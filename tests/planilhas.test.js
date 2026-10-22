@@ -66,7 +66,6 @@ describe("catálogo de planilhas", () => {
         arquivosDeCodigo(join(RAIZ, pasta)),
       ),
       join(RAIZ, "index.html"),
-      join(RAIZ, "analises.html"),
     ].filter((caminho) => relative(RAIZ, caminho) !== CATALOGO);
 
     const violacoes = arquivos.flatMap((caminho) => {

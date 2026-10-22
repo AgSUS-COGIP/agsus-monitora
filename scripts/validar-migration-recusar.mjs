@@ -2,12 +2,14 @@ import pg from "pg";
 
 /*
   Validação da migration `recusar_solicitacao_acesso` contra o banco real.
+  Desde 20261021140000 a assinatura é (p_solicitacao_id, p_motivo,
+  p_complemento): motivo da lista fixa (private."FC_MOTIVO_RECUSA_SOLICITACAO").
 
   Duas fases, na ordem em que devem ser corridas:
 
     node scripts/validar-migration-recusar.mjs --antes
       Pré-requisitos estruturais, antes de aplicar. Confere `private.is_master()`,
-      as colunas de `solicitacoes_acesso`, o gatilho de `updated_at` e que a
+      as colunas de `TB_SOLICITACAO_ACESSO`, o gatilho de `updated_at` e que a
       função ainda **não** existe. Falha se algo faltar — aplicar migration sobre
       pressuposto errado é como o repositório acumula objetos que ninguém sabe
       reconstruir.
@@ -84,7 +86,7 @@ try {
     const faltando = necessarias.filter((c) => !presentes.includes(c));
     registrar(
       faltando.length === 0,
-      "solicitacoes_acesso tem as colunas necessárias",
+      "TB_SOLICITACAO_ACESSO tem as colunas necessárias",
       faltando.length ? `faltam: ${faltando.join(", ")}` : "",
     );
 
@@ -131,7 +133,8 @@ try {
     } else {
       registrar(
         /p_solicitacao_id\s+uuid/.test(fn.argumentos) &&
-          /p_observacao_admin\s+text/.test(fn.argumentos),
+          /p_motivo\s+text/.test(fn.argumentos) &&
+          /p_complemento\s+text/.test(fn.argumentos),
         "assinatura confere",
         fn.argumentos,
       );
@@ -161,7 +164,7 @@ try {
 
       // ── Comportamento. Tudo dentro de transação revertida. ──────────────
       const alvo = await umaLinha(
-        `select id, status from public.solicitacoes_acesso order by created_at desc limit 1`,
+        `select id, status from public."TB_SOLICITACAO_ACESSO" order by created_at desc limit 1`,
       );
 
       if (!alvo) {
@@ -172,7 +175,7 @@ try {
         );
       } else {
         const naoMaster = await umaLinha(
-          `select user_id from public.perfis_usuarios
+          `select user_id from public."TB_PERFIL_USUARIO"
            where ativo is true and user_id is not null
              and lower(coalesce(perfil, '')) <> 'master'
            limit 1`,
@@ -187,7 +190,7 @@ try {
               [naoMaster.user_id],
             );
             await cliente.query(
-              `select public.recusar_solicitacao_acesso($1, 'teste')`,
+              `select public.recusar_solicitacao_acesso($1, 'FORA_DO_PUBLICO', 'teste')`,
               [alvo.id],
             );
             registrar(
@@ -220,7 +223,7 @@ try {
           primeira execução real.
         */
         const master = await umaLinha(
-          `select user_id from public.perfis_usuarios
+          `select user_id from public."TB_PERFIL_USUARIO"
            where ativo is true and user_id is not null
              and lower(coalesce(perfil, '')) = 'master'
            limit 1`,
@@ -235,7 +238,7 @@ try {
         };
 
         const avaliada = await umaLinha(
-          `select id from public.solicitacoes_acesso
+          `select id from public."TB_SOLICITACAO_ACESSO"
            where lower(coalesce(status, '')) <> 'pendente' limit 1`,
         );
         if (avaliada && master) {
@@ -243,7 +246,7 @@ try {
           try {
             await comoMaster();
             await cliente.query(
-              `select public.recusar_solicitacao_acesso($1, 'teste')`,
+              `select public.recusar_solicitacao_acesso($1, 'FORA_DO_PUBLICO', 'teste')`,
               [avaliada.id],
             );
             registrar(
@@ -273,7 +276,7 @@ try {
           conferida linha a linha, e desfaz-se.
         */
         const pendente = await umaLinha(
-          `select id from public.solicitacoes_acesso
+          `select id from public."TB_SOLICITACAO_ACESSO"
            where lower(coalesce(status, '')) = 'pendente' limit 1`,
         );
         if (pendente && master) {
@@ -281,12 +284,12 @@ try {
           try {
             await comoMaster();
             const retorno = await umaLinha(
-              `select public.recusar_solicitacao_acesso($1, 'validação automatizada') as r`,
+              `select public.recusar_solicitacao_acesso($1, 'FORA_DO_PUBLICO', 'validação automatizada') as r`,
               [pendente.id],
             );
             const linha = await umaLinha(
               `select status, avaliado_por, avaliado_em, observacao_admin, updated_at
-               from public.solicitacoes_acesso where id = $1`,
+               from public."TB_SOLICITACAO_ACESSO" where id = $1`,
               [pendente.id],
             );
             registrar(

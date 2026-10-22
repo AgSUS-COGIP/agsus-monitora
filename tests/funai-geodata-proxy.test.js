@@ -55,3 +55,26 @@ describe("catálogo geoespacial da Funai", () => {
     expect(chooseDseiFeatureType(featureTypesFromCapabilities(xml))).toBe("");
   });
 });
+
+describe("cache das respostas do proxy da Funai", () => {
+  function respostaFalsa() {
+    const cabecalhos = {};
+    return {
+      cabecalhos,
+      status() {
+        return this;
+      },
+      setHeader(nome, valor) {
+        cabecalhos[nome] = valor;
+      },
+      end() {},
+    };
+  }
+
+  it("erro não vai para o cache compartilhado", async () => {
+    const { default: handler } = await import("../api/funai-geodata.js");
+    const res = respostaFalsa();
+    await handler({ method: "GET", headers: {}, query: { dataset: "x" } }, res);
+    expect(res.cabecalhos["Cache-Control"]).toBe("no-store");
+  });
+});

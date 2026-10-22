@@ -19,9 +19,9 @@ const ROLE_LEVEL = Object.freeze({
 
 export const ACCESS_ROLES = Object.freeze([
   { value: "usuario", label: "Usuário" },
-  { value: "edital_gestor", label: "Edital gestor" },
+  { value: "edital_gestor", label: "Gestor" },
   { value: "contratador", label: "Contratador" },
-  { value: "admin", label: "Admin" },
+  { value: "admin", label: "Administrador global" },
 ]);
 
 export function normalizeRole(profile) {
@@ -37,6 +37,18 @@ export function roleLabel(profile) {
   if (profile?.grupo?.nome) return profile.grupo.nome;
   const role = normalizeRole(profile);
   return ACCESS_ROLES.find((item) => item.value === role)?.label || "Usuário";
+}
+
+/**
+ * Rótulo de exibição de um código de perfil, venha como vier ("edital_gestor",
+ * "Edital_gestor", "Admin", "master"). O que não é código (nome de grupo) fica
+ * como veio; vazio vira "Usuário".
+ */
+export function rotuloDoPerfil(valor) {
+  const texto = String(valor ?? "").trim();
+  const papel = ROLE_ALIASES[texto.toLowerCase()];
+  if (papel) return ACCESS_ROLES.find((item) => item.value === papel).label;
+  return texto || "Usuário";
 }
 
 export function isOwnAccessProfile(currentUser, targetProfile) {
@@ -102,13 +114,49 @@ export function canManageCandidateAttachments(profile) {
   return hasLevel(profile, "admin");
 }
 
-/* Aba Entrevistas (20260929235000_entrevistas.sql): só consulta nesta fase (leitor). */
+/* Aba Seleção (20261001090000_selecao.sql): só consulta (leitor). */
+export function canViewSelecao(profile) {
+  if (profile?.permissoes) return hasResource(profile, "selecao");
+  return normalizeRole(profile) !== "";
+}
+
+/*
+  Avaliação documental (20261006090000_avaliacao_documental_permissao_e_menu.sql):
+  ver a Fila (leitor); Regra, Equipe e Pré-classificação só para quem coordena
+  o edital. Quem coordena cada edital o banco decide
+  (gestor do edital ou coordenação na equipe, com Administrador). Sem a matriz
+  (contexto antigo), não aparece: o banco ainda não tem o recurso.
+*/
+export function canViewAvaliacaoDocumental(profile) {
+  if (profile?.permissoes) return hasResource(profile, "avaliacao_documental");
+  return false;
+}
+
+/*
+  Aba Classificação (20261002150000_classificacao.sql): ver (leitor); salvar a
+  regra do edital, gerar e publicar listas e registrar sorteio (editor).
+*/
+export function canViewClassificacao(profile) {
+  if (profile?.permissoes) return hasResource(profile, "classificacao");
+  return normalizeRole(profile) !== "";
+}
+
+export function canEditClassificacao(profile) {
+  if (profile?.permissoes) return hasResource(profile, "classificacao", 2);
+  return ["admin", "edital_gestor"].includes(normalizeRole(profile));
+}
+
+/*
+  Entrevistas (20260929235000_entrevistas.sql): o Painel de entrevistas e
+  Conduzir entrevistas usam o mesmo recurso; escrever (convocar, configurar,
+  lançar notas, roteiros) exige Editor, conferido pelo banco.
+*/
 export function canViewEntrevistas(profile) {
   if (profile?.permissoes) return hasResource(profile, "entrevistas");
   return normalizeRole(profile) !== "";
 }
 
-/* Aba Recursos: ver (leitor) e cadastrar/editar (editor). Por padrão, admin e edital gestor editam. */
+/* Aba Recursos: ver (leitor) e cadastrar/editar (editor). Por padrão, admin e gestor editam. */
 export function canViewRecursos(profile) {
   if (profile?.permissoes) return hasResource(profile, "recursos");
   return normalizeRole(profile) !== "";
@@ -119,9 +167,34 @@ export function canEditRecursos(profile) {
   return ["admin", "edital_gestor"].includes(normalizeRole(profile));
 }
 
+/*
+  Analisar recursos (a operação: registrar, enviar ao parecer, decidir,
+  responder, ajustar a pontuação): quem edita Recursos ou dá o parecer
+  jurídico, e vê Recursos. Quem só acompanha (leitor) fica com o Painel de
+  recursos. O banco confere cada ação (pode_editar, pode_decidir).
+*/
+export function canAnalisarRecursos(profile) {
+  if (!canViewRecursos(profile)) return false;
+  if (profile?.permissoes)
+    return (
+      canEditRecursos(profile) || hasResource(profile, "recursos_parecer", 2)
+    );
+  return canEditRecursos(profile);
+}
+
 export function canManageSubJudice(profile) {
   if (profile?.permissoes) return hasResource(profile, "aprovados", 2);
   return hasLevel(profile, "contratador");
+}
+
+/*
+  Alterar nota ou modalidade de quem já está na lista por decisão judicial, e
+  desfazer a alteração (20261001150000_sub_judice_alteracao.sql): só o admin
+  do módulo. Incluir sub judice continua com o editor.
+*/
+export function canAlterarPorDecisaoJudicial(profile) {
+  if (profile?.permissoes) return hasResource(profile, "aprovados", 3);
+  return hasLevel(profile, "admin");
 }
 
 export function canManageSettings(profile) {
@@ -137,6 +210,20 @@ export function isAdminGlobal(profile) {
   if (!profile || profile.ativo === false) return false;
   if (typeof profile.admin_global === "boolean") return profile.admin_global;
   return hasLevel(profile, "admin");
+}
+
+/**
+ * Corrige coordenadas dos mapas (Saúde Indígena e Projetos): admin global ou
+ * Gestor (perfil edital_gestor ativo). Espelho de private."FC_PODE_EDITAR_COORDENADA"
+ * (20261002200000); a escrita direta no cadastro do mapa segue só do admin global.
+ */
+/** "Pessoas online": admin global ou Gestor — em teste com os dois primeiro (05/10/2026). */
+export function podeVerPessoasOnline(profile) {
+  return isAdminGlobal(profile) || normalizeRole(profile) === "edital_gestor";
+}
+
+export function podeEditarCoordenadas(profile) {
+  return isAdminGlobal(profile) || normalizeRole(profile) === "edital_gestor";
 }
 
 /** Gerencia acessos: admin global, ou coordenador (módulo "acessos" ≥ editor). */
@@ -161,12 +248,14 @@ export function podeAbrirConfiguracoes(profile) {
 
 /**
  * Seção de Configurações liberada: "acessos" é de quem gerencia acessos;
- * "modulos" (Módulos e abas: ativar, desativar, manutenção), só do admin
- * global; as demais, de quem edita configurações.
+ * "modulos" (Módulos e abas: ativar, desativar, manutenção) e "cargas"
+ * (Status das atualizações), só do admin global; as demais, de quem edita
+ * configurações.
  */
 export function secaoDeConfiguracaoPermitida(profile, secao) {
   if (secao === "acessos") return canManageAccess(profile);
   if (secao === "modulos") return isAdminGlobal(profile);
+  if (secao === "cargas") return isAdminGlobal(profile);
   return canManageSettings(profile);
 }
 
@@ -206,8 +295,13 @@ export function paginasPermitidas(profile) {
     calendario: profile?.permissoes ? pode("calendario") : pode("cores"),
     approved: canViewCore(profile),
     analises: pode("analises"),
+    "avaliacao-documental": canViewAvaliacaoDocumental(profile),
     entrevistas: canViewEntrevistas(profile),
+    "conduzir-entrevistas": canViewEntrevistas(profile),
+    classificacao: canViewClassificacao(profile),
     recursos: canViewRecursos(profile),
+    "analisar-recursos": canAnalisarRecursos(profile),
+    selecao: canViewSelecao(profile),
     config: podeAbrirConfiguracoes(profile),
   };
 }

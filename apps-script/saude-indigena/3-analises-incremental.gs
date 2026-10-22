@@ -21,10 +21,21 @@ const ANALISES_INCREMENTAL_CFG = {
   STAGING_CHUNK_SIZE: 300,
   RPC_BATCH_SIZE: 250,
   MAX_RUNTIME_MS: 240000,
+  // [sempre-avanca] Depois de ler a planilha (que pode levar minutos), sobra pelo menos isto
+  // para comparar e processar. Sem isso, uma leitura lenta gastava o prazo inteiro e cada
+  // continuacao relia a planilha sem nunca comparar a primeira linha (07/10/2026).
+  MIN_WORK_MS: 4 * 60 * 1000,
   RPC_RESERVE_MS: 45000,
   CONTINUATION_DELAY_MS: 60000,
   CONTINUATION_HANDLER: 'continuarSyncAnalisesCurricularesIncremental',
-  MAX_CONFIRMATION_CHECKS: 3
+  MAX_CONFIRMATION_CHECKS: 3,
+  // [nao-trava] Sem progresso por mais que isto, o sync guardado e descartado e outro comeca.
+  // Mesmo limite do banco (20261007170000): la a execucao parada sai como "encerrada por inatividade".
+  MAX_SEM_PROGRESSO_MS: 30 * 60 * 1000,
+  // [sem-mudanca] Planilha igual ao ultimo envio confirmado: nada e enviado (nenhuma chamada ao banco)
+  // por ate MAX_SEM_ENVIO_MS; depois disso o sync roda mesmo igual, para o banco reconciliar.
+  PROP_ULTIMO_ENVIO: 'ANALISES_SYNC_INCREMENTAL_ULTIMO_V1',
+  MAX_SEM_ENVIO_MS: 6 * 60 * 60 * 1000
 };
 
 function syncAnalisesCurricularesIncremental() {
@@ -52,6 +63,7 @@ function limparEstadoLocalAnalisesIncremental(confirmacao) {
     throw new Error('Use confirmaracao LIMPAR_ESTADO_LOCAL apenas depois de conferir o sync remoto.');
   }
   PropertiesService.getScriptProperties().deleteProperty(ANALISES_INCREMENTAL_CFG.PROP_STATE);
+  PropertiesService.getScriptProperties().deleteProperty(ANALISES_INCREMENTAL_CFG.PROP_ULTIMO_ENVIO); // [sem-mudanca]
   limparContinuacoesAnalisesIncremental_();
   return { ok: true };
 }
@@ -63,7 +75,7 @@ function executarSyncAnalisesCurricularesIncremental_(options) {
     return { ok: false, skipped: true, motivo: 'Outra execucao do projeto esta em andamento.' };
   }
 
-  const deadline = Date.now() + ANALISES_INCREMENTAL_CFG.MAX_RUNTIME_MS;
+  let deadline = Date.now() + ANALISES_INCREMENTAL_CFG.MAX_RUNTIME_MS;
 
   try {
     obterConfiguracaoSupabaseAnalises_();
@@ -71,8 +83,38 @@ function executarSyncAnalisesCurricularesIncremental_(options) {
     let state = lerEstadoAnalisesIncremental_();
     let remotePending = null;
 
+    // [sem-mudanca] Sem sync guardado e com a planilha igual ao ultimo envio confirmado (ha menos
+    // de 6 h): nada a enviar e nenhuma chamada ao banco. Em 14/10/2026 eram ~220 syncs por dia,
+    // quase todos sem nenhuma linha alterada, cada um com dezenas de requisicoes.
+    let snapshotPrevio = null;
+    if (!state && !opts.resumeOnly) {
+      snapshotPrevio = montarSnapshotAnalisesIncremental_();
+      if (pularSemMudancaAnalisesIncremental_(lerUltimoEnvioAnalisesIncremental_(), snapshotPrevio.snapshotHash, Date.now())) {
+        const igual = {
+          ok: true,
+          status: 'processado',
+          sem_mudanca: true,
+          sync_id: null,
+          modo: ANALISES_INCREMENTAL_CFG.MODE,
+          total_ativos_local: snapshotPrevio.fatoAtivo.length,
+          motivo: 'Planilha igual ao ultimo envio confirmado; nada enviado ao banco.'
+        };
+        Logger.log('Incremental: ' + igual.motivo);
+        return igual;
+      }
+    }
+
     if (!state) {
       remotePending = consultarQualquerSyncPendenteAnalises_();
+      // [nao-trava] Pendente remoto parado ha mais de 30 min e execucao morta: nao adota nem
+      // espera; comeca um novo e o banco encerra o parado por inatividade ao iniciar.
+      if (remotePending && pendenteRemotoParadoAnalisesIncremental_(remotePending, Date.now())) {
+        Logger.log('Incremental: sync ' + remotePending.sync_id + ' (modo ' + remotePending.modo + ', status ' + remotePending.status +
+          ') esta parado ha mais de 30 min; comecando um novo (o banco encerra o parado por inatividade).');
+        remotePending = null;
+        state = criarEstadoAnalisesIncremental_(Utilities.getUuid(), false);
+        salvarEstadoAnalisesIncremental_(state);
+      }
       if (remotePending) {
         if (remotePending.modo !== ANALISES_INCREMENTAL_CFG.MODE) {
           return {
@@ -86,7 +128,7 @@ function executarSyncAnalisesCurricularesIncremental_(options) {
         }
         state = criarEstadoAnalisesIncremental_(remotePending.sync_id, true);
         salvarEstadoAnalisesIncremental_(state);
-      } else if (opts.resumeOnly) {
+      } else if (!state && opts.resumeOnly) {
         return { ok: false, idle: true, motivo: 'Nenhum sync incremental pendente para retomar.' };
       }
     }
@@ -96,7 +138,20 @@ function executarSyncAnalisesCurricularesIncremental_(options) {
       salvarEstadoAnalisesIncremental_(state);
     }
 
-    const snapshot = montarSnapshotAnalisesIncremental_();
+    const snapshot = snapshotPrevio || montarSnapshotAnalisesIncremental_(); // [sem-mudanca]
+    deadline = Math.max(deadline, Date.now() + ANALISES_INCREMENTAL_CFG.MIN_WORK_MS); // [sempre-avanca]
+
+    // [nao-trava] Antes de tudo, o banco diz se o sync guardado ainda pode seguir. Se nao pode
+    // (erro, inexistente, parado ha mais de 30 min), o estado local sai e um sync novo comeca
+    // nesta mesma execucao. Antes (06/10/2026), o cliente repetia "Status remoto nao permite
+    // retomada: erro" a cada gatilho ate alguem apagar a propriedade a mao.
+    let remote = consultarSyncAnalisesIncremental_(state.sync_id);
+    const decisao = decidirRetomadaAnalisesIncremental_(state, remote, Date.now());
+    if (decisao.acao === 'DESCARTAR') {
+      state = descartarEstadoAnalisesIncremental_(state, decisao.motivo);
+      remote = null;
+    }
+
     validarSnapshotAnalisesIncremental_(state, snapshot);
 
     if (!state.snapshot_hash) {
@@ -106,30 +161,25 @@ function executarSyncAnalisesCurricularesIncremental_(options) {
       salvarEstadoAnalisesIncremental_(state);
     }
 
-    const remote = consultarSyncAnalisesIncremental_(state.sync_id);
-
     if (!remote) {
-      if (state.remote_started) {
-        return pendenciaAnalisesIncremental_(state, 'Estado local indica inicio remoto, mas o log nao foi encontrado. Reconcilie antes de criar outro sync.', true);
-      }
-
       state.inFlight = { operation: 'iniciar_sync_analises_incremental', startedAt: new Date().toISOString() };
       salvarEstadoAnalisesIncremental_(state);
       const started = rpcAnalisesIncremental_('iniciar_sync_analises_incremental', { p_sync_id: state.sync_id, p_origem: ANALISES_INCREMENTAL_CFG.ORIGEM }, false); // [por-planilha]
       if (!started || started.ok !== true || started.sync_id !== state.sync_id) {
         return pendenciaAnalisesIncremental_(state, 'Resposta invalida ao iniciar sync incremental.', true);
       }
+      if (Number(started.encerradas_por_inatividade || 0) > 0) {
+        Logger.log('Incremental: o banco encerrou ' + started.encerradas_por_inatividade + ' execucao(oes) parada(s) desta planilha por inatividade.');
+      }
       delete state.inFlight;
       state.remote_started = true;
       state.phase = 'COMPARING';
+      marcarProgressoAnalisesIncremental_(state);
       salvarEstadoAnalisesIncremental_(state);
     } else {
       state.remote_started = true;
       if (remote.status === 'processado') {
         return concluirAnalisesIncremental_(state, remote, snapshot);
-      }
-      if (['carregado', 'processando'].indexOf(remote.status) === -1) {
-        return pendenciaAnalisesIncremental_(state, 'Status remoto nao permite retomada: ' + remote.status, true);
       }
       reconciliarInFlightAnalisesIncremental_(state, remote);
     }
@@ -150,6 +200,7 @@ function executarSyncAnalisesCurricularesIncremental_(options) {
       enviarEditaisAnalisesIncremental_(state, snapshot.editais);
       state.editais_uploaded = true;
       state.phase = 'PREPARING';
+      marcarProgressoAnalisesIncremental_(state);
       salvarEstadoAnalisesIncremental_(state);
     }
 
@@ -164,6 +215,7 @@ function executarSyncAnalisesCurricularesIncremental_(options) {
       state.prepared = true;
       state.phase = 'PROCESSING';
       state.cursor = 0;
+      marcarProgressoAnalisesIncremental_(state);
       salvarEstadoAnalisesIncremental_(state);
     }
 
@@ -254,9 +306,10 @@ function montarSnapshotAnalisesIncremental_() {
 function compararEEnviarAlteradosAnalisesIncremental_(state, snapshot, deadline) {
   let index = Number(state.compare_index || 0);
   const rows = snapshot.fatoAtivo;
+  let lotesNestaExecucao = 0; // [sempre-avanca] o primeiro lote sai mesmo com o prazo apertado
 
   while (index < rows.length) {
-    if (Date.now() >= deadline - ANALISES_INCREMENTAL_CFG.RPC_RESERVE_MS) {
+    if (lotesNestaExecucao > 0 && Date.now() >= deadline - ANALISES_INCREMENTAL_CFG.RPC_RESERVE_MS) {
       state.compare_index = index;
       salvarEstadoAnalisesIncremental_(state);
       return agendarContinuacaoAnalisesIncremental_(state, 'Comparacao incremental pausada por limite de tempo.');
@@ -271,7 +324,13 @@ function compararEEnviarAlteradosAnalisesIncremental_(state, snapshot, deadline)
       };
     });
 
-    const diff = rpcAnalisesIncremental_('comparar_analises_incremental', { p_itens: manifesto }, true);
+    // v2: anota as linhas no manifesto do sync; no fim, o banco desativa quem saiu
+    // da planilha (20261001140000). O primeiro lote (index 0) recomeça o manifesto.
+    const diff = rpcAnalisesIncremental_('comparar_analises_incremental_v2', {
+      p_sync_id: state.sync_id,
+      p_itens: manifesto,
+      p_reiniciar: index === 0
+    }, true);
     if (!diff || diff.ok !== true || !Array.isArray(diff.linhas_alteradas)) {
       throw new Error('Resposta invalida da comparacao incremental.');
     }
@@ -285,8 +344,10 @@ function compararEEnviarAlteradosAnalisesIncremental_(state, snapshot, deadline)
     }
 
     index += chunk.length;
+    lotesNestaExecucao++;
     state.compare_index = index;
     state.phase = 'COMPARING';
+    marcarProgressoAnalisesIncremental_(state);
     salvarEstadoAnalisesIncremental_(state);
     Logger.log('Incremental comparado: ' + index + '/' + rows.length + '; alterados acumulados=' + Number(state.changed_count || 0));
   }
@@ -336,7 +397,8 @@ function enviarStagingIdempotenteAnalisesIncremental_(rows) {
 }
 
 function processarLotesAnalisesIncremental_(state, snapshot, deadline) {
-  while (Date.now() < deadline - ANALISES_INCREMENTAL_CFG.RPC_RESERVE_MS) {
+  let lotesProcessados = 0; // [sempre-avanca] o primeiro lote sai mesmo com o prazo apertado
+  while (lotesProcessados === 0 || Date.now() < deadline - ANALISES_INCREMENTAL_CFG.RPC_RESERVE_MS) {
     const remote = consultarSyncAnalisesIncremental_(state.sync_id);
     if (!remote) return pendenciaAnalisesIncremental_(state, 'Log remoto nao encontrado durante processamento.', true);
     if (remote.status === 'processado') return concluirAnalisesIncremental_(state, remote, snapshot);
@@ -358,6 +420,7 @@ function processarLotesAnalisesIncremental_(state, snapshot, deadline) {
       }
       delete state.inFlight;
       state.phase = 'CONFIRMING';
+      marcarProgressoAnalisesIncremental_(state);
       salvarEstadoAnalisesIncremental_(state);
       return confirmarFinalizacaoAnalisesIncremental_(state, snapshot);
     }
@@ -382,6 +445,8 @@ function processarLotesAnalisesIncremental_(state, snapshot, deadline) {
     delete state.inFlight;
     state.cursor = Number(result.cursor || 0);
     state.fato_concluido = result.concluido_fato;
+    lotesProcessados++;
+    marcarProgressoAnalisesIncremental_(state);
     salvarEstadoAnalisesIncremental_(state);
     Logger.log('Lote incremental confirmado. cursor=' + state.cursor + ', concluido=' + state.fato_concluido);
   }
@@ -406,6 +471,7 @@ function reconciliarInFlightAnalisesIncremental_(state, remote) {
       delete state.inFlight;
       state.cursor = cursor;
       state.fato_concluido = false;
+      marcarProgressoAnalisesIncremental_(state);
       salvarEstadoAnalisesIncremental_(state);
     }
     return;
@@ -441,6 +507,7 @@ function concluirAnalisesIncremental_(state, remote, snapshot) {
 
   PropertiesService.getScriptProperties().deleteProperty(ANALISES_INCREMENTAL_CFG.PROP_STATE);
   limparContinuacoesAnalisesIncremental_();
+  salvarUltimoEnvioAnalisesIncremental_(state.snapshot_hash || snapshot.snapshotHash); // [sem-mudanca]
 
   const result = {
     ok: true,
@@ -565,6 +632,7 @@ function erroRespostaAnalisesIncremental_(res, key, path) {
 }
 
 function criarEstadoAnalisesIncremental_(syncId, resumed) {
+  const agora = new Date().toISOString();
   return {
     sync_id: syncId,
     mode: ANALISES_INCREMENTAL_CFG.MODE,
@@ -577,8 +645,89 @@ function criarEstadoAnalisesIncremental_(syncId, resumed) {
     prepared: false,
     fato_concluido: false,
     confirmation_checks: 0,
-    created_at: new Date().toISOString()
+    created_at: agora,
+    progress_at: agora
   };
+}
+
+// [nao-trava] Ultimo avanço confirmado (comparacao, envio, preparo, lote, finalizacao).
+function marcarProgressoAnalisesIncremental_(state) {
+  state.progress_at = new Date().toISOString();
+}
+
+/**
+ * [nao-trava] Decide o que fazer com o sync guardado (PROP_STATE), pelo que o banco diz dele.
+ * Funcao pura: sem Apps Script, testada em tests/apps-script-analises-incremental.test.js.
+ *   INICIAR    o log remoto ainda nao existe e o inicio nao foi confirmado: inicia com o mesmo sync_id;
+ *   RETOMAR    o banco aceita seguir (carregado/processando com progresso recente, ou processado);
+ *   DESCARTAR  nao ha como seguir: status erro (ou outro fora da fila), log sumiu depois de
+ *              iniciado, ou nenhum progresso local ha mais de MAX_SEM_PROGRESSO_MS.
+ */
+function decidirRetomadaAnalisesIncremental_(state, remote, agoraMs) {
+  const limiteMin = Math.round(ANALISES_INCREMENTAL_CFG.MAX_SEM_PROGRESSO_MS / 60000);
+  if (!remote) {
+    if (state && state.remote_started) {
+      return { acao: 'DESCARTAR', motivo: 'O sync ' + state.sync_id + ' nao existe mais no banco.' };
+    }
+    return { acao: 'INICIAR', motivo: 'Sync ainda nao iniciado no banco.' };
+  }
+  if (remote.status === 'processado') {
+    return { acao: 'RETOMAR', motivo: 'Sync processado no banco; falta concluir localmente.' };
+  }
+  if (['carregado', 'processando'].indexOf(remote.status) === -1) {
+    return { acao: 'DESCARTAR', motivo: 'Status remoto nao permite retomada: ' + remote.status };
+  }
+  const ultimo = Date.parse((state && (state.progress_at || state.created_at)) || '');
+  if (!isFinite(ultimo) || agoraMs - ultimo > ANALISES_INCREMENTAL_CFG.MAX_SEM_PROGRESSO_MS) {
+    return { acao: 'DESCARTAR', motivo: 'Sem progresso local ha mais de ' + limiteMin + ' min (fase ' + (state && state.phase) + ').' };
+  }
+  return { acao: 'RETOMAR', motivo: 'Sync ' + remote.status + ' com progresso recente.' };
+}
+
+/** [nao-trava] Pendente remoto (sem estado local) sem sinal no log ha mais de MAX_SEM_PROGRESSO_MS. Pura. */
+function pendenteRemotoParadoAnalisesIncremental_(remote, agoraMs) {
+  if (!remote) return false;
+  const ultimo = Math.max(Date.parse(remote.updated_at || '') || 0, Date.parse(remote.created_at || '') || 0);
+  return ultimo > 0 && agoraMs - ultimo > ANALISES_INCREMENTAL_CFG.MAX_SEM_PROGRESSO_MS;
+}
+
+// [nao-trava] Tira o sync guardado (nada e apagado no banco) e devolve um estado novo, ja salvo.
+function descartarEstadoAnalisesIncremental_(state, motivo) {
+  Logger.log('Incremental: estado local do sync ' + state.sync_id + ' (fase ' + state.phase + ') descartado: ' + motivo +
+    ' Comecando um sync novo nesta execucao.');
+  PropertiesService.getScriptProperties().deleteProperty(ANALISES_INCREMENTAL_CFG.PROP_STATE);
+  limparContinuacoesAnalisesIncremental_();
+  const novo = criarEstadoAnalisesIncremental_(Utilities.getUuid(), false);
+  novo.descartado_anterior = { sync_id: state.sync_id, phase: state.phase, motivo: motivo, em: novo.created_at };
+  salvarEstadoAnalisesIncremental_(novo);
+  return novo;
+}
+
+/**
+ * [sem-mudanca] Pula o sync? So com o ultimo envio confirmado (hash da planilha e quando) igual ao
+ * hash de agora e ha menos de MAX_SEM_ENVIO_MS. Funcao pura, testada em
+ * tests/apps-script-analises-incremental.test.js.
+ */
+function pularSemMudancaAnalisesIncremental_(ultimo, snapshotHash, agoraMs) {
+  if (!ultimo || !ultimo.hash || !snapshotHash || ultimo.hash !== snapshotHash) return false;
+  const em = Date.parse(ultimo.em || '');
+  return isFinite(em) && agoraMs - em >= 0 && agoraMs - em < ANALISES_INCREMENTAL_CFG.MAX_SEM_ENVIO_MS;
+}
+
+function lerUltimoEnvioAnalisesIncremental_() {
+  const raw = PropertiesService.getScriptProperties().getProperty(ANALISES_INCREMENTAL_CFG.PROP_ULTIMO_ENVIO);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    return null;
+  }
+}
+
+function salvarUltimoEnvioAnalisesIncremental_(hash) {
+  if (!hash) return;
+  PropertiesService.getScriptProperties().setProperty(ANALISES_INCREMENTAL_CFG.PROP_ULTIMO_ENVIO,
+    JSON.stringify({ hash: hash, em: new Date().toISOString() }));
 }
 
 function lerEstadoAnalisesIncremental_() {
@@ -633,6 +782,7 @@ function recomecarComparacaoAnalisesIncremental_(state, snapshot) {
   state.changed_count = 0;
   state.editais_uploaded = false;
   state.phase = 'COMPARING';
+  marcarProgressoAnalisesIncremental_(state);
   salvarEstadoAnalisesIncremental_(state);
 }
 

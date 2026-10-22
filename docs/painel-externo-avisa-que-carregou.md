@@ -1,7 +1,7 @@
 # Painel externo que avisa quando carregou
 
 Ao abrir um painel externo, o MONITORA cobre o quadro com um skeleton
-(`acompanharCarregamentoDoPainel`, em `src/modules/carregamento.js`). Sozinho, ele só sabe quando
+(`acompanharCarregamentoDoPainel`, em `src/app/carregamento.js`). Sozinho, ele só sabe quando
 a **página** do painel chegou (o `load` do iframe), e não quando os **dados** chegaram.
 
 Num painel feito em Google Apps Script (como o de Recursos), a página abre e só depois o script
@@ -16,10 +16,8 @@ painel avisa o MONITORA com duas mensagens:
 Painel que não manda nada continua como sempre: o skeleton sai no `load`. Um painel que avisou e
 nunca mandou o "pronto" é descoberto depois de 45 s.
 
-O app de análises do próprio MONITORA (`analises.html`) já manda os dois avisos, em
-`src/analises/analises-loading-feedback.js`: o "pronto" sai quando os dados (ou o erro) estão na
-tela. Ele não é mais um painel externo: é a página Análises curriculares
-(`src/modules/pagina-de-analises.js`), que usa o mesmo skeleton e os mesmos avisos.
+Nenhuma página do próprio MONITORA roda mais no quadro: Recursos, Entrevistas, Análises curriculares e
+Seleção são módulos de `src/modulos/`, sem avisos (o skeleton é o da própria tela).
 
 ## O que colar no Apps Script
 

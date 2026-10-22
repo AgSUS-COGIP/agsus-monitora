@@ -1,130 +1,110 @@
 import { readFileSync } from "node:fs";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  CACHE_TTL_MS,
-  RPC_DOS_MUNICIPIOS,
-  aplicarAreaNaVisaoGeral,
-  criarCarregadorDeMunicipios,
-  desenharMunicipiosDaArea,
-} from "../../src/modules/municipios-da-visao-geral.js";
+import { fonteDoApp } from "../fonte-do-app.js";
+import { describe, expect, it } from "vitest";
 
 /*
-  Saúde Indígena, SEDE e Projetos abrem a mesma Visão geral (#page-dashboard).
-  A Saúde Indígena fica exatamente como era; a SEDE não tem o bloco do mapa;
-  Projetos troca DSEIs por municípios das vagas.
+  Saúde Indígena, SEDE e Projetos abrem a mesma Visão geral (#page-dashboard,
+  React em src/modulos/visao-geral/). O mapa é da área e é React: o da Saúde
+  Indígena em src/modulos/mapa-saude-indigena/, o de Projetos em
+  src/modulos/mapa-de-projetos/ (o componente é testado em
+  tests/modulos/mapa-de-projetos.test.js), e a SEDE não tem. Aqui, o que o
+  legado ainda faz por área e o que saiu dele.
 */
 
 const indexHtml = readFileSync("index.html", "utf8");
-const secao = indexHtml.match(
-  /<section id="page-dashboard"[\s\S]*?<\/section>\s*<!-- React: src\/componentes\/nucleo/,
-)[0];
-const css = readFileSync("src/styles/health-map-workspace.css", "utf8");
-const legado = readFileSync("src/modules/legacy-app.js", "utf8");
+const legado = fonteDoApp();
 
-const normalizar = (texto) => texto.replace(/\s+/g, " ").trim();
-
-function montarPagina() {
-  document.head.innerHTML = `<style>${css}</style>`;
-  document.body.innerHTML = `<div class="content">${secao.replace(/<!-- React:[\s\S]*$/, "")}</div>`;
-  return document.getElementById("page-dashboard");
-}
-
-const visivel = (elemento) => getComputedStyle(elemento).display !== "none";
-
-describe("a mesma página nas três áreas", () => {
-  let pagina;
-  beforeEach(() => {
-    pagina = montarPagina();
+describe("a Visão geral não tem mapa legado", () => {
+  it("o index.html não tem o bloco do mapa nem a reserva", () => {
+    for (const id of [
+      "mapaDaVisaoGeral",
+      "reservaDoMapaDaVisaoGeral",
+      "mapaDosProjetos",
+      "mapaDosProjetosBrasil",
+      "brasilDseiList",
+      "brasilDseiCount",
+      "masterMapCount",
+    ])
+      expect(indexHtml, id).not.toContain(`id="${id}"`);
+    expect(indexHtml).not.toContain("health-map-");
+    expect(indexHtml).toMatch(
+      /<section id="page-dashboard" class="page active"><\/section>/,
+    );
   });
 
-  it("na Saúde Indígena nada muda no bloco do mapa", () => {
-    const antes = pagina.querySelector(".health-map-workspace").outerHTML;
-    expect(aplicarAreaNaVisaoGeral(pagina, "saude-indigena")).toBe("dsei");
-    expect(pagina.dataset.mapaDaArea).toBe("dsei");
-    expect(pagina.querySelector(".health-map-workspace").outerHTML).toBe(antes);
-    expect(visivel(pagina.querySelector(".health-map-workspace"))).toBe(true);
+  /*
+    As camadas de Terras Indígenas e Mapa/Satélite enfeitam os mapas com id
+    `map`/`detailMap`: esses ids são do mapa da Saúde Indígena (React). Dois
+    na página quebrariam as camadas.
+  */
+  it("não usa os ids do mapa da Saúde Indígena", () => {
+    expect(indexHtml).not.toContain('id="map"');
+    expect(indexHtml).not.toContain('id="detailMap"');
   });
 
-  it("na SEDE o bloco do mapa some e o resto da página fica", () => {
-    aplicarAreaNaVisaoGeral(pagina, "sede");
-    expect(pagina.dataset.mapaDaArea).toBe("nenhum");
-    expect(visivel(pagina.querySelector(".health-map-workspace"))).toBe(false);
-    expect(visivel(pagina.querySelector(".kpis-main"))).toBe(true);
-    expect(visivel(pagina.querySelector("#multiUnitsCard"))).toBe(true);
-    expect(visivel(pagina.querySelector(".table-card"))).toBe(true);
-  });
-
-  it("em Projetos o mapa fala de municípios e esconde o que é da Saúde Indígena", () => {
-    aplicarAreaNaVisaoGeral(pagina, "projetos");
-    const bloco = pagina.querySelector(".health-map-workspace");
-    expect(visivel(bloco)).toBe(true);
-    expect(normalizar(bloco.textContent)).toContain("Municípios por vagas");
-    expect(normalizar(bloco.textContent)).toContain("Municípios das vagas");
-    expect(normalizar(bloco.textContent)).not.toContain(
-      "Territórios por vagas",
-    );
-    expect(pagina.querySelector("#map").getAttribute("aria-label")).toContain(
-      "municípios",
-    );
-    // O ícone da lista continua lá.
-    expect(
-      pagina.querySelector(".health-map-units__header .fa-ranking-star"),
-    ).not.toBeNull();
-    expect(visivel(pagina.querySelector(".health-map-pane--detail"))).toBe(
-      false,
-    );
-    for (const classe of [
-      "health-map-botao--calor",
-      "agsus-indigenous-territories-control",
-    ]) {
-      const botao = document.createElement("div");
-      botao.className = classe;
-      pagina.querySelector("#map").append(botao);
-      expect(visivel(botao), classe).toBe(false);
-    }
-  });
-
-  it("voltar à Saúde Indígena devolve os textos do index.html", () => {
-    const original = normalizar(
-      pagina.querySelector(".health-map-workspace").textContent,
-    );
-    aplicarAreaNaVisaoGeral(pagina, "projetos");
-    aplicarAreaNaVisaoGeral(pagina, "saude-indigena");
-    expect(
-      normalizar(pagina.querySelector(".health-map-workspace").textContent),
-    ).toBe(original);
-    expect(pagina.querySelector("#map").getAttribute("aria-label")).toBe(
-      "Mapa do Brasil com processos seletivos por DSEI, polos base e CASAI",
-    );
+  it("o módulo e o CSS do mapa legado saíram", () => {
+    const main = readFileSync("src/main.js", "utf8");
+    expect(main).not.toContain("health-map-workspace.css");
+    expect(main).not.toContain("health-reference-kpis.css");
+    expect(main).toContain("./modulos/mapa-de-projetos/mapa-de-projetos.css");
+    for (const css of ["src/styles/app.css", "src/styles/mobile-app.css"])
+      expect(readFileSync(css, "utf8"), css).not.toContain("#mapaDosProjetos");
   });
 });
 
 describe("o legado usa a área atual", () => {
   it("filtros, KPIs, mapa e tabela partem dos editais da área atual", () => {
-    expect(legado).toContain("return linhasDaArea(rows, areaAtual());");
+    // O recorte é do estado da Visão geral (React); os mapas leem dele.
+    const estado = readFileSync("src/modulos/visao-geral/estado.ts", "utf8");
+    expect(estado).toContain(
+      "linhasDaArea(linhasDaResposta(linhas), areaAtual)",
+    );
     expect(legado).not.toMatch(/rows\.filter\(ehEditalDaSaudeIndigena\)/);
   });
 
-  it("SEDE não inicia o mapa; Projetos desenha os municípios", () => {
-    const renderMap = legado.match(/function renderMap\(\) \{[\s\S]*?\n\}/)[0];
-    expect(renderMap).toMatch(/if \(!mapa\) return;[\s\S]*initLeaflet\(\)/);
-    expect(renderMap).toContain("desenharMunicipiosNoMapa()");
-    expect(renderMap).toContain("__agsusSuspenderCamadasIndigenas");
+  it("o legado não tem mais mapa: os dois são React", () => {
+    for (const removido of [
+      "renderMap",
+      "desenharMunicipiosNoMapa",
+      "scheduleMapResize",
+      "criarCarregadorDeMunicipios",
+      "municipios-da-visao-geral",
+      "mapaDosProjetos",
+      "MAPA_DOS_MUNICIPIOS",
+      "initLeaflet",
+      "drawDSEIBubbles",
+      "drawCasai",
+      "renderDetailMap",
+      "detailRecordsForDsei",
+      "drawPolos",
+      "drawRedeAssistencial",
+      "__agsusSuspenderCamadasIndigenas",
+      "ligarMapa",
+    ])
+      expect(legado, removido).not.toContain(removido);
   });
 
-  it("trocar de área refaz os filtros e redesenha", () => {
-    expect(legado).toContain(
-      "assinarDadosDoMonitoramento(aoMudarDadosDoMonitoramento)",
+  it("trocar de área refaz o cabeçalho (o mapa é do estado da Visão geral)", () => {
+    // A navegação (src/app/navegacao.js; comportamento em tests/app/navegacao.test.js).
+    const navegacao = readFileSync("src/app/navegacao.js", "utf8");
+    const troca = navegacao.slice(navegacao.indexOf("function acompanharArea"));
+    expect(troca).toContain("assinarDadosDoMonitoramento(");
+    // O DSEI aberto e os filtros são do estado da Visão geral, que ouve os mesmos dados.
+    expect(troca).toContain("tituloDaVisaoGeral();");
+    expect(troca).not.toContain("renderMap");
+  });
+
+  it("os dados do mapa da Saúde Indígena vão para o estado da Visão geral", () => {
+    const fonte = readFileSync("src/app/carga.js", "utf8");
+    const carga = fonte.slice(
+      fonte.indexOf("async function carregarMapa"),
+      fonte.indexOf("async function carregarLinhas"),
     );
-    const troca = legado.match(
-      /function aoMudarDadosDoMonitoramento\(\) \{[\s\S]*?\n\}/,
-    )[0];
-    expect(troca).toContain("populateFilters();");
-    expect(troca).toContain("applyFilters();");
-    expect(troca).toContain("prepararVisaoGeralDaArea();");
+    expect(carga).toContain("visaoGeral.definirDadosDoMapa(");
+    expect(fonte).toContain("visaoGeral = estadoDaVisaoGeral");
   });
 
-  it("em Projetos as terras saem sem apagar a preferência da pessoa", () => {
+  it("as terras saem sem apagar a preferência da pessoa", () => {
     const camada = readFileSync(
       "src/modules/indigenous-territories-layer.js",
       "utf8",
@@ -137,207 +117,15 @@ describe("o legado usa a área atual", () => {
     expect(suspender).toContain("clearVector()");
     expect(suspender).toContain("renderDseiCoverage()");
     expect(suspender).not.toContain("storeVisibility");
-    expect(camada).toContain(
-      "!suspensas && map.__agsusIndigenousTerritoriesVisible",
+    expect(camada).toMatch(
+      /!suspensas &&\s+map\.__agsusIndigenousTerritoriesVisible/,
     );
+    // Mapa removido (React desmonta) também não desenha nada que chegue depois.
+    expect(camada).toMatch(/!removido &&\s+!suspensas/);
   });
 
   it("a view separada da SEDE e de Projetos saiu", () => {
     expect(legado).not.toContain("visao-area");
     expect(indexHtml).not.toContain("page-visao-area");
-  });
-});
-
-function supabaseFalso(resposta) {
-  return {
-    auth: {
-      getSession: async () => ({
-        data: { session: { access_token: "teste" } },
-        error: null,
-      }),
-    },
-    rpc: vi.fn(async () => resposta),
-  };
-}
-
-const RESPOSTA = {
-  data: [
-    {
-      municipio_uf: "Irati/PR",
-      vagas: 5,
-      candidatos: 70,
-      aprovados: 43,
-      reprovados: 27,
-    },
-    {
-      municipio_uf: "Seropédica/RJ",
-      vagas: 12,
-      candidatos: 647,
-      aprovados: 0,
-      reprovados: 0,
-    },
-    { municipio_uf: "Lugar Novo/AM", vagas: 1, candidatos: 3 },
-  ],
-  error: null,
-};
-
-describe("carga dos municípios", () => {
-  it("um pedido por área, guardado pelo tempo do cache", async () => {
-    let agora = 0;
-    const supabase = supabaseFalso(RESPOSTA);
-    const carregador = criarCarregadorDeMunicipios({
-      obterSupabase: () => supabase,
-      relogio: () => agora,
-    });
-    const [a, b] = await Promise.all([
-      carregador.carregar("projetos"),
-      carregador.carregar("projetos"),
-    ]);
-    expect(a).toBe(b);
-    expect(supabase.rpc).toHaveBeenCalledTimes(1);
-    expect(supabase.rpc).toHaveBeenCalledWith(RPC_DOS_MUNICIPIOS, {
-      p_area: "projetos",
-    });
-    expect(a.municipios).toHaveLength(3);
-    await carregador.carregar("projetos");
-    expect(supabase.rpc).toHaveBeenCalledTimes(1);
-    agora = CACHE_TTL_MS + 1;
-    await carregador.carregar("projetos");
-    expect(supabase.rpc).toHaveBeenCalledTimes(2);
-  });
-
-  it("banco sem a função não é erro; erro não fica guardado", async () => {
-    const semFuncao = criarCarregadorDeMunicipios({
-      obterSupabase: () =>
-        supabaseFalso({ data: null, error: { code: "PGRST202" } }),
-    });
-    expect(await semFuncao.carregar("projetos")).toMatchObject({
-      indisponivel: true,
-      erro: "",
-    });
-    const supabase = supabaseFalso({
-      data: null,
-      error: { message: "falhou" },
-    });
-    const comErro = criarCarregadorDeMunicipios({
-      obterSupabase: () => supabase,
-    });
-    expect((await comErro.carregar("projetos")).erro).toBe("falhou");
-    expect(comErro.emCache("projetos")).toBeNull();
-  });
-});
-
-describe("municípios no mapa e na lista", () => {
-  function leafletFalso() {
-    const marcadores = [];
-    const L = {
-      circleMarker: (coordenadas, opcoes) => {
-        const marcador = {
-          coordenadas,
-          opcoes,
-          bindTooltip: vi.fn(() => marcador),
-          bindPopup: vi.fn(() => marcador),
-          openPopup: vi.fn(),
-        };
-        marcadores.push(marcador);
-        return marcador;
-      },
-      latLngBounds: (pontos) => ({ pontos }),
-    };
-    const camada = {
-      camadas: [],
-      clearLayers() {
-        this.camadas = [];
-      },
-      addLayer(camadaNova) {
-        this.camadas.push(camadaNova);
-      },
-    };
-    const mapa = {
-      fitBounds: vi.fn(),
-      setView: vi.fn(),
-      getZoom: () => 5,
-    };
-    return { L, camada, mapa, marcadores };
-  }
-
-  beforeEach(() => {
-    document.body.innerHTML = `
-      <b id="conta">…</b><span id="contador"></span>
-      <div id="lista"></div>`;
-  });
-
-  const opcoes = (falso, extra = {}) => ({
-    ...falso,
-    area: "projetos",
-    carregador: criarCarregadorDeMunicipios({
-      obterSupabase: () => supabaseFalso(RESPOSTA),
-    }),
-    lista: document.getElementById("lista"),
-    conta: document.getElementById("conta"),
-    contador: document.getElementById("contador"),
-    ...extra,
-  });
-
-  it("um ponto por município com coordenada e a lista por vagas", async () => {
-    const falso = leafletFalso();
-    await desenharMunicipiosDaArea(opcoes(falso));
-    expect(falso.camada.camadas).toHaveLength(2);
-    expect(falso.mapa.fitBounds).toHaveBeenCalledTimes(1);
-    expect(document.getElementById("conta").textContent).toBe("3");
-    expect(document.getElementById("contador").textContent).toBe(
-      "3 municípios",
-    );
-    const linhas = [...document.querySelectorAll("#lista [data-municipio]")];
-    expect(
-      linhas.map((linha) => linha.querySelector("strong").textContent),
-    ).toEqual(["Seropédica/RJ", "Irati/PR", "Lugar Novo/AM"]);
-    // Mesmo formato de "Territórios por vagas": posição, nome, vagas, barra.
-    expect(linhas[1].classList).toContain("health-map-unit--ranking");
-    expect(linhas[1].querySelector(".health-map-unit__rank").textContent).toBe(
-      "2",
-    );
-    expect(normalizar(linhas[1].textContent)).toContain("5 vagas");
-    expect(normalizar(linhas[1].textContent)).toContain("70 candidatos");
-    expect(
-      linhas[1].querySelector(".health-map-unit__preench.is-resultado i").style
-        .width,
-    ).toBe("61%");
-    expect(normalizar(linhas[1].textContent)).toContain("61% aprovados");
-    // Sem nenhuma análise decidida, sem barra; sem coordenada, sem clique.
-    expect(linhas[0].querySelector(".health-map-unit__preench")).toBeNull();
-    expect(linhas[2].disabled).toBe(true);
-    expect(normalizar(linhas[2].textContent)).toContain(
-      "sem coordenada no mapa",
-    );
-
-    linhas[1].click();
-    expect(falso.mapa.setView).toHaveBeenCalledWith([-25.4697, -50.6493], 7, {
-      animate: true,
-    });
-    expect(falso.marcadores[1].openPopup).toHaveBeenCalled();
-  });
-
-  it("não desenha quando a página já mudou de área", async () => {
-    const falso = leafletFalso();
-    await desenharMunicipiosDaArea(opcoes(falso, { aindaVale: () => false }));
-    expect(falso.camada.camadas).toHaveLength(0);
-    expect(document.getElementById("contador").textContent).toBe("");
-  });
-
-  it("escapa o nome do município", async () => {
-    const falso = leafletFalso();
-    await desenharMunicipiosDaArea(
-      opcoes(falso, {
-        carregador: criarCarregadorDeMunicipios({
-          obterSupabase: () =>
-            supabaseFalso({
-              data: [{ municipio_uf: '<img src=x onerror="alert(1)">/XX' }],
-              error: null,
-            }),
-        }),
-      }),
-    );
-    expect(document.querySelector("#lista img")).toBeNull();
   });
 });

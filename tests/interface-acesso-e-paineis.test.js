@@ -1,12 +1,13 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { fonteDoApp } from "./fonte-do-app.js";
+import { describe, expect, it, vi } from "vitest";
+import { criarImagensDaAparencia } from "../src/modulos/configuracoes/imagens.js";
 import {
   ACCESS_BACKGROUND_MAX_BYTES,
   validateAccessBackgroundFile,
 } from "../src/lib/access-background-storage.js";
 
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
-const healthUx = readFileSync("src/modules/health-details-ux.js", "utf8");
+const app = fonteDoApp();
 const shellCss = readFileSync("src/styles/platform-shell.css", "utf8");
 
 const semComentarios = (fonte) =>
@@ -55,52 +56,69 @@ describe("imagens da tela de acesso até 6 MB", () => {
   });
 });
 
+/*
+  Apagar a arte ativa deixaria `auth_access_background_url` a apontar para um
+  objeto inexistente, e o cache guardado no navegador de cada pessoa
+  continuaria a pedir essa imagem. A galeria (Configurações › Aparência, em
+  React) não oferece Apagar para a arte em uso, e o estado das imagens recusa
+  por garantia, caso a interface e o estado divirjam por um instante.
+*/
 describe("exclusão de artes guardadas", () => {
-  it("a galeria oferece apagar", () => {
-    expect(app).toContain("deleteStoredAccessBackground");
-    expect(app).toContain("access-background-gallery-delete");
+  function montar({ confirmar = () => true } = {}) {
+    const armazenamento = {
+      list: vi.fn(async () => ({ data: [], error: null })),
+      remove: vi.fn(async () => ({ error: null })),
+      getPublicUrl: (c) => ({ data: { publicUrl: `https://cdn.test/${c}` } }),
+    };
+    const avisar = vi.fn();
+    const imagens = criarImagensDaAparencia({
+      supabase: () => ({ storage: { from: () => armazenamento } }),
+      configuracoes: {
+        obter: () => ({
+          valores: new Map([
+            ["auth_access_background_path", "branding/acesso-ativa.png"],
+          ]),
+        }),
+      },
+      documento: document,
+      avisar,
+      confirmar,
+    });
+    return { imagens, armazenamento, avisar };
+  }
+
+  it("a exclusão recusa a arte ativa mesmo se a interface divergir", async () => {
+    const { imagens, armazenamento, avisar } = montar();
+    expect(
+      await imagens.apagarFundo({
+        caminho: "branding/acesso-ativa.png",
+        nome: "acesso-ativa.png",
+      }),
+    ).toBe(false);
+    expect(armazenamento.remove).not.toHaveBeenCalled();
+    expect(avisar).toHaveBeenCalledWith(
+      expect.stringContaining("Esta arte está em uso"),
+      "warn",
+    );
   });
 
-  /*
-    Apagar a arte ativa deixaria `auth_access_background_url` a apontar para um
-    objeto inexistente, e o cache guardado no navegador de cada pessoa
-    continuaria a pedir essa imagem.
-  */
-  it("a arte em uso não recebe botão de apagar", () => {
-    const codigo = semComentarios(app);
-    const galeria = codigo.slice(
-      codigo.indexOf("items.forEach((item)"),
-      codigo.indexOf("gallery.appendChild(list)"),
-    );
-    expect(galeria).toContain("if (emUso)");
-    expect(galeria).toContain("access-background-gallery-hint");
-  });
-
-  it("a exclusão recusa a arte ativa mesmo se a interface divergir", () => {
-    const fn = app.slice(
-      app.indexOf("async function deleteStoredAccessBackground"),
-      app.indexOf("async function loadAccessBackgroundGallery"),
-    );
-    expect(fn).toContain("auth_access_background_path");
-    expect(fn).toContain("Esta arte está em uso");
-  });
-
-  it("pede confirmação antes de apagar", () => {
-    const fn = app.slice(
-      app.indexOf("async function deleteStoredAccessBackground"),
-      app.indexOf("async function loadAccessBackgroundGallery"),
-    );
-    expect(fn).toContain("window.confirm");
-    expect(fn).toContain("loadAccessBackgroundGallery()");
+  it("pede confirmação antes de apagar e recarrega a galeria", async () => {
+    let resposta = false;
+    const { imagens, armazenamento } = montar({ confirmar: () => resposta });
+    const outra = { caminho: "branding/acesso-velha.png", nome: "velha" };
+    expect(await imagens.apagarFundo(outra)).toBe(false);
+    expect(armazenamento.remove).not.toHaveBeenCalled();
+    resposta = true;
+    expect(await imagens.apagarFundo(outra)).toBe(true);
+    expect(armazenamento.remove).toHaveBeenCalledWith([outra.caminho]);
+    expect(armazenamento.list).toHaveBeenCalled();
   });
 });
 
 describe("painel externo com um cabeçalho só", () => {
   it("entra em external-panel-mode ao abrir o painel", () => {
-    const fn = app.slice(
-      app.indexOf("function openPanel(code)"),
-      app.indexOf("function openPanel(code)") + 1600,
-    );
+    const paineis = readFileSync("src/app/paineis-externos.js", "utf8");
+    const fn = paineis.slice(paineis.indexOf("function mostrar(codigo)"));
     expect(fn).toContain('classList.add("external-panel-mode")');
   });
 
@@ -123,8 +141,10 @@ describe("painel externo com um cabeçalho só", () => {
   });
 
   it("o modo é removido ao sair do painel", () => {
+    const navegacao = readFileSync("src/app/navegacao.js", "utf8");
     const remocoes = (
-      app.match(/classList\.remove\("external-panel-mode"\)/g) || []
+      (app + navegacao).match(/classList\.remove\("external-panel-mode"\)/g) ||
+      []
     ).length;
     expect(remocoes).toBeGreaterThanOrEqual(2);
   });
@@ -136,13 +156,8 @@ describe("uma única confirmação de saída", () => {
     `nielsen-shell-ux` — carregado depois — capturava a versão já embrulhada e
     somava o seu. Quem clicava em Sair via dois diálogos seguidos.
   */
-  it("o embrulho antigo de window.logout não existe mais", () => {
-    expect(healthUx).not.toContain("installConfirmedLogout");
-    expect(semComentarios(healthUx)).not.toContain("__agsusConfirmedLogout");
-  });
-
   it("nenhum módulo redefine window.logout", () => {
-    const codigo = semComentarios(app) + semComentarios(healthUx);
+    const codigo = semComentarios(app);
     expect(codigo).not.toMatch(/windowRef\.logout\s*=/);
     expect(codigo).not.toMatch(/window\.logout\s*=\s*(?!null)/);
   });
@@ -152,37 +167,41 @@ describe("botão de acesso no retorno do navegador", () => {
   /*
     Abaixo de 768 px o login é redirecionamento de página inteira. Ao voltar do
     Google pelo botão Voltar, o navegador restaura a página do bfcache com o
-    botão ainda `disabled` e o texto "Entrando no sistema…".
+    botão ainda ocupado ("Entrando no sistema…"). Quem cuida é a sessão do app.
   */
+  const sessao = semComentarios(readFileSync("src/app/sessao.js", "utf8"));
+
   it("existe um listener de pageshow", () => {
-    expect(semComentarios(app)).toContain('addEventListener("pageshow"');
+    expect(sessao).toContain('addEventListener("pageshow"');
   });
 
   it("trata tanto bfcache como navegação de histórico", () => {
-    const fn = app.slice(app.indexOf('addEventListener("pageshow"'));
-    expect(fn).toContain("event.persisted");
+    const fn = sessao.slice(sessao.indexOf("function aoMostrarPagina"));
+    expect(fn).toContain("evento.persisted");
     expect(fn).toContain("back_forward");
   });
 
   it("só restaura o botão quando não há sessão ativa", () => {
-    const fn = app.slice(
-      app.indexOf('addEventListener("pageshow"'),
-      app.indexOf('addEventListener("pageshow"') + 900,
+    const fn = sessao.slice(
+      sessao.indexOf("function aoMostrarPagina"),
+      sessao.indexOf("function instalarOuvintesDaJanela"),
     );
     expect(fn).toContain("estadoDaSessao");
     expect(fn).toContain("SESSAO_ATIVA");
-    expect(fn).toContain("resetGoogleLoginButton()");
+    expect(fn).toContain("liberarBotao()");
   });
 
   /*
-    Registado uma única vez, no carregamento do módulo: se fosse registado a cada
-    tentativa de login, os listeners acumulariam e o botão seria restaurado
-    tantas vezes quantas a pessoa tentasse entrar.
+    Registado uma única vez: se fosse registado a cada tentativa de login, os
+    listeners acumulariam.
   */
   it("é registado uma única vez", () => {
-    const registos = (
-      semComentarios(app).match(/addEventListener\("pageshow"/g) || []
-    ).length;
-    expect(registos).toBe(1);
+    expect((sessao.match(/addEventListener\("pageshow"/g) || []).length).toBe(
+      1,
+    );
+    const fn = sessao.slice(
+      sessao.indexOf("function instalarOuvintesDaJanela"),
+    );
+    expect(fn).toContain("if (ouvintesDaJanela");
   });
 });

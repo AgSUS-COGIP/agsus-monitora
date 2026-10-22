@@ -1,0 +1,289 @@
+/*
+  Estado da tela de Seleção (`#page-selecao`), fora do React: o que o banco
+  devolve para a área atual do app. Os componentes leem com
+  `useSyncExternalStore`. Este arquivo não importa React.
+
+  A tela só lê: uma RPC, `get_selecao_da_area` (json), que confere permissão
+  (recurso `selecao` >= leitor), área e o recorte da coordenação
+  (supabase/migrations/20261001090000_selecao.sql).
+
+  Cópia guardada ("stale-while-revalidate", src/lib/cache-de-payload.js, a
+  mesma da tela de Entrevistas): na primeira carga da área, a cópia do
+  navegador (do mesmo usuário e da mesma publicação) aparece na hora e a
+  versão nova é pedida por trás. Acesso revogado (42501) apaga as cópias.
+
+  Sessão: o cliente Supabase único do app; sem sessão, `semSessao`. Outro
+  usuário entrou na mesma aba (ou saiu da conta): tudo volta ao início, e a
+  próxima abertura da tela recarrega.
+*/
+import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
+import {
+  criarCacheDePayload,
+  ehErroDeAcesso,
+  respostaInalterada,
+  revalidarPayload,
+  versaoDoPacote,
+} from "../../lib/cache-de-payload.js";
+import {
+  comTempoLimite,
+  ehFalhaDeConexao,
+  mensagemDeFalha,
+} from "../../lib/falha-de-rede.js";
+import {
+  csvDaSelecao,
+  normalizarPayload,
+  PAINEL_DE_SELECAO,
+  payloadMudou,
+} from "../../lib/selecao-do-painel.ts";
+import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
+import type {
+  EstadoDaSelecao,
+  OpcoesDoEstadoDaSelecao,
+  SnapshotDaSelecao,
+  VagaDaSelecao,
+} from "./tipos.ts";
+
+export const MENSAGEM_SEM_SESSAO =
+  "Sessão não localizada. Entre de novo no MONITORA.";
+export const MENSAGEM_SEM_ACESSO = "Sem acesso à Seleção";
+
+/* A cópia vale só para a mesma publicação do front (o endereço do módulo muda a cada build). */
+const VERSAO_DA_COPIA = `1:${import.meta.url}`;
+const TEMPO_LIMITE_MS = 30000;
+
+const ESTADO_INICIAL: SnapshotDaSelecao = Object.freeze({
+  area: "",
+  dados: null,
+  carregado: false,
+  erroAoCarregar: "",
+  semSessao: false,
+  semAcesso: false,
+  atualizando: false,
+  daCopia: false,
+  carregadoEm: 0,
+});
+
+function codigoDoErro(erro: unknown) {
+  return erro !== null && typeof erro === "object" && "code" in erro
+    ? erro.code
+    : undefined;
+}
+
+function mensagemDaCarga(erro: unknown): string {
+  if (codigoDoErro(erro) === "PGRST202")
+    return "A aba Seleção ainda não foi publicada no banco.";
+  if (codigoDoErro(erro) === "42501")
+    return "Seu acesso não inclui a seleção desta área.";
+  return mensagemDeFalha(erro);
+}
+
+function baixarNoNavegador(conteudo: string, nome: string) {
+  const arquivo = new Blob([conteudo], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(arquivo);
+  const ancora = document.createElement("a");
+  ancora.href = url;
+  ancora.download = nome;
+  ancora.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export function criarEstadoDaSelecao({
+  supabase = null,
+  toast = (mensagem) => console.info(mensagem),
+  baixar = baixarNoNavegador,
+  armazenamento = armazenamentoDePayload,
+  agora = () => Date.now(),
+  tempoLimiteMs = TEMPO_LIMITE_MS,
+}: OpcoesDoEstadoDaSelecao = {}): EstadoDaSelecao {
+  let estado: SnapshotDaSelecao = ESTADO_INICIAL;
+  let pedido = 0;
+  /* O último payload mostrado (com a `versao` do banco): a volta à tela pergunta só se mudou. */
+  let ultimo: { area: string; payload: unknown } | null = null;
+  const ouvintes = new Set<() => void>();
+  const copias = criarCacheDePayload({
+    armazenamento,
+    versao: VERSAO_DA_COPIA,
+    tipo: PAINEL_DE_SELECAO,
+  });
+
+  function publicar(mudancas: Partial<SnapshotDaSelecao>) {
+    estado = { ...estado, ...mudancas };
+    for (const ouvinte of ouvintes) ouvinte();
+  }
+
+  function mostrar(payload: unknown, extra: Partial<SnapshotDaSelecao> = {}) {
+    ultimo = { area: estado.area, payload };
+    publicar({
+      dados: normalizarPayload(payload || {}),
+      carregado: true,
+      semAcesso: false,
+      erroAoCarregar: "",
+      atualizando: false,
+      daCopia: false,
+      carregadoEm: agora(),
+      ...extra,
+    });
+  }
+
+  const perderAcesso = (erro: unknown) => {
+    ultimo = null;
+    publicar({
+      ...ESTADO_INICIAL,
+      area: estado.area,
+      semAcesso: codigoDoErro(erro) === "42501",
+      erroAoCarregar: mensagemDaCarga(erro),
+    });
+  };
+
+  /*
+    Outro usuário na mesma aba (ou saiu da conta): o que era do anterior sai e
+    um pedido em curso deixa de valer.
+  */
+  function reiniciar() {
+    pedido += 1;
+    ultimo = null;
+    publicar(ESTADO_INICIAL);
+  }
+  let identidade: string | null | undefined;
+  supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
+    const atual = sessao?.user?.id || null;
+    if (atual === identidade) return;
+    // O primeiro aviso da página só registra quem é; não há o que limpar.
+    if (identidade !== undefined || !atual) reiniciar();
+    identidade = atual;
+  });
+
+  /*
+    O payload da área; lança o erro do banco (ou o de rede/tempo). Com o que a
+    tela já tem (`conhecido`), manda a versão dele: se ainda vale, o banco
+    responde só `{ inalterado: true }` (migration 20261013160000) e volta o
+    próprio `conhecido`.
+  */
+  async function buscar(
+    area: string,
+    conhecido: unknown = null,
+  ): Promise<unknown> {
+    if (!supabase) throw new Error("Sem conexão com o banco.");
+    const { data, error } = await comTempoLimite(
+      supabase.rpc("get_selecao_da_area_se_mudou", {
+        p_area: area,
+        p_versao: versaoDoPacote(conhecido),
+      }),
+      tempoLimiteMs,
+    );
+    if (error) throw error;
+    if (conhecido && respostaInalterada(data)) return conhecido;
+    return data || {};
+  }
+
+  /* O id do usuário da sessão; `null` sem sessão. Lança em falha de rede. */
+  async function usuarioDaSessao(): Promise<string | null> {
+    if (!supabase?.auth?.getSession) return "";
+    const { data: sessao } = await comTempoLimite(
+      supabase.auth.getSession(),
+      tempoLimiteMs,
+    );
+    if (!sessao?.session) return null;
+    return String(sessao.session.user?.id ?? "");
+  }
+
+  /*
+    Troca de área descarta o que era da outra (skeleton de novo, ou a cópia);
+    na mesma área, a tela fica e a releitura corre por trás. Resposta de um
+    pedido antigo é ignorada.
+  */
+  async function carregar(area = estado.area): Promise<boolean> {
+    if (!area) return false;
+    const meu = ++pedido;
+    const primeira = area !== estado.area || !estado.carregado;
+    if (area !== estado.area) publicar({ ...ESTADO_INICIAL, area });
+    else publicar({ atualizando: true, erroAoCarregar: "" });
+    if (!supabase) {
+      publicar({
+        erroAoCarregar: "Sem conexão com o banco.",
+        atualizando: false,
+      });
+      return false;
+    }
+    try {
+      const usuarioId = await usuarioDaSessao();
+      if (meu !== pedido) return false;
+      if (usuarioId === null) {
+        publicar({
+          erroAoCarregar: MENSAGEM_SEM_SESSAO,
+          semSessao: true,
+          atualizando: false,
+        });
+        return false;
+      }
+      const contexto = { usuarioId, area };
+
+      const guardado = primeira ? await copias.ler(contexto) : null;
+      if (meu !== pedido) return false;
+      if (guardado) {
+        mostrar(guardado, { atualizando: true, daCopia: true });
+        const novo = await revalidarPayload({
+          guardado,
+          buscar: () => buscar(area, guardado),
+          guardar: (payload: unknown) => copias.guardar(contexto, payload),
+          mudou: payloadMudou,
+          aoMudar: (payload: unknown) => {
+            if (meu === pedido) mostrar(payload);
+          },
+          aoPerderAcesso: (erro: unknown) => {
+            if (meu === pedido) perderAcesso(erro);
+          },
+          apagarTudo: () => copias.apagarTudo(),
+        });
+        if (meu === pedido && estado.carregado)
+          publicar({ atualizando: false, daCopia: false });
+        if (!novo && meu === pedido && estado.carregado)
+          toast(
+            "Mostrando a cópia guardada: não foi possível buscar a seleção mais recente.",
+            "warn",
+          );
+        return Boolean(novo);
+      }
+
+      const payload = await buscar(
+        area,
+        ultimo?.area === area ? ultimo.payload : null,
+      );
+      if (meu !== pedido) return false;
+      mostrar(payload);
+      void copias.guardar(contexto, payload);
+      return true;
+    } catch (erro) {
+      if (meu !== pedido) return false;
+      if (ehErroDeAcesso(erro)) {
+        await copias.apagarTudo();
+        perderAcesso(erro);
+        return false;
+      }
+      const mensagem = ehFalhaDeConexao(erro)
+        ? mensagemDeFalha(erro)
+        : mensagemDaCarga(erro);
+      if (estado.carregado) {
+        publicar({ atualizando: false });
+        toast(`Não foi possível atualizar a seleção: ${mensagem}`, "error");
+      } else publicar({ erroAoCarregar: mensagem, atualizando: false });
+      return false;
+    }
+  }
+
+  function exportarCsv(vagas: readonly VagaDaSelecao[]) {
+    const dia = hojeEmBrasilia(new Date(agora()));
+    baixar(csvDaSelecao(vagas), `selecao-${estado.area}-${dia}.csv`);
+  }
+
+  return {
+    obter: () => estado,
+    assinar(ouvinte: () => void) {
+      ouvintes.add(ouvinte);
+      return () => ouvintes.delete(ouvinte);
+    },
+    carregar,
+    exportarCsv,
+    reiniciar,
+  };
+}

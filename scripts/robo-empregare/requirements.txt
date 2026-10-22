@@ -1,0 +1,13 @@
+# Dependências do robô da Empregare (scripts/robo-empregare/), instaladas só no
+# GitHub Actions (.github/workflows/robo-empregare.yml). Ficam fora do
+# requirements.txt da raiz para não pesar as funções Python da Vercel.
+selenium==4.35.0
+pandas==2.3.2
+openpyxl==3.1.5
+xlrd==2.0.2
+# Leitura automática dos arquivos (leitura_de_arquivos.py; workflow leitura-de-arquivos.yml):
+# texto do PDF (pdfplumber, que traz Pillow e pypdfium2) e OCR (pytesseract + Tesseract do apt).
+pdfplumber==0.11.9
+pytesseract==0.3.13
+# Arruma a foto antes do OCR (perspectiva, sombra, inclinação, binarização): leitura_de_arquivos/imagem.py.
+opencv-python-headless==4.12.0.88

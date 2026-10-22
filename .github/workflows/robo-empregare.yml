@@ -1,0 +1,202 @@
+name: Robô da Empregare
+
+# Entra no portal da empresa na Empregare (sem API: Selenium, Chrome headless),
+# pede a exportação "Candidatos da vaga (Excel)" de cada vaga, baixa na Central
+# de Exportações e grava os candidatos no Supabase
+# (scripts/robo-empregare/robo_empregare.py). A lista de vagas vem do MONITORA:
+# sem filtro, as vagas dos editais ativos em curso.
+#
+# Quando roda:
+#   - só quando alguém pede (decisão de 05/10/2026: sem agenda automática);
+#   - pelo "Rodar agora" das Configurações › Status das atualizações
+#     (RPC disparar_robo, só administrador global; disparado_por = id do usuário);
+#   - pelo botão "Run workflow" desta aba Actions.
+# Modo "sondar" (só pelo Run workflow): só leitura, abre 1 a 3 candidatos da
+# vaga informada em "vagas" (limite = candidatos) e escreve no log só a
+# estrutura da aba Questionários, com os links mascarados. Não usa o Supabase.
+# "anexos" (opcional até validarmos): no modo normal/forcar, guarda também o
+# link de cada anexo do questionário (scripts/robo-empregare/anexos_empregare.py).
+# Modo "anexos" (Só anexos): relê só os anexos do questionário das vagas pedidas
+# (vagas ou editais), dos candidatos em "candidatos" ou, sem eles, dos suspeitos
+# (captura no dia da DATA DE RESPOSTA ou antes); NÃO exporta, não grava a carga,
+# não fecha a vaga e NÃO pré-classifica: situação, ativos e lote não mudam.
+# Nunca reduz anexos; "seco" só compara (scripts/robo-empregare/so_anexos.py).
+# Ao fim de uma carga normal ou forçada, o passo "Pré-classificar" recalcula a
+# pré-classificação da Avaliação documental dos editais carregados
+# (scripts/pre_classificacao/; ver pre-classificacao.yml).
+# Inscrições congeladas (migration 20261020170000): edital com a trava ligada
+# fica fora da carga e da pré-classificação (sem filtro, pulado; pedido em
+# editais/vagas, a execução é recusada). "forcar_congelado" é o token que o
+# MONITORA manda quando o administrador global pede "Forçar edital com
+# inscrições congeladas" (com motivo, registrado no banco); vale para o robô e
+# para o passo "Pré-classificar". O modo anexos continua permitido.
+# Registro: o primeiro passo grava no MONITORA a execução iniciada direto aqui
+# (Run workflow, gh workflow run), com quem a iniciou (python/monitora/
+# disparo_externo.py); falha nele só gera aviso.
+# Como operar e o que fazer quando falha: docs/robo-empregare.md.
+#
+# O REPOSITÓRIO É PÚBLICO e este log também: o robô só imprime contagens,
+# códigos de vaga e números de edital (python/monitora/mascaramento.py).
+#
+# Secrets do repositório (Settings → Secrets and variables → Actions):
+#   EMPREGARE_EMAIL              e-mail do usuário do robô no portal da Empregare
+#   EMPREGARE_SENHA              senha desse usuário
+#   SUPABASE_URL                 https://<projeto>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY    chave service_role do Supabase
+# (os dois últimos são os mesmos das sincronizações das planilhas).
+
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "normal = exporta e grava; seco = só lista as vagas; fumaca = só testa o login; forcar = aceita arquivo com menos da metade dos candidatos; sondar = só lê a estrutura da aba Questionários (1 vaga em vagas, 1 a 3 candidatos em limite); anexos = só relê os anexos do questionário (não exporta, não mexe em situação/lote, não pré-classifica)"
+        type: choice
+        options:
+          - normal
+          - seco
+          - fumaca
+          - forcar
+          - sondar
+          - anexos
+        default: normal
+      editais:
+        description: "Opcional: números de edital separados por vírgula (ex.: 80/2026, 81/2026)"
+        type: string
+        required: false
+        default: ""
+      vagas:
+        description: "Opcional: códigos de vaga da Empregare separados por vírgula (ex.: 177979)"
+        type: string
+        required: false
+        default: ""
+      limite:
+        description: "Máximo de vagas nesta execução (1 a 500)"
+        type: string
+        required: false
+        default: "60"
+      anexos:
+        description: "Também guarda o link de cada anexo do questionário (Visualizar Arquivo) e o da impressão das respostas (modo normal/forcar; opcional até validarmos)"
+        type: boolean
+        required: false
+        default: false
+      candidatos:
+        description: "Só no modo anexos, opcional: códigos de candidato da Empregare (ex.: 2160872); em branco = os suspeitos"
+        type: string
+        required: false
+        default: ""
+      seco:
+        description: "Só no modo anexos: só compara com o gravado (novos, alterados, removidos); não grava nada"
+        type: boolean
+        required: false
+        default: false
+      disparado_por:
+        description: "Preenchido pelo MONITORA (id do usuário); em branco = GitHub"
+        type: string
+        required: false
+        default: ""
+      forcar_congelado:
+        description: "Preenchido pelo MONITORA (liberação do administrador global para edital com inscrições congeladas); deixe em branco"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: robo-empregare
+  cancel-in-progress: false
+
+jobs:
+  robo:
+    name: Empregare → Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          show-progress: false
+
+      - name: Configurar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/robo-empregare/requirements.txt
+
+      # Execução iniciada direto no GitHub: registra no MONITORA (Status das
+      # atualizações) com quem a iniciou. Nunca derruba o robô.
+      - name: Registrar a execução no MONITORA
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PYTHONPATH: python
+          ATOR_GITHUB: ${{ github.triggering_actor }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
+          MODO: ${{ inputs.modo || 'normal' }}
+          EDITAIS: ${{ inputs.editais }}
+          VAGAS: ${{ inputs.vagas }}
+          LIMITE: ${{ inputs.limite || '60' }}
+          FORCAR_CONGELADO: ${{ inputs.forcar_congelado }}
+        run: python -m monitora.disparo_externo robo-empregare.yml
+
+      - name: Instalar dependências do robô
+        run: pip install --disable-pip-version-check -r scripts/robo-empregare/requirements.txt
+
+      # O runner ubuntu já traz o Google Chrome; o Selenium Manager acha o chromedriver.
+      - name: Conferir o Chrome
+        run: google-chrome --version
+
+      # Os inputs vão por variável de ambiente (nunca interpolados no shell) e o
+      # script valida o formato de cada um.
+      - name: Rodar o robô
+        env:
+          EMPREGARE_EMAIL: ${{ secrets.EMPREGARE_EMAIL }}
+          EMPREGARE_SENHA: ${{ secrets.EMPREGARE_SENHA }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MODO: ${{ inputs.modo || 'normal' }}
+          EDITAIS: ${{ inputs.editais }}
+          VAGAS: ${{ inputs.vagas }}
+          LIMITE: ${{ inputs.limite || '60' }}
+          ANEXOS: ${{ inputs.anexos && 'sim' || 'nao' }}
+          CANDIDATOS: ${{ inputs.candidatos }}
+          SECO: ${{ inputs.seco && 'sim' || 'nao' }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
+          FORCAR_CONGELADO: ${{ inputs.forcar_congelado }}
+        run: |
+          args=(--editais "$EDITAIS" --vagas "$VAGAS" --limite "$LIMITE")
+          case "$MODO" in
+            seco)   args+=(--seco) ;;
+            fumaca) args+=(--fumaca) ;;
+            forcar) args+=(--forcar) ;;
+            sondar) args+=(--sondar) ;;
+            anexos)
+              args+=(--so-anexos --candidatos "$CANDIDATOS")
+              if [ "$SECO" = "sim" ]; then args+=(--seco); fi
+              ANEXOS=nao ;;
+          esac
+          if [ "$ANEXOS" = "sim" ]; then args+=(--anexos); fi
+          python scripts/robo-empregare/robo_empregare.py "${args[@]}"
+
+      # Ao fim de uma carga (normal ou forçada), recalcula a pré-classificação da
+      # Avaliação documental dos editais das vagas carregadas (job Python
+      # scripts/pre_classificacao/, --apos-robo; o mesmo de pre-classificacao.yml).
+      # Roda também se o robô terminou parcial. Uma falha aqui não muda o
+      # resultado do robô: aparece no log e no Status das atualizações, e o
+      # "Recalcular" da aba Pré-classificação refaz. NUNCA no modo anexos (nem nos
+      # outros): só normal e forcar exportam e mexem na carga. Edital com
+      # inscrições congeladas fica de fora, salvo o mesmo forcar_congelado.
+      - name: Pré-classificar os editais carregados
+        if: ${{ !cancelled() && (inputs.modo == 'normal' || inputs.modo == 'forcar') }}
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          DISPARADO_POR: robo
+          FORCAR_CONGELADO: ${{ inputs.forcar_congelado }}
+        run: python scripts/pre_classificacao/pre_classificacao.py --apos-robo

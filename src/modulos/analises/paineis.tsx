@@ -1,0 +1,642 @@
+import type { Dispatch, SetStateAction } from "react";
+import type {
+  CampoDoFiltro,
+  FiltroDaAnalise,
+  FiltrosDasAnalises,
+  PeriodoDasAnalises,
+  ChipDasAnalises,
+  MudarFiltroDasAnalises,
+  RegistroDaAnalise,
+  PendenciaDaAnalise,
+  DiaDasAnalises,
+} from "./tipos.ts";
+import {
+  calcularKpis,
+  normalizarEscopo,
+  opcoesDosFiltros,
+} from "../../lib/analises-curriculares.ts";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
+import {
+  analisesPorResponsavel,
+  diaNoPeriodo,
+  ESCOPOS,
+  FILTROS,
+  normalizarPeriodo,
+  quantosFiltros,
+  ROTULO_DO_KPI,
+  rotuloDoEscopo,
+  rotuloDoPeriodo,
+  rotuloDoValor,
+  STATUS_DO_GRAFICO,
+  temPeriodo,
+  tendenciaDiaria,
+} from "../../lib/analises-curriculares.ts";
+import { formatNumberBR } from "../../lib/formatters.js";
+import { paletaDoPainel } from "../../lib/tema-do-painel.js";
+import {
+  Campo,
+  CardDeGrafico,
+  ChipDeFiltro,
+  ChipsDeFiltro,
+  Grafico,
+  GradeDeKpis,
+  Kpi,
+  ListaDePendencias,
+  MaisOpcoes,
+  paletaDosGraficos,
+  PainelDeFiltros,
+} from "../../ui/index.js";
+
+/*
+  Os blocos da tela de Análises curriculares, com os componentes de src/ui/:
+  "Refinar resultados" (situação do processo, filtros de seleção múltipla em
+  cascata, "Mais opções" — com o período da data da análise — e os filtros
+  aplicados), os 7 KPIs em card compacto (os seis primeiros filtram), os
+  gráficos (carga por responsável e análises por data, os dois clicáveis) e as
+  pendências prioritárias, que também filtram.
+*/
+
+const truncar = (valor: unknown, limite: number) => {
+  const texto = String(valor ?? "").trim();
+  return texto.length > limite ? `${texto.slice(0, limite - 1)}…` : texto;
+};
+
+/* ── Filtros ────────────────────────────────────────────────────────── */
+
+const idDoFiltro = (campo: CampoDoFiltro) => `analises-filtro-${campo}`;
+
+function CampoDeFiltro({
+  filtro,
+  opcoes,
+  selecionados,
+  aoMudar,
+}: {
+  filtro: FiltroDaAnalise;
+  opcoes: { value: string; label: string }[];
+  selecionados: readonly string[];
+  aoMudar: MudarFiltroDasAnalises;
+}) {
+  return (
+    <Campo rotulo={filtro.rotulo} idDoControle={idDoFiltro(filtro.campo)}>
+      <MultiSelectBusca
+        id={idDoFiltro(filtro.campo)}
+        opcoes={opcoes}
+        selecionados={selecionados}
+        placeholder={filtro.todos}
+        aoMudar={(valores) => aoMudar(filtro.campo, valores)}
+      />
+    </Campo>
+  );
+}
+
+/**
+ * `chips`: os filtros aplicados, `[{ chave, rotulo, valor, aoTirar }]`.
+ * `busca`/`aoBuscar`: o texto digitado da busca geral (o filtro aplica com
+ * um respiro, em analises.jsx). `periodo`/`aoPeriodo`: o período da data da
+ * análise (`{ inicio, fim }` em aaaa-mm-dd) — a alternativa de teclado ao
+ * clique no gráfico "Análises por data".
+ */
+export function Filtros({
+  escopo,
+  aoEscopo,
+  filtros,
+  opcoes,
+  busca,
+  aoBuscar,
+  aoMudar,
+  aoLimpar,
+  podeLimpar,
+  carregado,
+  comMunicipio,
+  periodo,
+  aoPeriodo,
+  chips,
+}: {
+  escopo: string;
+  aoEscopo(valor: string): void;
+  filtros: FiltrosDasAnalises;
+  opcoes: ReturnType<typeof opcoesDosFiltros>;
+  busca: string;
+  aoBuscar(valor: string): void;
+  aoMudar: MudarFiltroDasAnalises;
+  aoLimpar(): void;
+  podeLimpar: boolean;
+  carregado: boolean;
+  comMunicipio: boolean;
+  periodo: PeriodoDasAnalises;
+  aoPeriodo: Dispatch<SetStateAction<PeriodoDasAnalises>>;
+  chips: readonly ChipDasAnalises[];
+}) {
+  const [maisOpcoes, setMaisOpcoes] = useState(false);
+  const { inicio, fim } = normalizarPeriodo(periodo);
+  const comData = temPeriodo(periodo) ? 1 : 0;
+  const mudarPeriodo = (ponta: keyof PeriodoDasAnalises, valor: string) =>
+    aoPeriodo((atual) => normalizarPeriodo({ ...atual, [ponta]: valor }));
+  const campos = (avancado: boolean) =>
+    FILTROS.filter(
+      (filtro) =>
+        Boolean(filtro.avancado) === avancado &&
+        (filtro.campo !== "municipio" || comMunicipio),
+    ).map((filtro) => (
+      <CampoDeFiltro
+        key={filtro.campo}
+        filtro={filtro}
+        opcoes={opcoes[filtro.campo] ?? []}
+        selecionados={filtros[filtro.campo]}
+        aoMudar={aoMudar}
+      />
+    ));
+
+  return (
+    <PainelDeFiltros
+      tour="analises-filtros"
+      idDoTitulo="analisesFiltrosTitulo"
+      quantos={quantosFiltros(filtros) + comData}
+      escopo={rotuloDoEscopo(escopo)}
+      podeLimpar={podeLimpar}
+      aoLimpar={aoLimpar}
+      aoRecolher={() => setMaisOpcoes(false)}
+    >
+      <div className="ui-grade-de-campos" data-tour="analises-filtros-campos">
+        <Campo rotulo="Situação do processo">
+          <select
+            id="analises-filtro-escopo"
+            data-tour="analises-escopo"
+            value={escopo}
+            disabled={!carregado}
+            onChange={(evento) =>
+              aoEscopo(normalizarEscopo(evento.target.value))
+            }
+          >
+            {ESCOPOS.map(({ valor, rotulo }) => (
+              <option key={valor} value={valor}>
+                {rotulo}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        {campos(false)}
+      </div>
+      <MaisOpcoes
+        id="analisesFiltrosAdicionais"
+        aberto={maisOpcoes}
+        aoAlternar={() => setMaisOpcoes((atual) => !atual)}
+        quantos={quantosFiltros(filtros, { soAvancados: true }) + comData}
+        titulo="Mostrar categoria, modalidade, validação, data e busca"
+      >
+        {campos(true)}
+        <Campo rotulo="Data da análise: de">
+          <input
+            id="analises-filtro-data-inicio"
+            data-tour="analises-data-inicio"
+            type="date"
+            value={inicio}
+            max={fim || undefined}
+            disabled={!carregado}
+            onChange={(evento) => mudarPeriodo("inicio", evento.target.value)}
+          />
+        </Campo>
+        <Campo rotulo="Data da análise: até">
+          <input
+            id="analises-filtro-data-fim"
+            data-tour="analises-data-fim"
+            type="date"
+            value={fim}
+            min={inicio || undefined}
+            disabled={!carregado}
+            onChange={(evento) => mudarPeriodo("fim", evento.target.value)}
+          />
+        </Campo>
+        <Campo rotulo="Buscar em toda a tela">
+          <input
+            id="analises-filtro-busca"
+            data-tour="analises-busca"
+            type="search"
+            value={busca}
+            disabled={!carregado}
+            placeholder="Candidato, vaga, edital, responsável ou parecer"
+            onChange={(evento) => aoBuscar(evento.target.value)}
+          />
+        </Campo>
+      </MaisOpcoes>
+      <ChipsDeFiltro>
+        {chips.map(({ chave, rotulo, valor, aoTirar }) => (
+          <ChipDeFiltro key={chave} rotulo={rotulo} aoTirar={aoTirar}>
+            {valor}
+          </ChipDeFiltro>
+        ))}
+      </ChipsDeFiltro>
+    </PainelDeFiltros>
+  );
+}
+
+/** Os filtros aplicados como chips (cada um com o seu "x"). */
+export function chipsDosFiltros({
+  escopo,
+  filtros,
+  kpi,
+  responsavel,
+  periodo,
+  aoTirarEscopo,
+  aoMudar,
+  aoBuscar,
+  aoKpi,
+  aoResponsavel,
+  aoTirarData,
+}: {
+  escopo: string;
+  filtros: FiltrosDasAnalises;
+  kpi: string;
+  responsavel: string;
+  periodo: PeriodoDasAnalises;
+  aoTirarEscopo(): void;
+  aoMudar: MudarFiltroDasAnalises;
+  aoBuscar(valor: string): void;
+  aoKpi(valor: string): void;
+  aoResponsavel(valor: string): void;
+  aoTirarData(): void;
+}) {
+  const chips: ChipDasAnalises[] = [];
+  if (escopo !== "ativo")
+    chips.push({
+      chave: "escopo",
+      rotulo: "Situação do processo",
+      valor: rotuloDoEscopo(escopo),
+      aoTirar: aoTirarEscopo,
+    });
+  for (const { campo, rotulo } of FILTROS) {
+    const valores = filtros[campo];
+    if (valores.length)
+      chips.push({
+        chave: campo,
+        rotulo,
+        valor: valores.map((v) => rotuloDoValor(campo, v)).join(", "),
+        aoTirar: () => aoMudar(campo, []),
+      });
+  }
+  if (String(filtros.busca || "").trim())
+    chips.push({
+      chave: "busca",
+      rotulo: "Busca",
+      valor: filtros.busca.trim(),
+      aoTirar: () => aoBuscar(""),
+    });
+  if (kpi)
+    chips.push({
+      chave: "kpi",
+      rotulo: "KPI",
+      valor: ROTULO_DO_KPI[kpi] ?? kpi,
+      aoTirar: () => aoKpi(""),
+    });
+  if (responsavel)
+    chips.push({
+      chave: "responsavel-do-grafico",
+      rotulo: "Responsável no gráfico",
+      valor: responsavel,
+      aoTirar: () => aoResponsavel(""),
+    });
+  if (temPeriodo(periodo))
+    chips.push({
+      chave: "data",
+      rotulo: "Data",
+      valor: rotuloDoPeriodo(periodo),
+      aoTirar: aoTirarData,
+    });
+  return chips;
+}
+
+/* ── KPIs ───────────────────────────────────────────────────────────── */
+
+const KPIS = [
+  ["analisado", "k-green", "fa-list-check"],
+  ["pendente", "k-yellow", "fa-clock"],
+  ["revisar", "k-purple", "fa-magnifying-glass"],
+  ["aprovado", "k-green", "fa-circle-check"],
+  ["reprovado", "k-red", "fa-circle-xmark"],
+] as const;
+
+/*
+  Total (volta a mostrar todos), os cinco que filtram por status (clicar de
+  novo tira o filtro) e a taxa de conclusão.
+*/
+export function Indicadores({
+  kpis,
+  carregado,
+  kpi,
+  aoKpi,
+}: {
+  kpis: ReturnType<typeof calcularKpis>;
+  carregado: boolean;
+  kpi: string;
+  aoKpi(valor: string): void;
+}) {
+  const valor = (numero: number) => formatNumberBR(numero);
+  return (
+    <GradeDeKpis
+      tour="analises-kpis"
+      className="analises-kpis"
+      rotulo="Indicadores"
+    >
+      <Kpi
+        cor="k-cyan"
+        icone="fa-users"
+        chave="total"
+        rotulo={ROTULO_DO_KPI.total}
+        valor={valor(kpis.total)}
+        carregando={!carregado}
+        titulo="Mostrar todos os status"
+        aoClicar={carregado ? () => aoKpi("") : undefined}
+      />
+      {KPIS.map(([chave, cor, icone]) => (
+        <Kpi
+          key={chave}
+          cor={cor}
+          icone={icone}
+          chave={chave}
+          rotulo={ROTULO_DO_KPI[chave]}
+          valor={valor(kpis[chave])}
+          carregando={!carregado}
+          ativo={carregado ? kpi === chave : undefined}
+          aoClicar={
+            carregado ? () => aoKpi(kpi === chave ? "" : chave) : undefined
+          }
+        />
+      ))}
+      <Kpi
+        cor="k-slate"
+        icone="fa-chart-simple"
+        chave="taxa"
+        rotulo="Taxa de conclusão"
+        valor={`${kpis.taxa}%`}
+        carregando={!carregado}
+      />
+    </GradeDeKpis>
+  );
+}
+
+/* ── Gráficos e pendências ──────────────────────────────────────────── */
+
+/* As cores dos tokens do app (com a paleta dos painéis de reserva). */
+const paleta = (escuro: boolean) =>
+  paletaDosGraficos(escuro, paletaDoPainel(escuro));
+
+/* #rrggbb → rgba com transparência (o preenchimento da linha); outro formato, transparente. */
+function translucido(cor: string, alfa: number) {
+  const hex = String(cor || "")
+    .trim()
+    .match(/^#([0-9a-f]{6})$/i);
+  if (!hex) return "transparent";
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex[1]!.slice(i, i + 2), 16));
+  return `rgba(${r}, ${g}, ${b}, ${alfa})`;
+}
+
+const CORES_DO_STATUS = (p: ReturnType<typeof paleta>) => ({
+  Pendente: p.warn,
+  Revisar: p.review,
+  Aprovado: p.ok,
+  Reprovado: p.bad,
+});
+
+/*
+  `linhas`: o recorte inteiro (com a data escolhida) — carga por responsável e
+  pendências. `linhasPorData`: o mesmo recorte sem a data, para o gráfico de
+  datas mostrar todos os dias e o escolhido em destaque. Clicar num dia chama
+  `aoClicarNoDia(chave, { estender })` (Shift + clique estende o período).
+*/
+export function Graficos({
+  linhas,
+  linhasPorData = linhas,
+  pendencias,
+  carregado,
+  responsavel,
+  aoResponsavel,
+  periodo,
+  aoClicarNoDia,
+  escuro,
+}: {
+  linhas: readonly RegistroDaAnalise[];
+  linhasPorData?: readonly RegistroDaAnalise[];
+  pendencias: readonly (PendenciaDaAnalise & {
+    ativo: boolean;
+    aoClicar(): void;
+  })[];
+  carregado: boolean;
+  responsavel: string;
+  aoResponsavel(valor: string): void;
+  periodo: PeriodoDasAnalises;
+  aoClicarNoDia(dia: string, opcoes: { estender: boolean }): void;
+  escuro: boolean;
+}) {
+  const porResponsavel = useMemo(
+    () => analisesPorResponsavel(linhas),
+    [linhas],
+  );
+  const porDia = useMemo(() => tendenciaDiaria(linhasPorData), [linhasPorData]);
+  const comData = temPeriodo(periodo);
+  const tema = escuro ? "escuro" : "claro";
+  const carregando = !carregado;
+
+  // O clique do Chart.js chega aqui, sempre com o filtro mais recente.
+  const clique = useRef({ responsavel, aoResponsavel, aoClicarNoDia });
+  useEffect(() => {
+    clique.current = { responsavel, aoResponsavel, aoClicarNoDia };
+  });
+
+  return (
+    <>
+      <div className="ui-linha-de-cards">
+        <CardDeGrafico
+          titulo="Análises por responsável"
+          altura="short"
+          carregando={carregando}
+        >
+          <Grafico
+            id="chartResponsavel"
+            tipo="bar"
+            rotulo="Análises por responsável, empilhadas por status"
+            dependencias={[porResponsavel, tema]}
+            montar={() => {
+              const p = paleta(escuro);
+              const cores = CORES_DO_STATUS(p);
+              return {
+                data: {
+                  labels: porResponsavel.map((r) => truncar(r.rotulo, 22)),
+                  datasets: STATUS_DO_GRAFICO.map((status) => ({
+                    label: status,
+                    data: porResponsavel.map((r) => r[status]),
+                    backgroundColor: cores[status],
+                    borderRadius: 6,
+                  })),
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  animation: { duration: 380 },
+                  interaction: { mode: "index", intersect: false },
+                  plugins: {
+                    legend: {
+                      position: "top",
+                      labels: {
+                        color: p.text,
+                        boxWidth: 14,
+                        usePointStyle: true,
+                      },
+                    },
+                    tooltip: {
+                      callbacks: {
+                        title: (itens) =>
+                          porResponsavel[itens[0]?.dataIndex ?? -1]?.rotulo ||
+                          "",
+                        afterBody: (itens) => [
+                          `Total: ${formatNumberBR(porResponsavel[itens[0]?.dataIndex ?? -1]?.total || 0)}`,
+                        ],
+                      },
+                    },
+                  },
+                  scales: {
+                    x: {
+                      stacked: true,
+                      ticks: { color: p.text, maxRotation: 0 },
+                      grid: { display: false },
+                    },
+                    y: {
+                      stacked: true,
+                      beginAtZero: true,
+                      ticks: { color: p.text, precision: 0 },
+                      grid: { color: p.grid },
+                    },
+                  },
+                  onClick: (_, elementos) => {
+                    const item = porResponsavel[elementos[0]?.index ?? -1];
+                    if (!item) return;
+                    const atual = clique.current;
+                    atual.aoResponsavel(
+                      atual.responsavel === item.rotulo ? "" : item.rotulo,
+                    );
+                  },
+                },
+              };
+            }}
+          />
+        </CardDeGrafico>
+        <article className="ui-card ui-pilha" data-tour="analises-pendencias">
+          <h2 className="ui-titulo">Pendências prioritárias</h2>
+          <ListaDePendencias
+            carregando={carregando}
+            itens={pendencias}
+            vazio="Nenhuma pendência prioritária no recorte atual."
+          />
+        </article>
+      </div>
+
+      <CardDeGrafico
+        elemento="section"
+        titulo="Análises por data"
+        carregando={carregando}
+      >
+        <Grafico
+          id="chartTendencia"
+          tipo="line"
+          rotulo={`Análises por data; pontos em vermelho: fora da janela oficial ou com data no futuro. Clique num dia para filtrar a tela; o período também se escolhe em Mais opções${comData ? `. Data escolhida: ${rotuloDoPeriodo(periodo)}` : ""}`}
+          dependencias={[porDia, tema, periodo]}
+          montar={() => {
+            const p = paleta(escuro);
+            const marcado = (dia: DiaDasAnalises) => dia.fora || dia.futuras;
+            const escolhido = (dia: DiaDasAnalises) =>
+              comData && diaNoPeriodo(dia.chave, periodo);
+            const raio = (dia: DiaDasAnalises) => (marcado(dia) ? 5 : 3);
+            return {
+              data: {
+                labels: porDia.map((dia) => dia.rotulo),
+                datasets: [
+                  {
+                    label: "Análises",
+                    data: porDia.map((dia) => dia.valor),
+                    borderColor: p.blue,
+                    backgroundColor: translucido(p.blue, 0.08),
+                    pointBackgroundColor: porDia.map((dia) =>
+                      marcado(dia) ? p.bad : p.blue,
+                    ),
+                    pointRadius: porDia.map((dia) =>
+                      escolhido(dia) ? 8 : raio(dia),
+                    ),
+                    pointHoverRadius: porDia.map((dia) =>
+                      escolhido(dia) ? 9 : raio(dia) + 2,
+                    ),
+                    pointBorderColor: porDia.map((dia) =>
+                      escolhido(dia) ? p.text : p.surface,
+                    ),
+                    pointBorderWidth: porDia.map((dia) =>
+                      escolhido(dia) ? 3 : 1,
+                    ),
+                    borderWidth: 2.5,
+                    tension: 0.22,
+                    fill: true,
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 380 },
+                // O dia mais perto do clique na horizontal (não exige acertar o ponto).
+                interaction: { mode: "index", intersect: false },
+                onClick: (evento, elementos) => {
+                  const dia = porDia[elementos[0]?.index ?? -1];
+                  if (!dia?.chave) return;
+                  clique.current.aoClicarNoDia?.(dia.chave, {
+                    estender: Boolean(
+                      evento?.native &&
+                      "shiftKey" in evento.native &&
+                      evento.native.shiftKey,
+                    ),
+                  });
+                },
+                onHover: (evento, elementos, grafico) => {
+                  const alvo = grafico?.canvas || evento?.native?.target;
+                  if (alvo?.style)
+                    alvo.style.cursor = elementos.length ? "pointer" : "";
+                },
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      label: (item) =>
+                        `${formatNumberBR(item.parsed.y)} análise(s)`,
+                      afterBody: (itens) => {
+                        const dia = porDia[itens[0]?.dataIndex ?? -1];
+                        if (!dia) return [];
+                        return [
+                          ...(dia.fora
+                            ? [`${formatNumberBR(dia.fora)} fora do período`]
+                            : []),
+                          ...(dia.futuras
+                            ? [
+                                `${formatNumberBR(dia.futuras)} com data no futuro — corrija na planilha`,
+                              ]
+                            : []),
+                        ];
+                      },
+                    },
+                  },
+                },
+                scales: {
+                  x: {
+                    ticks: { color: p.text, maxRotation: 0 },
+                    grid: { color: p.grid },
+                  },
+                  y: {
+                    beginAtZero: true,
+                    ticks: { color: p.text, precision: 0 },
+                    grid: { color: p.grid },
+                  },
+                },
+              },
+            };
+          }}
+        />
+      </CardDeGrafico>
+    </>
+  );
+}

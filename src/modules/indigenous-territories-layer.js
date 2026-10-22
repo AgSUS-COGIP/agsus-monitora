@@ -230,6 +230,9 @@ const escaparHtml = (valor) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+/** A dica do contorno do DSEI: o nome vem do GeoJSON da Funai, escapado. */
+export const tooltipDoDsei = (nome) => `DSEI ${escaparHtml(nome)}`;
+
 /*
   O povo vem primeiro e em destaque; a Terra Indígena, que é o recorte
   fundiário, vem abaixo. Sem `etnia_nome` o polígono continua identificado pelo
@@ -823,6 +826,20 @@ function enhanceMap(L, map) {
     Indígena devolve o que a pessoa tinha. Ver `__agsusSuspenderCamadasIndigenas`.
   */
   let suspensas = false;
+  /*
+    Removido = o mapa saiu da página. Os da Saúde Indígena são React: o do
+    DSEI é destruído ao voltar ao Brasil, os dois ao trocar de área (e o
+    StrictMode monta, desmonta e monta de novo). O que chega depois —
+    catálogo, abrangência, terras em estudo, o redesenho agendado — não toca
+    num mapa removido (o Leaflet quebraria sem os painéis).
+  */
+  let removido = false;
+  map.on?.("unload", () => {
+    removido = true;
+    clearTimeout(refreshTimer);
+    clearTimeout(fimDoDestaque);
+    requestController?.abort?.();
+  });
 
   const rasterPaneName = "agsus-indigenous-territories";
   const rasterPane =
@@ -954,6 +971,7 @@ function enhanceMap(L, map) {
   });
 
   const desenharEstudo = () => {
+    if (removido) return;
     estudoLayer.clearLayers();
     if (
       !estudoGeojson?.features ||
@@ -1036,7 +1054,7 @@ function enhanceMap(L, map) {
       if (!supportsHover()) return;
       const nome = dseiFeatureName(feature?.properties);
       if (!nome) return;
-      layer.bindTooltip(`DSEI ${nome}`, {
+      layer.bindTooltip(tooltipDoDsei(nome), {
         sticky: true,
         direction: "top",
         className: "agsus-dsei-tooltip",
@@ -1046,6 +1064,7 @@ function enhanceMap(L, map) {
   map.__agsusDseiCoverageLayer = dseiLayer;
 
   const renderDseiCoverage = () => {
+    if (removido) return;
     if (!dseiGeojson?.features) return;
     dseiLayer.clearLayers();
     if (suspensas) {
@@ -1125,7 +1144,9 @@ function enhanceMap(L, map) {
   let lastViewportKey = "";
 
   const visible = () =>
-    !suspensas && map.__agsusIndigenousTerritoriesVisible !== false;
+    !removido &&
+    !suspensas &&
+    map.__agsusIndigenousTerritoriesVisible !== false;
 
   const useRasterFallback = () => {
     if (!visible()) return;
@@ -1506,10 +1527,10 @@ function enhanceMap(L, map) {
   };
 
   /*
-    SUSPENDER — a Visão geral de outra área (Projetos) usa este mesmo mapa.
-    Tira as terras, as em estudo e a abrangência dos DSEIs sem mexer na
-    preferência guardada; o botão "Terras Indígenas" some pelo CSS da página
-    (`health-map-workspace.css`). Voltar (`false`) redesenha o que estava.
+    SUSPENDER — tira as terras, as em estudo e a abrangência dos DSEIs sem
+    mexer na preferência guardada. Voltar (`false`) redesenha o que estava.
+    O mapa nacional da Saúde Indígena (React) chama com `false` ao nascer; o
+    de Projetos é outro mapa (`#mapaDosProjetos`), sem camadas indígenas.
   */
   map.__agsusSuspenderCamadasIndigenas = (suspender) => {
     const alvo = Boolean(suspender);

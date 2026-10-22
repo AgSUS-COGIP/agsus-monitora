@@ -1,0 +1,86 @@
+name: Sincronizar seleção
+
+# Lê a aba Resultado da planilha "Auditoria" (funil da seleção por vaga) com a
+# conta de serviço do Google e grava no Supabase (scripts/sincronizar-selecao.mjs).
+# Às 8h10, 13h10 e 18h10 de Brasília, pedido pelo banco (pg_cron → workflow_dispatch com
+# disparado_por = AGENDA; docs/agenda-dos-robos.md — sem `schedule` aqui, que o GitHub
+# atrasava ou pulava) e, quando precisar,
+# pelo botão "Run workflow" na aba Actions ou pelo "Rodar agora" das
+# Configurações › Status das atualizações (RPC disparar_robo).
+# Como operar e o que fazer quando falha: docs/sincronizacao-das-planilhas.md.
+#
+# Secrets do repositório (Settings → Secrets and variables → Actions):
+#   GOOGLE_SERVICE_ACCOUNT_JSON  conteúdo inteiro do JSON da conta de serviço
+#   SUPABASE_URL                 https://<projeto>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY    chave service_role do Supabase
+# (os mesmos da sincronização das entrevistas).
+
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "seco = só lê a planilha; normal = grava; forcar = aceita carga pequena"
+        type: choice
+        options:
+          - normal
+          - seco
+          - forcar
+        default: normal
+      disparado_por:
+        description: "Rodar agora do MONITORA = id do usuário; agenda do banco = AGENDA; em branco = GitHub"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sincronizar-selecao
+  cancel-in-progress: false
+
+jobs:
+  sincronizar:
+    name: Planilha → Supabase
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          show-progress: false
+
+      - name: Configurar Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      # Execução iniciada direto no GitHub: registra no MONITORA (Status das
+      # atualizações) com quem a iniciou (migration 20261020170000; o python3 do
+      # runner basta). Nunca derruba o job.
+      - name: Registrar a execução no MONITORA
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PYTHONPATH: python
+          ATOR_GITHUB: ${{ github.triggering_actor }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
+          MODO: ${{ inputs.modo || 'normal' }}
+        run: python3 -m monitora.disparo_externo sincronizar-selecao.yml
+
+      # O script não usa dependências: não precisa de npm install.
+      - name: Sincronizar
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MODO: ${{ inputs.modo || 'normal' }}
+        run: |
+          case "$MODO" in
+            seco)   node scripts/sincronizar-selecao.mjs --seco ;;
+            forcar) node scripts/sincronizar-selecao.mjs --forcar ;;
+            *)      node scripts/sincronizar-selecao.mjs ;;
+          esac

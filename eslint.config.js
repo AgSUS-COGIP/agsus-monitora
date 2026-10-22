@@ -1,15 +1,10 @@
 import js from "@eslint/js";
 import globals from "globals";
+import tsParser from "@typescript-eslint/parser";
 
 export default [
   {
-    ignores: [
-      "dist/**",
-      "coverage/**",
-      "node_modules/**",
-      "src/modules/legacy-app.js",
-      "src/analises/analises-app.js",
-    ],
+    ignores: ["dist/**", "coverage/**", "node_modules/**"],
   },
   {
     /*
@@ -23,8 +18,10 @@ export default [
       "api/**/*.js",
       "src/lib/**/*.js",
       "src/modules/**/*.js",
+      "src/app/**/*.{js,jsx}",
+      "src/ui/**/*.{js,jsx}",
       "src/componentes/**/*.{js,jsx}",
-      "src/recursos/**/*.{js,jsx}",
+      "src/modulos/**/*.{js,jsx}",
       "scripts/**/*.mjs",
       "tests/**/*.js",
       "vite.config.js",
@@ -45,6 +42,23 @@ export default [
       "no-undef": "error",
       "no-redeclare": "error",
       "no-unreachable": "error",
+      "no-constant-condition": ["error", { checkLoops: false }],
+    },
+  },
+  {
+    files: ["src/**/*.{ts,tsx}", "server/**/*.ts", "tests/tipos/**/*.tsx"],
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: { ...globals.browser, ...globals.node },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      // O compilador verifica nomes e redeclarações com o escopo de tipos.
+      "no-undef": "off",
+      "no-redeclare": "off",
+      "no-unused-vars": "off",
       "no-constant-condition": ["error", { checkLoops: false }],
     },
   },

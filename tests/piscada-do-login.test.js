@@ -59,8 +59,8 @@ describe("a marca é aplicada antes do primeiro paint", () => {
   });
 
   /*
-    A classe é exigida em `#loginScreen.login-panel-dark` por
-    post-152-regression-fixes.css. Aplicá-la no elemento — e não no <html> —
+    A classe é exigida em `#loginScreen.login-panel-dark` pela seção Login de
+    platform-shell.css. Aplicá-la no elemento — e não no <html> —
     reaproveita todos esses seletores sem duplicar nenhum.
   */
   it("a classe é aplicada logo depois do elemento existir", () => {
@@ -206,9 +206,9 @@ describe("uma resposta parcial não apaga o cache", () => {
   });
 
   it("quem aplica usa o resultado da mescla", () => {
-    const boot = readFileSync("src/lib/access-branding-boot.js", "utf8");
+    const boot = readFileSync("src/app/entrada/marca.js", "utf8");
     expect(boot).toContain("const completa = guardarMarca(marca) || marca");
-    expect(boot).toContain("aplicarMarcaNaTela(completa, documento)");
+    expect(boot).toContain("aplicarMarcaNaTela(completa, documento, estado)");
   });
 });
 
@@ -221,7 +221,7 @@ describe("fundo da tela de acesso sem arte configurada", () => {
   const folhas = [
     "src/styles/app.css",
     "src/styles/platform-shell.css",
-    "src/styles/config-page.css",
+    "src/modulos/configuracoes/configuracoes.css",
   ].map((arquivo) => [arquivo, readFileSync(arquivo, "utf8")]);
 
   it.each(folhas)("%s não carrega imagem de host externo", (_, css) => {

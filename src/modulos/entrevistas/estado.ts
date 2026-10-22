@@ -1,0 +1,392 @@
+import type {
+  EstadoDasEntrevistas,
+  OpcoesDoEstadoDasEntrevistas,
+  SnapshotDasEntrevistas,
+  EntrevistaDoPainel,
+} from "./tipos-do-painel.ts";
+import type { ItemDaAgenda } from "../../lib/painel-de-entrevistas.ts";
+/*
+  Estado da tela de Entrevistas (`#page-entrevistas`, visão "Resultados"),
+  fora do React: o que o banco devolve para a área atual do app, a entrevista
+  aberta na gaveta e a lista dos aprovados sem entrevista aberta. Os
+  componentes leem com `useSyncExternalStore`. Este arquivo não importa React.
+
+  Uma RPC, `get_entrevistas_da_area` (json), que confere permissão (recurso
+  `entrevistas` >= leitor), área e o recorte da coordenação
+  (supabase/migrations/20260929235000_entrevistas.sql).
+
+  Cópia guardada ("stale-while-revalidate", src/lib/cache-de-payload.js, a
+  mesma do painel de análises e da lista de aprovados): na primeira carga da
+  área, a cópia do navegador (do mesmo usuário e da mesma publicação) aparece
+  na hora e a versão nova é pedida por trás; a tela só redesenha se ela mudou.
+  Acesso revogado (42501) ou área inválida apagam as cópias.
+
+  Sem cópia, antes da primeira carga a tela é o skeleton (`carregado`
+  falso); uma falha nela vira `erroAoCarregar`, com "Tentar novamente". Sem
+  permissão (42501), `semAcesso`: a tela diz "Sem acesso às Entrevistas".
+  Sessão vencida (o cliente Supabase do app sem sessão): `semSessao`. Outro
+  usuário entrou na mesma aba: tudo volta ao início. Falha de rede usa a
+  mensagem de src/lib/falha-de-rede.js.
+*/
+import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
+import {
+  criarCacheDePayload,
+  ehErroDeAcesso,
+  respostaInalterada,
+  revalidarPayload,
+  versaoDoPacote,
+} from "../../lib/cache-de-payload.js";
+import {
+  comTempoLimite,
+  ehFalhaDeConexao,
+  mensagemDeFalha,
+} from "../../lib/falha-de-rede.js";
+import {
+  csvDasEntrevistas,
+  normalizarPayload,
+  normalizarAgendaDoPainel,
+  PAINEL_DE_ENTREVISTAS,
+  payloadMudou,
+} from "../../lib/entrevistas-do-painel.ts";
+import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
+import { avaliarMarcosDasEntrevistas } from "./marcos.ts";
+
+export const MENSAGEM_SEM_SESSAO =
+  "Sessão não localizada. Entre de novo no MONITORA.";
+export const MENSAGEM_SEM_ACESSO = "Sem acesso às Entrevistas";
+
+/* A cópia vale só para a mesma publicação do front (o endereço do módulo muda a cada build). */
+const VERSAO_DA_COPIA = `1:${import.meta.url}`;
+const TEMPO_LIMITE_MS = 30000;
+
+const ESTADO_INICIAL: SnapshotDasEntrevistas = Object.freeze({
+  area: "",
+  dados: null,
+  carregado: false,
+  erroAoCarregar: "",
+  semSessao: false,
+  semAcesso: false,
+  atualizando: false,
+  /** Os dados na tela vieram da cópia do navegador (ainda revalidando). */
+  daCopia: false,
+  carregadoEm: 0,
+  /** id da entrevista aberta na gaveta, ou `null`. */
+  gaveta: null,
+  /** Gaveta dos aprovados na análise sem entrevista aberta. */
+  semEntrevistaAberta: false,
+  /*
+    Comemorações ligadas (a situação do sistema que o app leu na entrada; o
+    controlador relê a cada abertura da tela): o marco "vaga pronta".
+  */
+  comemoracoes: false,
+  /*
+    Agenda dos próximos dias do edital do recorte (Painel): os horários
+    salvos na Classificação › Agenda (`obter_agenda_entrevista`). `itens`
+    nulo enquanto não chegou; sem agenda ou sem acesso, lista vazia.
+  */
+  agenda: Object.freeze({ editalId: "", itens: null, erro: "" }),
+});
+
+function codigoDoErro(erro: unknown) {
+  return typeof erro === "object" && erro !== null && "code" in erro
+    ? erro.code
+    : undefined;
+}
+
+function mensagemDaCarga(erro: unknown) {
+  if (codigoDoErro(erro) === "PGRST202")
+    return "A aba Entrevistas ainda não foi publicada no banco.";
+  if (codigoDoErro(erro) === "42501")
+    return "Seu acesso não inclui as entrevistas desta área.";
+  return mensagemDeFalha(erro);
+}
+
+function baixarNoNavegador(conteudo: string, nome: string) {
+  const arquivo = new Blob([conteudo], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(arquivo);
+  const ancora = document.createElement("a");
+  ancora.href = url;
+  ancora.download = nome;
+  ancora.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export function criarEstadoDasEntrevistas({
+  supabase = null,
+  toast = (mensagem) => console.info(mensagem),
+  baixar = baixarNoNavegador,
+  armazenamento = armazenamentoDePayload,
+  agora = () => Date.now(),
+  tempoLimiteMs = TEMPO_LIMITE_MS,
+  /* Vaga pronta para o resultado final (marcos.ts); troque nos testes. */
+  avaliarMarcos = avaliarMarcosDasEntrevistas,
+}: OpcoesDoEstadoDasEntrevistas = {}): EstadoDasEntrevistas {
+  let estado: SnapshotDasEntrevistas = ESTADO_INICIAL;
+  let pedido = 0;
+  let usuarioDaCarga = "";
+  /* O último payload mostrado (com a `versao` do banco): a volta à tela pergunta só se mudou. */
+  let ultimo: { area: string; payload: unknown } | null = null;
+  const ouvintes = new Set<() => void>();
+  const agendas = new Map<string, ItemDaAgenda[]>();
+  let geracaoDasAgendas = 0;
+  const copias = criarCacheDePayload({
+    armazenamento,
+    versao: VERSAO_DA_COPIA,
+    tipo: PAINEL_DE_ENTREVISTAS,
+  });
+
+  function publicar(mudancas: Partial<SnapshotDasEntrevistas>) {
+    estado = { ...estado, ...mudancas };
+    for (const ouvinte of ouvintes) ouvinte();
+  }
+
+  function mostrar(
+    payload: unknown,
+    extra: Partial<SnapshotDasEntrevistas> = {},
+  ) {
+    ultimo = { area: estado.area, payload };
+    publicar({
+      dados: normalizarPayload(payload || {}),
+      carregado: true,
+      semAcesso: false,
+      erroAoCarregar: "",
+      atualizando: false,
+      daCopia: false,
+      carregadoEm: agora(),
+      ...extra,
+    });
+    void avaliarMarcos?.({
+      usuarioId: usuarioDaCarga,
+      area: estado.area,
+      dados: estado.dados,
+      ligadas: estado.comemoracoes,
+    });
+  }
+
+  const perderAcesso = (erro: unknown) => {
+    ultimo = null;
+    publicar({
+      ...ESTADO_INICIAL,
+      area: estado.area,
+      comemoracoes: estado.comemoracoes,
+      semAcesso: codigoDoErro(erro) === "42501",
+      erroAoCarregar: mensagemDaCarga(erro),
+    });
+  };
+
+  /*
+    Outro usuário na mesma aba (ou saiu da conta): o que era do anterior sai e
+    um pedido em curso deixa de valer. A próxima abertura da tela recarrega.
+  */
+  function reiniciar() {
+    pedido += 1;
+    agendas.clear();
+    geracaoDasAgendas += 1;
+    usuarioDaCarga = "";
+    ultimo = null;
+    publicar({ ...ESTADO_INICIAL, comemoracoes: estado.comemoracoes });
+  }
+  let identidade: string | null | undefined;
+  supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
+    const atual = sessao?.user?.id || null;
+    if (atual === identidade) return;
+    // O primeiro aviso da página só registra quem é; não há o que limpar.
+    if (identidade !== undefined || !atual) reiniciar();
+    identidade = atual;
+  });
+
+  /*
+    O payload da área; lança o erro do banco (ou o de rede/tempo). Com o que a
+    tela já tem (`conhecido`), manda a versão dele: se ainda vale, o banco
+    responde só `{ inalterado: true }` (migration 20261013160000) e volta o
+    próprio `conhecido`.
+  */
+  async function buscar(
+    area: string,
+    conhecido: unknown = null,
+  ): Promise<unknown> {
+    if (!supabase) throw new Error("Sem conexão com o banco.");
+    const { data, error } = await comTempoLimite(
+      supabase.rpc("get_entrevistas_da_area_se_mudou", {
+        p_area: area,
+        p_versao: versaoDoPacote(conhecido),
+      }),
+      tempoLimiteMs,
+    );
+    if (error) throw error;
+    if (conhecido && respostaInalterada(data)) return conhecido;
+    return data || {};
+  }
+
+  /* O id do usuário da sessão; `null` sem sessão. Lança em falha de rede. */
+  async function usuarioDaSessao(): Promise<string | null> {
+    if (!supabase?.auth?.getSession) return "";
+    const { data: sessao } = await comTempoLimite(
+      supabase.auth.getSession(),
+      tempoLimiteMs,
+    );
+    if (!sessao?.session) return null;
+    return String(sessao.session.user?.id ?? "");
+  }
+
+  /*
+    Troca de área descarta o que era da outra (skeleton de novo, ou a cópia);
+    na mesma área, a tela fica e a releitura corre por trás. Resposta de um
+    pedido antigo é ignorada.
+  */
+  async function carregar(area = estado.area) {
+    if (!area) return false;
+    const meu = ++pedido;
+    const primeira = area !== estado.area || !estado.carregado;
+    if (area !== estado.area) {
+      agendas.clear();
+      geracaoDasAgendas += 1;
+      publicar({ ...ESTADO_INICIAL, area, comemoracoes: estado.comemoracoes });
+    } else publicar({ atualizando: true, erroAoCarregar: "" });
+    if (!supabase) {
+      publicar({
+        erroAoCarregar: "Sem conexão com o banco.",
+        atualizando: false,
+      });
+      return false;
+    }
+    try {
+      const usuarioId = await usuarioDaSessao();
+      if (meu !== pedido) return false;
+      if (usuarioId === null) {
+        publicar({
+          erroAoCarregar: MENSAGEM_SEM_SESSAO,
+          semSessao: true,
+          atualizando: false,
+        });
+        return false;
+      }
+      usuarioDaCarga = usuarioId;
+      const contexto = { usuarioId, area };
+
+      const guardado = primeira ? await copias.ler(contexto) : null;
+      if (meu !== pedido) return false;
+      if (guardado) {
+        mostrar(guardado, { atualizando: true, daCopia: true });
+        const novo = await revalidarPayload({
+          guardado,
+          buscar: () => buscar(area, guardado),
+          guardar: (payload: unknown) => copias.guardar(contexto, payload),
+          mudou: payloadMudou,
+          aoMudar: (payload: unknown) => {
+            if (meu === pedido) mostrar(payload);
+          },
+          aoPerderAcesso: (erro: unknown) => {
+            if (meu === pedido) perderAcesso(erro);
+          },
+          apagarTudo: () => copias.apagarTudo(),
+        });
+        if (meu === pedido && estado.carregado)
+          publicar({ atualizando: false, daCopia: false });
+        if (!novo && meu === pedido && estado.carregado)
+          toast(
+            "Mostrando a cópia guardada: não foi possível buscar as entrevistas mais recentes.",
+            "warn",
+          );
+        return Boolean(novo);
+      }
+
+      const payload = await buscar(
+        area,
+        ultimo?.area === area ? ultimo.payload : null,
+      );
+      if (meu !== pedido) return false;
+      mostrar(payload);
+      void copias.guardar(contexto, payload);
+      return true;
+    } catch (erro) {
+      if (meu !== pedido) return false;
+      if (ehErroDeAcesso(erro)) {
+        await copias.apagarTudo();
+        perderAcesso(erro);
+        return false;
+      }
+      const mensagem = ehFalhaDeConexao(erro)
+        ? mensagemDeFalha(erro)
+        : mensagemDaCarga(erro);
+      if (estado.carregado) {
+        publicar({ atualizando: false });
+        toast(
+          `Não foi possível atualizar as entrevistas: ${mensagem}`,
+          "error",
+        );
+      } else publicar({ erroAoCarregar: mensagem, atualizando: false });
+      return false;
+    }
+  }
+
+  const abrirGaveta = (id: string) =>
+    publicar({ gaveta: id, semEntrevistaAberta: false });
+  const fecharGaveta = () => publicar({ gaveta: null });
+  const abrirSemEntrevista = () =>
+    publicar({ semEntrevistaAberta: true, gaveta: null });
+  const fecharSemEntrevista = () => publicar({ semEntrevistaAberta: false });
+
+  /* A agenda do edital (uma leitura por edital; a troca de área ou de usuário zera). */
+  async function carregarAgenda(
+    editalId: string,
+  ): Promise<ItemDaAgenda[] | null> {
+    const id = String(editalId || "");
+    if (!id || !supabase) {
+      publicar({ agenda: ESTADO_INICIAL.agenda });
+      return null;
+    }
+    const guardada = agendas.get(id);
+    if (guardada) {
+      publicar({ agenda: { editalId: id, itens: guardada, erro: "" } });
+      return guardada;
+    }
+    const geracao = geracaoDasAgendas;
+    publicar({ agenda: { editalId: id, itens: null, erro: "" } });
+    try {
+      const { data, error } = await comTempoLimite(
+        supabase.rpc("obter_agenda_entrevista", { p_edital: id }),
+        tempoLimiteMs,
+      );
+      if (error) throw error;
+      if (geracao !== geracaoDasAgendas) return null;
+      const itens = normalizarAgendaDoPainel(data);
+      agendas.set(id, itens);
+      if (geracao === geracaoDasAgendas && estado.agenda.editalId === id)
+        publicar({ agenda: { editalId: id, itens, erro: "" } });
+      return itens;
+    } catch (erro) {
+      if (geracao === geracaoDasAgendas && estado.agenda.editalId === id)
+        publicar({
+          agenda: { editalId: id, itens: [], erro: mensagemDaCarga(erro) },
+        });
+      return null;
+    }
+  }
+
+  function exportarCsv(entrevistas: readonly EntrevistaDoPainel[]) {
+    const dia = hojeEmBrasilia(new Date(agora()));
+    baixar(
+      csvDasEntrevistas(entrevistas),
+      `entrevistas-${estado.area}-${dia}.csv`,
+    );
+  }
+
+  return {
+    obter: () => estado,
+    assinar(ouvinte: () => void) {
+      ouvintes.add(ouvinte);
+      return () => ouvintes.delete(ouvinte);
+    },
+    carregar,
+    abrirGaveta,
+    fecharGaveta,
+    abrirSemEntrevista,
+    fecharSemEntrevista,
+    exportarCsv,
+    carregarAgenda,
+    reiniciar,
+    definirComemoracoes: (ligadas: boolean) =>
+      publicar({ comemoracoes: ligadas === true }),
+  };
+}

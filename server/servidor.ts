@@ -5,9 +5,8 @@
   rota de saúde. Não há regra de negócio aqui — os dados vão do navegador ao
   Supabase, sob RLS. Substitui o antigo servidor Laravel/PHP com o mesmo contrato:
 
-  - páginas: `/`, `/index.html`, `/analises`, `/analises.html`, `/entrevistas`,
-    `/entrevistas.html`, `/recursos`, `/recursos.html`, `/auth/callback`, `/auth/callback.html`, idênticas byte
-    a byte ao build e sem cache;
+  - páginas: `/`, `/index.html`, `/auth/callback`, `/auth/callback.html`,
+    idênticas byte a byte ao build e sem cache;
   - `/up` responde 200 (saúde para Docker e CI);
   - estáticos só das pastas e arquivos listados abaixo; todo o resto é 404,
     inclusive `/.env`, pastas e arquivos que começam com ponto;
@@ -46,12 +45,6 @@ export type OpcoesDoServidor = {
 const PAGINAS: ReadonlyMap<string, string> = new Map([
   ["/", "index.html"],
   ["/index.html", "index.html"],
-  ["/analises", "analises.html"],
-  ["/analises.html", "analises.html"],
-  ["/entrevistas", "entrevistas.html"],
-  ["/entrevistas.html", "entrevistas.html"],
-  ["/recursos", "recursos.html"],
-  ["/recursos.html", "recursos.html"],
   ["/auth/callback", "auth/callback.html"],
   ["/auth/callback.html", "auth/callback.html"],
 ]);
@@ -63,6 +56,8 @@ const ARQUIVOS_ESTATICOS_DA_RAIZ = new Set([
   "offline.html",
   "sw.js",
   "sw-policy.js",
+  // Versão do build, conferida pelo aviso de versão nova (src/app/aviso-de-versao.ts).
+  "versao.json",
 ]);
 const METODOS_ACEITOS = "GET, HEAD";
 const HSTS = "strict-transport-security";
@@ -256,7 +251,13 @@ async function servirEstatico(
 
 export function criarServidor({ dist, cabecalhos }: OpcoesDoServidor): Server {
   return createServer((req, res) => {
-    const pathname = new URL(req.url ?? "/", "http://monitora.local").pathname;
+    // Alvo que não vira URL (ex.: "//["): exceção aqui derrubaria o processo.
+    let pathname: string;
+    try {
+      pathname = new URL(req.url ?? "/", "http://monitora.local").pathname;
+    } catch {
+      return texto(res, 400, "Requisição inválida.");
+    }
     aplicarSeguranca(req, res, cabecalhos, pathname);
 
     const pagina = PAGINAS.get(pathname);

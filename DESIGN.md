@@ -155,8 +155,9 @@ A escada já existe em parte (`app.css:40-42`). Formalizada:
 | `--z-loader` | 20025 | skeleton da entrada e a tela de carregamento dos salvamentos |
 | `--z-toast` | 20050 | toast (o topo) |
 
-Nada acima de `--z-toast`. Os `2147483000` de `nina-conversation.css` e
-`analises-residual-ui-fixes.js` devem descer para essa escada. Quem precisa ficar acima da barra
+Nada acima de `--z-toast`. O `2147483000` de `analises-residual-ui-fixes.js` deve descer para essa
+escada. A Aya (`src/modulos/aya/aya.css`) fica em 10042: acima do cabeçalho e da barra lateral do
+celular, abaixo do aviso de parabéns (10045). Quem precisa ficar acima da barra
 lateral usa os tokens de overlay: modal de busca (`--z-overlay`); link de pular, faixa offline,
 aviso de conectividade e aviso de sessão (`--z-toast`). `tests/camadas-acima-da-barra.test.js`
 guarda essa ordem.
@@ -165,7 +166,7 @@ guarda essa ordem.
 
 Media query não aceita `var()`, então os valores são constantes documentadas:
 **420px** (celular pequeno) · **640px** (celular) · **900px** (tablet; a barra lateral
-vira gaveta — contrato com `src/componentes/barra-lateral/usar-ambiente.js`) · **1220px** (desktop estreito).
+vira gaveta — contrato com `src/componentes/barra-lateral/usar-ambiente.ts`) · **1220px** (desktop estreito).
 Os valores de hoje (560, 680, 700, 720, 820, 1180) migram para o mais próximo quando a regra for tocada.
 
 ---
@@ -196,13 +197,12 @@ Os valores de hoje (560, 680, 700, 720, 820, 1180) migram para o mais próximo q
 **Sem faixa colorida no topo** (`::before` de 3 a 4px): com seis cards lado a lado vira um arco-íris
 que compete com o conteúdo. A cor vai para o tile do ícone e para o indicador, onde tem significado.
 
-### Indicador — `.kpi`, `.approved-kpi`
+### Indicador — `Kpi` (`.ui-kpi`)
 
 **Card** — exceção aceita ao Design System 11.7 (que pede faixa sem card), por decisão do
 responsável em 25/09/2026: os KPIs em card leem melhor no MONITORA. O card segue o DS 11.6.
-Feito na Visão geral da Saúde Indígena (`health-reference-kpis.css`), em Editais
-(`.nucleo-kpi-card`, `nucleo-operational-enhancements.css`) e na Lista de aprovados, nas duas abas
-(`.approved-kpi`, `lista-aprovados.css`): card de 78px, padding `--space-3 --space-4`.
+Feito pelo `Kpi` de `src/ui/` (`.ui-kpi` em `GradeDeKpis`) em todas as telas React — Editais e Lista
+de aprovados (nas duas abas) inclusive: card de 78px, padding `--space-3 --space-4`.
 
 ```
 ┌──────────────────────────┐   --surface-card · borda 1px --border-subtle · --radius-lg · sem sombra
@@ -246,7 +246,7 @@ no app principal e Tom Select em análises. Não crie um terceiro.
 `--z-overlay`, `--radius-lg`, `--shadow-overlay` e fundo escurecido. O foco fica preso no modal,
 `Esc` fecha e, ao fechar, o foco volta ao elemento que abriu. Largura máxima de 560px (formulário)
 ou 880px (detalhe). Formulário longo não vai em modal pequeno: use página ou drawer.
-Em React, `<Modal>` (`src/componentes/modal.jsx`) já faz o portal, o `Esc`, o foco preso e a volta
+Em React, `<Modal>` (`src/ui/modal.jsx`) já faz o portal, o `Esc`, o foco preso e a volta
 do foco; o legado ainda tem modais próprios (`#editModal`, `#searchModal`).
 
 ### Chip, badge e alerta — `.chip`, `.alert`
@@ -271,7 +271,7 @@ não os troca por skeleton: a tela fica e a barra do cabeçalho corre (`marcarAt
 alimenta por estado externo e eventos (ver `src/componentes/CLAUDE.md`). **Organizada em áreas** —
 um grupo por área do usuário (Saúde Indígena, SEDE, Projetos), cada um com Editais, Cronograma e
 Lista de aprovados (a Saúde Indígena também com Visão geral e Análises), depois Painéis e
-Administração (`src/lib/menu-lateral.js`; área nova é uma entrada no catálogo). O item escolhido
+Administração (`src/lib/menu-lateral.ts`; área nova é uma entrada no catálogo). O item escolhido
 define a área atual, que recorta as páginas; só o item da área atual fica ativo. Os painéis externos
 que não são de área entram em Painéis; as seções de Configurações são as páginas de Administração.
 
@@ -284,7 +284,7 @@ que não são de área entram em Painéis; as seções de Configurações são a
 - **Recolhida:** trilho de ícones de 36px. O painel da área vira um flutuante ao lado do trilho,
   com a pílula do nome em cima. Abre por clique, Enter/Espaço ou ponteiro (só com hover) e fecha
   por `Esc`, clique fora, foco saindo ou item escolhido — um por vez. O estado mora no JS
-  (`src/componentes/barra-lateral/menu-de-areas.jsx`), não em `:hover`.
+  (`src/componentes/barra-lateral/menu-de-areas.tsx`), não em `:hover`.
 - **Rodapé:** seletor Claro/Escuro (único controle de tema do app), Sair e versão. Recolhida,
   o tema vira um botão que alterna e o Sair vira ícone.
 - **Alça de recolher:** círculo de 24px na borda direita, na altura da marca, metade para fora; a
@@ -321,7 +321,7 @@ Regras:
 
 ## 5. Tema escuro
 
-- **Chave canônica: `html[data-theme="dark"]`**, definida em `src/modules/legacy-app.js`
+- **Chave canônica: `html[data-theme="dark"]`**, definida em `src/app/moldura.js`
   (`setAttribute("data-theme", …)`). A análise usa a mesma chave.
 - `body.dark-mode` é um **espelho** mantido por `syncHealthDarkModeClass()`
   (`src/modules/health-dashboard-interaction-fixes.js`). Não escreva regra nova com ele.

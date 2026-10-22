@@ -1,0 +1,234 @@
+/*
+  Mapa de Projetos (src/modulos/mapa-de-projetos/). O painel, a moldura do
+  mapa, a lista, a legenda flutuante, os balões, o tema escuro, a tela cheia
+  e o celular são os do mapa da Saúde Indígena (`.mapa-si-*`,
+  mapa-saude-indigena.css); card, título e vazio, de src/ui/. Aqui só o que é
+  de Projetos: a cor de cada projeto, o filtro e os grupos da lista.
+
+  Cada projeto tem uma série do design system, em ordem fixa (DESIGN.md §6;
+  a ordem está em PROJETOS_DO_MAPA, src/lib/visao-geral-da-area.ts). Os
+  pontos do Leaflet são SVG: a classe pinta por cima do atributo. O nome do
+  projeto vai sempre ao lado da cor (legenda, lista, balão), porque magenta e
+  oliva ficam na faixa mínima de separação.
+*/
+.marcador-de-projeto {
+  fill: var(--border-control);
+  stroke: var(--surface-card);
+  stroke-width: 2px;
+}
+
+.marcador-de-projeto.is-varios-projetos {
+  stroke: var(--text-primary);
+  stroke-dasharray: 3 2;
+}
+
+.mapa-projeto__cor {
+  flex: none;
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--border-control);
+  vertical-align: middle;
+}
+
+.mapa-projeto__cor--varios {
+  background: transparent;
+  border: 1.5px dashed var(--text-primary);
+}
+
+.marcador-de-projeto--1 {
+  fill: var(--series-1);
+}
+.mapa-projeto__cor--1 {
+  background: var(--series-1);
+}
+.marcador-de-projeto--2 {
+  fill: var(--series-2);
+}
+.mapa-projeto__cor--2 {
+  background: var(--series-2);
+}
+.marcador-de-projeto--3 {
+  fill: var(--series-3);
+}
+.mapa-projeto__cor--3 {
+  background: var(--series-3);
+}
+.marcador-de-projeto--4 {
+  fill: var(--series-4);
+}
+.mapa-projeto__cor--4 {
+  background: var(--series-4);
+}
+.marcador-de-projeto--5 {
+  fill: var(--series-5);
+}
+.mapa-projeto__cor--5 {
+  background: var(--series-5);
+}
+.marcador-de-projeto--6 {
+  fill: var(--series-6);
+}
+.mapa-projeto__cor--6 {
+  background: var(--series-6);
+}
+
+/*
+  Linha da lista, compacta (pedido de 02/10): nome e vagas na primeira linha
+  (posição e vagas alinhadas ao topo), os projetos como selos pequenos e o
+  detalhe na segunda, e a barra do resultado quando há análise.
+*/
+.mapa-projetos-lugar {
+  align-items: start;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-1-5) var(--space-2);
+}
+
+.mapa-projetos-lugar .mapa-si-territorio__posicao,
+.mapa-projetos-lugar .mapa-si-territorio__vagas {
+  line-height: var(--leading-body-sm);
+}
+
+.mapa-projetos-lugar .mapa-si-territorio__vagas b {
+  font-size: var(--text-body-sm);
+}
+
+.mapa-projetos-lugar:disabled {
+  cursor: default;
+}
+
+.mapa-projetos-lugar__segunda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.mapa-projetos-lugar__projeto {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0 var(--space-1-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  line-height: var(--leading-label);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.mapa-projetos-lugar__projeto .mapa-projeto__cor {
+  width: 8px;
+  height: 8px;
+}
+
+.mapa-projetos-lugar__projeto,
+.mapa-projetos__grupo-titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+/* Aprovados em verde sobre o trilho dos reprovados; o "NN% aprovados" ao lado diz o mesmo. */
+.mapa-projetos-lugar__resultado .mapa-si-territorio__barra {
+  background: var(--state-danger-soft);
+}
+
+/* Projeto e "Agrupar por projeto", no alto da lista (fica à vista ao rolar). */
+.mapa-projetos__filtros {
+  position: sticky;
+  top: calc(-1 * var(--space-2));
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-1);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+/* "Projeto": o Campo de src/ui (rótulo em sentence case), com o rótulo ao lado. */
+.mapa-projetos__filtros .ui-campo {
+  flex: 1 1 180px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.mapa-projetos__filtros .mapa-projetos__seletor {
+  min-width: 0;
+  min-height: 32px;
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-caption);
+}
+
+/*
+  "Agrupar por projeto": o label de app.css é caixa alta e o input dele
+  estica para 100%/40px — aqui a caixa volta ao tamanho natural e o rótulo
+  fica normal numa linha (como .mapa-si-coordenadas__caixa).
+*/
+.mapa-projetos__agrupar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.mapa-projetos__agrupar input {
+  width: auto;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--brand-primary);
+}
+
+.mapa-projetos__seletor:focus-visible,
+.mapa-projetos__agrupar input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* "Agrupar por projeto": um bloco por projeto. */
+.mapa-projetos__grupo {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.mapa-projetos__grupo-titulo {
+  margin: var(--space-2) var(--space-1) 0;
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+.mapa-projetos__grupo-titulo span:last-child {
+  color: var(--text-secondary);
+}
+
+/*
+  Balão (dica e popup): cada edital é uma linha de texto corrido — bolinha,
+  projeto em negrito e o resto —, que quebra na palavra. Não é flex: o texto
+  solto virava um item ao lado do projeto e espremia o nome numa coluna de
+  uma letra ("Saúde nas Fronteiras" letra a letra). Nem `white-space: normal`
+  nem `overflow-wrap: anywhere` no balão: o Leaflet mede o popup sem quebra
+  para escolher a largura (até o `maxWidth`), e os dois reduziam essa medida
+  à de uma letra — o popup ficava na largura mínima. A dica quebra pela
+  `.dica-no-mapa` (src/ui/ui.css).
+*/
+.mapa-projetos__balao-edital {
+  display: block;
+  overflow-wrap: break-word;
+}
+
+.mapa-projetos__balao-edital .mapa-projeto__cor {
+  margin-right: var(--space-1-5);
+}

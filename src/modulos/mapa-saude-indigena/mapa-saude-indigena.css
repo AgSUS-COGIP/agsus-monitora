@@ -1,0 +1,1042 @@
+/*
+  Mapa da Saúde Indígena (src/modulos/mapa-saude-indigena/). Só o que é deste
+  bloco; card, título, vazio e esqueleto vêm de src/ui/ (ui.css). Cores do
+  domínio (formas, bolhas, terras) vêm de src/lib/mapa-saude-indigena/formas.js
+  e das variáveis --terra-* (tokens.css).
+*/
+.mapa-si {
+  /* Mais espaço para o mapa (pedido de 02/10): no zoom nacional (≈ 500 km na
+     régua) o Brasil precisa de ~722px com folga; até 780px ele cabe inteiro
+     nesse zoom, e em telas baixas o zoom desce um quarto em vez de cortar.
+     Baixar esta altura volta a régua para 1000 km. */
+  --mapa-si-altura: clamp(560px, calc(100vh - 120px), 780px);
+  --mapa-si-lista: clamp(320px, 28%, 400px);
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.mapa-si-coordenadas {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.mapa-si-coordenadas dl {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.mapa-si-coordenadas dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.mapa-si-coordenadas__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.mapa-si-coordenadas__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.mapa-si-coordenadas__topo-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* Latitude e longitude lado a lado. */
+.mapa-si-coordenadas__par {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+/* Sugestões, Correção e Histórico: seções recolhíveis (details/summary). */
+.mapa-si-coordenadas__secao {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.mapa-si-coordenadas__secao > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.mapa-si-coordenadas__secao > summary b {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.mapa-si-coordenadas__secao > summary:focus-visible {
+  outline: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--focus-ring);
+}
+
+.mapa-si-coordenadas__busca {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.mapa-si-coordenadas__fila,
+.mapa-si-coordenadas__bloco {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.mapa-si-coordenadas__filtro,
+.mapa-si-coordenadas__escolhido {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.mapa-si-coordenadas__caixa {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: normal;
+  text-transform: none;
+  cursor: pointer;
+}
+
+/* O app.css estica todo input (100%, 40px); a caixa volta ao tamanho natural. */
+.mapa-si-coordenadas__caixa input {
+  width: auto;
+  min-height: 0;
+  margin: 0;
+}
+
+.mapa-si-coordenadas__contagem {
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A contagem e o filtro por gravidade: botões que quebram a linha. */
+.mapa-si-coordenadas__niveis,
+.mapa-si-coordenadas__grupo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.mapa-si-coordenadas__niveis {
+  gap: var(--space-1) var(--space-2);
+}
+
+.mapa-si-coordenadas__nivel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+
+.mapa-si-coordenadas__nivel b {
+  font-variant-numeric: tabular-nums;
+}
+
+.mapa-si-coordenadas__nivel[aria-pressed="true"] {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
+.mapa-si-coordenadas__nivel:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.mapa-si-coordenadas__item .mapa-si-coordenadas__resumo {
+  color: var(--text-primary);
+}
+
+.mapa-si-coordenadas__gravidade {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  margin: 0;
+}
+
+.mapa-si-coordenadas__sugestoes li[data-melhor] {
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted);
+}
+
+.mapa-si-coordenadas__sugestoes .ui-selo {
+  justify-self: start;
+}
+
+.mapa-si-coordenadas__lista,
+.mapa-si-coordenadas__sugestoes,
+.mapa-si-coordenadas__historico {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mapa-si-coordenadas__lista {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.mapa-si-coordenadas__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 var(--space-2);
+  width: 100%;
+  padding: var(--space-2);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mapa-si-coordenadas__item small {
+  grid-column: 1;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.mapa-si-coordenadas__item .ui-selo {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+
+.mapa-si-coordenadas__item:hover,
+.mapa-si-coordenadas__item[aria-pressed="true"] {
+  background: var(--surface-muted);
+}
+
+.mapa-si-coordenadas__item[aria-pressed="true"] .mapa-si-coordenadas__nome {
+  font-weight: var(--font-weight-semibold);
+}
+
+.mapa-si-coordenadas__nome {
+  overflow-wrap: anywhere;
+}
+
+.mapa-si-coordenadas__subtitulo {
+  margin: 0;
+  font-size: var(--text-body);
+}
+
+.mapa-si-coordenadas__motivo,
+.mapa-si-coordenadas__mais {
+  color: var(--text-secondary);
+}
+
+.mapa-si-coordenadas__sugestoes li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.mapa-si-coordenadas__sugestoes li > span,
+.mapa-si-coordenadas__historico li {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--text-caption);
+}
+
+.mapa-si-coordenadas__sugestoes small,
+.mapa-si-coordenadas__historico small {
+  color: var(--text-secondary);
+}
+
+.mapa-si-coordenadas__historico li {
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.mapa-si-coordenadas__desfazer {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* O estado pressionado usa o par de cores do botão primário. */
+.mapa-si-painel__acoes .btn[aria-pressed="true"] {
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
+.mapa-si-painel {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.mapa-si-painel[hidden] {
+  display: none;
+}
+
+.mapa-si-painel__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.mapa-si-painel__titulos {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.mapa-si-painel__contagem {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+.mapa-si-painel__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.mapa-si-painel__acoes .btn[aria-pressed="true"] {
+  border-color: var(--color-border-focus);
+  background: var(--brand-primary);
+}
+
+.mapa-si-painel__corpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--mapa-si-lista);
+  gap: var(--space-3);
+  height: var(--mapa-si-altura);
+  min-height: 0;
+}
+
+.mapa-si-moldura {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-muted);
+}
+
+.mapa-si-mapa {
+  width: 100%;
+  height: 100%;
+}
+
+.mapa-si-sem-mapa {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  text-align: center;
+}
+
+/* Escuro: o fundo do mapa recua para não ofuscar; bolhas e formas ficam. */
+.mapa-si--escuro .mapa-si-mapa .leaflet-tile-pane {
+  filter: saturate(0.48) brightness(0.78) contrast(1.08);
+}
+
+/* Acima do cabeçalho e da navegação; o topo fica fora da rolagem do mapa. */
+.mapa-si--tela-cheia .mapa-si-painel:not([hidden]) {
+  position: fixed;
+  z-index: calc(var(--z-overlay, 20000) - 1);
+  inset: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.mapa-si--tela-cheia .mapa-si-painel--dsei {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.mapa-si--tela-cheia .mapa-si-painel__corpo {
+  height: 100%;
+}
+
+/*
+  Modo de edição de coordenadas (src/modulos/editor-de-coordenadas/
+  modo-de-edicao.jsx): o painel cobre a página como a tela cheia, o mapa
+  ocupa todo o corpo e o editor flutua à direita, com rolagem própria. O
+  enquadramento desconta o painel (paddings do Leaflet). Fechar volta ao
+  layout de sempre (altura --mapa-si-altura).
+*/
+.mapa-si-painel--editando:not([hidden]) {
+  --mapa-si-editor: clamp(360px, 30vw, 400px);
+  position: fixed;
+  z-index: calc(var(--z-overlay, 20000) - 1);
+  inset: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.mapa-si-painel--editando.mapa-si-painel--dsei {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.mapa-si-painel--editando .mapa-si-painel__corpo {
+  position: relative;
+  display: block;
+  height: 100%;
+}
+
+.mapa-si-painel--editando .mapa-si-moldura {
+  height: 100%;
+}
+
+/* Acima dos controles do Leaflet (z-index 1000) e da legenda (800). */
+.mapa-si-editor {
+  position: absolute;
+  z-index: 1100;
+  top: var(--space-3);
+  right: var(--space-3);
+  bottom: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  width: var(--mapa-si-editor);
+  max-width: calc(100% - 2 * var(--space-3));
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-md);
+}
+
+.mapa-si-editor__conteudo {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.mapa-si-editor__conteudo[hidden] {
+  display: none;
+}
+
+/* Recolhido: só a faixa estreita com "Abrir editor", em pé. */
+.mapa-si-editor--recolhido {
+  width: auto;
+  align-items: center;
+  padding: var(--space-2) var(--space-1);
+}
+
+.mapa-si-editor--recolhido .mapa-si-editor__recolher {
+  writing-mode: vertical-rl;
+  padding: var(--space-2) var(--space-1);
+}
+
+.mapa-si-editor__recolher::before {
+  content: "▸" / "";
+  margin-inline-end: var(--space-1);
+}
+
+.mapa-si-editor--recolhido .mapa-si-editor__recolher::before {
+  content: "◂" / "";
+  margin: 0 0 var(--space-1);
+  writing-mode: horizontal-tb;
+}
+
+/* O editor enche o painel: a fila estica até o ponto ser escolhido. */
+.mapa-si-editor .mapa-si-coordenadas {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.mapa-si-editor .mapa-si-coordenadas__fila {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.mapa-si-editor .mapa-si-coordenadas__lista {
+  flex: 1 1 0;
+  min-height: 160px;
+  max-height: none;
+}
+
+.mapa-si-editor .mapa-si-coordenadas--com-ponto .mapa-si-coordenadas__fila {
+  flex: none;
+}
+
+.mapa-si-editor .mapa-si-coordenadas--com-ponto .mapa-si-coordenadas__lista {
+  flex: none;
+  min-height: 0;
+  max-height: clamp(140px, 28vh, 280px);
+}
+
+.mapa-si--tela-cheia .mapa-si-tela-cheia {
+  border-color: var(--brand-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* "← Voltar ao Brasil", no topo do mapa do DSEI: o botão primário, do tamanho do texto. */
+.mapa-si-voltar {
+  justify-self: start;
+  font-weight: var(--font-weight-semibold);
+}
+
+.mapa-si-chip-externo {
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--state-warning-soft);
+  color: var(--color-status-warning-text);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Lista ao lado do mapa: territórios por vagas, unidades, terras. */
+.mapa-si-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+  overflow: auto;
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+
+.mapa-si-lista__topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-1) 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caption);
+}
+
+.mapa-si-lista__topo b {
+  color: var(--text-primary);
+}
+
+.mapa-si-lista__itens {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mapa-si-lista__esqueleto {
+  height: var(--space-20);
+}
+
+.mapa-si-territorio,
+.mapa-si-unidade,
+.mapa-si-terra {
+  display: grid;
+  width: 100%;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mapa-si-territorio:hover,
+.mapa-si-unidade:hover,
+.mapa-si-terra:hover:not(:disabled) {
+  border-color: var(--border-subtle);
+  background: var(--surface-hover);
+}
+
+.mapa-si-territorio:focus-visible,
+.mapa-si-unidade:focus-visible,
+.mapa-si-terra:focus-visible,
+.mapa-si-filtros button:focus-visible,
+.mapa-si-terra-fase:focus-visible,
+.mapa-si-legenda__alternar:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.mapa-si-territorio {
+  grid-template-columns: var(--space-6) minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.mapa-si-territorio__posicao {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+}
+
+.mapa-si-territorio__corpo,
+.mapa-si-unidade__corpo {
+  display: grid;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.mapa-si-territorio__corpo strong,
+.mapa-si-unidade__corpo strong,
+.mapa-si-terra strong {
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-body-sm);
+}
+
+.mapa-si-territorio small,
+.mapa-si-unidade small,
+.mapa-si-terra small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.mapa-si-territorio--sem-vagas strong {
+  color: var(--text-secondary);
+}
+
+.mapa-si-territorio__preenchimento {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.mapa-si-territorio__barra {
+  flex: 1;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--border-subtle);
+}
+
+.mapa-si-territorio__barra i {
+  display: block;
+  height: 100%;
+  background: var(--state-success);
+}
+
+[data-situacao="atencao"] .mapa-si-territorio__barra i {
+  background: var(--state-warning);
+}
+
+[data-situacao="critico"] .mapa-si-territorio__barra i {
+  background: var(--state-danger);
+}
+
+.mapa-si-territorio__vagas {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+
+.mapa-si-territorio__vagas b {
+  color: var(--text-primary);
+  font-size: var(--text-body);
+}
+
+.mapa-si-unidade {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.mapa-si-unidade__corpo strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mapa-si-unidade__tipo {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.mapa-si-unidade__externo {
+  color: var(--color-status-warning-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.mapa-si-terra {
+  gap: var(--space-0-5);
+}
+
+.mapa-si-terra:disabled {
+  cursor: default;
+}
+
+.mapa-si-terra__povos {
+  font-size: var(--text-caption);
+}
+
+.mapa-si-terra__povos--ausente {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Chips dos tipos: interruptores (aria-pressed), desligado esmaece e risca. */
+.mapa-si-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.mapa-si-filtros button,
+.mapa-si-terra-fase {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+
+.mapa-si-filtros button[aria-pressed="false"],
+.mapa-si-terra-fase[aria-pressed="false"] {
+  opacity: 0.55;
+}
+
+.mapa-si-filtros button[aria-pressed="false"] b,
+.mapa-si-terra-fase[aria-pressed="false"] span {
+  text-decoration: line-through;
+}
+
+.mapa-si-terra-fase:disabled {
+  cursor: default;
+}
+
+/* Legenda. */
+.mapa-si-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+
+.mapa-si-legenda--flutuante {
+  position: absolute;
+  z-index: 800;
+  bottom: var(--space-3);
+  left: var(--space-3);
+  display: grid;
+  max-width: 240px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-md);
+}
+
+.mapa-si-legenda__alternar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+}
+
+.mapa-si-legenda__corpo {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.mapa-si-legenda__item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+
+.mapa-si-legenda__terras {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.mapa-si-legenda--flutuante .mapa-si-legenda__terras {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.mapa-si-legenda__subtitulo {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.mapa-si-amostra {
+  display: inline-block;
+  flex: none;
+}
+
+.mapa-si-amostra--bolha {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--surface-card);
+  border-radius: var(--radius-full);
+  background: var(--mapa-si-amostra);
+  box-shadow: 0 0 0 1px var(--border-subtle);
+}
+
+.mapa-si-amostra--casai-nacional {
+  width: 10px;
+  height: 10px;
+  margin: 0 1px;
+  border: 1.5px solid var(--surface-card);
+  background: var(--mapa-si-amostra);
+  transform: rotate(45deg);
+}
+
+.mapa-si-amostra--abrangencia {
+  width: 18px;
+  border-top: 3px solid var(--color-blue-600);
+}
+
+.mapa-si-amostra--vinculo {
+  width: 18px;
+  border-top: 2px dashed var(--text-secondary);
+}
+
+.mapa-si-terra-fase__amostra {
+  display: inline-block;
+  flex: none;
+  box-sizing: border-box;
+  width: 16px;
+  height: 11px;
+  border-radius: 3px;
+}
+
+.mapa-si-terra-fase__amostra--definitiva {
+  border: 2px solid var(--terra-definitiva);
+  background: color-mix(in srgb, var(--terra-fundo) 60%, transparent);
+}
+
+.mapa-si-terra-fase__amostra--em_processo {
+  border: 2px dashed var(--terra-em-processo);
+}
+
+.mapa-si-terra-fase__amostra--em_estudo {
+  width: 12px;
+  height: 12px;
+  border: 2px dashed var(--terra-em-processo);
+  border-radius: 50%;
+}
+
+.mapa-si-terra-fase[aria-pressed="false"] .mapa-si-terra-fase__amostra {
+  background: transparent;
+}
+
+.mapa-si-legenda--rodape {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Marcadores (ícones do Leaflet montados em leaflet.js). */
+.mapa-si-marcador-wrap {
+  border: 0;
+  background: none;
+}
+
+.mapa-si-marcador {
+  display: block;
+  line-height: 0;
+  filter: drop-shadow(0 1px 2px rgb(15 35 60 / 35%));
+}
+
+.mapa-si-marcador--externo svg {
+  border-radius: 50%;
+  outline: 2px dashed var(--text-secondary);
+  outline-offset: 2px;
+}
+
+.mapa-si-casai-nacional {
+  display: block;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 2px solid var(--color-neutral-0);
+  box-shadow: var(--shadow-sm);
+  transform: rotate(45deg);
+}
+
+.mapa-si-forma {
+  flex: none;
+}
+
+/* Popups e dicas: texto em linhas, a nota da coordenada menor. */
+.mapa-si-balao {
+  display: grid;
+  gap: var(--space-0-5);
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+}
+
+.mapa-si-balao__titulo {
+  font-weight: var(--font-weight-semibold);
+}
+
+.mapa-si-balao__nota {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.mapa-si--escuro .leaflet-popup-content-wrapper,
+.mapa-si--escuro .leaflet-popup-tip,
+.mapa-si--escuro .leaflet-tooltip {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+@media (max-width: 1220px) {
+  .mapa-si {
+    --mapa-si-lista: clamp(280px, 32%, 360px);
+  }
+}
+
+/* Celular: mapa em cima, lista embaixo. */
+@media (max-width: 900px) {
+  .mapa-si-painel__corpo {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: clamp(320px, 56vh, 520px) auto;
+    height: auto;
+  }
+
+  .mapa-si-lista {
+    max-height: 60vh;
+  }
+
+  .mapa-si-painel__acoes {
+    margin-left: 0;
+  }
+
+  .mapa-si--tela-cheia .mapa-si-painel__corpo {
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .mapa-si--tela-cheia .mapa-si-lista {
+    max-height: none;
+  }
+
+  .mapa-si--tela-cheia .mapa-si-painel {
+    padding: var(--space-3);
+  }
+
+  .mapa-si--tela-cheia .mapa-si-legenda--rodape {
+    max-height: 96px;
+    overflow: auto;
+  }
+
+  /* Modo de edição no celular: o mapa em cima, o editor numa folha embaixo. */
+  .mapa-si-painel--editando:not([hidden]) {
+    --mapa-si-folha: clamp(200px, 30vh, 400px);
+    --mapa-si-folha: clamp(200px, 30dvh, 400px);
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .mapa-si-painel--editando .mapa-si-painel__topo {
+    padding-bottom: var(--space-2);
+  }
+
+  .mapa-si-painel--editando .mapa-si-painel__contagem {
+    display: none;
+  }
+
+  .mapa-si-editor {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    max-width: none;
+    height: var(--mapa-si-folha);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .mapa-si-editor--recolhido {
+    height: auto;
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .mapa-si-editor--recolhido .mapa-si-editor__recolher {
+    writing-mode: horizontal-tb;
+    width: 100%;
+  }
+
+  .mapa-si-editor__recolher::before {
+    content: "▾" / "";
+  }
+
+  .mapa-si-editor--recolhido .mapa-si-editor__recolher::before {
+    content: "▴" / "";
+    margin: 0 var(--space-1) 0 0;
+  }
+
+  .mapa-si-editor .mapa-si-coordenadas--com-ponto .mapa-si-coordenadas__lista {
+    max-height: 120px;
+  }
+}

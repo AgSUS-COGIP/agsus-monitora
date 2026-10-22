@@ -1,33 +1,20 @@
 export const RESOURCES = Object.freeze([
   ["dashboard", "Visão geral"],
-  ["analises", "Análises curriculares"],
+  ["analises", "Painel das análises"],
+  ["avaliacao_documental", "Avaliação documental"],
   ["nucleo", "Editais"],
   ["calendario", "Cronograma"],
   ["aprovados", "Lista de aprovados"],
   ["entrevistas", "Entrevistas"],
+  ["classificacao", "Classificação"],
   ["recursos", "Recursos"],
+  ["recursos_parecer", "Parecer jurídico (Recursos)"],
+  ["selecao", "Seleção"],
   ["importacao", "Importação e convocação"],
   ["paineis", "Painéis externos"],
   ["configuracoes", "Configurações"],
   ["acessos", "Gestão de acessos"],
 ]);
-
-/** O que cada nível libera em cada módulo, em uma frase (tela de grupos). */
-export const DESCRICOES_DOS_MODULOS = Object.freeze({
-  dashboard: "Mapa e indicadores da Saúde Indígena.",
-  analises: "Painel de análises curriculares.",
-  nucleo: "Editais: consultar; Editor cadastra e edita editais e cronogramas.",
-  calendario: "Cronograma dos editais; Editor altera etapas.",
-  aprovados:
-    "Lista de aprovados; Editor muda status; Administrador desfaz status e anexa documentos.",
-  entrevistas: "Painel das entrevistas por área (somente consulta).",
-  recursos: "Recursos dos candidatos por área; Editor registra a análise.",
-  importacao:
-    "Importar listas e configurar convocação; Administrador substitui listas.",
-  paineis: "Abrir os painéis externos liberados à pessoa.",
-  configuracoes: "Marca, textos, aparência e operação do sistema.",
-  acessos: "Gerenciar os acessos da própria coordenação.",
-});
 
 export const LEVELS = Object.freeze([
   ["sem_acesso", "Sem acesso"],
@@ -50,6 +37,17 @@ export function tipoDoRecurso(recurso) {
   return "modulo";
 }
 
+/*
+  Módulos de dois níveis (Sem acesso | Editor). "recursos_parecer"
+  (20261001170000_recursos_parecer_juridico.sql) é quem decide os recursos:
+  deferir, deferir parcialmente, indeferir, devolver, reabrir e aprovar o
+  texto da resposta.
+*/
+export const RECURSOS_SIM_OU_NAO = Object.freeze([
+  "acessos",
+  "recursos_parecer",
+]);
+
 /** Níveis que a célula aceita (as mesmas regras do banco). */
 export function niveisDoRecurso(recurso) {
   const tipo = tipoDoRecurso(recurso);
@@ -57,7 +55,8 @@ export function niveisDoRecurso(recurso) {
   if (tipo === "painel") return LEVELS.slice(0, 2);
   if (recurso === "configuracoes")
     return LEVELS.filter(([nivel]) => nivel !== "leitor");
-  if (recurso === "acessos")
+  // Decide ou não decide (CK_GRUPACESSOREC_ACESSOS / _PARECER no banco).
+  if (RECURSOS_SIM_OU_NAO.includes(recurso))
     return LEVELS.filter(([nivel]) => ["sem_acesso", "editor"].includes(nivel));
   return LEVELS;
 }
@@ -86,24 +85,4 @@ export function hasResource(profile, resource, minimum = 1) {
     ([value]) => value === profile.permissoes?.[resource],
   );
   return rank >= Math.max(1, minimum);
-}
-
-export function matrixChanges(users, draft) {
-  const changes = [];
-  for (const user of users) {
-    for (const [resource, cell] of Object.entries(user.permissoes || {})) {
-      const value = draft.get(`${user.id}/${resource}`);
-      if (value !== undefined && value !== cell.nivel) {
-        if (!LEVELS.some(([level]) => level === value))
-          throw new Error("Nível inválido");
-        changes.push({
-          usuario_id: user.id,
-          recurso: resource,
-          nivel: value,
-          revisao: cell.revisao,
-        });
-      }
-    }
-  }
-  return changes;
 }

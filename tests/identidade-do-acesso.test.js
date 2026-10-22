@@ -4,23 +4,23 @@ import {
   guardarMarca,
   lerMarcaGuardada,
 } from "../src/lib/access-branding-cache.js";
-import { aplicarMarcaGuardadaNoArranque } from "../src/lib/access-branding-boot.js";
+import {
+  aplicarMarcaGuardadaNoArranque,
+  definirMarcaDaConfiguracao,
+  marcaDaEntrada,
+} from "../src/app/entrada/marca.js";
 
 const MARCA_DA_INSTITUICAO = {
   backgroundUrl: "https://exemplo.org/agosto-lilas.jpg",
   panelColor: "#ffffff",
   logoUrl: "https://exemplo.org/logo-institucional.png",
   greeting: "Bem-vindo ao Agosto Lilás",
-  instruction: "Entre com sua conta institucional.",
 };
 
+/* Arte e cor no `#loginScreen`; logo e saudação no estado que a tela (React) desenha. */
 function montarTelaDeAcesso() {
-  document.body.innerHTML = `
-    <div id="loginScreen">
-      <img id="loginLogo" src="" alt="" />
-      <h1 id="loginGreeting"></h1>
-      <p id="loginDescription"></p>
-    </div>`;
+  document.body.innerHTML = `<div id="loginScreen"></div>`;
+  marcaDaEntrada.definir({ logoUrl: "", saudacao: "" });
   return document.getElementById("loginScreen");
 }
 
@@ -29,9 +29,8 @@ function identidadeNaTela() {
   return {
     backgroundImage: tela.style.getPropertyValue("--login-background-image"),
     panelColor: tela.style.getPropertyValue("--login-panel-color"),
-    logo: document.getElementById("loginLogo").getAttribute("src"),
-    greeting: document.getElementById("loginGreeting").textContent,
-    instruction: document.getElementById("loginDescription").textContent,
+    logo: marcaDaEntrada.obter().logoUrl,
+    greeting: marcaDaEntrada.obter().saudacao,
   };
 }
 
@@ -42,18 +41,41 @@ beforeEach(() => {
 afterEach(() => localStorage.clear());
 
 describe("cache da identidade", () => {
-  it("guarda os cinco campos, não apenas fundo e cor", () => {
+  it("guarda os quatro campos, não apenas fundo e cor", () => {
     guardarMarca(MARCA_DA_INSTITUICAO);
     expect(lerMarcaGuardada()).toEqual(MARCA_DA_INSTITUICAO);
+  });
+
+  /*
+    Quem abriu a tela antes de a instrução sair tem `instruction` no cache. A
+    leitura só considera os campos conhecidos: o resto da marca continua valendo
+    e o campo velho some na próxima gravação.
+  */
+  it("cache antigo com instrução: lê o resto e descarta a instrução", () => {
+    localStorage.setItem(
+      "agsus_monitora_access_branding_v1",
+      JSON.stringify({
+        ...MARCA_DA_INSTITUICAO,
+        instruction: "Acesse com sua conta institucional.",
+      }),
+    );
+    expect(lerMarcaGuardada()).toEqual(MARCA_DA_INSTITUICAO);
+
+    guardarMarca({ greeting: "Nova saudação" });
+    const gravado = JSON.parse(
+      localStorage.getItem("agsus_monitora_access_branding_v1"),
+    );
+    expect(gravado).not.toHaveProperty("instruction");
+    expect(gravado.greeting).toBe("Nova saudação");
   });
 });
 
 describe("aplicação no arranque", () => {
   /*
     Aplicar só fundo e cor produzia tela híbrida: a arte de uma configuração com
-    a saudação e o logotipo de outra. Os cinco campos entram juntos.
+    a saudação e o logotipo de outra. Os campos entram juntos.
   */
-  it("aplica os cinco campos, sem deixar tela híbrida", () => {
+  it("aplica os quatro campos, sem deixar tela híbrida", () => {
     guardarMarca(MARCA_DA_INSTITUICAO);
     expect(aplicarMarcaGuardadaNoArranque(document)).toBe(true);
 
@@ -64,7 +86,6 @@ describe("aplicação no arranque", () => {
     expect(naTela.panelColor).toBe(MARCA_DA_INSTITUICAO.panelColor);
     expect(naTela.logo).toBe(MARCA_DA_INSTITUICAO.logoUrl);
     expect(naTela.greeting).toBe(MARCA_DA_INSTITUICAO.greeting);
-    expect(naTela.instruction).toBe(MARCA_DA_INSTITUICAO.instruction);
   });
 
   /*
@@ -81,7 +102,7 @@ describe("aplicação no arranque", () => {
 
   /*
     O ciclo completo que a pessoa vê: primeiro carregamento, depois do logout e
-    depois de recarregar precisam ser idênticos nos cinco valores.
+    depois de recarregar precisam ser idênticos nos quatro valores.
   */
   it("login inicial = login após logout = login após reload", () => {
     guardarMarca(MARCA_DA_INSTITUICAO);
@@ -126,30 +147,107 @@ describe("falha ao carregar a configuração", () => {
   });
 });
 
-describe("ligação com applyConfigToUi", () => {
-  const app = readFileSync("src/modules/legacy-app.js", "utf8");
-
-  it("a identidade só é gravada quando veio do banco", () => {
-    expect(app).toContain("configLoadOk && loadedConfigKeys.has(chave)");
-    expect(app).toMatch(
-      /if \(Object\.keys\(marcaParaGuardar\)\.length\) guardarMarca/,
-    );
-  });
+describe("tela de acesso sem repetição", () => {
+  const tela = readFileSync("src/app/entrada/entrada.jsx", "utf8");
+  const html = readFileSync("index.html", "utf8");
 
   /*
-    Se `guardarMarca` voltasse a ser chamada incondicionalmente, o defeito
-    regressaria inteiro.
+    Como no SIGAV: uma linha de apoio fixa acima do botão ("Acesse com sua
+    conta institucional.", `ACCESS_INSTRUCTION`) e o rodapé institucional com o
+    escudo. Sem campo de configuração para a linha de apoio e sem os antigos
+    blocos de descrição e de aviso de segurança.
   */
+  it("linha de apoio constante, sem campo para ela nem os blocos antigos", () => {
+    expect(tela).toContain('id="loginGreeting"');
+    expect(tela).toContain('id="googleLoginText"');
+    expect(tela).toContain("{ACCESS_INSTRUCTION}");
+    expect(html).toContain("Acesse com sua conta institucional.");
+    for (const fonte of [tela, html]) {
+      expect(fonte).not.toContain("loginDescription");
+      expect(fonte).not.toContain("loginSecurity");
+      expect(fonte).not.toContain("cfgAccessInstruction");
+    }
+  });
+});
+
+/*
+  A configuração completa (TB_CONFIGURACAO) chega pelo legado a cada
+  `loadConfig` e passa por `definirMarcaDaConfiguracao`.
+*/
+describe("a marca vinda da configuração", () => {
+  const COMPLETA = {
+    auth_access_background_url: "https://exemplo.org/agosto-lilas.jpg",
+    auth_access_panel_color: "#ffffff",
+    auth_access_logo_url: "https://exemplo.org/logo-institucional.png",
+    auth_access_greeting: "Bem-vindo ao Agosto Lilás",
+  };
+
+  it("a identidade só é gravada quando veio do banco", () => {
+    // O caminho de erro do loadConfig: configuração vazia, nada carregou.
+    definirMarcaDaConfiguracao({ valores: {}, carregou: false });
+    expect(lerMarcaGuardada()).toBeNull();
+    expect(identidadeNaTela().greeting).toBe("");
+
+    // Carregou, mas sem as chaves da marca (anônimo): também não grava.
+    definirMarcaDaConfiguracao({
+      valores: { app_title: "MONITORA" },
+      carregou: true,
+      chaves: new Set(["app_title"]),
+    });
+    expect(lerMarcaGuardada()).toBeNull();
+  });
+
+  it("com as chaves do banco, aplica e grava os quatro campos juntos", () => {
+    definirMarcaDaConfiguracao({
+      valores: COMPLETA,
+      carregou: true,
+      chaves: new Set(Object.keys(COMPLETA)),
+    });
+    expect(identidadeNaTela()).toEqual({
+      backgroundImage: `url("${MARCA_DA_INSTITUICAO.backgroundUrl}")`,
+      panelColor: MARCA_DA_INSTITUICAO.panelColor,
+      logo: MARCA_DA_INSTITUICAO.logoUrl,
+      greeting: MARCA_DA_INSTITUICAO.greeting,
+    });
+    expect(lerMarcaGuardada()).toEqual({
+      ...MARCA_DA_INSTITUICAO,
+      textoModo: "auto",
+    });
+  });
+
+  it("o rodapé institucional sai da configuração (departamento ou rodapé)", () => {
+    definirMarcaDaConfiguracao({
+      valores: { cogip_nome: "COGIP", footer_text: "AgSUS" },
+      carregou: true,
+      chaves: new Set(["cogip_nome", "footer_text"]),
+    });
+    expect(marcaDaEntrada.obter().rodape).toMatchObject({
+      nome: "COGIP",
+      departamento: "AgSUS",
+    });
+  });
+
   it("não existe chamada incondicional a guardarMarca", () => {
     // Os comentários do módulo citam a função ao explicar o defeito corrigido.
-    const codigo = app
+    const codigo = readFileSync("src/app/entrada/marca.js", "utf8")
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/^\s*\/\/.*$/gm, "");
-    const chamadas = [...codigo.matchAll(/guardarMarca\(/g)].length;
-    expect(chamadas).toBe(1);
+    expect(codigo).toMatch(
+      /if \(Object\.keys\(marcaParaGuardar\)\.length\) guardarMarca/,
+    );
+    // A outra é a do branding público, que guarda a resposta mesclada.
+    expect([...codigo.matchAll(/guardarMarca\(/g)].length).toBe(2);
   });
 
   it("o logout não apaga nem troca a identidade", () => {
-    expect(app).not.toContain("limparMarcaGuardada");
+    for (const arquivo of [
+      "src/app/sistema.js",
+      "src/app/perfil.js",
+      "src/app/sessao.js",
+      "src/app/entrada/marca.js",
+    ])
+      expect(readFileSync(arquivo, "utf8")).not.toContain(
+        "limparMarcaGuardada",
+      );
   });
 });

@@ -34,8 +34,8 @@
       em `#loginScreen`, que ainda não foi criado — variáveis CSS são herdadas,
       então `#loginScreen .login-card` já as resolve.
 
-      A classe de contraste não pode vir daqui: `post-152-regression-fixes.css`
-      a exige no próprio elemento, em `#loginScreen.login-panel-dark`. Ela fica
+      A classe de contraste não pode vir daqui: a seção Login de
+      `platform-shell.css` a exige no próprio elemento, em `#loginScreen.login-panel-dark`. Ela fica
       decidida nesta bandeira e é aplicada por um segundo script, logo depois do
       elemento — assim nenhum dos seletores existentes precisa ser duplicado.
 
@@ -65,7 +65,7 @@
             var b = parseInt(cor.slice(5, 7), 16);
             /*
               A classe, ao contrário, é exigida em `#loginScreen.login-panel-dark`
-              por post-152. Fica guardada aqui e um script logo depois do
+              (platform-shell.css). Fica guardada aqui e um script logo depois do
               elemento a aplica — assim nenhum seletor precisa ser duplicado.
             */
             /*
@@ -368,12 +368,15 @@
               ><span class="esqueleto"></span><span class="esqueleto"></span>
             </div>
             <div class="esqueleto esqueleto-calendario__grade">
-              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-              <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span
+              ><span></span><span></span> <span></span><span></span><span></span
+              ><span></span><span></span><span></span><span></span> <span></span
+              ><span></span><span></span><span></span><span></span><span></span
+              ><span></span> <span></span><span></span><span></span><span></span
+              ><span></span><span></span><span></span> <span></span><span></span
+              ><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span
+              ><span></span><span></span>
             </div>
           </div>
         </div>
@@ -422,7 +425,7 @@
       id="loginScreen"
       class="login-screen"
       aria-labelledby="loginGreeting"
-      aria-describedby="loginDescription"
+      aria-describedby="loginSubtitle"
     >
       <script>
         if (window.__agsusPainelEscuro) {
@@ -431,239 +434,104 @@
             .classList.add("login-panel-dark");
         }
       </script>
-      <div class="login-outer">
-        <div class="login-card">
-          <div class="login-brand-lockup" aria-label="MONITORA">
-            <div class="login-organization-mark">
-              <img
-                id="loginLogo"
-                src="/assets/agsus-logo.webp"
-                alt=""
-                onerror="this.style.display = 'none'"
-              />
-              <strong>AgSUS</strong>
-            </div>
-            <span class="login-brand-divider" aria-hidden="true"></span>
-            <div class="login-product-mark">
-              <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
-              <strong id="loginTitle">MONITORA</strong>
-            </div>
-          </div>
-          <p class="login-subtitle" id="loginSubtitle">
-            Monitoramento de Processos Seletivos
-          </p>
-          <h1 id="loginGreeting">Seja bem-vindo(a) à AgSUS</h1>
-          <p id="loginDescription" class="login-description">
-            Acesse com sua conta institucional.
-          </p>
-          <div id="configMsg" class="alert error hidden"></div>
-          <div id="loginMsg" class="alert hidden"></div>
-          <div class="login-form google-only-login">
-            <button
-              id="googleLoginBtn"
-              type="button"
-              class="google-login-btn"
-              onclick="loginWithGoogle()"
-            >
-              <span class="gmark">G</span
-              ><span id="googleLoginText">Entrar com Google institucional</span>
-            </button>
-            <div class="login-security" id="loginSecurity">
-              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-              <span
-                >Acesso seguro e exclusivo para contas institucionais
-                AgSUS.</span
-              >
-            </div>
-            <div id="accessRequestCard" class="access-request-card hidden">
-              <div class="access-request-head compact">
-                <div>
-                  <h2 id="accessRequestTitulo">Solicitar acesso</h2>
-                  <p class="access-request-subtitle">
-                    Sua conta Google entrou, mas ainda não tem acesso ao
-                    MONITORA. Envie o pedido e um administrador avalia.
-                  </p>
-                  <p class="access-request-invite">
-                    Se você recebeu um convite, entre com o e-mail convidado.
-                  </p>
-                </div>
+      <!--
+        A tela de acesso é React (src/app/entrada/entrada.jsx) e monta aqui,
+        no lugar do cartão abaixo. Ele segura o primeiro quadro, com a cor do
+        painel já aplicada, até o JavaScript chegar — com a MESMA árvore e as
+        MESMAS medidas do cartão do React (marca com logo 52×52 e ícone em SVG,
+        slogan, saudação padrão, linha de apoio, o botão do Google inerte e o
+        rodapé com o escudo). O texto do botão fica invisível até o React saber
+        qual é (`data-texto="pendente"`). Sem isso o cartão crescia na troca e
+        a tela "saltava" ao recarregar. `tests/app/entrada.test.js` compara as
+        duas árvores.
+      -->
+      <div id="telaDeEntrada">
+        <div class="login-outer">
+          <div class="login-card" aria-hidden="true">
+            <div class="login-brand-lockup">
+              <div class="login-organization-mark">
+                <img
+                  src="/assets/agsus-logo.webp"
+                  alt=""
+                  width="52"
+                  height="52"
+                />
+                <strong>AgSUS</strong>
               </div>
-
-              <!-- Enquanto a situação não é conhecida: nada de formulário (solicitacao-de-acesso.js). -->
-              <div
-                id="accessRequestCarregando"
-                class="access-request-carregando hidden"
-                aria-hidden="true"
-              >
-                <span class="esqueleto"></span>
-                <span class="esqueleto"></span>
-              </div>
-
-              <div class="access-authenticated-user">
-                <span>E-mail autenticado</span>
-                <strong id="accessReqEmail">-</strong>
-              </div>
-
-              <!-- Situação do pedido: src/modules/solicitacao-de-acesso.js -->
-              <div
-                id="accessRequestStatus"
-                class="access-status hidden"
-                role="status"
-                aria-live="polite"
-              >
-                <span
-                  id="accessRequestIlustracao"
-                  class="access-status-ilustracao hidden"
-                  aria-hidden="true"
-                  >😢</span
+              <span class="login-brand-divider"></span>
+              <div class="login-product-mark">
+                <svg
+                  class="login-product-icon"
+                  viewBox="0 0 24 24"
+                  width="30"
+                  height="30"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
                 >
-                <strong id="accessRequestStatusTitulo" class="hidden"></strong>
-                <span id="accessRequestStatusTexto"></span>
-                <button
-                  id="accessRequestEnterBtn"
-                  type="button"
-                  class="btn green access-enter-btn hidden"
-                >
-                  <i class="fa-solid fa-arrow-right"></i> Entrar
-                  agora
-                </button>
-                <div id="accessRequestReativar" class="access-reativar hidden">
-                  <span>Precisa do acesso de novo?</span>
-                  <button
-                    id="accessRequestReativarBtn"
-                    type="button"
-                    class="btn secondary"
-                  >
-                    <i class="fa-solid fa-rotate-left"></i> Pedir reativação
-                  </button>
-                </div>
+                  <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+                  <path d="m19 9-5 5-4-4-3 3" />
+                </svg>
+                <strong>MONITORA</strong>
               </div>
-
-              <div id="accessRequestForm" class="access-request-grid">
-                <div class="form-row">
-                  <label for="accessReqNome"
-                    >Nome <span class="access-required">(obrigatório)</span></label
-                  >
-                  <input
-                    id="accessReqNome"
-                    type="text"
-                    autocomplete="name"
-                    maxlength="120"
-                    aria-describedby="accessReqNomeErro"
-                  />
-                  <small
-                    id="accessReqNomeErro"
-                    class="access-field-error hidden"
-                  ></small>
-                </div>
-
-                <div id="accessReqSetorLinha" class="form-row">
-                  <label for="accessReqSetor">Área / setor</label>
-                  <input
-                    id="accessReqSetor"
-                    type="text"
-                    maxlength="200"
-                    placeholder="Ex.: COGIP, DSEI Yanomami"
-                    aria-describedby="accessReqSetorDica accessReqSetorErro"
-                  />
-                  <small id="accessReqSetorDica" class="access-field-hint"
-                    >Obrigatório se você não escolher a coordenação.</small
-                  >
-                  <small
-                    id="accessReqSetorErro"
-                    class="access-field-error hidden"
-                  ></small>
-                </div>
-
-                <div class="form-row full">
-                  <label for="accessReqCoordenacao">Coordenação</label>
-                  <select
-                    id="accessReqCoordenacao"
-                    aria-describedby="accessReqCoordenacaoErro"
-                  >
-                    <option value="">Não sei — o administrador define</option>
-                  </select>
-                  <small
-                    id="accessReqCoordenacaoErro"
-                    class="access-field-error hidden"
-                  ></small>
-                </div>
-
-                <div class="form-row full">
-                  <label for="accessReqJustificativa"
-                    >Justificativa
-                    <span class="access-required">(obrigatória)</span></label
-                  >
-                  <textarea
-                    id="accessReqJustificativa"
-                    rows="3"
-                    maxlength="2000"
-                    placeholder="Para que você vai usar o MONITORA?"
-                    aria-describedby="accessReqJustificativaDica accessReqJustificativaErro"
-                  ></textarea>
-                  <small
-                    id="accessReqJustificativaDica"
-                    class="access-field-hint"
-                    >Mínimo de 20 caracteres.</small
-                  >
-                  <small
-                    id="accessReqJustificativaErro"
-                    class="access-field-error hidden"
-                  ></small>
-                </div>
-              </div>
-
+            </div>
+            <p class="login-subtitle">Monitoramento de Processos Seletivos</p>
+            <h1>Boas-vindas!</h1>
+            <p class="login-apoio">Acesse com sua conta institucional.</p>
+            <div class="alert hidden"></div>
+            <div class="login-form google-only-login">
               <button
-                id="accessRequestBtn"
                 type="button"
-                class="btn green access-submit-btn"
-                onclick="submitAccessRequest()"
+                class="google-login-btn"
+                data-texto="pendente"
+                disabled
+                tabindex="-1"
               >
-                <i class="fa-solid fa-paper-plane"></i>
-                <span id="accessRequestBtnTexto">Enviar pedido</span>
+                <svg class="gmark" viewBox="0 0 48 48" width="20" height="20">
+                  <path
+                    fill="#EA4335"
+                    d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+                  />
+                  <path
+                    fill="#4285F4"
+                    d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+                  />
+                </svg>
+                <span>Entrar com Google</span>
               </button>
-
-              <div class="access-account-actions">
-                <button
-                  id="accessSwitchAccountBtn"
-                  type="button"
-                  class="google-login-btn"
-                  onclick="loginWithGoogle()"
-                >
-                  <span class="gmark">G</span
-                  ><span>Usar outra conta Google</span>
-                </button>
-                <button
-                  id="accessReturnLoginBtn"
-                  type="button"
-                  class="btn secondary"
-                  onclick="returnToLogin()"
-                >
-                  <i class="fa-solid fa-arrow-right-from-bracket"></i> Voltar ao
-                  login
-                </button>
-              </div>
             </div>
+            <p class="login-instituicao">
+              <svg
+                class="login-instituicao-icone"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+                />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+              <span>Agência Brasileira de Apoio à Gestão do SUS</span>
+            </p>
           </div>
-          <div class="login-cogip">
-            <img
-              class="login-cogip-logo"
-              id="loginCogipLogo"
-              src=""
-              alt=""
-              onerror="this.style.display = 'none'"
-              style="display: none"
-            />
-            <div class="login-cogip-info">
-              <div class="login-cogip-name" id="loginCogipName"></div>
-              <div class="login-cogip-role" id="loginCogipRole">
-                <span id="loginVersion"></span>
-              </div>
-              <div class="login-cogip-dept" id="loginFoot"></div>
-            </div>
-          </div>
+          <div class="login-stripe"></div>
         </div>
-        <div class="login-stripe" aria-hidden="true"></div>
       </div>
     </section>
 
@@ -703,35 +571,12 @@
             </div>
           </div>
           <div class="actions">
-            <div id="onlinePresence" class="online-presence hidden">
-              <button
-                id="onlinePresenceBtn"
-                class="online-presence-button"
-                type="button"
-                onclick="toggleOnlinePresence()"
-                aria-expanded="false"
-                aria-controls="onlinePresencePopover"
-              >
-                <span id="onlinePresenceDot" class="online-presence-dot"></span>
-                <i class="fa-solid fa-user-group" aria-hidden="true"></i>
-                <span id="onlinePresenceLabel">Sincronizando</span>
-              </button>
-              <div
-                id="onlinePresencePopover"
-                class="online-presence-popover"
-                hidden
-              >
-                <div class="online-presence-heading">
-                  <strong>Pessoas online</strong>
-                  <small>Ativas no MONITORA agora</small>
-                </div>
-                <div id="onlinePresenceList" class="online-presence-list"></div>
-              </div>
-            </div>
+            <!-- Pessoas online (React: src/componentes/pessoas-online/) -->
+            <div id="pessoasOnlineApp" class="pessoas-online-app"></div>
             <details id="topUserMenu" class="top-user-menu">
               <summary
                 class="top-user-button"
-                aria-label="Abrir perfil do usuário"
+                aria-label="Abrir informações da conta"
               >
                 <span
                   id="topUserAvatar"
@@ -740,6 +585,8 @@
                 >
                   <i class="fa-solid fa-user"></i>
                 </span>
+                <!-- Selo do edital no avatar (React: src/modulos/encerramento-do-edital/) -->
+                <span id="seloNoAvatarApp" class="selo-no-avatar"></span>
                 <span class="top-user-compact-copy">
                   <strong id="userName">-</strong>
                   <small
@@ -756,51 +603,56 @@
                 <strong id="topUserPopoverName">-</strong>
                 <small id="userEmail">-</small>
                 <span id="topUserPopoverProfile"></span>
-                <!--
-                  Ações do antigo botão "⋮" do cabeçalho: agora ficam no menu da conta,
-                  um lugar só para o que é da pessoa e da sessão. Modo escuro e Sair são
-                  retirados daqui por nielsen-shell-ux.js (estão na barra lateral).
-                -->
+                <!-- Selos de editais (React: src/modulos/encerramento-do-edital/) -->
+                <div id="selosDoEditalApp"></div>
+                <!-- Ações da conta. Tema e Sair ficam no rodapé da barra lateral. -->
                 <div class="top-user-popover-actions">
-                  <button type="button" onclick="refreshData(); this.closest('details').removeAttribute('open')">
+                  <button
+                    type="button"
+                    onclick="
+                      refreshData();
+                      this.closest('details').removeAttribute('open');
+                    "
+                  >
                     <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
                     <span id="refreshActionText">Atualizar dados</span>
                   </button>
-                  <button type="button" onclick="this.closest('details').removeAttribute('open'); toggleBrowserFullscreen()">
-                    <i id="fullscreenActionIcon" class="fa-solid fa-expand" aria-hidden="true"></i>
-                    <span id="fullscreenActionText">Tela cheia</span>
-                  </button>
-                  <button type="button" onclick="this.closest('details').removeAttribute('open'); exportPDF()">
-                    <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
-                    <span id="exportPdfActionText">Exportar relatório (PDF)</span>
-                  </button>
-                  <button type="button" onclick="toggleDarkMode()">
-                    <i class="fa-solid fa-moon" aria-hidden="true"></i>
-                    <span>Alternar modo escuro</span>
-                  </button>
-                  <button type="button" onclick="logout()">
+                  <button
+                    type="button"
+                    onclick="
+                      this.closest('details').removeAttribute('open');
+                      toggleBrowserFullscreen();
+                    "
+                  >
                     <i
-                      class="fa-solid fa-right-from-bracket"
+                      id="fullscreenActionIcon"
+                      class="fa-solid fa-expand"
                       aria-hidden="true"
                     ></i>
-                    <span>Sair do sistema</span>
+                    <span id="fullscreenActionText">Tela cheia</span>
+                  </button>
+                  <button
+                    type="button"
+                    onclick="
+                      this.closest('details').removeAttribute('open');
+                      exportPDF();
+                    "
+                  >
+                    <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+                    <span id="exportPdfActionText"
+                      >Exportar relatório (PDF)</span
+                    >
                   </button>
                 </div>
               </div>
             </details>
-            <button
-              id="exportCsvBtn"
-              class="btn green"
-              type="button"
-              onclick="exportCSV()"
-              hidden
-            >
-              <i class="fa-solid fa-download"></i>
-              <span id="exportCsvText"></span>
-            </button>
           </div>
         </header>
-        <div id="araraGuideHost"></div>
+        <!-- Aviso de versão nova (React: src/componentes/aviso-de-versao/) -->
+        <div id="avisoDeVersaoApp"></div>
+        <div id="ayaApp"></div>
+        <!-- Tela de encerramento do edital (React: src/modulos/encerramento-do-edital/) -->
+        <div id="encerramentoDoEditalApp"></div>
 
         <div
           id="broadcastBar"
@@ -810,541 +662,11 @@
         ></div>
 
         <div class="content">
-          <section id="page-dashboard" class="page active">
-            <div
-              id="boasVindas"
-              class="boas-vindas"
-              role="status"
-              aria-live="polite"
-              hidden
-            ></div>
-            <div
-              id="marcosDoAno"
-              class="boas-vindas marcos-do-ano"
-              role="status"
-              aria-live="polite"
-              hidden
-            ></div>
-            <div class="filter-card card">
-              <div class="filter-head">
-                <button
-                  id="filterToggleBtn"
-                  class="btn secondary"
-                  onclick="toggleFilters()"
-                ></button>
-              </div>
-              <div id="filterBody" class="filter-body hidden">
-                <div>
-                  <label>Unidade</label>
-                  <div
-                    id="filterUnidade"
-                    class="multi-select"
-                    data-filter="unidade"
-                  ></div>
-                </div>
-                <div>
-                  <label>Edital</label>
-                  <div
-                    id="filterEdital"
-                    class="multi-select"
-                    data-filter="edital"
-                  ></div>
-                </div>
-                <div>
-                  <label>Etapa</label>
-                  <div
-                    id="filterEtapa"
-                    class="multi-select"
-                    data-filter="etapa"
-                  ></div>
-                </div>
-                <div>
-                  <label>Status</label>
-                  <div
-                    id="filterStatus"
-                    class="multi-select"
-                    data-filter="status"
-                  ></div>
-                </div>
-                <div>
-                  <label>Risco</label>
-                  <div
-                    id="filterRisco"
-                    class="multi-select"
-                    data-filter="risco"
-                  ></div>
-                </div>
-                <div>
-                  <label>UF</label>
-                  <div
-                    id="filterUf"
-                    class="multi-select"
-                    data-filter="uf"
-                  ></div>
-                </div>
-                <button class="btn secondary" onclick="clearFilters()">
-                  Limpar
-                </button>
-              </div>
-            </div>
-            <div id="activeFiltersBar" class="active-filters-bar hidden"></div>
-            <div
-              id="dashboardSectionProcessos"
-              class="section-label section-label-primary"
-            ></div>
-            <div class="kpis kpis-main">
-              <div class="kpi ag-navy">
-                <span
-                  ><i
-                    class="fa-solid fa-folder-open"
-                    style="margin-right: 5px; opacity: 0.7"
-                  ></i
-                  ><span id="kpiProcessosLabel"></span></span
-                ><b id="kProcessos">0</b>
-              </div>
-              <div class="kpi ag-blue">
-                <span
-                  ><i
-                    class="fa-solid fa-briefcase"
-                    style="margin-right: 5px; opacity: 0.7"
-                  ></i
-                  ><span id="kpiVagasLabel"></span></span
-                ><b id="kVagas">0</b>
-              </div>
-              <div class="kpi ag-green">
-                <span
-                  ><i
-                    class="fa-solid fa-user-check"
-                    style="margin-right: 5px; opacity: 0.7"
-                  ></i
-                  ><span id="kpiContratadosLabel"></span></span
-                ><b id="kContratados">0</b>
-              </div>
-              <div class="kpi ag-red">
-                <span
-                  ><i
-                    class="fa-solid fa-triangle-exclamation"
-                    style="margin-right: 5px; opacity: 0.7"
-                  ></i
-                  ><span id="kpiOciosasLabel"></span></span
-                ><b id="kOciosas">0</b>
-              </div>
-              <button
-                type="button"
-                id="kpiCriticosCard"
-                class="kpi kpi-clickable ag-yellow"
-                onclick="toggleCriticalRiskFilter()"
-                title="Filtrar por risco Médio e Alto"
-              >
-                <span
-                  ><i
-                    class="fa-solid fa-circle-exclamation"
-                    style="margin-right: 5px; opacity: 0.7"
-                  ></i
-                  ><span id="kpiCriticosLabel"></span>
-                  <span id="panicChip" class="chip gray"></span
-                ></span>
-                <b id="kCriticos">0</b>
-              </button>
-              <div class="kpi ag-cyan">
-                <span
-                  ><i
-                    class="fa-solid fa-users"
-                    style="margin-right: 5px; opacity: 0.7"
-                  ></i
-                  ><span id="kpiInscritosLabel"></span></span
-                ><b id="kInscritos">0</b>
-              </div>
-            </div>
-            <div id="multiUnitsCard" class="multi-units-card card hidden"></div>
-            <div
-              class="health-map-workspace"
-              aria-label="Mapas da rede de saúde indígena"
-            >
-              <section class="card health-map-pane health-map-pane--master">
-                <header class="health-map-pane__header">
-                  <div>
-                    <span class="health-map-pane__eyebrow"
-                      ><i class="fa-solid fa-earth-americas"></i> Visão
-                      nacional</span
-                    >
-                    <h3>DSEIs / CASAIs do Brasil</h3>
-                  </div>
-                  <span class="health-map-pane__count" id="masterMapCount"
-                    >Brasil</span
-                  >
-                </header>
-                <!-- O mapa fica na proporção que o Brasil preenche; a largura
-                     que sobra leva a lista dos territórios, não oceano. -->
-                <div class="health-map-brasil-layout">
-                  <div
-                    id="map"
-                    role="img"
-                    aria-label="Mapa do Brasil com processos seletivos por DSEI, polos base e CASAI"
-                  ></div>
-                  <aside
-                    class="health-map-units health-map-brasil-painel"
-                    aria-label="Territórios por vagas"
-                  >
-                    <div class="health-map-units__header">
-                      <span
-                        ><i class="fa-solid fa-ranking-star"></i> Territórios
-                        por vagas</span
-                      >
-                      <b id="brasilDseiCount" aria-label="Carregando">…</b>
-                    </div>
-                    <div id="brasilDseiList" class="health-map-units__list">
-                      <div class="health-map-empty">
-                        <i class="fa-solid fa-map-location-dot"></i>
-                        <strong>Carregando os territórios</strong>
-                        <span>Segue os filtros da página.</span>
-                      </div>
-                    </div>
-                  </aside>
-                </div>
-                <footer class="health-map-pane__hint">
-                  <i class="fa-solid fa-arrow-pointer"></i>
-                  Escolha um DSEI no mapa para ver polos e unidades.
-                </footer>
-                <span id="mapLegendMin" class="hidden">0</span>
-                <span id="mapLegendMax" class="hidden"></span>
-                <span id="mapLegendScale" class="hidden"></span>
-                <span id="mapLegendDsei" class="hidden"></span>
-              </section>
-              <section class="card health-map-pane health-map-pane--detail">
-                <header class="health-map-pane__header">
-                  <div>
-                    <!-- O trilho guarda a referência nacional sem gastar um
-                         mapa inteiro a repetir o Brasil ao lado. -->
-                    <nav class="health-map-breadcrumb" aria-label="Onde estou">
-                      <button
-                        type="button"
-                        class="health-map-breadcrumb__voltar"
-                        onclick="resetDetailMap()"
-                      >
-                        Brasil
-                      </button>
-                      <span aria-hidden="true">›</span>
-                      <span id="detailBreadcrumbDsei">território</span>
-                    </nav>
-                    <h3 id="detailMapTitle">Mapa do Brasil</h3>
-                  </div>
-                  <div class="health-map-detail-actions">
-                    <!-- O chip só aparece quando há vínculo fora da abrangência
-                         do DSEI; o botão alterna entre o enquadramento do
-                         território e o que inclui as unidades externas. -->
-                    <span
-                      id="detailExternalChip"
-                      class="health-map-external-chip"
-                      hidden
-                    ></span>
-                    <button
-                      id="detailExternalToggle"
-                      class="health-map-external-toggle"
-                      type="button"
-                      onclick="toggleVinculosExternos()"
-                      hidden
-                    >
-                      Mostrar vínculos externos
-                    </button>
-                    <button
-                      id="detailMapReset"
-                      class="health-map-reset hidden"
-                      type="button"
-                      onclick="resetDetailMap()"
-                    >
-                      <i class="fa-solid fa-arrow-left"></i> Voltar à visão
-                      nacional
-                    </button>
-                  </div>
-                </header>
-                <!-- Território à esquerda, painel de unidades à direita. O card
-                     inteiro só aparece quando houver um DSEI escolhido. -->
-                <div class="health-map-detail-layout">
-                  <div
-                    id="detailMap"
-                    role="img"
-                    aria-label="Mapa detalhado dos polos e unidades do DSEI selecionado"
-                  ></div>
-                  <aside
-                    class="health-map-units"
-                    aria-label="Polos e unidades do território selecionado"
-                  >
-                    <div class="health-map-units__header">
-                      <span
-                        ><i class="fa-solid fa-house-medical"></i> Polos e
-                        unidades</span
-                      >
-                      <b id="detailUnitCount">0</b>
-                    </div>
-                    <div
-                      id="detailFiltros"
-                      class="health-map-filtros"
-                      role="group"
-                      aria-label="Filtrar as unidades por tipo"
-                      hidden
-                    ></div>
-                    <div id="detailUnitList" class="health-map-units__list">
-                      <div class="health-map-empty">
-                        <i class="fa-solid fa-map-location-dot"></i>
-                        <strong>Selecione um DSEI</strong>
-                        <span
-                          >Os polos, CASAIs e unidades aparecerão aqui.</span
-                        >
-                      </div>
-                    </div>
-                    <!--
-                      O mapa desenhava as terras e não as nomeava em lugar
-                      nenhum: para saber quais eram e que povos vivem nelas era
-                      preciso passar o ponteiro por cima de cada uma, uma a uma.
-                      Esta lista é preenchida pela própria camada, com as terras
-                      que sobreviveram ao filtro do distrito.
-                    -->
-                    <div class="health-map-units__header">
-                      <span
-                        ><i class="fa-solid fa-mountain-sun"></i> Terras
-                        Indígenas e povos</span
-                      >
-                      <b id="detailTerraCount">0</b>
-                    </div>
-                    <div id="detailTerraList" class="health-map-units__list">
-                      <div class="health-map-empty">
-                        <i class="fa-solid fa-mountain-sun"></i>
-                        <strong>Selecione um DSEI</strong>
-                        <span
-                          >As Terras Indígenas atendidas aparecerão aqui.</span
-                        >
-                      </div>
-                    </div>
-                  </aside>
-                </div>
-                <!--
-                  Preenchida por `aplicarLegendaDoMapaDetalhado()`, a partir da
-                  mesma tabela que decide a forma e a cor de cada marcador.
-                  Escrita à mão, ela ficou descrevendo bolinhas redondas
-                  enquanto o mapa já desenhava círculo, casa, cruz e losango.
-                -->
-                <footer
-                  class="health-map-detail-legend"
-                  aria-label="Legenda do mapa detalhado"
-                ></footer>
-              </section>
-            </div>
-            <div class="card panel-pad health-status-summary-card">
-              <h3 id="statusSummaryTitle" class="panel-title"></h3>
-              <div id="statusSummary"></div>
-            </div>
-            <div class="lower-grid">
-              <div class="card panel-pad">
-                <h3 id="operationalStatusTitle" class="panel-title"></h3>
-                <div class="chart-wrap">
-                  <canvas id="statusChart" role="img" aria-label=""></canvas>
-                </div>
-              </div>
-              <div class="card panel-pad">
-                <h3 id="attentionTitle" class="panel-title"></h3>
-                <div id="riskList" class="risk-list"></div>
-              </div>
-            </div>
-            <div class="table-card card">
-              <div class="table-head">
-                <h3>
-                  <i class="fa-solid fa-table-list"></i>
-                  <span id="detailsTitle"></span>
-                </h3>
-                <div
-                  style="
-                    display: flex;
-                    gap: 8px;
-                    align-items: center;
-                    flex: 1;
-                    justify-content: flex-end;
-                  "
-                >
-                  <div style="position: relative; flex: 1; max-width: 390px">
-                    <input
-                      id="tableSearch"
-                      placeholder=""
-                      aria-label=""
-                      oninput="debouncedSearch()"
-                      style="width: 100%; padding-right: 36px"
-                    />
-                    <i
-                      class="fa-solid fa-magnifying-glass"
-                      style="
-                        position: absolute;
-                        right: 12px;
-                        top: 50%;
-                        transform: translateY(-50%);
-                        color: #b0c4da;
-                        font-size: 13px;
-                        pointer-events: none;
-                      "
-                    ></i>
-                  </div>
-                  <button
-                    id="hideClosedBtn"
-                    class="btn secondary"
-                    onclick="toggleHideClosed()"
-                    title=""
-                    aria-pressed="false"
-                    style="min-height: 38px; padding: 0 12px; gap: 6px"
-                  >
-                    <i class="fa-solid fa-eye"></i>
-                    <span id="hideClosedLabel"></span>
-                  </button>
-                  <div class="col-toggle-wrap">
-                    <button
-                      id="columnsButton"
-                      class="btn secondary"
-                      onclick="toggleColMenu()"
-                      title=""
-                      style="min-height: 38px; padding: 0 12px; gap: 6px"
-                    >
-                      <i class="fa-solid fa-table-columns"></i>
-                      <span id="columnsButtonText"></span>
-                    </button>
-                    <div id="colToggleMenu" class="col-toggle-menu" role="menu">
-                      <div
-                        id="columnsMenuTitle"
-                        style="
-                          padding: 8px 16px 6px;
-                          font-size: var(--text-caption);
-                          font-weight: 500;
-                          color: var(--text-secondary);
-                        "
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="table-meta" id="tableMeta"></div>
-              <div
-                style="
-                  padding: 5px 14px 0;
-                  font-size: 11px;
-                  color: #9fb3c8;
-                  font-weight: 500;
-                "
-              >
-                <i class="fa-solid fa-keyboard" style="margin-right: 4px"></i>
-                <span id="keyboardHint"></span>
-              </div>
-              <div class="table-wrap">
-                <table class="details-table">
-                  <thead>
-                    <tr>
-                      <th data-sort-field="unidade">
-                        <button
-                          type="button"
-                          class="sort-th"
-                          onclick="sortDetails('unidade')"
-                        >
-                          Unidade <span class="sort-icon">↕</span>
-                        </button>
-                      </th>
-                      <th data-sort-field="edital">
-                        <button
-                          type="button"
-                          class="sort-th"
-                          onclick="sortDetails('edital')"
-                        >
-                          Edital <span class="sort-icon">↕</span>
-                        </button>
-                      </th>
-                      <th data-sort-field="data_inicio">
-                        <button
-                          type="button"
-                          class="sort-th"
-                          onclick="sortDetails('data_inicio')"
-                        >
-                          Início <span class="sort-icon">↕</span>
-                        </button>
-                      </th>
-                      <th data-sort-field="data_fim">
-                        <button
-                          type="button"
-                          class="sort-th"
-                          onclick="sortDetails('data_fim')"
-                        >
-                          Encerramento <span class="sort-icon">↕</span>
-                        </button>
-                      </th>
-                      <th class="num" data-sort-field="vagas_total">
-                        <button
-                          type="button"
-                          class="sort-th sort-num"
-                          onclick="sortDetails('vagas_total')"
-                        >
-                          Vagas <span class="sort-icon">↕</span>
-                        </button>
-                      </th>
-                      <th class="num" data-sort-field="contratados">
-                        <button
-                          type="button"
-                          class="sort-th sort-num"
-                          onclick="sortDetails('contratados')"
-                        >
-                          Contratados <span class="sort-icon">↕</span>
-                        </button>
-                      </th>
-                      <th class="num" data-sort-field="vagas_ociosas">
-                        <button
-                          type="button"
-                          class="sort-th sort-num"
-                          onclick="sortDetails('vagas_ociosas')"
-                        >
-                          Ociosas <span class="sort-icon">↕</span>
-                        </button>
-                      </th>
-                      <th data-sort-field="status">
-                        <button
-                          type="button"
-                          class="sort-th"
-                          onclick="sortDetails('status')"
-                        >
-                          Status <span class="sort-icon">↕</span>
-                        </button>
-                      </th>
-                      <th data-sort-field="etapa">
-                        <button
-                          type="button"
-                          class="sort-th"
-                          onclick="sortDetails('etapa')"
-                        >
-                          Etapa <span class="sort-icon">↕</span>
-                        </button>
-                      </th>
-                      <th data-sort-field="risco">
-                        <button
-                          type="button"
-                          class="sort-th"
-                          onclick="sortDetails('risco')"
-                        >
-                          Risco <span class="sort-icon">↕</span>
-                        </button>
-                      </th>
-                      <th class="obs-col" data-sort-field="observacoes">
-                        <button
-                          type="button"
-                          class="sort-th"
-                          onclick="sortDetails('observacoes')"
-                        >
-                          Observações <span class="sort-icon">↕</span>
-                        </button>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody id="monitorRows"></tbody>
-                  <tfoot id="monitorFoot"></tfoot>
-                </table>
-              </div>
-            </div>
-          </section>
+          <!-- React: src/modulos/visao-geral/ (com os mapas da Saúde Indígena e de Projetos; SEDE não tem mapa). -->
+          <section id="page-dashboard" class="page active"></section>
 
           <!-- React: src/componentes/nucleo/ (o modal do edital e a linha do tempo são portais no fim do body). -->
           <section id="page-nucleo" class="page"></section>
-
 
           <!-- React: src/componentes/calendario-editais/ (o popup do dia é portal no fim do body). -->
           <section id="page-calendario" class="page"></section>
@@ -1352,10 +674,29 @@
           <!-- React: src/componentes/lista-aprovados/ (os modais são portais no fim do body). -->
           <section id="page-approved" class="page"></section>
 
-          <!-- Análises curriculares, Entrevistas e Recursos: o quadro (analises.html / entrevistas.html / recursos.html, com ?area=) nasce na primeira abertura, por src/modules/pagina-do-painel.js. -->
-          <section id="page-analises" class="page pagina-do-painel" data-painel="analises"></section>
-          <section id="page-entrevistas" class="page pagina-do-painel" data-painel="entrevistas"></section>
-          <section id="page-recursos" class="page pagina-do-painel" data-painel="recursos"></section>
+          <!-- React: src/modulos/recursos/ — Painel de recursos (as gavetas são portais no fim do body). -->
+          <section id="page-recursos" class="page"></section>
+
+          <!-- React: src/modulos/recursos/ — Analisar recursos (fila, gaveta com as ações). -->
+          <section id="page-analisar-recursos" class="page"></section>
+
+          <!-- React: src/modulos/entrevistas/ (as gavetas são portais no fim do body). -->
+          <section id="page-entrevistas" class="page"></section>
+
+          <!-- React: src/modulos/entrevistas/conduzir.tsx (fila do dia, ficha, Preparar). -->
+          <section id="page-conduzir-entrevistas" class="page"></section>
+
+          <!-- React: src/modulos/analises/ (a gaveta é portal no fim do body). -->
+          <section id="page-analises" class="page"></section>
+
+          <!-- React: src/modulos/avaliacao-documental/. -->
+          <section id="page-avaliacao-documental" class="page"></section>
+
+          <!-- React: src/modulos/classificacao/. -->
+          <section id="page-classificacao" class="page"></section>
+
+          <!-- React: src/modulos/selecao/. -->
+          <section id="page-selecao" class="page"></section>
 
           <section id="page-external" class="page">
             <div class="table-card card">
@@ -1383,495 +724,32 @@
           </section>
 
           <section id="page-config" class="page">
+            <!-- Moldura React de Configurações (src/modulos/configuracoes/):
+                 cabeçalho da seção, barra de salvar, diálogos e as seções Marca,
+                 Página inicial, Tela de acesso, Aparência, Painéis externos e Operação. -->
+            <div id="configuracoesApp" data-configuracoes></div>
             <div class="admin-grid">
-              <div
-                id="accessRequestsAdminCard"
-                class="admin-card card full hidden"
-              >
-                <h3>Solicitações de acesso</h3>
-                <div id="accessRequestsAdmin" class="access-admin-list"></div>
-              </div>
-
-              <!-- Configurações › Acessos em React (src/componentes/acessos/). Sem card:
+              <!-- Configurações › Acessos em React (src/modulos/acessos/). Sem card:
                    a seção de Configurações já é a superfície. -->
               <div id="acessosApp" class="full" data-acessos></div>
 
-              <!-- Configurações › Módulos e abas em React (src/componentes/modulos/), só admin global. -->
+              <!-- Configurações › Módulos e abas em React (src/modulos/modulos/), só admin global. -->
               <div id="modulosApp" class="full" data-modulos></div>
 
-              <!--
-                O card "Acessos e usuários online" saiu a pedido: a seção de Acessos
-                fica para a matriz de permissões. Sem o card, access-dashboard.js não
-                consulta o banco nem liga o temporizador.
-              -->
-
-              <div class="admin-card card config-main-card">
-                <div class="config-card-title">
-                  <div>
-                    <h3>Configuração do sistema</h3>
-                    <p>
-                      Ajustes principais da tela inicial, autenticação e rótulos
-                      do dashboard.
-                    </p>
-                  </div>
-                </div>
-
-                <div class="form-grid">
-                  <div class="form-row" style="display: none">
-                    <label for="cfgMonitId">ID / referência da base</label
-                    ><input id="cfgMonitId" />
-                  </div>
-                  <div class="form-row" style="display: none">
-                    <label for="cfgTitle">Título do sistema</label><input id="cfgTitle" />
-                  </div>
-                  <div class="form-row" style="display: none">
-                    <label for="cfgSubtitle">Subtítulo do login</label><input id="cfgSubtitle" />
-                  </div>
-                  <div class="form-row" style="display: none">
-                    <label for="cfgSlogan">Slogan / área</label><input id="cfgSlogan" />
-                  </div>
-
-                  <div class="form-row">
-                    <label for="cfgPageTitle">Título da página inicial</label
-                    ><input
-                      id="cfgPageTitle"
-                      placeholder="Ex: Saúde Indígena"
-                    />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgPageSubtitle">Subtítulo da página inicial</label
-                    ><input
-                      id="cfgPageSubtitle"
-                      placeholder="Ex: Monitoramento DSEI/CASAI"
-                    />
-                  </div>
-
-                  <div class="form-row" style="display: none">
-                    <label for="cfgLoginEyebrow">Texto superior do login</label
-                    ><input id="cfgLoginEyebrow" />
-                  </div>
-                  <div class="form-row" style="display: none">
-                    <label for="cfgLoginEmailLabel">Label do e-mail</label
-                    ><input id="cfgLoginEmailLabel" />
-                  </div>
-                  <div class="form-row" style="display: none">
-                    <label for="cfgLoginEmailPlaceholder">Placeholder do e-mail</label
-                    ><input id="cfgLoginEmailPlaceholder" />
-                  </div>
-                  <div class="form-row" style="display: none">
-                    <label for="cfgLoginPasswordLabel">Label da senha</label
-                    ><input id="cfgLoginPasswordLabel" />
-                  </div>
-                  <div class="form-row" style="display: none">
-                    <label for="cfgLoginPasswordPlaceholder">Placeholder da senha</label
-                    ><input id="cfgLoginPasswordPlaceholder" />
-                  </div>
-                  <div class="form-row" style="display: none">
-                    <label for="cfgLoginButtonText">Texto do botão entrar</label
-                    ><input id="cfgLoginButtonText" />
-                  </div>
-                  <div class="form-row" style="display: none">
-                    <label for="cfgPasswordResetMessage">Ajuda de senha</label
-                    ><input id="cfgPasswordResetMessage" />
-                  </div>
-
-                  <div class="config-section-title">Autenticação Google</div>
-                  <div class="form-row">
-                    <label for="cfgGoogleEnabled">Login Google</label
-                    ><select id="cfgGoogleEnabled">
-                      <option value="false">Inativo</option>
-                      <option value="true">Ativo</option>
-                    </select>
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgGoogleButtonText">Texto do botão Google</label
-                    ><input id="cfgGoogleButtonText" />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgGoogleDomainHint">Domínio sugerido</label
-                    ><input
-                      id="cfgGoogleDomainHint"
-                      placeholder="agenciasus.org.br"
-                    />
-                  </div>
-                  <div class="form-row full">
-                    <label for="cfgGoogleAllowedDomains">Domínios institucionais permitidos</label
-                    ><input
-                      id="cfgGoogleAllowedDomains"
-                      placeholder="agenciasus.org.br,agsus.org.br"
-                    /><small>Separe mais de um domínio por vírgula.</small>
-                  </div>
-                  <div class="form-row full">
-                    <label>Imagem de fundo do acesso</label>
-                    <div class="access-background-manager">
-                      <div
-                        id="cfgAccessBackgroundPreview"
-                        class="access-background-preview"
-                        role="img"
-                        aria-label="Prévia da imagem de fundo"
-                      ></div>
-                      <div class="access-background-actions">
-                        <label class="btn access-background-upload">
-                          <i class="fa-solid fa-image" aria-hidden="true"></i>
-                          <span>Escolher imagem</span>
-                          <input
-                            id="cfgAccessBackgroundFile"
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            onchange="
-                              uploadAccessBackground(
-                                this.files && this.files[0],
-                              );
-                              this.value = '';
-                            "
-                          />
-                        </label>
-                        <button
-                          id="cfgAccessBackgroundRestore"
-                          type="button"
-                          class="btn secondary"
-                          onclick="restoreAccessBackground()"
-                        >
-                          Restaurar padrão
-                        </button>
-                        <small id="cfgAccessBackgroundStatus"
-                          >Arte 16:9, JPG, PNG ou WEBP, até 6 MB. A imagem fica
-                          guardada para reutilização.</small
-                        >
-                      </div>
-                    </div>
-                    <input id="cfgAccessBackgroundUrl" type="hidden" />
-                    <input id="cfgAccessBackgroundPath" type="hidden" />
-                    <div
-                      id="cfgAccessBackgroundGallery"
-                      class="access-background-gallery"
-                    ></div>
-                  </div>
-                  <div class="form-row full">
-                    <label for="cfgAccessLogoUrl">Logo da AgSUS no acesso</label
-                    ><input
-                      id="cfgAccessLogoUrl"
-                      placeholder="/assets/agsus-logo.webp"
-                    /><small
-                      >Aceita um caminho local ou uma URL HTTPS da identidade
-                      institucional.</small
-                    >
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgAccessPanelColor">Cor do painel de acesso</label
-                    ><input
-                      id="cfgAccessPanelColor"
-                      type="color"
-                      value="#c296eb"
-                    />
-                    <!-- "Automático" deriva o texto da luminância da cor.
-                         Impor claro ou escuro é escolha de identidade: pode
-                         reprovar a WCAG, e o aviso abaixo diz exatamente
-                         quanto. Quem decide é quem configura. -->
-                    <label for="cfgAccessTextoModo" class="form-sublabel"
-                      >Texto sobre o painel</label
-                    >
-                    <select id="cfgAccessTextoModo">
-                      <option value="auto">
-                        Automático — segue o contraste
-                      </option>
-                      <option value="claro">Sempre claro</option>
-                      <option value="escuro">Sempre escuro</option>
-                    </select>
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgAccessGreeting">Saudação do acesso</label
-                    ><input
-                      id="cfgAccessGreeting"
-                      placeholder="Seja bem-vindo(a) à AgSUS"
-                    />
-                  </div>
-                  <div class="form-row full">
-                    <label for="cfgAccessInstruction">Instrução do acesso</label
-                    ><input
-                      id="cfgAccessInstruction"
-                      placeholder="Acesse com sua conta institucional."
-                    />
-                  </div>
-
-                  <div class="config-section-title">Textos do dashboard</div>
-                  <div class="form-row">
-                    <label for="cfgFilterTitle">Título dos filtros</label
-                    ><input id="cfgFilterTitle" />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgFilterSubtitle">Subtítulo dos filtros</label
-                    ><input id="cfgFilterSubtitle" />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgFilterToggleShow">Mostrar filtros</label
-                    ><input id="cfgFilterToggleShow" />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgFilterToggleHide">Ocultar filtros</label
-                    ><input id="cfgFilterToggleHide" />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgKpiProcessos">KPI processos</label><input id="cfgKpiProcessos" />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgKpiVagas">KPI vagas</label><input id="cfgKpiVagas" />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgKpiContratados">KPI contratações</label
-                    ><input id="cfgKpiContratados" />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgKpiOciosas">KPI ociosas</label><input id="cfgKpiOciosas" />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgKpiCriticos">KPI críticos</label><input id="cfgKpiCriticos" />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgKpiInscritos">KPI inscritos</label><input id="cfgKpiInscritos" />
-                  </div>
-
-                  <div class="form-row full" style="display: none">
-                    <label for="cfgLoginLogo">Logo da tela de login</label>
-                    <input
-                      id="cfgLoginLogo"
-                      oninput="previewImg('cfgLoginLogo', 'prevLoginLogo')"
-                    />
-                    <img
-                      id="prevLoginLogo"
-                      src=""
-                      alt=""
-                      style="
-                        display: none;
-                        height: 52px;
-                        width: 52px;
-                        object-fit: contain;
-                        border-radius: 10px;
-                        border: 1px solid var(--line);
-                        margin-top: 6px;
-                        background: #f4f8fc;
-                      "
-                    />
-                  </div>
-
-                  <div class="form-row full" style="display: none">
-                    <label for="cfgLoginBg">Imagem de fundo do login</label>
-                    <input
-                      id="cfgLoginBg"
-                      oninput="previewImg('cfgLoginBg', 'prevLoginBg')"
-                    />
-                    <img
-                      id="prevLoginBg"
-                      src=""
-                      alt=""
-                      style="
-                        display: none;
-                        height: 52px;
-                        width: 120px;
-                        object-fit: cover;
-                        border-radius: 10px;
-                        border: 1px solid var(--line);
-                        margin-top: 6px;
-                      "
-                    />
-                  </div>
-
-                  <div class="config-section-title">
-                    Rodapé institucional (COGIP)
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgCogipNome">Nome da equipe</label
-                    ><input id="cfgCogipNome" placeholder="Ex: COGIP" />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgCogipFuncao">Função / área</label
-                    ><input
-                      id="cfgCogipFuncao"
-                      placeholder="Ex: Desenvolvimento e sustentação"
-                    />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgCogipVersao">Versão do sistema</label
-                    ><input id="cfgCogipVersao" placeholder="Ex: V.2.7.3" />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgCogipDept">Texto institucional</label
-                    ><input
-                      id="cfgCogipDept"
-                      placeholder="Ex: Gestão da Informação de Pessoal"
-                    />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgAppVersionCurrent">Versão publicada</label
-                    ><input
-                      id="cfgAppVersionCurrent"
-                      placeholder="Ex: MONITORA Web V2.9.35"
-                    />
-                  </div>
-                  <div class="form-row full">
-                    <label for="cfgCogipLogo">Logo da equipe (URL)</label>
-                    <input
-                      id="cfgCogipLogo"
-                      oninput="previewImg('cfgCogipLogo', 'prevCogipLogo')"
-                    />
-                    <img
-                      id="prevCogipLogo"
-                      src=""
-                      alt=""
-                      style="
-                        display: none;
-                        height: 40px;
-                        width: 40px;
-                        object-fit: cover;
-                        border-radius: 50%;
-                        border: 1px solid var(--line);
-                        margin-top: 6px;
-                      "
-                    />
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgFooter">Rodapé</label><input id="cfgFooter" />
-                  </div>
-                </div>
-              </div>
-
-              <div class="admin-card card config-main-card">
-                <div class="config-card-title">
-                  <div>
-                    <h3>Aviso global</h3>
-                    <p>
-                      Mensagem de topo e recursos operacionais do dashboard.
-                    </p>
-                  </div>
-                </div>
-
-                <div class="form-grid">
-                  <div class="form-row">
-                    <label for="cfgBroadcastType">Tipo do aviso</label
-                    ><select id="cfgBroadcastType">
-                      <option value="info">Info</option>
-                      <option value="warning">Alerta</option>
-                      <option value="danger">Crítico</option>
-                    </select>
-                  </div>
-                  <div class="form-row">
-                    <label for="cfgBroadcastMsg">Mensagem</label
-                    ><input
-                      id="cfgBroadcastMsg"
-                      placeholder="Mensagem global"
-                    />
-                  </div>
-
-                  <details
-                    class="form-row full"
-                    style="
-                      grid-column: 1/-1;
-                      border: 1px solid var(--line);
-                      border-radius: 8px;
-                      padding: 10px;
-                      background: #fafcff;
-                    "
-                  >
-                    <summary
-                      style="
-                        font-weight: 900;
-                        color: var(--agsus-azul);
-                        cursor: pointer;
-                      "
-                    >
-                      Avançado técnico
-                    </summary>
-                    <div class="form-grid" style="margin-top: 10px">
-                      <div class="form-row">
-                        <label for="cfgRealtimeEnabled">Realtime do monitoramento</label
-                        ><select id="cfgRealtimeEnabled">
-                          <option value="true">Ativo</option>
-                          <option value="false">Inativo</option>
-                        </select>
-                      </div>
-                      <div class="form-row">
-                        <label for="cfgAccessHeartbeatMinutos">Heartbeat de auditoria (min)</label
-                        ><input
-                          id="cfgAccessHeartbeatMinutos"
-                          type="number"
-                          min="1"
-                          step="1"
-                          placeholder="5"
-                        />
-                      </div>
-                    </div>
-                  </details>
-                </div>
-
-                <div id="panelAdmin" class="config-subpanel"></div>
-              </div>
-
-              <div class="admin-card card cnes-status-card">
-                <div class="config-card-title">
-                  <div>
-                    <h3>Rede assistencial do CNES</h3>
-                    <p>
-                      UBSI / CASAI agora são carregadas do Supabase para reduzir
-                      edição manual e risco de quebrar o mapa.
-                    </p>
-                  </div>
-                </div>
-
-                <div class="cnes-status-grid">
-                  <div><span>Fonte atual</span><strong>Supabase</strong></div>
-                  <div>
-                    <span>Uso no sistema</span
-                    ><strong>Mapa e drill-down</strong>
-                  </div>
-                  <div>
-                    <span>Edição manual</span
-                    ><strong>Desativada na rotina</strong>
-                  </div>
-                </div>
-
-                <p class="config-help">
-                  Quando precisar atualizar a base CNES, faça por
-                  migração/rotina controlada no Supabase, não colando JSON nesta
-                  tela.
-                </p>
-                <textarea id="cfgCnesJson" class="hidden" rows="1"></textarea>
-                <div id="cnesImportResumo" class="hidden"></div>
-              </div>
+              <!-- Configurações › Status das atualizações em React (src/componentes/saude-das-cargas/), só admin global. -->
+              <div
+                id="saudeDasCargasApp"
+                class="full"
+                data-saude-das-cargas
+              ></div>
             </div>
           </section>
         </div>
       </main>
     </section>
 
-    <div
-      id="searchModal"
-      class="search-modal"
-      role="dialog"
-      aria-label="Busca global"
-      aria-modal="true"
-    >
-      <div class="search-modal-card">
-        <div class="search-modal-input-wrap">
-          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-          <input
-            id="searchModalInput"
-            type="text"
-            placeholder="Buscar edital, unidade, etapa, UF..."
-            autocomplete="off"
-            oninput="runGlobalSearch(this.value)"
-            onkeydown="searchModalKey(event)"
-            aria-label="Campo de busca global"
-          />
-          <kbd onclick="closeSearchModal()">Esc</kbd>
-        </div>
-        <div id="searchResults" class="search-results"></div>
-        <div class="search-footer">
-          <span><kbd>↑↓</kbd> navegar</span>
-          <span><kbd>↵</kbd> selecionar</span>
-          <span><kbd>Esc</kbd> fechar</span>
-        </div>
-      </div>
-    </div>
+    <!-- Busca global (Ctrl+K), React: src/componentes/busca-global/ (o diálogo vai por portal no body). -->
+    <div id="buscaGlobalApp"></div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

@@ -1,26 +1,26 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.js";
+import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.ts";
 import {
   avisar,
   EVENTO_BARRA_ALTERNADA,
   EVENTO_MENU_ATUALIZADO,
   EVENTO_TEMA_ALTERADO,
 } from "../../src/lib/eventos-da-barra-lateral.js";
-import { SECOES } from "../../src/modules/config-secoes.js";
+import { SECOES } from "../../src/modulos/configuracoes/secoes.js";
 import { performExplicitLogout } from "../../src/modules/nielsen-shell-ux.js";
-import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.jsx";
+import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
 import {
   atualizarMenuLateral,
   marcarItemAtivoNoMenu,
   redefinirBarraLateral,
-} from "../../src/componentes/barra-lateral/estado.js";
+} from "../../src/componentes/barra-lateral/estado.ts";
 import {
   definirAreaAtual,
   obterDadosDoMonitoramento,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 
 vi.mock("../../src/modules/nielsen-shell-ux.js", async (original) => ({
   ...(await original()),
@@ -203,7 +203,7 @@ describe("áreas abertas por padrão", () => {
     expect(aberta("administracao")).toBe(false);
   });
 
-  it("Saúde Indígena é submenu: Visão geral, as páginas de edital e Análises", async () => {
+  it("Saúde Indígena é submenu, com os blocos Acompanhamento e Processo seletivo", async () => {
     await montar();
     const cabecalhoDaArea = cabecalho("saude-indigena");
     expect(cabecalhoDaArea.hasAttribute("data-view")).toBe(false);
@@ -214,11 +214,66 @@ describe("áreas abertas por padrão", () => {
       ),
     ).toEqual([
       ["Visão geral", "saude-indigena"],
+      ["Painel das análises", "saude-indigena"],
       ["Editais", "saude-indigena"],
       ["Cronograma", "saude-indigena"],
       ["Lista de aprovados", "saude-indigena"],
-      ["Análises curriculares", "saude-indigena"],
     ]);
+    // Cada bloco tem o título e uma lista nomeada por ele.
+    const blocos = [...area("saude-indigena").querySelectorAll(".menu-bloco")];
+    expect(
+      blocos.map((bloco) => [
+        bloco.dataset.bloco,
+        bloco.querySelector(".menu-bloco__titulo").textContent,
+        [...bloco.querySelectorAll(".menu-item")].map((b) => b.dataset.view),
+      ]),
+    ).toEqual([
+      ["acompanhamento", "Acompanhamento", ["dashboard", "analises"]],
+      ["processo", "Processo seletivo", ["nucleo", "calendario", "approved"]],
+    ]);
+    const titulo = blocos[1].querySelector(".menu-bloco__titulo");
+    expect(blocos[1].querySelector("ul").getAttribute("aria-labelledby")).toBe(
+      titulo.id,
+    );
+    // Administração continua uma lista só, sem blocos.
+    expect(area("administracao").querySelector(".menu-bloco")).toBeNull();
+  });
+
+  it("bloco sem página que o perfil vê não aparece", async () => {
+    await montar(
+      montarArvoreDoMenu({
+        permitidas: { nucleo: true, calendario: true },
+      }),
+    );
+    expect(
+      [...document.querySelectorAll("#nav .menu-bloco__titulo")].map(
+        (titulo) => titulo.textContent,
+      ),
+    ).toEqual(["Processo seletivo"]);
+  });
+
+  it("painel externo entra no fim de Acompanhamento, sem grupo próprio", async () => {
+    await montar(arvoreCompleta(PAINEL_X));
+    expect(area("paineis")).toBeNull();
+    expect(item("panel:x").closest(".menu-bloco").dataset.bloco).toBe(
+      "acompanhamento",
+    );
+    expect(
+      [
+        ...area("saude-indigena").querySelectorAll(
+          '[data-bloco="acompanhamento"] .menu-item',
+        ),
+      ].map((botao) => botao.dataset.view),
+    ).toEqual(["dashboard", "analises", "panel:x"]);
+  });
+
+  it("painel externo aberto acende o item e a área onde está", async () => {
+    await montar(arvoreCompleta(PAINEL_X));
+    await act(async () => marcarItemAtivoNoMenu("panel:x"));
+    expect(item("panel:x").getAttribute("aria-current")).toBe("page");
+    expect(area("saude-indigena").classList.contains("menu-area--atual")).toBe(
+      true,
+    );
   });
 });
 
@@ -334,7 +389,10 @@ describe("as áreas do usuário: seletor de área", () => {
       [...area("sede").querySelectorAll(".menu-item")].map(
         (botao) => botao.dataset.view,
       ),
-    ).toEqual(viewsDoGrupo(arvore, "sede"));
+    ).toEqual(["dashboard", "analises", "nucleo", "calendario", "approved"]);
+    expect(new Set(viewsDoGrupo(arvore, "sede"))).toEqual(
+      new Set(["dashboard", "analises", "approved", "nucleo", "calendario"]),
+    );
   });
 
   it("com uma área só, não há seletor e a área é acordeão como antes", async () => {
@@ -400,6 +458,39 @@ describe("as áreas do usuário: seletor de área", () => {
       [soDaSaude, "saude-indigena"],
       [viewsDoGrupo(arvore, "projetos")[0], "projetos"],
     ]);
+  });
+
+  it("trocar de área com alteração não salva pergunta antes; recusar mantém a área e a página", async () => {
+    const chamadas = [];
+    let permitir = false;
+    const confirmarTrocaDeArea = vi.fn(() => permitir);
+    await montar(
+      montarArvoreDoMenu({
+        permitidas: { dashboard: true, nucleo: true, calendario: true },
+        areas: TODAS,
+      }),
+      {
+        navegar: (view) => {
+          chamadas.push([view, obterDadosDoMonitoramento().areaAtual]);
+          marcarItemAtivoNoMenu(view);
+        },
+        confirmarTrocaDeArea,
+      },
+    );
+    await clicar(itemDaArea("saude-indigena", "calendario"));
+    expect(confirmarTrocaDeArea).not.toHaveBeenCalled();
+
+    await clicar(seletor().querySelector(".menu-area__cabecalho"));
+    await clicar(opcao("sede"));
+    expect(confirmarTrocaDeArea).toHaveBeenCalledTimes(1);
+    expect(obterDadosDoMonitoramento().areaAtual).toBe("saude-indigena");
+    expect(chamadas).toEqual([["calendario", "saude-indigena"]]);
+
+    permitir = true;
+    await clicar(seletor().querySelector(".menu-area__cabecalho"));
+    await clicar(opcao("sede"));
+    expect(obterDadosDoMonitoramento().areaAtual).toBe("sede");
+    expect(chamadas.at(-1)).toEqual(["calendario", "sede"]);
   });
 
   it("recolhida, o seletor é um ícone e a lista das áreas flutua no clique", async () => {
@@ -473,8 +564,8 @@ describe("as áreas do usuário: seletor de área", () => {
 
 /*
   Recolhida, cada página da área atual é um ícone que navega num clique, com a
-  dica do nome e a página aberta em destaque. Painéis e Administração
-  continuam agrupados, com o painel flutuante.
+  dica do nome e a página aberta em destaque; o título do bloco vira um
+  separador. Administração continua agrupada, com o painel flutuante.
 */
 describe("barra recolhida: páginas da área como ícones", () => {
   const TODAS = ["saude-indigena", "sede", "projetos"];
@@ -497,19 +588,14 @@ describe("barra recolhida: páginas da área como ícones", () => {
     ...document.querySelectorAll(".menu-area--direta .menu-item"),
   ];
 
-  it("de cima para baixo: área, páginas, Painéis e Administração", async () => {
+  it("de cima para baixo: área, páginas (em blocos) e Administração", async () => {
     await montar(arvoreDasAreas(), { navegar: () => {} });
     await recolher();
 
     const ordem = [...document.querySelectorAll("#nav > section")].map(
       (secao) => (secao.dataset.seletorDeArea ? "seletor" : secao.dataset.area),
     );
-    expect(ordem).toEqual([
-      "seletor",
-      "saude-indigena",
-      "paineis",
-      "administracao",
-    ]);
+    expect(ordem).toEqual(["seletor", "saude-indigena", "administracao"]);
     expect(
       paginasDoTrilho().map((botao) => [
         botao.dataset.rotulo,
@@ -518,20 +604,30 @@ describe("barra recolhida: páginas da área como ícones", () => {
       ]),
     ).toEqual([
       ["Visão geral", "map", "Visão geral"],
+      ["Painel das análises", "file-search", "Painel das análises"],
+      ["Painel de recursos", "scale", "Painel de recursos"],
+      ["Painel X", "square-arrow-out-up-right", "Painel X"],
       ["Editais", "file-text", "Editais"],
       ["Cronograma", "calendar-days", "Cronograma"],
       ["Lista de aprovados", "user-round-check", "Lista de aprovados"],
-      ["Análises curriculares", "file-search", "Análises curriculares"],
-      ["Recursos", "scale", "Recursos · BETA"],
     ]);
+    // Os dois blocos continuam no trilho (o título só sai de vista no CSS).
+    expect(
+      [...document.querySelectorAll(".menu-area--direta .menu-bloco")].map(
+        (bloco) => bloco.dataset.bloco,
+      ),
+    ).toEqual(["acompanhamento", "processo"]);
     // O nome continua no botão para o leitor de tela.
     expect(
       paginasDoTrilho().map(
         (botao) => botao.querySelector(".menu-item__rotulo").textContent,
       ),
     ).toContain("Cronograma");
-    // Painéis e Administração continuam agrupados, sem dica (a pílula diz o nome).
-    expect(cabecalho("paineis").getAttribute("aria-expanded")).toBe("false");
+    // Administração continua agrupada, sem dica (a pílula diz o nome).
+    expect(area("paineis")).toBeNull();
+    expect(cabecalho("administracao").getAttribute("aria-expanded")).toBe(
+      "false",
+    );
     expect(cabecalho("administracao").hasAttribute("data-dica")).toBe(false);
   });
 
@@ -572,14 +668,18 @@ describe("barra recolhida: páginas da área como ícones", () => {
   it("trocar de área troca os ícones das páginas", async () => {
     await montar(arvoreDasAreas(), { navegar: () => {} });
     await recolher();
-    expect(
-      new Set(paginasDoTrilho().map((botao) => botao.dataset.area)),
-    ).toEqual(new Set(["saude-indigena"]));
+    // O painel externo não tem área: fica de fora da conta.
+    const areasDasPaginas = () =>
+      new Set(
+        paginasDoTrilho()
+          .filter((botao) => !botao.dataset.view.startsWith("panel:"))
+          .map((botao) => botao.dataset.area),
+      );
+    expect(areasDasPaginas()).toEqual(new Set(["saude-indigena"]));
 
     await act(async () => definirAreaAtual("projetos"));
-    expect(
-      new Set(paginasDoTrilho().map((botao) => botao.dataset.area)),
-    ).toEqual(new Set(["projetos"]));
+    expect(areasDasPaginas()).toEqual(new Set(["projetos"]));
+    expect(item("panel:x").closest(".menu-area").dataset.area).toBe("projetos");
   });
 
   it("com uma área só, as páginas também são ícones diretos", async () => {
@@ -615,6 +715,7 @@ describe("ícones e selo beta no menu aberto", () => {
         dashboard: true,
         nucleo: true,
         recursos: true,
+        "analisar-recursos": true,
         config: true,
       },
       paineis: [{ codigo: "x", titulo: "Painel X" }],
@@ -633,7 +734,7 @@ describe("ícones e selo beta no menu aberto", () => {
     }
     expect(item("dashboard").dataset.icone).toBe("map");
     expect(item("panel:x").dataset.icone).toBe("square-arrow-out-up-right");
-    expect(item("config", "acessos").dataset.icone).toBe("settings");
+    expect(item("config", "acessos").dataset.icone).toBe("users");
     // Expandida não há dica: o nome está à vista.
     expect(document.querySelector("#nav [data-dica]")).toBeNull();
   });
@@ -643,11 +744,16 @@ describe("ícones e selo beta no menu aberto", () => {
     const selos = document.querySelectorAll("#nav .menu-item__selo");
     expect(selos).toHaveLength(1);
     expect(selos[0].textContent).toBe("BETA");
-    expect(selos[0].closest(".menu-item")).toBe(item("recursos"));
-    expect(item("recursos").classList.contains("menu-item--beta")).toBe(true);
-    expect(selos[0].previousElementSibling.textContent).toBe("Recursos");
+    expect(selos[0].closest(".menu-item")).toBe(item("analisar-recursos"));
+    expect(
+      item("analisar-recursos").classList.contains("menu-item--beta"),
+    ).toBe(true);
+    expect(selos[0].previousElementSibling.textContent).toBe(
+      "Analisar recursos",
+    );
     // O mobile lê o nome de `data-rotulo`: o selo não entra nele.
-    expect(item("recursos").dataset.rotulo).toBe("Recursos");
+    expect(item("analisar-recursos").dataset.rotulo).toBe("Analisar recursos");
+    expect(item("recursos").querySelector(".menu-item__selo")).toBeNull();
     expect(item("nucleo").querySelector(".menu-item__selo")).toBeNull();
   });
 
@@ -734,8 +840,8 @@ describe("escolher uma página", () => {
 });
 
 /*
-  Recolhida, Painéis e Administração são um ícone cada, e o painel deles
-  flutua ao lado do trilho. O estado é o de `proximoFlutuante` (testado em
+  Recolhida, Administração é um ícone, e o painel dela flutua ao lado do
+  trilho (o seletor de área também abre um). O estado é o de `proximoFlutuante` (testado em
   tests/menu-lateral.test.js).
 */
 describe("barra recolhida: painel flutuante", () => {
@@ -743,24 +849,42 @@ describe("barra recolhida: painel flutuante", () => {
     await montar(arvoreCompleta(PAINEL_X), { navegar: () => {} });
     await recolher();
 
-    await clicar(cabecalho("paineis"));
-    expect(flutuando("paineis")).toBe(true);
-    expect(cabecalho("paineis").getAttribute("aria-expanded")).toBe("true");
+    await clicar(cabecalho("administracao"));
+    expect(flutuando("administracao")).toBe(true);
+    expect(cabecalho("administracao").getAttribute("aria-expanded")).toBe(
+      "true",
+    );
     expect(
-      area("paineis").style.getPropertyValue("--menu-flutuante-topo"),
+      area("administracao").style.getPropertyValue("--menu-flutuante-topo"),
     ).toMatch(/px$/);
 
-    await clicar(cabecalho("paineis"));
-    expect(flutuando("paineis")).toBe(false);
-    expect(cabecalho("paineis").getAttribute("aria-expanded")).toBe("false");
+    await clicar(cabecalho("administracao"));
+    expect(flutuando("administracao")).toBe(false);
+    expect(cabecalho("administracao").getAttribute("aria-expanded")).toBe(
+      "false",
+    );
   });
 
   it("só um painel por vez", async () => {
-    await montar(arvoreCompleta(PAINEL_X), { navegar: () => {} });
+    await montar(
+      montarArvoreDoMenu({
+        permitidas: { nucleo: true, config: true },
+        secoesDeConfiguracao: SECOES,
+        areas: ["saude-indigena", "sede"],
+      }),
+      { navegar: () => {} },
+    );
     await recolher();
-    await clicar(cabecalho("paineis"));
+    const seletorDeArea = () =>
+      document.querySelector("[data-seletor-de-area]");
+    await clicar(seletorDeArea().querySelector(".menu-area__cabecalho"));
+    expect(seletorDeArea().classList.contains("menu-area--flutuante")).toBe(
+      true,
+    );
     await clicar(cabecalho("administracao"));
-    expect(flutuando("paineis")).toBe(false);
+    expect(seletorDeArea().classList.contains("menu-area--flutuante")).toBe(
+      false,
+    );
     expect(flutuando("administracao")).toBe(true);
   });
 
@@ -784,21 +908,21 @@ describe("barra recolhida: painel flutuante", () => {
     await montar(arvoreCompleta(PAINEL_X), { navegar: () => {} });
     await recolher();
 
-    await clicar(cabecalho("paineis"));
-    await clicar(item("panel:x"));
-    expect(flutuando("paineis")).toBe(false);
+    await clicar(cabecalho("administracao"));
+    await clicar(item("config", "marca"));
+    expect(flutuando("administracao")).toBe(false);
 
-    await clicar(cabecalho("paineis"));
+    await clicar(cabecalho("administracao"));
     await act(async () =>
       document.body.dispatchEvent(
         new MouseEvent("pointerdown", { bubbles: true }),
       ),
     );
-    expect(flutuando("paineis")).toBe(false);
+    expect(flutuando("administracao")).toBe(false);
 
-    await clicar(cabecalho("paineis"));
+    await clicar(cabecalho("administracao"));
     await recolher(false);
-    expect(flutuando("paineis")).toBe(false);
+    expect(flutuando("administracao")).toBe(false);
   });
 
   it("expandida, o clique no cabeçalho volta a ser acordeão", async () => {
@@ -1022,8 +1146,12 @@ describe("rodapé", () => {
   });
 });
 
+// CRLF vira LF: no Windows o checkout pode trazer \r\n, e as buscas por "\n" passariam por vacuidade.
 const semComentarios = (fonte) =>
-  fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  fonte
+    .replace(/\r\n/g, "\n")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/^\s*\/\/.*$/gm, "");
 const bloco = (css, seletor) => {
   const i = css.indexOf(seletor);
   return i < 0 ? "" : css.slice(i, css.indexOf("}", i));
@@ -1083,12 +1211,17 @@ describe("contrato de CSS e ligação no arranque", () => {
     expect(painel).toContain("visibility: visible");
   });
 
-  it("o system-ui-fixes não esconde mais o botão nem guarda folga para a alça", () => {
-    const fixes = semComentarios(
-      readFileSync("src/styles/system-ui-fixes.css", "utf8"),
+  it("nenhum remendo esconde o botão nem guarda folga para a alça", () => {
+    // O system-ui-fixes.css foi dissolvido: o cabeçalho é de app.css e platform-shell.css.
+    expect(existsSync("src/styles/system-ui-fixes.css")).toBe(false);
+    const cabecalho = semComentarios(
+      readFileSync("src/styles/app.css", "utf8") +
+        readFileSync("src/styles/platform-shell.css", "utf8"),
     );
-    expect(fixes).not.toContain(".global-side-toggle");
-    expect(fixes).not.toContain("padding-left: var(--space-6)");
+    expect(cabecalho).not.toMatch(
+      /\.top\s*\{[^}]*padding-left:\s*var\(--space-6\)/,
+    );
+    expect(cabecalho).not.toMatch(/\.app \.global-side-toggle\s*\{/);
   });
 
   it("recolhida, quem rola é a navegação, e só quando transborda", () => {
@@ -1113,7 +1246,7 @@ describe("contrato de CSS e ligação no arranque", () => {
 
   it("o main.js monta a barra antes do branding e importa o CSS dela", () => {
     expect(main).toContain(
-      'import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.jsx"',
+      'import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.tsx"',
     );
     expect(main).toContain('import "./styles/barra-lateral.css"');
     expect(main.indexOf("montarBarraLateral();")).toBeGreaterThan(-1);

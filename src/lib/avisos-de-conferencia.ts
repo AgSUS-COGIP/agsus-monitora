@@ -1,0 +1,781 @@
+import type {
+  Aviso,
+  ListaDeAvisosNormalizada,
+  Caso,
+  VinculoDoCaso,
+  AnaliseDoCaso,
+  DestinoDoCaso,
+} from "../modulos/conferencias/tipos.ts";
+/*
+  Avisos de conferência, sem React e sem banco: o que chega de
+  `listar_avisos_conferencia_se_mudou` (20261005210000 e 20261015000000: sem
+  chaves nulas e sem `exemplos` quando o aviso tem casos)
+  vira a lista da tela — título de cada conferência, tom da gravidade, onde
+  (edital, área ou vaga), contagem do selo de cada módulo e a validação do
+  motivo ao ignorar.
+
+  Os avisos são gravados pelo job Python scripts/conferencias/ (todo dia às 6h
+  e pelo "Rodar agora"). O catálogo (código → módulo, gravidade, título) é o
+  mesmo do job: tests/fixtures/conferencias/catalogo.json é o caso dourado que
+  o vitest e o pytest conferem.
+
+  Os casos de cada aviso (todos, não só os 20 exemplos) vêm de
+  `listar_casos_aviso_conferencia` (20261007120000; 20261007240000 resolve
+  também os aprovados, entrevistas, listas, ajustes e vagas): quem é (código,
+  nome), onde (edital, vaga, situação, responsável), o motivo (datas, notas),
+  as vagas da pessoa na lista de aprovados, para onde o caso leva e o CSV.
+  UUID interno nunca aparece: registro que sumiu é "Registro removido" e o
+  que está fora do acesso, "Sem acesso".
+*/
+import { sanitizeCsvCell } from "./csv-security.js";
+import { PARECERES } from "./entrevistas-do-painel.ts";
+
+export const CONFERENCIAS: Readonly<
+  Record<
+    string,
+    Readonly<{ modulo: string; gravidade: string; titulo: string }>
+  >
+> = Object.freeze({
+  ANALISE_APROVADA_ABAIXO_DO_CORTE: Object.freeze({
+    modulo: "analises",
+    gravidade: "CRITICA",
+    titulo: "Aprovada com nota abaixo da mínima",
+  }),
+  ANALISE_NOTA_DIFERENTE_DA_SOMA: Object.freeze({
+    modulo: "analises",
+    gravidade: "ATENCAO",
+    titulo: "Nota final diferente da soma das parciais",
+  }),
+  ANALISE_EXPERIENCIA_ACIMA_DO_TETO: Object.freeze({
+    modulo: "analises",
+    gravidade: "ATENCAO",
+    titulo: "Experiência acima do teto da regra",
+  }),
+  ANALISE_DATA_INVALIDA: Object.freeze({
+    modulo: "analises",
+    gravidade: "ATENCAO",
+    titulo: "Data da análise no futuro ou antes da inscrição",
+  }),
+  ANALISE_FICHA_CONTA_DIVERGENTE: Object.freeze({
+    modulo: "analises",
+    gravidade: "CRITICA",
+    titulo: "Ficha concluída com a conta diferente da regra",
+  }),
+  ANALISE_EM_DOIS_EDITAIS: Object.freeze({
+    modulo: "analises",
+    gravidade: "INFORMATIVO",
+    titulo: "Candidato analisado em dois editais ativos",
+  }),
+  ENTREVISTA_SEM_NOTA_APOS_DATA: Object.freeze({
+    modulo: "entrevistas",
+    gravidade: "ATENCAO",
+    titulo: "Convocado sem nota depois da data da entrevista",
+  }),
+  ENTREVISTA_NOTA_FORA_DA_ESCALA: Object.freeze({
+    modulo: "entrevistas",
+    gravidade: "CRITICA",
+    titulo: "Nota fora da escala do roteiro",
+  }),
+  ENTREVISTA_FORA_DA_CONVOCACAO: Object.freeze({
+    modulo: "entrevistas",
+    gravidade: "CRITICA",
+    titulo: "Convocado fora da lista de convocação vigente",
+  }),
+  ENTREVISTA_HORARIO_DUPLICADO: Object.freeze({
+    modulo: "entrevistas",
+    gravidade: "ATENCAO",
+    titulo: "Dois horários para o mesmo candidato",
+  }),
+  CLASSIFICACAO_LISTA_FINAL_DESATUALIZADA: Object.freeze({
+    modulo: "classificacao",
+    gravidade: "CRITICA",
+    titulo: "Lista final gerada antes da última mudança nas análises",
+  }),
+  CLASSIFICACAO_EMPATE_PENDENTE: Object.freeze({
+    modulo: "classificacao",
+    gravidade: "ATENCAO",
+    titulo: "Empate sem desempate registrado",
+  }),
+  CLASSIFICACAO_VAGA_SEM_QUADRO: Object.freeze({
+    modulo: "classificacao",
+    gravidade: "ATENCAO",
+    titulo: "Vaga sem linha no quadro de vagas",
+  }),
+  CLASSIFICACAO_AJUSTE_APOS_LISTA: Object.freeze({
+    modulo: "classificacao",
+    gravidade: "ATENCAO",
+    titulo: "Ajuste de recurso aprovado depois da última lista",
+  }),
+  APROVADOS_CONTRATADO_DUPLICADO: Object.freeze({
+    modulo: "aprovados",
+    gravidade: "CRITICA",
+    titulo: "Contratado em duas vagas",
+  }),
+  APROVADOS_CONVOCADO_SEM_DESFECHO: Object.freeze({
+    modulo: "aprovados",
+    gravidade: "ATENCAO",
+    titulo: "Convocado há muitos dias sem desfecho",
+  }),
+  APROVADOS_PENDENCIA_DA_PUBLICACAO: Object.freeze({
+    modulo: "aprovados",
+    gravidade: "ATENCAO",
+    titulo: "Pendência da publicação sem revisão",
+  }),
+  CARGA_VARIACAO_BRUSCA: Object.freeze({
+    modulo: "cargas",
+    gravidade: "ATENCAO",
+    titulo: "Variação brusca de candidatos na Empregare",
+  }),
+});
+
+export const MODULOS_DOS_AVISOS = Object.freeze([
+  Object.freeze({ valor: "analises", rotulo: "Análises" }),
+  Object.freeze({ valor: "entrevistas", rotulo: "Entrevistas" }),
+  Object.freeze({ valor: "classificacao", rotulo: "Classificação" }),
+  Object.freeze({ valor: "aprovados", rotulo: "Aprovados" }),
+  Object.freeze({ valor: "cargas", rotulo: "Cargas" }),
+]);
+
+export const GRAVIDADES = Object.freeze({
+  CRITICA: Object.freeze({ rotulo: "Crítico", tom: "perigo", ordem: 0 }),
+  ATENCAO: Object.freeze({ rotulo: "Atenção", tom: "aviso", ordem: 1 }),
+  INFORMATIVO: Object.freeze({ rotulo: "Informativo", tom: "info", ordem: 2 }),
+});
+
+export const LIMITES_DO_MOTIVO = Object.freeze({ minimo: 10, maximo: 500 });
+
+const NOMES_DAS_AREAS: Readonly<Record<string, string>> = Object.freeze({
+  "saude-indigena": "Saúde Indígena",
+  sede: "SEDE",
+  projetos: "Projetos",
+});
+
+const texto = (valor: unknown): string =>
+  typeof valor === "string" ||
+  typeof valor === "number" ||
+  typeof valor === "boolean"
+    ? String(valor).trim()
+    : "";
+const numero = (valor: unknown): number => {
+  if (typeof valor !== "string" && typeof valor !== "number") return 0;
+  const n = Number(valor);
+  return Number.isFinite(n) ? n : 0;
+};
+/** JSON recebido é desconhecido; somente objetos de dados entram na normalização. */
+const registro = (valor: unknown): Record<string, unknown> =>
+  valor !== null && typeof valor === "object" && !Array.isArray(valor)
+    ? (valor as Record<string, unknown>)
+    : {};
+const ehRegistro = (valor: unknown): valor is Record<string, unknown> =>
+  valor !== null && typeof valor === "object" && !Array.isArray(valor);
+const rotuloDoDicionario = (
+  dicionario: Readonly<Record<string, string>>,
+  chave: string,
+): string =>
+  Object.hasOwn(dicionario, chave) ? (dicionario[chave] ?? "") : "";
+const gravidadeDe = (valor: unknown): Aviso["gravidade"] =>
+  valor === "CRITICA" || valor === "INFORMATIVO" ? valor : "ATENCAO";
+
+const data = (valor: unknown): Date | null => {
+  if (
+    !valor ||
+    !(
+      typeof valor === "string" ||
+      typeof valor === "number" ||
+      valor instanceof Date
+    )
+  )
+    return null;
+  const d = new Date(valor);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
+/** Título da conferência (o código, se for uma que a tela ainda não conhece). */
+export const tituloDaConferencia = (codigo: unknown) =>
+  CONFERENCIAS[texto(codigo)]?.titulo || texto(codigo);
+
+/** "Edital 101/2026", "Saúde Indígena" ou "Vaga 177979". */
+export function ondeDoAviso(entrada: unknown) {
+  const aviso = registro(entrada);
+  const [tipo, ...resto] = texto(aviso?.escopo).split(":");
+  const id = resto.join(":");
+  if (tipo === "edital")
+    return aviso?.edital ? `Edital ${texto(aviso.edital)}` : "Edital";
+  if (tipo === "vaga") return `Vaga ${id}`;
+  return (
+    rotuloDoDicionario(NOMES_DAS_AREAS, texto(aviso.area)) ||
+    rotuloDoDicionario(NOMES_DAS_AREAS, id) ||
+    "Sem área"
+  );
+}
+
+function normalizarAviso(entrada: unknown): Aviso {
+  const bruto = registro(entrada);
+  const gravidade = gravidadeDe(bruto.gravidade);
+  return {
+    id: texto(bruto?.id),
+    conferencia: texto(bruto?.conferencia),
+    titulo: tituloDaConferencia(bruto?.conferencia),
+    escopo: texto(bruto?.escopo),
+    gravidade,
+    tom: GRAVIDADES[gravidade].tom,
+    rotuloDaGravidade: GRAVIDADES[gravidade].rotulo,
+    modulo: texto(bruto?.modulo),
+    area: texto(bruto?.area) || null,
+    editalId: texto(bruto?.edital_id) || null,
+    edital: texto(bruto?.edital) || null,
+    onde: ondeDoAviso(bruto),
+    quantidade: Math.max(0, Math.round(numero(bruto.quantidade) || 0)),
+    exemplos: (Array.isArray(bruto?.exemplos) ? bruto.exemplos : [])
+      .map(texto)
+      .filter(Boolean),
+    resumo: texto(bruto?.resumo),
+    situacao: bruto?.situacao === "IGNORADO" ? "IGNORADO" : "ABERTO",
+    primeiraVez: data(bruto?.primeira_vez),
+    ultimaVez: data(bruto?.ultima_vez),
+    ignoradoEm: data(bruto?.ignorado_em),
+    motivo: texto(bruto?.motivo) || null,
+    podeIgnorar: bruto?.pode_ignorar === true,
+  };
+}
+
+/** O payload de `listar_avisos_conferencia` em abertos (por gravidade) e ignorados. */
+export function normalizarAvisos(entrada: unknown): ListaDeAvisosNormalizada {
+  const dados = registro(entrada);
+  const avisos = (Array.isArray(dados?.avisos) ? dados.avisos : [])
+    .filter(ehRegistro)
+    .map(normalizarAviso);
+  const porGravidade = (a: Aviso, b: Aviso) =>
+    GRAVIDADES[a.gravidade].ordem - GRAVIDADES[b.gravidade].ordem ||
+    (a.primeiraVez?.getTime() ?? 0) - (b.primeiraVez?.getTime() ?? 0);
+  const ultima = ehRegistro(dados.ultima_execucao)
+    ? dados.ultima_execucao
+    : null;
+  return {
+    geradoEm: data(dados?.gerado_em),
+    ultimaExecucao: ultima
+      ? {
+          inicio: data(ultima.inicio),
+          fim: data(ultima.fim),
+          situacao: texto(ultima.situacao),
+        }
+      : null,
+    abertos: avisos.filter((a) => a.situacao === "ABERTO").sort(porGravidade),
+    ignorados: avisos.filter((a) => a.situacao === "IGNORADO"),
+  };
+}
+
+/** Avisos abertos por módulo (o selo de cada tela). */
+export function contagemPorModulo(lista: ListaDeAvisosNormalizada | null) {
+  const contagem = Object.fromEntries(
+    MODULOS_DOS_AVISOS.map((m) => [m.valor, 0]),
+  );
+  for (const aviso of lista?.abertos || [])
+    if (Object.hasOwn(contagem, aviso.modulo))
+      contagem[aviso.modulo] = (contagem[aviso.modulo] ?? 0) + 1;
+  return contagem;
+}
+
+/** Só os avisos de um módulo ("todos" = todos). */
+export function filtrarPorModulo(
+  lista: ListaDeAvisosNormalizada | null,
+  modulo: string | null,
+) {
+  if (!lista) return lista;
+  if (!modulo || modulo === "todos") return lista;
+  return {
+    ...lista,
+    abertos: lista.abertos.filter((a) => a.modulo === modulo),
+    ignorados: lista.ignorados.filter((a) => a.modulo === modulo),
+  };
+}
+
+/** Tom do selo de um módulo: o do aviso mais grave aberto. */
+export function tomDoSelo(abertos: readonly Aviso[] | null | undefined) {
+  const mais = [...(abertos || [])].sort(
+    (a, b) => GRAVIDADES[a.gravidade].ordem - GRAVIDADES[b.gravidade].ordem,
+  )[0];
+  return mais ? mais.tom : null;
+}
+
+/** Erro do motivo ao ignorar, ou "" quando está bom. */
+export function erroDoMotivo(motivo: unknown) {
+  const t = texto(motivo);
+  if (t.length < LIMITES_DO_MOTIVO.minimo)
+    return `Escreva o motivo (pelo menos ${LIMITES_DO_MOTIVO.minimo} caracteres).`;
+  if (t.length > LIMITES_DO_MOTIVO.maximo)
+    return `O motivo passa de ${LIMITES_DO_MOTIVO.maximo} caracteres.`;
+  return "";
+}
+
+/** "dd/mm/aaaa"; "—" sem data. */
+export function diaDoAviso(valor: unknown) {
+  if (!(valor instanceof Date)) return "—";
+  const dois = (n: number) => String(n).padStart(2, "0");
+  return `${dois(valor.getDate())}/${dois(valor.getMonth() + 1)}/${valor.getFullYear()}`;
+}
+
+/* ── Casos de um aviso (listar_casos_aviso_conferencia, 20261007120000) ── */
+
+/** Casos por página na gaveta; o CSV lê de 1000 em 1000. */
+export const CASOS_POR_PAGINA = 50;
+export const CASOS_POR_PAGINA_DO_CSV = 1000;
+
+/** "dd/mm/aaaa" de "aaaa-mm-dd…" (sem fuso: a data é do dia); "" se não der. */
+export function diaDoCaso(valor: unknown) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(texto(valor));
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
+}
+
+const numeroDoCaso = (valor: unknown) => {
+  if (valor === null || valor === undefined || valor === "") return "—";
+  if (typeof valor !== "number" && typeof valor !== "string") return "—";
+  const n = Number(valor);
+  return Number.isFinite(n)
+    ? n.toLocaleString("pt-BR", { maximumFractionDigits: 2 })
+    : "—";
+};
+
+/** "1777 · Enfermeiro" (o que houver). */
+const vagaDe = (codigo: unknown, nome: unknown) =>
+  [texto(codigo), texto(nome)].filter(Boolean).join(" · ");
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** A referência só aparece quando é um código (nunca um UUID interno). */
+const referenciaVisivel = (valor: unknown) => {
+  const t = texto(valor);
+  return t && !UUID.test(t) ? t : "";
+};
+
+const RESOLUCOES: Readonly<Record<string, string>> = Object.freeze({
+  removido: "Registro removido",
+  sem_acesso: "Sem acesso",
+});
+
+const TIPOS_DE_LISTA: Readonly<Record<string, string>> = Object.freeze({
+  FINAL: "Lista final",
+  PRELIMINAR: "Lista preliminar",
+  ENTREVISTA: "Lista da entrevista",
+});
+
+/** "Contratado em 03/02/2026", "Convocado em 01/09/2026" ou só a situação. */
+function situacaoDoAprovado({
+  status,
+  dataConvocacao,
+  dataContratacao,
+}: {
+  status?: string;
+  dataConvocacao?: string | null;
+  dataContratacao?: string | null;
+}) {
+  const situacao = texto(status);
+  if (!situacao) return "";
+  const dia =
+    situacao === "Contratado"
+      ? diaDoCaso(dataContratacao)
+      : situacao === "Convocado"
+        ? diaDoCaso(dataConvocacao)
+        : "";
+  return dia ? `${situacao} em ${dia}` : situacao;
+}
+
+function normalizarVinculo(entrada: unknown): VinculoDoCaso {
+  const bruto = registro(entrada);
+  const vinculo: VinculoDoCaso = {
+    situacao: "",
+    id: texto(bruto?.id) || null,
+    editalId: texto(bruto?.edital_id) || null,
+    edital: texto(bruto?.edital),
+    vaga: vagaDe(bruto?.codigo_vaga, bruto?.nome_vaga),
+    status: texto(bruto?.status),
+    dataConvocacao: texto(bruto?.data_convocacao) || null,
+    dataContratacao: texto(bruto?.data_contratacao) || null,
+  };
+  vinculo.situacao = situacaoDoAprovado(vinculo);
+  return vinculo;
+}
+
+/** Uma vaga da pessoa na lista de aprovados, em uma linha. */
+export const linhaDoVinculo = (vinculo: Partial<VinculoDoCaso> | null) =>
+  [vinculo?.edital, vinculo?.vaga, vinculo?.situacao]
+    .map(texto)
+    .filter(Boolean)
+    .join(" · ");
+
+function normalizarAnaliseDoCaso(entrada: unknown): AnaliseDoCaso {
+  const bruto = registro(entrada);
+  return {
+    id: texto(bruto?.id) || null,
+    edital: texto(bruto?.edital),
+    vaga: vagaDe(bruto?.codigo_vaga, bruto?.nome_vaga),
+    status: texto(bruto?.status),
+    responsavel: texto(bruto?.responsavel),
+    dataAnalise: texto(bruto?.data_analise) || null,
+  };
+}
+
+/**
+ * O que motivou o aviso, em uma linha curta ("Análise em 01/09/2026, antes
+ * da inscrição em 10/09/2026"). "" quando o caso não traz o dado.
+ */
+export function motivoDoCaso(
+  conferencia: string,
+  detalhe: Record<string, unknown> | null = {},
+  caso: Partial<Caso> = {},
+) {
+  const d = detalhe || {};
+  switch (conferencia) {
+    case "ANALISE_DATA_INVALIDA": {
+      const analise = diaDoCaso(d.data_analise || caso.dataAnalise);
+      if (!analise) return "";
+      if (d.motivo === "futuro") return `Análise em ${analise}, data futura`;
+      const inscricao = diaDoCaso(d.inscricao);
+      return inscricao
+        ? `Análise em ${analise}, antes da inscrição em ${inscricao}`
+        : `Análise em ${analise}`;
+    }
+    case "ANALISE_APROVADA_ABAIXO_DO_CORTE":
+      return `Nota ${numeroDoCaso(d.nota)} · mínima ${numeroDoCaso(d.corte)}`;
+    case "ANALISE_NOTA_DIFERENTE_DA_SOMA":
+      return `Nota ${numeroDoCaso(d.nota)} · soma das parciais ${numeroDoCaso(d.soma)}`;
+    case "ANALISE_EXPERIENCIA_ACIMA_DO_TETO":
+      return `Experiência ${numeroDoCaso(d.experiencia)} · teto ${numeroDoCaso(d.teto)}`;
+    case "ANALISE_FICHA_CONTA_DIVERGENTE": {
+      const campos = texto(d.campos).split("/").filter(Boolean).join(", ");
+      const nota =
+        d.nota_gravada !== undefined && d.nota_recalculada !== undefined
+          ? ` · nota ${numeroDoCaso(d.nota_gravada)}, pela regra ${numeroDoCaso(d.nota_recalculada)}`
+          : "";
+      return campos ? `Diferente na conta: ${campos}${nota}` : "";
+    }
+    case "ANALISE_EM_DOIS_EDITAIS": {
+      const n = numero(d.editais) || caso.analises?.length || 0;
+      return n > 1 ? `Em ${n} editais ativos` : "Em mais de um edital ativo";
+    }
+    case "ENTREVISTA_SEM_NOTA_APOS_DATA":
+      return d.data_entrevista
+        ? `Entrevista em ${diaDoCaso(d.data_entrevista)}, sem nota`
+        : "";
+    case "ENTREVISTA_NOTA_FORA_DA_ESCALA":
+      return d.maxima !== undefined && d.maxima !== null
+        ? `Nota ${numeroDoCaso(d.nota)} · máxima ${numeroDoCaso(d.maxima)}`
+        : `Nota ${numeroDoCaso(d.nota)}`;
+    case "ENTREVISTA_HORARIO_DUPLICADO":
+      return numero(d.horarios) > 1 ? `${d.horarios} horários` : "";
+    case "APROVADOS_CONTRATADO_DUPLICADO": {
+      const contratos = (caso.vinculos || []).filter(
+        (v) => v.status === "Contratado",
+      ).length;
+      const n = Math.max(contratos, numero(d.vagas) || 0);
+      return n > 1
+        ? `Contratado em ${n} vagas`
+        : "Contratado em mais de uma vaga";
+    }
+    case "APROVADOS_CONVOCADO_SEM_DESFECHO": {
+      const dia = diaDoCaso(d.convocado_em || caso.dataConvocacao);
+      return dia ? `Convocado em ${dia}, sem desfecho` : "";
+    }
+    case "CLASSIFICACAO_LISTA_FINAL_DESATUALIZADA": {
+      const dia = diaDoCaso(caso.lista?.geradaEm);
+      return dia ? `Gerada em ${dia}` : "";
+    }
+    case "CLASSIFICACAO_EMPATE_PENDENTE": {
+      const n = numero(d.pendencias ?? caso.lista?.pendencias) || 0;
+      return n
+        ? `${n} ${n === 1 ? "empate pendente" : "empates pendentes"}`
+        : "";
+    }
+    case "CLASSIFICACAO_AJUSTE_APOS_LISTA": {
+      const dia = diaDoCaso(caso.lista?.aprovadoEm);
+      return dia ? `Ajuste aprovado em ${dia}` : "";
+    }
+    case "CARGA_VARIACAO_BRUSCA":
+      return d.antes !== undefined && d.depois !== undefined
+        ? `De ${numeroDoCaso(d.antes)} para ${numeroDoCaso(d.depois)} candidatos`
+        : "";
+    default:
+      return "";
+  }
+}
+
+/** Um caso de `listar_casos_aviso_conferencia`, pronto para a tela e o CSV. */
+export function normalizarCaso(entrada: unknown): Caso {
+  const bruto = registro(entrada);
+  const conferencia = texto(bruto?.conferencia);
+  const detalhe = registro(bruto.detalhe);
+  const listaBruta = ehRegistro(bruto.lista) ? bruto.lista : null;
+  const lista = listaBruta
+    ? {
+        tipo: texto(listaBruta.tipo),
+        geradaEm: texto(listaBruta.gerada_em) || null,
+        aprovadoEm: texto(listaBruta.aprovado_em) || null,
+        pendencias: numero(listaBruta.pendencias),
+      }
+    : null;
+  const nota =
+    bruto?.nota === null || bruto?.nota === undefined || bruto?.nota === ""
+      ? null
+      : typeof bruto.nota === "string" || typeof bruto.nota === "number"
+        ? Number(bruto.nota)
+        : null;
+  const caso: Caso = {
+    chave: "",
+    situacao: "",
+    motivo: "",
+    avisoId: texto(bruto?.aviso_id),
+    conferencia,
+    titulo: tituloDaConferencia(conferencia),
+    ordem: Math.max(0, Math.round(numero(bruto.ordem) || 0)),
+    tipo: texto(bruto?.tipo) || null,
+    resolucao:
+      bruto.resolucao === "removido" || bruto.resolucao === "sem_acesso"
+        ? bruto.resolucao
+        : "ok",
+    analiseId: texto(bruto?.analise_id) || null,
+    aprovadoId: texto(bruto?.aprovado_id) || null,
+    entrevistaId: texto(bruto?.entrevista_id) || null,
+    editalId: texto(bruto?.edital_id) || null,
+    codigo: texto(bruto?.codigo),
+    nome: texto(bruto?.nome),
+    edital: texto(bruto?.edital),
+    codigoVaga: texto(bruto?.codigo_vaga),
+    vaga: vagaDe(bruto?.codigo_vaga, bruto?.nome_vaga),
+    responsavel: texto(bruto?.responsavel),
+    status: texto(bruto?.status),
+    dataAnalise: texto(bruto?.data_analise) || null,
+    dataConvocacao: texto(bruto?.data_convocacao) || null,
+    dataContratacao: texto(bruto?.data_contratacao) || null,
+    nota: Number.isFinite(nota) ? nota : null,
+    compareceu: texto(bruto?.compareceu) || null,
+    lista,
+    referencia: referenciaVisivel(bruto?.referencia),
+    detalhe,
+    analises: (Array.isArray(bruto?.analises) ? bruto.analises : [])
+      .filter(ehRegistro)
+      .map(normalizarAnaliseDoCaso),
+    vinculos: (Array.isArray(bruto?.vinculos) ? bruto.vinculos : [])
+      .filter(ehRegistro)
+      .map(normalizarVinculo),
+    foraDoAcesso: Math.max(0, Math.round(numero(bruto.fora_do_acesso) || 0)),
+  };
+  caso.chave = `${caso.avisoId}:${caso.ordem}`;
+  caso.situacao = situacaoDoCaso(caso);
+  caso.motivo = motivoDoCaso(conferencia, detalhe, caso);
+  return caso;
+}
+
+/** A página de `listar_casos_aviso_conferencia`: `{ total, casos }`. */
+export function normalizarCasos(entrada: unknown) {
+  const dados = registro(entrada);
+  const casos = (Array.isArray(dados?.casos) ? dados.casos : [])
+    .filter(ehRegistro)
+    .map(normalizarCaso);
+  return {
+    total: Math.max(casos.length, Math.round(numero(dados.total) || 0)),
+    casos,
+  };
+}
+
+/** Junta a página nova às anteriores, sem repetir caso. */
+export function juntarPaginasDeCasos(
+  anteriores: readonly Caso[] | null,
+  nova: readonly Caso[] | null,
+) {
+  const vistos = new Set((anteriores || []).map((c) => c.chave));
+  return [
+    ...(anteriores || []),
+    ...(nova || []).filter((c) => !vistos.has(c.chave)),
+  ];
+}
+
+/** Quantos casos ainda faltam carregar. */
+export const casosRestantes = (
+  carregados: readonly Caso[] | null,
+  total: number,
+) => Math.max(0, (Number(total) || 0) - (carregados?.length || 0));
+
+/** O texto de busca enviado ao banco (até 80 caracteres; vazio = sem busca). */
+export const termoDeBusca = (valor: unknown) =>
+  texto(valor).replace(/\s+/g, " ").slice(0, 80);
+
+const TIPOS_DE_VAGA = new Set(["vaga", "vaga_empregare"]);
+
+/**
+ * A situação do registro do caso, em poucas palavras: o aprovado
+ * ("Contratado em 03/02/2026"), a entrevista ("Apto · nota 8,5") ou o ajuste.
+ * "" para as análises (a situação delas vai no CSV).
+ */
+export function situacaoDoCaso(caso: Partial<Caso> | null) {
+  if (caso?.tipo === "candidato_aprovado") return situacaoDoAprovado(caso);
+  if (caso?.tipo === "entrevista")
+    return [
+      PARECERES.find((p) => p.id === caso.status)?.rotulo || texto(caso.status),
+      caso.nota !== null && caso.nota !== undefined
+        ? `nota ${numeroDoCaso(caso.nota)}`
+        : "",
+      caso.compareceu === "N" ? "não compareceu" : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  if (caso?.tipo === "ajuste_recurso") return texto(caso.status);
+  return "";
+}
+
+/**
+ * Quem é o caso, em uma linha: "177979 · Nome", a lista ("Lista final ·
+ * Edital 101/2026"), a vaga ("Vaga 177979 · Enfermeiro") ou a referência que
+ * é código. Registro que sumiu: "Registro removido"; fora do acesso: "Sem
+ * acesso". Nunca um UUID.
+ */
+export function quemDoCaso(caso: Partial<Caso> | null) {
+  const partes = [caso?.codigo, caso?.nome].map(texto).filter(Boolean);
+  const resolucao = RESOLUCOES[caso?.resolucao ?? ""];
+  if (resolucao)
+    return [texto(caso?.codigo), resolucao].filter(Boolean).join(" · ");
+  if (partes.length) return partes.join(" · ");
+  if (caso?.tipo === "lista_classificacao")
+    return (
+      rotuloDoDicionario(TIPOS_DE_LISTA, caso?.lista?.tipo ?? "") ||
+      "Lista de classificação"
+    );
+  if (TIPOS_DE_VAGA.has(caso?.tipo ?? ""))
+    return caso?.vaga ? `Vaga ${caso.vaga}` : "Vaga sem código";
+  const referencia = referenciaVisivel(caso?.referencia);
+  return referencia ? `Referência ${referencia}` : "Sem identificação";
+}
+
+/** Edital, vaga, situação e responsável do caso, em uma linha (o que houver). */
+export function ondeDoCaso(caso: Partial<Caso> | null) {
+  return [
+    caso?.edital,
+    TIPOS_DE_VAGA.has(caso?.tipo ?? "") ? "" : caso?.vaga,
+    caso?.situacao,
+    caso?.responsavel ? `Resp. ${caso.responsavel}` : "",
+  ]
+    .map(texto)
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/** O caso abre o Painel das análises? (aviso das análises, com análise para mostrar). */
+export const casoAbreAnalise = (caso: Partial<Caso> | null, modulo: string) =>
+  modulo === "analises" &&
+  Boolean(caso?.analiseId || caso?.analises?.some((a) => a.id));
+
+/** A tela (view do app) de cada módulo dos avisos. */
+export const VIEW_DO_MODULO: Readonly<Record<string, string>> = Object.freeze({
+  analises: "analises",
+  entrevistas: "entrevistas",
+  classificacao: "classificacao",
+  aprovados: "approved",
+});
+
+/**
+ * Para onde o caso leva: `{ view, filtro }` (o pedido de filtro da tela, ver
+ * src/app/pedido-de-filtro.js) ou `null` quando não há o que abrir (registro
+ * removido, fora do acesso, cargas).
+ *   análises     o Painel das análises na análise (busca pelo nome);
+ *   aprovados    a Lista de aprovados só com as vagas da pessoa;
+ *   entrevistas  Resultados, buscando o candidato e com a entrevista aberta;
+ *   classificação a tela da Classificação.
+ */
+export function destinoDoCaso(caso: Caso | null): DestinoDoCaso | null {
+  if (!caso || RESOLUCOES[caso.resolucao]) return null;
+  const modulo = CONFERENCIAS[caso.conferencia]?.modulo;
+  if (modulo === "analises")
+    return casoAbreAnalise(caso, modulo)
+      ? { view: "analises", filtro: filtroDoCaso(caso) }
+      : null;
+  if (modulo === "aprovados") {
+    const candidatos = [
+      ...new Set(
+        [caso.aprovadoId, ...(caso.vinculos || []).map((v) => v.id)].filter(
+          (id): id is string => Boolean(id),
+        ),
+      ),
+    ];
+    return candidatos.length
+      ? { view: "approved", filtro: { candidatos, nome: texto(caso.nome) } }
+      : null;
+  }
+  if (modulo === "entrevistas") {
+    const busca = texto(caso.nome) || texto(caso.codigo);
+    return busca || caso.entrevistaId
+      ? {
+          view: "entrevistas",
+          filtro: { busca, entrevista: caso.entrevistaId || null },
+        }
+      : null;
+  }
+  if (modulo === "classificacao")
+    return caso.editalId ? { view: "classificacao", filtro: {} } : null;
+  return null;
+}
+
+/**
+ * O pedido de filtro (src/app/pedido-de-filtro.js) que leva o Painel das
+ * análises ao caso: a busca pelo nome e a análise a abrir na gaveta.
+ */
+export function filtroDoCaso(caso: Partial<Caso> | null) {
+  const analise =
+    caso?.analiseId || caso?.analises?.find((a) => a.id)?.id || null;
+  return { busca: texto(caso?.nome), analise };
+}
+
+const COLUNAS_DO_CSV_DE_CASOS: readonly (readonly [
+  string,
+  (caso: Caso) => unknown,
+])[] = Object.freeze([
+  ["Aviso", (c) => c.titulo],
+  ["Código do candidato", (c) => c.codigo],
+  ["Nome", (c) => c.nome || RESOLUCOES[c.resolucao] || ""],
+  ["Edital", (c) => c.edital],
+  ["Vaga", (c) => c.vaga],
+  ["Responsável pela análise", (c) => c.responsavel],
+  ["Situação", (c) => c.situacao || c.status],
+  ["Data da análise", (c) => diaDoCaso(c.dataAnalise)],
+  ["Motivo", (c) => c.motivo],
+  [
+    "Análises do candidato",
+    (c) =>
+      c.analises
+        .map((a) => [a.edital, a.vaga, a.status].filter(Boolean).join(" · "))
+        .join(" | "),
+  ],
+  [
+    "Vagas na lista de aprovados",
+    (c) => c.vinculos.map(linhaDoVinculo).join(" | "),
+  ],
+  ["Referência", (c) => referenciaVisivel(c.referencia)],
+]);
+
+/** CSV (";") dos casos, com cada célula protegida contra fórmula. */
+export function csvDosCasos(casos: readonly Caso[] | null) {
+  const celula = (valor: unknown) =>
+    sanitizeCsvCell(
+      String(valor ?? "")
+        .replace(/[\r\n;]/g, " ")
+        .replace(/"/g, "'"),
+    );
+  return [
+    COLUNAS_DO_CSV_DE_CASOS.map(([titulo]) => titulo).join(";"),
+    ...(casos || []).map((caso) =>
+      COLUNAS_DO_CSV_DE_CASOS.map(([, valor]) => celula(valor(caso))).join(";"),
+    ),
+  ].join("\n");
+}
+
+/** "avisos-analise-data-invalida-2026-10-06.csv" ("avisos-busca-…" na busca geral). */
+export function nomeDoCsvDosCasos(
+  aviso: Pick<Aviso, "conferencia"> | null,
+  agora = new Date(),
+) {
+  const base =
+    texto(aviso?.conferencia)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "busca";
+  const dois = (n: number) => String(n).padStart(2, "0");
+  return `avisos-${base}-${agora.getFullYear()}-${dois(agora.getMonth() + 1)}-${dois(agora.getDate())}.csv`;
+}

@@ -15,6 +15,7 @@ import {
   tamanhoNaTelaEmPixels,
   terraPrecisaDeSimbolo,
   tooltipDaTerraIndigena,
+  tooltipDoDsei,
 } from "../src/modules/indigenous-territories-layer.js";
 
 /*
@@ -191,6 +192,11 @@ describe("marcação da Terra Indígena no mapa", () => {
     expect(
       tooltipDaTerraIndigena({ etnia_nome: "<img src=x onerror=alert(1)>" }),
     ).not.toContain("<img");
+  });
+
+  it("a dica do contorno do DSEI também escapa o nome da Funai", () => {
+    expect(tooltipDoDsei("Alagoas e Sergipe")).toBe("DSEI Alagoas e Sergipe");
+    expect(tooltipDoDsei("<img src=x onerror=alert(1)>")).not.toContain("<img");
   });
 });
 

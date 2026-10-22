@@ -50,6 +50,12 @@ export function raioDaBolha(
 }
 
 /*
+  A transparência do preenchimento das bolhas dos mapas nacionais (DSEIs e
+  lugares de Projetos): deixa ver o contorno das UFs e a bolha de baixo.
+*/
+export const OPACIDADE_DA_BOLHA = 0.7;
+
+/*
   PONTOS COINCIDENTES — SEM MEXER NA COORDENADA
 
   O código antigo somava 0,55° à latitude e à longitude para "desempilhar"
@@ -127,6 +133,11 @@ export function agruparCoincidentes(registros, casas = 5) {
 */
 export const SOBREPOSICAO_EM_PIXELS = 14;
 
+/** @template {{lat: number, lon: number}} T
+ * @param {readonly T[]} registros
+ * @param {(registro: T) => {x: number, y: number}} projetar
+ * @param {number} [toleranciaPx]
+ * @returns {{chave: string, lat: number, lon: number, registros: T[]}[]} */
 export function agruparPorProximidadeNaTela(
   registros,
   projetar,

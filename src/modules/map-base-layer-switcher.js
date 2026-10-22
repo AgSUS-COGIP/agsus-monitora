@@ -103,9 +103,10 @@ function healthMapElementId(element) {
   return String(element?.id || "");
 }
 
+/* Os mapas da Visão geral: os dois da Saúde Indígena e o de Projetos. */
 function isHealthMapElement(element) {
   const id = healthMapElementId(element);
-  return id === "map" || id === "detailMap";
+  return id === "map" || id === "detailMap" || id === "mapaDosProjetos";
 }
 
 export function normalizeMapZoomOptions(element, options = {}) {
@@ -294,6 +295,7 @@ function setBaseMapMode(L, map, requestedMode, { persist = false } = {}) {
   ampliada e deslocada até o quadrante certo. Só se o recuo inteiro falhar é
   que o erro sobe.
 */
+/** @returns {import("../modulos/mapa-saude-indigena/tipos-do-leaflet.ts").CamadaDeFundo} */
 export function criarCamadaComRecuo(L, url, options) {
   const Camada = L.TileLayer.extend({
     createTile(coords, done) {

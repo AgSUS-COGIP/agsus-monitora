@@ -1,0 +1,2 @@
+# Dependências das funções Python em api/ (Vercel). Só a leitura de PDF dos anexos do edital.
+pdfplumber==0.11.9

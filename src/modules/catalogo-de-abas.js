@@ -2,15 +2,18 @@
   O catálogo de abas do banco (`listar_abas_do_menu`: `TB_ABA` × `RL_ABA_AREA`)
   para o menu lateral.
 
-  A consulta sai junto com as outras da entrada (`iniciarConsultasDaSessao` em
-  `legacy-app.js`) e vai na cópia da sessão. Quem monta a árvore é
-  `montarArvoreDoMenu` (`src/lib/menu-lateral.js`), que recebe `abasDoMenu()`.
+  A consulta sai junto com as outras da entrada (`iniciarConsultas` em
+  src/app/carga.js) e vai na cópia da sessão. Quem monta a árvore é
+  `montarArvoreDoMenu` (`src/lib/menu-lateral.ts`), que recebe `abasDoMenu()`.
 
   Sem catálogo — função ainda não publicada no banco, erro de rede, resposta
   vazia ou estranha —, vale `ABAS_DO_MENU`, o mesmo catálogo no código: o menu
   fica igual. Por isso a falha não interrompe a entrada nem invalida a cópia.
+
+  No meio da sessão, o vigia do catálogo (src/app/vigia-do-catalogo.ts) relê
+  e reaplica o catálogo quando a versão dele muda no banco.
 */
-import { ABAS_DO_MENU, abasDoCatalogo } from "../lib/menu-lateral.js";
+import { ABAS_DO_MENU, abasDoCatalogo } from "../lib/menu-lateral.ts";
 
 const RPC_LISTAR_ABAS_DO_MENU = "listar_abas_do_menu";
 
@@ -49,4 +52,12 @@ export async function carregarCatalogoDeAbas({ consulta } = {}) {
 /** O catálogo em uso: o do banco, quando carregou; senão, o do código. */
 export function abasDoMenu() {
   return abas;
+}
+
+/*
+  O catálogo em uso veio do banco? Só nesse caso dá para dizer que uma aba
+  foi desligada (src/lib/pagina-desligada.ts): no do código, tudo está ligado.
+*/
+export function catalogoDoBanco() {
+  return abas !== ABAS_DO_MENU;
 }

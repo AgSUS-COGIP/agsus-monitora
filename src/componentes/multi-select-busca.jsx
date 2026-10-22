@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
   Tom Select; DESIGN.md, seção 4). Controlado: a tela guarda a seleção e a
   recebe de volta por `aoMudar`.
 
-  O padrão vem da tela de Análises (`src/analises/analises-app.js`). As classes
+  Usado também nos filtros de Análises curriculares (src/modulos/analises/). As classes
   são as de `src/styles/multi-select-busca.css`.
 
   - O `id` vai no botão que abre o menu, para o `<label htmlFor>` da linha
@@ -42,6 +42,9 @@ export function normalizarOpcoes(lista) {
     .filter((item) => item.value);
 }
 
+/**
+ * @param {{ id: string, opcoes?: readonly (string | { value: string, label?: string })[], selecionados?: readonly string[], placeholder?: string, aoMudar?: (valores: string[]) => void }} props
+ */
 export function MultiSelectBusca({
   id,
   opcoes = [],
@@ -54,6 +57,7 @@ export function MultiSelectBusca({
   const raiz = useRef(null);
   const gatilho = useRef(null);
   const campoDeBusca = useRef(null);
+  const menu = useRef(null);
   const lista = useRef(null);
   /* O que focar quando o menu acabar de abrir: a busca, ou a primeira opção. */
   const focoAoAbrir = useRef("busca");
@@ -102,11 +106,35 @@ export function MultiSelectBusca({
       setAberto(false);
       gatilho.current?.focus();
     }
+    /*
+      Tela estreita: o menu é fixo na largura da janela (multi-select-busca.css)
+      e precisa acompanhar o campo quando a página rola — antes ficava parado
+      onde abriu, longe do filtro (Lista de aprovados, 05/10/2026).
+    */
+    const estreita = globalThis.matchMedia?.("(max-width: 820px)");
+    function posicionar() {
+      const elemento = menu.current;
+      if (!elemento) return;
+      if (!estreita?.matches || !gatilho.current) {
+        elemento.style.top = "";
+        return;
+      }
+      const caixa = gatilho.current.getBoundingClientRect();
+      elemento.style.top = `${Math.round(caixa.bottom + 6)}px`;
+    }
+    posicionar();
     document.addEventListener("click", aoClicar);
     document.addEventListener("keydown", aoTeclar);
+    globalThis.addEventListener?.("scroll", posicionar, {
+      capture: true,
+      passive: true,
+    });
+    globalThis.addEventListener?.("resize", posicionar);
     return () => {
       document.removeEventListener("click", aoClicar);
       document.removeEventListener("keydown", aoTeclar);
+      globalThis.removeEventListener?.("scroll", posicionar, { capture: true });
+      globalThis.removeEventListener?.("resize", posicionar);
     };
   }, [aberto]);
 
@@ -125,6 +153,18 @@ export function MultiSelectBusca({
     <div
       ref={raiz}
       /*
+        Esc com o foco aqui dentro fecha só o menu: para antes de chegar ao
+        `document`, onde o <Modal> em volta (ex.: "Adicionar pessoa") fecharia
+        o formulário inteiro.
+      */
+      onKeyDown={(evento) => {
+        if (evento.key !== "Escape" || !aberto) return;
+        evento.preventDefault();
+        evento.stopPropagation();
+        setAberto(false);
+        gatilho.current?.focus();
+      }}
+      /*
         `multi-select-busca` separa este componente do filtro legado da Saúde
         Indígena, que usa as mesmas classes mas abre por `.open`, não por
         `hidden`: sem ela, `.multi-select-menu { display: grid }` valia para
@@ -135,6 +175,7 @@ export function MultiSelectBusca({
         "multi-select",
         "multi-select-busca",
         escolhidos.length && "is-filled",
+        aberto && "is-aberto",
       )}
     >
       <button
@@ -163,7 +204,7 @@ export function MultiSelectBusca({
         </span>
         <i className="fa-solid fa-chevron-down" aria-hidden="true" />
       </button>
-      <div className="multi-select-menu" hidden={!aberto}>
+      <div className="multi-select-menu" ref={menu} hidden={!aberto}>
         <input
           ref={campoDeBusca}
           type="search"

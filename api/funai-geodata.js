@@ -140,9 +140,13 @@ function safeBbox(value) {
 function json(res, status, payload) {
   res.status(status);
   res.setHeader("Content-Type", "application/json; charset=utf-8");
+  // Só resposta boa vai para o cache compartilhado: um 403 de origem de
+  // terceiro ou um 502 passageiro não pode ser servido a quem usa o MONITORA.
   res.setHeader(
     "Cache-Control",
-    "public, s-maxage=1800, stale-while-revalidate=86400",
+    status < 400
+      ? "public, s-maxage=1800, stale-while-revalidate=86400"
+      : "no-store",
   );
   res.end(JSON.stringify(payload));
 }

@@ -15,36 +15,15 @@ import { comemorar } from "./comemoracao.js";
 /*
   "Parabéns, Ana! Seu acesso ao MONITORA foi liberado." (ou "Bem-vindo(a) de
   volta…" na reativação), com o que a pessoa pode usar agora. Regra em
-  src/lib/acesso-liberado.js; o confete e o aviso são os de todas as
-  comemorações (src/modules/comemoracao.js), que respeitam
-  prefers-reduced-motion. Armazenamento sempre em try/catch (janela privada,
+  src/lib/acesso-liberado.js; os fogos (com um visto desenhado no céu) e o
+  aviso são os de todas as comemorações (src/modules/comemoracao.js), que
+  respeitam prefers-reduced-motion. Armazenamento sempre em try/catch (janela privada,
   bloqueado): sem ele, as marcas não ficam e a regra da primeira entrada ainda
   limita a um dia.
 
   Com as comemorações desligadas (Configurações › Módulos e abas), as marcas
   são consumidas do mesmo jeito, mas nada aparece.
 */
-
-/** Chamado por "Entrar agora", antes de recarregar a página. */
-export function marcarBoasVindasPendentes(janela = globalThis.window) {
-  gravar(janela?.sessionStorage, CHAVE_PENDENTE, "1");
-}
-
-/** A tela de acesso desativado foi mostrada: na volta, é "reativado". */
-export function lembrarContaDesativada(usuarioId, janela = globalThis.window) {
-  if (usuarioId)
-    gravar(janela?.localStorage, chaveDaDesativacao(usuarioId), "1");
-}
-
-/** A tela de conta desativada já foi mostrada a esta pessoa (e ela não voltou)? */
-export function contaMarcadaComoDesativada(
-  usuarioId,
-  janela = globalThis.window,
-) {
-  return Boolean(
-    usuarioId && ler(janela?.localStorage, chaveDaDesativacao(usuarioId)),
-  );
-}
 
 /**
  * Depois de abrir o app: comemora se for a hora e apaga/grava as marcas.
@@ -89,6 +68,9 @@ export function comemorarAcessoLiberado({
     ),
     itens: oQuePodeUsar(perfil),
     tituloDosItens: "O que você já pode usar:",
+    // O estouro do marco desenha um visto (✓) no céu.
+    forma: "check",
+    marco: "acesso-liberado",
     doc,
     janela,
   });

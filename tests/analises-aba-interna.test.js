@@ -1,22 +1,23 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it } from "vitest";
-import {
-  enderecoDasAnalises,
-  semOPainelAntigoDeAnalises,
-} from "../src/lib/pagina-do-painel.js";
+import { semOPainelAntigoDeAnalises } from "../src/lib/pagina-do-painel.js";
 import { RESOURCES } from "../src/lib/permissoes-recursos.js";
 import { paginasPermitidas, permissaoLegada } from "../src/lib/access-roles.js";
+import { bloqueioDaTela, telaPermitida } from "../src/lib/navegacao.js";
+import { TELAS_REACT } from "../src/app/navegacao.js";
 import {
-  collectPanelRows,
-  renderPanelAdminHTML,
-} from "../src/modules/config-ui.js";
+  linhasDosPaineis,
+  normalizarPaineis,
+} from "../src/lib/paineis-externos-das-configuracoes.js";
 
 /*
   Análises curriculares deixou de ser o painel externo `analises` e virou a
-  view `analises`, com permissão só do recurso `analises`.
+  view `analises`, com permissão só do recurso `analises`; desde a Etapa 4, é
+  o módulo React src/modulos/analises/, sem quadro.
 */
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
-const legado = ler("src/modules/legacy-app.js");
+const legado = fonteDoApp();
 const trecho = (inicio, fim) =>
   legado.slice(
     legado.indexOf(inicio),
@@ -29,16 +30,7 @@ const PAINEIS = [
   { id: "3", codigo: "recursos", titulo: "Recursos", url: "https://b" },
 ];
 
-describe("o endereço e a lista de painéis", () => {
-  it("o quadro abre no domínio atual, com a área", () => {
-    expect(enderecoDasAnalises("http://localhost:5173", "sede")).toBe(
-      "http://localhost:5173/analises.html?area=sede",
-    );
-    expect(enderecoDasAnalises("https://previa.vercel.app", "")).toBe(
-      "https://previa.vercel.app/analises.html",
-    );
-  });
-
+describe("a lista de painéis", () => {
   it("o painel antigo sai da lista (banco antes da migration, cópia da sessão)", () => {
     expect(
       semOPainelAntigoDeAnalises(PAINEIS).map((painel) => painel.codigo),
@@ -47,19 +39,16 @@ describe("o endereço e a lista de painéis", () => {
   });
 
   it("Painéis externos da Administração não mostram Análises, e o salvar lê as linhas certas", () => {
-    const lista = semOPainelAntigoDeAnalises(PAINEIS);
-    document.body.innerHTML = `<div id="panelAdmin">${renderPanelAdminHTML(lista)}</div>`;
-    expect(document.body.textContent).not.toContain("Analises");
-    expect(collectPanelRows(lista).map((linha) => linha.id)).toEqual([
+    const lista = normalizarPaineis(semOPainelAntigoDeAnalises(PAINEIS));
+    expect(lista.map((painel) => painel.titulo)).not.toContain("Analises");
+    expect(linhasDosPaineis(lista).map((linha) => linha.id)).toEqual([
       "1",
       "3",
     ]);
   });
 
-  it("o recurso analises se chama Análises curriculares na matriz", () => {
-    expect(Object.fromEntries(RESOURCES).analises).toBe(
-      "Análises curriculares",
-    );
+  it("o recurso analises se chama Painel das análises na matriz", () => {
+    expect(Object.fromEntries(RESOURCES).analises).toBe("Painel das análises");
   });
 });
 
@@ -74,47 +63,43 @@ describe("o legado trata Análises como página", () => {
     expect(permissaoLegada(perfil("sem_acesso"), "analises")).toBe(false);
     expect(paginasPermitidas(perfil("leitor")).analises).toBe(true);
     expect(paginasPermitidas(perfil("sem_acesso")).analises).toBe(false);
-    expect(trecho("function can(perm)", "function isMasterProfile")).toContain(
-      "permissaoLegada(profile, perm)",
+    // A navegação (src/lib/navegacao.js) usa as mesmas regras de access-roles.js.
+    expect(telaPermitida("analises", perfil("leitor"))).toBe(true);
+    expect(bloqueioDaTela("analises", perfil("sem_acesso"))).toBe(
+      "Sem permissão para o Painel das análises.",
     );
-    expect(
-      trecho("function isViewAllowed(view)", "function rememberView"),
-    ).toContain("paginasPermitidas(profile)");
-    expect(trecho("function buildNav()", "function setActiveNav")).toContain(
-      "paginasPermitidas(profile)",
-    );
-    expect(
-      trecho("function navigate(view)", "function subtituloDaArea"),
-    ).toMatch(/requestedView === "analises" && !can\("analises"\)/);
   });
 
-  it("navegar abre a página e o quadro dela", () => {
-    const navegar = trecho(
-      "function navigate(view)",
-      "function subtituloDaArea",
-    );
-    expect(navegar).toContain('$("page-analises").classList.add("active");');
-    expect(navegar).toContain('abrirPaginaDoPainel($("page-analises"));');
+  it("navegar abre a tela React (TELAS_REACT → analisesController.render())", () => {
+    const controlador = { render() {} };
+    expect(
+      TELAS_REACT.analises(() => "", { analisesController: controlador }),
+    ).toEqual(["Painel das análises", "", controlador]);
+    expect(ler("src/app/navegacao.js")).not.toContain("abrirPaginaDoPainel");
+    // Sob demanda (src/app/tela-sob-demanda.js): o módulo baixa na abertura.
+    const main = ler("src/main.js");
+    expect(main).toContain("window.analisesController = telaSobDemanda({");
+    expect(main).toContain('import("./modulos/analises/analises.tsx")');
+    expect(main).toContain("m.montarAnalises({");
   });
 
   it("os painéis carregados perdem o antigo de análises", () => {
+    const paineis = ler("src/app/paineis-externos.js");
     expect(
-      trecho("async function loadPanels", "function panelAllowed"),
+      paineis.slice(paineis.indexOf("async function carregar(")),
     ).toContain("semOPainelAntigoDeAnalises(data)");
   });
 
   it("o caminho do painel externo não tem mais caso de área", () => {
-    const painel = trecho(
-      "function openPanel(code)",
-      "function renderConfigForm",
-    );
+    const fonte = ler("src/app/paineis-externos.js");
+    const painel = fonte.slice(fonte.indexOf("function mostrar(codigo)"));
     expect(painel).not.toMatch(/area/i);
     expect(legado).not.toContain("recarregarPainelNaAreaAtual");
   });
 
-  it("o index.html tem a seção da página", () => {
+  it("o index.html tem a seção da página, sem quadro", () => {
     expect(ler("index.html")).toContain(
-      '<section id="page-analises" class="page pagina-do-painel" data-painel="analises"></section>',
+      '<section id="page-analises" class="page"></section>',
     );
   });
 });

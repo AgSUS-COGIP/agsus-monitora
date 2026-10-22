@@ -17,23 +17,43 @@ const FORMATO_DA_DATA = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "America/Sao_Paulo",
 });
 
+const FORMATO_DA_HORA = new Intl.DateTimeFormat("pt-BR", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+  timeZone: "America/Sao_Paulo",
+});
+
+function dataValida(valor) {
+  if (!valor) return null;
+  const data = new Date(valor);
+  return Number.isNaN(data.getTime()) ? null : data;
+}
+
 /** "2026-09-30T15:00:00Z" → "30/09/2026" (horário de Brasília); "" se inválida. */
 export function dataCurta(valor) {
-  if (!valor) return "";
-  const data = new Date(valor);
-  return Number.isNaN(data.getTime()) ? "" : FORMATO_DA_DATA.format(data);
+  const data = dataValida(valor);
+  return data ? FORMATO_DA_DATA.format(data) : "";
+}
+
+/** "2026-09-30T15:00:00Z" → "30/09/2026 às 12:00" (horário de Brasília); "" se inválida. */
+export function dataHoraCurta(valor) {
+  const data = dataValida(valor);
+  return data
+    ? `${FORMATO_DA_DATA.format(data)} às ${FORMATO_DA_HORA.format(data)}`
+    : "";
 }
 
 /**
  * Situação da pessoa na coluna "Situação":
  *   { tipo: "convite", rotulo: "Convidado · ainda não entrou" }
- *   { tipo: "acesso",  rotulo: "Último acesso em 30/09/2026" }
+ *   { tipo: "acesso",  rotulo: "Último acesso em 30/09/2026 às 12:00" }
  *   { tipo: "nunca",   rotulo: "Nunca" }
  */
 export function situacaoDoAcesso(usuario) {
   if (usuario?.convite_pendente)
     return { tipo: "convite", rotulo: "Convidado · ainda não entrou" };
-  const data = dataCurta(usuario?.ultimo_acesso);
+  const data = dataHoraCurta(usuario?.ultimo_acesso);
   return data
     ? { tipo: "acesso", rotulo: `Último acesso em ${data}` }
     : { tipo: "nunca", rotulo: "Nunca" };

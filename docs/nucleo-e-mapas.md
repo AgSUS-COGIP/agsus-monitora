@@ -8,34 +8,39 @@ que ela significa e o que fazer quando não aparece.
 ### Para que serve
 
 A Equipe Núcleo acompanha os cronogramas dos editais. O painel
-**Acompanhamento operacional**, no topo da fila, resume em seis indicadores o
-estado de todos os editais ativos e sinaliza quais deles exigem atenção.
+**Acompanhamento operacional**, no topo da fila, resume em oito indicadores o
+estado dos editais da área e sinaliza quais deles exigem atenção.
 
-### Os seis indicadores
+### Os oito indicadores
 
-| Indicador           | O que conta                                                               |
-| ------------------- | ------------------------------------------------------------------------- |
-| **Editais ativos**  | Todos os editais no resumo. É o total de referência.                      |
-| **Em andamento**    | Editais com situação _Em andamento_ ou _Planejado_.                       |
-| **Sem cronograma**  | Editais sem nenhuma etapa cadastrada.                                     |
-| **Incompletos**     | Editais com cronograma começado, mas com etapas em falta.                 |
-| **Próximos 7 dias** | Editais cuja próxima etapa vence em até 7 dias — inclui os de até 3 dias. |
-| **Excepcionais**    | Editais em situação excepcional, registrada manualmente.                  |
+| Indicador            | O que conta                                                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------------- |
+| **Total de editais** | Todos os editais no resumo. É o total de referência (ativos + inativos).                        |
+| **Editais ativos**   | Processo ainda em curso: status _Planejado_, _Em andamento_, _Suspenso_, _Paralisado_ ou vazio. |
+| **Editais inativos** | Processo que acabou: status _Concluído_ ou _Cancelado_.                                         |
+| **Em andamento**     | Editais com situação _Em andamento_ ou _Planejado_.                                             |
+| **Sem cronograma**   | Editais sem nenhuma etapa cadastrada.                                                           |
+| **Incompletos**      | Editais com cronograma começado, mas com etapas em falta.                                       |
+| **Próximos 7 dias**  | Editais cuja próxima etapa vence em até 7 dias — inclui os de até 3 dias.                       |
+| **Excepcionais**     | Editais em situação excepcional, registrada manualmente.                                        |
 
 ### Filtrar a fila
 
 Cada indicador é um botão. Clicar filtra a fila abaixo para mostrar apenas os
-editais daquele grupo; clicar de novo noutro indicador troca o filtro.
+editais daquele grupo; clicar de novo no mesmo indicador tira o filtro, e
+clicar noutro indicador troca o filtro.
 
-Com um filtro aplicado aparece a tarja **Filtro operacional ativo**, com o
-botão **Limpar** para voltar a ver tudo. O indicador aplicado fica marcado
+Com um filtro aplicado aparece o chip **Alerta: …** (ou **Situação: …**, para
+ativos e inativos); o **x** dele volta a
+mostrar tudo. O indicador aplicado fica marcado
 também para leitores de tela, não só pela cor.
 
 ### Atualizar
 
-O botão **Atualizar**, no canto do painel, relê o resumo. Enquanto o pedido
-corre, o botão fica desativado e os indicadores atuais permanecem na tela — a
-grade não pisca nem se esvazia.
+O botão **Atualizar**, no topo da tela (ao lado de "Atualizado em…" e de
+**Novo edital**), relê o resumo. Enquanto o pedido corre, o botão fica
+desativado e os indicadores atuais permanecem na tela — a grade não pisca nem
+se esvazia.
 
 Ao abrir a Equipe Núcleo, o resumo é reutilizado por até 30 segundos. Se o
 cache estiver vencido, a tela busca uma atualização; o catálogo de cópia de
@@ -60,16 +65,16 @@ Cada linha da fila recebe uma etiqueta com o seu alerta:
 
 O painel diz em que ponto está, em vez de mostrar números que ainda não apurou:
 
-- **Carregando os alertas da Equipe Núcleo** — o resumo foi pedido e ainda não
-  chegou.
-- **Nenhum edital ativo na Equipe Núcleo** — o resumo chegou e está vazio. Não
-  é falha: não há edital cadastrado.
-- **Não foi possível carregar os alertas** — o pedido falhou. Há o botão
-  **Tentar de novo**. O detalhe técnico da falha fica no console do navegador,
-  não na tela.
+- **Skeleton** (cartões cinzentos pulsando, sem número) — o resumo ainda não
+  chegou. A tabela também é skeleton até o legado publicar as linhas.
+- **Nenhum edital ativo nesta área.** — o resumo chegou e está vazio. Não é
+  falha: não há edital cadastrado.
+- **Não foi possível carregar os alertas dos editais** — o pedido falhou. Há o
+  botão **Tentar novamente**. O detalhe técnico da falha fica no console do
+  navegador, não na tela.
 
 Zeros nos indicadores são sempre um dado apurado. Enquanto o resumo não chega,
-a grade fica vazia — nunca zerada.
+os cartões são skeleton — nunca zerados.
 
 ## Mapas
 

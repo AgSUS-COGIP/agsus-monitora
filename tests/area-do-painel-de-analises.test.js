@@ -6,20 +6,16 @@ import {
   colunasDoCsvDeAnalises,
   ehAreaSaudeIndigena,
   experienciaProfissionalDaLinha,
-  grupoDaPlanilhaDaArea,
   mensagemDeAreaSemAnalises,
   nomeDoCsvDeAnalises,
   parametroDeAreaDaRpc,
   rotuloDaAreaDoPainel,
-  subtituloDoPainelDeAnalises,
-  tituloDaAbaDoPainelDeAnalises,
-  tituloDoPainelDeAnalises,
 } from "../src/lib/area-do-painel-de-analises.js";
 
 /*
-  Saúde Indígena, SEDE e Projetos abrem o MESMO painel de análises; a área vem
-  da URL. Sem área (ou com lixo), o painel é o da Saúde Indígena — igual ao de
-  antes de haver áreas.
+  Saúde Indígena, SEDE e Projetos usam a MESMA tela de análises (a área do
+  app). Os painéis do quadro leem a área da URL: sem área (ou com lixo), é a
+  da Saúde Indígena.
 */
 describe("a área do painel pela URL", () => {
   it("aceita os três códigos", () => {
@@ -38,24 +34,14 @@ describe("a área do painel pela URL", () => {
     expect(areaDaUrlDoPainel("?area=<script>")).toBe("saude-indigena");
   });
 
-  it("título e rótulo de cada área", () => {
-    expect(tituloDoPainelDeAnalises()).toBe("Painel de análises curriculares");
-    expect(subtituloDoPainelDeAnalises("projetos")).toBe(
-      "Projetos · Acompanhamento das análises dos processos seletivos",
-    );
-    expect(subtituloDoPainelDeAnalises("sede")).toMatch(/^SEDE · /);
-    expect(tituloDaAbaDoPainelDeAnalises("saude-indigena")).toBe(
-      "Painel de análises curriculares · Saúde Indígena — MONITORA",
-    );
+  it("rótulo de cada área", () => {
+    expect(rotuloDaAreaDoPainel("projetos")).toBe("Projetos");
     expect(rotuloDaAreaDoPainel("xyz")).toBe("Saúde Indígena");
     expect(ehAreaSaudeIndigena("saude-indigena")).toBe(true);
     expect(ehAreaSaudeIndigena("projetos")).toBe(false);
   });
 
-  it("grupo da planilha e parâmetro das RPCs", () => {
-    expect(grupoDaPlanilhaDaArea("saude-indigena")).toBe("Saúde Indígena");
-    expect(grupoDaPlanilhaDaArea("projetos")).toBe("Projetos");
-    expect(grupoDaPlanilhaDaArea("sede")).toBe("SEDE");
+  it("parâmetro das RPCs", () => {
     expect(parametroDeAreaDaRpc("sede")).toEqual({ p_area: "sede" });
     expect(parametroDeAreaDaRpc("qualquer")).toEqual({
       p_area: "saude-indigena",
@@ -64,7 +50,7 @@ describe("a área do painel pela URL", () => {
 });
 
 describe("cache por área", () => {
-  it("o cache em memória do transporte também separa as áreas", () => {
+  it("a cópia do navegador separa as áreas e os escopos", () => {
     expect(chaveDoCacheDoPayload("projetos", "ativo")).toBe("projetos:ativo");
     expect(chaveDoCacheDoPayload("saude-indigena", "Todos")).toBe(
       "saude-indigena:todos",

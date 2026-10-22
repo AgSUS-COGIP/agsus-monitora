@@ -1,7 +1,7 @@
 /*
   Editais da Equipe Núcleo — a lógica da página "Editais", sem DOM nem rede.
 
-  A tela é `src/componentes/nucleo/`. As linhas são as do monitoramento
+  A tela é `src/modulos/editais/`. As linhas são as do monitoramento
   (`TB_MONITORAMENTO_INDIGENA`), carregadas pelo legado para o mapa e para esta
   página; o resumo de cronogramas vem de `get_nucleo_cronograma_resumo`.
 
@@ -9,6 +9,7 @@
   mapa (`legacy-app.js`): as duas telas têm de concordar.
 */
 
+import { etapaComDatasValidas } from "./datas-do-cronograma.js";
 import {
   AREA_SAUDE_INDIGENA,
   ehResponsavelCores,
@@ -346,6 +347,22 @@ export function camposDaUnidade(unidade) {
  * @param {string} [area] a área pretendida (`co_area`): a do menu no edital novo,
  *   a do próprio edital ao editar. Sem ela, o banco deduz a área como antes.
  */
+/**
+ * Início e fim do edital pelo cronograma: a primeira data de início e a
+ * última de fim das etapas com datas possíveis; null sem etapa válida.
+ * Com o cronograma automático, são essas as datas do edital — digitadas à
+ * mão saíram "0202-10-09" e "20206-09-14" em 02/10/2026.
+ */
+export function periodoDoCronograma(etapas) {
+  const validas = (etapas || []).filter(etapaComDatasValidas);
+  if (!validas.length) return null;
+  const inicios = validas.map((e) => e.data_inicio.slice(0, 10)).sort();
+  const fins = validas
+    .map((e) => (e.data_fim || e.data_inicio).slice(0, 10))
+    .sort();
+  return { inicio: inicios[0], fim: fins[fins.length - 1] };
+}
+
 export function editalParaSalvar(
   formulario,
   unidade,
@@ -355,6 +372,7 @@ export function editalParaSalvar(
 ) {
   const f = formulario;
   const automatico = Boolean(cronograma.automatico);
+  const periodo = automatico ? periodoDoCronograma(cronograma.etapas) : null;
   return {
     id: txt(f.id) || null,
     processo: txt(f.processo),
@@ -366,8 +384,8 @@ export function editalParaSalvar(
     uf: txt(f.uf),
     ciclo: txt(f.ciclo),
     vagas_total: Number(f.vagas || 0),
-    data_inicio: txt(f.dataInicio) || null,
-    data_fim: txt(f.dataFim) || null,
+    data_inicio: periodo?.inicio || txt(f.dataInicio) || null,
+    data_fim: periodo?.fim || txt(f.dataFim) || null,
     status: automatico ? previa.status : txt(f.status),
     etapa: automatico ? previa.etapa : txt(f.etapa),
     risco: txt(f.risco) || "Baixo",
@@ -461,7 +479,35 @@ export const alertaDoTipo = (tipo) => ALERTAS[tipo] || ALERTAS.ok;
 const EM_ANDAMENTO = ["Em andamento", "Planejado"];
 const PROXIMAS = ["proxima_3d", "proxima_7d"];
 
-/** Os seis indicadores do painel operacional, contados sobre o resumo. */
+/*
+  Ativo ou inativo, pelo status do edital — o mesmo sentido da "Situação do
+  processo" das Análises: inativo é o processo que acabou (Concluído ou
+  Cancelado); os demais (Planejado, Em andamento, Suspenso, Paralisado, sem
+  status) seguem ativos. Os editais desligados no banco (`ativo = false`) nem
+  chegam à tela.
+*/
+export function situacaoDoEdital(status) {
+  const l = low(status);
+  return l.includes("conclu") || l.includes("cancel") ? "inativo" : "ativo";
+}
+
+/** Quantos editais ativos e inativos há no resumo (pelo status de cada um). */
+export function contarAtivosEInativos(resumo) {
+  return (resumo || []).reduce(
+    (acc, item) => {
+      if (situacaoDoEdital(item?.status) === "inativo") acc.inativos += 1;
+      else acc.ativos += 1;
+      return acc;
+    },
+    { ativos: 0, inativos: 0 },
+  );
+}
+
+/** O nome do filtro no chip: a situação (ativos/inativos) ou o alerta. */
+export const rotuloDoFiltroOperacional = (filtro) =>
+  filtro === "ativos" || filtro === "inativos" ? "Situação" : "Alerta";
+
+/** Os oito indicadores do painel operacional, contados sobre o resumo. */
 export function indicadoresDoResumo(resumo) {
   const contagem = (resumo || []).reduce(
     (acc, item) => {
@@ -472,13 +518,28 @@ export function indicadoresDoResumo(resumo) {
     },
     { total: 0, andamento: 0 },
   );
+  const { ativos, inativos } = contarAtivosEInativos(resumo);
   return [
     {
       key: "todos",
-      label: "Editais ativos",
+      label: "Total de editais",
       value: contagem.total,
       icon: "fa-folder-open",
       tone: "blue",
+    },
+    {
+      key: "ativos",
+      label: "Editais ativos",
+      value: ativos,
+      icon: "fa-signal",
+      tone: "green",
+    },
+    {
+      key: "inativos",
+      label: "Editais inativos",
+      value: inativos,
+      icon: "fa-box-archive",
+      tone: "slate",
     },
     {
       key: "andamento",
@@ -525,6 +586,8 @@ export function indicadoresDoResumo(resumo) {
 export function passaNoFiltroOperacional(item, filtro) {
   if (filtro === "todos") return true;
   if (!item) return false;
+  if (filtro === "ativos" || filtro === "inativos")
+    return `${situacaoDoEdital(item.status)}s` === filtro;
   if (filtro === "andamento") return EM_ANDAMENTO.includes(item.status);
   if (filtro === "proxima") return PROXIMAS.includes(item.alerta_tipo);
   return item.alerta_tipo === filtro;

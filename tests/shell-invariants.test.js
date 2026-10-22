@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it } from "vitest";
 
 const html = readFileSync("index.html", "utf8");
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
+const app = fonteDoApp();
 
 describe("platform shell invariants", () => {
   it("remove o modo executivo da interface e do runtime", () => {
@@ -12,9 +13,10 @@ describe("platform shell invariants", () => {
   });
 
   it("mantém painéis no shell sem redirecionamento de página", () => {
-    const openPanel = app.slice(
-      app.indexOf("function openPanel"),
-      app.indexOf("function buildExternalPanel"),
+    const paineis = readFileSync("src/app/paineis-externos.js", "utf8");
+    const openPanel = paineis.slice(
+      paineis.indexOf("function mostrar(codigo)"),
+      paineis.indexOf("function descartar(codigo)"),
     );
     expect(openPanel).not.toContain("window.location.assign");
     expect(openPanel).not.toContain('classList.add("external-clean")');
@@ -34,14 +36,12 @@ describe("platform shell invariants", () => {
     pertence, e a barra lateral não volta a ser sequestrada por ela.
   */
   it("normaliza a marca oficial na tela de acesso", () => {
-    expect(app).toContain("normalizeAccessLogoUrl(logoDoBanco)");
+    const marca = readFileSync("src/app/entrada/marca.js", "utf8");
+    expect(marca).toContain("normalizeAccessLogoUrl(logoDoBanco)");
   });
 
   it("não deixa a marca do login mandar na sidebar", () => {
-    const applyConfig = app.slice(
-      app.indexOf("function applyConfigToUi"),
-      app.indexOf("function normalizeUnitName"),
-    );
+    const applyConfig = readFileSync("src/app/configuracao.js", "utf8");
     expect(applyConfig).not.toContain('"sideLogo"');
   });
 });

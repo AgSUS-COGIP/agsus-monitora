@@ -6,7 +6,7 @@ import {
   abasDoCatalogo,
   montarArvoreDoMenu,
   paginasDaArea,
-} from "../src/lib/menu-lateral.js";
+} from "../src/lib/menu-lateral.ts";
 import { RESOURCES } from "../src/lib/permissoes-recursos.js";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 import {
@@ -50,6 +50,70 @@ const MIGRATION_DAS_ENTREVISTAS = ler(
 );
 const MIGRATION_QUE_LIGA_AS_ENTREVISTAS = ler(
   "supabase/migrations/20260930090000_liga_aba_entrevistas.sql",
+);
+/*
+  Seleção (20261001090000_selecao.sql): o mesmo formato das Entrevistas — entra
+  desligada, em todas as áreas, e 20261001090500_liga_aba_selecao.sql a liga.
+*/
+const MIGRATION_DA_SELECAO = ler(
+  "supabase/migrations/20261001090000_selecao.sql",
+);
+const MIGRATION_QUE_LIGA_A_SELECAO = ler(
+  "supabase/migrations/20261001090500_liga_aba_selecao.sql",
+);
+/*
+  Classificação (20261002150000_classificacao.sql): o mesmo formato — entra
+  desligada, em todas as áreas, empurra Aprovados (8) e Seleção (9), e
+  20261002150500_liga_aba_classificacao.sql a liga.
+*/
+const MIGRATION_DA_CLASSIFICACAO = ler(
+  "supabase/migrations/20261002150000_classificacao.sql",
+);
+const MIGRATION_QUE_LIGA_A_CLASSIFICACAO = ler(
+  "supabase/migrations/20261002150500_liga_aba_classificacao.sql",
+);
+/*
+  Avaliação documental (20261006090000_avaliacao_documental_permissao_e_menu.sql):
+  o mesmo formato — entra desligada, em todas as áreas, na ordem 5, empurra
+  Recursos, Entrevistas, Classificação, Aprovados e Seleção, e troca o rótulo
+  de Análises para "Painel das análises" (update de "NO_ABA");
+  20261006090500_liga_aba_avaliacao_documental.sql a liga.
+*/
+const MIGRATION_DA_AVALIACAO = ler(
+  "supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql",
+);
+const MIGRATION_QUE_LIGA_A_AVALIACAO = ler(
+  "supabase/migrations/20261006090500_liga_aba_avaliacao_documental.sql",
+);
+/*
+  Conduzir entrevistas (20261008130000_conduzir_entrevistas_no_menu.sql): o
+  mesmo formato — entra desligada, em todas as áreas, na ordem 8, empurra
+  Classificação, Aprovados e Seleção, e troca o rótulo de Entrevistas para
+  "Painel de entrevistas"; 20261008130500_liga_aba_conduzir_entrevistas.sql a
+  liga.
+*/
+const MIGRATION_DE_CONDUZIR = ler(
+  "supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql",
+);
+const MIGRATION_QUE_LIGA_CONDUZIR = ler(
+  "supabase/migrations/20261008130500_liga_aba_conduzir_entrevistas.sql",
+);
+/*
+  Analisar recursos (20261009230000_analisar_recursos_no_menu.sql): entra
+  desligada, na ordem 7, nas áreas do painel de recursos (que estão nas três),
+  empurra Painel de entrevistas, Conduzir entrevistas, Classificação,
+  Aprovados e Seleção, e troca o rótulo de Recursos para "Painel de
+  recursos"; 20261009230500_liga_aba_analisar_recursos.sql a liga.
+*/
+const MIGRATION_DE_ANALISAR = ler(
+  "supabase/migrations/20261009230000_analisar_recursos_no_menu.sql",
+);
+const MIGRATION_QUE_LIGA_ANALISAR = ler(
+  "supabase/migrations/20261009230500_liga_aba_analisar_recursos.sql",
+);
+/* A ordem por etapa do processo: só updates de "NU_ORDEM", aplicados por último. */
+const MIGRATION_DA_ORDEM = ler(
+  "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql",
 );
 const RESPOSTA_DO_ENSAIO = JSON.parse(
   ler("tests/fixtures/listar-abas-do-menu.json"),
@@ -95,11 +159,33 @@ function abasDoSeed() {
   const abas = [
     ...linhasDoInsert("TB_ABA"),
     ...linhasDoInsertEm(MIGRATION_DAS_ENTREVISTAS, "TB_ABA"),
+    ...linhasDoInsertEm(MIGRATION_DA_SELECAO, "TB_ABA"),
+    ...linhasDoInsertEm(MIGRATION_DA_CLASSIFICACAO, "TB_ABA"),
+    ...linhasDoInsertEm(MIGRATION_DA_AVALIACAO, "TB_ABA"),
+    ...linhasDoInsertEm(MIGRATION_DE_CONDUZIR, "TB_ABA"),
+    ...linhasDoInsertEm(MIGRATION_DE_ANALISAR, "TB_ABA"),
   ];
-  for (const [, ordem, aba] of MIGRATION_DAS_ENTREVISTAS.matchAll(
-    /update public\."TB_ABA" set "NU_ORDEM" = (\d+)[^;]*where "CO_ABA" = '([^']+)'/g,
-  ))
-    abas.find((linha) => linha.CO_ABA === aba).NU_ORDEM = Number(ordem);
+  for (const sql of [
+    MIGRATION_DAS_ENTREVISTAS,
+    MIGRATION_DA_ORDEM,
+    MIGRATION_DA_CLASSIFICACAO,
+    MIGRATION_DA_AVALIACAO,
+    MIGRATION_DE_CONDUZIR,
+    MIGRATION_DE_ANALISAR,
+  ])
+    for (const [, ordem, aba] of sql.matchAll(
+      /update public\."TB_ABA" set "NU_ORDEM" = (\d+)[^;]*where "CO_ABA" = '([^']+)'/g,
+    ))
+      abas.find((linha) => linha.CO_ABA === aba).NU_ORDEM = Number(ordem);
+  for (const sql of [
+    MIGRATION_DA_AVALIACAO,
+    MIGRATION_DE_CONDUZIR,
+    MIGRATION_DE_ANALISAR,
+  ])
+    for (const [, rotulo, aba] of sql.matchAll(
+      /update public."TB_ABA" set "NO_ABA" = '([^']+)'[^;]*where "CO_ABA" = '([^']+)'/g,
+    ))
+      abas.find((linha) => linha.CO_ABA === aba).NO_ABA = rotulo;
   return abas;
 }
 
@@ -110,12 +196,49 @@ function ligacoesDoSeed() {
   expect(MIGRATION_QUE_LIGA_AS_ENTREVISTAS).toContain(
     `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'entrevistas'`,
   );
+  expect(MIGRATION_DA_SELECAO).toContain(
+    `select 'selecao', a."CO_AREA", 'S' from public."TB_AREA" a`,
+  );
+  expect(MIGRATION_QUE_LIGA_A_SELECAO).toContain(
+    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'selecao'`,
+  );
+  expect(MIGRATION_DA_CLASSIFICACAO).toContain(
+    `select 'classificacao', a."CO_AREA", 'S' from public."TB_AREA" a`,
+  );
+  expect(MIGRATION_QUE_LIGA_A_CLASSIFICACAO).toContain(
+    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'classificacao'`,
+  );
+  expect(MIGRATION_DA_AVALIACAO).toContain(
+    `select 'avaliacao-documental', a."CO_AREA", 'S' from public."TB_AREA" a`,
+  );
+  expect(MIGRATION_QUE_LIGA_A_AVALIACAO).toContain(
+    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'avaliacao-documental'`,
+  );
+  expect(MIGRATION_DE_CONDUZIR).toContain(
+    `select 'conduzir-entrevistas', a."CO_AREA", 'S' from public."TB_AREA" a`,
+  );
+  expect(MIGRATION_QUE_LIGA_CONDUZIR).toContain(
+    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'conduzir-entrevistas'`,
+  );
+  expect(MIGRATION_DE_ANALISAR).toContain(
+    `select 'analisar-recursos', r."CO_AREA", r."ST_ATIVO" from public."RL_ABA_AREA" r where r."CO_ABA" = 'recursos'`,
+  );
+  expect(MIGRATION_QUE_LIGA_ANALISAR).toContain(
+    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'analisar-recursos'`,
+  );
   return [
     ...linhasDoInsert("RL_ABA_AREA"),
-    ...AREAS_DO_SISTEMA.map((area) => ({
-      CO_ABA: "entrevistas",
-      CO_AREA: area.id,
-    })),
+    ...[
+      "entrevistas",
+      "selecao",
+      "classificacao",
+      "avaliacao-documental",
+      "conduzir-entrevistas",
+      // As áreas do painel de recursos (as três no seed).
+      "analisar-recursos",
+    ].flatMap((aba) =>
+      AREAS_DO_SISTEMA.map((area) => ({ CO_ABA: aba, CO_AREA: area.id })),
+    ),
   ];
 }
 
@@ -190,8 +313,13 @@ describe("o seed da migration é o catálogo do código", () => {
       "calendario",
       "approved",
       "analises",
+      "avaliacao-documental",
       "entrevistas",
+      "conduzir-entrevistas",
       "recursos",
+      "analisar-recursos",
+      "selecao",
+      "classificacao",
     ]);
     const views = Object.values(paginasPorArea(ABAS_DO_MENU)).flatMap(
       (paginas) => paginas.map((pagina) => pagina.view),
@@ -281,7 +409,7 @@ describe("a árvore segue o catálogo do banco quando ele chega", () => {
     const editais = resposta.find((aba) => aba.co_aba === "editais");
     Object.assign(
       editais.areas.find((a) => a.co_area === "projetos"),
-      { nu_ordem: 9, ds_icone: "folder" },
+      { nu_ordem: 13, ds_icone: "folder" },
     );
     const grupos = Object.fromEntries(
       arvore(PERMISSOES.admin, AREAS.todas, abasDoCatalogo(resposta)).map(
@@ -293,6 +421,7 @@ describe("a árvore segue o catálogo do banco quando ele chega", () => {
     expect(grupos.projetos.at(-1)).toEqual({
       view: "nucleo",
       rotulo: "Editais",
+      bloco: "processo",
       icone: "folder",
       area: "projetos",
     });
@@ -323,7 +452,12 @@ describe("resposta estranha vira o catálogo do código", () => {
     ]);
     expect(abas.map((aba) => aba.id)).toEqual(["editais"]);
     expect(paginasDaArea(abas, "sede")).toEqual([
-      { view: "nucleo", rotulo: "Editais", icone: "file-text" },
+      {
+        view: "nucleo",
+        rotulo: "Editais",
+        icone: "file-text",
+        bloco: "processo",
+      },
     ]);
   });
 
@@ -446,27 +580,39 @@ describe("contrato e acesso da função", () => {
   o do banco; sem eles, o do código.
 */
 describe("selo beta das abas", () => {
-  const recursosDe = (abas) => abas.find((aba) => aba.id === "recursos");
+  const recursosDe = (abas) =>
+    abas.find((aba) => aba.id === "analisar-recursos");
 
-  it("no código, só Entrevistas e Recursos são beta; as outras nem têm o campo", () => {
+  it("no código, só Avaliação documental, Analisar recursos, Entrevistas (painel e conduzir), Classificação e Seleção são beta; as outras nem têm o campo", () => {
+    const beta = [
+      "avaliacao-documental",
+      "analisar-recursos",
+      "entrevistas",
+      "conduzir-entrevistas",
+      "classificacao",
+      "selecao",
+    ];
     expect(ABAS_DO_MENU.filter((aba) => aba.beta).map((aba) => aba.id)).toEqual(
-      ["entrevistas", "recursos"],
+      beta,
     );
     expect(
-      ABAS_DO_MENU.filter(
-        (aba) => !["entrevistas", "recursos"].includes(aba.id),
-      ).some((aba) => Object.hasOwn(aba, "beta")),
+      ABAS_DO_MENU.filter((aba) => !beta.includes(aba.id)).some((aba) =>
+        Object.hasOwn(aba, "beta"),
+      ),
     ).toBe(false);
   });
 
   it("o banco de hoje (sem ds_selo) herda o selo do código", () => {
     expect(recursosDe(abasDoCatalogo(RESPOSTA_DO_ENSAIO)).beta).toBe(true);
     expect(
-      paginasDaArea(abasDoCatalogo(RESPOSTA_DO_ENSAIO), "sede").at(-1),
+      paginasDaArea(abasDoCatalogo(RESPOSTA_DO_ENSAIO), "sede").find(
+        (pagina) => pagina.view === "analisar-recursos",
+      ),
     ).toEqual({
-      view: "recursos",
-      rotulo: "Recursos",
-      icone: "scale",
+      view: "analisar-recursos",
+      rotulo: "Analisar recursos",
+      icone: "gavel",
+      bloco: "processo",
       beta: true,
     });
   });
@@ -476,7 +622,7 @@ describe("selo beta das abas", () => {
       abasDoCatalogo(
         RESPOSTA_DO_ENSAIO.map((aba) => ({
           ...aba,
-          ...(aba.co_aba === "recursos" ? campos : {}),
+          ...(aba.co_aba === "analisar-recursos" ? campos : {}),
           ...(aba.co_aba === "editais" ? { ds_selo: "BETA" } : {}),
         })),
       );
@@ -487,9 +633,9 @@ describe("selo beta das abas", () => {
 
   it("o item do menu leva o selo da página beta", () => {
     const itens = montarArvoreDoMenu({
-      permitidas: { nucleo: true, recursos: true },
+      permitidas: { nucleo: true, "analisar-recursos": true },
     })[0].itens;
-    expect(itens.find((i) => i.view === "recursos").beta).toBe(true);
+    expect(itens.find((i) => i.view === "analisar-recursos").beta).toBe(true);
     expect(
       Object.hasOwn(
         itens.find((i) => i.view === "nucleo"),

@@ -1,12 +1,12 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarNucleo } from "../../src/componentes/nucleo/nucleo.jsx";
+import { montarNucleo } from "../../src/modulos/editais/nucleo.jsx";
 import {
   definirAreaAtual,
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 import { UNIDADES_CORES } from "../../src/lib/responsavel-do-edital.js";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 
@@ -235,6 +235,7 @@ async function montar({
   linhas = LINHAS(),
   publicar = true,
   abrir = true,
+  relogio = true,
 } = {}) {
   document.body.innerHTML = `<section id="page-nucleo" class="page active"></section>`;
   perfilAtual = perfil;
@@ -247,7 +248,8 @@ async function montar({
       getProfile: () => perfilAtual,
       confirmar,
       aoSalvar,
-      agora: () => new Date(HOJE),
+      // relogio: false monta como em produção, sem relógio injetado.
+      agora: relogio ? () => new Date(HOJE) : undefined,
     });
   });
   if (publicar)
@@ -281,15 +283,35 @@ const linhasDaTabela = () =>
   );
 const linha = (id) =>
   document.querySelector(`#nucleoRows tr[data-record-id="${id}"]`);
+/* O indicador clicável (o botão do Kpi); o skeleton não tem botão. */
 const cartao = (chave) =>
-  document.querySelector(`[data-alert-filter="${chave}"]`);
+  document.querySelector(
+    `#nucleoOperationalKpis [data-kpi="${chave}"] .ui-kpi-alvo`,
+  );
+const indicadores = () => $("nucleoOperationalKpis");
+const atualizar = () =>
+  document.querySelector('#page-nucleo [data-acao="atualizar"]');
 const abrirEdital = async (id) =>
   clicar(linha(id).querySelector('[aria-label^="Editar"]'));
 
 describe("tabela de editais", () => {
-  it("antes de o legado publicar as linhas, diz que está a carregar", async () => {
+  it("antes de o legado publicar as linhas, a tabela e os KPIs são skeleton", async () => {
     await montar({ publicar: false, abrir: false });
-    expect($("nucleoRows").textContent).toContain("Carregando editais");
+    expect($("nucleoRows").getAttribute("aria-busy")).toBe("true");
+    expect($("nucleoRows").querySelectorAll(".ui-esqueleto-tr").length).toBe(8);
+    expect($("nucleoRows").textContent).toBe("");
+    expect(
+      indicadores().querySelectorAll('.ui-kpi[aria-busy="true"]'),
+    ).toHaveLength(8);
+    // ED-1.4: os cartões de situação também nascem skeleton.
+    expect(
+      indicadores()
+        .querySelector('[data-kpi="ativos"]')
+        .getAttribute("aria-busy"),
+    ).toBe("true");
+    expect(
+      document.querySelector("#page-nucleo [data-status-da-carga]").textContent,
+    ).toBe("Carregando dados...");
   });
 
   it("ordena pelo risco e, depois, por quem tem mais vagas ociosas", async () => {
@@ -299,13 +321,11 @@ describe("tabela de editais", () => {
 
   it("colore status e risco, e só faz link de endereço http(s)", async () => {
     await montar();
-    expect(linha("1").querySelector(".chip.blue").textContent).toBe(
-      "Em andamento",
-    );
-    expect(linha("2").querySelector(".chip.green").textContent).toBe(
-      "Concluído",
-    );
-    expect(linha("2").querySelector(".chip.red").textContent).toBe("Alto");
+    const selo = (id, tom) =>
+      linha(id).querySelector(`.ui-selo[data-tom="${tom}"]`).textContent;
+    expect(selo("1", "info")).toBe("Em andamento");
+    expect(selo("2", "sucesso")).toBe("Concluído");
+    expect(selo("2", "perigo")).toBe("Alto");
     expect(linha("1").querySelector("a.link").getAttribute("href")).toBe(
       "https://exemplo.gov.br/edital-10",
     );
@@ -368,14 +388,62 @@ describe("painel operacional", () => {
     await clicar(cartao("sem_cronograma"));
     expect(linhasDaTabela()).toEqual(["3"]);
     expect(cartao("sem_cronograma").getAttribute("aria-pressed")).toBe("true");
-    expect(cartao("sem_cronograma").classList.contains("is-active")).toBe(true);
+    expect(
+      cartao("sem_cronograma")
+        .closest(".ui-kpi")
+        .classList.contains("is-ativo"),
+    ).toBe(true);
     const tarja = $("nucleoActiveAlertFilter");
     expect(tarja.getAttribute("role")).toBe("status");
     expect(tarja.textContent).toContain("Sem cronograma");
 
-    await clicar($("clearNucleoAlertFilter"));
+    await clicar(tarja.querySelector(".ui-chip"));
     expect(linhasDaTabela()).toEqual(["2", "3", "1"]);
-    expect($("nucleoActiveAlertFilter").hidden).toBe(true);
+    expect($("nucleoActiveAlertFilter")).toBeNull();
+  });
+
+  /* Histórias em docs/historias-de-usuario/editais.md. */
+  it("ED-1.1 — mostra Editais ativos e inativos no formato dos outros cartões", async () => {
+    await montar();
+    const ativos = cartao("ativos");
+    const inativos = cartao("inativos");
+    expect(ativos.textContent).toContain("Editais ativos");
+    expect(ativos.querySelector(".ui-kpi-valor").textContent).toBe("2");
+    expect(inativos.textContent).toContain("Editais inativos");
+    expect(inativos.querySelector(".ui-kpi-valor").textContent).toBe("1");
+    expect(cartao("todos").textContent).toContain("Total de editais");
+    expect(ativos.closest(".ui-kpi").querySelector(".ui-kpi-icone")).not.toBe(
+      null,
+    );
+  });
+
+  it("ED-2.1/2.2/2.3/2.4 — clicar filtra, clicar de novo tira; o chip diz Situação", async () => {
+    await montar();
+    await clicar(cartao("inativos"));
+    expect(linhasDaTabela()).toEqual(["2"]);
+    expect(cartao("inativos").getAttribute("aria-pressed")).toBe("true");
+    expect($("nucleoActiveAlertFilter").textContent).toContain("Situação");
+    expect($("nucleoActiveAlertFilter").textContent).toContain(
+      "Editais inativos",
+    );
+
+    // ED-2.2: o mesmo cartão de novo tira o filtro.
+    await clicar(cartao("inativos"));
+    expect(linhasDaTabela()).toEqual(["2", "3", "1"]);
+    expect($("nucleoActiveAlertFilter")).toBeNull();
+
+    // ED-2.3: o "x" do chip tira.
+    await clicar(cartao("ativos"));
+    expect(linhasDaTabela()).toEqual(["3", "1"]);
+    await clicar($("nucleoActiveAlertFilter").querySelector(".ui-chip"));
+    expect(linhasDaTabela()).toEqual(["2", "3", "1"]);
+
+    // ED-2.4: outro indicador troca o filtro.
+    await clicar(cartao("ativos"));
+    await clicar(cartao("sem_cronograma"));
+    expect(linhasDaTabela()).toEqual(["3"]);
+    expect(cartao("ativos").getAttribute("aria-pressed")).toBe("false");
+    expect($("nucleoActiveAlertFilter").textContent).toContain("Alerta");
   });
 
   it("reabrir a página com cache não chama a RPC nem recria os cartões", async () => {
@@ -409,24 +477,26 @@ describe("painel operacional", () => {
     expect(supabase.rpc).toHaveBeenCalledTimes(2);
   });
 
-  it("carregando não é zero; vazio explica o contexto", async () => {
+  it("carregando não é zero (skeleton); vazio é curto", async () => {
     let entregar;
     const supabase = supabaseFalso();
     supabase.rpc.mockImplementationOnce(
       () => new Promise((resolver) => (entregar = resolver)),
     );
     await montar({ supabase, abrir: false });
-    expect($("nucleoKpiGrid").textContent).toBe("");
+    const esqueleto = () =>
+      indicadores().querySelectorAll('.ui-kpi[aria-busy="true"]');
+    expect(esqueleto()).toHaveLength(8);
+    expect(indicadores().querySelector("b.ui-kpi-valor")).toBeNull();
+    expect(cartao("todos")).toBeNull();
     const pendente = controlador.render();
     await esperar();
-    expect($("nucleoKpiGrid").textContent).toContain("Carregando os alertas");
+    expect(esqueleto()).toHaveLength(8);
     await esperar(async () => {
       entregar({ data: [], error: null });
       await pendente;
     });
-    expect($("nucleoKpiGrid").textContent).toContain(
-      "Nenhum edital ativo na Equipe Núcleo",
-    );
+    expect(indicadores().textContent).toContain("Nenhum edital nesta área.");
   });
 
   it("erro oferece Tentar de novo, sem mostrar a mensagem do banco", async () => {
@@ -436,9 +506,12 @@ describe("painel operacional", () => {
       error: { message: "relation does not exist" },
     });
     await montar({ supabase });
-    const grade = $("nucleoKpiGrid");
-    expect(grade.textContent).toContain("Não foi possível carregar os alertas");
+    const grade = indicadores();
+    expect(grade.querySelector('[role="alert"]').textContent).toContain(
+      "Não foi possível carregar os alertas dos editais",
+    );
     expect(grade.textContent).not.toContain("relation does not exist");
+    expect($("nucleoSummaryRetry").textContent).toContain("Tentar novamente");
     await clicar($("nucleoSummaryRetry"));
     expect(cartao("todos")).not.toBeNull();
   });
@@ -460,7 +533,7 @@ describe("painel operacional", () => {
     });
     expect(document.querySelector(".nucleo-row-alert")).toBeNull();
     expect(cartao("todos")).toBeNull();
-    expect($("nucleoOperationalRefresh").disabled).toBe(false);
+    expect(atualizar().disabled).toBe(false);
   });
 
   it("o primeiro SIGNED_IN só registra quem é, sem nova carga", async () => {
@@ -695,6 +768,73 @@ describe("formulário do edital", () => {
     expect(toast).toHaveBeenLastCalledWith(
       "10/2026 salvo. 2 etapa(s) registradas e histórico atualizado.",
     );
+  });
+
+  it("edital cadastrado: o quadro de vagas do PDF é salvo na hora, sem o Salvar do edital", async () => {
+    const supabase = supabaseFalso();
+    const original = supabase.rpc.getMockImplementation();
+    supabase.rpc.mockImplementation(async (nome, argumentos) =>
+      nome === "salvar_quadro_de_vagas"
+        ? { data: { linhas: argumentos.p_dados.linhas }, error: null }
+        : original(nome, argumentos),
+    );
+    const resposta = {
+      edital: "10/2026",
+      cronograma: [],
+      vagas: [
+        {
+          cargo: "Enfermeiro",
+          lotacao: "Polo Base Leonardo",
+          modalidades: { "Ampla Concorrência": 1 },
+          vagas_imediatas: 1,
+          cadastro_reserva: true,
+        },
+        {
+          cargo: "Enfermeiro",
+          lotacao: "Polo Base Pavuru",
+          modalidades: { "Ampla Concorrência": null },
+          vagas_imediatas: 0,
+          cadastro_reserva: true,
+        },
+      ],
+      modalidades: ["Ampla Concorrência"],
+    };
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => resposta,
+      })),
+    );
+    try {
+      await montar({ supabase });
+      await abrirEdital("1");
+      const entrada = $("anexosArquivo");
+      Object.defineProperty(entrada, "files", {
+        value: [
+          new File(["%PDF-1.4"], "anexos.pdf", { type: "application/pdf" }),
+        ],
+      });
+      await act(async () => {
+        entrada.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      await esperar();
+      await clicar($("anexosSalvarQuadro"));
+      await esperar();
+      const [, argumentos] = supabase.rpc.mock.calls.find(
+        ([nome]) => nome === "salvar_quadro_de_vagas",
+      );
+      expect(argumentos.p_edital).toBe("1");
+      expect(argumentos.p_dados.linhas).toHaveLength(2);
+      expect($("anexosDoEdital").textContent).toContain(
+        "Quadro de vagas salvo: 2 linhas.",
+      );
+      expect($("anexosSalvarQuadro").textContent).toBe("Quadro salvo");
+      expect($("editModal")).not.toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("erro de validação não chega ao banco", async () => {
@@ -950,9 +1090,8 @@ describe("edital sempre na área certa", () => {
     expect($("mUnidadeNova")).not.toBeNull();
     expect($("mUf").readOnly).toBe(false);
     await digitar($("mUnidadeNova"), "Projeto Mais Médicos Especialistas");
-    expect($("mUnidadeNovaAjuda").textContent).toContain(
-      "fica registrada na área Projetos",
-    );
+    // Unidade da própria área: sem aviso.
+    expect($("mUnidadeNovaAjuda")).toBeNull();
     await clicar($("mCronogramaAutomatico"));
     supabase.rpc.mockClear();
     await clicar($("saveEditalBtn"));
@@ -1051,5 +1190,121 @@ describe("linha do tempo", () => {
 
     await clicar($("closeNucleoTimeline"));
     expect($("nucleoTimelineModal")).toBeNull();
+  });
+});
+
+describe("padrão das telas (topo, tabela contínua, skeleton e erro)", () => {
+  it("o topo traz a data do resumo, Atualizar e Novo edital", async () => {
+    await montar();
+    const topo = document.querySelector("#page-nucleo .ui-topo");
+    expect(topo.querySelector("[data-status-da-carga]").textContent).toMatch(
+      /^Atualizado em /,
+    );
+    expect(topo.querySelector("#nucleoOperationalRefresh")).toBe(atualizar());
+    expect(topo.querySelector("#newEditalBtn").textContent).toContain(
+      "Novo edital",
+    );
+    expect(document.querySelector(".nucleo-page-card #nucleoSearch")).not.toBe(
+      null,
+    );
+  });
+
+  it("quem só lê não vê Novo edital", async () => {
+    await montar({ perfil: { perfil: "usuario" } });
+    expect($("newEditalBtn")).toBeNull();
+  });
+
+  it("a tabela mostra 50 por vez e o resto no Carregar mais", async () => {
+    const muitas = Array.from({ length: 60 }, (_, indice) => ({
+      id: `e${indice}`,
+      unidade: `Unidade ${String(indice).padStart(2, "0")}`,
+      edital: `${indice}/2026`,
+      status: "Em andamento",
+      etapa: "Inscrições",
+      risco: "Baixo",
+      vagas_total: 1,
+      contratados: 0,
+      vagas_ociosas: 1,
+    }));
+    await montar({ linhas: muitas });
+    expect(linhasDaTabela()).toHaveLength(50);
+    await clicar(
+      document.querySelector('.nucleo-page-card [data-acao="carregar-mais"]'),
+    );
+    expect(linhasDaTabela()).toHaveLength(60);
+  });
+
+  it("linha do tempo: skeleton enquanto carrega e erro com Tentar novamente", async () => {
+    const supabase = supabaseFalso();
+    const original = supabase.rpc.getMockImplementation();
+    let modo = "pendente";
+    let entregar = null;
+    supabase.rpc.mockImplementation((nome, argumentos) => {
+      if (nome !== "get_monitoramento_cronograma")
+        return original(nome, argumentos);
+      if (modo === "pendente")
+        return new Promise((resolver) => (entregar = resolver));
+      if (modo === "erro")
+        return Promise.resolve({ data: null, error: { message: "falhou" } });
+      return original(nome, argumentos);
+    });
+    await montar({ supabase });
+
+    await clicar(linha("1").querySelector(".nucleo-view-timeline"));
+    const conteudo = () => $("nucleoTimelineContent");
+    expect(
+      conteudo().querySelector('[aria-busy="true"] .ui-esqueleto-bloco'),
+    ).not.toBeNull();
+
+    modo = "erro";
+    await esperar(async () => {
+      entregar({ data: null, error: { message: "falhou" } });
+    });
+    const alerta = conteudo().querySelector('[role="alert"]');
+    expect(alerta.textContent).toContain(
+      "Não foi possível carregar o cronograma",
+    );
+
+    modo = "ok";
+    await clicar(alerta.querySelector('[data-acao="tentar-novamente"]'));
+    await esperar();
+    expect(conteudo().querySelector('[role="alert"]')).toBeNull();
+    expect(conteudo().textContent).toContain("Cadastro inicial");
+  });
+});
+
+describe("cronograma e rascunho sem efeitos colaterais", () => {
+  it("digitar a data de início pelo teclado: o fim acompanha até a data completa", async () => {
+    await montar();
+    await clicar($("newEditalBtn"));
+    await clicar($("cronogramaAddRow"));
+    const inicio = () => document.querySelector('[data-field="data_inicio"]');
+    const fim = () => document.querySelector('[data-field="data_fim"]');
+    // O campo de data emite o ano parcial a cada tecla.
+    await digitar(inicio(), "0002-06-17");
+    await digitar(inicio(), "0020-06-17");
+    await digitar(inicio(), "2026-06-17");
+    expect(fim().value).toBe("2026-06-17");
+
+    // Fim informado diferente do início: não acompanha mais.
+    await digitar(fim(), "2026-06-20");
+    await digitar(inicio(), "2026-06-18");
+    expect(fim().value).toBe("2026-06-20");
+  });
+
+  it("sem relógio injetado, renderizar de novo não regrava o rascunho", async () => {
+    await montar({ relogio: false });
+    await clicar($("newEditalBtn"));
+    await digitar($("mEdital"), "20/2026");
+    const gravar = vi.spyOn(Storage.prototype, "setItem");
+    const gravacoesDoRascunho = () =>
+      gravar.mock.calls.filter(([chave]) =>
+        chave.startsWith("agsus_monitora_rascunho_edital_v1:"),
+      ).length;
+
+    await act(async () => publicarLinhasDoMonitoramento(LINHAS()));
+    await act(async () => publicarLinhasDoMonitoramento(LINHAS()));
+
+    expect(gravacoesDoRascunho()).toBe(0);
   });
 });

@@ -47,6 +47,10 @@ export function mensagemDeFalha(erro) {
 /**
  * Rejeita com `TempoEsgotado` se a promessa não terminar a tempo — o botão
  * volta a ficar disponível em vez de esperar para sempre.
+ * @template T
+ * @param {T | PromiseLike<T>} promessa
+ * @param {number} [ms]
+ * @returns {Promise<T>}
  */
 export function comTempoLimite(promessa, ms = 30000) {
   let espera;

@@ -33,8 +33,8 @@ Termos da própria interface e das instituições que a Aya representa.
 ## Taxa de ociosidade
 
 **perguntas:** taxa de ociosidade | ociosidade | percentual de ociosas
-**resposta:** A taxa de ociosidade do MONITORA é o número de vagas Ociosas dividido pelo total de Vagas, apresentado em porcentagem. É esse percentual que define a cor de cada território no mapa de calor.
-**fato:** A taxa de ociosidade é Ociosas dividido por Vagas, em porcentagem, e é ela que colore o mapa de calor por território.
+**resposta:** A taxa de ociosidade do MONITORA é o número de vagas Ociosas dividido pelo total de Vagas, apresentado em porcentagem. Na tabela da Visão geral, ela aparece ao lado das Ociosas de cada edital.
+**fato:** A taxa de ociosidade é Ociosas dividido por Vagas, em porcentagem, e aparece ao lado das Ociosas na tabela da Visão geral.
 **fonte:** interface do MONITORA
 
 ## Contratados
@@ -52,15 +52,21 @@ Termos da própria interface e das instituições que a Aya representa.
 
 ## Cores e leitura da tabela
 
+**perguntas:** cores da tabela | por que contratados em verde | por que ociosas em vermelho
+**resposta:** O MONITORA destaca Contratados em verde e Ociosas em vermelho, porque ociosidade alta indica vaga prevista que ainda não virou contratação.
 **fato:** O MONITORA destaca Contratados em verde e Ociosas em vermelho, porque ociosidade alta indica vaga prevista que ainda não virou contratação.
 **fonte:** interface do MONITORA
 
 ## 34 DSEIs e 36 pontos no mapa
 
+**perguntas:** 36 pontos no mapa | por que 36 pontos | 36 dseis
+**resposta:** Na visão nacional do MONITORA, os 34 DSEIs são distintos das 2 CASAIs nacionais; quando ambos estão desenhados, são 36 pontos no mapa, não 36 DSEIs.
 **fato:** Na visão nacional do MONITORA, os 34 DSEIs são distintos das 2 CASAIs nacionais; quando ambos estão desenhados, são 36 pontos no mapa, não 36 DSEIs.
 **fonte:** interface do MONITORA
 
 ## Comparação entre territórios
 
+**perguntas:** comparar dseis | comparacao entre territorios | comparar territorios
+**resposta:** O MONITORA organiza vagas, contratações e ociosidade por território, o que permite comparar os DSEIs entre si.
 **fato:** O MONITORA organiza vagas, contratações e ociosidade por território, o que permite comparar DSEIs entre si.
 **fonte:** interface do MONITORA

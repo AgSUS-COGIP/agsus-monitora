@@ -29,10 +29,26 @@
 
   Um tipo é `{ nome, chave(contexto), esquema(payload), esquemas, valido(payload) }`
   — ver `PAINEL_DE_ANALISES` (cache-do-painel-de-analises.js) e
-  `LISTA_DE_APROVADOS` (candidatos-aprovados-compactos.js).
+  `LISTA_DE_APROVADOS` (candidatos-aprovados-compactos.ts).
 */
 
 export const VALIDADE_DO_CACHE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/*
+  As RPCs `*_se_mudou` (migration 20261013160000) recebem a `versao` da cópia
+  e, se ela ainda vale, devolvem só `{ inalterado: true, versao }` em vez do
+  payload inteiro: a revalidação deixa de baixar megabytes para nada.
+*/
+
+/** A versão dos dados que o banco mandou junto do payload, ou `null`. */
+export function versaoDoPacote(payload) {
+  const versao = payload?.versao;
+  return typeof versao === "string" && versao ? versao : null;
+}
+
+/** O banco disse que a versão enviada ainda vale? */
+export const respostaInalterada = (resposta) =>
+  Boolean(resposta) && resposta.inalterado === true;
 
 /* Registro que diz de quem são as cópias guardadas. */
 export const CHAVE_DO_DONO = "__dono__";

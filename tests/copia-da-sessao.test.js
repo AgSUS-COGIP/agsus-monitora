@@ -21,10 +21,18 @@ const falha = { data: null, error: { message: "401" } };
 const RESPOSTAS = {
   config: ok([{ chave: "app_title", valor: "Monitora" }]),
   paineis: ok([{ id: 1, codigo: "bi" }]),
-  mapa: ok([{ chave: "lmap", payload: { dsei: [] } }]),
+  // O mapa também vem com versão (migration 20261015000100).
+  mapa: {
+    ...ok([{ chave: "lmap", payload: { dsei: [] } }]),
+    versao: "md5-do-mapa",
+  },
   unidades: ok([{ id_unidade: 7, nome_oficial: "DSEI Yanomami" }]),
   abas: ok([{ co_aba: "editais", no_aba: "Editais", co_view: "nucleo" }]),
-  monitoramento: [{ resumo: 1 }, ok([{ id: 10, edital: "01/2026" }])],
+  // A RPC do monitoramento manda a versão das linhas (migration 20261013160000).
+  monitoramento: {
+    ...ok([{ id: 10, edital: "01/2026" }]),
+    versao: "md5-das-linhas",
+  },
 };
 
 const PERFIL = {
@@ -77,9 +85,11 @@ describe("dados das respostas", () => {
       mapa: [{ chave: "lmap", payload: { dsei: [] } }],
       unidades: [{ id_unidade: 7, nome_oficial: "DSEI Yanomami" }],
       abas: [{ co_aba: "editais", no_aba: "Editais", co_view: "nucleo" }],
+      versaoDoMapa: "md5-do-mapa",
+      // As linhas e a versão delas: a próxima entrada pergunta só se mudou.
       monitoramento: {
-        payload: { resumo: 1 },
         linhas: [{ id: 10, edital: "01/2026" }],
+        versao: "md5-das-linhas",
       },
     });
   });
@@ -104,6 +114,13 @@ describe("dados das respostas", () => {
     expect(dadosDasRespostas(semAbas).abas).toBeNull();
   });
 
+  it("cópia antiga, sem a versão do mapa, volta sem versão (o banco manda o mapa inteiro)", async () => {
+    const antiga = dadosDasRespostas(RESPOSTAS);
+    delete antiga.versaoDoMapa;
+    const { mapa } = await respostasDasConsultas(consultasDosDados(antiga));
+    expect(mapa).toEqual({ ...RESPOSTAS.mapa, versao: null });
+  });
+
   it("cópia antiga, sem o catálogo de abas, volta com as abas vazias", async () => {
     const antiga = dadosDasRespostas(RESPOSTAS);
     delete antiga.abas;
@@ -113,7 +130,7 @@ describe("dados das respostas", () => {
 
   it("nenhuma cópia se a tabela do monitoramento falhou", () => {
     expect(
-      dadosDasRespostas({ ...RESPOSTAS, monitoramento: [null, falha] }),
+      dadosDasRespostas({ ...RESPOSTAS, monitoramento: falha }),
     ).toBeNull();
   });
 

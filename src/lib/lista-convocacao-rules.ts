@@ -1,0 +1,902 @@
+import type {
+  ModeloDaConvocacao,
+  CategoriaDaConvocacao,
+  ArredondamentoDaConvocacao,
+} from "./tipos-da-configuracao-de-convocacao.ts";
+import type {
+  CandidatoDaConvocacao,
+  LinhaDaConvocacao,
+  ResultadoDaConvocacao,
+  EntradaDaConvocacao,
+  BaseDoGrupoDaConvocacao,
+  GrupoDaConvocacao,
+  ConfiguracaoDaVagaParaChamada,
+  ItemDaFilaDaConvocacao,
+  OpcoesDoCsvDaConvocacao,
+} from "./tipos-da-lista-de-convocacao.ts";
+/*
+  Ordem de convocação: quem é chamado, em que posição, por conta de que vaga.
+
+  A lista de aprovados responde "quem passou". A de convocação responde "quem é
+  chamado primeiro", e a resposta não é a classificação: quando o edital reserva
+  vagas, as chamadas de cota entram ao longo da sequência segundo uma regra que
+  o edital define.
+
+  AS REGRAS VÊM DO MODELO, NÃO DAQUI
+
+  Este ficheiro não sabe que existem "pretos e pardos" ou "PCD". Sabe que há
+  categorias, uma delas a ampla, e que cada uma tem percentual, arredondamento,
+  cascata e um jeito de entrar na fila. Tudo isso chega num MODELO
+  (`modelo-de-convocacao.ts`), que é dado editável — porque a leitura de oito
+  editais da AgSUS mostrou que quase nada é constante: o 97/2025 tem cota trans,
+  o edital da FCC junta negros e indígenas numa cota só e publica as posições
+  literais em vez de proporcionalidade, e o 91/2026 manda a vaga de PCD vazia
+  para os indígenas.
+
+  O QUE É CONSTANTE, E FICA AQUI
+
+  Três coisas se repetem em todos os editais lidos, e por isso são código:
+
+  1. Quem concorre a uma reserva concorre TAMBÉM à ampla.
+  2. Ser chamado pela ampla não gasta a vaga da reserva — "não serão computados
+     para efeito de preenchimento das vagas reservadas", na redação que os oito
+     editais repetem com numeração diferente (5.2.3.1.3 no 96/2025, 97/2025 e
+     Cebraspe; 5.7.15 no 30/2026; 5.8.4 no 93/2026; 7.4.2 no da FGV). Cai de
+     graça do desenho: a vaga é uma POSIÇÃO na sequência, e ocupar uma posição
+     de ampla deixa as posições de reserva intactas, para o próximo daquela
+     fila.
+  3. Reserva sem candidato não fica vazia — desce a cascata e, no fim, reverte
+     para a ampla.
+
+  E duas regras de operação, que valem em todos os editais lidos:
+
+    - Desistente e Documentação Rejeitada não ocupam vaga; quem vem a seguir na
+      mesma fila toma o lugar. Continuam visíveis, fora da numeração.
+    - Convocado, Contratado e Migração continuam na fila, na posição que o
+      cálculo lhes deu (a vaga é deles): já foram chamados e não são chamados
+      de novo — "a convocar" são só as vagas imediatas ainda sem status.
+
+  O status "Fim de Fila" saiu (migration 20261005180000): ninguém o usava.
+
+  O cadastro de reserva continua a sequência de convocação depois das vagas
+  imediatas. No modelo `serie_mgi`, isso significa continuar a série global do
+  MGI (2ª PP, 5ª PCD, 6ª PP etc.), mesmo quando a vaga tem apenas 1 ou nenhuma
+  vaga imediata. Nos demais modelos, preserva-se o ciclo definido pelo quadro
+  imediato.
+*/
+
+import {
+  categoriaDaAmpla,
+  categoriasDeReserva,
+  lerModalidade,
+  normalizarModelo,
+} from "./modelo-de-convocacao.ts";
+import { sanitizeCsvCell } from "./csv-security.js";
+
+const texto = (valor: unknown) => String(valor ?? "").trim();
+
+/** Status que tiram o candidato da fila sem consumir a vaga. */
+export const STATUS_FORA_DA_FILA = Object.freeze([
+  "Desistente",
+  "Documentação Rejeitada",
+]);
+
+export function estaForaDaFila(
+  candidato: CandidatoDaConvocacao | null | undefined,
+) {
+  return STATUS_FORA_DA_FILA.includes(texto(candidato?.status));
+}
+
+/**
+ * Status de quem já foi chamado: ocupa a sua posição na fila e não é chamado
+ * de novo. Convocado ainda aguarda apresentação e documentos.
+ */
+export const STATUS_JA_CHAMADO = Object.freeze([
+  "Convocado",
+  "Contratado",
+  "Migração",
+]);
+
+export function jaFoiChamado(
+  candidato: CandidatoDaConvocacao | null | undefined,
+) {
+  return STATUS_JA_CHAMADO.includes(texto(candidato?.status));
+}
+
+/** Vaga imediata cujo candidato ainda não foi chamado. */
+export function estaAConvocar(
+  linha: Pick<LinhaDaConvocacao, "imediata" | "candidato"> | null | undefined,
+) {
+  return Boolean(linha?.imediata) && !jaFoiChamado(linha?.candidato);
+}
+
+function inteiroNaoNegativo(valor: unknown) {
+  const numero = Math.floor(Number(valor));
+  return Number.isFinite(numero) && numero > 0 ? numero : 0;
+}
+
+/**
+ * Arredondamento da fração de vagas, conforme o modo declarado na categoria.
+ *
+ * `meio_acima` é a redação repetida na maioria dos editais: fração igual ou
+ * maior que 0,5 sobe para o inteiro seguinte, menor que 0,5 desce.
+ * `sempre_acima` é a do 91/2026 para PCD, que sobe qualquer fração — e por isso
+ * vem sempre acompanhada de um teto.
+ */
+export function arredondarVaga(
+  valor: number,
+  modo: ArredondamentoDaConvocacao = "meio_acima",
+) {
+  if (!Number.isFinite(valor) || valor <= 0) return 0;
+  if (modo === "sempre_acima") return Math.ceil(valor);
+  const inteiro = Math.floor(valor);
+  return valor - inteiro >= 0.5 ? inteiro + 1 : inteiro;
+}
+
+/** Quadro zerado com uma entrada por categoria do modelo. */
+export function quadroVazio(
+  modelo: ModeloDaConvocacao,
+): Record<string, number> {
+  return Object.fromEntries(
+    modelo.categorias.map((categoria) => [categoria.id, 0]),
+  );
+}
+
+export function normalizarQuadro(
+  quadro: Record<string, unknown> | null | undefined,
+  modelo: ModeloDaConvocacao,
+): Record<string, number> {
+  const base = quadroVazio(modelo);
+  modelo.categorias.forEach((categoria) => {
+    base[categoria.id] = inteiroNaoNegativo(quadro?.[categoria.id]);
+  });
+  return base;
+}
+
+export function totalDoQuadro(
+  quadro: Record<string, unknown> | null | undefined,
+) {
+  return Object.values(quadro || {}).reduce<number>(
+    (soma, valor) => soma + inteiroNaoNegativo(valor),
+    0,
+  );
+}
+
+/**
+ * Deriva o quadro por categoria a partir do total de vagas imediatas da vaga e
+ * dos percentuais do modelo.
+ *
+ * As reservas são servidas da maior taxa para a menor, com orçamento: a soma
+ * nunca passa o total. A ordem pesa pouco com os percentuais reais, mas torna o
+ * resultado previsível se alguém configurar taxas que somem mais de 100, em vez
+ * de devolver uma ampla negativa.
+ *
+ * O que sobra é da ampla. Não é um percentual à parte: é o resto, e é assim que
+ * os editais a definem.
+ */
+export function derivarQuadro(
+  totalImediatas: unknown,
+  modelo: ModeloDaConvocacao,
+) {
+  const total = inteiroNaoNegativo(totalImediatas);
+  const quadro = quadroVazio(modelo);
+  const ampla = amplaDoModelo(modelo);
+  if (!total) return quadro;
+
+  let restante = total;
+  [...categoriasDeReserva(modelo)]
+    .sort((a, b) => b.percentual - a.percentual || a.ordem - b.ordem)
+    .forEach((categoria) => {
+      /*
+        Abaixo do mínimo a reserva simplesmente não existe nesta vaga, e o que
+        lhe caberia fica com a ampla. O mínimo é por CATEGORIA porque o edital
+        da FGV pede duas vagas para as cotas raciais (7.1.3) e cinco para PCD
+        (6.5): no mesmo edital, uma vaga de 3 tem reserva racial e não tem PCD.
+      */
+      if (categoria.minimo > 0 && total < categoria.minimo) return;
+      const bruto = (total * categoria.percentual) / 100;
+      let vagas = arredondarVaga(bruto, categoria.arredondamento);
+      // O teto do 91/2026: a reserva não pode passar dessa fatia do total.
+      if (categoria.teto > 0)
+        vagas = Math.min(vagas, Math.floor((total * categoria.teto) / 100));
+      vagas = Math.min(vagas, restante);
+      quadro[categoria.id] = vagas;
+      restante -= vagas;
+    });
+
+  quadro[ampla.id] = restante;
+  return quadro;
+}
+
+/*
+  Ordem geral dentro da vaga.
+
+  A nota manda, e a classificação só desempata. É de propósito: em boa parte dos
+  editais a coluna `classificacao` do XLSX vem POR modalidade, de modo que o 1º
+  da ampla e o 1º da cota indígena chegam ambos como "1". Ordenar por ela
+  embaralharia a lista; ordenar por nota reconstrói a classificação geral e
+  continua correta quando a planilha já trazia a classificação única.
+*/
+// Vazio é "sem valor", não zero: Number(null) e Number("") dão 0.
+const numeroOuNada = (valor: unknown) =>
+  valor === null || valor === undefined || String(valor).trim() === ""
+    ? Number.NaN
+    : Number(valor);
+
+export function ordenarPorClassificacao<T extends CandidatoDaConvocacao>(
+  candidatos: readonly T[] | null | undefined,
+): T[] {
+  return [...(candidatos || [])].sort((a, b) => {
+    const notaA = numeroOuNada(a?.nota);
+    const notaB = numeroOuNada(b?.nota);
+    const temA = Number.isFinite(notaA);
+    const temB = Number.isFinite(notaB);
+    if (temA && temB && notaA !== notaB) return notaB - notaA;
+    if (temA !== temB) return temA ? -1 : 1;
+
+    const classA = numeroOuNada(a?.classificacao);
+    const classB = numeroOuNada(b?.classificacao);
+    const temClassA = Number.isFinite(classA);
+    const temClassB = Number.isFinite(classB);
+    if (temClassA && temClassB && classA !== classB) return classA - classB;
+    if (temClassA !== temClassB) return temClassA ? -1 : 1;
+
+    return texto(a?.nome).localeCompare(texto(b?.nome), "pt-BR");
+  });
+}
+
+/*
+  Distribuição proporcional: a k-ésima vaga de uma categoria com `n` vagas num
+  total de `T` fica na posição ideal `(k - 0.5) * T / n` — o ponto médio da
+  k-ésima fatia da sequência. Ordenar todas as vagas por essa posição espalha
+  cada categoria em vez de despejar as reservas no fim, que é a "alternância e
+  proporcionalidade" que os editais descrevem sem publicar a sequência.
+
+  Com 2 de ampla e 1 de pretos e pardos sai `AC, PP, AC`.
+*/
+function sequenciaProporcional(
+  quadro: Record<string, number>,
+  modelo: ModeloDaConvocacao,
+  total: number,
+): string[] {
+  const posicoes: { id: string; ideal: number; ordem: number; k: number }[] =
+    [];
+  modelo.categorias.forEach((categoria) => {
+    const quantidade = quadro[categoria.id] || 0;
+    for (let k = 1; k <= quantidade; k += 1) {
+      posicoes.push({
+        id: categoria.id,
+        ideal: ((k - 0.5) * total) / quantidade,
+        ordem: categoria.ordem,
+        k,
+      });
+    }
+  });
+  posicoes.sort((a, b) => a.ideal - b.ideal || a.ordem - b.ordem || a.k - b.k);
+  return posicoes.map((posicao) => posicao.id);
+}
+
+/*
+  Distribuição por posições publicadas: o edital da FCC diz que a cota
+  étnico-racial ocupa "a 3ª, a 8ª, a 13ª… seguindo intervalos de cinco vagas", e
+  a de PCD "a 5ª, 21ª, 41ª… de vinte em vinte". As duas séries não são
+  aritméticas desde o início — daí a categoria guardar as posições que o edital
+  LISTA e o intervalo com que a série continua a partir da última delas.
+
+  Posição já tomada por outra categoria passa à seguinte livre: o edital não
+  prevê o choque, e empurrar é menos errado do que perder a vaga.
+*/
+function sequenciaPorPosicao(
+  quadro: Record<string, number>,
+  modelo: ModeloDaConvocacao,
+  total: number,
+): string[] {
+  const slots: (string | null)[] = Array.from({ length: total }, () => null);
+
+  const seriePosicoes = (
+    categoria: CategoriaDaConvocacao,
+    quantidade: number,
+  ) => {
+    const serie = [...categoria.posicoes];
+    let proxima = serie.at(-1) ?? 0;
+    while (serie.length < quantidade && categoria.intervalo > 0) {
+      proxima += categoria.intervalo;
+      if (proxima > total * 2 + categoria.intervalo) break;
+      serie.push(proxima);
+    }
+    return serie.slice(0, quantidade);
+  };
+
+  [...categoriasDeReserva(modelo)]
+    .sort((a, b) => a.ordem - b.ordem)
+    .forEach((categoria) => {
+      const quantidade = quadro[categoria.id] || 0;
+      if (!quantidade) return;
+      let colocadas = 0;
+      seriePosicoes(categoria, quantidade).forEach((posicao) => {
+        let indice = posicao - 1;
+        while (indice < total && slots[indice] !== null) indice += 1;
+        if (indice >= total) return;
+        slots[indice] = categoria.id;
+        colocadas += 1;
+      });
+      // Sobrou vaga da categoria sem posição publicada: entra no 1º lugar livre.
+      for (
+        let indice = 0;
+        indice < total && colocadas < quantidade;
+        indice += 1
+      ) {
+        if (slots[indice] !== null) continue;
+        slots[indice] = categoria.id;
+        colocadas += 1;
+      }
+    });
+
+  const ampla = amplaDoModelo(modelo);
+  return slots.map((id) => id ?? ampla.id);
+}
+
+/*
+  Distribuição do simulador de reserva de vagas do MGI. Reproduz, posição por
+  posição, a simulação de 100 vagas que o simulador publica (PcD 5, PN 25, PI 3,
+  PQ 2, AC 65):
+
+    - categoria com posições informadas segue a série dela — no modelo, a PCD:
+      5ª, 21ª, 41ª… (de 20 em 20, a ordem que o STF fixou: MS 31.715/DF,
+      MS 30.861/DF, MS 26.310/DF e RMS 27.710/DF);
+    - as outras entram a cada 100 ÷ percentual posições, começando no meio do
+      primeiro intervalo e arredondando para cima: pretos e pardos (25%) na 2ª,
+      6ª, 10ª…; indígenas (3%) na 17ª, 50ª, 84ª; quilombolas (2%) na 25ª e 75ª;
+    - quem tem série publicada entra primeiro, depois o maior percentual; a
+      posição já ocupada fica com a livre ANTERIOR (o indígena da 50ª vai para a
+      49ª, porque a 50ª é de pretos e pardos), e só não havendo nenhuma antes é
+      que vai para a seguinte.
+
+  O passo vem do percentual, e não do total de vagas: numa vaga de 45, pretos e
+  pardos continuam de 4 em 4. Categoria sem percentual (quadro manual) usa o
+  passo total ÷ vagas da categoria.
+*/
+function serieDoMgi(
+  categoria: CategoriaDaConvocacao,
+  quantidade: number,
+  total: number,
+) {
+  const serie = [...categoria.posicoes];
+  let proxima = serie.at(-1) ?? 0;
+  while (serie.length && serie.length < quantidade && categoria.intervalo > 0) {
+    proxima += categoria.intervalo;
+    serie.push(proxima);
+  }
+  const passo =
+    categoria.percentual > 0 ? 100 / categoria.percentual : total / quantidade;
+  // O arredondamento para cima não pode tropeçar no erro da vírgula flutuante.
+  for (let k = serie.length; k < quantidade; k += 1)
+    serie.push(Math.ceil((k + 0.5) * passo - 1e-9));
+  return serie.slice(0, quantidade);
+}
+
+function livreMaisProxima(slots: readonly (string | null)[], alvo: number) {
+  const inicio = Math.min(Math.max(alvo, 0), slots.length - 1);
+  for (let indice = inicio; indice >= 0; indice -= 1)
+    if (slots[indice] === null) return indice;
+  for (let indice = inicio + 1; indice < slots.length; indice += 1)
+    if (slots[indice] === null) return indice;
+  return -1;
+}
+
+function sequenciaDoMgi(
+  quadro: Record<string, number>,
+  modelo: ModeloDaConvocacao,
+  total: number,
+): string[] {
+  const slots: (string | null)[] = Array.from({ length: total }, () => null);
+  categoriasDeReserva(modelo)
+    .filter((categoria) => (quadro[categoria.id] || 0) > 0)
+    .sort(
+      (a, b) =>
+        Number(b.posicoes.length > 0) - Number(a.posicoes.length > 0) ||
+        b.percentual - a.percentual ||
+        a.ordem - b.ordem,
+    )
+    .forEach((categoria) => {
+      serieDoMgi(categoria, quadro[categoria.id] ?? 0, total).forEach(
+        (posicao) => {
+          const indice = livreMaisProxima(slots, posicao - 1);
+          if (indice >= 0) slots[indice] = categoria.id;
+        },
+      );
+    });
+  const ampla = amplaDoModelo(modelo);
+  return slots.map((id) => id ?? ampla.id);
+}
+
+/**
+ * O ciclo de categorias, do 1º ao último chamado imediato.
+ *
+ * Empates resolvem-se pela ordem declarada das categorias, para que o resultado
+ * seja sempre o mesmo entre execuções.
+ */
+export function sequenciaDeConvocacao(
+  quadro: Record<string, number>,
+  modelo: ModeloDaConvocacao,
+): string[] {
+  const total = totalDoQuadro(quadro);
+  if (!total) return [];
+  if (modelo.distribuicao === "posicao_fixa")
+    return sequenciaPorPosicao(quadro, modelo, total);
+  if (modelo.distribuicao === "serie_mgi")
+    return sequenciaDoMgi(quadro, modelo, total);
+  return sequenciaProporcional(quadro, modelo, total);
+}
+
+/**
+ * Decide em quais reservas o candidato de fato concorre.
+ *
+ * `maior_percentual` — a maioria dos editais: uma só, a de percentual mais
+ * elevado; empatado o percentual, aquela em que tem a melhor posição relativa.
+ *
+ * `acumula_com_acumulavel` — 91/2026: mantém a reserva marcada como acumulável
+ * (PCD, na prática) MAIS a de maior percentual entre as outras.
+ *
+ * `todas` — escape, não usado por nenhum edital lido.
+ *
+ * @param {string[]} reservas Reservas declaradas, já lidas da modalidade.
+ * @param {object} modelo Modelo normalizado.
+ * @param {Map<string, number>} posicaoNaReserva Posição do candidato,
+ *   1-indexada, dentro da lista específica de cada reserva que declarou.
+ * @returns {string[]} as reservas em que concorre.
+ */
+export function reservasEfetivas(
+  reservas: readonly string[] | null | undefined,
+  modelo: ModeloDaConvocacao,
+  posicaoNaReserva?: ReadonlyMap<string, number>,
+): string[] {
+  const declaradas = (reservas || []).filter((id) =>
+    modelo.categorias.some(
+      (categoria) => categoria.id === id && !categoria.ampla,
+    ),
+  );
+  if (declaradas.length <= 1) return declaradas;
+  if (modelo.cotaMultipla === "todas") return declaradas;
+
+  const percentual = (id: string) =>
+    modelo.categorias.find((categoria) => categoria.id === id)?.percentual ?? 0;
+  const eAcumulavel = (id: string) =>
+    modelo.categorias.find((categoria) => categoria.id === id)?.acumulavel ===
+    true;
+
+  const porPrioridade = [...declaradas].sort(
+    (a, b) =>
+      percentual(b) - percentual(a) ||
+      (posicaoNaReserva?.get(a) ?? Infinity) -
+        (posicaoNaReserva?.get(b) ?? Infinity) ||
+      declaradas.indexOf(a) - declaradas.indexOf(b),
+  );
+
+  if (modelo.cotaMultipla === "acumula_com_acumulavel") {
+    const acumulavel = porPrioridade.find(eAcumulavel);
+    const outra = porPrioridade.find((id) => !eAcumulavel(id));
+    return [acumulavel, outra].filter((id): id is string => id !== undefined);
+  }
+
+  return porPrioridade.slice(0, 1);
+}
+
+/*
+  Posição de cada candidato dentro da lista específica de cada reserva que
+  declarou. É o insumo do desempate de percentuais iguais, e tem de ser
+  calculado sobre a fila JÁ ordenada.
+*/
+function posicoesNasReservas<T extends CandidatoDaConvocacao>(
+  fila: readonly ItemDaFilaDaConvocacao<T>[],
+) {
+  const contadores = new Map<string, number>();
+  return fila.map((item) => {
+    const posicoes = new Map<string, number>();
+    item.declaradas.forEach((id) => {
+      const proxima = (contadores.get(id) ?? 0) + 1;
+      contadores.set(id, proxima);
+      posicoes.set(id, proxima);
+    });
+    return posicoes;
+  });
+}
+
+/**
+ * Monta a convocação de UMA vaga (um código de vaga de um edital).
+ *
+ * @param {object} entrada
+ * @param {Array} entrada.candidatos Candidatos daquela vaga, em qualquer ordem.
+ * @param {object} entrada.quadro Vagas imediatas por categoria.
+ * @param {object} entrada.modelo Modelo de convocação já normalizado.
+ * @param {boolean} [entrada.proporcionalidade=true] Quando falso, devolve a
+ *   ordem pura de classificação, sem categorias.
+ */
+export function montarConvocacaoDaVaga<T extends CandidatoDaConvocacao>({
+  candidatos,
+  quadro,
+  modelo: modeloCru,
+  proporcionalidade = true,
+}: EntradaDaConvocacao<T>): ResultadoDaConvocacao<T> {
+  const modelo = modeloCru?.categorias
+    ? modeloCru
+    : normalizarModelo(modeloCru);
+  const quadroFinal = normalizarQuadro(quadro, modelo);
+  const ampla = amplaDoModelo(modelo);
+
+  const declaradasDe = (candidato: T) =>
+    lerModalidade(candidato?.modalidade, modelo).reservas;
+
+  const ordenados = ordenarPorClassificacao(candidatos);
+  const foraDaFila: LinhaDaConvocacao<T>[] = ordenados
+    .filter(estaForaDaFila)
+    .map((candidato) => ({
+      candidato,
+      posicao: null,
+      categoria: null,
+      categoriaReservada: null,
+      imediata: false,
+      reservas: declaradasDe(candidato),
+      reservasEfetivas: [],
+    }));
+  const naFila = ordenados.filter((candidato) => !estaForaDaFila(candidato));
+
+  if (!proporcionalidade) {
+    const total = totalDoQuadro(quadroFinal);
+    return {
+      linhas: naFila.map((candidato, indice) => ({
+        candidato,
+        posicao: indice + 1,
+        categoria: null,
+        categoriaReservada: null,
+        imediata: total > 0 && indice < total,
+        reservas: declaradasDe(candidato),
+        reservasEfetivas: [],
+      })),
+      foraDaFila,
+      totalImediatas: total,
+      ciclo: [],
+    };
+  }
+
+  const ciclo = sequenciaDeConvocacao(quadroFinal, modelo);
+  const totalImediatas = ciclo.length;
+
+  /*
+    As reservas de cada candidato são lidas UMA vez: a leitura passa os termos de
+    todas as categorias pela célula, e refazê-la a cada tentativa de preencher
+    uma vaga tornaria o cálculo quadrático numa vaga com centenas de aprovados.
+  */
+  const fila: ItemDaFilaDaConvocacao<T>[] = naFila.map((candidato) => ({
+    candidato,
+    declaradas: declaradasDe(candidato),
+    efetivas: [],
+  }));
+  const posicoes = posicoesNasReservas(fila);
+  fila.forEach((item, indice) => {
+    item.efetivas = reservasEfetivas(item.declaradas, modelo, posicoes[indice]);
+  });
+
+  /*
+    O MGI define posições na ORDEM GLOBAL de convocação, não apenas dentro das
+    vagas imediatas. Por isso, para ordenar também o cadastro de reserva, a série
+    precisa ser gerada até a quantidade de candidatos da fila. O número de vagas
+    imediatas continua vindo exclusivamente do quadro original e serve apenas
+    para marcar `imediata`.
+
+    Exemplo com 1 vaga imediata: AC, PP, AC, AC, PCD, PP... A 1ª é imediata e
+    as demais são cadastro de reserva, mas a série não reinicia nem vira toda AC.
+
+    Os outros modos mantêm o comportamento anterior: repetem o ciclo calculado
+    a partir do quadro imediato. Sem quadro, caem para ampla concorrência.
+  */
+  const sequenciaDaFila =
+    modelo.distribuicao === "serie_mgi" && fila.length > 0
+      ? sequenciaDeConvocacao(derivarQuadro(fila.length, modelo), modelo)
+      : null;
+  const cicloEfetivo = ciclo.length ? ciclo : [ampla.id];
+
+  /*
+    Cada categoria guarda um ponteiro na fila, que só avança. Pode fazê-lo
+    porque candidato que já foi chamado, ou que não disputa aquela categoria,
+    nunca volta a ser elegível — o que deixa o preenchimento linear.
+  */
+  const ocupado: boolean[] = Array.from({ length: fila.length }, () => false);
+  const ponteiros = new Map<string, number>();
+
+  const disputa = (item: ItemDaFilaDaConvocacao<T>, categoriaId: string) =>
+    categoriaId === ampla.id || item.efetivas.includes(categoriaId);
+
+  const proximoDa = (categoriaId: string) => {
+    let indice = ponteiros.get(categoriaId) ?? 0;
+    while (
+      indice < fila.length &&
+      (ocupado[indice] || !disputa(exigirItem(fila[indice]), categoriaId))
+    )
+      indice += 1;
+    ponteiros.set(categoriaId, indice);
+    return indice < fila.length ? indice : -1;
+  };
+
+  /*
+    A vaga tenta a sua reserva, depois a cascata declarada no modelo, e só então
+    a ampla — que nunca fica vazia enquanto sobrar gente na fila, e é o que
+    garante o fim do laço.
+  */
+  const preencher = (categoriaId: string) => {
+    const categoria = modelo.categorias.find((item) => item.id === categoriaId);
+    const tentativas = [categoriaId, ...(categoria?.cascata || []), ampla.id];
+    for (const alvo of tentativas) {
+      const indice = proximoDa(alvo);
+      if (indice >= 0) return { indice, categoria: alvo };
+    }
+    return null;
+  };
+
+  const linhas: LinhaDaConvocacao<T>[] = [];
+  for (let volta = 0; linhas.length < fila.length; volta += 1) {
+    // As imediatas seguem o quadro (que pode ser manual); a reserva, a série.
+    const categoriaDaVaga =
+      volta < totalImediatas
+        ? ciclo[volta]
+        : (sequenciaDaFila?.[volta] ??
+          cicloEfetivo[volta % cicloEfetivo.length]);
+    const escolha = preencher(exigirItem(categoriaDaVaga));
+    if (!escolha) break;
+
+    ocupado[escolha.indice] = true;
+    const reverteu = escolha.categoria !== categoriaDaVaga;
+    const item = exigirItem(fila[escolha.indice]);
+    linhas.push({
+      candidato: item.candidato,
+      posicao: linhas.length + 1,
+      categoria: escolha.categoria,
+      categoriaReservada: reverteu ? exigirItem(categoriaDaVaga) : null,
+      imediata: linhas.length < totalImediatas,
+      reservas: item.declaradas,
+      reservasEfetivas: item.efetivas,
+    });
+  }
+
+  return { linhas, foraDaFila, totalImediatas, ciclo };
+}
+
+/*
+  Sub judice entra sem código de vaga — a inclusão manual só pede edital, cargo,
+  nome e nota. Para não virar uma "vaga" só dele, o candidato é anexado à vaga do
+  mesmo cargo quando existe exatamente uma; havendo várias, o cargo passa a ser a
+  própria chave, porque não há como adivinhar a qual delas ele pertence.
+*/
+function indexarCodigosPorCargo(
+  candidatos: readonly CandidatoDaConvocacao[] | null | undefined,
+) {
+  const porCargo = new Map<string, Set<string>>();
+  (candidatos || []).forEach((candidato) => {
+    const codigo = texto(candidato?.codigo_vaga);
+    if (!codigo) return;
+    const cargo = chaveDoCargo(candidato);
+    if (!porCargo.has(cargo)) porCargo.set(cargo, new Set());
+    exigirItem(porCargo.get(cargo)).add(codigo);
+  });
+  return porCargo;
+}
+
+function resolverCodigoDaVaga(
+  candidato: CandidatoDaConvocacao,
+  porCargo: ReadonlyMap<string, ReadonlySet<string>>,
+) {
+  const codigo = texto(candidato?.codigo_vaga);
+  if (codigo) return codigo;
+  const codigos = porCargo.get(chaveDoCargo(candidato));
+  if (codigos && codigos.size === 1) return [...codigos][0] ?? "";
+  return "";
+}
+
+/**
+ * Agrupa os candidatos por edital e vaga e resolve a convocação de cada grupo.
+ *
+ * @param {Array} candidatos Linhas de `listar_candidatos_aprovados`.
+ * @param {(editalId: string, codigoVaga: string) => ({
+ *   proporcionalidade: boolean, quadro: object, modelo: object
+ * })} obterConfiguracao Devolve a configuração da vaga. A escolha entre o quadro
+ *   derivado do percentual e o quadro manual é de quem chama; aqui só se consome
+ *   o resultado.
+ * @returns {Array} um grupo por vaga, ordenado por edital, cargo e código.
+ */
+export function montarListaDeConvocacao<T extends CandidatoDaConvocacao>(
+  candidatos: readonly T[] | null | undefined,
+  obterConfiguracao: (
+    editalId: string,
+    codigoVaga: string,
+  ) => ConfiguracaoDaVagaParaChamada | null | undefined,
+): GrupoDaConvocacao<T>[] {
+  const porCargo = indexarCodigosPorCargo(candidatos);
+  const grupos = new Map<string, BaseDoGrupoDaConvocacao<T>>();
+
+  (candidatos || []).forEach((candidato) => {
+    const editalId = String(candidato?.edital_id ?? "");
+    const cargo = texto(candidato?.cargo);
+    const codigoVaga = resolverCodigoDaVaga(candidato, porCargo);
+    const chave = `${editalId}\u0000${codigoVaga || `cargo:${cargo}`}`;
+    if (!grupos.has(chave)) {
+      grupos.set(chave, {
+        chave,
+        editalId,
+        edital: texto(candidato?.edital),
+        unidade: texto(candidato?.unidade),
+        cargo,
+        codigoVaga,
+        listaAtiva: Boolean(candidato?.lista_ativa),
+        candidatos: [],
+      });
+    }
+    exigirItem(grupos.get(chave)).candidatos.push(candidato);
+  });
+
+  return [...grupos.values()]
+    .map((grupo) => {
+      const configuracao = obterConfiguracao(grupo.editalId, grupo.codigoVaga);
+      const modelo = configuracao?.modelo?.categorias
+        ? configuracao.modelo
+        : normalizarModelo(configuracao?.modelo);
+      const quadro = normalizarQuadro(configuracao?.quadro, modelo);
+      const resultado = montarConvocacaoDaVaga({
+        candidatos: grupo.candidatos,
+        quadro,
+        modelo,
+        proporcionalidade: configuracao?.proporcionalidade !== false,
+      });
+      return {
+        ...grupo,
+        quadro,
+        modelo,
+        proporcionalidade: configuracao?.proporcionalidade !== false,
+        ...resultado,
+      };
+    })
+    .sort(
+      (a, b) =>
+        a.edital.localeCompare(b.edital, "pt-BR") ||
+        a.cargo.localeCompare(b.cargo, "pt-BR") ||
+        a.codigoVaga.localeCompare(b.codigoVaga, "pt-BR", { numeric: true }),
+    );
+}
+
+/**
+ * Resumo da convocação para os KPIs da aba.
+ */
+export function resumirConvocacao(
+  grupos: readonly GrupoDaConvocacao[] | null | undefined,
+) {
+  const resumo = {
+    vagas: 0,
+    imediatas: 0,
+    /** Vagas imediatas cujo candidato ainda não foi chamado. */
+    aConvocar: 0,
+    /** Chamados, aguardando apresentação e documentos. */
+    convocados: 0,
+    reserva: 0,
+    foraDaFila: 0,
+    vagasRevertidas: 0,
+  };
+  (grupos || []).forEach((grupo) => {
+    resumo.vagas += 1;
+    resumo.imediatas += grupo.totalImediatas;
+    grupo.linhas.forEach((linha) => {
+      if (estaAConvocar(linha)) resumo.aConvocar += 1;
+      if (texto(linha.candidato?.status) === "Convocado")
+        resumo.convocados += 1;
+      if (!linha.imediata) resumo.reserva += 1;
+      if (linha.categoriaReservada) resumo.vagasRevertidas += 1;
+    });
+    resumo.foraDaFila += grupo.foraDaFila.length;
+  });
+  return resumo;
+}
+
+/* "2026-10-05" → "05/10/2026". */
+const dataBr = (valor: unknown) => {
+  const m = texto(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
+};
+
+/** Onde a linha está na chamada: a convocar, já chamado, reserva ou fora. */
+export function situacaoNaChamada(linha: LinhaDaConvocacao | null | undefined) {
+  if (!linha?.posicao) return "Fora da fila";
+  if (jaFoiChamado(linha.candidato)) return "Já chamado";
+  return linha.imediata ? "A convocar" : "Cadastro de reserva";
+}
+
+/**
+ * As linhas do CSV da ordem de convocação (cabeçalho primeiro), na ordem da
+ * tela: por vaga, os da fila e depois os de fora. `convocacoes` é o mapa
+ * candidato_id → { data } (listar_convocacoes_aprovados); `rotulo(grupo,
+ * categoria)` dá o nome da categoria da vaga. Quem gera o arquivo passa as
+ * células por sanitizeCsvCell (csv-security.js).
+ */
+export function linhasDoCsvDaConvocacao<T extends CandidatoDaConvocacao>(
+  grupos: readonly GrupoDaConvocacao<T>[] | null | undefined,
+  {
+    convocacoes = new Map(),
+    rotulo = (_, categoria) => categoria || "",
+  }: OpcoesDoCsvDaConvocacao<T> = {},
+) {
+  const linhas: unknown[][] = [
+    [
+      "Edital",
+      "Unidade",
+      "Código da vaga",
+      "Cargo",
+      "Ordem",
+      "Classificação geral",
+      "Vaga da convocação",
+      "Situação na chamada",
+      "Nome",
+      "Nota",
+      "Modalidade declarada",
+      "Status",
+      "Data da convocação",
+    ],
+  ];
+  (grupos || []).forEach((grupo) => {
+    [...grupo.linhas, ...grupo.foraDaFila].forEach((linha) => {
+      const c = linha.candidato || {};
+      const categoria = linha.categoria
+        ? ` · ${rotulo(grupo, linha.categoria)}`
+        : "";
+      const vaga = !linha.posicao
+        ? ""
+        : `${linha.imediata ? "Imediata" : "Reserva"}${categoria}`;
+      const nota = Number(c.nota);
+      linhas.push([
+        grupo.edital,
+        grupo.unidade,
+        grupo.codigoVaga,
+        grupo.cargo,
+        linha.posicao ?? "",
+        c.classificacao ?? "",
+        vaga,
+        situacaoNaChamada(linha),
+        texto(c.nome),
+        Number.isFinite(nota) ? String(nota).replace(".", ",") : "",
+        texto(c.modalidade),
+        texto(c.status) || "Sem status",
+        dataBr(convocacoes.get?.(String(c.candidato_id))?.data),
+      ]);
+    });
+  });
+  return linhas;
+}
+
+/** O CSV da ordem de convocação: `;` (Excel pt-BR), BOM e células protegidas contra fórmula. */
+export function csvDaConvocacao<T extends CandidatoDaConvocacao>(
+  grupos: readonly GrupoDaConvocacao<T>[] | null | undefined,
+  opcoes: OpcoesDoCsvDaConvocacao<T> = {},
+) {
+  const celula = (valor: unknown) => {
+    const seguro = sanitizeCsvCell(valor ?? "");
+    return /[";\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
+  };
+  const linhas = linhasDoCsvDaConvocacao(grupos, opcoes).map((linha) =>
+    linha.map(celula).join(";"),
+  );
+  return `\uFEFF${linhas.join("\r\n")}\r\n`;
+}
+
+function exigirItem<T>(valor: T | undefined): T {
+  if (valor === undefined)
+    throw new Error("Dados internos da convocação inconsistentes.");
+  return valor;
+}
+function amplaDoModelo(modelo: ModeloDaConvocacao): CategoriaDaConvocacao {
+  const ampla = categoriaDaAmpla(modelo);
+  if (!ampla)
+    throw new Error(
+      "Modelo sem ampla concorrência. Recarregue a configuração.",
+    );
+  return ampla;
+}
+
+function chaveDoCargo(candidato: CandidatoDaConvocacao): string {
+  return String(candidato.edital_id ?? "") + "\u0000" + texto(candidato.cargo);
+}

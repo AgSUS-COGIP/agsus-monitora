@@ -1,10 +1,19 @@
 # MONITORA (`agsus-monitora/`)
 
 App de monitoramento: mapas da saúde indígena, editais, análises e lista de aprovados.
-Vite + JavaScript modular + React (migração em andamento: barra lateral, Núcleo, Calendário e
-Lista de aprovados já são React) + Supabase
-(RPC) + servidor web em TypeScript (`server/`). Front em JavaScript — JSX nos componentes React de
-`src/componentes/`; só o servidor é TypeScript. **Português** em nomes de arquivo, funções e commits.
+Vite + React + Supabase (RPC) + servidor web em TypeScript (`server/`). O front está migrando,
+tela por tela, para **um único app React** (rotas por área, visual único em `src/ui/`); o alvo, as
+regras e a ordem estão em **`docs/arquitetura-react.md`** — leia antes de criar ou migrar tela.
+Front com migração gradual para TypeScript/TSX: Seleção, Cronograma, Visão geral, Conferências, Status das atualizações, Análises curriculares, Módulos e abas, barra lateral, Busca global, dados compartilhados do monitoramento e componentes de `src/ui/`;
+O Mapa de Projetos também está em TypeScript, incluindo sua carga, lista, balões e integração do editor;
+o editor compartilhado pelos dois mapas também está em TypeScript (fila, sugestões, histórico, modo de edição e regras comuns);
+a base compartilhada dos mapas (painel, legenda, tela cheia, retorno ao Brasil e hooks) também está em TypeScript;
+as telas principal, nacional e por DSEI da Saúde Indígena também estão em TSX, com dados de entrada validados;
+as regras nacionais e distritais estão em TypeScript, com contratos JSDoc na fronteira da reconciliação compartilhada;
+a integração comum com o Leaflet também está em TypeScript, com contratos em `tipos-do-leaflet.ts`;
+o Painel de entrevistas também está em TypeScript (entrada, estado, normalização e apresentação), com contratos em `tipos-do-painel.ts`;
+guia em `docs/typescript-no-frontend.md`. O servidor também é TypeScript. **Português** em nomes
+de arquivo, funções e commits.
 
 Cada diretório relevante tem o próprio `CLAUDE.md`. Leia o do diretório onde vai
 trabalhar; **não rode `find`/`ls`/`tree` para descobrir a estrutura** — ela está aqui.
@@ -18,10 +27,12 @@ auth/callback.html      callback OAuth (JS em src/auth/callback.js)
 DESIGN.md               guia de interface: tokens, componentes, contraste, plano de migração
 api/                    funções serverless Vercel (proxy FUNAI, AYA)          → api/CLAUDE.md
 src/lib/                lógica pura e testável                                → src/lib/CLAUDE.md
-src/componentes/        componentes React (barra, Núcleo, calendário, aprovados) → src/componentes/CLAUDE.md
-src/modules/            features de UI, 1 arquivo por feature                 → src/modules/CLAUDE.md
+src/app/                base do app React: montarModulo, ErrorBoundary         → docs/arquitetura-react.md
+src/ui/                 design system: Topo, Filtros, Kpi, Gráfico, Tabela, Gaveta, Modal… (ui.css)
+src/componentes/        telas React (alvo: src/modulos/<nome>/, módulo a módulo) → src/componentes/CLAUDE.md
+src/modulos/            as telas em React, uma pasta por tela (ver README e docs/arquitetura-react.md)
+src/modules/            LEGADO: só encolhe, nada novo (check-legado-so-encolhe) → src/modules/CLAUDE.md
 src/styles/             CSS do app principal (ordem de import em main.js)     → src/styles/CLAUDE.md
-src/analises/           app de análises, JS + CSS próprios                    → src/analises/CLAUDE.md
 src/main.js             bootstrap: importa CSS e instala módulos, em ordem
 supabase/               migrations/ e correcoes/ (SQL de dados)               → supabase/CLAUDE.md
 apps-script/            código das planilhas de análises (colado no Google)   → apps-script/LEIA-ME.md
@@ -34,52 +45,58 @@ docs/                   decisões, auditorias e base de conhecimento da AYA    �
 
 ## Índice por assunto (vá direto ao arquivo)
 
-| Assunto | Arquivos |
-|---|---|
-| Sessão / auth | `src/lib/sessao.js`, `session-lifecycle.js`, `auth-flow.js`, `supabaseClient.js`, `src/modules/auth-storage.js` |
-| Carga da entrada (consultas em paralelo, cópia da sessão no navegador) | `loadInitialData`/`atualizarCopiaDaSessao` em `legacy-app.js`, `src/lib/copia-da-sessao.js` (regras), `src/modules/copia-da-sessao-indexeddb.js` (IndexedDB) |
-| Carregamento sem tela de carregamento (skeleton da entrada, barra do "Atualizar dados") | `src/modules/carregamento.js`, `src/lib/esqueleto-da-entrada.js` (formato), `src/styles/carregamento.css`, marcação `.esqueleto-da-entrada` e script `marcarSessaoGuardada` no `index.html` |
-| Permissões e perfis | `src/lib/access-roles.js` (o que cada perfil pode, páginas e seções liberadas), `permissoes-recursos.js` (módulos e níveis) |
-| **Acessos** (React: grupos de permissões + permissões individuais, coordenações, teto do coordenador, "como a pessoa vê", pedidos de acesso) | `src/componentes/acessos/`, `src/lib/matriz-de-acessos.js`, `teto-de-acessos.js`, `grupos-e-coordenacoes.js`, `ver-como.js`, `solicitacao-de-acesso.js` (+ `src/modules/solicitacao-de-acesso.js`); banco em `supabase/migrations/20260929121000`–`121300` e `190000`–`190200`; o legado abre por `window.acessosController` |
-| Contrato de RPC | `src/lib/rpc-contrato.js` + `scripts/check-rpc-contract.mjs` |
-| Mapa (Leaflet) | `src/lib/fabrica-do-leaflet.js`, `mapa-render.js`, `brasil-bounds.js`, `src/modules/map-*.js` |
-| Filtros do mapa/tabela | `src/lib/filtros-do-mapa.js` (lógica pura) · estado em `legacy-app.js` (`filterState`, `dseiSelecionado`, `applyFilters`) · evento `agsus:filtros-alterados` |
-| Terras indígenas | `src/modules/indigenous-territories-layer.js`, `api/funai-*.js`, `scripts/compilar-terras-indigenas.mjs` |
-| Coordenadas / lotação | `src/lib/localizacoes-validadas.js`, `reconciliacao-unidades.js`, `src/modules/lotacoes-geograficas-transport.js`, `docs/auditoria-geografica.md` |
-| **Editais / Núcleo** (React: tabela, alertas, formulário com cronograma, linha do tempo) | `src/componentes/nucleo/`, `src/lib/editais-do-nucleo.js`, `cronograma-do-edital.js`, `responsavel-do-edital.js`, `etapas-de-edital.js`, `editais-das-linhas.js`; o legado abre por `window.nucleoController` |
-| Calendário de editais (React) | `src/componentes/calendario-editais/`, `src/lib/calendario-editais.js` |
-| Linhas do monitoramento e unidades para o React | `src/componentes/dados-do-monitoramento.js` (o legado publica em `loadData`/`loadUnidades`) |
-| **Lista de aprovados** (React: aprovados, convocação, modais) | `src/componentes/lista-aprovados/`, `src/lib/lista-aprovados-rules.js`, `aprovados-import.js`, `lista-convocacao-rules.js`, `configuracao-de-convocacao.js`, `modelo-de-convocacao.js`, `anexos-do-candidato.js` (PDFs do candidato); o legado abre por `window.aprovadosController` |
-| Assistente AYA | `src/modules/aya-*.js`, `api/aya.js`, `docs/aya/`, `scripts/aya-*.mjs` |
-| Branding / acesso | `src/lib/access-branding*.js`, `src/modules/sidebar-branding.js`, `access-request-ui.js` |
-| **Barra lateral** (React: áreas, trilho, rodapé) | `src/componentes/barra-lateral/`, `src/lib/menu-lateral.js` (catálogo e estado do flutuante), `src/lib/eventos-da-barra-lateral.js`, `src/styles/barra-lateral.css`; o legado alimenta por `buildNav`/`setActiveNav` |
-| Ícones (Lucide) | `src/modules/icones.js` (registro único) e `src/componentes/icone.jsx`; o resto do app ainda usa Font Awesome |
-| Modal e seleção múltipla (React) | `src/componentes/modal.jsx`, `src/componentes/multi-select-busca.jsx` |
-| **Planilhas** (links, modelo, bucket) | **`src/lib/planilhas.js`** — único lugar com endereço de planilha |
-| Visual / CSS | **`DESIGN.md` (seção 0 primeiro)**, `src/styles/tokens.css`, `src/styles/CLAUDE.md` |
-| Análises | `src/analises/main.js` → `analises-*.js` |
+| Assunto                                                                                                                                           | Arquivos                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Sessão / auth                                                                                                                                     | `src/lib/sessao.js`, `session-lifecycle.js`, `auth-flow.js`, `supabaseClient.js`, `src/modules/auth-storage.js`                                                                                                                                                                                                          |
+| Carga da entrada (consultas em paralelo, cópia da sessão no navegador)                                                                            | `src/app/carga.js` (`loadInitialData`/`atualizarCopiaDaSessao`), `src/lib/copia-da-sessao.js` (regras), `src/modules/copia-da-sessao-indexeddb.js` (IndexedDB)                                                                                                                                                           |
+| Carregamento sem tela de carregamento (skeleton da entrada, barra do "Atualizar dados")                                                           | `src/app/carregamento.js`, `src/lib/esqueleto-da-entrada.js` (formato), `src/styles/carregamento.css`, marcação `.esqueleto-da-entrada` e script `marcarSessaoGuardada` no `index.html`                                                                                                                                  |
+| Permissões e perfis                                                                                                                               | `src/lib/access-roles.js` (o que cada perfil pode, páginas e seções liberadas), `permissoes-recursos.js` (módulos e níveis)                                                                                                                                                                                              |
+| **Acessos** (React: grupos de permissões + permissões individuais, coordenações, teto do coordenador, "como a pessoa vê", pedidos de acesso)      | `src/modulos/acessos/`, `src/lib/matriz-de-acessos.js`, `teto-de-acessos.js`, `grupos-e-coordenacoes.js`, `ver-como.js`, `solicitacao-de-acesso.ts` (ver `src/app/entrada/`); banco em `supabase/migrations/20260929121000`–`121300`, `190000`–`190200` e `20261021140000`; o legado abre por `window.acessosController` |
+| Contrato de RPC                                                                                                                                   | `src/lib/rpc-contrato.js` + `scripts/check-rpc-contract.mjs`                                                                                                                                                                                                                                                             |
+| Mapa (Leaflet)                                                                                                                                    | `src/lib/fabrica-do-leaflet.js`, `mapa-render.js`, `brasil-bounds.js`, `src/modules/map-*.js`                                                                                                                                                                                                                            |
+| Filtros do mapa/tabela                                                                                                                            | `src/lib/filtros-do-mapa.js` (lógica pura) · estado na Visão geral (`src/modulos/visao-geral/`) · evento `agsus:filtros-alterados`                                                                                                                                                                                       |
+| Terras indígenas                                                                                                                                  | `src/modules/indigenous-territories-layer.js`, `api/funai-*.js`, `scripts/compilar-terras-indigenas.mjs`                                                                                                                                                                                                                 |
+| Coordenadas / lotação                                                                                                                             | `reconciliacao-unidades.js`, `src/modules/lotacoes-geograficas-transport.js`, `docs/auditoria-geografica.md`, `docs/auditoria-oficial-das-coordenadas-2026-10-01.md`                                                                                                                                                     |
+| **Editais / Núcleo** (React: tabela, alertas, formulário com cronograma, linha do tempo)                                                          | `src/componentes/nucleo/`, `src/lib/editais-do-nucleo.js`, `cronograma-do-edital.js`, `responsavel-do-edital.js`, `etapas-de-edital.js`, `editais-das-linhas.js`; o legado abre por `window.nucleoController`                                                                                                            |
+| **Seleção** (módulo do app, sem iframe: montarSelecao na `#page-selecao`; funil por vaga da planilha Auditoria; carga diária pelo GitHub Actions) | `src/modulos/selecao/`, `src/lib/selecao-do-painel.ts`, `selecao-da-planilha.js`, `scripts/sincronizar-selecao.mjs`, `supabase/migrations/20261001090000_selecao.sql`, `docs/sincronizacao-das-planilhas.md`                                                                                                             |
+| Status das atualizações (Configurações, só admin global: última execução e atraso de cada carga)                                                  | `src/componentes/saude-das-cargas/`, `src/lib/saude-das-cargas.ts`, `supabase/migrations/20261001120000_saude_das_cargas.sql`                                                                                                                                                                                            |
+| Calendário de editais (React)                                                                                                                     | `src/modulos/cronograma/`, `src/lib/calendario-editais.ts`                                                                                                                                                                                                                                                               |
+| Linhas do monitoramento e unidades para o React                                                                                                   | `src/componentes/dados-do-monitoramento.ts`; **sob demanda**: só as páginas de `src/lib/telas-com-linhas.ts` (via `src/app/pagina-aberta.ts`) ou `usarLinhasDoMonitoramento` fazem a carga lê-las                                                                                                                        |
+| **Lista de aprovados** (React: aprovados, convocação, modais)                                                                                     | `src/modulos/aprovados/`, `src/lib/lista-aprovados-rules.ts`, `aprovados-import.ts`, `lista-convocacao-rules.ts`, `configuracao-de-convocacao.ts`, `modelo-de-convocacao.ts`, `anexos-do-candidato.ts` (PDFs do candidato); o legado abre por `window.aprovadosController`                                               |
+| Assistente AYA                                                                                                                                    | `src/modulos/aya/` (painel e contexto), `src/lib/busca-da-aya.js` (base sem rede), `src/modules/aya-memoria.js`, `docs/aya/`, `scripts/compilar-conhecimento-aya.mjs`; sem IA local ou túnel                                                                                                                             |
+| Branding / acesso                                                                                                                                 | `src/lib/access-branding*.js`, `src/modules/sidebar-branding.js`, `access-request-ui.js`                                                                                                                                                                                                                                 |
+| **Barra lateral** (React: áreas, trilho, rodapé)                                                                                                  | `src/componentes/barra-lateral/`, `src/lib/menu-lateral.ts` (catálogo e estado do flutuante), `src/lib/eventos-da-barra-lateral.js`, `src/styles/barra-lateral.css`; o legado alimenta por `buildNav`/`setActiveNav`                                                                                                     |
+| Ícones (Lucide)                                                                                                                                   | `src/modules/icones.js` (registro único) e `src/componentes/icone.jsx`; o resto do app ainda usa Font Awesome                                                                                                                                                                                                            |
+| **Arquitetura React** (alvo, regras, ordem, como criar módulo)                                                                                    | `docs/arquitetura-react.md`, `src/app/montar-modulo.jsx`, `src/app/ErrorBoundary.jsx`                                                                                                                                                                                                                                    |
+| **Design system** (componentes visuais padrão)                                                                                                    | `src/ui/index.js`, `src/ui/ui.css` (só tokens); `Modal` em `src/ui/modal.jsx` (`src/componentes/modal.jsx` só reexporta)                                                                                                                                                                                                 |
+| Seleção múltipla (React)                                                                                                                          | `src/componentes/multi-select-busca.jsx`                                                                                                                                                                                                                                                                                 |
+| Busca global (Ctrl+K, React)                                                                                                                      | `src/componentes/busca-global/`, `src/lib/busca-global.ts`; a escolha vai ao legado pelo evento `agsus:busca-global-escolhida`                                                                                                                                                                                           |
+| Configurações (todas as seções em React: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação)                            | `src/modulos/configuracoes/` (seções em `secoes.js`), `src/lib/publicacao-de-configuracoes.js`, `src/lib/apresentacao-das-configuracoes.js`, `src/lib/marca-da-barra-lateral.js`, `src/lib/paineis-externos-das-configuracoes.js`                                                                                        |
+| **Recursos** (módulo do app, sem iframe: montarRecursos na `#page-recursos`, área e tema do app)                                                  | `src/modulos/recursos/`, `src/lib/recursos-dos-candidatos.js`; o legado abre por `window.recursosController`                                                                                                                                                                                                             |
+| **Entrevistas** (módulo do app, sem iframe: montarEntrevistas na `#page-entrevistas`, área e tema do app)                                         | `src/modulos/entrevistas/`; o legado abre por `window.entrevistasController`. `src/ui/no-quadro.jsx` fica enquanto a Seleção estiver no iframe                                                                                                                                                                           |
+| **Planilhas** (links, modelo, bucket)                                                                                                             | **`src/lib/planilhas.js`** — único lugar com endereço de planilha                                                                                                                                                                                                                                                        |
+| Visual / CSS                                                                                                                                      | **`DESIGN.md` (seção 0 primeiro)**, `src/styles/tokens.css`, `src/styles/CLAUDE.md`                                                                                                                                                                                                                                      |
+| **Análises curriculares** (módulo do app, sem iframe: montarAnalises na `#page-analises`)                                                         | `src/modulos/analises/`, `src/lib/analises-curriculares.ts`                                                                                                                                                                                                                                                              |
+| **Encerramento do edital** (tela de fim de edital uma vez por pessoa, selos no menu da conta, quem fechou)                                        | `src/modulos/encerramento-do-edital/`, `src/lib/encerramento-do-edital.ts`; banco em `supabase/migrations/20261021180000_encerramento_do_edital.sql`; ligado em `src/app/sistema.js` e avisado por `src/modulos/analises/marcos.ts`                                                                                      |
 
 ## Não ler por inteiro (grep -n → sed -n 'A,Bp')
 
-| Arquivo | Tamanho | Observação |
-|---|---|---|
-| `public/data/*.json` | até 2,3 MB | gerados |
-| `src/modules/legacy-app.js` | 394 KB | legado, não crescer |
-| `src/lib/localizacoes-validadas-gerado.js` | 201 KB | gerado por `scripts/recompilar-vereditos.mjs` |
-| `supabase/migrations/20260918160000_padronizacao_nomenclatura_tabelas.sql` | 148 KB | renomeação em massa |
-| `src/styles/app.css` | 110 KB | CSS base |
-| `index.html` | 68 KB | |
-| `src/analises/analises-app.js` | 59 KB | |
-| `src/modules/indigenous-territories-layer.js` | 53 KB | |
-| `src/modules/aya-conhecimento-gerado.js` | 27 KB | gerado de `docs/aya/` |
-| `package-lock.json`, `dist/`, `node_modules/` | | nunca |
+| Arquivo                                                                               | Tamanho    | Observação            |
+| ------------------------------------------------------------------------------------- | ---------- | --------------------- |
+| `public/data/*.json`                                                                  | até 2,3 MB | gerados               |
+| `supabase/migrations-historicas/20260918160000_padronizacao_nomenclatura_tabelas.sql` | 148 KB     | renomeação em massa   |
+| `src/styles/app.css`                                                                  | 110 KB     | CSS base              |
+| `index.html`                                                                          | 68 KB      |                       |
+| `src/modules/indigenous-territories-layer.js`                                         | 53 KB      |                       |
+| `src/modules/aya-conhecimento-gerado.js`                                              | 27 KB      | gerado de `docs/aya/` |
+| `package-lock.json`, `dist/`, `node_modules/`                                         |            | nunca                 |
 
 ## Comandos (rode o mais barato que responda a pergunta)
 
 ```bash
 npx vitest run tests/<arquivo>.test.js   # 1 teste — padrão ao editar
 npm run lint                             # só arquivos alterados
-npm run check:architecture               # auth + rpc + MutationObserver + remendos
+npm run check:architecture               # auth + rpc + MutationObserver + remendos + legado só encolhe
 npm test                                 # Vitest completo (lento)
 npm run typecheck                        # tipos do servidor (server/*.ts)
 npm run dev                              # vite build --watch + servidor em 127.0.0.1:8000
@@ -96,11 +113,19 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
 - Nenhum `MutationObserver` novo (`check-no-new-mutation-observer.mjs`).
 - Nenhum remendo novo (`check-no-new-patch-layers.mjs`): nada de arquivo `*-fix`, `*-refinement`, `*-enhancements`, `post-N…` nem `window.navigate = …`/`window.saveAdminSettings = …` por outro módulo. Mude a fonte onde o comportamento é definido; ao passar por um remendo existente, prefira absorvê-lo na fonte e apagá-lo.
 - HTML dinâmico passa por `src/lib/sanitize.js` / `html-security.js`. Nunca `innerHTML` cru.
-- Feature nova = arquivo novo em `src/modules/` (+ lógica em `src/lib/` + teste). Não crescer
-  `legacy-app.js`; a cada parte migrada, ele encolhe (ver "Código legado" abaixo).
-- O front está migrando para React, por componente, com pedido. Componente React mora em
-  `src/componentes/` (lógica pura segue em `src/lib/`); o legado fala com ele por estado externo e
-  eventos, nunca pelo DOM dele (ver `src/componentes/CLAUDE.md`).
+- Tela ou feature nova = **React**: módulo em `src/componentes/<nome>/` (destino final
+  `src/modulos/<nome>/`), montado por `montarModulo` (`src/app/`), visual com os componentes de
+  `src/ui/` e tokens, lógica pura em `src/lib/` + teste. **Nada novo em `src/modules/` nem em
+  `src/analises/`** (`scripts/check-legado-so-encolhe.mjs` quebra o build e o CI); a ligação do
+  app fica em `src/app/` (`sistema.js`, `navegacao.js`, `carga.js`, `presenca.js`, `moldura.js`,
+  `configuracao.js`) — ver "Código legado" abaixo.
+- O legado fala com o React por estado externo e eventos, nunca pelo DOM dele (ver
+  `src/componentes/CLAUDE.md`). Ao migrar uma tela: levante tudo o que a antiga faz (checklist),
+  cumpra com testes, confira no navegador e só então apague o legado.
+- Interface sem textos genéricos: nada de parágrafo de ajuda, subtítulo que descreve o óbvio, dica
+  longa nem selo "Somente consulta" (quem só lê não vê os controles). Explicação é com a assistente
+  AYA (`docs/aya/`). Ficam rótulos, erros, confirmações, estados vazios curtos e avisos que pedem ação.
+  Data de atualização: discreta e uma vez só.
 - Arquivo gerado se edita **na fonte** e se regenera com o script (ver `scripts/CLAUDE.md`).
 - Link, caminho ou bucket de planilha só em `src/lib/planilhas.js`; o consumidor importa de lá
   (`tests/planilhas.test.js` falha se aparecer em outro arquivo).
@@ -112,7 +137,7 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
 O sistema **ainda está em desenvolvimento**. Quando o usuário confirmar que uma mudança está ok
 (por exemplo, uma página migrada para React), **remova todo o código legado que ela substituiu**:
 
-- módulos de `src/modules/`, trechos de `legacy-app.js`, marcação do `index.html` e funções expostas
+- módulos de `src/modules/`, marcação do `index.html` e funções expostas
   em `window` que só o código antigo usava;
 - CSS sem seletor vivo, testes do comportamento antigo e arquivos ou pastas sem uso (build antigo,
   workflow temporário, protótipo abandonado);

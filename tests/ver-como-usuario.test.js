@@ -10,7 +10,7 @@ import {
   paineisPermitidos,
   secaoDeConfiguracaoPermitida,
 } from "../src/lib/access-roles.js";
-import { areasDoUsuario, montarArvoreDoMenu } from "../src/lib/menu-lateral.js";
+import { areasDoUsuario, montarArvoreDoMenu } from "../src/lib/menu-lateral.ts";
 import { registrarNoRascunho } from "../src/lib/matriz-de-acessos.js";
 
 const SECOES = [

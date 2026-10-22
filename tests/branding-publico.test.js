@@ -9,7 +9,8 @@ import {
   aplicarMarcaGuardadaNoArranque,
   aplicarMarcaNaTela,
   atualizarMarcaComBrandingPublico,
-} from "../src/lib/access-branding-boot.js";
+  marcaDaEntrada,
+} from "../src/app/entrada/marca.js";
 import {
   guardarMarca,
   lerMarcaGuardada,
@@ -29,7 +30,7 @@ const RESPOSTA_DA_RPC = {
   auth_access_panel_color: "#ffffff",
   auth_access_greeting: "Bem-vindo ao Agosto Lilás",
   auth_access_instruction: "Entre com sua conta institucional.",
-  auth_google_button_text: "Entrar com Google institucional",
+  auth_google_button_text: "Entrar com sua conta institucional",
 };
 
 const IDENTIDADE_ATUAL = {
@@ -37,8 +38,7 @@ const IDENTIDADE_ATUAL = {
   logoUrl: "https://exemplo.org/logo.png",
   panelColor: "#ffffff",
   greeting: "Bem-vindo ao Agosto Lilás",
-  instruction: "Entre com sua conta institucional.",
-  buttonText: "Entrar com Google institucional",
+  buttonText: "Entrar com sua conta institucional",
 };
 
 const MARCA_ANTIGA = {
@@ -107,14 +107,13 @@ const respostaErro = (status) => ({
 const buscarCom = (buscar) =>
   buscarMarcaPublica({ buscar, url: URL_FALSA, chave: CHAVE_PUBLICA });
 
+/*
+  A arte e a cor vão no `#loginScreen`; logo, saudação e texto do botão, no
+  estado da marca que a tela de entrada (React) desenha.
+*/
 function montarTelaDeAcesso() {
-  document.body.innerHTML = `
-    <div id="loginScreen">
-      <img id="loginLogo" src="" alt="" />
-      <h1 id="loginGreeting"></h1>
-      <p id="loginDescription"></p>
-      <button><span id="googleLoginText"></span></button>
-    </div>`;
+  document.body.innerHTML = `<div id="loginScreen"></div>`;
+  marcaDaEntrada.definir({ logoUrl: "", saudacao: "", textoDoBotao: "" });
 }
 
 function identidadeNaTela() {
@@ -122,10 +121,9 @@ function identidadeNaTela() {
   return {
     fundo: tela.style.getPropertyValue("--login-background-image"),
     painel: tela.style.getPropertyValue("--login-panel-color"),
-    logo: document.getElementById("loginLogo").getAttribute("src"),
-    saudacao: document.getElementById("loginGreeting").textContent,
-    instrucao: document.getElementById("loginDescription").textContent,
-    botao: document.getElementById("googleLoginText").textContent,
+    logo: marcaDaEntrada.obter().logoUrl,
+    saudacao: marcaDaEntrada.obter().saudacao,
+    botao: marcaDaEntrada.obter().textoDoBotao,
   };
 }
 
@@ -136,8 +134,19 @@ beforeEach(() => {
 afterEach(() => localStorage.clear());
 
 describe("tradução da resposta da RPC", () => {
-  it("mapeia as seis chaves públicas para os campos do cache", () => {
+  it("mapeia as chaves públicas para os campos do cache", () => {
     expect(mapearBrandingPublico(RESPOSTA_DA_RPC)).toEqual(IDENTIDADE_ATUAL);
+  });
+
+  /*
+    A tela de acesso não tem mais instrução: a RPC ainda devolve a chave
+    `auth_access_instruction` (o banco não mudou), e o front a ignora.
+  */
+  it("ignora a instrução que a RPC ainda devolve", () => {
+    expect(RESPOSTA_DA_RPC).toHaveProperty("auth_access_instruction");
+    expect(mapearBrandingPublico(RESPOSTA_DA_RPC)).not.toHaveProperty(
+      "instruction",
+    );
   });
 
   /*
@@ -291,7 +300,6 @@ describe("os seis cenários de identidade", () => {
     expect(naTela.painel).toBe(IDENTIDADE_ATUAL.panelColor);
     expect(naTela.logo).toBe(IDENTIDADE_ATUAL.logoUrl);
     expect(naTela.saudacao).toBe(IDENTIDADE_ATUAL.greeting);
-    expect(naTela.instrucao).toBe(IDENTIDADE_ATUAL.instruction);
     expect(naTela.botao).toBe(IDENTIDADE_ATUAL.buttonText);
   });
 
@@ -320,7 +328,7 @@ describe("os seis cenários de identidade", () => {
 
     const naTela = identidadeNaTela();
     expect(naTela.saudacao).toBe(IDENTIDADE_ATUAL.greeting);
-    expect(naTela.saudacao).not.toBe("Seja bem-vindo(a) à AgSUS");
+    expect(naTela.saudacao).not.toBe("Boas-vindas!");
     expect(lerMarcaGuardada().backgroundUrl).toBe(
       IDENTIDADE_ATUAL.backgroundUrl,
     );
@@ -487,14 +495,14 @@ describe("cor do painel e contraste são atómicos", () => {
         .replace(/\/\*[\s\S]*?\*\//g, "")
         .replace(/^\s*\/\/.*$/gm, "");
     for (const ficheiro of [
-      "src/modules/legacy-app.js",
-      "src/lib/access-branding-boot.js",
+      "src/app/configuracao.js",
+      "src/app/entrada/marca.js",
     ]) {
       const codigo = semComentarios(ficheiro);
       const escritas = (
         codigo.match(/setProperty\(\s*"--login-panel-color"/g) || []
       ).length;
-      const esperado = ficheiro.endsWith("access-branding-boot.js") ? 1 : 0;
+      const esperado = ficheiro.endsWith("marca.js") ? 1 : 0;
       expect(
         escritas,
         `${ficheiro} escreve a cor fora da função partilhada`,

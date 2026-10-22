@@ -1,0 +1,33 @@
+# Regras das áreas e do menu
+
+As três áreas do sistema (Saúde Indígena, SEDE e Projetos), a área atual e a ordem do menu. Fontes:
+`src/lib/menu-lateral.ts`, `src/componentes/dados-do-monitoramento.ts`,
+`src/componentes/barra-lateral/menu-de-areas.tsx` e as migrations
+`20260925170000_areas_do_sistema.sql`, `20260925180000_areas_do_usuario.sql`,
+`20260925181000_recorta_dados_por_area.sql` e `20261001160000_ordem_do_menu_por_etapa.sql`.
+
+## Áreas do sistema
+
+**perguntas:** areas do sistema | area do sistema | o que muda entre as areas do sistema | quais sao as areas | quais areas existem | o que e area atual | area atual
+**resposta:** O MONITORA tem três áreas: Saúde Indígena, SEDE e Projetos. Cada área repete as mesmas páginas (Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Painel de recursos, Analisar recursos, Painel de entrevistas, Conduzir entrevistas, Classificação, Lista de aprovados e Seleção), e cada página mostra só os registros da área atual, a escolhida no menu. O que muda é o bloco do mapa da Visão geral: DSEIs e CASAIs na Saúde Indígena, os locais das vagas dos projetos em Projetos, e nenhum mapa na SEDE. A área do edital é calculada pelo banco a partir da unidade e do responsável: SEDE, Escritório Distrital e Regional e CCE ficam na SEDE; Caminhoneiros, Saúde nas Fronteiras, MFC e Rio Doce, em Projetos; as demais, na Saúde Indígena.
+**fato:** O MONITORA tem três áreas (Saúde Indígena, SEDE e Projetos); cada página mostra só a área atual escolhida no menu, e só a Visão geral da Saúde Indígena fala de DSEIs e CASAIs.
+**fonte:** src/lib/menu-lateral.ts; supabase/migrations/20260925170000_areas_do_sistema.sql
+
+## Trocar de área
+
+**perguntas:** trocar de area | como mudo de area | como trocar de area | seletor de area | mudar de area | nao vejo a area
+**resposta:** Quem tem mais de uma área vê o seletor "Área" no topo da barra lateral; abaixo dele ficam só as páginas da área escolhida. Trocar de área abre a mesma página na área nova (ou a primeira página dela, se não tiver essa). Com a barra recolhida, o seletor vira o ícone da área atual. A área escolhida fica guardada na aba do navegador: recarregar volta a ela, e uma aba nova começa na primeira área da pessoa. Quem tem uma área só não vê seletor. O administrador global vê todas as áreas; os demais veem as áreas liberadas para eles em Configurações › Acessos (com coordenação, só a área dela).
+**fonte:** src/componentes/barra-lateral/menu-de-areas.tsx; src/componentes/dados-do-monitoramento.ts; supabase/migrations/20260925180000_areas_do_usuario.sql
+
+## Ordem do menu
+
+**perguntas:** ordem do menu | qual e a ordem do menu | ordem das abas | paginas do menu | menu lateral | blocos do menu | acompanhamento | processo seletivo no menu
+**resposta:** O menu de cada área tem dois blocos. Em Acompanhamento ficam as páginas de consulta: Visão geral, Painel das análises, Painel de recursos, Painel de entrevistas e Seleção (e os painéis externos liberados para a pessoa, quando houver). Em Processo seletivo fica onde se trabalha, na ordem das etapas: Editais, Cronograma, Avaliação documental, Analisar recursos, Conduzir entrevistas, Classificação e Lista de aprovados. Cada pessoa vê só as páginas que pode abrir, e o bloco sem nenhuma página some. Abaixo das áreas fica Administração (as seções de Configurações). Com a barra recolhida, o nome do bloco vira um traço entre os ícones. O selo BETA ao lado do nome marca a aba ainda em teste.
+**fato:** O menu de cada área tem dois blocos: Acompanhamento (Visão geral, Painel das análises, Painel de recursos, Painel de entrevistas, Seleção e os painéis externos) e Processo seletivo (Editais, Cronograma, Avaliação documental, Analisar recursos, Conduzir entrevistas, Classificação e Lista de aprovados).
+**fonte:** supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql; supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; src/lib/menu-lateral.ts
+
+## Recorte por área no banco
+
+**perguntas:** recorte por area | por que nao vejo editais de outra area | dados de outra area | editais de outra area
+**resposta:** Quem não é administrador global só recebe do banco os dados das suas áreas: editais, cronogramas, listas de aprovados, candidatos, convocação, vagas e análises. A gravação também confere a área: ninguém cria edital nem move edital para uma área que não é sua. Para ver outra área, peça a liberação a quem administra os acessos.
+**fonte:** supabase/migrations/20260925181000_recorta_dados_por_area.sql; supabase/migrations/20260925190000_gravacao_e_matriz_por_area.sql

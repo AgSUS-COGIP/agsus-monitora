@@ -10,11 +10,12 @@ import { describe, expect, it } from "vitest";
 
 const semComentarios = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
 
-const nucleoCss = semComentarios(
-  readFileSync("src/styles/nucleo-operational-enhancements.css", "utf8"),
-);
+// Os mapas da Visão geral (React): o CSS da Saúde Indígena e o de Projetos.
 const mapaCss = semComentarios(
-  readFileSync("src/styles/health-map-workspace.css", "utf8"),
+  readFileSync(
+    "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css",
+    "utf8",
+  ) + readFileSync("src/modulos/mapa-de-projetos/mapa-de-projetos.css", "utf8"),
 );
 const seletorCss = semComentarios(
   readFileSync("src/styles/map-base-layer-switcher.css", "utf8"),
@@ -66,22 +67,6 @@ function resolverToken(valorCss) {
   return resolverToken(achado[1].trim());
 }
 
-/*
-  O mesmo com os valores do tema escuro: o bloco `html[data-theme="dark"]` de
-  tokens.css, e o do tema claro para o que o escuro não redefine.
-*/
-const raizEscura = tokensCss.slice(tokensCss.indexOf('[data-theme="dark"]'));
-function resolverTokenEscuro(valorCss) {
-  const nome = valorCss.match(/^var\(\s*(--[\w-]+)/)?.[1];
-  if (!nome) return valorCss;
-  const achado = raizEscura.match(
-    new RegExp(`(?<![\\w-])${nome}\\s*:\\s*([^;]+);`),
-  );
-  return achado
-    ? resolverTokenEscuro(achado[1].trim())
-    : resolverToken(valorCss);
-}
-
 const canal = (valor) => {
   const c = valor / 255;
   return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
@@ -102,7 +87,6 @@ const contraste = (frente, fundo) => {
 };
 
 const AA = 4.5;
-const BRANCO = "#ffffff";
 
 describe("convenção do tema escuro", () => {
   /*
@@ -122,61 +106,6 @@ describe("convenção do tema escuro", () => {
   });
 });
 
-describe("contraste dos KPIs da Equipe Núcleo", () => {
-  it("o rótulo passa o AA sobre o cartão claro", () => {
-    const cor = valor(nucleoCss, ".nucleo-kpi-card small", "color");
-    expect(contraste(cor, BRANCO)).toBeGreaterThanOrEqual(AA);
-  });
-
-  /*
-    Aqui verifica-se o valor, não o rótulo. No escuro o rótulo é pintado por
-    `html[data-theme="dark"] .app small` de `config-page.css`, com `!important`;
-    qualquer regra nossa perderia para ele. Afirmar a cor do rótulo a partir
-    deste ficheiro seria afirmar algo que a tela não mostra.
-  */
-  /*
-    O cartão é o card compacto da Visão geral, só com tokens e sem regra
-    própria para o escuro: valor e fundo saem das regras de sempre, resolvidos
-    com os tokens do tema escuro.
-  */
-  /*
-    O número vem na cor do KPI (`--tone`, definida por `.tone-*`): cada cor
-    tem de passar o AA sobre o cartão, no claro e no escuro.
-  */
-  const tons = [
-    ...nucleoCss.matchAll(
-      /\.nucleo-kpi-card\.tone-([\w-]+)\s*\{[^}]*--tone:\s*(var\([^;]+\));/g,
-    ),
-  ].map(([, nome, cor]) => [nome, cor]);
-
-  it("o número usa a cor do KPI", () => {
-    expect(valor(nucleoCss, ".nucleo-kpi-card strong", "color", (v) => v)).toBe(
-      "var(--tone, var(--text-primary))",
-    );
-    expect(tons.length).toBeGreaterThanOrEqual(4);
-  });
-
-  it("cada cor de KPI passa o AA sobre o cartão, no claro e no escuro", () => {
-    const fundoClaro = valor(nucleoCss, ".nucleo-kpi-card", "background");
-    const fundoEscuro = valor(
-      nucleoCss,
-      ".nucleo-kpi-card",
-      "background",
-      resolverTokenEscuro,
-    );
-    for (const [nome, cor] of tons) {
-      expect(
-        contraste(resolverToken(cor), fundoClaro),
-        `${nome} no claro`,
-      ).toBeGreaterThanOrEqual(AA);
-      expect(
-        contraste(resolverTokenEscuro(cor), fundoEscuro),
-        `${nome} no escuro`,
-      ).toBeGreaterThanOrEqual(AA);
-    }
-  });
-});
-
 describe("legibilidade e contraste dos mapas", () => {
   it("nenhum texto do workspace fica abaixo de 10px", () => {
     const miudos = [...mapaCss.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px/g)]
@@ -185,65 +114,14 @@ describe("legibilidade e contraste dos mapas", () => {
     expect(miudos).toEqual([]);
   });
 
-  it("o estado vazio passa o AA sobre o painel claro", () => {
-    const cor = valor(mapaCss, ".health-map-empty", "color");
-    expect(contraste(cor, BRANCO)).toBeGreaterThanOrEqual(AA);
-  });
-
   /*
-    Só o tema claro: no escuro o tipo da unidade é pintado pelo `!important`
-    de `config-page.css`, e esta folha não tem como o decidir.
+    Cores e contraste dos painéis vêm dos tokens (src/styles/tokens.css), que
+    o tema escuro redefine: os mapas não declaram cor de texto em hex. Os
+    testes de contraste do workspace antigo (health-map-workspace.css e
+    health-reference-kpis.css) saíram com ele.
   */
-  it("o tipo da unidade passa o AA sobre o painel claro", () => {
-    const cor = valor(mapaCss, ".health-map-unit small", "color");
-    expect(contraste(cor, BRANCO)).toBeGreaterThanOrEqual(AA);
-  });
-
-  /*
-    O fundo do painel saiu daqui: é a superfície do Design System (11.6) em
-    health-reference-kpis.css, `var(--surface-raised)`, cujo valor escuro mora
-    no bloco [data-theme="dark"] de tokens.css.
-  */
-  const fundoDoPainelEscuro = () => {
-    const kpisCss = semComentarios(
-      readFileSync("src/styles/health-reference-kpis.css", "utf8"),
-    );
-    const declarado = blocos(kpisCss, "#page-dashboard .health-map-pane")
-      .map((corpo) => corpo.match(/(?:^|;)\s*background\s*:\s*([^;!]+)/)?.[1])
-      .filter(Boolean)
-      .pop()
-      .trim();
-    const nome = declarado.match(/^var\(\s*(--[\w-]+)/)[1];
-    const raizEscura = tokensCss.slice(
-      tokensCss.indexOf('[data-theme="dark"]'),
-    );
-    return raizEscura.match(
-      new RegExp(`${nome}\\s*:\\s*(#[0-9a-f]{6})`, "i"),
-    )[1];
-  };
-
-  it("legenda, dica e vazio passam o AA sobre o painel escuro", () => {
-    const cor = valor(
-      mapaCss,
-      '[data-theme="dark"] .health-map-detail-legend',
-      "color",
-    );
-    expect(contraste(cor, fundoDoPainelEscuro())).toBeGreaterThanOrEqual(AA);
-  });
-
-  it("a tarja de seção passa o AA sobre o painel escuro", () => {
-    const cor = valor(
-      mapaCss,
-      '[data-theme="dark"] .health-map-pane__eyebrow',
-      "color",
-    );
-    expect(contraste(cor, fundoDoPainelEscuro())).toBeGreaterThanOrEqual(AA);
-  });
-
-  it("a tarja de seção passa o AA sobre o painel claro", () => {
-    const cor = valor(mapaCss, ".health-map-pane__eyebrow", "color");
-    const fundo = resolverToken("var(--surface-raised)");
-    expect(contraste(cor, fundo)).toBeGreaterThanOrEqual(AA);
+  it("os mapas não fixam cor de texto em hex", () => {
+    expect(mapaCss).not.toMatch(/(^|[^-])color:s*#[0-9a-f]{3,6}/i);
   });
 });
 

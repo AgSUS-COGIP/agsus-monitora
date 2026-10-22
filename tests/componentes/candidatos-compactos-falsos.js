@@ -1,7 +1,7 @@
 /*
   Monta, a partir de candidatos no formato de sempre, o pacote que
   `listar_candidatos_aprovados_compacto()` devolvia no formato 1 (listas uma vez
-  + linhas), o de antes da migration 20260929190000.
+  + linhas), o de antes da migration 20260929210000.
 */
 const COLUNAS_DA_LISTA = [
   "edital_id",
@@ -25,20 +25,38 @@ const COLUNAS = [
   "sub_judice",
   "codigo_vaga",
 ];
+/*
+  Alteração por decisão judicial (migration 20261001150000): só a linha
+  alterada leva estas 4 posições a mais; as outras ficam com 12.
+*/
+const COLUNAS_DA_ALTERACAO = [
+  "alterado_judicialmente",
+  "nota_original",
+  "modalidade_original",
+  "classificacao_original",
+];
+const TODAS_AS_COLUNAS = [...COLUNAS, ...COLUNAS_DA_ALTERACAO];
+const daAlteracao = (candidato) =>
+  candidato.alterado_judicialmente
+    ? COLUNAS_DA_ALTERACAO.map((coluna) => candidato[coluna] ?? null)
+    : [];
 
 export function compactarCandidatos(candidatos) {
   const listas = {};
   const linhas = candidatos.map((candidato, i) => {
     const lista = candidato.lista_id ?? `lista-${i}`;
     listas[lista] = COLUNAS_DA_LISTA.map((coluna) => candidato[coluna] ?? null);
-    return COLUNAS.map((coluna) =>
-      coluna === "lista_id" ? lista : (candidato[coluna] ?? null),
-    );
+    return [
+      ...COLUNAS.map((coluna) =>
+        coluna === "lista_id" ? lista : (candidato[coluna] ?? null),
+      ),
+      ...daAlteracao(candidato),
+    ];
   });
   return {
     colunas_da_lista: COLUNAS_DA_LISTA,
     listas,
-    colunas: COLUNAS,
+    colunas: TODAS_AS_COLUNAS,
     linhas,
     total: linhas.length,
   };
@@ -50,7 +68,7 @@ const DICIONARIZADAS = ["cargo", "modalidade", "status", "codigo_vaga"];
   O mesmo, no formato 2 (`listar_candidatos_aprovados_compacto(p_area)`):
   listas num array com o id na primeira coluna, a linha com o índice da lista,
   e cargo, modalidade, status e código da vaga em `dicionarios` (índice base 0,
-  valores em ordem), como a migration 20260929190000 monta.
+  valores em ordem), como a migration 20260929210000 monta.
 */
 export function compactarPorArea(
   candidatos,
@@ -79,15 +97,16 @@ export function compactarPorArea(
       ].sort(),
     ]),
   );
-  const linhas = candidatos.map((candidato, i) =>
-    COLUNAS.map((coluna) => {
+  const linhas = candidatos.map((candidato, i) => [
+    ...COLUNAS.map((coluna) => {
       if (coluna === "lista_id")
         return ids.indexOf(candidato.lista_id ?? `lista-${i}`);
       const valor = candidato[coluna] ?? null;
       if (!DICIONARIZADAS.includes(coluna) || valor === null) return valor;
       return dicionarios[coluna].indexOf(valor);
     }),
-  );
+    ...daAlteracao(candidato),
+  ]);
   return {
     formato: 2,
     area,
@@ -95,7 +114,7 @@ export function compactarPorArea(
     inalterado: false,
     colunas_da_lista: ["lista_id", ...COLUNAS_DA_LISTA],
     listas,
-    colunas: COLUNAS,
+    colunas: TODAS_AS_COLUNAS,
     dicionarios,
     linhas,
     total: linhas.length,

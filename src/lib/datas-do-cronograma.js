@@ -12,9 +12,13 @@
 export const ANO_MINIMO = 2015;
 export const ANO_MAXIMO = 2100;
 
+/* "AAAA-MM-DD" com o ano entre os limites. O formato inteiro conta: um ano de
+   cinco dígitos ("20206-09-14") passava como 2020 pelos 4 primeiros. */
 export function dataPlausivel(chave) {
-  const ano = Number(String(chave ?? "").slice(0, 4));
-  return Number.isInteger(ano) && ano >= ANO_MINIMO && ano <= ANO_MAXIMO;
+  const texto = String(chave ?? "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(texto)) return false;
+  const ano = Number(texto.slice(0, 4));
+  return ano >= ANO_MINIMO && ano <= ANO_MAXIMO;
 }
 
 /** A etapa tem início e fim possíveis, e o fim não vem antes do início? */
@@ -29,6 +33,11 @@ export function etapaComDatasValidas(etapa) {
   começar; o fim, se já está em andamento. Um prazo aberto desde agosto que
   termina amanhã é "amanhã", não "agosto".
 */
+/**
+ * @param {{ data_inicio: string, data_fim: string }} etapa
+ * @param {string} hoje
+ * @returns {string}
+ */
 export function proximaDataDaEtapa(etapa, hoje) {
   return etapa.data_inicio >= hoje ? etapa.data_inicio : etapa.data_fim;
 }
@@ -36,6 +45,11 @@ export function proximaDataDaEtapa(etapa, hoje) {
 /**
  * Etapas ainda não encerradas, da mais próxima para a mais distante.
  * Etapas com data impossível ficam de fora: não há como dizer quando vêm.
+ * @template {{ data_inicio: string, data_fim: string, ordem?: number }} T
+ * @param {readonly T[]} etapas
+ * @param {string} hoje
+ * @param {number} [limite]
+ * @returns {T[]}
  */
 export function proximasEtapas(etapas, hoje, limite = Infinity) {
   return etapas
@@ -51,7 +65,10 @@ export function proximasEtapas(etapas, hoje, limite = Infinity) {
     .map(({ etapa }) => etapa);
 }
 
-/** Editais com pelo menos uma etapa de data impossível, para quem vai corrigir. */
+/** Editais com pelo menos uma etapa de data impossível, para quem vai corrigir.
+ * @param {readonly { edital: string, unidade: string, data_inicio: string, data_fim: string }[]} etapas
+ * @returns {{ edital: string, etapasComProblema: number }[]}
+ */
 export function editaisComDatasARevisar(etapas) {
   const porEdital = new Map();
   for (const etapa of etapas) {

@@ -2,41 +2,15 @@
    Mantem a arquitetura atual e estabiliza o mapa Leaflet sem reescrever o app legado. */
 
 .visual-polish-ready .card,
-.visual-polish-ready .filter-card,
 .visual-polish-ready .table-card {
-  border-color: rgba(0, 59, 112, 0.12);
-  box-shadow: 0 10px 28px rgba(15, 35, 60, 0.07);
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Os KPIs e a grade de baixo da Visão geral são de health-reference-kpis.css e app.css. */
 
-.executive-mini-chart {
-  display: none !important;
-}
-
-.visual-polish-ready .map-card {
-  min-height: clamp(430px, 50vh, 590px) !important;
-  overflow: hidden;
-  background: #b7dce7;
-  contain: layout paint;
-}
-
-.visual-polish-ready #map {
-  width: 100%;
-  height: clamp(430px, 50vh, 590px) !important;
-  min-height: 430px !important;
-  background: #b7dce7;
-}
-
-.visual-polish-ready #map .leaflet-container,
 .visual-polish-ready .leaflet-container {
   background: #b7dce7;
-}
-
-.visual-polish-ready #map .leaflet-pane,
-.visual-polish-ready #map .leaflet-map-pane,
-.visual-polish-ready #map .leaflet-tile-pane {
-  will-change: transform;
 }
 
 .visual-polish-ready .leaflet-control-container .leaflet-top.leaflet-right {
@@ -49,13 +23,6 @@
   left: 10px;
 }
 
-.visual-polish-ready #mapLegendBox {
-  max-width: min(230px, calc(100vw - 110px));
-  border-radius: 10px !important;
-  box-shadow: 0 8px 22px rgba(15, 35, 60, 0.14) !important;
-  font-size: 11px !important;
-}
-
 .visual-polish-ready .leaflet-control-attribution {
   font-size: 10px;
   line-height: 1.2;
@@ -64,150 +31,6 @@
   text-align: right;
 }
 
-.visual-polish-ready .lower-grid .card {
-  min-height: 245px;
-}
-
 .visual-polish-ready .table-card {
   overflow: clip;
-}
-
-.visual-polish-ready #tableSearch {
-  min-height: 42px;
-  border-radius: 12px;
-  background: #fff;
-}
-
-.visual-polish-ready #monitorRows tr:hover td {
-  background: #f5fbff;
-}
-
-.visual-polish-ready .risk-list > * {
-  border-radius: 12px;
-}
-
-.access-admin-section {
-  display: grid;
-  gap: 12px;
-  padding: 14px 0;
-  border-top: 1px solid rgba(0, 59, 112, 0.12);
-}
-
-.access-admin-section:first-child {
-  border-top: 0;
-  padding-top: 0;
-}
-
-.section-title-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.section-title-row h4 {
-  margin: 0;
-  font-size: 14px;
-  color: var(--color-text-primary);
-}
-
-.section-title-row p {
-  margin: 3px 0 0;
-  font-size: 12px;
-  color: #60758f;
-}
-
-.access-user-summary {
-  display: grid;
-  gap: 12px;
-}
-
-.permission-chip {
-  display: inline-flex;
-  align-items: center;
-  min-height: 26px;
-  padding: 0 9px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  border: 1px solid rgba(96, 117, 143, 0.24);
-  color: #60758f;
-  background: #f6f9fc;
-}
-
-.permission-chip.on {
-  color: #0b6f45;
-  background: rgba(11, 143, 88, 0.1);
-  border-color: rgba(11, 143, 88, 0.2);
-}
-
-.permission-chip.off {
-  opacity: 0.66;
-}
-
-.panel-check.muted {
-  opacity: 0.55;
-}
-
-.access-admin-actions .btn.outline {
-  background: #fff;
-  color: var(--color-blue-800);
-  border: 1px solid rgba(0, 59, 112, 0.22);
-}
-
-#loginEmail,
-.password-wrap,
-#loginBtn {
-  display: none !important;
-}
-
-#googleLoginBtn {
-  display: flex !important;
-  min-height: 50px;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 900;
-}
-
-body.access-request-mode #googleLoginBtn {
-  display: none !important;
-}
-
-#googleLoginBtn + #accessRequestCard::before {
-  content: "Use sua conta Google corporativa. Acesso liberado somente após aprovação do perfil.";
-  display: block;
-  margin: 0 0 12px;
-  color: #60758f;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.35;
-  text-align: center;
-}
-
-body.access-request-mode #googleLoginBtn + #accessRequestCard::before {
-  display: none;
-}
-
-.visual-polish-ready .status-pill {
-  box-shadow: 0 6px 18px rgba(15, 35, 60, 0.08);
-}
-
-@media (max-width: 900px) {
-  .visual-polish-ready .map-card,
-  .visual-polish-ready #map {
-    height: 420px !important;
-    min-height: 420px !important;
-  }
-}
-
-@media (max-width: 560px) {
-  .visual-polish-ready .map-card,
-  .visual-polish-ready #map {
-    height: 360px !important;
-    min-height: 360px !important;
-  }
-
-  .visual-polish-ready #mapLegendBox {
-    max-width: calc(100vw - 92px);
-  }
 }

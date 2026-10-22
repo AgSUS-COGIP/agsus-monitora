@@ -1,20 +1,24 @@
 import { readFileSync } from "node:fs";
+import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it } from "vitest";
-import { BRASIL_BOUNDS, boundsDoGeoJson } from "../src/lib/brasil-bounds.js";
+import {
+  CHAVES_DAS_SECOES,
+  linhasDasSecoes,
+  normalizarValoresCarregados,
+} from "../src/lib/publicacao-de-configuracoes.js";
+import { LOGO_PADRAO_DA_BARRA } from "../src/lib/marca-da-barra-lateral.js";
 
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
-const governance = readFileSync("src/modules/config-governance.js", "utf8");
+const app = fonteDoApp();
+const governance = readFileSync("src/modulos/configuracoes/estado.js", "utf8");
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
 const lifecycle = readFileSync("src/lib/session-lifecycle.js", "utf8");
-const html = readFileSync("index.html", "utf8");
 // A barra lateral é React: o <img id="sideLogo"> nasce no componente da marca.
 const barraLateral = readFileSync(
-  "src/componentes/barra-lateral/barra-lateral.jsx",
+  "src/componentes/barra-lateral/barra-lateral.tsx",
   "utf8",
 );
 const tuning = readFileSync("src/styles/post157-interface-tuning.css", "utf8");
-const workspace = readFileSync("src/styles/health-map-workspace.css", "utf8");
 
 const semComentarios = (fonte) =>
   fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
@@ -22,46 +26,47 @@ const semComentarios = (fonte) =>
 /*
   1 — A cor da barra lateral não persistia.
 
-  O botão Salvar (e o Ctrl+S) publica pelo módulo de governança, que chama
-  `reviewAndPublish` direto — o `saveAdminSettings` do legado, que nesse fluxo
+  O botão Salvar (e o Ctrl+S) publica pelo estado de Configurações
+  (src/modulos/configuracoes/estado.js), que chama `revisar` direto — o `saveAdminSettings` do legado, que nesse fluxo
   nunca rodava, saiu. As chaves da barra lateral tinham sido acrescentadas só
-  a ele: `collectConfigRows()` não as via, `buildChanges()` não achava
+  a ele: a coleta das linhas não as via, `buildChanges()` não achava
   diferença e mudar apenas a cor terminava em "Nada para publicar".
 */
 describe("as chaves da barra lateral chegam ao caminho que realmente salva", () => {
   it("o fluxo de governança é quem publica", () => {
     const codigo = semComentarios(governance);
     expect(codigo).not.toMatch(/window.saveAdminSettingss*=/);
-    expect(codigo).toContain("void reviewAndPublish()");
+    expect(codigo).toContain("void revisar()");
     expect(semComentarios(app)).not.toContain("function saveAdminSettings");
   });
 
-  it("collectConfigRows inclui as linhas da barra lateral", () => {
-    const codigo = semComentarios(governance);
-    expect(codigo).toContain(
-      'import { linhasDeConfiguracaoDaSidebar } from "./sidebar-branding.js"',
+  it("as linhas da publicação incluem as da barra lateral", () => {
+    const fn = semComentarios(governance).slice(
+      semComentarios(governance).indexOf("const linhasDaPublicacao"),
+      semComentarios(governance).indexOf("async function revisar"),
     );
-    const fn = codigo.slice(
-      codigo.indexOf("function collectConfigRows"),
-      codigo.indexOf("function currentPanels"),
-    );
-    expect(fn).toContain("...linhasDeConfiguracaoDaSidebar()");
-  });
-
-  it("as duas chaves saem de uma função da barra lateral", () => {
-    expect(sidebar).toContain("chave: KEY_LOGO");
-    expect(sidebar).toContain("chave: KEY_COLOR");
+    expect(fn).toContain("linhasDasSecoes(valoresAtuais())");
+    expect(CHAVES_DAS_SECOES).toContain("ui_sidebar_logo_url");
+    expect(CHAVES_DAS_SECOES).toContain("ui_sidebar_background_color");
   });
 
   /*
-    Sem a guarda, um salvamento feito com a secção da barra lateral ausente do
-    DOM gravaria os valores padrão por cima de uma personalização existente.
+    A guarda de antes (sem os campos no DOM, nenhuma linha) existia para um
+    salvamento não gravar os valores padrão por cima de uma personalização.
+    Agora os valores vêm do que o banco devolveu: a personalização volta
+    intacta na publicação.
   */
-  it("não emite linhas quando os campos não estão no DOM", () => {
-    const fn = sidebar.slice(
-      sidebar.indexOf("export function linhasDeConfiguracaoDaSidebar"),
+  it("publicar outra coisa não troca a personalização da barra pelo padrão", () => {
+    const linhas = new Map(
+      linhasDasSecoes(
+        normalizarValoresCarregados({
+          ui_sidebar_logo_url: "https://cdn.test/logo.png",
+          ui_sidebar_background_color: "#123456",
+        }),
+      ).map((linha) => [linha.chave, linha.valor]),
     );
-    expect(fn).toContain("if (!logoInput && !colorInput) return [];");
+    expect(linhas.get("ui_sidebar_logo_url")).toBe("https://cdn.test/logo.png");
+    expect(linhas.get("ui_sidebar_background_color")).toBe("#123456");
   });
 });
 
@@ -69,7 +74,7 @@ describe("as chaves da barra lateral chegam ao caminho que realmente salva", () 
   2 — A logo sumia no shell.
 
   A apresentação dependia de `.side-logo-wrap { background-image: var(...) }`,
-  que `system-ui-fixes.css` anula com `background: transparent !important` — o
+  que o antigo `system-ui-fixes.css` anulava com `background: transparent !important` — o
   atalho `background` zera `background-image` e o `!important` vence a regra
   normal. Com o `<img>` em `opacity: 0`, não sobrava nada visível.
 */
@@ -88,7 +93,7 @@ describe("a logo da barra lateral é o <img> real", () => {
   it("sidebar-branding define o src diretamente", () => {
     const fn = sidebar.slice(
       sidebar.indexOf("function aplicarLogoNaBarraLateral"),
-      sidebar.indexOf("function errorMessage"),
+      sidebar.indexOf("export function aplicarMarcaDaBarraLateral"),
     );
     expect(fn).toContain('document.getElementById("sideLogo")');
     expect(fn).toContain('img.setAttribute("src", logo)');
@@ -97,10 +102,10 @@ describe("a logo da barra lateral é o <img> real", () => {
   it("o onerror devolve o padrão em vez de esconder", () => {
     const fn = sidebar.slice(
       sidebar.indexOf("function aplicarLogoNaBarraLateral"),
-      sidebar.indexOf("function errorMessage"),
+      sidebar.indexOf("export function aplicarMarcaDaBarraLateral"),
     );
     expect(fn).toContain("img.onerror");
-    expect(fn).toContain('img.setAttribute("src", DEFAULT_LOGO)');
+    expect(fn).toContain('img.setAttribute("src", LOGO_PADRAO_DA_BARRA)');
     expect(fn).not.toMatch(/display\s*=\s*["']none["']/);
   });
 
@@ -116,16 +121,17 @@ describe("a logo da barra lateral é o <img> real", () => {
       marca,
       barraLateral.indexOf(">", barraLateral.indexOf("/>", marca)),
     );
-    expect(tag).toContain('src="/assets/agsus-logo.webp"');
-    expect(tag).not.toContain("postimg.cc");
+    // O `src` vem de `usarLogoDaPrevia`: fora da prévia, a logo local padrão.
+    expect(LOGO_PADRAO_DA_BARRA).toBe("/assets/agsus-logo.webp");
+    expect(barraLateral).toMatch(
+      /logo === undefined\) return \{ src: LOGO_PADRAO_DA_BARRA \}/,
+    );
+    expect(barraLateral).not.toContain("postimg.cc");
     expect(tag).not.toMatch(/onerror/i);
   });
 
-  it("applyConfigToUi não sobrescreve mais a logo da barra lateral", () => {
-    const fn = app.slice(
-      app.indexOf("function applyConfigToUi"),
-      app.indexOf("function normalizeUnitName"),
-    );
+  it("a configuração do app não sobrescreve mais a logo da barra lateral", () => {
+    const fn = readFileSync("src/app/configuracao.js", "utf8");
     expect(fn).not.toContain('"sideLogo"');
   });
 });
@@ -134,37 +140,11 @@ describe("a logo da barra lateral é o <img> real", () => {
   3 — Área desperdiçada nos mapas.
 */
 describe("enquadramento do Brasil medido no contorno real", () => {
-  it("a constante bate com os vértices de BR_OUTLINE", () => {
-    const inicio = app.indexOf("const BR_OUTLINE = {");
-    expect(inicio).toBeGreaterThan(-1);
-    const corpo = app.slice(inicio + "const BR_OUTLINE = ".length);
-
-    let profundidade = 0;
-    let fim = 0;
-    for (let i = 0; i < corpo.length; i += 1) {
-      if (corpo[i] === "{") profundidade += 1;
-      else if (corpo[i] === "}") {
-        profundidade -= 1;
-        if (profundidade === 0) {
-          fim = i + 1;
-          break;
-        }
-      }
-    }
-
-    const medido = boundsDoGeoJson(
-      new Function(`return ${corpo.slice(0, fim)}`)(),
-    );
-    expect(medido).not.toBeNull();
-    expect(medido.vertices).toBeGreaterThan(1000);
-
-    const arredondar = (v) => Number(v.toFixed(2));
-    expect(medido.bounds.map((par) => par.map(arredondar))).toEqual([
-      [...BRASIL_BOUNDS[0]],
-      [...BRASIL_BOUNDS[1]],
-    ]);
-  });
-
+  /*
+    A constante contra os vértices do contorno (a cópia única, em
+    src/lib/mapa-saude-indigena/contornos.js) é conferida em
+    tests/mapa-saude-indigena.test.js.
+  */
   it("o map-guard usa a medição, não um retângulo à mão", () => {
     expect(mapGuard).toContain(
       'import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../lib/brasil-bounds.js"',
@@ -207,61 +187,10 @@ describe("um dono só para o enquadramento inicial", () => {
   });
 });
 
-describe("um mapa principal de cada vez", () => {
-  /*
-    Antes o card de detalhe ficava sempre visível ao lado do nacional e, sem
-    seleção, mostrava **outro Brasil**. A `sem-selecao` só colapsava a coluna
-    de polos dentro dele: continuavam a ser dois mapas a dividir a largura.
-  */
-  it("o card de detalhe não existe até haver DSEI", () => {
-    const regra = workspace.slice(
-      workspace.indexOf(".health-map-workspace .health-map-pane--detail"),
-      workspace.indexOf(".health-map-pane {"),
-    );
-    expect(regra).toContain("display: none");
-    expect(regra).toContain(
-      ".health-map-workspace.com-dsei .health-map-pane--master",
-    );
-  });
-
-  it("a classe morta saiu do HTML e do JS", () => {
-    expect(html).toContain('class="health-map-detail-layout"');
-    expect(html).not.toContain("sem-selecao");
-    expect(
-      app.slice(
-        app.indexOf("function definirSelecaoDoMapaDetalhado"),
-        app.indexOf("function definirSelecaoDoMapaDetalhado") + 700,
-      ),
-    ).not.toContain('classList.toggle("sem-selecao"');
-  });
-
-  it("os dois caminhos de seleção avisam o layout", () => {
-    const render = app.slice(
-      app.indexOf("function renderDetailMap"),
-      app.indexOf("function renderDetailMap") + 900,
-    );
-    expect(render).toContain("definirSelecaoDoMapaDetalhado(true)");
-
-    const reset = app.slice(
-      app.indexOf("function resetDetailMap"),
-      app.indexOf("function scheduleMapResize"),
-    );
-    expect(reset).toContain("definirSelecaoDoMapaDetalhado(false)");
-  });
-
-  /*
-    O Leaflet guarda o tamanho que mediu por último. Sem remedir depois da troca
-    de classe, o mapa continuaria desenhado na largura antiga.
-  */
-  it("o mapa é remedido depois da mudança de largura", () => {
-    const fn = app.slice(
-      app.indexOf("function definirSelecaoDoMapaDetalhado"),
-      app.indexOf("function resetDetailMap"),
-    );
-    expect(fn).toContain("requestAnimationFrame");
-    expect(fn).toContain("invalidateSize");
-  });
-});
+/*
+  Um mapa principal de cada vez (o nacional ou o do DSEI) é do componente
+  React: tests/modulos/mapa-saude-indigena.test.js.
+*/
 
 /*
   5 — "Sessão: 01:00:00" anunciava um encerramento desligado desde 08/09/2026.

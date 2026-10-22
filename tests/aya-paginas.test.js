@@ -1,0 +1,213 @@
+import { describe, expect, it } from "vitest";
+import {
+  acaoDaAya,
+  blocosDoTexto,
+  caracteresRevelados,
+  duracaoDaRevelacao,
+  paginaDaAya,
+  SECOES_DA_AYA,
+  VIEWS_DA_AYA,
+} from "../src/lib/aya-paginas.js";
+import {
+  ABAS_DO_MENU,
+  AREAS_DO_SISTEMA,
+  nomeDaArea,
+} from "../src/lib/menu-lateral.ts";
+import { SECOES } from "../src/modulos/configuracoes/secoes.js";
+import { responderAya } from "../src/lib/busca-da-aya.js";
+import { VERBETES_AYA } from "../src/modules/aya-conhecimento-gerado.js";
+
+/*
+  A interface não tem texto explicativo: quem explica é a Aya. Estes testes
+  garantem que nenhuma página do menu nem seção de Configurações fica sem
+  verbete, e que nenhuma sugestão do painel cai no "não sei".
+*/
+
+const AREAS = AREAS_DO_SISTEMA.map((area) => area.id);
+
+/* A resposta, ou "" quando a Aya pede outra pergunta ou foge do tema. */
+function respostaDaBase(question, local = {}) {
+  const resultado = responderAya({ question, ...local });
+  return resultado.oferecerChamado ||
+    /foge do que eu sei/.test(resultado.answer)
+    ? ""
+    : resultado.answer;
+}
+
+describe("um verbete por página e por seção", () => {
+  it("a Aya conhece as mesmas páginas do menu, na mesma ordem", () => {
+    expect(VIEWS_DA_AYA).toEqual(ABAS_DO_MENU.map((aba) => aba.view));
+  });
+
+  it("a Aya conhece as mesmas seções de Configurações", () => {
+    expect(Object.keys(SECOES_DA_AYA)).toEqual(SECOES.map((s) => s.id));
+    for (const secao of SECOES)
+      expect(SECOES_DA_AYA[secao.id].nome).toBe(secao.rotulo);
+  });
+
+  it.each(ABAS_DO_MENU.map((aba) => [aba.rotulo]))(
+    "responde para que serve a página %s",
+    (rotulo) => {
+      const resposta = respostaDaBase(`Para que serve ${rotulo}?`);
+      expect(resposta).not.toBe("");
+      expect(resposta).toContain(rotulo);
+    },
+  );
+
+  it.each(SECOES.map((secao) => [secao.rotulo]))(
+    "responde para que serve a seção %s",
+    (rotulo) => {
+      const resposta = respostaDaBase(`Para que serve ${rotulo}?`);
+      expect(resposta).not.toBe("");
+      expect(resposta).toContain(rotulo);
+    },
+  );
+});
+
+describe("sugestões do painel", () => {
+  const locais = [
+    ...VIEWS_DA_AYA.flatMap((view) =>
+      AREAS.map((area) => ({ view, area, nomeDaArea: nomeDaArea(area) })),
+    ),
+    ...SECOES.map((secao) => ({ view: "config", secao: secao.id })),
+    { view: "config" },
+    { view: "panel:externo", titulo: "Painel" },
+  ];
+  const todas = locais.map((local) => paginaDaAya(local));
+
+  it("toda página tem de 2 a 5 sugestões", () => {
+    for (const pagina of todas) {
+      expect(pagina.sugestoes.length).toBeGreaterThanOrEqual(2);
+      expect(pagina.sugestoes.length).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it("toda sugestão tem resposta da base, na própria página", () => {
+    const semResposta = locais
+      .flatMap((local) =>
+        paginaDaAya(local).sugestoes.map((s) => ({ local, s })),
+      )
+      .filter(
+        ({ local, s }) =>
+          !respostaDaBase(s.pergunta, {
+            section: local.view,
+            title: local.titulo,
+            area: local.area,
+            secao: local.secao,
+          }),
+      )
+      .map(({ s }) => s.pergunta);
+    expect(semResposta).toEqual([]);
+  });
+
+  it("o rótulo do botão é curto e diferente da pergunta enviada", () => {
+    for (const s of todas.flatMap((pagina) => pagina.sugestoes)) {
+      expect(s.rotulo.length).toBeLessThanOrEqual(24);
+      expect(s.pergunta).not.toBe(s.rotulo);
+    }
+  });
+});
+
+describe("página e área atuais", () => {
+  it("põe a área no nome das páginas do menu", () => {
+    expect(
+      paginaDaAya({ view: "recursos", area: "sede", nomeDaArea: "SEDE" }).nome,
+    ).toBe("Painel de recursos · SEDE");
+  });
+
+  it("a Visão geral de cada área fala do mapa certo", () => {
+    const si = paginaDaAya({
+      view: "dashboard",
+      area: "saude-indigena",
+      nomeDaArea: "Saúde Indígena",
+    });
+    const projetos = paginaDaAya({
+      view: "dashboard",
+      area: "projetos",
+      nomeDaArea: "Projetos",
+    });
+    const sede = paginaDaAya({
+      view: "dashboard",
+      area: "sede",
+      nomeDaArea: "SEDE",
+    });
+    expect(si.intro).toContain("DSEIs");
+    expect(projetos.intro).toContain("projetos");
+    expect(projetos.intro).not.toContain("DSEI");
+    expect(sede.intro).not.toContain("mapa");
+    expect(sede.intro).not.toContain("Saúde Indígena");
+    expect(sede.nome).toBe("Visão geral · SEDE");
+  });
+
+  it("dá a seção de Configurações e a página genérica", () => {
+    expect(paginaDaAya({ view: "config", secao: "acessos" }).nome).toBe(
+      "Configurações › Acessos",
+    );
+    expect(paginaDaAya({ view: "panel:x", titulo: "Painel X" }).nome).toBe(
+      "Painel X",
+    );
+  });
+
+  it("o Painel de recursos explica os números; Analisar recursos, o fluxo", () => {
+    expect(paginaDaAya({ view: "recursos" }).intro).toBe(
+      "Posso explicar os indicadores, as pendências, os prazos e o fluxo do parecer jurídico.",
+    );
+    expect(paginaDaAya({ view: "analisar-recursos" }).intro).toBe(
+      "Posso explicar como registrar, enviar ao parecer, decidir, responder e ajustar a pontuação.",
+    );
+  });
+});
+
+describe("ações das respostas", () => {
+  it("só navega dentro do app", () => {
+    expect(acaoDaAya("recursos")).toMatchObject({
+      rotulo: "Abrir Painel de recursos",
+      view: "recursos",
+    });
+    expect(acaoDaAya("analisar-recursos")).toMatchObject({
+      rotulo: "Abrir Analisar recursos",
+      view: "analisar-recursos",
+    });
+    expect(acaoDaAya("config:acessos")).toMatchObject({
+      rotulo: "Ir para Configurações › Acessos",
+      view: "config",
+      secao: "acessos",
+    });
+    expect(acaoDaAya("https://exemplo.com")).toBeNull();
+  });
+
+  it("todo `abrir` dos verbetes é uma ação conhecida", () => {
+    for (const verbete of VERBETES_AYA.filter((v) => v.abrir))
+      expect(acaoDaAya(verbete.abrir)).not.toBeNull();
+  });
+
+  it("a resposta da base traz a ação do verbete", () => {
+    expect(responderAya({ question: "Como dar acesso a alguém?" }).acao).toBe(
+      "config:acessos",
+    );
+    expect(responderAya({ question: "oi" }).acao).toBeUndefined();
+  });
+});
+
+describe("texto da resposta", () => {
+  it("vira parágrafos e listas, sem HTML", () => {
+    expect(
+      blocosDoTexto("Primeiro.\ncontinua\n\n- um\n- dois\n\n1. a\n2) b"),
+    ).toEqual([
+      { tipo: "paragrafo", itens: ["Primeiro. continua"] },
+      { tipo: "lista", itens: ["um", "dois"] },
+      { tipo: "numerada", itens: ["a", "b"] },
+    ]);
+    expect(blocosDoTexto("<b>oi</b>")).toEqual([
+      { tipo: "paragrafo", itens: ["<b>oi</b>"] },
+    ]);
+  });
+
+  it("revela aos poucos, de 650 ms a 3,4 s", () => {
+    expect(duracaoDaRevelacao("")).toBe(0);
+    expect(duracaoDaRevelacao("abc")).toBe(650);
+    expect(duracaoDaRevelacao("x".repeat(1000))).toBe(3400);
+    expect(caracteresRevelados("abcdef", 0)).toBe(1);
+    expect(caracteresRevelados("abcdef", 10000)).toBe(6);
+  });
+});

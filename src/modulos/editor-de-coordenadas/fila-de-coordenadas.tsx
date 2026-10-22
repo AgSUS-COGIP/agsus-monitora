@@ -1,0 +1,166 @@
+import type { ReactNode } from "react";
+import type {
+  PontoDoEditor,
+  ItemDaFila,
+  NivelDeGravidade,
+  FiltroDeGravidade,
+} from "../../lib/tipos-do-editor-de-coordenadas.ts";
+import {
+  GRAVIDADES,
+  textoDePendentes,
+} from "../../lib/editor-de-coordenadas.ts";
+import { Aviso, Carregando, EstadoVazio, Selo } from "../../ui/index.js";
+
+/* Quantos itens a lista desenha de uma vez (a visão nacional tem milhares). */
+export const LIMITE_DA_FILA = 200;
+
+/*
+  A fila do editor de coordenadas: busca, "Só pendentes" (ligado por padrão),
+  a contagem de pendentes, o filtro por gravidade (Provável erro, Revisar,
+  Sem sugestão, Só confirmar, com a contagem de cada) e a lista — o provável
+  erro primeiro, cada pendente com o selo da gravidade e o resumo (motivo e
+  sugestão que serve de régua). Escolher um item é com o pai (centraliza o
+  mapa e abre o formulário). Serve aos dois mapas: o texto da busca, o rótulo
+  da lista e a linha de detalhe de cada item vêm de quem usa. Compacta para o
+  painel do modo de edição: busca e "Só pendentes" numa linha, a contagem e
+  os níveis na seguinte, e a lista enche o que sobra do painel.
+*/
+export function FilaDeCoordenadas<P extends PontoDoEditor>({
+  itens,
+  pendentes,
+  porGravidade = {},
+  gravidade = "",
+  busca,
+  soPendentes,
+  escolhido,
+  placeholder = "Nome ou município",
+  rotuloDaLista = "Pontos do mapa",
+  detalheDoItem = (item) => item.localidade || "",
+  carregando,
+  erro,
+  desabilitado,
+  aoBuscar,
+  aoAlternarPendentes,
+  aoFiltrarGravidade,
+  aoEscolher,
+}: {
+  itens: readonly ItemDaFila<P>[];
+  pendentes: number;
+  porGravidade?: Partial<Record<NivelDeGravidade, number>>;
+  gravidade?: FiltroDeGravidade;
+  busca: string;
+  soPendentes: boolean;
+  escolhido: string;
+  placeholder?: string;
+  rotuloDaLista?: string;
+  detalheDoItem?(item: P): ReactNode;
+  carregando?: boolean;
+  erro?: string;
+  desabilitado?: boolean;
+  aoBuscar(busca: string): void;
+  aoAlternarPendentes(ativo: boolean): void;
+  aoFiltrarGravidade?(nivel: FiltroDeGravidade): void;
+  aoEscolher(id: string): void;
+}) {
+  const mostrados = itens.slice(0, LIMITE_DA_FILA);
+  return (
+    <div className="mapa-si-coordenadas__fila">
+      <div className="mapa-si-coordenadas__filtro">
+        <input
+          type="search"
+          className="mapa-si-coordenadas__busca"
+          aria-label="Buscar ponto"
+          value={busca}
+          placeholder={placeholder}
+          disabled={desabilitado}
+          onChange={(e) => aoBuscar(e.target.value)}
+        />
+        <label className="mapa-si-coordenadas__caixa">
+          <input
+            type="checkbox"
+            checked={soPendentes}
+            disabled={desabilitado}
+            onChange={(e) => aoAlternarPendentes(e.target.checked)}
+          />
+          Só pendentes
+        </label>
+      </div>
+      <div className="mapa-si-coordenadas__niveis">
+        <b className="mapa-si-coordenadas__contagem" aria-live="polite">
+          {carregando ? "…" : textoDePendentes(pendentes)}
+        </b>
+        {soPendentes && pendentes ? (
+          <div
+            className="mapa-si-coordenadas__grupo"
+            role="group"
+            aria-label="Filtrar por gravidade"
+          >
+            {(Object.keys(GRAVIDADES) as NivelDeGravidade[]).map((nivel) => (
+              <button
+                key={nivel}
+                type="button"
+                className="mapa-si-coordenadas__nivel"
+                data-nivel={nivel}
+                aria-pressed={gravidade === nivel}
+                disabled={desabilitado || !porGravidade[nivel]}
+                onClick={() =>
+                  aoFiltrarGravidade?.(gravidade === nivel ? "" : nivel)
+                }
+              >
+                {GRAVIDADES[nivel].rotulo} <b>{porGravidade[nivel] || 0}</b>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      {erro ? (
+        <Aviso tom="danger" papel="alert">
+          {erro}
+        </Aviso>
+      ) : null}
+      {carregando && soPendentes ? (
+        <Carregando />
+      ) : mostrados.length ? (
+        <ul className="mapa-si-coordenadas__lista" aria-label={rotuloDaLista}>
+          {mostrados.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                className="mapa-si-coordenadas__item"
+                aria-pressed={item.id === escolhido}
+                disabled={desabilitado}
+                onClick={() => aoEscolher(item.id)}
+              >
+                <span className="mapa-si-coordenadas__nome">{item.nome}</span>
+                <small>{detalheDoItem(item)}</small>
+                {item.gravidade ? (
+                  <>
+                    <Selo tom={GRAVIDADES[item.gravidade.nivel].tom}>
+                      {GRAVIDADES[item.gravidade.nivel].rotulo}
+                    </Selo>
+                    <small className="mapa-si-coordenadas__resumo">
+                      {item.gravidade.resumo}
+                    </small>
+                  </>
+                ) : item.pendente ? (
+                  <Selo tom="pendente">Pendente</Selo>
+                ) : item.pendencia ? (
+                  <Selo tom="aprovado">Conferido</Selo>
+                ) : null}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <EstadoVazio>
+          {soPendentes && !busca ? "Nenhum ponto pendente." : "Nenhum ponto."}
+        </EstadoVazio>
+      )}
+      {itens.length > mostrados.length ? (
+        <small className="mapa-si-coordenadas__mais">
+          {mostrados.length} de {itens.length} — refine a busca.
+        </small>
+      ) : null}
+    </div>
+  );
+}

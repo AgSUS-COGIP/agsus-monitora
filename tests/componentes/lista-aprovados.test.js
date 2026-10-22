@@ -1,6 +1,6 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarListaAprovados } from "../../src/componentes/lista-aprovados/lista-aprovados.jsx";
+import { montarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
 import { PLANILHAS } from "../../src/lib/planilhas.js";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 import {
@@ -11,7 +11,7 @@ import {
   definirAreaAtual,
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 
 /*
   A tela só mostra os editais da área atual (a padrão é a Saúde Indígena); os
@@ -235,23 +235,72 @@ const opcoesDoFiltro = (filtro) =>
       .querySelectorAll(".multi-select-option"),
   ].map((opcao) => opcao.textContent);
 
+describe("topo e visões", () => {
+  it("as duas visões são abas (tablist) com o visual do controle segmentado, no topo", async () => {
+    await montar();
+    const visoes = document.querySelector(
+      "#page-approved .ui-topo .ui-segmentado[role='tablist']",
+    );
+    expect(visoes).not.toBeNull();
+    const [aprovados, convocacao] = visoes.querySelectorAll("[role='tab']");
+    expect(aprovados.id).toBe("approvedTabAprovados");
+    expect(aprovados.getAttribute("aria-selected")).toBe("true");
+    expect(aprovados.classList.contains("is-ativo")).toBe(true);
+    expect(aprovados.getAttribute("aria-controls")).toBe(
+      "approvedPanelAprovados",
+    );
+    await clicar(convocacao);
+    expect(convocacao.getAttribute("aria-selected")).toBe("true");
+    expect($("approvedPanelConvocacao").classList.contains("hidden")).toBe(
+      false,
+    );
+    expect($("approvedPanelAprovados").classList.contains("hidden")).toBe(true);
+    expect($("approvedHeadActions").classList.contains("hidden")).toBe(true);
+    expect(
+      document.querySelector("#page-approved [data-status-da-carga]")
+        .textContent,
+    ).toMatch(/^Atualizado em /);
+  });
+
+  it("KPIs no Kpi compacto de src/ui, nas duas abas", async () => {
+    await montar();
+    for (const painel of [
+      "approvedPanelAprovados",
+      "approvedPanelConvocacao",
+    ]) {
+      const grade = $(painel).querySelector(".approved-kpis.ui-kpis");
+      expect(grade.querySelectorAll(".ui-kpi").length).toBeGreaterThanOrEqual(
+        5,
+      );
+    }
+    expect($("approvedKpiTotal").classList.contains("ui-kpi-valor")).toBe(true);
+  });
+});
+
 describe("carregamento", () => {
   it("antes do dado chegar, mostra skeleton — e não zero", async () => {
     await montar({ carregar: false });
     expect($("approvedKpiTotal").textContent).toBe("");
-    expect($("approvedKpiTotal").querySelector(".esqueleto")).not.toBeNull();
+    expect($("approvedKpiTotal").classList.contains("ui-esqueleto")).toBe(true);
+    expect($("convocacaoKpiVagas").classList.contains("ui-esqueleto")).toBe(
+      true,
+    );
     expect($("approvedCount").textContent).toBe("Carregando…");
     expect(
-      document.querySelectorAll("#approvedRows tr.esqueleto-da-tabela"),
+      document.querySelector("#page-approved [data-status-da-carga]")
+        .textContent,
+    ).toBe("Carregando dados...");
+    expect(
+      document.querySelectorAll("#approvedRows tr.ui-esqueleto-tr"),
     ).toHaveLength(8);
     expect(
-      $("convocacaoRows").querySelector("tr.esqueleto-da-tabela"),
+      $("convocacaoRows").querySelector("tr.ui-esqueleto-tr"),
     ).not.toBeNull();
   });
 
   it("carregar não cobre a tela: não há tela de carregamento a chamar", async () => {
     const fonte = await import("node:fs").then(({ readFileSync }) =>
-      readFileSync("src/componentes/lista-aprovados/estado.js", "utf8"),
+      readFileSync("src/modulos/aprovados/estado.ts", "utf8"),
     );
     expect(fonte).not.toContain("loader");
   });
@@ -260,18 +309,17 @@ describe("carregamento", () => {
     const erros = { listar_listas_aprovados: "sem rede" };
     const supabase = supabaseFalso({ erros });
     await montar({ supabase });
-    expect($("approvedRows").textContent).toContain(
-      "Não foi possível carregar a lista de aprovados",
+    expect($("approvedErro").textContent).toContain(
+      "Não foi possível carregar a lista de aprovados: sem rede",
     );
-    expect($("approvedRows").textContent).toContain("sem rede");
-    expect($("approvedRows").querySelector(".esqueleto-da-tabela")).toBeNull();
+    expect($("approvedRows").textContent).toBe("Sem dados.");
+    expect($("approvedRows").querySelector(".ui-esqueleto-tr")).toBeNull();
+    expect($("convocacaoRows").textContent).toBe("Sem dados.");
     expect($("approvedCount").textContent).toBe("Sem dados");
 
     delete erros.listar_listas_aprovados;
     await clicar(
-      [...$("approvedRows").querySelectorAll("button")].find(
-        (botao) => botao.textContent.trim() === "Tentar de novo",
-      ),
+      $("approvedErro").querySelector('[data-acao="tentar-novamente"]'),
     );
     await esperar(() => new Promise((resolver) => setTimeout(resolver, 0)));
     expect(nomes()).toContain("Ana Ribeiro");
@@ -348,6 +396,18 @@ describe("carregamento", () => {
 });
 
 describe("filtros e paginação", () => {
+  it("abre filtros recolhidos, permite filtrar e limpa todo o recorte", async () => {
+    await montar();
+    const painel = $("approvedFiltrosTitulo").closest(".ui-filtros");
+    expect(painel.classList.contains("approved-filters")).toBe(true);
+    expect(painel.querySelector(".ui-filtros-corpo").hidden).toBe(true);
+    await clicar(painel.querySelector('[data-acao="recolher-filtros"]'));
+    expect(painel.querySelector(".ui-filtros-corpo").hidden).toBe(false);
+    await clicar(opcaoDoFiltro("approvedFilterCargo", "Médico"));
+    expect(nomes()).toEqual(["Bruno Lima"]);
+    await clicar(painel.querySelector('[data-acao="limpar-filtros"]'));
+    expect(nomes()).toHaveLength(4);
+  });
   it("escolher um edital encolhe os cargos e descarta o cargo que sumiu", async () => {
     await montar();
     expect(opcoesDoFiltro("approvedFilterCargo")).toEqual([
@@ -893,6 +953,9 @@ describe("sub judice", () => {
       p_cargo: "Médico",
       p_nome: "Elza Martins",
       p_nota: 87.5,
+      p_modalidade: null,
+      p_processo: null,
+      p_observacao: null,
     });
     expect($("subJudiceModal")).toBeNull();
   });
@@ -937,6 +1000,135 @@ describe("sub judice", () => {
   });
 });
 
+describe("sub judice: candidato já aprovado (decisão judicial)", () => {
+  const ADMIN = { perfil: "admin" };
+  const martelo = (nome) =>
+    linhaDe(nome)?.querySelector('[data-approved-action="alteracao-judicial"]');
+  /* Tirou 33, a Justiça deu 40: o banco já guardou o resultado publicado. */
+  const ALTERADA = () =>
+    candidato({
+      candidato_id: "elza",
+      nome: "Elza Martins",
+      nota: 40,
+      sub_judice: true,
+      alterado_judicialmente: true,
+      nota_original: 33,
+      modalidade_original: "Ampla concorrência",
+      classificacao_original: 7,
+    });
+
+  it("o editor só vê a aba de novo candidato e nenhum martelo", async () => {
+    await montar();
+    expect(martelo("Ana Ribeiro")).toBeNull();
+    await clicar($("approvedAddSubJudiceBtn"));
+    expect($("subJudiceTabAprovado")).toBeNull();
+    expect($("subJudicePainelAprovado")).toBeNull();
+    expect($("subJudiceSave")).not.toBeNull();
+  });
+
+  it("o admin escolhe edital, cargo e candidato e registra a nota nova", async () => {
+    const { supabase } = await montar({ perfil: ADMIN });
+    await clicar($("approvedAddSubJudiceBtn"));
+    await clicar($("subJudiceTabAprovado"));
+    expect($("subJudiceTabAprovado").getAttribute("aria-selected")).toBe(
+      "true",
+    );
+    await escolher($("subJudiceAprovadoCargo"), "Médico");
+    expect(
+      [...$("subJudiceAprovadoCandidato").options].map((opcao) => opcao.value),
+    ).toEqual(["", "bruno"]);
+    await escolher($("subJudiceAprovadoCandidato"), "bruno");
+    // Começa com a nota e a modalidade atuais.
+    expect($("alteracaoJudicialNota").value).toBe("90,5");
+    expect($("alteracaoJudicialModalidade").value).toBe("Pessoa negra");
+    await digitar($("alteracaoJudicialNota"), "95");
+    await digitar($("alteracaoJudicialProcesso"), "1000000-00.2026.4.01.3400");
+
+    supabase.rpc.mockClear();
+    await clicar($("alteracaoJudicialSalvar"));
+    expect(supabase.rpc).toHaveBeenCalledWith("alterar_candidato_sub_judice", {
+      p_candidato_id: "bruno",
+      p_nota: 95,
+      p_modalidade: null,
+      p_processo: "1000000-00.2026.4.01.3400",
+      p_observacao: null,
+    });
+    expect($("subJudiceModal")).toBeNull();
+  });
+
+  it("muda só a modalidade, sem mandar a nota", async () => {
+    const { supabase } = await montar({ perfil: ADMIN });
+    await clicar(martelo("Ana Ribeiro"));
+    await escolher($("alteracaoJudicialModalidade"), "Pessoa negra");
+    supabase.rpc.mockClear();
+    await clicar($("alteracaoJudicialSalvar"));
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "alterar_candidato_sub_judice",
+      expect.objectContaining({
+        p_candidato_id: "ana",
+        p_nota: null,
+        p_modalidade: "Pessoa negra",
+      }),
+    );
+  });
+
+  it("o martelo da linha abre na aba do candidato já aprovado, com ele escolhido", async () => {
+    await montar({ perfil: ADMIN });
+    await clicar(martelo("Ana Ribeiro"));
+    expect($("subJudiceTabAprovado").getAttribute("aria-selected")).toBe(
+      "true",
+    );
+    expect($("subJudicePainelNovo").classList.contains("hidden")).toBe(true);
+    expect($("subJudiceAprovadoCandidato").value).toBe("ana");
+  });
+
+  it("sem mudar nota nem modalidade, não sai para o banco", async () => {
+    const { supabase, toast } = await montar({ perfil: ADMIN });
+    await clicar(martelo("Ana Ribeiro"));
+    supabase.rpc.mockClear();
+    await clicar($("alteracaoJudicialSalvar"));
+    expect(supabase.rpc).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(
+      "Informe uma nota ou modalidade diferente da atual.",
+      "warn",
+    );
+  });
+
+  it("o alterado mostra 33 → 40 e não tem o botão de remover", async () => {
+    await montar({
+      supabase: supabaseFalso({ candidatos: [...CANDIDATOS(), ALTERADA()] }),
+    });
+    const linha = linhaDe("Elza Martins");
+    expect(linha.querySelector(".approved-de-para s").textContent).toBe("33");
+    expect(linha.querySelector(".approved-de-para strong").textContent).toBe(
+      "40",
+    );
+    expect(
+      linha.querySelector('[data-approved-action="remove-subjudice"]'),
+    ).toBeNull();
+  });
+
+  it("o admin desfaz a alteração, com confirmação", async () => {
+    const confirmar = vi.fn(() => true);
+    const { supabase } = await montar({
+      perfil: ADMIN,
+      confirmar,
+      supabase: supabaseFalso({ candidatos: [...CANDIDATOS(), ALTERADA()] }),
+    });
+    await clicar(martelo("Elza Martins"));
+    expect(
+      document.querySelector(".approved-decisao-original").textContent,
+    ).toContain("33");
+    supabase.rpc.mockClear();
+    await clicar($("alteracaoJudicialDesfazer"));
+    expect(confirmar.mock.calls[0][0]).toContain("Elza Martins");
+    expect(supabase.rpc).toHaveBeenCalledWith("desfazer_alteracao_sub_judice", {
+      p_candidato_id: "elza",
+      p_observacao: null,
+    });
+  });
+});
+
 describe("modal de listas do edital", () => {
   const abrir = (editalId = "10") =>
     esperar(() =>
@@ -971,13 +1163,14 @@ describe("modal de listas do edital", () => {
     expect($("approvedImportSubmit")).toBeNull();
     expect($("approvedImportRemove")).toBeNull();
     expect($("approvedImportPermissionNote").textContent).toContain(
-      "O perfil edital_gestor pode ativar/inativar",
+      "Só admin substitui ou remove o XLSX.",
     );
   });
 
   it("o admin pode substituir e remover", async () => {
     await montar({ perfil: { perfil: "admin" } });
     await abrir();
+    expect($("approvedImportPermissionNote")).toBeNull();
     expect($("approvedImportSubmit").textContent).toContain("Substituir XLSX");
     expect($("approvedImportRemove")).not.toBeNull();
     expect(
@@ -1123,6 +1316,145 @@ describe("modal de listas do edital", () => {
     await abrir();
     expect($("approvedImportPanelArquivo").classList.contains("hidden")).toBe(
       false,
+    );
+  });
+});
+
+describe("lista de aprovados publicada da Classificação", () => {
+  const DA_CLASSIFICACAO = {
+    ...LISTA_ATIVA,
+    origem: "CLASSIFICACAO",
+    lista_classificacao_id: "lc1",
+    arquivo_nome: "Classificação — resultado final (regra v2)",
+    arquivo_path: "",
+    importado_em: "2026-10-05T15:00:00Z",
+  };
+  const SITUACAO = {
+    edital_id: "10",
+    pode_publicar: true,
+    tem_analises: true,
+    resultado_final: {
+      id: "lc2",
+      gerada_em: "2026-10-05T18:00:00Z",
+      versao_regra: 2,
+      pendencias: 0,
+    },
+    vigente: { lista_id: "L10", origem: "CLASSIFICACAO" },
+    publicacoes: [
+      {
+        id: "p1",
+        origem: "CLASSIFICACAO",
+        em: "2026-10-05T15:00:00Z",
+        por: "Gestora",
+        versao_regra: 2,
+        candidatos: 3,
+        entram: 1,
+        saem: 1,
+        mudam: 2,
+        pendencias: [{ nome: "Fulano Fora" }],
+      },
+    ],
+  };
+  function comSituacao(supabase, situacao = SITUACAO) {
+    const original = supabase.rpc.getMockImplementation();
+    supabase.rpc.mockImplementation((nome, argumentos) =>
+      nome === "obter_publicacao_lista_aprovados"
+        ? Promise.resolve({ data: situacao, error: null })
+        : original(nome, argumentos),
+    );
+    return supabase;
+  }
+  const abrir = (editalId = "10") =>
+    esperar(() =>
+      controlador.openImportModal(editalId, "03/2025 · DSEI Manaus"),
+    );
+
+  it("mostra a origem; trocar pela planilha pede motivo e o manda ao banco", async () => {
+    const supabase = comSituacao(
+      supabaseFalso({ listas: [DA_CLASSIFICACAO, LISTA_INATIVA] }),
+    );
+    const { toast } = await montar({ perfil: { perfil: "admin" }, supabase });
+    await abrir();
+    expect($("approvedImportCurrentState").textContent).toContain(
+      "Publicada da Classificação em 05/10",
+    );
+    expect($("approvedImportDownloadCurrent")).toBeNull();
+    Object.defineProperty($("approvedImportFile"), "files", {
+      value: [new File(["x"], "troca.xlsx")],
+    });
+    supabase.rpc.mockClear();
+    await clicar($("approvedImportSubmit"));
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining("informe o motivo"),
+      "warn",
+    );
+    expect(supabase.rpc).not.toHaveBeenCalledWith(
+      "importar_lista_aprovados",
+      expect.anything(),
+    );
+    await digitar($("approvedImportMotivo"), "Edital sem análise no sistema");
+    await clicar($("approvedImportSubmit"));
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "importar_lista_aprovados",
+      expect.objectContaining({
+        p_substituir: true,
+        p_motivo: "Edital sem análise no sistema",
+      }),
+    );
+  });
+
+  it("edital com resultado final oferece publicar da Classificação e mostra o histórico", async () => {
+    const supabase = comSituacao(supabaseFalso());
+    await montar({ perfil: { perfil: "admin" }, supabase });
+    window.navigate = vi.fn();
+    await abrir();
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "obter_publicacao_lista_aprovados",
+      {
+        p_edital: "10",
+        p_com_candidatos: false,
+      },
+    );
+    const botao = document.querySelector("[data-acao='ir-para-classificacao']");
+    expect(botao.textContent).toContain("Publicar da Classificação");
+    expect(
+      document.querySelector(".approved-import-historico").textContent,
+    ).toContain("Fulano Fora");
+    await clicar(botao);
+    expect(window.navigate).toHaveBeenCalledWith("classificacao");
+    expect($("approvedImportModal")).toBeNull();
+    delete window.navigate;
+  });
+
+  it("publicações malformadas não quebram o modal e permitem nova tentativa", async () => {
+    const supabase = comSituacao(supabaseFalso(), {
+      ...SITUACAO,
+      publicacoes: [{ id: "p1" }, { id: "p2", pendencias: {} }],
+    });
+    await montar({ perfil: { perfil: "admin" }, supabase });
+    await abrir();
+    expect($("approvedImportModal")).not.toBeNull();
+    expect(document.querySelector(".approved-import-historico")).toBeNull();
+    const repetir = document.querySelector(
+      '[data-acao="recarregar-publicacoes"]',
+    );
+    expect(repetir).not.toBeNull();
+    comSituacao(supabase);
+    await clicar(repetir);
+    expect(
+      document.querySelector('[data-acao="recarregar-publicacoes"]'),
+    ).toBeNull();
+    expect(
+      document.querySelector(".approved-import-historico").textContent,
+    ).toContain("Fulano Fora");
+  });
+
+  it("a aba de aprovados diz a origem das listas", async () => {
+    await montar({
+      supabase: supabaseFalso({ listas: [DA_CLASSIFICACAO, LISTA_INATIVA] }),
+    });
+    expect(document.querySelector("[data-origem-das-listas]").textContent).toBe(
+      "Listas: 1 publicada da Classificação · 1 manual (planilha)",
     );
   });
 });

@@ -1,107 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { initMarcosDoAno } from "../src/modules/marcos-do-ano.js";
 import {
-  publicarLinhasDoMonitoramento,
-  redefinirDadosDoMonitoramento,
-} from "../src/componentes/dados-do-monitoramento.js";
-import { avaliarMarcosDasAnalises } from "../src/analises/analises-marcos.js";
-import { esquecerComemoracoesDoPainel } from "../src/modules/comemoracao.js";
+  avaliarMarcosDasAnalises,
+  comemorarMetaDoDia,
+} from "../src/modulos/analises/marcos.ts";
+import { calcularRitmo } from "../src/lib/ritmo-da-analise.ts";
 
 /*
-  Onde os marcos aparecem: o card de marcos do ano na Visão geral e o aviso
-  de edital concluído / fila zerada no painel de análises.
+  Onde os marcos aparecem: o aviso de edital concluído / fila zerada na tela
+  de Análises curriculares. O card de marcos do ano na Visão geral (React) é
+  testado em tests/modulos/visao-geral.test.js.
 */
 
-const PERFIL = { id: "p1", user_id: "u1", nome: "Ana" };
-const ligado = () => ({ comemoracoes: true });
-
-function supabaseComMarcos(concluidas) {
-  return {
-    rpc: vi.fn(async (nome) =>
-      nome === "obter_marcos_da_area"
-        ? {
-            data: {
-              area: "saude-indigena",
-              ano: 2026,
-              concluidas_no_ano: concluidas,
-              concluidas_total: concluidas + 100,
-            },
-            error: null,
-          }
-        : { data: { sistema: { comemoracoes: true } }, error: null },
-    ),
-  };
-}
-
-const esperar = () => new Promise((ok) => setTimeout(ok, 0));
-
-describe("marcos do ano na Visão geral", () => {
-  let desligar = () => {};
+describe("marcos de Análises curriculares", () => {
   beforeEach(() => {
     localStorage.clear();
-    redefinirDadosDoMonitoramento();
-    document.body.innerHTML = '<div id="marcosDoAno" hidden></div>';
-  });
-  afterEach(() => {
-    desligar();
-    redefinirDadosDoMonitoramento();
-    document.body.innerHTML = "";
-  });
-
-  const montar = (supabase, obterSituacao = ligado) => {
-    desligar = initMarcosDoAno({
-      obterPerfil: () => PERFIL,
-      supabase,
-      obterSituacao,
-    });
-  };
-  const card = () => document.getElementById("marcosDoAno");
-
-  it("primeira leitura anuncia o marco já alcançado; o próximo aparece uma vez e fecha no ×", async () => {
-    montar(supabaseComMarcos(7400));
-    publicarLinhasDoMonitoramento([]);
-    await esperar();
-    expect(card().hidden).toBe(false);
-    expect(card().textContent).toContain("passou de 5.000 análises");
-    card().querySelector("button").click();
-    desligar();
-
-    const supabase = supabaseComMarcos(7600);
-    montar(supabase);
-    publicarLinhasDoMonitoramento([]);
-    await esperar();
-    expect(supabase.rpc).toHaveBeenCalledWith("obter_marcos_da_area", {
-      p_area: "saude-indigena",
-    });
-    expect(card().hidden).toBe(false);
-    expect(card().textContent).toContain(
-      "🎉 A equipe da Saúde Indígena passou de 7.500 análises concluídas em 2026!",
-    );
-    card().querySelector("button").click();
-    expect(card().hidden).toBe(true);
-    desligar();
-
-    // Voltou: o mesmo marco não aparece de novo.
-    montar(supabaseComMarcos(7700));
-    publicarLinhasDoMonitoramento([]);
-    await esperar();
-    expect(card().hidden).toBe(true);
-  });
-
-  it("comemorações desligadas: nem consulta o banco", async () => {
-    const supabase = supabaseComMarcos(9000);
-    montar(supabase, () => ({ comemoracoes: false }));
-    publicarLinhasDoMonitoramento([]);
-    await esperar();
-    expect(supabase.rpc).not.toHaveBeenCalled();
-    expect(card().hidden).toBe(true);
-  });
-});
-
-describe("marcos do painel de análises", () => {
-  beforeEach(() => {
-    localStorage.clear();
-    esquecerComemoracoesDoPainel();
     window.matchMedia = () => ({ matches: true });
   });
   afterEach(() => {
@@ -113,9 +25,9 @@ describe("marcos do painel de análises", () => {
     { edital: "05/2026", unidade: "SEDE", status_consolidado: "Aprovado" },
     { edital: "05/2026", unidade: "SEDE", status_consolidado: status },
   ];
-  const avaliar = (status, escopo = "ativo") =>
+  const avaliar = (status, escopo = "ativo", ligadas = true) =>
     avaliarMarcosDasAnalises({
-      supabase: supabaseComMarcos(0),
+      ligadas,
       usuarioId: "u1",
       area: "sede",
       nomeDaArea: "SEDE",
@@ -130,13 +42,135 @@ describe("marcos do painel de análises", () => {
       "Edital 05/2026 · SEDE concluído! 🎉 Todas as análises foram feitas.",
     );
     expect(comemoracao.itens).toEqual([
-      "Fila de análises zerada na SEDE! Parabéns, equipe. 🎉",
+      "Fila de análises zerada! Obrigado, equipe da SEDE. 🎉",
     ]);
     expect(document.querySelector(".comemoracao")).not.toBeNull();
+  });
+
+  it("comemorações desligadas: guarda o estado em silêncio, sem aviso", async () => {
+    expect(await avaliar("Pendente", "ativo", false)).toBeNull();
+    expect(await avaliar("Reprovado", "ativo", false)).toBeNull();
+    expect(document.querySelector(".comemoracao")).toBeNull();
+    expect(localStorage.length).toBe(1);
   });
 
   it("fora do escopo Ativo, não avalia", async () => {
     expect(await avaliar("Pendente", "todos")).toBeNull();
     expect(localStorage.length).toBe(0);
+  });
+});
+
+describe("meta de hoje batida pela equipe (Ritmo da análise)", () => {
+  const HOJE = "2026-10-19";
+  const ritmo = (feitoHoje) =>
+    calcularRitmo(
+      {
+        id: "e1",
+        edital: "114/2026",
+        situacoes: {
+          pendente: 600,
+          em_analise: 0,
+          revisar: 0,
+          concluida: 400,
+          fora_lote: 0,
+        },
+        porDia: [{ dia: HOJE, qt: feitoHoje }],
+        qtEquipe: 5,
+        qtAvaliadoresRecentes: 5,
+        cronograma: [
+          {
+            ordem: 1,
+            atividade: "Análise documental",
+            tipo: null,
+            inicio: "2026-10-15",
+            fim: "2026-10-22",
+          },
+        ],
+      },
+      { hoje: HOJE, hora: 15 },
+    );
+  const batida = [ritmo(400)];
+
+  beforeEach(() => localStorage.clear());
+  afterEach(() => {
+    document.body.innerHTML = "";
+    delete window.matchMedia;
+  });
+
+  it("comemora uma vez por dia por pessoa (guardado no navegador)", () => {
+    const soltar = vi.fn();
+    const chamar = (hoje = HOJE, usuario = "u1") =>
+      comemorarMetaDoDia({
+        ritmos: batida,
+        hoje,
+        usuario,
+        ligadas: true,
+        soltar,
+      });
+    expect(chamar()).toBe(true);
+    expect(chamar()).toBe(false);
+    expect(soltar).toHaveBeenCalledTimes(1);
+    expect(soltar.mock.calls[0][0]).toMatchObject({
+      texto: "Meta de hoje batida pela equipe! 🎉",
+      marco: "meta-do-dia",
+    });
+    expect(chamar(HOJE, "u2")).toBe(true); // outra pessoa
+    expect(chamar("2026-10-20")).toBe(true); // outro dia
+    expect(soltar).toHaveBeenCalledTimes(3);
+  });
+
+  it("sem meta batida, nada", () => {
+    const soltar = vi.fn();
+    expect(
+      comemorarMetaDoDia({
+        ritmos: [ritmo(10)],
+        hoje: HOJE,
+        usuario: "u1",
+        ligadas: true,
+        soltar,
+      }),
+    ).toBe(false);
+    expect(soltar).not.toHaveBeenCalled();
+  });
+
+  it("comemorações desligadas no sistema: nada, e religar no mesmo dia ainda comemora", () => {
+    const soltar = vi.fn();
+    const chamar = (ligadas) =>
+      comemorarMetaDoDia({
+        ritmos: batida,
+        hoje: HOJE,
+        usuario: "u1",
+        ligadas,
+        soltar,
+      });
+    expect(chamar(false)).toBe(false);
+    expect(localStorage.length).toBe(0);
+    expect(chamar(true)).toBe(true);
+    expect(soltar).toHaveBeenCalledTimes(1);
+  });
+
+  it("preferência pessoal desligada: sem aviso", () => {
+    localStorage.setItem("agsus_monitora_comemoracoes_desligadas", "1");
+    comemorarMetaDoDia({
+      ritmos: batida,
+      hoje: HOJE,
+      usuario: "u1",
+      ligadas: true,
+    });
+    expect(document.querySelector(".comemoracao")).toBeNull();
+  });
+
+  it("prefers-reduced-motion: só o aviso, sem os fogos", () => {
+    window.matchMedia = () => ({ matches: true });
+    comemorarMetaDoDia({
+      ritmos: batida,
+      hoje: HOJE,
+      usuario: "u1",
+      ligadas: true,
+    });
+    const aviso = document.querySelector(".comemoracao");
+    expect(aviso?.textContent).toContain("Meta de hoje batida pela equipe!");
+    expect(document.querySelector("canvas")).toBeNull();
+    expect(document.querySelector(".comemoracao__pular")).toBeNull();
   });
 });

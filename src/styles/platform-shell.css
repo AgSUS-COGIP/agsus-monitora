@@ -35,14 +35,55 @@
   background-color: var(--surface-page);
   background-image: var(--login-background-image, none);
   background-size: cover;
-  background-position: center;
+  /*
+    A arte de acesso é 16:9 com o desenho à direita e o lado esquerdo livre
+    para o cartão: quando sobra largura, o corte cai à esquerda, não no logo.
+  */
+  background-position: right center;
   padding: clamp(28px, 5vh, 64px) clamp(24px, 3.2vw, 64px);
 }
-.login-screen::before {
-  display: none;
-}
+.login-screen::before,
 .login-screen::after {
   display: none;
+}
+/*
+  Arte nova que chega da configuração (outra no lugar da guardada) entra com
+  fade cruzado em vez de trocar de um quadro para o outro.
+*/
+.login-screen,
+.login-screen::before,
+.login-screen::after {
+  transition: background-image 0.35s ease;
+}
+/*
+  Tela mais larga que a arte (notebook, janela baixa): o "cover" cortava em
+  cima e embaixo (o logo da AgSUS sumia). Aqui a arte aparece inteira à
+  direita e o resto é a própria arte desfocada, sem faixa de cor solta.
+*/
+@media (min-aspect-ratio: 16/9) {
+  .login-screen {
+    background-image: none;
+  }
+  .login-screen::before,
+  .login-screen::after {
+    content: "";
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: var(--login-background-image, none);
+    background-repeat: no-repeat;
+  }
+  .login-screen::before {
+    background-size: cover;
+    background-position: center;
+    filter: blur(28px);
+    transform: scale(1.08);
+  }
+  .login-screen::after {
+    background-size: contain;
+    background-position: right center;
+  }
 }
 .login-outer {
   width: min(516px, 31vw);
@@ -52,14 +93,23 @@
   background: var(--login-panel-color, #c296eb);
   box-shadow: 0 30px 90px rgba(35, 12, 54, 0.3);
   backdrop-filter: blur(8px);
+  transition: background-color 0.35s ease;
 }
 .login-stripe {
   display: none;
 }
+/*
+  O cartão tem a cor do painel (a mesma do `.login-outer`); sem ela, branco.
+  Com a cor guardada ela já vem no primeiro quadro (script do <head>); sem
+  cópia guardada, a cor que chega da configuração entra com transição.
+*/
 .login-card {
   padding: clamp(32px, 4vh, 46px) clamp(30px, 3vw, 42px);
-  background: transparent;
+  background: var(--login-panel-color, #ffffff);
   color: #132030;
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease;
 }
 .login-brand-lockup {
   display: flex;
@@ -78,6 +128,10 @@
   height: 52px;
   object-fit: contain;
 }
+/* Logo que não carregou: some sem sair do lugar (o lockup não encolhe). */
+.login-organization-mark img[data-falhou] {
+  visibility: hidden;
+}
 .login-organization-mark strong {
   color: var(--color-blue-800);
   font-size: 18px;
@@ -95,105 +149,208 @@
   gap: 10px;
   color: #102a43;
 }
-.login-product-mark i {
+.login-product-icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
   color: #59f2c8;
-  font-size: 30px;
   filter: drop-shadow(0 4px 10px rgba(16, 80, 70, 0.22));
-}
-.login-panel-dark .login-organization-mark img {
-  filter: brightness(0) invert(1);
-}
-.login-panel-dark .login-organization-mark strong,
-.login-panel-dark .login-product-mark,
-.login-panel-dark .login-card h1,
-.login-panel-dark .login-card p,
-.login-panel-dark .login-security {
-  color: #fff;
-}
-.login-panel-dark .login-brand-divider {
-  background: rgba(255, 255, 255, 0.5);
 }
 .login-product-mark strong {
   font-size: 25px;
   font-weight: 900;
+  line-height: 1;
   letter-spacing: 0.015em;
 }
+/*
+  Tipografia e respiros da tela de acesso do SIGAV: saudação, a linha de
+  apoio logo abaixo e o botão. Alturas de linha explícitas, para a troca da
+  fonte (Geist chega depois) não mudar a altura do cartão.
+*/
 .login-card h1 {
-  margin: 26px 0 8px;
+  margin: 20px 0 0;
   color: #102a43;
-  font-size: 25px;
+  font-size: 24px;
+  line-height: 32px;
   letter-spacing: -0.025em;
 }
+/*
+  O slogan é fixo e fica numa linha só, em qualquer largura: a fonte encolhe
+  no celular estreito (13px → 11.5px em 320px) e, no limite, termina em
+  reticências — nunca quebra nem muda a altura do cartão.
+*/
 .login-card .login-subtitle {
-  margin: 0 0 6px;
+  margin: 0;
+  overflow: hidden;
   color: #102a43;
-  font-size: 13px;
+  font-size: clamp(11.5px, 3.6vw, 13px);
   font-weight: 800;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.login-description {
-  max-width: 390px;
-  margin: 0 auto 30px !important;
-  color: #334155 !important;
+.login-card .login-apoio {
+  margin: 6px 0 0;
+  color: var(--color-neutral-800);
   font-size: 14px;
-  line-height: 1.55;
-  font-weight: 700 !important;
+  font-weight: 500;
+  line-height: 24px;
 }
-.login-panel-dark .login-card h1,
-.login-panel-dark .login-card .login-subtitle,
-.login-panel-dark .login-description,
-.login-panel-dark .login-security {
-  color: #fff !important;
+.login-card .google-only-login {
+  margin-top: 28px;
 }
-.login-panel-dark .login-product-mark i {
-  color: #bfffee;
+
+/*
+  Painel escuro (`login-panel-dark`, aplicada no próprio `#loginScreen` pelo
+  script do index.html e por src/app/entrada/marca.js): texto claro onde a
+  própria configuração diz que a superfície é escura. A página de solicitação
+  de acesso tem as próprias cores (src/app/entrada/solicitacao-de-acesso.css).
+*/
+#loginScreen.login-panel-dark .login-card,
+#loginScreen.login-panel-dark .login-card h1,
+#loginScreen.login-panel-dark .login-card p,
+#loginScreen.login-panel-dark .login-card strong,
+#loginScreen.login-panel-dark .login-card small,
+#loginScreen.login-panel-dark .login-subtitle,
+#loginScreen.login-panel-dark .login-organization-mark,
+#loginScreen.login-panel-dark .login-product-mark {
+  color: #f7fbff;
 }
-#googleLoginBtn,
-.google-login-btn {
-  min-height: 62px;
-  border: 0;
-  border-radius: 16px;
-  background: #101c2a;
-  color: #fff;
-  box-shadow: 0 14px 30px -18px rgba(0, 59, 112, 0.9);
+#loginScreen.login-panel-dark .login-card p:not(.login-subtitle) {
+  color: rgba(247, 251, 255, 0.82);
+}
+#loginScreen.login-panel-dark .login-brand-divider {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/*
+  A marca acompanha o contraste da superfície, como no AgSUS Pesquisas. O
+  filtro é restrito ao logotipo institucional; fotos e imagens de conteúdo não
+  são alteradas. O `img` sem id é o do cartão provisório do index.html, que
+  segura a marca até o React montar.
+
+  `body.sidebar-theme-dark` entra aqui porque a cor da barra lateral é
+  escolhida em Configurações e é **independente do tema do app**: dava para ter
+  uma barra escura com o tema claro, e aí a logo escura ficava sobre fundo
+  escuro. `.side-logo-wrap` não tem fundo próprio: a imagem repousa direto
+  sobre a cor da barra.
+*/
+#loginScreen.login-panel-dark #loginLogo,
+#loginScreen.login-panel-dark .login-organization-mark img,
+html[data-theme="dark"] .app #sideLogo,
+html[data-theme="dark"] .app .side-logo,
+body.sidebar-theme-dark .app #sideLogo,
+body.sidebar-theme-dark .app .side-logo {
+  filter: brightness(0) invert(0.96);
+}
+
+#loginScreen.login-panel-dark .login-product-icon {
+  color: #8ff3d0;
+}
+
+/*
+  O alerta de sessão encerrada continua legível mesmo com o cartão de acesso
+  configurado numa cor escura.
+*/
+#loginScreen.login-panel-dark #loginMsg.alert,
+#loginScreen.login-panel-dark .alert.warn,
+#loginScreen.login-panel-dark .alert.warning {
+  background: #fff8e6;
+  border-color: #f1c75b;
+  color: #7c3b08;
+}
+
+/*
+  O botão de acesso, como no SIGAV: branco, largo, cantos bem arredondados,
+  sombra suave (`shadow-lg`) e o "G" do Google nas quatro cores antes do
+  texto. Vale para os dois botões da tela de acesso: o principal e o de
+  trocar de conta.
+
+  Medido contra os painéis em uso:
+
+    branco sobre #c090eb (claro)   2.49:1
+    branco sobre #6c009e (escuro)  9.85:1
+    texto var(--color-blue-800) sobre branco    11.29:1
+
+  Num painel escuro o branco sozinho já passa de 3:1 e o botão fica sem
+  borda, como no SIGAV. Num painel claro o preenchimento branco fica abaixo
+  de 3:1, e a WCAG pede que a **borda do componente** seja perceptível: ali
+  entra a borda var(--color-blue-800) (4.53:1 contra o painel claro).
+
+  ALTURA FIXA. O botão tem 56px sempre, e o texto não quebra linha (texto
+  configurado longo demais termina em reticências): o cartão não muda de
+  altura por causa do rótulo.
+*/
+.login-screen .google-login-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 56px;
+  min-height: 56px;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 20px;
+  border: 1px solid var(--color-blue-800);
+  border-radius: 14px;
+  background: #ffffff;
+  color: var(--color-blue-800);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+  box-shadow:
+    0 10px 15px -3px rgba(15, 23, 42, 0.16),
+    0 4px 6px -4px rgba(15, 23, 42, 0.12);
   transition:
     transform 0.18s ease,
     background 0.18s ease,
     box-shadow 0.18s ease;
 }
-#googleLoginBtn:hover,
-.google-login-btn:hover {
-  background: #172a3f;
-  transform: translateY(-2px);
-  box-shadow: 0 18px 34px -18px rgba(0, 59, 112, 0.95);
+.login-screen.login-panel-dark .google-login-btn {
+  border-color: transparent;
+  box-shadow:
+    0 10px 15px -3px rgba(15, 23, 42, 0.28),
+    0 4px 6px -4px rgba(15, 23, 42, 0.2);
 }
-#googleLoginBtn:disabled {
+.login-screen .google-login-btn:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+}
+.login-screen .google-login-btn > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.login-screen .google-login-btn .gmark {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+/*
+  O botão nunca fica vazio: o "G" e o texto padrão ("Entrar com Google")
+  aparecem desde o cartão provisório do index.html; se a configuração trouxer
+  outro texto, ele entra com um fade curto (o botão tem tamanho fixo, nada pula).
+  Esconder o conteúdo até a configuração chegar dava a impressão de que o botão
+  sumia ao recarregar (08/10).
+*/
+.login-screen .google-login-btn[data-texto] > * {
+  transition: opacity 0.2s ease;
+}
+/* O botão do cartão provisório (aria-hidden, sem id): sem clique. */
+.login-screen .login-card[aria-hidden="true"] .google-login-btn {
+  pointer-events: none;
+}
+/* Login Google desligado: o lugar do botão fica, vazio. */
+.login-screen .google-login-btn--reservado {
+  visibility: hidden;
+  box-shadow: none;
+}
+#loginScreen #googleLoginBtn:disabled {
   cursor: wait;
   opacity: 0.72;
   transform: none;
-}
-.google-login-btn .gmark {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  border-radius: 999px;
-  background: #fff;
-}
-.login-security {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 18px;
-  padding-top: 18px;
-  border-top: 1px solid rgba(255, 255, 255, 0.28);
-  color: #334155;
-  font-size: 12px;
-  line-height: 1.5;
-  text-align: center;
-}
-.login-security i {
-  color: #59f2c8;
 }
 
 /* Shell e navegação lateral */
@@ -227,6 +384,7 @@
   --menu-flutuante-texto: var(--slate);
   --menu-flutuante-borda: var(--platform-border);
   --menu-pilula-fundo: var(--slate);
+  --menu-pilula-texto: var(--cor-do-texto-sobre-escuro);
   display: flex;
   flex-direction: column;
   padding: 0;
@@ -235,9 +393,13 @@
   border-right: 1px solid var(--menu-borda);
 }
 body.sidebar-theme-dark .sidebar {
-  --menu-texto: var(--text-inverse);
-  --menu-texto-suave: color-mix(in srgb, var(--text-inverse) 80%, transparent);
-  --menu-realce: var(--text-inverse);
+  --menu-texto: var(--cor-do-texto-sobre-escuro);
+  --menu-texto-suave: color-mix(
+    in srgb,
+    var(--cor-do-texto-sobre-escuro) 80%,
+    transparent
+  );
+  --menu-realce: var(--cor-do-texto-sobre-escuro);
 }
 /* O tema escuro da página vale sobre a cor configurada: vem depois, empata e vence. */
 html[data-theme="dark"] .sidebar {
@@ -246,6 +408,7 @@ html[data-theme="dark"] .sidebar {
   --menu-realce: var(--ux-dark-text);
   --menu-flutuante-texto: var(--ux-dark-text);
   --menu-pilula-fundo: var(--ux-dark-surface-soft);
+  --menu-pilula-texto: var(--ux-dark-text);
   background: var(--ux-dark-surface);
 }
 .side-brand {
@@ -314,8 +477,8 @@ html[data-theme="dark"] .sidebar {
   margin-top: 6px;
   padding: 3px 8px;
   border-radius: 999px;
-  background: #e6f6ef;
-  color: #067044;
+  background: var(--state-success-soft);
+  color: var(--state-success);
   font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.05em;
@@ -343,6 +506,9 @@ html[data-theme="dark"] .sidebar {
 }
 
 /* Presença online: batida autenticada e lista compacta, como no SIGAV. */
+.pessoas-online-app {
+  display: contents;
+}
 .online-presence {
   position: relative;
 }
@@ -354,38 +520,38 @@ html[data-theme="dark"] .sidebar {
   padding: 0 12px;
   border: 1px solid var(--platform-border);
   border-radius: 12px;
-  background: #fff;
-  color: #475569;
+  background: var(--surface-card);
+  color: var(--text-secondary);
   font: inherit;
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
 }
 .online-presence-button:hover {
-  background: #f8fafc;
-  color: var(--color-blue-800);
+  background: var(--surface-hover);
+  color: var(--color-text-brand);
 }
 .online-presence-dot {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #cbd5e1;
+  background: var(--color-status-neutral-solid);
 }
 .online-presence-dot.is-online {
-  background: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.14);
+  background: var(--color-status-success-solid);
+  box-shadow: 0 0 0 3px var(--state-success-soft);
 }
 .online-presence-popover {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  z-index: 400;
+  z-index: var(--z-popover);
   width: min(352px, calc(100vw - 24px));
   overflow: hidden;
   border: 1px solid var(--platform-border);
   border-radius: 18px;
-  background: #fff;
-  box-shadow: 0 24px 60px -28px rgba(15, 23, 42, 0.55);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
 }
 .online-presence-heading {
   padding: 13px 16px;
@@ -396,7 +562,7 @@ html[data-theme="dark"] .sidebar {
   display: block;
 }
 .online-presence-heading strong {
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 14px;
 }
 .online-presence-heading small {
@@ -406,6 +572,7 @@ html[data-theme="dark"] .sidebar {
 }
 .online-presence-list {
   max-height: 320px;
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 8px;
 }
@@ -423,9 +590,25 @@ html[data-theme="dark"] .sidebar {
   border-radius: 12px;
 }
 .online-presence-person:hover {
-  background: #f8fafc;
+  background: var(--surface-hover);
 }
-.online-presence-person > span:last-child {
+/*
+  No celular o botão fica à esquerda do cabeçalho: a lista abre presa ao
+  cabeçalho, de borda a borda, em vez de sair da tela pela esquerda.
+*/
+@media (max-width: 900px) {
+  .online-presence {
+    position: static;
+  }
+  .online-presence-popover {
+    left: 0;
+    right: 0;
+    width: auto;
+  }
+}
+/* O texto encolhe (reticências); o "Mensagem" fica inteiro à direita. */
+.online-presence-texto {
+  flex: 1 1 auto;
   min-width: 0;
 }
 .online-presence-person strong,
@@ -436,7 +619,7 @@ html[data-theme="dark"] .sidebar {
   white-space: nowrap;
 }
 .online-presence-person strong {
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 13px;
 }
 .online-presence-person small {
@@ -452,8 +635,8 @@ html[data-theme="dark"] .sidebar {
   display: grid;
   place-items: center;
   border-radius: 12px;
-  background: #eaf4ff;
-  color: var(--color-blue-800);
+  background: var(--state-info-soft);
+  color: var(--color-text-brand);
   font-size: 11px;
   font-weight: 900;
 }
@@ -469,9 +652,9 @@ html[data-theme="dark"] .sidebar {
   bottom: -2px;
   width: 13px;
   height: 13px;
-  border: 2px solid #fff;
+  border: 2px solid var(--surface-card);
   border-radius: 50%;
-  background: #10b981;
+  background: var(--color-status-success-solid);
 }
 
 /* Perfil no cabeçalho, no mesmo padrão de navegação do SIGAV. */
@@ -492,12 +675,12 @@ html[data-theme="dark"] .sidebar {
   padding: 4px 10px 4px 5px;
   border: 1px solid var(--platform-border);
   border-radius: 14px;
-  background: #fff;
-  color: #0f172a;
+  background: var(--surface-card);
+  color: var(--text-primary);
   cursor: pointer;
 }
 .top-user-button:hover {
-  background: #f8fafc;
+  background: var(--surface-hover);
 }
 .top-user-avatar {
   width: 32px;
@@ -507,8 +690,8 @@ html[data-theme="dark"] .sidebar {
   place-items: center;
   overflow: hidden;
   border-radius: 10px;
-  background: #eaf4ff;
-  color: #075ea8;
+  background: var(--state-info-soft);
+  color: var(--state-info);
 }
 .top-user-avatar img {
   width: 100%;
@@ -523,7 +706,7 @@ html[data-theme="dark"] .sidebar {
   display: block;
   max-width: 130px;
   overflow: hidden;
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -532,11 +715,11 @@ html[data-theme="dark"] .sidebar {
   margin: 1px 0 0;
   padding: 0;
   background: transparent;
-  color: #067044;
+  color: var(--state-success);
   font-size: 8px;
 }
 .top-user-chevron {
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 9px;
   transition: transform 0.2s ease;
 }
@@ -547,13 +730,13 @@ html[data-theme="dark"] .sidebar {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  z-index: 420;
+  z-index: var(--z-popover);
   width: 280px;
   padding: 15px;
   border: 1px solid var(--platform-border);
   border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 24px 60px -28px rgba(15, 23, 42, 0.55);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
 }
 .top-user-popover > strong,
 .top-user-popover > small,
@@ -564,7 +747,7 @@ html[data-theme="dark"] .sidebar {
   white-space: nowrap;
 }
 .top-user-popover > strong {
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 14px;
 }
 .top-user-popover > small {
@@ -574,7 +757,7 @@ html[data-theme="dark"] .sidebar {
 }
 .top-user-popover > span {
   margin-top: 8px;
-  color: #067044;
+  color: var(--state-success);
   font-size: 10px;
   font-weight: 900;
   text-transform: uppercase;
@@ -793,9 +976,6 @@ html[data-theme="dark"] .sidebar {
   Este estado esconde **apenas** o cabeçalho superior. Não é o antigo
   `external-clean`, que também escondia a navegação lateral: a sidebar fica, é
   por ela que se volta.
-
-  As páginas com painel do app (`.pagina-do-painel`: Análises curriculares e
-  Recursos) usam o mesmo estado: os dois painéis trazem o próprio cabeçalho.
 */
 body.external-panel-mode .main > header.top {
   display: none;
@@ -812,10 +992,7 @@ body.external-panel-mode .content {
 
 body.external-panel-mode #page-external,
 body.external-panel-mode #page-external .external-panel,
-body.external-panel-mode #page-external iframe,
-body.external-panel-mode .pagina-do-painel,
-body.external-panel-mode .pagina-do-painel .external-panel,
-body.external-panel-mode .pagina-do-painel iframe {
+body.external-panel-mode #page-external iframe {
   height: 100%;
   min-height: 100dvh;
 }
@@ -866,4 +1043,32 @@ body.external-panel-mode .content {
 
 body.external-panel-mode .app {
   overflow: hidden;
+}
+
+/*
+  Rolagem da barra lateral, igual à do SIGAV: sem a faixa branca do trilho
+  padrão do navegador (aberta e recolhida). Trilho transparente, polegar fino.
+*/
+.side-navigation,
+body.sidebar-collapsed .menu-area__itens {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-sidebar-scroll-thumb) transparent;
+  scrollbar-gutter: stable;
+}
+.side-navigation::-webkit-scrollbar,
+body.sidebar-collapsed .menu-area__itens::-webkit-scrollbar {
+  width: 6px;
+}
+.side-navigation::-webkit-scrollbar-track,
+body.sidebar-collapsed .menu-area__itens::-webkit-scrollbar-track {
+  background: transparent;
+}
+.side-navigation::-webkit-scrollbar-thumb,
+body.sidebar-collapsed .menu-area__itens::-webkit-scrollbar-thumb {
+  background-color: var(--color-sidebar-scroll-thumb);
+  border-radius: 999px;
+}
+.side-navigation:hover::-webkit-scrollbar-thumb,
+body.sidebar-collapsed .menu-area__itens:hover::-webkit-scrollbar-thumb {
+  background-color: var(--color-sidebar-scroll-thumb-hover);
 }

@@ -8,7 +8,7 @@ import {
   formatarTamanho,
   pdfDoBase64,
   problemaDosAnexos,
-} from "../src/lib/anexos-do-candidato.js";
+} from "../src/lib/anexos-do-candidato.ts";
 
 const pdf = (name = "doc.pdf", size = 1000, type = "application/pdf") => ({
   name,

@@ -2,22 +2,19 @@ name: Sincronizar entrevistas
 
 # Lê a aba Entrevistados da planilha "[dash] entrevistados" com a conta de
 # serviço do Google e grava no Supabase (scripts/sincronizar-entrevistas.mjs).
-# Todo dia às 9h de Brasília (12h UTC; o Brasil não tem horário de verão) e,
-# quando precisar, pelo botão "Run workflow" na aba Actions.
-# Como operar e o que fazer quando falha: docs/sincronizacao-das-entrevistas.md.
+# De hora em hora, o dia todo, pedido pelo banco (pg_cron → workflow_dispatch com
+# disparado_por = AGENDA; docs/agenda-dos-robos.md — sem `schedule` aqui, que o GitHub
+# atrasava ou pulava) e, quando precisar,
+# pelo botão "Run workflow" na aba Actions ou pelo "Rodar agora" das
+# Configurações › Status das atualizações (RPC disparar_robo).
+# Como operar e o que fazer quando falha: docs/sincronizacao-das-planilhas.md.
 #
 # Secrets do repositório (Settings → Secrets and variables → Actions):
 #   GOOGLE_SERVICE_ACCOUNT_JSON  conteúdo inteiro do JSON da conta de serviço
 #   SUPABASE_URL                 https://<projeto>.supabase.co
-#   SUPABASE_SERVICE_ROLE_KEY       chave service_role do Supabase
+#   SUPABASE_SERVICE_ROLE_KEY    chave service_role do Supabase
 
 on:
-  # TEMPORÁRIO: primeira execução antes do merge (modo normal). Tirar antes do merge.
-  push:
-    branches:
-      - feat/entrevistas-etl-google
-  schedule:
-    - cron: "0 12 * * *"
   workflow_dispatch:
     inputs:
       modo:
@@ -28,6 +25,11 @@ on:
           - seco
           - forcar
         default: normal
+      disparado_por:
+        description: "Rodar agora do MONITORA = id do usuário; agenda do banco = AGENDA; em branco = GitHub"
+        type: string
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -53,6 +55,20 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
+
+      # Execução iniciada direto no GitHub: registra no MONITORA (Status das
+      # atualizações) com quem a iniciou (migration 20261020170000; o python3 do
+      # runner basta). Nunca derruba o job.
+      - name: Registrar a execução no MONITORA
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PYTHONPATH: python
+          ATOR_GITHUB: ${{ github.triggering_actor }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
+          MODO: ${{ inputs.modo || 'normal' }}
+        run: python3 -m monitora.disparo_externo sincronizar-entrevistas.yml
 
       # O script não usa dependências: não precisa de npm install.
       - name: Sincronizar

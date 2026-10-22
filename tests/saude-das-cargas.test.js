@@ -1,0 +1,597 @@
+import { describe, expect, it } from "vitest";
+import {
+  normalizarSaude,
+  prazoDaAgenda,
+  PRAZO_DIARIO_MIN,
+  PRAZO_AGENDA_DOS_ROBOS_MIN,
+  PRAZO_DE_HORA_EM_HORA_MIN,
+  PRAZO_SELECAO_MIN,
+  PRAZO_FREQUENTE_MIN,
+  PRAZO_MENSAL_MIN,
+  textoDaIdade,
+  visaoSimples,
+} from "../src/lib/saude-das-cargas.ts";
+
+/* "Agora" fixo: 01/10/2026 12:00 UTC. */
+const AGORA = new Date("2026-10-01T12:00:00Z");
+const ha = (min) => new Date(AGORA.getTime() - min * 60000).toISOString();
+const execucao = (situacao, minAtras, extra = {}) => ({
+  inicio: ha(minAtras + 1),
+  fim: ha(minAtras),
+  situacao,
+  ...extra,
+});
+
+/* O formato de get_saude_das_cargas (20261001120000_saude_das_cargas.sql). */
+const PAYLOAD = {
+  schema_version: 1,
+  gerado_em: AGORA.toISOString(),
+  analises: [
+    {
+      origem: "apps_script_analises_incremental_v1",
+      area: "saude-indigena",
+      tipo: "INCREMENTAL",
+      execucoes: [execucao("processado", 10, { linhas: "120" })],
+    },
+    {
+      origem: "apps_script_analises_sede_incremental_v1",
+      area: "sede",
+      tipo: "INCREMENTAL",
+      execucoes: [execucao("processado", 90)],
+    },
+    {
+      origem: "apps_script_analises_projetos_incremental_v1",
+      area: "projetos",
+      tipo: "INCREMENTAL",
+      // A mais recente falhou, mesmo com uma boa antes.
+      execucoes: [
+        execucao("processado", 40),
+        execucao("erro", 5, { mensagem: "Timeout" }),
+      ],
+    },
+    {
+      origem: "apps_script_analises_curriculares_v2_pdf",
+      area: "saude-indigena",
+      tipo: "FULL",
+      // Completa de 10 dias atrás: sem prazo, segue em dia.
+      execucoes: [execucao("processado", 10 * 24 * 60)],
+    },
+    {
+      origem: "apps_script_analises_sede_full_v1",
+      area: "sede",
+      tipo: "FULL",
+      execucoes: [],
+    },
+  ],
+  entrevistas: [
+    { inicio: ha(181), fim: ha(180), situacao: "CONCLUIDA", linhas: 3404 },
+  ],
+  selecao: [
+    { inicio: ha(2), fim: null, situacao: "EM_ANDAMENTO", linhas: 0 },
+    {
+      inicio: ha(27 * 60),
+      fim: ha(27 * 60 - 1),
+      situacao: "CONCLUIDA",
+      linhas: 3146,
+    },
+  ],
+  tarefas: [
+    {
+      nome: "agsus_entrevistas_cache_do_painel",
+      agenda: "1-59/2 * * * *",
+      ativa: true,
+      execucoes: [{ inicio: ha(1), fim: ha(1), situacao: "succeeded" }],
+    },
+    {
+      nome: "agsus_analises_cache_do_painel",
+      agenda: "*/2 * * * *",
+      ativa: true,
+      execucoes: [
+        { inicio: ha(3), fim: ha(3), situacao: "failed", mensagem: "deadlock" },
+      ],
+    },
+  ],
+};
+
+const saude = normalizarSaude(PAYLOAD, AGORA);
+const carga = (id) =>
+  saude.grupos.flatMap((g) => g.cargas).find((c) => c.id === id);
+
+describe("selo de cada carga", () => {
+  it("incremental das análises: em dia até 1 h, atrasada depois", () => {
+    expect(carga("analises:apps_script_analises_incremental_v1")).toMatchObject(
+      {
+        nome: "Saúde Indígena · incremental",
+        situacao: "em_dia",
+        idadeMin: 10,
+      },
+    );
+    expect(
+      carga("analises:apps_script_analises_incremental_v1").ultimaOk.linhas,
+    ).toBe(120);
+    expect(
+      carga("analises:apps_script_analises_sede_incremental_v1").situacao,
+    ).toBe("atrasada");
+  });
+
+  it("a execução terminada mais recente com erro é falha, com a mensagem", () => {
+    const c = carga("analises:apps_script_analises_projetos_incremental_v1");
+    expect(c.situacao).toBe("falhou");
+    expect(c.historico[0]).toMatchObject({
+      situacao: "falha",
+      mensagem: "Timeout",
+    });
+    expect(c.ultimaOk.situacao).toBe("ok");
+    expect(c.historico[0].encerradaPorInatividade).toBe(false);
+  });
+
+  it("execução encerrada por inatividade (20261007170000) é falha marcada como tal", () => {
+    const saude = normalizarSaude(
+      {
+        analises: [
+          {
+            origem: "apps_script_analises_incremental_v1",
+            area: "saude-indigena",
+            tipo: "INCREMENTAL",
+            execucoes: [
+              execucao("erro", 5, {
+                mensagem:
+                  "Execução encerrada por inatividade: sem progresso desde 06/10/2026 16:49 (mais de 30 min).",
+                encerrada_por_inatividade: true,
+              }),
+            ],
+          },
+        ],
+      },
+      AGORA,
+    );
+    const c = saude.grupos[0].cargas[0];
+    expect(c.situacao).toBe("falhou");
+    expect(c.historico[0]).toMatchObject({
+      situacao: "falha",
+      encerradaPorInatividade: true,
+    });
+  });
+
+  it("a carga completa não tem prazo; sem execução é 'nunca rodou'", () => {
+    expect(
+      carga("analises:apps_script_analises_curriculares_v2_pdf"),
+    ).toMatchObject({
+      nome: "Saúde Indígena · carga completa",
+      situacao: "em_dia",
+      prazoMin: null,
+    });
+    expect(carga("analises:apps_script_analises_sede_full_v1").situacao).toBe(
+      "nunca",
+    );
+  });
+
+  it("entrevistas e seleção: atrasada pelo prazo de hora em hora; rodando agora aparece", () => {
+    expect(carga("entrevistas")).toMatchObject({
+      situacao: "em_dia",
+      idadeMin: 180,
+    });
+    const selecao = carga("selecao");
+    expect(selecao.situacao).toBe("atrasada");
+    expect(selecao.emAndamento).toBe(true);
+    expect(selecao.ultimaOk.linhas).toBe(3146);
+  });
+
+  it("tarefas do banco com nome legível e o prazo pela agenda", () => {
+    expect(carga("tarefa:agsus_entrevistas_cache_do_painel")).toMatchObject({
+      nome: "Painel de entrevistas (pacote pronto)",
+      situacao: "em_dia",
+      prazoMin: PRAZO_FREQUENTE_MIN,
+    });
+    expect(carga("tarefa:agsus_analises_cache_do_painel").situacao).toBe(
+      "falhou",
+    );
+  });
+
+  it("resumo conta cada situação", () => {
+    expect(saude.resumo).toEqual({
+      em_dia: 4,
+      atrasada: 2,
+      falhou: 2,
+      em_andamento: 0,
+      nunca: 1,
+    });
+    expect(saude.total).toBe(9);
+  });
+
+  it("sem acesso ao pg_cron, o grupo das tarefas fica indisponível", () => {
+    const sem = normalizarSaude({ ...PAYLOAD, tarefas: null }, AGORA);
+    const grupo = sem.grupos.find((g) => g.id === "tarefas");
+    expect(grupo.indisponivel).toBe(true);
+    expect(grupo.cargas).toEqual([]);
+  });
+
+  it("só execução em curso, sem nenhuma terminada: em andamento", () => {
+    const so = normalizarSaude(
+      { selecao: [{ inicio: ha(1), situacao: "EM_ANDAMENTO" }] },
+      AGORA,
+    );
+    expect(so.grupos[1].cargas[1].situacao).toBe("em_andamento");
+  });
+});
+
+describe("prazos e textos", () => {
+  it("prazo pela agenda do pg_cron", () => {
+    expect(prazoDaAgenda("*/2 * * * *")).toBe(PRAZO_FREQUENTE_MIN);
+    expect(prazoDaAgenda("1-59/2 * * * *")).toBe(PRAZO_FREQUENTE_MIN);
+    expect(prazoDaAgenda("20 6 * * *")).toBe(PRAZO_DIARIO_MIN);
+    expect(prazoDaAgenda("0 6 1 * *")).toBe(PRAZO_MENSAL_MIN);
+    expect(prazoDaAgenda("qualquer")).toBeNull();
+  });
+
+  it("idade em texto", () => {
+    expect(textoDaIdade(null)).toBe("—");
+    expect(textoDaIdade(0)).toBe("agora há pouco");
+    expect(textoDaIdade(45)).toBe("há 45 min");
+    expect(textoDaIdade(180)).toBe("há 3 h");
+    expect(textoDaIdade(3 * 24 * 60)).toBe("há 3 dias");
+  });
+});
+
+describe("visão simples: uma linha por aba do sistema", () => {
+  const { linhas, atencao } = visaoSimples(saude);
+  const linha = (id) => linhas.find((l) => l.id === id);
+
+  it("junta incremental e completa por área; a completa sem prazo não pesa", () => {
+    expect(linhas.map((l) => l.titulo)).toEqual([
+      "Análises curriculares · Saúde Indígena",
+      "Análises curriculares · SEDE",
+      "Análises curriculares · Projetos",
+      "Entrevistas",
+      "Seleção",
+      "Atualização automática do banco",
+    ]);
+    expect(linha("analises:saude-indigena")).toMatchObject({
+      situacao: "em_dia",
+      idadeMin: 10,
+    });
+    // SEDE: a incremental está atrasada; a completa que nunca rodou não conta.
+    expect(linha("analises:sede").situacao).toBe("atrasada");
+  });
+
+  it("a falha leva a mensagem e o nome da parte", () => {
+    expect(linha("analises:projetos")).toMatchObject({
+      situacao: "falhou",
+      erro: { mensagem: "Timeout", parte: "Projetos · incremental" },
+    });
+  });
+
+  it("as tarefas do banco viram uma linha só, com a pior situação", () => {
+    expect(linha("tarefas")).toMatchObject({ situacao: "falhou" });
+    expect(linha("tarefas").partes).toHaveLength(2);
+  });
+
+  it("o aviso do topo lista só falha e atraso", () => {
+    expect(atencao.map((l) => l.id)).toEqual([
+      "analises:sede",
+      "analises:projetos",
+      "selecao",
+      "tarefas",
+    ]);
+  });
+
+  it("área sem nenhuma carga (SEDE sem planilha ainda) não pede atenção", () => {
+    const semSede = normalizarSaude(
+      {
+        analises: [
+          {
+            origem: "sede_inc",
+            area: "sede",
+            tipo: "INCREMENTAL",
+            execucoes: [],
+          },
+          { origem: "sede_full", area: "sede", tipo: "FULL", execucoes: [] },
+        ],
+        entrevistas: [],
+        selecao: [],
+        tarefas: [],
+      },
+      AGORA,
+    );
+    const visao = visaoSimples(semSede);
+    expect(visao.linhas[0]).toMatchObject({
+      titulo: "Análises curriculares · SEDE",
+      situacao: "nunca",
+      ultimaAtualizacao: null,
+    });
+    expect(visao.atencao.map((l) => l.id)).not.toContain("analises:sede");
+  });
+});
+
+describe("robô da Empregare (20261005170000)", () => {
+  const comRobo = (empregare, agora = AGORA) =>
+    normalizarSaude({ ...PAYLOAD, empregare }, agora);
+
+  it("sem a chave no payload (migration não aplicada), a linha não aparece", () => {
+    expect(visaoSimples(saude).linhas.map((l) => l.id)).not.toContain(
+      "empregare",
+    );
+  });
+
+  it("vira uma linha depois da Seleção, com as contagens e quem disparou na mensagem", () => {
+    const s = comRobo([
+      execucao("PARCIAL", 30, {
+        linhas: 812,
+        vagas_pedidas: 12,
+        vagas_baixadas: 11,
+        vagas_falha: 1,
+        vagas_recusadas: 0,
+        disparo: "MONITORA",
+      }),
+      execucao("CONCLUIDA", 24 * 60, { linhas: 800, disparo: "AGENDA" }),
+    ]);
+    const { linhas, atencao } = visaoSimples(s);
+    expect(linhas.map((l) => l.titulo).slice(-3)).toEqual([
+      "Seleção",
+      "Robô da Empregare",
+      "Atualização automática do banco",
+    ]);
+    const robo = linhas.find((l) => l.id === "empregare");
+    expect(robo.situacao).toBe("falhou");
+    expect(robo.erro.mensagem).toBe(
+      "12 vagas pedidas · 11 baixadas · 1 com falha · 0 recusadas · disparo: Rodar agora",
+    );
+    expect(atencao.map((l) => l.id)).toContain("empregare");
+    expect(robo.partes[0].historico[1].mensagem).toContain("disparo: agenda");
+  });
+
+  it("concluída dentro do prazo fica em dia; em andamento aparece", () => {
+    const s = comRobo([
+      { inicio: ha(5), situacao: "EM_ANDAMENTO" },
+      execucao("CONCLUIDA", 60, { linhas: 10 }),
+    ]);
+    const robo = visaoSimples(s).linhas.find((l) => l.id === "empregare");
+    expect(robo).toMatchObject({ situacao: "em_dia", emAndamento: true });
+  });
+
+  it("entrevistas rodam o dia todo (4 h também à noite); seleção 3 vezes ao dia (15 h)", () => {
+    // 23h de Brasília = 02h UTC do dia seguinte.
+    const noite = normalizarSaude(PAYLOAD, new Date("2026-10-02T02:00:00Z"));
+    const planilhas = noite.grupos.find((g) => g.id === "planilhas").cargas;
+    const prazo = (id) => planilhas.find((c) => c.id === id).prazoMin;
+    expect(prazo("selecao")).toBe(PRAZO_SELECAO_MIN);
+    expect(planilhas.find((c) => c.id === "selecao").esperado).toBe(
+      "às 8h10, 13h10 e 18h10",
+    );
+    expect(prazo("entrevistas")).toBe(PRAZO_DE_HORA_EM_HORA_MIN);
+  });
+
+  it("robô da Empregare sem prazo: só roda quando alguém pede, nunca fica atrasado", () => {
+    const domingo = new Date("2026-10-04T15:00:00Z");
+    const umMesAntes = new Date("2026-09-02T09:40:00Z").toISOString();
+    const s = comRobo(
+      [{ inicio: umMesAntes, fim: umMesAntes, situacao: "CONCLUIDA" }],
+      domingo,
+    );
+    const robo = visaoSimples(s).linhas.find((l) => l.id === "empregare");
+    expect(robo.situacao).toBe("em_dia");
+  });
+});
+
+describe("conferências de consistência (20261005210000)", () => {
+  const comConferencias = (conferencias) =>
+    normalizarSaude({ ...PAYLOAD, empregare: [], conferencias }, AGORA);
+
+  it("sem a chave no payload (migration não aplicada), a linha não aparece", () => {
+    expect(
+      visaoSimples(
+        normalizarSaude({ ...PAYLOAD, empregare: [] }, AGORA),
+      ).linhas.map((l) => l.id),
+    ).not.toContain("conferencias");
+  });
+
+  it("vira uma linha depois do robô, com os avisos e quem disparou na mensagem", () => {
+    const s = comConferencias([
+      execucao("CONCLUIDA", 60, {
+        novos: 2,
+        abertos: 7,
+        resolvidos: 1,
+        falhas: [],
+        disparo: "AGENDA",
+      }),
+    ]);
+    const { linhas } = visaoSimples(s);
+    expect(linhas.map((l) => l.titulo).slice(-3)).toEqual([
+      "Robô da Empregare",
+      "Conferências de consistência",
+      "Atualização automática do banco",
+    ]);
+    const conf = linhas.find((l) => l.id === "conferencias");
+    expect(conf.situacao).toBe("em_dia");
+    expect(conf.partes[0].historico[0].mensagem).toBe(
+      "2 avisos novos · 7 abertos · 1 resolvidos · disparo: agenda",
+    );
+  });
+
+  it("diária: atrasada depois de 26 h; parcial conta como falha", () => {
+    const atrasada = comConferencias([
+      execucao("CONCLUIDA", PRAZO_DIARIO_MIN + 5),
+    ]);
+    expect(
+      visaoSimples(atrasada).linhas.find((l) => l.id === "conferencias")
+        .situacao,
+    ).toBe("atrasada");
+    const parcial = comConferencias([
+      execucao("PARCIAL", 10, { falhas: ["CARGA_VARIACAO_BRUSCA"] }),
+    ]);
+    const linha = visaoSimples(parcial).linhas.find(
+      (l) => l.id === "conferencias",
+    );
+    expect(linha.situacao).toBe("falhou");
+    expect(linha.erro.mensagem).toContain("1 conferências falharam");
+  });
+});
+
+describe("pré-classificação da Avaliação documental (20261006110000)", () => {
+  it("sem a chave no payload, a linha não aparece; com ela, vem depois das conferências", () => {
+    expect(
+      visaoSimples(
+        normalizarSaude({ ...PAYLOAD, empregare: [], conferencias: [] }, AGORA),
+      ).linhas.map((l) => l.id),
+    ).not.toContain("pre_classificacao");
+    const s = normalizarSaude(
+      {
+        ...PAYLOAD,
+        empregare: [],
+        conferencias: [],
+        pre_classificacao: [
+          execucao("CONCLUIDA", 30, {
+            editais: 1,
+            vagas: 5,
+            lote: 36,
+            disparo: "ROBO",
+          }),
+        ],
+      },
+      AGORA,
+    );
+    const { linhas } = visaoSimples(s);
+    expect(linhas.map((l) => l.titulo).slice(-2)).toEqual([
+      "Pré-classificação (Avaliação documental)",
+      "Atualização automática do banco",
+    ]);
+    const linha = linhas.find((l) => l.id === "pre_classificacao");
+    expect(linha.situacao).toBe("em_dia");
+    expect(linha.partes[0].historico[0].mensagem).toBe(
+      "1 editais · 5 vagas · 36 no lote · disparo: fim do robô da Empregare",
+    );
+  });
+});
+
+describe("o expurgo dos anexos do chat saiu com o chat (20261014120000)", () => {
+  it("payload antigo com expurgo_chat não vira linha", () => {
+    const base = { ...PAYLOAD, empregare: [], conferencias: [] };
+    const s = normalizarSaude(
+      { ...base, expurgo_chat: [execucao("CONCLUIDA", 60)] },
+      AGORA,
+    );
+    expect(visaoSimples(s).linhas.map((l) => l.id)).not.toContain(
+      "expurgo_chat",
+    );
+  });
+});
+
+describe("agenda dos robôs pelo banco (20261008140000)", () => {
+  const BASE = { ...PAYLOAD, empregare: [], conferencias: [] };
+  const disparo = (situacao, minAtras, extra = {}) => ({
+    workflow: "sincronizar-entrevistas.yml",
+    inicio: ha(minAtras),
+    fim: situacao === "PEDIDO" ? null : ha(minAtras),
+    situacao,
+    http: situacao === "ACEITO" ? 204 : null,
+    mensagem: null,
+    ...extra,
+  });
+  const agenda = (bruta) =>
+    visaoSimples(
+      normalizarSaude({ ...BASE, agenda_dos_robos: bruta }, AGORA),
+    ).linhas.find((l) => l.id === "agenda_dos_robos");
+
+  it("sem a chave no payload, a linha não aparece; com ela, vem antes das tarefas do banco", () => {
+    expect(
+      visaoSimples(normalizarSaude(BASE, AGORA)).linhas.map((l) => l.id),
+    ).not.toContain("agenda_dos_robos");
+    const { linhas } = visaoSimples(
+      normalizarSaude(
+        {
+          ...BASE,
+          agenda_dos_robos: {
+            chave_cadastrada: true,
+            ultimo_aceito: ha(10),
+            falhas_24h: 0,
+            sem_chave_24h: 0,
+            disparos: [disparo("ACEITO", 10)],
+          },
+        },
+        AGORA,
+      ),
+    );
+    expect(linhas.map((l) => l.titulo).slice(-2)).toEqual([
+      "Agenda dos robôs",
+      "Atualização automática do banco",
+    ]);
+    const linha = linhas.find((l) => l.id === "agenda_dos_robos");
+    expect(linha).toMatchObject({ situacao: "em_dia", idadeMin: 10 });
+    expect(linha.agenda).toMatchObject({ chaveCadastrada: true, falhas24h: 0 });
+    expect(linha.partes[0].historico[0].mensagem).toBe(
+      "Entrevistas · HTTP 204",
+    );
+  });
+
+  it("execução iniciada no GitHub (com quem iniciou) e pedido pelo SQL direto (20261020170000)", () => {
+    const linha = agenda({
+      chave_cadastrada: true,
+      ultimo_aceito: ha(30),
+      falhas_24h: 0,
+      sem_chave_24h: 0,
+      disparos: [
+        disparo("INICIADO", 5, {
+          workflow: "robo-empregare.yml",
+          origem: "GITHUB",
+          ator: "fulano",
+          mensagem: "modo normal · editais 93/2026",
+        }),
+        disparo("ACEITO", 20, {
+          workflow: "pre-classificacao.yml",
+          origem: "MANUAL",
+        }),
+        disparo("ACEITO", 30, { origem: "AGENDA" }),
+      ],
+    });
+    expect(linha.partes[0].historico.map((e) => e.mensagem)).toEqual([
+      "Robô da Empregare · iniciada no GitHub por fulano · modo normal · editais 93/2026",
+      "Pré-classificação · SQL direto, sem usuário · HTTP 204",
+      "Entrevistas · HTTP 204",
+    ]);
+    expect(linha.partes[0].historico[0].situacao).toBe("ok");
+  });
+
+  it("sem chave cadastrada no Vault, falhou mesmo sem pedido nenhum", () => {
+    const linha = agenda({
+      chave_cadastrada: false,
+      ultimo_aceito: null,
+      falhas_24h: 0,
+      sem_chave_24h: 0,
+      disparos: [],
+    });
+    expect(linha.situacao).toBe("falhou");
+    expect(linha.agenda.chaveCadastrada).toBe(false);
+  });
+
+  it("o último pedido recusado (chave expirada) é falha, com o código e a mensagem do GitHub", () => {
+    const linha = agenda({
+      chave_cadastrada: true,
+      ultimo_aceito: ha(70),
+      falhas_24h: 1,
+      sem_chave_24h: 0,
+      disparos: [
+        disparo("FALHOU", 10, {
+          workflow: "sincronizar-selecao.yml",
+          http: 401,
+          mensagem: "GitHub 401: Bad credentials",
+        }),
+        disparo("ACEITO", 70),
+      ],
+    });
+    expect(linha.situacao).toBe("falhou");
+    expect(linha.erro.mensagem).toBe(
+      "Seleção · HTTP 401 · GitHub 401: Bad credentials",
+    );
+  });
+
+  it("sem pedido aceito há mais de 2 h fica atrasada; pedido aberto não conta como falha", () => {
+    const linha = agenda({
+      chave_cadastrada: true,
+      ultimo_aceito: ha(PRAZO_AGENDA_DOS_ROBOS_MIN + 30),
+      falhas_24h: 0,
+      sem_chave_24h: 0,
+      disparos: [disparo("PEDIDO", 1)],
+    });
+    expect(linha.situacao).toBe("atrasada");
+  });
+});

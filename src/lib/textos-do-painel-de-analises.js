@@ -1,5 +1,5 @@
 /*
-  Parecer sob demanda e município/UF do painel de análises (`analises.html`).
+  Parecer sob demanda e município/UF de Análises curriculares (src/modulos/analises/).
 
   Desde 20260928200000 o payload da lista não traz o parecer (`analise`): ele
   era ~70% do payload da Saúde Indígena e nenhuma parte da lista o mostra. O

@@ -1,42 +1,31 @@
-import { readFileSync } from "node:fs";
-import { runInNewContext } from "node:vm";
 import { describe, expect, it } from "vitest";
-import { updateAraraGuide } from "../src/modules/arara-guide.js";
-import { definirPaginaDaAba } from "../src/lib/identidade-da-aba.js";
+import { obterPaginaDaAya } from "../src/modulos/aya/estado.js";
+import { criarNavegacao } from "../src/app/navegacao.js";
 
-const app = readFileSync("src/modules/legacy-app.js", "utf8");
-const start = app.indexOf("function setPageTitle(");
-const end = app.indexOf("function isSidebarLockedViewport(", start);
-
-describe("título e guia conectados à navegação real", () => {
+/*
+  A navegação real (src/app/navegacao.js) avisa a Aya da página aberta: é daí
+  que saem a saudação, as sugestões e o contexto das perguntas.
+*/
+describe("título e Aya conectados à navegação real", () => {
   it.each([
-    ["dashboard", "Saúde Indígena", "território"],
-    ["nucleo", "Editais", "cronograma"],
-    ["config", "Configurações", "acessos"],
-    ["analises", "Análises curriculares", "curriculares"],
-  ])(
-    "atualiza a orientação de %s sem renomear a aba",
-    (view, title, instruction) => {
-      document.body.innerHTML =
-        '<h1 id="pageTitle"></h1><p id="pageSubtitle"></p><div id="araraGuideHost"></div>';
-      const setPageTitle = runInNewContext(
-        `${app.slice(start, end)}; setPageTitle`,
-        {
-          document,
-          $: (id) => document.getElementById(id),
-          currentView: view,
-          updateAraraGuide,
-          definirPaginaDaAba,
-        },
-      );
-      setPageTitle(title, "Orientações da seção");
-      setPageTitle(title, "Orientações da seção");
-      expect(document.title).toBe("MONITORA");
-      expect(document.getElementById("pageTitle").textContent).toBe(title);
-      expect(document.querySelectorAll("[data-arara-guide]")).toHaveLength(1);
-      expect(document.getElementById("araraGuideHost").textContent).toContain(
-        instruction,
-      );
-    },
-  );
+    ["dashboard", "Saúde Indígena"],
+    ["nucleo", "Editais"],
+    ["recursos", "Recursos"],
+    ["config", "Configurações"],
+  ])("avisa a Aya de %s sem renomear a aba", (view, title) => {
+    document.body.innerHTML = `<h1 id="pageTitle"></h1><p id="pageSubtitle"></p>
+      <section id="page-dashboard" class="page"></section>
+      <section id="page-${view}" class="page"></section>`;
+    const navegacao = criarNavegacao({
+      janela: {},
+      obterPerfil: () => ({ id: "a", ativo: true, perfil: "admin" }),
+      confirmarSaida: () => true,
+      aplicarAtualizacao: () => false,
+    });
+    navegacao.irPara(view);
+    navegacao.definirTitulo(title, "Orientações da seção");
+    expect(document.title).toBe("MONITORA");
+    expect(document.getElementById("pageTitle").textContent).toBe(title);
+    expect(obterPaginaDaAya()).toMatchObject({ view, titulo: title });
+  });
 });

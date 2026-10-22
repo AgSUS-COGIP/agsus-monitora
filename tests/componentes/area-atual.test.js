@@ -9,8 +9,9 @@ import {
   obterDadosDoMonitoramento,
   redefinirDadosDoMonitoramento,
   soDosEditais,
-} from "../../src/componentes/dados-do-monitoramento.js";
+} from "../../src/componentes/dados-do-monitoramento.ts";
 import { resumoDasLinhas } from "../../src/lib/editais-do-nucleo.js";
+import { COLUNAS_DO_MONITORAMENTO } from "../../src/app/carga.js";
 
 /*
   A área atual (Saúde Indígena, SEDE ou Projetos) mora no store dos dados do
@@ -116,18 +117,10 @@ describe("resumoDasLinhas", () => {
 
 describe("as leituras de editais pedem a área", () => {
   // As colunas são listadas uma a uma; sem CO_AREA, SEDE e Projetos ficavam vazios.
-  it.each([
-    ["src/modules/legacy-app.js"],
-    ["src/modules/health-status-details.js"],
-  ])("%s", (arquivo) => {
-    const fonte = readFileSync(arquivo, "utf8");
-    const selects = [
-      ...fonte.matchAll(
-        /from\("TB_MONITORAMENTO_INDIGENA"\)[\s\S]*?\.select\(\s*"([^"]+)"/g,
-      ),
-    ];
-    expect(selects.length).toBeGreaterThan(0);
-    for (const [, colunas] of selects)
-      expect(colunas.split(",")).toContain("CO_AREA");
+  it("src/app/carga.js", () => {
+    expect(readFileSync("src/app/carga.js", "utf8")).toContain(
+      '"listar_monitoramento_operacional"',
+    );
+    expect(COLUNAS_DO_MONITORAMENTO.split(",")).toContain("CO_AREA");
   });
 });

@@ -17,7 +17,6 @@ let activeUserId = "";
 let lastActivityAt = 0;
 let lastPersistedActivityAt = 0;
 let tickHandle = null;
-let authSubscription = null;
 let broadcastChannel = null;
 let expirationInProgress = false;
 let warnedTenMinutes = false;
@@ -42,6 +41,8 @@ let currentIdleLimitMs = SESSION_IDLE_LIMIT_MS;
   auditoria, e reconstruir isso custaria muito mais do que a bandeira custa.
 */
 let encerrarPorInatividadeAtivo = false;
+/* Quem mostra a frase na tela de acesso (a sessão do app, src/app/sessao.js). */
+let avisarExpiracao = null;
 
 export function formatSessionRemaining(milliseconds) {
   const totalSeconds = Math.max(0, Math.ceil(Number(milliseconds || 0) / 1000));
@@ -113,24 +114,24 @@ function ensureSessionUi() {
         align-items: center;
         gap: 7px;
         padding: 8px 11px;
-        border: 1px solid rgba(15, 23, 42, .16);
+        border: 1px solid var(--border-subtle);
         border-radius: 999px;
-        background: rgba(255, 255, 255, .96);
-        color: #0f172a;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, .14);
+        background: var(--surface-card);
+        color: var(--text-primary);
+        box-shadow: var(--shadow-raised);
         font: 700 12px/1.2 var(--font-sans, "Geist", system-ui, sans-serif);
         backdrop-filter: blur(10px);
       }
       #agsusSessionTimer[hidden] { display: none !important; }
       #agsusSessionTimer[data-level="warning"] {
-        border-color: #d97706;
-        color: #92400e;
-        background: rgba(255, 251, 235, .98);
+        border-color: var(--state-warning);
+        color: var(--state-warning);
+        background-image: linear-gradient(var(--state-warning-soft), var(--state-warning-soft));
       }
       #agsusSessionTimer[data-level="critical"] {
-        border-color: #dc2626;
-        color: #991b1b;
-        background: rgba(254, 242, 242, .98);
+        border-color: var(--state-danger);
+        color: var(--state-danger);
+        background-image: linear-gradient(var(--state-danger-soft), var(--state-danger-soft));
       }
       #agsusSessionNotice {
         position: fixed;
@@ -141,17 +142,18 @@ function ensureSessionUi() {
         transform: translateX(-50%);
         padding: 12px 16px;
         border-radius: 12px;
-        background: #fffbeb;
-        color: #78350f;
-        border: 1px solid #f59e0b;
-        box-shadow: 0 12px 32px rgba(15, 23, 42, .2);
+        background-color: var(--surface-card);
+        background-image: linear-gradient(var(--state-warning-soft), var(--state-warning-soft));
+        color: var(--state-warning);
+        border: 1px solid var(--state-warning);
+        box-shadow: var(--shadow-overlay);
         font: 700 14px/1.4 var(--font-sans, "Geist", system-ui, sans-serif);
         text-align: center;
       }
       #agsusSessionNotice[data-level="critical"] {
-        background: #fef2f2;
-        color: #991b1b;
-        border-color: #ef4444;
+        background-image: linear-gradient(var(--state-danger-soft), var(--state-danger-soft));
+        color: var(--state-danger);
+        border-color: var(--state-danger);
       }
       #agsusSessionNotice[hidden] { display: none !important; }
     `;
@@ -243,12 +245,7 @@ function hideSessionUi() {
 function renderExpiredMessage() {
   showNotice(EXPIRED_MESSAGE, "critical", 0);
 
-  const loginMessage = document.getElementById("loginMsg");
-  if (loginMessage) {
-    loginMessage.textContent = EXPIRED_MESSAGE;
-    loginMessage.className = "alert warn";
-    loginMessage.classList.remove("hidden");
-  }
+  avisarExpiracao?.(EXPIRED_MESSAGE);
 
   const authWarning = document.getElementById("authWarning");
   if (authWarning) {
@@ -293,7 +290,7 @@ function createClientSessionId() {
   try {
     let value = window.sessionStorage.getItem(key);
     if (!value) {
-      value = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      value = globalThis.crypto.randomUUID();
       window.sessionStorage.setItem(key, value);
     }
     return value;
@@ -492,11 +489,13 @@ export function installSessionLifecycle({
   idleLimitMs = SESSION_IDLE_LIMIT_MS,
   // Padrão desligado desde 08/09/2026. Ver a nota no topo do arquivo.
   encerrarPorInatividade = false,
+  aoExpirar = null,
 } = {}) {
   if (installed || typeof window === "undefined") return;
   installed = true;
   currentIdleLimitMs = Math.max(60 * 1000, Number(idleLimitMs));
   encerrarPorInatividadeAtivo = Boolean(encerrarPorInatividade);
+  avisarExpiracao = typeof aoExpirar === "function" ? aoExpirar : null;
   ensureSessionUi();
 
   for (const eventName of ACTIVITY_EVENTS) {
@@ -518,7 +517,7 @@ export function installSessionLifecycle({
   const client = getSupabaseClient();
   if (!client) return;
 
-  const { data } = client.auth.onAuthStateChange((event, session) => {
+  client.auth.onAuthStateChange((event, session) => {
     if (event === "SIGNED_OUT") {
       stopActiveSession({ clearActivity: true });
       return;
@@ -527,8 +526,6 @@ export function installSessionLifecycle({
       startActiveSession(session);
     }
   });
-  authSubscription = data?.subscription || null;
-
   void client.auth.getSession().then(({ data: sessionData }) => {
     if (sessionData?.session?.user) startActiveSession(sessionData.session);
   });

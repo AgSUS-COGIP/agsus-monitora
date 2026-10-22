@@ -46,7 +46,8 @@ export function normalizarTexto(valor) {
 
 /**
  * Tipos de etapa, em ordem de precedência (o primeiro que casar vence).
- * `cor` é o nome do token CSS, definido em `styles/calendario-editais.css`.
+ * `cor` escolhe o token `--etapa-<cor>` (styles/tokens.css) pelo `data-cor`
+ * (tabela no fim de `modulos/cronograma/cronograma.css`).
  */
 export const TIPOS_DE_ETAPA = [
   /*

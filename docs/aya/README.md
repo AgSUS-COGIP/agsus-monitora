@@ -17,42 +17,31 @@ importa; o que falta é simplesmente omitido.
 **fonte:** interface do MONITORA
 ```
 
-| Campo       | Para que serve                                                               |
-| ----------- | ---------------------------------------------------------------------------- |
-| `perguntas` | termos que disparam o verbete, separados por `\|`                            |
-| `resposta`  | texto devolvido **sem passar pela IA**, quando a pergunta pede uma definição |
-| `fato`      | frase curta que entra no prompt, para a IA usar ao redigir outras respostas  |
-| `fonte`     | de onde veio; obrigatório quando não for a própria interface                 |
+| Campo       | Para que serve                                                                                                          |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `perguntas` | obrigatório: termos que disparam o verbete, separados por `\|` (o compilador acusa verbete sem perguntas)               |
+| `resposta`  | texto devolvido pela busca da Aya, sem gerar conteúdo                                                                   |
+| `fato`      | referência complementar; a busca responde apenas com o campo `resposta`                                                 |
+| `fonte`     | de onde veio; obrigatório quando não for a própria interface                                                            |
+| `abrir`     | opcional: botão que leva à tela citada (`recursos`, `config:acessos`… — ver `ACOES_DA_AYA` em `src/lib/aya-paginas.js`) |
 
-## As duas camadas, e por que elas são diferentes
+## Busca no navegador
 
-**`resposta` é determinística.** Sai em 1 ou 2 milissegundos, com o texto exato
-que você escreveu. A IA não participa, então não há como inventar. É onde deve
-morar tudo que não pode sair errado: siglas, definições, números oficiais.
-
-**`fato` entra no prompt.** A IA lê e usa para redigir. Ajuda, mas não garante:
-o modelo local é pequeno e já se contradisse tendo o fato correto à frente.
-Nunca ponha em `fato` algo que precise estar certo — ponha em `resposta`.
-
-## Regra de desempenho que não pode ser quebrada
-
-Os `fato` entram todos juntos, sempre iguais, no começo do prompt. Isso é
-deliberado: o llama.cpp reaproveita a avaliação de um prompt pelo prefixo comum
-com o anterior, e um prefixo estável custa 1,4s em vez de 22s por pergunta.
-
-Se algum dia alguém decidir montar o prompt escolhendo fatos conforme a
-pergunta, o prefixo muda a cada vez, o cache deixa de valer e **toda** pergunta
-volta a custar mais de 20 segundos nesta máquina. Medido, não estimado.
-
-Por isso: acrescentar verbete é barato; tornar o prompt variável é caro.
+A Aya usa apenas respostas escritas na base (`src/lib/busca-da-aya.js`). Acentos,
+plurais, sufixos comuns, sinônimos do domínio (`SINONIMOS` em
+`src/lib/termos-da-aya.js`) e pequenos erros de digitação são normalizados; o
+documento de origem permite preferir a tela atual. Uma pergunta igual a uma das
+`perguntas` do verbete recebe a resposta dele; por isso duas frases que a busca
+lê igual ("lista de aprovados" e "as listas dos aprovados") não podem estar em
+verbetes diferentes. Quando há ambiguidade, ela oferece até três perguntas em
+botões e um chamado pelo Gmail; pergunta sem relação com o MONITORA recebe a
+mensagem de fora do escopo. A Aya não usa IA: só devolve respostas escritas aqui.
 
 ## Quando o verbete precisa de fonte
 
 Se o conteúdo é sobre a interface do MONITORA, basta `fonte: interface do
 MONITORA` — a tela é a fonte. Para qualquer afirmação institucional, legal ou
-numérica, use um endereço oficial. A Aya erra menos que o modelo local porque o
-que ela afirma foi conferido; abrir mão disso é trocar a alucinação da máquina
-pela nossa.
+numérica, use um endereço oficial. As respostas são previamente conferidas; mantenha a fonte junto de cada verbete.
 
 ## Depois de editar
 

@@ -13,13 +13,13 @@ import {
   formatarNota,
   mediaPorCriterio,
   normalizarPayload,
+  normalizarAgendaDoPainel,
   notaDivergente,
   opcoesDosFiltros,
   pendenciasDasEntrevistas,
   rotuloCurtoDoCriterio,
-  textoDaUltimaCarga,
   topUnidades,
-} from "../src/lib/entrevistas-do-painel.js";
+} from "../src/lib/entrevistas-do-painel.ts";
 
 const CRITERIOS = [
   "HABILIDADE TÉCNICA INTERCULTURAL (Conhecimentos sobre a saúde indígena)",
@@ -182,6 +182,52 @@ describe("normalização do payload", () => {
     expect(vazio.ultimaCarga).toBeNull();
   });
 
+  it("lê objetos externos sem supor o formato das listas ou da análise", () => {
+    for (const invalido of [null, 7, "texto", [], true]) {
+      expect(normalizarPayload(invalido).entrevistas).toEqual([]);
+    }
+    const dados = normalizarPayload({
+      criterios: ["Postura"],
+      entrevistas: [
+        null,
+        7,
+        {
+          id: "e1",
+          candidato: "Ana",
+          analise: "inválida",
+          notas: [null, [0, "3"], [9, 2], [0, "NaN"]],
+        },
+      ],
+    });
+    expect(dados.entrevistas).toHaveLength(1);
+    expect(dados.entrevistas[0].notas).toEqual([
+      { indice: 0, criterio: "Postura", curto: "Postura", nota: 3 },
+    ]);
+    expect(dados.entrevistas[0].analise.nota).toBeNull();
+  });
+
+  it("normaliza a agenda externa e descarta entradas que não são objetos", () => {
+    expect(normalizarAgendaDoPainel(null)).toEqual([]);
+    expect(normalizarAgendaDoPainel({ itens: "inválido" })).toEqual([]);
+    const [agenda] = normalizarAgendaDoPainel({
+      itens: [
+        null,
+        7,
+        [],
+        { nome: "Ana", vaga: 7, inicio: "09:00", banca: "2" },
+      ],
+    });
+    expect(agenda).toEqual({
+      analise_id: null,
+      nome: "Ana",
+      vaga: null,
+      cargo: null,
+      data: null,
+      inicio: "09:00",
+      banca: 2,
+    });
+  });
+
   it("tolera diferença de até 0,05 na soma", () => {
     expect(notaDivergente(12.04, [{ nota: 4 }, { nota: 8 }])).toBe(false);
     expect(notaDivergente(12.06, [{ nota: 4 }, { nota: 8 }])).toBe(true);
@@ -293,13 +339,16 @@ describe("pendências, datas e CSV", () => {
   const { entrevistas, aprovadosSemEntrevista, ultimaCarga } =
     normalizarPayload(PAYLOAD);
 
-  it("conta as quatro pendências", () => {
+  it("conta as pendências (ligação e andamento)", () => {
     const p = pendenciasDasEntrevistas(entrevistas, aprovadosSemEntrevista);
     expect(Object.fromEntries(p.map((x) => [x.chave, x.valor]))).toEqual({
       sem_entrevista: 2,
       sem_analise: 1,
       sem_edital: 1,
       divergente: 1,
+      sem_comparecimento: 0,
+      sem_nota: 0,
+      sem_parecer: 0,
     });
   });
 
@@ -313,10 +362,6 @@ describe("pendências, datas e CSV", () => {
 
   it("formata a última carga", () => {
     expect(dataHoraBR("2026-09-29T10:30:00")).toBe("29/09/2026 10:30");
-    expect(textoDaUltimaCarga(ultimaCarga)).toBe(
-      "Dados da planilha de entrevistas · última carga 29/09/2026 10:30",
-    );
-    expect(textoDaUltimaCarga(null)).toContain("sem carga");
     expect(dataHoraBR("x")).toBe("");
   });
 
@@ -333,23 +378,44 @@ describe("pendências, datas e CSV", () => {
 });
 
 describe("registro da aba", async () => {
-  const { ABAS_DO_MENU } = await import("../src/lib/menu-lateral.js");
+  const { ABAS_DO_MENU } = await import("../src/lib/menu-lateral.ts");
   const { RESOURCES } = await import("../src/lib/permissoes-recursos.js");
   const { canViewEntrevistas, paginasPermitidas } =
     await import("../src/lib/access-roles.js");
   const { NOMES_DE_ICONES } = await import("../src/modules/icones.js");
 
-  it("Entrevistas vem depois de Análises e antes de Recursos, como beta", () => {
+  it("Painel de entrevistas e Conduzir entrevistas vêm depois de Recursos (painel e análise) e antes da Classificação e da Lista de aprovados, como beta", () => {
     const ids = ABAS_DO_MENU.map((aba) => aba.id);
-    expect(ids.indexOf("entrevistas")).toBe(ids.indexOf("analises") + 1);
+    expect(ids.indexOf("entrevistas")).toBe(
+      ids.indexOf("analisar-recursos") + 1,
+    );
+    expect(ids.indexOf("conduzir-entrevistas")).toBe(
+      ids.indexOf("entrevistas") + 1,
+    );
+    expect(ids.indexOf("classificacao")).toBe(
+      ids.indexOf("conduzir-entrevistas") + 1,
+    );
+    expect(
+      ABAS_DO_MENU.find((aba) => aba.id === "conduzir-entrevistas"),
+    ).toMatchObject({
+      rotulo: "Conduzir entrevistas",
+      view: "conduzir-entrevistas",
+      recurso: "entrevistas",
+      icone: "clipboard-pen-line",
+      ordem: 9,
+      beta: true,
+    });
+    expect(NOMES_DE_ICONES).toContain("clipboard-pen-line");
+    expect(ids.indexOf("aprovados")).toBe(ids.indexOf("classificacao") + 1);
     expect(ABAS_DO_MENU.find((aba) => aba.id === "entrevistas")).toMatchObject({
+      rotulo: "Painel de entrevistas",
       view: "entrevistas",
       recurso: "entrevistas",
       icone: "messages-square",
-      ordem: 6,
+      ordem: 8,
       beta: true,
     });
-    expect(ABAS_DO_MENU.find((aba) => aba.id === "recursos").ordem).toBe(7);
+    expect(ABAS_DO_MENU.find((aba) => aba.id === "recursos").ordem).toBe(6);
     expect(NOMES_DE_ICONES).toContain("messages-square");
     expect(RESOURCES).toContainEqual(["entrevistas", "Entrevistas"]);
   });
@@ -368,7 +434,7 @@ describe("registro da aba", async () => {
 
 describe("cópia guardada", async () => {
   const { PAINEL_DE_ENTREVISTAS, payloadMudou } =
-    await import("../src/lib/entrevistas-do-painel.js");
+    await import("../src/lib/entrevistas-do-painel.ts");
 
   it("chave por área, esquema 1 e payload com a lista", () => {
     expect(PAINEL_DE_ENTREVISTAS.chave({ area: "sede" })).toBe(

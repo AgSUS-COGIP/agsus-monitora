@@ -29,7 +29,7 @@ const PARTES_SIMPLES = Object.freeze(["config", "paineis", "mapa", "unidades"]);
 
 /*
   Partes que podem faltar sem invalidar a cópia: `abas` (o catálogo de abas do
-  menu) tem reserva no código (`ABAS_DO_MENU`, em `menu-lateral.js`), com o
+  menu) tem reserva no código (`ABAS_DO_MENU`, em `menu-lateral.ts`), com o
   mesmo menu. Falhou ou a função ainda não existe no banco, a parte fica `null`.
 */
 const PARTES_OPCIONAIS = Object.freeze(["abas"]);
@@ -84,14 +84,19 @@ export function dadosDasRespostas(respostas) {
     const resposta = respostas?.[parte];
     dados[parte] = !resposta || resposta.error ? null : (resposta.data ?? null);
   }
+  // A versão do mapa (listar_mapa_da_saude_indigena): a próxima entrada pergunta só se mudou.
+  dados.versaoDoMapa = respostas.mapa.versao ?? null;
   const monitoramento = respostas.monitoramento;
   if (!monitoramento) {
     dados.monitoramento = null;
     return dados;
   }
-  const [payload, tabela] = monitoramento;
-  if (!tabela || tabela.error) return null;
-  dados.monitoramento = { payload: payload ?? null, linhas: tabela.data ?? [] };
+  if (monitoramento.error) return null;
+  // A `versao` do banco vai junto: a próxima entrada pergunta só se mudou.
+  dados.monitoramento = {
+    linhas: monitoramento.data ?? [],
+    versao: monitoramento.versao ?? null,
+  };
   return dados;
 }
 
@@ -101,14 +106,19 @@ export function consultasDosDados(dados) {
   return {
     config: resposta(dados.config),
     paineis: resposta(dados.paineis),
-    mapa: resposta(dados.mapa),
+    mapa: Promise.resolve({
+      data: dados.mapa,
+      versao: dados.versaoDoMapa ?? null,
+      error: null,
+    }),
     unidades: resposta(dados.unidades),
     abas: resposta(dados.abas ?? null),
     monitoramento: dados.monitoramento
-      ? Promise.resolve([
-          dados.monitoramento.payload,
-          { data: dados.monitoramento.linhas, error: null },
-        ])
+      ? Promise.resolve({
+          data: dados.monitoramento.linhas,
+          versao: dados.monitoramento.versao ?? null,
+          error: null,
+        })
       : null,
   };
 }

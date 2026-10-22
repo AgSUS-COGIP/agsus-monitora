@@ -1,7 +1,7 @@
 # `tests/`
 
 - **Vitest** (`*.test.js`, ambiente jsdom) — `vitest.config.js` inclui `tests/**/*.test.js`.
-  Subpastas: `lib/`, `modules/`, `componentes/` (React), `analises/`; a maioria fica na raiz,
+  Subpastas: `lib/`, `modules/`, `componentes/` (React), `modulos/` (telas de src/modulos/), `ui/`, `analises/`; a maioria fica na raiz,
   nomeada pelo comportamento (`terras-do-dsei.test.js`, `sobreposicao-na-tela.test.js`).
 - **React** — o teste continua `.test.js`, sem JSX: monte com a função de montagem do componente e
   envolva cada mudança em `act` (de `react`), com `globalThis.IS_REACT_ACT_ENVIRONMENT = true`.
@@ -17,7 +17,7 @@
 
 ```bash
 npx vitest run tests/<arquivo>.test.js     # um arquivo — o padrão
-npx vitest run tests/analises/             # uma pasta
+npx vitest run tests/modulos/              # uma pasta
 npx vitest run -t "trecho do nome"         # um caso
 npm test                                   # tudo (só antes de entregar)
 npm run test:smoke                         # Playwright smoke (lento)

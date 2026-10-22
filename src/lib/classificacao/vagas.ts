@@ -1,0 +1,306 @@
+import type {
+  BaseDaVaga,
+  CandidatoDaVaga,
+  ConvocacaoDoEdital,
+  QuadroDaVaga,
+  VagaMontada,
+  VagasPorModalidade,
+} from "./tipos-das-vagas.ts";
+/*
+  As vagas de um edital para a classificação: o código da vaga (das análises)
+  ligado à linha do quadro de vagas do edital (TB_QUADRO_VAGA_EDITAL, ligação
+  feita no banco por private."FC_QUADRO_DA_VAGA"), com as vagas imediatas por
+  modalidade e o cabeçalho no padrão das publicações:
+
+    VAGA 169681 - Cirurgião Dentista - Área de abrangência DSEI Xingu - DSEI Xingu - 3 vagas (2 AC + 1 Pretos e Pardos + CR)
+
+  Toda linha do quadro aparece, mesmo sem candidato (a publicação lista todas
+  as vagas, com "Não houve candidatos aptos.").
+
+  As vagas por modalidade vêm, nesta ordem: do quadro do edital (quando traz a
+  divisão), da configuração de convocação do edital (Lista de aprovados ›
+  Convocação) ou dos percentuais da regra — estas duas pela MESMA conta da
+  convocação (`derivarQuadro`; ver convocacao-do-edital.ts).
+*/
+import { codigosDaModalidade, semAcento } from "./catalogo.ts";
+import {
+  modeloDaRegra,
+  vagasDaConvocacao,
+  vagasPelaConta,
+} from "./convocacao-do-edital.ts";
+import { numeroBR } from "./numeros.ts";
+import { normalizarRegra } from "./regra.ts";
+
+const texto = (valor: unknown) => String(valor ?? "").trim();
+
+/** As vagas por modalidade de uma linha do quadro: `{ AC: 2, PP: 1 }` (null = só CR). */
+export function vagasDoQuadroPorModalidade(
+  modalidades: Record<string, unknown> | null | undefined,
+): VagasPorModalidade | null {
+  const saida: VagasPorModalidade = {};
+  let explicitas = false;
+  for (const [nome, valor] of Object.entries(modalidades || {})) {
+    const codigo = codigosDaModalidade(nome)[0];
+    if (!codigo) continue;
+    const n = numeroBR(valor);
+    if (n !== null) explicitas = true;
+    saida[codigo] = (saida[codigo] || 0) + (n ?? 0);
+  }
+  return explicitas ? saida : null;
+}
+
+function arredondarCota(valor: number, modo: string) {
+  if (modo === "PARA_CIMA") return Math.ceil(valor - 1e-9);
+  if (modo === "PARA_BAIXO") return Math.floor(valor + 1e-9);
+  return Math.floor(valor + 0.5 + 1e-9);
+}
+
+/*
+  Vagas por modalidade quando o quadro só traz o total: a reserva pelos
+  percentuais da regra (só com o mínimo de vagas da regra), o resto na ampla —
+  pela conta da convocação (`derivarQuadro`). Só "fração para baixo", que a
+  convocação não tem, usa a conta daqui.
+*/
+export function vagasPelosPercentuais(
+  total: number,
+  regra: unknown,
+): VagasPorModalidade {
+  const r = normalizarRegra(regra);
+  const modelo = modeloDaRegra(r);
+  if (modelo) return limparZeros(vagasPelaConta(total, modelo));
+  const saida: VagasPorModalidade = { AC: total };
+  if (!total || total < Math.max(1, r.cotas.minimo_vagas_reserva)) return saida;
+  for (const m of r.modalidades) {
+    if (m.codigo === "AC" || !m.percentual) continue;
+    const n = arredondarCota((total * m.percentual) / 100, m.arredondamento);
+    if (n > 0) {
+      saida[m.codigo] = n;
+      saida.AC = (saida.AC ?? 0) - n;
+    }
+  }
+  saida.AC = Math.max(0, saida.AC ?? 0);
+  return saida;
+}
+
+function limparZeros(vagas: VagasPorModalidade): VagasPorModalidade {
+  return Object.fromEntries(
+    Object.entries(vagas).filter(([codigo, n]) => codigo === "AC" || n > 0),
+  );
+}
+
+function nomeDaModalidade(
+  codigo: string,
+  regra: ReturnType<typeof normalizarRegra>,
+) {
+  if (codigo === "AC") return "AC";
+  return regra.modalidades.find((m) => m.codigo === codigo)?.nome || codigo;
+}
+
+/** "3 vagas (2 AC + 1 Pretos e pardos + CR)" ou "Cadastro Reserva". */
+export function textoDasVagas(
+  vaga: Pick<VagaMontada, "total" | "porModalidade" | "cadastroReserva">,
+  regraBruta: unknown,
+) {
+  const regra = normalizarRegra(regraBruta);
+  const total = vaga.total ?? null;
+  if (total === null) return "";
+  if (!total) return "Cadastro Reserva";
+  const partes = Object.entries(vaga.porModalidade || {})
+    .filter(([, n]) => n > 0)
+    .map(([codigo, n]) => `${n} ${nomeDaModalidade(codigo, regra)}`);
+  if (vaga.cadastroReserva) partes.push("CR");
+  return `${total} ${total === 1 ? "vaga" : "vagas"}${partes.length ? ` (${partes.join(" + ")})` : ""}`;
+}
+
+/*
+  O cabeçalho da vaga na publicação: "VAGA 169673 - Analista … - DSEI Xingu
+  (Sede) - DSEI Xingu - 1 vaga (1 AC + CR)". A unidade vem mesmo quando a
+  lotação já a cita (como o 83/2026 publicou); só sai se for igual à lotação.
+*/
+export function cabecalhoDaVaga(
+  vaga: Omit<VagaMontada, "cabecalho">,
+  regra: unknown,
+  unidade = "",
+) {
+  const partes = [
+    vaga.codigo ? `VAGA ${vaga.codigo}` : "VAGA",
+    vaga.cargo,
+    vaga.lotacao,
+    unidade &&
+    semAcento(texto(vaga.lotacao)).toLowerCase() !==
+      semAcento(texto(unidade)).toLowerCase()
+      ? unidade
+      : "",
+    textoDasVagas(vaga, regra),
+  ].filter((parte) => texto(parte));
+  return partes.join(" - ");
+}
+
+/**
+ * As vagas do edital: uma por código de vaga das análises (com a linha do
+ * quadro que a maioria dos candidatos daquela vaga liga) e uma por linha do
+ * quadro sem candidato. Ordem: código da vaga, depois a ordem do quadro.
+ */
+export function montarVagas({
+  candidatos = [],
+  quadro = [],
+  regra,
+  unidade = "",
+  convocacao = null,
+}: {
+  candidatos?: readonly CandidatoDaVaga[];
+  quadro?: readonly QuadroDaVaga[];
+  regra?: unknown;
+  unidade?: string;
+  convocacao?: ConvocacaoDoEdital | null;
+}): VagaMontada[] {
+  const r = normalizarRegra(regra);
+  const linhas = new Map((quadro || []).map((q) => [String(q.id), q]));
+  const porCodigo = new Map<
+    string,
+    { cargos: Map<string, number>; quadros: Map<string, number> }
+  >();
+  for (const c of candidatos) {
+    const codigo = texto(c.vaga);
+    if (!codigo) continue;
+    if (!porCodigo.has(codigo))
+      porCodigo.set(codigo, { cargos: new Map(), quadros: new Map() });
+    const v = porCodigo.get(codigo);
+    if (!v) continue;
+    const cargo = texto(c.cargo);
+    if (cargo) v.cargos.set(cargo, (v.cargos.get(cargo) || 0) + 1);
+    const q = c.quadroId ? String(c.quadroId) : "";
+    if (q) v.quadros.set(q, (v.quadros.get(q) || 0) + 1);
+  }
+  const maisComum = (mapa: Map<string, number>) =>
+    [...mapa.entries()].sort(
+      (a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1),
+    )[0]?.[0] || "";
+
+  const usados = new Set<string>();
+  const vagas: Omit<VagaMontada, "cabecalho">[] = [];
+  const completar = (
+    base: BaseDaVaga,
+    linha: QuadroDaVaga | undefined,
+  ): Omit<VagaMontada, "cabecalho"> => {
+    const daConvocacao = base.codigo
+      ? vagasDaConvocacao(convocacao, base.codigo)
+      : null;
+    if (!linha) {
+      if (daConvocacao)
+        return {
+          ...base,
+          total: daConvocacao.total,
+          porModalidade: daConvocacao.porModalidade,
+          cadastroReserva: false,
+          semQuadro: false,
+          origemDasVagas: "CONVOCACAO",
+        };
+      return {
+        ...base,
+        total: null,
+        porModalidade: null,
+        cadastroReserva: false,
+        semQuadro: true,
+        origemDasVagas: null,
+      };
+    }
+    usados.add(String(linha.id));
+    const total = Math.max(0, Math.trunc(numeroBR(linha.vagas_imediatas) ?? 0));
+    const explicitas = vagasDoQuadroPorModalidade(linha.modalidades);
+    // A configuração de convocação só vale se fala do mesmo total de vagas.
+    const convocacaoCasa = daConvocacao && daConvocacao.total === total;
+    return {
+      ...base,
+      cargo: texto(linha.cargo) || base.cargo,
+      lotacao: texto(linha.lotacao),
+      quadroId: String(linha.id),
+      ordemQuadro: numeroBR(linha.ordem) ?? 0,
+      total,
+      porModalidade:
+        explicitas ||
+        (convocacaoCasa
+          ? daConvocacao.porModalidade
+          : vagasPelosPercentuais(total, r)),
+      cadastroReserva: Boolean(linha.cadastro_reserva),
+      semQuadro: false,
+      origemDasVagas: explicitas
+        ? "QUADRO"
+        : convocacaoCasa
+          ? "CONVOCACAO"
+          : "REGRA",
+      totalNaConvocacao:
+        daConvocacao && !convocacaoCasa ? daConvocacao.total : null,
+    };
+  };
+
+  for (const [codigo, v] of [...porCodigo.entries()].sort((a, b) =>
+    a[0].localeCompare(b[0], "pt-BR", { numeric: true }),
+  )) {
+    const linha = linhas.get(maisComum(v.quadros));
+    vagas.push(
+      completar(
+        { chave: codigo, codigo, cargo: maisComum(v.cargos), lotacao: "" },
+        linha,
+      ),
+    );
+  }
+  for (const linha of [...linhas.values()].sort(
+    (a, b) => (numeroBR(a.ordem) ?? 0) - (numeroBR(b.ordem) ?? 0),
+  )) {
+    if (usados.has(String(linha.id))) continue;
+    vagas.push(
+      completar(
+        {
+          chave: `quadro:${linha.id}`,
+          codigo: "",
+          cargo: texto(linha.cargo),
+          lotacao: "",
+        },
+        linha,
+      ),
+    );
+  }
+  return vagas.map((v) => ({
+    ...v,
+    cabecalho: cabecalhoDaVaga(v, r, unidade),
+  }));
+}
+
+/**
+ * O nível escrito no nome do cargo: "(Nível Superior)", "Nível Médio"… e,
+ * sem isso, o cargo que COMEÇA com "Técnico" ("Técnico de Enfermagem do
+ * Trabalho"; "Analista Técnico" não é técnico). Null quando o nome não diz.
+ */
+export function nivelNoNomeDoCargo(cargo: unknown): string | null {
+  const c = semAcento(cargo).replace(/\s+/g, " ").trim();
+  const escrito = /\bnivel (superior|tecnico|medio|fundamental)\b/.exec(c);
+  if (escrito?.[1]) return escrito[1];
+  return /^tecnic[oa]\b/.test(c) ? "tecnico" : null;
+}
+
+/**
+ * O nível da vaga (superior, técnico…): pela regra (niveis_por_cargo), pelo
+ * nome do cargo ("(Nível Superior)", "Técnico de…"), pela categoria e, por
+ * fim, o nível padrão da regra.
+ */
+export function nivelDaVaga(
+  { cargo = "", categoria = "" }: { cargo?: unknown; categoria?: unknown },
+  regra: unknown,
+): string | null {
+  const r = normalizarRegra(regra);
+  const c = semAcento(cargo);
+  // O cargo COMEÇA com o termo ("Técnico de Enfermagem"; "Analista Técnico" não é técnico).
+  const achado = r.documental.niveis_por_cargo.find(
+    (n) => n.termo && c.trim().startsWith(semAcento(n.termo).trim()),
+  );
+  if (achado) return achado.nivel;
+  const doNome = nivelNoNomeDoCargo(cargo);
+  if (doNome) return doNome;
+  const cat = semAcento(categoria);
+  if (/superior/.test(cat)) return "superior";
+  if (/tecnic/.test(cat)) return "tecnico";
+  if (/medio/.test(cat)) return "medio";
+  if (/fundamental/.test(cat)) return "fundamental";
+  return r.documental.nivel_padrao || null;
+}

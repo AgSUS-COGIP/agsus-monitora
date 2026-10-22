@@ -72,7 +72,7 @@
 /* ── Menu em áreas ────────────────────────────────────────────────────────── */
 
 .menu-lateral {
-  /* Tem de bater com ALTURA_DA_PILULA em src/lib/menu-lateral.js. */
+  /* Tem de bater com ALTURA_DA_PILULA em src/lib/menu-lateral.ts. */
   --menu-pilula-altura: 28px;
   --menu-icone: 18px;
   display: grid;
@@ -192,21 +192,46 @@
 */
 .menu-item__selo {
   flex: 0 0 auto;
-  padding: 0 var(--space-1-5);
-  border: 1px solid currentColor;
+  margin-left: auto;
+  padding: 1px 5px;
   border-radius: var(--radius-pill);
   background: var(--menu-fundo-ativo);
   color: var(--menu-realce);
-  font-size: var(--text-xs);
+  font-size: 9px;
   font-weight: 700;
-  line-height: 1.4;
-  letter-spacing: 0.04em;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  opacity: 0.85;
 }
 
 .menu-item.active {
   background: var(--menu-fundo-ativo);
   color: var(--menu-realce);
   font-weight: 600;
+}
+
+/*
+  Blocos da área (Acompanhamento e Processo seletivo): título pequeno em
+  caixa alta, na cor suave, alinhado ao ícone das páginas. Cada bloco tem a
+  sua linha-guia.
+*/
+.menu-bloco__titulo {
+  margin: var(--space-2) 0 2px;
+  margin-inline-start: calc(var(--space-2) + var(--menu-icone) / 2);
+  padding: 0 calc(var(--space-2) * 2 + 1px);
+  overflow: hidden;
+  color: var(--menu-texto-suave);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.menu-bloco:first-of-type > .menu-bloco__titulo {
+  margin-top: var(--space-1);
 }
 
 @media (max-width: 900px) {
@@ -302,7 +327,7 @@
     padding: 0 var(--space-3);
     border-radius: var(--radius-md);
     background: var(--menu-pilula-fundo);
-    color: var(--text-inverse);
+    color: var(--menu-pilula-texto);
     font-size: var(--text-sm);
     font-weight: 600;
     line-height: var(--menu-pilula-altura);
@@ -407,6 +432,20 @@
     box-shadow: 0 0 0 2px var(--sidebar-custom-bg, var(--card));
   }
 
+  /*
+    No trilho, o título do bloco sai de vista (continua nomeando a lista
+    para o leitor de tela) e, entre um bloco e outro, fica um traço curto.
+  */
+  body.sidebar-collapsed .menu-area--direta .menu-bloco + .menu-bloco::before {
+    content: "";
+    display: block;
+    width: 20px;
+    height: 1px;
+    margin: var(--space-1) auto;
+    background: var(--menu-borda);
+  }
+
+  body.sidebar-collapsed .menu-area--direta .menu-bloco__titulo,
   body.sidebar-collapsed .menu-area--direta .menu-item__selo,
   body.sidebar-collapsed .menu-area--direta .menu-item__rotulo {
     position: absolute;
@@ -666,7 +705,7 @@
     padding: var(--space-1) var(--space-3);
     border-radius: var(--radius-md);
     background: var(--menu-pilula-fundo);
-    color: var(--text-inverse);
+    color: var(--menu-pilula-texto);
     font-size: var(--text-sm);
     font-weight: 600;
     line-height: 1.4;
@@ -706,10 +745,14 @@
   display: inline-grid;
   flex: 0 0 auto;
   place-items: center;
+  color: var(--state-warning);
+}
+/* Barra configurada escura: o âmbar clareado (o do estado sumia no escuro). */
+body.sidebar-theme-dark .menu-manutencao {
   color: color-mix(
     in srgb,
     var(--color-warning-600) 55%,
-    var(--color-neutral-0)
+    var(--cor-do-texto-sobre-escuro)
   );
 }
 

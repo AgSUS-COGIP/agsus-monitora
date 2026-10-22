@@ -28,4 +28,22 @@ describe("csv-security", () => {
       'nome;analise\nMaria;\'=HYPERLINK("https://example.com")\nJoão;Regular',
     );
   });
+
+  it("não parte células entre aspas que têm ; ou quebra de linha", () => {
+    const csv = 'nome;obs\r\nMaria;"faltou;\n- reagendar; -5"\r\n';
+    expect(sanitizeCsvDocument(csv)).toBe(csv);
+  });
+
+  it("protege a célula entre aspas que começa com fórmula", () => {
+    // Exportação que põe toda célula entre aspas (ex.: exportCSV do legado).
+    const csv = '"Edital";"Obs"\n"01/2026";"=HYPERLINK(""https://x"")"';
+    expect(sanitizeCsvDocument(csv)).toBe(
+      '"Edital";"Obs"\n"01/2026";"\'=HYPERLINK(""https://x"")"',
+    );
+  });
+
+  it("não protege de novo a célula já protegida", () => {
+    const csv = "a;\"'=1+1\";'-2";
+    expect(sanitizeCsvDocument(csv)).toBe(csv);
+  });
 });

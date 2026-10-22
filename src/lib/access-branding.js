@@ -2,9 +2,16 @@ export const DEFAULT_ACCESS_BRANDING = Object.freeze({
   logoUrl: "/assets/agsus-logo.webp",
   backgroundUrl: "/assets/access-background-default.svg",
   panelColor: "#c296eb",
-  greeting: "Seja bem-vindo(a) à AgSUS",
-  instruction: "Acesse com sua conta institucional.",
+  greeting: "Boas-vindas!",
+  /* Texto do botão quando `auth_google_button_text` está vazio. */
+  buttonText: "Entrar com Google",
 });
+
+/*
+  A linha de apoio acima do botão da tela de acesso. Constante: não há campo
+  para ela em Configurações (saudação e texto do botão é que são configuráveis).
+*/
+export const ACCESS_INSTRUCTION = "Acesse com sua conta institucional.";
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 

@@ -29,16 +29,23 @@ textarea,
   touch-action: manipulation;
 }
 
+/* No celular o cabeçalho sobe para 10030 (app.css: --z-header 10010). */
+body.mobile-app .app .top {
+  z-index: 10030;
+}
+
 @media (max-width: 900px) {
   body {
-    background: #f4f7fb;
+    background: var(--surface-raised);
     padding-top: var(--mobile-safe-top);
     padding-bottom: var(--mobile-safe-bottom);
   }
 
+  /* Caixa de marcar e de opção ficam no tamanho natural: a área de toque é o
+     rótulo inteiro que as envolve. :where() mantém a especificidade de antes. */
   button,
   .btn,
-  input,
+  input:where(:not([type="checkbox"], [type="radio"])),
   select,
   textarea,
   [role="button"] {
@@ -46,7 +53,7 @@ textarea,
     font-size: 16px;
   }
 
-  input,
+  input:where(:not([type="checkbox"], [type="radio"])),
   select,
   textarea {
     width: 100%;
@@ -73,28 +80,16 @@ textarea,
     padding-right: 20px !important;
   }
 
-  .google-login-btn,
-  .access-submit-btn,
-  .access-account-actions .btn {
+  .google-login-btn {
     width: 100%;
     justify-content: center;
   }
 
-  .access-request-grid,
-  .form-grid,
-  .filter-grid,
-  .filters-grid,
-  .kpi-grid,
-  .cards-grid,
-  .dashboard-grid,
-  .panel-grid {
+  .form-grid {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
-  .app-shell,
-  .layout,
-  .main-layout,
-  .page-shell {
+  .layout {
     min-height: 100dvh;
   }
 
@@ -105,7 +100,7 @@ textarea,
     width: min(86vw, 320px) !important;
     max-width: 320px;
     height: auto !important;
-    /* Acima do cabeçalho (system-ui-fixes.css: body.mobile-app .app .top = 10030):
+    /* Acima do cabeçalho (body.mobile-app .app .top = 10030, no início deste arquivo):
        com 10020 o topo cobria a logo e o primeiro grupo da gaveta aberta. */
     z-index: 10036;
     transform: translateX(-105%);
@@ -133,9 +128,7 @@ textarea,
 
   .main,
   main,
-  .main-content,
-  #conteudoPrincipal,
-  .content-area {
+  #conteudoPrincipal {
     width: 100% !important;
     min-width: 0 !important;
     margin-left: 0 !important;
@@ -144,10 +137,7 @@ textarea,
     padding-bottom: calc(20px + var(--mobile-safe-bottom)) !important;
   }
 
-  .topbar,
-  .header,
-  .page-header,
-  .app-header {
+  .header {
     position: sticky;
     top: var(--mobile-safe-top);
     z-index: 900;
@@ -158,50 +148,14 @@ textarea,
     backdrop-filter: blur(14px);
   }
 
-  .topbar h1,
-  .header h1,
-  .page-header h1,
-  .app-header h1 {
+  .header h1 {
     font-size: clamp(1.05rem, 4.5vw, 1.35rem) !important;
     line-height: 1.2;
   }
 
-  .topbar-actions,
-  .header-actions,
-  .page-actions,
-  .toolbar,
-  .actions-row {
-    display: flex;
-    gap: 8px;
-    max-width: 100%;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
-  }
-
-  .topbar-actions::-webkit-scrollbar,
-  .header-actions::-webkit-scrollbar,
-  .page-actions::-webkit-scrollbar,
-  .toolbar::-webkit-scrollbar,
-  .actions-row::-webkit-scrollbar {
-    display: none;
-  }
-
-  .topbar-actions > *,
-  .header-actions > *,
-  .page-actions > *,
-  .toolbar > *,
-  .actions-row > * {
-    flex: 0 0 auto;
-  }
-
   .card,
   .panel,
-  .widget,
-  .kpi-card,
-  .filter-card,
-  .table-card,
-  .chart-card {
+  .table-card {
     min-width: 0;
     border-radius: 16px !important;
     box-shadow: 0 5px 18px rgba(15, 35, 60, 0.07) !important;
@@ -209,45 +163,15 @@ textarea,
 
   .card,
   .panel,
-  .widget,
-  .filter-card,
-  .table-card,
-  .chart-card {
+  .table-card {
     padding: 14px !important;
   }
 
-  .kpi-grid,
-  .cards-grid {
-    gap: 10px !important;
-  }
-
-  .kpi-card {
-    min-height: 112px;
-  }
-
-  .filters,
-  .filter-panel,
-  .filter-card {
+  .filters {
     width: 100%;
   }
 
-  .filters-actions,
-  .filter-actions {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .filters-actions > *,
-  .filter-actions > * {
-    width: 100%;
-  }
-
-  .table-wrap,
-  .table-container,
-  .data-table-wrap,
-  .responsive-table,
-  .analises-table-wrap {
+  .table-wrap {
     width: 100%;
     max-width: calc(100vw - 24px);
     overflow-x: auto !important;
@@ -283,9 +207,6 @@ textarea,
   }
 
   .modal-card,
-  .dialog-card,
-  .drawer,
-  .modal-content,
   [role="dialog"] > div {
     width: 100% !important;
     max-width: 100% !important;
@@ -305,22 +226,9 @@ textarea,
     max-width: none !important;
   }
 
-  .leaflet-container,
-  #map,
-  #mapa {
-    min-height: 320px;
-    height: min(52dvh, 480px) !important;
-    border-radius: 16px;
-  }
-
   iframe {
     max-width: 100%;
     min-height: 70dvh;
-  }
-
-  .hide-on-mobile,
-  .desktop-only {
-    display: none !important;
   }
 }
 
@@ -341,26 +249,16 @@ textarea,
 
   .main,
   main,
-  .main-content,
-  #conteudoPrincipal,
-  .content-area {
+  #conteudoPrincipal {
     padding-left: 8px !important;
     padding-right: 8px !important;
   }
 
   .card,
   .panel,
-  .widget,
-  .filter-card,
-  .table-card,
-  .chart-card {
+  .table-card {
     border-radius: 14px !important;
     padding: 12px !important;
-  }
-
-  .filters-actions,
-  .filter-actions {
-    grid-template-columns: 1fr;
   }
 
   .btn,

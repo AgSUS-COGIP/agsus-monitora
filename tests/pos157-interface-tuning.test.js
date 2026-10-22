@@ -5,7 +5,18 @@ const css = readFileSync("src/styles/post157-interface-tuning.css", "utf8");
 const main = readFileSync("src/main.js", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
-const governance = readFileSync("src/modules/config-governance.js", "utf8");
+// A escolha da logo e da cor é de Configurações › Aparência (React).
+const marcaDaBarra = readFileSync("src/lib/marca-da-barra-lateral.js", "utf8");
+const imagens = readFileSync("src/modulos/configuracoes/imagens.js", "utf8");
+const aparencia = readFileSync(
+  "src/modulos/configuracoes/aparencia.jsx",
+  "utf8",
+);
+const publicacao = readFileSync(
+  "src/lib/publicacao-de-configuracoes.js",
+  "utf8",
+);
+const governance = readFileSync("src/modulos/configuracoes/estado.js", "utf8");
 const migration = readFileSync(
   "supabase/migrations/20260909114500_platform_assets_6mb.sql",
   "utf8",
@@ -21,14 +32,13 @@ describe("primeiro paint da tela de login", () => {
 });
 
 /*
-  A densidade do KPI saiu daqui. Este arquivo sobrepunha health-reference-kpis.css
-  com !important e chegou a deixar o rótulo com 9px. Agora o dono é o próprio
-  health-reference-kpis.css, com valores de tokens.css: a faixa contínua do
-  Design System AgSUS (11.7), com rótulo em `label` e valor em `metric`. Sem
-  card nenhum sobrescrevendo, os tamanhos não precisam mais de !important.
+  A densidade do KPI saiu daqui. Este arquivo sobrepunha os KPIs da Visão geral
+  com !important e chegou a deixar o rótulo com 9px. Hoje a Visão geral é React
+  (src/modulos/visao-geral/) e o KPI é o card compacto de src/ui/ (`Kpi`,
+  ui.css), com valores de tokens.css: rótulo em `caption` e valor em `metric`.
 */
 describe("densidade do dashboard Saúde Indígena", () => {
-  const kpis = readFileSync("src/styles/health-reference-kpis.css", "utf8");
+  const kpis = readFileSync("src/ui/ui.css", "utf8");
 
   it("não é mais sobrescrita aqui", () => {
     expect(css).not.toContain("#page-dashboard .kpi");
@@ -56,7 +66,8 @@ describe("overview inicial dos mapas", () => {
     expect(mapGuard).toContain("map.__agsusOverviewMode = true");
     expect(mapGuard).toContain("HEALTH_MAP_OVERVIEW_MAX_ZOOM = 4.5");
     expect(mapGuard).toContain("maxZoom: HEALTH_MAP_OVERVIEW_MAX_ZOOM");
-    expect(mapGuard).toContain("padding: [10, 10]");
+    // A folga cobre a maior bolha (src/lib/enquadramento-do-brasil.js).
+    expect(mapGuard).toContain("padding: folgaDoBrasil");
     expect(mapGuard).toContain("isBrazilOverviewBounds");
   });
 
@@ -77,8 +88,10 @@ describe("overview inicial dos mapas", () => {
 
 describe("branding independente da sidebar", () => {
   it("usa chaves próprias", () => {
-    expect(sidebar).toContain('"ui_sidebar_logo_url"');
-    expect(sidebar).toContain('"ui_sidebar_background_color"');
+    expect(marcaDaBarra).toContain('"ui_sidebar_logo_url"');
+    expect(marcaDaBarra).toContain('"ui_sidebar_background_color"');
+    expect(sidebar).toContain("CHAVE_DO_LOGO_DA_BARRA");
+    expect(sidebar).toContain("CHAVE_DA_COR_DA_BARRA");
   });
 
   it("deriva contraste da cor escolhida", () => {
@@ -87,25 +100,25 @@ describe("branding independente da sidebar", () => {
   });
 
   it("oferece upload de logo como o gestor de fundo do login", () => {
-    expect(sidebar).toContain('type="file"');
-    expect(sidebar).toContain("Escolher imagem");
-    expect(sidebar).toContain("validateAccessBackgroundFile");
-    expect(sidebar).toContain("client.storage");
-    expect(sidebar).toContain("SIDEBAR_LOGO_FOLDER");
-    expect(sidebar).toContain("loadSidebarLogoGallery");
+    expect(aparencia).toContain('type="file"');
+    expect(aparencia).toContain("Escolher imagem");
+    expect(imagens).toContain("validateAccessBackgroundFile");
+    expect(imagens).toContain(".storage?.from(ACCESS_BACKGROUND_BUCKET)");
+    expect(imagens).toContain("PASTA_DOS_LOGOS_DA_BARRA");
+    expect(imagens).toContain("carregarLogos");
   });
 
   it("mantém upload da logo dentro da pasta branding já autorizada", () => {
-    expect(sidebar).toContain(
-      "const SIDEBAR_LOGO_FOLDER = `${ACCESS_BACKGROUND_FOLDER}/sidebar`",
+    expect(marcaDaBarra).toContain(
+      "export const PASTA_DOS_LOGOS_DA_BARRA = `${ACCESS_BACKGROUND_FOLDER}/sidebar`",
     );
-    expect(sidebar).toContain("ACCESS_BACKGROUND_BUCKET");
+    expect(imagens).toContain("ACCESS_BACKGROUND_BUCKET");
   });
 
   it("permite restaurar padrão e apagar logos não selecionadas", () => {
-    expect(sidebar).toContain("cfgSidebarLogoRestore");
-    expect(sidebar).toContain("deleteStoredSidebarLogo");
-    expect(sidebar).toContain("Restaurar padrão");
+    expect(imagens).toContain("restaurarLogo");
+    expect(imagens).toContain("apagarLogo");
+    expect(aparencia).toContain("Restaurar padrão");
   });
 
   it("não embrulha window.saveAdminSettings", () => {
@@ -128,24 +141,26 @@ describe("branding independente da sidebar", () => {
   });
 
   it("as chaves entram no mesmo p_config_rows da publicação", () => {
-    expect(sidebar).toContain("export function linhasDeConfiguracaoDaSidebar");
-    expect(governance).toContain("...linhasDeConfiguracaoDaSidebar()");
-  });
-
-  it("não desreferencia o cliente quando não há ambiente", () => {
-    const init = sidebar.slice(
-      sidebar.indexOf("export function initSidebarBranding"),
+    expect(publicacao).toContain('"ui_sidebar_logo_url"');
+    expect(publicacao).toContain('"ui_sidebar_background_color"');
+    expect(governance).toContain(
+      "const linhasDaPublicacao = () => linhasDasSecoes(valoresAtuais());",
     );
-    const guarda = init.indexOf("if (!client) return;");
-    const uso = init.indexOf("client.auth.onAuthStateChange");
-    expect(guarda).toBeGreaterThan(-1);
-    expect(guarda).toBeLessThan(uso);
   });
 
-  it("é inicializado antes do guard de Configurações", () => {
+  it("não relê a configuração: logo e cor vêm da leitura da entrada", () => {
+    // O Supabase emite SIGNED_IN a cada volta da aba; a leitura própria era ~2.700/dia.
+    expect(sidebar).not.toContain('.from("TB_CONFIGURACAO")');
+    expect(sidebar).not.toContain("onAuthStateChange");
+    expect(sidebar).toContain("export function aplicarMarcaDaConfiguracao");
+    const configuracao = readFileSync("src/app/configuracao.js", "utf8");
+    expect(configuracao).toContain("pintarBarra(valores)");
+  });
+
+  it("é inicializado antes da moldura de Configurações", () => {
     expect(main.indexOf("initSidebarBranding();")).toBeGreaterThan(-1);
     expect(main.indexOf("initSidebarBranding();")).toBeLessThan(
-      main.indexOf("initConfigGovernance();"),
+      main.indexOf("montarConfiguracoes();"),
     );
   });
 });
@@ -172,7 +187,9 @@ describe("o reenquadramento não descarta o zoom da pessoa", () => {
       mapGuard.indexOf('map.on("resize"'),
       mapGuard.indexOf('map.on("drag move zoomend'),
     );
-    expect(handler).toContain("if (!emOverview(map)) return;");
+    expect(handler).toContain(
+      "if (enquadramentoProprio || !emOverview(map)) return;",
+    );
   });
 });
 

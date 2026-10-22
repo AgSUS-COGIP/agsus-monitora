@@ -52,7 +52,6 @@ const CHAVES_DE_BRANDING = {
   auth_access_logo_url: "logoUrl",
   auth_access_panel_color: "panelColor",
   auth_access_greeting: "greeting",
-  auth_access_instruction: "instruction",
   auth_google_button_text: "buttonText",
   auth_access_texto_modo: "textoModo",
 };

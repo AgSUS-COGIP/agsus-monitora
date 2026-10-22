@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { criarNavegacao } from "../src/app/navegacao.js";
 
 import {
   shouldCheckForUpdate,
@@ -86,5 +87,59 @@ describe("ciclo web sem oferta de instalação", () => {
         alreadyReloading: true,
       }),
     ).toBe(false);
+  });
+});
+
+describe("versão nova espera a troca de página", () => {
+  it("sem versão nova esperando, não recarrega", async () => {
+    const { aplicarAtualizacaoPendente, marcarAtualizacaoPendenteParaTeste } =
+      await import("../src/modules/pwa-lifecycle.js");
+    marcarAtualizacaoPendenteParaTeste(false);
+    let recargas = 0;
+    expect(aplicarAtualizacaoPendente(() => (recargas += 1))).toBe(false);
+    expect(recargas).toBe(0);
+  });
+
+  it("com versão nova esperando, recarrega uma vez só", async () => {
+    const { aplicarAtualizacaoPendente, marcarAtualizacaoPendenteParaTeste } =
+      await import("../src/modules/pwa-lifecycle.js");
+    marcarAtualizacaoPendenteParaTeste(true);
+    let recargas = 0;
+    expect(aplicarAtualizacaoPendente(() => (recargas += 1))).toBe(true);
+    expect(aplicarAtualizacaoPendente(() => (recargas += 1))).toBe(false);
+    expect(recargas).toBe(1);
+  });
+
+  it("a troca de controlador não recarrega na hora (quem digita não perde o texto)", () => {
+    const trecho = lifecycleSource.slice(
+      lifecycleSource.indexOf('addEventListener("controllerchange"'),
+    );
+    const handler = trecho.slice(
+      0,
+      trecho.indexOf("export function aplicarAtualizacaoPendente"),
+    );
+    expect(handler).not.toContain("location.reload");
+    expect(handler).toContain("atualizacaoPendente = true");
+  });
+
+  it("o navigate aplica a versão nova depois da guarda de alterações não salvas", () => {
+    // src/app/navegacao.js: a guarda pergunta primeiro; recusada, nada recarrega.
+    const ordem = [];
+    const navegacao = criarNavegacao({
+      janela: { location: { reload() {} } },
+      confirmarSaida: () => {
+        ordem.push("guarda");
+        return ordem.length > 1;
+      },
+      aplicarAtualizacao: () => {
+        ordem.push("versao");
+        return true;
+      },
+    });
+    navegacao.irPara("nucleo");
+    expect(ordem).toEqual(["guarda"]);
+    navegacao.irPara("nucleo");
+    expect(ordem).toEqual(["guarda", "guarda", "versao"]);
+    expect(navegacao.obter().view).toBe("dashboard");
   });
 });

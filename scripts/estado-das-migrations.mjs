@@ -8,7 +8,11 @@ import {
   O QUE JÁ CORREU NO BANCO, E O QUE FALTA
 
   Este repositório tem migrations em `supabase/migrations/` e correções de dados
-  em `supabase/correcoes/`, e até agora nada dizia quais tinham corrido. A
+  em `supabase/correcoes/`, e até agora nada dizia quais tinham corrido.
+  `supabase/migrations-historicas/` também é lida: o registro guarda essas pelo
+  caminho de origem ("migrations/<arquivo>"), e elas aparecem como aplicadas
+  (ou como históricas sem registro), nunca como "por aplicar".
+  `supabase/descartadas/` não é lida: nada ali se aplica. A
   resposta vivia na memória de quem aplicou.
 
   O custo disso foi medido: na revisão de setembro de 2026 a pergunta "preciso
@@ -106,7 +110,7 @@ async function principal() {
   const noDisco = ficheirosNoDisco();
   if (!noDisco.length) {
     console.log(
-      "Nenhum ficheiro .sql em supabase/migrations/ nem em supabase/correcoes/.",
+      "Nenhum ficheiro .sql em supabase/migrations/, supabase/migrations-historicas/ nem em supabase/correcoes/.",
     );
     return;
   }
@@ -143,14 +147,14 @@ async function principal() {
     throw erro;
   }
 
-  const { aplicados, pendentes, divergentes, orfaos } = classificar(
-    noDisco,
-    registados,
-  );
+  const { aplicados, pendentes, divergentes, orfaos, historicasSemRegistro } =
+    classificar(noDisco, registados);
 
   if (pedidoDeRegisto) {
     const caminho = pedidoDeRegisto.slice("--registrar=".length);
-    const alvo = noDisco.find((f) => f.caminho === caminho);
+    const alvo = noDisco.find(
+      (f) => f.caminho === caminho || f.arquivo === caminho,
+    );
     if (!alvo) {
       console.error(`Não há ficheiro ${caminho} em supabase/.`);
       process.exitCode = 1;
@@ -171,6 +175,11 @@ async function principal() {
   console.log(
     `  divergentes   ${String(divergentes.length).padStart(4)}   ficheiro mudou depois de aplicado`,
   );
+  if (historicasSemRegistro.length) {
+    console.log(
+      `  históricas    ${String(historicasSemRegistro.length).padStart(4)}   em migrations-historicas/, sem registro — não reaplicar`,
+    );
+  }
   if (orfaos.length) {
     console.log(
       `  órfãos        ${String(orfaos.length).padStart(4)}   registados no banco, sem ficheiro no disco`,
@@ -194,7 +203,7 @@ async function principal() {
       "MUDARAM DEPOIS DE APLICADOS — o banco não tem o que o ficheiro diz:",
     );
     for (const f of divergentes) {
-      console.log(`  ${f.caminho}   aplicado em ${f.registo.aplicada}`);
+      console.log(`  ${f.arquivo}   aplicado em ${f.registo.aplicada}`);
     }
     console.log("");
     console.log(
@@ -203,6 +212,17 @@ async function principal() {
     console.log(
       "  --registrar=<caminho>. Se mudou o efeito, é migration nova.",
     );
+  }
+
+  /*
+    Efeito anterior ao registro, depois renomeado ou removido por migration
+    posterior (ver supabase/migrations-historicas/README.md). Listadas para
+    ninguém estranhar a contagem; reaplicar recriaria objetos antigos.
+  */
+  if (historicasSemRegistro.length) {
+    console.log("");
+    console.log("HISTÓRICAS SEM REGISTRO (não reaplicar):");
+    for (const f of historicasSemRegistro) console.log(`  ${f.arquivo}`);
   }
 
   if (orfaos.length) {

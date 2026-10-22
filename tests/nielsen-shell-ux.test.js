@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { criarEstadoDasConfiguracoes } from "../src/modulos/configuracoes/estado.js";
 import {
   deveAlternarTema,
+  hasUnsavedConfiguration,
   OPCOES_DE_TEMA,
-  presenceStateFromUi,
   themeControlState,
 } from "../src/modules/nielsen-shell-ux.js";
 
@@ -37,30 +38,19 @@ describe("Nielsen shell UX", () => {
     expect(deveAlternarTema("escuro", true)).toBe(false);
   });
 
-  it("distingue presença pronta, carregando e indisponível", () => {
-    expect(presenceStateFromUi("2 online")).toEqual({
-      state: "ready",
-      compactLabel: "2 online",
-      detail: "2 pessoas online.",
-    });
-
-    expect(
-      presenceStateFromUi("Sincronizando", { elapsedMs: 2_000 }),
-    ).toMatchObject({ state: "loading", compactLabel: "Sincronizando" });
-
-    expect(
-      presenceStateFromUi("Sincronizando", { elapsedMs: 15_000 }),
-    ).toMatchObject({
-      state: "error",
-      compactLabel: "Presença indisponível",
-    });
-  });
-
-  it("informa quando o navegador está offline", () => {
-    expect(presenceStateFromUi("Sincronizando", { online: false })).toEqual({
-      state: "offline",
-      compactLabel: "Offline",
-      detail: "Sem conexão com a internet.",
-    });
+  /*
+    O aviso de "alterações não salvas" do Sair procurava um indicador que não
+    existe mais (#configWorkspaceDirtyTop) e nunca aparecia. Agora pergunta ao
+    estado das Configurações, o mesmo que o navigate consulta.
+  */
+  it("o aviso do Sair segue as alterações não salvas das Configurações", () => {
+    const estado = criarEstadoDasConfiguracoes({ supabase: () => null });
+    estado.definirValoresCarregados({ page_title: "Saúde Indígena" });
+    expect(hasUnsavedConfiguration(estado)).toBe(false);
+    estado.mudarCampo("page_title", "Outro título");
+    expect(hasUnsavedConfiguration(estado)).toBe(true);
+    estado.mudarCampo("page_title", "Saúde Indígena");
+    expect(hasUnsavedConfiguration(estado)).toBe(false);
+    expect(hasUnsavedConfiguration(null)).toBe(false);
   });
 });

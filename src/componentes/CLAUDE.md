@@ -1,74 +1,43 @@
 # `src/componentes/` — componentes React
 
-O front está migrando para React **por componente**. Já migraram a barra lateral, o Núcleo
-(Editais, com o formulário e o cronograma), o Calendário de Editais e a Lista de Aprovados (com a
-convocação e os modais); o resto continua em `src/modules/` até migrar. JavaScript com JSX (`.jsx`), sem TypeScript. Nomes em
-português, arquivo em kebab-case, componente em PascalCase.
+O front está migrando para **um único app React** (alvo, regras e ordem em
+`docs/arquitetura-react.md`). Todas as telas são módulos do app em `src/modulos/` (Editais,
+Cronograma, Aprovados, Recursos, Entrevistas, Análises, Seleção, Classificação, Configurações, Acessos,
+Módulos e abas…). Aqui fica só a moldura: barra lateral, busca global (Ctrl+K), Status das
+atualizações e os dados compartilhados do monitoramento. Toda tela monta por
+`montarModulo` (`src/app/`) e usa os componentes visuais de
+`src/ui/`; as pastas daqui mudam para `src/modulos/<nome>/` módulo a módulo. JavaScript com JSX
+(`.jsx`) e migração gradual para TypeScript (`.tsx`); Status das atualizações já está
+migrado em `saude-das-cargas/`; barra lateral, Busca global, dados compartilhados e hook de área atual também estão em TypeScript. Contratos e
+limites estão nos READMEs das pastas e em seus `tipos.ts`. Nomes em português,
+arquivo em kebab-case, componente em PascalCase.
 
 ## Mapa
 
 ```
 icone.jsx                    <Icone nome="…"> — Lucide, do mesmo registro de src/modules/icones.js
-modal.jsx                    <Modal>: portal no body, Esc, clique no fundo, foco preso e devolvido
+modal.jsx                    só reexporta o <Modal> de src/ui/modal.jsx (importe de src/ui/ no código novo)
+aviso-de-versao/             faixa "Há uma versão nova" no topo (montarAvisoDeVersao); regra em src/app/aviso-de-versao.ts
+busca-global/                busca Ctrl+K (montarBuscaGlobal); a escolha vai ao legado por evento
 multi-select-busca.jsx       <MultiSelectBusca>: seleção múltipla com busca, controlada (o único do app)
-dados-do-monitoramento.js    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_UNIDADE que o legado
+dados-do-monitoramento.ts    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_UNIDADE que o legado
                              carrega e publica aqui (loadData / loadUnidades), e a área atual
                              (definida pelo menu; linhasDaArea, soDosEditais); sem React
-usar-area-atual.js           hook: a área atual, as linhas dela e os ids dos editais (Editais,
+usar-area-atual.ts           hook: a área atual, as linhas dela e os ids dos editais (Editais,
                              Cronograma e Lista de aprovados recortam por eles)
 barra-lateral/
-  barra-lateral.jsx          <BarraLateral> e montarBarraLateral() (chamada em src/main.js)
-  estado.js                  estado externo da barra (sem React): o legado empurra, a barra lê
-  menu-de-areas.jsx          áreas (acordeão; recolhida, painel flutuante) e itens
-  alca-de-recolher.jsx       o botão único de recolher: na marca (> 900px) ou no cabeçalho (portal)
-  rodape.jsx                 seletor Claro/Escuro, Sair e versão
-  usar-ambiente.js           hooks do que o legado controla: classe de body, largura, tema
-nucleo/                      a página #page-nucleo (Editais da Equipe Núcleo)
-  nucleo.jsx                 <Nucleo> (tabela e busca) e montarNucleo() → window.nucleoController
-  estado.js                  resumo dos cronogramas, filtro dos indicadores, modal aberto, reinício
-                             na troca de usuário e o salvamento governado; sem React
-  resumo.js                  cache do get_nucleo_cronograma_resumo (30 s, uma carga por vez)
-  painel-operacional.jsx     "Cronogramas e alertas": indicadores que filtram a tabela
-  modal-do-edital.jsx        formulário do edital (unidades USI × CORES, indicadores automáticos)
-  editor-de-cronograma.jsx   etapas, modelo padrão, datas em lote, cópia de outro edital, validação,
-                             status excepcional, motivo e histórico
-  modal-linha-do-tempo.jsx   consulta do cronograma, só leitura
-calendario-editais/          a página #page-calendario (só leitura dos cronogramas do Núcleo)
-  calendario-editais.jsx     <CalendarioEditais> e montarCalendarioEditais() → window.calendarioEditaisController
-  estado.js                  etapas carregadas (1 + N RPCs, cache de 60 s); sem React
-  partes.jsx                 grade do mês, linha de etapa, linha do tempo, popup do dia
-acessos/                     Configurações › Acessos (#acessosApp, dentro da seção "acessos")
-  acessos.jsx                <Acessos> (abas Usuários · Grupos · Coordenações) e montarAcessos()
-                             → window.acessosController
-  estado.js                  pessoas, rascunho (a guarda de saída pergunta aqui), pedidos, gaveta e as
-                             RPCs de acesso, uma ação por vez; sem React
-  aba-usuarios.jsx           Ativos: grupo (tag) + um select por módulo ("Do grupo" ou individual),
-                             filtros, barra de salvar com motivo · Pendentes: solicitacoes.jsx
-  solicitacoes.jsx           pedidos de acesso: aprovar com grupo + coordenação (ou áreas) / recusar
-  gaveta-do-usuario.jsx      gaveta da pessoa: áreas, painéis e "como a pessoa vê" (só leitura)
-  aba-grupos.jsx             lista + detalhe: nível de cada módulo no grupo (só admin global)
-  aba-coordenacoes.jsx       lista + detalhe: área, responsável, unidades, editais (só admin global)
-  partes.jsx                 controle segmentado, lista mestre, cabeçalho da gaveta, campo de motivo
-lista-aprovados/             a página #page-approved e os seus modais
-  lista-aprovados.jsx        <ListaAprovados> e montarListaAprovados() → window.aprovadosController
-  estado.js                  candidatos, listas, configuração de convocação, modal aberto e as ações
-                             que escrevem no banco (RPC e Storage), uma por vez (`executar`, `acao`); sem React
-  aba-aprovados.jsx          KPIs, filtros e tabela paginada
-  aba-convocacao.jsx         ordem de convocação por vaga
-  modais.jsx                 status do candidato (com anexar PDF), anexos do candidato e inclusão sub judice
-  modal-listas-do-edital.jsx XLSX da lista (importar, situação, remover) + aba de convocação
-  formulario-de-convocacao.jsx  modelo de regras e vagas imediatas do edital (rascunho local)
-  editor-de-modelo.jsx       categorias, percentuais, arredondamento e cascata
-  partes.jsx                 KPI, selo de status, ação de status, ícone de PDF dos anexos, paginação, CampoEditavel, e o carregamento
-                             sem tela cheia: LinhasEsqueleto, ErroAoCarregar, BotaoDeAcao (estado no botão)
+  barra-lateral.tsx          <BarraLateral> e montarBarraLateral() (chamada em src/main.js)
+  estado.ts                  estado externo da barra (sem React): o legado empurra, a barra lê
+  menu-de-areas.tsx          áreas (acordeão; recolhida, painel flutuante) e itens
+  alca-de-recolher.tsx       o botão único de recolher: na marca (> 900px) ou no cabeçalho (portal)
+  rodape.tsx                 seletor Claro/Escuro, Sair e versão
+  usar-ambiente.ts           hooks do que o legado controla: classe de body e largura (o tema é src/app/tema.js)
 ```
 
-Lógica pura fica em `src/lib/`: `menu-lateral.js` (barra), `editais-do-nucleo.js` e
-`cronograma-do-edital.js` (Núcleo), `calendario-editais.js` (calendário),
-`lista-aprovados-rules.js`, `lista-convocacao-rules.js` e `configuracao-de-convocacao.js`
-(aprovados). CSS: `src/styles/barra-lateral.css` e `platform-shell.css` (barra);
-`calendario-editais.css`, `lista-aprovados.css`, `lista-convocacao.css` e `multi-select-busca.css`
-(páginas — as classes e os ids são os de antes da migração).
+Lógica pura fica em `src/lib/`: `menu-lateral.ts` (barra), `busca-global.ts` (busca) e
+`linhas-do-monitoramento.ts` (validação dos dados compartilhados). CSS: `src/styles/barra-lateral.css`,
+`platform-shell.css` (barra) e `multi-select-busca.css`. Editais, Cronograma e Lista de aprovados
+moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS e testes lá).
 
 ## Como o legado fala com um componente
 
@@ -79,10 +48,10 @@ Lógica pura fica em `src/lib/`: `menu-lateral.js` (barra), `editais-do-nucleo.j
   é só da tela (filtros, página, aba, rascunho) é estado do componente e sobrevive a trocar de página.
 - **O perfil é relido a cada `render()`**: as permissões mudam sem aviso do legado.
 - **Dado que o legado carrega e o React lê** (linhas do monitoramento, unidades) passa por
-  `dados-do-monitoramento.js`: o legado publica, o componente assina. O Núcleo não relê a view.
+  `dados-do-monitoramento.ts`: o legado publica, o componente assina. O Núcleo não relê a view.
 
 - **Nunca pelo DOM do componente.** O legado empurra dados para o estado externo
-  (`barra-lateral/estado.js`: `atualizarMenuLateral`, `marcarItemAtivoNoMenu`) e o componente lê com
+  (`barra-lateral/estado.ts`: `atualizarMenuLateral`, `marcarItemAtivoNoMenu`) e o componente lê com
   `useSyncExternalStore`. O arquivo de estado não importa React, então o legado pode importá-lo.
 - **O que o componente não percebe sozinho chega por evento** em `document`
   (`src/lib/eventos-da-barra-lateral.js`): barra recolhida/expandida, tema trocado. Nada de
@@ -98,18 +67,21 @@ Lógica pura fica em `src/lib/`: `menu-lateral.js` (barra), `editais-do-nucleo.j
 
 ## Regras
 
-- Página migrada e confirmada pelo usuário: o código antigo sai inteiro (módulo, trecho do
-  `legacy-app.js`, marcação do `index.html`, testes antigos). Ver "Código legado" em `../../CLAUDE.md`.
+- Página migrada e confirmada pelo usuário: o código antigo sai inteiro (módulo,
+  marcação do `index.html`, testes antigos). Ver "Código legado" em `../../CLAUDE.md`.
 
-- Handler de navegação chama `window.navigate` **na hora do clique**: `config-governance.js` e
-  `nielsen-shell-ux.js` embrulham essa função.
-- Monte com `flushSync` quando código legado precisar do DOM logo depois (ver `montarBarraLateral`).
+- Handler de navegação chama `window.navigate` **na hora do clique** (não guarde a referência na
+  montagem): é o `navigate` do legado, que pergunta às Configurações antes de sair.
+- Monte sempre por `montarModulo` (`src/app/montar-modulo.jsx`: StrictMode + ErrorBoundary); passe
+  `{ flushSync: true }` quando código legado precisar do DOM logo depois (ver `montarBarraLateral`).
+- Visual novo vem de `src/ui/` (Topo, Filtros, Kpi, CardDeGrafico, TabelaInfinita, Gaveta, Modal,
+  Aviso, Campo, Selo…), só com tokens; não recrie em cada tela. Sem textos genéricos (ver o CLAUDE.md raiz).
 - `StrictMode` ligado: efeito tem de limpar o que instala.
 - Sem `innerHTML` e sem `dangerouslySetInnerHTML`: texto vai como filho.
 - Modal em React é sempre `<Modal>` (portal): um modal dentro da `<section>` sumiria com a página
   escondida — o de listas do edital abre a partir do Núcleo.
 - Campo cujo texto não é o valor (número, lista separada por `;`) usa `CampoEditavel`
-  (`lista-aprovados/partes.jsx`): amarrar o `value` ao valor lido apaga o que a pessoa digita.
+  (`src/modulos/aprovados/partes.tsx`): amarrar o `value` ao valor lido apaga o que a pessoa digita.
 - Tabela nova avisa `agsus:content-updated` depois de desenhar: é o que põe os rótulos do modo
   cartão (`src/modules/mobile-table-cards.js`, ≤ 900px).
 - Teste em `tests/componentes/` (`.test.js`, sem JSX, com `act`) — modelo em

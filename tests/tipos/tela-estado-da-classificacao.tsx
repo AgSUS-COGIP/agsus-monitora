@@ -1,0 +1,43 @@
+import {
+  TelaDeClassificacao,
+  montarClassificacao,
+} from "../../src/modulos/classificacao/classificacao.tsx";
+import { criarEstadoDaClassificacao } from "../../src/modulos/classificacao/estado.ts";
+import { criarRascunhoDaRegra } from "../../src/app/rascunho-da-regra.ts";
+import type {
+  EstadoDaAgenda,
+  SnapshotDaClassificacao,
+  ListaRegistrada,
+} from "../../src/modulos/classificacao/tipos-do-estado.ts";
+function conferir(agenda: EstadoDaAgenda, lista: ListaRegistrada) {
+  const estado = criarEstadoDaClassificacao({
+    toast: (mensagem, tom) => {
+      void [mensagem, tom];
+    },
+    supabase: {
+      rpc: async (nome, argumentos) => ({
+        data: { nome, argumentos },
+        error: null,
+      }),
+    },
+  });
+  const snapshot: SnapshotDaClassificacao = estado.obter();
+  const rascunho = criarRascunhoDaRegra({ tipo: "CLASSIFICACAO" });
+  const tela = (
+    <TelaDeClassificacao estado={estado} agenda={agenda} rascunho={rascunho} />
+  );
+  // @ts-expect-error O tipo do rascunho é ANALISE ou CLASSIFICACAO.
+  void criarRascunhoDaRegra({ tipo: "OUTRA" });
+  void montarClassificacao({ secao: null, areaAtual: () => "sede" });
+  void estado.publicarLista(lista, null);
+  // @ts-expect-error Publicar confere a geração inteira: pede o registro, não só o id.
+  void estado.publicarLista(lista.id, null);
+  // @ts-expect-error O sinalizador de salvamento precisa ser booleano.
+  const invalido: SnapshotDaClassificacao = { ...snapshot, salvando: "true" };
+  // @ts-expect-error A versão da regra é numérica.
+  void estado.renomearVersao("2", "Versão", "Motivo");
+  // @ts-expect-error Um registro de lista precisa de identificador.
+  const listaInvalida: ListaRegistrada = { tipo: "FINAL" };
+  return { tela, invalido, listaInvalida };
+}
+void conferir;

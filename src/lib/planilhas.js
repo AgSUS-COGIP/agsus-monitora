@@ -25,7 +25,7 @@ export const PLANILHAS = Object.freeze({
     arquivoNoRepositorio:
       "public/assets/modelo-importacao-lista-aprovados.xlsx",
     usadaEm: Object.freeze([
-      "src/componentes/lista-aprovados/modal-listas-do-edital.jsx (#approvedImportModelLink)",
+      "src/modulos/aprovados/modal-listas-do-edital.tsx (#approvedImportModelLink)",
     ]),
   }),
 
@@ -33,23 +33,13 @@ export const PLANILHAS = Object.freeze({
     nome: "Lista de aprovados importada (XLSX por edital)",
     onde: "Supabase Storage",
     bucket: "listas-aprovados",
-    usadaEm: Object.freeze(["src/componentes/lista-aprovados/estado.js"]),
+    usadaEm: Object.freeze(["src/modulos/aprovados/estado.ts"]),
   }),
 
   origemDaAnalise: Object.freeze({
     nome: "Planilha de origem de cada análise (Google Sheets)",
     onde: "id por linha, no campo origem_arquivo_id da análise",
-    usadaEm: Object.freeze(["src/analises/analises-app.js"]),
-  }),
-
-  lotacoes: Object.freeze({
-    nome: "Planilha oficial de Lotações",
-    onde: "Google Sheets",
-    // PENDENTE: id da planilha (o trecho entre /d/ e /edit do link). Enquanto for
-    // null, `scripts/validar-localizacoes.mjs` exige o caminho de um .xlsx local.
-    // Para o download funcionar, a planilha precisa estar acessível por link.
-    idGoogle: null,
-    usadaEm: Object.freeze(["scripts/validar-localizacoes.mjs"]),
+    usadaEm: Object.freeze(["src/lib/analises-curriculares.ts"]),
   }),
 
   entrevistados: Object.freeze({
@@ -60,6 +50,16 @@ export const PLANILHAS = Object.freeze({
     aba: "Entrevistados",
     area: "saude-indigena",
     usadaEm: Object.freeze(["scripts/sincronizar-entrevistas.mjs"]),
+  }),
+
+  auditoriaDaSelecao: Object.freeze({
+    nome: "Auditoria (funil da seleção por vaga)",
+    onde: "Google Sheets",
+    // Lida pela conta de serviço do Google (leitor na planilha), não por link.
+    // Mistura áreas: a área de cada vaga sai do edital/unidade, no banco.
+    idGoogle: "1ZGZRl8m9A2T2lWlQkxKWq-xqQECLAkbqUuihMkOtLyk",
+    aba: "Resultado",
+    usadaEm: Object.freeze(["scripts/sincronizar-selecao.mjs"]),
   }),
 });
 

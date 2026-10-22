@@ -46,11 +46,11 @@ function chavesSelecionadas(selecionados) {
  * @param {object} linha
  * @param {Record<string, Iterable<string>>} estado  valores selecionados por campo
  * @param {object} [opcoes]
- * @param {string[]} [opcoes.campos]           campos considerados (padrão: chaves do estado)
+ * @param {readonly string[]} [opcoes.campos]           campos considerados (padrão: chaves do estado)
  * @param {string} [opcoes.ignorarCampo]       campo desconsiderado (para montar as opções dele)
  * @param {(linha: object) => boolean} [opcoes.excluir]  regra extra de exclusão (ex.: encerrados)
  * @param {string} [opcoes.dsei]               chave do DSEI selecionado no mapa
- * @param {(linha: object) => string} [opcoes.chaveDsei]  chave do DSEI da linha
+ * @param {(linha: Record<string, unknown>) => string} [opcoes.chaveDsei]  chave do DSEI da linha
  */
 export function linhaAtende(linha, estado, opcoes = {}) {
   const { ignorarCampo = "", excluir, dsei = "", chaveDsei } = opcoes;
@@ -139,31 +139,4 @@ export function podarSelecoes(linhas, estado, opcoes = {}) {
     mudou = true;
   }
   return mudou;
-}
-
-/**
- * Assinatura do que o mapa desenha: por DSEI, processos, vagas e ociosas.
- * Se não mudou, o mapa não precisa ser redesenhado. Contar só linhas deixava
- * bolhas e lista com vagas antigas quando a troca mantinha a mesma contagem.
- */
-export function chaveDeRenderDoMapa(linhas, chaveDsei, prefixo = "") {
-  const porDsei = new Map();
-  (linhas || []).forEach((linha) => {
-    const chave = chaveDsei(linha);
-    if (!chave) return;
-    const atual = porDsei.get(chave) || [0, 0, 0];
-    atual[0] += 1;
-    atual[1] += Number(linha.vagas_total) || 0;
-    atual[2] += Number(linha.vagas_ociosas) || 0;
-    porDsei.set(chave, atual);
-  });
-  return (
-    prefixo +
-    Array.from(porDsei.entries())
-      .sort((a, b) => a[0].localeCompare(b[0], "pt-BR"))
-      .map(([chave, [processos, vagas, ociosas]]) =>
-        [chave, processos, vagas, ociosas].join(":"),
-      )
-      .join("|")
-  );
 }

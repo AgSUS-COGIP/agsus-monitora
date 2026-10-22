@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { request } from "node:http";
+import { connect } from "node:net";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -23,9 +24,6 @@ import {
 const PAGINAS = {
   "index.html":
     '<!doctype html><title>MONITORA</title><script src="/assets/main-AbCd1234.js"></script>',
-  "analises.html": "<!doctype html><title>Análises</title>",
-  "entrevistas.html": "<!doctype html><title>Entrevistas</title>",
-  "recursos.html": "<!doctype html><title>Recursos</title>",
   "auth/callback.html": "<!doctype html><title>Callback</title>",
 };
 
@@ -91,12 +89,6 @@ describe("servidor web do MONITORA", () => {
   it.each([
     ["/", "index.html"],
     ["/index.html", "index.html"],
-    ["/analises", "analises.html"],
-    ["/analises.html", "analises.html"],
-    ["/entrevistas", "entrevistas.html"],
-    ["/entrevistas.html", "entrevistas.html"],
-    ["/recursos", "recursos.html"],
-    ["/recursos.html", "recursos.html"],
     ["/auth/callback", "auth/callback.html"],
     ["/auth/callback.html", "auth/callback.html"],
   ])("entrega %s idêntica ao build (%s)", async (url, arquivo) => {
@@ -147,6 +139,14 @@ describe("servidor web do MONITORA", () => {
     "/package.json",
     "/server/servidor.ts",
     "/unknown",
+    "/recursos",
+    "/recursos.html",
+    "/analises",
+    "/analises.html",
+    "/entrevistas",
+    "/entrevistas.html",
+    "/selecao",
+    "/selecao.html",
     "/assets/",
     "/icons/",
     "/assets/../.env",
@@ -158,9 +158,28 @@ describe("servidor web do MONITORA", () => {
   });
 
   it("recusa escrita nas páginas", async () => {
-    const res = await pedir("/analises", { method: "POST" });
+    const res = await pedir("/index.html", { method: "POST" });
     expect(res.status).toBe(405);
     expect(res.headers.allow).toBe("GET, HEAD");
+  });
+
+  it("responde 400 a um alvo que não vira URL, sem derrubar o processo", async () => {
+    // `new URL("//[", base)` lança: antes, a exceção escapava do handler e
+    // encerrava o servidor inteiro com uma única requisição.
+    const resposta = await new Promise((ok, falha) => {
+      const { port } = servidor.address();
+      const socket = connect(port, "127.0.0.1", () =>
+        socket.write(
+          "GET //[ HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n",
+        ),
+      );
+      let texto = "";
+      socket.on("data", (parte) => (texto += parte));
+      socket.on("end", () => ok(texto));
+      socket.on("error", falha);
+    });
+    expect(resposta).toMatch(/^HTTP\/1\.1 400/);
+    expect((await pedir("/up")).status).toBe(200);
   });
 
   it("responde à rota de saúde", async () => {

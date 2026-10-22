@@ -23,14 +23,15 @@ Timestamp de 14 dígitos e descrição no infinitivo dizendo o efeito, não o me
 `create ... if not exists`) e traz no cabeçalho, em comentário: o motivo, os
 **dependentes** e o **rollback**.
 
-Três ficheiros existentes ficam fora do padrão e **não devem ser renomeados** —
-já foram aplicados, e renomear quebraria o histórico de quem os aplicou:
-
-| Ficheiro                                             | Problema      |
-| ---------------------------------------------------- | ------------- |
-| `20260624_access_requests_and_panel_permissions.sql` | data sem hora |
-| `add_update_user_access_rpc.sql`                     | sem timestamp |
-| `restrict_access_management_to_master.sql`           | sem timestamp |
+Três ficheiros antigos ficavam fora do padrão (`20260624_access_requests_and_panel_permissions.sql`,
+data sem hora; `add_update_user_access_rpc.sql` e `restrict_access_management_to_master.sql`, sem
+timestamp). Não foram renomeados — o registro os guarda pelo caminho —, mas desde 20/10/2026
+estão em `supabase/migrations-historicas/`, junto com as demais migrations antigas já aplicadas
+que seriam perigosas se reaplicadas (tabela `perfis_usuarios`, `search_path` não vazio, nomes
+anteriores à padronização MAD). O que foi decidido para nunca aplicar está em
+`supabase/descartadas/`. `supabase/migrations/` só tem o que se aplica, com timestamp de 14
+dígitos (`tests/migrations-pasta-limpa.test.js`). O processo completo — aplicação manual,
+registro, sem `supabase db push` — está em `supabase/migrations/README.md`.
 
 ### 1.1 O registro do que já foi aplicado
 
@@ -47,8 +48,10 @@ npm run db:estado -- --registrar=<caminho>
 npm run db:estado -- --registrar-todas-pendentes
 ```
 
-O script lê `supabase/migrations/` e `supabase/correcoes/` e responde quatro
-coisas:
+O script lê `supabase/migrations/`, `supabase/migrations-historicas/` e
+`supabase/correcoes/` e responde quatro coisas (as históricas são comparadas pelo
+caminho de origem, `migrations/<arquivo>`, e nunca aparecem como pendentes; sem
+registro, são listadas à parte como "históricas — não reaplicar"):
 
 | Estado         | O que significa                                    |
 | -------------- | -------------------------------------------------- |
@@ -413,6 +416,16 @@ Migration `20260928200000_analises_painel_mais_leve.sql` (rollback em
   o CSV (que sai igual ao de antes) e para a busca geral, que também procura no
   parecer. Mesma permissão da lista: `pode_recurso('analises')` e área do
   usuário (`FC_PODE_AREA`) ou admin; no detalhe, a área é a do grupo da linha.
+- Desde `20261020150000_detalhe_do_painel_com_espelho`, o detalhe traz `espelho`
+  na linha publicada pela ficha CONCLUÍDA da Avaliação documental (chave
+  `monitora|<edital>|<candidato>`, ou a linha da planilha adotada pela ficha,
+  achada pela regra da adoção): a mesma entrada de `obter_espelhos_de_nota`
+  (resultado, nota final, ART, declarada por critério, lançamento sem empregador
+  nem nome de curso, configuração da versão da regra e documental do edital),
+  sem nome, CPF, e-mail ou telefone. A gaveta monta a nota autodeclarada ×
+  consolidada e Declarada / Após análise / Teto por critério com
+  `espelhoDaFichaGravada` (a conta do espelho de nota). Nas outras linhas,
+  `espelho` é null. ~34 KB por abertura (a configuração da regra), 6–70 ms.
 - O recorte por área (e, no filtrado, por unidade e edital) compara as colunas
   geradas `*_norm` da tabela, em vez de chamar `analises_norm_key` linha a
   linha (a função tem `SET search_path` e não é embutida pelo planejador).
@@ -515,6 +528,37 @@ hash das funções, permissões, comentários e colunas iguais aos de antes).
   enxuto; sem o escopo `desativadas` no banco, "Todos" cai na leitura pela
   view), depois a migration. Ao contrário, o front antigo mostraria a lista
   enxuta sem grupo e sem detalhamento, e o Inativo quebraria (sem o filtrado).
+
+### 6.5 Os três caches só quando os dados mudam (07/10/2026)
+
+Migration `20261007220000_caches_so_quando_muda.sql` (rollback e ensaio com o
+mesmo nome em `supabase/rollback/` e `supabase/ensaios/`). Vale para o painel de
+análises (6.3/6.4), a lista de aprovados (12) e a aba Entrevistas.
+
+- **Marcas**: `private."TL_ALTERACAO_CACHE"` (tipo `APROVADOS`, `ANALISES` ou
+  `ENTREVISTAS`, área, tabela de origem). Gatilhos **por comando** (tabelas de
+  transição, nunca por linha) nas tabelas de origem só inserem; quem remonta
+  apaga as marcas da área **antes** de montar (mudança confirmada no meio deixa
+  marca nova). Sem marca = pacote em dia. Mudança sem efeito não marca: o
+  edital das análises e o monitoramento comparam antes × depois, e o
+  `finalizar_sync_analises_incremental` não regrava mais os editais iguais.
+- **As tarefas** `agsus_*_cache_*` (mesmos nomes e horários) só remontam a área
+  com marca, sem pacote ou com pacote de mais de 24 h. Sem mudança, ~1 ms (antes
+  0,6–1 s por execução, a cada 2 min). As funções de versão
+  (`FC_VERSAO_APROVADOS_AREA`, `FC_VERSAO_DADOS_ANALISE`, `FC_VERSAO_ENTREVISTAS`)
+  saíram; `DS_VERSAO_DADOS` é o instante da montagem.
+- **Lista de aprovados**: a versão entregue à tela é a do pacote; com marca
+  pendente, mais a contagem e a última marca (a cópia do navegador não vale);
+  com recorte, mais o md5 dos editais visíveis. Ensaio: 105–1.936 ms → 23–47 ms
+  por área; com a versão que ainda vale, 20 ms → 1–2 ms.
+- **Marcos da Visão geral** (`obter_marcos_da_area`): lê
+  `TA_PAINEL_ANALISE.DS_CONCLUIDAS_POR_ANO` (montada junto com o painel) em vez de
+  varrer a view da área. Ensaio: 3,7 s → 1 ms na Saúde Indígena; números iguais.
+- **Sem WAL**: os três caches e as tabelas de passagem do sync das análises
+  (`TM_ANALISE_CURRICULAR`, `TM_MANIFESTO_ANALISE`) são `UNLOGGED` (eram ~3,5 dos
+  4,5 GB de WAL em 5 dias, que o Realtime decodifica). Se o banco cair, o
+  Postgres os esvazia: os caches são remontados e o sync interrompido é
+  encerrado por `agsus_analises_encerrar_inativas`.
 
 ## 7. Edital sempre na área certa
 
@@ -650,7 +694,7 @@ virarem aba, entram com `TP_ABA = 'externa'`).
 O front (`src/modules/catalogo-de-abas.js`) pede a função junto com as outras
 consultas da entrada e guarda a resposta na cópia da sessão (parte opcional
 `abas`). Sem a função (PostgREST `PGRST202`), com erro ou resposta vazia, usa
-`ABAS_DO_MENU` (`src/lib/menu-lateral.js`), o mesmo catálogo no código — por
+`ABAS_DO_MENU` (`src/lib/menu-lateral.ts`), o mesmo catálogo no código — por
 isso o front pode ir antes da migration. `tests/catalogo-de-abas.test.js`
 confere que o seed é `ABAS_DO_MENU`, que a resposta capturada no ensaio
 (`tests/fixtures/listar-abas-do-menu.json`) é a que o seed produz e que a árvore
@@ -676,7 +720,7 @@ com o mesmo md5). Sem migração de dados: a aba começa vazia. O painel externo
   mudou; etapas com quando e quem) e `TH_RECURSO_CANDIDATO` (auditoria).
   RLS ligada, sem policy nem grant: só as RPCs leem e escrevem.
 - RPCs `SECURITY DEFINER`: `get_recursos_da_area` (json), `get_recurso_candidato_detalhe`,
-  `buscar_candidatos_recurso`, `salvar_recurso_candidato` (revisão → `40001`,
+  `buscar_candidatos_recurso`, `salvar_recurso_candidato` (revisão → `PT409`,
   duplicado em análise → `23505` salvo `permitir_duplicado`),
   `marcar_etapa_recurso`, `excluir_recurso_candidato` (lógica, com motivo).
 - Permissão: recurso `recursos` (admin = admin, edital_gestor = editor,
@@ -684,7 +728,7 @@ com o mesmo md5). Sem migração de dados: a aba começa vazia. O painel externo
   leitor; gravar e buscar candidato, editor.
 - Catálogo: aba `recursos` (ícone `scale`, ordem 6) nas três áreas.
 - O prazo de resposta é classificado no front a partir das etapas do
-  cronograma (`src/lib/prazo-do-recurso.js`); nada é guardado no banco.
+  cronograma (`src/lib/prazo-do-recurso.ts`); nada é guardado no banco.
 
 ## 11. CCE e Escritório Distrital e Regional são Projetos
 
@@ -718,7 +762,7 @@ default null)`. Com `p_area`: só a área (22023 se não existe, 42501 se não �
 - **Formato 2**: `listas` em array (id na primeira coluna; a linha leva o
   índice), `dicionarios` com cargo, modalidade, status e código da vaga (a linha
   leva o índice, base 0), `versao`, `area` e `cache`. O front
-  (`src/lib/candidatos-aprovados-compactos.js`) remonta objetos idênticos aos
+  (`src/lib/candidatos-aprovados-compactos.ts`) remonta objetos idênticos aos
   de antes — conferido no ensaio para o admin (3 áreas), um usuário da Saúde
   Indígena e um usuário sintético com recorte por coordenação: conteúdo e ordem
   iguais.
@@ -757,6 +801,33 @@ default null)`. Com `p_area`: só a área (22023 se não existe, 42501 se não �
 - **Ordem de publicação**: a migration pode ir antes do front (o front
   publicado chama sem `p_area` e recebe o de sempre) ou depois (o front novo,
   sem `p_area` no banco, recebe PGRST202 e chama a função sem argumentos).
+
+### Sub judice: inclusão e decisão judicial sobre quem já está na lista
+
+Migration `20261001150000_sub_judice_alteracao.sql` (rollback em
+`supabase/rollback/`, que recusa enquanto houver candidato alterado).
+
+- **Inclusão** (`incluir_sub_judice`, editor do módulo): candidato novo na lista
+  vigente e ativa, com modalidade, processo judicial e observação opcionais.
+- **Decisão judicial** (`alterar_candidato_sub_judice`, só admin do módulo):
+  nota e/ou modalidade novas para quem já está na lista. Na primeira alteração
+  o candidato guarda o resultado publicado (`nota_original`,
+  `modalidade_original`, `classificacao_original`, `sub_judice_original`) e
+  ganha `alterado_judicialmente` e `sub_judice`. `desfazer_alteracao_sub_judice`
+  (só admin) volta ao publicado. `remover_sub_judice` vale só para a inclusão.
+- **Classificação**: `private."FC_RECOLOCAR_NA_CLASSIFICACAO"` põe o candidato
+  na posição da nota dentro da escala dele e renumera a escala (os outros
+  mantêm a ordem). A escala é a vaga da convocação (cargo da lista, e o código
+  da vaga quando o cargo tem mais de uma); quando a planilha classificou por
+  modalidade (o mesmo número em modalidades diferentes), cada modalidade é
+  renumerada à parte. Empate de nota: depois de quem tinha a classificação
+  original melhor.
+- **Histórico**: `TH_CANDIDATO_SUB_JUDICE` (INCLUSAO, ALTERACAO, DESFAZER,
+  REMOCAO; antes e depois de nota, modalidade e classificação; processo,
+  observação, quem e quando). RLS sem policy, sem grant.
+- **Pacote da área**: só a linha alterada leva 4 posições a mais
+  (`alterado_judicialmente`, `nota_original`, `modalidade_original`,
+  `classificacao_original`); o expansor do front lê a que falta como nulo.
 
 ## 13. Recursos: anexos, modelos de resposta e resposta escrita no sistema
 
@@ -806,9 +877,9 @@ Migration `20260929230000_recursos_modelos_anexos_respostas.sql` (rollback em
   uso (senão ficam, com NOTICE).
 
 Ensaio (begin…rollback, produção): admin cria modelo (v1 → v2, sem mudança não
-cria versão, versão velha → 40001, marcador desconhecido → 22023, arquiva);
+cria versão, versão velha → PT409, marcador desconhecido → 22023, arquiva);
 usuario lê a aba sem modelos e recebe 42501 ao gravar; editor grava rascunho
-(revisão velha → 40001), não aprova recurso em análise, envia para revisão e
+(revisão velha → PT409), não aprova recurso em análise, envia para revisão e
 não aprova a própria; outro editor devolve (comentário obrigatório), aprova
 (situação diferente do modelo → 22023) e marca enviada (etapa marcada); editor
 com coordenação recortada não vê o recurso nem envia arquivo; upload com área
@@ -817,3 +888,298 @@ de outra pessoa → 42501; leitor só enxerga o objeto depois de registrar o
 download; outra área → 42501; anexo arquivado só o editor baixa. Migration +
 rollback: funções, CHECK e comentários iguais aos de antes (a menos do fim de
 linha CRLF com que 20260929190200 foi aplicada); fica só o bucket, vazio.
+
+## 14. Seleção vira aba nativa (funil por vaga)
+
+Migration `20261001090000_selecao.sql` (rollback em `supabase/rollback/`); a aba entra desligada
+e `20261001090500_liga_aba_selecao.sql` a liga junto com o front. **Ainda não ensaiada no banco.**
+
+- `TB_SELECAO_VAGA` — uma linha por vaga da aba Resultado da planilha "Auditoria": inscritos,
+  aptos, cancelados, reprovados no questionário, eliminados por nota, reprovados na análise,
+  triados, total de eliminados, convocados antigos (`QT_CONVOCADO_PLANILHA`) e observação. Chave
+  natural `DS_CHAVE_ORIGEM` = número do edital | código da vaga (outras bancas: `cargo:<nome>`,
+  com `#2`… para vaga de mesmo nome e números diferentes). Exclusão lógica em `ST_REGISTRO_ATIVO`
+  (norma MAD; `TB_ENTREVISTA` usa `ST_ATIVO`).
+- `TL_SYNC_SELECAO` — log das cargas (sem área: a planilha mistura as três).
+- Carga só `service_role` (`scripts/sincronizar-selecao.mjs`, GitHub Actions às 9h):
+  `sincronizar_selecao(p_sync, p_linhas)` em lotes e `finalizar_sync_selecao(p_sync, p_forcar)`,
+  que desativa o que saiu e chama `private."FC_LIGAR_SELECAO_AOS_EDITAIS"()`
+  (`20261001100000_selecao_area_pelos_editais.sql`): unidade DSEI ou CASAI fica na Saúde Indígena,
+  com o edital de mesmo número (`FC_NUMERO_EDITAL`) da Saúde Indígena; qualquer outra unidade
+  nunca fica nela — edital de mesmo número da SEDE ou de Projetos (de preferência mesma unidade),
+  área dele; sem edital, `TA_UNIDADE_AREA`, senão `sede`. Carga com menos da metade das linhas
+  ativas é recusada sem `p_forcar`.
+- Leitura `get_selecao_da_area(p_area)` — recurso `selecao` >= leitor, área e recorte da
+  coordenação. Calcula na hora:
+  - **convocados**: edital com alguma entrevista ativa em `TB_ENTREVISTA` (planilha ou sistema)
+    usa a contagem da vaga (0 sem nenhuma); senão, `QT_CONVOCADO_PLANILHA`;
+  - **aprovados / contratados / não contratados**: lista vigente (`TB_LISTA_APROVADO.vigente`) ×
+    `TB_CANDIDATO_APROVADO` sem removidos, pela vaga; contratado = status `Contratado` ou
+    `Migração`; sem lista vigente, nulos. Vaga sem código (outras bancas: CESPE, FGV, CCE…) liga
+    pelo nome do cargo — `codigo_vaga` da lista × coluna A da Auditoria, sem acento, caixa nem
+    pontuação (`20261001130000_selecao_aprovados_outras_bancas.sql`).
+- Permissão `selecao` com os níveis de `entrevistas`. O painel externo "Seleção" continua ativo até
+  a aba nova ser aprovada.
+
+## 15. Status das atualizações (antes "Saúde das cargas"; Configurações, só administrador global)
+
+Migration `20261001120000_saude_das_cargas.sql` (rollback em `supabase/rollback/`). **Só leitura.**
+
+- `get_saude_das_cargas()` (json; `private.is_master()`, 42501 para os demais): as últimas 10
+  execuções de cada origem das análises (`TL_SYNC_ANALISE` × `TA_ORIGEM_ANALISE` ×
+  `TB_PLANILHA_ANALISE`; colunas lidas pelo json da linha, porque a tabela é anterior às
+  migrations), de `TL_SYNC_ENTREVISTA`, de `TL_SYNC_SELECAO` e das tarefas `agsus_*` do pg_cron
+  (`cron.job` × `cron.job_run_details`; nulas sem acesso ao pg_cron).
+- Índice `IN_SYNCANALISE_ORIGEM` (`origem`, `started_at desc`) para a leitura por origem.
+- A tela mostra uma linha por aba (análises por área, entrevistas, seleção, tarefas do banco) e uma
+  frase no topo; o selo (em dia, atrasada, falhou, em andamento, ainda sem carga — este não pede
+  atenção: a SEDE ainda não tem planilha de análise) e os prazos ficam no front, em
+  `src/lib/saude-das-cargas.ts`: análises incrementais atrasadas depois de 1 h; entrevistas e
+  seleção, de 26 h; tarefas a cada 2 min, de 15 min. A seção é
+  `src/componentes/saude-das-cargas/`.
+
+## 16. Edital de treinamento (`ST_TREINAMENTO`) e a exceção à exclusão lógica
+
+Migration `20261007230000_edital_de_treinamento.sql` (ensaio e rollback com o mesmo nome em
+`supabase/ensaios/` e `supabase/rollback/`).
+
+- **Marca:** `TB_MONITORAMENTO_INDIGENA."ST_TREINAMENTO"` (S/N, padrão N,
+  `CK_MONITINDIG_STTREINAMENTO`). A tela não muda a marca; só
+  `private."FC_PREPARAR_EDITAL_TREINAMENTO"(p_area)` cria edital com S, um por área:
+  - Saúde Indígena: "Treinamento – Saúde Indígena (991/2099)", unidade "DSEI Treinamento"
+    (`private."FC_PREPARAR_TREINAMENTO_SI"`): entrevistas (os 15 primeiros, roteiro com aspectos),
+    classificação e a regra da avaliação documental do Edital 111/2026 (modelo SI26-PARINTINS, com
+    as perguntas do questionário NERSSI ligadas) CONFERIDA e nomeada ("SI26-PARINTINS — Edital
+    111/2026"), 30 fictícios na Empregare (cotas, cancelado, pendente, reprovado, empate, abaixo
+    da linha do lote) e a pré-classificação gravada (migration
+    `20261009120000_treinamentos_completos.sql`);
+  - Projetos: "Treinamento – Projetos (992/2099)", unidade "Escritório Treinamento"
+    (`private."FC_PREPARAR_TREINAMENTO_PROJETOS"`, migration
+    `20261008110000_treinamento_avaliacao_documental.sql`): espelho do Edital 93/2026 (5 vagas com
+    códigos fictícios `99099200x`, quadro, cronograma relativo), cópia **independente** (só o JSON)
+    da regra conferida do 93/2026 (versão 7) e da regra da classificação, 40 candidatos fictícios
+    no formato da exportação da Empregare e a pré-classificação já gravada; e a entrevista
+    (`private."FC_PREPARAR_ENTREVISTA_TREINAMENTO_PROJETOS"`, `20261009120000`): roteiro
+    "Treinamento — Entrevista Projetos (exemplo)" (cópia do modelo do SESMT), lançamento pela
+    secretaria, banca com o Avaliador Teste P3 só em "Habilidade intercultural", liberação da
+    janela e a lista de convocação dos que estão no lote da pré-classificação.
+  - Nos dois, `private."FC_CONVOCAR_E_AGENDAR_TREINAMENTO"` convoca a lista vigente (entrevistas
+    do sistema, como `convocar_para_entrevista`) e monta a agenda a partir de hoje (6 hoje, as
+    demais nos dias úteis seguintes), sem mexer no que já existe.
+- **Predicado único** — use estes, nunca `"ST_TREINAMENTO" = S` solto:
+  `private."FC_EH_TREINAMENTO"(marca)`, `private."FC_EDITAL_EH_TREINAMENTO"(id)` e
+  `private."FC_ANALISE_EH_TREINAMENTO"(origem_planilha)` (as análises fictícias têm
+  `origem_planilha = treinamento`; a análise não tem o id do edital). No front:
+  `src/lib/edital-de-treinamento.js` (`ehEditalDeTreinamento`, `semTreinamento`).
+- **Fica fora de:** `VW_MONITORAMENTO_INDIGENA_KPIS`/`_POR_EDITAL`/`_POR_UNIDADE`,
+  `listar_acompanhamento_da_visao_geral`, `VW_ANALISES_DASHBOARD_BASE_TODOS` (painel das análises,
+  `TA_PAINEL_ANALISE`, `obter_marcos_da_area`, `get_analises_dashboard_payload_v2`),
+  `private."FC_MONTAR_ENTREVISTAS_AREA"` (cache do painel de entrevistas e Aya),
+  `private."FC_MONTAR_APROVADOS_AREA"` e o formato antigo de `listar_candidatos_aprovados_compacto`,
+  `conferencia_ler_analises/_entrevistas/_classificacao/_aprovados`, `listar_vagas_empregare`
+  (modo PADRAO) e `pre_classificacao_ler_editais` (padrão e após o robô). Pedido explícito pelo
+  número ou id continua valendo. `finalizar_sync_analises_lotes` não desativa as análises
+  fictícias (não estão na planilha). No front: Visão geral (`estado.js`, boas-vindas), indicadores
+  de Editais e "vigentes" do painel dos robôs.
+- **Aparece, com `treinamento: true` para o selo:** `VW_MONITORAMENTO_INDIGENA_OPERACIONAL` (coluna),
+  `listar_editais_entrevista`, `obter_entrevistas_do_edital`, `listar_editais_avaliacao`,
+  `listar_editais_classificacao`, `FC_DADOS_CLASSIFICACAO_EDITAL`, `obter_pre_classificacao`,
+  `pre_classificacao_ler_editais`, `get_painel_dos_robos`. O documento oficial gerado sai com
+  "TREINAMENTO — SEM VALOR OFICIAL" no título (`documento-sei.js`).
+- **A pré-classificação pronta dos treinamentos:** o resultado do cálculo Python (o
+  mesmo `processar_edital` do job, gerado por `scripts/pre_classificacao/gerar_treinamento.py`
+  com `--area projetos` ou `--area saude-indigena` a partir de
+  `tests/fixtures/avaliacao-documental/treinamento-<área>.json`, conferido por
+  `tests/python/test_treinamento_projetos.py` e `test_treinamento_saude_indigena.py`) fica no
+  corpo do preparar e é gravado por
+  `private."FC_PRE_CLASSIFICAR_TREINAMENTO"` pelas mesmas RPCs do job
+  (`gravar_pre_classificacao_vaga`, `abrir_fichas_pre_classificacao`,
+  `finalizar_pre_classificacao`), na execução `treinamento-<id do edital>`. Essa execução fica fora
+  do painel dos robôs e do Status das atualizações (`private."FC_EXECUCAO_EH_TREINAMENTO"`). Mudou a
+  regra, os fictícios ou o cálculo: rode o gerador e recrie a função numa migration nova.
+- **Caches (para quem mexer neles):** o predicado está nas montagens
+  (`FC_MONTAR_ENTREVISTAS_AREA`, `FC_MONTAR_APROVADOS_AREA`) e na view que o painel das análises lê;
+  função de cache nova que ler `TB_ENTREVISTA`, `TB_ANALISE_CURRICULAR`, `TB_LISTA_APROVADO` ou
+  `TB_MONITORAMENTO_INDIGENA` direto tem de aplicar o predicado.
+
+### A exceção: apagar fisicamente só o treinamento
+
+A regra do banco é exclusão lógica, e várias tabelas da avaliação documental têm gatilho que
+proíbe `delete`. **Exceção única:** `public.reiniciar_edital_treinamento(p_edital)` (só admin
+global) chama `private."FC_APAGAR_DADOS_DO_TREINAMENTO"`, que apaga fisicamente os dados do edital
+de treinamento (entrevistas, classificação, avaliação documental, inscrições fictícias, aprovados,
+recursos, conversa, cronograma e as análises de origem `treinamento`) e depois o preparar recria
+os fictícios. Garantias:
+
+1. A função trava a linha do edital e recusa (42501) se `"ST_TREINAMENTO"` não for S — antes de
+   qualquer `delete`; o RPC confere de novo.
+2. Os gatilhos de imutabilidade (`FC_TG_FICHA_IMUTAVEL`, `FC_TG_PRE_CLASSIF_IMUTAVEL`,
+   `FC_TG_REGRA_ANALISE_IMUTAVEL`, `FC_TG_AJUSTE_PONTUACAO_IMUTAVEL`) só deixam apagar quando a
+   transação marcou `agsus.reinicio_treinamento` com o id de um edital de treinamento **e** a linha
+   é desse edital (`private."FC_REINICIO_TREINAMENTO_PERMITE"`).
+3. Vaga da Empregare carregada pelo robô (`CO_SYNC`) ligada ao treinamento: recusa e não apaga. O
+   preparar também recusa se o código de uma vaga fictícia já existir fora do treinamento.
+4. Análise só sai se for de origem `treinamento`, da área e do número do edital; FK de qualquer
+   registro real para ela aborta tudo.
+5. O ensaio confere que regra real não se apaga nem com a marca, que o reinício recusa edital real
+   e que nenhuma contagem real muda.
+
+## 17. Otimização do banco (09/10/2026)
+
+Migration `20261009110000_otimizacao_do_banco.sql` (rollback e ensaio com o mesmo nome em
+`supabase/rollback/` e `supabase/ensaios/`). Números do banco no ar desde 02/10/2026 (7,4 dias).
+
+- **Doze índices saem**, nenhum de constraint: iguais a um único que fica
+  (`idx_monitoramento_cronograma_monitoramento`, `idx_perfis_usuarios_user_id`,
+  `idx_analises_editais_ativo_chave`), prefixos de um único (`idx_analises_staging_sync_id`,
+  `idx_analises_staging_sync_entidade`, `IN_FKROTEIROCOMPETENCIA_CO`), sem leitura numa tabela de
+  147 linhas (quatro `idx_monitoramento_indigena_*`) e os dois `*_ordem_todos` de
+  `TB_ANALISE_CURRICULAR` (1 e 4 leituras; 14 → 12 índices). Ensaio: painel de análises e pacote
+  das entrevistas leem menos buffers; atualizar 2.000 análises gera ~10% menos WAL.
+- **`IN_SYNCANALISE_PROCESSADO`** (parcial): o último sync processado
+  (`obter_ultima_conferencia`) deixa de ler `TL_SYNC_ANALISE` inteira (430 → 3–6 buffers).
+- **`sincronizar_entrevistas` só regrava a nota que mudou**: a carga de hora em hora atualizava
+  todas (754 mil atualizações em 7,4 dias). Ensaio com linhas fictícias: carga igual 4 → 0
+  regravações; nota mudada continua gravando. `TB_ENTREVISTA` ainda regrava `CO_SYNC` (é por ele que
+  o fechamento desativa quem saiu da planilha).
+- Comentários que faltavam em doze funções `FC_` e em colunas de tabelas novas.
+
+## 18. Reiniciar as fichas de um edital real (sem apagar)
+
+Migration `20261009160000_reiniciar_fichas_do_edital.sql` (ensaio e rollback com o mesmo nome).
+Diferente do reinício do treinamento (seção 16), aqui **nada se apaga**: as fichas do lote (toda
+ficha que não está `FORA_LOTE`) voltam a `PENDENTE`, sem responsável, reserva, lançamento,
+resultado, parecer, notas, rascunho e conclusão, com `NU_VERSAO` + 1, e cada uma ganha uma linha
+`REINICIAR` em `TH_FICHA_ANALISE` (motivo de 10 a 2.000, autor e, em `DS_ALTERACAO`, o que foi
+limpo; o retrato de antes segue nas linhas `SALVAR`/`CONCLUIR`). `FORA_LOTE`, regra, decisões de
+inclusão, pré-classificação, Classificação e `TB_ANALISE_CURRICULAR` não mudam; ficha já no início
+não ganha histórico.
+
+- `public.reiniciar_fichas_do_edital(p_edital, p_motivo)`: só administrador global (42501); na tela,
+  Fila › Ações da coordenação › "Reiniciar as fichas do edital" (só aparece ao admin global).
+- `private."FC_REINICIAR_FICHAS_DO_EDITAL"(p_edital, p_motivo, p_usuario)`: sem grant; usada pela RPC
+  e pelo SQL Editor, que informa o autor (admin global ativo).
+- Primeiro uso: `supabase/correcoes/20261009-reiniciar-fichas-93.sql` (93/2026, Projetos: a análise
+  documental foi feita pela planilha).
+
+## 19. Modelo do espelho de nota, por edital (19/10/2026)
+
+Migration `20261019120000_modelo_do_espelho_de_nota.sql` (ensaio e rollback com o mesmo nome). Os
+textos da folha do espelho de nota (título, subtítulo, saudação com `{candidato}`, abertura, nomes
+dos quadros, rótulos das notas, "Não se aplica" do eliminado, "Sem observação registrada.", rodapé
+e se a nota autodeclarada aparece no modelo com pontos) passam a ser do edital, editados pela
+coordenação sem deploy. **Só textos**: quem aparece, notas, critérios e justificativas continuam da
+montagem no front (`src/lib/avaliacao-documental/espelho-de-nota.ts`).
+
+- `public."TB_MODELO_ESPELHO_NOTA"`: um por edital (`UK_MODELOESPELHO_EDITAL`), versão vigente e
+  `DS_TEXTOS` = só o que difere do padrão do código (`{}` = padrão; sem linha = padrão).
+- `public."TH_MODELO_ESPELHO_NOTA"`: cada versão (textos, `SALVAR` ou `RESTAURAR`, quem e quando).
+- `private."FC_VALIDAR_MODELO_ESPELHO_NOTA"(textos)`: as regras de `validarModeloDoEspelho`
+  (`src/lib/avaliacao-documental/modelo-do-espelho.ts`; `tests/modelo-do-espelho-de-nota-migration.test.js`
+  confere que chaves e limites são os mesmos); 22023.
+- `public.obter_modelo_espelho_nota(p_edital)`: todos da avaliação documental do edital (nível 1),
+  porque o espelho da ficha usa o modelo; `pode_editar` = coordenação.
+- `public.salvar_modelo_espelho_nota(p_edital, p_textos, p_versao_atual)`: só a coordenação do
+  edital (`FC_EXIGIR_COORD_AVALIACAO`, 42501); versão aberta diferente da vigente = `PT409`.
+
+Ordem: a migration pode ir antes ou depois do front. Sem a RPC, o front usa os textos padrão
+(o espelho sai como antes) e o editor mostra o erro ao abrir.
+
+## 20. Ritmo da análise no Painel das análises (19/10/2026)
+
+Migration `20261019170000_ritmo_da_analise.sql` (ensaio e rollback com o mesmo nome). Alimenta o
+card "Ritmo da análise" do Painel das análises: por edital com a avaliação documental no MONITORA
+(`TB_ORIGEM_ANALISE_EDITAL` = `MONITORA`), quanto falta, quantas por dia (e por avaliador) até o
+prazo do cronograma e o ritmo atual.
+
+- `public.obter_ritmo_da_analise(p_area)` → jsonb pequeno: por edital, contagens por situação de
+  `TB_FICHA_ANALISE`, concluídas por dia (14 dias, horário de Brasília), analistas ativos em
+  `RL_ANALISTA_EDITAL`, quem concluiu nos últimos 7 dias e o cronograma
+  (`TB_CRONOGRAMA_MONIT_INDIG`). `SECURITY DEFINER`, só `authenticated`; sessão,
+  `pode_recurso('analises')` e a área da pessoa (`FC_GRUPOS_ANALISES_DA_AREA`) e o recorte de
+  coordenação (`FC_EDITAIS_VISIVEIS`), como `get_analises_dashboard_payload_v2`.
+- Índice parcial `IN_FICHAANALISE_CONCLUIDA` (`CO_MONITORAMENTO`, `DT_CONCLUSAO`) incluindo
+  `CO_USUARIO_CONCLUSAO`, só fichas `CONCLUIDA`.
+- A conta (etapa do cronograma, dias úteis, ritmo, projeção, por avaliador) é do front, em
+  `src/lib/ritmo-da-analise.ts`. Sem polling: a tela pede junto com a carga do painel; trocar só o
+  escopo não pede de novo. Ensaio em 19/10/2026: 3,2 ms.
+- Ordem: aplicar a migration antes de publicar o front (sem a RPC, o card só não aparece).
+
+## 21. Relatório de motivos da avaliação documental (20/10/2026)
+
+Migration `20261020120000_relatorio_de_motivos.sql` (ensaio e rollback com o mesmo nome). A
+coordenação tira sozinha relatórios como "reprovados no critério da identidade com Outro motivo"
+(Avaliação documental › Fila › Ações da coordenação › "Relatório de motivos"); tabela, agrupamento e
+CSV/XLSX são montados no navegador (`src/lib/avaliacao-documental/relatorio-de-motivos.ts`). Nada
+é gravado.
+
+- `public.listar_relatorio_de_motivos(p_edital, p_filtros jsonb)` → json: as fichas do edital que
+  casam com os filtros (`blocos`, `situacoes` do bloco, `motivo` — `OUTRO` é o "Outro motivo" —,
+  `ajustada` = com justificativa de nota, `resultados`, `situacoes_ficha` — nulo = todas menos
+  `FORA_LOTE` —, `vagas`, `avaliador`, `de`/`ate` da conclusão em America/Sao_Paulo), com só as
+  colunas do relatório: código e nome do candidato (**sem CPF, e-mail ou telefone**), vaga, cargo,
+  lotação, situação, resultado, nota final, quem concluiu (`TB_PERFIL_USUARIO.nome`) e quando, e os
+  blocos de `DS_LANCAMENTO` reduzidos a `situacao`, `motivos`, `motivo_livre`, `justificativas` e
+  `nota_ajustada`. Os textos (título do bloco, motivo, justificativa) vêm da regra vigente, que a
+  tela já tem. Na ficha concluída, o bloco escolhido ausente do lançamento conta como
+  `NAO_SE_APLICA`.
+- Páginas de até 500 pela chave da ficha (`apos` = `proximo`); `total` e `avaliadores` na primeira.
+- `SECURITY DEFINER`, `search_path ''`, `statement_timeout 5s`, só `authenticated`; só administrador
+  e coordenação do edital (`FC_PAPEL_AVALIACAO` = `COORDENADOR`, 42501); filtro inválido = 22023.
+- Sem índice novo: `IN_FICHAANALISE_FILA` recorta o edital. Ensaio em 20/10/2026 no 114/2026 (como a
+  conta do setor): "Outro motivo por critério" com Identidade = 39 fichas em 16–41 ms; pontuação
+  ajustada (cursos + experiência) = 171 fichas em ~160 ms (frio); sem filtro, 500 de 1.512 em ~220 ms
+  (frio).
+- Ordem: aplicar a migration antes de publicar o front (sem a RPC, a gaveta abre e mostra o erro
+  ao gerar).
+
+## 22. Robô da Empregare: modo "Só anexos" e a resposta editada depois da captura (20/10/2026)
+
+Migration `20261020130000_robo_modo_anexos.sql` (ensaio e rollback com o mesmo nome). A captura dos
+anexos do questionário é incremental e marcava como lida a resposta que cobria as colunas "Pergunta N";
+quando o candidato edita a mesma resposta na Empregare (acrescenta ou troca arquivo), o número não muda e
+o robô nunca relia (caso 2160872, vaga 182514).
+
+- `private."FC_LIMITE_DA_RESPOSTA_EMPREGARE"(colunas)`: 00:00 (Brasília) do dia seguinte à maior
+  "DATA DE RESPOSTA - <questionário>" de `TB_EMPREGARE_CANDIDATO.DS_COLUNA_ORIGINAL` (ISO ou DD/MM/AAAA;
+  a hora não conta). Captura antes disso é suspeita.
+- `private."FC_ARQUIVO_DO_LINK_EMPREGARE"(link)`: o `arquivo=` do Visualizar Arquivo (diz se o arquivo
+  mudou sem depender do token).
+- `public.listar_prioridade_anexos_empregare(p_vaga)` (**correção de raiz**): lida só se capturada a partir
+  do limite acima (e cobrindo as perguntas, como antes).
+- `public.gravar_anexos_empregare(...)`: igual, mais — arquivo trocado (ou novo) na mesma resposta,
+  pergunta e número apaga a linha de `TB_LEITURA_ARQUIVO` (vira "nunca lido" para o robô da leitura);
+  devolve `leituras_invalidadas`.
+- `public.listar_anexos_empregare(p_vaga, p_codigos)` (nova; só leitura; `service_role`): o gravado por
+  candidato (respostas com perguntas e captura; anexos como `[pergunta, número, hash16 do arquivo=,
+hash16 do link]`, nunca o link), `vaga_interno`, colunas, ativos, suspeitos, sem captura e não
+  encontrados; sem códigos, só os suspeitos.
+- `private."FC_DISPARAR_ROBO"` e `public.disparar_robo`: o robô da Empregare aceita o modo `anexos`
+  (pede vagas ou editais) e as entradas `candidatos` (até 1.000) e `seco`, que só valem nele.
+
+O modo `anexos` (`scripts/robo-empregare/so_anexos.py`) nunca chama `gravar_lote_empregare` nem
+`fechar_vaga_empregare` e o workflow não pré-classifica depois dele. Ordem: **migration antes** de
+publicar o front e de disparar o modo (sem ela, `disparar_robo` recusa o modo e o robô avisa que falta
+`listar_anexos_empregare`). Rollback: aplicar o front sem o "Só anexos" antes.
+
+## 23. Medalhas do dia no card "Ritmo da análise" (21/10/2026)
+
+Migration `20261021100000_medalhas_do_dia.sql` (ensaio e rollback com o mesmo nome). Acrescenta, por
+edital, o campo `destaques` em `public.obter_ritmo_da_analise(p_area)` (`CREATE OR REPLACE` a
+partir da definição vigente, só acrescentando; mesma permissão):
+
+- `destaques: { dia, avaliadores: [ { nome, qt, reabertas } ] }` — quem concluiu fichas hoje
+  (`TB_FICHA_ANALISE` `CONCLUIDA` com `DT_CONCLUSAO` desde 00:00 de Brasília, por
+  `CO_USUARIO_CONCLUSAO`), só os do pódio (`dense_rank` ≤ 3) e quem chegou a 10 conclusões (o
+  mínimo do selo). Nome e sobrenome do cadastro (`FC_NOME_E_SOBRENOME` de `TB_PERFIL_USUARIO`).
+- Reabertas: `TH_FICHA_ANALISE` `REABRIR` registradas hoje cuja conclusão anterior (o `CONCLUIR`
+  imediatamente antes, na mesma ficha) também é de hoje; contam para quem fez aquele `CONCLUIR`.
+  `REINICIAR` não conta.
+- Índice parcial novo `IN_THFICHA_REABRIR` (`DT_REGISTRO`, incluindo `CO_FICHA_ANALISE`, só
+  `REABRIR`).
+- Medalhas (🥇🥈🥉, empate leva a mesma), selo Precisão (🎯: ≥ 10 conclusões hoje e nenhuma
+  reaberta) e a comemoração da meta da equipe (uma vez por dia por pessoa) são do front, em
+  `src/lib/ritmo-da-analise.ts` e `src/modulos/analises/marcos.ts`.
+- Ensaio em 21/10/2026: 3,9 ms com o card aquecido (antes 3,2 ms); o trecho novo com o volume de
+  20/10 (550 conclusões, 19 reaberturas) levou 1 ms aquecido e 20 ms frio.
+- Ordem: aplicar a migration antes de publicar o front (sem o campo, o bloco só não aparece).

@@ -1,6 +1,6 @@
 import { hasSupabaseEnv } from "./lib/env.js";
 // Antes de qualquer rede: pinta a tela de acesso com a marca da visita anterior.
-import "./lib/access-branding-boot.js";
+import "./app/entrada/marca.js";
 import { installCsvBlobSecurityGuard } from "./lib/csv-security.js";
 import { installSessionLifecycle } from "./lib/session-lifecycle.js";
 import { installBackgroundResourceLifecycle } from "./lib/background-resource-lifecycle.js";
@@ -11,106 +11,101 @@ import "./lib/supabase-legacy-bridge.js";
 import "./styles/tokens.css";
 import "./styles/icones-lucide.css";
 import "./styles/visual-polish.css";
-import "./styles/arara-guide.css";
-import "./styles/nina-conversation.css";
 import "./styles/loading-experience.css";
-import "./styles/access-dashboard.css";
-import "./styles/health-indigenous.css";
-import "./styles/health-map-contrast.css";
-import "./styles/health-reference-kpis.css";
-import "./styles/health-dashboard-refinements.css";
-import "./styles/health-dashboard-interaction-fixes.css";
-import "./styles/health-status-details.css";
-import "./styles/health-status-details-refinement.css";
-import "./styles/health-details-ux.css";
-import "./styles/health-details-runtime-fix.css";
-import "./styles/config-page.css";
-import "./styles/config-governance.css";
-import "./styles/nucleo-cronograma.css";
-import "./styles/calendario-editais.css";
-import "./styles/nucleo-cronograma-template-helper.css";
-import "./styles/nucleo-cronograma-manual-only.css";
-import "./styles/nucleo-operational-enhancements.css";
-import "./styles/nucleo-cronograma-tools.css";
 import "./styles/mobile-app.css";
 import "./styles/mobile-bottom-navigation.css";
 import "./styles/mobile-table-cards.css";
 import "./styles/connectivity-status.css";
 import "./styles/google-profile-photo.css";
 import "./styles/platform-shell.css";
-import "./styles/health-map-workspace.css";
-import "./styles/health-map-size-tuning.css";
-import "./styles/health-map-immersive-workspace.css";
 import "./styles/map-base-layer-switcher.css";
 import "./styles/indigenous-territories-layer.css";
-import "./styles/legenda-das-terras.css";
-import "./styles/system-ui-fixes.css";
 import "./styles/nielsen-shell-ux.css";
-import "./styles/post-152-regression-fixes.css";
 import "./styles/post157-interface-tuning.css";
 import "./styles/barra-lateral.css";
-import "./styles/lista-aprovados.css";
-import "./styles/lista-convocacao.css";
 import "./styles/multi-select-busca.css";
 import "./styles/carregamento.css";
-import "./styles/acessos.css";
-import "./styles/modulos-e-manutencao.css";
-import "./styles/config-apresentacao.css";
+import "./styles/manutencao.css";
+import "./styles/saude-das-cargas.css";
+// Componentes de src/ui/ e, depois, o CSS dos módulos que aparecem fora da própria tela. O CSS
+// de uma tela sob demanda (Entrevistas, Recursos, Classificação, Avaliação documental, Convocação
+// e carta) entra pelo ponto de entrada dela e baixa junto com o código.
+import "./ui/ui.css";
+import "./app/entrada/solicitacao-de-acesso.css";
+import "./modulos/configuracoes/configuracoes.css";
+import "./modulos/acessos/acessos.css";
+import "./modulos/modulos/modulos.css";
+import "./modulos/editais/editais.css";
+import "./modulos/cronograma/cronograma.css";
+import "./modulos/aprovados/aprovados.css";
+import "./modulos/selecao/selecao.css";
+import "./modulos/conferencias/conferencias.css";
+import "./modulos/visao-geral/visao-geral.css";
+import "./modulos/aya/aya.css";
+import "./modulos/aya/tour/tour.css";
+import "./modulos/mapa-saude-indigena/mapa-saude-indigena.css";
+import "./modulos/mapa-de-projetos/mapa-de-projetos.css";
 import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
 import { installIndigenousTerritoriesLayer } from "./modules/indigenous-territories-layer.js";
 import "./modules/monitoramento-operational-transport.js";
-import "./modules/lotacoes-geograficas-transport.js";
-import "./modules/legacy-app.js";
+// O sistema depois de entrar (navegação, carga, presença, moldura): src/app/sistema.js.
+import { ligarSistema } from "./app/sistema.js";
 import { initLoadingExperience } from "./modules/loading-experience.js";
-import { instalarCarregamento } from "./modules/carregamento.js";
+import { instalarCarregamento } from "./app/carregamento.js";
 import { initVisualPolish } from "./modules/visual-polish.js";
-import { initHealthDashboardRefinementsSafe } from "./modules/health-dashboard-refinements.js";
-import { initHealthDashboardInteractionFixes } from "./modules/health-dashboard-interaction-fixes.js";
-import { initHealthMapLegendCleanup } from "./modules/health-map-legend-cleanup.js";
-import { initHealthMapImmersiveWorkspace } from "./modules/health-map-immersive-workspace.js";
-import { initHealthStatusDetails } from "./modules/health-status-details.js";
-import { initHealthStatusDetailsRefinement } from "./modules/health-status-details-refinement.js";
-import { initHealthDetailsUx } from "./modules/health-details-ux.js";
-import { initHealthDetailsRuntimeFix } from "./modules/health-details-runtime-fix.js";
 import { initSidebarBranding } from "./modules/sidebar-branding.js";
-import { initAraraSpeakingEffects } from "./modules/arara-speaking-effects.js";
-import { initNinaPanelDrag } from "./modules/nina-panel-drag.js";
-import { aplicarLegendaDoMapaDetalhado } from "./modules/vinculos-territoriais.js";
-import { instalarAvisoDoPainelDeAcesso } from "./modules/aviso-de-contraste.js";
 import {
   organizarConfiguracoesEmSecoes,
   SECOES,
-} from "./modules/config-secoes.js";
-import { instalarApresentacaoDasConfiguracoes } from "./modules/config-apresentacao.js";
-import { initConfigGovernance } from "./modules/config-governance.js";
+} from "./modulos/configuracoes/secoes.js";
+import { montarConfiguracoes } from "./modulos/configuracoes/configuracoes.jsx";
 import { initMobileAppExperience } from "./modules/mobile-app-experience.js";
 import { initMobileBottomNavigation } from "./modules/mobile-bottom-navigation.js";
-import { initMobileGoogleOAuth } from "./modules/mobile-google-oauth.js";
 import { initMobileTableCards } from "./modules/mobile-table-cards.js";
 import { initPwaLifecycle } from "./modules/pwa-lifecycle.js";
 import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
-import { initBoasVindas } from "./modules/boas-vindas.js";
-import { initMarcosDoAno } from "./modules/marcos-do-ano.js";
-import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.jsx";
-import { montarListaAprovados } from "./componentes/lista-aprovados/lista-aprovados.jsx";
-import { montarCalendarioEditais } from "./componentes/calendario-editais/calendario-editais.jsx";
-import { montarNucleo } from "./componentes/nucleo/nucleo.jsx";
-import { montarAcessos } from "./componentes/acessos/acessos.jsx";
-import { montarModulos } from "./componentes/modulos/modulos.jsx";
+import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.tsx";
+import { montarNucleo } from "./modulos/editais/nucleo.jsx";
+import { montarVisaoGeral } from "./modulos/visao-geral/visao-geral.tsx";
+import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
+import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.tsx";
+import { montarEntrada } from "./app/entrada/entrada.jsx";
+import { telaSobDemanda } from "./app/tela-sob-demanda.js";
+import { TELAS_REACT } from "./app/navegacao.js";
+import { registrarPreCarga } from "./lib/carga-de-telas.js";
+import { sessaoDoApp } from "./app/sessao.js";
+
+import { montarAya } from "./modulos/aya/aya.jsx";
 
 // Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
 document.documentElement.classList.remove("vite-dev-carregando");
+
+/*
+  O sistema se liga à sessão antes de tudo: tema e barra guardados, as funções
+  em window (monitoraToast, navigate…) que as telas abaixo recebem e os ganchos
+  da entrada.
+*/
+ligarSistema();
+
+/*
+  A tela de acesso (React, src/app/entrada/) monta primeiro: o cartão vazio do
+  index.html vira o de verdade. Quem entra é a sessão (src/app/sessao.js),
+  iniciada no fim, depois de o legado e as telas se ligarem a ela.
+*/
+montarEntrada();
 
 installCsvBlobSecurityGuard();
 installLeafletMapGuard();
 installMapBaseLayerSwitcher();
 installMapZoomRange();
 installIndigenousTerritoriesLayer();
-installSessionLifecycle();
+installSessionLifecycle({
+  aoExpirar: (mensagem) => sessaoDoApp.mostrarMensagem(mensagem, "warn"),
+});
 installBackgroundResourceLifecycle();
 installFrontendPerformanceMonitor();
 installCspReportMonitor();
@@ -119,39 +114,27 @@ installCspReportMonitor();
   legado e o menu do celular a encontram no DOM quando rodam.
 */
 montarBarraLateral();
+/*
+  A Visão geral (React, src/modulos/visao-geral/, com os mapas da Saúde
+  Indígena e de Projetos) também monta já, de forma síncrona. O legado fala
+  com ela pelo estado (estado.js), não pelo DOM.
+*/
+window.visaoGeralController = montarVisaoGeral({
+  toast: window.monitoraToast,
+  comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
+});
 instalarCarregamento();
 initLoadingExperience();
 initVisualPolish();
-initAraraSpeakingEffects();
-initNinaPanelDrag();
-initHealthDashboardRefinementsSafe();
-initHealthDashboardInteractionFixes();
-initHealthMapLegendCleanup();
-initHealthMapImmersiveWorkspace();
-initHealthStatusDetails();
-aplicarLegendaDoMapaDetalhado();
-instalarAvisoDoPainelDeAcesso();
-initHealthStatusDetailsRefinement();
-initHealthDetailsUx();
-initHealthDetailsRuntimeFix();
-// Instala antes do guard de Configurações para que o botão global salve também
-// as duas chaves independentes da sidebar usando a RPC existente.
+// A logo e a cor gravadas da barra lateral (a escolha é de Configurações › Aparência).
 initSidebarBranding();
-/*
-  Depois da sidebar: ela injeta os proprios campos em Configuracoes, e so
-  existe o que organizar quando eles ja estao no DOM.
-*/
+// O esqueleto das seções de Configurações, depois a moldura e as seções em React (portais).
 organizarConfiguracoesEmSecoes();
-// Grupos, dicas e prévias de Marca, Página inicial, Tela de acesso e Recursos.
-instalarApresentacaoDasConfiguracoes();
-initConfigGovernance();
+montarConfiguracoes();
 initMobileAppExperience();
 initMobileBottomNavigation();
-initMobileGoogleOAuth();
 initMobileTableCards();
 initPwaLifecycle();
-initBoasVindas();
-initMarcosDoAno();
 initConnectivityStatus();
 initGoogleProfilePhoto();
 initNielsenShellUx();
@@ -167,29 +150,224 @@ window.nucleoController = montarNucleo({
   getProfile: window.getMonitoraProfile,
 });
 
+/*
+  Daqui para baixo, as telas que não abrem na entrada carregam sob demanda
+  (src/app/tela-sob-demanda.js): o código baixa na primeira abertura (ou ao
+  passar o mouse no item do menu) e o controlador em window mantém o mesmo
+  contrato (render(), abrirVisao()…). A Visão geral e o casco ficam no
+  pacote principal.
+*/
+const comemoracoesLigadas = () => situacaoDoSistema().comemoracoes === true;
+
 // Sem loader de tela cheia: skeleton na carga, e cada ação mostra o estado no botão.
-window.aprovadosController = montarListaAprovados({
-  toast: window.monitoraToast,
-  getProfile: window.getMonitoraProfile,
+window.aprovadosController = telaSobDemanda({
+  secao: "page-approved",
+  metodos: ["render", "openImportModal"],
+  carregar: () =>
+    import("./modulos/aprovados/lista-aprovados.tsx").then((m) =>
+      m.montarListaAprovados({
+        toast: window.monitoraToast,
+        getProfile: window.getMonitoraProfile,
+      }),
+    ),
 });
 
 // Sem loader de tela cheia: a grade mostra "Carregando…" por conta própria.
-window.calendarioEditaisController = montarCalendarioEditais({
-  toast: window.monitoraToast,
+window.calendarioEditaisController = telaSobDemanda({
+  secao: "page-calendario",
+  carregar: () =>
+    import("./modulos/cronograma/calendario-editais.tsx").then((m) =>
+      m.montarCalendarioEditais({ toast: window.monitoraToast }),
+    ),
 });
 
-// Configurações › Acessos: abre pela seção (config-secoes.js → render()).
-window.acessosController = montarAcessos({
-  toast: window.monitoraToast,
-  getProfile: window.getMonitoraProfile,
-  secoesDeConfiguracao: SECOES,
+/*
+  Recursos dos candidatos, em duas entradas do menu (src/modulos/recursos/):
+  o Painel de recursos (acompanhar, só leitura) e Analisar recursos (fazer),
+  cada um na própria <section> e com o próprio estado. A área é a atual do
+  app; `render()` recarrega a cada abertura (permissões do banco e
+  comemorações relidas), então o que se decide em Analisar aparece no painel
+  ao voltar.
+*/
+window.recursosController = telaSobDemanda({
+  secao: "page-recursos",
+  carregar: () =>
+    import("./modulos/recursos/recursos.tsx").then((m) =>
+      m.montarRecursos({ toast: window.monitoraToast, comemoracoesLigadas }),
+    ),
+});
+window.analisarRecursosController = telaSobDemanda({
+  secao: "page-analisar-recursos",
+  carregar: () =>
+    import("./modulos/recursos/recursos.tsx").then((m) =>
+      m.montarAnaliseDeRecursos({
+        toast: window.monitoraToast,
+        comemoracoesLigadas,
+      }),
+    ),
 });
 
-// Configurações › Módulos e abas (só admin global): abre pela seção (config-secoes.js → render()).
-window.modulosController = montarModulos({
-  toast: window.monitoraToast,
-  getProfile: window.getMonitoraProfile,
+/*
+  Entrevistas, em duas entradas do menu (src/modulos/entrevistas/): o Painel
+  de entrevistas (acompanhar) e Conduzir entrevistas (fazer), cada um na
+  própria <section>, como Recursos (área do app, render() a cada abertura,
+  comemorações relidas). Gravar notas ou convocar em Conduzir relê o painel;
+  as entrevistas do painel, quando já lidas, marcam "com entrevistas" na
+  lista de editais de Conduzir.
+*/
+window.entrevistasController = telaSobDemanda({
+  secao: "page-entrevistas",
+  metodos: ["render", "abrirVisao"],
+  carregar: () =>
+    import("./modulos/entrevistas/entrevistas.tsx").then((m) =>
+      m.montarEntrevistas({ toast: window.monitoraToast, comemoracoesLigadas }),
+    ),
 });
+window.conduzirEntrevistasController = telaSobDemanda({
+  secao: "page-conduzir-entrevistas",
+  metodos: ["render", "abrirVisao", "abrirEdital"],
+  carregar: () =>
+    import("./modulos/entrevistas/conduzir.tsx").then((m) =>
+      m.montarConducaoDeEntrevistas({
+        toast: window.monitoraToast,
+        comemoracoesLigadas,
+        aoMudarResultados: () => {
+          const painel = window.entrevistasController?.estado;
+          if (painel?.obter().area) void painel.carregar();
+        },
+        doPainel: () =>
+          window.entrevistasController?.estado?.obter().dados?.entrevistas ||
+          [],
+      }),
+    ),
+});
+
+/*
+  Análises curriculares: módulo de src/modulos/, na própria <section>. A área
+  é a atual do app; `render()` carrega na primeira abertura (e relê por trás
+  se a carga tiver mais de 5 minutos).
+*/
+window.analisesController = telaSobDemanda({
+  secao: "page-analises",
+  metodos: ["render", "abrirVisao"],
+  carregar: () =>
+    import("./modulos/analises/analises.tsx").then((m) =>
+      m.montarAnalises({ toast: window.monitoraToast, comemoracoesLigadas }),
+    ),
+});
+
+/*
+  Seleção: módulo de src/modulos/, na própria <section>, como Recursos e
+  Entrevistas (área do app, render() a cada abertura). Só leitura.
+*/
+window.selecaoController = telaSobDemanda({
+  secao: "page-selecao",
+  metodos: ["render", "abrirVisao"],
+  carregar: () =>
+    import("./modulos/selecao/selecao.tsx").then((m) =>
+      m.montarSelecao({ toast: window.monitoraToast }),
+    ),
+});
+
+/*
+  Classificação: módulo de src/modulos/, na própria <section> (área do app,
+  render() a cada abertura). A regra é de cada edital; a conta, do motor puro
+  (src/lib/classificacao/).
+*/
+window.classificacaoController = telaSobDemanda({
+  secao: "page-classificacao",
+  metodos: ["render", "abrirVisao"],
+  carregar: () =>
+    import("./modulos/classificacao/classificacao.tsx").then((m) =>
+      m.montarClassificacao({ toast: window.monitoraToast }),
+    ),
+});
+
+/*
+  Avaliação documental: módulo de src/modulos/, na própria <section> (área do
+  app, render() a cada abertura). A regra é de cada edital; a conta da prévia,
+  da lib pura (src/lib/avaliacao-documental/).
+*/
+window.avaliacaoDocumentalController = telaSobDemanda({
+  secao: "page-avaliacao-documental",
+  metodos: ["render", "abrirVisao"],
+  carregar: () =>
+    import("./modulos/avaliacao-documental/avaliacao-documental.jsx").then(
+      (m) =>
+        m.montarAvaliacaoDocumental({
+          toast: window.monitoraToast,
+          getProfile: window.getMonitoraProfile,
+        }),
+    ),
+});
+
+// Configurações › Acessos: abre pela seção (configuracoes/secoes.js → render()).
+window.acessosController = telaSobDemanda({
+  secao: "acessosApp",
+  padroes: { confirmarSaida: () => true },
+  carregar: () =>
+    import("./modulos/acessos/acessos.jsx").then((m) =>
+      m.montarAcessos({
+        toast: window.monitoraToast,
+        getProfile: window.getMonitoraProfile,
+        secoesDeConfiguracao: SECOES,
+      }),
+    ),
+});
+
+// Configurações › Módulos e abas (só admin global): abre pela seção (configuracoes/secoes.js → render()).
+window.modulosController = telaSobDemanda({
+  secao: "modulosApp",
+  padroes: { confirmarSaida: () => true },
+  carregar: () =>
+    import("./modulos/modulos/modulos.tsx").then((m) =>
+      m.montarModulos({
+        toast: window.monitoraToast,
+        getProfile: window.getMonitoraProfile,
+      }),
+    ),
+});
+
+// Configurações › Status das atualizações (só admin global): relê a cada abertura da seção.
+window.saudeDasCargasController = telaSobDemanda({
+  secao: "saudeDasCargasApp",
+  padroes: { confirmarSaida: () => true },
+  carregar: () =>
+    import("./componentes/saude-das-cargas/saude-das-cargas.tsx").then((m) =>
+      m.montarSaudeDasCargas({ getProfile: window.getMonitoraProfile }),
+    ),
+});
+
+// Mouse ou foco no item do menu: a tela começa a baixar antes do clique.
+registrarPreCarga((view, secao) => {
+  const daSecao = {
+    acessos: window.acessosController,
+    modulos: window.modulosController,
+    cargas: window.saudeDasCargasController,
+  }[secao ?? ""];
+  const daTela = Object.hasOwn(TELAS_REACT, view)
+    ? TELAS_REACT[view](() => "", window)[2]
+    : null;
+  void Promise.resolve((daSecao ?? daTela)?.carregar?.()).catch(() => {});
+});
+
+/*
+  Busca global (Ctrl+K / Cmd+K): só abre com usuário conectado. A escolha vai
+  ao legado por evento (filtros e navegação continuam lá).
+*/
+montarBuscaGlobal({
+  estaConectado: () => Boolean(sessaoDoApp.obter().usuario),
+});
+
+// A entrada: sessão guardada, retorno do Google ou a tela de acesso.
+void sessaoDoApp.iniciar();
+
+/*
+  A Aya (src/modulos/aya/): a arara flutuante e o painel de conversa. Sabe a
+  página pelo estado que o legado atualiza a cada navegação (setPageTitle →
+  definirPaginaDaAya) e a área pelo estado do monitoramento.
+*/
+montarAya();
 
 if (!hasSupabaseEnv()) {
   console.warn(

@@ -1,6 +1,6 @@
 /*
   Cronograma de um edital — o que o formulário do Núcleo calcula e valida antes
-  de salvar, sem DOM nem rede. A tela é `src/componentes/nucleo/`.
+  de salvar, sem DOM nem rede. A tela é `src/modulos/editais/`.
 
   O status e a etapa do edital saem das datas quando o cronograma é
   "automático": quem cadastra informa as etapas, e o sistema diz se o edital
@@ -153,6 +153,25 @@ export function analisarCronograma(
     erros.push(
       "Adicione pelo menos uma etapa ou desative o cálculo automático.",
     );
+
+  // As datas do próprio edital (com o automático, vêm do cronograma).
+  for (const [campo, nome] of [
+    ["data_inicio", "início"],
+    ["data_fim", "encerramento"],
+  ]) {
+    if (edital[campo] && !dataPlausivel(edital[campo]))
+      erros.push(
+        `A data de ${nome} do edital (${edital[campo]}) não é possível. Use um ano entre ${ANO_MINIMO} e ${ANO_MAXIMO}.`,
+      );
+  }
+  if (
+    edital.data_inicio &&
+    edital.data_fim &&
+    dataPlausivel(edital.data_inicio) &&
+    dataPlausivel(edital.data_fim) &&
+    edital.data_fim < edital.data_inicio
+  )
+    erros.push("A data de encerramento do edital é anterior à de início.");
 
   const vistas = new Set();
   const ano = Number((txt(edital.edital).match(/\b(20\d{2})\b/) || [])[1]);

@@ -1,17 +1,13 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
-  initMobileGoogleOAuth,
   isMobileOAuthContext,
   startMobileGoogleOAuth,
-} from "../src/modules/mobile-google-oauth.js";
+} from "../src/lib/auth-flow.js";
 
-beforeEach(() => {
-  document.body.innerHTML = `
-    <button id="googleLoginBtn" type="button" onclick="window.__legacyLogin?.()">Entrar</button>
-    <div id="loginMsg" class="hidden"></div>
-  `;
-  delete window.__legacyLogin;
-});
+/*
+  O clique no celular (redirecionamento, sem popup) é decidido pela sessão do
+  app: tests/app/sessao.test.js cobre o botão e a mensagem de erro.
+*/
 
 describe("mobile Google OAuth", () => {
   it("detecta navegadores mobile e iPad com user agent de desktop", () => {
@@ -54,45 +50,6 @@ describe("mobile Google OAuth", () => {
     expect(removeItem).toHaveBeenCalledWith("agsus_oauth_callback_ok");
     expect(signInWithOAuth).toHaveBeenCalledWith(
       expect.objectContaining({ provider: "google" }),
-    );
-  });
-
-  it("intercepta o clique mobile antes do onclick legado", async () => {
-    const legacyLogin = vi.fn();
-    const startOAuth = vi.fn().mockResolvedValue(true);
-    window.__legacyLogin = legacyLogin;
-
-    expect(
-      initMobileGoogleOAuth({ root: document, mobile: true, startOAuth }),
-    ).toBe(true);
-
-    document
-      .getElementById("googleLoginBtn")
-      .dispatchEvent(
-        new MouseEvent("click", { bubbles: true, cancelable: true }),
-      );
-    await Promise.resolve();
-
-    expect(startOAuth).toHaveBeenCalledTimes(1);
-    expect(legacyLogin).not.toHaveBeenCalled();
-  });
-
-  it("reativa o botão e informa erro quando OAuth não inicia", async () => {
-    const startOAuth = vi
-      .fn()
-      .mockRejectedValue(new Error("OAuth indisponível"));
-    initMobileGoogleOAuth({ root: document, mobile: true, startOAuth });
-
-    const button = document.getElementById("googleLoginBtn");
-    button.dispatchEvent(
-      new MouseEvent("click", { bubbles: true, cancelable: true }),
-    );
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(button.disabled).toBe(false);
-    expect(document.getElementById("loginMsg").textContent).toBe(
-      "OAuth indisponível",
     );
   });
 });

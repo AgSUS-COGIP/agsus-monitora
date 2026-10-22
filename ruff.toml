@@ -1,0 +1,17 @@
+# Lint e formatação do Python do MONITORA (python/, scripts/, api/*.py, tests/python/).
+# Rode: ruff check . && ruff format --check .  (guia: docs/python-no-monitora.md)
+# Fica em ruff.toml (e não em pyproject.toml) para a Vercel não confundir com
+# um projeto Python: as dependências das funções vêm só do requirements.txt da raiz.
+line-length = 120
+target-version = "py311"
+extend-exclude = ["node_modules", "dist", "public", ".cache"]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501", "B008", "E741"]
+
+[lint.isort]
+known-first-party = ["monitora"]
+
+[format]
+quote-style = "double"

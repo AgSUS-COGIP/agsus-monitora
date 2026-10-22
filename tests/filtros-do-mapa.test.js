@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   chaveDeFiltro,
-  chaveDeRenderDoMapa,
   linhaAtende,
   opcoesDoCampo,
   podarSelecoes,
@@ -147,19 +146,5 @@ describe("podarSelecoes", () => {
     const encerrado = (l) => chaveDeFiltro(l.status).startsWith("conclu");
     podarSelecoes(LINHAS, estado, { campos: CAMPOS, excluir: encerrado });
     expect(estado.status.size).toBe(0);
-  });
-});
-
-describe("chaveDeRenderDoMapa", () => {
-  it("muda quando as vagas mudam com a mesma contagem de linhas", () => {
-    const a = chaveDeRenderDoMapa([LINHAS[0]], chaveDsei);
-    const b = chaveDeRenderDoMapa([LINHAS[1]], chaveDsei);
-    expect(a).not.toBe(b);
-  });
-
-  it("não depende da ordem das linhas", () => {
-    expect(chaveDeRenderDoMapa(LINHAS, chaveDsei, "F|")).toBe(
-      chaveDeRenderDoMapa([...LINHAS].reverse(), chaveDsei, "F|"),
-    );
   });
 });
