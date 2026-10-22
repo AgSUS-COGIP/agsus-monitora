@@ -1,5 +1,5 @@
 /*
-  Rollback de 20261022180000_apagar_anexo_orfao_do_recurso.sql.
+  Rollback de 20261022190500_apagar_anexo_orfao_do_recurso.sql.
 
   Tira a política de delete e a função dela: o bucket recursos-anexos volta a
   não deixar apagar nada pela API (o front só deixa de limpar o arquivo

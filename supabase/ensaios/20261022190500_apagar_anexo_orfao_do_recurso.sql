@@ -1,5 +1,5 @@
 /*
-  ENSAIO de 20261022180000_apagar_anexo_orfao_do_recurso.sql — begin … rollback.
+  ENSAIO de 20261022190500_apagar_anexo_orfao_do_recurso.sql — begin … rollback.
 
   Cole no SQL Editor do Supabase (papel postgres). Aplica a migration dentro
   da transação e confere:

@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
   outra política de delete/update no bucket.
 */
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
-const NOME = "20261022180000_apagar_anexo_orfao_do_recurso.sql";
+const NOME = "20261022190500_apagar_anexo_orfao_do_recurso.sql";
 const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);

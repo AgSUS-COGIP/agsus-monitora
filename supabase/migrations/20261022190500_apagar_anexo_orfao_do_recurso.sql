@@ -15,8 +15,8 @@
   Depende de: 20260929230000_recursos_modelos_anexos_respostas (bucket,
   TB_ANEXO_RECURSO e as políticas de select/insert).
   Front: src/modulos/recursos/estado.ts (enviarERegistrar).
-  Rollback: supabase/rollback/20261022180000_apagar_anexo_orfao_do_recurso.sql.
-  Ensaio: supabase/ensaios/20261022180000_apagar_anexo_orfao_do_recurso.sql.
+  Rollback: supabase/rollback/20261022190500_apagar_anexo_orfao_do_recurso.sql.
+  Ensaio: supabase/ensaios/20261022190500_apagar_anexo_orfao_do_recurso.sql.
 */
 begin;
 

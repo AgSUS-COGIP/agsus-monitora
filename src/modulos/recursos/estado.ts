@@ -805,7 +805,7 @@ export function criarEstadoDosRecursos({
     Envia ao bucket (caminho da área e do recurso) e registra no banco. Se o
     registro não acontece (falhou, ou a tela mudou no meio), o arquivo enviado
     sai do bucket: sem isso, ficava órfão, sem linha em TB_ANEXO_RECURSO
-    (política de 20261022180000: quem enviou apaga o próprio arquivo ainda
+    (política de 20261022190500: quem enviou apaga o próprio arquivo ainda
     não registrado, nos primeiros 10 minutos).
   */
   async function enviarERegistrar(
