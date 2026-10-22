@@ -35,6 +35,7 @@ import "./app/entrada/solicitacao-de-acesso.css";
 import "./modulos/configuracoes/configuracoes.css";
 import "./modulos/acessos/acessos.css";
 import "./modulos/modulos/modulos.css";
+import "./modulos/automacao/automacao.css";
 import "./modulos/editais/editais.css";
 import "./modulos/cronograma/cronograma.css";
 import "./modulos/aprovados/aprovados.css";
@@ -339,12 +340,26 @@ window.saudeDasCargasController = telaSobDemanda({
     ),
 });
 
+// Configurações › Automação (só admin global): relê a cada abertura da seção.
+window.automacaoController = telaSobDemanda({
+  secao: "automacaoApp",
+  padroes: { confirmarSaida: () => true },
+  carregar: () =>
+    import("./modulos/automacao/automacao.tsx").then((m) =>
+      m.montarAutomacao({
+        toast: window.monitoraToast,
+        getProfile: window.getMonitoraProfile,
+      }),
+    ),
+});
+
 // Mouse ou foco no item do menu: a tela começa a baixar antes do clique.
 registrarPreCarga((view, secao) => {
   const daSecao = {
     acessos: window.acessosController,
     modulos: window.modulosController,
     cargas: window.saudeDasCargasController,
+    automacao: window.automacaoController,
   }[secao ?? ""];
   const daTela = Object.hasOwn(TELAS_REACT, view)
     ? TELAS_REACT[view](() => "", window)[2]

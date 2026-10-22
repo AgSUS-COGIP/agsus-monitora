@@ -1,7 +1,8 @@
 import type { ClienteDosAvisos } from "../../modulos/conferencias/tipos.ts";
 import type { ResumoDaAgenda } from "./agenda-dos-robos.tsx";
+import type { ChavesDaAutomacao } from "../../lib/chaves-da-automacao.ts";
 export type SituacaoDaCarga =
-  "em_dia" | "atrasada" | "falhou" | "em_andamento" | "nunca";
+  "em_dia" | "atrasada" | "falhou" | "em_andamento" | "nunca" | "desligada";
 export interface ExecucaoDaCarga {
   inicio: Date | null;
   fim: Date | null;
@@ -52,6 +53,8 @@ export interface LinhaDaSaude {
   partes: Carga[];
   agenda?: ResumoDaAgenda;
   indisponivel?: boolean;
+  /** A chave da aba está desligada em Configurações › Automação. */
+  desligada?: { motivo: string; em: Date | null; por: string };
 }
 export interface EditalDoRobo {
   id: string;
@@ -202,6 +205,8 @@ export interface SnapshotDaSaude {
     erro: string;
   };
   readonly acompanhamentos: Readonly<Record<string, PedidoDoRobo>>;
+  /** Chaves da automação (Configurações › Automação); nulo sem a função no banco. */
+  readonly chaves: ChavesDaAutomacao | null;
 }
 type RespostaDaCarga = {
   data: unknown;
@@ -217,7 +222,10 @@ export type ClienteDaSaude = ClienteDosAvisos & {
     parametros: { p_disparo: number | string },
   ): PromiseLike<RespostaDaCarga>;
   rpc(
-    nome: "get_saude_das_cargas" | "get_painel_dos_robos",
+    nome:
+      | "get_saude_das_cargas"
+      | "get_painel_dos_robos"
+      | "obter_chaves_da_automacao",
   ): PromiseLike<RespostaDaCarga>;
   rpc(
     nome: "listar_vagas_dos_robos",

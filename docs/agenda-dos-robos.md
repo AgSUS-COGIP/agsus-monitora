@@ -28,6 +28,38 @@ em `supabase/ensaios/` e `supabase/rollback/`).
 Robô da Empregare e pré-classificação estão na lista fixa da função; fora a agenda das inscrições
 (abaixo), não têm agenda.
 
+No banco em 22/10/2026: entrevistas com `5 0-10,15,21-23 * * *` e conferir disparos com
+`*/15 * * * *` (as linhas acima são as da migration de origem); 21, 22 e 23 com `active = false`.
+
+## Chaves da automação (20261022190000)
+
+Ligar e desligar o que roda sozinho é pela tela **Configurações › Automação** (só administrador
+global), com motivo e histórico — não mais com `cron.alter_job(..., active := ...)` à mão. Uma
+chave por aba; desligada:
+
+- as tarefas do pg_cron da chave ficam com `active = false` (a tela desliga e religa junto);
+- `FC_DISPARAR_ROBO` não pede nada ao GitHub com origem `AGENDA` (vale mesmo se alguém religar a
+  tarefa direto no banco; a tela avisa a tarefa fora do estado da chave);
+- o **Rodar agora** do Status das atualizações continua, com confirmação; a linha mostra
+  "Desligada pelo administrador" em vez de atraso.
+
+| Chave                        | Tarefas do pg_cron                                                                                                                    | Workflow (agenda)                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Entrevistas                  | `agsus_robo_sincronizar_entrevistas`                                                                                                  | `sincronizar-entrevistas.yml`                                              |
+| Seleção                      | `agsus_robo_sincronizar_selecao`                                                                                                      | `sincronizar-selecao.yml`                                                  |
+| KPIs do edital               | `agsus_kpis_do_edital_pela_selecao`                                                                                                   | —                                                                          |
+| Robô de inscrições           | `agsus_robo_inscricoes_*`                                                                                                             | `robo-empregare.yml`                                                       |
+| Pré-classificação automática | —                                                                                                                                     | `pre-classificacao.yml` chamado no fim do `robo-empregare.yml` (apos_robo) |
+| Conferências                 | `agsus_robo_conferencias`                                                                                                             | `conferencias.yml`                                                         |
+| Pacotes dos painéis          | `agsus_analises_cache_do_painel`, `agsus_aprovados_cache_por_area`, `agsus_entrevistas_cache_do_painel`                               | —                                                                          |
+| Manutenção do banco          | `agsus_analises_analyze_diario`, `agsus_fila_estatisticas`, `agsus_analises_encerrar_inativas`, `agsus_eventos_acesso_limpeza_mensal` | —                                                                          |
+
+Sem chave (sempre ligadas): `agsus_robo_conferir_disparos` (fecha os pedidos do Rodar agora) e
+`agsus_inativar_listas_vencidas`. Fora do banco: os gatilhos do Apps Script das planilhas de
+análises (incremental a cada 20 min) ficam no Google; a Leitura de arquivos só roda pelo Run
+workflow. Os workflows dos robôs só têm `workflow_dispatch` (`tests/workflows-dos-robos.test.js`
+impede `push` e `schedule`).
+
 ## Agenda das inscrições (robô da Empregare + pré-classificação)
 
 Durante as inscrições de um edital, a coordenação acompanha inscritos e aptos no cartão

@@ -309,6 +309,15 @@ export const SECOES_DA_AYA = Object.freeze({
       sug("Horários", "Quando cada atualização de dados roda?"),
     ],
   }),
+  automacao: Object.freeze({
+    nome: "Automação",
+    intro:
+      "Posso explicar o que cada chave liga e desliga e como rodar uma carga com a automação desligada.",
+    sugestoes: [
+      sug("O que é", "O que as chaves da automação desligam?"),
+      sug("Rodar agora", "Dá para rodar uma carga com a automação desligada?"),
+    ],
+  }),
 });
 
 const GENERICA = Object.freeze({

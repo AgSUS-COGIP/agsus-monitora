@@ -14,7 +14,9 @@ name: Pré-classificação da Avaliação documental
 #     com disparado_por = id do usuário;
 #   - sozinho, no fim do robô da Empregare que gravou alguma vaga (job
 #     "Pré-classificar" de robo-empregare.yml chama este workflow com
-#     workflow_call e apos_robo, para os editais das vagas carregadas);
+#     workflow_call e apos_robo, para os editais das vagas carregadas), salvo
+#     com a chave "Pré-classificação automática" desligada (Configurações ›
+#     Automação);
 #   - pelo botão "Run workflow" desta aba Actions (o primeiro passo registra a
 #     execução no MONITORA, com quem a iniciou; falha nele só gera aviso).
 # Guia: docs/python-no-monitora.md. Migration: 20261006110000_pre_classificacao_e_lote.sql.
@@ -122,9 +124,24 @@ jobs:
           FORCAR_CONGELADO: ${{ inputs.forcar_congelado }}
         run: python -m monitora.disparo_externo pre-classificacao.yml
 
+      # Fim do robô (apos_robo): com a chave "Pré-classificação automática"
+      # desligada em Configurações › Automação (migration 20261022190000), o
+      # passo seguinte é pulado; o Recalcular e o Rodar agora continuam. Na
+      # dúvida (banco fora), segue ligada.
+      - name: Conferir a chave da pré-classificação automática
+        id: chave_pre_classificacao
+        if: ${{ inputs.apos_robo }}
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PYTHONPATH: python
+        run: python -m monitora.chave_da_automacao pre_classificacao
+
       # Os inputs vão por variável de ambiente (nunca interpolados no shell); o
       # script valida o formato de cada um.
       - name: Pré-classificar
+        if: ${{ steps.chave_pre_classificacao.outputs.ligada != 'false' }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

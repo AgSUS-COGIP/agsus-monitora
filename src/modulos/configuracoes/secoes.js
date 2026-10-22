@@ -6,8 +6,8 @@
   O conteúdo é todo React: as seções que publicam pela barra fixa (Marca,
   Página inicial, Tela de acesso, Aparência, Painéis externos, Operação e
   Comemorações) entram por portal no corpo da
-  própria seção (src/modulos/configuracoes/configuracoes.jsx); Acessos, Módulos e abas
-  e Status das atualizações são ilhas próprias, cujos blocos do index.html
+  própria seção (src/modulos/configuracoes/configuracoes.jsx); Acessos, Módulos e abas,
+  Status das atualizações e Automação são ilhas próprias, cujos blocos do index.html
   este módulo move para a seção certa (SECAO_POR_BLOCO).
 */
 
@@ -88,6 +88,14 @@ export const SECOES = Object.freeze([
     descricao:
       "Se os dados de cada aba estão atualizados: quando rodou cada atualização, o que atrasou e o que falhou.",
   },
+  {
+    id: "automacao",
+    rotulo: "Automação",
+    icone: "fa-power-off",
+    iconeDoMenu: "play",
+    descricao:
+      "Ligar e desligar o que roda sozinho em cada aba, com motivo e histórico.",
+  },
 ]);
 
 /*
@@ -99,6 +107,7 @@ const CONTROLADOR_DA_SECAO = Object.freeze({
   acessos: "acessosController",
   modulos: "modulosController",
   cargas: "saudeDasCargasController",
+  automacao: "automacaoController",
 });
 const controladorDaSecao = (documento, secao) =>
   CONTROLADOR_DA_SECAO[secao]
@@ -110,6 +119,7 @@ export const SECAO_POR_BLOCO = Object.freeze({
   acessosApp: "acessos",
   modulosApp: "modulos",
   saudeDasCargasApp: "cargas",
+  automacaoApp: "automacao",
 });
 
 /*

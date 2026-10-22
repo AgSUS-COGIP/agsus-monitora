@@ -175,6 +175,13 @@
   font-size: var(--text-body-sm);
   overflow-wrap: anywhere;
 }
+/* Chave desligada em Configurações › Automação: quando, quem e o motivo. */
+.saude-desligada {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  overflow-wrap: anywhere;
+}
 
 /* Agenda dos robôs: o último pedido aceito ao GitHub e as falhas (agenda-dos-robos.tsx). */
 .saude-agenda {

@@ -195,6 +195,7 @@ describe("selo de cada carga", () => {
       falhou: 2,
       em_andamento: 0,
       nunca: 1,
+      desligada: 0,
     });
     expect(saude.total).toBe(9);
   });

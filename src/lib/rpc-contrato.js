@@ -683,6 +683,19 @@ export const CONTRATO_RPC = {
     resumo:
       "Vagas da Empregare conhecidas dos editais (ids) ou dos códigos pedidos (quadro do edital, Seleção e já carregadas): código, edital, cargo, última carga e situação. Sugestões do Rodar com opções; só administrador global.",
   },
+  // ── Chaves da automação (Configurações › Automação, 20261022190000_chaves_da_automacao.sql) ──
+  obter_chaves_da_automacao: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "As chaves da automação de cada aba (ligada, motivo, quando e quem mudou), as tarefas do pg_cron de cada uma (agenda, ativa, última execução), o último pedido da agenda, as tarefas sem chave e os 50 últimos eventos. Também lida pelo Status das atualizações. Só administrador global.",
+  },
+  alterar_chave_da_automacao: {
+    argumentos: ["p_chave", "p_ligar", "p_motivo"],
+    critica: false,
+    resumo:
+      "Liga ou desliga uma chave da automação, com motivo de 10 a 500 caracteres: as tarefas do pg_cron da chave acompanham e a agenda dos robôs para de pedir; grava o histórico e devolve obter_chaves_da_automacao. Só administrador global; 55000 se já estiver no estado pedido.",
+  },
   // ── Conferências de consistência (20261005210000_conferencias_de_consistencia.sql) ──
   listar_avisos_conferencia_se_mudou: {
     argumentos: ["p_area", "p_modulo", "p_versao"],
