@@ -595,6 +595,29 @@ describe("resposta ao candidato", () => {
   });
 });
 
+describe("resposta não salva", () => {
+  it("o texto digitado segura o F5, a versão nova e a página desligada até salvar ou sair", async () => {
+    const { guardaDeAlteracoes } =
+      await import("../../src/app/guarda-de-alteracoes.ts");
+    const servidor = criarServidor();
+    await montar(servidor);
+    await abrirGaveta();
+    expect(guardaDeAlteracoes.comAlteracoes()).toBe(false);
+    await digitar(
+      secao("resposta").querySelector('textarea[name="fundamentacao"]'),
+      "Ainda não salvo.",
+    );
+    expect(guardaDeAlteracoes.comAlteracoes()).toBe(true);
+    expect(guardaDeAlteracoes.podeRecarregar()).toBe(false);
+    const saida = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(saida);
+    expect(saida.defaultPrevented).toBe(true);
+    await act(async () => painel.raiz.unmount());
+    painel = null;
+    expect(guardaDeAlteracoes.comAlteracoes()).toBe(false);
+  });
+});
+
 describe("anexos", () => {
   it("editor anexa: envia ao bucket no caminho da área e do recurso e registra", async () => {
     const servidor = criarServidor();

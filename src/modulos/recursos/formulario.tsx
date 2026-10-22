@@ -254,6 +254,12 @@ export function FormularioDoRecurso({
     string | number | null
   >(null);
   const analistaAutomatico = useRef("");
+  /*
+    A revisão de quando o formulário abriu: uma releitura (outra pessoa salvou)
+    não pode fazer este salvamento passar por cima do que ela gravou; o banco
+    recusa a revisão antiga.
+  */
+  const revisaoAoAbrir = useRef(recurso?.revisao ?? null);
 
   /*
     A observação e os dados digitados chegam com o detalhe, uma vez só (uma
@@ -350,7 +356,7 @@ export function FormularioDoRecurso({
     const resposta = await estado.salvar(
       dadosParaSalvar(rascunho, {
         id: recurso?.id ?? null,
-        revisao: recurso?.revisao ?? null,
+        revisao: revisaoAoAbrir.current,
         permitirDuplicado: confirmaDuplicado,
       }),
     );
