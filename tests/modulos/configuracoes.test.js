@@ -271,7 +271,8 @@ describe("revisão da publicação", () => {
       chamada[1].p_config_rows.map((l) => [l.chave, l.valor]),
     );
     expect(linhas.get("cogip_nome")).toBe("Equipe nova");
-    expect(linhas.get("page_title")).toBe("Saúde Indígena");
+    // Só o que mudou vai: as outras chaves ficam como estão no banco.
+    expect(linhas.has("page_title")).toBe(false);
     expect(alertar).toHaveBeenCalled();
     expect(recarregar).toHaveBeenCalled();
   });

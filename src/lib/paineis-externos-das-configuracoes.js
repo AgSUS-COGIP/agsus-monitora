@@ -85,6 +85,21 @@ export function linhasDosPaineis(paineis) {
     }));
 }
 
+/**
+ * `p_paineis` só dos painéis que a pessoa mudou, a partir do que está no
+ * banco agora (`paineisDoBanco`, do get_configuracoes_snapshot) com os
+ * campos do rascunho por cima: os outros painéis e os campos não mexidos
+ * ficam como outro administrador os deixou.
+ */
+export function linhasDosPaineisAlterados(paineisDoBanco, rascunho) {
+  const banco = normalizarPaineis(paineisDoBanco);
+  return linhasDosPaineis(
+    banco
+      .filter((painel) => rascunho.has(painel.id))
+      .map((painel) => ({ ...painel, ...rascunho.get(painel.id) })),
+  );
+}
+
 /** Chave do erro do endereço de um painel em `errosDosCampos`. */
 export const chaveDoErroDoPainel = (id) => `painel:${id}:url`;
 

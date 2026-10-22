@@ -368,9 +368,10 @@ export function ModulosEAbas({ estado }: { estado: EstadoDosModulos }) {
   const atual = useSyncExternalStore(estado.assinar, estado.obter);
   const { arvore, rascunho, originais } = atual;
 
+  // Os rótulos do modo cartão do celular: só quando a árvore muda.
   useEffect(() => {
     document.dispatchEvent(new CustomEvent("agsus:content-updated"));
-  });
+  }, [arvore]);
 
   if (atual.perfil && !isAdminGlobal(atual.perfil))
     return (
@@ -589,12 +590,14 @@ export function montarModulos({
   toast,
   getProfile,
   confirmar,
+  aoSalvar,
 }: DependenciasDosModulos & { raizDaTela?: HTMLElement | null } = {}) {
   const estado = criarEstadoDosModulos({
     supabase,
     toast,
     getProfile,
     confirmar,
+    aoSalvar,
   });
   const raiz = raizDaTela
     ? montarModulo(raizDaTela, <ModulosEAbas estado={estado} />, {

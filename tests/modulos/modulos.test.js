@@ -96,7 +96,12 @@ function supabaseFalso({ recusa = null } = {}) {
 }
 
 let controlador = null;
-async function montar({ perfil, recusa, confirmar = () => true } = {}) {
+async function montar({
+  perfil,
+  recusa,
+  confirmar = () => true,
+  aoSalvar,
+} = {}) {
   document.body.innerHTML = '<div id="modulosApp" data-modulos></div>';
   const supabase = supabaseFalso({ recusa });
   const toast = vi.fn();
@@ -107,6 +112,7 @@ async function montar({ perfil, recusa, confirmar = () => true } = {}) {
       toast,
       getProfile: () => perfil,
       confirmar,
+      aoSalvar,
     });
   });
   await esperar(() => controlador.render());
@@ -342,5 +348,37 @@ describe("Configurações › Módulos e abas", () => {
     expect(salvarChamadas(supabase)[0][1].p_alteracoes).toEqual([
       { escopo: "sistema", campo: "comemoracoes", valor: "N" },
     ]);
+  });
+});
+
+/*
+  22/10: salvar painéis aqui não relia a lista de painéis do app (menu e
+  Configurações › Painéis externos); e um efeito sem dependências disparava
+  agsus:content-updated a cada render (a cada tecla).
+*/
+describe("depois de salvar e a cada tecla", () => {
+  it("salvar avisa quem relê os painéis", async () => {
+    const aoSalvar = vi.fn();
+    await montar({ perfil: ADMIN, aoSalvar });
+    await clicar(document.querySelector(".modulos-beta input[type=checkbox]"));
+    await clicar(botao("Revisar e salvar"));
+    await digitar(document.getElementById("modulosMotivo"), "teste");
+    await clicar(botao("Salvar alterações"));
+    await esperar();
+    expect(aoSalvar).toHaveBeenCalledTimes(1);
+  });
+
+  it("digitar não dispara agsus:content-updated", async () => {
+    await montar({ perfil: ADMIN });
+    await clicar(opcao("Situação do sistema inteiro", "Em manutenção"));
+    const avisos = vi.fn();
+    document.addEventListener("agsus:content-updated", avisos);
+    try {
+      await digitar(document.getElementById("modulos-sistema-mensagem"), "a");
+      await digitar(document.getElementById("modulos-sistema-mensagem"), "ab");
+      expect(avisos).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener("agsus:content-updated", avisos);
+    }
   });
 });

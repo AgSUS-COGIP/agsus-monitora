@@ -14,6 +14,7 @@ import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
 import {
   alteracoesDaVersao,
   buildChanges,
+  conflitosDaPublicacao,
   errosDasSecoes,
   linhasDasSecoes,
   normalizarValoresCarregados,
@@ -21,7 +22,7 @@ import {
 import {
   chaveDoErroDoPainel,
   errosDosPaineis,
-  linhasDosPaineis,
+  linhasDosPaineisAlterados,
   mudarRascunhoDoPainel,
   normalizarPaineis,
   paineisComRascunho,
@@ -62,7 +63,8 @@ const ESTADO_INICIAL = Object.freeze({
       { tipo: "erros", mensagens }        corrigir antes de publicar
       { tipo: "vazio" }                   nada para publicar
       { tipo: "falha", titulo, detalhe }  a revisão não pôde ser preparada
-      { tipo: "revisar", alteracoes, linhas, paineis, enviando, erro }
+      { tipo: "revisar", alteracoes, conflitos, linhas, paineis, enviando, erro }
+        (conflitos: o que outro administrador mudou nos mesmos campos)
       { tipo: "restaurar", versao, alteracoes, enviando, erro }
   */
   modal: null,
@@ -142,10 +144,20 @@ export function criarEstadoDasConfiguracoes({
 
   /** O legado terminou de ler a TB_PAINEL_EXTERNO (`loadPanels`). */
   function definirPaineisCarregados(lista = []) {
-    publicar({
-      paineis: Object.freeze(normalizarPaineis(lista)),
-      rascunhoDosPaineis: new Map(),
-    });
+    const paineis = Object.freeze(normalizarPaineis(lista));
+    // Uma releitura (ex.: depois de salvar Módulos e abas) não apaga o que a
+    // pessoa digitou: o rascunho fica, menos o que já é igual ao banco.
+    let rascunhoDosPaineis = new Map();
+    for (const [id, campos] of estado.rascunhoDosPaineis)
+      for (const [campo, valor] of Object.entries(campos))
+        rascunhoDosPaineis = mudarRascunhoDoPainel(
+          rascunhoDosPaineis,
+          paineis,
+          id,
+          campo,
+          valor,
+        );
+    publicar({ paineis, rascunhoDosPaineis });
   }
 
   function mudarPainel(id, campo, novo) {
@@ -197,8 +209,12 @@ export function criarEstadoDasConfiguracoes({
     return errosDaValidacao;
   }
 
-  /* Todas as chaves das seções no mesmo `p_config_rows` (uma chamada, uma transação). */
-  const linhasDaPublicacao = () => linhasDasSecoes(valoresAtuais());
+  /*
+    Só as chaves que a pessoa mudou, no mesmo `p_config_rows` (uma chamada,
+    uma transação): as outras ficam como estão no banco.
+  */
+  const linhasDaPublicacao = () =>
+    linhasDasSecoes(valoresAtuais(), [...estado.rascunho.keys()]);
 
   /* Desligar o login Google (o acesso institucional principal) pede confirmação. */
   const desligaOGoogle = () =>
@@ -242,8 +258,17 @@ export function criarEstadoDasConfiguracoes({
       );
       if (error) throw error;
       const linhas = linhasDaPublicacao();
-      const paineis = linhasDosPaineis(paineisAtuais());
+      const paineis = linhasDosPaineisAlterados(
+        retrato?.paineis,
+        estado.rascunhoDosPaineis,
+      );
       const alteracoes = buildChanges(retrato, linhas, paineis);
+      const conflitos = conflitosDaPublicacao(retrato, {
+        carregados: estado.valores,
+        rascunho: estado.rascunho,
+        paineisCarregados: estado.paineis,
+        rascunhoDosPaineis: estado.rascunhoDosPaineis,
+      });
       if (!alteracoes.length) {
         descartar();
         publicar({ salvando: false, modal: { tipo: "vazio" } });
@@ -254,6 +279,7 @@ export function criarEstadoDasConfiguracoes({
         modal: {
           tipo: "revisar",
           alteracoes,
+          conflitos,
           linhas,
           paineis,
           enviando: false,

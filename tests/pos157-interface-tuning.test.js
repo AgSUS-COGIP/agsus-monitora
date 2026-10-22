@@ -144,7 +144,7 @@ describe("branding independente da sidebar", () => {
     expect(publicacao).toContain('"ui_sidebar_logo_url"');
     expect(publicacao).toContain('"ui_sidebar_background_color"');
     expect(governance).toContain(
-      "const linhasDaPublicacao = () => linhasDasSecoes(valoresAtuais());",
+      "linhasDasSecoes(valoresAtuais(), [...estado.rascunho.keys()]);",
     );
   });
 

@@ -367,13 +367,20 @@ export function dominioValido(valor) {
   return /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(bruto);
 }
 
-/** Linhas de `p_config_rows`: { chave, valor, descricao }, uma por chave. */
-export function linhasDasSecoes(valores) {
-  return CHAVES_DAS_SECOES.map((chave) => ({
-    chave,
-    valor: txt(valores.get(chave)),
-    descricao: CAMPO_POR_CHAVE.get(chave).descricao,
-  }));
+/**
+ * Linhas de `p_config_rows`: { chave, valor, descricao }, uma por chave.
+ * Com `chaves`, só essas (as que a pessoa mudou): a publicação não reenvia o
+ * que outro administrador possa ter mudado depois que a tela carregou.
+ */
+export function linhasDasSecoes(valores, chaves = CHAVES_DAS_SECOES) {
+  const pedidas = new Set(chaves);
+  return CHAVES_DAS_SECOES.filter((chave) => pedidas.has(chave)).map(
+    (chave) => ({
+      chave,
+      valor: txt(valores.get(chave)),
+      descricao: CAMPO_POR_CHAVE.get(chave).descricao,
+    }),
+  );
 }
 
 /**
@@ -444,6 +451,64 @@ export function snapshotMaps(snapshot) {
     (snapshot?.paineis || []).map((item) => [String(item.id), item]),
   );
   return { configMap, panelMap };
+}
+
+/**
+ * O que outro administrador mudou no banco, depois que a tela carregou, nos
+ * mesmos campos que a pessoa está mudando: [{ entity, label, field }].
+ * `carregados` e `rascunho` são Maps chave → valor; os painéis vêm já
+ * normalizados (`paineisCarregados`) e o rascunho é Map id → { campo: valor }.
+ */
+export function conflitosDaPublicacao(
+  snapshot,
+  {
+    carregados,
+    rascunho,
+    paineisCarregados = [],
+    rascunhoDosPaineis = new Map(),
+  },
+) {
+  const { panelMap } = snapshotMaps(snapshot);
+  const doBanco = normalizarValoresCarregados(
+    Object.fromEntries(
+      (snapshot?.configuracoes || []).map((item) => [item.chave, item.valor]),
+    ),
+  );
+  const conflitos = [];
+  for (const chave of rascunho.keys()) {
+    if (txt(doBanco.get(chave)) === txt(carregados.get(chave))) continue;
+    conflitos.push({
+      entity: "Configuração",
+      label: CAMPO_POR_CHAVE.get(chave)?.descricao || chave,
+      field: "Valor",
+    });
+  }
+  const rotulos = {
+    titulo: "Título",
+    url: "URL",
+    ativo: "Ativo",
+    em_manutencao: "Manutenção",
+  };
+  for (const [id, campos] of rascunhoDosPaineis) {
+    const carregado = paineisCarregados.find((painel) => painel.id === id);
+    const banco = panelMap.get(String(id));
+    if (!carregado || !banco) continue;
+    for (const campo of Object.keys(campos)) {
+      const antes =
+        campo === "ativo"
+          ? banco.ativo !== false
+          : campo === "em_manutencao"
+            ? Boolean(banco.em_manutencao)
+            : txt(banco[campo]);
+      if (antes === carregado[campo]) continue;
+      conflitos.push({
+        entity: "Painel",
+        label: carregado.nome || carregado.codigo || id,
+        field: rotulos[campo] || campo,
+      });
+    }
+  }
+  return conflitos;
 }
 
 /** O que muda entre o banco e a tela: [{ entity, label, field, before, after }]. */
