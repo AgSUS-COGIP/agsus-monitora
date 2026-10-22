@@ -101,8 +101,9 @@ apps-script/
    script > Adicionar propriedade**:
    - `SUPABASE_SERVICE_ROLE_KEY` = a chave secreta (`sb_secret_...` ou JWT
      `service_role`) do projeto de produção;
-   - `SUPABASE_URL` = `https://SEU-PROJETO.supabase.co` (**obrigatória**: o
-     `DEFAULT_SUPABASE_URL` do código ainda aponta para o projeto antigo, desativado).
+   - `SUPABASE_URL` = `https://SEU-PROJETO.supabase.co` (**obrigatória**: o código
+     não tem URL fixa; sem a propriedade, o envio para com "Configure a propriedade do
+     script SUPABASE_URL…").
    **Nunca cole a chave no código** (`SERVICE_ROLE_KEY_FIXA` fica vazio).
 6. Rode `verificarConfiguracaoSupabaseAnalisesCurriculares` e confira no log
    "SUPABASE_SERVICE_ROLE_KEY: CONFIGURADA".
@@ -143,8 +144,10 @@ dados novos sozinho (isso é de propósito: nada errado entra). Para destravar:
    - incremental: rode `limparEstadoLocalAnalisesIncremental` com o argumento
      `'LIMPAR_ESTADO_LOCAL'` (crie uma função de uma linha que a chame, se
      preferir);
-   - FULL: em **Configurações do projeto > Propriedades do script**, apague
-     `ANALISES_SYNC_LOTES_CLIENT_V1`.
+   - FULL: não é preciso; com o envio encerrado como `erro`, o script descarta
+     o estado local sozinho na próxima execução (linha `FULL: estado local do
+     sync … descartado` no log). Para forçar, apague `ANALISES_SYNC_LOTES_CLIENT_V1`
+     em **Configurações do projeto > Propriedades do script**.
 4. Rode o envio manual de novo (ou espere o próximo ciclo do orquestrador).
 
 ## Conferir no banco
@@ -185,14 +188,10 @@ relação ao da Saúde Indígena, que **não impedem** o funcionamento:
   espera o próximo ciclo de 5 minutos para enviar, em vez de enviar na hora.
 - Não existe `reconciliarFatoComDimVagasAtivas_`: análises de vagas desativadas
   não saem da FATO automaticamente.
-- Os gatilhos de continuação são criados com nome terminado em `_`
-  (`processarLoteSincronizacaoAnalises_`, `continuarRecalculoStatusFato_`,
-  `continuarRecalculoNotasPontuacoesFato_`). O Apps Script não executa gatilho
-  com esse nome; a FATO só avança pelo resgate do orquestrador (a cada 8
-  minutos sem sinal). Para corrigir, no `CFG` do "Atualizar base" de Projetos
-  troque `CONTINUATION_SYNC_TRIGGER_HANDLER` para
-  `'processarLoteSincronizacaoAnalises'` (a função pública já vem no
-  `4-orquestrador-fato-supabase.gs`).
+- Até 22/10/2026 os gatilhos de continuação eram criados com nome terminado em
+  `_`, que o Apps Script não executa (a FATO só avançava pelo resgate do
+  orquestrador). Corrigido em `projetos/1-atualizar-base.gs`: ver "Robustez dos
+  scripts (22/10/2026)" no fim.
 
 ## Nota: nomes repetidos entre arquivos (29/09/2026)
 
@@ -312,3 +311,60 @@ enviado ao banco.` no log). Mudou qualquer linha de `FATO_ANALISES` ou
 `limparEstadoLocalAnalisesIncremental('LIMPAR_ESTADO_LOCAL')` apaga também o hash
 (força o próximo envio). Para aplicar: colar o `3-analises-incremental.gs` novo nas
 três planilhas (não precisa reinstalar gatilho).
+
+## Robustez dos scripts (22/10/2026)
+
+**O que mudou** (marcas no código entre colchetes):
+
+- **FULL não adota incremental** (`2-sincronizar-com-supabase-full.gs`, as três
+  planilhas, `[so-full]`): a busca do "sync pendente da planilha" não olhava o modo e o
+  FULL adotava um `INCREMENTAL_ACTIVE` parado. Finalizar um incremental como FULL
+  desativaria tudo o que não estava no staging (só as linhas alteradas). Agora o FULL
+  recusa ("Existe um sync INCREMENTAL_ACTIVE desta planilha pendente… O FULL não o
+  adota") e só cria, retoma e finaliza sync `FULL`. O banco recusa também
+  (`supabase/migrations/20261022140000_full_nao_processa_sync_incremental.sql`).
+- **FULL descarta estado local órfão** (`[nao-trava]`, como o incremental): se o sync
+  guardado em `ANALISES_SYNC_LOTES_CLIENT_V1` sumiu do banco, terminou em `erro`
+  (inclusive "encerrada por inatividade") ou é de outro modo, o estado sai sozinho
+  (`FULL: estado local do sync … descartado: …` no log). Nada é apagado no banco.
+- **Sem URL fixa** (`[sem-url-fixa]`): `DEFAULT_SUPABASE_URL` e `SUPABASE_URL_FIXA`
+  saíram (apontavam para o projeto antigo, desativado). A URL vem só da propriedade
+  `SUPABASE_URL`; sem ela, erro claro antes de qualquer requisição.
+- **Incremental já processado conclui primeiro** (`3-analises-incremental.gs`,
+  `[processado-primeiro]`): se o banco diz `processado`, o script conclui e limpa
+  antes de comparar com a planilha. Antes, uma planilha alterada depois do envio dava
+  "A planilha mudou durante um sync incremental pendente".
+- **PARTIAL não trava o incremental** (`4-orquestrador-fato-supabase.gs`,
+  `[parcial-nao-trava]`): o "Atualizar base" grava `PARTIAL` quando a FATO foi
+  promovida mas algumas vagas deram erro (essas ficam com as linhas anteriores). Uma vaga
+  com erro persistente deixava todo ciclo em PARTIAL e o incremental nunca mais rodava.
+  Agora PARTIAL segue para o incremental **se** `last_success_at` e
+  `last_run_finished_at` da `META_PAINEL` foram gravados juntos (até 2 min de
+  diferença: a FATO foi promovida nesta execução). PARTIAL sem essa confirmação,
+  ERROR, BLOCKED, STALE_RESET e CANCELLED continuam bloqueando.
+- **Gatilhos públicos** (`projetos/1-atualizar-base.gs`, `[gatilho-publico]`): os
+  gatilhos de continuação passam a chamar `processarLoteSincronizacaoAnalises` (vem no
+  `4-orquestrador-fato-supabase.gs`), `continuarRecalculoStatusFato` e
+  `continuarRecalculoNotasPontuacoesFato`. Um gatilho antigo com `_` é trocado pelo
+  novo no próximo agendamento e sai na limpeza.
+- **Fuso fixo** (`[fuso]`): `Utilities.formatDate`/`parseDate` usam
+  `America/Sao_Paulo` (constante `FUSO_HORARIO`), não o fuso do projeto. Se algum
+  projeto estava em outro fuso, as datas sem hora mudam uma vez e o incremental reenvia
+  essas linhas no primeiro ciclo.
+
+Testes: `tests/apps-script-analises-full.test.js` (e o do incremental).
+
+**Ordem para aplicar:**
+
+1. Banco: aplicar `20261022140000_full_nao_processa_sync_incremental.sql` (o ensaio
+   está em `supabase/ensaios/`) e registrar, como em `supabase/migrations/README.md`.
+   Os scripts atuais continuam funcionando com ela (o incremental passa pelo próprio
+   caminho; só o FULL com sync incremental é recusado).
+2. Em cada planilha, conferir em **Configurações do projeto > Propriedades do script**
+   que `SUPABASE_URL` existe (rode `verificarConfiguracaoSupabaseAnalisesCurriculares`).
+3. Colar os arquivos (apagar tudo e colar), salvar:
+   - Saúde Indígena: `saude-indigena/2-`, `3-` e `4-`;
+   - Projetos: `projetos/1-atualizar-base.gs`, `2-`, `3-` e `4-`;
+   - SEDE (quando existir): `sede/2-`, `3-` e `4-`.
+   Não é preciso reinstalar o gatilho do orquestrador.
+4. Acompanhar em **Execuções** o próximo `orquestrarFatoESupabaseAgendado`.
