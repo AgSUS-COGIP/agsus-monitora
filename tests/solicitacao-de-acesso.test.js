@@ -421,6 +421,7 @@ function supabaseDaTela({
   opcoes = OPCOES,
   falhaNasOpcoes = false,
   erroNoEnvio = null,
+  redeCaiNoEnvio = false,
 } = {}) {
   const fila = [...pedidos];
   return {
@@ -435,6 +436,8 @@ function supabaseDaTela({
           : { data: opcoes, error: null };
       if (nome === "obter_contexto_monitora")
         return { data: contexto, error: null };
+      if (nome === "registrar_solicitacao_acesso" && redeCaiNoEnvio)
+        throw new TypeError("Failed to fetch");
       if (nome === "registrar_solicitacao_acesso")
         return erroNoEnvio
           ? { data: null, error: erroNoEnvio }
@@ -665,6 +668,16 @@ describe("página: pedido enviado, editar e cancelar", () => {
     await preencherEEnviar(sb);
     expect(document.body.textContent).toContain(
       "Não foi possível enviar o pedido: Escolha o DSEI ou a CASAI na lista.",
+    );
+    expect(pedido.obter().enviando).toBe(false);
+  });
+
+  it("rede cai no envio (a promessa rejeita): aviso e o botão não fica preso", async () => {
+    const sb = supabaseDaTela({ redeCaiNoEnvio: true });
+    const pedido = await desenhar(sb);
+    await preencherEEnviar(sb);
+    expect(document.body.textContent).toContain(
+      "Não foi possível enviar o pedido",
     );
     expect(pedido.obter().enviando).toBe(false);
   });

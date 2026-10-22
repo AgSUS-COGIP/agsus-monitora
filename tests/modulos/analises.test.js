@@ -26,8 +26,8 @@ import {
 
 // O Chart.js não desenha no jsdom (sem canvas): um falso guarda o que recebeu.
 const graficos = vi.hoisted(() => []);
-vi.mock("../../src/lib/chartjs-global.js", () => ({
-  Chart: class {
+vi.mock("../../src/lib/chartjs-global.js", () => {
+  const Chart = class {
     constructor(canvas, configuracao) {
       this.canvas = canvas;
       this.config = configuracao;
@@ -42,8 +42,12 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
     destroy() {
       graficos.splice(graficos.indexOf(this), 1);
     }
-  },
-}));
+  };
+  return {
+    chartCarregado: () => Chart,
+    carregarChart: async () => Chart,
+  };
+});
 
 const { montarAnalises } =
   await import("../../src/modulos/analises/analises.tsx");
@@ -703,7 +707,7 @@ describe("ritmo da análise", () => {
     expect(chamadas(supabase, "obter_ritmo_da_analise")).toHaveLength(2);
   });
 
-  it("em Todos, conta só as linhas do Ativo (Inativo e desativadas ficam fora)", async () => {
+  it("em Todos, conta só as linhas do Ativo (o Inativo fica fora; as desativadas nem entram no Todos)", async () => {
     const supabase = supabaseFalso({
       respostas: {
         obter_ritmo_da_analise: () => ({ data: RITMO, error: null }),
@@ -732,7 +736,7 @@ describe("ritmo da análise", () => {
     expect(faltam()).toBe("Faltam1");
     await escolher(document.getElementById("analises-filtro-escopo"), "todos");
     await esperar();
-    expect(linhasDaFila()).toHaveLength(6);
+    expect(linhasDaFila()).toHaveLength(5);
     expect(faltam()).toBe("Faltam1");
   });
 

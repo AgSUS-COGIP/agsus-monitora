@@ -1,4 +1,7 @@
-import { EVENTO_ESCOLHA_DA_BUSCA } from "../lib/busca-global.ts";
+import {
+  EVENTO_ESCOLHA_DA_BUSCA,
+  areaParaLocalizar,
+} from "../lib/busca-global.ts";
 import { codigoDoPainel } from "../lib/navegacao.js";
 import { apagarCacheDePayload } from "../modules/cache-de-payload-indexeddb.js";
 import { comemorarAcessoLiberado } from "../modules/comemoracao-do-acesso.js";
@@ -7,7 +10,16 @@ import {
   situacaoDoSistema,
 } from "../modules/situacao-dos-modulos.js";
 import { esconderEsqueleto, mostrarEsqueleto } from "./carregamento.js";
-import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
+import {
+  esquecerVisaoGeral,
+  estadoDaVisaoGeral,
+} from "../modulos/visao-geral/estado.ts";
+import { esquecerConversaDaAya } from "../modulos/aya/estado.js";
+import {
+  areaDaLinha,
+  definirAreaAtual,
+  obterDadosDoMonitoramento,
+} from "../componentes/dados-do-monitoramento.ts";
 import { montarPessoasOnline } from "../componentes/pessoas-online/pessoas-online.jsx";
 import { montarAvisoDeVersao } from "../componentes/aviso-de-versao/aviso-de-versao.tsx";
 import { criarEstadoDoEncerramento } from "../modulos/encerramento-do-edital/estado.ts";
@@ -143,7 +155,9 @@ function sairDoPainelExterno() {
 /*
   Busca global (Ctrl+K, src/componentes/busca-global/): a linha escolhida fica
   à vista na Visão geral, que troca o recorte pela unidade e pelo edital dela
-  (sem DSEI aberto) e destaca a linha.
+  (sem DSEI aberto) e destaca a linha. Linha de outra área do usuário: a área
+  troca junto (a Visão geral recorta pela área atual), e volta se a navegação
+  for recusada.
 */
 export function localizarLinhaDoMonitoramento(id) {
   const linha = carga.linhas().find((item) => String(item.id) === String(id));
@@ -155,7 +169,13 @@ export function localizarLinhaDoMonitoramento(id) {
     );
     return;
   }
-  navegacao.irPara("dashboard");
+  const { areaAtual, areas } = obterDadosDoMonitoramento();
+  const area = areaParaLocalizar(areaDaLinha(linha), areaAtual, areas);
+  if (area) definirAreaAtual(area);
+  if (!navegacao.irPara("dashboard")) {
+    if (area) definirAreaAtual(areaAtual);
+    return;
+  }
   estadoDaVisaoGeral.localizar(linha);
 }
 
@@ -166,6 +186,7 @@ export function localizarLinhaDoMonitoramento(id) {
   tela. `carga.esquecer` também fecha o Realtime e tira as linhas do store.
 */
 function limparEstadoDeslogado() {
+  esquecerDaPessoa();
   carga.esquecer();
   encerramento.esquecer();
   presenca.pararTudo();
@@ -174,6 +195,12 @@ function limparEstadoDeslogado() {
   esquecerSituacaoDoSistema(document);
   esconderEsqueleto();
   perfil.esconderApp();
+}
+
+/* O que a pessoa deixou nas telas: a conversa da Aya e o recorte da Visão geral. */
+function esquecerDaPessoa() {
+  esquecerConversaDaAya();
+  esquecerVisaoGeral();
 }
 
 /* Fim da espera da entrada, aconteça o que acontecer: sem skeleton. */
@@ -213,14 +240,19 @@ async function abrirSistema({ origem }) {
   Sem acesso, ou acesso revogado: nada desta pessoa fica no navegador, e nada
   dela continua batendo no banco (heartbeat e Pessoas online param juntos).
 */
-function ficarSemAcesso() {
+function fecharSistema() {
   carga.esquecer();
   encerramento.esquecer();
-  void carga.apagarCopia();
   presenca.pararTudo();
   vigiaDoCatalogo.esquecer();
   encerrarEspera();
   perfil.esconderApp();
+}
+
+function ficarSemAcesso() {
+  esquecerDaPessoa();
+  fecharSistema();
+  void carga.apagarCopia();
 }
 
 /* O perfil mudou com o sistema aberto (USER_UPDATED). */
@@ -310,6 +342,8 @@ export function ligarSistema() {
     aoVerificar: prepararEntrada,
     abrir: abrirSistema,
     aoFicarSemAcesso: ficarSemAcesso,
+    // Perfil ilegível (falha passageira): fecha, mas a cópia da sessão fica.
+    aoFalharNaEntrada: fecharSistema,
     aoAtualizarPerfil: atualizarPerfilAberto,
     antesDeSair,
     aoSair: limparEstadoDeslogado,

@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { CHAVE_DO_SOM } from "../src/lib/fogos-cena.js";
 import { criarAleatorio } from "../src/lib/fogos.js";
-import { comemorar } from "../src/modules/comemoracao.js";
+import { TEMPO_DO_AVISO_MS, comemorar } from "../src/modules/comemoracao.js";
 import { encerrarShowsAoFimDeCadaTeste } from "./shows-de-comemoracao.js";
 
 /*
@@ -330,6 +330,46 @@ describe("o aviso da comemoração", () => {
       .click();
     expect(doc.body.textContent).not.toContain("De novo");
     expect(sobras(doc)).toBe(0);
+  });
+
+  it("efeito mais longo que o aviso: o aviso espera o efeito acabar", () => {
+    vi.useFakeTimers();
+    try {
+      const { doc, janela, rodar, quadros } = janelaComCanvas();
+      comemorar({
+        texto: "Longo",
+        teste: true,
+        efeito: "fogos",
+        duracaoMs: 15000,
+        doc,
+        janela,
+        aleatorio: criarAleatorio(5),
+      });
+      quadros.shift()(0);
+      vi.advanceTimersByTime(TEMPO_DO_AVISO_MS + 1);
+      // Antes, o aviso fechava aos 12 s e levava o efeito junto.
+      expect(aviso(doc)).not.toBeNull();
+      expect(doc.querySelector(".comemoracao__pular")).not.toBeNull();
+      rodar(5000);
+      vi.advanceTimersByTime(0);
+      expect(aviso(doc)).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("efeito curto: o aviso ainda fica o tempo de leitura", () => {
+    vi.useFakeTimers();
+    try {
+      const { doc, janela, rodar } = janelaComCanvas();
+      comemorar({ texto: "Curto", doc, janela, aleatorio: criarAleatorio(6) });
+      rodar();
+      expect(aviso(doc)).not.toBeNull();
+      vi.advanceTimersByTime(TEMPO_DO_AVISO_MS);
+      expect(aviso(doc)).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("som desligado por padrão: nenhum áudio é criado, mesmo depois de interagir", () => {

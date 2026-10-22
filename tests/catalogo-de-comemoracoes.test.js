@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  duracaoSAoDigitar,
   alteracoesDasComemoracoes,
   analisesConcluidasNoDia,
   CATALOGO_DE_MARCOS,
@@ -356,5 +357,15 @@ describe("preferência pessoal compartilhada com a mascote", () => {
     const armazenamento = memoria();
     armazenamento.setItem(CHAVE_COMEMORACOES_PESSOAIS, "1");
     expect(comemoracoesPessoaisLigadas(armazenamento)).toBe(false);
+  });
+});
+
+describe("duração enquanto a pessoa digita", () => {
+  it("meio digitado ou fora dos limites não aplica; vazio é automática", () => {
+    expect(duracaoSAoDigitar("1")).toBeUndefined();
+    expect(duracaoSAoDigitar("12")).toBe(12);
+    expect(duracaoSAoDigitar("2,5")).toBe(2.5);
+    expect(duracaoSAoDigitar("40")).toBeUndefined();
+    expect(duracaoSAoDigitar("")).toBeNull();
   });
 });

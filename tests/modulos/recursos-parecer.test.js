@@ -12,16 +12,20 @@ import { clicar, digitar, esperar } from "../componentes/interacoes.js";
   pode_decidir), o aviso "Aguardando parecer jurídico" para os demais e a
   chamada de transicionar_recurso_candidato com o parecer.
 */
-vi.mock("../../src/lib/chartjs-global.js", () => ({
-  Chart: class {
+vi.mock("../../src/lib/chartjs-global.js", () => {
+  const Chart = class {
     constructor(canvas, configuracao) {
       this.data = configuracao.data;
       this.options = configuracao.options;
     }
     update() {}
     destroy() {}
-  },
-}));
+  };
+  return {
+    chartCarregado: () => Chart,
+    carregarChart: async () => Chart,
+  };
+});
 
 const { montarRecursos } =
   await import("../../src/modulos/recursos/recursos.tsx");

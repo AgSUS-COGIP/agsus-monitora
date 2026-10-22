@@ -161,7 +161,14 @@ describe("preenchimento", () => {
   });
 
   it("data por extenso, em português", () => {
-    expect(dataPorExtenso(new Date(2026, 0, 5))).toBe("5 de janeiro de 2026");
+    expect(dataPorExtenso(new Date("2026-01-05T15:00:00Z"))).toBe(
+      "5 de janeiro de 2026",
+    );
+    // 01:00 UTC ainda é dia 4 em Brasília (antes, o fuso de quem usava decidia).
+    expect(dataPorExtenso(new Date("2026-01-05T01:00:00Z"))).toBe(
+      "4 de janeiro de 2026",
+    );
+    expect(dataPorExtenso("2026-09-29")).toBe("29 de setembro de 2026");
     expect(dataPorExtenso("x")).toBe("");
   });
 });

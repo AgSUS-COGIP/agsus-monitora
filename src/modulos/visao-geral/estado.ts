@@ -89,6 +89,18 @@ const txt = (valor: unknown) => String(valor ?? "").trim();
 */
 const acompanhamentosConhecidos = new Map<string, unknown>();
 
+/*
+  A pessoa saiu (ou ficou sem acesso): nada da Visão geral dela passa para
+  quem entrar depois nesta aba — nem o acompanhamento guardado por área, nem
+  o recorte (filtros guardados, busca, atalho, DSEI, destaque).
+*/
+export function esquecerVisaoGeral(
+  estado: EstadoDaVisaoGeral = estadoDaVisaoGeral,
+) {
+  acompanhamentosConhecidos.clear();
+  estado.esquecer();
+}
+
 /** A busca do acompanhamento pelo cliente Supabase da tela. */
 export function buscarAcompanhamentoNoSupabase(
   supabase: ClienteDoAcompanhamento,
@@ -516,6 +528,17 @@ export function criarEstadoDaVisaoGeral({
       if (colunas === proprio.colunas) return;
       guardar(armazenamento, CHAVE_DAS_COLUNAS, colunas);
       publicar({ colunas });
+    },
+    esquecer() {
+      pedido = null;
+      publicar({
+        filtros: filtrosVazios(),
+        busca: "",
+        atalho: "",
+        dsei: { chave: "", nome: "" },
+        destaque: null,
+        acompanhamento: null,
+      });
     },
     exportarCsv() {
       // O recorte da tela; sem recorte, ele já é a área inteira.

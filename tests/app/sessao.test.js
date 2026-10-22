@@ -109,6 +109,7 @@ function sistemaFalso(sobre = {}) {
     aoVerificar: vi.fn(),
     abrir: vi.fn(async () => true),
     aoFicarSemAcesso: vi.fn(),
+    aoFalharNaEntrada: vi.fn(),
     aoAtualizarPerfil: vi.fn(),
     antesDeSair: vi.fn(async () => {}),
     aoSair: vi.fn(),
@@ -123,7 +124,6 @@ function montar({
   janela = janelaFalsa(),
   sistema = sistemaFalso(),
   celular = false,
-  avisar = vi.fn(),
   temAmbiente = true,
 } = {}) {
   const sessao = criarSessao({
@@ -132,11 +132,10 @@ function montar({
     janela,
     temAmbiente: () => temAmbiente,
     celular: () => celular,
-    avisar,
     esperar: async () => {},
   });
   sessao.ligarSistema(sistema);
-  return { sessao, cliente, janela, sistema, avisar };
+  return { sessao, cliente, janela, sistema };
 }
 
 const proximoCiclo = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -301,19 +300,63 @@ describe("sem acesso → pedido", () => {
     expect(sistema.abrir).not.toHaveBeenCalled();
   });
 
-  it("contexto com erro: avisa e mostra o pedido, como antes", async () => {
-    const { sessao, avisar } = montar({
+  it("contexto com erro: falha na entrada (Tentar de novo), não o pedido", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { sessao, sistema } = montar({
       cliente: clienteFalso({
         guardada: sessaoDe("u1"),
         erroNoContexto: { message: "falhou" },
       }),
     });
     await sessao.iniciar();
-    expect(avisar).toHaveBeenCalledWith(MENSAGENS.permissoes, "error");
-    expect(sessao.obter().fase).toBe(FASES.SEM_ACESSO);
+    const estado = sessao.obter();
+    expect(estado.fase).toBe(FASES.FALHA_NA_ENTRADA);
+    expect(estado.mensagem).toEqual({
+      texto: MENSAGENS.permissoes,
+      tom: "error",
+    });
+    expect(sistema.aoFalharNaEntrada).toHaveBeenCalled();
+    expect(sistema.aoFicarSemAcesso).not.toHaveBeenCalled();
+    expect(sistema.abrir).not.toHaveBeenCalled();
+    console.warn.mockRestore();
   });
 
-  it("a carga do login quebrou: pedido sem consulta e a mensagem de liberação", async () => {
+  it("Tentar de novo relê o perfil com a mesma sessão e abre o sistema", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const cliente = clienteFalso({
+      guardada: sessaoDe("u1"),
+      erroNoContexto: { message: "falhou" },
+    });
+    const { sessao, sistema } = montar({ cliente });
+    await sessao.iniciar();
+    cliente.rpc.mockImplementation(async (nome) =>
+      nome === "obter_contexto_monitora"
+        ? { data: CONTEXTO, error: null }
+        : { data: null, error: null },
+    );
+    await sessao.tentarDeNovo();
+    expect(sessao.obter().fase).toBe(FASES.CONECTADO);
+    expect(sistema.abrir).toHaveBeenCalledTimes(1);
+    console.warn.mockRestore();
+  });
+
+  it("perfil ilegível com o sistema aberto: fica o perfil que estava", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const cliente = clienteFalso({ guardada: sessaoDe("u1") });
+    const { sessao, sistema } = montar({ cliente });
+    await sessao.iniciar();
+    cliente.rpc.mockImplementation(async () => ({
+      data: null,
+      error: { message: "sem rede" },
+    }));
+    await sessao.recarregarPerfil(sessaoDe("u1"));
+    expect(sessao.obter().fase).toBe(FASES.CONECTADO);
+    expect(sessao.obter().perfil).toEqual(CONTEXTO.profile);
+    expect(sistema.aoFicarSemAcesso).not.toHaveBeenCalled();
+    console.warn.mockRestore();
+  });
+
+  it("a carga do login quebrou: falha na entrada, não o pedido de acesso", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     const { sessao } = montar({
       cliente: clienteFalso({ guardada: sessaoDe("u1") }),
@@ -325,9 +368,8 @@ describe("sem acesso → pedido", () => {
     });
     await sessao.iniciar();
     const estado = sessao.obter();
-    expect(estado.fase).toBe(FASES.SEM_ACESSO);
-    expect(estado.consultarPedido).toBe(false);
-    expect(estado.mensagem.texto).toBe(MENSAGENS.aguardandoLiberacao);
+    expect(estado.fase).toBe(FASES.FALHA_NA_ENTRADA);
+    expect(estado.mensagem.texto).toBe(MENSAGENS.falhaAoAbrir);
     console.error.mockRestore();
   });
 

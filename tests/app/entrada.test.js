@@ -50,6 +50,7 @@ function sessaoFalsa(inicial = {}) {
     },
     entrarComGoogle: vi.fn(),
     limparSessao: vi.fn(),
+    tentarDeNovo: vi.fn(),
   };
 }
 
@@ -319,6 +320,21 @@ describe("tela de acesso", () => {
     expect($("googleLoginText").textContent).toBe(TEXTO_DO_BOTAO_OCUPADO);
     expect($("loginMsg").className).toBe("alert warn");
     expect($("loginMsg").textContent).toBe("Escolha sua conta.");
+  });
+
+  it("perfil ilegível: o erro e Tentar de novo, não o pedido de acesso", async () => {
+    const { sessao } = await montar({
+      sessao: sessaoFalsa({
+        fase: FASES.FALHA_NA_ENTRADA,
+        mensagem: { texto: "Não deu.", tom: "error" },
+      }),
+    });
+    expect($("loginMsg").textContent).toBe("Não deu.");
+    expect(document.querySelector(".solicitacao-marca")).toBeNull();
+    await clicar($("tentarDeNovoBtn"));
+    expect(sessao.tentarDeNovo).toHaveBeenCalled();
+    await act(async () => sessao.definir({ fase: FASES.DESLOGADO }));
+    expect($("tentarDeNovoBtn")).toBeNull();
   });
 
   it("sem as variáveis do Supabase: o aviso de configuração", async () => {

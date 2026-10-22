@@ -25,6 +25,7 @@ export type ErrosDoModelo = Partial<
   virar marcador nem HTML. Quem desenha (a gaveta, a página de impressão, o
   .docx) põe o texto como texto — nada de innerHTML.
 */
+import { hojeEmBrasilia } from "./agenda-das-entrevistas.ts";
 import { formatNumberBR } from "./formatters.js";
 import { rotuloDaOrigem, situacaoDecidida } from "./recursos-dos-candidatos.ts";
 
@@ -70,11 +71,20 @@ const MESES = [
   "dezembro",
 ];
 
-/** "29 de setembro de 2026" (data local de quem usa). */
+/**
+ * "29 de setembro de 2026", no dia de Brasília (o documento não muda com o
+ * fuso do computador de quem gera). "AAAA-MM-DD" é o próprio dia.
+ */
 export function dataPorExtenso(data: DataDoRecurso = new Date()) {
-  const d = data instanceof Date ? data : new Date(data);
-  if (Number.isNaN(d.getTime())) return "";
-  return `${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`;
+  let dia =
+    typeof data === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data) ? data : "";
+  if (!dia) {
+    const d = data instanceof Date ? data : new Date(data);
+    if (Number.isNaN(d.getTime())) return "";
+    dia = hojeEmBrasilia(d);
+  }
+  const [ano = 0, mes = 0, numero = 0] = dia.split("-").map(Number);
+  return `${numero} de ${MESES[mes - 1]} de ${ano}`;
 }
 
 const notaEmTexto = (valor: unknown) =>

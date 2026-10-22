@@ -23,11 +23,16 @@ const n = (valor: number) => formatNumberBR(valor);
 
 export function AgendaDosProximosDias({
   itens,
+  erro = "",
+  aoTentarDeNovo,
   hoje,
   aoConduzir,
   aoAbrirAgenda,
 }: {
   itens: ItemDaAgenda[] | null;
+  /** A leitura falhou: o erro, não "nenhuma agendada". */
+  erro?: string;
+  aoTentarDeNovo?: () => void;
   hoje: string;
   aoConduzir: (() => void) | null;
   aoAbrirAgenda: (() => void) | null;
@@ -37,7 +42,7 @@ export function AgendaDosProximosDias({
     <section
       className="ui-card entrevistas-agenda-proxima"
       aria-labelledby="entrevistasAgendaProximaTitulo"
-      aria-busy={itens === null}
+      aria-busy={itens === null && !erro}
       data-tour="entrevistas-agenda-proxima"
     >
       <div className="entrevistas-agenda-topo">
@@ -66,7 +71,20 @@ export function AgendaDosProximosDias({
           ) : null}
         </span>
       </div>
-      {itens === null ? (
+      {erro ? (
+        <Aviso tom="danger">
+          Não foi possível carregar a agenda: {erro}{" "}
+          {aoTentarDeNovo ? (
+            <button
+              type="button"
+              className="btn secondary small"
+              onClick={aoTentarDeNovo}
+            >
+              Tentar de novo
+            </button>
+          ) : null}
+        </Aviso>
+      ) : itens === null ? (
         <div className="ui-esqueleto-linha" />
       ) : dias.length ? (
         <ol className="entrevistas-agenda-dias">

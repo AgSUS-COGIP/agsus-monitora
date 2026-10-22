@@ -168,6 +168,21 @@ function TelaDeConducao({
     );
   }, [itens, busca, situacao]);
 
+  /*
+    A ordem do "próximo" é a da fila na tela no momento em que a ficha abriu.
+    Fica guardada enquanto a ficha está aberta: com a fila filtrada (busca ou
+    situação), salvar as notas tira o candidato do filtro, e a ordem não pode
+    mudar por baixo (antes, caía na ordem do edital inteiro).
+  */
+  const [ordemDaFicha, setOrdemDaFicha] = useState<string[] | null>(null);
+  if (!e.fichaAberta) {
+    if (ordemDaFicha) setOrdemDaFicha(null);
+  } else if (!ordemDaFicha?.includes(e.fichaAberta)) {
+    const ids = naTela.map((i) => i.convocado.id);
+    const nova = ids.includes(e.fichaAberta) ? ids : null;
+    if (nova || ordemDaFicha) setOrdemDaFicha(nova);
+  }
+
   /* Trocou a área com a tela aberta: recomeça na nova. */
   useEffect(() => {
     if (e.area && areaDoApp && e.area !== areaDoApp) {
@@ -213,8 +228,11 @@ function TelaDeConducao({
     ? dados?.convocados.find((c) => c.id === e.fichaAberta) || null
     : null;
   if (dados && convocado) {
-    // A ordem do "próximo" é a da fila na tela (sem ela, a do edital).
-    const daFila = naTela.map((i) => i.convocado);
+    // A ordem do "próximo": a da fila quando a ficha abriu (sem ela, a do edital).
+    const porId = new Map(dados.convocados.map((c) => [c.id, c]));
+    const daFila = (ordemDaFicha || [])
+      .map((id) => porId.get(id))
+      .filter((c) => c !== undefined);
     const lista = daFila.some((c) => c.id === convocado.id)
       ? daFila
       : dados.convocados;

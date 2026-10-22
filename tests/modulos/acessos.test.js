@@ -370,6 +370,81 @@ describe("Configurações › Acessos", () => {
     });
   });
 
+  it("excluir grupo pede o motivo no rodapé, sem window.prompt", async () => {
+    const prompt = vi.spyOn(window, "prompt").mockImplementation(() => null);
+    const grupos = [
+      ...GRUPOS,
+      {
+        codigo: "temp",
+        nome: "Temporário",
+        revisao: 1,
+        usuarios: 0,
+        niveis: {},
+      },
+    ];
+    const supabase = await montar({
+      perfil: ADMIN,
+      teto: TETO_ADMIN,
+      extra: {
+        obter_matriz_acessos: () => ({
+          data: { ...MATRIZ(TETO_ADMIN), grupos },
+          error: null,
+        }),
+      },
+    });
+    await clicar(document.getElementById("acessos-aba-grupos"));
+    await clicar(
+      [...document.querySelectorAll(".acessos-mestre-item")].find((b) =>
+        b.textContent.includes("Temporário"),
+      ),
+    );
+    await clicar(botao("Excluir grupo"));
+    expect(prompt).not.toHaveBeenCalled();
+    const confirmar = () =>
+      document
+        .querySelector(
+          '[role="group"][aria-label="Excluir o grupo Temporário"]',
+        )
+        .querySelector("button.perigo");
+    expect(confirmar().disabled).toBe(true);
+    await digitar(
+      document.getElementById("acessosExcluirGrupoMotivo"),
+      "Grupo sem uso",
+    );
+    await clicar(confirmar());
+    const chamada = supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "remover_grupo_acesso",
+    );
+    expect(chamada).toBeTruthy();
+    expect(JSON.stringify(chamada[1])).toContain("Grupo sem uso");
+    prompt.mockRestore();
+  });
+
+  it("revisão nova do grupo não apaga a edição em andamento", async () => {
+    let revisao = 1;
+    await montar({
+      perfil: ADMIN,
+      teto: TETO_ADMIN,
+      extra: {
+        obter_matriz_acessos: () => ({
+          data: {
+            ...MATRIZ(TETO_ADMIN),
+            grupos: GRUPOS.map((g) =>
+              g.codigo === "usuario" ? { ...g, revisao } : g,
+            ),
+          },
+          error: null,
+        }),
+      },
+    });
+    await clicar(document.getElementById("acessos-aba-grupos"));
+    await digitar(document.getElementById("acessosGrupoNome"), "Usuários");
+    revisao = 2;
+    await esperar(() => controlador.estado.carregarMatriz());
+    expect(document.getElementById("acessosGrupoNome").value).toBe("Usuários");
+    expect(document.getElementById("acessosGrupoMotivo")).not.toBeNull();
+  });
+
   it("pedidos pendentes aparecem em 'Pendentes' e aprovam com grupo e coordenação", async () => {
     const supabase = await montar({ perfil: ADMIN, teto: TETO_ADMIN });
     await clicar(botao("Pendentes (1)"));

@@ -13,16 +13,20 @@ import { clicar, digitar, esperar } from "../componentes/interacoes.js";
   aprova a resposta aprova — recalculando a prévia. Quem não decide não vê a
   seção enquanto não houver ajuste.
 */
-vi.mock("../../src/lib/chartjs-global.js", () => ({
-  Chart: class {
+vi.mock("../../src/lib/chartjs-global.js", () => {
+  const Chart = class {
     constructor(canvas, configuracao) {
       this.data = configuracao.data;
       this.options = configuracao.options;
     }
     update() {}
     destroy() {}
-  },
-}));
+  };
+  return {
+    chartCarregado: () => Chart,
+    carregarChart: async () => Chart,
+  };
+});
 
 const { montarRecursos } =
   await import("../../src/modulos/recursos/recursos.tsx");

@@ -241,15 +241,22 @@ export function resumoDoRascunho(
 /**
  * Depois de recarregar (conflito de revisão): o que ainda vale do rascunho.
  * Entrada cuja base mudou vira conflito e sai; as demais usam a base nova.
+ * Entrada de quem não veio na recarga (outra página da lista) não pode ser
+ * conferida: mantida com a base velha, o mesmo conflito voltaria a cada
+ * Salvar. Sai também, em `foraDaLista`.
  */
 export function rebasearRascunho(rascunho, usuariosRecarregados = []) {
   const porId = new Map(usuariosRecarregados.map((u) => [u.id, u]));
   const proximo = new Map();
   const conflitos = [];
+  const foraDaLista = [];
   for (const [k, entrada] of rascunho) {
     const usuario = porId.get(entrada.usuario.id);
     if (!usuario) {
-      proximo.set(k, entrada);
+      foraDaLista.push({
+        usuario: entrada.usuario,
+        alvo: k.slice(k.indexOf("/") + 1),
+      });
       continue;
     }
     const alvo = k.slice(k.indexOf("/") + 1);
@@ -261,7 +268,25 @@ export function rebasearRascunho(rascunho, usuariosRecarregados = []) {
     if (!semEfeito(alvo, nova, entrada.valor))
       proximo.set(k, { ...entrada, base: nova });
   }
-  return { rascunho: proximo, conflitos };
+  return { rascunho: proximo, conflitos, foraDaLista };
+}
+
+const acessos = (n) => `${n} ${n === 1 ? "acesso" : "acessos"}`;
+
+/** O aviso depois de rebasear o rascunho (`rebasearRascunho`). */
+export function avisoDoConflito(conflitos = [], foraDaLista = []) {
+  const partes = [];
+  if (conflitos.length)
+    partes.push(
+      `Outra pessoa mudou ${acessos(conflitos.length)} que você estava alterando; essas alterações saíram.`,
+    );
+  if (foraDaLista.length)
+    partes.push(
+      `${foraDaLista.length === 1 ? "Saiu 1 alteração" : `Saíram ${foraDaLista.length} alterações`} de pessoas fora desta página, que não puderam ser conferidas.`,
+    );
+  if (!partes.length)
+    return "Os acessos mudaram enquanto você editava. A lista foi recarregada com as suas alterações; revise e salve de novo.";
+  return `${partes.join(" ")} Revise e salve de novo.`;
 }
 
 // ── Visão simples: grupo em uma frase, áreas da pessoa e a trava de área ───────

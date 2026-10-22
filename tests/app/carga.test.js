@@ -256,17 +256,22 @@ describe("entrada", () => {
     expect(obterDadosDoMonitoramento().unidades).toHaveLength(1);
   });
 
-  it("sem as linhas do monitoramento, não abre e tira o skeleton", async () => {
-    const { carga, mostrarApp, esqueleto, avisar } = montar({
+  it("falha nas linhas do monitoramento avisa uma vez e abre o app mesmo assim", async () => {
+    const { carga, mostrarApp, esqueleto, avisar, cliente } = montar({
       erroNasLinhas: { message: "falhou" },
     });
-    await expect(carga.carregarEntrada()).resolves.toBe(false);
-    expect(mostrarApp).not.toHaveBeenCalled();
+    await expect(carga.carregarEntrada()).resolves.toBe(true);
+    expect(mostrarApp).toHaveBeenCalled();
     expect(esqueleto.esconder).toHaveBeenCalled();
     expect(avisar).toHaveBeenCalledWith(
       "Erro ao carregar dados: falhou",
       "error",
     );
+    await esperarTudo();
+    const leituras = cliente.rpc.mock.calls.filter(
+      ([nome]) => nome === "listar_monitoramento_operacional",
+    );
+    expect(leituras).toHaveLength(1);
   });
 
   it("lê a cópia junto com o perfil (prepararEntrada) e uma vez só", async () => {

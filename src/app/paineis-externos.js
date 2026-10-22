@@ -17,12 +17,51 @@ import { avisar as avisarPadrao } from "./avisos.js";
   carregavam a cada login.
 */
 
+/*
+  O quadro do painel é de outro site (endereco-do-painel.js recusa a mesma
+  origem), por isso pode ter `allow-scripts` junto de `allow-same-origin`:
+  a página de fora continua na origem dela, sem acesso a esta.
+
+  O que os painéis de hoje precisam (Apps Script HtmlService, Looker Studio,
+  Power BI):
+    - allow-scripts, allow-same-origin: os scripts e o login Google/Microsoft
+      do próprio site (o Apps Script abre num quadro interno de
+      script.googleusercontent.com que lê os cookies de lá);
+    - allow-forms: formulários do Apps Script (google.script.run, filtros);
+    - allow-popups, allow-popups-to-escape-sandbox: "abrir em nova aba", login
+      e links para planilhas e documentos, que abrem sem a sandbox;
+    - allow-downloads: exportar CSV/PDF;
+    - allow-modals: alert/confirm do HtmlService;
+    - allow-top-navigation-by-user-activation: link com target="_top" só
+      quando a pessoa clica (o quadro não tira ninguém do sistema sozinho);
+    - allow-storage-access-by-user-activation: o Looker Studio pede acesso aos
+      cookies dele no clique.
+  Fora: allow-top-navigation (sem clique), allow-pointer-lock,
+  allow-presentation, allow-orientation-lock.
+
+  `allow` (Permissions Policy) só o que um painel usa: tela cheia e copiar
+  para a área de transferência, restritos à origem do próprio quadro (sem
+  `*`). Saíram geolocalização, captura de tela, leitura da área de
+  transferência e mídia protegida.
+*/
+export const SANDBOX_DO_QUADRO = [
+  "allow-scripts",
+  "allow-same-origin",
+  "allow-forms",
+  "allow-popups",
+  "allow-popups-to-escape-sandbox",
+  "allow-downloads",
+  "allow-modals",
+  "allow-top-navigation-by-user-activation",
+  "allow-storage-access-by-user-activation",
+].join(" ");
+
 const ATRIBUTOS_DO_QUADRO = Object.freeze({
   class: "external-frame",
   loading: "eager",
   referrerpolicy: "no-referrer-when-downgrade",
-  allow:
-    "fullscreen *; clipboard-read *; clipboard-write *; encrypted-media *; geolocation *; display-capture *",
+  sandbox: SANDBOX_DO_QUADRO,
+  allow: "fullscreen; clipboard-write",
   allowfullscreen: "true",
 });
 

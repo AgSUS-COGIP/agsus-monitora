@@ -493,6 +493,28 @@ describe("as áreas do usuário: seletor de área", () => {
     expect(chamadas.at(-1)).toEqual(["calendario", "sede"]);
   });
 
+  it("navegação recusada: a área volta à de antes", async () => {
+    const arvore = montarArvoreDoMenu({
+      permitidas: { dashboard: true, nucleo: true, calendario: true },
+      areas: TODAS,
+    });
+    let aceitar = true;
+    await montar(arvore, {
+      navegar: (view) => {
+        if (!aceitar) return false;
+        marcarItemAtivoNoMenu(view);
+        return true;
+      },
+    });
+    await clicar(itemDaArea("saude-indigena", "calendario"));
+    expect(obterDadosDoMonitoramento().areaAtual).toBe("saude-indigena");
+
+    aceitar = false;
+    await clicar(seletor().querySelector(".menu-area__cabecalho"));
+    await clicar(opcao("sede"));
+    expect(obterDadosDoMonitoramento().areaAtual).toBe("saude-indigena");
+  });
+
   it("recolhida, o seletor é um ícone e a lista das áreas flutua no clique", async () => {
     await montar(
       montarArvoreDoMenu({ permitidas: { nucleo: true }, areas: TODAS }),

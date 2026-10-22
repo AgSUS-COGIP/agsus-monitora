@@ -26,8 +26,8 @@ import {
 
 // O Chart.js não desenha no jsdom (sem canvas): um falso guarda o que recebeu.
 const graficos = vi.hoisted(() => []);
-vi.mock("../../src/lib/chartjs-global.js", () => ({
-  Chart: class {
+vi.mock("../../src/lib/chartjs-global.js", () => {
+  const Chart = class {
     constructor(canvas, configuracao) {
       this.canvas = canvas;
       this.config = configuracao;
@@ -42,8 +42,12 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
     destroy() {
       graficos.splice(graficos.indexOf(this), 1);
     }
-  },
-}));
+  };
+  return {
+    chartCarregado: () => Chart,
+    carregarChart: async () => Chart,
+  };
+});
 
 const { montarEntrevistas } =
   await import("../../src/modulos/entrevistas/entrevistas.tsx");
@@ -364,6 +368,43 @@ describe("agenda, empates e pendências", () => {
     expect(agenda.querySelector('[data-hoje="sim"]').textContent).toContain(
       "Candidato x4",
     );
+  });
+
+  it("agenda com erro: o erro e Tentar de novo, não 'nenhuma agendada'", async () => {
+    let falhar = true;
+    const supabase = {
+      rpc: vi.fn(async (nome) =>
+        nome === "obter_agenda_entrevista"
+          ? falhar
+            ? { data: null, error: { message: "tempo esgotado" } }
+            : { data: { itens: [] }, error: null }
+          : { data: PAYLOAD_DO_EDITAL, error: null },
+      ),
+      auth: supabaseDoEdital(null).auth,
+    };
+    await montar(supabase);
+    const agenda = () => secao.querySelector(".entrevistas-agenda-proxima");
+    expect(agenda().textContent).toContain(
+      "Não foi possível carregar a agenda",
+    );
+    expect(agenda().textContent).not.toContain("Nenhuma entrevista agendada");
+    falhar = false;
+    await clicar(
+      [...agenda().querySelectorAll("button")].find(
+        (b) => b.textContent === "Tentar de novo",
+      ),
+    );
+    await esperar();
+    expect(chamadas(supabase, "obter_agenda_entrevista")).toHaveLength(2);
+    expect(agenda().textContent).toContain("Nenhuma entrevista agendada");
+  });
+
+  it("recarregar o painel renova a agenda guardada", async () => {
+    const supabase = supabaseDoEdital({ itens: [] });
+    await montar(supabase);
+    expect(chamadas(supabase, "obter_agenda_entrevista")).toHaveLength(1);
+    await abrirATela();
+    expect(chamadas(supabase, "obter_agenda_entrevista")).toHaveLength(2);
   });
 
   it("empatados na nota: selo na tabela e o aviso que leva à Classificação no edital", async () => {

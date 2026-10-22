@@ -137,6 +137,17 @@ const classes = (...lista: (string | boolean | null | undefined)[]) =>
   inline: quem a procura na janela na hora pega sempre a versão atual do
   legado, mesmo que ela seja trocada depois da montagem.
 */
+/*
+  Troca a área atual e devolve como desfazer: a navegação que vem a seguir
+  pode ser recusada (alteração não salva, sem permissão), e a página que fica
+  não pode mudar de área por baixo.
+*/
+function trocarAreaAntesDeNavegar(area: string) {
+  const anterior = obterDadosDoMonitoramento().areaAtual;
+  definirAreaAtual(area);
+  return () => definirAreaAtual(anterior);
+}
+
 const paginaAtivaPadrao = (view: string) =>
   Boolean(
     document.getElementById(`page-${view}`)?.classList.contains("active"),
@@ -712,7 +723,8 @@ export function Navegacao({
     const paginaAtiva = opcoes.paginaAtiva ?? paginaAtivaPadrao;
     if (item.area && item.area !== areaAtual && !podeTrocarDeArea()) return;
     // A área vem antes da navegação: a página abre já recortada por ela.
-    if (item.area) definirAreaAtual(item.area);
+    // Navegação recusada (`false`): a área volta à de antes.
+    const trocar = item.area ? trocarAreaAntesDeNavegar(item.area) : () => {};
 
     if (item.secao) {
       /*
@@ -720,15 +732,15 @@ export function Navegacao({
         navega quando ela ainda não está aberta. Se a navegação foi barrada
         (uma confirmação recusada), a seção não abre.
       */
-      if (!paginaAtiva(item.view)) navegar(item.view);
+      if (!paginaAtiva(item.view) && navegar(item.view) === false) trocar();
       // A seção pode recusar abrir (saída de Acessos com alteração não salva).
       if (
         paginaAtiva(item.view) &&
         opcoes.aoAbrirSecao?.(item.view, item.secao) !== false
       )
         marcarItemAtivoNoMenu(item.view, item.secao);
-    } else {
-      navegar(item.view);
+    } else if (navegar(item.view) === false) {
+      trocar();
     }
 
     if (!trilho) return;
@@ -744,8 +756,12 @@ export function Navegacao({
   const trocarDeArea = (id: string) => {
     if (id !== areaAtual && !podeTrocarDeArea()) return;
     const destino = destinoAoTrocarDeArea(arvore, id, ativo.view);
-    definirAreaAtual(id);
-    if (destino) (opcoes.navegar ?? navegarPelaJanela)(destino.view);
+    const desfazer = trocarAreaAntesDeNavegar(id);
+    if (
+      destino &&
+      (opcoes.navegar ?? navegarPelaJanela)(destino.view) === false
+    )
+      desfazer();
   };
 
   const desenharArea = (

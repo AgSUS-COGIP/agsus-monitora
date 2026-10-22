@@ -46,6 +46,7 @@ describe("ligarSistema", () => {
         "abrir",
         "antesDeSair",
         "aoAtualizarPerfil",
+        "aoFalharNaEntrada",
         "aoFicarSemAcesso",
         "aoLimparSessao",
         "aoSair",

@@ -1,6 +1,8 @@
 importScripts("/sw-policy.js");
 
-const CACHE_VERSION = "agsus-monitora-v17";
+// Trocada a cada build pela versão publicada (vite.config.js): versão nova, cache novo.
+const CACHE_VERSION = "agsus-monitora-dev";
+const CACHE_LIMIT = 150;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
@@ -21,7 +23,8 @@ const BLOCKED_PATH_PREFIXES = [
   "/functions/",
 ];
 
-const { getRequestStrategy, isResponseCacheable } = self.AgSUSPwaCachePolicy;
+const { getRequestStrategy, isResponseCacheable, entriesBeyondLimit } =
+  self.AgSUSPwaCachePolicy;
 
 function isCacheableRequest(request, url) {
   if (request.method !== "GET") return false;
@@ -40,6 +43,19 @@ async function storeResponse(request, response) {
 
   const cache = await caches.open(STATIC_CACHE);
   await cache.put(request, response.clone());
+  await trimCache(cache);
+}
+
+async function trimCache(cache) {
+  const keys = await cache.keys();
+  const keep = APP_SHELL.map(
+    (path) => new URL(path, self.location.origin).href,
+  );
+  const excess = entriesBeyondLimit(
+    keys.map((key) => key.url),
+    { limit: CACHE_LIMIT, keep },
+  );
+  await Promise.all(excess.map((url) => cache.delete(url)));
 }
 
 async function cacheFirst(request) {

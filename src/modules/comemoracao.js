@@ -621,7 +621,8 @@ export function soltarConfete(
 
 /**
  * O aviso no topo: a frase e, se houver, uma lista curta. `aoFechar` é
- * chamado quando ele sai (× ou tempo).
+ * chamado quando ele sai (× ou tempo). `tempoMs: null`: não fecha sozinho
+ * (quem chama fecha — a comemoração com efeito espera o efeito acabar).
  */
 export function mostrarAviso(
   doc = globalThis.document,
@@ -672,7 +673,7 @@ export function mostrarAviso(
   fechar.addEventListener("click", fecharAviso);
   aviso.append(corpo, fechar);
   doc.body.appendChild(aviso);
-  setTimeout(fecharAviso, tempoMs);
+  if (tempoMs) setTimeout(fecharAviso, tempoMs);
   return aviso;
 }
 
@@ -800,16 +801,28 @@ export function comemorar({
     ? criarSom(janela, { ligadoPorPadrao: plano.som === true })
     : null;
   let fogos = null;
+  const inicio = Date.now();
+  /*
+    Com efeito, o aviso não fecha no tempo fixo (cortaria um efeito mais
+    longo que ele): fecha quando o efeito acaba, mas nunca antes do tempo de
+    leitura do aviso.
+  */
   const aviso = mostrarAviso(doc, {
     texto,
     itens,
     tituloDosItens,
+    tempoMs: animar ? null : TEMPO_DO_AVISO_MS,
     aoFechar: () => {
       fogos?.parar?.();
       som?.fechar();
     },
   });
   if (!aviso || !animar) return aviso;
+  const fecharDepois = () =>
+    setTimeout(
+      () => aviso.querySelector(".comemoracao__fechar")?.click(),
+      Math.max(0, TEMPO_DO_AVISO_MS - (Date.now() - inicio)),
+    );
   const acoes = doc.createElement("div");
   acoes.className = "comemoracao__acoes";
   const botaoSom = doc.createElement("button");
@@ -829,12 +842,18 @@ export function comemorar({
     duracaoMs: plano.duracaoMs,
     forma,
     som,
-    aoTerminar: () => pular.remove(),
+    aoTerminar: () => {
+      pular.remove();
+      fecharDepois();
+    },
     ...(aleatorio ? { aleatorio } : {}),
   });
   if (fogos)
     aviso.insertBefore(acoes, aviso.querySelector(".comemoracao__fechar"));
-  else som.fechar();
+  else {
+    som.fechar();
+    fecharDepois();
+  }
   return aviso;
 }
 

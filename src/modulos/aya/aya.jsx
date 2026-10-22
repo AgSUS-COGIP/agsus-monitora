@@ -685,6 +685,16 @@ export function Aya({
   const [revelando, setRevelando] = useState("");
   const [chamadoPara, setChamadoPara] = useState("");
   const [semResposta, setSemResposta] = useState(() => lerSemResposta(janela));
+  // Saída do sistema (esquecerConversaDaAya): a conversa na tela sai também.
+  const conversaVista = useRef(local.conversa);
+  useEffect(() => {
+    if (conversaVista.current === local.conversa) return;
+    conversaVista.current = local.conversa;
+    setMensagens([]);
+    setTexto("");
+    setChamadoPara("");
+    setRevelando("");
+  }, [local.conversa]);
   const [copiado, setCopiado] = useState("");
 
   const refPainel = useRef(null);
@@ -1360,7 +1370,11 @@ export function Aya({
                 placeholder="Pergunte à Aya…"
                 autoComplete="off"
                 value={texto}
-                disabled={ocupada}
+                /* Ocupada, o campo fica só leitura (não disabled): disabled
+                   tirava o foco de quem digita e a pessoa ia parar no <body>.
+                   O envio já recusa enquanto a Aya pensa. */
+                readOnly={ocupada}
+                aria-disabled={ocupada || undefined}
                 onChange={(evento) => setTexto(evento.target.value)}
                 onKeyDown={aoTeclarNoCampo}
               />

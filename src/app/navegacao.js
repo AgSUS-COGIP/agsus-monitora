@@ -375,13 +375,21 @@ export function criarNavegacao({
     avisarOuvintes({ tipo: "aviso", view: tela });
   }
 
-  /** Abre a tela (o `navigate` de sempre). Sem permissão, avisa e fica onde está. */
+  /**
+   * Abre a tela (o `navigate` de sempre). Sem permissão, avisa e fica onde está.
+   * Devolve `false` quando a navegação foi recusada (saída não confirmada ou
+   * sem permissão): quem trocou a área antes de navegar a devolve.
+   */
   function irPara(pedida) {
+    return abrirTela(pedida) !== false;
+  }
+
+  function abrirTela(pedida) {
     const anterior = view;
     // Link antigo (`entrevistas:conduzir`…) vai para a tela e a visão novas.
     const destino = destinoDaTela(pedida);
     const tela = destino.view || deEntrada();
-    if (tela !== view && !confirmarSaida()) return;
+    if (tela !== view && !confirmarSaida()) return false;
     // Versão nova do sistema esperando: entra agora. A tela pedida fica guardada
     // e abre depois da recarga (a tela de entrada confere a permissão). Com
     // rascunho ainda não guardado (ex.: a regra, src/app/guarda-de-alteracoes.ts),
@@ -400,7 +408,7 @@ export function criarNavegacao({
     const bloqueio = bloqueioDaTela(tela, perfil(), paineis);
     if (bloqueio) {
       avisar(bloqueio, "warn");
-      return;
+      return false;
     }
 
     documento.body.classList.remove("external-clean");

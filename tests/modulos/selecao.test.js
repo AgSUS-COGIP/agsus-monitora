@@ -19,8 +19,8 @@ import { clicar, digitar, esperar, teclar } from "../componentes/interacoes.js";
 
 // O Chart.js não desenha no jsdom (sem canvas): um falso guarda o que recebeu.
 const graficos = vi.hoisted(() => []);
-vi.mock("../../src/lib/chartjs-global.js", () => ({
-  Chart: class {
+vi.mock("../../src/lib/chartjs-global.js", () => {
+  const Chart = class {
     constructor(canvas, configuracao) {
       this.canvas = canvas;
       this.config = configuracao;
@@ -36,8 +36,12 @@ vi.mock("../../src/lib/chartjs-global.js", () => ({
     destroy() {
       graficos.splice(graficos.indexOf(this), 1);
     }
-  },
-}));
+  };
+  return {
+    chartCarregado: () => Chart,
+    carregarChart: async () => Chart,
+  };
+});
 
 const { montarSelecao } = await import("../../src/modulos/selecao/selecao.tsx");
 const { criarEstadoDaSelecao } =

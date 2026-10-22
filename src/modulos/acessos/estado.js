@@ -15,6 +15,7 @@ import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
 import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 import {
   alteracoesDoRascunho,
+  avisoDoConflito,
   contarPendencias,
   rebasearRascunho,
   registrarNoRascunho,
@@ -262,17 +263,26 @@ export function criarEstadoDosAcessos({
       } catch (erro) {
         if (ehConflitoDeVersao(erro)) {
           const matriz = await carregarMatriz();
-          const { rascunho, conflitos } = rebasearRascunho(
+          /* Sem a lista nova, rebasear na velha repetiria o conflito. */
+          if (!matriz) {
+            publicar({
+              aviso: {
+                tom: "danger",
+                texto:
+                  "Os acessos mudaram enquanto você editava e a lista não pôde ser recarregada. As alterações continuam pendentes; recarregue e salve de novo.",
+              },
+            });
+            return false;
+          }
+          const { rascunho, conflitos, foraDaLista } = rebasearRascunho(
             estado.rascunho,
-            (matriz || estado.matriz)?.usuarios || [],
+            matriz.usuarios || [],
           );
           publicar({
             rascunho,
             aviso: {
               tom: "warn",
-              texto: conflitos.length
-                ? `Outra pessoa mudou ${conflitos.length} ${conflitos.length === 1 ? "acesso" : "acessos"} que você estava alterando; essas alterações saíram. Revise e salve de novo.`
-                : "Os acessos mudaram enquanto você editava. A lista foi recarregada com as suas alterações; revise e salve de novo.",
+              texto: avisoDoConflito(conflitos, foraDaLista),
             },
           });
           return false;

@@ -1,5 +1,5 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
-import { Chart } from "../lib/chartjs-global.js";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { carregarChart, chartCarregado } from "../lib/chartjs-global.js";
 
 /*
   Cores dos gráficos dentro do app, lidas dos tokens (src/styles/tokens.css)
@@ -69,12 +69,26 @@ export function Grafico({ tipo, montar, dependencias, rotulo, id, plugins }) {
   const grafico = useRef(null);
   const ultimoMontar = useRef(montar);
   const pluginsIniciais = useRef(plugins);
+  // O Chart.js baixa no primeiro gráfico (chartjs-global.js); depois, desenha na hora.
+  const [Chart, definirChart] = useState(() => chartCarregado());
   useLayoutEffect(() => {
     ultimoMontar.current = montar;
   });
 
   useEffect(() => {
-    if (!canvas.current) return undefined;
+    if (Chart) return undefined;
+    let vivo = true;
+    carregarChart().then(
+      (carregado) => vivo && definirChart(() => carregado),
+      (erro) => console.warn("Não foi possível carregar os gráficos:", erro),
+    );
+    return () => {
+      vivo = false;
+    };
+  }, [Chart]);
+
+  useEffect(() => {
+    if (!canvas.current || !Chart) return undefined;
     const { data, options } = ultimoMontar.current();
     try {
       grafico.current = new Chart(canvas.current, {
@@ -92,7 +106,7 @@ export function Grafico({ tipo, montar, dependencias, rotulo, id, plugins }) {
       grafico.current?.destroy();
       grafico.current = null;
     };
-  }, [tipo]);
+  }, [tipo, Chart]);
 
   useEffect(() => {
     const atual = grafico.current;

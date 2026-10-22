@@ -187,6 +187,7 @@ describe("Recursos após trocar área ou sessão", () => {
     const toast = vi.fn();
     const bucket = {
       upload: vi.fn(() => envio.promessa),
+      remove: vi.fn(async () => ({ error: null })),
       createSignedUrl: vi.fn(() => assinatura.promessa),
     };
     const supabase = {
@@ -204,7 +205,7 @@ describe("Recursos após trocar área ou sessão", () => {
     const e = criarEstadoDosRecursos({ supabase, toast, abrirUrl });
     await e.carregar("a");
     const upload = e.enviarAnexo(
-      "r1",
+      "11111111-2222-4333-8444-555555555555",
       new File(["PDF"], "a.pdf", { type: "application/pdf" }),
       "documento",
     );
@@ -216,6 +217,10 @@ describe("Recursos após trocar área ou sessão", () => {
         ([nome]) => nome === "registrar_anexo_recurso",
       ),
     ).toBe(false);
+    // O arquivo enviado e não registrado sai do bucket (não fica órfão).
+    expect(bucket.remove).toHaveBeenCalledWith([
+      bucket.upload.mock.calls[0][0],
+    ]);
     const download = e.baixarAnexo({ id: "an1" });
     await vi.waitFor(() => expect(bucket.createSignedUrl).toHaveBeenCalled());
     await e.carregar("c");
@@ -226,5 +231,92 @@ describe("Recursos após trocar área ou sessão", () => {
     expect(await download).toBeNull();
     expect(abrirUrl).not.toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
+  });
+  it("registro do anexo recusado: o arquivo enviado sai do bucket", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const bucket = {
+      upload: vi.fn(async () => ({ error: null })),
+      remove: vi.fn(async () => ({ error: null })),
+    };
+    const toast = vi.fn();
+    const supabase = {
+      storage: { from: () => bucket },
+      rpc: vi.fn(async (nome) =>
+        nome === "registrar_anexo_recurso"
+          ? { data: null, error: { message: "recusado" } }
+          : { data: { recursos: [] }, error: null },
+      ),
+    };
+    const e = criarEstadoDosRecursos({ supabase, toast });
+    await e.carregar("a");
+    const ok = await e.enviarAnexo(
+      "11111111-2222-4333-8444-555555555555",
+      new File(["PDF"], "a.pdf", { type: "application/pdf" }),
+      "documento",
+    );
+    expect(ok).toBe(false);
+    expect(bucket.remove).toHaveBeenCalledWith([
+      bucket.upload.mock.calls[0][0],
+    ]);
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining("Não foi possível anexar"),
+      "error",
+    );
+    console.warn.mockRestore();
+  });
+  it("detalhe lido duas vezes: a resposta antiga que volta depois não sobrescreve a nova", async () => {
+    const antiga = adiar();
+    const nova = adiar();
+    let numero = 0;
+    const supabase = {
+      rpc: vi.fn((nome) =>
+        nome === "get_recurso_candidato_detalhe"
+          ? ++numero === 1
+            ? antiga.promessa
+            : nova.promessa
+          : Promise.resolve({ data: { recursos: [] }, error: null }),
+      ),
+    };
+    const e = criarEstadoDosRecursos({ supabase });
+    await e.carregar("a");
+    const primeira = e.carregarDetalhe("r1");
+    const segunda = e.carregarDetalhe("r1");
+    nova.resolver({ data: { observacao: "nova" }, error: null });
+    await segunda;
+    antiga.resolver({ data: { observacao: "antiga" }, error: null });
+    await primeira;
+    expect(e.obter().detalhes.get("r1").observacao).toBe("nova");
+  });
+
+  it("leitura de ajuste que começou antes da gravação não sobrescreve o gravado", async () => {
+    const leitura = adiar();
+    let numero = 0;
+    const supabase = {
+      rpc: vi.fn((nome) => {
+        if (nome === "obter_ajustes_pontuacao_recurso")
+          return ++numero === 1
+            ? leitura.promessa
+            : Promise.resolve({
+                data: { versoes: [{ id: "relida" }] },
+                error: null,
+              });
+        if (nome === "propor_ajuste_pontuacao")
+          return Promise.resolve({
+            data: { versoes: [{ id: "gravada" }] },
+            error: null,
+          });
+        return Promise.resolve({ data: { recursos: [] }, error: null });
+      }),
+    };
+    const e = criarEstadoDosRecursos({ supabase, toast: () => {} });
+    await e.carregar("a");
+    const antiga = e.carregarAjustes("r1");
+    await e.proporAjuste({ id: "r1" }, { motivo: "Revisão" });
+    expect(e.obter().ajustes.get("r1").versoes).toEqual([{ id: "gravada" }]);
+    leitura.resolver({ data: { versoes: [{ id: "antiga" }] }, error: null });
+    await antiga;
+    await vi.waitFor(() =>
+      expect(e.obter().ajustes.get("r1").versoes).toEqual([{ id: "relida" }]),
+    );
   });
 });

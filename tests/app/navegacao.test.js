@@ -178,9 +178,10 @@ describe("guarda de saída e versão nova", () => {
   it("alteração não salva confirmada como não: não sai da tela", () => {
     const confirmarSaida = vi.fn(() => false);
     const { navegacao } = criar({ confirmarSaida });
-    navegacao.irPara("dashboard");
+    expect(navegacao.irPara("dashboard")).toBe(true);
     confirmarSaida.mockClear();
-    navegacao.irPara("recursos");
+    // Recusada: devolve false (quem trocou a área antes a desfaz).
+    expect(navegacao.irPara("recursos")).toBe(false);
     expect(confirmarSaida).toHaveBeenCalledTimes(1);
     expect(navegacao.obter().view).toBe("dashboard");
   });

@@ -154,6 +154,7 @@ function TelaDaArea({
     if (carregado) void estado.carregarAgenda(editalId);
   }, [estado, carregado, editalId]);
   const agenda = e.agenda?.editalId === editalId ? e.agenda.itens : null;
+  const erroDaAgenda = e.agenda?.editalId === editalId ? e.agenda.erro : "";
 
   // KPI, pendência e fatia de gráfico: clicar de novo tira o filtro.
   const alternarFiltro = (campo: CampoDoFiltro, valor: string) =>
@@ -246,6 +247,8 @@ function TelaDaArea({
           {editalId ? (
             <AgendaDosProximosDias
               itens={agenda}
+              erro={erroDaAgenda}
+              aoTentarDeNovo={() => void estado.carregarAgenda(editalId)}
               hoje={hojeEmBrasilia()}
               aoConduzir={() => irCom("conduzir-entrevistas")}
               aoAbrirAgenda={() => irCom("classificacao")}
