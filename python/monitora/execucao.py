@@ -11,15 +11,11 @@ a agenda manda "agenda"; em branco = alguém clicou "Run workflow" no GitHub.
 import os
 import re
 import uuid
-from datetime import datetime, timedelta, timezone
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from datetime import datetime
 
+from monitora.fuso import FUSO
 from monitora.mascaramento import mascarar
 
-try:
-    FUSO = ZoneInfo("America/Sao_Paulo")
-except ZoneInfoNotFoundError:  # Windows sem o pacote tzdata: o Brasil não tem horário de verão.
-    FUSO = timezone(timedelta(hours=-3), "America/Sao_Paulo")
 _UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
 

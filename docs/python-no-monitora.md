@@ -39,6 +39,7 @@ Só biblioteca padrão — não pesa na Vercel nem nos jobs.
 | `monitora.registro`     | `registro("nome")`: logger que passa toda mensagem (e exceção) pelo mascaramento                                                                            |
 | `monitora.supabase_rpc` | `configuracao(guia)` e `chamar(config, "rpc", corpo)`: RPC com a `service_role`, repetindo só erro de rede/5xx, erro mascarado                              |
 | `monitora.execucao`     | `disparo(...)` (AGENDA/MONITORA/GITHUB), `identificador(prefixo=…)`, `url_da_execucao()` e `resumir(titulo, linhas)` (GITHUB_STEP_SUMMARY)                  |
+| `monitora.fuso`         | `FUSO` (America/Sao_Paulo) e `hoje_em_brasilia()`: a data de hoje das regras (o runner é UTC; nunca `date.today()`)                                         |
 
 Quem usa hoje: o robô da Empregare (`scripts/robo-empregare/`), as conferências
 (`scripts/conferencias/`) e a pré-classificação da Avaliação documental (`scripts/pre_classificacao/`,

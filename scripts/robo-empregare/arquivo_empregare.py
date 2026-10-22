@@ -24,6 +24,8 @@ Testes: tests/python/test_leitura_de_arquivos_robo.py (HTML sintético).
 """
 
 import base64
+import binascii
+import http.client
 import re
 import urllib.error
 import urllib.request
@@ -190,15 +192,25 @@ def eh_html(tipo, conteudo):
 
 
 def _com_a_sessao(driver, url):
-    driver.set_script_timeout(TEMPO_DO_DOWNLOAD + 30)
-    r = driver.execute_async_script(JS_BAIXAR, url, TAMANHO_MAXIMO) or {}
+    """GET pela página logada. Falha do navegador (tempo do script, aba que caiu, resposta estranha) vira
+    ErroNoArquivo: é erro DESTE arquivo, não derruba a execução."""
+    try:
+        driver.set_script_timeout(TEMPO_DO_DOWNLOAD + 30)
+        r = driver.execute_async_script(JS_BAIXAR, url, TAMANHO_MAXIMO) or {}
+    except Exception as erro:  # selenium (TimeoutException, WebDriverException…), sem importar o selenium aqui
+        raise ErroNoArquivo(f"navegador_{type(erro).__name__}"[:60]) from None
+    if not isinstance(r, dict):
+        raise ErroNoArquivo("navegador_resposta_invalida")
     if r.get("login"):
         raise ErroNoArquivo("sessao_expirada")
     if r.get("grande"):
         raise ErroNoArquivo("arquivo_grande_demais")
     if r.get("status") != 200:
         raise ErroNoArquivo(f"http_{r.get('status') or 'sem_resposta'}")
-    return r.get("tipo") or "", base64.b64decode(r.get("base64") or "")
+    try:
+        return str(r.get("tipo") or ""), base64.b64decode(r.get("base64") or "", validate=True)
+    except (binascii.Error, ValueError, TypeError):
+        raise ErroNoArquivo("conteudo_invalido") from None
 
 
 def _sem_cookie(url, abrir=urllib.request.urlopen):
@@ -211,7 +223,8 @@ def _sem_cookie(url, abrir=urllib.request.urlopen):
             return resposta.headers.get("Content-Type", ""), conteudo
     except urllib.error.HTTPError as erro:
         raise ErroNoArquivo(f"http_{erro.code}") from None
-    except (urllib.error.URLError, TimeoutError, ConnectionError) as erro:
+    except (urllib.error.URLError, http.client.HTTPException, OSError, ValueError) as erro:
+        # URLError, tempo esgotado, conexão caída, SSL, resposta HTTP truncada, endereço estranho: erro do arquivo.
         raise ErroNoArquivo("rede") from erro
 
 

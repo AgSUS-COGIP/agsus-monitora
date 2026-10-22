@@ -84,6 +84,18 @@ Nenhum documento sai do runner: sem API de IA paga, sem consulta de CNPJ na inte
   com mais texto confiável.
 - **Certificados e diplomas**: "Carga horária" e "Curso" também pela posição (rótulo e valor
   embaixo ou ao lado).
+- **TIFF/WebP de várias páginas**: cada quadro é lido (até 30; o resto conta como página não lida).
+- **Arquivo pesado não trava a execução** (`extracao.py`): a página vai ao OCR com no máximo
+  4.000 px no lado maior (o PDF já é renderizado nesse tamanho; a imagem enorme é reduzida); cada
+  chamada do Tesseract tem `timeout` (60 s); a página tem 120 s (passou, fica a melhor leitura até
+  ali) e o arquivo, 300 s — passou, a leitura é gravada como **ERRO `arquivo_demorado`** e vai para o
+  fim da fila, sem segurar os outros.
+- **Download**: falha de rede, HTTP ou do navegador vira erro **do arquivo** (código `rede`,
+  `http_…`, `navegador_…`, `download_…`), nunca derruba a execução. Sessão da Empregare expirada: um
+  novo login, uma vez só por execução; depois disso, `sessao_expirada` é erro do arquivo.
+- **Orçamento da execução**: 90 min (`ORCAMENTO_MINUTOS`); o que faltar fica para a próxima e a
+  execução fecha normal. Saída **parcial** (código 2) quando algum arquivo deu erro, o banco recusou
+  leituras (`fora` de `gravar_leituras_de_arquivos`) ou algum edital pedido não foi achado.
 
 Medição nos documentos sintéticos (`tests/python/sinteticos_leitura.py`, nada real):
 `python tests/python/avaliar_leitura_sintetica.py --ocr` (com `--codigo DIR` mede outro checkout).

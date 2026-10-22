@@ -6,6 +6,7 @@ Base Python comum do MONITORA (guia: docs/python-no-monitora.md).
     monitora.registro      logging que passa tudo pelo mascaramento
     monitora.supabase_rpc  chamadas às RPCs com a service_role (jobs)
     monitora.execucao      disparo, identificador e resumo da execução no Actions
+    monitora.fuso          o fuso de Brasília e hoje_em_brasilia()
 
 Só biblioteca padrão: o pacote não pesa nas funções da Vercel nem nos jobs.
 Quem importa: scripts/robo-empregare/, scripts/conferencias/,

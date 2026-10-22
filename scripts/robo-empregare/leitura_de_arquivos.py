@@ -19,9 +19,13 @@ Uso (o workflow .github/workflows/leitura-de-arquivos.yml faz isso):
   --so-relidos  só relê o que já foi lido (versão antiga ou erro; com --forcar, tudo o já lido);
             nunca lê anexo novo (o já lido com versão antiga vem primeiro sempre)
 
-Orçamento: ORCAMENTO_MINUTOS (padrão 100; o job tem 120). Ao esgotar, grava o
+Orçamento: ORCAMENTO_MINUTOS (padrão 90; o job tem 120). Ao esgotar, grava o
 que leu e para: a execução seguinte continua de onde parou (o banco sabe o
-que já foi lido). Grava em lotes de LOTE leituras.
+que já foi lido). Grava em lotes de LOTE leituras. Cada arquivo tem prazo
+próprio (extracao.PRAZO_DO_ARQUIVO): o pesado demais vira ERRO
+"arquivo_demorado" e vai para o fim da fila, sem segurar a execução. Falha de
+rede ou do navegador no download é erro DO ARQUIVO; sessão da Empregare
+expirada: um novo login (uma vez só na execução), depois disso erro do arquivo.
 
 Variáveis: EMPREGARE_EMAIL, EMPREGARE_SENHA, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 O LOG É PÚBLICO: só contagens, códigos de erro e números de edital — nunca
@@ -29,7 +33,8 @@ nome, CPF, nome de arquivo ou trecho de documento. O CPF do candidato nem
 chega ao robô: o banco manda sha256(sal + CPF) com o sal sorteado aqui.
 
 Saída: 0 concluída (ou parou no orçamento); 1 erro (nada lido); 2 parcial
-(houve erro de download/leitura em algum arquivo).
+(houve erro de download/leitura em algum arquivo, o banco recusou leituras
+— "fora" de gravar_leituras_de_arquivos — ou algum edital pedido não foi achado).
 """
 
 import argparse
@@ -67,7 +72,8 @@ LIMITE_PADRAO = 300
 LIMITE_MAXIMO = 2000
 LIMITE_DA_SONDAGEM = 3
 LOTE = 20
-ORCAMENTO_PADRAO = 100  # minutos (o job tem 120)
+ORCAMENTO_PADRAO = 90  # minutos (o job tem 120; cada arquivo tem no máximo extracao.PRAZO_DO_ARQUIVO)
+SESSAO_EXPIRADA = "sessao_expirada"
 _PEDIDO = re.compile(r"^[A-Za-z0-9/ ._-]{1,100}$")
 # Os campos que vão para o banco (o resto do resultado fica só na memória).
 CAMPOS = (
@@ -163,6 +169,9 @@ def ler_anexo(anexo, regras, baixar, sal, hoje, ler=ler_documento):
         conteudo = baixar(anexo["link"])
     except arquivo.ErroNoArquivo as erro:
         return leitura_com_erro(anexo, erro.codigo), esperado
+    except Exception as erro:  # rede/HTTP/navegador inesperado: erro deste arquivo, não da execução
+        log.info("Um download falhou (%s).", type(erro).__name__)
+        return leitura_com_erro(anexo, f"download_{type(erro).__name__}"), esperado
     try:
         resultado = ler(
             conteudo,
@@ -179,6 +188,30 @@ def ler_anexo(anexo, regras, baixar, sal, hoje, ler=ler_documento):
         return leitura_com_erro(anexo, f"leitura_{type(erro).__name__}"), esperado
     finally:
         del conteudo
+
+
+def com_novo_login(baixar_um, entrar):
+    """O `baixar(link)` que, na primeira sessão expirada da execução, entra de novo na Empregare e tenta o mesmo
+    arquivo; da segunda vez em diante (ou se o novo login falhar), a sessão expirada é erro do arquivo."""
+    reentrou = False
+
+    def baixar(link):
+        nonlocal reentrou
+        try:
+            return baixar_um(link)
+        except arquivo.ErroNoArquivo as erro:
+            if erro.codigo != SESSAO_EXPIRADA or reentrou:
+                raise
+        reentrou = True
+        log.info("A sessão da Empregare expirou: novo login (uma vez só nesta execução).")
+        try:
+            entrar()
+        except Exception as erro:
+            log.info("O novo login falhou (%s).", type(erro).__name__)
+            raise arquivo.ErroNoArquivo("novo_login_falhou") from None
+        return baixar_um(link)
+
+    return baixar
 
 
 class Gravador:
@@ -209,7 +242,7 @@ def linhas_do_resumo(lista, contagem, gravador, esperados, esgotou, segundos):
         f"Anexos da resposta vigente: {lista.get('total', 0)} · a ler antes desta execução: {lista.get('pendentes', 0)}",
         f"Arquivos processados: {sum(contagem.values())} (lidos {contagem['LIDO']}, ilegíveis {contagem['ILEGIVEL']}, "
         f"erro {contagem['ERRO']}, formato não lido {contagem['NAO_SUPORTADO']})",
-        f"Gravados: {gravador.gravadas}" + (f" · fora do banco: {gravador.fora}" if gravador.fora else ""),
+        f"Gravados: {gravador.gravadas}" + (f" · recusados pelo banco: {gravador.fora}" if gravador.fora else ""),
         "Por item da ficha: " + (", ".join(f"{k.lower()} {v}" for k, v in sorted(esperados.items())) or "nenhum"),
         f"Extrator {VERSAO_DO_EXTRATOR} · {round(segundos / 60, 1)} min",
     ]
@@ -276,7 +309,7 @@ def principal(args, configuracao=None, chamar=supabase_rpc.chamar, portal_de=Non
     )
     if args.seco or not anexos:
         execucao.resumir(TITULO, linhas_do_resumo(lista, Contagem(), Gravador(config, "", chamar), Counter(), False, 0))
-        return 0
+        return codigo_de_saida(lista, Contagem(), None)
     regras = {e["id"]: e.get("regra") or {} for e in lista.get("editais") or []}
     id_execucao = execucao.identificador(prefixo="leitura")
     gravador = Gravador(config, id_execucao, chamar)
@@ -297,8 +330,7 @@ def principal(args, configuracao=None, chamar=supabase_rpc.chamar, portal_de=Non
             execucao.resumir(TITULO + " (sondagem)", sondar(portal, anexos))
             return 0
 
-        def baixar(link):
-            return arquivo.baixar(portal.driver, link)
+        baixar = com_novo_login(lambda link: arquivo.baixar(portal.driver, link), lambda: portal.entrar(email, senha))
 
         try:
             contagem, esperados, esgotou = processar(
@@ -307,9 +339,17 @@ def principal(args, configuracao=None, chamar=supabase_rpc.chamar, portal_de=Non
         finally:
             gravador.descarregar()
     execucao.resumir(TITULO, linhas_do_resumo(lista, contagem, gravador, esperados, esgotou, relogio() - inicio))
-    if sum(contagem.values()) and contagem["ERRO"] == sum(contagem.values()):
+    return codigo_de_saida(lista, contagem, gravador)
+
+
+def codigo_de_saida(lista, contagem, gravador):
+    """1 se todo arquivo processado deu erro; 2 (parcial) se algum deu erro, o banco recusou leituras ("fora")
+    ou algum edital pedido não foi achado; 0 no resto (inclusive quando parou no orçamento)."""
+    total = sum(contagem.values())
+    if total and contagem["ERRO"] == total:
         return 1
-    return 2 if contagem["ERRO"] else 0
+    recusadas = gravador.fora if gravador is not None else 0
+    return 2 if contagem["ERRO"] or recusadas or lista.get("nao_encontrados") else 0
 
 
 def main(lista=None):

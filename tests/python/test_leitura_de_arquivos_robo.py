@@ -318,3 +318,164 @@ def test_para_o_banco_tira_numero_com_cara_de_cpf():
     texto = str(saida["itens"]) + str(saida["alertas"]) + saida["resumo"]
     assert not re.search(r"\d{3}\.?\d{3}\.?\d{3}-?\d{2}", texto)
     assert saida["itens"][0]["dias"] == 30
+
+
+# ── robustez do download e da saída ──────────────────────────────────────────
+
+
+class FalhaDeRede(Exception):
+    """Um erro de rede/HTTP que nem o arquivo_empregare conhece (antes derrubava a execução inteira)."""
+
+
+def test_erro_inesperado_no_download_vira_erro_do_arquivo(monkeypatch, ambiente):
+    def baixar(_driver, link):
+        if "1000" in link:
+            raise FalhaDeRede("conexão caiu")
+        return pdf_de_certificado()
+
+    monkeypatch.setattr(robo.arquivo, "baixar", baixar)
+    banco = BancoFalso([anexo(0), anexo(1)])
+    saida = robo.principal(robo.argumentos([]), configuracao={}, chamar=banco, portal_de=PortalFalso)
+    assert saida == 2
+    (gravacao,) = [c for f, c in banco.chamadas if f == "gravar_leituras_de_arquivos"]
+    erro, lido = gravacao["p_leituras"]
+    assert erro["situacao"] == "ERRO" and erro["erro"] == "download_falhaderede"
+    assert lido["situacao"] == "LIDO"
+
+
+class DriverQueQuebra:
+    def set_script_timeout(self, _):
+        pass
+
+    def execute_async_script(self, *_):
+        raise RuntimeError("script timeout")  # como o TimeoutException do selenium
+
+
+def test_falha_do_navegador_e_resposta_invalida_viram_codigo():
+    with pytest.raises(arq.ErroNoArquivo) as erro:
+        arq.baixar(DriverQueQuebra(), LINK)
+    assert erro.value.codigo == "navegador_RuntimeError"
+
+    class DriverComLixo(DriverFalso):
+        def execute_async_script(self, _js, url, _limite):
+            return {"status": 200, "tipo": "application/pdf", "base64": "@@não é base64@@", "login": False}
+
+    with pytest.raises(arq.ErroNoArquivo) as erro:
+        arq.baixar(DriverComLixo({}), LINK)
+    assert erro.value.codigo == "conteudo_invalido"
+
+
+def test_sem_cookie_erro_de_conexao_ou_resposta_truncada_vira_rede():
+    import http.client
+    import ssl
+
+    for falha in (ssl.SSLError("handshake"), http.client.IncompleteRead(b""), ConnectionResetError(), OSError()):
+
+        def abrir(_pedido, timeout, falha=falha):
+            raise falha
+
+        with pytest.raises(arq.ErroNoArquivo) as erro:
+            arq._sem_cookie("https://arquivos.exemplo.com/x.pdf", abrir=abrir)
+        assert erro.value.codigo == "rede"
+
+
+class PortalQueConta(PortalFalso):
+    def __init__(self, pasta):
+        super().__init__(pasta)
+        self.logins = 0
+
+    def entrar(self, email, senha):
+        super().entrar(email, senha)
+        self.logins += 1
+
+
+def test_sessao_expirada_faz_um_novo_login_e_tenta_de_novo(monkeypatch, ambiente):
+    portais, pedidos = [], []
+
+    def portal_de(pasta):
+        portais.append(PortalQueConta(pasta))
+        return portais[-1]
+
+    def baixar(_driver, link):
+        pedidos.append(link)
+        if len(pedidos) == 1:
+            raise arq.ErroNoArquivo("sessao_expirada")
+        return pdf_de_certificado()
+
+    monkeypatch.setattr(robo.arquivo, "baixar", baixar)
+    banco = BancoFalso([anexo(0), anexo(1)])
+    assert robo.principal(robo.argumentos([]), configuracao={}, chamar=banco, portal_de=portal_de) == 0
+    assert portais[0].logins == 2  # o login do início e o novo, uma vez
+    (gravacao,) = [c for f, c in banco.chamadas if f == "gravar_leituras_de_arquivos"]
+    assert [lt["situacao"] for lt in gravacao["p_leituras"]] == ["LIDO", "LIDO"]
+    assert len(pedidos) == 3
+
+
+def test_sessao_expirada_de_novo_depois_do_novo_login_e_erro(monkeypatch, ambiente):
+    portais = []
+
+    def portal_de(pasta):
+        portais.append(PortalQueConta(pasta))
+        return portais[-1]
+
+    def baixar(_driver, _link):
+        raise arq.ErroNoArquivo("sessao_expirada")
+
+    monkeypatch.setattr(robo.arquivo, "baixar", baixar)
+    banco = BancoFalso([anexo(0), anexo(1), anexo(2)])
+    assert robo.principal(robo.argumentos([]), configuracao={}, chamar=banco, portal_de=portal_de) == 1
+    assert portais[0].logins == 2  # nunca mais de um novo login por execução
+    (gravacao,) = [c for f, c in banco.chamadas if f == "gravar_leituras_de_arquivos"]
+    assert {lt["erro"] for lt in gravacao["p_leituras"]} == {"sessao_expirada"}
+
+
+def test_novo_login_que_falha_vira_erro_do_arquivo():
+    def baixar_um(_link):
+        raise arq.ErroNoArquivo("sessao_expirada")
+
+    def entrar():
+        raise RuntimeError("login recusado")
+
+    baixar = robo.com_novo_login(baixar_um, entrar)
+    with pytest.raises(arq.ErroNoArquivo) as erro:
+        baixar("x")
+    assert erro.value.codigo == "novo_login_falhou"
+    with pytest.raises(arq.ErroNoArquivo) as erro:
+        baixar("x")
+    assert erro.value.codigo == "sessao_expirada"
+
+
+class BancoQueRecusa(BancoFalso):
+    def __call__(self, config, funcao, corpo):
+        if funcao == "gravar_leituras_de_arquivos":
+            self.chamadas.append((funcao, corpo))
+            n = len(corpo["p_leituras"])
+            return {"recebidas": n, "gravadas": n - 1, "fora": 1}
+        return super().__call__(config, funcao, corpo)
+
+
+def test_leituras_recusadas_pelo_banco_saem_como_parcial(monkeypatch, ambiente, capsys):
+    monkeypatch.setattr(robo.arquivo, "baixar", lambda _d, _l: pdf_de_certificado())
+    banco = BancoQueRecusa([anexo(0), anexo(1)])
+    assert robo.principal(robo.argumentos([]), configuracao={}, chamar=banco, portal_de=PortalFalso) == 2
+    assert "recusados pelo banco: 1" in capsys.readouterr().out
+
+
+class BancoSemEdital(BancoFalso):
+    def __call__(self, config, funcao, corpo):
+        r = super().__call__(config, funcao, corpo)
+        if funcao == "listar_anexos_para_leitura":
+            r["nao_encontrados"] = ["999/2026"]
+        return r
+
+
+def test_edital_nao_encontrado_sai_como_parcial(monkeypatch, ambiente):
+    monkeypatch.setattr(robo.arquivo, "baixar", lambda _d, _l: pdf_de_certificado())
+    args = robo.argumentos(["--editais", "93/2026,999/2026"])
+    assert robo.principal(args, configuracao={}, chamar=BancoSemEdital([anexo(0)]), portal_de=PortalFalso) == 2
+    # Sem nenhum anexo a ler, também.
+    assert robo.principal(args, configuracao={}, chamar=BancoSemEdital([]), portal_de=PortalFalso) == 2
+
+
+def test_orcamento_padrao_de_90_minutos():
+    assert robo.ORCAMENTO_PADRAO == 90
