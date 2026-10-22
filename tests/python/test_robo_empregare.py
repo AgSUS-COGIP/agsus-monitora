@@ -947,7 +947,7 @@ class FluxoDeUmaVaga(unittest.TestCase):
         self.assertNotIn("p_vaga_interno", chamadas[-1][1])
         self.assertTrue(all("link" not in l for _, c in chamadas[:-1] for l in c["p_linhas"]))
 
-    def test_banco_sem_a_migration_fecha_sem_o_identificador(self):
+    def test_fechar_sem_a_funcao_nova_falha_sem_repetir_a_chamada_antiga(self):
         chamadas = []
 
         def chamar(_config, funcao, corpo, tentativas=3):
@@ -964,10 +964,10 @@ class FluxoDeUmaVaga(unittest.TestCase):
             chamar,
             enderecos={"vaga_interno": "Ab1cD2eF3g|", "candidatos": {}, "respostas": {}},
         )
-        self.assertEqual(situacao, "GRAVADA")
+        self.assertEqual(situacao, "FALHA")
         fechamentos = [c for f, c in chamadas if f == "fechar_vaga_empregare"]
-        self.assertEqual(len(fechamentos), 2)
-        self.assertNotIn("p_vaga_interno", fechamentos[-1])
+        self.assertEqual(len(fechamentos), 1)
+        self.assertEqual(fechamentos[0]["p_vaga_interno"], "Ab1cD2eF3g|")
 
     def test_trava_para_no_primeiro_lote(self):
         chamadas = []
