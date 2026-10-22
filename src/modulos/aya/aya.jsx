@@ -37,6 +37,7 @@ import {
   useEffect,
   useId,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -918,6 +919,28 @@ export function Aya({
     });
   };
 
+  /*
+    O "Feedback e suporte" do topo: o registro aberto na tela sai de uma
+    varredura do DOM (collectAyaPageContext). Ela roda quando a conversa ou a
+    página mudam e de novo no clique, não a cada tecla no campo.
+  */
+  const ultimaResposta = useMemo(
+    () =>
+      [...mensagens].reverse().find((m) => m.papel === "assistant") || {
+        id: "",
+        texto: "",
+      },
+    [mensagens],
+  );
+  const hrefDoSuporte = useMemo(
+    () => chamadoDe(ultimaResposta).href,
+    // chamadoDe lê as mensagens, a página e a configuração do momento.
+    [ultimaResposta, local, nomeDaAreaAtual],
+  );
+  const renovarSuporte = (evento) => {
+    evento.currentTarget.href = chamadoDe(ultimaResposta).href;
+  };
+
   async function enviar(pergunta) {
     const limpa = String(pergunta || "").trim();
     if (!limpa || ocupada) return;
@@ -1193,16 +1216,10 @@ export function Aya({
                 className="aya-icone-botao aya-suporte"
                 aria-label="Feedback e suporte"
                 title="Feedback e suporte"
-                href={
-                  chamadoDe(
-                    [...mensagens]
-                      .reverse()
-                      .find((m) => m.papel === "assistant") || {
-                      id: "",
-                      texto: "",
-                    },
-                  ).href
-                }
+                href={hrefDoSuporte}
+                onClick={renovarSuporte}
+                onAuxClick={renovarSuporte}
+                onContextMenu={renovarSuporte}
                 target="_blank"
                 rel="noopener noreferrer"
               >
