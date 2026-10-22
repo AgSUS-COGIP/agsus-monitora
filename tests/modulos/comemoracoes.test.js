@@ -165,6 +165,32 @@ describe("seção Comemorações", () => {
     expect(marco("fim-do-tour").dataset.ligado).toBe("false");
   });
 
+  it("duração: dá para digitar 12 (o 1 do caminho não vira 2) e o limite entra ao sair", async () => {
+    const estado = criarEstado();
+    await montar({
+      estado,
+      testar: vi.fn(),
+      janela: janelaFalsa(),
+      previa: false,
+    });
+    await clicar(
+      host.querySelector('[aria-label="Detalhes: Fila de análises zerada"]'),
+    );
+    const campo = () =>
+      host.querySelector("#comemoracoesMarco-fila-zerada-duracao");
+    await digitar(campo(), "1");
+    expect(campo().value).toBe("1");
+    await digitar(campo(), "12");
+    expect(campo().value).toBe("12");
+    expect(JSON.parse(estado.atual()).marcos["fila-zerada"].duracaoS).toBe(12);
+    await digitar(campo(), "1");
+    await act(async () =>
+      campo().dispatchEvent(new FocusEvent("focusout", { bubbles: true })),
+    );
+    expect(campo().value).toBe("2");
+    expect(JSON.parse(estado.atual()).marcos["fila-zerada"].duracaoS).toBe(2);
+  });
+
   it("Testar solta com as opções da tela e não toca no rascunho", async () => {
     const estado = criarEstado(
       JSON.stringify({

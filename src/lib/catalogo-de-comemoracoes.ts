@@ -223,6 +223,25 @@ export function normalizarDuracaoS(valor: unknown): number | null {
   return Math.round(limitado * 2) / 2;
 }
 
+/**
+ * A duração enquanto a pessoa digita: `null` = campo vazio (automática);
+ * número = já está entre o mínimo e o máximo; `undefined` = ainda não dá
+ * para aplicar (meio digitado, como "1" a caminho de "12", ou fora dos
+ * limites). Limitar a cada tecla transformava o "1" em 2 e impedia o "12";
+ * o limite entra ao sair do campo (`normalizarDuracaoS`).
+ */
+export function duracaoSAoDigitar(valor: unknown): number | null | undefined {
+  if (texto(valor) === "") return null;
+  const numero = Number(String(valor).replace(",", "."));
+  if (
+    !Number.isFinite(numero) ||
+    numero < DURACAO_MINIMA_S ||
+    numero > DURACAO_MAXIMA_S
+  )
+    return undefined;
+  return normalizarDuracaoS(numero);
+}
+
 /** As opções de um marco a partir do bruto, completando com o padrão. */
 export function normalizarOpcoes(
   bruto: unknown,

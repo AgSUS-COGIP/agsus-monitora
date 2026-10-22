@@ -10,6 +10,9 @@ import {
   META_MAXIMA,
   mensagemDoPersonalizado,
   normalizarConfiguracao,
+  DURACAO_MAXIMA_S,
+  DURACAO_MINIMA_S,
+  duracaoSAoDigitar,
   normalizarDuracaoS,
   normalizarMeta,
   novoPersonalizado,
@@ -122,6 +125,49 @@ function pedidoDoMarco(
   };
 }
 
+/*
+  Duração em segundos: o texto é da pessoa enquanto ela digita; o valor só
+  vai ao rascunho quando já é válido, e o limite entra ao sair do campo.
+*/
+function CampoDeDuracao({
+  id,
+  valor,
+  aoMudar,
+}: {
+  id: string;
+  valor: number | null | undefined;
+  aoMudar: (duracaoS: number | null) => void;
+}) {
+  const [texto, setTexto] = useState(valor == null ? "" : String(valor));
+  const [visto, setVisto] = useState(valor);
+  if (valor !== visto) {
+    setVisto(valor);
+    if (duracaoSAoDigitar(texto) !== valor)
+      setTexto(valor == null ? "" : String(valor));
+  }
+  return (
+    <input
+      id={id}
+      type="number"
+      min={DURACAO_MINIMA_S}
+      max={DURACAO_MAXIMA_S}
+      step={0.5}
+      placeholder="Automática"
+      value={texto}
+      onChange={(evento) => {
+        setTexto(evento.target.value);
+        const duracao = duracaoSAoDigitar(evento.target.value);
+        if (duracao !== undefined && duracao !== valor) aoMudar(duracao);
+      }}
+      onBlur={() => {
+        const duracao = normalizarDuracaoS(texto);
+        setTexto(duracao == null ? "" : String(duracao));
+        if (duracao !== (valor ?? null)) aoMudar(duracao);
+      }}
+    />
+  );
+}
+
 function LinhaDoMarco({
   id,
   prefixo,
@@ -225,17 +271,10 @@ function LinhaDoMarco({
         >
           {extras}
           <Campo rotulo="Duração (s)">
-            <input
+            <CampoDeDuracao
               id={`${prefixo}-duracao`}
-              type="number"
-              min={2}
-              max={15}
-              step={0.5}
-              placeholder="Automática"
-              value={opcoes.duracaoS ?? ""}
-              onChange={(evento) =>
-                aoMudar({ duracaoS: normalizarDuracaoS(evento.target.value) })
-              }
+              valor={opcoes.duracaoS}
+              aoMudar={(duracaoS) => aoMudar({ duracaoS })}
             />
           </Campo>
           <Campo rotulo="Quem vê">
