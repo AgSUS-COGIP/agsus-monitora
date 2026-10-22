@@ -123,7 +123,7 @@ class BancoComRetrato(base.BancoFalso):
         self.hoje = hoje
         self.recusar_retrato = recusar_retrato
 
-    def __call__(self, cfg, funcao, corpo):
+    def __call__(self, cfg, funcao, corpo, **opcoes):
         if funcao == "pre_classificacao_ler_editais":
             self.chamadas.append((funcao, json.loads(json.dumps(corpo))))
             return {"hoje": self.hoje, "nao_encontrados": [], "editais": self.editais}
@@ -132,7 +132,7 @@ class BancoComRetrato(base.BancoFalso):
             if self.recusar_retrato:
                 raise base.supabase_rpc.ErroDoSupabase(funcao, 404, '{"code":"PGRST202","message":"não existe"}')
             return {"vagas": len(corpo["p_vagas"])}
-        return super().__call__(cfg, funcao, corpo)
+        return super().__call__(cfg, funcao, corpo, **opcoes)
 
 
 class Job(unittest.TestCase):

@@ -234,8 +234,10 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
     """
     Pré-classifica as vagas de um edital. gravar = função (vaga, resultado) ou
     None (modo seco). Devolve o resultado do edital (só códigos e contagens).
-    gravar_sugestoes = função (vaga, sugestoes) ou None: as linhas que as
-    respostas de cada candidato já dão para a ficha (sugestoes_da_ficha.py);
+    gravar_sugestoes = função (vaga, calcular) ou None: as linhas que as
+    respostas de cada candidato já dão para a ficha (sugestoes_da_ficha.py).
+    calcular() devolve as sugestões e é chamada DENTRO do tratamento de erro
+    de gravar_sugestoes (um erro na conta só vira aviso, como o da gravação);
     devolve quantos candidatos ficaram com sugestão.
     retratar: monta também o retrato das inscrições de cada vaga
     (resultado["retrato"]), mesmo sem regra conferida (prévia, sem gravar).
@@ -314,6 +316,7 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
             hoje=hoje,
             congelar=congelar,
             decisoes=lidos.get("decisoes") or {},
+            cronograma=edital.get("cronograma"),
         )
         resumo = r["resumo"]
         if retratar:
@@ -330,8 +333,9 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
             gravar(vaga["codigo"], r)
         if gravar_sugestoes is not None and tem_blocos_com_itens(regra):
             nivel = dados_da_vaga(vaga, edital.get("documental"))["nivel"]
+            candidatos = lidos.get("candidatos") or []
             resultado["sugestoes"] += gravar_sugestoes(
-                vaga["codigo"], sugestoes_da_vaga(regra, lidos.get("candidatos") or [], nivel)
+                vaga["codigo"], lambda candidatos=candidatos, nivel=nivel: sugestoes_da_vaga(regra, candidatos, nivel)
             )
         for chave in (
             "inscritos",
@@ -592,8 +596,8 @@ def principal(args, configuracao=None, chamar_rpc=None):
     cfg = configuracao or supabase_rpc.configuracao(GUIA)
     chamar_rpc = chamar_rpc or supabase_rpc.chamar
 
-    def chamar(funcao, corpo):
-        return chamar_rpc(cfg, funcao, corpo)
+    def chamar(funcao, corpo, **opcoes):
+        return chamar_rpc(cfg, funcao, corpo, **opcoes)
 
     contexto = ler_editais(chamar, args)
     editais = contexto.get("editais") or []
@@ -664,6 +668,8 @@ def principal(args, configuracao=None, chamar_rpc=None):
                 "p_refazer": bool(args.refazer_lote),
                 "p_pedido": args.editais,
             },
+            # Sem repetir: se a resposta se perdeu, a 2ª tentativa esbarraria na execução que a 1ª abriu.
+            tentativas=1,
         )
     except supabase_rpc.ErroDoSupabase as erro:
         if "55P03" in str(erro) or "em andamento" in str(erro):
@@ -695,9 +701,10 @@ def principal(args, configuracao=None, chamar_rpc=None):
                     },
                 )
 
-            def gravar_sugestoes(codigo, sugestoes, edital=edital):
-                """As sugestões da ficha (gravar_sugestoes_da_ficha); falha só vira aviso."""
+            def gravar_sugestoes(codigo, calcular, edital=edital):
+                """As sugestões da ficha (calcular() e gravar_sugestoes_da_ficha); falha na conta ou na gravação só vira aviso."""
                 try:
+                    sugestoes = calcular()
                     r = (
                         chamar(
                             "gravar_sugestoes_da_ficha",
@@ -711,7 +718,11 @@ def principal(args, configuracao=None, chamar_rpc=None):
                         or {}
                     )
                 except Exception as erro:
-                    log.warning("Sugestões da ficha da vaga %s não gravadas: %s", codigo, resumo_do_erro(erro)[:200])
+                    log.warning(
+                        "Sugestões da ficha da vaga %s não calculadas ou não gravadas: %s",
+                        codigo,
+                        resumo_do_erro(erro)[:200],
+                    )
                     return 0
                 return int(r.get("candidatos") or 0)
 

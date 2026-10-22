@@ -13,6 +13,7 @@ import json
 import pathlib
 import sys
 import unittest
+import urllib.error
 from contextlib import redirect_stdout
 from unittest import mock
 
@@ -78,9 +79,11 @@ class BancoFalso:
         self.falhar_vaga = falhar_vaga
         self.em_andamento = em_andamento
         self.chamadas = []
+        self.opcoes = {}
 
-    def __call__(self, _cfg, funcao, corpo):
+    def __call__(self, _cfg, funcao, corpo, **opcoes):
         self.chamadas.append((funcao, json.loads(json.dumps(corpo))))
+        self.opcoes.setdefault(funcao, []).append(opcoes)
         if funcao == "pre_classificacao_ler_editais":
             return {"hoje": "2026-10-06", "nao_encontrados": ["99/2099"], "editais": self.editais}
         if funcao == "pre_classificacao_ler_colunas":
@@ -225,6 +228,96 @@ class Fluxo(unittest.TestCase):
         self.assertEqual(codigo, 1)
         self.assertIn("em andamento", saida)
         self.assertEqual(banco.de("gravar_pre_classificacao_vaga"), [])
+
+    def test_iniciar_nao_repete(self):
+        # A RPC que abre a execução não é idempotente: uma tentativa só. As outras repetem (padrão).
+        banco = BancoFalso([edital_93()], CANDIDATOS)
+        codigo, _ = rodar(banco, ["--editais", "93/2026"])
+        self.assertEqual(codigo, 0)
+        self.assertEqual(banco.opcoes["iniciar_pre_classificacao"], [{"tentativas": 1}])
+        self.assertEqual(banco.opcoes["gravar_pre_classificacao_vaga"], [{}])
+        self.assertEqual(banco.opcoes["finalizar_pre_classificacao"], [{}])
+
+    def test_iniciar_sem_resposta_nao_e_chamado_de_novo(self):
+        # Pelo chamar de verdade (supabase_rpc): a resposta se perde e o job não abre outra execução.
+        banco = BancoFalso([edital_93()], CANDIDATOS)
+        pedidos = []
+
+        class Resposta:
+            headers = {}
+
+            def __init__(self, corpo):
+                self.corpo = corpo
+
+            def read(self):
+                return json.dumps(self.corpo).encode("utf-8")
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_):
+                return False
+
+        def abrir(pedido, timeout=None):
+            funcao = pedido.full_url.rsplit("/", 1)[-1]
+            pedidos.append(funcao)
+            if funcao == "iniciar_pre_classificacao":
+                raise urllib.error.URLError("conexão perdida")
+            return Resposta(banco(None, funcao, json.loads(pedido.data)))
+
+        def chamar_rpc(cfg, funcao, corpo, **opcoes):
+            return supabase_rpc.chamar(cfg, funcao, corpo, abrir=abrir, esperar=lambda _s: None, **opcoes)
+
+        with self.assertRaises(supabase_rpc.ErroDoSupabase), redirect_stdout(io.StringIO()):
+            job.principal(
+                job.argumentos(["--editais", "93/2026"]),
+                configuracao={"url": "https://x", "chave": "k"},
+                chamar_rpc=chamar_rpc,
+            )
+        self.assertEqual(pedidos.count("iniciar_pre_classificacao"), 1)
+        self.assertNotIn("gravar_pre_classificacao_vaga", pedidos)
+
+    def test_erro_no_calculo_das_sugestoes_so_vira_aviso(self):
+        # A conta das sugestões fica dentro do tratamento de gravar_sugestoes: o edital segue PROCESSADO.
+        regra = {**REGRA, "blocos": [{"codigo": "CURSOS", "tipo": "CURSOS", "perguntas": ["Informe os cursos"]}]}
+        edital = {**edital_93(), "regra": {"versao": 3, "situacao": "CONFERIDA", "configuracao": regra}}
+        banco = BancoFalso([edital], CANDIDATOS)
+        with (
+            mock.patch.object(job, "sugestoes_da_vaga", side_effect=RuntimeError("conta quebrada")),
+            self.assertLogs("monitora.pre_classificacao", level="WARNING") as registro,
+        ):
+            codigo, _ = rodar(banco, ["--editais", "93/2026"])
+        self.assertEqual(codigo, 0)
+        self.assertEqual(banco.de("gravar_sugestoes_da_ficha"), [])
+        self.assertEqual(len(banco.de("gravar_pre_classificacao_vaga")), 1)
+        self.assertEqual(len(banco.de("abrir_fichas_pre_classificacao")), 1)
+        fim = banco.de("finalizar_pre_classificacao")[0]
+        self.assertEqual((fim["p_erro"], fim["p_editais"][0]["situacao"]), (None, "PROCESSADO"))
+        self.assertTrue(any("Sugestões da ficha da vaga 179698" in r for r in registro.output))
+
+    def test_idoso_pela_idade_no_fim_das_inscricoes_do_cronograma(self):
+        # Hoje (2026-10-06) o 01 já tem 60 anos; no fim das inscrições (2026-09-29), ainda 59: não é idoso.
+        regra = {**REGRA, "provisoria": {**REGRA["provisoria"], "desempate": ["IDOSO", "CANDIDATURA"]}}
+        cronograma = [{"atividade": "Período de inscrição", "inicio": "2026-09-21", "fim": "2026-09-29"}]
+        edital = {
+            **edital_93(),
+            "regra": {"versao": 3, "situacao": "CONFERIDA", "configuracao": regra},
+            "cronograma": cronograma,
+        }
+        quase_idoso = {**candidato(1, "24,0/30,0"), "nascimento": "1966-10-01"}
+        mais_novo = {**candidato(2, "24,0/30,0"), "candidatura": "2026-09-01T12:00:00+00:00"}
+
+        def posicoes(banco):
+            codigo, _ = rodar(banco, ["--editais", "93/2026"])
+            self.assertEqual(codigo, 0)
+            return {l["id"][-2:]: l["posicao"] for l in banco.de("gravar_pre_classificacao_vaga")[0]["p_linhas"]}
+
+        self.assertEqual(posicoes(BancoFalso([edital], {"179698": [quase_idoso, mais_novo]})), {"01": 2, "02": 1})
+        # Sem cronograma, a idade é a de hoje: o 01 é idoso e vem primeiro.
+        sem_cronograma = {**edital, "cronograma": None}
+        self.assertEqual(
+            posicoes(BancoFalso([sem_cronograma], {"179698": [quase_idoso, mais_novo]})), {"01": 1, "02": 2}
+        )
 
     def test_disparo_e_modo_pelo_ambiente(self):
         self.assertEqual(job.tipo_do_disparo("robo"), ("ROBO", None))
@@ -484,10 +577,10 @@ class Fluxo(unittest.TestCase):
         completo = BancoFalso([edital], {"179698": candidatos})
         completo_chamar = completo.__call__
 
-        def sem_colunas(_cfg, funcao, corpo):
+        def sem_colunas(_cfg, funcao, corpo, **opcoes):
             if funcao == "pre_classificacao_ler_colunas":
                 raise supabase_rpc.ErroDoSupabase(funcao, 404, "PGRST202: function not found")
-            return completo_chamar(_cfg, funcao, corpo)
+            return completo_chamar(_cfg, funcao, corpo, **opcoes)
 
         sem_colunas.de = completo.de
         self.assertEqual(gravacoes(enxuto), gravacoes(sem_colunas))

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   artDasColunas,
   congelaADeclarada,
+  dataDaIdade,
   declaradaCongelada,
   eliminacaoDoCandidato,
   fimDasInscricoes,
@@ -67,6 +68,7 @@ const rodar = (c) =>
     hoje: c.hoje,
     congelar: c.congelar ?? false,
     decisoes: c.decisoes ?? {},
+    cronograma: c.cronograma ?? null,
   });
 
 describe("casos dourados da pré-classificação", () => {
@@ -255,6 +257,11 @@ describe("peças da conta", () => {
     expect(mesesDeclarados("De 6 meses a 1 ano")).toBe(6);
     expect(mesesDeclarados("Sem experiência")).toBe(0);
     expect(mesesDeclarados("1,5 ano")).toBe(18);
+    expect(mesesDeclarados("Menos de 6 meses")).toBe(0);
+    expect(mesesDeclarados("Até 1 ano")).toBe(0);
+    expect(mesesDeclarados("Abaixo de 2 anos")).toBe(0);
+    expect(mesesDeclarados("Inferior a 6 meses")).toBe(0);
+    expect(mesesDeclarados("atendimento por 2 anos")).toBe(24);
     expect(mesesDeclarados(24)).toBe(24);
     expect(mesesDeclarados("texto livre")).toBeNull();
     expect(mesesDeclarados("")).toBeNull();
@@ -337,6 +344,12 @@ describe("base da nota do lote e declarada congelada (os mesmos casos no pytest)
     "fim das inscrições de %j",
     (cronograma, esperado) =>
       expect(fimDasInscricoes(cronograma)).toBe(esperado),
+  );
+
+  it.each(CASOS.data_da_idade.casos)(
+    "idade do desempate: cronograma %j e hoje %s → %s",
+    (cronograma, hoje, esperado) =>
+      expect(dataDaIdade(cronograma, hoje)).toBe(esperado),
   );
 
   it.each(CASOS.congelamento.congela)(

@@ -23,10 +23,12 @@
         a equipe ajusta pontos na Empregare) fica só para comparar;
       ART: a coluna "NOTA - …" da Empregare ("24,0/30,0"); sem ART, a nota
         declarada recalculada pela regra, com aviso (ART_AUSENTE);
-    depois o desempate da regra (provisoria.desempate: IDOSO,
-    EXPERIENCIA_DECLARADA — a faixa respondida em
-    provisoria.pergunta_experiencia, em meses —, MAIOR_IDADE ou MAIS_VELHO,
-    CANDIDATURA) e o código do candidato;
+    depois o desempate da regra (provisoria.desempate: IDOSO — 60 anos ou
+    mais no fim das inscrições do cronograma (dataDaIdade; sem a etapa de
+    inscrição, hoje) —, EXPERIENCIA_DECLARADA — a faixa respondida em
+    provisoria.pergunta_experiencia, em meses pelo limite de baixo ("Menos de
+    6 meses" vale 0) —, MAIOR_IDADE ou MAIS_VELHO, CANDIDATURA) e o código do
+    candidato;
   - declarada congelada: com `congelar` (a primeira pré-classificação depois
     do fim das inscrições do cronograma, ou sem data de fim: congelaADeclarada)
     a declarada COMPLETA de cada candidato é guardada com as respostas usadas
@@ -93,6 +95,14 @@ const ehNumero = (v) => typeof v === "number" && Number.isFinite(v);
 /** "AAAA-MM-DD" do fim das inscrições no cronograma do edital (a etapa de inscrição; com prorrogação, o fim mais tarde), ou null. */
 export const fimDasInscricoes = (cronograma) =>
   dataDeCorteDoCronograma(lista(cronograma));
+
+/**
+ * A data em que se mede a idade do desempate IDOSO: o fim das inscrições do
+ * cronograma do edital; hoje só quando o cronograma não tem a etapa de
+ * inscrição (ou não há cronograma).
+ */
+export const dataDaIdade = (cronograma, hoje) =>
+  fimDasInscricoes(cronograma) ?? hoje ?? null;
 
 /**
  * Esta pré-classificação congela a nota declarada? Sim depois do fim das
@@ -257,12 +267,15 @@ const vezes = (multiplo, n) => Math.ceil(multiplo * n - 1e-9);
  * Os meses de experiência de uma resposta da Empregare ("De 1 a 2 anos" → 12,
  * "Mais de 5 anos" → 60, "6 meses obrigatórios" → 6, "\"1 ano e 6 meses\"" →
  * 18, "4 anos e 2 meses" → 50, "Não possuo" → 0): o limite de baixo da
- * faixa; null quando não dá para ler ("--").
+ * faixa; a faixa aberta por baixo ("Menos de 6 meses", "Até 1 ano", "Abaixo
+ * de 2 anos", "Inferior a 6 meses") começa em 0. null quando não dá para ler
+ * ("--").
  */
 export function mesesDeclarados(valor) {
   if (typeof valor === "number") return Number.isFinite(valor) ? valor : null;
   const texto = normalizarTexto(textoDaResposta(valor));
   if (!texto) return null;
+  if (/^(menos de|ate|abaixo de|inferior a)\b/.test(texto)) return 0;
   const anosEMeses = /(\d+) anos? e (\d+) mes(es)?\b/.exec(texto);
   if (anosEMeses) return Number(anosEMeses[1]) * 12 + Number(anosEMeses[2]);
   const numero = /(\d+(?:[.,]\d+)?)/.exec(texto);
@@ -385,9 +398,9 @@ function comparaNulosPorUltimo(a, b, comparar) {
   return comparar(a, b);
 }
 
-function comparador(desempate, hoje) {
+function comparador(desempate, diaDaIdade) {
   const idoso = (l) => {
-    const idade = idadeEm(l.nascimento, hoje);
+    const idade = idadeEm(l.nascimento, diaDaIdade);
     return idade !== null && idade >= 60;
   };
   return (a, b) => {
@@ -439,7 +452,9 @@ const peloLoteDaRegra = (ant) =>
  *                  declarada_congelada } } (declarada_congelada: o valor guardado, que não se recalcula)
  *   ultimo_lote  o maior número de lote já usado na vaga
  *   refazer      recorta o lote do zero (só com todas as fichas intocadas)
- *   hoje         "AAAA-MM-DD" (idade do desempate)
+ *   hoje         "AAAA-MM-DD"
+ *   cronograma   o do edital: a idade do desempate IDOSO é a do fim das
+ *                inscrições (dataDaIdade); hoje só sem a etapa de inscrição
  *   congelar     guarda a declarada completa de quem ainda não a tem congelada (congelaADeclarada)
  *   decisoes     { [id]: { motivo } }: as decisões vigentes da coordenação (ficam no lote, entrada DECISAO)
  * Devolve { linhas, resumo } (resumo.no_lote: pela regra; resumo.por_decisao: por decisão).
@@ -454,6 +469,7 @@ export function preClassificarVaga({
   hoje,
   congelar = false,
   decisoes = {},
+  cronograma = null,
 }) {
   const provisoria = regra?.provisoria ?? {};
   const loteDaRegra = regra?.lote ?? {};
@@ -558,7 +574,7 @@ export function preClassificarVaga({
 
   // Provisória: ART decrescente e o desempate da regra; depois do último, os
   // eliminados pela regra que ficam no lote por decisão da coordenação.
-  const ordem = comparador(desempate, hoje);
+  const ordem = comparador(desempate, dataDaIdade(cronograma, hoje));
   const ranqueados = linhas
     .filter((l) => l.situacao !== "ELIMINADO")
     .sort(ordem);

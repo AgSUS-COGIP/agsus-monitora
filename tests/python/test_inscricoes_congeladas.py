@@ -161,7 +161,7 @@ class BancoDaPre:
         self.contexto = contexto
         self.chamadas = []
 
-    def __call__(self, _cfg, funcao, corpo):
+    def __call__(self, _cfg, funcao, corpo, **opcoes):
         self.chamadas.append((funcao, json.loads(json.dumps(corpo))))
         if funcao == "pre_classificacao_ler_editais":
             return self.contexto
