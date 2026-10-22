@@ -26,6 +26,7 @@ import type {
   GrupoDosSemEntrevista,
 } from "../modulos/entrevistas/tipos-do-painel.ts";
 import type { ItemDaAgenda } from "./painel-de-entrevistas.ts";
+import { quandoFoi } from "./texto-da-conferencia.js";
 
 function registro(valor: unknown): Record<string, unknown> {
   return typeof valor === "object" && valor !== null && !Array.isArray(valor)
@@ -59,6 +60,9 @@ export const NOTA_MAXIMA_DO_CRITERIO = 5;
 export const PARECERES = Object.freeze([
   Object.freeze({ id: "APTO", rotulo: "Apto", badge: "aprovado" }),
   Object.freeze({ id: "INAPTO", rotulo: "Inapto", badge: "reprovado" }),
+  /* Quem faltou (no banco: INAPTO, quando a ausência elimina, ou sem parecer)
+     não entra em "Inaptos": tem situação própria no painel. */
+  Object.freeze({ id: "FALTOU", rotulo: "Faltou", badge: "reprovado" }),
   Object.freeze({ id: "SEM_PARECER", rotulo: "Sem parecer", badge: "neutro" }),
 ]);
 
@@ -130,7 +134,7 @@ export function rotuloCurtoDoCriterio(criterio: unknown) {
 
 function normalizarParecer(valor: unknown) {
   const id = texto(valor).toUpperCase();
-  return PARECERES.some((p) => p.id === id) ? id : "SEM_PARECER";
+  return id === "APTO" || id === "INAPTO" ? id : "SEM_PARECER";
 }
 
 function normalizarComparecimento(valor: unknown) {
@@ -196,6 +200,8 @@ function normalizarEntrevista(
         ativo: dadosDaAnalise.ativo !== false,
       }
     : null;
+  const compareceu = normalizarComparecimento(bruta?.compareceu);
+  const parecerDoBanco = normalizarParecer(bruta?.parecer);
   const entrevista: EntrevistaDoPainel = {
     busca: "",
     id: texto(bruta?.id),
@@ -209,8 +215,11 @@ function normalizarEntrevista(
     codigo: texto(bruta?.codigo) || null,
     modalidade: texto(bruta?.modalidade) || null,
     nota,
-    parecer: normalizarParecer(bruta?.parecer),
-    compareceu: normalizarComparecimento(bruta?.compareceu),
+    parecer: compareceu === "N" ? "FALTOU" : parecerDoBanco,
+    parecerDoBanco,
+    compareceu,
+    origem: texto(bruta?.origem) || null,
+    atualizadoEm: texto(bruta?.atualizado_em) || null,
     link: texto(bruta?.link) || null,
     notas,
     somaDasNotas,
@@ -237,6 +246,26 @@ function normalizarAprovado(valor: unknown): AprovadoSemEntrevista {
     nota: numero(bruto?.nota),
     modalidade: texto(bruto?.modalidade) || null,
   };
+}
+
+/*
+  De quando são os números do painel (D6): as linhas da planilha são da
+  última carga; as do sistema (convocações e notas lançadas no MONITORA)
+  estão como no momento em que o pacote foi montado. "Conferido" sozinho, ao
+  lado de números que mudam pelo sistema, enganava.
+*/
+export function textoDasFontesDoPainel(
+  dados: Pick<DadosDoPainel, "ultimaCarga" | "geradoEm" | "entrevistas">,
+  agora = new Date(),
+) {
+  const planilha = quandoFoi(dados.ultimaCarga?.em, agora);
+  const temSistema = dados.entrevistas.some((e) => e.origem === "sistema");
+  const sistema = temSistema ? quandoFoi(dados.geradoEm, agora) : "";
+  const partes = [
+    planilha ? `Planilha conferida ${planilha}` : "",
+    sistema ? `sistema ${sistema}` : "",
+  ].filter(Boolean);
+  return partes.length ? partes.join(" · ") : null;
 }
 
 /** O payload de `get_entrevistas_da_area` no formato do painel. */
@@ -375,8 +404,11 @@ export function mediaDasNotas(entrevistas: readonly EntrevistaDoPainel[]) {
 }
 
 /**
- * "Candidatos" conta linhas (uma por entrevista), não pessoas distintas: quem
- * concorreu a duas vagas entra duas vezes, e o total fecha com aptos + inaptos.
+ * Todos os KPIs na mesma unidade: a linha (uma entrevista por candidato e
+ * vaga). O banco manda só a entrevista vigente de cada análise
+ * (FC_ENTREVISTAS_VIGENTES, migration 20261022200000: a linha da planilha e a
+ * do sistema da mesma análise não contam duas vezes). "Candidatos" fecha com
+ * aptos + inaptos + faltaram + sem parecer; quem faltou não é inapto.
  */
 export function calcularIndicadores(
   entrevistas: readonly EntrevistaDoPainel[],
@@ -388,6 +420,7 @@ export function calcularIndicadores(
     compareceram: entrevistas.filter((e) => e.compareceu === "S").length,
     aptos: entrevistas.filter((e) => e.parecer === "APTO").length,
     inaptos: entrevistas.filter((e) => e.parecer === "INAPTO").length,
+    faltaram: entrevistas.filter((e) => e.parecer === "FALTOU").length,
     media: mediaDasNotas(entrevistas),
     semEntrevista: aprovadosSemEntrevista.length,
   };

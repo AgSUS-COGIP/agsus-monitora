@@ -477,6 +477,25 @@ describe("entrevista ligada à análise SÓ pelo id (CO_ANALISE_CURRICULAR)", ()
     expect(avisosDe(r, "ENTREVISTA_REPETIDA")).toHaveLength(1);
     expect(vagaDe(r, "169681").geral[0].nota).toBe(24);
   });
+
+  it("convocação nova do sistema (sem parecer) não apaga o parecer e a nota da planilha", () => {
+    // Antes a do sistema pesava mais que a de parecer: a nota 14 sumia da Classificação.
+    const r = classificar({
+      tipo: "FINAL",
+      regra,
+      candidatos: [a],
+      entrevistas: [
+        entrevista(a, 14),
+        entrevista(a, null, {
+          origem: "sistema",
+          parecer: "SEM_PARECER",
+          compareceu: null,
+        }),
+      ],
+    });
+    expect(avisosDe(r, "ENTREVISTA_REPETIDA")).toHaveLength(1);
+    expect(vagaDe(r, "169681").geral[0].nota).toBe(24);
+  });
 });
 
 describe("eliminação na entrevista, com motivo padronizado", () => {

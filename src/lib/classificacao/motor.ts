@@ -82,6 +82,7 @@ import {
   lerHora,
   numeroBR,
 } from "./numeros.ts";
+import { compararEntrevistas } from "../entrevista-vigente.ts";
 import { normalizarRegra } from "./regra.ts";
 import { divergenciasDasCotas } from "./convocacao-do-edital.ts";
 import { chaveDoGrupo } from "./sorteio.ts";
@@ -278,13 +279,10 @@ export function ligarEntrevistas(
         tom: "warning",
         vaga: c.vaga,
         analiseId,
-        texto: `${c.nome}: mais de uma entrevista lançada; vale a do sistema (ou a de parecer definido).`,
+        texto: `${c.nome}: mais de uma entrevista lançada; vale a de parecer definido (depois a com nota, depois a do sistema).`,
       });
-      const peso = (x: EntrevistaDoMotor) =>
-        (x.origem === "sistema" ? 2 : 0) +
-        (x.parecer !== "SEM_PARECER" ? 1 : 0);
-      if (peso(e) > peso(atual) || (peso(e) === peso(atual) && e.id > atual.id))
-        escolhidas.set(analiseId, e);
+      // A regra única de qual entrevista vale (a mesma do banco e do Painel de entrevistas).
+      if (compararEntrevistas(e, atual) < 0) escolhidas.set(analiseId, e);
     } else escolhidas.set(analiseId, e);
   }
   for (const c of candidatos) {

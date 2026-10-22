@@ -112,6 +112,10 @@ describe("cada motivo", () => {
     ).toEqual([
       { codigo: "sem_inscritos", rotulo: "Sem inscritos", tom: "alerta" },
     ]);
+    // Inscritos nulo = a fonte do funil não tem o número (só as análises): não é zero.
+    expect(
+      codigos(aberto({ etapa: "Análise Curricular", inscritos: null })),
+    ).toEqual([]);
     // Ainda nas inscrições (ou antes), não.
     expect(
       codigos(aberto({ etapa: "Período de inscrição", inscritos: 0 })),

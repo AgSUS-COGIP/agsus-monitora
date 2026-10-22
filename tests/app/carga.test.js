@@ -734,7 +734,7 @@ describe("contratos da carga", () => {
 
   it("a RPC do monitoramento devolve exatamente COLUNAS_DO_MONITORAMENTO", () => {
     const sql = readFileSync(
-      "supabase/migrations/20261013160000_payload_so_quando_muda.sql",
+      "supabase/migrations/20261022200000_funil_do_edital_de_uma_fonte_so.sql",
       "utf8",
     );
     const corpo = sql.slice(

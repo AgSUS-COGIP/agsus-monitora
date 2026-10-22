@@ -20,10 +20,10 @@ import {
   filtrarEntrevistas,
   opcoesDosFiltros,
   pendenciasDasEntrevistas,
+  textoDasFontesDoPainel,
 } from "../../lib/entrevistas-do-painel.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import { Aviso } from "../../ui/index.js";
-import { textoDaConferencia } from "../../lib/texto-da-conferencia.js";
 import { hojeEmBrasilia } from "../../lib/fila-de-conducao.ts";
 import {
   editalDoRecorte,
@@ -94,7 +94,7 @@ function textoDoStatus(e: SnapshotDasEntrevistas) {
   if (!e.carregado) return "Carregando dados...";
   if (e.atualizando) return "Atualizando...";
   return (
-    textoDaConferencia({ conferidoEm: e.dados?.ultimaCarga?.em }) ||
+    (e.dados && textoDasFontesDoPainel(e.dados)) ||
     `Atualizado em ${dataHoraBR(e.carregadoEm)}`
   );
 }

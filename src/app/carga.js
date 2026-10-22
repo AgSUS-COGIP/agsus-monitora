@@ -79,14 +79,14 @@ const RPC_DO_MAPA = "listar_mapa_da_saude_indigena";
 
 /*
   As colunas de cada linha do monitoramento, as que
-  `listar_monitoramento_operacional` devolve (migration 20261013160000, da view
+  `listar_monitoramento_operacional` devolve (migration 20261022200000, da view
   VW_MONITORAMENTO_INDIGENA_OPERACIONAL). As seis `cronograma_*` entram de
   propósito: uma leitura só do monitoramento (a Visão geral e os detalhes
   leem daqui). tests/app/carga.test.js confere que a migration seleciona
   exatamente estas.
 */
 export const COLUNAS_DO_MONITORAMENTO =
-  "aprovados_analise,aprovados_prova,aptos_analise,ativo,cancelados,cargos,ciclo,contratados,cronograma_atividade_atual,cronograma_automatico,cronograma_dias_para_proxima,cronograma_percentual,cronograma_proxima_atividade,cronograma_proxima_data,data_fim,data_inicio,edital,eliminados_nota,entrevistados,etapa,id,id_unidade,inscritos,link_edital,observacoes,observacoes_internas,processo,reprovados_analise,responsavel,risco,sigla_unidade,status,tipo_unidade,total_eliminados,uf,unidade,vagas_ociosas,vagas_total,CO_AREA,ST_TREINAMENTO";
+  "aprovados_analise,aprovados_prova,aptos_analise,ativo,cancelados,cargos,ciclo,contratados,cronograma_atividade_atual,cronograma_automatico,cronograma_dias_para_proxima,cronograma_percentual,cronograma_proxima_atividade,cronograma_proxima_data,data_fim,data_inicio,edital,eliminados_nota,entrevistados,etapa,id,id_unidade,inscritos,link_edital,observacoes,observacoes_internas,processo,reprovados_analise,responsavel,risco,sigla_unidade,status,tipo_unidade,total_eliminados,uf,unidade,vagas_ociosas,vagas_total,CO_AREA,ST_TREINAMENTO,TP_FONTE_FUNIL,DT_FONTE_FUNIL";
 const RPC_DO_MONITORAMENTO = "listar_monitoramento_operacional";
 
 const COPIA_PADRAO = Object.freeze({

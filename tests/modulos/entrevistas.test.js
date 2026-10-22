@@ -219,10 +219,11 @@ describe("Resultados", () => {
     expect(kpi("vagas")).toBe("2");
     expect(kpi("aptos")).toBe("1");
     expect(kpi("inaptos")).toBe("1");
+    expect(kpi("faltaram")).toBe("0");
     expect(kpi("media")).toBe("6,00");
     expect(kpi("sem-entrevista")).toBe("1");
     // A última carga aparece uma vez só, discreta, no topo.
-    expect(status().textContent).toBe("Conferido em 29/09, 10:30");
+    expect(status().textContent).toBe("Planilha conferida em 29/09, 10:30");
     expect(document.querySelectorAll(".status-discreto")).toHaveLength(1);
     expect(linhasDaTabela()).toHaveLength(2);
     expect(document.querySelector(".ui-tabela tbody img")).toBeNull();
@@ -580,7 +581,7 @@ describe("a tela dentro do app", () => {
     expect(
       secao.querySelector("section.ui-card.ui-filtros h2").textContent,
     ).toBe("Refinar resultados");
-    expect(secao.querySelector(".entrevistas-kpis").children).toHaveLength(7);
+    expect(secao.querySelector(".entrevistas-kpis").children).toHaveLength(8);
     expect(
       secao.querySelector('.entrevistas-kpis [data-kpi="inaptos"]').dataset.tom,
     ).toBe("perigo");
