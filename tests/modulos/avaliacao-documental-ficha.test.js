@@ -2015,7 +2015,7 @@ describe("estado da ficha: menos chamadas (20261014231000)", () => {
     salvo_em: "2026-10-15T13:05:00Z",
   });
 
-  it("rascunho 3 s depois da última mudança, mas no máximo 15 s depois da primeira pendente", async () => {
+  it("rascunho 10 s depois da última mudança, mas no máximo 60 s depois da primeira pendente", async () => {
     let agora = 0;
     const agendados = [];
     const rpc = vi.fn(async (nome, args) =>
@@ -2036,21 +2036,56 @@ describe("estado da ficha: menos chamadas (20261014231000)", () => {
     await estado.carregar("f1");
     const nivel = (n) => estado.mudar((l) => ({ ...l, nivel: n }));
     nivel("tecnico");
-    expect(agendados.at(-1).ms).toBe(3000);
-    // Mudanças a cada 2 s: a espera encurta até fechar 15 s da primeira.
-    for (const t of [2000, 4000, 6000, 8000, 10000, 12000, 14000]) {
+    expect(agendados.at(-1).ms).toBe(10000);
+    // Mudanças a cada 8 s: a espera encurta até fechar 60 s da primeira.
+    for (const t of [8000, 16000, 24000, 32000, 40000, 48000, 56000]) {
       agora = t;
-      nivel(t % 4000 ? "superior" : "tecnico");
+      nivel(t % 16000 ? "superior" : "tecnico");
     }
-    expect(agendados.at(-1).ms).toBe(1000);
+    expect(agendados.at(-1).ms).toBe(4000);
     await agendados.at(-1).fn();
     expect(
       rpc.mock.calls.filter(([n]) => n === "salvar_rascunho_ficha"),
     ).toHaveLength(1);
-    // Depois do envio, a próxima mudança volta aos 3 s.
-    agora = 20000;
+    // Depois do envio, a próxima mudança volta aos 10 s.
+    agora = 70000;
+    nivel("tecnico");
+    expect(agendados.at(-1).ms).toBe(10000);
+    estado.descartar();
+  });
+
+  it("conteúdo igual ao último rascunho salvo não vai ao banco", async () => {
+    const agendados = [];
+    const rpc = vi.fn(async (nome, args) =>
+      nome === "salvar_rascunho_ficha"
+        ? salvarFalso(args)
+        : nome === "obter_ficha_analise"
+          ? fichaDoBanco()
+          : null,
+    );
+    const estado = criarEstadoDaFicha({
+      rpc,
+      toast,
+      agendar: (fn, ms) => agendados.push({ fn, ms }),
+      cancelar: () => {},
+      regras: new Map(),
+    });
+    await estado.carregar("f1");
+    const nivel = (n) => estado.mudar((l) => ({ ...l, nivel: n }));
+    const salvamentos = () =>
+      rpc.mock.calls.filter(([n]) => n === "salvar_rascunho_ficha").length;
     nivel("superior");
-    expect(agendados.at(-1).ms).toBe(3000);
+    await estado.salvar();
+    expect(salvamentos()).toBe(1);
+    // Marca e desmarca: volta ao que foi salvo, nada a enviar.
+    nivel("tecnico");
+    nivel("superior");
+    expect(await estado.salvar()).toBe(true);
+    expect(salvamentos()).toBe(1);
+    expect(estado.obter().sujo).toBe(false);
+    nivel("tecnico");
+    await estado.salvar();
+    expect(salvamentos()).toBe(2);
     estado.descartar();
   });
 

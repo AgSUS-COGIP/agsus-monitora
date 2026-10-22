@@ -445,19 +445,28 @@ function TelaDaArea({
   );
 }
 
-export function TelaDeAnalises({ estado }: { estado: EstadoDasAnalises }) {
+export function TelaDeAnalises({
+  estado,
+  visivel = () => true,
+}: {
+  estado: EstadoDasAnalises;
+  /** A tela está à mostra (a página aberta do app)? */
+  visivel?: () => boolean;
+}) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
 
   /*
-    A área do app mudou com a tela já aberta: recarrega com a nova. Quem abre
-    a tela é o `render()` do controlador — antes dele, nada é pedido.
+    A área do app mudou com a tela à mostra: recarrega com a nova. Quem abre
+    a tela é o `render()` do controlador — antes dele, nada é pedido; com a
+    tela escondida (outra página), também não: ao voltar, o `render()` vê a
+    área nova e carrega.
   */
   useEffect(() => {
     const { area } = estado.obter();
-    if (area && areaDoApp && area !== areaDoApp)
+    if (area && areaDoApp && area !== areaDoApp && visivel())
       void estado.carregar(areaDoApp);
-  }, [estado, areaDoApp]);
+  }, [estado, areaDoApp, visivel]);
 
   return <TelaDaArea key={e.area || "sem-area"} estado={estado} e={e} />;
 }
@@ -487,9 +496,16 @@ export function montarAnalises({
     comemoracoesLigadas,
   });
   const raiz = secao
-    ? montarModulo(secao, <TelaDeAnalises estado={estado} />, {
-        nome: "a tela de análises curriculares",
-      }).raiz
+    ? montarModulo(
+        secao,
+        <TelaDeAnalises
+          estado={estado}
+          visivel={() => secao.classList.contains("active")}
+        />,
+        {
+          nome: "a tela de análises curriculares",
+        },
+      ).raiz
     : null;
   return {
     estado,

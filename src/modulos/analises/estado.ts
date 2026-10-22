@@ -4,6 +4,7 @@ import type {
   EstadoDasAnalises,
   LeituraDasAnalises,
   DetalheDaAnalise,
+  ConsultasDasAnalises,
 } from "./tipos.ts";
 /*
   Estado da tela de Análises curriculares (`#page-analises`), fora do React:
@@ -20,7 +21,9 @@ import type {
     devolve 42501): `semAcesso`. Outro usuário entrou na mesma aba: tudo volta
     ao início e o guardado é esquecido.
   - "Atualizar" pede a lista ao servidor (sem a cópia) e esquece detalhes e
-    pareceres já trazidos.
+    pareceres já trazidos; a revalidação que traz um pacote novo também (o
+    detalhe aberto na gaveta é pedido de novo).
+  - Sem acesso (porteiro ou 42501): as cópias do navegador são apagadas.
   - Comemorações (marcos.js): a cada carga do escopo "Ativo".
   - Ritmo da análise: uma consulta leve junto com a carga (outra área,
     "Atualizar", reabertura depois de 5 min); trocar só o escopo não pede de
@@ -133,6 +136,10 @@ export function criarEstadoDasAnalises({
   let pedido = 0;
   let usuarioDaCarga = "";
   let cacheAntigoLimpo = false;
+  /* Muda a cada pacote novo na tela: pareceres pedidos antes não valem para ele. */
+  let geracaoDosDados = 0;
+  let textosEmCurso: { chave: string; promessa: Promise<boolean> } | null =
+    null;
   const ouvintes = new Set<() => void>();
 
   function publicar(mudancas: Partial<SnapshotDasAnalises>) {
@@ -146,8 +153,15 @@ export function criarEstadoDasAnalises({
   */
   function reiniciar() {
     pedido += 1;
-    consultas?.esquecer();
+    esquecerDados();
     publicar({ ...ESTADO_INICIAL, detalhes: new Map() });
+  }
+
+  /* Detalhes e pareceres já trazidos deixam de valer (pacote novo, Atualizar, outro usuário). */
+  function esquecerDados() {
+    geracaoDosDados += 1;
+    textosEmCurso = null;
+    consultas?.esquecer();
   }
   let identidade: string | null | undefined;
   supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
@@ -228,7 +242,10 @@ export function criarEstadoDasAnalises({
       cacheAntigoLimpo = true;
       limparCacheAntigo();
     }
-    if (outraArea || escopo !== estado.escopo || !estado.carregado)
+    if (outraArea || escopo !== estado.escopo || !estado.carregado) {
+      // Outras linhas: detalhe e pareceres pedidos para as de antes não entram nelas.
+      geracaoDosDados += 1;
+      textosEmCurso = null;
       // `atualizando`: uma segunda abertura no meio da carga não pede de novo.
       publicar({
         ...ESTADO_INICIAL,
@@ -238,7 +255,7 @@ export function criarEstadoDasAnalises({
         atualizando: true,
         ritmo: ritmoGuardado,
       });
-    else publicar({ atualizando: true, erroAoCarregar: "" });
+    } else publicar({ atualizando: true, erroAoCarregar: "" });
 
     if (!supabase || !consultas) {
       publicar({
@@ -263,6 +280,7 @@ export function criarEstadoDasAnalises({
       const pode = await consultas.podeLer();
       if (meu !== pedido) return false;
       if (pode === false) {
+        void consultas.apagarCopias();
         perderAcesso({ code: "42501" });
         return false;
       }
@@ -283,7 +301,11 @@ export function criarEstadoDasAnalises({
         usuarioId,
         forcarRede: opcoes.forcarRede === true,
         aoMudar: (novo) => {
-          if (meu === pedido) mostrar(novo);
+          if (meu !== pedido) return;
+          // Pacote novo: o detalhe e os pareceres guardados podem estar velhos.
+          esquecerDados();
+          mostrar(novo, { detalhes: new Map() });
+          if (estado.gaveta) void abrirDetalhe(estado.gaveta);
         },
         aoPerderAcesso: (erro) => {
           if (meu === pedido) perderAcesso(erro);
@@ -336,8 +358,11 @@ export function criarEstadoDasAnalises({
   }
 
   async function atualizar() {
-    consultas?.esquecer();
+    esquecerDados();
+    // Pedidos de detalhe e de pareceres em curso deixam de valer: nada fica "carregando".
+    publicar({ detalhes: new Map(), textos: "" });
     const ok = await carregar(estado.area, { forcarRede: true });
+    if (estado.gaveta) void abrirDetalhe(estado.gaveta);
     if (ok)
       toast(
         `Análises atualizadas: ${formatNumberBR(estado.linhas.length)} registros.`,
@@ -353,23 +378,42 @@ export function criarEstadoDasAnalises({
     lote, para a busca geral, a busca da fila e o CSV. Devolve se as linhas
     estão completas.
   */
-  async function garantirTextos() {
-    if (!haLinhasSemParecer(estado.linhas)) return true;
-    if (!consultas) return false;
-    if (estado.textos === "carregando") return false;
-    const meu = pedido;
+  function garantirTextos(): Promise<boolean> {
+    if (!haLinhasSemParecer(estado.linhas)) return Promise.resolve(true);
+    if (!consultas) return Promise.resolve(false);
+    // Já pedidos (busca geral, CSV): quem chega depois espera a mesma leitura.
+    const chave = `${geracaoDosDados}|${estado.area}|${estado.escopo}`;
+    if (textosEmCurso?.chave === chave) return textosEmCurso.promessa;
+    const promessa = trazerTextos(consultas);
+    const emCurso = { chave, promessa };
+    textosEmCurso = emCurso;
+    void promessa.finally(() => {
+      if (textosEmCurso === emCurso) textosEmCurso = null;
+    });
+    return promessa;
+  }
+
+  async function trazerTextos(consultas: ConsultasDasAnalises) {
+    const minha = geracaoDosDados;
     const { area, escopo } = estado;
     publicar({ textos: "carregando" });
+    const valeAinda = () =>
+      minha === geracaoDosDados &&
+      area === estado.area &&
+      escopo === estado.escopo;
     try {
       const mapa = await consultas.textos(area, escopo);
-      if (meu !== pedido) return false;
+      if (!valeAinda()) {
+        if (estado.textos === "carregando") publicar({ textos: "" });
+        return false;
+      }
       const copia = estado.linhas.map((linha) => ({ ...linha }));
       mesclarTextos(copia, mapa);
       publicar({ linhas: copia.map(comIndicesDeBusca), textos: "prontos" });
       return true;
     } catch (erro) {
       console.warn("Não foi possível trazer os pareceres:", erro);
-      if (meu === pedido) publicar({ textos: "erro" });
+      publicar({ textos: valeAinda() ? "erro" : "" });
       return false;
     }
   }
@@ -420,17 +464,19 @@ export function criarEstadoDasAnalises({
     )
       return;
     if (estado.detalhes.get(chave)?.situacao === "pronto") return;
-    const meu = pedido;
+    // Vale enquanto as linhas são as mesmas (reler a mesma versão não o invalida).
+    const minha = geracaoDosDados;
     definirDetalhe(chave, { situacao: "carregando", dados: null });
     try {
       const dados = await consultas.detalhe(linha.id);
-      if (meu === pedido) definirDetalhe(chave, { situacao: "pronto", dados });
+      if (minha === geracaoDosDados)
+        definirDetalhe(chave, { situacao: "pronto", dados });
     } catch (erro) {
       console.warn(
         "Não foi possível carregar o detalhamento da análise:",
         erro,
       );
-      if (meu === pedido)
+      if (minha === geracaoDosDados)
         definirDetalhe(chave, { situacao: "erro", dados: null });
     }
   }

@@ -194,6 +194,12 @@ function supabaseFalso({ respostas = {}, sessao = true } = {}) {
       return { data: DETALHE, error: null };
     if (nome === "get_analises_texto_do_painel")
       return { data: TEXTOS, error: null };
+    // Conferência e ritmo: sem dados (o card não aparece), sem erro no console.
+    if (
+      nome === "obter_ultima_conferencia" ||
+      nome === "obter_ritmo_da_analise"
+    )
+      return { data: null, error: null };
     return { data: null, error: { message: `rpc inesperada: ${nome}` } };
   });
   return {
@@ -697,6 +703,39 @@ describe("ritmo da análise", () => {
     expect(chamadas(supabase, "obter_ritmo_da_analise")).toHaveLength(2);
   });
 
+  it("em Todos, conta só as linhas do Ativo (Inativo e desativadas ficam fora)", async () => {
+    const supabase = supabaseFalso({
+      respostas: {
+        obter_ritmo_da_analise: () => ({ data: RITMO, error: null }),
+        get_analises_dashboard_payload_v2_se_mudou: ({ p_scope }) => ({
+          data: payload(
+            p_scope === "ativo"
+              ? LINHAS
+              : [
+                  {
+                    ...LINHAS[1],
+                    id: `x-${p_scope}`,
+                    status_consolidado: "Pendente",
+                  },
+                ],
+            { scope: p_scope },
+          ),
+          error: null,
+        }),
+      },
+    });
+    await montar(supabase);
+    const faltam = () =>
+      [...card().querySelectorAll(".ui-kpi")]
+        .map((k) => k.textContent.replace(/\s+/g, ""))
+        .find((t) => /^Faltam\d/.test(t));
+    expect(faltam()).toBe("Faltam1");
+    await escolher(document.getElementById("analises-filtro-escopo"), "todos");
+    await esperar();
+    expect(linhasDaFila()).toHaveLength(6);
+    expect(faltam()).toBe("Faltam1");
+  });
+
   it("Destaques de hoje: só medalhistas (com a contagem) e selos, sem quem ficou fora", async () => {
     const hoje = agoraEmBrasilia().hoje;
     const supabase = supabaseFalso({
@@ -1031,6 +1070,10 @@ describe("fila", () => {
 
     await digitar(secao.querySelector(".ui-tabela-busca"), "pessoa 007");
     expect(candidatos()).toEqual(["Pessoa 007"]);
+    // O recorte conta o que a busca da fila deixou.
+    expect(secao.querySelector("[data-tabela-contagem]").textContent).toBe(
+      "Recorte atual: 1 de 120",
+    );
     expect(chamadas(supabase, "get_analises_texto_do_painel")).toHaveLength(1);
     // Limpar tudo limpa também a busca da fila.
     await clicar(secao.querySelector('[data-acao="limpar-filtros"]'));
@@ -1246,6 +1289,114 @@ describe("exportar, atualizar e a cópia do navegador", () => {
   });
 });
 
+describe("o que já veio deixa de valer quando os dados mudam", () => {
+  it("Atualizar com a gaveta aberta pede o detalhe de novo", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await clicar(linhasDaFila()[0].querySelector('[data-acao="detalhes"]'));
+    await esperar();
+    expect(chamadas(supabase, "get_analise_detalhe_do_painel")).toHaveLength(1);
+    await clicar(secao.querySelector('[data-acao="atualizar"]'));
+    await esperar();
+    expect(chamadas(supabase, "get_analise_detalhe_do_painel")).toHaveLength(2);
+    expect(document.getElementById("analisesGaveta").textContent).toContain(
+      "Composição da pontuação",
+    );
+  });
+
+  it("a revalidação que traz outra versão esquece pareceres e detalhes já trazidos", async () => {
+    const armazenamento = armazenamentoEmMemoria();
+    await montar(supabaseFalso(), { armazenamento });
+    await act(async () => painel.raiz.unmount());
+    secao.remove();
+
+    let soltar;
+    const supabase = supabaseFalso({
+      respostas: {
+        get_analises_dashboard_payload_v2_se_mudou: () =>
+          new Promise((ok) => {
+            soltar = () =>
+              ok({
+                data: payload(LINHAS, { generated_at: "2026-10-01T09:00:00Z" }),
+                error: null,
+              });
+          }),
+      },
+    });
+    await montar(supabase, { armazenamento });
+    // Da cópia: pareceres e detalhe pedidos antes da versão nova chegar.
+    let ok;
+    await act(async () => {
+      ok = await painel.estado.garantirTextos();
+    });
+    expect(ok).toBe(true);
+    await clicar(linhasDaFila()[0].querySelector('[data-acao="detalhes"]'));
+    await esperar();
+    expect(chamadas(supabase, "get_analises_texto_do_painel")).toHaveLength(1);
+    expect(chamadas(supabase, "get_analise_detalhe_do_painel")).toHaveLength(1);
+    await act(async () => soltar());
+    await esperar();
+    // A gaveta aberta pede o detalhe da versão nova; os pareceres são pedidos de novo.
+    expect(chamadas(supabase, "get_analise_detalhe_do_painel")).toHaveLength(2);
+    expect(painel.estado.obter().textos).toBe("");
+    await act(async () => {
+      ok = await painel.estado.garantirTextos();
+    });
+    expect(ok).toBe(true);
+    expect(chamadas(supabase, "get_analises_texto_do_painel")).toHaveLength(2);
+  });
+
+  it("CSV com os pareceres já a caminho (busca geral): espera a mesma leitura", async () => {
+    let soltar;
+    const supabase = supabaseFalso({
+      respostas: {
+        get_analises_texto_do_painel: () =>
+          new Promise((ok) => {
+            soltar = () => ok({ data: TEXTOS, error: null });
+          }),
+      },
+    });
+    await montar(supabase);
+    let busca;
+    let csv;
+    await act(async () => {
+      busca = painel.estado.garantirTextos();
+      csv = painel.estado.exportarCsv((linhas) => linhas);
+    });
+    await act(async () => soltar());
+    expect(await busca).toBe(true);
+    expect(await csv).toBe(true);
+    expect(chamadas(supabase, "get_analises_texto_do_painel")).toHaveLength(1);
+    expect(baixar).toHaveBeenCalledTimes(1);
+    expect(toast).not.toHaveBeenCalledWith(
+      "Não foi possível trazer os pareceres para o CSV. Tente novamente.",
+      "error",
+    );
+  });
+
+  it("Atualizar que falha não deixa os pareceres carregando", async () => {
+    let falharLista = false;
+    const supabase = supabaseFalso({
+      respostas: {
+        get_analises_texto_do_painel: () => new Promise(() => {}),
+        get_analises_dashboard_payload_v2_se_mudou: () =>
+          falharLista
+            ? { data: null, error: { message: "fora do ar" } }
+            : { data: payload(), error: null },
+      },
+    });
+    await montar(supabase);
+    await act(async () => void painel.estado.garantirTextos());
+    expect(painel.estado.obter().textos).toBe("carregando");
+    falharLista = true;
+    await act(async () => void painel.estado.atualizar());
+    await esperar();
+    expect(painel.estado.obter().textos).toBe("");
+    expect(painel.estado.obter().atualizando).toBe(false);
+    expect(linhasDaFila()).toHaveLength(4);
+  });
+});
+
 describe("sessão, permissão, erro e demora", () => {
   it("sem acesso (o porteiro diz não): aviso e nada da lista", async () => {
     const supabase = supabaseFalso({
@@ -1253,7 +1404,9 @@ describe("sessão, permissão, erro e demora", () => {
         usuario_pode_ler_analises: () => ({ data: false, error: null }),
       },
     });
-    await montar(supabase);
+    const armazenamento = armazenamentoEmMemoria();
+    armazenamento.mapa.set("copia-antiga", payload());
+    await montar(supabase, { armazenamento });
     expect(secao.querySelector(".ui-aviso").textContent).toBe(
       "Sem acesso ao Painel das análises.",
     );
@@ -1261,6 +1414,8 @@ describe("sessão, permissão, erro e demora", () => {
       chamadas(supabase, "get_analises_dashboard_payload_v2_se_mudou"),
     ).toHaveLength(0);
     expect(status().textContent).toBe("Sem acesso");
+    // As cópias do navegador não ficam para quem perdeu o acesso.
+    expect(armazenamento.mapa.size).toBe(0);
   });
 
   it("a lista recusa (42501): o mesmo aviso", async () => {
@@ -1343,6 +1498,22 @@ describe("área, usuário, reabertura e comemorações", () => {
       p_versao: null,
     });
     expect(linhasDaFila()).toHaveLength(4);
+  });
+
+  it("trocar de área com a tela escondida não carrega; ao voltar, carrega a área nova", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    secao.classList.remove("active");
+    await act(async () => definirAreaAtual("projetos"));
+    await esperar();
+    expect(
+      chamadas(supabase, "get_analises_dashboard_payload_v2_se_mudou"),
+    ).toHaveLength(1);
+    secao.classList.add("active");
+    await abrirATela();
+    expect(
+      chamadas(supabase, "get_analises_dashboard_payload_v2_se_mudou").at(-1),
+    ).toEqual({ p_scope: "ativo", p_area: "projetos", p_versao: null });
   });
 
   it("reabrir na mesma área não recarrega; depois de 5 minutos, relê por trás", async () => {

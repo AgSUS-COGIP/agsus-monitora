@@ -8,7 +8,9 @@
     (migration não aplicada) ou erro: nada a mostrar, sem aviso.
   - A tela só abre com as comemorações ligadas no sistema; desligadas, nada
     é marcado e a tela aparece quando religarem.
-  - `fechar()`: grava o visto no banco e abre o próximo, se houver.
+  - `fechar()`: grava o visto no banco e abre o próximo, se houver. Uma
+    leitura que já estava no caminho não reabre o que a pessoa fechou: os
+    vistos desta página valem por cima da resposta até a sessão acabar.
 */
 import { getSupabaseClient } from "../../lib/supabaseClient.js";
 import {
@@ -51,6 +53,8 @@ export function criarEstadoDoEncerramento({
 } = {}) {
   let estado: EstadoDoEncerramento = VAZIO;
   let geracao = 0;
+  /* Fechados nesta página (o banco pode responder antes de gravar o visto). */
+  const vistosNaPagina = new Set<string>();
   const ouvintes = new Set<() => void>();
 
   const mudar = (parte: Partial<EstadoDoEncerramento>) => {
@@ -69,7 +73,9 @@ export function criarEstadoDoEncerramento({
       const { data, error } = await supabase.rpc(RPC_DOS_ENCERRAMENTOS);
       if (minha !== geracao) return estado.encerramentos;
       if (error) return estado.encerramentos;
-      const encerramentos = lerEncerramentos(data);
+      const encerramentos = lerEncerramentos(data).map((e) =>
+        vistosNaPagina.has(e.id) && !e.visto ? { ...e, visto: true } : e,
+      );
       mudar({
         encerramentos,
         aberto: estado.aberto ?? proximo(encerramentos),
@@ -83,14 +89,25 @@ export function criarEstadoDoEncerramento({
   async function fechar() {
     const atual = estado.aberto;
     if (!atual) return;
+    // A leitura em curso (de antes do visto) não vale mais.
+    geracao += 1;
+    vistosNaPagina.add(atual.id);
     const encerramentos = estado.encerramentos.map((e) =>
       e.id === atual.id ? { ...e, visto: true } : e,
     );
     mudar({ encerramentos, aberto: null });
+    // Sem o visto gravado, a tela volta na próxima entrada: melhor que sumir.
     try {
-      await cliente()?.rpc(RPC_DO_VISTO, { p_edital: atual.id });
-    } catch {
-      // Sem o visto gravado, a tela volta na próxima entrada: melhor que sumir.
+      const resposta = await cliente()?.rpc(RPC_DO_VISTO, {
+        p_edital: atual.id,
+      });
+      if (resposta?.error)
+        console.warn(
+          "Não foi possível gravar o visto do encerramento:",
+          resposta.error,
+        );
+    } catch (erro) {
+      console.warn("Não foi possível gravar o visto do encerramento:", erro);
     }
     mudar({ aberto: proximo(estado.encerramentos) });
   }
@@ -122,6 +139,7 @@ export function criarEstadoDoEncerramento({
     /** Saiu da sessão: nada desta pessoa fica. */
     esquecer() {
       geracao += 1;
+      vistosNaPagina.clear();
       mudar({ ...VAZIO, fogosJaSoltos: new Set() });
     },
   };

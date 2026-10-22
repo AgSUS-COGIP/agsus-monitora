@@ -35,13 +35,20 @@ export function partesDoEscopo(escopo) {
   return escopo === "todos" ? [...PARTES_DE_TODOS] : [escopo];
 }
 
-/** Completa a linha com o que o envelope manda uma vez só (grupo e situação do edital). */
+/**
+ * Completa a linha com o que o envelope manda uma vez só (grupo e situação do
+ * edital) e marca de que pacote ela veio (`__escopo`: 'ativo', 'inativo' ou
+ * 'desativadas'), para quem precisa separar as partes de "Todos" (o Ritmo
+ * conta só o Ativo).
+ */
 export function completarLinhaPeloEnvelope(linha, payload) {
   if (!linha || typeof linha !== "object" || !payload) return linha;
   ["grupo", "edital_status"].forEach((campo) => {
     if (!temCampo(linha, campo) && payload[campo] != null)
       linha[campo] = payload[campo];
   });
+  if (!temCampo(linha, "__escopo") && PARTES_DE_TODOS.includes(payload.scope))
+    linha.__escopo = payload.scope;
   return linha;
 }
 

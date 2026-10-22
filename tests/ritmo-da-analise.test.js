@@ -492,6 +492,28 @@ describe("as contagens do resumo do Painel", () => {
     ]);
   });
 
+  it("em Todos, só as linhas do pacote Ativo contam (Inativo e desativadas ficam fora)", () => {
+    const linha = (status_consolidado, __escopo) => ({
+      edital: "114/2026",
+      status_consolidado,
+      __escopo,
+    });
+    const [e] = noMomentoDoResumo(
+      [edital()],
+      [
+        linha("Pendente", "ativo"),
+        linha("Aprovado", "ativo"),
+        linha("Pendente", "desativadas"),
+        linha("Pendente", "inativo"),
+        // Linha sem a marca (payload antigo): conta, como antes.
+        linha("Pendente", undefined),
+      ],
+      "2026-10-19",
+    );
+    expect(e.situacoes.pendente).toBe(2);
+    expect(e.situacoes.concluida).toBe(1);
+  });
+
   it("edital sem linha no resumo sai", () => {
     expect(noMomentoDoResumo([edital()], [], "2026-10-19")).toEqual([]);
     expect(noMomentoDoResumo([edital()], null, "2026-10-19")).toEqual([]);

@@ -242,6 +242,12 @@ export function RitmoDaAnalise({
   ligadas?: () => boolean;
 }) {
   const [recolhido, setRecolhido] = useState(() => lerRitmoRecolhido(usuario));
+  // O perfil chega depois da primeira pintura (ou outra pessoa entrou): relê a escolha dela.
+  const [usuarioLido, setUsuarioLido] = useState(usuario);
+  if (usuarioLido !== usuario) {
+    setUsuarioLido(usuario);
+    setRecolhido(lerRitmoRecolhido(usuario));
+  }
   // O esperado do dia anda com o relógio: recalcula sem consultar o banco.
   const [relogio, setRelogio] = useState(() => Date.now());
   useEffect(() => {

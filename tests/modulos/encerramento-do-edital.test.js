@@ -151,6 +151,46 @@ describe("tela de encerramento", () => {
     expect(estado.obter().aberto).toBeNull();
   });
 
+  it("uma leitura que já estava a caminho não reabre o que a pessoa fechou", async () => {
+    let soltarLeitura;
+    const resposta = { data: { editais: [edital()] }, error: null };
+    const cliente = {
+      chamadas: [],
+      rpc: vi.fn(async (nome) => {
+        cliente.chamadas.push(nome);
+        if (nome === "marcar_encerramento_visto")
+          return { data: null, error: { message: "fora do ar" } };
+        if (cliente.chamadas.filter((n) => n === nome).length === 1)
+          return resposta;
+        // A segunda leitura demora e volta com o visto ainda não gravado.
+        return new Promise((ok) => {
+          soltarLeitura = () => ok(resposta);
+        });
+      }),
+    };
+    const aviso = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const estado = criarEstadoDoEncerramento({
+      cliente: () => cliente,
+      ligadas: () => true,
+    });
+    await estado.verificar();
+    expect(estado.obter().aberto?.id).toBe("e114");
+    const leitura = estado.verificar();
+    await estado.fechar();
+    // O erro do visto vai para o console (a tela volta na próxima entrada).
+    expect(aviso).toHaveBeenCalled();
+    soltarLeitura();
+    await leitura;
+    expect(estado.obter().aberto).toBeNull();
+    // Nem uma leitura nova reabre nesta página.
+    const nova = estado.verificar();
+    soltarLeitura();
+    await nova;
+    expect(estado.obter().aberto).toBeNull();
+    expect(estado.obter().encerramentos[0].visto).toBe(true);
+    aviso.mockRestore();
+  });
+
   it("já visto (outro navegador, dia seguinte): não abre", async () => {
     const cliente = clienteFalso({
       data: { editais: [edital({ visto: true })] },

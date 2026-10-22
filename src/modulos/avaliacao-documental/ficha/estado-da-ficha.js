@@ -24,9 +24,12 @@
   marcar a ficha como alterada: vai no próximo rascunho ou na conclusão); a
   cada mudança, refaz o texto automático quando o resumo dos itens mudou.
 
-  Salvamento automático: cada mudança agenda um rascunho para ATRASO_MS (3 s)
+  Salvamento automático: cada mudança agenda um rascunho para ATRASO_MS (10 s)
   depois da última; com mudanças seguidas, o envio sai no máximo
-  MAXIMO_SEM_SALVAR_MS (15 s) depois da primeira que ficou pendente. Fechar,
+  MAXIMO_SEM_SALVAR_MS (60 s) depois da primeira que ficou pendente (eram 3 e
+  15 s: salvar_rascunho_ficha era a função que mais custava ao banco, ~17 mil
+  chamadas de 14 a 22/10/2026). Conteúdo igual ao último salvo não vai ao
+  banco (marcar e desmarcar volta ao que estava). Fechar,
   trocar de ficha, concluir e esconder a aba (ficha.jsx: visibilitychange e
   pagehide) salvam na hora (salvar()). Uma mudança durante o envio agenda
   outro com a versão nova. "Salvo às HH:MM" só depois de o banco confirmar
@@ -58,8 +61,8 @@ const RPC_CONCLUIR = "concluir_ficha";
 const RPC_REABRIR = "reabrir_ficha";
 const RPC_ACESSO = "registrar_acesso_ficha";
 
-export const ATRASO_MS = 3000;
-export const MAXIMO_SEM_SALVAR_MS = 15000;
+export const ATRASO_MS = 10000;
+export const MAXIMO_SEM_SALVAR_MS = 60000;
 
 /*
   As configurações de regra já recebidas, pela chave (md5) que o banco manda
@@ -115,6 +118,8 @@ export function criarEstadoDaFicha({
   let envio = null;
   let pendenteDesde = null;
   let semLeve = false;
+  /* O conteúdo do último rascunho que o banco confirmou (JSON), para não reenviar o mesmo. */
+  let ultimoSalvo = null;
 
   /*
     A ficha: a leve, com a chave da última regra guardada (o banco omite a
@@ -231,6 +236,7 @@ export function criarEstadoDaFicha({
     pararTemporizador();
     mudancas = 0;
     pendenteDesde = null;
+    ultimoSalvo = null;
     publicar({ ...INICIAL, fichaId, carregando: true });
     try {
       const dados = await lerFicha(fichaId);
@@ -296,18 +302,27 @@ export function criarEstadoDaFicha({
     // O que mudar a partir daqui conta a espera máxima de novo.
     pendenteDesde = null;
     const { lancamento, avaliacao, declarada, versao } = estado;
+    const conteudo = {
+      p_lancamento: lancamentoParaGravar(
+        estado.dados.regra.configuracao,
+        lancamento,
+      ),
+      p_resultado: resumoParaGravar(avaliacao, declarada),
+      p_parecer: avaliacao.parecer,
+    };
+    const assinatura = JSON.stringify(conteudo);
+    if (assinatura === ultimoSalvo) {
+      publicar({ sujo: mudancas !== minhas });
+      return true;
+    }
     publicar({ salvando: true });
     try {
       const r = await rpc(RPC_SALVAR, {
         p_ficha: estado.fichaId,
         p_versao: versao,
-        p_lancamento: lancamentoParaGravar(
-          estado.dados.regra.configuracao,
-          lancamento,
-        ),
-        p_resultado: resumoParaGravar(avaliacao, declarada),
-        p_parecer: avaliacao.parecer,
+        ...conteudo,
       });
+      ultimoSalvo = assinatura;
       const nada = mudancas === minhas;
       publicar({
         salvando: false,
