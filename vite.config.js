@@ -1,12 +1,21 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { cp, mkdir } from "node:fs/promises";
+import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHtmlSecurityPlugin } from "./src/lib/html-security.js";
+import { swComVersao } from "./src/lib/cache-do-service-worker.js";
 import { novidadesVisiveis } from "./src/lib/novidades.ts";
 
 const projectDirectory = dirname(fileURLToPath(import.meta.url));
+
+/*
+  Versão do build: na Vercel é o commit; fora dela, a hora do build. Vai para
+  o aviso de versão nova e para o nome do cache do service worker.
+*/
+const VERSAO_DO_BUILD =
+  (process.env.VERCEL_GIT_COMMIT_SHA || "").slice(0, 12) ||
+  `local-${Date.now().toString(36)}`;
 
 function copyProgressiveWebAppAssets() {
   return {
@@ -19,11 +28,17 @@ function copyProgressiveWebAppAssets() {
       );
       await mkdir(outputDirectory, { recursive: true });
 
+      await writeFile(
+        resolve(outputDirectory, "sw.js"),
+        swComVersao(
+          await readFile(resolve(projectDirectory, "sw.js"), "utf8"),
+          VERSAO_DO_BUILD,
+        ),
+      );
       for (const filename of [
         "manifest.webmanifest",
         "offline.html",
         "sw-policy.js",
-        "sw.js",
       ]) {
         await cp(
           resolve(projectDirectory, filename),
@@ -47,9 +62,7 @@ function copyProgressiveWebAppAssets() {
   commit; fora dela, a hora do build. A página aberta compara as duas.
 */
 function publicarVersaoDoBuild() {
-  const versao =
-    (process.env.VERCEL_GIT_COMMIT_SHA || "").slice(0, 12) ||
-    `local-${Date.now().toString(36)}`;
+  const versao = VERSAO_DO_BUILD;
   return {
     name: "agsus-versao-do-build",
     apply: "build",

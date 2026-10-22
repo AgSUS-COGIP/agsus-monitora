@@ -50,4 +50,28 @@ describe("service worker cache policy", () => {
     );
     expect(policy.isResponseCacheable(response("no-store"))).toBe(false);
   });
+
+  it("o cache tem limite: saem as entradas mais antigas, nunca as do app shell", () => {
+    const urls = ["/", "/index.html", "/a.js", "/b.js", "/c.js", "/d.js"];
+    expect(
+      policy.entriesBeyondLimit(urls, {
+        limit: 4,
+        keep: ["/", "/index.html"],
+      }),
+    ).toEqual(["/a.js", "/b.js"]);
+    expect(policy.entriesBeyondLimit(urls, { limit: 10 })).toEqual([]);
+  });
+});
+
+describe("versão do cache do service worker", () => {
+  it("o build troca o nome do cache pela versão publicada", async () => {
+    const { swComVersao } =
+      await import("../src/lib/cache-do-service-worker.js");
+    const fonte = readFileSync(resolve(process.cwd(), "sw.js"), "utf8");
+    const publicado = swComVersao(fonte, "abc123");
+    expect(publicado).toContain(
+      'const CACHE_VERSION = "agsus-monitora-abc123";',
+    );
+    expect(publicado).not.toContain("agsus-monitora-dev");
+  });
 });
