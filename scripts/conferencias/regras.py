@@ -22,6 +22,7 @@ from datetime import date, datetime, time, timedelta
 from catalogo import CATALOGO
 
 from monitora.avaliacao_documental.pontuacao import conferir_ficha
+from monitora.fuso import hoje_em_brasilia
 
 MAX_EXEMPLOS = 20
 MAX_CASOS = 5000
@@ -276,7 +277,7 @@ def conferir_analises(paginas, contexto, acumulador):
     paginas: iterável de listas de linhas de conferencia_ler_analises.
     contexto: conferencia_ler_contexto (editais, regras, hoje).
     """
-    hoje = dia(contexto.get("hoje")) or date.today()
+    hoje = dia(contexto.get("hoje")) or hoje_em_brasilia()
     editais = {e["id"]: e for e in contexto.get("editais") or []}
     regras = {r["edital"]: r for r in contexto.get("regras") or []}
     editais_por_codigo = defaultdict(set)
@@ -448,7 +449,7 @@ def _na_escala(nota, maxima, roteiro):
 
 
 def conferir_entrevistas(dados, contexto, acumulador):
-    hoje = dia(contexto.get("hoje")) or date.today()
+    hoje = dia(contexto.get("hoje")) or hoje_em_brasilia()
     entrevistas = dados.get("entrevistas") or []
     por_candidato = defaultdict(list)
     for e in entrevistas:
@@ -601,7 +602,7 @@ def conferir_classificacao(dados, acumulador):
 
 
 def conferir_aprovados(dados, contexto, acumulador, dias_convocado=15):
-    hoje = dia(contexto.get("hoje")) or date.today()
+    hoje = dia(contexto.get("hoje")) or hoje_em_brasilia()
     limite = hoje - timedelta(days=dias_convocado)
     candidatos = dados.get("candidatos") or []
 

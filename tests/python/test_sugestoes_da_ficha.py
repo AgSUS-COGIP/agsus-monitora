@@ -32,6 +32,16 @@ class Cursos(unittest.TestCase):
     def test_horas_fora_do_limite_ficam_de_fora(self):
         self.assertEqual(s.cursos_das_respostas(["Curso 0h", "Curso 99999 horas"]), [])
 
+    def test_horas_com_separador_de_milhar(self):
+        """Antes, "1.200 horas" virava 200 (o número começava depois do ponto)."""
+        self.assertEqual(
+            [c["horas"] for c in s.cursos_das_respostas(["Residência fictícia 1.200 horas", "Pós 1.200,5h"])],
+            [1200, 1200],
+        )
+        self.assertEqual(s.cursos_das_respostas(["Mestrado 12.000 horas"])[0]["horas"], 12000)
+        # Decimal continua decimal: "1.5 horas" e "40,5 horas" não são milhar.
+        self.assertEqual([c["horas"] for c in s.cursos_das_respostas(["Oficina 1.5 horas; Curso 40,5 horas"])], [2, 40])
+
 
 class Vinculos(unittest.TestCase):
     def test_datas_completas_e_mes_ano(self):
