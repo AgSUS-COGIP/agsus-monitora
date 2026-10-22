@@ -127,6 +127,22 @@ const ESTADO_INICIAL: EstadoDaConducao = Object.freeze({
   fichaAberta: null,
 });
 
+/*
+  Leitura opcional (agenda, configuração e modelos da convocação): sem a
+  migration (PGRST202) ou sem acesso (42501), segue sem ela, como sempre.
+  Outra falha (rede, tempo, banco) não é "não existe" e não pode virar
+  silêncio: antes, `.catch(() => null)` engolia tudo.
+*/
+const AUSENTE = new Set(["42501", "PGRST202"]);
+export function opcionalDaConducao<T>(
+  promessa: PromiseLike<T>,
+): Promise<T | null> {
+  return Promise.resolve(promessa).catch((erro: unknown) => {
+    if (AUSENTE.has(codigoDaFalhaDaConducao(erro))) return null;
+    throw erro;
+  });
+}
+
 export function mensagemDe(erro: unknown) {
   return ehFalhaDeConexao(erro)
     ? mensagemDeFalha(erro)
@@ -394,7 +410,17 @@ export function criarEstadoDaConducao({
     try {
       const [resposta, agenda] = await Promise.all([
         rpc(RPC_OBTER_EDITAL, { p_edital: id }),
-        rpc(RPC_OBTER_AGENDA, { p_edital: id }).catch(() => null),
+        // A agenda que falhou não impede abrir o edital: a fila fica em Todos, com aviso.
+        opcionalDaConducao(rpc(RPC_OBTER_AGENDA, { p_edital: id })).catch(
+          (erro: unknown) => {
+            if (erro instanceof RespostaObsoletaDaConducao) throw erro;
+            toast(
+              `Não foi possível carregar a agenda: ${mensagemDe(erro)}`,
+              "warn",
+            );
+            return null;
+          },
+        ),
       ]);
       if (meu !== pedidoDoEdital) return false;
       const dados = dadosDoEditalDaConducao(resposta);
@@ -427,8 +453,9 @@ export function criarEstadoDaConducao({
     try {
       const [resposta, configuracoes, modelos] = await Promise.all([
         rpc(RPC_OBTER_CLASSIFICACAO, { p_edital: id }),
-        rpc(RPC_CONFIGURACAO_CONVOCACAO).catch(() => null),
-        rpc(RPC_MODELOS_CONVOCACAO).catch(() => null),
+        // Falha aqui vira erro do cálculo: sem a configuração, a ordem mudaria calada.
+        opcionalDaConducao(rpc(RPC_CONFIGURACAO_CONVOCACAO)),
+        opcionalDaConducao(rpc(RPC_MODELOS_CONVOCACAO)),
       ]);
       const dados = objetoDaConducao(resposta);
       if (!dados?.regra)

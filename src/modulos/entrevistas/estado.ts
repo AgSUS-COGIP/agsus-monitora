@@ -242,7 +242,13 @@ export function criarEstadoDasEntrevistas({
       agendas.clear();
       geracaoDasAgendas += 1;
       publicar({ ...ESTADO_INICIAL, area, comemoracoes: estado.comemoracoes });
-    } else publicar({ atualizando: true, erroAoCarregar: "" });
+    } else {
+      publicar({ atualizando: true, erroAoCarregar: "" });
+      /* Recarregar a mesma área renova a agenda aberta (a guardada envelhece). */
+      agendas.clear();
+      geracaoDasAgendas += 1;
+      if (estado.agenda.editalId) void carregarAgenda(estado.agenda.editalId);
+    }
     if (!supabase) {
       publicar({
         erroAoCarregar: "Sem conexão com o banco.",
@@ -327,7 +333,12 @@ export function criarEstadoDasEntrevistas({
     publicar({ semEntrevistaAberta: true, gaveta: null });
   const fecharSemEntrevista = () => publicar({ semEntrevistaAberta: false });
 
-  /* A agenda do edital (uma leitura por edital; a troca de área ou de usuário zera). */
+  /*
+    A agenda do edital (uma leitura por edital; recarregar a área, trocar de
+    área ou de usuário zera). Renovando a mesma agenda, a da tela fica até a
+    nova chegar. Erro não vira "nenhuma agendada": vai em `erro`, e não é
+    guardado (a próxima abertura tenta de novo).
+  */
   async function carregarAgenda(
     editalId: string,
   ): Promise<ItemDaAgenda[] | null> {
@@ -342,7 +353,11 @@ export function criarEstadoDasEntrevistas({
       return guardada;
     }
     const geracao = geracaoDasAgendas;
-    publicar({ agenda: { editalId: id, itens: null, erro: "" } });
+    const naTela =
+      estado.agenda.editalId === id && !estado.agenda.erro
+        ? estado.agenda.itens
+        : null;
+    publicar({ agenda: { editalId: id, itens: naTela, erro: "" } });
     try {
       const { data, error } = await comTempoLimite(
         supabase.rpc("obter_agenda_entrevista", { p_edital: id }),
@@ -358,7 +373,7 @@ export function criarEstadoDasEntrevistas({
     } catch (erro) {
       if (geracao === geracaoDasAgendas && estado.agenda.editalId === id)
         publicar({
-          agenda: { editalId: id, itens: [], erro: mensagemDaCarga(erro) },
+          agenda: { editalId: id, itens: null, erro: mensagemDaCarga(erro) },
         });
       return null;
     }

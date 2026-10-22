@@ -587,6 +587,69 @@ describe("a tela de Conduzir entrevistas", () => {
     ).toBe("sim");
   });
 
+  it("fila filtrada por situação: a ficha segue a fila da tela, mesmo depois que o salvo sai do filtro", async () => {
+    // Hoje: e3 (07:00) e e1 (08:00) aguardando; e2 em andamento; e4 concluída.
+    const agenda = {
+      ...AGENDA_DO_DIA,
+      itens: AGENDA_DO_DIA.itens.map((i) =>
+        i.analise_id === "an3" ? { ...i, inicio: "07:00", fim: "07:30" } : i,
+      ),
+    };
+    const dados = {
+      ...EDITAL_DO_DIA,
+      convocados: EDITAL_DO_DIA.convocados.map((c) =>
+        c.id === "e3"
+          ? { ...c, compareceu: null, parecer: "SEM_PARECER", avaliacoes: [] }
+          : c,
+      ),
+    };
+    const supabase = supabaseDaConducao({
+      edital: dados,
+      respostas: {
+        obter_agenda_entrevista: () => ({ data: agenda, error: null }),
+        lancar_notas_entrevista: () => ({
+          data: {
+            ...dados,
+            convocados: dados.convocados.map((c) =>
+              c.id === "e3" ? { ...c, compareceu: "N", parecer: "INAPTO" } : c,
+            ),
+          },
+          error: null,
+        }),
+      },
+    });
+    await montar(supabase);
+    await clicar(
+      document.querySelector(
+        '.entrevistas-fila-resumo [data-situacao="aguardando"]',
+      ),
+    );
+    expect(cartoes().map(([id]) => id)).toEqual(["e3", "e1"]);
+    await clicar(document.querySelector('[data-convocado="e3"]'));
+    const ficha = document.getElementById("entrevistasFichaDoCandidato");
+    await clicar(
+      ficha.querySelector('.entrevistas-comparecimento button[data-valor="N"]'),
+    );
+    await digitar(justificativa(ficha), "Não compareceu.");
+    expect(
+      document.querySelector(".entrevistas-analise-posicao").textContent,
+    ).toBe("1 de 2");
+    await clicar(
+      [...ficha.querySelectorAll("button")].find(
+        (b) => b.textContent === "Salvar",
+      ),
+    );
+    await esperar();
+    // Antes, e3 saía do filtro e a ficha passava à ordem do edital inteiro.
+    expect(
+      document.querySelector(".entrevistas-analise-posicao").textContent,
+    ).toBe("1 de 2");
+    await clicar(document.querySelector('[data-acao="ficha-proxima"]'));
+    expect(
+      document.getElementById("entrevistasFichaTitulo").textContent,
+    ).toContain("Candidato 1");
+  });
+
   it("comemorações desligadas: concluir o dia não solta os fogos", async () => {
     const dados = {
       ...EDITAL_DO_DIA,
