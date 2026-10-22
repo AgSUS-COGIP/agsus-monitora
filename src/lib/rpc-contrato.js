@@ -1257,12 +1257,43 @@ export const CONTRATO_RPC = {
     resumo:
       "A coordenação reabre uma ficha concluída (volta a Em análise com o mesmo responsável). p_motivo: código da lista fixa (motivos-da-reabertura.ts; texto livre da tela antiga é recusado com 22023 pedindo recarregar); p_complemento opcional até 500, obrigatório em OUTRO (15+ caracteres, 3 palavras). Histórico REABRIR: rótulo legível no motivo e o código nas alterações.",
   },
-  // ── Reiniciar as fichas do edital (20261009160000_reiniciar_fichas_do_edital.sql)
+  // ── Reiniciar as fichas do edital (20261009160000; dois administradores em 20261022210000)
   reiniciar_fichas_do_edital: {
     argumentos: ["p_edital", "p_motivo"],
     critica: false,
     resumo:
-      "Só admin global (42501): volta ao início as fichas do lote do edital (PENDENTE, sem responsável, reserva nem conteúdo; versão + 1), com motivo de 10 a 2.000 e histórico REINICIAR por ficha; FORA_LOTE fica; nada se apaga.",
+      "Só admin global (42501), só em edital sem ficha trabalhada: volta ao início as fichas iniciadas (PENDENTE, sem responsável, reserva nem conteúdo; versão + 1), com motivo de 10 a 2.000 e histórico REINICIAR por ficha; FORA_LOTE fica. Com ficha CONCLUIDA ou em análise com lançamento, recusa (55000) e orienta o pedido com dois administradores; edital congelado ou encerrado, 55000.",
+  },
+  // ── Reinício das fichas com dois administradores (20261022210000_reinicio_das_fichas_com_dois_administradores.sql)
+  obter_reinicio_fichas_do_edital: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Só admin global (42501): número do edital (o que se digita), impacto (concluídas, em análise, com lançamento, iniciadas, exige_aprovacao), bloqueio (congelado/encerrado), o pedido pendente (quem pediu, se é meu, vencido, validade, impacto no pedido) e os últimos 20 eventos.",
+  },
+  pedir_reinicio_fichas_do_edital: {
+    argumentos: ["p_edital", "p_motivo", "p_confirmacao"],
+    critica: false,
+    resumo:
+      "Admin global A pede o reinício: motivo de 10 a 1.000 com 3 palavras e o número do edital digitado (22023); recusa edital congelado, encerrado, sem ficha iniciada ou com pedido pendente (55000). Vale 24 h; nada muda nas fichas. Devolve a leitura.",
+  },
+  aprovar_reinicio_fichas_do_edital: {
+    argumentos: ["p_pedido", "p_confirmacao"],
+    critica: false,
+    resumo:
+      "Outro admin global aprova (quem pediu: 42501), digitando o número do edital; pedido pendente e dentro das 24 h, edital nem congelado nem encerrado (55000). Roda o reinício (histórico REINICIAR por ficha) e devolve { resultado, reinicio }.",
+  },
+  recusar_reinicio_fichas_do_edital: {
+    argumentos: ["p_pedido", "p_confirmacao", "p_motivo"],
+    critica: false,
+    resumo:
+      "Outro admin global recusa o pedido (quem pediu: 42501, cancela), digitando o número do edital; motivo opcional (10 a 1.000). Nada muda nas fichas. Devolve a leitura.",
+  },
+  cancelar_reinicio_fichas_do_edital: {
+    argumentos: ["p_pedido"],
+    critica: false,
+    resumo:
+      "Quem pediu desiste do pedido pendente (outro admin: 42501, recusa). Devolve a leitura.",
   },
   registrar_acesso_ficha: {
     argumentos: ["p_ficha", "p_tipo"],

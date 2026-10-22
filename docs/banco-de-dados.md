@@ -1055,12 +1055,27 @@ limpo; o retrato de antes segue nas linhas `SALVAR`/`CONCLUIR`). `FORA_LOTE`, re
 inclusão, pré-classificação, Classificação e `TB_ANALISE_CURRICULAR` não mudam; ficha já no início
 não ganha histórico.
 
-- `public.reiniciar_fichas_do_edital(p_edital, p_motivo)`: só administrador global (42501); na tela,
-  Fila › Ações da coordenação › "Reiniciar as fichas do edital" (só aparece ao admin global).
-- `private."FC_REINICIAR_FICHAS_DO_EDITAL"(p_edital, p_motivo, p_usuario)`: sem grant; usada pela RPC
+- `public.reiniciar_fichas_do_edital(p_edital, p_motivo)`: só administrador global (42501) e, desde
+  20261022210000, só em edital sem ficha trabalhada (abaixo).
+- `private."FC_REINICIAR_FICHAS_DO_EDITAL"(p_edital, p_motivo, p_usuario)`: sem grant; usada pelas RPCs
   e pelo SQL Editor, que informa o autor (admin global ativo).
 - Primeiro uso: `supabase/correcoes/20261009-reiniciar-fichas-93.sql` (93/2026, Projetos: a análise
   documental foi feita pela planilha).
+
+**Dois administradores (22/10/2026).** Migration
+`20261022210000_reinicio_das_fichas_com_dois_administradores.sql` (ensaio e rollback com o mesmo
+nome). Edital com ficha `CONCLUIDA` ou `EM_ANALISE`/`REVISAR` com lançamento só é reiniciado em dois
+passos: `pedir_reinicio_fichas_do_edital(p_edital, p_motivo, p_confirmacao)` (admin global A, motivo
+de 10 a 1.000 com 3 palavras, número do edital digitado; grava `TB_PEDIDO_REINICIO_FICHA` com o
+impacto e validade de 24 h) e `aprovar_reinicio_fichas_do_edital(p_pedido, p_confirmacao)` (admin
+global B, diferente de A; o check `CK_PEDREINFICHA_DECISAO` também impede A = B). A cancela
+(`cancelar_…`), outro recusa (`recusar_…`); `obter_…` lê. Histórico em `TH_PEDIDO_REINICIO_FICHA`
+(`PEDIR`, `CANCELAR`, `RECUSAR`, `APROVAR`, `EXECUTAR`, `VENCER`); a execução continua gravando
+`REINICIAR` por ficha, com B como autor e o número do pedido no motivo. `reiniciar_fichas_do_edital`
+só executa em edital sem ficha trabalhada (senão 55000). `FC_REINICIAR_FICHAS_DO_EDITAL` recusa
+(55000) edital com inscrições congeladas ou encerrado por qualquer caminho, inclusive o SQL Editor.
+Na tela: Fila › Ações da coordenação › "Pedir reinício das fichas" e o aviso de aprovação pendente
+no alto da Fila (`src/modulos/avaliacao-documental/reinicio-das-fichas.tsx`).
 
 ## 19. Modelo do espelho de nota, por edital (19/10/2026)
 
