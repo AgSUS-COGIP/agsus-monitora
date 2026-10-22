@@ -153,6 +153,16 @@ describe("Busca global", () => {
     expect(document.body.textContent).toContain("Nenhum resultado encontrado");
   });
 
+  it("linhas ainda não carregadas: Carregando, não Nenhum resultado", async () => {
+    redefinirDadosDoMonitoramento();
+    await ctrlK();
+    await digitar(campo(), "xavante");
+    expect(document.body.textContent).toContain("Carregando…");
+    expect(document.body.textContent).not.toContain("Nenhum resultado");
+    await act(async () => publicarLinhasDoMonitoramento(LINHAS));
+    expect(itens()).toHaveLength(1);
+  });
+
   it("setas movem a escolha sem passar das pontas e Enter escolhe", async () => {
     await ctrlK();
     await digitar(campo(), "dsei");

@@ -57,7 +57,7 @@ function PainelDaBusca({
   aoEscolher: OpcoesDaBusca["aoEscolher"];
 }) {
   // Aberta, a busca pede as linhas (sob demanda: a página atual pode não usá-las).
-  const { linhas } = usarLinhasDoMonitoramento();
+  const { linhas, carregado } = usarLinhasDoMonitoramento();
   const [termo, setTermo] = useState("");
   const [indice, setIndice] = useState(-1);
   const rolarAteEscolhido = useRef(false);
@@ -168,7 +168,8 @@ function PainelDaBusca({
       </ul>
       {procurando && !resultados.length ? (
         <p className="search-results-vazio" role="status">
-          Nenhum resultado encontrado
+          {/* As linhas ainda não chegaram: "nenhum" seria falso. */}
+          {carregado ? "Nenhum resultado encontrado" : "Carregando…"}
         </p>
       ) : null}
     </Modal>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  areaParaLocalizar,
   buscarLinhas,
   ehAtalhoDaBusca,
   LIMITE_DE_RESULTADOS,
@@ -173,5 +174,17 @@ describe("busca sem acento e atalho com Caps Lock", () => {
 
   it("Ctrl+K com Caps Lock ou Shift também abre", () => {
     expect(ehAtalhoDaBusca({ ctrlKey: true, key: "K" })).toBe(true);
+  });
+});
+
+describe("área ao abrir um resultado", () => {
+  const areas = ["saude-indigena", "sede"];
+  it("linha de outra área do usuário: troca para ela", () => {
+    expect(areaParaLocalizar("sede", "saude-indigena", areas)).toBe("sede");
+  });
+  it("mesma área, área que o usuário não tem ou sem área: fica", () => {
+    expect(areaParaLocalizar("sede", "sede", areas)).toBe("");
+    expect(areaParaLocalizar("projetos", "sede", areas)).toBe("");
+    expect(areaParaLocalizar("", "sede", areas)).toBe("");
   });
 });

@@ -145,6 +145,21 @@ export function proximoIndice(atual: number, tecla: string, total: number) {
   return atual;
 }
 
+/**
+ * A área para a qual trocar ao abrir um resultado: a da linha, se for outra
+ * área do usuário (a Visão geral recorta pela área atual; sem trocar, a linha
+ * não apareceria). Vazio = fica na área atual.
+ */
+export function areaParaLocalizar(
+  areaDaLinha: string,
+  areaAtual: string,
+  areas: readonly string[],
+) {
+  return areaDaLinha && areaDaLinha !== areaAtual && areas.includes(areaDaLinha)
+    ? areaDaLinha
+    : "";
+}
+
 export function ehAtalhoDaBusca(evento: AtalhoDaBusca | null | undefined) {
   return Boolean(
     (evento?.ctrlKey || evento?.metaKey) &&

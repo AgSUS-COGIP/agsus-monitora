@@ -1,4 +1,7 @@
-import { EVENTO_ESCOLHA_DA_BUSCA } from "../lib/busca-global.ts";
+import {
+  EVENTO_ESCOLHA_DA_BUSCA,
+  areaParaLocalizar,
+} from "../lib/busca-global.ts";
 import { codigoDoPainel } from "../lib/navegacao.js";
 import { apagarCacheDePayload } from "../modules/cache-de-payload-indexeddb.js";
 import { comemorarAcessoLiberado } from "../modules/comemoracao-do-acesso.js";
@@ -8,6 +11,11 @@ import {
 } from "../modules/situacao-dos-modulos.js";
 import { esconderEsqueleto, mostrarEsqueleto } from "./carregamento.js";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
+import {
+  areaDaLinha,
+  definirAreaAtual,
+  obterDadosDoMonitoramento,
+} from "../componentes/dados-do-monitoramento.ts";
 import { montarPessoasOnline } from "../componentes/pessoas-online/pessoas-online.jsx";
 import { montarAvisoDeVersao } from "../componentes/aviso-de-versao/aviso-de-versao.tsx";
 import { criarEstadoDoEncerramento } from "../modulos/encerramento-do-edital/estado.ts";
@@ -143,7 +151,9 @@ function sairDoPainelExterno() {
 /*
   Busca global (Ctrl+K, src/componentes/busca-global/): a linha escolhida fica
   à vista na Visão geral, que troca o recorte pela unidade e pelo edital dela
-  (sem DSEI aberto) e destaca a linha.
+  (sem DSEI aberto) e destaca a linha. Linha de outra área do usuário: a área
+  troca junto (a Visão geral recorta pela área atual), e volta se a navegação
+  for recusada.
 */
 export function localizarLinhaDoMonitoramento(id) {
   const linha = carga.linhas().find((item) => String(item.id) === String(id));
@@ -155,7 +165,13 @@ export function localizarLinhaDoMonitoramento(id) {
     );
     return;
   }
-  navegacao.irPara("dashboard");
+  const { areaAtual, areas } = obterDadosDoMonitoramento();
+  const area = areaParaLocalizar(areaDaLinha(linha), areaAtual, areas);
+  if (area) definirAreaAtual(area);
+  if (!navegacao.irPara("dashboard")) {
+    if (area) definirAreaAtual(areaAtual);
+    return;
+  }
   estadoDaVisaoGeral.localizar(linha);
 }
 
