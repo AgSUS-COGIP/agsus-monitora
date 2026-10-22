@@ -83,7 +83,7 @@ export function dataPorExtenso(data: DataDoRecurso = new Date()) {
     if (Number.isNaN(d.getTime())) return "";
     dia = hojeEmBrasilia(d);
   }
-  const [ano, mes, numero] = dia.split("-").map(Number);
+  const [ano = 0, mes = 0, numero = 0] = dia.split("-").map(Number);
   return `${numero} de ${MESES[mes - 1]} de ${ano}`;
 }
 
