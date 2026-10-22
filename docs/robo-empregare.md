@@ -279,9 +279,11 @@ pré-classificação:
 - **de raiz**: `FC_EMPREGARE_ABRIR_VAGA` dá RECUSADA à vaga de edital congelado (nada gravado nem
   desativado), inclusive para versões antigas do robô;
 - a **pré-classificação** (após robô, normal, refazer lote) pula ou recusa o edital;
-- continuam: **Só anexos**, seco, fumaça e sondar.
+- continuam: seco, fumaça, sondar e o **Só anexos** com "só comparar" (seco). O Só anexos que
+  grava (respostas e anexos) pede a liberação desde `20261022120000`: sem ela, a tela recusa
+  (55000), o robô recusa a execução inteira e `gravar_anexos_empregare` recusa a vaga.
 
-Override, só do administrador global: **Opções** → modo Normal/Forçar com o edital → **Forçar
+Override, só do administrador global: **Opções** → modo Normal/Forçar/Só anexos com o edital → **Forçar
 edital com inscrições congeladas** + motivo. O banco grava a liberação (12 h) e manda o token como
 `forcar_congelado`; o robô e o passo "Pré-classificar" registram o uso na execução
 (`TH_CONGELAMENTO_INSCRICAO`). Pelo Run workflow, deixe `forcar_congelado` em branco.
@@ -289,6 +291,23 @@ edital com inscrições congeladas** + motivo. O banco grava a liberação (12 h
 **Registro:** toda execução iniciada direto aqui (Run workflow, `gh workflow run`) aparece em
 Status das atualizações › Agenda dos robôs como "iniciada no GitHub por &lt;login&gt;" (primeiro passo
 do workflow; se falhar, só avisa).
+
+### Robustez da execução (20261022120000)
+
+- **Prazo único** de 105 min desde o login (`PRAZO_DA_EXECUCAO`): nenhuma espera, download, volta
+  na Central nem segunda passada passa dele; o que faltar vira falha e a execução fecha normal
+  (PARCIAL). Falha ao abrir ou ler a Central gasta só aquela tentativa.
+- Na Central só vale a exportação **"Candidatos da vaga (Excel)"** com data legível desta
+  execução; depois do clique em Exportar, a exportação conta como pedida (não se pede de novo).
+- Uma tentativa nas RPCs que gravam lote, fecham a vaga ou fecham a execução; o 57014
+  (statement_timeout) nunca se repete igual (o lote se divide ao meio).
+- **Saídas:** 0 concluída; 1 erro; 2 parcial (inclusive anexos do questionário que o banco
+  recusou); 3 entrada inválida. Cancelamento ou tempo esgotado (SIGTERM) fecha a execução no banco
+  com erro.
+- **Concorrência:** robô e leitura dos arquivos dividem o grupo `empregare`; o GitHub guarda só uma
+  execução esperando por grupo (a nova cancelaria a que espera), então `disparar_robo` recusa
+  (55006) o pedido quando já há uma esperando. A pré-classificação do fim do robô é um job que chama
+  `pre-classificacao.yml` (grupo `pre-classificacao`) e só roda se alguma vaga foi gravada.
 
 ### Teste de fumaça (depois de cadastrar os segredos)
 

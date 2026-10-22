@@ -27,6 +27,10 @@ SEGURANÇA
     tempo esgotado) sai como "não relido" e nada dele é gravado.
   - --seco: compara e relata (novos, alterados, removidos por candidato) sem
     gravar e sem abrir execução no banco.
+  - Edital com inscrições congeladas (20261022120000): fora do --seco, só com a
+    liberação do administrador global (--forcar-congelado; a execução registra
+    o uso e o banco confere em gravar_anexos_empregare); sem ela, a execução
+    inteira é recusada antes de abrir a Empregare.
   - O resumo das perguntas da carga NÃO é recalculado: ele vem das colunas do
     Excel (resumo_das_perguntas.py), que este modo não toca.
 
@@ -39,7 +43,7 @@ import time
 
 import anexos_empregare as anexos
 
-from monitora import supabase_rpc
+from monitora import execucao, supabase_rpc
 from monitora.mascaramento import resumo_do_erro
 
 RPC_LISTAR = "listar_anexos_empregare"
@@ -305,38 +309,76 @@ def vagas_pedidas(args, config, chamar):
     """
     As vagas: os códigos pedidos ou as dos editais (listar_vagas_empregare, só
     leitura), até o limite. Finalidade "anexos": as vagas de edital com
-    inscrições congeladas vêm também (migration 20261020170000; reler anexos não
-    muda situação nem lote). Banco sem a finalidade: a chamada de antes.
+    inscrições congeladas vêm também, marcadas ("congelada" e, com a liberação
+    do administrador global em args.forcar_congelado, "liberada"; migration
+    20261020170000). Os códigos pedidos também passam pela lista, para a marca
+    valer para eles. Banco sem a finalidade: a lista de antes, sem marca.
     """
-    if args.vagas:
-        return [{"vaga": v} for v in args.vagas][: args.limite]
-    corpo = {"p_editais": args.editais, "p_vagas": None, "p_limite": args.limite}
+    liberacao = getattr(args, "forcar_congelado", "") or None
+    corpo = {"p_editais": args.editais or None, "p_vagas": args.vagas or None, "p_limite": args.limite}
     try:
-        lista = chamar(config, "listar_vagas_empregare", dict(corpo, p_finalidade="anexos"))
+        lista = chamar(config, "listar_vagas_empregare", dict(corpo, p_finalidade="anexos", p_liberacao=liberacao))
     except supabase_rpc.ErroDoSupabase as erro:
         if getattr(erro, "status", None) != 404:
             raise
+        if args.vagas:
+            return [{"vaga": v} for v in args.vagas][: args.limite]
         lista = chamar(config, "listar_vagas_empregare", corpo)
     return (lista or {}).get("vagas") or []
 
 
+def congeladas_sem_liberacao(vagas):
+    """As vagas de edital com inscrições congeladas sem a liberação: o modo que grava não roda nelas."""
+    return [v for v in vagas if v.get("congelada") and not v.get("liberada")]
+
+
+def recusa_das_congeladas(vagas):
+    """As linhas do resumo quando o Só anexos (que grava) pega edital congelado sem a liberação."""
+    editais = sorted({str(v.get("edital") or "sem número") for v in vagas})
+    return [
+        f"Recusado: inscrições congeladas em {', '.join(editais)} ({len(vagas)} vaga(s)). Nada foi relido nem gravado.",
+        "Para conferir sem gravar, rode com “só comparar”; para gravar, o administrador global usa "
+        "“Forçar edital com inscrições congeladas” em Status das atualizações › Rodar com opções (com motivo).",
+    ]
+
+
 def executar(
-    args, config, abrir_portal, registrar, resumir, chamar=supabase_rpc.chamar, agora=time.monotonic, ids=None
+    args,
+    config,
+    abrir_portal,
+    registrar,
+    resumir,
+    chamar=supabase_rpc.chamar,
+    agora=time.monotonic,
+    ids=None,
+    liberar=None,
 ):
     """
     O modo anexos inteiro. `abrir_portal()`: context manager que entrega o
     PortalEmpregare já logado em Vagas Anunciadas. `ids`: {"sync", "tipo",
-    "usuario", "url"} (quem chamou monta). Saída: 0 concluída, 2 parcial, 1 erro.
+    "usuario", "url"} (quem chamou monta). `liberar(sync)`: registra o uso da
+    liberação do administrador global nesta execução e devolve a linha do log
+    (usar_liberacao do robô). Saída: 0 concluída, 2 parcial, 1 erro.
+
+    Inscrições congeladas (20261022120000): fora do --seco, vaga de edital
+    congelado sem a liberação recusa a execução inteira (nada relido nem
+    gravado); o banco confere de novo em gravar_anexos_empregare.
     """
     seco = bool(args.seco)
     pedidos = list(args.candidatos or [])
     vagas = vagas_pedidas(args, config, chamar)
     ids = ids or {}
     sync = ids.get("sync")
+    bloqueadas = [] if seco else congeladas_sem_liberacao(vagas)
+    if bloqueadas:
+        resumir(recusa_das_congeladas(bloqueadas))
+        return 1
     if not seco:
         filtro = {"so_anexos": True, "editais": args.editais, "vagas": args.vagas, "limite": args.limite}
         if pedidos:
             filtro["candidatos"] = pedidos
+        if getattr(args, "forcar_congelado", ""):
+            filtro["forcar_congelado"] = True
         chamar(
             config,
             "iniciar_sync_empregare",
@@ -351,6 +393,10 @@ def executar(
             },
             tentativas=1,
         )
+        if liberar and getattr(args, "forcar_congelado", ""):
+            linha = liberar(sync)
+            if linha:
+                registrar(linha)
     registrar(
         f"Só anexos{' (seco)' if seco else ''}: {len(vagas)} vaga(s)"
         + (f", {len(pedidos)} candidato(s) pedido(s)" if pedidos else ", candidatos suspeitos")
@@ -360,20 +406,22 @@ def executar(
     relatorios = []
     inicio = agora()
     try:
-        if vagas:
-            with abrir_portal() as portal:
-                for v in vagas:
-                    codigo = str(v["vaga"])
-                    if agora() - inicio >= PRAZO_DO_MODO:
-                        rel = novo_relatorio(codigo)
-                        rel.update(situacao="FALHA", motivo="sem tempo nesta execução")
-                        relatorios.append(rel)
-                        continue
-                    prazo = min(agora() + anexos.TEMPO_LIMITE_DOS_ANEXOS, inicio + PRAZO_DO_MODO)
-                    relatorios.append(
-                        processar_vaga(portal, config, sync, codigo, pedidos, seco, prazo, registrar, chamar, agora)
-                    )
-    except Exception as erro:
+        # Cancelamento ou tempo esgotado no GitHub (SIGTERM/SIGINT) também fecha a execução.
+        with execucao.interromper_com_excecao():
+            if vagas:
+                with abrir_portal() as portal:
+                    for v in vagas:
+                        codigo = str(v["vaga"])
+                        if agora() - inicio >= PRAZO_DO_MODO:
+                            rel = novo_relatorio(codigo)
+                            rel.update(situacao="FALHA", motivo="sem tempo nesta execução")
+                            relatorios.append(rel)
+                            continue
+                        prazo = min(agora() + anexos.TEMPO_LIMITE_DOS_ANEXOS, inicio + PRAZO_DO_MODO)
+                        relatorios.append(
+                            processar_vaga(portal, config, sync, codigo, pedidos, seco, prazo, registrar, chamar, agora)
+                        )
+    except (Exception, execucao.ExecucaoInterrompida) as erro:
         mensagem = resumo_do_erro(erro)
         if not seco:
             try:
@@ -386,6 +434,7 @@ def executar(
                         "p_vagas_falha": sum(r["situacao"] == "FALHA" for r in relatorios),
                         "p_erro": mensagem,
                     },
+                    tentativas=1,
                 )
             except Exception as erro_ao_fechar:
                 registrar(f"Também não consegui fechar a execução no banco ({resumo_do_erro(erro_ao_fechar)}).")
@@ -409,6 +458,8 @@ def executar(
                 "p_vagas_falha": com_pendencia,
                 "p_erro": None,
             },
+            # Sem repetir: se a resposta se perdeu, a execução já pode estar fechada.
+            tentativas=1,
         )
         or {}
     )

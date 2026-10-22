@@ -69,8 +69,10 @@ class BancoFalso:
         distribuicao=None,
         decisoes=None,
         anterior=None,
+        nao_encontrados=(),
     ):
         self.editais = editais
+        self.nao_encontrados = list(nao_encontrados)
         self.anterior = anterior or {}
         self.decisoes = decisoes or {}
         self.distribuicao = distribuicao or {"modo": "PEGAR_PROXIMO", "novos": "MENOS_PENDENTES", "a_abrir": []}
@@ -79,10 +81,10 @@ class BancoFalso:
         self.em_andamento = em_andamento
         self.chamadas = []
 
-    def __call__(self, _cfg, funcao, corpo):
+    def __call__(self, _cfg, funcao, corpo, **_opcoes):
         self.chamadas.append((funcao, json.loads(json.dumps(corpo))))
         if funcao == "pre_classificacao_ler_editais":
-            return {"hoje": "2026-10-06", "nao_encontrados": ["99/2099"], "editais": self.editais}
+            return {"hoje": "2026-10-06", "nao_encontrados": self.nao_encontrados, "editais": self.editais}
         if funcao == "pre_classificacao_ler_colunas":
             return {"colunas": sorted({k for cs in self.candidatos.values() for c in cs for k in c["colunas"]})}
         if funcao == "pre_classificacao_ler_candidatos":
@@ -150,9 +152,10 @@ CANDIDATOS = {"179698": [candidato(1, "24,0/30,0"), candidato(2, "22,0/30,0"), c
 class Fluxo(unittest.TestCase):
     def test_edital_sem_regra_explica_e_nao_quebra_no_modo_seco(self):
         sem_regra = {**edital_93(), "regra": None}
-        banco = BancoFalso([sem_regra], CANDIDATOS)
-        codigo, saida = rodar(banco, ["--seco", "--editais", "93/2026"])
-        self.assertEqual(codigo, 0)
+        banco = BancoFalso([sem_regra], CANDIDATOS, nao_encontrados=["99/2099"])
+        codigo, saida = rodar(banco, ["--seco", "--editais", "93/2026,99/2099"])
+        # Edital pedido que não existe não é sucesso: parcial.
+        self.assertEqual(codigo, 2)
         self.assertIn("93/2026: edital sem regra conferida", saida)
         self.assertIn("3 inscritos em 1 vaga(s) aguardam", saida)
         self.assertIn("Editais não encontrados: 99/2099", saida)
@@ -484,10 +487,10 @@ class Fluxo(unittest.TestCase):
         completo = BancoFalso([edital], {"179698": candidatos})
         completo_chamar = completo.__call__
 
-        def sem_colunas(_cfg, funcao, corpo):
+        def sem_colunas(_cfg, funcao, corpo, **opcoes):
             if funcao == "pre_classificacao_ler_colunas":
                 raise supabase_rpc.ErroDoSupabase(funcao, 404, "PGRST202: function not found")
-            return completo_chamar(_cfg, funcao, corpo)
+            return completo_chamar(_cfg, funcao, corpo, **opcoes)
 
         sem_colunas.de = completo.de
         self.assertEqual(gravacoes(enxuto), gravacoes(sem_colunas))

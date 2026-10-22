@@ -239,7 +239,11 @@ describe("workflows: o override e o registro da execução", () => {
     expect(entradas(robo).length).toBeLessThanOrEqual(10);
     expect(
       robo.match(/FORCAR_CONGELADO: \$\{\{ inputs\.forcar_congelado \}\}/g),
-    ).toHaveLength(3);
+    ).toHaveLength(2);
+    // A pré-classificação do fim do robô recebe o mesmo token (workflow_call).
+    expect(robo).toContain(
+      "forcar_congelado: ${{ inputs.forcar_congelado }}\n    secrets: inherit",
+    );
     const pre = WF("pre-classificacao.yml");
     expect(entradas(pre)).toContain("forcar_congelado");
     expect(
@@ -297,10 +301,20 @@ describe("Rodar com opções: forçar edital congelado", () => {
       validarOpcoes(empregare, {
         modo: "anexos",
         editais: ["114/2026"],
+        seco: true,
         forcar_congelado: true,
         motivo: "x".repeat(12),
       }).erro,
     ).toBe("congelado_no_modo");
+    // Só anexos grava respostas e anexos: com a liberação (20261022120000).
+    expect(
+      validarOpcoes(empregare, {
+        modo: "anexos",
+        editais: ["114/2026"],
+        forcar_congelado: true,
+        motivo: "x".repeat(12),
+      }).opcoes,
+    ).toMatchObject({ modo: "anexos", forcar_congelado: true });
     expect(
       validarOpcoes(empregare, {
         modo: "normal",

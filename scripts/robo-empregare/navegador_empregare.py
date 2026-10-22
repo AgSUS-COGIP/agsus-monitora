@@ -283,15 +283,20 @@ def ler_data_da_central(texto):
 
 def escolher_exportacao(linhas, codigo, desde=None):
     """
-    A exportação mais recente da vaga já disponível, feita a partir de `desde`
-    (início da execução, com folga). Devolve (linha, motivo).
+    A exportação "Candidatos da vaga (Excel)" mais recente da vaga já
+    disponível, feita a partir de `desde` (início da execução, com folga).
+    Devolve (linha, motivo).
+
+    Com `desde`, linha de data ilegível não conta como recente (podia ser a
+    exportação de outro dia). Exportação de outro tipo da mesma vaga (outro
+    relatório da Central) nunca é baixada: o Excel teria outras colunas.
     """
     da_vaga = [l for l in linhas if l.get("vaga") == str(codigo)]
     if desde is not None:
         recentes = []
         for l in da_vaga:
             quando = ler_data_da_central(l.get("data"))
-            if quando is None or quando >= desde - FOLGA_DO_RELOGIO:
+            if quando is not None and quando >= desde - FOLGA_DO_RELOGIO:
                 recentes.append(l)
         da_vaga = recentes
     if not da_vaga:
@@ -300,7 +305,9 @@ def escolher_exportacao(linhas, codigo, desde=None):
     if not disponiveis:
         situacoes = ", ".join(sorted({l.get("situacao", "").split("\n")[0] for l in da_vaga if l.get("situacao")}))
         return None, situacoes or "sem situação"
-    candidatas = [l for l in disponiveis if ORIGEM_EXPORTACAO in l.get("origem", "")] or disponiveis
+    candidatas = [l for l in disponiveis if ORIGEM_EXPORTACAO in l.get("origem", "")]
+    if not candidatas:
+        return None, f"só exportação de outro tipo (não {ORIGEM_EXPORTACAO})"
     escolhida = max(candidatas, key=lambda l: (ler_data_da_central(l.get("data")) or datetime.min, l.get("id", "")))
     return escolhida, "ok"
 
@@ -686,6 +693,15 @@ class PortalEmpregare:
         self.diagnostico = {}  # da última página de candidaturas aberta (só contagens)
         self.respostas = {}  # código do candidato → {pessoa, respostas} dos questionários (última lista lida)
         self.paginas_da_central = 0  # páginas da Central lidas na última leitura (só contagem)
+        # Prazo único da execução (time.monotonic), posto por quem chama: download e leitura
+        # da Central não passam dele. None: só os limites de cada passo.
+        self.prazo = None
+
+    def restante(self, limite):
+        """`limite` segundos, ou menos se o prazo da execução chegar antes (nunca negativo)."""
+        if self.prazo is None:
+            return limite
+        return max(0.0, min(limite, self.prazo - time.monotonic()))
 
     def __enter__(self):
         self.driver = self._iniciar()
@@ -902,6 +918,7 @@ class PortalEmpregare:
         from selenium.webdriver.support import expected_conditions as EC
 
         presente = EC.presence_of_element_located
+        pedido = False  # depois do clique em "Exportar", a exportação já foi pedida
         try:
             processo = self._buscar_processo(codigo)
             self.clicar(processo)
@@ -933,6 +950,7 @@ class PortalEmpregare:
             time.sleep(1)
 
             self.clicar(self._esperar(20).until(presente((By.ID, "btn-exportar-candidatos"))))
+            pedido = True
             try:
                 ok = self._esperar(10).until(presente((By.CSS_SELECTOR, "button.confirm, button.swal2-confirm")))
                 self.clicar(ok)
@@ -942,6 +960,16 @@ class PortalEmpregare:
             self.abrir_vagas_anunciadas()
             return True
         except Exception as erro:
+            if pedido:
+                # O clique já pediu: pedir de novo geraria uma segunda exportação da vaga.
+                self.registrar(
+                    f"Vaga {codigo}: exportação pedida, mas a tela não voltou ({resumo_do_erro(erro)}); seguindo."
+                )
+                try:
+                    self.abrir_vagas_anunciadas()
+                except Exception:
+                    pass
+                return True
             if ultima:
                 self.registrar(f"Vaga {codigo}: não consegui pedir a exportação ({resumo_do_erro(erro)}).")
             else:
@@ -1112,7 +1140,8 @@ class PortalEmpregare:
                 EC.presence_of_element_located((By.CSS_SELECTOR, 'a[href="/empresa/exportacoes"]'))
             )
             self.clicar(central)
-        except TimeoutException:
+        except Exception:
+            # Menu que não abriu, clique interceptado, página trocada no meio: vai pelo endereço.
             self.driver.get(URL_EXPORTACOES)
         try:
             self._esperar(30).until(
@@ -1141,6 +1170,8 @@ class PortalEmpregare:
         coletar()
         posicao = 0
         for _ in range(200):
+            if not self.restante(1):
+                break
             posicao += 400
             atual, maximo = self.driver.execute_script(JS_ROLAR, posicao)
             time.sleep(0.4)
@@ -1192,7 +1223,7 @@ class PortalEmpregare:
                 "document.body.appendChild(a); a.click(); a.remove();",
                 url,
             )
-        arquivo = esperar_download(pasta, antes)
+        arquivo = esperar_download(pasta, antes, limite=self.restante(TIMEOUT_DOWNLOAD))
         return os.path.join(pasta, arquivo) if arquivo else None
 
 

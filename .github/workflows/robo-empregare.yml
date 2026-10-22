@@ -21,15 +21,17 @@ name: Robô da Empregare
 # (captura no dia da DATA DE RESPOSTA ou antes); NÃO exporta, não grava a carga,
 # não fecha a vaga e NÃO pré-classifica: situação, ativos e lote não mudam.
 # Nunca reduz anexos; "seco" só compara (scripts/robo-empregare/so_anexos.py).
-# Ao fim de uma carga normal ou forçada, o passo "Pré-classificar" recalcula a
-# pré-classificação da Avaliação documental dos editais carregados
-# (scripts/pre_classificacao/; ver pre-classificacao.yml).
+# Ao fim de uma carga normal ou forçada que gravou alguma vaga (saída "carga"
+# do passo do robô), o job "Pré-classificar" chama pre-classificacao.yml
+# (workflow_call, no grupo de concorrência dele) para recalcular a
+# pré-classificação da Avaliação documental dos editais carregados.
 # Inscrições congeladas (migration 20261020170000): edital com a trava ligada
 # fica fora da carga e da pré-classificação (sem filtro, pulado; pedido em
 # editais/vagas, a execução é recusada). "forcar_congelado" é o token que o
 # MONITORA manda quando o administrador global pede "Forçar edital com
 # inscrições congeladas" (com motivo, registrado no banco); vale para o robô e
-# para o passo "Pré-classificar". O modo anexos continua permitido.
+# para o passo "Pré-classificar". O modo anexos (que grava respostas e anexos)
+# também pede a liberação, salvo com "seco" (só compara; 20261022120000).
 # Registro: o primeiro passo grava no MONITORA a execução iniciada direto aqui
 # (Run workflow, gh workflow run), com quem a iniciou (python/monitora/
 # disparo_externo.py); falha nele só gera aviso.
@@ -103,8 +105,12 @@ on:
 permissions:
   contents: read
 
+# Mesmo grupo da leitura dos arquivos (leitura-de-arquivos.yml): a leitura não baixa
+# anexo que a carga está trocando. O GitHub guarda só uma execução esperando por grupo
+# (a nova cancela a que esperava): disparar_robo recusa o pedido quando já há uma
+# esperando (FC_EXECUCAO_PENDENTE_NO_GRUPO, migration 20261022120000).
 concurrency:
-  group: robo-empregare
+  group: empregare
   cancel-in-progress: false
 
 jobs:
@@ -112,6 +118,8 @@ jobs:
     name: Empregare → Supabase
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    outputs:
+      carga: ${{ steps.robo.outputs.carga }}
 
     steps:
       - name: Baixar código
@@ -154,6 +162,7 @@ jobs:
       # Os inputs vão por variável de ambiente (nunca interpolados no shell) e o
       # script valida o formato de cada um.
       - name: Rodar o robô
+        id: robo
         env:
           EMPREGARE_EMAIL: ${{ secrets.EMPREGARE_EMAIL }}
           EMPREGARE_SENHA: ${{ secrets.EMPREGARE_SENHA }}
@@ -183,20 +192,22 @@ jobs:
           if [ "$ANEXOS" = "sim" ]; then args+=(--anexos); fi
           python scripts/robo-empregare/robo_empregare.py "${args[@]}"
 
-      # Ao fim de uma carga (normal ou forçada), recalcula a pré-classificação da
-      # Avaliação documental dos editais das vagas carregadas (job Python
-      # scripts/pre_classificacao/, --apos-robo; o mesmo de pre-classificacao.yml).
-      # Roda também se o robô terminou parcial. Uma falha aqui não muda o
-      # resultado do robô: aparece no log e no Status das atualizações, e o
-      # "Recalcular" da aba Pré-classificação refaz. NUNCA no modo anexos (nem nos
-      # outros): só normal e forcar exportam e mexem na carga. Edital com
-      # inscrições congeladas fica de fora, salvo o mesmo forcar_congelado.
-      - name: Pré-classificar os editais carregados
-        if: ${{ !cancelled() && (inputs.modo == 'normal' || inputs.modo == 'forcar') }}
-        continue-on-error: true
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          DISPARADO_POR: robo
-          FORCAR_CONGELADO: ${{ inputs.forcar_congelado }}
-        run: python scripts/pre_classificacao/pre_classificacao.py --apos-robo
+  # Ao fim de uma carga (normal ou forçada) que gravou alguma vaga, recalcula a
+  # pré-classificação da Avaliação documental dos editais das vagas carregadas
+  # (pre-classificacao.yml com apos_robo: o mesmo job, no grupo de concorrência
+  # "pre-classificacao", para não rodar junto com um "Recalcular"). Roda também se
+  # o robô terminou parcial; não roda se nada foi gravado, se a execução foi
+  # cancelada nem no modo anexos (nem nos outros): só normal e forcar mexem na
+  # carga. Uma falha aqui não muda o resultado do robô: aparece no log e no Status
+  # das atualizações, e o "Recalcular" da aba Pré-classificação refaz. Edital com
+  # inscrições congeladas fica de fora, salvo o mesmo forcar_congelado.
+  pre_classificar:
+    name: Pré-classificar os editais carregados
+    needs: robo
+    if: ${{ !cancelled() && needs.robo.outputs.carga == 'sim' && (inputs.modo == 'normal' || inputs.modo == 'forcar') }}
+    uses: ./.github/workflows/pre-classificacao.yml
+    with:
+      apos_robo: true
+      disparado_por: robo
+      forcar_congelado: ${{ inputs.forcar_congelado }}
+    secrets: inherit

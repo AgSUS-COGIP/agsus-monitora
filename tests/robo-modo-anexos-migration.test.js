@@ -202,12 +202,13 @@ describe("workflow do robô no modo anexos", () => {
   });
 
   it("a pré-classificação NÃO roda no modo anexos (só normal e forcar)", () => {
+    // Job que chama pre-classificacao.yml (20261022120000), só com carga gravada.
     const passo = WORKFLOW.slice(
-      WORKFLOW.indexOf("- name: Pré-classificar os editais carregados"),
+      WORKFLOW.indexOf("name: Pré-classificar os editais carregados"),
     );
     const condicao = passo.match(/^\s*if: (.*)$/m)[1];
     expect(condicao).toBe(
-      "${{ !cancelled() && (inputs.modo == 'normal' || inputs.modo == 'forcar') }}",
+      "${{ !cancelled() && needs.robo.outputs.carga == 'sim' && (inputs.modo == 'normal' || inputs.modo == 'forcar') }}",
     );
     expect(condicao).not.toContain("anexos");
   });

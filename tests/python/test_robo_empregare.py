@@ -813,7 +813,7 @@ class FluxoDeUmaVaga(unittest.TestCase):
     def test_grava_em_lotes_e_fecha(self):
         chamadas = []
 
-        def chamar(_config, funcao, corpo):
+        def chamar(_config, funcao, corpo, tentativas=3):
             chamadas.append((funcao, corpo))
             if funcao == "fechar_vaga_empregare":
                 return {"situacao": "GRAVADA", "ativos": 1202, "desativadas": 0}
@@ -834,7 +834,7 @@ class FluxoDeUmaVaga(unittest.TestCase):
         chamadas = []
         saida = []
 
-        def chamar(_config, funcao, corpo):
+        def chamar(_config, funcao, corpo, tentativas=3):
             chamadas.append((funcao, corpo))
             if funcao == "fechar_vaga_empregare":
                 return {"situacao": "GRAVADA", "ativos": 1202, "desativadas": 0}
@@ -863,7 +863,7 @@ class FluxoDeUmaVaga(unittest.TestCase):
     def test_recusa_na_primeira_metade_para_a_vaga(self):
         chamadas = []
 
-        def chamar(_config, funcao, corpo):
+        def chamar(_config, funcao, corpo, tentativas=3):
             chamadas.append((funcao, len(corpo.get("p_linhas", []))))
             if funcao == "gravar_lote_empregare" and len(corpo["p_linhas"]) > 100:
                 raise self._estouro(funcao)
@@ -877,7 +877,7 @@ class FluxoDeUmaVaga(unittest.TestCase):
     def test_estouro_no_lote_minimo_vira_falha_sem_fechar(self):
         chamadas = []
 
-        def chamar(_config, funcao, corpo):
+        def chamar(_config, funcao, corpo, tentativas=3):
             chamadas.append(funcao)
             if funcao == "gravar_lote_empregare":
                 raise self._estouro(funcao)
@@ -891,7 +891,7 @@ class FluxoDeUmaVaga(unittest.TestCase):
     def test_outro_erro_do_banco_nao_divide_o_lote(self):
         chamadas = []
 
-        def chamar(_config, funcao, corpo):
+        def chamar(_config, funcao, corpo, tentativas=3):
             chamadas.append(funcao)
             raise self.robo.supabase_rpc.ErroDoSupabase(funcao, 400, "22023: Código de vaga inválido")
 
@@ -912,7 +912,7 @@ class FluxoDeUmaVaga(unittest.TestCase):
         )
         chamadas = []
 
-        def chamar(_config, funcao, corpo):
+        def chamar(_config, funcao, corpo, tentativas=3):
             chamadas.append((funcao, corpo))
             if funcao == "fechar_vaga_empregare":
                 return {"situacao": "GRAVADA", "ativos": 3, "desativadas": 0}
@@ -939,7 +939,7 @@ class FluxoDeUmaVaga(unittest.TestCase):
     def test_sem_links_grava_como_antes(self):
         chamadas = []
 
-        def chamar(_config, funcao, corpo):
+        def chamar(_config, funcao, corpo, tentativas=3):
             chamadas.append((funcao, corpo))
             return {"situacao": "GRAVADA" if funcao == "fechar_vaga_empregare" else "EM_CARGA"}
 
@@ -950,7 +950,7 @@ class FluxoDeUmaVaga(unittest.TestCase):
     def test_banco_sem_a_migration_fecha_sem_o_identificador(self):
         chamadas = []
 
-        def chamar(_config, funcao, corpo):
+        def chamar(_config, funcao, corpo, tentativas=3):
             chamadas.append((funcao, dict(corpo)))
             if funcao == "fechar_vaga_empregare" and "p_vaga_interno" in corpo:
                 raise self.robo.supabase_rpc.ErroDoSupabase(funcao, 404, "PGRST202: function not found")
@@ -972,7 +972,7 @@ class FluxoDeUmaVaga(unittest.TestCase):
     def test_trava_para_no_primeiro_lote(self):
         chamadas = []
 
-        def chamar(_config, funcao, corpo):
+        def chamar(_config, funcao, corpo, tentativas=3):
             chamadas.append(funcao)
             return {"situacao": "RECUSADA"}
 
@@ -980,7 +980,7 @@ class FluxoDeUmaVaga(unittest.TestCase):
         self.assertEqual(chamadas, ["gravar_lote_empregare", "fechar_vaga_empregare"])
 
     def test_erro_inesperado_perde_so_a_vaga(self):
-        def chamar(_config, funcao, corpo):
+        def chamar(_config, funcao, corpo, tentativas=3):
             raise ValueError("resposta truncada")
 
         self.assertEqual(self.robo.gravar_vaga({}, "gh-x", "177979", self.caminho, chamar), "FALHA")
@@ -1097,7 +1097,7 @@ class LotesDeExportacao(unittest.TestCase):
         self.antigos = (robo_empregare.registrar, robo_empregare.gravar_vaga)
         robo_empregare.registrar = self.logs.append
 
-        def gravar(_config, _sync, codigo, _caminho, enderecos=None):
+        def gravar(_config, _sync, codigo, _caminho, enderecos=None, totais=None):
             self.gravadas.append(codigo)
             return "GRAVADA"
 
@@ -1124,7 +1124,7 @@ class LotesDeExportacao(unittest.TestCase):
         portal = CentralFalsa(visiveis=15)
         contagem = {}
         self.assertEqual(self.processar(portal, contagem=contagem), (30, 0))
-        self.assertEqual(contagem, {"baixadas": 30, "falhas": 0})
+        self.assertEqual(contagem, {"baixadas": 30, "falhas": 0, "gravadas": 0, "anexos_com_falha": 0})
         self.assertEqual(self.robo.TAMANHO_DO_LOTE_DE_EXPORTACAO, 10)
         codigos = [v["vaga"] for v in self.vagas]
         self.assertEqual(sorted(self.gravadas), sorted(codigos))
@@ -1161,7 +1161,7 @@ class LotesDeExportacao(unittest.TestCase):
         portal = CentralFalsa(atrasadas=[atrasada], nunca=[sumida], falha_ao_pedir=[recusada])
         contagem = {}
         self.assertEqual(self.processar(portal, contagem=contagem), (29, 1))
-        self.assertEqual(contagem, {"baixadas": 29, "falhas": 1})
+        self.assertEqual(contagem, {"baixadas": 29, "falhas": 1, "gravadas": 0, "anexos_com_falha": 0})
         self.assertEqual({c: n for c, n in portal.pedidos.items() if n > 1}, {atrasada: 2, sumida: 2, recusada: 2})
         segunda = [l for l in self.logs if l.startswith("Segunda passada: pedindo")]
         self.assertEqual(len(segunda), 1)

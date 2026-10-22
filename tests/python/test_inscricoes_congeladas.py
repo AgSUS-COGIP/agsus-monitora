@@ -1,7 +1,8 @@
 """
 Inscrições congeladas e o registro dos disparos (migration
 20261020170000_inscricoes_congeladas.sql): o robô da Empregare pula o edital
-congelado sem filtro e recusa o pedido explícito; o modo "só anexos" continua;
+congelado sem filtro e recusa o pedido explícito; o modo "só anexos" pede a
+liberação (ou --seco) desde 20261022120000;
 o override (--forcar-congelado) vai ao banco e a execução registra o uso; a
 pré-classificação faz o mesmo; e o registro das execuções iniciadas direto no
 GitHub (python/monitora/disparo_externo.py) nunca derruba o robô. Banco falso:
@@ -118,13 +119,19 @@ class RoboDaEmpregare(unittest.TestCase):
         self.assertEqual(codigo, 0)
         self.assertIn("Num modo que grava, este pedido seria recusado.", saida)
 
-    def test_forcar_congelado_so_com_token_valido_e_fora_do_modo_anexos(self):
+    def test_forcar_congelado_so_com_token_valido_e_no_so_anexos_sem_seco(self):
         with redirect_stdout(io.StringIO()), mock.patch("sys.stderr", io.StringIO()):
-            with self.assertRaises(SystemExit):
+            with self.assertRaises(SystemExit) as falha:
                 robo.argumentos(["--forcar-congelado", "114/2026"])
+            self.assertEqual(falha.exception.code, 3)  # entrada inválida, não o 2 do parcial
             with self.assertRaises(SystemExit):
-                robo.argumentos(["--so-anexos", "--editais", "114/2026", "--forcar-congelado", LIBERACAO])
+                robo.argumentos(["--so-anexos", "--editais", "114/2026", "--seco", "--forcar-congelado", LIBERACAO])
+            with self.assertRaises(SystemExit):
+                robo.argumentos(["--fumaca", "--forcar-congelado", LIBERACAO])
         self.assertEqual(robo.argumentos(["--forcar-congelado", f" {LIBERACAO} "]).forcar_congelado, LIBERACAO)
+        # Só anexos grava (respostas e anexos): com a liberação, vale também no edital congelado.
+        args = robo.argumentos(["--so-anexos", "--editais", "114/2026", "--forcar-congelado", LIBERACAO])
+        self.assertEqual(args.forcar_congelado, LIBERACAO)
 
     def test_uso_da_liberacao_registrado_e_falha_vira_aviso(self):
         banco = BancoDoRobo({})
@@ -161,7 +168,7 @@ class BancoDaPre:
         self.contexto = contexto
         self.chamadas = []
 
-    def __call__(self, _cfg, funcao, corpo):
+    def __call__(self, _cfg, funcao, corpo, **_opcoes):
         self.chamadas.append((funcao, json.loads(json.dumps(corpo))))
         if funcao == "pre_classificacao_ler_editais":
             return self.contexto
@@ -240,9 +247,13 @@ class RegistroDeDisparoExterno(unittest.TestCase):
 
     def test_registra_com_ator_url_e_resumo_sem_candidatos(self):
         chamadas = []
-        disparo, _ = self.registrar(self.AMBIENTE, lambda _c, f, corpo: chamadas.append((f, corpo)) or 42)
+        disparo, _ = self.registrar(
+            self.AMBIENTE, lambda _c, f, corpo, **opcoes: chamadas.append((f, corpo, opcoes)) or 42
+        )
         self.assertEqual(disparo, 42)
-        funcao, corpo = chamadas[0]
+        # Uma tentativa só: o registro não atrasa o robô.
+        self.assertEqual(chamadas[0][2], {"tentativas": 1})
+        funcao, corpo, _ = chamadas[0]
         self.assertEqual(funcao, "registrar_disparo_externo")
         self.assertEqual((corpo["p_workflow"], corpo["p_ator"], corpo["p_url"]), ("robo-empregare.yml", "fulano", URL))
         self.assertEqual(corpo["p_resumo"], "modo normal · editais 114/2026, 93/2026 · 2 vaga(s) · limite 60")
@@ -256,14 +267,14 @@ class RegistroDeDisparoExterno(unittest.TestCase):
             self.assertIn("já registrada", linhas[0])
 
     def test_falha_nunca_derruba_e_vira_aviso(self):
-        def fora(*_a):
+        def fora(*_a, **_k):
             raise supabase_rpc.ErroDoSupabase("registrar_disparo_externo", 500, "fora do ar")
 
         disparo, linhas = self.registrar(self.AMBIENTE, fora)
         self.assertIsNone(disparo)
         self.assertTrue(linhas[0].startswith("::warning::Execução NÃO registrada"))
 
-        def sem_funcao(*_a):
+        def sem_funcao(*_a, **_k):
             raise SEM_FUNCAO
 
         _, linhas = self.registrar(self.AMBIENTE, sem_funcao)
