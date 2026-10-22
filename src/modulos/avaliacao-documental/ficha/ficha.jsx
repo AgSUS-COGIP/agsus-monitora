@@ -790,7 +790,11 @@ export function ConteudoDaFicha({
         secundaria={secundaria}
         primaria={primaria}
       >
-        {st.dados.pode_reabrir ? <ReabrirAFicha loja={loja} /> : null}
+        {st.dados.pode_reabrir ||
+        (st.dados.papel === "COORDENADOR" &&
+          st.dados.ficha.situacao === "REVISAR") ? (
+          <ReabrirAFicha loja={loja} />
+        ) : null}
       </RodapeDaFicha>
     </div>
   );
