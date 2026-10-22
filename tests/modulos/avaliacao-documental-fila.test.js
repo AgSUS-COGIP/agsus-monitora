@@ -1050,35 +1050,296 @@ describe("fila: relatório de motivos", () => {
   });
 });
 
-describe("fila: reiniciar as fichas do edital (admin global)", () => {
-  it("só o admin global vê; pede motivo e chama a RPC", async () => {
-    await montar(supabaseFalso());
-    await abrirMenu();
-    expect(secao.querySelector("[data-acao='reiniciar-fichas']")).toBeNull();
-    document.body.innerHTML = "";
-
-    const supabase = supabaseFalso(fila(), {
-      reiniciar_fichas_do_edital: () => ({ reiniciadas: 5 }),
-    });
-    await montar(supabase, {
-      getProfile: () => ({ ativo: true, admin_global: true }),
-    });
+describe("fila: reiniciar as fichas do edital (dois administradores)", () => {
+  const ADMIN = { getProfile: () => ({ ativo: true, admin_global: true }) };
+  const MOTIVO = "A análise foi feita com a regra errada do edital";
+  const leitura = (extra = {}) => ({
+    schema_version: 1,
+    edital: "e93",
+    numero: "93/2026",
+    validade_horas: 24,
+    impacto: {
+      concluidas: 1509,
+      em_analise: 12,
+      com_lancamento: 10,
+      iniciadas: 1530,
+      exige_aprovacao: true,
+    },
+    bloqueio: null,
+    pedido: null,
+    historico: [],
+    ...extra,
+  });
+  const pedido = (extra = {}) => ({
+    id: 7,
+    situacao: "PENDENTE",
+    vencido: false,
+    motivo: MOTIVO,
+    por: "Beto",
+    meu: false,
+    em: "2026-10-22T12:00:00Z",
+    validade: "2026-10-23T12:00:00Z",
+    impacto: { concluidas: 1509, em_analise: 12, iniciadas: 1530 },
+    ...extra,
+  });
+  const erroDoBanco = (message, code) =>
+    Object.assign(new Error(message), { code });
+  const gaveta = () =>
+    document.querySelector("[data-tour='avd-fila-reinicio']");
+  const abrirReinicio = async () => {
     await abrirMenu();
     await clicar(secao.querySelector("[data-acao='reiniciar-fichas']"));
-    const gaveta = document.querySelector("[data-tour='avd-fila-confirmar']");
-    expect(gaveta.textContent).toContain("voltam a Pendente");
-    const confirmar = gaveta.querySelector("[data-acao='confirmar-reiniciar']");
-    expect(confirmar.disabled).toBe(true);
+    await esperar();
+  };
+
+  it("quem não é admin global não vê o menu nem lê o reinício", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await abrirMenu();
+    expect(secao.querySelector("[data-acao='reiniciar-fichas']")).toBeNull();
+    expect(
+      supabase.rpc.mock.calls.some(
+        ([nome]) => nome === "obter_reinicio_fichas_do_edital",
+      ),
+    ).toBe(false);
+  });
+
+  it("com fichas concluídas, pede o reinício com motivo e o número do edital", async () => {
+    const supabase = supabaseFalso(fila(), {
+      obter_reinicio_fichas_do_edital: () => leitura(),
+      pedir_reinicio_fichas_do_edital: () =>
+        leitura({ pedido: pedido({ meu: true, por: "Ana" }) }),
+    });
+    await montar(supabase, ADMIN);
+    await abrirReinicio();
+    const g = gaveta();
+    expect(g.textContent).toContain("1.509 concluídas e 12 em análise");
+    expect(g.textContent).toContain("Outro administrador global");
+    const pedir = g.querySelector("[data-acao='pedir-reinicio']");
+    expect(pedir.disabled).toBe(true);
+    await digitar(g.querySelector("[data-campo='motivo-do-reinicio']"), MOTIVO);
     await digitar(
-      gaveta.querySelector("textarea"),
-      "A análise documental foi feita pela planilha",
+      g.querySelector("[data-campo='numero-do-edital']"),
+      "93/2025",
     );
-    await clicar(confirmar);
+    expect(pedir.disabled).toBe(true);
+    expect(g.textContent).toContain("Não confere.");
+    await digitar(
+      g.querySelector("[data-campo='numero-do-edital']"),
+      "93/2026",
+    );
+    expect(pedir.disabled).toBe(false);
+    await clicar(pedir);
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "pedir_reinicio_fichas_do_edital",
+      { p_edital: "e93", p_motivo: MOTIVO, p_confirmacao: "93/2026" },
+    );
+    // Nada de reiniciar direto.
+    expect(
+      supabase.rpc.mock.calls.some(
+        ([nome]) => nome === "reiniciar_fichas_do_edital",
+      ),
+    ).toBe(false);
+    expect(
+      gaveta().querySelector("[data-acao='cancelar-pedido-de-reinicio']"),
+    ).not.toBeNull();
+    expect(secao.querySelector("[data-reinicio='meu-pedido']")).not.toBeNull();
+  });
+
+  it("motivo que não parece texto não habilita o pedido", async () => {
+    await montar(
+      supabaseFalso(fila(), {
+        obter_reinicio_fichas_do_edital: () => leitura(),
+      }),
+      ADMIN,
+    );
+    await abrirReinicio();
+    const g = gaveta();
+    await digitar(
+      g.querySelector("[data-campo='motivo-do-reinicio']"),
+      "dsdfsdfsfsa fdfdf",
+    );
+    await digitar(
+      g.querySelector("[data-campo='numero-do-edital']"),
+      "93/2026",
+    );
+    expect(g.querySelector("[data-acao='pedir-reinicio']").disabled).toBe(true);
+    expect(g.textContent).toContain("pelo menos 3 palavras");
+  });
+
+  it("outro admin vê o aviso e aprova digitando o número; a fila relê", async () => {
+    const supabase = supabaseFalso(fila(), {
+      obter_reinicio_fichas_do_edital: () => leitura({ pedido: pedido() }),
+      aprovar_reinicio_fichas_do_edital: () => ({
+        resultado: { reiniciadas: 1521 },
+        reinicio: leitura({ pedido: null }),
+      }),
+    });
+    await montar(supabase, ADMIN);
+    const aviso = secao.querySelector("[data-reinicio='aguardando-aprovacao']");
+    expect(aviso.textContent).toContain(
+      "Reinício pedido por Beto aguardando sua aprovação",
+    );
+    await clicar(secao.querySelector("[data-acao='ver-pedido-de-reinicio']"));
+    await esperar();
+    const g = gaveta();
+    expect(g.querySelector("[data-motivo-do-pedido]").textContent).toBe(MOTIVO);
+    const aprovar = g.querySelector("[data-acao='aprovar-reinicio']");
+    expect(aprovar.disabled).toBe(true);
+    expect(g.querySelector("[data-acao='recusar-reinicio']").disabled).toBe(
+      true,
+    );
+    await digitar(
+      g.querySelector("[data-campo='numero-do-edital']"),
+      "093/2026",
+    );
+    expect(aprovar.disabled).toBe(false);
+    const leiturasDaFila = () =>
+      supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "obter_fila_avaliacao",
+      ).length;
+    const antes = leiturasDaFila();
+    await clicar(aprovar);
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "aprovar_reinicio_fichas_do_edital",
+      { p_pedido: 7, p_confirmacao: "093/2026" },
+    );
+    expect(toast).toHaveBeenCalledWith(
+      "1521 ficha(s) de volta ao início.",
+      "success",
+    );
+    expect(leiturasDaFila()).toBeGreaterThan(antes);
+    expect(gaveta()).toBeNull();
+    expect(
+      secao.querySelector("[data-reinicio='aguardando-aprovacao']"),
+    ).toBeNull();
+  });
+
+  it("outro admin recusa com motivo opcional", async () => {
+    const supabase = supabaseFalso(fila(), {
+      obter_reinicio_fichas_do_edital: () => leitura({ pedido: pedido() }),
+      recusar_reinicio_fichas_do_edital: () => leitura(),
+    });
+    await montar(supabase, ADMIN);
+    await clicar(secao.querySelector("[data-acao='ver-pedido-de-reinicio']"));
+    await esperar();
+    const g = gaveta();
+    await digitar(
+      g.querySelector("[data-campo='numero-do-edital']"),
+      "93/2026",
+    );
+    await digitar(g.querySelector("[data-campo='motivo-da-recusa']"), "curto");
+    expect(g.querySelector("[data-acao='recusar-reinicio']").disabled).toBe(
+      true,
+    );
+    await digitar(g.querySelector("[data-campo='motivo-da-recusa']"), "");
+    await clicar(g.querySelector("[data-acao='recusar-reinicio']"));
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "recusar_reinicio_fichas_do_edital",
+      { p_pedido: 7, p_confirmacao: "93/2026", p_motivo: null },
+    );
+    expect(
+      secao.querySelector("[data-reinicio='aguardando-aprovacao']"),
+    ).toBeNull();
+  });
+
+  it("quem pediu não aprova: só cancela; a recusa do banco aparece", async () => {
+    const supabase = supabaseFalso(fila(), {
+      obter_reinicio_fichas_do_edital: () =>
+        leitura({ pedido: pedido({ meu: true, por: "Ana" }) }),
+      cancelar_reinicio_fichas_do_edital: () =>
+        erroDoBanco(
+          "Este pedido de reinício não está mais pendente (executado).",
+          "55000",
+        ),
+    });
+    await montar(supabase, ADMIN);
+    expect(
+      secao.querySelector("[data-reinicio='aguardando-aprovacao']"),
+    ).toBeNull();
+    await clicar(secao.querySelector("[data-acao='ver-pedido-de-reinicio']"));
+    await esperar();
+    const g = gaveta();
+    expect(g.querySelector("[data-acao='aprovar-reinicio']")).toBeNull();
+    await clicar(g.querySelector("[data-acao='cancelar-pedido-de-reinicio']"));
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "cancelar_reinicio_fichas_do_edital",
+      { p_pedido: 7 },
+    );
+    expect(g.querySelector("[role='alert']").textContent).toContain(
+      "não está mais pendente",
+    );
+  });
+
+  it("pedido vencido: o aviso some e a gaveta volta a pedir", async () => {
+    await montar(
+      supabaseFalso(fila(), {
+        obter_reinicio_fichas_do_edital: () =>
+          leitura({ pedido: pedido({ vencido: true }) }),
+      }),
+      ADMIN,
+    );
+    expect(secao.querySelector("[data-reinicio]")).toBeNull();
+    await abrirReinicio();
+    expect(
+      gaveta().querySelector("[data-acao='pedir-reinicio']"),
+    ).not.toBeNull();
+  });
+
+  it("edital congelado: só a frase do bloqueio, sem botão", async () => {
+    await montar(
+      supabaseFalso(fila(), {
+        obter_reinicio_fichas_do_edital: () =>
+          leitura({
+            bloqueio:
+              "As inscrições deste edital estão congeladas. Libere o congelamento na Pré-classificação antes de reiniciar as fichas.",
+          }),
+      }),
+      ADMIN,
+    );
+    await abrirReinicio();
+    const g = gaveta();
+    expect(g.querySelector("[role='alert']").textContent).toContain(
+      "congeladas",
+    );
+    expect(g.querySelector("[data-acao='pedir-reinicio']")).toBeNull();
+    expect(g.querySelector("[data-acao='aprovar-reinicio']")).toBeNull();
+  });
+
+  it("sem ficha trabalhada: reinicia direto, com um administrador", async () => {
+    const supabase = supabaseFalso(fila(), {
+      obter_reinicio_fichas_do_edital: () =>
+        leitura({
+          impacto: {
+            concluidas: 0,
+            em_analise: 1,
+            com_lancamento: 0,
+            iniciadas: 1,
+            exige_aprovacao: false,
+          },
+        }),
+      reiniciar_fichas_do_edital: () => ({ reiniciadas: 1 }),
+    });
+    await montar(supabase, ADMIN);
+    await abrirReinicio();
+    const g = gaveta();
+    expect(g.querySelector("[data-acao='pedir-reinicio']")).toBeNull();
+    await digitar(g.querySelector("[data-campo='motivo-do-reinicio']"), MOTIVO);
+    await digitar(
+      g.querySelector("[data-campo='numero-do-edital']"),
+      "93/2026",
+    );
+    await clicar(g.querySelector("[data-acao='reiniciar-direto']"));
     await esperar();
     expect(supabase.rpc).toHaveBeenCalledWith("reiniciar_fichas_do_edital", {
       p_edital: "e93",
-      p_motivo: "A análise documental foi feita pela planilha",
+      p_motivo: MOTIVO,
     });
+    expect(gaveta()).toBeNull();
   });
 });
 

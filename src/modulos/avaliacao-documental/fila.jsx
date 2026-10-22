@@ -65,6 +65,7 @@ import { erroDoMotivoDaFila } from "../../lib/avaliacao-documental/qualidade-do-
 import { ModeloDoEspelhoDeNota } from "./modelo-do-espelho.tsx";
 import { ConteudoDaFicha } from "./ficha/ficha.jsx";
 import { ResumoDoAndamento } from "./resumo-do-andamento.tsx";
+import { ReinicioDasFichas } from "./reinicio-das-fichas.tsx";
 
 /*
   Aba Fila (fase F3): o resumo do andamento (o edital e o bloco recolhível
@@ -203,7 +204,6 @@ const TITULOS_DA_ACAO = {
   distribuir: "Distribuir fichas",
   liberar: "Liberar reservas",
   revisao: "Mandar para revisão",
-  reiniciar: "Reiniciar as fichas do edital",
 };
 
 function AcaoEmLote({ fila, acao, dados, aoFechar }) {
@@ -224,17 +224,9 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
     acao.fichas.some((c) => c.ficha.reserva?.usuario !== dados.eu);
   const exigeMotivo =
     acao.tipo === "revisao" ||
-    acao.tipo === "reiniciar" ||
     deOutros ||
     (acao.tipo === "distribuir" && (plano.redistribui || para === "fila"));
-  // Reiniciar (só admin global) pede só o tamanho; os outros, também o texto mínimo.
-  const erroDoMotivo = !exigeMotivo
-    ? ""
-    : acao.tipo === "reiniciar"
-      ? motivo.trim().length >= 10
-        ? ""
-        : "De 10 a 2.000 caracteres."
-      : erroDoMotivoDaFila(motivo);
+  const erroDoMotivo = exigeMotivo ? erroDoMotivoDaFila(motivo) : "";
   const motivoOk = !erroDoMotivo;
   const vazio =
     acao.tipo === "distribuir"
@@ -253,8 +245,6 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
         })),
         motivo.trim(),
       );
-    else if (acao.tipo === "reiniciar")
-      r = await fila.reiniciarFichas(motivo.trim());
     else if (acao.tipo === "liberar")
       r = await fila.liberarReservas(
         acao.fichas.map((c) => c.ficha.id),
@@ -325,12 +315,6 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
               </Aviso>
             ) : null}
           </>
-        ) : null}
-        {acao.tipo === "reiniciar" ? (
-          <Aviso tom="warning">
-            Todas as fichas do lote voltam a Pendente, sem responsável nem
-            análise. As fora do lote ficam como estão.
-          </Aviso>
         ) : null}
         {exigeMotivo ? (
           <Campo
@@ -892,6 +876,7 @@ export function Fila({ e, fila }) {
   const [incluindo, setIncluindo] = useState(false);
   const [espelhos, setEspelhos] = useState(false);
   const [modeloDoEspelho, setModeloDoEspelho] = useState(false);
+  const [reiniciando, setReiniciando] = useState(false);
   // A gaveta do relatório abre pelo próprio estado: abrir e fechar não redesenham a lista.
   const relatorio = useRef(null);
   const [busca, setBusca] = useState(st.filtro.busca);
@@ -1177,10 +1162,10 @@ export function Fila({ e, fila }) {
       ? [
           {
             id: "reiniciar-fichas",
-            rotulo: "Reiniciar as fichas do edital",
+            rotulo: "Pedir reinício das fichas",
             icone: "fa-rotate-left",
             desabilitado: !noLote.length || Boolean(st.acao),
-            aoEscolher: () => setAcao({ tipo: "reiniciar", fichas: noLote }),
+            aoEscolher: () => setReiniciando(true),
             dados: { "data-acao": "reiniciar-fichas" },
           },
         ]
@@ -1216,6 +1201,19 @@ export function Fila({ e, fila }) {
 
   return (
     <div className="avd-fila" data-tour="avd-fila">
+      <ReinicioDasFichas
+        editalId={st.editalId || e.editalId}
+        rpc={fila.rpc}
+        admin={Boolean(fila.ehAdminGlobal?.())}
+        aberto={reiniciando}
+        aoAbrir={() => setReiniciando(true)}
+        aoFechar={() => setReiniciando(false)}
+        reiniciarDireto={fila.reiniciarFichas}
+        aoReiniciar={(n) => {
+          fila.toast(`${n} ficha(s) de volta ao início.`, "success");
+          void fila.carregar();
+        }}
+      />
       {andamento.vagas.length ? (
         <ResumoDoAndamento
           andamento={andamento}

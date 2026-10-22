@@ -516,7 +516,8 @@ export function criarEstadoDaFila({
       (r) => `${r?.criadas ?? 0} ficha(s) aberta(s).`,
     );
 
-  /* Só o administrador global (o banco confere): as fichas do lote voltam ao início. */
+  /* Só o administrador global e só em edital sem ficha trabalhada (o banco confere; com
+     ficha concluída ou em análise, o pedido com dois administradores: reinicio-das-fichas.tsx). */
   const reiniciarFichas = (motivo) =>
     executar(
       "reiniciar",

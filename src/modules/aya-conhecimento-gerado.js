@@ -1417,6 +1417,28 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Reiniciar as fichas do edital (dois administradores)",
+    perguntas: [
+      "reiniciar fichas",
+      "reiniciar as fichas do edital",
+      "pedir reinicio",
+      "aprovar reinicio",
+      "recusar reinicio",
+      "cancelar pedido de reinicio",
+      "zerar a analise",
+      "voltar fichas a pendente",
+      "reinicio aguardando aprovacao",
+      "dois administradores",
+    ],
+    resposta:
+      'Só o administrador global reinicia as fichas de um edital, em Fila › Ações da coordenação › Pedir reinício das fichas. Quando nenhuma ficha foi trabalhada (nenhuma concluída nem em análise com lançamento), um administrador reinicia na hora, com motivo e digitando o número do edital. Com trabalho feito, são dois passos com dois administradores globais diferentes: o primeiro pede, com motivo (pelo menos 3 palavras) e o número do edital digitado, vendo quantas fichas concluídas e em análise voltariam a Pendente; o pedido vale 24 horas e quem pediu pode cancelar. Outro administrador global vê no alto da Fila "Reinício pedido por … aguardando sua aprovação" e, digitando o número do edital, aprova (só então as fichas voltam a Pendente, sem responsável nem análise; as fora do lote ficam fora) ou recusa. Quem pediu não aprova o próprio pedido, e pedido vencido não executa. Edital com inscrições congeladas ou encerrado (todas as fichas do lote concluídas) não pode ser reiniciado, nem com dois administradores: o congelamento sai antes, pela Pré-classificação. Pedido, aprovação, recusa, cancelamento e execução ficam no histórico da gaveta; cada ficha ganha o registro de reinício. Nada se apaga.',
+    fato: "No MONITORA, reiniciar fichas de edital com trabalho feito exige dois administradores globais diferentes, com o número do edital digitado nos dois passos; edital congelado ou encerrado não é reiniciado.",
+    fonte:
+      "src/modulos/avaliacao-documental/reinicio-das-fichas.tsx; src/lib/avaliacao-documental/reinicio-das-fichas.ts; supabase/migrations/20261022210000_reinicio_das_fichas_com_dois_administradores.sql",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "Listas Provisória e Lote de convocação",
     perguntas: [
       "lista provisoria oficial",
