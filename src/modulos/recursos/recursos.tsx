@@ -293,6 +293,7 @@ function TelaDaArea({
       {/* Com o formulário aberto, a gaveta sai de cena e volta quando ele fecha. */}
       {aberto && !e.formulario && !e.modelosAbertos ? (
         <GavetaDoRecurso
+          key={aberto.id}
           estado={estado}
           recurso={aberto}
           detalhe={e.detalhes.get(aberto.id)}

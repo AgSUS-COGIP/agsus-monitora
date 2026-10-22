@@ -205,6 +205,18 @@ export function criarEstadoDosRecursos({
   let pedido = 0;
   const ouvintes = new Set<() => void>();
   const ajustesPedidos = new Set<Id>();
+  /*
+    Gravações de ajuste por recurso: a leitura que começou antes de uma
+    gravação volta com o que havia antes dela e não pode sobrescrever a tela.
+  */
+  const gravacoesDosAjustes = new Map<Id, number>();
+  /*
+    A leitura mais recente do detalhe de cada recurso: duas leituras do mesmo
+    recurso (abrir a gaveta e a releitura depois de salvar) podem voltar fora
+    de ordem, e a antiga não pode sobrescrever a nova.
+  */
+  const ultimaLeituraDoDetalhe = new Map<Id, number>();
+  let leiturasDoDetalhe = 0;
 
   function publicar(mudancas: Partial<SnapshotDosRecursos>) {
     estado = { ...estado, ...mudancas };
@@ -364,10 +376,13 @@ export function criarEstadoDosRecursos({
 
   async function carregarDetalhe(id: Id) {
     const minhaGeracao = geracao;
+    const minhaLeitura = ++leiturasDoDetalhe;
+    ultimaLeituraDoDetalhe.set(id, minhaLeitura);
     const { data, error } = await banco.rpc("get_recurso_candidato_detalhe", {
       p_id: id,
     });
     if (minhaGeracao !== geracao) return null;
+    if (ultimaLeituraDoDetalhe.get(id) !== minhaLeitura) return null;
     const detalhes = new Map(estado.detalhes);
     detalhes.set(
       id,
@@ -556,6 +571,8 @@ export function criarEstadoDosRecursos({
     const minhaGeracao = geracao;
     if (ajustesPedidos.has(id)) return;
     ajustesPedidos.add(id);
+    const gravacao = gravacoesDosAjustes.get(id) ?? 0;
+    let velha = false;
     try {
       const { data, error } = await banco.rpc(
         "obter_ajustes_pontuacao_recurso",
@@ -564,9 +581,15 @@ export function criarEstadoDosRecursos({
         },
       );
       if (minhaGeracao !== geracao) return null;
-      guardarAjustes(id, error ? { erro: mensagemDe(error) } : data || {});
+      // Houve gravação no meio: a resposta é de antes dela; lê de novo.
+      velha = (gravacoesDosAjustes.get(id) ?? 0) !== gravacao;
+      if (!velha)
+        guardarAjustes(id, error ? { erro: mensagemDe(error) } : data || {});
     } finally {
-      if (minhaGeracao === geracao) ajustesPedidos.delete(id);
+      if (minhaGeracao === geracao) {
+        ajustesPedidos.delete(id);
+        if (velha) void carregarAjustes(id);
+      }
     }
   }
 
@@ -627,6 +650,10 @@ export function criarEstadoDosRecursos({
     return executar(`ajuste:${acao}`, "Salvando…", async (vigente) => {
       const { data, error } = await chamar();
       if (!vigente()) return null;
+      gravacoesDosAjustes.set(
+        recurso.id,
+        (gravacoesDosAjustes.get(recurso.id) ?? 0) + 1,
+      );
       if (error) {
         toast(`Não foi possível concluir: ${mensagemDe(error)}`, "error");
         return false;
@@ -774,7 +801,13 @@ export function criarEstadoDosRecursos({
       qt_anexos: Math.max(0, (Number(r.qt_anexos) || 0) + quantos),
     }));
 
-  /* Envia ao bucket (caminho da área e do recurso) e registra no banco. */
+  /*
+    Envia ao bucket (caminho da área e do recurso) e registra no banco. Se o
+    registro não acontece (falhou, ou a tela mudou no meio), o arquivo enviado
+    sai do bucket: sem isso, ficava órfão, sem linha em TB_ANEXO_RECURSO
+    (política de 20261022180000: quem enviou apaga o próprio arquivo ainda
+    não registrado, nos primeiros 10 minutos).
+  */
   async function enviarERegistrar(
     recursoId: Id,
     arquivo: File,
@@ -792,8 +825,24 @@ export function criarEstadoDosRecursos({
     const envio = await storage()
       .from(BUCKET_DOS_ANEXOS)
       .upload(caminho, arquivo, { contentType: mime, upsert: false });
-    if (!vigente()) return;
-    if (envio.error) throw new Error(mensagemDe(envio.error));
+    const apagarEnviado = async () => {
+      try {
+        const { error } = await storage()
+          .from(BUCKET_DOS_ANEXOS)
+          .remove([caminho]);
+        if (error) console.warn("Anexo enviado e não registrado:", error);
+      } catch (erro) {
+        console.warn("Anexo enviado e não registrado:", erro);
+      }
+    };
+    if (envio.error) {
+      if (!vigente()) return;
+      throw new Error(mensagemDe(envio.error));
+    }
+    if (!vigente()) {
+      await apagarEnviado();
+      return;
+    }
     const { error } = await banco.rpc("registrar_anexo_recurso", {
       p_recurso_id: recursoId,
       p_tipo: tipo,
@@ -801,7 +850,10 @@ export function criarEstadoDosRecursos({
       p_caminho: caminho,
       p_resposta_id: respostaId,
     });
-    if (error) throw new Error(mensagemDe(error));
+    if (error) {
+      await apagarEnviado();
+      throw new Error(mensagemDe(error));
+    }
   }
 
   function enviarAnexo(recursoId: Id, arquivo: File, tipo: string) {
