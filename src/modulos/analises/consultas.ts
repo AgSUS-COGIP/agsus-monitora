@@ -13,7 +13,7 @@ import type {
   - `podeLer()`: o porteiro (`usuario_pode_ler_analises`).
   - `carregarEscopo()`: a lista enxuta da área (get_analises_dashboard_payload_v2)
     no escopo da "Situação do processo". "Ativo" e "Inativo" são um pacote
-    cada; "Todos" são os pacotes 'ativo', 'inativo' e 'desativadas' juntos, na
+    cada; "Todos" são os pacotes 'ativo' e 'inativo' juntos (sem as desativadas), na
     ordem do banco (src/lib/lista-do-painel-de-analises.js).
     Cópia no navegador (IndexedDB, src/lib/cache-do-painel-de-analises.js): com
     cópia, devolve na hora (`daCopia`) e revalida por trás (`revalidacao`);

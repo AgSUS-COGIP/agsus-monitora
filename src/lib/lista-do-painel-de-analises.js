@@ -13,9 +13,11 @@
   - "tem PDF?" vem como `tem_pdf`; o link, no detalhe e no CSV;
   - pontuações, experiências, links e datas ficam no detalhamento
     (get_analise_detalhe_do_painel), buscado ao abrir o registro;
-  - "Todos" não tem pacote próprio: são os escopos 'ativo', 'inativo' e
-    'desativadas' (análise desativada de edital ativo) juntos, na ordem do
-    banco (`juntarPartesDoPainel`).
+  - "Todos" não tem pacote próprio: são os escopos 'ativo' e 'inativo'
+    juntos, na ordem do banco (`juntarPartesDoPainel`). As análises
+    desativadas (saíram da planilha, ou ficha fora do lote) não entram no
+    painel desde 22/10/2026: os números do "Todos" contavam pendentes e
+    revisões que não existem mais.
 
   O payload antigo (schema 3, com todas as colunas) passa por aqui sem mudar:
   toda regra só completa o que falta na linha.
@@ -26,11 +28,7 @@ const temCampo = (objeto, campo) =>
   Boolean(objeto) && Object.prototype.hasOwnProperty.call(objeto, campo);
 
 /* As partes do escopo "Todos", na ordem em que o banco as separa. */
-export const PARTES_DE_TODOS = Object.freeze([
-  "ativo",
-  "inativo",
-  "desativadas",
-]);
+export const PARTES_DE_TODOS = Object.freeze(["ativo", "inativo"]);
 
 /* Os escopos que o painel pede ao servidor para cada situação do filtro. */
 export function partesDoEscopo(escopo) {

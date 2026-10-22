@@ -508,7 +508,7 @@ describe("filtros", () => {
 });
 
 describe("situação do processo (escopo)", () => {
-  it("Inativo pede o pacote dele; Todos junta os três; Limpar tudo volta ao Ativo", async () => {
+  it("Inativo pede o pacote dele; Todos junta ativo e inativo (sem as desativadas); Limpar tudo volta ao Ativo", async () => {
     const supabase = supabaseFalso({
       respostas: {
         get_analises_dashboard_payload_v2_se_mudou: ({ p_scope }) => ({
@@ -546,8 +546,8 @@ describe("situação do processo (escopo)", () => {
       chamadas(supabase, "get_analises_dashboard_payload_v2_se_mudou").map(
         (a) => a.p_scope,
       ),
-    ).toEqual(["ativo", "inativo", "ativo", "inativo", "desativadas"]);
-    expect(linhasDaFila()).toHaveLength(6);
+    ).toEqual(["ativo", "inativo", "ativo", "inativo"]);
+    expect(linhasDaFila()).toHaveLength(5);
 
     await clicar(secao.querySelector('[data-acao="limpar-filtros"]'));
     await esperar();
