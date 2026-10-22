@@ -15,12 +15,14 @@ describe("reabrir fichas em revisão", () => {
     expect(migration).toContain('private."FC_MOTIVO_REABERTURA"');
   });
   it("preserva a análise e registra o status real anterior no histórico", () => {
-    expect(migration).toContain("when coalesce(\"CO_USUARIO_RESPONSAVEL\", \"CO_USUARIO_CONCLUSAO\") is null then 'PENDENTE'");
-    expect(migration).toContain('\"TP_SITUACAO\" = \"NU_VERSAO\"').toBe(false);
-    expect(migration).toContain('\'REABRIR\', v_f."TP_SITUACAO"');
-    expect(migration).not.toContain('\"DS_LANCAMENTO\" =');
-    expect(migration).not.toContain('\"VL_NOTA_FINAL\" =');
-    expect(migration).not.toContain('\"DS_RESULTADO\" =');
+    expect(migration).toContain(
+      `when coalesce("CO_USUARIO_RESPONSAVEL", "CO_USUARIO_CONCLUSAO") is null then 'PENDENTE'`,
+    );
+    expect(migration).not.toContain('"TP_SITUACAO" = "NU_VERSAO"');
+    expect(migration).toContain(`'REABRIR', v_f."TP_SITUACAO"`);
+    expect(migration).not.toContain('"DS_LANCAMENTO" =');
+    expect(migration).not.toContain('"VL_NOTA_FINAL" =');
+    expect(migration).not.toContain('"DS_RESULTADO" =');
   });
   it("tela só oferece a reabertura em revisão para coordenador", () => {
     expect(tela).toContain('st.dados.papel === "COORDENADOR"');
