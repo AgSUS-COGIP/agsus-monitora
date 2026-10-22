@@ -37,6 +37,26 @@ describe("cabeçalhos HTTP de segurança", () => {
     expect(headers.get("X-XSS-Protection")).toBe("0");
   });
 
+  /*
+    Proteção contra clickjacking (verificação de segurança de 21/10/2026): só
+    a própria origem embute o MONITORA (o painel em iframe é da mesma origem).
+    A CSP ainda é Report-Only, então o frame-ancestors dela não bloqueia nada;
+    quem bloqueia é o X-Frame-Options.
+  */
+  it("não deixa outro site embutir o MONITORA em moldura", () => {
+    const config = loadConfig();
+    const headers = headersForSource(config, "/(.*)");
+
+    expect(headers.get("X-Frame-Options")).toBe("SAMEORIGIN");
+    expect(headers.get("Content-Security-Policy-Report-Only")).toContain(
+      "frame-ancestors 'self'",
+    );
+    expect(headers.has("Content-Security-Policy")).toBe(false);
+    expect(
+      effectiveHeaders(config, "/auth/callback").get("X-Frame-Options"),
+    ).toBe("SAMEORIGIN");
+  });
+
   it("desabilita recursos de navegador não utilizados", () => {
     const config = loadConfig();
     const permissions =
