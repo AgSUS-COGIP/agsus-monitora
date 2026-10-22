@@ -5,7 +5,10 @@ const nome = "20261022160000_reabrir_fichas_em_revisao.sql";
 const migration = readFileSync(`supabase/migrations/${nome}`, "utf8");
 const rollback = readFileSync(`supabase/rollback/${nome}`, "utf8");
 const ensaio = readFileSync(`supabase/ensaios/${nome}`, "utf8");
-const tela = readFileSync("src/modulos/avaliacao-documental/ficha/ficha.jsx", "utf8");
+const tela = readFileSync(
+  "src/modulos/avaliacao-documental/ficha/ficha.jsx",
+  "utf8",
+);
 
 describe("reabrir fichas em revisão", () => {
   it("só aceita fichas concluídas ou em revisão com a mesma autorização e controle de versão", () => {
