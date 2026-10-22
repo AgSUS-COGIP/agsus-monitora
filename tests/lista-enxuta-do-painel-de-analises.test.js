@@ -41,13 +41,10 @@ const parte = (geradoEm, linhas, extra = {}) => ({
   linhas,
 });
 
-describe("Todos = ativo + inativo + desativadas", () => {
-  it("pede os três escopos só para Todos", () => {
-    expect(partesDoEscopo("todos")).toEqual([
-      "ativo",
-      "inativo",
-      "desativadas",
-    ]);
+describe("Todos = ativo + inativo (sem as desativadas)", () => {
+  it("pede os dois escopos só para Todos", () => {
+    expect(partesDoEscopo("todos")).toEqual(["ativo", "inativo"]);
+    expect(partesDoEscopo("todos")).not.toContain("desativadas");
     expect(partesDoEscopo("inativo")).toEqual(["inativo"]);
   });
 

@@ -110,12 +110,12 @@ describe("a lista por escopo e a cópia do navegador", () => {
     expect(armazenamento.mapa.size).toBe(0);
   });
 
-  it("Todos: os três pacotes, juntos e sem repetir", async () => {
+  it("Todos: ativo e inativo, juntos e sem repetir (sem as desativadas)", async () => {
     const supabase = supabaseCom((_, { p_scope }) => ({
       data: {
         ativo: pacote("ativo", ["a1", "a3"]),
         inativo: pacote("inativo", ["a2"]),
-        desativadas: pacote("desativadas", ["a3"]),
+        desativadas: pacote("desativadas", ["a4"]),
       }[p_scope],
       error: null,
     }));
@@ -132,7 +132,6 @@ describe("a lista por escopo e a cópia do navegador", () => {
     expect(supabase.rpc.mock.calls.map(([, a]) => a.p_scope)).toEqual([
       "ativo",
       "inativo",
-      "desativadas",
     ]);
     expect(todos.linhas.map((l) => l.id).sort()).toEqual(["a1", "a2", "a3"]);
     expect(todos.payload.scope).toBe("todos");
