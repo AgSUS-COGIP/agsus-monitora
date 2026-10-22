@@ -20,6 +20,8 @@ import anexos_empregare as anexos  # noqa: E402
 import robo_empregare  # noqa: E402
 import so_anexos  # noqa: E402
 
+from monitora import execucao  # noqa: E402
+
 VAGA = "182514"
 BASE = "https://corporate.empregare.com/Company/VacancyTests/GetViewerLogArquivo?"
 
@@ -68,8 +70,9 @@ class PortalFalso:
 class BancoFalso:
     PROIBIDAS = {"gravar_lote_empregare", "fechar_vaga_empregare"}
 
-    def __init__(self, listado, situacao_final="CONCLUIDA", invalidadas=0):
+    def __init__(self, listado, situacao_final="CONCLUIDA", invalidadas=0, vagas=None):
         self.listado = listado
+        self.vagas = vagas if vagas is not None else [{"vaga": VAGA, "edital": "114/2026"}]
         self.situacao_final = situacao_final
         self.invalidadas = invalidadas
         self.chamadas = []
@@ -80,7 +83,7 @@ class BancoFalso:
         if funcao == "listar_anexos_empregare":
             return self.listado
         if funcao == "listar_vagas_empregare":
-            return {"vagas": [{"vaga": VAGA, "edital": "114/2026"}]}
+            return {"vagas": self.vagas}
         if funcao == "gravar_anexos_empregare":
             return {
                 "respostas": len(corpo["p_respostas"]),
@@ -173,11 +176,13 @@ class ModoAnexos(unittest.TestCase):
         self.releitura("2160872", capturado("10", 1, "a.pdf"), capturado("16", 1, "b.pdf"), capturado("18", 1, "c.pdf"))
         self.assertEqual(self.rodar(banco, portal, Args(candidatos=["2160872"])), 0)
         nomes = banco.nomes()
-        self.assertEqual(nomes[0], "iniciar_sync_empregare")
+        # A lista de vagas (só leitura) vem antes: é ela que marca o edital congelado.
+        self.assertEqual(nomes[:2], ["listar_vagas_empregare", "iniciar_sync_empregare"])
+        self.assertEqual(banco.chamadas[0][1]["p_vagas"], [VAGA])
         self.assertEqual(nomes[-1], "finalizar_sync_empregare")
         self.assertNotIn("gravar_lote_empregare", nomes)
         self.assertNotIn("fechar_vaga_empregare", nomes)
-        inicio = banco.chamadas[0][1]
+        inicio = banco.chamadas[1][1]
         self.assertEqual(inicio["p_filtro"]["so_anexos"], True)
         self.assertEqual(inicio["p_vagas_pedidas"], 1)
         self.assertEqual(banco.gravados(), ["2160872"])
@@ -222,7 +227,7 @@ class ModoAnexos(unittest.TestCase):
         )
         saida = self.rodar(banco, PortalFalso(na_lista("2160872")), Args(candidatos=["2160872"], seco=True))
         self.assertEqual(saida, 0)
-        self.assertEqual(banco.nomes(), ["listar_anexos_empregare"])
+        self.assertEqual(banco.nomes(), ["listar_vagas_empregare", "listar_anexos_empregare"])
         texto = "\n".join(self.logs + self.resumo)
         self.assertIn("1 anexo(s) novo(s) · 1 alterado(s) · 0 removido(s)", texto)
         self.assertIn("SECO: nada foi gravado.", texto)
@@ -238,7 +243,7 @@ class ModoAnexos(unittest.TestCase):
         )
         self.releitura("2160872", capturado("10", 1, "a.pdf"))
         self.rodar(banco, PortalFalso(na_lista("2160872", "2160999")), Args())
-        self.assertEqual(banco.chamadas[1], ("listar_anexos_empregare", {"p_vaga": VAGA, "p_codigos": None}))
+        self.assertEqual(banco.chamadas[2], ("listar_anexos_empregare", {"p_vaga": VAGA, "p_codigos": None}))
         self.assertEqual(self.lidos, [(VAGA, ["2160872"], None)])
         self.assertEqual(banco.gravados(), ["2160872"])  # sem mudança: grava a captura de hoje
 
@@ -260,6 +265,61 @@ class ModoAnexos(unittest.TestCase):
         self.assertEqual(self.rodar(banco, portal, Args(candidatos=["2160872"])), 1)
         self.assertEqual(portal.capturadas, [])
         self.assertEqual(banco.chamadas[-1][1]["p_vagas_baixadas"], 0)
+
+    def test_edital_congelado_sem_liberacao_recusa_sem_abrir_execucao_nem_a_empregare(self):
+        banco = BancoFalso(listado([]), vagas=[{"vaga": VAGA, "edital": "114/2026", "congelada": True}])
+        portal = PortalFalso({})
+        self.assertEqual(self.rodar(banco, portal, Args(candidatos=["2160872"])), 1)
+        self.assertEqual(banco.nomes(), ["listar_vagas_empregare"])
+        self.assertEqual(portal.capturadas, [])
+        self.assertTrue(any("inscrições congeladas em 114/2026" in l for l in self.resumo))
+
+    def test_edital_congelado_no_seco_so_compara(self):
+        banco = BancoFalso(
+            listado([candidato("2160872", [gravado("10", 1, "a.pdf")])]),
+            vagas=[{"vaga": VAGA, "edital": "114/2026", "congelada": True}],
+        )
+        self.releitura("2160872", capturado("10", 1, "a.pdf"))
+        saida = self.rodar(banco, PortalFalso(na_lista("2160872")), Args(candidatos=["2160872"], seco=True))
+        self.assertEqual(saida, 0)
+        self.assertEqual(banco.nomes(), ["listar_vagas_empregare", "listar_anexos_empregare"])
+
+    def test_edital_congelado_com_liberacao_registra_o_uso_e_grava(self):
+        banco = BancoFalso(
+            listado([candidato("2160872", [gravado("10", 1, "a.pdf")])]),
+            vagas=[{"vaga": VAGA, "edital": "114/2026", "congelada": True, "liberada": True}],
+        )
+        self.releitura("2160872", capturado("10", 1, "a.pdf"))
+        args = Args(candidatos=["2160872"])
+        args.forcar_congelado = "6f1c2d3e-4b5a-4c7d-8e9f-0a1b2c3d4e5f"
+        usos = []
+        saida = so_anexos.executar(
+            args,
+            {},
+            lambda: contextlib.nullcontext(PortalFalso(na_lista("2160872"))),
+            self.logs.append,
+            self.resumo.extend,
+            chamar=banco,
+            agora=lambda: 0.0,
+            ids={"sync": "gh-20261022T120000-abcdef12", "tipo": "GITHUB", "usuario": None, "url": None},
+            liberar=lambda sync: usos.append(sync) or "Override registrado.",
+        )
+        self.assertEqual(saida, 0)
+        self.assertEqual(banco.chamadas[0][1]["p_liberacao"], args.forcar_congelado)
+        self.assertEqual(usos, ["gh-20261022T120000-abcdef12"])
+        self.assertTrue(banco.chamadas[1][1]["p_filtro"]["forcar_congelado"])
+        self.assertEqual(banco.gravados(), ["2160872"])
+
+    def test_interrupcao_do_github_fecha_a_execucao_com_erro(self):
+        banco = BancoFalso(listado([candidato("2160872", [gravado("10", 1, "a.pdf")])]))
+
+        def cancelado(*_a, **_k):
+            raise execucao.ExecucaoInterrompida("execução interrompida (SIGTERM)")
+
+        anexos.capturar_anexos = cancelado
+        self.assertEqual(self.rodar(banco, PortalFalso(na_lista("2160872")), Args(candidatos=["2160872"])), 1)
+        self.assertEqual(banco.nomes()[-1], "finalizar_sync_empregare")
+        self.assertIn("SIGTERM", banco.chamadas[-1][1]["p_erro"])
 
     def test_editais_usam_a_lista_de_vagas_so_de_leitura(self):
         banco = BancoFalso(listado([]))

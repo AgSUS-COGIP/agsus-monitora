@@ -119,8 +119,27 @@ def argumentos(lista=None):
     return args
 
 
+_ARQUIVO_DO_LINK = re.compile(r"[?&]arquivo=([^&]*)")
+
+
+def hash_do_arquivo_do_link(link):
+    """
+    sha256 do arquivo= do link (como FC_ARQUIVO_DO_LINK_EMPREGARE no banco; sem
+    ele, do link inteiro); sem link, None. Vai o hash, nunca o nome do arquivo.
+    """
+    if not link:
+        return None
+    m = _ARQUIVO_DO_LINK.search(str(link))
+    return hashlib.sha256((m.group(1) if m else str(link)).encode("utf-8")).hexdigest()
+
+
 def para_o_banco(anexo, resultado, hash_do_arquivo):
-    """A leitura no formato de gravar_leituras_de_arquivos (sem nome, CPF ou texto do documento)."""
+    """
+    A leitura no formato de gravar_leituras_de_arquivos (sem nome, CPF ou texto
+    do documento). `hash_link_arquivo` diz de qual arquivo ela é: se o robô da
+    Empregare trocou o anexo enquanto a leitura rodava, o banco a deixa de fora
+    ("trocadas", migration 20261022170000) e o arquivo novo volta para a fila.
+    """
     leitura = {c: resultado.get(c) for c in CAMPOS if resultado.get(c) is not None}
     leitura.update(
         resposta=anexo["resposta"],
@@ -129,6 +148,9 @@ def para_o_banco(anexo, resultado, hash_do_arquivo):
         hash=hash_do_arquivo,
         versao=VERSAO_DO_EXTRATOR,
     )
+    hash_link = hash_do_arquivo_do_link(anexo.get("link"))
+    if hash_link:
+        leitura["hash_link_arquivo"] = hash_link
     leitura.setdefault("itens", [])
     leitura.setdefault("alertas", [])
     for campo in ("itens", "alertas", "resumo"):

@@ -7,7 +7,8 @@ workflow" na aba Actions (ou roda `gh workflow run`) não passa pelo banco:
 sem este passo, a execução não aparecia no "Status das atualizações". O
 primeiro passo de cada workflow da lista fixa chama este módulo, que grava a
 execução pela RPC registrar_disparo_externo (migration
-20261020170000_inscricoes_congeladas.sql): origem GITHUB, o ator
+20261020170000_inscricoes_congeladas.sql; leitura-de-arquivos.yml desde a
+20261022170000_robos_mais_robustos.sql): origem GITHUB, o ator
 (github.triggering_actor), o endereço da execução e um resumo curto dos inputs
 (modo, editais, vagas — nunca candidatos nem token).
 
@@ -35,9 +36,9 @@ WORKFLOWS = (
     "sincronizar-entrevistas.yml",
     "sincronizar-selecao.yml",
     "conferencias.yml",
-    "expurgo-anexos-chat.yml",
     "robo-empregare.yml",
     "pre-classificacao.yml",
+    "leitura-de-arquivos.yml",
 )
 _UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 _JA_REGISTRADOS = {"agenda", "manual", "robo"}
@@ -92,6 +93,8 @@ def registrar(workflow, ambiente=None, chamar=None, configuracao=None, imprimir=
             config,
             RPC,
             {"p_workflow": workflow, "p_ator": a.get("ATOR_GITHUB") or None, "p_url": url, "p_resumo": resumo(a)},
+            # Uma tentativa: o registro não pode atrasar o robô (e a RPC já é idempotente pelo endereço).
+            tentativas=1,
         )
         imprimir(f"Execução registrada no MONITORA (Status das atualizações, disparo {disparo}).")
         return disparo

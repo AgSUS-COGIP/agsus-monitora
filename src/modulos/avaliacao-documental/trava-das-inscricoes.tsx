@@ -130,7 +130,7 @@ export function TravaDasInscricoes({
         <div className="avd-trava-form">
           <Aviso tom="warning">
             {congelar
-              ? "O robô da Empregare e a pré-classificação deixam de mexer neste edital (inscrições e lote). Só anexos continua."
+              ? "O robô da Empregare e a pré-classificação deixam de mexer neste edital (inscrições e lote). O Só anexos só compara, salvo com a liberação do administrador global."
               : "O robô da Empregare e a pré-classificação voltam a atualizar inscrições e lote deste edital."}
           </Aviso>
           <Campo

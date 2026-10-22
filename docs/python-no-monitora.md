@@ -163,9 +163,10 @@ distribuição inicial, depois que a coordenação distribuiu, as fichas novas j
 menos pendentes (`distribuicao.atribuicoes_dos_novos`); o banco valida cada atribuição, marca
 "Fora do lote" quem saiu eliminado e o resumo mostra quantas fichas abriu, atribuiu e tirou do lote.
 
-- **Quando roda:** no fim de cada carga normal ou forçada do robô da Empregare (passo
-  "Pré-classificar" em `robo-empregare.yml`, `DISPARADO_POR=robo`, `--apos-robo`; uma falha ali não
-  muda o resultado do robô), pelo "Recalcular" da aba Pré-classificação (só a coordenação do edital;
+- **Quando roda:** no fim de cada carga normal ou forçada do robô da Empregare que gravou alguma
+  vaga (job "Pré-classificar" em `robo-empregare.yml`, que chama `pre-classificacao.yml` por
+  `workflow_call` com `apos_robo`, no grupo de concorrência `pre-classificacao`;
+  `DISPARADO_POR=robo`, `--apos-robo`; uma falha ali não muda o resultado do robô), pelo "Recalcular" da aba Pré-classificação (só a coordenação do edital;
   a RPC `disparar_robo` confere `pode_recalcular_pre_classificacao` de quem clicou e
   manda `editais` = o id do edital), pelo "Rodar agora" do Status das atualizações (todos) e pelo
   "Run workflow".

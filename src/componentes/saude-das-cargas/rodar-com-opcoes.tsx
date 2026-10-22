@@ -268,7 +268,10 @@ export function RodarComOpcoes({
   const [forcarCongelado, setForcarCongelado] = useState(false);
   const [motivoDoCongelado, setMotivoDoCongelado] = useState("");
   const [enviando, setEnviando] = useState(false);
-  const podeForcarCongelado = Boolean(aceitas.forcar_congelado?.includes(modo));
+  // "Só comparar" (seco) não grava: não há o que forçar.
+  const podeForcarCongelado =
+    Boolean(aceitas.forcar_congelado?.includes(modo)) &&
+    !(modo === MODO_SO_ANEXOS && seco);
 
   const { codigos, invalidos } = useMemo(
     () => separarCodigos(textoDasVagas),
