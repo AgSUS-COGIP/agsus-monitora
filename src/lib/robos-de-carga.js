@@ -82,7 +82,7 @@ export function editalDoPedido(valor) {
   `forcar_congelado` (20261020170000): os modos em que o administrador global
   pode forçar edital com inscrições congeladas — só com o edital ou as vagas
   pedidos e um `motivo` de 10 a 500 caracteres (o banco grava a liberação).
-  O Só anexos grava respostas e anexos: desde 20261022120000 também pede a
+  O Só anexos grava respostas e anexos: desde 20261022170000 também pede a
   liberação no edital congelado, salvo com `seco` (só compara, não grava).
 */
 /** @type {Readonly<Record<string, import("../componentes/saude-das-cargas/tipos.ts").OpcoesDoRobo>>} */

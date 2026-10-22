@@ -27,7 +27,7 @@ SEGURANÇA
     tempo esgotado) sai como "não relido" e nada dele é gravado.
   - --seco: compara e relata (novos, alterados, removidos por candidato) sem
     gravar e sem abrir execução no banco.
-  - Edital com inscrições congeladas (20261022120000): fora do --seco, só com a
+  - Edital com inscrições congeladas (20261022170000): fora do --seco, só com a
     liberação do administrador global (--forcar-congelado; a execução registra
     o uso e o banco confere em gravar_anexos_empregare); sem ela, a execução
     inteira é recusada antes de abrir a Empregare.
@@ -360,7 +360,7 @@ def executar(
     liberação do administrador global nesta execução e devolve a linha do log
     (usar_liberacao do robô). Saída: 0 concluída, 2 parcial, 1 erro.
 
-    Inscrições congeladas (20261022120000): fora do --seco, vaga de edital
+    Inscrições congeladas (20261022170000): fora do --seco, vaga de edital
     congelado sem a liberação recusa a execução inteira (nada relido nem
     gravado); o banco confere de novo em gravar_anexos_empregare.
     """

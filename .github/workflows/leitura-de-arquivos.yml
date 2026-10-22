@@ -62,7 +62,7 @@ permissions:
 
 # Mesmo grupo do robô da Empregare (robo-empregare.yml): a leitura não roda enquanto
 # a carga troca os anexos (o banco também recusa leitura de arquivo trocado,
-# gravar_leituras_de_arquivos, migration 20261022120000).
+# gravar_leituras_de_arquivos, migration 20261022170000).
 concurrency:
   group: empregare
   cancel-in-progress: false

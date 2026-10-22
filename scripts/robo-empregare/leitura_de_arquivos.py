@@ -138,7 +138,7 @@ def para_o_banco(anexo, resultado, hash_do_arquivo):
     A leitura no formato de gravar_leituras_de_arquivos (sem nome, CPF ou texto
     do documento). `hash_link_arquivo` diz de qual arquivo ela é: se o robô da
     Empregare trocou o anexo enquanto a leitura rodava, o banco a deixa de fora
-    ("trocadas", migration 20261022120000) e o arquivo novo volta para a fila.
+    ("trocadas", migration 20261022170000) e o arquivo novo volta para a fila.
     """
     leitura = {c: resultado.get(c) for c in CAMPOS if resultado.get(c) is not None}
     leitura.update(

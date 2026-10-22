@@ -1,5 +1,5 @@
 /*
-  ENSAIO de 20261022120000_robos_mais_robustos.sql — begin … rollback.
+  ENSAIO de 20261022170000_robos_mais_robustos.sql — begin … rollback.
 
   Cole no SQL Editor do Supabase (papel postgres), com a migration no lugar
   marcado abaixo (sem o begin/commit dela). Nada sai para o GitHub: o nome do
@@ -26,7 +26,7 @@ begin;
 set local lock_timeout = '5s';
 set local statement_timeout = '60s';
 
--- >>> cole aqui supabase/migrations/20261022120000_robos_mais_robustos.sql (sem o begin/commit) <<<
+-- >>> cole aqui supabase/migrations/20261022170000_robos_mais_robustos.sql (sem o begin/commit) <<<
 
 select set_config('ensaio.edital', 'bcecfb08-88ef-4e06-8401-bcad6bf88fd0', true);
 select set_config('ensaio.admin', (

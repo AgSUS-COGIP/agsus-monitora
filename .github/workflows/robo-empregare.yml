@@ -31,7 +31,7 @@ name: Robô da Empregare
 # MONITORA manda quando o administrador global pede "Forçar edital com
 # inscrições congeladas" (com motivo, registrado no banco); vale para o robô e
 # para o passo "Pré-classificar". O modo anexos (que grava respostas e anexos)
-# também pede a liberação, salvo com "seco" (só compara; 20261022120000).
+# também pede a liberação, salvo com "seco" (só compara; 20261022170000).
 # Registro: o primeiro passo grava no MONITORA a execução iniciada direto aqui
 # (Run workflow, gh workflow run), com quem a iniciou (python/monitora/
 # disparo_externo.py); falha nele só gera aviso.
@@ -108,7 +108,7 @@ permissions:
 # Mesmo grupo da leitura dos arquivos (leitura-de-arquivos.yml): a leitura não baixa
 # anexo que a carga está trocando. O GitHub guarda só uma execução esperando por grupo
 # (a nova cancela a que esperava): disparar_robo recusa o pedido quando já há uma
-# esperando (FC_EXECUCAO_PENDENTE_NO_GRUPO, migration 20261022120000).
+# esperando (FC_EXECUCAO_PENDENTE_NO_GRUPO, migration 20261022170000).
 concurrency:
   group: empregare
   cancel-in-progress: false

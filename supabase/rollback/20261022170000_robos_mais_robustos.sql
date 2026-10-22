@@ -1,5 +1,5 @@
 /*
-  Rollback de 20261022120000_robos_mais_robustos.sql.
+  Rollback de 20261022170000_robos_mais_robustos.sql.
 
   Volta disparar_robo, gravar_anexos_empregare, gravar_leituras_de_arquivos e
   registrar_disparo_externo às definições de antes (as de 20261020170000 e

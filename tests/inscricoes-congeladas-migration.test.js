@@ -306,7 +306,7 @@ describe("Rodar com opções: forçar edital congelado", () => {
         motivo: "x".repeat(12),
       }).erro,
     ).toBe("congelado_no_modo");
-    // Só anexos grava respostas e anexos: com a liberação (20261022120000).
+    // Só anexos grava respostas e anexos: com a liberação (20261022170000).
     expect(
       validarOpcoes(empregare, {
         modo: "anexos",

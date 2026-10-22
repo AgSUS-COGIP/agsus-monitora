@@ -2,12 +2,12 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 /*
-  Robôs mais robustos (20261022120000): execução esperando no grupo de
+  Robôs mais robustos (20261022170000): execução esperando no grupo de
   concorrência do GitHub, Só anexos com a trava das inscrições congeladas,
   leitura de arquivo trocado e leitura-de-arquivos.yml no registro dos disparos.
 */
 const ler = (f) => readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-const NOME = "20261022120000_robos_mais_robustos.sql";
+const NOME = "20261022170000_robos_mais_robustos.sql";
 const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);

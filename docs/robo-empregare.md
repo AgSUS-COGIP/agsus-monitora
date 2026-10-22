@@ -280,7 +280,7 @@ pré-classificação:
   desativado), inclusive para versões antigas do robô;
 - a **pré-classificação** (após robô, normal, refazer lote) pula ou recusa o edital;
 - continuam: seco, fumaça, sondar e o **Só anexos** com "só comparar" (seco). O Só anexos que
-  grava (respostas e anexos) pede a liberação desde `20261022120000`: sem ela, a tela recusa
+  grava (respostas e anexos) pede a liberação desde `20261022170000`: sem ela, a tela recusa
   (55000), o robô recusa a execução inteira e `gravar_anexos_empregare` recusa a vaga.
 
 Override, só do administrador global: **Opções** → modo Normal/Forçar/Só anexos com o edital → **Forçar
@@ -292,7 +292,7 @@ edital com inscrições congeladas** + motivo. O banco grava a liberação (12 h
 Status das atualizações › Agenda dos robôs como "iniciada no GitHub por &lt;login&gt;" (primeiro passo
 do workflow; se falhar, só avisa).
 
-### Robustez da execução (20261022120000)
+### Robustez da execução (20261022170000)
 
 - **Prazo único** de 105 min desde o login (`PRAZO_DA_EXECUCAO`): nenhuma espera, download, volta
   na Central nem segunda passada passa dele; o que faltar vira falha e a execução fecha normal

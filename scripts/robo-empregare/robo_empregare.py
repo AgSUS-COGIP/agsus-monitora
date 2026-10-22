@@ -43,7 +43,7 @@ Uso
       RESPOSTA" ou antes); nunca reduz anexos; --seco só compara, sem gravar.
       Edital com inscrições congeladas: só com --seco ou com --forcar-congelado
       (a liberação; o banco confere em gravar_anexos_empregare, migration
-      20261022120000).
+      20261022170000).
   python scripts/robo-empregare/robo_empregare.py --resumir-perguntas [--editais 114/2026] [--forcar]
       só recalcula o resumo das perguntas da carga (resumo_das_perguntas.py)
       dos editais cuja carga mudou (--forcar: de todos com carga); não entra

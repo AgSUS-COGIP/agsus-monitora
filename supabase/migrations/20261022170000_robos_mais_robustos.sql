@@ -34,8 +34,8 @@
 
   Python: scripts/robo-empregare/ (robo_empregare.py, so_anexos.py,
   leitura_de_arquivos.py), python/monitora/disparo_externo.py e os workflows.
-  Rollback: supabase/rollback/20261022120000_robos_mais_robustos.sql.
-  Ensaio: supabase/ensaios/20261022120000_robos_mais_robustos.sql.
+  Rollback: supabase/rollback/20261022170000_robos_mais_robustos.sql.
+  Ensaio: supabase/ensaios/20261022170000_robos_mais_robustos.sql.
 */
 begin;
 
@@ -115,7 +115,7 @@ $function$;
 
 revoke all on function private."FC_EXECUCAO_PENDENTE_NO_GRUPO"(text) from public, anon, authenticated;
 comment on function private."FC_EXECUCAO_PENDENTE_NO_GRUPO"(text) is
-  'Há execução esperando no grupo de concorrência do GitHub (uma rodando e um pedido do banco mais novo que o dela)? disparar_robo recusa o pedido novo, que cancelaria a que espera (20261022120000).';
+  'Há execução esperando no grupo de concorrência do GitHub (uma rodando e um pedido do banco mais novo que o dela)? disparar_robo recusa o pedido novo, que cancelaria a que espera (20261022170000).';
 
 -- 5. leitura-de-arquivos.yml no log dos disparos -----------------------------
 alter table public."TL_DISPARO_ROBO" drop constraint if exists "CK_DISPROBO_NOWORKFLOW";
@@ -382,7 +382,7 @@ begin
     raise exception 'Esta carga acabou de ser pedida. Aguarde alguns minutos.' using errcode = '55006';
   end if;
 
-  -- [pendente-no-grupo] (20261022120000) O GitHub guarda UMA execução esperando por grupo de
+  -- [pendente-no-grupo] (20261022170000) O GitHub guarda UMA execução esperando por grupo de
   -- concorrência: um pedido novo cancela, sem aviso, o que já esperava. Com uma execução
   -- rodando e outra já pedida depois dela, recusa em vez de trocar uma pela outra.
   if private."FC_EXECUCAO_PENDENTE_NO_GRUPO"(v_robo ->> 'workflow') then
@@ -394,7 +394,7 @@ begin
   -- vaga pedidos explicitamente de edital congelado são recusados; o administrador global
   -- pode forçar, com motivo (a LIBERACAO vale 12 h e vai ao workflow como forcar_congelado).
   -- Sem edital nem vaga, o robô e a pré-classificação pulam os congelados sozinhos.
-  -- (20261022120000) O Só anexos grava também (respostas e anexos): só com a liberação, ou
+  -- (20261022170000) O Só anexos grava também (respostas e anexos): só com a liberação, ou
   -- com "só comparar" (seco), que não grava nada.
   v_grava := (v_robo -> 'modos_que_gravam') ? v_modo
              or ((v_robo -> 'modos_que_gravam_sem_seco') ? v_modo and not coalesce(v_seco, false));
@@ -495,7 +495,7 @@ begin
   if p_vaga is null or p_vaga !~ '^[0-9]{1,20}$' then
     raise exception 'Código de vaga inválido' using errcode = '22023';
   end if;
-  -- [congeladas-anexos] (20261022120000) Edital com inscrições congeladas: só a execução que
+  -- [congeladas-anexos] (20261022170000) Edital com inscrições congeladas: só a execução que
   -- registrou o uso da liberação do administrador global grava respostas e anexos (vale para
   -- a carga e para o modo Só anexos, que antes passava).
   select v."CO_MONITORAMENTO" into v_edital from public."TB_EMPREGARE_VAGA" v where v."CO_VAGA" = p_vaga;
@@ -615,7 +615,7 @@ begin
       v_fora := v_fora + 1;
       continue;
     end if;
-    -- [arquivo-trocado] (20261022120000) A leitura diz de qual arquivo é (hash_link_arquivo: sha256
+    -- [arquivo-trocado] (20261022170000) A leitura diz de qual arquivo é (hash_link_arquivo: sha256
     -- do arquivo= do link baixado). Se o robô da Empregare trocou o anexo enquanto a leitura
     -- rodava, ela é do arquivo antigo: fica de fora e o novo volta para a fila.
     if nullif(v ->> 'hash_link_arquivo', '') is not null and not exists (
@@ -697,6 +697,6 @@ end;
 $function$;
 
 comment on function public.disparar_robo(text, jsonb) is
-  'Rodar agora, Opções (Status das atualizações) e Recalcular (pré-classificação) pelo banco (20261008140000; substitui api/rodar-carga.js): confere quem pede (administrador global: qualquer robô e opções; coordenação: só a pré-classificação de um edital pelo id, modo normal), a lista branca do robô (modo, editais, vagas, limite, anexos; no robô da Empregare o modo "anexos" — só relê os anexos do questionário, sem exportar nem pré-classificar; pede vagas ou editais — com "candidatos" e "seco", que só valem nele), o pedido repetido em 2 min (55006) e, desde 20261022120000, a execução que já espera a vez no grupo de concorrência do GitHub (55006: o pedido novo a cancelaria). Inscrições congeladas (20261020170000): nos modos que gravam (robô: normal, forcar e, desde 20261022120000, anexos sem "seco"; pré-classificação: normal e refazer_lote), edital ou vaga pedidos de edital congelado dão 55000, salvo forcar_congelado = true com motivo (10 a 500), só do administrador global — grava a LIBERACAO em TH_CONGELAMENTO_INSCRICAO (12 h) e manda o token como forcar_congelado. Pede o workflow por FC_DISPARAR_ROBO com disparado_por = id de quem pediu e devolve o CO_DISPARO de TL_DISPARO_ROBO (acompanhe por situacao_do_disparo_robo). 28000 sem sessão, 42501 sem permissão, 22023 para opção inválida.';
+  'Rodar agora, Opções (Status das atualizações) e Recalcular (pré-classificação) pelo banco (20261008140000; substitui api/rodar-carga.js): confere quem pede (administrador global: qualquer robô e opções; coordenação: só a pré-classificação de um edital pelo id, modo normal), a lista branca do robô (modo, editais, vagas, limite, anexos; no robô da Empregare o modo "anexos" — só relê os anexos do questionário, sem exportar nem pré-classificar; pede vagas ou editais — com "candidatos" e "seco", que só valem nele), o pedido repetido em 2 min (55006) e, desde 20261022170000, a execução que já espera a vez no grupo de concorrência do GitHub (55006: o pedido novo a cancelaria). Inscrições congeladas (20261020170000): nos modos que gravam (robô: normal, forcar e, desde 20261022170000, anexos sem "seco"; pré-classificação: normal e refazer_lote), edital ou vaga pedidos de edital congelado dão 55000, salvo forcar_congelado = true com motivo (10 a 500), só do administrador global — grava a LIBERACAO em TH_CONGELAMENTO_INSCRICAO (12 h) e manda o token como forcar_congelado. Pede o workflow por FC_DISPARAR_ROBO com disparado_por = id de quem pediu e devolve o CO_DISPARO de TL_DISPARO_ROBO (acompanhe por situacao_do_disparo_robo). 28000 sem sessão, 42501 sem permissão, 22023 para opção inválida.';
 
 commit;

@@ -1,5 +1,5 @@
 """
-Robustez dos robôs (varredura de 22/10/2026; migration 20261022120000_robos_mais_robustos.sql):
+Robustez dos robôs (varredura de 22/10/2026; migration 20261022170000_robos_mais_robustos.sql):
 prazo único da execução do robô da Empregare, Central que falha numa tentativa só,
 exportação de outro tipo ou de data ilegível nunca baixada, pedido de exportação que
 não se repete depois do clique, uma tentativa nas RPCs que fecham ou gravam, o 57014
