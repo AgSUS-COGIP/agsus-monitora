@@ -31,15 +31,15 @@ import {
 
   OS PRAZOS (folga sobre o esperado, decisão de 01/10/2026)
     Análises, incremental   esperado a cada 20 min · atrasada depois de 1 h
-    Entrevistas e Seleção   sem prazo: a agenda delas (agsus_robo_sincronizar_entrevistas e
-                            agsus_robo_sincronizar_selecao) está desligada de propósito desde
-                            16/10/2026; só rodam pelo "Rodar agora" (docs/agenda-dos-robos.md)
+    Entrevistas             esperado de hora em hora, o dia todo (decisão de 06/10/2026) ·
+                            atrasada depois de 4 h
+    Seleção                 às 8h10, 13h10 e 18h10 de Brasília (decisão de 07/10/2026) ·
+                            atrasada depois de 15 h (a noite inteira sem carga é esperada)
     Robô da Empregare       sem prazo: só roda pelo "Rodar agora" (decisão de 05/10/2026)
     Conferências            todo dia às 6h (Brasília) · atrasada depois de 26 h
     Agenda dos robôs        o banco pede cada execução ao GitHub (pg_cron + pg_net,
                             20261008140000): falhou se o último pedido foi recusado ou se
-                            não há chave no Vault; com só as Conferências na agenda (6h),
-                            atrasada sem pedido aceito há 26 h
+                            não há chave no Vault; atrasada sem pedido aceito há 2 h
     Tarefas a cada 2 min    atrasada depois de 15 min
     Tarefas diárias         atrasada depois de 26 h; mensais, depois de 32 dias
 */
@@ -49,8 +49,9 @@ export const PRAZO_ANALISES_MIN = 60;
 export const PRAZO_DIARIO_MIN = 26 * 60;
 export const PRAZO_FREQUENTE_MIN = 15;
 export const PRAZO_MENSAL_MIN = 32 * 24 * 60;
-// Só as Conferências (6h) ficam na agenda: Entrevistas e Seleção desligadas desde 16/10/2026.
-export const PRAZO_AGENDA_DOS_ROBOS_MIN = PRAZO_DIARIO_MIN;
+export const PRAZO_DE_HORA_EM_HORA_MIN = 4 * 60;
+export const PRAZO_SELECAO_MIN = 15 * 60;
+export const PRAZO_AGENDA_DOS_ROBOS_MIN = 2 * 60;
 
 export const SITUACOES = Object.freeze({
   em_dia: Object.freeze({ rotulo: "Em dia", tom: "sucesso", ordem: 4 }),
@@ -305,7 +306,7 @@ function execucaoDoDisparo(entrada: unknown) {
 /*
   A agenda dos robôs (get_saude_das_cargas.agenda_dos_robos, 20261008140000):
   sem chave no Vault, falhou; senão, o selo pelos pedidos — o último fechado
-  recusado é falha e, sem pedido aceito há mais de 26 h, atrasada (a conta usa
+  recusado é falha e, sem pedido aceito há mais de 2 h, atrasada (a conta usa
   o último aceito do banco, que pode ser anterior aos 20 pedidos da lista).
 */
 function montarAgenda(entrada: unknown, agora: Date): Carga {
@@ -315,8 +316,7 @@ function montarAgenda(entrada: unknown, agora: Date): Carga {
       id: "agenda_dos_robos",
       nome: "Agenda dos robôs",
       onde: "Banco (pg_cron + pg_net) → GitHub Actions",
-      esperado:
-        "Conferências todo dia às 6h (Entrevistas e Seleção desligadas desde 16/10/2026)",
+      esperado: "Entrevistas de hora em hora; Seleção às 8h10, 13h10 e 18h10",
       prazoMin: PRAZO_AGENDA_DOS_ROBOS_MIN,
       tipo: "disparo",
       execucoes: registros(bruta.disparos).map(execucaoDoDisparo),
@@ -435,8 +435,8 @@ export function normalizarSaude(
         id: "entrevistas",
         nome: "Entrevistas",
         onde: "GitHub Actions · Sincronizar entrevistas",
-        esperado: "desligada desde 16/10/2026: só pelo Rodar agora",
-        prazoMin: null,
+        esperado: "de hora em hora, o dia todo",
+        prazoMin: PRAZO_DE_HORA_EM_HORA_MIN,
         tipo: "planilha",
         execucoes: dados?.entrevistas,
       },
@@ -447,8 +447,8 @@ export function normalizarSaude(
         id: "selecao",
         nome: "Seleção (planilha Auditoria)",
         onde: "GitHub Actions · Sincronizar seleção",
-        esperado: "desligada desde 16/10/2026: só pelo Rodar agora",
-        prazoMin: null,
+        esperado: "às 8h10, 13h10 e 18h10",
+        prazoMin: PRAZO_SELECAO_MIN,
         tipo: "planilha",
         execucoes: dados?.selecao,
       },
