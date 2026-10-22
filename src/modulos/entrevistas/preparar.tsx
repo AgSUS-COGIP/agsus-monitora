@@ -727,7 +727,9 @@ function PrepararDoEdital({
 
 /**
  * "Preparar" o edital aberto (`e.edital`): o resumo das regras e os quatro
- * passos. Outro edital recomeça os passos.
+ * passos. Outro edital recomeça os passos. Reler o mesmo edital (voltar à
+ * tela, "Atualizar") mantém os passos e o rascunho: o topo mostra
+ * "Carregando o edital…" enquanto isso.
  */
 export function PrepararEdital({
   conducao,
@@ -737,7 +739,8 @@ export function PrepararEdital({
   e: EstadoDaConducao;
 }) {
   const dados = e.edital as Dados | null;
-  if (!dados || e.carregandoEdital) return null;
+  // Outro edital: abrirEdital tira o anterior (e.edital fica nulo) até chegar.
+  if (!dados) return null;
   return (
     <PrepararDoEdital
       key={dados.edital?.id || ""}

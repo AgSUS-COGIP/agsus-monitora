@@ -22,6 +22,8 @@ import {
   desempate só leitura da Classificação).
 */
 
+const { guardaDeAlteracoes } =
+  await import("../../src/app/guarda-de-alteracoes.ts");
 const { montarConducaoDeEntrevistas } =
   await import("../../src/modulos/entrevistas/conduzir.tsx");
 // Preparar baixa sob demanda (lazy): já carregado aqui, o import da tela resolve na hora.
@@ -1953,5 +1955,163 @@ describe("observação do avaliador e justificativa da banca", () => {
     expect(
       ficha.querySelector(".entrevistas-parecer-pronto pre").textContent,
     ).toContain("Justificativa da banca: Domínio do SasiSUS.");
+  });
+});
+
+/*
+  22/10: voltar à tela (render() relê o edital) reiniciava a ficha com os dados
+  do banco e apagava as notas digitadas; o Preparar desmontava durante a
+  releitura e perdia o rascunho; a ficha abria "suja" sem mexer quando o
+  convocado não tinha banca num edital de banca única; o editor de roteiro
+  fechava sem perguntar.
+*/
+describe("conduzir sem perder trabalho", () => {
+  const ficha = () => document.getElementById("entrevistasFichaDoCandidato");
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it("notas não salvas: voltar à tela não reinicia a ficha e a guarda segura o F5", async () => {
+    const supabase = supabaseDaConducao();
+    await montar(supabase);
+    await abrirAFicha();
+    expect(guardaDeAlteracoes.comAlteracoes()).toBe(false);
+    await digitar(notas(ficha())[0], "3");
+    expect(guardaDeAlteracoes.comAlteracoes()).toBe(true);
+    expect(guardaDeAlteracoes.podeRecarregar()).toBe(false);
+    const saida = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(saida);
+    expect(saida.defaultPrevented).toBe(true);
+
+    await act(async () => void tela.render());
+    await esperar();
+    expect(chamadas(supabase, "obter_entrevistas_do_edital").length).toBe(2);
+    expect(notas(ficha())[0].value).toBe("3");
+
+    // Sair confirmando: a guarda sai junto com a ficha.
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    await clicar(ficha().querySelector('[data-acao="voltar-a-lista"]'));
+    expect(ficha()).toBeNull();
+    expect(guardaDeAlteracoes.comAlteracoes()).toBe(false);
+  });
+
+  it("depois de salvar, a ficha recomeça do que o banco devolveu", async () => {
+    const salvo = {
+      ...EDITAL,
+      convocados: [
+        {
+          ...EDITAL.convocados[0],
+          compareceu: "S",
+          avaliacoes: [{ competencia: "c1", avaliador: "a1", nota: 3 }],
+        },
+      ],
+    };
+    const supabase = supabaseDaConducao({
+      respostas: {
+        lancar_notas_entrevista: () => ({ data: salvo, error: null }),
+      },
+    });
+    await montar(supabase);
+    await abrirAFicha();
+    await digitar(notas(ficha())[0], "3");
+    await teclar(notas(ficha())[0], "Enter", { ctrlKey: true });
+    await esperar();
+    expect(chamadas(supabase, "lancar_notas_entrevista").length).toBe(1);
+    expect(guardaDeAlteracoes.comAlteracoes()).toBe(false);
+    expect(notas(ficha())[0].value).toBe("3");
+  });
+
+  it("convocado sem banca num edital de banca única: a ficha abre limpa", async () => {
+    const supabase = supabaseDaConducao({
+      edital: {
+        ...EDITAL,
+        convocados: [{ ...EDITAL.convocados[0], banca: null }],
+      },
+    });
+    await montar(supabase);
+    await abrirAFicha();
+    expect(guardaDeAlteracoes.comAlteracoes()).toBe(false);
+    const confirmar = vi.spyOn(window, "confirm");
+    await clicar(ficha().querySelector('[data-acao="voltar-a-lista"]'));
+    expect(confirmar).not.toHaveBeenCalled();
+    expect(ficha()).toBeNull();
+  });
+
+  it("releitura do mesmo edital mantém o Preparar montado", async () => {
+    let soltar = null;
+    let vez = 0;
+    const supabase = supabaseDaConducao({
+      respostas: {
+        obter_entrevistas_do_edital: () => {
+          vez += 1;
+          if (vez === 1) return { data: EDITAL, error: null };
+          return new Promise((resolver) => {
+            soltar = () => resolver({ data: EDITAL, error: null });
+          });
+        },
+      },
+    });
+    await montar(supabase);
+    await abrirEdital();
+    const passos = document.querySelector(".entrevistas-passos");
+    expect(passos).not.toBeNull();
+    let render;
+    await act(async () => {
+      render = tela.render();
+    });
+    await esperar();
+    expect(document.body.textContent).toContain("Carregando o edital…");
+    expect(document.querySelector(".entrevistas-passos")).toBe(passos);
+    await act(async () => {
+      soltar();
+      await render;
+    });
+    expect(document.querySelector(".entrevistas-passos")).toBe(passos);
+  });
+
+  it("o editor de roteiro com alteração pergunta antes de fechar", async () => {
+    const supabase = supabaseDaConducao();
+    await montar(supabase);
+    await clicar(visao("preparar"));
+    await esperar();
+    await abrirPasso("roteiro");
+    const abrirEditor = async () => {
+      await clicar(
+        [...document.querySelectorAll('[data-roteiro="r1"] button')].find((b) =>
+          b.textContent.includes("Editar (cria versão 2)"),
+        ),
+      );
+      return document.getElementById("entrevistasEditorDeRoteiro");
+    };
+    const cancelar = (editor) =>
+      [...editor.querySelectorAll("button")].find(
+        (b) => b.textContent.trim() === "Cancelar",
+      );
+    const confirmar = vi.spyOn(window, "confirm").mockReturnValue(false);
+
+    // Sem mudança: fecha direto.
+    let editor = await abrirEditor();
+    await clicar(cancelar(editor));
+    expect(confirmar).not.toHaveBeenCalled();
+    expect(document.getElementById("entrevistasEditorDeRoteiro")).toBeNull();
+
+    editor = await abrirEditor();
+    await digitar(
+      editor.querySelectorAll(
+        'li[data-competencia="1"] input[type="number"]',
+      )[1],
+      "1.5",
+    );
+    expect(guardaDeAlteracoes.comAlteracoes()).toBe(true);
+    await clicar(cancelar(editor));
+    expect(confirmar).toHaveBeenCalledWith(
+      "Fechar o roteiro sem salvar as alterações?",
+    );
+    expect(
+      document.getElementById("entrevistasEditorDeRoteiro"),
+    ).not.toBeNull();
+    confirmar.mockReturnValue(true);
+    await clicar(cancelar(editor));
+    expect(document.getElementById("entrevistasEditorDeRoteiro")).toBeNull();
+    expect(guardaDeAlteracoes.comAlteracoes()).toBe(false);
   });
 });
