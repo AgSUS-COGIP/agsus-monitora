@@ -1,5 +1,5 @@
 /*
-  Rollback de 20261022160000_rascunho_da_ficha_nao_republica_o_painel.sql:
+  Rollback de 20261022180000_rascunho_da_ficha_nao_republica_o_painel.sql:
   o gatilho volta a republicar a cada mudança de DS_PARECER ou DS_RESULTADO,
   em qualquer situação (como em 20261015150000).
 */

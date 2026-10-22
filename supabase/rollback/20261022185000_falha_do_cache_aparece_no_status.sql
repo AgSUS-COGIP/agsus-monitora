@@ -1,5 +1,5 @@
 /*
-  Rollback de 20261022165000_falha_do_cache_aparece_no_status.sql: os três jobs
+  Rollback de 20261022185000_falha_do_cache_aparece_no_status.sql: os três jobs
   voltam a chamar as funções direto (com a trava no where), a procedure e
   FC_FALHAS_DO_CACHE saem e atualizar_cache_painel_entrevistas volta a devolver
   só "remontadas".

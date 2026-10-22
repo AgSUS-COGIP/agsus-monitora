@@ -1,5 +1,5 @@
 /*
-  Rollback de 20261022162000_policies_avaliam_permissao_uma_vez.sql: as 74
+  Rollback de 20261022182000_policies_avaliam_permissao_uma_vez.sql: as 72
   policies voltam às expressões de antes (a função direto, linha a linha) e as
   quatro de SELECT de TB_ANALISE_CURRICULAR e TB_EDITAL_ANALISE voltam.
 */
@@ -147,15 +147,8 @@ alter policy "perfis_update_admin" on public."TB_PERFIL_USUARIO"
   using (private.is_master())
   with check (private.is_master());
 
-alter policy "solicitacoes_delete_admin" on public."TB_SOLICITACAO_ACESSO"
-  using (private.is_master());
-
 alter policy "solicitacoes_select_own_or_admin" on public."TB_SOLICITACAO_ACESSO"
   using (((user_id = ( SELECT auth.uid() AS uid)) OR (lower(email) = lower(COALESCE(( SELECT (auth.jwt() ->> 'email'::text)), ''::text))) OR private.is_master()));
-
-alter policy "solicitacoes_update_admin" on public."TB_SOLICITACAO_ACESSO"
-  using (private.is_master())
-  with check (private.is_master());
 
 alter policy "recurso_leitura" on public."TB_VAGA_IMEDIATA"
   using (private.pode_recurso('aprovados'::text));

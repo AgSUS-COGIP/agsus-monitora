@@ -1,12 +1,12 @@
 /*
-  ENSAIO da migration 20261022161000_fila_confere_a_marca_antes_de_montar.sql
+  ENSAIO da migration 20261022181000_fila_confere_a_marca_antes_de_montar.sql
   — begin … rollback. NÃO É MIGRATION; nada fica gravado.
 
   Montagem (como nos outros ensaios):
     { echo begin;
-      sed -n '/^-- == ANTES ==/,/^-- == aplicar a migration aqui ==/p' supabase/ensaios/20261022161000_fila_confere_a_marca_antes_de_montar.sql;
-      sed -e '/^begin;$/d' -e '/^commit;$/d' supabase/migrations/20261022161000_fila_confere_a_marca_antes_de_montar.sql;
-      sed -n '/^-- == DEPOIS ==/,$p' supabase/ensaios/20261022161000_fila_confere_a_marca_antes_de_montar.sql;
+      sed -n '/^-- == ANTES ==/,/^-- == aplicar a migration aqui ==/p' supabase/ensaios/20261022181000_fila_confere_a_marca_antes_de_montar.sql;
+      sed -e '/^begin;$/d' -e '/^commit;$/d' supabase/migrations/20261022181000_fila_confere_a_marca_antes_de_montar.sql;
+      sed -n '/^-- == DEPOIS ==/,$p' supabase/ensaios/20261022181000_fila_confere_a_marca_antes_de_montar.sql;
     } > /tmp/ensaio.sql   (o arquivo termina em rollback)
 
   Para a conta do setor (coordenação, a01afddb…) e um analista do 114/2026, como

@@ -1,13 +1,13 @@
 /*
-  ENSAIO da migration 20261022165000_falha_do_cache_aparece_no_status.sql
+  ENSAIO da migration 20261022185000_falha_do_cache_aparece_no_status.sql
   — begin … rollback. NÃO É MIGRATION; nada fica gravado (nem os jobs: cron.job
   é tabela comum e volta com o rollback).
 
   Montagem (como nos outros ensaios):
     { echo begin;
-      sed -n '/^-- == ANTES ==/,/^-- == aplicar a migration aqui ==/p' supabase/ensaios/20261022165000_falha_do_cache_aparece_no_status.sql;
-      sed -e '/^begin;$/d' -e '/^commit;$/d' supabase/migrations/20261022165000_falha_do_cache_aparece_no_status.sql;
-      sed -n '/^-- == DEPOIS ==/,$p' supabase/ensaios/20261022165000_falha_do_cache_aparece_no_status.sql;
+      sed -n '/^-- == ANTES ==/,/^-- == aplicar a migration aqui ==/p' supabase/ensaios/20261022185000_falha_do_cache_aparece_no_status.sql;
+      sed -e '/^begin;$/d' -e '/^commit;$/d' supabase/migrations/20261022185000_falha_do_cache_aparece_no_status.sql;
+      sed -n '/^-- == DEPOIS ==/,$p' supabase/ensaios/20261022185000_falha_do_cache_aparece_no_status.sql;
     } > /tmp/ensaio.sql   (o arquivo termina em rollback)
 
   1. FC_FALHAS_DO_CACHE com respostas de exemplo das três funções (sem falha,

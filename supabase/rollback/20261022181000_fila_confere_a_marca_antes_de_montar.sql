@@ -1,5 +1,5 @@
 /*
-  Rollback de 20261022161000_fila_confere_a_marca_antes_de_montar.sql:
+  Rollback de 20261022181000_fila_confere_a_marca_antes_de_montar.sql:
   obter_fila_avaliacao_desde volta à definição de 20261019150000 (a marca
   depois da parcial). Mesma assinatura, mesmos grants.
 */

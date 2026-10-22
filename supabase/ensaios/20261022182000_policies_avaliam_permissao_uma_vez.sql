@@ -1,12 +1,12 @@
 /*
-  ENSAIO da migration 20261022162000_policies_avaliam_permissao_uma_vez.sql
+  ENSAIO da migration 20261022182000_policies_avaliam_permissao_uma_vez.sql
   — begin … rollback. NÃO É MIGRATION; nada fica gravado.
 
   Montagem (como nos outros ensaios):
     { echo begin;
-      sed -n '/^-- == ANTES ==/,/^-- == aplicar a migration aqui ==/p' supabase/ensaios/20261022162000_policies_avaliam_permissao_uma_vez.sql;
-      sed -e '/^begin;$/d' -e '/^commit;$/d' supabase/migrations/20261022162000_policies_avaliam_permissao_uma_vez.sql;
-      sed -n '/^-- == DEPOIS ==/,$p' supabase/ensaios/20261022162000_policies_avaliam_permissao_uma_vez.sql;
+      sed -n '/^-- == ANTES ==/,/^-- == aplicar a migration aqui ==/p' supabase/ensaios/20261022182000_policies_avaliam_permissao_uma_vez.sql;
+      sed -e '/^begin;$/d' -e '/^commit;$/d' supabase/migrations/20261022182000_policies_avaliam_permissao_uma_vez.sql;
+      sed -n '/^-- == DEPOIS ==/,$p' supabase/ensaios/20261022182000_policies_avaliam_permissao_uma_vez.sql;
     } > /tmp/ensaio.sql   (o arquivo termina em rollback)
 
   1. Texto: para cada policy de public que continua, tirar o embrulho

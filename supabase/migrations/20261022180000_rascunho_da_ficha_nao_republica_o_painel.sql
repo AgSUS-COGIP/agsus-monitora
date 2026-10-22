@@ -23,8 +23,8 @@
     conflita com ele).
 
   Dependentes: public."TB_FICHA_ANALISE", private."FC_TG_PUBLICAR_FICHA_ANALISE".
-  Ensaio: supabase/ensaios/20261022160000_rascunho_da_ficha_nao_republica_o_painel.sql
-  Rollback: supabase/rollback/20261022160000_rascunho_da_ficha_nao_republica_o_painel.sql
+  Ensaio: supabase/ensaios/20261022180000_rascunho_da_ficha_nao_republica_o_painel.sql
+  Rollback: supabase/rollback/20261022180000_rascunho_da_ficha_nao_republica_o_painel.sql
 */
 begin;
 
@@ -46,6 +46,6 @@ create trigger "TG_FICHAANALISE_PUBLICA_UPD"
   execute function private."FC_TG_PUBLICAR_FICHA_ANALISE"();
 
 comment on trigger "TG_FICHAANALISE_PUBLICA_UPD" on public."TB_FICHA_ANALISE" is
-  'Republica a linha da ficha no Painel das análises quando muda o que ela mostra; parecer e resultado só na ficha concluída ou em revisão: o rascunho não republica (20261022160000).';
+  'Republica a linha da ficha no Painel das análises quando muda o que ela mostra; parecer e resultado só na ficha concluída ou em revisão: o rascunho não republica (20261022180000).';
 
 commit;

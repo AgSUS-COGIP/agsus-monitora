@@ -24,8 +24,8 @@
 
   Dependentes: private."FC_FILA_AVALIACAO_JSON", private."FC_PAPEL_AVALIACAO",
   private."FC_VAGAS_DO_ANALISTA", private."FC_EXIGIR_AVALIACAO_EDITAL".
-  Ensaio: supabase/ensaios/20261022161000_fila_confere_a_marca_antes_de_montar.sql
-  Rollback: supabase/rollback/20261022161000_fila_confere_a_marca_antes_de_montar.sql
+  Ensaio: supabase/ensaios/20261022181000_fila_confere_a_marca_antes_de_montar.sql
+  Rollback: supabase/rollback/20261022181000_fila_confere_a_marca_antes_de_montar.sql
 */
 begin;
 
@@ -117,7 +117,7 @@ end;
 $$;
 
 comment on function public.obter_fila_avaliacao_desde(uuid, timestamptz, text) is
-  'obter_fila_avaliacao só com o que mudou (20261014231000; sem montar a fila inteira desde 20261019150000; marca conferida antes de montar desde 20261022161000): sem p_desde ou com outra marca, a fila inteira com marca e parcial false; com o gerado_em e a marca da leitura anterior, só as linhas do núcleo cuja ficha mudou (ou cuja reserva vence) desde p_desde − 2 min, os ids que saíram do núcleo (saiu), total_nucleo e o resto da fila sem vagas. Mesma permissão.';
+  'obter_fila_avaliacao só com o que mudou (20261014231000; sem montar a fila inteira desde 20261019150000; marca conferida antes de montar desde 20261022181000): sem p_desde ou com outra marca, a fila inteira com marca e parcial false; com o gerado_em e a marca da leitura anterior, só as linhas do núcleo cuja ficha mudou (ou cuja reserva vence) desde p_desde − 2 min, os ids que saíram do núcleo (saiu), total_nucleo e o resto da fila sem vagas. Mesma permissão.';
 
 revoke all on function public.obter_fila_avaliacao_desde(uuid, timestamptz, text) from public, anon;
 grant execute on function public.obter_fila_avaliacao_desde(uuid, timestamptz, text) to authenticated;

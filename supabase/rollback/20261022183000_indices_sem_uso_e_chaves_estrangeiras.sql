@@ -1,5 +1,5 @@
 /*
-  Rollback de 20261022163000_indices_sem_uso_e_chaves_estrangeiras.sql: os seis
+  Rollback de 20261022183000_indices_sem_uso_e_chaves_estrangeiras.sql: os seis
   índices voltam com a mesma definição (e comentário) e os dois das chaves
   estrangeiras saem.
 */

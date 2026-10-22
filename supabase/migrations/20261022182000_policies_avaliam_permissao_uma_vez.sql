@@ -1,7 +1,7 @@
 /*
   AS POLICIES AVALIAM A PERMISSÃO UMA VEZ POR CONSULTA
 
-  Por quê: 74 policies antigas de public chamam private.has_perm,
+  Por quê: 72 policies antigas de public chamam private.has_perm,
   private.pode_recurso, private.monitora_role ou private.is_master direto na
   expressão. Assim o Postgres avalia a função linha a linha (cada uma lê
   TB_PERFIL_USUARIO, TB_GRUPO_ACESSO e as permissões): em 22/10/2026,
@@ -15,7 +15,7 @@
   da linha.
 
   O QUE MUDA
-    1. alter policy nas 74, trocando só `private.f(args)` por
+    1. alter policy nas 72, trocando só `private.f(args)` por
        `(select private.f(args))` — a mesma expressão (o ensaio confere, policy
        a policy, que tirar o embrulho devolve o texto de antes). A de
        TB_PAINEL_EXTERNO que lê pode_recurso('painel:' || id) depende da
@@ -32,8 +32,8 @@
     do supabase_storage_admin: ficam para quem administra o Storage.
 
   Dependentes: só as tabelas listadas. Nenhuma função muda.
-  Ensaio: supabase/ensaios/20261022162000_policies_avaliam_permissao_uma_vez.sql
-  Rollback: supabase/rollback/20261022162000_policies_avaliam_permissao_uma_vez.sql
+  Ensaio: supabase/ensaios/20261022182000_policies_avaliam_permissao_uma_vez.sql
+  Rollback: supabase/rollback/20261022182000_policies_avaliam_permissao_uma_vez.sql
 */
 begin;
 
@@ -180,15 +180,8 @@ alter policy "perfis_update_admin" on public."TB_PERFIL_USUARIO"
   using ((select private.is_master()))
   with check ((select private.is_master()));
 
-alter policy "solicitacoes_delete_admin" on public."TB_SOLICITACAO_ACESSO"
-  using ((select private.is_master()));
-
 alter policy "solicitacoes_select_own_or_admin" on public."TB_SOLICITACAO_ACESSO"
   using (((user_id = ( SELECT auth.uid() AS uid)) OR (lower(email) = lower(COALESCE(( SELECT (auth.jwt() ->> 'email'::text)), ''::text))) OR (select private.is_master())));
-
-alter policy "solicitacoes_update_admin" on public."TB_SOLICITACAO_ACESSO"
-  using ((select private.is_master()))
-  with check ((select private.is_master()));
 
 alter policy "recurso_leitura" on public."TB_VAGA_IMEDIATA"
   using ((select private.pode_recurso('aprovados'::text)));

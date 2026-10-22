@@ -30,8 +30,8 @@
   As RPCs de leitura continuam chamando as funções, que seguem sem derrubar
   ninguém.
 
-  Ensaio: supabase/ensaios/20261022165000_falha_do_cache_aparece_no_status.sql
-  Rollback: supabase/rollback/20261022165000_falha_do_cache_aparece_no_status.sql
+  Ensaio: supabase/ensaios/20261022185000_falha_do_cache_aparece_no_status.sql
+  Rollback: supabase/rollback/20261022185000_falha_do_cache_aparece_no_status.sql
 */
 begin;
 
@@ -104,7 +104,7 @@ as $$
 $$;
 
 comment on function private."FC_FALHAS_DO_CACHE"(jsonb) is
-  'As áreas que não foram remontadas numa resposta de atualizar_cache_* ("área: erro; …"), ou null; "ocupado" não conta (20261022165000).';
+  'As áreas que não foram remontadas numa resposta de atualizar_cache_* ("área: erro; …"), ou null; "ocupado" não conta (20261022185000).';
 
 revoke all on function private."FC_FALHAS_DO_CACHE"(jsonb) from public, anon, authenticated;
 
@@ -142,7 +142,7 @@ end;
 $$;
 
 comment on procedure private."PR_REMONTAR_CACHE_AGENDADO"(text) is
-  'Remonta os pacotes vencidos (ANALISES, APROVADOS ou ENTREVISTAS) pelo pg_cron, grava o que deu certo e termina com erro se alguma área falhou, para a execução aparecer como falha no Status das atualizações (20261022165000).';
+  'Remonta os pacotes vencidos (ANALISES, APROVADOS ou ENTREVISTAS) pelo pg_cron, grava o que deu certo e termina com erro se alguma área falhou, para a execução aparecer como falha no Status das atualizações (20261022185000).';
 
 revoke all on procedure private."PR_REMONTAR_CACHE_AGENDADO"(text) from public, anon, authenticated;
 

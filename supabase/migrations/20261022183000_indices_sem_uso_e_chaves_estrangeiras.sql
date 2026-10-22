@@ -38,8 +38,8 @@
     em vez de varrer a tabela. São tabelas pequenas (4,6 mil e 4,5 mil linhas):
     o índice é criado dentro da transação, com trava curta.
 
-  Ensaio: supabase/ensaios/20261022163000_indices_sem_uso_e_chaves_estrangeiras.sql
-  Rollback: supabase/rollback/20261022163000_indices_sem_uso_e_chaves_estrangeiras.sql
+  Ensaio: supabase/ensaios/20261022183000_indices_sem_uso_e_chaves_estrangeiras.sql
+  Rollback: supabase/rollback/20261022183000_indices_sem_uso_e_chaves_estrangeiras.sql
 */
 begin;
 
@@ -53,11 +53,11 @@ drop index if exists public.idx_historico_evento_created;
 create index if not exists "IN_FKENTREVISTA_COROTEIRO"
   on public."TB_ENTREVISTA" ("CO_ROTEIRO");
 comment on index public."IN_FKENTREVISTA_COROTEIRO" is
-  'Chave estrangeira para TB_ROTEIRO_ENTREVISTA (20261022163000).';
+  'Chave estrangeira para TB_ROTEIRO_ENTREVISTA (20261022183000).';
 
 create index if not exists "IN_FKHISTCANDAPROV_LISTA"
   on public."TH_CANDIDATO_APROVADO" (lista_id);
 comment on index public."IN_FKHISTCANDAPROV_LISTA" is
-  'Chave estrangeira para TB_LISTA_APROVADO (20261022163000).';
+  'Chave estrangeira para TB_LISTA_APROVADO (20261022183000).';
 
 commit;

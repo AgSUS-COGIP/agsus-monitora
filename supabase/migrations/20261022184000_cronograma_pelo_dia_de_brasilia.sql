@@ -1,10 +1,30 @@
 /*
-  Rollback de 20261022164000_cronograma_pelo_dia_de_brasilia.sql: o padrão de
-  p_data e a view voltam a CURRENT_DATE (o dia em UTC).
+  O CRONOGRAMA DO EDITAL PELO DIA DE BRASÍLIA
+
+  Por quê: o banco roda em UTC. A VW_MONITORAMENTO_INDIGENA_OPERACIONAL (a
+  leitura do monitoramento, listar_monitoramento_operacional) e o padrão de
+  public.get_monitoramento_cronograma_estado(p_monitoramento_id, p_data)
+  usavam CURRENT_DATE: das 21:00 às 23:59 de Brasília já era "amanhã", e a
+  atividade atual, a próxima e os dias que faltam mudavam três horas antes.
+  get_monitoramento_cronograma e get_nucleo_cronograma_resumo já passavam
+  (now() at time zone 'America/Sao_Paulo')::date; a tela via um dia na visão
+  geral e outro no Núcleo.
+
+  O QUE MUDA
+    - o padrão de p_data passa a ser o dia de Brasília (mesmo corpo);
+    - a view chama a função com o dia de Brasília (mesmas colunas, mesma ordem,
+      security_invoker como antes).
+  salvar_monitoramento_com_cronograma (a v1, sem chamador; o front usa a _v2)
+  ainda passa current_date: a limpeza das RPCs sem uso a remove.
+
+  Dependentes: listar_monitoramento_operacional (lê a view), o front da visão
+  geral e do mapa.
+  Ensaio: supabase/ensaios/20261022184000_cronograma_pelo_dia_de_brasilia.sql
+  Rollback: supabase/rollback/20261022184000_cronograma_pelo_dia_de_brasilia.sql
 */
 begin;
 
-CREATE OR REPLACE FUNCTION public.get_monitoramento_cronograma_estado(p_monitoramento_id uuid, p_data date DEFAULT CURRENT_DATE)
+CREATE OR REPLACE FUNCTION public.get_monitoramento_cronograma_estado(p_monitoramento_id uuid, p_data date DEFAULT ((now() AT TIME ZONE 'America/Sao_Paulo'::text))::date)
  RETURNS jsonb
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
@@ -179,6 +199,6 @@ create or replace view public."VW_MONITORAMENTO_INDIGENA_OPERACIONAL"
     m."CO_AREA",
     m."ST_TREINAMENTO"
    FROM ("TB_MONITORAMENTO_INDIGENA" m
-     CROSS JOIN LATERAL get_monitoramento_cronograma_estado(m.id, CURRENT_DATE) estado(estado));
+     CROSS JOIN LATERAL get_monitoramento_cronograma_estado(m.id, ((now() AT TIME ZONE 'America/Sao_Paulo'::text))::date) estado(estado));
 
 commit;

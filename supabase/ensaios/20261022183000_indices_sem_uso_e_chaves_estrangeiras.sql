@@ -1,12 +1,12 @@
 /*
-  ENSAIO da migration 20261022163000_indices_sem_uso_e_chaves_estrangeiras.sql
+  ENSAIO da migration 20261022183000_indices_sem_uso_e_chaves_estrangeiras.sql
   — begin … rollback. NÃO É MIGRATION; nada fica gravado.
 
   Montagem (como nos outros ensaios):
     { echo begin;
-      sed -n '/^-- == ANTES ==/,/^-- == aplicar a migration aqui ==/p' supabase/ensaios/20261022163000_indices_sem_uso_e_chaves_estrangeiras.sql;
-      sed -e '/^begin;$/d' -e '/^commit;$/d' supabase/migrations/20261022163000_indices_sem_uso_e_chaves_estrangeiras.sql;
-      sed -n '/^-- == DEPOIS ==/,$p' supabase/ensaios/20261022163000_indices_sem_uso_e_chaves_estrangeiras.sql;
+      sed -n '/^-- == ANTES ==/,/^-- == aplicar a migration aqui ==/p' supabase/ensaios/20261022183000_indices_sem_uso_e_chaves_estrangeiras.sql;
+      sed -e '/^begin;$/d' -e '/^commit;$/d' supabase/migrations/20261022183000_indices_sem_uso_e_chaves_estrangeiras.sql;
+      sed -n '/^-- == DEPOIS ==/,$p' supabase/ensaios/20261022183000_indices_sem_uso_e_chaves_estrangeiras.sql;
     } > /tmp/ensaio.sql   (o arquivo termina em rollback)
 
   Antes: os seis índices existem, continuam com zero leituras e nenhum é de

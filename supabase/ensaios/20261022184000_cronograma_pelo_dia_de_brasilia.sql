@@ -1,12 +1,12 @@
 /*
-  ENSAIO da migration 20261022164000_cronograma_pelo_dia_de_brasilia.sql
+  ENSAIO da migration 20261022184000_cronograma_pelo_dia_de_brasilia.sql
   — begin … rollback. NÃO É MIGRATION; nada fica gravado.
 
   Montagem (como nos outros ensaios):
     { echo begin;
-      sed -n '/^-- == ANTES ==/,/^-- == aplicar a migration aqui ==/p' supabase/ensaios/20261022164000_cronograma_pelo_dia_de_brasilia.sql;
-      sed -e '/^begin;$/d' -e '/^commit;$/d' supabase/migrations/20261022164000_cronograma_pelo_dia_de_brasilia.sql;
-      sed -n '/^-- == DEPOIS ==/,$p' supabase/ensaios/20261022164000_cronograma_pelo_dia_de_brasilia.sql;
+      sed -n '/^-- == ANTES ==/,/^-- == aplicar a migration aqui ==/p' supabase/ensaios/20261022184000_cronograma_pelo_dia_de_brasilia.sql;
+      sed -e '/^begin;$/d' -e '/^commit;$/d' supabase/migrations/20261022184000_cronograma_pelo_dia_de_brasilia.sql;
+      sed -n '/^-- == DEPOIS ==/,$p' supabase/ensaios/20261022184000_cronograma_pelo_dia_de_brasilia.sql;
     } > /tmp/ensaio.sql   (o arquivo termina em rollback)
 
   1. As colunas da view não mudam (nomes, tipos e ordem) e ela segue
