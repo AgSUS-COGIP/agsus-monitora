@@ -50,7 +50,7 @@ jobs:
         run: node scripts/check-legado-so-encolhe.mjs
 
       - name: Instalar dependências
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Verificar lint
         run: npm run lint
@@ -148,7 +148,7 @@ jobs:
           node-version: 24
 
       - name: Instalar dependências
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Verificar contrato contra o catálogo
         # SUPABASE_DB_URL_DEV aponta para o Supabase de DESENVOLVIMENTO, nunca para

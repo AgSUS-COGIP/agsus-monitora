@@ -244,20 +244,13 @@ def com_links(linhas, enderecos):
 
 def fechar_vaga(config, corpo, vaga_interno, chamar):
     """
-    fechar_vaga_empregare com o identificador interno da vaga. Banco sem a
-    migration 20261007160000 (função sem p_vaga_interno: 404 do PostgREST)
-    fecha como antes, sem o identificador. Uma tentativa só: se a resposta se
-    perdeu, o fechamento (que desativa os ausentes) pode já ter rodado.
+    fechar_vaga_empregare com o identificador interno da vaga, quando o robô o
+    leu (20261007160000). Uma tentativa só: se a resposta se perdeu, o
+    fechamento (que desativa os ausentes) pode já ter rodado.
     """
     if not vaga_interno:
         return chamar(config, "fechar_vaga_empregare", corpo, tentativas=1)
-    try:
-        return chamar(config, "fechar_vaga_empregare", dict(corpo, p_vaga_interno=vaga_interno), tentativas=1)
-    except supabase_rpc.ErroDoSupabase as erro:
-        if getattr(erro, "status", None) != 404:
-            raise
-        registrar("O banco ainda não guarda o identificador interno da vaga (falta a migration 20261007160000).")
-        return chamar(config, "fechar_vaga_empregare", corpo, tentativas=1)
+    return chamar(config, "fechar_vaga_empregare", dict(corpo, p_vaga_interno=vaga_interno), tentativas=1)
 
 
 def estourou_o_tempo(erro):
@@ -611,13 +604,11 @@ def resumir_perguntas(config, editais=None, forcar=False, chamar=supabase_rpc.ch
     """
     Recalcula o resumo das perguntas dos editais cuja carga mudou (Python:
     resumo_das_perguntas.py). Nunca derruba a execução: devolve a linha do
-    resumo final e se houve falha. Banco sem a migration 20261009180000: avisa.
+    resumo final e se houve falha.
     """
     try:
         feitos, falhas = resumo_das_perguntas.resumir_editais(config, registrar, chamar, editais, forcar)
     except supabase_rpc.ErroDoSupabase as erro:
-        if getattr(erro, "status", None) == 404:
-            return "Resumo das perguntas: o banco ainda não tem a migration 20261009180000.", False
         return f"Resumo das perguntas NÃO atualizado ({erro}); a tela segue com o anterior.", True
     except Exception as erro:
         return f"Resumo das perguntas NÃO atualizado ({resumo_do_erro(erro)}); a tela segue com o anterior.", True
@@ -687,24 +678,16 @@ def listar_vagas(config, args, chamar=None):
     """
     A lista de vagas da carga (listar_vagas_empregare, finalidade carga): as de
     edital com inscrições congeladas voltam em "congeladas", salvo a liberação
-    do administrador global (--forcar-congelado). Banco sem a migration
-    20261020170000: a lista de antes, com aviso.
+    do administrador global (--forcar-congelado).
     """
     chamar = chamar or supabase_rpc.chamar
-    corpo = {"p_editais": args.editais or None, "p_vagas": args.vagas or None, "p_limite": args.limite}
-    try:
-        return (
-            chamar(
-                config,
-                "listar_vagas_empregare",
-                dict(corpo, p_finalidade="carga", p_liberacao=args.forcar_congelado or None),
-            )
-            or {}
-        )
-    except supabase_rpc.ErroDoSupabase as erro:
-        if getattr(erro, "status", None) != 404:
-            raise
-    registrar("O banco ainda não tem a trava de inscrições congeladas (migration 20261020170000); lista sem ela.")
+    corpo = {
+        "p_editais": args.editais or None,
+        "p_vagas": args.vagas or None,
+        "p_limite": args.limite,
+        "p_finalidade": "carga",
+        "p_liberacao": args.forcar_congelado or None,
+    }
     return chamar(config, "listar_vagas_empregare", corpo) or {}
 
 

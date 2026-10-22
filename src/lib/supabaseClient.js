@@ -33,11 +33,6 @@ function avisarTelaAntiga(sinal) {
   );
 }
 
-function decorateSharedClient(client) {
-  const decorate = globalThis.__agsusDecorateOperationalClient;
-  return typeof decorate === "function" ? decorate(client) : client;
-}
-
 export function getSupabaseClient() {
   if (!hasSupabaseEnv()) return null;
 
@@ -61,7 +56,6 @@ export function getSupabaseClient() {
         ),
       },
     });
-    supabaseClient = decorateSharedClient(supabaseClient);
   }
 
   return supabaseClient;

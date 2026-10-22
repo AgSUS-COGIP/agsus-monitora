@@ -362,7 +362,7 @@ class LinksDaEmpregare(unittest.TestCase):
         self.assertIsNone(nav.link_de_detalhe(LINK_1 + '"><script>'))
 
     def test_le_codigo_e_link_de_cada_candidato(self):
-        candidatos = nav.ler_candidatos_do_html(HTML_DA_LISTA)
+        candidatos = nav.ler_lista_de_candidatos(HTML_DA_LISTA)[0]
         self.assertEqual(
             candidatos,
             [
@@ -375,15 +375,15 @@ class LinksDaEmpregare(unittest.TestCase):
 
     def test_bloco_com_dois_codigos_e_ambiguo(self):
         html = f'<div><span data-pessoa-id="1"></span><span data-pessoa-id="2"></span><a href="{LINK_1}">x</a></div>'
-        self.assertEqual(nav.ler_candidatos_do_html(html), [])
-        self.assertEqual(nav.ler_candidatos_do_html(""), [])
+        self.assertEqual(nav.ler_lista_de_candidatos(html)[0], [])
+        self.assertEqual(nav.ler_lista_de_candidatos("")[0], [])
 
     def test_lista_longa_sem_estourar_a_recursao(self):
         itens = "".join(
             f'<div data-pessoa-id="{i}"><a href="/empresa/curriculo/detalhes?tokenCandidato=T{i}&id=I{i}|">d</a></div>'
             for i in range(1, 3001)
         )
-        self.assertEqual(len(nav.ler_candidatos_do_html(f"<main>{itens}</main>")), 3000)
+        self.assertEqual(len(nav.ler_lista_de_candidatos(f"<main>{itens}</main>")[0]), 3000)
 
     def test_percorre_paginas_ate_acabar(self):
         paginas = [
@@ -559,7 +559,7 @@ class PortalFalso(nav.PortalEmpregare):
     def _carregar_e_ler_pagina(self, prazo, total=None):
         if self.falha:
             raise self.falha
-        return nav.ler_candidatos_do_html(self.paginas[0] if self.paginas else "")
+        return nav.ler_lista_de_candidatos(self.paginas[0] if self.paginas else "")[0]
 
     def _proxima_pagina(self):
         self.paginas.pop(0)
@@ -947,7 +947,7 @@ class FluxoDeUmaVaga(unittest.TestCase):
         self.assertNotIn("p_vaga_interno", chamadas[-1][1])
         self.assertTrue(all("link" not in l for _, c in chamadas[:-1] for l in c["p_linhas"]))
 
-    def test_banco_sem_a_migration_fecha_sem_o_identificador(self):
+    def test_fechar_sem_a_funcao_nova_falha_sem_repetir_a_chamada_antiga(self):
         chamadas = []
 
         def chamar(_config, funcao, corpo, tentativas=3):
@@ -964,10 +964,10 @@ class FluxoDeUmaVaga(unittest.TestCase):
             chamar,
             enderecos={"vaga_interno": "Ab1cD2eF3g|", "candidatos": {}, "respostas": {}},
         )
-        self.assertEqual(situacao, "GRAVADA")
+        self.assertEqual(situacao, "FALHA")
         fechamentos = [c for f, c in chamadas if f == "fechar_vaga_empregare"]
-        self.assertEqual(len(fechamentos), 2)
-        self.assertNotIn("p_vaga_interno", fechamentos[-1])
+        self.assertEqual(len(fechamentos), 1)
+        self.assertEqual(fechamentos[0]["p_vaga_interno"], "Ab1cD2eF3g|")
 
     def test_trava_para_no_primeiro_lote(self):
         chamadas = []

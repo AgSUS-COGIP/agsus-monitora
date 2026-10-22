@@ -134,13 +134,13 @@ repositório** — sete delas críticas. Foram aplicadas manualmente.
 Sem migration (⚠ = crítica):
 
 - ⚠ `usuario_pode_ler_analises`
-- ⚠ `salvar_configuracoes_e_paineis`
+- ~~`salvar_configuracoes_e_paineis`~~ (sem chamador; removida em `20261022155000_remove_rpcs_sem_chamador.sql`)
 - ⚠ `salvar_configuracoes_e_paineis_v2`
 - ~~`salvar_monitoramento_indigena`~~ (removida em `20260925150000_remove_objetos_mortos.sql`)
 - ⚠ `salvar_monitoramento_com_cronograma_v2`
 - ⚠ `get_monitoramento_cronograma`
 - ⚠ `get_analises_dashboard_payload_v2` (hoje em `20260928240000`)
-- `get_acessos_config_master`
+- ~~`get_acessos_config_master`~~ (sem chamador; removida em `20261022155000_remove_rpcs_sem_chamador.sql`)
 - `get_configuracoes_snapshot`
 - `get_configuracoes_historico`
 - `restaurar_configuracoes_versao`

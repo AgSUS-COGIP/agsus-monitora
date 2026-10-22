@@ -7,7 +7,6 @@ import { installBackgroundResourceLifecycle } from "./lib/background-resource-li
 import { installFrontendPerformanceMonitor } from "./lib/frontend-performance-monitor.js";
 import { installCspReportMonitor } from "./lib/csp-report-monitor.js";
 import "./lib/chartjs-global.js";
-import "./lib/supabase-legacy-bridge.js";
 import "./styles/tokens.css";
 import "./styles/icones-lucide.css";
 import "./styles/visual-polish.css";
@@ -50,7 +49,6 @@ import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
 import { installIndigenousTerritoriesLayer } from "./modules/indigenous-territories-layer.js";
-import "./modules/monitoramento-operational-transport.js";
 // O sistema depois de entrar (navegação, carga, presença, moldura): src/app/sistema.js.
 import { ligarSistema, recarregarPaineisExternos } from "./app/sistema.js";
 import { initLoadingExperience } from "./modules/loading-experience.js";

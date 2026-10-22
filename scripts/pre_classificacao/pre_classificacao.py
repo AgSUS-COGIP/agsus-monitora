@@ -383,14 +383,9 @@ def tem_blocos_com_itens(regra):
 def colunas_do_edital(chamar, edital, regra):
     """
     As colunas que o cálculo olha com esta regra (colunas_da_leitura.py), dos nomes
-    que o banco tem no edital; None = ler todas (banco sem pre_classificacao_ler_colunas).
+    que o banco tem no edital (pre_classificacao_ler_colunas).
     """
-    try:
-        nomes = (chamar("pre_classificacao_ler_colunas", {"p_edital": edital["id"]}) or {}).get("colunas")
-    except supabase_rpc.ErroDoSupabase as erro:
-        if erro.status == 404:
-            return None
-        raise
+    nomes = (chamar("pre_classificacao_ler_colunas", {"p_edital": edital["id"]}) or {}).get("colunas")
     return colunas_necessarias(regra, nomes or [])
 
 
@@ -543,22 +538,14 @@ def ler_editais(chamar, args):
     """
     Os editais a calcular (pre_classificacao_ler_editais). Com a trava das
     inscrições congeladas (20261020170000): o seco os inclui (não grava); a
-    liberação do administrador global (--forcar-congelado) também. Banco sem a
-    migration: a chamada de antes.
+    liberação do administrador global (--forcar-congelado) também.
     """
-    corpo = {"p_editais": args.editais or None, "p_apos_robo": bool(args.apos_robo and not args.editais)}
-    try:
-        return (
-            chamar(
-                "pre_classificacao_ler_editais",
-                dict(corpo, p_incluir_congelados=bool(args.seco), p_liberacao=args.forcar_congelado or None),
-            )
-            or {}
-        )
-    except supabase_rpc.ErroDoSupabase as erro:
-        if getattr(erro, "status", None) != 404:
-            raise
-    log.warning("O banco ainda não tem a trava de inscrições congeladas (migration 20261020170000).")
+    corpo = {
+        "p_editais": args.editais or None,
+        "p_apos_robo": bool(args.apos_robo and not args.editais),
+        "p_incluir_congelados": bool(args.seco),
+        "p_liberacao": args.forcar_congelado or None,
+    }
     return chamar("pre_classificacao_ler_editais", corpo) or {}
 
 

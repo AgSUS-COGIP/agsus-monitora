@@ -1,7 +1,10 @@
 """
-Nota declarada: a ART (nota do questionário da Empregare, "x/30") recalculada
-pela regra a partir das respostas, só para CONFERIR a ART — divergência vira
-aviso; a ordem da Provisória continua pela ART.
+Nota declarada: a nota do questionário calculada pela regra a partir das
+respostas. Com nota declarada configurada, ela é a base do corte e da ordem da
+Provisória (base_da_nota DECLARADA, o padrão; vale a ART se a regra pedir ART
+ou se a declarada vier incompleta) e é congelada depois do fim das inscrições
+(pre_classificacao.py). A ART ("x/30" da Empregare) fica para conferência:
+divergência vira aviso.
 
 Cópia fiel de src/lib/avaliacao-documental/nota-declarada.js (mesmos nomes de
 campo na saída).

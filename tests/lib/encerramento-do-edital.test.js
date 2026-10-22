@@ -7,7 +7,6 @@ import {
   formatarPercentual,
   lerEncerramentos,
   numeroCurto,
-  numeroDoEdital,
   selosDoPerfil,
   tituloDeQuemFechou,
 } from "../../src/lib/encerramento-do-edital.ts";
@@ -127,7 +126,6 @@ describe("selos e quem fechou", () => {
     ]);
     expect(numeroCurto("114/2026")).toBe("114");
     expect(tituloDeQuemFechou("114/2026")).toBe("fechou o 114");
-    expect(numeroDoEdital("Edital nº 091/2026 - Projetos")).toBe("91/2026");
   });
 });
 

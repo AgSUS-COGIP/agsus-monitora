@@ -75,6 +75,7 @@
 */
 
 import { quandoFoi } from "./texto-da-conferencia.js";
+import { numeroDoEdital } from "./numero-do-edital.ts";
 
 export interface EtapaDoCronograma {
   ordem: number;
@@ -705,21 +706,6 @@ export function textoDoPrazo(r: RitmoDoEdital): string {
   return `Prazo: ${diaMes(r.etapa.fim)} · ${r.etapa.nome}`;
 }
 
-/** A frase da projeção; "" quando não há o que projetar. */
-export function textoDoRitmo(r: RitmoDoEdital): string {
-  if (r.situacao === "concluido") return "Todas as fichas do lote concluídas.";
-  if (r.ritmo === null || !r.termino)
-    return "Sem dias com análise para medir o ritmo.";
-  const inicio = `No ritmo atual (≈${numero(r.ritmo)} por dia), termina por volta de ${diaMes(r.termino)}`;
-  if (!r.etapa) return `${inicio}.`;
-  const prazo = diaMes(r.etapa.fim);
-  if (r.situacao === "vencido") return `${inicio}; o prazo era ${prazo}.`;
-  if (r.diasDeAtraso)
-    return `${inicio}, ${diasUteis(r.diasDeAtraso)} depois do prazo de ${prazo}.`;
-  if (r.termino === r.etapa.fim) return `${inicio}, no prazo.`;
-  return `${inicio}, antes do prazo de ${prazo}.`;
-}
-
 /* ── No momento do resumo do Painel ─────────────────────────────────── */
 
 type LinhaDoResumo = Record<string, unknown>;
@@ -730,12 +716,6 @@ const STATUS_QUE_FALTAM = {
   Revisar: "revisar",
 } as const;
 const STATUS_CONCLUIDOS = new Set(["Aprovado", "Reprovado"]);
-
-/** "Edital 06/2026 (sanitarista)" → "6/2026" (como FC_NUMERO_EDITAL); "" sem número. */
-function numeroDoEdital(valor: unknown): string {
-  const m = texto(valor).match(/(\d{1,4})\s*\/\s*(\d{4})/);
-  return m ? `${Number(m[1])}/${m[2]}` : "";
-}
 
 /* "DD/MM/AAAA" ou "AAAA-MM-DD" (a data da análise no painel) → "AAAA-MM-DD". */
 function diaDaAnalise(valor: unknown): string {

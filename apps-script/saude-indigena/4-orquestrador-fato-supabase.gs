@@ -4,7 +4,7 @@
  * publica processarLoteSincronizacaoAnalises (o "Atualizar base" da Saude Indigena ja tem a dele;
  * duas com o mesmo nome no projeto fariam valer a do arquivo carregado por ultimo).
  * [nao-trava] 07/10/2026: nao espera retomada impossivel e nao encadeia o incremental quando a
- * FATO ja consumiu 20 min da execucao. Ver apps-script/LEIA-ME.md.
+ * FATO ja consumiu 15 min da execucao (MAX_ELAPSED_BEFORE_INCREMENTAL_MS). Ver apps-script/LEIA-ME.md.
  *
  * Adicione este arquivo AO LADO de:
  * - Atualizar base.gs

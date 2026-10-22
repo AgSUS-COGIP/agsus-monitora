@@ -88,11 +88,10 @@ const TAREFAS: Readonly<Record<string, string>> = Object.freeze({
   agsus_robo_sincronizar_selecao: "Agenda: pedir a carga da Seleção",
   agsus_robo_conferencias: "Agenda: pedir as conferências",
   agsus_robo_conferir_disparos: "Agenda: conferir as respostas do GitHub",
-  // Até 15/10/2026; desliga sozinha (20261009140000).
-  agsus_robo_inscricoes_114_2026:
-    "Agenda: inscrições do 114/2026 (Empregare e pré-classificação)",
   agsus_kpis_do_edital_pela_selecao: "KPIs do edital pela Seleção",
   agsus_fila_estatisticas: "Estatísticas da fila da Avaliação documental",
+  agsus_analises_limpar_manifesto:
+    "Limpeza do manifesto das cargas de análises",
 });
 
 /* Os workflows que o banco pede ao GitHub (lista fixa de FC_DISPARAR_ROBO). */

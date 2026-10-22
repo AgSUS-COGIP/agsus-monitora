@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   AREA_PADRAO_DO_PAINEL,
-  areaDaUrlDoPainel,
   chaveDoCacheDoPayload,
   colunasDoCsvDeAnalises,
   ehAreaSaudeIndigena,
@@ -14,24 +13,13 @@ import {
 
 /*
   Saúde Indígena, SEDE e Projetos usam a MESMA tela de análises (a área do
-  app). Os painéis do quadro leem a área da URL: sem área (ou com lixo), é a
-  da Saúde Indígena.
+  app): sem área (ou com lixo), é a da Saúde Indígena.
 */
-describe("a área do painel pela URL", () => {
-  it("aceita os três códigos", () => {
-    expect(areaDaUrlDoPainel("?area=projetos")).toBe("projetos");
-    expect(areaDaUrlDoPainel("?area=sede")).toBe("sede");
-    expect(areaDaUrlDoPainel("area=saude-indigena")).toBe("saude-indigena");
-    expect(areaDaUrlDoPainel("?aba=1&area=PROJETOS")).toBe("projetos");
-  });
-
+describe("a área do painel", () => {
   it("sem área ou com código desconhecido, é a Saúde Indígena", () => {
     expect(AREA_PADRAO_DO_PAINEL).toBe("saude-indigena");
-    expect(areaDaUrlDoPainel("")).toBe("saude-indigena");
-    expect(areaDaUrlDoPainel(undefined)).toBe("saude-indigena");
-    expect(areaDaUrlDoPainel("?area=")).toBe("saude-indigena");
-    expect(areaDaUrlDoPainel("?area=paineis")).toBe("saude-indigena");
-    expect(areaDaUrlDoPainel("?area=<script>")).toBe("saude-indigena");
+    expect(rotuloDaAreaDoPainel("")).toBe("Saúde Indígena");
+    expect(rotuloDaAreaDoPainel("<script>")).toBe("Saúde Indígena");
   });
 
   it("rótulo de cada área", () => {

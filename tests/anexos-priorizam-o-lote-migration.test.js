@@ -49,8 +49,8 @@ describe("anexos priorizam o lote", () => {
     );
   });
 
-  it("o robô usa a RPC e cai para ler todos sem a migration", () => {
+  it("o robô usa a RPC e, se a chamada falhar, lê todos", () => {
     expect(ANEXOS).toContain('"listar_prioridade_anexos_empregare"');
-    expect(ANEXOS).toContain("falta a migration 20261014200000");
+    expect(ANEXOS).toContain("sem a prioridade dos anexos");
   });
 });

@@ -608,17 +608,6 @@ export function soltarFogos(
   return { parar };
 }
 
-/** O nome antigo: os mesmos fogos ("pequeno" até 50 pedaços). */
-export function soltarConfete(
-  doc = globalThis.document,
-  janela = globalThis.window,
-  { quantidade = 140 } = {},
-) {
-  return soltarFogos(doc, janela, {
-    intensidade: quantidade <= 50 ? "pequeno" : "cheio",
-  });
-}
-
 /**
  * O aviso no topo: a frase e, se houver, uma lista curta. `aoFechar` é
  * chamado quando ele sai (× ou tempo). `tempoMs: null`: não fecha sozinho

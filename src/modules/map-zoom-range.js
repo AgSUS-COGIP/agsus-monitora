@@ -41,6 +41,3 @@ export function installMapZoomRange() {
   installed = true;
   return true;
 }
-
-export const MAP_MIN_ZOOM = MIN_ZOOM;
-export const MAP_MAX_ZOOM = MAX_ZOOM;

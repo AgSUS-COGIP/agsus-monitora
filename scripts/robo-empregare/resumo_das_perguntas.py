@@ -42,13 +42,8 @@ def linhas_da_vaga(lido):
 
 
 def ler_vaga(config, chamar, vaga):
-    """As respostas da vaga, compactas; banco sem p_compacto (404): como antes."""
-    try:
-        return chamar(config, "ler_respostas_pergunta_vaga", {"p_vaga": vaga, "p_compacto": True}) or {}
-    except supabase_rpc.ErroDoSupabase as erro:
-        if erro.status != 404:
-            raise
-    return chamar(config, "ler_respostas_pergunta_vaga", {"p_vaga": vaga}) or {}
+    """As respostas da vaga, compactas."""
+    return chamar(config, "ler_respostas_pergunta_vaga", {"p_vaga": vaga, "p_compacto": True}) or {}
 
 
 def resumir_editais(config, registrar, chamar=supabase_rpc.chamar, editais=None, forcar=False):

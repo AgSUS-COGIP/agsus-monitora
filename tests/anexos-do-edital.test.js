@@ -4,7 +4,6 @@ import {
   etapasDoAnexo,
   juntarAnexos,
   lerAnexoNoServidor,
-  numeroDoEdital,
   problemaDoArquivo,
   quadroParaSalvar,
   resumoDoQuadro,
@@ -43,11 +42,6 @@ const VAGAS = [
 ];
 
 describe("arquivo e número do edital", () => {
-  it("normaliza o número", () => {
-    expect(numeroDoEdital("Edital 091/2026")).toBe("91/2026");
-    expect(numeroDoEdital("sem número")).toBe("");
-  });
-
   it("recusa o que não é PDF ou passa de 4 MB", () => {
     expect(
       problemaDoArquivo({ name: "a.pdf", type: "application/pdf", size: 10 }),

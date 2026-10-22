@@ -316,12 +316,6 @@ export const TIPOS_DE_LISTA_DA_PRE_CLASSIFICACAO = Object.freeze([
   ["LOTE", "Lote de convocação"],
 ]);
 
-/* Fase da publicação de uma lista (título do documento). */
-export const FASES_DA_PUBLICACAO = Object.freeze([
-  ["PRELIMINAR", "Preliminar"],
-  ["FINAL", "Final"],
-]);
-
 /*
   As parciais da avaliação documental que a lista publica (colunas), na ordem
   das publicações. Cada edital escolhe as suas na regra (o 100/2026 não tem
