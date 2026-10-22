@@ -213,14 +213,18 @@ async function abrirSistema({ origem }) {
   Sem acesso, ou acesso revogado: nada desta pessoa fica no navegador, e nada
   dela continua batendo no banco (heartbeat e Pessoas online param juntos).
 */
-function ficarSemAcesso() {
+function fecharSistema() {
   carga.esquecer();
   encerramento.esquecer();
-  void carga.apagarCopia();
   presenca.pararTudo();
   vigiaDoCatalogo.esquecer();
   encerrarEspera();
   perfil.esconderApp();
+}
+
+function ficarSemAcesso() {
+  fecharSistema();
+  void carga.apagarCopia();
 }
 
 /* O perfil mudou com o sistema aberto (USER_UPDATED). */
@@ -310,6 +314,8 @@ export function ligarSistema() {
     aoVerificar: prepararEntrada,
     abrir: abrirSistema,
     aoFicarSemAcesso: ficarSemAcesso,
+    // Perfil ilegível (falha passageira): fecha, mas a cópia da sessão fica.
+    aoFalharNaEntrada: fecharSistema,
     aoAtualizarPerfil: atualizarPerfilAberto,
     antesDeSair,
     aoSair: limparEstadoDeslogado,

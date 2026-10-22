@@ -102,6 +102,7 @@ export function TelaDeEntrada({ sessao, marca, pedido }) {
   const identidade = useSyncExternalStore(marca.assinar, marca.obter);
   const { configuracao, mensagem } = estado;
   const semAcesso = estado.fase === FASES.SEM_ACESSO;
+  const falhou = estado.fase === FASES.FALHA_NA_ENTRADA;
   const textoDoBotao = estado.entrando
     ? TEXTO_DO_BOTAO_OCUPADO
     : configuracao.textoDoBotao || identidade.textoDoBotao || TEXTO_DO_BOTAO;
@@ -160,6 +161,18 @@ export function TelaDeEntrada({ sessao, marca, pedido }) {
           {mensagem.texto}
         </div>
         <div className="login-form google-only-login">
+          {falhou ? (
+            /* O perfil não pôde ser lido: tenta de novo com a mesma sessão. */
+            <button
+              id="tentarDeNovoBtn"
+              type="button"
+              className="google-login-btn"
+              data-texto="pronto"
+              onClick={() => void sessao.tentarDeNovo()}
+            >
+              <span>Tentar de novo</span>
+            </button>
+          ) : null}
           {configuracao.googleAtivo ? (
             <button
               id="googleLoginBtn"

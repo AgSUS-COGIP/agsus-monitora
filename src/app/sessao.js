@@ -66,6 +66,11 @@ export const FASES = Object.freeze({
   ABRINDO: "abrindo",
   /** Entrou com Google, mas sem perfil ativo: o pedido de acesso. */
   SEM_ACESSO: "sem-acesso",
+  /**
+   * O perfil não pôde ser lido (ou a abertura quebrou): não é "sem acesso".
+   * A tela de entrada oferece "Tentar de novo".
+   */
+  FALHA_NA_ENTRADA: "falha-na-entrada",
   CONECTADO: "conectado",
 });
 
@@ -86,6 +91,7 @@ export const MENSAGENS = Object.freeze({
   aguardandoLiberacao:
     "Seu e-mail entrou com Google, mas ainda precisa ser liberado por um administrador.",
   permissoes: "Não foi possível verificar suas permissões. Tente novamente.",
+  falhaAoAbrir: "Não foi possível abrir o sistema. Tente novamente.",
   semAmbiente:
     "Configure VITE_SUPABASE_URL e VITE_SUPABASE_PUBLISHABLE_KEY para conectar ao Supabase.",
   semConexao: "Não foi possível iniciar a conexão segura com o Supabase.",
@@ -96,6 +102,9 @@ export function mensagemDoDominio(dominios) {
 }
 
 const SEM_MENSAGEM = Object.freeze({ texto: "", tom: "" });
+
+/* O perfil não pôde ser lido: diferente de "sem perfil" (`null`). */
+const PERFIL_ILEGIVEL = Object.freeze({ ilegivel: true });
 
 /* As chaves de TB_CONFIGURACAO que a entrada usa, com o padrão de quando não vieram. */
 const CONFIGURACAO_PADRAO = Object.freeze({
@@ -165,7 +174,6 @@ export function criarSessao({
   janela = globalThis.window,
   temAmbiente = hasSupabaseEnv,
   celular = () => isMobileOAuthContext(),
-  avisar = (texto, tom) => globalThis.window?.monitoraToast?.(texto, tom),
   agora = () => Date.now(),
   esperar = esperarPadrao,
 } = {}) {
@@ -335,15 +343,16 @@ export function criarSessao({
   // ── Perfil ──────────────────────────────────────────────────────────────
 
   /**
-   * O perfil de quem entrou. `null` = sem acesso (sem perfil, ou o contexto
-   * não pôde ser lido — como antes, a pessoa vê o pedido de acesso e um aviso).
+   * O perfil de quem entrou. `null` = sem perfil (pedido de acesso);
+   * `PERFIL_ILEGIVEL` = a leitura falhou (rede, banco): não se sabe se há
+   * perfil, e a pessoa não deve cair no pedido de acesso por isso.
    */
   async function carregarPerfil() {
     const client = obterCliente();
     const { data, error } = await client.rpc(RPC_CONTEXTO);
     if (error) {
-      avisar(MENSAGENS.permissoes, "error");
-      return null;
+      console.warn("Falha ao ler o contexto do usuário:", error);
+      return PERFIL_ILEGIVEL;
     }
     const contexto = normalizePlatformContext(data);
     if (contexto)
@@ -357,7 +366,7 @@ export function criarSessao({
     const reserva = await client.rpc(RPC_MEU_USUARIO);
     if (reserva.error) {
       console.warn("Perfil indisponível para o usuário atual:", reserva.error);
-      return null;
+      return PERFIL_ILEGIVEL;
     }
     const linha = Array.isArray(reserva.data)
       ? reserva.data[0] || null
@@ -382,6 +391,21 @@ export function criarSessao({
     chamar("aoFicarSemAcesso", { usuario: estado.usuario });
   }
 
+  /*
+    A leitura do perfil (ou a abertura) falhou: a tela de entrada mostra o
+    erro e "Tentar de novo". O sistema fica fechado, como no pedido de acesso.
+  */
+  function falharNaEntrada(texto) {
+    definir({
+      fase: FASES.FALHA_NA_ENTRADA,
+      perfil: null,
+      painelIds: [],
+      contextoCarregado: false,
+      mensagem: { texto, tom: "error" },
+    });
+    chamar("aoFalharNaEntrada", { usuario: estado.usuario });
+  }
+
   // ── Entrar ──────────────────────────────────────────────────────────────
 
   function jaAberto(sessao) {
@@ -399,6 +423,10 @@ export function criarSessao({
     // O legado liga o skeleton e começa a ler a cópia da sessão junto com o perfil.
     chamar("aoVerificar", { usuario, origem });
     const contexto = await carregarPerfil();
+    if (contexto === PERFIL_ILEGIVEL) {
+      falharNaEntrada(MENSAGENS.permissoes);
+      return;
+    }
     if (!contexto) {
       ficarSemAcesso({ consultar: true });
       return;
@@ -461,10 +489,7 @@ export function criarSessao({
       await carregamento;
     } catch (erro) {
       console.error("Falha ao finalizar login:", erro);
-      ficarSemAcesso({
-        consultar: false,
-        mensagem: MENSAGENS.aguardandoLiberacao,
-      });
+      falharNaEntrada(MENSAGENS.falhaAoAbrir);
     } finally {
       limparEnderecoDoOAuth();
       carregamento = null;
@@ -519,6 +544,8 @@ export function criarSessao({
     if (!estado.usuario || estado.fase !== FASES.CONECTADO) return;
     try {
       const contexto = await carregarPerfil();
+      // Leitura falhou com o sistema aberto: fica o perfil que já estava.
+      if (contexto === PERFIL_ILEGIVEL) return;
       if (!contexto) {
         ficarSemAcesso({ consultar: true });
         return;
@@ -833,6 +860,23 @@ export function criarSessao({
     aplicarSaida();
   }
 
+  /** "Tentar de novo" depois de uma falha na entrada: relê a sessão guardada e entra. */
+  async function tentarDeNovo() {
+    if (estado.fase !== FASES.FALHA_NA_ENTRADA) return;
+    const client = obterCliente();
+    definir({ mensagem: SEM_MENSAGEM });
+    try {
+      const { data } = await client.auth.getSession();
+      if (isUsableSession(data?.session)) {
+        await entrar(data.session, "tentar_de_novo");
+        return;
+      }
+    } catch (erro) {
+      console.warn("Falha ao reler a sessão:", erro);
+    }
+    redefinirDeslogado({ texto: MENSAGENS.sessaoIncompleta, tom: "warn" });
+  }
+
   /** "Voltar ao login" do pedido de acesso: limpa tudo, inclusive a cópia da sessão. */
   async function limparSessao() {
     await limparAutenticacaoLocal();
@@ -863,6 +907,7 @@ export function criarSessao({
     entrarComGoogle,
     sair,
     limparSessao,
+    tentarDeNovo,
     recarregarPerfil,
     /** Para os testes: chamar os passos sem passar pelo Supabase Auth. */
     entrar,

@@ -229,7 +229,8 @@ contrato de RPC); quem não tem perfil ativo vê o pedido de acesso.
 
 `sessaoDoApp.obter()` devolve `{ fase, usuario, perfil, painelIds, contextoCarregado, mensagem,
 entrando, erroDeConfiguracao, consultarPedido, configuracao }`, com `fase` em `FASES`:
-`iniciando` → `deslogado` | `abrindo` → `conectado` | `sem-acesso`.
+`iniciando` → `deslogado` | `abrindo` → `conectado` | `sem-acesso` | `falha-na-entrada` (perfil
+ilegível ou abertura quebrada: a entrada mostra o erro e "Tentar de novo", nunca o pedido de acesso).
 
 O sistema depois de entrar é `src/app/sistema.js` (fase 2, abaixo): `ligarSistema()`, chamado no
 começo de `src/main.js`, cria as peças, publica os contratos em `window` e registra os ganchos de
@@ -244,6 +245,7 @@ configuração (`src/app/configuracao.js`) chama `sessaoDoApp.definirConfiguraca
 | `aoVerificar`          | sessão válida, antes de consultar o perfil    | skeleton + começa a ler a cópia da sessão (`carga.prepararEntrada`) |
 | `abrir`                | perfil confirmado; `true` = sistema aberto    | `carga.carregarEntrada`, auditoria, heartbeat, presença, Realtime   |
 | `aoFicarSemAcesso`     | sem perfil ativo                              | apaga a cópia, para Realtime e heartbeat, esconde `#appScreen`      |
+| `aoFalharNaEntrada`    | perfil ilegível ou abertura quebrada          | o mesmo, sem apagar a cópia da sessão                               |
 | `aoAtualizarPerfil`    | `USER_UPDATED` com o sistema aberto           | painéis liberados, menu, volta à tela de entrada se preciso         |
 | `antesDeSair`          | botão Sair, antes do `signOut()`              | auditoria `logout`, para o Realtime, apaga o cache de análises      |
 | `aoSair`               | estado deslogado aplicado (uma vez por saída) | limpa linhas, presença, painéis externos, esconde `#appScreen`      |

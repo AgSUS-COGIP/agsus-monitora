@@ -505,6 +505,8 @@ export function criarCarga({
     await carregarUnidades({ consulta: fonte.unidades });
     // Sem permissão para as linhas, a carga só publica a lista vazia (sem rede).
     // Cópia que serve sem as linhas (quem nunca as abriu): espera a consulta real.
+    // Falha nas linhas não impede abrir o app: o erro já foi avisado e a
+    // próxima página que pedir as linhas tenta de novo.
     const linhasOk =
       comLinhas || !podeCarregarMonitoramento()
         ? await carregarLinhas({
@@ -513,15 +515,12 @@ export function criarCarga({
               : null,
           })
         : true;
-    if (!linhasOk) {
-      esqueleto.esconder();
-      return false;
-    }
     mostrarApp();
     sessaoAberta = true;
     navegacao.irPara(navegacao.telaDeEntrada());
     // A página aberta já pediu as linhas (ou o pedido ficou da sessão anterior).
-    void garantirLinhas();
+    // Se acabaram de falhar, não repete na hora (seria o mesmo erro, avisado duas vezes).
+    if (linhasOk) void garantirLinhas();
     esqueleto.esconder();
     comemorar();
     atualizarCopia(sessao, consultas, daCopia ? guardada.dados : null).catch(
