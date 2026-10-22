@@ -5,6 +5,11 @@ import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
 import { BotaoDeAcao, Campo, Modal } from "../../ui/index.js";
 import { CabecalhoDaGaveta, CampoMotivo, motivoValido } from "./partes.jsx";
 import { AcoesDoConvite } from "./convite.jsx";
+import {
+  isAllowedInstitutionalEmail,
+  normalizeAllowedDomains,
+} from "../../lib/platform-context.js";
+import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
 
 /*
   "Adicionar pessoa": cadastra pelo e-mail, antes de ela entrar
@@ -14,11 +19,28 @@ import { AcoesDoConvite } from "./convite.jsx";
 
   Depois de gravar, o modal vira "Convite pronto": a mensagem para mandar à
   pessoa (copiar ou abrir no e-mail).
+
+  Só e-mail dos domínios institucionais (auth_google_allowed_domains, como o
+  login e o hook do Supabase que recusa criar conta de outro domínio).
 */
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
-export function ModalAdicionarPessoa({ estado }) {
+const dominiosDaConfiguracao = () =>
+  estadoDasConfiguracoes.valor("auth_google_allowed_domains");
+
+export function erroDoEmailInstitucional(email, dominios) {
+  const texto = String(email ?? "").trim();
+  if (!EMAIL.test(texto)) return "Informe um e-mail válido.";
+  if (isAllowedInstitutionalEmail(texto, dominios)) return "";
+  const lista = normalizeAllowedDomains(dominios).map((d) => `@${d}`);
+  return `Use um e-mail institucional (${lista.join(" ou ")}).`;
+}
+
+export function ModalAdicionarPessoa({
+  estado,
+  dominios = dominiosDaConfiguracao(),
+}) {
   const { matriz } = useSyncExternalStore(estado.assinar, estado.obter);
   const teto = matriz.teto;
   const grupos = gruposAtribuiveis(teto, matriz.grupos || []);
@@ -33,7 +55,10 @@ export function ModalAdicionarPessoa({ estado }) {
   const [coordenacao, setCoordenacao] = useState(
     teto.admin_global ? "" : teto.coordenacao || "",
   );
-  const [areasEscolhidas, setAreasEscolhidas] = useState(["saude-indigena"]);
+  // A área só vem marcada quando há uma só para escolher.
+  const [areasEscolhidas, setAreasEscolhidas] = useState(() =>
+    areas.length === 1 && areas[0]?.id ? [areas[0].id] : [],
+  );
   const [motivo, setMotivo] = useState("");
   const [tentou, setTentou] = useState(false);
   /** { nome, email, reativada } depois de gravar: passo "Convite pronto". */
@@ -41,7 +66,7 @@ export function ModalAdicionarPessoa({ estado }) {
   const adminGlobal = grupos.find((g) => g.codigo === grupo)?.admin_global;
   const semCoordenacao = !coordenacao && !adminGlobal;
   const erros = {
-    email: EMAIL.test(email.trim()) ? "" : "Informe um e-mail válido.",
+    email: erroDoEmailInstitucional(email, dominios),
     nome: nome.trim().length >= 2 ? "" : "Informe o nome da pessoa.",
     areas:
       semCoordenacao && !areasEscolhidas.length
