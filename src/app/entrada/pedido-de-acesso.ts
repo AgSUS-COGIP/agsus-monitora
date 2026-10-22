@@ -494,23 +494,26 @@ export function criarPedidoDeAcesso({
     definir({ erros });
     if (Object.keys(erros).length) return { ok: false, erros };
     definir({ enviando: true, aviso: null });
-    const { error } = await sb.rpc(
-      RPC_REGISTRAR_SOLICITACAO,
-      argumentosDaSolicitacao(estado.campos, { reativacao }),
-    );
-    if (error) {
+    // try/finally: a rede que cai (a promessa rejeita) não deixa o botão preso em "Enviando".
+    try {
+      const { error } = await sb.rpc(
+        RPC_REGISTRAR_SOLICITACAO,
+        argumentosDaSolicitacao(estado.campos, { reativacao }),
+      );
+      if (error) throw error;
+      await carregar({ carregando: false });
+      return { ok: true, erros: {} };
+    } catch (erro) {
       definir({
-        enviando: false,
         aviso: {
           tom: "danger",
-          texto: "Não foi possível enviar o pedido: " + mensagemDoEnvio(error),
+          texto: "Não foi possível enviar o pedido: " + mensagemDoEnvio(erro),
         },
       });
       return { ok: false, erros: {} };
+    } finally {
+      definir({ enviando: false });
     }
-    await carregar({ carregando: false });
-    definir({ enviando: false });
-    return { ok: true, erros: {} };
   }
 
   /** "Cancelar pedido" (já confirmado na tela). */
@@ -518,24 +521,25 @@ export function criarPedidoDeAcesso({
     const sb = cliente();
     if (!sb || estado.cancelando) return false;
     definir({ cancelando: true, aviso: null });
-    const { error } = await sb.rpc(RPC_CANCELAR_SOLICITACAO);
-    if (error) {
+    try {
+      const { error } = await sb.rpc(RPC_CANCELAR_SOLICITACAO);
+      if (error) throw error;
+      await carregar({
+        carregando: false,
+        aviso: { tom: "info", texto: AVISO_CANCELADO },
+      });
+      return true;
+    } catch (erro) {
       definir({
-        cancelando: false,
         aviso: {
           tom: "danger",
-          texto:
-            "Não foi possível cancelar o pedido: " + mensagemDoEnvio(error),
+          texto: "Não foi possível cancelar o pedido: " + mensagemDoEnvio(erro),
         },
       });
       return false;
+    } finally {
+      definir({ cancelando: false });
     }
-    await carregar({
-      carregando: false,
-      aviso: { tom: "info", texto: AVISO_CANCELADO },
-    });
-    definir({ cancelando: false });
-    return true;
   }
 
   /** "Entrar agora" (pedido liberado): marca as boas-vindas e recarrega. */
