@@ -104,8 +104,9 @@ describe("sem tela de carregamento na entrada", () => {
     },
   );
 
-  it("sem acesso, a espera acaba", () => {
-    expect(funcao("function ficarSemAcesso()")).toContain("encerrarEspera()");
+  it("sem acesso (ou perfil ilegível), a espera acaba", () => {
+    expect(funcao("function fecharSistema()")).toContain("encerrarEspera()");
+    expect(funcao("function ficarSemAcesso()")).toContain("fecharSistema()");
   });
 
   it("aconteça o que acontecer, a entrada encerra a espera", () => {
