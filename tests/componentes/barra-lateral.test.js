@@ -460,6 +460,39 @@ describe("as áreas do usuário: seletor de área", () => {
     ]);
   });
 
+  it("trocar de área com alteração não salva pergunta antes; recusar mantém a área e a página", async () => {
+    const chamadas = [];
+    let permitir = false;
+    const confirmarTrocaDeArea = vi.fn(() => permitir);
+    await montar(
+      montarArvoreDoMenu({
+        permitidas: { dashboard: true, nucleo: true, calendario: true },
+        areas: TODAS,
+      }),
+      {
+        navegar: (view) => {
+          chamadas.push([view, obterDadosDoMonitoramento().areaAtual]);
+          marcarItemAtivoNoMenu(view);
+        },
+        confirmarTrocaDeArea,
+      },
+    );
+    await clicar(itemDaArea("saude-indigena", "calendario"));
+    expect(confirmarTrocaDeArea).not.toHaveBeenCalled();
+
+    await clicar(seletor().querySelector(".menu-area__cabecalho"));
+    await clicar(opcao("sede"));
+    expect(confirmarTrocaDeArea).toHaveBeenCalledTimes(1);
+    expect(obterDadosDoMonitoramento().areaAtual).toBe("saude-indigena");
+    expect(chamadas).toEqual([["calendario", "saude-indigena"]]);
+
+    permitir = true;
+    await clicar(seletor().querySelector(".menu-area__cabecalho"));
+    await clicar(opcao("sede"));
+    expect(obterDadosDoMonitoramento().areaAtual).toBe("sede");
+    expect(chamadas.at(-1)).toEqual(["calendario", "sede"]);
+  });
+
   it("recolhida, o seletor é um ícone e a lista das áreas flutua no clique", async () => {
     await montar(
       montarArvoreDoMenu({ permitidas: { nucleo: true }, areas: TODAS }),

@@ -520,6 +520,35 @@ describe("agenda das entrevistas na Classificação", () => {
     expect(linhas()[0][2]).toBe("Ana Primeira");
   });
 
+  it("convocação registrada que não veio: erro com Tentar novamente, sem cair no cálculo atual", async () => {
+    let falhar = true;
+    const supabase = supabaseFalso(agendaDoBanco({ regra: regraSalva() }), {
+      obter_lista_classificacao: () => {
+        if (falhar) throw new Error("Failed to fetch");
+        return { lista: EDITAL.listas[0], resultado: structuredClone(RETRATO) };
+      },
+    });
+    await montar(supabase);
+    await abrirAgenda();
+    const falha = secao.querySelector(".agenda-falha-da-lista");
+    expect(falha.textContent).toContain(
+      "Não foi possível carregar a lista de convocação registrada",
+    );
+    expect(secao.querySelector(".agenda-fonte")).toBeNull();
+    expect(secao.querySelector("[data-acao='gerar-agenda']").disabled).toBe(
+      true,
+    );
+
+    falhar = false;
+    await clicar(falha.querySelector("[data-acao='tentar-novamente']"));
+    await esperar();
+    expect(secao.querySelector(".agenda-falha-da-lista")).toBeNull();
+    expect(secao.querySelector(".agenda-fonte")).toBeNull();
+    expect(secao.querySelector("[data-acao='gerar-agenda']").disabled).toBe(
+      false,
+    );
+  });
+
   it("quem só lê vê a regra e a agenda, sem os controles", async () => {
     const supabase = supabaseFalso(
       agendaDoBanco({

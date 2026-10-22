@@ -262,9 +262,16 @@ export function TelaDaAvaliacaoDocumental({
   const { area: areaDoApp } = usarAreaAtual();
   useEffect(() => {
     const { area } = estado.obter();
-    if (area && areaDoApp && area !== areaDoApp)
-      void estado.carregar(areaDoApp);
-  }, [estado, areaDoApp]);
+    if (!area || !areaDoApp || area === areaDoApp) return undefined;
+    let vivo = true;
+    // A ficha aberta salva o que falta e libera a reserva; só então a área troca.
+    void Promise.resolve(fila?.fechar?.({ reler: false })).then(() => {
+      if (vivo) void estado.carregar(areaDoApp);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [estado, fila, areaDoApp]);
   return (
     <TelaDaArea
       key={e.area || "sem-area"}

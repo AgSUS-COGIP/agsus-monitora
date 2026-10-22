@@ -479,7 +479,6 @@ function ModoDeAnalise({
     posicao >= 0 && posicao < navegaveis.length - 1
       ? navegaveis[posicao + 1]
       : null;
-  const meu = reservaVigente(f.reserva) && f.reserva.usuario === dados.eu;
   // O cabeçalho é desenhado pela ficha (ficha/cabecalho-da-ficha.tsx), com o nível que ela calcula.
   const topo = {
     codigo: String(f.codigo ?? ""),
@@ -509,7 +508,11 @@ function ModoDeAnalise({
         ? [{ rotulo: "Saiu do lote", valor: f.motivo_saida }]
         : []),
     ],
-    fimDaMinhaReserva: meu ? f.reserva.expira : null,
+    // A minha, em dia ou vencida: vencida, o cabeçalho pede para reabrir.
+    fimDaMinhaReserva:
+      aberta.reservada && f.reserva?.usuario === dados.eu
+        ? f.reserva.expira
+        : null,
     decisao: inscrito ? (
       <span className="avd-inline avd-analise-decisao">
         <SeloDaDecisao c={inscrito} />

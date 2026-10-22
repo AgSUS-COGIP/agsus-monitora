@@ -16,6 +16,7 @@ import type {
   EventoFlutuante,
 } from "./tipos.ts";
 import { navegarPelaJanela } from "./integracao.ts";
+import { confirmarTrocaDeArea } from "../../app/guarda-de-alteracoes.ts";
 type Espera = RefObject<number>;
 type Despachar = Dispatch<EventoFlutuante>;
 type Gatilho = {
@@ -703,9 +704,13 @@ export function Navegacao({
     guardarFechadas(proximas);
   };
 
+  const podeTrocarDeArea = () =>
+    (opcoes.confirmarTrocaDeArea ?? confirmarTrocaDeArea)();
+
   const escolher: EscolherItem = (item, area, refCabecalho) => {
     const navegar = opcoes.navegar ?? navegarPelaJanela;
     const paginaAtiva = opcoes.paginaAtiva ?? paginaAtivaPadrao;
+    if (item.area && item.area !== areaAtual && !podeTrocarDeArea()) return;
     // A área vem antes da navegação: a página abre já recortada por ela.
     if (item.area) definirAreaAtual(item.area);
 
@@ -737,6 +742,7 @@ export function Navegacao({
     e a página é a mesma, se a área nova a tem, ou a primeira dela.
   */
   const trocarDeArea = (id: string) => {
+    if (id !== areaAtual && !podeTrocarDeArea()) return;
     const destino = destinoAoTrocarDeArea(arvore, id, ativo.view);
     definirAreaAtual(id);
     if (destino) (opcoes.navegar ?? navegarPelaJanela)(destino.view);

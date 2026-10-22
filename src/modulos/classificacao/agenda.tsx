@@ -761,6 +761,9 @@ function AgendaDosConvocados({
   const [rascunho, setRascunho] = useState<Rascunho | null>(null);
   const [confirmar, setConfirmar] = useState(false);
   const [erroDaFonte, setErroDaFonte] = useState("");
+  // A lista registrada não veio (rede, banco): sem cair para o cálculo atual.
+  const [falhaDaLista, setFalhaDaLista] = useState(false);
+  const [tentativa, setTentativa] = useState(0);
   const [ajuste, setAjuste] = useState("");
   const regra = a.dados?.regra?.configuracao || null;
 
@@ -769,17 +772,21 @@ function AgendaDosConvocados({
     let vivo = true;
     async function carregarFonte() {
       setErroDaFonte("");
+      setFalhaDaLista(false);
       try {
         if (idDaLista) {
           const registrada = await estado.obterLista(idDaLista);
           if (!vivo) return;
-          if (registrada?.retrato) {
-            setFonte({
-              lista: idDaLista,
-              convocados: convocadosDaLista(registrada.retrato),
-            });
+          if (!registrada?.retrato) {
+            setFonte(null);
+            setFalhaDaLista(true);
             return;
           }
+          setFonte({
+            lista: idDaLista,
+            convocados: convocadosDaLista(registrada.retrato),
+          });
+          return;
         }
         const calculada = dados?.regra ? calcular(dados, "CONVOCACAO") : null;
         if (vivo)
@@ -797,7 +804,7 @@ function AgendaDosConvocados({
     return () => {
       vivo = false;
     };
-  }, [estado, idDaLista, dados, calcular]);
+  }, [estado, idDaLista, dados, calcular, tentativa]);
 
   const salvos = useMemo(() => itensDoBanco(a.dados?.itens), [a.dados]);
   const base = useMemo(
@@ -871,6 +878,13 @@ function AgendaDosConvocados({
         <Aviso tom="danger" papel="alert">
           {erroDaFonte}
         </Aviso>
+      ) : null}
+      {falhaDaLista ? (
+        <ErroAoCarregar
+          className="agenda-falha-da-lista"
+          oQue="a lista de convocação registrada"
+          aoTentar={() => setTentativa((n) => n + 1)}
+        />
       ) : null}
       <GradeDeKpis
         tour="classificacao-agenda-kpis"
@@ -963,7 +977,13 @@ function AgendaDosConvocados({
               className="btn"
               data-acao="gerar-agenda"
               data-tour="classificacao-agenda-gerar"
-              disabled={!regra || !fonte || Boolean(erroDaFonte) || a.salvando}
+              disabled={
+                !regra ||
+                !fonte ||
+                Boolean(erroDaFonte) ||
+                falhaDaLista ||
+                a.salvando
+              }
               onClick={pedirGerar}
             >
               <i className="fa-solid fa-calendar-check" aria-hidden="true" />{" "}

@@ -84,6 +84,8 @@ export interface SnapshotDaClassificacao {
   erroDoEdital: string;
   salvando: boolean;
   gerando: boolean;
+  /** Falha ao ler a convocação do edital (não 42501): o "Gerar" espera. */
+  erroDaConvocacao: string;
 }
 export type RpcDaClassificacao =
   | "listar_editais_classificacao"

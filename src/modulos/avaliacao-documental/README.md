@@ -58,8 +58,9 @@ pessoa e área) ou o único vigente; senão, mostra os cartões dos editais vige
   "Voltar à fila", candidato pelo código e nome, vaga, posição, nota declarada (ART), situação,
   responsável, reserva e Anterior / Próxima pela lista filtrada; Esc volta; a ficha aberta fica na
   sessão da aba (recarregar volta a ela) e a **reserva** de 15 minutos, renovada a cada 5 minutos e
-  liberada ao fechar; "Em uso por … desde HH:MM" só para leitura; a coordenação libera reserva
-  presa com motivo. O conteúdo da análise é da F4;
+  liberada ao fechar; vencida, a renovação reserva de novo para o responsável sem subir a versão
+  (`20261022130000`) e o cabeçalho mostra "Reserva vencida: reabra a ficha" até lá; "Em uso por …
+  desde HH:MM" só para leitura; a coordenação libera reserva presa com motivo. O conteúdo da análise é da F4;
 - o seletor de editais mostra só os vigentes (`src/lib/avaliacao-documental/editais.js`), com
   "Mostrar todos os editais da área";
 - na aba Regra: o lote "Todos com a nota mínima" (item 8.2.6 do 93/2026) e os desempates da
@@ -103,7 +104,9 @@ até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Class
   prontas e observação, prévia do parecer (sem resultado enquanto falta conferir) e histórico;
 - rodapé mínimo: "Salvo às HH:MM" (rascunho automático), Anterior / Próximo item e o botão do
   momento ("Próximo pendente", "Revisar e concluir"; na Conclusão, "Concluir e próxima", travado até
-  não faltar nada, e "Salvar rascunho"); "← Voltar à fila" salva antes de soltar a reserva;
+  não faltar nada, e "Salvar rascunho"); "← Voltar à fila" salva antes de soltar a reserva; trocar de área pergunta se há
+  alteração não guardada (`confirmarTrocaDeArea`), e a ficha que sai salva o pendente antes de a
+  fila liberar a reserva (`registrarSalvamento` em `estado-da-fila.js`);
 - concluída: abre na Conclusão, só leitura, com o parecer gravado e o histórico; a coordenação
   reabre com motivo; "Espelho de nota" abre a impressão do espelho para o candidato (eliminado sem
   pontos; apto/inapto por nota com a pontuação por critério) e "Baixar PDF" baixa o mesmo espelho em

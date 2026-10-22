@@ -29,7 +29,9 @@ function conferir(agenda: EstadoDaAgenda, lista: ListaRegistrada) {
   // @ts-expect-error O tipo do rascunho é ANALISE ou CLASSIFICACAO.
   void criarRascunhoDaRegra({ tipo: "OUTRA" });
   void montarClassificacao({ secao: null, areaAtual: () => "sede" });
-  void estado.publicarLista(lista.id);
+  void estado.publicarLista(lista, null);
+  // @ts-expect-error Publicar confere a geração inteira: pede o registro, não só o id.
+  void estado.publicarLista(lista.id, null);
   // @ts-expect-error O sinalizador de salvamento precisa ser booleano.
   const invalido: SnapshotDaClassificacao = { ...snapshot, salvando: "true" };
   // @ts-expect-error A versão da regra é numérica.

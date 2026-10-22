@@ -13,6 +13,7 @@ export function conferirPublicacao(estado: EstadoDaClassificacao) {
     <ModalDePublicacaoDeAprovados
       estado={estado}
       registro={{ id: "l1", tipo: "FINAL" }}
+      resultado={null}
       analises={new Map()}
       aoFechar={() => {}}
     />

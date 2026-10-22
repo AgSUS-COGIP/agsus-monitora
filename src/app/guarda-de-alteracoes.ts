@@ -71,3 +71,21 @@ export type GuardaDeAlteracoes = ReturnType<typeof criarGuardaDeAlteracoes>;
 
 /** A guarda do app (uma por página). */
 export const guardaDeAlteracoes = criarGuardaDeAlteracoes();
+
+/*
+  Trocar de área remonta as telas da área (a ficha aberta da Avaliação
+  documental sai). Com mudança que ainda não chegou a lugar durável, pergunta
+  antes. Trocar de página não passa por aqui: a tela fica montada, escondida.
+*/
+export function confirmarTrocaDeArea(
+  confirmar: (mensagem: string) => boolean = (mensagem) =>
+    globalThis.confirm?.(mensagem) ?? true,
+  guarda: Pick<GuardaDeAlteracoes, "podeRecarregar"> = guardaDeAlteracoes,
+): boolean {
+  return (
+    guarda.podeRecarregar() ||
+    confirmar(
+      "Há alteração que ainda não foi salva. Trocar de área mesmo assim?",
+    )
+  );
+}
