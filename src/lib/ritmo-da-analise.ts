@@ -761,6 +761,9 @@ export function noMomentoDoResumo(
     { situacoes: SituacoesDasFichas; hoje: number }
   >();
   for (const linha of linhas || []) {
+    // "Todos" traz também o Inativo e as análises desativadas: o ritmo é só do Ativo.
+    const escopo = linha?.__escopo;
+    if (escopo !== undefined && escopo !== "ativo") continue;
     const numero = numeroDoEdital(linha?.edital);
     if (!numero) continue;
     let conta = porNumero.get(numero);

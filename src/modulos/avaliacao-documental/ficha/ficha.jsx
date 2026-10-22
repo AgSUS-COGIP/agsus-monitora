@@ -226,7 +226,7 @@ export function ConteudoDaFicha({
   );
 
   useEffect(() => {
-    // Esconder a aba ou sair da página salva o rascunho na hora (o automático espera até 3 s).
+    // Esconder a aba ou sair da página salva o rascunho na hora (o automático espera até 10 s).
     const salvarAgora = () => {
       if (loja.temAlteracaoPendente()) void loja.salvar();
     };

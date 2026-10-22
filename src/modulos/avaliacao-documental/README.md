@@ -219,8 +219,9 @@ em `src/app/copias-por-versao.ts`): a pré-classificação, a regra e a Classifi
 que a tela tem e recebem só `{ inalterado }` quando nada mudou (a pré-classificação e a
 Classificação, quando mudou, com os inscritos em colunas); a fila, depois da primeira leitura, só as
 linhas que mudaram, e não é relida ao passar de uma ficha a outra no modo de análise (só ao voltar à
-lista); a ficha não traz a configuração da regra que a tela já guardou. O rascunho automático sai 3 s
-depois da última mudança (no máximo 15 s depois da primeira pendente) e na hora ao fechar, trocar de
+lista); a ficha não traz a configuração da regra que a tela já guardou. O rascunho automático sai 10 s
+depois da última mudança (no máximo 60 s depois da primeira pendente; o mesmo conteúdo do último
+salvo não vai ao banco) e na hora ao fechar, trocar de
 ficha ou esconder a aba. Sem as migrations, a tela usa as RPCs de sempre.
 
 ## Arquivos

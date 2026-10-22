@@ -64,7 +64,7 @@ export function TabelaDeAnalises({
       informacao={(quantos) =>
         quantos === null
           ? ""
-          : `Recorte atual: ${formatNumberBR(linhas.length)} de ${formatNumberBR(total)}`
+          : `Recorte atual: ${formatNumberBR(quantos)} de ${formatNumberBR(total)}`
       }
       total={total}
       vazio={mensagemDeAreaSemAnalises(area) || "Nenhuma análise nesta área."}

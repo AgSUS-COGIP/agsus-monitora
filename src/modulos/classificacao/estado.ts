@@ -190,6 +190,8 @@ export function criarEstadoDaClassificacao({
   let pedidoDosEditais = 0;
   let geracao = 0;
   let pedidoDoEdital = 0;
+  /* A configuração e os modelos de convocação: uma leitura por sessão (o "Atualizar" relê). */
+  let convocacoes: Promise<[unknown, unknown]> | null = null;
   const ouvintes = new Set<() => void>();
 
   function publicar(mudancas: Partial<SnapshotDaClassificacao>) {
@@ -199,6 +201,7 @@ export function criarEstadoDaClassificacao({
 
   function reiniciar() {
     geracao += 1;
+    convocacoes = null;
     pedidoDosEditais += 1;
     pedidoDoEdital += 1;
     leituraDoEdital.esquecer();
@@ -225,9 +228,17 @@ export function criarEstadoDaClassificacao({
     return data;
   }
 
-  /* Os editais da área. Troca de área recomeça do zero. */
-  async function carregar(area = estado.area) {
+  /*
+    Os editais da área. Troca de área recomeça do zero. `releitura` (o
+    "Atualizar") relê também a configuração de convocação; o edital escolhido
+    é relido uma vez só, aqui.
+  */
+  async function carregar(
+    area = estado.area,
+    { releitura = false }: { releitura?: boolean } = {},
+  ) {
     if (!area) return false;
+    if (releitura) convocacoes = null;
     const meu = ++pedidoDosEditais;
     if (area !== estado.area) {
       geracao += 1;
@@ -275,11 +286,19 @@ export function criarEstadoDaClassificacao({
   async function carregarConvocacao(
     id: string,
   ): Promise<{ convocacao: unknown; erro: string }> {
-    try {
-      const [configuracoes, modelos] = await Promise.all([
+    if (!convocacoes) {
+      const leitura = Promise.all([
         rpc(RPC_CONFIGURACAO_CONVOCACAO),
         rpc(RPC_MODELOS_CONVOCACAO),
       ]);
+      convocacoes = leitura;
+      // Falhou: a próxima escolha tenta de novo.
+      leitura.catch(() => {
+        if (convocacoes === leitura) convocacoes = null;
+      });
+    }
+    try {
+      const [configuracoes, modelos] = await convocacoes;
       return {
         convocacao: convocacaoDoEdital({ configuracoes, modelos }, id),
         erro: "",

@@ -136,11 +136,9 @@ function TelaDaArea({
         aoAtualizar={() => {
           if (rascunho.comAlteracoes() && !confirmar(AVISO_AO_ATUALIZAR))
             return;
-          recarregar();
-          if (e.editalId) {
-            void estado.escolherEdital(e.editalId);
-            void agenda.carregar(e.editalId);
-          }
+          // Os editais e o escolhido (uma leitura só) e a configuração de convocação.
+          void estado.carregar(e.area, { releitura: true });
+          if (e.editalId) void agenda.carregar(e.editalId);
         }}
         atualizarDesativado={
           !e.area || e.carregandoEditais || e.carregandoEdital
