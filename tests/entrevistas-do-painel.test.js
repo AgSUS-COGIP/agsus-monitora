@@ -67,7 +67,7 @@ const PAYLOAD = {
   area: "saude-indigena",
   gerado_em: "2026-09-29T12:00:00Z",
   ultima_carga: {
-    em: "2026-09-29T10:30:00",
+    em: "2026-09-29T13:30:00Z",
     linhas: 4,
     ligadas_analise: 3,
     sem_analise: 1,
