@@ -240,7 +240,7 @@ describe("colunas do documento: larguras ajustadas aos títulos (114/2026)", () 
   const soParciaisFora = (t) =>
     t.colunas.filter((c) => !/Formação|Cursos|Experiência/.test(c.rotulo));
 
-  it("Classificação 14% e Nota Final 12% ao centro; Nome e Modalidade à esquerda", () => {
+  it("Classificação 12% e Nota Final 12% ao centro; Nome (60%) e Modalidade (16%) à esquerda", () => {
     const semParciais = documentoOficial(retrato, {
       regra: {
         ...REGRA_100,
@@ -248,12 +248,12 @@ describe("colunas do documento: larguras ajustadas aos títulos (114/2026)", () 
       },
     }).blocos[0].tabelas[0];
     expect(colunas(semParciais)).toEqual([
-      "Classificação 14 centro",
-      "Nome 46 esquerda",
-      "Modalidade de Concorrência 28 esquerda",
+      "Classificação 12 centro",
+      "Nome 60 esquerda",
+      "Modalidade de Concorrência 16 esquerda",
       "Nota Final 12 centro",
     ]);
-    expect(soParciaisFora(pi).map((c) => c.largura)).toEqual([14, 74, 12]);
+    expect(soParciaisFora(pi).map((c) => c.largura)).toEqual([12, 76, 12]);
     for (const t of [geral, pi])
       expect(t.colunas.reduce((s, c) => s + c.largura, 0)).toBe(100);
   });

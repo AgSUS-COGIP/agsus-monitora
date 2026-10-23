@@ -541,7 +541,7 @@ describe("tela de Classificação", () => {
     expect(html).toContain("VAGA 169681 - Cirurgião Dentista");
     expect(html).toContain("<strong>CLASSIFICAÇÃO</strong>");
     expect(html).not.toMatch(/<script|onerror/i);
-    expect(texto).toMatch(/^Brasília, na data da assinatura digital\./);
+    expect(texto).not.toContain("na data da assinatura digital");
     expect(texto).toContain("1. DISPOSIÇÕES PRELIMINARES");
     expect(texto).toContain("2.1. Os(as) candidatos(as) aprovados(as)");
     expect(toast).toHaveBeenCalledWith(
@@ -601,7 +601,9 @@ describe("tela de Classificação", () => {
     const conteudo = new TextDecoder().decode(bytes);
     expect(conteudo).toContain("word/header1.xml");
     expect(conteudo).toContain("word/media/logo.png");
-    expect(conteudo).toContain("SEI AGSUS.016954/2026-81");
+    // Sem rodapé de página (o SEI põe "título / pg. N").
+    expect(conteudo).not.toContain("word/footer1.xml");
+    expect(conteudo).not.toContain(" / pg. ");
     expect(conteudo).toContain("Texto final do edital.");
 
     copiar.mockClear();

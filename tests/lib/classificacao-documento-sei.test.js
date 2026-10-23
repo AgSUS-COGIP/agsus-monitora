@@ -238,9 +238,8 @@ describe("resultado preliminar da análise curricular (83/2026, SEI 0641561)", (
     const html = htmlParaSei(doc);
     const pagina = new DOMParser().parseFromString(html, "text/html");
     const classes = (c) => pagina.querySelectorAll(`p.${c}`);
-    expect(classes("Texto_Alinhado_Direita")[0].textContent).toBe(
-      "Brasília, na data da assinatura digital.",
-    );
+    // A data fica no modelo do Comunicado do SEI; colada, saía duas vezes.
+    expect(html).not.toContain("na data da assinatura digital");
     expect(classes("Texto_Centralizado_Maiusculas")[0].textContent).toBe(
       "RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR",
     );
@@ -288,10 +287,16 @@ describe("resultado preliminar da análise curricular (83/2026, SEI 0641561)", (
     expect(classeDa("Classificação")).toBe("Tabela_Texto_Centralizado");
     expect(classeDa("Nome")).toBe("Tabela_Texto_Alinhado_Esquerda");
     expect(classeDa("Nota Final")).toBe("Tabela_Texto_Centralizado");
-    // O título de cada coluna não quebra.
-    expect(cabeca.querySelector("td").getAttribute("style")).toContain(
+    // O título pode quebrar (Modalidade de Concorrência em duas linhas) e as
+    // larguras seguem o modelo: Nome com o resto.
+    expect(cabeca.querySelector("td").getAttribute("style")).not.toContain(
       "white-space:nowrap",
     );
+    expect(
+      [...cabeca.querySelectorAll("td")].map(
+        (td) => td.getAttribute("style").match(/width:(\d+)%/)[1],
+      ),
+    ).toEqual(["12", "76", "12"]);
     expect(tabelas[2].textContent).toBe("Não houve candidatos aptos.");
     // Sem timbrado nem assinatura: o SEI põe.
     expect(html).not.toMatch(/<img|assinado eletronicamente|SEPN CRN/i);
@@ -791,7 +796,6 @@ describe("DOCX com papel timbrado", () => {
         "word/document.xml",
         "word/_rels/document.xml.rels",
         "word/header1.xml",
-        "word/footer1.xml",
         "word/_rels/header1.xml.rels",
         "word/media/logo.png",
       ]),
@@ -823,11 +827,8 @@ describe("DOCX com papel timbrado", () => {
       "AGÊNCIA BRASILEIRA DE APOIO À GESTÃO DO SISTEMA ÚNICO DE SAÚDE",
     );
     expect(cabecalho).toContain("SEPN CRN 514, Bloco D");
-    const rodape = xml("word/footer1.xml");
-    expect(rodape).toContain(
-      "Resultado Preliminar - Etapa de Análise Curricular - Classificação Geral · SEI AGSUS.016954/2026-81 / pg. ",
-    );
-    expect(rodape).toContain(" PAGE ");
+    // Sem rodapé de página: "título / pg. N" quem põe é o SEI.
+    expect(zip.has("word/footer1.xml")).toBe(false);
   });
 
   it("corpo: título, itens numerados, vagas e tabelas, data por extenso, sem assinatura", () => {
@@ -835,9 +836,7 @@ describe("DOCX com papel timbrado", () => {
     expect(corpo).toContain(
       '<w:headerReference w:type="default" r:id="rIdCabecalho"/>',
     );
-    expect(corpo).toContain(
-      '<w:footerReference w:type="default" r:id="rIdRodape"/>',
-    );
+    expect(corpo).not.toContain("footerReference");
     expect(corpo).toContain(
       "RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR",
     );
@@ -885,6 +884,10 @@ describe("prévia (Como fica no SEI)", () => {
     expect(lida.querySelectorAll("table")).toHaveLength(3);
     expect(lida.querySelector(".posto-pelo-sei").textContent).toContain(
       "SEI AGSUS.016954/2026-81 / pg. N",
+    );
+    // Na tela, o aviso; no PDF (impressão), não sai: o SEI põe o rodapé.
+    expect(lida.querySelector("style").textContent).toContain(
+      ".posto-pelo-sei { display: none; }",
     );
     expect(lida.querySelector("script")).toBeNull();
     // Endereço de logo estranho não entra.

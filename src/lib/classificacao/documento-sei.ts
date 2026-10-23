@@ -568,20 +568,22 @@ const semMarcas = (valor: unknown) =>
 /*
   Larguras-base (%) por coluna; o Nome (ou a Vaga) fica com o resto. Na
   avaliação documental (Classificação | Nome | Modalidade de Concorrência |
-  Nota Final): 14 | 46 | 28 | 12 — cada título cabe numa linha (Calibri 10 pt
-  em negrito na largura útil do A4) e o Nome fica com o resto.
+  Nota Final): 12 | 60 | 16 | 12 — o Nome, que é o texto longo, fica com o
+  resto; o título "Modalidade de Concorrência" quebra em duas linhas (a coluna
+  só tem siglas: AC, PcD…). Antes 14 | 46 | 28 | 12 deixava a Modalidade larga
+  demais no SEI (23/10/2026).
 */
 export const LARGURAS_DAS_COLUNAS: Readonly<
   Record<string, number | undefined>
 > = Object.freeze({
-  Classificação: 14,
+  Classificação: 12,
   CLASSIFICAÇÃO: 18,
   Nº: 6,
   NOTA: 20,
   "NOTA FINAL": 20,
   "Nota Final": 12,
   Nota: 12,
-  "Modalidade de Concorrência": 28,
+  "Modalidade de Concorrência": 16,
   MODALIDADE: 14,
   SITUAÇÃO: 16,
   Situação: 14,
@@ -1153,7 +1155,7 @@ function tabelaHtml(t: TabelaDoDocumento) {
   const cabeca = `<tr>${t.colunas
     .map(
       (c) =>
-        `<td style="width:${c.largura}%;${BORDA};background-color:#d9d9d9;white-space:nowrap"><p class="Tabela_Texto_Centralizado"><strong>${escapar(c.rotulo)}</strong></p></td>`,
+        `<td style="width:${c.largura}%;${BORDA};background-color:#d9d9d9"><p class="Tabela_Texto_Centralizado"><strong>${escapar(c.rotulo)}</strong></p></td>`,
     )
     .join("")}</tr>`;
   const corpo = t.linhas
@@ -1175,9 +1177,9 @@ function tabelaHtml(t: TabelaDoDocumento) {
  * borda; sem timbrado, assinatura e rodapé (o SEI põe).
  */
 export function htmlParaSei(doc: DocumentoOficial) {
-  const partes = [
-    `<p class="Texto_Alinhado_Direita">${escapar(doc.localData)}</p>`,
-  ];
+  // Sem "Brasília, na data da assinatura digital.": o modelo do Comunicado no
+  // SEI já traz essa linha (colada, ela saía duas vezes — 23/10/2026).
+  const partes: string[] = [];
   for (const linha of doc.titulo)
     partes.push(
       `<p class="Texto_Centralizado_Maiusculas">${htmlDoTrecho(linha)}</p>`,
@@ -1229,7 +1231,7 @@ export function numeracao(itens: readonly ItemDoDocumento[], secao: number) {
 
 /** O documento em texto puro (numerado; tabelas separadas por tabulação). */
 export function textoParaSei(doc: DocumentoOficial) {
-  const saida = [doc.localData, "", ...doc.titulo.map(semMarcas), ""];
+  const saida = [...doc.titulo.map(semMarcas), ""];
   const secao = (
     n: number,
     rotulo: string,
@@ -1295,7 +1297,7 @@ const ESTILO_DO_SEI = `
   p.Texto_Justificado_Recuo_Primeira_Linha { text-align: justify; text-indent: 25mm; }
   p.Texto_Alinhado_Esquerda { text-align: left; }
   .quebra-de-pagina { break-before: page; page-break-before: always; border-top: 1px dashed #999; margin-top: 18pt; padding-top: 12pt; }
-  @media print { .quebra-de-pagina { border-top: 0; margin-top: 0; padding-top: 0; } }
+  @media print { .quebra-de-pagina { border-top: 0; margin-top: 0; padding-top: 0; } .posto-pelo-sei { display: none; } }
   .posto-pelo-sei { margin-top: 18pt; padding-top: 6pt; border-top: 1px dashed #999; color: #666; font-size: 8pt; text-align: center; }
 `;
 
