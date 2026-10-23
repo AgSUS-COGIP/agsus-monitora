@@ -26,7 +26,7 @@ conferir ou falhar, um aviso (`obter_desempate_da_lista`, `estadoDoRelatorio` em
 `20261023170000_classificacao_em_python_etapa_2.sql`). Etapa 2b
 (`20261023200000_classificacao_em_python_etapa_2b.sql`), atrás da chave da automação "Gerar listas
 pelo Python" (`classificacao_calculo`, nasce **desligada**; ligar só depois da publicação do
-114/2026): desligada, o "Gerar" é o de sempre (motor.ts + `registrar_lista_classificacao`; antes,
+114/2026; só vale com "Classificação em Python", `classificacao`, também ligada — 20261024110000): desligada, o "Gerar" é o de sempre (motor.ts + `registrar_lista_classificacao`; antes,
 `pedir_calculo_classificacao` só responde `{ligada: false}`). Ligada, `gerarLista` (`estado.ts`)
 pede o cálculo ao job, mostra "Calculando a lista… (até 5 min)", relê o pedido a cada 3 s, recebe
 o retrato do Python e só registra (`registrar_lista_calculada`, que confere de novo no banco)

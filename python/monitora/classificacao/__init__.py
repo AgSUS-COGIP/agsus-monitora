@@ -1,6 +1,6 @@
 """
 Classificação em Python (etapa 2a: o relatório de desempate de cada lista gerada; etapa 2b:
-a lista calculada pelo Python, atrás da chave "Gerar listas pelo Python").
+a lista calculada pelo Python, atrás das chaves "Gerar listas pelo Python" e "Classificação em Python").
 
     monitora.classificacao.motor        cópia fiel de src/lib/classificacao/motor.ts
                                         (classificar, classificar_edital, classificar_com_rastro)

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  avisoSemEfeito,
   chaveDaLinha,
+  chaveQueFalta,
   mensagemDaRecusa,
   motivoValido,
   normalizarChaves,
@@ -223,6 +225,47 @@ describe("cada chave na tela", () => {
     expect(chaveDaLinha(dados, "empregare")).toBeNull();
     expect(chaveDaLinha(dados, "constructor")).toBeNull();
     expect(chaveDaLinha(null, "entrevistas")).toBeNull();
+  });
+
+  it("o cálculo pelo Python só tem efeito com a Classificação em Python ligada (20261024110000)", () => {
+    const duas = (classificacao, calculo) =>
+      normalizarChaves({
+        chaves: [
+          {
+            chave: "classificacao",
+            nome: "Classificação em Python",
+            ligada: classificacao,
+          },
+          {
+            chave: "classificacao_calculo",
+            nome: "Gerar listas pelo Python",
+            ligada: calculo,
+          },
+        ],
+      });
+    const calculo = (d) => d.chaves[1];
+    const semClassificacao = duas(false, true);
+    expect(
+      chaveQueFalta(semClassificacao, calculo(semClassificacao))?.chave,
+    ).toBe("classificacao");
+    expect(avisoSemEfeito(semClassificacao, calculo(semClassificacao))).toBe(
+      'Sem efeito enquanto "Classificação em Python" estiver desligada: o Gerar segue com o cálculo da tela.',
+    );
+    expect(chaveDaLinha(semClassificacao, "classificacao_calculo")?.chave).toBe(
+      "classificacao",
+    );
+    for (const d of [duas(true, true), duas(true, false), duas(false, false)])
+      expect(avisoSemEfeito(d, calculo(d))).toBeNull();
+    expect(chaveDaLinha(duas(true, true), "classificacao_calculo")?.chave).toBe(
+      "classificacao_calculo",
+    );
+    expect(
+      chaveDaLinha(duas(false, false), "classificacao_calculo")?.chave,
+    ).toBe("classificacao_calculo");
+    // As outras chaves não dependem de nenhuma.
+    expect(
+      avisoSemEfeito(semClassificacao, semClassificacao.chaves[0]),
+    ).toBeNull();
   });
 });
 

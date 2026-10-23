@@ -2,8 +2,9 @@ name: Classificação em Python
 
 # Job Python (scripts/classificacao/classificacao.py) da Classificação. Toda
 # execução esvazia as duas filas, nesta ordem:
-#   1. CÁLCULO das listas pedidas pelo "Gerar" (etapa 2b, só com a chave "Gerar
-#      listas pelo Python" ligada em Configurações › Automação): calcula a lista
+#   1. CÁLCULO das listas pedidas pelo "Gerar" (etapa 2b, só com as chaves "Gerar
+#      listas pelo Python" e "Classificação em Python" ligadas em Configurações ›
+#      Automação, 20261024110000): calcula a lista
 #      com o Python (python/monitora/classificacao/) e grava o retrato pronto
 #      (classificacao_gravar_calculo); a tela confere com o motor.ts e só então
 #      registra a lista.
@@ -15,7 +16,7 @@ name: Classificação em Python
 #
 # Quando roda:
 #   - sozinho, quando alguém clica em Gerar em Classificação › Listas: o banco
-#     pede modo=calculo (pedir_calculo_classificacao, chave ligada) e, depois
+#     pede modo=calculo (pedir_calculo_classificacao, as duas chaves ligadas) e, depois
 #     do registro, modo=desempate com a lista (registrar_lista_classificacao →
 #     FC_DISPARAR_ROBO, salvo com a chave "Classificação em Python" desligada);
 #     disparado_por = id de quem gerou;

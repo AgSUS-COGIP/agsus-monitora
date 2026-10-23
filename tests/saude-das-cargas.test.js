@@ -691,4 +691,27 @@ describe("Classificação em Python no Status (20261023200000)", () => {
     );
     expect(linhas.classificacao_desempate.situacao).toBe("falhou");
   });
+
+  it("o cálculo ligado com a Classificação em Python desligada aparece desligado (20261024110000)", () => {
+    const chaves = normalizarChaves({
+      chaves: [
+        {
+          chave: "classificacao",
+          nome: "Classificação em Python",
+          ligada: false,
+          motivo: "Pausa do Python",
+        },
+        {
+          chave: "classificacao_calculo",
+          nome: "Gerar listas pelo Python",
+          ligada: true,
+        },
+      ],
+    });
+    const linhas = porId(comClassificacao([], [item("FALHOU", 5)]), chaves);
+    expect(linhas.classificacao_calculo.situacao).toBe("desligada");
+    expect(linhas.classificacao_calculo.desligada.motivo).toBe(
+      "Pausa do Python",
+    );
+  });
 });

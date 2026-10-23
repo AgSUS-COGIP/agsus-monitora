@@ -289,6 +289,13 @@ Decisão do usuário (23/10/2026): a troca do cálculo só vai ao ar **depois qu
 "Gerar" é o de hoje: o `motor.ts` calcula e `registrar_lista_classificacao` registra (a tela faz
 uma chamada antes, `pedir_calculo_classificacao`, que só responde `{ligada: false}` sem gravar
 nada). Sem a linha da chave na tabela, também conta como desligada (`FC_CALCULO_PELO_PYTHON`).
+**As duas chaves** (20261024110000): o cálculo pelo Python só vale com "Gerar listas pelo Python"
+**e** "Classificação em Python" (`classificacao`) ligadas, porque o pedido sai pelo mesmo
+`classificacao.yml` e `FC_DISPARAR_ROBO` não o pede com `classificacao` desligada (antes, o
+"Gerar" ficava sem saída: pedido `SEM_DISPARO` e o caminho da tela recusado com 55000). Com uma só
+ligada, o "Gerar" é o da tela; Configurações › Automação mostra "Sem efeito enquanto
+"Classificação em Python" estiver desligada" na linha do cálculo, e no Status das atualizações a
+linha "Cálculo das listas pelo Python" fica "Desligada pelo administrador" (com o motivo da outra).
 
 - **Ligada, o "Gerar"** pede o cálculo (`pedir_calculo_classificacao`: grava o pedido em
   `TB_PEDIDO_CALCULO_CLASSIFICACAO` e pede `classificacao.yml` com `modo=calculo` por
@@ -315,8 +322,8 @@ nada). Sem a linha da chave na tabela, também conta como desligada (`FC_CALCULO
 - **Com a chave ligada**, `registrar_lista_classificacao` (o caminho antigo, de uma aba aberta antes
   da troca) recusa com 55000 ("recarregue a página e gere de novo").
 - **Status das atualizações:** duas linhas, "Relatório de desempate (Classificação em Python)"
-  (chave `classificacao`) e "Cálculo das listas pelo Python" (chave `classificacao_calculo`;
-  desligada = "Desligada pelo administrador"). Cada lista é uma execução
+  (chave `classificacao`) e "Cálculo das listas pelo Python" (chaves `classificacao_calculo` e
+  `classificacao`; qualquer uma desligada = "Desligada pelo administrador"). Cada lista é uma execução
   (`get_saude_das_cargas.classificacao_python`: os 20 últimos preparos e pedidos, com edital, tipo e
   mensagem): falhou quando a mais recente terminada falhou, não conferiu ou não chegou ao GitHub, ou
   quando o pedido espera o job há mais que 30 min (relatório) ou 15 min (cálculo). "Rodar agora" do

@@ -57,7 +57,9 @@ chave por aba; desligada:
 - "Gerar listas pelo Python" (20261023200000, **nasce desligada**): desligada, o "Gerar" calcula e
   registra na tela, como antes; ligada, pede `classificacao.yml` com `modo=calculo`
   (`pedir_calculo_classificacao`) e registra a lista do Python só igual à da tela. Sem a linha da
-  chave, conta como desligada.
+  chave, conta como desligada. **Só tem efeito com "Classificação em Python" também ligada**
+  (20261024110000: o pedido sai pelo mesmo `classificacao.yml`); com ela desligada, o "Gerar" é o
+  da tela e Configurações › Automação avisa que a chave está sem efeito.
 
 | Chave                        | Tarefas do pg_cron                                                                                                                    | Workflow (agenda)                                                             |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |

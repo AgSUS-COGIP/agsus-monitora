@@ -989,7 +989,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_tipo", "p_versao"],
     critica: false,
     resumo:
-      '"Gerar" com a chave "Gerar listas pelo Python" (classificacao_calculo): desligada, { ligada: false } sem gravar nada; ligada, grava o pedido de cálculo e pede classificacao.yml (modo calculo). Devolve { ligada, pedido, situacao, mensagem }. PT409 com a regra mudada. Editor.',
+      '"Gerar" com as chaves "Gerar listas pelo Python" (classificacao_calculo) e "Classificação em Python" (classificacao, 20261024110000): qualquer uma desligada, { ligada: false } sem gravar nada; as duas ligadas, grava o pedido de cálculo e pede classificacao.yml (modo calculo). Devolve { ligada, pedido, situacao, mensagem }. PT409 com a regra mudada. Editor.',
   },
   obter_calculo_classificacao: {
     argumentos: ["p_pedido", "p_com_retrato"],
