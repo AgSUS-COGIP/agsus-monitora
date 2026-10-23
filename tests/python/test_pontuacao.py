@@ -19,11 +19,25 @@ CASOS = json.loads((_FIXTURES / "casos-de-pontuacao.json").read_text(encoding="u
 
 
 def regra_do_caso(caso):
-    """A regra do caso: parecer_da_regra põe as opções do parecer por cima."""
+    """
+    A regra do caso: parecer_da_regra põe as opções do parecer por cima, e
+    motivos_da_regra ({BLOCO: {MOTIVO: texto}}) troca o texto de motivos.
+    """
     regra = CASOS["regras"][caso["regra"]]
-    if not caso.get("parecer_da_regra"):
-        return regra
-    return {**regra, "parecer": {**regra["parecer"], **caso["parecer_da_regra"]}}
+    textos = caso.get("motivos_da_regra") or {}
+    blocos = [
+        {
+            **b,
+            "motivos": [
+                {**m, "texto": textos[b["codigo"]][m["codigo"]]} if m["codigo"] in textos[b["codigo"]] else m
+                for m in b["motivos"]
+            ],
+        }
+        if b["codigo"] in textos
+        else b
+        for b in regra["blocos"]
+    ]
+    return {**regra, "parecer": {**regra["parecer"], **(caso.get("parecer_da_regra") or {})}, "blocos": blocos}
 
 
 class CasosDourados(unittest.TestCase):
@@ -153,6 +167,44 @@ class PontosInformativos(unittest.TestCase):
                 "(Titulação 8,0; Cursos 2,0; Experiência 0,0)."
             )
         )
+
+
+class ParecerSemEspacosNasPontas(unittest.TestCase):
+    """
+    114/2026: o motivo da regra termina com espaço (item 8.2.10.7). O parecer sai
+    sem espaço nas pontas das linhas (como a tela), e a conferência ignora só essa
+    diferença no parecer gravado antes (o banco tirava só o espaço do fim do texto).
+    """
+
+    def setUp(self):
+        self.caso = next(c for c in CASOS["casos"] if c.get("motivos_da_regra"))
+        self.regra = regra_do_caso(self.caso)
+        self.r = pt.calcular_avaliacao(self.regra, self.caso["candidato"], self.caso["opcoes"])
+
+    def conferir(self, parecer):
+        gravado = {**self.caso["esperado"], "parecer": parecer}
+        return [d["campo"] for d in pt.conferir_ficha(self.regra, self.caso["candidato"], gravado, self.caso["opcoes"])]
+
+    def test_linhas_sem_espacos_nas_pontas(self):
+        self.assertEqual(pt.linhas_sem_espacos_nas_pontas("  a  b \n\tc\t\n\n d. "), "a  b\nc\n\nd.")
+        self.assertEqual(pt.linhas_sem_espacos_nas_pontas(None), "")
+
+    def test_o_parecer_sai_sem_espacos_nas_pontas(self):
+        self.assertTrue(all(t.endswith(". ") for t in self.r["observacoes"]))
+        self.assertFalse(any(linha != linha.strip(" \t") for linha in self.r["parecer"].split("\n")))
+
+    def test_parecer_gravado_com_o_espaco_no_meio_e_sem_o_do_fim_confere(self):
+        # Como a tela gravava: cada observação com o espaço do motivo, menos a última (btrim do banco).
+        linhas = self.r["parecer"].split("\n")
+        antigo = "\n".join(linha + " " if linha.startswith("- Item") else linha for linha in linhas).rstrip(" ")
+        self.assertNotEqual(antigo, self.r["parecer"])
+        self.assertEqual(self.conferir(antigo), [])
+        self.assertEqual(self.conferir(self.r["parecer"]), [])
+
+    def test_outra_diferenca_no_parecer_continua_divergente(self):
+        self.assertEqual(self.conferir(self.r["parecer"].replace("Eventos", "Evento")), ["parecer"])
+        self.assertEqual(self.conferir(self.r["parecer"].replace("palestras e", "palestras  e")), ["parecer"])
+        self.assertEqual(self.conferir(self.r["parecer"] + "\n"), ["parecer"])
 
 
 class VariasCotas(unittest.TestCase):

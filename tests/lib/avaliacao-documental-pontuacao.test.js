@@ -5,6 +5,7 @@ import {
   calcularAvaliacao,
   diasDosIntervalos,
   faixaDoCurso,
+  linhasSemEspacosNasPontas,
   numeroDoParecer,
   preencherModelo,
 } from "../../src/lib/avaliacao-documental/pontuacao.js";
@@ -33,12 +34,29 @@ const CASOS = JSON.parse(
   ),
 );
 
-/* A regra do caso: parecer_da_regra põe as opções do parecer por cima. */
+/*
+  A regra do caso: parecer_da_regra põe as opções do parecer por cima, e
+  motivos_da_regra ({ BLOCO: { MOTIVO: texto } }) troca o texto de motivos.
+*/
 const regraDoCaso = (caso) => {
   const regra = CASOS.regras[caso.regra];
-  return caso.parecer_da_regra
-    ? { ...regra, parecer: { ...regra.parecer, ...caso.parecer_da_regra } }
-    : regra;
+  const textos = caso.motivos_da_regra ?? {};
+  return {
+    ...regra,
+    parecer: { ...regra.parecer, ...caso.parecer_da_regra },
+    blocos: regra.blocos.map((b) =>
+      textos[b.codigo]
+        ? {
+            ...b,
+            motivos: b.motivos.map((m) =>
+              Object.hasOwn(textos[b.codigo], m.codigo)
+                ? { ...m, texto: textos[b.codigo][m.codigo] }
+                : m,
+            ),
+          }
+        : b,
+    ),
+  };
 };
 
 describe("casos dourados", () => {
@@ -366,6 +384,18 @@ describe("blocos, efeitos e parecer", () => {
     );
     expect(numeroDoParecer(7.25, 1)).toBe("7,3");
     expect(numeroDoParecer(12, 2)).toBe("12,00");
+  });
+
+  it("parecer: cada linha sem espaço nas pontas, o meio da linha igual", () => {
+    expect(linhasSemEspacosNasPontas("  a  b \n\tc\t\n\n d. ")).toBe(
+      "a  b\nc\n\nd.",
+    );
+    expect(linhasSemEspacosNasPontas(null)).toBe("");
+    const caso = CASOS.casos.find((c) => c.motivos_da_regra);
+    const r = calcularAvaliacao(regraDoCaso(caso), caso.candidato, caso.opcoes);
+    // A observação guarda o texto da regra; o parecer, não o espaço do fim.
+    expect(r.observacoes.every((t) => t.endsWith(". "))).toBe(true);
+    expect(r.parecer.split("\n").some((l) => /^\s|\s$/.test(l))).toBe(false);
   });
 });
 

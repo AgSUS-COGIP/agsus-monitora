@@ -591,6 +591,19 @@ def numero_do_parecer(valor, casas=1):
     return ("-" if q < 0 else "") + texto
 
 
+_PONTAS_DA_LINHA = re.compile(r"^[ \t]+|[ \t]+$")
+
+
+def linhas_sem_espacos_nas_pontas(texto):
+    """
+    Cada linha sem espaço (nem tabulação) nas pontas; o resto do texto fica igual
+    (linhasSemEspacosNasPontas do JS). O parecer sai assim: o motivo ou o modelo da
+    regra digitado com espaço no fim não muda o texto (o banco já tira os espaços
+    das pontas do parecer inteiro em concluir_ficha).
+    """
+    return "\n".join(_PONTAS_DA_LINHA.sub("", linha) for linha in str(texto or "").split("\n"))
+
+
 def preencher_modelo(modelo, campos):
     return _CAMPO.sub(
         lambda m: (
@@ -776,7 +789,7 @@ def calcular_avaliacao(regra_entrada, candidato=None, opcoes=None):
             "nota": _numero_saida(pontos_informativos["nota"]),
             "parciais": {k: _numero_saida(v) for k, v in pontos_informativos["parciais"].items()},
         },
-        "parecer": parecer.lstrip("\n"),
+        "parecer": linhas_sem_espacos_nas_pontas(parecer).lstrip("\n"),
     }
 
 
@@ -820,6 +833,8 @@ def conferir_ficha(regra, lancamento, gravado, opcoes=None, tolerancia=1e-4):
                 "recalculado": r["modalidade_final"],
             }
         )
-    if "parecer" in gravado and str(gravado.get("parecer") or "") != r["parecer"]:
+    # O parecer gravado antes da geração sem espaços nas pontas das linhas (motivo da
+    # regra com espaço no fim, no meio do texto) confere: só essa diferença não conta.
+    if "parecer" in gravado and linhas_sem_espacos_nas_pontas(gravado.get("parecer")) != r["parecer"]:
         diferencas.append({"campo": "parecer", "gravado": "(texto)", "recalculado": "(texto)"})
     return diferencas
