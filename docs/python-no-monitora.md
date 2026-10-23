@@ -323,6 +323,30 @@ nada). Sem a linha da chave na tabela, também conta como desligada (`FC_CALCULO
   nome). **Ligar** só depois da publicação do 114/2026: Configurações › Automação › "Gerar listas
   pelo Python", com motivo.
 
+## Relatório de desempate, versão 2: cabeçalho, idade, resumo e índice (23/10/2026)
+
+`desempate.py` grava `VERSAO_DO_RELATORIO = 2`; a tela lê a 1 e a 2
+(`src/lib/classificacao/relatorio-de-desempate.ts`, `VERSOES_LIDAS`), então o relatório já
+gravado continua abrindo. Para ganhar o formato novo, gere a lista de novo ou reprocesse pelo
+"Rodar agora" do relatório.
+
+- **Cabeçalho** (`cabecalho_da_lista`): edital (número e unidade), lista (tipo, fase, número da
+  geração entre as do mesmo tipo no edital, id), quando (horário de Brasília) e por quem foi
+  gerada (nome e sobrenome do cadastro, `FC_NOME_E_SOBRENOME`, em `gerada_por` de `classificacao_ler_lista`) e a versão da regra.
+- **Idade**: em anos completos na data de corte da regra (a mesma de "idade" e "60+"),
+  calculada no Python a partir da data de nascimento que o job já lê; só nos grupos em que a idade
+  pesou (o grupo chegou ao critério "idade" ou algum par foi decidido pelo 60+); nos outros, "—". A ordem no grupo e a certidão continuam; a data nunca sai.
+- **Resumo** (`resumo_dos_grupos`): pares decididos por critério (e em quantos grupos) e como
+  terminaram os empates até o fim. A tela recalcula o mesmo resumo dos grupos (vale para a
+  versão 1) e o teste confere que é igual ao do Python.
+- **Modalidade**: cada grupo leva `listaNome` ("Lista geral" ou "Lista de cota: …") e `cota`.
+- **Exportação**: XLSX com Resumo, Grupos, Pares e Candidatos (as três últimas com filtro e
+  cabeçalho fixo); PDF com cabeçalho, resumo, índice por vaga com links e a tabela de cada vaga
+  com o cabeçalho repetido em cada página (o navegador não numera páginas no índice).
+- **Banco** (`20261023230000_relatorio_de_desempate_versao_2.sql`, ensaio e rollback com o mesmo
+  nome): `classificacao_ler_lista` com `gerada_por` e `classificacao_gravar_desempate` aceitando
+  as versões 1 e 2. **Aplicar antes de mesclar** (o job novo grava a versão 2).
+
 ## Terceira entrega: expurgo diário dos anexos do chat (saiu)
 
 O job `scripts/expurgo_anexos_chat/` e o workflow `expurgo-anexos-chat.yml` saíram com o chat

@@ -21,13 +21,17 @@ Três modos:
   Relatório (etapa 2a): para cada lista gerada que espera o relatório
   (classificacao_ler_pedidos_desempate: as pendentes e as pedidas em --lista),
   marca PREPARANDO, lê a lista registrada
-  (classificacao_ler_lista: retrato, hash, tipo, versão da regra) e o edital
+  (classificacao_ler_lista: retrato, hash, tipo, versão da regra, quando e por
+  quem foi gerada) e o edital
   (classificacao_ler_edital, com os nomes reais), calcula a lista com o Python
   e monta o retrato que a tela grava. Só se o retrato calculado for IGUAL ao
   registrado (e a versão da regra a mesma), grava o relatório de desempate
   (classificacao_gravar_desempate, que confere o hash de novo e marca PRONTO);
   senão marca NAO_CONFERE (os dados mudaram desde a geração, ou o Python e o
   motor da tela divergem). Erro numa lista marca FALHOU e segue para a próxima.
+  O relatório leva o cabeçalho da lista (edital, tipo, fase, número da geração,
+  id, quando e por quem foi gerada, versão da regra) e a idade em anos na data
+  de corte (a mesma da regra), calculada aqui a partir da data de nascimento.
 
 --seco (etapa 1: conferência)
   Lê um edital (--edital) ou o json salvo (--arquivo), classifica com o Python
@@ -70,7 +74,11 @@ sys.path.insert(0, str(_RAIZ / "python"))
 
 from monitora import execucao, supabase_rpc  # noqa: E402
 from monitora.classificacao.comparacao import comparar  # noqa: E402
-from monitora.classificacao.desempate import relatorio_do_rastro, texto_do_relatorio  # noqa: E402
+from monitora.classificacao.desempate import (  # noqa: E402
+    cabecalho_da_lista,
+    relatorio_do_rastro,
+    texto_do_relatorio,
+)
 from monitora.classificacao.motor import (  # noqa: E402
     DadosInvalidos,
     classificar_com_rastro,
@@ -127,7 +135,7 @@ def conferir_edital(dados: dict, tipos, motor=motor_da_tela) -> dict:
     saida = {}
     for tipo in tipos:
         resultado, rastro = classificar_com_rastro(entrada_do_edital(dados, tipo))
-        relatorio = relatorio_do_rastro(resultado, rastro)
+        relatorio = relatorio_do_rastro(resultado, rastro, cabecalho_da_lista(dados, None, tipo))
         saida[tipo] = {
             "resultado": resultado,
             "relatorio": relatorio,
@@ -266,7 +274,7 @@ def preparar_lista(config, pedido: dict, execucao_id: str, editais: dict, chamar
             raise ListaNaoConfere(
                 MENSAGEM_NAO_CONFERE.format(n=len(diferencas)), [d["caminho"] for d in diferencas[:5]]
             )
-        relatorio = relatorio_do_rastro(resultado, rastro)
+        relatorio = relatorio_do_rastro(resultado, rastro, cabecalho_da_lista(dados, lista, tipo))
         chamar(
             config,
             "classificacao_gravar_desempate",

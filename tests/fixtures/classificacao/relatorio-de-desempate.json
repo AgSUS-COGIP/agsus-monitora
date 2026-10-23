@@ -1,17 +1,36 @@
 {
  "lista_id": "lista-ficticia-final",
- "versao": 1,
+ "versao": 2,
  "gerado_em": "2026-10-23T10:00:00-03:00",
  "da_lista_atual": true,
  "grupos": 16,
  "empatados": 8,
  "pendentes": 7,
  "relatorio": {
-  "versao": 1,
+  "versao": 2,
   "tipo": "FINAL",
   "ordem": "FINAL",
   "casas": 2,
   "dataCorte": "2025-02-28",
+  "cabecalho": {
+   "edital": {
+    "numero": "999/2026",
+    "unidade": "DSEI Fictício"
+   },
+   "lista": {
+    "id": "lista-ficticia-final",
+    "numero": 2,
+    "tipo": "FINAL",
+    "tipoNome": "Final",
+    "fase": "Resultado final do processo seletivo",
+    "geradaEm": "2026-10-23T13:00:00+00:00",
+    "geradaEmTexto": "23/10/2026 10:00",
+    "geradaPor": "Maria Silva"
+   },
+   "regra": {
+    "versao": 3
+   }
+  },
   "empateNaLista": "CRITERIOS",
   "criterios": [
    {
@@ -45,6 +64,20 @@
     "direcao": "SIM_PRIMEIRO"
    }
   ],
+  "modalidades": [
+   {
+    "codigo": "AC",
+    "nome": "Ampla concorrência"
+   },
+   {
+    "codigo": "PCD",
+    "nome": "Pessoas com deficiência"
+   },
+   {
+    "codigo": "PPIQ",
+    "nome": "Pretos, pardos, indígenas e quilombolas"
+   }
+  ],
   "empateFinal": {
    "metodo": "SORTEIO",
    "numeracao": "DENSA"
@@ -56,6 +89,60 @@
    "pendentes": 7,
    "mesmaPosicaoNaLista": 0
   },
+  "resumo": {
+   "porCriterio": [
+    {
+     "codigo": "IDOSO_60",
+     "rotulo": "60+",
+     "pares": 3,
+     "grupos": 3
+    },
+    {
+     "codigo": "INDIGENA_COMPROVADO",
+     "rotulo": "indígena comprovado",
+     "pares": 1,
+     "grupos": 1
+    },
+    {
+     "codigo": "EXP_SAUDE_INDIGENA",
+     "rotulo": "exp. saúde indígena",
+     "pares": 2,
+     "grupos": 1
+    },
+    {
+     "codigo": "EXP_PROFISSIONAL_TEMPO",
+     "rotulo": "tempo de experiência",
+     "pares": 1,
+     "grupos": 1
+    },
+    {
+     "codigo": "MAIOR_IDADE",
+     "rotulo": "idade",
+     "pares": 3,
+     "grupos": 3
+    },
+    {
+     "codigo": "PCD",
+     "rotulo": "PcD",
+     "pares": 1,
+     "grupos": 1
+    }
+   ],
+   "empatesAteOFim": [
+    {
+     "resolucao": "SORTEIO",
+     "rotulo": "sorteio registrado",
+     "empates": 1,
+     "candidatos": 2
+    },
+    {
+     "resolucao": "PENDENTE",
+     "rotulo": "aguardando o registro (pendente)",
+     "empates": 7,
+     "candidatos": 22
+    }
+   ]
+  },
   "vagas": [
    {
     "chave": "101",
@@ -64,6 +151,8 @@
     "grupos": [
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 80.0,
       "notaTexto": "80,00",
       "posicoes": [
@@ -80,6 +169,7 @@
         "codigo": "5001",
         "nome": "Ana Exemplo",
         "posicao": 1,
+        "idade": 60,
         "valores": {
          "IDOSO_60": true
         },
@@ -90,6 +180,7 @@
         "codigo": "5002",
         "nome": "Bruno Teste",
         "posicao": 2,
+        "idade": 40,
         "valores": {
          "IDOSO_60": false
         },
@@ -112,6 +203,8 @@
      },
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 79.0,
       "notaTexto": "79,00",
       "posicoes": [
@@ -129,6 +222,7 @@
         "codigo": "5003",
         "nome": "Carla Ficticia",
         "posicao": 3,
+        "idade": null,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": true
@@ -140,6 +234,7 @@
         "codigo": "5004",
         "nome": "Davi Modelo",
         "posicao": 4,
+        "idade": null,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false
@@ -163,6 +258,8 @@
      },
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 78.0,
       "notaTexto": "78,00",
       "posicoes": [
@@ -181,6 +278,7 @@
         "codigo": "5005",
         "nome": "Elisa Amostra",
         "posicao": 5,
+        "idade": null,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
@@ -193,6 +291,7 @@
         "codigo": "5006",
         "nome": "Fábio Simulado",
         "posicao": 6,
+        "idade": null,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
@@ -205,6 +304,7 @@
         "codigo": "5007",
         "nome": "Gabriela Ensaio",
         "posicao": 7,
+        "idade": null,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
@@ -239,6 +339,8 @@
      },
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 77.0,
       "notaTexto": "77,00",
       "posicoes": [
@@ -258,6 +360,7 @@
         "codigo": "5008",
         "nome": "Heitor Prova",
         "posicao": 8,
+        "idade": null,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
@@ -271,6 +374,7 @@
         "codigo": "5009",
         "nome": "Íris Rascunho",
         "posicao": 9,
+        "idade": null,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
@@ -296,6 +400,8 @@
      },
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 76.0,
       "notaTexto": "76,00",
       "posicoes": [
@@ -316,12 +422,14 @@
         "codigo": "5010",
         "nome": "João Esboço",
         "posicao": 10,
+        "idade": 44,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 44,
           "ordemDeIdade": 1,
           "certidao": false
          }
@@ -333,12 +441,14 @@
         "codigo": "5011",
         "nome": "Karina Piloto",
         "posicao": 11,
+        "idade": 42,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 42,
           "ordemDeIdade": 2,
           "certidao": false
          }
@@ -353,10 +463,12 @@
         "criterio": "MAIOR_IDADE",
         "valores": [
          {
+          "idade": 44,
           "ordemDeIdade": 1,
           "certidao": false
          },
          {
+          "idade": 42,
           "ordemDeIdade": 2,
           "certidao": false
          }
@@ -369,6 +481,8 @@
      },
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 75.0,
       "notaTexto": "75,00",
       "posicoes": [
@@ -389,12 +503,14 @@
         "codigo": "5013",
         "nome": "Marina Demo",
         "posicao": 12,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": true
          }
@@ -406,12 +522,14 @@
         "codigo": "5012",
         "nome": "Lucas Treino",
         "posicao": 13,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 2,
           "certidao": false
          }
@@ -426,10 +544,12 @@
         "criterio": "MAIOR_IDADE",
         "valores": [
          {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": true
          },
          {
+          "idade": 34,
           "ordemDeIdade": 2,
           "certidao": false
          }
@@ -442,6 +562,8 @@
      },
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 74.0,
       "notaTexto": "74,00",
       "posicoes": [
@@ -463,12 +585,14 @@
         "codigo": "5015",
         "nome": "Olga Stub",
         "posicao": 14,
+        "idade": 31,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 31,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -481,12 +605,14 @@
         "codigo": "5014",
         "nome": "Nelson Mock",
         "posicao": 15,
+        "idade": 31,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 31,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -511,6 +637,8 @@
      },
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 73.0,
       "notaTexto": "73,00",
       "posicoes": [
@@ -532,12 +660,14 @@
         "codigo": "5017",
         "nome": "Paula Igual",
         "posicao": 16,
+        "idade": 30,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 30,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -550,12 +680,14 @@
         "codigo": "5016",
         "nome": "Paulo Igual",
         "posicao": 17,
+        "idade": 30,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 30,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -596,6 +728,8 @@
      },
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 72.0,
       "notaTexto": "72,00",
       "posicoes": [
@@ -617,12 +751,14 @@
         "codigo": "5018",
         "nome": "Quirino Par",
         "posicao": 18,
+        "idade": 28,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 28,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -635,12 +771,14 @@
         "codigo": "5019",
         "nome": "Rita Par",
         "posicao": 18,
+        "idade": 28,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 28,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -653,12 +791,14 @@
         "codigo": "5020",
         "nome": "Sérgio Par",
         "posicao": 18,
+        "idade": 28,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 28,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -709,6 +849,8 @@
      },
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 69.0,
       "notaTexto": "69,00",
       "posicoes": [
@@ -730,12 +872,14 @@
         "codigo": "5023",
         "nome": "Vera Cota",
         "posicao": 21,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -748,12 +892,14 @@
         "codigo": "5024",
         "nome": "Wagner Cota",
         "posicao": 21,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -794,6 +940,8 @@
      },
      {
       "lista": "PPIQ",
+      "listaNome": "Lista de cota: Pretos, pardos, indígenas e quilombolas (PPIQ)",
+      "cota": true,
       "nota": 69.0,
       "notaTexto": "69,00",
       "posicoes": [
@@ -815,12 +963,14 @@
         "codigo": "5023",
         "nome": "Vera Cota",
         "posicao": 3,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -833,12 +983,14 @@
         "codigo": "5024",
         "nome": "Wagner Cota",
         "posicao": 3,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -886,6 +1038,8 @@
     "grupos": [
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 80.0,
       "notaTexto": "80,00",
       "posicoes": [
@@ -907,12 +1061,14 @@
         "codigo": "5034",
         "nome": "Gustavo Médico",
         "posicao": 1,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -925,12 +1081,14 @@
         "codigo": "5036",
         "nome": "Igor Médico",
         "posicao": 1,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -978,6 +1136,8 @@
     "grupos": [
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 50.0,
       "notaTexto": "50,00",
       "posicoes": [
@@ -999,12 +1159,14 @@
         "codigo": "5041",
         "nome": "Nara Técnica",
         "posicao": 1,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -1017,12 +1179,14 @@
         "codigo": "5042",
         "nome": "Otávio Técnico",
         "posicao": 1,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -1070,6 +1234,8 @@
     "grupos": [
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 30.0,
       "notaTexto": "30,00",
       "posicoes": [
@@ -1091,12 +1257,14 @@
         "codigo": "5049",
         "nome": "Ana d'Ávila",
         "posicao": 1,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -1109,12 +1277,14 @@
         "codigo": "5050",
         "nome": "Ana Lúcia",
         "posicao": 1,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -1127,12 +1297,14 @@
         "codigo": "5045",
         "nome": "ana maria",
         "posicao": 1,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -1145,12 +1317,14 @@
         "codigo": "5047",
         "nome": "Ana Maria",
         "posicao": 1,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -1163,12 +1337,14 @@
         "codigo": "5048",
         "nome": "Ána Maria",
         "posicao": 1,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -1181,12 +1357,14 @@
         "codigo": "5046",
         "nome": "Ana-Maria",
         "posicao": 1,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -1199,12 +1377,14 @@
         "codigo": "5053",
         "nome": "Anderson",
         "posicao": 1,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -1217,12 +1397,14 @@
         "codigo": "5051",
         "nome": "ÂNGELA",
         "posicao": 1,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -1235,12 +1417,14 @@
         "codigo": "5052",
         "nome": "Ângelo",
         "posicao": 1,
+        "idade": 34,
         "valores": {
          "IDOSO_60": false,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 34,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -1358,6 +1542,8 @@
     "grupos": [
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 48.0,
       "notaTexto": "48,00",
       "posicoes": [
@@ -1379,12 +1565,14 @@
         "codigo": "5055",
         "nome": "Bento Bissexto",
         "posicao": 1,
+        "idade": 60,
         "valores": {
          "IDOSO_60": true,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 60,
           "ordemDeIdade": 1,
           "certidao": false
          },
@@ -1397,12 +1585,14 @@
         "codigo": "5056",
         "nome": "Célia Março",
         "posicao": 2,
+        "idade": 60,
         "valores": {
          "IDOSO_60": true,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": 60,
           "ordemDeIdade": 2,
           "certidao": false
          },
@@ -1415,12 +1605,14 @@
         "codigo": "5057",
         "nome": "Dario Sem Data",
         "posicao": 3,
+        "idade": null,
         "valores": {
          "IDOSO_60": null,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": null,
           "ordemDeIdade": null,
           "certidao": false
          },
@@ -1433,12 +1625,14 @@
         "codigo": "5058",
         "nome": "Eva Sem Data",
         "posicao": 3,
+        "idade": null,
         "valores": {
          "IDOSO_60": null,
          "INDIGENA_COMPROVADO": false,
          "EXP_SAUDE_INDIGENA": 100,
          "EXP_PROFISSIONAL_TEMPO": 1000,
          "MAIOR_IDADE": {
+          "idade": null,
           "ordemDeIdade": null,
           "certidao": false
          },
@@ -1454,10 +1648,12 @@
         "criterio": "MAIOR_IDADE",
         "valores": [
          {
+          "idade": 60,
           "ordemDeIdade": 1,
           "certidao": false
          },
          {
+          "idade": 60,
           "ordemDeIdade": 2,
           "certidao": false
          }
@@ -1506,6 +1702,8 @@
      },
      {
       "lista": "GERAL",
+      "listaNome": "Lista geral",
+      "cota": false,
       "nota": 46.0,
       "notaTexto": "46,00",
       "posicoes": [
@@ -1522,6 +1720,7 @@
         "codigo": "5060",
         "nome": "Gil Data BR",
         "posicao": 4,
+        "idade": 60,
         "valores": {
          "IDOSO_60": true
         },
@@ -1532,6 +1731,7 @@
         "codigo": "5059",
         "nome": "Félix Data Ruim",
         "posicao": 5,
+        "idade": null,
         "valores": {
          "IDOSO_60": null
         },
@@ -1556,5 +1756,5 @@
    }
   ]
  },
- "texto": "RELATÓRIO DE DESEMPATE — Resultado final\nCritérios da regra, nesta ordem: 1) 60+ (sim antes de não); 2) indígena comprovado (sim antes de não); 3) exp. saúde indígena (maior primeiro); 4) tempo de experiência (maior primeiro); 5) idade (maior primeiro); 6) PcD (sim antes de não).\nEmpate que sobra: sorteio registrado. Numeração: 1º, 2º, 2º, 3º.\n16 grupo(s) de empate: 8 decidido(s) pelos critérios, 8 com empate até o fim (7 pendente(s)), 0 na mesma posição pela regra da lista.\n\nVaga 101 · lista geral · nota 80,00 · 2 empatados · 1º a 2º\n  Critérios aplicados: 60+\n  1º  Ana Exemplo (insc. 5001)  60+: sim\n  2º  Bruno Teste (insc. 5002)  60+: não\n  · Ana Exemplo (insc. 5001) à frente de Bruno Teste (insc. 5002) por 60+ (sim × não)\n\nVaga 101 · lista geral · nota 79,00 · 2 empatados · 3º a 4º\n  Critérios aplicados: 60+ → indígena comprovado\n  3º  Carla Ficticia (insc. 5003)  60+: não | indígena comprovado: sim\n  4º  Davi Modelo (insc. 5004)  60+: não | indígena comprovado: não\n  · Carla Ficticia (insc. 5003) à frente de Davi Modelo (insc. 5004) por indígena comprovado (sim × não)\n\nVaga 101 · lista geral · nota 78,00 · 3 empatados · 5º a 7º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena\n  5º  Elisa Amostra (insc. 5005)  60+: não | indígena comprovado: não | exp. saúde indígena: 300\n  6º  Fábio Simulado (insc. 5006)  60+: não | indígena comprovado: não | exp. saúde indígena: 120\n  7º  Gabriela Ensaio (insc. 5007)  60+: não | indígena comprovado: não | exp. saúde indígena: sem dado\n  · Elisa Amostra (insc. 5005) à frente de Fábio Simulado (insc. 5006) por exp. saúde indígena (300 × 120)\n  · Fábio Simulado (insc. 5006) à frente de Gabriela Ensaio (insc. 5007) por exp. saúde indígena (120 × sem dado)\n\nVaga 101 · lista geral · nota 77,00 · 2 empatados · 8º a 9º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência\n  8º  Heitor Prova (insc. 5008)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 2000 dias\n  9º  Íris Rascunho (insc. 5009)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1500 dias\n  · Heitor Prova (insc. 5008) à frente de Íris Rascunho (insc. 5009) por tempo de experiência (2000 dias × 1500 dias)\n\nVaga 101 · lista geral · nota 76,00 · 2 empatados · 10º a 11º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade\n  10º  João Esboço (insc. 5010)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão\n  11º  Karina Piloto (insc. 5011)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 2º mais velho do grupo, sem certidão\n  · João Esboço (insc. 5010) à frente de Karina Piloto (insc. 5011) por idade (1º mais velho do grupo, sem certidão × 2º mais velho do grupo, sem certidão)\n\nVaga 101 · lista geral · nota 75,00 · 2 empatados · 12º a 13º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade\n  12º  Marina Demo (insc. 5013)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo\n  13º  Lucas Treino (insc. 5012)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 2º mais velho do grupo, sem certidão\n  · Marina Demo (insc. 5013) à frente de Lucas Treino (insc. 5012) por idade (1º mais velho do grupo × 2º mais velho do grupo, sem certidão); mesma data de nascimento, decidiu a hora da certidão\n\nVaga 101 · lista geral · nota 74,00 · 2 empatados · 14º a 15º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  14º  Olga Stub (insc. 5015)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: sim\n  15º  Nelson Mock (insc. 5014)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  · Olga Stub (insc. 5015) à frente de Nelson Mock (insc. 5014) por PcD (sim × não)\n\nVaga 101 · lista geral · nota 73,00 · 2 empatados · 16º a 17º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  16º  Paula Igual (insc. 5017)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  17º  Paulo Igual (insc. 5016)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Paula Igual (insc. 5017), Paulo Igual (insc. 5016) — sorteio registrado (registro sorteio-FINAL).\n\nVaga 101 · lista geral · nota 72,00 · 3 empatados · 18º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  18º  Quirino Par (insc. 5018)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  18º  Rita Par (insc. 5019)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  18º  Sérgio Par (insc. 5020)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Quirino Par (insc. 5018), Rita Par (insc. 5019), Sérgio Par (insc. 5020) — aguardando o registro (pendente).\n\nVaga 101 · lista geral · nota 69,00 · 2 empatados · 21º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  21º  Vera Cota (insc. 5023)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: sim\n  21º  Wagner Cota (insc. 5024)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: sim\n  Empatados em todos os critérios: Vera Cota (insc. 5023), Wagner Cota (insc. 5024) — aguardando o registro (pendente).\n\nVaga 101 · lista PPIQ · nota 69,00 · 2 empatados · 3º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  3º  Vera Cota (insc. 5023)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: sim\n  3º  Wagner Cota (insc. 5024)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: sim\n  Empatados em todos os critérios: Vera Cota (insc. 5023), Wagner Cota (insc. 5024) — aguardando o registro (pendente).\n\nVaga 102 · lista geral · nota 80,00 · 2 empatados · 1º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  1º  Gustavo Médico (insc. 5034)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Igor Médico (insc. 5036)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Gustavo Médico (insc. 5034), Igor Médico (insc. 5036) — aguardando o registro (pendente).\n\nVaga 103 · lista geral · nota 50,00 · 2 empatados · 1º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  1º  Nara Técnica (insc. 5041)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Otávio Técnico (insc. 5042)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Nara Técnica (insc. 5041), Otávio Técnico (insc. 5042) — aguardando o registro (pendente).\n\nVaga 104 · lista geral · nota 30,00 · 9 empatados · 1º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  1º  Ana d'Ávila (insc. 5049)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ana Lúcia (insc. 5050)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  ana maria (insc. 5045)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ana Maria (insc. 5047)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ána Maria (insc. 5048)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ana-Maria (insc. 5046)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Anderson (insc. 5053)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  ÂNGELA (insc. 5051)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ângelo (insc. 5052)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Ana d'Ávila (insc. 5049), Ana Lúcia (insc. 5050), ana maria (insc. 5045), Ana Maria (insc. 5047), Ána Maria (insc. 5048), Ana-Maria (insc. 5046), Anderson (insc. 5053), ÂNGELA (insc. 5051), Ângelo (insc. 5052) — aguardando o registro (pendente).\n\nVaga 105 · lista geral · nota 48,00 · 4 empatados · 1º a 3º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  1º  Bento Bissexto (insc. 5055)  60+: sim | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  2º  Célia Março (insc. 5056)  60+: sim | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 2º mais velho do grupo, sem certidão | PcD: não\n  3º  Dario Sem Data (insc. 5057)  60+: sem dado | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: sem data de nascimento, sem certidão | PcD: não\n  3º  Eva Sem Data (insc. 5058)  60+: sem dado | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: sem data de nascimento, sem certidão | PcD: não\n  · Bento Bissexto (insc. 5055) à frente de Célia Março (insc. 5056) por idade (1º mais velho do grupo, sem certidão × 2º mais velho do grupo, sem certidão)\n  · Célia Março (insc. 5056) à frente de Dario Sem Data (insc. 5057) por 60+ (sim × sem dado)\n  Empatados em todos os critérios: Dario Sem Data (insc. 5057), Eva Sem Data (insc. 5058) — aguardando o registro (pendente).\n\nVaga 105 · lista geral · nota 46,00 · 2 empatados · 4º a 5º\n  Critérios aplicados: 60+\n  4º  Gil Data BR (insc. 5060)  60+: sim\n  5º  Félix Data Ruim (insc. 5059)  60+: sem dado\n  · Gil Data BR (insc. 5060) à frente de Félix Data Ruim (insc. 5059) por 60+ (sim × sem dado)\n"
+ "texto": "RELATÓRIO DE DESEMPATE — Resultado final\nEdital nº 999/2026 · DSEI Fictício\nLista Final · fase: Resultado final do processo seletivo · 2ª geração desta lista\nIdentificador da lista: lista-ficticia-final\nGerada em 23/10/2026 10:00 por Maria Silva · regra versão 3\nData de corte (idade e 60+): 28/02/2025\n\nCritérios da regra, nesta ordem: 1) 60+ (sim antes de não); 2) indígena comprovado (sim antes de não); 3) exp. saúde indígena (maior primeiro); 4) tempo de experiência (maior primeiro); 5) idade (maior primeiro); 6) PcD (sim antes de não).\nEmpate que sobra: sorteio registrado. Numeração: 1º, 2º, 2º, 3º.\n\nRESUMO\n16 grupo(s) de empate: 8 decidido(s) pelos critérios, 8 com empate até o fim (7 pendente(s)), 0 na mesma posição pela regra da lista.\nDecididos por critério (pares de candidatos · grupos):\n  60+: 3 · 3\n  indígena comprovado: 1 · 1\n  exp. saúde indígena: 2 · 1\n  tempo de experiência: 1 · 1\n  idade: 3 · 3\n  PcD: 1 · 1\nEmpates até o fim e como foram resolvidos (empates · candidatos):\n  sorteio registrado: 1 · 2\n  aguardando o registro (pendente): 7 · 22\n\nÍNDICE POR VAGA\n  Vaga 101 — Enfermeiro (Nível Superior): 11 grupo(s)\n  Vaga 102 — Médico Clínico: 1 grupo(s)\n  Vaga 103 — Técnico de Enfermagem: 1 grupo(s)\n  Vaga 104 — Agente Indígena de Saúde: 1 grupo(s)\n  Vaga 105 — Analista Administrativo: 2 grupo(s)\n\nVAGA 101 — ENFERMEIRO (NÍVEL SUPERIOR)\n\nVaga 101 — Enfermeiro (Nível Superior) · Lista geral · nota 80,00 · 2 empatados · 1º a 2º\n  Critérios aplicados: 60+\n  1º  Ana Exemplo (insc. 5001)  60+: sim (60 anos)\n  2º  Bruno Teste (insc. 5002)  60+: não (40 anos)\n  · Ana Exemplo (insc. 5001) à frente de Bruno Teste (insc. 5002) por 60+ (sim (60 anos) × não (40 anos))\n\nVaga 101 — Enfermeiro (Nível Superior) · Lista geral · nota 79,00 · 2 empatados · 3º a 4º\n  Critérios aplicados: 60+ → indígena comprovado\n  3º  Carla Ficticia (insc. 5003)  60+: não | indígena comprovado: sim\n  4º  Davi Modelo (insc. 5004)  60+: não | indígena comprovado: não\n  · Carla Ficticia (insc. 5003) à frente de Davi Modelo (insc. 5004) por indígena comprovado (sim × não)\n\nVaga 101 — Enfermeiro (Nível Superior) · Lista geral · nota 78,00 · 3 empatados · 5º a 7º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena\n  5º  Elisa Amostra (insc. 5005)  60+: não | indígena comprovado: não | exp. saúde indígena: 300\n  6º  Fábio Simulado (insc. 5006)  60+: não | indígena comprovado: não | exp. saúde indígena: 120\n  7º  Gabriela Ensaio (insc. 5007)  60+: não | indígena comprovado: não | exp. saúde indígena: sem dado\n  · Elisa Amostra (insc. 5005) à frente de Fábio Simulado (insc. 5006) por exp. saúde indígena (300 × 120)\n  · Fábio Simulado (insc. 5006) à frente de Gabriela Ensaio (insc. 5007) por exp. saúde indígena (120 × sem dado)\n\nVaga 101 — Enfermeiro (Nível Superior) · Lista geral · nota 77,00 · 2 empatados · 8º a 9º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência\n  8º  Heitor Prova (insc. 5008)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 2000 dias\n  9º  Íris Rascunho (insc. 5009)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1500 dias\n  · Heitor Prova (insc. 5008) à frente de Íris Rascunho (insc. 5009) por tempo de experiência (2000 dias × 1500 dias)\n\nVaga 101 — Enfermeiro (Nível Superior) · Lista geral · nota 76,00 · 2 empatados · 10º a 11º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade\n  10º  João Esboço (insc. 5010)  60+: não (44 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 44 anos, 1º mais velho do grupo, sem certidão\n  11º  Karina Piloto (insc. 5011)  60+: não (42 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 42 anos, 2º mais velho do grupo, sem certidão\n  · João Esboço (insc. 5010) à frente de Karina Piloto (insc. 5011) por idade (44 anos, 1º mais velho do grupo, sem certidão × 42 anos, 2º mais velho do grupo, sem certidão)\n\nVaga 101 — Enfermeiro (Nível Superior) · Lista geral · nota 75,00 · 2 empatados · 12º a 13º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade\n  12º  Marina Demo (insc. 5013)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo\n  13º  Lucas Treino (insc. 5012)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 2º mais velho do grupo, sem certidão\n  · Marina Demo (insc. 5013) à frente de Lucas Treino (insc. 5012) por idade (34 anos, 1º mais velho do grupo × 34 anos, 2º mais velho do grupo, sem certidão); mesma data de nascimento, decidiu a hora da certidão\n\nVaga 101 — Enfermeiro (Nível Superior) · Lista geral · nota 74,00 · 2 empatados · 14º a 15º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  14º  Olga Stub (insc. 5015)  60+: não (31 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 31 anos, 1º mais velho do grupo, sem certidão | PcD: sim\n  15º  Nelson Mock (insc. 5014)  60+: não (31 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 31 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  · Olga Stub (insc. 5015) à frente de Nelson Mock (insc. 5014) por PcD (sim × não)\n\nVaga 101 — Enfermeiro (Nível Superior) · Lista geral · nota 73,00 · 2 empatados · 16º a 17º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  16º  Paula Igual (insc. 5017)  60+: não (30 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 30 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  17º  Paulo Igual (insc. 5016)  60+: não (30 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 30 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Paula Igual (insc. 5017), Paulo Igual (insc. 5016) — sorteio registrado (registro sorteio-FINAL).\n\nVaga 101 — Enfermeiro (Nível Superior) · Lista geral · nota 72,00 · 3 empatados · 18º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  18º  Quirino Par (insc. 5018)  60+: não (28 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 28 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  18º  Rita Par (insc. 5019)  60+: não (28 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 28 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  18º  Sérgio Par (insc. 5020)  60+: não (28 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 28 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Quirino Par (insc. 5018), Rita Par (insc. 5019), Sérgio Par (insc. 5020) — aguardando o registro (pendente).\n\nVaga 101 — Enfermeiro (Nível Superior) · Lista geral · nota 69,00 · 2 empatados · 21º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  21º  Vera Cota (insc. 5023)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: sim\n  21º  Wagner Cota (insc. 5024)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: sim\n  Empatados em todos os critérios: Vera Cota (insc. 5023), Wagner Cota (insc. 5024) — aguardando o registro (pendente).\n\nVaga 101 — Enfermeiro (Nível Superior) · Lista de cota: Pretos, pardos, indígenas e quilombolas (PPIQ) · nota 69,00 · 2 empatados · 3º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  3º  Vera Cota (insc. 5023)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: sim\n  3º  Wagner Cota (insc. 5024)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: sim\n  Empatados em todos os critérios: Vera Cota (insc. 5023), Wagner Cota (insc. 5024) — aguardando o registro (pendente).\n\nVAGA 102 — MÉDICO CLÍNICO\n\nVaga 102 — Médico Clínico · Lista geral · nota 80,00 · 2 empatados · 1º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  1º  Gustavo Médico (insc. 5034)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Igor Médico (insc. 5036)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Gustavo Médico (insc. 5034), Igor Médico (insc. 5036) — aguardando o registro (pendente).\n\nVAGA 103 — TÉCNICO DE ENFERMAGEM\n\nVaga 103 — Técnico de Enfermagem · Lista geral · nota 50,00 · 2 empatados · 1º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  1º  Nara Técnica (insc. 5041)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Otávio Técnico (insc. 5042)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Nara Técnica (insc. 5041), Otávio Técnico (insc. 5042) — aguardando o registro (pendente).\n\nVAGA 104 — AGENTE INDÍGENA DE SAÚDE\n\nVaga 104 — Agente Indígena de Saúde · Lista geral · nota 30,00 · 9 empatados · 1º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  1º  Ana d'Ávila (insc. 5049)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ana Lúcia (insc. 5050)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  1º  ana maria (insc. 5045)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ana Maria (insc. 5047)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ána Maria (insc. 5048)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ana-Maria (insc. 5046)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Anderson (insc. 5053)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  1º  ÂNGELA (insc. 5051)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ângelo (insc. 5052)  60+: não (34 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 34 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Ana d'Ávila (insc. 5049), Ana Lúcia (insc. 5050), ana maria (insc. 5045), Ana Maria (insc. 5047), Ána Maria (insc. 5048), Ana-Maria (insc. 5046), Anderson (insc. 5053), ÂNGELA (insc. 5051), Ângelo (insc. 5052) — aguardando o registro (pendente).\n\nVAGA 105 — ANALISTA ADMINISTRATIVO\n\nVaga 105 — Analista Administrativo · Lista geral · nota 48,00 · 4 empatados · 1º a 3º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  1º  Bento Bissexto (insc. 5055)  60+: sim (60 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 60 anos, 1º mais velho do grupo, sem certidão | PcD: não\n  2º  Célia Março (insc. 5056)  60+: sim (60 anos) | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 60 anos, 2º mais velho do grupo, sem certidão | PcD: não\n  3º  Dario Sem Data (insc. 5057)  60+: sem dado | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: sem data de nascimento, sem certidão | PcD: não\n  3º  Eva Sem Data (insc. 5058)  60+: sem dado | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: sem data de nascimento, sem certidão | PcD: não\n  · Bento Bissexto (insc. 5055) à frente de Célia Março (insc. 5056) por idade (60 anos, 1º mais velho do grupo, sem certidão × 60 anos, 2º mais velho do grupo, sem certidão)\n  · Célia Março (insc. 5056) à frente de Dario Sem Data (insc. 5057) por 60+ (sim (60 anos) × sem dado)\n  Empatados em todos os critérios: Dario Sem Data (insc. 5057), Eva Sem Data (insc. 5058) — aguardando o registro (pendente).\n\nVaga 105 — Analista Administrativo · Lista geral · nota 46,00 · 2 empatados · 4º a 5º\n  Critérios aplicados: 60+\n  4º  Gil Data BR (insc. 5060)  60+: sim (60 anos)\n  5º  Félix Data Ruim (insc. 5059)  60+: sem dado\n  · Gil Data BR (insc. 5060) à frente de Félix Data Ruim (insc. 5059) por 60+ (sim (60 anos) × sem dado)\n"
 }

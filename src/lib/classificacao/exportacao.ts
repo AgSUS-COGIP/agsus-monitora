@@ -188,10 +188,21 @@ const colunaExcel = (i: number) => {
   return s;
 };
 
+/* A área do filtro: do cabeçalho até a última linha, na largura da linha mais larga. */
+function areaDoFiltro(linhas: PlanilhaDaClassificacao["linhas"]) {
+  const largura = Math.max(1, ...linhas.map((l) => l.length));
+  return `A1:${colunaExcel(largura - 1)}${Math.max(1, linhas.length)}`;
+}
+
 function planilhaXml(
   linhas: PlanilhaDaClassificacao["linhas"],
   larguras: PlanilhaDaClassificacao["larguras"] = [],
+  filtro = false,
 ) {
+  // Com filtro, o cabeçalho fica fixo ao rolar.
+  const vista = filtro
+    ? '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
+    : "";
   // Larguras em caracteres (proporcionais ao conteúdo de cada coluna).
   const colunas = larguras.length
     ? `<cols>${larguras
@@ -217,7 +228,9 @@ function planilhaXml(
   return (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
-    `${colunas}<sheetData>${corpo}</sheetData></worksheet>`
+    `${vista}${colunas}<sheetData>${corpo}</sheetData>` +
+    (filtro ? `<autoFilter ref="${areaDoFiltro(linhas)}"/>` : "") +
+    "</worksheet>"
   );
 }
 
@@ -321,6 +334,20 @@ export function gerarXlsxDaLista(retrato: unknown, quando = new Date()) {
   );
 }
 
+/* O nome oculto que o Excel usa para lembrar o filtro de cada planilha. */
+function nomesDosFiltros(
+  folhas: readonly (PlanilhaDaClassificacao & { n: number })[],
+) {
+  const com = folhas.filter((f) => f.filtro === true);
+  if (!com.length) return "";
+  return `<definedNames>${com
+    .map(
+      (f) =>
+        `<definedName name="_xlnm._FilterDatabase" localSheetId="${f.n - 1}" hidden="1">'${escaparXml(f.nome.replace(/'/g, "''"))}'!${areaDoFiltro(f.linhas).replace(/([A-Z]+)(\d+)/g, "$$$1$$$2")}</definedName>`,
+    )
+    .join("")}</definedNames>`;
+}
+
 /**
  * Um .xlsx (SpreadsheetML mínimo) com as planilhas dadas: [{ nome, linhas }],
  * a primeira linha de cada uma em negrito. Também usado pela agenda das
@@ -362,7 +389,9 @@ export function gerarXlsx(
       conteudo:
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
         '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
-        `<sheets>${folhas.map((f) => `<sheet name="${escaparXml(f.nome)}" sheetId="${f.n}" r:id="rId${f.n}"/>`).join("")}</sheets></workbook>`,
+        `<sheets>${folhas.map((f) => `<sheet name="${escaparXml(f.nome)}" sheetId="${f.n}" r:id="rId${f.n}"/>`).join("")}</sheets>` +
+        nomesDosFiltros(folhas) +
+        "</workbook>",
     },
     {
       nome: "xl/_rels/workbook.xml.rels",
@@ -390,7 +419,7 @@ export function gerarXlsx(
     },
     ...folhas.map((f) => ({
       nome: `xl/worksheets/sheet${f.n}.xml`,
-      conteudo: planilhaXml(f.linhas, f.larguras),
+      conteudo: planilhaXml(f.linhas, f.larguras, f.filtro === true),
     })),
   ];
   return zipSemCompressao(arquivos, quando);

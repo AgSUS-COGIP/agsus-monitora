@@ -504,7 +504,10 @@ describe("tela de Classificação", () => {
     );
     imprimir.mockClear();
     await clicar(secao.querySelector("[data-desempate='pdf']"));
-    expect(imprimir.mock.calls[0][0]).toContain("RELATÓRIO DE DESEMPATE");
+    expect(imprimir.mock.calls[0][0]).toContain(
+      "<h1>Relatório de desempate</h1>",
+    );
+    expect(imprimir.mock.calls[0][0]).toContain('href="#vaga-1"');
   });
 
   it("Relatório de desempate: depois de gerar, 'sendo preparado…' até o Python gravar; então os botões", async () => {

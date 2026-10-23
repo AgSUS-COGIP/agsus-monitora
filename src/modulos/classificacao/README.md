@@ -15,7 +15,11 @@ nos dois lados). Etapa 2a: gerar a lista pede o relatório de desempate ao job
 (`registrar_lista_classificacao` → workflow `classificacao.yml`, chave da automação
 "Classificação em Python"); o job só grava o relatório quando o retrato que ele calcula é o da lista
 registrada. Na visão Listas, "Relatório de desempate sendo preparado…" até chegar (relê a cada 10 s,
-espera até 15 min); depois, "Relatório de desempate (XLSX)" e "(PDF)", com nome e inscrição; se não
+espera até 15 min); depois, "Relatório de desempate (XLSX)" e "(PDF)", com nome e inscrição (versão 2,
+`20261023230000_relatorio_de_desempate_versao_2.sql`: cabeçalho da lista, idade em anos na data de
+corte, resumo por critério, lista geral ou de cota no título do grupo; XLSX com Resumo, Grupos,
+Pares e Candidatos com filtro; PDF com índice por vaga e o cabeçalho da vaga repetido; a versão 1
+continua abrindo); se não
 conferir ou falhar, um aviso (`obter_desempate_da_lista`, `estadoDoRelatorio` em
 `src/lib/classificacao/relatorio-de-desempate.ts`; banco em
 `supabase/migrations/20261023140000_classificacao_em_python_e_relatorio_de_desempate.sql` e

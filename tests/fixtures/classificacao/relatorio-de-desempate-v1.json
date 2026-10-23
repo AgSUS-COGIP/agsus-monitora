@@ -1,0 +1,1560 @@
+{
+ "lista_id": "lista-ficticia-final",
+ "versao": 1,
+ "gerado_em": "2026-10-23T10:00:00-03:00",
+ "da_lista_atual": true,
+ "grupos": 16,
+ "empatados": 8,
+ "pendentes": 7,
+ "relatorio": {
+  "versao": 1,
+  "tipo": "FINAL",
+  "ordem": "FINAL",
+  "casas": 2,
+  "dataCorte": "2025-02-28",
+  "empateNaLista": "CRITERIOS",
+  "criterios": [
+   {
+    "codigo": "IDOSO_60",
+    "rotulo": "60+",
+    "direcao": "SIM_PRIMEIRO"
+   },
+   {
+    "codigo": "INDIGENA_COMPROVADO",
+    "rotulo": "indígena comprovado",
+    "direcao": "SIM_PRIMEIRO"
+   },
+   {
+    "codigo": "EXP_SAUDE_INDIGENA",
+    "rotulo": "exp. saúde indígena",
+    "direcao": "MAIOR_PRIMEIRO"
+   },
+   {
+    "codigo": "EXP_PROFISSIONAL_TEMPO",
+    "rotulo": "tempo de experiência",
+    "direcao": "MAIOR_PRIMEIRO"
+   },
+   {
+    "codigo": "MAIOR_IDADE",
+    "rotulo": "idade",
+    "direcao": "MAIOR_PRIMEIRO"
+   },
+   {
+    "codigo": "PCD",
+    "rotulo": "PcD",
+    "direcao": "SIM_PRIMEIRO"
+   }
+  ],
+  "empateFinal": {
+   "metodo": "SORTEIO",
+   "numeracao": "DENSA"
+  },
+  "totais": {
+   "grupos": 16,
+   "decididosPorCriterio": 8,
+   "empatadosAteOFim": 8,
+   "pendentes": 7,
+   "mesmaPosicaoNaLista": 0
+  },
+  "vagas": [
+   {
+    "chave": "101",
+    "codigo": "101",
+    "cargo": "Enfermeiro (Nível Superior)",
+    "grupos": [
+     {
+      "lista": "GERAL",
+      "nota": 80.0,
+      "notaTexto": "80,00",
+      "posicoes": [
+       1,
+       2
+      ],
+      "resolucao": "CRITERIOS",
+      "criteriosAplicados": [
+       "IDOSO_60"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c001-101",
+        "codigo": "5001",
+        "nome": "Ana Exemplo",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": true
+        },
+        "decididoPor": "IDOSO_60"
+       },
+       {
+        "analiseId": "c002-101",
+        "codigo": "5002",
+        "nome": "Bruno Teste",
+        "posicao": 2,
+        "valores": {
+         "IDOSO_60": false
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c001-101",
+        "abaixo": "c002-101",
+        "criterio": "IDOSO_60",
+        "valores": [
+         true,
+         false
+        ],
+        "resolucao": "CRITERIOS"
+       }
+      ],
+      "empatadosAteOFim": []
+     },
+     {
+      "lista": "GERAL",
+      "nota": 79.0,
+      "notaTexto": "79,00",
+      "posicoes": [
+       3,
+       4
+      ],
+      "resolucao": "CRITERIOS",
+      "criteriosAplicados": [
+       "IDOSO_60",
+       "INDIGENA_COMPROVADO"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c003-101",
+        "codigo": "5003",
+        "nome": "Carla Ficticia",
+        "posicao": 3,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": true
+        },
+        "decididoPor": "INDIGENA_COMPROVADO"
+       },
+       {
+        "analiseId": "c004-101",
+        "codigo": "5004",
+        "nome": "Davi Modelo",
+        "posicao": 4,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c003-101",
+        "abaixo": "c004-101",
+        "criterio": "INDIGENA_COMPROVADO",
+        "valores": [
+         true,
+         false
+        ],
+        "resolucao": "CRITERIOS"
+       }
+      ],
+      "empatadosAteOFim": []
+     },
+     {
+      "lista": "GERAL",
+      "nota": 78.0,
+      "notaTexto": "78,00",
+      "posicoes": [
+       5,
+       7
+      ],
+      "resolucao": "CRITERIOS",
+      "criteriosAplicados": [
+       "IDOSO_60",
+       "INDIGENA_COMPROVADO",
+       "EXP_SAUDE_INDIGENA"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c005-101",
+        "codigo": "5005",
+        "nome": "Elisa Amostra",
+        "posicao": 5,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 300
+        },
+        "decididoPor": "EXP_SAUDE_INDIGENA"
+       },
+       {
+        "analiseId": "c006-101",
+        "codigo": "5006",
+        "nome": "Fábio Simulado",
+        "posicao": 6,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 120
+        },
+        "decididoPor": "EXP_SAUDE_INDIGENA"
+       },
+       {
+        "analiseId": "c007-101",
+        "codigo": "5007",
+        "nome": "Gabriela Ensaio",
+        "posicao": 7,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": null
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c005-101",
+        "abaixo": "c006-101",
+        "criterio": "EXP_SAUDE_INDIGENA",
+        "valores": [
+         300,
+         120
+        ],
+        "resolucao": "CRITERIOS"
+       },
+       {
+        "acima": "c006-101",
+        "abaixo": "c007-101",
+        "criterio": "EXP_SAUDE_INDIGENA",
+        "valores": [
+         120,
+         null
+        ],
+        "resolucao": "CRITERIOS"
+       }
+      ],
+      "empatadosAteOFim": []
+     },
+     {
+      "lista": "GERAL",
+      "nota": 77.0,
+      "notaTexto": "77,00",
+      "posicoes": [
+       8,
+       9
+      ],
+      "resolucao": "CRITERIOS",
+      "criteriosAplicados": [
+       "IDOSO_60",
+       "INDIGENA_COMPROVADO",
+       "EXP_SAUDE_INDIGENA",
+       "EXP_PROFISSIONAL_TEMPO"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c008-101",
+        "codigo": "5008",
+        "nome": "Heitor Prova",
+        "posicao": 8,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 2000
+        },
+        "decididoPor": "EXP_PROFISSIONAL_TEMPO"
+       },
+       {
+        "analiseId": "c009-101",
+        "codigo": "5009",
+        "nome": "Íris Rascunho",
+        "posicao": 9,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1500
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c008-101",
+        "abaixo": "c009-101",
+        "criterio": "EXP_PROFISSIONAL_TEMPO",
+        "valores": [
+         2000,
+         1500
+        ],
+        "resolucao": "CRITERIOS"
+       }
+      ],
+      "empatadosAteOFim": []
+     },
+     {
+      "lista": "GERAL",
+      "nota": 76.0,
+      "notaTexto": "76,00",
+      "posicoes": [
+       10,
+       11
+      ],
+      "resolucao": "CRITERIOS",
+      "criteriosAplicados": [
+       "IDOSO_60",
+       "INDIGENA_COMPROVADO",
+       "EXP_SAUDE_INDIGENA",
+       "EXP_PROFISSIONAL_TEMPO",
+       "MAIOR_IDADE"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c010-101",
+        "codigo": "5010",
+        "nome": "João Esboço",
+        "posicao": 10,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         }
+        },
+        "decididoPor": "MAIOR_IDADE"
+       },
+       {
+        "analiseId": "c011-101",
+        "codigo": "5011",
+        "nome": "Karina Piloto",
+        "posicao": 11,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 2,
+          "certidao": false
+         }
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c010-101",
+        "abaixo": "c011-101",
+        "criterio": "MAIOR_IDADE",
+        "valores": [
+         {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         {
+          "ordemDeIdade": 2,
+          "certidao": false
+         }
+        ],
+        "resolucao": "CRITERIOS",
+        "horaDaCertidao": false
+       }
+      ],
+      "empatadosAteOFim": []
+     },
+     {
+      "lista": "GERAL",
+      "nota": 75.0,
+      "notaTexto": "75,00",
+      "posicoes": [
+       12,
+       13
+      ],
+      "resolucao": "CRITERIOS",
+      "criteriosAplicados": [
+       "IDOSO_60",
+       "INDIGENA_COMPROVADO",
+       "EXP_SAUDE_INDIGENA",
+       "EXP_PROFISSIONAL_TEMPO",
+       "MAIOR_IDADE"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c013-101",
+        "codigo": "5013",
+        "nome": "Marina Demo",
+        "posicao": 12,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": true
+         }
+        },
+        "decididoPor": "MAIOR_IDADE"
+       },
+       {
+        "analiseId": "c012-101",
+        "codigo": "5012",
+        "nome": "Lucas Treino",
+        "posicao": 13,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 2,
+          "certidao": false
+         }
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c013-101",
+        "abaixo": "c012-101",
+        "criterio": "MAIOR_IDADE",
+        "valores": [
+         {
+          "ordemDeIdade": 1,
+          "certidao": true
+         },
+         {
+          "ordemDeIdade": 2,
+          "certidao": false
+         }
+        ],
+        "resolucao": "CRITERIOS",
+        "horaDaCertidao": true
+       }
+      ],
+      "empatadosAteOFim": []
+     },
+     {
+      "lista": "GERAL",
+      "nota": 74.0,
+      "notaTexto": "74,00",
+      "posicoes": [
+       14,
+       15
+      ],
+      "resolucao": "CRITERIOS",
+      "criteriosAplicados": [
+       "IDOSO_60",
+       "INDIGENA_COMPROVADO",
+       "EXP_SAUDE_INDIGENA",
+       "EXP_PROFISSIONAL_TEMPO",
+       "MAIOR_IDADE",
+       "PCD"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c015-101",
+        "codigo": "5015",
+        "nome": "Olga Stub",
+        "posicao": 14,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": true
+        },
+        "decididoPor": "PCD"
+       },
+       {
+        "analiseId": "c014-101",
+        "codigo": "5014",
+        "nome": "Nelson Mock",
+        "posicao": 15,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c015-101",
+        "abaixo": "c014-101",
+        "criterio": "PCD",
+        "valores": [
+         true,
+         false
+        ],
+        "resolucao": "CRITERIOS"
+       }
+      ],
+      "empatadosAteOFim": []
+     },
+     {
+      "lista": "GERAL",
+      "nota": 73.0,
+      "notaTexto": "73,00",
+      "posicoes": [
+       16,
+       17
+      ],
+      "resolucao": "EMPATE_FINAL",
+      "criteriosAplicados": [
+       "IDOSO_60",
+       "INDIGENA_COMPROVADO",
+       "EXP_SAUDE_INDIGENA",
+       "EXP_PROFISSIONAL_TEMPO",
+       "MAIOR_IDADE",
+       "PCD"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c017-101",
+        "codigo": "5017",
+        "nome": "Paula Igual",
+        "posicao": 16,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "SORTEIO"
+       },
+       {
+        "analiseId": "c016-101",
+        "codigo": "5016",
+        "nome": "Paulo Igual",
+        "posicao": 17,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c017-101",
+        "abaixo": "c016-101",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "SORTEIO"
+       }
+      ],
+      "empatadosAteOFim": [
+       {
+        "analiseIds": [
+         "c017-101",
+         "c016-101"
+        ],
+        "codigos": [
+         "5017",
+         "5016"
+        ],
+        "nomes": [
+         "Paula Igual",
+         "Paulo Igual"
+        ],
+        "resolucao": "SORTEIO",
+        "chave": "FINAL|101|c016-101,c017-101",
+        "registro": "sorteio-FINAL",
+        "metodo": null
+       }
+      ]
+     },
+     {
+      "lista": "GERAL",
+      "nota": 72.0,
+      "notaTexto": "72,00",
+      "posicoes": [
+       18,
+       18
+      ],
+      "resolucao": "EMPATE_FINAL",
+      "criteriosAplicados": [
+       "IDOSO_60",
+       "INDIGENA_COMPROVADO",
+       "EXP_SAUDE_INDIGENA",
+       "EXP_PROFISSIONAL_TEMPO",
+       "MAIOR_IDADE",
+       "PCD"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c018-101",
+        "codigo": "5018",
+        "nome": "Quirino Par",
+        "posicao": 18,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c019-101",
+        "codigo": "5019",
+        "nome": "Rita Par",
+        "posicao": 18,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c020-101",
+        "codigo": "5020",
+        "nome": "Sérgio Par",
+        "posicao": 18,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c018-101",
+        "abaixo": "c019-101",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       },
+       {
+        "acima": "c019-101",
+        "abaixo": "c020-101",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       }
+      ],
+      "empatadosAteOFim": [
+       {
+        "analiseIds": [
+         "c018-101",
+         "c019-101",
+         "c020-101"
+        ],
+        "codigos": [
+         "5018",
+         "5019",
+         "5020"
+        ],
+        "nomes": [
+         "Quirino Par",
+         "Rita Par",
+         "Sérgio Par"
+        ],
+        "resolucao": "PENDENTE",
+        "chave": "FINAL|101|c018-101,c019-101,c020-101",
+        "registro": null,
+        "metodo": "SORTEIO"
+       }
+      ]
+     },
+     {
+      "lista": "GERAL",
+      "nota": 69.0,
+      "notaTexto": "69,00",
+      "posicoes": [
+       21,
+       21
+      ],
+      "resolucao": "EMPATE_FINAL",
+      "criteriosAplicados": [
+       "IDOSO_60",
+       "INDIGENA_COMPROVADO",
+       "EXP_SAUDE_INDIGENA",
+       "EXP_PROFISSIONAL_TEMPO",
+       "MAIOR_IDADE",
+       "PCD"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c023-101",
+        "codigo": "5023",
+        "nome": "Vera Cota",
+        "posicao": 21,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": true
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c024-101",
+        "codigo": "5024",
+        "nome": "Wagner Cota",
+        "posicao": 21,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": true
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c023-101",
+        "abaixo": "c024-101",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       }
+      ],
+      "empatadosAteOFim": [
+       {
+        "analiseIds": [
+         "c023-101",
+         "c024-101"
+        ],
+        "codigos": [
+         "5023",
+         "5024"
+        ],
+        "nomes": [
+         "Vera Cota",
+         "Wagner Cota"
+        ],
+        "resolucao": "PENDENTE",
+        "chave": "FINAL|101|c023-101,c024-101",
+        "registro": null,
+        "metodo": "SORTEIO"
+       }
+      ]
+     },
+     {
+      "lista": "PPIQ",
+      "nota": 69.0,
+      "notaTexto": "69,00",
+      "posicoes": [
+       3,
+       3
+      ],
+      "resolucao": "EMPATE_FINAL",
+      "criteriosAplicados": [
+       "IDOSO_60",
+       "INDIGENA_COMPROVADO",
+       "EXP_SAUDE_INDIGENA",
+       "EXP_PROFISSIONAL_TEMPO",
+       "MAIOR_IDADE",
+       "PCD"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c023-101",
+        "codigo": "5023",
+        "nome": "Vera Cota",
+        "posicao": 3,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": true
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c024-101",
+        "codigo": "5024",
+        "nome": "Wagner Cota",
+        "posicao": 3,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": true
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c023-101",
+        "abaixo": "c024-101",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       }
+      ],
+      "empatadosAteOFim": [
+       {
+        "analiseIds": [
+         "c023-101",
+         "c024-101"
+        ],
+        "codigos": [
+         "5023",
+         "5024"
+        ],
+        "nomes": [
+         "Vera Cota",
+         "Wagner Cota"
+        ],
+        "resolucao": "PENDENTE",
+        "chave": "FINAL|101|c023-101,c024-101",
+        "registro": null,
+        "metodo": "SORTEIO"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "chave": "102",
+    "codigo": "102",
+    "cargo": "Médico Clínico",
+    "grupos": [
+     {
+      "lista": "GERAL",
+      "nota": 80.0,
+      "notaTexto": "80,00",
+      "posicoes": [
+       1,
+       1
+      ],
+      "resolucao": "EMPATE_FINAL",
+      "criteriosAplicados": [
+       "IDOSO_60",
+       "INDIGENA_COMPROVADO",
+       "EXP_SAUDE_INDIGENA",
+       "EXP_PROFISSIONAL_TEMPO",
+       "MAIOR_IDADE",
+       "PCD"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c034-102",
+        "codigo": "5034",
+        "nome": "Gustavo Médico",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c036-102",
+        "codigo": "5036",
+        "nome": "Igor Médico",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c034-102",
+        "abaixo": "c036-102",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       }
+      ],
+      "empatadosAteOFim": [
+       {
+        "analiseIds": [
+         "c034-102",
+         "c036-102"
+        ],
+        "codigos": [
+         "5034",
+         "5036"
+        ],
+        "nomes": [
+         "Gustavo Médico",
+         "Igor Médico"
+        ],
+        "resolucao": "PENDENTE",
+        "chave": "FINAL|102|c034-102,c036-102",
+        "registro": null,
+        "metodo": "SORTEIO"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "chave": "103",
+    "codigo": "103",
+    "cargo": "Técnico de Enfermagem",
+    "grupos": [
+     {
+      "lista": "GERAL",
+      "nota": 50.0,
+      "notaTexto": "50,00",
+      "posicoes": [
+       1,
+       1
+      ],
+      "resolucao": "EMPATE_FINAL",
+      "criteriosAplicados": [
+       "IDOSO_60",
+       "INDIGENA_COMPROVADO",
+       "EXP_SAUDE_INDIGENA",
+       "EXP_PROFISSIONAL_TEMPO",
+       "MAIOR_IDADE",
+       "PCD"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c041-103",
+        "codigo": "5041",
+        "nome": "Nara Técnica",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c042-103",
+        "codigo": "5042",
+        "nome": "Otávio Técnico",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c041-103",
+        "abaixo": "c042-103",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       }
+      ],
+      "empatadosAteOFim": [
+       {
+        "analiseIds": [
+         "c041-103",
+         "c042-103"
+        ],
+        "codigos": [
+         "5041",
+         "5042"
+        ],
+        "nomes": [
+         "Nara Técnica",
+         "Otávio Técnico"
+        ],
+        "resolucao": "PENDENTE",
+        "chave": "FINAL|103|c041-103,c042-103",
+        "registro": null,
+        "metodo": "SORTEIO"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "chave": "104",
+    "codigo": "104",
+    "cargo": "Agente Indígena de Saúde",
+    "grupos": [
+     {
+      "lista": "GERAL",
+      "nota": 30.0,
+      "notaTexto": "30,00",
+      "posicoes": [
+       1,
+       1
+      ],
+      "resolucao": "EMPATE_FINAL",
+      "criteriosAplicados": [
+       "IDOSO_60",
+       "INDIGENA_COMPROVADO",
+       "EXP_SAUDE_INDIGENA",
+       "EXP_PROFISSIONAL_TEMPO",
+       "MAIOR_IDADE",
+       "PCD"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c049-104",
+        "codigo": "5049",
+        "nome": "Ana d'Ávila",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c050-104",
+        "codigo": "5050",
+        "nome": "Ana Lúcia",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c045-104",
+        "codigo": "5045",
+        "nome": "ana maria",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c047-104",
+        "codigo": "5047",
+        "nome": "Ana Maria",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c048-104",
+        "codigo": "5048",
+        "nome": "Ána Maria",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c046-104",
+        "codigo": "5046",
+        "nome": "Ana-Maria",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c053-104",
+        "codigo": "5053",
+        "nome": "Anderson",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c051-104",
+        "codigo": "5051",
+        "nome": "ÂNGELA",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c052-104",
+        "codigo": "5052",
+        "nome": "Ângelo",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": false,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c049-104",
+        "abaixo": "c050-104",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       },
+       {
+        "acima": "c050-104",
+        "abaixo": "c045-104",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       },
+       {
+        "acima": "c045-104",
+        "abaixo": "c047-104",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       },
+       {
+        "acima": "c047-104",
+        "abaixo": "c048-104",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       },
+       {
+        "acima": "c048-104",
+        "abaixo": "c046-104",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       },
+       {
+        "acima": "c046-104",
+        "abaixo": "c053-104",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       },
+       {
+        "acima": "c053-104",
+        "abaixo": "c051-104",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       },
+       {
+        "acima": "c051-104",
+        "abaixo": "c052-104",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       }
+      ],
+      "empatadosAteOFim": [
+       {
+        "analiseIds": [
+         "c049-104",
+         "c050-104",
+         "c045-104",
+         "c047-104",
+         "c048-104",
+         "c046-104",
+         "c053-104",
+         "c051-104",
+         "c052-104"
+        ],
+        "codigos": [
+         "5049",
+         "5050",
+         "5045",
+         "5047",
+         "5048",
+         "5046",
+         "5053",
+         "5051",
+         "5052"
+        ],
+        "nomes": [
+         "Ana d'Ávila",
+         "Ana Lúcia",
+         "ana maria",
+         "Ana Maria",
+         "Ána Maria",
+         "Ana-Maria",
+         "Anderson",
+         "ÂNGELA",
+         "Ângelo"
+        ],
+        "resolucao": "PENDENTE",
+        "chave": "FINAL|104|c045-104,c046-104,c047-104,c048-104,c049-104,c050-104,c051-104,c052-104,c053-104",
+        "registro": null,
+        "metodo": "SORTEIO"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "chave": "105",
+    "codigo": "105",
+    "cargo": "Analista Administrativo",
+    "grupos": [
+     {
+      "lista": "GERAL",
+      "nota": 48.0,
+      "notaTexto": "48,00",
+      "posicoes": [
+       1,
+       3
+      ],
+      "resolucao": "EMPATE_FINAL",
+      "criteriosAplicados": [
+       "IDOSO_60",
+       "INDIGENA_COMPROVADO",
+       "EXP_SAUDE_INDIGENA",
+       "EXP_PROFISSIONAL_TEMPO",
+       "MAIOR_IDADE",
+       "PCD"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c055-105",
+        "codigo": "5055",
+        "nome": "Bento Bissexto",
+        "posicao": 1,
+        "valores": {
+         "IDOSO_60": true,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "MAIOR_IDADE"
+       },
+       {
+        "analiseId": "c056-105",
+        "codigo": "5056",
+        "nome": "Célia Março",
+        "posicao": 2,
+        "valores": {
+         "IDOSO_60": true,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": 2,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "IDOSO_60"
+       },
+       {
+        "analiseId": "c057-105",
+        "codigo": "5057",
+        "nome": "Dario Sem Data",
+        "posicao": 3,
+        "valores": {
+         "IDOSO_60": null,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": null,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": "PENDENTE"
+       },
+       {
+        "analiseId": "c058-105",
+        "codigo": "5058",
+        "nome": "Eva Sem Data",
+        "posicao": 3,
+        "valores": {
+         "IDOSO_60": null,
+         "INDIGENA_COMPROVADO": false,
+         "EXP_SAUDE_INDIGENA": 100,
+         "EXP_PROFISSIONAL_TEMPO": 1000,
+         "MAIOR_IDADE": {
+          "ordemDeIdade": null,
+          "certidao": false
+         },
+         "PCD": false
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c055-105",
+        "abaixo": "c056-105",
+        "criterio": "MAIOR_IDADE",
+        "valores": [
+         {
+          "ordemDeIdade": 1,
+          "certidao": false
+         },
+         {
+          "ordemDeIdade": 2,
+          "certidao": false
+         }
+        ],
+        "resolucao": "CRITERIOS",
+        "horaDaCertidao": false
+       },
+       {
+        "acima": "c056-105",
+        "abaixo": "c057-105",
+        "criterio": "IDOSO_60",
+        "valores": [
+         true,
+         null
+        ],
+        "resolucao": "CRITERIOS"
+       },
+       {
+        "acima": "c057-105",
+        "abaixo": "c058-105",
+        "criterio": null,
+        "valores": null,
+        "resolucao": "PENDENTE"
+       }
+      ],
+      "empatadosAteOFim": [
+       {
+        "analiseIds": [
+         "c057-105",
+         "c058-105"
+        ],
+        "codigos": [
+         "5057",
+         "5058"
+        ],
+        "nomes": [
+         "Dario Sem Data",
+         "Eva Sem Data"
+        ],
+        "resolucao": "PENDENTE",
+        "chave": "FINAL|105|c057-105,c058-105",
+        "registro": null,
+        "metodo": "SORTEIO"
+       }
+      ]
+     },
+     {
+      "lista": "GERAL",
+      "nota": 46.0,
+      "notaTexto": "46,00",
+      "posicoes": [
+       4,
+       5
+      ],
+      "resolucao": "CRITERIOS",
+      "criteriosAplicados": [
+       "IDOSO_60"
+      ],
+      "candidatos": [
+       {
+        "analiseId": "c060-105",
+        "codigo": "5060",
+        "nome": "Gil Data BR",
+        "posicao": 4,
+        "valores": {
+         "IDOSO_60": true
+        },
+        "decididoPor": "IDOSO_60"
+       },
+       {
+        "analiseId": "c059-105",
+        "codigo": "5059",
+        "nome": "Félix Data Ruim",
+        "posicao": 5,
+        "valores": {
+         "IDOSO_60": null
+        },
+        "decididoPor": null
+       }
+      ],
+      "pares": [
+       {
+        "acima": "c060-105",
+        "abaixo": "c059-105",
+        "criterio": "IDOSO_60",
+        "valores": [
+         true,
+         null
+        ],
+        "resolucao": "CRITERIOS"
+       }
+      ],
+      "empatadosAteOFim": []
+     }
+    ]
+   }
+  ]
+ },
+ "texto": "RELATÓRIO DE DESEMPATE — Resultado final\nCritérios da regra, nesta ordem: 1) 60+ (sim antes de não); 2) indígena comprovado (sim antes de não); 3) exp. saúde indígena (maior primeiro); 4) tempo de experiência (maior primeiro); 5) idade (maior primeiro); 6) PcD (sim antes de não).\nEmpate que sobra: sorteio registrado. Numeração: 1º, 2º, 2º, 3º.\n16 grupo(s) de empate: 8 decidido(s) pelos critérios, 8 com empate até o fim (7 pendente(s)), 0 na mesma posição pela regra da lista.\n\nVaga 101 · lista geral · nota 80,00 · 2 empatados · 1º a 2º\n  Critérios aplicados: 60+\n  1º  Ana Exemplo (insc. 5001)  60+: sim\n  2º  Bruno Teste (insc. 5002)  60+: não\n  · Ana Exemplo (insc. 5001) à frente de Bruno Teste (insc. 5002) por 60+ (sim × não)\n\nVaga 101 · lista geral · nota 79,00 · 2 empatados · 3º a 4º\n  Critérios aplicados: 60+ → indígena comprovado\n  3º  Carla Ficticia (insc. 5003)  60+: não | indígena comprovado: sim\n  4º  Davi Modelo (insc. 5004)  60+: não | indígena comprovado: não\n  · Carla Ficticia (insc. 5003) à frente de Davi Modelo (insc. 5004) por indígena comprovado (sim × não)\n\nVaga 101 · lista geral · nota 78,00 · 3 empatados · 5º a 7º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena\n  5º  Elisa Amostra (insc. 5005)  60+: não | indígena comprovado: não | exp. saúde indígena: 300\n  6º  Fábio Simulado (insc. 5006)  60+: não | indígena comprovado: não | exp. saúde indígena: 120\n  7º  Gabriela Ensaio (insc. 5007)  60+: não | indígena comprovado: não | exp. saúde indígena: sem dado\n  · Elisa Amostra (insc. 5005) à frente de Fábio Simulado (insc. 5006) por exp. saúde indígena (300 × 120)\n  · Fábio Simulado (insc. 5006) à frente de Gabriela Ensaio (insc. 5007) por exp. saúde indígena (120 × sem dado)\n\nVaga 101 · lista geral · nota 77,00 · 2 empatados · 8º a 9º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência\n  8º  Heitor Prova (insc. 5008)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 2000 dias\n  9º  Íris Rascunho (insc. 5009)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1500 dias\n  · Heitor Prova (insc. 5008) à frente de Íris Rascunho (insc. 5009) por tempo de experiência (2000 dias × 1500 dias)\n\nVaga 101 · lista geral · nota 76,00 · 2 empatados · 10º a 11º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade\n  10º  João Esboço (insc. 5010)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão\n  11º  Karina Piloto (insc. 5011)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 2º mais velho do grupo, sem certidão\n  · João Esboço (insc. 5010) à frente de Karina Piloto (insc. 5011) por idade (1º mais velho do grupo, sem certidão × 2º mais velho do grupo, sem certidão)\n\nVaga 101 · lista geral · nota 75,00 · 2 empatados · 12º a 13º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade\n  12º  Marina Demo (insc. 5013)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo\n  13º  Lucas Treino (insc. 5012)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 2º mais velho do grupo, sem certidão\n  · Marina Demo (insc. 5013) à frente de Lucas Treino (insc. 5012) por idade (1º mais velho do grupo × 2º mais velho do grupo, sem certidão); mesma data de nascimento, decidiu a hora da certidão\n\nVaga 101 · lista geral · nota 74,00 · 2 empatados · 14º a 15º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  14º  Olga Stub (insc. 5015)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: sim\n  15º  Nelson Mock (insc. 5014)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  · Olga Stub (insc. 5015) à frente de Nelson Mock (insc. 5014) por PcD (sim × não)\n\nVaga 101 · lista geral · nota 73,00 · 2 empatados · 16º a 17º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  16º  Paula Igual (insc. 5017)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  17º  Paulo Igual (insc. 5016)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Paula Igual (insc. 5017), Paulo Igual (insc. 5016) — sorteio registrado (registro sorteio-FINAL).\n\nVaga 101 · lista geral · nota 72,00 · 3 empatados · 18º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  18º  Quirino Par (insc. 5018)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  18º  Rita Par (insc. 5019)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  18º  Sérgio Par (insc. 5020)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Quirino Par (insc. 5018), Rita Par (insc. 5019), Sérgio Par (insc. 5020) — aguardando o registro (pendente).\n\nVaga 101 · lista geral · nota 69,00 · 2 empatados · 21º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  21º  Vera Cota (insc. 5023)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: sim\n  21º  Wagner Cota (insc. 5024)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: sim\n  Empatados em todos os critérios: Vera Cota (insc. 5023), Wagner Cota (insc. 5024) — aguardando o registro (pendente).\n\nVaga 101 · lista PPIQ · nota 69,00 · 2 empatados · 3º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  3º  Vera Cota (insc. 5023)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: sim\n  3º  Wagner Cota (insc. 5024)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: sim\n  Empatados em todos os critérios: Vera Cota (insc. 5023), Wagner Cota (insc. 5024) — aguardando o registro (pendente).\n\nVaga 102 · lista geral · nota 80,00 · 2 empatados · 1º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  1º  Gustavo Médico (insc. 5034)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Igor Médico (insc. 5036)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Gustavo Médico (insc. 5034), Igor Médico (insc. 5036) — aguardando o registro (pendente).\n\nVaga 103 · lista geral · nota 50,00 · 2 empatados · 1º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  1º  Nara Técnica (insc. 5041)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Otávio Técnico (insc. 5042)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Nara Técnica (insc. 5041), Otávio Técnico (insc. 5042) — aguardando o registro (pendente).\n\nVaga 104 · lista geral · nota 30,00 · 9 empatados · 1º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  1º  Ana d'Ávila (insc. 5049)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ana Lúcia (insc. 5050)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  ana maria (insc. 5045)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ana Maria (insc. 5047)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ána Maria (insc. 5048)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ana-Maria (insc. 5046)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Anderson (insc. 5053)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  ÂNGELA (insc. 5051)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  1º  Ângelo (insc. 5052)  60+: não | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  Empatados em todos os critérios: Ana d'Ávila (insc. 5049), Ana Lúcia (insc. 5050), ana maria (insc. 5045), Ana Maria (insc. 5047), Ána Maria (insc. 5048), Ana-Maria (insc. 5046), Anderson (insc. 5053), ÂNGELA (insc. 5051), Ângelo (insc. 5052) — aguardando o registro (pendente).\n\nVaga 105 · lista geral · nota 48,00 · 4 empatados · 1º a 3º\n  Critérios aplicados: 60+ → indígena comprovado → exp. saúde indígena → tempo de experiência → idade → PcD\n  1º  Bento Bissexto (insc. 5055)  60+: sim | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 1º mais velho do grupo, sem certidão | PcD: não\n  2º  Célia Março (insc. 5056)  60+: sim | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: 2º mais velho do grupo, sem certidão | PcD: não\n  3º  Dario Sem Data (insc. 5057)  60+: sem dado | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: sem data de nascimento, sem certidão | PcD: não\n  3º  Eva Sem Data (insc. 5058)  60+: sem dado | indígena comprovado: não | exp. saúde indígena: 100 | tempo de experiência: 1000 dias | idade: sem data de nascimento, sem certidão | PcD: não\n  · Bento Bissexto (insc. 5055) à frente de Célia Março (insc. 5056) por idade (1º mais velho do grupo, sem certidão × 2º mais velho do grupo, sem certidão)\n  · Célia Março (insc. 5056) à frente de Dario Sem Data (insc. 5057) por 60+ (sim × sem dado)\n  Empatados em todos os critérios: Dario Sem Data (insc. 5057), Eva Sem Data (insc. 5058) — aguardando o registro (pendente).\n\nVaga 105 · lista geral · nota 46,00 · 2 empatados · 4º a 5º\n  Critérios aplicados: 60+\n  4º  Gil Data BR (insc. 5060)  60+: sim\n  5º  Félix Data Ruim (insc. 5059)  60+: sem dado\n  · Gil Data BR (insc. 5060) à frente de Félix Data Ruim (insc. 5059) por 60+ (sim × sem dado)\n"
+}
