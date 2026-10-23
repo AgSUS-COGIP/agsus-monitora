@@ -59,9 +59,9 @@ const PAYLOAD_DAS_CHAVES = () => ({
       tarefas: [
         {
           nome: "agsus_analises_cache_do_painel",
-          agenda: "20,50 * * * *",
+          agenda: "*/5 * * * *",
           ativa: true,
-          ultima: { inicio: ha(17), fim: ha(17), situacao: "succeeded" },
+          ultima: { inicio: ha(2), fim: ha(2), situacao: "succeeded" },
         },
         {
           nome: "agsus_aprovados_cache_por_area",
@@ -194,7 +194,7 @@ describe("cada chave na tela", () => {
 
   it("próxima: a mais cedo das tarefas ativas; nada com a chave desligada", () => {
     expect(proximaDaChave(paineis, AGORA)).toEqual(
-      new Date("2026-10-22T14:11:00Z"),
+      new Date("2026-10-22T14:10:00Z"),
     );
     expect(proximaDaChave(entrevistas, AGORA)).toBeNull();
     expect(semProxima(entrevistas)).toBe("Não roda enquanto estiver desligada");

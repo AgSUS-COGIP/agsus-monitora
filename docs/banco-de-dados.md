@@ -463,7 +463,7 @@ das funções igual ao de antes).
   (só `service_role`/`postgres`), chamada no fim de
   `finalizar_sync_analises_lotes` e `finalizar_sync_analises_incremental` (a
   área da planilha; erro vira aviso, o sync não falha), pelo pg_cron
-  `agsus_analises_cache_do_painel` (`7,37 * * * *`, todas as áreas) e pela RPC.
+  `agsus_analises_cache_do_painel` (hoje `*/5 * * * *`, só a área marcada; ver 20261024100000) e pela RPC.
   Sem gatilho por linha (o cache antigo, `TA_DASHBOARD_ANALISE`, era apagado a
   cada escrita do sync).
 - Ensaio (Saúde Indígena, 6.828 linhas, 3,5 MB): a RPC levava de 0,6 s (banco

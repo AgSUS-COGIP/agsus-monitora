@@ -41,7 +41,7 @@
 
   AS CONTAGENS SÃO AS DO RESUMO DO PAINEL (19/10/2026)
     O card mostrava as fichas ao vivo e os KPIs do topo vêm do resumo do
-    Painel (private."TA_PAINEL_ANALISE", remontado a cada 30 min): o usuário
+    Painel (private."TA_PAINEL_ANALISE", conferido a cada 5 min): o usuário
     via 1.076 pendentes no topo e "faltam 1.074" no card. Agora o card conta
     as linhas do edital no mesmo resumo que a tela já recebeu
     (`noMomentoDoResumo`), sem nova consulta: faltam = Pendente + Em análise
