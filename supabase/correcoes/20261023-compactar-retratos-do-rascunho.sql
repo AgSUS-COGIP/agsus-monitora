@@ -4,7 +4,7 @@
 
   APLICAR SÓ DEPOIS DE 22/10/2026 (fim da análise do 114/2026), SÓ COM A
   AUTORIZAÇÃO do usuário, FORA DO EXPEDIENTE (ex.: 22h de Brasília) e DEPOIS da
-  migration 20261023090000_historico_do_rascunho_enxuto.sql.
+  migration 20261023220000_historico_do_rascunho_enxuto.sql.
 
   Por quê: até a migration, cada salvamento automático com alteração gravava no
   SALVAR o retrato inteiro do lançamento (DS_RETRATO). Em 21/10/2026: 10.866
@@ -22,7 +22,9 @@
       parecer que limpou, então nenhum conteúdo apagado da ficha depende dos
       retratos compactados.
       Medição de 21/10/2026 (ensaio): ficam 1.238 retratos (1,9 MiB); saem
-      9.691 (12,4 MiB = ~13 MB). Os números crescem até a aplicação.
+      9.691 (12,4 MiB = ~13 MB). Ensaio de 23/10/2026: saem 12.394 (16 MB, de
+      1.523 fichas), ficam 1.610 (2,5 MB); tabela em 34 MB. Os números crescem
+      até a aplicação.
     - O histórico é imutável (gatilho "TG_THFICHA_IMUTAVEL",
       private."FC_TG_FICHA_IMUTAVEL"): só ESTE gatilho é desligado, DENTRO da
       transação (ALTER TABLE … DISABLE TRIGGER é transacional: se algo falhar,
@@ -90,7 +92,7 @@ begin
   if exists (select 1 from pg_constraint c
               where c.conrelid = 'public."TH_FICHA_ANALISE"'::regclass and c.conname = 'CK_THFICHA_CONTEUDO'
                 and pg_get_constraintdef(c.oid) like '%SALVAR%') then
-    raise exception 'Aplique antes a migration 20261023090000_historico_do_rascunho_enxuto.sql (o SALVAR ainda exige retrato).';
+    raise exception 'Aplique antes a migration 20261023220000_historico_do_rascunho_enxuto.sql (o SALVAR ainda exige retrato).';
   end if;
   if not exists (select 1 from public."TB_PERFIL_USUARIO" p
                    join public."TB_GRUPO_ACESSO" a on a."CO_GRUPO_ACESSO" = p.perfil
@@ -163,7 +165,7 @@ begin
     return;
   end if;
   execute format('comment on column public."TH_FICHA_ANALISE"."DS_RETRATO" is %L',
-    'Retrato do conteúdo depois da ação ({lancamento, resultado, parecer, versao_regra}); obrigatório no CONCLUIR. No SALVAR, só até 20261023090000 (desde então o rascunho vigente fica em TB_FICHA_ANALISE e o histórico guarda o que mudou em DS_ALTERACAO). '
+    'Retrato do conteúdo depois da ação ({lancamento, resultado, parecer, versao_regra}); obrigatório no CONCLUIR. No SALVAR, só até 20261023220000 (desde então o rascunho vigente fica em TB_FICHA_ANALISE e o histórico guarda o que mudou em DS_ALTERACAO). '
     || format('Em %s, a correção supabase/correcoes/20261023-compactar-retratos-do-rascunho.sql, assinada pela conta do setor Gestão da Informação de Pessoal (a01afddb-f64b-47d9-80e8-476a1ed14e43), tirou o retrato de %s linhas SALVAR antigas e manteve %s (o último rascunho de cada ficha e o último antes de cada CONCLUIR); as linhas, quem, quando e o que mudou ficaram. Os retratos tirados foram exportados antes (scripts/exportar-retratos-do-rascunho.mjs; sha256 %s; caminho do arquivo em docs/banco-de-dados.md §24).',
               to_char(now() at time zone 'America/Sao_Paulo', 'DD/MM/YYYY HH24:MI'), r.compactadas, r.mantidas,
               split_part(current_setting('monitora.exportacao_retratos'), ':', 2)));

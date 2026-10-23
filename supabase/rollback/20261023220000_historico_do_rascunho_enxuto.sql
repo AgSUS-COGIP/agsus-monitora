@@ -1,5 +1,5 @@
 /*
-  Rollback de 20261023090000_historico_do_rascunho_enxuto: o SALVAR volta a
+  Rollback de 20261023220000_historico_do_rascunho_enxuto: o SALVAR volta a
   gravar o retrato inteiro ({lancamento, resultado, versao_regra}).
 
   - public.salvar_rascunho_ficha volta à definição de 20261013130000_regra_por_cargo.sql

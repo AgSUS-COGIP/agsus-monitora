@@ -1266,7 +1266,7 @@ export const CONTRATO_RPC = {
     ],
     critica: false,
     resumo:
-      "Salvamento automático da ficha: lançamento (com a vaga e o cargo da ficha), resultado da conta da tela e parecer, revalidados contra a regra da vaga, com as diferenças por cargo (estrutura, limites, coerência); exige a reserva (55P03) e a versão aberta (PT409); renova a reserva; alteração vai ao histórico como SALVAR leve (o que mudou, sem o retrato, que fica na ficha; 20261023090000).",
+      "Salvamento automático da ficha: lançamento (com a vaga e o cargo da ficha), resultado da conta da tela e parecer, revalidados contra a regra da vaga, com as diferenças por cargo (estrutura, limites, coerência); exige a reserva (55P03) e a versão aberta (PT409); renova a reserva; alteração vai ao histórico como SALVAR leve (o que mudou, sem o retrato, que fica na ficha; 20261023220000).",
   },
   concluir_ficha: {
     argumentos: [

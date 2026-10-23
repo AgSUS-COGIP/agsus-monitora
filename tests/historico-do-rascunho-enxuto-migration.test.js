@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 
 /*
-  Histórico do rascunho enxuto (20261023090000; aplicar só depois de
+  Histórico do rascunho enxuto (20261023220000; aplicar só depois de
   22/10/2026): o SALVAR da ficha vai ao histórico só com o que mudou, sem o
   retrato inteiro; CONCLUIR continua com o retrato obrigatório. A correção
   20261023-compactar-retratos-do-rascunho tira o retrato dos SALVAR antigos,
@@ -13,7 +13,7 @@ import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
   estáticas.
 */
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
-const NOME = "20261023090000_historico_do_rascunho_enxuto.sql";
+const NOME = "20261023220000_historico_do_rascunho_enxuto.sql";
 const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);
@@ -44,7 +44,7 @@ const restricao = (texto) => {
   return texto.slice(ini, texto.indexOf(";", ini));
 };
 
-describe("migration 20261023090000 (SALVAR sem retrato)", () => {
+describe("migration 20261023220000 (SALVAR sem retrato)", () => {
   it("o SALVAR passa null no retrato e nada mais muda na função vigente", () => {
     const nova = funcao(MIGRATION);
     const antiga = funcao(ANTERIOR);
@@ -124,7 +124,7 @@ describe("migration 20261023090000 (SALVAR sem retrato)", () => {
 
 describe("correção 20261023-compactar-retratos-do-rascunho", () => {
   it("exige a migration aplicada e a conta do setor como admin global ativo", () => {
-    expect(CORRECAO).toContain("Aplique antes a migration 20261023090000");
+    expect(CORRECAO).toContain("Aplique antes a migration 20261023220000");
     expect(CORRECAO).toContain(`p.user_id = '${CONTA_DO_SETOR}'`);
     expect(CORRECAO).toContain('a."ST_ADMIN_GLOBAL"');
   });

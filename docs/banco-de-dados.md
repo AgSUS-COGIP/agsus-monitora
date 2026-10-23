@@ -1201,7 +1201,7 @@ partir da definição vigente, só acrescentando; mesma permissão):
 
 ## 24. Histórico do rascunho enxuto (aplicar depois de 22/10/2026)
 
-Migration `20261023090000_historico_do_rascunho_enxuto.sql` (ensaio e rollback com o mesmo nome) e
+Migration `20261023220000_historico_do_rascunho_enxuto.sql` (ensaio e rollback com o mesmo nome) e
 correção `supabase/correcoes/20261023-compactar-retratos-do-rascunho.sql` (com ensaio). Só depois do
 fim da análise do 114/2026 e com autorização.
 
@@ -1216,7 +1216,7 @@ fim da análise do 114/2026 e com autorização.
   `CK_THFICHA_CONTEUDO` exige o retrato só no `CONCLUIR`. CONCLUIR, REABRIR, REINICIAR, DISTRIBUIR,
   REVISAR etc. não mudam. ~440 bytes por `SALVAR` em vez de ~1,8 KB.
 - Passado: a correção tira o retrato dos `SALVAR` antigos, menos o último de cada ficha e o último
-  antes de cada `CONCLUIR` (ensaio de 21/10: saem ~11 mil, ~14 MB; ficam ~1,4 mil). Desliga só o
+  antes de cada `CONCLUIR` (ensaio de 23/10: saem 12.394 de 1.523 fichas, 16 MB; ficam 1.610, 2,5 MB; tabela em 34 MB). Desliga só o
   gatilho `TG_THFICHA_IMUTAVEL` dentro da transação e religa antes do commit; assina pela conta do
   setor (a01afddb-…) no comentário de `DS_RETRATO`, com o sha256 da exportação.
 - **Exportação antes (obrigatória; o FREE não tem backup):**
@@ -1230,9 +1230,11 @@ fim da análise do 114/2026 e com autorização.
 Ordem de aplicação (depois de 22/10, com autorização, fora do expediente):
 
 1. Mesclar a PR.
-2. Aplicar a migration e registrar (`npm run db:estado -- --registrar=migrations/20261023090000_historico_do_rascunho_enxuto.sql`).
+2. Aplicar a migration e registrar (`npm run db:estado -- --registrar=migrations/20261023220000_historico_do_rascunho_enxuto.sql`).
 3. Exportar: `node --env-file=.env.local scripts/exportar-retratos-do-rascunho.mjs --saida=retratos-do-rascunho-AAAAMMDD.jsonl.gz`
-   (`SUPABASE_DB_URL`, ou `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF`). Guardar o arquivo
+   (`SUPABASE_DB_URL` com `psql`, ou `SUPABASE_ACCESS_TOKEN`/`SUPABASE_ACCESS_TOKEN_NOVO` +
+   `SUPABASE_PROJECT_REF=tabmkiokfuxyqjuvfiha`; o `.env.local` tem só o token `_NOVO`, então o
+   `SUPABASE_PROJECT_REF` vai no ambiente do comando). Guardar o arquivo
    fora do banco (pasta do setor no Drive/rede, a critério do usuário) e anotar abaixo caminho,
    linhas e sha256.
 4. Correção no SQL Editor: primeira linha a `set monitora.exportacao_retratos = …` impressa, depois o

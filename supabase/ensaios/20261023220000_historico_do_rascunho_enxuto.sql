@@ -1,5 +1,5 @@
 /*
-  Ensaio de 20261023090000_historico_do_rascunho_enxuto (begin … rollback; nada
+  Ensaio de 20261023220000_historico_do_rascunho_enxuto (begin … rollback; nada
   fica gravado). O trecho entre os marcadores é o corpo da migration (sem o
   begin/commit dela), mais a validação da restrição; o teste
   tests/historico-do-rascunho-enxuto-migration.test.js confere que é idêntico.
@@ -33,13 +33,13 @@ alter table public."TH_FICHA_ANALISE"
     and ("TP_ACAO" <> 'CONCLUIR' or "DS_RETRATO" is not null)) not valid;
 
 comment on constraint "CK_THFICHA_CONTEUDO" on public."TH_FICHA_ANALISE" is
-  'Resultado válido, nota de 0 a 1.000, alterações em lista, retrato em objeto (obrigatório ao concluir; o SALVAR não leva retrato desde 20261023090000).';
+  'Resultado válido, nota de 0 a 1.000, alterações em lista, retrato em objeto (obrigatório ao concluir; o SALVAR não leva retrato desde 20261023220000).';
 comment on table public."TH_FICHA_ANALISE" is
   'Histórico imutável da ficha: criação, pegar, reservar e liberar, distribuição e redistribuição (com motivo), devolução à fila, envio à revisão, saída ou volta ao lote e, do conteúdo, cada rascunho com alteração (o que mudou), a conclusão (com o retrato do lançamento) e a reabertura (com motivo).';
 comment on column public."TH_FICHA_ANALISE"."TP_ACAO" is
-  'CRIAR, PEGAR (Pegar próximo), RESERVAR (abriu), LIBERAR (fechou), LIBERAR_RESERVA (a coordenação liberou a reserva de outra pessoa), DISTRIBUIR, REDISTRIBUIR, DEVOLVER_FILA, REVISAR, SAIR_LOTE, VOLTAR_LOTE, SALVAR (rascunho com alteração: só o que mudou, sem retrato, desde 20261023090000), CONCLUIR, REABRIR, REINICIAR (o administrador global voltou as fichas do edital ao início), REFAZER_LOTE (a ficha intocada ficou fora do lote refeito do zero) ou MODALIDADE (a pré-classificação mudou a modalidade da ficha não concluída).';
+  'CRIAR, PEGAR (Pegar próximo), RESERVAR (abriu), LIBERAR (fechou), LIBERAR_RESERVA (a coordenação liberou a reserva de outra pessoa), DISTRIBUIR, REDISTRIBUIR, DEVOLVER_FILA, REVISAR, SAIR_LOTE, VOLTAR_LOTE, SALVAR (rascunho com alteração: só o que mudou, sem retrato, desde 20261023220000), CONCLUIR, REABRIR, REINICIAR (o administrador global voltou as fichas do edital ao início), REFAZER_LOTE (a ficha intocada ficou fora do lote refeito do zero), MODALIDADE (a pré-classificação mudou a modalidade da ficha não concluída) ou CORRIGIR (correção de dados da ficha concluída, assinada pelo setor).';
 comment on column public."TH_FICHA_ANALISE"."DS_RETRATO" is
-  'Retrato do conteúdo depois da ação ({lancamento, resultado, parecer, versao_regra}); obrigatório no CONCLUIR. No SALVAR, só até 20261023090000 (desde então o rascunho vigente fica em TB_FICHA_ANALISE e o histórico guarda o que mudou em DS_ALTERACAO).';
+  'Retrato do conteúdo depois da ação ({lancamento, resultado, parecer, versao_regra}); obrigatório no CONCLUIR. No SALVAR, só até 20261023220000 (desde então o rascunho vigente fica em TB_FICHA_ANALISE e o histórico guarda o que mudou em DS_ALTERACAO).';
 
 CREATE OR REPLACE FUNCTION public.salvar_rascunho_ficha(p_ficha uuid, p_versao integer, p_lancamento jsonb, p_resultado jsonb, p_parecer text)
  RETURNS json
@@ -80,7 +80,7 @@ begin
     "NU_VERSAO" = "NU_VERSAO" + 1, "DT_ATUALIZACAO" = now()
    where "CO_FICHA_ANALISE" = p_ficha;
   -- O histórico do rascunho é leve: o que mudou (de → para), sem o retrato
-  -- inteiro, que fica na própria ficha (20261023090000).
+  -- inteiro, que fica na própria ficha (20261023220000).
   if jsonb_array_length(v_alt) > 0 then
     perform private."FC_HISTORICO_CONTEUDO_FICHA"(p_ficha, 'SALVAR', v_f."TP_SITUACAO", null, v_uid, v_alt, null);
   end if;
@@ -89,7 +89,7 @@ begin
 end;
 $function$;
 comment on function public.salvar_rascunho_ficha(uuid, integer, jsonb, jsonb, text) is
-  'Salva o rascunho da ficha (o salvamento automático da tela): lançamento (com a vaga e o cargo da ficha, desde 20261013130000), resultado da conta e parecer gerado, conferidos contra a regra vigente da vaga (a diferença do cargo por cima do nível, FC_REGRA_DA_VAGA; estrutura, limites e coerência do resultado; nada é recalculado). Exige a reserva vigente de quem chama, em análise, e a versão que a tela abriu; renova a reserva; sobe a versão. Alteração de conteúdo vai ao histórico como SALVAR leve: o que mudou, de quanto para quanto, sem o retrato (que fica na ficha; 20261023090000). Devolve a versão nova e a hora.';
+  'Salva o rascunho da ficha (o salvamento automático da tela): lançamento (com a vaga e o cargo da ficha, desde 20261013130000), resultado da conta e parecer gerado, conferidos contra a regra vigente da vaga (a diferença do cargo por cima do nível, FC_REGRA_DA_VAGA; estrutura, limites e coerência do resultado; nada é recalculado). Exige a reserva vigente de quem chama, em análise, e a versão que a tela abriu (40001); renova a reserva; sobe a versão. Alteração de conteúdo vai ao histórico como SALVAR leve: o que mudou, de quanto para quanto, sem o retrato (que fica na ficha; 20261023220000). Devolve a versão nova e a hora.';
 
 alter table public."TH_FICHA_ANALISE" validate constraint "CK_THFICHA_CONTEUDO";
 -- <<< migration
@@ -141,10 +141,10 @@ begin
                 and (p.proowner, p.prosecdef, p.proconfig, p.proacl) is distinct from (a.proowner, a.prosecdef, a.proconfig, a.proacl)) then
     raise exception 'E4: dono, SECURITY DEFINER, search_path ou grants mudaram';
   end if;
-  raise notice 'Ensaio 20261023090000 ok (ficha de teste %)', v_ficha;
+  raise notice 'Ensaio 20261023220000 ok (ficha de teste %)', v_ficha;
 end;
 $$;
 
-select 'ok' as ensaio_20261023090000;
+select 'ok' as ensaio_20261023220000;
 
 rollback;

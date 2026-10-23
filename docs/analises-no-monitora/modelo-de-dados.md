@@ -771,7 +771,7 @@ O gatilho `private."FC_TG_HISTORICO_IMUTAVEL"` recusa `update` e `delete` nas du
 retrato completo vai a cada salvamento com diferença (no máximo um por minuto por pessoa e ficha) e
 a cada transição.
 
-> **Como ficou (20261023090000):** o retrato completo (`DS_RETRATO`) vai só no `CONCLUIR`; o `SALVAR`
+> **Como ficou (20261023220000):** o retrato completo (`DS_RETRATO`) vai só no `CONCLUIR`; o `SALVAR`
 > (cada salvamento automático com alteração) guarda o que mudou (`DS_ALTERACAO`, de → para), sem o
 > retrato — o rascunho vigente fica em `TB_FICHA_ANALISE`. Os retratos dos `SALVAR` antigos são
 > compactados por `supabase/correcoes/20261023-compactar-retratos-do-rascunho.sql`.
