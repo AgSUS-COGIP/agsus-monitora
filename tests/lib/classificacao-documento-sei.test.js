@@ -238,9 +238,8 @@ describe("resultado preliminar da análise curricular (83/2026, SEI 0641561)", (
     const html = htmlParaSei(doc);
     const pagina = new DOMParser().parseFromString(html, "text/html");
     const classes = (c) => pagina.querySelectorAll(`p.${c}`);
-    expect(classes("Texto_Alinhado_Direita")[0].textContent).toBe(
-      "Brasília, na data da assinatura digital.",
-    );
+    // A data fica no modelo do Comunicado do SEI; colada, saía duas vezes.
+    expect(html).not.toContain("na data da assinatura digital");
     expect(classes("Texto_Centralizado_Maiusculas")[0].textContent).toBe(
       "RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR",
     );

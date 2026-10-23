@@ -1175,9 +1175,9 @@ function tabelaHtml(t: TabelaDoDocumento) {
  * borda; sem timbrado, assinatura e rodapé (o SEI põe).
  */
 export function htmlParaSei(doc: DocumentoOficial) {
-  const partes = [
-    `<p class="Texto_Alinhado_Direita">${escapar(doc.localData)}</p>`,
-  ];
+  // Sem "Brasília, na data da assinatura digital.": o modelo do Comunicado no
+  // SEI já traz essa linha (colada, ela saía duas vezes — 23/10/2026).
+  const partes: string[] = [];
   for (const linha of doc.titulo)
     partes.push(
       `<p class="Texto_Centralizado_Maiusculas">${htmlDoTrecho(linha)}</p>`,
@@ -1229,7 +1229,7 @@ export function numeracao(itens: readonly ItemDoDocumento[], secao: number) {
 
 /** O documento em texto puro (numerado; tabelas separadas por tabulação). */
 export function textoParaSei(doc: DocumentoOficial) {
-  const saida = [doc.localData, "", ...doc.titulo.map(semMarcas), ""];
+  const saida = [...doc.titulo.map(semMarcas), ""];
   const secao = (
     n: number,
     rotulo: string,
