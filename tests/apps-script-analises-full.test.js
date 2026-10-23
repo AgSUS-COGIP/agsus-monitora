@@ -264,14 +264,19 @@ describe("o FULL descarta estado local órfão (decidirEstadoLocalLotesAnalises_
 
 const PROJETO_ATUAL = "https://tabmkiokfuxyqjuvfiha.supabase.co";
 const semUrlFixa = (codigo) =>
-  codigo.replace(`SUPABASE_URL_FIXA: '${PROJETO_ATUAL}',`, "SUPABASE_URL_FIXA: '',");
+  codigo.replace(
+    `SUPABASE_URL_FIXA: '${PROJETO_ATUAL}',`,
+    "SUPABASE_URL_FIXA: '',",
+  );
 
 describe("URL do banco: fixa no código ou propriedade SUPABASE_URL", () => {
   it("nenhum .gs aponta para outro projeto Supabase nem tem DEFAULT_SUPABASE_URL", () => {
     for (const p of PLANILHAS)
       for (const codigo of ARQUIVOS[p]) {
         expect(codigo).not.toMatch(/DEFAULT_SUPABASE_URL/);
-        for (const url of codigo.match(/https:\/\/[a-z0-9]{20}\.supabase\.co/g) || [])
+        for (const url of codigo.match(
+          /https:\/\/[a-z0-9]{20}\.supabase\.co/g,
+        ) || [])
           expect(url).toBe(PROJETO_ATUAL);
       }
   });
@@ -281,7 +286,9 @@ describe("URL do banco: fixa no código ou propriedade SUPABASE_URL", () => {
     const { ctx, props } = contexto(FULL[p]);
     props.set("SUPABASE_SERVICE_ROLE_KEY", "sb_secret_teste123");
     props.set("SUPABASE_URL", "https://outro.exemplo");
-    expect(ctx.obterConfiguracaoSupabaseAnalises_()).toMatchObject({ url: PROJETO_ATUAL });
+    expect(ctx.obterConfiguracaoSupabaseAnalises_()).toMatchObject({
+      url: PROJETO_ATUAL,
+    });
   });
 
   it.each(PLANILHAS)(
