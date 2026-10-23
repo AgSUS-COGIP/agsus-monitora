@@ -677,9 +677,12 @@ describe("tela de Classificação", () => {
       modal.querySelector("[data-campo-documento='processo']"),
       "AGSUS.016954/2026-81",
     );
-    expect(previa().getAttribute("srcdoc")).toContain(
-      "SEI AGSUS.016954/2026-81",
+    // O processo vai no rodapé do Word; a prévia não simula a linha de
+    // assinatura e rodapé que o SEI põe.
+    expect(modal.querySelector("[data-campo-documento='processo']").value).toBe(
+      "AGSUS.016954/2026-81",
     );
+    expect(previa().getAttribute("srcdoc")).not.toContain("pg. N");
     await clicar(modal.querySelector(".ui-abas [data-aba='textos']"));
     expect(textosDoModelo().hidden).toBe(false);
     expect(

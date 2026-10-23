@@ -321,6 +321,15 @@ linha "Cálculo das listas pelo Python" fica "Desligada pelo administrador" (com
   pedido novo).
 - **Com a chave ligada**, `registrar_lista_classificacao` (o caminho antigo, de uma aba aberta antes
   da troca) recusa com 55000 ("recarregue a página e gere de novo").
+- **O hash da lista é do conteúdo** (`20261024130000_hash_do_retrato_pelo_conteudo.sql`, ensaio e
+  rollback com o mesmo nome): o Python grava a nota inteira como `35.0` e a tela como `35`; o
+  jsonb guarda a forma, e o hash era `sha256(DS_RESULTADO::text)` — a mesma lista dava dois hashes
+  (114/2026, 23/10). Agora `private."FC_HASH_RETRATO_CLASSIFICACAO"` faz o sha256 do texto do jsonb
+  com os números sem zeros à direita (`trim_scale`); o retrato gravado não muda (o do Python segue
+  com `35.0`). A tela não manda zero à direita, então o hash dela é o de antes. A mesma conta em
+  `src/lib/classificacao/hash-do-retrato.ts` e `python/monitora/classificacao/hash_do_retrato.py`,
+  com o teste cruzado dos casos dourados (`tests/fixtures/classificacao/hash-dos-retratos.json`,
+  `node scripts/classificacao/gerar-hash-dos-retratos.mjs`). Nenhum hash gravado muda.
 - **Status das atualizações:** duas linhas, "Relatório de desempate (Classificação em Python)"
   (chave `classificacao`) e "Cálculo das listas pelo Python" (chaves `classificacao_calculo` e
   `classificacao`; qualquer uma desligada = "Desligada pelo administrador"). Cada lista é uma execução

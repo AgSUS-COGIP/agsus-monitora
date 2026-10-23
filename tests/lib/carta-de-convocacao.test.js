@@ -405,6 +405,7 @@ describe("o documento (SEI, PDF, DOCX)", () => {
     expect(
       [...lida.querySelectorAll(".timbrado p")].map((p) => p.textContent),
     ).toEqual(["AGÊNCIA X", "Rua Y"]);
+    expect(pagina).not.toContain("posta pelo SEI");
     expect(lida.querySelector("script")).toBeNull();
   });
 

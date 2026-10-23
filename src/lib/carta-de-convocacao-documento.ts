@@ -184,14 +184,7 @@ export function paginaDaPrevia(
         `<section class="carta${i ? " quebra-de-pagina" : ""}" data-carta="${i + 1}">${htmlDaCarta(doc, carta)}</section>`,
     )
     .join("");
-  return paginaNoModeloDoSei(
-    {
-      nome: doc.nome,
-      corpoHtml,
-      aviso: "Assinatura eletrônica: posta pelo SEI.",
-    },
-    marca,
-  );
+  return paginaNoModeloDoSei({ nome: doc.nome, corpoHtml }, marca);
 }
 
 /* ── DOCX ────────────────────────────────────────────────────────────── */

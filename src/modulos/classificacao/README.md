@@ -91,8 +91,8 @@ Regras puras em `src/lib/classificacao/` (`motor.ts`, `regra.ts`, `catalogo.ts`,
 aprovados em recurso e a prévia do recurso —, `documento-sei.ts` — o documento no modelo das
 publicações do SEI, textos-padrão do 83/2026 e do 100/2026 —, `documento-docx.ts` — Word com papel
 timbrado —, `dados.ts`). Os textos e as colunas do documento ajustados pelo gestor ficam na regra
-(`DS_CONFIGURACAO.documento`, `.colunas` por publicação, `.desempate` = a nota abaixo da tabela da
-vaga com empate de nota resolvido; sem migration); o cabeçalho da agência, em Configurações › Marca
+(`DS_CONFIGURACAO.documento`, `.colunas` por publicação, `.desempate` = a nota abaixo de
+cada tabela, geral ou de cota, com empate de nota resolvido; sem migration); o cabeçalho da agência, em Configurações › Marca
 (`documento_cabecalho`, `src/lib/cabecalho-dos-documentos.js`). Banco:
 `supabase/migrations/20261002150000_classificacao.sql` (+ `20261002150500_liga_aba_classificacao.sql`),
 `20261002170000_classificacao_lista_da_entrevista.sql` (lista ENTREVISTA e critérios novos do
