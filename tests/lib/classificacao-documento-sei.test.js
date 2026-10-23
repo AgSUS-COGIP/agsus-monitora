@@ -862,7 +862,7 @@ describe("DOCX com papel timbrado", () => {
 });
 
 describe("prévia (Como fica no SEI)", () => {
-  it("timbrado com o logo e o cabeçalho, o HTML do SEI e o aviso do que o SEI põe", () => {
+  it("timbrado com o logo e o cabeçalho e o HTML do SEI, sem a linha de assinatura e rodapé", () => {
     const doc = documentoOficial(retratoDe("PRELIMINAR"), {
       lista: "geral",
       regra: REGRA_83,
@@ -882,13 +882,9 @@ describe("prévia (Como fica no SEI)", () => {
       'content: counter(item-n1) "." counter(item-n2) "."',
     );
     expect(lida.querySelectorAll("table")).toHaveLength(3);
-    expect(lida.querySelector(".posto-pelo-sei").textContent).toContain(
-      "SEI AGSUS.016954/2026-81 / pg. N",
-    );
-    // Na tela, o aviso; no PDF (impressão), não sai: o SEI põe o rodapé.
-    expect(lida.querySelector("style").textContent).toContain(
-      ".posto-pelo-sei { display: none; }",
-    );
+    // Sem a linha de assinatura/rodapé: quem põe é o SEI, a prévia não avisa.
+    expect(lida.querySelector(".posto-pelo-sei")).toBeNull();
+    expect(pagina).not.toMatch(/postos? pelo SEI|pg\. N/);
     expect(lida.querySelector("script")).toBeNull();
     // Endereço de logo estranho não entra.
     expect(paginaDaPrevia(doc, { logo: 'javascript:alert(1)"' })).not.toContain(
