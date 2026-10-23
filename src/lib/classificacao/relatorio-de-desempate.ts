@@ -841,7 +841,7 @@ function grupoNoPdf(
     linhas.push(
       `<tr><td class="num">${html(ordinal(c.posicao))}</td><td>${html(c.codigo)}</td><td>${html(c.nome)}</td>` +
         (comIdade
-          ? `<td class="num">${c.idade === null ? SEM_IDADE : html(c.idade)}</td>`
+          ? `<td class="idade">${c.idade === null ? SEM_IDADE : html(c.idade)}</td>`
           : "") +
         `<td>${valores}</td><td>${html(decididoPor(c, rotulo, r.criterios))}</td></tr>`,
     );
@@ -924,7 +924,7 @@ export function paginaDoDesempate(desempate: DesempateDaLista, titulo: string) {
       (v, i) =>
         `<section class="vaga" id="vaga-${i + 1}"><table class="grupos"><thead>` +
         `<tr><th class="vaga" colspan="${colunas}">${html(tituloDaVaga(v))} <span class="leve">· ${v.grupos.length} grupo(s) · ${html(subtitulo)}</span></th></tr>` +
-        `<tr><th class="num">Pos.</th><th>Inscrição</th><th class="candidato">Candidato</th>${comIdade ? '<th class="num">Idade</th>' : ""}<th>Valores nos critérios aplicados</th><th>Decidido por</th></tr>` +
+        `<tr><th class="num">Pos.</th><th>Inscrição</th><th class="candidato">Candidato</th>${comIdade ? '<th class="idade">Idade</th>' : ""}<th>Valores nos critérios aplicados</th><th>Decidido por</th></tr>` +
         `</thead>${v.grupos.map((g) => grupoNoPdf(g, r, colunas, comIdade)).join("")}</table></section>`,
     )
     .join("");
@@ -968,6 +968,7 @@ tr.fim td{background:var(--fundo-empate)}
 .resolucao{font-weight:normal;color:var(--texto-suave)}
 .insc{color:var(--texto-suave)}
 th.candidato{width:22%}
+th.idade,td.idade{text-align:center;white-space:nowrap;width:7%}
 </style>
 </head><body><h1>${html(titulo)}</h1><p class="sub">${html(subtitulo)}</p>
 <dl class="cabecalho">${cabecalho}</dl>

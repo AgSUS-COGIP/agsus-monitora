@@ -127,8 +127,8 @@ describe("relatório de desempate na tela", () => {
     expect(idade("Elisa Amostra")).toBe("—");
     expect(idade("Carla Ficticia")).toBe("—");
     const html = paginaDoDesempate(d, "Relatório de desempate");
-    expect(html).toContain('<td>Elisa Amostra</td><td class="num">—</td>');
-    expect(html).toContain('<td>Ana Exemplo</td><td class="num">60</td>');
+    expect(html).toContain('<td>Elisa Amostra</td><td class="idade">—</td>');
+    expect(html).toContain('<td>Ana Exemplo</td><td class="idade">60</td>');
     // A tela é tolerante: mostra a idade que vier gravada, sem recalcular.
     const comTodas = structuredClone(DOURADO);
     comTodas.relatorio.vagas[0].grupos[2].candidatos[0].idade = 34;
@@ -213,7 +213,7 @@ describe("relatório de desempate na tela", () => {
     });
     const pagina = paginaDoDesempate(d, "Relatório de desempate");
     expect(pagina).toContain('href="#vaga-1"');
-    expect(pagina).not.toContain('<th class="num">Idade</th>');
+    expect(pagina).not.toContain('<th class="idade">Idade</th>');
   });
 
   it("o valor de cada critério como texto, sem data de nascimento", () => {
@@ -258,7 +258,7 @@ describe("relatório de desempate na tela", () => {
     expect(html).toContain(
       '<span class="selo cota">Lista de cota: Pretos, pardos, indígenas e quilombolas (PPIQ)</span>',
     );
-    expect(html).toContain('<th class="num">Idade</th>');
+    expect(html).toContain('<th class="idade">Idade</th>');
     expect(html).toContain("decidiu a hora da certidão");
     expect(html).toContain('content:"Página " counter(page)');
   });
