@@ -327,9 +327,11 @@ três planilhas (não precisa reinstalar gatilho).
   guardado em `ANALISES_SYNC_LOTES_CLIENT_V1` sumiu do banco, terminou em `erro`
   (inclusive "encerrada por inatividade") ou é de outro modo, o estado sai sozinho
   (`FULL: estado local do sync … descartado: …` no log). Nada é apagado no banco.
-- **Sem URL fixa** (`[sem-url-fixa]`): `DEFAULT_SUPABASE_URL` e `SUPABASE_URL_FIXA`
-  saíram (apontavam para o projeto antigo, desativado). A URL vem só da propriedade
-  `SUPABASE_URL`; sem ela, erro claro antes de qualquer requisição.
+- **URL fixa do banco atual** (`[url-fixa]`, 23/10): `SUPABASE_URL_FIXA` voltou com o
+  projeto atual (`tabmkiokfuxyqjuvfiha`) e vale antes da propriedade `SUPABASE_URL`;
+  vazia, vale a propriedade; sem nenhuma, erro claro antes de qualquer requisição.
+  `DEFAULT_SUPABASE_URL` continua fora (apontava para o projeto antigo, desativado).
+  A chave pode ficar em `SERVICE_ROLE_KEY_FIXA` **só na planilha** — nunca no repositório.
 - **Incremental já processado conclui primeiro** (`3-analises-incremental.gs`,
   `[processado-primeiro]`): se o banco diz `processado`, o script conclui e limpa
   antes de comparar com a planilha. Antes, uma planilha alterada depois do envio dava
