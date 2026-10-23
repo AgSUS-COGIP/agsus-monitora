@@ -9,13 +9,18 @@ lista gerada, ativos e em andamento primeiro (`listar_editais_classificacao`,
 
 A regra de classificação é **de cada edital** (decidida pelo gestor do edital, versionada no
 banco); nada é fixo no código. A conta é do motor puro `src/lib/classificacao/motor.ts`.
-Classificação em Python, etapa 1 (`docs/python-no-monitora.md`): `python/monitora/classificacao/`
-é a cópia fiel do motor (casos dourados `tests/fixtures/classificacao/casos-do-motor.json`, nos
-dois lados) e gera o relatório de desempate; roda em paralelo pelo job
-`scripts/classificacao/classificacao.py --seco`, sem mudar a tela. Na visão Listas, "Relatório de
-desempate (XLSX)" e "(PDF)" só aparecem quando a lista gerada tem relatório
-(`obter_desempate_da_lista`, `src/lib/classificacao/relatorio-de-desempate.ts`; banco em
-`supabase/migrations/20261023140000_classificacao_em_python_e_relatorio_de_desempate.sql`).
+Classificação em Python (`docs/python-no-monitora.md`): `python/monitora/classificacao/` é a
+cópia fiel do motor e do retrato (casos dourados `tests/fixtures/classificacao/casos-do-motor.json`,
+nos dois lados). Etapa 2a: gerar a lista pede o relatório de desempate ao job
+(`registrar_lista_classificacao` → workflow `classificacao.yml`, chave da automação
+"Classificação em Python"); o job só grava o relatório quando o retrato que ele calcula é o da lista
+registrada. Na visão Listas, "Relatório de desempate sendo preparado…" até chegar (relê a cada 10 s,
+espera até 15 min); depois, "Relatório de desempate (XLSX)" e "(PDF)", com nome e inscrição; se não
+conferir ou falhar, um aviso (`obter_desempate_da_lista`, `estadoDoRelatorio` em
+`src/lib/classificacao/relatorio-de-desempate.ts`; banco em
+`supabase/migrations/20261023140000_classificacao_em_python_e_relatorio_de_desempate.sql` e
+`20261023170000_classificacao_em_python_etapa_2.sql`). O cálculo da lista na tela continua com o
+`motor.ts` (etapa 2b: a lista calculada pelo Python).
 
 Listas (`TIPOS_DE_LISTA`), no padrão das publicações da AgSUS: `PRELIMINAR` (avaliação documental e
 de títulos, com as parciais e os eliminados — vale como preliminar ou final da etapa; a exportação

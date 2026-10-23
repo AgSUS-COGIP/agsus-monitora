@@ -51,7 +51,7 @@ com a conta em `monitora.avaliacao_documental`).
 | `monitora.avaliacao_documental.pre_classificacao` | eliminação automática, Provisória por ART, tamanho do lote e "a linha anda" (cópia fiel de `pre-classificacao.js`)                       |
 | `monitora.avaliacao_documental.distribuicao`      | distribuição das fichas (menor carga, limites) e as fichas novas da distribuição inicial (cópia fiel de `distribuicao.js`)               |
 | `monitora.entrevistas.calculo`                    | nota por competência, total e parecer da entrevista, com ou sem aspectos (a regra de `FC_CALCULAR_ENTREVISTA` e de `calcularEntrevista`) |
-| `monitora.classificacao`                          | o motor da classificação (cópia fiel de `motor.ts`) e o relatório de desempate; etapa 1, em paralelo com a tela (ver abaixo)             |
+| `monitora.classificacao`                          | o motor da classificação (cópia fiel de `motor.ts`), o retrato da lista e o relatório de desempate de cada lista gerada (ver abaixo)     |
 
 ### Importar a base
 
@@ -233,8 +233,49 @@ e avisos. **A tela continua com o motor.ts**: nesta etapa o Python roda em paral
   pelo Python, lido pela tela: `tests/python/test_classificacao_desempate.py` e
   `tests/lib/classificacao-relatorio-de-desempate.test.js`).
 - **Conferência real (23/10/2026)**: 114/2026, 93/2026 e 30/2026, as quatro listas: 0 divergência.
-- **Etapa 2** (com o ok do usuário): a geração passa a usar o resultado do Python e grava o
-  relatório junto da lista.
+- Os apelidos dos nomes saíram na etapa 2a (abaixo): o job passou a ler os nomes reais.
+
+## Classificação em Python — etapa 2a: o relatório de desempate de toda lista gerada (23/10/2026)
+
+Decisão do usuário (23/10/2026): o job usa os **nomes reais** dos candidatos (não apelidos), e a
+ordem alfabética do desempate final é a do Python, calculada como o `motor.ts`
+(`localeCompare("pt-BR")`, `semantica_js.comparar_base`). Os nomes não vão para o log do Actions
+nem para as mensagens de erro; o relatório gravado traz nome e código (documento interno da
+comissão).
+
+- **Disparo:** `registrar_lista_classificacao` (o "Gerar" da tela) grava a lista como antes e chama
+  `private."FC_PEDIR_DESEMPATE"`: com a chave da automação "Classificação em Python"
+  (`classificacao`) ligada, pede `classificacao.yml` por `FC_DISPARAR_ROBO` (origem MONITORA, em
+  nome de quem gerou; inputs `modo=desempate` e `listas`) e grava o preparo
+  (`TB_PREPARO_DESEMPATE`: `PEDIDO`, `DESLIGADA` ou `SEM_DISPARO`). Nunca derruba o registro da
+  lista. O GitHub guarda uma execução só na fila do grupo `classificacao`, então cada execução leva
+  também todas as listas que esperam (`classificacao_ler_pedidos_desempate`).
+- **Job** `scripts/classificacao/classificacao.py --desempate [--lista …]`: marca `PREPARANDO`,
+  lê a lista registrada (`classificacao_ler_lista`: retrato, hash, tipo, versão da regra) e o
+  edital (`classificacao_ler_edital`, com nomes), calcula com o Python e monta o retrato que a tela
+  grava (`monitora.classificacao.retrato`, cópia de `instantaneoDaLista` +
+  `retratoDaClassificacao`). Só com a mesma versão da regra e o retrato **igual** ao registrado
+  grava o relatório (`classificacao_gravar_desempate` confere o hash de novo e marca `PRONTO`);
+  senão marca `NAO_CONFERE` (os dados mudaram desde a geração, ou o Python e o motor da tela
+  divergem); erro numa lista marca `FALHOU` e segue. Log público: número do edital, tipo, id curto
+  da lista, contagens e o caminho das diferenças. Saída 0 tudo pronto, 2 com lista não conferida ou
+  falha, 1 erro.
+- **Tela:** "Relatório de desempate sendo preparado…" enquanto o preparo está `PEDIDO` ou
+  `PREPARANDO` (relê a cada 10 s, espera até 15 min); depois os botões XLSX e PDF. `NAO_CONFERE`:
+  "os dados mudaram desde esta geração — gere de novo" quando a própria tela vê a geração
+  desatualizada; senão, "o cálculo em Python não confere com esta lista — avise o suporte".
+- **Banco** (`20261023170000_classificacao_em_python_etapa_2.sql`, ensaio e rollback com o mesmo
+  nome): `classificacao_ler_edital` com nomes (sai a collation do apelido), a chave
+  `classificacao`, `classificacao.yml` em `FC_CHAVE_DO_WORKFLOW`, `FC_DISPARAR_ROBO` e
+  `TL_DISPARO_ROBO`, `TB_PREPARO_DESEMPATE`, `FC_PEDIR_DESEMPATE`, as RPCs do job (só
+  `service_role`) e `obter_desempate_da_lista` com o preparo.
+- **Conferência real (23/10/2026, nomes reais):** 114/2026, 93/2026 e 30/2026, as quatro listas,
+  Python × motor da tela: 0 divergência; a ordem alfabética de 2.891 nomes e 200 mil pares
+  sorteados: 0 diferença. O `--desempate` nas 11 listas registradas desses editais: as 3 listas do
+  114 com a regra vigente conferem e dariam relatório; as outras não conferem (regra antiga ou
+  geradas antes de `totais.aguardando`), como esperado.
+- **Etapa 2b** (próxima): a geração passa a usar a lista calculada pelo Python, com o `motor.ts`
+  como conferência por um período (divergiu, a tela avisa e não registra).
 
 ## Terceira entrega: expurgo diário dos anexos do chat (saiu)
 

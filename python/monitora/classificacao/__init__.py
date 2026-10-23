@@ -1,10 +1,11 @@
 """
-Classificação em Python (etapa 1: em paralelo com a tela, para conferir).
+Classificação em Python (etapa 2a: o relatório de desempate de cada lista gerada).
 
     monitora.classificacao.motor        cópia fiel de src/lib/classificacao/motor.ts
                                         (classificar, classificar_edital, classificar_com_rastro)
     monitora.classificacao.desempate    o relatório de desempate (json estável + texto)
     monitora.classificacao.comparacao   Python × motor da tela, caminho a caminho
+    monitora.classificacao.retrato      o retrato que a tela grava ao gerar (instantaneoDaLista)
     monitora.classificacao.regra        normalizarRegra
     monitora.classificacao.vagas        montarVagas, nivelDaVaga
     monitora.classificacao.convocacao   a configuração de convocação do edital (derivarQuadro…)

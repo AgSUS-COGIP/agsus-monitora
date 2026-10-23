@@ -231,4 +231,6 @@ def normalizar_regra(bruta) -> dict:
                 if e["termos"]
             ],
         },
+        # O rodapé do documento (só o retrato da lista usa; o motor não).
+        "rodape": texto(r.get("rodape")),
     }

@@ -502,6 +502,98 @@ describe("tela de Classificação", () => {
     expect(imprimir.mock.calls[0][0]).toContain("RELATÓRIO DE DESEMPATE");
   });
 
+  it("Relatório de desempate: depois de gerar, 'sendo preparado…' até o Python gravar; então os botões", async () => {
+    const dourado = JSON.parse(
+      readFileSync(
+        "tests/fixtures/classificacao/relatorio-de-desempate.json",
+        "utf8",
+      ),
+    );
+    let pronto = false;
+    const supabase = supabaseFalso({
+      obter_desempate_da_lista: ({ p_lista }) =>
+        p_lista !== "l1"
+          ? null
+          : pronto
+            ? {
+                ...dourado,
+                lista_id: "l1",
+                preparo: {
+                  situacao: "PRONTO",
+                  pedido_em: new Date().toISOString(),
+                },
+              }
+            : {
+                lista_id: "l1",
+                preparo: {
+                  situacao: "PEDIDO",
+                  pedido_em: new Date().toISOString(),
+                },
+              },
+    });
+    await montar(supabase);
+    await abrirEdital();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      await clicar(secao.querySelector("[data-acao='gerar']"));
+      await esperar();
+      expect(
+        secao.querySelector("[data-desempate-preparo='preparando']")
+          ?.textContent,
+      ).toBe("Relatório de desempate sendo preparado…");
+      expect(secao.querySelector("[data-desempate]")).toBeNull();
+      pronto = true;
+      await act(async () => void vi.advanceTimersByTime(10000));
+      await esperar();
+      expect(secao.querySelector("[data-desempate-preparo]")).toBeNull();
+      expect(secao.querySelector("[data-desempate='xlsx']")).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("Relatório de desempate: não confere ou não saiu → aviso; automação desligada → nada", async () => {
+    for (const [situacao, seletor, trecho] of [
+      [
+        "NAO_CONFERE",
+        ".classificacao-desempate-nao-confere",
+        "não confere com esta lista",
+      ],
+      ["FALHOU", ".classificacao-desempate-falhou", "não pôde ser preparado"],
+      [
+        "SEM_DISPARO",
+        ".classificacao-desempate-falhou",
+        "não pôde ser preparado",
+      ],
+      ["DESLIGADA", null, null],
+    ]) {
+      const supabase = supabaseFalso({
+        obter_desempate_da_lista: () => ({
+          lista_id: "l1",
+          preparo: { situacao, pedido_em: new Date().toISOString() },
+        }),
+      });
+      await montar(supabase);
+      await abrirEdital();
+      await clicar(secao.querySelector("[data-acao='gerar']"));
+      await esperar();
+      if (seletor)
+        expect(secao.querySelector(seletor)?.textContent, situacao).toContain(
+          trecho,
+        );
+      else
+        expect(
+          secao.querySelector(
+            "[data-desempate-preparo], .classificacao-desempate-nao-confere, .classificacao-desempate-falhou",
+          ),
+          situacao,
+        ).toBeNull();
+      expect(secao.querySelector("[data-desempate]")).toBeNull();
+      await act(async () => painel.raiz.unmount());
+      secao.remove();
+    }
+  });
+
   it("Exportar: o recorte é de cada lista; o XLSX (planilha inteira) não leva o recorte no nome", async () => {
     await montar(supabaseFalso());
     await abrirEdital();

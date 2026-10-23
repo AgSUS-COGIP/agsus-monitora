@@ -68,6 +68,7 @@ export const CHAVE_DA_LINHA: Readonly<Record<string, string>> = Object.freeze({
 const QUANDO_SEM_TAREFA: Readonly<Record<string, string>> = Object.freeze({
   pre_classificacao: "No fim de cada carga do robô da Empregare",
   robo_de_inscricoes: "Nenhum edital com agenda de inscrições",
+  classificacao: "Quando uma lista é gerada na Classificação",
 });
 
 const registro = (valor: unknown): Record<string, unknown> =>

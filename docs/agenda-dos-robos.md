@@ -19,12 +19,12 @@ em `supabase/ensaios/` e `supabase/rollback/`).
 
 Como está no `cron.job` do banco (conferido em 22/10/2026):
 
-| Tarefa do pg_cron                    | Agenda (UTC)            | Brasília                                       | Ativa                | Workflow                      |
-| ------------------------------------ | ----------------------- | ---------------------------------------------- | -------------------- | ----------------------------- |
-| `agsus_robo_sincronizar_entrevistas` | `5 0-10,15,21-23 * * *` | aos :05, de 18h a 7h, às 12h05                 | **não** (desde 16/10) | `sincronizar-entrevistas.yml` |
-| `agsus_robo_sincronizar_selecao`     | `10 11,16,21 * * *`     | 8h10, 13h10 e 18h10                            | **não** (desde 16/10) | `sincronizar-selecao.yml`     |
-| `agsus_robo_conferencias`            | `0 9 * * *`             | 6h                                             | sim                  | `conferencias.yml`            |
-| `agsus_robo_conferir_disparos`       | `*/15 * * * *`          | a cada 15 min (lê as respostas do GitHub)      | sim                  | —                             |
+| Tarefa do pg_cron                    | Agenda (UTC)            | Brasília                                  | Ativa                 | Workflow                      |
+| ------------------------------------ | ----------------------- | ----------------------------------------- | --------------------- | ----------------------------- |
+| `agsus_robo_sincronizar_entrevistas` | `5 0-10,15,21-23 * * *` | aos :05, de 18h a 7h, às 12h05            | **não** (desde 16/10) | `sincronizar-entrevistas.yml` |
+| `agsus_robo_sincronizar_selecao`     | `10 11,16,21 * * *`     | 8h10, 13h10 e 18h10                       | **não** (desde 16/10) | `sincronizar-selecao.yml`     |
+| `agsus_robo_conferencias`            | `0 9 * * *`             | 6h                                        | sim                   | `conferencias.yml`            |
+| `agsus_robo_conferir_disparos`       | `*/15 * * * *`          | a cada 15 min (lê as respostas do GitHub) | sim                   | —                             |
 
 **Entrevistas e Seleção estão DESLIGADAS DE PROPÓSITO desde 16/10/2026** (`active = false`; o
 último pedido `AGENDA` de cada uma em `TL_DISPARO_ROBO` é de 16/10, 7h05 e 8h10 de Brasília). As
@@ -51,7 +51,9 @@ chave por aba; desligada:
 - `FC_DISPARAR_ROBO` não pede nada ao GitHub com origem `AGENDA` (vale mesmo se alguém religar a
   tarefa direto no banco; a tela avisa a tarefa fora do estado da chave);
 - o **Rodar agora** do Status das atualizações continua, com confirmação; a linha mostra
-  "Desligada pelo administrador" em vez de atraso.
+  "Desligada pelo administrador" em vez de atraso;
+- "Classificação em Python" (20261023170000): gerar uma lista não pede o relatório de desempate
+  (`FC_PEDIR_DESEMPATE` confere a chave; o preparo fica `DESLIGADA`).
 
 | Chave                        | Tarefas do pg_cron                                                                                                                    | Workflow (agenda)                                                          |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
@@ -63,6 +65,7 @@ chave por aba; desligada:
 | Conferências                 | `agsus_robo_conferencias`                                                                                                             | `conferencias.yml`                                                         |
 | Pacotes dos painéis          | `agsus_analises_cache_do_painel`, `agsus_aprovados_cache_por_area`, `agsus_entrevistas_cache_do_painel`                               | —                                                                          |
 | Manutenção do banco          | `agsus_analises_analyze_diario`, `agsus_fila_estatisticas`, `agsus_analises_encerrar_inativas`, `agsus_eventos_acesso_limpeza_mensal` | —                                                                          |
+| Classificação em Python      | —                                                                                                                                     | `classificacao.yml` pedido ao gerar uma lista (20261023170000)             |
 
 Sem chave (sempre ligadas): `agsus_robo_conferir_disparos` (fecha os pedidos do Rodar agora) e
 `agsus_inativar_listas_vencidas`. Fora do banco: os gatilhos do Apps Script das planilhas de

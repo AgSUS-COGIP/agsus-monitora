@@ -1,8 +1,10 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  ESPERA_DO_RELATORIO_MS,
+  estadoDoRelatorio,
   lerDesempateDaLista,
-  nomesDoRetrato,
+  lerRespostaDoDesempate,
   paginaDoDesempate,
   planilhasDoDesempate,
   textoDoValor,
@@ -50,15 +52,18 @@ describe("relatório de desempate na tela", () => {
     expect(lerDesempateDaLista({ ...DOURADO, lista_id: 5 })).toBeNull();
   });
 
-  it("monta as planilhas Candidatos e Pares com o nome do retrato", () => {
+  it("monta as planilhas Candidatos e Pares com o nome e a inscrição do relatório", () => {
     const d = lerDesempateDaLista(DOURADO);
     const primeiro = d.relatorio.vagas[0].grupos[0].candidatos[0];
-    const nomes = new Map([[primeiro.analiseId, "Pessoa Fictícia"]]);
-    const [candidatos, pares] = planilhasDoDesempate(d, nomes);
+    expect(primeiro.nome).toBeTruthy();
+    const [candidatos, pares] = planilhasDoDesempate(d);
     expect(candidatos.nome).toBe("Candidatos");
     expect(candidatos.linhas[0]).toContain("Decidido por");
     expect(candidatos.linhas[0]).toContain("60+");
-    expect(candidatos.linhas.flat()).toContain("Pessoa Fictícia");
+    expect(candidatos.linhas.flat()).toContain(primeiro.nome);
+    expect(candidatos.linhas.flat()).toContain(primeiro.codigo);
+    expect(pares.linhas.flat()).toContain(primeiro.nome);
+    expect(d.texto).toContain(`${primeiro.nome} (insc. ${primeiro.codigo})`);
     expect(pares.nome).toBe("Pares");
     const porIdade = pares.linhas.find((l) =>
       String(l[6]).includes("hora da certidão"),
@@ -89,18 +94,56 @@ describe("relatório de desempate na tela", () => {
     expect(html).not.toContain("<b>");
   });
 
-  it("os nomes vêm do retrato da lista (geral e modalidades)", () => {
-    const nomes = nomesDoRetrato({
-      vagas: [
-        {
-          geral: [{ analise_id: "a", nome: "Ana Fictícia" }],
-          listas: { PCD: [{ analise_id: "b", nome: "Bia Fictícia" }] },
-        },
-      ],
+  it("lê o preparo junto do relatório (migration 20261023170000)", () => {
+    const pedido = "2026-10-23T14:00:00Z";
+    const so = lerRespostaDoDesempate({
+      lista_id: "l1",
+      preparo: { situacao: "PEDIDO", pedido_em: pedido },
     });
-    expect([...nomes]).toEqual([
-      ["a", "Ana Fictícia"],
-      ["b", "Bia Fictícia"],
-    ]);
+    expect(so).toEqual({
+      preparo: { situacao: "PEDIDO", pedidoEm: pedido },
+      desempate: null,
+    });
+    const pronta = lerRespostaDoDesempate({
+      ...DOURADO,
+      preparo: { situacao: "PRONTO", pedido_em: pedido },
+    });
+    expect(pronta.preparo?.situacao).toBe("PRONTO");
+    expect(pronta.desempate?.listaId).toBe("lista-ficticia-final");
+    expect(lerRespostaDoDesempate(null)).toEqual({
+      preparo: null,
+      desempate: null,
+    });
+    expect(
+      lerRespostaDoDesempate({ preparo: { situacao: "OUTRA" } }).preparo,
+    ).toBeNull();
+  });
+
+  it("o estado do relatório: pronto, preparando (até a espera), não confere, falhou ou nada", () => {
+    const agora = Date.parse("2026-10-23T14:05:00Z");
+    const com = (situacao, pedidoEm = "2026-10-23T14:00:00Z") => ({
+      preparo: { situacao, pedidoEm },
+      desempate: null,
+    });
+    expect(estadoDoRelatorio(null, agora)).toBe("nada");
+    expect(estadoDoRelatorio({ preparo: null, desempate: null }, agora)).toBe(
+      "nada",
+    );
+    expect(
+      estadoDoRelatorio(
+        { ...com("PEDIDO"), desempate: lerDesempateDaLista(DOURADO) },
+        agora,
+      ),
+    ).toBe("pronto");
+    expect(estadoDoRelatorio(com("PEDIDO"), agora)).toBe("preparando");
+    expect(estadoDoRelatorio(com("PREPARANDO"), agora)).toBe("preparando");
+    const velho = new Date(agora - ESPERA_DO_RELATORIO_MS).toISOString();
+    expect(estadoDoRelatorio(com("PEDIDO", velho), agora)).toBe("falhou");
+    expect(estadoDoRelatorio(com("NAO_CONFERE"), agora)).toBe("nao_confere");
+    expect(estadoDoRelatorio(com("FALHOU"), agora)).toBe("falhou");
+    expect(estadoDoRelatorio(com("SEM_DISPARO"), agora)).toBe("falhou");
+    expect(estadoDoRelatorio(com("DESLIGADA"), agora)).toBe("nada");
+    // Relatório lido mas preparo sem relatório legível (versão nova): nada.
+    expect(estadoDoRelatorio(com("PRONTO"), agora)).toBe("nada");
   });
 });

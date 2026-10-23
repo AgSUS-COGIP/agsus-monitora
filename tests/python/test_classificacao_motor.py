@@ -14,6 +14,7 @@ import unittest
 
 from monitora.classificacao import motor
 from monitora.classificacao.numeros import arredondar, dias_de_vida, escalar, formatar_nota, idade_na_data, numero_br
+from monitora.classificacao.retrato import conferir_com_o_registrado, instantaneo_da_lista
 from monitora.classificacao.semantica_js import comparar_base, comparar_numerico, formatar_pt_br
 
 _FIXTURE = pathlib.Path(__file__).resolve().parents[1] / "fixtures" / "classificacao" / "casos-do-motor.json"
@@ -65,6 +66,26 @@ class CasosDouradosDoMotor(unittest.TestCase):
                 obtido = _json(motor.classificar(entrada))
                 diferencas = _diferencas(caso["saida"], obtido)
                 self.assertEqual(diferencas, [], "\n".join(diferencas))
+
+    def test_python_monta_o_mesmo_retrato_que_a_tela_grava(self):
+        for i, caso in enumerate(DADOS["casos"]):
+            with self.subTest(caso=caso["nome"]):
+                entrada = {"tipo": caso["tipo"], **DADOS["editais"][caso["edital"]]}
+                retrato = _json(
+                    instantaneo_da_lista(
+                        motor.classificar(entrada), caso["editalDoRetrato"], entrada.get("regra"), i // 4 + 1
+                    )
+                )
+                diferencas = _diferencas(caso["retrato"], retrato)
+                self.assertEqual(diferencas, [], "\n".join(diferencas))
+                self.assertEqual(conferir_com_o_registrado(retrato, caso["retrato"]), [])
+
+    def test_o_retrato_diferente_aparece_na_conferencia(self):
+        caso = DADOS["casos"][3]
+        mexido = json.loads(json.dumps(caso["retrato"]))
+        mexido["vagas"][0]["geral"][0]["posicao"] += 1
+        diferencas = conferir_com_o_registrado(mexido, caso["retrato"])
+        self.assertEqual([d["caminho"] for d in diferencas], ["vagas[0].geral[0].posicao"])
 
 
 class SemanticaDoJs(unittest.TestCase):
