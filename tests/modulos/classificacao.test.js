@@ -541,7 +541,7 @@ describe("tela de Classificação", () => {
     expect(html).toContain("VAGA 169681 - Cirurgião Dentista");
     expect(html).toContain("<strong>CLASSIFICAÇÃO</strong>");
     expect(html).not.toMatch(/<script|onerror/i);
-    expect(texto).toMatch(/^Brasília, na data da assinatura digital\./);
+    expect(texto).not.toContain("na data da assinatura digital");
     expect(texto).toContain("1. DISPOSIÇÕES PRELIMINARES");
     expect(texto).toContain("2.1. Os(as) candidatos(as) aprovados(as)");
     expect(toast).toHaveBeenCalledWith(
