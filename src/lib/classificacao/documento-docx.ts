@@ -16,8 +16,8 @@ import type {
 
     word/header1.xml   o logo da AgSUS (PNG embutido) e o cabeçalho da agência
                        (Configurações › Marca), centralizados;
-    word/footer1.xml   "<nome do documento> · SEI <processo> / pg. N" (campo
-                       PAGE: o Word numera);
+    (sem rodapé: o "título (nº SEI) SEI processo / pg. N" quem põe é o SEI,
+                       23/10/2026);
     word/document.xml  título, 1. DISPOSIÇÕES PRELIMINARES (itens numerados
                        aqui, com tabulação de 25 mm como no SEI), um bloco por
                        vaga com a tabela (e a nota de desempate, se houve
@@ -253,7 +253,6 @@ export function documentoComPartes(partes: readonly string[]) {
     `<w:document xmlns:w="${W}" xmlns:r="${R}">` +
     `<w:body>${partes.join("")}<w:sectPr>` +
     '<w:headerReference w:type="default" r:id="rIdCabecalho"/>' +
-    '<w:footerReference w:type="default" r:id="rIdRodape"/>' +
     '<w:pgSz w:w="11906" w:h="16838"/>' +
     '<w:pgMar w:top="1418" w:right="1134" w:bottom="1134" w:left="1701" w:header="567" w:footer="567" w:gutter="0"/>' +
     "</w:sectPr></w:body></w:document>"
@@ -307,31 +306,6 @@ export function cabecalhoXml(
   );
 }
 
-/** O word/footer1.xml: "<nome> · SEI <processo> / pg. N" (N = campo PAGE). */
-export function rodapeXml(doc: { nome: string; processo?: string }) {
-  const texto = [doc.nome, doc.processo ? `SEI ${doc.processo}` : ""]
-    .filter(Boolean)
-    .join(" · ");
-  const pagina =
-    `<w:r><w:rPr>${FONTE}<w:color w:val="808080"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r>` +
-    `<w:r><w:rPr>${FONTE}<w:color w:val="808080"/><w:sz w:val="16"/></w:rPr><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r>` +
-    `<w:r><w:rPr>${FONTE}<w:color w:val="808080"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="separate"/></w:r>` +
-    `${corrida("1", { tamanho: 16, cor: "808080" })}` +
-    `<w:r><w:rPr>${FONTE}<w:color w:val="808080"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="end"/></w:r>`;
-  return (
-    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
-    `<w:ftr xmlns:w="${W}" xmlns:r="${R}">` +
-    paragrafo(
-      `${corrida(`${texto} / pg. `, { tamanho: 16, cor: "808080" })}${pagina}`,
-      {
-        alinhamento: "center",
-        depois: 0,
-      },
-    ) +
-    "</w:ftr>"
-  );
-}
-
 const relacao = (id: string, tipo: string, alvo: string) =>
   `<Relationship Id="${id}" Type="${R}/${tipo}" Target="${alvo}"/>`;
 
@@ -353,8 +327,8 @@ export function gerarDocxOficial(
 
 /**
  * Os arquivos do .docx (para zipar), com o word/document.xml já pronto
- * (`documento`, de documentoComPartes), o timbrado e o rodapé
- * "<nome> · SEI <processo> / pg. N". A carta de convocação também o usa.
+ * (`documento`, de documentoComPartes) e o timbrado; sem rodapé de página
+ * (o SEI numera). A carta de convocação também o usa.
  */
 export function arquivosDoDocx(
   { nome, processo = "", documento }: PartesDoDocx,
@@ -377,7 +351,6 @@ export function arquivosDoDocx(
         '<Default Extension="png" ContentType="image/png"/>' +
         '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
         '<Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>' +
-        '<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>' +
         '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' +
         "</Types>",
     },
@@ -407,7 +380,6 @@ export function arquivosDoDocx(
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
         '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
         relacao("rIdCabecalho", "header", "header1.xml") +
-        relacao("rIdRodape", "footer", "footer1.xml") +
         "</Relationships>",
     },
     { nome: "word/document.xml", conteudo: documento },
@@ -415,7 +387,6 @@ export function arquivosDoDocx(
       nome: "word/header1.xml",
       conteudo: cabecalhoXml(cabecalho, comLogo ? logo : null),
     },
-    { nome: "word/footer1.xml", conteudo: rodapeXml(doc) },
   ];
   if (comLogo && logo)
     arquivos.push(

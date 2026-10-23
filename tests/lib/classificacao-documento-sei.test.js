@@ -791,7 +791,6 @@ describe("DOCX com papel timbrado", () => {
         "word/document.xml",
         "word/_rels/document.xml.rels",
         "word/header1.xml",
-        "word/footer1.xml",
         "word/_rels/header1.xml.rels",
         "word/media/logo.png",
       ]),
@@ -823,11 +822,8 @@ describe("DOCX com papel timbrado", () => {
       "AGÊNCIA BRASILEIRA DE APOIO À GESTÃO DO SISTEMA ÚNICO DE SAÚDE",
     );
     expect(cabecalho).toContain("SEPN CRN 514, Bloco D");
-    const rodape = xml("word/footer1.xml");
-    expect(rodape).toContain(
-      "Resultado Preliminar - Etapa de Análise Curricular - Classificação Geral · SEI AGSUS.016954/2026-81 / pg. ",
-    );
-    expect(rodape).toContain(" PAGE ");
+    // Sem rodapé de página: "título / pg. N" quem põe é o SEI.
+    expect(zip.has("word/footer1.xml")).toBe(false);
   });
 
   it("corpo: título, itens numerados, vagas e tabelas, data por extenso, sem assinatura", () => {
@@ -835,9 +831,7 @@ describe("DOCX com papel timbrado", () => {
     expect(corpo).toContain(
       '<w:headerReference w:type="default" r:id="rIdCabecalho"/>',
     );
-    expect(corpo).toContain(
-      '<w:footerReference w:type="default" r:id="rIdRodape"/>',
-    );
+    expect(corpo).not.toContain("footerReference");
     expect(corpo).toContain(
       "RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR",
     );
