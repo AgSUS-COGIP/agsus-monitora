@@ -45,6 +45,11 @@ type Opcoes = {
 
   Sem a migration no banco (PGRST202), a agenda fica `indisponivel` e o
   resto da Classificação segue igual.
+
+  A leitura vai por GET (a função é STABLE): o PostgREST aceita, e o
+  supabase-js tenta de novo sozinho quando a conexão cai (até 3 vezes, 1 s,
+  2 s, 4 s) — o POST não é repetido. Regra ainda não salva, agenda vazia ou
+  edital sem lista de convocação não são erro: são estados da tela.
 */
 import {
   agendaPorCandidato,
@@ -77,10 +82,12 @@ const ESTADO_INICIAL: SnapshotDaAgenda = Object.freeze({
 
 export function mensagemDaAgenda(erro: unknown) {
   const dados = objeto(erro);
-  if (objeto(erro).code === "PGRST202")
+  if (dados.code === "PGRST202")
     return "A agenda das entrevistas ainda não foi publicada no banco.";
-  if (objeto(erro).code === "42501")
+  if (dados.code === "42501")
     return "Seu acesso não inclui a agenda deste edital.";
+  if (dados.code === "22023")
+    return String(dados.message || "") || "Edital não encontrado.";
   if (ehConflitoDeVersao(erro))
     return (
       String(dados.message || "") ||
@@ -125,10 +132,13 @@ export function criarEstadoDaAgenda({
       | typeof RPC_SALVAR_REGRA_AGENDA
       | typeof RPC_SALVAR_AGENDA,
     argumentos: Record<string, unknown>,
+    { leitura = false }: { leitura?: boolean } = {},
   ) {
     if (!supabase) throw new Error("Sem conexão com o banco.");
     const { data, error } = await comTempoLimite(
-      supabase.rpc(nome, argumentos),
+      leitura
+        ? supabase.rpc(nome, argumentos, { get: true })
+        : supabase.rpc(nome, argumentos),
       tempoLimiteMs,
     );
     if (error) throw error;
@@ -156,7 +166,7 @@ export function criarEstadoDaAgenda({
     });
     try {
       const dados = dadosDaAgenda(
-        await rpc(RPC_OBTER_AGENDA, { p_edital: editalId }),
+        await rpc(RPC_OBTER_AGENDA, { p_edital: editalId }, { leitura: true }),
       );
       if (meu !== pedido) return false;
       if (dados.edital.id !== editalId)
@@ -165,6 +175,8 @@ export function criarEstadoDaAgenda({
       return true;
     } catch (erro) {
       if (meu !== pedido) return false;
+      // O que veio de fato (código, detalhe do fetch) fica no console para o diagnóstico.
+      console.warn("Não foi possível carregar a agenda das entrevistas:", erro);
       publicar({
         carregando: false,
         indisponivel: objeto(erro).code === "PGRST202",

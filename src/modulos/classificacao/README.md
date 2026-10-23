@@ -3,6 +3,9 @@
 A tela `#page-classificacao` (view `classificacao`): monta na própria `<section>` por
 `montarClassificacao()` (`src/main.js` → `window.classificacaoController`); o legado chama
 `render()` ao navegar (`TELAS_REACT`). Área = a atual do app; o edital é escolhido no topo.
+O seletor traz só os editais da área com análise curricular ativa (qualquer origem) ou com
+lista gerada, ativos e em andamento primeiro (`listar_editais_classificacao`,
+`supabase/migrations/20261023120000_classificacao_so_editais_analisados.sql`).
 
 A regra de classificação é **de cada edital** (decidida pelo gestor do edital, versionada no
 banco); nada é fixo no código. A conta é do motor puro `src/lib/classificacao/motor.ts`.
@@ -115,7 +118,10 @@ Tela, estado e regras da agenda estão em TypeScript/TSX. Contratos em
 convocação inválida mostra erro e bloqueia a geração; a convocação registrada que não veio (rede,
 banco) mostra erro com "Tentar novamente", sem cair no cálculo atual. Respostas antigas de gravação não
 mudam dados, flags ou avisos depois de trocar de edital ou usuário (inclusive A → B → A).
-Falha ao atualizar o mesmo edital preserva a agenda aberta. Testes:
+Falha ao atualizar o mesmo edital preserva a agenda aberta. A agenda é lida por GET (`obter_agenda_entrevista` é STABLE): o supabase-js repete
+sozinho quando a conexão cai; a falha que sobra diz o motivo (rede, permissão, edital) e vai ao
+console. Regra da agenda não salva e edital sem lista de convocação não são erro. A convocação
+registrada é lida uma vez por lista (e no "Tentar novamente"), não a cada releitura do edital. Testes:
 `tests/lib/dados-da-agenda.test.js`, `tests/modulos/agenda-contexto-de-gravacao.test.js`
 e `tests/tipos/agenda-da-classificacao.tsx`.
 A lista `CONVOCACAO` gerada aqui é a única convocação para a entrevista: Conduzir entrevistas › Preparar mostra

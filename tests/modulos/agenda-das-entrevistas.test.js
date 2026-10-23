@@ -283,9 +283,12 @@ describe("agenda das entrevistas na Classificação", () => {
   it("o botão da lista de convocação abre a agenda; a regra é salva como versão nova", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
-    expect(supabase.rpc).toHaveBeenCalledWith("obter_agenda_entrevista", {
-      p_edital: "e83",
-    });
+    // Leitura por GET: o supabase-js repete sozinho quando a conexão cai.
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "obter_agenda_entrevista",
+      { p_edital: "e83" },
+      { get: true },
+    );
     await clicar(
       secao.querySelector(".classificacao-tipos [data-valor='CONVOCACAO']"),
     );
@@ -594,4 +597,122 @@ describe("agenda das entrevistas na Classificação", () => {
       .find((l) => l.includes("Caio Terceiro"));
     expect(linhaDoCaio).not.toContain("06/10/2026");
   });
+});
+
+/*
+  Os casos de 23/10 (114/2026: regra da agenda ainda não salva, nenhuma lista de
+  convocação, agenda vazia). Nada disso é erro; a falha ao ler a agenda diz o
+  que aconteceu (rede, permissão, edital), sem confundir com "sem lista".
+*/
+describe("agenda: edital sem regra, sem lista e falhas ao ler", () => {
+  const sem = (supabase, nome, resposta) => {
+    const original = supabase.rpc.getMockImplementation();
+    supabase.rpc.mockImplementation(async (n, args, opcoes) =>
+      n === nome ? resposta() : original(n, args, opcoes),
+    );
+  };
+  const editalSemLista = () => ({ ...structuredClone(EDITAL), listas: [] });
+
+  it("sem regra da agenda e sem lista: formulário, aviso do cálculo atual e nada de erro", async () => {
+    const supabase = supabaseFalso(
+      agendaDoBanco({ regra: null, itens: [], bancas: [], historico: [] }),
+      { obter_classificacao_do_edital: editalSemLista },
+    );
+    await montar(supabase);
+    await abrirAgenda();
+    expect(secao.querySelector("[role='alert']")).toBeNull();
+    expect(secao.querySelector(".agenda-regra form")).not.toBeNull();
+    expect(secao.querySelector(".agenda-fonte").textContent).toContain(
+      "Sem lista de convocação gerada",
+    );
+    // Sem regra salva, "Gerar" espera a regra.
+    expect(secao.querySelector("[data-acao='gerar-agenda']").disabled).toBe(
+      true,
+    );
+    expect(chamada(supabase, "obter_lista_classificacao")).toBeUndefined();
+
+    await digitar(secao.querySelector("[data-campo='inicio']"), "2026-10-06");
+    await digitar(secao.querySelector("[data-campo='fim']"), "2026-10-06");
+    await clicar(secao.querySelector("[data-acao='salvar-regra-agenda']"));
+    await esperar();
+    expect(secao.querySelector("[data-acao='gerar-agenda']").disabled).toBe(
+      false,
+    );
+    await clicar(secao.querySelector("[data-acao='gerar-agenda']"));
+    expect(linhas()[0][2]).toBe("Ana Primeira");
+    await clicar(secao.querySelector("[data-acao='salvar-agenda']"));
+    await esperar();
+    expect(chamada(supabase, "salvar_agenda_entrevista")).toMatchObject({
+      p_edital: "e83",
+      p_dados: { acao: "GERAR", lista: null, versao_regra: 1 },
+    });
+  });
+
+  it("com lista registrada e sem agenda salva: lê a lista uma vez; Atualizar não relê o retrato", async () => {
+    const supabase = supabaseFalso(agendaDoBanco({ regra: regraSalva() }));
+    await montar(supabase);
+    await abrirAgenda();
+    const leituras = () =>
+      supabase.rpc.mock.calls.filter(([n]) => n === "obter_lista_classificacao")
+        .length;
+    const antes = leituras();
+    expect(antes).toBeGreaterThan(0);
+    expect(linhas().map((l) => l[2])).toEqual([
+      "Ana Primeira",
+      "Bia Segunda",
+      "Caio Terceiro",
+    ]);
+    await clicar(secao.querySelector("[data-acao='atualizar']"));
+    await esperar();
+    await esperar();
+    expect(leituras()).toBe(antes);
+    expect(secao.querySelector(".agenda-falha-da-lista")).toBeNull();
+  });
+
+  it.each([
+    [
+      "rede",
+      { message: "TypeError: Failed to fetch", code: "" },
+      "Não foi possível falar com o servidor",
+    ],
+    [
+      "permissão",
+      { message: "Sem permissão", code: "42501" },
+      "Seu acesso não inclui a agenda deste edital.",
+    ],
+    [
+      "edital",
+      { message: "Edital não encontrado", code: "22023" },
+      "Edital não encontrado",
+    ],
+  ])(
+    "falha ao ler a agenda (%s) diz o motivo e Tentar novamente lê de novo",
+    async (_caso, erro, texto) => {
+      const supabase = supabaseFalso(agendaDoBanco({ regra: null }), {
+        obter_classificacao_do_edital: editalSemLista,
+      });
+      let falhar = true;
+      sem(supabase, "obter_agenda_entrevista", () =>
+        falhar
+          ? { data: null, error: erro }
+          : { data: agendaDoBanco({ regra: null }), error: null },
+      );
+      const aviso = vi.spyOn(console, "warn").mockImplementation(() => {});
+      await montar(supabase);
+      await abrirAgenda();
+      const alerta = secao.querySelector("[role='alert']");
+      expect(alerta.textContent).toContain(
+        `Não foi possível carregar a agenda das entrevistas: ${texto}`,
+      );
+      expect(alerta.textContent).not.toContain("lista de convocação");
+      expect(aviso).toHaveBeenCalled();
+      aviso.mockRestore();
+
+      falhar = false;
+      await clicar(alerta.querySelector("[data-acao='tentar-novamente']"));
+      await esperar();
+      expect(secao.querySelector("[role='alert']")).toBeNull();
+      expect(secao.querySelector(".agenda-regra form")).not.toBeNull();
+    },
+  );
 });

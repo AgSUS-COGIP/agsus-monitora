@@ -275,6 +275,43 @@ describe("tela de Classificação", () => {
     expect(secao.querySelector(".classificacao-vaga")).toBeNull();
   });
 
+  it("área sem edital analisado: o seletor diz isso (o banco só manda os editais com análises)", async () => {
+    const supabase = supabaseFalso({
+      listar_editais_classificacao: () => ({
+        area: "sede",
+        pode_editar: true,
+        editais: [],
+      }),
+    });
+    await montar(supabase);
+    expect([...seletorDoEdital().options].map((o) => o.textContent)).toEqual([
+      "Nenhum edital com análises nesta área",
+    ]);
+  });
+
+  it("edital que não abriu: erro com Tentar novamente, sem esqueleto carregando para sempre", async () => {
+    let falhar = true;
+    const supabase = supabaseFalso();
+    const original = supabase.rpc.getMockImplementation();
+    supabase.rpc.mockImplementation(async (nome, args, opcoes) =>
+      falhar && nome.startsWith("obter_classificacao_do_edital")
+        ? { data: null, error: { message: "Falha no banco", code: "XX000" } }
+        : original(nome, args, opcoes),
+    );
+    await montar(supabase);
+    await abrirEdital();
+    expect(secao.textContent).toContain("Não foi possível abrir o edital");
+    expect(secao.querySelector('[aria-busy="true"]')).toBeNull();
+    for (const visao of ["agenda", "regra"]) {
+      await clicar(secao.querySelector(`[data-valor="${visao}"]`));
+      expect(secao.querySelector('[aria-busy="true"]')).toBeNull();
+    }
+    falhar = false;
+    await clicar(botao("Tentar novamente", secao));
+    await esperar();
+    expect(secao.textContent).not.toContain("Não foi possível abrir o edital");
+  });
+
   it("ao escolher o edital, calcula as listas pela regra dele (KPIs, vaga, eliminados)", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);

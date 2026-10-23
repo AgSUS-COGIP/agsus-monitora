@@ -946,7 +946,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_area"],
     critica: false,
     resumo:
-      "Editais da área para a aba Classificação: candidatos nas análises, versão da regra e a última lista gerada; pode_editar.",
+      "Editais da área para a aba Classificação, só os com análise curricular ativa (qualquer origem) ou lista gerada (20261023120000): candidatos nas análises, versão da regra e a última lista gerada; pode_editar.",
   },
   obter_classificacao_do_edital: {
     argumentos: ["p_edital"],
