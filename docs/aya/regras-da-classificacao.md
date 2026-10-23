@@ -101,8 +101,8 @@ dos PDFs oficiais).
 ## Gerar e publicar a lista
 
 **perguntas:** gerar lista de classificacao | como gerar a lista de classificacao | publicar lista de classificacao | hash da lista
-**resposta:** "Gerar" registra a lista no banco: o retrato (por vaga, posição, nome, nota e modalidade; eliminados com motivo; só o nome, sem CPF), a versão da regra usada, quem e quando, e o SHA-256 do retrato, calculado no banco. Se a regra mudou desde que a tela abriu, o banco recusa e pede para gerar de novo. "Marcar como publicada" registra quem e quando publicou; lista com empate esperando sorteio ou decisão não pode ser publicada.
-**fonte:** supabase/migrations/20261002150000_classificacao.sql; src/lib/classificacao/exportacao.ts
+**resposta:** "Gerar" registra a lista no banco: o retrato (por vaga, posição, nome, nota e modalidade; eliminados com motivo; só o nome, sem CPF), a versão da regra usada, quem e quando, e o SHA-256 do retrato, calculado no banco pelo conteúdo (a nota 35 ou 35.0 dá o mesmo hash, venha a lista da tela ou do Python). Se a regra mudou desde que a tela abriu, o banco recusa e pede para gerar de novo. "Marcar como publicada" registra quem e quando publicou; lista com empate esperando sorteio ou decisão não pode ser publicada.
+**fonte:** supabase/migrations/20261002150000_classificacao.sql; supabase/migrations/20261024130000_hash_do_retrato_pelo_conteudo.sql; src/lib/classificacao/exportacao.ts
 **abrir:** classificacao
 
 ## Lista calculada pelo Python

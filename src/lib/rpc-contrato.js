@@ -982,7 +982,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_tipo", "p_versao", "p_resultado"],
     critica: false,
     resumo:
-      'Registra a lista gerada (retrato, versão da regra, quem, quando) e devolve o hash SHA-256 calculado no banco; pede o relatório de desempate ao job do Python (chave da automação classificacao; 20261023170000). Com a chave "Gerar listas pelo Python" ligada, 55000 (20261023200000). Editor.',
+      'Registra a lista gerada (retrato, versão da regra, quem, quando) e devolve o hash SHA-256 do conteúdo calculado no banco (números sem zeros à direita, 20261024130000); pede o relatório de desempate ao job do Python (chave da automação classificacao; 20261023170000). Com a chave "Gerar listas pelo Python" ligada, 55000 (20261023200000). Editor.',
   },
   // 20261023200000_classificacao_em_python_etapa_2b.sql
   pedir_calculo_classificacao: {

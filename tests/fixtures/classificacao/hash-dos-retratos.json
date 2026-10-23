@@ -1,0 +1,36 @@
+{
+  "gerado_por": "scripts/classificacao/gerar-hash-dos-retratos.mjs",
+  "aviso": "Dados fictícios. Não edite à mão: rode o gerador de novo (o hash é o de hash-do-retrato.ts).",
+  "casos": {
+    "criterios-sorteio-maior-percentual · PRELIMINAR": "4dbeede57f9fc21872907c84b9d79da0bd50df1f5e5c65328f1e2eef8e9b177a",
+    "criterios-sorteio-maior-percentual · CONVOCACAO": "bcaf4064649e72d8096e95f3ee7dd4dafdd6506f55129a529a2f4009308e291f",
+    "criterios-sorteio-maior-percentual · ENTREVISTA": "e3c748d212df35375adef574eafd54c9f4654f9110b3392880cf680208925209",
+    "criterios-sorteio-maior-percentual · FINAL": "9f3a01f364cc727a6ca904b9c0a5d3bcee5152a9bda0f2f8a66f784954ac0db6",
+    "ordem-de-inscricao-saltando-pcd-mais-uma · PRELIMINAR": "0e6c670c464b47ff3cffd326d46b9aa6d9e372a27d200028d4707d89daf1d2fb",
+    "ordem-de-inscricao-saltando-pcd-mais-uma · CONVOCACAO": "ce0f99fd866093e82d99e559a54c16d3aee26ecd626a42aa30ead9371fc06a5f",
+    "ordem-de-inscricao-saltando-pcd-mais-uma · ENTREVISTA": "fa50afc6f77327ad81e3f3a0f6ee884e6a170963974e039392fe8cb748a7027c",
+    "ordem-de-inscricao-saltando-pcd-mais-uma · FINAL": "6c58a90f1e1f1a7a66abe38e9eb22db9c2dda2decac6bcd16b002bc023f72acd",
+    "mesma-posicao-todas-so-parecer · PRELIMINAR": "0d06e37afb293565dc91304805c65f47c7ca135e2e24cb9324e767bea629e028",
+    "mesma-posicao-todas-so-parecer · CONVOCACAO": "caf02975e905c1f95027c79d8bed4f3734fd5d961f3e8509dc6725a9536e870f",
+    "mesma-posicao-todas-so-parecer · ENTREVISTA": "f62601a28d1aed71033e2bff69becb7bd97a63aea24eda46a52ebfa406bd465f",
+    "mesma-posicao-todas-so-parecer · FINAL": "3a51e8d01076208cc27042c01f680e17506e18914f680d2cc6e4bdd97300b7ed",
+    "decisao-manual-convocacao-ajustes · PRELIMINAR": "9c9ac5a91c0002757b8b0ebb4f8dfae6beb0a18d67eae71ab7ea910dcb0b5813",
+    "decisao-manual-convocacao-ajustes · CONVOCACAO": "71e638e1a6175281da36cc867e8be5f7a02793f7545b7d01e68823f421e0af9b",
+    "decisao-manual-convocacao-ajustes · ENTREVISTA": "71244f7d67125489b0065b72ce7afcdd71be1010b93af64ee9346839f1b6d1e9",
+    "decisao-manual-convocacao-ajustes · FINAL": "9fec44a175151332e173fb5e1dfa5237eafae4b5a46ced5763a5979448f07964",
+    "regra-vazia-sem-data-de-corte · PRELIMINAR": "3410cfab8c3ca6d3b006c2b2259d161f2e1751626ec98c089b45b793e039ca9d",
+    "regra-vazia-sem-data-de-corte · CONVOCACAO": "07625b0dfe6df159ab203d8c3c517a623c5e06c8eb6810ced02d4ae07023734a",
+    "regra-vazia-sem-data-de-corte · ENTREVISTA": "40575e389b76c86f328f3719d14df980c084afcbd4e28dad090a0a5c051ed488",
+    "regra-vazia-sem-data-de-corte · FINAL": "f0a8e9eb93213a8eee33e7c82e98f37e611e54c32154dc5c5c1dabe47776f419"
+  },
+  "exemplos": [
+    {
+      "texto": "{\"tipo\": \"PRELIMINAR\", \"casas\": 2, \"vagas\": [{\"geral\": [{\"nome\": \"Ana Exemplo\", \"nota\": 35.0, \"posicao\": 1, \"parciais\": {\"FORMACAO\": 10.0, \"EXPERIENCIA\": 25.0}}, {\"nome\": \"Bruno Teste\", \"nota\": 7.50, \"posicao\": 2, \"parciais\": {\"FORMACAO\": 0.0, \"EXPERIENCIA\": 7.5}}]}], \"rodape\": \"Nota 35.0 no texto fica como está.\"}",
+      "hash": "9f16925f4a269d1e585ab1ad37946768ba3310cc80dc27b528aa700677bf4acb"
+    },
+    {
+      "texto": "{\"a\": [1.0, 2.50, -0.0, 0.000001, 1e-7, 1E+21], \"b\": \"Tab\\t, aspas \\\" e barra \\\\; ação\", \"chave mais longa\": null, \"x\": true}",
+      "hash": "c995d15e17105689adb558f7d4597ab464a55048544d36c33dca0e3d785019fe"
+    }
+  ]
+}
