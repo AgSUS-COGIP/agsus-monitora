@@ -81,8 +81,7 @@ import {
 } from "../../lib/classificacao/exportacao.ts";
 import type { DesempateDaLista } from "../../lib/classificacao/relatorio-de-desempate.ts";
 import {
-  lerDesempateDaLista,
-  nomesDoRetrato,
+  lerRespostaDoDesempate,
   paginaDoDesempate,
   planilhasDoDesempate,
 } from "../../lib/classificacao/relatorio-de-desempate.ts";
@@ -863,22 +862,23 @@ export function criarEstadoDaClassificacao({
 
   /*
     O relatório de desempate da lista gerada (calculado pelo Python e guardado
-    em TB_RELATORIO_DESEMPATE; migration 20261023140000). Sem relatório, sem a
-    RPC no banco ou com falha na leitura: null, e o botão não aparece — nada
-    da lista depende dele.
+    em TB_RELATORIO_DESEMPATE) e o preparo dele (gerar a lista pede o
+    relatório ao job; migrations 20261023140000 e 20261023170000). Sem
+    resposta, sem a RPC no banco ou com falha na leitura: null, e a tela não
+    mostra nada do relatório — nada da lista depende dele.
   */
   async function obterDesempate(listaId: string) {
     if (!listaId) return null;
     const minhaGeracao = geracao;
     try {
       const dados = await rpc(RPC_OBTER_DESEMPATE, { p_lista: listaId });
-      return minhaGeracao === geracao ? lerDesempateDaLista(dados) : null;
+      return minhaGeracao === geracao ? lerRespostaDoDesempate(dados) : null;
     } catch {
       return null;
     }
   }
 
-  /* XLSX (planilhas Candidatos e Pares) ou PDF (impressão do texto), com os nomes do retrato. */
+  /* XLSX (planilhas Candidatos e Pares) ou PDF (impressão do texto). */
   function exportarDesempate(
     desempate: DesempateDaLista | null,
     registrado: ListaRegistrada | null,
@@ -889,9 +889,7 @@ export function criarEstadoDaClassificacao({
     const nome = `${nomeDoArquivo(registrado.retrato)}-desempate`;
     if (formato === "xlsx")
       baixar(
-        gerarXlsx(
-          planilhasDoDesempate(desempate, nomesDoRetrato(registrado.retrato)),
-        ),
+        gerarXlsx(planilhasDoDesempate(desempate)),
         `${nome}.xlsx`,
         MIME_XLSX,
       );

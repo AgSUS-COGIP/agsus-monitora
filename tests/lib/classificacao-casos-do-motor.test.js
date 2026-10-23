@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { convocacaoDoEdital } from "../../src/lib/classificacao/convocacao-do-edital.ts";
 import { classificar } from "../../src/lib/classificacao/motor.ts";
+import { retratoDaClassificacao } from "../../src/lib/classificacao/dados-do-estado.ts";
+import { instantaneoDaLista } from "../../src/lib/classificacao/exportacao.ts";
 
 /*
   Casos dourados da classificação, compartilhados com o pytest
@@ -46,6 +48,20 @@ describe("casos dourados da classificação (motor.ts × Python)", () => {
     "o motor da tela dá a saída gravada: %s",
     (_nome, caso) => {
       expect(classificarCaso(caso)).toEqual(caso.saida);
+    },
+  );
+
+  it.each(DOURADO.casos.map((c, i) => [c.nome, c, i]))(
+    "o retrato que a tela grava ao gerar é o gravado: %s",
+    (_nome, caso, i) => {
+      const retrato = retratoDaClassificacao(
+        instantaneoDaLista(classificarCaso(caso), {
+          edital: caso.editalDoRetrato,
+          regra: DOURADO.editais[caso.edital].regra,
+          versao: Math.floor(i / 4) + 1,
+        }),
+      );
+      expect(JSON.parse(JSON.stringify(retrato))).toEqual(caso.retrato);
     },
   );
 

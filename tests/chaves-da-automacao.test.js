@@ -199,6 +199,13 @@ describe("cada chave na tela", () => {
     expect(proximaDaChave(entrevistas, AGORA)).toBeNull();
     expect(semProxima(entrevistas)).toBe("Não roda enquanto estiver desligada");
     expect(semProxima(pre)).toBe("No fim de cada carga do robô da Empregare");
+    expect(
+      semProxima({
+        ...pre,
+        chave: "classificacao",
+        nome: "Classificação em Python",
+      }),
+    ).toBe("Quando uma lista é gerada na Classificação");
   });
 
   it("aponta a tarefa mexida direto no banco", () => {

@@ -1,9 +1,9 @@
 """
 O relatório de desempate (python/monitora/classificacao/desempate.py), a
-comparação com o motor da tela (comparacao.py) e o job --seco
-(scripts/classificacao/classificacao.py), nos editais fictícios dos casos
+comparação com o motor da tela (comparacao.py) e o job (--seco e --desempate,
+scripts/classificacao/classificacao.py), nos editais fictícios dos casos
 dourados (tests/fixtures/classificacao/casos-do-motor.json). Nada fala com o
-Supabase nem roda o Node: o motor da tela entra como função injetada.
+Supabase nem roda o Node: o motor da tela e as RPCs entram como funções injetadas.
 """
 
 import contextlib
@@ -16,6 +16,7 @@ import unittest
 
 from monitora.classificacao import desempate, motor
 from monitora.classificacao.comparacao import comparar, divergencias
+from monitora.classificacao.retrato import retrato_do_edital
 
 _RAIZ = pathlib.Path(__file__).resolve().parents[2]
 DADOS = json.loads((_RAIZ / "tests" / "fixtures" / "classificacao" / "casos-do-motor.json").read_text(encoding="utf-8"))
@@ -118,11 +119,12 @@ class RelatorioDeDesempate(unittest.TestCase):
         self.assertIn("GERAL", listas)
         self.assertTrue(listas - {"GERAL"}, "esperado ao menos um grupo numa lista de modalidade")
 
-    def test_sem_nome_nem_data_de_nascimento(self):
+    def test_nome_e_codigo_sem_data_de_nascimento(self):
         texto = json.dumps(self.final, ensure_ascii=False) + desempate.texto_do_relatorio(self.final)
+        primeiro = _grupo(self.final, "101", 80)["candidatos"][0]
+        self.assertTrue(primeiro["nome"])
+        self.assertIn(f"{primeiro['nome']} (insc. {primeiro['codigo']})", texto)
         for c in DADOS["editais"]["criterios-sorteio-maior-percentual"]["candidatos"]:
-            if c["nome"]:
-                self.assertNotIn(c["nome"], texto)
             if c["data_nascimento"]:
                 self.assertNotIn(c["data_nascimento"], texto)
         self.assertNotRegex(texto, r"@|[0-9]{11}")
@@ -231,12 +233,19 @@ class JobSeco(unittest.TestCase):
         self.assertIn("diverge em vagas[0].geral[0].posicao", log)
         self.assertNotIn("99", log.split("diverge em")[1].split("\n")[0].replace("vagas[0].geral[0].posicao", ""))
 
-    def test_so_roda_seco_nesta_etapa(self):
-        with self.assertRaises(SystemExit) as saida, contextlib.redirect_stderr(io.StringIO()):
-            job.principal(["--arquivo", "x.json"], ambiente={})
-        self.assertEqual(saida.exception.code, 3)
-        with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
-            job.principal(["--seco", "--arquivo", "x.json", "--tipos", "OUTRA"], ambiente={})
+    def test_pede_um_modo_e_opcoes_do_modo(self):
+        for argv in (
+            ["--arquivo", "x.json"],
+            ["--seco", "--desempate"],
+            ["--seco", "--arquivo", "x.json", "--tipos", "OUTRA"],
+            ["--seco", "--arquivo", "x.json", "--lista", "11111111-1111-1111-1111-111111111111"],
+            ["--desempate", "--edital", "x"],
+            ["--desempate", "--lista", "nao-e-uuid"],
+        ):
+            with self.subTest(argv=argv):
+                with self.assertRaises(SystemExit) as saida, contextlib.redirect_stderr(io.StringIO()):
+                    job.principal(argv, ambiente={})
+                self.assertEqual(saida.exception.code, 3)
 
     def test_falha_do_motor_da_tela_sai_com_1(self):
         def quebra(_dados, _tipos):
@@ -258,6 +267,117 @@ class JobSeco(unittest.TestCase):
             job.ler_edital({"url": "https://x", "chave": "k"}, "id-1", chamar=chamar)["edital"]["numero"], "1/2026"
         )
         self.assertEqual(chamadas, [("classificacao_ler_edital", {"p_edital": "id-1"})])
+
+
+L_PRONTA = "11111111-1111-4111-8111-111111111111"
+L_MEXIDA = "22222222-2222-4222-8222-222222222222"
+L_REGRA_VELHA = "33333333-3333-4333-8333-333333333333"
+L_QUEBRA = "44444444-4444-4444-8444-444444444444"
+HASH = "a" * 64
+
+
+class BancoFalso:
+    """As RPCs do --desempate, sem rede: as listas registradas vêm do próprio retrato do Python (como a tela grava)."""
+
+    def __init__(self, pedidos=None, falha_na_leitura=False):
+        self.dados = _dados_do_edital()
+        resultado = motor.classificar_edital(self.dados, "FINAL")
+        # O jsonb devolve as chaves em outra ordem e 3.0 como 3.
+        retrato = json.loads(json.dumps(retrato_do_edital(self.dados, resultado), sort_keys=True))
+        mexido = json.loads(json.dumps(retrato))
+        mexido["vagas"][0]["geral"][0]["posicao"] += 1
+        base = {"edital": "edital-ficticio", "tipo": "FINAL", "versao_regra": 1, "hash": HASH}
+        self.listas = {
+            L_PRONTA: {**base, "id": L_PRONTA, "resultado": retrato},
+            L_MEXIDA: {**base, "id": L_MEXIDA, "resultado": mexido},
+            L_REGRA_VELHA: {**base, "id": L_REGRA_VELHA, "versao_regra": 0, "resultado": retrato},
+        }
+        self.pedidos = (
+            [{"lista": x} for x in (L_PRONTA, L_MEXIDA, L_REGRA_VELHA, L_QUEBRA)] if pedidos is None else pedidos
+        )
+        self.falha_na_leitura = falha_na_leitura
+        self.chamadas = []
+        self.marcas = {}
+        self.gravados = {}
+
+    def __call__(self, config, funcao, corpo):
+        self.chamadas.append((funcao, corpo))
+        if funcao == "classificacao_ler_pedidos_desempate":
+            if self.falha_na_leitura:
+                raise job.supabase_rpc.ErroDoSupabase(funcao, 500, "fora do ar")
+            return self.pedidos
+        if funcao == "classificacao_marcar_preparo":
+            self.marcas.setdefault(corpo["p_lista"], []).append((corpo["p_situacao"], corpo["p_mensagem"]))
+            return {"situacao": corpo["p_situacao"]}
+        if funcao == "classificacao_ler_lista":
+            if corpo["p_lista"] not in self.listas:
+                raise job.supabase_rpc.ErroDoSupabase(funcao, 400, "22023: Lista não encontrada")
+            return json.loads(json.dumps(self.listas[corpo["p_lista"]]))
+        if funcao == "classificacao_ler_edital":
+            return json.loads(json.dumps(self.dados))
+        if funcao == "classificacao_gravar_desempate":
+            self.gravados[corpo["p_lista"]] = corpo
+            return {"lista": corpo["p_lista"]}
+        raise AssertionError(funcao)
+
+
+class JobDesempate(unittest.TestCase):
+    def _rodar(self, banco, argv=("--desempate",)):
+        saida = io.StringIO()
+        ambiente = {"SUPABASE_URL": "https://exemplo.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": "chave"}
+        with contextlib.redirect_stdout(saida):
+            codigo = job.principal(list(argv), ambiente=ambiente, chamar=banco)
+        return codigo, saida.getvalue()
+
+    def test_grava_so_a_lista_que_confere_e_marca_as_outras(self):
+        banco = BancoFalso()
+        codigo, log = self._rodar(banco)
+        self.assertEqual(codigo, job.COM_DIVERGENCIA)
+        self.assertEqual(set(banco.gravados), {L_PRONTA})
+        gravado = banco.gravados[L_PRONTA]
+        self.assertEqual(gravado["p_hash"], HASH)
+        self.assertEqual(gravado["p_relatorio"]["tipo"], "FINAL")
+        self.assertTrue(gravado["p_execucao"].startswith("classificacao-"))
+        self.assertEqual([s for s, _ in banco.marcas[L_PRONTA]], ["PREPARANDO"])
+        self.assertEqual([s for s, _ in banco.marcas[L_MEXIDA]], ["PREPARANDO", "NAO_CONFERE"])
+        self.assertIn("1 diferença(s)", banco.marcas[L_MEXIDA][-1][1])
+        self.assertEqual(banco.marcas[L_REGRA_VELHA][-1], ("NAO_CONFERE", job.MENSAGEM_REGRA_MUDOU))
+        self.assertEqual(banco.marcas[L_QUEBRA][-1][0], "FALHOU")
+        self.assertIn("Lista não encontrada", banco.marcas[L_QUEBRA][-1][1])
+        # O edital é lido uma vez para as listas dele.
+        self.assertEqual(sum(1 for f, _ in banco.chamadas if f == "classificacao_ler_edital"), 1)
+        self.assertIn("999/2026 · FINAL · lista 11111111: relatório gravado", log)
+        self.assertIn("difere em vagas[0].geral[0].posicao", log)
+        self.assertIn("4 lista(s): 1 falhou, 2 nao confere, 1 pronto.", log)
+
+    def test_o_relatorio_gravado_tem_nome_e_o_log_e_as_mensagens_nao(self):
+        banco = BancoFalso()
+        _, log = self._rodar(banco)
+        nomes = [c["nome"] for c in banco.dados["candidatos"] if c["nome"]]
+        texto = banco.gravados[L_PRONTA]["p_texto"]
+        self.assertTrue(any(n in texto for n in nomes))
+        mensagens = " ".join(m or "" for marcas in banco.marcas.values() for _, m in marcas)
+        for nome in nomes:
+            self.assertNotIn(nome, log)
+            self.assertNotIn(nome, mensagens)
+
+    def test_so_as_listas_pedidas_e_nada_pendente(self):
+        banco = BancoFalso(pedidos=[{"lista": L_PRONTA}])
+        codigo, log = self._rodar(banco, ["--desempate", "--lista", f"{L_PRONTA},{L_MEXIDA}"])
+        self.assertEqual(codigo, job.SEM_DIVERGENCIA)
+        self.assertEqual(banco.chamadas[0], ("classificacao_ler_pedidos_desempate", {"p_listas": [L_PRONTA, L_MEXIDA]}))
+        codigo, log = self._rodar(BancoFalso(pedidos=[]))
+        self.assertEqual(codigo, job.SEM_DIVERGENCIA)
+        self.assertIn("Nenhuma lista esperando", log)
+
+    def test_falha_ao_ler_os_pedidos_sai_com_1(self):
+        codigo, log = self._rodar(BancoFalso(falha_na_leitura=True))
+        self.assertEqual(codigo, job.ERRO)
+        self.assertIn("Falhou ao ler os pedidos", log)
+
+    def test_motivo_seguro_nao_repete_a_mensagem_de_excecao_qualquer(self):
+        self.assertEqual(job.motivo_seguro(KeyError("Fulana de Tal")), "KeyError")
+        self.assertIn("hash diferente", job.motivo_seguro(job.supabase_rpc.ErroDoSupabase("x", 400, "hash diferente")))
 
 
 if __name__ == "__main__":

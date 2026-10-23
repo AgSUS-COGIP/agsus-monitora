@@ -18,11 +18,15 @@
   convocação (múltiplo, exceção do cargo, posição do CR, empatados no limite),
   eliminações da documental e da entrevista, ajustes de recurso, entrevistas
   repetidas ou sem análise, quem aguarda análise e a ordem alfabética do pt-BR.
+  Cada caso traz também o retrato que a tela grava ao gerar (`retrato`, de
+  instantaneoDaLista + retratoDaClassificacao), que o retrato.py repete.
 
   Uso: node scripts/classificacao/gerar-casos-do-motor.mjs
 */
 import { writeFileSync } from "node:fs";
 import { chaveDoGrupo } from "../../src/lib/classificacao/sorteio.ts";
+import { retratoDaClassificacao } from "../../src/lib/classificacao/dados-do-estado.ts";
+import { instantaneoDaLista } from "../../src/lib/classificacao/exportacao.ts";
 import { classificarCaso } from "./classificar-como-a-tela.mjs";
 
 const DESTINO = new URL(
@@ -435,6 +439,8 @@ const regraCompleta = {
     casas: 2,
   },
   desempate: CRITERIOS,
+  // Só o retrato usa (aparado, como o normalizarRegra).
+  rodape: "  Comissão fictícia de seleção.  ",
   listas: {
     PRELIMINAR: { empate: "CRITERIOS" },
     ENTREVISTA: { empate: "CRITERIOS" },
@@ -647,15 +653,50 @@ const EDITAIS = [
   },
 ];
 
+/*
+  O edital de cada caso no retrato (o que a tela grava ao gerar): com id,
+  sem id (o retrato não leva) e de treinamento — o retrato.py repete.
+*/
+const EDITAL_DO_RETRATO = [
+  {
+    id: "edital-ficticio",
+    edital: "Edital nº 1/2026",
+    unidade: "DSEI Fictício",
+  },
+  { id: null, edital: "Edital nº 2/2026", unidade: "DSEI Fictício" },
+  {
+    id: "edital-de-treinamento",
+    edital: "Treinamento",
+    unidade: null,
+    treinamento: true,
+  },
+];
+
 const casos = [];
-for (const edital of EDITAIS)
-  for (const tipo of TIPOS)
+EDITAIS.forEach((edital, i) => {
+  for (const tipo of TIPOS) {
+    const saida = classificarCaso({ tipo, ...edital.entrada });
+    const doRetrato = EDITAL_DO_RETRATO[i % EDITAL_DO_RETRATO.length];
     casos.push({
       nome: `${edital.nome} · ${tipo}`,
       edital: edital.nome,
       tipo,
-      saida: classificarCaso({ tipo, ...edital.entrada }),
+      saida,
+      editalDoRetrato: doRetrato,
+      retrato: JSON.parse(
+        JSON.stringify(
+          retratoDaClassificacao(
+            instantaneoDaLista(saida, {
+              edital: doRetrato,
+              regra: edital.entrada.regra,
+              versao: i + 1,
+            }),
+          ),
+        ),
+      ),
     });
+  }
+});
 
 /* Uma linha por caso e por edital: o diff mostra qual caso mudou. */
 const editais = EDITAIS.map(

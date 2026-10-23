@@ -11,9 +11,11 @@ uma conta à parte. Dois formatos: `relatorio_de_desempate` (json estável,
 versão em VERSAO_DO_RELATORIO, para guardar junto da lista) e
 `texto_do_relatorio` (texto legível).
 
-Sem dado pessoal: o candidato é o id da análise e o código de inscrição; a
-maior idade sai como a ordem de idade dentro do grupo (1 = mais velho) e se
-havia certidão de nascimento, nunca a data.
+O candidato é o id da análise, o código de inscrição e o nome (decisão do
+usuário de 23/10/2026: o relatório é documento interno da comissão, lido só
+por quem vê a lista); a maior idade sai como a ordem de idade dentro do grupo
+(1 = mais velho) e se havia certidão de nascimento, nunca a data. Nada de CPF,
+contato ou data de nascimento.
 """
 
 from __future__ import annotations
@@ -165,6 +167,7 @@ def _grupo(linhas, lista, rastro_da_vaga, ctx) -> dict:
             {
                 "analiseId": c.analiseId,
                 "codigo": c.codigo,
+                "nome": c.nome,
                 "posicao": linha.posicao,
                 "valores": {k: _valor_publico(c, k, ctx, idades) for k in aplicados},
                 "decididoPor": pares[i]["criterio"] or pares[i]["resolucao"] if i < len(pares) else None,
@@ -183,6 +186,7 @@ def _grupo(linhas, lista, rastro_da_vaga, ctx) -> dict:
             {
                 "analiseIds": [linha.c.analiseId for linha in cadeia],
                 "codigos": [linha.c.codigo for linha in cadeia],
+                "nomes": [linha.c.nome for linha in cadeia],
                 "resolucao": _resolucao_do_residuo(blocos),
                 "chave": next((b.chave for b in blocos if b.chave), None),
                 "registro": (registro or {}).get("id"),
@@ -263,6 +267,12 @@ def _ordinal(n) -> str:
     return f"{n}º"
 
 
+def _quem(nome: str, codigo: str, analise_id: str) -> str:
+    """ "Nome (insc. 123)"; sem código, os 8 primeiros dígitos do id da análise."""
+    referencia = f"insc. {codigo}" if codigo else f"análise {analise_id[:8]}"
+    return f"{nome} ({referencia})" if nome else referencia
+
+
 def texto_do_relatorio(relatorio: dict) -> str:
     """O relatório em texto legível (para o arquivo do job e a exportação)."""
     linhas = [
@@ -310,12 +320,12 @@ def texto_do_relatorio(relatorio: dict) -> str:
             por_id = {c["analiseId"]: c for c in g["candidatos"]}
             for c in g["candidatos"]:
                 valores = " | ".join(f"{_rotulo(k)}: {_texto_do_valor(v, k)}" for k, v in c["valores"].items())
-                quem = f"insc. {c['codigo']}" if c["codigo"] else f"análise {c['analiseId'][:8]}"
+                quem = _quem(c["nome"], c["codigo"], c["analiseId"])
                 linhas.append(f"  {_ordinal(c['posicao'])}  {quem}" + (f"  {valores}" if valores else ""))
             for p in g["pares"]:
                 a, b = por_id[p["acima"]], por_id[p["abaixo"]]
-                qa = f"insc. {a['codigo']}" if a["codigo"] else f"análise {a['analiseId'][:8]}"
-                qb = f"insc. {b['codigo']}" if b["codigo"] else f"análise {b['analiseId'][:8]}"
+                qa = _quem(a["nome"], a["codigo"], a["analiseId"])
+                qb = _quem(b["nome"], b["codigo"], b["analiseId"])
                 if p["criterio"]:
                     va, vb = (_texto_do_valor(v, p["criterio"]) for v in p["valores"])
                     hora = "; mesma data de nascimento, decidiu a hora da certidão" if p.get("horaDaCertidao") else ""
@@ -323,7 +333,9 @@ def texto_do_relatorio(relatorio: dict) -> str:
                 elif p["resolucao"] == "MESMA_POSICAO_LISTA":
                     linhas.append(f"  · {qa} e {qb}: {_RESOLUCOES['MESMA_POSICAO_LISTA']}")
             for e in g["empatadosAteOFim"]:
-                quem = ", ".join(f"insc. {c}" if c else "sem código" for c in e["codigos"])
+                quem = ", ".join(
+                    _quem(n, c, i) for n, c, i in zip(e["nomes"], e["codigos"], e["analiseIds"], strict=True)
+                )
                 resolucao = " + ".join(_RESOLUCOES.get(r, r) for r in e["resolucao"].split("+"))
                 registro = f" (registro {e['registro']})" if e["registro"] else ""
                 linhas.append(f"  Empatados em todos os critérios: {quem} — {resolucao}{registro}.")

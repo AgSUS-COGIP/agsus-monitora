@@ -16,7 +16,11 @@ import type {
   SnapshotDaClassificacao,
 } from "./tipos-do-estado.ts";
 
-import type { DesempateDaLista } from "../../lib/classificacao/relatorio-de-desempate.ts";
+import type { RespostaDoDesempate } from "../../lib/classificacao/relatorio-de-desempate.ts";
+import {
+  estadoDoRelatorio,
+  RELEITURA_DO_PREPARO_MS,
+} from "../../lib/classificacao/relatorio-de-desempate.ts";
 import { useEffect, useId, useMemo, useState } from "react";
 import {
   MOTIVOS_DE_ELIMINACAO,
@@ -799,20 +803,34 @@ function Acoes({
   const geracoes = (dados?.listas || []).filter((l) => l.tipo === tipo);
   const ultima = registro || geracoes[0] || null;
   const desatualizada = listaDesatualizada(ultima, dados?.ajustes_mudaram_em);
-  /* O relatório de desempate da lista gerada (do Python), quando existe. */
-  const [desempate, setDesempate] = useState<DesempateDaLista | null>(null);
+  /*
+    O relatório de desempate da lista gerada (do Python): gerar pede o
+    relatório; enquanto ele é preparado, relê a cada RELEITURA_DO_PREPARO_MS.
+  */
+  const [respostaDoDesempate, setRespostaDoDesempate] =
+    useState<RespostaDoDesempate | null>(null);
   const idDaUltima = ultima?.id || "";
   useEffect(() => {
     let vigente = true;
-    setDesempate(null);
-    if (idDaUltima)
-      void estado.obterDesempate(idDaUltima).then((d) => {
-        if (vigente) setDesempate(d);
+    let espera: ReturnType<typeof setTimeout> | undefined;
+    setRespostaDoDesempate(null);
+    const ler = () => {
+      if (!idDaUltima) return;
+      void estado.obterDesempate(idDaUltima).then((resposta) => {
+        if (!vigente) return;
+        setRespostaDoDesempate(resposta);
+        if (estadoDoRelatorio(resposta) === "preparando")
+          espera = setTimeout(ler, RELEITURA_DO_PREPARO_MS);
       });
+    };
+    ler();
     return () => {
       vigente = false;
+      clearTimeout(espera);
     };
   }, [estado, idDaUltima]);
+  const desempate = respostaDoDesempate?.desempate ?? null;
+  const relatorio = estadoDoRelatorio(respostaDoDesempate);
   // A geração guardada não bate com os dados de agora (fichas, notas, regra…).
   const defasada = geracaoDesatualizada(
     ultima,
@@ -1092,6 +1110,36 @@ Usar esta geração assim mesmo?`,
           className="classificacao-desatualizada"
         >
           Há recursos aprovados depois desta lista — gere de novo.
+        </Aviso>
+      ) : null}
+      {relatorio === "preparando" ? (
+        <p
+          className="status-discreto"
+          role="status"
+          data-desempate-preparo="preparando"
+        >
+          Relatório de desempate sendo preparado…
+        </p>
+      ) : null}
+      {relatorio === "nao_confere" ? (
+        <Aviso
+          tom="warning"
+          papel="status"
+          className="classificacao-desempate-nao-confere"
+        >
+          {defasada
+            ? "O relatório de desempate não saiu: os dados mudaram desde esta geração — gere de novo."
+            : "O cálculo em Python não confere com esta lista e o relatório de desempate não saiu — avise o suporte."}
+        </Aviso>
+      ) : null}
+      {relatorio === "falhou" ? (
+        <Aviso
+          tom="warning"
+          papel="status"
+          className="classificacao-desempate-falhou"
+        >
+          O relatório de desempate não pôde ser preparado — gere de novo ou
+          avise o suporte.
         </Aviso>
       ) : null}
       {publicando ? (

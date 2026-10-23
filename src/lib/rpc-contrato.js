@@ -982,7 +982,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_tipo", "p_versao", "p_resultado"],
     critica: false,
     resumo:
-      "Registra a lista gerada (retrato, versão da regra, quem, quando) e devolve o hash SHA-256 calculado no banco. Editor.",
+      "Registra a lista gerada (retrato, versão da regra, quem, quando) e devolve o hash SHA-256 calculado no banco; pede o relatório de desempate ao job do Python (chave da automação classificacao; 20261023170000). Editor.",
   },
   publicar_lista_classificacao: {
     argumentos: ["p_lista"],
@@ -1006,7 +1006,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_lista"],
     critica: false,
     resumo:
-      "O relatório de desempate de uma lista gerada (json e texto, calculado pelo Python; TB_RELATORIO_DESEMPATE, 20261023140000); null sem relatório. Classificação leitor, área e recorte do edital.",
+      "O relatório de desempate de uma lista gerada (json e texto, com nome e código, calculado pelo Python; TB_RELATORIO_DESEMPATE, 20261023140000) e o preparo dele (situação e quando foi pedido; TB_PREPARO_DESEMPATE, 20261023170000); null sem relatório nem preparo. Classificação leitor, área e recorte do edital.",
   },
   obter_lista_classificacao: {
     argumentos: ["p_lista"],

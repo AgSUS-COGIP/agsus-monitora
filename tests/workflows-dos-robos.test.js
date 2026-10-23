@@ -16,6 +16,7 @@ const ROBOS = [
   "robo-empregare.yml",
   "pre-classificacao.yml",
   "leitura-de-arquivos.yml",
+  "classificacao.yml",
 ];
 const gatilhos = (texto) => {
   const bloco =

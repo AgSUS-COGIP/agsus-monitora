@@ -11,14 +11,16 @@ import { formatarNota } from "./numeros.ts";
   da resposta (malformada = sem relatório, o botão não aparece), as planilhas
   do XLSX e a página do PDF (impressão).
 
-  O relatório não tem nomes: o candidato é o id da análise e o código de
-  inscrição. O nome vem do retrato da própria lista (`nomesDoRetrato`), que a
-  tela já leu com a permissão de quem exporta.
+  O candidato vem com o id da análise, o código de inscrição e o nome
+  (documento interno da comissão; a RPC só o entrega a quem lê a lista). O
+  Python grava o relatório só quando o retrato que ele calcula é o da lista
+  registrada, então o nome é o mesmo da lista.
 */
 
 export interface CandidatoDoDesempate {
   analiseId: string;
   codigo: string;
+  nome: string;
   posicao: number;
   valores: Record<string, unknown>;
   decididoPor: string | null;
@@ -34,6 +36,7 @@ export interface ParDoDesempate {
 export interface EmpateAteOFim {
   analiseIds: string[];
   codigos: string[];
+  nomes: string[];
   resolucao: string;
   chave: string | null;
   registro: string | null;
@@ -95,6 +98,7 @@ function candidato(valor: unknown): CandidatoDoDesempate | null {
   return {
     analiseId: c.analiseId,
     codigo: texto(c.codigo),
+    nome: texto(c.nome),
     posicao: c.posicao,
     valores: registro(c.valores) || {},
     decididoPor: typeof c.decididoPor === "string" ? c.decididoPor : null,
@@ -121,6 +125,7 @@ function empate(valor: unknown): EmpateAteOFim | null {
   return {
     analiseIds: textos(e.analiseIds),
     codigos: textos(e.codigos),
+    nomes: textos(e.nomes),
     resolucao: texto(e.resolucao),
     chave: typeof e.chave === "string" ? e.chave : null,
     registro: typeof e.registro === "string" ? e.registro : null,
@@ -199,21 +204,76 @@ export function lerDesempateDaLista(valor: unknown): DesempateDaLista | null {
   };
 }
 
-/** analise_id → nome, a partir do retrato da lista gerada (geral, modalidades e eliminados). */
-export function nomesDoRetrato(retrato: unknown): Map<string, string> {
-  const nomes = new Map<string, string>();
-  const guardar = (linha: unknown) => {
-    const l = registro(linha);
-    if (l && typeof l.analise_id === "string" && typeof l.nome === "string")
-      nomes.set(l.analise_id, l.nome);
+/*
+  O PREPARO do relatório (TB_PREPARO_DESEMPATE, migration 20261023170000):
+  gerar a lista pede o relatório ao job do Python; até ele chegar, a tela diz
+  "sendo preparado…" e relê de tempos em tempos.
+*/
+export const SITUACOES_DO_PREPARO = Object.freeze([
+  "PEDIDO",
+  "PREPARANDO",
+  "PRONTO",
+  "NAO_CONFERE",
+  "FALHOU",
+  "DESLIGADA",
+  "SEM_DISPARO",
+] as const);
+export type SituacaoDoPreparo = (typeof SITUACOES_DO_PREPARO)[number];
+export interface PreparoDoDesempate {
+  situacao: SituacaoDoPreparo;
+  pedidoEm: string;
+}
+export interface RespostaDoDesempate {
+  preparo: PreparoDoDesempate | null;
+  desempate: DesempateDaLista | null;
+}
+
+/** Quanto a tela espera o relatório (o job leva ~1 min) antes de dizer que não chegou. */
+export const ESPERA_DO_RELATORIO_MS = 15 * 60 * 1000;
+/** De quanto em quanto tempo a tela relê enquanto o relatório é preparado. */
+export const RELEITURA_DO_PREPARO_MS = 10 * 1000;
+
+const ehSituacao = (v: unknown): v is SituacaoDoPreparo =>
+  SITUACOES_DO_PREPARO.some((s) => s === v);
+
+/** A resposta inteira de obter_desempate_da_lista: o relatório (se houver) e o preparo. */
+export function lerRespostaDoDesempate(valor: unknown): RespostaDoDesempate {
+  const p = registro(registro(valor)?.preparo);
+  return {
+    preparo:
+      p && ehSituacao(p.situacao)
+        ? { situacao: p.situacao, pedidoEm: texto(p.pedido_em) }
+        : null,
+    desempate: lerDesempateDaLista(valor),
   };
-  for (const v of lista(registro(retrato)?.vagas) || []) {
-    const vg = registro(v);
-    for (const l of lista(vg?.geral) || []) guardar(l);
-    for (const linhas of Object.values(registro(vg?.listas) || {}))
-      for (const l of lista(linhas) || []) guardar(l);
+}
+
+export type EstadoDoRelatorio =
+  "pronto" | "preparando" | "nao_confere" | "falhou" | "nada";
+
+/**
+ * O que a tela mostra: os botões (pronto), "sendo preparado…" (pedido há
+ * menos de ESPERA_DO_RELATORIO_MS), o aviso de que não confere ou de que não
+ * saiu, ou nada (lista antiga, automação desligada, sem resposta).
+ */
+export function estadoDoRelatorio(
+  resposta: RespostaDoDesempate | null,
+  agora = Date.now(),
+): EstadoDoRelatorio {
+  if (!resposta) return "nada";
+  if (resposta.desempate) return "pronto";
+  const preparo = resposta.preparo;
+  if (!preparo) return "nada";
+  if (preparo.situacao === "PEDIDO" || preparo.situacao === "PREPARANDO") {
+    const pedido = Date.parse(preparo.pedidoEm);
+    return Number.isFinite(pedido) && agora - pedido >= ESPERA_DO_RELATORIO_MS
+      ? "falhou"
+      : "preparando";
   }
-  return nomes;
+  if (preparo.situacao === "NAO_CONFERE") return "nao_confere";
+  if (preparo.situacao === "FALHOU" || preparo.situacao === "SEM_DISPARO")
+    return "falhou";
+  return "nada";
 }
 
 const RESOLUCOES: Readonly<Record<string, string>> = Object.freeze({
@@ -260,12 +320,10 @@ const nomeDaLista = (codigo: string) => (codigo === "GERAL" ? "Geral" : codigo);
  */
 export function planilhasDoDesempate(
   desempate: DesempateDaLista,
-  nomes: ReadonlyMap<string, string> = new Map(),
 ): PlanilhaDaClassificacao[] {
   const { criterios, vagas } = desempate.relatorio;
   const rotulo = (codigo: string) =>
     criterios.find((c) => c.codigo === codigo)?.rotulo || codigo;
-  const quem = (id: string, codigo: string) => nomes.get(id) || codigo || id;
   const candidatos: (string | number)[][] = [
     [
       "Vaga",
@@ -299,7 +357,7 @@ export function planilhasDoDesempate(
           ...base,
           c.posicao,
           c.codigo,
-          nomes.get(c.analiseId) || "",
+          c.nome,
           c.decididoPor
             ? criterios.some((k) => k.codigo === c.decididoPor)
               ? rotulo(c.decididoPor)
@@ -312,14 +370,17 @@ export function planilhasDoDesempate(
           ),
           resolucao(g.resolucao),
         ]);
-      const codigoDe = new Map(
-        g.candidatos.map((c) => [c.analiseId, c.codigo]),
+      const quem = new Map(
+        g.candidatos.map((c) => [
+          c.analiseId,
+          c.nome || c.codigo || c.analiseId,
+        ]),
       );
       for (const p of g.pares)
         pares.push([
           ...base,
-          quem(p.acima, codigoDe.get(p.acima) || ""),
-          quem(p.abaixo, codigoDe.get(p.abaixo) || ""),
+          quem.get(p.acima) || p.acima,
+          quem.get(p.abaixo) || p.abaixo,
           p.criterio ? rotulo(p.criterio) : "",
           p.criterio && p.valores
             ? p.valores
