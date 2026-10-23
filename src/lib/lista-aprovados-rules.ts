@@ -31,7 +31,7 @@ function matchStatus(
   escolhidos: readonly string[],
   row: CandidatoDasRegrasDeAprovados,
 ) {
-  const status = text(row.status);
+  const status = statusEfetivo(row);
   return escolhidos.some((escolha) =>
     escolha === SEM_STATUS ? !status : escolha === status,
   );
@@ -39,6 +39,89 @@ function matchStatus(
 
 export function statusNeedsMatricula(status: unknown) {
   return status === "Contratado" || status === "Migração";
+}
+
+/*
+  Contratado em outra lista (migration 20261024120000): quem concorre à cota
+  concorre também à ampla, e a lista do edital tem uma linha da pessoa em cada
+  uma. A linha pela qual ela NÃO foi contratada recebe esta situação: não
+  conta nos contratados (KPIs, Visão geral, Seleção, marcos), não gasta vaga
+  na Convocação e não entra na conferência, mas fica visível na lista e no
+  histórico, com a matrícula (opcional) da contratação feita pela outra linha.
+*/
+export const STATUS_CONTRATADO_EM_OUTRA_LISTA = "Contratado em outra lista";
+
+/** O job decidiu que esta linha Contratado é a "em outra lista" (instantâneo TB_CONTRATACAO_APROVADO). */
+export function contratadoEmOutraListaPeloSistema(
+  row: CandidatoDasRegrasDeAprovados | null | undefined,
+) {
+  return (
+    text(row?.status) === "Contratado" &&
+    text(row?.contratacao_situacao) === "OUTRA_LISTA"
+  );
+}
+
+/** A regra não decidiu qual das linhas da mesma matrícula é a contratação: a equipe decide. */
+export function contratacaoAmbigua(
+  row: CandidatoDasRegrasDeAprovados | null | undefined,
+) {
+  return (
+    text(row?.status) === "Contratado" &&
+    text(row?.contratacao_situacao) === "AMBIGUO"
+  );
+}
+
+/**
+ * O status como as contagens e os filtros o veem: o gravado, ou "Contratado em
+ * outra lista" quando o job decidiu assim (o gravado continua Contratado).
+ */
+export function statusEfetivo(
+  row: CandidatoDasRegrasDeAprovados | null | undefined,
+) {
+  return contratadoEmOutraListaPeloSistema(row)
+    ? STATUS_CONTRATADO_EM_OUTRA_LISTA
+    : text(row?.status);
+}
+
+/** Os status em que o banco guarda a matrícula (obrigatória só nos dois primeiros). */
+export function statusGuardaMatricula(status: unknown) {
+  return (
+    statusNeedsMatricula(status) || status === STATUS_CONTRATADO_EM_OUTRA_LISTA
+  );
+}
+
+/**
+ * A matrícula como a conferência a compara (conferencia_ler_aprovados,
+ * 20261024090000): só letras e dígitos, maiúsculas, sem zeros à esquerda.
+ */
+export function matriculaNormalizada(valor: unknown) {
+  return text(valor)
+    .replace(/[^0-9A-Za-z]/g, "")
+    .toUpperCase()
+    .replace(/^0+/, "");
+}
+
+/**
+ * Ao marcar Contratado: as OUTRAS linhas do mesmo edital com a mesma matrícula
+ * já Contratado (a lista da ampla e a da cota). A tela sugere marcá-las como
+ * "Contratado em outra lista" — sugestão, quem decide é quem edita.
+ */
+export function outrasLinhasContratadasDaMatricula<
+  T extends CandidatoDasRegrasDeAprovados,
+>(
+  rows: readonly T[] | null | undefined,
+  candidato: CandidatoDasRegrasDeAprovados | null | undefined,
+  matricula: unknown,
+): T[] {
+  const chave = matriculaNormalizada(matricula);
+  if (!chave || !candidato) return [];
+  return (rows || []).filter(
+    (row) =>
+      String(row.candidato_id) !== String(candidato.candidato_id) &&
+      String(row.edital_id) === String(candidato.edital_id) &&
+      statusEfetivo(row) === "Contratado" &&
+      matriculaNormalizada(row.matricula) === chave,
+  );
 }
 
 /*
@@ -229,16 +312,20 @@ export function summarizeApprovedCandidates(
     migracao: 0,
     documentacaoRejeitada: 0,
     convocado: 0,
+    contratadoEmOutraLista: 0,
   };
 
   // Convocado não é contratado: conta à parte, como na Seleção e nos KPIs.
   filtered.forEach((row) => {
-    const status = text(row.status);
+    const status = statusEfetivo(row);
     if (status === "Contratado") summary.contratado += 1;
     if (status === "Desistente") summary.desistente += 1;
     if (status === "Migração") summary.migracao += 1;
     if (status === "Documentação Rejeitada") summary.documentacaoRejeitada += 1;
     if (status === STATUS_CONVOCADO) summary.convocado += 1;
+    // Não é mais um contratado: a pessoa já conta pela outra linha.
+    if (status === STATUS_CONTRATADO_EM_OUTRA_LISTA)
+      summary.contratadoEmOutraLista += 1;
   });
 
   return summary;
@@ -335,6 +422,7 @@ export function paginateApprovedCandidates<T>(
 export const STATUS_DO_CANDIDATO = Object.freeze([
   STATUS_CONVOCADO,
   "Contratado",
+  STATUS_CONTRATADO_EM_OUTRA_LISTA,
   "Desistente",
   "Migração",
   "Documentação Rejeitada",
@@ -375,6 +463,7 @@ export function tomDoStatus(status: unknown) {
   if (status === "Desistente" || status === "Documentação Rejeitada")
     return "danger";
   if (status === "Migração") return "info";
+  if (status === STATUS_CONTRATADO_EM_OUTRA_LISTA) return "neutral";
   if (status === STATUS_CONVOCADO) return "warning";
   return "neutral";
 }

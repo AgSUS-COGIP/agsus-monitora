@@ -6,6 +6,9 @@ name: Conferências de consistência
 # cargas da Empregare e grava AVISOS (TB_AVISO_CONFERENCIA). Só leitura dos
 # dados de negócio: não muda análise, entrevista, lista nem aprovado.
 #
+# Primeiro chama contratacao-dos-aprovados.yml ("Contratado em outra lista"), que decide qual
+# linha é a contratação quando a mesma matrícula está Contratado em duas listas do edital.
+#
 # Quando roda:
 #   - todo dia às 6h de Brasília (9h UTC), pedido pelo banco (pg_cron → workflow_dispatch
 #     com disparado_por = AGENDA; docs/agenda-dos-robos.md; sem `schedule` aqui);
@@ -47,8 +50,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Antes das conferências, o "Contratado em outra lista" (migration 20261024120000): a conferência
+  # dos aprovados já lê as decisões do dia. Falhou? As conferências rodam do mesmo jeito.
+  contratacao:
+    name: Contratado em outra lista
+    uses: ./.github/workflows/contratacao-dos-aprovados.yml
+    with:
+      modo: ${{ inputs.modo || 'normal' }}
+      disparado_por: ${{ inputs.disparado_por }}
+    secrets:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
   conferir:
     name: Banco → avisos
+    needs: contratacao
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
 

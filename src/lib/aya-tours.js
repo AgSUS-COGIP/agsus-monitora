@@ -735,7 +735,7 @@ const TOURS = Object.freeze({
       passo(
         "[data-approved-action='status']",
         "Status do candidato",
-        "Convocado, Contratado, Desistente, Migração ou Documentação rejeitada; status definido só o admin altera, exceto o Convocado.",
+        "Convocado, Contratado, Contratado em outra lista, Desistente, Migração ou Documentação rejeitada; status definido só o admin altera, exceto o Convocado.",
         { exige: canChangeCandidateStatus },
       ),
       PASSO_DA_AYA,

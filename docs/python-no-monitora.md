@@ -158,8 +158,41 @@ Limites conhecidos (a acertar com os dados reais, depois do ensaio):
   pelo código do candidato da análise ou, nas listas por planilha, pelo nome normalizado (em hash).
   O vínculo é a matrícula (em hash, 20261024090000): é crítico só com duas matrículas Contratado
   no mesmo edital; a mesma matrícula em duas linhas (ampla e cota) é o aviso de atenção
-  `APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS`; editais diferentes com matrículas diferentes
+  `APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS` — desde 20261024120000, só o que o job "Contratado em
+  outra lista" não decide (ambíguo) e a mesma matrícula em editais diferentes; editais diferentes com matrículas diferentes
   (recontratação) não geram aviso, porque o MONITORA não tem as datas de admissão e desligamento.
+
+## Contratado em outra lista (24/10/2026)
+
+A mesma matrícula Contratado em duas ou mais linhas do mesmo edital (a lista da ampla e a da cota;
+o Empregare separa a vaga por modalidade) é uma contratação só. O job decide qual linha é a
+contratação; as outras ficam "Contratado em outra lista" — não contam nos contratados nem ocupam
+vaga —, sem mudar o status gravado.
+
+- Regra: `python/monitora/aprovados/contratacao.py` (versão 1). Linha **alcançada** = a posição dela
+  está dentro do que a convocação daquela vaga já chamou (a maior posição com status entre os
+  outros candidatos da vaga, sem as linhas em conflito). Uma só alcançada → ela; mais de uma → a de
+  ampla concorrência; nenhuma, ou mais de uma de ampla → **ambíguo** (não decide; a conferência
+  avisa). Sem desempate pela ordem em que a equipe marcou.
+- **Congelada**: a decisão fica no instantâneo e não muda sozinha (nem se o alcance mudar). É
+  refeita quando a base muda — o conjunto de linhas Contratado da matrícula no edital: o gatilho
+  `TG_HISTCANDAPROV_CONTRATACAO` apaga a decisão na hora em que uma linha deixa ou passa a ser
+  Contratado (inclusive pelo status explícito) e pede o job. Na publicação de uma lista nova, as
+  linhas novas herdam a decisão pelo candidato anterior. O ambíguo é reavaliado a cada rodada.
+- Sobrepor: o status explícito "Contratado em outra lista", escolhido na tela pela equipe.
+- Job: `scripts/aprovados/contratacao.py` (`--seco` só decide e resume por área: casos resolvidos e
+  ambíguos e contratados antes → depois). Lê por `contratacao_ler_aprovados` e grava por
+  `gravar_contratacao_dos_aprovados` (só service_role; o banco só valida — linha Contratado na lista
+  vigente, vínculo, base igual à de hoje, escolha do mesmo grupo — e guarda em
+  `TB_CONTRATACAO_APROVADO`, recalculando os contratados dos editais tocados).
+- Quem lê o instantâneo: `FC_ATUALIZAR_CONTRATADOS_DO_EDITAL`, `FC_ATUALIZAR_KPIS_PELA_SELECAO`,
+  `get_selecao_da_area`, `listar_acompanhamento_da_visao_geral` (e, por eles, os marcos),
+  `conferencia_ler_aprovados` e o pacote da Lista de aprovados (dicionário `contratacao`).
+- Quando roda: `.github/workflows/contratacao-dos-aprovados.yml`, pedido pelo banco depois de
+  mudança de status que envolve Contratado e de lista nova (chave "Conferências"); todo dia antes
+  das conferências (`conferencias.yml` o chama primeiro); e pelo Run workflow.
+- Migration: `supabase/migrations/20261024120000_contratado_em_outra_lista.sql`. Testes:
+  `tests/python/test_contratacao_dos_aprovados.py`.
 
 ## Segunda entrega: pré-classificação da Avaliação documental
 

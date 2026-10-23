@@ -95,6 +95,8 @@ import {
   nomeDeArquivoSeguro,
   podeTirarOStatus,
   statusEhConvocado,
+  STATUS_CONTRATADO_EM_OUTRA_LISTA,
+  statusGuardaMatricula,
   statusNeedsMatricula,
   statusTravado,
 } from "../../lib/lista-aprovados-rules.ts";
@@ -752,12 +754,14 @@ export function criarEstadoDaListaDeAprovados({
     return mapa;
   }
 
-  const comCandidato = (atualizado: CandidatoAprovado) =>
-    estado.candidatos.map((row) =>
-      String(row.candidato_id) === String(atualizado.candidato_id)
-        ? atualizado
-        : row,
+  const comCandidatos = (atualizados: readonly CandidatoAprovado[]) => {
+    const porId = new Map(
+      atualizados.map((row) => [String(row.candidato_id), row]),
     );
+    return estado.candidatos.map(
+      (row) => porId.get(String(row.candidato_id)) ?? row,
+    );
+  };
 
   /*
     Um arquivo por vez: o PDF vai em base64 e o banco grava em bytea, na mesma
@@ -865,14 +869,22 @@ export function criarEstadoDaListaDeAprovados({
       const { falhas, novos } = arquivos.length
         ? await enviarAnexos(candidato, arquivos, rotular)
         : { falhas: [], novos: [] };
-      // Como o banco gravou: matrícula só fica para Contratado e Migração.
+      const { marcadas, falhasDasOutras } =
+        status === "Contratado"
+          ? await marcarEmOutraLista(campos.emOutraLista)
+          : { marcadas: [], falhasDasOutras: [] };
+      // Como o banco gravou: matrícula só fica para Contratado, Migração e
+      // Contratado em outra lista.
       aplicarLocal({
-        candidatos: comCandidato({
-          ...candidato,
-          status: status || null,
-          processo_sei: processo || null,
-          matricula: statusNeedsMatricula(status) ? matricula : null,
-        }),
+        candidatos: comCandidatos([
+          {
+            ...candidato,
+            status: status || null,
+            processo_sei: processo || null,
+            matricula: statusGuardaMatricula(status) ? matricula : null,
+          },
+          ...marcadas,
+        ]),
         anexos: comAnexos(candidato.candidato_id, [
           ...anexosDe(candidato.candidato_id),
           ...novos,
@@ -893,6 +905,15 @@ export function criarEstadoDaListaDeAprovados({
           `Status atualizado, mas ${falhas.length} anexo(s) não foram enviados. ${falhas.join(" · ")}`,
           "error",
         );
+      else if (falhasDasOutras.length)
+        toast(
+          `Status atualizado, mas a outra linha não ficou "Contratado em outra lista": ${falhasDasOutras.join(" · ")}`,
+          "error",
+        );
+      else if (marcadas.length)
+        toast(
+          `Status atualizado; ${marcadas.length === 1 ? "a outra linha ficou" : `${marcadas.length} outras linhas ficaram`} "Contratado em outra lista".`,
+        );
       else
         toast(
           arquivos.length
@@ -903,6 +924,40 @@ export function criarEstadoDaListaDeAprovados({
     });
     if (salvo) void carregar({ emSegundoPlano: true });
     return salvo;
+  }
+
+  /*
+    A sugestão do modal de status, aceita: as outras linhas Contratado da mesma
+    matrícula no edital viram "Contratado em outra lista", uma RPC por linha,
+    com a matrícula e o processo que já tinham. Só as que quem edita pode
+    mudar e que continuam Contratado.
+  */
+  async function marcarEmOutraLista(ids: readonly string[] | undefined) {
+    const marcadas: CandidatoAprovado[] = [];
+    const falhasDasOutras: string[] = [];
+    for (const id of ids ?? []) {
+      const outra = candidatoPorId(id);
+      if (
+        !supabase ||
+        !outra ||
+        text(outra.status) !== "Contratado" ||
+        !canEditCandidateStatus(perfil(), outra)
+      )
+        continue;
+      const { error } = await supabase.rpc(
+        "alterar_status_candidato_aprovado",
+        {
+          p_candidato_id: outra.candidato_id,
+          p_status: STATUS_CONTRATADO_EM_OUTRA_LISTA,
+          p_processo_sei: text(outra.processo_sei) || null,
+          p_matricula: text(outra.matricula) || null,
+        },
+      );
+      if (error) falhasDasOutras.push(mensagemDe(error));
+      else
+        marcadas.push({ ...outra, status: STATUS_CONTRATADO_EM_OUTRA_LISTA });
+    }
+    return { marcadas, falhasDasOutras };
   }
 
   /*

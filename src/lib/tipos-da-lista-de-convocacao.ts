@@ -12,6 +12,8 @@ export interface CandidatoDaConvocacao {
   edital?: unknown;
   unidade?: unknown;
   lista_ativa?: unknown;
+  /** OUTRA_LISTA: o job dá a linha como "Contratado em outra lista" (não ocupa vaga). */
+  contratacao_situacao?: unknown;
 }
 export interface LinhaDaConvocacao<
   T extends CandidatoDaConvocacao = CandidatoDaConvocacao,

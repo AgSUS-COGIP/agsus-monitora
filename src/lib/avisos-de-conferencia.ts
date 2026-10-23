@@ -477,7 +477,7 @@ export function motivoDoCaso(
     case "APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS": {
       const n = numero(d.linhas) || 0;
       return n > 1
-        ? `Mesma matrícula em ${n} listas: deixar Contratado só em uma`
+        ? `Mesma matrícula em ${n} listas: marcar a outra como "Contratado em outra lista"`
         : "Mesma matrícula em mais de uma lista";
     }
     case "APROVADOS_CONVOCADO_SEM_DESFECHO": {

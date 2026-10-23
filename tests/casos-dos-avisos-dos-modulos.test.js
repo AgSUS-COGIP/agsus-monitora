@@ -72,7 +72,7 @@ describe("caso de aprovado (Duas matrículas no mesmo edital)", () => {
       }),
     );
     expect(caso.motivo).toBe(
-      "Mesma matrícula em 2 listas: deixar Contratado só em uma",
+      'Mesma matrícula em 2 listas: marcar a outra como "Contratado em outra lista"',
     );
   });
 

@@ -425,7 +425,7 @@ class Aprovados(unittest.TestCase):
         self.assertEqual(mesma["gravidade"], "ATENCAO")
         self.assertEqual(mesma["casos"], [{"referencia": "c6", "tipo": "candidato_aprovado", "detalhe": {"linhas": 2}}])
         self.assertEqual((mesma["quantidade"], mesma["exemplos"]), (1, ["c6", "c7"]))
-        self.assertIn("deixe Contratado só na lista pela qual a pessoa foi contratada", mesma["resumo"])
+        self.assertIn('como "Contratado em outra lista"', mesma["resumo"])
 
     def test_mesma_matricula_em_editais_e_areas_diferentes_um_caso_por_area(self):
         m1 = "1" * 64
@@ -446,6 +446,22 @@ class Aprovados(unittest.TestCase):
         self.assertEqual(sede["casos"][0]["referencia"], "c1")
         self.assertEqual(projetos["casos"][0]["referencia"], "c2")
         self.assertEqual(projetos["exemplos"], ["c2", "c1"])
+
+    def test_linha_contratado_em_outra_lista_nao_conta(self):
+        # A linha da lista pela qual a pessoa não foi contratada, já marcada "Contratado em outra
+        # lista" (20261024120000): o caso da mesma matrícula em duas linhas acabou, e ela não soma
+        # vínculo para o crítico. (A leitura do banco nem a traz; aqui, mesmo que trouxesse.)
+        m1, m2 = "1" * 64, "2" * 64
+        dados = {
+            "candidatos": [
+                {"id": "c1", "edital": E1, "area": "sede", "status": "Contratado", "pessoa": "a" * 64, "vinculo": m1},
+                {"id": "c2", "edital": E1, "area": "sede", "status": "Contratado em outra lista", "pessoa": "a" * 64, "vinculo": m1},
+                {"id": "c3", "edital": E1, "area": "sede", "status": "Contratado em outra lista", "pessoa": "a" * 64, "vinculo": m2},
+            ],
+        }  # fmt: skip
+        ac = regras.Acumulador({e["id"]: e for e in CONTEXTO["editais"]})
+        regras.conferir_aprovados(dados, CONTEXTO, ac)
+        self.assertEqual(_avisos(ac), {})
 
     def test_sem_a_chave_vinculo_nao_ha_aviso(self):
         # Leitura de antes de 20261024090000 (sem o hash da matrícula): não dá para afirmar duas

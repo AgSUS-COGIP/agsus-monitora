@@ -15,6 +15,9 @@ export interface CandidatoDasRegrasDeAprovados {
   nota_original?: unknown;
   modalidade_original?: unknown;
   classificacao_original?: unknown;
+  /** Do job "Contratado em outra lista" (pacote, dicionário `contratacao`): CONTRATACAO, OUTRA_LISTA ou AMBIGUO. */
+  contratacao_situacao?: unknown;
+  contratacao_motivo?: unknown;
 }
 export type EscolhasDosFiltros =
   string | number | readonly (string | number)[] | null;

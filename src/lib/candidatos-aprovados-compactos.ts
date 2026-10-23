@@ -18,6 +18,10 @@
     função no banco.
   A mesma conta serve aos dois: `listas[linha[lista_id]]` acha a lista pelo
   índice (array) ou pelo id (objeto).
+
+  "Contratado em outra lista" (migration 20261024120000): o dicionário
+  `contratacao` leva, por id, [situação, motivo] das linhas que o job decidiu;
+  viram `contratacao_situacao` e `contratacao_motivo` só nessas linhas.
 */
 /** Lê uma chave dinâmica sem promover valores externos a tipos de negócio. */
 function campo(valor: unknown, chave: unknown): unknown {
@@ -38,6 +42,7 @@ export function expandirCandidatosCompactos(
   const dicionarios = campo(pacote, "dicionarios");
   const linhas = lista(campo(pacote, "linhas"));
   const posicaoDaLista = colunas.indexOf("lista_id");
+  const contratacao = campo(dicionarios, "contratacao");
   const dicionarioDe = colunas.map((coluna): readonly unknown[] | null => {
     const valores = campo(dicionarios, coluna);
     return Array.isArray(valores) ? valores : null;
@@ -57,6 +62,11 @@ export function expandirCandidatosCompactos(
     colunasDaLista.forEach((coluna, i) => {
       candidato[coluna] = campo(dadosDaLista, i) ?? null;
     });
+    const decidida = campo(contratacao, candidato.candidato_id);
+    if (Array.isArray(decidida)) {
+      candidato.contratacao_situacao = decidida[0] ?? null;
+      candidato.contratacao_motivo = decidida[1] ?? null;
+    }
     return candidato;
   });
 }

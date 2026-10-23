@@ -14,6 +14,8 @@ export interface CandidatoAprovado extends Record<string, unknown> {
   status?: string | null;
   matricula?: string | null;
   processo_sei?: string | null;
+  contratacao_situacao?: string | null;
+  contratacao_motivo?: string | null;
 }
 export interface ListaDeAprovados extends Record<string, unknown> {
   edital_id: string;

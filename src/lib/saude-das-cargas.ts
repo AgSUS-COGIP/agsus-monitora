@@ -115,6 +115,8 @@ const NOMES_DOS_WORKFLOWS: Readonly<Record<string, string>> = Object.freeze({
   // Só pelo Run workflow do GitHub (registrar_disparo_externo, 20261022170000).
   "leitura-de-arquivos.yml": "Leitura dos arquivos",
   "classificacao.yml": "Classificação em Python",
+  // Pedido pelo banco depois de mudanças em Contratado e chamado pelas conferências (20261024120000).
+  "contratacao-dos-aprovados.yml": "Contratado em outra lista",
 });
 
 /* O estado de cada tipo de execução, em ok / falha / andamento. */
