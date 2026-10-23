@@ -185,7 +185,7 @@ function TelaDaArea({
                   {e.carregado
                     ? e.editais.length
                       ? "Escolha o edital"
-                      : "Nenhum edital nesta área"
+                      : "Nenhum edital com análises nesta área"
                     : "Carregando…"}
                 </option>
                 {e.editais.map((ed) => (
@@ -219,7 +219,7 @@ function TelaDaArea({
           ) : null}
 
           {e.editalId ? (
-            visao === "listas" ? (
+            visao === "listas" && (e.dados || e.carregandoEdital) ? (
               <Listas
                 key={e.editalId}
                 estado={estado}
@@ -244,12 +244,12 @@ function TelaDaArea({
                 dataDeCorte={dataDeCorte}
                 rascunhoGuardado={rascunho}
               />
-            ) : (
+            ) : e.carregandoEdital ? (
               <div className="ui-card" aria-busy="true">
                 <div className="ui-esqueleto-linha" />
                 <div className="ui-esqueleto-linha" />
               </div>
-            )
+            ) : null
           ) : null}
         </>
       )}

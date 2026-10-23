@@ -733,6 +733,10 @@ function ConfirmarGerar({
 
 /* ── A agenda dos convocados ────────────────────────────────────────── */
 
+type FonteDaAgenda = { lista: string | null; convocados: ConvocadoDaAgenda[] };
+const LISTA_INVALIDA =
+  "A lista de convocação está incompleta ou inválida. Recarregue o edital antes de gerar a agenda.";
+
 const semHorario = (c: ConvocadoDaAgenda): ItemDaAgenda => ({
   ...c,
   data: null,
@@ -754,57 +758,64 @@ function AgendaDosConvocados({
   const listaRegistrada =
     (dados?.listas || []).find((l) => l.tipo === "CONVOCACAO") || null;
   const idDaLista = listaRegistrada?.id || "";
-  const [fonte, setFonte] = useState<{
-    lista: string | null;
-    convocados: ConvocadoDaAgenda[];
-  } | null>(null);
+  const [registrada, setRegistrada] = useState<FonteDaAgenda | null>(null);
+  const [erroDaRegistrada, setErroDaRegistrada] = useState("");
   const [rascunho, setRascunho] = useState<Rascunho | null>(null);
   const [confirmar, setConfirmar] = useState(false);
-  const [erroDaFonte, setErroDaFonte] = useState("");
   // A lista registrada não veio (rede, banco): sem cair para o cálculo atual.
   const [falhaDaLista, setFalhaDaLista] = useState(false);
   const [tentativa, setTentativa] = useState(0);
   const [ajuste, setAjuste] = useState("");
   const regra = a.dados?.regra?.configuracao || null;
 
-  /* Os convocados: a última convocação registrada ou o cálculo atual. */
+  /*
+    Os convocados da última convocação registrada: lidos uma vez por lista (e
+    no "Tentar novamente"), não a cada mudança dos dados do edital.
+  */
   useEffect(() => {
+    if (!idDaLista) return;
     let vivo = true;
-    async function carregarFonte() {
-      setErroDaFonte("");
-      setFalhaDaLista(false);
-      try {
-        if (idDaLista) {
-          const registrada = await estado.obterLista(idDaLista);
-          if (!vivo) return;
-          if (!registrada?.retrato) {
-            setFonte(null);
-            setFalhaDaLista(true);
-            return;
-          }
-          setFonte({
-            lista: idDaLista,
-            convocados: convocadosDaLista(registrada.retrato),
-          });
-          return;
-        }
-        const calculada = dados?.regra ? calcular(dados, "CONVOCACAO") : null;
-        if (vivo)
-          setFonte({ lista: null, convocados: convocadosDaLista(calculada) });
-      } catch {
-        if (vivo) {
-          setFonte(null);
-          setErroDaFonte(
-            "A lista de convocação está incompleta ou inválida. Recarregue o edital antes de gerar a agenda.",
-          );
-        }
+    setRegistrada(null);
+    setErroDaRegistrada("");
+    setFalhaDaLista(false);
+    void estado.obterLista(idDaLista).then((lista) => {
+      if (!vivo) return;
+      if (!lista?.retrato) {
+        setFalhaDaLista(true);
+        return;
       }
-    }
-    void carregarFonte();
+      try {
+        setRegistrada({
+          lista: idDaLista,
+          convocados: convocadosDaLista(lista.retrato),
+        });
+      } catch {
+        setErroDaRegistrada(LISTA_INVALIDA);
+      }
+    });
     return () => {
       vivo = false;
     };
-  }, [estado, idDaLista, dados, calcular, tentativa]);
+  }, [estado, idDaLista, tentativa]);
+
+  /* Sem convocação registrada: o cálculo atual (sem regra, ninguém). */
+  const calculada = useMemo((): {
+    fonte: FonteDaAgenda | null;
+    erro: string;
+  } => {
+    if (idDaLista) return { fonte: null, erro: "" };
+    try {
+      const lista = dados?.regra ? calcular(dados, "CONVOCACAO") : null;
+      return {
+        fonte: { lista: null, convocados: convocadosDaLista(lista) },
+        erro: "",
+      };
+    } catch {
+      return { fonte: null, erro: LISTA_INVALIDA };
+    }
+  }, [idDaLista, dados, calcular]);
+  const fonte = idDaLista ? registrada : calculada.fonte;
+  const erroDaFonte = idDaLista ? erroDaRegistrada : calculada.erro;
 
   const salvos = useMemo(() => itensDoBanco(a.dados?.itens), [a.dados]);
   const base = useMemo(

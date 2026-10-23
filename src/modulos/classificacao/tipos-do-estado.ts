@@ -110,6 +110,7 @@ export interface ClienteDaClassificacao {
       | "salvar_regra_agenda_entrevista"
       | "salvar_agenda_entrevista",
     argumentos?: RegistroDaClassificacao,
+    opcoes?: { get?: boolean },
   ) => PromiseLike<{ data: unknown; error: unknown }>;
   auth?: Partial<Pick<SupabaseClient["auth"], "onAuthStateChange">>;
 }

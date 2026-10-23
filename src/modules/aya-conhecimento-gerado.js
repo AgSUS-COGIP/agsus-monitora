@@ -2257,6 +2257,23 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-classificacao.md",
+    titulo: "Quais editais aparecem na Classificação",
+    perguntas: [
+      "quais editais aparecem na classificacao",
+      "edital nao aparece na classificacao",
+      "por que o edital nao aparece na classificacao",
+      "seletor de editais da classificacao",
+      "editais sem analise na classificacao",
+    ],
+    resposta:
+      'O seletor "Edital" da Classificação mostra só os editais da área que têm análise curricular ativa — feita no MONITORA ou trazida da planilha, porque a classificação lê os candidatos dessas análises — ou que já têm lista gerada. O número entre parênteses é o de análises ativas. Edital sem nenhuma análise não aparece (não haveria quem classificar); ele entra sozinho quando as análises chegarem. A ordem: os ativos, fora do treinamento, em andamento antes dos concluídos e cancelados; o edital de treinamento vem por último.',
+    fato: "No MONITORA, o seletor da Classificação lista só os editais com análise curricular ativa (qualquer origem) ou com lista de classificação gerada.",
+    fonte:
+      "supabase/migrations/20261023120000_classificacao_so_editais_analisados.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
     titulo: "Regra de classificação do edital",
     perguntas: [
       "regra de classificacao",
