@@ -42,7 +42,7 @@ _LISTA_FICTICIA = {
     "tipo": "FINAL",
     "versao_regra": 3,
     "gerada_em": "2026-10-23T13:00:00+00:00",
-    "gerada_por": "Maria Exemplo da Silva",
+    "gerada_por": "Maria Silva",
 }
 
 
@@ -125,7 +125,9 @@ class RelatorioDeDesempate(unittest.TestCase):
         self.assertTrue(corte)
         for v in self.final["vagas"]:
             for g in v["grupos"]:
-                de_idade = any(k in ("IDOSO_60", "MAIOR_IDADE") for k in g["criteriosAplicados"])
+                de_idade = "MAIOR_IDADE" in g["criteriosAplicados"] or any(
+                    p["criterio"] in ("IDOSO_60", "MAIOR_IDADE") for p in g["pares"]
+                )
                 for c in g["candidatos"]:
                     esperada = idade_na_data(nascimento[c["analiseId"]], corte) if de_idade else None
                     self.assertEqual(c["idade"], esperada)
@@ -138,6 +140,22 @@ class RelatorioDeDesempate(unittest.TestCase):
         texto = desempate.texto_do_relatorio(self.final)
         self.assertRegex(texto, r"por 60\+ \(sim \(\d+ anos\) × não \(\d+ anos\)\)")
         self.assertIn("Data de corte (idade e 60+): 28/02/2025", texto)
+
+    def test_a_idade_so_nos_grupos_em_que_a_idade_pesou(self):
+        idades = lambda nota: [c["idade"] for c in _grupo(self.final, "101", nota)["candidatos"]]  # noqa: E731
+        # Decidido pelo 60+: a idade aparece.
+        self.assertEqual(idades(80), [60, 40])
+        # Decididos por indígena comprovado, exp. saúde indígena, tempo de experiência (o 60+ empatou): sem a idade.
+        for nota in (79, 78, 77):
+            with self.subTest(nota=nota):
+                self.assertEqual(set(idades(nota)), {None})
+        # Chegou ao critério idade (decidido por ele, por PcD depois dele ou empate até o fim): com a idade.
+        for nota in (76, 75, 74, 73):
+            with self.subTest(nota=nota):
+                self.assertNotIn(None, idades(nota))
+        texto = desempate.texto_do_relatorio(self.final)
+        self.assertIn("  5º  Elisa Amostra (insc. 5005)  60+: não | ", texto)
+        self.assertIn("  1º  Ana Exemplo (insc. 5001)  60+: sim (60 anos)", texto)
 
     def test_grupo_que_nao_chega_a_idade_nao_leva_a_idade(self):
         _, r = _relatorio("mesma-posicao-todas-so-parecer", "PRELIMINAR")
@@ -190,7 +208,7 @@ class RelatorioDeDesempate(unittest.TestCase):
                 "fase": "Resultado final do processo seletivo",
                 "geradaEm": "2026-10-23T13:00:00+00:00",
                 "geradaEmTexto": "23/10/2026 10:00",
-                "geradaPor": "Maria Exemplo da Silva",
+                "geradaPor": "Maria Silva",
             },
         )
         self.assertEqual(cab["regra"], {"versao": 3})
@@ -200,7 +218,7 @@ class RelatorioDeDesempate(unittest.TestCase):
             "Edital nº 999/2026 · DSEI Fictício\n"
             "Lista Final · fase: Resultado final do processo seletivo · 2ª geração desta lista\n"
             "Identificador da lista: lista-ficticia-final\n"
-            "Gerada em 23/10/2026 10:00 por Maria Exemplo da Silva · regra versão 3\n",
+            "Gerada em 23/10/2026 10:00 por Maria Silva · regra versão 3\n",
             texto,
         )
         # Sem a lista (--seco): a versão vigente, sem número, id nem autor.
@@ -411,7 +429,7 @@ class BancoFalso:
             "versao_regra": 1,
             "hash": HASH,
             "gerada_em": "2026-10-23T13:00:00+00:00",
-            "gerada_por": "Maria Exemplo da Silva",
+            "gerada_por": "Maria Silva",
         }
         self.dados["listas"] = [{"id": L_PRONTA, "tipo": "FINAL", "gerada_em": base["gerada_em"]}]
         self.listas = {
@@ -487,10 +505,10 @@ class JobDesempate(unittest.TestCase):
         self.assertEqual(cabecalho["edital"]["numero"], "999/2026")
         self.assertEqual(
             {k: cabecalho["lista"][k] for k in ("id", "numero", "geradaEmTexto", "geradaPor")},
-            {"id": L_PRONTA, "numero": 1, "geradaEmTexto": "23/10/2026 10:00", "geradaPor": "Maria Exemplo da Silva"},
+            {"id": L_PRONTA, "numero": 1, "geradaEmTexto": "23/10/2026 10:00", "geradaPor": "Maria Silva"},
         )
         self.assertEqual(cabecalho["regra"], {"versao": 1})
-        self.assertIn("por Maria Exemplo da Silva · regra versão 1", gravado["p_texto"])
+        self.assertIn("por Maria Silva · regra versão 1", gravado["p_texto"])
         self.assertTrue(gravado["p_execucao"].startswith("classificacao-"))
         self.assertEqual([s for s, _ in banco.marcas[L_PRONTA]], ["PREPARANDO"])
         self.assertEqual([s for s, _ in banco.marcas[L_MEXIDA]], ["PREPARANDO", "NAO_CONFERE"])
@@ -507,7 +525,7 @@ class JobDesempate(unittest.TestCase):
     def test_o_relatorio_gravado_tem_nome_e_o_log_e_as_mensagens_nao(self):
         banco = BancoFalso()
         _, log = self._rodar(banco)
-        nomes = [c["nome"] for c in banco.dados["candidatos"] if c["nome"]] + ["Maria Exemplo da Silva"]
+        nomes = [c["nome"] for c in banco.dados["candidatos"] if c["nome"]] + ["Maria Silva"]
         texto = banco.gravados[L_PRONTA]["p_texto"]
         self.assertTrue(any(n in texto for n in nomes))
         mensagens = " ".join(m or "" for marcas in banco.marcas.values() for _, m in marcas)

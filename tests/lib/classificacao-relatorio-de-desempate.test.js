@@ -80,10 +80,7 @@ describe("relatório de desempate na tela", () => {
     ]);
     const [resumo, grupos, pares, candidatos] = planilhas;
     expect(resumo.linhas).toContainEqual(["Edital", "nº 999/2026"]);
-    expect(resumo.linhas).toContainEqual([
-      "Gerada por",
-      "Maria Exemplo da Silva",
-    ]);
+    expect(resumo.linhas).toContainEqual(["Gerada por", "Maria Silva"]);
     expect(resumo.linhas).toContainEqual(["Grupos de empate", 16]);
     expect(resumo.linhas).toContainEqual(["60+", 3, 3]);
     expect(resumo.linhas).toContainEqual(["sorteio registrado", 1, 2]);
@@ -113,6 +110,31 @@ describe("relatório de desempate na tela", () => {
     ).toBe(true);
     expect(pares.linhas.some((l) => String(l[7]).includes("pendente"))).toBe(
       true,
+    );
+  });
+
+  it("a idade só nos grupos em que ela pesou; nos outros, —", () => {
+    const d = lerDesempateDaLista(DOURADO);
+    const candidatos = planilhasDoDesempate(d)[3];
+    const coluna = candidatos.linhas[0].indexOf("Idade na data de corte");
+    const idade = (nome) =>
+      candidatos.linhas.find((l) => l[6] === nome)?.[coluna];
+    // Decidido pelo 60+ e decidido pela idade: com a idade.
+    expect(idade("Ana Exemplo")).toBe(60);
+    expect(idade("Bruno Teste")).toBe(40);
+    expect(idade("João Esboço")).toBe(44);
+    // Decididos por exp. saúde indígena e indígena comprovado (o 60+ empatou): —.
+    expect(idade("Elisa Amostra")).toBe("—");
+    expect(idade("Carla Ficticia")).toBe("—");
+    const html = paginaDoDesempate(d, "Relatório de desempate");
+    expect(html).toContain('<td>Elisa Amostra</td><td class="num">—</td>');
+    expect(html).toContain('<td>Ana Exemplo</td><td class="num">60</td>');
+    // A tela é tolerante: mostra a idade que vier gravada, sem recalcular.
+    const comTodas = structuredClone(DOURADO);
+    comTodas.relatorio.vagas[0].grupos[2].candidatos[0].idade = 34;
+    const outra = planilhasDoDesempate(lerDesempateDaLista(comTodas))[3];
+    expect(outra.linhas.find((l) => l[6] === "Elisa Amostra")?.[coluna]).toBe(
+      34,
     );
   });
 
@@ -154,7 +176,7 @@ describe("relatório de desempate na tela", () => {
       ["Geração", "2ª desta lista"],
       ["Identificador da lista", "lista-ficticia-final"],
       ["Lista gerada em", "23/10/2026 10:00"],
-      ["Gerada por", "Maria Exemplo da Silva"],
+      ["Gerada por", "Maria Silva"],
       ["Versão da regra", "3"],
       ["Data de corte (idade e 60+)", "28/02/2025"],
       ["Relatório preparado em", "23/10/2026 10:00"],
@@ -221,9 +243,7 @@ describe("relatório de desempate na tela", () => {
   it("a página do PDF: cabeçalho, resumo, índice com links e o cabeçalho da vaga em cada tabela", () => {
     const d = lerDesempateDaLista(DOURADO);
     const html = paginaDoDesempate(d, "Relatório de desempate");
-    expect(html).toContain(
-      "<dt>Gerada por</dt><dd>Maria Exemplo da Silva</dd>",
-    );
+    expect(html).toContain("<dt>Gerada por</dt><dd>Maria Silva</dd>");
     expect(html).toContain("<dt>Edital</dt><dd>nº 999/2026</dd>");
     expect(html).toContain(
       '<td>60+</td><td class="num">3</td><td class="num">3</td>',

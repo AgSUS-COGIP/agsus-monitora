@@ -28,7 +28,7 @@ export interface CandidatoDoDesempate {
   codigo: string;
   nome: string;
   posicao: number;
-  /** Idade em anos na data de corte (versão 2, quando o grupo chegou a um critério de idade). */
+  /** Idade em anos na data de corte (versão 2, só quando a idade pesou no grupo: chegou ao critério idade ou o 60+ decidiu um par). */
   idade: number | null;
   valores: Record<string, unknown>;
   decididoPor: string | null;
@@ -623,6 +623,9 @@ function regraDoEmpate(r: RelatorioDeDesempate) {
   return criterios + final;
 }
 
+/* Sem idade no grupo: a idade não pesou nele (o Python só a grava quando pesou) ou falta a data. */
+const SEM_IDADE = "—";
+
 const usaIdade = (r: RelatorioDeDesempate) =>
   r.versao >= 2 &&
   r.criterios.some(
@@ -742,7 +745,7 @@ export function planilhasDoDesempate(
           c.posicao,
           c.codigo,
           c.nome,
-          ...(comIdade ? [c.idade ?? ""] : []),
+          ...(comIdade ? [c.idade ?? SEM_IDADE] : []),
           decididoPor(c, rotulo, criterios),
           ...criterios.map((k) =>
             k.codigo in c.valores
@@ -838,7 +841,7 @@ function grupoNoPdf(
     linhas.push(
       `<tr><td class="num">${html(ordinal(c.posicao))}</td><td>${html(c.codigo)}</td><td>${html(c.nome)}</td>` +
         (comIdade
-          ? `<td class="num">${c.idade === null ? "" : html(c.idade)}</td>`
+          ? `<td class="num">${c.idade === null ? SEM_IDADE : html(c.idade)}</td>`
           : "") +
         `<td>${valores}</td><td>${html(decididoPor(c, rotulo, r.criterios))}</td></tr>`,
     );

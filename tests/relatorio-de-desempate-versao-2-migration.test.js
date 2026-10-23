@@ -64,8 +64,11 @@ describe("relatório de desempate, versão 2 (20261023230000)", () => {
     }
   });
 
-  it("a leitura da lista traz quem a gerou pelo nome do cadastro, sem e-mail", () => {
+  it("a leitura da lista traz quem a gerou pelo nome e sobrenome do cadastro, sem e-mail", () => {
     const f = funcao(MIGRATION, "public.classificacao_ler_lista");
+    expect(f).toContain(
+      'select private."FC_NOME_E_SOBRENOME"(p.nome) into v_nome',
+    );
     expect(f).toContain(
       'from public."TB_PERFIL_USUARIO" p where p.user_id = v."CO_USUARIO"',
     );

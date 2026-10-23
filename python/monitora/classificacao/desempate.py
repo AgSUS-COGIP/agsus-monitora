@@ -204,8 +204,10 @@ def _grupo(linhas, lista, rastro_da_vaga, ctx, nomes) -> dict:
         aplicados = [d["criterio"] for d in criterios]
     else:
         aplicados = [d["criterio"] for d in criterios[: mais_fundo + 1]]
-    # A idade só vai para o relatório quando o grupo chegou a um critério de idade.
-    usa_idade = any(k in _CRITERIOS_DE_IDADE for k in aplicados)
+    # A idade (dado pessoal) só vai para o relatório quando a idade pesou no grupo: o grupo
+    # chegou ao critério "idade" ou algum par foi decidido pelo 60+. Quem foi separado
+    # antes (ex.: por exp. saúde indígena, com o 60+ empatado) fica sem a idade.
+    usa_idade = "MAIOR_IDADE" in aplicados or any(p["criterio"] in _CRITERIOS_DE_IDADE for p in pares)
 
     candidatos = []
     for i, linha in enumerate(linhas):

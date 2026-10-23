@@ -4,7 +4,7 @@
   O QUE MUDA PARA QUEM USA
   O relatório de desempate (Classificação › Listas › "Relatório de desempate")
   ganha o cabeçalho da lista — edital e unidade, tipo e fase, número da
-  geração e identificador, quando e por quem foi gerada (o nome do cadastro),
+  geração e identificador, quando e por quem foi gerada (nome e sobrenome do cadastro),
   versão da regra —, a idade em anos na data de corte, o resumo por critério e
   o título de cada grupo dizendo se o empate é na lista geral ou numa lista de
   cota. Quem calcula é o Python (python/monitora/classificacao/desempate.py,
@@ -14,8 +14,9 @@
   de novo ou peça o relatório pelo "Rodar agora".
 
   1. classificacao_ler_lista (só service_role): o mesmo corpo (20261023170000)
-     + 'gerada_por', o nome do cadastro (TB_PERFIL_USUARIO.nome) de quem gerou
-     a lista (nulo sem cadastro ou se o nome tiver "@"). O nome vai para o
+     + 'gerada_por', o nome e sobrenome do cadastro de quem gerou a lista
+     (private."FC_NOME_E_SOBRENOME" de TB_PERFIL_USUARIO.nome, 20261016120000;
+     nulo sem cadastro ou se o nome tiver "@"). O nome vai para o
      relatório (documento interno da comissão), nunca para o log do Actions.
   2. classificacao_gravar_desempate (só service_role): o mesmo corpo
      (20261023170000), aceitando o relatório nas versões 1 e 2 e gravando em
@@ -41,6 +42,9 @@ begin
      or to_regclass('public."TB_PREPARO_DESEMPATE"') is null then
     raise exception 'Aplique antes 20261023170000_classificacao_em_python_etapa_2.sql.';
   end if;
+  if to_regprocedure('private."FC_NOME_E_SOBRENOME"(text)') is null then
+    raise exception 'Aplique antes 20261016120000_responsavel_nome_do_cadastro.sql.';
+  end if;
 end;
 $$;
 
@@ -60,8 +64,8 @@ begin
   if v."CO_LISTA_CLASSIFICACAO" is null then
     raise exception 'Lista não encontrada' using errcode = '22023';
   end if;
-  -- O nome do cadastro de quem gerou; nada que pareça e-mail.
-  select nullif(btrim(regexp_replace(p.nome, '\s+', ' ', 'g')), '') into v_nome
+  -- Nome e sobrenome do cadastro de quem gerou; nada que pareça e-mail.
+  select private."FC_NOME_E_SOBRENOME"(p.nome) into v_nome
     from public."TB_PERFIL_USUARIO" p where p.user_id = v."CO_USUARIO" limit 1;
   return jsonb_build_object(
     'id', v."CO_LISTA_CLASSIFICACAO",
@@ -75,7 +79,7 @@ begin
 end;
 $function$;
 comment on function public.classificacao_ler_lista(uuid) is
-  'Job da classificação em Python (--desempate, 20261023170000): a lista gerada como foi registrada — o retrato (DS_RESULTADO, com os nomes), o hash, o tipo, a versão da regra, o edital, quando e por quem foi gerada (gerada_por: o nome do cadastro, nulo sem cadastro ou com "@"; 20261023230000) — para conferir com o cálculo do Python antes de gravar o relatório de desempate. Só service_role.';
+  'Job da classificação em Python (--desempate, 20261023170000): a lista gerada como foi registrada — o retrato (DS_RESULTADO, com os nomes), o hash, o tipo, a versão da regra, o edital, quando e por quem foi gerada (gerada_por: nome e sobrenome do cadastro, FC_NOME_E_SOBRENOME; nulo sem cadastro ou com "@"; 20261023230000) — para conferir com o cálculo do Python antes de gravar o relatório de desempate. Só service_role.';
 revoke all on function public.classificacao_ler_lista(uuid) from public, anon, authenticated;
 grant execute on function public.classificacao_ler_lista(uuid) to service_role;
 

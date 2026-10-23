@@ -332,10 +332,10 @@ gravado continua abrindo. Para ganhar o formato novo, gere a lista de novo ou re
 
 - **Cabeçalho** (`cabecalho_da_lista`): edital (número e unidade), lista (tipo, fase, número da
   geração entre as do mesmo tipo no edital, id), quando (horário de Brasília) e por quem foi
-  gerada (o nome do cadastro, `gerada_por` de `classificacao_ler_lista`) e a versão da regra.
+  gerada (nome e sobrenome do cadastro, `FC_NOME_E_SOBRENOME`, em `gerada_por` de `classificacao_ler_lista`) e a versão da regra.
 - **Idade**: em anos completos na data de corte da regra (a mesma de "idade" e "60+"),
-  calculada no Python a partir da data de nascimento que o job já lê; só nos grupos que chegaram
-  a um critério de idade. A ordem no grupo e a certidão continuam; a data nunca sai.
+  calculada no Python a partir da data de nascimento que o job já lê; só nos grupos em que a idade
+  pesou (o grupo chegou ao critério "idade" ou algum par foi decidido pelo 60+); nos outros, "—". A ordem no grupo e a certidão continuam; a data nunca sai.
 - **Resumo** (`resumo_dos_grupos`): pares decididos por critério (e em quantos grupos) e como
   terminaram os empates até o fim. A tela recalcula o mesmo resumo dos grupos (vale para a
   versão 1) e o teste confere que é igual ao do Python.

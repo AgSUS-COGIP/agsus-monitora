@@ -1,6 +1,7 @@
 -- ENSAIO de supabase/migrations/20261023230000_relatorio_de_desempate_versao_2.sql: roda o corpo e desfaz (rollback).
 -- Esperado, no edital 114/2026 (bcecfb08-88ef-4e06-8401-bcad6bf88fd0), com a última lista gerada dele como base:
---   classificacao_ler_lista traz gerada_por (o nome do cadastro de quem gerou; aqui só se veio preenchido);
+--   classificacao_ler_lista traz gerada_por (nome e sobrenome do cadastro de quem gerou, FC_NOME_E_SOBRENOME; aqui só se veio
+--   preenchido e se é o mesmo que a função dá para o cadastro);
 --   classificacao_gravar_desempate grava a versão 2 (NU_VERSAO_RELATORIO = 2) e ainda a 1, recusa a 3 e o
 --   relatório com "@"; as duas RPCs só para service_role.
 -- O resultado (json) traz só verdadeiro/falso e números; nenhum nome real.
@@ -17,6 +18,9 @@ begin
      or to_regprocedure('public.classificacao_gravar_desempate(text, uuid, text, jsonb, text)') is null
      or to_regclass('public."TB_PREPARO_DESEMPATE"') is null then
     raise exception 'Aplique antes 20261023170000_classificacao_em_python_etapa_2.sql.';
+  end if;
+  if to_regprocedure('private."FC_NOME_E_SOBRENOME"(text)') is null then
+    raise exception 'Aplique antes 20261016120000_responsavel_nome_do_cadastro.sql.';
   end if;
 end;
 $$;
@@ -37,8 +41,8 @@ begin
   if v."CO_LISTA_CLASSIFICACAO" is null then
     raise exception 'Lista não encontrada' using errcode = '22023';
   end if;
-  -- O nome do cadastro de quem gerou; nada que pareça e-mail.
-  select nullif(btrim(regexp_replace(p.nome, '\s+', ' ', 'g')), '') into v_nome
+  -- Nome e sobrenome do cadastro de quem gerou; nada que pareça e-mail.
+  select private."FC_NOME_E_SOBRENOME"(p.nome) into v_nome
     from public."TB_PERFIL_USUARIO" p where p.user_id = v."CO_USUARIO" limit 1;
   return jsonb_build_object(
     'id', v."CO_LISTA_CLASSIFICACAO",
@@ -52,7 +56,7 @@ begin
 end;
 $function$;
 comment on function public.classificacao_ler_lista(uuid) is
-  'Job da classificação em Python (--desempate, 20261023170000): a lista gerada como foi registrada — o retrato (DS_RESULTADO, com os nomes), o hash, o tipo, a versão da regra, o edital, quando e por quem foi gerada (gerada_por: o nome do cadastro, nulo sem cadastro ou com "@"; 20261023230000) — para conferir com o cálculo do Python antes de gravar o relatório de desempate. Só service_role.';
+  'Job da classificação em Python (--desempate, 20261023170000): a lista gerada como foi registrada — o retrato (DS_RESULTADO, com os nomes), o hash, o tipo, a versão da regra, o edital, quando e por quem foi gerada (gerada_por: nome e sobrenome do cadastro, FC_NOME_E_SOBRENOME; nulo sem cadastro ou com "@"; 20261023230000) — para conferir com o cálculo do Python antes de gravar o relatório de desempate. Só service_role.';
 revoke all on function public.classificacao_ler_lista(uuid) from public, anon, authenticated;
 grant execute on function public.classificacao_ler_lista(uuid) to service_role;
 
@@ -198,6 +202,9 @@ begin
     'tem_gerada_por', v_lida ? 'gerada_por',
     'gerada_por_preenchido', coalesce(v_lida->>'gerada_por', '') <> '',
     'gerada_por_sem_arroba', coalesce(v_lida->>'gerada_por', '') !~ '@',
+    'gerada_por_e_nome_e_sobrenome', (v_lida->>'gerada_por') is not distinct from (
+      select private."FC_NOME_E_SOBRENOME"(p.nome) from public."TB_PERFIL_USUARIO" p
+       where p.user_id = v_lista."CO_USUARIO" limit 1),
     'mesmas_chaves_de_antes', v_lida ?& array['id', 'edital', 'tipo', 'versao_regra', 'hash', 'gerada_em', 'resultado']));
   insert into t_ensaio values ('versao_1_e_recusas', jsonb_build_object(
     'versao_1_ainda_grava', (v_r1->>'versao')::integer = 1,
