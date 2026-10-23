@@ -22,6 +22,8 @@
                                                 as mostra (20261009180000)
     copiar_modelo_regra_analise(...)            versão 1 a partir de um modelo
     salvar_regra_analise(...)                   versão nova (motivo da 2ª em diante)
+                                                (os textos do parecer sem espaço nas
+                                                pontas: textos-da-regra.ts)
     conferir_regra_analise(...)                 outra pessoa da coordenação
                                                 conferiu (dupla conferência)
     renomear_versao_regra_analise(...)          troca só o nome de uma versão
@@ -66,6 +68,7 @@ import {
 import { criarCopiasPorVersao } from "../../app/copias-por-versao.ts";
 import { criarLeituraPorVersao } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
 import { editalVigente } from "../../lib/avaliacao-documental/editais.js";
+import { regraComTextosSemEspacosNasPontas } from "../../lib/avaliacao-documental/textos-da-regra.ts";
 import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 import {
   coordenaOEdital,
@@ -458,7 +461,7 @@ export function criarEstadoDaAvaliacao({
         RPC_SALVAR_REGRA,
         {
           p_edital: estado.editalId,
-          p_configuracao: configuracao,
+          p_configuracao: regraComTextosSemEspacosNasPontas(configuracao),
           p_versao_atual: estado.dados?.regra?.versao ?? 0,
           p_motivo: motivo || null,
           ...(nome ? { p_nome: nome } : {}),

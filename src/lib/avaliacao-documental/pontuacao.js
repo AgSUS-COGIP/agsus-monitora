@@ -539,6 +539,20 @@ export function numeroDoParecer(valor, casas = 1) {
   });
 }
 
+/**
+ * Cada linha sem espaço (nem tabulação) nas pontas; o resto do texto fica
+ * igual. O parecer sai assim: o motivo ou o modelo da regra digitado com
+ * espaço no fim não muda o texto (o banco já tira os espaços das pontas do
+ * parecer inteiro em concluir_ficha). A mesma conta em
+ * linhas_sem_espacos_nas_pontas de python/monitora/avaliacao_documental/pontuacao.py.
+ */
+export function linhasSemEspacosNasPontas(texto) {
+  return String(texto ?? "")
+    .split("\n")
+    .map((linha) => linha.replace(/^[ \t]+|[ \t]+$/g, ""))
+    .join("\n");
+}
+
 /** Troca os {campos} do modelo; campo desconhecido fica como está. */
 export function preencherModelo(modelo, campos) {
   return String(modelo ?? "").replace(/\{([a-z_]+)\}/g, (inteiro, chave) =>
@@ -750,6 +764,6 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
     observacoes,
     experiencia,
     pontos_informativos: pontosInformativos,
-    parecer: parecer.replace(/^\n+/, ""),
+    parecer: linhasSemEspacosNasPontas(parecer).replace(/^\n+/, ""),
   };
 }

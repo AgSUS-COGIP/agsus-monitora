@@ -4322,6 +4322,74 @@
         "ajustes": {},
         "parecer": "Edital 114/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 20,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 0,0 pontos.\n- Experiência Profissional: 20,0 pontos.\n\nObservações da análise:\n- Enviou só a capa do certificado.\n- RG com foto antiga, mas legível; conferido com a CNH.\n- Enviou diploma de graduação; não pontua no nível médio.\n- Vínculos conferidos na CTPS digital."
       }
+    },
+    {
+      "nome": "Motivo e modelo da regra com espaço no fim (114/2026, item 8.2.10.7): o parecer sai sem espaço nas pontas das linhas",
+      "regra": "E114-POR-CARGO",
+      "parecer_da_regra": {
+        "observacoes": "\n\nObservações da análise:  \n{observacoes}"
+      },
+      "motivos_da_regra": {
+        "CURSOS": {
+          "EVENTO": "Eventos acadêmicos, palestras e afins não são pontuados. "
+        },
+        "EXPERIENCIA": {
+          "ESTAGIO_OU_SIMILAR": "Pontuação não atribuída devido à ausência do documento comprobatório. "
+        }
+      },
+      "candidato": {
+        "nivel": "medio",
+        "vaga": "182528",
+        "cargo": null,
+        "blocos": {
+          "IDENTIDADE": {
+            "situacao": "CONFORME"
+          },
+          "ESCOLARIDADE": {
+            "situacao": "CONFORME"
+          },
+          "REQUISITO_DO_CARGO": {
+            "situacao": "CONFORME",
+            "requisitos": {
+              "CNH_D": true,
+              "DIRECAO_DEFENSIVA": true
+            }
+          },
+          "CURSOS": {
+            "situacao": "NAO_CONFORME",
+            "motivos": ["EVENTO"]
+          },
+          "EXPERIENCIA": {
+            "situacao": "NAO_CONFORME",
+            "motivos": ["ESTAGIO_OU_SIMILAR"]
+          }
+        },
+        "cursos": [],
+        "vinculos": [
+          {
+            "categoria": "AREA",
+            "inicio": "2022-01-01",
+            "fim": "2024-06-30",
+            "aceito": true
+          }
+        ]
+      },
+      "opcoes": {
+        "notaMinima": 10
+      },
+      "esperado": {
+        "resultado": "APTO",
+        "nota_apurada": 20,
+        "nota_final": 20,
+        "parciais": {
+          "FORMACAO": 0,
+          "CURSOS": 0,
+          "EXPERIENCIA": 20
+        },
+        "eliminatorios": [],
+        "encaminhamentos": [],
+        "parecer": "Edital 114/2026\nCandidato(a) HABILITADO(A) na Avaliação Documental e de Títulos com a pontuação total de 20,0 pontos, distribuídos da seguinte forma:\n\n- Formação Acadêmica: 0,0 pontos.\n- Cursos de Aperfeiçoamento: 0,0 pontos.\n- Experiência Profissional: 20,0 pontos.\n\nObservações da análise:\n- Item 6.4: Eventos acadêmicos, palestras e afins não são pontuados.\n- Item 8.2.5: Pontuação não atribuída devido à ausência do documento comprobatório."
+      }
     }
   ],
   "nota_declarada": [
