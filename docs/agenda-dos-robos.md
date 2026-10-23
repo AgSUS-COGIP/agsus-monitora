@@ -53,19 +53,24 @@ chave por aba; desligada:
 - o **Rodar agora** do Status das atualizações continua, com confirmação; a linha mostra
   "Desligada pelo administrador" em vez de atraso;
 - "Classificação em Python" (20261023170000): gerar uma lista não pede o relatório de desempate
-  (`FC_PEDIR_DESEMPATE` confere a chave; o preparo fica `DESLIGADA`).
+  (`FC_PEDIR_DESEMPATE` confere a chave; o preparo fica `DESLIGADA`);
+- "Gerar listas pelo Python" (20261023200000, **nasce desligada**): desligada, o "Gerar" calcula e
+  registra na tela, como antes; ligada, pede `classificacao.yml` com `modo=calculo`
+  (`pedir_calculo_classificacao`) e registra a lista do Python só igual à da tela. Sem a linha da
+  chave, conta como desligada.
 
-| Chave                        | Tarefas do pg_cron                                                                                                                    | Workflow (agenda)                                                          |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Entrevistas                  | `agsus_robo_sincronizar_entrevistas`                                                                                                  | `sincronizar-entrevistas.yml`                                              |
-| Seleção                      | `agsus_robo_sincronizar_selecao`                                                                                                      | `sincronizar-selecao.yml`                                                  |
-| KPIs do edital               | `agsus_kpis_do_edital_pela_selecao`                                                                                                   | —                                                                          |
-| Robô de inscrições           | `agsus_robo_inscricoes_*`                                                                                                             | `robo-empregare.yml`                                                       |
-| Pré-classificação automática | —                                                                                                                                     | `pre-classificacao.yml` chamado no fim do `robo-empregare.yml` (apos_robo) |
-| Conferências                 | `agsus_robo_conferencias`                                                                                                             | `conferencias.yml`                                                         |
-| Pacotes dos painéis          | `agsus_analises_cache_do_painel`, `agsus_aprovados_cache_por_area`, `agsus_entrevistas_cache_do_painel`                               | —                                                                          |
-| Manutenção do banco          | `agsus_analises_analyze_diario`, `agsus_fila_estatisticas`, `agsus_analises_encerrar_inativas`, `agsus_eventos_acesso_limpeza_mensal` | —                                                                          |
-| Classificação em Python      | —                                                                                                                                     | `classificacao.yml` pedido ao gerar uma lista (20261023170000)             |
+| Chave                        | Tarefas do pg_cron                                                                                                                    | Workflow (agenda)                                                             |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Entrevistas                  | `agsus_robo_sincronizar_entrevistas`                                                                                                  | `sincronizar-entrevistas.yml`                                                 |
+| Seleção                      | `agsus_robo_sincronizar_selecao`                                                                                                      | `sincronizar-selecao.yml`                                                     |
+| KPIs do edital               | `agsus_kpis_do_edital_pela_selecao`                                                                                                   | —                                                                             |
+| Robô de inscrições           | `agsus_robo_inscricoes_*`                                                                                                             | `robo-empregare.yml`                                                          |
+| Pré-classificação automática | —                                                                                                                                     | `pre-classificacao.yml` chamado no fim do `robo-empregare.yml` (apos_robo)    |
+| Conferências                 | `agsus_robo_conferencias`                                                                                                             | `conferencias.yml`                                                            |
+| Pacotes dos painéis          | `agsus_analises_cache_do_painel`, `agsus_aprovados_cache_por_area`, `agsus_entrevistas_cache_do_painel`                               | —                                                                             |
+| Manutenção do banco          | `agsus_analises_analyze_diario`, `agsus_fila_estatisticas`, `agsus_analises_encerrar_inativas`, `agsus_eventos_acesso_limpeza_mensal` | —                                                                             |
+| Classificação em Python      | —                                                                                                                                     | `classificacao.yml` pedido ao gerar uma lista (20261023170000)                |
+| Gerar listas pelo Python     | —                                                                                                                                     | `classificacao.yml` (modo calculo) pedido ao clicar em Gerar (20261023200000) |
 
 Sem chave (sempre ligadas): `agsus_robo_conferir_disparos` (fecha os pedidos do Rodar agora) e
 `agsus_inativar_listas_vencidas`. Fora do banco: os gatilhos do Apps Script das planilhas de

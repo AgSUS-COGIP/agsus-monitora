@@ -102,21 +102,23 @@ describe("robôs: o expurgo sai da lista fixa, do Rodar agora e do Status", () =
     MIGRATION,
     "create or replace function public.get_saude_das_cargas()",
   );
+  /* Os robôs de ROBOS_DE_CARGA que vieram depois desta migration (classificacao.yml: 20261023200000). */
+  const NA_EPOCA = ROBOS_DE_CARGA.filter(
+    (r) => r.workflow !== "classificacao.yml",
+  );
 
   it("a lista fixa de FC_DISPARAR_ROBO é a de ROBOS_DE_CARGA (sem o expurgo)", () => {
     const daFuncao = [
       ...FC.matchAll(/'([a-z-]+\.yml)', jsonb_build_array/g),
     ].map((m) => m[1]);
-    expect(daFuncao.sort()).toEqual(
-      ROBOS_DE_CARGA.map((r) => r.workflow).sort(),
-    );
+    expect(daFuncao.sort()).toEqual(NA_EPOCA.map((r) => r.workflow).sort());
   });
 
   it("os robôs de disparar_robo são os de ROBOS_DE_CARGA", () => {
     const daRpc = [
       ...RPC.matchAll(/^ {4}'([a-z_]+)', jsonb_build_object\('nome'/gm),
     ].map((m) => m[1]);
-    expect(daRpc.sort()).toEqual(ROBOS_DE_CARGA.map((r) => r.id).sort());
+    expect(daRpc.sort()).toEqual(NA_EPOCA.map((r) => r.id).sort());
   });
 
   it("get_saude_das_cargas não devolve mais expurgo_chat; o resto fica", () => {

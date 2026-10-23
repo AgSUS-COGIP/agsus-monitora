@@ -8,7 +8,8 @@ sem este passo, a execução não aparecia no "Status das atualizações". O
 primeiro passo de cada workflow da lista fixa chama este módulo, que grava a
 execução pela RPC registrar_disparo_externo (migration
 20261020170000_inscricoes_congeladas.sql; leitura-de-arquivos.yml desde a
-20261022170000_robos_mais_robustos.sql): origem GITHUB, o ator
+20261022170000_robos_mais_robustos.sql; classificacao.yml desde a
+20261023200000_classificacao_em_python_etapa_2b.sql): origem GITHUB, o ator
 (github.triggering_actor), o endereço da execução e um resumo curto dos inputs
 (modo, editais, vagas — nunca candidatos nem token).
 
@@ -39,6 +40,7 @@ WORKFLOWS = (
     "robo-empregare.yml",
     "pre-classificacao.yml",
     "leitura-de-arquivos.yml",
+    "classificacao.yml",
 )
 _UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 _JA_REGISTRADOS = {"agenda", "manual", "robo"}

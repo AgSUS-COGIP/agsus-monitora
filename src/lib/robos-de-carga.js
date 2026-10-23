@@ -56,6 +56,17 @@ export const ROBOS_DE_CARGA = Object.freeze([
     limiteMin: 20,
     porEdital: true,
   }),
+  /*
+    Classificação em Python (20261023200000): reprocessa os relatórios de
+    desempate e os cálculos pendentes (modo normal), inclusive os que o GitHub
+    não recebeu (SEM_DISPARO).
+  */
+  Object.freeze({
+    id: "classificacao_desempate",
+    nome: "Relatório de desempate (Classificação em Python)",
+    workflow: "classificacao.yml",
+    limiteMin: 20,
+  }),
 ]);
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

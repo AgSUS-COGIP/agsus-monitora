@@ -30,6 +30,9 @@ function banco() {
         });
       if (nome.startsWith("listar_"))
         return Promise.resolve({ data: [], error: null });
+      // Chave "Gerar listas pelo Python" desligada (20261023200000): o "Gerar" segue como antes.
+      if (nome === "pedir_calculo_classificacao")
+        return Promise.resolve({ data: { ligada: false }, error: null });
       return new Promise((resolve) =>
         pendentes.push({ nome, resolver: resolve }),
       );

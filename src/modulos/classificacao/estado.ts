@@ -43,6 +43,12 @@ import {
     obter_classificacao_do_edital(p_edital)  o mesmo, inteiro, como antes
     salvar_regra_classificacao(...)          nova versão da regra
     registrar_lista_classificacao(...)       "Gerar": retrato + hash do banco
+    pedir_calculo_classificacao(...)         "Gerar" com a chave "Gerar listas pelo
+                                             Python" ligada (20261023200000): pede o
+                                             cálculo ao job; desligada, { ligada: false }
+    obter_calculo_classificacao(...)         o pedido (e, pronto, o retrato do Python)
+    registrar_lista_calculada(...)           registra o retrato do Python, igual ao da tela
+    registrar_divergencia_do_calculo(...)    os caminhos das diferenças (sem valores)
     publicar_lista_classificacao(p_lista)
     obter_lista_classificacao(p_lista)       retrato de uma geração anterior
     registrar_desempate_classificacao(...)   sorteio ou decisão manual
@@ -61,6 +67,9 @@ import {
 
   A conta é do motor puro (src/lib/classificacao/motor.ts), feita no
   componente a partir de `dados`; aqui só a carga, a gravação e a exportação.
+  Com a chave "Gerar listas pelo Python" ligada, a lista registrada é a que o
+  Python calculou, e só quando ela é igual à do motor.ts (gerarLista;
+  src/lib/classificacao/calculo-em-python.ts).
 
   Sessão: o cliente Supabase único do app. Outro usuário na mesma aba: tudo
   volta ao início.
@@ -80,6 +89,16 @@ import {
   nomeDoArquivo,
 } from "../../lib/classificacao/exportacao.ts";
 import type { DesempateDaLista } from "../../lib/classificacao/relatorio-de-desempate.ts";
+import type { PedidoDeCalculo } from "../../lib/classificacao/calculo-em-python.ts";
+import {
+  calculoLido,
+  diferencasDosRetratos,
+  esperaOJob,
+  INTERVALO_DO_CALCULO_MS,
+  PRAZO_DO_CALCULO_MS,
+  respostaDoPedido,
+  textoDoPedidoParado,
+} from "../../lib/classificacao/calculo-em-python.ts";
 import {
   lerRespostaDoDesempate,
   paginaDoDesempate,
@@ -129,6 +148,10 @@ const RPC_CONFIGURACAO_CONVOCACAO = "listar_configuracao_convocacao";
 const RPC_MODELOS_CONVOCACAO = "listar_modelos_convocacao";
 const RPC_SALVAR_HORA = "salvar_hora_nascimento_candidato";
 const RPC_OBTER_DESEMPATE = "obter_desempate_da_lista";
+const RPC_PEDIR_CALCULO = "pedir_calculo_classificacao";
+const RPC_OBTER_CALCULO = "obter_calculo_classificacao";
+const RPC_REGISTRAR_CALCULADA = "registrar_lista_calculada";
+const RPC_DIVERGENCIA_DO_CALCULO = "registrar_divergencia_do_calculo";
 
 export const MENSAGEM_SEM_ACESSO = "Sem acesso à Classificação";
 const TEMPO_LIMITE_MS = 45000;
@@ -148,6 +171,7 @@ const ESTADO_INICIAL: Readonly<SnapshotDaClassificacao> = Object.freeze({
   salvando: false,
   gerando: false,
   erroDaConvocacao: "",
+  calculo: null,
 });
 
 function mensagemDoBanco(erro: unknown) {
@@ -188,6 +212,9 @@ export function criarEstadoDaClassificacao({
   agendaDoEdital = () => null,
   aoGravarVersao = () => {},
   copias = criarCopiasPorVersao(supabase, RPC_OBTER_EDITAL_SE_MUDOU),
+  intervaloDoCalculoMs = INTERVALO_DO_CALCULO_MS,
+  prazoDoCalculoMs = PRAZO_DO_CALCULO_MS,
+  agora = () => Date.now(),
 }: OpcoesDoEstado = {}) {
   let estado: SnapshotDaClassificacao = ESTADO_INICIAL;
   const leituraDoEdital = criarLeituraPorVersao({
@@ -344,6 +371,7 @@ export function criarEstadoDaClassificacao({
         carregandoEdital: false,
         erroDoEdital: "",
         erroDaConvocacao: "",
+        calculo: null,
       });
       return false;
     }
@@ -352,7 +380,9 @@ export function criarEstadoDaClassificacao({
       editalId: id,
       carregandoEdital: true,
       erroDoEdital: "",
-      ...(outro ? { dados: null, salvando: false, gerando: false } : {}),
+      ...(outro
+        ? { dados: null, salvando: false, gerando: false, calculo: null }
+        : {}),
     });
     try {
       const [dados, { convocacao, erro: erroDaConvocacao }] = await Promise.all(
@@ -488,7 +518,128 @@ export function criarEstadoDaClassificacao({
     }
   }
 
-  /* "Gerar": grava o retrato da lista com a versão da regra; o banco devolve o hash. */
+  /*
+    O cálculo pelo Python (20261023200000): pede ao banco. Chave desligada
+    ({ ligada: false }) ou banco sem a RPC: null, e o "Gerar" segue com o
+    cálculo da tela, como antes.
+  */
+  async function pedirCalculo(edital: string, tipo: string, versao: number) {
+    try {
+      return respostaDoPedido(
+        await rpc(RPC_PEDIR_CALCULO, {
+          p_edital: edital,
+          p_tipo: tipo,
+          p_versao: versao,
+        }),
+      );
+    } catch (erro) {
+      if (objeto(erro).code === "PGRST202") return null;
+      throw erro;
+    }
+  }
+
+  const esperar = (ms: number) =>
+    new Promise<void>((pronto) => setTimeout(pronto, ms));
+
+  /*
+    Espera o job calcular a lista, confere o retrato do Python com o da tela e
+    só registra quando são iguais (o banco confere de novo). Devolve a lista
+    registrada, ou null com o aviso em `calculo` (falhou, prazo, diferente).
+  */
+  async function registrarPeloPython(
+    pedido: PedidoDeCalculo,
+    tipo: string,
+    retrato: RegistroDaClassificacao,
+    vigente: () => boolean,
+  ): Promise<ListaRegistrada | null> {
+    const avisar = (
+      situacao: "calculando" | "falhou" | "prazo" | "diferente",
+      mensagem = "",
+    ) => {
+      if (vigente())
+        publicar({
+          calculo: { tipo, pedido: pedido.pedido, situacao, mensagem },
+        });
+    };
+    if (!esperaOJob(pedido.situacao)) {
+      avisar("falhou", textoDoPedidoParado(pedido));
+      return null;
+    }
+    avisar("calculando");
+    const inicio = agora();
+    let lido = calculoLido({ ...pedido, retrato: null });
+    while (esperaOJob(lido.situacao)) {
+      if (agora() - inicio >= prazoDoCalculoMs) {
+        avisar(
+          "prazo",
+          `O cálculo em Python não chegou em ${Math.round(prazoDoCalculoMs / 60000)} min.`,
+        );
+        return null;
+      }
+      await esperar(intervaloDoCalculoMs);
+      if (!vigente()) return null;
+      try {
+        lido = calculoLido(
+          await rpc(RPC_OBTER_CALCULO, { p_pedido: pedido.pedido }),
+        );
+      } catch (erro) {
+        // A conexão caiu: tenta de novo até o prazo.
+        if (!ehFalhaDeConexao(erro)) throw erro;
+      }
+      if (!vigente()) return null;
+    }
+    if (lido.situacao !== "PRONTO") {
+      avisar("falhou", textoDoPedidoParado(lido));
+      return null;
+    }
+    const comRetrato = calculoLido(
+      await rpc(RPC_OBTER_CALCULO, {
+        p_pedido: pedido.pedido,
+        p_com_retrato: true,
+      }),
+    );
+    if (!vigente()) return null;
+    const { total, caminhos } = diferencasDosRetratos(
+      retrato,
+      comRetrato.retrato,
+    );
+    if (total || !comRetrato.retrato) {
+      avisar(
+        "diferente",
+        `O cálculo em Python não confere com o da tela (${total || 1} diferença(s)); a lista não foi registrada.`,
+      );
+      try {
+        await rpc(RPC_DIVERGENCIA_DO_CALCULO, {
+          p_pedido: pedido.pedido,
+          p_total: total || 1,
+          p_caminhos: caminhos,
+        });
+      } catch {
+        // O aviso na tela já basta; a divergência gravada é para o suporte.
+      }
+      return null;
+    }
+    const resposta = await rpc(RPC_REGISTRAR_CALCULADA, {
+      p_pedido: pedido.pedido,
+      p_resultado: retrato,
+    });
+    if (objeto(resposta).nao_confere === true) {
+      avisar(
+        "diferente",
+        "O banco não confirmou que o cálculo em Python é igual ao da tela; a lista não foi registrada.",
+      );
+      return null;
+    }
+    const registro = listaRegistrada(resposta);
+    if (!registro) throw new Error("Registro de lista inválido.");
+    return registro;
+  }
+
+  /*
+    "Gerar": grava o retrato da lista com a versão da regra; o banco devolve o
+    hash. Com a chave "Gerar listas pelo Python" ligada, a lista vem do Python
+    (registrarPeloPython) e só é registrada igual à do motor.ts.
+  */
   async function gerarLista(resultado: ResultadoDaClassificacao) {
     const d = estado.dados;
     if (!d?.regra || estado.gerando) return null;
@@ -503,7 +654,8 @@ export function criarEstadoDaClassificacao({
     const minhaGeracao = geracao;
     const vigente = () =>
       minhaGeracao === geracao && estado.editalId === edital;
-    publicar({ gerando: true });
+    publicar({ gerando: true, calculo: null });
+    let pedido: PedidoDeCalculo | null = null;
     try {
       const retrato = retratoDaClassificacao(
         instantaneoDaLista(resultado, {
@@ -513,27 +665,56 @@ export function criarEstadoDaClassificacao({
         }),
       );
       if (!retrato) throw new Error("Retrato de lista inválido.");
-      const registro = listaRegistrada(
-        await rpc(RPC_REGISTRAR_LISTA, {
-          p_edital: edital,
-          p_tipo: resultado.tipo,
-          p_versao: d.regra.versao,
-          p_resultado: retrato,
-        }),
-      );
-      if (!registro) throw new Error("Registro de lista inválido.");
+      pedido = await pedirCalculo(edital, resultado.tipo, d.regra.versao);
+      let registro: ListaRegistrada | null;
+      if (pedido) {
+        if (!vigente()) return null;
+        registro = await registrarPeloPython(
+          pedido,
+          resultado.tipo,
+          retrato,
+          vigente,
+        );
+        if (!vigente()) return null;
+        if (!registro) {
+          publicar({ gerando: false });
+          return null;
+        }
+      } else {
+        registro = listaRegistrada(
+          await rpc(RPC_REGISTRAR_LISTA, {
+            p_edital: edital,
+            p_tipo: resultado.tipo,
+            p_versao: d.regra.versao,
+            p_resultado: retrato,
+          }),
+        );
+        if (!registro) throw new Error("Registro de lista inválido.");
+      }
       if (!vigente()) return null;
       const registrado = { ...registro, retrato };
       mudarDados(edital, (atual) => ({
         ...atual,
         listas: [registro, ...(atual.listas || [])],
       }));
-      publicar({ gerando: false });
+      publicar({ gerando: false, calculo: null });
       toast("Lista gerada e registrada.", "success");
       return registrado;
     } catch (erro) {
       if (!vigente()) return null;
-      publicar({ gerando: false });
+      publicar({
+        gerando: false,
+        ...(pedido
+          ? {
+              calculo: {
+                tipo: resultado.tipo,
+                pedido: pedido.pedido,
+                situacao: "falhou" as const,
+                mensagem: mensagemDoBanco(erro),
+              },
+            }
+          : {}),
+      });
       toast(
         `Não foi possível gerar a lista: ${mensagemDoBanco(erro)}`,
         "error",

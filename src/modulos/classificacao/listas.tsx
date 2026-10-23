@@ -9,6 +9,7 @@ import type {
   VagaRecortada,
 } from "../../lib/classificacao/tipos-do-resultado.ts";
 import type {
+  CalculoDaLista,
   DadosDaClassificacao,
   DesempateRegistrado,
   EstadoDaClassificacao,
@@ -21,6 +22,7 @@ import {
   estadoDoRelatorio,
   RELEITURA_DO_PREPARO_MS,
 } from "../../lib/classificacao/relatorio-de-desempate.ts";
+import { PRAZO_DO_CALCULO_MS } from "../../lib/classificacao/calculo-em-python.ts";
 import { useEffect, useId, useMemo, useState } from "react";
 import {
   MOTIVOS_DE_ELIMINACAO,
@@ -774,6 +776,51 @@ function ModalDeDesempate({
   );
 }
 
+/*
+  O "Gerar" com o cálculo pelo Python (chave "Gerar listas pelo Python"):
+  esperando o job, o aviso de quando ele não chegou, falhou ou não confere com
+  o motor da tela (nada registrado) e o "Tentar de novo" (um pedido novo).
+*/
+function CalculoPeloPython({
+  calculo,
+  tentar,
+}: {
+  calculo: CalculoDaLista;
+  tentar: (() => void) | null;
+}) {
+  if (calculo.situacao === "calculando")
+    return (
+      <p className="status-discreto" role="status" data-calculo="calculando">
+        Calculando a lista… (até {Math.round(PRAZO_DO_CALCULO_MS / 60000)} min)
+      </p>
+    );
+  const diferente = calculo.situacao === "diferente";
+  return (
+    <Aviso
+      tom={diferente ? "danger" : "warning"}
+      papel="alert"
+      className="classificacao-calculo-aviso"
+    >
+      <p data-calculo={calculo.situacao}>
+        {calculo.mensagem || "O cálculo em Python não terminou."}
+        {diferente
+          ? " Clique em Atualizar e gere de novo; se continuar, avise o suporte."
+          : ""}
+      </p>
+      {tentar ? (
+        <button
+          type="button"
+          className="btn secondary"
+          data-acao="tentar-calculo"
+          onClick={tentar}
+        >
+          Tentar de novo
+        </button>
+      ) : null}
+    </Aviso>
+  );
+}
+
 function Acoes({
   tipo,
   e,
@@ -831,6 +878,8 @@ function Acoes({
   }, [estado, idDaUltima]);
   const desempate = respostaDoDesempate?.desempate ?? null;
   const relatorio = estadoDoRelatorio(respostaDoDesempate);
+  // O cálculo pelo Python desta lista (chave "Gerar listas pelo Python" ligada).
+  const calculo = e.calculo?.tipo === tipo ? e.calculo : null;
   // A geração guardada não bate com os dados de agora (fichas, notas, regra…).
   const defasada = geracaoDesatualizada(
     ultima,
@@ -1141,6 +1190,12 @@ Usar esta geração assim mesmo?`,
           O relatório de desempate não pôde ser preparado — gere de novo ou
           avise o suporte.
         </Aviso>
+      ) : null}
+      {calculo ? (
+        <CalculoPeloPython
+          calculo={calculo}
+          tentar={e.podeEditar && !e.gerando ? () => void gerar() : null}
+        />
       ) : null}
       {publicando ? (
         <ModalDePublicacaoDeAprovados

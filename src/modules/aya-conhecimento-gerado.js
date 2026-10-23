@@ -2506,6 +2506,25 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-classificacao.md",
+    titulo: "Lista calculada pelo Python",
+    perguntas: [
+      "calculando a lista",
+      "gerar listas pelo python",
+      "lista calculada pelo python",
+      "o calculo em python nao confere",
+      "calculo da lista demorou",
+      "tentar de novo o calculo",
+      "a lista agora e calculada pelo python",
+    ],
+    resposta:
+      'Com a automação "Gerar listas pelo Python" ligada (Configurações › Automação; nasce desligada e só deve ser ligada depois da publicação da classificação do 114/2026), o botão Gerar pede o cálculo da lista à classificação em Python: a aba Listas mostra "Calculando a lista… (até 5 min)" e, quando o Python termina, a tela calcula a mesma lista com o cálculo dela e só registra se as duas forem exatamente iguais (o banco confere de novo). Se forem diferentes, a lista não é registrada e aparece o aviso "O cálculo em Python não confere com o da tela": clique em Atualizar e gere de novo (os dados podem ter mudado desde que o edital foi aberto); se continuar, avise o suporte — a diferença fica guardada para a análise. Se o cálculo falhar, não chegar ao GitHub ou passar de 5 minutos, o aviso diz o motivo e "Tentar de novo" faz um pedido novo. Com a automação desligada, o Gerar calcula e registra na própria tela, como sempre; uma aba aberta antes de a automação ser ligada recebe "recarregue a página e gere de novo".',
+    fato: 'Com a chave "Gerar listas pelo Python" ligada, a lista só é registrada quando o cálculo do Python e o da tela são iguais.',
+    fonte:
+      "src/lib/classificacao/calculo-em-python.ts; src/modulos/classificacao/estado.ts; scripts/classificacao/classificacao.py; supabase/migrations/20261023200000_classificacao_em_python_etapa_2b.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
     titulo: "Exportar a lista de classificação",
     perguntas: [
       "exportar a lista de classificacao",
