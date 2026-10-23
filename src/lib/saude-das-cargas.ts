@@ -47,7 +47,8 @@ import {
     Agenda dos robôs        o banco pede cada execução ao GitHub (pg_cron + pg_net,
                             20261008140000): falhou se o último pedido foi recusado ou se
                             não há chave no Vault; atrasada sem pedido aceito há 2 h
-    Tarefas a cada 2 min    atrasada depois de 15 min
+    Tarefas a cada poucos min  atrasada depois de 15 min (ex.: o pacote do Painel de
+                            análises, a cada 5 min desde 20261024100000)
     Tarefas diárias         atrasada depois de 26 h; mensais, depois de 32 dias
 */
 

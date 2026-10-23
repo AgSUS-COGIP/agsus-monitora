@@ -26,6 +26,11 @@ Como está no `cron.job` do banco (conferido em 22/10/2026):
 | `agsus_robo_conferencias`            | `0 9 * * *`             | 6h                                        | sim                   | `conferencias.yml`            |
 | `agsus_robo_conferir_disparos`       | `*/15 * * * *`          | a cada 15 min (lê as respostas do GitHub) | sim                   | —                             |
 
+Pacotes dos painéis (só no banco, sem GitHub): `agsus_analises_cache_do_painel` roda a cada 5 min
+(`*/5 * * * *`, desde 20261024100000) e só remonta a área marcada por uma carga nova em
+`TB_ANALISE_CURRICULAR` (ou com pacote de mais de 24 h); sem marca, a rodada custa milissegundos.
+`agsus_entrevistas_cache_do_painel` roda aos :25 e `agsus_aprovados_cache_por_area` aos :35.
+
 **Entrevistas e Seleção estão DESLIGADAS DE PROPÓSITO desde 16/10/2026** (`active = false`; o
 último pedido `AGENDA` de cada uma em `TL_DISPARO_ROBO` é de 16/10, 7h05 e 8h10 de Brasília). As
 duas tarefas continuam no `cron.job` com a agenda acima, para religar sem reescrever; até lá, as
