@@ -66,6 +66,14 @@ export const CHAVE_DA_LINHA: Readonly<Record<string, string>> = Object.freeze({
   classificacao_calculo: "classificacao_calculo",
 });
 
+/*
+  Chave que só tem efeito com outra ligada (20261024110000): o cálculo das
+  listas pelo Python sai pelo workflow da "Classificação em Python", e o banco
+  (FC_CALCULO_PELO_PYTHON) exige as duas ligadas.
+*/
+export const CHAVE_QUE_PRECISA_DE: Readonly<Record<string, string>> =
+  Object.freeze({ classificacao_calculo: "classificacao" });
+
 /* Quando a chave não tem tarefa no pg_cron: o que dispara a automação. */
 const QUANDO_SEM_TAREFA: Readonly<Record<string, string>> = Object.freeze({
   pre_classificacao: "No fim de cada carga do robô da Empregare",
@@ -286,13 +294,42 @@ export function chavesPorTarefa(dados: ChavesDaAutomacao | null | undefined) {
   return mapa;
 }
 
-/** A chave de uma linha do Status das atualizações, se houver. */
+/** A chave de que esta precisa, quando está desligada (então esta não tem efeito); senão `null`. */
+export function chaveQueFalta(
+  dados: ChavesDaAutomacao | null | undefined,
+  chave: ChaveDaAutomacao,
+) {
+  const id = Object.hasOwn(CHAVE_QUE_PRECISA_DE, chave.chave)
+    ? CHAVE_QUE_PRECISA_DE[chave.chave]
+    : "";
+  const outra = id ? dados?.chaves.find((c) => c.chave === id) : undefined;
+  return outra && !outra.ligada ? outra : null;
+}
+
+/** O aviso curto da chave ligada sem efeito (a de que ela precisa está desligada). */
+export function avisoSemEfeito(
+  dados: ChavesDaAutomacao | null | undefined,
+  chave: ChaveDaAutomacao,
+) {
+  if (!chave.ligada) return null;
+  const falta = chaveQueFalta(dados, chave);
+  return falta
+    ? `Sem efeito enquanto "${falta.nome}" estiver desligada: o Gerar segue com o cálculo da tela.`
+    : null;
+}
+
+/**
+ * A chave de uma linha do Status das atualizações, se houver. Ligada, mas sem
+ * efeito porque a de que precisa está desligada: vale a desligada.
+ */
 export function chaveDaLinha(
   dados: ChavesDaAutomacao | null | undefined,
   linha: string,
 ) {
   const id = Object.hasOwn(CHAVE_DA_LINHA, linha) ? CHAVE_DA_LINHA[linha] : "";
-  return (id && dados?.chaves.find((c) => c.chave === id)) || null;
+  const propria = (id && dados?.chaves.find((c) => c.chave === id)) || null;
+  if (!propria?.ligada) return propria;
+  return chaveQueFalta(dados, propria) || propria;
 }
 
 /** O que dizer quando o banco recusa a mudança. */

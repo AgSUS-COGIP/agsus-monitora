@@ -8,6 +8,7 @@ import { montarModulo } from "../../app/montar-modulo.jsx";
 import { isAdminGlobal } from "../../lib/access-roles.js";
 import {
   MOTIVO_MAXIMO,
+  avisoSemEfeito,
   motivoValido,
   proximaDaChave,
   semProxima,
@@ -122,11 +123,13 @@ function LinhaDaChave({
   estado,
   mudando,
   ocupado,
+  semEfeito,
 }: {
   chave: ChaveDaAutomacao;
   estado: EstadoDaAutomacao;
   mudando: boolean;
   ocupado: boolean;
+  semEfeito: string | null;
 }) {
   const [aberta, setAberta] = useState(false);
   const ultima = ultimaExecucao(chave);
@@ -178,6 +181,11 @@ function LinhaDaChave({
         <small className="automacao-linha__tarefas">
           {chave.tarefas.map((t) => `${t.nome} (${t.agenda})`).join(" · ")}
         </small>
+      ) : null}
+      {semEfeito ? (
+        <Aviso tom="warning" como="p">
+          {semEfeito}
+        </Aviso>
       ) : null}
       {fora.length ? (
         <Aviso tom="warning" como="p">
@@ -281,6 +289,7 @@ export function Automacao({ estado }: { estado: EstadoDaAutomacao }) {
               estado={estado}
               mudando={atual.mudando === chave.chave}
               ocupado={atual.mudando !== null}
+              semEfeito={avisoSemEfeito(dados, chave)}
             />
           ))}
         </ul>

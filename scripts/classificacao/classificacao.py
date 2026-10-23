@@ -6,8 +6,8 @@ Três modos:
 --calculo e --desempate (o que o workflow classificacao.yml roda)
   Toda execução esvazia as duas filas, porque o GitHub guarda uma execução só na
   fila do grupo (a mais nova substitui a que esperava): primeiro os CÁLCULOS
-  pedidos pelo "Gerar" (etapa 2b, com a chave "Gerar listas pelo Python"
-  ligada), que têm alguém esperando na tela, e depois os RELATÓRIOS de
+  pedidos pelo "Gerar" (etapa 2b, com as chaves "Gerar listas pelo Python" e
+  "Classificação em Python" ligadas), que têm alguém esperando na tela, e depois os RELATÓRIOS de
   desempate; entre um relatório e outro, olha de novo a fila dos cálculos.
   --desempate aceita --lista (as listas pedidas, além das que esperam).
 

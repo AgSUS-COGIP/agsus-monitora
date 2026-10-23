@@ -142,6 +142,36 @@ describe("Configurações › Automação", () => {
     expect(raiz.textContent).toContain("Histórico");
   });
 
+  it("o cálculo pelo Python ligado com a Classificação em Python desligada avisa que não tem efeito", async () => {
+    const dados = CHAVES();
+    dados.chaves.push(
+      {
+        chave: "classificacao",
+        nome: "Classificação em Python",
+        ligada: false,
+        motivo: "Pausa do Python",
+        tarefas: [],
+      },
+      {
+        chave: "classificacao_calculo",
+        nome: "Gerar listas pelo Python",
+        ligada: true,
+        motivo: "Depois da publicação do 114/2026",
+        tarefas: [],
+      },
+    );
+    await montar({
+      rpc: async (nome) =>
+        nome === "obter_chaves_da_automacao"
+          ? { data: dados, error: null }
+          : { data: null, error: { code: "XX000", message: "inesperado" } },
+    });
+    expect(linha("classificacao_calculo").textContent).toContain(
+      'Sem efeito enquanto "Classificação em Python" estiver desligada',
+    );
+    expect(linha("classificacao").textContent).not.toContain("Sem efeito");
+  });
+
   it("ligar pede motivo de 10 caracteres e manda a chave ao banco", async () => {
     const { supabase, toast } = await montar({
       rpc: async (nome) =>
