@@ -1,20 +1,26 @@
 import type { PlanilhaDaClassificacao } from "./tipos-dos-documentos.ts";
 import { escapeHtml } from "../sanitize.js";
-import { formatarNota } from "./numeros.ts";
+import { dataBR, formatarNota } from "./numeros.ts";
 
 /*
   O relatório de desempate de uma lista gerada, como a tela o mostra e exporta
   (Classificação › Listas › "Relatório de desempate"). Quem calcula é o Python
   (python/monitora/classificacao/desempate.py, a MESMA ordenação do motor) e
   quem guarda é o banco (TB_RELATORIO_DESEMPATE, lido por
-  obter_desempate_da_lista; migration 20261023140000). Aqui, sem DOM: a leitura
-  da resposta (malformada = sem relatório, o botão não aparece), as planilhas
-  do XLSX e a página do PDF (impressão).
+  obter_desempate_da_lista; migrations 20261023140000 e 20261023230000). Aqui,
+  sem DOM: a leitura da resposta (malformada = sem relatório, o botão não
+  aparece), as planilhas do XLSX (Resumo, Grupos, Pares e Candidatos, com
+  filtro) e a página do PDF (impressão: cabeçalho, resumo, índice por vaga com
+  links e o cabeçalho da vaga repetido em cada página).
+
+  Versões lidas: 1 (sem cabeçalho, idade só como a ordem no grupo) e 2
+  (cabeçalho da lista, modalidades com o nome, idade em anos na data de corte,
+  resumo). O resumo e o nome de cada lista saem dos grupos, nas duas versões.
 
   O candidato vem com o id da análise, o código de inscrição e o nome
   (documento interno da comissão; a RPC só o entrega a quem lê a lista). O
   Python grava o relatório só quando o retrato que ele calcula é o da lista
-  registrada, então o nome é o mesmo da lista.
+  registrada, então o nome é o mesmo da lista. Nunca a data de nascimento.
 */
 
 export interface CandidatoDoDesempate {
@@ -22,6 +28,8 @@ export interface CandidatoDoDesempate {
   codigo: string;
   nome: string;
   posicao: number;
+  /** Idade em anos na data de corte (versão 2, quando o grupo chegou a um critério de idade). */
+  idade: number | null;
   valores: Record<string, unknown>;
   decididoPor: string | null;
 }
@@ -43,6 +51,9 @@ export interface EmpateAteOFim {
 }
 export interface GrupoDoDesempate {
   lista: string;
+  /** "Lista geral", "Lista de cota: Pretos e pardos (PP)"… */
+  listaNome: string;
+  cota: boolean;
   notaTexto: string;
   posicoes: number[];
   resolucao: string;
@@ -62,9 +73,29 @@ export interface CriterioDoDesempate {
   rotulo: string;
   direcao: string;
 }
+export interface CabecalhoDoDesempate {
+  edital: { numero: string; unidade: string };
+  lista: {
+    id: string | null;
+    numero: number | null;
+    tipo: string;
+    tipoNome: string;
+    fase: string;
+    geradaEm: string | null;
+    geradaEmTexto: string;
+    geradaPor: string | null;
+  };
+  regra: { versao: number | null };
+}
 export interface RelatorioDeDesempate {
   versao: number;
   tipo: string;
+  dataCorte: string;
+  empateNaLista: string;
+  empateFinal: { metodo: string; numeracao: string } | null;
+  /** Só na versão 2. */
+  cabecalho: CabecalhoDoDesempate | null;
+  modalidades: { codigo: string; nome: string }[];
   criterios: CriterioDoDesempate[];
   vagas: VagaDoDesempate[];
 }
@@ -77,8 +108,10 @@ export interface DesempateDaLista {
   texto: string;
 }
 
-/** A versão do formato que esta tela sabe ler (desempate.py, VERSAO_DO_RELATORIO). */
-export const VERSAO_DO_RELATORIO = 1;
+/** A versão do formato que o Python grava hoje (desempate.py, VERSAO_DO_RELATORIO). */
+export const VERSAO_DO_RELATORIO = 2;
+/** As versões que esta tela lê: a 1 continua abrindo (relatórios gravados antes da 2). */
+export const VERSOES_LIDAS: readonly number[] = Object.freeze([1, 2]);
 
 type Registro = Record<string, unknown>;
 const registro = (valor: unknown): Registro | null =>
@@ -88,8 +121,25 @@ const registro = (valor: unknown): Registro | null =>
 const lista = (valor: unknown): unknown[] | null =>
   Array.isArray(valor) ? valor : null;
 const texto = (valor: unknown) => (typeof valor === "string" ? valor : "");
+const textoOuNulo = (valor: unknown) =>
+  typeof valor === "string" && valor ? valor : null;
+const inteiroOuNulo = (valor: unknown) =>
+  typeof valor === "number" && Number.isInteger(valor) ? valor : null;
 const textos = (valor: unknown) =>
   (lista(valor) || []).filter((v): v is string => typeof v === "string");
+
+const ehCota = (codigo: string) => codigo !== "GERAL" && codigo !== "AC";
+
+/** "Lista geral", "Lista de cota: Pretos e pardos (PP)" ou "Lista de Ampla concorrência (AC)" (como o Python). */
+export function nomeDaLista(
+  codigo: string,
+  nomes: Readonly<Record<string, string>> = {},
+) {
+  if (codigo === "GERAL") return "Lista geral";
+  const nome = nomes[codigo] || codigo;
+  const rotulo = nome === codigo ? nome : `${nome} (${codigo})`;
+  return ehCota(codigo) ? `Lista de cota: ${rotulo}` : `Lista de ${rotulo}`;
+}
 
 function candidato(valor: unknown): CandidatoDoDesempate | null {
   const c = registro(valor);
@@ -100,6 +150,7 @@ function candidato(valor: unknown): CandidatoDoDesempate | null {
     codigo: texto(c.codigo),
     nome: texto(c.nome),
     posicao: c.posicao,
+    idade: inteiroOuNulo(c.idade),
     valores: registro(c.valores) || {},
     decididoPor: typeof c.decididoPor === "string" ? c.decididoPor : null,
   };
@@ -140,15 +191,21 @@ function todos<T>(valor: unknown, ler: (v: unknown) => T | null): T[] | null {
   return lidos.every((x): x is T => x !== null) ? lidos : null;
 }
 
-function grupo(valor: unknown): GrupoDoDesempate | null {
+function grupo(
+  valor: unknown,
+  nomes: Readonly<Record<string, string>>,
+): GrupoDoDesempate | null {
   const g = registro(valor);
   if (!g) return null;
   const candidatos = todos(g.candidatos, candidato);
   const pares = todos(g.pares, par);
   const empatados = todos(g.empatadosAteOFim, empate);
   if (!candidatos || !pares || !empatados) return null;
+  const codigo = texto(g.lista);
   return {
-    lista: texto(g.lista),
+    lista: codigo,
+    listaNome: texto(g.listaNome) || nomeDaLista(codigo, nomes),
+    cota: typeof g.cota === "boolean" ? g.cota : ehCota(codigo),
     notaTexto: texto(g.notaTexto),
     posicoes: (lista(g.posicoes) || []).filter(
       (n): n is number => typeof n === "number",
@@ -161,15 +218,39 @@ function grupo(valor: unknown): GrupoDoDesempate | null {
   };
 }
 
-function vaga(valor: unknown): VagaDoDesempate | null {
+function vaga(
+  valor: unknown,
+  nomes: Readonly<Record<string, string>>,
+): VagaDoDesempate | null {
   const v = registro(valor);
-  const grupos = v && todos(v.grupos, grupo);
+  const grupos = v && todos(v.grupos, (g) => grupo(g, nomes));
   if (!v || !grupos) return null;
   return {
     chave: texto(v.chave),
     codigo: texto(v.codigo),
     cargo: texto(v.cargo),
     grupos,
+  };
+}
+
+function cabecalho(valor: unknown): CabecalhoDoDesempate | null {
+  const c = registro(valor);
+  const edital = registro(c?.edital);
+  const l = registro(c?.lista);
+  if (!c || !edital || !l) return null;
+  return {
+    edital: { numero: texto(edital.numero), unidade: texto(edital.unidade) },
+    lista: {
+      id: textoOuNulo(l.id),
+      numero: inteiroOuNulo(l.numero),
+      tipo: texto(l.tipo),
+      tipoNome: texto(l.tipoNome),
+      fase: texto(l.fase),
+      geradaEm: textoOuNulo(l.geradaEm),
+      geradaEmTexto: texto(l.geradaEmTexto),
+      geradaPor: textoOuNulo(l.geradaPor),
+    },
+    regra: { versao: inteiroOuNulo(registro(c.regra)?.versao) },
   };
 }
 
@@ -180,8 +261,16 @@ function vaga(valor: unknown): VagaDoDesempate | null {
 export function lerDesempateDaLista(valor: unknown): DesempateDaLista | null {
   const d = registro(valor);
   const r = registro(d?.relatorio);
-  if (!d || !r || r.versao !== VERSAO_DO_RELATORIO) return null;
-  const vagas = todos(r.vagas, vaga);
+  if (!d || !r || typeof r.versao !== "number") return null;
+  if (!VERSOES_LIDAS.includes(r.versao)) return null;
+  const modalidades = (lista(r.modalidades) || []).flatMap((m) => {
+    const x = registro(m);
+    return x && typeof x.codigo === "string"
+      ? [{ codigo: x.codigo, nome: texto(x.nome) || x.codigo }]
+      : [];
+  });
+  const nomes = Object.fromEntries(modalidades.map((m) => [m.codigo, m.nome]));
+  const vagas = todos(r.vagas, (v) => vaga(v, nomes));
   const criterios = todos(r.criterios, (v) => {
     const c = registro(v);
     return c && typeof c.codigo === "string"
@@ -189,14 +278,22 @@ export function lerDesempateDaLista(valor: unknown): DesempateDaLista | null {
       : null;
   });
   if (!vagas || !criterios || typeof d.lista_id !== "string") return null;
+  const final = registro(r.empateFinal);
   return {
     listaId: d.lista_id,
     geradoEm: texto(d.gerado_em),
     daListaAtual: d.da_lista_atual === true,
     grupos: typeof d.grupos === "number" ? d.grupos : 0,
     relatorio: {
-      versao: VERSAO_DO_RELATORIO,
+      versao: r.versao,
       tipo: texto(r.tipo),
+      dataCorte: texto(r.dataCorte),
+      empateNaLista: texto(r.empateNaLista),
+      empateFinal: final
+        ? { metodo: texto(final.metodo), numeracao: texto(final.numeracao) }
+        : null,
+      cabecalho: r.versao >= 2 ? cabecalho(r.cabecalho) : null,
+      modalidades,
       criterios,
       vagas,
     },
@@ -277,12 +374,12 @@ export function estadoDoRelatorio(
 }
 
 const RESOLUCOES: Readonly<Record<string, string>> = Object.freeze({
-  CRITERIOS: "critérios",
+  CRITERIOS: "decidido pelos critérios",
   SORTEIO: "sorteio registrado",
   MANUAL: "decisão manual registrada",
   INSCRICAO: "ordem de inscrição",
-  MESMA_POSICAO: "mesma posição",
-  PENDENTE: "pendente (aguardando o registro)",
+  MESMA_POSICAO: "ficam na mesma posição",
+  PENDENTE: "aguardando o registro (pendente)",
   MESMA_POSICAO_LISTA: "mesma posição (regra da lista)",
   EMPATE_FINAL: "empate até o fim",
 });
@@ -292,18 +389,50 @@ const resolucao = (codigo: string) =>
     .map((c) => RESOLUCOES[c] || c)
     .join(" + ");
 
-/** O valor de um critério como texto ("sim", "1.200 dias", "1º mais velho do grupo"). */
-export function textoDoValor(valor: unknown, criterio: string) {
+const TITULOS: Readonly<Record<string, string>> = Object.freeze({
+  PRELIMINAR: "Avaliação documental",
+  CONVOCACAO: "Convocação para entrevista",
+  ENTREVISTA: "Resultado da entrevista",
+  FINAL: "Resultado final",
+});
+const METODOS: Readonly<Record<string, string>> = Object.freeze({
+  SORTEIO: "sorteio registrado",
+  ORDEM_INSCRICAO: "ordem de inscrição",
+  MESMA_POSICAO: "mesma posição",
+  DECISAO_MANUAL: "decisão manual com justificativa",
+});
+
+const anos = (idade: number | null) =>
+  idade === null ? "sem data de nascimento" : `${idade} anos`;
+
+/**
+ * O valor de um critério como texto ("sim (61 anos)", "1.200 dias", "44 anos,
+ * 1º mais velho do grupo"). `idade` (anos na data de corte) acompanha o 60+.
+ * Versão 1 da maior idade: só a ordem no grupo.
+ */
+export function textoDoValor(
+  valor: unknown,
+  criterio: string,
+  idade: number | null = null,
+) {
   if (valor === null || valor === undefined) return "sem dado";
-  if (typeof valor === "boolean") return valor ? "sim" : "não";
-  const idade = registro(valor);
-  if (criterio === "MAIOR_IDADE" && idade) {
-    const ordem = idade.ordemDeIdade;
+  if (typeof valor === "boolean") {
+    const base = valor ? "sim" : "não";
+    return criterio === "IDOSO_60" && idade !== null
+      ? `${base} (${anos(idade)})`
+      : base;
+  }
+  const v = registro(valor);
+  if (criterio === "MAIOR_IDADE" && v) {
+    const ordem = typeof v.ordemDeIdade === "number" ? v.ordemDeIdade : null;
     const base =
-      typeof ordem === "number"
-        ? `${ordem}º mais velho do grupo`
-        : "sem data de nascimento";
-    return idade.certidao === true ? base : `${base}, sem certidão`;
+      "idade" in v
+        ? anos(inteiroOuNulo(v.idade)) +
+          (ordem ? `, ${ordem}º mais velho do grupo` : "")
+        : ordem
+          ? `${ordem}º mais velho do grupo`
+          : "sem data de nascimento";
+    return v.certidao === true ? base : `${base}, sem certidão`;
   }
   if (typeof valor !== "number") return String(valor);
   if (criterio === "EXP_PROFISSIONAL_TEMPO")
@@ -311,27 +440,265 @@ export function textoDoValor(valor: unknown, criterio: string) {
   return formatarNota(valor, Number.isInteger(valor) ? 0 : 2);
 }
 
-const nomeDaLista = (codigo: string) => (codigo === "GERAL" ? "Geral" : codigo);
+/** "Vaga 101 — Enfermeiro (Nível Superior)"; sem um dos dois, o que houver. */
+export const tituloDaVaga = (v: VagaDoDesempate) =>
+  v.codigo && v.cargo
+    ? `Vaga ${v.codigo} — ${v.cargo}`
+    : `Vaga ${v.codigo || v.cargo}`;
+
+const ordinal = (n: number | undefined) =>
+  typeof n === "number" ? `${n}º` : "—";
+const posicoesDoGrupo = (g: GrupoDoDesempate) => {
+  const [primeira, ultima] = [g.posicoes[0], g.posicoes[g.posicoes.length - 1]];
+  return primeira === ultima
+    ? ordinal(primeira)
+    : `${ordinal(primeira)} a ${ordinal(ultima)}`;
+};
+
+export interface ResumoDoDesempate {
+  grupos: number;
+  decididosPorCriterio: number;
+  empatadosAteOFim: number;
+  pendentes: number;
+  mesmaPosicaoNaLista: number;
+  /** Na ordem da regra, só os que decidiram algum par. */
+  porCriterio: {
+    codigo: string;
+    rotulo: string;
+    pares: number;
+    grupos: number;
+  }[];
+  /** Cada sequência de empatados em todos os critérios, por resolução. */
+  empatesAteOFim: {
+    resolucao: string;
+    rotulo: string;
+    empates: number;
+    candidatos: number;
+  }[];
+}
+
+/** O resumo do topo, calculado dos grupos (o mesmo que o Python grava em `resumo` e `totais`). */
+export function resumoDoDesempate(
+  desempate: DesempateDaLista,
+): ResumoDoDesempate {
+  const { criterios, vagas } = desempate.relatorio;
+  const porCriterio = new Map<string, { pares: number; grupos: number }>(
+    criterios.map((c) => [c.codigo, { pares: 0, grupos: 0 }]),
+  );
+  const porResolucao = new Map<
+    string,
+    { empates: number; candidatos: number }
+  >();
+  const resumo = {
+    grupos: 0,
+    decididosPorCriterio: 0,
+    empatadosAteOFim: 0,
+    pendentes: 0,
+    mesmaPosicaoNaLista: 0,
+  };
+  for (const v of vagas)
+    for (const g of v.grupos) {
+      resumo.grupos += 1;
+      if (g.resolucao === "CRITERIOS") resumo.decididosPorCriterio += 1;
+      else if (g.resolucao === "MESMA_POSICAO_LISTA")
+        resumo.mesmaPosicaoNaLista += 1;
+      else resumo.empatadosAteOFim += 1;
+      const decidiu = new Set<string>();
+      for (const p of g.pares)
+        if (p.criterio) {
+          const item = porCriterio.get(p.criterio) || { pares: 0, grupos: 0 };
+          item.pares += 1;
+          porCriterio.set(p.criterio, item);
+          decidiu.add(p.criterio);
+        }
+      for (const k of decidiu) {
+        const item = porCriterio.get(k);
+        if (item) item.grupos += 1;
+      }
+      for (const e of g.empatadosAteOFim) {
+        if (e.resolucao.split("+").includes("PENDENTE")) resumo.pendentes += 1;
+        const item = porResolucao.get(e.resolucao) || {
+          empates: 0,
+          candidatos: 0,
+        };
+        item.empates += 1;
+        item.candidatos += e.analiseIds.length;
+        porResolucao.set(e.resolucao, item);
+      }
+    }
+  const rotulo = (codigo: string) =>
+    criterios.find((c) => c.codigo === codigo)?.rotulo || codigo;
+  return {
+    ...resumo,
+    porCriterio: [...porCriterio]
+      .filter(([, n]) => n.pares > 0)
+      .map(([codigo, n]) => ({ codigo, rotulo: rotulo(codigo), ...n })),
+    empatesAteOFim: [...porResolucao].map(([codigo, n]) => ({
+      resolucao: codigo,
+      rotulo: resolucao(codigo),
+      ...n,
+    })),
+  };
+}
+
+/** "2026-10-23T13:05:00+00:00" → "23/10/2026 10:05" (horário de Brasília); inválido → "". */
+export function momentoBR(valor: string) {
+  const momento = Date.parse(valor);
+  if (!Number.isFinite(momento)) return "";
+  const partes = Object.fromEntries(
+    new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(momento)
+      .map((p) => [p.type, p.value]),
+  );
+  return `${partes.day}/${partes.month}/${partes.year} ${partes.hour}:${partes.minute}`;
+}
 
 /**
- * As planilhas do XLSX: "Candidatos" (uma linha por candidato em cada grupo,
- * com o valor em cada critério da regra) e "Pares" (quem ficou à frente de
- * quem e por quê).
+ * O cabeçalho como pares [rótulo, valor], na ordem do documento: edital,
+ * unidade, lista, fase, geração, identificador, quando e por quem foi gerada,
+ * versão da regra, data de corte e quando o relatório foi preparado. Versão 1:
+ * só o que ela tem.
+ */
+export function linhasDoCabecalho(
+  desempate: DesempateDaLista,
+): [string, string][] {
+  const r = desempate.relatorio;
+  const c = r.cabecalho;
+  const linhas: [string, string][] = [];
+  const incluir = (
+    rotulo: string,
+    valor: string | number | null | undefined,
+  ) => {
+    if (valor !== null && valor !== undefined && valor !== "")
+      linhas.push([rotulo, String(valor)]);
+  };
+  incluir("Edital", c?.edital.numero ? `nº ${c.edital.numero}` : "");
+  incluir("Unidade", c?.edital.unidade);
+  incluir("Lista", c?.lista.tipoNome || TITULOS[r.tipo] || r.tipo);
+  incluir("Fase", c?.lista.fase);
+  incluir("Geração", c?.lista.numero ? `${c.lista.numero}ª desta lista` : "");
+  incluir("Identificador da lista", c?.lista.id || desempate.listaId);
+  incluir("Lista gerada em", c?.lista.geradaEmTexto);
+  incluir("Gerada por", c?.lista.geradaPor);
+  incluir("Versão da regra", c?.regra.versao);
+  incluir("Data de corte (idade e 60+)", dataBR(r.dataCorte));
+  incluir(
+    "Relatório preparado em",
+    momentoBR(desempate.geradoEm) +
+      (desempate.daListaAtual ? "" : " (de outra versão desta lista)"),
+  );
+  return linhas;
+}
+
+/** "1) 60+ (sim antes de não); 2) …" ou a regra da lista sem critérios. */
+function regraDoEmpate(r: RelatorioDeDesempate) {
+  const direcoes: Readonly<Record<string, string>> = {
+    SIM_PRIMEIRO: "sim antes de não",
+    NAO_PRIMEIRO: "não antes de sim",
+    MAIOR_PRIMEIRO: "maior primeiro",
+    MENOR_PRIMEIRO: "menor primeiro",
+  };
+  const criterios =
+    r.empateNaLista === "MESMA_POSICAO"
+      ? "Nesta lista o empate de nota fica na mesma posição (a regra não aplica os critérios)."
+      : r.criterios.length
+        ? `Critérios da regra, nesta ordem: ${r.criterios
+            .map(
+              (c, i) =>
+                `${i + 1}) ${c.rotulo} (${direcoes[c.direcao] || c.direcao})`,
+            )
+            .join("; ")}.`
+        : "A regra não tem critérios de desempate.";
+  const final = r.empateFinal
+    ? ` Empate que sobra: ${METODOS[r.empateFinal.metodo] || r.empateFinal.metodo}.`
+    : "";
+  return criterios + final;
+}
+
+const usaIdade = (r: RelatorioDeDesempate) =>
+  r.versao >= 2 &&
+  r.criterios.some(
+    (c) => c.codigo === "IDOSO_60" || c.codigo === "MAIOR_IDADE",
+  );
+
+function decididoPor(
+  c: CandidatoDoDesempate,
+  rotulo: (codigo: string) => string,
+  criterios: CriterioDoDesempate[],
+) {
+  if (!c.decididoPor) return "";
+  return criterios.some((k) => k.codigo === c.decididoPor)
+    ? rotulo(c.decididoPor)
+    : resolucao(c.decididoPor);
+}
+
+/**
+ * As planilhas do XLSX: "Resumo" (cabeçalho, totais, decididos por critério e
+ * empates até o fim), "Grupos" (um por linha), "Pares" (quem ficou à frente de
+ * quem e por quê) e "Candidatos" (uma linha por candidato em cada grupo, com a
+ * idade e o valor em cada critério da regra). Grupos, Pares e Candidatos com
+ * filtro e cabeçalho fixo.
  */
 export function planilhasDoDesempate(
   desempate: DesempateDaLista,
 ): PlanilhaDaClassificacao[] {
-  const { criterios, vagas } = desempate.relatorio;
+  const r = desempate.relatorio;
+  const { criterios, vagas } = r;
   const rotulo = (codigo: string) =>
     criterios.find((c) => c.codigo === codigo)?.rotulo || codigo;
+  const resumo = resumoDoDesempate(desempate);
+  const comIdade = usaIdade(r);
+
+  const linhasDoResumo: (string | number)[][] = [
+    [`Relatório de desempate — ${TITULOS[r.tipo] || r.tipo}`, ""],
+    ...linhasDoCabecalho(desempate),
+    ["Regra do desempate", regraDoEmpate(r)],
+    [],
+    ["Grupos de empate", resumo.grupos],
+    ["Decididos pelos critérios", resumo.decididosPorCriterio],
+    ["Com empate até o fim", resumo.empatadosAteOFim],
+    ["Pendentes (aguardando o registro)", resumo.pendentes],
+    ["Na mesma posição pela regra da lista", resumo.mesmaPosicaoNaLista],
+    [],
+    ["Decididos por critério", "Pares de candidatos", "Grupos"],
+    ...resumo.porCriterio.map((c) => [c.rotulo, c.pares, c.grupos]),
+    [],
+    ["Empates até o fim, como foram resolvidos", "Empates", "Candidatos"],
+    ...resumo.empatesAteOFim.map((e) => [e.rotulo, e.empates, e.candidatos]),
+  ];
+
+  const grupos: (string | number)[][] = [
+    [
+      "Vaga",
+      "Cargo",
+      "Lista",
+      "Cota",
+      "Nota",
+      "Posições",
+      "Empatados",
+      "Critérios aplicados",
+      "Decidido por",
+      "Resolução",
+    ],
+  ];
   const candidatos: (string | number)[][] = [
     [
       "Vaga",
+      "Cargo",
       "Lista",
       "Nota",
       "Posição",
       "Inscrição",
       "Candidato",
+      ...(comIdade ? ["Idade na data de corte"] : []),
       "Decidido por",
       ...criterios.map((c) => c.rotulo),
       "Resolução do grupo",
@@ -351,18 +718,32 @@ export function planilhasDoDesempate(
   ];
   for (const v of vagas)
     for (const g of v.grupos) {
-      const base = [v.codigo || v.cargo, nomeDaLista(g.lista), g.notaTexto];
+      const decisivos = [
+        ...new Set(g.pares.flatMap((p) => (p.criterio ? [p.criterio] : []))),
+      ];
+      grupos.push([
+        v.codigo,
+        v.cargo,
+        g.listaNome,
+        g.cota ? "sim" : "não",
+        g.notaTexto,
+        posicoesDoGrupo(g),
+        g.candidatos.length,
+        g.criteriosAplicados.map(rotulo).join(" → "),
+        decisivos.map(rotulo).join(", "),
+        resolucao(g.resolucao),
+      ]);
       for (const c of g.candidatos)
         candidatos.push([
-          ...base,
+          v.codigo,
+          v.cargo,
+          g.listaNome,
+          g.notaTexto,
           c.posicao,
           c.codigo,
           c.nome,
-          c.decididoPor
-            ? criterios.some((k) => k.codigo === c.decididoPor)
-              ? rotulo(c.decididoPor)
-              : resolucao(c.decididoPor)
-            : "",
+          ...(comIdade ? [c.idade ?? ""] : []),
+          decididoPor(c, rotulo, criterios),
           ...criterios.map((k) =>
             k.codigo in c.valores
               ? textoDoValor(c.valores[k.codigo], k.codigo)
@@ -370,21 +751,29 @@ export function planilhasDoDesempate(
           ),
           resolucao(g.resolucao),
         ]);
-      const quem = new Map(
-        g.candidatos.map((c) => [
-          c.analiseId,
-          c.nome || c.codigo || c.analiseId,
-        ]),
-      );
+      const porId = new Map(g.candidatos.map((c) => [c.analiseId, c]));
+      const quem = (id: string) => {
+        const c = porId.get(id);
+        if (!c) return id;
+        return c.codigo ? `${c.nome} (insc. ${c.codigo})` : c.nome || id;
+      };
       for (const p of g.pares)
         pares.push([
-          ...base,
-          quem.get(p.acima) || p.acima,
-          quem.get(p.abaixo) || p.abaixo,
+          v.codigo || v.cargo,
+          g.listaNome,
+          g.notaTexto,
+          quem(p.acima),
+          quem(p.abaixo),
           p.criterio ? rotulo(p.criterio) : "",
           p.criterio && p.valores
-            ? p.valores
-                .map((x) => textoDoValor(x, p.criterio || ""))
+            ? [p.acima, p.abaixo]
+                .map((id, i) =>
+                  textoDoValor(
+                    p.valores?.[i],
+                    p.criterio || "",
+                    porId.get(id)?.idade ?? null,
+                  ),
+                )
                 .join(" × ") +
               (p.horaDaCertidao ? " (mesma data; hora da certidão)" : "")
             : "",
@@ -392,21 +781,191 @@ export function planilhasDoDesempate(
         ]);
     }
   return [
+    { nome: "Resumo", linhas: linhasDoResumo, larguras: [40, 60, 12] },
+    {
+      nome: "Grupos",
+      linhas: grupos,
+      larguras: [8, 30, 44, 7, 8, 12, 10, 50, 30, 26],
+      filtro: true,
+    },
+    {
+      nome: "Pares",
+      linhas: pares,
+      larguras: [10, 44, 8, 40, 40, 22, 44, 26],
+      filtro: true,
+    },
     {
       nome: "Candidatos",
       linhas: candidatos,
-      larguras: [12, 10, 8, 8, 12, 36, 22],
+      larguras: [8, 30, 44, 8, 8, 12, 36, ...(comIdade ? [12] : []), 22],
+      filtro: true,
     },
-    { nome: "Pares", linhas: pares, larguras: [12, 10, 8, 36, 36, 22, 36, 26] },
   ];
 }
 
-/** A página do PDF (impressão do navegador): o texto do relatório, com o título. */
+const html = (valor: unknown) => escapeHtml(String(valor ?? ""));
+
+/* Um grupo no PDF: título (lista, nota, posições, resolução), candidatos, pares e o empate até o fim. */
+function grupoNoPdf(
+  g: GrupoDoDesempate,
+  r: RelatorioDeDesempate,
+  colunas: number,
+  comIdade: boolean,
+) {
+  const rotulo = (codigo: string) =>
+    r.criterios.find((c) => c.codigo === codigo)?.rotulo || codigo;
+  const porId = new Map(g.candidatos.map((c) => [c.analiseId, c]));
+  const quem = (id: string) => {
+    const c = porId.get(id);
+    if (!c) return html(id);
+    return `${html(c.nome)}${c.codigo ? ` <span class="insc">(insc. ${html(c.codigo)})</span>` : ""}`;
+  };
+  const titulo =
+    `<span class="${g.cota ? "selo cota" : "selo"}">${html(g.listaNome)}</span> ` +
+    `nota ${html(g.notaTexto)} · ${g.candidatos.length} empatados · ${html(posicoesDoGrupo(g))} ·` +
+    ` <span class="resolucao">${html(resolucao(g.resolucao))}</span>`;
+  const linhas = [
+    `<tr class="titulo-do-grupo"><td colspan="${colunas}">${titulo}</td></tr>`,
+  ];
+  if (g.criteriosAplicados.length)
+    linhas.push(
+      `<tr class="aplicados"><td colspan="${colunas}">Critérios aplicados: ${html(g.criteriosAplicados.map(rotulo).join(" → "))}</td></tr>`,
+    );
+  for (const c of g.candidatos) {
+    const valores = Object.entries(c.valores)
+      .map(([k, v]) => `${html(rotulo(k))}: ${html(textoDoValor(v, k))}`)
+      .join(" · ");
+    linhas.push(
+      `<tr><td class="num">${html(ordinal(c.posicao))}</td><td>${html(c.codigo)}</td><td>${html(c.nome)}</td>` +
+        (comIdade
+          ? `<td class="num">${c.idade === null ? "" : html(c.idade)}</td>`
+          : "") +
+        `<td>${valores}</td><td>${html(decididoPor(c, rotulo, r.criterios))}</td></tr>`,
+    );
+  }
+  for (const p of g.pares) {
+    if (p.criterio && p.valores) {
+      const [va, vb] = [p.acima, p.abaixo].map((id, i) =>
+        textoDoValor(
+          p.valores?.[i],
+          p.criterio || "",
+          porId.get(id)?.idade ?? null,
+        ),
+      );
+      const hora = p.horaDaCertidao
+        ? "; mesma data de nascimento, decidiu a hora da certidão"
+        : "";
+      linhas.push(
+        `<tr class="par"><td colspan="${colunas}">${quem(p.acima)} à frente de ${quem(p.abaixo)} por <b>${html(rotulo(p.criterio))}</b> (${html(va)} × ${html(vb)})${html(hora)}</td></tr>`,
+      );
+    } else if (p.resolucao === "MESMA_POSICAO_LISTA")
+      linhas.push(
+        `<tr class="par"><td colspan="${colunas}">${quem(p.acima)} e ${quem(p.abaixo)}: nesta lista o empate fica na mesma posição</td></tr>`,
+      );
+  }
+  for (const e of g.empatadosAteOFim) {
+    const registroDoEmpate = e.registro
+      ? ` (registro ${html(e.registro)})`
+      : "";
+    linhas.push(
+      `<tr class="fim"><td colspan="${colunas}">Empatados em todos os critérios: ${e.analiseIds.map(quem).join(", ")} — <b>${html(resolucao(e.resolucao))}</b>${registroDoEmpate}</td></tr>`,
+    );
+  }
+  return `<tbody class="grupo">${linhas.join("")}</tbody>`;
+}
+
+/**
+ * A página do PDF (impressão do navegador): cabeçalho da lista, resumo, índice
+ * por vaga (links para cada vaga) e, por vaga, uma tabela cujo cabeçalho (a
+ * vaga e as colunas) se repete em cada página.
+ */
 export function paginaDoDesempate(desempate: DesempateDaLista, titulo: string) {
-  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${escapeHtml(titulo)}</title>
-<style>body{font:11px/1.45 Arial,sans-serif;margin:16mm}h1{font-size:15px;margin:0 0 4px}
-p{margin:0 0 12px}pre{white-space:pre-wrap;font:10.5px/1.45 "Courier New",monospace;margin:0}</style>
-</head><body><h1>${escapeHtml(titulo)}</h1><p>Gerado em ${escapeHtml(desempate.geradoEm.slice(0, 16).replace("T", " "))}${
-    desempate.daListaAtual ? "" : " — de outra versão desta lista"
-  }</p><pre>${escapeHtml(desempate.texto)}</pre></body></html>`;
+  const r = desempate.relatorio;
+  const resumo = resumoDoDesempate(desempate);
+  const comIdade = usaIdade(r);
+  const colunas = comIdade ? 6 : 5;
+  const subtitulo = TITULOS[r.tipo] || r.tipo;
+  const cabecalho = linhasDoCabecalho(desempate)
+    .map(([k, v]) => `<dt>${html(k)}</dt><dd>${html(v)}</dd>`)
+    .join("");
+  const porCriterio = resumo.porCriterio.length
+    ? `<table class="resumo"><thead><tr><th>Decididos por critério</th><th class="num">Pares</th><th class="num">Grupos</th></tr></thead><tbody>${resumo.porCriterio
+        .map(
+          (c) =>
+            `<tr><td>${html(c.rotulo)}</td><td class="num">${c.pares}</td><td class="num">${c.grupos}</td></tr>`,
+        )
+        .join("")}</tbody></table>`
+    : "";
+  const ateOFim = resumo.empatesAteOFim.length
+    ? `<table class="resumo"><thead><tr><th>Empates até o fim, como foram resolvidos</th><th class="num">Empates</th><th class="num">Candidatos</th></tr></thead><tbody>${resumo.empatesAteOFim
+        .map(
+          (e) =>
+            `<tr><td>${html(e.rotulo)}</td><td class="num">${e.empates}</td><td class="num">${e.candidatos}</td></tr>`,
+        )
+        .join("")}</tbody></table>`
+    : "";
+  const totais =
+    `<p class="totais"><b>${resumo.grupos}</b> grupo(s) de empate: <b>${resumo.decididosPorCriterio}</b> decidido(s) pelos critérios, ` +
+    `<b>${resumo.empatadosAteOFim}</b> com empate até o fim (<b>${resumo.pendentes}</b> pendente(s)), ` +
+    `<b>${resumo.mesmaPosicaoNaLista}</b> na mesma posição pela regra da lista.</p>`;
+  const indice = r.vagas.length
+    ? `<nav class="indice"><h2>Índice por vaga</h2><ol>${r.vagas
+        .map(
+          (v, i) =>
+            `<li><a href="#vaga-${i + 1}"><span>${html(tituloDaVaga(v))}</span><span class="pontos"></span><span>${v.grupos.length} grupo(s)</span></a></li>`,
+        )
+        .join("")}</ol></nav>`
+    : `<p>Nenhum empate de nota nesta lista.</p>`;
+  const vagas = r.vagas
+    .map(
+      (v, i) =>
+        `<section class="vaga" id="vaga-${i + 1}"><table class="grupos"><thead>` +
+        `<tr><th class="vaga" colspan="${colunas}">${html(tituloDaVaga(v))} <span class="leve">· ${v.grupos.length} grupo(s) · ${html(subtitulo)}</span></th></tr>` +
+        `<tr><th class="num">Pos.</th><th>Inscrição</th><th class="candidato">Candidato</th>${comIdade ? '<th class="num">Idade</th>' : ""}<th>Valores nos critérios aplicados</th><th>Decidido por</th></tr>` +
+        `</thead>${v.grupos.map((g) => grupoNoPdf(g, r, colunas, comIdade)).join("")}</table></section>`,
+    )
+    .join("");
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${html(titulo)}</title>
+<style>
+@page{size:A4;margin:14mm 12mm 16mm;@bottom-right{content:"Página " counter(page) " de " counter(pages);font:9px Arial,sans-serif;color:#555}}
+*{box-sizing:border-box}
+body{font:10px/1.4 Arial,sans-serif;color:#111;margin:0}
+h1{font-size:16px;margin:0 0 2px}
+h1+.sub{font-size:12px;color:#333;margin:0 0 10px}
+h2{font-size:12px;margin:14px 0 6px}
+dl.cabecalho{display:grid;grid-template-columns:max-content 1fr;gap:2px 12px;margin:0 0 10px;padding:8px 10px;border:1px solid #bbb;border-radius:4px}
+dl.cabecalho dt{font-weight:bold;color:#333}
+dl.cabecalho dd{margin:0}
+p.regra{margin:0 0 8px;color:#333}
+p.totais{margin:0 0 8px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;vertical-align:top;padding:3px 5px;border-bottom:1px solid #ddd}
+.num{text-align:right;white-space:nowrap}
+table.resumo{width:auto;min-width:55%;margin:0 0 10px}
+table.resumo th{background:#eef1f5;border-bottom:1px solid #999}
+nav.indice ol{list-style:none;margin:0;padding:0}
+nav.indice li{margin:0 0 2px}
+nav.indice a{display:flex;gap:6px;color:#0b3d91;text-decoration:none}
+nav.indice .pontos{flex:1;border-bottom:1px dotted #999;margin-bottom:3px}
+section.vaga{margin-top:16px}
+section.vaga:first-of-type{break-before:page;margin-top:0}
+table.grupos thead th{background:#eef1f5;border-bottom:1px solid #999}
+table.grupos thead th.vaga{font-size:12px;background:#dfe6ee}
+.leve{font-weight:normal;color:#444}
+tbody.grupo{break-inside:avoid}
+tr{break-inside:avoid}
+tr.titulo-do-grupo td{background:#f5f5f5;font-weight:bold;border-top:2px solid #888}
+tr.aplicados td{color:#444;font-size:9.5px}
+tr.par td,tr.fim td{font-size:9.5px;color:#222;padding-left:14px}
+tr.fim td{background:#fff8e6}
+.selo{display:inline-block;padding:0 5px;border:1px solid #888;border-radius:3px;font-weight:bold}
+.selo.cota{border-color:#8a4b00;color:#8a4b00;background:#fff3e0}
+.resolucao{font-weight:normal;color:#444}
+.insc{color:#555}
+th.candidato{width:22%}
+</style>
+</head><body><h1>${html(titulo)}</h1><p class="sub">${html(subtitulo)}</p>
+<dl class="cabecalho">${cabecalho}</dl>
+<p class="regra">${html(regraDoEmpate(r))}</p>
+<h2>Resumo</h2>${totais}${porCriterio}${ateOFim}${indice}${vagas}</body></html>`;
 }

@@ -4,6 +4,8 @@ export interface PlanilhaDaClassificacao {
   linhas: readonly (readonly CelulaDaPlanilha[])[];
   /** Largura de cada coluna, em caracteres (opcional). */
   larguras?: readonly number[];
+  /** Filtro na primeira linha (cabeçalho), que também fica fixa ao rolar. */
+  filtro?: boolean;
 }
 export interface ModalidadeDoRetrato {
   codigo: string;

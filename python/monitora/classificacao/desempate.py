@@ -11,26 +11,44 @@ uma conta à parte. Dois formatos: `relatorio_de_desempate` (json estável,
 versão em VERSAO_DO_RELATORIO, para guardar junto da lista) e
 `texto_do_relatorio` (texto legível).
 
+Versão 2 (23/10/2026): o cabeçalho (edital e unidade, tipo e fase da lista,
+número da geração e id, quando e por quem foi gerada, versão da regra), as
+modalidades com o nome (o título do grupo diz se o empate é na lista geral ou
+numa lista de cota), a idade em anos na data de corte e o resumo (pares
+decididos por critério e como terminaram os empates até o fim). A tela
+continua lendo a versão 1 (src/lib/classificacao/relatorio-de-desempate.ts).
+
 O candidato é o id da análise, o código de inscrição e o nome (decisão do
 usuário de 23/10/2026: o relatório é documento interno da comissão, lido só
-por quem vê a lista); a maior idade sai como a ordem de idade dentro do grupo
-(1 = mais velho) e se havia certidão de nascimento, nunca a data. Nada de CPF,
-contato ou data de nascimento.
+por quem vê a lista); a idade sai em anos completos na data de corte (a mesma
+dos critérios idade e 60+), com a ordem de idade dentro do grupo (1 = mais
+velho) e se havia certidão de nascimento — nunca a data. Nada de CPF, contato
+ou data de nascimento.
 """
 
 from __future__ import annotations
 
+import datetime
+
 from .catalogo import CRITERIO_POR_CODIGO
 from .motor import classificar_com_rastro, primeiro_que_separa, valor_do_criterio
-from .numeros import escalar, formatar_nota
+from .numeros import data_br, escalar, formatar_nota, idade_na_data
 
-VERSAO_DO_RELATORIO = 1
+VERSAO_DO_RELATORIO = 2
 
 _TITULOS = {
     "PRELIMINAR": "Avaliação documental",
     "CONVOCACAO": "Convocação para entrevista",
     "ENTREVISTA": "Resultado da entrevista",
     "FINAL": "Resultado final",
+}
+# O tipo da lista e a fase (etapa do processo seletivo) a que ela pertence.
+_TIPOS = {"PRELIMINAR": "Preliminar", "CONVOCACAO": "Convocação", "ENTREVISTA": "Entrevista", "FINAL": "Final"}
+_FASES = {
+    "PRELIMINAR": "Avaliação documental e de títulos",
+    "CONVOCACAO": "Convocação para a entrevista",
+    "ENTREVISTA": "Entrevista",
+    "FINAL": "Resultado final do processo seletivo",
 }
 _DIRECOES = {
     "SIM_PRIMEIRO": "sim antes de não",
@@ -52,6 +70,9 @@ _RESOLUCOES = {
     "PENDENTE": "aguardando o registro (pendente)",
     "MESMA_POSICAO_LISTA": "nesta lista o empate fica na mesma posição",
 }
+_CRITERIOS_DE_IDADE = ("IDOSO_60", "MAIOR_IDADE")
+# Horário de Brasília (sem horário de verão desde 2019).
+_BRASILIA = datetime.timezone(datetime.timedelta(hours=-3))
 
 
 def _rotulo(criterio: str) -> str:
@@ -66,21 +87,31 @@ def _ordem_de_idade(membros, ctx) -> dict:
     return {i: (distintos.index(v) + 1 if v is not None else None) for i, v in valores.items()}
 
 
-def _valor_publico(c, criterio, ctx, idades):
-    """O valor do critério que pode ir para o relatório (a idade vira a ordem no grupo)."""
+def _valor_publico(c, criterio, ctx, ordens):
+    """O valor do critério que pode ir para o relatório (a idade em anos e a ordem no grupo, nunca a data)."""
     if criterio == "MAIOR_IDADE":
-        return {"ordemDeIdade": idades.get(c.analiseId), "certidao": bool(c.horaNascimento)}
+        return {
+            "idade": idade_na_data(c.dataNascimento, ctx.data_corte),
+            "ordemDeIdade": ordens.get(c.analiseId),
+            "certidao": bool(c.horaNascimento),
+        }
     return valor_do_criterio(c, criterio, ctx)
 
 
-def _texto_do_valor(valor, criterio) -> str:
+def _anos(idade) -> str:
+    return "sem data de nascimento" if idade is None else f"{idade} anos"
+
+
+def _texto_do_valor(valor, criterio, idade=None) -> str:
+    """O valor como texto; `idade` (anos na data de corte) acompanha o 60+."""
     if valor is None:
         return "sem dado"
     if isinstance(valor, bool):
-        return "sim" if valor else "não"
+        base = "sim" if valor else "não"
+        return f"{base} ({_anos(idade)})" if criterio == "IDOSO_60" and idade is not None else base
     if criterio == "MAIOR_IDADE":
         ordem = valor.get("ordemDeIdade")
-        base = f"{ordem}º mais velho do grupo" if ordem else "sem data de nascimento"
+        base = _anos(valor.get("idade")) + (f", {ordem}º mais velho do grupo" if ordem else "")
         return base + ("" if valor.get("certidao") else ", sem certidão")
     if criterio == "EXP_PROFISSIONAL_TEMPO":
         return f"{formatar_nota(valor, 0)} dias"
@@ -114,10 +145,24 @@ def _resolucao_do_residuo(blocos) -> str:
     return resolucoes[0] if len(resolucoes) == 1 else "+".join(resolucoes)
 
 
-def _grupo(linhas, lista, rastro_da_vaga, ctx) -> dict:
+def eh_lista_de_cota(lista: str) -> bool:
+    """A lista de uma modalidade de cota (não a geral nem a de ampla concorrência)."""
+    return lista not in ("GERAL", "AC")
+
+
+def nome_da_lista(lista: str, nomes: dict) -> str:
+    """ "Lista geral", "Lista de cota: Pretos e pardos (PPP)" ou "Lista de Ampla concorrência (AC)"."""
+    if lista == "GERAL":
+        return "Lista geral"
+    nome = nomes.get(lista) or lista
+    rotulo = nome if nome == lista else f"{nome} ({lista})"
+    return f"Lista de cota: {rotulo}" if eh_lista_de_cota(lista) else f"Lista de {rotulo}"
+
+
+def _grupo(linhas, lista, rastro_da_vaga, ctx, nomes) -> dict:
     criterios = ctx.criterios
     membros = [linha.c for linha in linhas]
-    idades = _ordem_de_idade(membros, ctx)
+    ordens = _ordem_de_idade(membros, ctx)
     usa_criterios = rastro_da_vaga["usarCriterios"] and linhas[0].bloco.resolucao != "MESMA_POSICAO_LISTA"
 
     pares = []
@@ -133,8 +178,8 @@ def _grupo(linhas, lista, rastro_da_vaga, ctx) -> dict:
             mais_fundo = max(mais_fundo, indice)
             par["criterio"] = separa["criterio"]
             par["valores"] = [
-                _valor_publico(a, separa["criterio"], ctx, idades),
-                _valor_publico(b, separa["criterio"], ctx, idades),
+                _valor_publico(a, separa["criterio"], ctx, ordens),
+                _valor_publico(b, separa["criterio"], ctx, ordens),
             ]
             par["resolucao"] = "CRITERIOS"
             if separa["criterio"] == "MAIOR_IDADE":
@@ -159,6 +204,8 @@ def _grupo(linhas, lista, rastro_da_vaga, ctx) -> dict:
         aplicados = [d["criterio"] for d in criterios]
     else:
         aplicados = [d["criterio"] for d in criterios[: mais_fundo + 1]]
+    # A idade só vai para o relatório quando o grupo chegou a um critério de idade.
+    usa_idade = any(k in _CRITERIOS_DE_IDADE for k in aplicados)
 
     candidatos = []
     for i, linha in enumerate(linhas):
@@ -169,7 +216,8 @@ def _grupo(linhas, lista, rastro_da_vaga, ctx) -> dict:
                 "codigo": c.codigo,
                 "nome": c.nome,
                 "posicao": linha.posicao,
-                "valores": {k: _valor_publico(c, k, ctx, idades) for k in aplicados},
+                "idade": idade_na_data(c.dataNascimento, ctx.data_corte) if usa_idade else None,
+                "valores": {k: _valor_publico(c, k, ctx, ordens) for k in aplicados},
                 "decididoPor": pares[i]["criterio"] or pares[i]["resolucao"] if i < len(pares) else None,
             }
         )
@@ -203,6 +251,8 @@ def _grupo(linhas, lista, rastro_da_vaga, ctx) -> dict:
     nota = linhas[0].c.nota
     return {
         "lista": lista,
+        "listaNome": nome_da_lista(lista, nomes),
+        "cota": eh_lista_de_cota(lista),
         "nota": nota,
         "notaTexto": formatar_nota(nota, ctx.casas),
         "posicoes": [linhas[0].posicao, linhas[-1].posicao],
@@ -214,10 +264,91 @@ def _grupo(linhas, lista, rastro_da_vaga, ctx) -> dict:
     }
 
 
-def relatorio_do_rastro(resultado: dict, rastro: dict) -> dict:
+def resumo_dos_grupos(vagas, criterios) -> dict:
+    """
+    O resumo do topo: por critério da regra (na ordem dela), quantos pares ele
+    decidiu e em quantos grupos; e como terminaram os empates até o fim (cada
+    sequência de empatados em todos os critérios), por resolução, na ordem em
+    que aparecem.
+    """
+    por_criterio = {d["codigo"]: {"pares": 0, "grupos": 0} for d in criterios}
+    por_resolucao: dict = {}
+    for v in vagas:
+        for g in v["grupos"]:
+            decidiu = set()
+            for p in g["pares"]:
+                if p["criterio"]:
+                    item = por_criterio.setdefault(p["criterio"], {"pares": 0, "grupos": 0})
+                    item["pares"] += 1
+                    decidiu.add(p["criterio"])
+            for k in decidiu:
+                por_criterio[k]["grupos"] += 1
+            for e in g["empatadosAteOFim"]:
+                item = por_resolucao.setdefault(e["resolucao"], {"empates": 0, "candidatos": 0})
+                item["empates"] += 1
+                item["candidatos"] += len(e["analiseIds"])
+    return {
+        "porCriterio": [{"codigo": k, "rotulo": _rotulo(k), **n} for k, n in por_criterio.items() if n["pares"]],
+        "empatesAteOFim": [
+            {"resolucao": k, "rotulo": " + ".join(_RESOLUCOES.get(r, r) for r in k.split("+")), **n}
+            for k, n in por_resolucao.items()
+        ],
+    }
+
+
+def momento_br(valor) -> str:
+    """ "2026-10-23T13:05:00+00:00" → "23/10/2026 10:05" (horário de Brasília); inválido → ""."""
+    if not isinstance(valor, str) or not valor:
+        return ""
+    try:
+        momento = datetime.datetime.fromisoformat(valor.replace("Z", "+00:00"))
+    except ValueError:
+        return ""
+    if momento.tzinfo is None:
+        momento = momento.replace(tzinfo=datetime.UTC)
+    return momento.astimezone(_BRASILIA).strftime("%d/%m/%Y %H:%M")
+
+
+def cabecalho_da_lista(dados: dict, lista: dict | None, tipo: str) -> dict:
+    """
+    O cabeçalho do relatório: o edital (número e unidade), a lista (tipo, fase,
+    número da geração entre as do mesmo tipo no edital, id, quando e por quem
+    foi gerada) e a versão da regra. `dados` é o json de
+    classificacao_ler_edital; `lista`, o de classificacao_ler_lista (sem lista,
+    no --seco, a versão é a vigente e a lista fica sem número, id e autor).
+    """
+    edital = dados.get("edital") if isinstance(dados.get("edital"), dict) else {}
+    lista = lista or {}
+    lista_id = str(lista.get("id") or "")
+    geradas = sorted(
+        (x for x in dados.get("listas") or [] if isinstance(x, dict) and x.get("tipo") == tipo),
+        key=lambda x: (str(x.get("gerada_em") or ""), str(x.get("id") or "")),
+    )
+    numero = next((i + 1 for i, x in enumerate(geradas) if lista_id and str(x.get("id") or "") == lista_id), None)
+    regra = dados.get("regra") if isinstance(dados.get("regra"), dict) else {}
+    versao = lista.get("versao_regra") if lista else regra.get("versao")
+    return {
+        "edital": {"numero": str(edital.get("numero") or ""), "unidade": str(edital.get("unidade") or "")},
+        "lista": {
+            "id": lista_id or None,
+            "numero": numero,
+            "tipo": tipo,
+            "tipoNome": _TIPOS.get(tipo, tipo),
+            "fase": _FASES.get(tipo, ""),
+            "geradaEm": lista.get("gerada_em") or None,
+            "geradaEmTexto": momento_br(lista.get("gerada_em")),
+            "geradaPor": str(lista.get("gerada_por") or "") or None,
+        },
+        "regra": {"versao": versao if isinstance(versao, int) and not isinstance(versao, bool) else None},
+    }
+
+
+def relatorio_do_rastro(resultado: dict, rastro: dict, cabecalho: dict | None = None) -> dict:
     """O relatório de desempate (json estável) da lista classificada."""
     ctx = rastro["ctx"]
     regra = rastro["regra"]
+    modalidades = [{"codigo": m["codigo"], "nome": m["nome"]} for m in regra.get("modalidades") or []]
+    nomes = {m["codigo"]: m["nome"] for m in modalidades}
     vagas = []
     totais = {"grupos": 0, "decididosPorCriterio": 0, "empatadosAteOFim": 0, "pendentes": 0, "mesmaPosicaoNaLista": 0}
     for rv in rastro["vagas"]:
@@ -225,7 +356,7 @@ def relatorio_do_rastro(resultado: dict, rastro: dict) -> dict:
         grupos = []
         for lista, linhas in listas:
             for linhas_do_grupo in _grupos_da_lista(linhas, ctx.casas):
-                grupo = _grupo(linhas_do_grupo, lista, rv, ctx)
+                grupo = _grupo(linhas_do_grupo, lista, rv, ctx, nomes)
                 grupos.append(grupo)
                 totais["grupos"] += 1
                 if grupo["resolucao"] == "CRITERIOS":
@@ -241,26 +372,30 @@ def relatorio_do_rastro(resultado: dict, rastro: dict) -> dict:
                 {"chave": v["chave"], "codigo": v.get("codigo") or "", "cargo": v.get("cargo") or "", "grupos": grupos}
             )
     tipo_da_ordem = rastro["vagas"][0]["tipoDaOrdem"] if rastro["vagas"] else rastro["tipo"]
+    criterios = [
+        {"codigo": d["criterio"], "rotulo": _rotulo(d["criterio"]), "direcao": d["direcao"]} for d in ctx.criterios
+    ]
     return {
         "versao": VERSAO_DO_RELATORIO,
         "tipo": resultado["tipo"],
         "ordem": tipo_da_ordem,
         "casas": resultado["casas"],
         "dataCorte": resultado["dataCorte"],
+        "cabecalho": cabecalho or cabecalho_da_lista({}, None, resultado["tipo"]),
         "empateNaLista": regra["listas"][tipo_da_ordem]["empate"],
-        "criterios": [
-            {"codigo": d["criterio"], "rotulo": _rotulo(d["criterio"]), "direcao": d["direcao"]} for d in ctx.criterios
-        ],
+        "criterios": criterios,
+        "modalidades": modalidades,
         "empateFinal": dict(regra["empate_final"]),
         "totais": totais,
+        "resumo": resumo_dos_grupos(vagas, criterios),
         "vagas": vagas,
     }
 
 
-def relatorio_de_desempate(entrada: dict) -> tuple[dict, dict]:
+def relatorio_de_desempate(entrada: dict, cabecalho: dict | None = None) -> tuple[dict, dict]:
     """(resultado, relatório) de uma entrada do motor."""
     resultado, rastro = classificar_com_rastro(entrada)
-    return resultado, relatorio_do_rastro(resultado, rastro)
+    return resultado, relatorio_do_rastro(resultado, rastro, cabecalho)
 
 
 def _ordinal(n) -> str:
@@ -273,10 +408,61 @@ def _quem(nome: str, codigo: str, analise_id: str) -> str:
     return f"{nome} ({referencia})" if nome else referencia
 
 
+def titulo_da_vaga(vaga: dict) -> str:
+    """ "Vaga 101 — Enfermeiro (Nível Superior)"; sem um dos dois, o que houver."""
+    if vaga["codigo"] and vaga["cargo"]:
+        return f"Vaga {vaga['codigo']} — {vaga['cargo']}"
+    return f"Vaga {vaga['codigo'] or vaga['cargo']}"
+
+
+def _linhas_do_cabecalho(relatorio: dict) -> list[str]:
+    cab = relatorio["cabecalho"]
+    edital, lista = cab["edital"], cab["lista"]
+    linhas = []
+    partes = [f"Edital nº {edital['numero']}" if edital["numero"] else "", edital["unidade"]]
+    if any(partes):
+        linhas.append(" · ".join(p for p in partes if p))
+    geracao = f" · {lista['numero']}ª geração desta lista" if lista.get("numero") else ""
+    linhas.append(f"Lista {lista['tipoNome']} · fase: {lista['fase']}{geracao}")
+    if lista.get("id"):
+        linhas.append(f"Identificador da lista: {lista['id']}")
+    gerada = []
+    if lista.get("geradaEmTexto"):
+        gerada.append(
+            f"Gerada em {lista['geradaEmTexto']}" + (f" por {lista['geradaPor']}" if lista.get("geradaPor") else "")
+        )
+    if cab["regra"].get("versao") is not None:
+        gerada.append(f"regra versão {cab['regra']['versao']}")
+    if gerada:
+        linhas.append(" · ".join(gerada))
+    if relatorio.get("dataCorte"):
+        linhas.append(f"Data de corte (idade e 60+): {data_br(relatorio['dataCorte'])}")
+    return linhas
+
+
+def _linhas_do_resumo(relatorio: dict) -> list[str]:
+    t, resumo = relatorio["totais"], relatorio["resumo"]
+    linhas = [
+        "RESUMO",
+        f"{t['grupos']} grupo(s) de empate: {t['decididosPorCriterio']} decidido(s) pelos critérios, "
+        f"{t['empatadosAteOFim']} com empate até o fim ({t['pendentes']} pendente(s)), "
+        f"{t['mesmaPosicaoNaLista']} na mesma posição pela regra da lista.",
+    ]
+    if resumo["porCriterio"]:
+        linhas.append("Decididos por critério (pares de candidatos · grupos):")
+        linhas.extend(f"  {c['rotulo']}: {c['pares']} · {c['grupos']}" for c in resumo["porCriterio"])
+    if resumo["empatesAteOFim"]:
+        linhas.append("Empates até o fim e como foram resolvidos (empates · candidatos):")
+        linhas.extend(f"  {e['rotulo']}: {e['empates']} · {e['candidatos']}" for e in resumo["empatesAteOFim"])
+    return linhas
+
+
 def texto_do_relatorio(relatorio: dict) -> str:
     """O relatório em texto legível (para o arquivo do job e a exportação)."""
     linhas = [
         f"RELATÓRIO DE DESEMPATE — {_TITULOS.get(relatorio['tipo'], relatorio['tipo'])}",
+        *_linhas_do_cabecalho(relatorio),
+        "",
     ]
     criterios = relatorio["criterios"]
     if relatorio["empateNaLista"] == "CRITERIOS" and criterios:
@@ -296,30 +482,33 @@ def texto_do_relatorio(relatorio: dict) -> str:
         f"Empate que sobra: {_METODOS.get(final['metodo'], final['metodo'])}. "
         f"Numeração: {'1º, 2º, 2º, 4º' if final['numeracao'] == 'SALTANDO' else '1º, 2º, 2º, 3º'}."
     )
-    t = relatorio["totais"]
-    linhas.append(
-        f"{t['grupos']} grupo(s) de empate: {t['decididosPorCriterio']} decidido(s) pelos critérios, "
-        f"{t['empatadosAteOFim']} com empate até o fim ({t['pendentes']} pendente(s)), "
-        f"{t['mesmaPosicaoNaLista']} na mesma posição pela regra da lista."
-    )
+    linhas.append("")
+    linhas.extend(_linhas_do_resumo(relatorio))
     if not relatorio["vagas"]:
         linhas.append("")
         linhas.append("Nenhum empate de nota nesta lista.")
+    else:
+        linhas.append("")
+        linhas.append("ÍNDICE POR VAGA")
+        linhas.extend(f"  {titulo_da_vaga(v)}: {len(v['grupos'])} grupo(s)" for v in relatorio["vagas"])
     for vaga in relatorio["vagas"]:
+        linhas.append("")
+        linhas.append(titulo_da_vaga(vaga).upper())
         for g in vaga["grupos"]:
-            lista = "lista geral" if g["lista"] == "GERAL" else f"lista {g['lista']}"
             primeira, ultima = g["posicoes"]
             posicoes = _ordinal(primeira) if primeira == ultima else f"{_ordinal(primeira)} a {_ordinal(ultima)}"
             linhas.append("")
             linhas.append(
-                f"Vaga {vaga['codigo'] or vaga['cargo']} · {lista} · nota {g['notaTexto']} · "
+                f"{titulo_da_vaga(vaga)} · {g['listaNome']} · nota {g['notaTexto']} · "
                 f"{len(g['candidatos'])} empatados · {posicoes}"
             )
             if g["criteriosAplicados"]:
                 linhas.append("  Critérios aplicados: " + " → ".join(_rotulo(k) for k in g["criteriosAplicados"]))
             por_id = {c["analiseId"]: c for c in g["candidatos"]}
             for c in g["candidatos"]:
-                valores = " | ".join(f"{_rotulo(k)}: {_texto_do_valor(v, k)}" for k, v in c["valores"].items())
+                valores = " | ".join(
+                    f"{_rotulo(k)}: {_texto_do_valor(v, k, c['idade'])}" for k, v in c["valores"].items()
+                )
                 quem = _quem(c["nome"], c["codigo"], c["analiseId"])
                 linhas.append(f"  {_ordinal(c['posicao'])}  {quem}" + (f"  {valores}" if valores else ""))
             for p in g["pares"]:
@@ -327,7 +516,8 @@ def texto_do_relatorio(relatorio: dict) -> str:
                 qa = _quem(a["nome"], a["codigo"], a["analiseId"])
                 qb = _quem(b["nome"], b["codigo"], b["analiseId"])
                 if p["criterio"]:
-                    va, vb = (_texto_do_valor(v, p["criterio"]) for v in p["valores"])
+                    va = _texto_do_valor(p["valores"][0], p["criterio"], a["idade"])
+                    vb = _texto_do_valor(p["valores"][1], p["criterio"], b["idade"])
                     hora = "; mesma data de nascimento, decidiu a hora da certidão" if p.get("horaDaCertidao") else ""
                     linhas.append(f"  · {qa} à frente de {qb} por {_rotulo(p['criterio'])} ({va} × {vb}){hora}")
                 elif p["resolucao"] == "MESMA_POSICAO_LISTA":
