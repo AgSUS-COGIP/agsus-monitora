@@ -82,9 +82,7 @@ describe("conferência dos aprovados pelo vínculo (20261024090000)", () => {
   it("o rollback volta ao corpo de 20261007230000, sem o vínculo", () => {
     expect(ROLLBACK).toMatch(/\nbegin;\n/);
     expect(ROLLBACK.trimEnd().endsWith("commit;")).toBe(true);
-    expect(semCabecalho(funcao(ROLLBACK))).toBe(
-      semCabecalho(funcao(ANTERIOR)),
-    );
+    expect(semCabecalho(funcao(ROLLBACK))).toBe(semCabecalho(funcao(ANTERIOR)));
     expect(funcao(ROLLBACK)).not.toContain("vinculo");
   });
 
