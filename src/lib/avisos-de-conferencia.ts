@@ -109,7 +109,12 @@ export const CONFERENCIAS: Readonly<
   APROVADOS_CONTRATADO_DUPLICADO: Object.freeze({
     modulo: "aprovados",
     gravidade: "CRITICA",
-    titulo: "Contratado em duas vagas",
+    titulo: "Duas matrículas no mesmo edital",
+  }),
+  APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS: Object.freeze({
+    modulo: "aprovados",
+    gravidade: "ATENCAO",
+    titulo: "Mesma contratação marcada em duas listas",
   }),
   APROVADOS_CONVOCADO_SEM_DESFECHO: Object.freeze({
     modulo: "aprovados",
@@ -464,13 +469,16 @@ export function motivoDoCaso(
     case "ENTREVISTA_HORARIO_DUPLICADO":
       return numero(d.horarios) > 1 ? `${d.horarios} horários` : "";
     case "APROVADOS_CONTRATADO_DUPLICADO": {
-      const contratos = (caso.vinculos || []).filter(
-        (v) => v.status === "Contratado",
-      ).length;
-      const n = Math.max(contratos, numero(d.vagas) || 0);
+      const n = numero(d.vinculos) || 0;
       return n > 1
-        ? `Contratado em ${n} vagas`
-        : "Contratado em mais de uma vaga";
+        ? `${n} matrículas no mesmo edital`
+        : "Mais de uma matrícula no mesmo edital";
+    }
+    case "APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS": {
+      const n = numero(d.linhas) || 0;
+      return n > 1
+        ? `Mesma matrícula em ${n} listas: deixar Contratado só em uma`
+        : "Mesma matrícula em mais de uma lista";
     }
     case "APROVADOS_CONVOCADO_SEM_DESFECHO": {
       const dia = diaDoCaso(d.convocado_em || caso.dataConvocacao);

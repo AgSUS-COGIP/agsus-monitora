@@ -53,7 +53,7 @@ const casos = [
     status: "Contratado",
     data_contratacao: "2026-02-03T13:00:00+00:00",
     referencia: null,
-    detalhe: { vagas: 2 },
+    detalhe: { vagas: 2, vinculos: 2 },
     vinculos: [
       {
         id: APROVADO,
@@ -131,14 +131,14 @@ afterEach(async () => {
   consumirPedidoDeFiltro("approved");
 });
 
-describe("casos do aviso Contratado em duas vagas", () => {
+describe("casos do aviso Duas matrículas no mesmo edital", () => {
   it("mostra a pessoa, a situação e as vagas — nunca o UUID", async () => {
     await abrirCasos();
     const itens = document.querySelectorAll(".conf-caso");
     expect(itens).toHaveLength(2);
     const primeiro = itens[0].textContent;
     expect(primeiro).toContain("4512 · Maria Fictícia");
-    expect(primeiro).toContain("Contratado em 2 vagas");
+    expect(primeiro).toContain("2 matrículas no mesmo edital");
     expect(primeiro).toContain(
       "Edital 40/2026 · 1900 · Técnico de enfermagem · Contratado em 20/05/2026",
     );

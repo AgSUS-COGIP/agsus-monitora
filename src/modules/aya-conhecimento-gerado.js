@@ -3957,7 +3957,7 @@ export const VERBETES_AYA = Object.freeze([
       "conferencias dos aprovados",
     ],
     resposta:
-      "Análises: aprovada com nota abaixo da mínima da regra de classificação; nota final diferente da soma das parciais (formação, cursos, experiência e critério étnico); experiência acima do teto, quando a regra tiver teto; data da análise no futuro ou antes da inscrição na Empregare; e, só como informação, o mesmo candidato com análise em dois editais ativos. Entrevistas: convocado sem nota depois da data marcada na agenda; nota de avaliador fora da escala do roteiro; convocado que não está na lista de convocação vigente da Classificação; e dois horários para o mesmo candidato. Classificação: lista final gerada antes da última mudança nas análises; empate sem desempate registrado; vaga das análises sem linha no quadro de vagas do edital; ajuste de recurso aprovado depois da última lista. Lista de aprovados: a mesma pessoa contratada em duas vagas; convocado há mais de 15 dias sem desfecho; pessoas da publicação vinda da Classificação ainda para revisão. Cargas: vaga da Empregare cujo número de candidatos variou 50% ou mais na última carga.",
+      "Análises: aprovada com nota abaixo da mínima da regra de classificação; nota final diferente da soma das parciais (formação, cursos, experiência e critério étnico); experiência acima do teto, quando a regra tiver teto; data da análise no futuro ou antes da inscrição na Empregare; e, só como informação, o mesmo candidato com análise em dois editais ativos. Entrevistas: convocado sem nota depois da data marcada na agenda; nota de avaliador fora da escala do roteiro; convocado que não está na lista de convocação vigente da Classificação; e dois horários para o mesmo candidato. Classificação: lista final gerada antes da última mudança nas análises; empate sem desempate registrado; vaga das análises sem linha no quadro de vagas do edital; ajuste de recurso aprovado depois da última lista. Lista de aprovados: a mesma pessoa com duas matrículas Contratado no mesmo edital (crítico); a mesma matrícula Contratado em mais de uma lista, por exemplo na ampla e na cota, que é uma contratação só e deve ficar Contratado só na lista pela qual a pessoa foi contratada (atenção); recontratação em outro edital, com outra matrícula, não gera aviso; convocado há mais de 15 dias sem desfecho; pessoas da publicação vinda da Classificação ainda para revisão. Cargas: vaga da Empregare cujo número de candidatos variou 50% ou mais na última carga.",
     fato: "",
     fonte: "scripts/conferencias/regras.py; scripts/conferencias/catalogo.py",
   },
@@ -4021,6 +4021,9 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: [
       "contratado em duas vagas",
       "quem foi contratado em duas vagas",
+      "duas matrículas no mesmo edital",
+      "mesma contratação marcada em duas listas",
+      "mesma matrícula em duas listas",
       "casos do aviso da lista de aprovados",
       "convocado sem desfecho",
       "casos do aviso das entrevistas",
@@ -4031,7 +4034,7 @@ export const VERBETES_AYA = Object.freeze([
       "abrir o aprovado do aviso",
     ],
     resposta:
-      'Os casos de todos os módulos mostram quem é e o que conferir. Na lista de aprovados: o nome, o código do candidato na Empregare (quando há), o edital, a vaga e a situação com a data (por exemplo, "Contratado em 03/02/2026"); no "Contratado em duas vagas" aparecem todas as vagas da pessoa nas listas vigentes, com edital, vaga, situação e data, e quantas ficaram fora do seu acesso. Clicar no caso abre a Lista de aprovados só com as vagas daquela pessoa; "Ver todos" tira o recorte. Nas entrevistas: nome, código, edital, vaga, parecer e nota, e o clique abre Entrevistas já buscando o candidato, com a entrevista aberta. Na classificação aparecem a lista (tipo e data), a vaga (código e nome) ou o candidato do ajuste. Se o registro não existe mais, o caso mostra "Registro removido"; se ele é de uma área ou edital fora do seu acesso, "Sem acesso" — nunca o identificador interno.',
+      'Os casos de todos os módulos mostram quem é e o que conferir. Na lista de aprovados: o nome, o código do candidato na Empregare (quando há), o edital, a vaga e a situação com a data (por exemplo, "Contratado em 03/02/2026"); em "Duas matrículas no mesmo edital" e "Mesma contratação marcada em duas listas" aparecem todas as vagas da pessoa nas listas vigentes, com edital, vaga, situação e data, e quantas ficaram fora do seu acesso. Clicar no caso abre a Lista de aprovados só com as vagas daquela pessoa; "Ver todos" tira o recorte. Nas entrevistas: nome, código, edital, vaga, parecer e nota, e o clique abre Entrevistas já buscando o candidato, com a entrevista aberta. Na classificação aparecem a lista (tipo e data), a vaga (código e nome) ou o candidato do ajuste. Se o registro não existe mais, o caso mostra "Registro removido"; se ele é de uma área ou edital fora do seu acesso, "Sem acesso" — nunca o identificador interno.',
     fato: "",
     fonte:
       "src/lib/avisos-de-conferencia.ts; supabase/migrations/20261007240000_casos_dos_avisos_resolvidos.sql",

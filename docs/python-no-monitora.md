@@ -156,6 +156,10 @@ Limites conhecidos (a acertar com os dados reais, depois do ensaio):
   outro jeito, o aviso pode ser ignorado com motivo — e a regra, ajustada.
 - Mesmo candidato em duas vagas da lista de aprovados: as listas não têm CPF; a pessoa é achada
   pelo código do candidato da análise ou, nas listas por planilha, pelo nome normalizado (em hash).
+  O vínculo é a matrícula (em hash, 20261024090000): é crítico só com duas matrículas Contratado
+  no mesmo edital; a mesma matrícula em duas linhas (ampla e cota) é o aviso de atenção
+  `APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS`; editais diferentes com matrículas diferentes
+  (recontratação) não geram aviso, porque o MONITORA não tem as datas de admissão e desligamento.
 
 ## Segunda entrega: pré-classificação da Avaliação documental
 
