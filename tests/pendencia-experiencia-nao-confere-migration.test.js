@@ -71,7 +71,8 @@ describe("experiência Não confere com os vínculos aceitos cumprindo o mínimo
   });
 
   it("a tela pede o mesmo (pendenciasDaFicha, tipo minimo)", () => {
-    expect(FICHA).toContain('l.situacao === "NAO_CONFORME" && meses >= minimo');
+    // 20261023090000: também no Não enviou (zera) e fora quando outro bloco elimina.
+    expect(FICHA).toContain("if (zera && meses >= minimo)");
     expect(FICHA).toContain('(bloco.efeito_minimo ?? "ELIMINA") === "ELIMINA"');
   });
 });

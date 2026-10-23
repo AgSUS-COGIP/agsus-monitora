@@ -53,6 +53,8 @@ Arquivos que exigem cuidado:
 - `status-da-analise.ts` — status sem decisão (Pendente, Em análise), comum ao KPI "Pendentes" e aos marcos.
 - `encerramento-do-edital.ts` — leitura de obter_encerramentos_do_edital, tela a mostrar, selos do perfil e fogos
   do encerramento (quem fechou o edital). O banco decide quando o edital está encerrado.
+- `avaliacao-documental/datas-do-vinculo.ts` — datas do vínculo da ficha (nada antes de 1960 nem fim depois de hoje) e o
+  fim do vínculo atual (a data limite do bloco, o fim das inscrições); o banco e o robô repetem a regra.
 - `env.js` — leitura de variáveis; nunca hardcode de chave.
 
 Arquivo novo: nome em português, kebab-case, com teste junto.

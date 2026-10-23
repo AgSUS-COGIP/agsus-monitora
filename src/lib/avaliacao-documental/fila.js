@@ -455,6 +455,12 @@ export const COLUNAS_DA_FILA = Object.freeze({
     rotulo: "Motivo da eliminação",
     valor: (c) => String(c.motivo_eliminacao ?? "").trim(),
   },
+  // O último motivo de "Mandar para revisão" (a coordenação ou a conferência
+  // automática da ficha concluída que ficou com pendência: FC_LINHAS_DA_FILA).
+  motivo_revisao: {
+    rotulo: "Motivo da revisão",
+    valor: (c) => String(c.ficha?.motivo_revisao ?? "").trim(),
+  },
   responsavel: {
     rotulo: "Responsável",
     valor: (c) => String(c.ficha?.responsavel_nome ?? ""),
@@ -515,6 +521,7 @@ const COLUNAS_DA_ETAPA = Object.freeze({
     "codigo",
     "nome",
     "art",
+    "motivo_revisao",
     "responsavel",
     "reserva",
   ],

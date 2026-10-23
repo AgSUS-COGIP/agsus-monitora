@@ -22,5 +22,8 @@ Regras:
 - RLS ligada por padrão; não desligar para "resolver" permissão.
 - Nomenclatura MAD: prefixo tipológico, MAIÚSCULAS, aspas duplas (PDTIC 2026–2027, resumido em
   `docs/padronizacao_nomenclatura_*.md`; o PDF fica fora do repositório). A skill `mad-ddl-review` revisa o DDL antes de aplicar.
+- Banco só valida a gravação de uma linha e guarda; cálculo em lote é do Python (scripts/ + RPC
+  service_role enxuta). O cálculo dos itens da ficha tem paridade tela × banco × Python pelos casos de
+  `tests/fixtures/avaliacao-documental/casos-do-calculo-no-banco.json`.
 - Validar: `npm run check:rpc-contract:db`, `npm run db:capturar-baseline`,
   `node scripts/estado-das-migrations.mjs` e o `scripts/validar-migration-*.mjs` do tema, quando houver.

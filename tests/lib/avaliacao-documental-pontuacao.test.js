@@ -141,6 +141,10 @@ describe("vínculos e tempo", () => {
   it("AM-10.5: anos de 365, meses de 30", () => {
     expect(anosMesesDias(912)).toEqual({ anos: 2, meses: 6, dias: 2 });
     expect(anosMesesDias(0)).toEqual({ anos: 0, meses: 0, dias: 0 });
+    // Meses até 11: o resto fica nos dias (364 dias não é "12 meses e 4 dias").
+    expect(anosMesesDias(364)).toEqual({ anos: 0, meses: 11, dias: 34 });
+    expect(anosMesesDias(360)).toEqual({ anos: 0, meses: 11, dias: 30 });
+    expect(anosMesesDias(729)).toEqual({ anos: 1, meses: 11, dias: 34 });
   });
 
   it("AM-10.2: 55 meses a 0,2 com teto 10 vale 10", () => {

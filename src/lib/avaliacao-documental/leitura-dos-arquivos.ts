@@ -19,6 +19,7 @@
   Sem DOM e sem estado. Testes: tests/lib/avaliacao-documental-leitura-dos-arquivos.test.js.
 */
 import { itemCompleto } from "./ficha.js";
+import { fimDoVinculoAtual } from "./datas-do-vinculo.ts";
 
 export type AlertaLido = { codigo: string; texto: string };
 
@@ -45,6 +46,8 @@ export type ItemLido = {
   dias?: number | null;
   /** Vínculo atual (sem fim): até quando os dias foram contados (a emissão do documento). */
   dias_ate?: string | null;
+  /** De onde veio dias_ate: EMISSAO (do documento), DATA_LIMITE, ARQUIVO ou LEITURA. */
+  dias_ate_fonte?: string | null;
   /** Declaração sem data de saída e sem "até a presente data": não dá para saber até quando. */
   fim_nao_informado?: boolean;
   /** Declaração sem número ligado a "horas semanais"/"carga horária"/"jornada". */
@@ -276,6 +279,8 @@ type BlocoComItens = {
   codigo: string;
   tipo: string;
   categorias?: { codigo: string }[];
+  /** Até quando a experiência conta (o fim das inscrições, se a regra não diz outra). */
+  data_limite?: string | null;
 };
 const LISTA_DO_BLOCO: Record<string, ChaveDosItens | undefined> = {
   TITULOS: "titulos",
@@ -361,18 +366,23 @@ export function linhaDoItemLido(
       .slice(0, 200),
     categoria: bloco.categorias?.[0]?.codigo,
     inicio: item.inicio && DATA.test(item.inicio) ? item.inicio : "",
-    // Atual: o fim é a emissão do documento (até onde o robô contou); sem ela, fica em branco.
-    fim: dataDoFim(item),
+    // Atual: até a data limite do bloco (o fim das inscrições), ou a emissão se for antes.
+    fim: dataDoFim(item, bloco.data_limite),
     aceito: true,
     do_arquivo: chave,
   };
 }
 
-function dataDoFim(item: ItemLido): string {
+function dataDoFim(item: ItemLido, dataLimite?: string | null): string {
   if (item.fim && DATA.test(item.fim)) return item.fim;
-  if (item.atual && item.dias_ate && DATA.test(item.dias_ate))
-    return item.dias_ate;
-  return "";
+  if (!item.atual) return "";
+  // A data de hoje (ou a do arquivo) não é fim: só a emissão do documento comprova.
+  const emissao =
+    !item.dias_ate_fonte || item.dias_ate_fonte === "EMISSAO"
+      ? item.dias_ate
+      : null;
+  if (dataLimite) return fimDoVinculoAtual({ emissao, dataLimite });
+  return item.dias_ate && DATA.test(item.dias_ate) ? item.dias_ate : "";
 }
 
 /**

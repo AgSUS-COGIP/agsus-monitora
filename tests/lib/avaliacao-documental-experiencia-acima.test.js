@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   calcularFicha,
   conferenciaDaFicha,
-  experienciaAcimaDoComprovado,
   pendenciasDaFicha,
+  pontuacaoAcimaDoComprovado,
 } from "../../src/lib/avaliacao-documental/ficha.js";
 
 /*
@@ -68,9 +68,12 @@ describe("experiência confirmada acima do que os vínculos aceitos comprovam", 
     const av = avaliar(l);
     expect(av.parciais.EXPERIENCIA).toBe(35);
     expect(av.calculados.EXPERIENCIA).toBe(5);
-    expect(
-      experienciaAcimaDoComprovado(EXPERIENCIA, l.blocos.EXPERIENCIA, av),
-    ).toEqual({ valor: 35, calculado: 5, meses: 16 });
+    expect(pontuacaoAcimaDoComprovado(EXPERIENCIA, l, av)).toEqual({
+      parcial: "EXPERIENCIA",
+      valor: 35,
+      calculado: 5,
+      meses: 16,
+    });
     expect(doTipo(l, "acima")).toEqual([
       {
         bloco: "EXPERIENCIA",
@@ -83,7 +86,7 @@ describe("experiência confirmada acima do que os vínculos aceitos comprovam", 
     expect(doTipo(l, "justificativa")).toEqual([]);
     expect(
       conferenciaDaFicha(REGRA, l, av, pendencias(l)).texto_da_falta,
-    ).toContain("experiência acima do comprovado");
+    ).toContain("pontuação acima do comprovado");
   });
 
   it("eliminado por outro critério: sem pendência (pontuação só informativa)", () => {
