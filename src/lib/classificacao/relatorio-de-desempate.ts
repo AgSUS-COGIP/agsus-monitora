@@ -927,41 +927,43 @@ export function paginaDoDesempate(desempate: DesempateDaLista, titulo: string) {
     .join("");
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${html(titulo)}</title>
 <style>
-@page{size:A4;margin:14mm 12mm 16mm;@bottom-right{content:"Página " counter(page) " de " counter(pages);font:9px Arial,sans-serif;color:#555}}
+/* Papel: as cores do documento impresso, iguais nos dois temas. */
+:root{--texto:#111;--texto-suave:#444;--borda:#999;--borda-leve:#ddd;--fundo-cabecalho:#eef1f5;--fundo-vaga:#dfe6ee;--fundo-grupo:#f5f5f5;--fundo-empate:#fff8e6;--cota:#8a4b00;--fundo-cota:#fff3e0;--link:#0b3d91}
+@page{size:A4;margin:14mm 12mm 16mm;@bottom-right{content:"Página " counter(page) " de " counter(pages);font:9px Arial,sans-serif;color:var(--texto-suave)}}
 *{box-sizing:border-box}
-body{font:10px/1.4 Arial,sans-serif;color:#111;margin:0}
+body{font:10px/1.4 Arial,sans-serif;color:var(--texto);margin:0}
 h1{font-size:16px;margin:0 0 2px}
-h1+.sub{font-size:12px;color:#333;margin:0 0 10px}
+h1+.sub{font-size:12px;color:var(--texto-suave);margin:0 0 10px}
 h2{font-size:12px;margin:14px 0 6px}
-dl.cabecalho{display:grid;grid-template-columns:max-content 1fr;gap:2px 12px;margin:0 0 10px;padding:8px 10px;border:1px solid #bbb;border-radius:4px}
-dl.cabecalho dt{font-weight:bold;color:#333}
+dl.cabecalho{display:grid;grid-template-columns:max-content 1fr;gap:2px 12px;margin:0 0 10px;padding:8px 10px;border:1px solid var(--borda);border-radius:4px}
+dl.cabecalho dt{font-weight:bold;color:var(--texto-suave)}
 dl.cabecalho dd{margin:0}
-p.regra{margin:0 0 8px;color:#333}
+p.regra{margin:0 0 8px;color:var(--texto-suave)}
 p.totais{margin:0 0 8px}
 table{width:100%;border-collapse:collapse}
-th,td{text-align:left;vertical-align:top;padding:3px 5px;border-bottom:1px solid #ddd}
+th,td{text-align:left;vertical-align:top;padding:3px 5px;border-bottom:1px solid var(--borda-leve)}
 .num{text-align:right;white-space:nowrap}
 table.resumo{width:auto;min-width:55%;margin:0 0 10px}
-table.resumo th{background:#eef1f5;border-bottom:1px solid #999}
+table.resumo th{background:var(--fundo-cabecalho);border-bottom:1px solid var(--borda)}
 nav.indice ol{list-style:none;margin:0;padding:0}
 nav.indice li{margin:0 0 2px}
-nav.indice a{display:flex;gap:6px;color:#0b3d91;text-decoration:none}
-nav.indice .pontos{flex:1;border-bottom:1px dotted #999;margin-bottom:3px}
+nav.indice a{display:flex;gap:6px;color:var(--link);text-decoration:none}
+nav.indice .pontos{flex:1;border-bottom:1px dotted var(--borda);margin-bottom:3px}
 section.vaga{margin-top:16px}
 section.vaga:first-of-type{break-before:page;margin-top:0}
-table.grupos thead th{background:#eef1f5;border-bottom:1px solid #999}
-table.grupos thead th.vaga{font-size:12px;background:#dfe6ee}
-.leve{font-weight:normal;color:#444}
+table.grupos thead th{background:var(--fundo-cabecalho);border-bottom:1px solid var(--borda)}
+table.grupos thead th.vaga{font-size:12px;background:var(--fundo-vaga)}
+.leve{font-weight:normal;color:var(--texto-suave)}
 tbody.grupo{break-inside:avoid}
 tr{break-inside:avoid}
-tr.titulo-do-grupo td{background:#f5f5f5;font-weight:bold;border-top:2px solid #888}
-tr.aplicados td{color:#444;font-size:9.5px}
-tr.par td,tr.fim td{font-size:9.5px;color:#222;padding-left:14px}
-tr.fim td{background:#fff8e6}
-.selo{display:inline-block;padding:0 5px;border:1px solid #888;border-radius:3px;font-weight:bold}
-.selo.cota{border-color:#8a4b00;color:#8a4b00;background:#fff3e0}
-.resolucao{font-weight:normal;color:#444}
-.insc{color:#555}
+tr.titulo-do-grupo td{background:var(--fundo-grupo);font-weight:bold;border-top:2px solid var(--borda)}
+tr.aplicados td{color:var(--texto-suave);font-size:9.5px}
+tr.par td,tr.fim td{font-size:9.5px;color:var(--texto);padding-left:14px}
+tr.fim td{background:var(--fundo-empate)}
+.selo{display:inline-block;padding:0 5px;border:1px solid var(--borda);border-radius:3px;font-weight:bold}
+.selo.cota{border-color:var(--cota);color:var(--cota);background:var(--fundo-cota)}
+.resolucao{font-weight:normal;color:var(--texto-suave)}
+.insc{color:var(--texto-suave)}
 th.candidato{width:22%}
 </style>
 </head><body><h1>${html(titulo)}</h1><p class="sub">${html(subtitulo)}</p>

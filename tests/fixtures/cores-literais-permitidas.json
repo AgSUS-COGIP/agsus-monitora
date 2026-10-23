@@ -9,6 +9,7 @@
     "src/lib/avaliacao-documental/espelho-de-nota.ts": "documento para impressão (espelho de nota do candidato): papel branco, texto escuro, azul e bordas do timbrado",
     "src/lib/avaliacao-documental/resumo-da-regra.ts": "documento gerado para impressão/arquivo: papel branco, texto preto",
     "src/lib/classificacao/documento-sei.ts": "documento no padrão do SEI: papel branco, texto preto, bordas e faixas do modelo",
+    "src/lib/classificacao/relatorio-de-desempate.ts": "documento para impressão (PDF do relatório de desempate): papel branco, texto escuro, faixas e selo de cota",
     "src/lib/contraste.js": "regra de contraste: as duas cores de texto sobre cor configurada (barra, painel de acesso)",
     "src/lib/documento-da-resposta.js": "documento gerado para impressão/arquivo: papel branco, texto preto",
     "src/lib/fogos.js": "efeito de comemoração (canvas): cores do fogo de artifício",
@@ -83,6 +84,19 @@
       "#e6e6e6": 1,
       "#999": 2,
       "#666": 1
+    },
+    "src/lib/classificacao/relatorio-de-desempate.ts": {
+      "#111": 1,
+      "#444": 1,
+      "#999": 1,
+      "#ddd": 1,
+      "#eef1f5": 1,
+      "#dfe6ee": 1,
+      "#f5f5f5": 1,
+      "#fff8e6": 1,
+      "#8a4b00": 1,
+      "#fff3e0": 1,
+      "#0b3d91": 1
     },
     "src/lib/contraste.js": {
       "#f7fbff": 1,
