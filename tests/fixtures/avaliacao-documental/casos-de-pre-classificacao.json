@@ -7880,6 +7880,414 @@
           "avisos": []
         }
       }
+    },
+    {
+      "nome": "desempate IDOSO pela idade no fim das inscrições (cronograma): quem faz 60 anos depois do fim não é idoso, mesmo que já tenha 60 hoje",
+      "historia": "AM-4.2",
+      "regra": {
+        "schema": 1,
+        "titulo_etapa": "Avaliação Documental e de Títulos",
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            },
+            {
+              "codigo": "QUESTIONARIO",
+              "coluna_prefixo": "SITUAÇÃO - ",
+              "exceto": ["FINALIZADO"],
+              "motivo": "Não finalizou o questionário"
+            },
+            {
+              "codigo": "REPROVADO_EMPREGARE",
+              "coluna": "REPROVADO",
+              "quando": ["SIM"],
+              "motivo": "Reprovado na Empregare"
+            },
+            {
+              "codigo": "TERMO",
+              "pergunta": "Pergunta 23 -",
+              "quando": ["Não estou de acordo"],
+              "motivo": "Recusou o termo de responsabilidade"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0
+        },
+        "lote": {
+          "base": "FIXO",
+          "multiplo": 2,
+          "fixo": 2,
+          "inclui_cr": true,
+          "por_modalidade": false,
+          "inclui_empatados": false,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900001",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": {
+          "Ampla Concorrência": 1
+        }
+      },
+      "cronograma": [
+        {
+          "atividade": "Publicação do Edital",
+          "inicio": "2026-09-16",
+          "fim": "2026-09-16"
+        },
+        {
+          "atividade": "Período de inscrição",
+          "inicio": "2026-09-21",
+          "fim": "2026-10-22"
+        },
+        {
+          "atividade": "Resultado das inscrições homologadas",
+          "inicio": "2026-10-27",
+          "fim": "2026-10-27"
+        }
+      ],
+      "candidatos": [
+        {
+          "id": "i01",
+          "codigo": "7100001",
+          "ativo": true,
+          "nascimento": "1966-11-20",
+          "candidatura": "2026-09-30T08:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "i02",
+          "codigo": "7100002",
+          "ativo": true,
+          "nascimento": "1966-10-22",
+          "candidatura": "2026-09-25T08:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "i03",
+          "codigo": "7100003",
+          "ativo": true,
+          "nascimento": "1990-01-01",
+          "candidatura": "2026-09-21T08:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        },
+        {
+          "id": "i04",
+          "codigo": "7100004",
+          "ativo": true,
+          "nascimento": "1966-10-23",
+          "candidatura": "2026-09-22T08:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "SITUAÇÃO - Questionário de seleção": "FINALIZADO",
+            "NOTA - Questionário de seleção": "20,0/30,0",
+            "REPROVADO": "NÃO",
+            "Pergunta 5 - Sistema de concorrência": "Ampla concorrência",
+            "Pergunta 23 - Termo de responsabilidade": "Estou de acordo"
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-12-01",
+      "esperado": {
+        "linhas": {
+          "i01": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "i02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 (número fixo)",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "i03": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 2 (número fixo)",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "i04": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 4,
+          "eliminados": 0,
+          "ranqueados": 4,
+          "no_lote": 2,
+          "por_decisao": 0,
+          "tamanho": 2,
+          "descricao": "2 (número fixo)",
+          "por_modalidade": null,
+          "art_corte": 20,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 2,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
+        }
+      }
+    },
+    {
+      "nome": "experiência declarada pelo limite de baixo: \"Menos de 1 ano\" e \"Até 2 anos\" valem 0 meses e ficam atrás de \"6 meses obrigatórios\"; \"--\" por último",
+      "historia": "AM-4.2",
+      "regra": {
+        "schema": 1,
+        "provisoria": {
+          "eliminacao_automatica": [
+            {
+              "codigo": "CANCELADO",
+              "coluna": "SITUAÇÃO",
+              "quando": ["CANCELADO"],
+              "motivo": "Cancelou a inscrição"
+            }
+          ],
+          "nota_declarada": [],
+          "divergencia_tolerancia": 0,
+          "desempate": ["EXPERIENCIA_DECLARADA", "CANDIDATURA"],
+          "pergunta_experiencia": "Pergunta 17 -"
+        },
+        "lote": {
+          "base": "FIXO",
+          "multiplo": 1,
+          "fixo": 1,
+          "inclui_cr": false,
+          "por_modalidade": false,
+          "inclui_empatados": false,
+          "linha_anda": true,
+          "publica_reposicao": false
+        },
+        "blocos": [
+          {
+            "codigo": "MODALIDADE",
+            "titulo": "Sistema de concorrência",
+            "tipo": "REGISTRO",
+            "perguntas": ["Pergunta 5 -"]
+          }
+        ]
+      },
+      "vaga": {
+        "codigo": "900093",
+        "vagas_imediatas": 1,
+        "cadastro_reserva": true,
+        "modalidades": null
+      },
+      "candidatos": [
+        {
+          "id": "m01",
+          "codigo": "8100001",
+          "ativo": true,
+          "nascimento": "1990-05-01",
+          "candidatura": "2026-09-11T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "20,0/30,0",
+            "Pergunta 17 - Tempo de experiência": "\"Menos de 1 ano\""
+          }
+        },
+        {
+          "id": "m02",
+          "codigo": "8100002",
+          "ativo": true,
+          "nascimento": "1990-05-01",
+          "candidatura": "2026-09-12T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "20,0/30,0",
+            "Pergunta 17 - Tempo de experiência": "\"6 meses obrigatórios\""
+          }
+        },
+        {
+          "id": "m03",
+          "codigo": "8100003",
+          "ativo": true,
+          "nascimento": "1990-05-01",
+          "candidatura": "2026-09-13T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "20,0/30,0",
+            "Pergunta 17 - Tempo de experiência": "ATÉ 2 ANOS"
+          }
+        },
+        {
+          "id": "m04",
+          "codigo": "8100004",
+          "ativo": true,
+          "nascimento": "1990-05-01",
+          "candidatura": "2026-09-10T12:00:00+00:00",
+          "colunas": {
+            "SITUAÇÃO": "Ativo",
+            "NOTA - Questionário": "20,0/30,0",
+            "Pergunta 17 - Tempo de experiência": "--"
+          }
+        }
+      ],
+      "anterior": {},
+      "ultimo_lote": 0,
+      "refazer": false,
+      "hoje": "2026-10-23",
+      "esperado": {
+        "linhas": {
+          "m01": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 2,
+            "posicao_modalidade": 2,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "m02": {
+            "situacao": "NO_LOTE",
+            "motivo_codigo": null,
+            "posicao": 1,
+            "posicao_modalidade": 1,
+            "lote": 1,
+            "lista_lote": "GERAL",
+            "entrada": "INICIAL",
+            "motivo_entrada": "Lote inicial: 1 (número fixo)",
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "m03": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 3,
+            "posicao_modalidade": 3,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          },
+          "m04": {
+            "situacao": "RANQUEADO",
+            "motivo_codigo": null,
+            "posicao": 4,
+            "posicao_modalidade": 4,
+            "lote": null,
+            "lista_lote": null,
+            "entrada": null,
+            "motivo_entrada": null,
+            "nota": 20,
+            "origem_nota": "ART",
+            "divergente": false,
+            "modalidade": "AC"
+          }
+        },
+        "resumo": {
+          "inscritos": 4,
+          "eliminados": 0,
+          "ranqueados": 4,
+          "no_lote": 1,
+          "por_decisao": 0,
+          "tamanho": 1,
+          "descricao": "1 (número fixo)",
+          "por_modalidade": null,
+          "art_corte": 20,
+          "base_da_nota": "ART",
+          "pela_art": 0,
+          "congeladas": 0,
+          "divergencias": 0,
+          "sem_art": 0,
+          "acima_do_corte": 0,
+          "entraram": 1,
+          "lote_novo": 1,
+          "saidas": [],
+          "avisos": []
+        }
+      }
     }
   ],
   "perguntas": [
@@ -8176,7 +8584,16 @@
       ["\"4 anos e 2 meses\"", 50],
       ["\"Não possuo\"", 0],
       ["--", null],
-      ["De 1 a 2 anos", 12]
+      ["De 1 a 2 anos", 12],
+      ["\"Menos de 6 meses\"", 0],
+      ["Menos de 1 ano", 0],
+      ["\"Até 1 ano\"", 0],
+      ["ATÉ 2 ANOS", 0],
+      ["ate 6 meses", 0],
+      ["Abaixo de 2 anos", 0],
+      ["\"Inferior a 6 meses\"", 0],
+      ["INFERIOR À 1 ANO", 0],
+      ["\"Menos de 1 ano e 6 meses\"", 0]
     ],
     "art": [
       ["45,0/50,0", 45],
@@ -8794,6 +9211,45 @@
       ["2026-09-25", "2026-09-29", false],
       ["2026-10-07", null, true],
       [null, "2026-09-29", false]
+    ]
+  },
+  "data_da_idade": {
+    "sobre": "dataDaIdade/data_da_idade: a idade do desempate IDOSO é medida no fim das inscrições do cronograma (fimDasInscricoes/fim_das_inscricoes); hoje só sem a etapa de inscrição ou sem cronograma.",
+    "casos": [
+      [
+        [
+          {
+            "atividade": "Publicação do Edital",
+            "inicio": "2026-09-16",
+            "fim": "2026-09-16"
+          },
+          {
+            "atividade": "Período de inscrição",
+            "inicio": "2026-09-21",
+            "fim": "2026-10-22"
+          },
+          {
+            "atividade": "Resultado das inscrições homologadas",
+            "inicio": "2026-10-27",
+            "fim": "2026-10-27"
+          }
+        ],
+        "2026-12-01",
+        "2026-10-22"
+      ],
+      [null, "2026-12-01", "2026-12-01"],
+      [[], "2026-12-01", "2026-12-01"],
+      [
+        [
+          {
+            "atividade": "Resultado preliminar",
+            "inicio": "2026-11-05",
+            "fim": "2026-11-05"
+          }
+        ],
+        "2026-12-01",
+        "2026-12-01"
+      ]
     ]
   }
 }

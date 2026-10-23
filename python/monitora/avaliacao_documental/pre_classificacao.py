@@ -54,6 +54,7 @@ _DATA = re.compile(r"^(\d{4})-(\d{2})-(\d{2})")
 _NUMERO_DO_QUADRO = re.compile(r"^\d+(\.\d+)?$")
 _NO_LOTE = {"NO_LOTE", "ANALISADO"}
 _ANOS_E_MESES = re.compile(r"([0-9]+) anos? e ([0-9]+) mes(es)?\b")
+_ABERTA_POR_BAIXO = re.compile(r"^(menos de|ate|abaixo de|inferior a)\b")
 _NIVEL_ESCRITO = re.compile(r"\bnivel (superior|tecnico|medio|fundamental)\b")
 _COMECA_COM_TECNICO = re.compile(r"^tecnic[oa]\b")
 _MARCAS = re.compile("[̀-ͯ]")
@@ -447,8 +448,10 @@ def meses_declarados(valor):
     """
     Os meses de experiência de uma resposta da Empregare ("De 1 a 2 anos" → 12,
     "Mais de 5 anos" → 60, "6 meses obrigatórios" → 6, '"1 ano e 6 meses"' → 18,
-    "4 anos e 2 meses" → 50, "Não possuo" → 0): o limite de baixo da faixa; None
-    quando não dá para ler ("--"; mesmo que mesesDeclarados do JS).
+    "4 anos e 2 meses" → 50, "Não possuo" → 0): o limite de baixo da faixa; a
+    faixa aberta por baixo ("Menos de 6 meses", "Até 1 ano", "Abaixo de 2 anos",
+    "Inferior a 6 meses") começa em 0. None quando não dá para ler ("--"; mesmo
+    que mesesDeclarados do JS).
     """
     if isinstance(valor, bool):
         return None
@@ -457,6 +460,8 @@ def meses_declarados(valor):
     texto = normalizar_texto(texto_da_resposta(valor))
     if not texto:
         return None
+    if _ABERTA_POR_BAIXO.search(texto):
+        return 0
     anos_e_meses = _ANOS_E_MESES.search(texto)
     if anos_e_meses:
         return int(anos_e_meses.group(1)) * 12 + int(anos_e_meses.group(2))
@@ -557,9 +562,18 @@ def _nulos_por_ultimo(a, b, comparar):
     return comparar(a, b)
 
 
-def _chave_de_ordem(desempate, hoje):
+def data_da_idade(cronograma, hoje):
+    """
+    A data em que se mede a idade do desempate IDOSO (dataDaIdade do JS): o fim
+    das inscrições do cronograma do edital (fim_das_inscricoes); hoje só quando
+    o cronograma não tem a etapa de inscrição (ou não há cronograma).
+    """
+    return fim_das_inscricoes(cronograma) or hoje
+
+
+def _chave_de_ordem(desempate, dia_da_idade):
     def idoso(linha):
-        idade = idade_em(linha["_nascimento"], hoje)
+        idade = idade_em(linha["_nascimento"], dia_da_idade)
         return idade is not None and idade >= 60
 
     def comparar(a, b):
@@ -602,7 +616,16 @@ def _pelo_lote_da_regra(ant):
 
 
 def pre_classificar_vaga(
-    regra, vaga, candidatos, anterior=None, ultimo_lote=0, refazer=False, hoje=None, congelar=False, decisoes=None
+    regra,
+    vaga,
+    candidatos,
+    anterior=None,
+    ultimo_lote=0,
+    refazer=False,
+    hoje=None,
+    congelar=False,
+    decisoes=None,
+    cronograma=None,
 ):
     """
     Pré-classifica os inscritos de uma vaga (mesmo contrato de preClassificarVaga do JS).
@@ -615,6 +638,8 @@ def pre_classificar_vaga(
       anterior     {id: {situacao, lote, lista_lote, entrada, motivo_entrada, posicao, declarada_congelada}}
       congelar     guarda a declarada completa de quem ainda não a tem congelada (congela_a_declarada)
       decisoes     {id: {motivo}}: as decisões vigentes da coordenação (ficam no lote, entrada DECISAO)
+      hoje         "AAAA-MM-DD"; cronograma: o do edital. A idade do desempate IDOSO é a do fim
+                   das inscrições (data_da_idade); hoje só sem a etapa de inscrição no cronograma
     Devolve {"linhas": [...], "resumo": {...}} (resumo.no_lote: pela regra; resumo.por_decisao: por decisão).
     """
     anterior = anterior or {}
@@ -708,7 +733,7 @@ def pre_classificar_vaga(
 
     # Provisória: ART decrescente e o desempate da regra; depois do último, os
     # eliminados pela regra que ficam no lote por decisão da coordenação.
-    ordem = _chave_de_ordem(desempate, hoje)
+    ordem = _chave_de_ordem(desempate, data_da_idade(cronograma, hoje))
     ranqueados = sorted((l for l in linhas if l["situacao"] != "ELIMINADO"), key=ordem)
     eliminados_por_decisao = sorted(
         (

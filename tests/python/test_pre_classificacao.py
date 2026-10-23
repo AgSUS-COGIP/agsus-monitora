@@ -47,6 +47,7 @@ def rodar(caso, **mudancas):
         hoje=c["hoje"],
         congelar=c.get("congelar", False),
         decisoes=c.get("decisoes") or {},
+        cronograma=c.get("cronograma"),
     )
 
 
@@ -219,6 +220,11 @@ class PecasDaConta(unittest.TestCase):
             "De 6 meses a 1 ano": 6,
             "Sem experiência": 0,
             "1,5 ano": 18,
+            "Menos de 6 meses": 0,
+            "Até 1 ano": 0,
+            "Abaixo de 2 anos": 0,
+            "Inferior a 6 meses": 0,
+            "atendimento por 2 anos": 24,
             "texto livre": None,
             "": None,
         }
@@ -333,6 +339,11 @@ class BaseDaNotaECongelamento(unittest.TestCase):
         for hoje, fim, esperado in PRE["congelamento"]["congela"]:
             with self.subTest((hoje, fim)):
                 self.assertEqual(pc.congela_a_declarada(hoje, fim), esperado)
+
+    def test_a_idade_do_desempate_e_a_do_fim_das_inscricoes(self):
+        for cronograma, hoje, esperado in PRE["data_da_idade"]["casos"]:
+            with self.subTest((cronograma, hoje)):
+                self.assertEqual(pc.data_da_idade(cronograma, hoje), esperado)
 
     def test_a_congelada_guarda_as_respostas_e_o_anterior_invalido_e_ignorado(self):
         caso = next(c for c in PRE["casos"] if c["nome"].startswith("congelamento:"))
