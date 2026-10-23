@@ -340,6 +340,8 @@ function TabelaDoGrupo({
                 <td>
                   <SeloDeStatus
                     status={text(candidato.status)}
+                    situacao={text(candidato.contratacao_situacao)}
+                    motivo={text(candidato.contratacao_motivo)}
                     dataConvocacao={
                       convocacoes.get(String(candidato.candidato_id))?.data
                     }

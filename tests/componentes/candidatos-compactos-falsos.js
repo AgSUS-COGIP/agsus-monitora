@@ -97,6 +97,15 @@ export function compactarPorArea(
       ].sort(),
     ]),
   );
+  // "Contratado em outra lista" (20261024120000): id → [situação, motivo] das linhas decididas.
+  dicionarios.contratacao = Object.fromEntries(
+    candidatos
+      .filter((candidato) => candidato.contratacao_situacao)
+      .map((candidato) => [
+        candidato.candidato_id,
+        [candidato.contratacao_situacao, candidato.contratacao_motivo ?? ""],
+      ]),
+  );
   const linhas = candidatos.map((candidato, i) => [
     ...COLUNAS.map((coluna) => {
       if (coluna === "lista_id")

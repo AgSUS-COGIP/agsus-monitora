@@ -262,8 +262,9 @@ def resumir(aviso, numero_do_edital):
         )
     if c == "APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS":
         return (
-            f"{plural(n, 'contratação marcada', 'contratações marcadas')} em mais de uma lista com a mesma matrícula: "
-            "deixe Contratado só na lista pela qual a pessoa foi contratada."
+            f"{plural(n, 'contratação marcada', 'contratações marcadas')} em mais de uma lista com a mesma matrícula, "
+            "sem decisão do sistema: "
+            'marque a linha pela qual a pessoa não foi contratada como "Contratado em outra lista".'
         )
     if c == "APROVADOS_CONVOCADO_SEM_DESFECHO":
         return f"{plural(n, 'convocado', 'convocados')} há mais de {extra.get('dias')} dias sem desfecho {onde}."
@@ -649,7 +650,13 @@ def _contratado_duplicado(lista, acumulador):
 
 
 def _mesma_matricula_em_duas_linhas(candidatos, acumulador):
-    """Atenção: a mesma matrícula Contratado em mais de uma linha, uma contratação marcada em duas listas."""
+    """
+    Atenção: a mesma matrícula Contratado em mais de uma linha, uma contratação marcada em duas listas.
+    Só Contratado conta: a linha "Contratado em outra lista" (20261024120000) — marcada pela equipe ou
+    decidida pelo job scripts/aprovados/contratacao.py — é o desfecho do caso, e a leitura
+    (conferencia_ler_aprovados) nem a traz. Sobra aqui o que a regra não decide (ambíguo) e a mesma
+    matrícula em editais diferentes.
+    """
     por_vinculo = defaultdict(list)
     for c in candidatos:
         if c.get("status") == "Contratado" and c.get("vinculo"):

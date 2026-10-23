@@ -1,0 +1,93 @@
+name: Contratado em outra lista
+
+# Job Python (scripts/aprovados/contratacao.py): quando a mesma matrícula está Contratado em duas
+# ou mais linhas do mesmo edital (a lista da ampla e a da cota), decide qual é a contratação e
+# grava a situação efetiva das outras — "Contratado em outra lista" — no instantâneo
+# TB_CONTRATACAO_APROVADO, pelas RPCs contratacao_ler_aprovados e
+# gravar_contratacao_dos_aprovados (só service_role). Não muda o status de nenhum aprovado.
+# Regra (versão 1, congelada): python/monitora/aprovados/contratacao.py.
+#
+# Quando roda:
+#   - pedido pelo banco (FC_DISPARAR_ROBO, chave "Conferências") depois de uma mudança de status
+#     que envolve Contratado e de uma lista nova, importada ou publicada (migration 20261024120000);
+#   - todo dia, antes das conferências das 6h de Brasília: conferencias.yml o chama primeiro
+#     (workflow_call), e a conferência já lê as decisões do dia;
+#   - pelo botão "Run workflow" desta aba Actions.
+# Guia: docs/python-no-monitora.md.
+#
+# O REPOSITÓRIO É PÚBLICO e este log também: o job só imprime contagens e áreas.
+#
+# Secrets do repositório (os mesmos das conferências):
+#   SUPABASE_URL                 https://<projeto>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY    chave service_role do Supabase
+
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "normal = decide e grava; seco = só decide e mostra o resumo"
+        type: choice
+        options:
+          - normal
+          - seco
+        default: normal
+      disparado_por:
+        description: "Pedido do MONITORA = id do usuário; agenda do banco = AGENDA; em branco = GitHub"
+        type: string
+        required: false
+        default: ""
+  workflow_call:
+    inputs:
+      modo:
+        type: string
+        required: false
+        default: normal
+      disparado_por:
+        type: string
+        required: false
+        default: ""
+    secrets:
+      SUPABASE_URL:
+        required: true
+      SUPABASE_SERVICE_ROLE_KEY:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  decidir:
+    name: Aprovados → instantâneo
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Pedidos em sequência (várias mudanças de status seguidas) viram uma execução só na fila.
+    concurrency:
+      group: contratacao-dos-aprovados
+      cancel-in-progress: false
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          show-progress: false
+
+      # Só biblioteca padrão (python/monitora/ e scripts/aprovados/): sem pip install.
+      - name: Configurar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # Os inputs vão por variável de ambiente (nunca interpolados no shell).
+      - name: Decidir
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MODO: ${{ inputs.modo || 'normal' }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
+        run: |
+          if [ "$MODO" = "seco" ]; then
+            python scripts/aprovados/contratacao.py --seco
+          else
+            python scripts/aprovados/contratacao.py
+          fi

@@ -174,6 +174,15 @@ export function AbaAprovados({
           "Convocados",
           resumo.convocado,
         )}
+        {kpi(
+          "approvedKpiContratadoEmOutraLista",
+          "contratado-em-outra-lista",
+          "neutro",
+          "fa-copy",
+          // Fora dos contratados: a pessoa já conta pela outra linha do edital.
+          "Contratados em outra lista",
+          resumo.contratadoEmOutraLista,
+        )}
       </GradeDeKpis>
 
       <PainelDeFiltros
@@ -306,6 +315,8 @@ export function AbaAprovados({
                     <td>
                       <SeloDeStatus
                         status={text(row.status)}
+                        situacao={text(row.contratacao_situacao)}
+                        motivo={text(row.contratacao_motivo)}
                         dataConvocacao={
                           convocacoes.get(String(row.candidato_id))?.data
                         }

@@ -17,6 +17,7 @@ const ROBOS = [
   "pre-classificacao.yml",
   "leitura-de-arquivos.yml",
   "classificacao.yml",
+  "contratacao-dos-aprovados.yml",
 ];
 const gatilhos = (texto) => {
   const bloco =
@@ -34,6 +35,19 @@ describe("gatilhos dos workflows dos robôs", () => {
     expect(lista.filter((g) => g !== "workflow_call")).toEqual([
       "workflow_dispatch",
     ]);
+  });
+
+  it("as conferências chamam o Contratado em outra lista antes, e rodam mesmo se ele falhar", () => {
+    const conferencias = readFileSync(
+      ".github/workflows/conferencias.yml",
+      "utf8",
+    ).replace(/\r\n/g, "\n");
+    expect(conferencias).toContain(
+      "    uses: ./.github/workflows/contratacao-dos-aprovados.yml\n",
+    );
+    expect(conferencias).toContain(
+      "    needs: contratacao\n    if: ${{ always() }}\n",
+    );
   });
 
   it("a pré-classificação no fim do robô confere a chave antes", () => {

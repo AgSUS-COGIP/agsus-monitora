@@ -21,11 +21,16 @@ import {
   problemaDosAnexos,
 } from "../../lib/anexos-do-candidato.ts";
 import {
+  STATUS_CONTRATADO_EM_OUTRA_LISTA,
   STATUS_DO_CANDIDATO,
   alteracaoJudicial,
   canDesfazerAlteracaoSubJudice,
   candidateModalidadesForEdital,
   canEditCandidateAttachments,
+  canEditCandidateStatus,
+  contratacaoAmbigua,
+  contratadoEmOutraListaPeloSistema,
+  outrasLinhasContratadasDaMatricula,
   podeTirarOStatus,
   statusEhConvocado,
   formatarNota,
@@ -164,10 +169,22 @@ function CampoDeAnexos({
   );
 }
 
+/** "Pessoa negra · 3º · vaga VG-2": como a linha aparece na sugestão. */
+function rotuloDaLinha(linha: CandidatoAprovado) {
+  return [
+    modalidadeSemAspas(linha.modalidade) || "Sem modalidade",
+    linha.classificacao ? `${linha.classificacao}º` : "",
+    linha.codigo_vaga ? `vaga ${linha.codigo_vaga}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 export function ModalDeStatus({
   estado,
   perfil,
   candidato,
+  candidatos = [],
   jaAnexados = 0,
   dataConvocacao = "",
 }: PropsDoModalDeStatus) {
@@ -179,7 +196,21 @@ export function ModalDeStatus({
   const [matricula, setMatricula] = useState(candidato.matricula || "");
   const [data, setData] = useState(dataConvocacao || hoje);
   const [anexos, setAnexos] = useState<File[]>([]);
+  const [marcarOutras, setMarcarOutras] = useState(false);
   const exigeMatricula = statusNeedsMatricula(status);
+  /*
+    A mesma matrícula já Contratado em outra linha do edital (a da ampla e a
+    da cota): sugere marcar a outra como "Contratado em outra lista". Só
+    sugere; a outra linha muda se quem edita marcar a caixa (e puder mudá-la:
+    status já definido é do admin do módulo).
+  */
+  const outras =
+    status === "Contratado"
+      ? outrasLinhasContratadasDaMatricula(candidatos, candidato, matricula)
+      : [];
+  const podeMarcarOutras =
+    outras.length > 0 &&
+    outras.every((outra) => canEditCandidateStatus(perfil, outra));
   // Do Convocado, quem edita segue o fluxo; deixar sem status é do admin.
   const semStatusBarrado = !podeTirarOStatus(perfil, candidato);
   const anexosInvalidos = Boolean(problemaDosAnexos(anexos, jaAnexados));
@@ -220,6 +251,23 @@ export function ModalDeStatus({
                 </option>
               ))}
             </select>
+            {contratadoEmOutraListaPeloSistema(candidato) ? (
+              <small
+                id="approvedPeloSistemaHint"
+                className="approved-field-hint"
+              >
+                O sistema dá esta linha como &quot;Contratado em outra
+                lista&quot;: {String(candidato.contratacao_motivo || "")} Para
+                fixar à mão, escolha esse status.
+              </small>
+            ) : contratacaoAmbigua(candidato) ? (
+              <small
+                id="approvedPeloSistemaHint"
+                className="approved-field-hint"
+              >
+                {String(candidato.contratacao_motivo || "")}
+              </small>
+            ) : null}
           </div>
           {statusEhConvocado(status) ? (
             <div className="form-row full">
@@ -265,7 +313,51 @@ export function ModalDeStatus({
                 Obrigatória para este status.
               </small>
             ) : null}
+            {status === STATUS_CONTRATADO_EM_OUTRA_LISTA ? (
+              <small
+                id="approvedOutraListaHint"
+                className="approved-field-hint"
+              >
+                Não conta nos contratados nem ocupa vaga desta lista. Matrícula
+                opcional: a da contratação pela outra linha.
+              </small>
+            ) : null}
           </div>
+          {outras.length ? (
+            <div
+              id="approvedOutraListaSugestao"
+              className="form-row full approved-outra-lista"
+              role="status"
+            >
+              <p>
+                <strong>
+                  Esta matrícula já está Contratado em outra linha do edital:
+                </strong>{" "}
+                {outras.map(rotuloDaLinha).join("; ")}. Se a pessoa foi
+                contratada por esta, a outra fica &quot;Contratado em outra
+                lista&quot;.
+              </p>
+              {podeMarcarOutras ? (
+                <label className="approved-outra-lista-marcar">
+                  <input
+                    id="approvedOutraListaMarcar"
+                    type="checkbox"
+                    checked={marcarOutras}
+                    onChange={(evento) =>
+                      setMarcarOutras(evento.target.checked)
+                    }
+                  />
+                  Marcar a outra linha como &quot;Contratado em outra
+                  lista&quot; ao salvar
+                </label>
+              ) : (
+                <small className="approved-field-hint">
+                  Status já definido: peça a mudança da outra linha a quem tem
+                  Administrador em Aprovados.
+                </small>
+              )}
+            </div>
+          ) : null}
           {podeAnexar ? (
             <CampoDeAnexos
               jaAnexados={jaAnexados}
@@ -292,6 +384,10 @@ export function ModalDeStatus({
                 matricula,
                 anexos,
                 dataConvocacao: data,
+                emOutraLista:
+                  marcarOutras && podeMarcarOutras
+                    ? outras.map((outra) => outra.candidato_id)
+                    : [],
               })
             }
           >

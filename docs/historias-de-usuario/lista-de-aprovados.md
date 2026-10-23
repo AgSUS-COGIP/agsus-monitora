@@ -86,6 +86,26 @@ Testes: ensaio E2/E3/E4 ("o gatilho não herdou a data", "a carta da lista antig
 
 ---
 
+### H3b. Contratado em outra lista (24/10/2026)
+
+Como **equipe de contratação**, quero que a mesma pessoa marcada Contratado na lista da ampla e na
+da cota do mesmo edital (mesma matrícula) conte uma vez só, para que os contratados do edital e as
+vagas ocupadas fiquem certos sem eu corrigir linha por linha.
+
+- O sistema decide qual linha é a contratação (job Python, `python/monitora/aprovados/contratacao.py`):
+  vale a linha alcançada pela convocação da sua lista; se as duas foram alcançadas, a de ampla
+  concorrência. A outra aparece como "Contratado em outra lista · pelo sistema", com o motivo no
+  tooltip, e o status gravado continua Contratado.
+- "Contratado em outra lista" não conta nos contratados (indicadores, Visão geral, Seleção,
+  comemorações), não ocupa vaga na Convocação e tem indicador próprio na aba Aprovados.
+- A decisão não muda sozinha; é refeita só quando uma das linhas deixa ou passa a ser Contratado.
+- Quando a regra não decide, o selo fica Contratado com alerta e a conferência avisa; o admin do
+  módulo escolhe o status "Contratado em outra lista" na linha pela qual a pessoa não foi
+  contratada (matrícula opcional, guardada). Marcar Contratado numa linha cuja matrícula já está
+  Contratado em outra linha do edital sugere marcar a outra (caixa desmarcada por padrão).
+
+Migration: `supabase/migrations/20261024120000_contratado_em_outra_lista.sql`.
+
 ## Entrega 2 — Carta de convocação
 
 ### H4. Manter o modelo da carta

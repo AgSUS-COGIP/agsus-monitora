@@ -1626,3 +1626,146 @@ describe("candidatos por área, com a cópia do navegador", () => {
     );
   });
 });
+
+describe("Contratado em outra lista (20261024120000)", () => {
+  const MOTIVO =
+    "A pessoa foi contratada pela linha Ampla Concorrência · 137º · vaga MED: a convocação alcançou a pessoa nas duas.";
+  /* A mesma matrícula Contratado na ampla e na cota do mesmo edital; o job decidiu a ampla. */
+  const PAR = () => [
+    candidato({
+      candidato_id: "ac",
+      nome: "Pessoa Fictícia",
+      status: "Contratado",
+      matricula: "M-9",
+      codigo_vaga: "MED",
+      contratacao_situacao: "CONTRATACAO",
+      contratacao_motivo: "Esta é a contratação.",
+    }),
+    candidato({
+      candidato_id: "cota",
+      nome: "Pessoa Fictícia",
+      status: "Contratado",
+      matricula: "M-9",
+      modalidade: "PPIQ",
+      codigo_vaga: "MED PPIQ",
+      contratacao_situacao: "OUTRA_LISTA",
+      contratacao_motivo: MOTIVO,
+    }),
+    candidato({
+      candidato_id: "amb",
+      nome: "Outra Pessoa",
+      status: "Contratado",
+      matricula: "M-7",
+      contratacao_situacao: "AMBIGUO",
+      contratacao_motivo: "A regra não decide.",
+    }),
+  ];
+  it("a linha espelho mostra o rótulo com o motivo e não conta nos contratados", async () => {
+    await montar({ supabase: supabaseFalso({ candidatos: PAR() }) });
+    expect($("approvedKpiContratado").textContent).toBe("2");
+    expect($("approvedKpiContratadoEmOutraLista").textContent).toBe("1");
+    const selos = [
+      ...document.querySelectorAll("#approvedRows [data-contratacao]"),
+    ];
+    const espelho = selos.find(
+      (s) => s.getAttribute("data-contratacao") === "OUTRA_LISTA",
+    );
+    expect(espelho.textContent).toBe("Contratado em outra lista");
+    expect(espelho.title).toBe(MOTIVO);
+    expect(espelho.classList.contains("approved-status-calculado")).toBe(true);
+    const ambiguo = selos.find(
+      (s) => s.getAttribute("data-contratacao") === "AMBIGUO",
+    );
+    expect(ambiguo.textContent).toBe("Contratado");
+    expect(ambiguo.querySelector(".fa-triangle-exclamation")).not.toBeNull();
+  });
+
+  it("o filtro de status acha a linha decidida pelo sistema", async () => {
+    await montar({ supabase: supabaseFalso({ candidatos: PAR() }) });
+    expect(opcoesDoFiltro("approvedFilterStatus")).toContain(
+      "Contratado em outra lista",
+    );
+    await clicar(
+      opcaoDoFiltro("approvedFilterStatus", "Contratado em outra lista"),
+    );
+    expect(
+      [...document.querySelectorAll("#approvedRows [data-contratacao]")].map(
+        (s) => s.getAttribute("data-contratacao"),
+      ),
+    ).toEqual(["OUTRA_LISTA"]);
+  });
+
+  it("o admin escolhe o status explícito, que guarda a matrícula", async () => {
+    const { supabase } = await montar({
+      perfil: { perfil: "admin" },
+      supabase: supabaseFalso({ candidatos: PAR() }),
+    });
+    const lapis = [
+      ...document.querySelectorAll('[data-approved-action="status"]'),
+    ].find((b) =>
+      b.closest("tr")?.querySelector('[data-contratacao="AMBIGUO"]'),
+    );
+    await clicar(lapis);
+    expect($("approvedPeloSistemaHint").textContent).toBe(
+      "A regra não decide.",
+    );
+    await escolher($("approvedStatusSelect"), "Contratado em outra lista");
+    expect($("approvedOutraListaHint")).not.toBeNull();
+    expect($("approvedStatusMatricula").required).toBe(false);
+    supabase.rpc.mockClear();
+    await clicar($("approvedStatusSave"));
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "alterar_status_candidato_aprovado",
+      {
+        p_candidato_id: "amb",
+        p_status: "Contratado em outra lista",
+        p_processo_sei: null,
+        p_matricula: "M-7",
+      },
+    );
+  });
+
+  it("marcar Contratado sugere a outra linha da mesma matrícula, sem marcar sozinho", async () => {
+    const linhas = [
+      candidato({
+        candidato_id: "x1",
+        nome: "Pessoa X",
+        status: "Contratado",
+        matricula: "00123",
+      }),
+      candidato({
+        candidato_id: "x2",
+        nome: "Pessoa X",
+        modalidade: "PCD",
+        codigo_vaga: "VG-PCD",
+        classificacao: 2,
+        status: "",
+      }),
+    ];
+    const { supabase } = await montar({
+      perfil: { perfil: "admin" },
+      supabase: supabaseFalso({ candidatos: linhas }),
+    });
+    const lapis = [
+      ...document.querySelectorAll('[data-approved-action="status"]'),
+    ].find((b) => b.closest("tr")?.textContent.includes("PCD"));
+    await clicar(lapis);
+    await escolher($("approvedStatusSelect"), "Contratado");
+    await digitar($("approvedStatusMatricula"), "123");
+    expect($("approvedOutraListaSugestao").textContent).toContain(
+      "Esta matrícula já está Contratado em outra linha do edital:",
+    );
+    expect($("approvedOutraListaMarcar").checked).toBe(false);
+    supabase.rpc.mockClear();
+    await clicar($("approvedOutraListaMarcar"));
+    await clicar($("approvedStatusSave"));
+    const chamadas = supabase.rpc.mock.calls.filter(
+      ([nome]) => nome === "alterar_status_candidato_aprovado",
+    );
+    expect(chamadas.map(([, a]) => [a.p_candidato_id, a.p_status])).toEqual([
+      ["x2", "Contratado"],
+      ["x1", "Contratado em outra lista"],
+    ]);
+    expect(chamadas[1][1].p_matricula).toBe("00123");
+  });
+});

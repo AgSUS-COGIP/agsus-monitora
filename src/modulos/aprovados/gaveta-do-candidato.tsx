@@ -90,6 +90,8 @@ export function GavetaDoCandidato({
       resumo={
         <SeloDeStatus
           status={String(candidato.status || "")}
+          situacao={String(candidato.contratacao_situacao || "")}
+          motivo={String(candidato.contratacao_motivo || "")}
           dataConvocacao={dataConvocacao}
         />
       }

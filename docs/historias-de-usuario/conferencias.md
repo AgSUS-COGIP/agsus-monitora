@@ -115,7 +115,7 @@ topo da minha tela quantos avisos há, **para** corrigir sem procurar.
 | `CLASSIFICACAO_VAGA_SEM_QUADRO`            | Classificação | Atenção     | vaga das análises de edital ativo sem linha no quadro (ex.: 101/2026)    |
 | `CLASSIFICACAO_AJUSTE_APOS_LISTA`          | Classificação | Atenção     | ajuste de recurso aprovado depois da última lista do mesmo tipo          |
 | `APROVADOS_CONTRATADO_DUPLICADO`           | Aprovados     | Crítico     | a mesma pessoa com duas matrículas Contratado no mesmo edital            |
-| `APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS` | Aprovados     | Atenção     | a mesma matrícula Contratado em mais de uma linha (ampla e cota, etc.)   |
+| `APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS` | Aprovados     | Atenção     | a mesma matrícula Contratado em mais de uma linha, sem decisão do job    |
 | `APROVADOS_CONVOCADO_SEM_DESFECHO`         | Aprovados     | Atenção     | Convocado há mais de N dias (padrão 15; `CONFERENCIA_DIAS_CONVOCADO`)    |
 | `APROVADOS_PENDENCIA_DA_PUBLICACAO`        | Aprovados     | Atenção     | pendência da publicação vinda da Classificação ainda sem desfecho        |
 | `CARGA_VARIACAO_BRUSCA`                    | Cargas        | Atenção     | candidatos de uma vaga da Empregare variaram 50% ou mais na última carga |
