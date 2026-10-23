@@ -2200,6 +2200,51 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Pontuação conferida pelo banco e ficha que volta para revisão",
+    perguntas: [
+      "pontuacao acima dos itens",
+      "confere acima do comprovado",
+      "confere abaixo do comprovado",
+      "doutorado declarado so especializacao",
+      "a parcial esta acima do que os itens registrados dao",
+      "ajuste em editar nota com justificativa",
+      "ficha concluida foi para revisao sozinha",
+      "conferencia automatica",
+      "motivo da revisao na fila",
+      "por que a ficha concluida voltou",
+      "experiencia nao enviou com vinculos",
+      "eliminado por outro criterio experiencia",
+    ],
+    resposta:
+      'Ao salvar e ao concluir, o banco recalcula a pontuação de Titulação, Cursos (quando há a lista de cursos) e Experiência a partir dos itens registrados na ficha, com a mesma conta da tela. No Confere, vale a pontuação declarada. Se ela passar do que os títulos, cursos ou vínculos aceitos dão, a ficha pede ajuste: registre o que comprova o declarado ou use Editar nota, que passa a valer o calculado; para manter uma nota maior, escolha a justificativa. Sem isso, a ficha não conclui. Declarado abaixo do que os itens comprovam não é falta: vale a declarada. Ficam de fora os Cursos decididos pela faixa (sem lista) e o candidato inapto por requisito. A experiência mínima também trava a ficha marcada como "Não enviou" quando os vínculos aceitos somam o mínimo, mas não trava quando outro critério já elimina o candidato (identidade, escolaridade, requisito do cargo): aí a experiência é só informativa. Todo dia, na conferência das 6h, as fichas concluídas que passaram a ter alguma pendência pela regra vão sozinhas para Em revisão, sem mudar a nota nem o resultado. O histórico registra "Conferência automática" com a pendência, e a fila mostra o motivo na coluna "Motivo da revisão". Isso só acontece com a chave "Conferências" ligada em Configurações › Automação.',
+    fato: "No MONITORA, a ficha concluída que passa a ter pendência pela regra vai para Em revisão na conferência diária, sem mudar a nota, e a fila mostra o motivo.",
+    fonte:
+      "supabase/migrations/20261023090000_calculo_conferido_no_banco.sql (FC_CALCULADO_DO_BLOCO, FC_VALIDAR_RESULTADO_FICHA, FC_PENDENCIAS_FICHA, revisar_ficha_concluida_com_pendencia); scripts/conferencias/revisao_das_fichas.py; src/lib/avaliacao-documental/ficha.js (pontuacaoAcimaDoComprovado, pendenciasDaFicha)",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Datas dos vínculos e data limite da experiência",
+    perguntas: [
+      "fim do vinculo no futuro",
+      "vinculo antes de 1960",
+      "ate o momento",
+      "vinculo atual ate quando",
+      "data limite da experiencia",
+      "experiencia conta ate quando",
+      "fim das inscricoes experiencia",
+      "dias depois do fim das inscricoes",
+      "fim futuro",
+    ],
+    resposta:
+      'A experiência conta até a data limite do item Experiência. Se a regra não define essa data, vale o fim das inscrições do cronograma do edital (no 114/2026, 14/10/2026). Os dias depois dela não entram nem nos pontos nem no tempo do desempate. O vínculo "atual" ou "até o momento" recebe como fim a data limite, e não a data de hoje; se o documento foi emitido antes dela, o fim é a data de emissão, porque o documento só comprova até ali. Não se salva vínculo com data antes de 1960 nem com fim depois de hoje. Quando o robô de leitura encontra um fim no futuro (contrato com fim previsto ou ano lido errado), ele conta até a emissão do documento ou até hoje e marca o alerta "Fim lido depois da emissão do documento ou de hoje".',
+    fato: "No MONITORA, a experiência conta até o fim das inscrições do edital, salvo outra data limite na regra; o vínculo atual vai até essa data.",
+    fonte:
+      "supabase/migrations/20261023090000_calculo_conferido_no_banco.sql (FC_FIM_DAS_INSCRICOES, FC_REGRA_COM_DATA_LIMITE, FC_VALIDAR_LANCAMENTO_FICHA); src/lib/avaliacao-documental/datas-do-vinculo.ts; python/monitora/avaliacao_documental/leitura_de_arquivos/experiencia.py",
+    abrir: "avaliacao-documental",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "Quem vê e quem grava a ficha",
     perguntas: [
       "quem ve a ficha",

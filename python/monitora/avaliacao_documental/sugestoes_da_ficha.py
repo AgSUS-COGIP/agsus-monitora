@@ -35,6 +35,8 @@ formato do lançamento da ficha (titulos/cursos/vinculos) e "da_resposta": true.
 import calendar
 import re
 
+from monitora.fuso import hoje_em_brasilia
+
 from .nota_declarada import colunas_da_pergunta, normalizar_texto, opcoes_da_resposta, texto_da_resposta
 
 ITENS_DO_TIPO = {"TITULOS": "titulos", "CURSOS": "cursos", "VINCULOS": "vinculos"}
@@ -126,8 +128,11 @@ def _data_iso(dia, mes, ano, fim_do_mes):
     return f"{a:04d}-{m:02d}-{d:02d}"
 
 
-def vinculos_das_respostas(respostas, categoria=None):
-    """Vínculos com início e fim ("Hospital X, de 01/02/2020 a 31/01/2022"); pares de datas na ordem."""
+def vinculos_das_respostas(respostas, categoria=None, hoje=None):
+    """Vínculos com início e fim ("Hospital X, de 01/02/2020 a 31/01/2022"); pares de datas na ordem. O fim
+    depois de hoje (contrato com o fim previsto, ano digitado errado) fica em hoje; o que começa depois de hoje
+    sai (a ficha recusa o fim no futuro: faltaNasDatasDoVinculo e FC_PENDENCIAS_FICHA)."""
+    hoje_iso = (hoje or hoje_em_brasilia()).isoformat()
     itens = []
     for texto in textos_uteis(respostas):
         datas = list(_DATA.finditer(texto))
@@ -136,8 +141,9 @@ def vinculos_das_respostas(respostas, categoria=None):
             a, b = datas[i], datas[i + 1]
             inicio = _data_iso(a.group(1), a.group(2), a.group(3), False)
             fim = _data_iso(b.group(1), b.group(2), b.group(3), True)
-            if not inicio or not fim or fim < inicio:
+            if not inicio or not fim or fim < inicio or inicio > hoje_iso:
                 continue
+            fim = min(fim, hoje_iso)
             item = {"empregador": _limpar(texto[antes : a.start()]), "inicio": inicio, "fim": fim, "aceito": True}
             if categoria:
                 item["categoria"] = categoria

@@ -9,12 +9,12 @@ import {
   decidePelaNota,
   divergenciaDoBloco,
   ehAnexo,
-  experienciaAcimaDoComprovado,
   ESCOLHAS_DA_FICHA,
   itemCompleto,
   marcouOutroMotivo,
   mensagemDoBloco,
   PERGUNTA_DA_DECISAO,
+  pontuacaoAcimaDoComprovado,
   respostasDoBloco,
   sugereNaoEnviado,
   textoDaNota,
@@ -1118,11 +1118,11 @@ function Justificativa({
     diferenca: number;
   } | null;
   const marcadas = lancado.justificativas || [];
-  // Editar nota acima do que os vínculos aceitos comprovam: a justificativa
-  // é o caminho (pendência "acima" em pendenciasDaFicha), mesmo na declarada.
+  // Editar nota acima do que os itens aceitos dão: a justificativa é o
+  // caminho (pendência "acima" em pendenciasDaFicha), mesmo na declarada.
   const acima =
     lancado.edita_nota === true &&
-    experienciaAcimaDoComprovado(bloco, lancado, st.avaliacao) !== null;
+    pontuacaoAcimaDoComprovado(bloco, st.lancamento, st.avaliacao) !== null;
   // Bloco com itens: o texto é a "Justificativa do ajuste" (resumo dos itens).
   const comItens = Boolean(BLOCOS_COM_ITENS[bloco.tipo]);
   const comTexto =

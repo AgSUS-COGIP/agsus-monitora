@@ -75,7 +75,10 @@ describe("experiência confirmada acima do que os vínculos aceitos comprovam", 
   });
 
   it("a tela pede o mesmo (pendenciasDaFicha, tipo acima)", () => {
-    expect(FICHA).toContain('falta(\n          "acima",');
+    // 20261023090000: também títulos e cursos com lista (pontuacaoAcimaDoComprovado).
+    expect(FICHA).toContain(
+      'falta("acima", textoDoAcimaDoComprovado(bloco, acima))',
+    );
     expect(FICHA).toContain("objeto(lancado).edita_nota === true &&");
     expect(FICHA).toContain("avaliacao?.calculados?.[parcial]");
   });

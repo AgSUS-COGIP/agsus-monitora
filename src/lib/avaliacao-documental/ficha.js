@@ -50,6 +50,7 @@ import {
   OUTRO_MOTIVO,
   tetoDoBloco,
 } from "./pontuacao.js";
+import { faltaNasDatasDoVinculo, hojeEmBrasilia } from "./datas-do-vinculo.ts";
 import { normalizarRegraAnalise } from "./regra.js";
 import { faltasDoCargo, regraDaVaga } from "./regra-por-cargo.ts";
 
@@ -426,26 +427,6 @@ export function faltaDoComprovado(bloco, lancamento, declarada) {
 const ZERAM_O_BLOCO = ["NAO_CONFORME", "NAO_ENVIADO"];
 
 /**
- * A experiência Conforme (Confere ou Editar nota) com a pontuação que vai
- * valer (o ajuste: no Confere, a declarada) ACIMA do que os vínculos aceitos
- * comprovam (calculados, a conta de apurarExperiencia, com o teto e o nível
- * da vaga). Devolve { valor, calculado, meses } ou null. Auditoria de
- * 20/10/2026 (edital 114): Confere com 35 pontos e 16 meses aceitos (5).
- */
-export function experienciaAcimaDoComprovado(bloco, lancado, avaliacao) {
-  if (bloco?.tipo !== "VINCULOS" || objeto(lancado).situacao !== "CONFORME")
-    return null;
-  const parcial = PARCIAL_DO_TIPO[bloco.tipo];
-  const valor = avaliacao?.parciais?.[parcial];
-  const calculado = avaliacao?.calculados?.[parcial];
-  if (typeof valor !== "number" || typeof calculado !== "number") return null;
-  if (!(valor - calculado > DIFERENCA)) return null;
-  const exp = objeto(avaliacao?.experiencia);
-  const meses = Number(exp.meses_considerados ?? exp.meses) || 0;
-  return { valor, calculado, meses };
-}
-
-/**
  * O caminho legítimo da pontuação acima do comprovado: Editar nota
  * (edita_nota) com a justificativa do ajuste (blocoJustificado). O Confere
  * "silencioso" não basta.
@@ -453,6 +434,52 @@ export function experienciaAcimaDoComprovado(bloco, lancado, avaliacao) {
 export const acimaDoComprovadoJustificado = (regra, bloco, lancado) =>
   objeto(lancado).edita_nota === true &&
   blocoJustificado(regra, bloco, lancado);
+
+/**
+ * O bloco de itens (títulos, vínculos; cursos só na ficha antiga com a lista)
+ * Conforme com a pontuação que vai valer ACIMA do que os itens aceitos dão
+ * (o calculado): o Confere grava a declarada (Doutorado declarado com só a
+ * Especialização registrada). Abaixo não é falta: no Confere vale a
+ * declarada, mesmo que os itens comprovem mais (decisão de 23/10/2026).
+ * Devolve { parcial, valor, calculado, meses } ou null. Só o Editar nota com
+ * justificativa (acimaDoComprovadoJustificado) aceita a diferença; o banco
+ * recalcula os itens e recusa o mesmo (FC_PENDENCIAS_FICHA e
+ * FC_VALIDAR_RESULTADO_FICHA, migration 20261023090000) e o Python também
+ * (pendencias_da_ficha). Cursos pela nota (decidePelaNota) não têm itens.
+ */
+export function pontuacaoAcimaDoComprovado(bloco, lancamento, avaliacao) {
+  const chave = BLOCOS_COM_ITENS[bloco?.tipo];
+  const lancado = objeto(objeto(lancamento?.blocos)[bloco?.codigo]);
+  if (!chave || lancado.situacao !== "CONFORME") return null;
+  if (decidePelaNota(bloco, lancamento)) return null;
+  const parcial = PARCIAL_DO_TIPO[bloco.tipo];
+  const valor = avaliacao?.parciais?.[parcial];
+  const calculado = avaliacao?.calculados?.[parcial];
+  if (typeof valor !== "number" || typeof calculado !== "number") return null;
+  if (!(valor - calculado > DIFERENCA)) return null;
+  const exp = objeto(avaliacao?.experiencia);
+  const meses =
+    bloco.tipo === "VINCULOS"
+      ? Number(exp.meses_considerados ?? exp.meses) || 0
+      : null;
+  return { parcial, valor, calculado, meses };
+}
+
+const NOME_DOS_ITENS = {
+  titulos: "os títulos aceitos dão",
+  cursos: "os cursos aceitos dão",
+};
+
+/** O texto da pendência da pontuação acima do comprovado. */
+function textoDoAcimaDoComprovado(bloco, acima) {
+  const mes = (n) => `${n} ${Number(n) === 1 ? "mês" : "meses"}`;
+  const pts = (n) =>
+    `${textoDaNota(n)} ${Number(n) === 1 ? "ponto" : "pontos"}`;
+  if (bloco.tipo === "VINCULOS")
+    return `Experiência confirmada com ${pts(acima.valor)}, mas os vínculos aceitos comprovam ${mes(acima.meses)} (${pts(acima.calculado)}). Lance os vínculos que comprovam o período declarado ou ajuste a pontuação em Editar nota, com justificativa.`;
+  const itens = NOME_DOS_ITENS[BLOCOS_COM_ITENS[bloco.tipo]];
+  return `${nomeCurtoDoBloco(bloco)} confirmada com ${pts(acima.valor)}, mas ${itens} ${pts(acima.calculado)}. Registre os itens que comprovam o declarado ou ajuste a pontuação em Editar nota, com justificativa.`;
+}
 
 /**
  * O lançamento que vai para o banco (rascunho e conclusão): no bloco Não
@@ -545,21 +572,27 @@ export const itemConferido = (bloco, lancamento, pendencias = []) =>
 /**
  * O que falta para concluir, bloco a bloco: [{ bloco, tipo, texto }]. Vazio =
  * pode concluir. O banco confere o mesmo em concluir_ficha. `tipo`: situacao,
- * motivo, item, datas, horas, comprovado, minimo, acima, justificativa ou nota.
- * `acima`: a experiência Conforme com a pontuação acima do que os vínculos
- * aceitos comprovam, sem Editar nota com justificativa. `minimo`:
- * a experiência Conforme abaixo do mínimo pelos vínculos aceitos ou Não confere
- * com os vínculos aceitos cumprindo o mínimo (não eliminaria). A nota diferente da
- * declarada só pede justificativa depois que o bloco foi conferido (antes, a
- * falta é a própria situação).
+ * motivo, item, datas, horas, comprovado, minimo, acima, justificativa ou
+ * nota. `acima`: o bloco de itens (títulos, vínculos, cursos com a lista)
+ * Conforme com a pontuação acima do que os itens aceitos dão
+ * (pontuacaoAcimaDoComprovado), sem Editar nota com justificativa. `minimo`:
+ * a experiência Conforme abaixo do mínimo pelos vínculos aceitos ou Não
+ * confere/Não enviou com os vínculos aceitos cumprindo o mínimo (não
+ * eliminaria) — fora quando outro bloco já elimina (a experiência é só
+ * informativa). `datas`: o vínculo aceito com data inválida, antes de 1960 ou
+ * com o fim depois de hoje (`opcoes.hoje`, AAAA-MM-DD; padrão: hoje em
+ * Brasília). A nota diferente da declarada só pede justificativa depois que o
+ * bloco foi conferido (antes, a falta é a própria situação).
  */
 export function pendenciasDaFicha(
   regraEntrada,
   lancamento,
   avaliacao,
   declarada,
+  opcoes = {},
 ) {
   const regra = regraDaFicha(regraEntrada, lancamento);
+  const hoje = opcoes.hoje ?? hojeEmBrasilia();
   const pendencias = [];
   const blocos = objeto(lancamento?.blocos);
   const eliminadoPorBloco = lista(avaliacao?.blocos).some(
@@ -615,8 +648,11 @@ export function pendenciasDaFicha(
       // O item recusado não conta: não pede as datas nem a carga horária (a
       // recusa pode ser justamente "carga horária não comprovada").
       const aceitos = itens.filter((i) => i && i.aceito !== false);
-      if (chave === "vinculos" && aceitos.some((v) => !datasValidas(v)))
-        falta("datas", "Confira o início e o fim do vínculo.");
+      const faltaNasDatas =
+        chave === "vinculos"
+          ? aceitos.map((v) => faltaNasDatasDoVinculo(v, hoje)).find(Boolean)
+          : null;
+      if (faltaNasDatas) falta("datas", faltaNasDatas);
       if (chave === "cursos" && aceitos.some((c) => !(Number(c.horas) > 0)))
         falta("horas", "Informe a carga horária do curso.");
       // Já eliminado por outro bloco (efeito Elimina): não pede o registro.
@@ -627,13 +663,21 @@ export function pendenciasDaFicha(
       if (comprovado) falta("comprovado", comprovado);
       // A experiência mínima que elimina, pelos vínculos aceitos (os meses do
       // mínimo em apurarExperiencia; o banco pede o mesmo em FC_PENDENCIAS_FICHA).
+      // Eliminado por OUTRO bloco (identidade, escolaridade, requisito…), a
+      // experiência é só informativa e o resultado não muda: não pede nada
+      // (decisão da coordenação, 22/10/2026). Continua valendo quando a única
+      // eliminação é a da própria experiência.
       const exp = avaliacao?.experiencia;
       const minimo = Number(bloco.minimo_meses);
+      const eliminadoPorOutro = lista(avaliacao?.blocos).some(
+        (b) => b?.efeito === "ELIMINA" && b.codigo !== bloco.codigo,
+      );
       if (
         chave === "vinculos" &&
         exp &&
         minimo > 0 &&
-        (bloco.efeito_minimo ?? "ELIMINA") === "ELIMINA"
+        (bloco.efeito_minimo ?? "ELIMINA") === "ELIMINA" &&
+        !eliminadoPorOutro
       ) {
         const meses =
           Number(
@@ -647,36 +691,28 @@ export function pendenciasDaFicha(
             "minimo",
             `Experiência mínima de ${mes(minimo)} não comprovada (comprovado ${mes(meses)}): registre os vínculos que comprovam ou escolha Não confere.`,
           );
-        // Não confere com os vínculos aceitos cumprindo o mínimo não elimina
-        // (só zera a experiência): desmarque os vínculos não aceitos ou
-        // marque Confere.
-        if (l.situacao === "NAO_CONFORME" && meses >= minimo)
+        // Não confere (ou Não enviou) com os vínculos aceitos cumprindo o
+        // mínimo não elimina (só zera a experiência): desmarque os vínculos
+        // não aceitos ou marque Confere.
+        if (zera && meses >= minimo)
           falta(
             "minimo",
-            `Experiência marcada como Não confere, mas os vínculos aceitos somam ${mes(meses)} (mínimo ${mes(minimo)}). Desmarque os vínculos que não foram aceitos — sem a experiência mínima o candidato é eliminado — ou marque Confere.`,
+            `Experiência marcada como ${l.situacao === "NAO_ENVIADO" ? "Não enviou" : "Não confere"}, mas os vínculos aceitos somam ${mes(meses)} (mínimo ${mes(minimo)}). Desmarque os vínculos que não foram aceitos — sem a experiência mínima o candidato é eliminado — ou marque Confere.`,
           );
       }
-      // A pontuação confirmada acima do que os vínculos aceitos comprovam
-      // (o banco pede o mesmo em FC_PENDENCIAS_FICHA): só com Editar nota e
-      // justificativa. Sem vínculo ou abaixo do mínimo, a falta já é outra. No
-      // inapto por requisito (eliminado por outro critério) a pontuação é só
-      // informativa e não vale (20261021090000).
+      // A pontuação confirmada acima do que os itens aceitos dão (o banco
+      // recalcula e pede o mesmo em FC_PENDENCIAS_FICHA): só com Editar nota e
+      // justificativa. Sem item ou abaixo do mínimo, a falta já é outra. No
+      // inapto por requisito a pontuação é só informativa e não vale
+      // (20261021090000).
       const acima =
-        chave === "vinculos" &&
         !comprovado &&
         avaliacao?.resultado !== "INAPTO_REQUISITO" &&
         !pendencias.some((p) => p.bloco === bloco.codigo && p.tipo === "minimo")
-          ? experienciaAcimaDoComprovado(bloco, l, avaliacao)
+          ? pontuacaoAcimaDoComprovado(bloco, lancamento, avaliacao)
           : null;
-      if (acima && !acimaDoComprovadoJustificado(regra, bloco, l)) {
-        const mes = (n) => `${n} ${Number(n) === 1 ? "mês" : "meses"}`;
-        const pts = (n) =>
-          `${textoDaNota(n)} ${Number(n) === 1 ? "ponto" : "pontos"}`;
-        falta(
-          "acima",
-          `Experiência confirmada com ${pts(acima.valor)}, mas os vínculos aceitos comprovam ${mes(acima.meses)} (${pts(acima.calculado)}). Lance os vínculos que comprovam o período declarado ou ajuste a pontuação em Editar nota, com justificativa.`,
-        );
-      }
+      if (acima && !acimaDoComprovadoJustificado(regra, bloco, l))
+        falta("acima", textoDoAcimaDoComprovado(bloco, acima));
     }
     // Com Não confere, o motivo do bloco já justifica o zero.
     if (
@@ -736,7 +772,7 @@ const COMPLEMENTO_DA_FALTA = {
   justificativa: "justificativa",
   nota: "nota",
   minimo: "experiência mínima",
-  acima: "experiência acima do comprovado",
+  acima: "pontuação acima do comprovado",
   comprovado: "item comprovado",
   requisito: "requisitos do cargo",
   extra: "item extra",
@@ -967,6 +1003,7 @@ export const ACOES_DO_HISTORICO = Object.freeze({
   SALVAR: "Rascunho salvo",
   CONCLUIR: "Concluída",
   REABRIR: "Reaberta",
+  CORRIGIR: "Corrigida (correção de dados)",
 });
 
 /** Uma alteração do histórico em texto ("Experiência: 25 → 20 (justificativa)"). */

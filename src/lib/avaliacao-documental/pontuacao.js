@@ -126,12 +126,19 @@ export function diasDosIntervalos(
   return total;
 }
 
-/** Dias em anos (365), meses (30) e dias, como a planilha e o simulador. */
+/**
+ * Dias em anos (365), meses (30) e dias, como a planilha e o simulador. Os
+ * meses vão até 11 e o resto fica nos dias: 364 dias = 0 anos, 11 meses e 34
+ * dias (antes, "12 meses e 4 dias"). O banco converte igual
+ * (FC_ANOS_MESES_DIAS, migration 20261023090000) e o Python também
+ * (anos_meses_dias).
+ */
 export function anosMesesDias(dias) {
   const total = Math.max(0, Math.floor(numero(dias)));
   const anos = Math.floor(total / 365);
   const resto = total % 365;
-  return { anos, meses: Math.floor(resto / 30), dias: resto % 30 };
+  const meses = Math.min(Math.floor(resto / 30), 11);
+  return { anos, meses, dias: resto - meses * 30 };
 }
 
 const forca = (efeito) => {

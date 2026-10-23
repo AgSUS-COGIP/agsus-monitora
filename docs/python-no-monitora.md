@@ -137,6 +137,13 @@ RPCs `conferencia_ler_*` e grava avisos (`TB_AVISO_CONFERENCIA`), que aparecem n
 no cartão "Avisos de conferência" do Status das atualizações. Histórias e critérios:
 [historias-de-usuario/conferencias.md](historias-de-usuario/conferencias.md).
 
+A única escrita além dos avisos: a ficha concluída da Avaliação documental que passou a ter
+pendência pela regra vigente vai para Em revisão (`scripts/conferencias/revisao_das_fichas.py`, com
+`python/monitora/avaliacao_documental/pendencias_da_ficha.py`; grava pela RPC
+`revisar_ficha_concluida_com_pendencia`, que confere de novo no banco), sem mudar nota nem resultado e só
+com a chave "Conferências" ligada. Correções de dados em lote ficam em `scripts/correcoes/` (modo
+`--seco` primeiro; ex.: `experiencia_ate_o_fim_das_inscricoes.py`).
+
 Limites conhecidos (a acertar com os dados reais, depois do ensaio):
 
 - "Aprovado/Triados": nas análises só existe `Aprovado` (`status_consolidado`); "Triados" é uma

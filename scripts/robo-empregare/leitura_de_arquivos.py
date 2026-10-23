@@ -47,7 +47,7 @@ import sys
 import tempfile
 import time
 from collections import Counter
-from datetime import datetime
+from datetime import date, datetime
 
 # A base comum (python/monitora/) vem do próprio repositório, sem instalar nada.
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "python"))
@@ -182,11 +182,22 @@ def leitura_com_erro(anexo, codigo):
     )
 
 
+def data_limite_do_bloco(bloco):
+    """A data limite do bloco de vínculos (o fim das inscrições que o banco põe na regra: FC_REGRA_COM_DATA_LIMITE):
+    o vínculo atual conta até ela, não até hoje. None sem data (ou em outro bloco)."""
+    valor = (bloco or {}).get("data_limite") if (bloco or {}).get("tipo") == "VINCULOS" else None
+    try:
+        return date.fromisoformat(str(valor)[:10]) if valor else None
+    except ValueError:
+        return None
+
+
 def ler_anexo(anexo, regras, baixar, sal, hoje, ler=ler_documento):
     """Baixa e lê um anexo: a leitura para o banco e o que contar no resumo (sem dado pessoal)."""
     regra = regras.get(anexo.get("edital")) or {}
     bloco = bloco_do_anexo(regra, anexo.get("coluna"), anexo.get("enunciado"))
     esperado = esperado_do_bloco(bloco)
+    data_limite = data_limite_do_bloco(bloco)
     try:
         conteudo = baixar(anexo["link"])
     except arquivo.ErroNoArquivo as erro:
@@ -203,6 +214,7 @@ def ler_anexo(anexo, regras, baixar, sal, hoje, ler=ler_documento):
             hash_do_cpf=anexo.get("cpf"),
             minimo_horas=minimo_de_horas(bloco) if esperado == "CURSOS" else None,
             hoje=hoje,
+            **({"data_limite": data_limite} if data_limite else {}),
         )
         return para_o_banco(anexo, resultado, hashlib.sha256(conteudo).hexdigest()), esperado
     except Exception as erro:  # um arquivo estranho não derruba o lote

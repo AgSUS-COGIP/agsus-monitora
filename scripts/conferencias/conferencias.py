@@ -8,7 +8,10 @@ TB_AVISO_CONFERENCIA (supabase/migrations/20261005210000_conferencias_de_consist
 com todos os casos de cada um em TB_CASO_AVISO_CONFERENCIA (20261007120000).
 Não muda análise, entrevista, lista nem aprovado. No módulo Análises entra
 também a conta das fichas concluídas da avaliação documental
-(conferencia_ler_fichas, refeita por python/monitora/avaliacao_documental/pontuacao.py).
+(conferencia_ler_fichas, refeita por python/monitora/avaliacao_documental/pontuacao.py)
+e, com a chave "Conferências" ligada, a única escrita fora dos avisos: a ficha concluída
+que passou a ter pendência pela regra vigente vai para Em revisão (revisao_das_fichas.py,
+RPC revisar_ficha_concluida_com_pendencia), sem mudar nota nem resultado.
 As regras estão em regras.py;
 o catálogo (código, módulo, gravidade, título), em catalogo.py.
 
@@ -40,9 +43,12 @@ sys.path.insert(0, str(_AQUI))
 sys.path.insert(0, str(_AQUI.parents[1] / "python"))
 
 import regras  # noqa: E402
+import revisao_das_fichas  # noqa: E402
 from catalogo import CATALOGO, MODULOS, do_modulo  # noqa: E402
 
 from monitora import config, execucao, supabase_rpc  # noqa: E402
+from monitora.chave_da_automacao import esta_ligada  # noqa: E402
+from monitora.fuso import hoje_em_brasilia  # noqa: E402
 from monitora.mascaramento import resumo_do_erro  # noqa: E402
 from monitora.registro import registro  # noqa: E402
 
@@ -93,10 +99,13 @@ def paginas_de_fichas(chamar):
         apos = proximo
 
 
-def conferir_o_modulo_de_analises(chamar, contexto, acumulador):
-    """As análises do painel e, das fichas concluídas no MONITORA, a conta gravada."""
+def conferir_o_modulo_de_analises(chamar, contexto, acumulador, pendentes):
+    """As análises do painel e, das fichas concluídas no MONITORA, a conta gravada e as
+    pendências pela regra vigente (em `pendentes`, para a revisão automática)."""
     regras.conferir_analises(paginas_de_analises(chamar), contexto, acumulador)
-    regras.conferir_fichas(paginas_de_fichas(chamar), acumulador)
+    paginas = list(paginas_de_fichas(chamar))  # lidas uma vez, usadas duas
+    regras.conferir_fichas(paginas, acumulador)
+    pendentes.extend(revisao_das_fichas.fichas_com_pendencia(paginas, hoje_em_brasilia().isoformat()))
 
 
 def lotes(avisos, tamanho=TAMANHO_DO_LOTE, casos_por_lote=CASOS_POR_LOTE):
@@ -114,12 +123,14 @@ def lotes(avisos, tamanho=TAMANHO_DO_LOTE, casos_por_lote=CASOS_POR_LOTE):
 
 
 def conferir(chamar, dias_convocado):
-    """Roda os cinco módulos. Devolve (avisos, conferências que rodaram, conferências que falharam)."""
+    """Roda os cinco módulos. Devolve (avisos, conferências que rodaram, conferências que falharam,
+    fichas concluídas com pendência)."""
     contexto = chamar("conferencia_ler_contexto", {}) or {}
     editais = {e["id"]: e for e in contexto.get("editais") or []}
     acumulador = regras.Acumulador(editais)
+    pendentes = []
     etapas = {
-        "analises": lambda: conferir_o_modulo_de_analises(chamar, contexto, acumulador),
+        "analises": lambda: conferir_o_modulo_de_analises(chamar, contexto, acumulador, pendentes),
         "entrevistas": lambda: regras.conferir_entrevistas(
             chamar("conferencia_ler_entrevistas", {}) or {}, contexto, acumulador
         ),
@@ -143,7 +154,7 @@ def conferir(chamar, dias_convocado):
     avisos = acumulador.avisos(regras.resumir)
     # Aviso de um módulo que falhou no meio não é gravado: a conferência dele não rodou inteira.
     avisos = [a for a in avisos if a["conferencia"] not in falhas]
-    return avisos, rodadas, falhas
+    return avisos, rodadas, falhas, pendentes
 
 
 def linhas_do_resumo(avisos, rodadas, falhas):
@@ -162,6 +173,25 @@ def linhas_do_resumo(avisos, rodadas, falhas):
     return linhas
 
 
+def revisar_fichas(cfg, chamar, pendentes):
+    """Manda para revisão as fichas concluídas com pendência, se a chave "Conferências" está ligada."""
+    if not pendentes:
+        return "Fichas concluídas com pendência: 0."
+    ligada = esta_ligada(
+        revisao_das_fichas.CHAVE_DA_AUTOMACAO,
+        chamar=lambda _cfg, funcao, corpo: chamar(funcao, corpo),
+        configuracao=lambda ambiente=None: cfg,
+        imprimir=log.info,
+    )
+    if not ligada:
+        return f"Fichas concluídas com pendência: {len(pendentes)} (chave Conferências desligada: nenhuma foi para revisão)."
+    r = revisao_das_fichas.mandar_para_revisao(chamar, pendentes, log)
+    return (
+        f"Fichas concluídas com pendência: {len(pendentes)} · foram para revisão: {r['revisadas']}"
+        f" · não confirmadas pelo banco: {r['recusadas']}."
+    )
+
+
 def principal(args, configuracao=None, chamar_rpc=None):
     cfg = configuracao or supabase_rpc.configuracao("docs/python-no-monitora.md")
     chamar_rpc = chamar_rpc or supabase_rpc.chamar
@@ -170,8 +200,13 @@ def principal(args, configuracao=None, chamar_rpc=None):
         return chamar_rpc(cfg, funcao, corpo, **opcoes)
 
     if args.seco:
-        avisos, rodadas, falhas = conferir(chamar, args.dias_convocado)
-        execucao.resumir(TITULO, ["Modo seco: nada foi gravado."] + linhas_do_resumo(avisos, rodadas, falhas))
+        avisos, rodadas, falhas, pendentes = conferir(chamar, args.dias_convocado)
+        execucao.resumir(
+            TITULO,
+            ["Modo seco: nada foi gravado."]
+            + linhas_do_resumo(avisos, rodadas, falhas)
+            + [f"Fichas concluídas com pendência (iriam para revisão): {len(pendentes)}."],
+        )
         return 2 if falhas else 0
 
     tipo, usuario = execucao.disparo(args.disparado_por)
@@ -187,9 +222,10 @@ def principal(args, configuracao=None, chamar_rpc=None):
         # Cancelamento ou tempo esgotado no GitHub (SIGTERM/SIGINT): ExecucaoInterrompida passa pelo
         # except de cada módulo e cai aqui, que fecha a execução com erro.
         with execucao.interromper_com_excecao():
-            avisos, rodadas, falhas = conferir(chamar, args.dias_convocado)
+            avisos, rodadas, falhas, pendentes = conferir(chamar, args.dias_convocado)
             for lote in lotes(avisos):
                 chamar("gravar_avisos_conferencia", {"p_execucao": id_execucao, "p_avisos": lote})
+            revisao = revisar_fichas(cfg, chamar, pendentes)
     except (Exception, execucao.ExecucaoInterrompida) as erro:
         mensagem = resumo_do_erro(erro)
         try:
@@ -220,7 +256,8 @@ def principal(args, configuracao=None, chamar_rpc=None):
             f"Avisos novos ou reabertos: {fim.get('novos', 0)} · abertos: {fim.get('abertos', 0)} · "
             f"resolvidos agora: {fim.get('resolvidos', 0)}.",
         ]
-        + linhas_do_resumo(avisos, rodadas, falhas),
+        + linhas_do_resumo(avisos, rodadas, falhas)
+        + [revisao],
     )
     return {"CONCLUIDA": 0, "PARCIAL": 2}.get(situacao, 1)
 

@@ -168,6 +168,13 @@ def _alertas_do_item(item, hoje, minimo, nome_do_arquivo_confere, sobrepostos, i
             # Empregadores diferentes ao mesmo tempo: legítimo (médico 20 h + 10 h). Só a informação, sem alerta.
             item["concomitante"] = True
             item["informacao"] = INFORMACAO_CONCOMITANTE
+        if item.get("fim_futuro"):
+            alertas.append(
+                _alerta(
+                    "FIM_FUTURO",
+                    f"Fim lido ({item.get('fim_lido')}) depois da emissão do documento ou de hoje: contado até {item['fim']}",
+                )
+            )
         if item.get("desligado_sem_data"):
             alertas.append(_alerta("SEM_DATA_FIM", "Vínculo encerrado, mas a data de saída não foi lida"))
         if not item.get("empregador"):
@@ -270,8 +277,10 @@ def ler_documento(
     minimo_horas=None,
     hoje=None,
     ocr=ocr_tesseract,
+    data_limite=None,
 ):
-    """O resultado da leitura de um arquivo (bytes). `ocr=None` não faz OCR (página-imagem fica sem leitura)."""
+    """O resultado da leitura de um arquivo (bytes). `ocr=None` não faz OCR (página-imagem fica sem leitura).
+    `data_limite` (date): a do bloco de vínculos (o fim das inscrições); o vínculo atual conta até ela."""
     hoje = hoje or hoje_em_brasilia()
     leitura = ler_paginas(conteudo, ocr=ocr)
     resultado = {
@@ -300,12 +309,12 @@ def ler_documento(
             resultado["situacao"] = "ILEGIVEL"
             resultado["alertas"].append(_alerta("DOCUMENTO_ILEGIVEL", "Não deu para ler o documento"))
         else:
-            _interpretar(resultado, leitura, texto, esperado, nome, sal, hash_do_cpf, minimo_horas, hoje)
+            _interpretar(resultado, leitura, texto, esperado, nome, sal, hash_do_cpf, minimo_horas, hoje, data_limite)
     resultado["resumo"] = resumo(resultado)
     return resultado
 
 
-def _interpretar(resultado, leitura, texto, esperado, nome, sal, hash_do_cpf, minimo_horas, hoje):
+def _interpretar(resultado, leitura, texto, esperado, nome, sal, hash_do_cpf, minimo_horas, hoje, data_limite=None):
     paginas = [p for p in leitura.paginas if p.texto]
     resultado["nome_confere"] = nome_confere(nome, texto) if nome else None
     resultado["cpf_confere"] = cpf_confere(texto, sal, hash_do_cpf)
@@ -316,13 +325,13 @@ def _interpretar(resultado, leitura, texto, esperado, nome, sal, hash_do_cpf, mi
     elif esperado == "TITULOS":
         itens = _diplomas.titulos(paginas, nome)
     elif esperado == "VINCULOS":
-        itens = _experiencia.vinculos(paginas, nome, hoje, leitura.data_do_arquivo, avisos)
+        itens = _experiencia.vinculos(paginas, nome, hoje, leitura.data_do_arquivo, avisos, data_limite)
     elif esperado == "IDENTIDADE":
         itens = _identidade.identidade(paginas)
     elif esperado == "REGISTRO":
         itens = _identidade.registro(paginas)
     elif tipo in DOCUMENTOS_DE_VINCULO:
-        itens = _experiencia.vinculos(paginas, nome, hoje, leitura.data_do_arquivo, avisos)
+        itens = _experiencia.vinculos(paginas, nome, hoje, leitura.data_do_arquivo, avisos, data_limite)
     else:
         itens = []
     for item in itens:

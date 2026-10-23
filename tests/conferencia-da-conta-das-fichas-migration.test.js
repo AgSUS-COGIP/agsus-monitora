@@ -52,9 +52,10 @@ describe("conferência da conta das fichas", () => {
 
   it("o job lê as fichas no módulo Análises e avisa com o código do catálogo", () => {
     expect(JOB).toContain('chamar("conferencia_ler_fichas"');
-    expect(JOB).toContain(
-      "regras.conferir_fichas(paginas_de_fichas(chamar), acumulador)",
-    );
+    // As páginas são lidas uma vez e usadas pela conferência da conta e pela
+    // revisão das fichas com pendência (20261023090000).
+    expect(JOB).toContain("paginas = list(paginas_de_fichas(chamar))");
+    expect(JOB).toContain("regras.conferir_fichas(paginas, acumulador)");
     expect(REGRAS).toContain(
       "from monitora.avaliacao_documental.pontuacao import conferir_ficha",
     );

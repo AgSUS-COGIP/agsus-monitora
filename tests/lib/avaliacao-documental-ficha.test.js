@@ -433,7 +433,11 @@ describe("o que falta para concluir", () => {
     lanc.blocos.FORMACAO = { situacao: "CONFORME", nota_ajustada: 8 };
     const av = calcularFicha(REGRA, lanc, DOCUMENTAL);
     expect(av.parciais.FORMACAO).toBe(8);
-    expect(pendenciasDaFicha(REGRA, lanc, av, declarada)).toHaveLength(1);
+    // Acima do que os títulos aceitos dão, sem Editar nota: também "acima"
+    // (o banco recalcula os itens e recusa o mesmo, 20261023090000).
+    expect(
+      pendenciasDaFicha(REGRA, lanc, av, declarada).map((p) => p.tipo),
+    ).toEqual(["acima", "justificativa"]);
     lanc.blocos.FORMACAO.nota_ajustada = 12;
     expect(
       pendenciasDaFicha(

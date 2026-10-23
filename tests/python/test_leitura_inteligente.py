@@ -392,3 +392,32 @@ def test_pdf_que_o_pdfplumber_nao_abre_vai_pelo_pdfium(monkeypatch):
     assert chamado.get("sim")
     assert leitura.total_de_paginas == 1
     assert leitura.erro is None
+
+
+# ── data limite do bloco e fim no futuro (20261023090000) ───────────────────
+
+
+def test_vinculo_atual_vai_ate_a_data_limite_e_nao_ate_hoje():
+    conteudo = _pdf(
+        ["Carteira de Trabalho Digital", "Razão social: CLINICA EXEMPLO LTDA", "Data de admissão: 01/02/2026"]
+    )
+    limite = date(2026, 9, 15)
+    (item,) = ler_documento(conteudo, "VINCULOS", NOME, hoje=HOJE, ocr=None, data_limite=limite)["itens"]
+    assert (item["dias_ate"], item["dias_ate_fonte"]) == ("2026-09-15", "DATA_LIMITE")
+    assert item["dias"] == (limite - date(2026, 2, 1)).days + 1
+
+
+def test_fim_depois_de_hoje_fica_em_hoje_com_o_alerta():
+    conteudo = _pdf(
+        [
+            "Carteira de Trabalho Digital",
+            "Razão social: CLINICA EXEMPLO LTDA",
+            "Data de admissão: 01/02/2026",
+            "Data de saída: 31/12/2027",
+        ]
+    )
+    (item,) = ler_documento(conteudo, "VINCULOS", NOME, hoje=HOJE, ocr=None)["itens"]
+    assert (item["fim"], item["fim_lido"]) == ("2026-10-09", "2027-12-31")
+    assert item["dias"] == (HOJE - date(2026, 2, 1)).days + 1
+    assert "FIM_FUTURO" in _codigos(item)
+    assert "DATA_FUTURA" not in _codigos(item)

@@ -147,9 +147,11 @@ def dias_dos_intervalos(intervalos, unir=True, limite=None):
 
 
 def anos_meses_dias(dias):
+    """Anos (365), meses (30, até 11) e dias: 364 dias = 0 anos, 11 meses e 34 dias (anosMesesDias)."""
     total = max(0, math.floor(_numero(dias)))
     resto = total % 365
-    return {"anos": total // 365, "meses": resto // 30, "dias": resto % 30}
+    meses = min(resto // 30, 11)
+    return {"anos": total // 365, "meses": meses, "dias": resto - meses * 30}
 
 
 def texto_do_cargo(valor):
@@ -591,9 +593,9 @@ def numero_do_parecer(valor, casas=1):
 
 def preencher_modelo(modelo, campos):
     return _CAMPO.sub(
-        lambda m: str(campos[m.group(1)] if campos[m.group(1)] is not None else "")
-        if m.group(1) in campos
-        else m.group(0),
+        lambda m: (
+            str(campos[m.group(1)] if campos[m.group(1)] is not None else "") if m.group(1) in campos else m.group(0)
+        ),
         str(modelo or ""),
     )
 

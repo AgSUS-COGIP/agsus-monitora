@@ -455,7 +455,8 @@ def _paginador(paginas):
 
 
 def dias_do_vinculo(inicio, fim, hoje):
-    final = fim or hoje
+    """Dias de [inicio, fim] com o primeiro e o último; o fim nunca passa de hoje."""
+    final = min(fim or hoje, hoje) if hoje else fim
     return max(0, (final - inicio).days + 1) if inicio and final and final >= inicio else 0
 
 
@@ -720,7 +721,17 @@ def _sem_duplicados_entre_paginas(itens):
     ]
 
 
-def vinculos(paginas, nome_do_candidato=None, hoje=None, data_do_arquivo=None, avisos=None):
+def fim_do_vinculo_atual(emissao, data_limite, hoje):
+    """Até quando conta o vínculo atual (fimDoVinculoAtual em datas-do-vinculo.ts): a data limite do bloco (o fim
+    das inscrições), não a data de hoje; se o documento foi emitido antes dela, a emissão. Nunca depois de hoje.
+    Devolve (data, fonte) com fonte EMISSAO ou DATA_LIMITE."""
+    ate = min(data_limite, hoje)
+    if emissao and emissao < ate:
+        return emissao, "EMISSAO"
+    return ate, "DATA_LIMITE"
+
+
+def vinculos(paginas, nome_do_candidato=None, hoje=None, data_do_arquivo=None, avisos=None, data_limite=None):
     """Os itens VINCULO do arquivo, na ordem do texto, sem repetição.
 
     CTPS: pela posição dos campos (`ctps`) ou pelos rótulos. Declaração, contrato, certidão e holerite: por seção
@@ -731,7 +742,8 @@ def vinculos(paginas, nome_do_candidato=None, hoje=None, data_do_arquivo=None, a
 
     O vínculo atual (sem fim) conta os dias até a emissão do documento (na declaração, a da própria seção); sem
     ela, até a data em que o PDF foi gerado (`data_do_arquivo`, dos metadados) ou, sem nada, até `hoje` (a data da
-    leitura) — sempre com `dias_ate` (a data) e `dias_ate_fonte` (EMISSAO, ARQUIVO ou LEITURA), sem alerta."""
+    leitura) — sempre com `dias_ate` (a data) e `dias_ate_fonte` (EMISSAO, ARQUIVO ou LEITURA), sem alerta. Com a
+    `data_limite` do bloco (o fim das inscrições), o atual vai até ela (ou até a emissão, se antes): DATA_LIMITE."""
     hoje = hoje or hoje_em_brasilia()
     avisos = [] if avisos is None else avisos
     original, pagina_de = _paginador(paginas)
@@ -772,7 +784,12 @@ def vinculos(paginas, nome_do_candidato=None, hoje=None, data_do_arquivo=None, a
         emissao_do_item = it.get("_emissao", emissao)
         emissao_do_item = emissao_do_item if emissao_do_item and emissao_do_item <= hoje else None
         # Atual: fim None; os dias vão até a emissão do documento, a data do arquivo ou a da leitura.
-        if it["atual"]:
+        if it["atual"] and data_limite:
+            emissao_valida = emissao_do_item if emissao_do_item and emissao_do_item >= it["inicio"] else None
+            ate, fonte = fim_do_vinculo_atual(emissao_valida, data_limite, hoje)
+            it["dias"] = dias_do_vinculo(it["inicio"], ate, hoje)
+            it["dias_ate"], it["dias_ate_fonte"] = iso(ate), fonte
+        elif it["atual"]:
             if emissao_do_item and emissao_do_item >= it["inicio"]:
                 ate, fonte = emissao_do_item, "EMISSAO"
             elif data_do_arquivo and data_do_arquivo >= it["inicio"]:
@@ -782,6 +799,13 @@ def vinculos(paginas, nome_do_candidato=None, hoje=None, data_do_arquivo=None, a
             it["dias"] = dias_do_vinculo(it["inicio"], ate, hoje)
             it["dias_ate"], it["dias_ate_fonte"] = iso(ate), fonte
         elif it["fim"]:
+            # Fim depois da emissão do documento (contrato com o fim previsto) ou de hoje (ano lido
+            # errado): o comprovado vai até a emissão confiável (ou hoje), com o alerta FIM_FUTURO.
+            limite = emissao_do_item if emissao_do_item and emissao_do_item >= it["inicio"] else hoje
+            if it["fim"] > limite:
+                it["fim_lido"] = iso(it["fim"])
+                it["fim"] = limite
+                it["fim_futuro"] = True
             it["dias"] = dias_do_vinculo(it["inicio"], it["fim"], hoje)
         elif declarado and not it.get("desligado_sem_data"):
             # Sem fim e sem "até a presente data": não dá para saber até quando (a tela diz "fim não informado").
@@ -870,7 +894,8 @@ def sobrepostos(itens, hoje=None):
 
 
 def intervalos_para_somar(itens, hoje=None):
-    """[{inicio, fim}] dos vínculos (o atual até `dias_ate`), para a soma sem sobreposição da pontuação."""
+    """[{inicio, fim}] dos vínculos (o atual até `dias_ate`), para a soma sem sobreposição da pontuação; o fim
+    nunca passa de hoje."""
     hoje = hoje or hoje_em_brasilia()
     saida = []
     for it in itens:
@@ -878,5 +903,5 @@ def intervalos_para_somar(itens, hoje=None):
             continue
         fim = it.get("fim") or ((it.get("dias_ate") or hoje.isoformat()) if it.get("atual") else None)
         if fim:
-            saida.append({"inicio": it["inicio"], "fim": fim})
+            saida.append({"inicio": it["inicio"], "fim": min(fim, hoje.isoformat())})
     return saida
