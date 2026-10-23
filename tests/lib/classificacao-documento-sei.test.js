@@ -288,7 +288,7 @@ describe("resultado preliminar da análise curricular (83/2026, SEI 0641561)", (
     expect(classeDa("Nome")).toBe("Tabela_Texto_Alinhado_Esquerda");
     expect(classeDa("Nota Final")).toBe("Tabela_Texto_Centralizado");
     // O título pode quebrar (Modalidade de Concorrência em duas linhas) e as
-    // larguras seguem o modelo: Nome com o resto (12 | 60 | 16 | 12).
+    // larguras seguem o modelo: Nome com o resto.
     expect(cabeca.querySelector("td").getAttribute("style")).not.toContain(
       "white-space:nowrap",
     );
@@ -296,7 +296,7 @@ describe("resultado preliminar da análise curricular (83/2026, SEI 0641561)", (
       [...cabeca.querySelectorAll("td")].map(
         (td) => td.getAttribute("style").match(/width:(\d+)%/)[1],
       ),
-    ).toEqual(["12", "60", "16", "12"]);
+    ).toEqual(["12", "76", "12"]);
     expect(tabelas[2].textContent).toBe("Não houve candidatos aptos.");
     // Sem timbrado nem assinatura: o SEI põe.
     expect(html).not.toMatch(/<img|assinado eletronicamente|SEPN CRN/i);
