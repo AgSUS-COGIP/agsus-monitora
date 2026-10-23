@@ -256,7 +256,15 @@ def resumir(aviso, numero_do_edital):
     if c == "CLASSIFICACAO_AJUSTE_APOS_LISTA":
         return f"{plural(n, 'ajuste', 'ajustes')} de recurso aprovado depois da última lista {onde}."
     if c == "APROVADOS_CONTRATADO_DUPLICADO":
-        return f"{plural(n, 'pessoa contratada', 'pessoas contratadas')} em mais de uma vaga."
+        return (
+            f"{plural(n, 'pessoa contratada', 'pessoas contratadas')} com mais de uma matrícula no mesmo edital: "
+            "confira com a equipe de contratação qual vínculo vale."
+        )
+    if c == "APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS":
+        return (
+            f"{plural(n, 'contratação marcada', 'contratações marcadas')} em mais de uma lista com a mesma matrícula: "
+            "deixe Contratado só na lista pela qual a pessoa foi contratada."
+        )
     if c == "APROVADOS_CONVOCADO_SEM_DESFECHO":
         return f"{plural(n, 'convocado', 'convocados')} há mais de {extra.get('dias')} dias sem desfecho {onde}."
     if c == "APROVADOS_PENDENCIA_DA_PUBLICACAO":
@@ -601,6 +609,57 @@ def conferir_classificacao(dados, acumulador):
 # ── Lista de aprovados ──────────────────────────────────────────────────────
 
 
+def _um_caso_por_area(codigo, linhas, acumulador, detalhe):
+    """Um caso por área: a linha dali é a referência (a tela lista as outras vagas da pessoa)."""
+    for area in sorted({c.get("area") for c in linhas if c.get("area")}) or [None]:
+        principal = next((c for c in linhas if c.get("area") == area), linhas[0])
+        aviso = acumulador.anotar(
+            codigo,
+            area=area,
+            exemplo=principal.get("id"),
+            caso={"referencia": principal.get("id"), "tipo": "candidato_aprovado", "detalhe": detalhe},
+        )
+        for c in linhas:
+            if c is not principal:
+                Acumulador.acrescentar_exemplo(aviso, c.get("id"))
+
+
+def _contratado_duplicado(lista, acumulador):
+    """
+    Crítico: a mesma pessoa com duas ou mais matrículas Contratado no MESMO edital.
+    A mesma matrícula em duas linhas é uma contratação só (a conferência de atenção abaixo);
+    editais diferentes com matrículas diferentes é recontratação, que sem as datas de admissão
+    e desligamento não se distingue de acúmulo: não gera aviso.
+    """
+    por_edital = defaultdict(list)
+    for c in lista:
+        por_edital[c.get("edital")].append(c)
+    linhas, vinculos = [], 0
+    for do_edital in por_edital.values():
+        # O vínculo é o hash da matrícula (conferencia_ler_aprovados, 20261024090000). Sem ele
+        # (Contratado sempre tem matrícula; só a leitura de antes da migration não o traz), não há
+        # como afirmar duas contratações: a linha não conta.
+        n = len({c["vinculo"] for c in do_edital if c.get("vinculo")})
+        if n >= 2:
+            linhas += do_edital
+            vinculos = max(vinculos, n)
+    if linhas:
+        detalhe = {"vagas": len({c.get("id") for c in linhas}), "vinculos": vinculos}
+        _um_caso_por_area("APROVADOS_CONTRATADO_DUPLICADO", linhas, acumulador, detalhe)
+
+
+def _mesma_matricula_em_duas_linhas(candidatos, acumulador):
+    """Atenção: a mesma matrícula Contratado em mais de uma linha, uma contratação marcada em duas listas."""
+    por_vinculo = defaultdict(list)
+    for c in candidatos:
+        if c.get("status") == "Contratado" and c.get("vinculo"):
+            por_vinculo[c["vinculo"]].append(c)
+    for linhas in por_vinculo.values():
+        n = len({c.get("id") for c in linhas})
+        if n >= 2:
+            _um_caso_por_area("APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS", linhas, acumulador, {"linhas": n})
+
+
 def conferir_aprovados(dados, contexto, acumulador, dias_convocado=15):
     hoje = dia(contexto.get("hoje")) or hoje_em_brasilia()
     limite = hoje - timedelta(days=dias_convocado)
@@ -625,22 +684,9 @@ def conferir_aprovados(dados, contexto, acumulador, dias_convocado=15):
                 },
             )
 
-    # Um caso por pessoa em cada área: o vínculo dela naquela área (a tela lista as outras vagas).
     for lista in contratados.values():
-        vagas = len({c.get("id") for c in lista})
-        if vagas < 2:
-            continue
-        for area in sorted({c.get("area") for c in lista if c.get("area")}) or [None]:
-            principal = next((c for c in lista if c.get("area") == area), lista[0])
-            aviso = acumulador.anotar(
-                "APROVADOS_CONTRATADO_DUPLICADO",
-                area=area,
-                exemplo=principal.get("id"),
-                caso={"referencia": principal.get("id"), "tipo": "candidato_aprovado", "detalhe": {"vagas": vagas}},
-            )
-            for c in lista:
-                if c is not principal:
-                    Acumulador.acrescentar_exemplo(aviso, c.get("id"))
+        _contratado_duplicado(lista, acumulador)
+    _mesma_matricula_em_duas_linhas(candidatos, acumulador)
 
     for p in dados.get("pendencias") or []:
         ids = p.get("candidatos") or []

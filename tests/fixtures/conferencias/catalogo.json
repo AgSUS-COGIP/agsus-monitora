@@ -74,7 +74,12 @@
     "APROVADOS_CONTRATADO_DUPLICADO": {
       "modulo": "aprovados",
       "gravidade": "CRITICA",
-      "titulo": "Contratado em duas vagas"
+      "titulo": "Duas matrículas no mesmo edital"
+    },
+    "APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS": {
+      "modulo": "aprovados",
+      "gravidade": "ATENCAO",
+      "titulo": "Mesma contratação marcada em duas listas"
     },
     "APROVADOS_CONVOCADO_SEM_DESFECHO": {
       "modulo": "aprovados",

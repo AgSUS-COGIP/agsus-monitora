@@ -40,7 +40,7 @@ const aprovado = (extra) => ({
   data_convocacao: "2026-01-10",
   data_contratacao: "2026-02-03T13:00:00+00:00",
   referencia: null,
-  detalhe: { vagas: 2 },
+  detalhe: { vagas: 2, vinculos: 2 },
   vinculos: [
     {
       id: UUID_DO_APROVADO,
@@ -63,14 +63,26 @@ const aprovado = (extra) => ({
   ...extra,
 });
 
-describe("caso de aprovado (Contratado em duas vagas)", () => {
+describe("caso de aprovado (Duas matrículas no mesmo edital)", () => {
+  it("a mesma matrícula em duas listas diz o que fazer", () => {
+    const caso = normalizarCaso(
+      aprovado({
+        conferencia: "APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS",
+        detalhe: { linhas: 2 },
+      }),
+    );
+    expect(caso.motivo).toBe(
+      "Mesma matrícula em 2 listas: deixar Contratado só em uma",
+    );
+  });
+
   it("quem, onde, situação, motivo e as vagas da pessoa — sem UUID", () => {
     const caso = normalizarCaso(aprovado());
     expect(quemDoCaso(caso)).toBe("4512 · Maria Fictícia");
     expect(ondeDoCaso(caso)).toBe(
       "Edital 12/2025 · 1777 · Enfermeiro · Contratado em 03/02/2026",
     );
-    expect(caso.motivo).toBe("Contratado em 2 vagas");
+    expect(caso.motivo).toBe("2 matrículas no mesmo edital");
     expect(caso.vinculos.map(linhaDoVinculo)).toEqual([
       "Edital 12/2025 · 1777 · Enfermeiro · Contratado em 03/02/2026",
       "Edital 40/2026 · 1900 · Técnico de enfermagem · Contratado em 20/05/2026",

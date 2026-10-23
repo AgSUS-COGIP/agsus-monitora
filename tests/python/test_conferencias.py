@@ -374,7 +374,8 @@ class Aprovados(unittest.TestCase):
         ac = regras.Acumulador({e["id"]: e for e in CONTEXTO["editais"]})
         regras.conferir_aprovados(dados, CONTEXTO, ac, dias_convocado=15)
         avisos = _avisos(ac)
-        self.assertEqual(avisos[("APROVADOS_CONTRATADO_DUPLICADO", "area:saude-indigena")]["exemplos"], ["c1", "c2"])
+        # Editais diferentes, sem matrícula repetida: recontratação, sem aviso.
+        self.assertNotIn(("APROVADOS_CONTRATADO_DUPLICADO", "area:saude-indigena"), avisos)
         convocado = avisos[("APROVADOS_CONVOCADO_SEM_DESFECHO", f"edital:{E1}")]
         self.assertEqual(convocado["exemplos"], ["c4"])
         self.assertIn("15 dias", convocado["resumo"])
@@ -391,24 +392,73 @@ class Aprovados(unittest.TestCase):
             [{"referencia": "c9", "tipo": "candidato_aprovado"}, {"referencia": "c8", "tipo": "candidato_aprovado"}],
         )
 
-    def test_contratado_em_duas_vagas_um_caso_por_pessoa_e_area(self):
-        p1 = "a" * 64
+    def test_contratado_duplicado_so_com_duas_matriculas_no_mesmo_edital(self):
+        p1, p2, p3 = "a" * 64, "b" * 64, "c" * 64
+        m1, m2, m3, m4 = "1" * 64, "2" * 64, "3" * 64, "4" * 64
         dados = {
             "candidatos": [
-                {"id": "c1", "edital": E1, "area": "sede", "status": "Contratado", "pessoa": p1},
-                {"id": "c2", "edital": E2, "area": "saude-indigena", "status": "Contratado", "pessoa": p1},
-                {"id": "c3", "edital": E2, "area": "saude-indigena", "status": "Contratado", "pessoa": p1},
+                # p1: duas matrículas no edital E2 (saúde indígena) e outra linha no E1 (sede).
+                {"id": "c1", "edital": E1, "area": "sede", "status": "Contratado", "pessoa": p1, "vinculo": m4},
+                {"id": "c2", "edital": E2, "area": "saude-indigena", "status": "Contratado", "pessoa": p1, "vinculo": m1},
+                {"id": "c3", "edital": E2, "area": "saude-indigena", "status": "Contratado", "pessoa": p1, "vinculo": m2},
+                # p2: recontratada em outro edital, com outra matrícula: nenhum aviso.
+                {"id": "c4", "edital": E1, "area": "saude-indigena", "status": "Contratado", "pessoa": p2, "vinculo": m3},
+                {"id": "c5", "edital": E2, "area": "saude-indigena", "status": "Contratado", "pessoa": p2, "vinculo": "5" * 64},
+                # p3: a mesma matrícula na lista da ampla e na da cota: uma contratação, não duas.
+                {"id": "c6", "edital": E1, "area": "saude-indigena", "status": "Contratado", "pessoa": p3, "vinculo": "6" * 64},
+                {"id": "c7", "edital": E1, "area": "saude-indigena", "status": "Contratado", "pessoa": p3, "vinculo": "6" * 64},
             ],
         }  # fmt: skip
         ac = regras.Acumulador({e["id"]: e for e in CONTEXTO["editais"]})
         regras.conferir_aprovados(dados, CONTEXTO, ac)
         avisos = _avisos(ac)
         saude = avisos[("APROVADOS_CONTRATADO_DUPLICADO", "area:saude-indigena")]
-        sede = avisos[("APROVADOS_CONTRATADO_DUPLICADO", "area:sede")]
-        # O caso de cada área é o vínculo da pessoa naquela área; uma pessoa, um caso.
-        self.assertEqual(saude["casos"], [{"referencia": "c2", "tipo": "candidato_aprovado", "detalhe": {"vagas": 3}}])
-        self.assertEqual(sede["casos"], [{"referencia": "c1", "tipo": "candidato_aprovado", "detalhe": {"vagas": 3}}])
-        self.assertEqual((saude["quantidade"], saude["exemplos"]), (1, ["c2", "c1", "c3"]))
+        self.assertNotIn(("APROVADOS_CONTRATADO_DUPLICADO", "area:sede"), avisos)
+        self.assertEqual(
+            saude["casos"],
+            [{"referencia": "c2", "tipo": "candidato_aprovado", "detalhe": {"vagas": 2, "vinculos": 2}}],
+        )
+        self.assertEqual((saude["quantidade"], saude["exemplos"]), (1, ["c2", "c3"]))
+        self.assertEqual(saude["gravidade"], "CRITICA")
+        self.assertIn("mais de uma matrícula no mesmo edital", saude["resumo"])
+        mesma = avisos[("APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS", "area:saude-indigena")]
+        self.assertEqual(mesma["gravidade"], "ATENCAO")
+        self.assertEqual(mesma["casos"], [{"referencia": "c6", "tipo": "candidato_aprovado", "detalhe": {"linhas": 2}}])
+        self.assertEqual((mesma["quantidade"], mesma["exemplos"]), (1, ["c6", "c7"]))
+        self.assertIn("deixe Contratado só na lista pela qual a pessoa foi contratada", mesma["resumo"])
+
+    def test_mesma_matricula_em_editais_e_areas_diferentes_um_caso_por_area(self):
+        m1 = "1" * 64
+        dados = {
+            "candidatos": [
+                {"id": "c1", "edital": E1, "area": "sede", "status": "Contratado", "pessoa": "a" * 64, "vinculo": m1},
+                {"id": "c2", "edital": E2, "area": "projetos", "status": "Contratado", "pessoa": "a" * 64, "vinculo": m1},
+                # Convocado com matrícula não conta: só Contratado.
+                {"id": "c3", "edital": E2, "area": "projetos", "status": "Convocado", "pessoa": "a" * 64, "vinculo": m1},
+            ],
+        }  # fmt: skip
+        ac = regras.Acumulador({e["id"]: e for e in CONTEXTO["editais"]})
+        regras.conferir_aprovados(dados, CONTEXTO, ac)
+        avisos = _avisos(ac)
+        self.assertFalse(any(c == "APROVADOS_CONTRATADO_DUPLICADO" for c, _ in avisos))
+        sede = avisos[("APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS", "area:sede")]
+        projetos = avisos[("APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS", "area:projetos")]
+        self.assertEqual(sede["casos"][0]["referencia"], "c1")
+        self.assertEqual(projetos["casos"][0]["referencia"], "c2")
+        self.assertEqual(projetos["exemplos"], ["c2", "c1"])
+
+    def test_sem_a_chave_vinculo_nao_ha_aviso(self):
+        # Leitura de antes de 20261024090000 (sem o hash da matrícula): não dá para afirmar duas
+        # contratações, então nenhum dos dois avisos sai (e os abertos se resolvem na rodada).
+        dados = {
+            "candidatos": [
+                {"id": "c2", "edital": E2, "area": "saude-indigena", "status": "Contratado", "pessoa": "a" * 64},
+                {"id": "c3", "edital": E2, "area": "saude-indigena", "status": "Contratado", "pessoa": "a" * 64},
+            ],
+        }  # fmt: skip
+        ac = regras.Acumulador({e["id"]: e for e in CONTEXTO["editais"]})
+        regras.conferir_aprovados(dados, CONTEXTO, ac)
+        self.assertEqual(_avisos(ac), {})
 
 
 class Cargas(unittest.TestCase):

@@ -98,26 +98,27 @@ topo da minha tela quantos avisos há, **para** corrigir sem procurar.
 
 ## CF-6 — As conferências
 
-| Código                                    | Módulo        | Gravidade   | Confere                                                                  |
-| ----------------------------------------- | ------------- | ----------- | ------------------------------------------------------------------------ |
-| `ANALISE_APROVADA_ABAIXO_DO_CORTE`        | Análises      | Crítico     | aprovada com nota abaixo da nota mínima documental da regra vigente      |
-| `ANALISE_NOTA_DIFERENTE_DA_SOMA`          | Análises      | Atenção     | nota final ≠ formação + cursos + experiência + étnico (±0,01)            |
-| `ANALISE_EXPERIENCIA_ACIMA_DO_TETO`       | Análises      | Atenção     | experiência acima de `documental.teto_experiencia` (se a regra tiver)    |
-| `ANALISE_DATA_INVALIDA`                   | Análises      | Atenção     | data da análise no futuro ou antes da candidatura na Empregare           |
-| `ANALISE_FICHA_CONTA_DIVERGENTE`          | Análises      | Crítico     | ficha concluída cuja conta refeita (pontuacao.py) difere da gravada      |
-| `ANALISE_EM_DOIS_EDITAIS`                 | Análises      | Informativo | mesmo código de candidato em dois editais ativos                         |
-| `ENTREVISTA_SEM_NOTA_APOS_DATA`           | Entrevistas   | Atenção     | data da agenda passou, sem nota e sem ausência marcada                   |
-| `ENTREVISTA_NOTA_FORA_DA_ESCALA`          | Entrevistas   | Crítico     | nota do avaliador fora da faixa/passo, lista ou níveis do roteiro        |
-| `ENTREVISTA_FORA_DA_CONVOCACAO`           | Entrevistas   | Crítico     | convocado pelo sistema fora da lista de convocação vigente               |
-| `ENTREVISTA_HORARIO_DUPLICADO`            | Entrevistas   | Atenção     | duas entrevistas no edital, ou horários que se cruzam em dois editais    |
-| `CLASSIFICACAO_LISTA_FINAL_DESATUALIZADA` | Classificação | Crítico     | lista FINAL gerada antes da última mudança nas análises do edital        |
-| `CLASSIFICACAO_EMPATE_PENDENTE`           | Classificação | Atenção     | última lista com empate sem desempate registrado                         |
-| `CLASSIFICACAO_VAGA_SEM_QUADRO`           | Classificação | Atenção     | vaga das análises de edital ativo sem linha no quadro (ex.: 101/2026)    |
-| `CLASSIFICACAO_AJUSTE_APOS_LISTA`         | Classificação | Atenção     | ajuste de recurso aprovado depois da última lista do mesmo tipo          |
-| `APROVADOS_CONTRATADO_DUPLICADO`          | Aprovados     | Crítico     | a mesma pessoa Contratada em duas vagas                                  |
-| `APROVADOS_CONVOCADO_SEM_DESFECHO`        | Aprovados     | Atenção     | Convocado há mais de N dias (padrão 15; `CONFERENCIA_DIAS_CONVOCADO`)    |
-| `APROVADOS_PENDENCIA_DA_PUBLICACAO`       | Aprovados     | Atenção     | pendência da publicação vinda da Classificação ainda sem desfecho        |
-| `CARGA_VARIACAO_BRUSCA`                   | Cargas        | Atenção     | candidatos de uma vaga da Empregare variaram 50% ou mais na última carga |
+| Código                                     | Módulo        | Gravidade   | Confere                                                                  |
+| ------------------------------------------ | ------------- | ----------- | ------------------------------------------------------------------------ |
+| `ANALISE_APROVADA_ABAIXO_DO_CORTE`         | Análises      | Crítico     | aprovada com nota abaixo da nota mínima documental da regra vigente      |
+| `ANALISE_NOTA_DIFERENTE_DA_SOMA`           | Análises      | Atenção     | nota final ≠ formação + cursos + experiência + étnico (±0,01)            |
+| `ANALISE_EXPERIENCIA_ACIMA_DO_TETO`        | Análises      | Atenção     | experiência acima de `documental.teto_experiencia` (se a regra tiver)    |
+| `ANALISE_DATA_INVALIDA`                    | Análises      | Atenção     | data da análise no futuro ou antes da candidatura na Empregare           |
+| `ANALISE_FICHA_CONTA_DIVERGENTE`           | Análises      | Crítico     | ficha concluída cuja conta refeita (pontuacao.py) difere da gravada      |
+| `ANALISE_EM_DOIS_EDITAIS`                  | Análises      | Informativo | mesmo código de candidato em dois editais ativos                         |
+| `ENTREVISTA_SEM_NOTA_APOS_DATA`            | Entrevistas   | Atenção     | data da agenda passou, sem nota e sem ausência marcada                   |
+| `ENTREVISTA_NOTA_FORA_DA_ESCALA`           | Entrevistas   | Crítico     | nota do avaliador fora da faixa/passo, lista ou níveis do roteiro        |
+| `ENTREVISTA_FORA_DA_CONVOCACAO`            | Entrevistas   | Crítico     | convocado pelo sistema fora da lista de convocação vigente               |
+| `ENTREVISTA_HORARIO_DUPLICADO`             | Entrevistas   | Atenção     | duas entrevistas no edital, ou horários que se cruzam em dois editais    |
+| `CLASSIFICACAO_LISTA_FINAL_DESATUALIZADA`  | Classificação | Crítico     | lista FINAL gerada antes da última mudança nas análises do edital        |
+| `CLASSIFICACAO_EMPATE_PENDENTE`            | Classificação | Atenção     | última lista com empate sem desempate registrado                         |
+| `CLASSIFICACAO_VAGA_SEM_QUADRO`            | Classificação | Atenção     | vaga das análises de edital ativo sem linha no quadro (ex.: 101/2026)    |
+| `CLASSIFICACAO_AJUSTE_APOS_LISTA`          | Classificação | Atenção     | ajuste de recurso aprovado depois da última lista do mesmo tipo          |
+| `APROVADOS_CONTRATADO_DUPLICADO`           | Aprovados     | Crítico     | a mesma pessoa com duas matrículas Contratado no mesmo edital            |
+| `APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS` | Aprovados     | Atenção     | a mesma matrícula Contratado em mais de uma linha (ampla e cota, etc.)   |
+| `APROVADOS_CONVOCADO_SEM_DESFECHO`         | Aprovados     | Atenção     | Convocado há mais de N dias (padrão 15; `CONFERENCIA_DIAS_CONVOCADO`)    |
+| `APROVADOS_PENDENCIA_DA_PUBLICACAO`        | Aprovados     | Atenção     | pendência da publicação vinda da Classificação ainda sem desfecho        |
+| `CARGA_VARIACAO_BRUSCA`                    | Cargas        | Atenção     | candidatos de uma vaga da Empregare variaram 50% ou mais na última carga |
 
 - **CF-6.1** — **Dado** o catálogo, **quando** os testes rodam, **então** o do job e o da tela são
   iguais ao caso dourado `tests/fixtures/conferencias/catalogo.json`.

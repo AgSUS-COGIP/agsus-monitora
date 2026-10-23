@@ -168,7 +168,8 @@ export function alteracaoJudicial(
 
 /*
   `candidatos` (ids): só aqueles registros — o caso de um aviso de conferência
-  ("Contratado em duas vagas") abre a lista nas vagas da pessoa.
+  ("Duas matrículas no mesmo edital", "Mesma contratação marcada em duas listas")
+  abre a lista nas vagas da pessoa.
 */
 export function filterApprovedCandidates<
   T extends CandidatoDasRegrasDeAprovados,

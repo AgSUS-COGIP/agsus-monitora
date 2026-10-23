@@ -34,7 +34,12 @@ CATALOGO = {
     "CLASSIFICACAO_VAGA_SEM_QUADRO": ("classificacao", ATENCAO, "Vaga sem linha no quadro de vagas"),
     "CLASSIFICACAO_AJUSTE_APOS_LISTA": ("classificacao", ATENCAO, "Ajuste de recurso aprovado depois da última lista"),
     # Lista de aprovados
-    "APROVADOS_CONTRATADO_DUPLICADO": ("aprovados", CRITICA, "Contratado em duas vagas"),
+    "APROVADOS_CONTRATADO_DUPLICADO": ("aprovados", CRITICA, "Duas matrículas no mesmo edital"),
+    "APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS": (
+        "aprovados",
+        ATENCAO,
+        "Mesma contratação marcada em duas listas",
+    ),
     "APROVADOS_CONVOCADO_SEM_DESFECHO": ("aprovados", ATENCAO, "Convocado há muitos dias sem desfecho"),
     "APROVADOS_PENDENCIA_DA_PUBLICACAO": ("aprovados", ATENCAO, "Pendência da publicação sem revisão"),
     # Cargas
