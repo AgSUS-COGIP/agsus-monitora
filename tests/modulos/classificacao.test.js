@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -458,6 +459,47 @@ describe("tela de Classificação", () => {
     expect(pagina).toContain("RESULTADO FINAL - PROCESSO SELETIVO");
     expect(pagina).toContain("Conforme item 10.4 do edital.");
     expect(pagina).toContain("AGÊNCIA DE TESTE");
+  });
+
+  it("Relatório de desempate: só aparece quando a lista gerada tem um; exporta XLSX e PDF", async () => {
+    const dourado = JSON.parse(
+      readFileSync(
+        "tests/fixtures/classificacao/relatorio-de-desempate.json",
+        "utf8",
+      ),
+    );
+    await montar(supabaseFalso());
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    expect(secao.querySelector("[data-desempate]")).toBeNull();
+    await act(async () => painel.raiz.unmount());
+    secao.remove();
+
+    const supabase = supabaseFalso({
+      obter_desempate_da_lista: ({ p_lista }) =>
+        p_lista === "l1" ? { ...dourado, lista_id: "l1" } : null,
+    });
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    expect(
+      supabase.rpc.mock.calls.some(
+        ([nome, args]) =>
+          nome === "obter_desempate_da_lista" && args.p_lista === "l1",
+      ),
+    ).toBe(true);
+    baixar.mockClear();
+    await clicar(secao.querySelector("[data-desempate='xlsx']"));
+    expect(baixar).toHaveBeenLastCalledWith(
+      expect.any(Uint8Array),
+      "classificacao-final-83-2026-desempate.xlsx",
+      expect.stringContaining("spreadsheetml"),
+    );
+    imprimir.mockClear();
+    await clicar(secao.querySelector("[data-desempate='pdf']"));
+    expect(imprimir.mock.calls[0][0]).toContain("RELATÓRIO DE DESEMPATE");
   });
 
   it("Exportar: o recorte é de cada lista; o XLSX (planilha inteira) não leva o recorte no nome", async () => {

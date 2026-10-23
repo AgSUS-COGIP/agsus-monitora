@@ -62,6 +62,14 @@ dos PDFs oficiais).
 **fonte:** src/lib/classificacao/sorteio.ts; supabase/migrations/20261002150000_classificacao.sql
 **abrir:** classificacao
 
+## Relatório de desempate
+
+**perguntas:** relatorio de desempate | como foi o desempate | quem desempatou | por que ficou a frente | criterio que decidiu o empate | exportar o desempate
+**resposta:** O relatório de desempate mostra, para uma lista gerada, cada grupo de empate de nota por vaga e por lista (a geral e a de cada modalidade): os critérios da regra que foram aplicados, na ordem, o valor de cada candidato em cada critério, o critério que decidiu cada par (quem ficou à frente de quem e por quê) e quem empatou em tudo — com o que resolveu: sorteio ou decisão registrados (com o registro), ordem de inscrição, mesma posição ou pendente. A maior idade aparece como a ordem de idade dentro do grupo (1º mais velho) e se havia certidão de nascimento, nunca a data. Quem calcula é a classificação em Python, com a mesma ordenação da tela; o relatório fica guardado junto da lista gerada. Na aba Listas, os botões "Relatório de desempate (XLSX)" e "(PDF)" só aparecem quando a lista gerada tem relatório.
+**fato:** O relatório de desempate é calculado pela classificação em Python e fica guardado junto da lista gerada.
+**fonte:** python/monitora/classificacao/desempate.py; src/lib/classificacao/relatorio-de-desempate.ts; supabase/migrations/20261023140000_classificacao_em_python_e_relatorio_de_desempate.sql
+**abrir:** classificacao
+
 ## 60 anos ou mais
 
 **perguntas:** 60 anos ou mais | como e calculado o criterio de 60 anos | como e calculado o criterio de 60 anos ou mais | idoso no desempate | data de corte da idade

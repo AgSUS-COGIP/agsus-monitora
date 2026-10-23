@@ -73,11 +73,19 @@ import {
 */
 import { MIME_DOCX } from "../../lib/documento-da-resposta.js";
 import {
+  gerarXlsx,
   gerarXlsxDaLista,
   instantaneoDaLista,
   MIME_XLSX,
   nomeDoArquivo,
 } from "../../lib/classificacao/exportacao.ts";
+import type { DesempateDaLista } from "../../lib/classificacao/relatorio-de-desempate.ts";
+import {
+  lerDesempateDaLista,
+  nomesDoRetrato,
+  paginaDoDesempate,
+  planilhasDoDesempate,
+} from "../../lib/classificacao/relatorio-de-desempate.ts";
 import {
   CABECALHO_PADRAO,
   documentoOficial,
@@ -121,6 +129,7 @@ const RPC_PUBLICAR_APROVADOS = "publicar_lista_aprovados_da_classificacao";
 const RPC_CONFIGURACAO_CONVOCACAO = "listar_configuracao_convocacao";
 const RPC_MODELOS_CONVOCACAO = "listar_modelos_convocacao";
 const RPC_SALVAR_HORA = "salvar_hora_nascimento_candidato";
+const RPC_OBTER_DESEMPATE = "obter_desempate_da_lista";
 
 export const MENSAGEM_SEM_ACESSO = "Sem acesso à Classificação";
 const TEMPO_LIMITE_MS = 45000;
@@ -852,6 +861,44 @@ export function criarEstadoDaClassificacao({
     return true;
   }
 
+  /*
+    O relatório de desempate da lista gerada (calculado pelo Python e guardado
+    em TB_RELATORIO_DESEMPATE; migration 20261023140000). Sem relatório, sem a
+    RPC no banco ou com falha na leitura: null, e o botão não aparece — nada
+    da lista depende dele.
+  */
+  async function obterDesempate(listaId: string) {
+    if (!listaId) return null;
+    const minhaGeracao = geracao;
+    try {
+      const dados = await rpc(RPC_OBTER_DESEMPATE, { p_lista: listaId });
+      return minhaGeracao === geracao ? lerDesempateDaLista(dados) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /* XLSX (planilhas Candidatos e Pares) ou PDF (impressão do texto), com os nomes do retrato. */
+  function exportarDesempate(
+    desempate: DesempateDaLista | null,
+    registrado: ListaRegistrada | null,
+    formato: string,
+  ) {
+    if (!desempate || !registrado?.retrato) return false;
+    if (registrado.id !== desempate.listaId) return false;
+    const nome = `${nomeDoArquivo(registrado.retrato)}-desempate`;
+    if (formato === "xlsx")
+      baixar(
+        gerarXlsx(
+          planilhasDoDesempate(desempate, nomesDoRetrato(registrado.retrato)),
+        ),
+        `${nome}.xlsx`,
+        MIME_XLSX,
+      );
+    else imprimir(paginaDoDesempate(desempate, "Relatório de desempate"));
+    return true;
+  }
+
   /* "Copiar para o SEI": HTML (classes do SEI) + texto na área de transferência. */
   async function copiarParaSei(
     registrado: ListaRegistrada | null,
@@ -920,6 +967,8 @@ export function criarEstadoDaClassificacao({
     prepararPublicacaoDeAprovados,
     publicarComoListaDeAprovados,
     exportar,
+    obterDesempate,
+    exportarDesempate,
     documentoDaLista,
     marcaDoDocumento,
     copiarParaSei,

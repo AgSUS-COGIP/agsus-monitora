@@ -101,7 +101,8 @@ export type RpcDaClassificacao =
   | "publicar_lista_aprovados_da_classificacao"
   | "listar_configuracao_convocacao"
   | "listar_modelos_convocacao"
-  | "salvar_hora_nascimento_candidato";
+  | "salvar_hora_nascimento_candidato"
+  | "obter_desempate_da_lista";
 export interface ClienteDaClassificacao {
   rpc: (
     nome:
