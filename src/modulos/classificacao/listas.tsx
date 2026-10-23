@@ -16,7 +16,8 @@ import type {
   SnapshotDaClassificacao,
 } from "./tipos-do-estado.ts";
 
-import { useId, useMemo, useState } from "react";
+import type { DesempateDaLista } from "../../lib/classificacao/relatorio-de-desempate.ts";
+import { useEffect, useId, useMemo, useState } from "react";
 import {
   MOTIVOS_DE_ELIMINACAO,
   TIPOS_DE_LISTA,
@@ -798,6 +799,20 @@ function Acoes({
   const geracoes = (dados?.listas || []).filter((l) => l.tipo === tipo);
   const ultima = registro || geracoes[0] || null;
   const desatualizada = listaDesatualizada(ultima, dados?.ajustes_mudaram_em);
+  /* O relatório de desempate da lista gerada (do Python), quando existe. */
+  const [desempate, setDesempate] = useState<DesempateDaLista | null>(null);
+  const idDaUltima = ultima?.id || "";
+  useEffect(() => {
+    let vigente = true;
+    setDesempate(null);
+    if (idDaUltima)
+      void estado.obterDesempate(idDaUltima).then((d) => {
+        if (vigente) setDesempate(d);
+      });
+    return () => {
+      vigente = false;
+    };
+  }, [estado, idDaUltima]);
   // A geração guardada não bate com os dados de agora (fichas, notas, regra…).
   const defasada = geracaoDesatualizada(
     ultima,
@@ -851,6 +866,10 @@ Usar esta geração assim mesmo?`,
   async function exportar(formato: string) {
     const alvo = await alvoRegistrado();
     if (alvo) await estado.exportar(alvo, formato, lista, fase || null);
+  }
+  async function exportarDesempate(formato: string) {
+    const alvo = await alvoRegistrado();
+    if (alvo) estado.exportarDesempate(desempate, alvo, formato);
   }
   async function copiarParaSei() {
     const alvo = await alvoRegistrado();
@@ -1027,6 +1046,22 @@ Usar esta geração assim mesmo?`,
             como lista de aprovados
           </button>
         ) : null}
+        {desempate
+          ? [
+              ["xlsx", "Relatório de desempate (XLSX)"],
+              ["pdf", "Relatório de desempate (PDF)"],
+            ].map(([formato = "", rotulo]) => (
+              <button
+                key={formato}
+                type="button"
+                className="btn secondary"
+                data-desempate={formato}
+                onClick={() => void exportarDesempate(formato)}
+              >
+                {rotulo}
+              </button>
+            ))
+          : null}
       </div>
       {e.erroDaConvocacao ? (
         <ErroAoCarregar

@@ -51,6 +51,7 @@ com a conta em `monitora.avaliacao_documental`).
 | `monitora.avaliacao_documental.pre_classificacao` | eliminação automática, Provisória por ART, tamanho do lote e "a linha anda" (cópia fiel de `pre-classificacao.js`)                       |
 | `monitora.avaliacao_documental.distribuicao`      | distribuição das fichas (menor carga, limites) e as fichas novas da distribuição inicial (cópia fiel de `distribuicao.js`)               |
 | `monitora.entrevistas.calculo`                    | nota por competência, total e parecer da entrevista, com ou sem aspectos (a regra de `FC_CALCULAR_ENTREVISTA` e de `calcularEntrevista`) |
+| `monitora.classificacao`                          | o motor da classificação (cópia fiel de `motor.ts`) e o relatório de desempate; etapa 1, em paralelo com a tela (ver abaixo)             |
 
 ### Importar a base
 
@@ -193,6 +194,47 @@ menos pendentes (`distribuicao.atribuicoes_dos_novos`); o banco valida cada atri
   `tests/python/test_pre_classificacao.py` e `tests/python/test_distribuicao.py`.
 - **Log público:** contagens, códigos de vaga e de aviso e números de edital. O resultado por edital
   que vai ao banco é recusado se tiver `@` ou 11 dígitos seguidos.
+
+## Classificação em Python — etapa 1: cálculo em paralelo e relatório de desempate (23/10/2026)
+
+O motor da classificação (`src/lib/classificacao/motor.ts`) tem uma cópia fiel em
+`python/monitora/classificacao/` (`motor.py`, com `regra.py`, `vagas.py`, `convocacao.py`,
+`catalogo.py`, `numeros.py` e `semantica_js.py` — o que o JS faz e o Python não: `String()`,
+`Math.round`, a formatação pt-BR do Intl e a ordem alfabética do `localeCompare("pt-BR")`). Mesma
+entrada, mesma saída: posições, situação VAGA/CR, eliminados com o motivo, modalidade, explicações
+e avisos. **A tela continua com o motor.ts**: nesta etapa o Python roda em paralelo, para conferir.
+
+- **Relatório de desempate** (`desempate.py`): sai da MESMA ordenação (`classificar_com_rastro`).
+  Por vaga, lista (geral e cada modalidade) e nota, os grupos de empate; em cada um, os critérios
+  aplicados na ordem da regra, o valor de cada candidato, o critério que decidiu cada par e cada
+  posição e quem empatou em tudo, com o que o motor fez (sorteio ou decisão registrados, ordem de
+  inscrição, mesma posição, pendente), a chave do grupo e o registro. Json estável
+  (`VERSAO_DO_RELATORIO`) + texto legível. Sem dado pessoal: candidato = id da análise e código de
+  inscrição; a maior idade vira a ordem de idade no grupo e se havia certidão (nunca a data).
+- **Job** `scripts/classificacao/classificacao.py --seco` (`--edital <id>` ou `--arquivo <json>`,
+  `--tipos`, `--saida <pasta>`): lê pela RPC `classificacao_ler_edital` (só `service_role`; o json
+  de `obter_classificacao_do_edital` sem nomes — cada nome vira um apelido de 6 dígitos na ordem
+  alfabética do motor, calculada no banco pela collation `CL_NOME_PT_BR_BASE` —, sem o conteúdo das
+  listas, sem autores, com a configuração de convocação), roda o Python e o motor da tela pelo Node
+  (`classificar-como-a-tela.mjs`) e compara caminho a caminho. Log público: lista, contagens e o
+  caminho divergente, sem valores; os relatórios e as divergências com os valores vão só para a
+  `--saida` local. Saída 0 sem divergência, 2 com divergência, 1 erro. Sem workflow nesta etapa.
+- **Banco** (`20261023140000_classificacao_em_python_e_relatorio_de_desempate.sql`, ensaio e
+  rollback com o mesmo nome): `TB_RELATORIO_DESEMPATE` (uma linha por lista gerada, RLS sem
+  política), `classificacao_gravar_desempate` (só `service_role`; confere o hash da lista, a versão
+  e o tipo do relatório, que cada candidato está na lista, os totais e a ausência de `@`/11 dígitos)
+  — ainda sem uso — e `obter_desempate_da_lista` (a tela; Classificação leitor).
+- **Tela**: em Classificação › Listas, "Relatório de desempate (XLSX)" e "(PDF)" aparecem só
+  quando a lista gerada tem relatório (`src/lib/classificacao/relatorio-de-desempate.ts`).
+- **Casos dourados**: `tests/fixtures/classificacao/casos-do-motor.json` (5 editais fictícios × 4
+  listas, gerados pelo motor.ts com `scripts/classificacao/gerar-casos-do-motor.mjs`), conferidos
+  por `tests/lib/classificacao-casos-do-motor.test.js` e `tests/python/test_classificacao_motor.py`;
+  o formato do relatório, por `tests/fixtures/classificacao/relatorio-de-desempate.json` (gerado
+  pelo Python, lido pela tela: `tests/python/test_classificacao_desempate.py` e
+  `tests/lib/classificacao-relatorio-de-desempate.test.js`).
+- **Conferência real (23/10/2026)**: 114/2026, 93/2026 e 30/2026, as quatro listas: 0 divergência.
+- **Etapa 2** (com o ok do usuário): a geração passa a usar o resultado do Python e grava o
+  relatório junto da lista.
 
 ## Terceira entrega: expurgo diário dos anexos do chat (saiu)
 

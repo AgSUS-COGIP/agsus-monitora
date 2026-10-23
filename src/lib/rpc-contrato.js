@@ -1002,6 +1002,12 @@ export const CONTRATO_RPC = {
     resumo:
       "Publica o resultado final da Classificação como a lista de aprovados vigente (a anterior fica no histórico), levando status, sub judice e anexos de quem casou (p_vinculos). PT409 se a lista vigente mudou. Classificação editor.",
   },
+  obter_desempate_da_lista: {
+    argumentos: ["p_lista"],
+    critica: false,
+    resumo:
+      "O relatório de desempate de uma lista gerada (json e texto, calculado pelo Python; TB_RELATORIO_DESEMPATE, 20261023140000); null sem relatório. Classificação leitor, área e recorte do edital.",
+  },
   obter_lista_classificacao: {
     argumentos: ["p_lista"],
     critica: false,
