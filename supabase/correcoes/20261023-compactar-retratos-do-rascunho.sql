@@ -22,7 +22,7 @@
       parecer que limpou, então nenhum conteúdo apagado da ficha depende dos
       retratos compactados.
       Medição de 21/10/2026 (ensaio): ficam 1.238 retratos (1,9 MiB); saem
-      9.691 (12,4 MiB = ~13 MB). Ensaio de 23/10/2026: saem 12.394 (16 MB, de
+      9.691 (12,4 MiB = ~13 MB). Ensaio de 23/10/2026: saem 12.395 (16 MB, de
       1.523 fichas), ficam 1.610 (2,5 MB); tabela em 34 MB. Os números crescem
       até a aplicação.
     - O histórico é imutável (gatilho "TG_THFICHA_IMUTAVEL",

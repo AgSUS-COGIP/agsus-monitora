@@ -1216,7 +1216,7 @@ fim da análise do 114/2026 e com autorização.
   `CK_THFICHA_CONTEUDO` exige o retrato só no `CONCLUIR`. CONCLUIR, REABRIR, REINICIAR, DISTRIBUIR,
   REVISAR etc. não mudam. ~440 bytes por `SALVAR` em vez de ~1,8 KB.
 - Passado: a correção tira o retrato dos `SALVAR` antigos, menos o último de cada ficha e o último
-  antes de cada `CONCLUIR` (ensaio de 23/10: saem 12.394 de 1.523 fichas, 16 MB; ficam 1.610, 2,5 MB; tabela em 34 MB). Desliga só o
+  antes de cada `CONCLUIR` (ensaio de 23/10: saem 12.395 de 1.523 fichas, 16 MB; ficam 1.610, 2,5 MB; tabela em 34 MB). Desliga só o
   gatilho `TG_THFICHA_IMUTAVEL` dentro da transação e religa antes do commit; assina pela conta do
   setor (a01afddb-…) no comentário de `DS_RETRATO`, com o sha256 da exportação.
 - **Exportação antes (obrigatória; o FREE não tem backup):**
