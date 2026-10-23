@@ -36,6 +36,13 @@ import {
     Seleção                 às 8h10, 13h10 e 18h10 de Brasília (decisão de 07/10/2026) ·
                             atrasada depois de 15 h (a noite inteira sem carga é esperada)
     Robô da Empregare       sem prazo: só roda pelo "Rodar agora" (decisão de 05/10/2026)
+    Classificação em Python sem prazo: roda quando uma lista é gerada (o relatório de
+                            desempate) e quando alguém clica em Gerar com a chave "Gerar
+                            listas pelo Python" ligada (o cálculo). O selo sai de cada lista
+                            (get_saude_das_cargas.classificacao_python, 20261023200000): falhou
+                            quando a mais recente terminada falhou, não conferiu ou não chegou
+                            ao GitHub, ou quando o pedido espera o job há mais que o limite
+                            (relatório 30 min, cálculo 15 min)
     Conferências            todo dia às 6h (Brasília) · atrasada depois de 26 h
     Agenda dos robôs        o banco pede cada execução ao GitHub (pg_cron + pg_net,
                             20261008140000): falhou se o último pedido foi recusado ou se
@@ -52,6 +59,9 @@ export const PRAZO_MENSAL_MIN = 32 * 24 * 60;
 export const PRAZO_DE_HORA_EM_HORA_MIN = 4 * 60;
 export const PRAZO_SELECAO_MIN = 15 * 60;
 export const PRAZO_AGENDA_DOS_ROBOS_MIN = 2 * 60;
+/* Classificação em Python: depois disto, o pedido que ainda espera o job conta como falha. */
+export const ESPERA_DO_RELATORIO_MIN = 30;
+export const ESPERA_DO_CALCULO_MIN = 15;
 
 export const SITUACOES = Object.freeze({
   em_dia: Object.freeze({ rotulo: "Em dia", tom: "sucesso", ordem: 4 }),
@@ -103,6 +113,7 @@ const NOMES_DOS_WORKFLOWS: Readonly<Record<string, string>> = Object.freeze({
   "pre-classificacao.yml": "Pré-classificação",
   // Só pelo Run workflow do GitHub (registrar_disparo_externo, 20261022170000).
   "leitura-de-arquivos.yml": "Leitura dos arquivos",
+  "classificacao.yml": "Classificação em Python",
 });
 
 /* O estado de cada tipo de execução, em ok / falha / andamento. */
@@ -114,6 +125,15 @@ const ESTADOS = Object.freeze({
   tarefa: { ok: ["succeeded"], falha: ["failed"] },
   // INICIADO: execução iniciada direto no GitHub (origem GITHUB, 20261020170000).
   disparo: { ok: ["ACEITO", "INICIADO"], falha: ["FALHOU", "SEM_TOKEN"] },
+  // Classificação em Python (20261023200000): cada lista é uma execução.
+  relatorio: {
+    ok: ["PRONTO"],
+    falha: ["NAO_CONFERE", "FALHOU", "SEM_DISPARO", "SEM_RESPOSTA"],
+  },
+  calculo: {
+    ok: ["PRONTO", "REGISTRADO"],
+    falha: ["NAO_CONFERE", "FALHOU", "SEM_DISPARO", "SEM_RESPOSTA"],
+  },
 });
 
 const registro = (valor: unknown): Record<string, unknown> =>
@@ -281,6 +301,34 @@ function execucaoDaPreClassificacao(entrada: unknown) {
   return {
     ...bruta,
     mensagem: `${partes.join(" · ")}${mensagem ? `. ${mensagem}` : ""}`,
+  };
+}
+
+/*
+  Uma lista da Classificação em Python (o preparo do relatório ou o pedido de
+  cálculo): o edital e o tipo entram na mensagem; ainda esperando o job há mais
+  que o limite, conta como falha (SEM_RESPOSTA: o job não pegou o pedido).
+*/
+function itemDaClassificacao(entrada: unknown, limiteMin: number, agora: Date) {
+  const bruta = registro(entrada);
+  const situacao = texto(bruta?.situacao);
+  const esperando = ["PEDIDO", "PREPARANDO", "CALCULANDO"].includes(situacao);
+  const inicio = data(bruta?.inicio);
+  const parado =
+    esperando &&
+    inicio !== null &&
+    agora.getTime() - inicio.getTime() > limiteMin * MINUTO;
+  const partes = [texto(bruta?.edital), texto(bruta?.tipo)].filter(Boolean);
+  const mensagem = parado
+    ? `Sem resposta do job há mais de ${limiteMin} min.`
+    : texto(bruta?.mensagem);
+  if (mensagem) partes.push(mensagem);
+  return {
+    inicio: bruta?.inicio,
+    fim: esperando ? null : bruta?.fim,
+    situacao: parado ? "SEM_RESPOSTA" : situacao,
+    linhas: null,
+    mensagem: partes.join(" · "),
   };
 }
 
@@ -504,6 +552,40 @@ export function normalizarSaude(
           tipo: "conferencia",
           execucoes: registros(dados.pre_classificacao).map(
             execucaoDaPreClassificacao,
+          ),
+        },
+        agora,
+      ),
+    );
+
+  // A Classificação em Python só aparece depois da migration 20261023200000 (a chave vem no payload).
+  const classificacao = registro(dados?.classificacao_python);
+  if (Object.keys(classificacao).length)
+    robos.push(
+      montarCarga(
+        {
+          id: "classificacao_desempate",
+          nome: "Relatório de desempate (Classificação em Python)",
+          onde: "GitHub Actions · Classificação em Python",
+          esperado: "quando uma lista é gerada na Classificação",
+          prazoMin: null,
+          tipo: "relatorio",
+          execucoes: registros(classificacao.relatorios).map((r) =>
+            itemDaClassificacao(r, ESPERA_DO_RELATORIO_MIN, agora),
+          ),
+        },
+        agora,
+      ),
+      montarCarga(
+        {
+          id: "classificacao_calculo",
+          nome: "Cálculo das listas pelo Python",
+          onde: "GitHub Actions · Classificação em Python",
+          esperado: "quando alguém clica em Gerar na Classificação",
+          prazoMin: null,
+          tipo: "calculo",
+          execucoes: registros(classificacao.calculos).map((c) =>
+            itemDaClassificacao(c, ESPERA_DO_CALCULO_MIN, agora),
           ),
         },
         agora,
@@ -770,6 +852,14 @@ export function visaoSimples(
     pre_classificacao: [
       "Pré-classificação (Avaliação documental)",
       "Monta a Provisória por ART e o lote de convocação de cada vaga no fim do robô da Empregare e quando a coordenação clica em Recalcular.",
+    ],
+    classificacao_desempate: [
+      "Relatório de desempate (Classificação em Python)",
+      "Prepara o relatório de desempate de cada lista gerada na Classificação, pelo Python. Rodar agora reprocessa os pendentes.",
+    ],
+    classificacao_calculo: [
+      "Cálculo das listas pelo Python",
+      "Calcula a lista pedida pelo Gerar da Classificação; a tela confere com o cálculo dela antes de registrar.",
     ],
   };
   for (const carga of porId.robos?.cargas || []) {

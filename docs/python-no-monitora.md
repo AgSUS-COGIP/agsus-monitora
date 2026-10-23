@@ -274,8 +274,54 @@ comissão).
   sorteados: 0 diferença. O `--desempate` nas 11 listas registradas desses editais: as 3 listas do
   114 com a regra vigente conferem e dariam relatório; as outras não conferem (regra antiga ou
   geradas antes de `totais.aguardando`), como esperado.
-- **Etapa 2b** (próxima): a geração passa a usar a lista calculada pelo Python, com o `motor.ts`
-  como conferência por um período (divergiu, a tela avisa e não registra).
+- **Etapa 2b** (abaixo): a geração passa a usar a lista calculada pelo Python, com o `motor.ts`
+  como conferência (divergiu, a tela avisa e não registra), atrás de uma chave desligada.
+
+## Classificação em Python — etapa 2b: a lista calculada pelo Python, atrás de chave (23/10/2026)
+
+Decisão do usuário (23/10/2026): a troca do cálculo só vai ao ar **depois que a classificação do
+114/2026 for publicada com o motor atual**. Por isso tudo fica atrás da chave da automação nova
+**"Gerar listas pelo Python"** (`classificacao_calculo`), que nasce **desligada**. Desligada, o
+"Gerar" é o de hoje: o `motor.ts` calcula e `registrar_lista_classificacao` registra (a tela faz
+uma chamada antes, `pedir_calculo_classificacao`, que só responde `{ligada: false}` sem gravar
+nada). Sem a linha da chave na tabela, também conta como desligada (`FC_CALCULO_PELO_PYTHON`).
+
+- **Ligada, o "Gerar"** pede o cálculo (`pedir_calculo_classificacao`: grava o pedido em
+  `TB_PEDIDO_CALCULO_CLASSIFICACAO` e pede `classificacao.yml` com `modo=calculo` por
+  `FC_DISPARAR_ROBO`, em nome de quem gerou; o pedido que não chega ao GitHub fica `SEM_DISPARO`).
+  A tela mostra "Calculando a lista… (até 5 min)" e relê o pedido a cada 3 s
+  (`obter_calculo_classificacao`; `src/lib/classificacao/calculo-em-python.ts`).
+- **Job** `classificacao.py --calculo`: lê a fila (`classificacao_ler_pedidos_calculo`: `PEDIDO` e
+  `CALCULANDO` dos últimos 30 min), marca `CALCULANDO`, lê o edital com os nomes, confere a versão
+  da regra do pedido, calcula com o motor Python e grava o retrato
+  (`classificacao_gravar_calculo`: forma, tipo, versão do pedido e a vigente, candidatos do edital,
+  tamanho; calcula o hash e marca `PRONTO`). Erro ou regra mudada marca `FALHOU`. **Toda
+  execução esvazia as duas filas**, qualquer que seja o modo (o GitHub guarda uma execução só na
+  fila do grupo `classificacao`): os cálculos primeiro, depois os relatórios de desempate, e entre um
+  relatório e outro olha de novo a fila dos cálculos (alguém espera na tela).
+- **A conferência:** pronto, a tela lê o retrato do Python, calcula o seu com o `motor.ts` e compara
+  campo a campo (sem ordem de chave; 3.0 = 3). **Igual:** `registrar_lista_calculada` — o banco
+  compara de novo, jsonb a jsonb, e registra **o retrato do Python** (o mesmo corpo de registro,
+  `FC_REGISTRAR_LISTA_CLASSIFICACAO`, com o hash e o pedido do relatório de desempate, que segue
+  como na 2a). **Diferente:** aviso "O cálculo em Python não confere com o da tela (N diferença(s)); a
+  lista não foi registrada…", nada registrado, e `registrar_divergencia_do_calculo` grava só o total e
+  até 20 caminhos (o banco recusa caminho com valor); o retrato fica no pedido para a análise.
+  Falhou, não chegou ao GitHub ou passou de 5 min: aviso com o motivo e "Tentar de novo" (um
+  pedido novo).
+- **Com a chave ligada**, `registrar_lista_classificacao` (o caminho antigo, de uma aba aberta antes
+  da troca) recusa com 55000 ("recarregue a página e gere de novo").
+- **Status das atualizações:** duas linhas, "Relatório de desempate (Classificação em Python)"
+  (chave `classificacao`) e "Cálculo das listas pelo Python" (chave `classificacao_calculo`;
+  desligada = "Desligada pelo administrador"). Cada lista é uma execução
+  (`get_saude_das_cargas.classificacao_python`: os 20 últimos preparos e pedidos, com edital, tipo e
+  mensagem): falhou quando a mais recente terminada falhou, não conferiu ou não chegou ao GitHub, ou
+  quando o pedido espera o job há mais que 30 min (relatório) ou 15 min (cálculo). "Rodar agora" do
+  relatório (`disparar_robo('classificacao_desempate')`, modo `normal`) reprocessa os pendentes —
+  inclusive os `SEM_DISPARO`, que agora entram em `classificacao_ler_pedidos_desempate`. O workflow
+  registra a execução iniciada no GitHub (`monitora.disparo_externo`, `registrar_disparo_externo`).
+- **Banco** (`20261023200000_classificacao_em_python_etapa_2b.sql`, ensaio e rollback com o mesmo
+  nome). **Ligar** só depois da publicação do 114/2026: Configurações › Automação › "Gerar listas
+  pelo Python", com motivo.
 
 ## Terceira entrega: expurgo diário dos anexos do chat (saiu)
 

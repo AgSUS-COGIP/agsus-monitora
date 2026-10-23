@@ -1,26 +1,36 @@
 name: Classificação em Python
 
-# Job Python (scripts/classificacao/classificacao.py --desempate) que prepara o
-# RELATÓRIO DE DESEMPATE de cada lista gerada na Classificação: lê a lista
-# registrada e o edital pelas RPCs do service_role, calcula a lista de novo
-# com o Python (python/monitora/classificacao/) e, só se o retrato calculado
-# for igual ao registrado, grava o relatório (classificacao_gravar_desempate,
-# que confere o hash da lista de novo). Senão marca a lista como "não confere".
+# Job Python (scripts/classificacao/classificacao.py) da Classificação. Toda
+# execução esvazia as duas filas, nesta ordem:
+#   1. CÁLCULO das listas pedidas pelo "Gerar" (etapa 2b, só com a chave "Gerar
+#      listas pelo Python" ligada em Configurações › Automação): calcula a lista
+#      com o Python (python/monitora/classificacao/) e grava o retrato pronto
+#      (classificacao_gravar_calculo); a tela confere com o motor.ts e só então
+#      registra a lista.
+#   2. RELATÓRIO DE DESEMPATE de cada lista gerada (etapa 2a): lê a lista
+#      registrada e o edital, calcula de novo e, só se o retrato calculado for
+#      igual ao registrado, grava o relatório (classificacao_gravar_desempate).
+#      Entre um relatório e outro, olha de novo a fila dos cálculos (alguém
+#      espera na tela).
 #
 # Quando roda:
-#   - sozinho, quando alguém gera uma lista em Classificação › Listas: o banco
-#     pede (registrar_lista_classificacao → FC_DISPARAR_ROBO, disparado_por = id
-#     de quem gerou, listas = a lista), salvo com a chave "Classificação em
-#     Python" desligada (Configurações › Automação);
+#   - sozinho, quando alguém clica em Gerar em Classificação › Listas: o banco
+#     pede modo=calculo (pedir_calculo_classificacao, chave ligada) e, depois
+#     do registro, modo=desempate com a lista (registrar_lista_classificacao →
+#     FC_DISPARAR_ROBO, salvo com a chave "Classificação em Python" desligada);
+#     disparado_por = id de quem gerou;
+#   - pelo "Rodar agora" do Status das atualizações (modo=normal: reprocessa os
+#     relatórios e os cálculos pendentes, inclusive os que o GitHub não recebeu);
 #   - pelo botão "Run workflow" desta aba Actions (listas = ids separados por
-#     vírgula, opcional).
-# Cada execução leva também todas as listas que esperam o relatório (o GitHub
-# guarda uma execução só na fila do grupo; a mais nova substitui a que esperava).
-# Guia: docs/python-no-monitora.md. Migration: 20261023170000_classificacao_em_python_etapa_2.sql.
+#     vírgula, opcional, no modo desempate).
+# O GitHub guarda uma execução só na fila do grupo (a mais nova substitui a que
+# esperava): por isso cada execução leva tudo o que espera, qualquer que seja o modo.
+# Guia: docs/python-no-monitora.md. Migrations: 20261023170000 (etapa 2a) e 20261023200000 (etapa 2b).
 #
 # O REPOSITÓRIO É PÚBLICO e este log também: o job só imprime número do edital,
-# tipo e id curto da lista, contagens e o caminho das diferenças — nunca nome,
-# nota ou valor (os nomes reais chegam ao job só para o cálculo).
+# tipo e id curto da lista ou do pedido, contagens e o caminho das diferenças —
+# nunca nome, nota ou valor (os nomes reais chegam ao job só para o cálculo e
+# vão ao banco só no retrato e no relatório).
 #
 # Secrets do repositório (os mesmos das sincronizações e do robô):
 #   SUPABASE_URL                 https://<projeto>.supabase.co
@@ -30,18 +40,20 @@ on:
   workflow_dispatch:
     inputs:
       modo:
-        description: "desempate = prepara o relatório de desempate das listas geradas"
+        description: "calculo = listas pedidas pelo Gerar; desempate = relatórios (e as listas abaixo); normal = tudo o que espera"
         type: choice
         options:
+          - normal
+          - calculo
           - desempate
-        default: desempate
+        default: normal
       listas:
-        description: "ids das listas (separados por vírgula); em branco = só as que esperam"
+        description: "modo desempate: ids das listas (separados por vírgula); em branco = só as que esperam"
         type: string
         required: false
         default: ""
       disparado_por:
-        description: "Gerar lista no MONITORA = id do usuário; em branco = GitHub"
+        description: "Gerar ou Rodar agora no MONITORA = id do usuário; em branco = GitHub"
         type: string
         required: false
         default: ""
@@ -54,8 +66,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  desempate:
-    name: Listas geradas → relatório de desempate
+  classificacao:
+    name: Cálculo das listas e relatório de desempate
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -72,15 +84,31 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Os inputs vão por variável de ambiente (nunca interpolados no shell).
-      - name: Preparar os relatórios
+      # Execução iniciada direto no GitHub: registra no MONITORA (Status das
+      # atualizações) com quem a iniciou. Nunca derruba o job.
+      - name: Registrar a execução no MONITORA
+        continue-on-error: true
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PYTHONPATH: python
+          ATOR_GITHUB: ${{ github.triggering_actor }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
+          MODO: ${{ inputs.modo || 'normal' }}
+        run: python -m monitora.disparo_externo classificacao.yml
+
+      # Os inputs vão por variável de ambiente (nunca interpolados no shell).
+      - name: Calcular as listas e preparar os relatórios
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MODO: ${{ inputs.modo || 'normal' }}
           LISTAS: ${{ inputs.listas }}
           DISPARADO_POR: ${{ inputs.disparado_por }}
         run: |
-          if [ -n "$LISTAS" ]; then
+          if [ "$MODO" = "calculo" ]; then
+            python scripts/classificacao/classificacao.py --calculo
+          elif [ "$MODO" = "desempate" ] && [ -n "$LISTAS" ]; then
             python scripts/classificacao/classificacao.py --desempate --lista "$LISTAS"
           else
             python scripts/classificacao/classificacao.py --desempate

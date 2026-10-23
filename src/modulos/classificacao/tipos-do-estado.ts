@@ -86,6 +86,19 @@ export interface SnapshotDaClassificacao {
   gerando: boolean;
   /** Falha ao ler a convocação do edital (não 42501): o "Gerar" espera. */
   erroDaConvocacao: string;
+  /** O cálculo pelo Python de uma lista (chave "Gerar listas pelo Python", 20261023200000). */
+  calculo: CalculoDaLista | null;
+}
+/*
+  O "Gerar" com o cálculo pelo Python: calculando (esperando o job), falhou
+  (o job, o banco ou o pedido ao GitHub), prazo (o job não respondeu a tempo)
+  ou diferente (o retrato do Python não é o do motor.ts; nada registrado).
+*/
+export interface CalculoDaLista {
+  tipo: string;
+  pedido: string;
+  situacao: "calculando" | "falhou" | "prazo" | "diferente";
+  mensagem: string;
 }
 export type RpcDaClassificacao =
   | "listar_editais_classificacao"
@@ -102,7 +115,11 @@ export type RpcDaClassificacao =
   | "listar_configuracao_convocacao"
   | "listar_modelos_convocacao"
   | "salvar_hora_nascimento_candidato"
-  | "obter_desempate_da_lista";
+  | "obter_desempate_da_lista"
+  | "pedir_calculo_classificacao"
+  | "obter_calculo_classificacao"
+  | "registrar_lista_calculada"
+  | "registrar_divergencia_do_calculo";
 export interface ClienteDaClassificacao {
   rpc: (
     nome:
@@ -144,6 +161,10 @@ export interface OpcoesDoEstado {
   copias?:
     | import("../../lib/avaliacao-documental/leitura-por-versao.ts").CopiasPorChave
     | null;
+  /** Cálculo pelo Python: de quanto em quanto tempo relê o pedido e quanto espera (testes). */
+  intervaloDoCalculoMs?: number;
+  prazoDoCalculoMs?: number;
+  agora?: () => number;
 }
 export type EstadoDaClassificacao = ReturnType<
   typeof import("./estado.ts").criarEstadoDaClassificacao

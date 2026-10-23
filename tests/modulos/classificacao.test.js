@@ -5,8 +5,13 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarClassificacao } from "../../src/modulos/classificacao/classificacao.tsx";
+import {
+  calcularClassificacao,
+  montarClassificacao,
+} from "../../src/modulos/classificacao/classificacao.tsx";
 import { ordemDoSorteio } from "../../src/lib/classificacao/sorteio.ts";
+import { retratoDaClassificacao } from "../../src/lib/classificacao/dados-do-estado.ts";
+import { instantaneoDaLista } from "../../src/lib/classificacao/exportacao.ts";
 import {
   clicar,
   digitar,
@@ -1479,5 +1484,212 @@ describe("Classificação: convocação e publicação conferidas", () => {
     expect(chamou(supabase, "publicar_lista_aprovados_da_classificacao")).toBe(
       false,
     );
+  });
+});
+
+/*
+  Etapa 2b (20261023200000): com a chave "Gerar listas pelo Python" ligada, o
+  "Gerar" pede o cálculo ao Python, espera o job ("Calculando a lista…"),
+  recebe o retrato, calcula o mesmo com o motor.ts e só registra quando são
+  iguais (registrar_lista_calculada). Desligada, tudo como antes.
+*/
+describe("Gerar com a lista calculada pelo Python", () => {
+  const PEDIDO = "aaaaaaaa-1111-4111-8111-111111111111";
+  const nomes = (supabase) => supabase.rpc.mock.calls.map(([nome]) => nome);
+  /* O retrato que o Python calcularia com os mesmos dados, como o jsonb devolve (chaves em outra ordem). */
+  function retratoDoPython(mexer = (r) => r) {
+    const dados = painel.estado.obter().dados;
+    const retrato = retratoDaClassificacao(
+      instantaneoDaLista(calcularClassificacao(dados, "FINAL"), {
+        edital: dados.edital,
+        regra: dados.regra.configuracao,
+        versao: dados.regra.versao,
+      }),
+    );
+    const invertido = (v) =>
+      Array.isArray(v)
+        ? v.map(invertido)
+        : v && typeof v === "object"
+          ? Object.fromEntries(
+              Object.entries(v)
+                .reverse()
+                .map(([k, x]) => [k, invertido(x)]),
+            )
+          : v;
+    return invertido(mexer(JSON.parse(JSON.stringify(retrato))));
+  }
+  function ligada({
+    situacoes = ["CALCULANDO", "PRONTO"],
+    mexer,
+    extra = {},
+  } = {}) {
+    const fila = [...situacoes];
+    return supabaseFalso({
+      pedir_calculo_classificacao: ({ p_tipo }) => ({
+        ligada: true,
+        pedido: PEDIDO,
+        tipo: p_tipo,
+        situacao: "PEDIDO",
+        mensagem: null,
+      }),
+      obter_calculo_classificacao: ({ p_com_retrato }) => {
+        const situacao = p_com_retrato ? "PRONTO" : fila.shift() || "PRONTO";
+        return {
+          pedido: PEDIDO,
+          tipo: "FINAL",
+          situacao,
+          mensagem:
+            situacao === "FALHOU"
+              ? "A regra do edital mudou desde o pedido; gere a lista de novo."
+              : null,
+          retrato: p_com_retrato ? retratoDoPython(mexer) : null,
+        };
+      },
+      registrar_lista_calculada: () => ({
+        id: "l1",
+        tipo: "FINAL",
+        versao_regra: 2,
+        hash: "e".repeat(64),
+        gerada_em: "2026-10-23T13:00:00Z",
+        por: "Gestora",
+        pendencias: 0,
+        publicada: false,
+      }),
+      registrar_divergencia_do_calculo: ({ p_pedido }) => ({
+        pedido: p_pedido,
+        situacao: "NAO_CONFERE",
+      }),
+      ...extra,
+    });
+  }
+  async function gerarEsperando(supabase, passos = 2) {
+    await montar(supabase);
+    await abrirEdital();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    const enquanto = {
+      texto: secao.querySelector("[data-calculo='calculando']")?.textContent,
+      gerarDesabilitado: secao.querySelector("[data-acao='gerar']").disabled,
+    };
+    for (let i = 0; i < passos; i += 1) {
+      await act(async () => void vi.advanceTimersByTime(3000));
+      await esperar();
+    }
+    return enquanto;
+  }
+  afterEach(() => vi.useRealTimers());
+
+  it("desligada: registra pelo cálculo da tela, como antes, sem esperar o Python", async () => {
+    const supabase = supabaseFalso({
+      pedir_calculo_classificacao: () => ({ ligada: false }),
+    });
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    expect(nomes(supabase)).toContain("registrar_lista_classificacao");
+    expect(nomes(supabase)).not.toContain("obter_calculo_classificacao");
+    expect(nomes(supabase)).not.toContain("registrar_lista_calculada");
+    expect(secao.querySelector("[data-calculo]")).toBeNull();
+    expect(secao.querySelector("[data-geracao='l1']")).not.toBeNull();
+  });
+
+  it("ligada e igual: espera o job, confere e registra o retrato do Python", async () => {
+    const supabase = ligada();
+    const enquanto = await gerarEsperando(supabase);
+    expect(enquanto.texto).toBe("Calculando a lista… (até 5 min)");
+    expect(enquanto.gerarDesabilitado).toBe(true);
+    expect(nomes(supabase)).not.toContain("registrar_lista_classificacao");
+    const chamada = supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "registrar_lista_calculada",
+    );
+    expect(chamada[1].p_pedido).toBe(PEDIDO);
+    expect(chamada[1].p_resultado.vagas[0].geral.map((l) => l.nome)).toEqual([
+      "Ana Empatada",
+      "Bia Empatada",
+      "Caio Parda",
+    ]);
+    expect(nomes(supabase)).not.toContain("registrar_divergencia_do_calculo");
+    expect(secao.querySelector("[data-calculo]")).toBeNull();
+    expect(secao.querySelector("[data-geracao='l1']")).not.toBeNull();
+    expect(toast).toHaveBeenCalledWith("Lista gerada e registrada.", "success");
+  });
+
+  it("ligada e diferente: avisa, não registra e grava só os caminhos da diferença", async () => {
+    const supabase = ligada({
+      mexer: (r) => {
+        r.vagas[0].geral[0].posicao = 9;
+        return r;
+      },
+    });
+    await gerarEsperando(supabase);
+    expect(nomes(supabase)).not.toContain("registrar_lista_calculada");
+    expect(nomes(supabase)).not.toContain("registrar_lista_classificacao");
+    const divergencia = supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "registrar_divergencia_do_calculo",
+    )[1];
+    expect(divergencia).toEqual({
+      p_pedido: PEDIDO,
+      p_total: 1,
+      p_caminhos: ["vagas[0].geral[0].posicao"],
+    });
+    const aviso = secao.querySelector("[data-calculo='diferente']");
+    expect(aviso.textContent).toContain(
+      "O cálculo em Python não confere com o da tela (1 diferença(s)); a lista não foi registrada.",
+    );
+    expect(secao.querySelector("[data-geracao]")).toBeNull();
+    // Tentar de novo: um pedido novo.
+    await clicar(secao.querySelector("[data-acao='tentar-calculo']"));
+    expect(
+      nomes(supabase).filter((n) => n === "pedir_calculo_classificacao"),
+    ).toHaveLength(2);
+  });
+
+  it("ligada e o banco não confirma a igualdade: não registra e avisa", async () => {
+    const supabase = ligada({
+      extra: {
+        registrar_lista_calculada: () => ({
+          nao_confere: true,
+          pedido: PEDIDO,
+        }),
+      },
+    });
+    await gerarEsperando(supabase);
+    expect(
+      secao.querySelector("[data-calculo='diferente']").textContent,
+    ).toContain("O banco não confirmou");
+    expect(secao.querySelector("[data-geracao]")).toBeNull();
+  });
+
+  it("ligada e o job falhou, ou o pedido não saiu: o motivo e Tentar de novo", async () => {
+    const supabase = ligada({ situacoes: ["FALHOU"] });
+    await gerarEsperando(supabase, 1);
+    expect(
+      secao.querySelector("[data-calculo='falhou']").textContent,
+    ).toContain("A regra do edital mudou desde o pedido");
+    expect(secao.querySelector("[data-acao='tentar-calculo']")).not.toBeNull();
+    expect(nomes(supabase)).not.toContain("registrar_lista_calculada");
+    await act(async () => painel.raiz.unmount());
+    secao.remove();
+    vi.useRealTimers();
+
+    const semDisparo = supabaseFalso({
+      pedir_calculo_classificacao: () => ({
+        ligada: true,
+        pedido: PEDIDO,
+        situacao: "SEM_DISPARO",
+        mensagem: "O pedido ao GitHub não saiu (SEM_TOKEN).",
+      }),
+    });
+    await montar(semDisparo);
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    expect(
+      secao.querySelector("[data-calculo='falhou']").textContent,
+    ).toContain("O pedido ao GitHub não saiu (SEM_TOKEN).");
+    expect(nomes(semDisparo)).not.toContain("obter_calculo_classificacao");
+    expect(secao.querySelector("[data-acao='gerar']").disabled).toBe(false);
   });
 });

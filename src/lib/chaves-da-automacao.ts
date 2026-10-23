@@ -62,6 +62,8 @@ export const CHAVE_DA_LINHA: Readonly<Record<string, string>> = Object.freeze({
   selecao: "selecao",
   conferencias: "conferencias",
   pre_classificacao: "pre_classificacao",
+  classificacao_desempate: "classificacao",
+  classificacao_calculo: "classificacao_calculo",
 });
 
 /* Quando a chave não tem tarefa no pg_cron: o que dispara a automação. */
@@ -69,6 +71,7 @@ const QUANDO_SEM_TAREFA: Readonly<Record<string, string>> = Object.freeze({
   pre_classificacao: "No fim de cada carga do robô da Empregare",
   robo_de_inscricoes: "Nenhum edital com agenda de inscrições",
   classificacao: "Quando uma lista é gerada na Classificação",
+  classificacao_calculo: "Quando alguém clica em Gerar na Classificação",
 });
 
 const registro = (valor: unknown): Record<string, unknown> =>

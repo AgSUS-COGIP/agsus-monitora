@@ -1,11 +1,26 @@
 """
-CLASSIFICAÇÃO EM PYTHON — RELATÓRIO DE DESEMPATE DE CADA LISTA GERADA E CONFERÊNCIA COM A TELA
+CLASSIFICAÇÃO EM PYTHON — A LISTA CALCULADA PELO PYTHON, O RELATÓRIO DE DESEMPATE E A CONFERÊNCIA COM A TELA
 
-Dois modos:
+Três modos:
 
---desempate (etapa 2a: o que o workflow classificacao.yml roda)
-  Para cada lista gerada que espera o relatório (classificacao_ler_pedidos_desempate:
-  as pendentes e as pedidas em --lista), marca PREPARANDO, lê a lista registrada
+--calculo e --desempate (o que o workflow classificacao.yml roda)
+  Toda execução esvazia as duas filas, porque o GitHub guarda uma execução só na
+  fila do grupo (a mais nova substitui a que esperava): primeiro os CÁLCULOS
+  pedidos pelo "Gerar" (etapa 2b, com a chave "Gerar listas pelo Python"
+  ligada), que têm alguém esperando na tela, e depois os RELATÓRIOS de
+  desempate; entre um relatório e outro, olha de novo a fila dos cálculos.
+  --desempate aceita --lista (as listas pedidas, além das que esperam).
+
+  Cálculo (classificacao_ler_pedidos_calculo): marca CALCULANDO, lê o edital
+  (classificacao_ler_edital, com os nomes reais), confere a versão da regra do
+  pedido, calcula a lista com o Python e grava o retrato que a tela registraria
+  (classificacao_gravar_calculo: o banco confere a forma, a versão e os
+  candidatos e marca PRONTO). A tela confere esse retrato com o motor.ts e só
+  então registra a lista. Erro ou regra mudada marca FALHOU e segue.
+
+  Relatório (etapa 2a): para cada lista gerada que espera o relatório
+  (classificacao_ler_pedidos_desempate: as pendentes e as pedidas em --lista),
+  marca PREPARANDO, lê a lista registrada
   (classificacao_ler_lista: retrato, hash, tipo, versão da regra) e o edital
   (classificacao_ler_edital, com os nomes reais), calcula a lista com o Python
   e monta o retrato que a tela grava. Só se o retrato calculado for IGUAL ao
@@ -23,6 +38,7 @@ Dois modos:
   valores (divergencias-*.json) só na máquina de quem roda.
 
 Uso
+  python scripts/classificacao/classificacao.py --calculo
   python scripts/classificacao/classificacao.py --desempate [--lista <uuid>…]
   python scripts/classificacao/classificacao.py --seco --edital <uuid> [--edital <uuid>…]
       [--tipos PRELIMINAR,CONVOCACAO,ENTREVISTA,FINAL] [--saida <pasta>]
@@ -34,8 +50,8 @@ o caminho das diferenças — nunca nome, nota nem valor. Os nomes reais chegam
 ao job (decisão de 23/10/2026: a ordem alfabética do desempate final é a do
 Python) e ficam só na memória; a mensagem gravada no preparo também não os leva.
 
-Saída: 0 tudo certo; 2 com divergência (--seco) ou lista não conferida/falha
-(--desempate); 1 erro; 3 entrada inválida.
+Saída: 0 tudo certo; 2 com divergência (--seco) ou cálculo/lista não conferida/falha
+(--calculo, --desempate); 1 erro; 3 entrada inválida.
 """
 
 from __future__ import annotations
@@ -55,18 +71,24 @@ sys.path.insert(0, str(_RAIZ / "python"))
 from monitora import execucao, supabase_rpc  # noqa: E402
 from monitora.classificacao.comparacao import comparar  # noqa: E402
 from monitora.classificacao.desempate import relatorio_do_rastro, texto_do_relatorio  # noqa: E402
-from monitora.classificacao.motor import DadosInvalidos, classificar_com_rastro, entrada_do_edital  # noqa: E402
+from monitora.classificacao.motor import (  # noqa: E402
+    DadosInvalidos,
+    classificar_com_rastro,
+    classificar_edital,
+    entrada_do_edital,
+)
 from monitora.classificacao.retrato import conferir_com_o_registrado, retrato_do_edital  # noqa: E402
 from monitora.mascaramento import mascarar, resumo_do_erro  # noqa: E402
 
 TITULO_SECO = "Classificação em Python → conferência com o motor da tela"
-TITULO_DESEMPATE = "Classificação em Python → relatório de desempate das listas geradas"
+TITULO_DESEMPATE = "Classificação em Python → cálculo das listas pedidas e relatório de desempate das geradas"
 TIPOS = ("PRELIMINAR", "CONVOCACAO", "ENTREVISTA", "FINAL")
 SEM_DIVERGENCIA, COM_DIVERGENCIA, ERRO, ENTRADA_INVALIDA = 0, 2, 1, 3
 MOTOR_DA_TELA = _AQUI / "classificar-como-a-tela.mjs"
 _UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE)
 
 MENSAGEM_REGRA_MUDOU = "A regra do edital mudou desde a geração; gere a lista de novo."
+MENSAGEM_REGRA_MUDOU_NO_PEDIDO = "A regra do edital mudou desde o pedido; gere a lista de novo."
 MENSAGEM_NAO_CONFERE = (
     "O cálculo em Python não confere com esta lista ({n} diferença(s)): os dados mudaram desde a "
     "geração ou o cálculo diverge do da tela."
@@ -277,43 +299,131 @@ def preparar_lista(config, pedido: dict, execucao_id: str, editais: dict, chamar
         return {"situacao": "FALHOU", "linhas": [f"{rotulo}: falhou — {motivo}"]}
 
 
-def rodar_desempate(a, argumentos, ambiente, chamar) -> int:
-    listas = [x.strip() for valor in a.lista for x in valor.split(",") if x.strip()]
-    if any(not _UUID.match(x) for x in listas):
-        argumentos.error("--lista: use ids de lista (uuid), separados por vírgula ou repetindo a opção")
+# ── --calculo: a lista calculada pelo Python (etapa 2b) ─────────────────
+
+
+class CalculoRecusado(Exception):
+    """O pedido não pode ser calculado como está (a regra mudou desde o pedido)."""
+
+
+def calcular_pedido(config, pedido: dict, execucao_id: str, chamar=supabase_rpc.chamar) -> dict:
+    """
+    Calcula uma lista pedida pelo "Gerar" e grava o retrato: {situacao, linhas}.
+    PRONTO quando gravou; FALHOU (já marcado no banco) quando não. O edital é lido
+    na hora, para cada pedido: a tela confere o retrato com os dados que ela tem.
+    """
+    pedido_id = str(pedido.get("pedido") or "")
+    rotulo = f"pedido {pedido_id[:8]}"
+
+    def marcar(situacao: str, mensagem: str | None = None):
+        chamar(
+            config,
+            "classificacao_marcar_calculo",
+            {"p_execucao": execucao_id, "p_pedido": pedido_id, "p_situacao": situacao, "p_mensagem": mensagem},
+        )
+
+    try:
+        marcar("CALCULANDO")
+        dados = ler_edital(config, str(pedido.get("edital") or ""), chamar=chamar)
+        numero = str((dados.get("edital") or {}).get("numero") or "edital")
+        tipo = str(pedido.get("tipo") or "")
+        rotulo = f"{numero} · {tipo} · pedido {pedido_id[:8]}"
+        if (dados.get("regra") or {}).get("versao") != pedido.get("versao_regra"):
+            raise CalculoRecusado(MENSAGEM_REGRA_MUDOU_NO_PEDIDO)
+        resultado = classificar_edital(dados, tipo)
+        chamar(
+            config,
+            "classificacao_gravar_calculo",
+            {"p_execucao": execucao_id, "p_pedido": pedido_id, "p_retrato": retrato_do_edital(dados, resultado)},
+        )
+        t = resultado["totais"]
+        return {
+            "situacao": "PRONTO",
+            "linhas": [
+                f"{rotulo}: lista calculada — {t['elegiveis']} na lista, {t['eliminados']} eliminados, "
+                f"{t['aguardando']} aguardando"
+            ],
+        }
+    except CalculoRecusado as recusa:
+        _marcar_sem_derrubar(marcar, "FALHOU", str(recusa))
+        return {"situacao": "FALHOU", "linhas": [f"{rotulo}: não calculado — {recusa}"]}
+    except Exception as erro:  # noqa: BLE001 — um pedido com problema não segura os outros
+        motivo = motivo_seguro(erro)
+        _marcar_sem_derrubar(marcar, "FALHOU", f"O cálculo falhou ({motivo}).")
+        return {"situacao": "FALHOU", "linhas": [f"{rotulo}: falhou — {motivo}"]}
+
+
+def rodar_calculos(config, execucao_id: str, chamar) -> list[dict]:
+    """Os cálculos que esperam agora, um a um. Falha ao ler a fila vira um item FALHOU (o resto segue)."""
+    try:
+        pedidos = chamar(config, "classificacao_ler_pedidos_calculo", {})
+        if not isinstance(pedidos, list):
+            raise ValueError("classificacao_ler_pedidos_calculo não devolveu uma lista.")
+    except Exception as erro:  # noqa: BLE001
+        return [{"situacao": "FALHOU", "linhas": [f"Falhou ao ler os pedidos de cálculo: {motivo_seguro(erro)}"]}]
+    return [calcular_pedido(config, pedido, execucao_id, chamar=chamar) for pedido in pedidos]
+
+
+def _contagem(feitos: list[dict]) -> str:
+    situacoes: dict = {}
+    for feito in feitos:
+        situacoes[feito["situacao"]] = situacoes.get(feito["situacao"], 0) + 1
+    return ", ".join(
+        f"{quantas} {situacao.lower().replace('_', ' ')}" for situacao, quantas in sorted(situacoes.items())
+    )
+
+
+# ── a fila: os cálculos primeiro, depois os relatórios ──────────────────
+
+
+def rodar_fila(listas, ambiente, chamar) -> int:
+    """
+    Uma execução do workflow: os cálculos que esperam, os relatórios (os
+    pendentes e os de `listas`) e, entre um relatório e outro, os cálculos que
+    chegaram enquanto isso. 0 tudo pronto; 2 com falha ou lista não conferida;
+    1 sem conseguir ler os relatórios pedidos.
+    """
     execucao_id = execucao.identificador(prefixo="classificacao")
     try:
         config = supabase_rpc.configuracao(ambiente=ambiente)
+    except Exception as erro:  # noqa: BLE001
+        execucao.resumir(TITULO_DESEMPATE, [f"Falhou ao ler os pedidos: {motivo_seguro(erro)}"], ambiente=ambiente)
+        return ERRO
+    calculos = rodar_calculos(config, execucao_id, chamar)
+    try:
         pedidos = chamar(config, "classificacao_ler_pedidos_desempate", {"p_listas": listas or None})
         if not isinstance(pedidos, list):
             raise ValueError("classificacao_ler_pedidos_desempate não devolveu uma lista.")
     except Exception as erro:  # noqa: BLE001
-        execucao.resumir(TITULO_DESEMPATE, [f"Falhou ao ler os pedidos: {motivo_seguro(erro)}"], ambiente=ambiente)
+        linhas = [linha for feito in calculos for linha in feito["linhas"]]
+        linhas.append(f"Falhou ao ler os pedidos de relatório: {motivo_seguro(erro)}")
+        execucao.resumir(TITULO_DESEMPATE, linhas, ambiente=ambiente)
         return ERRO
-    if not pedidos:
-        execucao.resumir(TITULO_DESEMPATE, ["Nenhuma lista esperando o relatório de desempate."], ambiente=ambiente)
-        return SEM_DIVERGENCIA
     editais: dict = {}
-    situacoes: dict = {}
-    linhas = []
+    relatorios = []
     for pedido in pedidos:
-        feito = preparar_lista(config, pedido, execucao_id, editais, chamar=chamar)
-        situacoes[feito["situacao"]] = situacoes.get(feito["situacao"], 0) + 1
-        linhas.extend(feito["linhas"])
-    linhas.append(
-        f"{len(pedidos)} lista(s): "
-        + ", ".join(
-            f"{quantas} {situacao.lower().replace('_', ' ')}" for situacao, quantas in sorted(situacoes.items())
-        )
-        + f". Execução {execucao_id}."
-    )
+        # Quem gerou uma lista espera na tela: o cálculo passa na frente do próximo relatório.
+        calculos.extend(rodar_calculos(config, execucao_id, chamar))
+        relatorios.append(preparar_lista(config, pedido, execucao_id, editais, chamar=chamar))
+    if pedidos:
+        calculos.extend(rodar_calculos(config, execucao_id, chamar))
+    linhas = [linha for feito in calculos + relatorios for linha in feito["linhas"]]
+    if calculos:
+        linhas.append(f"{len(calculos)} cálculo(s): {_contagem(calculos)}.")
+    if relatorios:
+        linhas.append(f"{len(relatorios)} lista(s): {_contagem(relatorios)}.")
+    if not calculos and not relatorios:
+        linhas.append("Nenhuma lista esperando o cálculo nem o relatório de desempate.")
+    linhas.append(f"Execução {execucao_id}.")
     execucao.resumir(TITULO_DESEMPATE, linhas, ambiente=ambiente)
-    return SEM_DIVERGENCIA if set(situacoes) == {"PRONTO"} else COM_DIVERGENCIA
+    feitos = calculos + relatorios
+    return SEM_DIVERGENCIA if all(f["situacao"] == "PRONTO" for f in feitos) else COM_DIVERGENCIA
 
 
 def principal(argv=None, ambiente=None, ler=ler_edital, motor=motor_da_tela, chamar=supabase_rpc.chamar) -> int:
     argumentos = execucao.Argumentos(description=__doc__.split("\n\n")[0].strip())
     modo = argumentos.add_mutually_exclusive_group(required=True)
+    modo.add_argument("--calculo", action="store_true", help="calcula as listas pedidas e prepara os relatórios")
     modo.add_argument("--desempate", action="store_true", help="grava o relatório de desempate das listas geradas")
     modo.add_argument("--seco", action="store_true", help="só lê, calcula e compara com o motor da tela")
     argumentos.add_argument("--lista", action="append", default=[], help="--desempate: id da lista (pode repetir)")
@@ -322,10 +432,15 @@ def principal(argv=None, ambiente=None, ler=ler_edital, motor=motor_da_tela, cha
     argumentos.add_argument("--tipos", default=",".join(TIPOS), help="--seco: listas, separadas por vírgula")
     argumentos.add_argument("--saida", help="--seco: pasta local para os relatórios e as divergências")
     a = argumentos.parse_args(argv)
-    if a.desempate:
+    if a.calculo or a.desempate:
         if a.edital or a.arquivo or a.saida:
-            argumentos.error("--desempate lê as listas pedidas; --edital, --arquivo e --saida são do --seco")
-        return rodar_desempate(a, argumentos, ambiente, chamar)
+            argumentos.error("--calculo e --desempate leem os pedidos; --edital, --arquivo e --saida são do --seco")
+        if a.calculo and a.lista:
+            argumentos.error("--lista é do --desempate")
+        listas = [x.strip() for valor in a.lista for x in valor.split(",") if x.strip()]
+        if any(not _UUID.match(x) for x in listas):
+            argumentos.error("--lista: use ids de lista (uuid), separados por vírgula ou repetindo a opção")
+        return rodar_fila(listas, ambiente, chamar)
     if a.lista:
         argumentos.error("--lista é do --desempate")
     return rodar_seco(a, argumentos, ambiente, ler, motor)

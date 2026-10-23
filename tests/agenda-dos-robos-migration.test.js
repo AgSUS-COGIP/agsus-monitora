@@ -16,6 +16,8 @@ const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);
 const WORKFLOWS = ROBOS_DE_CARGA.map((r) => r.workflow);
+/* Robôs que entraram em ROBOS_DE_CARGA depois desta migration (classificacao.yml: 20261023200000). */
+const DEPOIS_DA_AGENDA = ["classificacao.yml"];
 /* A definição mais recente de disparar_robo e FC_DISPARAR_ROBO (modo sondar e
    input anexos do robô da Empregare; recriadas da definição viva do banco). */
 const NOME_DA_LISTA = "20261008190000_sondar_e_anexos_no_disparo_dos_robos.sql";
@@ -44,8 +46,12 @@ describe("migration da agenda dos robôs (20261008140000)", () => {
     );
   });
 
-  /* O expurgo dos anexos do chat saiu da lista em 20261014120000 (o chat saiu). */
-  const NA_EPOCA = [...WORKFLOWS, "expurgo-anexos-chat.yml"];
+  /* O expurgo dos anexos do chat saiu da lista em 20261014120000 (o chat saiu); a
+     Classificação em Python entrou depois (tests/classificacao-em-python-etapa-2b-migration.test.js). */
+  const NA_EPOCA = [
+    ...WORKFLOWS.filter((w) => !DEPOIS_DA_AGENDA.includes(w)),
+    "expurgo-anexos-chat.yml",
+  ];
 
   it("a lista fixa da função e da tabela era a de ROBOS_DE_CARGA (mais o expurgo do chat)", () => {
     const daFuncao = [
@@ -256,7 +262,9 @@ const SITUACAO = corpoDaFuncao(
 
 describe("Rodar agora pelo banco: disparar_robo (substitui api/rodar-carga.js)", () => {
   it("os robôs da RPC são os de ROBOS_DE_CARGA, cada um com o seu workflow", () => {
-    for (const robo of ROBOS_DE_CARGA) {
+    for (const robo of ROBOS_DE_CARGA.filter(
+      (r) => !DEPOIS_DA_AGENDA.includes(r.workflow),
+    )) {
       const inicio = RPC.indexOf(`'${robo.id}', jsonb_build_object(`);
       expect(inicio, robo.id).toBeGreaterThan(-1);
       expect(RPC.slice(inicio, RPC.indexOf("\n", inicio))).toContain(

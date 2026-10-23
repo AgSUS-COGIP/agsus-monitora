@@ -11,6 +11,7 @@ import {
   textoDaIdade,
   visaoSimples,
 } from "../src/lib/saude-das-cargas.ts";
+import { normalizarChaves } from "../src/lib/chaves-da-automacao.ts";
 
 /* "Agora" fixo: 01/10/2026 12:00 UTC. */
 const AGORA = new Date("2026-10-01T12:00:00Z");
@@ -594,5 +595,100 @@ describe("agenda dos robôs pelo banco (20261008140000)", () => {
       disparos: [disparo("PEDIDO", 1)],
     });
     expect(linha.situacao).toBe("atrasada");
+  });
+});
+
+describe("Classificação em Python no Status (20261023200000)", () => {
+  const item = (situacao, minAtras, extra = {}) => ({
+    inicio: ha(minAtras + 1),
+    fim: ha(minAtras),
+    situacao,
+    edital: "114/2026",
+    tipo: "PRELIMINAR",
+    mensagem: null,
+    ...extra,
+  });
+  const comClassificacao = (relatorios, calculos) =>
+    normalizarSaude(
+      {
+        ...PAYLOAD,
+        empregare: [],
+        conferencias: [],
+        classificacao_python: { relatorios, calculos },
+      },
+      AGORA,
+    );
+  const porId = (s, chaves = null) =>
+    Object.fromEntries(visaoSimples(s, chaves).linhas.map((l) => [l.id, l]));
+
+  it("sem a chave no payload, as linhas não aparecem", () => {
+    const linhas = visaoSimples(
+      normalizarSaude({ ...PAYLOAD, empregare: [], conferencias: [] }, AGORA),
+    ).linhas.map((l) => l.id);
+    expect(linhas).not.toContain("classificacao_desempate");
+    expect(linhas).not.toContain("classificacao_calculo");
+  });
+
+  it("a última lista pronta: em dia, com a última execução; a mais recente falhou: falhou, com o edital e o motivo", () => {
+    const linhas = porId(
+      comClassificacao(
+        [item("PRONTO", 20)],
+        [
+          item("NAO_CONFERE", 5, {
+            mensagem:
+              "O cálculo do Python não confere com o da tela (2 diferença(s)); a lista não foi registrada.",
+          }),
+          item("REGISTRADO", 60),
+        ],
+      ),
+    );
+    expect(linhas.classificacao_desempate.situacao).toBe("em_dia");
+    expect(linhas.classificacao_desempate.titulo).toBe(
+      "Relatório de desempate (Classificação em Python)",
+    );
+    expect(linhas.classificacao_desempate.idadeMin).toBe(20);
+    expect(linhas.classificacao_calculo.situacao).toBe("falhou");
+    expect(linhas.classificacao_calculo.erro.mensagem).toBe(
+      "114/2026 · PRELIMINAR · O cálculo do Python não confere com o da tela (2 diferença(s)); a lista não foi registrada.",
+    );
+  });
+
+  it("pedido esperando o job há mais que o limite conta como falha; dentro do limite, em andamento", () => {
+    const linhas = porId(
+      comClassificacao(
+        [item("PEDIDO", 40, { fim: ha(40) })],
+        [item("CALCULANDO", 2, { fim: ha(2) })],
+      ),
+    );
+    expect(linhas.classificacao_desempate.situacao).toBe("falhou");
+    expect(linhas.classificacao_desempate.erro.mensagem).toContain(
+      "Sem resposta do job há mais de 30 min.",
+    );
+    expect(linhas.classificacao_calculo.situacao).toBe("em_andamento");
+    expect(linhas.classificacao_calculo.emAndamento).toBe(true);
+  });
+
+  it("as chaves da automação: o cálculo desligado aparece como 'Desligada pelo administrador'", () => {
+    const chaves = normalizarChaves({
+      chaves: [
+        {
+          chave: "classificacao",
+          nome: "Classificação em Python",
+          ligada: true,
+        },
+        {
+          chave: "classificacao_calculo",
+          nome: "Gerar listas pelo Python",
+          ligada: false,
+          motivo: "Só depois da publicação do 114/2026",
+        },
+      ],
+    });
+    const linhas = porId(comClassificacao([item("FALHOU", 5)], []), chaves);
+    expect(linhas.classificacao_calculo.situacao).toBe("desligada");
+    expect(linhas.classificacao_calculo.desligada.motivo).toBe(
+      "Só depois da publicação do 114/2026",
+    );
+    expect(linhas.classificacao_desempate.situacao).toBe("falhou");
   });
 });

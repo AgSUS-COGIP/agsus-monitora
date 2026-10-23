@@ -19,8 +19,16 @@ espera até 15 min); depois, "Relatório de desempate (XLSX)" e "(PDF)", com nom
 conferir ou falhar, um aviso (`obter_desempate_da_lista`, `estadoDoRelatorio` em
 `src/lib/classificacao/relatorio-de-desempate.ts`; banco em
 `supabase/migrations/20261023140000_classificacao_em_python_e_relatorio_de_desempate.sql` e
-`20261023170000_classificacao_em_python_etapa_2.sql`). O cálculo da lista na tela continua com o
-`motor.ts` (etapa 2b: a lista calculada pelo Python).
+`20261023170000_classificacao_em_python_etapa_2.sql`). Etapa 2b
+(`20261023200000_classificacao_em_python_etapa_2b.sql`), atrás da chave da automação "Gerar listas
+pelo Python" (`classificacao_calculo`, nasce **desligada**; ligar só depois da publicação do
+114/2026): desligada, o "Gerar" é o de sempre (motor.ts + `registrar_lista_classificacao`; antes,
+`pedir_calculo_classificacao` só responde `{ligada: false}`). Ligada, `gerarLista` (`estado.ts`)
+pede o cálculo ao job, mostra "Calculando a lista… (até 5 min)", relê o pedido a cada 3 s, recebe
+o retrato do Python e só registra (`registrar_lista_calculada`, que confere de novo no banco)
+quando ele é igual ao do motor.ts; diferente, aviso e `registrar_divergencia_do_calculo` (só os
+caminhos); falhou, não chegou ao GitHub ou passou do prazo, aviso com "Tentar de novo"
+(`CalculoPeloPython` em `listas.tsx`, regras em `src/lib/classificacao/calculo-em-python.ts`).
 
 Listas (`TIPOS_DE_LISTA`), no padrão das publicações da AgSUS: `PRELIMINAR` (avaliação documental e
 de títulos, com as parciais e os eliminados — vale como preliminar ou final da etapa; a exportação

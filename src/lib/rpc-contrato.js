@@ -982,7 +982,32 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_tipo", "p_versao", "p_resultado"],
     critica: false,
     resumo:
-      "Registra a lista gerada (retrato, versão da regra, quem, quando) e devolve o hash SHA-256 calculado no banco; pede o relatório de desempate ao job do Python (chave da automação classificacao; 20261023170000). Editor.",
+      'Registra a lista gerada (retrato, versão da regra, quem, quando) e devolve o hash SHA-256 calculado no banco; pede o relatório de desempate ao job do Python (chave da automação classificacao; 20261023170000). Com a chave "Gerar listas pelo Python" ligada, 55000 (20261023200000). Editor.',
+  },
+  // 20261023200000_classificacao_em_python_etapa_2b.sql
+  pedir_calculo_classificacao: {
+    argumentos: ["p_edital", "p_tipo", "p_versao"],
+    critica: false,
+    resumo:
+      '"Gerar" com a chave "Gerar listas pelo Python" (classificacao_calculo): desligada, { ligada: false } sem gravar nada; ligada, grava o pedido de cálculo e pede classificacao.yml (modo calculo). Devolve { ligada, pedido, situacao, mensagem }. PT409 com a regra mudada. Editor.',
+  },
+  obter_calculo_classificacao: {
+    argumentos: ["p_pedido", "p_com_retrato"],
+    critica: false,
+    resumo:
+      "O pedido de cálculo (situação, mensagem, hash) e, com p_com_retrato e PRONTO, o retrato calculado pelo Python. Editor.",
+  },
+  registrar_lista_calculada: {
+    argumentos: ["p_pedido", "p_resultado"],
+    critica: false,
+    resumo:
+      "Registra o retrato do Python (pedido PRONTO) só quando o retrato da tela (p_resultado) é igual a ele; devolve a lista como registrar_lista_classificacao, ou { nao_confere: true } sem registrar. 55000 fora de PRONTO. Editor.",
+  },
+  registrar_divergencia_do_calculo: {
+    argumentos: ["p_pedido", "p_total", "p_caminhos"],
+    critica: false,
+    resumo:
+      "Marca o pedido de cálculo NAO_CONFERE com o total e até 20 caminhos das diferenças (sem valores). Editor.",
   },
   publicar_lista_classificacao: {
     argumentos: ["p_lista"],

@@ -1,6 +1,6 @@
 """
 O relatório de desempate (python/monitora/classificacao/desempate.py), a
-comparação com o motor da tela (comparacao.py) e o job (--seco e --desempate,
+comparação com o motor da tela (comparacao.py) e o job (--seco, --calculo e --desempate,
 scripts/classificacao/classificacao.py), nos editais fictícios dos casos
 dourados (tests/fixtures/classificacao/casos-do-motor.json). Nada fala com o
 Supabase nem roda o Node: o motor da tela e as RPCs entram como funções injetadas.
@@ -279,7 +279,7 @@ HASH = "a" * 64
 class BancoFalso:
     """As RPCs do --desempate, sem rede: as listas registradas vêm do próprio retrato do Python (como a tela grava)."""
 
-    def __init__(self, pedidos=None, falha_na_leitura=False):
+    def __init__(self, pedidos=None, falha_na_leitura=False, calculos=None, falha_nos_calculos=False, recusar=None):
         self.dados = _dados_do_edital()
         resultado = motor.classificar_edital(self.dados, "FINAL")
         # O jsonb devolve as chaves em outra ordem e 3.0 como 3.
@@ -296,9 +296,15 @@ class BancoFalso:
             [{"lista": x} for x in (L_PRONTA, L_MEXIDA, L_REGRA_VELHA, L_QUEBRA)] if pedidos is None else pedidos
         )
         self.falha_na_leitura = falha_na_leitura
+        # A fila dos cálculos, lida a cada chamada (o que chega no meio da execução vem num lote depois).
+        self.lotes_de_calculo = list(calculos or [])
+        self.falha_nos_calculos = falha_nos_calculos
+        self.recusar = recusar or {}
         self.chamadas = []
         self.marcas = {}
         self.gravados = {}
+        self.marcas_do_calculo = {}
+        self.retratos = {}
 
     def __call__(self, config, funcao, corpo):
         self.chamadas.append((funcao, corpo))
@@ -318,6 +324,18 @@ class BancoFalso:
         if funcao == "classificacao_gravar_desempate":
             self.gravados[corpo["p_lista"]] = corpo
             return {"lista": corpo["p_lista"]}
+        if funcao == "classificacao_ler_pedidos_calculo":
+            if self.falha_nos_calculos:
+                raise job.supabase_rpc.ErroDoSupabase(funcao, 500, "fora do ar")
+            return self.lotes_de_calculo.pop(0) if self.lotes_de_calculo else []
+        if funcao == "classificacao_marcar_calculo":
+            self.marcas_do_calculo.setdefault(corpo["p_pedido"], []).append((corpo["p_situacao"], corpo["p_mensagem"]))
+            return {"situacao": corpo["p_situacao"]}
+        if funcao == "classificacao_gravar_calculo":
+            if corpo["p_pedido"] in self.recusar:
+                raise job.supabase_rpc.ErroDoSupabase(funcao, 400, self.recusar[corpo["p_pedido"]])
+            self.retratos[corpo["p_pedido"]] = corpo
+            return {"pedido": corpo["p_pedido"], "situacao": "PRONTO", "hash": HASH}
         raise AssertionError(funcao)
 
 
@@ -365,7 +383,7 @@ class JobDesempate(unittest.TestCase):
         banco = BancoFalso(pedidos=[{"lista": L_PRONTA}])
         codigo, log = self._rodar(banco, ["--desempate", "--lista", f"{L_PRONTA},{L_MEXIDA}"])
         self.assertEqual(codigo, job.SEM_DIVERGENCIA)
-        self.assertEqual(banco.chamadas[0], ("classificacao_ler_pedidos_desempate", {"p_listas": [L_PRONTA, L_MEXIDA]}))
+        self.assertIn(("classificacao_ler_pedidos_desempate", {"p_listas": [L_PRONTA, L_MEXIDA]}), banco.chamadas)
         codigo, log = self._rodar(BancoFalso(pedidos=[]))
         self.assertEqual(codigo, job.SEM_DIVERGENCIA)
         self.assertIn("Nenhuma lista esperando", log)
@@ -378,6 +396,94 @@ class JobDesempate(unittest.TestCase):
     def test_motivo_seguro_nao_repete_a_mensagem_de_excecao_qualquer(self):
         self.assertEqual(job.motivo_seguro(KeyError("Fulana de Tal")), "KeyError")
         self.assertIn("hash diferente", job.motivo_seguro(job.supabase_rpc.ErroDoSupabase("x", 400, "hash diferente")))
+
+
+P_OK = "aaaaaaaa-1111-4111-8111-111111111111"
+P_REGRA = "bbbbbbbb-2222-4222-8222-222222222222"
+P_RECUSADO = "cccccccc-3333-4333-8333-333333333333"
+
+
+def _pedido(pedido, versao=1, tipo="FINAL"):
+    return {"pedido": pedido, "edital": "edital-ficticio", "tipo": tipo, "versao_regra": versao, "situacao": "PEDIDO"}
+
+
+class JobCalculo(unittest.TestCase):
+    """--calculo (etapa 2b): o retrato da lista pedida pelo "Gerar", calculado pelo Python e gravado no pedido."""
+
+    def _rodar(self, banco, argv=("--calculo",)):
+        saida = io.StringIO()
+        ambiente = {"SUPABASE_URL": "https://exemplo.supabase.co", "SUPABASE_SERVICE_ROLE_KEY": "chave"}
+        with contextlib.redirect_stdout(saida):
+            codigo = job.principal(list(argv), ambiente=ambiente, chamar=banco)
+        return codigo, saida.getvalue()
+
+    def test_grava_o_retrato_que_a_tela_registraria(self):
+        banco = BancoFalso(pedidos=[], calculos=[[_pedido(P_OK)]])
+        codigo, log = self._rodar(banco)
+        self.assertEqual(codigo, job.SEM_DIVERGENCIA, log)
+        self.assertEqual([s for s, _ in banco.marcas_do_calculo[P_OK]], ["CALCULANDO"])
+        gravado = banco.retratos[P_OK]
+        self.assertTrue(gravado["p_execucao"].startswith("classificacao-"))
+        esperado = retrato_do_edital(banco.dados, motor.classificar_edital(banco.dados, "FINAL"))
+        self.assertEqual(gravado["p_retrato"], esperado)
+        self.assertEqual(gravado["p_retrato"]["regra_versao"], 1)
+        self.assertIn("999/2026 · FINAL · pedido aaaaaaaa: lista calculada", log)
+        self.assertIn("1 cálculo(s): 1 pronto.", log)
+        # O retrato leva os nomes (vai para o banco); o log, não.
+        nomes = [c["nome"] for c in banco.dados["candidatos"] if c["nome"]]
+        self.assertTrue(any(n in json.dumps(gravado["p_retrato"], ensure_ascii=False) for n in nomes))
+        for nome in nomes:
+            self.assertNotIn(nome, log)
+
+    def test_regra_mudada_ou_gravacao_recusada_marca_falhou_e_segue(self):
+        banco = BancoFalso(
+            pedidos=[],
+            calculos=[[_pedido(P_REGRA, versao=0), _pedido(P_RECUSADO), _pedido(P_OK)]],
+            recusar={P_RECUSADO: "PT409: A regra do edital mudou desde o pedido; gere de novo."},
+        )
+        codigo, log = self._rodar(banco)
+        self.assertEqual(codigo, job.COM_DIVERGENCIA)
+        self.assertEqual(banco.marcas_do_calculo[P_REGRA][-1], ("FALHOU", job.MENSAGEM_REGRA_MUDOU_NO_PEDIDO))
+        self.assertNotIn(P_REGRA, banco.retratos)
+        self.assertEqual(banco.marcas_do_calculo[P_RECUSADO][-1][0], "FALHOU")
+        self.assertIn("mudou desde o pedido", banco.marcas_do_calculo[P_RECUSADO][-1][1])
+        self.assertIn(P_OK, banco.retratos)
+        self.assertIn("3 cálculo(s): 2 falhou, 1 pronto.", log)
+
+    def test_o_calculo_que_chega_passa_na_frente_do_proximo_relatorio(self):
+        banco = BancoFalso(pedidos=[{"lista": L_PRONTA}, {"lista": L_MEXIDA}], calculos=[[], [], [_pedido(P_OK)]])
+        codigo, log = self._rodar(banco, ["--desempate"])
+        self.assertEqual(codigo, job.COM_DIVERGENCIA)  # a L_MEXIDA não confere
+        nomes = [f for f, _ in banco.chamadas]
+        gravou_o_calculo = nomes.index("classificacao_gravar_calculo")
+        lidas = [i for i, (f, c) in enumerate(banco.chamadas) if f == "classificacao_ler_lista"]
+        self.assertLess(lidas[0], gravou_o_calculo)
+        self.assertLess(gravou_o_calculo, lidas[1])
+        self.assertIn("1 cálculo(s): 1 pronto.", log)
+        self.assertIn("2 lista(s): 1 nao confere, 1 pronto.", log)
+
+    def test_falha_ao_ler_a_fila_dos_calculos_nao_segura_os_relatorios(self):
+        banco = BancoFalso(pedidos=[{"lista": L_PRONTA}], falha_nos_calculos=True)
+        codigo, log = self._rodar(banco)
+        self.assertEqual(codigo, job.COM_DIVERGENCIA)
+        self.assertIn("Falhou ao ler os pedidos de cálculo", log)
+        self.assertEqual(set(banco.gravados), {L_PRONTA})
+
+    def test_nada_esperando(self):
+        codigo, log = self._rodar(BancoFalso(pedidos=[]))
+        self.assertEqual(codigo, job.SEM_DIVERGENCIA)
+        self.assertIn("Nenhuma lista esperando o cálculo nem o relatório de desempate.", log)
+
+    def test_calculo_nao_aceita_lista_nem_opcoes_do_seco(self):
+        for argv in (
+            ["--calculo", "--lista", L_PRONTA],
+            ["--calculo", "--edital", "x"],
+            ["--calculo", "--desempate"],
+        ):
+            with self.subTest(argv=argv):
+                with self.assertRaises(SystemExit) as saida, contextlib.redirect_stderr(io.StringIO()):
+                    job.principal(argv, ambiente={})
+                self.assertEqual(saida.exception.code, 3)
 
 
 if __name__ == "__main__":
