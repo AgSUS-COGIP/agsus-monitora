@@ -601,7 +601,9 @@ describe("tela de Classificação", () => {
     const conteudo = new TextDecoder().decode(bytes);
     expect(conteudo).toContain("word/header1.xml");
     expect(conteudo).toContain("word/media/logo.png");
-    expect(conteudo).toContain("SEI AGSUS.016954/2026-81");
+    // Sem rodapé de página (o SEI põe "título / pg. N").
+    expect(conteudo).not.toContain("word/footer1.xml");
+    expect(conteudo).not.toContain(" / pg. ");
     expect(conteudo).toContain("Texto final do edital.");
 
     copiar.mockClear();
