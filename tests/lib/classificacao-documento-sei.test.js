@@ -294,7 +294,7 @@ describe("resultado preliminar da análise curricular (83/2026, SEI 0641561)", (
     );
     expect(
       [...cabeca.querySelectorAll("td")].map(
-        (td) => td.getAttribute("style").match(/width:(d+)%/)[1],
+        (td) => td.getAttribute("style").match(/width:(\d+)%/)[1],
       ),
     ).toEqual(["12", "60", "16", "12"]);
     expect(tabelas[2].textContent).toBe("Não houve candidatos aptos.");
