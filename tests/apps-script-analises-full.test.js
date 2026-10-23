@@ -10,7 +10,8 @@ import { describe, expect, it } from "vitest";
     INCREMENTAL_ACTIVE parado; finalizar um incremental como FULL desativaria o
     resto da planilha. Agora o FULL recusa sync de outro modo e descarta o
     estado local órfão (sync que sumiu, terminou em erro ou é de outro modo).
-  - Nenhuma URL de projeto no código: só a propriedade SUPABASE_URL.
+  - URL do banco: SUPABASE_URL_FIXA no código (só o projeto atual) ou a
+    propriedade SUPABASE_URL; sem nenhuma, erro claro (23/10/2026).
   - Datas formatadas em America/Sao_Paulo, não no fuso do projeto.
   - Gatilho só chama função pública (sem '_' no fim).
   - FATO em PARTIAL (promovida, com vagas em erro) não bloqueia o incremental.
@@ -101,7 +102,7 @@ function bancoFalsoDoFull(syncs) {
   });
   const UrlFetchApp = {
     fetch(url, opcoes) {
-      const caminho = url.replace("https://banco.exemplo", "");
+      const caminho = url.replace(/^https:\/\/[^/]+/, "");
       chamadas.push({ caminho, metodo: opcoes.method });
       if (caminho.startsWith("/rest/v1/TL_SYNC_ANALISE")) {
         const id = decodeURIComponent(
@@ -261,22 +262,35 @@ describe("o FULL descarta estado local órfão (decidirEstadoLocalLotesAnalises_
   );
 });
 
-describe("URL do banco só pela propriedade SUPABASE_URL", () => {
-  it("nenhum .gs tem URL de projeto Supabase nem DEFAULT_SUPABASE_URL", () => {
+const PROJETO_ATUAL = "https://tabmkiokfuxyqjuvfiha.supabase.co";
+const semUrlFixa = (codigo) =>
+  codigo.replace(`SUPABASE_URL_FIXA: '${PROJETO_ATUAL}',`, "SUPABASE_URL_FIXA: '',");
+
+describe("URL do banco: fixa no código ou propriedade SUPABASE_URL", () => {
+  it("nenhum .gs aponta para outro projeto Supabase nem tem DEFAULT_SUPABASE_URL", () => {
     for (const p of PLANILHAS)
       for (const codigo of ARQUIVOS[p]) {
-        expect(codigo).not.toMatch(/DEFAULT_SUPABASE_URL|SUPABASE_URL_FIXA/);
-        expect(codigo).not.toMatch(/https:\/\/[a-z0-9]{20}\.supabase\.co/);
+        expect(codigo).not.toMatch(/DEFAULT_SUPABASE_URL/);
+        for (const url of codigo.match(/https:\/\/[a-z0-9]{20}\.supabase\.co/g) || [])
+          expect(url).toBe(PROJETO_ATUAL);
       }
   });
 
+  it.each(PLANILHAS)("%s: a URL fixa vale antes da propriedade", (p) => {
+    expect(FULL[p]).toContain(`SUPABASE_URL_FIXA: '${PROJETO_ATUAL}',`);
+    const { ctx, props } = contexto(FULL[p]);
+    props.set("SUPABASE_SERVICE_ROLE_KEY", "sb_secret_teste123");
+    props.set("SUPABASE_URL", "https://outro.exemplo");
+    expect(ctx.obterConfiguracaoSupabaseAnalises_()).toMatchObject({ url: PROJETO_ATUAL });
+  });
+
   it.each(PLANILHAS)(
-    "%s: sem a propriedade, erro claro antes de qualquer requisição",
+    "%s: sem URL fixa nem propriedade, erro claro antes de qualquer requisição",
     (p) => {
-      const { ctx, props } = contexto(FULL[p]);
+      const { ctx, props } = contexto(semUrlFixa(FULL[p]));
       props.set("SUPABASE_SERVICE_ROLE_KEY", "sb_secret_teste123");
       expect(() => ctx.obterConfiguracaoSupabaseAnalises_()).toThrow(
-        /Configure a propriedade do script SUPABASE_URL .*O codigo nao tem URL fixa/,
+        /Configure a propriedade do script SUPABASE_URL .*ou SUPABASE_URL_FIXA no codigo/,
       );
       props.set("SUPABASE_URL", "https://banco.exemplo/");
       expect(ctx.obterConfiguracaoSupabaseAnalises_()).toMatchObject({
@@ -411,7 +425,7 @@ describe("incremental já processado no banco conclui antes de comparar a planil
       const chamadas = [];
       const UrlFetchApp = {
         fetch(url, opcoes) {
-          const caminho = url.replace("https://banco.exemplo", "");
+          const caminho = url.replace(/^https:\/\/[^/]+/, "");
           chamadas.push(caminho);
           const corpo = (c) => ({
             getResponseCode: () => 200,

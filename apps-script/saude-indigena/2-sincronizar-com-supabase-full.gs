@@ -4,7 +4,9 @@ const ANALISES_SYNC_CFG = {
   ORIGENS_PLANILHA: ['apps_script_analises_curriculares_v2_pdf', 'apps_script_analises_incremental_v1'], // [por-planilha]
 SERVICE_ROLE_KEY_FIXA: '',
 
-  // [sem-url-fixa] A URL do projeto vem SO da propriedade do script SUPABASE_URL (sem valor no codigo).
+  // [url-fixa] URL do banco do MONITORA no codigo (vale antes da propriedade SUPABASE_URL).
+  // Vazia, vale a propriedade. O endereco nao e segredo; segredo e so a chave.
+  SUPABASE_URL_FIXA: 'https://tabmkiokfuxyqjuvfiha.supabase.co',
   PROP_SUPABASE_URL: 'SUPABASE_URL',
   PROP_SERVICE_ROLE_KEY: 'SUPABASE_SERVICE_ROLE_KEY',
   // [fuso] Datas formatadas sempre no horario de Brasilia, qualquer que seja o fuso do projeto.
@@ -151,8 +153,8 @@ function getSupabaseServiceRoleKeyFixaAnalises_() {
 
 function configurarSupabaseAnalisesCurriculares(serviceRoleKey, supabaseUrl) {
   const props = {};
-  // [sem-url-fixa] Sem URL informada, vale a que ja esta nas Propriedades do Script; sem nenhuma, erro.
-  const url = String(supabaseUrl || PropertiesService.getScriptProperties().getProperty(ANALISES_SYNC_CFG.PROP_SUPABASE_URL) || '').trim().replace(/\/+$/, '');
+  // [url-fixa] Sem URL informada, vale a fixa do codigo ou a das Propriedades do Script; sem nenhuma, erro.
+  const url = String(supabaseUrl || getSupabaseUrlAnalises_(PropertiesService.getScriptProperties())).trim().replace(/\/+$/, '');
   if (!url) throw new Error(mensagemSemUrlSupabaseAnalises_());
   props[ANALISES_SYNC_CFG.PROP_SUPABASE_URL] = url;
 
@@ -168,11 +170,12 @@ function configurarSupabaseAnalisesCurriculares(serviceRoleKey, supabaseUrl) {
 function verificarConfiguracaoSupabaseAnalisesCurriculares() {
   const props = PropertiesService.getScriptProperties();
   const keyFixa = getSupabaseServiceRoleKeyFixaAnalises_();
+  const urlFixa = String(ANALISES_SYNC_CFG.SUPABASE_URL_FIXA || '').trim();
   const urlProp = String(props.getProperty(ANALISES_SYNC_CFG.PROP_SUPABASE_URL) || '').trim();
   const keyProp = props.getProperty(ANALISES_SYNC_CFG.PROP_SERVICE_ROLE_KEY);
   const keyFinal = keyFixa || keyProp || '';
 
-  Logger.log('SUPABASE_URL (Propriedades do Script): ' + (urlProp || 'NAO CONFIGURADA. ' + mensagemSemUrlSupabaseAnalises_()));
+  Logger.log('SUPABASE_URL: ' + (urlFixa ? urlFixa + ' (SUPABASE_URL_FIXA no codigo)' : (urlProp ? urlProp + ' (Propriedades do Script)' : 'NAO CONFIGURADA. ' + mensagemSemUrlSupabaseAnalises_())));
   Logger.log('SUPABASE_SERVICE_ROLE_KEY origem: ' + (keyFixa ? 'SERVICE_ROLE_KEY_FIXA no codigo' : (keyProp ? 'Propriedades do Script' : 'NAO CONFIGURADA')));
   Logger.log('SUPABASE_SERVICE_ROLE_KEY: ' + (keyFinal ? 'CONFIGURADA' : 'NAO CONFIGURADA'));
 }
@@ -671,16 +674,19 @@ function validarConfiguracaoSupabaseAnalises_() {
   return obterConfiguracaoSupabaseAnalises_();
 }
 
-// [sem-url-fixa] Antes, sem a propriedade, o script usava a URL de um projeto antigo (desativado)
-// escrita no codigo e falhava longe da causa. Agora a falta da propriedade e o proprio erro.
+// [url-fixa] URL: a fixa do codigo; vazia, a propriedade SUPABASE_URL; sem nenhuma, erro claro.
+function getSupabaseUrlAnalises_(props) {
+  return String(ANALISES_SYNC_CFG.SUPABASE_URL_FIXA || props.getProperty(ANALISES_SYNC_CFG.PROP_SUPABASE_URL) || '').trim();
+}
+
 function mensagemSemUrlSupabaseAnalises_() {
   return 'Configure a propriedade do script ' + ANALISES_SYNC_CFG.PROP_SUPABASE_URL +
-    ' (Configuracoes do projeto > Propriedades do script) com a URL https://<projeto>.supabase.co do banco do MONITORA. O codigo nao tem URL fixa.';
+    ' (Configuracoes do projeto > Propriedades do script) ou SUPABASE_URL_FIXA no codigo com a URL https://<projeto>.supabase.co do banco do MONITORA.';
 }
 
 function obterConfiguracaoSupabaseAnalises_() {
   const props = PropertiesService.getScriptProperties();
-  const url = String(props.getProperty(ANALISES_SYNC_CFG.PROP_SUPABASE_URL) || '').trim().replace(/\/+$/, '');
+  const url = getSupabaseUrlAnalises_(props).replace(/\/+$/, '');
   if (!url) throw new Error(mensagemSemUrlSupabaseAnalises_());
   const key = String(getSupabaseServiceRoleKeyFixaAnalises_() || props.getProperty(ANALISES_SYNC_CFG.PROP_SERVICE_ROLE_KEY) || '').trim();
   if (!/^https:\/\/[a-z0-9.-]+(?::\d+)?$/i.test(url)) throw new Error('SUPABASE_URL inválida. Informe a URL HTTPS do projeto, sem /rest/v1.');
