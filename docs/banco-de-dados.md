@@ -1051,7 +1051,7 @@ Diferente do reinício do treinamento (seção 16), aqui **nada se apaga**: as f
 ficha que não está `FORA_LOTE`) voltam a `PENDENTE`, sem responsável, reserva, lançamento,
 resultado, parecer, notas, rascunho e conclusão, com `NU_VERSAO` + 1, e cada uma ganha uma linha
 `REINICIAR` em `TH_FICHA_ANALISE` (motivo de 10 a 2.000, autor e, em `DS_ALTERACAO`, o que foi
-limpo; o retrato de antes segue nas linhas `SALVAR`/`CONCLUIR`). `FORA_LOTE`, regra, decisões de
+limpo, com o lançamento, o resultado e o parecer de antes; o retrato da conclusão segue no `CONCLUIR`). `FORA_LOTE`, regra, decisões de
 inclusão, pré-classificação, Classificação e `TB_ANALISE_CURRICULAR` não mudam; ficha já no início
 não ganha histórico.
 
@@ -1198,3 +1198,66 @@ partir da definição vigente, só acrescentando; mesma permissão):
 - Ensaio em 21/10/2026: 3,9 ms com o card aquecido (antes 3,2 ms); o trecho novo com o volume de
   20/10 (550 conclusões, 19 reaberturas) levou 1 ms aquecido e 20 ms frio.
 - Ordem: aplicar a migration antes de publicar o front (sem o campo, o bloco só não aparece).
+
+## 24. Histórico do rascunho enxuto (aplicar depois de 22/10/2026)
+
+Migration `20261023220000_historico_do_rascunho_enxuto.sql` (ensaio e rollback com o mesmo nome) e
+correção `supabase/correcoes/20261023-compactar-retratos-do-rascunho.sql` (com ensaio). Só depois do
+fim da análise do 114/2026 e com autorização.
+
+- Por quê (21/10/2026): `TH_FICHA_ANALISE` com 27,8 MB, dos quais 19,7 MB nas 10.866 linhas
+  `SALVAR` e 15 MB só de `DS_RETRATO` (o lançamento inteiro a cada salvamento automático com
+  alteração); nos dias de análise, 4–8,5 MB/dia, 76% retrato. Banco em 303/500 MB (FREE).
+- Ninguém lê o retrato do `SALVAR`: só `FC_HISTORICO_CONTEUDO_FICHA` grava `DS_RETRATO`;
+  `obter_ficha_analise` devolve do histórico ação, quem, quando, motivo, resultado, nota e
+  `DS_ALTERACAO`; front, scripts, Python e servidor não leem a tabela.
+- Daqui para frente: `salvar_rascunho_ficha` grava o `SALVAR` com o que mudou (`DS_ALTERACAO`, de →
+  para), o resultado e a nota, **sem retrato** (o rascunho vigente fica em `TB_FICHA_ANALISE`).
+  `CK_THFICHA_CONTEUDO` exige o retrato só no `CONCLUIR`. CONCLUIR, REABRIR, REINICIAR, DISTRIBUIR,
+  REVISAR etc. não mudam. ~440 bytes por `SALVAR` em vez de ~1,8 KB.
+- Passado: a correção tira o retrato dos `SALVAR` antigos, menos o último de cada ficha e o último
+  antes de cada `CONCLUIR` (ensaio de 23/10: saem 12.395 de 1.523 fichas, 16 MB; ficam 1.610, 2,5 MB; tabela em 34 MB). Desliga só o
+  gatilho `TG_THFICHA_IMUTAVEL` dentro da transação e religa antes do commit; assina pela conta do
+  setor (a01afddb-…) no comentário de `DS_RETRATO`, com o sha256 da exportação.
+- **Exportação antes (obrigatória; o FREE não tem backup):**
+  `scripts/exportar-retratos-do-rascunho.mjs` lê, só com SELECT e em lotes de 500 pela chave, as
+  linhas que a correção vai zerar — a regra é a mesma, lida do trecho `-- >>> regra` da correção — e
+  grava `.jsonl.gz` (`CO_HISTORICO_FICHA`, `CO_FICHA_ANALISE`, `NU_VERSAO`, `TP_ACAO`,
+  `DT_REGISTRO`, `CO_USUARIO`, `DS_RETRATO`). Imprime linhas, tamanho, sha256 e a linha
+  `set monitora.exportacao_retratos = '<linhas>:<sha256>';`, sem a qual (ou com contagem
+  diferente) a correção aborta.
+
+Ordem de aplicação (depois de 22/10, com autorização, fora do expediente):
+
+1. Mesclar a PR.
+2. Aplicar a migration e registrar (`npm run db:estado -- --registrar=migrations/20261023220000_historico_do_rascunho_enxuto.sql`).
+3. Exportar: `node --env-file=.env.local scripts/exportar-retratos-do-rascunho.mjs --saida=retratos-do-rascunho-AAAAMMDD.jsonl.gz`
+   (`SUPABASE_DB_URL` com `psql`, ou `SUPABASE_ACCESS_TOKEN`/`SUPABASE_ACCESS_TOKEN_NOVO` +
+   `SUPABASE_PROJECT_REF=tabmkiokfuxyqjuvfiha`; o `.env.local` tem só o token `_NOVO`, então o
+   `SUPABASE_PROJECT_REF` vai no ambiente do comando). Guardar o arquivo
+   fora do banco (pasta do setor no Drive/rede, a critério do usuário) e anotar abaixo caminho,
+   linhas e sha256.
+4. Correção no SQL Editor: primeira linha a `set monitora.exportacao_retratos = …` impressa, depois o
+   arquivo com o `commit` final trocado por `rollback`; conferir; repetir com `commit`; registrar
+   como `correcoes/20261023-compactar-retratos-do-rascunho.sql`.
+5. `set lock_timeout = '5s'; vacuum (full, analyze) public."TH_FICHA_ANALISE";` sozinho (trava a
+   tabela por segundos; sem ele o espaço só fica para reuso dentro da tabela).
+
+**Exportação dos retratos** (preencher na aplicação): caminho `…` · linhas `…` · sha256 `…` · data `…`.
+
+Consultar uma ficha pelo arquivo (só leitura; o histórico não é reescrito):
+
+```
+node scripts/exportar-retratos-do-rascunho.mjs --ler=retratos-do-rascunho-AAAAMMDD.jsonl.gz --ficha=<uuid> --sha256=<sha>
+```
+
+Mostra cada retrato da ficha (histórico, versão, data, quem) em ordem. Para ver ao lado do
+histórico no banco, cole uma linha do arquivo:
+
+```sql
+with exportado as (select $linha$<uma linha do arquivo>$linha$::jsonb as l)
+select h."CO_HISTORICO_FICHA", h."NU_VERSAO", h."TP_ACAO", h."DT_REGISTRO", h."DS_ALTERACAO",
+       jsonb_pretty(e.l -> 'DS_RETRATO') as retrato_exportado
+  from exportado e
+  join public."TH_FICHA_ANALISE" h on h."CO_HISTORICO_FICHA" = (e.l ->> 'CO_HISTORICO_FICHA')::bigint;
+```
