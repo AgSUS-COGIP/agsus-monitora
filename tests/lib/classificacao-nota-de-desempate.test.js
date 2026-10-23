@@ -11,27 +11,32 @@ import { corpoXml } from "../../src/lib/classificacao/documento-docx.ts";
 import { documentoDaRegra } from "../../src/lib/classificacao/regra.ts";
 
 /*
-  A nota de desempate abaixo da tabela da vaga: só na vaga em que dois com a
-  mesma nota ficaram em posições diferentes (empate resolvido por critério ou
-  pelo empate final), na prévia, no HTML do SEI, no texto e no DOCX.
+  A nota de desempate logo abaixo de cada tabela (a geral ou a de uma cota)
+  em que dois com a mesma nota ficaram em posições diferentes (empate
+  resolvido por critério ou pelo empate final), na prévia, no HTML do SEI, no
+  texto e no DOCX. Tabela sem empate: sem nota. Regra sem rodapé: sem nota.
 */
 
-const linha = (posicao, nome, nota) => ({
+const RODAPE =
+  "Os critérios de desempate foram considerados conforme item 10.1 do edital.";
+const NOTA = `*${RODAPE}`;
+
+const linha = (posicao, nome, nota, modalidades = ["AC"]) => ({
   posicao,
   analise_id: nome,
   nome,
   nota,
-  modalidades: ["AC"],
+  modalidades,
   situacao: "VAGA",
 });
 
-const retrato = (tipo, { rodape = "", vagas } = {}) => ({
+const retrato = (tipo, { rodape = RODAPE, vagas, modalidades = [] } = {}) => ({
   schema: 1,
   tipo,
   edital: { id: "e1", edital: "Edital 50/2026", unidade: "DSEI Xingu" },
   casas: 2,
   rodape,
-  modalidades: [],
+  modalidades,
   vagas: vagas || [
     {
       codigo: "101",
@@ -51,6 +56,42 @@ const retrato = (tipo, { rodape = "", vagas } = {}) => ({
   ],
 });
 
+/* Vaga com a geral e duas cotas: empate na geral e na PcD; PN sem empate. */
+const comCotas = (rodape = RODAPE) =>
+  retrato("PRELIMINAR", {
+    rodape,
+    modalidades: [
+      { codigo: "PCD", nome: "Pessoas com Deficiência" },
+      { codigo: "PN", nome: "Pretos e Pardos" },
+    ],
+    vagas: [
+      {
+        codigo: "201",
+        cabecalho: "VAGA 201 - Médico",
+        geral: [
+          linha(1, "Ana", 40, ["AC", "PCD"]),
+          linha(2, "Bia", 40, ["AC", "PCD"]),
+          linha(3, "Caio", 30, ["AC", "PN"]),
+          linha(4, "Davi", 20, ["AC", "PN"]),
+        ],
+        listas: {
+          PCD: [
+            linha(1, "Ana", 40, ["AC", "PCD"]),
+            linha(2, "Bia", 40, ["AC", "PCD"]),
+          ],
+          PN: [
+            linha(1, "Caio", 30, ["AC", "PN"]),
+            linha(2, "Davi", 20, ["AC", "PN"]),
+          ],
+        },
+        eliminados: [],
+      },
+    ],
+  });
+
+const notas = (doc) =>
+  doc.blocos.map((b) => b.tabelas.map((t) => t.notaDeDesempate || ""));
+
 describe("houveDesempate", () => {
   it("mesma nota em posições diferentes; empate na mesma posição não conta", () => {
     expect(houveDesempate([linha(1, "A", 40), linha(2, "B", 40)])).toBe(true);
@@ -64,11 +105,10 @@ describe("houveDesempate", () => {
   });
 });
 
-describe("nota de desempate abaixo da tabela da vaga", () => {
-  it("vaga com empate resolvido leva a nota; vaga sem empate, não", () => {
+describe("nota de desempate abaixo da tabela com empate", () => {
+  it("tabela com empate resolvido leva a nota; tabela sem empate, não", () => {
     const doc = documentoOficial(retrato("FINAL"), { lista: "geral" });
-    expect(doc.blocos[0].notaDeDesempate).toBe(NOTA_DE_DESEMPATE_PADRAO);
-    expect(doc.blocos[1].notaDeDesempate).toBe("");
+    expect(notas(doc)).toEqual([[NOTA], [""]]);
     expect(NOTA_DE_DESEMPATE_PADRAO).toBe(
       "*Os critérios de desempate foram considerados conforme item 10 do referido edital.",
     );
@@ -80,21 +120,53 @@ describe("nota de desempate abaixo da tabela da vaga", () => {
       '<p class="Texto_Alinhado_Esquerda"><span style="font-size:10pt"><em>*Os critérios de desempate',
     );
     expect(nota).toBeGreaterThan(html.indexOf("VAGA 101"));
-    expect(nota).toBeGreaterThan(html.indexOf("Bia"));
+    expect(html.lastIndexOf("</table>", nota)).toBeGreaterThan(
+      html.indexOf("Caio"),
+    );
     expect(nota).toBeLessThan(html.indexOf("VAGA 102"));
+    // Sem asterisco nas linhas dos desempatados.
+    expect(html).not.toMatch(/\*(Ana|Bia)|(Ana|Bia)\*|1º\*|2º\*/);
 
     const texto = textoParaSei(doc).split("\n");
-    const i = texto.indexOf(NOTA_DE_DESEMPATE_PADRAO);
+    const i = texto.indexOf(NOTA);
     expect(texto[i - 1]).toContain("Caio");
+  });
+
+  it("cota com empate: a nota logo abaixo da geral e da cota com empate; a cota sem empate fica sem", () => {
+    const doc = documentoOficial(comCotas(), { lista: "todas" });
+    expect(notas(doc)).toEqual([[NOTA, NOTA, ""]]);
+    const html = htmlParaSei(doc);
+    expect(html.match(/critérios de desempate/g)).toHaveLength(2);
+    const tabelas = [...html.matchAll(/<\/table>/g)].map((m) => m.index);
+    const nas = [...html.matchAll(/<em>\*Os critérios/g)].map((m) => m.index);
+    // A 1ª nota entre a tabela geral e a PcD; a 2ª entre a PcD e a PN.
+    expect(nas[0]).toBeGreaterThan(tabelas[0]);
+    expect(nas[0]).toBeLessThan(html.indexOf("Pessoas com Deficiência"));
+    expect(nas[1]).toBeGreaterThan(tabelas[1]);
+    expect(nas[1]).toBeLessThan(html.indexOf("Pretos e Pardos"));
+
+    // Só a lista da cota: a nota abaixo dela.
+    expect(notas(documentoOficial(comCotas(), { lista: "PCD" }))).toEqual([
+      [NOTA],
+    ]);
+    expect(notas(documentoOficial(comCotas(), { lista: "PN" }))).toEqual([
+      [""],
+    ]);
+  });
+
+  it("regra sem rodapé (e sem texto do edital): nenhuma nota", () => {
+    expect(notaDeDesempatePadrao("")).toBe("");
+    const doc = documentoOficial(comCotas(""), { lista: "todas" });
+    expect(notas(doc)).toEqual([["", "", ""]]);
+    expect(htmlParaSei(doc)).not.toContain("critérios de desempate");
+    expect(textoParaSei(doc)).not.toContain("critérios de desempate");
+    expect(corpoXml(doc)).not.toContain("critérios de desempate");
   });
 
   it("vale na avaliação documental (preliminar) e na entrevista com critérios", () => {
     for (const tipo of ["PRELIMINAR", "ENTREVISTA"]) {
       const doc = documentoOficial(retrato(tipo), { lista: "geral" });
-      expect(doc.blocos.map((b) => Boolean(b.notaDeDesempate))).toEqual([
-        true,
-        false,
-      ]);
+      expect(notas(doc)).toEqual([[NOTA], [""]]);
     }
   });
 
@@ -113,21 +185,17 @@ describe("nota de desempate abaixo da tabela da vaga", () => {
       }),
       { lista: "geral" },
     );
-    expect(doc.blocos[0].notaDeDesempate).toBe("");
+    expect(notas(doc)).toEqual([[""]]);
     expect(htmlParaSei(doc)).not.toContain("critérios de desempate");
   });
 
   it("os eliminados e a convocação não levam a nota", () => {
     expect(
-      documentoOficial(retrato("FINAL"), { lista: "eliminados" }).blocos.some(
-        (b) => b.notaDeDesempate,
-      ),
-    ).toBe(false);
+      notas(documentoOficial(retrato("FINAL"), { lista: "eliminados" })).flat(),
+    ).not.toContain(NOTA);
     expect(
-      documentoOficial(retrato("CONVOCACAO"), { lista: "todas" }).blocos.some(
-        (b) => b.notaDeDesempate,
-      ),
-    ).toBe(false);
+      notas(documentoOficial(retrato("CONVOCACAO"), { lista: "todas" })).flat(),
+    ).not.toContain(NOTA);
   });
 
   it("o texto personalizado do edital aparece no lugar do padrão", () => {
@@ -140,7 +208,7 @@ describe("nota de desempate abaixo da tabela da vaga", () => {
       "*Desempate conforme o item 9.4 do Edital nº {edital}.",
     );
     const doc = documentoOficial(retrato("FINAL"), { lista: "geral", regra });
-    expect(doc.blocos[0].notaDeDesempate).toBe(
+    expect(notas(doc)[0][0]).toBe(
       "*Desempate conforme o item 9.4 do Edital nº 50/2026.",
     );
     expect(htmlParaSei(doc)).toContain(
@@ -160,10 +228,10 @@ describe("nota de desempate abaixo da tabela da vaga", () => {
       lista: "geral",
       regra: { rodape },
     });
-    expect(doc.blocos[0].notaDeDesempate).toBe(`*${rodape}`);
+    expect(notas(doc)[0][0]).toBe(`*${rodape}`);
     expect(doc.finais.map((i) => i.texto)).not.toContain(rodape);
 
-    // Sem nenhuma vaga com empate, o rodapé segue no fim do resultado final.
+    // Sem nenhuma tabela com empate, o rodapé segue no fim do resultado final.
     const semEmpate = documentoOficial(
       retrato("FINAL", {
         rodape,
@@ -174,7 +242,7 @@ describe("nota de desempate abaixo da tabela da vaga", () => {
     expect(semEmpate.finais.map((i) => i.texto)).toContain(rodape);
   });
 
-  it("o DOCX inclui a nota em itálico abaixo da tabela da vaga com empate", () => {
+  it("o DOCX inclui a nota em itálico logo abaixo de cada tabela com empate", () => {
     const doc = documentoOficial(retrato("FINAL"), { lista: "geral" });
     const xml = corpoXml(doc);
     expect(xml.match(/critérios de desempate/g)).toHaveLength(1);
@@ -186,5 +254,14 @@ describe("nota de desempate abaixo da tabela da vaga", () => {
     expect(nota).toBeLessThan(xml.indexOf("VAGA 102"));
     const lido = new DOMParser().parseFromString(xml, "application/xml");
     expect(lido.querySelector("parsererror")).toBeNull();
+
+    const cotas = corpoXml(documentoOficial(comCotas(), { lista: "todas" }));
+    const nas = [...cotas.matchAll(/\*Os critérios de desempate/g)].map(
+      (m) => m.index,
+    );
+    expect(nas).toHaveLength(2);
+    expect(nas[0]).toBeLessThan(cotas.indexOf("Pessoas com Deficiência"));
+    expect(nas[1]).toBeGreaterThan(cotas.indexOf("Pessoas com Deficiência"));
+    expect(nas[1]).toBeLessThan(cotas.indexOf("Pretos e Pardos"));
   });
 });

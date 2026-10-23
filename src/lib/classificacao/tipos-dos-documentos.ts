@@ -74,11 +74,12 @@ export interface TabelaDoDocumento {
   linhas: string[][];
   vazia: string;
   notas?: string[];
+  /** A nota de desempate logo abaixo da tabela (empate de nota resolvido). */
+  notaDeDesempate?: string;
 }
 export interface BlocoDoDocumento {
   cabecalho: string;
   tabelas: TabelaDoDocumento[];
-  notaDeDesempate?: string;
 }
 export interface ItemDoDocumento {
   nivel: number;

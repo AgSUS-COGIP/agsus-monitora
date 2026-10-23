@@ -218,15 +218,15 @@ export function corpoXml(doc: DocumentoOficial) {
             antes: 60,
           }),
         );
+      // A nota de desempate da tabela (empate de nota resolvido), em itálico.
+      if (t.notaDeDesempate)
+        partes.push(
+          paragrafo(
+            corridas(t.notaDeDesempate, { italico: true, tamanho: 20 }),
+            { alinhamento: "left", antes: 60 },
+          ),
+        );
     }
-    // A nota de desempate da vaga (empate de nota resolvido), em itálico.
-    if (bloco.notaDeDesempate)
-      partes.push(
-        paragrafo(
-          corridas(bloco.notaDeDesempate, { italico: true, tamanho: 20 }),
-          { alinhamento: "left", antes: 60 },
-        ),
-      );
   }
   partes.push(titulo(2, "Disposições Finais"));
   const numerosFin = numeracao(doc.finais, 2);

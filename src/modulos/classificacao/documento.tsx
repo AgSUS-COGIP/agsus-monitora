@@ -54,7 +54,7 @@ import {
   recolhível à esquerda, em três abas: "Dados" (número do edital, processo
   SEI, unidade, autoridade do 1.1, local e data), "Textos" (título e
   disposições preliminares e finais do modelo desta lista e, nas listas por
-  nota, a nota de desempate que vai abaixo da tabela da vaga com empate
+  nota, a nota de desempate que vai abaixo de cada tabela com empate
   resolvido — uma só por edital) e "Colunas" (as
   colunas da tabela de cada vaga e a ordem delas, por publicação —
   colunas-do-documento.tsx). No celular, uma coluna: o painel em cima e a
@@ -530,7 +530,7 @@ export function DocumentoDoSei({
                 />
               </Campo>
               {comNotaDeDesempate ? (
-                <Campo rotulo="Nota de desempate (abaixo da tabela da vaga)">
+                <Campo rotulo="Nota de desempate (abaixo da tabela com empate)">
                   <textarea
                     data-campo-documento="desempate"
                     rows={2}

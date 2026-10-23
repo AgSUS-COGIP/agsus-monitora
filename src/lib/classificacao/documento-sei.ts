@@ -35,8 +35,9 @@ type ModeloDeTexto = {
     VAGA <código> - <cargo> - <lotação> - <unidade> - <N vagas (…)>
     [tabela da vaga]  — todas as vagas, inclusive as vazias:
                         "Não houve candidatos aptos."
-    [*nota de desempate] — só na vaga com empate de nota resolvido (critério
-                        ou empate final); texto em regra.documento.desempate
+    [*nota de desempate] — logo abaixo de cada tabela (geral ou de cota) com
+                        empate de nota resolvido (critério ou empate final);
+                        texto em regra.documento.desempate ou o rodapé da regra
     2. DISPOSIÇÕES FINAIS        2.1. …
     [assinatura eletrônica e rodapé "<título> (<nº>) SEI <processo> / pg. N"]
                                                          ← o SEI põe
@@ -669,13 +670,17 @@ export function marcasDasDecisoes(
 }
 
 /*
-  A nota de desempate: logo abaixo da tabela da vaga em que dois candidatos
-  com a mesma nota (na escala das casas publicadas, como o motor agrupa)
-  ficaram em posições diferentes — o empate foi resolvido pelos critérios da
-  regra ou pelo empate final (sorteio, decisão, inscrição). Empate que fica na
-  mesma posição não leva a nota. O texto: o do edital
-  (regra.documento.desempate) ou o padrão — o rodapé da regra, quando ele já
-  é a frase do desempate, ou o item 10.
+  A nota de desempate: logo abaixo de cada tabela — a geral (ampla
+  concorrência) ou a de uma cota (PcD, Pretos e pardos…) — em que dois
+  candidatos com a mesma nota (na escala das casas publicadas, como o motor
+  agrupa) ficaram em posições diferentes: o empate foi resolvido pelos
+  critérios da regra ou pelo empate final (sorteio, decisão, inscrição). Vem
+  das posições e notas gravadas na lista (nada é recalculado). Tabela sem
+  empate resolvido não leva a nota; empate que fica na mesma posição também
+  não. Sem asterisco nas linhas: o "*" fica no começo da nota. O texto: o do
+  edital (regra.documento.desempate) ou o padrão — o rodapé da regra, quando
+  ele já é a frase do desempate, ou o item 10. Regra sem rodapé (e sem texto
+  do edital): sem nota.
 */
 export const NOTA_DE_DESEMPATE_PADRAO =
   "*Os critérios de desempate foram considerados conforme item 10 do referido edital.";
@@ -693,9 +698,13 @@ export function listaComNotaDeDesempate(tipo: string, lista: string) {
   return TIPOS_COM_NOTA_DE_DESEMPATE.has(tipo) && lista !== "eliminados";
 }
 
-/** O padrão da nota: o rodapé da regra, se é a frase do desempate; senão, o item 10. */
+/**
+ * O padrão da nota: o rodapé da regra, se é a frase do desempate; senão, o
+ * item 10. Regra sem rodapé: sem nota ("").
+ */
 export function notaDeDesempatePadrao(rodape: unknown) {
   const r = texto(rodape);
+  if (!r) return "";
   if (!FALA_DO_DESEMPATE.test(r) || r.length > 300 || r.includes("\n"))
     return NOTA_DE_DESEMPATE_PADRAO;
   return r.startsWith("*") ? r : `*${r}`;
@@ -784,7 +793,8 @@ function tabelasDaLista(
   agenda: AgendaDoDocumento | null,
   guardadas: readonly string[] | undefined,
   chave: string,
-): (BlocoDoDocumento & { desempate?: boolean })[] {
+  notaDoDesempate = "",
+): BlocoDoDocumento[] {
   const casas = retrato.casas ?? 2;
   const tipo = retrato.tipo;
   const modalidades = retrato.modalidades || [];
@@ -913,14 +923,16 @@ function tabelasDaLista(
 
   return retrato.vagas.map((v) => {
     const tabelas: TabelaDoDocumento[] = [];
-    let desempate = false;
+    // A nota de desempate vai logo abaixo de cada tabela com empate resolvido.
     const comLinhas = (
       codigo: string,
       linhasDaLista: LinhaDoRetrato[],
       comModalidade: boolean,
     ) => {
-      if (houveDesempate(linhasDaLista, casas)) desempate = true;
-      tabelas.push(tabela(codigo, linhasDaLista, comModalidade));
+      const t = tabela(codigo, linhasDaLista, comModalidade);
+      if (notaDoDesempate && houveDesempate(linhasDaLista, casas))
+        t.notaDeDesempate = notaDoDesempate;
+      tabelas.push(t);
     };
     if (lista === "eliminados") tabelas.push(tabelaDeEliminados(v));
     else {
@@ -930,7 +942,7 @@ function tabelasDaLista(
         if (todas || lista === m.codigo)
           comLinhas(m.codigo, v.listas?.[m.codigo] || [], false);
     }
-    return { cabecalho: v.cabecalho || "", tabelas, desempate };
+    return { cabecalho: v.cabecalho || "", tabelas };
   });
 }
 
@@ -1068,7 +1080,7 @@ export function documentoOficial(
     ...i,
     texto: limpar(i.texto),
   }));
-  // A nota de desempate vai abaixo da tabela de cada vaga com empate resolvido.
+  // A nota de desempate vai abaixo de cada tabela com empate resolvido.
   const nota = listaComNotaDeDesempate(retrato.tipo, listaEfetiva)
     ? limpar(notaDeDesempate(doc, r.rodape || retrato.rodape))
     : "";
@@ -1078,11 +1090,11 @@ export function documentoOficial(
     agendaParaDocumento(agenda),
     doc.colunas[chave],
     chave,
-  ).map(({ desempate, ...bloco }) => ({
-    ...bloco,
-    notaDeDesempate: desempate && nota ? nota : "",
-  }));
-  const desempatePorVaga = blocos.some((b) => b.notaDeDesempate);
+    nota,
+  );
+  const desempatePorVaga = blocos.some((b) =>
+    b.tabelas.some((t) => t.notaDeDesempate),
+  );
   // O rodapé da regra (ex.: os critérios de desempate) vale para o resultado
   // final — menos a frase do desempate quando ela já está abaixo das vagas.
   if (
@@ -1203,11 +1215,11 @@ export function htmlParaSei(doc: DocumentoOficial) {
       partes.push(tabelaHtml(t));
       for (const n of t.notas || [])
         partes.push(`<p class="Texto_Alinhado_Esquerda">${escapar(n)}</p>`);
+      if (t.notaDeDesempate)
+        partes.push(
+          `<p class="Texto_Alinhado_Esquerda"><span style="font-size:10pt"><em>${htmlDoTrecho(t.notaDeDesempate)}</em></span></p>`,
+        );
     }
-    if (bloco.notaDeDesempate)
-      partes.push(
-        `<p class="Texto_Alinhado_Esquerda"><span style="font-size:10pt"><em>${htmlDoTrecho(bloco.notaDeDesempate)}</em></span></p>`,
-      );
   }
   partes.push('<p class="Texto_Justificado">&nbsp;</p>');
   partes.push('<p class="Item_Nivel1">Disposições Finais</p>');
@@ -1255,8 +1267,8 @@ export function textoParaSei(doc: DocumentoOficial) {
         for (const l of t.linhas) saida.push(l.join("\t"));
       }
       for (const n of t.notas || []) saida.push(n);
+      if (t.notaDeDesempate) saida.push(semMarcas(t.notaDeDesempate));
     }
-    if (bloco.notaDeDesempate) saida.push(semMarcas(bloco.notaDeDesempate));
     saida.push("");
   }
   secao(2, "DISPOSIÇÕES FINAIS", doc.finais);
