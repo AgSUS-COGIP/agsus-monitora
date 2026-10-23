@@ -880,6 +880,10 @@ describe("prévia (Como fica no SEI)", () => {
     expect(lida.querySelector(".posto-pelo-sei").textContent).toContain(
       "SEI AGSUS.016954/2026-81 / pg. N",
     );
+    // Na tela, o aviso; no PDF (impressão), não sai: o SEI põe o rodapé.
+    expect(lida.querySelector("style").textContent).toContain(
+      ".posto-pelo-sei { display: none; }",
+    );
     expect(lida.querySelector("script")).toBeNull();
     // Endereço de logo estranho não entra.
     expect(paginaDaPrevia(doc, { logo: 'javascript:alert(1)"' })).not.toContain(

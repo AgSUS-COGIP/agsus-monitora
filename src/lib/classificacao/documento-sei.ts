@@ -1295,7 +1295,7 @@ const ESTILO_DO_SEI = `
   p.Texto_Justificado_Recuo_Primeira_Linha { text-align: justify; text-indent: 25mm; }
   p.Texto_Alinhado_Esquerda { text-align: left; }
   .quebra-de-pagina { break-before: page; page-break-before: always; border-top: 1px dashed #999; margin-top: 18pt; padding-top: 12pt; }
-  @media print { .quebra-de-pagina { border-top: 0; margin-top: 0; padding-top: 0; } }
+  @media print { .quebra-de-pagina { border-top: 0; margin-top: 0; padding-top: 0; } .posto-pelo-sei { display: none; } }
   .posto-pelo-sei { margin-top: 18pt; padding-top: 6pt; border-top: 1px dashed #999; color: #666; font-size: 8pt; text-align: center; }
 `;
 
