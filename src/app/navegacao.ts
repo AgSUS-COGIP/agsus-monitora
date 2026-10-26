@@ -249,9 +249,8 @@ const PAINEIS_VAZIOS: PaineisDoApp = Object.freeze({
 });
 
 /*
-  src/modules/situacao-dos-modulos.js e src/lib/situacao-dos-modulos.js ainda
-  são JS: os padrões (`abas = []`, `aoIrParaInicio = null`) fecham o tipo
-  inferido; estes são os contratos de verdade.
+  src/modules/situacao-dos-modulos.js ainda é JS: os padrões (`abas = []`,
+  `aoIrParaInicio = null`) fecham o tipo inferido; este é o contrato de verdade.
 */
 type AbasDoMenu = ReturnType<typeof abasDoMenu>;
 type AplicarManutencao = (opcoes: {
@@ -263,12 +262,6 @@ type AplicarManutencao = (opcoes: {
   desligada?: boolean;
   aoIrParaInicio?: () => void;
 }) => boolean;
-type SituacaoEfetiva = (consulta: {
-  situacao: ReturnType<typeof situacaoDoSistema>;
-  abas: AbasDoMenu;
-  view: string;
-  area: string;
-}) => ReturnType<typeof situacaoEfetiva>;
 
 const TEXTO_SEM_ACESSO =
   "Seu usuário ainda não tem módulos liberados. Solicite a liberação a um administrador.";
@@ -619,8 +612,7 @@ export function criarNavegacao({
       !fechada &&
       !isAdminGlobal(perfil()) &&
       !situacao.adminGlobal &&
-      // `as unknown`: o JS infere `abas: never[]` (padrão `[]`), sem par com o catálogo.
-      (situacaoEfetiva as unknown as SituacaoEfetiva)({
+      situacaoEfetiva({
         situacao,
         abas: abasDoMenu(),
         view,

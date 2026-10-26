@@ -81,7 +81,6 @@ import { sessaoDoApp } from "./app/sessao.ts";
 import { montarAya } from "./modulos/aya/aya.tsx";
 import type { avisar, mostrarCarregamento } from "./app/avisos.ts";
 import type { TelaSobDemanda } from "./app/tela-sob-demanda.ts";
-import type { montarListaAprovados } from "./modulos/aprovados/lista-aprovados.tsx";
 import type { montarCalendarioEditais } from "./modulos/cronograma/calendario-editais.tsx";
 import type {
   montarAnaliseDeRecursos,
@@ -112,7 +111,6 @@ declare global {
     monitoraToast?: typeof avisar;
     monitoraLoader?: typeof mostrarCarregamento;
     visaoGeralController?: ReturnType<typeof montarVisaoGeral>;
-    aprovadosController?: SobDemanda<typeof montarListaAprovados>;
     calendarioEditaisController?: SobDemanda<typeof montarCalendarioEditais>;
     recursosController?: SobDemanda<typeof montarRecursos>;
     analisarRecursosController?: SobDemanda<typeof montarAnaliseDeRecursos>;
@@ -173,9 +171,7 @@ montarBarraLateral();
 */
 window.visaoGeralController = montarVisaoGeral({
   toast: window.monitoraToast,
-  // O JS de situacao-dos-modulos infere `false` (o padrão); a resposta traz boolean.
-  comemoracoesLigadas: () =>
-    (situacaoDoSistema().comemoracoes as boolean) === true,
+  comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
 });
 instalarCarregamento();
 initLoadingExperience();
@@ -198,12 +194,11 @@ initNielsenShellUx();
   <section>. O legado as abre por estes controladores (`render()` ao navegar e
   `openImportModal` no Núcleo), nunca pelo DOM delas.
 */
-// nucleo.jsx é JS: só as opções com padrão entram no tipo inferido.
 window.nucleoController = montarNucleo({
   toast: window.monitoraToast,
   loader: window.monitoraLoader,
   getProfile: window.getMonitoraProfile,
-} as Parameters<typeof montarNucleo>[0]);
+});
 
 /*
   Daqui para baixo, as telas que não abrem na entrada carregam sob demanda
@@ -212,10 +207,10 @@ window.nucleoController = montarNucleo({
   contrato (render(), abrirVisao()…). A Visão geral e o casco ficam no
   pacote principal.
 */
-const comemoracoesLigadas = () =>
-  (situacaoDoSistema().comemoracoes as boolean) === true;
+const comemoracoesLigadas = () => situacaoDoSistema().comemoracoes === true;
 
 // Sem loader de tela cheia: skeleton na carga, e cada ação mostra o estado no botão.
+// `openImportModal` está em `metodos`: existe antes da carga (o tipo de window é o do Núcleo).
 window.aprovadosController = telaSobDemanda({
   secao: "page-approved",
   metodos: ["render", "openImportModal"],
@@ -226,7 +221,7 @@ window.aprovadosController = telaSobDemanda({
         getProfile: window.getMonitoraProfile,
       }),
     ),
-});
+}) as NonNullable<Window["aprovadosController"]>;
 
 // Sem loader de tela cheia: a grade mostra "Carregando…" por conta própria.
 window.calendarioEditaisController = telaSobDemanda({
