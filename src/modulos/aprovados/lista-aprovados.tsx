@@ -23,7 +23,6 @@ import {
   filterApprovedCandidates,
   manterSoAsOpcoes,
   opcoesDeEdital,
-  paginateApprovedCandidates,
 } from "../../lib/lista-aprovados-rules.ts";
 import { PLANILHAS } from "../../lib/planilhas.ts";
 import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
@@ -62,8 +61,6 @@ import "./carta-de-convocacao/carta.css";
   alguém numa redesenha a outra. Os modais são portais no fim do `body`.
 */
 
-/** Linhas por página da tabela; tem de ser um dos tamanhos de `Paginacao`. */
-const TAMANHO_PADRAO = 50;
 const FILTROS_INICIAIS: FiltrosDaTabelaDeAprovados = Object.freeze({
   candidatos: [],
   editalId: [],
@@ -272,13 +269,8 @@ export function ListaAprovados({ estado }: { estado: EstadoDosAprovados }) {
   );
   const [aba, setAba] = useState<AbaDosAprovados>("aprovados");
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
-  /*
-    Página da tabela, começando em 1. Filtrar volta sempre à primeira: filtrar
-    estando na página 7 e continuar na 7 mostra uma tabela vazia, ou um pedaço
-    do meio do resultado — nos dois casos parece que a busca não encontrou nada.
-  */
-  const [pagina, setPagina] = useState(1);
-  const [tamanho, setTamanho] = useState(TAMANHO_PADRAO);
+  // A busca só da tabela; "Limpar filtros" e o pedido de filtro a limpam.
+  const [busca, setBusca] = useState("");
 
   /*
     Cargo e modalidade só oferecem o que existe nos editais escolhidos, e o que
@@ -308,11 +300,6 @@ export function ListaAprovados({ estado }: { estado: EstadoDosAprovados }) {
     () => filterApprovedCandidates(candidatos, efetivos),
     [candidatos, chaveDosFiltros],
   );
-  // `paginate` corrige a página: filtrar pode ter encurtado a lista para aquém da aberta.
-  const paginaAtual = useMemo(
-    () => paginateApprovedCandidates(filtrados, pagina, tamanho),
-    [filtrados, pagina, tamanho],
-  );
 
   function mudarFiltro(
     campo: keyof FiltrosDaTabelaDeAprovados,
@@ -332,14 +319,6 @@ export function ListaAprovados({ estado }: { estado: EstadoDosAprovados }) {
       }
       return proximos;
     });
-    setPagina(1);
-  }
-
-  function irPara(destino: number) {
-    const alvo = paginateApprovedCandidates(filtrados, destino, tamanho).page;
-    if (alvo === paginaAtual.page) return false;
-    setPagina(alvo);
-    return true;
   }
 
   const podeSubJudice =
@@ -348,7 +327,7 @@ export function ListaAprovados({ estado }: { estado: EstadoDosAprovados }) {
 
   function limparFiltros() {
     setFiltros(FILTROS_INICIAIS);
-    setPagina(1);
+    setBusca("");
   }
 
   // Caso de um aviso de conferência: a aba Aprovados só com as vagas da pessoa.
@@ -357,7 +336,7 @@ export function ListaAprovados({ estado }: { estado: EstadoDosAprovados }) {
     if (!ids.length) return;
     setAba("aprovados");
     setFiltros({ ...FILTROS_INICIAIS, candidatos: ids });
-    setPagina(1);
+    setBusca("");
   });
 
   return (
@@ -434,13 +413,9 @@ export function ListaAprovados({ estado }: { estado: EstadoDosAprovados }) {
         filtros={efetivos}
         aoMudarFiltro={mudarFiltro}
         aoLimparFiltros={limparFiltros}
-        pagina={paginaAtual}
-        tamanho={tamanho}
-        aoIrPara={irPara}
-        aoMudarTamanho={(valor) => {
-          setTamanho(valor);
-          setPagina(1);
-        }}
+        linhas={filtrados}
+        busca={busca}
+        aoBuscar={setBusca}
       />
       <AbaConvocacao
         ativa={aba === "convocacao"}

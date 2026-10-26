@@ -200,12 +200,24 @@ export function TabelaInfinita<T>({
     if (!controlada) setBuscaPropria(nova);
     aoMudar?.(nova);
   };
-  const [limite, setLimite] = useState(POR_VEZ);
   const naTabela = useMemo(
     () => filtrarPelaBusca(itens, busca),
     [itens, busca, filtrarPelaBusca],
   );
-  useEffect(() => setLimite(POR_VEZ), [naTabela]);
+  /*
+    Quantas linhas estão carregadas, guardado junto do recorte a que se refere:
+    recorte novo (filtro, busca, ordem) começa nas primeiras 50 já neste
+    desenho. Zerar num efeito desenhava antes o recorte novo com o limite
+    antigo — com milhares de linhas carregadas, ordenar ou filtrar levava
+    segundos.
+  */
+  const [carga, setCarga] = useState({ recorte: naTabela, limite: POR_VEZ });
+  const limite = carga.recorte === naTabela ? carga.limite : POR_VEZ;
+  const carregarMais = () =>
+    setCarga((atual) => ({
+      recorte: naTabela,
+      limite: (atual.recorte === naTabela ? atual.limite : POR_VEZ) + POR_VEZ,
+    }));
   const recolhidos = grupo?.recolhidos;
   // Agrupada: os itens dos grupos recolhidos não contam para o carregamento contínuo.
   const abertos = useMemo(
@@ -231,7 +243,7 @@ export function TabelaInfinita<T>({
       caixa.scrollTop + caixa.clientHeight >=
         caixa.scrollHeight - PERTO_DO_FIM_PX
     )
-      setLimite((atual) => atual + POR_VEZ);
+      carregarMais();
   }
 
   return (
@@ -359,7 +371,7 @@ export function TabelaInfinita<T>({
           type="button"
           className="btn secondary small ui-tabela-mais"
           data-acao="carregar-mais"
-          onClick={() => setLimite((atual) => atual + POR_VEZ)}
+          onClick={() => carregarMais()}
         >
           <i className="fa-solid fa-plus" aria-hidden="true" /> Carregar mais{" "}
           {formatNumberBR(Math.min(POR_VEZ, faltam))}

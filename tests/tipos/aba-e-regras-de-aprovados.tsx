@@ -58,10 +58,9 @@ const props: PropsDaAbaDeAprovados = {
   },
   aoMudarFiltro: () => {},
   aoLimparFiltros: () => {},
-  pagina,
-  tamanho: 50,
-  aoIrPara: () => true,
-  aoMudarTamanho: () => {},
+  linhas: pagina.rows,
+  busca: "",
+  aoBuscar: (busca) => void busca.trim(),
 };
 void (<AbaAprovados {...props} />);
 void (
