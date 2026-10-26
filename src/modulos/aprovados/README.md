@@ -4,7 +4,7 @@ A tela `#page-approved` (view `approved`): monta na própria `<section>` por
 `montarListaAprovados()` (`src/main.ts` → `window.aprovadosController`); o legado chama `render()` ao
 navegar e `openImportModal(id, rótulo)` pelo botão de listas de Editais. Área = a atual do app.
 
-Duas visões no topo: **Aprovados** (indicadores, filtros, tabela paginada) e **Convocação** (a ordem
+Duas visões no topo: **Aprovados** (indicadores, filtros, tabela de rolagem contínua) e **Convocação** (a ordem
 de chamada de cada vaga, calculada pelo modelo de convocação e pelas vagas imediatas do edital). As
 duas leem os mesmos candidatos: mudar um status redesenha as duas.
 
@@ -15,12 +15,14 @@ estado.ts                  store sem React: candidatos (pacote compacto por áre
                            convocação e cartas por candidato), ações que escrevem no banco e o estado
                            da carta (`estado.carta`)
 aba-aprovados.tsx          visão Aprovados: KPIs (Convocados no lugar do antigo Fim de fila), filtros,
-                           tabela, ações por linha (anexos, status, carta, decisão judicial, sub judice)
+                           tabela na TabelaInfinita de src/ui (50 por vez ao rolar, busca da tabela,
+                           ordenação pelo cabeçalho, linha que abre a gaveta), ações por linha
+                           (anexos, status, carta, decisão judicial, sub judice)
 aba-convocacao.tsx         visão Convocação: KPIs (A convocar, Convocados…), filtros, escolha dos
                            candidatos para a carta, "Escolher os a convocar", Exportar CSV, uma tabela
                            por vaga
 partes.tsx                 peças das duas abas: selo de status (com a data do Convocado), nome que abre
-                           a gaveta, ações de status, carta e anexos, paginação, CampoEditavel
+                           a gaveta, ações de status, carta e anexos, paginação (Convocação), CampoEditavel
 modais.tsx                 status (Convocado pede a data), anexos, sub judice
 gaveta-do-candidato.tsx    a gaveta do candidato: dados, status e as cartas de convocação emitidas
 modal-listas-do-edital.tsx listas do edital: origem, importar XLSX, publicar da Classificação
