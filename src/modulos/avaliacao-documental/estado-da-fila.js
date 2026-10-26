@@ -37,7 +37,7 @@
   marcada como desatualizada e é relida ao voltar à lista ("Voltar à fila",
   remontar a aba).
 */
-import { isAdminGlobal } from "../../lib/access-roles.js";
+import { isAdminGlobal } from "../../lib/access-roles.ts";
 import { comTempoLimite } from "../../lib/falha-de-rede";
 import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 import {

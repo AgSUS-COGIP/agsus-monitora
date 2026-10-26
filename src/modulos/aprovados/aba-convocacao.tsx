@@ -26,7 +26,7 @@ import {
   montarListaDeConvocacao,
   resumirConvocacao,
 } from "../../lib/lista-convocacao-rules.ts";
-import { canChangeCandidateStatus } from "../../lib/access-roles.js";
+import { canChangeCandidateStatus } from "../../lib/access-roles.ts";
 import {
   lerModalidade,
   rotuloDaCategoria,

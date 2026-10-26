@@ -3,11 +3,11 @@ import {
   conflitosDaPublicacao,
   linhasDasSecoes,
   normalizarValoresCarregados,
-} from "../../src/lib/publicacao-de-configuracoes.js";
+} from "../../src/lib/publicacao-de-configuracoes.ts";
 import {
   linhasDosPaineisAlterados,
   normalizarPaineis,
-} from "../../src/lib/paineis-externos-das-configuracoes.js";
+} from "../../src/lib/paineis-externos-das-configuracoes.ts";
 
 /*
   22/10: publicar Configurações mandava todas as chaves e todos os painéis com

@@ -6,7 +6,7 @@ import {
   obterEstadoDaBarraLateral,
 } from "../../componentes/barra-lateral/estado.ts";
 import type { ArvoreDoMenu } from "../../componentes/barra-lateral/tipos.ts";
-import { needsLightForeground } from "../../lib/access-branding.js";
+import { needsLightForeground } from "../../lib/access-branding.ts";
 import {
   corDaBarraSegura,
   logoDaBarraSegura,
@@ -17,7 +17,7 @@ import {
   montarArvoreDoMenu,
 } from "../../lib/menu-lateral.ts";
 import { MolduraDaPrevia } from "./moldura-da-previa.tsx";
-import { SECOES } from "./secoes.js";
+import { SECOES } from "./secoes.ts";
 
 /*
   A prévia da barra lateral em Configurações › Marca: a barra de verdade

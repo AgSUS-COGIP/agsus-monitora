@@ -4,7 +4,7 @@
     "src/app/entrada/icones-da-entrada.tsx": "marca: as quatro cores do G do Google",
     "src/app/entrada/solicitacao-de-acesso.css": "marca da solicitação de acesso: texto sobre a cor configurada do painel, igual nos dois temas",
     "src/app/moldura.js": "impressão: cabeçalho do relatório impresso, sempre em papel branco",
-    "src/lib/access-branding.js": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
+    "src/lib/access-branding.ts": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
     "src/lib/avaliacao-documental/anexo-na-empregare.ts": "falso positivo: entidade HTML (&#160;), não é cor",
     "src/lib/avaliacao-documental/espelho-de-nota.ts": "documento para impressão (espelho de nota do candidato): papel branco, texto escuro, azul e bordas do timbrado",
     "src/lib/avaliacao-documental/resumo-da-regra.ts": "documento gerado para impressão/arquivo: papel branco, texto preto",
@@ -23,7 +23,7 @@
     "src/modulos/aya/mascote/contornos.ts": "marca: desenho da mascote AYA",
     "src/modulos/aya/mascote/desenho.tsx": "marca: desenho da mascote AYA",
     "src/modulos/classificacao/documento-no-navegador.ts": "documento: fundo branco do papel ao rasterizar a prévia",
-    "src/modulos/configuracoes/partes.jsx": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
+    "src/modulos/configuracoes/partes.tsx": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
     "src/modulos/mapa-saude-indigena/leaflet.ts": "mapa: contorno branco dos marcadores sobre a base do mapa",
     "src/modulos/mapa-saude-indigena/legenda.tsx": "mapa: legenda com o mesmo contorno dos marcadores",
     "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css": "mapa: sombra do marcador sobre a base do mapa",
@@ -55,7 +55,7 @@
       "#a3322b": 1,
       "#444": 1
     },
-    "src/lib/access-branding.js": {
+    "src/lib/access-branding.ts": {
       "#c296eb": 1
     },
     "src/lib/avaliacao-documental/anexo-na-empregare.ts": {
@@ -227,7 +227,7 @@
     "src/modulos/classificacao/documento-no-navegador.ts": {
       "#ffffff": 1
     },
-    "src/modulos/configuracoes/partes.jsx": {
+    "src/modulos/configuracoes/partes.tsx": {
       "#c296eb": 1
     },
     "src/modulos/mapa-saude-indigena/leaflet.ts": {

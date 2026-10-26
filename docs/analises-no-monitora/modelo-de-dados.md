@@ -57,7 +57,7 @@ TB_ANEXO_EMPREGARE (fase B)                                 documentos baixados 
 
 Separado de `analises`, que continua sendo o do **Painel das análises**.
 
-- Entra em `src/lib/permissoes-recursos.js` (`RESOURCES`), no catálogo do menu
+- Entra em `src/lib/permissoes-recursos.ts` (`RESOURCES`), no catálogo do menu
   (`src/lib/menu-lateral.ts`: id e view `avaliacao-documental`, rótulo "Avaliação documental",
   nas três áreas) e nas restrições `CK_` das tabelas de permissão por recurso e por grupo, com
   migration.

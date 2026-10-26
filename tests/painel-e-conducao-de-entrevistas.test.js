@@ -29,7 +29,7 @@ import {
   textoDoEmpateFinal,
 } from "../src/lib/convocacao-da-entrevista.ts";
 import { destinoDaTela } from "../src/lib/navegacao";
-import { paginasPermitidas } from "../src/lib/access-roles.js";
+import { paginasPermitidas } from "../src/lib/access-roles.ts";
 import { bloqueioDaTela } from "../src/lib/navegacao";
 
 /*

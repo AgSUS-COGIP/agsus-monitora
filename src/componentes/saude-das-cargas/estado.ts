@@ -29,7 +29,7 @@ import type {
   administrador". Sem a função no banco (ou com erro), `chaves` fica nulo e a
   tela segue como antes.
 */
-import { isAdminGlobal } from "../../lib/access-roles.js";
+import { isAdminGlobal } from "../../lib/access-roles.ts";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
 import {
   acompanhamentoDoPedido,

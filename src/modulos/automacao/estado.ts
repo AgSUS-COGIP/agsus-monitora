@@ -5,7 +5,7 @@
   (`alterar_chave_da_automacao`); o banco devolve a lista nova. Este arquivo
   não importa React; as regras ficam em src/lib/chaves-da-automacao.ts.
 */
-import { isAdminGlobal } from "../../lib/access-roles.js";
+import { isAdminGlobal } from "../../lib/access-roles.ts";
 import {
   mensagemDaRecusa,
   motivoValido,

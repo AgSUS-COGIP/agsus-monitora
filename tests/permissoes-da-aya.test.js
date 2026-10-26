@@ -8,7 +8,7 @@ import { responderAya } from "../src/lib/busca-da-aya.js";
 /*
   "Não aparece o botão": a Aya explica a permissão que falta para o perfil de
   quem pergunta (src/lib/permissoes-da-aya.js), com as mesmas regras de
-  src/lib/access-roles.js que escondem o botão.
+  src/lib/access-roles.ts que escondem o botão.
 */
 
 const perfil = (permissoes, extra = {}) => ({

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { criarEstadoDosAcessos } from "../../src/modulos/acessos/estado.js";
+import { criarEstadoDosAcessos } from "../../src/modulos/acessos/estado.ts";
 import { SEM_SERVIDOR } from "../../src/lib/falha-de-rede";
 
 /*

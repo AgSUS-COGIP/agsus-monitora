@@ -1,5 +1,5 @@
 import { getSupabaseClient } from "../lib/supabaseClient";
-import { podeVerPessoasOnline } from "../lib/access-roles.js";
+import { podeVerPessoasOnline } from "../lib/access-roles.ts";
 import {
   normalizeOnlinePresenceList,
   ondeEstaNoMonitora,
@@ -8,7 +8,7 @@ import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento
 import {
   SECOES,
   secaoAtualDeConfiguracao,
-} from "../modulos/configuracoes/secoes.js";
+} from "../modulos/configuracoes/secoes.ts";
 
 /*
   Presença e acesso, sem React:

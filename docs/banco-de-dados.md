@@ -233,7 +233,7 @@ Medição que importa para o diagnóstico, feita no banco real:
 A segunda linha é a razão de a chamada pública de branding não usar o cliente
 compartilhado: uma sessão corrompida no armazenamento faria a requisição falhar
 com 401 **mesmo tendo `anon` o `execute` concedido**. Ver
-`src/lib/access-branding-publico.js`.
+`src/lib/access-branding-publico.ts`.
 
 ### 4.2 Seis tabelas com RLS e sem policy — não mexer
 

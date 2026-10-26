@@ -14,9 +14,9 @@ import {
   canAlterarPorDecisaoJudicial,
   canChangeCandidateStatus,
   canManageSubJudice,
-} from "../../lib/access-roles.js";
+} from "../../lib/access-roles.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
-import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
+import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import {
   candidateCargosForEdital,
   candidateModalidadesForEdital,

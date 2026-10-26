@@ -2,7 +2,7 @@ import { getSupabaseClient } from "../lib/supabaseClient";
 import {
   DEFAULT_ACCESS_BRANDING,
   normalizeAccessLogoUrl,
-} from "../lib/access-branding.js";
+} from "../lib/access-branding.ts";
 import { avisoGlobal } from "../lib/aviso-global";
 import { erroAmigavel } from "../lib/erro-amigavel";
 import {
@@ -11,7 +11,7 @@ import {
 } from "../lib/identidade-da-aba";
 import { sessaoDoApp } from "./sessao.js";
 import { definirMarcaDaConfiguracao } from "./entrada/marca.js";
-import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.js";
+import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
 import { aplicarMarcaDaConfiguracao } from "../modules/sidebar-branding.js";
 import { avisar as avisarPadrao } from "./avisos.js";
 import {

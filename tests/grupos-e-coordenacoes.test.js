@@ -12,7 +12,7 @@ import {
   resumoDaCoordenacao,
   validarCoordenacao,
   validarGrupo,
-} from "../src/lib/grupos-e-coordenacoes.js";
+} from "../src/lib/grupos-e-coordenacoes.ts";
 
 describe("grupo de permissões", () => {
   it("código sai do nome, sem acento", () => {

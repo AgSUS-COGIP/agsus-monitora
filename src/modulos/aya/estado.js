@@ -5,7 +5,7 @@
   Sem React: `definirTitulo` da navegação (src/app/navegacao.js) chama
   `definirPaginaDaAya` a cada navegação; a área vem de
   `dados-do-monitoramento.ts` (trocar de área no menu avisa aqui) e a seção,
-  do evento que `configuracoes/secoes.js` dispara ao abrir cada seção. O componente
+  do evento que `configuracoes/secoes.ts` dispara ao abrir cada seção. O componente
   lê com `useSyncExternalStore(assinarPaginaDaAya, obterPaginaDaAya)`.
 */
 
@@ -17,7 +17,7 @@ import { esquecerConversa } from "../../modules/aya-memoria.js";
 import {
   EVENTO_SECAO_ABERTA,
   secaoAtualDeConfiguracao,
-} from "../configuracoes/secoes.js";
+} from "../configuracoes/secoes.ts";
 
 const ouvintes = new Set();
 

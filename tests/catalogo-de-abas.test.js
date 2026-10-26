@@ -7,7 +7,7 @@ import {
   montarArvoreDoMenu,
   paginasDaArea,
 } from "../src/lib/menu-lateral.ts";
-import { RESOURCES } from "../src/lib/permissoes-recursos.js";
+import { RESOURCES } from "../src/lib/permissoes-recursos.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 import {
   abasDoMenu,

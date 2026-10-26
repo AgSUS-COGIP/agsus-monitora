@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { gruposAtribuiveis } from "../../lib/teto-de-acessos.js";
-import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.js";
-import { linhaDoPedidoDeReativacao } from "../../lib/contas-desativadas.js";
+import { gruposAtribuiveis } from "../../lib/teto-de-acessos.ts";
+import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.ts";
+import { linhaDoPedidoDeReativacao } from "../../lib/contas-desativadas.ts";
 import {
   MOTIVOS_DE_RECUSA,
   MOTIVO_DE_RECUSA_OUTRO,
@@ -21,8 +21,17 @@ import {
   Modal,
   Selo,
 } from "../../ui/index.ts";
-import type { EstadoDaAcao } from "../../ui/botao-de-acao.tsx";
-import { CabecalhoDaGaveta } from "./partes.jsx";
+import type {
+  AreaDeAcesso,
+  CoordenacaoDeAcesso,
+  GrupoDeAcesso,
+} from "../../lib/tipos-dos-acessos.ts";
+import type {
+  EstadoDosAcessos,
+  MatrizDosAcessos,
+  PedidoPendente,
+} from "./tipos.ts";
+import { CabecalhoDaGaveta } from "./partes.tsx";
 
 /*
   Pedidos de acesso pendentes, na mesma seção de Usuários ("Pendentes"). O
@@ -41,57 +50,12 @@ import { CabecalhoDaGaveta } from "./partes.jsx";
   reativa a conta.
 */
 
-type Grupo = { codigo: string; nome: string; admin_global?: boolean };
-type AreaDaMatriz = { id: string; titulo: string };
-type Coordenacao = {
-  codigo: string;
-  nome: string;
-  area: string;
-  ativo?: boolean;
-};
-type Teto = { admin_global?: boolean; coordenacao?: string | null };
-type Matriz = {
-  teto: Teto;
-  grupos?: Grupo[];
-  areas?: AreaDaMatriz[];
-  coordenacoes?: Coordenacao[];
-};
+type Grupo = GrupoDeAcesso;
+type AreaDaMatriz = AreaDeAcesso;
+type Coordenacao = CoordenacaoDeAcesso;
+type Matriz = MatrizDosAcessos;
 
-export type PedidoPendente = {
-  id: string;
-  nome?: string | null;
-  email: string;
-  setor?: string | null;
-  justificativa?: string | null;
-  created_at?: string | null;
-  coordenacao?: string | null;
-  coordenacao_nome?: string | null;
-  area?: string | null;
-  area_nome?: string | null;
-  cargo?: string | null;
-  cargo_rotulo?: string | null;
-  cargo_outro?: string | null;
-  reativacao?: boolean;
-  grupo_anterior?: string | null;
-};
-
-type Resultado = { ok: boolean; erro: string };
-
-type EstadoDosAcessos = {
-  aprovar: (
-    solicitacao: PedidoPendente,
-    escolha: {
-      grupo: string;
-      coordenacao: string;
-      areas: string[] | null;
-    },
-  ) => Promise<unknown>;
-  recusar: (
-    solicitacao: PedidoPendente,
-    argumentos: { p_motivo: string; p_complemento: string | null },
-  ) => Promise<Resultado>;
-  carregarSolicitacoes: () => Promise<unknown>;
-} & EstadoDaAcao;
+export type { PedidoPendente };
 
 /** A área do pedido, se a pessoa que aprova pode marcá-la; senão nenhuma. */
 export function areasIniciaisDoPedido(
@@ -392,7 +356,7 @@ export function Solicitacoes({
 }: {
   estado: EstadoDosAcessos;
   atual: {
-    solicitacoes: PedidoPendente[];
+    solicitacoes: readonly PedidoPendente[];
     statusDasSolicitacoes: string;
     matriz: Matriz | null;
   };

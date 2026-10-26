@@ -2,7 +2,7 @@
 
 A tela Cronograma (view `calendario`), o calendário dos cronogramas dos editais. Fontes:
 `src/modulos/cronograma/calendario-editais.tsx`, `src/lib/calendario-editais.ts`,
-`src/lib/etapas-de-edital.js`, `src/lib/datas-do-cronograma.js` e `src/lib/access-roles.js`.
+`src/lib/etapas-de-edital.js`, `src/lib/datas-do-cronograma.js` e `src/lib/access-roles.ts`.
 
 ## Tela de Cronograma
 
@@ -15,7 +15,7 @@ A tela Cronograma (view `calendario`), o calendário dos cronogramas dos editais
 
 **perguntas:** quem pode alterar as etapas do cronograma | quem altera o cronograma | como editar uma etapa do cronograma | editar cronograma | quem ve o cronograma | nao vejo a aba cronograma
 **resposta:** As etapas se alteram no formulário do edital, na tela Editais, por quem tem nível Editor em Editais ou em Cronograma. O Cronograma em si só mostra as datas salvas, e vê a aba quem tem pelo menos Leitor em Cronograma. Em edital já cadastrado, a alteração pede um motivo, que vai para o histórico do edital.
-**fonte:** src/lib/access-roles.js; src/modulos/editais/modal-do-edital.jsx
+**fonte:** src/lib/access-roles.ts; src/modulos/editais/modal-do-edital.jsx
 **abrir:** nucleo
 
 ## Filtros do Cronograma

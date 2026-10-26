@@ -6,7 +6,7 @@ import {
   oQuePodeUsar,
   primeiraEntradaDeConvidado,
   tipoDeComemoracao,
-} from "../src/lib/acesso-liberado.js";
+} from "../src/lib/acesso-liberado.ts";
 
 const AGORA = Date.parse("2026-09-30T15:00:00Z");
 const HORA = 60 * 60 * 1000;

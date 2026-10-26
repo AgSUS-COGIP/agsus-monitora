@@ -4,14 +4,14 @@ import {
   contextoDepoisDeSalvar,
   menuDoContexto,
   resumoDoEscopo,
-} from "../src/lib/ver-como.js";
+} from "../src/lib/ver-como.ts";
 import {
   paginasPermitidas,
   paineisPermitidos,
   secaoDeConfiguracaoPermitida,
-} from "../src/lib/access-roles.js";
+} from "../src/lib/access-roles.ts";
 import { areasDoUsuario, montarArvoreDoMenu } from "../src/lib/menu-lateral.ts";
-import { registrarNoRascunho } from "../src/lib/matriz-de-acessos.js";
+import { registrarNoRascunho } from "../src/lib/matriz-de-acessos.ts";
 
 const SECOES = [
   { id: "marca", rotulo: "Marca" },

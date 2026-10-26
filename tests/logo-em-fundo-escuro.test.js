@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { needsLightForeground } from "../src/lib/access-branding.js";
+import { needsLightForeground } from "../src/lib/access-branding.ts";
 
 // A tela de acesso e a marca da barra lateral são de platform-shell.css (seção Login).
 const shell = readFileSync("src/styles/platform-shell.css", "utf8").replace(

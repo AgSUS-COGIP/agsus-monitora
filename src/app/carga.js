@@ -5,7 +5,7 @@ import {
   canImportApprovedList,
   canViewCore,
   permissaoLegada,
-} from "../lib/access-roles.js";
+} from "../lib/access-roles.ts";
 import {
   assinaturaDoAcesso,
   consultasDosDados,

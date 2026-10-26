@@ -44,7 +44,7 @@ import {
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { comemorar } from "../../modules/comemoracao.js";
-import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
+import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {
   acaoDaAya,
@@ -65,10 +65,10 @@ import {
 } from "../../lib/aya-tours.js";
 import { montarChamado, pedeSuporte } from "../../lib/chamado-da-aya.js";
 import { nomeDaArea } from "../../lib/menu-lateral.ts";
-import { abrirSecaoDeConfiguracao } from "../configuracoes/secoes.js";
+import { abrirSecaoDeConfiguracao } from "../configuracoes/secoes.ts";
 import { collectAyaPageContext, estadoDaTela } from "./contexto.js";
 import { responderComDados } from "../../lib/dados-da-aya.js";
-import { isAdminGlobal } from "../../lib/access-roles.js";
+import { isAdminGlobal } from "../../lib/access-roles.ts";
 import {
   comPerguntaSemResposta,
   perguntasGuardadas,

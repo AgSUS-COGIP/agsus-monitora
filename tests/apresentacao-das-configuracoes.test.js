@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   tomDoAviso,
   urlDeImagem,
-} from "../src/lib/apresentacao-das-configuracoes.js";
+} from "../src/lib/apresentacao-das-configuracoes.ts";
 
 /*
   Regras sem DOM das prévias de Configurações (os grupos e as prévias são

@@ -7,15 +7,15 @@ Arquivos que exigem cuidado:
 
 - `rpc-contrato.js` — contrato das RPCs. Mudou no banco, muda aqui (`npm run check:rpc-contract`).
 - `sessao.ts`, `session-lifecycle.ts`, `supabaseClient.ts`, `auth-flow.ts` — único caminho de auth.
-- `access-roles.js`, `permissoes-recursos.js` — matriz de permissão; costuma exigir migration junto.
-  `access-roles.js` também é a regra única de páginas e seções liberadas (`paginasPermitidas`,
+- `access-roles.ts`, `permissoes-recursos.ts` — matriz de permissão; costuma exigir migration junto.
+  `access-roles.ts` também é a regra única de páginas e seções liberadas (`paginasPermitidas`,
   `secaoDeConfiguracaoPermitida`), usada pela barra e pelo "Ver como".
-- `matriz-de-acessos.js` (rascunho; grupo × individual), `teto-de-acessos.js` (teto do coordenador),
-  `grupos-e-coordenacoes.js`, `ver-como.js`, `solicitacao-de-acesso.ts` (pedido de acesso por área: listas, situação, validação, recusa) — Configurações › Acessos.
-- `apresentacao-das-configuracoes.js` — tom da faixa de aviso global e endereço de imagem aceito nas
+- `matriz-de-acessos.ts` (rascunho; grupo × individual), `teto-de-acessos.ts` (teto do coordenador),
+  `grupos-e-coordenacoes.ts`, `ver-como.ts`, `solicitacao-de-acesso.ts` (pedido de acesso por área: listas, situação, validação, recusa) — Configurações › Acessos.
+- `apresentacao-das-configuracoes.ts` — tom da faixa de aviso global e endereço de imagem aceito nas
   prévias de Configurações (telas em `src/modulos/configuracoes/`).
 - `marca-da-barra-lateral.js` — logo e cor da barra lateral publicadas e em rascunho, sem DOM.
-- `publicacao-de-configuracoes.js` — publicação de Configurações sem DOM: chaves de cada seção (legado e
+- `publicacao-de-configuracoes.ts` — publicação de Configurações sem DOM: chaves de cada seção (legado e
   React), comparação com o retrato do banco, validação de URL e domínio.
 - `sanitize.ts`, `html-security.ts`, `csv-security.ts` — fronteira de segurança. Não afrouxar.
 - `reconciliacao-unidades.js`, `uf-ibge.js`, `brasil-bounds.js` — referência geográfica usada pelos

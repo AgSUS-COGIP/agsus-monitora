@@ -18,7 +18,7 @@ import {
   montarArvoreDoMenu,
   paginasDaArea,
 } from "../src/lib/menu-lateral.ts";
-import { secaoDeConfiguracaoPermitida } from "../src/lib/access-roles.js";
+import { secaoDeConfiguracaoPermitida } from "../src/lib/access-roles.ts";
 import {
   aplicarManutencaoNaNavegacao,
   carregarSituacaoDoSistema,

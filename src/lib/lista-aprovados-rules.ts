@@ -12,7 +12,7 @@ import {
   canManageCandidateAttachments,
   canManageSubJudice,
   canUnlockCandidateStatus,
-} from "./access-roles.js";
+} from "./access-roles.ts";
 
 const text = (value: unknown) => String(value ?? "").trim();
 const low = (value: unknown) => text(value).toLocaleLowerCase("pt-BR");

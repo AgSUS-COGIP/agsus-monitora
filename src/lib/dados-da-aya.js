@@ -14,7 +14,7 @@
   em cada RPC; erro de acesso vira "sem acesso", nunca o dado.
 */
 import { calcularKpis } from "./analises-curriculares.ts";
-import { isAdminGlobal, paginasPermitidas } from "./access-roles.js";
+import { isAdminGlobal, paginasPermitidas } from "./access-roles.ts";
 import { calcularIndicadores as indicadoresDasEntrevistas } from "./entrevistas-do-painel.ts";
 import { calcularIndicadores as indicadoresDosRecursos } from "./recursos-dos-candidatos.ts";
 import {

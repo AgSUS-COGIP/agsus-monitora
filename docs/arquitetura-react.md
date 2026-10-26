@@ -54,7 +54,7 @@ gera conflito com quem está trabalhando em paralelo.
 | `src/app/` (`montar-modulo.jsx`, `ErrorBoundary.jsx`)                                                            | fica                                                      | —          |
 | `src/ui/` (design system)                                                                                        | fica                                                      | —          |
 | `src/componentes/icone.tsx`, `multi-select-busca.tsx`                                                            | `src/ui/`                                                 | ao tocar   |
-| Configurações (moldura, seções e `secoes.js`), Acessos, Módulos e abas                                           | `src/modulos/configuracoes/`, `acessos/`, `modulos/`      | concluído  |
+| Configurações (moldura, seções e `secoes.ts`), Acessos, Módulos e abas                                           | `src/modulos/configuracoes/`, `acessos/`, `modulos/`      | concluído  |
 | `src/componentes/saude-das-cargas/` (Status das atualizações)                                                    | `src/modulos/`                                            | ao tocar   |
 | Editais, Cronograma e Lista de aprovados                                                                         | `src/modulos/editais/`, `cronograma/`, `aprovados/`       | concluído  |
 | `src/modules/map-*`, `health-*`, `indigenous-*`, (o dashboard já saiu do legado)                                 | `src/modulos/visao-geral/`                                | 5          |
@@ -110,7 +110,7 @@ export function montarTela({
 `ErrorBoundary`; devolve `{ raiz, desmontar }`. Todas as ilhas React de hoje (as de `src/main.js`)
 montam por ele. Usa `flushSync` a barra lateral (o legado lê `#nav` logo depois).
 
-**Seção de Configurações** (modelos: `src/modulos/acessos/` e `src/modulos/modulos/`): monta no bloco do `index.html` (`#acessosApp`, `#modulosApp`) que `src/modulos/configuracoes/secoes.js` move para a seção; o controlador em `window` (`acessosController`) tem `render()` e `confirmarSaida()` (a guarda de saída). As seções que publicam pela barra fixa (Marca… Operação) entram por portal no corpo da seção, pela moldura `src/modulos/configuracoes/configuracoes.jsx`.
+**Seção de Configurações** (modelos: `src/modulos/acessos/` e `src/modulos/modulos/`): monta no bloco do `index.html` (`#acessosApp`, `#modulosApp`) que `src/modulos/configuracoes/secoes.ts` move para a seção; o controlador em `window` (`acessosController`) tem `render()` e `confirmarSaida()` (a guarda de saída). As seções que publicam pela barra fixa (Marca… Operação) entram por portal no corpo da seção, pela moldura `src/modulos/configuracoes/configuracoes.tsx`.
 
 **Tela de página inteira** (modelos: `src/modulos/recursos/`, `src/modulos/selecao/`, `src/modulos/entrevistas/`, esta com visões num `Segmentado` no topo, e `src/modulos/analises/`): monta na `<section id="page-<view>">`
 vazia do `index.html`, sem pedir nada ao banco; `src/main.js` guarda o controlador em `window`
@@ -218,7 +218,7 @@ Testes: `tests/app/sessao.test.js`, `tests/app/entrada.test.js`, `tests/solicita
 | `logout`, `returnToLogin`, `clearLocalAuthState`, `aplicarSaida`                        | `sair()`, `limparSessao()`, `aplicarSaida()` na sessão                       |
 | `showAccessRequestState`, `submitAccessRequest`, `src/modules/solicitacao-de-acesso.js` | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                          |
 | `access-branding-boot.js`, marca e rodapé de `applyConfigToUi`                          | `src/app/entrada/marca.js` (`definirMarcaDaConfiguracao`)                    |
-| marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.js`)                | `src/lib/acesso-liberado.js` (a comemoração continua no legado)              |
+| marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.js`)                | `src/lib/acesso-liberado.ts` (a comemoração continua no legado)              |
 | `#loginMsg` escrito por `session-lifecycle.js`                                          | `installSessionLifecycle({ aoExpirar })` → `sessaoDoApp.mostrarMensagem`     |
 | `window.loginWithGoogle`, `logout`, `returnToLogin`, `submitAccessRequest`              | saíram; o Sair confirmado (`nielsen-shell-ux.js`) chama `sessaoDoApp.sair()` |
 

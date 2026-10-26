@@ -21,7 +21,7 @@ import {
   proximoFlutuante,
   recortarArvorePorArea,
 } from "../src/lib/menu-lateral.ts";
-import { SECOES } from "../src/modulos/configuracoes/secoes.js";
+import { SECOES } from "../src/modulos/configuracoes/secoes.ts";
 import { NOMES_DE_ICONES } from "../src/modules/icones.js";
 
 const TUDO = {

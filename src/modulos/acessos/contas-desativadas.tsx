@@ -1,0 +1,352 @@
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import {
+  errosDaReativacao,
+  linhaDaDesativacao,
+  motivoDaDesativacao,
+  MOTIVO_NAO_REGISTRADO,
+  valoresIniciaisDaReativacao,
+} from "../../lib/contas-desativadas.ts";
+import { gruposAtribuiveis } from "../../lib/teto-de-acessos.ts";
+import { explicacaoDoGrupo } from "../../lib/matriz-de-acessos.ts";
+import {
+  Aviso,
+  BotaoDeAcao,
+  Campo,
+  classes,
+  ErroAoCarregar,
+  LinhasEsqueleto,
+  Modal,
+  Selo,
+} from "../../ui/index.ts";
+import {
+  AvisoSemArea,
+  AvisoSemCoordenacao,
+  CabecalhoDaGaveta,
+  CaixasDeArea,
+  CampoMotivo,
+  OpcoesDeCoordenacao,
+  OpcoesDoGrupo,
+  motivoValido,
+} from "./partes.tsx";
+import type { ValoresDaReativacao } from "../../lib/tipos-dos-acessos.ts";
+import type {
+  ContaDesativadaDosAcessos,
+  EstadoDosAcessos,
+  MatrizDosAcessos,
+  SnapshotDosAcessos,
+} from "./tipos.ts";
+
+/*
+  Usuários › "Desativadas" (só o administrador global): quem foi desativado,
+  quando, por quem e por quê, com o grupo e as áreas de antes. "Reativar"
+  abre um modal com o que a pessoa tinha (editável, com as mesmas travas da
+  gaveta) e pede motivo. Na próxima entrada, a pessoa vê "Bem-vindo(a) de
+  volta" (src/modules/comemoracao-do-acesso.js).
+*/
+
+function ModalReativarConta({
+  estado,
+  conta,
+  matriz,
+  aoFechar,
+}: {
+  estado: EstadoDosAcessos;
+  conta: ContaDesativadaDosAcessos;
+  matriz: MatrizDosAcessos;
+  aoFechar: () => void;
+}) {
+  const grupos = matriz.grupos || [];
+  const areas = matriz.areas || [];
+  const [valores, setValores] = useState(() =>
+    valoresIniciaisDaReativacao(conta, grupos),
+  );
+  const [tentou, setTentou] = useState(false);
+  const [recusa, setRecusa] = useState("");
+  const nome = conta.nome || conta.email;
+  const grupo = grupos.find((g) => g.codigo === valores.grupo);
+  const adminGlobal = Boolean(grupo?.admin_global);
+  const erros = errosDaReativacao(valores, grupos);
+  const travado = Boolean(erros.grupo || erros.semArea || erros.semCoordenacao);
+  const mudar = (mudancas: Partial<ValoresDaReativacao>) => {
+    setRecusa("");
+    setValores((antes) => ({ ...antes, ...mudancas }));
+  };
+  const nomeDaCoordenacao = (matriz.coordenacoes || []).find(
+    (c) => c.codigo === valores.coordenacao,
+  )?.nome;
+
+  async function salvar(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault();
+    setTentou(true);
+    if (travado || !motivoValido(valores.motivo)) return;
+    const resultado = await estado.reativar(conta, valores, grupos);
+    if (resultado.ok) aoFechar();
+    else setRecusa(resultado.erro);
+  }
+
+  return (
+    <Modal
+      id="acessosReativar"
+      rotuloId="acessosReativarTitulo"
+      className="acessos-modal"
+      cartaoClassName="acessos-modal-cartao"
+      aoFechar={aoFechar}
+      fecharAoClicarFora={false}
+    >
+      <CabecalhoDaGaveta
+        tituloId="acessosReativarTitulo"
+        titulo={`Reativar ${nome}`}
+        aoFechar={aoFechar}
+      />
+      <form className="acessos-modal-corpo" onSubmit={salvar} noValidate>
+        <div className="acessos-grade-campos">
+          <Campo rotulo="Grupo">
+            <select
+              id="acessosReativarGrupo"
+              data-foco-inicial
+              title={explicacaoDoGrupo(grupo) || undefined}
+              value={valores.grupo}
+              onChange={(e) => mudar({ grupo: e.target.value })}
+            >
+              <OpcoesDoGrupo
+                grupos={grupos}
+                atribuiveis={gruposAtribuiveis(matriz.teto, grupos)}
+                atual={valores.grupo}
+              />
+            </select>
+          </Campo>
+          {!adminGlobal ? (
+            <Campo rotulo="Coordenação">
+              <select
+                id="acessosReativarCoordenacao"
+                value={valores.coordenacao}
+                onChange={(e) => mudar({ coordenacao: e.target.value })}
+              >
+                <option value="">Sem coordenação</option>
+                <OpcoesDeCoordenacao
+                  coordenacoes={matriz.coordenacoes || []}
+                  areas={areas}
+                  atual={valores.coordenacao}
+                />
+              </select>
+            </Campo>
+          ) : null}
+        </div>
+        <div className="acessos-areas">
+          <span className="acessos-rotulo">Áreas</span>
+          {adminGlobal ? (
+            <p className="acessos-secundario">
+              Administrador global: vê todas as áreas.
+            </p>
+          ) : valores.coordenacao ? (
+            <p className="acessos-secundario">
+              Vê só o recorte da coordenação{" "}
+              {nomeDaCoordenacao || valores.coordenacao}.
+            </p>
+          ) : (
+            <CaixasDeArea
+              areas={areas}
+              marcadas={valores.areas}
+              aoAlternar={(id, ligar) =>
+                mudar({
+                  areas: ligar
+                    ? [...new Set([...valores.areas, id])]
+                    : valores.areas.filter((a) => a !== id),
+                })
+              }
+            />
+          )}
+        </div>
+        {erros.semArea ? <AvisoSemArea nome={nome} /> : null}
+        {erros.semCoordenacao ? <AvisoSemCoordenacao /> : null}
+        <CampoMotivo
+          id="acessosReativarMotivo"
+          rotulo="Motivo da reativação"
+          valor={valores.motivo}
+          aoMudar={(motivo) => mudar({ motivo })}
+          erro={tentou && !motivoValido(valores.motivo)}
+        />
+        {recusa ? (
+          <Aviso tom="danger" papel="alert" como="p" className="acessos-recusa">
+            {recusa}
+          </Aviso>
+        ) : null}
+        <div className="ui-acoes acessos-modal-rodape">
+          <button type="button" className="btn ghost" onClick={aoFechar}>
+            Cancelar
+          </button>
+          <BotaoDeAcao
+            estado={estado}
+            acao={`reativar:${conta.id}`}
+            type="submit"
+            className="btn primary"
+            disabled={travado}
+          >
+            Reativar
+          </BotaoDeAcao>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+function Antes({
+  conta,
+  matriz,
+}: {
+  conta: ContaDesativadaDosAcessos;
+  matriz: MatrizDosAcessos;
+}) {
+  const titulo = new Map((matriz.areas || []).map((a) => [a.id, a.titulo]));
+  const coordenacao = (matriz.coordenacoes || []).find(
+    (c) => c.codigo === conta.coordenacao,
+  );
+  const areas = Array.isArray(conta.areas) ? conta.areas : [];
+  return (
+    <span className="acessos-grupo">
+      <span className="acessos-chip acessos-chip-grupo">
+        {conta.grupo_nome || conta.grupo || "—"}
+      </span>
+      {conta.coordenacao ? (
+        <small>{coordenacao?.nome || conta.coordenacao}</small>
+      ) : null}
+      {areas.length ? (
+        <span className="acessos-chips">
+          {areas.map((id) => (
+            <span key={id} className="acessos-chip">
+              {titulo.get(id) || id}
+            </span>
+          ))}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+export function Desativadas({
+  estado,
+  atual,
+  busca,
+  campoDeBusca,
+}: {
+  estado: EstadoDosAcessos;
+  atual: SnapshotDosAcessos;
+  busca: string;
+  campoDeBusca: ReactNode;
+}) {
+  const { desativadas, statusDasDesativadas, matriz } = atual;
+  const [reativando, setReativando] =
+    useState<ContaDesativadaDosAcessos | null>(null);
+  // Mesma busca da aba (nome ou e-mail), 300 ms depois da digitação.
+  useEffect(() => {
+    if (busca.trim() === atual.buscaDasDesativadas) return undefined;
+    const espera = setTimeout(
+      () => void estado.carregarDesativadas({ busca: busca.trim() }),
+      300,
+    );
+    return () => clearTimeout(espera);
+  }, [busca, atual.buscaDasDesativadas, estado]);
+
+  if (statusDasDesativadas === "error")
+    return (
+      <ErroAoCarregar
+        oQue="as contas desativadas"
+        aoTentar={() => void estado.carregarDesativadas()}
+      />
+    );
+  const carregando = statusDasDesativadas !== "ready" || !matriz;
+  return (
+    <>
+      <div className="acessos-filtros">{campoDeBusca}</div>
+      <div
+        className="acessos-tabela acessos-tabela-simples"
+        data-mobile-table="scroll"
+        tabIndex={0}
+        role="region"
+        aria-label="Contas desativadas"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Pessoa</th>
+              <th scope="col">Antes</th>
+              <th scope="col">Desativação</th>
+              <th scope="col">
+                <span className="sr-only">Ações</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {carregando ? (
+              <LinhasEsqueleto colunas={4} linhas={3} />
+            ) : desativadas.length ? (
+              desativadas.map((conta) => {
+                const motivo = motivoDaDesativacao(conta);
+                return (
+                  <tr key={conta.id}>
+                    <th scope="row">
+                      <span className="acessos-pessoa-textos">
+                        <strong title={conta.nome || conta.email}>
+                          {conta.nome || conta.email}
+                        </strong>
+                        {conta.nome ? <small>{conta.email}</small> : null}
+                        {conta.pedido_pendente ? (
+                          <Selo tom="pendente" className="acessos-selo-convite">
+                            Pediu reativação
+                          </Selo>
+                        ) : null}
+                      </span>
+                    </th>
+                    <td>
+                      <Antes conta={conta} matriz={matriz} />
+                    </td>
+                    <td>
+                      <span className="acessos-empilhado">
+                        <span>{linhaDaDesativacao(conta)}</span>
+                        <small
+                          className={classes(
+                            "acessos-secundario",
+                            motivo === MOTIVO_NAO_REGISTRADO &&
+                              "acessos-motivo-ausente",
+                          )}
+                        >
+                          {motivo}
+                        </small>
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn secondary"
+                        onClick={() => setReativando(conta)}
+                      >
+                        Reativar
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={4} className="acessos-vazio">
+                  {atual.buscaDasDesativadas
+                    ? "Nenhuma conta desativada corresponde à busca."
+                    : "Nenhuma conta desativada."}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      {reativando && matriz ? (
+        <ModalReativarConta
+          key={reativando.id}
+          estado={estado}
+          conta={reativando}
+          matriz={matriz}
+          aoFechar={() => setReativando(null)}
+        />
+      ) : null}
+    </>
+  );
+}

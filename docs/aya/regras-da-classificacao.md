@@ -205,7 +205,7 @@ dos PDFs oficiais).
 
 **perguntas:** quem pode mudar a regra de classificacao | quem pode gerar a lista de classificacao | permissao classificacao | nao vejo a aba classificacao
 **resposta:** A aba Classificação usa a permissão "Classificação" (Configurações › Acessos): Leitor vê as listas, a regra e as explicações; Editor salva a regra do edital, gera e publica listas e registra sorteio ou decisão. Por padrão, o administrador é Administrador; gestor de edital e coordenador, Editor; contratador, usuário e jurídico, Leitor. Também vale a área e o recorte da coordenação do edital.
-**fonte:** supabase/migrations/20261002150000_classificacao.sql; src/lib/access-roles.js
+**fonte:** supabase/migrations/20261002150000_classificacao.sql; src/lib/access-roles.ts
 **abrir:** config:acessos
 
 ## Nota alterada pelo recurso
@@ -227,7 +227,7 @@ dos PDFs oficiais).
 
 **perguntas:** por que nao aparece o botao gerar | botao gerar nao aparece | botao publicar desabilitado | nao consigo publicar a lista de classificacao | copiar para o sei desabilitado | nao consigo exportar a classificacao | publicar como lista de aprovados nao aparece
 **resposta:** "Gerar", "Marcar como publicada" e "Publicar como lista de aprovados" só aparecem para quem tem Editor em Classificação, com a área e o edital; "Gerar" fica desabilitado enquanto o edital não tem regra salva. Copiar para o SEI, Como fica no SEI, Baixar DOCX, PDF e XLSX ficam desabilitados até existir uma lista gerada naquela etapa: gere primeiro. "Marcar como publicada" e "Publicar como lista de aprovados" ficam desabilitados enquanto houver empate esperando sorteio ou decisão, e "Publicar como lista de aprovados" só existe na lista Resultado final.
-**fonte:** src/modulos/classificacao/listas.tsx; src/lib/access-roles.js (canEditClassificacao)
+**fonte:** src/modulos/classificacao/listas.tsx; src/lib/access-roles.ts (canEditClassificacao)
 **abrir:** classificacao
 
 ## Siglas das modalidades e cadastro reserva

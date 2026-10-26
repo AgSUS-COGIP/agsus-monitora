@@ -8,11 +8,11 @@ import {
   organizarConfiguracoesEmSecoes,
   EVENTO_SECAO_ABERTA,
   secaoAtualDeConfiguracao,
-} from "../src/modulos/configuracoes/secoes.js";
+} from "../src/modulos/configuracoes/secoes.ts";
 
 const html = readFileSync("index.html", "utf8");
 const main = readFileSync("src/main.js", "utf8");
-const modulo = readFileSync("src/modulos/configuracoes/secoes.js", "utf8");
+const modulo = readFileSync("src/modulos/configuracoes/secoes.ts", "utf8");
 
 /*
   A página era um formulário corrido: um card com 47 campos e três subtítulos

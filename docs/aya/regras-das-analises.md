@@ -48,7 +48,7 @@ e `20260930234000_cache_sem_atropelo.sql`.
 
 **perguntas:** quem pode ver as analises curriculares | nao vejo a aba analises | permissao analises | posso editar a analise no monitora | onde corrijo a analise | corrigir nota da analise
 **resposta:** A aba usa a permissão "Análises curriculares" (Leitor basta, em Configurações › Acessos) e mostra só a área atual e, com coordenação, os editais dela. Ela é só de consulta: a análise é feita e corrigida nas planilhas de análise, que chegam ao MONITORA pelo Apps Script, ou, no edital analisado no MONITORA, nas fichas da Avaliação documental. Nota alterada por recurso não muda a análise: vale como ajuste aprovado, aplicado na Classificação.
-**fonte:** src/lib/access-roles.js; src/lib/permissoes-recursos.js; src/modulos/analises/; apps-script/LEIA-ME.md
+**fonte:** src/lib/access-roles.ts; src/lib/permissoes-recursos.ts; src/modulos/analises/; apps-script/LEIA-ME.md
 **abrir:** analises
 
 ## Número das Análises que não bate

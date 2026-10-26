@@ -4,12 +4,12 @@ import {
   guardarMarca,
   lerMarcaGuardada,
   limparMarcaGuardada,
-} from "../src/lib/access-branding-cache.js";
-import { needsLightForeground } from "../src/lib/access-branding.js";
+} from "../src/lib/access-branding-cache.ts";
+import { needsLightForeground } from "../src/lib/access-branding.ts";
 
 const html = readFileSync("index.html", "utf8");
-const cache = readFileSync("src/lib/access-branding-cache.js", "utf8");
-const marca = readFileSync("src/lib/access-branding.js", "utf8");
+const cache = readFileSync("src/lib/access-branding-cache.ts", "utf8");
+const marca = readFileSync("src/lib/access-branding.ts", "utf8");
 
 /*
   A piscada ao recarregar a tela de acesso.

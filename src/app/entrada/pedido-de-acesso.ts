@@ -17,7 +17,7 @@ import {
   contaMarcadaComoDesativada,
   lembrarContaDesativada,
   marcarBoasVindasPendentes,
-} from "../../lib/acesso-liberado.js";
+} from "../../lib/acesso-liberado.ts";
 import { mensagemDeFalha } from "../../lib/falha-de-rede";
 import { normalizePlatformContext } from "../../lib/platform-context";
 import {

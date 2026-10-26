@@ -34,7 +34,7 @@ import {
 
 import { MIME_DOCX } from "../../../lib/documento-da-resposta.js";
 import { CABECALHO_PADRAO } from "../../../lib/cabecalho-dos-documentos.js";
-import { canChangeCandidateStatus } from "../../../lib/access-roles.js";
+import { canChangeCandidateStatus } from "../../../lib/access-roles.ts";
 import { ehConflitoDeVersao } from "../../../lib/conflito-de-versao.ts";
 import {
   assinaturaDaEmissao,

@@ -40,8 +40,8 @@ import {
   isAdminGlobal,
   paginasPermitidas,
   secaoDeConfiguracaoPermitida,
-} from "./access-roles.js";
-import { hasResource } from "./permissoes-recursos.js";
+} from "./access-roles.ts";
+import { hasResource } from "./permissoes-recursos.ts";
 
 const passo = (alvo, titulo, texto, extra = {}) =>
   Object.freeze({ alvo, titulo, texto, ...extra });

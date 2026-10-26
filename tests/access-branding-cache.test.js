@@ -3,7 +3,7 @@ import {
   guardarMarca,
   lerMarcaGuardada,
   limparMarcaGuardada,
-} from "../src/lib/access-branding-cache.js";
+} from "../src/lib/access-branding-cache.ts";
 
 const CHAVE = "agsus_monitora_access_branding_v1";
 

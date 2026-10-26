@@ -3,7 +3,7 @@
 A tela Lista de aprovados (view `approved`): status dos candidatos, importação, convocação, sub
 judice e anexos. Fontes: `src/modulos/aprovados/`, `src/lib/lista-aprovados-rules.ts`,
 `src/lib/aprovados-import.ts`, `src/lib/lista-convocacao-rules.ts`,
-`src/lib/modelo-de-convocacao.ts`, `src/lib/anexos-do-candidato.ts`, `src/lib/carta-de-convocacao.ts`, `src/lib/access-roles.js` e as
+`src/lib/modelo-de-convocacao.ts`, `src/lib/anexos-do-candidato.ts`, `src/lib/carta-de-convocacao.ts`, `src/lib/access-roles.ts` e as
 migrations `20260928235000_anexos_so_admin.sql`, `20260930200000_aprovados_por_grupo_edital_gestor_edita.sql`,
 `20261001150000_sub_judice_alteracao.sql`, `20261005160000_lista_de_aprovados_da_classificacao.sql` (lista
 publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovados.ts`) e
@@ -22,13 +22,13 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** o que acontece com uma lista inativa | lista inativa | listas inativas | ativar lista | inativar lista
 **resposta:** Listas inativas continuam consultáveis, mas seus candidatos não podem ser alterados, nem receber anexos. Ativar ou inativar a lista é de quem pode importar (Editor em Importação, como o grupo Gestor); substituir ou remover o XLSX de uma lista existente é do Administrador em Importação.
-**fonte:** src/lib/lista-aprovados-rules.ts; src/lib/access-roles.js
+**fonte:** src/lib/lista-aprovados-rules.ts; src/lib/access-roles.ts
 
 ## Importar a lista
 
 **perguntas:** importar lista de aprovados | importacao do xlsx | colunas do xlsx | substituir lista
 **resposta:** A importação aceita só .xlsx e usa a primeira aba, com as colunas obrigatórias codigo_vaga, cargo, classificacao, nota, nome e modalidade (classificação inteira maior que 0; nota numérica, 0 ou mais); mostra até 12 erros por vez. Importa quem tem Editor em Importação (ou o grupo Gestor); substituir uma lista existente é do Administrador. A importação liga os candidatos ao edital pelo ID do edital.
-**fonte:** src/lib/aprovados-import.ts; src/lib/access-roles.js
+**fonte:** src/lib/aprovados-import.ts; src/lib/access-roles.ts
 
 ## Modelo de convocação
 
@@ -40,7 +40,7 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** como funciona o candidato sub judice | sub judice | decisao judicial | incluir sub judice
 **resposta:** Quem tem Editor em Aprovados inclui um candidato sub judice, que fica vinculado à lista vigente do edital; remover vale só para quem foi incluído assim. Alterar nota ou modalidade por decisão judicial, e desfazer, é só do Administrador em Aprovados: a classificação é refeita e o número do processo judicial é opcional. Na Convocação, quem está sem código de vaga entra na vaga do mesmo cargo quando há uma única no próprio edital; se houver várias, o sistema não escolhe automaticamente. Vagas de outros editais não participam dessa escolha.
-**fonte:** src/lib/access-roles.js; src/lib/lista-aprovados-rules.ts; supabase/migrations/20261001150000_sub_judice_alteracao.sql
+**fonte:** src/lib/access-roles.ts; src/lib/lista-aprovados-rules.ts; supabase/migrations/20261001150000_sub_judice_alteracao.sql
 
 ## Anexos do candidato
 
@@ -143,7 +143,7 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** cadeado no status | por que aparece um cadeado | nao consigo mudar o status | status travado | voltar para sem status | desfazer status do candidato
 **resposta:** O cadeado aparece para quem tem Editor em Aprovados quando a lista é inativa ou quando o status já foi definido e só o Administrador em Aprovados pode mudá-lo (inclusive voltar a "Sem status"). A exceção é o Convocado: o Editor o leva para Contratado, Desistente ou Documentação Rejeitada sem cadeado. Sem Editor em Aprovados, a coluna mostra só um traço. Peça a mudança a quem tem Administrador em Aprovados.
-**fonte:** src/modulos/aprovados/partes.tsx (AcaoDeStatus); src/lib/lista-aprovados-rules.ts; src/lib/access-roles.js
+**fonte:** src/modulos/aprovados/partes.tsx (AcaoDeStatus); src/lib/lista-aprovados-rules.ts; src/lib/access-roles.ts
 **abrir:** approved
 
 ## Carta de convocação que não aparece
@@ -157,5 +157,5 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** por que o edital nao tem lista de aprovados | lista de aprovados vazia | edital nao aparece na lista de aprovados | nao tem lista de aprovados
 **resposta:** A Lista de aprovados mostra a lista vigente de cada edital da área atual (e do recorte da sua coordenação). Edital sem lista ainda não teve o resultado final publicado da Classificação nem planilha importada: publique em Classificação › Resultado final ("Publicar como lista de aprovados") ou, em edital sem análise no sistema, importe o XLSX (Editor em Importação e convocação). As listas anteriores ficam inativas, para consulta, no modal "Listas do edital".
-**fonte:** src/lib/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.tsx; src/lib/access-roles.js
+**fonte:** src/lib/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.tsx; src/lib/access-roles.ts
 **abrir:** approved

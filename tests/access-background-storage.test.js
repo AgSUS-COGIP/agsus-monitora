@@ -3,7 +3,7 @@ import {
   ACCESS_BACKGROUND_MAX_BYTES,
   createAccessBackgroundPath,
   validateAccessBackgroundFile,
-} from "../src/lib/access-background-storage.js";
+} from "../src/lib/access-background-storage.ts";
 
 describe("access background storage", () => {
   it("accepts supported images up to the bucket limit", () => {

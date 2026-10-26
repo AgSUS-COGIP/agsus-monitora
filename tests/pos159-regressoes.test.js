@@ -5,11 +5,11 @@ import {
   CHAVES_DAS_SECOES,
   linhasDasSecoes,
   normalizarValoresCarregados,
-} from "../src/lib/publicacao-de-configuracoes.js";
+} from "../src/lib/publicacao-de-configuracoes.ts";
 import { LOGO_PADRAO_DA_BARRA } from "../src/lib/marca-da-barra-lateral.js";
 
 const app = fonteDoApp();
-const governance = readFileSync("src/modulos/configuracoes/estado.js", "utf8");
+const governance = readFileSync("src/modulos/configuracoes/estado.ts", "utf8");
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
 const lifecycle = readFileSync("src/lib/session-lifecycle.ts", "utf8");
@@ -27,7 +27,7 @@ const semComentarios = (fonte) =>
   1 — A cor da barra lateral não persistia.
 
   O botão Salvar (e o Ctrl+S) publica pelo estado de Configurações
-  (src/modulos/configuracoes/estado.js), que chama `revisar` direto — o `saveAdminSettings` do legado, que nesse fluxo
+  (src/modulos/configuracoes/estado.ts), que chama `revisar` direto — o `saveAdminSettings` do legado, que nesse fluxo
   nunca rodava, saiu. As chaves da barra lateral tinham sido acrescentadas só
   a ele: a coleta das linhas não as via, `buildChanges()` não achava
   diferença e mudar apenas a cor terminava em "Nada para publicar".

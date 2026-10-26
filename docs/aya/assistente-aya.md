@@ -61,7 +61,7 @@ O que a Aya faz, o que ela não faz e como abrir um chamado ao suporte. Fontes:
 
 **perguntas:** nao aparece o botao | o botao sumiu | cade o botao | por que nao consigo | por que o botao nao aparece | botao desabilitado
 **resposta:** Diga qual botão ou ação (por exemplo "não aparece o botão de novo recurso" ou "não consigo emitir a carta") e eu confiro no seu perfil: se você não tem a permissão, digo qual falta (por exemplo, nível Editor em Recursos) e que quem libera é o administrador de acessos da sua coordenação, em Configurações › Acessos; se você tem, digo onde o botão fica e o que conferir (área do menu, edital escolhido).
-**fonte:** src/lib/permissoes-da-aya.js; src/lib/access-roles.js
+**fonte:** src/lib/permissoes-da-aya.js; src/lib/access-roles.ts
 
 ## Perguntas sem resposta
 

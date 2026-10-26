@@ -2,14 +2,14 @@ import { readFileSync } from "node:fs";
 import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it } from "vitest";
 import { semOPainelAntigoDeAnalises } from "../src/lib/pagina-do-painel";
-import { RESOURCES } from "../src/lib/permissoes-recursos.js";
-import { paginasPermitidas, permissaoLegada } from "../src/lib/access-roles.js";
+import { RESOURCES } from "../src/lib/permissoes-recursos.ts";
+import { paginasPermitidas, permissaoLegada } from "../src/lib/access-roles.ts";
 import { bloqueioDaTela, telaPermitida } from "../src/lib/navegacao";
 import { TELAS_REACT } from "../src/app/navegacao.js";
 import {
   linhasDosPaineis,
   normalizarPaineis,
-} from "../src/lib/paineis-externos-das-configuracoes.js";
+} from "../src/lib/paineis-externos-das-configuracoes.ts";
 
 /*
   Análises curriculares deixou de ser o painel externo `analises` e virou a
@@ -54,7 +54,7 @@ describe("a lista de painéis", () => {
 
 describe("o legado trata Análises como página", () => {
   it("a permissão é só o recurso analises", () => {
-    // can(), isViewAllowed e buildNav delegam a access-roles.js.
+    // can(), isViewAllowed e buildNav delegam a access-roles.ts.
     const perfil = (analises) => ({
       role: "usuario",
       permissoes: { dashboard: "leitor", analises },
@@ -63,7 +63,7 @@ describe("o legado trata Análises como página", () => {
     expect(permissaoLegada(perfil("sem_acesso"), "analises")).toBe(false);
     expect(paginasPermitidas(perfil("leitor")).analises).toBe(true);
     expect(paginasPermitidas(perfil("sem_acesso")).analises).toBe(false);
-    // A navegação (src/lib/navegacao.ts) usa as mesmas regras de access-roles.js.
+    // A navegação (src/lib/navegacao.ts) usa as mesmas regras de access-roles.ts.
     expect(telaPermitida("analises", perfil("leitor"))).toBe(true);
     expect(bloqueioDaTela("analises", perfil("sem_acesso"))).toBe(
       "Sem permissão para o Painel das análises.",

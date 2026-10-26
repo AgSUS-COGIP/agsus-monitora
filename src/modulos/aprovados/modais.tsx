@@ -14,7 +14,7 @@ import { useRef, useState } from "react";
 import {
   canAlterarPorDecisaoJudicial,
   canManageSubJudice,
-} from "../../lib/access-roles.js";
+} from "../../lib/access-roles.ts";
 import {
   MAXIMO_DE_ANEXOS,
   formatarTamanho,

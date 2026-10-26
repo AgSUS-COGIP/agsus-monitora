@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { hasResource } from "../src/lib/permissoes-recursos.js";
+import { hasResource } from "../src/lib/permissoes-recursos.ts";
 import {
   canManageEditais,
   canChangeCandidateStatus,
   canManageAccess,
   canImportApprovedList,
-} from "../src/lib/access-roles.js";
+} from "../src/lib/access-roles.ts";
 
 describe("permissões por recurso", () => {
   it("nega módulo omitido, desconhecido e usuário desativado, inclusive admin", () => {

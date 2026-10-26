@@ -1,4 +1,4 @@
-import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.js";
+import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
 import { sessaoDoApp } from "../app/sessao.js";
 
 let initialized = false;

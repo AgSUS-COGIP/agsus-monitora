@@ -7,7 +7,7 @@ import {
   mensagemDoConvite,
   situacaoDoAcesso,
   dataHoraCurta,
-} from "../src/lib/convite-de-acesso.js";
+} from "../src/lib/convite-de-acesso.ts";
 import {
   areasDaLinha,
   explicacaoDoGrupo,
@@ -16,7 +16,7 @@ import {
   pessoasSemAreaNoRascunho,
   registrarNoRascunho,
   ALVO_GRUPO,
-} from "../src/lib/matriz-de-acessos.js";
+} from "../src/lib/matriz-de-acessos.ts";
 
 /*
   Visão simples de Acessos: situação (convite pendente / último acesso),

@@ -28,7 +28,7 @@ import type {
   atual vira um ícone (link direto), o título do bloco vira um separador, e
   Administração, um ícone só.
 
-  Por que "área" e não "módulo": em `permissoes-recursos.js` e
+  Por que "área" e não "módulo": em `permissoes-recursos.ts` e
   `permissoes-por-modulo.js`, módulo já é o nome de cada página com permissão
   própria (dashboard, nucleo, calendario…). Chamar o agrupamento do menu pelo
   mesmo nome misturaria as duas coisas.

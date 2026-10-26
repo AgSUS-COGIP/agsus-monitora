@@ -5,7 +5,7 @@ import {
   mensagemDaComemoracao,
   oQuePodeUsar,
   tipoDeComemoracao,
-} from "../lib/acesso-liberado.js";
+} from "../lib/acesso-liberado.ts";
 import {
   gravarArmazenamento as gravar,
   lerArmazenamento as ler,
@@ -15,7 +15,7 @@ import { comemorar } from "./comemoracao.js";
 /*
   "Parabéns, Ana! Seu acesso ao MONITORA foi liberado." (ou "Bem-vindo(a) de
   volta…" na reativação), com o que a pessoa pode usar agora. Regra em
-  src/lib/acesso-liberado.js; os fogos (com um visto desenhado no céu) e o
+  src/lib/acesso-liberado.ts; os fogos (com um visto desenhado no céu) e o
   aviso são os de todas as comemorações (src/modules/comemoracao.js), que
   respeitam prefers-reduced-motion. Armazenamento sempre em try/catch (janela privada,
   bloqueado): sem ele, as marcas não ficam e a regra da primeira entrada ainda

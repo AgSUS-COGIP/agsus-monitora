@@ -9,7 +9,7 @@ import {
   it,
 } from "vitest";
 import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.ts";
-import { SECOES } from "../../src/modulos/configuracoes/secoes.js";
+import { SECOES } from "../../src/modulos/configuracoes/secoes.ts";
 import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
 import {
   atualizarMenuLateral,

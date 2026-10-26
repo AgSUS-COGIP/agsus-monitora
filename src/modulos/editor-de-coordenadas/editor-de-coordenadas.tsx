@@ -23,7 +23,7 @@ import {
   correcaoDoEditor,
 } from "../../lib/respostas-do-editor-de-coordenadas.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { podeEditarCoordenadas } from "../../lib/access-roles.js";
+import { podeEditarCoordenadas } from "../../lib/access-roles.ts";
 import {
   formatarCoordenada,
   formatarDistancia,

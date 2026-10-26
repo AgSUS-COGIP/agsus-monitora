@@ -1,0 +1,45 @@
+/*
+  Apresentação das seções de Configurações, sem DOM: o tom da faixa de aviso
+  global e o endereço de imagem que pode ir para as prévias. As telas são de
+  src/modulos/configuracoes/.
+*/
+
+const txt = (valor: unknown): string => String(valor ?? "").trim();
+
+/** Tipo gravado em `broadcast_type`. */
+export type TipoDoAviso = "info" | "warning" | "danger";
+
+/** O tom, o ícone e o rótulo da faixa de aviso global. */
+export interface TomDoAviso {
+  tom: TipoDoAviso;
+  icone: string;
+  rotulo: string;
+}
+
+/** Faixa de aviso: tom do design.md 11.12 para cada tipo gravado. */
+export function tomDoAviso(tipo: unknown): TomDoAviso {
+  const tons: Record<TipoDoAviso, TomDoAviso> = {
+    info: { tom: "info", icone: "info", rotulo: "Informação" },
+    warning: { tom: "warning", icone: "triangle-alert", rotulo: "Alerta" },
+    danger: { tom: "danger", icone: "circle-alert", rotulo: "Crítico" },
+  };
+  return (tons as Partial<Record<string, TomDoAviso>>)[txt(tipo)] || tons.info;
+}
+
+/**
+ * Endereço de imagem que pode ir para um <img>: caminho do próprio site
+ * ("/assets/…") ou http(s). Qualquer outra coisa (javascript:, data:) vira "".
+ */
+export function urlDeImagem(valor: unknown): string {
+  const bruto = txt(valor);
+  if (!bruto) return "";
+  if (/^\/(?!\/)/.test(bruto)) return bruto;
+  try {
+    const url = new URL(bruto);
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? url.toString()
+      : "";
+  } catch {
+    return "";
+  }
+}

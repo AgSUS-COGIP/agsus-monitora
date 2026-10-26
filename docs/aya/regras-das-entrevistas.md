@@ -210,7 +210,7 @@ duas entradas, em `src/modulos/entrevistas/conduzir.tsx`, `src/lib/fila-de-condu
 
 **perguntas:** quem pode lancar notas | quem pode conduzir entrevistas | nao aparece o botao convocar | nao consigo lancar nota | botoes sumiram em entrevistas | permissao entrevistas | nao vejo conduzir entrevistas no menu
 **resposta:** O Painel de entrevistas e Conduzir entrevistas usam o mesmo recurso, Entrevistas: quem tem Leitor vê os dois (a fila, as fichas, o Preparar e os roteiros, sem os botões). Lançar notas, convocar, desconvocar, salvar a configuração do edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital (recorte da coordenação). No modo "Cada avaliador lança a sua", cada avaliador só edita a própria coluna. "Convocar selecionados" só aparece quando a Classificação já gerou a lista de convocação do edital, e liberar edital fora da janela é só do administrador global.
-**fonte:** src/modulos/entrevistas/conduzir.tsx; src/lib/access-roles.js; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql
+**fonte:** src/modulos/entrevistas/conduzir.tsx; src/lib/access-roles.ts; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql
 **abrir:** config:acessos
 
 ## Nome da versão do roteiro de entrevista

@@ -1,12 +1,12 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.jsx";
-import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.js";
-import { normalizarValoresCarregados } from "../../src/lib/publicacao-de-configuracoes.js";
+import { montarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.tsx";
+import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.ts";
+import { normalizarValoresCarregados } from "../../src/lib/publicacao-de-configuracoes.ts";
 import {
   abrirSecaoDeConfiguracao,
   organizarConfiguracoesEmSecoes,
-} from "../../src/modulos/configuracoes/secoes.js";
+} from "../../src/modulos/configuracoes/secoes.ts";
 import { clicar, digitar, esperar, teclar } from "../componentes/interacoes.js";
 
 /*

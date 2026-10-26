@@ -2,7 +2,7 @@
   Configurações (src/modulos/configuracoes/), só com tokens de
   src/styles/tokens.css — o tema escuro vem dos próprios tokens.
 
-    Moldura        seções de secoes.js, cabeçalho da seção aberta, barra fixa
+    Moldura        seções de secoes.ts, cabeçalho da seção aberta, barra fixa
     Seções         grupos, prévias, imagens e galerias, contraste, painéis
     Publicação     diálogos de revisar e restaurar, histórico (Operação)
 
@@ -13,7 +13,7 @@
 
 /* ── Moldura: a grade antiga e as seções ─────────────────────────────── */
 
-/* Só até secoes.js distribuir os blocos; depois a grade fica escondida. */
+/* Só até secoes.ts distribuir os blocos; depois a grade fica escondida. */
 .admin-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -162,7 +162,7 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--state-danger) 12%, transparent) !important;
 }
 
-/* ── Barra fixa de salvar (configuracoes.jsx, <BarraDeSalvar>) ────────── */
+/* ── Barra fixa de salvar (configuracoes.tsx, <BarraDeSalvar>) ────────── */
 /*
   O texto mora em .config-barra__texto: a regra de `span` dele não alcança o
   ícone, que é um tile centralizado.

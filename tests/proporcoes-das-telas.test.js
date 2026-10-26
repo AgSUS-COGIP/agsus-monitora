@@ -102,14 +102,14 @@ describe("Acessos: nomes longos com reticências", () => {
   });
 
   it("o nome inteiro fica no title", () => {
-    const usuarios = ler("src/modulos/acessos/aba-usuarios.jsx");
+    const usuarios = ler("src/modulos/acessos/aba-usuarios.tsx");
     expect(usuarios).toContain(
       "titulo={`Abrir o acesso de ${usuario.nome || usuario.email}`}",
     );
     expect(usuarios).toContain(
       "title={nomeDaCoordenacao || coordenacao || undefined}",
     );
-    expect(ler("src/modulos/acessos/contas-desativadas.jsx")).toContain(
+    expect(ler("src/modulos/acessos/contas-desativadas.tsx")).toContain(
       "<strong title={conta.nome || conta.email}>",
     );
   });
@@ -138,7 +138,7 @@ describe("Aparência: cartões da galeria", () => {
 
 describe("Operação: botão Restaurar do histórico", () => {
   it("leva a classe que o põe na linha de baixo, na largura toda, no celular", () => {
-    expect(ler("src/modulos/configuracoes/configuracoes.jsx")).toContain(
+    expect(ler("src/modulos/configuracoes/configuracoes.tsx")).toContain(
       'className="btn secondary config-history-restore"',
     );
     const css = ler("src/modulos/configuracoes/configuracoes.css");
