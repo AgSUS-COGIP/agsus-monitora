@@ -85,14 +85,14 @@ describe("o legado trata Análises como página", () => {
 
   it("os painéis carregados perdem o antigo de análises", () => {
     const paineis = ler("src/app/paineis-externos.ts");
-    expect(
-      paineis.slice(paineis.indexOf("async function carregar(")),
-    ).toContain("semOPainelAntigoDeAnalises(data)");
+    expect(paineis.slice(paineis.indexOf("async function carregar("))).toMatch(
+      /semOPainelAntigoDeAnalises(<[^>]*>)?\(data\)/,
+    );
   });
 
   it("o caminho do painel externo não tem mais caso de área", () => {
     const fonte = ler("src/app/paineis-externos.ts");
-    const painel = fonte.slice(fonte.indexOf("function mostrar(codigo)"));
+    const painel = fonte.slice(fonte.indexOf("function mostrar(codigo"));
     expect(painel).not.toMatch(/area/i);
     expect(legado).not.toContain("recarregarPainelNaAreaAtual");
   });

@@ -319,7 +319,7 @@ describe("skeleton do painel externo", () => {
 
   it("o app liga o skeleton ao criar o iframe do painel", () => {
     const paineis = readFileSync("src/app/paineis-externos.ts", "utf8");
-    const inicio = paineis.indexOf("function montarQuadro(holder, painel)");
+    const inicio = paineis.indexOf("function montarQuadro(holder");
     const corpo = paineis.slice(
       inicio,
       paineis.indexOf("function mostrar(", inicio),

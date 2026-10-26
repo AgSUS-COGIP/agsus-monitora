@@ -10,7 +10,7 @@ function arquivos(pasta) {
   return readdirSync(pasta, { withFileTypes: true }).flatMap((item) => {
     const caminho = join(pasta, item.name);
     if (item.isDirectory()) return arquivos(caminho);
-    return /\.(js|jsx)$/.test(item.name) ? [caminho] : [];
+    return /\.(js|jsx|ts|tsx)$/.test(item.name) ? [caminho] : [];
   });
 }
 

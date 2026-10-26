@@ -15,8 +15,8 @@ describe("platform shell invariants", () => {
   it("mantém painéis no shell sem redirecionamento de página", () => {
     const paineis = readFileSync("src/app/paineis-externos.ts", "utf8");
     const openPanel = paineis.slice(
-      paineis.indexOf("function mostrar(codigo)"),
-      paineis.indexOf("function descartar(codigo)"),
+      paineis.indexOf("function mostrar(codigo"),
+      paineis.indexOf("function descartar(codigo"),
     );
     expect(openPanel).not.toContain("window.location.assign");
     expect(openPanel).not.toContain('classList.add("external-clean")');
