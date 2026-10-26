@@ -348,30 +348,15 @@ reset role;
 set local role authenticated;
 do $$
 declare
-  c_gestor constant text := '{"sub":"00000000-0000-4000-a000-00000000e501","role":"authenticated","email":"ensaio.p2p.gestor@ensaio.invalid"}';
-  c_juridico constant text := '{"sub":"00000000-0000-4000-a000-00000000e503","role":"authenticated","email":"ensaio.p2p.juridico@ensaio.invalid"}';
   c_admin constant text := '{"sub":"00000000-0000-4000-a000-00000000e505","role":"authenticated","email":"ensaio.p2p.admin@ensaio.invalid"}';
-  v json;
 begin
-  -- Gestor (Seleção editor, área do edital) lê os candidatos da vaga; jurídico (leitor) não.
-  perform set_config('request.jwt.claims', c_gestor, true);
-  v := public.obter_candidatos_empregare('9990900');
-  if json_array_length(v -> 'candidatos') <> 8 or json_array_length(v -> 'colunas') <> 3 then
-    raise exception 'FALHOU E2: obter_candidatos_empregare %', v;
-  end if;
-  perform set_config('request.jwt.claims', c_juridico, true);
-  begin
-    perform public.obter_candidatos_empregare('9990900');
-    raise exception 'FALHOU E2: jurídico leu os candidatos da Empregare';
-  exception when insufficient_privilege then null;
-  end;
   perform set_config('request.jwt.claims', c_admin, true);
   if not exists (select 1 from json_array_elements(public.get_saude_das_cargas() -> 'empregare') x
                   where (x ->> 'inicio')::timestamptz = now() and x ->> 'situacao' = 'CONCLUIDA'
                     and (x ->> 'linhas')::integer = 8) then
     raise exception 'FALHOU E2: a execução do robô não aparece no Status das atualizações';
   end if;
-  raise notice 'ok E2.3: gestor lê os 8 candidatos da vaga; jurídico barrado (42501); admin vê a execução no Status das atualizações';
+  raise notice 'ok E2.3: admin vê a execução do robô no Status das atualizações';
 end;
 $$;
 reset role;

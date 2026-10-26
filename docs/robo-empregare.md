@@ -76,8 +76,9 @@ execuções seguintes.
   Seleção; vaga pedida fora das duas fica sem edital (só o administrador global vê).
 - **Mudanças**: cada linha guarda o hash das colunas; a data de atualização só muda quando alguma
   coluna muda.
-- Quem lê (RPC `obter_candidatos_empregare`): Seleção ≥ editor, com a área e o recorte do edital;
-  vaga sem edital, só o administrador global.
+- Leitura direta: não há RPC que devolva os candidatos de uma vaga. A antiga
+  `obter_candidatos_empregare` não tinha chamador e saiu na migration
+  `20261026120000_remove_funcoes_sem_chamador.sql`.
 
 ### Links para a ficha (migration `20261007160000_link_do_candidato_na_empregare.sql`)
 
