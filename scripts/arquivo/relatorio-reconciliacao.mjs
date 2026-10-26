@@ -8,7 +8,7 @@ import {
   nomeCanonico,
   reconciliarDsei,
   tipoDeclarado,
-} from "../../src/lib/reconciliacao-unidades.js";
+} from "../../src/lib/reconciliacao-unidades.ts";
 
 /*
   RELATÓRIO DA RECONCILIAÇÃO — SOMENTE LEITURA.

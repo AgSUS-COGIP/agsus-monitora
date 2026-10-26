@@ -35,7 +35,7 @@ def _falso_no_js(valor) -> bool:
 
 
 def _eh_treinamento(edital: dict) -> bool:
-    """ehEditalDeTreinamento (src/lib/edital-de-treinamento.js)."""
+    """ehEditalDeTreinamento (src/lib/edital-de-treinamento.ts)."""
     if edital.get("treinamento") is True:
         return True
     marca = edital.get("ST_TREINAMENTO", edital.get("st_treinamento"))

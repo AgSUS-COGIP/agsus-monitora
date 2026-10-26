@@ -1,11 +1,11 @@
 import {
   ROTULO_DO_TREINAMENTO,
   ehEditalDeTreinamento,
-} from "../lib/edital-de-treinamento.js";
+} from "../lib/edital-de-treinamento.ts";
 import { Selo } from "../ui/index.ts";
 
 /*
-  O selo "Treinamento" do edital de treinamento (src/lib/edital-de-treinamento.js):
+  O selo "Treinamento" do edital de treinamento (src/lib/edital-de-treinamento.ts):
   no seletor e no topo das telas operacionais e na tabela de Editais. Edital
   real: nada.
 */

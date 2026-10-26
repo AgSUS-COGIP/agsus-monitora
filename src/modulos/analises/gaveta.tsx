@@ -9,8 +9,8 @@ import {
   tomDoStatus,
 } from "../../lib/analises-curriculares.ts";
 import { espelhoDoDetalhe } from "../../lib/espelho-do-painel-de-analises.ts";
-import { mesclarDetalhe } from "../../lib/lista-do-painel-de-analises.js";
-import { linhaSemParecer } from "../../lib/textos-do-painel-de-analises.js";
+import { mesclarDetalhe } from "../../lib/lista-do-painel-de-analises.ts";
+import { linhaSemParecer } from "../../lib/textos-do-painel-de-analises.ts";
 import { Gaveta, GradeDeKv, Kv, Secao, Selo } from "../../ui/index.ts";
 import { EspelhoNaGaveta } from "./espelho-na-gaveta.tsx";
 

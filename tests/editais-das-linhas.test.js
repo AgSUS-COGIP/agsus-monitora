@@ -3,7 +3,7 @@ import {
   chaveDoEdital,
   editaisDasLinhas,
   editalEstaAtivo,
-} from "../src/lib/editais-das-linhas.js";
+} from "../src/lib/editais-das-linhas.ts";
 
 describe("situação do edital vinda da view ou da planilha", () => {
   /*

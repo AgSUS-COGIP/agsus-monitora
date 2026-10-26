@@ -1,7 +1,7 @@
 import {
   ehEditalDeTreinamento,
   ROTULO_DO_TREINAMENTO,
-} from "../../lib/edital-de-treinamento.js";
+} from "../../lib/edital-de-treinamento.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import { Selo } from "../../ui/index.ts";

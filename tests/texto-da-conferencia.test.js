@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   quandoFoi,
   textoDaConferencia,
-} from "../src/lib/texto-da-conferencia.js";
+} from "../src/lib/texto-da-conferencia.ts";
 
 /* A hora no topo das telas de carga: conferência (a carga rodou) e mudança (o dado mudou). */
 const agora = new Date("2026-10-05T12:55:00Z"); // 09:55 em Brasília

@@ -5,7 +5,7 @@
   edital do app; "Mostrar todos os editais da área" traz todos. O edital já
   escolhido continua na lista mesmo se não for vigente.
 */
-import { ehEditalEncerrado } from "../indicadores-do-monitoramento.js";
+import { ehEditalEncerrado } from "../indicadores-do-monitoramento.ts";
 
 /** O mínimo de um edital da lista que o seletor confere (id e ativo). */
 export interface EditalDaEscolha {

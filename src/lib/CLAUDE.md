@@ -18,12 +18,12 @@ Arquivos que exigem cuidado:
 - `publicacao-de-configuracoes.ts` — publicação de Configurações sem DOM: chaves de cada seção (legado e
   React), comparação com o retrato do banco, validação de URL e domínio.
 - `sanitize.ts`, `html-security.ts`, `csv-security.ts` — fronteira de segurança. Não afrouxar.
-- `reconciliacao-unidades.js`, `uf-ibge.js`, `brasil-bounds.ts` — referência geográfica usada pelos
+- `reconciliacao-unidades.ts`, `uf-ibge.ts`, `brasil-bounds.ts` — referência geográfica usada pelos
   scripts de auditoria (as coordenadas do mapa vêm só do banco).
 - `fabrica-do-leaflet.ts` — único lugar que cria mapa Leaflet (as guardas preservam o namespace `L`).
 - `filtros-do-mapa.ts` — regra dos filtros da página do mapa: comparação sem acento, opções sem
   duplicata, poda até estabilizar. A Visão geral guarda o estado e delega para cá.
-- `planilhas.js` — **catálogo de todas as planilhas** (modelo de aprovados, bucket da lista importada,
+- `planilhas.ts` — **catálogo de todas as planilhas** (modelo de aprovados, bucket da lista importada,
   link da origem das análises, planilha de Lotações). Planilha nova entra aqui, com `usadaEm`.
 - `contraste.ts` — cálculo de contraste usado pelo aviso de branding; reutilize em vez de reescrever.
 - `menu-lateral.ts` — **catálogo dos grupos do menu lateral** (as áreas do usuário — Saúde
@@ -31,10 +31,10 @@ Arquivos que exigem cuidado:
   `BLOCOS_DA_AREA`/`blocoDaAba`), árvore por permissão e por área, página ativa
   (considera a área atual), áreas abertas por padrão e estado do painel flutuante. Área ou página nova entra aqui; o desenho é de `src/componentes/barra-lateral/`.
 - `eventos-da-barra-lateral.ts` — nomes dos eventos entre o legado e a barra lateral (React).
-- `editais-do-nucleo.js` — a página Editais sem DOM: ordem da fila (risco, vagas ociosas), tons de
+- `editais-do-nucleo.ts` — a página Editais sem DOM: ordem da fila (risco, vagas ociosas), tons de
   status e risco (também usados pelo mapa), unidades do formulário (catálogo + as que só existem nos
   editais, USI × CORES), rascunho e payload do edital, índice do resumo e filtro dos indicadores.
-- `cronograma-do-edital.js` — cronograma do edital: estado calculado pelas datas, validação antes de
+- `cronograma-do-edital.ts` — cronograma do edital: estado calculado pelas datas, validação antes de
   salvar (erros e avisos), modelo padrão, datas coladas em lote e situação na linha do tempo.
 - `anexos-do-candidato.ts` — anexos PDF do candidato aprovado (o PDF fica no banco, em bytea): base64 de ida e volta, limites (2 MB, 5 por
   candidato), validação antes do envio e agrupamento por candidato. O banco repete os limites.

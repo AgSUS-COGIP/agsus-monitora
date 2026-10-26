@@ -91,7 +91,7 @@ com a conta em `monitora.avaliacao_documental`).
   `PARCIAL`, `FALHOU`), quem disparou e o endereço da execução; a execução esquecida não segura a
   próxima. Entra no **Status das atualizações** (`get_saude_das_cargas` + `src/lib/saude-das-cargas.ts`).
 - **Rodar agora:** o workflow aceita `workflow_dispatch` com `modo` e `disparado_por`; o robô entra
-  na lista fixa `ROBOS_DE_CARGA` de `src/lib/robos-de-carga.js` (id = id da linha do Status) e
+  na lista fixa `ROBOS_DE_CARGA` de `src/lib/robos-de-carga.ts` (id = id da linha do Status) e
   nas listas fixas de `disparar_robo` e `FC_DISPARAR_ROBO` (o banco pede ao GitHub com a chave do
   Vault; `docs/agenda-dos-robos.md`).
   Inputs vão por variável de ambiente, nunca interpolados no shell.
@@ -119,7 +119,7 @@ leem: o vitest (`tests/*.test.js`) e o pytest (`tests/python/test_*.py`). Exempl
    se tiver agenda, o workflow entra na lista fixa de `FC_DISPARAR_ROBO` e ganha uma tarefa
    `agsus_robo_*` no pg_cron ([agenda-dos-robos.md](agenda-dos-robos.md)) — `concurrency`, `timeout-minutes`, secrets por `env`. Cabeçalho dizendo que o log é
    público.
-4. Robô em `ROBOS_DE_CARGA` (`src/lib/robos-de-carga.js`) e a linha em `src/lib/saude-das-cargas.ts`.
+4. Robô em `ROBOS_DE_CARGA` (`src/lib/robos-de-carga.ts`) e a linha em `src/lib/saude-das-cargas.ts`.
 5. `tests/python/test_<job>.py`; verbete da Aya em `docs/aya/`; guia de operação em `docs/`.
 
 ## Como criar uma função `api/*.py` nova
@@ -477,8 +477,8 @@ tarefas deixava todo o resto lento.
 2. **Sincronizações das Entrevistas e da Seleção em Python** (hoje `scripts/sincronizar-*.mjs`).
    Mesmas RPCs de gravação; leitura da planilha pela conta de serviço do Google (JWT RS256 —
    precisa de `google-auth` ou `cryptography` no `requirements.txt` do job, a base `monitora` é só
-   biblioteca padrão); as regras de `src/lib/entrevistas-da-planilha.js` e
-   `src/lib/selecao-da-planilha.js` portadas com casos dourados compartilhados. Não alivia o banco
+   biblioteca padrão); as regras de `src/lib/entrevistas-da-planilha.ts` e
+   `src/lib/selecao-da-planilha.ts` portadas com casos dourados compartilhados. Não alivia o banco
    (o custo é das RPCs), mas junta as cargas no mesmo lugar dos outros jobs. Junto: a carga das
    Entrevistas passar a gravar só a linha que mudou (hoje regrava as ~3.400 linhas e o `CO_SYNC` a
    cada hora, o que remonta o pacote e gera WAL). Estimativa: 3–4 dias; risco baixo.

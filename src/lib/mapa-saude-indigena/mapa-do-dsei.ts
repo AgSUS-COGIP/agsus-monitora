@@ -33,12 +33,12 @@ import type {
 import {
   reconciliarDsei,
   unirEstabelecimentosRepetidos,
-} from "../reconciliacao-unidades.js";
+} from "../reconciliacao-unidades.ts";
 import {
   VINCULO_EXTERNO,
   VINCULO_INDETERMINADO,
   classificarVinculoTerritorial,
-} from "../uf-ibge.js";
+} from "../uf-ibge.ts";
 import { formatarNumero, temCoordenada, texto } from "./chaves.ts";
 import { TIPO_CASAI, TIPO_POLO, TIPO_SEDE, tipoDaUnidade } from "./formas.ts";
 

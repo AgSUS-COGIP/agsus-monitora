@@ -43,13 +43,13 @@ import {
   dataLocal,
   etapaConcluida,
   normalizarTexto,
-} from "./etapas-de-edital.js";
+} from "./etapas-de-edital.ts";
 import {
   editaisComDatasARevisar,
   etapaComDatasValidas,
   proximaDataDaEtapa,
   proximasEtapas as etapasNaOrdemDaProximaData,
-} from "./datas-do-cronograma.js";
+} from "./datas-do-cronograma.ts";
 
 export { editaisComDatasARevisar };
 

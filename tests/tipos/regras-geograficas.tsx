@@ -20,7 +20,7 @@ import type { CoordenadasDoMapa } from "../../src/lib/tipos-do-mapa.ts";
 import {
   reconciliarDsei,
   unirEstabelecimentosRepetidos,
-} from "../../src/lib/reconciliacao-unidades.js";
+} from "../../src/lib/reconciliacao-unidades.ts";
 import { TIPO_POLO } from "../../src/lib/mapa-saude-indigena/formas.ts";
 
 const dsei: DseiDoMapa = {

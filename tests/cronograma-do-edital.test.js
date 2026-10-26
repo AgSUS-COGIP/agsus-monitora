@@ -8,7 +8,7 @@ import {
   lerLinhaDeDatas,
   novaEtapa,
   situacaoNaLinhaDoTempo,
-} from "../src/lib/cronograma-do-edital.js";
+} from "../src/lib/cronograma-do-edital.ts";
 
 const etapa = (atividade, data_inicio, data_fim = data_inicio, ordem = 1) =>
   novaEtapa({ atividade, data_inicio, data_fim }, ordem);

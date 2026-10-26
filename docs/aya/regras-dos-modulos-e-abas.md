@@ -2,7 +2,7 @@
 
 Configurações › Módulos e abas: ativar, desativar e pôr em manutenção o sistema, as áreas, as abas
 e os painéis; selo BETA; comemorações. Fontes: `src/modulos/modulos/modulos.tsx`,
-`src/lib/situacao-dos-modulos.js`, `src/lib/modulos-e-abas.ts`, `src/lib/access-roles.ts` e a
+`src/lib/situacao-dos-modulos.ts`, `src/lib/modulos-e-abas.ts`, `src/lib/access-roles.ts` e a
 migration `20260930140000_modulos_e_manutencao.sql`.
 
 ## Seção Módulos e abas
@@ -16,7 +16,7 @@ migration `20260930140000_modulos_e_manutencao.sql`.
 
 **perguntas:** o que acontece quando uma aba fica em manutencao | aba em manutencao | sistema em manutencao | em manutencao | tela de manutencao | como por uma aba em manutencao
 **resposta:** Em manutenção, a aba (ou a área, ou o sistema inteiro) continua no menu com o aviso, mas quem não é administrador global vê a tela de manutenção com a mensagem e a previsão configuradas; o administrador global entra normalmente, com a faixa "Em manutenção para os demais usuários". Vale a mensagem do nível mais alto: sistema, depois área, depois aba em todas as áreas, depois aba naquela área. O sistema inteiro não se desativa, só entra ou sai de manutenção. Se a situação não puder ser lida do banco, tudo vale como ativo.
-**fonte:** src/lib/situacao-dos-modulos.js; supabase/migrations/20260930140000_modulos_e_manutencao.sql
+**fonte:** src/lib/situacao-dos-modulos.ts; supabase/migrations/20260930140000_modulos_e_manutencao.sql
 
 ## Área ou aba desativada
 

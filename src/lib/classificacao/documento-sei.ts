@@ -84,11 +84,11 @@ import {
 } from "./colunas-do-documento.ts";
 import { escalar, formatarNota, lerData, ordinal } from "./numeros.ts";
 import { documentoDaRegra, normalizarRegra } from "./regra.ts";
-import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.js";
+import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.ts";
 import {
   MARCA_SEM_VALOR_OFICIAL,
   ehEditalDeTreinamento,
-} from "../edital-de-treinamento.js";
+} from "../edital-de-treinamento.ts";
 
 export { CABECALHO_PADRAO };
 export const LOCAL_PADRAO = "Brasília";

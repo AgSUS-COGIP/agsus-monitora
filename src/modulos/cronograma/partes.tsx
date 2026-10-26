@@ -4,7 +4,7 @@ import type {
   EtapaDoCalendario,
   MarcoDaEtapa,
 } from "./tipos.ts";
-import { dataLocal, situacaoDaEtapa } from "../../lib/etapas-de-edital.js";
+import { dataLocal, situacaoDaEtapa } from "../../lib/etapas-de-edital.ts";
 import {
   DIAS_SEMANA,
   dataExibidaNasProximas,

@@ -28,7 +28,7 @@ import {
 import {
   AREA_SAUDE_INDIGENA,
   ehEditalDaSaudeIndigena,
-} from "../lib/responsavel-do-edital.js";
+} from "../lib/responsavel-do-edital.ts";
 
 /*
   Guardada na aba (sessionStorage): recarregar a página volta à mesma área,

@@ -10,7 +10,7 @@ import {
   reconciliarDsei,
   tipoDeclarado,
   tiposCompativeis,
-} from "../src/lib/reconciliacao-unidades.js";
+} from "../src/lib/reconciliacao-unidades.ts";
 
 const polo = (nome, lat, lon, extra = {}) => ({
   nome,

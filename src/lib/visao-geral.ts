@@ -26,7 +26,7 @@ import type {
   resto mora aqui.
 
   Cada linha ganha, antes do recorte (`enriquecerLinhas`), a fase calculada
-  (`fases-do-processo.js`), os motivos de atenção (`criticos-da-visao-geral.js`)
+  (`fases-do-processo.ts`), os motivos de atenção (`criticos-da-visao-geral.ts`)
   e as pendências pós-resultado. O recorte: cinco filtros de escolha múltipla
   (Unidade, Edital, Status, Fase, UF; comparação sem acento nem caixa,
   `filtros-do-mapa.ts`), a busca livre, o DSEI aberto no mapa e um atalho
@@ -34,21 +34,21 @@ import type {
   exportação partem do mesmo recorte.
 */
 
-import { hojeEmBrasilia } from "./cronograma-do-edital.js";
+import { hojeEmBrasilia } from "./cronograma-do-edital.ts";
 import {
   diaDoCalendario,
   gravidade,
   LIMITES_DO_CRITICO,
   motivosDeAtencao,
-} from "./criticos-da-visao-geral.js";
+} from "./criticos-da-visao-geral.ts";
 import { sanitizeCsvCell } from "./csv-security";
-import { tomDoStatusDoEdital } from "./editais-do-nucleo.js";
+import { tomDoStatusDoEdital } from "./editais-do-nucleo.ts";
 import {
   faseDoEdital,
   FASES,
   ORDEM_DAS_FASES,
   tomDaFase,
-} from "./fases-do-processo.js";
+} from "./fases-do-processo.ts";
 import {
   linhaAtende,
   opcoesDoCampo,
@@ -62,7 +62,7 @@ import {
   indicadoresDoMonitoramento,
   temResultado,
   vagasSemContratacao,
-} from "./indicadores-do-monitoramento.js";
+} from "./indicadores-do-monitoramento.ts";
 
 const txt = (valor: unknown) =>
   typeof valor === "string" || typeof valor === "number"

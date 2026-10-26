@@ -9,7 +9,7 @@ import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   editalEscolhido,
   sufixoDeTreinamento,
-} from "../../lib/edital-de-treinamento.js";
+} from "../../lib/edital-de-treinamento.ts";
 import {
   PAPEIS_DA_EQUIPE,
   rotuloDe,
@@ -18,7 +18,7 @@ import {
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.ts";
-import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
+import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import {
   coordenaOEdital,

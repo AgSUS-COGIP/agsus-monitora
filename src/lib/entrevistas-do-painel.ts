@@ -26,7 +26,7 @@ import type {
   GrupoDosSemEntrevista,
 } from "../modulos/entrevistas/tipos-do-painel.ts";
 import type { ItemDaAgenda } from "./painel-de-entrevistas.ts";
-import { quandoFoi } from "./texto-da-conferencia.js";
+import { quandoFoi } from "./texto-da-conferencia.ts";
 
 function registro(valor: unknown): Record<string, unknown> {
   return typeof valor === "object" && valor !== null && !Array.isArray(valor)

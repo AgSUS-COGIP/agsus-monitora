@@ -7,7 +7,7 @@ import {
   municipioUfDaLinha,
   municipioUfDaVaga,
   parecerDoDetalhe,
-} from "../src/lib/textos-do-painel-de-analises.js";
+} from "../src/lib/textos-do-painel-de-analises.ts";
 
 describe("município/UF da vaga", () => {
   it("lê o município e a UF da UBS móvel", () => {

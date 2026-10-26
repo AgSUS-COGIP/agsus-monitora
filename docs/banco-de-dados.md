@@ -472,7 +472,7 @@ das funções igual ao de antes).
 - No navegador, o payload fica no IndexedDB (banco `agsus-monitora-analises`,
   por usuário, área e escopo, amarrado à publicação e ao `schema_version`):
   o painel abre com a cópia e revalida por trás (`analises-consolidated-transport.js`,
-  regras em `src/lib/cache-do-painel-de-analises.js`). O MONITORA apaga esse
+  regras em `src/lib/cache-do-painel-de-analises.ts`). O MONITORA apaga esse
   banco ao sair pelo botão, em "Limpar sessão", com acesso revogado e quando
   outro usuário entra. O cache antigo do `localStorage`
   (`agsus_analises_cache_*`) é apagado ao abrir o painel.
@@ -574,7 +574,7 @@ desconhecida caía na Saúde Indígena e sumia da tela de quem o criou.
 - **Área de uma unidade** (`private."FC_AREA_DA_UNIDADE"`): `TA_UNIDADE_AREA`;
   senão unidade do catálogo `TD_UNIDADE` (DSEI/CASAI) → `saude-indigena`; senão
   desconhecida. O front usa a mesma ordem (`mapaDeAreasDasUnidades`, em
-  `src/lib/editais-do-nucleo.js`), lendo `listar_unidades_por_area()`.
+  `src/lib/editais-do-nucleo.ts`), lendo `listar_unidades_por_area()`.
 - **`salvar_monitoramento_com_cronograma_v2`** — mesma assinatura; a área
   pretendida vai em `p_payload.co_area` (o formulário manda a área do menu no
   edital novo e a do próprio edital ao editar). Com ela: a área tem de existir
@@ -970,7 +970,7 @@ Migration `20261007230000_edital_de_treinamento.sql` (ensaio e rollback com o me
   `private."FC_EH_TREINAMENTO"(marca)`, `private."FC_EDITAL_EH_TREINAMENTO"(id)` e
   `private."FC_ANALISE_EH_TREINAMENTO"(origem_planilha)` (as análises fictícias têm
   `origem_planilha = treinamento`; a análise não tem o id do edital). No front:
-  `src/lib/edital-de-treinamento.js` (`ehEditalDeTreinamento`, `semTreinamento`).
+  `src/lib/edital-de-treinamento.ts` (`ehEditalDeTreinamento`, `semTreinamento`).
 - **Fica fora de:** `VW_MONITORAMENTO_INDIGENA_KPIS`/`_POR_EDITAL`/`_POR_UNIDADE`,
   `listar_acompanhamento_da_visao_geral`, `VW_ANALISES_DASHBOARD_BASE_TODOS` (painel das análises,
   `TA_PAINEL_ANALISE`, `obter_marcos_da_area`, `get_analises_dashboard_payload_v2`),

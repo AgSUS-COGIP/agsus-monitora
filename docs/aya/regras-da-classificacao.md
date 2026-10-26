@@ -169,7 +169,7 @@ dos PDFs oficiais).
 
 **perguntas:** docx da classificacao | word da lista de classificacao | papel timbrado da classificacao | baixar docx
 **resposta:** "Baixar DOCX" gera o mesmo documento em Word para anexar ou ajustar: no cabeçalho, o logo da AgSUS e o nome, endereço e site da agência (Configurações › Marca › Documentos oficiais); no corpo, o título, os itens numerados com o recuo do SEI, as tabelas por vaga e a linha final "Brasília, <data por extenso>."; no rodapé, o nome do documento, o processo SEI e o número da página. Não tem bloco de assinatura: quem assina é o SEI.
-**fonte:** src/lib/classificacao/documento-docx.ts; src/lib/cabecalho-dos-documentos.js
+**fonte:** src/lib/classificacao/documento-docx.ts; src/lib/cabecalho-dos-documentos.ts
 **abrir:** classificacao
 
 ## Listas por etapa

@@ -21,7 +21,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { guardaDeAlteracoes } from "../../app/guarda-de-alteracoes.ts";
-import { rotuloDaAreaDoPainel } from "../../lib/area-do-painel-de-analises.js";
+import { rotuloDaAreaDoPainel } from "../../lib/area-do-painel-de-analises.ts";
 import {
   dadosDoRoteiroParaSalvar,
   errosDoRoteiro,

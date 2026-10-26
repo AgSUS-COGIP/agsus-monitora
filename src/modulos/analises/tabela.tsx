@@ -1,5 +1,5 @@
 import type { LinhaDaAnalise } from "./tipos.ts";
-import { mensagemDeAreaSemAnalises } from "../../lib/area-do-painel-de-analises.js";
+import { mensagemDeAreaSemAnalises } from "../../lib/area-do-painel-de-analises.ts";
 import {
   filtrarPelaBuscaDaFila,
   tomDoStatus,

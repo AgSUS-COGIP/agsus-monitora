@@ -7,7 +7,7 @@ import {
   linhaSemDetalhe,
   mesclarDetalhe,
   partesDoEscopo,
-} from "../src/lib/lista-do-painel-de-analises.js";
+} from "../src/lib/lista-do-painel-de-analises.ts";
 
 /*
   A lista enxuta do painel de análises (20260929150000): o que sai da linha

@@ -410,7 +410,7 @@ Duas cautelas registadas para quem continuar:
 - **Não usar geometria para decidir UF.** Já medido neste projeto em
   09/09/2026: o ray casting no `UF_GEO` diverge do CNES em 20 unidades e aponta
   12 como fora do DSEI, das quais 9 são falso positivo perto de fronteira. Quem
-  decide UF administrativa é o CNES — ver [`src/lib/uf-ibge.js`](../src/lib/uf-ibge.js).
+  decide UF administrativa é o CNES — ver [`src/lib/uf-ibge.ts`](../src/lib/uf-ibge.ts).
 - **Coordenada igual à sede do município continua a não ser afirmável sem a
   base de sedes do IBGE.** O auditor passou a ter um indício bem mais forte do
   que as casas decimais — várias unidades no mesmo ponto, todas do mesmo
@@ -443,7 +443,7 @@ nada.
 
 ### O que a reconciliação junta, e o que recusa
 
-O módulo é [`src/lib/reconciliacao-unidades.js`](../src/lib/reconciliacao-unidades.js).
+O módulo é [`src/lib/reconciliacao-unidades.ts`](../src/lib/reconciliacao-unidades.ts).
 Junta quando há, ao mesmo tempo: **mesmo DSEI**, **nome canónico igual por
 inteiro** e **tipo compatível**. Recusa-se a:
 

@@ -80,7 +80,7 @@ import {
   (documento-docx.js); PDF = impressão da página "Como fica no SEI". O
   cabeçalho da agência vem de Configurações › Marca (`documento_cabecalho`).
 */
-import { MIME_DOCX } from "../../lib/documento-da-resposta.js";
+import { MIME_DOCX } from "../../lib/documento-da-resposta.ts";
 import {
   gerarXlsx,
   gerarXlsxDaLista,
@@ -112,7 +112,7 @@ import {
   textoParaSei,
 } from "../../lib/classificacao/documento-sei.ts";
 import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.ts";
-import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.js";
+import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.ts";
 import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.ts";
 import {
   copiarParaAreaDeTransferencia,

@@ -4,8 +4,8 @@ import {
   normalizarNomeDaUnidade,
   opcoesDeUnidade,
   unidadesDaArea,
-} from "./editais-do-nucleo.js";
-import { normalizarResponsavel } from "./responsavel-do-edital.js";
+} from "./editais-do-nucleo.ts";
+import { normalizarResponsavel } from "./responsavel-do-edital.ts";
 import type {
   CoordenacaoDeAcesso,
   CoordenacaoParaSalvar,

@@ -13,7 +13,7 @@ import {
   validarModelo,
 } from "../../../lib/carta-de-convocacao.ts";
 import { opcoesDeEdital } from "../../../lib/lista-aprovados-rules.ts";
-import { formatarDataHora } from "../../../lib/cronograma-do-edital.js";
+import { formatarDataHora } from "../../../lib/cronograma-do-edital.ts";
 import {
   Aviso,
   BlocosEsqueleto,

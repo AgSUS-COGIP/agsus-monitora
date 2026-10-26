@@ -5,7 +5,7 @@ import {
   normalizarResponsavel,
   UNIDADES_CORES,
   unidadesDoResponsavel,
-} from "../src/lib/responsavel-do-edital.js";
+} from "../src/lib/responsavel-do-edital.ts";
 
 const catalogo = [
   {

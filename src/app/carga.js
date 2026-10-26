@@ -1,5 +1,5 @@
 import { getSupabaseClient } from "../lib/supabaseClient";
-import { ordenarUnidades } from "../lib/editais-do-nucleo.js";
+import { ordenarUnidades } from "../lib/editais-do-nucleo.ts";
 import { erroAmigavel } from "../lib/erro-amigavel";
 import {
   canImportApprovedList,

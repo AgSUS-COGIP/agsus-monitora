@@ -11,7 +11,7 @@ import type {
   RetanguloDoEditor,
   SugestaoDoEditor,
 } from "./tipos-do-editor-de-coordenadas.ts";
-import { distanciaKm } from "./reconciliacao-unidades.js";
+import { distanciaKm } from "./reconciliacao-unidades.ts";
 
 /*
   O EDITOR DE COORDENADAS DOS MAPAS — regras comuns, sem DOM

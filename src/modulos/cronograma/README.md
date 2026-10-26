@@ -13,8 +13,8 @@ ignorar o cache. A área vem do app e recorta os editais já carregados.
 | `cronograma.css`         | Estilos próprios do módulo                                            |
 
 As regras puras estão em `src/lib/calendario-editais.ts`. Classificação de etapas e
-plausibilidade das datas continuam nos helpers compartilhados `etapas-de-edital.js`
-e `datas-do-cronograma.js`; estes mantêm suas regras existentes.
+plausibilidade das datas continuam nos helpers compartilhados `etapas-de-edital.ts`
+e `datas-do-cronograma.ts`; estes mantêm suas regras existentes.
 
 ## Carregamento
 

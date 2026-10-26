@@ -9,7 +9,7 @@ import {
   criarCacheDoPainel,
   payloadMudou,
   revalidarPayload,
-} from "../src/lib/cache-do-painel-de-analises.js";
+} from "../src/lib/cache-do-painel-de-analises.ts";
 import {
   apagarCacheDePayload,
   armazenamentoDePayload,

@@ -17,7 +17,7 @@ import {
   estadoDoBotao,
   OPCOES_DOS_ROBOS,
   roboDeCarga,
-} from "../../lib/robos-de-carga.js";
+} from "../../lib/robos-de-carga.ts";
 import {
   dataHora,
   marcaDasConferencias,
@@ -52,7 +52,7 @@ import { RodarComOpcoes } from "./rodar-com-opcoes.tsx";
   "Rodar agora": o botão chama a RPC disparar_robo (o banco pede o workflow ao
   GitHub com a chave do Vault, 20261008140000) e acompanha por
   situacao_do_disparo_robo; fica desabilitado enquanto a carga roda
-  (src/lib/robos-de-carga.js).
+  (src/lib/robos-de-carga.ts).
 
   Robô da Empregare, Pré-classificação e Conferências têm também "Opções"
   (rodar-com-opcoes.tsx: editais, códigos de vaga, modo, limite e prévia).

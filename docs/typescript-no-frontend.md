@@ -12,7 +12,7 @@ estado, cartão, selos, gaveta, busca e paginação dos casos, CSV, ação de ig
 navegação e regras em `src/lib/avisos-de-conferencia.ts`. Status das atualizações inclui
 saúde das cargas, agenda, histórico, acompanhamento, formulário de opções, estado e regras em
 `src/lib/saude-das-cargas.ts` e `src/lib/painel-dos-robos.ts`. A validação das opções em
-`src/lib/robos-de-carga.js` continua compartilhada com a Avaliação documental, com contratos JSDoc.
+`src/lib/robos-de-carga.ts` (TypeScript) continua compartilhada com a Avaliação documental.
 Em Entrevistas, as peças novas do Painel e de Conduzir (`agenda-e-empates.tsx`, `conduzir.tsx`,
 `fila-do-dia.tsx`, as peças da ficha de notas — cabeçalho, abas, matriz, célula, resultado —, o resumo das
 regras e as competências de cada membro da banca (`resumo-das-regras.tsx`, `competencias-do-membro.tsx`), o seletor do
@@ -86,6 +86,18 @@ só o mínimo que usa (por exemplo `MapaDaDica`, `DicaDoLeaflet`). A migração 
 gerado: a saída do esbuild (sem espaços, sintaxe minificada) de cada arquivo é idêntica à do
 original. `scripts/arquivo/auditar-coordenadas.mjs` e `scripts/gerar-icones-lucide.mjs` importam o `.ts`
 direto no Node, que remove os tipos.
+
+Editais (`src/modulos/editais/`: estado, resumo, Núcleo, painel operacional, modal do edital,
+editor do cronograma, importação de anexos e linha do tempo) está todo em TypeScript, assim como as
+regras que ele e as análises usam em `src/lib/`: editais do Núcleo e das linhas, cronograma do
+edital, etapas e datas do cronograma, responsável, edital de treinamento, anexos do edital e do
+recurso, rascunho, documento da resposta, cabeçalho dos documentos, área, cache, lista e textos do
+Painel das análises, data de análise, atalhos de filtro, críticos da Visão geral, fases do processo,
+indicadores do monitoramento, modalidades de concorrência, situação dos módulos, texto da
+conferência, planilhas, entrevistas e seleção da planilha, robôs de carga, reconciliação de
+unidades e `uf-ibge.ts`. Os scripts de sincronização e de coordenadas em `scripts/` importam
+algumas dessas regras direto no Node 24 (remoção de tipos), por isso elas usam só sintaxe
+apagável e imports relativos com extensão.
 
 ## Verificação
 

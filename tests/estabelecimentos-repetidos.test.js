@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   LIMIAR_MESMO_ESTABELECIMENTO_KM,
   unirEstabelecimentosRepetidos,
-} from "../src/lib/reconciliacao-unidades.js";
+} from "../src/lib/reconciliacao-unidades.ts";
 
 /*
   O painel do DSEI listava o POLO BASE JAPIIM duas vezes. São dois registos no

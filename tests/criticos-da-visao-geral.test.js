@@ -6,7 +6,7 @@ import {
   motivosDeAtencao,
   temEtapaEmCurso,
   ultimaMudancaDeEtapa,
-} from "../src/lib/criticos-da-visao-geral.js";
+} from "../src/lib/criticos-da-visao-geral.ts";
 
 /*
   O crítico calculado da Visão geral: cada motivo isolado, com os casos da

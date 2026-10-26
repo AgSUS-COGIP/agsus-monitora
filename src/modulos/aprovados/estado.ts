@@ -110,7 +110,7 @@ import {
   modeloParaSalvar,
   somaDasReservas,
 } from "../../lib/configuracao-de-convocacao.ts";
-import { PLANILHAS } from "../../lib/planilhas.js";
+import { PLANILHAS } from "../../lib/planilhas.ts";
 import { motivoValido } from "../../lib/publicacao-de-aprovados.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { criarEstadoDaCarta } from "./carta-de-convocacao/estado.ts";

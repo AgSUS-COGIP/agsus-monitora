@@ -152,7 +152,7 @@ vai para o container (`docker run --env-file .env.local`).
   (`workflow_dispatch`); os horários ficam no banco (pg_cron), ver `docs/agenda-dos-robos.md`.
 - `scripts/sincronizar-entrevistas.mjs` e `scripts/sincronizar-selecao.mjs`: as cargas;
   `scripts/carga-de-planilha.mjs`: o que as duas têm em comum (credencial, leitura da aba, RPC).
-- `src/lib/entrevistas-da-planilha.js` e `src/lib/selecao-da-planilha.js`: como cada aba vira
+- `src/lib/entrevistas-da-planilha.ts` e `src/lib/selecao-da-planilha.ts`: como cada aba vira
   linhas (testes em `tests/entrevistas-da-planilha.test.js` e `tests/selecao-da-planilha.test.js`).
-- `src/lib/planilhas.js` (`entrevistados`, `auditoriaDaSelecao`): ID da planilha e nome da aba.
+- `src/lib/planilhas.ts` (`entrevistados`, `auditoriaDaSelecao`): ID da planilha e nome da aba.
 - `supabase/migrations/20261001090000_selecao.sql`: tabelas e regras da Seleção.

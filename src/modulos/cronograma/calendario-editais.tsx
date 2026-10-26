@@ -33,7 +33,7 @@ import {
   somarMeses,
   unidadesDasEtapas,
 } from "../../lib/calendario-editais.ts";
-import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
+import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
 import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {

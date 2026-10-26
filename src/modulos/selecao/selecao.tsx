@@ -22,7 +22,7 @@ import {
 } from "../../lib/selecao-do-painel.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { Aviso } from "../../ui/index.ts";
-import { textoDaConferencia } from "../../lib/texto-da-conferencia.js";
+import { textoDaConferencia } from "../../lib/texto-da-conferencia.ts";
 import { criarEstadoDaSelecao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import {
   ativosDoRecorte,

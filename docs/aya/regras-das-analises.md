@@ -1,7 +1,7 @@
 # Regras do Painel das análises
 
 A tela Painel das análises (view `analises`, antes chamada Análises curriculares) e a sincronização das planilhas de análise. Fontes:
-`src/modulos/analises/`, `src/lib/analises-curriculares.ts`, `src/lib/data-de-analise.js`,
+`src/modulos/analises/`, `src/lib/analises-curriculares.ts`, `src/lib/data-de-analise.ts`,
 `apps-script/LEIA-ME.md` e as migrations `20260929150000_analises_lista_enxuta.sql`,
 `20260930100000_analises_sem_registro_fantasma.sql`, `20261001140000_incremental_remove_ausentes.sql`
 e `20260930234000_cache_sem_atropelo.sql`.
@@ -30,7 +30,7 @@ e `20260930234000_cache_sem_atropelo.sql`.
 
 **perguntas:** quais sao as pendencias das analises curriculares | pendencias das analises | data no futuro | data fora do periodo | sem responsavel | validacao da janela
 **resposta:** Nas Análises curriculares, as pendências prioritárias aparecem da mais grave para a menos grave (até 8): Data no futuro, Data fora do período e Sem responsável; depois Pendentes, Em revisão e Etapa sem data. Cada uma tem um atalho que aplica o filtro. A data da análise é comparada com a janela do edital: Dentro do período, Fora do período, Sem data de análise, Sem janela configurada ou Data no futuro (data depois de hoje, um dado a corrigir na planilha). No gráfico de evolução diária, os dias com análise fora do período ou no futuro ficam em vermelho.
-**fonte:** src/lib/analises-curriculares.ts; src/lib/data-de-analise.js
+**fonte:** src/lib/analises-curriculares.ts; src/lib/data-de-analise.ts
 
 ## Atualização das análises
 
@@ -42,7 +42,7 @@ e `20260930234000_cache_sem_atropelo.sql`.
 
 **perguntas:** conferido as | o que e conferido as | o que quer dizer conferido | ultima mudanca | hora no topo da tela | atualizado em | a tela parece parada | dados parados | por que a hora nao muda
 **resposta:** No topo de Análises curriculares, Seleção e Entrevistas, "Conferido às 09:32" é a última vez que a carga conferiu os dados (horário de Brasília; se foi em outro dia, aparece a data, como "em 04/10, 13:05"). Nas Análises curriculares, vem junto "última mudança em …": quando os dados mudaram de fato. Se a carga rodou e a planilha não tinha nada novo, o "Conferido" avança e a última mudança fica — os dados não estão parados. Sem registro de conferência, aparece "Atualizado em …". Se suspeitar de carga atrasada ou com falha, o administrador global confere em Configurações › Status das atualizações.
-**fonte:** src/lib/texto-da-conferencia.js; src/modulos/analises/analises.tsx; src/modulos/selecao/selecao.tsx; src/modulos/entrevistas/entrevistas.tsx
+**fonte:** src/lib/texto-da-conferencia.ts; src/modulos/analises/analises.tsx; src/modulos/selecao/selecao.tsx; src/modulos/entrevistas/entrevistas.tsx
 
 ## Quem vê as Análises curriculares
 

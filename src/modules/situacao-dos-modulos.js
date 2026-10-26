@@ -3,7 +3,7 @@
   (`obter_situacao_do_sistema`), a tela "Em manutenção" e a faixa do
   administrador global.
 
-  Quem decide o que vale é `src/lib/situacao-dos-modulos.js` (sem DOM). O
+  Quem decide o que vale é `src/lib/situacao-dos-modulos.ts` (sem DOM). O
   app (src/app/carga.js e src/app/navegacao.js) só:
     - dispara a consulta junto com as outras da entrada
       (`consultaDaSituacaoDoSistema`) e aplica a resposta
@@ -30,7 +30,7 @@ import {
   SITUACAO_PADRAO,
   textoDaFaixaDoAdministrador,
   textosDaManutencao,
-} from "../lib/situacao-dos-modulos.js";
+} from "../lib/situacao-dos-modulos.ts";
 import { TEXTOS_DA_PAGINA_DESLIGADA } from "../lib/pagina-desligada.ts";
 import { criarIcone } from "./icones.js";
 

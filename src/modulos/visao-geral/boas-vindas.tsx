@@ -20,7 +20,7 @@ import {
   mensagemDoMarcoDoAno,
   proximoEstadoDoMarco,
 } from "../../lib/comemoracao.ts";
-import { semTreinamento } from "../../lib/edital-de-treinamento.js";
+import { semTreinamento } from "../../lib/edital-de-treinamento.ts";
 import { nomeDaArea } from "../../lib/menu-lateral.ts";
 import { comemorar } from "../../modules/comemoracao.js";
 import { lerMarcosDaArea } from "./marcos.ts";

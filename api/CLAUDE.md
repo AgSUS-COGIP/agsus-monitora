@@ -9,7 +9,7 @@ o endpoint de IA e o bridge local foram retirados.
 - `funai-wms.js` — proxy do WMS da FUNAI (camada `Funai:tis_poligonais`).
 - `anexos-do-edital.py` — Python (pdfplumber, `requirements.txt` na raiz): lê o PDF de anexos do
   edital e devolve cronograma (Anexo I) e quadro de vagas (Anexo II) em JSON. Só usuário logado
-  (Bearer conferido em `/auth/v1/user`); não grava nada. Quem usa: `src/lib/anexos-do-edital.js`.
+  (Bearer conferido em `/auth/v1/user`); não grava nada. Quem usa: `src/lib/anexos-do-edital.ts`.
 
 Regras:
 - Os dois proxies validam a origem com `src/lib/origem-da-requisicao.js` (`origemDeTerceiro`).

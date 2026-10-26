@@ -11,7 +11,7 @@ import {
 } from "../src/lib/painel-dos-robos.ts";
 import { criarEstadoDaSaude } from "../src/componentes/saude-das-cargas/estado.ts";
 
-import { situacaoDoPedido } from "../src/lib/robos-de-carga.js";
+import { situacaoDoPedido } from "../src/lib/robos-de-carga.ts";
 
 describe("fronteiras do Status das atualizações", () => {
   it("mantém o acompanhamento quando o histórico ainda não existe", () => {

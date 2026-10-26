@@ -11,7 +11,7 @@ import {
   anoDaSelecao,
   anosDosEditais,
   editaisDoAno,
-} from "../../lib/atalhos-de-filtro.js";
+} from "../../lib/atalhos-de-filtro.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import {
   CAMPOS_DO_FILTRO,

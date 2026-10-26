@@ -2664,7 +2664,7 @@ export const VERBETES_AYA = Object.freeze([
       '"Baixar DOCX" gera o mesmo documento em Word para anexar ou ajustar: no cabeçalho, o logo da AgSUS e o nome, endereço e site da agência (Configurações › Marca › Documentos oficiais); no corpo, o título, os itens numerados com o recuo do SEI, as tabelas por vaga e a linha final "Brasília, <data por extenso>."; no rodapé, o nome do documento, o processo SEI e o número da página. Não tem bloco de assinatura: quem assina é o SEI.',
     fato: "",
     fonte:
-      "src/lib/classificacao/documento-docx.ts; src/lib/cabecalho-dos-documentos.js",
+      "src/lib/classificacao/documento-docx.ts; src/lib/cabecalho-dos-documentos.ts",
     abrir: "classificacao",
   },
   {
@@ -3464,7 +3464,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "Na Visão geral, os sete indicadores contam os editais do recorte e fecham entre si: Vagas imediatas = Contratadas + Em seleção + Ociosas. Vagas imediatas é a soma das vagas do cadastro do edital. Contratadas são as contratações de cada edital limitadas às vagas imediatas dele (o que passa disso é Cadastro reserva, mostrado à parte). Em seleção são as vagas ainda sem contratação dos editais sem resultado (em andamento, planejados ou sem cronograma). Ociosas são as vagas sem contratação dos editais com resultado (concluídos ou na fase Contratação). Editais cancelados não entram em nenhum indicador, nem em Inscritos. Críticos conta os editais com algum motivo de atenção e Inscritos soma os inscritos. Os rótulos podem ser trocados em Configurações › Página inicial.",
     fato: "Na Visão geral, Vagas imediatas = Contratadas (contratações limitadas às vagas de cada edital) + Em seleção (editais sem resultado) + Ociosas (editais concluídos ou na fase Contratação); contratações além das vagas são Cadastro reserva; cancelados não entram.",
-    fonte: "src/lib/indicadores-do-monitoramento.js",
+    fonte: "src/lib/indicadores-do-monitoramento.ts",
   },
   {
     arquivo: "regras-da-visao-geral.md",
@@ -3483,7 +3483,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'Na Visão geral, "crítico" é calculado (o risco preenchido no edital não entra). Um edital aberto é crítico quando: o fim do cronograma já passou e o edital não concluiu ("Etapa atrasada há N dias"); está em andamento, sem etapa em curso e sem mudança de etapa (início ou fim de uma etapa do cronograma) há 15 dias ou mais ("Parado há N dias"); ou está em andamento, já depois das inscrições, com 0 inscritos ("Sem inscritos"). Um edital concluído é crítico quando as contratadas ficam abaixo de 50% das vagas imediatas ("Contratação abaixo de 50%"). Cancelado nunca é crítico. Etapa chegando (próxima em até 3 dias) é agenda, não problema: não faz o edital crítico — aparece nas boas-vindas ("N editais têm etapa nos próximos 7 dias") e em vermelho na coluna de cronograma da tabela. O KPI Críticos, os detalhes do processo e a ordem da tabela usam os mesmos motivos; clicar em Críticos filtra a página pelos críticos e clicar de novo tira.',
     fato: "Crítico na Visão geral: cronograma vencido sem concluir, parado há 15 dias ou mais, em andamento sem inscritos depois das inscrições, ou concluído com menos de 50% das vagas imediatas contratadas.",
-    fonte: "src/lib/criticos-da-visao-geral.js",
+    fonte: "src/lib/criticos-da-visao-geral.ts",
   },
   {
     arquivo: "regras-da-visao-geral.md",
@@ -3545,7 +3545,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'A fase do edital na Visão geral vem primeiro do status (cancelado é Cancelado, concluído é Concluído, planejado é Edital) e, nos demais, do texto da atividade do cronograma (a de hoje, ou a etapa mostrada), sem acento nem caixa: contratação, admissão ou posse é Contratação; prazo ou abertura de recurso é Recursos; resultado final ou homologação do resultado é Resultado; outro recurso é Recursos; entrevista é Entrevistas; análise curricular, documental, títulos, prova ou resultado preliminar é Análise curricular; inscrição é Inscrições; outro resultado é Resultado; edital, impugnação ou publicação é Edital. "Aguardando: X" conta como a fase de X; texto que nenhuma regra reconhece fica em Outra e "Cronograma pendente" em Sem cronograma.',
     fato: "",
-    fonte: "src/lib/fases-do-processo.js",
+    fonte: "src/lib/fases-do-processo.ts",
   },
   {
     arquivo: "regras-da-visao-geral.md",
@@ -3579,7 +3579,7 @@ export const VERBETES_AYA = Object.freeze([
       "Os números de cada edital (inscritos, aptos, cancelados, eliminados, reprovados e aprovados na análise, entrevistados e contratados) são recalculados pelo banco no fim de cada carga da Seleção e, de novo, às 10h de Brasília. Valem para todo edital ativo que tem a fonte, com ou sem vaga na Seleção: as vagas da planilha Auditoria ligadas ao edital somadas, a lista de aprovados vigente do edital (Contratado ou Migração), as entrevistas do edital com parecer e as análises com status Aprovado do mesmo número de edital (ou do mesmo nome, para editais sem número, quando o nome é único na área). Sem a fonte, o valor anterior fica. As Vagas e o cronograma continuam vindo do cadastro do edital, em Editais. A Visão geral soma esses números dos editais do recorte.",
     fato: "Os KPIs dos editais na Visão geral são recalculados pelo banco no fim de cada carga da Seleção e às 10h de Brasília, para todo edital ativo que tem a fonte (Seleção, lista de aprovados vigente, entrevistas, análises); sem a fonte, o valor anterior fica; as vagas vêm do cadastro do edital.",
     fonte:
-      "supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; src/lib/indicadores-do-monitoramento.js",
+      "supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; src/lib/indicadores-do-monitoramento.ts",
   },
   {
     arquivo: "regras-da-visao-geral.md",
@@ -3595,7 +3595,7 @@ export const VERBETES_AYA = Object.freeze([
       "Os números de cada edital são recalculados pelo banco no fim de cada carga da Seleção e, de novo, às 10h; entre uma carga e outra, a lista de aprovados pode já ter mudado. Contratadas ficam limitadas às vagas imediatas de cada edital (o excedente vai para Cadastro reserva), editais cancelados não entram em nenhum indicador e as Vagas vêm do cadastro do edital, em Editais. Confira também a área atual, os filtros (guardados no navegador) e a busca, que valem para a página toda.",
     fato: "",
     fonte:
-      "src/lib/indicadores-do-monitoramento.js; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql",
+      "src/lib/indicadores-do-monitoramento.ts; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql",
     abrir: "dashboard",
   },
   {
@@ -3685,7 +3685,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "Nas Análises curriculares, as pendências prioritárias aparecem da mais grave para a menos grave (até 8): Data no futuro, Data fora do período e Sem responsável; depois Pendentes, Em revisão e Etapa sem data. Cada uma tem um atalho que aplica o filtro. A data da análise é comparada com a janela do edital: Dentro do período, Fora do período, Sem data de análise, Sem janela configurada ou Data no futuro (data depois de hoje, um dado a corrigir na planilha). No gráfico de evolução diária, os dias com análise fora do período ou no futuro ficam em vermelho.",
     fato: "",
-    fonte: "src/lib/analises-curriculares.ts; src/lib/data-de-analise.js",
+    fonte: "src/lib/analises-curriculares.ts; src/lib/data-de-analise.ts",
   },
   {
     arquivo: "regras-das-analises.md",
@@ -3721,7 +3721,7 @@ export const VERBETES_AYA = Object.freeze([
       'No topo de Análises curriculares, Seleção e Entrevistas, "Conferido às 09:32" é a última vez que a carga conferiu os dados (horário de Brasília; se foi em outro dia, aparece a data, como "em 04/10, 13:05"). Nas Análises curriculares, vem junto "última mudança em …": quando os dados mudaram de fato. Se a carga rodou e a planilha não tinha nada novo, o "Conferido" avança e a última mudança fica — os dados não estão parados. Sem registro de conferência, aparece "Atualizado em …". Se suspeitar de carga atrasada ou com falha, o administrador global confere em Configurações › Status das atualizações.',
     fato: "",
     fonte:
-      "src/lib/texto-da-conferencia.js; src/modulos/analises/analises.tsx; src/modulos/selecao/selecao.tsx; src/modulos/entrevistas/entrevistas.tsx",
+      "src/lib/texto-da-conferencia.ts; src/modulos/analises/analises.tsx; src/modulos/selecao/selecao.tsx; src/modulos/entrevistas/entrevistas.tsx",
   },
   {
     arquivo: "regras-das-analises.md",
@@ -5014,7 +5014,7 @@ export const VERBETES_AYA = Object.freeze([
       'O Cronograma mostra, num calendário, as etapas dos cronogramas cadastrados em Editais, só da área atual. A tela é só de leitura e se atualiza quando um cronograma é salvo. O mês mostra quantas etapas de cada tipo há em cada dia (uma etapa conta no dia em que começa e no dia em que termina), e há filtros por unidade, edital, tipo de etapa e busca. O tipo é deduzido do texto da atividade: Impugnação, Recursos, Resultado final, Resultado, Convocação para entrevista, Entrevistas, Inscrições, Análise curricular ou Outros. Etapas com ano impossível ficam fora de "Próximas etapas" e aparecem listadas para correção.',
     fato: "",
     fonte:
-      "src/modulos/cronograma/calendario-editais.tsx; src/lib/calendario-editais.ts; src/lib/etapas-de-edital.js; src/lib/datas-do-cronograma.js",
+      "src/modulos/cronograma/calendario-editais.tsx; src/lib/calendario-editais.ts; src/lib/etapas-de-edital.ts; src/lib/datas-do-cronograma.ts",
     abrir: "calendario",
   },
   {
@@ -5031,7 +5031,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "As etapas se alteram no formulário do edital, na tela Editais, por quem tem nível Editor em Editais ou em Cronograma. O Cronograma em si só mostra as datas salvas, e vê a aba quem tem pelo menos Leitor em Cronograma. Em edital já cadastrado, a alteração pede um motivo, que vai para o histórico do edital.",
     fato: "",
-    fonte: "src/lib/access-roles.ts; src/modulos/editais/modal-do-edital.jsx",
+    fonte: "src/lib/access-roles.ts; src/modulos/editais/modal-do-edital.tsx",
     abrir: "nucleo",
   },
   {
@@ -5064,7 +5064,7 @@ export const VERBETES_AYA = Object.freeze([
       'O Cronograma só mostra etapas já salvas no cronograma de cada edital, em Editais, e só da área atual: edital sem cronograma não aparece. "Ocultar concluídas" começa ligada, então as etapas que já terminaram ficam escondidas até você desligá-la ou clicar em "Limpar tudo". Etapa com ano impossível sai de "Próximas etapas" e aparece na lista para correção. Confira também a busca e os filtros de unidade, edital e tipo de etapa.',
     fato: "",
     fonte:
-      "src/modulos/cronograma/calendario-editais.tsx; src/lib/calendario-editais.ts; src/lib/datas-do-cronograma.js",
+      "src/modulos/cronograma/calendario-editais.tsx; src/lib/calendario-editais.ts; src/lib/datas-do-cronograma.ts",
     abrir: "calendario",
   },
   {
@@ -5397,7 +5397,7 @@ export const VERBETES_AYA = Object.freeze([
       "Ctrl+K (ou Cmd+K) abre a busca global, com usuário conectado. Ela procura em edital, unidade, etapa, status, UF, risco, ciclo, responsável e observações e mostra até 12 resultados. Escolher um resultado limpa os filtros, filtra a unidade e o edital, abre o painel e destaca a linha na tabela; sem permissão, aparece um aviso. Quem não é administrador global só encontra editais das suas áreas.",
     fato: "",
     fonte:
-      "src/lib/busca-global.ts; src/componentes/busca-global/busca-global.tsx; src/lib/responsavel-do-edital.js",
+      "src/lib/busca-global.ts; src/componentes/busca-global/busca-global.tsx; src/lib/responsavel-do-edital.ts",
   },
   {
     arquivo: "regras-do-sistema.md",
@@ -5494,7 +5494,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Status das atualizações, o administrador global vê o botão "Rodar agora" nas linhas Robô da Empregare, Conferências de consistência, Pré-classificação (Avaliação documental), Seleção e Entrevistas. Na pré-classificação, o Rodar agora recalcula todos os editais ativos com vagas da Empregare; a coordenação de um edital usa o Recalcular da aba Pré-classificação. O clique pede ao banco, que pede ao GitHub Actions (com a mesma chave da Agenda dos robôs) a execução do workflow daquela carga, em modo normal, e registra quem pediu; funciona também fora do site publicado; para escolher editais, vagas, modo ou limite, use "Opções". O botão fica desabilitado enquanto a carga roda (pelo registro do banco) e por 3 minutos depois do pedido; em segundos a linha diz se o GitHub aceitou. A nova execução entra na lista em alguns minutos; o robô da Empregare pode levar mais de meia hora.',
     fato: "",
     fonte:
-      "src/lib/robos-de-carga.js; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; docs/robo-empregare.md",
+      "src/lib/robos-de-carga.ts; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; docs/robo-empregare.md",
     abrir: "config:cargas",
   },
   {
@@ -5524,7 +5524,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Status das atualizações, o administrador global tem o botão "Opções" nas linhas Robô da Empregare, Pré-classificação e Conferências de consistência. Ele abre uma gaveta para rodar com escolhas: editais (com busca e filtro por área; aparecem só os vigentes, e "Mostrar todos" traz os encerrados e cancelados), códigos de vaga da Empregare (cole a lista separada por vírgula, espaço ou linha; só dígitos — o que tiver letra é recusado; ao escolher o edital aparecem as vagas conhecidas dele com o cargo, e "Adicionar todas" põe todas), modo e limite de vagas (de 1 a 500; padrão 60). No robô da Empregare, os modos são: Normal (exporta, baixa e grava), Seco (só lista as vagas que exportaria, sem entrar na Empregare), Fumaça (só testa o login) e Forçar (grava mesmo se o arquivo vier com menos da metade dos candidatos). Na pré-classificação: Normal, Seco (calcula sem gravar) e Refazer lote (recorta o lote do zero, só com todas as fichas do edital intocadas). Nas conferências: Normal e Seco. Com códigos de vaga, o robô roda só os códigos; o edital escolhido serve para as sugestões. Antes de confirmar, "Vai rodar" mostra a prévia, como "5 vagas do 93/2026: 179698, 180231…", e avisa quando o limite corta (ficam as vagas nunca carregadas ou carregadas há mais tempo). Depois do pedido, a linha acompanha: "Pedido enviado. Aguardando o GitHub", depois "Rodando" e o resultado por vaga (gravada, candidatos no arquivo, ativos e quantos com link da Empregare), com o link da execução no GitHub. O modo seco e o fumaça não gravam no banco: o resultado fica no resumo da execução no GitHub. Em "Detalhes", o robô da Empregare e a pré-classificação mostram as 8 últimas execuções com quem pediu, os parâmetros usados e o resultado. A coordenação de um edital continua usando o Recalcular da aba Pré-classificação.',
     fato: "",
     fonte:
-      "src/lib/robos-de-carga.js; src/lib/painel-dos-robos.ts; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; supabase/migrations/20261007190000_painel_dos_robos.sql; docs/robo-empregare.md",
+      "src/lib/robos-de-carga.ts; src/lib/painel-dos-robos.ts; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; supabase/migrations/20261007190000_painel_dos_robos.sql; docs/robo-empregare.md",
     abrir: "config:cargas",
   },
   {
@@ -5621,7 +5621,7 @@ export const VERBETES_AYA = Object.freeze([
       'Veja as últimas execuções da linha e a mensagem da que falhou. Uma carga recusada (planilha com menos da metade das linhas, ou vaga da Empregare com menos da metade dos candidatos) não mudou nada: os dados de antes continuam na tela. Em Seleção, Entrevistas e no robô da Empregare, depois de corrigir a causa, o administrador global pode usar "Rodar agora"; as análises não têm esse botão, porque o envio sai do Apps Script de cada planilha. Atrasada quer dizer que a última execução que deu certo passou do prazo da carga.',
     fato: "",
     fonte:
-      "src/lib/saude-das-cargas.ts; src/lib/robos-de-carga.js; docs/sincronizacao-das-planilhas.md",
+      "src/lib/saude-das-cargas.ts; src/lib/robos-de-carga.ts; docs/sincronizacao-das-planilhas.md",
     abrir: "config:cargas",
   },
   {
@@ -5824,7 +5824,7 @@ export const VERBETES_AYA = Object.freeze([
       'Confira, nesta ordem: a pessoa entrou com a conta Google do e-mail convidado (o link sozinho não dá acesso e outra conta não serve); o e-mail é de um domínio permitido (Configurações › Tela de acesso); e o cadastro está ativo — conta desativada vê "Seu acesso ao MONITORA foi desativado." e pode pedir reativação. Quem entra sem convite vê a tela de pedido de acesso, que vai para Acessos › Usuários › Pendentes. Se o Login Google estiver Inativo, o botão some da tela de entrada; com o sistema inteiro em manutenção, quem não é administrador global vê a tela de manutenção.',
     fato: "",
     fonte:
-      "src/lib/convite-de-acesso.ts; src/lib/solicitacao-de-acesso.ts; supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/lib/situacao-dos-modulos.js",
+      "src/lib/convite-de-acesso.ts; src/lib/solicitacao-de-acesso.ts; supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/lib/situacao-dos-modulos.ts",
     abrir: "config:acessos",
   },
   {
@@ -5842,7 +5842,7 @@ export const VERBETES_AYA = Object.freeze([
       "Em Editais ficam os editais da área atual: a tabela, os alertas de cronograma e o formulário de cada edital, com cronograma, status, anexos em PDF, quadro de vagas e histórico. Os indicadores do painel (Total de editais, Editais ativos, Editais inativos, Em andamento, Sem cronograma, Incompletos, Próximos 7 dias e Excepcionais) filtram a fila ao clicar; clicar de novo no mesmo indicador tira o filtro. Cadastra e edita quem tem nível Editor em Editais ou em Cronograma.",
     fato: "",
     fonte:
-      "src/modulos/editais/; src/lib/editais-do-nucleo.js; src/lib/access-roles.ts",
+      "src/modulos/editais/; src/lib/editais-do-nucleo.ts; src/lib/access-roles.ts",
     abrir: "nucleo",
   },
   {
@@ -5862,7 +5862,7 @@ export const VERBETES_AYA = Object.freeze([
       "Em Editais, edital inativo é o que teve o processo encerrado: status Concluído ou Cancelado — o mesmo sentido do Inativo da Situação do processo nas Análises curriculares. Os demais (Planejado, Em andamento, Suspenso, Paralisado ou sem status) são ativos. Total de editais é a soma dos dois, só da área atual. Clicar em Editais ativos ou Editais inativos mostra só esses na tabela, com o chip Situação; clicar de novo, ou no x do chip, volta a mostrar todos. Edital desligado no banco não aparece na tela.",
     fato: "",
     fonte:
-      "src/lib/editais-do-nucleo.js; src/modulos/editais/painel-operacional.jsx; docs/historias-de-usuario/editais.md",
+      "src/lib/editais-do-nucleo.ts; src/modulos/editais/painel-operacional.tsx; docs/historias-de-usuario/editais.md",
     abrir: "nucleo",
   },
   {
@@ -5879,7 +5879,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'Com o cálculo automático ligado, o status e a etapa do edital saem das datas do cronograma: antes da primeira etapa, "Planejado" e "Aguardando: …"; durante, "Em andamento" e o nome da etapa atual; depois da última, "Concluído". Sem etapas válidas (ou com o automático desligado), aparece "Cronograma pendente". Ao salvar, vale o calculado; o status excepcional (Suspenso, Cancelado ou Paralisado) é a única forma de contrariar o cálculo, e pede motivo e data da decisão.',
     fato: "",
-    fonte: "src/lib/cronograma-do-edital.js; src/lib/editais-do-nucleo.js",
+    fonte: "src/lib/cronograma-do-edital.ts; src/lib/editais-do-nucleo.ts",
   },
   {
     arquivo: "regras-dos-editais.md",
@@ -5894,7 +5894,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "Status excepcional (Suspenso, Cancelado ou Paralisado) é para quando o cronograma não reflete a situação real do edital. Ele passa por cima do status calculado, exige motivo e data da decisão, e o motivo vai para o histórico do edital.",
     fato: "",
-    fonte: "src/lib/cronograma-do-edital.js",
+    fonte: "src/lib/cronograma-do-edital.ts",
   },
   {
     arquivo: "regras-dos-editais.md",
@@ -5909,7 +5909,7 @@ export const VERBETES_AYA = Object.freeze([
       'O cronograma não salva com etapa sem atividade ou sem datas, data final antes da inicial, ano fora de 2015 a 2100 ou atividade repetida. Só geram aviso: data fora do ano do edital, falta de etapa de resultado final e etapas sobrepostas. Em edital já cadastrado, mexer no cronograma pede o motivo da alteração, que vai para o histórico; edital novo não pede justificativa (o histórico registra "Cadastro do edital").',
     fato: "",
     fonte:
-      "src/lib/cronograma-do-edital.js; src/modulos/editais/modal-do-edital.jsx; supabase/migrations/20260928120000_edital_novo_sem_motivo.sql",
+      "src/lib/cronograma-do-edital.ts; src/modulos/editais/modal-do-edital.tsx; supabase/migrations/20260928120000_edital_novo_sem_motivo.sql",
   },
   {
     arquivo: "regras-dos-editais.md",
@@ -5924,7 +5924,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       '"Copiar cronograma" lista os outros editais que já têm etapas e copia só atividades, datas e observações. O preenchimento em lote aceita uma data ou intervalo por linha, na ordem das atividades do modelo padrão (12 etapas, que precisa ser criado antes), nos formatos 17/06/2026, 18/06/2026 a 20/06/2026 ou 18 a 20/06/2026.',
     fato: "",
-    fonte: "src/lib/editais-do-nucleo.js; src/lib/cronograma-do-edital.js",
+    fonte: "src/lib/editais-do-nucleo.ts; src/lib/cronograma-do-edital.ts",
   },
   {
     arquivo: "regras-dos-editais.md",
@@ -5942,7 +5942,7 @@ export const VERBETES_AYA = Object.freeze([
       'No formulário do edital, os anexos em PDF (só PDF, até 4 MB, pode escolher mais de um quando cada anexo vem separado) são lidos no servidor sem gravar nada: o Anexo I vira as etapas do cronograma e o Anexo II, o quadro de vagas (em Projetos o quadro vem no Anexo I, sem modalidades). "Usar no cronograma" troca as etapas (pede confirmação se já houver). "Salvar quadro de vagas" grava na hora em edital já cadastrado (confirma antes de substituir o atual); em edital novo, o quadro vai junto no salvar do edital. As datas do PDF vêm sem ano: o ano começa no do edital e avança quando a data volta de dezembro para janeiro.',
     fato: "",
     fonte:
-      "src/modulos/editais/importar-anexos.jsx; api/anexos-do-edital.py; src/lib/anexos-do-edital.js",
+      "src/modulos/editais/importar-anexos.tsx; api/anexos-do-edital.py; src/lib/anexos-do-edital.ts",
     abrir: "nucleo",
   },
   {
@@ -5989,7 +5989,7 @@ export const VERBETES_AYA = Object.freeze([
       "Só o administrador global move um edital para outra área, com motivo obrigatório e confirmação; o banco confere de novo e registra a mudança no histórico. O edital leva junto a lista de aprovados, o cronograma e a convocação. O botão só fica ativo depois de salvar ou descartar as alterações do formulário. Edital novo nasce na área do menu, e unidade de outra área é recusada.",
     fato: "",
     fonte:
-      "src/modulos/editais/estado.js; supabase/migrations/20260928220000_edital_na_area_certa.sql; src/lib/access-roles.ts",
+      "src/modulos/editais/estado.ts; supabase/migrations/20260928220000_edital_na_area_certa.sql; src/lib/access-roles.ts",
   },
   {
     arquivo: "regras-dos-editais.md",
@@ -6002,7 +6002,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "No formulário do edital, Inscritos, Aptos análise, Cancelados, Eliminados nota, Reprovados análise, Total eliminados, Aprovados análise, Aprovados prova, Entrevistados, Contratados e Vagas ociosas aparecem só para conferência: vêm das cargas do sistema e não se editam ali. A UF é preenchida pela unidade escolhida, e unidade nova digitada fica registrada na área do edital ao salvar.",
     fato: "",
-    fonte: "src/modulos/editais/modal-do-edital.jsx",
+    fonte: "src/modulos/editais/modal-do-edital.tsx",
   },
   {
     arquivo: "regras-dos-editais.md",
@@ -6019,7 +6019,7 @@ export const VERBETES_AYA = Object.freeze([
       'Cadastrar ("Novo edital") e editar (o lápis da linha) é de quem tem nível Editor em Editais ou em Cronograma, em Configurações › Acessos. Com Leitor, a tela mostra a tabela, os indicadores e o "Ver cronograma", sem esses botões. Na linha, o ícone da Lista de aprovados aparece para quem tem Editor em Importação e convocação. Mover o edital de área é só do administrador global.',
     fato: "",
     fonte:
-      "src/modulos/editais/nucleo.jsx; src/lib/access-roles.ts (canManageEditais, canImportApprovedList, canMoveEditalBetweenAreas)",
+      "src/modulos/editais/nucleo.tsx; src/lib/access-roles.ts (canManageEditais, canImportApprovedList, canMoveEditalBetweenAreas)",
     abrir: "config:acessos",
   },
   {
@@ -6035,7 +6035,7 @@ export const VERBETES_AYA = Object.freeze([
       "Editais mostra só os editais da área escolhida no menu e, se você está numa coordenação, só os do recorte dela; quem não é administrador global nem recebe do banco editais de outras áreas. Confira também os filtros e o indicador clicado: Editais ativos ou Editais inativos deixam só aquela situação (chip Situação), e clicar de novo no indicador ou no x do chip volta a mostrar todos. Edital desligado no banco não aparece. Se o edital é de outra área, troque a área no menu ou peça a liberação a quem administra os acessos.",
     fato: "",
     fonte:
-      "src/lib/editais-do-nucleo.js; src/modulos/editais/painel-operacional.jsx; supabase/migrations/20260925181000_recorta_dados_por_area.sql",
+      "src/lib/editais-do-nucleo.ts; src/modulos/editais/painel-operacional.tsx; supabase/migrations/20260925181000_recorta_dados_por_area.sql",
     abrir: "nucleo",
   },
   {
@@ -6063,7 +6063,7 @@ export const VERBETES_AYA = Object.freeze([
       'Há dois editais de treinamento, para praticar sem tocar em dados reais, e cada um tem as duas etapas prontas para demonstrar: a avaliação documental e a entrevista. "Treinamento – Saúde Indígena (991/2099)" (unidade fictícia "DSEI Treinamento"): 3 vagas fictícias (Enfermeiro, Técnico de Enfermagem e Agente Indígena de Saúde) e 30 candidatos fictícios ("Candidato Teste 01" a "30"). Avaliação documental: a regra do Edital 111/2026 (DSEI Parintins) já conferida, com o nome de versão "SI26-PARINTINS — Edital 111/2026" e as perguntas do questionário da Saúde Indígena ligadas, a pré-classificação rodada pelo mesmo cálculo do robô e 24 fichas pendentes no lote para "Pegar próximo" (entre na Equipe como analista antes). Entrevista: os 15 primeiros convocados, o roteiro de exemplo com aspectos (Conceitua, Propriedade, Profundidade), banca AgSUS e DSEI com o Avaliador Teste 2 avaliando só "Trabalho em equipe", lançamento pela secretaria e a agenda com 6 entrevistas hoje. "Treinamento – Projetos (992/2099)" (unidade "Escritório Treinamento"): espelho do Edital 93/2026, com as mesmas 5 vagas e cargos (códigos fictícios 990992001 a 990992005) e 40 candidatos fictícios ("Candidato Teste P01" a "P40") com o questionário no formato da Empregare. Avaliação documental: a regra conferida do 93/2026 (versão 7) copiada, a pré-classificação já rodada e 21 fichas pendentes. Entrevista: o roteiro "Treinamento — Entrevista Projetos (exemplo)", copiado do modelo do SESMT (4 competências de 0 a 2, apto com 5 pontos e metade em cada; o estudo de caso é em grupo; sem aspectos), lançamento pela secretaria, banca CDHO / AgSUS, SSO / AgSUS e CONDISI com o Avaliador Teste P3 avaliando só "Habilidade intercultural", a lista de convocação gerada dos 21 do lote, os 21 convocados e a agenda com 6 entrevistas hoje; a janela da entrevista fica liberada, porque no cronograma do 93/2026 ela vem depois da análise. A agenda é montada a partir do dia em que o treinamento foi preparado ou reiniciado: para a fila "Hoje" de Conduzir entrevistas ter itens no dia da apresentação, reinicie o treinamento nesse dia. Nos dois, nenhum candidato tem CPF e os e-mails são @exemplo.invalid. Eles aparecem com o selo Treinamento em Editais, Conduzir entrevistas, Avaliação documental e Classificação. Ficam fora da Visão geral, dos indicadores, dos painéis (análises, entrevistas e aprovados), das comemorações, das conferências, dos robôs, do painel dos robôs e do Status das atualizações; a pré-classificação só roda para eles quando pedida para eles (em Rodar com opções, marque Mostrar todos e escolha o edital). Documento oficial gerado deles sai com "TREINAMENTO — SEM VALOR OFICIAL" no título. Não rode o robô da Empregare para eles: as vagas são fictícias.',
     fato: "",
     fonte:
-      "supabase/migrations/20261007230000_edital_de_treinamento.sql; supabase/migrations/20261008110000_treinamento_avaliacao_documental.sql; supabase/migrations/20261009120000_treinamentos_completos.sql; src/lib/edital-de-treinamento.js",
+      "supabase/migrations/20261007230000_edital_de_treinamento.sql; supabase/migrations/20261008110000_treinamento_avaliacao_documental.sql; supabase/migrations/20261009120000_treinamentos_completos.sql; src/lib/edital-de-treinamento.ts",
     abrir: "nucleo",
   },
   {
@@ -6081,7 +6081,7 @@ export const VERBETES_AYA = Object.freeze([
       "Em Editais, o administrador global vê nos editais de treinamento (Saúde Indígena e Projetos) o botão Reiniciar treinamento (setas circulares). Ao clicar, a própria linha pede a confirmação; em Reiniciar, tudo o que foi feito naquele treinamento (convocações, notas, listas geradas, fichas e pré-classificação, decisões de lote, aprovados, recursos) é apagado e os dados fictícios voltam ao estado inicial, com o cronograma recalculado a partir de hoje. Nos dois voltam prontas as duas etapas: a avaliação documental (regra conferida, pré-classificação e fichas pendentes: 24 na Saúde Indígena, 21 em Projetos) e a entrevista (roteiro, banca, convocados e a agenda com 6 entrevistas no dia do reinício). Só os editais de treinamento podem ser reiniciados: o banco recusa qualquer edital real, e também recusa se uma vaga do treinamento tiver vindo do robô da Empregare; nesses casos nada é apagado.",
     fato: "",
     fonte:
-      "supabase/migrations/20261009120000_treinamentos_completos.sql; src/modulos/editais/nucleo.jsx",
+      "supabase/migrations/20261009120000_treinamentos_completos.sql; src/modulos/editais/nucleo.tsx",
     abrir: "nucleo",
   },
   {
@@ -6240,7 +6240,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em manutenção, a aba (ou a área, ou o sistema inteiro) continua no menu com o aviso, mas quem não é administrador global vê a tela de manutenção com a mensagem e a previsão configuradas; o administrador global entra normalmente, com a faixa "Em manutenção para os demais usuários". Vale a mensagem do nível mais alto: sistema, depois área, depois aba em todas as áreas, depois aba naquela área. O sistema inteiro não se desativa, só entra ou sai de manutenção. Se a situação não puder ser lida do banco, tudo vale como ativo.',
     fato: "",
     fonte:
-      "src/lib/situacao-dos-modulos.js; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
+      "src/lib/situacao-dos-modulos.ts; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",

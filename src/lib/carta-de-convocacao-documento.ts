@@ -45,7 +45,7 @@ import {
   pacoteDocx,
   QUEBRA_DE_PAGINA,
 } from "./classificacao/documento-docx.ts";
-import { zipSemCompressao } from "./documento-da-resposta.js";
+import { zipSemCompressao } from "./documento-da-resposta.ts";
 import { hojeEmBrasilia, preencherCarta } from "./carta-de-convocacao.ts";
 import { dataPorExtenso } from "./classificacao/documento-sei.ts";
 

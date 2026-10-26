@@ -16,7 +16,7 @@
   usuário entrou na mesma aba (ou saiu da conta): tudo volta ao início, e a
   próxima abertura da tela recarrega.
 */
-import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
+import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
 import {
   criarCacheDePayload,
   ehErroDeAcesso,

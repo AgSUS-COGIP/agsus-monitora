@@ -17,8 +17,8 @@ import {
   situacaoDoEdital,
   unidadesDaArea,
   unidadesDisponiveis,
-} from "../src/lib/editais-do-nucleo.js";
-import { UNIDADES_CORES } from "../src/lib/responsavel-do-edital.js";
+} from "../src/lib/editais-do-nucleo.ts";
+import { UNIDADES_CORES } from "../src/lib/responsavel-do-edital.ts";
 
 const CATALOGO = [
   {

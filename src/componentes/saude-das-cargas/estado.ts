@@ -13,7 +13,7 @@ import type {
   banco, que chama o GitHub com a chave do Vault (20261008140000); `pedidos`
   e `avisos` guardam o último clique de cada carga nesta tela, e
   situacao_do_disparo_robo diz se o GitHub aceitou (ou se a chave falta ou
-  expirou). As regras do botão são de src/lib/robos-de-carga.js.
+  expirou). As regras do botão são de src/lib/robos-de-carga.ts.
 
   "Rodar com opções" e as últimas execuções: `painel` guarda
   get_painel_dos_robos (editais e histórico, src/lib/painel-dos-robos.ts);
@@ -43,7 +43,7 @@ import {
   RPC_DISPARAR_ROBO,
   RPC_SITUACAO_DO_DISPARO,
   situacaoDoPedido,
-} from "../../lib/robos-de-carga.js";
+} from "../../lib/robos-de-carga.ts";
 import { normalizarSaude } from "../../lib/saude-das-cargas.ts";
 import { normalizarChaves } from "../../lib/chaves-da-automacao.ts";
 

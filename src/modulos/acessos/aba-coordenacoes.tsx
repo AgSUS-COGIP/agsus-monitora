@@ -5,7 +5,7 @@ import {
   useSyncExternalStore,
   type FormEvent,
 } from "react";
-import { RESPONSAVEIS_DE_EDITAL } from "../../lib/responsavel-do-edital.js";
+import { RESPONSAVEIS_DE_EDITAL } from "../../lib/responsavel-do-edital.ts";
 import {
   coordenacaoParaSalvar,
   coordenacaoVazia,

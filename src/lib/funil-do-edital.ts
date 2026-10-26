@@ -6,7 +6,7 @@
   e "DT_FONTE_FUNIL"; o campo que a fonte não tem chega nulo e aparece como
   "—" (nunca 0: zero inscritos seria um dado, e acenderia "Sem inscritos").
 */
-import { quandoFoi } from "./texto-da-conferencia.js";
+import { quandoFoi } from "./texto-da-conferencia.ts";
 
 export const FONTES_DO_FUNIL: Readonly<Record<string, string>> = Object.freeze({
   AVALIACAO_DOCUMENTAL: "Avaliação documental",

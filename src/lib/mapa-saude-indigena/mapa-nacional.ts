@@ -24,7 +24,7 @@ import type {
 } from "./tipos.ts";
 import { enquadramentoDoRecorte } from "../enquadramento-do-brasil.ts";
 import { OPACIDADE_DA_BOLHA, raioDaBolha } from "../mapa-render.ts";
-import { siglaDaUf } from "../uf-ibge.js";
+import { siglaDaUf } from "../uf-ibge.ts";
 import {
   chaveDoDsei,
   formatarNumero,

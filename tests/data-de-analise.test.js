@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dataDeAnaliseNoFuturo } from "../src/lib/data-de-analise.js";
+import { dataDeAnaliseNoFuturo } from "../src/lib/data-de-analise.ts";
 
 describe("data de análise no futuro", () => {
   const agora = new Date(2026, 8, 28, 23, 50); // 28/09/2026, 23:50

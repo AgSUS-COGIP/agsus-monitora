@@ -9,7 +9,7 @@ import {
   somarCampo,
   temResultado,
   vagasSemContratacao,
-} from "../src/lib/indicadores-do-monitoramento.js";
+} from "../src/lib/indicadores-do-monitoramento.ts";
 
 /*
   Os KPIs da Visão geral fecham: Vagas imediatas = Contratadas + Em seleção +

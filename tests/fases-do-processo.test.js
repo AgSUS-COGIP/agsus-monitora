@@ -5,7 +5,7 @@ import {
   FASES,
   ORDEM_DAS_FASES,
   tomDaFase,
-} from "../src/lib/fases-do-processo.js";
+} from "../src/lib/fases-do-processo.ts";
 
 /*
   As fases fixas da Visão geral, lidas do texto livre do cronograma. Os textos

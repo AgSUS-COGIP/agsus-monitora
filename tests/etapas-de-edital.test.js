@@ -7,7 +7,7 @@ import {
   etapaConcluida,
   normalizarTexto,
   situacaoDaEtapa,
-} from "../src/lib/etapas-de-edital.js";
+} from "../src/lib/etapas-de-edital.ts";
 
 /*
   As doze atividades do modelo padrão, copiadas de `nucleo-cronograma.js`

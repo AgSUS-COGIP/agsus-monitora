@@ -5,7 +5,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.ts";
-import { urlDaPlanilhaGoogle } from "../../src/lib/planilhas.js";
+import { urlDaPlanilhaGoogle } from "../../src/lib/planilhas.ts";
 import { pedirFiltro } from "../../src/app/pedido-de-filtro.js";
 import { agoraEmBrasilia } from "../../src/lib/ritmo-da-analise.ts";
 import {

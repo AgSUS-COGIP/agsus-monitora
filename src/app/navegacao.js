@@ -10,7 +10,7 @@ import { abasDoMenu, catalogoDoBanco } from "../modules/catalogo-de-abas.js";
 import {
   filtrarAreasAtivas,
   situacaoEfetiva,
-} from "../lib/situacao-dos-modulos.js";
+} from "../lib/situacao-dos-modulos.ts";
 import {
   paginaDesligada,
   primeiraPaginaLigada,

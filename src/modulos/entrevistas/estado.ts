@@ -28,7 +28,7 @@ import type { ItemDaAgenda } from "../../lib/painel-de-entrevistas.ts";
   usuário entrou na mesma aba: tudo volta ao início. Falha de rede usa a
   mensagem de src/lib/falha-de-rede.ts.
 */
-import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
+import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
 import {
   criarCacheDePayload,
   ehErroDeAcesso,
