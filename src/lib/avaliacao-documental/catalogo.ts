@@ -163,21 +163,6 @@ export const BASES_DA_NOTA_DO_LOTE: ListaDoCatalogo = Object.freeze([
 export const DESEMPATE_PADRAO_DA_PROVISORIA: ReadonlyArray<DesempateDaProvisoria> =
   Object.freeze(["IDOSO", "CANDIDATURA"]);
 
-/* Situações de um inscrito na pré-classificação (TB_PRE_CLASSIFICACAO). */
-export const SITUACOES_DA_PRE_CLASSIFICACAO: ListaDoCatalogo = Object.freeze([
-  ["ELIMINADO", "Eliminado"],
-  ["RANQUEADO", "Ranqueado"],
-  ["NO_LOTE", "No lote"],
-  ["ANALISADO", "Analisado"],
-]);
-
-/* Como alguém entrou no lote (TB_PRE_CLASSIFICACAO.TP_ENTRADA_LOTE). */
-export const ENTRADAS_NO_LOTE: ListaDoCatalogo = Object.freeze([
-  ["INICIAL", "Lote inicial"],
-  ["REPOSICAO", "Reposição"],
-  ["AMPLIACAO", "Lote ampliado"],
-]);
-
 export const BASES_DO_LOTE: ListaDoCatalogo = Object.freeze([
   ["MULTIPLO_VAGAS", "Múltiplo das vagas imediatas"],
   ["FIXO", "Número fixo por vaga"],
@@ -202,21 +187,6 @@ export const DESTINO_DOS_NOVOS: ListaDoCatalogo = Object.freeze([
 export const SINAIS_DA_REVISAO: ListaDoCatalogo = Object.freeze([
   ["VINCULO_ATIVO", "Vínculo ativo"],
   ["PARENTESCO", "Parentesco"],
-]);
-
-/** Campos que os modelos de parecer aceitam. */
-export const CAMPOS_DO_PARECER: ReadonlyArray<string> = Object.freeze([
-  "edital",
-  "titulo_etapa",
-  "nota",
-  "corte",
-  "item_corte",
-  "distribuicao",
-  "motivos",
-  "observacoes",
-  // Só no modelo pontos_informativos (parecer.mostrar_pontos_quando_inapto).
-  "nota_informativa",
-  "distribuicao_informativa",
 ]);
 
 export const RESULTADOS: ListaDoCatalogo = Object.freeze([

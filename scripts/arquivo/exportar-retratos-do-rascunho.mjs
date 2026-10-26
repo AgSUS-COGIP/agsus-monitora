@@ -20,8 +20,8 @@
     SUPABASE_PROJECT_REF                 → Management API (/database/query)
 
   Uso:
-    node --env-file=.env.local scripts/exportar-retratos-do-rascunho.mjs --saida=retratos-do-rascunho-AAAAMMDD.jsonl.gz [--lote=500]
-    node scripts/exportar-retratos-do-rascunho.mjs --ler=<arquivo> [--ficha=<uuid>] [--sha256=<sha>]
+    node --env-file=.env.local scripts/arquivo/exportar-retratos-do-rascunho.mjs --saida=retratos-do-rascunho-AAAAMMDD.jsonl.gz [--lote=500]
+    node scripts/arquivo/exportar-retratos-do-rascunho.mjs --ler=<arquivo> [--ficha=<uuid>] [--sha256=<sha>]
       (só lê o arquivo: confere o sha256 e mostra os retratos da ficha, em ordem)
 */
 import { createHash } from "node:crypto";
@@ -37,7 +37,7 @@ import { dirname, resolve } from "node:path";
 import { once } from "node:events";
 import { createGunzip, createGzip } from "node:zlib";
 
-const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const RAIZ = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 export const CORRECAO = resolve(
   RAIZ,
   "supabase/correcoes/20261023-compactar-retratos-do-rascunho.sql",

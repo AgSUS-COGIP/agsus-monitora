@@ -24,10 +24,6 @@ def eh_numero(valor) -> bool:
     return isinstance(valor, int | float) and not isinstance(valor, bool)
 
 
-def eh_finito(valor) -> bool:
-    return eh_numero(valor) and math.isfinite(valor)
-
-
 def numero_em_texto(n) -> str:
     """String(n) do JS: 3.0 → "3", 0.1 → "0.1", NaN → "NaN"."""
     if isinstance(n, int):

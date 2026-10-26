@@ -3,6 +3,9 @@
 Auditoria da procedência das coordenadas de Polo Base, CASAI, UBSI e demais
 unidades no mapa do AgSUS Monitora.
 
+As linhas citadas (`legacy-app.js:…`) são do `legacy-app.js` da época, que já saiu (ver
+`docs/arquitetura-react.md`, Fase 2); os scripts da auditoria estão em `scripts/arquivo/`.
+
 **Nada foi alterado.** Nenhuma escrita no banco, no payload ou no comportamento
 da aplicação. O que este trabalho entrega é diagnóstico, instrumento de medição
 e proposta.
@@ -23,7 +26,7 @@ Os números desta seção foram medidos em **14/09/2026**, em consulta somente
 leitura ao projeto `agsusmonitora-dais`, e vieram da equipa — **não** de uma
 corrida do auditor nesta máquina. Ficam aqui como agregados verificáveis, e a
 distinção importa: a contagem por nível de confiança exige correr
-`scripts/auditar-coordenadas.mjs` sobre o payload, e não é reproduzida aqui de
+`scripts/arquivo/auditar-coordenadas.mjs` sobre o payload, e não é reproduzida aqui de
 memória.
 
 ### Volumetria
@@ -114,7 +117,7 @@ rastreabilidade: `lat_lmap`, `lon_lmap`, `deslocamento_km`, `lugares_no_ponto`,
 ## 3. Como a fonte é produzida
 
 O mapa lê duas linhas da tabela `mapa_saude_indigena_config`, pelas chaves
-`lmap` e `rede_cnes` ([`legacy-app.js:2164`](../src/modules/legacy-app.js#L2164)).
+`lmap` e `rede_cnes` (`legacy-app.js:2164`).
 São payloads JSON, não tabelas relacionais: não há coluna, tipo, restrição nem
 chave estrangeira sobre nada disto.
 
@@ -123,10 +126,10 @@ chave estrangeira sobre nada disto.
 Produzido por importação manual: alguém cola o conteúdo de um ficheiro chamado
 "JSON v4" numa caixa de texto da tela de Configurações (`cfgCnesJson`) e clica
 em _Aplicar ao mapa_
-([`aplicarCnesCoords`, linha 10187](../src/modules/legacy-app.js#L10187)).
+(`aplicarCnesCoords`, linha 10187).
 
 A transformação está em
-[`_redeFromV4`, linha 10083](../src/modules/legacy-app.js#L10083):
+`_redeFromV4`, linha 10083:
 
 - lê três coleções do ficheiro: `ubsis_amostra_por_dsei`,
   `casais_dsei_ou_local_por_dsei` e `casais_nacionais`;
@@ -136,7 +139,7 @@ A transformação está em
   `[nome, cnes, lat, lon, município, uf]`, com as coordenadas arredondadas a
   6 casas decimais;
 - associa cada estabelecimento a um DSEI **pelo nome normalizado**
-  ([`_dseiKeyNorm`, linha 10067](../src/modules/legacy-app.js#L10067)), e
+  (`_dseiKeyNorm`, linha 10067), e
   **descarta em silêncio** quem não casar com nenhum DSEI do `lmap`.
 
 O nome da coleção principal merece atenção: `ubsis_amostra_por_dsei`. Se for
@@ -144,9 +147,9 @@ mesmo uma amostra, a rede desenhada no mapa nunca foi a rede completa.
 
 ### `lmap` — não tem origem rastreável
 
-`LMAP` é declarado vazio ([linha 3184](../src/modules/legacy-app.js#L3184)) e
+`LMAP` é declarado vazio (linha 3184) e
 atribuído **num único ponto**: a leitura do Supabase
-([linha 2183](../src/modules/legacy-app.js#L2183)). Não existe importador, tela
+(linha 2183). Não existe importador, tela
 de edição, migration ou semente em nenhum lugar do repositório.
 
 É o `lmap` que carrega a lista de DSEIs, a sede de cada um, a população, as UFs
@@ -158,7 +161,7 @@ possível, a partir deste repositório, dizer de onde veio a coordenada de um
 polo, quem a pôs lá, quando, nem com que fonte.
 
 Pior: `saveMapaConfigToSupabase`
-([linha 2133](../src/modules/legacy-app.js#L2133)) grava de volta o `LMAP` que
+(linha 2133) grava de volta o `LMAP` que
 estiver em memória. Qualquer pessoa com permissão de configuração que clique em
 _Aplicar ao mapa_ reescreve as duas chaves — e a única cópia do `lmap` é a que
 está no banco.
@@ -175,7 +178,7 @@ está no banco.
 ## 4. Como o Polo Base é casado com o CNES
 
 Este é o ponto mais delicado da auditoria, e está em
-[`findOfficialPoloCoord`, linha 9095](../src/modules/legacy-app.js#L9095).
+`findOfficialPoloCoord`, linha 9095.
 
 O comentário do próprio código diz o essencial: _"As coordenadas oficiais do
 CNES no JSON v4 estão nos estabelecimentos (UBSI/CASAI), **não nos polos base
@@ -217,7 +220,7 @@ sua coordenada ao polo.
 
 ### O rótulo que engana
 
-[`polosCorrigidosPorCnes`, linha 9142](../src/modules/legacy-app.js#L9142) pega
+`polosCorrigidosPorCnes`, linha 9142 pega
 no resultado e escreve:
 
 ```js
@@ -242,9 +245,9 @@ desenho**:
 
 | Local                                                                    | O que faz                                                               |
 | ------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| [9694](../src/modules/legacy-app.js#L9694) — bolhas de DSEI              | Usa variáveis locais `lat`/`lon` só para o marcador; não escreve em `d` |
-| [9870](../src/modules/legacy-app.js#L9870) — `_spread`, estabelecimentos | Devolve cópia com `_lat`/`_lon`; preserva `lat`/`lon`                   |
-| [9941](../src/modules/legacy-app.js#L9941) — polos                       | Devolve cópia com `_lat`/`_lon`; preserva `lat`/`lon`                   |
+| 9694 — bolhas de DSEI              | Usa variáveis locais `lat`/`lon` só para o marcador; não escreve em `d` |
+| 9870 — `_spread`, estabelecimentos | Devolve cópia com `_lat`/`_lon`; preserva `lat`/`lon`                   |
+| 9941 — polos                       | Devolve cópia com `_lat`/`_lon`; preserva `lat`/`lon`                   |
 
 Nenhum deles persiste nada, e nada muta o `LMAP` — verificado: não há uma única
 atribuição a `.lat` ou `.lon` em todo o `legacy-app.js`.
@@ -369,10 +372,10 @@ avisar ninguém.
 ## 8. Como fechar as Tarefas 2 e 3
 
 O auditor está pronto e testado:
-[`scripts/auditar-coordenadas.mjs`](../scripts/auditar-coordenadas.mjs).
+[`scripts/arquivo/auditar-coordenadas.mjs`](../scripts/arquivo/auditar-coordenadas.mjs).
 
 ```bash
-node scripts/auditar-coordenadas.mjs --arquivo export.json --csv relatorio.csv
+node scripts/arquivo/auditar-coordenadas.mjs --arquivo export.json --csv relatorio.csv
 ```
 
 Ele não escreve nada, e aceita duas entradas: a variável `SUPABASE_DB_URL` (em
@@ -499,7 +502,7 @@ Distinguir os dois casos é o ponto inteiro deste módulo.
 ### Relatório dos pares
 
 ```bash
-node scripts/relatorio-reconciliacao.mjs --arquivo export.json --csv pares.csv
+node scripts/arquivo/relatorio-reconciliacao.mjs --arquivo export.json --csv pares.csv
 ```
 
 Corre a mesma função que o mapa usa e devolve quatro listas: reconciliados

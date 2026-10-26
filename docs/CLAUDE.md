@@ -23,8 +23,8 @@ Leia **só o documento do assunto**. Nada aqui é carregado pelo build, exceto `
 
 Os `.md` numerados (`01-saude-indigena.md` … `05-politica-e-controle-social.md`) são compilados por
 `npm run aya:conhecimento`. Editou aqui, recompile: o gerado vai no bundle. O formato do verbete está
-em `docs/aya/README.md`. Número na resposta que não está no material é detectado como inventado
-(`tests/aya-numeros-sem-lastro.test.js`): todo número que a AYA precisa dizer tem de estar escrito aqui.
+em `docs/aya/README.md`. A Aya só responde com o que está no material (não há IA gerando texto):
+todo número que a AYA precisa dizer tem de estar escrito aqui.
 
 Documento novo: nome em português, kebab-case, data no nome quando for registro pontual
 (`auditoria-…-AAAA-MM-DD.md`). Documento descreve o código; quando divergirem, corrija o documento.

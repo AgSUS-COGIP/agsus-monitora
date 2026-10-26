@@ -524,4 +524,3 @@ export function criteriosDaRegra(regra: unknown) {
 }
 
 export type RegraNormalizada = ReturnType<typeof normalizarRegra>;
-export type DocumentoDaRegra = ReturnType<typeof documentoDaRegra>;

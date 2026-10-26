@@ -12,10 +12,10 @@ import {
   extrairRegra,
   lerExportacao,
   linhaDaCorrecao,
-} from "../scripts/exportar-retratos-do-rascunho.mjs";
+} from "../scripts/arquivo/exportar-retratos-do-rascunho.mjs";
 
 /*
-  Exportação dos retratos antes da compactação (scripts/exportar-retratos-do-rascunho.mjs),
+  Exportação dos retratos antes da compactação (scripts/arquivo/exportar-retratos-do-rascunho.mjs),
   com dados falsos: a regra vem da correção, os lotes andam pela chave, o
   arquivo é JSONL compactado com o sha256 e a linha que a correção exige.
 */

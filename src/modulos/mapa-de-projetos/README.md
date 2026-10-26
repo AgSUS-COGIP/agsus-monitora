@@ -71,7 +71,7 @@ Testes: `tests/visao-geral-da-area.test.js` (regras e recorte), `tests/enquadram
 leque) e `tests/modulos/visao-geral.test.js` (filtros da página no mapa). Explicações para a Aya:
 `docs/aya/regras-dos-mapas.md`.
 
-O que saiu do legado: `src/modules/municipios-da-visao-geral.js`, o bloco
+O que saiu do legado: `municipios-da-visao-geral.js` (de `src/modules/`), o bloco
 `#mapaDaVisaoGeral`/`#reservaDoMapaDaVisaoGeral` do `index.html`, `renderMap`,
 `desenharMunicipiosNoMapa`, `scheduleMapResize` e o carregador do `legacy-app.js`,
 `health-map-workspace.css`, `health-reference-kpis.css` e os `#mapaDosProjetos` de `app.css` e

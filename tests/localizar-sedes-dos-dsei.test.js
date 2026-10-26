@@ -13,7 +13,7 @@ import {
   pareceSede,
   pontoMaisProximo,
   variantesDoEndereco,
-} from "../scripts/localizar-sedes-dos-dsei.mjs";
+} from "../scripts/arquivo/localizar-sedes-dos-dsei.mjs";
 
 /*
   A ESTRELA DA SEDE NO ENDEREÇO DA SEDE

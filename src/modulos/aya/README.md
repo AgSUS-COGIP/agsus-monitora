@@ -1,7 +1,7 @@
 # `src/modulos/aya/` — Aya, a assistente
 
 A arara flutuante e o painel de conversa (cartão no canto inferior direito; tela cheia até 600px),
-montados por `montarAya()` em `#ayaApp` (`src/main.js`). Substitui `src/modules/arara-guide.js`,
+montados por `montarAya()` em `#ayaApp` (`src/main.js`). Substitui os antigos `arara-guide.js`,
 `arara-speaking-effects.js` e `nina-panel-drag.js`.
 
 ```

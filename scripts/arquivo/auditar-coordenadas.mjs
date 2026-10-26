@@ -1,11 +1,11 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
-import { BRASIL_BOUNDS } from "../src/lib/brasil-bounds.js";
+import { BRASIL_BOUNDS } from "../../src/lib/brasil-bounds.js";
 import {
   classificarVinculoTerritorial,
   siglaDaUf,
   VINCULO_EXTERNO,
-} from "../src/lib/uf-ibge.js";
+} from "../../src/lib/uf-ibge.js";
 
 /*
   AUDITORIA DAS COORDENADAS DO MAPA — SOMENTE LEITURA.
@@ -16,8 +16,8 @@ import {
 
   DUAS ENTRADAS POSSÍVEIS
 
-    node scripts/auditar-coordenadas.mjs                  # usa SUPABASE_DB_URL
-    node scripts/auditar-coordenadas.mjs --arquivo d.json # usa um export local
+    node scripts/arquivo/auditar-coordenadas.mjs                  # usa SUPABASE_DB_URL
+    node scripts/arquivo/auditar-coordenadas.mjs --arquivo d.json # usa um export local
 
   A segunda existe porque a auditoria não deve depender de credencial de
   produção: basta exportar do painel do Supabase um JSON no formato

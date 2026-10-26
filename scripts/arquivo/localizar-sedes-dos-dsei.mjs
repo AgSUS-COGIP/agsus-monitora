@@ -39,7 +39,7 @@ import {
 
   Nenhum ponto novo é aceite fora do município da sede, pela malha do IBGE.
 
-      node scripts/localizar-sedes-dos-dsei.mjs <lmap.json>
+      node scripts/arquivo/localizar-sedes-dos-dsei.mjs <lmap.json>
 
   Escreve `supabase/correcoes/20260923-leva-as-sedes-dos-dsei-ao-endereco.sql`
   e `docs/sedes-dos-dsei.md`. O SQL é para aplicar à mão, como os outros.
@@ -555,7 +555,9 @@ function enderecoLegivel(d) {
 async function principal() {
   const [caminhoLmap] = process.argv.slice(2);
   if (!caminhoLmap) {
-    console.error("uso: node scripts/localizar-sedes-dos-dsei.mjs <lmap.json>");
+    console.error(
+      "uso: node scripts/arquivo/localizar-sedes-dos-dsei.mjs <lmap.json>",
+    );
     process.exitCode = 1;
     return;
   }
@@ -842,7 +844,7 @@ function escreverSql(linhas) {
   const sql = `-- ---------------------------------------------------------------------------
 -- A ESTRELA DA SEDE NO ENDEREÇO DA SEDE
 --
--- Gerado por \`scripts/localizar-sedes-dos-dsei.mjs\`. O relatório completo, com
+-- Gerado por \`scripts/arquivo/localizar-sedes-dos-dsei.mjs\`. O relatório completo, com
 -- as duas fontes de cada DSEI, está em \`docs/sedes-dos-dsei.md\`.
 --
 -- Em 32 dos 34 DSEIs a coordenada da sede era o ponto de referência da cidade.
@@ -959,7 +961,7 @@ function escreverRelatorio(linhas) {
     .join("\n");
   const md = `# Sedes dos DSEI — de onde vem cada ponto
 
-Gerado por \`scripts/localizar-sedes-dos-dsei.mjs\`. Correção correspondente:
+Gerado por \`scripts/arquivo/localizar-sedes-dos-dsei.mjs\`. Correção correspondente:
 \`supabase/correcoes/20260923-leva-as-sedes-dos-dsei-ao-endereco.sql\`.
 
 Fontes: CNES (API de dados abertos do Ministério da Saúde, estabelecimento tipo

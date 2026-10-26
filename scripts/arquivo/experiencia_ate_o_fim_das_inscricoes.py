@@ -11,12 +11,12 @@ mudaria com o corte NÃO é corrigida: aparece na lista, e o job de conferência
 revisão.
 
     # Relatório, sem gravar (lê pela RPC conferencia_ler_fichas, service_role):
-    python scripts/correcoes/experiencia_ate_o_fim_das_inscricoes.py --edital <uuid> --data-limite 2026-10-14 --seco
+    python scripts/arquivo/experiencia_ate_o_fim_das_inscricoes.py --edital <uuid> --data-limite 2026-10-14 --seco
     # Relatório a partir de um arquivo com as páginas de conferencia_ler_fichas (sem chave nenhuma):
-    python scripts/correcoes/experiencia_ate_o_fim_das_inscricoes.py --edital <uuid> --data-limite 2026-10-14 \
+    python scripts/arquivo/experiencia_ate_o_fim_das_inscricoes.py --edital <uuid> --data-limite 2026-10-14 \
         --seco --de-arquivo fichas.json
     # Correção (depois da migration 20261023090000 aplicada):
-    python scripts/correcoes/experiencia_ate_o_fim_das_inscricoes.py --edital <uuid> --data-limite 2026-10-14
+    python scripts/arquivo/experiencia_ate_o_fim_das_inscricoes.py --edital <uuid> --data-limite 2026-10-14
 
 A gravação é ficha a ficha pela RPC corrigir_experiencia_da_ficha (service_role), que confere de
 novo no banco a experiência enviada e a pontuação, grava o histórico (TP_ACAO 'CORRIGIR') com a
@@ -148,7 +148,7 @@ def principal(args, configuracao=None, chamar_rpc=None, imprimir=print):
         paginas = dados if isinstance(dados, list) else [dados]
         chamar = None
     else:
-        cfg = configuracao or supabase_rpc.configuracao("scripts/correcoes/experiencia_ate_o_fim_das_inscricoes.py")
+        cfg = configuracao or supabase_rpc.configuracao("scripts/arquivo/experiencia_ate_o_fim_das_inscricoes.py")
         chamar_rpc = chamar_rpc or supabase_rpc.chamar
 
         def chamar(funcao, corpo, **opcoes):

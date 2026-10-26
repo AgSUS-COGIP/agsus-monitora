@@ -107,4 +107,3 @@ export interface LeafletDoEditor {
   ): CamadaDoEditor;
   latLngBounds(posicoes: PosicaoDoEditor[]): unknown;
 }
-export type HistoricoDoEditor = AlteracaoDoPonto[];

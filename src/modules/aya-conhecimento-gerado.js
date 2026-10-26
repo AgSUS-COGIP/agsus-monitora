@@ -2821,7 +2821,7 @@ export const VERBETES_AYA = Object.freeze([
       'Nas listas e nos documentos, AC é ampla concorrência; PcD, pessoas com deficiência; PP, pretos e pardos; PI, indígenas; PQ, quilombolas; e PPIQ, a reserva conjunta de pretos e pardos, indígenas e quilombolas de alguns editais. CR é cadastro reserva: quem passou, mas ficou além das vagas imediatas, ou a vaga que só tem cadastro reserva (no cabeçalho, "- Cadastro Reserva"). O cotista também concorre na ampla, e quem é chamado pela ampla não gasta a vaga reservada. Percentual, lista própria e remanejamento de cada modalidade são da regra de classificação do edital.',
     fato: "",
     fonte:
-      "src/lib/classificacao/catalogo.ts (MODALIDADES_CONHECIDAS); src/lib/classificacao/motor.ts; src/lib/classificacao/vagas.ts",
+      "src/lib/classificacao/catalogo.ts (codigosDaModalidade); src/lib/classificacao/motor.ts; src/lib/classificacao/vagas.ts",
     abrir: "classificacao",
   },
   {
@@ -4312,7 +4312,7 @@ export const VERBETES_AYA = Object.freeze([
       "A prévia ao lado da seção Marca é a própria barra lateral, em miniatura e sem clique: a logo MONITORA, o seletor de área, os seus itens de menu com os selos BETA, Administração e o rodapé com Claro/Escuro, Recolher menu, Sair e a versão. Ela usa a cor e o logo escolhidos em Aparência antes de salvar e segue o tema claro ou escuro do sistema; para ver o outro tema, troque no rodapé da barra. Se a barra mudar, a prévia muda junto.",
     fato: "",
     fonte:
-      "src/modulos/configuracoes/previa-da-barra-lateral.tsx; src/componentes/barra-lateral/barra-lateral.jsx",
+      "src/modulos/configuracoes/previa-da-barra-lateral.tsx; src/componentes/barra-lateral/barra-lateral.tsx",
     abrir: "config:marca",
   },
   {
@@ -4467,7 +4467,7 @@ export const VERBETES_AYA = Object.freeze([
       "O Painel de entrevistas é para acompanhar (gestão e coordenação), como o Painel das análises ao lado da Avaliação documental; fazer é em Conduzir entrevistas, outra entrada do menu. O painel mostra, da área atual: os filtros, os indicadores, a agenda dos próximos dias quando há um edital escolhido, os gráficos, as pendências (sem comparecimento, sem nota, sem parecer, aprovados sem entrevista, sem análise, sem edital e nota divergente), os empatados na nota da entrevista, a tabela e a exportação em CSV. Só leitura. O edital de treinamento não entra no painel. Quem tem Leitor em Entrevistas vê o painel e Conduzir entrevistas; escrever exige Editor.",
     fato: "O Painel de entrevistas acompanha; Conduzir entrevistas faz (fila do dia, ficha de notas, Preparar e roteiros). As duas usam o recurso Entrevistas.",
     fonte:
-      "src/modulos/entrevistas/entrevistas.tsx; src/modulos/entrevistas/andamento.tsx; src/lib/painel-de-entrevistas.ts",
+      "src/modulos/entrevistas/entrevistas.tsx; src/modulos/entrevistas/agenda-e-empates.tsx; src/lib/painel-de-entrevistas.ts",
     abrir: "entrevistas",
   },
   {
@@ -4959,7 +4959,7 @@ export const VERBETES_AYA = Object.freeze([
       'A agenda é montada e ajustada na Classificação, visão Agenda. Em Conduzir entrevistas, a Fila usa a agenda salva: Hoje são os convocados com horário hoje (Brasília), Próximos os dos dias seguintes (o cartão mostra o dia) e Todos inclui quem não tem horário; Preparar › Agenda mostra a agenda do edital por dia e quem ainda está sem horário. No Painel de entrevistas, com um edital escolhido, a "Agenda dos próximos dias" mostra até cinco dias com entrevista, um por coluna, com o botão Conduzir. Sem agenda salva, a Fila abre em Todos.',
     fato: "",
     fonte:
-      "src/modulos/entrevistas/fila-do-dia.tsx; src/modulos/entrevistas/andamento.tsx; src/lib/fila-de-conducao.ts",
+      "src/modulos/entrevistas/fila-do-dia.tsx; src/modulos/entrevistas/agenda-e-empates.tsx; src/lib/fila-de-conducao.ts",
     abrir: "conduzir-entrevistas",
   },
   {
@@ -5363,7 +5363,7 @@ export const VERBETES_AYA = Object.freeze([
       'Pessoas online fica no cabeçalho e só o administrador global e o Gestor veem. Mostra quem está com o MONITORA aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). A presença de cada pessoa é avisada a cada 90 segundos com a aba visível (e na hora de trocar de página, área ou seção); a contagem do botão se atualiza a cada 10 minutos, e a lista aberta, a cada 90 segundos.',
     fato: "",
     fonte:
-      "src/lib/online-presence.js; src/app/presenca.js; src/componentes/pessoas-online/pessoas-online.tsx; src/lib/access-roles.ts (podeVerPessoasOnline)",
+      "src/lib/online-presence.ts; src/app/presenca.js; src/componentes/pessoas-online/pessoas-online.tsx; src/lib/access-roles.ts (podeVerPessoasOnline)",
   },
   {
     arquivo: "regras-do-sistema.md",
@@ -5382,7 +5382,7 @@ export const VERBETES_AYA = Object.freeze([
       'Quando sai uma versão nova do MONITORA, aparece no topo da página a faixa "Há uma versão nova do MONITORA.", com "Atualizar agora" e o X para fechar (fechada, ela só volta numa versão mais nova). Se a versão trouxe uma mudança que importa, a faixa diz o que é, como "Novo: motivo padronizado na reabertura". O sistema confere a versão a cada 5 minutos com a aba aberta e ao voltar para ela, sem consultar o banco. Nada recarrega à força: com rascunho ou alteração não salva, "Atualizar agora" pede para salvar antes. Se uma ação falhar porque a tela é de uma versão anterior, a faixa fica amarela e pede "Atualize para continuar". Só uma tela que não consegue abrir por ser da versão antiga recarrega sozinha, uma vez.',
     fato: "",
     fonte:
-      "src/app/aviso-de-versao.ts; src/componentes/aviso-de-versao/aviso-de-versao.tsx; src/lib/versao-do-sistema.ts; src/lib/novidades.ts; src/lib/importar-com-recarga.js; src/modules/pwa-lifecycle.js; src/app/navegacao.js (navigate)",
+      "src/app/aviso-de-versao.ts; src/componentes/aviso-de-versao/aviso-de-versao.tsx; src/lib/versao-do-sistema.ts; src/lib/novidades.ts; src/lib/importar-com-recarga.ts; src/modules/pwa-lifecycle.js; src/app/navegacao.js (navigate)",
   },
   {
     arquivo: "regras-do-sistema.md",

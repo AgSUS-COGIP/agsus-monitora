@@ -22,7 +22,6 @@
 */
 import { comemoracoesLigadasNaResposta } from "./comemoracao.js";
 
-export const ATIVA = "ATIVA";
 export const MANUTENCAO = "MANUTENCAO";
 
 export const MENSAGEM_PADRAO_DE_MANUTENCAO =

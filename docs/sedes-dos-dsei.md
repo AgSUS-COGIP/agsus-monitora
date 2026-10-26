@@ -1,6 +1,6 @@
 # Sedes dos DSEI — de onde vem cada ponto
 
-Gerado por `scripts/localizar-sedes-dos-dsei.mjs`. Correção correspondente:
+Gerado por `scripts/arquivo/localizar-sedes-dos-dsei.mjs`. Correção correspondente:
 `supabase/correcoes/20260923-leva-as-sedes-dos-dsei-ao-endereco.sql`.
 
 Fontes: CNES (API de dados abertos do Ministério da Saúde, estabelecimento tipo

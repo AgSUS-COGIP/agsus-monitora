@@ -306,15 +306,6 @@ export type ModeloDoEdital = {
   podeEditar: boolean;
 };
 
-export const MODELO_PADRAO_DO_EDITAL: Readonly<ModeloDoEdital> = Object.freeze({
-  versao: 0,
-  textos: { ...TEXTOS_PADRAO_DO_ESPELHO },
-  salvos: {},
-  atualizadoEm: null,
-  atualizadoPor: null,
-  podeEditar: false,
-});
-
 /** obter_modelo_espelho_nota / salvar_modelo_espelho_nota → o modelo da tela. */
 export function lerModeloDoEdital(resposta: unknown): ModeloDoEdital {
   const r = (resposta && typeof resposta === "object" ? resposta : {}) as {
