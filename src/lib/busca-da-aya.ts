@@ -109,6 +109,8 @@ export interface PerguntaDaAya {
   history?: readonly (MensagemDaConversa | null | undefined)[];
   context?: ContextoParaResposta;
   perfil?: unknown;
+  /** A aba aberta: o painel manda, mas a busca ainda não a usa. */
+  aba?: string;
 }
 
 /** A resposta da Aya. */

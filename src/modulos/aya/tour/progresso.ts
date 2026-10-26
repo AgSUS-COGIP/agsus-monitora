@@ -14,13 +14,17 @@ import {
   convitesFeitos,
   progressoDasTrilhas,
 } from "../../../lib/aya-tours.ts";
+import type { ProgressoDasTrilhas } from "../../../lib/aya-tours.ts";
+
+/** A janela (ou um substituto nos testes) com o localStorage. */
+export type JanelaComArmazenamento = { readonly localStorage: Storage };
 
 export const CHAVE_PROGRESSO_DAS_TRILHAS = "agsus_aya_trilhas_v1";
 export const CHAVE_OFERTA_DE_PRIMEIROS_PASSOS =
   "agsus_aya_primeiros_passos_oferecidos_v1";
 export const CHAVE_CONVITES_DE_TOUR = "agsus_aya_convites_de_tour_v1";
 
-function ler(janela, chave) {
+function ler(janela: JanelaComArmazenamento, chave: string): string | null {
   try {
     return janela.localStorage.getItem(chave);
   } catch {
@@ -28,7 +32,11 @@ function ler(janela, chave) {
   }
 }
 
-function gravar(janela, chave, valor) {
+function gravar(
+  janela: JanelaComArmazenamento,
+  chave: string,
+  valor: string,
+): void {
   try {
     janela.localStorage.setItem(chave, valor);
   } catch {
@@ -36,7 +44,9 @@ function gravar(janela, chave, valor) {
   }
 }
 
-export function lerProgressoDasTrilhas(janela = globalThis.window) {
+export function lerProgressoDasTrilhas(
+  janela: JanelaComArmazenamento = globalThis.window,
+): ProgressoDasTrilhas {
   try {
     return progressoDasTrilhas(
       JSON.parse(ler(janela, CHAVE_PROGRESSO_DAS_TRILHAS) || "{}"),
@@ -46,32 +56,47 @@ export function lerProgressoDasTrilhas(janela = globalThis.window) {
   }
 }
 
-function salvar(janela, progresso) {
+function salvar(
+  janela: JanelaComArmazenamento,
+  progresso: ProgressoDasTrilhas,
+): ProgressoDasTrilhas {
   gravar(janela, CHAVE_PROGRESSO_DAS_TRILHAS, JSON.stringify(progresso));
   return progresso;
 }
 
 /** Guarda o passo atual da trilha (índice nos passos que o perfil faz). */
-export function salvarPassoDaTrilha(janela, id, passo) {
+export function salvarPassoDaTrilha(
+  janela: JanelaComArmazenamento,
+  id: string,
+  passo: number,
+): ProgressoDasTrilhas {
   return salvar(
     janela,
     comPassoDaTrilha(lerProgressoDasTrilhas(janela), id, passo),
   );
 }
 
-export function concluirTrilha(janela, id) {
+export function concluirTrilha(
+  janela: JanelaComArmazenamento,
+  id: string,
+): ProgressoDasTrilhas {
   return salvar(janela, comTrilhaConcluida(lerProgressoDasTrilhas(janela), id));
 }
 
-export const ofertaDePrimeirosPassosFeita = (janela = globalThis.window) =>
-  ler(janela, CHAVE_OFERTA_DE_PRIMEIROS_PASSOS) === "1";
+export const ofertaDePrimeirosPassosFeita = (
+  janela: JanelaComArmazenamento = globalThis.window,
+): boolean => ler(janela, CHAVE_OFERTA_DE_PRIMEIROS_PASSOS) === "1";
 
-export function marcarOfertaDePrimeirosPassos(janela = globalThis.window) {
+export function marcarOfertaDePrimeirosPassos(
+  janela: JanelaComArmazenamento = globalThis.window,
+): void {
   gravar(janela, CHAVE_OFERTA_DE_PRIMEIROS_PASSOS, "1");
 }
 
 /* Convite da primeira visita a cada tela: as telas (chaves de tour) já convidadas. */
-export function lerConvitesDeTour(janela = globalThis.window) {
+export function lerConvitesDeTour(
+  janela: JanelaComArmazenamento = globalThis.window,
+): string[] {
   try {
     return convitesFeitos(
       JSON.parse(ler(janela, CHAVE_CONVITES_DE_TOUR) || "[]"),
@@ -81,7 +106,10 @@ export function lerConvitesDeTour(janela = globalThis.window) {
   }
 }
 
-export function marcarConviteDeTour(janela, chave) {
+export function marcarConviteDeTour(
+  janela: JanelaComArmazenamento,
+  chave: string,
+): string[] {
   const feitos = lerConvitesDeTour(janela);
   if (!feitos.includes(chave)) feitos.push(chave);
   gravar(janela, CHAVE_CONVITES_DE_TOUR, JSON.stringify(feitos));

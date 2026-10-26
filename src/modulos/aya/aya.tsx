@@ -42,6 +42,13 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import type {
+  CSSProperties,
+  KeyboardEvent,
+  MouseEvent,
+  PointerEvent,
+  RefObject,
+} from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { comemorar } from "../../modules/comemoracao.js";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
@@ -103,6 +110,118 @@ import {
   lerPosicaoDaAya,
   passoDaSeta,
 } from "../../lib/borda-da-aya.ts";
+import type { BordaDaAya, PosicaoDaAya } from "../../lib/borda-da-aya.ts";
+import type { AcaoDaAya, SugestaoDaAya } from "../../lib/aya-paginas.ts";
+import type { PassoDoTour } from "../../lib/aya-tours.ts";
+import type { FonteOficial } from "../../lib/busca-da-aya.ts";
+import type { ChamadoDaAya } from "../../lib/chamado-da-aya.ts";
+import type { MensagemDaConversa } from "../../lib/contexto-da-aya.ts";
+import type {
+  AcaoDaIntencao,
+  FiltroDaAcao,
+} from "../../lib/intencoes-da-aya.ts";
+import type {
+  PerguntaBruta,
+  PerguntaSemResposta,
+} from "../../lib/perguntas-sem-resposta.ts";
+import type { MotivoDoFimDoTour } from "./tour/tour.tsx";
+
+/* ---------- Tipos ---------- */
+
+/** A janela do navegador (ou a dos testes). */
+export type JanelaDaAya = Window & typeof globalThis;
+
+/** A navegação do legado (src/app), posta em window. */
+type JanelaDoLegado = Window & { navigate?: (view: string) => unknown };
+
+/** Uma mensagem da conversa no painel. */
+export interface MensagemDaAya {
+  id: string;
+  papel: "user" | "assistant";
+  texto: string;
+  restaurada?: boolean;
+  provider?: string;
+  fontes?: readonly FonteOficial[];
+  acao?: string;
+  acaoDados?: AcaoDaIntencao | null;
+  sugestoes?: readonly SugestaoDaAya[];
+  oferecerChamado?: boolean;
+  avaliacao?: AvaliacaoDaResposta;
+}
+
+/** "Isso ajudou?": sim ou não. */
+export type AvaliacaoDaResposta = "sim" | "nao";
+
+/** O que o painel pergunta a quem responde (`perguntar`). */
+export interface PerguntaDoPainel {
+  question: string;
+  section: string;
+  title: string;
+  area: string;
+  secao: string;
+  history: MensagemDaConversa[];
+  doc: Document;
+  perfil: unknown;
+}
+
+/** A resposta que o painel mostra (da base ou dos dados ao vivo). */
+export interface RespostaDoPainel {
+  answer?: string;
+  provider?: string;
+  sources?: readonly FonteOficial[];
+  acao?: string;
+  acaoDados?: AcaoDaIntencao | null;
+  sugestoes?: readonly SugestaoDaAya[];
+  oferecerChamado?: boolean;
+  semResposta?: boolean;
+  unavailable?: boolean;
+}
+
+export type PerguntarAAya = (
+  opcoes: PerguntaDoPainel,
+) => Promise<RespostaDoPainel | null>;
+
+/** Um botão que leva a uma tela (a ação do verbete ou a dos dados ao vivo). */
+type AcaoDeTela = Pick<AcaoDaAya, "view" | "secao"> & {
+  filtro?: FiltroDaAcao;
+};
+
+/** O tour em curso: o da tela ou o de uma trilha. */
+interface TourEmCurso {
+  chave: string;
+  trilha?: string;
+  rotulo: string;
+  passos: readonly PassoDoTour[];
+  inicio: number;
+}
+
+/** O arraste da arara em andamento. */
+interface ArrasteDaArara {
+  id: number;
+  x: number;
+  y: number;
+  left: number;
+  top: number;
+  moveu: boolean;
+  desejada: { left: number; top: number } | null;
+}
+
+interface ManipuladoresDoArraste {
+  onPointerDown(evento: PointerEvent<HTMLButtonElement>): void;
+  onPointerMove(evento: PointerEvent<HTMLButtonElement>): void;
+  onPointerUp(evento: PointerEvent<HTMLButtonElement>): void;
+  onKeyDown(evento: KeyboardEvent<HTMLButtonElement>): void;
+  onPointerCancel?: (evento: PointerEvent<HTMLButtonElement>) => void;
+}
+
+export interface PropsDaAya {
+  perguntar?: PerguntarAAya;
+  navegar?: (view: string) => unknown;
+  abrirSecao?: (secao: string) => unknown;
+  configuracao?: (chave: string) => unknown;
+  obterPerfil?: () => unknown;
+  janela?: JanelaDaAya;
+}
 
 /* As mesmas chaves do painel antigo: quem fechou a Aya ou moveu a arara continua assim. */
 export const CHAVE_OCULTA = "agsus_monitora_arara_oculta_v1";
@@ -117,7 +236,7 @@ const ATENTA_AO_ABRIR = Object.freeze({ estado: "atenta", duracaoMs: 2200 });
 const ARRASTE_MINIMO = 4;
 const MARGEM = 8;
 
-const ROTULO_DA_ORIGEM = Object.freeze({
+const ROTULO_DA_ORIGEM: Readonly<Record<string, string>> = Object.freeze({
   "curated-official": "Fonte oficial",
   "monitora-local-context": "Dados desta tela",
   "base-monitora": "Base do MONITORA",
@@ -126,14 +245,14 @@ const ROTULO_DA_ORIGEM = Object.freeze({
 });
 
 /* localStorage pode faltar (janela privada, bloqueio): a Aya funciona igual. */
-function ler(janela, chave) {
+function ler(janela: JanelaDaAya, chave: string): string | null {
   try {
     return janela.localStorage.getItem(chave);
   } catch {
     return null;
   }
 }
-function gravar(janela, chave, valor) {
+function gravar(janela: JanelaDaAya, chave: string, valor: string): void {
   try {
     janela.localStorage.setItem(chave, valor);
   } catch {
@@ -141,8 +260,11 @@ function gravar(janela, chave, valor) {
   }
 }
 
-function registrarAvaliacao(janela, avaliacao) {
-  let lista = [];
+function registrarAvaliacao(
+  janela: JanelaDaAya,
+  avaliacao: Readonly<Record<string, unknown>>,
+): void {
+  let lista: unknown[] = [];
   try {
     lista = JSON.parse(ler(janela, CHAVE_AVALIACOES) || "[]");
     if (!Array.isArray(lista)) lista = [];
@@ -157,7 +279,7 @@ function registrarAvaliacao(janela, avaliacao) {
   );
 }
 
-function lerSemResposta(janela) {
+function lerSemResposta(janela: JanelaDaAya): PerguntaSemResposta[] {
   try {
     return perguntasGuardadas(
       JSON.parse(ler(janela, CHAVE_SEM_RESPOSTA) || "[]"),
@@ -167,7 +289,10 @@ function lerSemResposta(janela) {
   }
 }
 
-function guardarSemResposta(janela, item) {
+function guardarSemResposta(
+  janela: JanelaDaAya,
+  item: PerguntaBruta,
+): PerguntaSemResposta[] {
   const lista = comPerguntaSemResposta(lerSemResposta(janela), item);
   gravar(janela, CHAVE_SEM_RESPOSTA, JSON.stringify(lista));
   return lista;
@@ -178,19 +303,22 @@ function guardarSemResposta(janela, item) {
   leitura, pelas RPCs que a pessoa já pode chamar); depois a base de
   verbetes, com a aba e o edital da tela e o perfil de quem pergunta.
 */
-let fontesPadrao = null;
+let fontesPadrao: ReturnType<typeof criarFontesDaAya> | null = null;
 /*
   A base de verbetes (busca-da-aya.ts e src/modules/aya-conhecimento-gerado.js,
   ~100 KB gzip) baixa na primeira pergunta ou ao abrir o painel
   (preCarregarBase), fora do pacote principal.
 */
-let buscaDaBase = null;
+let buscaDaBase: Promise<typeof import("../../lib/busca-da-aya.ts")> | null =
+  null;
 const preCarregarBase = () =>
   (buscaDaBase ??= import("../../lib/busca-da-aya.ts").catch((erro) => {
     buscaDaBase = null;
     throw erro;
   }));
-async function perguntarPadrao(opcoes) {
+async function perguntarPadrao(
+  opcoes: PerguntaDoPainel,
+): Promise<RespostaDoPainel> {
   const tela = estadoDaTela(opcoes.doc);
   fontesPadrao ||= criarFontesDaAya();
   const comDados = await responderComDados({
@@ -210,20 +338,20 @@ async function perguntarPadrao(opcoes) {
 
 const PEDE_TOUR =
   /\b(me mostr\w* (a |esta |essa )?tela|mostr\w* (esta|essa|a) tela|tour|item por item|passo a passo|educacao guiada|me (ensina|ensine) (a )?(usar )?(esta|essa|a) tela)\b/;
-const normalizarPedido = (texto) =>
+const normalizarPedido = (texto: string): string =>
   String(texto)
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
-const ehApresentacaoGuardada = (turno) =>
+const ehApresentacaoGuardada = (turno: MensagemDaConversa | null | undefined) =>
   turno?.role === "assistant" &&
   /^ol[aá]! eu sou a aya\b/i.test(String(turno.content || "").trim());
 
 let proximoId = 0;
 const novoId = () => `aya-${Date.now().toString(36)}-${(proximoId += 1)}`;
 
-function mensagensGuardadas(janela) {
+function mensagensGuardadas(janela: JanelaDaAya): MensagemDaAya[] {
   return lerConversa(janela)
     .filter((turno) => !ehApresentacaoGuardada(turno))
     .map((turno) => ({
@@ -234,7 +362,7 @@ function mensagensGuardadas(janela) {
     }));
 }
 
-function movimentoReduzido(janela) {
+function movimentoReduzido(janela: JanelaDaAya): boolean {
   try {
     if (typeof janela.matchMedia !== "function") return true;
     return janela.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -243,7 +371,7 @@ function movimentoReduzido(janela) {
   }
 }
 
-function telaPequena(janela) {
+function telaPequena(janela: JanelaDaAya): boolean {
   try {
     return janela.matchMedia?.("(max-width: 600px)").matches === true;
   } catch {
@@ -253,7 +381,7 @@ function telaPequena(janela) {
 
 /* ---------- Texto da resposta, sem HTML ---------- */
 
-function TextoEmBlocos({ texto }) {
+function TextoEmBlocos({ texto }: { texto: string }) {
   return blocosDoTexto(texto).map((bloco, indice) => {
     if (bloco.tipo === "paragrafo") return <p key={indice}>{bloco.itens[0]}</p>;
     const Lista = bloco.tipo === "numerada" ? "ol" : "ul";
@@ -268,7 +396,15 @@ function TextoEmBlocos({ texto }) {
 }
 
 /* O texto aparece aos poucos; o leitor de tela recebe o texto inteiro de uma vez. */
-function TextoRevelado({ texto, animar, aoTerminar }) {
+function TextoRevelado({
+  texto,
+  animar,
+  aoTerminar,
+}: {
+  texto: string;
+  animar: boolean;
+  aoTerminar?: () => void;
+}) {
   const [visiveis, setVisiveis] = useState(() =>
     animar ? 1 : String(texto).length,
   );
@@ -281,7 +417,7 @@ function TextoRevelado({ texto, animar, aoTerminar }) {
     const inicio = performance.now();
     const duracao = duracaoDaRevelacao(texto);
     let quadro = 0;
-    const passo = (agora) => {
+    const passo = (agora: number) => {
       const quantos = caracteresRevelados(texto, agora - inicio);
       setVisiveis(quantos);
       if (agora - inicio < duracao) quadro = requestAnimationFrame(passo);
@@ -308,7 +444,13 @@ function TextoRevelado({ texto, animar, aoTerminar }) {
 
 /* ---------- Uma mensagem ---------- */
 
-function Avaliacao({ mensagem, aoAvaliar }) {
+function Avaliacao({
+  mensagem,
+  aoAvaliar,
+}: {
+  mensagem: MensagemDaAya;
+  aoAvaliar: (mensagem: MensagemDaAya, valor: AvaliacaoDaResposta) => void;
+}) {
   if (mensagem.avaliacao) {
     return (
       <p className="aya-avaliacao__obrigado" role="status">
@@ -341,7 +483,7 @@ function Avaliacao({ mensagem, aoAvaliar }) {
   );
 }
 
-function CartaoDoChamado({ chamado }) {
+function CartaoDoChamado({ chamado }: { chamado: ChamadoDaAya }) {
   return (
     <div className="aya-chamado" role="note" aria-label="Abrir chamado">
       <strong>Abrir chamado</strong>
@@ -369,6 +511,14 @@ function Mensagem({
   aoAbrir,
   aoPerguntar,
   chamado,
+}: {
+  mensagem: MensagemDaAya;
+  animar: boolean;
+  aoTerminarRevelacao: () => void;
+  aoAvaliar: (mensagem: MensagemDaAya, valor: AvaliacaoDaResposta) => void;
+  aoAbrir: (acao: AcaoDeTela) => void;
+  aoPerguntar: (pergunta: string) => unknown;
+  chamado: ChamadoDaAya | null;
 }) {
   if (mensagem.papel === "user") {
     return (
@@ -380,7 +530,8 @@ function Mensagem({
       </li>
     );
   }
-  const origem = ROTULO_DA_ORIGEM[mensagem.provider] || "";
+  // Mensagem restaurada não tem `provider`: o rótulo fica vazio.
+  const origem = ROTULO_DA_ORIGEM[mensagem.provider as string] || "";
   const acao = acaoDaAya(mensagem.acao);
   const fontes = Array.isArray(mensagem.fontes) ? mensagem.fontes : [];
   return (
@@ -422,7 +573,7 @@ function Mensagem({
         <button
           type="button"
           className="aya-acao"
-          onClick={() => aoAbrir(mensagem.acaoDados)}
+          onClick={() => aoAbrir(mensagem.acaoDados!)}
         >
           Abrir
           <Icone nome="arrow-right" tamanho={14} />
@@ -452,11 +603,16 @@ function Mensagem({
 
 /* ---------- Arrastar a arara ---------- */
 
-function lerPosicao(janela) {
+function lerPosicao(janela: JanelaDaAya): PosicaoDaAya | null {
   return lerPosicaoDaAya(ler(janela, CHAVE_POSICAO_DA_ARARA));
 }
 
-function limitarPosicao(janela, elemento, left, top) {
+function limitarPosicao(
+  janela: JanelaDaAya,
+  elemento: Element | null,
+  left: number,
+  top: number,
+): { left: number; top: number } {
   const caixa = elemento?.getBoundingClientRect?.() || { width: 0, height: 0 };
   const maxLeft = Math.max(MARGEM, janela.innerWidth - caixa.width - MARGEM);
   const maxTop = Math.max(MARGEM, janela.innerHeight - caixa.height - MARGEM);
@@ -471,7 +627,12 @@ function limitarPosicao(janela, elemento, left, top) {
   borda, escondida nela. O tamanho vem de offsetWidth/Height (o translate de
   quem está escondida não conta).
 */
-function pousar(janela, elemento, left, top) {
+function pousar(
+  janela: JanelaDaAya,
+  elemento: HTMLElement | null,
+  left: number,
+  top: number,
+): PosicaoDaAya {
   const contida = limitarPosicao(janela, elemento, left, top);
   const borda = bordaEncostada({
     left,
@@ -484,8 +645,14 @@ function pousar(janela, elemento, left, top) {
   });
   if (!borda) return contida;
   // Escondida, encosta de vez na borda (a mesma folga de sempre).
-  const extremo = { esquerda: -Infinity, direita: Infinity };
-  const vertical = { topo: -Infinity, baixo: Infinity };
+  const extremo: Partial<Record<BordaDaAya, number>> = {
+    esquerda: -Infinity,
+    direita: Infinity,
+  };
+  const vertical: Partial<Record<BordaDaAya, number>> = {
+    topo: -Infinity,
+    baixo: Infinity,
+  };
   return {
     ...limitarPosicao(
       janela,
@@ -497,10 +664,15 @@ function pousar(janela, elemento, left, top) {
   };
 }
 
-function usarArraste(janela, refBotao) {
-  const [posicao, setPosicao] = useState(() => lerPosicao(janela));
+function usarArraste(
+  janela: JanelaDaAya,
+  refBotao: RefObject<HTMLButtonElement | null>,
+) {
+  const [posicao, setPosicao] = useState<PosicaoDaAya | null>(() =>
+    lerPosicao(janela),
+  );
   const [arrastando, setArrastando] = useState(false);
-  const arraste = useRef(null);
+  const arraste = useRef<ArrasteDaArara | null>(null);
   const ignorarClique = useRef(false);
 
   useEffect(() => {
@@ -523,17 +695,17 @@ function usarArraste(janela, refBotao) {
   }, [janela, refBotao]);
 
   /* O canto de cima à esquerda de agora (escondida, o translate não conta). */
-  function origem(elemento) {
+  function origem(elemento: Element): { left: number; top: number } {
     if (posicao) return { left: posicao.left, top: posicao.top };
     const caixa = elemento.getBoundingClientRect();
     return { left: caixa.left, top: caixa.top };
   }
 
-  function guardar(final) {
+  function guardar(final: PosicaoDaAya): void {
     gravar(janela, CHAVE_POSICAO_DA_ARARA, JSON.stringify(final));
   }
 
-  const manipuladores = {
+  const manipuladores: ManipuladoresDoArraste = {
     onPointerDown(evento) {
       if (evento.button !== undefined && evento.button !== 0) return;
       arraste.current = {
@@ -576,8 +748,8 @@ function usarArraste(janela, refBotao) {
       const final = pousar(
         janela,
         refBotao.current,
-        atual.desejada.left,
-        atual.desejada.top,
+        atual.desejada!.left,
+        atual.desejada!.top,
       );
       setPosicao(final);
       guardar(final);
@@ -614,12 +786,15 @@ function usarArraste(janela, refBotao) {
 const FOCAVEIS =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function prenderFoco(evento, painel) {
+function prenderFoco(
+  evento: KeyboardEvent<HTMLElement>,
+  painel: HTMLElement | null,
+): void {
   if (evento.key !== "Tab" || !painel) return;
-  const focaveis = [...painel.querySelectorAll(FOCAVEIS)];
+  const focaveis = [...painel.querySelectorAll<HTMLElement>(FOCAVEIS)];
   if (!focaveis.length) return;
-  const primeiro = focaveis[0];
-  const ultimo = focaveis[focaveis.length - 1];
+  const primeiro = focaveis[0]!;
+  const ultimo = focaveis[focaveis.length - 1]!;
   const ativo = painel.ownerDocument.activeElement;
   if (evento.shiftKey && (ativo === primeiro || !painel.contains(ativo))) {
     evento.preventDefault();
@@ -632,17 +807,20 @@ function prenderFoco(evento, painel) {
 
 /* ---------- A Aya ---------- */
 
-const navegarPelaJanela = (view) => globalThis.window?.navigate?.(view);
-const abrirSecaoPadrao = (secao) =>
+const navegarPelaJanela = (view: string) =>
+  (globalThis.window as JanelaDoLegado | undefined)?.navigate?.(view);
+const abrirSecaoPadrao = (secao: string) =>
   abrirSecaoDeConfiguracao(globalThis.document, secao);
-const configuracaoPublicada = (chave) =>
+const configuracaoPublicada = (chave: string) =>
   estadoDasConfiguracoes.obter().valores?.get?.(chave) ?? "";
 
 /*
   O balão da oferta fica junto da arara (ALTURA_DA_ARARA): em cima dela, ou
   embaixo quando ela foi arrastada para o alto da tela (o cabeçalho).
 */
-function estiloDaOferta(posicao) {
+function estiloDaOferta(
+  posicao: PosicaoDaAya | null,
+): CSSProperties | undefined {
   if (!posicao) return undefined;
   const emCima = posicao.top > 150;
   return {
@@ -664,7 +842,7 @@ export function Aya({
   configuracao = configuracaoPublicada,
   obterPerfil = perfilDoLegado,
   janela = globalThis.window,
-}) {
+}: PropsDaAya) {
   const local = useSyncExternalStore(assinarPaginaDaAya, obterPaginaDaAya);
   const temArea = VIEWS_DA_AYA.includes(local.view);
   const nomeDaAreaAtual = temArea ? nomeDaArea(local.area) : "";
@@ -679,7 +857,9 @@ export function Aya({
   const [aberta, setAberta] = useState(() => ler(janela, CHAVE_OCULTA) === "0");
   // Depois de o painel abrir uma vez, o rosto do botão nasce do corpo (a volta).
   const [rostoVemDoCorpo, setRostoVemDoCorpo] = useState(aberta);
-  const [mensagens, setMensagens] = useState(() => mensagensGuardadas(janela));
+  const [mensagens, setMensagens] = useState<MensagemDaAya[]>(() =>
+    mensagensGuardadas(janela),
+  );
   const [ocupada, setOcupada] = useState(false);
   const [texto, setTexto] = useState("");
   const [revelando, setRevelando] = useState("");
@@ -697,10 +877,10 @@ export function Aya({
   }, [local.conversa]);
   const [copiado, setCopiado] = useState("");
 
-  const refPainel = useRef(null);
-  const refCampo = useRef(null);
-  const refArara = useRef(null);
-  const refCorpo = useRef(null);
+  const refPainel = useRef<HTMLElement>(null);
+  const refCampo = useRef<HTMLTextAreaElement>(null);
+  const refArara = useRef<HTMLButtonElement>(null);
+  const refCorpo = useRef<HTMLDivElement>(null);
   const devolverFocoAArara = useRef(false);
   const idDoTitulo = useId();
   const idDoCampo = useId();
@@ -713,13 +893,16 @@ export function Aya({
   const perfil = obterPerfil();
   const tourDaTela = tourDaPagina({ ...local, perfil });
   const trilhas = trilhasDoPerfil(perfil);
-  const [tour, setTour] = useState(null);
+  const [tour, setTour] = useState<TourEmCurso | null>(null);
   const [progresso, setProgresso] = useState(() =>
     lerProgressoDasTrilhas(janela),
   );
   const [oferta, setOferta] = useState(false);
   // Convite da primeira visita a esta tela: { chave, titulo } ou null.
-  const [convite, setConvite] = useState(null);
+  const [convite, setConvite] = useState<{
+    chave: string;
+    titulo: string;
+  } | null>(null);
   const temPrimeirosPassos = trilhas.some(
     (t) => t.id === ID_DOS_PRIMEIROS_PASSOS,
   );
@@ -760,19 +943,19 @@ export function Aya({
 
   /* Leva à tela do passo da trilha; diz se precisou trocar de tela. */
   const irParaOPasso = useCallback(
-    (passo) => {
+    (passo: PassoDoTour) => {
       const [view, secao = ""] = String(passo.pagina || "").split(":");
       const agora = obterPaginaDaAya();
       if (agora.view === view && (!secao || agora.secao === secao))
         return false;
-      if (agora.view !== view) navegar(view);
+      if (agora.view !== view) navegar(view!);
       if (secao) abrirSecao(secao);
       return true;
     },
     [navegar, abrirSecao],
   );
 
-  function celebrarFimDoTour(concluido) {
+  function celebrarFimDoTour(concluido: TourEmCurso | null): void {
     if (!concluido) return;
     const nome = String(concluido.rotulo || "").replace(/^(Tour|Trilha): /, "");
     comemorar({
@@ -787,7 +970,7 @@ export function Aya({
     });
   }
 
-  function comecarTour(novo) {
+  function comecarTour(novo: TourEmCurso): void {
     setOferta(false);
     setConvite(null);
     setAberta(false);
@@ -813,7 +996,11 @@ export function Aya({
     return true;
   }
 
-  function iniciarTrilha(trilha) {
+  function iniciarTrilha(trilha: {
+    id: string;
+    titulo: string;
+    passos: readonly PassoDoTour[];
+  }): void {
     comecarTour({
       chave: `trilha:${trilha.id}`,
       trilha: trilha.id,
@@ -824,7 +1011,7 @@ export function Aya({
   }
 
   const aoMudarPassoDoTour = useCallback(
-    (indice) => {
+    (indice: number) => {
       if (tour?.trilha)
         setProgresso(salvarPassoDaTrilha(janela, tour.trilha, indice));
     },
@@ -832,7 +1019,7 @@ export function Aya({
   );
 
   const aoFecharTour = useCallback(
-    (motivo) => {
+    (motivo: MotivoDoFimDoTour) => {
       if (tour?.trilha && motivo === "concluiu")
         setProgresso(concluirTrilha(janela, tour.trilha));
       // Fim do tour com "Concluir": fogos; fim de uma trilha inteira: a festa.
@@ -909,7 +1096,7 @@ export function Aya({
     refCampo.current?.focus();
   }
 
-  const chamadoDe = (mensagem) => {
+  const chamadoDe = (mensagem: { id: string; texto: string }): ChamadoDaAya => {
     const encontrado = mensagens.findIndex((m) => m.id === mensagem.id);
     const indice = encontrado < 0 ? mensagens.length : encontrado;
     const pergunta =
@@ -947,11 +1134,11 @@ export function Aya({
     // chamadoDe lê as mensagens, a página e a configuração do momento.
     [ultimaResposta, local, nomeDaAreaAtual],
   );
-  const renovarSuporte = (evento) => {
+  const renovarSuporte = (evento: MouseEvent<HTMLAnchorElement>) => {
     evento.currentTarget.href = chamadoDe(ultimaResposta).href;
   };
 
-  async function enviar(pergunta) {
+  async function enviar(pergunta: string): Promise<void> {
     const limpa = String(pergunta || "").trim();
     if (!limpa || ocupada) return;
     // "Me mostra esta tela", "tour", "item por item": começa o tour da tela.
@@ -959,7 +1146,7 @@ export function Aya({
       setTexto("");
       return;
     }
-    const historico = mensagens.map((m) => ({
+    const historico = mensagens.map((m): MensagemDaConversa => ({
       role: m.papel === "user" ? "user" : "assistant",
       content: m.texto,
     }));
@@ -969,7 +1156,7 @@ export function Aya({
     ]);
     setTexto("");
     setOcupada(true);
-    let resultado;
+    let resultado: RespostaDoPainel | null;
     try {
       resultado = await perguntar({
         question: limpa,
@@ -1020,7 +1207,7 @@ export function Aya({
     setOcupada(false);
   }
 
-  function avaliar(mensagem, valor) {
+  function avaliar(mensagem: MensagemDaAya, valor: AvaliacaoDaResposta): void {
     setMensagens((atuais) =>
       atuais.map((m) =>
         m.id === mensagem.id ? { ...m, avaliacao: valor } : m,
@@ -1060,7 +1247,7 @@ export function Aya({
     }
   }
 
-  function abrirTela(acao) {
+  function abrirTela(acao: AcaoDeTela): void {
     if (acao.filtro && Object.keys(acao.filtro).length)
       pedirFiltro(acao.view, acao.filtro);
     if (acao.secao) {
@@ -1074,7 +1261,7 @@ export function Aya({
 
   const terminarRevelacao = useCallback(() => setRevelando(""), []);
 
-  function aoTeclarNoPainel(evento) {
+  function aoTeclarNoPainel(evento: KeyboardEvent<HTMLElement>): void {
     if (evento.key === "Escape") {
       evento.stopPropagation();
       fechar();
@@ -1083,7 +1270,7 @@ export function Aya({
     prenderFoco(evento, refPainel.current);
   }
 
-  function aoTeclarNoCampo(evento) {
+  function aoTeclarNoCampo(evento: KeyboardEvent<HTMLTextAreaElement>): void {
     if (
       evento.key !== "Enter" ||
       evento.shiftKey ||
@@ -1397,7 +1584,7 @@ export function Aya({
 export function montarAya({
   elemento = globalThis.document?.getElementById("ayaApp"),
   ...opcoes
-} = {}) {
+}: PropsDaAya & { elemento?: Element | null } = {}) {
   if (!elemento) return { raiz: null, desmontar: () => {} };
   const { raiz, desmontar } = montarModulo(elemento, <Aya {...opcoes} />, {
     nome: "Aya",

@@ -1670,8 +1670,9 @@ export function passosDaTrilha(
 }
 
 /** As trilhas que o perfil pode fazer (a regra da trilha e ao menos um passo de tela). */
-export function trilhasDoPerfil(perfil: PerfilDoTour): TrilhaDaAya[] {
-  if (!perfil || perfil.ativo === false) return [];
+export function trilhasDoPerfil(perfil: unknown): TrilhaDaAya[] {
+  if (!perfil || (perfil as NonNullable<PerfilDoTour>).ativo === false)
+    return [];
   return TRILHAS.filter(
     (trilha) =>
       trilha.exige(perfil) &&

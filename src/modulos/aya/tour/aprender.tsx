@@ -7,10 +7,37 @@
 */
 
 import { useId, useState } from "react";
+import type { CSSProperties } from "react";
 import { Icone } from "../../../componentes/icone.tsx";
 import { passoParaRetomar, rotuloDoProgresso } from "../../../lib/aya-tours.ts";
+import type {
+  ProgressoDasTrilhas,
+  TrilhaDaAya,
+} from "../../../lib/aya-tours.ts";
 
-export function SecaoAprender({ trilhas, progresso, aoIniciar, desabilitada }) {
+export interface PropsDaSecaoAprender {
+  trilhas: readonly TrilhaDaAya[];
+  progresso: ProgressoDasTrilhas;
+  aoIniciar: (trilha: TrilhaDaAya) => void;
+  desabilitada?: boolean;
+}
+
+export interface PropsDaOfertaDePrimeirosPassos {
+  noPainel?: boolean;
+  estilo?: CSSProperties;
+  aoAceitar: () => void;
+  aoRecusar: () => void;
+  rotulo?: string;
+  destaque?: string;
+  texto?: string;
+}
+
+export function SecaoAprender({
+  trilhas,
+  progresso,
+  aoIniciar,
+  desabilitada,
+}: PropsDaSecaoAprender) {
   const [aberta, setAberta] = useState(false);
   const idDaLista = useId();
   if (!trilhas.length) return null;
@@ -73,7 +100,7 @@ export function OfertaDePrimeirosPassos({
   rotulo = "Primeiros passos",
   destaque = "Primeira vez no MONITORA?",
   texto = "Posso te mostrar o básico em poucos passos.",
-}) {
+}: PropsDaOfertaDePrimeirosPassos) {
   return (
     <div
       className={
