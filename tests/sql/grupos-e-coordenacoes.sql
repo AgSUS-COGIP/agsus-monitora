@@ -3,17 +3,9 @@
 -- Identidades sintéticas; o rollback final não deixa rastro.
 begin;
 
--- 1. Semente dos perfis = função fixa antiga, célula a célula --------------------------
-do $$
-begin
-  if exists (
-    select 1
-      from unnest(array['usuario','edital_gestor','contratador','admin']) p(perfil)
-     cross join unnest(array['dashboard','analises','nucleo','calendario','aprovados','importacao','paineis','configuracoes']) r(recurso)
-     where private."FC_NIVEL_DO_GRUPO"(p.perfil, r.recurso) is distinct from private.nivel_padrao_recurso(p.perfil, r.recurso)
-  ) then raise exception 'Perfis semente divergem de nivel_padrao_recurso'; end if;
-end;
-$$;
+-- 1. (A conferência da semente dos perfis contra a função fixa antiga,
+--    private.nivel_padrao_recurso, saiu com a função na migration
+--    20261026120000_remove_funcoes_sem_chamador.sql.)
 
 -- 2. Cenário: área Saúde Indígena, dois editais, coordenação Norte só com a unidade A --
 insert into public."TB_MONITORAMENTO_INDIGENA" (id, edital, unidade, responsavel, ativo, "CO_AREA") values
