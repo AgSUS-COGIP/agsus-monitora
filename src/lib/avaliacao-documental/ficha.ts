@@ -1,11 +1,11 @@
 /*
   A ficha da avaliação documental (fase F4): o que a tela precisa além da
-  conta (pontuacao.js). Sem DOM e sem estado.
+  conta (pontuacao.ts). Sem DOM e sem estado.
 
   - o que o candidato DECLAROU em cada bloco: as respostas da Empregare das
     perguntas ligadas ao bloco na regra (o formato real: aspas, múltipla
     escolha, "--", &nbsp;), pela mesma leitura da nota declarada
-    (nota-declarada.js);
+    (nota-declarada.ts);
   - os pontos declarados por parcial (calcularNotaDeclarada com a regra, no
     nível da vaga do lançamento — itens com pontos_por_nivel);
   - o lançamento inicial (nível da vaga, modalidade, indígena e aldeia pelas
@@ -15,14 +15,14 @@
   - o resumo que vai para o banco (DS_RESULTADO) e o endereço da vaga na
     Empregare.
 
-  O lançamento é o "candidato" de pontuacao.js, com:
+  O lançamento é o "candidato" de pontuacao.ts, com:
     blocos[<CODIGO>] = { situacao, motivos[], motivo_livre, nota_ajustada,
                          justificativas[], justificativa_livre, observacao }
   "Outro motivo (descrever)": o código OUTRO_MOTIVO em motivos (Não confere,
   Não enviou) ou em justificativas (nota diferente da declarada) e o texto em
   motivo_livre (10 caracteres ou mais), que vale como o motivo. A
   `observacao` (Observação do avaliador, opcional, até 2.000 caracteres) vai
-  para "Observações da análise" com o item (pontuacao.js).
+  para "Observações da análise" com o item (pontuacao.ts).
     titulos[] = { titulo, nome, aceito, motivo }
     cursos[]  = { nome, horas, aceito, motivo }
     vinculos[]= { empregador, categoria, inicio, fim, aceito, motivo }
@@ -35,7 +35,7 @@ import {
   PARCIAL_DO_TIPO,
   rotuloDe,
   TITULOS_ACADEMICOS,
-} from "./catalogo.js";
+} from "./catalogo.ts";
 import {
   calcularNotaDeclarada,
   chaveDaOpcao,
@@ -43,15 +43,15 @@ import {
   comecoDoEnunciado,
   opcoesDaResposta,
   textoDaResposta,
-} from "./nota-declarada.js";
+} from "./nota-declarada.ts";
 import {
   calcularAvaliacao,
   modalidadesDoLancamento,
   OUTRO_MOTIVO,
   tetoDoBloco,
-} from "./pontuacao.js";
+} from "./pontuacao.ts";
 import { faltaNasDatasDoVinculo, hojeEmBrasilia } from "./datas-do-vinculo.ts";
-import { normalizarRegraAnalise } from "./regra.js";
+import { normalizarRegraAnalise } from "./regra.ts";
 import { faltasDoCargo, regraDaVaga } from "./regra-por-cargo.ts";
 
 const lista = (v) => (Array.isArray(v) ? v : []);

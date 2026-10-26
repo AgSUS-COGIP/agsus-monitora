@@ -14,7 +14,7 @@ const NOME = "20261007140000_declarada_por_nivel.sql";
 const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);
-const REGRA_JS = ler("src/lib/avaliacao-documental/regra.js");
+const REGRA_JS = ler("src/lib/avaliacao-documental/regra.ts");
 const CORRECAO = ler(
   "supabase/correcoes/20261007-declarada-experiencia-por-nivel.sql",
 );

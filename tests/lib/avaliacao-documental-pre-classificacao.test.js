@@ -15,7 +15,7 @@ import {
   preClassificarVaga,
   tamanhoDoLote,
   vagasPorModalidade,
-} from "../../src/lib/avaliacao-documental/pre-classificacao.js";
+} from "../../src/lib/avaliacao-documental/pre-classificacao.ts";
 import { nivelDaVaga } from "../../src/lib/classificacao/vagas.ts";
 import {
   calcularNotaDeclarada,
@@ -26,11 +26,11 @@ import {
   opcoesDaResposta,
   perguntaAmbigua,
   textoDaResposta,
-} from "../../src/lib/avaliacao-documental/nota-declarada.js";
+} from "../../src/lib/avaliacao-documental/nota-declarada.ts";
 import {
   normalizarRegraAnalise,
   validarRegraAnalise,
-} from "../../src/lib/avaliacao-documental/regra.js";
+} from "../../src/lib/avaliacao-documental/regra.ts";
 
 /*
   Os mesmos casos rodam no pytest (tests/python/test_pre_classificacao.py),

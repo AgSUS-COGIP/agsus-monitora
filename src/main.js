@@ -291,7 +291,7 @@ window.avaliacaoDocumentalController = telaSobDemanda({
   secao: "page-avaliacao-documental",
   metodos: ["render", "abrirVisao"],
   carregar: () =>
-    import("./modulos/avaliacao-documental/avaliacao-documental.jsx").then(
+    import("./modulos/avaliacao-documental/avaliacao-documental.tsx").then(
       (m) =>
         m.montarAvaliacaoDocumental({
           toast: window.monitoraToast,

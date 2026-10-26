@@ -1,4 +1,4 @@
-import { NIVEIS as LISTA_DE_NIVEIS } from "../../../lib/avaliacao-documental/catalogo.js";
+import { NIVEIS as LISTA_DE_NIVEIS } from "../../../lib/avaliacao-documental/catalogo.ts";
 import { Popover } from "../../../ui/index.ts";
 import { copiar, LinkDaEmpregare } from "./empregare.tsx";
 import type { ContextoDaEmpregare } from "./tipos.ts";

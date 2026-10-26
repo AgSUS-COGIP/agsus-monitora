@@ -9,7 +9,7 @@
 
   As versões já salvas são imutáveis (TG_THREGRAANALISE_IMUTAVEL) e ficam como
   estão: o parecer já sai sem espaço nas pontas das linhas
-  (linhasSemEspacosNasPontas de pontuacao.js), e a conferência da conta
+  (linhasSemEspacosNasPontas de pontuacao.ts), e a conferência da conta
   ignora só essa diferença (conferir_ficha do Python).
 */
 import type { RegraAnalise } from "./tipos-da-regra.ts";

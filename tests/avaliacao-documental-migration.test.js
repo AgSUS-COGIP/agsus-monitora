@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { validarRegraAnalise } from "../src/lib/avaliacao-documental/regra.js";
+import { validarRegraAnalise } from "../src/lib/avaliacao-documental/regra.ts";
 import { niveisDoRecurso, RESOURCES } from "../src/lib/permissoes-recursos.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 

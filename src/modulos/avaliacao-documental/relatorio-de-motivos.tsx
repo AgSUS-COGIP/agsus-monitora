@@ -9,7 +9,7 @@ import {
   type Ref,
 } from "react";
 import { MIME_XLSX } from "../../lib/classificacao/exportacao.ts";
-import { RESULTADOS } from "../../lib/avaliacao-documental/catalogo.js";
+import { RESULTADOS } from "../../lib/avaliacao-documental/catalogo.ts";
 import {
   agruparPorOutroMotivo,
   argumentosDoRelatorio,

@@ -1,7 +1,7 @@
 /*
   Estado da aba Fila (fase F3), fora do React (useSyncExternalStore). Não
-  importa React. As regras puras estão em src/lib/avaliacao-documental/fila.js
-  e distribuicao.js; aqui, a leitura, as ações e a reserva da ficha aberta.
+  importa React. As regras puras estão em src/lib/avaliacao-documental/fila.ts
+  e distribuicao.ts; aqui, a leitura, as ações e a reserva da ficha aberta.
 
   RPCs (supabase/migrations/20261006120000_fichas_fila_e_reserva.sql;
   contrato em src/lib/rpc-contrato.js):
@@ -22,7 +22,7 @@
     distribuir_fichas(p_edital, p_atribuicoes, p_motivo)
     mandar_fichas_revisao(p_edital, p_fichas, p_motivo)
     abrir_fichas_do_edital(p_edital)
-    incluir_no_lote_por_decisao / revogar_decisao_lote (20261007200000; decisao-no-banco.js)
+    incluir_no_lote_por_decisao / revogar_decisao_lote (20261007200000; decisao-no-banco.ts)
     salvar_filtro_fila(p_nome, p_filtro) / excluir_filtro_fila(p_filtro)
   "Exportar CSV" baixa a aba aberta (csvDaFila), sem ir ao banco.
   O último filtro usado fica no navegador só por conveniência (try/catch);
@@ -45,7 +45,7 @@ import {
   FILTRO_INICIAL,
   nomeDoCsvDaFila,
   normalizarFiltro,
-} from "../../lib/avaliacao-documental/fila.js";
+} from "../../lib/avaliacao-documental/fila.ts";
 import {
   lerForaDoLote,
   resumoForaDoLote,
@@ -56,8 +56,8 @@ import {
   RPC_FILA_DESDE,
 } from "../../lib/avaliacao-documental/fila-por-mudancas.ts";
 import { funcaoAusente } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
-import { decidirNoLote } from "./decisao-no-banco.js";
-import { mensagemDoBanco } from "./estado.js";
+import { decidirNoLote } from "./decisao-no-banco.ts";
+import { mensagemDoBanco } from "./estado.ts";
 
 const RPC_OBTER_FILA = "obter_fila_avaliacao";
 const RPC_PEGAR_PROXIMA = "pegar_proxima_ficha";
@@ -182,7 +182,7 @@ export function criarEstadoDaFila({
   let semFilaDesde = false;
   /* A lista mudou desde a última leitura e ninguém a está vendo (modo de análise). */
   let desatualizada = false;
-  /* O salvamento da ficha aberta (ficha.jsx): fechar espera por ele antes de liberar. */
+  /* O salvamento da ficha aberta (ficha.tsx): fechar espera por ele antes de liberar. */
   const salvamentos = new Map();
   const ouvintes = new Set();
   const publicar = (mudancas) => {
@@ -613,7 +613,7 @@ export function criarEstadoDaFila({
     salvarFiltro,
     excluirFiltro,
     exportarCsv,
-    /* Para o conteúdo da ficha aberta (ficha/estado-da-ficha.js). */
+    /* Para o conteúdo da ficha aberta (ficha/estado-da-ficha.ts). */
     rpc,
     toast,
   };

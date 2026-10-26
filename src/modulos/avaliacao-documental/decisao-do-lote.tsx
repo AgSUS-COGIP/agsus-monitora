@@ -6,14 +6,14 @@ import {
   MOTIVO_SUGERIDO_DA_DECISAO,
   nota,
   seloDaDecisao,
-} from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
+} from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import { Aviso, Campo, Gaveta, Selo } from "../../ui/index.ts";
 
 /*
   Inclusão no lote por decisão da coordenação (aba Pré-classificação e Fila):
   o selo "Decisão: <motivo>", a gaveta "Incluir por decisão da coordenação"
   (candidatos fora do lote, motivo com a sugestão "Critério CORES") e o
-  "Revogar decisão" (com motivo). As ações são dos stores (decisao-no-banco.js).
+  "Revogar decisão" (com motivo). As ações são dos stores (decisao-no-banco.ts).
   Explicação: docs/aya/regras-da-avaliacao-documental.md.
 */
 

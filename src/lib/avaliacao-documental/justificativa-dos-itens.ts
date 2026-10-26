@@ -24,7 +24,7 @@
   O texto vai para o campo que já existe, `justificativa_livre` do bloco
   (FC_VALIDAR_LANCAMENTO_FICHA: até 2.000 caracteres), e entra no parecer em
   "Observações da análise" como qualquer justificativa (textosDasJustificativas
-  em pontuacao.js e pontuacao.py). comJustificativasDosItens decide quando o
+  em pontuacao.ts e pontuacao.py). comJustificativasDosItens decide quando o
   texto acompanha os itens: só quando o item precisa (Confere ou Editar nota,
   com a pontuação diferente da declarada ou com algum item não pontuado) e só
   enquanto o texto é o automático (vazio ou igual ao resumo anterior). O que o
@@ -37,8 +37,8 @@ import {
   divergenciaDoBloco,
   rotuloDoTitulo,
   titulosDoNivel,
-} from "./ficha.js";
-import { doNivel, faixaDoCurso, tetoDoBloco } from "./pontuacao.js";
+} from "./ficha.ts";
+import { doNivel, faixaDoCurso, tetoDoBloco } from "./pontuacao.ts";
 import {
   comprovadoDaExperiencia,
   diasEmComum,

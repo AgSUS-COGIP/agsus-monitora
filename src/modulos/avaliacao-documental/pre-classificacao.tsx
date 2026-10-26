@@ -19,7 +19,7 @@ import {
   textoDoAviso,
   textoDoLote,
   vagasDaTela,
-} from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
+} from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
 import { ESPERA_DO_PEDIDO_MIN } from "../../lib/robos-de-carga.js";
 import { Aviso, GradeDeKpis, Kpi, Selo } from "../../ui/index.ts";
@@ -27,8 +27,8 @@ import {
   IncluirPorDecisao,
   RevogarDecisao,
   SeloDaDecisao,
-} from "./decisao-do-lote.jsx";
-import { chaveDaLista } from "./estado-da-pre-classificacao.js";
+} from "./decisao-do-lote.tsx";
+import { chaveDaLista } from "./estado-da-pre-classificacao.ts";
 import { InscricoesDoEdital } from "./inscricoes-do-edital.tsx";
 import { TravaDasInscricoes } from "./trava-das-inscricoes.tsx";
 
@@ -39,7 +39,7 @@ import { TravaDasInscricoes } from "./trava-das-inscricoes.tsx";
   o job; os tamanhos do lote por vaga viram versão nova da regra; as listas
   PROVISORIA e LOTE são registradas no banco e exportadas pelo gerador da
   Classificação. A coordenação inclui no lote por decisão (ex.: "Critério
-  CORES") quem a regra deixa fora, e revoga (decisao-do-lote.jsx); o lote
+  CORES") quem a regra deixa fora, e revoga (decisao-do-lote.tsx); o lote
   mostra "N pela regra + M por decisão". Explicações:
   docs/aya/regras-da-avaliacao-documental.md.
 */

@@ -19,8 +19,8 @@ import {
 import {
   NIVEIS,
   TIPOS_DA_NOTA_DECLARADA,
-} from "../../../lib/avaliacao-documental/catalogo.js";
-import { chaveDaOpcao } from "../../../lib/avaliacao-documental/nota-declarada.js";
+} from "../../../lib/avaliacao-documental/catalogo.ts";
+import { chaveDaOpcao } from "../../../lib/avaliacao-documental/nota-declarada.ts";
 import type {
   ColunasDaVaga,
   ItemDaNotaDeclarada,
@@ -38,7 +38,7 @@ import {
   CampoNumero,
   CampoPergunta,
   Escolha,
-} from "../campos.jsx";
+} from "../campos.tsx";
 
 /*
   Passo 3: as perguntas da Empregare. O sistema lê as colunas "Pergunta N -"

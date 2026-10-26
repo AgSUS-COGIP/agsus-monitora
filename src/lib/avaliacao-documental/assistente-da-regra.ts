@@ -1,7 +1,7 @@
 /*
   O assistente "Nova regra" / "Editar regra" da avaliação documental, em
   regras puras (sem DOM e sem estado). É uma interface sobre o MESMO JSON da
-  regra (src/lib/avaliacao-documental/regra.js, schema 1): cada cartão do
+  regra (src/lib/avaliacao-documental/regra.ts, schema 1): cada cartão do
   cardápio liga ou desliga um pedaço da regra (um bloco, uma eliminação
   automática, o corte pelos pontos mínimos), e o resultado é salvo como versão
   nova pelo salvar_regra_analise de sempre. Nada de formato novo.
@@ -23,15 +23,15 @@ import {
   blocoNovo,
   codigoLivre,
   normalizarRegraAnalise,
-} from "./regra.js";
-import { PARCIAL_DO_TIPO } from "./catalogo.js";
+} from "./regra.ts";
+import { PARCIAL_DO_TIPO } from "./catalogo.ts";
 import {
   chaveDaOpcao,
   colunasDaPergunta,
   comecoDoEnunciado,
   normalizarTexto,
   textoDaResposta,
-} from "./nota-declarada.js";
+} from "./nota-declarada.ts";
 import type {
   Bloco,
   ColunasDaVaga,

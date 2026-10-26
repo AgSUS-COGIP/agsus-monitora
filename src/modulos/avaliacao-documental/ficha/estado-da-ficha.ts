@@ -1,7 +1,7 @@
 /*
   Estado da ficha aberta (fase F4), fora do React (useSyncExternalStore). Não
   importa React. A conta e as regras puras estão em
-  src/lib/avaliacao-documental/ficha.js e pontuacao.js; aqui, a leitura, o
+  src/lib/avaliacao-documental/ficha.ts e pontuacao.ts; aqui, a leitura, o
   lançamento em edição, o salvamento automático, a conclusão e a reabertura.
 
   RPCs (supabase/migrations/20261007130000_conteudo_da_ficha.sql; contrato em
@@ -30,7 +30,7 @@
   15 s: salvar_rascunho_ficha era a função que mais custava ao banco, ~17 mil
   chamadas de 14 a 22/10/2026). Conteúdo igual ao último salvo não vai ao
   banco (marcar e desmarcar volta ao que estava). Fechar,
-  trocar de ficha, concluir e esconder a aba (ficha.jsx: visibilitychange e
+  trocar de ficha, concluir e esconder a aba (ficha.tsx: visibilitychange e
   pagehide) salvam na hora (salvar()). Uma mudança durante o envio agenda
   outro com a versão nova. "Salvo às HH:MM" só depois de o banco confirmar
   (AM-12.1). Versão velha (conflito de versão: PT409, antes 40001) ou reserva
@@ -45,14 +45,14 @@ import {
   pendenciasDaFicha,
   regraDaFicha,
   resumoParaGravar,
-} from "../../../lib/avaliacao-documental/ficha.js";
+} from "../../../lib/avaliacao-documental/ficha.ts";
 import { comJustificativasDosItens } from "../../../lib/avaliacao-documental/justificativa-dos-itens.ts";
 import { funcaoAusente } from "../../../lib/avaliacao-documental/leitura-por-versao.ts";
 import {
   AVISO_DE_FICHA_ALTERADA,
   ehConflitoDeVersao,
 } from "../../../lib/conflito-de-versao.ts";
-import { mensagemDoBanco } from "../estado.js";
+import { mensagemDoBanco } from "../estado.ts";
 
 const RPC_OBTER = "obter_ficha_analise";
 const RPC_OBTER_LEVE = "obter_ficha_analise_leve";

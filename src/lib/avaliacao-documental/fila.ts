@@ -2,17 +2,17 @@
   A fila da avaliação documental (aba Fila, fase F3), sem DOM e sem estado:
   as etapas com contadores, os filtros (e o formato dos filtros salvos), a
   reserva ("Em uso por … desde HH:MM"), o que cada ação em lote pode pegar da
-  seleção, o plano da distribuição (a conta é de distribuicao.js, a mesma do
+  seleção, o plano da distribuição (a conta é de distribuicao.ts, a mesma do
   job Python) e, por aba, as colunas, a ordem por coluna e o CSV. Os dados
   vêm de obter_fila_avaliacao (supabase/migrations/20261006120000_fichas_fila_e_reserva.sql).
 */
 import { sanitizeCsvCell } from "../csv-security";
-import { distribuirFichas } from "./distribuicao.js";
+import { distribuirFichas } from "./distribuicao.ts";
 import {
   DICA_DA_ART,
   ROTULO_CURTO_DA_ART,
   ROTULO_DA_ART,
-} from "./tela-da-pre-classificacao.js";
+} from "./tela-da-pre-classificacao.ts";
 
 /** As abas de etapa, na ordem do funil; cada uma é também um filtro. */
 export const ETAPAS_DA_FILA = Object.freeze([

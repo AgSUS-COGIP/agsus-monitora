@@ -19,7 +19,7 @@
     BASES_DA_NOTA_DO_LOTE no catálogo)
     (pergunta_experiencia e nota_declarada[].pergunta: o começo do enunciado
     — ou uma lista de alternativas, quando o enunciado muda de questionário
-    para questionário; casa com qualquer uma, ver nota-declarada.js;
+    para questionário; casa com qualquer uma, ver nota-declarada.ts;
     nota_declarada[] = { parcial, pergunta, tipo, pontos | pontos_por_nivel
     { superior: {resposta: pontos}, tecnico, medio, fundamental } (só OPCAO e
     OPCOES_SOMADAS) | meses + pontos_por_mes (FAIXA_EM_MESES), teto })
@@ -65,7 +65,7 @@ import {
   TIPOS_DE_BLOCO,
   TITULO_PADRAO_DA_ETAPA,
   TITULOS_ACADEMICOS,
-} from "./catalogo.js";
+} from "./catalogo.ts";
 import { validarPorCargo } from "./regra-por-cargo.ts";
 
 const valores = (lista) => new Set(lista.map(([v]) => v));

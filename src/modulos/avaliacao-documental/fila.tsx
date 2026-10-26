@@ -31,8 +31,8 @@ import {
   textoDaColuna,
   textoDaReserva,
   textoDaSituacaoNaFila,
-} from "../../lib/avaliacao-documental/fila.js";
-import { tomDoResultado } from "../../lib/avaliacao-documental/ficha.js";
+} from "../../lib/avaliacao-documental/fila.ts";
+import { tomDoResultado } from "../../lib/avaliacao-documental/ficha.ts";
 import {
   contadoresComForaDoLote,
   juntarFila,
@@ -44,7 +44,7 @@ import {
   DICA_DA_ART,
   nota,
   podeIncluirPorDecisao,
-} from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
+} from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import {
   Abas,
   Aviso,
@@ -58,12 +58,12 @@ import {
   IncluirPorDecisao,
   RevogarDecisao,
   SeloDaDecisao,
-} from "./decisao-do-lote.jsx";
+} from "./decisao-do-lote.tsx";
 import { EspelhosEmMassa } from "./espelhos-em-massa.tsx";
 import { RelatorioDeMotivosDaFila } from "./relatorio-de-motivos.tsx";
 import { erroDoMotivoDaFila } from "../../lib/avaliacao-documental/qualidade-do-motivo.ts";
 import { ModeloDoEspelhoDeNota } from "./modelo-do-espelho.tsx";
-import { ConteudoDaFicha } from "./ficha/ficha.jsx";
+import { ConteudoDaFicha } from "./ficha/ficha.tsx";
 import { ResumoDoAndamento } from "./resumo-do-andamento.tsx";
 import { ReinicioDasFichas } from "./reinicio-das-fichas.tsx";
 
@@ -77,8 +77,8 @@ import { ReinicioDasFichas } from "./reinicio-das-fichas.tsx";
   relatório de motivos: relatorio-de-motivos.tsx), a tabela agrupada por vaga
   quando a vaga é "Todas", a inclusão no
   lote por decisão da coordenação (selo "Decisão: …" na lista e no topo da
-  ficha, com "Revogar decisão": decisao-do-lote.jsx) e a ficha aberta
-  com a reserva; o conteúdo da análise (F4) é ficha/ficha.jsx. Explicações:
+  ficha, com "Revogar decisão": decisao-do-lote.tsx) e a ficha aberta
+  com a reserva; o conteúdo da análise (F4) é ficha/ficha.tsx. Explicações:
   docs/aya/regras-da-avaliacao-documental.md.
 
   Desempenho (lista de até ~7.700 inscritos): os derivados da lista ficam em
@@ -363,7 +363,7 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
   fica só o menu lateral). Daqui saem os dados do cabeçalho (candidato, vaga,
   chips, o "i" com situação, responsável, reserva e regra, Anterior /
   Próxima entre as fichas da lista filtrada, salvando antes), que a ficha
-  desenha preso ao alto com o stepper (ficha/ficha.jsx), e os avisos logo
+  desenha preso ao alto com o stepper (ficha/ficha.tsx), e os avisos logo
   abaixo dele. Esc também volta à fila.
 */
 function ModoDeAnalise({

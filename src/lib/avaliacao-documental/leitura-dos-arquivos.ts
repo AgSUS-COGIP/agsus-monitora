@@ -18,7 +18,7 @@
   A pontuação continua a das linhas aceitas (a conta da ficha e a do banco).
   Sem DOM e sem estado. Testes: tests/lib/avaliacao-documental-leitura-dos-arquivos.test.js.
 */
-import { itemCompleto } from "./ficha.js";
+import { itemCompleto } from "./ficha.ts";
 import { fimDoVinculoAtual } from "./datas-do-vinculo.ts";
 
 export type AlertaLido = { codigo: string; texto: string };

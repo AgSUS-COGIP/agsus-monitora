@@ -1,5 +1,5 @@
 {
-  "sobre": "Casos dourados da avaliação documental: a mesma regra e o mesmo candidato têm de dar o mesmo resultado em src/lib/avaliacao-documental/pontuacao.js, no banco (fase F4) e em qualquer conferidor (Python). As regras são cópia dos modelos de supabase/correcoes/20261006-modelos-da-regra-da-analise.sql (tests/avaliacao-documental-casos.test.js confere). O caso com parecer_da_regra põe esses campos no parecer da regra antes da conta (as opções do parecer, como mostrar_pontos_quando_inapto).",
+  "sobre": "Casos dourados da avaliação documental: a mesma regra e o mesmo candidato têm de dar o mesmo resultado em src/lib/avaliacao-documental/pontuacao.ts, no banco (fase F4) e em qualquer conferidor (Python). As regras são cópia dos modelos de supabase/correcoes/20261006-modelos-da-regra-da-analise.sql (tests/avaliacao-documental-casos.test.js confere). O caso com parecer_da_regra põe esses campos no parecer da regra antes da conta (as opções do parecer, como mostrar_pontos_quando_inapto).",
   "regras": {
     "PROJ26-CURRICULAR": {
       "schema": 1,

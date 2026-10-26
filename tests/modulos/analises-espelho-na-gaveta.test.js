@@ -7,7 +7,7 @@ import {
   calcularFicha,
   declaradaDaFicha,
   regraDaFicha,
-} from "../../src/lib/avaliacao-documental/ficha.js";
+} from "../../src/lib/avaliacao-documental/ficha.ts";
 import {
   espelhoDoDetalhe,
   TEXTOS_DO_ESPELHO_NO_PAINEL,

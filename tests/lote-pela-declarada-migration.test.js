@@ -21,7 +21,7 @@ const ANTES_VALIDAR = ler(
 const ANTES_PRE = ler(
   "supabase/migrations/20261006110000_pre_classificacao_e_lote.sql",
 );
-const REGRA_JS = ler("src/lib/avaliacao-documental/regra.js");
+const REGRA_JS = ler("src/lib/avaliacao-documental/regra.ts");
 const REGRA_PY = ler(
   "python/monitora/avaliacao_documental/pre_classificacao.py",
 );

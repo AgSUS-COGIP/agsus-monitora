@@ -6,11 +6,11 @@ import {
   SITUACOES_DO_BLOCO,
   TIPOS_DE_BLOCO,
   TITULOS_ACADEMICOS,
-} from "../../lib/avaliacao-documental/catalogo.js";
+} from "../../lib/avaliacao-documental/catalogo.ts";
 import {
   blocoNovo,
   codigoLivre,
-} from "../../lib/avaliacao-documental/regra.js";
+} from "../../lib/avaliacao-documental/regra.ts";
 import { Campo } from "../../ui/index.ts";
 import {
   BotaoMais,
@@ -21,7 +21,7 @@ import {
   CampoTexto,
   comValor,
   Escolha,
-} from "./campos.jsx";
+} from "./campos.tsx";
 
 /*
   Os blocos da ficha na regra: um cartão por documento ou pergunta, com o item

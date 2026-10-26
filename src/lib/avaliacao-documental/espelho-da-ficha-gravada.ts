@@ -1,7 +1,7 @@
 /*
   A ENTRADA DO ESPELHO DE NOTA a partir da ficha, sem DOM e sem banco.
 
-  - entradaDoEspelho: do estado da ficha carregada (estado-da-ficha.js) e do
+  - entradaDoEspelho: do estado da ficha carregada (estado-da-ficha.ts) e do
     cabeçalho dela — o botão "Espelho de nota" da ficha concluída.
   - espelhoDaFichaGravada: da ficha GRAVADA como o banco a entrega
     (obter_espelhos_de_nota nos Espelhos de nota em massa; a chave "espelho"
@@ -19,7 +19,7 @@ import {
   TEXTOS_PADRAO_DO_ESPELHO,
   type TextosDoEspelho,
 } from "./modelo-do-espelho.ts";
-import { calcularFicha, regraDaFicha } from "./ficha.js";
+import { calcularFicha, regraDaFicha } from "./ficha.ts";
 import { nomeDaArea } from "../menu-lateral.ts";
 
 export type FichaCarregada = {

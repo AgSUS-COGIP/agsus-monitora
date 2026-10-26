@@ -9,7 +9,7 @@
   avaliacao_documental para analisar ou revisar, Administrador para
   coordenar) em salvar_equipe_edital.
 */
-import { PAPEIS_DA_EQUIPE } from "./catalogo.js";
+import { PAPEIS_DA_EQUIPE } from "./catalogo.ts";
 
 const PAPEIS = new Set(PAPEIS_DA_EQUIPE.map(([v]) => v));
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

@@ -1,10 +1,10 @@
 import { useState, type ReactNode } from "react";
-import { PARCIAL_DO_TIPO as PARCIAIS_DOS_TIPOS } from "../../../lib/avaliacao-documental/catalogo.js";
+import { PARCIAL_DO_TIPO as PARCIAIS_DOS_TIPOS } from "../../../lib/avaliacao-documental/catalogo.ts";
 import {
   ACOES_DO_HISTORICO as ACOES,
   textoDaAlteracao,
   textoDaNota,
-} from "../../../lib/avaliacao-documental/ficha.js";
+} from "../../../lib/avaliacao-documental/ficha.ts";
 import { ResumoDaNota } from "./resumo-da-nota.tsx";
 import type { PropriedadesDoResumo } from "./resumo-da-nota.tsx";
 import { Chips } from "./item-da-ficha.tsx";

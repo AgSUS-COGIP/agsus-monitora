@@ -7,11 +7,11 @@ import {
   rotuloDe,
   SITUACOES_DO_BLOCO,
   TITULOS_ACADEMICOS,
-} from "../../lib/avaliacao-documental/catalogo.js";
+} from "../../lib/avaliacao-documental/catalogo.ts";
 import {
   calcularAvaliacao,
   numeroDoParecer,
-} from "../../lib/avaliacao-documental/pontuacao.js";
+} from "../../lib/avaliacao-documental/pontuacao.ts";
 import { diferencaDaVaga } from "../../lib/avaliacao-documental/regra-por-cargo.ts";
 import type { RegraAnalise } from "../../lib/avaliacao-documental/tipos-da-regra.ts";
 import type { Candidato, NotaMinima } from "./previa.tsx";
@@ -23,7 +23,7 @@ import {
   CampoNumero,
   comValor,
   Escolha,
-} from "./campos.jsx";
+} from "./campos.tsx";
 
 /*
   O corpo de "Testar com um candidato fictício" (previa.tsx), carregado só

@@ -10,7 +10,7 @@ import {
   pendenciasDaFicha,
   regraDaFicha,
   respostasDoBloco,
-} from "../../src/lib/avaliacao-documental/ficha.js";
+} from "../../src/lib/avaliacao-documental/ficha.ts";
 import { semPerguntaNoQuestionario } from "../../src/lib/avaliacao-documental/respostas-do-candidato.ts";
 
 /*

@@ -1,5 +1,5 @@
 {
-  "sobre": "Casos dourados da pré-classificação (Provisória por ART e lote de convocação, fase F2): a mesma regra, a mesma vaga e os mesmos inscritos têm de dar o mesmo resultado em src/lib/avaliacao-documental/pre-classificacao.js (prévia da tela; tests/lib/avaliacao-documental-pre-classificacao.test.js) e em python/monitora/avaliacao_documental/pre_classificacao.py (a conta oficial do job; tests/python/test_pre_classificacao.py). Dados fictícios. 'esperado.linhas' traz, por candidato, só os campos conferidos; 'esperado.resumo', o resumo inteiro.",
+  "sobre": "Casos dourados da pré-classificação (Provisória por ART e lote de convocação, fase F2): a mesma regra, a mesma vaga e os mesmos inscritos têm de dar o mesmo resultado em src/lib/avaliacao-documental/pre-classificacao.ts (prévia da tela; tests/lib/avaliacao-documental-pre-classificacao.test.js) e em python/monitora/avaliacao_documental/pre_classificacao.py (a conta oficial do job; tests/python/test_pre_classificacao.py). Dados fictícios. 'esperado.linhas' traz, por candidato, só os campos conferidos; 'esperado.resumo', o resumo inteiro.",
   "casos": [
     {
       "nome": "elimina cancelado, questionário incompleto, reprovado e termo; ordena pela ART; lote 2 × (1 + CR)",
@@ -8602,7 +8602,7 @@
     ]
   },
   "nota_declarada_por_nivel": {
-    "sobre": "Nota declarada com pontos por nível (93/2026: experiência +5 a cada 6 meses além dos 6 obrigatórios no nível superior, máx. 35; +4 no técnico e no médio, máx. 40). O mesmo resultado em nota-declarada.js e nota_declarada.py.",
+    "sobre": "Nota declarada com pontos por nível (93/2026: experiência +5 a cada 6 meses além dos 6 obrigatórios no nível superior, máx. 35; +4 no técnico e no médio, máx. 40). O mesmo resultado em nota-declarada.ts e nota_declarada.py.",
     "regra": {
       "schema": 1,
       "provisoria": {

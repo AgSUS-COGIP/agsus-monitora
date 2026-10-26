@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   distribuirFichas,
   tetoDoAnalista,
-} from "../../src/lib/avaliacao-documental/distribuicao.js";
+} from "../../src/lib/avaliacao-documental/distribuicao.ts";
 
 /*
   Distribuição das fichas (fase F3). Os casos dourados rodam também no pytest

@@ -16,7 +16,7 @@ import {
   itemCompleto,
   lancamentoParaGravar,
   opcoesDeJustificativa,
-} from "../../src/lib/avaliacao-documental/ficha.js";
+} from "../../src/lib/avaliacao-documental/ficha.ts";
 
 /*
   O Apurado dos itens que pontuam: vem do Calculado pelos itens registrados

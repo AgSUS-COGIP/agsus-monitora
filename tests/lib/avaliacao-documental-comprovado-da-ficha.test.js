@@ -16,13 +16,13 @@ import {
   composicaoDaNota,
   conferenciaDaFicha,
   pendenciasDaFicha,
-} from "../../src/lib/avaliacao-documental/ficha.js";
+} from "../../src/lib/avaliacao-documental/ficha.ts";
 import {
   assuntoDaObservacao,
   justificativasDoBloco,
 } from "../../src/lib/avaliacao-documental/justificativas-do-bloco.ts";
 import { motivosDoResultado } from "../../src/lib/avaliacao-documental/motivos-do-resultado.ts";
-import { apurarExperiencia } from "../../src/lib/avaliacao-documental/pontuacao.js";
+import { apurarExperiencia } from "../../src/lib/avaliacao-documental/pontuacao.ts";
 
 /*
   A ficha no item Experiência (retorno do teste de 09/10): o tempo COMPROVADO

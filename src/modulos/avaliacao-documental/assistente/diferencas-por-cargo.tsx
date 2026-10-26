@@ -23,7 +23,7 @@ import {
   CampoLista,
   CampoNumero,
   CampoTexto,
-} from "../campos.jsx";
+} from "../campos.tsx";
 import { EditorFaixas } from "./cardapio.tsx";
 
 /*

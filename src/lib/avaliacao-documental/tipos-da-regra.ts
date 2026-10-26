@@ -1,6 +1,6 @@
 /*
   Contratos da regra da avaliação documental (TH_REGRA_ANALISE."DS_CONFIGURACAO").
-  O formato é o de src/lib/avaliacao-documental/regra.js (schema 1), que o
+  O formato é o de src/lib/avaliacao-documental/regra.ts (schema 1), que o
   banco confere em private."FC_VALIDAR_REGRA_ANALISE": aqui só os tipos, para
   o assistente e o resumo. Uma anotação não valida JSON: quem valida é
   validarRegraAnalise.

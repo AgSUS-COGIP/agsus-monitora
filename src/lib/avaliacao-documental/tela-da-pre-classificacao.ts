@@ -7,12 +7,12 @@
   (supabase/migrations/20261006110000_pre_classificacao_e_lote.sql): o
   resultado que o job Python gravou. Aqui não se recalcula ninguém.
 */
-import { normalizarRegraAnalise } from "./regra.js";
+import { normalizarRegraAnalise } from "./regra.ts";
 import {
   PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA,
   PREFIXO_DO_AVISO_DE_SEM_NIVEL,
   tamanhoDoLote,
-} from "./pre-classificacao.js";
+} from "./pre-classificacao.ts";
 
 const lista = (v) => (Array.isArray(v) ? v : []);
 const numero = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);

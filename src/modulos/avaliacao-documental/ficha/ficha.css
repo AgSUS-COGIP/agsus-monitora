@@ -1,7 +1,7 @@
-/* Ficha da Avaliação documental (ficha/*.tsx e ficha.jsx). Só tokens; claro e escuro pelos tokens. */
+/* Ficha da Avaliação documental (ficha/*.tsx e ficha.tsx). Só tokens; claro e escuro pelos tokens. */
 
 /*
-  Modo de análise (fila.jsx, ModoDeAnalise): a ficha ocupa a área de conteúdo.
+  Modo de análise (fila.tsx, ModoDeAnalise): a ficha ocupa a área de conteúdo.
   O cabeçalho com o stepper fica preso logo abaixo do cabeçalho do app; a
   lateral, abaixo dos dois; o rodapé preso ao pé, acima do menu inferior do
   celular. Os recuos (--avd-recuo-do-cabecalho, --avd-altura-do-topo) são

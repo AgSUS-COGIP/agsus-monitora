@@ -17,7 +17,7 @@ import type {
 import { DIRECOES, NIVEIS } from "../../../lib/classificacao/catalogo.ts";
 import { rotuloDaVersao } from "../../../lib/nome-da-versao.ts";
 import { Aviso } from "../../../ui/index.ts";
-import { Caixa, CampoNumero } from "../campos.jsx";
+import { Caixa, CampoNumero } from "../campos.tsx";
 import { ListaOrdenavel } from "./lista-ordenavel.tsx";
 import { SeletorDeCriterios } from "./seletor-de-criterios.tsx";
 import type { ApoioDaRegra, NotaMinimaDaClassificacao } from "./tipos.ts";

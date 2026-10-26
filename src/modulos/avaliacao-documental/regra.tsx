@@ -12,14 +12,14 @@ import {
   SINAIS_DA_REVISAO,
   SITUACOES_DA_REGRA,
   TIPOS_DA_NOTA_DECLARADA,
-} from "../../lib/avaliacao-documental/catalogo.js";
+} from "../../lib/avaliacao-documental/catalogo.ts";
 import {
   codigoLivre,
   normalizarRegraAnalise,
   regrasIguais,
   validarRegraAnalise,
-} from "../../lib/avaliacao-documental/regra.js";
-import { comecoDoEnunciado } from "../../lib/avaliacao-documental/nota-declarada.js";
+} from "../../lib/avaliacao-documental/regra.ts";
+import { comecoDoEnunciado } from "../../lib/avaliacao-documental/nota-declarada.ts";
 import {
   comPontosQuandoInapto,
   ROTULO_DA_OPCAO,
@@ -51,7 +51,7 @@ import {
 } from "../../lib/rascunho-da-regra.ts";
 import { AssistenteDaRegra } from "./assistente/assistente.tsx";
 import { ComparacaoDeVersoes, ResumoDaRegra } from "./assistente/conferir.tsx";
-import { Blocos } from "./blocos.jsx";
+import { Blocos } from "./blocos.tsx";
 import {
   BotaoMais,
   BotaoTirar,
@@ -62,7 +62,7 @@ import {
   CampoTexto,
   comValor,
   Escolha,
-} from "./campos.jsx";
+} from "./campos.tsx";
 import { Previa } from "./previa.tsx";
 
 /*

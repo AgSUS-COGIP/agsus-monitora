@@ -42,7 +42,7 @@
                                                 análises) ou PLANILHA, com motivo
                                                 (20261009200000; coordenação)
 
-  A conta da prévia é a de src/lib/avaliacao-documental/pontuacao.js, feita no
+  A conta da prévia é a de src/lib/avaliacao-documental/pontuacao.ts, feita no
   componente; aqui só a carga e a gravação. A aba aberta (`visao`) mora aqui
   para o "Atualizar" e a reabertura da tela relerem a aba certa. Regra, Equipe
   e Pré-classificação são só de quem coordena o edital (abas-e-entrada.ts):
@@ -53,7 +53,7 @@
   o único vigente; senão, a tela mostra os cartões dos editais.
 
   Rascunho: o que a pessoa muda na regra é guardado a cada mudança por
-  src/app/rascunho-da-regra.ts (montado em avaliacao-documental.jsx); ao
+  src/app/rascunho-da-regra.ts (montado em avaliacao-documental.tsx); ao
   salvar a versão nova, `aoGravarVersao` o apaga antes de a aba remontar.
 
   Leitura x gravação: a leitura do edital que estava no ar quando uma gravação
@@ -67,7 +67,7 @@ import {
 } from "../../lib/falha-de-rede";
 import { criarCopiasPorVersao } from "../../app/copias-por-versao.ts";
 import { criarLeituraPorVersao } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
-import { editalVigente } from "../../lib/avaliacao-documental/editais.js";
+import { editalVigente } from "../../lib/avaliacao-documental/editais.ts";
 import { regraComTextosSemEspacosNasPontas } from "../../lib/avaliacao-documental/textos-da-regra.ts";
 import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 import {

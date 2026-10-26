@@ -17,7 +17,7 @@ import {
   nomeDoArquivo,
 } from "../src/lib/classificacao/exportacao.ts";
 import { editaisParaConduzir } from "../src/lib/conducao-de-entrevista.ts";
-import { editaisDaEscolha } from "../src/lib/avaliacao-documental/editais.js";
+import { editaisDaEscolha } from "../src/lib/avaliacao-documental/editais.ts";
 import { indicadoresDaVisaoGeral } from "../src/lib/visao-geral.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 import { COLUNAS_DO_MONITORAMENTO } from "../src/app/carga.js";
@@ -152,7 +152,7 @@ describe("telas operacionais: aparece, com a marca", () => {
   it("as três telas mostram o selo no seletor e no topo", () => {
     for (const arquivo of [
       "src/modulos/entrevistas/seletor-do-edital.tsx",
-      "src/modulos/avaliacao-documental/avaliacao-documental.jsx",
+      "src/modulos/avaliacao-documental/avaliacao-documental.tsx",
       "src/modulos/classificacao/classificacao.tsx",
     ]) {
       const fonte = ler(arquivo);

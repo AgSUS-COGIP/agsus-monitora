@@ -3,7 +3,7 @@
   candidato declarou: o tempo de experiência (dos vínculos aceitos), os
   cursos (quantos e quantas horas) e os títulos. Só leitura do que a conta já
   fez: o tempo vem de `avaliacao.experiencia` (apurarExperiencia, em
-  pontuacao.js: união dos vínculos aceitos, emenda do dia seguinte, dias ÷
+  pontuacao.ts: união dos vínculos aceitos, emenda do dia seguinte, dias ÷
   dias_por_mes, só os meses inteiros), então o texto muda a cada vínculo ou
   aceite e nunca diverge dos pontos. A divisão "além do mínimo → períodos →
   pontos" repete a fórmula de apurarExperiencia só para explicar a conta.
@@ -13,7 +13,7 @@ import {
   diasDosIntervalos,
   doNivel,
   tetoDoBloco,
-} from "./pontuacao.js";
+} from "./pontuacao.ts";
 
 type ExperienciaApurada = {
   dias_total: number;

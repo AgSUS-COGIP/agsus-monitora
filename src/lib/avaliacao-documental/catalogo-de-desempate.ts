@@ -5,8 +5,8 @@
   Python sabe calcular). Os dois catálogos continuam separados: aqui só se
   decide em que grupo cada um aparece, a busca e quais já estão na lista.
 */
-import { DESEMPATES_DA_PROVISORIA } from "./catalogo.js";
-import { normalizarTexto } from "./nota-declarada.js";
+import { DESEMPATES_DA_PROVISORIA } from "./catalogo.ts";
+import { normalizarTexto } from "./nota-declarada.ts";
 import { CATALOGO_DE_CRITERIOS } from "../classificacao/catalogo.ts";
 
 export type GrupoDeDesempate =

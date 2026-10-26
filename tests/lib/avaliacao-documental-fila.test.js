@@ -22,11 +22,11 @@ import {
   textoDoAndamento,
   textoDaReserva,
   textoDaSituacaoNaFila,
-} from "../../src/lib/avaliacao-documental/fila.js";
+} from "../../src/lib/avaliacao-documental/fila.ts";
 import {
   editaisDaEscolha,
   editalVigente,
-} from "../../src/lib/avaliacao-documental/editais.js";
+} from "../../src/lib/avaliacao-documental/editais.ts";
 
 const AGORA = new Date("2026-10-06T15:00:00Z");
 const EM_10_MIN = "2026-10-06T15:10:00Z";

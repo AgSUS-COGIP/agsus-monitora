@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GRUPOS_DO_CARDAPIO } from "../../src/lib/avaliacao-documental/assistente-da-regra.ts";
-import { DESEMPATES_DA_PROVISORIA } from "../../src/lib/avaliacao-documental/catalogo.js";
+import { DESEMPATES_DA_PROVISORIA } from "../../src/lib/avaliacao-documental/catalogo.ts";
 import {
   catalogoAgrupado,
   CRITERIOS_DA_CLASSIFICACAO,

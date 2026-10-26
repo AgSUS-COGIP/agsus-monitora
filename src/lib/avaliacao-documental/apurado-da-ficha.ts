@@ -1,14 +1,14 @@
 /*
   A decisão de cada item da ficha e o "Apurado" dos itens que pontuam
   (Titulação, Cursos, Experiência, critério étnico). Só a interação; a conta
-  continua a de pontuacao.js (nota_ajustada por cima do que os itens
+  continua a de pontuacao.ts (nota_ajustada por cima do que os itens
   lançados dão) e o banco confere o mesmo (FC_PENDENCIAS_FICHA).
 
   Três escolhas lado a lado, sobre as situações que o banco já conhece:
   - CONFERE (situacao CONFORME): aceita o que o candidato declarou; nos
     blocos que pontuam, a pontuação fica igual ao declarado
     (nota_ajustada = declarado). Com Declarado acima de 0, o registro
-    continua exigido (faltaDoComprovado, em ficha.js): a primeira linha já
+    continua exigido (faltaDoComprovado, em ficha.ts): a primeira linha já
     abre, com o título da resposta pré-escolhido.
   - NAO_CONFERE (situacao NAO_CONFORME, ou NAO_ENVIADO quando o candidato
     não enviou o documento): só o motivo; pontuação 0 (nota_ajustada = 0) e
@@ -25,10 +25,10 @@ import {
   BLOCOS_PELA_NOTA,
   decidePelaNota,
   titulosDoNivel,
-} from "./ficha.js";
+} from "./ficha.ts";
 import { itensSugeridos } from "./respostas-do-candidato.ts";
-import { PARCIAL_DO_TIPO } from "./catalogo.js";
-import { notaAjustada, tetoDoBloco } from "./pontuacao.js";
+import { PARCIAL_DO_TIPO } from "./catalogo.ts";
+import { notaAjustada, tetoDoBloco } from "./pontuacao.ts";
 
 type Situacao = "CONFORME" | "NAO_CONFORME" | "NAO_ENVIADO";
 type BlocoQuePontua = { codigo: string; tipo: string };
@@ -261,7 +261,7 @@ export function abreComLinhaNova(
   declarada: Declarada,
 ): boolean {
   if (!ITENS[bloco.tipo] || temItensLancados(bloco, lancamento)) return false;
-  // Cursos: pela faixa/nota do bloco, sem lista (BLOCOS_PELA_NOTA em ficha.js).
+  // Cursos: pela faixa/nota do bloco, sem lista (BLOCOS_PELA_NOTA em ficha.ts).
   if ((BLOCOS_PELA_NOTA as readonly string[]).includes(bloco.tipo))
     return false;
   const lancado = lancamento.blocos?.[bloco.codigo];

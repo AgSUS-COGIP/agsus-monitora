@@ -24,7 +24,7 @@
     descongelar_declarada_pre_classificacao(p_edital, p_motivo, p_vaga)
                                                       (20261007170000) descongela a
                                                       nota declarada; depois, Recalcular
-    incluir_no_lote_por_decisao / revogar_decisao_lote  (20261007200000, decisao-no-banco.js)
+    incluir_no_lote_por_decisao / revogar_decisao_lote  (20261007200000, decisao-no-banco.ts)
                                                       a coordenação inclui no lote por
                                                       decisão ou revoga, com motivo
   "Recalcular": disparar_robo('pre_classificacao', { editais: [edital] })
@@ -71,8 +71,8 @@ import {
   criarLeituraPorVersao,
   funcaoAusente,
 } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
-import { decidirNoLote } from "./decisao-no-banco.js";
-import { mensagemDoBanco } from "./estado.js";
+import { decidirNoLote } from "./decisao-no-banco.ts";
+import { mensagemDoBanco } from "./estado.ts";
 
 const RPC_OBTER_PRE_CLASSIFICACAO = "obter_pre_classificacao";
 const RPC_OBTER_PRE_SE_MUDOU = "obter_pre_classificacao_se_mudou";

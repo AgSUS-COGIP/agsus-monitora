@@ -28,23 +28,23 @@ import {
   textoDoResultado,
   textoDoSalvo,
   tomDoResultado,
-} from "../../../lib/avaliacao-documental/ficha.js";
+} from "../../../lib/avaliacao-documental/ficha.ts";
 import {
   NIVEIS,
   PARCIAL_DO_TIPO,
   rotuloDe,
-} from "../../../lib/avaliacao-documental/catalogo.js";
+} from "../../../lib/avaliacao-documental/catalogo.ts";
 import {
   DICA_DA_ART,
   ROTULO_DA_ART,
-} from "../../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
+} from "../../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import {
   composicaoComPrevias,
   notaComPrevias,
 } from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
 import { motivosDoResultado } from "../../../lib/avaliacao-documental/motivos-do-resultado.ts";
 import { pontuacaoInformativaDaFicha } from "../../../lib/avaliacao-documental/pontos-informativos.ts";
-import { modalidadesDoLancamento } from "../../../lib/avaliacao-documental/pontuacao.js";
+import { modalidadesDoLancamento } from "../../../lib/avaliacao-documental/pontuacao.ts";
 import { rotuloDaVersaoNaLista } from "../../../lib/nome-da-versao.ts";
 import { Aviso } from "../../../ui/index.ts";
 import { guardaDeAlteracoes } from "../../../app/guarda-de-alteracoes.ts";
@@ -68,7 +68,7 @@ import { MaisAcoesDaFicha } from "./mais-acoes-da-ficha.tsx";
 import { ProgressoDaFicha } from "./progresso-da-ficha.tsx";
 import { ResumoDaNota } from "./resumo-da-nota.tsx";
 import { RodapeDaFicha } from "./rodape-da-ficha.tsx";
-import { criarEstadoDaFicha } from "./estado-da-ficha.js";
+import { criarEstadoDaFicha } from "./estado-da-ficha.ts";
 
 /*
   O conteúdo da ficha no modo de análise da aba Fila, calmo e guiado:
@@ -83,7 +83,7 @@ import { criarEstadoDaFicha } from "./estado-da-ficha.js";
   - fora da Conclusão, a lateral só com a nota, o mínimo, a composição por
     bloco e o "⋯" (resumo-da-nota.tsx, mais-acoes-da-ficha.tsx);
   - rodapé fixo mínimo (rodape-da-ficha.tsx).
-  Mesmas RPCs e mesma gravação (estado-da-ficha.js): rascunho automático,
+  Mesmas RPCs e mesma gravação (estado-da-ficha.ts): rascunho automático,
   conclusão só sem pendência, concluída só leitura com Reabrir. Teclas 1/2/3,
   J/K, Ctrl+S e Ctrl+Enter. Explicações: docs/aya/regras-da-avaliacao-documental.md.
 */
@@ -149,7 +149,7 @@ function textoDoEstado(st) {
 /**
  * O corpo da ficha aberta. `registrarAntesDeFechar(fn)` recebe a função que o
  * modo de análise chama antes de sair (salva o que falta e confirma se não
- * der). `topo`: o que o cabeçalho mostra (fila.jsx); `children`: os avisos
+ * der). `topo`: o que o cabeçalho mostra (fila.tsx); `children`: os avisos
  * logo abaixo dele.
  */
 export function ConteudoDaFicha({
@@ -183,7 +183,7 @@ export function ConteudoDaFicha({
   }, [loja, fichaId]);
   /*
     A fila espera o salvamento desta ficha antes de liberar a reserva
-    (estado-da-fila.js, fechar). Ao desmontar, o envio do que estava pendente
+    (estado-da-fila.ts, fechar). Ao desmontar, o envio do que estava pendente
     fica no lugar, para a liberação que vier depois esperar por ele.
   */
   useEffect(() => {
@@ -247,7 +247,7 @@ export function ConteudoDaFicha({
     };
   }, [loja]);
 
-  // A regra da vaga (a diferença do cargo por cima do nível): estado-da-ficha.js.
+  // A regra da vaga (a diferença do cargo por cima do nível): estado-da-ficha.ts.
   const regra = st.regra;
   const blocos = useMemo(() => regra?.blocos || [], [regra]);
   const passos = useMemo(

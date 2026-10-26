@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react";
-import { PAPEIS_DA_EQUIPE } from "../../lib/avaliacao-documental/catalogo.js";
+import { PAPEIS_DA_EQUIPE } from "../../lib/avaliacao-documental/catalogo.ts";
 import {
   linhaDaEquipe,
   resumoDaEquipe,
   validarEquipe,
-} from "../../lib/avaliacao-documental/equipe.js";
+} from "../../lib/avaliacao-documental/equipe.ts";
 import { rotuloDoNivel } from "../../lib/permissoes-recursos.ts";
 import { Aviso, Campo, EstadoVazio, Selo } from "../../ui/index.ts";
-import { BotaoMais, BotaoTirar } from "./campos.jsx";
+import { BotaoMais, BotaoTirar } from "./campos.tsx";
 import { QuemEntraNaEquipe } from "./quem-entra-na-equipe.tsx";
 
 /*

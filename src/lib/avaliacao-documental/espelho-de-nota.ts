@@ -2,7 +2,7 @@
   O ESPELHO DE NOTA do candidato (modelo "Template_Espelho_de_Nota_Layout_
   Candidato"): um documento simplificado para o atendimento ao candidato, feito
   a partir da ficha concluída da Avaliação documental. Sem DOM e sem banco: a
-  ficha já carregada (estado-da-ficha.js) entra, uma página HTML A4 sai; o
+  ficha já carregada (estado-da-ficha.ts) entra, uma página HTML A4 sai; o
   navegador imprime ("Salvar como PDF") e nada fica guardado (nem no Storage).
 
   Dois modelos, escolhidos pelo resultado gravado da ficha:
@@ -16,7 +16,7 @@
     critério: os motivos e justificativas da conta, textosDasJustificativas) e
     as observações registradas (as do parecer que não couberam num critério:
     a Observação do avaliador de cada item, as prontas e a geral).
-  Os textos vêm da mesma conta do parecer (pontuacao.js), para não divergir.
+  Os textos vêm da mesma conta do parecer (pontuacao.ts), para não divergir.
   Nada interno: nem avaliador, nem CPF, nem o questionário.
 
   Os textos fixos da folha (título, saudação, nomes dos quadros, rótulos das
@@ -24,10 +24,10 @@
   pela coordenação; sem modelo, o padrão. O PDF (espelho-em-pdf.ts) desenha o
   mesmo objeto Espelho.
 */
-import { PARCIAL_DO_TIPO } from "./catalogo.js";
-import { composicaoDaNota } from "./ficha.js";
+import { PARCIAL_DO_TIPO } from "./catalogo.ts";
+import { composicaoDaNota } from "./ficha.ts";
 import { motivosDoResultado } from "./motivos-do-resultado.ts";
-import { numeroDoParecer, textosDasJustificativas } from "./pontuacao.js";
+import { numeroDoParecer, textosDasJustificativas } from "./pontuacao.ts";
 import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.js";
 import {
   comOCandidato,

@@ -5,7 +5,7 @@ import {
   conferenciaDaFicha,
   pendenciasDaFicha,
   pontuacaoAcimaDoComprovado,
-} from "../../src/lib/avaliacao-documental/ficha.js";
+} from "../../src/lib/avaliacao-documental/ficha.ts";
 
 /*
   Auditoria de 20/10/2026 (edital 114/2026): o Confere da experiência grava a

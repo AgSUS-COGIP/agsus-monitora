@@ -17,7 +17,7 @@ import {
 import {
   regrasIguais,
   validarRegraAnalise,
-} from "../../../lib/avaliacao-documental/regra.js";
+} from "../../../lib/avaliacao-documental/regra.ts";
 import {
   pendenciasDoSalvar,
   type PendenciaDoSalvar,
@@ -55,14 +55,14 @@ import type { EstadoDaRegra, SnapshotDaAvaliacao } from "./tipos.ts";
 
 /*
   O assistente "Nova regra" / "Editar regra" da aba Regra: cinco passos sobre o
-  mesmo rascunho que o modo avançado edita (o JSON de regra.js). Salvar cria a
+  mesmo rascunho que o modo avançado edita (o JSON de regra.ts). Salvar cria a
   versão nova com motivo (salvar_regra_analise) e, se a nota mínima ou o
   desempate da classificação mudaram, grava a regra de classificação antes
   (salvar_regra_classificacao, com a permissão dela). O passo 5 segue a ordem
   Resumo → Comparar versões → Testar (recolhido) → Nome, motivo e Salvar, com
   a lista do que falta ao lado do botão (cada item leva ao passo e ao campo).
 
-  O rascunho é guardado a cada mudança pela aba Regra (regra.jsx, com
+  O rascunho é guardado a cada mudança pela aba Regra (regra.tsx, com
   src/app/rascunho-da-regra.ts): a regra e, se mudaram, a nota mínima e o
   desempate (com a versão da classificação de onde partiram). Retomado, ele
   abre no passo 2; a classificação só volta se a versão dela ainda for a mesma.

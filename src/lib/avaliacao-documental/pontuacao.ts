@@ -1,5 +1,5 @@
 /*
-  A conta da avaliação documental a partir de UMA regra (regra.js) e do que
+  A conta da avaliação documental a partir de UMA regra (regra.ts) e do que
   foi conferido de um candidato. Sem DOM e sem estado: a prévia "Testar com um
   candidato fictício" usa hoje, e a ficha (fase F4) usa a mesma função. Nenhum
   peso fica aqui: pontos, tetos, faixas e efeitos vêm da regra.
@@ -64,11 +64,11 @@ import {
   rotuloDe,
   SITUACOES_DO_BLOCO,
   TITULO_PADRAO_DA_ETAPA,
-} from "./catalogo.js";
+} from "./catalogo.ts";
 import {
   MODELO_DOS_PONTOS_INFORMATIVOS,
   normalizarRegraAnalise,
-} from "./regra.js";
+} from "./regra.ts";
 import { pontosDosExtras, regraDaVaga } from "./regra-por-cargo.ts";
 
 const DIA_MS = 24 * 60 * 60 * 1000;

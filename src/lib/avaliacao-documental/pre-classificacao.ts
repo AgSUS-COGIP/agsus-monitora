@@ -38,12 +38,12 @@
     A coordenação descongela (com motivo) e recalcula;
   - divergência ART × declarada além da tolerância é aviso, e só conta
     quando a declarada do candidato está completa (todo item
-    resolvido; ver nota-declarada.js). O item com pontos por nível usa o nível
+    resolvido; ver nota-declarada.ts). O item com pontos por nível usa o nível
     da vaga (vaga.nivel, que o job tira do nome do cargo e da regra de
     classificação: nivelDaVaga); sem nível, não soma e vira o aviso
     SEM_NIVEL:NOTA_<parcial>;
   - as perguntas da regra são achadas pelo começo do enunciado (ou do nome da
-    coluna; ver nota-declarada.js): a que casa com mais de uma coluna não vale
+    coluna; ver nota-declarada.ts): a que casa com mais de uma coluna não vale
     e vira o aviso PERGUNTA_AMBIGUA:<de onde>;
   - lote: o tamanho da vaga (lote.por_vaga), o número fixo, a nota mínima
     (NOTA_MINIMA: entram todos os não eliminados com a nota ≥
@@ -65,7 +65,7 @@
 */
 import { codigosDaModalidade } from "../classificacao/catalogo.ts";
 import { dataDeCorteDoCronograma } from "../classificacao/dados.ts";
-import { DESEMPATE_PADRAO_DA_PROVISORIA } from "./catalogo.js";
+import { DESEMPATE_PADRAO_DA_PROVISORIA } from "./catalogo.ts";
 import {
   calcularNotaDeclarada,
   chaveDaOpcao,
@@ -75,7 +75,7 @@ import {
   normalizarTexto,
   perguntaAmbigua,
   textoDaResposta,
-} from "./nota-declarada.js";
+} from "./nota-declarada.ts";
 
 export const PREFIXO_DA_ART = "NOTA - ";
 export const PREFIXO_DO_AVISO_DE_PERGUNTA_AMBIGUA = "PERGUNTA_AMBIGUA:";

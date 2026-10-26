@@ -32,7 +32,7 @@ import {
   calcularFicha,
   declaradaDaFicha,
   regraDaFicha,
-} from "../../src/lib/avaliacao-documental/ficha.js";
+} from "../../src/lib/avaliacao-documental/ficha.ts";
 import { entradaDoEspelho } from "../../src/lib/avaliacao-documental/espelho-da-ficha-gravada.ts";
 
 /*

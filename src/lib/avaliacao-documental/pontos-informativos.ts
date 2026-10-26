@@ -1,11 +1,11 @@
-import { PARCIAIS_CURTAS, rotuloDe } from "./catalogo.js";
-import { MODELO_DOS_PONTOS_INFORMATIVOS } from "./regra.js";
+import { PARCIAIS_CURTAS, rotuloDe } from "./catalogo.ts";
+import { MODELO_DOS_PONTOS_INFORMATIVOS } from "./regra.ts";
 import type { RegraAnalise } from "./tipos-da-regra.ts";
 
 /*
   A pontuação informativa do inapto por requisito, como a ficha mostra (lateral
   "Nota" e Conclusão). Só existe com parecer.mostrar_pontos_quando_inapto na
-  regra: a conta (calcularAvaliacao, pontuacao.js) devolve pontos_informativos
+  regra: a conta (calcularAvaliacao, pontuacao.ts) devolve pontos_informativos
   = { nota, parciais } — a soma das parciais apuradas, que NÃO entra na nota
   final (o resultado continua Inapto e a nota final 0, item 8.2.1 do 114/2026).
 */

@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.js";
+import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.ts";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { criarRascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
@@ -13,7 +13,7 @@ import {
   PAPEIS_DA_EQUIPE,
   rotuloDe,
   SITUACOES_DA_REGRA,
-} from "../../lib/avaliacao-documental/catalogo.js";
+} from "../../lib/avaliacao-documental/catalogo.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.ts";
@@ -26,14 +26,14 @@ import {
   VISOES,
 } from "./abas-e-entrada.ts";
 import { EntradaDaAvaliacao } from "./entrada-da-avaliacao.tsx";
-import { Equipe } from "./equipe.jsx";
-import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.js";
-import { criarEstadoDaFila, lerFichaLembrada } from "./estado-da-fila.js";
-import { criarEstadoDaPreClassificacao } from "./estado-da-pre-classificacao.js";
-import { Fila } from "./fila.jsx";
+import { Equipe } from "./equipe.tsx";
+import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
+import { criarEstadoDaFila, lerFichaLembrada } from "./estado-da-fila.ts";
+import { criarEstadoDaPreClassificacao } from "./estado-da-pre-classificacao.ts";
+import { Fila } from "./fila.tsx";
 import { OrigemDaAnalise } from "./origem-da-analise.tsx";
-import { PreClassificacao } from "./pre-classificacao.jsx";
-import { Regra } from "./regra.jsx";
+import { PreClassificacao } from "./pre-classificacao.tsx";
+import { Regra } from "./regra.tsx";
 import "./avaliacao-documental.css";
 import "./ficha/ficha.css";
 

@@ -7,9 +7,9 @@ import {
   lancamentoInicial,
   pendenciasDaFicha,
   regraDaFicha,
-} from "../../src/lib/avaliacao-documental/ficha.js";
-import { calcularAvaliacao } from "../../src/lib/avaliacao-documental/pontuacao.js";
-import { validarRegraAnalise } from "../../src/lib/avaliacao-documental/regra.js";
+} from "../../src/lib/avaliacao-documental/ficha.ts";
+import { calcularAvaliacao } from "../../src/lib/avaliacao-documental/pontuacao.ts";
+import { validarRegraAnalise } from "../../src/lib/avaliacao-documental/regra.ts";
 import {
   avisosDoTituloUnico,
   cargoCasa,

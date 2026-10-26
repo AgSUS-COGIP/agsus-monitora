@@ -4,7 +4,7 @@ ART (item 8.3.1) e o lote de convocação (item 8.4).
 
 Esta é a conta OFICIAL, em lote: o job scripts/pre_classificacao/ roda aqui
 e grava o resultado pronto em TB_PRE_CLASSIFICACAO pelas RPCs. A cópia em
-JavaScript (src/lib/avaliacao-documental/pre-classificacao.js) serve à prévia
+JavaScript (src/lib/avaliacao-documental/pre-classificacao.ts) serve à prévia
 da tela; as duas são conferidas pelos MESMOS casos dourados
 (tests/fixtures/avaliacao-documental/casos-de-pre-classificacao.json). Mudou
 aqui, muda lá — as regras estão descritas no cabeçalho do arquivo JS e em

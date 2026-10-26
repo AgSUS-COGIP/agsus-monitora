@@ -3,7 +3,7 @@ A conta da ficha da avaliação documental (fase F4) a partir de UMA regra e do
 que o analista lançou: situação e motivos de cada bloco, títulos, cursos,
 vínculos, nota ajustada com justificativa e observações.
 
-Cópia fiel de calcularAvaliacao (src/lib/avaliacao-documental/pontuacao.js),
+Cópia fiel de calcularAvaliacao (src/lib/avaliacao-documental/pontuacao.ts),
 com os mesmos nomes de campo na saída. A tela calcula com o JS e grava o
 resultado pronto (concluir_ficha); o banco revalida a estrutura e os limites;
 este módulo recalcula em lote para CONFERIR o que foi gravado
@@ -66,7 +66,7 @@ PARECER_PADRAO = {
     "observacoes": "\n\nObservações da análise:\n{observacoes}",
 }
 # A linha da pontuação informativa do inapto por requisito (parecer.mostrar_pontos_quando_inapto),
-# quando a regra não traz parecer.pontos_informativos (MODELO_DOS_PONTOS_INFORMATIVOS do regra.js).
+# quando a regra não traz parecer.pontos_informativos (MODELO_DOS_PONTOS_INFORMATIVOS do regra.ts).
 MODELO_DOS_PONTOS_INFORMATIVOS = (
     "\n\nPontuação apurada dos títulos, para fins informativos: {nota_informativa} pontos ({distribuicao_informativa})."
 )

@@ -7,7 +7,7 @@
     revogar_decisao_lote(p_edital, p_codigos, p_motivo, p_vaga)
   Uma chamada por vaga (o mesmo código pode estar em mais de uma vaga).
 */
-import { codigosPorVaga } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
+import { codigosPorVaga } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 
 const RPC_INCLUIR_POR_DECISAO = "incluir_no_lote_por_decisao";
 const RPC_REVOGAR_DECISAO = "revogar_decisao_lote";

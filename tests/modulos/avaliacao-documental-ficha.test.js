@@ -5,8 +5,8 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.jsx";
-import { criarEstadoDaFicha } from "../../src/modulos/avaliacao-documental/ficha/estado-da-ficha.js";
+import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
+import { criarEstadoDaFicha } from "../../src/modulos/avaliacao-documental/ficha/estado-da-ficha.ts";
 import {
   clicar,
   digitar,
@@ -346,7 +346,7 @@ const etapa = (codigo) =>
     `[data-tour='avd-ficha-etapas'] [data-etapa='${codigo}']`,
   );
 const irAo = (codigo) => clicar(etapa(codigo));
-/* O avanço sozinho espera a animação do ✓ (ficha.jsx: ESPERA_PARA_AVANCAR_MS). */
+/* O avanço sozinho espera a animação do ✓ (ficha.tsx: ESPERA_PARA_AVANCAR_MS). */
 const esperarAvanco = () =>
   esperar(() => new Promise((r) => setTimeout(r, 500)));
 const conforme = (codigo) =>

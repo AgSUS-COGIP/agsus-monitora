@@ -23,7 +23,7 @@ import {
 import {
   regrasIguais,
   validarRegraAnalise,
-} from "../../src/lib/avaliacao-documental/regra.js";
+} from "../../src/lib/avaliacao-documental/regra.ts";
 import {
   htmlDoResumo,
   resumoDaRegra,

@@ -61,7 +61,7 @@ pessoa e área) ou o único vigente; senão, mostra os cartões dos editais vige
   liberada ao fechar; vencida, a renovação reserva de novo para o responsável sem subir a versão
   (`20261022130000`) e o cabeçalho mostra "Reserva vencida: reabra a ficha" até lá; "Em uso por …
   desde HH:MM" só para leitura; a coordenação libera reserva presa com motivo. O conteúdo da análise é da F4;
-- o seletor de editais mostra só os vigentes (`src/lib/avaliacao-documental/editais.js`), com
+- o seletor de editais mostra só os vigentes (`src/lib/avaliacao-documental/editais.ts`), com
   "Mostrar todos os editais da área";
 - na aba Regra: o lote "Todos com a nota mínima" (item 8.2.6 do 93/2026) e os desempates da
   Provisória (60 anos ou mais, experiência declarada com a pergunta, maior idade, candidatura).
@@ -106,7 +106,7 @@ até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Class
   momento ("Próximo pendente", "Revisar e concluir"; na Conclusão, "Concluir e próxima", travado até
   não faltar nada, e "Salvar rascunho"); "← Voltar à fila" salva antes de soltar a reserva; trocar de área pergunta se há
   alteração não guardada (`confirmarTrocaDeArea`), e a ficha que sai salva o pendente antes de a
-  fila liberar a reserva (`registrarSalvamento` em `estado-da-fila.js`);
+  fila liberar a reserva (`registrarSalvamento` em `estado-da-fila.ts`);
 - concluída: abre na Conclusão, só leitura, com o parecer gravado e o histórico; a coordenação
   reabre com motivo; "Espelho de nota" abre a impressão do espelho para o candidato (eliminado sem
   pontos; apto/inapto por nota com a pontuação por critério) e "Baixar PDF" baixa o mesmo espelho em
@@ -144,11 +144,11 @@ A próxima fase traz a revisão (F5).
 
 A aba Regra abre no **assistente** (`assistente/`, em TSX, contratos em `assistente/tipos.ts` e
 `src/lib/avaliacao-documental/tipos-da-regra.ts`); o **Modo avançado** é o formulário inteiro de
-`regra.jsx`. Os dois editam o mesmo rascunho e salvam o mesmo JSON (`regra.js`) pelo
+`regra.tsx`. Os dois editam o mesmo rascunho e salvam o mesmo JSON (`regra.ts`) pelo
 `salvar_regra_analise`. O rascunho é guardado a cada mudança (por edital e por pessoa, em
 `TB_RASCUNHO_REGRA` com cópia no navegador sem conexão: `src/app/rascunho-da-regra.ts`, hook
 `src/app/usar-rascunho-da-regra.ts`) e volta ao abrir ("Continuar de onde parei" / "Descartar");
-salvar a versão (`aoGravarVersao` do `estado.js`) apaga. Cinco passos:
+salvar a versão (`aoGravarVersao` do `estado.ts`) apaga. Cinco passos:
 
 1. ponto de partida (`partida.tsx`): versão vigente, regra conferida de outro edital da área,
    modelo ou do zero — sempre cópia independente;
@@ -159,7 +159,7 @@ salvar a versão (`aoGravarVersao` do `estado.js`) apaga. Cinco passos:
    (`obter_apoio_regra_analise`) e as respostas da última carga (`obter_perguntas_carga_analise`,
    instantâneo calculado em Python pelo robô; pedidas só ao abrir este passo ou o formulário do modo
    avançado), ligação automática pelo enunciado, verde/amarelo/vermelho com a
-   regra de `nota-declarada.js`, e a nota declarada;
+   regra de `nota-declarada.ts`, e a nota declarada;
 4. nota mínima e desempate (`nota-e-desempate.tsx`, `lista-ordenavel.tsx`,
    `seletor-de-criterios.tsx`): a regra de classificação (gravada por
    `salvar_regra_classificacao`, com a permissão dela; sem Editor, só leitura com aviso) e o
@@ -171,7 +171,7 @@ salvar a versão (`aoGravarVersao` do `estado.js`) apaga. Cinco passos:
    (`pendencias-do-salvar.ts`; cada item leva ao passo e ao campo). No topo, o cartão de estado
    (`estado-do-passo-5.tsx`: sem mudanças, pronto, salvo — com "Marcar como conferida" quando
    pode) e, preso ao pé, o botão do que vai acontecer (salvar, concluir sem mudanças ou fechar).
-   A aba remonta a cada versão; `regraSalvaAgora` (estado.js) faz o assistente voltar ao passo 5.
+   A aba remonta a cada versão; `regraSalvaAgora` (estado.ts) faz o assistente voltar ao passo 5.
 
 "Conferida" é dupla conferência: quem salvou a versão não confere (o banco recusa em
 `conferir_regra_analise`; o administrador global pode), e a regra vigente diz à tela
@@ -227,23 +227,23 @@ ficha ou esconder a aba. Sem as migrations, a tela usa as RPCs de sempre.
 ## Arquivos
 
 ```
-avaliacao-documental.jsx  tela e montarAvaliacaoDocumental() (na #page-avaliacao-documental)
-estado.js                 store sem React: editais, regra, equipe e as gravações (RPCs)
+avaliacao-documental.tsx  tela e montarAvaliacaoDocumental() (na #page-avaliacao-documental)
+estado.ts                 store sem React: editais, regra, equipe e as gravações (RPCs)
 abas-e-entrada.ts         abas por papel, edital que abre sozinho, último edital lembrado
 entrada-da-avaliacao.tsx  cartões dos editais vigentes (sem edital escolhido)
-regra.jsx                 aba Regra: formulário, perguntas da carga, versões, aldeias
+regra.tsx                 aba Regra: formulário, perguntas da carga, versões, aldeias
 assistente/diferencas-por-cargo.tsx  "Diferenças por cargo" (assistente e modo avançado)
-blocos.jsx                os blocos da ficha na regra
+blocos.tsx                os blocos da ficha na regra
 previa.tsx                "Testar com um candidato fictício" (entradas à esquerda, resultado preso
                           à direita; uma coluna em largura estreita)
-equipe.jsx                aba Equipe
-pre-classificacao.jsx     aba Pré-classificação (contadores, vagas, listas oficiais)
-fila.jsx                  aba Fila (etapas, filtros, ações em lote, ficha aberta)
-estado-da-fila.js         store da aba: obter_fila_avaliacao (só o lote e as contagens),
+equipe.tsx                aba Equipe
+pre-classificacao.tsx     aba Pré-classificação (contadores, vagas, listas oficiais)
+fila.tsx                  aba Fila (etapas, filtros, ações em lote, ficha aberta)
+estado-da-fila.ts         store da aba: obter_fila_avaliacao (só o lote e as contagens),
                           os de fora do lote sob demanda e em páginas (obter_fila_fora_do_lote,
                           lib fila-fora-do-lote.ts), Pegar próximo, reserva (renovação e
                           liberação), distribuição, revisão, filtros salvos
-ficha/ficha.jsx           conteúdo da ficha aberta: modo foco / lista, passos, teclas, rodapé
+ficha/ficha.tsx           conteúdo da ficha aberta: modo foco / lista, passos, teclas, rodapé
 ficha/*.tsx               cabeçalho, stepper, item, Conclusão, nota, "⋯", rodapé e links da
                           Empregare (contratos em ficha/tipos.ts); as escolhas (Confere,
                           Não confere, Editar nota) e o que gravam em
@@ -270,43 +270,43 @@ relatorio-de-motivos.tsx  Ações da coordenação › "Relatório de motivos": 
                           listar_relatorio_de_motivos em páginas de 500 (20261020120000), tabela,
                           textos do outro motivo agrupados, CSV/XLSX no navegador; regras puras em
                           src/lib/avaliacao-documental/relatorio-de-motivos.ts
-ficha/estado-da-ficha.js  store da ficha: obter_ficha_analise, rascunho automático,
+ficha/estado-da-ficha.ts  store da ficha: obter_ficha_analise, rascunho automático,
                           concluir_ficha, reabrir_ficha, registrar_acesso_ficha
 ficha/reabrir-a-ficha.tsx "Reabrir" da coordenação: motivo da lista fixa, complemento e
                           "Outro" com descrição (src/lib/avaliacao-documental/motivos-da-reabertura.ts,
                           qualidade-do-motivo.ts; 20261021110000)
 ficha/ficha.css           estilos da ficha (só tokens)
-estado-da-pre-classificacao.js  store da aba: obter_pre_classificacao, Recalcular,
+estado-da-pre-classificacao.ts  store da aba: obter_pre_classificacao, Recalcular,
                           registrar/publicar as listas, Copiar para o SEI e DOCX
-decisao-do-lote.jsx       selo "Decisão: …", "Incluir por decisão da coordenação" e
+decisao-do-lote.tsx       selo "Decisão: …", "Incluir por decisão da coordenação" e
                           "Revogar decisão" (Pré-classificação e Fila)
-decisao-no-banco.js       incluir_no_lote_por_decisao / revogar_decisao_lote (uma chamada por vaga)
-campos.jsx                peças de formulário da regra
+decisao-no-banco.ts       incluir_no_lote_por_decisao / revogar_decisao_lote (uma chamada por vaga)
+campos.tsx                peças de formulário da regra
 avaliacao-documental.css  só tokens
 ```
 
 ## Regras
 
 - A regra é **dado** do edital. Nenhum peso no código: o formato, os valores padrão e a validação
-  ficam em `src/lib/avaliacao-documental/regra.js`, e o banco repete a validação em
+  ficam em `src/lib/avaliacao-documental/regra.ts`, e o banco repete a validação em
   `private."FC_VALIDAR_REGRA_ANALISE"` (`supabase/migrations/20261006100000_regra_da_analise.sql`).
 - A conta da pré-classificação é do job Python (`python/monitora/avaliacao_documental/`); a
-  cópia em `src/lib/avaliacao-documental/pre-classificacao.js` só faz a prévia (tamanho sugerido do
+  cópia em `src/lib/avaliacao-documental/pre-classificacao.ts` só faz a prévia (tamanho sugerido do
   lote) e é conferida com o Python pelos casos de
   `tests/fixtures/avaliacao-documental/casos-de-pre-classificacao.json`. A aba não recalcula
-  ninguém: lê o que o job gravou (`src/lib/avaliacao-documental/tela-da-pre-classificacao.js`).
-- A conta da prévia é `src/lib/avaliacao-documental/pontuacao.js`. É só para a tela: a conta
+  ninguém: lê o que o job gravou (`src/lib/avaliacao-documental/tela-da-pre-classificacao.ts`).
+- A conta da prévia é `src/lib/avaliacao-documental/pontuacao.ts`. É só para a tela: a conta
   oficial, em lote (Provisória, lote, nota declarada de todos os inscritos), é da base Python
   (`python/monitora/`), que grava o resultado pronto e reproduz os casos dourados de
   `tests/fixtures/avaliacao-documental/casos-de-pontuacao.json`. Nada de conta pesada em SQL.
 - Quem coordena cada edital, o banco decide (`FC_PAPEL_AVALIACAO`); a tela só esconde os
   controles de quem não pode (`pode_coordenar`).
 - Explicações vão para `docs/aya/regras-da-avaliacao-documental.md`, não para a tela.
-- A distribuição das fichas é a mesma conta em `src/lib/avaliacao-documental/distribuicao.js` (a
+- A distribuição das fichas é a mesma conta em `src/lib/avaliacao-documental/distribuicao.ts` (a
   prévia) e em `python/monitora/avaliacao_documental/distribuicao.py` (o job, para as fichas que
   entram depois), conferida por `tests/fixtures/avaliacao-documental/casos-de-distribuicao.json`.
   O banco valida e grava (`supabase/migrations/20261006120000_fichas_fila_e_reserva.sql`).
-- A ficha: a tela calcula com `pontuacao.js` (e `src/lib/avaliacao-documental/ficha.js`:
+- A ficha: a tela calcula com `pontuacao.ts` (e `src/lib/avaliacao-documental/ficha.ts`:
   declarado, pendências, resumo); o banco revalida e grava
   (`supabase/migrations/20261007130000_conteudo_da_ficha.sql`); o Python
   (`python/monitora/avaliacao_documental/pontuacao.py`) reconfere em lote pelos casos dourados.

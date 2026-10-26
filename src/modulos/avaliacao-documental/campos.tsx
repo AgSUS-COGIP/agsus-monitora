@@ -2,12 +2,12 @@ import { useId, useState } from "react";
 import {
   perguntaDoTexto,
   textoDaPergunta,
-} from "../../lib/avaliacao-documental/regra.js";
+} from "../../lib/avaliacao-documental/regra.ts";
 import { Campo } from "../../ui/index.ts";
 
 /*
   Peças de formulário da regra da avaliação documental (só desenho; o formato
-  e a validação são de src/lib/avaliacao-documental/regra.js).
+  e a validação são de src/lib/avaliacao-documental/regra.ts).
 */
 
 const numeroOuTexto = (texto) => {
