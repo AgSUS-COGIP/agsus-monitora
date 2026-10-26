@@ -21,9 +21,11 @@ continua lendo a versão 1 (src/lib/classificacao/relatorio-de-desempate.ts).
 O candidato é o id da análise, o código de inscrição e o nome (decisão do
 usuário de 23/10/2026: o relatório é documento interno da comissão, lido só
 por quem vê a lista); a idade sai em anos completos na data de corte (a mesma
-dos critérios idade e 60+), com a ordem de idade dentro do grupo (1 = mais
-velho) e se havia certidão de nascimento — nunca a data. Nada de CPF, contato
-ou data de nascimento.
+dos critérios idade e 60+) para todos os candidatos de todos os grupos (decisão
+de 26/10/2026; antes, só onde a idade pesou), e, onde o critério idade foi
+aplicado, a ordem de idade dentro do grupo (1 = mais velho) e se havia
+certidão de nascimento — nunca a data. Nada de CPF, contato ou data de
+nascimento.
 """
 
 from __future__ import annotations
@@ -70,7 +72,6 @@ _RESOLUCOES = {
     "PENDENTE": "aguardando o registro (pendente)",
     "MESMA_POSICAO_LISTA": "nesta lista o empate fica na mesma posição",
 }
-_CRITERIOS_DE_IDADE = ("IDOSO_60", "MAIOR_IDADE")
 # Horário de Brasília (sem horário de verão desde 2019).
 _BRASILIA = datetime.timezone(datetime.timedelta(hours=-3))
 
@@ -100,6 +101,11 @@ def _valor_publico(c, criterio, ctx, ordens):
 
 def _anos(idade) -> str:
     return "sem data de nascimento" if idade is None else f"{idade} anos"
+
+
+def _idade_do_candidato(idade) -> str:
+    """A idade ao lado do nome no texto: "45 anos" ou, sem a data, "idade —"."""
+    return "idade —" if idade is None else f"{idade} anos"
 
 
 def _texto_do_valor(valor, criterio, idade=None) -> str:
@@ -204,10 +210,6 @@ def _grupo(linhas, lista, rastro_da_vaga, ctx, nomes) -> dict:
         aplicados = [d["criterio"] for d in criterios]
     else:
         aplicados = [d["criterio"] for d in criterios[: mais_fundo + 1]]
-    # A idade (dado pessoal) só vai para o relatório quando a idade pesou no grupo: o grupo
-    # chegou ao critério "idade" ou algum par foi decidido pelo 60+. Quem foi separado
-    # antes (ex.: por exp. saúde indígena, com o 60+ empatado) fica sem a idade.
-    usa_idade = "MAIOR_IDADE" in aplicados or any(p["criterio"] in _CRITERIOS_DE_IDADE for p in pares)
 
     candidatos = []
     for i, linha in enumerate(linhas):
@@ -218,7 +220,9 @@ def _grupo(linhas, lista, rastro_da_vaga, ctx, nomes) -> dict:
                 "codigo": c.codigo,
                 "nome": c.nome,
                 "posicao": linha.posicao,
-                "idade": idade_na_data(c.dataNascimento, ctx.data_corte) if usa_idade else None,
+                # A idade de todos os candidatos de todos os grupos (decisão do usuário de 26/10/2026),
+                # pesando ou não no grupo; sem data de nascimento (ou de corte), None. A data nunca sai.
+                "idade": idade_na_data(c.dataNascimento, ctx.data_corte),
                 "valores": {k: _valor_publico(c, k, ctx, ordens) for k in aplicados},
                 "decididoPor": pares[i]["criterio"] or pares[i]["resolucao"] if i < len(pares) else None,
             }
@@ -508,11 +512,13 @@ def texto_do_relatorio(relatorio: dict) -> str:
                 linhas.append("  Critérios aplicados: " + " → ".join(_rotulo(k) for k in g["criteriosAplicados"]))
             por_id = {c["analiseId"]: c for c in g["candidatos"]}
             for c in g["candidatos"]:
-                valores = " | ".join(
-                    f"{_rotulo(k)}: {_texto_do_valor(v, k, c['idade'])}" for k, v in c["valores"].items()
-                )
+                # A idade vai ao lado do nome (de todos); nos valores, o 60+ fica só "sim"/"não".
+                valores = " | ".join(f"{_rotulo(k)}: {_texto_do_valor(v, k)}" for k, v in c["valores"].items())
                 quem = _quem(c["nome"], c["codigo"], c["analiseId"])
-                linhas.append(f"  {_ordinal(c['posicao'])}  {quem}" + (f"  {valores}" if valores else ""))
+                linhas.append(
+                    f"  {_ordinal(c['posicao'])}  {quem} · {_idade_do_candidato(c['idade'])}"
+                    + (f"  {valores}" if valores else "")
+                )
             for p in g["pares"]:
                 a, b = por_id[p["acima"]], por_id[p["abaixo"]]
                 qa = _quem(a["nome"], a["codigo"], a["analiseId"])

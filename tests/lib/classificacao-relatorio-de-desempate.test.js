@@ -113,7 +113,7 @@ describe("relatório de desempate na tela", () => {
     );
   });
 
-  it("a idade só nos grupos em que ela pesou; nos outros, —", () => {
+  it("a idade de todos os candidatos de todos os grupos; sem data, —", () => {
     const d = lerDesempateDaLista(DOURADO);
     const candidatos = planilhasDoDesempate(d)[3];
     const coluna = candidatos.linhas[0].indexOf("Idade na data de corte");
@@ -123,19 +123,46 @@ describe("relatório de desempate na tela", () => {
     expect(idade("Ana Exemplo")).toBe(60);
     expect(idade("Bruno Teste")).toBe(40);
     expect(idade("João Esboço")).toBe(44);
-    // Decididos por exp. saúde indígena e indígena comprovado (o 60+ empatou): —.
-    expect(idade("Elisa Amostra")).toBe("—");
-    expect(idade("Carla Ficticia")).toBe("—");
+    // Decididos por exp. saúde indígena e indígena comprovado (o 60+ empatou): também com a idade.
+    expect(idade("Elisa Amostra")).toBe(34);
+    expect(idade("Carla Ficticia")).toBe(34);
+    // Sem data de nascimento: —.
+    expect(idade("Dario Sem Data")).toBe("—");
     const html = paginaDoDesempate(d, "Relatório de desempate");
-    expect(html).toContain('<td>Elisa Amostra</td><td class="idade">—</td>');
+    expect(html).toContain('<td>Elisa Amostra</td><td class="idade">34</td>');
     expect(html).toContain('<td>Ana Exemplo</td><td class="idade">60</td>');
-    // A tela é tolerante: mostra a idade que vier gravada, sem recalcular.
-    const comTodas = structuredClone(DOURADO);
-    comTodas.relatorio.vagas[0].grupos[2].candidatos[0].idade = 34;
-    const outra = planilhasDoDesempate(lerDesempateDaLista(comTodas))[3];
+    expect(html).toContain('<td>Dario Sem Data</td><td class="idade">—</td>');
+    // A ordem de idade só onde o critério idade foi aplicado.
+    const elisa = candidatos.linhas.find((l) => l[6] === "Elisa Amostra");
+    expect(elisa.join(" ")).not.toContain("mais velho");
+    // A tela é tolerante: mostra a idade que vier gravada, sem recalcular
+    // (um relatório gravado antes de 26/10/2026 tem — onde a idade não pesou).
+    const antigo = structuredClone(DOURADO);
+    antigo.relatorio.vagas[0].grupos[2].candidatos[0].idade = null;
+    const outra = planilhasDoDesempate(lerDesempateDaLista(antigo))[3];
     expect(outra.linhas.find((l) => l[6] === "Elisa Amostra")?.[coluna]).toBe(
-      34,
+      "—",
     );
+  });
+
+  it("a coluna da idade também numa regra sem critério de idade", () => {
+    const semCriterio = structuredClone(DOURADO);
+    semCriterio.relatorio.criterios = semCriterio.relatorio.criterios.filter(
+      (c) => c.codigo !== "IDOSO_60" && c.codigo !== "MAIOR_IDADE",
+    );
+    const d = lerDesempateDaLista(semCriterio);
+    expect(planilhasDoDesempate(d)[3].linhas[0]).toContain(
+      "Idade na data de corte",
+    );
+    expect(paginaDoDesempate(d, "Relatório")).toContain(
+      '<th class="idade">Idade</th>',
+    );
+    // Sem nenhuma idade gravada e sem critério de idade: sem a coluna.
+    for (const v of semCriterio.relatorio.vagas)
+      for (const g of v.grupos) for (const c of g.candidatos) c.idade = null;
+    expect(
+      planilhasDoDesempate(lerDesempateDaLista(semCriterio))[3].linhas[0],
+    ).not.toContain("Idade na data de corte");
   });
 
   it("o XLSX leva o filtro e o cabeçalho fixo nas planilhas com filtro", () => {
