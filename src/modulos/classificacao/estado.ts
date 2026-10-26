@@ -853,10 +853,13 @@ export function criarEstadoDaClassificacao({
     listaId,
     listaVigente,
     vinculos,
+    motivo = "",
   }: {
     listaId: string;
     listaVigente?: string | null;
     vinculos?: VinculoDaPublicacao[];
+    /** Sobrescrever lista com status exige motivo (20261026150000). */
+    motivo?: string;
   }) {
     const minhaGeracao = geracao;
     try {
@@ -864,6 +867,7 @@ export function criarEstadoDaClassificacao({
         p_lista_classificacao: listaId,
         p_lista_vigente: listaVigente || null,
         p_vinculos: vinculos || [],
+        p_motivo: motivo.trim() || null,
       });
       if (minhaGeracao !== geracao) return null;
       let resultado;

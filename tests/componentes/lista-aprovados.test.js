@@ -1378,6 +1378,7 @@ describe("modal de listas do edital", () => {
       p_arquivo_path: caminho,
       p_candidatos: [{ nome: "X" }, { nome: "Y" }],
       p_substituir: false,
+      p_vinculos: [],
     });
     expect(toast).toHaveBeenCalledWith(
       "2 candidato(s) importados com sucesso.",
@@ -1416,6 +1417,9 @@ describe("modal de listas do edital", () => {
     supabase.rpc.mockClear();
     await clicar($("approvedImportRemove"));
     expect(confirmar).toHaveBeenCalledTimes(1);
+    expect(confirmar.mock.calls[0][0]).toContain(
+      "os contratados do edital voltam a zero",
+    );
     expect(supabase.rpc).toHaveBeenCalledWith("remover_lista_aprovados", {
       p_lista_id: "L10",
     });
@@ -1438,6 +1442,220 @@ describe("modal de listas do edital", () => {
     URL.createObjectURL = original;
     expect(supabase.bucket.download).toHaveBeenCalledWith("10/arquivo.xlsx");
     expect(baixados).toEqual(["aprovados-03-2025.xlsx"]);
+  });
+
+  describe("substituir o XLSX: prévia do casamento antes de confirmar", () => {
+    const VIGENTE = {
+      edital_id: "10",
+      pode_substituir: true,
+      tem_analises: false,
+      resultado_final: null,
+      publicacoes: [],
+      vigente: {
+        lista_id: "L10",
+        origem: "XLSX",
+        importado_em: "2026-09-20T12:00:00Z",
+        candidatos: [
+          {
+            candidato_id: "ana",
+            nome: "Ana Ribeiro",
+            codigo_vaga: "VG-1",
+            classificacao: 1,
+            status: "Contratado",
+            matricula: "M-1",
+          },
+          {
+            candidato_id: "bruno",
+            nome: "Bruno Lima",
+            codigo_vaga: "VG-1",
+            classificacao: 2,
+          },
+          {
+            candidato_id: "carla",
+            nome: "Carla Souza",
+            codigo_vaga: "VG-1",
+            sub_judice: true,
+          },
+          {
+            candidato_id: "paulo",
+            nome: "Paulo Fora",
+            codigo_vaga: "VG-1",
+            classificacao: 3,
+            status: "Desistente",
+          },
+        ],
+      },
+    };
+    const linha = (classificacao, nota, nome) => ({
+      codigo_vaga: "VG-1",
+      cargo: "Enfermeiro",
+      classificacao,
+      nota,
+      nome,
+      modalidade: "AC",
+    });
+    const PLANILHA = [
+      linha(1, 90, "ANA RIBEIRO"),
+      linha(2, 80, "Bruno  Lima"),
+      linha(3, 70, "Nova Pessoa"),
+    ];
+    function comVigente(supabase, situacao = VIGENTE) {
+      const original = supabase.rpc.getMockImplementation();
+      supabase.rpc.mockImplementation((nome, argumentos) => {
+        if (nome === "obter_publicacao_lista_aprovados")
+          return Promise.resolve({
+            data: structuredClone(situacao),
+            error: null,
+          });
+        if (nome === "importar_lista_aprovados")
+          return Promise.resolve({
+            data: { ok: true, preservados: 1 },
+            error: null,
+          });
+        return original(nome, argumentos);
+      });
+      return supabase;
+    }
+    const escolherArquivo = () =>
+      Object.defineProperty($("approvedImportFile"), "files", {
+        value: [new File(["x"], "nova.xlsx")],
+      });
+    const kpi = (chave) =>
+      document.querySelector(
+        `#approvedImportPrevia [data-kpi='${chave}'] .ui-kpi-valor`,
+      ).textContent;
+
+    it("o aviso diz o que é preservado ao substituir", async () => {
+      await montar({ perfil: { perfil: "admin" } });
+      await abrir();
+      expect(
+        document.querySelector("[data-aviso-substituicao]").textContent,
+      ).toContain(
+        "Substituir mantém status, matrícula, convocação, sub judice e anexos",
+      );
+    });
+
+    it("mostra casados, quem entra, sem par e os status sem dono, sem gravar nada", async () => {
+      const supabase = comVigente(supabaseFalso());
+      await montar({
+        perfil: { perfil: "admin" },
+        supabase,
+        lerPlanilha: async () => PLANILHA,
+      });
+      await abrir();
+      escolherArquivo();
+      supabase.rpc.mockClear();
+      await clicar($("approvedImportSubmit"));
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        "obter_publicacao_lista_aprovados",
+        { p_edital: "10", p_com_candidatos: true },
+      );
+      expect(supabase.bucket.upload).not.toHaveBeenCalled();
+      expect(supabase.rpc).not.toHaveBeenCalledWith(
+        "importar_lista_aprovados",
+        expect.anything(),
+      );
+      expect(kpi("casados")).toBe("2");
+      expect(kpi("entram")).toBe("1");
+      expect(kpi("sem-par")).toBe("1");
+      expect(kpi("sem-dono")).toBe("1");
+      expect(kpi("sub-judice")).toBe("1");
+      expect(
+        document.querySelector(".approved-import-sem-dono").textContent,
+      ).toContain("Paulo Fora");
+      // Ana tem status: substituir pede o motivo.
+      expect($("approvedImportMotivo")).not.toBeNull();
+      // Cancelar volta ao botão de substituir.
+      await clicar($("approvedImportCancelPrevia"));
+      expect($("approvedImportPrevia")).toBeNull();
+      expect($("approvedImportSubmit")).not.toBeNull();
+    });
+
+    it("confirma com os vínculos da prévia (pela linha da planilha) e o motivo", async () => {
+      const supabase = comVigente(supabaseFalso());
+      const lerPlanilha = vi.fn(async () => PLANILHA);
+      const { toast } = await montar({
+        perfil: { perfil: "admin" },
+        supabase,
+        lerPlanilha,
+      });
+      await abrir();
+      escolherArquivo();
+      await clicar($("approvedImportSubmit"));
+      await digitar($("approvedImportMotivo"), "Planilha corrigida pela banca");
+      supabase.rpc.mockClear();
+      await clicar($("approvedImportConfirm"));
+      // A planilha é lida uma vez só: a confirmação usa a da prévia.
+      expect(lerPlanilha).toHaveBeenCalledTimes(1);
+      const chamada = supabase.rpc.mock.calls.find(
+        ([nome]) => nome === "importar_lista_aprovados",
+      );
+      expect(chamada[1]).toMatchObject({
+        p_edital_id: "10",
+        p_substituir: true,
+        p_motivo: "Planilha corrigida pela banca",
+        p_candidatos: PLANILHA,
+        p_vinculos: [
+          { candidato_id: "ana", linha: 1, forma: "NOME" },
+          { candidato_id: "bruno", linha: 2, forma: "NOME" },
+        ],
+      });
+      expect(toast).toHaveBeenCalledWith(
+        "3 candidato(s) importados; 1 com status, matrícula ou sub judice preservados.",
+      );
+      expect($("approvedImportModal")).toBeNull();
+    });
+
+    it("lista sem status: substitui sem pedir motivo", async () => {
+      const semStatus = structuredClone(VIGENTE);
+      semStatus.vigente.candidatos = [
+        {
+          candidato_id: "bruno",
+          nome: "Bruno Lima",
+          codigo_vaga: "VG-1",
+          classificacao: 1,
+        },
+      ];
+      const supabase = comVigente(supabaseFalso(), semStatus);
+      await montar({
+        perfil: { perfil: "admin" },
+        supabase,
+        lerPlanilha: async () => PLANILHA,
+      });
+      await abrir();
+      escolherArquivo();
+      await clicar($("approvedImportSubmit"));
+      expect($("approvedImportMotivo")).toBeNull();
+      expect(kpi("sem-dono")).toBe("0");
+      supabase.rpc.mockClear();
+      await clicar($("approvedImportConfirm"));
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        "importar_lista_aprovados",
+        expect.objectContaining({
+          p_motivo: null,
+          p_vinculos: [{ candidato_id: "bruno", linha: 2, forma: "NOME" }],
+        }),
+      );
+    });
+
+    it("a lista mudou desde a abertura: não mostra prévia velha", async () => {
+      const outra = structuredClone(VIGENTE);
+      outra.vigente.lista_id = "L99";
+      const supabase = comVigente(supabaseFalso(), outra);
+      const { toast } = await montar({
+        perfil: { perfil: "admin" },
+        supabase,
+        lerPlanilha: async () => PLANILHA,
+      });
+      await abrir();
+      escolherArquivo();
+      await clicar($("approvedImportSubmit"));
+      expect($("approvedImportPrevia")).toBeNull();
+      expect(toast).toHaveBeenCalledWith(
+        "A lista do edital mudou. Recarregue a página e confira de novo.",
+        "warn",
+      );
+    });
   });
 
   it("reabrir começa na aba do arquivo, com rascunho limpo", async () => {
@@ -1476,7 +1694,7 @@ describe("lista de aprovados publicada da Classificação", () => {
       versao_regra: 2,
       pendencias: 0,
     },
-    vigente: { lista_id: "L10", origem: "CLASSIFICACAO" },
+    vigente: { lista_id: "L10", origem: "CLASSIFICACAO", candidatos: [] },
     publicacoes: [
       {
         id: "p1",
@@ -1521,8 +1739,11 @@ describe("lista de aprovados publicada da Classificação", () => {
     });
     supabase.rpc.mockClear();
     await clicar($("approvedImportSubmit"));
+    // A prévia pede o motivo: a lista foi publicada da Classificação.
+    expect($("approvedImportPrevia")).not.toBeNull();
+    await clicar($("approvedImportConfirm"));
     expect(toast).toHaveBeenCalledWith(
-      expect.stringContaining("informe o motivo"),
+      expect.stringContaining("motivo da substituição"),
       "warn",
     );
     expect(supabase.rpc).not.toHaveBeenCalledWith(
@@ -1530,7 +1751,7 @@ describe("lista de aprovados publicada da Classificação", () => {
       expect.anything(),
     );
     await digitar($("approvedImportMotivo"), "Edital sem análise no sistema");
-    await clicar($("approvedImportSubmit"));
+    await clicar($("approvedImportConfirm"));
     expect(supabase.rpc).toHaveBeenCalledWith(
       "importar_lista_aprovados",
       expect.objectContaining({

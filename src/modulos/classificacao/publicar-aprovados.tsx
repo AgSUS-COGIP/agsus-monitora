@@ -29,6 +29,9 @@ import {
   argumentosDaPublicacao,
   candidatosDaListaFinal,
   casarCandidatos,
+  exigeMotivoParaSubstituir,
+  MOTIVO_MAXIMO,
+  motivoValido,
   origemDaLista,
   resumoDaPublicacao,
   temDadosDaLista,
@@ -43,6 +46,10 @@ import { Aviso, GradeDeKpis, Kpi, Modal } from "../../ui/index.ts";
   (status, matrícula, sub judice) e quem saiu com dados e precisa de revisão:
   ali dá para dizer quem é a mesma pessoa na lista nova. A conta é de
   src/lib/publicacao-de-aprovados.ts; o banco confere e grava o histórico.
+
+  A mesma regra de substituir pelo XLSX (migration 20261026150000): lista já
+  cadastrada só o admin da Importação substitui (pode_substituir), e lista
+  com status, matrícula ou sub judice pede o motivo.
 */
 
 const texto = (valor: unknown) => String(valor ?? "").trim();
@@ -104,6 +111,7 @@ export function ModalDePublicacaoDeAprovados({
   const [preparo, setPreparo] = useState<Preparo | null>(null);
   const [manuais, setManuais] = useState<Record<string, string>>({});
   const [enviando, setEnviando] = useState(false);
+  const [motivo, setMotivo] = useState("");
   const [publicado, setPublicado] = useState<ResultadoDaPublicacao | null>(
     null,
   );
@@ -165,18 +173,25 @@ export function ModalDePublicacaoDeAprovados({
   };
 
   async function publicar() {
-    if (enviando || !preparo?.registrado) return;
+    if (enviando || !preparo?.registrado || bloqueada) return;
     setEnviando(true);
     const resultado = await estado.publicarComoListaDeAprovados({
       listaId: preparo.registrado.id,
       listaVigente: vigente?.lista_id || null,
       vinculos: argumentosDaPublicacao(casamento),
+      motivo: exigeMotivo ? motivo : "",
     });
     setEnviando(false);
     if (resultado) setPublicado(resultado);
   }
 
   const origem = origemDaLista(vigente);
+  const podeSubstituir =
+    !vigente || preparo?.situacao?.pode_substituir !== false;
+  const exigeMotivo =
+    Boolean(vigente) &&
+    exigeMotivoParaSubstituir(anteriores, { origemNova: "CLASSIFICACAO" });
+  const bloqueada = !podeSubstituir || (exigeMotivo && !motivoValido(motivo));
   const kpis: [string, string, string, string, number][] = [
     ["entram", "sucesso", "fa-user-plus", "Entram", resumo.entram.length],
     ["saem", "perigo", "fa-user-minus", "Saem", resumo.saem.length],
@@ -317,6 +332,24 @@ export function ModalDePublicacaoDeAprovados({
                 registro desta publicação.
               </Aviso>
             ) : null}
+            {!podeSubstituir ? (
+              <Aviso tom="warning" papel="alert">
+                Só o admin da Importação substitui a lista de aprovados vigente.
+              </Aviso>
+            ) : exigeMotivo ? (
+              <div className="form-row full">
+                <label htmlFor="classificacaoPublicarMotivo">
+                  Motivo da substituição
+                </label>
+                <textarea
+                  id="classificacaoPublicarMotivo"
+                  rows={2}
+                  maxLength={MOTIVO_MAXIMO}
+                  value={motivo}
+                  onChange={(evento) => setMotivo(evento.target.value)}
+                />
+              </div>
+            ) : null}
             <div className="ui-acoes">
               <button
                 type="button"
@@ -329,7 +362,7 @@ export function ModalDePublicacaoDeAprovados({
                 type="button"
                 className="btn"
                 data-acao="confirmar-publicacao-aprovados"
-                disabled={enviando || !novos.length}
+                disabled={enviando || !novos.length || bloqueada}
                 onClick={publicar}
               >
                 {enviando ? "Publicando…" : "Publicar"}

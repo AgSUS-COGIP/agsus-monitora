@@ -44,6 +44,8 @@ export interface ListaVigenteDaPublicacao {
 }
 export interface SituacaoDaPublicacao {
   vigente: ListaVigenteDaPublicacao | null;
+  /** Pode substituir a lista vigente (admin da Importação, ou o edital nunca teve lista). */
+  pode_substituir: boolean;
 }
 export interface ResultadoDaPublicacao {
   candidatos: number;

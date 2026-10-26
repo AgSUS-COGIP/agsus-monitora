@@ -1156,6 +1156,7 @@ describe("Classificação: publicar o resultado final como lista de aprovados", 
   const VIGENTE = {
     edital_id: "e83",
     pode_publicar: true,
+    pode_substituir: true,
     tem_analises: true,
     vigente: {
       lista_id: "lv1",
@@ -1244,9 +1245,17 @@ describe("Classificação: publicar o resultado final como lista de aprovados", 
       "Pessoa Que Saiu",
     );
     await escolher(modal.querySelector("#revisao-c2"), A(2));
-    await clicar(
-      modal.querySelector("[data-acao='confirmar-publicacao-aprovados']"),
+    // A lista vigente tem status: como no XLSX, substituir pede o motivo.
+    const confirmar = modal.querySelector(
+      "[data-acao='confirmar-publicacao-aprovados']",
     );
+    expect(confirmar.disabled).toBe(true);
+    await digitar(
+      modal.querySelector("#classificacaoPublicarMotivo"),
+      "Resultado após os recursos",
+    );
+    expect(confirmar.disabled).toBe(false);
+    await clicar(confirmar);
     await esperar();
 
     const chamada = supabase.rpc.mock.calls.find(
@@ -1259,10 +1268,35 @@ describe("Classificação: publicar o resultado final como lista de aprovados", 
         { candidato_id: "c2", analise_id: A(2), forma: "MANUAL" },
         { candidato_id: "c1", analise_id: A(1), forma: "NOME" },
       ],
+      p_motivo: "Resultado após os recursos",
     });
     expect(modal.textContent).toContain(
       "Lista de aprovados publicada com 3 candidato(s).",
     );
+  });
+
+  it("a mesma permissão do XLSX: sem poder substituir, avisa e não publica", async () => {
+    const supabase = supabaseFalso({
+      obter_publicacao_lista_aprovados: () => ({
+        ...structuredClone(VIGENTE),
+        pode_substituir: false,
+      }),
+    });
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    await clicar(secao.querySelector("[data-acao='publicar-aprovados']"));
+    await esperar();
+    const modal = document.getElementById("classificacaoPublicarAprovados");
+    expect(modal.querySelector("[role='alert']").textContent).toContain(
+      "Só o admin da Importação substitui a lista de aprovados vigente.",
+    );
+    expect(modal.querySelector("#classificacaoPublicarMotivo")).toBeNull();
+    expect(
+      modal.querySelector("[data-acao='confirmar-publicacao-aprovados']")
+        .disabled,
+    ).toBe(true);
   });
 
   it("leitor não vê o botão de publicar", async () => {

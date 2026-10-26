@@ -460,20 +460,23 @@ export const CONTRATO_RPC = {
       "p_candidatos",
       "p_substituir",
       "p_motivo",
+      "p_vinculos",
     ],
     critica: true,
     resumo:
-      "Importa ou substitui a lista XLSX de aprovados de um edital; sobre lista publicada da Classificação, exige p_motivo. Vai para o histórico das publicações.",
+      "Importa ou substitui a lista XLSX de aprovados de um edital pela nova versão comum (20261026150000): leva status, matrícula, convocação, sub judice e anexos de quem casou (p_vinculos {candidato_id, linha, forma}; nulo = o banco casa) e recalcula os contratados. Lista já cadastrada só o admin; com status (ou publicada da Classificação), exige p_motivo. Vai para o histórico das publicações.",
   },
   definir_lista_aprovados_ativa: {
     argumentos: ["p_lista_id", "p_ativo"],
     critica: true,
-    resumo: "Ativa ou inativa uma lista vigente de aprovados.",
+    resumo:
+      "Ativa ou inativa uma lista vigente de aprovados e recalcula os contratados do edital.",
   },
   remover_lista_aprovados: {
     argumentos: ["p_lista_id"],
     critica: true,
-    resumo: "Arquiva a lista vigente de aprovados preservando o histórico.",
+    resumo:
+      "Arquiva a lista vigente de aprovados preservando o histórico; os contratados do edital voltam a zero.",
   },
   listar_pendencias_do_edital: {
     argumentos: ["p_area", "p_edital"],
@@ -1091,13 +1094,18 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_com_candidatos"],
     critica: false,
     resumo:
-      "Lista de aprovados vigente do edital (origem; com p_com_candidatos, os candidatos para a prévia), último resultado final da Classificação, se há análises e o histórico das publicações. Classificação, Aprovados ou Importação.",
+      "Lista de aprovados vigente do edital (origem; com p_com_candidatos, os candidatos para a prévia), se a pessoa pode substituí-la (pode_substituir), último resultado final da Classificação, se há análises e o histórico das publicações. Classificação, Aprovados ou Importação.",
   },
   publicar_lista_aprovados_da_classificacao: {
-    argumentos: ["p_lista_classificacao", "p_lista_vigente", "p_vinculos"],
+    argumentos: [
+      "p_lista_classificacao",
+      "p_lista_vigente",
+      "p_vinculos",
+      "p_motivo",
+    ],
     critica: false,
     resumo:
-      "Publica o resultado final da Classificação como a lista de aprovados vigente (a anterior fica no histórico), levando status, sub judice e anexos de quem casou (p_vinculos). PT409 se a lista vigente mudou. Classificação editor.",
+      "Publica o resultado final da Classificação como a lista de aprovados vigente pela mesma nova versão do XLSX (a anterior fica no histórico), levando status, matrícula, convocação, sub judice e anexos de quem casou (p_vinculos). Mesma permissão do XLSX: lista já cadastrada só o admin; com status, p_motivo. PT409 se a lista vigente mudou. Classificação editor.",
   },
   obter_desempate_da_lista: {
     argumentos: ["p_lista"],

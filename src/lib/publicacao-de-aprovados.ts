@@ -37,6 +37,13 @@ import {
   - `origemDaLista`: o rótulo da origem da lista na tela de aprovados.
 
   O banco recebe os vínculos (`argumentosDaPublicacao`) e confere cada um.
+
+  Substituir a lista pelo XLSX usa o mesmo casamento e o mesmo resumo
+  (migration 20261026150000: os dois caminhos gravam pela mesma função do
+  banco): `candidatosDaPlanilha` faz das linhas da planilha "quem entra" (a
+  chave é a linha, "linha:N") e `argumentosDaImportacao` manda os vínculos
+  como o banco os recebe. Sem vínculos, o banco casa sozinho com as mesmas
+  regras (FC_CASAR_NOVA_VERSAO_DA_LISTA).
 */
 
 const texto = (valor: unknown) => String(valor ?? "").trim();
@@ -303,7 +310,60 @@ export function argumentosDaPublicacao(casamento: CasamentoDeCandidatos) {
   }));
 }
 
-/* O motivo para trocar pela planilha uma lista publicada da Classificação. */
+const PREFIXO_DA_LINHA = "linha:";
+
+/**
+ * As linhas do XLSX (readApprovedWorkbook) como quem entra na lista nova. A
+ * planilha não traz análise: a chave de cada uma é a linha ("linha:1"…), que
+ * é como o banco a reconhece (p_candidatos na mesma ordem).
+ */
+export function candidatosDaPlanilha(
+  linhas: readonly Record<string, unknown>[] | null | undefined,
+): CandidatoDaListaFinal[] {
+  return (linhas || []).map((linha, indice) => ({
+    analise_id: `${PREFIXO_DA_LINHA}${indice + 1}`,
+    nome: texto(linha?.nome),
+    cargo: texto(linha?.cargo),
+    codigo_vaga: texto(linha?.codigo_vaga),
+    posicao: numero(linha?.classificacao),
+    nota: numero(linha?.nota),
+    situacao: null,
+    modalidades: [],
+  }));
+}
+
+/** Os vínculos da substituição pelo XLSX como o banco os recebe: { candidato_id, linha, forma }. */
+export function argumentosDaImportacao(casamento: CasamentoDeCandidatos) {
+  return casamento.vinculos
+    .filter((v) => v.analise_id.startsWith(PREFIXO_DA_LINHA))
+    .map(({ candidato_id, analise_id, forma }) => ({
+      candidato_id,
+      linha: Number(analise_id.slice(PREFIXO_DA_LINHA.length)),
+      forma,
+    }));
+}
+
+/**
+ * Substituir esta lista exige motivo? Sim quando alguém nela tem status,
+ * matrícula, processo ou sub judice — e, para trocar pela planilha, quando
+ * ela foi publicada da Classificação (FC_EXIGIR_PODE_SUBSTITUIR_LISTA).
+ */
+export function exigeMotivoParaSubstituir(
+  anteriores: readonly CandidatoAnterior[] | null | undefined,
+  {
+    origemAtual = "",
+    origemNova,
+  }: { origemAtual?: unknown; origemNova: "XLSX" | "CLASSIFICACAO" },
+) {
+  if (
+    origemNova === "XLSX" &&
+    texto(origemAtual).toUpperCase() === "CLASSIFICACAO"
+  )
+    return true;
+  return (anteriores || []).some(temDadosDaLista);
+}
+
+/* O motivo para substituir uma lista com status (ou trocar pela planilha a da Classificação). */
 export const MOTIVO_MINIMO = 3;
 export const MOTIVO_MAXIMO = 500;
 export function motivoValido(motivo: unknown) {

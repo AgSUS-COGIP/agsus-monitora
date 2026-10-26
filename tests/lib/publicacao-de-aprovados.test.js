@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  argumentosDaImportacao,
   argumentosDaPublicacao,
+  candidatosDaPlanilha,
+  exigeMotivoParaSubstituir,
   candidatosDaListaFinal,
   casarCandidatos,
   motivoValido,
@@ -10,6 +13,10 @@ import {
   resumoDasOrigens,
   temDadosDaLista,
 } from "../../src/lib/publicacao-de-aprovados.ts";
+import {
+  montarPreviaDaSubstituicao,
+  numerosDaPrevia,
+} from "../../src/lib/previa-da-substituicao-de-aprovados.ts";
 
 const retrato = {
   tipo: "FINAL",
@@ -361,5 +368,147 @@ describe("origem da lista", () => {
         { origem: "XLSX" },
       ]),
     ).toBe("Listas: 1 publicada da Classificação · 2 manuais (planilha)");
+  });
+});
+
+describe("substituir pelo XLSX: o mesmo casamento (20261026150000)", () => {
+  const anteriores = [
+    {
+      candidato_id: "a",
+      nome: "José da Silva",
+      codigo_vaga: "V1",
+      classificacao: 1,
+      status: "Contratado",
+      matricula: "M1",
+    },
+    {
+      candidato_id: "b",
+      nome: "Maria Souza",
+      codigo_vaga: "V1",
+      classificacao: 2,
+      status: "Convocado",
+    },
+    {
+      candidato_id: "c",
+      nome: "Maria Souza",
+      codigo_vaga: "V2",
+      classificacao: 1,
+    },
+    {
+      candidato_id: "d",
+      nome: "Sem Par",
+      codigo_vaga: "V1",
+      classificacao: 3,
+      status: "Desistente",
+    },
+    {
+      candidato_id: "e",
+      nome: "Incluída Judicial",
+      codigo_vaga: "V1",
+      sub_judice: true,
+    },
+  ];
+  const planilha = [
+    {
+      codigo_vaga: "V1",
+      cargo: "Enf",
+      classificacao: 2,
+      nota: 70,
+      nome: "JOSE DA SILVA",
+    },
+    {
+      codigo_vaga: "V1",
+      cargo: "Enf",
+      classificacao: 1,
+      nota: 90,
+      nome: "maria souza",
+    },
+    {
+      codigo_vaga: "V2",
+      cargo: "Enf",
+      classificacao: 1,
+      nota: 88,
+      nome: "Maria  Souza",
+    },
+    {
+      codigo_vaga: "V1",
+      cargo: "Enf",
+      classificacao: 3,
+      nota: 60,
+      nome: "Gente Nova",
+    },
+  ];
+
+  it("as linhas da planilha viram quem entra, com a linha como chave", () => {
+    const novos = candidatosDaPlanilha(planilha);
+    expect(novos.map((n) => n.analise_id)).toEqual([
+      "linha:1",
+      "linha:2",
+      "linha:3",
+      "linha:4",
+    ]);
+    expect(novos[0]).toMatchObject({
+      nome: "JOSE DA SILVA",
+      codigo_vaga: "V1",
+      posicao: 2,
+      nota: 70,
+      situacao: null,
+    });
+  });
+
+  it("casa pelo nome e desempata homônimos pela vaga; os vínculos vão pela linha", () => {
+    const novos = candidatosDaPlanilha(planilha);
+    const casamento = casarCandidatos(anteriores, novos);
+    expect(argumentosDaImportacao(casamento)).toEqual([
+      { candidato_id: "a", linha: 1, forma: "NOME" },
+      { candidato_id: "b", linha: 2, forma: "NOME_VAGA" },
+      { candidato_id: "c", linha: 3, forma: "NOME_VAGA" },
+    ]);
+  });
+
+  it("a prévia: casados, entram, sem par, status sem dono e sub judice mantidos", () => {
+    const previa = montarPreviaDaSubstituicao({
+      editalId: "10",
+      arquivo: new File(["x"], "a.xlsx"),
+      candidatos: planilha,
+      listaId: "L1",
+      origemAtual: "XLSX",
+      anteriores,
+    });
+    expect(numerosDaPrevia(previa)).toEqual({
+      casados: 3,
+      preservados: 2,
+      entram: 1,
+      semPar: 1,
+      semDono: 1,
+      subJudiceMantidos: 1,
+    });
+    expect(previa.resumo.pendencias.map((p) => p.candidato_id)).toEqual(["d"]);
+    expect(previa.exigeMotivo).toBe(true);
+  });
+
+  it("motivo: lista com status, ou trocar pela planilha a da Classificação", () => {
+    const semStatus = [{ candidato_id: "x", nome: "X" }];
+    expect(
+      exigeMotivoParaSubstituir(semStatus, {
+        origemAtual: "XLSX",
+        origemNova: "XLSX",
+      }),
+    ).toBe(false);
+    expect(
+      exigeMotivoParaSubstituir(semStatus, {
+        origemAtual: "CLASSIFICACAO",
+        origemNova: "XLSX",
+      }),
+    ).toBe(true);
+    expect(
+      exigeMotivoParaSubstituir(semStatus, {
+        origemAtual: "CLASSIFICACAO",
+        origemNova: "CLASSIFICACAO",
+      }),
+    ).toBe(false);
+    expect(
+      exigeMotivoParaSubstituir(anteriores, { origemNova: "CLASSIFICACAO" }),
+    ).toBe(true);
   });
 });

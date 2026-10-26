@@ -124,7 +124,11 @@ describe("migration da lista de aprovados da Classificação: RPCs", () => {
         .split(",")
         .map((a) => a.trim().split(" ")[0])
         .filter(Boolean);
-      expect(CONTRATO_RPC[nome]?.argumentos).toEqual(argumentos);
+      // Migrations depois desta só acrescentam parâmetros com default no fim
+      // (20261026150000: p_vinculos no importar, p_motivo no publicar).
+      expect(
+        CONTRATO_RPC[nome]?.argumentos.slice(0, argumentos.length),
+      ).toEqual(argumentos);
     },
   );
 
