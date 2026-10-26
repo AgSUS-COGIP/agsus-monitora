@@ -13,8 +13,8 @@
 */
 import { useEffect, useSyncExternalStore } from "react";
 
-/** O que quem pede manda (a Aya, um aviso de conferência, outra tela). */
-export type FiltroPedido = Readonly<Record<string, unknown>>;
+/** O que quem pede manda (a Aya, um aviso de conferência, outra tela): qualquer objeto, copiado raso. */
+export type FiltroPedido = object;
 
 /** O filtro que a tela recebe ao consumir o pedido. */
 export type FiltroDoPedido = {
