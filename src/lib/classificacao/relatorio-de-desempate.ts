@@ -28,7 +28,10 @@ export interface CandidatoDoDesempate {
   codigo: string;
   nome: string;
   posicao: number;
-  /** Idade em anos na data de corte (versão 2, só quando a idade pesou no grupo: chegou ao critério idade ou o 60+ decidiu um par). */
+  /**
+   * Idade em anos na data de corte (versão 2). Desde 26/10/2026, de todos os
+   * candidatos de todos os grupos; antes, só onde a idade pesou. Sem data, null.
+   */
   idade: number | null;
   valores: Record<string, unknown>;
   decididoPor: string | null;
@@ -623,14 +626,18 @@ function regraDoEmpate(r: RelatorioDeDesempate) {
   return criterios + final;
 }
 
-/* Sem idade no grupo: a idade não pesou nele (o Python só a grava quando pesou) ou falta a data. */
+/* Sem idade: falta a data de nascimento (ou, num relatório gravado antes de 26/10/2026, a idade não pesou no grupo). */
 const SEM_IDADE = "—";
 
+/* A coluna da idade: versão 2, com a idade em algum candidato ou um critério de idade na regra. */
 const usaIdade = (r: RelatorioDeDesempate) =>
   r.versao >= 2 &&
-  r.criterios.some(
+  (r.criterios.some(
     (c) => c.codigo === "IDOSO_60" || c.codigo === "MAIOR_IDADE",
-  );
+  ) ||
+    r.vagas.some((v) =>
+      v.grupos.some((g) => g.candidatos.some((c) => c.idade !== null)),
+    ));
 
 function decididoPor(
   c: CandidatoDoDesempate,

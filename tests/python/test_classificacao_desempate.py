@@ -125,12 +125,8 @@ class RelatorioDeDesempate(unittest.TestCase):
         self.assertTrue(corte)
         for v in self.final["vagas"]:
             for g in v["grupos"]:
-                de_idade = "MAIOR_IDADE" in g["criteriosAplicados"] or any(
-                    p["criterio"] in ("IDOSO_60", "MAIOR_IDADE") for p in g["pares"]
-                )
                 for c in g["candidatos"]:
-                    esperada = idade_na_data(nascimento[c["analiseId"]], corte) if de_idade else None
-                    self.assertEqual(c["idade"], esperada)
+                    self.assertEqual(c["idade"], idade_na_data(nascimento[c["analiseId"]], corte))
                     if "MAIOR_IDADE" in c["valores"]:
                         self.assertEqual(c["valores"]["MAIOR_IDADE"]["idade"], c["idade"])
         por_idade = _grupo(self.final, "101", 76)
@@ -141,26 +137,47 @@ class RelatorioDeDesempate(unittest.TestCase):
         self.assertRegex(texto, r"por 60\+ \(sim \(\d+ anos\) × não \(\d+ anos\)\)")
         self.assertIn("Data de corte (idade e 60+): 28/02/2025", texto)
 
-    def test_a_idade_so_nos_grupos_em_que_a_idade_pesou(self):
+    def test_a_idade_de_todos_os_candidatos_de_todos_os_grupos(self):
         idades = lambda nota: [c["idade"] for c in _grupo(self.final, "101", nota)["candidatos"]]  # noqa: E731
-        # Decidido pelo 60+: a idade aparece.
+        # Decidido pelo 60+, por indígena comprovado, exp. saúde indígena, tempo de experiência
+        # (o 60+ empatou) ou pelo critério idade: a idade aparece em todos.
         self.assertEqual(idades(80), [60, 40])
-        # Decididos por indígena comprovado, exp. saúde indígena, tempo de experiência (o 60+ empatou): sem a idade.
-        for nota in (79, 78, 77):
-            with self.subTest(nota=nota):
-                self.assertEqual(set(idades(nota)), {None})
-        # Chegou ao critério idade (decidido por ele, por PcD depois dele ou empate até o fim): com a idade.
-        for nota in (76, 75, 74, 73):
+        for nota in (79, 78, 77, 76, 75, 74, 73):
             with self.subTest(nota=nota):
                 self.assertNotIn(None, idades(nota))
+        # A ordem de idade e a certidão só onde o critério idade foi aplicado.
+        for nota in (79, 78, 77):
+            with self.subTest(nota=nota):
+                self.assertNotIn("MAIOR_IDADE", _grupo(self.final, "101", nota)["criteriosAplicados"])
+                for c in _grupo(self.final, "101", nota)["candidatos"]:
+                    self.assertNotIn("MAIOR_IDADE", c["valores"])
         texto = desempate.texto_do_relatorio(self.final)
-        self.assertIn("  5º  Elisa Amostra (insc. 5005)  60+: não | ", texto)
-        self.assertIn("  1º  Ana Exemplo (insc. 5001)  60+: sim (60 anos)", texto)
+        self.assertRegex(texto, r"  5º  Elisa Amostra \(insc\. 5005\) · \d+ anos  60\+: não \| ")
+        self.assertIn("  1º  Ana Exemplo (insc. 5001) · 60 anos  60+: sim\n", texto)
+        # Sem data de nascimento: a idade nula, "—".
+        self.assertIn("  3º  Dario Sem Data (insc. 5057) · idade —  60+: sem dado | ", texto)
 
-    def test_grupo_que_nao_chega_a_idade_nao_leva_a_idade(self):
-        _, r = _relatorio("mesma-posicao-todas-so-parecer", "PRELIMINAR")
+    def test_grupo_que_nao_chega_a_idade_tambem_leva_a_idade(self):
+        dados, r = _relatorio("mesma-posicao-todas-so-parecer", "PRELIMINAR")
         self.assertTrue(r["vagas"])
-        self.assertTrue(all(c["idade"] is None for v in r["vagas"] for g in v["grupos"] for c in g["candidatos"]))
+        candidatos = [c for v in r["vagas"] for g in v["grupos"] for c in g["candidatos"]]
+        self.assertTrue(all("MAIOR_IDADE" not in c["valores"] for c in candidatos))
+        nascimento = {
+            c["analise_id"]: c.get("data_nascimento")
+            for c in DADOS["editais"]["mesma-posicao-todas-so-parecer"]["candidatos"]
+        }
+        for c in candidatos:
+            self.assertEqual(c["idade"], idade_na_data(nascimento[c["analiseId"]], r["dataCorte"]))
+
+    def test_sem_data_de_nascimento_a_idade_fica_nula(self):
+        edital = json.loads(json.dumps(DADOS["editais"]["criterios-sorteio-maior-percentual"]))
+        for c in edital["candidatos"]:
+            c["data_nascimento"] = None
+        _, r = desempate.relatorio_de_desempate({"tipo": "FINAL", **edital})
+        candidatos = [c for v in r["vagas"] for g in v["grupos"] for c in g["candidatos"]]
+        self.assertTrue(candidatos)
+        self.assertTrue(all(c["idade"] is None for c in candidatos))
+        self.assertIn(" · idade —", desempate.texto_do_relatorio(r))
 
     def test_resumo_por_criterio_e_dos_empates_ate_o_fim(self):
         resumo = self.final["resumo"]
