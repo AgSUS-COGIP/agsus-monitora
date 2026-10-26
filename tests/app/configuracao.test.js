@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { criarConfiguracao, PADROES } from "../../src/app/configuracao.js";
+import { criarConfiguracao, PADROES } from "../../src/app/configuracao.ts";
 
 /*
-  A configuração do sistema (src/app/configuracao.js): carrega
+  A configuração do sistema (src/app/configuracao.ts): carrega
   TB_CONFIGURACAO, aplica os textos do app e o aviso global, e repassa à
   sessão, à marca da tela de acesso e às seções de Configurações.
 */

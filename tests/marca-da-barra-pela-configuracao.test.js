@@ -3,7 +3,7 @@ import { aplicarMarcaDaConfiguracao } from "../src/modules/sidebar-branding.js";
 
 /*
   A logo e a cor da barra lateral vêm da leitura da configuração que o app já
-  faz (src/app/configuracao.js), não de uma consulta própria a cada SIGNED_IN.
+  faz (src/app/configuracao.ts), não de uma consulta própria a cada SIGNED_IN.
 */
 
 beforeEach(() => {

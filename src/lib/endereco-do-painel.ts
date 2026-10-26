@@ -6,7 +6,7 @@
   abre.
 
   A mesma origem é recusada porque o quadro tem `allow-scripts` e
-  `allow-same-origin` (src/app/paineis-externos.js): com a página do próprio
+  `allow-same-origin` (src/app/paineis-externos.ts): com a página do próprio
   app dentro dele, a sandbox não protegeria nada. Não há mais página do app em
   iframe — todas viraram módulos de src/modulos/.
 */

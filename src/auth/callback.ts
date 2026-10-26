@@ -1,8 +1,34 @@
 import { hasSupabaseEnv } from "../lib/env";
 import { isUsableSession, LOGIN_POPUP_MESSAGE } from "../lib/auth-flow";
 import { getSupabaseClient } from "../lib/supabaseClient";
+import type { SessaoConferida } from "../lib/auth-flow";
 
-export function callbackResultUrl(result) {
+/** Resultado do retorno do OAuth, levado à página principal. */
+export type ResultadoDoCallback =
+  | "success"
+  | "missing_env"
+  | "missing_code"
+  | "supabase_unavailable"
+  | "oauth_callback";
+
+/** A parte do cliente do Supabase que o retorno do OAuth usa. */
+export type ClienteDoCallback = {
+  auth?: {
+    exchangeCodeForSession?: (code: string) => Promise<{
+      data: { session?: SessaoConferida | null } | null;
+      error: unknown;
+    }>;
+  };
+};
+
+export type OpcoesDoCallback = {
+  locationRef?: Pick<Location, "search"> | null;
+  sessionStorageRef?: Pick<Storage, "setItem"> | null;
+  resolveClient?: () => ClienteDoCallback | null;
+  redirect?: (result: ResultadoDoCallback) => void;
+};
+
+export function callbackResultUrl(result: string): string {
   switch (result) {
     case "success":
       return "/?auth=google";
@@ -17,7 +43,7 @@ export function callbackResultUrl(result) {
   }
 }
 
-function redirectHome(result) {
+function redirectHome(result: ResultadoDoCallback): void {
   if (window.opener && !window.opener.closed) {
     try {
       window.opener.postMessage(
@@ -33,7 +59,9 @@ function redirectHome(result) {
   window.location.replace(callbackResultUrl(result));
 }
 
-function safeWindowValue(name) {
+function safeWindowValue<K extends "location" | "sessionStorage">(
+  name: K,
+): Window[K] | null {
   if (typeof window === "undefined") return null;
   try {
     return window[name] || null;
@@ -42,7 +70,9 @@ function safeWindowValue(name) {
   }
 }
 
-export async function finishOAuth(options = {}) {
+export async function finishOAuth(
+  options: OpcoesDoCallback = {},
+): Promise<boolean> {
   const locationRef = Object.prototype.hasOwnProperty.call(
     options,
     "locationRef",
@@ -87,7 +117,9 @@ export async function finishOAuth(options = {}) {
         "agsus_oauth_callback_ok",
         String(Date.now()),
       );
-    } catch (_) {}
+    } catch (_) {
+      // Armazenamento bloqueado (aba privada): o marcador é só uma conveniência.
+    }
     redirect("success");
     return true;
   } catch (error) {

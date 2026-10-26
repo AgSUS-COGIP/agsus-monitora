@@ -6,10 +6,10 @@ import type {
   VagaDaSelecao,
 } from "./tipos.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
+import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { filtrosDaSelecao } from "../../lib/filtro-da-aya.ts";
-import { montarModulo } from "../../app/montar-modulo.jsx";
-import { usarTemaEscuro } from "../../app/tema.js";
+import { montarModulo } from "../../app/montar-modulo.tsx";
+import { usarTemaEscuro } from "../../app/tema.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
@@ -39,7 +39,7 @@ import { MENSAGEM_SEM_VAGAS, TabelaDeVagas } from "./tabela.tsx";
   A tela de Seleção (view `selecao`), um módulo do app: monta direto na
   `<section id="page-selecao">` do index.html, como Recursos e Entrevistas. A
   navegação é dona da classe `.active` da seção e chama `render()` do
-  controlador ao navegar (tabela `TELAS_REACT` de src/app/navegacao.js).
+  controlador ao navegar (tabela `TELAS_REACT` de src/app/navegacao.ts).
 
   A mesma tela do antigo painel externo "AgSUS Monitora Recrutamento e
   Seleção" (Apps Script sobre a planilha Auditoria), com os dados do banco
@@ -52,7 +52,7 @@ import { MENSAGEM_SEM_VAGAS, TabelaDeVagas } from "./tabela.tsx";
     recarrega (filtros e a busca da tabela recomeçam).
   - Sessão: o cliente Supabase único do app. Tema: o do app
     (`html[data-theme="dark"]`); os gráficos acompanham. Tela cheia: a do app.
-  - Aviso (toast): o do app (`window.monitoraToast`, passado por src/main.js).
+  - Aviso (toast): o do app (`window.monitoraToast`, passado por src/main.ts).
 
   Sem tela de carregamento: antes da primeira carga, os KPIs, os gráficos e a
   tabela são o skeleton deles; falha na primeira carga vira um aviso com

@@ -74,6 +74,15 @@ navegador (`copia-da-sessao.ts`, `cache-de-payload.ts`), navegação, presença,
 monitores de desempenho e CSP. Esses módulos são importados sem extensão. `origem-da-requisicao.js`
 continua em JavaScript porque as funções da Vercel em `api/` o importam direto, no Node.
 
+O app (`src/app/`, sem JS/JSX), a entrada (`src/main.ts`) e o retorno do OAuth
+(`src/auth/callback.ts`) também estão em TypeScript: sessão do app (`sessao.ts`, com o estado
+`EstadoDaSessaoDoApp` e o contrato `GanchosDoSistema` com o sistema), tela de entrada e marca
+(`entrada/`), carga, carregamento, presença, perfil, configuração, navegação, painéis externos,
+moldura, telas sob demanda (`TelaSobDemanda<C>`), pedido de filtro, avisos e tema. Os
+controladores publicados em `window` são declarados em `src/main.ts`. A migração foi só de tipos:
+a saída do esbuild (sem renomear identificadores) é igual à do JavaScript, arquivo a arquivo.
+`index.html` carrega `/src/main.ts` e `auth/callback.html`, `/src/auth/callback.ts`.
+
 As regras de mapas, comemorações e visual de `src/lib/` também estão em TypeScript, importadas
 com a extensão `.ts`: limites e enquadramento do Brasil (`brasil-bounds.ts`,
 `enquadramento-do-brasil.ts`), sedes municipais (`coordenadas-dos-municipios.ts`), dicas e popups

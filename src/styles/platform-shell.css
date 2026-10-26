@@ -202,7 +202,7 @@
 
 /*
   Painel escuro (`login-panel-dark`, aplicada no próprio `#loginScreen` pelo
-  script do index.html e por src/app/entrada/marca.js): texto claro onde a
+  script do index.html e por src/app/entrada/marca.ts): texto claro onde a
   própria configuração diz que a superfície é escura. A página de solicitação
   de acesso tem as próprias cores (src/app/entrada/solicitacao-de-acesso.css).
 */

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const css = readFileSync("src/styles/post157-interface-tuning.css", "utf8");
-const main = readFileSync("src/main.js", "utf8");
+const main = readFileSync("src/main.ts", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
 // A escolha da logo e da cor é de Configurações › Aparência (React).
@@ -153,7 +153,7 @@ describe("branding independente da sidebar", () => {
     expect(sidebar).not.toContain('.from("TB_CONFIGURACAO")');
     expect(sidebar).not.toContain("onAuthStateChange");
     expect(sidebar).toContain("export function aplicarMarcaDaConfiguracao");
-    const configuracao = readFileSync("src/app/configuracao.js", "utf8");
+    const configuracao = readFileSync("src/app/configuracao.ts", "utf8");
     expect(configuracao).toContain("pintarBarra(valores)");
   });
 

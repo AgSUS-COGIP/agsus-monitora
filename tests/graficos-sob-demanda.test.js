@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { carregarChart, chartCarregado } from "../src/lib/chartjs-global.ts";
 
 /*
-  O Chart.js baixa no primeiro gráfico, não na entrada: src/main.js importa
+  O Chart.js baixa no primeiro gráfico, não na entrada: src/main.ts importa
   chartjs-global.ts, e um import estático de chart.js ali punha o
   vendor-charts no modulepreload da tela de login.
 */

@@ -1,7 +1,7 @@
 # Cronograma
 
 Tela de leitura dos cronogramas de Editais, montada em `#page-calendario`.
-O controlador de `src/main.js` chama `render()` ao abrir e `recarregar()` para
+O controlador de `src/main.ts` chama `render()` ao abrir e `recarregar()` para
 ignorar o cache. A área vem do app e recorta os editais já carregados.
 
 | Arquivo                  | Responsabilidade                                                      |

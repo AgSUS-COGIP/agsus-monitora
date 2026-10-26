@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const source = readFileSync("src/modules/map-base-layer-switcher.js", "utf8");
-const main = readFileSync("src/main.js", "utf8");
+const main = readFileSync("src/main.ts", "utf8");
 const css = readFileSync("src/styles/map-base-layer-switcher.css", "utf8");
 
 describe("seletor Mapa | Satélite", () => {

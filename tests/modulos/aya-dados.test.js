@@ -6,7 +6,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { clicar, digitar, teclar } from "../componentes/interacoes.js";
-import { consumirPedidoDeFiltro } from "../../src/app/pedido-de-filtro.js";
+import { consumirPedidoDeFiltro } from "../../src/app/pedido-de-filtro.ts";
 
 /*
   A Aya mais esperta no painel (src/modulos/aya/aya.tsx): a resposta com

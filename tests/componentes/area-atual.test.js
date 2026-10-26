@@ -11,7 +11,7 @@ import {
   soDosEditais,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { resumoDasLinhas } from "../../src/lib/editais-do-nucleo.ts";
-import { COLUNAS_DO_MONITORAMENTO } from "../../src/app/carga.js";
+import { COLUNAS_DO_MONITORAMENTO } from "../../src/app/carga.ts";
 
 /*
   A área atual (Saúde Indígena, SEDE ou Projetos) mora no store dos dados do
@@ -117,8 +117,8 @@ describe("resumoDasLinhas", () => {
 
 describe("as leituras de editais pedem a área", () => {
   // As colunas são listadas uma a uma; sem CO_AREA, SEDE e Projetos ficavam vazios.
-  it("src/app/carga.js", () => {
-    expect(readFileSync("src/app/carga.js", "utf8")).toContain(
+  it("src/app/carga.ts", () => {
+    expect(readFileSync("src/app/carga.ts", "utf8")).toContain(
       '"listar_monitoramento_operacional"',
     );
     expect(COLUNAS_DO_MONITORAMENTO.split(",")).toContain("CO_AREA");

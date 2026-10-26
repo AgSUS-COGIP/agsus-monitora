@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.ts";
-import { montarModulo } from "../../app/montar-modulo.jsx";
+import { montarModulo } from "../../app/montar-modulo.tsx";
 import { criarRascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
 import type { RascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
@@ -50,7 +50,7 @@ import "./ficha/ficha.css";
   A tela Avaliação documental (view `avaliacao-documental`), módulo do app:
   monta direto na `<section id="page-avaliacao-documental">` do index.html. A
   navegação é dona da classe `.active` e chama `render()` ao navegar (tabela
-  `TELAS_REACT` de src/app/navegacao.js).
+  `TELAS_REACT` de src/app/navegacao.ts).
 
   Fases F1 a F3 (docs/analises-no-monitora/plano-de-construcao.md): escolha
   do edital (só os vigentes, com "Mostrar todos os editais da área"), a regra

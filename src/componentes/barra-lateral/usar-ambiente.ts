@@ -4,7 +4,7 @@ import { EVENTO_BARRA_ALTERNADA } from "../../lib/eventos-da-barra-lateral.ts";
 /*
   O que a barra lê do ambiente que o legado controla: a classe de `body` que
   recolhe a barra e a largura em que ela vira gaveta (o tema é de
-  src/app/tema.js, comum a todo o app). Quem muda essas coisas avisa por
+  src/app/tema.ts, comum a todo o app). Quem muda essas coisas avisa por
   evento (`eventos-da-barra-lateral.ts`); não há `MutationObserver`.
 */
 

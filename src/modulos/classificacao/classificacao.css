@@ -5,7 +5,7 @@
   fileira de cinco KPIs, as tabelas estreitas das vagas, os avisos do topo, a
   lista ordenável dos critérios, a tabela das modalidades e o registro do
   empate e o documento oficial (textos e prévia do SEI). Importado pelo
-  src/main.js, depois do ui.css.
+  src/main.ts, depois do ui.css.
 */
 
 .classificacao-tela {

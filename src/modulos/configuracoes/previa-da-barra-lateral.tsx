@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { usarTemaEscuro } from "../../app/tema.js";
+import { usarTemaEscuro } from "../../app/tema.ts";
 import { PecasDaBarraLateral } from "../../componentes/barra-lateral/barra-lateral.tsx";
 import {
   assinarBarraLateral,

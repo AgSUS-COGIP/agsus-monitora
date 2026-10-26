@@ -6,7 +6,7 @@
   com etapas e percentual. A marcação está no HTML para sair na primeira
   pintura; quando há sessão guardada, o script `marcarSessaoGuardada` do
   <head> o liga antes de qualquer JavaScript do bundle. Daí em diante, quem
-  liga e desliga é o app (src/app/sistema.js e carga.js), por
+  liga e desliga é o app (src/app/sistema.ts e carga.ts), por
   `mostrarEsqueleto` e `esconderEsqueleto`.
   Na demora, nos mesmos tempos da antiga tela (`getLoadingStage`, em
   `lib/loading-copy.ts`), aparece um aviso e, depois, "Tentar novamente".
@@ -26,27 +26,27 @@ const ATIVO = "esqueleto-ativo";
 const MARCOS_DE_DEMORA_MS = [12_000, 25_000];
 
 let inicio = 0;
-let temporizadores = [];
+let temporizadores: number[] = [];
 
 const raiz = () => document.documentElement;
 const avisoDaEntrada = () =>
-  document.querySelector(".esqueleto-da-entrada .esqueleto-aviso");
+  document.querySelector<HTMLElement>(".esqueleto-da-entrada .esqueleto-aviso");
 
 export function esqueletoAtivo() {
   return raiz().classList.contains(ATIVO);
 }
 
 /** Aviso de demora de um skeleton: some antes dos 12s, oferece tentar aos 25s. */
-function avisar(aviso, decorridoMs) {
+function avisar(aviso: HTMLElement | null, decorridoMs: number) {
   if (!aviso) return;
   const etapa = getLoadingStage({ elapsedMs: decorridoMs });
-  aviso.querySelector("p").textContent = etapa.delayMessage;
-  aviso.querySelector("button").hidden = !etapa.canRetry;
+  aviso.querySelector("p")!.textContent = etapa.delayMessage;
+  aviso.querySelector("button")!.hidden = !etapa.canRetry;
   aviso.hidden = !etapa.delayed;
 }
 
 /** Agenda os avisos de demora desde `desde` (`performance.now()`). */
-function agendarAvisos(aviso, desde) {
+function agendarAvisos(aviso: HTMLElement | null, desde: number) {
   const decorrido = performance.now() - desde;
   avisar(aviso, decorrido);
   return MARCOS_DE_DEMORA_MS.filter((ms) => ms > decorrido).map((ms) =>
@@ -57,7 +57,7 @@ function agendarAvisos(aviso, desde) {
   );
 }
 
-function acompanharDemora(desde) {
+function acompanharDemora(desde: number) {
   pararDeAcompanhar();
   inicio = desde;
   temporizadores = agendarAvisos(avisoDaEntrada(), inicio);
@@ -74,7 +74,7 @@ function pararDeAcompanhar() {
  * script do <head> ou por uma etapa anterior), só atualiza o formato: a
  * contagem da demora continua de onde estava.
  */
-export function mostrarEsqueleto(visao) {
+export function mostrarEsqueleto(visao: unknown) {
   const html = raiz();
   html.dataset.esqueleto = formatoDoEsqueleto(visao);
   html.dataset.esqueletoBarra = document.body.classList.contains(
@@ -93,18 +93,22 @@ export function esconderEsqueleto() {
 }
 
 /** Barra de atualização no cabeçalho, enquanto os dados da tela são trocados. */
-export function marcarAtualizacao(ativa) {
+export function marcarAtualizacao(ativa: boolean) {
   raiz().classList.toggle("dados-atualizando", !!ativa);
 }
 
-function elemento(tag, classe, filhos = []) {
+function elemento<Tag extends keyof HTMLElementTagNameMap>(
+  tag: Tag,
+  classe?: string,
+  filhos: Node[] = [],
+): HTMLElementTagNameMap[Tag] {
   const el = document.createElement(tag);
   if (classe) el.className = classe;
   el.append(...filhos);
   return el;
 }
 
-const bloco = (modificador) =>
+const bloco = (modificador: string) =>
   elemento("span", `esqueleto esqueleto--${modificador}`);
 
 /** Um painel de indicadores genérico: título, quatro indicadores e dois gráficos. */
@@ -169,7 +173,7 @@ const ESPERA_MAXIMA_MS = 45_000;
   iframe, então a janela que manda pode estar alguns níveis abaixo. `parent`
   se lê mesmo entre origens diferentes.
 */
-function veioDoQuadro(janela, quadro) {
+function veioDoQuadro(janela: Window | null, quadro: HTMLIFrameElement) {
   for (let nivel = 0; janela && nivel < 4; nivel += 1) {
     if (janela === quadro.contentWindow) return true;
     if (janela === janela.parent) return false;
@@ -183,18 +187,22 @@ function veioDoQuadro(janela, quadro) {
  * ficou pronto. `aoTentarDeNovo` é o "Tentar novamente" do aviso de demora
  * (no legado, `reloadExternal`).
  */
+export type OpcoesDoCarregamentoDoPainel = {
+  aoTentarDeNovo?: () => void;
+};
+
 export function acompanharCarregamentoDoPainel(
-  holder,
-  { aoTentarDeNovo } = {},
+  holder: Element | null | undefined,
+  { aoTentarDeNovo }: OpcoesDoCarregamentoDoPainel = {},
 ) {
   const quadro = holder?.querySelector("iframe");
   if (!quadro) return;
   const esqueleto = criarEsqueletoDoPainel();
-  const aviso = esqueleto.querySelector(".esqueleto-aviso");
+  const aviso = esqueleto.querySelector<HTMLElement>(".esqueleto-aviso")!;
   aviso
-    .querySelector("button")
+    .querySelector("button")!
     .addEventListener("click", () => aoTentarDeNovo?.());
-  holder.append(esqueleto);
+  holder!.append(esqueleto);
   const temporizadores = agendarAvisos(aviso, performance.now());
   let anunciou = false;
   let saiu = false;
@@ -208,11 +216,12 @@ export function acompanharCarregamentoDoPainel(
     window.setTimeout(() => esqueleto.remove(), 200);
   }
 
-  function ouvir(evento) {
+  function ouvir(evento: MessageEvent<{ tipo?: unknown } | null | undefined>) {
     const tipo = evento.data?.tipo;
     if (tipo !== AVISO_DO_PAINEL_CARREGANDO && tipo !== AVISO_DO_PAINEL_PRONTO)
       return;
-    if (!veioDoQuadro(evento.source, quadro)) return;
+    // A janela que manda (um iframe); MessagePort/ServiceWorker não chegam aqui.
+    if (!veioDoQuadro(evento.source as Window | null, quadro!)) return;
     if (tipo === AVISO_DO_PAINEL_PRONTO) sair();
     else anunciou = true;
   }
@@ -232,7 +241,7 @@ export function acompanharCarregamentoDoPainel(
 }
 
 /**
- * Chamado pelo `main.js`. Liga o botão "Tentar novamente" e, se o script do
+ * Chamado pelo `main.ts`. Liga o botão "Tentar novamente" e, se o script do
  * <head> já ligou o skeleton, conta a demora desde o início da navegação.
  */
 export function instalarCarregamento() {

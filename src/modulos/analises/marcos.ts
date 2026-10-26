@@ -4,7 +4,7 @@ import type { MarcoDasAnalises } from "./tipos.ts";
   zerada e a meta de hoje batida pela equipe (card "Ritmo da análise"). Chamado pelo estado (estado.ts) sempre que as linhas do escopo
   "Ativo" chegam (do servidor ou da cópia do navegador) — Inativo e Todos
   misturam editais encerrados. Também os marcos personalizados "análises no
-  dia" (src/app/marcos-personalizados.js). A regra (linha de base, transições, frases) é
+  dia" (src/app/marcos-personalizados.ts). A regra (linha de base, transições, frases) é
   de src/lib/comemoracao.ts; o aviso e os fogos, de src/modules/comemoracao.js.
   Edital concluído avisa a tela de encerramento (EVENTO_EDITAL_CONCLUIDO, em
   src/modulos/encerramento-do-edital/), que relê o banco e não repete os fogos.
@@ -27,7 +27,7 @@ import {
   TEXTO_DA_META_BATIDA,
   type RitmoDoEdital,
 } from "../../lib/ritmo-da-analise.ts";
-import { avaliarMarcosPersonalizados } from "../../app/marcos-personalizados.js";
+import { avaliarMarcosPersonalizados } from "../../app/marcos-personalizados.ts";
 import { EVENTO_EDITAL_CONCLUIDO } from "../../lib/encerramento-do-edital.ts";
 
 export function avaliarMarcosDasAnalises({

@@ -8,7 +8,7 @@ import type {
 } from "./tipos.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useMemo, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.jsx";
+import { montarModulo } from "../../app/montar-modulo.tsx";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { apagarCopiaDaSessao } from "../../modules/copia-da-sessao-indexeddb.js";

@@ -441,7 +441,7 @@ export const duracaoMsDasOpcoes = (op: Pick<OpcoesDoMarco, "duracaoS">) =>
 
 let publicada: ConfiguracaoDasComemoracoes = normalizarConfiguracao("");
 
-/** O app leu TB_CONFIGURACAO (src/app/configuracao.js). */
+/** O app leu TB_CONFIGURACAO (src/app/configuracao.ts). */
 export function definirConfiguracaoDasComemoracoes(bruto: unknown): void {
   publicada = normalizarConfiguracao(bruto);
 }

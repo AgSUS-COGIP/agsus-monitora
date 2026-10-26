@@ -12,7 +12,7 @@ type ValorDoCampo = (alvo: AlvoDosModulos, campo: CampoDosModulos) => string;
 type SituacaoDoAlvo = (alvo: AlvoDosModulos) => EstadoDoModulo;
 type OpcaoDeEstado = { valor: EstadoDoModulo; rotulo: string };
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.jsx";
+import { montarModulo } from "../../app/montar-modulo.tsx";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { isAdminGlobal } from "../../lib/access-roles.ts";
 import {

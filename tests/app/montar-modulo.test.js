@@ -1,6 +1,6 @@
 import { act, createElement, useEffect } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarModulo } from "../../src/app/montar-modulo.jsx";
+import { montarModulo } from "../../src/app/montar-modulo.tsx";
 import "../componentes/interacoes.js";
 
 /*

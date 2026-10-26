@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { criarNavegacao } from "../../src/app/navegacao.js";
+import { criarNavegacao } from "../../src/app/navegacao.ts";
 import {
   INTERVALO_DA_PRESENCA_MS,
   criarPresenca,
-} from "../../src/app/presenca.js";
+} from "../../src/app/presenca.ts";
 import {
   criarVigiaDoCatalogo,
   versaoDaResposta,
@@ -38,10 +38,10 @@ import { redefinirPaginaDaAya } from "../../src/modulos/aya/estado.ts";
 
   - a regra pura (src/lib/pagina-desligada.ts);
   - a checagem periódica: a versão do catálogo vem de carona na presença, a
-    cada 90 s com a aba visível, e para com a aba oculta (src/app/presenca.js);
+    cada 90 s com a aba visível, e para com a aba oculta (src/app/presenca.ts);
   - o vigia (src/app/vigia-do-catalogo.ts) relê o catálogo só quando a versão
     muda;
-  - a navegação (src/app/navegacao.js) troca a página pelo aviso, sem
+  - a navegação (src/app/navegacao.ts) troca a página pelo aviso, sem
     chamar a tela de novo; com trabalho não salvo, só a faixa; religada, o
     menu volta.
 */

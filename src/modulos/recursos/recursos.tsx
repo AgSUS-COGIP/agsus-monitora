@@ -10,10 +10,10 @@ import type {
   IdentificadorDoRecurso,
 } from "../../lib/tipos-dos-recursos.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { pedirFiltro, usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
+import { pedirFiltro, usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { filtrosDeRecursos } from "../../lib/filtro-da-aya.ts";
-import { montarModulo } from "../../app/montar-modulo.jsx";
-import { usarTemaEscuro } from "../../app/tema.js";
+import { montarModulo } from "../../app/montar-modulo.tsx";
+import { usarTemaEscuro } from "../../app/tema.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
@@ -68,7 +68,7 @@ import "./recursos.css";
   - Sessão: o cliente Supabase único do app (src/lib/supabaseClient.ts).
   - Tema: o do app (`html[data-theme="dark"]`, o seletor da barra lateral);
     os gráficos acompanham. Tela cheia: a do app (menu da conta).
-  - Aviso (toast): o do app (`window.monitoraToast`, passado por src/main.js).
+  - Aviso (toast): o do app (`window.monitoraToast`, passado por src/main.ts).
   - Permissões: vêm do banco a cada carga (`pode_editar`, `pode_decidir` —
     o parecer jurídico — e `pode_administrar_modelos`); `render()` recarrega,
     então mudam sem recarregar a página. Quem só lê não vê os controles de

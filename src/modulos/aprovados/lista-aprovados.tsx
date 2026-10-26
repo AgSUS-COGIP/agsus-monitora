@@ -7,8 +7,8 @@ import type {
 } from "./tipos-do-estado.ts";
 import type { FiltrosDaTabelaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
 import { useMemo, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.jsx";
-import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
+import { montarModulo } from "../../app/montar-modulo.tsx";
+import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import {
   canAlterarPorDecisaoJudicial,

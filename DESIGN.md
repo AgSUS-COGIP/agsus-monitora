@@ -97,7 +97,7 @@ já usam o `lucide`, por `src/modules/icones.js` (ver "Ícones", seção 4).
 ## 3. Tokens
 
 Os valores abaixo são o alvo. Devem morar em **um único arquivo**, `src/styles/tokens.css`,
-importado antes de qualquer outro CSS no `src/main.js`.
+importado antes de qualquer outro CSS no `src/main.ts`.
 O arquivo já existe, com o que pôde entrar sem repintar nada: fonte, tamanhos `--text-sm/md/base`,
 espaçamento, raio, `--shadow-overlay`, movimento e `--text-inverse`. As cores de texto e superfície
 entram quando cada componente migrar (as reservas atuais divergem). As camadas (`--z-*`) seguem em
@@ -321,9 +321,9 @@ Regras:
 
 ## 5. Tema escuro
 
-- **Chave canônica: `html[data-theme="dark"]`**, definida em `src/app/moldura.js`
+- **Chave canônica: `html[data-theme="dark"]`**, definida em `src/app/moldura.ts`
   (`setAttribute("data-theme", …)`). A análise usa a mesma chave.
-- `body.dark-mode` é um **espelho** mantido pelo `src/app/moldura.js`, junto com o
+- `body.dark-mode` é um **espelho** mantido pelo `src/app/moldura.ts`, junto com o
   `data-theme`. Não escreva regra nova com ele.
 - `body.sidebar-theme-dark` é o tema **configurável da barra lateral** (branding), um assunto
   à parte. Não use para o tema da página.
@@ -369,12 +369,12 @@ Viram `--series-1` … `--series-6` no `tokens.css`. Regras:
 ## 7. Onde escrever CSS
 
 **Como a cascata funciona aqui:** `app.css` entra por `<link>` no `index.html` e carrega **antes**
-dos 40 CSS importados pelo `src/main.js`. Por isso perde em empate de especificidade para todos eles,
-e por isso acumulou 140 `!important`. Entre os importados, vence o último da lista do `main.js`.
+dos 40 CSS importados pelo `src/main.ts`. Por isso perde em empate de especificidade para todos eles,
+e por isso acumulou 140 `!important`. Entre os importados, vence o último da lista do `main.ts`.
 Um `#id` vence qualquer número de classes. `health-reference-kpis.css` domina `#page-dashboard`
 com `#id … !important` em quase toda regra.
 
-- Estilo de um módulo vai em `src/styles/<modulo>.css`, importado no `main.js`, no ponto da lista
+- Estilo de um módulo vai em `src/styles/<modulo>.css`, importado no `main.ts`, no ponto da lista
   onde a ordem faz sentido.
 - Componentes compartilhados (botão, card, tabela, formulário, modal) devem convergir para um
   único arquivo de componentes (os de React já estão em `src/ui/`, com o `ui.css`). Não redefina `.btn` em CSS de módulo.

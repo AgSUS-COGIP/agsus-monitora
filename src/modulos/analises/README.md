@@ -1,7 +1,7 @@
 # `src/modulos/analises/` — Análises curriculares
 
 A tela `#page-analises` (view `analises`), módulo do app desde a Etapa 4: monta na própria
-`<section>` por `montarAnalises()` (`src/main.js` → `window.analisesController`); o legado chama
+`<section>` por `montarAnalises()` (`src/main.ts` → `window.analisesController`); o legado chama
 `render()` ao navegar (`TELAS_REACT`). Área = a atual do app; sessão, tema, aviso e tela cheia =
 os do app. Sem iframe, sem postMessage, sem `window.*` próprio.
 

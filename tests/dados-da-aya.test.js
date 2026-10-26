@@ -9,7 +9,7 @@ import {
 import {
   consumirPedidoDeFiltro,
   pedirFiltro,
-} from "../src/app/pedido-de-filtro.js";
+} from "../src/app/pedido-de-filtro.ts";
 
 /*
   As perguntas com número da Aya (src/lib/dados-da-aya.ts): contas iguais às

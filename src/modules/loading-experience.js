@@ -3,7 +3,7 @@ import {
   isGenericLoadingCopy,
   normalizeLoadingProgress,
 } from "../lib/loading-copy";
-import { EVENTO_DO_CARREGAMENTO } from "../app/avisos.js";
+import { EVENTO_DO_CARREGAMENTO } from "../app/avisos.ts";
 
 const UPDATE_INTERVAL_MS = 1_000;
 let loadingStartedAt = 0;
@@ -100,7 +100,7 @@ export function initLoadingExperience() {
   };
 
   sync();
-  // Quem mostra ou esconde o #loader avisa (src/app/avisos.js); antes, um
+  // Quem mostra ou esconde o #loader avisa (src/app/avisos.ts); antes, um
   // intervalo de 250 ms conferia a classe para sempre, mesmo sem carregamento.
   document.addEventListener(EVENTO_DO_CARREGAMENTO, sync);
 }

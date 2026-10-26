@@ -996,7 +996,7 @@ describe("painel e análise separados", () => {
   it("“Analisar este recurso” leva à análise com os filtros e o recurso", async () => {
     const navegar = vi.fn();
     window.navigate = navegar;
-    const pedidos = await import("../../src/app/pedido-de-filtro.js");
+    const pedidos = await import("../../src/app/pedido-de-filtro.ts");
     await montar(supabaseFalso());
     await escolher(secao.querySelector("#filtro-origem"), "analise-curricular");
     await clicar(document.querySelector(".recursos-linha"));
@@ -1010,7 +1010,7 @@ describe("painel e análise separados", () => {
   });
 
   it("a análise aplica o pedido: os filtros e a gaveta do recurso", async () => {
-    const pedidos = await import("../../src/app/pedido-de-filtro.js");
+    const pedidos = await import("../../src/app/pedido-de-filtro.ts");
     pedidos.pedirFiltro("analisar-recursos", {
       filtros: { edital: "e1", inventado: "x" },
       recurso: "r1",
@@ -1025,7 +1025,7 @@ describe("painel e análise separados", () => {
   it("“Ver no painel” volta com os mesmos filtros", async () => {
     const navegar = vi.fn();
     window.navigate = navegar;
-    const pedidos = await import("../../src/app/pedido-de-filtro.js");
+    const pedidos = await import("../../src/app/pedido-de-filtro.ts");
     await montar(supabaseFalso(), { modo: "analise" });
     await escolher(secao.querySelector("#analise-filtro-origem"), "entrevista");
     await clicar(botao("Ver no painel"));

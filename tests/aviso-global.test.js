@@ -50,7 +50,7 @@ describe("aviso global", () => {
 
 describe("ligação do aviso global com a interface", () => {
   const html = readFileSync("index.html", "utf8");
-  const app = readFileSync("src/app/configuracao.js", "utf8");
+  const app = readFileSync("src/app/configuracao.ts", "utf8");
 
   it("tem no HTML o elemento que recebe o aviso", () => {
     expect(html).toContain('id="broadcastBar"');

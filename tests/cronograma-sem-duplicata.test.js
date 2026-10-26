@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { COLUNAS_DO_MONITORAMENTO } from "../src/app/carga.js";
+import { COLUNAS_DO_MONITORAMENTO } from "../src/app/carga.ts";
 
 const CRONOGRAMA = [
   "cronograma_automatico",

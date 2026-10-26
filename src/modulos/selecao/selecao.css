@@ -5,7 +5,7 @@
   gráfico e tabela são de src/ui/ (ui.css). Aqui: os quatro filtros de escolha
   múltipla numa linha (com o desenho dos campos de src/ui/), os sete KPIs numa
   fileira em tela larga, os alertas da coluna Observação e os números da
-  tabela. Importado pelo src/main.js, depois do ui.css.
+  tabela. Importado pelo src/main.ts, depois do ui.css.
 */
 
 /* ── Filtros: quatro campos numa linha (dois e um em telas menores) ──── */

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { telaSobDemanda } from "../src/app/tela-sob-demanda.js";
+import { telaSobDemanda } from "../src/app/tela-sob-demanda.ts";
 import {
   haTelaCarregando,
   preCarregarTela,

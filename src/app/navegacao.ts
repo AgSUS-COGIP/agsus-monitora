@@ -58,6 +58,9 @@ import {
 } from "../modulos/configuracoes/secoes.ts";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
 import { definirPaginaDaAya } from "../modulos/aya/estado.ts";
+import type { PerfilDeAcesso } from "../lib/tipos-dos-acessos.ts";
+import type { PaineisDaNavegacao } from "../lib/navegacao";
+import type { ArvoreDoMenu } from "../componentes/barra-lateral/tipos.ts";
 
 /*
   A navegação do app, sem React: qual tela está aberta, a troca de tela (a
@@ -80,79 +83,164 @@ import { definirPaginaDaAya } from "../modulos/aya/estado.ts";
   Quem acompanha a navegação assina: `assinar(ouvinte)` recebe
   `{ tipo: "menu" }` a cada marcação do menu (o lugar da pessoa pode ter
   mudado), `{ tipo: "abertura", view, anterior }` quando uma tela abriu
-  (auditoria e presença, em src/app/presenca.js) e `{ tipo: "aviso", view }`
+  (auditoria e presença, em src/app/presenca.ts) e `{ tipo: "aviso", view }`
   quando, no lugar dela, ficou um aviso (sem acesso, desligada, manutenção).
   A página aberta decide o que se carrega (src/app/pagina-aberta.ts).
 */
 
 /*
-  Telas React de página inteira (montadas por src/main.js na própria
+  Telas React de página inteira (montadas por src/main.ts na própria
   `#page-<view>`): título, subtítulo (depois da área) e o controlador.
 */
-export const TELAS_REACT = Object.freeze({
+/** O controlador de uma tela React em `window` (montado por src/main.ts). */
+export interface ControladorDaTela {
+  render(): unknown;
+  abrirVisao?(visao: string): unknown;
+}
+
+type NomeDoControlador =
+  | "nucleoController"
+  | "calendarioEditaisController"
+  | "aprovadosController"
+  | "recursosController"
+  | "analisarRecursosController"
+  | "entrevistasController"
+  | "conduzirEntrevistasController"
+  | "classificacaoController"
+  | "analisesController"
+  | "avaliacaoDocumentalController"
+  | "selecaoController";
+
+/** Os controladores das telas em `window` (cada um com o seu tipo lá). */
+export type JanelaDasTelas = { readonly [nome in NomeDoControlador]?: unknown };
+
+/** Título, subtítulo e controlador de uma tela React. */
+export type TelaReact = (
+  valor: (chave: string) => string,
+  janela: JanelaDasTelas,
+) => readonly [string, string, ControladorDaTela | undefined];
+
+type Controle = ControladorDaTela | undefined;
+
+export const TELAS_REACT: Readonly<Record<string, TelaReact>> = Object.freeze({
   nucleo: (valor, janela) => [
     "Editais",
     valor("nucleo_page_subtitle"),
-    janela.nucleoController,
+    janela.nucleoController as Controle,
   ],
   calendario: (_valor, janela) => [
     "Cronograma",
     "Etapas dos editais, por data.",
-    janela.calendarioEditaisController,
+    janela.calendarioEditaisController as Controle,
   ],
   approved: (_valor, janela) => [
     "Lista de Aprovados",
     "Candidatos por edital e situação de contratação.",
-    janela.aprovadosController,
+    janela.aprovadosController as Controle,
   ],
   recursos: (_valor, janela) => [
     "Painel de recursos",
     "",
-    janela.recursosController,
+    janela.recursosController as Controle,
   ],
   "analisar-recursos": (_valor, janela) => [
     "Analisar recursos",
     "",
-    janela.analisarRecursosController,
+    janela.analisarRecursosController as Controle,
   ],
   entrevistas: (_valor, janela) => [
     "Painel de entrevistas",
     "",
-    janela.entrevistasController,
+    janela.entrevistasController as Controle,
   ],
   "conduzir-entrevistas": (_valor, janela) => [
     "Conduzir entrevistas",
     "",
-    janela.conduzirEntrevistasController,
+    janela.conduzirEntrevistasController as Controle,
   ],
   classificacao: (_valor, janela) => [
     "Classificação",
     "",
-    janela.classificacaoController,
+    janela.classificacaoController as Controle,
   ],
   analises: (_valor, janela) => [
     "Painel das análises",
     "",
-    janela.analisesController,
+    janela.analisesController as Controle,
   ],
   "avaliacao-documental": (_valor, janela) => [
     "Avaliação documental",
     "",
-    janela.avaliacaoDocumentalController,
+    janela.avaliacaoDocumentalController as Controle,
   ],
-  selecao: (_valor, janela) => ["Seleção", "", janela.selecaoController],
+  selecao: (_valor, janela) => [
+    "Seleção",
+    "",
+    janela.selecaoController as Controle,
+  ],
 });
 
+/** O que pergunta antes de sair (Acessos, Módulos e abas). */
+interface ControleComSaida {
+  confirmarSaida(): unknown;
+}
+/** As telas de `window` que guardam alteração não salva. */
+export type JanelaComSaida = {
+  acessosController?: ControleComSaida;
+  modulosController?: ControleComSaida;
+};
+
 /* Sair com alteração não salva (Acessos, Módulos e abas ou campos de Configurações) pergunta antes. */
-export function confirmarSaidaPadrao(janela) {
+export function confirmarSaidaPadrao(
+  janela: object | null | undefined,
+): boolean {
   return (
-    janela?.acessosController?.confirmarSaida() !== false &&
-    janela?.modulosController?.confirmarSaida() !== false &&
+    (
+      janela as JanelaComSaida | null | undefined
+    )?.acessosController?.confirmarSaida() !== false &&
+    (
+      janela as JanelaComSaida | null | undefined
+    )?.modulosController?.confirmarSaida() !== false &&
     estadoDasConfiguracoes.confirmarSaida()
   );
 }
 
-const PAINEIS_VAZIOS = Object.freeze({
+/** Os painéis externos, como a navegação os usa (src/app/paineis-externos.ts). */
+export interface PaineisDoApp extends PaineisDaNavegacao {
+  doMenu(): readonly { codigo?: string | null; titulo?: string | null }[];
+  mostrar(codigo: string): { titulo: string } | null | void;
+  esquecerAtual(): void;
+}
+
+/** O que a navegação avisa a quem assina. */
+export type EventoDaNavegacao =
+  | { tipo: "menu" }
+  | { tipo: "abertura"; view: string; anterior: string }
+  | { tipo: "aviso"; view: string };
+export type OuvinteDaNavegacao = (evento: EventoDaNavegacao) => void;
+
+/** A janela: os controladores das telas e a recarga. */
+export type JanelaDaNavegacao = JanelaDasTelas & {
+  location: { reload(): void };
+};
+
+export interface OpcoesDaNavegacao {
+  documento?: Document;
+  janela?: JanelaDaNavegacao;
+  armazenamento?: () => Storage | null | undefined;
+  obterPerfil?: () => PerfilDeAcesso | null | undefined;
+  paineis?: PaineisDoApp;
+  configuracao?: (chave: string) => string;
+  avisar?: (texto: string, tom?: string) => void;
+  ajustarBarra?: () => void;
+  confirmarSaida?: () => boolean;
+  aplicarAtualizacao?: (recarregar: () => void) => boolean;
+  podeRecarregar?: () => boolean;
+  recarregar?: () => void;
+  temTrabalhoNaoSalvo?: () => boolean;
+}
+
+const PAINEIS_VAZIOS: PaineisDoApp = Object.freeze({
   podeAbrir: () => false,
   primeiro: () => null,
   doMenu: () => [],
@@ -160,17 +248,29 @@ const PAINEIS_VAZIOS = Object.freeze({
   esquecerAtual: () => {},
 });
 
+/*
+  src/modules/situacao-dos-modulos.js ainda é JS: os padrões (`abas = []`,
+  `aoIrParaInicio = null`) fecham o tipo inferido; este é o contrato de verdade.
+*/
+type AbasDoMenu = ReturnType<typeof abasDoMenu>;
+type AplicarManutencao = (opcoes: {
+  documento?: Document;
+  view: string;
+  area: string;
+  abas: AbasDoMenu;
+  adminGlobal?: boolean;
+  desligada?: boolean;
+  aoIrParaInicio?: () => void;
+}) => boolean;
+
 const TEXTO_SEM_ACESSO =
   "Seu usuário ainda não tem módulos liberados. Solicite a liberação a um administrador.";
 
 /**
- * @param {object} dependencias
- * @param {() => object|null} dependencias.obterPerfil perfil de quem entrou
- * @param {object} dependencias.paineis painéis externos: `podeAbrir(codigo)`,
- *   `primeiro()`, `doMenu()`, `mostrar(codigo)` e `esquecerAtual()`
- * @param {(chave: string) => string} dependencias.configuracao valor de TB_CONFIGURACAO
- * @param {(texto: string, tom?: string) => void} dependencias.avisar toast
- * @param {() => void} dependencias.ajustarBarra barra lateral recolhida no celular
+ * Dependências: `obterPerfil` (perfil de quem entrou), `paineis` (painéis
+ * externos: `podeAbrir(codigo)`, `primeiro()`, `doMenu()`, `mostrar(codigo)`
+ * e `esquecerAtual()`), `configuracao` (valor de TB_CONFIGURACAO), `avisar`
+ * (toast) e `ajustarBarra` (barra lateral recolhida no celular).
  */
 export function criarNavegacao({
   documento = globalThis.document,
@@ -187,22 +287,22 @@ export function criarNavegacao({
   recarregar = () => janela.location.reload(),
   // Fechar a página agora perderia algo (ainda não guardado em lugar nenhum).
   temTrabalhoNaoSalvo = () => !guardaDeAlteracoes.podeRecarregar(),
-} = {}) {
+}: OpcoesDaNavegacao = {}) {
   let view = "dashboard";
   let estado = Object.freeze({ view });
   /* A última árvore do menu: dela sai a página do botão "Ir para a página inicial". */
-  let arvore = [];
-  const ouvintes = new Set();
+  let arvore: ArvoreDoMenu = [];
+  const ouvintes = new Set<OuvinteDaNavegacao>();
 
-  const $ = (id) => documento.getElementById(id);
+  const $ = (id: string) => documento.getElementById(id);
   const perfil = () => obterPerfil();
   const areaAtual = () => obterDadosDoMonitoramento().areaAtual;
 
-  function avisarOuvintes(evento) {
+  function avisarOuvintes(evento: EventoDaNavegacao) {
     ouvintes.forEach((ouvinte) => ouvinte(evento));
   }
 
-  function definirView(nova) {
+  function definirView(nova: string) {
     if (nova === view) return;
     view = nova;
     estado = Object.freeze({ view });
@@ -210,7 +310,7 @@ export function criarNavegacao({
 
   // ── Tela guardada ─────────────────────────────────────────────────────
 
-  function guardarTela(tela) {
+  function guardarTela(tela: string) {
     if (!tela) return;
     try {
       armazenamento()?.setItem(CHAVE_DA_TELA_GUARDADA, tela);
@@ -227,10 +327,10 @@ export function criarNavegacao({
     }
   }
 
-  const permitida = (tela) => telaPermitida(tela, perfil(), paineis);
+  const permitida = (tela: string) => telaPermitida(tela, perfil(), paineis);
 
   /* A página (view) na área está desligada pela coordenação (src/lib/pagina-desligada.ts)? */
-  const desligada = (tela, area = areaAtual()) =>
+  const desligada = (tela: string, area: string = areaAtual()) =>
     paginaDesligada({
       abas: abasDoMenu(),
       doBanco: catalogoDoBanco(),
@@ -246,7 +346,7 @@ export function criarNavegacao({
     a Visão geral liberada (o grupo Avaliador, por exemplo) mas a vê desligada
     na área entra direto na página que usa, sem passar pela Visão geral.
   */
-  function ligadaOuPrimeira(tela) {
+  function ligadaOuPrimeira(tela: string) {
     if (!desligada(tela)) return tela;
     const item = primeiraPaginaLigada(arvore, areaAtual(), tela);
     if (!item) return tela;
@@ -273,7 +373,7 @@ export function criarNavegacao({
 
   // ── Cabeçalho e menu ──────────────────────────────────────────────────
 
-  function definirTitulo(titulo, subtitulo) {
+  function definirTitulo(titulo: string, subtitulo: string) {
     const h1 = $("pageTitle");
     const sub = $("pageSubtitle");
     if (h1) h1.textContent = titulo || "";
@@ -285,7 +385,7 @@ export function criarNavegacao({
   }
 
   /* Editais, Cronograma e Aprovados mostram só a área atual; o subtítulo diz qual. */
-  function subtituloDaArea(sub) {
+  function subtituloDaArea(sub: string) {
     return [nomeDaArea(areaAtual()), sub].filter(Boolean).join(" · ");
   }
 
@@ -302,7 +402,7 @@ export function criarNavegacao({
     definirTitulo(titulo, subtitulo);
   }
 
-  function marcarMenu(tela = view) {
+  function marcarMenu(tela: string = view) {
     marcarItemAtivoNoMenu(tela, secaoAtualDeConfiguracao(documento));
     avisarOuvintes({ tipo: "menu" });
   }
@@ -366,12 +466,12 @@ export function criarNavegacao({
     );
   }
 
-  function abriu(tela, anterior) {
+  function abriu(tela: string, anterior: string) {
     avisarOuvintes({ tipo: "abertura", view: tela, anterior });
   }
 
   /* No lugar da página ficou um aviso (sem acesso, desligada, manutenção). */
-  function ficouAviso(tela) {
+  function ficouAviso(tela: string) {
     avisarOuvintes({ tipo: "aviso", view: tela });
   }
 
@@ -380,11 +480,11 @@ export function criarNavegacao({
    * Devolve `false` quando a navegação foi recusada (saída não confirmada ou
    * sem permissão): quem trocou a área antes de navegar a devolve.
    */
-  function irPara(pedida) {
+  function irPara(pedida: unknown): boolean {
     return abrirTela(pedida) !== false;
   }
 
-  function abrirTela(pedida) {
+  function abrirTela(pedida: unknown) {
     const anterior = view;
     // Link antigo (`entrevistas:conduzir`…) vai para a tela e a visão novas.
     const destino = destinoDaTela(pedida);
@@ -432,7 +532,7 @@ export function criarNavegacao({
     // aba em manutenção: quem não é admin global vê a tela de manutenção.
     const fechada = desligada(tela);
     if (
-      aplicarManutencaoNaNavegacao({
+      (aplicarManutencaoNaNavegacao as AplicarManutencao)({
         documento,
         view: tela,
         area: areaAtual(),
@@ -458,7 +558,7 @@ export function criarNavegacao({
       return;
     }
     if (Object.hasOwn(TELAS_REACT, tela)) {
-      const [titulo, subtitulo, controlador] = TELAS_REACT[tela](
+      const [titulo, subtitulo, controlador] = TELAS_REACT[tela]!(
         configuracao,
         janela,
       );
@@ -512,10 +612,15 @@ export function criarNavegacao({
       !fechada &&
       !isAdminGlobal(perfil()) &&
       !situacao.adminGlobal &&
-      situacaoEfetiva({ situacao, abas: abasDoMenu(), view, area });
+      situacaoEfetiva({
+        situacao,
+        abas: abasDoMenu(),
+        view,
+        area,
+      });
     if (!fechada && !manutencao) {
       // Continua aberta: só a faixa (a do administrador, ou nenhuma) se ajusta.
-      aplicarManutencaoNaNavegacao({
+      (aplicarManutencaoNaNavegacao as AplicarManutencao)({
         documento,
         view,
         area,
@@ -551,7 +656,7 @@ export function criarNavegacao({
 
   return {
     obter: () => estado,
-    assinar(ouvinte) {
+    assinar(ouvinte: OuvinteDaNavegacao) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
@@ -568,3 +673,5 @@ export function criarNavegacao({
     guardarTela,
   };
 }
+
+export type Navegacao = ReturnType<typeof criarNavegacao>;

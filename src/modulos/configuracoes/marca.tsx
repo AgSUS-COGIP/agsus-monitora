@@ -12,7 +12,7 @@ import type { EstadoDasConfiguracoes } from "./tipos.ts";
 
 /*
   Configurações › Marca: a equipe responsável e o rodapé (que aparecem no pé
-  do cartão da tela de acesso, `src/app/entrada/entrada.jsx`), o cabeçalho
+  do cartão da tela de acesso, `src/app/entrada/entrada.tsx`), o cabeçalho
   da agência nos documentos oficiais (Classificação), a prévia da barra
   lateral ao lado e a mascote da Aya em cada estado (cartao-da-mascote.tsx),
   para conferir. Os valores são do rascunho de `estado.ts` e vão na

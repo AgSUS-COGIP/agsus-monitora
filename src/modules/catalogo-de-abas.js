@@ -3,7 +3,7 @@
   para o menu lateral.
 
   A consulta sai junto com as outras da entrada (`iniciarConsultas` em
-  src/app/carga.js) e vai na cópia da sessão. Quem monta a árvore é
+  src/app/carga.ts) e vai na cópia da sessão. Quem monta a árvore é
   `montarArvoreDoMenu` (`src/lib/menu-lateral.ts`), que recebe `abasDoMenu()`.
 
   Sem catálogo — função ainda não publicada no banco, erro de rede, resposta

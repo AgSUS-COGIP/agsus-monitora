@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { criarPerfil } from "../../src/app/perfil.js";
+import { criarPerfil } from "../../src/app/perfil.ts";
 
-/* Quem entrou (src/app/perfil.js): cópia da sessão e o que o app mostra dele. */
+/* Quem entrou (src/app/perfil.ts): cópia da sessão e o que o app mostra dele. */
 
 function sessaoFalsa() {
   let estado = { usuario: null, perfil: null, painelIds: [] };

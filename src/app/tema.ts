@@ -3,7 +3,7 @@ import { EVENTO_TEMA_ALTERADO } from "../lib/eventos-da-barra-lateral.ts";
 
 /*
   O tema do app (claro/escuro), para os componentes React. Quem manda é a
-  moldura (`alternarTema` em src/app/moldura.js, `window.toggleDarkMode`,
+  moldura (`alternarTema` em src/app/moldura.ts, `window.toggleDarkMode`,
   acionado pelo seletor da barra lateral): ele marca `html[data-theme="dark"]` e avisa
   `agsus:tema-alterado`. Outra aba que trocou o tema avisa por `storage`.
   Sem `MutationObserver`.
@@ -12,7 +12,7 @@ import { EVENTO_TEMA_ALTERADO } from "../lib/eventos-da-barra-lateral.ts";
 export const temaEscuro = () =>
   document.documentElement.getAttribute("data-theme") === "dark";
 
-function assinarTema(avisar) {
+function assinarTema(avisar: () => void) {
   document.addEventListener(EVENTO_TEMA_ALTERADO, avisar);
   window.addEventListener("storage", avisar);
   return () => {

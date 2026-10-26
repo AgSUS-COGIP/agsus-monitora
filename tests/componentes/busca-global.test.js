@@ -234,11 +234,11 @@ describe("Busca global", () => {
 });
 
 describe("o legado recebe a escolha", () => {
-  const legado = readFileSync("src/app/sistema.js", "utf8");
+  const legado = readFileSync("src/app/sistema.ts", "utf8");
 
   it("escuta o evento e localiza a linha no painel", () => {
     expect(legado).toMatch(
-      /addEventListener\(EVENTO_ESCOLHA_DA_BUSCA,[\s\S]{0,80}localizarLinhaDoMonitoramento\(evento\.detail\?\.id\)/,
+      /addEventListener\(EVENTO_ESCOLHA_DA_BUSCA,[\s\S]{0,80}localizarLinhaDoMonitoramento\(\s*\(?evento( as [^)]*\))?\.detail\?\.id/,
     );
     const corpo = legado.slice(
       legado.indexOf("function localizarLinhaDoMonitoramento"),

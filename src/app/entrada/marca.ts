@@ -1,12 +1,12 @@
 /*
   A marca da tela de acesso: arte de fundo, cor do painel, logo, saudação,
   texto do botão e o rodapé institucional. Estado sem React (`obter`/`assinar`)
-  que a tela de entrada (entrada.jsx) lê com `useSyncExternalStore`.
+  que a tela de entrada (entrada.tsx) lê com `useSyncExternalStore`.
 
   ORDEM DE CARREGAMENTO
     0. antes do primeiro quadro — o script clássico do <head> do index.html
        aplica a arte e a cor guardadas (cópia mínima desta leitura);
-    1. ao avaliar este módulo (é o primeiro import de src/main.js) — a marca
+    1. ao avaliar este módulo (é o primeiro import de src/main.ts) — a marca
        guardada da visita anterior, sem rede;
     2. em paralelo — `obter_branding_acesso_publico()`, que traz a identidade
        atual e não exige autenticação;
@@ -26,6 +26,7 @@
 import {
   guardarMarca,
   lerMarcaGuardada,
+  type MarcaGuardada,
 } from "../../lib/access-branding-cache.ts";
 import { buscarMarcaPublica } from "../../lib/access-branding-publico.ts";
 import {
@@ -41,7 +42,43 @@ import {
   normalizarModo,
 } from "../../lib/contraste.ts";
 
-const RODAPE_VAZIO = Object.freeze({
+/** O rodapé institucional da tela de acesso (chaves `cogip_*`). */
+export type RodapeDaEntrada = {
+  nome: string;
+  logoUrl: string;
+  funcao: string;
+  versao: string;
+  departamento: string;
+};
+
+/** O que a tela de acesso desenha da marca (logo, saudação, botão, rodapé). */
+export type IdentidadeDaEntrada = {
+  logoUrl: string;
+  saudacao: string;
+  textoDoBotao: string;
+  rodape: Readonly<RodapeDaEntrada>;
+  resolvida: boolean;
+};
+
+/** O estado da marca, lido com `useSyncExternalStore` (`obter`/`assinar`). */
+export type EstadoDaMarcaDaEntrada = {
+  obter: () => Readonly<IdentidadeDaEntrada>;
+  assinar: (ouvinte: () => void) => () => boolean;
+  definir: (parcial: Partial<IdentidadeDaEntrada>) => void;
+  reiniciarParaTestes: () => void;
+};
+
+/** O documento onde está o `#loginScreen` (o real ou um de teste). */
+export type DocumentoDaEntrada = Pick<Document, "getElementById">;
+
+/** A configuração que o legado repassa a `definirMarcaDaConfiguracao`. */
+export type ConfiguracaoDaMarca = {
+  valores?: Readonly<Record<string, string | null | undefined>>;
+  carregou?: boolean;
+  chaves?: ReadonlySet<string>;
+};
+
+const RODAPE_VAZIO: Readonly<RodapeDaEntrada> = Object.freeze({
   nome: "",
   logoUrl: "",
   funcao: "",
@@ -49,7 +86,7 @@ const RODAPE_VAZIO = Object.freeze({
   departamento: "",
 });
 
-export const MARCA_INICIAL = Object.freeze({
+export const MARCA_INICIAL: Readonly<IdentidadeDaEntrada> = Object.freeze({
   logoUrl: DEFAULT_ACCESS_BRANDING.logoUrl,
   saudacao: DEFAULT_ACCESS_BRANDING.greeting,
   textoDoBotao: "",
@@ -63,17 +100,17 @@ export const MARCA_INICIAL = Object.freeze({
 });
 
 /** `url("…")` seguro: aspas e barras invertidas quebrariam a declaração CSS. */
-function comoUrlCss(valor) {
+function comoUrlCss(valor: unknown): string {
   return `url("${String(valor).replace(/["\\]/g, "")}")`;
 }
 
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown): string => String(valor ?? "").trim();
 
 /** O estado da marca: `obter()`, `assinar(ouvinte)` e as escritas. */
-export function criarMarcaDaEntrada() {
-  let atual = MARCA_INICIAL;
-  const ouvintes = new Set();
-  const definir = (parcial) => {
+export function criarMarcaDaEntrada(): EstadoDaMarcaDaEntrada {
+  let atual: Readonly<IdentidadeDaEntrada> = MARCA_INICIAL;
+  const ouvintes = new Set<() => void>();
+  const definir = (parcial: Partial<IdentidadeDaEntrada>) => {
     atual = { ...atual, ...parcial };
     ouvintes.forEach((ouvinte) => ouvinte());
   };
@@ -97,7 +134,11 @@ export const marcaDaEntrada = criarMarcaDaEntrada();
   "escuro" são escolha de identidade (quem escolhe vê o número em
   Configurações antes de salvar).
 */
-export function aplicarCorDoPainel(tela, cor, modo = MODO_AUTO) {
+export function aplicarCorDoPainel(
+  tela: HTMLElement | null | undefined,
+  cor: string | null | undefined,
+  modo: string = MODO_AUTO,
+): boolean {
   if (!tela || !cor) return false;
   tela.style.setProperty("--login-panel-color", cor);
   tela.classList.toggle(
@@ -115,10 +156,10 @@ export function aplicarCorDoPainel(tela, cor, modo = MODO_AUTO) {
  * @returns {boolean} `true` se algo chegou a ser aplicado.
  */
 export function aplicarMarcaNaTela(
-  marca,
-  documento = globalThis.document,
-  estado = marcaDaEntrada,
-) {
+  marca: MarcaGuardada | null | undefined,
+  documento: DocumentoDaEntrada | null | undefined = globalThis.document,
+  estado: EstadoDaMarcaDaEntrada = marcaDaEntrada,
+): boolean {
   if (!marca) return false;
 
   const tela = documento?.getElementById?.("loginScreen");
@@ -130,7 +171,7 @@ export function aplicarMarcaNaTela(
   }
   if (tela) aplicarCorDoPainel(tela, marca.panelColor, marca.textoModo);
 
-  const parcial = {};
+  const parcial: Partial<IdentidadeDaEntrada> = {};
   if (marca.logoUrl) parcial.logoUrl = marca.logoUrl;
   if (marca.greeting) parcial.saudacao = marca.greeting;
   if (marca.buttonText) parcial.textoDoBotao = marca.buttonText;
@@ -140,9 +181,9 @@ export function aplicarMarcaNaTela(
 }
 
 export function aplicarMarcaGuardadaNoArranque(
-  documento = globalThis.document,
-  estado = marcaDaEntrada,
-) {
+  documento: DocumentoDaEntrada | null | undefined = globalThis.document,
+  estado: EstadoDaMarcaDaEntrada = marcaDaEntrada,
+): boolean {
   const guardada = lerMarcaGuardada();
   if (guardada) estado.definir({ resolvida: true });
   return aplicarMarcaNaTela(guardada, documento, estado);
@@ -153,9 +194,9 @@ export function aplicarMarcaGuardadaNoArranque(
  * Falhar aqui é inofensivo por construção: nada é aplicado e nada é guardado.
  */
 export async function atualizarMarcaComBrandingPublico(
-  documento = globalThis.document,
-  estado = marcaDaEntrada,
-) {
+  documento: DocumentoDaEntrada | null | undefined = globalThis.document,
+  estado: EstadoDaMarcaDaEntrada = marcaDaEntrada,
+): Promise<boolean> {
   const marca = await buscarMarcaPublica();
   /* Respondeu ou falhou, a espera acabou: a tela mostra o que tiver. */
   if (!estado.obter().resolvida) estado.definir({ resolvida: true });
@@ -184,12 +225,16 @@ export async function atualizarMarcaComBrandingPublico(
  * com o que houver.
  */
 export function definirMarcaDaConfiguracao(
-  { valores = {}, carregou = false, chaves = new Set() } = {},
-  documento = globalThis.document,
-  estado = marcaDaEntrada,
-) {
-  const valor = (chave) => texto(valores[chave]);
-  const doBanco = (chave) =>
+  {
+    valores = {},
+    carregou = false,
+    chaves = new Set<string>(),
+  }: ConfiguracaoDaMarca = {},
+  documento: DocumentoDaEntrada | null | undefined = globalThis.document,
+  estado: EstadoDaMarcaDaEntrada = marcaDaEntrada,
+): void {
+  const valor = (chave: string) => texto(valores[chave]);
+  const doBanco = (chave: string): string | null =>
     carregou && chaves.has(chave) ? (valores[chave] ?? "") : null;
 
   const fundoDoBanco = doBanco("auth_access_background_url");
@@ -198,8 +243,8 @@ export function definirMarcaDaConfiguracao(
   const saudacaoDoBanco = doBanco("auth_access_greeting");
 
   const tela = documento?.getElementById?.("loginScreen");
-  const marcaParaGuardar = {};
-  const parcial = {};
+  const marcaParaGuardar: MarcaGuardada = {};
+  const parcial: Partial<IdentidadeDaEntrada> = {};
 
   if (tela && fundoDoBanco !== null) {
     const url = normalizeAccessBackgroundUrl(fundoDoBanco);
@@ -246,7 +291,7 @@ export function definirMarcaDaConfiguracao(
 }
 
 /*
-  O `#loginScreen` já existe quando este módulo é avaliado (src/main.js é
+  O `#loginScreen` já existe quando este módulo é avaliado (src/main.ts é
   `type="module"`, portanto adiado até o HTML ser analisado); o
   `DOMContentLoaded` cobre quem o importar antes disso.
 */

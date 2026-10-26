@@ -10,14 +10,14 @@ import {
   SLOGAN,
   ligarEntradaAPagina,
   montarEntrada,
-} from "../../src/app/entrada/entrada.jsx";
-import { criarMarcaDaEntrada } from "../../src/app/entrada/marca.js";
+} from "../../src/app/entrada/entrada.tsx";
+import { criarMarcaDaEntrada } from "../../src/app/entrada/marca.ts";
 import {
   FASES,
   TEXTO_DO_BOTAO,
   TEXTO_DO_BOTAO_OCUPADO,
   configuracaoDaEntrada,
-} from "../../src/app/sessao.js";
+} from "../../src/app/sessao.ts";
 import { clicar } from "../componentes/interacoes.js";
 
 /*

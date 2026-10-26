@@ -19,7 +19,7 @@ peça, não uma tela: o mapa da Visão geral da Saúde Indígena, ligado em `vis
 `editor-de-coordenadas/` também é peça: o editor de coordenadas (fila, sugestões, histórico e
 desfazer) comum aos mapas da Saúde Indígena e de Projetos.
 `encerramento-do-edital/` também é peça: a tela de fim de edital (uma vez por pessoa) e os selos
-no menu da conta, montados pela moldura em `src/app/sistema.js`.
+no menu da conta, montados pela moldura em `src/app/sistema.ts`.
 Guia completo, com o mapa de hoje → alvo: `docs/arquitetura-react.md`.
 
 `editor-de-coordenadas/` está em TypeScript: editor compartilhado pelos mapas de Projetos e

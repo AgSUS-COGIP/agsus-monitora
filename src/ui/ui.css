@@ -3,7 +3,7 @@
   tokens de src/styles/tokens.css — o tema escuro vem de
   `html[data-theme="dark"]` nos próprios tokens.
 
-  Importado uma vez, pelo src/main.js (o app).
+  Importado uma vez, pelo src/main.ts (o app).
 
   Os componentes usam só as classes `.ui-*` daqui (prefixo para não colidir
   com `.panel`, `.kpi`, `.card`… de src/styles/app.css). Os seletores de

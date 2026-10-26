@@ -23,7 +23,7 @@ describe("sai o payload do monitoramento (20261007220100)", () => {
 
   it("o front não a chama e o contrato não a lista", () => {
     expect(Object.keys(CONTRATO_RPC)).not.toContain(RPC);
-    for (const arquivo of ["src/app/carga.js", "src/lib/rpc-contrato.js"])
+    for (const arquivo of ["src/app/carga.ts", "src/lib/rpc-contrato.js"])
       expect(ler(arquivo)).not.toContain(RPC);
   });
 

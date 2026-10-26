@@ -43,7 +43,7 @@ import type {
   nova = uma linha no banco E uma entrada em `ABAS_DO_MENU` (o teste
   `catalogo-de-abas.test.js` confere que o seed da migration e esta lista são
   iguais). Quem decide o que o perfil pode ver é o `montarMenu` de
-  src/app/navegacao.js; este arquivo só organiza o que já foi permitido.
+  src/app/navegacao.ts; este arquivo só organiza o que já foi permitido.
 */
 
 import {

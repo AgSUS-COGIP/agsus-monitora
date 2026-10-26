@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { montarModulo } from "../../app/montar-modulo.jsx";
+import { montarModulo } from "../../app/montar-modulo.tsx";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import {
   resumoDaVersao,
@@ -716,7 +716,7 @@ const corpoDaSecao = (pagina: Element, secao: string): Element | null =>
   );
 
 /*
-  Chamada em src/main.js depois de `organizarConfiguracoesEmSecoes`, que cria
+  Chamada em src/main.ts depois de `organizarConfiguracoesEmSecoes`, que cria
   o corpo de cada seção (os alvos dos portais).
 */
 export function montarConfiguracoes({

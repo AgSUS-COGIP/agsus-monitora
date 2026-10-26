@@ -18,7 +18,7 @@ arquivo em kebab-case, componente em PascalCase.
 ```
 icone.tsx                    <Icone nome="…"> — Lucide, do mesmo registro de src/modules/icones.js
 selo-de-treinamento.tsx      <SeloDeTreinamento>: selo "Treinamento" do edital de treinamento
-pessoas-online/              "Pessoas online" no cabeçalho (montarPessoasOnline); estado em src/app/presenca.js
+pessoas-online/              "Pessoas online" no cabeçalho (montarPessoasOnline); estado em src/app/presenca.ts
 aviso-de-versao/             faixa "Há uma versão nova" no topo (montarAvisoDeVersao); regra em src/app/aviso-de-versao.ts
 busca-global/                busca Ctrl+K (montarBuscaGlobal); a escolha vai ao legado por evento
 multi-select-busca.tsx       <MultiSelectBusca>: seleção múltipla com busca, controlada (o único do app)
@@ -28,12 +28,12 @@ dados-do-monitoramento.ts    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_
 usar-area-atual.ts           hook: a área atual, as linhas dela e os ids dos editais (Editais,
                              Cronograma e Lista de aprovados recortam por eles)
 barra-lateral/
-  barra-lateral.tsx          <BarraLateral> e montarBarraLateral() (chamada em src/main.js)
+  barra-lateral.tsx          <BarraLateral> e montarBarraLateral() (chamada em src/main.ts)
   estado.ts                  estado externo da barra (sem React): o legado empurra, a barra lê
   menu-de-areas.tsx          áreas (acordeão; recolhida, painel flutuante) e itens
   alca-de-recolher.tsx       o botão único de recolher: na marca (> 900px) ou no cabeçalho (portal)
   rodape.tsx                 seletor Claro/Escuro, Sair e versão
-  usar-ambiente.ts           hooks do que o legado controla: classe de body e largura (o tema é src/app/tema.js)
+  usar-ambiente.ts           hooks do que o legado controla: classe de body e largura (o tema é src/app/tema.ts)
 ```
 
 Lógica pura fica em `src/lib/`: `menu-lateral.ts` (barra), `busca-global.ts` (busca) e
@@ -74,7 +74,7 @@ moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS 
 
 - Handler de navegação chama `window.navigate` **na hora do clique** (não guarde a referência na
   montagem): é o `navigate` do legado, que pergunta às Configurações antes de sair.
-- Monte sempre por `montarModulo` (`src/app/montar-modulo.jsx`: StrictMode + ErrorBoundary); passe
+- Monte sempre por `montarModulo` (`src/app/montar-modulo.tsx`: StrictMode + ErrorBoundary); passe
   `{ flushSync: true }` quando código legado precisar do DOM logo depois (ver `montarBarraLateral`).
 - Visual novo vem de `src/ui/` (Topo, Filtros, Kpi, CardDeGrafico, TabelaInfinita, Gaveta, Modal,
   Aviso, Campo, Selo…), só com tokens; não recrie em cada tela. Sem textos genéricos (ver o CLAUDE.md raiz).

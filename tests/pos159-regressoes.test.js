@@ -133,7 +133,7 @@ describe("a logo da barra lateral é o <img> real", () => {
   });
 
   it("a configuração do app não sobrescreve mais a logo da barra lateral", () => {
-    const fn = readFileSync("src/app/configuracao.js", "utf8");
+    const fn = readFileSync("src/app/configuracao.ts", "utf8");
     expect(fn).not.toContain('"sideLogo"');
   });
 });

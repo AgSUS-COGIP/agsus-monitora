@@ -29,7 +29,7 @@ describe("fonte Geist no sistema todo", () => {
 
   it("tokens.css é o primeiro CSS dos pontos de entrada", () => {
     const primeiroCss = (fonte) => fonte.match(/import\s+"([^"]+\.css)"/)?.[1];
-    expect(primeiroCss(ler("src/main.js"))).toBe("./styles/tokens.css");
+    expect(primeiroCss(ler("src/main.ts"))).toBe("./styles/tokens.css");
   });
 
   it("o corpo do app usa o token", () => {

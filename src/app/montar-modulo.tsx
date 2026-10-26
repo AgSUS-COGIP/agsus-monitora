@@ -1,7 +1,9 @@
 import { StrictMode } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
-import { ErrorBoundary } from "./ErrorBoundary.jsx";
+import type { Container, Root } from "react-dom/client";
+import type { ReactNode } from "react";
+import { ErrorBoundary } from "./ErrorBoundary.tsx";
 
 /**
  * O jeito único de montar uma ilha React do MONITORA: `createRoot` +
@@ -13,15 +15,16 @@ import { ErrorBoundary } from "./ErrorBoundary.jsx";
  *
  * Devolve `{ raiz, desmontar }`. A `raiz` (do React) continua exposta nos
  * controladores porque os testes desmontam por ela (`controlador.raiz.unmount()`).
- * @param {import("react-dom/client").Container} elemento
- * @param {import("react").ReactNode} componente
- * @param {{ flushSync?: boolean, nome?: string }} [opcoes]
  */
+export type OpcoesDeMontagem = { flushSync?: boolean; nome?: string };
+
+export type ModuloMontado = { raiz: Root; desmontar: () => void };
+
 export function montarModulo(
-  elemento,
-  componente,
-  { flushSync: sincrono = false, nome } = {},
-) {
+  elemento: Container,
+  componente: ReactNode,
+  { flushSync: sincrono = false, nome }: OpcoesDeMontagem = {},
+): ModuloMontado {
   const raiz = createRoot(elemento);
   const arvore = (
     <StrictMode>

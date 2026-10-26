@@ -1187,7 +1187,7 @@ describe("contrato de CSS e ligação no arranque", () => {
     readFileSync("src/styles/platform-shell.css", "utf8"),
   );
   const app = semComentarios(readFileSync("src/styles/app.css", "utf8"));
-  const main = readFileSync("src/main.js", "utf8");
+  const main = readFileSync("src/main.ts", "utf8");
   const html = readFileSync("index.html", "utf8");
 
   it("o hambúrguer antigo sai de cena e o botão único aparece em todo modo", () => {
@@ -1266,7 +1266,7 @@ describe("contrato de CSS e ligação no arranque", () => {
     );
   });
 
-  it("o main.js monta a barra antes do branding e importa o CSS dela", () => {
+  it("o main.ts monta a barra antes do branding e importa o CSS dela", () => {
     expect(main).toContain(
       'import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.tsx"',
     );

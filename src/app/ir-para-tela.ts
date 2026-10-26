@@ -3,7 +3,7 @@
   Lista de aprovados). O destino é conferido (src/lib/link-interno.ts) e a
   troca é a do legado (`window.navigate`, que confere a permissão da página e
   avisa). Com edital, a Classificação e Conduzir entrevistas já abrem nele;
-  as telas carregam sob demanda (src/app/tela-sob-demanda.js), então espera
+  as telas carregam sob demanda (src/app/tela-sob-demanda.ts), então espera
   montar.
 */
 import { linkInterno } from "../lib/link-interno.ts";

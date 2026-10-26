@@ -5,7 +5,7 @@ import { semOPainelAntigoDeAnalises } from "../src/lib/pagina-do-painel";
 import { RESOURCES } from "../src/lib/permissoes-recursos.ts";
 import { paginasPermitidas, permissaoLegada } from "../src/lib/access-roles.ts";
 import { bloqueioDaTela, telaPermitida } from "../src/lib/navegacao";
-import { TELAS_REACT } from "../src/app/navegacao.js";
+import { TELAS_REACT } from "../src/app/navegacao.ts";
 import {
   linhasDosPaineis,
   normalizarPaineis,
@@ -75,24 +75,24 @@ describe("o legado trata Análises como página", () => {
     expect(
       TELAS_REACT.analises(() => "", { analisesController: controlador }),
     ).toEqual(["Painel das análises", "", controlador]);
-    expect(ler("src/app/navegacao.js")).not.toContain("abrirPaginaDoPainel");
-    // Sob demanda (src/app/tela-sob-demanda.js): o módulo baixa na abertura.
-    const main = ler("src/main.js");
+    expect(ler("src/app/navegacao.ts")).not.toContain("abrirPaginaDoPainel");
+    // Sob demanda (src/app/tela-sob-demanda.ts): o módulo baixa na abertura.
+    const main = ler("src/main.ts");
     expect(main).toContain("window.analisesController = telaSobDemanda({");
     expect(main).toContain('import("./modulos/analises/analises.tsx")');
     expect(main).toContain("m.montarAnalises({");
   });
 
   it("os painéis carregados perdem o antigo de análises", () => {
-    const paineis = ler("src/app/paineis-externos.js");
-    expect(
-      paineis.slice(paineis.indexOf("async function carregar(")),
-    ).toContain("semOPainelAntigoDeAnalises(data)");
+    const paineis = ler("src/app/paineis-externos.ts");
+    expect(paineis.slice(paineis.indexOf("async function carregar("))).toMatch(
+      /semOPainelAntigoDeAnalises(<[^>]*>)?\(data\)/,
+    );
   });
 
   it("o caminho do painel externo não tem mais caso de área", () => {
-    const fonte = ler("src/app/paineis-externos.js");
-    const painel = fonte.slice(fonte.indexOf("function mostrar(codigo)"));
+    const fonte = ler("src/app/paineis-externos.ts");
+    const painel = fonte.slice(fonte.indexOf("function mostrar(codigo"));
     expect(painel).not.toMatch(/area/i);
     expect(legado).not.toContain("recarregarPainelNaAreaAtual");
   });

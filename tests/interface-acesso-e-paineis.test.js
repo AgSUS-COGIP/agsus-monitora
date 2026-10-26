@@ -117,8 +117,8 @@ describe("exclusão de artes guardadas", () => {
 
 describe("painel externo com um cabeçalho só", () => {
   it("entra em external-panel-mode ao abrir o painel", () => {
-    const paineis = readFileSync("src/app/paineis-externos.js", "utf8");
-    const fn = paineis.slice(paineis.indexOf("function mostrar(codigo)"));
+    const paineis = readFileSync("src/app/paineis-externos.ts", "utf8");
+    const fn = paineis.slice(paineis.indexOf("function mostrar(codigo"));
     expect(fn).toContain('classList.add("external-panel-mode")');
   });
 
@@ -141,7 +141,7 @@ describe("painel externo com um cabeçalho só", () => {
   });
 
   it("o modo é removido ao sair do painel", () => {
-    const navegacao = readFileSync("src/app/navegacao.js", "utf8");
+    const navegacao = readFileSync("src/app/navegacao.ts", "utf8");
     const remocoes = (
       (app + navegacao).match(/classList\.remove\("external-panel-mode"\)/g) ||
       []
@@ -169,7 +169,7 @@ describe("botão de acesso no retorno do navegador", () => {
     Google pelo botão Voltar, o navegador restaura a página do bfcache com o
     botão ainda ocupado ("Entrando no sistema…"). Quem cuida é a sessão do app.
   */
-  const sessao = semComentarios(readFileSync("src/app/sessao.js", "utf8"));
+  const sessao = semComentarios(readFileSync("src/app/sessao.ts", "utf8"));
 
   it("existe um listener de pageshow", () => {
     expect(sessao).toContain('addEventListener("pageshow"');

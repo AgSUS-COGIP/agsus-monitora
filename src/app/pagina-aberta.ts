@@ -13,11 +13,11 @@ import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 
   - as linhas do monitoramento são pedidas enquanto está aberta uma página que
     as usa (src/lib/telas-com-linhas.ts); sem pedido, a carga não as lê
-    (src/app/carga.js);
+    (src/app/carga.ts);
   - a Visão geral sabe se está aberta (`definirAberta`): fechada, não pede o
     acompanhamento da área; ao voltar, pede o que ficou para trás.
 
-  Acompanha a navegação (src/app/navegacao.js): `abertura` abriu uma página;
+  Acompanha a navegação (src/app/navegacao.ts): `abertura` abriu uma página;
   `aviso` quer dizer que no lugar dela ficou um aviso (desligada, manutenção,
   sem acesso) — nada aberto.
 */

@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../montar-modulo.jsx";
+import { montarModulo } from "../montar-modulo.tsx";
 import { classes } from "../../ui/index.ts";
 import { ACCESS_INSTRUCTION } from "../../lib/access-branding.ts";
 import {
@@ -7,14 +7,22 @@ import {
   TEXTO_DO_BOTAO,
   TEXTO_DO_BOTAO_OCUPADO,
   sessaoDoApp,
-} from "../sessao.js";
+} from "../sessao.ts";
 import {
   IconeDeEscudo,
   IconeDoMonitora,
   MarcaDoGoogle,
 } from "./icones-da-entrada.tsx";
-import { marcaDaEntrada } from "./marca.js";
-import { criarPedidoDeAcesso } from "./pedido-de-acesso.ts";
+import {
+  marcaDaEntrada,
+  type EstadoDaMarcaDaEntrada,
+  type RodapeDaEntrada,
+} from "./marca.ts";
+import {
+  criarPedidoDeAcesso,
+  type PedidoDeAcesso,
+} from "./pedido-de-acesso.ts";
+import type { ModuloMontado } from "../montar-modulo.tsx";
 import { PaginaDaSolicitacao } from "./solicitacao-de-acesso.tsx";
 
 /*
@@ -42,11 +50,59 @@ import { PaginaDaSolicitacao } from "./solicitacao-de-acesso.tsx";
 export const SLOGAN = "Monitoramento de Processos Seletivos";
 export const INSTITUICAO = "Agência Brasileira de Apoio à Gestão do SUS";
 
+/** O valor de `FASES` (sessao.ts). */
+type FaseDaSessao = (typeof FASES)[keyof typeof FASES];
+
+/** O que a tela de entrada lê do estado da sessão. */
+export type EstadoDaSessaoNaEntrada = {
+  fase: FaseDaSessao;
+  usuario: { id?: string; email?: string } | null;
+  consultarPedido: boolean;
+  entrando: boolean;
+  erroDeConfiguracao: string;
+  mensagem: { texto: string; tom: string };
+  configuracao: { googleAtivo: boolean; textoDoBotao: string };
+};
+
+/** O que a tela de entrada usa da sessão (`sessaoDoApp`, de sessao.ts). */
+export type SessaoDaEntrada = {
+  obter: () => EstadoDaSessaoNaEntrada;
+  assinar: (ouvinte: () => void) => () => unknown;
+  entrarComGoogle: () => unknown;
+  tentarDeNovo: () => unknown;
+  limparSessao: () => unknown;
+};
+
+/** As props de `TelaDeEntrada`. */
+export type PropsDaTelaDeEntrada = {
+  sessao: SessaoDaEntrada;
+  marca: EstadoDaMarcaDaEntrada;
+  pedido: PedidoDeAcesso;
+};
+
+/** As opções de `ligarEntradaAPagina`. */
+export type OpcoesDaLigacaoDaEntrada = {
+  sessao: SessaoDaEntrada;
+  pedido: PedidoDeAcesso;
+  documento?: Document;
+};
+
+/** As opções de `montarEntrada` (todas com padrão). */
+export type OpcoesDaEntrada = {
+  elemento?: HTMLElement | null;
+  sessao?: SessaoDaEntrada;
+  marca?: EstadoDaMarcaDaEntrada;
+  pedido?: PedidoDeAcesso;
+};
+
+/** O que `montarEntrada` devolve quando há onde montar. */
+export type EntradaMontada = ModuloMontado & { pedido: PedidoDeAcesso };
+
 /**
  * O logo fica invisível se a imagem falhar (e volta se o endereço mudar),
  * sem sair do lugar: o lockup não muda de tamanho.
  */
-function LogoDaInstituicao({ url }) {
+function LogoDaInstituicao({ url }: { url: string }) {
   const [falhou, definirFalhou] = useState(false);
   useEffect(() => definirFalhou(false), [url]);
   return (
@@ -62,7 +118,7 @@ function LogoDaInstituicao({ url }) {
   );
 }
 
-function Rodape({ rodape }) {
+function Rodape({ rodape }: { rodape: Readonly<RodapeDaEntrada> }) {
   const papel = [rodape.funcao, rodape.versao].filter(Boolean).join(" · ");
   const visivel = [
     rodape.nome,
@@ -97,7 +153,7 @@ function Rodape({ rodape }) {
   );
 }
 
-export function TelaDeEntrada({ sessao, marca, pedido }) {
+export function TelaDeEntrada({ sessao, marca, pedido }: PropsDaTelaDeEntrada) {
   const estado = useSyncExternalStore(sessao.assinar, sessao.obter);
   const identidade = useSyncExternalStore(marca.assinar, marca.obter);
   const { configuracao, mensagem } = estado;
@@ -215,8 +271,11 @@ export function ligarEntradaAPagina({
   sessao,
   pedido,
   documento = globalThis.document,
-}) {
-  let anterior = { fase: null, usuarioId: "" };
+}: OpcoesDaLigacaoDaEntrada): () => unknown {
+  let anterior: { fase: FaseDaSessao | null; usuarioId: string } = {
+    fase: null,
+    usuarioId: "",
+  };
   const aplicar = () => {
     const { fase, usuario, consultarPedido } = sessao.obter();
     const usuarioId = usuario?.id || "";
@@ -250,7 +309,7 @@ export function montarEntrada({
   sessao = sessaoDoApp,
   marca = marcaDaEntrada,
   pedido = criarPedidoDeAcesso(),
-} = {}) {
+}: OpcoesDaEntrada = {}): EntradaMontada | null {
   if (!elemento) return null;
   const desligar = ligarEntradaAPagina({ sessao, pedido });
   const { raiz, desmontar } = montarModulo(

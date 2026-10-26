@@ -11,7 +11,7 @@ import {
 } from "../src/modulos/configuracoes/secoes.ts";
 
 const html = readFileSync("index.html", "utf8");
-const main = readFileSync("src/main.js", "utf8");
+const main = readFileSync("src/main.ts", "utf8");
 const modulo = readFileSync("src/modulos/configuracoes/secoes.ts", "utf8");
 
 /*

@@ -53,7 +53,7 @@ describe("cadastro só do domínio institucional (migration)", () => {
     expect(f).toContain("lower(btrim(");
     expect(f).toContain('from public."TB_CONFIGURACAO" c');
     expect(f).toContain("c.chave = 'auth_google_allowed_domains'");
-    expect(ler("src/app/sessao.js")).toContain(
+    expect(ler("src/app/sessao.ts")).toContain(
       'normalizeAllowedDomains(lido("auth_google_allowed_domains"))',
     );
     const padrao = f.match(/v_dominios := array\[([^\]]+)\]/)[1];

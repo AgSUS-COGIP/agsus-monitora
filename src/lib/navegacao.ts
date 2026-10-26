@@ -14,7 +14,7 @@ import {
 /*
   Regras da navegação do app (sem DOM): que tela o perfil pode abrir, qual é a
   tela inicial e o aviso quando a tela pedida não é dele. Quem aplica é
-  src/app/navegacao.js.
+  src/app/navegacao.ts.
 
   `paineis` traz o que depende dos painéis externos carregados:
   `podeAbrir(codigo)` e `primeiro()` (o primeiro painel liberado, ou nada).

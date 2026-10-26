@@ -6,7 +6,7 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 window.matchMedia ||= () => ({ matches: false });
 
 /*
-  A ligação do sistema (src/app/sistema.js): os contratos em window que o
+  A ligação do sistema (src/app/sistema.ts): os contratos em window que o
   index.html, a barra lateral, a Aya e as telas usam, os ganchos da
   sessão e a busca global.
 */
@@ -17,9 +17,9 @@ describe("ligarSistema", () => {
       <section id="appScreen" class="app hidden"></section>
       <div id="pessoasOnlineApp"></div>
       <i id="fullscreenActionIcon"></i>`;
-    const { sessaoDoApp } = await import("../../src/app/sessao.js");
+    const { sessaoDoApp } = await import("../../src/app/sessao.ts");
     const ligar = vi.spyOn(sessaoDoApp, "ligarSistema");
-    const sistema = await import("../../src/app/sistema.js");
+    const sistema = await import("../../src/app/sistema.ts");
     await act(async () => sistema.ligarSistema());
 
     for (const nome of [
@@ -75,7 +75,7 @@ describe("ligarSistema", () => {
   });
 
   it("a busca global sem linha carregada não navega", async () => {
-    const sistema = await import("../../src/app/sistema.js");
+    const sistema = await import("../../src/app/sistema.ts");
     const ir = vi.spyOn(sistema.navegacao, "irPara");
     sistema.localizarLinhaDoMonitoramento("999");
     expect(ir).not.toHaveBeenCalled();

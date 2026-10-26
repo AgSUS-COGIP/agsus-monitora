@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
-import { COLUNAS_DO_MONITORAMENTO, criarCarga } from "../../src/app/carga.js";
+import { COLUNAS_DO_MONITORAMENTO, criarCarga } from "../../src/app/carga.ts";
 import { assinaturaDoAcesso, montarCopia } from "../../src/lib/copia-da-sessao";
 import {
   obterDadosDoMonitoramento,
@@ -8,7 +8,7 @@ import {
 } from "../../src/componentes/dados-do-monitoramento.ts";
 
 /*
-  A carga dos dados (src/app/carga.js): consultas em paralelo na entrada,
+  A carga dos dados (src/app/carga.ts): consultas em paralelo na entrada,
   cópia da sessão, "Atualizar dados" sem tela de carregamento e o Realtime.
   O Supabase, a configuração, os painéis e a navegação são falsos.
 */
@@ -748,7 +748,7 @@ describe("contratos da carga", () => {
   });
 
   it("sem tela de carregamento (o skeleton e a barra do cabeçalho bastam)", () => {
-    const fonte = readFileSync("src/app/carga.js", "utf8");
+    const fonte = readFileSync("src/app/carga.ts", "utf8");
     expect(fonte).not.toContain("mostrarCarregamento");
     expect(fonte).not.toContain("loader(");
     expect(fonte).not.toContain("sleep(");

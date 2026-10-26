@@ -23,23 +23,44 @@ import { importarComRecarga } from "../lib/importar-com-recarga";
   (importarComRecarga).
 */
 
+export interface OpcoesDaTelaSobDemanda<C extends object> {
+  /** Importa o módulo e devolve o controlador montado. */
+  carregar: () => Promise<C>;
+  /** Id da `<section>` da tela (para o "Carregando…"). */
+  secao?: string;
+  /** Métodos que, antes da carga, baixam e chamam. */
+  metodos?: readonly string[];
+  /** Respostas antes da carga. */
+  padroes?: Readonly<Record<string, unknown>>;
+  documento?: Document;
+}
+
+/** O que o controlador sob demanda tem desde a abertura do app. */
+export interface ControleDaCarga<C> {
+  carregar: () => Promise<C>;
+  readonly carregado: boolean;
+}
+
 /**
- * @param {object} p
- * @param {() => Promise<object>} p.carregar importa o módulo e devolve o controlador montado
- * @param {string} [p.secao] id da `<section>` da tela (para o "Carregando…")
- * @param {string[]} [p.metodos] métodos que, antes da carga, baixam e chamam
- * @param {Record<string, unknown>} [p.padroes] respostas antes da carga
- * @param {Document} [p.documento]
+ * O controlador sob demanda: as propriedades do de verdade chegam depois da
+ * carga (antes, só os `metodos` e os `padroes`; quem lê usa `?.`).
  */
-export function telaSobDemanda({
+export type TelaSobDemanda<C extends object> = Partial<C> & ControleDaCarga<C>;
+
+type MetodosDoControlador = Record<
+  string,
+  ((...argumentos: unknown[]) => unknown) | undefined
+>;
+
+export function telaSobDemanda<C extends object>({
   carregar,
   secao,
   metodos = ["render"],
   padroes = {},
   documento = globalThis.document,
-}) {
-  let real = null;
-  let pedido = null;
+}: OpcoesDaTelaSobDemanda<C>): TelaSobDemanda<C> {
+  let real: C | null = null;
+  let pedido: Promise<C> | null = null;
   const baixar = importarComRecarga(carregar);
 
   function mostrarCarregando() {
@@ -52,7 +73,7 @@ export function telaSobDemanda({
     elemento.append(aviso);
   }
 
-  function garantir() {
+  function garantir(): Promise<C> {
     if (real) return Promise.resolve(real);
     if (!pedido) {
       const terminar = comecarCargaDeTela();
@@ -71,7 +92,7 @@ export function telaSobDemanda({
     return pedido;
   }
 
-  const proprio = {
+  const proprio: ControleDaCarga<C> = {
     carregar: () => garantir(),
     get carregado() {
       return Boolean(real);
@@ -80,21 +101,21 @@ export function telaSobDemanda({
 
   return new Proxy(proprio, {
     get(alvo, chave) {
-      if (Object.hasOwn(alvo, chave)) return alvo[chave];
+      if (Object.hasOwn(alvo, chave)) return alvo[chave as keyof typeof alvo];
       if (real) {
-        const valor = real[chave];
+        const valor = (real as Record<PropertyKey, unknown>)[chave];
         return typeof valor === "function" ? valor.bind(real) : valor;
       }
       if (typeof chave === "string" && Object.hasOwn(padroes, chave))
         return padroes[chave];
       if (typeof chave === "string" && metodos.includes(chave))
-        return (...argumentos) => {
+        return (...argumentos: unknown[]) => {
           mostrarCarregando();
           return garantir().then((controlador) =>
-            controlador[chave]?.(...argumentos),
+            (controlador as MetodosDoControlador)[chave]?.(...argumentos),
           );
         };
       return undefined;
     },
-  });
+  }) as TelaSobDemanda<C>;
 }

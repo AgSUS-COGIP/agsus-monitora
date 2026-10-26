@@ -63,7 +63,7 @@ export function openLoginPopup(
 /*
   Login Google no celular e no iPad: redirecionamento de página inteira, sem
   popup e sem `signOut` antes (só o estado guardado é limpo). Quem chama é a
-  sessão (src/app/sessao.js) ao clicar em "Entrar".
+  sessão (src/app/sessao.ts) ao clicar em "Entrar".
 */
 const TEMPO_PARA_INICIAR_OAUTH_MS = 8000;
 

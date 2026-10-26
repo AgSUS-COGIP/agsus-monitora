@@ -7,7 +7,7 @@ import { escapeHtml } from "../lib/sanitize";
   negrito. Agora é um cartão claro com um ícone na cor do estado — o mesmo
   padrão dos KPIs: a cor mora no ícone, o texto fica legível em qualquer tipo.
 
-  A porta de entrada é `avisar(mensagem, tipo)` de src/app/avisos.js
+  A porta de entrada é `avisar(mensagem, tipo)` de src/app/avisos.ts
   (`window.monitoraToast`); ela só delega para cá.
 */
 

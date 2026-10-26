@@ -1,7 +1,7 @@
 /*
   Página "Solicitação de acesso" (solicitacao-de-acesso.tsx), dentro do
   `#loginScreen` (a arte de fundo e a cor do painel são da marca da tela de
-  acesso: --login-background-image e --login-panel-color, de marca.js).
+  acesso: --login-background-image e --login-panel-color, de marca.ts).
 
   Duas colunas a partir de 900px: a marca (cor do painel, logo, MONITORA,
   slogan, a Aya e o nome da Agência) e o pedido (superfície do tema, claro ou

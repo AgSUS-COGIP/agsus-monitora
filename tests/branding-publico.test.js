@@ -10,7 +10,7 @@ import {
   aplicarMarcaNaTela,
   atualizarMarcaComBrandingPublico,
   marcaDaEntrada,
-} from "../src/app/entrada/marca.js";
+} from "../src/app/entrada/marca.ts";
 import {
   guardarMarca,
   lerMarcaGuardada,
@@ -495,14 +495,14 @@ describe("cor do painel e contraste são atómicos", () => {
         .replace(/\/\*[\s\S]*?\*\//g, "")
         .replace(/^\s*\/\/.*$/gm, "");
     for (const ficheiro of [
-      "src/app/configuracao.js",
-      "src/app/entrada/marca.js",
+      "src/app/configuracao.ts",
+      "src/app/entrada/marca.ts",
     ]) {
       const codigo = semComentarios(ficheiro);
       const escritas = (
         codigo.match(/setProperty\(\s*"--login-panel-color"/g) || []
       ).length;
-      const esperado = ficheiro.endsWith("marca.js") ? 1 : 0;
+      const esperado = ficheiro.endsWith("marca.ts") ? 1 : 0;
       expect(
         escritas,
         `${ficheiro} escreve a cor fora da função partilhada`,

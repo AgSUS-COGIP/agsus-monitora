@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { criarNavegacao, TELAS_REACT } from "../../src/app/navegacao.js";
+import { criarNavegacao, TELAS_REACT } from "../../src/app/navegacao.ts";
 import { CHAVE_DA_TELA_GUARDADA } from "../../src/lib/navegacao";
 import {
   definirAreaAtual,
@@ -16,7 +16,7 @@ import {
 } from "../../src/modulos/aya/estado.ts";
 
 /*
-  A navegação do app (src/app/navegacao.js): troca de tela, título, menu,
+  A navegação do app (src/app/navegacao.ts): troca de tela, título, menu,
   permissões, guarda de saída, versão nova esperando, painel externo e os
   avisos para quem acompanha (auditoria e presença).
 */

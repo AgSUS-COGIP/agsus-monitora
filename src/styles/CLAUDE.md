@@ -6,7 +6,7 @@
 
 - `app.css` (110 KB, **não ler inteiro**) entra por `<link>` no `index.html` e carrega **antes** de todos
   os outros. Por isso perde empates e acumulou `!important`.
-- Os demais são importados por `src/main.js`, **em ordem**. Em empate de especificidade, vence o último.
+- Os demais são importados por `src/main.ts`, **em ordem**. Em empate de especificidade, vence o último.
 - `barra-lateral.css` usa `#appScreen` de propósito (botão de recolher). Regra com só classe perde
   **em silêncio** para ele.
 
@@ -21,7 +21,7 @@ Depois, confira no navegador com `getComputedStyle(el).prop`, e não no arquivo.
 ## Onde colocar
 
 - Estilo de uma tela → o CSS do módulo dela, em `src/modulos/<nome>/<nome>.css` (ex.: `editais.css`,
-  `cronograma.css`, `aprovados.css` + `convocacao.css`), importado no `main.js` depois do `ui.css`.
+  `cronograma.css`, `aprovados.css` + `convocacao.css`), importado no `main.ts` depois do `ui.css`.
   Peça comum de várias telas → `src/ui/ui.css`. Legado que ainda mora aqui: `health-*.css` e `saude-das-cargas.css`.
 - **Proibido** criar `*-fix.css`, `post-NNN-*.css`, `*-refinement.css`, `*-tuning.css`: corrija na origem.
 - Cor, raio, sombra, espaço e z-index **só por token**. Nenhum `!important` ou `#id` novo.

@@ -39,7 +39,7 @@ it("melhora o carregamento quando ele for ativado apos o login", async () => {
   const { initLoadingExperience } =
     await import("../src/modules/loading-experience.js");
 
-  const { mostrarCarregamento } = await import("../src/app/avisos.js");
+  const { mostrarCarregamento } = await import("../src/app/avisos.ts");
 
   initLoadingExperience();
   document.body.classList.remove("config-loading");
@@ -70,7 +70,7 @@ it("sem carregamento, nenhum relógio fica rodando", async () => {
   vi.resetModules();
   const { initLoadingExperience } =
     await import("../src/modules/loading-experience.js");
-  const { mostrarCarregamento } = await import("../src/app/avisos.js");
+  const { mostrarCarregamento } = await import("../src/app/avisos.ts");
   document.body.classList.remove("config-loading");
 
   initLoadingExperience();

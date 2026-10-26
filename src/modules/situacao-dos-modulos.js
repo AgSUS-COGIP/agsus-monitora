@@ -4,7 +4,7 @@
   administrador global.
 
   Quem decide o que vale é `src/lib/situacao-dos-modulos.ts` (sem DOM). O
-  app (src/app/carga.js e src/app/navegacao.js) só:
+  app (src/app/carga.ts e src/app/navegacao.ts) só:
     - dispara a consulta junto com as outras da entrada
       (`consultaDaSituacaoDoSistema`) e aplica a resposta
       (`carregarSituacaoDoSistema`) antes do `buildNav`, que tira do menu as
@@ -163,7 +163,7 @@ export function avisoNoLugarDaPagina(documento = globalThis.document) {
 /*
   A página atual foi desligada (ou entrou em manutenção) com trabalho não
   salvo: ela fica, com a faixa avisando, até a próxima checagem depois de
-  salvo (src/app/navegacao.js, `reavaliarTelaAtual`).
+  salvo (src/app/navegacao.ts, `reavaliarTelaAtual`).
 */
 export function avisarNaFaixa(documento, texto, origem) {
   const faixa = documento && garantirFaixa(documento);

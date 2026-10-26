@@ -8,7 +8,7 @@
   Antes da rede, o que a tela já carregou: se a tela de Recursos ou Seleção
   está carregada na mesma área (Análises não: a tela carrega só o pacote da
   situação escolhida, e a Aya conta o edital ativo inteiro) (o controlador que
-  src/main.js põe em window), os números saem do estado dela — o mesmo que o
+  src/main.ts põe em window), os números saem do estado dela — o mesmo que o
   indicador mostra. Senão, uma chamada e a resposta fica guardada por um
   minuto, para a pergunta seguinte não chamar de novo.
 */
@@ -31,7 +31,7 @@ export interface OpcoesDaLeitura {
   cargaDe?: string;
 }
 
-/** O controlador que src/main.js põe em window para cada tela. */
+/** O controlador que src/main.ts põe em window para cada tela. */
 type ControladorDaTela =
   | {
       estado?: {

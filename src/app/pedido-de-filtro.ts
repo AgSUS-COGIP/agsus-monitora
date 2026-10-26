@@ -13,20 +13,49 @@
 */
 import { useEffect, useSyncExternalStore } from "react";
 
+/** O que quem pede manda (a Aya, um aviso de conferência, outra tela): qualquer objeto, copiado raso. */
+export type FiltroPedido = object;
+
+/** O filtro que a tela recebe ao consumir o pedido. */
+export type FiltroDoPedido = {
+  edital?: string;
+  metrica?: string;
+  busca?: string;
+  entrevista?: string;
+  candidatos?: readonly (string | number)[];
+};
+
+interface PedidoGuardado {
+  view: string;
+  filtro: FiltroDoPedido;
+  em: number;
+}
+
 const VALIDADE_MS = 15 * 1000;
 
-let pedido = null;
+let pedido: PedidoGuardado | null = null;
 let versao = 0;
-const ouvintes = new Set();
+const ouvintes = new Set<() => void>();
 
-export function pedirFiltro(view, filtro = {}, agora = Date.now()) {
-  pedido = { view: String(view || ""), filtro: { ...filtro }, em: agora };
+export function pedirFiltro(
+  view: unknown,
+  filtro: FiltroPedido = {},
+  agora: number = Date.now(),
+): void {
+  pedido = {
+    view: String(view || ""),
+    filtro: { ...filtro } as FiltroDoPedido,
+    em: agora,
+  };
   versao += 1;
   for (const ouvinte of ouvintes) ouvinte();
 }
 
 /** O filtro pedido para esta tela (e o pedido some), ou `null`. */
-export function consumirPedidoDeFiltro(view, agora = Date.now()) {
+export function consumirPedidoDeFiltro(
+  view: unknown,
+  agora: number = Date.now(),
+): FiltroDoPedido | null {
   if (!pedido || pedido.view !== String(view || "")) return null;
   const valido = agora - pedido.em <= VALIDADE_MS;
   const filtro = pedido.filtro;
@@ -34,7 +63,7 @@ export function consumirPedidoDeFiltro(view, agora = Date.now()) {
   return valido ? filtro : null;
 }
 
-function assinar(ouvinte) {
+function assinar(ouvinte: () => void) {
   ouvintes.add(ouvinte);
   return () => ouvintes.delete(ouvinte);
 }
@@ -43,11 +72,12 @@ const obterVersao = () => versao;
 /**
  * Na tela: quando chega um pedido para `view` e a tela está `pronta` (dados
  * carregados), chama `aplicar(filtro)` uma vez.
- * @param {string} view
- * @param {boolean} pronta
- * @param {(filtro: { edital?: string, metrica?: string, busca?: string, entrevista?: string, candidatos?: readonly (string | number)[] }) => void} aplicar
  */
-export function usarPedidoDeFiltro(view, pronta, aplicar) {
+export function usarPedidoDeFiltro(
+  view: string,
+  pronta: boolean,
+  aplicar: (filtro: FiltroDoPedido) => void,
+): void {
   const atual = useSyncExternalStore(assinar, obterVersao, obterVersao);
   useEffect(() => {
     if (!pronta) return;

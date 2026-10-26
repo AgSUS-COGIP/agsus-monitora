@@ -7,7 +7,7 @@ import {
   definirAreasDoUsuario,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { consumirPedidoDeFiltro } from "../../src/app/pedido-de-filtro.js";
+import { consumirPedidoDeFiltro } from "../../src/app/pedido-de-filtro.ts";
 
 /*
   Casos dos avisos de conferência na gaveta (src/modulos/conferencias/):

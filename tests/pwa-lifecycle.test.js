@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { criarNavegacao } from "../src/app/navegacao.js";
+import { criarNavegacao } from "../src/app/navegacao.ts";
 
 import {
   shouldCheckForUpdate,
@@ -123,7 +123,7 @@ describe("versão nova espera a troca de página", () => {
   });
 
   it("o navigate aplica a versão nova depois da guarda de alterações não salvas", () => {
-    // src/app/navegacao.js: a guarda pergunta primeiro; recusada, nada recarrega.
+    // src/app/navegacao.ts: a guarda pergunta primeiro; recusada, nada recarrega.
     const ordem = [];
     const navegacao = criarNavegacao({
       janela: { location: { reload() {} } },

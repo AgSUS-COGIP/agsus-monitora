@@ -3,7 +3,7 @@ import {
   CHAVE_DA_BARRA_RECOLHIDA,
   CHAVE_DO_TEMA,
   criarMoldura,
-} from "../../src/app/moldura.js";
+} from "../../src/app/moldura.ts";
 import {
   EVENTO_BARRA_ALTERNADA,
   EVENTO_TEMA_ALTERADO,
@@ -13,7 +13,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 
-/* A moldura do app (src/app/moldura.js): barra, tema, tela cheia e PDF. */
+/* A moldura do app (src/app/moldura.ts): barra, tema, tela cheia e PDF. */
 
 function janelaFalsa({ celular = false } = {}) {
   const ouvintes = {};

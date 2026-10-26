@@ -19,7 +19,7 @@ import { areaEstaAtiva } from "./situacao-dos-modulos.ts";
   menu já some com elas. Faltava a página: quem estava nela (ou chega por
   link, busca ou tela guardada) continuava lá, consultando o banco. Aqui se
   decide se a página (view) na área está desligada; quem fecha a página é a
-  navegação (src/app/navegacao.js), e quem percebe a mudança no meio da
+  navegação (src/app/navegacao.ts), e quem percebe a mudança no meio da
   sessão é o vigia do catálogo (src/app/vigia-do-catalogo.ts).
 
   Só vale para as views de aba (as do catálogo do código, `ABAS_DO_MENU`, ou

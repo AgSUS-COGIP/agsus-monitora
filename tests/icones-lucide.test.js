@@ -61,7 +61,7 @@ describe("ícones Lucide no lugar do Font Awesome", () => {
   });
 
   it("o CSS dos ícones entra logo depois dos tokens", () => {
-    const main = readFileSync("src/main.js", "utf8");
+    const main = readFileSync("src/main.ts", "utf8");
     expect(main.indexOf("icones-lucide.css")).toBeGreaterThan(-1);
     expect(main.indexOf("icones-lucide.css")).toBeLessThan(
       main.indexOf("visual-polish.css"),

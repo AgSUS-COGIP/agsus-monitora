@@ -8,7 +8,7 @@ import {
   aplicarMarcaGuardadaNoArranque,
   definirMarcaDaConfiguracao,
   marcaDaEntrada,
-} from "../src/app/entrada/marca.js";
+} from "../src/app/entrada/marca.ts";
 
 const MARCA_DA_INSTITUICAO = {
   backgroundUrl: "https://exemplo.org/agosto-lilas.jpg",
@@ -148,7 +148,7 @@ describe("falha ao carregar a configuração", () => {
 });
 
 describe("tela de acesso sem repetição", () => {
-  const tela = readFileSync("src/app/entrada/entrada.jsx", "utf8");
+  const tela = readFileSync("src/app/entrada/entrada.tsx", "utf8");
   const html = readFileSync("index.html", "utf8");
 
   /*
@@ -229,7 +229,7 @@ describe("a marca vinda da configuração", () => {
 
   it("não existe chamada incondicional a guardarMarca", () => {
     // Os comentários do módulo citam a função ao explicar o defeito corrigido.
-    const codigo = readFileSync("src/app/entrada/marca.js", "utf8")
+    const codigo = readFileSync("src/app/entrada/marca.ts", "utf8")
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/^\s*\/\/.*$/gm, "");
     expect(codigo).toMatch(
@@ -241,10 +241,10 @@ describe("a marca vinda da configuração", () => {
 
   it("o logout não apaga nem troca a identidade", () => {
     for (const arquivo of [
-      "src/app/sistema.js",
-      "src/app/perfil.js",
-      "src/app/sessao.js",
-      "src/app/entrada/marca.js",
+      "src/app/sistema.ts",
+      "src/app/perfil.ts",
+      "src/app/sessao.ts",
+      "src/app/entrada/marca.ts",
     ])
       expect(readFileSync(arquivo, "utf8")).not.toContain(
         "limparMarcaGuardada",

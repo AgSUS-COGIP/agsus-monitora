@@ -17,7 +17,7 @@
     - sair, limpar a sessão e a troca de usuário na mesma aba.
 
   O resto (navegação, carga dos dados, presença, auditoria) é do sistema
-  (src/app/sistema.js): ele se liga com `ligarSistema({...})` e é chamado nos
+  (src/app/sistema.ts): ele se liga com `ligarSistema({...})` e é chamado nos
   pontos do contrato (docs/arquitetura-react.md, "Sessão ↔ sistema").
 
   Por que a sessão termina (manual, expirada, revogada) continua em
@@ -54,6 +54,14 @@ import {
   getSupabaseAuthStorage,
   getSupabaseClient,
 } from "../lib/supabaseClient";
+import type {
+  AuthChangeEvent,
+  Session,
+  SupabaseClient,
+  User,
+} from "@supabase/supabase-js";
+import type { CausaDaSaida } from "../lib/estado-de-saida";
+import type { PerfilDaPlataforma } from "../lib/platform-context";
 
 const RPC_CONTEXTO = "obter_contexto_monitora";
 const RPC_MEU_USUARIO = "meu_usuario";
@@ -97,14 +105,111 @@ export const MENSAGENS = Object.freeze({
   semConexao: "Não foi possível iniciar a conexão segura com o Supabase.",
 });
 
-export function mensagemDoDominio(dominios) {
+/** Uma fase da entrada (valor de `FASES`). */
+export type FaseDaSessao = (typeof FASES)[keyof typeof FASES];
+
+/** A mensagem da tela de entrada; `tom` vazio = sem mensagem. */
+export type MensagemDaEntrada = { texto: string; tom: string };
+
+/** O que a entrada lê de TB_CONFIGURACAO (ver `configuracaoDaEntrada`). */
+export type ConfiguracaoDaEntrada = {
+  googleAtivo: boolean;
+  textoDoBotao: string;
+  dicaDeDominio: string;
+  dominios: string[];
+  mensagemDeSenha: string;
+};
+
+/** O perfil lido do banco e os painéis liberados. */
+export type ContextoDoPerfil = {
+  perfil: PerfilDaPlataforma;
+  painelIds: string[];
+  contextoCarregado: boolean;
+};
+
+/** O estado assinável da sessão. */
+export type EstadoDaSessaoDoApp = {
+  fase: FaseDaSessao;
+  usuario: User | null;
+  perfil: PerfilDaPlataforma | null;
+  painelIds: string[];
+  contextoCarregado: boolean;
+  mensagem: MensagemDaEntrada;
+  entrando: boolean;
+  erroDeConfiguracao: string;
+  consultarPedido: boolean;
+  configuracao: ConfiguracaoDaEntrada;
+};
+
+/** De onde veio a sessão que está entrando. */
+export type OrigemDaEntrada =
+  | "auth"
+  | "boot"
+  | "oauth"
+  | "oauth_callback"
+  | "oauth_popup"
+  | "tentar_de_novo";
+
+/**
+ * Os ganchos que o sistema registra com `ligarSistema` (contrato
+ * "Sessão ↔ sistema" em docs/arquitetura-react.md). Todos opcionais.
+ */
+export type GanchosDoSistema = {
+  aoVerificar?: (dados: { usuario: User; origem: OrigemDaEntrada }) => unknown;
+  abrir?: (
+    dados: ContextoDoPerfil & { usuario: User; origem: OrigemDaEntrada },
+  ) => unknown;
+  aoAtualizarPerfil?: (dados: {
+    perfil: PerfilDaPlataforma;
+    painelIds: string[];
+  }) => unknown;
+  aoFicarSemAcesso?: (dados: { usuario: User | null }) => unknown;
+  aoFalharNaEntrada?: (dados: { usuario: User | null }) => unknown;
+  aoSair?: () => unknown;
+  aoLimparSessao?: () => unknown;
+  antesDeSair?: () => unknown;
+  carregarConfiguracao?: () => unknown;
+  mostrarEsqueleto?: () => unknown;
+  encerrarEspera?: () => unknown;
+};
+
+type Gancho<K extends keyof GanchosDoSistema> = NonNullable<
+  GanchosDoSistema[K]
+>;
+
+/** O armazenamento da sessão do Supabase (só a limpeza é usada aqui). */
+type ArmazenamentoDaAutenticacao = { clearAuthState?: () => void } | null;
+
+/** As dependências de `criarSessao`, injetáveis para os testes. */
+export type DependenciasDaSessao = {
+  cliente?: () => SupabaseClient | null;
+  armazenamento?: () => ArmazenamentoDaAutenticacao;
+  janela?: Window;
+  temAmbiente?: () => boolean;
+  celular?: () => boolean;
+  agora?: () => number;
+  esperar?: (ms: number) => Promise<unknown>;
+};
+
+/** O usuário do Supabase Auth, na parte que dá nome à pessoa. */
+type UsuarioComMetadados = {
+  email?: string | null;
+  user_metadata?: Record<string, unknown> | null;
+};
+
+/** A mensagem que o popup do login (auth/callback.html) manda à página. */
+type MensagemDoPopup = { type?: unknown; result?: unknown } | null | undefined;
+
+export function mensagemDoDominio(dominios: string[]): string {
   return `Use uma conta institucional (${dominios.map((dominio) => `@${dominio}`).join(" ou ")}).`;
 }
 
 const SEM_MENSAGEM = Object.freeze({ texto: "", tom: "" });
 
 /* O perfil não pôde ser lido: diferente de "sem perfil" (`null`). */
-const PERFIL_ILEGIVEL = Object.freeze({ ilegivel: true });
+const PERFIL_ILEGIVEL: Readonly<{ ilegivel: true }> = Object.freeze({
+  ilegivel: true,
+});
 
 /* As chaves de TB_CONFIGURACAO que a entrada usa, com o padrão de quando não vieram. */
 const CONFIGURACAO_PADRAO = Object.freeze({
@@ -115,7 +220,7 @@ const CONFIGURACAO_PADRAO = Object.freeze({
   password_reset_message: "",
 });
 
-function lerBooleano(valor, padrao) {
+function lerBooleano(valor: unknown, padrao: boolean): boolean {
   const texto = String(valor ?? "")
     .trim()
     .toLowerCase();
@@ -128,8 +233,10 @@ function lerBooleano(valor, padrao) {
  * O que a entrada precisa da configuração. `valores` traz só as chaves que
  * vieram do banco (as outras ficam no padrão, como o `cfgValue` do legado).
  */
-export function configuracaoDaEntrada(valores = {}) {
-  const lido = (chave) =>
+export function configuracaoDaEntrada(
+  valores: Record<string, unknown> = {},
+): ConfiguracaoDaEntrada {
+  const lido = (chave: keyof typeof CONFIGURACAO_PADRAO): string =>
     Object.hasOwn(valores, chave)
       ? String(valores[chave] ?? "")
       : CONFIGURACAO_PADRAO[chave];
@@ -143,8 +250,10 @@ export function configuracaoDaEntrada(valores = {}) {
 }
 
 /** O nome que o Google deu à pessoa (preenche o pedido de acesso). */
-export function nomeDoUsuario(usuario) {
-  const meta = usuario?.user_metadata || {};
+export function nomeDoUsuario(
+  usuario: UsuarioComMetadados | null | undefined,
+): string {
+  const meta: Record<string, unknown> = usuario?.user_metadata || {};
   return String(
     meta.full_name ||
       meta.name ||
@@ -154,7 +263,7 @@ export function nomeDoUsuario(usuario) {
   ).trim();
 }
 
-function sessionStorageDe(janela) {
+function sessionStorageDe(janela: Window | null | undefined): Storage | null {
   try {
     return janela?.sessionStorage || null;
   } catch {
@@ -162,7 +271,8 @@ function sessionStorageDe(janela) {
   }
 }
 
-const esperarPadrao = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const esperarPadrao = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Cria o estado da sessão. As dependências são injetáveis para os testes; o
@@ -176,8 +286,8 @@ export function criarSessao({
   celular = () => isMobileOAuthContext(),
   agora = () => Date.now(),
   esperar = esperarPadrao,
-} = {}) {
-  let estado = {
+}: DependenciasDaSessao = {}) {
+  let estado: EstadoDaSessaoDoApp = {
     fase: FASES.INICIANDO,
     usuario: null,
     perfil: null,
@@ -189,25 +299,29 @@ export function criarSessao({
     consultarPedido: true,
     configuracao: configuracaoDaEntrada(),
   };
-  const ouvintes = new Set();
-  let sistema = {};
-  let sb = null;
+  const ouvintes = new Set<() => void>();
+  let sistema: GanchosDoSistema = {};
+  let sb: SupabaseClient | null = null;
   let iniciado = false;
   let ouvintesDaJanela = false;
   let trocandoCodigo = false;
-  let vigiaDoPopup = null;
+  let vigiaDoPopup: number | null = null;
   let tentativaDoPopup = 0;
   let usuarioCarregado = "";
   let ultimoSignedIn = 0;
-  let carregamento = null;
+  let carregamento: Promise<void> | null = null;
 
-  function definir(parcial) {
+  function definir(parcial: Partial<EstadoDaSessaoDoApp>) {
     estado = { ...estado, ...parcial };
     ouvintes.forEach((ouvinte) => ouvinte());
   }
 
-  function chamar(gancho, ...argumentos) {
-    const funcao = sistema?.[gancho];
+  function chamar<K extends keyof GanchosDoSistema>(
+    gancho: K,
+    ...argumentos: Parameters<Gancho<K>>
+  ): unknown {
+    const funcao = sistema?.[gancho] as
+      ((...lista: Parameters<Gancho<K>>) => unknown) | undefined;
     return typeof funcao === "function" ? funcao(...argumentos) : undefined;
   }
 
@@ -216,7 +330,7 @@ export function criarSessao({
     return sb;
   }
 
-  function mostrarMensagem(texto, tom = "warn") {
+  function mostrarMensagem(texto: string, tom = "warn") {
     definir({ mensagem: texto ? { texto, tom } : SEM_MENSAGEM });
   }
 
@@ -265,7 +379,7 @@ export function criarSessao({
   /** Há uma saída em curso? Enquanto houver, a sessão não reabre o sistema. */
   const saidaEmCurso = () => causaDaSaida() !== SAIDA_DESCONHECIDA;
 
-  function redefinirDeslogado(mensagem = SEM_MENSAGEM) {
+  function redefinirDeslogado(mensagem: MensagemDaEntrada = SEM_MENSAGEM) {
     usuarioCarregado = "";
     ultimoSignedIn = 0;
     definir({
@@ -287,7 +401,9 @@ export function criarSessao({
     garante que ela só é aplicada uma vez (a causa dura até o próximo
     `SIGNED_IN`).
   */
-  function aplicarSaida(opcoes = {}) {
+  function aplicarSaida(
+    opcoes: { causa?: CausaDaSaida; mensagem?: string; tom?: string } = {},
+  ) {
     if (opcoes.causa) declararSaida(opcoes.causa);
     if (!reivindicarSaida()) return false;
     const texto =
@@ -304,7 +420,12 @@ export function criarSessao({
     mensagem genérica da causa); no legado, a frase específica — o domínio
     recusado, o aviso da recuperação de senha — se perdia ali.
   */
-  async function sairComMensagem(causa, texto, tom, { local = true } = {}) {
+  async function sairComMensagem(
+    causa: CausaDaSaida,
+    texto: string,
+    tom: string,
+    { local = true }: { local?: boolean } = {},
+  ) {
     declararSaida(causa);
     try {
       await obterCliente()?.auth.signOut(
@@ -347,8 +468,10 @@ export function criarSessao({
    * `PERFIL_ILEGIVEL` = a leitura falhou (rede, banco): não se sabe se há
    * perfil, e a pessoa não deve cair no pedido de acesso por isso.
    */
-  async function carregarPerfil() {
-    const client = obterCliente();
+  async function carregarPerfil(): Promise<
+    ContextoDoPerfil | typeof PERFIL_ILEGIVEL | null
+  > {
+    const client = obterCliente()!;
     const { data, error } = await client.rpc(RPC_CONTEXTO);
     if (error) {
       console.warn("Falha ao ler o contexto do usuário:", error);
@@ -368,7 +491,7 @@ export function criarSessao({
       console.warn("Perfil indisponível para o usuário atual:", reserva.error);
       return PERFIL_ILEGIVEL;
     }
-    const linha = Array.isArray(reserva.data)
+    const linha: Record<string, unknown> | null = Array.isArray(reserva.data)
       ? reserva.data[0] || null
       : reserva.data || null;
     if (!linha) return null;
@@ -379,7 +502,10 @@ export function criarSessao({
     };
   }
 
-  function ficarSemAcesso({ consultar = true, mensagem = "" } = {}) {
+  function ficarSemAcesso({
+    consultar = true,
+    mensagem = "",
+  }: { consultar?: boolean; mensagem?: string } = {}) {
     definir({
       fase: FASES.SEM_ACESSO,
       perfil: null,
@@ -395,7 +521,7 @@ export function criarSessao({
     A leitura do perfil (ou a abertura) falhou: a tela de entrada mostra o
     erro e "Tentar de novo". O sistema fica fechado, como no pedido de acesso.
   */
-  function falharNaEntrada(texto) {
+  function falharNaEntrada(texto: string) {
     definir({
       fase: FASES.FALHA_NA_ENTRADA,
       perfil: null,
@@ -408,7 +534,7 @@ export function criarSessao({
 
   // ── Entrar ──────────────────────────────────────────────────────────────
 
-  function jaAberto(sessao) {
+  function jaAberto(sessao: Session | null | undefined) {
     const id = sessao?.user?.id || "";
     return (
       Boolean(id) &&
@@ -418,7 +544,7 @@ export function criarSessao({
     );
   }
 
-  async function abrirSessao(sessao, origem) {
+  async function abrirSessao(sessao: Session, origem: OrigemDaEntrada) {
     const usuario = sessao.user;
     // O legado liga o skeleton e começa a ler a cópia da sessão junto com o perfil.
     chamar("aoVerificar", { usuario, origem });
@@ -431,16 +557,17 @@ export function criarSessao({
       ficarSemAcesso({ consultar: true });
       return;
     }
+    // `===` não estreita objetos: aqui já não é PERFIL_ILEGIVEL.
     definir({
-      perfil: contexto.perfil,
-      painelIds: contexto.painelIds,
-      contextoCarregado: contexto.contextoCarregado,
+      perfil: (contexto as ContextoDoPerfil).perfil,
+      painelIds: (contexto as ContextoDoPerfil).painelIds,
+      contextoCarregado: (contexto as ContextoDoPerfil).contextoCarregado,
     });
     const aberto = await chamar("abrir", {
       usuario,
-      perfil: contexto.perfil,
-      painelIds: contexto.painelIds,
-      contextoCarregado: contexto.contextoCarregado,
+      perfil: (contexto as ContextoDoPerfil).perfil,
+      painelIds: (contexto as ContextoDoPerfil).painelIds,
+      contextoCarregado: (contexto as ContextoDoPerfil).contextoCarregado,
       origem,
     });
     if (aberto) {
@@ -456,11 +583,15 @@ export function criarSessao({
    * Uma sessão válida chegou (arranque, retorno do Google, popup, evento).
    * Confere o domínio, evita recarregar o mesmo usuário e carrega uma vez só.
    */
-  async function entrar(sessao, origem = "auth") {
+  async function entrar(
+    sessao: Session | null | undefined,
+    origem: OrigemDaEntrada = "auth",
+  ): Promise<void> {
     if (!isUsableSession(sessao) || saidaEmCurso()) return;
 
     const { dominios } = estado.configuracao;
-    if (!isAllowedInstitutionalEmail(sessao.user?.email, dominios)) {
+    // `isUsableSession` não é guarda de tipo: daqui em diante há sessão.
+    if (!isAllowedInstitutionalEmail(sessao!.user?.email, dominios)) {
       await sairComMensagem(
         SAIDA_REVOGADA,
         mensagemDoDominio(dominios),
@@ -476,15 +607,15 @@ export function criarSessao({
       recarrega tudo.
     */
     if (jaAberto(sessao)) {
-      definir({ usuario: sessao.user });
+      definir({ usuario: sessao!.user });
       return;
     }
     if (carregamento) return carregamento;
 
     // Entrar encerra a transição de saída, venha ou não o SIGNED_IN nesta aba.
     encerrarTransicaoDeSaida();
-    definir({ usuario: sessao.user, fase: FASES.ABRINDO });
-    carregamento = abrirSessao(sessao, origem);
+    definir({ usuario: sessao!.user, fase: FASES.ABRINDO });
+    carregamento = abrirSessao(sessao!, origem);
     try {
       await carregamento;
     } catch (erro) {
@@ -499,8 +630,11 @@ export function criarSessao({
     }
   }
 
-  async function esperarSessao(idEsperado = "", limiteMs = 5000) {
-    const client = obterCliente();
+  async function esperarSessao(
+    idEsperado = "",
+    limiteMs = 5000,
+  ): Promise<Session | null> {
+    const client = obterCliente()!;
     const inicio = agora();
     while (agora() - inicio < limiteMs) {
       const { data } = await client.auth.getSession();
@@ -519,7 +653,7 @@ export function criarSessao({
     trocandoCodigo = true;
     try {
       const { data, error } =
-        await obterCliente().auth.exchangeCodeForSession(codigo);
+        await obterCliente()!.auth.exchangeCodeForSession(codigo);
       if (error) throw error;
       const sessao = isUsableSession(data?.session)
         ? data.session
@@ -539,7 +673,7 @@ export function criarSessao({
     }
   }
 
-  async function recarregarPerfil(sessao) {
+  async function recarregarPerfil(sessao?: Session | null) {
     definir({ usuario: sessao?.user || null });
     if (!estado.usuario || estado.fase !== FASES.CONECTADO) return;
     try {
@@ -551,20 +685,23 @@ export function criarSessao({
         return;
       }
       definir({
-        perfil: contexto.perfil,
-        painelIds: contexto.painelIds,
-        contextoCarregado: contexto.contextoCarregado,
+        perfil: (contexto as ContextoDoPerfil).perfil,
+        painelIds: (contexto as ContextoDoPerfil).painelIds,
+        contextoCarregado: (contexto as ContextoDoPerfil).contextoCarregado,
       });
       await chamar("aoAtualizarPerfil", {
-        perfil: contexto.perfil,
-        painelIds: contexto.painelIds,
+        perfil: (contexto as ContextoDoPerfil).perfil,
+        painelIds: (contexto as ContextoDoPerfil).painelIds,
       });
     } catch (erro) {
       console.error("Falha ao atualizar perfil:", erro);
     }
   }
 
-  function aoMudarAutenticacao(evento, sessao) {
+  function aoMudarAutenticacao(
+    evento: AuthChangeEvent,
+    sessao: Session | null,
+  ) {
     if (evento === "PASSWORD_RECOVERY") {
       definir({ usuario: null });
       limparEndereco();
@@ -597,7 +734,7 @@ export function criarSessao({
       encerrarTransicaoDeSaida();
       if (trocandoCodigo) return;
       if (jaAberto(sessao)) {
-        definir({ usuario: sessao.user });
+        definir({ usuario: sessao!.user });
         return;
       }
       const id = sessao?.user?.id || "";
@@ -611,7 +748,7 @@ export function criarSessao({
 
   // ── Login Google ────────────────────────────────────────────────────────
 
-  function liberarBotao(mensagem) {
+  function liberarBotao(mensagem?: MensagemDaEntrada) {
     definir({
       entrando: false,
       ...(mensagem ? { mensagem } : {}),
@@ -629,7 +766,11 @@ export function criarSessao({
     botão volta com `mensagem`. Uma tentativa mais nova (a mensagem do popup
     chegou enquanto o vigia esperava) torna esta sem efeito.
   */
-  async function concluirPeloPopup(tentativa, limiteMs, mensagem) {
+  async function concluirPeloPopup(
+    tentativa: number,
+    limiteMs: number,
+    mensagem: MensagemDaEntrada,
+  ) {
     try {
       const sessao = await esperarSessao("", limiteMs);
       if (tentativa !== tentativaDoPopup) return;
@@ -646,7 +787,7 @@ export function criarSessao({
   }
 
   /* A janela fechada sem a mensagem do popup: a pessoa desistiu. */
-  function vigiarPopup(popup) {
+  function vigiarPopup(popup: Window) {
     pararVigiaDoPopup();
     const tentativa = ++tentativaDoPopup;
     vigiaDoPopup = janela.setInterval(() => {
@@ -665,13 +806,13 @@ export function criarSessao({
     imediata. Nos dois casos o vigia da janela sai: ela fechou por conclusão,
     não por desistência.
   */
-  async function aoReceberMensagem(evento) {
+  async function aoReceberMensagem(evento: MessageEvent<MensagemDoPopup>) {
     if (evento.origin !== janela.location.origin) return;
     if (evento.data?.type !== LOGIN_POPUP_MESSAGE) return;
     pararVigiaDoPopup();
     const tentativa = ++tentativaDoPopup;
     // A mesma mensagem do retorno com `?auth_error=` (login sem popup).
-    if (evento.data.result !== "success") {
+    if (evento.data!.result !== "success") {
       liberarBotao({ texto: MENSAGENS.falhaNoRetorno, tom: "error" });
       return;
     }
@@ -687,11 +828,13 @@ export function criarSessao({
     página (muitas vezes do bfcache) com o botão ainda ocupado. Sem sessão,
     o botão volta.
   */
-  function aoMostrarPagina(evento) {
+  function aoMostrarPagina(evento: PageTransitionEvent) {
     const restauradaDoCache = evento.persisted;
     const veioDoHistorico =
-      janela.performance?.getEntriesByType?.("navigation")?.[0]?.type ===
-      "back_forward";
+      (
+        janela.performance?.getEntriesByType?.("navigation")?.[0] as
+          PerformanceNavigationTiming | undefined
+      )?.type === "back_forward";
     if (!restauradaDoCache && !veioDoHistorico) return;
     if (!estado.entrando) return;
     void (async () => {
@@ -730,7 +873,7 @@ export function criarSessao({
         });
       } catch (erro) {
         liberarBotao({
-          texto: erro?.message || MENSAGENS.falhaNoCelular,
+          texto: (erro as Error | null)?.message || MENSAGENS.falhaNoCelular,
           tom: "error",
         });
       }
@@ -747,7 +890,7 @@ export function criarSessao({
       entrando: true,
       mensagem: { texto: MENSAGENS.escolherConta, tom: "warn" },
     });
-    const queryParams = { prompt: "select_account" };
+    const queryParams: Record<string, string> = { prompt: "select_account" };
     if (estado.configuracao.dicaDeDominio)
       queryParams.hd = estado.configuracao.dicaDeDominio;
     const { data, error } = await client.auth.signInWithOAuth({
@@ -825,7 +968,7 @@ export function criarSessao({
     }
 
     if (isUsableSession(data?.session)) {
-      await entrar(data.session, "boot");
+      await entrar(data!.session, "boot");
       return;
     }
 
@@ -863,7 +1006,7 @@ export function criarSessao({
   /** "Tentar de novo" depois de uma falha na entrada: relê a sessão guardada e entra. */
   async function tentarDeNovo() {
     if (estado.fase !== FASES.FALHA_NA_ENTRADA) return;
-    const client = obterCliente();
+    const client = obterCliente()!;
     definir({ mensagem: SEM_MENSAGEM });
     try {
       const { data } = await client.auth.getSession();
@@ -890,16 +1033,16 @@ export function criarSessao({
 
   return {
     obter: () => estado,
-    assinar(ouvinte) {
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
     /** O legado registra os ganchos do contrato (ver docs/arquitetura-react.md). */
-    ligarSistema(adaptador) {
+    ligarSistema(adaptador: GanchosDoSistema | null | undefined) {
       sistema = adaptador || {};
     },
     /** O legado repassa o que carregou de TB_CONFIGURACAO. */
-    definirConfiguracao(valores) {
+    definirConfiguracao(valores?: Record<string, unknown>) {
       definir({ configuracao: configuracaoDaEntrada(valores) });
     },
     mostrarMensagem,
