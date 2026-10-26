@@ -201,8 +201,7 @@ Processo completo em [supabase/migrations/README.md](supabase/migrations/README.
 
 ## Operação
 
-- **Supabase no plano gratuito:** limite de 500 MB de banco e **sem backup automático**. Antes de
-  limpezas ou correções de dados em massa, exporte o que vai mudar.
+- **Correções de dados em massa:** antes de limpezas ou correções, exporte o que vai mudar.
 - **Logs:** os logs operacionais têm rotinas de limpeza para não estourar a cota; a última
   execução de cada carga é preservada.
 - **Monitoramento:** **Configurações → Status das atualizações** mostra a última execução e o
