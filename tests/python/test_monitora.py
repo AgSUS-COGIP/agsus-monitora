@@ -6,6 +6,7 @@ e dados da execução. Nada fala com o Supabase.
     python -m pytest tests/python
 """
 
+import base64
 import io
 import json
 import logging
@@ -20,7 +21,25 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "python"))
 from monitora import config, execucao, mascaramento, registro, supabase_rpc  # noqa: E402
 
 CPF_FICTICIO = "00000000191"  # CPF de teste conhecido, não pertence a ninguém
-JWT_FICTICIO = "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.c2VncmVkby1maWN0aWNpbw"
+
+
+def _jwt_ficticio() -> str:
+    """Monta, em tempo de execução, um JWT só no formato (cabeçalho.corpo.assinatura).
+
+    Não há literal de token no arquivo: as partes são JSON fictícios codificados
+    aqui, com papel e assinatura inventados, sem valor em nenhum ambiente.
+    """
+
+    def parte(dados: dict) -> str:
+        return base64.urlsafe_b64encode(json.dumps(dados).encode()).decode().rstrip("=")
+
+    cabecalho = parte({"alg": "none", "typ": "JWT"})
+    corpo = parte({"role": "papel_ficticio_de_teste"})
+    assinatura = base64.urlsafe_b64encode(b"assinatura-ficticia").decode().rstrip("=")
+    return f"{cabecalho}.{corpo}.{assinatura}"
+
+
+JWT_FICTICIO = _jwt_ficticio()
 
 
 class Configuracao(unittest.TestCase):

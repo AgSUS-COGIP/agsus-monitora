@@ -18,7 +18,6 @@
 # Gerados por script (não se editam à mão)
 src/modules/aya-conhecimento-gerado.js linguist-generated=true
 src/styles/icones-lucide.css linguist-generated=true
-supabase/correcoes/20260923-leva-as-sedes-dos-dsei-ao-endereco.sql linguist-generated=true
 tests/fixtures/** linguist-generated=true
 
 # Dados grandes (contornos, camadas geográficas)
@@ -27,8 +26,10 @@ src/modulos/aya/mascote/contornos.ts linguist-vendored=true linguist-generated=t
 public/data/** linguist-vendored=true
 
 # Documentação e apoio às migrations: ensaios (begin; ... rollback;),
-# rollbacks e migrations descartadas. supabase/migrations/ segue contando.
+# rollbacks, migrations descartadas e scripts de correção de dados de uso
+# único. supabase/migrations/ segue contando.
 docs/** linguist-documentation=true
 supabase/ensaios/** linguist-documentation=true
 supabase/rollback/** linguist-documentation=true
 supabase/descartadas/** linguist-documentation=true
+supabase/correcoes/** linguist-documentation=true
