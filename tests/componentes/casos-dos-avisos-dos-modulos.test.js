@@ -160,12 +160,14 @@ describe("casos do aviso Duas matrículas no mesmo edital", () => {
     );
   });
 
-  it("sem aoAbrirCaso, o pedido de filtro fica para a Lista de aprovados", async () => {
+  it("sem aoAbrirCaso, o pedido de filtro leva à aba Pendências da Lista de aprovados", async () => {
     await abrirCasos();
     await clicar(document.querySelector(".conf-caso--clicavel"));
     expect(consumirPedidoDeFiltro("approved")).toEqual({
       candidatos: [APROVADO, OUTRA_VAGA],
       nome: "Maria Fictícia",
+      pendencias: true,
+      edital: expect.any(String),
     });
   });
 });

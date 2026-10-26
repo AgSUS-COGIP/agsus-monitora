@@ -1,0 +1,294 @@
+{
+  "descricao": "Casos dourados FICTÍCIOS da detecção das pendências do edital (python/monitora/aprovados/pendencias.py). A entrada é o formato compacto de pendencias_ler_aprovados (migration 20261026190000); os hashes de nome, código e matrícula são inventados. hoje = 2026-10-26, prazo do Convocado = 15 dias.",
+  "hoje": "2026-10-26",
+  "entrada": {
+    "schema_version": 1,
+    "lido_em": "2026-10-26T09:00:00+00:00",
+    "listas": [
+      ["lista-a", "edital-1", "projetos", true],
+      ["lista-b", "edital-1", "projetos", true],
+      ["lista-c", "edital-2", "saude-indigena", false],
+      ["lista-d", "edital-3", "sede", true]
+    ],
+    "linhas": [
+      [
+        "d1",
+        0,
+        "100",
+        "Ampla Concorrência",
+        1,
+        "Contratado",
+        null,
+        "nome-ana",
+        null,
+        "mat-x",
+        false
+      ],
+      [
+        "d2",
+        1,
+        "101",
+        "Pessoas Pretas e Pardas",
+        1,
+        "Contratado",
+        null,
+        "nome-ana",
+        null,
+        "mat-x",
+        true
+      ],
+      [
+        "d3",
+        0,
+        "102",
+        "Ampla Concorrência",
+        4,
+        "Contratado",
+        null,
+        "nome-ana",
+        null,
+        "mat-y",
+        false
+      ],
+
+      [
+        "o1",
+        0,
+        "103",
+        "Ampla Concorrência",
+        2,
+        "Contratado",
+        null,
+        "nome-bia",
+        null,
+        "mat-z",
+        false
+      ],
+      [
+        "o2",
+        1,
+        "104",
+        "Ampla Concorrência",
+        3,
+        "Contratado",
+        null,
+        "nome-bia",
+        null,
+        "mat-z",
+        false
+      ],
+
+      [
+        "r1",
+        0,
+        "200",
+        "Ampla Concorrência",
+        10,
+        null,
+        null,
+        "nome-caio",
+        null,
+        null,
+        null
+      ],
+      [
+        "r2",
+        0,
+        "200",
+        "Ampla Concorrência",
+        10,
+        null,
+        null,
+        "nome-caio",
+        null,
+        null,
+        null
+      ],
+
+      [
+        "h1",
+        0,
+        "201",
+        "Ampla Concorrência",
+        5,
+        null,
+        null,
+        "nome-davi",
+        "cod-1",
+        null,
+        null
+      ],
+      [
+        "h2",
+        0,
+        "201",
+        "Ampla Concorrência",
+        6,
+        null,
+        null,
+        "nome-davi",
+        "cod-2",
+        null,
+        null
+      ],
+
+      [
+        "p1",
+        2,
+        "300",
+        "Ampla Concorrência",
+        7,
+        null,
+        null,
+        "nome-eva",
+        null,
+        null,
+        null
+      ],
+      [
+        "p2",
+        2,
+        "300",
+        "Ampla Concorrência",
+        7,
+        "Desistente",
+        null,
+        "nome-fabio",
+        null,
+        null,
+        null
+      ],
+      ["p3", 2, "300", "PcD", 7, null, null, "nome-gil", null, null, null],
+
+      [
+        "c1",
+        3,
+        "400",
+        "Ampla Concorrência",
+        1,
+        "Convocado",
+        "2026-10-01",
+        "nome-hugo",
+        null,
+        null,
+        null
+      ],
+      [
+        "c2",
+        3,
+        "400",
+        "Ampla Concorrência",
+        2,
+        "Convocado",
+        "2026-10-11",
+        "nome-iris",
+        null,
+        null,
+        null
+      ],
+      [
+        "c3",
+        3,
+        "400",
+        "Ampla Concorrência",
+        3,
+        "Convocado",
+        "2026-10-10",
+        "nome-joao",
+        null,
+        null,
+        null
+      ],
+      [
+        "c4",
+        2,
+        "301",
+        "Ampla Concorrência",
+        1,
+        "Convocado",
+        "2026-09-01",
+        "nome-kai",
+        null,
+        null,
+        null
+      ],
+
+      [
+        "u1",
+        0,
+        "500",
+        "Ampla Concorrência",
+        1,
+        "Contratado",
+        null,
+        "nome-lia",
+        null,
+        "mat-w",
+        false
+      ]
+    ],
+    "ambiguos": [
+      ["o1", "edital-1", "mat-z", "NENHUMA_ALCANCADA"],
+      ["o2", "edital-1", "mat-z", "NENHUMA_ALCANCADA"],
+      ["u1", "edital-1", "mat-w", "NENHUMA_ALCANCADA"]
+    ],
+    "pendencias": []
+  },
+  "esperado": [
+    {
+      "tipo": "CONTRATADO_DUAS_MATRICULAS",
+      "area": "projetos",
+      "candidatos": ["d1", "d2", "d3"],
+      "detalhe": { "linhas": 3, "vinculos": 2 }
+    },
+    {
+      "tipo": "CONTRATADO_EM_DUAS_LISTAS",
+      "area": "projetos",
+      "candidatos": ["o1", "o2"],
+      "detalhe": { "linhas": 2, "motivo": "NENHUMA_ALCANCADA" }
+    },
+    {
+      "tipo": "PESSOA_REPETIDA",
+      "area": "projetos",
+      "candidatos": ["r1", "r2"],
+      "detalhe": { "linhas": 2 }
+    },
+    {
+      "tipo": "POSICAO_REPETIDA",
+      "area": "saude-indigena",
+      "candidatos": ["p1", "p2"],
+      "detalhe": { "linhas": 2, "posicao": 7 }
+    },
+    {
+      "tipo": "CONVOCADO_SEM_DESFECHO",
+      "area": "sede",
+      "candidatos": ["c1"],
+      "detalhe": {
+        "linhas": 1,
+        "convocado_em": "2026-10-01",
+        "dias": 25,
+        "prazo": 15
+      }
+    },
+    {
+      "tipo": "CONVOCADO_SEM_DESFECHO",
+      "area": "sede",
+      "candidatos": ["c3"],
+      "detalhe": {
+        "linhas": 1,
+        "convocado_em": "2026-10-10",
+        "dias": 16,
+        "prazo": 15
+      }
+    }
+  ],
+  "por_que": {
+    "d1-d3": "mesma pessoa, duas matrículas (x e y) Contratado no edital 1; d2 está em outra lista pelo job e não conta como matrícula a mais, mas aparece para o gestor",
+    "o1-o2": "AMBIGUO do job, mesma matrícula: o gestor escolhe a lista",
+    "u1": "AMBIGUO de uma linha só (o par sumiu): não é pendência",
+    "r1-r2": "mesmo nome na mesma lista, vaga e modalidade; a posição repetida delas não vira outra pendência",
+    "h1-h2": "mesmo nome, códigos de candidato diferentes: homônimos, sem pendência",
+    "p1-p3": "posição 7 em p1 e p2 (mesma vaga e modalidade); p3 é de outra modalidade",
+    "c1-c4": "Convocado há mais de 15 dias: c1 (25) e c3 (16); c2 tem 15 (não passou); c4 está numa lista inativa"
+  }
+}

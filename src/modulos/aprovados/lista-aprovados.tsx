@@ -40,6 +40,13 @@ import { ModalDaCarta } from "./carta-de-convocacao/modal-da-carta.tsx";
 import { ModelosDaCarta } from "./carta-de-convocacao/modelos-da-carta.tsx";
 import { plural } from "./partes.tsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
+import { AbaPendencias, usarPendencias } from "./pendencias/aba-pendencias.tsx";
+import {
+  criarEstadoDasPendencias,
+  type EstadoDasPendencias,
+} from "./pendencias/estado-das-pendencias.ts";
+import { contarAbertas } from "../../lib/pendencias-do-edital.ts";
+import { hojeEmBrasilia } from "../../lib/carta-de-convocacao.ts";
 import "./convocacao.css";
 import "./carta-de-convocacao/carta.css";
 
@@ -72,7 +79,7 @@ const FILTROS_INICIAIS: FiltrosDaTabelaDeAprovados = Object.freeze({
   status: [],
 });
 
-type AbaDosAprovados = "aprovados" | "convocacao";
+type AbaDosAprovados = "aprovados" | "convocacao" | "pendencias";
 const ABAS: {
   nome: AbaDosAprovados;
   id: string;
@@ -94,6 +101,13 @@ const ABAS: {
     icone: "fa-bullhorn",
     rotulo: "Convocação",
   },
+  {
+    nome: "pendencias",
+    id: "approvedTabPendencias",
+    painel: "approvedPanelPendencias",
+    icone: "fa-list-check",
+    rotulo: "Pendências",
+  },
 ];
 
 function textoDoStatus({
@@ -114,9 +128,12 @@ function textoDoStatus({
 function Visoes({
   aba,
   aoMudar,
+  pendencias = 0,
 }: {
   aba: AbaDosAprovados;
   aoMudar: (aba: AbaDosAprovados) => void;
+  /** Pendências abertas: o selo da aba (some no zero). */
+  pendencias?: number;
 }) {
   return (
     <div
@@ -143,6 +160,15 @@ function Visoes({
         >
           <i className={`fa-solid ${item.icone}`} aria-hidden="true" />
           {item.rotulo}
+          {item.nome === "pendencias" && pendencias > 0 ? (
+            <span
+              className="approved-selo-da-aba"
+              id="approvedPendenciasSelo"
+              aria-label={`${pendencias} abertas`}
+            >
+              {pendencias}
+            </span>
+          ) : null}
         </button>
       ))}
     </div>
@@ -250,8 +276,21 @@ function ModalAberto({
   return null;
 }
 
-export function ListaAprovados({ estado }: { estado: EstadoDosAprovados }) {
+/* Sem a peça das pendências (testes antigos, uso avulso): uma vazia, sem banco. */
+const PENDENCIAS_SEM_BANCO = criarEstadoDasPendencias();
+
+export function ListaAprovados({
+  estado,
+  pendencias = PENDENCIAS_SEM_BANCO,
+  hoje = hojeEmBrasilia,
+}: {
+  estado: EstadoDosAprovados;
+  pendencias?: EstadoDasPendencias;
+  hoje?: () => string;
+}) {
   const dados = useSyncExternalStore(estado.assinar, estado.obter);
+  const dadosDasPendencias = usarPendencias(pendencias);
+  const [editalDaPendencia, setEditalDaPendencia] = useState("");
   const { carregado, erroAoCarregar, perfil } = dados;
   /*
     Só as listas e os candidatos dos editais da área escolhida no menu — o
@@ -261,7 +300,7 @@ export function ListaAprovados({ estado }: { estado: EstadoDosAprovados }) {
     Núcleo é de um edital certo e vê tudo o que foi carregado — a área atual,
     a mesma do Núcleo.
   */
-  const { ids } = usarAreaAtual();
+  const { ids, area } = usarAreaAtual();
   const listas = useMemo(
     () => soDosEditais(dados.listas, ids),
     [dados.listas, ids],
@@ -351,8 +390,17 @@ export function ListaAprovados({ estado }: { estado: EstadoDosAprovados }) {
     setPagina(1);
   }
 
-  // Caso de um aviso de conferência: a aba Aprovados só com as vagas da pessoa.
+  /*
+    Caso de um aviso de conferência: os avisos que viraram pendência (duas
+    matrículas, mesma matrícula em duas listas, Convocado sem desfecho) abrem a
+    aba Pendências no edital; os outros, a aba Aprovados só com as vagas da pessoa.
+  */
   usarPedidoDeFiltro("approved", carregado, (pedido) => {
+    if (pedido?.pendencias) {
+      setAba("pendencias");
+      setEditalDaPendencia(String(pedido.edital || ""));
+      return;
+    }
     const ids = (pedido?.candidatos || []).map(String).filter(Boolean);
     if (!ids.length) return;
     setAba("aprovados");
@@ -364,7 +412,13 @@ export function ListaAprovados({ estado }: { estado: EstadoDosAprovados }) {
     <div className="ui-tela aprovados-tela">
       <TopoDoPainel
         tour="aprovados-topo"
-        visoes={<Visoes aba={aba} aoMudar={setAba} />}
+        visoes={
+          <Visoes
+            aba={aba}
+            aoMudar={setAba}
+            pendencias={contarAbertas(dadosDasPendencias.pendencias).total}
+          />
+        }
         status={textoDoStatus(dados)}
         aoAtualizar={() => void estado.carregar()}
         atualizarDesativado={
@@ -454,6 +508,13 @@ export function ListaAprovados({ estado }: { estado: EstadoDosAprovados }) {
         carregado={carregado}
         erroAoCarregar={erroAoCarregar}
       />
+      <AbaPendencias
+        ativa={aba === "pendencias"}
+        estado={pendencias}
+        area={String(area || "")}
+        editalPedido={editalDaPendencia}
+        hoje={hoje()}
+      />
       <ModalAberto
         estado={estado}
         dados={dados}
@@ -501,13 +562,25 @@ export function montarListaAprovados({
     ...(baixar ? { baixar } : {}),
     ...(hoje ? { hoje } : {}),
   });
+  // Decidir uma pendência muda status, posição ou remove linha: a lista recarrega.
+  const pendencias = criarEstadoDasPendencias({
+    supabase,
+    ...(toast ? { toast } : {}),
+    ...(hoje ? { hoje } : {}),
+    aoDecidir: () => void estado.carregar({ emSegundoPlano: true }),
+  });
   const raiz = secao
-    ? montarModulo(secao, <ListaAprovados estado={estado} />, {
-        nome: "a lista de aprovados",
-      }).raiz
+    ? montarModulo(
+        secao,
+        <ListaAprovados estado={estado} pendencias={pendencias} />,
+        {
+          nome: "a lista de aprovados",
+        },
+      ).raiz
     : null;
   return {
     estado,
+    pendencias,
     raiz,
     render: () => estado.garantirCarregado(),
     openImportModal: (editalId: string, rotulo = "") =>

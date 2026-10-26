@@ -674,3 +674,19 @@ table.mobile-card-table td.approved-actions {
   max-height: 30vh;
   overflow: auto;
 }
+
+/* O selo da aba Pendências: quantas abertas (some no zero). */
+.approved-selo-da-aba {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: var(--space-1);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+}

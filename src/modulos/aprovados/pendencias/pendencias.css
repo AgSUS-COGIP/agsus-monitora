@@ -1,0 +1,127 @@
+/*
+  Aba Pendências da Lista de aprovados (aba-pendencias.tsx): filtros, cartões
+  das pendências, tabela das linhas, histórico e o modal da decisão. KPIs,
+  campos, selo e modal vêm de src/ui/ (ui.css). Só tokens: o tema escuro vem deles.
+*/
+
+.pendencias-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+.pendencias-filtros .ui-campo {
+  min-width: 260px;
+}
+
+.pendencias-lista {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.pendencia-cartao {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--state-warning);
+}
+.pendencia-cartao[data-tom="perigo"] {
+  border-left-color: var(--state-danger);
+}
+.pendencia-cartao[data-tom="info"] {
+  border-left-color: var(--state-info);
+}
+
+.pendencia-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.pendencia-topo h3 {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+.pendencia-onde,
+.pendencia-decisao {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+}
+
+table.pendencia-linhas {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-body-sm);
+}
+.pendencia-linhas th,
+.pendencia-linhas td {
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border-subtle);
+  text-align: left;
+}
+.pendencia-linhas .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.pendencia-linhas tr.is-removida td {
+  color: var(--color-text-tertiary);
+  text-decoration: line-through;
+}
+.pendencia-linhas small {
+  color: var(--color-text-tertiary);
+}
+
+.pendencia-historico summary {
+  cursor: pointer;
+  font-size: var(--text-caption);
+  color: var(--color-text-link);
+}
+.pendencia-historico ul {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+}
+
+.pendencia-modal .pendencia-campos {
+  display: grid;
+  gap: var(--space-3);
+}
+.pendencia-escolha {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+}
+.pendencia-escolha legend {
+  padding: 0 var(--space-1);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-medium);
+}
+.pendencia-escolha label {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-body-sm);
+}
+.pendencia-erro {
+  margin: var(--space-2) 0 0;
+  color: var(--state-danger);
+  font-size: var(--text-body-sm);
+}
+
+@media (max-width: 640px) {
+  .pendencia-topo {
+    flex-direction: column;
+  }
+  .pendencias-filtros .ui-campo {
+    min-width: 0;
+    width: 100%;
+  }
+}

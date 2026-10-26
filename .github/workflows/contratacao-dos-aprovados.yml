@@ -7,6 +7,11 @@ name: Contratado em outra lista
 # gravar_contratacao_dos_aprovados (só service_role). Não muda o status de nenhum aprovado.
 # Regra (versão 1, congelada): python/monitora/aprovados/contratacao.py.
 #
+# Depois, no mesmo job, as PENDÊNCIAS DO EDITAL (scripts/aprovados/pendencias.py): duas matrículas,
+# contratação em duas listas que a regra não decide, pessoa e posição repetidas e Convocado sem desfecho,
+# gravadas no instantâneo TB_PENDENCIA_APROVADO (pendencias_ler_aprovados e gravar_pendencias_do_edital,
+# só service_role). Quem decide é quem tem a permissão "Pendências dos aprovados", na tela.
+#
 # Quando roda:
 #   - pedido pelo banco (FC_DISPARAR_ROBO, chave "Conferências") depois de uma mudança de status
 #     que envolve Contratado e de uma lista nova, importada ou publicada (migration 20261024120000);
@@ -20,6 +25,8 @@ name: Contratado em outra lista
 # Secrets do repositório (os mesmos das conferências):
 #   SUPABASE_URL                 https://<projeto>.supabase.co
 #   SUPABASE_SERVICE_ROLE_KEY    chave service_role do Supabase
+# Variável opcional do repositório:
+#   CONFERENCIA_DIAS_CONVOCADO   dias de "Convocado" sem desfecho até virar pendência (padrão 15)
 
 on:
   workflow_dispatch:
@@ -90,4 +97,22 @@ jobs:
             python scripts/aprovados/contratacao.py --seco
           else
             python scripts/aprovados/contratacao.py
+          fi
+
+      # Logo depois, as pendências do edital (scripts/aprovados/pendencias.py, migration 20261026190000):
+      # o que o gestor decide na tela Lista de aprovados › Pendências. Lê os AMBIGUO que o passo
+      # anterior acabou de gravar; roda mesmo se ele falhar (a leitura usa o instantâneo que houver).
+      - name: Pendências do edital
+        if: ${{ !cancelled() }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CONFERENCIA_DIAS_CONVOCADO: ${{ vars.CONFERENCIA_DIAS_CONVOCADO }}
+          MODO: ${{ inputs.modo || 'normal' }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
+        run: |
+          if [ "$MODO" = "seco" ]; then
+            python scripts/aprovados/pendencias.py --seco
+          else
+            python scripts/aprovados/pendencias.py
           fi

@@ -92,8 +92,27 @@ describe("caso de aprovado (Duas matrículas no mesmo edital)", () => {
     expect(tudo).not.toMatch(/b44c58f2/);
   });
 
-  it("leva à Lista de aprovados só com as vagas da pessoa", () => {
-    expect(destinoDoCaso(normalizarCaso(aprovado()))).toEqual({
+  it("o aviso que virou pendência leva à aba Pendências, no edital do caso", () => {
+    const caso = normalizarCaso(aprovado());
+    expect(destinoDoCaso(caso)).toEqual({
+      view: "approved",
+      filtro: {
+        candidatos: [UUID_DO_APROVADO, UUID_DA_OUTRA_VAGA],
+        nome: "Maria Fictícia",
+        pendencias: true,
+        edital: caso.editalId || "",
+      },
+    });
+  });
+
+  it("os outros avisos dos aprovados levam à Lista só com as vagas da pessoa", () => {
+    expect(
+      destinoDoCaso(
+        normalizarCaso(
+          aprovado({ conferencia: "APROVADOS_PENDENCIA_DA_PUBLICACAO" }),
+        ),
+      ),
+    ).toEqual({
       view: "approved",
       filtro: {
         candidatos: [UUID_DO_APROVADO, UUID_DA_OUTRA_VAGA],
