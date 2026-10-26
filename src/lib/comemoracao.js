@@ -12,7 +12,7 @@
     - vaga pronta para o resultado final (painel de entrevistas);
     - marcos do ano da área (1.000, 2.500, 5.000, 7.500, 10.000 e, dali em
       diante, a cada 5.000 análises concluídas);
-    - o acesso liberado (src/lib/acesso-liberado.js).
+    - o acesso liberado (src/lib/acesso-liberado.ts).
 
   Liga/desliga global: `sistema.comemoracoes` de obter_situacao_do_sistema
   (Configurações › Módulos e abas › Sistema inteiro). Sem resposta, desligado:

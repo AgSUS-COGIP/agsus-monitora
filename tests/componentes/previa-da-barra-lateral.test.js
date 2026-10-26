@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.ts";
 import { EVENTO_MENU_ATUALIZADO } from "../../src/lib/eventos-da-barra-lateral.js";
-import { SECOES } from "../../src/modulos/configuracoes/secoes.js";
+import { SECOES } from "../../src/modulos/configuracoes/secoes.ts";
 import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
 import {
   atualizarMenuLateral,
@@ -14,8 +14,8 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.js";
-import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.js";
-import { SecaoMarca } from "../../src/modulos/configuracoes/marca.jsx";
+import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.ts";
+import { SecaoMarca } from "../../src/modulos/configuracoes/marca.tsx";
 import { PreviaDaBarraLateral } from "../../src/modulos/configuracoes/previa-da-barra-lateral.tsx";
 
 /*

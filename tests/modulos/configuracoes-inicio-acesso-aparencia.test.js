@@ -2,20 +2,20 @@ import { readFileSync } from "node:fs";
 import { fonteDoApp } from "../fonte-do-app.js";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.jsx";
-import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.js";
+import { montarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.tsx";
+import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.ts";
 import {
   CHAVES_DAS_SECOES,
   linhasDasSecoes,
-} from "../../src/lib/publicacao-de-configuracoes.js";
+} from "../../src/lib/publicacao-de-configuracoes.ts";
 import {
   criarImagensDaAparencia,
   EVENTO_FUNDO_DO_ACESSO,
-} from "../../src/modulos/configuracoes/imagens.js";
+} from "../../src/modulos/configuracoes/imagens.ts";
 import {
   abrirSecaoDeConfiguracao,
   organizarConfiguracoesEmSecoes,
-} from "../../src/modulos/configuracoes/secoes.js";
+} from "../../src/modulos/configuracoes/secoes.ts";
 import {
   clicar,
   digitar,
@@ -571,12 +571,12 @@ describe("Aparência", () => {
 
 describe("regras do código", () => {
   const arquivos = [
-    "pagina-inicial.jsx",
-    "tela-de-acesso.jsx",
-    "aparencia.jsx",
-    "partes.jsx",
-    "imagens.js",
-    "estado.js",
+    "pagina-inicial.tsx",
+    "tela-de-acesso.tsx",
+    "aparencia.tsx",
+    "partes.tsx",
+    "imagens.ts",
+    "estado.ts",
   ].map((nome) => readFileSync(`src/modulos/configuracoes/${nome}`, "utf8"));
 
   it("sem innerHTML, sem dangerouslySetInnerHTML e sem ler campos cfg* do DOM", () => {

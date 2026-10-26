@@ -3,7 +3,7 @@
   dar acesso?": a Aya responde olhando o perfil de quem pergunta.
 
   Cada ação tem as palavras que a nomeiam, a tela, a regra de permissão (as
-  mesmas funções de src/lib/access-roles.js que escondem o botão), quem pode
+  mesmas funções de src/lib/access-roles.ts que escondem o botão), quem pode
   (em texto) e onde o botão fica. Sem DOM, sem rede: o perfil vem de quem
   chama (`getMonitoraProfile` do app).
 */
@@ -22,8 +22,8 @@ import {
   podeEditarCoordenadas,
   podeVerPessoasOnline,
   roleLabel,
-} from "./access-roles.js";
-import { hasResource } from "./permissoes-recursos.js";
+} from "./access-roles.ts";
+import { hasResource } from "./permissoes-recursos.ts";
 import { normalizar } from "./termos-da-aya.js";
 
 const acao = (id, palavras, nome, pode, quem, onde, abrir = "") =>

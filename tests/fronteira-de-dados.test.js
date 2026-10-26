@@ -8,7 +8,7 @@ import {
 } from "../src/lib/rpc-contrato.js";
 
 const app = fonteDoApp();
-const acessos = readFileSync("src/modulos/acessos/estado.js", "utf8");
+const acessos = readFileSync("src/modulos/acessos/estado.ts", "utf8");
 
 describe("contrato de RPC", () => {
   it("declara as funções de administração de acesso como críticas", () => {
@@ -49,7 +49,7 @@ describe("fronteira de dados na administração de acesso", () => {
     passavam por RPC, mas recusar gravava direto na tabela — escolhendo no
     navegador `status`, `avaliado_por` e `avaliado_em`. A autorização da mesma
     decisão ficava em dois lugares. Hoje a decisão é do Acessos em React
-    (src/modulos/acessos/estado.js).
+    (src/modulos/acessos/estado.ts).
   */
   it("recusar solicitação passa por RPC, não por escrita direta", () => {
     const inicio = acessos.indexOf("function recusar(");

@@ -50,9 +50,9 @@ import {
   quem vê — um por vez); os marcos personalizados na mesma forma, criados
   por um mini-assistente. A preferência pessoal ("Para mim") é um
   interruptor na linha do título da seção (InterruptorPessoal, posto pela
-  moldura em configuracoes.jsx).
+  moldura em configuracoes.tsx).
 
-  O valor vai para o rascunho de `estado.js` como o JSON da chave
+  O valor vai para o rascunho de `estado.ts` como o JSON da chave
   `comemoracoes_marcos` e só vale depois de "Salvar alterações" (motivo e
   histórico, como as outras seções). "Testar" e o palco nunca gravam: soltam
   a comemoração com `teste: true`. Regras em

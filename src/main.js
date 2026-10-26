@@ -58,8 +58,8 @@ import { initSidebarBranding } from "./modules/sidebar-branding.js";
 import {
   organizarConfiguracoesEmSecoes,
   SECOES,
-} from "./modulos/configuracoes/secoes.js";
-import { montarConfiguracoes } from "./modulos/configuracoes/configuracoes.jsx";
+} from "./modulos/configuracoes/secoes.ts";
+import { montarConfiguracoes } from "./modulos/configuracoes/configuracoes.tsx";
 import { initMobileAppExperience } from "./modules/mobile-app-experience.js";
 import { initMobileBottomNavigation } from "./modules/mobile-bottom-navigation.js";
 import { initMobileTableCards } from "./modules/mobile-table-cards.js";
@@ -300,12 +300,12 @@ window.avaliacaoDocumentalController = telaSobDemanda({
     ),
 });
 
-// Configurações › Acessos: abre pela seção (configuracoes/secoes.js → render()).
+// Configurações › Acessos: abre pela seção (configuracoes/secoes.ts → render()).
 window.acessosController = telaSobDemanda({
   secao: "acessosApp",
   padroes: { confirmarSaida: () => true },
   carregar: () =>
-    import("./modulos/acessos/acessos.jsx").then((m) =>
+    import("./modulos/acessos/acessos.tsx").then((m) =>
       m.montarAcessos({
         toast: window.monitoraToast,
         getProfile: window.getMonitoraProfile,
@@ -314,7 +314,7 @@ window.acessosController = telaSobDemanda({
     ),
 });
 
-// Configurações › Módulos e abas (só admin global): abre pela seção (configuracoes/secoes.js → render()).
+// Configurações › Módulos e abas (só admin global): abre pela seção (configuracoes/secoes.ts → render()).
 window.modulosController = telaSobDemanda({
   secao: "modulosApp",
   padroes: { confirmarSaida: () => true },

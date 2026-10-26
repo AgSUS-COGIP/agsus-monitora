@@ -18,7 +18,7 @@ import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
-import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
+import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import {
   coordenaOEdital,
   visaoNaTela,

@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ACCESS_INSTRUCTION,
   DEFAULT_ACCESS_BRANDING,
-} from "../../src/lib/access-branding.js";
+} from "../../src/lib/access-branding.ts";
 import {
   INSTITUICAO,
   SLOGAN,

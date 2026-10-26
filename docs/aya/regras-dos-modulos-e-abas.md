@@ -2,7 +2,7 @@
 
 Configurações › Módulos e abas: ativar, desativar e pôr em manutenção o sistema, as áreas, as abas
 e os painéis; selo BETA; comemorações. Fontes: `src/modulos/modulos/modulos.tsx`,
-`src/lib/situacao-dos-modulos.js`, `src/lib/modulos-e-abas.ts`, `src/lib/access-roles.js` e a
+`src/lib/situacao-dos-modulos.js`, `src/lib/modulos-e-abas.ts`, `src/lib/access-roles.ts` e a
 migration `20260930140000_modulos_e_manutencao.sql`.
 
 ## Seção Módulos e abas

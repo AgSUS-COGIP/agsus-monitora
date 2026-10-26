@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { criarEstadoDosAcessos } from "../../src/modulos/acessos/estado.js";
+import { criarEstadoDosAcessos } from "../../src/modulos/acessos/estado.ts";
 
 /*
   Desativar (ou mover para Coordenações) a única pessoa da última página

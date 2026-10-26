@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { gerenciariaAcessosSemCoordenacao } from "../src/lib/matriz-de-acessos.js";
-import { canManageAccess, roleLabel } from "../src/lib/access-roles.js";
+import { gerenciariaAcessosSemCoordenacao } from "../src/lib/matriz-de-acessos.ts";
+import { canManageAccess, roleLabel } from "../src/lib/access-roles.ts";
 
 /*
   30/09: uma conta ficou em Coordenador sem coordenação; o menu mostrava

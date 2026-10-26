@@ -25,7 +25,7 @@ import {
   isAdminGlobal,
   paginasPermitidas,
   secaoDeConfiguracaoPermitida,
-} from "../lib/access-roles.js";
+} from "../lib/access-roles.ts";
 import {
   CHAVE_DA_TELA_GUARDADA,
   TELA_SEM_ACESSO,
@@ -55,8 +55,8 @@ import {
   definirSecoesPermitidas,
   SECOES,
   secaoAtualDeConfiguracao,
-} from "../modulos/configuracoes/secoes.js";
-import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.js";
+} from "../modulos/configuracoes/secoes.ts";
+import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
 import { definirPaginaDaAya } from "../modulos/aya/estado.js";
 
 /*
@@ -313,7 +313,7 @@ export function criarNavegacao({
   */
   function montarMenu() {
     const atual = perfil();
-    // As mesmas regras do "Ver como" de Acessos (src/lib/access-roles.js).
+    // As mesmas regras do "Ver como" de Acessos (src/lib/access-roles.ts).
     const permitidas = paginasPermitidas(atual);
     // Seção "Acessos" só para quem gerencia acessos; as demais, para quem edita configurações.
     const secoes = SECOES.filter((secao) =>

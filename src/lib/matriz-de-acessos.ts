@@ -1,0 +1,544 @@
+import {
+  LEVELS,
+  RESOURCES,
+  niveisDoRecurso,
+  rotuloDoNivel,
+  tipoDoRecurso,
+} from "./permissoes-recursos.ts";
+import type {
+  AlteracaoDeAcesso,
+  AlteracaoDescartada,
+  AreaDeAcesso,
+  AreasDaLinha,
+  BaseDoAlvo,
+  CelulaDaMatriz,
+  CelulaExibida,
+  ColunaDaMatriz,
+  CoordenacaoDeAcesso,
+  EntradaDoRascunho,
+  GrupoDeAcesso,
+  GruposPorCodigo,
+  ItemDoResumo,
+  MatrizDeAcessos,
+  NivelDeAcesso,
+  PessoaDoRascunho,
+  RascunhoDeAcessos,
+  RascunhoRebaseado,
+  ResumoDaPessoa,
+  UsuarioDaMatriz,
+} from "./tipos-dos-acessos.ts";
+
+/*
+  Permissões de Configurações › Acessos, sem DOM e sem React.
+
+  Cada pessoa segue um GRUPO (níveis por módulo); uma permissão INDIVIDUAL
+  vale só para ela e passa por cima do grupo. Cada célula vem do banco
+  (obter_matriz_acessos) como
+    { nivel, origem: "grupo" | "excecao", nivel_grupo, revisao }
+  e o usuário traz `grupo`, `coordenacao` e `revisao_conta` (trava das
+  mudanças de conta).
+
+  O RASCUNHO é autocontido: guarda, com cada alteração, a base lida e quem é a
+  pessoa. Por isso dá para paginar, buscar e filtrar sem perder o que foi
+  mudado.
+
+    chave  "<usuario>/<alvo>"  alvo = recurso | "#grupo" | "#coordenacao"
+    valor  { valor, base, usuario: { id, nome, email } }
+
+  Numa célula de recurso, `valor` é um nível ou `null` ("do grupo": apaga a
+  permissão individual no banco).
+*/
+
+export const ALVO_GRUPO = "#grupo";
+export const ALVO_COORDENACAO = "#coordenacao";
+
+type Rascunho = ReadonlyMap<string, EntradaDoRascunho>;
+
+const chave = (usuarioId: string, alvo: string) => `${usuarioId}/${alvo}`;
+const quem = (usuario: UsuarioDaMatriz): PessoaDoRascunho => ({
+  id: usuario.id,
+  nome: usuario.nome || "",
+  email: usuario.email || "",
+});
+const ehConta = (alvo: string) =>
+  alvo === ALVO_GRUPO || alvo === ALVO_COORDENACAO;
+
+/** Colunas de módulo da tabela de usuários. */
+export const MODULOS: readonly ColunaDaMatriz[] = Object.freeze(
+  RESOURCES.map(([id, rotulo]) => ({ id, rotulo, tipo: "modulo" as const })),
+);
+
+function baseDoAlvo(usuario: UsuarioDaMatriz, alvo: string): BaseDoAlvo {
+  if (alvo === ALVO_GRUPO)
+    return { valor: usuario.grupo ?? "", revisao: usuario.revisao_conta };
+  if (alvo === ALVO_COORDENACAO)
+    return {
+      valor: usuario.coordenacao ?? null,
+      revisao: usuario.revisao_conta,
+    };
+  return (
+    usuario.permissoes?.[alvo] || {
+      nivel: "sem_acesso",
+      origem: "grupo",
+      nivel_grupo: "sem_acesso",
+      revisao: 0,
+    }
+  );
+}
+
+/** A alteração não muda nada do que está salvo? */
+function semEfeito(alvo: string, base: BaseDoAlvo, valor: string | null) {
+  if (ehConta(alvo)) return (base.valor ?? null) === (valor ?? null);
+  if (valor === null) return base.origem !== "excecao";
+  return base.origem === "excecao" && base.nivel === valor;
+}
+
+/**
+ * Registra uma alteração e devolve um rascunho NOVO. Voltar ao que está
+ * salvo apaga a entrada.
+ */
+export function registrarNoRascunho(
+  rascunho: Rascunho,
+  usuario: UsuarioDaMatriz,
+  alvo: string,
+  valor: string | null,
+): RascunhoDeAcessos {
+  const proximo = new Map(rascunho);
+  const k = chave(usuario.id, alvo);
+  const base = proximo.get(k)?.base ?? baseDoAlvo(usuario, alvo);
+  if (
+    valor !== null &&
+    !ehConta(alvo) &&
+    !niveisDoRecurso(alvo).some(([nivel]) => nivel === valor)
+  )
+    throw new Error("Nível inválido");
+  if (semEfeito(alvo, base, valor)) proximo.delete(k);
+  else proximo.set(k, { valor, base, usuario: quem(usuario) });
+  return proximo;
+}
+
+export const contarPendencias = (rascunho: Rascunho) => rascunho.size;
+
+export function pendenciasDoUsuario(rascunho: Rascunho, usuarioId: string) {
+  let total = 0;
+  for (const k of rascunho.keys())
+    if (k.startsWith(`${usuarioId}/`)) total += 1;
+  return total;
+}
+
+/**
+ * Separa o rascunho de uma pessoa do resto: { daPessoa, resto }. O "Salvar"
+ * da gaveta grava só `daPessoa`; o que foi mudado em outras linhas continua
+ * pendente.
+ */
+export function separarRascunhoDaPessoa(
+  rascunho: Rascunho,
+  usuarioId: string,
+): { daPessoa: RascunhoDeAcessos; resto: RascunhoDeAcessos } {
+  const daPessoa: RascunhoDeAcessos = new Map();
+  const resto: RascunhoDeAcessos = new Map();
+  for (const [k, entrada] of rascunho)
+    (k.startsWith(`${usuarioId}/`) ? daPessoa : resto).set(k, entrada);
+  return { daPessoa, resto };
+}
+
+/** Grupo em vigor na linha: o do rascunho, se houver; senão o salvo. */
+export function grupoDaLinha(
+  usuario: UsuarioDaMatriz,
+  rascunho: Rascunho,
+): string | null | undefined {
+  const entrada = rascunho.get(chave(usuario.id, ALVO_GRUPO));
+  return entrada ? entrada.valor : usuario.grupo;
+}
+
+export function coordenacaoDaLinha(
+  usuario: UsuarioDaMatriz,
+  rascunho: Rascunho,
+): string | null {
+  const entrada = rascunho.get(chave(usuario.id, ALVO_COORDENACAO));
+  return entrada ? entrada.valor : (usuario.coordenacao ?? null);
+}
+
+export const alvoPendente = (
+  rascunho: Rascunho,
+  usuarioId: string,
+  alvo: string,
+) => rascunho.has(chave(usuarioId, alvo));
+
+/**
+ * O que a célula mostra agora: nível, se vem do grupo ou é individual, o
+ * nível do grupo em vigor e se há alteração pendente. Trocar o grupo no
+ * rascunho já muda as células que seguem o grupo.
+ */
+export function celulaExibida(
+  usuario: UsuarioDaMatriz,
+  recurso: string,
+  rascunho: Rascunho,
+  gruposPorCodigo: GruposPorCodigo = {},
+): CelulaExibida {
+  // Recurso nunca é "#grupo"/"#coordenacao": a base é uma célula.
+  const base = baseDoAlvo(usuario, recurso) as CelulaDaMatriz;
+  const grupo = grupoDaLinha(usuario, rascunho);
+  const nivelGrupo =
+    tipoDoRecurso(recurso) === "modulo"
+      ? (gruposPorCodigo[grupo as string]?.niveis?.[recurso] ??
+        base.nivel_grupo)
+      : "sem_acesso";
+  const entrada = rascunho.get(chave(usuario.id, recurso));
+  if (entrada)
+    return entrada.valor === null
+      ? { nivel: nivelGrupo, individual: false, nivelGrupo, pendente: true }
+      : {
+          // registrarNoRascunho só aceita nível válido numa célula de recurso.
+          nivel: entrada.valor as NivelDeAcesso,
+          individual: true,
+          nivelGrupo,
+          pendente: true,
+        };
+  if (base.origem === "excecao")
+    return { nivel: base.nivel, individual: true, nivelGrupo, pendente: false };
+  return { nivel: nivelGrupo, individual: false, nivelGrupo, pendente: false };
+}
+
+/**
+ * O `p_alteracoes` de salvar_matriz_acessos. Mudanças de conta (grupo,
+ * coordenação) vão antes: o teto do coordenador confere os níveis com o grupo
+ * novo.
+ */
+export function alteracoesDoRascunho(rascunho: Rascunho): AlteracaoDeAcesso[] {
+  const conta: AlteracaoDeAcesso[] = [];
+  const niveis: AlteracaoDeAcesso[] = [];
+  for (const [k, { valor, base, usuario }] of rascunho) {
+    const alvo = k.slice(k.indexOf("/") + 1);
+    if (alvo === ALVO_GRUPO)
+      conta.push({
+        tipo: "grupo",
+        usuario_id: usuario.id,
+        grupo: valor,
+        revisao: base.revisao,
+      });
+    else if (alvo === ALVO_COORDENACAO)
+      conta.push({
+        tipo: "coordenacao",
+        usuario_id: usuario.id,
+        coordenacao: valor,
+        revisao: base.revisao,
+      });
+    else {
+      if (valor !== null && !LEVELS.some(([nivel]) => nivel === valor))
+        throw new Error("Nível inválido");
+      niveis.push({
+        tipo: "nivel",
+        usuario_id: usuario.id,
+        recurso: alvo,
+        nivel: valor,
+        revisao: base.revisao ?? 0,
+      });
+    }
+  }
+  return [...conta, ...niveis];
+}
+
+/**
+ * Revisão agrupada por pessoa: [{ usuario, itens: [{ rotulo, de, para }] }].
+ * `nomes` traduz alvo e valor (colunas, grupos e coordenações).
+ */
+export function resumoDoRascunho(
+  rascunho: Rascunho,
+  {
+    colunas = MODULOS,
+    grupos = [],
+    coordenacoes = [],
+  }: {
+    colunas?: readonly Pick<ColunaDaMatriz, "id" | "rotulo">[];
+    grupos?: readonly Pick<GrupoDeAcesso, "codigo" | "nome">[];
+    coordenacoes?: readonly Pick<CoordenacaoDeAcesso, "codigo" | "nome">[];
+  } = {},
+): ResumoDaPessoa[] {
+  const nomeDaColuna = new Map(colunas.map((c) => [c.id, c.rotulo]));
+  const nomeDoGrupo = new Map<string | null | undefined, string>(
+    grupos.map((g) => [g.codigo, g.nome]),
+  );
+  const nomeDaCoordenacao = new Map<string | null | undefined, string>(
+    coordenacoes.map((c) => [c.codigo, c.nome]),
+  );
+  const doGrupo = (nivel: string | undefined, alvo: string) =>
+    `Do grupo (${rotuloDoNivel(nivel, alvo)})`;
+  const porUsuario = new Map<string, ResumoDaPessoa>();
+  for (const [k, { valor, base, usuario }] of rascunho) {
+    const alvo = k.slice(k.indexOf("/") + 1);
+    let item: ItemDoResumo;
+    if (alvo === ALVO_GRUPO)
+      item = {
+        rotulo: "Grupo",
+        de: nomeDoGrupo.get(base.valor) || base.valor || "—",
+        para: nomeDoGrupo.get(valor) || valor,
+      };
+    else if (alvo === ALVO_COORDENACAO)
+      item = {
+        rotulo: "Coordenação",
+        de: nomeDaCoordenacao.get(base.valor) || "Sem coordenação",
+        para: nomeDaCoordenacao.get(valor) || "Sem coordenação",
+      };
+    else
+      item = {
+        rotulo: nomeDaColuna.get(alvo) || alvo,
+        de:
+          base.origem === "excecao"
+            ? rotuloDoNivel(base.nivel, alvo)
+            : doGrupo(base.nivel_grupo, alvo),
+        para:
+          valor === null
+            ? doGrupo(base.nivel_grupo, alvo)
+            : rotuloDoNivel(valor, alvo),
+      };
+    if (!porUsuario.has(usuario.id))
+      porUsuario.set(usuario.id, { usuario, itens: [] });
+    porUsuario.get(usuario.id)!.itens.push(item);
+  }
+  return [...porUsuario.values()];
+}
+
+/**
+ * Depois de recarregar (conflito de revisão): o que ainda vale do rascunho.
+ * Entrada cuja base mudou vira conflito e sai; as demais usam a base nova.
+ * Entrada de quem não veio na recarga (outra página da lista) não pode ser
+ * conferida: mantida com a base velha, o mesmo conflito voltaria a cada
+ * Salvar. Sai também, em `foraDaLista`.
+ */
+export function rebasearRascunho(
+  rascunho: Rascunho,
+  usuariosRecarregados: readonly UsuarioDaMatriz[] = [],
+): RascunhoRebaseado {
+  const porId = new Map(usuariosRecarregados.map((u) => [u.id, u]));
+  const proximo: RascunhoDeAcessos = new Map();
+  const conflitos: AlteracaoDescartada[] = [];
+  const foraDaLista: AlteracaoDescartada[] = [];
+  for (const [k, entrada] of rascunho) {
+    const usuario = porId.get(entrada.usuario.id);
+    if (!usuario) {
+      foraDaLista.push({
+        usuario: entrada.usuario,
+        alvo: k.slice(k.indexOf("/") + 1),
+      });
+      continue;
+    }
+    const alvo = k.slice(k.indexOf("/") + 1);
+    const nova = baseDoAlvo(usuario, alvo);
+    if (String(nova.revisao ?? "") !== String(entrada.base.revisao ?? "")) {
+      conflitos.push({ usuario: entrada.usuario, alvo });
+      continue;
+    }
+    if (!semEfeito(alvo, nova, entrada.valor))
+      proximo.set(k, { ...entrada, base: nova });
+  }
+  return { rascunho: proximo, conflitos, foraDaLista };
+}
+
+const acessos = (n: number) => `${n} ${n === 1 ? "acesso" : "acessos"}`;
+
+/** O aviso depois de rebasear o rascunho (`rebasearRascunho`). */
+export function avisoDoConflito(
+  conflitos: readonly unknown[] = [],
+  foraDaLista: readonly unknown[] = [],
+): string {
+  const partes: string[] = [];
+  if (conflitos.length)
+    partes.push(
+      `Outra pessoa mudou ${acessos(conflitos.length)} que você estava alterando; essas alterações saíram.`,
+    );
+  if (foraDaLista.length)
+    partes.push(
+      `${foraDaLista.length === 1 ? "Saiu 1 alteração" : `Saíram ${foraDaLista.length} alterações`} de pessoas fora desta página, que não puderam ser conferidas.`,
+    );
+  if (!partes.length)
+    return "Os acessos mudaram enquanto você editava. A lista foi recarregada com as suas alterações; revise e salve de novo.";
+  return `${partes.join(" ")} Revise e salve de novo.`;
+}
+
+// ── Visão simples: grupo em uma frase, áreas da pessoa e a trava de área ───────
+
+/*
+  Módulos que contam para a frase do grupo ("acessos" e o parecer viram frase à
+  parte).
+*/
+const MODULOS_DA_FRASE = MODULOS.filter(
+  (m) => !["acessos", "recursos_parecer"].includes(m.id),
+);
+/* "Tudo" não conta Configurações: o módulo não tem nível de leitura. */
+const MODULOS_DE_TUDO = MODULOS_DA_FRASE.filter(
+  (m) => m.id !== "configuracoes",
+);
+
+function listaCurta(rotulos: readonly string[], maximo = 3) {
+  const nomes = rotulos.map((r) => r.toLocaleLowerCase("pt-BR"));
+  if (nomes.length <= maximo)
+    return nomes.length > 1
+      ? `${nomes.slice(0, -1).join(", ")} e ${nomes.at(-1)}`
+      : nomes[0] || "";
+  return `${nomes.slice(0, maximo).join(", ")} e mais ${nomes.length - maximo}`;
+}
+
+/**
+ * O que o grupo deixa fazer, em uma linha, lida dos níveis do grupo:
+ *   "Leitura: vê tudo, não altera nada."
+ *   "Edição: altera editais e cronograma; o resto só vê."
+ */
+export function explicacaoDoGrupo(
+  grupo: Pick<GrupoDeAcesso, "admin_global" | "niveis"> | null | undefined,
+): string {
+  if (!grupo) return "";
+  if (grupo.admin_global)
+    return "Administrador: vê e altera tudo, em todas as áreas.";
+  const niveis = grupo.niveis || {};
+  const nivelDe = (id: string) => niveis[id] || "sem_acesso";
+  const ve = MODULOS_DA_FRASE.filter((m) => nivelDe(m.id) !== "sem_acesso");
+  const altera = ve.filter((m) => ["editor", "admin"].includes(nivelDe(m.id)));
+  const gerencia = nivelDe("acessos") === "editor";
+  const decide = nivelDe("recursos_parecer") === "editor";
+  const extra = `${gerencia ? " Gerencia os acessos da coordenação." : ""}${
+    decide ? " Dá o parecer jurídico dos recursos." : ""
+  }`;
+  if (!ve.length)
+    return gerencia
+      ? `Só gestão de acessos.${extra}`
+      : "Sem acesso: não vê nenhuma página.";
+  const cobre = (lista: readonly ColunaDaMatriz[]) =>
+    MODULOS_DE_TUDO.every((m) => lista.some((x) => x.id === m.id));
+  const tudo = cobre(ve);
+  if (!altera.length)
+    return `Leitura: vê ${tudo ? "tudo" : listaCurta(ve.map((m) => m.rotulo))}, não altera nada.${extra}`;
+  const resto = ve.length > altera.length ? "; o resto só vê" : "";
+  return `Edição: altera ${
+    cobre(altera) ? "tudo" : listaCurta(altera.map((m) => m.rotulo))
+  }${resto}.${extra}`;
+}
+
+/** O grupo em vigor na linha (rascunho ou salvo) é de administrador global? */
+export function adminGlobalDaLinha(
+  usuario: UsuarioDaMatriz,
+  rascunho: Rascunho,
+  gruposPorCodigo: GruposPorCodigo = {},
+): boolean {
+  const grupo = gruposPorCodigo[grupoDaLinha(usuario, rascunho) as string];
+  return grupo ? Boolean(grupo.admin_global) : Boolean(usuario.admin_global);
+}
+
+/** Áreas marcadas uma a uma (area:<id> = "leitor"), já com o rascunho. */
+export function areasMarcadasDaLinha(
+  usuario: UsuarioDaMatriz,
+  rascunho: Rascunho,
+  areas: readonly AreaDeAcesso[] = [],
+): string[] {
+  return areas
+    .map((area) => area.id)
+    .filter(
+      (id) => celulaExibida(usuario, `area:${id}`, rascunho).nivel === "leitor",
+    );
+}
+
+/**
+ * Regra do banco (salvar_matriz_acessos, 23514): quem não é administrador
+ * global só vê as áreas marcadas ou a da coordenação. Sem nenhuma das duas, a
+ * pessoa entra e não vê nada.
+ */
+export function ficariaSemArea({
+  adminGlobal,
+  coordenacao,
+  areasMarcadas,
+}: {
+  adminGlobal: boolean;
+  coordenacao: string | null | undefined;
+  areasMarcadas: readonly string[] | null | undefined;
+}): boolean {
+  return !adminGlobal && !coordenacao && !(areasMarcadas || []).length;
+}
+
+/**
+ * Regra do banco (salvar_matriz_acessos, 23514): quem gerencia acessos (nível
+ * editor ou mais em "acessos") sem ser administrador global precisa de
+ * coordenação — o coordenador só gerencia a própria. Sem ela, o menu mostra
+ * Acessos e o banco recusa a leitura.
+ */
+export function gerenciariaAcessosSemCoordenacao({
+  adminGlobal,
+  coordenacao,
+  nivelAcessos,
+}: {
+  adminGlobal: boolean;
+  coordenacao: string | null | undefined;
+  nivelAcessos: string | null | undefined;
+}): boolean {
+  return (
+    !adminGlobal &&
+    !coordenacao &&
+    ["editor", "admin"].includes(nivelAcessos || "")
+  );
+}
+
+/** A pessoa, como está no rascunho, ficaria sem área? (inativa não conta) */
+export function linhaFicariaSemArea(
+  usuario: UsuarioDaMatriz,
+  rascunho: Rascunho,
+  { grupos = [], areas = [] }: Pick<MatrizDeAcessos, "grupos" | "areas"> = {},
+): boolean {
+  if (usuario.ativo === false) return false;
+  const gruposPorCodigo: GruposPorCodigo = Object.fromEntries(
+    grupos.map((g) => [g.codigo, g]),
+  );
+  return ficariaSemArea({
+    adminGlobal: adminGlobalDaLinha(usuario, rascunho, gruposPorCodigo),
+    coordenacao: coordenacaoDaLinha(usuario, rascunho),
+    areasMarcadas: areasMarcadasDaLinha(usuario, rascunho, areas),
+  });
+}
+
+/**
+ * Pessoas com alteração pendente que ficariam sem área: o salvar espera até
+ * alguém marcar a área (o banco recusaria o lote inteiro). Só confere quem
+ * está na página carregada; as demais o banco confere.
+ */
+export function pessoasSemAreaNoRascunho(
+  rascunho: Rascunho,
+  matriz: Pick<MatrizDeAcessos, "usuarios" | "grupos" | "areas"> = {},
+): UsuarioDaMatriz[] {
+  const ids = new Set([...rascunho.values()].map((e) => e.usuario.id));
+  return (matriz.usuarios || []).filter(
+    (usuario) =>
+      ids.has(usuario.id) && linhaFicariaSemArea(usuario, rascunho, matriz),
+  );
+}
+
+/**
+ * Áreas que a pessoa vê, para a coluna "Áreas": { todas } para administrador
+ * global; senão os ids. Sem alteração pendente vale o que o banco calculou
+ * (areas_efetivas); com alteração, a coordenação e as áreas marcadas do
+ * rascunho.
+ */
+export function areasDaLinha(
+  usuario: UsuarioDaMatriz,
+  rascunho: Rascunho,
+  {
+    grupos = [],
+    areas = [],
+    coordenacoes = [],
+  }: Pick<MatrizDeAcessos, "grupos" | "areas" | "coordenacoes"> = {},
+): AreasDaLinha {
+  const gruposPorCodigo: GruposPorCodigo = Object.fromEntries(
+    grupos.map((g) => [g.codigo, g]),
+  );
+  if (adminGlobalDaLinha(usuario, rascunho, gruposPorCodigo))
+    return { todas: true, ids: [] };
+  if (
+    !pendenciasDoUsuario(rascunho, usuario.id) &&
+    Array.isArray(usuario.areas_efetivas)
+  )
+    return { todas: false, ids: usuario.areas_efetivas };
+  const coordenacao = coordenacaoDaLinha(usuario, rascunho);
+  const daCoordenacao = coordenacoes.find(
+    (c) => c.codigo === coordenacao,
+  )?.area;
+  const ids = new Set(areasMarcadasDaLinha(usuario, rascunho, areas));
+  if (daCoordenacao) ids.add(daCoordenacao);
+  return { todas: false, ids: [...ids] };
+}

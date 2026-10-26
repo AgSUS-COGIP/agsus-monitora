@@ -6,7 +6,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { RESPONSAVEIS_DE_EDITAL } from "../../lib/responsavel-do-edital.js";
-import { canMoveEditalBetweenAreas } from "../../lib/access-roles.js";
+import { canMoveEditalBetweenAreas } from "../../lib/access-roles.ts";
 import { AREAS_DO_SISTEMA, nomeDaArea } from "../../lib/menu-lateral.ts";
 import {
   NOVA_UNIDADE,

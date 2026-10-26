@@ -216,7 +216,7 @@ O **painel** e o **trabalho** ficam separados no menu (`src/lib/menu-lateral.ts`
 | Menu (rótulo) | Rota / view | Recurso de permissão | Para quê |
 |---|---|---|---|
 | **Painel das análises** | `analises` (a de hoje; o rótulo muda de "Análises curriculares" para "Painel das análises") | `analises` (o de hoje: Leitor, Editor, Admin) | indicadores, gráficos, pendências, carga por responsável, consulta e CSV. **Só leitura.** |
-| **Avaliação documental** | `avaliacao-documental` (módulo novo em `src/modulos/avaliacao-documental/`) | **`avaliacao_documental`** (novo, em `permissoes-recursos.js`, com migration) | Provisória por ART, lote, fila, ficha, revisão, parecer, regra da avaliação e equipe do edital |
+| **Avaliação documental** | `avaliacao-documental` (módulo novo em `src/modulos/avaliacao-documental/`) | **`avaliacao_documental`** (novo, em `permissoes-recursos.ts`, com migration) | Provisória por ART, lote, fila, ficha, revisão, parecer, regra da avaliação e equipe do edital |
 
 Os dois aparecem lado a lado no menu; o painel ganha o atalho "Abrir na Avaliação documental" em
 cada análise de origem MONITORA, e a ficha ganha "Ver no painel".

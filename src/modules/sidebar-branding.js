@@ -1,4 +1,4 @@
-import { needsLightForeground } from "../lib/access-branding.js";
+import { needsLightForeground } from "../lib/access-branding.ts";
 import {
   CHAVE_DA_COR_DA_BARRA,
   CHAVE_DO_LOGO_DA_BARRA,
@@ -12,7 +12,7 @@ import {
   Pinta a barra lateral com a logo e a cor gravadas (`ui_sidebar_logo_url`,
   `ui_sidebar_background_color`). A escolha (envio de logo, galeria, cor e o
   aviso de contraste) é de Configurações › Aparência, em React
-  (src/modulos/configuracoes/aparencia.jsx), que chama
+  (src/modulos/configuracoes/aparencia.tsx), que chama
   `aplicarMarcaDaBarraLateral` enquanto a pessoa experimenta.
 
   Os valores vêm da leitura da configuração que o app já faz na entrada

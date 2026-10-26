@@ -39,7 +39,7 @@ import {
   logoEmPng,
 } from "../../classificacao/documento-no-navegador.ts";
 import { baixarNoNavegador } from "../../classificacao/estado.ts";
-import { estadoDasConfiguracoes } from "../../configuracoes/estado.js";
+import { estadoDasConfiguracoes } from "../../configuracoes/estado.ts";
 
 function cabecalhoConfigurado() {
   try {

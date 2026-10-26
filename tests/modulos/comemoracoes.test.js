@@ -1,7 +1,7 @@
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { secaoDeConfiguracaoPermitida } from "../../src/lib/access-roles.js";
+import { secaoDeConfiguracaoPermitida } from "../../src/lib/access-roles.ts";
 import { SECOES_DA_AYA } from "../../src/lib/aya-paginas.js";
 import {
   CHAVE_DA_PREFERENCIA_PESSOAL,
@@ -11,7 +11,7 @@ import {
   InterruptorPessoal,
   SecaoComemoracoes,
 } from "../../src/modulos/configuracoes/comemoracoes.tsx";
-import { SECOES } from "../../src/modulos/configuracoes/secoes.js";
+import { SECOES } from "../../src/modulos/configuracoes/secoes.ts";
 import { clicar, digitar, escolher } from "../componentes/interacoes.js";
 
 /*

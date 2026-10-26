@@ -1,6 +1,6 @@
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { montarAcessos } from "../../src/modulos/acessos/acessos.jsx";
+import { montarAcessos } from "../../src/modulos/acessos/acessos.tsx";
 import {
   clicar,
   digitar,

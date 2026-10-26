@@ -54,7 +54,7 @@ ficam aqui, com a Aya. Fontes: `src/modulos/selecao/`, `src/lib/selecao-do-paine
 
 **perguntas:** quem pode ver a selecao | nao vejo a aba selecao | permissao selecao | posso editar a selecao
 **resposta:** A Seleção usa a permissão "Seleção" (Leitor basta, em Configurações › Acessos) e é só de consulta: nenhum número se edita ali. Os números vêm da planilha Auditoria, das entrevistas registradas e da lista de aprovados vigente; para mudar, corrija a fonte. A tela mostra só a área escolhida no menu.
-**fonte:** src/lib/access-roles.js (canViewSelecao); supabase/migrations/20261001090000_selecao.sql
+**fonte:** src/lib/access-roles.ts (canViewSelecao); supabase/migrations/20261001090000_selecao.sql
 **abrir:** selecao
 
 ## Vaga ou número que não bate na Seleção

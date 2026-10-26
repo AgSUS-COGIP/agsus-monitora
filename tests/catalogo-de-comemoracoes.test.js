@@ -30,7 +30,7 @@ import {
   CAMPOS_DAS_SECOES,
   errosDasSecoes,
   normalizarValoresCarregados,
-} from "../src/lib/publicacao-de-configuracoes.js";
+} from "../src/lib/publicacao-de-configuracoes.ts";
 
 /*
   O catálogo e a configuração das comemorações: os marcos que o código já

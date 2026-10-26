@@ -13,7 +13,7 @@ import {
   camposDaSecao,
   errosDasSecoes,
   normalizarValoresCarregados,
-} from "../src/lib/publicacao-de-configuracoes.js";
+} from "../src/lib/publicacao-de-configuracoes.ts";
 
 /*
   "Abrir chamado" da Aya: um mailto: para o suporte, com assunto e corpo em

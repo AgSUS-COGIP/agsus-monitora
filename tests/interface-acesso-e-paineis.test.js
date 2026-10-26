@@ -1,11 +1,11 @@
 import { readFileSync } from "node:fs";
 import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it, vi } from "vitest";
-import { criarImagensDaAparencia } from "../src/modulos/configuracoes/imagens.js";
+import { criarImagensDaAparencia } from "../src/modulos/configuracoes/imagens.ts";
 import {
   ACCESS_BACKGROUND_MAX_BYTES,
   validateAccessBackgroundFile,
-} from "../src/lib/access-background-storage.js";
+} from "../src/lib/access-background-storage.ts";
 
 const app = fonteDoApp();
 const shellCss = readFileSync("src/styles/platform-shell.css", "utf8");

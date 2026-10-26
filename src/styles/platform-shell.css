@@ -20,7 +20,7 @@
   uma identidade que ninguém havia escolhido.
 
   Agora a alternativa é `none`. Quem já acessou recebe a arte certa antes da
-  primeira pintura, vinda de `access-branding-cache.js`; quem nunca acessou vê o
+  primeira pintura, vinda de `access-branding-cache.ts`; quem nunca acessou vê o
   fundo liso até a configuração responder. Meio segundo mais sóbrio vale mais que
   meio segundo mostrando a marca errada.
 

@@ -10,7 +10,7 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 
 **perguntas:** tela de editais | tela editais | aba editais | para que serve editais | para que serve a tela de editais | equipe nucleo
 **resposta:** Em Editais ficam os editais da área atual: a tabela, os alertas de cronograma e o formulário de cada edital, com cronograma, status, anexos em PDF, quadro de vagas e histórico. Os indicadores do painel (Total de editais, Editais ativos, Editais inativos, Em andamento, Sem cronograma, Incompletos, Próximos 7 dias e Excepcionais) filtram a fila ao clicar; clicar de novo no mesmo indicador tira o filtro. Cadastra e edita quem tem nível Editor em Editais ou em Cronograma.
-**fonte:** src/modulos/editais/; src/lib/editais-do-nucleo.js; src/lib/access-roles.js
+**fonte:** src/modulos/editais/; src/lib/editais-do-nucleo.js; src/lib/access-roles.ts
 **abrir:** nucleo
 
 ## Editais ativos e inativos
@@ -68,7 +68,7 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 
 **perguntas:** como mover um edital de area | mover edital de area | trocar a area do edital | edital na area errada
 **resposta:** Só o administrador global move um edital para outra área, com motivo obrigatório e confirmação; o banco confere de novo e registra a mudança no histórico. O edital leva junto a lista de aprovados, o cronograma e a convocação. O botão só fica ativo depois de salvar ou descartar as alterações do formulário. Edital novo nasce na área do menu, e unidade de outra área é recusada.
-**fonte:** src/modulos/editais/estado.js; supabase/migrations/20260928220000_edital_na_area_certa.sql; src/lib/access-roles.js
+**fonte:** src/modulos/editais/estado.js; supabase/migrations/20260928220000_edital_na_area_certa.sql; src/lib/access-roles.ts
 
 ## Campos calculados do edital
 
@@ -80,7 +80,7 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 
 **perguntas:** quem pode editar edital | quem pode cadastrar edital | botao novo edital nao aparece | nao consigo editar o edital | sumiu o lapis do edital | permissao editais
 **resposta:** Cadastrar ("Novo edital") e editar (o lápis da linha) é de quem tem nível Editor em Editais ou em Cronograma, em Configurações › Acessos. Com Leitor, a tela mostra a tabela, os indicadores e o "Ver cronograma", sem esses botões. Na linha, o ícone da Lista de aprovados aparece para quem tem Editor em Importação e convocação. Mover o edital de área é só do administrador global.
-**fonte:** src/modulos/editais/nucleo.jsx; src/lib/access-roles.js (canManageEditais, canImportApprovedList, canMoveEditalBetweenAreas)
+**fonte:** src/modulos/editais/nucleo.jsx; src/lib/access-roles.ts (canManageEditais, canImportApprovedList, canMoveEditalBetweenAreas)
 **abrir:** config:acessos
 
 ## Edital que não aparece em Editais

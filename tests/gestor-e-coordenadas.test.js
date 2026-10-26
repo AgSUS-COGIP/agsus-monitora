@@ -4,7 +4,7 @@ import {
   podeEditarCoordenadas,
   podeVerPessoasOnline,
   roleLabel,
-} from "../src/lib/access-roles.js";
+} from "../src/lib/access-roles.ts";
 
 /*
   O perfil edital_gestor aparece como "Gestor" (o código não muda) e corrige

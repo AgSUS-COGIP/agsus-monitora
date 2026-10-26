@@ -1,0 +1,147 @@
+/*
+  Convite de acesso e situação da pessoa em Configurações › Acessos, sem DOM e
+  sem React.
+
+  O convite é só uma mensagem: o link não dá acesso a nada. Quem entra com a
+  conta Google do e-mail cadastrado (adicionar_pessoa_acesso) é ligado ao
+  perfil no primeiro login. obter_matriz_acessos traz, por pessoa,
+  `convite_pendente` (cadastrada, nunca entrou) e `ultimo_acesso`.
+*/
+
+import type {
+  DadosDoConvite,
+  SituacaoDoAcesso,
+  UsuarioDaMatriz,
+} from "./tipos-dos-acessos.ts";
+
+export const ASSUNTO_DO_CONVITE = "Convite para o MONITORA";
+
+const FORMATO_DA_DATA = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  timeZone: "America/Sao_Paulo",
+});
+
+const FORMATO_DA_HORA = new Intl.DateTimeFormat("pt-BR", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+  timeZone: "America/Sao_Paulo",
+});
+
+function dataValida(valor: unknown): Date | null {
+  if (!valor) return null;
+  // Data do banco (ISO), milissegundos ou Date; o resto vira data inválida.
+  const data = new Date(valor as string | number | Date);
+  return Number.isNaN(data.getTime()) ? null : data;
+}
+
+/** "2026-09-30T15:00:00Z" → "30/09/2026" (horário de Brasília); "" se inválida. */
+export function dataCurta(valor: unknown): string {
+  const data = dataValida(valor);
+  return data ? FORMATO_DA_DATA.format(data) : "";
+}
+
+/** "2026-09-30T15:00:00Z" → "30/09/2026 às 12:00" (horário de Brasília); "" se inválida. */
+export function dataHoraCurta(valor: unknown): string {
+  const data = dataValida(valor);
+  return data
+    ? `${FORMATO_DA_DATA.format(data)} às ${FORMATO_DA_HORA.format(data)}`
+    : "";
+}
+
+/**
+ * Situação da pessoa na coluna "Situação":
+ *   { tipo: "convite", rotulo: "Convidado · ainda não entrou" }
+ *   { tipo: "acesso",  rotulo: "Último acesso em 30/09/2026 às 12:00" }
+ *   { tipo: "nunca",   rotulo: "Nunca" }
+ */
+export function situacaoDoAcesso(
+  usuario:
+    | Pick<UsuarioDaMatriz, "convite_pendente" | "ultimo_acesso">
+    | null
+    | undefined,
+): SituacaoDoAcesso {
+  if (usuario?.convite_pendente)
+    return { tipo: "convite", rotulo: "Convidado · ainda não entrou" };
+  const data = dataHoraCurta(usuario?.ultimo_acesso);
+  return data
+    ? { tipo: "acesso", rotulo: `Último acesso em ${data}` }
+    : { tipo: "nunca", rotulo: "Nunca" };
+}
+
+function saudacao(nome: string | null | undefined) {
+  const limpo = String(nome || "")
+    .trim()
+    .replace(/\s+/g, " ");
+  return limpo ? `Olá, ${limpo}!` : "Olá!";
+}
+
+/** Texto do convite, pronto para colar num e-mail ou mensagem. */
+export function mensagemDoConvite({
+  nome,
+  email,
+  origem,
+}: DadosDoConvite): string {
+  const endereco = String(origem || "").replace(/\/+$/, "");
+  return [
+    `${saudacao(nome)} Você foi convidado(a) para o MONITORA (AgSUS).`,
+    `Acesse ${endereco} e entre com sua conta Google ${String(email || "").trim()}.`,
+  ].join(" ");
+}
+
+/** mailto: para o e-mail convidado, com assunto e corpo já escritos. */
+export function linkDoEmailDoConvite({
+  nome,
+  email,
+  origem,
+}: DadosDoConvite): string {
+  const destinatario = encodeURIComponent(String(email || "").trim()).replace(
+    /%40/g,
+    "@",
+  );
+  const assunto = encodeURIComponent(ASSUNTO_DO_CONVITE);
+  const corpo = encodeURIComponent(mensagemDoConvite({ nome, email, origem }));
+  return `mailto:${destinatario}?subject=${assunto}&body=${corpo}`;
+}
+
+/**
+ * Copia o texto: navigator.clipboard quando existe (HTTPS); senão, um
+ * <textarea> escondido + execCommand("copy"). true se copiou.
+ */
+export async function copiarTexto(
+  texto: string,
+  {
+    clipboard = globalThis.navigator?.clipboard,
+    documento = globalThis.document,
+  }: {
+    clipboard?: Pick<Clipboard, "writeText"> | null;
+    documento?: Document | null;
+  } = {},
+): Promise<boolean> {
+  if (clipboard?.writeText) {
+    try {
+      await clipboard.writeText(texto);
+      return true;
+    } catch {
+      // Sem permissão (ou HTTP): tenta o caminho antigo.
+    }
+  }
+  if (!documento?.body || typeof documento.execCommand !== "function")
+    return false;
+  const campo = documento.createElement("textarea");
+  campo.value = texto;
+  campo.setAttribute("readonly", "");
+  campo.style.position = "fixed";
+  campo.style.opacity = "0";
+  documento.body.appendChild(campo);
+  campo.select();
+  try {
+    return documento.execCommand("copy") === true;
+  } catch {
+    return false;
+  } finally {
+    campo.remove();
+  }
+}

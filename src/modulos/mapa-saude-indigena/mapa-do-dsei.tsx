@@ -53,7 +53,7 @@ import {
   remedir,
 } from "./leaflet.ts";
 import { usarUltimo } from "./usar-ultimo.ts";
-import { podeEditarCoordenadas } from "../../lib/access-roles.js";
+import { podeEditarCoordenadas } from "../../lib/access-roles.ts";
 import { EditorDeCoordenadas } from "./editor-de-coordenadas.tsx";
 import {
   BotaoDeRecolher,

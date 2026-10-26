@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { ABAS_DO_MENU } from "../src/lib/menu-lateral.ts";
-import { RESOURCES } from "../src/lib/permissoes-recursos.js";
+import { RESOURCES } from "../src/lib/permissoes-recursos.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 import { ORIGENS_DO_RECURSO } from "../src/lib/prazo-do-recurso.ts";
-import { canEditRecursos, canViewRecursos } from "../src/lib/access-roles.js";
+import { canEditRecursos, canViewRecursos } from "../src/lib/access-roles.ts";
 
 /*
   A migration da aba Recursos (ensaiada em produção com begin…rollback em

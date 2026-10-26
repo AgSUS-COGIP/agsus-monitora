@@ -11,7 +11,7 @@ import type {
 } from "./tipos.ts";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { isAdminGlobal } from "../../lib/access-roles.js";
+import { isAdminGlobal } from "../../lib/access-roles.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import {
   estadoDoBotao,
@@ -42,7 +42,7 @@ import { RodarComOpcoes } from "./rodar-com-opcoes.tsx";
   "Detalhes". Só leitura: uma RPC, `get_saude_das_cargas`
   (20261001120000_saude_das_cargas.sql); as regras em src/lib/saude-das-cargas.ts.
 
-  Abre pela seção (src/modulos/configuracoes/secoes.js → `render()`), que relê a cada
+  Abre pela seção (src/modulos/configuracoes/secoes.ts → `render()`), que relê a cada
   vez: o estado das cargas muda a cada poucos minutos.
 
   Abaixo da lista, o cartão "Avisos de conferência" (src/modulos/conferencias/):
@@ -486,7 +486,7 @@ function secaoNaTela(raiz: HTMLElement | null | undefined) {
 
 /**
  * Monta a seção no `#saudeDasCargasApp` e devolve o controlador que
- * src/modulos/configuracoes/secoes.js chama ao abrir a seção.
+ * src/modulos/configuracoes/secoes.ts chama ao abrir a seção.
  */
 export function montarSaudeDasCargas({
   raizDaTela = document.getElementById("saudeDasCargasApp"),

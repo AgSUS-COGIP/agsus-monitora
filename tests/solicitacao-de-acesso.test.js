@@ -30,7 +30,7 @@ import {
   visaoDoPedido,
 } from "../src/app/entrada/pedido-de-acesso.ts";
 import { PaginaDaSolicitacao } from "../src/app/entrada/solicitacao-de-acesso.tsx";
-import { lembrarContaDesativada } from "../src/lib/acesso-liberado.js";
+import { lembrarContaDesativada } from "../src/lib/acesso-liberado.ts";
 import { clicar, digitar, escolher } from "./componentes/interacoes.js";
 
 /*

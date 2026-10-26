@@ -8,7 +8,7 @@ import {
   paineisComRascunho,
   resumoDosPaineis,
   situacaoDoPainel,
-} from "../src/lib/paineis-externos-das-configuracoes.js";
+} from "../src/lib/paineis-externos-das-configuracoes.ts";
 import {
   CHAVES_DAS_SECOES,
   errosDasSecoes,
@@ -16,7 +16,7 @@ import {
   normalizarBooleano,
   normalizarInteiro,
   normalizarValoresCarregados,
-} from "../src/lib/publicacao-de-configuracoes.js";
+} from "../src/lib/publicacao-de-configuracoes.ts";
 
 /*
   Painéis externos e Operação em React (01/10): a regra sem DOM. O ponto

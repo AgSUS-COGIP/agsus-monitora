@@ -10,7 +10,7 @@ import type {
   EstadoDaConfiguracao,
 } from "../../lib/tipos-da-configuracao-de-convocacao.ts";
 import { useMemo, useState } from "react";
-import { canImportApprovedList } from "../../lib/access-roles.js";
+import { canImportApprovedList } from "../../lib/access-roles.ts";
 import {
   categoriasDeReserva,
   modeloDeReferencia,

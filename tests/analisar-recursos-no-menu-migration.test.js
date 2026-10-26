@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   canAnalisarRecursos,
   paginasPermitidas,
-} from "../src/lib/access-roles.js";
+} from "../src/lib/access-roles.ts";
 import { linkInterno } from "../src/lib/link-interno.ts";
 import { ABAS_DO_MENU, montarArvoreDoMenu } from "../src/lib/menu-lateral.ts";
 import { bloqueioDaTela, destinoDaTela } from "../src/lib/navegacao";

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CATALOGO_DE_CRITERIOS } from "../src/lib/classificacao/catalogo.ts";
-import { niveisDoRecurso, RESOURCES } from "../src/lib/permissoes-recursos.js";
+import { niveisDoRecurso, RESOURCES } from "../src/lib/permissoes-recursos.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 
 /*

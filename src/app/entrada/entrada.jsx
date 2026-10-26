@@ -1,7 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../montar-modulo.jsx";
 import { classes } from "../../ui/index.ts";
-import { ACCESS_INSTRUCTION } from "../../lib/access-branding.js";
+import { ACCESS_INSTRUCTION } from "../../lib/access-branding.ts";
 import {
   FASES,
   TEXTO_DO_BOTAO,

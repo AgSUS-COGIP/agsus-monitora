@@ -1,4 +1,4 @@
-import { permissaoLegada, roleLabel } from "../lib/access-roles.js";
+import { permissaoLegada, roleLabel } from "../lib/access-roles.ts";
 import { profileDisplayName } from "../lib/platform-context";
 import { sessaoDoApp } from "./sessao.js";
 

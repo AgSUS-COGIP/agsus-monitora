@@ -1,7 +1,7 @@
 # Configurações
 
-A moldura (`configuracoes.jsx`), as seções (`secoes.js`) e o estado com a
-publicação versionada (`estado.js`) estão descritos no topo de cada arquivo e
+A moldura (`configuracoes.tsx`), as seções (`secoes.ts`) e o estado com a
+publicação versionada (`estado.ts`) estão descritos no topo de cada arquivo e
 em `docs/arquitetura-react.md`. Aqui fica o que é próprio da seção
 **Comemorações**.
 

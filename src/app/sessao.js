@@ -32,7 +32,7 @@ import {
   openLoginPopup,
   startMobileGoogleOAuth,
 } from "../lib/auth-flow";
-import { DEFAULT_ACCESS_BRANDING } from "../lib/access-branding.js";
+import { DEFAULT_ACCESS_BRANDING } from "../lib/access-branding.ts";
 import { hasSupabaseEnv } from "../lib/env";
 import {
   SAIDA_DESCONHECIDA,

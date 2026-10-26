@@ -634,7 +634,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'Diga qual botão ou ação (por exemplo "não aparece o botão de novo recurso" ou "não consigo emitir a carta") e eu confiro no seu perfil: se você não tem a permissão, digo qual falta (por exemplo, nível Editor em Recursos) e que quem libera é o administrador de acessos da sua coordenação, em Configurações › Acessos; se você tem, digo onde o botão fica e o que conferir (área do menu, edital escolhido).',
     fato: "",
-    fonte: "src/lib/permissoes-da-aya.js; src/lib/access-roles.js",
+    fonte: "src/lib/permissoes-da-aya.js; src/lib/access-roles.ts",
   },
   {
     arquivo: "assistente-aya.md",
@@ -1167,7 +1167,7 @@ export const VERBETES_AYA = Object.freeze([
       "A Avaliação documental tem permissão própria, separada do Painel das análises: Leitor vê a Fila dos editais que enxerga (Regra, Equipe e Pré-classificação são só de quem coordena o edital); Editor trabalha nas fichas dos editais em que está na equipe (nas próximas fases); Administrador coordena os editais em que é gestor ou está como coordenação. No começo, o administrador global, o Gestor de edital e o Coordenador têm Administrador e os demais grupos não veem o item — quem vai analisar recebe Editor em Configurações › Acessos. Vale também a área e o recorte da coordenação do edital.",
     fato: "",
     fonte:
-      "supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; src/lib/access-roles.js",
+      "supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; src/lib/access-roles.ts",
     abrir: "config:acessos",
   },
   {
@@ -2743,7 +2743,7 @@ export const VERBETES_AYA = Object.freeze([
       'A aba Classificação usa a permissão "Classificação" (Configurações › Acessos): Leitor vê as listas, a regra e as explicações; Editor salva a regra do edital, gera e publica listas e registra sorteio ou decisão. Por padrão, o administrador é Administrador; gestor de edital e coordenador, Editor; contratador, usuário e jurídico, Leitor. Também vale a área e o recorte da coordenação do edital.',
     fato: "",
     fonte:
-      "supabase/migrations/20261002150000_classificacao.sql; src/lib/access-roles.js",
+      "supabase/migrations/20261002150000_classificacao.sql; src/lib/access-roles.ts",
     abrir: "config:acessos",
   },
   {
@@ -2796,7 +2796,7 @@ export const VERBETES_AYA = Object.freeze([
       '"Gerar", "Marcar como publicada" e "Publicar como lista de aprovados" só aparecem para quem tem Editor em Classificação, com a área e o edital; "Gerar" fica desabilitado enquanto o edital não tem regra salva. Copiar para o SEI, Como fica no SEI, Baixar DOCX, PDF e XLSX ficam desabilitados até existir uma lista gerada naquela etapa: gere primeiro. "Marcar como publicada" e "Publicar como lista de aprovados" ficam desabilitados enquanto houver empate esperando sorteio ou decisão, e "Publicar como lista de aprovados" só existe na lista Resultado final.',
     fato: "",
     fonte:
-      "src/modulos/classificacao/listas.tsx; src/lib/access-roles.js (canEditClassificacao)",
+      "src/modulos/classificacao/listas.tsx; src/lib/access-roles.ts (canEditClassificacao)",
     abrir: "classificacao",
   },
   {
@@ -2964,7 +2964,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "Listas inativas continuam consultáveis, mas seus candidatos não podem ser alterados, nem receber anexos. Ativar ou inativar a lista é de quem pode importar (Editor em Importação, como o grupo Gestor); substituir ou remover o XLSX de uma lista existente é do Administrador em Importação.",
     fato: "",
-    fonte: "src/lib/lista-aprovados-rules.ts; src/lib/access-roles.js",
+    fonte: "src/lib/lista-aprovados-rules.ts; src/lib/access-roles.ts",
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
@@ -2978,7 +2978,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "A importação aceita só .xlsx e usa a primeira aba, com as colunas obrigatórias codigo_vaga, cargo, classificacao, nota, nome e modalidade (classificação inteira maior que 0; nota numérica, 0 ou mais); mostra até 12 erros por vez. Importa quem tem Editor em Importação (ou o grupo Gestor); substituir uma lista existente é do Administrador. A importação liga os candidatos ao edital pelo ID do edital.",
     fato: "",
-    fonte: "src/lib/aprovados-import.ts; src/lib/access-roles.js",
+    fonte: "src/lib/aprovados-import.ts; src/lib/access-roles.ts",
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
@@ -3009,7 +3009,7 @@ export const VERBETES_AYA = Object.freeze([
       "Quem tem Editor em Aprovados inclui um candidato sub judice, que fica vinculado à lista vigente do edital; remover vale só para quem foi incluído assim. Alterar nota ou modalidade por decisão judicial, e desfazer, é só do Administrador em Aprovados: a classificação é refeita e o número do processo judicial é opcional. Na Convocação, quem está sem código de vaga entra na vaga do mesmo cargo quando há uma única no próprio edital; se houver várias, o sistema não escolhe automaticamente. Vagas de outros editais não participam dessa escolha.",
     fato: "",
     fonte:
-      "src/lib/access-roles.js; src/lib/lista-aprovados-rules.ts; supabase/migrations/20261001150000_sub_judice_alteracao.sql",
+      "src/lib/access-roles.ts; src/lib/lista-aprovados-rules.ts; supabase/migrations/20261001150000_sub_judice_alteracao.sql",
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
@@ -3260,7 +3260,7 @@ export const VERBETES_AYA = Object.freeze([
       'O cadeado aparece para quem tem Editor em Aprovados quando a lista é inativa ou quando o status já foi definido e só o Administrador em Aprovados pode mudá-lo (inclusive voltar a "Sem status"). A exceção é o Convocado: o Editor o leva para Contratado, Desistente ou Documentação Rejeitada sem cadeado. Sem Editor em Aprovados, a coluna mostra só um traço. Peça a mudança a quem tem Administrador em Aprovados.',
     fato: "",
     fonte:
-      "src/modulos/aprovados/partes.tsx (AcaoDeStatus); src/lib/lista-aprovados-rules.ts; src/lib/access-roles.js",
+      "src/modulos/aprovados/partes.tsx (AcaoDeStatus); src/lib/lista-aprovados-rules.ts; src/lib/access-roles.ts",
     abrir: "approved",
   },
   {
@@ -3292,7 +3292,7 @@ export const VERBETES_AYA = Object.freeze([
       'A Lista de aprovados mostra a lista vigente de cada edital da área atual (e do recorte da sua coordenação). Edital sem lista ainda não teve o resultado final publicado da Classificação nem planilha importada: publique em Classificação › Resultado final ("Publicar como lista de aprovados") ou, em edital sem análise no sistema, importe o XLSX (Editor em Importação e convocação). As listas anteriores ficam inativas, para consulta, no modal "Listas do edital".',
     fato: "",
     fonte:
-      "src/lib/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.tsx; src/lib/access-roles.js",
+      "src/lib/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.tsx; src/lib/access-roles.ts",
     abrir: "approved",
   },
   {
@@ -3410,7 +3410,7 @@ export const VERBETES_AYA = Object.freeze([
       'A Seleção usa a permissão "Seleção" (Leitor basta, em Configurações › Acessos) e é só de consulta: nenhum número se edita ali. Os números vêm da planilha Auditoria, das entrevistas registradas e da lista de aprovados vigente; para mudar, corrija a fonte. A tela mostra só a área escolhida no menu.',
     fato: "",
     fonte:
-      "src/lib/access-roles.js (canViewSelecao); supabase/migrations/20261001090000_selecao.sql",
+      "src/lib/access-roles.ts (canViewSelecao); supabase/migrations/20261001090000_selecao.sql",
     abrir: "selecao",
   },
   {
@@ -3610,7 +3610,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'A Visão geral usa a permissão "Visão geral" (Leitor basta, em Configurações › Acessos), mostra só a área atual e é só de consulta. Para mudar vagas, cronograma ou status de um edital, use Editais (Editor em Editais ou em Cronograma); os rótulos dos indicadores mudam em Configurações › Página inicial. Corrigir coordenadas dos mapas é do administrador global ou do Gestor.',
     fato: "",
-    fonte: "src/lib/access-roles.js (paginasPermitidas, podeEditarCoordenadas)",
+    fonte: "src/lib/access-roles.ts (paginasPermitidas, podeEditarCoordenadas)",
     abrir: "dashboard",
   },
   {
@@ -3738,7 +3738,7 @@ export const VERBETES_AYA = Object.freeze([
       'A aba usa a permissão "Análises curriculares" (Leitor basta, em Configurações › Acessos) e mostra só a área atual e, com coordenação, os editais dela. Ela é só de consulta: a análise é feita e corrigida nas planilhas de análise, que chegam ao MONITORA pelo Apps Script, ou, no edital analisado no MONITORA, nas fichas da Avaliação documental. Nota alterada por recurso não muda a análise: vale como ajuste aprovado, aplicado na Classificação.',
     fato: "",
     fonte:
-      "src/lib/access-roles.js; src/lib/permissoes-recursos.js; src/modulos/analises/; apps-script/LEIA-ME.md",
+      "src/lib/access-roles.ts; src/lib/permissoes-recursos.ts; src/modulos/analises/; apps-script/LEIA-ME.md",
     abrir: "analises",
   },
   {
@@ -4242,7 +4242,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "Configurações fica em Administração, no menu, com uma seção por item: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação, Acessos, Módulos e abas e Status das atualizações. As seis primeiras abrem para quem tem Editor em Configurações; Acessos, para quem gerencia acessos; Módulos e abas e Status das atualizações, só para o administrador global. Cada pessoa vê só as seções que pode abrir.",
     fato: "",
-    fonte: "src/lib/access-roles.js; src/modulos/configuracoes/secoes.js",
+    fonte: "src/lib/access-roles.ts; src/modulos/configuracoes/secoes.ts",
   },
   {
     arquivo: "regras-das-configuracoes.md",
@@ -4258,7 +4258,7 @@ export const VERBETES_AYA = Object.freeze([
       'Nas seções Marca, Página inicial, Tela de acesso, Aparência, Painéis externos e Operação, o que muda fica pendente até "Salvar alterações" (na barra fixa, ou Ctrl+S): o sistema valida, compara com o que está publicado e abre a revisão; sem diferença, não há nada a publicar. A publicação pede o motivo da alteração, grava tudo numa transação só e cria uma nova entrada no histórico, sem apagar nada. Acessos e Módulos e abas salvam pela própria tela, também com motivo. Sair com alteração pendente pergunta antes.',
     fato: "",
     fonte:
-      "src/modulos/configuracoes/estado.js; src/modulos/configuracoes/configuracoes.jsx",
+      "src/modulos/configuracoes/estado.ts; src/modulos/configuracoes/configuracoes.tsx",
   },
   {
     arquivo: "regras-das-configuracoes.md",
@@ -4274,7 +4274,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Operação fica o histórico de configurações, com as 30 últimas publicações. Cada item tem "Restaurar", que pede o motivo da restauração e publica de novo aqueles valores; o histórico não perde nada.',
     fato: "",
     fonte:
-      "src/modulos/configuracoes/estado.js; src/modulos/configuracoes/configuracoes.jsx",
+      "src/modulos/configuracoes/estado.ts; src/modulos/configuracoes/configuracoes.tsx",
     abrir: "config:operacao",
   },
   {
@@ -4294,7 +4294,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé do cartão da tela de acesso, o texto do rodapé (que entra no lugar do texto institucional quando ele está vazio) e, em "Documentos oficiais", o cabeçalho da agência (uma linha por linha do timbrado: nome, endereço e site) usado no Word e na prévia "Como fica no SEI" da Classificação. A barra lateral não mostra a equipe. Vale depois de "Salvar alterações".',
     fato: "",
     fonte:
-      "src/modulos/configuracoes/marca.jsx; src/lib/publicacao-de-configuracoes.js; src/app/entrada/marca.js",
+      "src/modulos/configuracoes/marca.tsx; src/lib/publicacao-de-configuracoes.ts; src/app/entrada/marca.js",
     abrir: "config:marca",
   },
   {
@@ -4328,7 +4328,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Aparência ficam a arte de fundo e o logo da tela de acesso, a cor do painel de acesso e do texto sobre ele, e a logo e a cor da barra lateral. Cada cor mostra a razão de contraste. A arte de fundo vale na hora; o resto, depois de "Salvar alterações".',
     fato: "",
     fonte:
-      "src/modulos/configuracoes/aparencia.jsx; src/lib/publicacao-de-configuracoes.js",
+      "src/modulos/configuracoes/aparencia.tsx; src/lib/publicacao-de-configuracoes.ts",
     abrir: "config:aparencia",
   },
   {
@@ -4346,7 +4346,7 @@ export const VERBETES_AYA = Object.freeze([
       "Painéis externos são páginas de fora do MONITORA abertas pelo menu, no bloco Acompanhamento da área. Análises, Recursos, Entrevistas e Seleção viraram abas do próprio sistema e seus painéis externos foram arquivados; sem painel ativo, nenhum aparece no menu. Em Configurações › Painéis externos só se editam os painéis que já existem: título, endereço (https:// ou http://; painel ativo precisa de endereço), ativo e em manutenção. Ver um painel exige a marcação dele para a pessoa em Acessos.",
     fato: "",
     fonte:
-      "src/lib/paineis-externos-das-configuracoes.js; src/modulos/configuracoes/paineis-externos.jsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql",
+      "src/lib/paineis-externos-das-configuracoes.ts; src/modulos/configuracoes/paineis-externos.tsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql",
     abrir: "config:recursos",
   },
   {
@@ -4365,7 +4365,7 @@ export const VERBETES_AYA = Object.freeze([
       "Em Configurações › Operação ficam a versão do sistema e a versão publicada, o Realtime do monitoramento (ativo ou inativo), o heartbeat de auditoria (1 a 60 minutos), o e-mail do suporte (para onde a Aya abre chamados) e o histórico de publicações, com Restaurar.",
     fato: "",
     fonte:
-      "src/modulos/configuracoes/operacao.jsx; src/lib/publicacao-de-configuracoes.js",
+      "src/modulos/configuracoes/operacao.tsx; src/lib/publicacao-de-configuracoes.ts",
     abrir: "config:operacao",
   },
   {
@@ -4978,7 +4978,7 @@ export const VERBETES_AYA = Object.freeze([
       'O Painel de entrevistas e Conduzir entrevistas usam o mesmo recurso, Entrevistas: quem tem Leitor vê os dois (a fila, as fichas, o Preparar e os roteiros, sem os botões). Lançar notas, convocar, desconvocar, salvar a configuração do edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital (recorte da coordenação). No modo "Cada avaliador lança a sua", cada avaliador só edita a própria coluna. "Convocar selecionados" só aparece quando a Classificação já gerou a lista de convocação do edital, e liberar edital fora da janela é só do administrador global.',
     fato: "",
     fonte:
-      "src/modulos/entrevistas/conduzir.tsx; src/lib/access-roles.js; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
+      "src/modulos/entrevistas/conduzir.tsx; src/lib/access-roles.ts; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
     abrir: "config:acessos",
   },
   {
@@ -5031,7 +5031,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "As etapas se alteram no formulário do edital, na tela Editais, por quem tem nível Editor em Editais ou em Cronograma. O Cronograma em si só mostra as datas salvas, e vê a aba quem tem pelo menos Leitor em Cronograma. Em edital já cadastrado, a alteração pede um motivo, que vai para o histórico do edital.",
     fato: "",
-    fonte: "src/lib/access-roles.js; src/modulos/editais/modal-do-edital.jsx",
+    fonte: "src/lib/access-roles.ts; src/modulos/editais/modal-do-edital.jsx",
     abrir: "nucleo",
   },
   {
@@ -5363,7 +5363,7 @@ export const VERBETES_AYA = Object.freeze([
       'Pessoas online fica no cabeçalho e só o administrador global e o Gestor veem. Mostra quem está com o MONITORA aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). A presença de cada pessoa é avisada a cada 90 segundos com a aba visível (e na hora de trocar de página, área ou seção); a contagem do botão se atualiza a cada 10 minutos, e a lista aberta, a cada 90 segundos.',
     fato: "",
     fonte:
-      "src/lib/online-presence.js; src/app/presenca.js; src/componentes/pessoas-online/pessoas-online.tsx; src/lib/access-roles.js (podeVerPessoasOnline)",
+      "src/lib/online-presence.js; src/app/presenca.js; src/componentes/pessoas-online/pessoas-online.tsx; src/lib/access-roles.ts (podeVerPessoasOnline)",
   },
   {
     arquivo: "regras-do-sistema.md",
@@ -5639,7 +5639,7 @@ export const VERBETES_AYA = Object.freeze([
       "Em Configurações › Acessos ficam as pessoas (Usuários, com Pendentes e Desativadas), os Grupos de permissões e as Coordenações. Gerenciam acessos o administrador global e o coordenador (Gestão de acessos como Editor e uma coordenação); Grupos, Coordenações e Desativadas aparecem só para o administrador global. Ninguém altera o próprio acesso: outra pessoa precisa fazer. Toda mudança pede motivo (3 a 500 caracteres) e fica auditada.",
     fato: "",
     fonte:
-      "src/lib/teto-de-acessos.js; src/lib/access-roles.js; supabase/migrations/20260929121300_gestao_de_acessos_delegada.sql",
+      "src/lib/teto-de-acessos.ts; src/lib/access-roles.ts; supabase/migrations/20260929121300_gestao_de_acessos_delegada.sql",
     abrir: "config:acessos",
   },
   {
@@ -5659,7 +5659,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Acessos › Usuários, clique em "Adicionar pessoa" e informe o e-mail institucional, o nome, o grupo (padrão Usuário), a coordenação (ou, sem coordenação, pelo menos uma área) e o motivo. O cadastro fica pronto antes de a pessoa entrar, e a tela mostra o "Convite pronto", com a mensagem para copiar ou abrir no e-mail. O link sozinho não dá acesso: só funciona entrando com a conta Google do e-mail convidado, e aí a pessoa entra sem precisar pedir acesso. Enquanto ela não entra, a situação mostra "Convidado · ainda não entrou" e dá para reenviar o convite; cancelar o convite (só o administrador global) desativa o cadastro, com motivo. O coordenador só cadastra na própria coordenação, com grupo dentro do teto dele.',
     fato: "O acesso ao MONITORA é só por convite: a pessoa é cadastrada em Configurações › Acessos e entra com a conta Google do e-mail convidado; o link sozinho não dá acesso.",
     fonte:
-      "src/modulos/acessos/modal-adicionar-pessoa.jsx; src/lib/convite-de-acesso.js; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql",
+      "src/modulos/acessos/modal-adicionar-pessoa.tsx; src/lib/convite-de-acesso.ts; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql",
     abrir: "config:acessos",
   },
   {
@@ -5677,7 +5677,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Configurações › Acessos, "Último acesso em …" é a última vez que a pessoa usou o MONITORA: o mais recente entre o último login, a última tela ou ação registrada e o último sinal de presença (enviado enquanto o sistema está aberto). Antes de 02/10/2026 era só o último login, e como a sessão se renova sozinha por semanas, a data ficava velha para quem continuava usando. "Convidado · ainda não entrou" aparece para quem nunca teve nenhum acesso. A aba "Desativadas" usa a mesma conta.',
     fato: "",
     fonte:
-      "supabase/migrations/20261002200000_gestor_coordenadas_e_ultimo_acesso.sql; src/lib/convite-de-acesso.js",
+      "supabase/migrations/20261002200000_gestor_coordenadas_e_ultimo_acesso.sql; src/lib/convite-de-acesso.ts",
     abrir: "config:acessos",
   },
   {
@@ -5696,7 +5696,7 @@ export const VERBETES_AYA = Object.freeze([
       'O grupo define o nível de cada módulo (Visão geral, Análises, Editais, Cronograma, Aprovados, Entrevistas, Classificação, Recursos, Parecer jurídico, Seleção, Importação, Painéis, Configurações e Gestão de acessos): Sem acesso, Leitor, Editor ou Administrador. Os grupos de base são Usuário, Gestor, Contratador, Coordenador, Jurídico e Administrador global (acesso total, não editável). Mudar um grupo muda todos que o seguem; só o administrador global gerencia grupos, e grupo de sistema ou com pessoas não pode ser removido. Para casos especiais, o modal da pessoa tem "Exceções por módulo": vale só para ela e passa por cima do grupo ("Do grupo" volta a seguir o grupo). Área é Sim ou Não; painel externo é marcado por pessoa.',
     fato: "",
     fonte:
-      "src/lib/permissoes-recursos.js; supabase/migrations/20260929121000_grupos_de_acesso.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/modulos/acessos/gaveta-do-usuario.jsx",
+      "src/lib/permissoes-recursos.ts; supabase/migrations/20260929121000_grupos_de_acesso.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/modulos/acessos/gaveta-do-usuario.tsx",
   },
   {
     arquivo: "regras-dos-acessos.md",
@@ -5712,7 +5712,7 @@ export const VERBETES_AYA = Object.freeze([
       "Coordenação é uma subdivisão de uma área; cada pessoa fica em no máximo uma. Ela limita o que a pessoa vê aos editais da área da coordenação: sem responsável, unidades nem editais, a área inteira; só com editais listados, só esses; com responsável ou unidades, os editais que casam a regra mais os listados. Vale para cronograma, listas, candidatos, convocação, vagas, anexos, histórico, análises e recursos. O coordenador gerencia só a própria coordenação e concede no máximo o próprio nível, nunca Gestão de acessos, sem mexer em área ou coordenação. Só o administrador global cria e muda coordenações.",
     fato: "",
     fonte:
-      "supabase/migrations/20260929121100_coordenacoes.sql; src/lib/teto-de-acessos.js; supabase/migrations/20260929121300_gestao_de_acessos_delegada.sql",
+      "supabase/migrations/20260929121100_coordenacoes.sql; src/lib/teto-de-acessos.ts; supabase/migrations/20260929121300_gestao_de_acessos_delegada.sql",
   },
   {
     arquivo: "regras-dos-acessos.md",
@@ -5725,7 +5725,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'No modal da pessoa, a coluna "Como a pessoa vê" monta o menu dela com as mesmas regras da barra lateral; com alteração pendente, mostra o resultado com o selo "Depois de salvar". É só leitura: não é entrar como a pessoa.',
     fato: "",
-    fonte: "src/lib/ver-como.js; src/modulos/acessos/gaveta-do-usuario.jsx",
+    fonte: "src/lib/ver-como.ts; src/modulos/acessos/gaveta-do-usuario.tsx",
   },
   {
     arquivo: "regras-dos-acessos.md",
@@ -5791,7 +5791,7 @@ export const VERBETES_AYA = Object.freeze([
       'Só o administrador global desativa uma conta, com motivo; ela vai para a aba "Desativadas", que mostra quando, por quem e por quê. "Reativar" pede grupo, coordenação, áreas e motivo (vêm como estavam) e resolve o pedido pendente da pessoa. Quem foi desativado vê "Seu acesso ao MONITORA foi desativado." e pode pedir reativação.',
     fato: "",
     fonte:
-      "supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/modulos/acessos/contas-desativadas.jsx; src/lib/solicitacao-de-acesso.ts",
+      "supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/modulos/acessos/contas-desativadas.tsx; src/lib/solicitacao-de-acesso.ts",
     abrir: "config:acessos",
   },
   {
@@ -5824,7 +5824,7 @@ export const VERBETES_AYA = Object.freeze([
       'Confira, nesta ordem: a pessoa entrou com a conta Google do e-mail convidado (o link sozinho não dá acesso e outra conta não serve); o e-mail é de um domínio permitido (Configurações › Tela de acesso); e o cadastro está ativo — conta desativada vê "Seu acesso ao MONITORA foi desativado." e pode pedir reativação. Quem entra sem convite vê a tela de pedido de acesso, que vai para Acessos › Usuários › Pendentes. Se o Login Google estiver Inativo, o botão some da tela de entrada; com o sistema inteiro em manutenção, quem não é administrador global vê a tela de manutenção.',
     fato: "",
     fonte:
-      "src/lib/convite-de-acesso.js; src/lib/solicitacao-de-acesso.ts; supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/lib/situacao-dos-modulos.js",
+      "src/lib/convite-de-acesso.ts; src/lib/solicitacao-de-acesso.ts; supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/lib/situacao-dos-modulos.js",
     abrir: "config:acessos",
   },
   {
@@ -5842,7 +5842,7 @@ export const VERBETES_AYA = Object.freeze([
       "Em Editais ficam os editais da área atual: a tabela, os alertas de cronograma e o formulário de cada edital, com cronograma, status, anexos em PDF, quadro de vagas e histórico. Os indicadores do painel (Total de editais, Editais ativos, Editais inativos, Em andamento, Sem cronograma, Incompletos, Próximos 7 dias e Excepcionais) filtram a fila ao clicar; clicar de novo no mesmo indicador tira o filtro. Cadastra e edita quem tem nível Editor em Editais ou em Cronograma.",
     fato: "",
     fonte:
-      "src/modulos/editais/; src/lib/editais-do-nucleo.js; src/lib/access-roles.js",
+      "src/modulos/editais/; src/lib/editais-do-nucleo.js; src/lib/access-roles.ts",
     abrir: "nucleo",
   },
   {
@@ -5989,7 +5989,7 @@ export const VERBETES_AYA = Object.freeze([
       "Só o administrador global move um edital para outra área, com motivo obrigatório e confirmação; o banco confere de novo e registra a mudança no histórico. O edital leva junto a lista de aprovados, o cronograma e a convocação. O botão só fica ativo depois de salvar ou descartar as alterações do formulário. Edital novo nasce na área do menu, e unidade de outra área é recusada.",
     fato: "",
     fonte:
-      "src/modulos/editais/estado.js; supabase/migrations/20260928220000_edital_na_area_certa.sql; src/lib/access-roles.js",
+      "src/modulos/editais/estado.js; supabase/migrations/20260928220000_edital_na_area_certa.sql; src/lib/access-roles.ts",
   },
   {
     arquivo: "regras-dos-editais.md",
@@ -6019,7 +6019,7 @@ export const VERBETES_AYA = Object.freeze([
       'Cadastrar ("Novo edital") e editar (o lápis da linha) é de quem tem nível Editor em Editais ou em Cronograma, em Configurações › Acessos. Com Leitor, a tela mostra a tabela, os indicadores e o "Ver cronograma", sem esses botões. Na linha, o ícone da Lista de aprovados aparece para quem tem Editor em Importação e convocação. Mover o edital de área é só do administrador global.',
     fato: "",
     fonte:
-      "src/modulos/editais/nucleo.jsx; src/lib/access-roles.js (canManageEditais, canImportApprovedList, canMoveEditalBetweenAreas)",
+      "src/modulos/editais/nucleo.jsx; src/lib/access-roles.ts (canManageEditais, canImportApprovedList, canMoveEditalBetweenAreas)",
     abrir: "config:acessos",
   },
   {
@@ -6319,7 +6319,7 @@ export const VERBETES_AYA = Object.freeze([
       'Analisar recursos é a tela de fazer, com entrada própria no menu (selo BETA). Tem no topo Atualizar, "Ver no painel" (volta ao Painel de recursos com os mesmos filtros), Modelos de resposta (para o Administrador de Recursos) e Novo recurso (para quem tem Editor em Recursos); embaixo, os filtros e a fila. "Abrir" (ou clicar na linha) abre a gaveta do recurso com as ações: editar e excluir, marcar as etapas, enviar para o parecer jurídico, decidir (deferir, deferir parcialmente, indeferir, devolver, reabrir), o ajuste da pontuação, a resposta ao candidato e os anexos. Vê a entrada quem tem Editor em Recursos ou a permissão "Parecer jurídico (Recursos)"; quem só tem Leitor fica com o Painel de recursos. O banco confere cada ação. As origens ativas são análise curricular, entrevista e resultado final; um segundo recurso sem decisão para o mesmo candidato, edital e origem gera um aviso e só é gravado com confirmação.',
     fato: "Analisar recursos aparece para quem tem Editor em Recursos ou o Parecer jurídico; o Painel de recursos, para todo mundo que vê Recursos.",
     fonte:
-      "src/modulos/recursos/recursos.tsx; src/lib/access-roles.js (canAnalisarRecursos); supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
+      "src/modulos/recursos/recursos.tsx; src/lib/access-roles.ts (canAnalisarRecursos); supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
     abrir: "analisar-recursos",
   },
   {
@@ -6358,7 +6358,7 @@ export const VERBETES_AYA = Object.freeze([
       'Decide o recurso (deferir, deferir parcialmente ou indeferir), devolve para ajuste e reabre a decisão só quem tem a permissão "Parecer jurídico (Recursos)", que tem dois níveis: Sem acesso ou Editor. Ela é dada por grupo ou individualmente em Configurações › Acessos. O grupo Jurídico já vem com ela (e com Editor em Recursos), e o grupo do administrador global também; os outros grupos não. O nível Administrador em Recursos não decide: serve para manter os modelos de resposta. O banco recusa qualquer mudança de situação ou parecer feita sem a permissão.',
     fato: "",
     fonte:
-      "supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/permissoes-recursos.js",
+      "supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/permissoes-recursos.ts",
     abrir: "config:acessos",
   },
   {

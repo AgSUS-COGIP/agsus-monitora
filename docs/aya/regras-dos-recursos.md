@@ -29,7 +29,7 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 **perguntas:** analisar recursos | analisar um recurso | onde analiso o recurso | onde decido o recurso | onde fica a fila de recursos para analisar | painel ou analisar recursos | diferença entre painel de recursos e analisar recursos | nao vejo analisar recursos
 **resposta:** Analisar recursos é a tela de fazer, com entrada própria no menu (selo BETA). Tem no topo Atualizar, "Ver no painel" (volta ao Painel de recursos com os mesmos filtros), Modelos de resposta (para o Administrador de Recursos) e Novo recurso (para quem tem Editor em Recursos); embaixo, os filtros e a fila. "Abrir" (ou clicar na linha) abre a gaveta do recurso com as ações: editar e excluir, marcar as etapas, enviar para o parecer jurídico, decidir (deferir, deferir parcialmente, indeferir, devolver, reabrir), o ajuste da pontuação, a resposta ao candidato e os anexos. Vê a entrada quem tem Editor em Recursos ou a permissão "Parecer jurídico (Recursos)"; quem só tem Leitor fica com o Painel de recursos. O banco confere cada ação. As origens ativas são análise curricular, entrevista e resultado final; um segundo recurso sem decisão para o mesmo candidato, edital e origem gera um aviso e só é gravado com confirmação.
 **fato:** Analisar recursos aparece para quem tem Editor em Recursos ou o Parecer jurídico; o Painel de recursos, para todo mundo que vê Recursos.
-**fonte:** src/modulos/recursos/recursos.tsx; src/lib/access-roles.js (canAnalisarRecursos); supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql
+**fonte:** src/modulos/recursos/recursos.tsx; src/lib/access-roles.ts (canAnalisarRecursos); supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql
 **abrir:** analisar-recursos
 
 ## Fluxo do parecer jurídico
@@ -43,7 +43,7 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 
 **perguntas:** quem pode decidir um recurso | quem pode decidir o recurso | quem decide o recurso | quem decide um recurso | quem defere o recurso | quem pode deferir | quem pode indeferir | grupo juridico | permissao parecer juridico
 **resposta:** Decide o recurso (deferir, deferir parcialmente ou indeferir), devolve para ajuste e reabre a decisão só quem tem a permissão "Parecer jurídico (Recursos)", que tem dois níveis: Sem acesso ou Editor. Ela é dada por grupo ou individualmente em Configurações › Acessos. O grupo Jurídico já vem com ela (e com Editor em Recursos), e o grupo do administrador global também; os outros grupos não. O nível Administrador em Recursos não decide: serve para manter os modelos de resposta. O banco recusa qualquer mudança de situação ou parecer feita sem a permissão.
-**fonte:** supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/permissoes-recursos.js
+**fonte:** supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/permissoes-recursos.ts
 **abrir:** config:acessos
 
 ## Aguardando parecer

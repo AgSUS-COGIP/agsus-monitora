@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
-import { AvisoDeContraste } from "../src/modulos/configuracoes/partes.jsx";
-import { CAMPOS_DAS_SECOES } from "../src/lib/publicacao-de-configuracoes.js";
+import { AvisoDeContraste } from "../src/modulos/configuracoes/partes.tsx";
+import { CAMPOS_DAS_SECOES } from "../src/lib/publicacao-de-configuracoes.ts";
 import {
   MINIMO_AA,
   MODO_AUTO,
@@ -20,7 +20,7 @@ import {
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const aparencia = readFileSync(
-  "src/modulos/configuracoes/aparencia.jsx",
+  "src/modulos/configuracoes/aparencia.tsx",
   "utf8",
 );
 
@@ -194,12 +194,12 @@ describe("os dois campos de cor recebem o aviso", () => {
 describe("modo do texto sobre o painel", () => {
   const html = readFileSync("index.html", "utf8");
   const governanca = readFileSync(
-    "src/lib/publicacao-de-configuracoes.js",
+    "src/lib/publicacao-de-configuracoes.ts",
     "utf8",
   );
   const boot = readFileSync("src/app/entrada/marca.js", "utf8");
-  const cache = readFileSync("src/lib/access-branding-cache.js", "utf8");
-  const publico = readFileSync("src/lib/access-branding-publico.js", "utf8");
+  const cache = readFileSync("src/lib/access-branding-cache.ts", "utf8");
+  const publico = readFileSync("src/lib/access-branding-publico.ts", "utf8");
   const migracao = readFileSync(
     "supabase/migrations/20260910120000_modo_do_texto_da_tela_de_acesso.sql",
     "utf8",
@@ -291,7 +291,7 @@ describe("modo do texto sobre o painel", () => {
     expect(bloco).toContain('modo === "escuro"');
   });
 
-  // Um caminho só: a publicação de Configurações (publicacao-de-configuracoes.js).
+  // Um caminho só: a publicação de Configurações (publicacao-de-configuracoes.ts).
   it("a chave entra no caminho de gravação", () => {
     expect(governanca).toContain('"auth_access_texto_modo"');
   });

@@ -5,7 +5,7 @@ import {
   type FormEvent,
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { isAdminGlobal } from "../../lib/access-roles.js";
+import { isAdminGlobal } from "../../lib/access-roles.ts";
 import {
   MOTIVO_MAXIMO,
   avisoSemEfeito,
@@ -309,7 +309,7 @@ export function Automacao({ estado }: { estado: EstadoDaAutomacao }) {
 
 /**
  * Monta a seção no `#automacaoApp` e devolve o controlador que
- * src/modulos/configuracoes/secoes.js chama ao abrir a seção.
+ * src/modulos/configuracoes/secoes.ts chama ao abrir a seção.
  */
 export function montarAutomacao({
   raizDaTela = document.getElementById("automacaoApp"),

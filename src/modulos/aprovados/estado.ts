@@ -85,7 +85,7 @@ import {
   canManageSubJudice,
   canReplaceApprovedList,
   canViewCore,
-} from "../../lib/access-roles.js";
+} from "../../lib/access-roles.ts";
 import {
   canAlterarCandidatoSubJudice,
   canDesfazerAlteracaoSubJudice,

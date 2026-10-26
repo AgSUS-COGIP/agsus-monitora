@@ -11,7 +11,7 @@ import { useRef, useState } from "react";
 import {
   canImportApprovedList,
   canReplaceApprovedList,
-} from "../../lib/access-roles.js";
+} from "../../lib/access-roles.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import { PLANILHAS } from "../../lib/planilhas.js";
 import {

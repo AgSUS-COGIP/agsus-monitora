@@ -186,7 +186,7 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 
 **perguntas:** permissao da avaliacao documental | quem ve a avaliacao documental | acesso a avaliacao documental | nao vejo a avaliacao documental | niveis da avaliacao documental
 **resposta:** A Avaliação documental tem permissão própria, separada do Painel das análises: Leitor vê a Fila dos editais que enxerga (Regra, Equipe e Pré-classificação são só de quem coordena o edital); Editor trabalha nas fichas dos editais em que está na equipe (nas próximas fases); Administrador coordena os editais em que é gestor ou está como coordenação. No começo, o administrador global, o Gestor de edital e o Coordenador têm Administrador e os demais grupos não veem o item — quem vai analisar recebe Editor em Configurações › Acessos. Vale também a área e o recorte da coordenação do edital.
-**fonte:** supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; src/lib/access-roles.js
+**fonte:** supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; src/lib/access-roles.ts
 **abrir:** config:acessos
 
 ## Aldeias do DSEI

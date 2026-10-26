@@ -16,7 +16,7 @@
 
   As views são as do legado (`currentView`: `dashboard`, `nucleo`…), na ordem
   do menu (`ABAS_DO_MENU` em menu-lateral.ts); as seções, as de
-  `src/modulos/configuracoes/secoes.js`.
+  `src/modulos/configuracoes/secoes.ts`.
 
   `ACOES_DA_AYA` são os botões que uma resposta pode trazer ("Abrir Recursos",
   "Ir para Configurações › Acessos"). Só navegam dentro do app — nunca abrem
@@ -208,7 +208,7 @@ const PAGINAS = Object.freeze({
   },
 });
 
-/* As seções de Configurações (ids de modulos/configuracoes/secoes.js), na ordem do menu. */
+/* As seções de Configurações (ids de modulos/configuracoes/secoes.ts), na ordem do menu. */
 export const SECOES_DA_AYA = Object.freeze({
   marca: Object.freeze({
     nome: "Marca",

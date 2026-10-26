@@ -14,7 +14,7 @@ import {
   canMoveEditalBetweenAreas,
   canManageEditais,
   isAdminGlobal,
-} from "../../lib/access-roles.js";
+} from "../../lib/access-roles.ts";
 import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.js";
 import { exigirSessao } from "../../lib/sessao";
 import { analisarCronograma } from "../../lib/cronograma-do-edital.js";

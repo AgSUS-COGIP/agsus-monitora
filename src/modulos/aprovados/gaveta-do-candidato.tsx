@@ -1,7 +1,7 @@
 import type { PropsDaGavetaDoAprovado } from "./tipos-dos-modais.ts";
 import type { CartaDoHistorico } from "../../lib/tipos-da-carta.ts";
 import { useSyncExternalStore } from "react";
-import { canChangeCandidateStatus } from "../../lib/access-roles.js";
+import { canChangeCandidateStatus } from "../../lib/access-roles.ts";
 import {
   canEditCandidateStatus,
   formatarData,

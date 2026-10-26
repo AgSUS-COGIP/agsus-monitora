@@ -13,7 +13,7 @@ type AtributosDaAcao = ButtonHTMLAttributes<HTMLButtonElement> & {
   [chave: `data-${string}`]: string | number | boolean | undefined;
 };
 import { useState } from "react";
-import { canChangeCandidateStatus } from "../../lib/access-roles.js";
+import { canChangeCandidateStatus } from "../../lib/access-roles.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import {
   alteracaoJudicial,

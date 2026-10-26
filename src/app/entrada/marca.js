@@ -26,14 +26,14 @@
 import {
   guardarMarca,
   lerMarcaGuardada,
-} from "../../lib/access-branding-cache.js";
-import { buscarMarcaPublica } from "../../lib/access-branding-publico.js";
+} from "../../lib/access-branding-cache.ts";
+import { buscarMarcaPublica } from "../../lib/access-branding-publico.ts";
 import {
   DEFAULT_ACCESS_BRANDING,
   normalizeAccessBackgroundUrl,
   normalizeAccessLogoUrl,
   normalizeAccessPanelColor,
-} from "../../lib/access-branding.js";
+} from "../../lib/access-branding.ts";
 import {
   MODO_AUTO,
   TEXTO_CLARO,

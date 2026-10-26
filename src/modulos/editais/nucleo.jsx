@@ -6,7 +6,7 @@ import {
   canImportApprovedList,
   canManageEditais,
   isAdminGlobal,
-} from "../../lib/access-roles.js";
+} from "../../lib/access-roles.ts";
 import {
   ehEditalDeTreinamento,
   semTreinamento,

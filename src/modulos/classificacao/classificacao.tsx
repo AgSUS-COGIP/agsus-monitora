@@ -17,7 +17,7 @@ import {
   criarRascunhoDaRegra,
   type RascunhoDaRegra,
 } from "../../app/rascunho-da-regra.ts";
-import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
+import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
