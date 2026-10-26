@@ -90,14 +90,14 @@ ficaram sem edital e quantas saíram da planilha.
 
 ## Quando fica vermelho
 
-| Mensagem no log                                                  | O que fazer                                                                                                                                                                                               |
-| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Carga … RECUSADA: a planilha trouxe X … e o banco tem Y ativas` | A aba veio com menos da metade das linhas de antes. Abra a planilha: se a aba estiver vazia ou quebrada, conserte (ou espere o cruzamento refazer) e rode `normal`. Se a redução for real, rode `forcar`. |
-| `Sem acesso à planilha (403/404)`                                | A planilha deixou de estar compartilhada com a conta de serviço. Compartilhe como **Leitor** com `credenciais-pyhton@credencial-437411.iam.gserviceaccount.com`.                                          |
-| `Google recusou a conta de serviço`                              | A chave do Google foi apagada ou trocada. Gere uma nova (abaixo) e atualize o secret.                                                                                                                     |
-| `Coluna obrigatória não encontrada`                              | Alguém renomeou ou apagou uma coluna. Entrevistados: DSEI, Edital, Vaga, Nome. Resultado: Vaga, Edital, Inscritos. Volte o cabeçalho.                                                                     |
-| `… respondeu 401`                                                | A `service_role` do Supabase mudou. Atualize o secret `SUPABASE_SERVICE_ROLE_KEY`.                                                                                                                        |
-| `… respondeu 404` com `sincronizar_selecao`                      | A migration da Seleção ainda não foi aplicada no banco.                                                                                                                                                   |
+| Mensagem no log                                                  | O que fazer                                                                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Carga … RECUSADA: a planilha trouxe X … e o banco tem Y ativas` | A aba veio com menos da metade das linhas de antes. Abra a planilha: se a aba estiver vazia ou quebrada, conserte (ou espere o cruzamento refazer) e rode `normal`. Se a redução for real, rode `forcar`.                                                                                             |
+| `Sem acesso à planilha (403/404)`                                | A planilha deixou de estar compartilhada com a conta de serviço. Compartilhe como **Leitor** com `<conta-de-servico>@<projeto>.iam.gserviceaccount.com` (o endereço está no campo `client_email` do JSON da conta de serviço, ou no Google Cloud Console em IAM e administrador → Contas de serviço). |
+| `Google recusou a conta de serviço`                              | A chave do Google foi apagada ou trocada. Gere uma nova (abaixo) e atualize o secret.                                                                                                                                                                                                                 |
+| `Coluna obrigatória não encontrada`                              | Alguém renomeou ou apagou uma coluna. Entrevistados: DSEI, Edital, Vaga, Nome. Resultado: Vaga, Edital, Inscritos. Volte o cabeçalho.                                                                                                                                                                 |
+| `… respondeu 401`                                                | A `service_role` do Supabase mudou. Atualize o secret `SUPABASE_SERVICE_ROLE_KEY`.                                                                                                                                                                                                                    |
+| `… respondeu 404` com `sincronizar_selecao`                      | A migration da Seleção ainda não foi aplicada no banco.                                                                                                                                                                                                                                               |
 
 ## Onde ficam as credenciais
 
@@ -105,19 +105,19 @@ Só nos **secrets do repositório** (Settings → Secrets and variables → Acti
 duas cargas. O GitHub não mostra o valor depois de salvo, nem nos logs. Ninguém precisa do arquivo
 no computador.
 
-| Secret                        | O que é                                                                                 |
-| ----------------------------- | --------------------------------------------------------------------------------------- |
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | conteúdo do JSON da conta de serviço `credenciais-pyhton` (projeto `credencial-437411`) |
-| `SUPABASE_URL`                | `https://SEU-PROJETO.supabase.co` (URL do projeto de produção, com quem administra)     |
-| `SUPABASE_SERVICE_ROLE_KEY`   | chave service_role (Supabase → Project Settings → API)                                  |
+| Secret                        | O que é                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------ |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | conteúdo do JSON da conta de serviço do Google (`<conta-de-servico>` no `<projeto>`) |
+| `SUPABASE_URL`                | `https://SEU-PROJETO.supabase.co` (URL do projeto de produção, com quem administra)  |
+| `SUPABASE_SERVICE_ROLE_KEY`   | chave service_role (Supabase → Project Settings → API)                               |
 
 Para trocar um secret: clique no nome → **Update secret** → cole o novo valor. Precisa ser
 administrador do repositório.
 
 ### Trocar a chave do Google (se vazou ou a cada ano)
 
-1. [console.cloud.google.com](https://console.cloud.google.com) → projeto **credencial-437411** →
-   IAM e administrador → Contas de serviço → `credenciais-pyhton` → aba **Chaves**.
+1. [console.cloud.google.com](https://console.cloud.google.com) → projeto **`<projeto>`** da conta de serviço →
+   IAM e administrador → Contas de serviço → `<conta-de-servico>` → aba **Chaves**.
 2. **Adicionar chave → Criar nova chave → JSON**. O arquivo baixa sozinho.
 3. Cole o conteúdo inteiro no secret `GOOGLE_SERVICE_ACCOUNT_JSON`.
 4. Rode os dois workflows em modo `seco`. Deu verde? Volte em **Chaves** e **exclua a chave antiga**.
@@ -142,7 +142,7 @@ vai para o container (`docker run --env-file .env.local`).
 ## Quem precisa ter acesso (para não depender de uma pessoa)
 
 - **Repositório no GitHub**: pelo menos duas pessoas administradoras (para trocar secrets).
-- **Projeto `credencial-437411` no Google Cloud**: pelo menos dois proprietários (para gerar chave).
+- **Projeto da conta de serviço no Google Cloud**: pelo menos dois proprietários (para gerar chave).
 - **Planilhas "[dash] entrevistados" e "Auditoria"**: a conta de serviço como Leitor (já está).
 - **Supabase**: pelo menos dois administradores do projeto (para ver a `service_role`).
 
