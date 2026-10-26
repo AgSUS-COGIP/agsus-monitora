@@ -6,7 +6,7 @@ import {
   primeiroNome,
   resumoDoDia,
   saudacao,
-} from "../src/lib/boas-vindas.js";
+} from "../src/lib/boas-vindas.ts";
 
 describe("textos das boas-vindas", () => {
   it("saúda pela hora", () => {

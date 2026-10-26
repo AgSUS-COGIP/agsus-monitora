@@ -31,7 +31,7 @@ import {
   type Publico,
   type TipoPersonalizado,
 } from "../../lib/catalogo-de-comemoracoes.ts";
-import { EFEITOS, ROTULOS_DOS_EFEITOS } from "../../lib/motor-de-efeitos.js";
+import { EFEITOS, ROTULOS_DOS_EFEITOS } from "../../lib/motor-de-efeitos.ts";
 import { comemorar, semMovimento } from "../../modules/comemoracao.js";
 import { Aviso, Campo, Segmentado } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";

@@ -13,7 +13,7 @@ import { clicar, digitar, esperar } from "../componentes/interacoes.js";
   aprova a resposta aprova — recalculando a prévia. Quem não decide não vê a
   seção enquanto não houver ajuste.
 */
-vi.mock("../../src/lib/chartjs-global.js", () => {
+vi.mock("../../src/lib/chartjs-global.ts", () => {
   const Chart = class {
     constructor(canvas, configuracao) {
       this.data = configuracao.data;

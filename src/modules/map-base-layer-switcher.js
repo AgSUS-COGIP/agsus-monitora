@@ -1,9 +1,9 @@
-import { envolverFabricaDoLeaflet } from "../lib/fabrica-do-leaflet.js";
+import { envolverFabricaDoLeaflet } from "../lib/fabrica-do-leaflet.ts";
 import {
   azulejoDoRecuo,
   podeRecuar,
   semAzulejoDeAviso,
-} from "../lib/recuo-de-azulejo.js";
+} from "../lib/recuo-de-azulejo.ts";
 
 const STORAGE_KEY = "agsus_map_base_layer_v1";
 const MODE_MAP = "map";
@@ -68,7 +68,7 @@ export function installMapBaseLayerSwitcher() {
 
   const guardedTileLayer = L.tileLayer;
   // `envolverFabricaDoLeaflet` preserva o que está pendurado na fábrica —
-  // nomeadamente `L.tileLayer.wms`. Ver `src/lib/fabrica-do-leaflet.js`.
+  // nomeadamente `L.tileLayer.wms`. Ver `src/lib/fabrica-do-leaflet.ts`.
   L.tileLayer = envolverFabricaDoLeaflet(
     guardedTileLayer,
     function agsusTaggedTileLayer(urlTemplate, options = {}) {
@@ -282,7 +282,7 @@ function setBaseMapMode(L, map, requestedMode, { persist = false } = {}) {
 /*
   A CAMADA DE SATÉLITE QUE NÃO QUEBRA AO APROXIMAR
 
-  Ver `src/lib/recuo-de-azulejo.js`: acima do zoom 17, nos territórios
+  Ver `src/lib/recuo-de-azulejo.ts`: acima do zoom 17, nos territórios
   indígenas, a Esri não tem foto e devolvia um aviso em forma de imagem.
 
   O recuo tem de acontecer DENTRO do azulejo, antes de o erro chegar ao

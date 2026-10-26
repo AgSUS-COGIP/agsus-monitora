@@ -304,7 +304,7 @@ que não são de área entram em Painéis; as seções de Configurações são a
   Lucide de verdade, pelo registro abaixo.
 - **Resto do sistema:** o HTML e os módulos ainda escrevem `<i class="fa-solid fa-…">`, mas
   `src/styles/icones-lucide.css` (gerado por `npm run icones` a partir de
-  `src/lib/mapa-de-icones-lucide.js`) desenha em cada classe o ícone Lucide equivalente, como
+  `src/lib/mapa-de-icones-lucide.ts`) desenha em cada classe o ícone Lucide equivalente, como
   máscara no `::before`. Ícone novo com classe `fa-…`: acrescente o par no mapa e rode
   `npm run icones`; `tests/icones-lucide.test.js` falha se faltar. Ao reescrever um componente,
   prefira o registro abaixo.
@@ -336,7 +336,7 @@ Regras:
 
 ## 6. Gráficos
 
-Chart.js em todo o sistema (`src/ui/grafico.tsx`, `window.Chart` via `src/lib/chartjs-global.js`).
+Chart.js em todo o sistema (`src/ui/grafico.tsx`, `window.Chart` via `src/lib/chartjs-global.ts`).
 
 **Paleta categórica, em ordem fixa**, validada com o validador da skill `dataviz`: faixa de luminosidade,
 croma, separação para daltonismo (CVD), visão normal e contraste ≥ 3:1. Passou em todos.

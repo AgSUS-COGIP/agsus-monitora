@@ -7,7 +7,7 @@ import type {
   ChartType,
   Plugin,
 } from "chart.js";
-import { carregarChart, chartCarregado } from "../lib/chartjs-global.js";
+import { carregarChart, chartCarregado } from "../lib/chartjs-global.ts";
 
 /*
   Cores dos gráficos dentro do app, lidas dos tokens (src/styles/tokens.css)
@@ -109,7 +109,7 @@ export function Grafico<T extends ChartType>({
   const grafico = useRef<ChartJs<T, number[], string> | null>(null);
   const ultimoMontar = useRef(montar);
   const pluginsIniciais = useRef(plugins);
-  // O Chart.js baixa no primeiro gráfico (chartjs-global.js); depois, desenha na hora.
+  // O Chart.js baixa no primeiro gráfico (chartjs-global.ts); depois, desenha na hora.
   const [Chart, definirChart] = useState<typeof ChartJs | null>(() =>
     chartCarregado(),
   );

@@ -4,7 +4,7 @@ import { registroDaVisaoGeral } from "../../lib/visao-geral.ts";
   Os marcos do ano da equipe na Visão geral: a leitura do banco
   (`obter_marcos_da_area`, contrato em src/lib/rpc-contrato.js). Números só da
   equipe da área, nunca de uma pessoa. O card fica em boas-vindas.tsx; a regra
-  de quando comemorar, em src/lib/comemoracao.js.
+  de quando comemorar, em src/lib/comemoracao.ts.
 */
 export const RPC_MARCOS_DA_AREA = "obter_marcos_da_area";
 

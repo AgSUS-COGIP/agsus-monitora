@@ -14,8 +14,8 @@ import { useEffect, useMemo, useState } from "react";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { podeEditarCoordenadas } from "../../lib/access-roles.ts";
 import { aplicarCoordenada } from "../../lib/coordenadas-dos-projetos.ts";
-import { enquadramentoDoRecorte } from "../../lib/enquadramento-do-brasil.js";
-import { OPACIDADE_DA_BOLHA } from "../../lib/mapa-render.js";
+import { enquadramentoDoRecorte } from "../../lib/enquadramento-do-brasil.ts";
+import { OPACIDADE_DA_BOLHA } from "../../lib/mapa-render.ts";
 import {
   MAPA_DOS_MUNICIPIOS,
   TEXTOS_DO_MAPA,

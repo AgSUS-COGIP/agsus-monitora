@@ -67,7 +67,7 @@ describe("catálogo de marcos", () => {
     // O id aparece no arquivo que dispara a comemoração.
     for (const marco of CATALOGO_DE_MARCOS) {
       const onde = readFileSync(marco.onde, "utf8");
-      const lib = readFileSync("src/lib/comemoracao.js", "utf8");
+      const lib = readFileSync("src/lib/comemoracao.ts", "utf8");
       expect(
         onde.includes(`"${marco.id}"`) || lib.includes(`"${marco.id}"`),
       ).toBe(true);
@@ -349,7 +349,7 @@ describe("publicação com histórico (mesma das outras seções)", () => {
 describe("preferência pessoal compartilhada com a mascote", () => {
   it('a chave e o formato que a arara lê: "1" = desligadas', async () => {
     const { CHAVE_COMEMORACOES_PESSOAIS } =
-      await import("../src/lib/preferencia-de-comemoracoes.js");
+      await import("../src/lib/preferencia-de-comemoracoes.ts");
     expect(CHAVE_COMEMORACOES_PESSOAIS).toBe(
       "agsus_monitora_comemoracoes_desligadas",
     );

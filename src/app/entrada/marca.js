@@ -39,7 +39,7 @@ import {
   TEXTO_CLARO,
   corDoTextoPara,
   normalizarModo,
-} from "../../lib/contraste.js";
+} from "../../lib/contraste.ts";
 
 const RODAPE_VAZIO = Object.freeze({
   nome: "",

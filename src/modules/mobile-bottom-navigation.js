@@ -3,7 +3,7 @@ import {
   avisar,
   EVENTO_BARRA_ALTERNADA,
   EVENTO_MENU_ATUALIZADO,
-} from "../lib/eventos-da-barra-lateral.js";
+} from "../lib/eventos-da-barra-lateral.ts";
 import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.ts";
 
 /*

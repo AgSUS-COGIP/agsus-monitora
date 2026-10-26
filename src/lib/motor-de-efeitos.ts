@@ -6,7 +6,7 @@
   requestAnimationFrame, pausa com a aba oculta e limpa ao fim é
   src/modules/comemoracao.js (`soltarFogos`).
 
-  Os fogos continuam sendo o show de src/lib/fogos.js (roteiro, rastro de
+  Os fogos continuam sendo o show de src/lib/fogos.ts (roteiro, rastro de
   subida, estouros em camadas, cintilação, gravidade, fumaça e o marco
   desenhado no céu); a cena só o embute. Os outros efeitos são partículas
   simples daqui, com física mínima: atrito do ar, gravidade (ou empuxo, nos
@@ -15,7 +15,7 @@
   Desempenho: teto de partículas (LIMITE_DO_MOTOR, além do teto dos fogos),
   passo máximo de simulação (aba que volta do fundo não "pula") e tudo some
   sozinho até o fim da duração. Sorteio por `aleatorio` (criarAleatorio de
-  fogos.js nos testes): a mesma semente e os mesmos passos dão a mesma cena.
+  fogos.ts nos testes): a mesma semente e os mesmos passos dão a mesma cena.
 
   Unidades: tempo em s, posição em px CSS, velocidade em px/s.
 */
@@ -30,9 +30,149 @@ import {
   paletaDosFogos,
   PASSO_MAXIMO_S,
   showAcabou,
-} from "./fogos.js";
+} from "./fogos.ts";
+import type {
+  Aleatorio,
+  PaletaDosFogos,
+  PontoXY,
+  ShowDeFogos,
+} from "./fogos.ts";
+import type { AmostrarTexto } from "./fogos-formas.ts";
 
-export const EFEITOS = Object.freeze([
+export type NomeDoEfeito =
+  | "fogos"
+  | "confete"
+  | "serpentina"
+  | "estrelas"
+  | "coracoes"
+  | "baloes"
+  | "aya"
+  | "combinado";
+export type NomeDoNivel = "suave" | "normal" | "festa";
+
+/** Uma leva de partículas: quando, de que peça, quantas e de onde. */
+export interface LoteDoMotor {
+  t: number;
+  peca: string;
+  quantos: number;
+  origem: string;
+}
+
+/** O que toda partícula do motor tem; o resto depende do tipo. */
+interface BaseDaParticulaDoMotor extends PontoXY {
+  vx: number;
+  vy: number;
+  atrito: number;
+  gravidade: number;
+  vida: number;
+  vidaMax: number;
+  idade: number;
+  cor: string;
+  forma?: string;
+  largura?: number;
+  altura?: number;
+  rot?: number;
+  vrot?: number;
+  fase?: number;
+  vfase?: number;
+  balanco?: number;
+  frequencia?: number;
+  giro?: number;
+  trocaDoGiro?: number;
+  relogio?: number;
+  rastro?: PontoXY[];
+  espessura?: number;
+  tamanho?: number;
+  cintila?: number;
+}
+export interface ConfeteDoMotor extends BaseDaParticulaDoMotor {
+  tipo: "confete";
+  forma: string;
+  largura: number;
+  altura: number;
+  rot: number;
+  vrot: number;
+  fase: number;
+  vfase: number;
+  balanco: number;
+  frequencia: number;
+}
+export interface SerpentinaDoMotor extends BaseDaParticulaDoMotor {
+  tipo: "serpentina";
+  giro: number;
+  trocaDoGiro: number;
+  relogio: number;
+  rastro: PontoXY[];
+  espessura: number;
+}
+export interface CometaDoMotor extends BaseDaParticulaDoMotor {
+  tipo: "cometa";
+  rastro: PontoXY[];
+  tamanho: number;
+}
+export interface EstrelaDoMotor extends BaseDaParticulaDoMotor {
+  tipo: "estrela";
+  rot: number;
+  vrot: number;
+  fase: number;
+  cintila: number;
+  tamanho: number;
+}
+/** Coração e balão: sobem balançando. */
+export interface FlutuanteDoMotor extends BaseDaParticulaDoMotor {
+  tipo: "coracao" | "balao";
+  fase: number;
+  balanco: number;
+  frequencia: number;
+  tamanho: number;
+}
+export type ParticulaDoMotor =
+  | ConfeteDoMotor
+  | SerpentinaDoMotor
+  | CometaDoMotor
+  | EstrelaDoMotor
+  | FlutuanteDoMotor;
+/** A partícula ao nascer, antes de `vidaMax` e `idade`. */
+type ParticulaNascendo<T = ParticulaDoMotor> = T extends unknown
+  ? Omit<T, "vidaMax" | "idade">
+  : never;
+
+/** Estouro ainda não tocado (som): dos fogos ou de um canhão do motor. */
+export interface EventoDaCena {
+  tipo: "estouro";
+  formato: string;
+  papel: string;
+  x?: number;
+  y?: number;
+}
+
+export interface CenaDeEfeitos {
+  t: number;
+  duracao: number;
+  efeito: NomeDoEfeito;
+  intensidade: NomeDoNivel;
+  componentes: readonly string[];
+  show: ShowDeFogos | null;
+  lotes: LoteDoMotor[];
+  proximo: number;
+  particulas: ParticulaDoMotor[];
+  limite: number;
+  aleatorio: Aleatorio;
+  largura: number;
+  altura: number;
+  escala: number;
+  paleta: PaletaDosFogos;
+  comVeu: boolean;
+  chamaAya: boolean;
+  eventos: EventoDaCena[];
+}
+/** O que o nascimento das partículas lê da cena. */
+export type CenaParaNascer = Pick<
+  CenaDeEfeitos,
+  "largura" | "altura" | "escala" | "aleatorio" | "paleta"
+>;
+
+export const EFEITOS: readonly NomeDoEfeito[] = Object.freeze([
   "fogos",
   "confete",
   "serpentina",
@@ -56,7 +196,7 @@ export const ROTULOS_DOS_EFEITOS = Object.freeze({
 
 /*
   Intensidade: quanto de partícula (multiplicador) e o show de fogos
-  equivalente (src/lib/fogos.js INTENSIDADES).
+  equivalente (src/lib/fogos.ts INTENSIDADES).
 */
 export const NIVEIS = Object.freeze({
   suave: Object.freeze({ quantidade: 0.55, fogos: "pequeno" }),
@@ -70,7 +210,7 @@ export const ROTULOS_DOS_NIVEIS = Object.freeze({
 });
 
 /* Os nomes antigos das intensidades dos fogos, no nível equivalente. */
-const NIVEL_DOS_FOGOS = Object.freeze({
+const NIVEL_DOS_FOGOS: Readonly<Record<string, NomeDoNivel>> = Object.freeze({
   pequeno: "suave",
   cheio: "normal",
   fogos: "normal",
@@ -78,10 +218,12 @@ const NIVEL_DOS_FOGOS = Object.freeze({
 });
 
 /** O nível (suave, normal, festa) de uma intensidade nova ou antiga. */
-export const nivelDaIntensidade = (intensidade) =>
-  Object.hasOwn(NIVEIS, intensidade)
-    ? intensidade
-    : NIVEL_DOS_FOGOS[intensidade] || "normal";
+export const nivelDaIntensidade = (intensidade: unknown): NomeDoNivel =>
+  Object.hasOwn(NIVEIS, intensidade as PropertyKey)
+    ? (intensidade as NomeDoNivel)
+    : (NIVEL_DOS_FOGOS as Readonly<Record<string, NomeDoNivel | undefined>>)[
+        intensidade as string
+      ] || "normal";
 
 export const DURACAO_PADRAO_MS = 5000;
 export const DURACAO_MINIMA_MS = 2000;
@@ -90,30 +232,33 @@ export const DURACAO_MAXIMA_MS = 15000;
 export const LIMITE_DO_MOTOR = 900;
 
 /* As peças de cada efeito; "aya" não desenha nada (só chama a mascote). */
-const COMPONENTES = Object.freeze({
-  fogos: ["fogos"],
-  confete: ["confete"],
-  serpentina: ["serpentina"],
-  estrelas: ["estrelas"],
-  coracoes: ["coracoes"],
-  baloes: ["baloes"],
-  aya: [],
-  combinado: ["fogos", "confete", "serpentina"],
-});
+const COMPONENTES: Readonly<Record<NomeDoEfeito, readonly string[]>> =
+  Object.freeze({
+    fogos: ["fogos"],
+    confete: ["confete"],
+    serpentina: ["serpentina"],
+    estrelas: ["estrelas"],
+    coracoes: ["coracoes"],
+    baloes: ["baloes"],
+    aya: [],
+    combinado: ["fogos", "confete", "serpentina"],
+  });
 
-export const componentesDoEfeito = (efeito) =>
-  COMPONENTES[efeito] || COMPONENTES.fogos;
+export const componentesDoEfeito = (efeito: unknown): readonly string[] =>
+  (COMPONENTES as Readonly<Record<string, readonly string[] | undefined>>)[
+    efeito as string
+  ] || COMPONENTES.fogos;
 
 /** O efeito chama a Aya para comemorar (evento `aya:estado`). */
-export const efeitoChamaAya = (efeito) =>
+export const efeitoChamaAya = (efeito: unknown): boolean =>
   efeito === "aya" || efeito === "combinado";
 
 /** Fogos e estrelas brilham sobre o véu escuro; os outros, sobre a tela. */
-export const efeitoComVeu = (efeito) =>
+export const efeitoComVeu = (efeito: unknown): boolean =>
   componentesDoEfeito(efeito).some((c) => c === "fogos" || c === "estrelas");
 
 /** Duração pedida em ms, limitada; inválida ou vazia, `null` (a padrão). */
-export function normalizarDuracao(duracaoMs) {
+export function normalizarDuracao(duracaoMs: unknown): number | null {
   const numero = Number(duracaoMs);
   if (!duracaoMs || !Number.isFinite(numero)) return null;
   return Math.round(
@@ -121,10 +266,12 @@ export function normalizarDuracao(duracaoMs) {
   );
 }
 
-const entre = (aleatorio, min, max) => min + (max - min) * aleatorio();
-const limitar = (valor, min, max) => Math.min(max, Math.max(min, valor));
-const sortear = (aleatorio, lista) =>
-  lista[Math.floor(aleatorio() * lista.length) % lista.length];
+const entre = (aleatorio: Aleatorio, min: number, max: number): number =>
+  min + (max - min) * aleatorio();
+const limitar = (valor: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, valor));
+const sortear = <T>(aleatorio: Aleatorio, lista: readonly T[]): T =>
+  lista[Math.floor(aleatorio() * lista.length) % lista.length]!;
 
 // ── Lotes: quando e de onde nasce cada leva de partículas ───────────────────
 
@@ -133,16 +280,34 @@ const sortear = (aleatorio, lista) =>
   começo (canhões dos cantos) e chuva contínua até ~1,5 s antes do fim, para
   tudo sair de cena a tempo.
 */
-function chuva(peca, { de, ate, intervalo, porLote, origem }) {
-  const lotes = [];
+function chuva(
+  peca: string,
+  {
+    de,
+    ate,
+    intervalo,
+    porLote,
+    origem,
+  }: {
+    de: number;
+    ate: number;
+    intervalo: number;
+    porLote: number;
+    origem: string;
+  },
+): LoteDoMotor[] {
+  const lotes: LoteDoMotor[] = [];
   for (let t = de; t <= ate; t += intervalo)
     lotes.push({ t, peca, quantos: porLote, origem });
   return lotes;
 }
 
-function lotesDaPeca(peca, { duracao, quantidade }) {
+function lotesDaPeca(
+  peca: string,
+  { duracao, quantidade }: { duracao: number; quantidade: number },
+): LoteDoMotor[] {
   const fim = Math.max(0.6, duracao - 1.6);
-  const q = (n) => Math.max(1, Math.round(n * quantidade));
+  const q = (n: number): number => Math.max(1, Math.round(n * quantidade));
   switch (peca) {
     case "confete":
       return [
@@ -226,10 +391,13 @@ function lotesDaPeca(peca, { duracao, quantidade }) {
 
 const FORMAS_DO_CONFETE = ["retangulo", "retangulo", "tira", "circulo"];
 
-function confete(cena, origem) {
+function confete(
+  cena: CenaParaNascer,
+  origem: string,
+): ParticulaNascendo<ConfeteDoMotor> {
   const { largura, altura, escala, aleatorio, paleta } = cena;
   const base = {
-    tipo: "confete",
+    tipo: "confete" as const,
     forma: sortear(aleatorio, FORMAS_DO_CONFETE),
     cor: sortear(aleatorio, paleta.cores),
     largura: entre(aleatorio, 6, 11) * escala,
@@ -266,7 +434,10 @@ function confete(cena, origem) {
   };
 }
 
-function serpentina(cena, origem) {
+function serpentina(
+  cena: CenaParaNascer,
+  origem: string,
+): ParticulaNascendo<SerpentinaDoMotor> {
   const { largura, altura, escala, aleatorio, paleta } = cena;
   const esquerda = origem === "canhao-esquerdo";
   const doTopo = origem === "topo";
@@ -297,7 +468,7 @@ function serpentina(cena, origem) {
   };
 }
 
-function cometa(cena) {
+function cometa(cena: CenaParaNascer): ParticulaNascendo<CometaDoMotor> {
   const { largura, altura, escala, aleatorio, paleta } = cena;
   const angulo = entre(aleatorio, 0.35, 0.7); // abaixo da horizontal
   const velocidade = entre(aleatorio, 650, 1050) * escala;
@@ -318,7 +489,7 @@ function cometa(cena) {
   };
 }
 
-function estrela(cena) {
+function estrela(cena: CenaParaNascer): ParticulaNascendo<EstrelaDoMotor> {
   const { largura, escala, aleatorio, paleta } = cena;
   return {
     tipo: "estrela",
@@ -340,7 +511,7 @@ function estrela(cena) {
 
 const CORES_DOS_CORACOES = ["#ff4d6d", "#ff758f", "#ff8fab", "#e5383b"];
 
-function coracao(cena) {
+function coracao(cena: CenaParaNascer): ParticulaNascendo<FlutuanteDoMotor> {
   const { largura, altura, escala, aleatorio, paleta } = cena;
   return {
     tipo: "coracao",
@@ -362,7 +533,7 @@ function coracao(cena) {
   };
 }
 
-function balao(cena) {
+function balao(cena: CenaParaNascer): ParticulaNascendo<FlutuanteDoMotor> {
   const { largura, altura, escala, aleatorio, paleta } = cena;
   const raio = entre(aleatorio, 16, 30) * escala;
   return {
@@ -392,25 +563,44 @@ const NASCER = Object.freeze({
 });
 
 /** As partículas de um lote, sem passar do teto (`cabem`). */
-export function nascerLote(cena, lote, cabem = Infinity) {
+export function nascerLote(
+  cena: CenaParaNascer,
+  lote: LoteDoMotor,
+  cabem = Infinity,
+): ParticulaDoMotor[] {
   const quantos = Math.max(0, Math.min(lote.quantos, cabem));
-  const nascer = NASCER[lote.peca];
+  const nascer = (
+    NASCER as Readonly<
+      Record<
+        string,
+        | ((cena: CenaParaNascer, origem: string) => ParticulaNascendo)
+        | undefined
+      >
+    >
+  )[lote.peca];
   if (!nascer) return [];
   return Array.from({ length: quantos }, () => {
     const p = nascer(cena, lote.origem);
-    return { ...p, vidaMax: p.vida, idade: 0 };
+    return { ...p, vidaMax: p.vida, idade: 0 } as ParticulaDoMotor;
   });
 }
 
 // ── Física ──────────────────────────────────────────────────────────────────
 
-const MAXIMO_DO_RASTRO = Object.freeze({ serpentina: 22, cometa: 14 });
+const MAXIMO_DO_RASTRO: Readonly<Record<string, number>> = Object.freeze({
+  serpentina: 22,
+  cometa: 14,
+});
 
 /**
  * Move uma partícula do motor `dt` s. Devolve se continua viva (vida e
  * dentro da tela, com folga).
  */
-export function moverParticulaDoMotor(p, dt, { largura, altura } = {}) {
+export function moverParticulaDoMotor(
+  p: ParticulaDoMotor,
+  dt: number,
+  { largura, altura }: { largura?: number; altura?: number } = {},
+): boolean {
   p.idade += dt;
   p.vida -= dt;
   const freio = Math.exp(-p.atrito * dt);
@@ -431,12 +621,12 @@ export function moverParticulaDoMotor(p, dt, { largura, altura } = {}) {
   let deriva = 0;
   if (p.balanco)
     deriva =
-      Math.cos(p.idade * p.frequencia * 2 * Math.PI + (p.fase || 0)) *
+      Math.cos(p.idade * p.frequencia! * 2 * Math.PI + (p.fase || 0)) *
       p.balanco;
   p.x += (p.vx + deriva) * dt;
   p.y += p.vy * dt;
-  if (p.vrot) p.rot += p.vrot * dt;
-  if (p.vfase) p.fase += p.vfase * dt;
+  if (p.vrot) p.rot! += p.vrot * dt;
+  if (p.vfase) p.fase! += p.vfase * dt;
   if (p.rastro) {
     p.rastro.push({ x: p.x, y: p.y });
     const maximo = MAXIMO_DO_RASTRO[p.tipo] || 12;
@@ -455,7 +645,7 @@ export function moverParticulaDoMotor(p, dt, { largura, altura } = {}) {
 }
 
 /** Brilho (0–1): entra rápido, sai no fim da vida; a estrela cintila. */
-export function brilhoDoMotor(p) {
+export function brilhoDoMotor(p: ParticulaDoMotor): number {
   const resto = limitar(p.vida / p.vidaMax, 0, 1);
   const entrada = limitar(p.idade / 0.2, 0, 1);
   let brilho = Math.min(entrada, resto < 0.3 ? resto / 0.3 : 1);
@@ -469,8 +659,7 @@ export function brilhoDoMotor(p) {
 /**
  * A cena de um efeito para uma tela. `intensidade`: suave, normal ou festa;
  * `duracaoMs`: 2–15 s (fogos: 4–15 s; vazio, a padrão de cada um);
- * `forma`, `comAya` e `amostrarTexto` vão para os fogos (fogos.js).
- * @param {{ efeito?: string, intensidade?: string, duracaoMs?: number | null, largura?: number, altura?: number, paleta?: any, aleatorio?: () => number, forma?: any, comAya?: boolean, amostrarTexto?: any, limite?: number }} [opcoes]
+ * `forma`, `comAya` e `amostrarTexto` vão para os fogos (fogos.ts).
  */
 export function criarCena({
   efeito = "fogos",
@@ -484,8 +673,22 @@ export function criarCena({
   comAya = true,
   amostrarTexto = null,
   limite = LIMITE_DO_MOTOR,
-} = {}) {
-  const nome = EFEITOS.includes(efeito) ? efeito : "fogos";
+}: {
+  efeito?: string;
+  intensidade?: string;
+  duracaoMs?: number | null;
+  largura?: number;
+  altura?: number;
+  paleta?: PaletaDosFogos;
+  aleatorio?: Aleatorio;
+  forma?: unknown;
+  comAya?: boolean;
+  amostrarTexto?: AmostrarTexto | null;
+  limite?: number;
+} = {}): CenaDeEfeitos {
+  const nome = (EFEITOS as readonly string[]).includes(efeito)
+    ? (efeito as NomeDoEfeito)
+    : "fogos";
   const nomeDoNivel = nivelDaIntensidade(intensidade);
   const nivel = NIVEIS[nomeDoNivel];
   // Nome antigo dos fogos ("fogos", do fim do tour) vale como foi pedido.
@@ -540,7 +743,7 @@ export function criarCena({
  * Avança a cena `dt` s (limitado a PASSO_MAXIMO_S e à duração): o show de
  * fogos, os lotes da hora e a física de cada partícula. Devolve a cena.
  */
-export function avancarCena(cena, dt) {
+export function avancarCena(cena: CenaDeEfeitos, dt: unknown): CenaDeEfeitos {
   const passo = limitar(
     Number(dt) || 0,
     0,
@@ -551,12 +754,12 @@ export function avancarCena(cena, dt) {
     avancarShow(cena.show, passo);
     cena.eventos.push(...cena.show.eventos.splice(0));
   }
-  const novas = [];
+  const novas: ParticulaDoMotor[] = [];
   while (
     cena.proximo < cena.lotes.length &&
-    cena.lotes[cena.proximo].t <= cena.t
+    cena.lotes[cena.proximo]!.t <= cena.t
   ) {
-    const lote = cena.lotes[cena.proximo];
+    const lote = cena.lotes[cena.proximo]!;
     const cabem = cena.limite - cena.particulas.length - novas.length;
     novas.push(...nascerLote(cena, lote, cabem));
     if (lote.origem?.startsWith("canhao"))
@@ -576,7 +779,7 @@ export function avancarCena(cena, dt) {
 }
 
 /** Acabou: passou da duração, ou já nasceu tudo e nada mais está na tela. */
-export function cenaAcabou(cena) {
+export function cenaAcabou(cena: CenaDeEfeitos): boolean {
   if (cena.t >= cena.duracao) return true;
   return (
     (!cena.show || showAcabou(cena.show)) &&
@@ -586,12 +789,15 @@ export function cenaAcabou(cena) {
 }
 
 /** Quantas partículas a cena tem agora (motor + fogos). */
-export const particulasDaCena = (cena) =>
+export const particulasDaCena = (cena: CenaDeEfeitos): number =>
   cena.particulas.length + (cena.show ? cena.show.particulas.length : 0);
 
 // ── Desenho (num contexto 2D qualquer) ──────────────────────────────────────
 
-function caminhoDaEstrela(contexto, raio) {
+function caminhoDaEstrela(
+  contexto: CanvasRenderingContext2D,
+  raio: number,
+): void {
   contexto.beginPath();
   for (let i = 0; i < 10; i += 1) {
     const r = i % 2 ? raio * 0.45 : raio;
@@ -602,7 +808,7 @@ function caminhoDaEstrela(contexto, raio) {
   contexto.closePath();
 }
 
-function caminhoDoCoracao(contexto, t) {
+function caminhoDoCoracao(contexto: CanvasRenderingContext2D, t: number): void {
   contexto.beginPath();
   contexto.moveTo(0, t * 0.35);
   contexto.bezierCurveTo(-t, -t * 0.25, -t * 0.45, -t, 0, -t * 0.45);
@@ -610,7 +816,12 @@ function caminhoDoCoracao(contexto, t) {
   contexto.closePath();
 }
 
-function desenharRastro(contexto, p, alfa, espessura) {
+function desenharRastro(
+  contexto: CanvasRenderingContext2D,
+  p: ParticulaDoMotor,
+  alfa: number,
+  espessura: number,
+): void {
   const pontos = p.rastro;
   if (!pontos || pontos.length < 2) return;
   contexto.lineCap = "round";
@@ -623,8 +834,8 @@ function desenharRastro(contexto, p, alfa, espessura) {
       alfa * (p.tipo === "cometa" ? u * u : 0.35 + 0.65 * u);
     contexto.lineWidth = espessura * (p.tipo === "cometa" ? 0.3 + u : 1);
     contexto.beginPath();
-    contexto.moveTo(pontos[i - 1].x, pontos[i - 1].y);
-    contexto.lineTo(pontos[i].x, pontos[i].y);
+    contexto.moveTo(pontos[i - 1]!.x, pontos[i - 1]!.y);
+    contexto.lineTo(pontos[i]!.x, pontos[i]!.y);
     contexto.stroke();
   }
 }
@@ -633,7 +844,10 @@ function desenharRastro(contexto, p, alfa, espessura) {
  * Desenha as partículas do motor (não os fogos, que são de
  * src/modules/comemoracao.js). `saida` (0–1) apaga tudo no fim da cena.
  */
-export function desenharParticulasDoMotor(contexto, cena) {
+export function desenharParticulasDoMotor(
+  contexto: CanvasRenderingContext2D,
+  cena: CenaDeEfeitos,
+): void {
   const saida = fatorDeSaida(cena.t, cena.duracao);
   for (const p of cena.particulas) {
     const alfa = brilhoDoMotor(p) * saida;

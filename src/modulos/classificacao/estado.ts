@@ -113,7 +113,7 @@ import {
 } from "../../lib/classificacao/documento-sei.ts";
 import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.ts";
 import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.js";
-import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.js";
+import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.ts";
 import {
   copiarParaAreaDeTransferencia,
   imprimirPagina,

@@ -29,7 +29,7 @@ import type {
   (`fases-do-processo.js`), os motivos de atenção (`criticos-da-visao-geral.js`)
   e as pendências pós-resultado. O recorte: cinco filtros de escolha múltipla
   (Unidade, Edital, Status, Fase, UF; comparação sem acento nem caixa,
-  `filtros-do-mapa.js`), a busca livre, o DSEI aberto no mapa e um atalho
+  `filtros-do-mapa.ts`), a busca livre, o DSEI aberto no mapa e um atalho
   (Críticos ou uma pendência do Pós-resultado). KPIs, mapa, blocos, tabela e
   exportação partem do mesmo recorte.
 */
@@ -53,7 +53,7 @@ import {
   linhaAtende,
   opcoesDoCampo,
   podarSelecoes,
-} from "./filtros-do-mapa.js";
+} from "./filtros-do-mapa.ts";
 import {
   contratadasImediatas,
   ehCancelado,

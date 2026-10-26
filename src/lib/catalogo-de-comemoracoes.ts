@@ -14,17 +14,17 @@
   - A preferência pessoal (neste navegador) de não ver comemorações.
 
   O liga/desliga geral continua em Módulos e abas › Sistema inteiro
-  (`sistema.comemoracoes`, src/lib/comemoracao.js).
+  (`sistema.comemoracoes`, src/lib/comemoracao.ts).
 */
 
-import { analisePendente } from "./comemoracao.js";
+import { analisePendente } from "./comemoracao.ts";
 import { chaveDoDia } from "./analises-curriculares.ts";
 import {
   DURACAO_MAXIMA_MS,
   DURACAO_MINIMA_MS,
   EFEITOS,
   NIVEIS,
-} from "./motor-de-efeitos.js";
+} from "./motor-de-efeitos.ts";
 
 export type Efeito =
   | "fogos"
@@ -50,7 +50,7 @@ export interface OpcoesDoMarco {
   publico: Publico;
 }
 
-/** O desenho do último estouro dos fogos (src/lib/fogos-formas.js). */
+/** O desenho do último estouro dos fogos (src/lib/fogos-formas.ts). */
 export type FormaDoMarco =
   "coracao" | "estrela" | "check" | { tipo: "numero"; texto: string } | null;
 
@@ -449,13 +449,13 @@ export function definirConfiguracaoDasComemoracoes(bruto: unknown): void {
 export const configuracaoDasComemoracoes = (): ConfiguracaoDasComemoracoes =>
   publicada;
 
-// ── Preferência pessoal (neste navegador): src/lib/preferencia-de-comemoracoes.js ──
+// ── Preferência pessoal (neste navegador): src/lib/preferencia-de-comemoracoes.ts ──
 
 export {
   CHAVE_COMEMORACOES_PESSOAIS as CHAVE_DA_PREFERENCIA_PESSOAL,
   comemoracoesPessoaisLigadas,
   guardarPreferenciaPessoal,
-} from "./preferencia-de-comemoracoes.js";
+} from "./preferencia-de-comemoracoes.ts";
 
 /**
  * A decisão de uma comemoração de marco: se aparece e com que opções. O

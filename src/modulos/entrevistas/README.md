@@ -162,7 +162,7 @@ recorte, empates, agenda dos próximos dias —, `fila-de-conducao.ts` — fila,
 `roteiro-de-entrevista.ts`, `digitacao-de-notas.ts` — a digitação da matriz —, `resumo-da-entrevista.ts` — as
 regras em linguagem simples —, `passos-do-preparar.ts` — os passos de Preparar e a agenda por dia —,
 `pendencias-do-roteiro.ts` — as seções e o que falta no editor —, `parecer-da-entrevista.ts` — o parecer em
-texto pronto —, `comemoracao.js`). Testes: `tests/modulos/entrevistas.test.js` (painel), `tests/modulos/agenda-do-painel-de-entrevistas.test.js` (respostas antigas da agenda), `tests/modulos/conduzir-entrevistas.test.js`,
+texto pronto —, `comemoracao.ts`). Testes: `tests/modulos/entrevistas.test.js` (painel), `tests/modulos/agenda-do-painel-de-entrevistas.test.js` (respostas antigas da agenda), `tests/modulos/conduzir-entrevistas.test.js`,
 `tests/painel-e-conducao-de-entrevistas.test.js`, `tests/digitacao-de-notas.test.js`,
 `tests/convocacao-da-entrevista.test.js`, `tests/conducao-de-entrevista.test.js` e
 `tests/convocacao-unica-da-entrevista-migration.test.js`, `tests/resumo-da-entrevista.test.js` e

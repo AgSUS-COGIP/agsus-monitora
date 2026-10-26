@@ -16,14 +16,14 @@ export const COR_PADRAO_DA_BARRA = "#ffffff";
 export const PASTA_DOS_LOGOS_DA_BARRA = `${ACCESS_BACKGROUND_FOLDER}/sidebar`;
 const PREFIXO_DO_LOGO = "logo-";
 const COR_HEX = /^#[0-9a-f]{6}$/i;
-const EXTENSAO_POR_TIPO = Object.freeze({
+const EXTENSAO_POR_TIPO: Readonly<Record<string, string>> = Object.freeze({
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
 });
 
 /** Logo que pode ir para a barra: caminho do site ou https; o resto vira o padrão. */
-export function logoDaBarraSegura(valor) {
+export function logoDaBarraSegura(valor: unknown): string {
   const bruto = String(valor || "").trim();
   if (!bruto) return LOGO_PADRAO_DA_BARRA;
   if (bruto.startsWith("/")) return bruto;
@@ -32,15 +32,18 @@ export function logoDaBarraSegura(valor) {
 }
 
 /** Cor #rrggbb em minúsculas; o resto vira o branco padrão. */
-export function corDaBarraSegura(valor) {
+export function corDaBarraSegura(valor: unknown): string {
   const bruto = String(valor || "")
     .trim()
     .toLowerCase();
   return COR_HEX.test(bruto) ? bruto : COR_PADRAO_DA_BARRA;
 }
 
-export function caminhoDoNovoLogoDaBarra(arquivo, gerarId) {
-  const extensao = EXTENSAO_POR_TIPO[arquivo?.type] || "png";
+export function caminhoDoNovoLogoDaBarra(
+  arquivo: { type?: string } | null | undefined,
+  gerarId?: () => string | null | undefined,
+): string {
+  const extensao = EXTENSAO_POR_TIPO[arquivo?.type as string] || "png";
   const id =
     gerarId?.() ||
     globalThis.crypto?.randomUUID?.() ||
@@ -49,7 +52,7 @@ export function caminhoDoNovoLogoDaBarra(arquivo, gerarId) {
 }
 
 /** Arquivo da pasta que é uma logo enviada (logo-*.jpg|png|webp). */
-export function ehLogoDaBarraGuardada(nome) {
+export function ehLogoDaBarraGuardada(nome: unknown): boolean {
   const texto = String(nome || "");
   return (
     texto.startsWith(PREFIXO_DO_LOGO) && /\.(?:jpe?g|png|webp)$/i.test(texto)
@@ -57,6 +60,6 @@ export function ehLogoDaBarraGuardada(nome) {
 }
 
 /** Arquivo da pasta de artes que é uma imagem (a subpasta das logos fica de fora). */
-export function ehImagemGuardada(nome) {
+export function ehImagemGuardada(nome: unknown): boolean {
   return /\.(?:jpe?g|png|webp)$/i.test(String(nome || ""));
 }

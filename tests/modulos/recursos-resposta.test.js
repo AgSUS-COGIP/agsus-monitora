@@ -18,7 +18,7 @@ import { proximoEstado } from "../../src/lib/resposta-do-recurso.ts";
   migration no essencial.
 */
 
-vi.mock("../../src/lib/chartjs-global.js", () => {
+vi.mock("../../src/lib/chartjs-global.ts", () => {
   const Chart = class {
     constructor(canvas, configuracao) {
       this.data = configuracao.data;

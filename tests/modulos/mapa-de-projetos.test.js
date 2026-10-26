@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { StrictMode, act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.js";
+import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.ts";
 import {
   CACHE_TTL_MS,
   RPC_DOS_MUNICIPIOS,
@@ -274,7 +274,7 @@ describe("o mapa", () => {
     // Fundo, contorno do Brasil e divisas das UFs.
     expect([...mapa.camadas].some((c) => c.tipo === "tileLayer")).toBe(true);
     expect(leaflet.desenhadas(mapa, "geoJSON")).toHaveLength(2);
-    // Dicas e popups ficam dentro do mapa (src/lib/dica-dentro-do-mapa.js).
+    // Dicas e popups ficam dentro do mapa (src/lib/dica-dentro-do-mapa.ts).
     expect(mapa.ouvintes("tooltipopen")).toBe(1);
     expect(mapa.ouvintes("popupopen")).toBe(1);
     // Desmontar remove o Leaflet.

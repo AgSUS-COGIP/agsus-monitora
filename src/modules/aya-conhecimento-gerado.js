@@ -4410,7 +4410,7 @@ export const VERBETES_AYA = Object.freeze([
       'As comemorações celebram o processo e a equipe, nunca uma pessoa (não há ranking): edital todo analisado (só quando a última ficha em análise é concluída; quem a concluiu ganha uma comemoração própria) e fila de análises zerada, vaga pronta para o resultado final nas Entrevistas, marcos do ano da área (1.000, 2.500, 5.000, 7.500 e 10.000 análises concluídas, depois a cada 5.000), acesso liberado ou reativado e o fim de um tour ou de uma trilha comigo. Em Configurações › Comemorações, quem edita as configurações escolhe, para cada marco: ligado ou desligado, o efeito (Fogos, Confete, Serpentina, Chuva de estrelas, Corações, Balões, Aya comemorando ou Combinado), a intensidade (Suave, Normal ou Festa), a duração (de 2 a 15 segundos; em branco, automática), o som (desligado por padrão), uma mensagem própria e quem vê. Por enquanto só quem fez vê: "Toda a área online" depende de um aviso em tempo real que o MONITORA ainda não tem. Nos fogos, a tela escurece de leve, eu atravesso voando e o último estouro desenha o marco no céu (o número, um coração, uma estrela ou um visto). O aviso no topo tem "Pular" e o botão de som; o som só toca depois de você interagir com a página. Com movimento reduzido no aparelho, só o aviso. Cada marco aparece uma vez por pessoa. As mudanças valem depois de "Salvar alterações", com motivo, e ficam no histórico de Operação. Para não ver comemorações neste navegador, desligue "Para mim", na linha do título de Configurações › Comemorações. O liga/desliga geral, para todos, fica em Módulos e abas › Sistema inteiro.',
     fato: "",
     fonte:
-      "src/lib/catalogo-de-comemoracoes.ts; src/lib/motor-de-efeitos.js; src/lib/comemoracao.js; src/lib/fogos.js; src/modulos/configuracoes/comemoracoes.tsx",
+      "src/lib/catalogo-de-comemoracoes.ts; src/lib/motor-de-efeitos.ts; src/lib/comemoracao.ts; src/lib/fogos.ts; src/modulos/configuracoes/comemoracoes.tsx",
     abrir: "config:comemoracoes",
   },
   {
@@ -6130,7 +6130,7 @@ export const VERBETES_AYA = Object.freeze([
       'O mapa de Projetos segue as mesmas regras do mapa da Saúde Indígena. Os filtros e a busca da Visão geral valem para ele: com algum filtro, só ficam os lugares que têm edital no recorte, e cada lugar mostra só esses editais; sem nenhum, a lista diz "Nenhum município no recorte.". Sem filtro, o mapa mostra o Brasil inteiro; com filtro da página ou com um projeto escolhido no campo "Projeto", ele aproxima do único lugar que sobrou ou enquadra todos os que sobraram. "Agrupar por projeto" não muda o enquadramento, e "Brasil" volta ao país inteiro. O tamanho do ponto segue as vagas do lugar com a mesma escala da bolha do DSEI e não muda quando se filtra. Lugares que caem no mesmo ponto abrem em leque, com um traço até a posição real.',
     fato: "",
     fonte:
-      "src/modulos/mapa-de-projetos/README.md; src/lib/enquadramento-do-brasil.js; src/lib/visao-geral-da-area.ts",
+      "src/modulos/mapa-de-projetos/README.md; src/lib/enquadramento-do-brasil.ts; src/lib/visao-geral-da-area.ts",
   },
   {
     arquivo: "regras-dos-mapas.md",
@@ -6279,7 +6279,7 @@ export const VERBETES_AYA = Object.freeze([
       "O liga/desliga geral das comemorações fica em Configurações › Módulos e abas › Sistema inteiro, com o administrador global: desligado, ninguém vê comemoração nenhuma. Cada marco, o efeito de cada um e os marcos personalizados ficam em Configurações › Comemorações.",
     fato: "",
     fonte:
-      "src/lib/comemoracao.js; supabase/migrations/20260930150000_comemoracoes_e_marcos.sql",
+      "src/lib/comemoracao.ts; supabase/migrations/20260930150000_comemoracoes_e_marcos.sql",
   },
   {
     arquivo: "regras-dos-recursos.md",

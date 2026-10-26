@@ -10,7 +10,7 @@ import {
   somLigado,
   trajetoDaAya,
   VOO_DA_AYA,
-} from "../src/lib/fogos-cena.js";
+} from "../src/lib/fogos-cena.ts";
 
 /* A cena dos fogos: o voo da Aya, o véu e a regra do som (sem DOM). */
 const tela = { largura: 1280, altura: 720 };

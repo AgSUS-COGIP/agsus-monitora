@@ -4,7 +4,7 @@ import {
   CHAVE_DA_COR_DA_BARRA,
   CHAVE_DO_LOGO_DA_BARRA,
   logoDaBarraSegura,
-} from "../../lib/marca-da-barra-lateral.js";
+} from "../../lib/marca-da-barra-lateral.ts";
 import { camposDaSecao } from "../../lib/publicacao-de-configuracoes.ts";
 import { aplicarMarcaDaBarraLateral } from "../../modules/sidebar-branding.js";
 import { Aviso, Selo } from "../../ui/index.ts";

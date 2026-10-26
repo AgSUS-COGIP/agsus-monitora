@@ -15,8 +15,9 @@
 
   A conta é a mesma do Leaflet: Web Mercator com azulejos de 256 px.
 */
-import { BRASIL_BOUNDS } from "./brasil-bounds.js";
-import { RAIO_MAXIMO as RAIO_DA_BOLHA } from "./mapa-render.js";
+import { BRASIL_BOUNDS } from "./brasil-bounds.ts";
+import type { LimitesGeograficos } from "./brasil-bounds.ts";
+import { RAIO_MAXIMO as RAIO_DA_BOLHA } from "./mapa-render.ts";
 
 /*
   O maior ponto dos mapas: o raio da bolha do DSEI e o traço dela. O ponto de
@@ -37,7 +38,10 @@ export const PASSO_DO_ZOOM = 0.25;
 const AZULEJO = 256;
 
 /* Posição em pixels no zoom 0 (Web Mercator, como `map.project` do Leaflet). */
-export function projetar([latitude, longitude]) {
+export function projetar([latitude, longitude]: readonly [number, number]): {
+  x: number;
+  y: number;
+} {
   const seno = Math.sin((latitude * Math.PI) / 180);
   return {
     x: ((longitude + 180) / 360) * AZULEJO,
@@ -45,7 +49,10 @@ export function projetar([latitude, longitude]) {
   };
 }
 
-function tamanhoNoZoomZero(limites) {
+function tamanhoNoZoomZero(limites: LimitesGeograficos): {
+  largura: number;
+  altura: number;
+} {
   const [sul, oeste] = limites[0];
   const [norte, leste] = limites[1];
   const noroeste = projetar([norte, oeste]);
@@ -66,7 +73,14 @@ export function zoomQueCabe({
   folga = FOLGA_DO_BRASIL,
   maximo = ZOOM_NACIONAL,
   passo = PASSO_DO_ZOOM,
-} = {}) {
+}: {
+  largura?: number | string | null;
+  altura?: number | string | null;
+  limites?: LimitesGeograficos;
+  folga?: number;
+  maximo?: number;
+  passo?: number;
+} = {}): number {
   const util = {
     largura: Number(largura) - 2 * folga,
     altura: Number(altura) - 2 * folga,
@@ -92,7 +106,12 @@ export function sobraNaMoldura({
   altura,
   zoom,
   limites = BRASIL_BOUNDS,
-}) {
+}: {
+  largura: number | string;
+  altura: number | string;
+  zoom: number;
+  limites?: LimitesGeograficos;
+}): { cima: number; baixo: number; esquerda: number; direita: number } {
   const base = tamanhoNoZoomZero(limites);
   const fator = 2 ** zoom;
   const horizontal = (Number(largura) - base.largura * fator) / 2;
@@ -118,12 +137,22 @@ export function sobraNaMoldura({
 export const ZOOM_DO_PONTO = 7;
 export const OPCOES_DA_CAIXA = Object.freeze({ padding: [60, 60], maxZoom: 7 });
 
-/** @param {{pontos?: readonly (readonly [number, number])[], filtroAtivo?: boolean}} [opcoes] */
+export interface EnquadramentoDoRecorte {
+  modo: "brasil" | "ponto" | "caixa";
+  pontos: [number, number][];
+  chave: string;
+}
+
 export function enquadramentoDoRecorte({
   pontos = [],
   filtroAtivo = false,
-} = {}) {
-  const lista = (Array.isArray(pontos) ? pontos : []).filter(
+}: {
+  pontos?: readonly [number, number][];
+  filtroAtivo?: boolean;
+} = {}): EnquadramentoDoRecorte {
+  const lista = (
+    (Array.isArray(pontos) ? pontos : []) as readonly [number, number][]
+  ).filter(
     (ponto) =>
       Array.isArray(ponto) &&
       Number.isFinite(Number(ponto[0])) &&

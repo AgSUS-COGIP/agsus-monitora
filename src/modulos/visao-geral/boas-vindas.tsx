@@ -10,7 +10,7 @@ import {
   primeiroNome,
   resumoDoDia,
   saudacao,
-} from "../../lib/boas-vindas.js";
+} from "../../lib/boas-vindas.ts";
 import {
   agradecimentoDoMarco,
   chaveDoMarco,
@@ -19,7 +19,7 @@ import {
   lerArmazenamento,
   mensagemDoMarcoDoAno,
   proximoEstadoDoMarco,
-} from "../../lib/comemoracao.js";
+} from "../../lib/comemoracao.ts";
 import { semTreinamento } from "../../lib/edital-de-treinamento.js";
 import { nomeDaArea } from "../../lib/menu-lateral.ts";
 import { comemorar } from "../../modules/comemoracao.js";
@@ -40,7 +40,7 @@ import { linhasDaResposta } from "../../lib/visao-geral.ts";
     (obter_marcos_da_area), nunca de uma pessoa; uma leitura por área e por
     pessoa em cada entrada, só com as comemorações ligadas. A regra (linha de
     base na primeira vez, marco novo contra o guardado, uma vez por marco) é
-    de src/lib/comemoracao.js. Qualquer falha: o card não aparece.
+    de src/lib/comemoracao.ts. Qualquer falha: o card não aparece.
 */
 
 /* Abre o Cronograma da área pelo item do menu (troca a área e a tela). */

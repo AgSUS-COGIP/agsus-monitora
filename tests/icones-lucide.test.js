@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   FA_MODIFICADORES,
   FA_PARA_LUCIDE,
-} from "../src/lib/mapa-de-icones-lucide.js";
+} from "../src/lib/mapa-de-icones-lucide.ts";
 import { gerarCssDosIcones } from "../scripts/gerar-icones-lucide.mjs";
 
 /*

@@ -57,7 +57,7 @@ import {
 import {
   avisar,
   EVENTO_MENU_ATUALIZADO,
-} from "../../lib/eventos-da-barra-lateral.js";
+} from "../../lib/eventos-da-barra-lateral.ts";
 import {
   assinarDadosDoMonitoramento,
   definirAreaAtual,

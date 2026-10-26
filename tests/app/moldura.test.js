@@ -7,7 +7,7 @@ import {
 import {
   EVENTO_BARRA_ALTERNADA,
   EVENTO_TEMA_ALTERADO,
-} from "../../src/lib/eventos-da-barra-lateral.js";
+} from "../../src/lib/eventos-da-barra-lateral.ts";
 import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,

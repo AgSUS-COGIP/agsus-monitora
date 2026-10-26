@@ -34,4 +34,4 @@ migration `20260930140000_modulos_e_manutencao.sql`.
 
 **perguntas:** desligar comemoracoes | ligar comemoracoes | comemoracoes desligadas | desligar os fogos para todos
 **resposta:** O liga/desliga geral das comemorações fica em Configurações › Módulos e abas › Sistema inteiro, com o administrador global: desligado, ninguém vê comemoração nenhuma. Cada marco, o efeito de cada um e os marcos personalizados ficam em Configurações › Comemorações.
-**fonte:** src/lib/comemoracao.js; supabase/migrations/20260930150000_comemoracoes_e_marcos.sql
+**fonte:** src/lib/comemoracao.ts; supabase/migrations/20260930150000_comemoracoes_e_marcos.sql

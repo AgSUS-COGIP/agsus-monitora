@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it } from "vitest";
-import { BRASIL_BOUNDS, boundsDoGeoJson } from "../src/lib/brasil-bounds.js";
+import { BRASIL_BOUNDS, boundsDoGeoJson } from "../src/lib/brasil-bounds.ts";
 import {
   chaveDoDsei,
   temCoordenada,

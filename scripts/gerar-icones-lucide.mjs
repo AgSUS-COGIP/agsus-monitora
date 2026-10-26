@@ -3,7 +3,7 @@
 
       npm run icones
 
-  Cada classe `fa-…` de `src/lib/mapa-de-icones-lucide.js` vira uma regra que
+  Cada classe `fa-…` de `src/lib/mapa-de-icones-lucide.ts` vira uma regra que
   desenha o ícone Lucide no `::before` do `<i>` — o mesmo lugar onde o Font
   Awesome desenhava o glifo. O `<i>` continua com o tamanho, o fundo e a cor
   que o CSS de cada tela já lhe dá (vários são o próprio quadradinho colorido
@@ -16,7 +16,7 @@
 import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import * as lucide from "lucide";
-import { FA_PARA_LUCIDE } from "../src/lib/mapa-de-icones-lucide.js";
+import { FA_PARA_LUCIDE } from "../src/lib/mapa-de-icones-lucide.ts";
 
 function svgDaMascara(no) {
   const filhos = no
@@ -54,7 +54,7 @@ export function gerarCssDosIcones() {
 
   return `/*
   GERADO por scripts/gerar-icones-lucide.mjs a partir de
-  src/lib/mapa-de-icones-lucide.js. Não edite à mão: rode \`npm run icones\`.
+  src/lib/mapa-de-icones-lucide.ts. Não edite à mão: rode \`npm run icones\`.
 
   Ícones Lucide no lugar do Font Awesome, com as mesmas classes \`fa-…\`.
 */

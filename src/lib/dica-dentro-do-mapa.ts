@@ -48,17 +48,94 @@ export const LARGURA_MINIMA_DO_POPUP = 160;
   (e, no alto, do seletor Mapa/Satélite); a de baixo à direita deixa a
   atribuição e a régua à vista.
 */
-export const FOLGA_DO_POPUP_EM_CIMA = Object.freeze([52, 24]);
-export const FOLGA_DO_POPUP_EMBAIXO = Object.freeze([24, 24]);
+export const FOLGA_DO_POPUP_EM_CIMA = Object.freeze([52, 24] as const);
+export const FOLGA_DO_POPUP_EMBAIXO = Object.freeze([24, 24] as const);
 
-const OPOSTA = Object.freeze({
-  top: "bottom",
-  bottom: "top",
-  left: "right",
-  right: "left",
-});
+/** Direção da dica do Leaflet que esta peça escolhe. */
+export type DirecaoDaDica = "top" | "bottom" | "left" | "right";
 
-const finito = (valor, reserva = 0) => {
+export interface PontoNoMapa {
+  x: number;
+  y: number;
+}
+export interface AreaDoMapa {
+  largura: number;
+  altura: number;
+}
+export interface RetanguloNoMapa extends PontoNoMapa, AreaDoMapa {}
+export interface Deslocamento {
+  dx: number;
+  dy: number;
+}
+/** A dica medida: âncora (ponta da seta, em px do contêiner) e tamanho. */
+export interface MedidaDaDica {
+  ancora: Partial<PontoNoMapa> | null | undefined;
+  largura: number;
+  altura: number;
+}
+export interface DirecaoEscolhida {
+  direcao: DirecaoDaDica;
+  transborda: number;
+  deslocamento: Deslocamento;
+}
+
+/** As opções de popup do Leaflet que esta peça define. */
+export interface OpcoesDoPopup {
+  className: string;
+  maxWidth: number;
+  minWidth: number;
+  autoPan: boolean;
+  keepInView: boolean;
+  autoPanPaddingTopLeft: number[];
+  autoPanPaddingBottomRight: number[];
+  maxHeight?: number;
+}
+
+/*
+  O mínimo do Leaflet que esta peça usa: dica (`L.Tooltip`), popup
+  (`L.Popup`) e mapa (`L.Map`).
+*/
+export interface DicaDoLeaflet {
+  getElement?(): HTMLElement | undefined;
+  options?: { direction?: string; offset?: unknown; sticky?: boolean };
+  setLatLng?(posicao: unknown): unknown;
+  getLatLng(): unknown;
+  _source?: {
+    on?(evento: string, ouvinte: () => void): unknown;
+    off?(evento: string, ouvinte: () => void): unknown;
+  };
+}
+export interface PopupDoLeaflet {
+  options?: Record<string, unknown>;
+  getElement?(): HTMLElement | undefined;
+  update?(): unknown;
+}
+export interface EventoDaDicaOuPopup {
+  tooltip?: DicaDoLeaflet;
+  popup?: PopupDoLeaflet;
+}
+export interface MapaDaDica {
+  getContainer?(): HTMLElement | undefined;
+  /* O ouvinte recebe o evento do Leaflet (`EventoDaDicaOuPopup` aqui). */
+  on?(evento: string, ouvinte: (evento?: unknown) => void): unknown;
+  off?(evento: string, ouvinte: (evento?: unknown) => void): unknown;
+}
+export type MedirDica = (
+  mapa: MapaDaDica,
+  dica: DicaDoLeaflet,
+  elemento: HTMLElement,
+  direcao: string,
+) => MedidaDaDica | null;
+
+const OPOSTA: Readonly<Record<string, DirecaoDaDica | undefined>> =
+  Object.freeze({
+    top: "bottom",
+    bottom: "top",
+    left: "right",
+    right: "left",
+  });
+
+const finito = (valor: unknown, reserva = 0): number => {
   const n = Number(valor);
   return Number.isFinite(n) ? n : reserva;
 };
@@ -68,7 +145,10 @@ const finito = (valor, reserva = 0) => {
   mapa, em pixels do contêiner) e a seta. É a conta do `_setPosition` do
   Leaflet 1.9 com as margens da seta do leaflet.css.
 */
-export function retanguloDaDica(direcao, { ancora, largura, altura }) {
+export function retanguloDaDica(
+  direcao: string,
+  { ancora, largura, altura }: MedidaDaDica,
+): RetanguloNoMapa {
   const x = finito(ancora?.x);
   const y = finito(ancora?.y);
   const d = DISTANCIA_DA_SETA;
@@ -82,7 +162,11 @@ export function retanguloDaDica(direcao, { ancora, largura, altura }) {
 }
 
 /* Quantos pixels do retângulo ficam fora da área útil (soma dos quatro lados). */
-export function transbordamento(retangulo, area, folga = FOLGA_DA_BORDA) {
+export function transbordamento(
+  retangulo: RetanguloNoMapa,
+  area: AreaDoMapa,
+  folga: number = FOLGA_DA_BORDA,
+): number {
   const esquerda = Math.max(0, folga - retangulo.x);
   const topo = Math.max(0, folga - retangulo.y);
   const direita = Math.max(
@@ -100,8 +184,12 @@ export function transbordamento(retangulo, area, folga = FOLGA_DA_BORDA) {
   Quanto empurrar o retângulo para ele ficar dentro da área útil (o que sobra
   de um lado vai para o outro; maior que a área, encosta no começo).
 */
-export function deslocamentoParaCaber(retangulo, area, folga = FOLGA_DA_BORDA) {
-  const eixo = (inicio, tamanho, limite) => {
+export function deslocamentoParaCaber(
+  retangulo: RetanguloNoMapa,
+  area: AreaDoMapa,
+  folga: number = FOLGA_DA_BORDA,
+): Deslocamento {
+  const eixo = (inicio: number, tamanho: number, limite: number): number => {
     if (inicio < folga || tamanho > limite - 2 * folga) return folga - inicio;
     const fim = inicio + tamanho;
     return fim > limite - folga ? limite - folga - fim : 0;
@@ -117,12 +205,18 @@ export function deslocamentoParaCaber(retangulo, area, folga = FOLGA_DA_BORDA) {
   primeiro o que tem mais espaço (à direita de quem está na metade esquerda).
   Pedida à esquerda ou à direita, a outra lateral vem antes de cima/embaixo.
 */
-export function ordemDasDirecoes(preferida, ancora, area) {
-  const pedida = OPOSTA[preferida] ? preferida : "top";
-  const ladoComMaisEspaco =
+export function ordemDasDirecoes(
+  preferida: string | undefined,
+  ancora: Partial<PontoNoMapa> | null | undefined,
+  area: Partial<AreaDoMapa> | null | undefined,
+): DirecaoDaDica[] {
+  const pedida = (
+    OPOSTA[preferida as string] ? preferida : "top"
+  ) as DirecaoDaDica;
+  const ladoComMaisEspaco: DirecaoDaDica =
     finito(ancora?.x) < finito(area?.largura) / 2 ? "right" : "left";
-  const lados = [ladoComMaisEspaco, OPOSTA[ladoComMaisEspaco]];
-  const verticais = ["top", "bottom"];
+  const lados = [ladoComMaisEspaco, OPOSTA[ladoComMaisEspaco] as DirecaoDaDica];
+  const verticais: DirecaoDaDica[] = ["top", "bottom"];
   const resto =
     pedida === "top" || pedida === "bottom"
       ? lados
@@ -130,22 +224,21 @@ export function ordemDasDirecoes(preferida, ancora, area) {
           ...verticais.filter((v) => v !== pedida),
           ...lados.filter((l) => l !== pedida && l !== OPOSTA[pedida]),
         ];
-  return [...new Set([pedida, OPOSTA[pedida], ...resto, ...verticais])];
+  return [
+    ...new Set([
+      pedida,
+      OPOSTA[pedida] as DirecaoDaDica,
+      ...resto,
+      ...verticais,
+    ]),
+  ];
 }
 
 /**
  * A direção da dica que cabe no mapa.
  *
- * @param {object} medida
- * @param {{x:number,y:number}} medida.ancora  ponto da dica, em px do contêiner
- * @param {number} medida.largura              largura da dica
- * @param {number} medida.altura               altura da dica
- * @param {{largura:number,altura:number}} medida.area  tamanho do contêiner
- * @param {string} [medida.preferida]          direção pedida (padrão "top")
- * @param {number} [medida.folga]              espaço mínimo até a borda
- * @returns {{direcao: string, transborda: number, deslocamento: {dx: number, dy: number}}}
- *   `deslocamento` só não é zero quando nenhuma direção cabe inteira: o quanto
- *   empurrar a dica (na direção que menos transborda) para dentro do mapa.
+ * `deslocamento` só não é zero quando nenhuma direção cabe inteira: o quanto
+ * empurrar a dica (na direção que menos transborda) para dentro do mapa.
  */
 export function escolherDirecaoDaDica({
   ancora,
@@ -154,22 +247,39 @@ export function escolherDirecaoDaDica({
   area,
   preferida = "top",
   folga = FOLGA_DA_BORDA,
-}) {
-  const medida = {
+}: {
+  /** Ponto da dica, em px do contêiner. */
+  ancora: Partial<PontoNoMapa> | null | undefined;
+  /** Largura da dica. */
+  largura: unknown;
+  /** Altura da dica. */
+  altura: unknown;
+  /** Tamanho do contêiner. */
+  area: Partial<AreaDoMapa> | null | undefined;
+  /** Direção pedida (padrão "top"). */
+  preferida?: string;
+  /** Espaço mínimo até a borda. */
+  folga?: number;
+}): DirecaoEscolhida {
+  const medida: MedidaDaDica = {
     ancora,
     largura: Math.max(0, finito(largura)),
     altura: Math.max(0, finito(altura)),
   };
-  const util = {
+  const util: AreaDoMapa = {
     largura: Math.max(0, finito(area?.largura)),
     altura: Math.max(0, finito(area?.altura)),
   };
   const ordem = ordemDasDirecoes(preferida, ancora, util);
-  const parado = { dx: 0, dy: 0 };
+  const parado: Deslocamento = { dx: 0, dy: 0 };
   // Sem medida (mapa escondido, teste sem layout): fica a pedida.
   if (!util.largura || !util.altura || !medida.largura)
-    return { direcao: ordem[0], transborda: 0, deslocamento: parado };
-  let melhor = null;
+    return { direcao: ordem[0]!, transborda: 0, deslocamento: parado };
+  let melhor: {
+    direcao: DirecaoDaDica;
+    transborda: number;
+    retangulo: RetanguloNoMapa;
+  } | null = null;
   for (const direcao of ordem) {
     const retangulo = retanguloDaDica(direcao, medida);
     const transborda = transbordamento(retangulo, util, folga);
@@ -178,14 +288,17 @@ export function escolherDirecaoDaDica({
       melhor = { direcao, transborda, retangulo };
   }
   return {
-    direcao: melhor.direcao,
-    transborda: melhor.transborda,
-    deslocamento: deslocamentoParaCaber(melhor.retangulo, util, folga),
+    direcao: melhor!.direcao,
+    transborda: melhor!.transborda,
+    deslocamento: deslocamentoParaCaber(melhor!.retangulo, util, folga),
   };
 }
 
 /* O teto da largura da dica num mapa desta largura (mapa estreito, dica estreita). */
-export function larguraMaximaDaDica(larguraDoMapa, folga = FOLGA_DA_BORDA) {
+export function larguraMaximaDaDica(
+  larguraDoMapa: unknown,
+  folga: number = FOLGA_DA_BORDA,
+): number {
   const disponivel = finito(larguraDoMapa) - 2 * folga;
   if (disponivel <= 0) return LARGURA_MAXIMA_DA_DICA;
   return Math.max(
@@ -199,7 +312,10 @@ export function larguraMaximaDaDica(larguraDoMapa, folga = FOLGA_DA_BORDA) {
   mapa menos as folgas do autoPan, e a altura máxima faz o conteúdo longo
   rolar dentro do balão em vez de sair por cima. Sem medida, as de sempre.
 */
-export function opcoesDoPopup({ largura, altura } = {}) {
+export function opcoesDoPopup({
+  largura,
+  altura,
+}: { largura?: unknown; altura?: unknown } = {}): OpcoesDoPopup {
   const w = finito(largura);
   const h = finito(altura);
   const folgaLateral = FOLGA_DO_POPUP_EM_CIMA[0] + FOLGA_DO_POPUP_EMBAIXO[0];
@@ -214,7 +330,7 @@ export function opcoesDoPopup({ largura, altura } = {}) {
           80,
         )
       : LARGURA_MAXIMA_DO_POPUP;
-  const opcoes = {
+  const opcoes: OpcoesDoPopup = {
     className: CLASSE_DO_POPUP,
     maxWidth,
     minWidth: Math.min(LARGURA_MINIMA_DO_POPUP, maxWidth),
@@ -228,7 +344,7 @@ export function opcoesDoPopup({ largura, altura } = {}) {
 }
 
 /* Medida do contêiner do mapa (0 quando escondido). */
-function medidaDoMapa(mapa) {
+function medidaDoMapa(mapa: MapaDaDica | null | undefined): AreaDoMapa {
   const elemento = mapa?.getContainer?.();
   return {
     largura: finito(elemento?.clientWidth),
@@ -236,12 +352,18 @@ function medidaDoMapa(mapa) {
   };
 }
 
-const pedidas = new WeakMap();
+const pedidas = new WeakMap<
+  DicaDoLeaflet,
+  { direcao: string; deslocamento: [number, number] }
+>();
 
-const comoPar = (offset) =>
+const comoPar = (offset: unknown): [number, number] =>
   Array.isArray(offset)
     ? [finito(offset[0]), finito(offset[1])]
-    : [finito(offset?.x), finito(offset?.y)];
+    : [
+        finito((offset as Partial<PontoNoMapa> | null | undefined)?.x),
+        finito((offset as Partial<PontoNoMapa> | null | undefined)?.y),
+      ];
 
 /*
   Reposiciona a dica aberta: volta à direção e ao deslocamento pedidos, aplica
@@ -251,7 +373,11 @@ const comoPar = (offset) =>
   apontaria mais para o ponto. `medir` existe para o teste (o jsdom não tem
   layout).
 */
-export function ajustarDica(mapa, dica, { medir = medirDica } = {}) {
+export function ajustarDica(
+  mapa: MapaDaDica | null | undefined,
+  dica: DicaDoLeaflet,
+  { medir = medirDica }: { medir?: MedirDica } = {},
+): DirecaoDaDica | null {
   const elemento = dica?.getElement?.();
   if (!mapa || !elemento || !dica.options) return null;
   if (!pedidas.has(dica))
@@ -259,7 +385,7 @@ export function ajustarDica(mapa, dica, { medir = medirDica } = {}) {
       direcao: dica.options.direction || "top",
       deslocamento: comoPar(dica.options.offset),
     });
-  const { direcao: preferida, deslocamento: original } = pedidas.get(dica);
+  const { direcao: preferida, deslocamento: original } = pedidas.get(dica)!;
   // "center" e "auto" ficam como o Leaflet faz.
   if (!OPOSTA[preferida]) return null;
   const area = medidaDoMapa(mapa);
@@ -301,7 +427,12 @@ export function ajustarDica(mapa, dica, { medir = medirDica } = {}) {
   Mede a dica já posicionada pelo Leaflet na direção `direcao` e devolve a
   âncora que ele usou (a ponta da seta), em pixels do contêiner.
 */
-export function medirDica(mapa, _dica, elemento, direcao) {
+export function medirDica(
+  mapa: MapaDaDica,
+  _dica: DicaDoLeaflet,
+  elemento: HTMLElement,
+  direcao: string,
+): (MedidaDaDica & { ancora: PontoNoMapa }) | null {
   const caixa = elemento.getBoundingClientRect?.();
   const moldura = mapa.getContainer?.()?.getBoundingClientRect?.();
   if (!caixa || !moldura || !caixa.width) return null;
@@ -320,7 +451,10 @@ export function medirDica(mapa, _dica, elemento, direcao) {
 }
 
 /* Popup aberto: opções do tamanho atual do mapa e o autoPan refeito com elas. */
-export function ajustarPopup(mapa, popup) {
+export function ajustarPopup(
+  mapa: MapaDaDica | null | undefined,
+  popup: PopupDoLeaflet | null | undefined,
+): OpcoesDoPopup | null {
   if (!mapa || !popup?.options) return null;
   const opcoes = opcoesDoPopup(medidaDoMapa(mapa));
   const { className, ...resto } = opcoes;
@@ -334,12 +468,16 @@ export function ajustarPopup(mapa, popup) {
  * Liga o ajuste a um mapa do Leaflet: toda dica e todo popup que abrir nele.
  * Devolve a função que desliga (o `remove` do mapa também desfaz).
  */
-export function manterDicasDentroDoMapa(mapa, { medir = medirDica } = {}) {
+export function manterDicasDentroDoMapa(
+  mapa: MapaDaDica | null | undefined,
+  { medir = medirDica }: { medir?: MedirDica } = {},
+): () => void {
   if (!mapa?.on) return () => {};
-  const seguindo = new Map();
-  const aoAbrirDica = (evento) => {
-    const dica = evento?.tooltip;
-    ajustarDica(mapa, dica, { medir });
+  const seguindo = new Map<DicaDoLeaflet | undefined, () => void>();
+  const aoAbrirDica = (evento?: unknown) => {
+    const dica = (evento as EventoDaDicaOuPopup | undefined)?.tooltip;
+    // ajustarDica tolera a dica ausente (`dica?.getElement?.()`).
+    ajustarDica(mapa, dica as DicaDoLeaflet, { medir });
     // A dica que segue o ponteiro (`sticky`) é reposicionada a cada movimento.
     const origem = dica?._source;
     if (dica?.options?.sticky && origem?.on && !seguindo.has(dica)) {
@@ -348,13 +486,16 @@ export function manterDicasDentroDoMapa(mapa, { medir = medirDica } = {}) {
       seguindo.set(dica, () => origem.off?.("mousemove", aoMover));
     }
   };
-  const aoFecharDica = (evento) => {
-    const parar = seguindo.get(evento?.tooltip);
+  const aoFecharDica = (evento?: unknown) => {
+    const parar = seguindo.get(
+      (evento as EventoDaDicaOuPopup | undefined)?.tooltip,
+    );
     if (!parar) return;
     parar();
-    seguindo.delete(evento.tooltip);
+    seguindo.delete((evento as EventoDaDicaOuPopup).tooltip);
   };
-  const aoAbrirPopup = (evento) => ajustarPopup(mapa, evento?.popup);
+  const aoAbrirPopup = (evento?: unknown) =>
+    ajustarPopup(mapa, (evento as EventoDaDicaOuPopup | undefined)?.popup);
   mapa.on("tooltipopen", aoAbrirDica);
   mapa.on("tooltipclose", aoFecharDica);
   mapa.on("popupopen", aoAbrirPopup);

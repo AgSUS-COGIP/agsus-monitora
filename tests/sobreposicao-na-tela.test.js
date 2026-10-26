@@ -3,7 +3,7 @@ import {
   SOBREPOSICAO_EM_PIXELS,
   agruparCoincidentes,
   agruparPorProximidadeNaTela,
-} from "../src/lib/mapa-render.js";
+} from "../src/lib/mapa-render.ts";
 
 /*
   DOIS REGISTOS A DEZ METROS SÃO UM PIXEL SÓ

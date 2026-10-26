@@ -5,7 +5,7 @@ import {
   FORMATOS,
   INTENSIDADES,
   paletaDosFogos,
-} from "../src/lib/fogos.js";
+} from "../src/lib/fogos.ts";
 import {
   avancarCena,
   cenaAcabou,
@@ -19,7 +19,7 @@ import {
   nivelDaIntensidade,
   normalizarDuracao,
   particulasDaCena,
-} from "../src/lib/motor-de-efeitos.js";
+} from "../src/lib/motor-de-efeitos.ts";
 
 /*
   O motor de efeitos das comemorações: cenas repetíveis com semente fixa,

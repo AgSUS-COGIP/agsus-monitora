@@ -22,8 +22,8 @@ import type {
   CasaiNacionalDoMapa,
   EnquadramentoDoMapa,
 } from "./tipos.ts";
-import { enquadramentoDoRecorte } from "../enquadramento-do-brasil.js";
-import { OPACIDADE_DA_BOLHA, raioDaBolha } from "../mapa-render.js";
+import { enquadramentoDoRecorte } from "../enquadramento-do-brasil.ts";
+import { OPACIDADE_DA_BOLHA, raioDaBolha } from "../mapa-render.ts";
 import { siglaDaUf } from "../uf-ibge.js";
 import {
   chaveDoDsei,
@@ -61,7 +61,7 @@ const VAZIO = Object.freeze({ editais: 0, vagas: 0, ociosas: 0 });
 /*
   Uma bolha por DSEI com coordenada. Ordem: da maior para a menor, para que a
   menor fique por cima e as duas continuem clicáveis onde se sobrepõem (o
-  leque, `leque-de-marcadores.js`, separa as que caem no mesmo pixel).
+  leque, `leque-de-marcadores.ts`, separa as que caem no mesmo pixel).
 */
 
 export function bolhasDosDsei({
@@ -184,7 +184,7 @@ export function casaisNacionais({
 
 /*
   Enquadramento do mapa nacional: a regra comum aos mapas da Visão geral
-  (`enquadramentoDoRecorte`, src/lib/enquadramento-do-brasil.js) com os DSEIs
+  (`enquadramentoDoRecorte`, src/lib/enquadramento-do-brasil.ts) com os DSEIs
   e as CASAIs que sobraram. Sem filtro, o Brasil; um ponto só, zoom 7 nele.
 */
 
