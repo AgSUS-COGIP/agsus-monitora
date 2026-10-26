@@ -1,14 +1,14 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { calcularAvaliacao } from "../src/lib/avaliacao-documental/pontuacao.js";
+import { calcularAvaliacao } from "../src/lib/avaliacao-documental/pontuacao.ts";
 import {
   preClassificarVaga,
   tamanhoDoLote,
-} from "../src/lib/avaliacao-documental/pre-classificacao.js";
+} from "../src/lib/avaliacao-documental/pre-classificacao.ts";
 import {
   normalizarRegraAnalise,
   validarRegraAnalise,
-} from "../src/lib/avaliacao-documental/regra.js";
+} from "../src/lib/avaliacao-documental/regra.ts";
 
 /*
   Modelos da regra lidos dos editais recentes (91, 93, 100, 109, 111 e

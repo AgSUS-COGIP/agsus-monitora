@@ -15,7 +15,7 @@ const NOME =
 const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);
-const FICHA = ler("src/lib/avaliacao-documental/ficha.js");
+const FICHA = ler("src/lib/avaliacao-documental/ficha.ts");
 
 const funcao = (sql) => {
   const ini = sql.search(/function private."FC_PENDENCIAS_FICHA"/i);

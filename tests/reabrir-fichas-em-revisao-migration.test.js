@@ -6,7 +6,7 @@ const migration = readFileSync(`supabase/migrations/${nome}`, "utf8");
 const rollback = readFileSync(`supabase/rollback/${nome}`, "utf8");
 const ensaio = readFileSync(`supabase/ensaios/${nome}`, "utf8");
 const tela = readFileSync(
-  "src/modulos/avaliacao-documental/ficha/ficha.jsx",
+  "src/modulos/avaliacao-documental/ficha/ficha.tsx",
   "utf8",
 );
 const papelDaAvaliacao = readFileSync(

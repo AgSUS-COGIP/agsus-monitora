@@ -24,7 +24,7 @@ import type {
   A lista branca e a validação dos parâmetros são de src/lib/robos-de-carga.js
   (as mesmas de disparar_robo, no banco).
 */
-import { editalVigente } from "./avaliacao-documental/editais.js";
+import { editalVigente } from "./avaliacao-documental/editais.ts";
 import {
   ehEditalDeTreinamento,
   sufixoDeTreinamento,

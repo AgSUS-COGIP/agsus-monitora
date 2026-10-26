@@ -9,16 +9,43 @@
   avaliacao_documental para analisar ou revisar, Administrador para
   coordenar) em salvar_equipe_edital.
 */
-import { PAPEIS_DA_EQUIPE } from "./catalogo.js";
+import { PAPEIS_DA_EQUIPE } from "./catalogo.ts";
+
+export type PapelDaEquipe = "ANALISTA" | "REVISOR" | "COORDENADOR";
+
+/** A linha como a tela a edita (campos de formulário, ainda sem conferir). */
+export interface EntradaDaEquipe {
+  usuario?: unknown;
+  papel?: unknown;
+  vaga?: unknown;
+  limite?: unknown;
+}
+
+/** A linha no formato de salvar_equipe_edital. */
+export interface LinhaDaEquipe {
+  usuario: string;
+  papel: string;
+  vaga: string | null;
+  limite: number | null;
+}
+
+/** O gestor do edital (já coordena, sem linha na tabela). */
+export interface GestorDoEdital {
+  usuario: string;
+}
+
+export type ResumoDaEquipe = Record<PapelDaEquipe, number>;
 
 const PAPEIS = new Set(PAPEIS_DA_EQUIPE.map(([v]) => v));
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const VAGA = /^[0-9]{1,20}$/;
 
-const texto = (v) => String(v ?? "").trim();
+const texto = (v: unknown): string => String(v ?? "").trim();
 
 /** A linha da tela no formato que salvar_equipe_edital recebe. */
-export function linhaDaEquipe(linha) {
+export function linhaDaEquipe(
+  linha: EntradaDaEquipe | null | undefined,
+): LinhaDaEquipe {
   const vaga = texto(linha?.vaga);
   const limite = texto(linha?.limite);
   return {
@@ -33,9 +60,12 @@ export function linhaDaEquipe(linha) {
  * Confere a equipe antes de enviar (o banco confere de novo, com as
  * permissões). Devolve a lista de erros (vazia = pode salvar).
  */
-export function validarEquipe(linhas, { gestores = [] } = {}) {
-  const erros = [];
-  const vistos = new Set();
+export function validarEquipe(
+  linhas: ReadonlyArray<EntradaDaEquipe> | null | undefined,
+  { gestores = [] }: { gestores?: ReadonlyArray<GestorDoEdital> } = {},
+): string[] {
+  const erros: string[] = [];
+  const vistos = new Set<string>();
   const ehGestor = new Set(gestores.map((g) => g.usuario));
   (Array.isArray(linhas) ? linhas : []).forEach((bruta, i) => {
     const l = linhaDaEquipe(bruta);
@@ -61,9 +91,14 @@ export function validarEquipe(linhas, { gestores = [] } = {}) {
 }
 
 /** Quantas pessoas por papel (gestores contam como coordenação). */
-export function resumoDaEquipe(linhas, gestores = []) {
-  const resumo = { ANALISTA: 0, REVISOR: 0, COORDENADOR: 0 };
-  const porPapel = {
+export function resumoDaEquipe(
+  linhas: ReadonlyArray<EntradaDaEquipe> | null | undefined,
+  gestores: ReadonlyArray<GestorDoEdital> = [],
+): ResumoDaEquipe {
+  const resumo: ResumoDaEquipe = { ANALISTA: 0, REVISOR: 0, COORDENADOR: 0 };
+  // Indexado pelo papel da linha (texto livre): papel desconhecido dá undefined.
+  const porPapel: Record<PapelDaEquipe, Set<string>> &
+    Partial<Record<string, Set<string>>> = {
     ANALISTA: new Set(),
     REVISOR: new Set(),
     COORDENADOR: new Set(),
@@ -71,8 +106,9 @@ export function resumoDaEquipe(linhas, gestores = []) {
   for (const g of gestores) porPapel.COORDENADOR.add(g.usuario);
   for (const bruta of Array.isArray(linhas) ? linhas : []) {
     const l = linhaDaEquipe(bruta);
-    if (porPapel[l.papel] && l.usuario) porPapel[l.papel].add(l.usuario);
+    if (porPapel[l.papel] && l.usuario) porPapel[l.papel]!.add(l.usuario);
   }
-  for (const papel of Object.keys(resumo)) resumo[papel] = porPapel[papel].size;
+  for (const papel of Object.keys(resumo) as PapelDaEquipe[])
+    resumo[papel] = porPapel[papel].size;
   return resumo;
 }

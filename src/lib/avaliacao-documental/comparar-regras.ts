@@ -5,7 +5,7 @@
   acadêmica › teto: 10 → 12"). Sem DOM e sem estado.
 */
 import { regraNormalizada } from "./assistente-da-regra.ts";
-import { textoDaPergunta } from "./regra.js";
+import { textoDaPergunta } from "./regra.ts";
 import type { RegraAnalise } from "./tipos-da-regra.ts";
 
 export type Diferenca = {

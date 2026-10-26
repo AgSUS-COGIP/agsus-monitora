@@ -1,5 +1,5 @@
 /*
-  Contratos do assistente da regra com o estado da tela (estado.js) e com as
+  Contratos do assistente da regra com o estado da tela (estado.ts) e com as
   RPCs obter_regra_analise, obter_apoio_regra_analise e
   obter_perguntas_carga_analise. Dados externos: uma
   anotação não valida JSON; a regra é conferida por validarRegraAnalise antes

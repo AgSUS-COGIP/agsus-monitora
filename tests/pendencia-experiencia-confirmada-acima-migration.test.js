@@ -18,7 +18,7 @@ const ROLLBACK = ler(`supabase/rollback/${NOME}`);
 const ANTERIOR = ler(
   "supabase/migrations/20261020100000_pendencia_experiencia_nao_confere_com_vinculos.sql",
 );
-const FICHA = ler("src/lib/avaliacao-documental/ficha.js");
+const FICHA = ler("src/lib/avaliacao-documental/ficha.ts");
 
 const funcao = (sql) => {
   const ini = sql.search(/function private."FC_PENDENCIAS_FICHA"/i);

@@ -3,7 +3,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DiferencasPorCargo } from "../../src/modulos/avaliacao-documental/assistente/diferencas-por-cargo.tsx";
-import { validarRegraAnalise } from "../../src/lib/avaliacao-documental/regra.js";
+import { validarRegraAnalise } from "../../src/lib/avaliacao-documental/regra.ts";
 import { clicar, digitar } from "../componentes/interacoes.js";
 
 /*

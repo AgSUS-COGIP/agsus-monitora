@@ -10,7 +10,7 @@ import {
   calcularFicha,
   declaradaDaFicha,
   regraDaFicha,
-} from "../../src/lib/avaliacao-documental/ficha.js";
+} from "../../src/lib/avaliacao-documental/ficha.ts";
 import { entradaDoEspelho } from "../../src/lib/avaliacao-documental/espelho-da-ficha-gravada.ts";
 
 const f114 = JSON.parse(
@@ -20,7 +20,7 @@ const f114 = JSON.parse(
   ),
 );
 
-/* A ficha concluída como estado-da-ficha.js a deixa (regra da vaga, conta e declarada). */
+/* A ficha concluída como estado-da-ficha.ts a deixa (regra da vaga, conta e declarada). */
 function fichaConcluida(lancamento, documental = { nota_minima: 15 }) {
   const regra = regraDaFicha(structuredClone(f114.regra), lancamento);
   const avaliacao = calcularFicha(regra, lancamento, documental);

@@ -8,8 +8,8 @@ import {
   type AndamentoDaVaga,
   type OrdemPorVaga,
 } from "../../lib/avaliacao-documental/andamento-por-vaga.ts";
-import { textoDoAndamento } from "../../lib/avaliacao-documental/fila.js";
-import { textoDoLote } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
+import { textoDoAndamento } from "../../lib/avaliacao-documental/fila.ts";
+import { textoDoLote } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 
 /*
   O resumo do andamento no alto da Fila: a barra do edital (concluídas, em

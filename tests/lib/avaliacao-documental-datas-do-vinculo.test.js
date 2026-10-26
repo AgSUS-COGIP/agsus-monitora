@@ -7,7 +7,7 @@ import {
 import {
   colunasDaEtapa,
   textoDaColuna,
-} from "../../src/lib/avaliacao-documental/fila.js";
+} from "../../src/lib/avaliacao-documental/fila.ts";
 import { linhaDoItemLido } from "../../src/lib/avaliacao-documental/leitura-dos-arquivos.ts";
 
 /*

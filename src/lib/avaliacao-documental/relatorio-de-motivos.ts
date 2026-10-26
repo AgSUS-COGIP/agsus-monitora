@@ -8,9 +8,9 @@
 */
 import { sanitizeCsvCell } from "../csv-security";
 import { gerarXlsx } from "../classificacao/exportacao.ts";
-import { RESULTADOS, rotuloDe, SITUACOES_DO_BLOCO } from "./catalogo.js";
-import { nomeCurtoDoBloco } from "./ficha.js";
-import { OUTRO_MOTIVO } from "./pontuacao.js";
+import { RESULTADOS, rotuloDe, SITUACOES_DO_BLOCO } from "./catalogo.ts";
+import { nomeCurtoDoBloco } from "./ficha.ts";
+import { OUTRO_MOTIVO } from "./pontuacao.ts";
 
 export const RPC_RELATORIO_DE_MOTIVOS = "listar_relatorio_de_motivos";
 /** O banco devolve até 500 fichas por página. */

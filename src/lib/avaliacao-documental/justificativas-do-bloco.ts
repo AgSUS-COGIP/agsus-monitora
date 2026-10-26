@@ -3,7 +3,7 @@
   motivos padronizados do próprio bloco e as observações prontas do mesmo
   assunto), depois as outras (gerais ou de outros blocos), que a tela mostra
   recolhidas. A lista completa e a gravação não mudam (opcoesDeJustificativa
-  em ficha.js; os códigos continuam os mesmos).
+  em ficha.ts; os códigos continuam os mesmos).
 
   A regra não liga a observação pronta a um bloco (só tem item_edital, que não
   bate com o do bloco: a "Nota de cursos diminuída" cita o 6.4, o bloco de
@@ -18,7 +18,7 @@
   texto, mas é de Identidade). O assunto do bloco vem do tipo (VINCULOS,
   TITULOS, CURSOS); nos outros, do título e do código pelas mesmas palavras.
 */
-import { opcoesDeJustificativa } from "./ficha.js";
+import { opcoesDeJustificativa } from "./ficha.ts";
 
 export type Assunto = "EXPERIENCIA" | "TITULOS" | "CURSOS" | "IDENTIDADE";
 

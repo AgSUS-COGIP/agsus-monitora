@@ -11,7 +11,7 @@ import { espelhoDaFichaGravada } from "../../src/lib/avaliacao-documental/espelh
 import {
   calcularFicha,
   regraDaFicha,
-} from "../../src/lib/avaliacao-documental/ficha.js";
+} from "../../src/lib/avaliacao-documental/ficha.ts";
 import { carregarBibliotecasDoPdf } from "../../src/lib/avaliacao-documental/espelho-em-pdf.ts";
 import { unzipSync } from "fflate";
 import { clicar, esperar } from "../componentes/interacoes.js";

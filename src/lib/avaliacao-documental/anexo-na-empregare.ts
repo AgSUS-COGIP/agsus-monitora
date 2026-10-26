@@ -1,7 +1,7 @@
 /*
   O anexo declarado na Empregare, como a ficha o mostra: o endereço do botão
   do anexo, o rótulo e a dica de onde achar o arquivo. Única fonte: a ficha
-  (ficha.jsx e ficha/empregare.tsx) não monta link nenhum.
+  (ficha.tsx e ficha/empregare.tsx) não monta link nenhum.
 
   O robô (scripts/robo-empregare/anexos_empregare.py, com --anexos) lê o
   JSON das respostas de cada questionário (GetRespostaDetails) e grava
@@ -14,7 +14,7 @@
   respondeu o questionário mais de uma vez tem as outras em
   `empregare.envios_anteriores`, cada uma com os arquivos.
 
-    enderecos.anexos = anexosDaEmpregare(dados.empregare);        // ficha.jsx
+    enderecos.anexos = anexosDaEmpregare(dados.empregare);        // ficha.tsx
     enderecos.impressao = impressaoDasRespostas(dados.empregare);
     enderecos.anteriores = enviosAnterioresDaEmpregare(dados.empregare);
     enderecos.respostaLida = respostaLidaDaEmpregare(dados.empregare);
@@ -52,7 +52,7 @@ export type EnvioAnterior = {
   arquivos: AnexoDaEmpregare[];
 };
 
-/** Os endereços que a ficha já resolveu (ficha.js), os anexos e a impressão das respostas. */
+/** Os endereços que a ficha já resolveu (ficha.ts), os anexos e a impressão das respostas. */
 export type EnderecosDaEmpregare = {
   candidato: string | null;
   vaga: string | null;

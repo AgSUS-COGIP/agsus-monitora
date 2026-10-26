@@ -1,14 +1,20 @@
 import { useMemo, useState } from "react";
-import { PAPEIS_DA_EQUIPE } from "../../lib/avaliacao-documental/catalogo.js";
+import { PAPEIS_DA_EQUIPE } from "../../lib/avaliacao-documental/catalogo.ts";
 import {
   linhaDaEquipe,
   resumoDaEquipe,
   validarEquipe,
-} from "../../lib/avaliacao-documental/equipe.js";
+} from "../../lib/avaliacao-documental/equipe.ts";
 import { rotuloDoNivel } from "../../lib/permissoes-recursos.ts";
 import { Aviso, Campo, EstadoVazio, Selo } from "../../ui/index.ts";
-import { BotaoMais, BotaoTirar } from "./campos.jsx";
+import { BotaoMais, BotaoTirar } from "./campos.tsx";
 import { QuemEntraNaEquipe } from "./quem-entra-na-equipe.tsx";
+import type { LojaDaAvaliacao } from "./estado.ts";
+import type {
+  EstadoDaAvaliacao,
+  LinhaDaEquipeSalva,
+  PessoaDaEquipe,
+} from "./tipos-do-estado.ts";
 
 /*
   Aba "Equipe": quem analisa, quem revisa e quem coordena o edital (ou uma
@@ -17,14 +23,31 @@ import { QuemEntraNaEquipe } from "./quem-entra-na-equipe.tsx";
 */
 
 const NIVEL = ["sem_acesso", "leitor", "editor", "admin"];
-const daEquipe = (r) => ({
+
+/** Uma linha da equipe na tela (vaga "" = todas; limite "" = sem limite). */
+interface LinhaNaTela {
+  usuario: string;
+  papel: string;
+  vaga: string;
+  limite: number | string;
+}
+
+/** A pessoa no seletor (as da lista e as que já estão na equipe). */
+type PessoaNoSeletor = Pick<PessoaDaEquipe, "usuario" | "nome" | "nivel">;
+
+interface PropsDaEquipe {
+  e: EstadoDaAvaliacao;
+  estado: Pick<LojaDaAvaliacao, "salvarEquipe">;
+}
+
+const daEquipe = (r: LinhaDaEquipeSalva): LinhaNaTela => ({
   usuario: r.usuario,
   papel: r.papel,
   vaga: r.vaga ?? "",
   limite: r.limite ?? "",
 });
 
-export function Equipe({ e, estado }) {
+export function Equipe({ e, estado }: PropsDaEquipe) {
   const equipe = e.equipe;
   const inicial = useMemo(() => (equipe?.equipe ?? []).map(daEquipe), [equipe]);
   const [linhas, setLinhas] = useState(inicial);
@@ -34,7 +57,7 @@ export function Equipe({ e, estado }) {
   if (!equipe) return null;
   const coordena = Boolean(equipe.pode_coordenar);
   const gestores = equipe.gestores ?? [];
-  const pessoas = new Map();
+  const pessoas = new Map<string, PessoaNoSeletor>();
   for (const p of equipe.pessoas ?? []) pessoas.set(p.usuario, p);
   for (const r of equipe.equipe ?? [])
     if (!pessoas.has(r.usuario))
@@ -55,7 +78,7 @@ export function Equipe({ e, estado }) {
           String(b.vaga) === String(a.vaga),
       ),
   ).length;
-  const mudar = (i, chave, valor) =>
+  const mudar = (i: number, chave: keyof LinhaNaTela, valor: string) =>
     setLinhas(linhas.map((l, j) => (j === i ? { ...l, [chave]: valor } : l)));
 
   async function salvar() {

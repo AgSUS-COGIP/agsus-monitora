@@ -17,7 +17,7 @@ const ENSAIO = ler(`supabase/ensaios/${NOME}`);
 const ROBO = ler("supabase/migrations/20261005170000_robo_empregare.sql");
 const FICHA = ler("supabase/migrations/20261007130000_conteudo_da_ficha.sql");
 const NAVEGADOR = ler("scripts/robo-empregare/navegador_empregare.py");
-const TELA = ler("src/lib/avaliacao-documental/ficha.js");
+const TELA = ler("src/lib/avaliacao-documental/ficha.ts");
 
 const corpoDaFuncao = (texto, cabeca) => {
   const inicio = texto.indexOf(cabeca);

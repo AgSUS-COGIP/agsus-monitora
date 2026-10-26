@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { criarEstadoDaFicha } from "../../src/modulos/avaliacao-documental/ficha/estado-da-ficha.js";
+import { criarEstadoDaFicha } from "../../src/modulos/avaliacao-documental/ficha/estado-da-ficha.ts";
 import { ItemDaFicha } from "../../src/modulos/avaliacao-documental/ficha/item-da-ficha.tsx";
 import { clicar } from "../componentes/interacoes.js";
 

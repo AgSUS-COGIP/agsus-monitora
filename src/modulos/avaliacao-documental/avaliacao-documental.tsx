@@ -1,7 +1,8 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.js";
+import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.ts";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { criarRascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
+import type { RascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
@@ -13,7 +14,7 @@ import {
   PAPEIS_DA_EQUIPE,
   rotuloDe,
   SITUACOES_DA_REGRA,
-} from "../../lib/avaliacao-documental/catalogo.js";
+} from "../../lib/avaliacao-documental/catalogo.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.ts";
@@ -26,14 +27,22 @@ import {
   VISOES,
 } from "./abas-e-entrada.ts";
 import { EntradaDaAvaliacao } from "./entrada-da-avaliacao.tsx";
-import { Equipe } from "./equipe.jsx";
-import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.js";
-import { criarEstadoDaFila, lerFichaLembrada } from "./estado-da-fila.js";
-import { criarEstadoDaPreClassificacao } from "./estado-da-pre-classificacao.js";
-import { Fila } from "./fila.jsx";
+import { Equipe } from "./equipe.tsx";
+import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
+import type { LojaDaAvaliacao } from "./estado.ts";
+import { criarEstadoDaFila, lerFichaLembrada } from "./estado-da-fila.ts";
+import type { LojaDaFila } from "./estado-da-fila.ts";
+import { criarEstadoDaPreClassificacao } from "./estado-da-pre-classificacao.ts";
+import type {
+  Avisar,
+  ClienteDaAvaliacao,
+  EstadoDaAvaliacao,
+  FichaLembrada,
+} from "./tipos-do-estado.ts";
+import { Fila } from "./fila.tsx";
 import { OrigemDaAnalise } from "./origem-da-analise.tsx";
-import { PreClassificacao } from "./pre-classificacao.jsx";
-import { Regra } from "./regra.jsx";
+import { PreClassificacao } from "./pre-classificacao.tsx";
+import { Regra } from "./regra.tsx";
 import "./avaliacao-documental.css";
 import "./ficha/ficha.css";
 
@@ -57,9 +66,30 @@ import "./ficha/ficha.css";
   Equipe, Pré-classificação e Fila; os demais, só a Fila, sem o seletor. Sem
   edital escolhido não há abas: a entrada mostra os cartões dos editais.
 */
-const FILA = VISOES.find((v) => v.valor === "fila");
+const FILA = VISOES.find((v) => v.valor === "fila")!;
 
-function textoDoStatus(e) {
+type LojaDaPreClassificacao = ReturnType<typeof criarEstadoDaPreClassificacao>;
+type OpcoesDaPreClassificacao = NonNullable<
+  Parameters<typeof criarEstadoDaPreClassificacao>[0]
+>;
+
+/** O "Atualizar" da tela (criarAtualizacao): devolve se os editais carregaram. */
+type Atualizar = (area?: string) => Promise<unknown>;
+
+interface PropsDaTela {
+  estado: LojaDaAvaliacao;
+  pre: LojaDaPreClassificacao;
+  fila: LojaDaFila;
+  rascunho: RascunhoDaRegra;
+  atualizar: Atualizar;
+  confirmar: (mensagem: string) => boolean;
+}
+
+interface PropsDaTelaDaArea extends PropsDaTela {
+  e: EstadoDaAvaliacao;
+}
+
+function textoDoStatus(e: EstadoDaAvaliacao) {
   if (e.semAcesso) return "Sem acesso";
   if (!e.carregado && e.carregandoEditais) return "Carregando editais...";
   if (e.carregandoEdital) return "Carregando o edital...";
@@ -72,7 +102,15 @@ function textoDoStatus(e) {
 const AVISO_AO_ATUALIZAR =
   "A regra tem alterações ainda não salvas como versão (o rascunho fica guardado e volta ao abrir a regra). Atualizar agora?";
 
-function TelaDaArea({ estado, pre, fila, rascunho, atualizar, confirmar, e }) {
+function TelaDaArea({
+  estado,
+  pre,
+  fila,
+  rascunho,
+  atualizar,
+  confirmar,
+  e,
+}: PropsDaTelaDaArea) {
   const visao = visaoNaTela(e);
   const visoes = visoesDaPessoa(e);
   const [todos, setTodos] = useState(false);
@@ -257,6 +295,8 @@ export function TelaDaAvaliacaoDocumental({
   rascunho,
   atualizar,
   confirmar = (mensagem) => globalThis.confirm?.(mensagem) ?? true,
+}: Omit<PropsDaTela, "confirmar"> & {
+  confirmar?: PropsDaTela["confirmar"];
 }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
@@ -295,6 +335,11 @@ export function criarAtualizacao({
   pre,
   fila,
   fichaLembrada = lerFichaLembrada,
+}: {
+  estado: LojaDaAvaliacao;
+  pre: Pick<LojaDaPreClassificacao, "carregar">;
+  fila: Pick<LojaDaFila, "carregar">;
+  fichaLembrada?: () => FichaLembrada | null;
 }) {
   return async function atualizar(area = estado.obter().area) {
     const antes = estado.obter();
@@ -302,7 +347,7 @@ export function criarAtualizacao({
     const visao = visaoNaTela(antes);
     // Página recarregada no modo de análise: volta ao edital e à Fila (a fila reabre a ficha).
     const lembrada = editalId ? null : fichaLembrada();
-    const pedidos = [
+    const pedidos: [Promise<boolean>, ...Promise<unknown>[]] = [
       estado.carregar(area, { preferido: lembrada?.edital || "" }),
     ];
     if (area && area === antes.area && editalId) {
@@ -332,6 +377,16 @@ export function montarAvaliacaoDocumental({
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
   rascunho = criarRascunhoDaRegra({ tipo: "ANALISE", supabase }),
   confirmar,
+}: {
+  secao?: HTMLElement | null;
+  supabase?: ClienteDaAvaliacao | null;
+  toast?: Avisar;
+  areaAtual?: () => string | null | undefined;
+  agendar?: OpcoesDaPreClassificacao["agendar"];
+  getProfile?: () => unknown;
+  cabecalho?: OpcoesDaPreClassificacao["cabecalho"];
+  rascunho?: RascunhoDaRegra;
+  confirmar?: (mensagem: string) => boolean;
 } = {}) {
   // Versão nova salva: o rascunho guardado acaba antes de a aba Regra remontar.
   const estado = criarEstadoDaAvaliacao({

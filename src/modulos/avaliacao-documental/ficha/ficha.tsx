@@ -4,6 +4,7 @@ import {
   impressaoDasRespostas,
   respostaLidaDaEmpregare,
 } from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
+import type { ReactNode } from "react";
 import {
   useCallback,
   useEffect,
@@ -28,29 +29,32 @@ import {
   textoDoResultado,
   textoDoSalvo,
   tomDoResultado,
-} from "../../../lib/avaliacao-documental/ficha.js";
+} from "../../../lib/avaliacao-documental/ficha.ts";
 import {
   NIVEIS,
   PARCIAL_DO_TIPO,
   rotuloDe,
-} from "../../../lib/avaliacao-documental/catalogo.js";
+} from "../../../lib/avaliacao-documental/catalogo.ts";
 import {
   DICA_DA_ART,
   ROTULO_DA_ART,
-} from "../../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
+} from "../../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import {
   composicaoComPrevias,
   notaComPrevias,
 } from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
 import { motivosDoResultado } from "../../../lib/avaliacao-documental/motivos-do-resultado.ts";
 import { pontuacaoInformativaDaFicha } from "../../../lib/avaliacao-documental/pontos-informativos.ts";
-import { modalidadesDoLancamento } from "../../../lib/avaliacao-documental/pontuacao.js";
+import { modalidadesDoLancamento } from "../../../lib/avaliacao-documental/pontuacao.ts";
 import { rotuloDaVersaoNaLista } from "../../../lib/nome-da-versao.ts";
 import { Aviso } from "../../../ui/index.ts";
 import { guardaDeAlteracoes } from "../../../app/guarda-de-alteracoes.ts";
-import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
+import {
+  CabecalhoDaFicha,
+  type PropriedadesDoCabecalho,
+} from "./cabecalho-da-ficha.tsx";
 import { cpfDaFicha } from "../../../lib/avaliacao-documental/cpf-da-ficha.ts";
-import { ConclusaoDaFicha } from "./conclusao-da-ficha.tsx";
+import { ConclusaoDaFicha, type Previa } from "./conclusao-da-ficha.tsx";
 import { ReabrirAFicha } from "./reabrir-a-ficha.tsx";
 import { copiar, EnviosAnteriores } from "./empregare.tsx";
 import { abrirEspelhoDeNota, baixarEspelhoEmPdf } from "./espelho-de-nota.ts";
@@ -58,17 +62,36 @@ import { textosParaOEspelho } from "../modelo-do-espelho-no-banco.ts";
 import {
   blocoEditaNota,
   escolhaDoBloco,
+  type Escolha,
 } from "../../../lib/avaliacao-documental/apurado-da-ficha.ts";
 import {
   contextoDaEscolha,
   decidirNoLancamento,
   ItemDaFicha,
+  type PropriedadesDoItem,
 } from "./item-da-ficha.tsx";
 import { MaisAcoesDaFicha } from "./mais-acoes-da-ficha.tsx";
 import { ProgressoDaFicha } from "./progresso-da-ficha.tsx";
-import { ResumoDaNota } from "./resumo-da-nota.tsx";
-import { RodapeDaFicha } from "./rodape-da-ficha.tsx";
-import { criarEstadoDaFicha } from "./estado-da-ficha.js";
+import { ResumoDaNota, type PropriedadesDoResumo } from "./resumo-da-nota.tsx";
+import { RodapeDaFicha, type AcaoDoRodape } from "./rodape-da-ficha.tsx";
+import {
+  criarEstadoDaFicha,
+  type DadosDaFicha,
+  type EstadoDaFichaAberta,
+  type FichaComDados,
+  type FichaDoBanco,
+} from "./estado-da-ficha.ts";
+import type { ChamadaDeRpc } from "../../../lib/avaliacao-documental/leitura-por-versao.ts";
+import type { EnderecosDaEmpregare } from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
+import type { FichaAberta } from "../tipos-do-estado.ts";
+import type { VersaoComNome } from "../../../lib/nome-da-versao.ts";
+import type {
+  Bloco,
+  ContextoDaEmpregare,
+  Lancamento,
+  Mudar,
+  Passo,
+} from "./tipos.ts";
 
 /*
   O conteúdo da ficha no modo de análise da aba Fila, calmo e guiado:
@@ -83,19 +106,19 @@ import { criarEstadoDaFicha } from "./estado-da-ficha.js";
   - fora da Conclusão, a lateral só com a nota, o mínimo, a composição por
     bloco e o "⋯" (resumo-da-nota.tsx, mais-acoes-da-ficha.tsx);
   - rodapé fixo mínimo (rodape-da-ficha.tsx).
-  Mesmas RPCs e mesma gravação (estado-da-ficha.js): rascunho automático,
+  Mesmas RPCs e mesma gravação (estado-da-ficha.ts): rascunho automático,
   conclusão só sem pendência, concluída só leitura com Reabrir. Teclas 1/2/3,
   J/K, Ctrl+S e Ctrl+Enter. Explicações: docs/aya/regras-da-avaliacao-documental.md.
 */
 
 /* O passo já não pede nada (marcado sem pendência, opcional ou a Conclusão). */
-const passoResolvido = (passo) =>
+const passoResolvido = (passo: Passo | undefined) =>
   !passo ||
   passo.codigo === PASSO_DA_CONCLUSAO ||
   !["nao_conferido", "pendencia"].includes(passo.estado);
 
 /* Quantos títulos, cursos ou vínculos o bloco tem (a escolha pode abrir uma linha). */
-function contarItens(estado, codigo) {
+function contarItens(estado: EstadoDaFichaAberta, codigo: string): number {
   const bloco = estado.regra?.blocos?.find((b) => b.codigo === codigo);
   const chave = bloco ? BLOCOS_COM_ITENS[bloco.tipo] : null;
   return chave ? (estado.lancamento?.[chave] || []).length : 0;
@@ -104,7 +127,9 @@ function contarItens(estado, codigo) {
 const CHAVE_DO_MODO = "monitora.avaliacao-documental.ficha-modo";
 const ESPERA_PARA_AVANCAR_MS = 420;
 
-function lerModo() {
+type Modo = "foco" | "lista";
+
+function lerModo(): Modo {
   try {
     return globalThis.localStorage?.getItem(CHAVE_DO_MODO) === "lista"
       ? "lista"
@@ -113,7 +138,7 @@ function lerModo() {
     return "foco";
   }
 }
-function guardarModo(modo) {
+function guardarModo(modo: Modo) {
   try {
     globalThis.localStorage?.setItem(CHAVE_DO_MODO, modo);
   } catch {
@@ -121,12 +146,16 @@ function guardarModo(modo) {
   }
 }
 
-const ehCampoDeTexto = (alvo) =>
-  ["INPUT", "TEXTAREA", "SELECT"].includes(alvo?.tagName) ||
-  alvo?.isContentEditable;
+const ehCampoDeTexto = (alvo: HTMLElement | null) =>
+  (["INPUT", "TEXTAREA", "SELECT"] as (string | undefined)[]).includes(
+    alvo?.tagName,
+  ) || alvo?.isContentEditable;
 
 /* Os endereços da Empregare da ficha (obter_ficha_analise → empregare; sem eles, a lista de vagas). */
-function enderecosDaEmpregare(dados, ficha) {
+function enderecosDaEmpregare(
+  dados: DadosDaFicha,
+  ficha: { vaga?: string | null },
+): EnderecosDaEmpregare {
   const empregare = dados.empregare || {};
   const vaga = enderecoDaVagaNaEmpregare(ficha.vaga, empregare.vaga_interno);
   return {
@@ -140,16 +169,39 @@ function enderecosDaEmpregare(dados, ficha) {
   };
 }
 
-function textoDoEstado(st) {
+function textoDoEstado(st: EstadoDaFichaAberta): string {
   if (st.salvando) return "Salvando…";
   if (st.sujo) return "Alteração não salva";
   return textoDoSalvo(st.salvoEm);
 }
 
+/** O que a ficha usa da fila (estado-da-fila.ts); métodos, para a fila tipar os seus. */
+export interface FilaDaFicha {
+  rpc: ChamadaDeRpc;
+  toast(mensagem: string, tipo?: string): void;
+  registrarSalvamento?(fichaId: string, salvar: () => Promise<boolean>): void;
+  pegarProxima(vaga: string): Promise<unknown>;
+  obter(): { editalId?: string | null };
+}
+
+export interface PropriedadesDaFicha {
+  fila: FilaDaFicha;
+  /** A ficha aberta na fila (fila.tsx só monta a ficha com ela). */
+  aberta: FichaAberta;
+  filtroVaga?: string | null;
+  versoes?: ReadonlyArray<VersaoComNome> | null;
+  aoFechar?: () => void;
+  registrarAntesDeFechar?:
+    ((antesDeFechar: (() => Promise<boolean>) | null) => void) | null;
+  topo?: Omit<PropriedadesDoCabecalho, "children"> | null;
+  children?: ReactNode;
+  criarLoja?: typeof criarEstadoDaFicha;
+}
+
 /**
  * O corpo da ficha aberta. `registrarAntesDeFechar(fn)` recebe a função que o
  * modo de análise chama antes de sair (salva o que falta e confirma se não
- * der). `topo`: o que o cabeçalho mostra (fila.jsx); `children`: os avisos
+ * der). `topo`: o que o cabeçalho mostra (fila.tsx); `children`: os avisos
  * logo abaixo dele.
  */
 export function ConteudoDaFicha({
@@ -162,34 +214,34 @@ export function ConteudoDaFicha({
   topo,
   children,
   criarLoja = criarEstadoDaFicha,
-}) {
+}: PropriedadesDaFicha) {
   const [loja] = useState(() =>
     criarLoja({ rpc: fila.rpc, toast: fila.toast }),
   );
   const st = useSyncExternalStore(loja.assinar, loja.obter);
-  const [escolhido, setEscolhido] = useState(null);
+  const [escolhido, setEscolhido] = useState<string | null>(null);
   const [modo, setModo] = useState(lerModo);
   const [direcao, setDirecao] = useState("frente");
   const [erroDeConclusao, setErroDeConclusao] = useState("");
   const [tentouConcluir, setTentouConcluir] = useState(false);
   // "Código copiado" e afins, no rodapé.
   const [aviso, setAviso] = useState("");
-  const raiz = useRef(null);
-  const avanco = useRef(null);
-  const fichaId = aberta.ficha.id;
+  const raiz = useRef<HTMLDivElement>(null);
+  const avanco = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fichaId = aberta.ficha!.id;
 
   useEffect(() => {
     void loja.carregar(fichaId);
   }, [loja, fichaId]);
   /*
     A fila espera o salvamento desta ficha antes de liberar a reserva
-    (estado-da-fila.js, fechar). Ao desmontar, o envio do que estava pendente
+    (estado-da-fila.ts, fechar). Ao desmontar, o envio do que estava pendente
     fica no lugar, para a liberação que vier depois esperar por ele.
   */
   useEffect(() => {
     fila.registrarSalvamento?.(fichaId, () => loja.salvar());
     return () => {
-      clearTimeout(avanco.current);
+      clearTimeout(avanco.current as ReturnType<typeof setTimeout> | undefined);
       const envio = loja.descartar();
       fila.registrarSalvamento?.(fichaId, () => envio);
     };
@@ -247,7 +299,7 @@ export function ConteudoDaFicha({
     };
   }, [loja]);
 
-  // A regra da vaga (a diferença do cargo por cima do nível): estado-da-ficha.js.
+  // A regra da vaga (a diferença do cargo por cima do nível): estado-da-ficha.ts.
   const regra = st.regra;
   const blocos = useMemo(() => regra?.blocos || [], [regra]);
   const passos = useMemo(
@@ -259,7 +311,7 @@ export function ConteudoDaFicha({
   );
   const concluida = st.dados?.ficha?.situacao === "CONCLUIDA";
   /* O passo inicial, decidido uma vez ao abrir: na concluída, a Conclusão; senão, o primeiro que pede algo. */
-  const inicial = useRef(null);
+  const inicial = useRef<string | null>(null);
   if (!inicial.current && passos.length)
     inicial.current = concluida
       ? PASSO_DA_CONCLUSAO
@@ -271,16 +323,17 @@ export function ConteudoDaFicha({
 
   /* Vai ao passo: no foco, troca o item (com a animação); na lista, rola até ele. */
   const irPara = useCallback(
-    (codigo) => {
+    (codigo: string | null | undefined) => {
       if (!codigo) return;
-      clearTimeout(avanco.current);
+      clearTimeout(avanco.current as ReturnType<typeof setTimeout> | undefined);
       const de = passos.findIndex((p) => p.codigo === atual);
       const para = passos.findIndex((p) => p.codigo === codigo);
       setDirecao(para < de ? "tras" : "frente");
       setEscolhido(codigo);
       // Sem mover o foco (o contorno do foco do app pesaria no cartão): o anúncio vai pelo aria-live.
       const depois =
-        globalThis.requestAnimationFrame ?? ((fn) => setTimeout(fn, 0));
+        globalThis.requestAnimationFrame ??
+        ((fn: () => void) => setTimeout(fn, 0));
       depois(() => {
         if (modo === "foco") {
           if (globalThis.scrollY > 0) globalThis.scrollTo?.({ top: 0 });
@@ -299,12 +352,12 @@ export function ConteudoDaFicha({
     precisar clicar nela antes), menos em campo de texto, com um modal aberto
     ou com o foco em outro painel (Aya).
   */
-  const teclar = useRef(null);
+  const teclar = useRef<((ev: KeyboardEvent) => void) | null>(null);
   teclar.current = null;
   useEffect(() => {
-    const aoTeclarNaPagina = (ev) => {
+    const aoTeclarNaPagina = (ev: KeyboardEvent) => {
       if (ev.defaultPrevented || document.querySelector(".modal.show")) return;
-      const alvo = ev.target;
+      const alvo = ev.target as Node | null;
       const area = raiz.current?.closest(".avd-analise") ?? raiz.current;
       const naFicha =
         alvo === document.body ||
@@ -338,14 +391,14 @@ export function ConteudoDaFicha({
       </>
     );
 
-  const ficha = { ...aberta.ficha, ...st.dados.ficha };
+  const ficha = { ...aberta.ficha!, ...st.dados.ficha };
   const desabilitado = !st.podeEditar || st.concluindo;
   const conferencia = st.conferencia;
   const avaliacao = st.avaliacao;
   const lancamento = st.lancamento;
   // Mexer no item (itens, nota, motivo) cancela o avanço sozinho que estava por vir.
-  const mudar = (transformar) => {
-    clearTimeout(avanco.current);
+  const mudar: Mudar = (transformar) => {
+    clearTimeout(avanco.current as ReturnType<typeof setTimeout> | undefined);
     loja.mudar(transformar);
   };
   const itens = passos.filter((p) => p.codigo !== PASSO_DA_CONCLUSAO);
@@ -382,7 +435,7 @@ export function ConteudoDaFicha({
     avaliacao.calculados,
   );
   const comPrevias = notaComPrevias(partes);
-  const nota = {
+  const nota: PropriedadesDoResumo = {
     nota: emAnalise
       ? comPrevias.nota
       : gravada
@@ -414,8 +467,9 @@ export function ConteudoDaFicha({
       : pontuacaoInformativaDaFicha(avaliacao, resultado),
     partes,
   };
-  const previa = gravada
-    ? { completa: true, texto: ficha.parecer, motivos: [] }
+  const previa: Previa = gravada
+    ? // Gravada: o parecer existe (gravada é o próprio parecer).
+      { completa: true, texto: ficha.parecer as string, motivos: [] }
     : previaDoParecer(avaliacao, conferencia, lancamento);
 
   const maisAcoes = (
@@ -425,7 +479,7 @@ export function ConteudoDaFicha({
         !desabilitado && st.dados.papel === "COORDENADOR"
           ? {
               valor: lancamento.nivel,
-              aoMudar: (nivel) =>
+              aoMudar: (nivel: string) =>
                 mudar((l) => {
                   l.nivel = nivel;
                   return l;
@@ -441,9 +495,14 @@ export function ConteudoDaFicha({
     que pede algo. A linha que a escolha acabou de abrir segura o item, para
     o avaliador ver o registro (o título já vem da resposta).
   */
-  function depoisDeDecidir(codigo, escolha, itensAntes = null) {
+  function depoisDeDecidir(
+    codigo: string,
+    escolha: Escolha | null,
+    itensAntes: number | null = null,
+  ) {
     if (escolha !== "CONFERE" || modo !== "foco") return;
-    const agora = loja.obter();
+    // A ficha na tela já carregou: decidir só acontece com ela.
+    const agora = loja.obter() as FichaComDados;
     if (agora.pendencias.some((p) => p.bloco === codigo)) return;
     if (itensAntes !== null && itensAntes !== contarItens(agora, codigo))
       return;
@@ -451,12 +510,12 @@ export function ConteudoDaFicha({
       passosDaFicha(agora.regra, agora.lancamento, agora.pendencias),
       codigo,
     );
-    clearTimeout(avanco.current);
+    clearTimeout(avanco.current as ReturnType<typeof setTimeout> | undefined);
     avanco.current = setTimeout(() => irPara(proximo), ESPERA_PARA_AVANCAR_MS);
   }
 
-  function decidir(bloco, escolha) {
-    const agora = loja.obter();
+  function decidir(bloco: Bloco, escolha: Escolha) {
+    const agora = loja.obter() as FichaComDados;
     const antes = contarItens(agora, bloco.codigo);
     const parcial = PARCIAL_DO_TIPO[bloco.tipo];
     const atual = escolhaDoBloco(
@@ -485,14 +544,14 @@ export function ConteudoDaFicha({
       await fila.pegarProxima(filtroVaga || "");
       return;
     }
-    if (r.pendencias?.length) irPara(r.pendencias[0].bloco);
+    if (r.pendencias?.length) irPara(r.pendencias[0]!.bloco);
     else setErroDeConclusao(r.erro || "Não foi possível concluir.");
   }
 
   const posicao = passos.findIndex((p) => p.codigo === atual);
-  const vizinho = (passo) => passos[posicao + passo]?.codigo;
+  const vizinho = (passo: number) => passos[posicao + passo]?.codigo;
 
-  function aoTeclar(ev) {
+  function aoTeclar(ev: KeyboardEvent) {
     const ctrl = ev.ctrlKey || ev.metaKey;
     if (ctrl && ev.key.toLowerCase() === "s") {
       ev.preventDefault();
@@ -504,7 +563,8 @@ export function ConteudoDaFicha({
       void concluirEProxima();
       return;
     }
-    if (ctrl || ev.altKey || ehCampoDeTexto(ev.target)) return;
+    if (ctrl || ev.altKey || ehCampoDeTexto(ev.target as HTMLElement | null))
+      return;
     const k = ev.key.toLowerCase();
     if (k === "j" || k === "k") {
       ev.preventDefault();
@@ -525,8 +585,8 @@ export function ConteudoDaFicha({
   teclar.current = aoTeclar;
 
   /* O botão primário do rodapé, conforme o momento. */
-  let primaria = null;
-  let secundaria = null;
+  let primaria: AcaoDoRodape | null = null;
+  let secundaria: AcaoDoRodape | null = null;
   if (st.podeEditar) {
     if (naConclusao || !foco) {
       primaria = {
@@ -597,7 +657,7 @@ export function ConteudoDaFicha({
                   fila.rpc,
                   fila.obter().editalId,
                 ),
-              }).catch((e) =>
+              }).catch((e: { message?: string } | null | undefined) =>
                 setAviso(
                   `Não foi possível gerar o PDF: ${e?.message || String(e)}`,
                 ),
@@ -624,7 +684,7 @@ export function ConteudoDaFicha({
       }
     />
   );
-  const item = (bloco, extra = {}) => (
+  const item = (bloco: Bloco, extra: Partial<PropriedadesDoItem> = {}) => (
     <ItemDaFicha
       key={bloco.codigo}
       st={st}

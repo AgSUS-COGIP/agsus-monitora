@@ -43,7 +43,7 @@ ITENS_DO_TIPO = {"TITULOS": "titulos", "CURSOS": "cursos", "VINCULOS": "vinculos
 MAXIMO_DE_LINHAS = 20
 TAMANHO_DO_TEXTO = 200
 
-# Os títulos acadêmicos (catalogo.js TITULOS_ACADEMICOS), com os nomes que aparecem nas respostas.
+# Os títulos acadêmicos (catalogo.ts TITULOS_ACADEMICOS), com os nomes que aparecem nas respostas.
 TITULOS = (
     ("DOUTORADO", ("doutorado", "doutor")),
     ("MESTRADO", ("mestrado", "mestre")),

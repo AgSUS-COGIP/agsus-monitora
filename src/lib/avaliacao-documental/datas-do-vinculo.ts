@@ -4,7 +4,7 @@
   nada depois de hoje (fim previsto de contrato, ano trocado). O banco recusa
   o mesmo em FC_PENDENCIAS_FICHA ("vínculo com data inválida", "antes de
   1960", "fim depois de hoje"). A data limite da regra (data_limite do bloco)
-  não recusa a linha: só corta a conta (diasDosIntervalos, em pontuacao.js).
+  não recusa a linha: só corta a conta (diasDosIntervalos, em pontuacao.ts).
 */
 
 /** A data mais antiga aceita num vínculo (início ou fim). */

@@ -1,3 +1,4 @@
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import {
   memo,
   useCallback,
@@ -10,6 +11,7 @@ import {
 import { ordinal } from "../../lib/classificacao/numeros.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
+import type { VersaoComNome } from "../../lib/nome-da-versao.ts";
 import {
   acoesDaSelecao,
   agruparPorVaga,
@@ -31,8 +33,18 @@ import {
   textoDaColuna,
   textoDaReserva,
   textoDaSituacaoNaFila,
-} from "../../lib/avaliacao-documental/fila.js";
-import { tomDoResultado } from "../../lib/avaliacao-documental/ficha.js";
+} from "../../lib/avaliacao-documental/fila.ts";
+import type {
+  ChaveDaColuna,
+  DistribuicaoDaRegra,
+  EtapaDaFila,
+  FiltroDaFila,
+  InscritoComFicha,
+  InscritoNaFila,
+  OrdemDaFila as OrdemDaTabela,
+  ResumoDaVagaNaFila as ResumoDaVaga,
+} from "../../lib/avaliacao-documental/fila.ts";
+import { tomDoResultado } from "../../lib/avaliacao-documental/ficha.ts";
 import {
   contadoresComForaDoLote,
   juntarFila,
@@ -44,7 +56,7 @@ import {
   DICA_DA_ART,
   nota,
   podeIncluirPorDecisao,
-} from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
+} from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import {
   Abas,
   Aviso,
@@ -54,18 +66,22 @@ import {
   Selo,
   TabelaInfinita,
 } from "../../ui/index.ts";
+import type { AcaoDoMenu } from "../../ui/index.ts";
 import {
   IncluirPorDecisao,
   RevogarDecisao,
   SeloDaDecisao,
-} from "./decisao-do-lote.jsx";
+} from "./decisao-do-lote.tsx";
 import { EspelhosEmMassa } from "./espelhos-em-massa.tsx";
 import { RelatorioDeMotivosDaFila } from "./relatorio-de-motivos.tsx";
 import { erroDoMotivoDaFila } from "../../lib/avaliacao-documental/qualidade-do-motivo.ts";
 import { ModeloDoEspelhoDeNota } from "./modelo-do-espelho.tsx";
-import { ConteudoDaFicha } from "./ficha/ficha.jsx";
+import { ConteudoDaFicha } from "./ficha/ficha.tsx";
 import { ResumoDoAndamento } from "./resumo-do-andamento.tsx";
 import { ReinicioDasFichas } from "./reinicio-das-fichas.tsx";
+import type { LojaDaFila, SnapshotDaFila } from "./estado-da-fila.ts";
+import type { FiltroSalvo } from "./tipos-do-estado.ts";
+import type { AberturaDoRelatorio } from "./relatorio-de-motivos.tsx";
 
 /*
   Aba Fila (fase F3): o resumo do andamento (o edital e o bloco recolhível
@@ -77,18 +93,27 @@ import { ReinicioDasFichas } from "./reinicio-das-fichas.tsx";
   relatório de motivos: relatorio-de-motivos.tsx), a tabela agrupada por vaga
   quando a vaga é "Todas", a inclusão no
   lote por decisão da coordenação (selo "Decisão: …" na lista e no topo da
-  ficha, com "Revogar decisão": decisao-do-lote.jsx) e a ficha aberta
-  com a reserva; o conteúdo da análise (F4) é ficha/ficha.jsx. Explicações:
+  ficha, com "Revogar decisão": decisao-do-lote.tsx) e a ficha aberta
+  com a reserva; o conteúdo da análise (F4) é ficha/ficha.tsx. Explicações:
   docs/aya/regras-da-avaliacao-documental.md.
 
   Desempenho (lista de até ~7.700 inscritos): os derivados da lista ficam em
   useMemo, as funções passadas à tabela em useCallback, a tabela e cada linha
-  em React.memo. Ainda em .jsx: passar a .tsx pede tipar as props de todos os
-  componentes do arquivo e as libs .js que ele usa (tsconfig estrito) — fica
-  para uma conversão própria, sem mudar comportamento junto.
+  em React.memo. Em .tsx: as props de cada componente do arquivo são tipadas
+  (interfaces abaixo), sem mudar comportamento.
 */
 
-function SituacaoDaLinha({ c }) {
+/* O estado da aba (estado-da-fila.ts) e o que ele publica. */
+type Fila = LojaDaFila;
+type DadosDaFila = NonNullable<SnapshotDaFila["dados"]>;
+/* Uma linha da fila (núcleo ou fora do lote). */
+type Inscrito = InscritoNaFila;
+
+interface SituacaoProps {
+  c: Inscrito;
+}
+
+function SituacaoDaLinha({ c }: SituacaoProps) {
   return (
     <>
       <SituacaoNaFila c={c} /> <SeloDaDecisao c={c} />
@@ -96,14 +121,14 @@ function SituacaoDaLinha({ c }) {
   );
 }
 
-function SituacaoNaFila({ c }) {
+function SituacaoNaFila({ c }: SituacaoProps) {
   const texto = textoDaSituacaoNaFila(c);
   if (c.ficha?.situacao === "CONCLUIDA" && c.ficha.resultado)
     return <Selo tom={tomDoResultado(c.ficha.resultado)}>{texto}</Selo>;
   if (c.ficha)
     return (
       <Selo
-        tom={SITUACOES_DA_FICHA[c.ficha.situacao]?.tom}
+        tom={SITUACOES_DA_FICHA[c.ficha.situacao as string]?.tom}
         titulo={c.ficha.motivo_saida || undefined}
       >
         {texto}
@@ -119,7 +144,13 @@ function SituacaoNaFila({ c }) {
   );
 }
 
-function FiltrosSalvos({ fila, f, filtros }) {
+interface FiltrosSalvosProps {
+  fila: Fila;
+  f: FiltroDaFila;
+  filtros: FiltroSalvo[];
+}
+
+function FiltrosSalvos({ fila, f, filtros }: FiltrosSalvosProps) {
   const [nome, setNome] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [escolhido, setEscolhido] = useState("");
@@ -200,13 +231,28 @@ function FiltrosSalvos({ fila, f, filtros }) {
   );
 }
 
-const TITULOS_DA_ACAO = {
+type TipoDaAcao = "distribuir" | "liberar" | "revisao";
+
+/* A ação em lote pedida no menu da coordenação: o tipo e as fichas. */
+interface AcaoPedida {
+  tipo: TipoDaAcao;
+  fichas: InscritoComFicha[];
+}
+
+const TITULOS_DA_ACAO: Record<TipoDaAcao, string> = {
   distribuir: "Distribuir fichas",
   liberar: "Liberar reservas",
   revisao: "Mandar para revisão",
 };
 
-function AcaoEmLote({ fila, acao, dados, aoFechar }) {
+interface AcaoEmLoteProps {
+  fila: Fila;
+  acao: AcaoPedida;
+  dados: DadosDaFila;
+  aoFechar: (feito: boolean) => void;
+}
+
+function AcaoEmLote({ fila, acao, dados, aoFechar }: AcaoEmLoteProps) {
   const [para, setPara] = useState("");
   const [motivo, setMotivo] = useState("");
   const [erro, setErro] = useState("");
@@ -215,7 +261,13 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
   const plano = useMemo(
     () =>
       acao.tipo === "distribuir"
-        ? planoDeDistribuicao(acao.fichas, analistas, dados.distribuicao, para)
+        ? planoDeDistribuicao(
+            acao.fichas,
+            analistas,
+            // Só undefined usa o padrão {} de planoDeDistribuicao (como antes).
+            dados.distribuicao as DistribuicaoDaRegra | undefined,
+            para,
+          )
         : null,
     [acao, analistas, dados.distribuicao, para],
   );
@@ -225,12 +277,12 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
   const exigeMotivo =
     acao.tipo === "revisao" ||
     deOutros ||
-    (acao.tipo === "distribuir" && (plano.redistribui || para === "fila"));
+    (acao.tipo === "distribuir" && (plano!.redistribui || para === "fila"));
   const erroDoMotivo = exigeMotivo ? erroDoMotivoDaFila(motivo) : "";
   const motivoOk = !erroDoMotivo;
   const vazio =
     acao.tipo === "distribuir"
-      ? !plano.atribuicoes.length
+      ? !plano!.atribuicoes.length
       : !acao.fichas.length;
 
   async function confirmar() {
@@ -238,7 +290,7 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
     let r;
     if (acao.tipo === "distribuir")
       r = await fila.distribuir(
-        plano.atribuicoes.map(({ ficha, versao, usuario }) => ({
+        plano!.atribuicoes.map(({ ficha, versao, usuario }) => ({
           ficha,
           versao,
           usuario,
@@ -288,7 +340,7 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
                 <option value="fila">Devolver à fila (sem responsável)</option>
               </select>
             </Campo>
-            {plano.resumo.length ? (
+            {plano!.resumo.length ? (
               <table className="avd-tabela" aria-label="Prévia da distribuição">
                 <thead>
                   <tr>
@@ -298,7 +350,7 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {plano.resumo.map((r) => (
+                  {plano!.resumo.map((r) => (
                     <tr key={r.usuario}>
                       <td>{r.nome}</td>
                       <td>{r.novas}</td>
@@ -308,9 +360,9 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
                 </tbody>
               </table>
             ) : null}
-            {plano.sobra.length ? (
+            {plano!.sobra.length ? (
               <Aviso tom="warning">
-                {plano.sobra.length} ficha(s) sem analista que possa recebê-las
+                {plano!.sobra.length} ficha(s) sem analista que possa recebê-las
                 (vaga ou limite): continuam na fila.
               </Aviso>
             ) : null}
@@ -363,9 +415,23 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }) {
   fica só o menu lateral). Daqui saem os dados do cabeçalho (candidato, vaga,
   chips, o "i" com situação, responsável, reserva e regra, Anterior /
   Próxima entre as fichas da lista filtrada, salvando antes), que a ficha
-  desenha preso ao alto com o stepper (ficha/ficha.jsx), e os avisos logo
+  desenha preso ao alto com o stepper (ficha/ficha.tsx), e os avisos logo
   abaixo dele. Esc também volta à fila.
 */
+/* O que o conteúdo da ficha registra para rodar antes de sair (true: pode sair). */
+type AntesDeSair = () => Promise<boolean>;
+
+interface ModoDeAnaliseProps {
+  fila: Fila;
+  aberta: SnapshotDaFila["aberta"];
+  abrindo: boolean;
+  dados: DadosDaFila;
+  inscritos: Inscrito[];
+  filtroVaga: string;
+  navegaveis: InscritoComFicha[];
+  versoes: ReadonlyArray<VersaoComNome> | null | undefined;
+}
+
 function ModoDeAnalise({
   fila,
   aberta,
@@ -375,12 +441,12 @@ function ModoDeAnalise({
   filtroVaga,
   navegaveis,
   versoes,
-}) {
+}: ModoDeAnaliseProps) {
   const f = aberta?.ficha;
-  const raiz = useRef(null);
+  const raiz = useRef<HTMLElement>(null);
   // O conteúdo da ficha salva o que falta (e confirma) antes de sair dela.
-  const antesDeSair = useRef(null);
-  const registrarAntesDeFechar = useCallback((fn) => {
+  const antesDeSair = useRef<AntesDeSair | null>(null);
+  const registrarAntesDeFechar = useCallback((fn: AntesDeSair | null) => {
     antesDeSair.current = fn;
   }, []);
   const podeSair = async () =>
@@ -389,7 +455,7 @@ function ModoDeAnalise({
     if (!(await podeSair())) return;
     await fila.fechar({ esquecer: true });
   };
-  const ir = async (fichaId) => {
+  const ir = async (fichaId: string | null | undefined) => {
     if (!fichaId || !(await podeSair())) return;
     await fila.abrir(fichaId);
   };
@@ -401,7 +467,7 @@ function ModoDeAnalise({
     globalThis.scrollTo?.({ top: 0 });
   }, [f?.id]);
   useEffect(() => {
-    const aoTeclar = (ev) => {
+    const aoTeclar = (ev: KeyboardEvent) => {
       if (ev.key !== "Escape" || ev.defaultPrevented) return;
       if (document.querySelector(".modal.show")) return;
       ev.preventDefault();
@@ -420,10 +486,10 @@ function ModoDeAnalise({
     if (!topo || typeof ResizeObserver !== "function") return undefined;
     const cabecalho = document.querySelector("#conteudoPrincipal > .top");
     // Só recua se o cabeçalho do app ficar preso no alto (sticky ou fixed).
-    const preso = (el) =>
+    const preso = (el: Element | null) =>
       el && ["sticky", "fixed"].includes(getComputedStyle(el).position);
     const medir = () => {
-      const altura = (el) =>
+      const altura = (el: Element | null) =>
         el ? `${Math.ceil(el.getBoundingClientRect().height)}px` : "0px";
       raiz.current?.style.setProperty(
         "--avd-recuo-do-cabecalho",
@@ -452,11 +518,12 @@ function ModoDeAnalise({
       </div>
     );
 
-  const situacao = SITUACOES_DA_FICHA[f.situacao] || {};
+  const situacao: { rotulo?: string; tom?: string } =
+    SITUACOES_DA_FICHA[f.situacao as string] || {};
   // O inscrito da fila (entrada no lote e a decisão da coordenação).
   const inscrito = (inscritos || []).find((c) => c.ficha?.id === f.id);
   const reservaDeOutro =
-    reservaVigente(f.reserva) && f.reserva.usuario !== dados.eu;
+    reservaVigente(f.reserva) && f.reserva!.usuario !== dados.eu;
   const posicao = navegaveis.findIndex((c) => c.ficha.id === f.id);
   const anterior = posicao > 0 ? navegaveis[posicao - 1] : null;
   const proxima =
@@ -494,8 +561,8 @@ function ModoDeAnalise({
     ],
     // A minha, em dia ou vencida: vencida, o cabeçalho pede para reabrir.
     fimDaMinhaReserva:
-      aberta.reservada && f.reserva?.usuario === dados.eu
-        ? f.reserva.expira
+      aberta!.reservada && f.reserva?.usuario === dados.eu
+        ? f.reserva!.expira
         : null,
     decisao: inscrito ? (
       <span className="avd-inline avd-analise-decisao">
@@ -503,7 +570,7 @@ function ModoDeAnalise({
         {dados.pode_coordenar ? (
           <RevogarDecisao
             c={inscrito}
-            aoRevogar={async (motivo) => {
+            aoRevogar={async (motivo: string) => {
               const r = await fila.revogarDecisao([inscrito], motivo);
               // Reabrir a ficha desmonta o conteúdo: salva o que falta antes
               // (como Voltar e Ir), senão o rascunho agendado se perde.
@@ -525,7 +592,7 @@ function ModoDeAnalise({
         ? { id: proxima.ficha.id, codigo: proxima.codigo }
         : null,
       abrindo,
-      ir: (id) => void ir(id),
+      ir: (id: string | undefined) => void ir(id),
     },
   };
   return (
@@ -538,15 +605,15 @@ function ModoDeAnalise({
       <ConteudoDaFicha
         key={f.id}
         fila={fila}
-        aberta={aberta}
+        aberta={aberta!}
         filtroVaga={filtroVaga}
         versoes={versoes}
         aoFechar={voltar}
         registrarAntesDeFechar={registrarAntesDeFechar}
         topo={topo}
       >
-        {aberta.somente_leitura && aberta.motivo ? (
-          <Aviso tom="warning">Só leitura: {aberta.motivo}</Aviso>
+        {aberta!.somente_leitura && aberta!.motivo ? (
+          <Aviso tom="warning">Só leitura: {aberta!.motivo}</Aviso>
         ) : null}
         {dados.pode_coordenar && reservaDeOutro ? (
           liberando ? (
@@ -597,10 +664,16 @@ function ModoDeAnalise({
 }
 
 /* A busca já vem aplicada por filtrarFila (o filtro "busca" é salvo com os outros). */
-const jaFiltrado = (itens) => itens;
+const jaFiltrado = <T,>(itens: readonly T[]): readonly T[] => itens;
 
 /* O conteúdo de cada coluna; o resto é o texto de textoDaColuna ("—" sem valor). */
-function Celula({ c, chave, eu }) {
+interface CelulaProps {
+  c: Inscrito;
+  chave: ChaveDaColuna;
+  eu: string | undefined;
+}
+
+function Celula({ c, chave, eu }: CelulaProps) {
   if (chave === "situacao" || chave === "resultado")
     return <SituacaoDaLinha c={c} />;
   if (chave === "posicao") return c.posicao ? ordinal(c.posicao) : "—";
@@ -614,6 +687,18 @@ function Celula({ c, chave, eu }) {
   caixa dela é marcada ou desmarcada, ou muda a etapa / "abrindo". Selecionar
   uma linha não redesenha as outras 49.
 */
+interface LinhaDaFilaProps {
+  c: Inscrito;
+  chaves: readonly ChaveDaColuna[];
+  comCaixa: boolean;
+  comAbrir: boolean;
+  marcada: boolean;
+  marcar: (id: string, sim: boolean) => void;
+  abrindo: boolean;
+  eu: string | undefined;
+  fila: Fila;
+}
+
 const LinhaDaFila = memo(function LinhaDaFila({
   c,
   chaves,
@@ -624,7 +709,7 @@ const LinhaDaFila = memo(function LinhaDaFila({
   abrindo,
   eu,
   fila,
-}) {
+}: LinhaDaFilaProps) {
   return (
     <tr data-candidato={c.codigo}>
       {comCaixa ? (
@@ -655,7 +740,7 @@ const LinhaDaFila = memo(function LinhaDaFila({
               type="button"
               className="btn secondary small"
               disabled={abrindo}
-              onClick={() => void fila.abrir(c.ficha.id)}
+              onClick={() => void fila.abrir(c.ficha!.id!)}
             >
               Abrir
             </button>
@@ -678,6 +763,35 @@ const LinhaDaFila = memo(function LinhaDaFila({
   funções memorizadas, a etapa e "abrindo" em vez do estado inteiro), então
   abrir um menu, uma gaveta ou uma mensagem do estado não a redesenham.
 */
+/* O grupo da tabela (por vaga), como a TabelaInfinita o recebe. */
+interface GrupoDaTabela {
+  chave: (c: Inscrito) => string;
+  cabecalho: (vaga: string, quantos: number) => ReactNode;
+  recolhidos: Set<string>;
+  aoAlternar: (vaga: string) => void;
+}
+
+interface TabelaDaFilaProps {
+  etapa: string;
+  abrindo: boolean;
+  eu: string | undefined;
+  fila: Fila;
+  linhas: Inscrito[];
+  ordenadas: Inscrito[];
+  exibidas: Inscrito[];
+  ordem: OrdemDaTabela;
+  setOrdem: Dispatch<SetStateAction<OrdemDaTabela>>;
+  total: number;
+  carregado: boolean;
+  erroDeFora: string;
+  semPreClassificacao: boolean;
+  coordena: boolean;
+  selecao: Set<string>;
+  marcar: (id: string, sim: boolean) => void;
+  limparSelecao: () => void;
+  grupo: GrupoDaTabela | null;
+}
+
 const TabelaDaFila = memo(function TabelaDaFila({
   etapa,
   abrindo,
@@ -697,7 +811,7 @@ const TabelaDaFila = memo(function TabelaDaFila({
   marcar,
   limparSelecao,
   grupo,
-}) {
+}: TabelaDaFilaProps) {
   const chaves = colunasDaEtapa(etapa);
   const comFicha = useMemo(() => linhas.filter((c) => c.ficha), [linhas]);
   const comCaixa = coordena && comFicha.length > 0;
@@ -759,7 +873,7 @@ const TabelaDaFila = memo(function TabelaDaFila({
     ],
   );
   const informacao = useCallback(
-    (quantos) =>
+    (quantos: number | null) =>
       quantos === null
         ? ""
         : quantos === total
@@ -768,7 +882,7 @@ const TabelaDaFila = memo(function TabelaDaFila({
     [total],
   );
   const linha = useCallback(
-    (c) => (
+    (c: Inscrito) => (
       <LinhaDaFila
         key={c.id}
         c={c}
@@ -817,7 +931,8 @@ const TabelaDaFila = memo(function TabelaDaFila({
           : "Nenhum inscrito nesta etapa."
       }
       informacao={informacao}
-      grupo={grupo}
+      // A tabela trata null como sem grupo (o padrão dela).
+      grupo={grupo as GrupoDaTabela}
       ferramentas={
         <>
           {coordena && selecao.size ? (
@@ -852,10 +967,14 @@ const TabelaDaFila = memo(function TabelaDaFila({
 });
 
 /* A chave do grupo da tabela: a vaga (função de módulo, estável). */
-const vagaDoInscrito = (c) => String(c.vaga ?? "");
+const vagaDoInscrito = (c: Inscrito) => String(c.vaga ?? "");
 
 /* O cabeçalho do grupo da vaga na tabela: cargo, o lote e a linha de corte. */
-function textoDoGrupo(cargo, resumo, quantos) {
+function textoDoGrupo(
+  cargo: string | null | undefined,
+  resumo: ResumoDaVaga,
+  quantos: number,
+) {
   const lote = resumo.porDecisao
     ? `lote ${resumo.total} (${resumo.pelaRegra} pela regra + ${resumo.porDecisao} por decisão)`
     : `lote ${resumo.total}`;
@@ -869,20 +988,36 @@ function textoDoGrupo(cargo, resumo, quantos) {
     .join(" · ");
 }
 
-export function Fila({ e, fila }) {
+/* O edital escolhido (estado.ts), no que a aba Fila usa dele. */
+interface EditalDaFila {
+  editalId: string;
+  dados?: {
+    regra?: {
+      versoes?: ReadonlyArray<VersaoComNome> | null;
+      configuracao?: unknown;
+    } | null;
+  } | null;
+}
+
+interface FilaProps {
+  e: EditalDaFila;
+  fila: Fila;
+}
+
+export function Fila({ e, fila }: FilaProps) {
   const st = useSyncExternalStore(fila.assinar, fila.obter);
-  const [selecao, setSelecao] = useState(() => new Set());
-  const [acao, setAcao] = useState(null);
+  const [selecao, setSelecao] = useState(() => new Set<string>());
+  const [acao, setAcao] = useState<AcaoPedida | null>(null);
   const [incluindo, setIncluindo] = useState(false);
   const [espelhos, setEspelhos] = useState(false);
   const [modeloDoEspelho, setModeloDoEspelho] = useState(false);
   const [reiniciando, setReiniciando] = useState(false);
   // A gaveta do relatório abre pelo próprio estado: abrir e fechar não redesenham a lista.
-  const relatorio = useRef(null);
+  const relatorio = useRef<AberturaDoRelatorio>(null);
   const [busca, setBusca] = useState(st.filtro.busca);
-  const [recolhidos, setRecolhidos] = useState(() => new Set());
+  const [recolhidos, setRecolhidos] = useState(() => new Set<string>());
   // A ordem da tabela fica aqui: Anterior / Próxima da ficha seguem a mesma.
-  const [ordem, setOrdem] = useState({ chave: "", sentido: "" });
+  const [ordem, setOrdem] = useState<OrdemDaTabela>({ chave: "", sentido: "" });
   const etapa = st.filtro.etapa;
   useEffect(() => setOrdem({ chave: "", sentido: "" }), [etapa]);
 
@@ -935,7 +1070,7 @@ export function Fila({ e, fila }) {
     [agrupada, ordenadas, dados?.vagas],
   );
   const navegaveis = useMemo(
-    () => exibidas.filter((c) => c.ficha?.id),
+    () => exibidas.filter((c) => c.ficha?.id) as InscritoComFicha[],
     [exibidas],
   );
   const modalidades = useMemo(
@@ -958,9 +1093,9 @@ export function Fila({ e, fila }) {
     () =>
       [...selecao]
         .map((id) => posicaoNaFila.get(id))
-        .filter((i) => i !== undefined)
+        .filter((i): i is number => i !== undefined)
         .sort((a, b) => a - b)
-        .map((i) => todos[i]),
+        .map((i) => todos[i]!),
     [selecao, posicaoNaFila, todos],
   );
   const acoes = useMemo(() => acoesDaSelecao(selecionados), [selecionados]);
@@ -972,7 +1107,8 @@ export function Fila({ e, fila }) {
   const livres = useMemo(
     () =>
       candidatos.filter(
-        (c) => c.ficha?.situacao === "PENDENTE" && !c.ficha.responsavel,
+        (c): c is InscritoComFicha =>
+          c.ficha?.situacao === "PENDENTE" && !c.ficha.responsavel,
       ),
     [candidatos],
   );
@@ -998,7 +1134,7 @@ export function Fila({ e, fila }) {
   );
 
   const marcar = useCallback(
-    (id, sim) =>
+    (id: string, sim: boolean) =>
       setSelecao((atual) => {
         const nova = new Set(atual);
         if (sim) nova.add(id);
@@ -1016,15 +1152,15 @@ export function Fila({ e, fila }) {
   );
   // O resumo de cada vaga (lote e linha de corte) é calculado uma vez por lista.
   const resumoDaVaga = useMemo(() => {
-    const feitos = new Map();
-    return (vaga) => {
+    const feitos = new Map<string, ResumoDaVaga>();
+    return (vaga: string): ResumoDaVaga => {
       if (!feitos.has(vaga))
         feitos.set(vaga, resumoDaVagaNaFila(candidatos, vaga));
-      return feitos.get(vaga);
+      return feitos.get(vaga)!;
     };
   }, [candidatos]);
   const alternarGrupo = useCallback(
-    (vaga) =>
+    (vaga: string) =>
       setRecolhidos((atual) => {
         const novo = new Set(atual);
         if (novo.has(vaga)) novo.delete(vaga);
@@ -1038,7 +1174,7 @@ export function Fila({ e, fila }) {
       agrupada
         ? {
             chave: vagaDoInscrito,
-            cabecalho: (vaga, quantos) => (
+            cabecalho: (vaga: string, quantos: number) => (
               <>
                 <strong>{vaga}</strong>
                 <span className="ui-texto-secundario">
@@ -1077,7 +1213,7 @@ export function Fila({ e, fila }) {
   const minhas = st.filtro.responsavel === "eu";
 
   // As ações da coordenação num menu só (quem não coordena não vê o menu).
-  const acoesDaCoordenacao = [
+  const acoesDaCoordenacao: AcaoDoMenu[] = [
     {
       id: "incluir",
       rotulo: "Incluir por decisão da coordenação",
@@ -1234,7 +1370,9 @@ export function Fila({ e, fila }) {
           dados: { "data-valor": et.valor },
         }))}
         ativa={st.filtro.etapa}
-        aoEscolher={(etapa) => fila.mudarFiltro({ etapa })}
+        aoEscolher={(etapa: string) =>
+          fila.mudarFiltro({ etapa: etapa as EtapaDaFila })
+        }
       />
 
       <section className="ui-card avd-fila-barra" aria-label="Filtros da fila">
@@ -1365,7 +1503,8 @@ export function Fila({ e, fila }) {
         selecao={selecao}
         marcar={marcar}
         limparSelecao={limparSelecao}
-        grupo={grupo}
+        // A tabela trata null como sem grupo (o padrão dela).
+        grupo={grupo as GrupoDaTabela}
       />
 
       {incluindo ? (
@@ -1413,7 +1552,7 @@ export function Fila({ e, fila }) {
           fila={fila}
           acao={acao}
           dados={dados}
-          aoFechar={(feito) => {
+          aoFechar={(feito: boolean) => {
             setAcao(null);
             if (feito) setSelecao(new Set());
           }}

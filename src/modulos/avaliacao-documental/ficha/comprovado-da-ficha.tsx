@@ -3,7 +3,7 @@ import {
   comprovadoDosCursos,
   comprovadoDosTitulos,
 } from "../../../lib/avaliacao-documental/comprovado-da-ficha.ts";
-import { titulosDoNivel } from "../../../lib/avaliacao-documental/ficha.js";
+import { titulosDoNivel } from "../../../lib/avaliacao-documental/ficha.ts";
 import type { Bloco, ExperienciaApurada, Lancamento } from "./tipos.ts";
 
 /*

@@ -18,7 +18,7 @@ import {
   calcularFicha,
   declaradaDaFicha,
   regraDaFicha,
-} from "../../src/lib/avaliacao-documental/ficha.js";
+} from "../../src/lib/avaliacao-documental/ficha.ts";
 import {
   entradaDoEspelho,
   espelhoDaFichaGravada,
@@ -114,7 +114,7 @@ function lancamentoEnxuto(l) {
   };
 }
 
-/* O espelho do botão da ficha (estado-da-ficha.js + entradaDoEspelho). */
+/* O espelho do botão da ficha (estado-da-ficha.ts + entradaDoEspelho). */
 function espelhoIndividual(lancamento, ficha) {
   const regra = regraDaFicha(structuredClone(f114.regra), lancamento);
   const avaliacao = calcularFicha(regra, lancamento, DOCUMENTAL);

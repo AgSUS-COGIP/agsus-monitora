@@ -3,7 +3,7 @@
   ("CARGO 1: QUÍMICO - Análise da Água (Nível Superior)" vira "QUÍMICO -
   Análise da Água"), a ordem da lista (a do banco, por progresso ou por
   pendentes), o resumo da linha recolhida e o aberto/fechado lembrado por
-  usuário neste navegador. As contas vêm de andamentoDaFila (fila.js).
+  usuário neste navegador. As contas vêm de andamentoDaFila (fila.ts).
 */
 
 export type AndamentoDaVaga = {

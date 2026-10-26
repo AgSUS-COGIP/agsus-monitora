@@ -1,7 +1,7 @@
 import {
   itemCompleto,
   titulosDoNivel,
-} from "../../../lib/avaliacao-documental/ficha.js";
+} from "../../../lib/avaliacao-documental/ficha.ts";
 import type { Bloco, ItemLancado } from "./tipos.ts";
 
 /*

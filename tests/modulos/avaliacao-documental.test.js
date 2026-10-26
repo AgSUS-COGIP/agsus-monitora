@@ -5,8 +5,8 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.jsx";
-import { comecoDoEnunciado } from "../../src/lib/avaliacao-documental/nota-declarada.js";
+import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
+import { comecoDoEnunciado } from "../../src/lib/avaliacao-documental/nota-declarada.ts";
 import {
   clicar,
   digitar,

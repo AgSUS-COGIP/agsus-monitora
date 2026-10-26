@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   EFEITOS,
   NIVEIS,
@@ -6,11 +6,19 @@ import {
   SITUACOES_DO_BLOCO,
   TIPOS_DE_BLOCO,
   TITULOS_ACADEMICOS,
-} from "../../lib/avaliacao-documental/catalogo.js";
+} from "../../lib/avaliacao-documental/catalogo.ts";
 import {
   blocoNovo,
   codigoLivre,
-} from "../../lib/avaliacao-documental/regra.js";
+} from "../../lib/avaliacao-documental/regra.ts";
+import type {
+  Bloco as BlocoDaRegra,
+  CategoriaDeVinculo,
+  Faixa,
+  FaixasDeCursos,
+  Motivo,
+  PontosDeExperiencia,
+} from "../../lib/avaliacao-documental/tipos-da-regra.ts";
 import { Campo } from "../../ui/index.ts";
 import {
   BotaoMais,
@@ -21,7 +29,7 @@ import {
   CampoTexto,
   comValor,
   Escolha,
-} from "./campos.jsx";
+} from "./campos.tsx";
 
 /*
   Os blocos da ficha na regra: um cartão por documento ou pergunta, com o item
@@ -34,9 +42,42 @@ const SITUACOES_COM_EFEITO = SITUACOES_DO_BLOCO.filter(
   ([s]) => s !== "NAO_SE_APLICA",
 );
 
-function Motivos({ bloco, aoMudar }) {
+/*
+  Tipos do formulário. O bloco é lido como a regra o descreve (tipos-da-regra.ts),
+  mais o que só este formulário mostra; o que volta do formulário tem as
+  mesmas chaves, mas os valores não são conferidos aqui (um número digitado
+  pode voltar como texto): quem confere é validarRegraAnalise, ao salvar.
+*/
+type BlocoNoFormulario = BlocoDaRegra & {
+  /** REGISTRO: as respostas que acendem o alerta. */
+  alerta_quando?: string[];
+};
+/** O bloco que o formulário devolve: as chaves do bloco, valores sem conferir. */
+export type BlocoEditado = {
+  [Chave in keyof BlocoNoFormulario]?: unknown;
+};
+type ChaveDoBloco = keyof BlocoNoFormulario;
+/** Os valores próprios de um nível (por_nivel): faixas de cursos ou pontos de vínculos. */
+type ValorDoNivel = FaixasDeCursos | PontosDeExperiencia;
+/** O que as faixas editam: o teto e as faixas (do bloco ou de um nível). */
+type AlvoDasFaixas = { teto?: unknown; faixas?: Faixa[] };
+/** O que os pontos de vínculos editam (do bloco ou de um nível). */
+type AlvoDosPontos = {
+  pontos_por_mes?: unknown;
+  pontos_por_periodo?: unknown;
+  teto?: unknown;
+};
+/** Um título na tabela de pontos por nível (os pontos digitados podem ser texto). */
+type TituloNaTabela = { titulo: string; pontos: unknown };
+
+interface MotivosProps {
+  bloco: BlocoNoFormulario;
+  aoMudar: (motivos: Motivo[]) => void;
+}
+
+function Motivos({ bloco, aoMudar }: MotivosProps) {
   const motivos = bloco.motivos ?? [];
-  const mudar = (i, chave, valor) =>
+  const mudar = (i: number, chave: keyof Motivo, valor: unknown) =>
     aoMudar(motivos.map((m, j) => (j === i ? { ...m, [chave]: valor } : m)));
   return (
     <div className="avd-subgrupo">
@@ -93,9 +134,15 @@ function Motivos({ bloco, aoMudar }) {
   );
 }
 
-function Faixas({ alvo, aoMudar, rotulo }) {
+interface FaixasProps {
+  alvo: AlvoDasFaixas | undefined;
+  aoMudar: (alvo: AlvoDasFaixas) => void;
+  rotulo: ReactNode;
+}
+
+function Faixas({ alvo, aoMudar, rotulo }: FaixasProps) {
   const faixas = alvo?.faixas ?? [];
-  const mudar = (i, chave, valor) =>
+  const mudar = (i: number, chave: keyof Faixa, valor: unknown) =>
     aoMudar({
       ...alvo,
       faixas: faixas.map((f, j) => (j === i ? { ...f, [chave]: valor } : f)),
@@ -150,8 +197,20 @@ function Faixas({ alvo, aoMudar, rotulo }) {
 }
 
 /* Níveis que trocam os valores do bloco (por_nivel). */
-function PorNivel({ bloco, aoMudar, novo, desenhar }) {
-  const porNivel = bloco.por_nivel ?? {};
+interface PorNivelProps {
+  bloco: BlocoNoFormulario;
+  aoMudar: (bloco: BlocoEditado) => void;
+  /** Os valores de um nível novo (copiados dos gerais). */
+  novo: () => ValorDoNivel;
+  desenhar: (
+    nivel: string,
+    valor: ValorDoNivel,
+    mudarNivel: (valor: unknown) => void,
+  ) => ReactNode;
+}
+
+function PorNivel({ bloco, aoMudar, novo, desenhar }: PorNivelProps) {
+  const porNivel: Record<string, ValorDoNivel> = bloco.por_nivel ?? {};
   const livres = NIVEIS.filter(([n]) => !porNivel[n]);
   return (
     <div className="avd-subgrupo">
@@ -202,8 +261,14 @@ function PorNivel({ bloco, aoMudar, novo, desenhar }) {
   );
 }
 
-function CamposDoTipo({ bloco, aoMudar }) {
-  const mudar = (chave, valor) => aoMudar({ ...bloco, [chave]: valor });
+interface CamposDoTipoProps {
+  bloco: BlocoNoFormulario;
+  aoMudar: (bloco: BlocoEditado) => void;
+}
+
+function CamposDoTipo({ bloco, aoMudar }: CamposDoTipoProps) {
+  const mudar = (chave: ChaveDoBloco, valor: unknown) =>
+    aoMudar({ ...bloco, [chave]: valor });
   if (bloco.tipo === "PONTUACAO")
     return (
       <div className="ui-grade-de-campos">
@@ -232,7 +297,8 @@ function CamposDoTipo({ bloco, aoMudar }) {
       </div>
     );
   if (bloco.tipo === "TITULOS") {
-    const tabela = bloco.pontos_por_nivel ?? {};
+    const tabela: Partial<Record<string, ReadonlyArray<TituloNaTabela>>> =
+      bloco.pontos_por_nivel ?? {};
     return (
       <div className="avd-subgrupo">
         <Caixa
@@ -282,7 +348,7 @@ function CamposDoTipo({ bloco, aoMudar }) {
                             (x) => x.titulo !== t,
                           );
                           const n2 = Number(texto);
-                          const lista =
+                          const lista: ReadonlyArray<TituloNaTabela> =
                             texto === ""
                               ? resto
                               : [
@@ -335,7 +401,10 @@ function CamposDoTipo({ bloco, aoMudar }) {
     );
   if (bloco.tipo === "VINCULOS") {
     const porPeriodo = (bloco.pontuacao ?? "POR_MES") === "POR_PERIODO";
-    const pontos = (valor, mudarAlvo) => (
+    const pontos = (
+      valor: AlvoDosPontos,
+      mudarAlvo: (valor: AlvoDosPontos) => void,
+    ) => (
       <div className="ui-grade-de-campos">
         {porPeriodo ? (
           <CampoNumero
@@ -357,8 +426,9 @@ function CamposDoTipo({ bloco, aoMudar }) {
         />
       </div>
     );
-    const categorias = bloco.categorias ?? [];
-    const estagio = bloco.estagio_indigena ?? {};
+    const categorias: CategoriaDeVinculo[] = bloco.categorias ?? [];
+    const estagio: Partial<NonNullable<BlocoDaRegra["estagio_indigena"]>> =
+      bloco.estagio_indigena ?? {};
     return (
       <div className="avd-subgrupo">
         <h4>Categorias</h4>
@@ -390,7 +460,7 @@ function CamposDoTipo({ bloco, aoMudar }) {
                   ? ""
                   : String(c.desempate)
               }
-              opcoes={[1, 2, 3, 4, 5].map((n) => [String(n), `${n}º`])}
+              opcoes={[1, 2, 3, 4, 5].map((n) => [String(n), `${n}º`] as const)}
               vazio="Não desempata"
               aoMudar={(v) =>
                 mudar(
@@ -571,9 +641,27 @@ function CamposDoTipo({ bloco, aoMudar }) {
   return null;
 }
 
-function Bloco({ bloco, indice, total, aoMudar, aoMover, aoTirar }) {
-  const mudar = (chave, valor) => aoMudar({ ...bloco, [chave]: valor });
-  const efeitos = bloco.efeitos ?? {};
+interface BlocoProps {
+  bloco: BlocoNoFormulario;
+  indice: number;
+  total: number;
+  aoMudar: (bloco: BlocoEditado) => void;
+  /** -1 sobe, 1 desce. */
+  aoMover: (passo: number) => void;
+  aoTirar: () => void;
+}
+
+function Bloco({
+  bloco,
+  indice,
+  total,
+  aoMudar,
+  aoMover,
+  aoTirar,
+}: BlocoProps) {
+  const mudar = (chave: ChaveDoBloco, valor: unknown) =>
+    aoMudar({ ...bloco, [chave]: valor });
+  const efeitos: Partial<Record<string, string>> = bloco.efeitos ?? {};
   return (
     <section
       className="ui-card avd-bloco"
@@ -664,12 +752,18 @@ function Bloco({ bloco, indice, total, aoMudar, aoMover, aoTirar }) {
   );
 }
 
-export function Blocos({ blocos, aoMudar }) {
-  const [tipoNovo, setTipoNovo] = useState("DOCUMENTO");
-  const mover = (i, passo) => {
-    const nova = [...blocos];
+export interface BlocosProps {
+  blocos: ReadonlyArray<BlocoNoFormulario>;
+  /** A lista nova (os valores não são conferidos aqui: validarRegraAnalise confere). */
+  aoMudar: (blocos: Array<BlocoNoFormulario | BlocoEditado>) => void;
+}
+
+export function Blocos({ blocos, aoMudar }: BlocosProps) {
+  const [tipoNovo, setTipoNovo] = useState<string>("DOCUMENTO");
+  const mover = (i: number, passo: number) => {
+    const nova: Array<BlocoNoFormulario | BlocoEditado> = [...blocos];
     const [item] = nova.splice(i, 1);
-    nova.splice(i + passo, 0, item);
+    nova.splice(i + passo, 0, item!);
     aoMudar(nova);
   };
   return (

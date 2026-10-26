@@ -139,7 +139,7 @@ aplicar). Pela decisão de 06/10/2026, a conta pesada é do **Python**, não de 
   `CK_LISTACLASSIF_TPLISTA`; um gatilho em `TH_REGRA_ANALISE` que confere os campos novos da regra
   (`provisoria.desempate` e `lote.por_vaga`); a linha nova no Status das atualizações. No lugar de
   `FC_PRE_CLASSIFICAR_VAGA`, `FC_TAMANHO_LOTE` e `FC_NOTA_DECLARADA`, a conta está em
-  `python/monitora/avaliacao_documental/` (oficial) e `src/lib/avaliacao-documental/pre-classificacao.js`
+  `python/monitora/avaliacao_documental/` (oficial) e `src/lib/avaliacao-documental/pre-classificacao.ts`
   (prévia), conferidas pelos mesmos casos dourados
   (`tests/fixtures/avaliacao-documental/casos-de-pre-classificacao.json` e a nota declarada de
   `casos-de-pontuacao.json`, no vitest e no pytest).
@@ -147,7 +147,7 @@ aplicar). Pela decisão de 06/10/2026, a conta pesada é do **Python**, não de 
   `normal`/`seco`/`refazer_lote`, `disparado_por`); roda sozinho no fim do robô da Empregare (passo
   novo em `robo-empregare.yml`, `--apos-robo`), pelo "Recalcular" da coordenação e pelo "Rodar
   agora" (hoje pela RPC `disparar_robo`, que aceita o robô por edital).
-- Aba **Pré-classificação** (`src/modulos/avaliacao-documental/pre-classificacao.jsx`): contadores,
+- Aba **Pré-classificação** (`src/modulos/avaliacao-documental/pre-classificacao.tsx`): contadores,
   tabela por vaga com a linha de corte, divergência ART × declarada, eliminados à parte, tamanho do
   lote por vaga (versão nova da regra) e o registro/exportação das listas PROVISORIA e LOTE com o
   gerador da Classificação (`documento-sei.js` ganhou os modelos dos itens 8.3.1 e 8.4). As abas
@@ -201,15 +201,15 @@ aplicar). O que entrou:
   As fichas são abertas pelo **job da pré-classificação** no fim de cada edital (o banco valida e
   grava em `FC_ABRIR_FICHAS`); a distribuição dos que entram depois é calculada em Python
   (`python/monitora/avaliacao_documental/distribuicao.py`), com a mesma conta da prévia da tela
-  (`src/lib/avaliacao-documental/distribuicao.js`) e casos dourados comuns. No lugar de
+  (`src/lib/avaliacao-documental/distribuicao.ts`) e casos dourados comuns. No lugar de
   `atribuir_fichas`, `distribuir_fichas` faz distribuir, redistribuir e devolver à fila.
 - `20261006120500_lote_por_nota_minima.sql`: a base `NOTA_MINIMA` do lote (93/2026, item 8.2.6),
   os desempates `EXPERIENCIA_DECLARADA` e `MAIOR_IDADE` (item 10.1) e o status dos editais em
   `listar_editais_avaliacao` (o seletor mostra só os vigentes); correções
   `supabase/correcoes/20261006-modelo-proj26-nota-minima.sql` (o PROJ26-CURRICULAR só do 93/2026,
   com o lote, o desempate e as cotas PI e PQ dos itens 5.7.5 e 5.7.6).
-- Aba **Fila** (`src/modulos/avaliacao-documental/fila.jsx`), lógica pura em
-  `src/lib/avaliacao-documental/fila.js`, tours da Aya e verbetes.
+- Aba **Fila** (`src/modulos/avaliacao-documental/fila.tsx`), lógica pura em
+  `src/lib/avaliacao-documental/fila.ts`, tours da Aya e verbetes.
 - Ficam para a F4: o conteúdo da ficha (blocos, títulos, vínculos, nota), AM-2.3 (fichas
   concluídas afetadas por versão nova da regra) e AM-12.1/12.3 a 12.6. Fica para a F5: validar ou
   devolver a ficha em revisão.
@@ -254,7 +254,7 @@ analisar… para sair das planilhas". O que entrou:
   `salvar_rascunho_ficha`, `concluir_ficha`, `reabrir_ficha` e `registrar_acesso_ficha`;
   `obter_fila_avaliacao` traz resultado e nota e mostra ao analista só as vagas dele;
   `salvar_regra_analise` devolve as fichas concluídas com versão anterior (AM-2.3).
-- **A conta:** a tela calcula com `src/lib/avaliacao-documental/pontuacao.js`; o banco **não refaz a
+- **A conta:** a tela calcula com `src/lib/avaliacao-documental/pontuacao.ts`; o banco **não refaz a
   conta** (revalida estrutura, limites e coerência: blocos e motivos da regra, teto, soma, bloco
   eliminatório ⇒ inapto, nota mínima, pendências e justificativa); o Python
   (`python/monitora/avaliacao_documental/pontuacao.py`, `conferir_ficha`) recalcula em lote, pelos

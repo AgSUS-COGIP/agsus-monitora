@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { criarEstadoDaPreClassificacao } from "../../src/modulos/avaliacao-documental/estado-da-pre-classificacao.js";
+import { criarEstadoDaPreClassificacao } from "../../src/modulos/avaliacao-documental/estado-da-pre-classificacao.ts";
 import {
   contadoresDaPreClassificacao,
   declaradasCongeladas,
@@ -10,7 +10,7 @@ import {
   tamanhoSugerido,
   textoDoAviso,
   vagasDaTela,
-} from "../../src/lib/avaliacao-documental/tela-da-pre-classificacao.js";
+} from "../../src/lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import {
   chaveDoModelo,
   documentoOficial,
@@ -21,7 +21,7 @@ import { nomeDoArquivo } from "../../src/lib/classificacao/exportacao.ts";
 
 /*
   A aba Pré-classificação sem DOM (src/lib/avaliacao-documental/
-  tela-da-pre-classificacao.js) e o documento das listas PROVISORIA e LOTE no
+  tela-da-pre-classificacao.ts) e o documento das listas PROVISORIA e LOTE no
   gerador da Classificação (src/lib/classificacao/documento-sei.ts) — AM-4.4,
   AM-5.0, AM-5.6 e AM-16.
 */

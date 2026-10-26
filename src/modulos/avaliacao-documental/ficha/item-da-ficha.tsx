@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { enunciadoCompleto } from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
-import { PARCIAL_DO_TIPO as PARCIAIS_DOS_TIPOS } from "../../../lib/avaliacao-documental/catalogo.js";
+import { PARCIAL_DO_TIPO as PARCIAIS_DOS_TIPOS } from "../../../lib/avaliacao-documental/catalogo.ts";
 import {
   BLOCOS_COM_ITENS as ITENS_DOS_TIPOS,
   blocoNaoPontuaNoNivel,
@@ -19,7 +19,7 @@ import {
   sugereNaoEnviado,
   textoDaNota,
   titulosDoNivel,
-} from "../../../lib/avaliacao-documental/ficha.js";
+} from "../../../lib/avaliacao-documental/ficha.ts";
 import {
   abreComLinhaNova,
   apuradoDoBloco,
@@ -68,7 +68,7 @@ import {
   diasEmComum,
 } from "../../../lib/avaliacao-documental/comprovado-da-ficha.ts";
 import type { LeituraDoArquivo } from "../../../lib/avaliacao-documental/leitura-dos-arquivos.ts";
-import { tetoDoBloco } from "../../../lib/avaliacao-documental/pontuacao.js";
+import { tetoDoBloco } from "../../../lib/avaliacao-documental/pontuacao.ts";
 import { Selo } from "../../../ui/index.ts";
 import { CamposDoItem } from "./campos-do-item.tsx";
 import { ComprovadoDaFicha } from "./comprovado-da-ficha.tsx";
@@ -1036,7 +1036,7 @@ const justificativaDosItens = (st: EstadoDaFicha, bloco: Bloco) =>
 
 /*
   "Justificativa do ajuste": o resumo dos itens aceitos e dos não pontuados,
-  já preenchido no campo justificativa_livre (estado-da-ficha.js) e editável;
+  já preenchido no campo justificativa_livre (estado-da-ficha.ts) e editável;
   o texto entra no parecer. Quando o texto não é o resumo atual (editado, ou
   os itens mudaram depois de editar), "Usar o resumo dos itens" volta a ele.
 */

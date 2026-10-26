@@ -1,7 +1,7 @@
 import {
   ESCOLHAS_DA_FICHA,
   textoDoProgresso,
-} from "../../../lib/avaliacao-documental/ficha.js";
+} from "../../../lib/avaliacao-documental/ficha.ts";
 import { Popover } from "../../../ui/index.ts";
 import type { Conferencia, EstadoDoPasso, Passo } from "./tipos.ts";
 

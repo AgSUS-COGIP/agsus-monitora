@@ -11,11 +11,11 @@ import {
   calcularFicha,
   lancamentoInicial,
   resumoParaGravar,
-} from "../../src/lib/avaliacao-documental/ficha.js";
+} from "../../src/lib/avaliacao-documental/ficha.ts";
 import {
   cotasConfirmadas,
   modalidadesDoLancamento,
-} from "../../src/lib/avaliacao-documental/pontuacao.js";
+} from "../../src/lib/avaliacao-documental/pontuacao.ts";
 
 const CASOS = JSON.parse(
   readFileSync(

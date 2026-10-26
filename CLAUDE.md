@@ -12,6 +12,7 @@ as telas principal, nacional e por DSEI da Saúde Indígena também estão em TS
 as regras nacionais e distritais estão em TypeScript, com contratos JSDoc na fronteira da reconciliação compartilhada;
 a integração comum com o Leaflet também está em TypeScript, com contratos em `tipos-do-leaflet.ts`;
 o Painel de entrevistas também está em TypeScript (entrada, estado, normalização e apresentação), com contratos em `tipos-do-painel.ts`;
+a Avaliação documental (módulo e lib) também está em TypeScript, com contratos em `tipos-do-estado.ts` e `tipos-da-ficha.ts`;
 guia em `docs/typescript-no-frontend.md`. O servidor também é TypeScript. **Português** em nomes
 de arquivo, funções e commits.
 

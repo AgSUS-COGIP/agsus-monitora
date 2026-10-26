@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { validarRegraAnalise } from "../src/lib/avaliacao-documental/regra.js";
+import { validarRegraAnalise } from "../src/lib/avaliacao-documental/regra.ts";
 
 /*
   Migration 20261014170000: a pontuação dos títulos no inapto por requisito,

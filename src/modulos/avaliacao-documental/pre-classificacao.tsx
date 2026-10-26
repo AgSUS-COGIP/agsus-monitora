@@ -19,7 +19,7 @@ import {
   textoDoAviso,
   textoDoLote,
   vagasDaTela,
-} from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
+} from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
 import { ESPERA_DO_PEDIDO_MIN } from "../../lib/robos-de-carga.js";
 import { Aviso, GradeDeKpis, Kpi, Selo } from "../../ui/index.ts";
@@ -27,10 +27,22 @@ import {
   IncluirPorDecisao,
   RevogarDecisao,
   SeloDaDecisao,
-} from "./decisao-do-lote.jsx";
-import { chaveDaLista } from "./estado-da-pre-classificacao.js";
+} from "./decisao-do-lote.tsx";
+import { chaveDaLista } from "./estado-da-pre-classificacao.ts";
 import { InscricoesDoEdital } from "./inscricoes-do-edital.tsx";
 import { TravaDasInscricoes } from "./trava-das-inscricoes.tsx";
+import type { EstadoDaAvaliacao, LojaDaAvaliacao } from "./estado.ts";
+import type {
+  DadosDaPreClassificacao,
+  EstadoDaPreClassificacao,
+  ListaRegistradaDaPre,
+  RegistroDaPre,
+  SituacaoDoInscrito,
+  SnapshotDaPreClassificacao,
+  TipoDaListaDaPre,
+  VagaDaTela,
+  InscritoDaPre,
+} from "./tipos-da-pre-classificacao.ts";
 
 /*
   Aba Pré-classificação (fase F2): a Lista Geral de Classificação Provisória
@@ -39,24 +51,27 @@ import { TravaDasInscricoes } from "./trava-das-inscricoes.tsx";
   o job; os tamanhos do lote por vaga viram versão nova da regra; as listas
   PROVISORIA e LOTE são registradas no banco e exportadas pelo gerador da
   Classificação. A coordenação inclui no lote por decisão (ex.: "Critério
-  CORES") quem a regra deixa fora, e revoga (decisao-do-lote.jsx); o lote
+  CORES") quem a regra deixa fora, e revoga (decisao-do-lote.tsx); o lote
   mostra "N pela regra + M por decisão". Explicações:
   docs/aya/regras-da-avaliacao-documental.md.
 */
 
-const SITUACAO_DA_EXECUCAO = {
+const SITUACAO_DA_EXECUCAO: Record<string, string> = {
   EM_ANDAMENTO: "rodando",
   CONCLUIDA: "concluída",
   PARCIAL: "parcial",
   FALHOU: "falhou",
 };
-const TOM_DA_SITUACAO = {
+const TOM_DA_SITUACAO: Record<SituacaoDoInscrito, string> = {
   NO_LOTE: "aprovado",
   ANALISADO: "revisar",
   RANQUEADO: "neutro",
   ELIMINADO: "reprovado",
 };
-const quando = (valor) =>
+/* Os avisos por situação gravada do edital (pode vir uma que não está aqui). */
+type AvisosDaSituacao = Readonly<Record<string, string | undefined>>;
+
+const quando = (valor: string | null | undefined) =>
   valor
     ? new Date(valor).toLocaleString("pt-BR", {
         dateStyle: "short",
@@ -64,7 +79,7 @@ const quando = (valor) =>
       })
     : "";
 
-function cabecalhoDaVaga(v) {
+function cabecalhoDaVaga(v: VagaDaTela) {
   const vagas =
     v.vagas_imediatas === null || v.vagas_imediatas === undefined
       ? ""
@@ -74,7 +89,14 @@ function cabecalhoDaVaga(v) {
     .join(" - ");
 }
 
-function LinhaDoInscrito({ c, podeCoordenar, pre }) {
+interface LinhaDoInscritoProps {
+  c: InscritoDaPre;
+  /** Sem ele (fora do lote), a linha não oferece "Revogar decisão". */
+  podeCoordenar?: boolean;
+  pre?: EstadoDaPreClassificacao;
+}
+
+function LinhaDoInscrito({ c, podeCoordenar, pre }: LinhaDoInscritoProps) {
   return (
     <tr data-candidato={c.codigo} data-situacao={c.situacao}>
       <td>{c.posicao ? ordinal(c.posicao) : "—"}</td>
@@ -131,12 +153,22 @@ function LinhaDoInscrito({ c, podeCoordenar, pre }) {
         {podeCoordenar ? (
           <RevogarDecisao
             c={c}
-            aoRevogar={(motivo) => pre.revogarDecisao([c], motivo)}
+            aoRevogar={(motivo) => pre!.revogarDecisao([c], motivo)}
           />
         ) : null}
       </td>
     </tr>
   );
+}
+
+interface VagaDaPreProps {
+  v: VagaDaTela;
+  configuracao: RegistroDaPre;
+  podeCoordenar: boolean;
+  /** O tamanho digitado e ainda não salvo ("" tira o definido). */
+  tamanho: string | undefined;
+  aoMudarTamanho: (codigo: string, valor: string) => void;
+  pre: EstadoDaPreClassificacao;
 }
 
 function VagaDaPre({
@@ -146,7 +178,7 @@ function VagaDaPre({
   tamanho,
   aoMudarTamanho,
   pre,
-}) {
+}: VagaDaPreProps) {
   const [incluindo, setIncluindo] = useState(false);
   const definido = tamanhoDefinido(configuracao, v.codigo);
   const sugerido = tamanhoSugerido(configuracao, v);
@@ -215,7 +247,7 @@ function VagaDaPre({
       ) : null}
       {(v.avisos || []).length ? (
         <ul className="avd-lista-simples" aria-label="Avisos da vaga">
-          {v.avisos.map((a) => (
+          {v.avisos!.map((a) => (
             <li key={a}>{textoDoAviso(a)}</li>
           ))}
         </ul>
@@ -295,7 +327,13 @@ function VagaDaPre({
   );
 }
 
-function ExportarLista({ registrado, pre, comEliminados }) {
+interface ExportarListaProps {
+  registrado: ListaRegistradaDaPre | undefined;
+  pre: EstadoDaPreClassificacao;
+  comEliminados?: boolean;
+}
+
+function ExportarLista({ registrado, pre, comEliminados }: ExportarListaProps) {
   if (!registrado) return null;
   return (
     <span className="ui-acoes">
@@ -335,10 +373,17 @@ function ExportarLista({ registrado, pre, comEliminados }) {
   );
 }
 
-function ListasOficiais({ d, p, pre }) {
+interface ListasOficiaisProps {
+  d: DadosDaPreClassificacao;
+  p: SnapshotDaPreClassificacao;
+  pre: EstadoDaPreClassificacao;
+}
+
+function ListasOficiais({ d, p, pre }: ListasOficiaisProps) {
   const lotes = lotesAPublicar(d);
   const semRegraDeClassificacao = !d.regra_classificacao;
-  const registrar = (tipo, lote = null) => void pre.registrarLista(tipo, lote);
+  const registrar = (tipo: TipoDaListaDaPre, lote: number | null = null) =>
+    void pre.registrarLista(tipo, lote);
   return (
     <section className="ui-card avd-listas" aria-labelledby="avdListasPre">
       <h2 className="ui-titulo" id="avdListasPre">
@@ -425,7 +470,7 @@ function ListasOficiais({ d, p, pre }) {
                       <button
                         type="button"
                         className="btn secondary small"
-                        onClick={() => void pre.publicarLista(meta.id)}
+                        onClick={() => void pre.publicarLista(meta!.id)}
                       >
                         Marcar como publicada
                       </button>
@@ -443,9 +488,15 @@ function ListasOficiais({ d, p, pre }) {
   );
 }
 
-export function PreClassificacao({ e, estado, pre }) {
+export interface PreClassificacaoProps {
+  e: EstadoDaAvaliacao;
+  estado: LojaDaAvaliacao;
+  pre: EstadoDaPreClassificacao;
+}
+
+export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
   const p = useSyncExternalStore(pre.assinar, pre.obter);
-  const [tamanhos, setTamanhos] = useState({});
+  const [tamanhos, setTamanhos] = useState<Record<string, string>>({});
   const [motivo, setMotivo] = useState("");
   const [erroAoSalvar, setErroAoSalvar] = useState("");
   const [abrirDescongelar, setAbrirDescongelar] = useState(false);
@@ -661,9 +712,10 @@ export function PreClassificacao({ e, estado, pre }) {
             : "Crie a regra na aba Regra para recalcular."}
         </Aviso>
       ) : null}
-      {situacaoDoEdital && SITUACOES_DO_EDITAL[situacaoDoEdital] ? (
+      {situacaoDoEdital &&
+      (SITUACOES_DO_EDITAL as AvisosDaSituacao)[situacaoDoEdital] ? (
         <Aviso tom="warning">
-          {SITUACOES_DO_EDITAL[situacaoDoEdital]}
+          {(SITUACOES_DO_EDITAL as AvisosDaSituacao)[situacaoDoEdital]}
           {ultima?.edital?.mensagem ? ` ${ultima.edital.mensagem}` : ""}
         </Aviso>
       ) : null}

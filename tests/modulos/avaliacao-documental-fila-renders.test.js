@@ -2,10 +2,10 @@ import { renders } from "../componentes/contar-renders.js";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { criarEstadoDaFila } from "../../src/modulos/avaliacao-documental/estado-da-fila.js";
-import { Fila } from "../../src/modulos/avaliacao-documental/fila.jsx";
-import * as telaDaPre from "../../src/lib/avaliacao-documental/tela-da-pre-classificacao.js";
-import * as libDaFila from "../../src/lib/avaliacao-documental/fila.js";
+import { criarEstadoDaFila } from "../../src/modulos/avaliacao-documental/estado-da-fila.ts";
+import { Fila } from "../../src/modulos/avaliacao-documental/fila.tsx";
+import * as telaDaPre from "../../src/lib/avaliacao-documental/tela-da-pre-classificacao.ts";
+import * as libDaFila from "../../src/lib/avaliacao-documental/fila.ts";
 import { clicar, escolher, esperar } from "../componentes/interacoes.js";
 
 /*
@@ -19,13 +19,13 @@ import { clicar, escolher, esperar } from "../componentes/interacoes.js";
 */
 
 vi.mock(
-  "../../src/lib/avaliacao-documental/tela-da-pre-classificacao.js",
+  "../../src/lib/avaliacao-documental/tela-da-pre-classificacao.ts",
   async (original) => {
     const m = await original();
     return { ...m, podeIncluirPorDecisao: vi.fn(m.podeIncluirPorDecisao) };
   },
 );
-vi.mock("../../src/lib/avaliacao-documental/fila.js", async (original) => {
+vi.mock("../../src/lib/avaliacao-documental/fila.ts", async (original) => {
   const m = await original();
   return {
     ...m,

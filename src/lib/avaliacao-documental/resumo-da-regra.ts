@@ -10,9 +10,9 @@ import {
   NIVEIS,
   TITULOS_ACADEMICOS,
   rotuloDe,
-} from "./catalogo.js";
+} from "./catalogo.ts";
 import { rotuloDaVersao } from "../nome-da-versao.ts";
-import { baseDaNota, textoDaPergunta } from "./regra.js";
+import { baseDaNota, textoDaPergunta } from "./regra.ts";
 import type {
   Bloco,
   EliminacaoAutomatica,

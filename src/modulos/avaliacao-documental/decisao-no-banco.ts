@@ -7,22 +7,42 @@
     revogar_decisao_lote(p_edital, p_codigos, p_motivo, p_vaga)
   Uma chamada por vaga (o mesmo código pode estar em mais de uma vaga).
 */
-import { codigosPorVaga } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
+import type { ChamadaDeRpc } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
+import type { CandidatoParaDecidir } from "./tipos-da-pre-classificacao.ts";
+import { codigosPorVaga } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 
 const RPC_INCLUIR_POR_DECISAO = "incluir_no_lote_por_decisao";
 const RPC_REVOGAR_DECISAO = "revogar_decisao_lote";
 
-const ACOES = Object.freeze({
+export type AcaoNoLote = "incluir" | "revogar";
+
+/** Um candidato da decisão: o código na Empregare e a vaga. */
+export type CandidatoDaDecisao = CandidatoParaDecidir;
+
+/** O que decidirNoLote devolve: quantos e o aviso para a tela. */
+export interface DecisaoNoLote {
+  quantidade: number;
+  texto: string;
+}
+
+interface ComoDecidir {
+  rpc: string;
+  /** O campo da resposta com a quantidade. */
+  campo: string;
+  texto: (n: number) => string;
+}
+
+const ACOES: Readonly<Record<AcaoNoLote, ComoDecidir>> = Object.freeze({
   incluir: {
     rpc: RPC_INCLUIR_POR_DECISAO,
     campo: "incluidos",
-    texto: (n) =>
+    texto: (n: number) =>
       `${n} ${n === 1 ? "candidato incluído" : "candidatos incluídos"} no lote por decisão da coordenação.`,
   },
   revogar: {
     rpc: RPC_REVOGAR_DECISAO,
     campo: "revogadas",
-    texto: (n) =>
+    texto: (n: number) =>
       `${n} ${n === 1 ? "decisão revogada" : "decisões revogadas"}.`,
   },
 });
@@ -32,17 +52,23 @@ const ACOES = Object.freeze({
  * [{ codigo, vaga }] do edital, com o motivo. `rpc(nome, argumentos)` é a
  * chamada do store. Devolve { quantidade, texto }; o erro do banco sobe.
  */
-export async function decidirNoLote(rpc, acao, editalId, candidatos, motivo) {
+export async function decidirNoLote(
+  rpc: ChamadaDeRpc,
+  acao: AcaoNoLote,
+  editalId: string,
+  candidatos: ReadonlyArray<CandidatoDaDecisao>,
+  motivo: string | null | undefined,
+): Promise<DecisaoNoLote> {
   const a = ACOES[acao];
   if (!a) throw new Error(`Ação desconhecida: ${acao}`);
   let quantidade = 0;
   for (const { vaga, codigos } of codigosPorVaga(candidatos)) {
-    const r = await rpc(a.rpc, {
+    const r = (await rpc(a.rpc, {
       p_edital: editalId,
       p_codigos: codigos,
       p_motivo: String(motivo ?? "").trim(),
       p_vaga: vaga,
-    });
+    })) as Record<string, unknown> | null;
     quantidade += Number(r?.[a.campo]) || 0;
   }
   return { quantidade, texto: a.texto(quantidade) };

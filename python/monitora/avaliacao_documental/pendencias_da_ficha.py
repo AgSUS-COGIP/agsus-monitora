@@ -1,6 +1,6 @@
 """
 O que falta para concluir a ficha da avaliação documental (cópia fiel de
-pendenciasDaFicha em src/lib/avaliacao-documental/ficha.js, com os mesmos tipos):
+pendenciasDaFicha em src/lib/avaliacao-documental/ficha.ts, com os mesmos tipos):
 situacao, motivo, item, datas, horas, comprovado, minimo, acima, justificativa,
 requisito, extra e nota. O banco confere o mesmo ao concluir (FC_PENDENCIAS_FICHA).
 
@@ -77,7 +77,7 @@ def _data_valida(texto):
 
 
 def _texto_comparavel(t):
-    """textoComparavel de ficha.js: sem acento, minúsculo, só letras e dígitos."""
+    """textoComparavel de ficha.ts: sem acento, minúsculo, só letras e dígitos."""
     t = unicodedata.normalize("NFD", "" if t is None else str(t))
     t = "".join(c for c in t if not 0x300 <= ord(c) <= 0x36F).lower()
     return re.sub(r"[^a-z0-9]+", " ", t).strip()

@@ -11,8 +11,8 @@ import {
   lerEditalLembrado,
   visaoNaTela,
 } from "../../src/modulos/avaliacao-documental/abas-e-entrada.ts";
-import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.jsx";
-import { editalVigente } from "../../src/lib/avaliacao-documental/editais.js";
+import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
+import { editalVigente } from "../../src/lib/avaliacao-documental/editais.ts";
 import { clicar, esperar } from "../componentes/interacoes.js";
 
 /*

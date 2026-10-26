@@ -24,7 +24,7 @@
     descongelar_declarada_pre_classificacao(p_edital, p_motivo, p_vaga)
                                                       (20261007170000) descongela a
                                                       nota declarada; depois, Recalcular
-    incluir_no_lote_por_decisao / revogar_decisao_lote  (20261007200000, decisao-no-banco.js)
+    incluir_no_lote_por_decisao / revogar_decisao_lote  (20261007200000, decisao-no-banco.ts)
                                                       a coordenação inclui no lote por
                                                       decisão ou revoga, com motivo
   "Recalcular": disparar_robo('pre_classificacao', { editais: [edital] })
@@ -71,8 +71,30 @@ import {
   criarLeituraPorVersao,
   funcaoAusente,
 } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
-import { decidirNoLote } from "./decisao-no-banco.js";
-import { mensagemDoBanco } from "./estado.js";
+import { decidirNoLote } from "./decisao-no-banco.ts";
+import { mensagemDoBanco } from "./estado.ts";
+import type { DadosDoAcompanhamento } from "../../lib/avaliacao-documental/acompanhamento-das-inscricoes.ts";
+import type {
+  CandidatoParaDecidir,
+  DadosDaPreClassificacao,
+  ExecucaoDaPre,
+  ListaRegistradaDaPre,
+  MetaDaLista,
+  OpcoesDaPreClassificacao,
+  RetratoDaPre,
+  SituacaoDaPre,
+  SnapshotDaPreClassificacao,
+  TipoDaListaDaPre,
+} from "./tipos-da-pre-classificacao.ts";
+
+type Mudancas = Partial<SnapshotDaPreClassificacao>;
+type Publicar = (mudancas: Mudancas) => void;
+/** O que incluirPorDecisao e revogarDecisao devolvem. */
+export type ResultadoDaDecisao =
+  { ok: true; quantidade: number } | { ok: false; erro: string };
+
+/** O erro do banco (PostgREST) com o código. */
+type ErroComCodigo = { code?: unknown } | null | undefined;
 
 const RPC_OBTER_PRE_CLASSIFICACAO = "obter_pre_classificacao";
 const RPC_OBTER_PRE_SE_MUDOU = "obter_pre_classificacao_se_mudou";
@@ -92,7 +114,7 @@ const VALIDADE_DA_LEITURA_MS = 5 * 60 * 1000;
 const LIMITE_DO_ACOMPANHAMENTO_MS =
   (roboDeCarga("pre_classificacao")?.limiteMin ?? 20) * 60000;
 
-const INICIAL = Object.freeze({
+const INICIAL: Readonly<SnapshotDaPreClassificacao> = Object.freeze({
   editalId: "",
   dados: null,
   inscricoes: null,
@@ -104,17 +126,20 @@ const INICIAL = Object.freeze({
   registradas: {},
 });
 
-const hora = (data) =>
+const hora = (data: Date) =>
   data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-export function chaveDaLista(tipo, lote = null) {
+export function chaveDaLista(
+  tipo: TipoDaListaDaPre | string,
+  lote: number | null = null,
+): string {
   return lote ? `${tipo}:${lote}` : tipo;
 }
 
 export function criarEstadoDaPreClassificacao({
   supabase = null,
-  toast = (mensagem) => console.info(mensagem),
-  agendar = (fn, ms) => setTimeout(fn, ms),
+  toast = (mensagem: string) => console.info(mensagem),
+  agendar = (fn: () => void, ms: number) => setTimeout(fn, ms),
   agora = () => new Date(),
   baixar = baixarNoNavegador,
   copiar = copiarParaAreaDeTransferencia,
@@ -123,8 +148,8 @@ export function criarEstadoDaPreClassificacao({
   cabecalho = () => CABECALHO_PADRAO,
   tempoLimiteMs = TEMPO_LIMITE_MS,
   copias = criarCopiasPorVersao(supabase, RPC_OBTER_PRE_SE_MUDOU),
-} = {}) {
-  let estado = INICIAL;
+}: OpcoesDaPreClassificacao = {}) {
+  let estado: SnapshotDaPreClassificacao = INICIAL;
   const leitura = criarLeituraPorVersao({
     nova: RPC_OBTER_PRE_SE_MUDOU,
     antiga: RPC_OBTER_PRE_CLASSIFICACAO,
@@ -135,13 +160,16 @@ export function criarEstadoDaPreClassificacao({
   let lidoEm = 0;
   let chaveLida = "";
   let acompanhamento = 0;
-  const ouvintes = new Set();
-  const publicar = (mudancas) => {
+  const ouvintes = new Set<() => void>();
+  const publicar: Publicar = (mudancas) => {
     estado = { ...estado, ...mudancas };
     for (const ouvinte of ouvintes) ouvinte();
   };
 
-  async function rpc(nome, argumentos) {
+  async function rpc(
+    nome: string,
+    argumentos: Record<string, unknown>,
+  ): Promise<unknown> {
     if (!supabase) throw new Error("Sem conexão com o banco.");
     const { data, error } = await comTempoLimite(
       supabase.rpc(nome, argumentos),
@@ -157,9 +185,9 @@ export function criarEstadoDaPreClassificacao({
     "Inscrições" (retratos diários) não muda com elas.
   */
   async function carregar(
-    editalId = estado.editalId,
-    { inscricoes: lerInscricoes = true } = {},
-  ) {
+    editalId: string = estado.editalId,
+    { inscricoes: lerInscricoes = true }: { inscricoes?: boolean } = {},
+  ): Promise<boolean> {
     const meu = ++pedido;
     if (!editalId) {
       publicar({ ...INICIAL });
@@ -181,7 +209,13 @@ export function criarEstadoDaPreClassificacao({
       ]);
       if (meu !== pedido) return false;
       lidoEm = agora().getTime();
-      publicar({ dados, inscricoes, carregando: false, erro: "" });
+      // O payload validado no banco (obter_pre_classificacao[_se_mudou]).
+      publicar({
+        dados: dados as DadosDaPreClassificacao | null,
+        inscricoes: inscricoes as DadosDoAcompanhamento | null,
+        carregando: false,
+        erro: "",
+      });
       return true;
     } catch (erro) {
       if (meu !== pedido) return false;
@@ -195,7 +229,10 @@ export function criarEstadoDaPreClassificacao({
     ou leitura com mais de 5 minutos. "Atualizar" e o acompanhamento do
     recálculo chamam carregar e sempre relêem.
   */
-  async function garantirCarregado(editalId, chave = "") {
+  async function garantirCarregado(
+    editalId: string,
+    chave = "",
+  ): Promise<boolean> {
     const recente =
       Boolean(estado.dados) &&
       !estado.erro &&
@@ -207,27 +244,27 @@ export function criarEstadoDaPreClassificacao({
   }
 
   /* "Recalcular": pede o job da pré-classificação só deste edital. */
-  async function recalcular() {
+  async function recalcular(): Promise<boolean> {
     const editalId = estado.editalId;
     if (!editalId) return false;
     const antes = estado.dados?.ultima_execucao?.id ?? null;
     const em = agora();
     acompanhamento += 1;
-    const doEdital = (mudancas) => {
+    const doEdital: Publicar = (mudancas) => {
       if (estado.editalId === editalId) publicar(mudancas);
     };
     publicar({
       pedidoEm: em,
       aviso: { tom: "info", texto: "Pedindo o recálculo…" },
     });
-    let disparo;
+    let disparo: unknown;
     try {
       disparo = await rpc(RPC_DISPARAR_ROBO, {
         p_robo: "pre_classificacao",
         p_inputs: inputsDoPedido({ edital: editalId }),
       });
     } catch (erro) {
-      if (erro?.code === "55006") {
+      if ((erro as ErroComCodigo)?.code === "55006") {
         const texto = `${mensagemDoErroDoDisparo(erro)} A lista atualiza sozinha quando terminar.`;
         doEdital({ aviso: { tom: "info", texto } });
         toast(texto, "info");
@@ -236,7 +273,7 @@ export function criarEstadoDaPreClassificacao({
       }
       return recusado(
         doEdital,
-        erro?.code
+        (erro as ErroComCodigo)?.code
           ? mensagemDoErroDoDisparo(erro, "Não foi possível pedir o recálculo.")
           : mensagemDeFalha(erro),
       );
@@ -253,9 +290,12 @@ export function criarEstadoDaPreClassificacao({
   }
 
   /* O GitHub aceitou? Se recusou (ou falta a chave), a aba diz o que fazer. */
-  async function conferirDisparo(editalId, disparo) {
+  async function conferirDisparo(
+    editalId: string,
+    disparo: unknown,
+  ): Promise<void> {
     if (!supabase || disparo === null || disparo === undefined) return;
-    let situacao;
+    let situacao: ReturnType<typeof situacaoDoPedido>;
     try {
       situacao = situacaoDoPedido(
         await rpc(RPC_SITUACAO_DO_DISPARO, { p_disparo: disparo }),
@@ -273,16 +313,18 @@ export function criarEstadoDaPreClassificacao({
     do edital, com o motivo no histórico, e pede o recálculo, que congela de
     novo com as respostas de agora.
   */
-  async function descongelar(motivo) {
+  async function descongelar(
+    motivo: string | null | undefined,
+  ): Promise<boolean> {
     const editalId = estado.editalId;
     if (!editalId) return false;
-    let r;
+    let r: { descongeladas?: unknown } | null | undefined;
     try {
-      r = await rpc(RPC_DESCONGELAR, {
+      r = (await rpc(RPC_DESCONGELAR, {
         p_edital: editalId,
         p_motivo: String(motivo ?? "").trim(),
         p_vaga: null,
-      });
+      })) as { descongeladas?: unknown } | null | undefined;
     } catch (erro) {
       toast(`Não foi possível descongelar: ${mensagemDoBanco(erro)}`, "error");
       return false;
@@ -301,7 +343,11 @@ export function criarEstadoDaPreClassificacao({
     [{ codigo, vaga }] e o motivo. O banco põe (ou tira) do lote na hora e
     abre (ou tira do lote) a ficha; a aba relê. Devolve { ok, erro }.
   */
-  async function decidir(acao, candidatos, motivo) {
+  async function decidir(
+    acao: "incluir" | "revogar",
+    candidatos: readonly CandidatoParaDecidir[],
+    motivo: string,
+  ): Promise<ResultadoDaDecisao> {
     const editalId = estado.editalId;
     if (!editalId) return { ok: false, erro: "Escolha o edital." };
     try {
@@ -315,7 +361,7 @@ export function criarEstadoDaPreClassificacao({
     }
   }
 
-  function recusado(doEdital, motivo) {
+  function recusado(doEdital: Publicar, motivo: string): false {
     const texto = `Recálculo não pedido: ${motivo}`;
     doEdital({ pedidoEm: null, aviso: { tom: "danger", texto } });
     toast(texto, "error");
@@ -327,10 +373,14 @@ export function criarEstadoDaPreClassificacao({
     (em_andamento e ultima_execucao nos dados); banco sem ela, relê o
     resultado inteiro, como antes. null = falhou (tenta na próxima volta).
   */
-  async function situacaoDaExecucao(editalId) {
+  async function situacaoDaExecucao(
+    editalId: string,
+  ): Promise<SituacaoDaPre | null> {
     if (!semSituacao) {
       try {
-        const s = await rpc(RPC_SITUACAO_PRE, { p_edital: editalId });
+        const s = (await rpc(RPC_SITUACAO_PRE, {
+          p_edital: editalId,
+        })) as SituacaoDaPre | null;
         if (s && typeof s === "object") {
           if (estado.editalId === editalId && estado.dados)
             publicar({
@@ -358,14 +408,14 @@ export function criarEstadoDaPreClassificacao({
     resultado. Para no tempo limite do workflow, ao trocar de edital ou num
     pedido novo.
   */
-  function acompanhar(editalId, antes, desde) {
+  function acompanhar(editalId: string, antes: string | null, desde: Date) {
     const meu = acompanhamento;
     const vale = () => meu === acompanhamento && estado.editalId === editalId;
-    const passo = async () => {
+    const passo = async (): Promise<void> => {
       if (!vale()) return;
       const d = await situacaoDaExecucao(editalId);
       if (!vale()) return;
-      const ultima = d?.ultima_execucao;
+      const ultima: ExecucaoDaPre | null | undefined = d?.ultima_execucao;
       if (
         d &&
         !d.em_andamento &&
@@ -403,16 +453,19 @@ export function criarEstadoDaPreClassificacao({
   }
 
   /* Registra a lista PROVISORIA ou LOTE (o banco monta o retrato). */
-  async function registrarLista(tipo, lote = null) {
+  async function registrarLista(
+    tipo: TipoDaListaDaPre,
+    lote: number | null = null,
+  ): Promise<boolean> {
     const editalId = estado.editalId;
     const chave = chaveDaLista(tipo, lote);
     publicar({ registrando: chave });
     try {
-      const r = await rpc(RPC_REGISTRAR_LISTA, {
+      const r = (await rpc(RPC_REGISTRAR_LISTA, {
         p_edital: editalId,
         p_tipo: tipo,
         p_lote: lote,
-      });
+      })) as { lista?: MetaDaLista; resultado?: RetratoDaPre } | null;
       if (editalId === estado.editalId)
         publicar({
           registradas: {
@@ -431,7 +484,7 @@ export function criarEstadoDaPreClassificacao({
     }
   }
 
-  async function publicarLista(id) {
+  async function publicarLista(id: string): Promise<boolean> {
     try {
       await rpc(RPC_PUBLICAR_LISTA, { p_lista: id });
       toast("Lista marcada como publicada.", "success");
@@ -443,7 +496,10 @@ export function criarEstadoDaPreClassificacao({
     }
   }
 
-  function documento(registrado, lista = "todas") {
+  function documento(
+    registrado: ListaRegistradaDaPre | null | undefined,
+    lista = "todas",
+  ) {
     if (!registrado?.retrato) return null;
     return documentoOficial(registrado.retrato, {
       lista,
@@ -465,7 +521,11 @@ export function criarEstadoDaPreClassificacao({
   }
 
   /* DOCX timbrado ou impressão (PDF) de uma lista registrada; lista = todas | eliminados. */
-  async function exportar(registrado, formato, lista = "todas") {
+  async function exportar(
+    registrado: ListaRegistradaDaPre,
+    formato: string,
+    lista = "todas",
+  ): Promise<boolean> {
     const doc = documento(registrado, lista);
     if (!doc) return false;
     const m = marca();
@@ -482,7 +542,10 @@ export function criarEstadoDaPreClassificacao({
     return true;
   }
 
-  async function copiarParaSei(registrado, lista = "todas") {
+  async function copiarParaSei(
+    registrado: ListaRegistradaDaPre,
+    lista = "todas",
+  ): Promise<string> {
     const doc = documento(registrado, lista);
     if (!doc) return "";
     const resultado = await copiar({
@@ -508,8 +571,8 @@ export function criarEstadoDaPreClassificacao({
   }
 
   return {
-    obter: () => estado,
-    assinar(ouvinte) {
+    obter: (): SnapshotDaPreClassificacao => estado,
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
@@ -520,10 +583,14 @@ export function criarEstadoDaPreClassificacao({
     garantirCarregado,
     recalcular,
     descongelar,
-    incluirPorDecisao: (candidatos, motivo) =>
-      decidir("incluir", candidatos, motivo),
-    revogarDecisao: (candidatos, motivo) =>
-      decidir("revogar", candidatos, motivo),
+    incluirPorDecisao: (
+      candidatos: readonly CandidatoParaDecidir[],
+      motivo: string,
+    ) => decidir("incluir", candidatos, motivo),
+    revogarDecisao: (
+      candidatos: readonly CandidatoParaDecidir[],
+      motivo: string,
+    ) => decidir("revogar", candidatos, motivo),
     registrarLista,
     publicarLista,
     exportar,

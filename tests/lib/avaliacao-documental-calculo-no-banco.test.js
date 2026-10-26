@@ -4,7 +4,7 @@ import {
   calcularFicha,
   pendenciasDaFicha,
   resumoParaGravar,
-} from "../../src/lib/avaliacao-documental/ficha.js";
+} from "../../src/lib/avaliacao-documental/ficha.ts";
 
 /*
   Casos dourados do cálculo dos itens e das pendências da ficha, nos três

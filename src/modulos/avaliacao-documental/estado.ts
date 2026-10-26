@@ -42,7 +42,7 @@
                                                 análises) ou PLANILHA, com motivo
                                                 (20261009200000; coordenação)
 
-  A conta da prévia é a de src/lib/avaliacao-documental/pontuacao.js, feita no
+  A conta da prévia é a de src/lib/avaliacao-documental/pontuacao.ts, feita no
   componente; aqui só a carga e a gravação. A aba aberta (`visao`) mora aqui
   para o "Atualizar" e a reabertura da tela relerem a aba certa. Regra, Equipe
   e Pré-classificação são só de quem coordena o edital (abas-e-entrada.ts):
@@ -53,7 +53,7 @@
   o único vigente; senão, a tela mostra os cartões dos editais.
 
   Rascunho: o que a pessoa muda na regra é guardado a cada mudança por
-  src/app/rascunho-da-regra.ts (montado em avaliacao-documental.jsx); ao
+  src/app/rascunho-da-regra.ts (montado em avaliacao-documental.tsx); ao
   salvar a versão nova, `aoGravarVersao` o apaga antes de a aba remontar.
 
   Leitura x gravação: a leitura do edital que estava no ar quando uma gravação
@@ -67,7 +67,7 @@ import {
 } from "../../lib/falha-de-rede";
 import { criarCopiasPorVersao } from "../../app/copias-por-versao.ts";
 import { criarLeituraPorVersao } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
-import { editalVigente } from "../../lib/avaliacao-documental/editais.js";
+import { editalVigente } from "../../lib/avaliacao-documental/editais.ts";
 import { regraComTextosSemEspacosNasPontas } from "../../lib/avaliacao-documental/textos-da-regra.ts";
 import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 import {
@@ -78,6 +78,31 @@ import {
   VISAO_DE_QUEM_AVALIA,
   visaoProibida,
 } from "./abas-e-entrada.ts";
+import type { Visao } from "./abas-e-entrada.ts";
+import type { ApoioDaRegra } from "./assistente/tipos.ts";
+import type {
+  PerguntaDaCarga,
+  RegraAnalise,
+  RegraSalva,
+} from "../../lib/avaliacao-documental/tipos-da-regra.ts";
+import type {
+  DadosDoEdital,
+  EditalDaAvaliacao,
+  EquipeDoEdital,
+  ErroDoBanco,
+  EstadoDaAvaliacao,
+  LinhaDaEquipeParaSalvar,
+  OpcoesDaAvaliacao,
+  RegraDeClassificacaoGravada,
+  Registro,
+  RespostaDaGravacaoDaRegra,
+  ResultadoDaClassificacao,
+  ResultadoDaRegra,
+  ResultadoDasAldeias,
+  ResultadoSimples,
+} from "./tipos-do-estado.ts";
+
+export type { EstadoDaAvaliacao } from "./tipos-do-estado.ts";
 
 const RPC_LISTAR_EDITAIS = "listar_editais_avaliacao";
 const RPC_OBTER_REGRA = "obter_regra_analise";
@@ -97,14 +122,14 @@ const RPC_SALVAR_ALDEIAS = "salvar_aldeias_dsei";
 export const MENSAGEM_SEM_ACESSO = "Sem acesso à Avaliação documental";
 const TEMPO_LIMITE_MS = 45000;
 
-export const VISOES_DA_AVALIACAO = Object.freeze([
+export const VISOES_DA_AVALIACAO: ReadonlyArray<Visao> = Object.freeze([
   "regra",
   "equipe",
   "pre",
   "fila",
 ]);
 
-const ESTADO_INICIAL = Object.freeze({
+const ESTADO_INICIAL: Readonly<EstadoDaAvaliacao> = Object.freeze({
   area: "",
   visao: "regra",
   editais: [],
@@ -134,22 +159,28 @@ const ESTADO_INICIAL = Object.freeze({
 });
 
 /* Sem a RPC do assistente publicada: abre sem as perguntas por vaga, as regras da área e a classificação. */
-const APOIO_VAZIO = Object.freeze({
+const APOIO_VAZIO: ApoioDaRegra = Object.freeze({
   perguntas_por_vaga: [],
   regras_da_area: [],
   classificacao: { pode_ler: false, pode_editar: false, regra: null },
   indisponivel: true,
 });
 
-export function mensagemDoBanco(erro) {
-  if (erro?.code === "PGRST202")
+/** O erro do banco como chega (sem garantia de forma). */
+type ErroLido = ErroDoBanco | null | undefined;
+
+export function mensagemDoBanco(erro: unknown): string {
+  if ((erro as ErroLido)?.code === "PGRST202")
     return "A Avaliação documental ainda não foi publicada no banco.";
-  if (erro?.code === "42501")
-    return erro.message || "Seu acesso não inclui esta ação.";
+  if ((erro as ErroLido)?.code === "42501")
+    return (erro as ErroDoBanco).message || "Seu acesso não inclui esta ação.";
   if (ehConflitoDeVersao(erro))
-    return erro.message || "A regra mudou desde que você abriu; recarregue.";
+    return (
+      (erro as ErroDoBanco).message ||
+      "A regra mudou desde que você abriu; recarregue."
+    );
   if (ehFalhaDeConexao(erro)) return mensagemDeFalha(erro);
-  return erro?.message || mensagemDeFalha(erro);
+  return (erro as ErroLido)?.message || mensagemDeFalha(erro);
 }
 
 export function criarEstadoDaAvaliacao({
@@ -158,8 +189,8 @@ export function criarEstadoDaAvaliacao({
   tempoLimiteMs = TEMPO_LIMITE_MS,
   aoGravarVersao = (_editalId) => {},
   copias = criarCopiasPorVersao(supabase, RPC_OBTER_REGRA_SE_MUDOU),
-} = {}) {
-  let estado = ESTADO_INICIAL;
+}: OpcoesDaAvaliacao = {}) {
+  let estado: EstadoDaAvaliacao = ESTADO_INICIAL;
   const leituraDaRegra = criarLeituraPorVersao({
     nova: RPC_OBTER_REGRA_SE_MUDOU,
     antiga: RPC_OBTER_REGRA,
@@ -168,9 +199,9 @@ export function criarEstadoDaAvaliacao({
   let pedidoDosEditais = 0;
   let pedidoDoEdital = 0;
   let gravacoes = 0;
-  const ouvintes = new Set();
+  const ouvintes = new Set<() => void>();
 
-  function publicar(mudancas) {
+  function publicar(mudancas: Partial<EstadoDaAvaliacao>) {
     estado = { ...estado, ...mudancas };
     // Quem não coordena o edital não fica numa aba da coordenação.
     if (visaoProibida(estado))
@@ -178,7 +209,7 @@ export function criarEstadoDaAvaliacao({
     for (const ouvinte of ouvintes) ouvinte();
   }
 
-  let identidade;
+  let identidade: string | null | undefined;
   /* A área em que a entrada (abrir um edital sozinho) já foi feita. */
   let areaDaEntrada = "";
   supabase?.auth?.onAuthStateChange?.((_evento, sessao) => {
@@ -195,7 +226,7 @@ export function criarEstadoDaAvaliacao({
   });
 
   /* Quem está na tela (para lembrar o edital por pessoa). */
-  async function usuarioAtual() {
+  async function usuarioAtual(): Promise<string | null> {
     if (identidade !== undefined) return identidade;
     try {
       const { data } = (await supabase?.auth?.getSession?.()) ?? {};
@@ -205,7 +236,7 @@ export function criarEstadoDaAvaliacao({
     }
   }
 
-  async function rpc(nome, argumentos) {
+  async function rpc(nome: string, argumentos?: Registro): Promise<unknown> {
     if (!supabase) throw new Error("Sem conexão com o banco.");
     const { data, error } = await comTempoLimite(
       supabase.rpc(nome, argumentos),
@@ -220,7 +251,10 @@ export function criarEstadoDaAvaliacao({
     área, sem edital escolhido, abre sozinho o `preferido` (o edital da ficha
     que estava aberta), o último aberto ou o único vigente.
   */
-  async function carregar(area = estado.area, { preferido = "" } = {}) {
+  async function carregar(
+    area = estado.area,
+    { preferido = "" }: { preferido?: string } = {},
+  ): Promise<boolean> {
     if (!area) return false;
     const meu = ++pedidoDosEditais;
     if (area !== estado.area) {
@@ -228,7 +262,9 @@ export function criarEstadoDaAvaliacao({
       publicar({ ...ESTADO_INICIAL, area, carregandoEditais: true });
     } else publicar({ carregandoEditais: true, erroAoCarregar: "" });
     try {
-      const dados = await rpc(RPC_LISTAR_EDITAIS, { p_area: area });
+      const dados = (await rpc(RPC_LISTAR_EDITAIS, { p_area: area })) as {
+        editais?: EditalDaAvaliacao[] | null;
+      } | null;
       if (meu !== pedidoDosEditais) return false;
       const editais = Array.isArray(dados?.editais) ? dados.editais : [];
       let escolhido = editais.some((e) => e.id === estado.editalId)
@@ -257,7 +293,7 @@ export function criarEstadoDaAvaliacao({
       if (meu !== pedidoDosEditais) return false;
       publicar({
         carregandoEditais: false,
-        semAcesso: erro?.code === "42501",
+        semAcesso: (erro as ErroLido)?.code === "42501",
         erroAoCarregar: mensagemDoBanco(erro),
       });
       return false;
@@ -269,7 +305,7 @@ export function criarEstadoDaAvaliacao({
     diz o papel; sem ele, lê a equipe e confere depois). Lembra o edital
     aberto ("" esquece: a próxima entrada mostra os cartões).
   */
-  async function escolherEdital(editalId) {
+  async function escolherEdital(editalId: string): Promise<boolean> {
     const meu = ++pedidoDoEdital;
     void usuarioAtual().then((usuario) =>
       lembrarEdital(usuario, estado.area, editalId),
@@ -296,19 +332,18 @@ export function criarEstadoDaAvaliacao({
     const gravacoesAntes = gravacoes;
     try {
       const coordena = coordenaOEdital({ ...estado, dados: null });
-      const [dados, equipeLida] = await Promise.all([
+      const [dados, equipeLida] = (await Promise.all([
         leituraDaRegra.ler(rpc, { p_edital: editalId }, editalId),
         coordena === false
           ? null
           : rpc(RPC_OBTER_EQUIPE, { p_edital: editalId }),
-      ]);
+      ])) as [DadosDoEdital | null, unknown];
       if (meu !== pedidoDoEdital) return false;
       // A lista disse que não coordena, mas o edital diz que sim (papel mudou).
-      const equipe =
-        equipeLida ??
+      const equipe = (equipeLida ??
         (dados?.pode_coordenar
           ? await rpc(RPC_OBTER_EQUIPE, { p_edital: editalId })
-          : null);
+          : null)) as EquipeDoEdital | null;
       if (meu !== pedidoDoEdital) return false;
       // Gravou-se no meio da leitura: ela pode ser de antes; lê de novo.
       if (gravacoesAntes !== gravacoes) return escolherEdital(editalId);
@@ -326,15 +361,18 @@ export function criarEstadoDaAvaliacao({
 
   /* Grava e devolve { ok, erro }; a regra nova volta para a tela. */
   async function gravarRegra(
-    nome,
-    argumentos,
-    aviso,
-    { versaoNova = false } = {},
-  ) {
+    nome: string,
+    argumentos: Registro,
+    aviso: string,
+    { versaoNova = false }: { versaoNova?: boolean } = {},
+  ): Promise<ResultadoDaRegra> {
     const editalId = estado.editalId;
     publicar({ salvando: true });
     try {
-      const resposta = await rpc(nome, argumentos);
+      const resposta = (await rpc(
+        nome,
+        argumentos,
+      )) as RespostaDaGravacaoDaRegra | null;
       gravacoes += 1;
       if (versaoNova && resposta?.regra) aoGravarVersao(editalId);
       if (editalId === estado.editalId && estado.dados)
@@ -354,7 +392,10 @@ export function criarEstadoDaAvaliacao({
     }
   }
 
-  function atualizarEditalNaLista(editalId, regra) {
+  function atualizarEditalNaLista(
+    editalId: string,
+    regra: RegraSalva | null | undefined,
+  ) {
     if (!regra) return;
     publicar({
       editais: estado.editais.map((e) =>
@@ -372,14 +413,18 @@ export function criarEstadoDaAvaliacao({
 
   /* O que o assistente lê (uma vez por edital; "recarregar" lê de novo). */
   let pedidoDoApoio = 0;
-  async function carregarApoio({ recarregar = false } = {}) {
+  async function carregarApoio({
+    recarregar = false,
+  }: { recarregar?: boolean } = {}): Promise<ApoioDaRegra | null> {
     const editalId = estado.editalId;
     if (!editalId || (estado.apoio && !recarregar) || estado.carregandoApoio)
       return estado.apoio;
     const meu = ++pedidoDoApoio;
     publicar({ carregandoApoio: true, erroDoApoio: "" });
     try {
-      const apoio = await rpc(RPC_OBTER_APOIO, { p_edital: editalId });
+      const apoio = (await rpc(RPC_OBTER_APOIO, {
+        p_edital: editalId,
+      })) as ApoioDaRegra | null;
       if (meu !== pedidoDoApoio || editalId !== estado.editalId) return null;
       publicar({ apoio: apoio ?? APOIO_VAZIO, carregandoApoio: false });
       return apoio;
@@ -387,8 +432,9 @@ export function criarEstadoDaAvaliacao({
       if (meu !== pedidoDoApoio || editalId !== estado.editalId) return null;
       publicar({
         carregandoApoio: false,
-        apoio: erro?.code === "PGRST202" ? APOIO_VAZIO : null,
-        erroDoApoio: erro?.code === "PGRST202" ? "" : mensagemDoBanco(erro),
+        apoio: (erro as ErroLido)?.code === "PGRST202" ? APOIO_VAZIO : null,
+        erroDoApoio:
+          (erro as ErroLido)?.code === "PGRST202" ? "" : mensagemDoBanco(erro),
       });
       return null;
     }
@@ -400,7 +446,9 @@ export function criarEstadoDaAvaliacao({
     a RPC (PGRST202): abre sem as perguntas.
   */
   let pedidoDasPerguntas = 0;
-  async function carregarPerguntas({ recarregar = false } = {}) {
+  async function carregarPerguntas({
+    recarregar = false,
+  }: { recarregar?: boolean } = {}): Promise<PerguntaDaCarga[] | null> {
     const editalId = estado.editalId;
     if (
       !editalId ||
@@ -411,7 +459,9 @@ export function criarEstadoDaAvaliacao({
     const meu = ++pedidoDasPerguntas;
     publicar({ carregandoPerguntas: true, erroDasPerguntas: "" });
     try {
-      const dados = await rpc(RPC_OBTER_PERGUNTAS, { p_edital: editalId });
+      const dados = (await rpc(RPC_OBTER_PERGUNTAS, {
+        p_edital: editalId,
+      })) as { perguntas?: PerguntaDaCarga[] | null } | null;
       if (meu !== pedidoDasPerguntas || editalId !== estado.editalId)
         return null;
       const perguntas = Array.isArray(dados?.perguntas) ? dados.perguntas : [];
@@ -420,7 +470,7 @@ export function criarEstadoDaAvaliacao({
     } catch (erro) {
       if (meu !== pedidoDasPerguntas || editalId !== estado.editalId)
         return null;
-      const semRpc = erro?.code === "PGRST202";
+      const semRpc = (erro as ErroLido)?.code === "PGRST202";
       publicar({
         carregandoPerguntas: false,
         perguntasDaCarga: semRpc ? [] : null,
@@ -434,34 +484,40 @@ export function criarEstadoDaAvaliacao({
     obter: () => estado,
     carregarApoio,
     carregarPerguntas,
-    assinar(ouvinte) {
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
     carregar,
     escolherEdital,
     /* Aba da coordenação para quem não coordena: fica na Fila. */
-    mudarVisao(visao) {
+    mudarVisao(visao: string) {
       if (
-        VISOES_DA_AVALIACAO.includes(visao) &&
+        (VISOES_DA_AVALIACAO as ReadonlyArray<string>).includes(visao) &&
         visao !== estado.visao &&
-        !visaoProibida({ ...estado, visao })
+        !visaoProibida({ ...estado, visao: visao as Visao })
       )
-        publicar({ visao });
+        publicar({ visao: visao as Visao });
     },
-    copiarModelo: (modelo) =>
+    copiarModelo: (modelo: string) =>
       gravarRegra(
         RPC_COPIAR_MODELO,
         { p_edital: estado.editalId, p_modelo: modelo },
         "Regra criada a partir do modelo. Confira antes de usar.",
       ),
     /* O nome só vai quando preenchido: sem ele, a chamada é a de antes. */
-    salvarRegra: (configuracao, motivo, nome = null) =>
+    salvarRegra: (
+      configuracao: unknown,
+      motivo: string,
+      nome: string | null = null,
+    ) =>
       gravarRegra(
         RPC_SALVAR_REGRA,
         {
           p_edital: estado.editalId,
-          p_configuracao: regraComTextosSemEspacosNasPontas(configuracao),
+          p_configuracao: regraComTextosSemEspacosNasPontas(
+            configuracao as RegraAnalise,
+          ),
           p_versao_atual: estado.dados?.regra?.versao ?? 0,
           p_motivo: motivo || null,
           ...(nome ? { p_nome: nome } : {}),
@@ -474,7 +530,7 @@ export function criarEstadoDaAvaliacao({
       if (estado.regraSalvaAgora) publicar({ regraSalvaAgora: null });
     },
     /* Troca só o nome de uma versão (null tira o nome); conteúdo e hash ficam. */
-    renomearVersao: (versao, nome, motivo) =>
+    renomearVersao: (versao: number, nome: string | null, motivo: string) =>
       gravarRegra(
         RPC_RENOMEAR_VERSAO,
         {
@@ -495,16 +551,20 @@ export function criarEstadoDaAvaliacao({
       Nota mínima e desempate: a regra de classificação inteira, pela RPC da
       Classificação (a permissão é a dela). Devolve { ok, erro }.
     */
-    async salvarRegraClassificacao(configuracao, versaoAtual, motivo) {
+    async salvarRegraClassificacao(
+      configuracao: unknown,
+      versaoAtual: number | null | undefined,
+      motivo: string,
+    ): Promise<ResultadoDaClassificacao> {
       const editalId = estado.editalId;
       publicar({ salvando: true });
       try {
-        const regra = await rpc(RPC_SALVAR_CLASSIFICACAO, {
+        const regra = (await rpc(RPC_SALVAR_CLASSIFICACAO, {
           p_edital: editalId,
           p_configuracao: configuracao,
           p_versao_atual: versaoAtual ?? 0,
           p_motivo: motivo || null,
-        });
+        })) as RegraDeClassificacaoGravada | null;
         gravacoes += 1;
         if (editalId === estado.editalId) {
           const documental = regra?.configuracao?.documental ?? {};
@@ -554,15 +614,18 @@ export function criarEstadoDaAvaliacao({
       O dono da avaliação do edital (MONITORA ou PLANILHA), com motivo. No
       MONITORA, as fichas alimentam o Painel das análises. Devolve { ok, erro }.
     */
-    async definirOrigem(origem, motivo) {
+    async definirOrigem(
+      origem: string,
+      motivo: string,
+    ): Promise<ResultadoSimples> {
       const editalId = estado.editalId;
       publicar({ salvando: true });
       try {
-        const r = await rpc(RPC_DEFINIR_ORIGEM, {
+        const r = (await rpc(RPC_DEFINIR_ORIGEM, {
           p_edital: editalId,
           p_origem: origem,
           p_motivo: motivo,
-        });
+        })) as { origem?: string | null } | null;
         gravacoes += 1;
         const nova = r?.origem ?? origem;
         if (editalId === estado.editalId && estado.dados)
@@ -585,15 +648,18 @@ export function criarEstadoDaAvaliacao({
         publicar({ salvando: false });
       }
     },
-    async salvarEquipe(equipe, motivo) {
+    async salvarEquipe(
+      equipe: ReadonlyArray<LinhaDaEquipeParaSalvar>,
+      motivo: string,
+    ): Promise<ResultadoSimples> {
       const editalId = estado.editalId;
       publicar({ salvando: true });
       try {
-        const nova = await rpc(RPC_SALVAR_EQUIPE, {
+        const nova = (await rpc(RPC_SALVAR_EQUIPE, {
           p_edital: editalId,
           p_equipe: equipe,
           p_motivo: motivo || null,
-        });
+        })) as EquipeDoEdital | null;
         gravacoes += 1;
         if (editalId === estado.editalId) publicar({ equipe: nova });
         toast("Equipe salva.", "success");
@@ -604,14 +670,18 @@ export function criarEstadoDaAvaliacao({
         publicar({ salvando: false });
       }
     },
-    async salvarAldeias(unidade, aldeias, fonte) {
+    async salvarAldeias(
+      unidade: string | number | null | undefined,
+      aldeias: ReadonlyArray<string>,
+      fonte: string,
+    ): Promise<ResultadoDasAldeias> {
       publicar({ salvando: true });
       try {
-        const r = await rpc(RPC_SALVAR_ALDEIAS, {
+        const r = (await rpc(RPC_SALVAR_ALDEIAS, {
           p_unidade: unidade,
           p_aldeias: aldeias,
           p_fonte: fonte,
-        });
+        })) as { ativas?: number | null } | null;
         toast(`Lista de aldeias salva: ${r?.ativas ?? 0} ativas.`, "success");
         void escolherEdital(estado.editalId);
         return { ok: true, resposta: r };
@@ -623,3 +693,6 @@ export function criarEstadoDaAvaliacao({
     },
   };
 }
+
+/** A loja da avaliação (o que criarEstadoDaAvaliacao devolve). */
+export type LojaDaAvaliacao = ReturnType<typeof criarEstadoDaAvaliacao>;

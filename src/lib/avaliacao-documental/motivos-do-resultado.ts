@@ -1,6 +1,6 @@
 /*
   POR QUE a ficha deu Inapto, item a item, para a lateral e a Conclusão (nunca
-  "Inapto (requisito)" sem motivo). Só leitura da conta de pontuacao.js:
+  "Inapto (requisito)" sem motivo). Só leitura da conta de pontuacao.ts:
   - bloco conferido com efeito ELIMINA: os motivos escolhidos (com o item do
     edital) ou "Não conforme"/"Não enviado";
   - experiência mínima (bloco de vínculos com minimo_meses e efeito_minimo
@@ -11,8 +11,8 @@
   um bloco (a nota mínima) fica com bloco null. Se a conta eliminou por algo
   que nenhum bloco explica, os textos de `eliminatorios` entram como estão.
 */
-import { SITUACOES_DO_BLOCO, rotuloDe } from "./catalogo.js";
-import { blocoConferido, nomeCurtoDoBloco, textoDaNota } from "./ficha.js";
+import { SITUACOES_DO_BLOCO, rotuloDe } from "./catalogo.ts";
+import { blocoConferido, nomeCurtoDoBloco, textoDaNota } from "./ficha.ts";
 import { mesesDoMinimo } from "./comprovado-da-ficha.ts";
 
 export type MotivoDoResultado = { bloco: string | null; texto: string };
@@ -23,7 +23,7 @@ type BlocoDaRegra = {
   titulo?: string;
   item_edital?: string;
   minimo_meses?: number | null;
-  efeito_minimo?: string;
+  efeito_minimo?: string | null;
   item_minimo?: string;
   minimo_conta_estagio?: boolean;
 };

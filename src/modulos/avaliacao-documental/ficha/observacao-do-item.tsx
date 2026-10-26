@@ -3,7 +3,7 @@ import {
   MINIMO_DO_MOTIVO_LIVRE,
   OUTRO_MOTIVO,
   TAMANHO_DA_OBSERVACAO,
-} from "../../../lib/avaliacao-documental/ficha.js";
+} from "../../../lib/avaliacao-documental/ficha.ts";
 import type { Lancado, Mudar, Opcao } from "./tipos.ts";
 
 /*
@@ -12,7 +12,7 @@ import type { Lancado, Mudar, Opcao } from "./tipos.ts";
     enviou) e das justificativas da nota (Editar nota, Confirmar com
     diferença). Marcada, o campo obrigatório aparece e o texto (motivo_livre)
     VALE como o motivo: satisfaz a pendência e entra no parecer com o item do
-    edital do bloco (pontuacao.js). Desmarcada, o texto sai.
+    edital do bloco (pontuacao.ts). Desmarcada, o texto sai.
   - "Observação do avaliador": opcional, no fim do card, em qualquer cargo e
     situação (inclusive Não se aplica). Vai para "Observações da análise"
     como o avaliador escreveu, sem o item do edital (observacoesDosItens).

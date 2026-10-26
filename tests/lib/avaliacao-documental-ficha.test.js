@@ -34,10 +34,10 @@ import {
   TEXTO_DO_PARECER_EM_ANALISE,
   textoDoProgresso,
   titulosDoNivel,
-} from "../../src/lib/avaliacao-documental/ficha.js";
+} from "../../src/lib/avaliacao-documental/ficha.ts";
 
 /*
-  A ficha da avaliação documental (fase F4, src/lib/avaliacao-documental/ficha.js):
+  A ficha da avaliação documental (fase F4, src/lib/avaliacao-documental/ficha.ts):
   o que o candidato declarou por bloco (no formato real da Empregare), o que
   falta para concluir (incluindo a justificativa de nota diferente da
   declarada) e o resumo que vai para o banco. Dados fictícios.

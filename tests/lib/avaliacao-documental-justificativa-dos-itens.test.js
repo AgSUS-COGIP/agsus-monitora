@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { regraDaFicha } from "../../src/lib/avaliacao-documental/ficha.js";
+import { regraDaFicha } from "../../src/lib/avaliacao-documental/ficha.ts";
 import {
   comJustificativasDosItens,
   justificativaDoBloco,
   TAMANHO_DA_JUSTIFICATIVA,
 } from "../../src/lib/avaliacao-documental/justificativa-dos-itens.ts";
-import { calcularAvaliacao } from "../../src/lib/avaliacao-documental/pontuacao.js";
+import { calcularAvaliacao } from "../../src/lib/avaliacao-documental/pontuacao.ts";
 
 /*
   A "Justificativa do ajuste" (pedido das COREs na Avaliação documental): o

@@ -1,7 +1,7 @@
 /*
   Contratos da ficha de análise (ficha/*.tsx). Os dados vêm de
-  obter_ficha_analise e da conta pura (src/lib/avaliacao-documental/ficha.js e
-  pontuacao.js, em JavaScript); aqui só o que os componentes leem. O banco e o
+  obter_ficha_analise e da conta pura (src/lib/avaliacao-documental/ficha.ts e
+  pontuacao.ts, em JavaScript); aqui só o que os componentes leem. O banco e o
   normalizador da regra validam a estrutura — estes tipos não validam JSON.
 */
 import type { EnderecosDaEmpregare } from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
@@ -115,7 +115,7 @@ export type Lancamento = {
   [chave: string]: unknown;
 };
 
-/** Muda o lançamento numa cópia (estado-da-ficha.js: mudar). */
+/** Muda o lançamento numa cópia (estado-da-ficha.ts: mudar). */
 export type Mudar = (transformar: (l: Lancamento) => Lancamento) => void;
 
 export type BlocoAvaliado = {
@@ -133,7 +133,7 @@ export type Avaliacao = {
   calculados: Record<string, number | undefined>;
   blocos: BlocoAvaliado[];
   parecer: string;
-  /** O tempo dos vínculos aceitos (apurarExperiencia, em pontuacao.js). */
+  /** O tempo dos vínculos aceitos (apurarExperiencia, em pontuacao.ts). */
   experiencia?: ExperienciaApurada | null;
   /** Inapto por requisito com parecer.mostrar_pontos_quando_inapto (pontos-informativos.ts). */
   pontos_informativos?: PontosInformativos | null;
@@ -168,7 +168,7 @@ export type LinhaDeResposta = {
   opcoes: string[];
 };
 
-/** Estado do passo no stepper (ficha.js: etapasDaFicha e passosDaFicha). */
+/** Estado do passo no stepper (ficha.ts: etapasDaFicha e passosDaFicha). */
 export type EstadoDoPasso =
   "nao_conferido" | "pendencia" | "opcional" | "pronta" | Situacao;
 
@@ -192,12 +192,12 @@ export type ParteDaNota = {
   previa?: number | null;
 };
 
-/** A loja da ficha (estado-da-ficha.js), no que os componentes usam. */
+/** A loja da ficha (estado-da-ficha.ts), no que os componentes usam. */
 export type LojaDaFicha = {
   registrarAcesso: (tipo: "ABRIR_EMPREGARE" | "COPIAR_CODIGO") => Promise<void>;
 };
 
-/** O que os links da Empregare precisam (ficha.jsx monta). */
+/** O que os links da Empregare precisam (ficha.tsx monta). */
 export type ContextoDaEmpregare = {
   enderecos: EnderecosDaEmpregare;
   codigoDoCandidato: string;
@@ -206,9 +206,9 @@ export type ContextoDaEmpregare = {
   aoAvisar: (mensagem: string) => void;
 };
 
-/** O snapshot da ficha que os componentes leem (estado-da-ficha.js: obter()). */
+/** O snapshot da ficha que os componentes leem (estado-da-ficha.ts: obter()). */
 export type EstadoDaFicha = {
-  /** A regra da vaga: a diferença do cargo por cima do nível (estado-da-ficha.js). */
+  /** A regra da vaga: a diferença do cargo por cima do nível (estado-da-ficha.ts). */
   regra: Regra;
   lancamento: Lancamento;
   avaliacao: Avaliacao;

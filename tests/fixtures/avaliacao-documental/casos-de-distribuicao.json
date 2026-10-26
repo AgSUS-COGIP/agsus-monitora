@@ -1,5 +1,5 @@
 {
-  "descricao": "Casos dourados da distribuição das fichas (src/lib/avaliacao-documental/distribuicao.js e python/monitora/avaliacao_documental/distribuicao.py). Os dois lados têm de dar o mesmo resultado.",
+  "descricao": "Casos dourados da distribuição das fichas (src/lib/avaliacao-documental/distribuicao.ts e python/monitora/avaliacao_documental/distribuicao.py). Os dois lados têm de dar o mesmo resultado.",
   "casos": [
     {
       "nome": "partes iguais do zero, empate pela ordem dos analistas",

@@ -7,7 +7,7 @@
   decisão. Aqui, sem DOM e sem estado: as contagens das abas com os de fora,
   a lista inteira na ordem do banco e a leitura das páginas.
 */
-import { contadoresDaFila } from "./fila.js";
+import { contadoresDaFila } from "./fila.ts";
 
 /** O inscrito na fila, como o banco devolve (as chaves nulas não vêm). */
 export interface InscritoDaFila {

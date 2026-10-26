@@ -3,7 +3,7 @@ import type { KeyboardEvent, ReactNode } from "react";
 import {
   itemCompleto,
   titulosDoNivel,
-} from "../../../lib/avaliacao-documental/ficha.js";
+} from "../../../lib/avaliacao-documental/ficha.ts";
 import {
   aceitarItemCorrigido,
   aceitarItemLido,

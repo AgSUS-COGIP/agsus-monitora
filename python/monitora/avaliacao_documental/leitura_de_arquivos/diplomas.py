@@ -4,7 +4,7 @@ arquivo. Frente e verso contam como um: o verso (registro, livro, folha,
 apostila, assinaturas) fica com a frente e não cria título; dois títulos com a
 mesma data no arquivo viram um só.
 
-  titulo       o código da ficha (catalogo.js TITULOS_ACADEMICOS): DOUTORADO,
+  titulo       o código da ficha (catalogo.ts TITULOS_ACADEMICOS): DOUTORADO,
                MESTRADO, RESIDENCIA, ESPECIALIZACAO, GRADUACAO, TECNICO,
                ENSINO_MEDIO — o mais alto que a FRENTE diz ("título de Mestre",
                "pós-graduação lato sensu", "grau de Bacharel"…); "Doutor(a)

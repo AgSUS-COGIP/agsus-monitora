@@ -8,19 +8,19 @@ import {
   linhasSemEspacosNasPontas,
   numeroDoParecer,
   preencherModelo,
-} from "../../src/lib/avaliacao-documental/pontuacao.js";
+} from "../../src/lib/avaliacao-documental/pontuacao.ts";
 import {
   calcularNotaDeclarada,
   colunaDaPergunta,
   divergeDaArt,
   lerArt,
-} from "../../src/lib/avaliacao-documental/nota-declarada.js";
+} from "../../src/lib/avaliacao-documental/nota-declarada.ts";
 import {
   comPontosQuandoInapto,
   pontuacaoInformativaDaFicha,
 } from "../../src/lib/avaliacao-documental/pontos-informativos.ts";
-import { resumoParaGravar } from "../../src/lib/avaliacao-documental/ficha.js";
-import { normalizarRegraAnalise } from "../../src/lib/avaliacao-documental/regra.js";
+import { resumoParaGravar } from "../../src/lib/avaliacao-documental/ficha.ts";
+import { normalizarRegraAnalise } from "../../src/lib/avaliacao-documental/regra.ts";
 
 /*
   A conta da avaliação documental (src/lib/avaliacao-documental/). Os casos

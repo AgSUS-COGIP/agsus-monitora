@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { criarEstadoDaPreClassificacao } from "../../src/modulos/avaliacao-documental/estado-da-pre-classificacao.js";
-import { decidirNoLote } from "../../src/modulos/avaliacao-documental/decisao-no-banco.js";
-import { loteDaFila } from "../../src/lib/avaliacao-documental/fila.js";
+import { criarEstadoDaPreClassificacao } from "../../src/modulos/avaliacao-documental/estado-da-pre-classificacao.ts";
+import { decidirNoLote } from "../../src/modulos/avaliacao-documental/decisao-no-banco.ts";
+import { loteDaFila } from "../../src/lib/avaliacao-documental/fila.ts";
 import {
   codigosPorVaga,
   contadoresDaPreClassificacao,
@@ -16,7 +16,7 @@ import {
   seloDaDecisao,
   textoDoAviso,
   textoDoLote,
-} from "../../src/lib/avaliacao-documental/tela-da-pre-classificacao.js";
+} from "../../src/lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import {
   documentoOficial,
   htmlParaSei,

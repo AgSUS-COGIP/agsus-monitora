@@ -6,7 +6,7 @@ ou se a declarada vier incompleta) e é congelada depois do fim das inscrições
 (pre_classificacao.py). A ART ("x/30" da Empregare) fica para conferência:
 divergência vira aviso.
 
-Cópia fiel de src/lib/avaliacao-documental/nota-declarada.js (mesmos nomes de
+Cópia fiel de src/lib/avaliacao-documental/nota-declarada.ts (mesmos nomes de
 campo na saída).
 
 Como a regra acha a pergunta (o mesmo do JS): as colunas da Empregare se

@@ -15,7 +15,7 @@ import {
   BASES_DA_NOTA_DO_LOTE,
   NIVEIS,
   TITULOS_ACADEMICOS,
-} from "../../../lib/avaliacao-documental/catalogo.js";
+} from "../../../lib/avaliacao-documental/catalogo.ts";
 import type {
   Bloco,
   ColunasDaVaga,
@@ -36,14 +36,14 @@ import {
   CampoNumero,
   CampoTexto,
   Escolha,
-} from "../campos.jsx";
+} from "../campos.tsx";
 import { DiferencasPorCargo } from "./diferencas-por-cargo.tsx";
 
 /*
   Passo 2: "O que vale ponto e o que elimina", um cardápio de cartões. O
   cartão marcado traz o pedaço da regra (com valores sugeridos das fontes) e
   abre só os seus campos; desmarcado, some da regra. Os campos mexem no mesmo
-  JSON da regra (regra.js); o modo avançado continua com tudo.
+  JSON da regra (regra.ts); o modo avançado continua com tudo.
 */
 
 type Numero = number | string | null;

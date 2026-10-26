@@ -42,15 +42,59 @@
   também não a conta). Só a declarada completa confere a ART: a incompleta não
   conta divergência (faltaria um pedaço da nota).
 */
+import type {
+  ItemDaNotaDeclarada,
+  MapaDeRespostas,
+  Parcial,
+  Pergunta,
+} from "./tipos-da-regra.ts";
 
-const lista = (v) => (Array.isArray(v) ? v : []);
-const numero = (v) => {
+/** As colunas da Empregare de um candidato (DS_COLUNA_ORIGINAL): coluna → resposta. */
+export type RespostasDaEmpregare = Readonly<Record<string, unknown>>;
+
+/** O pedaço da regra que a nota declarada usa (provisoria.nota_declarada). */
+export interface RegraDaNotaDeclarada {
+  provisoria?: {
+    nota_declarada?: ReadonlyArray<ItemDaNotaDeclarada> | null;
+  } | null;
+}
+
+/** Um item da nota declarada já calculado para um candidato. */
+export interface ItemDaNotaCalculada {
+  parcial: Parcial;
+  pergunta: Pergunta;
+  coluna: string | null;
+  resposta: string;
+  mapeada: boolean;
+  ambigua: boolean;
+  nivel_desconhecido: boolean;
+  pontos: number;
+}
+
+/** A nota declarada recalculada (calcularNotaDeclarada). */
+export interface NotaDeclarada {
+  total: number;
+  /** Pontos por parcial (ETNICO, FORMACAO...); o item sem nível não entra. */
+  parciais: Record<string, number>;
+  itens: ItemDaNotaCalculada[];
+  sem_mapa: number;
+  completa: boolean;
+}
+
+/** O item com pontos_por_nivel (o mapa do nível é lido pelo nível da vaga). */
+export type ItemPorNivel = ItemDaNotaDeclarada & {
+  pontos_por_nivel: Partial<Record<string, MapaDeRespostas>>;
+};
+
+const lista = <T>(v: ReadonlyArray<T> | null | undefined): ReadonlyArray<T> =>
+  Array.isArray(v) ? v : [];
+const numero = (v: unknown): number => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 };
 
 /** Texto comparável: sem acento, minúsculo, espaços simples (&nbsp; vira espaço). */
-export function normalizarTexto(valor) {
+export function normalizarTexto(valor: unknown): string {
   return String(valor ?? "")
     .replace(/&nbsp;|&#160;/gi, " ")
     .normalize("NFD")
@@ -69,7 +113,10 @@ const PREFIXO_DA_PERGUNTA = /^pergunta ?[0-9]+ ?[-–—] ?/;
  * ser uma lista de alternativas (o enunciado muda de questionário para
  * questionário): casa com qualquer uma.
  */
-export function colunasDaPergunta(respostas, pergunta) {
+export function colunasDaPergunta(
+  respostas: RespostasDaEmpregare | null | undefined,
+  pergunta: Pergunta | null | undefined,
+): string[] {
   const alvos = (Array.isArray(pergunta) ? pergunta : [pergunta])
     .map(normalizarTexto)
     .filter(Boolean);
@@ -90,14 +137,15 @@ export function colunasDaPergunta(respostas, pergunta) {
  * compatíveis com o cargo" (até o primeiro "?", ":" ou "(", no máximo 120
  * caracteres). Coluna sem "Pergunta N - " fica como está.
  */
-export function comecoDoEnunciado(coluna) {
+export function comecoDoEnunciado(coluna: unknown): string {
   const nome = String(coluna ?? "")
     .replace(/&nbsp;|&#160;/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
   const m = /^pergunta ?[0-9]+ ?[-–—] ?(.*)$/i.exec(nome);
   if (!m) return nome.slice(0, 200);
-  const comeco = m[1].split(/[?:(]/)[0].trim() || m[1].trim();
+  // O grupo (.*) sempre casa; split devolve ao menos um pedaço.
+  const comeco = m[1]!.split(/[?:(]/)[0]!.trim() || m[1]!.trim();
   if (comeco.length <= 120) return comeco;
   const corte = comeco.slice(0, 120);
   return corte.slice(
@@ -107,13 +155,19 @@ export function comecoDoEnunciado(coluna) {
 }
 
 /** A coluna da pergunta; null quando nenhuma ou mais de uma casa (ambígua). */
-export function colunaDaPergunta(respostas, pergunta) {
+export function colunaDaPergunta(
+  respostas: RespostasDaEmpregare | null | undefined,
+  pergunta: Pergunta | null | undefined,
+): string | null {
   const colunas = colunasDaPergunta(respostas, pergunta);
-  return colunas.length === 1 ? colunas[0] : null;
+  return colunas.length === 1 ? colunas[0]! : null;
 }
 
 /** O texto da regra casa com mais de uma coluna? */
-export function perguntaAmbigua(respostas, pergunta) {
+export function perguntaAmbigua(
+  respostas: RespostasDaEmpregare | null | undefined,
+  pergunta: Pergunta | null | undefined,
+): boolean {
   return colunasDaPergunta(respostas, pergunta).length > 1;
 }
 
@@ -123,7 +177,7 @@ const SEM_RESPOSTA = new Set(["", "--", "resposta nao informada"]);
  * A resposta como a Empregare exporta, sem as aspas e sem o &nbsp;
  * ("\"1 ano&nbsp;\"" → "1 ano"); vazia, "--" ou "Resposta não informada" → "".
  */
-export function textoDaResposta(valor) {
+export function textoDaResposta(valor: unknown): string {
   const t = String(valor ?? "")
     .replace(/&nbsp;|&#160;/gi, " ")
     .trim();
@@ -136,7 +190,7 @@ export function textoDaResposta(valor) {
  * "\"Sou indígena\", \"Moro em aldeia\""; sem aspas, separadas por ";", "|"
  * ou linha.
  */
-export function opcoesDaResposta(valor) {
+export function opcoesDaResposta(valor: unknown): string[] {
   const t = String(valor ?? "").replace(/&nbsp;|&#160;/gi, " ");
   const entreAspas = [...t.matchAll(/"([^"]*)"/g)].map((m) => m[1]);
   return (entreAspas.length ? entreAspas : t.split(/[;|\n]/))
@@ -148,32 +202,42 @@ export function opcoesDaResposta(valor) {
  * A chave tolerante de uma opção: sem aspas, acento, caixa nem espaços — a
  * Empregare às vezes perde a quebra de linha ("porinstituição").
  */
-export function chaveDaOpcao(valor) {
+export function chaveDaOpcao(valor: unknown): string {
   return normalizarTexto(textoDaResposta(valor)).replace(/ /g, "");
 }
 
-function valorDoMapa(mapa, resposta) {
+function valorDoMapa(
+  mapa: Readonly<Record<string, unknown>> | null | undefined,
+  resposta: unknown,
+): number | null {
   const alvo = chaveDaOpcao(resposta);
   if (!alvo) return null;
   const chave = Object.keys(mapa ?? {}).find((k) => chaveDaOpcao(k) === alvo);
-  return chave === undefined ? null : numero(mapa[chave]);
+  // Achou a chave: o mapa existe.
+  return chave === undefined ? null : numero(mapa![chave]);
 }
 
-const comTeto = (valor, teto) =>
+const comTeto = (valor: number, teto: number | null | undefined): number =>
   teto === null || teto === undefined ? valor : Math.min(valor, teto);
-const arredondar = (n) => Math.round((n + Number.EPSILON) * 10000) / 10000;
+const arredondar = (n: number): number =>
+  Math.round((n + Number.EPSILON) * 10000) / 10000;
 
-const ehObjeto = (v) =>
+const ehObjeto = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === "object" && !Array.isArray(v);
 
 /** O item da nota declarada tem pontos por nível (pontos_por_nivel)? */
-export const itemPorNivel = (item) => ehObjeto(item?.pontos_por_nivel);
+export const itemPorNivel = (
+  item: ItemDaNotaDeclarada | null | undefined,
+): item is ItemPorNivel => ehObjeto(item?.pontos_por_nivel);
 
 /**
  * O mapa resposta → pontos do item no nível da vaga: pontos_por_nivel[nivel]
  * quando o item é por nível (null sem nível ou sem mapa para ele), senão pontos.
  */
-export function pontosDoItem(item, nivel) {
+export function pontosDoItem(
+  item: ItemDaNotaDeclarada | null | undefined,
+  nivel: string | null | undefined,
+): MapaDeRespostas | null | undefined {
   if (!itemPorNivel(item)) return item?.pontos;
   const mapa = nivel ? item.pontos_por_nivel[nivel] : undefined;
   return ehObjeto(mapa) ? mapa : null;
@@ -186,55 +250,68 @@ export function pontosDoItem(item, nivel) {
  * @param {string|null} [nivel] o nível da vaga (superior, tecnico, medio, fundamental), para os itens por nível
  * @returns {{ total: number, parciais: Record<string, number>, itens: object[], sem_mapa: number, completa: boolean }}
  */
-export function calcularNotaDeclarada(regra, respostas, nivel = null) {
-  const itens = lista(regra?.provisoria?.nota_declarada).map((item) => {
-    const colunas = colunasDaPergunta(respostas, item.pergunta);
-    const coluna = colunas.length === 1 ? colunas[0] : null;
-    const resposta = coluna ? String(respostas[coluna] ?? "") : "";
-    const respondida = Boolean(coluna && textoDaResposta(resposta));
-    const mapaDoNivel = pontosDoItem(item, nivel);
-    // Sem o nível da vaga, só a resposta dada fica sem conta (vazia vale zero).
-    const nivelDesconhecido = respondida && mapaDoNivel === null;
-    let pontos = 0;
-    let mapeada = false;
-    if (respondida && !nivelDesconhecido) {
-      if (item.tipo === "OPCAO") {
-        const v = valorDoMapa(mapaDoNivel, resposta);
-        mapeada = v !== null;
-        pontos = v ?? 0;
-      } else if (item.tipo === "FAIXA_EM_MESES") {
-        const meses = valorDoMapa(item.meses, resposta);
-        mapeada = meses !== null;
-        pontos = (meses ?? 0) * numero(item.pontos_por_mes);
-      } else if (item.tipo === "OPCOES_SOMADAS") {
-        const marcadas = new Set(opcoesDaResposta(resposta).map(chaveDaOpcao));
-        const mapa = mapaDoNivel ?? {};
-        const casadas = Object.keys(mapa).filter((opcao) =>
-          marcadas.has(chaveDaOpcao(opcao)),
-        );
-        mapeada = casadas.length > 0;
-        pontos = casadas.reduce((soma, opcao) => soma + numero(mapa[opcao]), 0);
+export function calcularNotaDeclarada(
+  regra: RegraDaNotaDeclarada | null | undefined,
+  respostas: RespostasDaEmpregare | null | undefined,
+  nivel: string | null = null,
+): NotaDeclarada {
+  const itens = lista(regra?.provisoria?.nota_declarada).map(
+    (item): ItemDaNotaCalculada => {
+      const colunas = colunasDaPergunta(respostas, item.pergunta);
+      const coluna = colunas.length === 1 ? colunas[0]! : null;
+      // Há coluna só quando há respostas.
+      const resposta = coluna ? String(respostas![coluna] ?? "") : "";
+      const respondida = Boolean(coluna && textoDaResposta(resposta));
+      const mapaDoNivel = pontosDoItem(item, nivel);
+      // Sem o nível da vaga, só a resposta dada fica sem conta (vazia vale zero).
+      const nivelDesconhecido = respondida && mapaDoNivel === null;
+      let pontos = 0;
+      let mapeada = false;
+      if (respondida && !nivelDesconhecido) {
+        if (item.tipo === "OPCAO") {
+          const v = valorDoMapa(mapaDoNivel, resposta);
+          mapeada = v !== null;
+          pontos = v ?? 0;
+        } else if (item.tipo === "FAIXA_EM_MESES") {
+          const meses = valorDoMapa(item.meses, resposta);
+          mapeada = meses !== null;
+          pontos = (meses ?? 0) * numero(item.pontos_por_mes);
+        } else if (item.tipo === "OPCOES_SOMADAS") {
+          const marcadas = new Set(
+            opcoesDaResposta(resposta).map(chaveDaOpcao),
+          );
+          const mapa: Readonly<Record<string, unknown>> = mapaDoNivel ?? {};
+          const casadas = Object.keys(mapa).filter((opcao) =>
+            marcadas.has(chaveDaOpcao(opcao)),
+          );
+          mapeada = casadas.length > 0;
+          pontos = casadas.reduce(
+            (soma, opcao) => soma + numero(mapa[opcao]),
+            0,
+          );
+        }
       }
-    }
-    return {
-      parcial: item.parcial,
-      pergunta: item.pergunta,
-      coluna,
-      resposta,
-      mapeada,
-      ambigua: colunas.length > 1,
-      nivel_desconhecido: nivelDesconhecido,
-      pontos: arredondar(comTeto(pontos, item.teto)),
-    };
-  });
+      return {
+        parcial: item.parcial,
+        pergunta: item.pergunta,
+        coluna,
+        resposta,
+        mapeada,
+        ambigua: colunas.length > 1,
+        nivel_desconhecido: nivelDesconhecido,
+        pontos: arredondar(comTeto(pontos, item.teto)),
+      };
+    },
+  );
   // O item sem o nível da vaga não soma (nem aparece na parcial).
-  const parciais = {};
+  const parciais: Record<string, number> = {};
   for (const item of itens)
     if (!item.nivel_desconhecido)
       parciais[item.parcial] = arredondar(
         (parciais[item.parcial] ?? 0) + item.pontos,
       );
-  const respondida = (i) => Boolean(i.coluna && textoDaResposta(i.resposta));
+  const respondida = (i: ItemDaNotaCalculada): boolean =>
+    Boolean(i.coluna && textoDaResposta(i.resposta));
   return {
     total: arredondar(Object.values(parciais).reduce((a, b) => a + b, 0)),
     parciais,
@@ -251,15 +328,19 @@ export function calcularNotaDeclarada(regra, respostas, nivel = null) {
 }
 
 /** A ART como número: "6,0/30,0" ou "45,0/50,0" → 6 ou 45. Sem número ("--"), null. */
-export function lerArt(texto) {
+export function lerArt(texto: unknown): number | null {
   const m = textoDaResposta(texto).match(/^(-?\d+(?:[.,]\d+)?)/);
   if (!m) return null;
-  const n = Number(m[1].replace(",", "."));
+  const n = Number(m[1]!.replace(",", "."));
   return Number.isFinite(n) ? n : null;
 }
 
 /** A ART diverge da nota declarada além da tolerância da regra? */
-export function divergeDaArt(art, declarada, tolerancia = 0) {
+export function divergeDaArt(
+  art: unknown,
+  declarada: unknown,
+  tolerancia: unknown = 0,
+): boolean {
   if (art === null || art === undefined || !Number.isFinite(Number(art)))
     return false;
   return Math.abs(Number(art) - Number(declarada)) > Number(tolerancia) + 1e-9;

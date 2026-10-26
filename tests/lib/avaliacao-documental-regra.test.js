@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { TIPOS_DE_BLOCO } from "../../src/lib/avaliacao-documental/catalogo.js";
+import { TIPOS_DE_BLOCO } from "../../src/lib/avaliacao-documental/catalogo.ts";
 import {
   blocoNovo,
   codigoLivre,
@@ -10,12 +10,12 @@ import {
   regrasIguais,
   textoDaPergunta,
   validarRegraAnalise,
-} from "../../src/lib/avaliacao-documental/regra.js";
+} from "../../src/lib/avaliacao-documental/regra.ts";
 import {
   linhaDaEquipe,
   resumoDaEquipe,
   validarEquipe,
-} from "../../src/lib/avaliacao-documental/equipe.js";
+} from "../../src/lib/avaliacao-documental/equipe.ts";
 
 /*
   Formato e validação da regra da avaliação documental (AM-2.x) e da equipe

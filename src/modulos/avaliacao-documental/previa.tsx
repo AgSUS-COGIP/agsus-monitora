@@ -4,7 +4,7 @@ import type { RegraAnalise } from "../../lib/avaliacao-documental/tipos-da-regra
 
 /*
   "Testar com um candidato fictício": a conta pura de
-  src/lib/avaliacao-documental/pontuacao.js sobre o rascunho da regra, na
+  src/lib/avaliacao-documental/pontuacao.ts sobre o rascunho da regra, na
   hora e sem gravar nada. A nota mínima é a da regra de classificação do
   edital; sem ela, vale a que for digitada aqui (só na prévia). A conta
   oficial em lote (Provisória, lote) é da base Python, na fase F2.
