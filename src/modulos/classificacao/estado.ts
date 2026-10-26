@@ -57,10 +57,11 @@ import {
     obter_lista_classificacao(p_lista)       retrato de uma geração anterior
     registrar_desempate_classificacao(...)   sorteio ou decisão manual
     obter_publicacao_lista_aprovados(...)    a lista de aprovados vigente do
-                                             edital e os candidatos (prévia)
-    publicar_lista_aprovados_da_classificacao(...)  o resultado final vira a
-                                             lista de aprovados (migration
-                                             20261005160000)
+                                             edital e se a pessoa pode substituí-la
+    pedir_casamento_da_lista(...)            a prévia: o job Python casa a lista
+    obter_casamento_da_lista(p_pedido)       vigente com o resultado final
+    aplicar_casamento_da_lista(...)          o resultado final vira a lista de
+                                             aprovados (migration 20261026150000)
     listar_configuracao_convocacao()         a configuração de convocação
     listar_modelos_convocacao()              dos editais (Lista de aprovados):
                                              as vagas por modalidade saem da
