@@ -8,7 +8,7 @@ import type {
   ChaveDaOrdemDosAprovados,
   OrdemDosAprovados,
 } from "../../lib/ordem-dos-aprovados.ts";
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import {
   OPCOES_DO_FILTRO_DE_STATUS,
   canAlterarCandidatoSubJudice,
@@ -100,12 +100,19 @@ const COLUNAS: ReadonlyArray<{
   { rotulo: "Ações", largura: "14%" },
 ];
 
+/* Sem `convocacoes`, o mesmo Map sempre (a linha memorizada compara por referência). */
+const SEM_CONVOCACOES: ConvocacoesDaTabela = new Map();
+
 /* O clique que caiu num botão, link ou campo da linha é dele, e não da linha. */
 const doControle = (alvo: EventTarget | null) =>
   alvo instanceof Element &&
   Boolean(alvo.closest("button, a, input, select, textarea, label"));
 
-function LinhaDoAprovado({
+/*
+  A linha é memorizada: carregar mais 50 (ou abrir um modal) não redesenha as
+  linhas já na tela — com milhares delas, era isso que pesava na rolagem.
+*/
+const LinhaDoAprovado = memo(function LinhaDoAprovado({
   row,
   estado,
   perfil,
@@ -207,7 +214,7 @@ function LinhaDoAprovado({
       </td>
     </tr>
   );
-}
+});
 
 export function AbaAprovados({
   ativa,
@@ -216,7 +223,7 @@ export function AbaAprovados({
   candidatos,
   listas = [],
   anexos,
-  convocacoes = new Map(),
+  convocacoes = SEM_CONVOCACOES,
   carregado,
   erroAoCarregar,
   opcoes,
