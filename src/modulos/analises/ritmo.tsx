@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import {
   agoraEmBrasilia,
   gravarRitmoRecolhido,

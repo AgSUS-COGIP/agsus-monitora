@@ -1,25 +1,45 @@
-export function getOAuthCallbackUrl(locationLike) {
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+/** Onde a página está (`window.location` ou um substituto no teste). */
+export type LocalDaPagina = { origin?: string; href?: string };
+
+/** A parte da sessão do Supabase que esta conferência lê. */
+export type SessaoConferida = {
+  access_token?: string;
+  user?: { id?: string } | null;
+};
+
+export function getOAuthCallbackUrl(
+  locationLike: LocalDaPagina | null | undefined,
+): string {
   const origin = String(locationLike?.origin || "").trim();
   if (origin && origin !== "null") {
     return new URL("/auth/callback.html", origin).toString();
   }
 
   const href = String(locationLike?.href || "").trim();
-  return href ? href.split("#")[0].split("?")[0] : "";
+  return href ? ((href.split("#")[0] as string).split("?")[0] as string) : "";
 }
 
-export function isUsableSession(session, expectedUserId = "") {
+export function isUsableSession(
+  session: SessaoConferida | null | undefined,
+  expectedUserId = "",
+): boolean {
   if (!session?.access_token || !session?.user?.id) return false;
   return !expectedUserId || session.user.id === expectedUserId;
 }
 
 export const LOGIN_POPUP_MESSAGE = "agsus-monitora:login-concluido";
 
-export function supportsLoginPopup(windowRef = globalThis.window) {
+export function supportsLoginPopup(
+  windowRef: Window | null | undefined = globalThis.window,
+): windowRef is Window {
   return Boolean(windowRef?.open && Number(windowRef.innerWidth || 0) >= 768);
 }
 
-export function openLoginPopup(windowRef = globalThis.window) {
+export function openLoginPopup(
+  windowRef: Window | null | undefined = globalThis.window,
+): Window | null {
   if (!supportsLoginPopup(windowRef)) return null;
   const width = 520;
   const height = 680;
@@ -53,13 +73,17 @@ export function isMobileOAuthContext({
   maxTouchPoints = typeof navigator !== "undefined"
     ? navigator.maxTouchPoints || 0
     : 0,
-} = {}) {
+}: {
+  userAgent?: string;
+  platform?: string;
+  maxTouchPoints?: number;
+} = {}): boolean {
   if (/Android|iPhone|iPad|iPod/i.test(userAgent)) return true;
   return platform === "MacIntel" && maxTouchPoints > 1;
 }
 
-function esgotarEm(ms) {
-  return new Promise((_, rejeitar) => {
+function esgotarEm(ms: number) {
+  return new Promise<never>((_, rejeitar) => {
     setTimeout(() => {
       rejeitar(
         new Error("O login Google demorou para iniciar. Tente novamente."),
@@ -74,7 +98,13 @@ export async function startMobileGoogleOAuth({
   locationRef = typeof window !== "undefined" ? window.location : null,
   sessionStorageRef = null,
   timeoutMs = TEMPO_PARA_INICIAR_OAUTH_MS,
-} = {}) {
+}: {
+  client?: Pick<SupabaseClient, "auth"> | null;
+  authStorage?: { clearAuthState?: () => void } | null;
+  locationRef?: LocalDaPagina | null;
+  sessionStorageRef?: Pick<Storage, "removeItem"> | null;
+  timeoutMs?: number;
+} = {}): Promise<true> {
   if (!client?.auth?.signInWithOAuth) {
     throw new Error("Autenticação Google indisponível.");
   }

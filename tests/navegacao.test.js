@@ -7,9 +7,9 @@ import {
   telaDeEntrada,
   telaInicialDoSistema,
   telaPermitida,
-} from "../src/lib/navegacao.js";
+} from "../src/lib/navegacao";
 
-/* Regras puras da navegação (src/lib/navegacao.js). */
+/* Regras puras da navegação (src/lib/navegacao.ts). */
 
 const paineisDe = (...codigos) => ({
   podeAbrir: (codigo) => codigos.includes(codigo),

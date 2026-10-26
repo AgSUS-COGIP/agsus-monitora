@@ -1,6 +1,6 @@
 import { useEffect, useReducer, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { situacaoDaPresenca } from "../../lib/online-presence.js";
+import { situacaoDaPresenca } from "../../lib/online-presence";
 
 /*
   "Pessoas online" no cabeçalho (moldura do app): o botão com a contagem e a

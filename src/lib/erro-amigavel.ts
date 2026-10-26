@@ -1,4 +1,15 @@
-import { ehFalhaTransitoria, ehSessaoEncerrada } from "./sessao.js";
+import { ehFalhaTransitoria, ehSessaoEncerrada } from "./sessao";
+
+/** Os campos que esta tradução lê de um erro qualquer (todos opcionais). */
+type ErroLido =
+  | {
+      message?: string;
+      code?: unknown;
+      sessaoEncerrada?: unknown;
+      falhaTransitoria?: unknown;
+    }
+  | null
+  | undefined;
 
 /*
   Traduz o erro numa frase útil — e, acima de tudo, não inventa expiração.
@@ -7,15 +18,16 @@ import { ehFalhaTransitoria, ehSessaoEncerrada } from "./sessao.js";
   "Sessão expirada" falsa do sistema: qualquer resposta com essas letras
   mandava a pessoa entrar de novo — inclusive função ausente no banco. A
   classificação vem do objeto de erro (código, status, tipo), não do texto
-  (ver `sessao.js`). As regras por mensagem que sobraram tratam de erros que as
+  (ver `sessao.ts`). As regras por mensagem que sobraram tratam de erros que as
   nossas próprias RPCs emitem com texto que nós mesmos escrevemos.
 */
-export function erroAmigavel(error) {
-  const msg = error?.message || String(error || "Erro desconhecido");
+export function erroAmigavel(error: unknown): string {
+  const lido = error as ErroLido;
+  const msg = lido?.message || String(error || "Erro desconhecido");
 
-  if (error?.sessaoEncerrada || ehSessaoEncerrada(error))
+  if (lido?.sessaoEncerrada || ehSessaoEncerrada(error))
     return "Sessão expirada. Faça login novamente.";
-  if (error?.falhaTransitoria || ehFalhaTransitoria(error))
+  if (lido?.falhaTransitoria || ehFalhaTransitoria(error))
     return "Não foi possível falar com o servidor. Verifique a conexão e tente de novo.";
 
   if (msg.includes("vagas_ociosas"))
@@ -30,7 +42,7 @@ export function erroAmigavel(error) {
   )
     return "Permissão insuficiente para esta ação. Verifique o perfil do usuário e as políticas RLS.";
   // PGRST202: função ausente no schema. Não é permissão nem sessão.
-  if (error?.code === "PGRST202")
+  if (lido?.code === "PGRST202")
     return "Esta operação depende de uma função que ainda não está publicada no banco. Avise a equipe técnica.";
   return msg;
 }

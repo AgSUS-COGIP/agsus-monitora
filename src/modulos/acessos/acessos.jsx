@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { getSupabaseClient } from "../../lib/supabaseClient";
 import { abasDeAcessos } from "../../lib/teto-de-acessos.js";
 import { criarEstadoDosAcessos } from "./estado.js";
 import { AbaUsuarios } from "./aba-usuarios.jsx";

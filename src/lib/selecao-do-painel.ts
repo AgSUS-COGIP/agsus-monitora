@@ -14,9 +14,9 @@
   tem (senão, da coluna V da planilha); aprovados e contratados vêm da lista de
   aprovados vigente (nulos, "—", sem lista).
 */
-import { sanitizeCsvCell } from "./csv-security.js";
+import { sanitizeCsvCell } from "./csv-security";
 import { dataHoraBR, normalizarBusca } from "./entrevistas-do-painel.ts";
-import { formatNumberBR } from "./formatters.js";
+import { formatNumberBR } from "./formatters";
 
 import type {
   CampoDoFiltro,
@@ -430,7 +430,7 @@ export function csvDaSelecao(vagas: readonly VagaDaSelecao[]) {
 
 /* ── Cópia guardada no navegador ────────────────────────────────────── */
 
-/* O tipo de payload para src/lib/cache-de-payload.js (a mesma cópia das Entrevistas). */
+/* O tipo de payload para src/lib/cache-de-payload.ts (a mesma cópia das Entrevistas). */
 export const PAINEL_DE_SELECAO = Object.freeze({
   nome: "painel de seleção",
   chave: ({ area }: { area?: unknown }) =>

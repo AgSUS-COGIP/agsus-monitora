@@ -12,7 +12,7 @@ const app = fonteDoApp();
 const governance = readFileSync("src/modulos/configuracoes/estado.js", "utf8");
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
-const lifecycle = readFileSync("src/lib/session-lifecycle.js", "utf8");
+const lifecycle = readFileSync("src/lib/session-lifecycle.ts", "utf8");
 // A barra lateral é React: o <img id="sideLogo"> nasce no componente da marca.
 const barraLateral = readFileSync(
   "src/componentes/barra-lateral/barra-lateral.tsx",

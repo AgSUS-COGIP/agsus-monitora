@@ -50,7 +50,7 @@ import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.js";
 import { nomeDoArquivo } from "../../lib/classificacao/exportacao.ts";
 import { CABECALHO_PADRAO } from "../../lib/cabecalho-dos-documentos.js";
 import { MIME_DOCX } from "../../lib/documento-da-resposta.js";
-import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
+import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
 import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.js";
 import {
   inputsDoPedido,

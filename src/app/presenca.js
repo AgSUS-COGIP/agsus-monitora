@@ -1,9 +1,9 @@
-import { getSupabaseClient } from "../lib/supabaseClient.js";
+import { getSupabaseClient } from "../lib/supabaseClient";
 import { podeVerPessoasOnline } from "../lib/access-roles.js";
 import {
   normalizeOnlinePresenceList,
   ondeEstaNoMonitora,
-} from "../lib/online-presence.js";
+} from "../lib/online-presence";
 import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.ts";
 import {
   SECOES,

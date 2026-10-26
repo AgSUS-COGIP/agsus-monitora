@@ -6,7 +6,7 @@ Regra do diretório: **sem DOM e sem estado global**. Entrada → saída, com te
 Arquivos que exigem cuidado:
 
 - `rpc-contrato.js` — contrato das RPCs. Mudou no banco, muda aqui (`npm run check:rpc-contract`).
-- `sessao.js`, `session-lifecycle.js`, `supabaseClient.js`, `auth-flow.js` — único caminho de auth.
+- `sessao.ts`, `session-lifecycle.ts`, `supabaseClient.ts`, `auth-flow.ts` — único caminho de auth.
 - `access-roles.js`, `permissoes-recursos.js` — matriz de permissão; costuma exigir migration junto.
   `access-roles.js` também é a regra única de páginas e seções liberadas (`paginasPermitidas`,
   `secaoDeConfiguracaoPermitida`), usada pela barra e pelo "Ver como".
@@ -17,7 +17,7 @@ Arquivos que exigem cuidado:
 - `marca-da-barra-lateral.js` — logo e cor da barra lateral publicadas e em rascunho, sem DOM.
 - `publicacao-de-configuracoes.js` — publicação de Configurações sem DOM: chaves de cada seção (legado e
   React), comparação com o retrato do banco, validação de URL e domínio.
-- `sanitize.js`, `html-security.js`, `csv-security.js` — fronteira de segurança. Não afrouxar.
+- `sanitize.ts`, `html-security.ts`, `csv-security.ts` — fronteira de segurança. Não afrouxar.
 - `reconciliacao-unidades.js`, `uf-ibge.js`, `brasil-bounds.js` — referência geográfica usada pelos
   scripts de auditoria (as coordenadas do mapa vêm só do banco).
 - `fabrica-do-leaflet.js` — único lugar que cria mapa Leaflet (as guardas preservam o namespace `L`).
@@ -44,7 +44,7 @@ Arquivos que exigem cuidado:
 - `configuracao-de-convocacao.ts` — leitura do modelo e das vagas que o banco guarda, precedência do
   quadro (manual > total da vaga > padrão), rascunho do formulário e edição imutável do modelo. O
   cálculo da ordem é de `lista-convocacao-rules.ts`; o desenho, de `src/modulos/aprovados/`.
-- `copia-da-sessao.js` — quando a cópia da sessão guardada no navegador pode abrir a tela (mesmo
+- `copia-da-sessao.ts` — quando a cópia da sessão guardada no navegador pode abrir a tela (mesmo
   usuário, mesmo acesso, mesma versão publicada, dentro da validade) e o que mudou desde ela.
   Afrouxar uma regra daqui expõe dado a quem perdeu acesso.
 - `novidades.ts` — **novidades do aviso de versão nova** (o "Novo: …"); entrada nova no topo, `visivel: true` só
@@ -55,7 +55,7 @@ Arquivos que exigem cuidado:
   do encerramento (quem fechou o edital). O banco decide quando o edital está encerrado.
 - `avaliacao-documental/datas-do-vinculo.ts` — datas do vínculo da ficha (nada antes de 1960 nem fim depois de hoje) e o
   fim do vínculo atual (a data limite do bloco, o fim das inscrições); o banco e o robô repetem a regra.
-- `env.js` — leitura de variáveis; nunca hardcode de chave.
+- `env.ts` — leitura de variáveis; nunca hardcode de chave.
 
 Arquivo novo: nome em português, kebab-case, com teste junto.
 Teste: `npx vitest run tests/<nome>.test.js`.

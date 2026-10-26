@@ -30,7 +30,7 @@ type Paleta = ReturnType<typeof paleta>;
 type EscalaDeBarras = NonNullable<ChartOptions<"bar">["scales"]>[string];
 import { useEffect, useMemo, useRef } from "react";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import {
   aptosEEliminados,
   CAMPOS_DO_FILTRO,
@@ -42,7 +42,7 @@ import {
   topUnidades,
   triadosEReprovados,
 } from "../../lib/selecao-do-painel.ts";
-import { paletaDoPainel } from "../../lib/tema-do-painel.js";
+import { paletaDoPainel } from "../../lib/tema-do-painel";
 import {
   CardDeGrafico,
   ChipDeFiltro,

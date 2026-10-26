@@ -68,6 +68,13 @@ calcula grupos sem recalcular a ordem da Classificação. O módulo não tem arq
 JS/JSX; `marcos.ts` também tipa a integração do painel com as comemorações compartilhadas.
 Os limites de validação estão no README de Entrevistas.
 
+A infraestrutura de `src/lib/` também está em TypeScript: sessão e autenticação (`sessao.ts`,
+`session-lifecycle.ts`, `auth-flow.ts`, `supabaseClient.ts`, `estado-de-saida.ts`), `env.ts`,
+segurança (`sanitize.ts`, `html-security.ts`, `csv-security.ts`, `config-validation.ts`), cópias no
+navegador (`copia-da-sessao.ts`, `cache-de-payload.ts`), navegação, presença, carregamento e
+monitores de desempenho e CSP. Esses módulos são importados sem extensão. `origem-da-requisicao.js`
+continua em JavaScript porque as funções da Vercel em `api/` o importam direto, no Node.
+
 ## Verificação
 
 `npm run typecheck` verifica o servidor e o frontend. Também é possível rodar cada um:

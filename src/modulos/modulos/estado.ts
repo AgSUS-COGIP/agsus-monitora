@@ -26,8 +26,8 @@ import {
 */
 
 import { isAdminGlobal } from "../../lib/access-roles.js";
-import { exigirSessao } from "../../lib/sessao.js";
-import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
+import { exigirSessao } from "../../lib/sessao";
+import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
 import {
   alteracoesDoRascunho,
   contarPendencias,

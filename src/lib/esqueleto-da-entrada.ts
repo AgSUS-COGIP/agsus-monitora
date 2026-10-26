@@ -19,9 +19,11 @@ export const FORMATOS_DO_ESQUELETO = Object.freeze([
   "painel",
   "tabela",
   "calendario",
-]);
+] as const);
 
-export function formatoDoEsqueleto(visao) {
+export type FormatoDoEsqueleto = (typeof FORMATOS_DO_ESQUELETO)[number];
+
+export function formatoDoEsqueleto(visao: unknown): FormatoDoEsqueleto {
   const tela = String(visao ?? "").trim();
   if (tela === "calendario") return "calendario";
   if (!tela || tela === "dashboard" || tela.startsWith("panel:"))

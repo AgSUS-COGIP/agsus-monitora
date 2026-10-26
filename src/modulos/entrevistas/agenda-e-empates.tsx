@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import {
   proximosDiasDaAgenda,
   type GrupoEmpatado,

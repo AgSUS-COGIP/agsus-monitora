@@ -10,8 +10,8 @@
   há alteração não salva (`confirmarSaida`).
 */
 
-import { exigirSessao } from "../../lib/sessao.js";
-import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
+import { exigirSessao } from "../../lib/sessao";
+import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
 import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 import {
   alteracoesDoRascunho,

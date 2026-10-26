@@ -1,14 +1,14 @@
-import { getSupabaseClient } from "../lib/supabaseClient.js";
+import { getSupabaseClient } from "../lib/supabaseClient";
 import {
   DEFAULT_ACCESS_BRANDING,
   normalizeAccessLogoUrl,
 } from "../lib/access-branding.js";
-import { avisoGlobal } from "../lib/aviso-global.js";
-import { erroAmigavel } from "../lib/erro-amigavel.js";
+import { avisoGlobal } from "../lib/aviso-global";
+import { erroAmigavel } from "../lib/erro-amigavel";
 import {
   aplicarFaviconDaMarca,
   definirSistemaDaAba,
-} from "../lib/identidade-da-aba.js";
+} from "../lib/identidade-da-aba";
 import { sessaoDoApp } from "./sessao.js";
 import { definirMarcaDaConfiguracao } from "./entrada/marca.js";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.js";
@@ -88,7 +88,7 @@ export function criarConfiguracao({
 
   /*
     Aviso global — a mensagem de topo definida em Configurações. A decisão de
-    aparência está em `lib/aviso-global.js`; aqui só a escrita no DOM.
+    aparência está em `lib/aviso-global.ts`; aqui só a escrita no DOM.
   */
   function aplicarAvisoGlobal() {
     const barra = $("broadcastBar");

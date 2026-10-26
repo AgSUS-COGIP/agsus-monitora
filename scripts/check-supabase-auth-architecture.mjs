@@ -50,7 +50,7 @@ const PADROES = [
   ],
   [
     "extra-client",
-    "cliente Supabase fora de lib/supabaseClient.js",
+    "cliente Supabase fora de lib/supabaseClient.ts",
     /import\s*\{[^}]*\bcreateClient\b[^}]*\}\s*from\s*["']@supabase\/supabase-js["']/g,
   ],
 ];
@@ -60,7 +60,7 @@ const PADROES = [
   reduzir: é a fronteira desejada, e deve continuar valendo.
 */
 const FONTE_UNICA = new Map([
-  ["src/lib/supabaseClient.js", new Map([["extra-client", 1]])],
+  ["src/lib/supabaseClient.ts", new Map([["extra-client", 1]])],
 ]);
 
 function percorrer(dir) {

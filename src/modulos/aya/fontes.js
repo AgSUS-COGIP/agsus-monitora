@@ -17,7 +17,7 @@ import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.js";
 import { normalizarPayload as payloadDasEntrevistas } from "../../lib/entrevistas-do-painel.ts";
 import { enriquecerRecursos } from "../../lib/recursos-dos-candidatos.ts";
 import { normalizarPayload as payloadDaSelecao } from "../../lib/selecao-do-painel.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { getSupabaseClient } from "../../lib/supabaseClient";
 
 const VALIDADE_MS = 60 * 1000;
 

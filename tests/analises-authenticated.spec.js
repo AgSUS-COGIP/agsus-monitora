@@ -9,7 +9,7 @@ const sessionJson = process.env.E2E_SUPABASE_SESSION_JSON;
   a sessão numa chave que ninguém consulta, e a corrida passava por um caminho
   não autenticado sem dizer nada.
 
-  Fica como literal porque `src/lib/env.js` lê `import.meta.env`, que não existe
+  Fica como literal porque `src/lib/env.ts` lê `import.meta.env`, que não existe
   no runtime do Playwright — importá-lo aqui derruba o ficheiro inteiro. A
   sincronia com a aplicação é garantida por teste no Vitest, onde o import
   funciona.

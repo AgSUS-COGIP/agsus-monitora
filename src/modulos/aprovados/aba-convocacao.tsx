@@ -38,7 +38,7 @@ import {
   resumirQuadro,
 } from "../../lib/configuracao-de-convocacao.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import {
   Campo,
   GradeDeKpis,

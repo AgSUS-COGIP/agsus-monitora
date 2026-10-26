@@ -16,13 +16,13 @@ import {
   normalizeAccessLogoUrl,
   normalizeAccessPanelColor,
 } from "./access-branding.js";
-import { isValidAccessAssetUrl } from "./config-validation.js";
+import { isValidAccessAssetUrl } from "./config-validation";
 import { normalizarModo } from "./contraste.js";
 import {
   corDaBarraSegura,
   logoDaBarraSegura,
 } from "./marca-da-barra-lateral.js";
-import { normalizeAllowedDomains } from "./platform-context.js";
+import { normalizeAllowedDomains } from "./platform-context";
 import { EMAIL_DO_SUPORTE_PADRAO, emailValido } from "./chamado-da-aya.js";
 import {
   CABECALHO_PADRAO,

@@ -1,6 +1,6 @@
-import { getSupabaseClient } from "../lib/supabaseClient.js";
+import { getSupabaseClient } from "../lib/supabaseClient";
 import { ordenarUnidades } from "../lib/editais-do-nucleo.js";
-import { erroAmigavel } from "../lib/erro-amigavel.js";
+import { erroAmigavel } from "../lib/erro-amigavel";
 import {
   canImportApprovedList,
   canViewCore,
@@ -14,8 +14,8 @@ import {
   montarCopia,
   partesQueMudaram,
   respostasDasConsultas,
-} from "../lib/copia-da-sessao.js";
-import { ehPainelExterno, codigoDoPainel } from "../lib/navegacao.js";
+} from "../lib/copia-da-sessao";
+import { ehPainelExterno, codigoDoPainel } from "../lib/navegacao";
 import {
   VERSAO_DA_COPIA,
   apagarCopiaDaSessao,
@@ -48,7 +48,7 @@ import { avisar as avisarPadrao } from "./avisos.js";
   Na entrada, as consultas (configuração, painéis, mapa, unidades, catálogo de
   abas e, se a tela de entrada as usa, as linhas do monitoramento) saem juntas
   e cada uma é aplicada na ordem de sempre; a espera é a da mais lenta. Se a
-  cópia da sessão (IndexedDB, regras em src/lib/copia-da-sessao.js) servir, a
+  cópia da sessão (IndexedDB, regras em src/lib/copia-da-sessao.ts) servir, a
   tela abre por ela e as consultas reais atualizam por trás, reaplicando só o
   que mudou. "Atualizar dados" refaz as consultas sem tela de carregamento.
 

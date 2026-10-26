@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   BACKGROUND_SUSPEND_DELAY_MS,
   shouldSuspendBackgroundResources,
-} from "../src/lib/background-resource-lifecycle.js";
+} from "../src/lib/background-resource-lifecycle";
 
 describe("background resource lifecycle", () => {
   it("usa atraso de dois minutos antes de suspender recursos", () => {

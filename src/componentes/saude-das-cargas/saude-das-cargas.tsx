@@ -12,7 +12,7 @@ import type {
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { isAdminGlobal } from "../../lib/access-roles.js";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import {
   estadoDoBotao,
   OPCOES_DOS_ROBOS,
@@ -25,7 +25,7 @@ import {
   textoDaIdade,
   visaoSimples,
 } from "../../lib/saude-das-cargas.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { getSupabaseClient } from "../../lib/supabaseClient";
 import { CartaoDeAvisos } from "../../modulos/conferencias/avisos-de-conferencia.tsx";
 import { Icone } from "../icone.jsx";
 import { AgendaDosRobos } from "./agenda-dos-robos.tsx";

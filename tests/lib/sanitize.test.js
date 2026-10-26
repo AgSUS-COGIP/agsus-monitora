@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  escapeHtml,
-  safeHttpUrl,
-  sanitizeHtml,
-} from "../../src/lib/sanitize.js";
+import { escapeHtml, safeHttpUrl, sanitizeHtml } from "../../src/lib/sanitize";
 
 describe("sanitize", () => {
   it("escapa HTML e atributos", () => {

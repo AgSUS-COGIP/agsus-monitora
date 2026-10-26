@@ -18,7 +18,7 @@ import {
   type ChavesDaAutomacao,
 } from "../../lib/chaves-da-automacao.ts";
 import { dataHora } from "../../lib/saude-das-cargas.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { getSupabaseClient } from "../../lib/supabaseClient";
 import {
   Aviso,
   BlocosEsqueleto,

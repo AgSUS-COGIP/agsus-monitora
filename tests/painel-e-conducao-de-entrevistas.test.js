@@ -28,9 +28,9 @@ import {
   criteriosDeDesempate,
   textoDoEmpateFinal,
 } from "../src/lib/convocacao-da-entrevista.ts";
-import { destinoDaTela } from "../src/lib/navegacao.js";
+import { destinoDaTela } from "../src/lib/navegacao";
 import { paginasPermitidas } from "../src/lib/access-roles.js";
-import { bloqueioDaTela } from "../src/lib/navegacao.js";
+import { bloqueioDaTela } from "../src/lib/navegacao";
 
 /*
   O painel (acompanhar) e Conduzir entrevistas (fazer), sem React: a fila do

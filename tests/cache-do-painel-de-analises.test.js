@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CHAVE_DO_DONO,
   VALIDADE_DO_CACHE_MS,
-} from "../src/lib/cache-de-payload.js";
+} from "../src/lib/cache-de-payload";
 import {
   ESQUEMAS_DO_PAYLOAD,
   chavesDoCacheAntigo,

@@ -7,7 +7,7 @@ import {
   nomeDosCandidatosFiltrados,
   summarizeApprovedCandidates,
 } from "../../lib/lista-aprovados-rules.ts";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import { resumoDasOrigens } from "../../lib/publicacao-de-aprovados.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
 import {

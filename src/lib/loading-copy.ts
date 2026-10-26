@@ -1,4 +1,10 @@
-const GENERIC_LOADING_COPY = new Set([
+interface EtapaDoCarregamento {
+  maxProgress: number;
+  title: string;
+  detail: string;
+}
+
+const GENERIC_LOADING_COPY = new Set<string>([
   "",
   "aguarde",
   "aguarde um momento",
@@ -7,7 +13,7 @@ const GENERIC_LOADING_COPY = new Set([
   "preparando dados",
 ]);
 
-const APP_STAGES = [
+const APP_STAGES: EtapaDoCarregamento[] = [
   {
     maxProgress: 10,
     title: "Preparando o AgSUS Monitora",
@@ -35,7 +41,7 @@ const APP_STAGES = [
   },
 ];
 
-const ANALISES_STAGES = [
+const ANALISES_STAGES: EtapaDoCarregamento[] = [
   {
     maxProgress: 15,
     title: "Preparando o painel de análises",
@@ -58,13 +64,13 @@ const ANALISES_STAGES = [
   },
 ];
 
-export function normalizeLoadingProgress(value) {
+export function normalizeLoadingProgress(value: unknown): number {
   const numeric = Number.parseFloat(String(value ?? "").replace(",", "."));
   if (!Number.isFinite(numeric)) return 0;
   return Math.max(0, Math.min(100, numeric));
 }
 
-export function isGenericLoadingCopy(value) {
+export function isGenericLoadingCopy(value: unknown): boolean {
   const normalized = String(value ?? "")
     .trim()
     .toLocaleLowerCase("pt-BR")
@@ -76,14 +82,14 @@ export function getLoadingStage({
   context = "app",
   progress = 0,
   elapsedMs = 0,
-} = {}) {
+}: { context?: string; progress?: unknown; elapsedMs?: number } = {}) {
   const stages = context === "analises" ? ANALISES_STAGES : APP_STAGES;
   const normalizedProgress = normalizeLoadingProgress(progress);
   const stageIndex = Math.max(
     0,
     stages.findIndex((stage) => normalizedProgress <= stage.maxProgress),
   );
-  const stage = stages[stageIndex] || stages.at(-1);
+  const stage = (stages[stageIndex] || stages.at(-1)) as EtapaDoCarregamento;
   const delayed = elapsedMs >= 12_000;
   const canRetry = elapsedMs >= 25_000;
 

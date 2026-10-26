@@ -11,7 +11,7 @@ import type { Novidade } from "./novidades.ts";
     com a versão anterior aberta — função que não existe mais com aquela
     assinatura (PGRST202) ou a mensagem "recarregue a página" que algumas
     funções devolvem (22023/PT409). O sinal sai do `fetch` do cliente Supabase
-    (src/lib/supabaseClient.js), sem mudar a resposta para quem chamou.
+    (src/lib/supabaseClient.ts), sem mudar a resposta para quem chamou.
 */
 
 export const ARQUIVO_DA_VERSAO = "/versao.json";

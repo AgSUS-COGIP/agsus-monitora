@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { normalizeAllowedDomains } from "../src/lib/platform-context.js";
+import { normalizeAllowedDomains } from "../src/lib/platform-context";
 
 /*
   Migration 20261021170000 (ainda não aplicada; ensaio begin…rollback em

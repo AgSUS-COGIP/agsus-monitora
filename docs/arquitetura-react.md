@@ -128,7 +128,7 @@ baixam na primeira abertura: em `src/main.js`, `window.<tela>Controller = telaSo
 metodos, padroes, carregar: () => import("…").then((m) => m.montarX(…)) })`
 (`src/app/tela-sob-demanda.js`). O controlador mantém o contrato (`render()`, `abrirVisao()`…;
 `estado` só depois da carga, `carregar()` para esperar), a seção mostra "Carregando…" enquanto
-baixa, o item do menu pré-carrega no mouse/foco (`src/lib/carga-de-telas.js`) e o tour da Aya
+baixa, o item do menu pré-carrega no mouse/foco (`src/lib/carga-de-telas.ts`) e o tour da Aya
 espera a carga. A base de verbetes da Aya baixa ao abrir o painel. Tela nova de página inteira
 entra assim, não com import estático em `main.js`.
 
@@ -214,7 +214,7 @@ Testes: `tests/app/sessao.test.js`, `tests/app/entrada.test.js`, `tests/solicita
 | `boot()`, `onAuthStateChange`, `?code=`, `?auth=google`, recuperação de senha           | `sessaoDoApp.iniciar()`, `aoMudarAutenticacao`, `trocarCodigoDoOAuth`        |
 | `handleSignedInSession` (domínio, mesmo usuário, carga única)                           | `entrar()`                                                                   |
 | `loadProfile` (`obter_contexto_monitora`, `meu_usuario`)                                | `carregarPerfil()` na sessão                                                 |
-| `loginWithGoogle`, popup, `message`, `pageshow`, `mobile-google-oauth.js`               | `entrarComGoogle()`; `startMobileGoogleOAuth` em `src/lib/auth-flow.js`      |
+| `loginWithGoogle`, popup, `message`, `pageshow`, `mobile-google-oauth.js`               | `entrarComGoogle()`; `startMobileGoogleOAuth` em `src/lib/auth-flow.ts`      |
 | `logout`, `returnToLogin`, `clearLocalAuthState`, `aplicarSaida`                        | `sair()`, `limparSessao()`, `aplicarSaida()` na sessão                       |
 | `showAccessRequestState`, `submitAccessRequest`, `src/modules/solicitacao-de-acesso.js` | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                          |
 | `access-branding-boot.js`, marca e rodapé de `applyConfigToUi`                          | `src/app/entrada/marca.js` (`definirMarcaDaConfiguracao`)                    |
@@ -265,7 +265,7 @@ configuração (`src/app/configuracao.js`) chama `sessaoDoApp.definirConfiguraca
 src/app/sistema.js               cria as peças, contratos em window, ganchos da sessão, busca global
 src/app/navegacao.js             troca de tela (.active, título, menu marcado), permissões, guarda de
                                  saída, versão nova esperando, tela guardada, menu (TELAS_REACT)
-src/lib/navegacao.js             regras puras: bloqueioDaTela, telaPermitida, telaInicialDoSistema…
+src/lib/navegacao.ts             regras puras: bloqueioDaTela, telaPermitida, telaInicialDoSistema…
 src/app/configuracao.js          TB_CONFIGURACAO, textos do app, aviso global, fundo do acesso
 src/app/paineis-externos.js      painéis externos: lista, liberados, quadro (iframe na 1ª abertura)
 src/app/carga.js                 consultas em paralelo, cópia da sessão, "Atualizar dados", Realtime
@@ -275,7 +275,7 @@ src/app/perfil.js                usuário e perfil (cópia da sessão), cabeçal
 src/app/moldura.js               barra recolhida, tema, tela cheia, relatório em PDF
 src/app/avisos.js                toast (window.monitoraToast) e loader (window.monitoraLoader)
 src/app/carregamento.js          skeleton da entrada e do painel externo, barra do "Atualizar dados"
-src/lib/erro-amigavel.js         a frase do erro (antigo friendlyError)
+src/lib/erro-amigavel.ts         a frase do erro (antigo friendlyError)
 ```
 
 Contratos mantidos em `window`: `navigate` (é `navegacao.irPara`), `refreshData`,

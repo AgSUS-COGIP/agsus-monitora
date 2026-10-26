@@ -23,7 +23,7 @@
      manual continua sendo a mesma saída manual, não uma expiração nova.
 
   Falha temporária de rede não passa por aqui: não produz `SIGNED_OUT`, e a
-  classificação de erro vive em `lib/sessao.js`.
+  classificação de erro vive em `lib/sessao.ts`.
 */
 
 export const SAIDA_MANUAL = "manual";
@@ -31,14 +31,20 @@ export const SAIDA_EXPIRADA = "expired";
 export const SAIDA_REVOGADA = "revoked";
 export const SAIDA_DESCONHECIDA = "unknown";
 
-const CAUSAS = new Set([
+export type CausaDaSaida =
+  | typeof SAIDA_MANUAL
+  | typeof SAIDA_EXPIRADA
+  | typeof SAIDA_REVOGADA
+  | typeof SAIDA_DESCONHECIDA;
+
+const CAUSAS = new Set<unknown>([
   SAIDA_MANUAL,
   SAIDA_EXPIRADA,
   SAIDA_REVOGADA,
   SAIDA_DESCONHECIDA,
 ]);
 
-const MENSAGENS = {
+const MENSAGENS: Readonly<Record<CausaDaSaida, string>> = {
   // Saída voluntária é sucesso, não aviso. A pessoa acabou de confirmar que quer sair.
   [SAIDA_MANUAL]: "",
   [SAIDA_EXPIRADA]: "Sessão encerrada. Faça login novamente.",
@@ -53,38 +59,40 @@ const MENSAGENS = {
     sucesso em aparência de falha.
 
     A causa não se adivinha. Só `SAIDA_EXPIRADA` — declarada com prova pelo
-    classificador de `lib/sessao.js` — produz a mensagem de expiração.
+    classificador de `lib/sessao.ts` — produz a mensagem de expiração.
   */
   [SAIDA_DESCONHECIDA]: "",
 };
 
-let causaAtual = SAIDA_DESCONHECIDA;
+let causaAtual: CausaDaSaida = SAIDA_DESCONHECIDA;
 let saidaAplicada = false;
 
 /** Declara por que a sessão vai terminar, antes de pedir o `signOut()`. */
-export function declararSaida(causa) {
-  causaAtual = CAUSAS.has(causa) ? causa : SAIDA_DESCONHECIDA;
+export function declararSaida(causa: unknown): void {
+  causaAtual = CAUSAS.has(causa) ? (causa as CausaDaSaida) : SAIDA_DESCONHECIDA;
 }
 
-export function causaDaSaida() {
+export function causaDaSaida(): CausaDaSaida {
   return causaAtual;
 }
 
-export function mensagemDaSaida(causa = causaAtual) {
-  return MENSAGENS[CAUSAS.has(causa) ? causa : SAIDA_DESCONHECIDA];
+export function mensagemDaSaida(causa: unknown = causaAtual): string {
+  return MENSAGENS[
+    CAUSAS.has(causa) ? (causa as CausaDaSaida) : SAIDA_DESCONHECIDA
+  ];
 }
 
 /**
  * Marca que o estado deslogado já foi aplicado nesta transição.
- * @returns {boolean} `true` na primeira vez; `false` nas repetições.
+ * @returns `true` na primeira vez; `false` nas repetições.
  */
-export function reivindicarSaida() {
+export function reivindicarSaida(): boolean {
   if (saidaAplicada) return false;
   saidaAplicada = true;
   return true;
 }
 
-export function saidaJaAplicada() {
+export function saidaJaAplicada(): boolean {
   return saidaAplicada;
 }
 
@@ -92,11 +100,11 @@ export function saidaJaAplicada() {
   Entrar encerra a transição: a partir daqui, um `SIGNED_OUT` é um evento novo e
   merece a sua própria causa. É o único ponto que devolve o estado ao início.
 */
-export function encerrarTransicaoDeSaida() {
+export function encerrarTransicaoDeSaida(): void {
   causaAtual = SAIDA_DESCONHECIDA;
   saidaAplicada = false;
 }
 
-export function reiniciarEstadoDeSaidaParaTestes() {
+export function reiniciarEstadoDeSaidaParaTestes(): void {
   encerrarTransicaoDeSaida();
 }

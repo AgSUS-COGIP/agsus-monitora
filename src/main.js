@@ -1,11 +1,11 @@
-import { hasSupabaseEnv } from "./lib/env.js";
+import { hasSupabaseEnv } from "./lib/env";
 // Antes de qualquer rede: pinta a tela de acesso com a marca da visita anterior.
 import "./app/entrada/marca.js";
-import { installCsvBlobSecurityGuard } from "./lib/csv-security.js";
-import { installSessionLifecycle } from "./lib/session-lifecycle.js";
-import { installBackgroundResourceLifecycle } from "./lib/background-resource-lifecycle.js";
-import { installFrontendPerformanceMonitor } from "./lib/frontend-performance-monitor.js";
-import { installCspReportMonitor } from "./lib/csp-report-monitor.js";
+import { installCsvBlobSecurityGuard } from "./lib/csv-security";
+import { installSessionLifecycle } from "./lib/session-lifecycle";
+import { installBackgroundResourceLifecycle } from "./lib/background-resource-lifecycle";
+import { installFrontendPerformanceMonitor } from "./lib/frontend-performance-monitor";
+import { installCspReportMonitor } from "./lib/csp-report-monitor";
 import "./lib/chartjs-global.js";
 import "./styles/tokens.css";
 import "./styles/icones-lucide.css";
@@ -75,7 +75,7 @@ import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.tsx";
 import { montarEntrada } from "./app/entrada/entrada.jsx";
 import { telaSobDemanda } from "./app/tela-sob-demanda.js";
 import { TELAS_REACT } from "./app/navegacao.js";
-import { registrarPreCarga } from "./lib/carga-de-telas.js";
+import { registrarPreCarga } from "./lib/carga-de-telas";
 import { sessaoDoApp } from "./app/sessao.js";
 
 import { montarAya } from "./modulos/aya/aya.jsx";

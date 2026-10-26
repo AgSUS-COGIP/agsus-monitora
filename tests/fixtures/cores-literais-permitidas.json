@@ -16,7 +16,7 @@
     "src/lib/mapa-saude-indigena/formas.ts": "mapa: cores de domínio das camadas e marcadores (iguais nos dois temas)",
     "src/lib/marca-da-barra-lateral.js": "valor padrão gravado da cor da barra lateral (configuração, não tema)",
     "src/lib/motor-de-efeitos.js": "efeito de comemoração (canvas): corações e brilho",
-    "src/lib/tema-do-painel.js": "reserva dos gráficos quando o CSS não carregou (testes); a tela lê os tokens",
+    "src/lib/tema-do-painel.ts": "reserva dos gráficos quando o CSS não carregou (testes); a tela lê os tokens",
     "src/modules/comemoracao.js": "efeito de comemoração (canvas, legado)",
     "src/modules/indigenous-territories-layer.js": "mapa: cores de domínio das Terras Indígenas (tests/cor-da-terra-indigena.test.js)",
     "src/modulos/analises/paineis.tsx": "monta rgba() a partir de um token lido em tempo de execução (não é cor fixa)",
@@ -146,7 +146,7 @@
       "#e5383b": 1,
       "#ffffff": 1
     },
-    "src/lib/tema-do-painel.js": {
+    "src/lib/tema-do-painel.ts": {
       "#dbe8f5": 1,
       "#526780": 1,
       "#2ca25f": 1,

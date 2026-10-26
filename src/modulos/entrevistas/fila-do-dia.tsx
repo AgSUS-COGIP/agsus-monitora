@@ -12,7 +12,7 @@ import {
   type Recorte,
   type Situacao,
 } from "../../lib/fila-de-conducao.ts";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import { EstadoVazio, Segmentado, Selo } from "../../ui/index.js";
 import { numeroBR } from "./resultado-da-ficha.tsx";
 

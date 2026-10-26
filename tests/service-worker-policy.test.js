@@ -65,8 +65,7 @@ describe("service worker cache policy", () => {
 
 describe("versão do cache do service worker", () => {
   it("o build troca o nome do cache pela versão publicada", async () => {
-    const { swComVersao } =
-      await import("../src/lib/cache-do-service-worker.js");
+    const { swComVersao } = await import("../src/lib/cache-do-service-worker");
     const fonte = readFileSync(resolve(process.cwd(), "sw.js"), "utf8");
     const publicado = swComVersao(fonte, "abc123");
     expect(publicado).toContain(

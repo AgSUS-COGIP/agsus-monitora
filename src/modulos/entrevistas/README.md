@@ -23,7 +23,7 @@ ao lado da Avaliação documental (acompanhar × fazer):
   último aberto na área fica no navegador (só conveniência); com um só na lista, ele abre sozinho.
 
 Links antigos (`entrevistas:conduzir`, `entrevistas:roteiros`) vão para Conduzir entrevistas
-(`destinoDaTela`, `src/lib/navegacao.js`; o controlador tem `abrirVisao` e `abrirEdital`).
+(`destinoDaTela`, `src/lib/navegacao.ts`; o controlador tem `abrirVisao` e `abrirEdital`).
 
 **Desempate**: uma fonte só, a regra de classificação do edital. `obter_entrevistas_do_edital` traz
 `regra_classificacao.desempate` e `empate_final` (migration `20261008130000`); Preparar e o editor do

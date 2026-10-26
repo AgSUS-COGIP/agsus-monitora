@@ -42,9 +42,9 @@ import {
 } from "../../lib/area-do-painel-de-analises.js";
 import { chavesDoCacheAntigo } from "../../lib/cache-do-painel-de-analises.js";
 import { editaisDasLinhas } from "../../lib/editais-das-linhas.js";
-import { ehErroDeAcesso } from "../../lib/cache-de-payload.js";
-import { mensagemDeFalha } from "../../lib/falha-de-rede.js";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { ehErroDeAcesso } from "../../lib/cache-de-payload";
+import { mensagemDeFalha } from "../../lib/falha-de-rede";
+import { formatNumberBR } from "../../lib/formatters";
 import { linhaSemDetalhe } from "../../lib/lista-do-painel-de-analises.js";
 import {
   haLinhasSemParecer,

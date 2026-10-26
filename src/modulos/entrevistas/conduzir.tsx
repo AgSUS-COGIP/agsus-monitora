@@ -24,8 +24,8 @@ import {
   type Recorte,
   type Situacao,
 } from "../../lib/fila-de-conducao.ts";
-import { importarComRecarga } from "../../lib/importar-com-recarga.js";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { importarComRecarga } from "../../lib/importar-com-recarga";
+import { getSupabaseClient } from "../../lib/supabaseClient";
 import { comemorar } from "../../modules/comemoracao.js";
 import {
   Aviso,

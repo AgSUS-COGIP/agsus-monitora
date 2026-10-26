@@ -34,7 +34,7 @@
   se não houver, a tela fica neutra. Uma falha nunca troca uma identidade correta.
 */
 
-import { SUPABASE_KEY, SUPABASE_URL } from "./env.js";
+import { SUPABASE_KEY, SUPABASE_URL } from "./env";
 
 export const RPC_BRANDING_PUBLICO = "obter_branding_acesso_publico";
 

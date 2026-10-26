@@ -38,7 +38,7 @@
   remontar a aba).
 */
 import { isAdminGlobal } from "../../lib/access-roles.js";
-import { comTempoLimite } from "../../lib/falha-de-rede.js";
+import { comTempoLimite } from "../../lib/falha-de-rede";
 import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 import {
   csvDaFila,

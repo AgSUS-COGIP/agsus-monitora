@@ -1,6 +1,6 @@
 const FORMULA_PREFIX = /^[\t\r ]*[=+\-@]/;
 
-export function sanitizeCsvCell(value) {
+export function sanitizeCsvCell(value: unknown): string {
   const text = String(value ?? "");
   return FORMULA_PREFIX.test(text) ? `'${text}` : text;
 }
@@ -10,7 +10,7 @@ export function sanitizeCsvCell(value) {
   entre aspas pode conter o delimitador e quebras de linha, que não a partem.
   Na célula entre aspas, o apóstrofo entra logo depois da aspa de abertura.
 */
-export function sanitizeCsvDocument(content, delimiter = ";") {
+export function sanitizeCsvDocument(content: unknown, delimiter = ";"): string {
   const text = String(content ?? "");
   let saida = "";
   let i = 0;
@@ -38,7 +38,10 @@ export function sanitizeCsvDocument(content, delimiter = ";") {
       continue;
     }
     let fim = i;
-    while (fim < text.length && !`${delimiter}\r\n`.includes(text[fim])) {
+    while (
+      fim < text.length &&
+      !`${delimiter}\r\n`.includes(text[fim] as string)
+    ) {
       fim += 1;
     }
     saida += sanitizeCsvCell(text.slice(i, fim));
@@ -47,14 +50,18 @@ export function sanitizeCsvDocument(content, delimiter = ";") {
   return saida;
 }
 
-export function installCsvBlobSecurityGuard() {
-  if (globalThis.Blob?.__agsusCsvSecurityGuard) return false;
+/** O `Blob` do navegador, com a marca de que a guarda já foi instalada. */
+type BlobComGuarda = typeof Blob & { __agsusCsvSecurityGuard?: boolean };
+
+export function installCsvBlobSecurityGuard(): boolean {
+  if ((globalThis.Blob as BlobComGuarda | undefined)?.__agsusCsvSecurityGuard)
+    return false;
 
   const NativeBlob = globalThis.Blob;
   if (typeof NativeBlob !== "function") return false;
 
   class SecureBlob extends NativeBlob {
-    constructor(parts = [], options = {}) {
+    constructor(parts: BlobPart[] = [], options: BlobPropertyBag = {}) {
       const type = String(options?.type || "").toLowerCase();
       const securedParts = type.includes("text/csv")
         ? parts.map((part) =>

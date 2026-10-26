@@ -41,7 +41,7 @@ describe("fonte Geist no sistema todo", () => {
   it("não sobra Inter em CSS, no aviso de sessão nem na página offline", () => {
     const arquivos = [
       ...cssDe("src/styles"),
-      "src/lib/session-lifecycle.js",
+      "src/lib/session-lifecycle.ts",
       "offline.html",
     ];
     const comInter = arquivos.filter((arquivo) =>

@@ -60,7 +60,7 @@ import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
-} from "../../lib/falha-de-rede.js";
+} from "../../lib/falha-de-rede";
 import {
   editaisParaConduzir,
   mensagemDoErroDaEntrevista,

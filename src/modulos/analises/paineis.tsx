@@ -32,8 +32,8 @@ import {
   temPeriodo,
   tendenciaDiaria,
 } from "../../lib/analises-curriculares.ts";
-import { formatNumberBR } from "../../lib/formatters.js";
-import { paletaDoPainel } from "../../lib/tema-do-painel.js";
+import { formatNumberBR } from "../../lib/formatters";
+import { paletaDoPainel } from "../../lib/tema-do-painel";
 import {
   Campo,
   CardDeGrafico,

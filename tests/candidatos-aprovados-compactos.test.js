@@ -4,7 +4,7 @@ import {
   expandirCandidatosCompactos,
   pacoteInalterado,
 } from "../src/lib/candidatos-aprovados-compactos.ts";
-import { criarCacheDePayload } from "../src/lib/cache-de-payload.js";
+import { criarCacheDePayload } from "../src/lib/cache-de-payload";
 import {
   compactarCandidatos,
   compactarPorArea,

@@ -3,8 +3,8 @@ import react from "@vitejs/plugin-react";
 import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createHtmlSecurityPlugin } from "./src/lib/html-security.js";
-import { swComVersao } from "./src/lib/cache-do-service-worker.js";
+import { createHtmlSecurityPlugin } from "./src/lib/html-security";
+import { swComVersao } from "./src/lib/cache-do-service-worker";
 import { novidadesVisiveis } from "./src/lib/novidades.ts";
 
 const projectDirectory = dirname(fileURLToPath(import.meta.url));

@@ -4,7 +4,7 @@ import type {
 } from "./tipos-da-gaveta.ts";
 import type { OrigemDoRecurso } from "../../lib/tipos-dos-recursos.ts";
 import { useState, useSyncExternalStore } from "react";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import {
   ETAPAS,
   rotuloDaOrigem,

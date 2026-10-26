@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarPessoasOnline } from "../../src/componentes/pessoas-online/pessoas-online.jsx";
-import { situacaoDaPresenca } from "../../src/lib/online-presence.js";
-import { normalizeOnlinePresenceList } from "../../src/lib/online-presence.js";
+import { situacaoDaPresenca } from "../../src/lib/online-presence";
+import { normalizeOnlinePresenceList } from "../../src/lib/online-presence";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 

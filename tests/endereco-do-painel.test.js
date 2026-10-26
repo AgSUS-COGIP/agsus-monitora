@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { enderecoDoPainel } from "../src/lib/endereco-do-painel.js";
+import { enderecoDoPainel } from "../src/lib/endereco-do-painel";
 
 describe("endereço do painel externo", () => {
   it("painel de fora fica como está", () => {

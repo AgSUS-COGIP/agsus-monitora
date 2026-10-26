@@ -12,7 +12,7 @@ import {
   canImportApprovedList,
   canReplaceApprovedList,
 } from "../../lib/access-roles.js";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import { PLANILHAS } from "../../lib/planilhas.js";
 import {
   MOTIVO_MAXIMO,

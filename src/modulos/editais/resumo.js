@@ -6,7 +6,7 @@
   invalida.
 */
 
-import { exigirSessao } from "../../lib/sessao.js";
+import { exigirSessao } from "../../lib/sessao";
 
 const RPC_SUMMARY = "get_nucleo_cronograma_resumo";
 export const NUCLEO_SUMMARY_TTL_MS = 30_000;

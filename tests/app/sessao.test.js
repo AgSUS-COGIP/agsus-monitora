@@ -10,7 +10,7 @@ import {
   SAIDA_EXPIRADA,
   declararSaida,
   reiniciarEstadoDeSaidaParaTestes,
-} from "../../src/lib/estado-de-saida.js";
+} from "../../src/lib/estado-de-saida";
 
 /*
   A sessão do app (src/app/sessao.js): entrar, sair, sessão expirada, troca de

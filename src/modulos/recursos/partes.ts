@@ -1,4 +1,4 @@
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 
 /*
   Formatos comuns da gaveta de Recursos (detalhe, formulário, resposta, anexos

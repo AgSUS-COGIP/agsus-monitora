@@ -1,4 +1,32 @@
-import { getSupabaseClient } from "./supabaseClient.js";
+import { getSupabaseClient } from "./supabaseClient";
+
+/** Medida de recurso (PerformanceResourceTiming ou parecido). */
+type MedidaDeRecurso = { transferSize?: unknown; decodedBodySize?: unknown };
+
+/** Os tempos lidos da navegação (PerformanceNavigationTiming). */
+type MedidaDaNavegacao = {
+  domInteractive?: unknown;
+  domContentLoadedEventEnd?: unknown;
+  loadEventEnd?: unknown;
+  responseEnd?: unknown;
+};
+
+/** `performance.memory` (só Chromium). */
+type MemoriaDoNavegador = {
+  usedJSHeapSize?: unknown;
+  totalJSHeapSize?: unknown;
+  jsHeapSizeLimit?: unknown;
+};
+
+/** `navigator.connection` (Network Information API, fora do padrão). */
+type ConexaoDoNavegador = {
+  effectiveType?: unknown;
+  downlink?: unknown;
+  rtt?: unknown;
+  saveData?: unknown;
+};
+
+export type RetratoDeDesempenho = ReturnType<typeof createPerformanceSnapshot>;
 
 export const PERFORMANCE_REPORT_DELAY_MS = 20 * 1000;
 export const PERFORMANCE_STORAGE_KEY = "agsus_frontend_performance_v1";
@@ -7,22 +35,28 @@ const APP_VERSION = "frontend-performance-v1";
 const MAX_STORED_SNAPSHOTS = 10;
 
 let installed = false;
-let reportHandle = null;
-let originalFetch = null;
+let reportHandle: number | null = null;
+let originalFetch: typeof fetch | null = null;
 let longTaskCount = 0;
 let longTaskDurationMs = 0;
 let requestStarted = 0;
 let requestCompleted = 0;
 let requestFailed = 0;
-let observer = null;
+let observer: PerformanceObserver | null = null;
 
-export function roundMetric(value) {
+export function roundMetric(value: unknown): number {
   const number = Number(value || 0);
   return Number.isFinite(number) ? Math.round(number) : 0;
 }
 
-export function summarizeResourceEntries(entries = []) {
-  return entries.reduce(
+export function summarizeResourceEntries(
+  entries: readonly (MedidaDeRecurso | null | undefined)[] = [],
+) {
+  return entries.reduce<{
+    count: number;
+    transferSize: number;
+    decodedBodySize: number;
+  }>(
     (summary, entry) => {
       summary.count += 1;
       summary.transferSize += Number(entry?.transferSize || 0);
@@ -43,9 +77,19 @@ export function createPerformanceSnapshot({
   pathname = "/",
   visibilityState = "visible",
   now = Date.now(),
+}: {
+  navigationEntry?: MedidaDaNavegacao | null;
+  resourceEntries?: readonly (MedidaDeRecurso | null | undefined)[];
+  longTasks?: { count: unknown; durationMs: unknown };
+  requests?: { started: unknown; completed: unknown; failed: unknown };
+  memory?: MemoriaDoNavegador | null;
+  connection?: ConexaoDoNavegador | null;
+  pathname?: string;
+  visibilityState?: string;
+  now?: number;
 } = {}) {
   const resources = summarizeResourceEntries(resourceEntries);
-  const navigation = navigationEntry || {};
+  const navigation: MedidaDaNavegacao = navigationEntry || {};
 
   return {
     captured_at: new Date(now).toISOString(),
@@ -95,7 +139,14 @@ export function createPerformanceSnapshot({
   };
 }
 
-function getPerformanceEntries(type) {
+/** `navigator` com a conexão de cada navegador. */
+type NavegadorComConexao = Navigator & {
+  connection?: ConexaoDoNavegador;
+  mozConnection?: ConexaoDoNavegador;
+  webkitConnection?: ConexaoDoNavegador;
+};
+
+function getPerformanceEntries(type: string): PerformanceEntry[] {
   try {
     return window.performance?.getEntriesByType?.(type) || [];
   } catch {
@@ -104,8 +155,11 @@ function getPerformanceEntries(type) {
 }
 
 function buildCurrentSnapshot() {
-  const navigationEntry = getPerformanceEntries("navigation")[0] || null;
-  const resourceEntries = getPerformanceEntries("resource");
+  const navigationEntry = (getPerformanceEntries("navigation")[0] ||
+    null) as PerformanceNavigationTiming | null;
+  const resourceEntries = getPerformanceEntries(
+    "resource",
+  ) as PerformanceResourceTiming[];
 
   return createPerformanceSnapshot({
     navigationEntry,
@@ -116,20 +170,22 @@ function buildCurrentSnapshot() {
       completed: requestCompleted,
       failed: requestFailed,
     },
-    memory: window.performance?.memory || null,
+    memory:
+      (window.performance as Performance & { memory?: MemoriaDoNavegador })
+        ?.memory || null,
     connection:
-      navigator.connection ||
-      navigator.mozConnection ||
-      navigator.webkitConnection ||
+      (navigator as NavegadorComConexao).connection ||
+      (navigator as NavegadorComConexao).mozConnection ||
+      (navigator as NavegadorComConexao).webkitConnection ||
       null,
     pathname: window.location.pathname || "/",
     visibilityState: document.visibilityState || "visible",
   });
 }
 
-function persistSnapshot(snapshot) {
+function persistSnapshot(snapshot: RetratoDeDesempenho) {
   try {
-    const previous = JSON.parse(
+    const previous: unknown = JSON.parse(
       window.sessionStorage.getItem(PERFORMANCE_STORAGE_KEY) || "[]",
     );
     const next = [...(Array.isArray(previous) ? previous : []), snapshot].slice(
@@ -144,7 +200,7 @@ function persistSnapshot(snapshot) {
   }
 }
 
-async function reportSnapshot(snapshot) {
+async function reportSnapshot(snapshot: RetratoDeDesempenho) {
   persistSnapshot(snapshot);
   const client = getSupabaseClient();
   if (!client) return;
@@ -176,7 +232,7 @@ function installFetchMetrics() {
   window.fetch = async (...args) => {
     requestStarted += 1;
     try {
-      const response = await originalFetch(...args);
+      const response = await (originalFetch as typeof fetch)(...args);
       requestCompleted += 1;
       if (!response.ok) requestFailed += 1;
       return response;
@@ -203,7 +259,7 @@ function installLongTaskObserver() {
 }
 
 function scheduleReport() {
-  window.clearTimeout(reportHandle);
+  window.clearTimeout(reportHandle as number | undefined);
   reportHandle = window.setTimeout(() => {
     reportHandle = null;
     void reportSnapshot(buildCurrentSnapshot());

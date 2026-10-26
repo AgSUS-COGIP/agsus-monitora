@@ -3,14 +3,14 @@
   Classificação (src/lib/avaliacao-documental/leitura-por-versao.ts): o
   payload como o banco mandou (com a versão), no IndexedDB das cópias de
   payload (src/modules/cache-de-payload-indexeddb.js), pelas regras de
-  src/lib/cache-de-payload.js — de um usuário só, por chave, por 7 dias.
+  src/lib/cache-de-payload.ts — de um usuário só, por chave, por 7 dias.
 
   Reabrir a tela num dia seguinte (ou depois de recarregar a página) manda a
   versão guardada e recebe só { inalterado } quando nada mudou, em vez de
   0,5 a 1 MB. Sem IndexedDB (aba anônima, teste) a leitura segue só com a
   memória da página.
 */
-import { criarCacheDePayload } from "../lib/cache-de-payload.js";
+import { criarCacheDePayload } from "../lib/cache-de-payload";
 import type { CopiasPorChave } from "../lib/avaliacao-documental/leitura-por-versao.ts";
 import { armazenamentoDePayload } from "../modules/cache-de-payload-indexeddb.js";
 

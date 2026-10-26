@@ -31,7 +31,7 @@ import {
   ehAreaSaudeIndigena,
   experienciaProfissionalDaLinha,
 } from "./area-do-painel-de-analises.js";
-import { sanitizeCsvCell } from "./csv-security.js";
+import { sanitizeCsvCell } from "./csv-security";
 import { STATUS_PENDENTES } from "./status-da-analise.ts";
 import { dataDeAnaliseNoFuturo } from "./data-de-analise.js";
 import { completarLinhaPeloEnvelope } from "./lista-do-painel-de-analises.js";

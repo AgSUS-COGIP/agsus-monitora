@@ -63,7 +63,7 @@ import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
-} from "../../lib/falha-de-rede.js";
+} from "../../lib/falha-de-rede";
 import { baixarNoNavegador } from "./estado.ts";
 
 const RPC_OBTER_AGENDA = "obter_agenda_entrevista";

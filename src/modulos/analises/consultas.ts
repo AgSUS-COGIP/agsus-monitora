@@ -39,11 +39,8 @@ import {
   criarCacheDoPainel,
   revalidarPayload,
 } from "../../lib/cache-do-painel-de-analises.js";
-import {
-  respostaInalterada,
-  versaoDoPacote,
-} from "../../lib/cache-de-payload.js";
-import { comTempoLimite } from "../../lib/falha-de-rede.js";
+import { respostaInalterada, versaoDoPacote } from "../../lib/cache-de-payload";
+import { comTempoLimite } from "../../lib/falha-de-rede";
 import {
   envelopeDeTodos,
   juntarPartesDoPainel,

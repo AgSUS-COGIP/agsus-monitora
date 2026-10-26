@@ -20,7 +20,7 @@ type PropsDoFiltro = {
   aoFiltrar: AoFiltrarRecursos;
 };
 import { useEffect, useMemo, useRef, useState } from "react";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import {
   esteiraDosRecursos,
   FILTROS_VAZIOS,
@@ -28,7 +28,7 @@ import {
   recursosPorAnalista,
   recursosPorSituacao,
 } from "../../lib/recursos-dos-candidatos.ts";
-import { paletaDoPainel } from "../../lib/tema-do-painel.js";
+import { paletaDoPainel } from "../../lib/tema-do-painel";
 import {
   Campo,
   CardDeGrafico,

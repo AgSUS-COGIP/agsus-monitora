@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { criarEstadoDosAcessos } from "../../src/modulos/acessos/estado.js";
-import { SEM_SERVIDOR } from "../../src/lib/falha-de-rede.js";
+import { SEM_SERVIDOR } from "../../src/lib/falha-de-rede";
 
 /*
   Uma chamada que nunca volta (rede caída no meio do caminho) não pode deixar

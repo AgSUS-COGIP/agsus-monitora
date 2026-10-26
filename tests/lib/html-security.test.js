@@ -4,7 +4,7 @@ import {
   sanitizeAnalyticsPageLocation,
   secureHtmlDocument,
   stripSupabaseCdnScripts,
-} from "../../src/lib/html-security.js";
+} from "../../src/lib/html-security";
 
 describe("html security", () => {
   it("remove o script CDN do Supabase e preserva os demais scripts", () => {

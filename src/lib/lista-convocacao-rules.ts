@@ -73,7 +73,7 @@ import {
   lerModalidade,
   normalizarModelo,
 } from "./modelo-de-convocacao.ts";
-import { sanitizeCsvCell } from "./csv-security.js";
+import { sanitizeCsvCell } from "./csv-security";
 
 const texto = (valor: unknown) => String(valor ?? "").trim();
 

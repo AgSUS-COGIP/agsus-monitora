@@ -7,7 +7,7 @@ import type {
   TextosDaVisaoGeral,
 } from "./tipos.ts";
 import { useEffect, useRef, useState } from "react";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import {
   COLUNAS_DA_TABELA,
   dataCurta,

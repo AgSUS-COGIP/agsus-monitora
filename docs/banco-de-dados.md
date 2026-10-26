@@ -794,7 +794,7 @@ default null)`. Com `p_area`: só a área (22023 se não existe, 42501 se não �
   candidato a menos.
 - **No navegador**: uma cópia por área no IndexedDB (`aprovados:<área>`, no
   mesmo banco e com o mesmo dono das cópias do painel de análises; regras gerais
-  em `src/lib/cache-de-payload.js`). A primeira abertura da área mostra a cópia
+  em `src/lib/cache-de-payload.ts`). A primeira abertura da área mostra a cópia
   e pergunta ao banco se a `versao` dela vale; a releitura depois de uma
   escrita vai sempre ao banco, com a versão da tela. Sair, "Limpar sessão",
   acesso revogado e outro usuário apagam as cópias.

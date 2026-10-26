@@ -1,14 +1,16 @@
 export const BACKGROUND_SUSPEND_DELAY_MS = 2 * 60 * 1000;
 
 let installed = false;
-let suspendHandle = null;
+let suspendHandle: number | null = null;
 let suspended = false;
 
-export function shouldSuspendBackgroundResources(visibilityState) {
+export function shouldSuspendBackgroundResources(
+  visibilityState: DocumentVisibilityState | string,
+): boolean {
   return visibilityState === "hidden";
 }
 
-function dispatch(name) {
+function dispatch(name: string) {
   window.dispatchEvent(new CustomEvent(name));
 }
 
@@ -39,7 +41,7 @@ function handleVisibilityChange() {
   resume();
 }
 
-export function installBackgroundResourceLifecycle() {
+export function installBackgroundResourceLifecycle(): void {
   if (installed || typeof window === "undefined") return;
   installed = true;
   document.addEventListener("visibilitychange", handleVisibilityChange);

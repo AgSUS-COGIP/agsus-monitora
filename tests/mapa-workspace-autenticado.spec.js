@@ -16,7 +16,7 @@ import { expect, test } from "@playwright/test";
   não entra num teste automatizado. Sem `E2E_SUPABASE_SESSION_JSON` os testes
   são pulados — nunca passam por vacuidade.
 
-  A chave é literal porque `src/lib/env.js` lê `import.meta.env`, ausente no
+  A chave é literal porque `src/lib/env.ts` lê `import.meta.env`, ausente no
   runtime do Playwright; `tests/chaves-de-sessao.test.js` falha se ela divergir
   da que a aplicação usa.
 */

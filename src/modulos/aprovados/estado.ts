@@ -53,7 +53,7 @@ import {
   Os candidatos vêm só da área atual do menu (`areaAtual`, de
   `dados-do-monitoramento.ts`): trocar de área e abrir a página busca os da
   área nova. A primeira abertura de uma área mostra a cópia guardada no
-  navegador (IndexedDB, regras em `lib/cache-de-payload.js`) e pergunta ao
+  navegador (IndexedDB, regras em `lib/cache-de-payload.ts`) e pergunta ao
   banco, por trás, se a `versao` dela ainda vale — o banco calcula a versão dos
   próprios dados a cada chamada e só manda o pacote de novo se ela mudou. A
   releitura depois de uma escrita nunca usa a cópia: vai ao banco, que devolve
@@ -75,7 +75,7 @@ import {
   versaoDoPacote,
   criarCacheDePayload,
   revalidarPayload,
-} from "../../lib/cache-de-payload.js";
+} from "../../lib/cache-de-payload";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import {

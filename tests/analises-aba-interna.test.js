@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import { fonteDoApp } from "./fonte-do-app.js";
 import { describe, expect, it } from "vitest";
-import { semOPainelAntigoDeAnalises } from "../src/lib/pagina-do-painel.js";
+import { semOPainelAntigoDeAnalises } from "../src/lib/pagina-do-painel";
 import { RESOURCES } from "../src/lib/permissoes-recursos.js";
 import { paginasPermitidas, permissaoLegada } from "../src/lib/access-roles.js";
-import { bloqueioDaTela, telaPermitida } from "../src/lib/navegacao.js";
+import { bloqueioDaTela, telaPermitida } from "../src/lib/navegacao";
 import { TELAS_REACT } from "../src/app/navegacao.js";
 import {
   linhasDosPaineis,
@@ -63,7 +63,7 @@ describe("o legado trata Análises como página", () => {
     expect(permissaoLegada(perfil("sem_acesso"), "analises")).toBe(false);
     expect(paginasPermitidas(perfil("leitor")).analises).toBe(true);
     expect(paginasPermitidas(perfil("sem_acesso")).analises).toBe(false);
-    // A navegação (src/lib/navegacao.js) usa as mesmas regras de access-roles.js.
+    // A navegação (src/lib/navegacao.ts) usa as mesmas regras de access-roles.js.
     expect(telaPermitida("analises", perfil("leitor"))).toBe(true);
     expect(bloqueioDaTela("analises", perfil("sem_acesso"))).toBe(
       "Sem permissão para o Painel das análises.",

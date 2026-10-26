@@ -12,7 +12,7 @@ import {
   normalizarChaves,
   type ChavesDaAutomacao,
 } from "../../lib/chaves-da-automacao.ts";
-import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
+import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
 
 export const RPC_OBTER_CHAVES = "obter_chaves_da_automacao";
 export const RPC_ALTERAR_CHAVE = "alterar_chave_da_automacao";

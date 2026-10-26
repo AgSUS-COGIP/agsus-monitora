@@ -14,7 +14,7 @@ type AtributosDaAcao = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 import { useState } from "react";
 import { canChangeCandidateStatus } from "../../lib/access-roles.js";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import {
   alteracaoJudicial,
   canEditCandidateStatus,

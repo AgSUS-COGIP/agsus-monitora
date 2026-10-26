@@ -9,7 +9,7 @@
   liga e desliga é o app (src/app/sistema.js e carga.js), por
   `mostrarEsqueleto` e `esconderEsqueleto`.
   Na demora, nos mesmos tempos da antiga tela (`getLoadingStage`, em
-  `lib/loading-copy.js`), aparece um aviso e, depois, "Tentar novamente".
+  `lib/loading-copy.ts`), aparece um aviso e, depois, "Tentar novamente".
 
   Painel externo: o iframe nasce na primeira abertura e fica em branco até o
   site de fora responder. Um skeleton de painel de indicadores cobre o quadro
@@ -19,8 +19,8 @@
   Atualizar dados: a tela fica como está e uma barra fina corre no pé do
   cabeçalho (`marcarAtualizacao`), até os dados novos a substituírem.
 */
-import { formatoDoEsqueleto } from "../lib/esqueleto-da-entrada.js";
-import { getLoadingStage } from "../lib/loading-copy.js";
+import { formatoDoEsqueleto } from "../lib/esqueleto-da-entrada";
+import { getLoadingStage } from "../lib/loading-copy";
 
 const ATIVO = "esqueleto-ativo";
 const MARCOS_DE_DEMORA_MS = [12_000, 25_000];

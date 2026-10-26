@@ -1,6 +1,6 @@
-import { hasSupabaseEnv } from "../lib/env.js";
-import { isUsableSession, LOGIN_POPUP_MESSAGE } from "../lib/auth-flow.js";
-import { getSupabaseClient } from "../lib/supabaseClient.js";
+import { hasSupabaseEnv } from "../lib/env";
+import { isUsableSession, LOGIN_POPUP_MESSAGE } from "../lib/auth-flow";
+import { getSupabaseClient } from "../lib/supabaseClient";
 
 export function callbackResultUrl(result) {
   switch (result) {

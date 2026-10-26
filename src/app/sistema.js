@@ -2,7 +2,7 @@ import {
   EVENTO_ESCOLHA_DA_BUSCA,
   areaParaLocalizar,
 } from "../lib/busca-global.ts";
-import { codigoDoPainel } from "../lib/navegacao.js";
+import { codigoDoPainel } from "../lib/navegacao";
 import { apagarCacheDePayload } from "../modules/cache-de-payload-indexeddb.js";
 import { comemorarAcessoLiberado } from "../modules/comemoracao-do-acesso.js";
 import {
