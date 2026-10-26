@@ -93,6 +93,8 @@ export interface CamposDoStatus {
   matricula?: unknown;
   dataConvocacao?: unknown;
   anexos?: ArrayLike<File> | Iterable<File>;
+  /** Outras linhas (mesma matrícula, mesmo edital) a marcar como "Contratado em outra lista". */
+  emOutraLista?: readonly string[];
 }
 export interface CamposSubJudice {
   editalId?: unknown;

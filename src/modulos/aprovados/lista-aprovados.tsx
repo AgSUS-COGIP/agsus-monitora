@@ -176,6 +176,7 @@ function ModalAberto({
         estado={estado}
         perfil={dados.perfil}
         candidato={candidato}
+        candidatos={dados.candidatos}
         jaAnexados={anexos.length}
         dataConvocacao={
           dados.convocacoes.get(String(candidato.candidato_id))?.data

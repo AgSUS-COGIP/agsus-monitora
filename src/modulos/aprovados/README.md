@@ -115,6 +115,11 @@ candidato e no histórico do status, gatilho que leva a data na publicação da 
 `definir_modelo_carta_ativo`, `registrar_carta_convocacao`, `listar_cartas_do_candidato` e
 `listar_convocacoes_aprovados` (contrato em `src/lib/rpc-contrato.js`).
 
+"Contratado em outra lista" (`supabase/migrations/20261024120000_contratado_em_outra_lista.sql`):
+o status explícito e a situação que o job Python (`scripts/aprovados/contratacao.py`) decide e
+o pacote traz no dicionário `contratacao` (`contratacao_situacao`, `contratacao_motivo`); o selo
+(`SeloDeStatus`), os indicadores e o filtro usam `statusEfetivo`, e a Convocação, `statusNaFila`.
+
 Histórias de usuário: `docs/historias-de-usuario/lista-de-aprovados.md`. Explicações para a Aya:
 `docs/aya/regras-da-lista-de-aprovados.md`. Testes: `tests/componentes/lista-aprovados.test.js`,
 `tests/componentes/lista-de-convocacao.test.js`, `tests/componentes/convocado-e-carta.test.js`,

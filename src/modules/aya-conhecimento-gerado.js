@@ -2945,7 +2945,7 @@ export const VERBETES_AYA = Object.freeze([
       "status do candidato",
     ],
     resposta:
-      "A Lista de aprovados mostra a lista vigente de cada edital da área atual, em duas abas: Aprovados (os candidatos e o status) e Convocação (a ordem de chamada, os a convocar e a carta de convocação). Os status do candidato são Convocado, Contratado, Desistente, Migração e Documentação Rejeitada; Contratado e Migração exigem matrícula e Convocado leva a data da convocação. Status já definido só quem tem Administrador em Aprovados altera (os demais veem um cadeado), exceto do Convocado para o status seguinte. Clicar no nome abre a gaveta do candidato, com os dados e as cartas de convocação emitidas. Quem tem Editor em Aprovados muda status; o grupo Gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.",
+      "A Lista de aprovados mostra a lista vigente de cada edital da área atual, em duas abas: Aprovados (os candidatos e o status) e Convocação (a ordem de chamada, os a convocar e a carta de convocação). Os status do candidato são Convocado, Contratado, Contratado em outra lista, Desistente, Migração e Documentação Rejeitada; Contratado e Migração exigem matrícula e Convocado leva a data da convocação. Status já definido só quem tem Administrador em Aprovados altera (os demais veem um cadeado), exceto do Convocado para o status seguinte. Clicar no nome abre a gaveta do candidato, com os dados e as cartas de convocação emitidas. Quem tem Editor em Aprovados muda status; o grupo Gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.",
     fato: "",
     fonte:
       "src/lib/lista-aprovados-rules.ts; src/modulos/aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql",
@@ -2991,7 +2991,7 @@ export const VERBETES_AYA = Object.freeze([
       "sem modelo de convocacao",
     ],
     resposta:
-      'O modelo de convocação são as regras de reserva do edital: categorias, percentuais, arredondamento e cascata. As vagas de cota entram intercaladas às de ampla (proporcional, como AC, PP, AC, AC, PP, AC, ou nas posições fixas que o edital publica) e a convocação segue a classificação. Quem concorre a cota concorre também à ampla, e ser chamado pela ampla não gasta a vaga da cota; cota sem candidato desce a cascata e, no fim, volta para a ampla. Desistente e Documentação Rejeitada não ocupam vaga; Convocado, Contratado e Migração continuam na posição e não são chamados de novo. As vagas imediatas são informadas por vaga (zero vira cadastro reserva). Sem modelo, tudo sai como ampla concorrência. O modelo é compartilhado entre editais: a tela avisa quantos serão afetados e oferece "Duplicar". Modelo e vagas valem para o edital e sobrevivem à troca do XLSX.',
+      'O modelo de convocação são as regras de reserva do edital: categorias, percentuais, arredondamento e cascata. As vagas de cota entram intercaladas às de ampla (proporcional, como AC, PP, AC, AC, PP, AC, ou nas posições fixas que o edital publica) e a convocação segue a classificação. Quem concorre a cota concorre também à ampla, e ser chamado pela ampla não gasta a vaga da cota; cota sem candidato desce a cascata e, no fim, volta para a ampla. Desistente, Documentação Rejeitada e Contratado em outra lista não ocupam vaga; Convocado, Contratado e Migração continuam na posição e não são chamados de novo. As vagas imediatas são informadas por vaga (zero vira cadastro reserva). Sem modelo, tudo sai como ampla concorrência. O modelo é compartilhado entre editais: a tela avisa quantos serão afetados e oferece "Duplicar". Modelo e vagas valem para o edital e sobrevivem à troca do XLSX.',
     fato: "",
     fonte:
       "src/lib/lista-convocacao-rules.ts; src/lib/modelo-de-convocacao.ts; src/lib/configuracao-de-convocacao.ts",
@@ -3113,6 +3113,27 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Contratado em outra lista",
+    perguntas: [
+      "contratado em outra lista",
+      "o que e contratado em outra lista",
+      "contratado nas duas listas",
+      "contratado na ampla e na cota",
+      "mesma matricula em duas linhas",
+      "contratado duas vezes",
+      "contratados contando em dobro",
+      "por que esta linha nao conta como contratado",
+      "contratado pelo sistema",
+    ],
+    resposta:
+      'Quem concorre à cota concorre também à ampla, e a lista do edital tem uma linha da pessoa em cada uma. Quando as duas estão Contratado com a mesma matrícula, é uma contratação só: a linha pela qual a pessoa não foi contratada fica "Contratado em outra lista", não conta nos contratados (indicadores, Visão geral, Seleção, comemorações) nem ocupa vaga na Convocação, e continua visível na lista e no histórico. O sistema decide sozinho, todo dia e depois de cada mudança: vale a linha que a convocação daquela lista já alcançou (a posição dela está dentro do que a lista já chamou); se as duas foram alcançadas, vale a ampla concorrência, porque quem passa na ampla não ocupa vaga de cota. O selo mostra "Contratado em outra lista · pelo sistema", e o motivo aparece ao passar o mouse; o status gravado continua Contratado. A decisão não muda sozinha depois: só é refeita quando uma das linhas deixa de ser (ou passa a ser) Contratado. Quando a regra não decide (nenhuma das linhas alcançada, ou duas de ampla), o selo fica Contratado com um alerta ("a equipe decide") e a conferência avisa. Para decidir ou trocar, quem tem Administrador em Aprovados escolhe o status "Contratado em outra lista" na linha pela qual a pessoa não foi contratada (a matrícula fica, opcional); ao marcar Contratado numa linha cuja matrícula já está Contratado em outra linha do edital, a tela sugere marcar a outra.',
+    fato: "",
+    fonte:
+      "python/monitora/aprovados/contratacao.py; src/lib/lista-aprovados-rules.ts; src/modulos/aprovados/partes.tsx; supabase/migrations/20261024120000_contratado_em_outra_lista.sql",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Status Convocado",
     perguntas: [
       "status convocado",
@@ -3143,7 +3164,7 @@ export const VERBETES_AYA = Object.freeze([
       "ordem de chamada convocado",
     ],
     resposta:
-      'Na aba Convocação, "A convocar" são as vagas imediatas cujo candidato ainda não foi chamado (sem status). Convocado, Contratado e Migração continuam na posição que a ordem lhes deu e não são chamados de novo; Desistente e Documentação Rejeitada saem da fila e o próximo toma a vaga. "Escolher os a convocar" marca de uma vez esses candidatos para a carta. "Exportar CSV" baixa a ordem com a situação na chamada, o status e a data da convocação.',
+      'Na aba Convocação, "A convocar" são as vagas imediatas cujo candidato ainda não foi chamado (sem status). Convocado, Contratado e Migração continuam na posição que a ordem lhes deu e não são chamados de novo; Desistente, Documentação Rejeitada e Contratado em outra lista saem da fila e o próximo toma a vaga. "Escolher os a convocar" marca de uma vez esses candidatos para a carta. "Exportar CSV" baixa a ordem com a situação na chamada, o status e a data da convocação.',
     fato: "",
     fonte:
       "src/lib/lista-convocacao-rules.ts; src/modulos/aprovados/aba-convocacao.tsx",
@@ -3959,7 +3980,7 @@ export const VERBETES_AYA = Object.freeze([
       "conferencias dos aprovados",
     ],
     resposta:
-      "Análises: aprovada com nota abaixo da mínima da regra de classificação; nota final diferente da soma das parciais (formação, cursos, experiência e critério étnico); experiência acima do teto, quando a regra tiver teto; data da análise no futuro ou antes da inscrição na Empregare; e, só como informação, o mesmo candidato com análise em dois editais ativos. Entrevistas: convocado sem nota depois da data marcada na agenda; nota de avaliador fora da escala do roteiro; convocado que não está na lista de convocação vigente da Classificação; e dois horários para o mesmo candidato. Classificação: lista final gerada antes da última mudança nas análises; empate sem desempate registrado; vaga das análises sem linha no quadro de vagas do edital; ajuste de recurso aprovado depois da última lista. Lista de aprovados: a mesma pessoa com duas matrículas Contratado no mesmo edital (crítico); a mesma matrícula Contratado em mais de uma lista, por exemplo na ampla e na cota, que é uma contratação só e deve ficar Contratado só na lista pela qual a pessoa foi contratada (atenção); recontratação em outro edital, com outra matrícula, não gera aviso; convocado há mais de 15 dias sem desfecho; pessoas da publicação vinda da Classificação ainda para revisão. Cargas: vaga da Empregare cujo número de candidatos variou 50% ou mais na última carga.",
+      'Análises: aprovada com nota abaixo da mínima da regra de classificação; nota final diferente da soma das parciais (formação, cursos, experiência e critério étnico); experiência acima do teto, quando a regra tiver teto; data da análise no futuro ou antes da inscrição na Empregare; e, só como informação, o mesmo candidato com análise em dois editais ativos. Entrevistas: convocado sem nota depois da data marcada na agenda; nota de avaliador fora da escala do roteiro; convocado que não está na lista de convocação vigente da Classificação; e dois horários para o mesmo candidato. Classificação: lista final gerada antes da última mudança nas análises; empate sem desempate registrado; vaga das análises sem linha no quadro de vagas do edital; ajuste de recurso aprovado depois da última lista. Lista de aprovados: a mesma pessoa com duas matrículas Contratado no mesmo edital (crítico); a mesma matrícula Contratado em mais de uma lista, por exemplo na ampla e na cota, que é uma contratação só, quando o sistema não decidiu qual linha é a contratação — a linha que ele decide fica "Contratado em outra lista" e sai do aviso; a equipe marca esse status na linha pela qual a pessoa não foi contratada (atenção); recontratação em outro edital, com outra matrícula, não gera aviso; convocado há mais de 15 dias sem desfecho; pessoas da publicação vinda da Classificação ainda para revisão. Cargas: vaga da Empregare cujo número de candidatos variou 50% ou mais na última carga.',
     fato: "",
     fonte: "scripts/conferencias/regras.py; scripts/conferencias/catalogo.py",
   },

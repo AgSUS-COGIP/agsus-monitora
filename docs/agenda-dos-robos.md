@@ -40,6 +40,12 @@ linha **Agenda dos robôs** passa a esperar só o pedido diário das Conferênci
 de 26 h). Não religue sem combinar com a coordenação; ao religar, devolva também o "esperado" e o
 prazo em `src/lib/saude-das-cargas.ts` (e o teste).
 
+O **Contratado em outra lista** (`contratacao-dos-aprovados.yml`, 20261024120000) não tem tarefa
+própria: roda todo dia chamado pelo `conferencias.yml` (antes das conferências) e é pedido pelo
+banco depois de uma mudança de status que envolve Contratado ou de uma lista nova de aprovados
+(gatilhos em `TH_CANDIDATO_APROVADO` e `TH_PUBLICACAO_APROVADO`), com a chave **Conferências**
+ligada.
+
 Robô da Empregare e pré-classificação estão na lista fixa da função; fora a agenda das inscrições
 (abaixo), não têm agenda.
 
@@ -73,7 +79,7 @@ chave por aba; desligada:
 | KPIs do edital               | `agsus_kpis_do_edital_pela_selecao`                                                                                                   | —                                                                             |
 | Robô de inscrições           | `agsus_robo_inscricoes_*`                                                                                                             | `robo-empregare.yml`                                                          |
 | Pré-classificação automática | —                                                                                                                                     | `pre-classificacao.yml` chamado no fim do `robo-empregare.yml` (apos_robo)    |
-| Conferências                 | `agsus_robo_conferencias`                                                                                                             | `conferencias.yml`                                                            |
+| Conferências                 | `agsus_robo_conferencias`                                                                                                             | `conferencias.yml` (chama `contratacao-dos-aprovados.yml` antes)              |
 | Pacotes dos painéis          | `agsus_analises_cache_do_painel`, `agsus_aprovados_cache_por_area`, `agsus_entrevistas_cache_do_painel`                               | —                                                                             |
 | Manutenção do banco          | `agsus_analises_analyze_diario`, `agsus_fila_estatisticas`, `agsus_analises_encerrar_inativas`, `agsus_eventos_acesso_limpeza_mensal` | —                                                                             |
 | Classificação em Python      | —                                                                                                                                     | `classificacao.yml` pedido ao gerar uma lista (20261023170000)                |

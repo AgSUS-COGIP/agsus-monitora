@@ -50,8 +50,10 @@ import type {
 
   E duas regras de operação, que valem em todos os editais lidos:
 
-    - Desistente e Documentação Rejeitada não ocupam vaga; quem vem a seguir na
-      mesma fila toma o lugar. Continuam visíveis, fora da numeração.
+    - Desistente, Documentação Rejeitada e Contratado em outra lista (a pessoa
+      foi contratada pela outra linha do edital, ampla ou cota; migration
+      20261024120000) não ocupam vaga; quem vem a seguir na mesma fila toma o
+      lugar. Continuam visíveis, fora da numeração.
     - Convocado, Contratado e Migração continuam na fila, na posição que o
       cálculo lhes deu (a vaga é deles): já foram chamados e não são chamados
       de novo — "a convocar" são só as vagas imediatas ainda sem status.
@@ -79,12 +81,28 @@ const texto = (valor: unknown) => String(valor ?? "").trim();
 export const STATUS_FORA_DA_FILA = Object.freeze([
   "Desistente",
   "Documentação Rejeitada",
+  "Contratado em outra lista",
 ]);
+
+/*
+  O status na fila: o gravado, ou "Contratado em outra lista" quando o job
+  decidiu que a pessoa foi contratada pela outra linha do edital (migration
+  20261024120000) — a linha não ocupa vaga, mesmo com o status Contratado.
+*/
+export function statusNaFila(
+  candidato: CandidatoDaConvocacao | null | undefined,
+) {
+  const status = texto(candidato?.status);
+  return status === "Contratado" &&
+    texto(candidato?.contratacao_situacao) === "OUTRA_LISTA"
+    ? "Contratado em outra lista"
+    : status;
+}
 
 export function estaForaDaFila(
   candidato: CandidatoDaConvocacao | null | undefined,
 ) {
-  return STATUS_FORA_DA_FILA.includes(texto(candidato?.status));
+  return STATUS_FORA_DA_FILA.includes(statusNaFila(candidato));
 }
 
 /**
@@ -100,7 +118,7 @@ export const STATUS_JA_CHAMADO = Object.freeze([
 export function jaFoiChamado(
   candidato: CandidatoDaConvocacao | null | undefined,
 ) {
-  return STATUS_JA_CHAMADO.includes(texto(candidato?.status));
+  return STATUS_JA_CHAMADO.includes(statusNaFila(candidato));
 }
 
 /** Vaga imediata cujo candidato ainda não foi chamado. */

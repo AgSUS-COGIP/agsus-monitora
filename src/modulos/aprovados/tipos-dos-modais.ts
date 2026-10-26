@@ -24,6 +24,8 @@ export interface PropsDoModalDeStatus {
   estado: EstadoDosAprovados;
   perfil: unknown;
   candidato: CandidatoAprovado;
+  /** Os candidatos carregados: para achar a mesma matrícula em outra linha do edital. */
+  candidatos?: readonly CandidatoAprovado[];
   jaAnexados?: number;
   dataConvocacao?: string;
 }

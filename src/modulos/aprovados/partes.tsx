@@ -21,11 +21,13 @@ import {
   formatarData,
   formatarNota,
   modalidadeSemAspas,
+  STATUS_CONTRATADO_EM_OUTRA_LISTA,
   statusEhConvocado,
   statusTravado,
   tomDoStatus,
 } from "../../lib/lista-aprovados-rules.ts";
 import { Icone } from "../../componentes/icone.jsx";
+import { classes } from "../../ui/index.js";
 
 /*
   Peças que as duas abas (aprovados e convocação) e os modais repetem. As
@@ -33,7 +35,7 @@ import { Icone } from "../../componentes/icone.jsx";
   (BotaoDeAcao, LinhasEsqueleto, ErroAoCarregar, Kpi) vêm de src/ui/.
 */
 
-export { classes } from "../../ui/index.js";
+export { classes };
 
 export const plural = (total: number, singular: string, varios: string) =>
   `${formatNumberBR(total)} ${total === 1 ? singular : varios}`;
@@ -41,20 +43,53 @@ export const plural = (total: number, singular: string, varios: string) =>
 /*
   O selo do status; com a data da convocação (`dataConvocacao`, "AAAA-MM-DD"),
   Convocado mostra o dia em que foi chamado.
+
+  `situacao` e `motivo` vêm do job "Contratado em outra lista" (migration
+  20261024120000). Na linha Contratado que o sistema dá como espelho da
+  contratação feita pela outra lista do edital (OUTRA_LISTA), o selo mostra
+  "Contratado em outra lista", com o motivo no tooltip; o status gravado
+  continua Contratado. No caso que a regra não decide (AMBIGUO), o selo segue
+  Contratado com um alerta e o motivo.
 */
 export function SeloDeStatus({
   status,
   dataConvocacao = "",
+  situacao = "",
+  motivo = "",
 }: {
   status: string;
   dataConvocacao?: string;
+  situacao?: string;
+  motivo?: string;
 }) {
   const data = statusEhConvocado(status) ? formatarData(dataConvocacao) : "";
+  const contratado = status === "Contratado";
+  const espelho = contratado && situacao === "OUTRA_LISTA";
+  const ambigua = contratado && situacao === "AMBIGUO";
+  const rotulo = espelho ? STATUS_CONTRATADO_EM_OUTRA_LISTA : status;
+  const dica = contratado && motivo ? motivo : undefined;
   return (
     <span className="approved-status-celula">
-      <span className={`approved-status ${tomDoStatus(status)}`}>
-        {status || "Sem status"}
+      <span
+        className={classes(
+          "approved-status",
+          tomDoStatus(rotulo),
+          espelho && "approved-status-calculado",
+          ambigua && "approved-status-ambiguo",
+        )}
+        title={dica}
+        data-contratacao={contratado && situacao ? situacao : undefined}
+      >
+        {ambigua ? (
+          <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />
+        ) : null}
+        {rotulo || "Sem status"}
       </span>
+      {espelho || ambigua ? (
+        <small className="approved-status-data">
+          {espelho ? "pelo sistema" : "a equipe decide"}
+        </small>
+      ) : null}
       {data ? <small className="approved-status-data">em {data}</small> : null}
     </span>
   );

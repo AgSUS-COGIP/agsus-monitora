@@ -478,7 +478,7 @@ export const CONTRATO_RPC = {
     ],
     critica: true,
     resumo:
-      "Altera o status de um candidato (Convocado, Contratado, Desistente, Migração, Documentação Rejeitada ou nulo), com processo SEI, matrícula e a data da convocação (Convocado). Status já definido só o admin altera, exceto do Convocado para outro status.",
+      "Altera o status de um candidato (Convocado, Contratado, Contratado em outra lista, Desistente, Migração, Documentação Rejeitada ou nulo), com processo SEI, matrícula e a data da convocação (Convocado). Status já definido só o admin altera, exceto do Convocado para outro status.",
   },
   marcar_candidatos_convocados: {
     argumentos: ["p_candidatos", "p_data_convocacao", "p_carta"],
