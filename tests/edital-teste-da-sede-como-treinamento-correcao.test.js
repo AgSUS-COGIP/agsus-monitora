@@ -34,7 +34,9 @@ describe(`correção ${NOME}`, () => {
     expect(sql).not.toMatch(/\bdelete\s+from\b/i);
     expect(sql).not.toMatch(/\btruncate\b/i);
     expect(sql).not.toMatch(/\bdrop\s+(table|function|view)\b/i);
-    expect(sql).not.toMatch(/reiniciar_edital_treinamento|FC_APAGAR_DADOS_DO_TREINAMENTO/);
+    expect(sql).not.toMatch(
+      /reiniciar_edital_treinamento|FC_APAGAR_DADOS_DO_TREINAMENTO/,
+    );
     expect(sql).not.toMatch(/session_replication_role|disable trigger/i);
   });
 
