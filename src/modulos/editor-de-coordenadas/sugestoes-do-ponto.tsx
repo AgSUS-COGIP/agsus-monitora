@@ -6,7 +6,7 @@ import {
   formatarDistancia,
   GRAVIDADES,
 } from "../../lib/editor-de-coordenadas.ts";
-import { EstadoVazio, Selo } from "../../ui/index.js";
+import { EstadoVazio, Selo } from "../../ui/index.ts";
 
 /*
   Posições candidatas de um ponto (as `sugestoes` já prontas, de

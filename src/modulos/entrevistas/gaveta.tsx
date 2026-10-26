@@ -11,7 +11,7 @@ import {
   rotuloDoComparecimento,
   rotuloDoParecer,
 } from "../../lib/entrevistas-do-painel.ts";
-import { EstadoVazio, Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.js";
+import { EstadoVazio, Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.ts";
 import { SeloDoParecer } from "./tabela.tsx";
 
 /*

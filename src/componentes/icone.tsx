@@ -1,4 +1,5 @@
 import { createElement } from "react";
+import type { IconNode } from "lucide";
 import { ICONE_RESERVA, ICONES } from "../modules/icones.js";
 
 /*
@@ -6,8 +7,26 @@ import { ICONE_RESERVA, ICONES } from "../modules/icones.js";
   (`src/modules/icones.js`). Sempre decorativo: quem nomeia o controle é o
   texto dele ou um `aria-label`.
 */
-export function Icone({ nome, tamanho = 18, traco = 1.75, className = "" }) {
-  const conhecido = Object.hasOwn(ICONES, nome) ? nome : ICONE_RESERVA;
+export type NomeDoIcone = keyof typeof ICONES;
+
+export interface PropriedadesDoIcone {
+  /** Nome do registro; um nome desconhecido desenha o ícone de reserva. */
+  nome: string;
+  tamanho?: number;
+  traco?: number;
+  className?: string;
+}
+
+const ehConhecido = (nome: string): nome is NomeDoIcone =>
+  Object.hasOwn(ICONES, nome);
+
+export function Icone({
+  nome,
+  tamanho = 18,
+  traco = 1.75,
+  className = "",
+}: PropriedadesDoIcone) {
+  const conhecido: NomeDoIcone = ehConhecido(nome) ? nome : ICONE_RESERVA;
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -24,7 +43,7 @@ export function Icone({ nome, tamanho = 18, traco = 1.75, className = "" }) {
       focusable="false"
       data-icone={conhecido}
     >
-      {ICONES[conhecido].map(([tag, atributos], indice) =>
+      {(ICONES[conhecido] as IconNode).map(([tag, atributos], indice) =>
         createElement(tag, { key: indice, ...atributos }),
       )}
     </svg>

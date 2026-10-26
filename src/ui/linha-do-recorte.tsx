@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 /*
   O recorte ativo de uma tela (`.ui-recorte`): uma linha que diz quais filtros
   estão valendo ("Recorte ativo: Edital: X · Parecer: Apto") ou "Sem filtros".
@@ -6,16 +8,25 @@
   entram abaixo da linha — em geral `<MarcasDoRecorte>`. Usada por Recursos,
   Entrevistas e Análises curriculares.
 */
-export function textoDoRecorte(ativos) {
+export type FiltroAtivo = readonly [string, string, string];
+
+export function textoDoRecorte(ativos: readonly FiltroAtivo[]): string {
   return ativos.length
     ? `Recorte ativo: ${ativos.map(([, rotulo, valor]) => `${rotulo}: ${valor}`).join(" · ")}`
     : "Sem filtros";
 }
 
-/**
- * @param {{ ativos?: readonly (readonly [string, string, string])[], texto?: string, children?: import("react").ReactNode }} props
- */
-export function LinhaDoRecorte({ ativos = [], texto, children }) {
+export interface PropriedadesDaLinhaDoRecorte {
+  ativos?: readonly FiltroAtivo[];
+  texto?: string;
+  children?: ReactNode;
+}
+
+export function LinhaDoRecorte({
+  ativos = [],
+  texto,
+  children,
+}: PropriedadesDaLinhaDoRecorte) {
   return (
     <section className="ui-card ui-recorte" aria-label="Recorte ativo">
       <p className="ui-recorte-texto" data-recorte="">
@@ -30,7 +41,19 @@ export function LinhaDoRecorte({ ativos = [], texto, children }) {
   As marcas do recorte, embaixo da linha: `{ chave, tom, icone, texto }`, com
   `tom` "sucesso", "alerta" ou "neutro" (o padrão).
 */
-export function MarcasDoRecorte({ marcas }) {
+export interface MarcaDoRecorte {
+  chave: string;
+  /** "sucesso", "alerta" ou "neutro" (o padrão). */
+  tom?: string;
+  icone?: string;
+  texto: ReactNode;
+}
+
+export interface PropriedadesDasMarcasDoRecorte {
+  marcas: readonly MarcaDoRecorte[];
+}
+
+export function MarcasDoRecorte({ marcas }: PropriedadesDasMarcasDoRecorte) {
   if (!marcas.length) return null;
   return (
     <div className="ui-recorte-marcas">

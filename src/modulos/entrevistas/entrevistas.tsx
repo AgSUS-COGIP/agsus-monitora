@@ -23,7 +23,7 @@ import {
   textoDasFontesDoPainel,
 } from "../../lib/entrevistas-do-painel.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { Aviso } from "../../ui/index.js";
+import { Aviso } from "../../ui/index.ts";
 import { hojeEmBrasilia } from "../../lib/fila-de-conducao.ts";
 import {
   editalDoRecorte,

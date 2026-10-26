@@ -39,7 +39,7 @@ describe("arquivosNovosNoLegado", () => {
     const agora = [
       "src/modules/a.js",
       "src/modulos/tela/tela.jsx",
-      "src/ui/kpi.jsx",
+      "src/ui/kpi.tsx",
       "src/componentes/x.jsx",
     ];
     expect(arquivosNovosNoLegado(antes, agora)).toEqual([]);

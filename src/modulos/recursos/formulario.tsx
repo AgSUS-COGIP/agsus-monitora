@@ -48,7 +48,7 @@ import {
   Modal,
   TopoDaGaveta,
   usarClassesDaGaveta,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import { nota } from "./partes.ts";
 
 /*

@@ -11,7 +11,7 @@ import {
   rotuloDoComparecimento,
   rotuloDoParecer,
 } from "../../lib/entrevistas-do-painel.ts";
-import { Selo, TabelaInfinita } from "../../ui/index.js";
+import { Selo, TabelaInfinita } from "../../ui/index.ts";
 
 /*
   "Entrevistas": a tabela do Painel de entrevistas, na tabela de carregamento

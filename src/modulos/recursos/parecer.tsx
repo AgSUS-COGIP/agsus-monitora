@@ -8,7 +8,7 @@ import {
   erroDoTextoDoParecer,
   LIMITES_DO_PARECER,
 } from "../../lib/parecer-do-recurso.ts";
-import { Aviso, Kv, Secao } from "../../ui/index.js";
+import { Aviso, Kv, Secao } from "../../ui/index.ts";
 import { dataHora } from "./partes.ts";
 import { SeloDaSituacao } from "./tabela.tsx";
 

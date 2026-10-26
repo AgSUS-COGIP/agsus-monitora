@@ -49,7 +49,7 @@ describe("KPIs: mesma altura, rótulo em até duas linhas", () => {
     esperaDuasLinhas(regra(css, ".ui-kpi-texto"));
     expect(regra(css, ".ui-kpi-valor")["margin-top"]).toBe("auto");
 
-    const jsx = ler("src/ui/kpi.jsx");
+    const jsx = ler("src/ui/kpi.tsx");
     expect(jsx).toContain('className="ui-kpi-texto"');
     expect(jsx).toContain(
       'title={typeof rotulo === "string" ? rotulo : undefined}',

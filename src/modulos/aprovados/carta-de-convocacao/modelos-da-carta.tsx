@@ -21,7 +21,7 @@ import {
   Campo,
   Modal,
   Selo,
-} from "../../../ui/index.js";
+} from "../../../ui/index.ts";
 
 /*
   Os modelos da carta de convocação da área: a lista (ativos primeiro; os de

@@ -1,5 +1,5 @@
 import { dataHora } from "../../lib/saude-das-cargas.ts";
-import { Aviso } from "../../ui/index.js";
+import { Aviso } from "../../ui/index.ts";
 
 /*
   Status das atualizações › linha "Agenda dos robôs" (20261008140000): o banco

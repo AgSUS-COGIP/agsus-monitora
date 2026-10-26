@@ -16,7 +16,7 @@ import type {
 } from "../../../lib/avaliacao-documental/tipos-da-regra.ts";
 import { DIRECOES, NIVEIS } from "../../../lib/classificacao/catalogo.ts";
 import { rotuloDaVersao } from "../../../lib/nome-da-versao.ts";
-import { Aviso } from "../../../ui/index.js";
+import { Aviso } from "../../../ui/index.ts";
 import { Caixa, CampoNumero } from "../campos.jsx";
 import { ListaOrdenavel } from "./lista-ordenavel.tsx";
 import { SeletorDeCriterios } from "./seletor-de-criterios.tsx";

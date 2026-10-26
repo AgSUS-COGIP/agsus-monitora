@@ -5,7 +5,7 @@ import {
   hojeEmBrasilia,
   situacaoNaLinhaDoTempo,
 } from "../../lib/cronograma-do-edital.js";
-import { BlocosEsqueleto, ErroAoCarregar, Modal } from "../../ui/index.js";
+import { BlocosEsqueleto, ErroAoCarregar, Modal } from "../../ui/index.ts";
 
 /*
   Consulta do cronograma de um edital, sem abrir o formulário: status atual,

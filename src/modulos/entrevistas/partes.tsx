@@ -1,7 +1,7 @@
 import type { MouseEventHandler } from "react";
 import type { BancaDoRascunho } from "../../lib/tipos-do-roteiro-de-entrevista.ts";
 import { novaOrigemDaBanca } from "../../lib/roteiro-de-entrevista.ts";
-import { Campo } from "../../ui/index.js";
+import { Campo } from "../../ui/index.ts";
 
 /*
   Peças que as visões "Conduzir entrevistas" e "Roteiros" repetem: os botões

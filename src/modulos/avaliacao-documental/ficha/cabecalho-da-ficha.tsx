@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { Popover } from "../../../ui/index.js";
+import { Popover } from "../../../ui/index.ts";
 
 /*
   O cabeçalho do modo de análise: "← Voltar à fila", o nome do candidato

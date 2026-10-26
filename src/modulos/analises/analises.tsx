@@ -44,7 +44,7 @@ import {
   LinhaDoRecorte,
   MarcasDoRecorte,
   TopoDoPainel,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import { criarEstadoDasAnalises } from "./estado.ts";
 import { GavetaDaAnalise } from "./gaveta.tsx";
 import { chipsDosFiltros, Filtros, Graficos, Indicadores } from "./paineis.tsx";

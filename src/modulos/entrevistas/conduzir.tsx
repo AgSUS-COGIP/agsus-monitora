@@ -32,7 +32,7 @@ import {
   EstadoVazio,
   Segmentado,
   TopoDoPainel,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import { criarEstadoDaConducao } from "./estado-da-conducao.ts";
 import { FichaDoCandidato } from "./ficha.tsx";
 import { FilaDoDia } from "./fila-do-dia.tsx";

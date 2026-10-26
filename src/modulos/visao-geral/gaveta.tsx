@@ -15,7 +15,7 @@ import {
   statusCanonico,
   urgenciaDoCronograma,
 } from "../../lib/visao-geral.ts";
-import { Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.js";
+import { Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.ts";
 
 /*
   Os detalhes de um processo seletivo (clique na linha da tabela ou num item

@@ -6,7 +6,7 @@ import {
   validarEquipe,
 } from "../../lib/avaliacao-documental/equipe.js";
 import { rotuloDoNivel } from "../../lib/permissoes-recursos.js";
-import { Aviso, Campo, EstadoVazio, Selo } from "../../ui/index.js";
+import { Aviso, Campo, EstadoVazio, Selo } from "../../ui/index.ts";
 import { BotaoMais, BotaoTirar } from "./campos.jsx";
 import { QuemEntraNaEquipe } from "./quem-entra-na-equipe.tsx";
 

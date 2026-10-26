@@ -15,7 +15,7 @@ import {
 import { diferencaDaVaga } from "../../lib/avaliacao-documental/regra-por-cargo.ts";
 import type { RegraAnalise } from "../../lib/avaliacao-documental/tipos-da-regra.ts";
 import type { Candidato, NotaMinima } from "./previa.tsx";
-import { Campo, Selo } from "../../ui/index.js";
+import { Campo, Selo } from "../../ui/index.ts";
 import {
   BotaoMais,
   BotaoTirar,

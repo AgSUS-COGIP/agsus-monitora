@@ -15,7 +15,7 @@ import {
   tomDaSituacao,
 } from "../../lib/recursos-dos-candidatos.ts";
 import { rotuloDoEstado, tomDoEstado } from "../../lib/resposta-do-recurso.ts";
-import { classes, Selo, TabelaInfinita } from "../../ui/index.js";
+import { classes, Selo, TabelaInfinita } from "../../ui/index.ts";
 
 /*
   "Fila de recursos": a tabela do painel, na tabela de carregamento contínuo

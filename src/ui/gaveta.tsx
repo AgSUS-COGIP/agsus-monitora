@@ -1,5 +1,6 @@
-import { Modal } from "./modal.jsx";
-import { classes } from "./classes.js";
+import type { ReactNode } from "react";
+import { Modal } from "./modal.tsx";
+import { classes } from "./classes.ts";
 
 /*
   A gaveta lateral: um <Modal> (portal, Esc, foco preso) com o topo —
@@ -14,6 +15,15 @@ export function usarClassesDaGaveta() {
   return { fundo: "ui-gaveta-fundo", cartao: "ui-gaveta" };
 }
 
+export interface PropriedadesDoTopoDaGaveta {
+  sobretitulo?: ReactNode;
+  titulo: ReactNode;
+  tituloId?: string;
+  resumo?: ReactNode;
+  aoFechar: () => void;
+  rotuloDoFechar?: string;
+}
+
 /* O topo da gaveta (e do formulário): sobretítulo, título, resumo e fechar. */
 export function TopoDaGaveta({
   sobretitulo,
@@ -22,7 +32,7 @@ export function TopoDaGaveta({
   resumo,
   aoFechar,
   rotuloDoFechar,
-}) {
+}: PropriedadesDoTopoDaGaveta) {
   return (
     <div className="ui-gaveta-topo">
       <div>
@@ -49,9 +59,21 @@ export function TopoDaGaveta({
  * `className` vai no fundo, `cartaoClassName` no cartão; `tituloId` liga o
  * título ao `aria-labelledby` do diálogo.
  */
-/**
- * @param {{id?: string, tituloId?: string, aoFechar: () => void, fecharAoClicarFora?: boolean, className?: string, cartaoClassName?: string, sobretitulo?: import("react").ReactNode, titulo: import("react").ReactNode, resumo?: import("react").ReactNode, rotuloDoFechar?: string, tour?: string, children?: import("react").ReactNode}} props
- */
+export interface PropriedadesDaGaveta {
+  id?: string;
+  tituloId?: string;
+  aoFechar: () => void;
+  fecharAoClicarFora?: boolean;
+  className?: string;
+  cartaoClassName?: string;
+  sobretitulo?: ReactNode;
+  titulo: ReactNode;
+  resumo?: ReactNode;
+  rotuloDoFechar?: string;
+  tour?: string;
+  children?: ReactNode;
+}
+
 export function Gaveta({
   id,
   tituloId,
@@ -65,7 +87,7 @@ export function Gaveta({
   rotuloDoFechar,
   tour,
   children,
-}) {
+}: PropriedadesDaGaveta) {
   const { fundo, cartao } = usarClassesDaGaveta();
   return (
     <Modal

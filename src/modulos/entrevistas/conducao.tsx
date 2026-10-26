@@ -28,7 +28,7 @@ import {
   criteriosDeDesempate,
   textoDoEmpateFinal,
 } from "../../lib/convocacao-da-entrevista.ts";
-import { Aviso, Campo, classes, Gaveta, Selo } from "../../ui/index.js";
+import { Aviso, Campo, classes, Gaveta, Selo } from "../../ui/index.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { numeroBR } from "./partes.tsx";
 

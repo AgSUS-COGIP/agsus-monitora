@@ -21,7 +21,7 @@ import {
   type FiltroDosEspelhos,
   type PaginaDosEspelhos,
 } from "../../lib/avaliacao-documental/espelhos-em-massa.ts";
-import { Aviso, Campo, Gaveta, Segmentado } from "../../ui/index.js";
+import { Aviso, Campo, Gaveta, Segmentado } from "../../ui/index.ts";
 import { espelhoDaFichaGravada } from "../../lib/avaliacao-documental/espelho-da-ficha-gravada.ts";
 import {
   abrirEspelhosEmMassa,

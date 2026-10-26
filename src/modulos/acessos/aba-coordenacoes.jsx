@@ -11,8 +11,8 @@ import {
 } from "../../lib/grupos-e-coordenacoes.js";
 import { linhasDaArea } from "../../componentes/dados-do-monitoramento.ts";
 import { usarLinhasDoMonitoramento } from "../../componentes/usar-linhas-do-monitoramento.ts";
-import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
-import { BlocosEsqueleto, BotaoDeAcao, Campo } from "../../ui/index.js";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
+import { BlocosEsqueleto, BotaoDeAcao, Campo } from "../../ui/index.ts";
 import { CampoMotivo, ListaMestre, motivoValido } from "./partes.jsx";
 
 /*

@@ -17,7 +17,7 @@ import {
   LinhasEsqueleto,
   Modal,
   Selo,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import {
   AvisoSemArea,
   AvisoSemCoordenacao,

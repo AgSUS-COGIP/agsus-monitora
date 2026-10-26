@@ -21,9 +21,9 @@ import {
   MODO_SO_ANEXOS,
   MOTIVO_DO_CONGELADO,
 } from "../../lib/robos-de-carga.js";
-import { Aviso, Campo, Gaveta, Segmentado } from "../../ui/index.js";
-import { Icone } from "../icone.jsx";
-import { MultiSelectBusca } from "../multi-select-busca.jsx";
+import { Aviso, Campo, Gaveta, Segmentado } from "../../ui/index.ts";
+import { Icone } from "../icone.tsx";
+import { MultiSelectBusca } from "../multi-select-busca.tsx";
 
 /*
   "Rodar com opções" de um robô (Configurações › Status das atualizações, só

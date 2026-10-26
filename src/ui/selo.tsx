@@ -1,4 +1,5 @@
-import { classes } from "./classes.js";
+import type { ReactNode } from "react";
+import { classes } from "./classes.ts";
 
 /*
   Selo de situação: `tom` é a variante — "aprovado", "reprovado",
@@ -6,7 +7,7 @@ import { classes } from "./classes.js";
   usa. Marcação: `.ui-selo[data-tom]` (fundo e texto do estado).
 */
 
-const TOM_DO_SELO = {
+const TOM_DO_SELO: Partial<Record<string, string>> = {
   aprovado: "sucesso",
   reprovado: "perigo",
   pendente: "alerta",
@@ -14,10 +15,19 @@ const TOM_DO_SELO = {
   neutro: "neutro",
 };
 
-/**
- * @param {{tom?: string, titulo?: string, className?: string, children?: import("react").ReactNode}} props
- */
-export function Selo({ tom = "neutro", titulo, className, children }) {
+export interface PropriedadesDoSelo {
+  tom?: string;
+  titulo?: string;
+  className?: string;
+  children?: ReactNode;
+}
+
+export function Selo({
+  tom = "neutro",
+  titulo,
+  className,
+  children,
+}: PropriedadesDoSelo) {
   return (
     <span
       className={classes("ui-selo", className)}

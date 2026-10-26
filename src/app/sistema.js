@@ -20,7 +20,7 @@ import {
   definirAreaAtual,
   obterDadosDoMonitoramento,
 } from "../componentes/dados-do-monitoramento.ts";
-import { montarPessoasOnline } from "../componentes/pessoas-online/pessoas-online.jsx";
+import { montarPessoasOnline } from "../componentes/pessoas-online/pessoas-online.tsx";
 import { montarAvisoDeVersao } from "../componentes/aviso-de-versao/aviso-de-versao.tsx";
 import { criarEstadoDoEncerramento } from "../modulos/encerramento-do-edital/estado.ts";
 import { montarEncerramentoDoEdital } from "../modulos/encerramento-do-edital/encerramento-do-edital.tsx";

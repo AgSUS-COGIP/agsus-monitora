@@ -69,7 +69,7 @@ import {
 } from "../../../lib/avaliacao-documental/comprovado-da-ficha.ts";
 import type { LeituraDoArquivo } from "../../../lib/avaliacao-documental/leitura-dos-arquivos.ts";
 import { tetoDoBloco } from "../../../lib/avaliacao-documental/pontuacao.js";
-import { Selo } from "../../../ui/index.js";
+import { Selo } from "../../../ui/index.ts";
 import { CamposDoItem } from "./campos-do-item.tsx";
 import { ComprovadoDaFicha } from "./comprovado-da-ficha.tsx";
 import {

@@ -40,7 +40,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { Icone } from "../icone.jsx";
+import { Icone } from "../icone.tsx";
 import {
   AREA_DAS_CONFIGURACOES,
   areaAberta,

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { classes } from "./classes.js";
+import type { ReactNode } from "react";
+import { classes } from "./classes.ts";
 
 /*
   "Refinar resultados": os filtros de uma tela, num card
@@ -12,9 +13,23 @@ import { classes } from "./classes.js";
   `rotuloOcultar` trocam os textos (a Visão geral os lê de Configurações ›
   Página inicial).
 */
-/**
- * @param {{ idDoTitulo: string, className?: string, recolhivel?: boolean, quantos?: number, escopo?: string, podeLimpar?: boolean | number, aoLimpar?: () => void, aoRecolher?: (recolhido: boolean) => void, titulo?: string, subtitulo?: string, rotuloMostrar?: string, rotuloOcultar?: string, tour?: string, children?: import("react").ReactNode }} props
- */
+export interface PropriedadesDoPainelDeFiltros {
+  idDoTitulo: string;
+  className?: string;
+  recolhivel?: boolean;
+  quantos?: number;
+  escopo?: string;
+  podeLimpar?: boolean | number;
+  aoLimpar?: () => void;
+  aoRecolher?: (recolhido: boolean) => void;
+  titulo?: string;
+  subtitulo?: string;
+  rotuloMostrar?: string;
+  rotuloOcultar?: string;
+  tour?: string;
+  children?: ReactNode;
+}
+
 export function PainelDeFiltros({
   idDoTitulo,
   className,
@@ -30,7 +45,7 @@ export function PainelDeFiltros({
   rotuloOcultar = "Ocultar filtros",
   tour,
   children,
-}) {
+}: PropriedadesDoPainelDeFiltros) {
   // Nasce recolhido (pedido de 02/10): a tela abre com os dados; os filtros
   // aparecem no botão. Quem tem filtro ativo vê o resumo ao lado.
   const [recolhido, setRecolhido] = useState(true);
@@ -127,10 +142,12 @@ export function PainelDeFiltros({
   );
 }
 
-/** A faixa de filtros aplicados.
- * @param {{ children?: import("react").ReactNode }} props
- */
-export function ChipsDeFiltro({ children }) {
+export interface PropriedadesDosChipsDeFiltro {
+  children?: ReactNode;
+}
+
+/** A faixa de filtros aplicados. */
+export function ChipsDeFiltro({ children }: PropriedadesDosChipsDeFiltro) {
   return (
     <div className="ui-chips" aria-label="Filtros aplicados">
       {children}
@@ -138,10 +155,18 @@ export function ChipsDeFiltro({ children }) {
   );
 }
 
-/** Um filtro aplicado: rótulo em negrito, o valor e o "x" que o tira.
- * @param {{ rotulo: string, aoTirar: () => void, children?: import("react").ReactNode }} props
- */
-export function ChipDeFiltro({ rotulo, aoTirar, children }) {
+export interface PropriedadesDoChipDeFiltro {
+  rotulo: string;
+  aoTirar: () => void;
+  children?: ReactNode;
+}
+
+/** Um filtro aplicado: rótulo em negrito, o valor e o "x" que o tira. */
+export function ChipDeFiltro({
+  rotulo,
+  aoTirar,
+  children,
+}: PropriedadesDoChipDeFiltro) {
   return (
     <button
       type="button"

@@ -45,7 +45,7 @@ import {
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { comemorar } from "../../modules/comemoracao.js";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
-import { Icone } from "../../componentes/icone.jsx";
+import { Icone } from "../../componentes/icone.tsx";
 import {
   acaoDaAya,
   blocosDoTexto,

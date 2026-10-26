@@ -8,7 +8,7 @@ import {
   renumerar,
 } from "../../lib/cronograma-do-edital.js";
 import { editaisComCronogramaParaCopiar } from "../../lib/editais-do-nucleo.js";
-import { Aviso, Campo, LinhasEsqueleto, Selo } from "../../ui/index.js";
+import { Aviso, Campo, LinhasEsqueleto, Selo } from "../../ui/index.ts";
 
 /*
   A seção "Cronograma do edital" do formulário. O rascunho (`cronograma`) e o

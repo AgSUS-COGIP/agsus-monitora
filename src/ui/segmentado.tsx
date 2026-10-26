@@ -1,5 +1,6 @@
 import { useRef } from "react";
-import { classes } from "./classes.js";
+import type { KeyboardEvent } from "react";
+import { classes } from "./classes.ts";
 
 /*
   Controle segmentado (DESIGN.md, "Controle segmentado"; `.ui-segmentado`):
@@ -12,18 +13,28 @@ import { classes } from "./classes.js";
   Usado pelas visões de Entrevistas (no topo da tela), pela escala do roteiro,
   pelo modo de lançamento e pelo comparecimento da ficha.
 */
-/**
- * @template {string} V
- * @param {object} p
- * @param {string} p.rotulo
- * @param {ReadonlyArray<{ valor: V, rotulo: string, icone?: string }>} p.opcoes
- * @param {V} p.valor
- * @param {(valor: V) => void} p.aoMudar
- * @param {boolean} [p.desabilitado]
- * @param {string} [p.className]
- * @param {string} [p.tour]
- */
-export function Segmentado({
+export interface OpcaoDoSegmentado<V extends string = string> {
+  valor: V;
+  rotulo: string;
+  icone?: string;
+}
+
+export interface PropriedadesDoSegmentado<V extends string = string> {
+  rotulo: string;
+  opcoes: ReadonlyArray<OpcaoDoSegmentado<V>>;
+  valor: V;
+  aoMudar: (valor: V) => void;
+  desabilitado?: boolean;
+  className?: string;
+  tour?: string;
+}
+
+const PASSO_DA_SETA: Partial<Record<string, number>> = {
+  ArrowRight: 1,
+  ArrowLeft: -1,
+};
+
+export function Segmentado<V extends string>({
   rotulo,
   opcoes,
   valor,
@@ -31,16 +42,16 @@ export function Segmentado({
   desabilitado = false,
   className,
   tour,
-}) {
-  const botoes = useRef([]);
+}: PropriedadesDoSegmentado<V>) {
+  const botoes = useRef<Array<HTMLButtonElement | null>>([]);
   const temEscolha = opcoes.some((o) => o.valor === valor);
 
-  function aoTeclar(evento, indice) {
-    const passo = { ArrowRight: 1, ArrowLeft: -1 }[evento.key];
+  function aoTeclar(evento: KeyboardEvent<HTMLButtonElement>, indice: number) {
+    const passo = PASSO_DA_SETA[evento.key];
     if (!passo || desabilitado) return;
     evento.preventDefault();
     const proximo = (indice + passo + opcoes.length) % opcoes.length;
-    aoMudar(opcoes[proximo].valor);
+    aoMudar(opcoes[proximo]!.valor);
     botoes.current[proximo]?.focus();
   }
 
@@ -56,7 +67,9 @@ export function Segmentado({
         return (
           <button
             key={opcao.valor}
-            ref={(el) => (botoes.current[indice] = el)}
+            ref={(el) => {
+              botoes.current[indice] = el;
+            }}
             type="button"
             role="radio"
             aria-checked={escolhida}

@@ -7,7 +7,7 @@ import {
   nota,
   seloDaDecisao,
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.js";
-import { Aviso, Campo, Gaveta, Selo } from "../../ui/index.js";
+import { Aviso, Campo, Gaveta, Selo } from "../../ui/index.ts";
 
 /*
   Inclusão no lote por decisão da coordenação (aba Pré-classificação e Fila):

@@ -1,5 +1,6 @@
 import { Children, cloneElement, isValidElement, useId } from "react";
-import { classes } from "./classes.js";
+import type { ReactNode } from "react";
+import { classes } from "./classes.ts";
 
 /*
   O campo das telas (`.ui-campo`): rótulo
@@ -9,11 +10,20 @@ import { classes } from "./classes.js";
   um desses (a seleção múltipla, um botão) recebe o id de `idDoControle`.
 */
 
-const CONTROLES = ["input", "select", "textarea"];
+const CONTROLES: ReadonlyArray<unknown> = ["input", "select", "textarea"];
 
-/**
- * @param {{ rotulo: import("react").ReactNode, erro?: import("react").ReactNode, dica?: import("react").ReactNode, obrigatorio?: boolean, largo?: boolean, idDoControle?: string, children?: import("react").ReactNode }} props
- */
+export interface PropriedadesDoCampo {
+  rotulo: ReactNode;
+  erro?: ReactNode;
+  dica?: ReactNode;
+  obrigatorio?: boolean;
+  largo?: boolean;
+  idDoControle?: string;
+  children?: ReactNode;
+}
+
+type PropriedadesDoControle = { id?: string; "aria-invalid"?: boolean };
+
 export function Campo({
   rotulo,
   erro,
@@ -22,13 +32,17 @@ export function Campo({
   largo,
   idDoControle,
   children,
-}) {
+}: PropriedadesDoCampo) {
   const idGerado = useId();
   const gerado = idDoControle || idGerado;
   let id = gerado;
   let ligado = false;
   const filhos = Children.map(children, (filho) => {
-    if (ligado || !isValidElement(filho) || !CONTROLES.includes(filho.type))
+    if (
+      ligado ||
+      !isValidElement<PropriedadesDoControle>(filho) ||
+      !CONTROLES.includes(filho.type)
+    )
       return filho;
     ligado = true;
     id = filho.props.id || gerado;

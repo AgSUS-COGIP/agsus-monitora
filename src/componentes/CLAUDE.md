@@ -6,20 +6,22 @@ Cronograma, Aprovados, Recursos, Entrevistas, Análises, Seleção, Classificaç
 Módulos e abas…). Aqui fica só a moldura: barra lateral, busca global (Ctrl+K), Status das
 atualizações e os dados compartilhados do monitoramento. Toda tela monta por
 `montarModulo` (`src/app/`) e usa os componentes visuais de
-`src/ui/`; as pastas daqui mudam para `src/modulos/<nome>/` módulo a módulo. JavaScript com JSX
-(`.jsx`) e migração gradual para TypeScript (`.tsx`); Status das atualizações já está
-migrado em `saude-das-cargas/`; barra lateral, Busca global, dados compartilhados e hook de área atual também estão em TypeScript. Contratos e
+`src/ui/`; as pastas daqui mudam para `src/modulos/<nome>/` módulo a módulo. Tudo aqui está em
+TypeScript (`.ts`/`.tsx`): Status das atualizações (`saude-das-cargas/`), barra lateral, Busca
+global, Pessoas online, ícone, seleção múltipla, selo de treinamento, dados compartilhados e hook de
+área atual; código novo também. Contratos e
 limites estão nos READMEs das pastas e em seus `tipos.ts`. Nomes em português,
 arquivo em kebab-case, componente em PascalCase.
 
 ## Mapa
 
 ```
-icone.jsx                    <Icone nome="…"> — Lucide, do mesmo registro de src/modules/icones.js
-modal.jsx                    só reexporta o <Modal> de src/ui/modal.jsx (importe de src/ui/ no código novo)
+icone.tsx                    <Icone nome="…"> — Lucide, do mesmo registro de src/modules/icones.js
+selo-de-treinamento.tsx      <SeloDeTreinamento>: selo "Treinamento" do edital de treinamento
+pessoas-online/              "Pessoas online" no cabeçalho (montarPessoasOnline); estado em src/app/presenca.js
 aviso-de-versao/             faixa "Há uma versão nova" no topo (montarAvisoDeVersao); regra em src/app/aviso-de-versao.ts
 busca-global/                busca Ctrl+K (montarBuscaGlobal); a escolha vai ao legado por evento
-multi-select-busca.jsx       <MultiSelectBusca>: seleção múltipla com busca, controlada (o único do app)
+multi-select-busca.tsx       <MultiSelectBusca>: seleção múltipla com busca, controlada (o único do app)
 dados-do-monitoramento.ts    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_UNIDADE que o legado
                              carrega e publica aqui (loadData / loadUnidades), e a área atual
                              (definida pelo menu; linhasDaArea, soDosEditais); sem React

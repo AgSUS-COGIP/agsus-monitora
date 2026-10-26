@@ -13,7 +13,7 @@ import {
   type TextosDoEspelho,
 } from "../../lib/avaliacao-documental/modelo-do-espelho.ts";
 import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
-import { Aviso, Campo, Carregando, Modal, Segmentado } from "../../ui/index.js";
+import { Aviso, Campo, Carregando, Modal, Segmentado } from "../../ui/index.ts";
 import { marcaDaPagina } from "./ficha/espelho-de-nota.ts";
 import {
   mensagemDoErroDoModelo,

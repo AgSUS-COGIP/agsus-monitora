@@ -29,7 +29,7 @@ import {
 } from "../../lib/configuracao-de-convocacao.ts";
 import { EditorDeModelo } from "./editor-de-modelo.tsx";
 import { PreviaDaConvocacao } from "./previa-da-convocacao.tsx";
-import { BotaoDeAcao, classes } from "../../ui/index.js";
+import { BotaoDeAcao, classes } from "../../ui/index.ts";
 import { CampoEditavel, plural } from "./partes.tsx";
 
 /*

@@ -9,7 +9,7 @@ import type {
   RegraSalva,
 } from "../../../lib/avaliacao-documental/tipos-da-regra.ts";
 import { rotuloDaVersao } from "../../../lib/nome-da-versao.ts";
-import { Aviso } from "../../../ui/index.js";
+import { Aviso } from "../../../ui/index.ts";
 
 /*
   Passo 1: de onde a regra começa. A versão vigente (quem edita), a regra

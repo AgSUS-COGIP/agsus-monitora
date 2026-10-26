@@ -6,7 +6,7 @@ import {
   temCandidatosPorLugar,
   textoDasVagas,
 } from "../../lib/visao-geral-da-area.ts";
-import { Campo, EstadoVazio, classes } from "../../ui/index.js";
+import { Campo, EstadoVazio, classes } from "../../ui/index.ts";
 import { ListaDoMapa } from "../mapa-saude-indigena/painel-do-mapa.tsx";
 
 /*

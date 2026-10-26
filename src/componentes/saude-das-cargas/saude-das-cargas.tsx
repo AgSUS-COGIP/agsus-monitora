@@ -27,7 +27,7 @@ import {
 } from "../../lib/saude-das-cargas.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { CartaoDeAvisos } from "../../modulos/conferencias/avisos-de-conferencia.tsx";
-import { Icone } from "../icone.jsx";
+import { Icone } from "../icone.tsx";
 import { AgendaDosRobos } from "./agenda-dos-robos.tsx";
 import { criarEstadoDaSaude } from "./estado.ts";
 import { Acompanhamento, UltimasExecucoes } from "./execucoes-dos-robos.tsx";

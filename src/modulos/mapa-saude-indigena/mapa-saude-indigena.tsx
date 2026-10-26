@@ -21,7 +21,7 @@ import {
   registrosDoDsei,
   resumoDaRede,
 } from "../../lib/mapa-saude-indigena/mapa-do-dsei.ts";
-import { classes } from "../../ui/index.js";
+import { classes } from "../../ui/index.ts";
 import { obterLeaflet } from "./leaflet.ts";
 import { MapaDoDsei } from "./mapa-do-dsei.tsx";
 import { MapaNacional } from "./mapa-nacional.tsx";

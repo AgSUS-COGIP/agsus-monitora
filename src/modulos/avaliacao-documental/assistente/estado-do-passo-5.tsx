@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { PendenciaDoSalvar } from "../../../lib/avaliacao-documental/pendencias-do-salvar.ts";
-import { Aviso } from "../../../ui/index.js";
+import { Aviso } from "../../../ui/index.ts";
 
 /*
   O cartão no topo do passo 5 do assistente: diz em que pé está a regra e o

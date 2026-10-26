@@ -57,7 +57,7 @@ import {
   nomeDoCampo,
   RenomearVersao,
   Segmentado,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import {
   errosPorSecao,
   pendenciasDoRoteiro,

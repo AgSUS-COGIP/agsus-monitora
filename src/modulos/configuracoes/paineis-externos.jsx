@@ -5,7 +5,7 @@ import {
   SELO_DA_SITUACAO,
   situacaoDoPainel,
 } from "../../lib/paineis-externos-das-configuracoes.js";
-import { EstadoVazio, Selo } from "../../ui/index.js";
+import { EstadoVazio, Selo } from "../../ui/index.ts";
 import { Previa } from "./partes.jsx";
 
 /*

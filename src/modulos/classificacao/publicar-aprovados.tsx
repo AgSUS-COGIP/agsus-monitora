@@ -33,7 +33,7 @@ import {
   resumoDaPublicacao,
   temDadosDaLista,
 } from "../../lib/publicacao-de-aprovados.ts";
-import { Aviso, GradeDeKpis, Kpi, Modal } from "../../ui/index.js";
+import { Aviso, GradeDeKpis, Kpi, Modal } from "../../ui/index.ts";
 
 /*
   "Publicar como lista de aprovados" (Classificação › Listas › Resultado final):

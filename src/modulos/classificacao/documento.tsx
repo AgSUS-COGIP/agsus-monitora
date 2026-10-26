@@ -39,7 +39,7 @@ import {
   ehOPadrao,
 } from "../../lib/classificacao/colunas-do-documento.ts";
 import { documentoDaRegra } from "../../lib/classificacao/regra.ts";
-import { Abas, Campo, classes, Modal } from "../../ui/index.js";
+import { Abas, Campo, classes, Modal } from "../../ui/index.ts";
 import {
   ColunasDoDocumento,
   type ColunaDisponivel,

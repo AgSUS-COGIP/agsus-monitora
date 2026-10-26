@@ -40,7 +40,7 @@ import {
 } from "../../lib/classificacao/ajustes.ts";
 import { rotuloDoItem } from "../../lib/classificacao/motor.ts";
 import { formatarNota, ordinal } from "../../lib/classificacao/numeros.ts";
-import { Aviso, Campo, Secao, Segmentado, Selo } from "../../ui/index.js";
+import { Aviso, Campo, Secao, Segmentado, Selo } from "../../ui/index.ts";
 import { dataHora } from "./partes.ts";
 
 /*

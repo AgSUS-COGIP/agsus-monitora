@@ -20,7 +20,7 @@ import {
   type RitmoDoEdital,
   type SituacaoDoDia,
 } from "../../lib/ritmo-da-analise.ts";
-import { GradeDeKpis, Kpi, Selo } from "../../ui/index.js";
+import { GradeDeKpis, Kpi, Selo } from "../../ui/index.ts";
 import { comemorarMetaDoDia } from "./marcos.ts";
 
 /*

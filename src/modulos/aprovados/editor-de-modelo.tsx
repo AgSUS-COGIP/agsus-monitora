@@ -29,7 +29,7 @@ import {
   removerCategoria,
   resumoDasRegrasDaCategoria,
 } from "../../lib/configuracao-de-convocacao.ts";
-import { BotaoDeAcao, classes } from "../../ui/index.js";
+import { BotaoDeAcao, classes } from "../../ui/index.ts";
 import { CampoEditavel } from "./partes.tsx";
 import { PreviaDaConvocacao } from "./previa-da-convocacao.tsx";
 

@@ -6,7 +6,7 @@ import {
   type ItemDaAgenda,
 } from "../../lib/painel-de-entrevistas.ts";
 import { rotuloDoDia } from "../../lib/fila-de-conducao.ts";
-import { Aviso } from "../../ui/index.js";
+import { Aviso } from "../../ui/index.ts";
 
 /*
   Dois blocos do Painel de entrevistas, entre os KPIs e a tabela:

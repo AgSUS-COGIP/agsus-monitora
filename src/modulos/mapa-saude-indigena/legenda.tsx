@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode, SVGProps } from "react";
 import type { MapaDasTerras } from "./tipos-do-painel.ts";
 import { useEffect, useId, useReducer, useState } from "react";
-import { Icone } from "../../componentes/icone.jsx";
+import { Icone } from "../../componentes/icone.tsx";
 import {
   EVENTO_DAS_TERRAS,
   FASES_DAS_TERRAS,

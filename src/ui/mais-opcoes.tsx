@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 /*
   "Mais opções" dos filtros (Recursos, Análises curriculares): o botão que
   mostra e esconde os filtros adicionais, com a contagem dos que estão em uso,
@@ -5,6 +7,15 @@
   Controlado: a tela guarda `aberto` (para fechar junto com o "Ocultar
   filtros").
 */
+export interface PropriedadesDeMaisOpcoes {
+  id: string;
+  aberto: boolean;
+  aoAlternar: () => void;
+  quantos?: number;
+  titulo?: string;
+  children?: ReactNode;
+}
+
 export function MaisOpcoes({
   id,
   aberto,
@@ -12,7 +23,7 @@ export function MaisOpcoes({
   quantos = 0,
   titulo,
   children,
-}) {
+}: PropriedadesDeMaisOpcoes) {
   return (
     <>
       <div className="ui-mais-opcoes">

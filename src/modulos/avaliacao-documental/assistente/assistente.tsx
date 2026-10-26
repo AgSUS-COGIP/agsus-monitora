@@ -34,7 +34,7 @@ import {
   nomeParaGravar,
   sugerirNomeDaVersao,
 } from "../../../lib/nome-da-versao.ts";
-import { Aviso } from "../../../ui/index.js";
+import { Aviso } from "../../../ui/index.ts";
 import { nomeDoCampo } from "../../../ui/nome-da-versao.tsx";
 import { Previa } from "../previa.tsx";
 import { PassoCardapio } from "./cardapio.tsx";

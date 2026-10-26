@@ -7,7 +7,7 @@ import {
   SITUACOES_DA_VAGA,
 } from "../../lib/painel-dos-robos.ts";
 import { dataHora } from "../../lib/saude-das-cargas.ts";
-import { Icone } from "../icone.jsx";
+import { Icone } from "../icone.tsx";
 
 /*
   O que roda e o que rodou em cada robô (Status das atualizações):

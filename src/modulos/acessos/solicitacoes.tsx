@@ -11,7 +11,7 @@ import {
   rotuloDoCargo,
   validarRecusa,
 } from "../../lib/solicitacao-de-acesso.ts";
-import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import {
   Aviso,
   BotaoDeAcao,
@@ -20,7 +20,7 @@ import {
   LinhasEsqueleto,
   Modal,
   Selo,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import type { EstadoDaAcao } from "../../ui/botao-de-acao.tsx";
 import { CabecalhoDaGaveta } from "./partes.jsx";
 

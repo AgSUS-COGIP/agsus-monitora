@@ -16,7 +16,7 @@ import {
   opcoesDosFiltros,
 } from "../../lib/analises-curriculares.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import {
   analisesPorResponsavel,
   diaNoPeriodo,
@@ -46,7 +46,7 @@ import {
   MaisOpcoes,
   paletaDosGraficos,
   PainelDeFiltros,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 
 /*
   Os blocos da tela de Análises curriculares, com os componentes de src/ui/:

@@ -36,7 +36,7 @@ import {
   type EntradaDoResumo,
 } from "../../lib/resumo-da-entrevista.ts";
 import { textoDaPontuacao } from "../../lib/roteiro-de-entrevista.ts";
-import { Aviso, EstadoVazio, Selo } from "../../ui/index.js";
+import { Aviso, EstadoVazio, Selo } from "../../ui/index.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import {
   BotaoIrPara,

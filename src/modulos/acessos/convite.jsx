@@ -4,7 +4,7 @@ import {
   linkDoEmailDoConvite,
   mensagemDoConvite,
 } from "../../lib/convite-de-acesso.js";
-import { Icone } from "../../componentes/icone.jsx";
+import { Icone } from "../../componentes/icone.tsx";
 
 /*
   Mensagem do convite com "Copiar mensagem" e "Abrir no e-mail": no passo

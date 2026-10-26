@@ -15,7 +15,7 @@ import {
   GradeDeKv,
   Kv,
   Secao,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import { SeloDeStatus } from "./partes.tsx";
 
 /*

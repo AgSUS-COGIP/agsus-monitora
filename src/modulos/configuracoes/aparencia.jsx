@@ -7,8 +7,8 @@ import {
 } from "../../lib/marca-da-barra-lateral.js";
 import { camposDaSecao } from "../../lib/publicacao-de-configuracoes.js";
 import { aplicarMarcaDaBarraLateral } from "../../modules/sidebar-branding.js";
-import { Aviso, Selo } from "../../ui/index.js";
-import { Icone } from "../../componentes/icone.jsx";
+import { Aviso, Selo } from "../../ui/index.ts";
+import { Icone } from "../../componentes/icone.tsx";
 import {
   AvisoDeContraste,
   CampoDaSecao,

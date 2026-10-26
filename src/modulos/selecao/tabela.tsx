@@ -6,7 +6,7 @@ import {
   formatarQuantidade,
   rotuloDaUnidade,
 } from "../../lib/selecao-do-painel.ts";
-import { TabelaInfinita } from "../../ui/index.js";
+import { TabelaInfinita } from "../../ui/index.ts";
 
 /*
   "Base operacional consolidada": a tabela do painel antigo (DSEI, edital,

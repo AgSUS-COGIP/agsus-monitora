@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { horaBR, lerHora } from "../../lib/classificacao/numeros.ts";
-import { Campo, Secao } from "../../ui/index.js";
+import { Campo, Secao } from "../../ui/index.ts";
 
 /*
   A hora de nascimento pela certidão, na explicação do candidato

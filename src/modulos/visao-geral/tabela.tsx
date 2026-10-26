@@ -20,7 +20,7 @@ import {
   taxaDeOciosidade,
   urgenciaDoCronograma,
 } from "../../lib/visao-geral.ts";
-import { classes, Selo, TabelaInfinita } from "../../ui/index.js";
+import { classes, Selo, TabelaInfinita } from "../../ui/index.ts";
 
 /*
   A tabela de processos seletivos da Visão geral (TabelaInfinita, src/ui/):

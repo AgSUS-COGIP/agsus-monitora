@@ -7,7 +7,7 @@
 */
 
 import { useId, useState } from "react";
-import { Icone } from "../../../componentes/icone.jsx";
+import { Icone } from "../../../componentes/icone.tsx";
 import { passoParaRetomar, rotuloDoProgresso } from "../../../lib/aya-tours.js";
 
 export function SecaoAprender({ trilhas, progresso, aoIniciar, desabilitada }) {

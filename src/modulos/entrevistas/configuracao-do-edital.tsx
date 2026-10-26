@@ -7,7 +7,7 @@ import {
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import type { PendenciaDaConfiguracao } from "../../lib/passos-do-preparar.ts";
 import { textoDaPontuacao } from "../../lib/roteiro-de-entrevista.ts";
-import { Aviso, Campo, Segmentado } from "../../ui/index.js";
+import { Aviso, Campo, Segmentado } from "../../ui/index.ts";
 import { CompetenciasDoMembro } from "./competencias-do-membro.tsx";
 import type { CompetenciaDaFicha } from "./tipos-da-ficha.ts";
 import { BotaoDeLinha, ComposicaoDaBanca, trocarNaLista } from "./partes.tsx";

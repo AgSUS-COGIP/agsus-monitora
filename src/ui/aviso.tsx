@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import { classes } from "./classes.js";
+import { classes } from "./classes.ts";
 
 export type PropriedadesDoAviso = PropsWithChildren<{
   tom?: "info" | "warning" | "danger";

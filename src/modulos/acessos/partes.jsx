@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.js";
-import { Icone } from "../../componentes/icone.jsx";
-import { Aviso, Campo, classes } from "../../ui/index.js";
+import { Icone } from "../../componentes/icone.tsx";
+import { Aviso, Campo, classes } from "../../ui/index.ts";
 
 /*
   Peças que as abas de Acessos repetem e que não existem em src/ui/: lista

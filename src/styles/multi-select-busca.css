@@ -1,5 +1,5 @@
 /*
-  Select com busca e escolha múltipla (ver src/componentes/multi-select-busca.jsx).
+  Select com busca e escolha múltipla (ver src/componentes/multi-select-busca.tsx).
 
   Usa só os tokens do tema (--card, --line, --soft, --blue), por isso o modo
   escuro sai de graça: `[data-theme="dark"]` já os redefine.

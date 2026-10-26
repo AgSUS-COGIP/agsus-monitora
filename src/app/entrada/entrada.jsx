@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../montar-modulo.jsx";
-import { classes } from "../../ui/index.js";
+import { classes } from "../../ui/index.ts";
 import { ACCESS_INSTRUCTION } from "../../lib/access-branding.js";
 import {
   FASES,

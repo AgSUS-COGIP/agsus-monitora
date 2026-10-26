@@ -17,7 +17,7 @@ import {
   NomeDaVersao,
   nomeDoCampo,
   RenomearVersao,
-} from "../src/ui/index.js";
+} from "../src/ui/index.ts";
 import { clicar, digitar } from "./componentes/interacoes.js";
 
 /*

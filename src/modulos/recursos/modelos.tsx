@@ -26,7 +26,7 @@ import {
   SITUACOES,
   situacaoDecidida,
 } from "../../lib/recursos-dos-candidatos.ts";
-import { Aviso, Carregando, Gaveta, Secao } from "../../ui/index.js";
+import { Aviso, Carregando, Gaveta, Secao } from "../../ui/index.ts";
 import { dataHora } from "./partes.ts";
 
 /*

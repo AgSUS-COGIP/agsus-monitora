@@ -16,7 +16,7 @@ import {
   textoDoImpacto,
   type ReinicioDasFichas as Reinicio,
 } from "../../lib/avaliacao-documental/reinicio-das-fichas.ts";
-import { Aviso, Campo, Gaveta } from "../../ui/index.js";
+import { Aviso, Campo, Gaveta } from "../../ui/index.ts";
 
 /*
   Reinício das fichas do edital com dois administradores globais (migration

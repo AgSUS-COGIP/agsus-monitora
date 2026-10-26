@@ -36,7 +36,7 @@ import {
   paletaDosGraficos,
   PainelDeFiltros,
   TopoDoPainel,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 
 interface Paleta {
   text: string;

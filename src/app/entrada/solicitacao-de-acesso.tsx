@@ -5,7 +5,7 @@ import {
   useSyncExternalStore,
   type FormEvent,
 } from "react";
-import { Abas, Aviso, Campo, classes } from "../../ui/index.js";
+import { Abas, Aviso, Campo, classes } from "../../ui/index.ts";
 import { Mascote } from "../../modulos/aya/mascote/mascote.tsx";
 import type { EstadoDaMascote } from "../../lib/estado-da-aya.ts";
 import {

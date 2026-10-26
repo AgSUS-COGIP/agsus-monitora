@@ -22,7 +22,7 @@ import {
   Campo,
   Modal,
   Segmentado,
-} from "../../../ui/index.js";
+} from "../../../ui/index.ts";
 
 /*
   Emitir a carta de convocação para um ou vários candidatos (escolhidos na aba

@@ -29,7 +29,7 @@ declare module "chart.js" {
 type Paleta = ReturnType<typeof paleta>;
 type EscalaDeBarras = NonNullable<ChartOptions<"bar">["scales"]>[string];
 import { useEffect, useMemo, useRef } from "react";
-import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import { formatNumberBR } from "../../lib/formatters";
 import {
   aptosEEliminados,
@@ -54,7 +54,7 @@ import {
   paletaDosGraficos,
   PainelDeFiltros,
   TopoDoPainel,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 
 /*
   Os blocos da tela de Seleção, com os componentes de src/ui/, na ordem do
