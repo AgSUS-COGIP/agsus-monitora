@@ -8,7 +8,7 @@ import {
   montarChamado,
   pedeSuporte,
   semDadosPessoais,
-} from "../src/lib/chamado-da-aya.js";
+} from "../src/lib/chamado-da-aya.ts";
 import {
   camposDaSecao,
   errosDasSecoes,

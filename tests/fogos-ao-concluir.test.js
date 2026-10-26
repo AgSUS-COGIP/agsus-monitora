@@ -454,7 +454,7 @@ describe("o aviso da comemoração", () => {
   });
 
   it("o fim do tour (Concluir) celebra: fogos no tour, festa e estrela na trilha", () => {
-    const aya = readFileSync("src/modulos/aya/aya.jsx", "utf8");
+    const aya = readFileSync("src/modulos/aya/aya.tsx", "utf8");
     expect(aya).toMatch(/motivo === "concluiu"\) celebrarFimDoTour\(tour\)/);
     expect(aya).toContain(
       'marco: concluido.trilha ? "fim-da-trilha" : "fim-do-tour"',

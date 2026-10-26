@@ -17,10 +17,10 @@ import {
   deveConvidar,
   geometriaDoHolofote,
   MARGEM_DO_HOLOFOTE,
-} from "../src/lib/aya-tours.js";
+} from "../src/lib/aya-tours.ts";
 
 /*
-  Os roteiros dos tours e das trilhas da Aya (src/lib/aya-tours.js): cada
+  Os roteiros dos tours e das trilhas da Aya (src/lib/aya-tours.ts): cada
   tela pedida tem tour, a Visão geral muda por área, as trilhas aparecem só
   para quem pode fazê-las, o progresso guardado é limpo e o balão fica
   sempre dentro da tela.
@@ -164,7 +164,7 @@ describe("tours das telas", () => {
   });
 
   it("todo data-tour usado nos roteiros existe num componente", () => {
-    const fonte = readFileSync("src/lib/aya-tours.js", "utf8");
+    const fonte = readFileSync("src/lib/aya-tours.ts", "utf8");
     // `t("nome")` monta o seletor [data-tour='nome'].
     const usados = [
       ...fonte.matchAll(/data-tour='([^']+)'/g),

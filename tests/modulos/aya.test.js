@@ -16,9 +16,9 @@ import { clicar, digitar, teclar } from "../componentes/interacoes.js";
 */
 
 const { montarAya, CHAVE_OCULTA, CHAVE_AVALIACOES, CHAVE_POSICAO_DA_ARARA } =
-  await import("../../src/modulos/aya/aya.jsx");
+  await import("../../src/modulos/aya/aya.tsx");
 const { definirPaginaDaAya, esquecerConversaDaAya, redefinirPaginaDaAya } =
-  await import("../../src/modulos/aya/estado.js");
+  await import("../../src/modulos/aya/estado.ts");
 
 let raiz;
 let controlador;

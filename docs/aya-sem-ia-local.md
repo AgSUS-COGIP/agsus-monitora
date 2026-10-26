@@ -4,9 +4,9 @@ A Aya responde no navegador usando os verbetes de `docs/aya/` e os dados já vis
 na tela. A decisão substitui a IA local: não depende de Ollama, GPU, bridge, túnel,
 sessão adicional ou endpoint `/api/aya`.
 
-`src/lib/busca-da-aya.js` responde só com textos da base, sem geração de conteúdo:
+`src/lib/busca-da-aya.ts` responde só com textos da base, sem geração de conteúdo:
 
-- termos (`src/lib/termos-da-aya.js`): sem acento e sem stopwords, no singular,
+- termos (`src/lib/termos-da-aya.ts`): sem acento e sem stopwords, no singular,
   com 18 grupos de sinônimos do domínio (também de várias palavras: "processo
   seletivo" = edital, "casa de apoio" = CASAI) e radical simples ("convocação",
   "convocar" e "convocados" juntos);
@@ -22,7 +22,7 @@ sessão adicional ou endpoint `/api/aya`.
   desconhecidas ("me conta uma piada"), a mensagem de fora do escopo com sugestões
   da tela.
 
-Antes da base vêm a conversa (`src/lib/conversa-da-aya.js`: saudação, ajuda,
+Antes da base vêm a conversa (`src/lib/conversa-da-aya.ts`: saudação, ajuda,
 agradecimento, despedida; "bom dia, como dar acesso?" responde a pergunta com
 "Bom dia!" na frente) e os dados da tela. Contagens só são respondidas quando
 disponíveis no contexto, com o recorte indicado. A única resposta fora da busca é a

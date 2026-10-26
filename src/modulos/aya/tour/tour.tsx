@@ -3,7 +3,7 @@
 
   Escurece a página com um recorte (spotlight) no elemento da vez e mostra um
   balão curto ao lado dele: contador ("Passo 2 de 6"), título, uma ou duas frases e
-  os botões Pular · Anterior · Próximo. O roteiro vem de src/lib/aya-tours.js.
+  os botões Pular · Anterior · Próximo. O roteiro vem de src/lib/aya-tours.ts.
 
   - O passo aponta para um seletor estável (id, data-tour, data-*). Se o
     elemento não existe ou está escondido (sem permissão, tela vazia, aba
@@ -34,20 +34,54 @@ import {
   useRef,
   useState,
 } from "react";
+import type { KeyboardEvent as EventoDeTecla } from "react";
 import { createPortal } from "react-dom";
 import {
   geometriaDoHolofote,
   posicaoDoBalao,
   rotuloDoPasso,
-} from "../../../lib/aya-tours.js";
+} from "../../../lib/aya-tours.ts";
+import type {
+  AlvoDoPasso,
+  GeometriaDoHolofote,
+  PassoDoTour,
+  PosicaoDoBalao,
+} from "../../../lib/aya-tours.ts";
 import { haTelaCarregando } from "../../../lib/carga-de-telas";
+
+/** Por que o tour acabou: chegou ao fim ou a pessoa pulou (Esc, Pular). */
+export type MotivoDoFimDoTour = "concluiu" | "pulou";
+
+/** A janela do navegador (ou a dos testes). */
+export type JanelaDoTour = Window & typeof globalThis;
+
+export interface PropsDoTour {
+  passos: readonly PassoDoTour[];
+  inicio?: number;
+  rotulo?: string;
+  aoFechar?: (motivo: MotivoDoFimDoTour, indice: number) => void;
+  aoMudarPasso?: (indice: number) => void;
+  /** Troca de tela para o passo de trilha; `true` se trocou. */
+  irPara?: (passo: PassoDoTour) => boolean;
+  janela?: JanelaDoTour;
+  documento?: Document;
+  visivel?: (elemento: Element) => boolean;
+  espera?: number;
+  carregando?: () => boolean;
+}
+
+/** O passo resolvido: o índice e o elemento achado (ou nenhum). */
+interface PassoAtual {
+  indice: number;
+  elemento: Element | null;
+}
 
 const FOCAVEIS =
   'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 const INTERVALO_DA_PROCURA = 120;
 
 /* O elemento está na tela? Escondido por `hidden`, página inativa ou display:none não conta. */
-export function elementoVisivel(elemento) {
+export function elementoVisivel(elemento: Element | null | undefined): boolean {
   if (!elemento?.isConnected) return false;
   if (elemento.closest("[hidden], [aria-hidden='true'], .page:not(.active)"))
     return false;
@@ -57,10 +91,14 @@ export function elementoVisivel(elemento) {
 }
 
 /* O primeiro seletor do passo que acha um elemento visível. */
-export function acharAlvo(passo, documento, visivel = elementoVisivel) {
-  const seletores = [passo?.alvo].flat().filter(Boolean);
+export function acharAlvo(
+  passo: { alvo?: AlvoDoPasso | undefined } | null | undefined,
+  documento: ParentNode,
+  visivel: (elemento: Element) => boolean = elementoVisivel,
+): Element | null {
+  const seletores = [passo?.alvo].flat().filter(Boolean) as string[];
   for (const seletor of seletores) {
-    let elementos = [];
+    let elementos: Element[] = [];
     try {
       elementos = [...documento.querySelectorAll(seletor)];
     } catch {
@@ -72,7 +110,7 @@ export function acharAlvo(passo, documento, visivel = elementoVisivel) {
   return null;
 }
 
-function movimentoReduzido(janela) {
+function movimentoReduzido(janela: JanelaDoTour): boolean | undefined {
   try {
     return janela.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   } catch {
@@ -80,7 +118,7 @@ function movimentoReduzido(janela) {
   }
 }
 
-function telaDeCelular(janela) {
+function telaDeCelular(janela: JanelaDoTour): boolean {
   try {
     return janela.matchMedia?.("(max-width: 600px)").matches === true;
   } catch {
@@ -89,7 +127,7 @@ function telaDeCelular(janela) {
 }
 
 /* O recorte e as faixas saem do mesmo retângulo (moldura == área clara). */
-function medir(elemento) {
+function medir(elemento: Element): GeometriaDoHolofote | null {
   return geometriaDoHolofote(elemento.getBoundingClientRect());
 }
 
@@ -105,25 +143,26 @@ export function Tour({
   visivel = elementoVisivel,
   espera = 1600,
   carregando = haTelaCarregando,
-}) {
+}: PropsDoTour) {
   const total = passos.length;
   // `pedido`: o índice desejado e a direção (1 avança, -1 volta) para pular ausentes.
   const [pedido, setPedido] = useState(() => ({
     indice: Math.min(Math.max(0, inicio), Math.max(0, total - 1)),
     direcao: 1,
   }));
-  const [atual, setAtual] = useState(null); // { indice, elemento }
-  const [caixa, setCaixa] = useState(null);
-  const [posicao, setPosicao] = useState(null);
-  const refBalao = useRef(null);
-  const refProximo = useRef(null);
-  const focoAnterior = useRef(null);
+  const [atual, setAtual] = useState<PassoAtual | null>(null); // { indice, elemento }
+  const [caixa, setCaixa] = useState<GeometriaDoHolofote | null>(null);
+  const [posicao, setPosicao] = useState<PosicaoDoBalao | null>(null);
+  const refBalao = useRef<HTMLElement>(null);
+  const refProximo = useRef<HTMLButtonElement>(null);
+  const focoAnterior = useRef<(Element & { focus?: () => void }) | null>(null);
   const ultimoValido = useRef(-1);
   const idTitulo = useId();
   const idTexto = useId();
 
   const fechar = useCallback(
-    (motivo) => aoFechar?.(motivo, atual?.indice ?? pedido.indice),
+    (motivo: MotivoDoFimDoTour) =>
+      aoFechar?.(motivo, atual?.indice ?? pedido.indice),
     [aoFechar, atual, pedido.indice],
   );
 
@@ -152,10 +191,10 @@ export function Tour({
       if (direcao > 0) aoFechar?.("concluiu", total - 1);
       return undefined;
     }
-    const passo = passos[indice];
+    const passo = passos[indice]!;
     const trocouDeTela = passo.pagina ? irPara?.(passo) === true : false;
 
-    const aceitar = (elemento) => {
+    const aceitar = (elemento: Element | null) => {
       if (cancelado) return;
       ultimoValido.current = indice;
       setAtual({ indice, elemento });
@@ -185,7 +224,7 @@ export function Tour({
         (atributo) => aba.getAttribute(atributo) === "true",
       );
       if (marcada) return false;
-      aba.click();
+      (aba as HTMLElement).click();
       return true;
     };
 
@@ -288,7 +327,7 @@ export function Tour({
 
   // Teclado em qualquer lugar: Esc sai, setas navegam.
   useEffect(() => {
-    const aoTeclar = (evento) => {
+    const aoTeclar = (evento: KeyboardEvent) => {
       if (evento.key === "Escape") {
         evento.preventDefault();
         evento.stopPropagation();
@@ -305,23 +344,25 @@ export function Tour({
     return () => documento.removeEventListener("keydown", aoTeclar, true);
   }, [documento, fechar, proximo, voltar]);
 
-  function prenderFoco(evento) {
+  function prenderFoco(evento: EventoDeTecla<HTMLElement>) {
     if (evento.key !== "Tab") return;
     const balao = refBalao.current;
-    const focaveis = [...(balao?.querySelectorAll(FOCAVEIS) || [])];
+    const focaveis = [
+      ...(balao?.querySelectorAll<HTMLElement>(FOCAVEIS) || []),
+    ];
     if (!focaveis.length) {
       evento.preventDefault();
       return;
     }
-    const primeiro = focaveis[0];
-    const ultimo = focaveis[focaveis.length - 1];
+    const primeiro = focaveis[0]!;
+    const ultimo = focaveis[focaveis.length - 1]!;
     const ativo = documento.activeElement;
-    if (evento.shiftKey && (ativo === primeiro || !balao.contains(ativo))) {
+    if (evento.shiftKey && (ativo === primeiro || !balao!.contains(ativo))) {
       evento.preventDefault();
       ultimo.focus();
     } else if (
       !evento.shiftKey &&
-      (ativo === ultimo || !balao.contains(ativo))
+      (ativo === ultimo || !balao!.contains(ativo))
     ) {
       evento.preventDefault();
       primeiro.focus();
@@ -329,7 +370,7 @@ export function Tour({
   }
 
   if (!atual) return null;
-  const passo = passos[atual.indice];
+  const passo = passos[atual.indice]!;
   const ultimo = atual.indice >= total - 1;
   const contador = rotuloDoPasso(atual.indice, total);
   const estiloDoBalao =

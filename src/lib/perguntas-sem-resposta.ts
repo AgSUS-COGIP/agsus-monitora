@@ -1,7 +1,7 @@
 /*
   As perguntas que a Aya não resolveu ("não ajudou" ou "não entendi"), para
   melhorar a base de docs/aya. Sem DOM e sem rede: quem guarda no navegador
-  é o painel (src/modulos/aya/aya.jsx, localStorage com try/catch) e quem
+  é o painel (src/modulos/aya/aya.tsx, localStorage com try/catch) e quem
   leva para a base é o administrador global, pelo botão "Copiar perguntas
   sem resposta".
 
@@ -14,8 +14,26 @@
 export const LIMITE_DE_PERGUNTAS = 100;
 const TAMANHO_MAXIMO = 200;
 
+export type MotivoSemResposta = "nao-ajudou" | "nao-entendeu";
+
+/** Uma pergunta guardada, já limpa. */
+export interface PerguntaSemResposta {
+  pergunta: string;
+  pagina: string;
+  motivo: MotivoSemResposta;
+  quando: string;
+}
+
+/** O que chega para guardar ou do navegador: forma não garantida. */
+export interface PerguntaBruta {
+  pergunta?: unknown;
+  pagina?: unknown;
+  motivo?: unknown;
+  quando?: unknown;
+}
+
 /** A pergunta sem e-mail, CPF, telefone ou número longo, em uma linha só. */
-export function limparPergunta(texto) {
+export function limparPergunta(texto: unknown): string {
   return String(texto ?? "")
     .replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, "[e-mail]")
     .replace(/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, "[número]")
@@ -30,11 +48,14 @@ export function limparPergunta(texto) {
  * A lista com a pergunta nova no fim (sem repetir a mesma pergunta na mesma
  * página), até `LIMITE_DE_PERGUNTAS`. `item`: `{ pergunta, pagina, motivo, quando }`.
  */
-export function comPerguntaSemResposta(lista, item) {
-  const atual = Array.isArray(lista) ? lista : [];
+export function comPerguntaSemResposta(
+  lista: unknown,
+  item: PerguntaBruta | null | undefined,
+): PerguntaSemResposta[] {
+  const atual: PerguntaSemResposta[] = Array.isArray(lista) ? lista : [];
   const pergunta = limparPergunta(item?.pergunta);
   if (!pergunta) return atual;
-  const novo = {
+  const novo: PerguntaSemResposta = {
     pergunta,
     pagina: String(item?.pagina || ""),
     motivo: item?.motivo === "nao-entendeu" ? "nao-entendeu" : "nao-ajudou",
@@ -47,11 +68,14 @@ export function comPerguntaSemResposta(lista, item) {
 }
 
 /** O que guardado ainda vale (descarta o que não tem a forma certa). */
-export function perguntasGuardadas(bruto) {
+export function perguntasGuardadas(bruto: unknown): PerguntaSemResposta[] {
   if (!Array.isArray(bruto)) return [];
-  return bruto
-    .filter((p) => p && typeof p.pergunta === "string" && p.pergunta.trim())
-    .map((p) => ({
+  return (
+    (bruto as (PerguntaBruta | null | undefined)[]).filter(
+      (p) => p && typeof p.pergunta === "string" && p.pergunta.trim(),
+    ) as (PerguntaBruta & { pergunta: string })[]
+  )
+    .map((p): PerguntaSemResposta => ({
       pergunta: limparPergunta(p.pergunta),
       pagina: String(p.pagina || ""),
       motivo: p.motivo === "nao-entendeu" ? "nao-entendeu" : "nao-ajudou",
@@ -60,13 +84,13 @@ export function perguntasGuardadas(bruto) {
     .slice(-LIMITE_DE_PERGUNTAS);
 }
 
-const MOTIVO = Object.freeze({
+const MOTIVO: Readonly<Record<MotivoSemResposta, string>> = Object.freeze({
   "nao-ajudou": "não ajudou",
   "nao-entendeu": "não entendi",
 });
 
 /** O texto que vai para a área de transferência: uma pergunta por linha. */
-export function textoDasPerguntas(lista) {
+export function textoDasPerguntas(lista: unknown): string {
   return perguntasGuardadas(lista)
     .map(
       (p) =>

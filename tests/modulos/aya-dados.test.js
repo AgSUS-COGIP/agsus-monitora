@@ -9,7 +9,7 @@ import { clicar, digitar, teclar } from "../componentes/interacoes.js";
 import { consumirPedidoDeFiltro } from "../../src/app/pedido-de-filtro.js";
 
 /*
-  A Aya mais esperta no painel (src/modulos/aya/aya.jsx): a resposta com
+  A Aya mais esperta no painel (src/modulos/aya/aya.tsx): a resposta com
   número traz "Abrir", que navega com o filtro pedido; "não ajudou" e "não
   entendi" guardam a pergunta (sem dado pessoal) e o administrador global
   copia a lista; "me mostra esta tela" digitado começa o tour; o perfil vai
@@ -17,9 +17,9 @@ import { consumirPedidoDeFiltro } from "../../src/app/pedido-de-filtro.js";
 */
 
 const { montarAya, CHAVE_SEM_RESPOSTA } =
-  await import("../../src/modulos/aya/aya.jsx");
+  await import("../../src/modulos/aya/aya.tsx");
 const { definirPaginaDaAya, redefinirPaginaDaAya } =
-  await import("../../src/modulos/aya/estado.js");
+  await import("../../src/modulos/aya/estado.ts");
 
 let raiz;
 let controlador;

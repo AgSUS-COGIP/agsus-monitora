@@ -7,7 +7,7 @@ import {
   gerarModulo,
 } from "../scripts/compilar-conhecimento-aya.mjs";
 import { VERBETES_AYA } from "../src/modules/aya-conhecimento-gerado.js";
-import { responderAya } from "../src/lib/busca-da-aya.js";
+import { responderAya } from "../src/lib/busca-da-aya.ts";
 
 const resposta = (question) =>
   responderAya({ question, section: "dashboard", area: "saude-indigena" })

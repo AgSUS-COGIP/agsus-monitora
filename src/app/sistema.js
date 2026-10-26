@@ -14,7 +14,7 @@ import {
   esquecerVisaoGeral,
   estadoDaVisaoGeral,
 } from "../modulos/visao-geral/estado.ts";
-import { esquecerConversaDaAya } from "../modulos/aya/estado.js";
+import { esquecerConversaDaAya } from "../modulos/aya/estado.ts";
 import {
   areaDaLinha,
   definirAreaAtual,

@@ -2,7 +2,7 @@
 
 Três arquivos, cada um é um endpoint `/api/<nome>`:
 
-A Aya responde no navegador pela base de conhecimento (`src/lib/busca-da-aya.js`);
+A Aya responde no navegador pela base de conhecimento (`src/lib/busca-da-aya.ts`);
 o endpoint de IA e o bridge local foram retirados.
 
 - `funai-geodata.js` — proxy do GeoServer OWS da FUNAI (polígonos de terras indígenas).

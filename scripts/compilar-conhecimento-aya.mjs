@@ -15,8 +15,8 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import prettier from "prettier";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { acaoDaAya } from "../src/lib/aya-paginas.js";
-import { palavrasDe } from "../src/lib/termos-da-aya.js";
+import { acaoDaAya } from "../src/lib/aya-paginas.ts";
+import { palavrasDe } from "../src/lib/termos-da-aya.ts";
 
 /*
   Sob o vitest este módulo pode chegar por uma URL que não é `file:`, e aí
@@ -45,7 +45,7 @@ function lerCampo(bloco, nome) {
 }
 
 /*
-  O termo é comparado com a pergunta já sem acento (src/lib/termos-da-aya.js e
+  O termo é comparado com a pergunta já sem acento (src/lib/termos-da-aya.ts e
   `curatedAnswerForQuestion` em aya-knowledge.js). Guardar "parecer jurídico" com acento fazia o termo nunca
   casar; por isso ele sai daqui do mesmo jeito que a pergunta chega lá.
 */
@@ -81,7 +81,7 @@ export function compilarVerbetes(origem = ORIGEM) {
       const resposta = lerCampo(bloco, "resposta");
       const fato = lerCampo(bloco, "fato");
       const fonte = lerCampo(bloco, "fonte");
-      // O botão de navegação que a resposta oferece (ACOES_DA_AYA em src/lib/aya-paginas.js).
+      // O botão de navegação que a resposta oferece (ACOES_DA_AYA em src/lib/aya-paginas.ts).
       const abrir = lerCampo(bloco, "abrir");
 
       if (!titulo) continue;

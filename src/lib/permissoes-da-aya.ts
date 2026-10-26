@@ -24,12 +24,40 @@ import {
   roleLabel,
 } from "./access-roles.ts";
 import { hasResource } from "./permissoes-recursos.ts";
-import { normalizar } from "./termos-da-aya.js";
+import { normalizar } from "./termos-da-aya.ts";
 
-const acao = (id, palavras, nome, pode, quem, onde, abrir = "") =>
+/** Uma ação que depende de permissão, com a regra e onde o botão fica. */
+export interface AcaoComPermissao {
+  readonly id: string;
+  readonly palavras: RegExp;
+  readonly nome: string;
+  /** A mesma regra que esconde o botão (src/lib/access-roles.ts). */
+  readonly pode: (perfil: unknown) => boolean;
+  readonly quem: string;
+  readonly onde: string;
+  /** O código de ACOES_DA_AYA para o botão "Abrir" (ou ""). */
+  readonly abrir: string;
+}
+
+/** A resposta sobre permissão. */
+export interface RespostaDePermissao {
+  answer: string;
+  acao: string;
+  oferecerChamado?: boolean;
+}
+
+const acao = (
+  id: string,
+  palavras: RegExp,
+  nome: string,
+  pode: (perfil: unknown) => boolean,
+  quem: string,
+  onde: string,
+  abrir = "",
+): AcaoComPermissao =>
   Object.freeze({ id, palavras, nome, pode, quem, onde, abrir });
 
-export const ACOES_COM_PERMISSAO = Object.freeze([
+export const ACOES_COM_PERMISSAO: readonly AcaoComPermissao[] = Object.freeze([
   acao(
     "decidir-recurso",
     /\b(deferir|indeferir|decidir|decisao|devolver)\b.*\brecursos?\b|\bparecer juridico\b|\bdar (o )?parecer\b/,
@@ -224,7 +252,7 @@ const PERGUNTA_DE_PERMISSAO =
   /\b(botao|botoes|opcao|opcoes|icone|nao (consigo|posso|deixa|tenho (acesso|permissao))|desabilitad\w*|bloquead\w*|cinza|quem pode|posso|consigo|tenho permissao|minha permissao|meu acesso|meu perfil)\b/;
 
 /** A ação com permissão de que a pergunta fala, ou `null`. */
-export function acaoDaPergunta(pergunta) {
+export function acaoDaPergunta(pergunta: unknown): AcaoComPermissao | null {
   const texto = normalizar(pergunta);
   if (!texto || !PERGUNTA_DE_PERMISSAO.test(texto)) return null;
   return ACOES_COM_PERMISSAO.find((a) => a.palavras.test(texto)) || null;
@@ -234,7 +262,10 @@ export function acaoDaPergunta(pergunta) {
  * A resposta sobre permissão para o perfil de quem pergunta, ou `null`:
  * `{ answer, acao }` (`acao`: o código de ACOES_DA_AYA para o botão "Abrir").
  */
-export function explicarPermissao(pergunta, perfil) {
+export function explicarPermissao(
+  pergunta: unknown,
+  perfil: unknown,
+): RespostaDePermissao | null {
   const achada = acaoDaPergunta(pergunta);
   if (!achada) return null;
   const quemPode = `Para ${achada.nome} é preciso ${achada.quem}.`;

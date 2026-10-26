@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   acaoDaPergunta,
   explicarPermissao,
-} from "../src/lib/permissoes-da-aya.js";
-import { responderAya } from "../src/lib/busca-da-aya.js";
+} from "../src/lib/permissoes-da-aya.ts";
+import { responderAya } from "../src/lib/busca-da-aya.ts";
 
 /*
   "Não aparece o botão": a Aya explica a permissão que falta para o perfil de
-  quem pergunta (src/lib/permissoes-da-aya.js), com as mesmas regras de
+  quem pergunta (src/lib/permissoes-da-aya.ts), com as mesmas regras de
   src/lib/access-roles.ts que escondem o botão.
 */
 

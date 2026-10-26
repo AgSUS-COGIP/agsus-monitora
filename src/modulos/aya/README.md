@@ -5,15 +5,15 @@ montados por `montarAya()` em `#ayaApp` (`src/main.js`). Substitui os antigos `a
 `arara-speaking-effects.js` e `nina-panel-drag.js`.
 
 ```
-aya.jsx     <Aya> e montarAya(): arara arrastável (fechada, só o rosto; solta numa
+aya.tsx     <Aya> e montarAya(): arara arrastável (fechada, só o rosto; solta numa
             borda, se esconde espiando; setas como alternativa ao arraste), painel
             (a arara inteira, 88px), sugestões, conversa, "Isso ajudou?", cartão
             "Abrir chamado", foco preso e Esc
-estado.js   store sem React: view e título (o legado chama definirPaginaDaAya em
+estado.ts   store sem React: view e título (o legado chama definirPaginaDaAya em
             setPageTitle), área atual e seção de Configurações aberta
-contexto.js o que a tela já mostra: dados do mapa e da tabela, e estadoDaTela()
+contexto.ts o que a tela já mostra: dados do mapa e da tabela, e estadoDaTela()
             (a aba marcada e o número do edital escolhido; nunca nome)
-fontes.js   dados ao vivo das perguntas com número: o estado já carregado das
+fontes.ts   dados ao vivo das perguntas com número: o estado já carregado das
             telas ou as RPCs de leitura que elas já usam (guardadas por 1 min)
 aya.css     só tokens; camada 10042 (acima do cabeçalho, abaixo do parabéns)
 mascote/
@@ -32,34 +32,34 @@ mascote/
   mascote.css   só transform/opacity por data-estado e data-enquadramento (o quadro
                 aproxima a cabeça); movimento reduzido: só pisca, troca sem transição
 tour/
-  tour.jsx      <Tour>: véu com recorte no elemento da vez, balão (Pular/Anterior/Próximo,
+  tour.tsx      <Tour>: véu com recorte no elemento da vez, balão (Pular/Anterior/Próximo,
                 "Passo 2 de 6"), Esc, setas, foco preso, anúncio ao leitor de tela; pula o
                 elemento ausente e, na trilha, troca de tela e espera o elemento;
                 o recorte acompanha rolagem, redimensionamento e um ResizeObserver
                 no elemento da vez (nada de MutationObserver)
-  aprender.jsx  seção "Aprender" (trilhas do perfil e progresso) e a oferta de
+  aprender.tsx  seção "Aprender" (trilhas do perfil e progresso) e a oferta de
                 "Primeiros passos" da primeira entrada (uma vez)
-  progresso.js  passo e conclusão de cada trilha, a oferta e os convites de tour de
+  progresso.ts  passo e conclusão de cada trilha, a oferta e os convites de tour de
                 cada tela (primeira visita), no localStorage (try/catch)
   tour.css      só tokens; camada 10044
 ```
 
 Os roteiros dos tours ("Me mostra esta tela", um por tela e por aba principal) e das trilhas
-ficam em `src/lib/aya-tours.js`; os atributos `data-tour="…"` das telas (e a prop `tour` dos
+ficam em `src/lib/aya-tours.ts`; os atributos `data-tour="…"` das telas (e a prop `tour` dos
 componentes de `src/ui/`) existem só para eles.
 
 Perguntas com número ("quantas análises pendentes tem o 93/2026?"): o catálogo de intenções e
-entidades é `src/lib/intencoes-da-aya.js`; as contas e a resposta, `src/lib/dados-da-aya.js`
+entidades é `src/lib/intencoes-da-aya.ts`; as contas e a resposta, `src/lib/dados-da-aya.ts`
 (permissão conferida antes de buscar; só contagens e datas); o "Abrir" deixa o filtro em
 `src/app/pedido-de-filtro.js` e Recursos, Entrevistas e Seleção aplicam com
-`src/lib/filtro-da-aya.js`. "Não aparece o botão": `src/lib/permissoes-da-aya.js`, pelo perfil.
+`src/lib/filtro-da-aya.ts`. "Não aparece o botão": `src/lib/permissoes-da-aya.ts`, pelo perfil.
 "Não ajudou" e "não entendi" guardam a pergunta sem dado pessoal
-(`src/lib/perguntas-sem-resposta.js`) e o administrador global copia a lista pelo painel.
+(`src/lib/perguntas-sem-resposta.ts`) e o administrador global copia a lista pelo painel.
 
 O que a Aya diz em cada página (saudação, sugestões, botões de navegação) fica em
-`src/lib/aya-paginas.js`; o chamado ao suporte (Gmail, com alternativa `mailto:`), em `src/lib/chamado-da-aya.js`. As
-respostas vêm de `src/lib/busca-da-aya.js`: base de `docs/aya/`, normalização, sinônimos e
-busca com tolerância a erros e preferência pela tela. `contexto.js` lê apenas dados já
+`src/lib/aya-paginas.ts`; o chamado ao suporte (Gmail, com alternativa `mailto:`), em `src/lib/chamado-da-aya.ts`. As
+respostas vêm de `src/lib/busca-da-aya.ts`: base de `docs/aya/`, normalização, sinônimos e
+busca com tolerância a erros e preferência pela tela. `contexto.ts` lê apenas dados já
 visíveis; não há endpoint de IA, modelo, serviço local ou túnel. Dúvidas oferecem até
 três perguntas em botões e chamado pelo Gmail. Testes: `tests/modulos/aya.test.js`, `tests/aya-paginas.test.js`,
 `tests/aya-respostas-chave.test.js`, `tests/busca-da-aya.test.js`, `tests/termos-da-aya.test.js`,
@@ -76,3 +76,19 @@ tempos sorteados) fica em `src/lib/estado-da-aya.ts`. Qualquer tela pede um esta
 (`{ detail: { estado, duracaoMs } }`); os fogos (`src/modules/comemoracao.js`) já pedem
 "comemorando". A prévia de cada estado fica em Configurações › Marca › Mascote
 (`src/modulos/configuracoes/cartao-da-mascote.tsx`).
+
+## TypeScript
+
+O módulo (sem a pasta `mascote/`, que já era TypeScript) e as regras da Aya em `src/lib/` estão em
+TypeScript, sem JS/JSX: `aya-paginas.ts`, `aya-tours.ts`, `busca-da-aya.ts`, `chamado-da-aya.ts`,
+`contexto-da-aya.ts`, `conversa-da-aya.ts`, `dados-da-aya.ts`, `filtro-da-aya.ts`,
+`intencoes-da-aya.ts`, `permissoes-da-aya.ts`, `termos-da-aya.ts` e `perguntas-sem-resposta.ts`.
+A base gerada (`src/modules/aya-conhecimento-gerado.js`) continua em JavaScript; o script de
+compilação importa `aya-paginas.ts` e `termos-da-aya.ts` direto no Node.
+
+Limites dos contratos: o que vem do navegador (conversa, progresso, convites, perguntas sem
+resposta) e das RPCs chega como `unknown` e passa pelas leituras que já existiam; o resultado de
+cada fonte em `dados-da-aya.ts` é convertido no ponto de uso (pacote ou lista), sem validação
+nova. `cargasQuePedemAtencao` trata o retorno de `visaoSimples` como lista, mas ele é
+`{ linhas, atencao }`: a pergunta "alguma carga atrasada?" falha (anotado na migração, não
+corrigido).

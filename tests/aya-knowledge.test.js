@@ -4,7 +4,7 @@ import {
   curatedAnswerForQuestion,
   officialSourcesForQuestion,
 } from "../src/modules/aya-knowledge.js";
-import { responderAya } from "../src/lib/busca-da-aya.js";
+import { responderAya } from "../src/lib/busca-da-aya.ts";
 
 const responder = (question) =>
   responderAya({ question, section: "dashboard", area: "saude-indigena" });

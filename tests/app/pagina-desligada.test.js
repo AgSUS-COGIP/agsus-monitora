@@ -29,7 +29,7 @@ import {
   carregarSituacaoDoSistema,
   esquecerSituacaoDoSistema,
 } from "../../src/modules/situacao-dos-modulos.js";
-import { redefinirPaginaDaAya } from "../../src/modulos/aya/estado.js";
+import { redefinirPaginaDaAya } from "../../src/modulos/aya/estado.ts";
 
 /*
   Página desligada pela coordenação fecha sem recarregar (19/10/2026: o banco

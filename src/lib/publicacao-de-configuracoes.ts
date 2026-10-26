@@ -23,7 +23,7 @@ import {
   logoDaBarraSegura,
 } from "./marca-da-barra-lateral.js";
 import { normalizeAllowedDomains } from "./platform-context";
-import { EMAIL_DO_SUPORTE_PADRAO, emailValido } from "./chamado-da-aya.js";
+import { EMAIL_DO_SUPORTE_PADRAO, emailValido } from "./chamado-da-aya.ts";
 import {
   CABECALHO_PADRAO,
   CHAVE_DO_CABECALHO,
@@ -435,7 +435,7 @@ export const CAMPOS_DAS_SECOES: Readonly<
       normalizar: (valor) => normalizarInteiro(valor, 5, 1),
     },
     {
-      /* Para onde o "Abrir chamado" da Aya abre o e-mail (src/lib/chamado-da-aya.js). */
+      /* Para onde o "Abrir chamado" da Aya abre o e-mail (src/lib/chamado-da-aya.ts). */
       chave: "support_email",
       descricao: "E-mail do suporte (chamados abertos pela Aya)",
       rotulo: "E-mail do suporte",

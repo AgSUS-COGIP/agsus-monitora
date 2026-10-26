@@ -14,7 +14,7 @@ import {
   quemDoCaso,
   termoDeBusca,
 } from "../src/lib/avisos-de-conferencia.ts";
-import { filtrosDasAnalises } from "../src/lib/filtro-da-aya.js";
+import { filtrosDasAnalises } from "../src/lib/filtro-da-aya.ts";
 import { criarEstadoDosAvisos } from "../src/modulos/conferencias/estado.ts";
 
 /*

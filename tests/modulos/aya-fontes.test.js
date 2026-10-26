@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { criarFontesDaAya } from "../../src/modulos/aya/fontes.js";
-import { responderComDados } from "../../src/lib/dados-da-aya.js";
+import { criarFontesDaAya } from "../../src/modulos/aya/fontes.ts";
+import { responderComDados } from "../../src/lib/dados-da-aya.ts";
 
 /*
-  De onde a Aya conta as análises (src/modulos/aya/fontes.js): os editais em
+  De onde a Aya conta as análises (src/modulos/aya/fontes.ts): os editais em
   situação Ativo, como no banco — o pacote "ativo" do painel e o
   "desativadas" (análises de edital ativo que saíram da planilha). Caso do
   teste real de 05/10: 110/2026 com 841 análises, 8 pendentes, todas

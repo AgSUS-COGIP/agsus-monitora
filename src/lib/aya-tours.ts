@@ -2,8 +2,8 @@
   A educação guiada da Aya, em dados, sem DOM nem estado global: os tours
   "item por item" de cada tela e aba ("Me mostra esta tela") e as trilhas
   ("Aprender"), que juntam telas em sequência. Quem desenha é
-  src/modulos/aya/tour/tour.jsx; quem guarda o progresso e os convites no
-  navegador, src/modulos/aya/tour/progresso.js.
+  src/modulos/aya/tour/tour.tsx; quem guarda o progresso e os convites no
+  navegador, src/modulos/aya/tour/progresso.ts.
 
   Passo: `{ alvo, titulo, texto }`.
   - `alvo`: o elemento da vez, por atributo estável `data-tour="…"` (posto
@@ -42,18 +42,117 @@ import {
   secaoDeConfiguracaoPermitida,
 } from "./access-roles.ts";
 import { hasResource } from "./permissoes-recursos.ts";
+import type { PaginasPermitidas } from "./tipos-dos-acessos.ts";
 
-const passo = (alvo, titulo, texto, extra = {}) =>
-  Object.freeze({ alvo, titulo, texto, ...extra });
+/* ---------- Tipos ---------- */
+
+/** Uma regra do perfil (as mesmas funções que escondem o botão). */
+export type RegraDoPerfil = (perfil: unknown) => boolean;
+
+/** O seletor do elemento da vez, uma lista (vale o primeiro visível) ou nenhum. */
+export type AlvoDoPasso = string | readonly string[] | null;
+
+/** O que um passo pode trazer além de alvo, título e texto. */
+export interface ExtraDoPasso {
+  readonly areas?: readonly string[];
+  readonly exige?: RegraDoPerfil;
+  readonly antes?: string;
+  readonly pagina?: string;
+}
+
+export interface PassoDoTour extends ExtraDoPasso {
+  readonly alvo: AlvoDoPasso;
+  readonly titulo: string;
+  readonly texto: string;
+}
+
+export interface TourDaTela {
+  readonly titulo: string;
+  readonly passos: readonly PassoDoTour[];
+}
+
+/** O tour recortado da tela aberta, com a chave. */
+export interface TourDaPagina extends TourDaTela {
+  readonly chave: string;
+}
+
+export interface TrilhaDaAya {
+  readonly id: string;
+  readonly titulo: string;
+  readonly resumo: string;
+  readonly exige: RegraDoPerfil;
+  readonly passos: readonly PassoDoTour[];
+}
+
+/** O perfil de quem faz o tour (o do app); só `ativo` é lido aqui. */
+export type PerfilDoTour = { readonly ativo?: unknown } | null | undefined;
+
+/** Onde a trilha parou. */
+export interface ProgressoDaTrilha {
+  passo: number;
+  concluida: boolean;
+}
+
+export type ProgressoDasTrilhas = Record<string, ProgressoDaTrilha>;
+
+/** O que está aberto: view, seção de Configurações e aba. */
+export interface AberturaDoTour {
+  view?: string;
+  secao?: string;
+  aba?: string;
+}
+
+/** Um retângulo na tela (getBoundingClientRect). */
+export interface RetanguloNaTela {
+  readonly top: number;
+  readonly left: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface TamanhoNaTela {
+  readonly largura: number;
+  readonly altura: number;
+}
+
+export type LadoDoBalao = "baixo" | "cima" | "direita" | "esquerda";
+
+export type PosicaoDoBalao =
+  | { modo: "celular"; lado: "cima" | "baixo" }
+  | { modo: "centro" | "sobre" | LadoDoBalao; top: number; left: number };
+
+/** Uma faixa escura do véu. */
+export interface FaixaDoVeu {
+  top: number;
+  left: number;
+  width?: number;
+  height?: number;
+  right?: number;
+  bottom?: number;
+}
+
+export interface GeometriaDoHolofote {
+  recorte: { top: number; left: number; width: number; height: number };
+  faixas: FaixaDoVeu[];
+}
+
+const passo = (
+  alvo: AlvoDoPasso,
+  titulo: string,
+  texto: string,
+  extra: ExtraDoPasso = {},
+): PassoDoTour => Object.freeze({ alvo, titulo, texto, ...extra });
 
 /** O seletor de um `data-tour`. */
-export const t = (nome) => `[data-tour='${nome}']`;
+export const t = (nome: string): string => `[data-tour='${nome}']`;
 
-const editaEntrevistas = (p) => hasResource(p, "entrevistas", 2);
-const decideRecursos = (p) => hasResource(p, "recursos_parecer", 2);
-const administraRecursos = (p) => hasResource(p, "recursos", 3);
-const analisaDocumentos = (p) => hasResource(p, "avaliacao_documental", 2);
-const coordenaAvaliacao = (p) => hasResource(p, "avaliacao_documental", 3);
+const editaEntrevistas = (p: unknown) => hasResource(p, "entrevistas", 2);
+const decideRecursos = (p: unknown) => hasResource(p, "recursos_parecer", 2);
+const administraRecursos = (p: unknown) => hasResource(p, "recursos", 3);
+const analisaDocumentos = (p: unknown) =>
+  hasResource(p, "avaliacao_documental", 2);
+const coordenaAvaliacao = (p: unknown) =>
+  hasResource(p, "avaliacao_documental", 3);
 
 /* ---------- Pedaços repetidos ---------- */
 
@@ -87,7 +186,7 @@ const PUBLICAR = passo(
 
 /* ---------- Tours de cada tela e aba ---------- */
 
-const TOURS = Object.freeze({
+const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
   dashboard: Object.freeze({
     titulo: "Visão geral",
     passos: Object.freeze([
@@ -1170,7 +1269,7 @@ const TOURS = Object.freeze({
 
 /* ---------- Trilhas ("Aprender") ---------- */
 
-const TRILHAS = Object.freeze([
+const TRILHAS: readonly TrilhaDaAya[] = Object.freeze([
   Object.freeze({
     id: "primeiros-passos",
     titulo: "Primeiros passos",
@@ -1231,7 +1330,7 @@ const TRILHAS = Object.freeze([
     id: "do-edital-ao-aprovado",
     titulo: "Do edital ao aprovado",
     resumo: "As telas na ordem do processo seletivo.",
-    exige: (perfil) => paginasPermitidas(perfil).nucleo === true,
+    exige: (perfil: unknown) => paginasPermitidas(perfil).nucleo === true,
     passos: Object.freeze([
       passo(
         [t("editais-kpis"), "#nucleoOperationalKpis"],
@@ -1293,7 +1392,7 @@ const TRILHAS = Object.freeze([
     id: "conduzir-entrevista",
     titulo: "Conduzir uma entrevista",
     resumo: "Edital, preparar, fila do dia e ficha de notas.",
-    exige: (perfil) =>
+    exige: (perfil: unknown) =>
       paginasPermitidas(perfil)["conduzir-entrevistas"] === true,
     passos: Object.freeze([
       passo(
@@ -1338,7 +1437,8 @@ const TRILHAS = Object.freeze([
     id: "registrar-recurso",
     titulo: "Registrar e decidir um recurso",
     resumo: "O que faz quem registra e o que o jurídico decide.",
-    exige: (perfil) => canEditRecursos(perfil) || decideRecursos(perfil),
+    exige: (perfil: unknown) =>
+      canEditRecursos(perfil) || decideRecursos(perfil),
     passos: Object.freeze([
       passo(
         t("recursos-novo"),
@@ -1486,14 +1586,15 @@ const TRILHAS = Object.freeze([
 /* ---------- Regras puras ---------- */
 
 /* As abas que têm tour próprio, pelo valor que a tela marca. */
-const ABAS_COM_TOUR = Object.freeze({
-  "conduzir-entrevistas": ["preparar"],
-  classificacao: ["agenda", "regra"],
-  approved: ["convocacao"],
-  "avaliacao-documental": ["regra", "fila"],
-});
+const ABAS_COM_TOUR: Readonly<Record<string, readonly string[]>> =
+  Object.freeze({
+    "conduzir-entrevistas": ["preparar"],
+    classificacao: ["agenda", "regra"],
+    approved: ["convocacao"],
+    "avaliacao-documental": ["regra", "fila"],
+  });
 
-function normalizarAba(aba) {
+function normalizarAba(aba: unknown): string | undefined {
   return String(aba || "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -1503,16 +1604,21 @@ function normalizarAba(aba) {
 }
 
 /** A chave do tour para o que está aberto (`view`, aba, seção de Configurações). */
-export function chaveDoTour({ view = "", secao = "", aba = "" } = {}) {
+export function chaveDoTour({
+  view = "",
+  secao = "",
+  aba = "",
+}: AberturaDoTour = {}): string {
   const base = String(view || "");
   if (base === "config") return secao ? `config:${secao}` : "config";
   const escolhida = normalizarAba(aba);
-  if ((ABAS_COM_TOUR[base] || []).includes(escolhida))
+  if ((ABAS_COM_TOUR[base] || []).includes(escolhida!))
     return `${base}:${escolhida}`;
   return base;
 }
 
-const passoPermitido = (p, perfil) => !p.exige || !perfil || p.exige(perfil);
+const passoPermitido = (p: PassoDoTour, perfil: unknown): boolean =>
+  !p.exige || !perfil || p.exige(perfil);
 
 /**
  * O tour da tela aberta (e da aba), recortado pela área e pelo perfil: os
@@ -1524,7 +1630,10 @@ export function tourDaPagina({
   secao = "",
   aba = "",
   perfil = null,
-} = {}) {
+}: AberturaDoTour & {
+  area?: string;
+  perfil?: unknown;
+} = {}): TourDaPagina | null {
   const chave = chaveDoTour({ view, secao, aba });
   const tour = TOURS[chave];
   if (!tour) return null;
@@ -1537,17 +1646,22 @@ export function tourDaPagina({
 }
 
 /** As telas e abas que têm tour. */
-export const PAGINAS_COM_TOUR = Object.freeze(Object.keys(TOURS));
+export const PAGINAS_COM_TOUR: readonly string[] = Object.freeze(
+  Object.keys(TOURS),
+);
 
-const permitida = (perfil, pagina) => {
+const permitida = (perfil: unknown, pagina: unknown): boolean => {
   const [view, secao] = String(pagina || "").split(":");
   if (view === "config" && secao)
     return secaoDeConfiguracaoPermitida(perfil, secao);
-  return paginasPermitidas(perfil)[view] === true;
+  return paginasPermitidas(perfil)[view as keyof PaginasPermitidas] === true;
 };
 
 /** Os passos da trilha que este perfil faz: só os de páginas que ele abre e cuja regra ele cumpre. */
-export function passosDaTrilha(trilha, perfil) {
+export function passosDaTrilha(
+  trilha: TrilhaDaAya,
+  perfil: unknown,
+): PassoDoTour[] {
   return trilha.passos.filter(
     (p) =>
       (!p.pagina || permitida(perfil, p.pagina)) &&
@@ -1556,8 +1670,9 @@ export function passosDaTrilha(trilha, perfil) {
 }
 
 /** As trilhas que o perfil pode fazer (a regra da trilha e ao menos um passo de tela). */
-export function trilhasDoPerfil(perfil) {
-  if (!perfil || perfil.ativo === false) return [];
+export function trilhasDoPerfil(perfil: unknown): TrilhaDaAya[] {
+  if (!perfil || (perfil as NonNullable<PerfilDoTour>).ativo === false)
+    return [];
   return TRILHAS.filter(
     (trilha) =>
       trilha.exige(perfil) &&
@@ -1568,11 +1683,12 @@ export function trilhasDoPerfil(perfil) {
 /* ---------- Progresso (o que progresso.js guarda) ---------- */
 
 /** `{ [id]: { passo, concluida } }` a partir do que estava guardado, descartando o resto. */
-export function progressoDasTrilhas(bruto) {
+export function progressoDasTrilhas(bruto: unknown): ProgressoDasTrilhas {
   if (!bruto || typeof bruto !== "object" || Array.isArray(bruto)) return {};
-  const limpo = {};
+  const limpo: ProgressoDasTrilhas = {};
   for (const trilha of TRILHAS) {
-    const entrada = bruto[trilha.id];
+    const entrada = (bruto as Record<string, unknown>)[trilha.id] as
+      { passo?: unknown; concluida?: unknown } | null | undefined;
     if (!entrada || typeof entrada !== "object") continue;
     const passoGuardado = Number(entrada.passo);
     limpo[trilha.id] = {
@@ -1586,7 +1702,11 @@ export function progressoDasTrilhas(bruto) {
   return limpo;
 }
 
-export function comPassoDaTrilha(progresso, id, passoAtual) {
+export function comPassoDaTrilha(
+  progresso: ProgressoDasTrilhas,
+  id: string,
+  passoAtual: unknown,
+): ProgressoDasTrilhas {
   const anterior = progresso[id] || { passo: 0, concluida: false };
   return {
     ...progresso,
@@ -1594,12 +1714,18 @@ export function comPassoDaTrilha(progresso, id, passoAtual) {
   };
 }
 
-export function comTrilhaConcluida(progresso, id) {
+export function comTrilhaConcluida(
+  progresso: ProgressoDasTrilhas,
+  id: string,
+): ProgressoDasTrilhas {
   return { ...progresso, [id]: { passo: 0, concluida: true } };
 }
 
 /** "Concluída", "3 de 7" (parou no 3º) ou "7 passos" (não começou). */
-export function rotuloDoProgresso(entrada, total) {
+export function rotuloDoProgresso(
+  entrada: ProgressoDaTrilha | null | undefined,
+  total: number,
+): string {
   if (entrada?.concluida) return "Concluída";
   if (entrada && entrada.passo > 0)
     return `${Math.min(entrada.passo + 1, total)} de ${total}`;
@@ -1607,27 +1733,44 @@ export function rotuloDoProgresso(entrada, total) {
 }
 
 /** Onde a trilha recomeça: do passo guardado, ou do começo se já foi concluída. */
-export function passoParaRetomar(entrada, total) {
+export function passoParaRetomar(
+  entrada: ProgressoDaTrilha | null | undefined,
+  total: number,
+): number {
   if (!entrada || entrada.concluida || total <= 0) return 0;
   return Math.min(Math.max(0, entrada.passo), total - 1);
 }
 
 /** "Passo 3 de 9". */
-export const rotuloDoPasso = (indice, total) =>
+export const rotuloDoPasso = (indice: number, total: number): string =>
   `Passo ${indice + 1} de ${total}`;
 
 /* ---------- Convite da primeira visita ---------- */
 
 /** As chaves de tour já oferecidas, a partir do que estava guardado. */
-export function convitesFeitos(bruto) {
+export function convitesFeitos(bruto: unknown): string[] {
   return Array.isArray(bruto)
-    ? [...new Set(bruto.filter((c) => typeof c === "string" && c))]
+    ? [
+        ...new Set(
+          (bruto as unknown[]).filter(
+            (c) => typeof c === "string" && c,
+          ) as string[],
+        ),
+      ]
     : [];
 }
 
 /** Convida para o tour desta tela? Só uma vez por tela ou aba, e nunca durante outro tour. */
-export function deveConvidar({ chave, feitos = [], ocupado = false }) {
-  return Boolean(chave) && !ocupado && !feitos.includes(chave);
+export function deveConvidar({
+  chave,
+  feitos = [],
+  ocupado = false,
+}: {
+  chave: string | null | undefined;
+  feitos?: readonly string[];
+  ocupado?: boolean;
+}): boolean {
+  return Boolean(chave) && !ocupado && !feitos.includes(chave!);
 }
 
 /* ---------- Onde pôr o balão ---------- */
@@ -1646,7 +1789,13 @@ export function posicaoDoBalao({
   tela,
   celular = false,
   margem = 12,
-}) {
+}: {
+  caixa: RetanguloNaTela | null | undefined;
+  balao: TamanhoNaTela | null | undefined;
+  tela: TamanhoNaTela | null | undefined;
+  celular?: boolean;
+  margem?: number;
+}): PosicaoDoBalao {
   const largura = balao?.largura || 0;
   const altura = balao?.altura || 0;
   const W = tela?.largura || 0;
@@ -1655,7 +1804,7 @@ export function posicaoDoBalao({
     const meio = caixa ? caixa.top + caixa.height / 2 : 0;
     return { modo: "celular", lado: caixa && meio > H / 2 ? "cima" : "baixo" };
   }
-  const limitar = (valor, tamanho, total) =>
+  const limitar = (valor: number, tamanho: number, total: number): number =>
     Math.round(
       Math.min(
         Math.max(margem, valor),
@@ -1672,7 +1821,7 @@ export function posicaoDoBalao({
   const direita = caixa.left + caixa.width;
   const centroX = caixa.left + caixa.width / 2 - largura / 2;
   const centroY = caixa.top + caixa.height / 2 - altura / 2;
-  const opcoes = [
+  const opcoes: [LadoDoBalao, boolean, number, number][] = [
     ["baixo", H - baixo >= altura + margem * 2, baixo + margem, centroX],
     [
       "cima",
@@ -1714,7 +1863,10 @@ export const MARGEM_DO_HOLOFOTE = 6;
   MESMO retângulo arredondado, para a moldura nunca ficar maior ou menor que
   a área clara. Faixa: { top, left, width?, height?, right?, bottom? }.
 */
-export function geometriaDoHolofote(retangulo, margem = MARGEM_DO_HOLOFOTE) {
+export function geometriaDoHolofote(
+  retangulo: RetanguloNaTela | null | undefined,
+  margem = MARGEM_DO_HOLOFOTE,
+): GeometriaDoHolofote | null {
   if (!retangulo) return null;
   // Não passa da borda de cima nem da esquerda: a moldura fica na tela.
   const top = Math.max(0, Math.round(retangulo.top - margem));

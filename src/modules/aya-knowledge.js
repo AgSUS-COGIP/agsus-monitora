@@ -1,7 +1,7 @@
 /*
   Fontes oficiais citadas junto das respostas da Aya e a resposta composta do
   DSEI Alagoas e Sergipe. As demais respostas vêm da busca na base
-  (src/lib/busca-da-aya.js).
+  (src/lib/busca-da-aya.ts).
 */
 
 export const AYA_SOURCE_CATALOG = Object.freeze({

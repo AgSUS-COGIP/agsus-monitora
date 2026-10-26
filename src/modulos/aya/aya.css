@@ -1,5 +1,5 @@
 /*
-  A Aya (src/modulos/aya/aya.jsx): a arara flutuante e o painel de conversa.
+  A Aya (src/modulos/aya/aya.tsx): a arara flutuante e o painel de conversa.
   Só tokens (src/styles/tokens.css); o tema escuro vem deles.
 
   Camada: 10038 — acima do cabeçalho (.top 10030) e da barra lateral do

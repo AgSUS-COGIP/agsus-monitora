@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   intencaoDeConversa,
   textoDaConversa,
-} from "../src/lib/conversa-da-aya.js";
+} from "../src/lib/conversa-da-aya.ts";
 
 describe("intenções de conversa", () => {
   it.each([

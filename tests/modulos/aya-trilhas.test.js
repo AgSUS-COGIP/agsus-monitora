@@ -14,11 +14,11 @@ import { clicar, teclar } from "../componentes/interacoes.js";
   marca concluída, e a oferta de "Primeiros passos" só na primeira entrada.
 */
 
-const { montarAya } = await import("../../src/modulos/aya/aya.jsx");
+const { montarAya } = await import("../../src/modulos/aya/aya.tsx");
 const { definirPaginaDaAya, redefinirPaginaDaAya } =
-  await import("../../src/modulos/aya/estado.js");
+  await import("../../src/modulos/aya/estado.ts");
 const { CHAVE_PROGRESSO_DAS_TRILHAS, CHAVE_OFERTA_DE_PRIMEIROS_PASSOS } =
-  await import("../../src/modulos/aya/tour/progresso.js");
+  await import("../../src/modulos/aya/tour/progresso.ts");
 
 let raiz;
 let controlador;

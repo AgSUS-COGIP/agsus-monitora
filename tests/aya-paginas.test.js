@@ -7,14 +7,14 @@ import {
   paginaDaAya,
   SECOES_DA_AYA,
   VIEWS_DA_AYA,
-} from "../src/lib/aya-paginas.js";
+} from "../src/lib/aya-paginas.ts";
 import {
   ABAS_DO_MENU,
   AREAS_DO_SISTEMA,
   nomeDaArea,
 } from "../src/lib/menu-lateral.ts";
 import { SECOES } from "../src/modulos/configuracoes/secoes.ts";
-import { responderAya } from "../src/lib/busca-da-aya.js";
+import { responderAya } from "../src/lib/busca-da-aya.ts";
 import { VERBETES_AYA } from "../src/modules/aya-conhecimento-gerado.js";
 
 /*

@@ -19,11 +19,21 @@ import {
   secaoAtualDeConfiguracao,
 } from "../configuracoes/secoes.ts";
 
-const ouvintes = new Set();
+/** Onde a pessoa está: view, título, seção, área e a conversa da vez. */
+export interface PaginaAbertaDaAya {
+  readonly view: string;
+  readonly titulo: string;
+  readonly secao: string;
+  readonly area: string;
+  /** Sobe a cada conversa esquecida (saída): o painel limpa a que mostra. */
+  readonly conversa: number;
+}
 
-const areaAtual = () => obterDadosDoMonitoramento().areaAtual || "";
+const ouvintes = new Set<() => void>();
 
-let estado = Object.freeze({
+const areaAtual = (): string => obterDadosDoMonitoramento().areaAtual || "";
+
+let estado: PaginaAbertaDaAya = Object.freeze({
   view: "",
   titulo: "",
   secao: "",
@@ -32,27 +42,31 @@ let estado = Object.freeze({
   conversa: 0,
 });
 
-function publicar(mudancas) {
-  const proximo = { ...estado, ...mudancas };
-  if (Object.keys(proximo).every((chave) => proximo[chave] === estado[chave]))
+function publicar(mudancas: Partial<PaginaAbertaDaAya>): void {
+  const proximo: PaginaAbertaDaAya = { ...estado, ...mudancas };
+  if (
+    (Object.keys(proximo) as (keyof PaginaAbertaDaAya)[]).every(
+      (chave) => proximo[chave] === estado[chave],
+    )
+  )
     return;
   estado = Object.freeze(proximo);
   for (const ouvinte of ouvintes) ouvinte();
 }
 
-export const obterPaginaDaAya = () => estado;
+export const obterPaginaDaAya = (): PaginaAbertaDaAya => estado;
 
-export function assinarPaginaDaAya(ouvinte) {
+export function assinarPaginaDaAya(ouvinte: () => void): () => boolean {
   ouvintes.add(ouvinte);
   return () => ouvintes.delete(ouvinte);
 }
 
 /** O legado navegou: a view (`dashboard`, `recursos`, `config`…) e o título do cabeçalho. */
 export function definirPaginaDaAya(
-  view,
-  titulo = "",
-  documento = globalThis.document,
-) {
+  view: unknown,
+  titulo: unknown = "",
+  documento: Document = globalThis.document,
+): void {
   const chave = String(view || "").trim();
   publicar({
     view: chave,
@@ -66,20 +80,26 @@ assinarDadosDoMonitoramento(() => publicar({ area: areaAtual() }));
 
 globalThis.document?.addEventListener(EVENTO_SECAO_ABERTA, (evento) => {
   if (estado.view !== "config") return;
-  publicar({ secao: String(evento.detail?.secao || "") });
+  publicar({
+    secao: String(
+      (evento as CustomEvent<{ secao?: unknown } | null>).detail?.secao || "",
+    ),
+  });
 });
 
 /*
   A pessoa saiu (ou ficou sem acesso): a conversa guardada na aba sai, e o
   painel — que continua montado — limpa a que está na tela.
 */
-export function esquecerConversaDaAya(janela = globalThis) {
+export function esquecerConversaDaAya(
+  janela: typeof globalThis = globalThis,
+): void {
   esquecerConversa(janela);
   publicar({ conversa: estado.conversa + 1 });
 }
 
 /** Só para os testes: volta ao estado inicial. */
-export function redefinirPaginaDaAya() {
+export function redefinirPaginaDaAya(): void {
   estado = Object.freeze({
     view: "",
     titulo: "",

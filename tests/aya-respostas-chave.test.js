@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { responderAya } from "../src/lib/busca-da-aya.js";
+import { responderAya } from "../src/lib/busca-da-aya.ts";
 
 /*
   Perguntas-chave sobre as regras que saíram das telas. A resposta é direta
