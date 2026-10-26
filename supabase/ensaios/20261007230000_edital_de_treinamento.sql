@@ -34,7 +34,7 @@ begin;
          private."FC_EDITAL_EH_TREINAMENTO"(edital)  pelo id (lê a marca)
          private."FC_ANALISE_EH_TREINAMENTO"(origem) análise fictícia
                                                      (origem_planilha = 'treinamento')
-       No front: src/lib/edital-de-treinamento.ts.
+       No front: src/lib/edital-de-treinamento.js.
     3. O edital de treinamento fica FORA de:
          - Visão geral / indicadores: VW_MONITORAMENTO_INDIGENA_KPIS,
            _POR_EDITAL, _POR_UNIDADE e listar_acompanhamento_da_visao_geral;
@@ -76,7 +76,7 @@ begin;
        deixam apagar quando a transação marcou o reinício DESTE edital
        (private."FC_REINICIO_TREINAMENTO_PERMITE").
 
-  Dependentes: src/app/carga.js (coluna), src/lib/edital-de-treinamento.ts,
+  Dependentes: src/app/carga.js (coluna), src/lib/edital-de-treinamento.js,
   telas de Editais, Entrevistas, Avaliação documental, Classificação, painel
   dos robôs; src/lib/rpc-contrato.js (reiniciar_edital_treinamento).
   Os caches (20261007220000) não mudam: o predicado está nas montagens e na

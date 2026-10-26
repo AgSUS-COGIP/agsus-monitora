@@ -22,16 +22,38 @@
   O payload antigo (schema 3, com todas as colunas) passa por aqui sem mudar:
   toda regra só completa o que falta na linha.
 */
+import type {
+  EnvelopeDasAnalises,
+  RegistroDaAnalise,
+} from "../modulos/analises/tipos.ts";
 
-const texto = (valor) => String(valor ?? "").trim();
-const temCampo = (objeto, campo) =>
+/** O envelope de um pacote, com os campos que a junção de "Todos" lê. */
+export interface EnvelopeDoPainel extends EnvelopeDasAnalises {
+  scope?: unknown;
+  generated_at?: unknown;
+  atualizado_em?: unknown;
+  cache?: { hit?: unknown; refreshed_at?: unknown } | null;
+  rows?: unknown;
+}
+
+/** Uma parte de "Todos": o envelope do pacote e as linhas dele. */
+export interface ParteDoPainel {
+  payload?: EnvelopeDoPainel | null;
+  linhas: readonly RegistroDaAnalise[];
+}
+
+const texto = (valor: unknown) => String(valor ?? "").trim();
+const temCampo = (objeto: unknown, campo: string) =>
   Boolean(objeto) && Object.prototype.hasOwnProperty.call(objeto, campo);
 
 /* As partes do escopo "Todos", na ordem em que o banco as separa. */
-export const PARTES_DE_TODOS = Object.freeze(["ativo", "inativo"]);
+export const PARTES_DE_TODOS: readonly string[] = Object.freeze([
+  "ativo",
+  "inativo",
+]);
 
 /* Os escopos que o painel pede ao servidor para cada situação do filtro. */
-export function partesDoEscopo(escopo) {
+export function partesDoEscopo(escopo: string): string[] {
   return escopo === "todos" ? [...PARTES_DE_TODOS] : [escopo];
 }
 
@@ -41,19 +63,24 @@ export function partesDoEscopo(escopo) {
  * 'desativadas'), para quem precisa separar as partes de "Todos" (o Ritmo
  * conta só o Ativo).
  */
-export function completarLinhaPeloEnvelope(linha, payload) {
+export function completarLinhaPeloEnvelope<
+  L extends RegistroDaAnalise | null | undefined,
+>(linha: L, payload: Readonly<RegistroDaAnalise> | null | undefined): L {
   if (!linha || typeof linha !== "object" || !payload) return linha;
   ["grupo", "edital_status"].forEach((campo) => {
     if (!temCampo(linha, campo) && payload[campo] != null)
-      linha[campo] = payload[campo];
+      (linha as RegistroDaAnalise)[campo] = payload[campo];
   });
-  if (!temCampo(linha, "__escopo") && PARTES_DE_TODOS.includes(payload.scope))
-    linha.__escopo = payload.scope;
+  if (
+    !temCampo(linha, "__escopo") &&
+    PARTES_DE_TODOS.includes(payload.scope as string)
+  )
+    (linha as RegistroDaAnalise).__escopo = payload.scope;
   return linha;
 }
 
 /* O detalhamento ainda não veio para esta linha (lista enxuta)? */
-export function linhaSemDetalhe(linha) {
+export function linhaSemDetalhe(linha: unknown): boolean {
   return (
     Boolean(linha) &&
     typeof linha === "object" &&
@@ -70,8 +97,11 @@ export function linhaSemDetalhe(linha) {
 const FORA_DA_LINHA = new Set(["id", "area", "chave_natural", "espelho"]);
 
 /** Põe na linha o que o detalhe trouxe e ela não tem. Devolve se mudou algo. */
-export function mesclarDetalhe(linha, detalhe) {
-  const dados = Array.isArray(detalhe) ? detalhe[0] : detalhe;
+export function mesclarDetalhe(
+  linha: RegistroDaAnalise | null | undefined,
+  detalhe: unknown,
+): boolean {
+  const dados: unknown = Array.isArray(detalhe) ? detalhe[0] : detalhe;
   if (
     !linha ||
     typeof linha !== "object" ||
@@ -96,7 +126,10 @@ export function mesclarDetalhe(linha, detalhe) {
 const COLACAO_DO_BANCO = new Intl.Collator("en-US");
 const CAMPOS_DA_ORDEM = ["unidade", "edital", "codigo_vaga", "candidato"];
 
-export function compararNaOrdemDoBanco(a, b) {
+export function compararNaOrdemDoBanco(
+  a: Readonly<RegistroDaAnalise> | null | undefined,
+  b: Readonly<RegistroDaAnalise> | null | undefined,
+): number {
   for (const campo of CAMPOS_DA_ORDEM) {
     const x = a?.[campo];
     const y = b?.[campo];
@@ -114,18 +147,21 @@ export function compararNaOrdemDoBanco(a, b) {
   return idA < idB ? -1 : idA > idB ? 1 : 0;
 }
 
-const horaDoPayload = (payload) => Date.parse(payload?.generated_at) || 0;
+const horaDoPayload = (payload: EnvelopeDoPainel | null | undefined) =>
+  Date.parse(payload?.generated_at as string) || 0;
 
 /*
   "Todos": junta as partes (cada uma `{ payload, linhas }`) sem repetir linha e
   na ordem do banco. Uma análise que mudou de escopo entre duas cópias (a do
   navegador e a nova) aparece em duas partes: fica a da parte mais nova.
 */
-export function juntarPartesDoPainel(partes) {
+export function juntarPartesDoPainel(
+  partes: readonly (ParteDoPainel | null | undefined)[] | null | undefined,
+): RegistroDaAnalise[] {
   const lista = (Array.isArray(partes) ? partes : []).filter(
     (parte) => parte && Array.isArray(parte.linhas),
-  );
-  const donoDoId = new Map();
+  ) as ParteDoPainel[];
+  const donoDoId = new Map<string, { indice: number; hora: number }>();
   lista.forEach((parte, indice) => {
     const hora = horaDoPayload(parte.payload);
     parte.linhas.forEach((linha) => {
@@ -139,27 +175,27 @@ export function juntarPartesDoPainel(partes) {
   const filas = lista.map((parte, indice) =>
     parte.linhas.filter((linha) => {
       const id = texto(linha?.id);
-      return !id || donoDoId.get(id).indice === indice;
+      return !id || donoDoId.get(id)!.indice === indice;
     }),
   );
   const posicoes = filas.map(() => 0);
-  const juntas = [];
+  const juntas: RegistroDaAnalise[] = [];
   for (;;) {
     let escolhida = -1;
     filas.forEach((fila, indice) => {
-      if (posicoes[indice] >= fila.length) return;
+      if (posicoes[indice]! >= fila.length) return;
       if (
         escolhida < 0 ||
         compararNaOrdemDoBanco(
-          fila[posicoes[indice]],
-          filas[escolhida][posicoes[escolhida]],
+          fila[posicoes[indice]!],
+          filas[escolhida]![posicoes[escolhida]!],
         ) < 0
       )
         escolhida = indice;
     });
     if (escolhida < 0) break;
-    juntas.push(filas[escolhida][posicoes[escolhida]]);
-    posicoes[escolhida] += 1;
+    juntas.push(filas[escolhida]![posicoes[escolhida]!]!);
+    posicoes[escolhida]! += 1;
   }
   return juntas;
 }
@@ -169,11 +205,15 @@ export function juntarPartesDoPainel(partes) {
   cópia vale o que vale a parte mais velha), o total das linhas juntas e a
   data do dado mais novo.
 */
-export function envelopeDeTodos(partes, total) {
+export function envelopeDeTodos(
+  partes: readonly (ParteDoPainel | null | undefined)[] | null | undefined,
+  total: number,
+): EnvelopeDasAnalises {
   const payloads = (Array.isArray(partes) ? partes : [])
     .map((parte) => parte?.payload)
-    .filter(Boolean);
-  if (!payloads.length) return null;
+    .filter(Boolean) as EnvelopeDoPainel[];
+  /* Sem parte nenhuma, null; quem chama (consultas.ts) sempre tem as partes. */
+  if (!payloads.length) return null as unknown as EnvelopeDasAnalises;
   const maisNovo = payloads.reduce((a, b) =>
     horaDoPayload(b) > horaDoPayload(a) ? b : a,
   );
@@ -181,7 +221,7 @@ export function envelopeDeTodos(partes, total) {
     horaDoPayload(b) < horaDoPayload(a) ? b : a,
   );
   const atualizados = payloads
-    .map((payload) => payload.atualizado_em)
+    .map((payload) => payload.atualizado_em as string)
     .filter((valor) => Date.parse(valor));
   const atualizadoEm = atualizados.length
     ? atualizados.reduce((a, b) => (Date.parse(b) > Date.parse(a) ? b : a))

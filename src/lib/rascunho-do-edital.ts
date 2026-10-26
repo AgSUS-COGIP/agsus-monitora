@@ -12,26 +12,65 @@
   (`estadoComparavel`): fechar um formulário sem mudança não pergunta nada.
 */
 
+import type { CronogramaDoFormulario } from "./cronograma-do-edital.ts";
+
+/** Os campos do cronograma que entram no rascunho. */
+export type CampoDoCronogramaNoRascunho =
+  | "automatico"
+  | "etapas"
+  | "statusExcepcional"
+  | "etapaExcepcional"
+  | "motivoExcepcional"
+  | "dataExcepcional"
+  | "retomada"
+  | "motivo"
+  | "errata";
+
+export type CronogramaDoRascunho = Partial<
+  Pick<CronogramaDoFormulario, CampoDoCronogramaNoRascunho>
+>;
+
+/** O que fica guardado no navegador. */
+export interface RascunhoDoEdital {
+  salvoEm: string;
+  formulario: Record<string, unknown>;
+  cronograma: CronogramaDoRascunho;
+}
+
+/** O pedaço do `Storage` que o rascunho usa (nos testes, um objeto). */
+export type ArmazenamentoDoRascunho = Pick<
+  Storage,
+  "getItem" | "setItem" | "removeItem"
+>;
+
+/** O perfil, para a chave: só o que identifica a conta. */
+interface PerfilDoRascunho {
+  user_id?: unknown;
+  id?: unknown;
+  email?: unknown;
+}
+
 const PREFIXO = "agsus_monitora_rascunho_edital_v1";
 /** Rascunho mais velho que isto é ignorado (e apagado) ao abrir. */
 const VALIDADE_MS = 14 * 24 * 60 * 60 * 1000;
 
-const txt = (valor) => String(valor ?? "").trim();
+const txt = (valor: unknown) => String(valor ?? "").trim();
 
 /* Os campos do cronograma que a pessoa edita; carga, erro e histórico ficam de fora. */
-const CAMPOS_DO_CRONOGRAMA = Object.freeze([
-  "automatico",
-  "etapas",
-  "statusExcepcional",
-  "etapaExcepcional",
-  "motivoExcepcional",
-  "dataExcepcional",
-  "retomada",
-  "motivo",
-  "errata",
-]);
+const CAMPOS_DO_CRONOGRAMA: readonly CampoDoCronogramaNoRascunho[] =
+  Object.freeze([
+    "automatico",
+    "etapas",
+    "statusExcepcional",
+    "etapaExcepcional",
+    "motivoExcepcional",
+    "dataExcepcional",
+    "retomada",
+    "motivo",
+    "errata",
+  ]);
 
-function armazenamentoPadrao() {
+function armazenamentoPadrao(): ArmazenamentoDoRascunho | null {
   try {
     return window.localStorage;
   } catch {
@@ -40,16 +79,24 @@ function armazenamentoPadrao() {
 }
 
 /** Quem é o usuário, para a chave: o id da conta; na falta dele, o e-mail. */
-export function usuarioDoPerfil(perfil) {
+export function usuarioDoPerfil(perfil: unknown) {
   return (
-    txt(perfil?.user_id) ||
-    txt(perfil?.id) ||
-    txt(perfil?.email).toLowerCase() ||
+    txt((perfil as PerfilDoRascunho | null | undefined)?.user_id) ||
+    txt((perfil as PerfilDoRascunho | null | undefined)?.id) ||
+    txt((perfil as PerfilDoRascunho | null | undefined)?.email).toLowerCase() ||
     "anonimo"
   );
 }
 
-export function chaveDoRascunho({ usuario, id, area }) {
+export function chaveDoRascunho({
+  usuario,
+  id,
+  area,
+}: {
+  usuario: unknown;
+  id?: unknown;
+  area?: unknown;
+}) {
   const alvo = txt(id)
     ? `edital-${txt(id)}`
     : `novo-${txt(area) || "sem-area"}`;
@@ -57,18 +104,23 @@ export function chaveDoRascunho({ usuario, id, area }) {
 }
 
 /** Só as partes editáveis do cronograma. */
-export function cronogramaDoRascunho(cronograma) {
+export function cronogramaDoRascunho(
+  cronograma: Partial<CronogramaDoFormulario> | null | undefined,
+): CronogramaDoRascunho {
   const c = cronograma || {};
   return Object.fromEntries(
     CAMPOS_DO_CRONOGRAMA.map((campo) => [campo, c[campo]]),
-  );
+  ) as CronogramaDoRascunho;
 }
 
 /**
  * Uma "foto" comparável do formulário. Enquanto o cronograma carrega, ele não
  * entra: nada ali foi mexido ainda.
  */
-export function estadoComparavel(formulario, cronograma) {
+export function estadoComparavel(
+  formulario: object | null | undefined,
+  cronograma: Partial<CronogramaDoFormulario> | null | undefined,
+) {
   return JSON.stringify({
     formulario: formulario || {},
     cronograma: cronograma?.carregando
@@ -78,22 +130,24 @@ export function estadoComparavel(formulario, cronograma) {
 }
 
 export function lerRascunho(
-  chave,
-  armazenamento = armazenamentoPadrao(),
+  chave: string,
+  armazenamento:
+    ArmazenamentoDoRascunho | null | undefined = armazenamentoPadrao(),
   agora = new Date(),
-) {
+): RascunhoDoEdital | null {
   try {
     const bruto = armazenamento?.getItem(chave);
     if (!bruto) return null;
-    const dados = JSON.parse(bruto);
-    const salvoEm = new Date(dados?.salvoEm);
+    const dados = JSON.parse(bruto) as RascunhoDoEdital | null;
+    // Sem data (ou dados nulos) vira Invalid Date, e o rascunho é recusado abaixo.
+    const salvoEm = new Date(dados?.salvoEm as string);
     const valido =
       dados &&
       typeof dados.formulario === "object" &&
       typeof dados.cronograma === "object" &&
       !Number.isNaN(salvoEm.getTime());
     if (!valido || agora.getTime() - salvoEm.getTime() > VALIDADE_MS) {
-      armazenamento.removeItem(chave);
+      armazenamento!.removeItem(chave);
       return null;
     }
     return dados;
@@ -103,10 +157,17 @@ export function lerRascunho(
 }
 
 export function guardarRascunho(
-  chave,
-  { formulario, cronograma },
+  chave: string,
+  {
+    formulario,
+    cronograma,
+  }: {
+    formulario: object;
+    cronograma: Partial<CronogramaDoFormulario> | null | undefined;
+  },
   agora = new Date(),
-  armazenamento = armazenamentoPadrao(),
+  armazenamento:
+    ArmazenamentoDoRascunho | null | undefined = armazenamentoPadrao(),
 ) {
   try {
     armazenamento?.setItem(
@@ -123,7 +184,11 @@ export function guardarRascunho(
   }
 }
 
-export function apagarRascunho(chave, armazenamento = armazenamentoPadrao()) {
+export function apagarRascunho(
+  chave: string,
+  armazenamento:
+    ArmazenamentoDoRascunho | null | undefined = armazenamentoPadrao(),
+) {
   try {
     armazenamento?.removeItem(chave);
   } catch {
@@ -131,10 +196,13 @@ export function apagarRascunho(chave, armazenamento = armazenamentoPadrao()) {
   }
 }
 
-const doisDigitos = (numero) => String(numero).padStart(2, "0");
+const doisDigitos = (numero: number) => String(numero).padStart(2, "0");
 
 /** "14:32" se foi hoje; "27/09 às 14:32" se foi antes. */
-export function horaDoRascunho(salvoEm, hoje = new Date()) {
+export function horaDoRascunho(
+  salvoEm: string | number | Date,
+  hoje = new Date(),
+) {
   const data = new Date(salvoEm);
   if (Number.isNaN(data.getTime())) return "";
   const hora = `${doisDigitos(data.getHours())}:${doisDigitos(data.getMinutes())}`;

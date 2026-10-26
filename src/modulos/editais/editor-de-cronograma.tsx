@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import type { RefObject } from "react";
 import {
   STATUS_EXCEPCIONAIS,
   aplicarDatasEmLote,
@@ -7,8 +8,49 @@ import {
   novaEtapa,
   renumerar,
 } from "../../lib/cronograma-do-edital.ts";
+import type {
+  AnaliseDoCronograma,
+  CronogramaDoFormulario,
+  CronogramaNoBanco,
+  EstadoDoCronograma,
+  EtapaDoCronograma,
+  RegistroDoHistoricoDoCronograma,
+  ResultadoDoLote,
+} from "../../lib/cronograma-do-edital.ts";
 import { editaisComCronogramaParaCopiar } from "../../lib/editais-do-nucleo.ts";
 import { Aviso, Campo, LinhasEsqueleto, Selo } from "../../ui/index.ts";
+
+/* O resumo do Núcleo (a lista de "copiar cronograma") é do tipo de `editais-do-nucleo.ts`. */
+type ResumoParaCopiar = Parameters<typeof editaisComCronogramaParaCopiar>[0];
+type EditalParaCopiar = ReturnType<
+  typeof editaisComCronogramaParaCopiar
+>[number];
+
+/** O que o editor usa do estado da página (`estado.ts`). */
+export interface EstadoDoEditorDeCronograma {
+  assinar(ouvinte: () => void): () => void;
+  obter(): { geracao: number };
+  confirmar(mensagem: string): boolean;
+  /** O resumo do Núcleo. */
+  editaisParaCopiar(): Promise<unknown>;
+  /** A resposta de `get_monitoramento_cronograma`. */
+  lerCronograma(id: string): Promise<unknown>;
+}
+
+type AvisoDoEditor = ResultadoDoLote["aviso"];
+
+type MudarCronograma = (
+  transformar: (atual: CronogramaDoFormulario) => CronogramaDoFormulario,
+) => void;
+
+export interface PropriedadesDoEditorDeCronograma {
+  estado: EstadoDoEditorDeCronograma;
+  idAtual: string;
+  cronograma: CronogramaDoFormulario;
+  previa: EstadoDoCronograma;
+  analise: AnaliseDoCronograma;
+  aoMudar: MudarCronograma;
+}
 
 /*
   A seção "Cronograma do edital" do formulário. O rascunho (`cronograma`) e o
@@ -24,14 +66,29 @@ import { Aviso, Campo, LinhasEsqueleto, Selo } from "../../ui/index.ts";
   deles).
 */
 
-const txt = (valor) => String(valor ?? "").trim();
-const plural = (total, um, varios) => `${total} ${total === 1 ? um : varios}`;
+const txt = (valor: unknown) => String(valor ?? "").trim();
+const plural = (total: number, um: string, varios: string) =>
+  `${total} ${total === 1 ? um : varios}`;
 
-function CopiaDeCronograma({ estado, idAtual, aoCopiar }) {
+function CopiaDeCronograma({
+  estado,
+  idAtual,
+  aoCopiar,
+}: {
+  estado: EstadoDoEditorDeCronograma;
+  idAtual: string;
+  aoCopiar: (
+    etapas: EtapaDoCronograma[],
+    fonte: EditalParaCopiar | undefined,
+  ) => void;
+}) {
   const { geracao } = useSyncExternalStore(estado.assinar, estado.obter);
-  const [catalogo, setCatalogo] = useState({ geracao: -1, lista: [] });
+  const [catalogo, setCatalogo] = useState<{
+    geracao: number;
+    lista: ResumoParaCopiar;
+  }>({ geracao: -1, lista: [] });
   const [origem, setOrigem] = useState("");
-  const [aviso, setAviso] = useState(null);
+  const [aviso, setAviso] = useState<AvisoDoEditor | null>(null);
   const [copiando, setCopiando] = useState(false);
 
   useEffect(() => {
@@ -42,12 +99,15 @@ function CopiaDeCronograma({ estado, idAtual, aoCopiar }) {
       .then((lista) => {
         // Resposta que chegou depois de trocar de usuário não é desta sessão.
         if (vivo && estado.obter().geracao === pedidoEm)
-          setCatalogo({ geracao: pedidoEm, lista: lista || [] });
+          setCatalogo({
+            geracao: pedidoEm,
+            lista: (lista as ResumoParaCopiar | null) || [],
+          });
       })
       .catch((erro) => {
         if (vivo && estado.obter().geracao === pedidoEm)
           setAviso({
-            texto: `Não foi possível carregar os editais de origem: ${erro?.message || erro}`,
+            texto: `Não foi possível carregar os editais de origem: ${(erro as Error | null)?.message || erro}`,
             tom: "error",
           });
       });
@@ -60,7 +120,7 @@ function CopiaDeCronograma({ estado, idAtual, aoCopiar }) {
   const opcoes = carregado
     ? editaisComCronogramaParaCopiar(catalogo.lista, idAtual)
     : [];
-  const avisoVisivel =
+  const avisoVisivel: AvisoDoEditor | null =
     aviso ||
     (carregado && !opcoes.length
       ? {
@@ -80,7 +140,9 @@ function CopiaDeCronograma({ estado, idAtual, aoCopiar }) {
       return;
     setCopiando(true);
     try {
-      const dados = await estado.lerCronograma(origem);
+      const dados = (await estado.lerCronograma(
+        origem,
+      )) as CronogramaNoBanco | null;
       const etapas = Array.isArray(dados?.etapas) ? dados.etapas : [];
       if (!etapas.length)
         throw new Error("O edital selecionado não possui etapas cadastradas.");
@@ -104,7 +166,7 @@ function CopiaDeCronograma({ estado, idAtual, aoCopiar }) {
       });
     } catch (erro) {
       setAviso({
-        texto: `Erro ao copiar cronograma: ${erro?.message || erro}`,
+        texto: `Erro ao copiar cronograma: ${(erro as Error | null)?.message || erro}`,
         tom: "error",
       });
     } finally {
@@ -165,7 +227,13 @@ function CopiaDeCronograma({ estado, idAtual, aoCopiar }) {
   );
 }
 
-function Validacao({ erroDeCarga, analise }) {
+function Validacao({
+  erroDeCarga,
+  analise,
+}: {
+  erroDeCarga: string;
+  analise: AnaliseDoCronograma;
+}) {
   if (erroDeCarga)
     return (
       <div id="cronogramaValidation" className="cronograma-validation">
@@ -214,9 +282,19 @@ function Validacao({ erroDeCarga, analise }) {
   );
 }
 
-function LoteDeDatas({ aberto, aoFechar, aoAplicar, campo }) {
+function LoteDeDatas({
+  aberto,
+  aoFechar,
+  aoAplicar,
+  campo,
+}: {
+  aberto: boolean;
+  aoFechar: () => void;
+  aoAplicar: (texto: string) => AvisoDoEditor;
+  campo: RefObject<HTMLTextAreaElement | null>;
+}) {
   const [texto, setTexto] = useState("");
-  const [aviso, setAviso] = useState(null);
+  const [aviso, setAviso] = useState<AvisoDoEditor | null>(null);
   return (
     <section
       id="cronogramaBulkDates"
@@ -267,7 +345,11 @@ function LoteDeDatas({ aberto, aoFechar, aoAplicar, campo }) {
   );
 }
 
-function HistoricoDoCronograma({ historico }) {
+function HistoricoDoCronograma({
+  historico,
+}: {
+  historico: RegistroDoHistoricoDoCronograma[];
+}) {
   return (
     <section className="cronograma-history-section">
       <div className="cronograma-history-heading">
@@ -327,15 +409,20 @@ export function EditorDeCronograma({
   previa,
   analise,
   aoMudar,
-}) {
+}: PropriedadesDoEditorDeCronograma) {
   const [loteAberto, setLoteAberto] = useState(false);
-  const campoDoLote = useRef(null);
-  const tabela = useRef(null);
+  const campoDoLote = useRef<HTMLTextAreaElement>(null);
+  const tabela = useRef<HTMLDivElement>(null);
   const c = cronograma;
   const excepcional = Boolean(txt(c.statusExcepcional));
 
-  const mudar = (mudancas) => aoMudar((atual) => ({ ...atual, ...mudancas }));
-  const mudarEtapa = (indice, campo, valor) =>
+  const mudar = (mudancas: Partial<CronogramaDoFormulario>) =>
+    aoMudar((atual) => ({ ...atual, ...mudancas }));
+  const mudarEtapa = (
+    indice: number,
+    campo: "atividade" | "data_inicio" | "data_fim",
+    valor: string,
+  ) =>
     aoMudar((atual) => ({
       ...atual,
       etapas: atual.etapas.map((etapa, i) => {
@@ -380,7 +467,7 @@ export function EditorDeCronograma({
       mudar({ etapas: [] });
   }
 
-  function aplicarLote(texto) {
+  function aplicarLote(texto: string) {
     const { etapas, aviso } = aplicarDatasEmLote(c.etapas, texto);
     if (aviso.tom !== "error") {
       mudar({ etapas, automatico: true });

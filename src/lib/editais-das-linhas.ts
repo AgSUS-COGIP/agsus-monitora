@@ -20,15 +20,32 @@
 
 const VALORES_DE_ATIVO = ["sim", "s", "ativo", "1", "true", "x"];
 
-function texto(valor) {
+/** Uma linha da view do painel: só os campos do edital interessam aqui. */
+export type LinhaComEdital = Readonly<Record<string, unknown>>;
+
+/** Um edital com a janela oficial de análise (type, não interface: cabe em Record). */
+export type EditalDasLinhas = {
+  grupo: string | null;
+  unidade: string;
+  edital: string;
+  ativo: boolean;
+  data_inicio_analise: string | null;
+  data_fim_analise: string | null;
+};
+
+function texto(valor: unknown) {
   return String(valor ?? "").trim();
 }
 
-function normalizar(valor) {
+function normalizar(valor: unknown) {
   return texto(valor).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
-export function chaveDoEdital(grupo, unidade, edital) {
+export function chaveDoEdital(
+  grupo: unknown,
+  unidade: unknown,
+  edital: unknown,
+): string {
   return [normalizar(grupo), normalizar(unidade), normalizar(edital)].join("|");
 }
 
@@ -36,7 +53,7 @@ export function chaveDoEdital(grupo, unidade, edital) {
   A situação chega ora como booleano da view, ora como texto vindo da planilha
   ("SIM", "x", "1"). O retorno é sempre booleano.
 */
-export function editalEstaAtivo(valor) {
+export function editalEstaAtivo(valor: unknown): boolean {
   if (typeof valor === "boolean") return valor;
   return VALORES_DE_ATIVO.includes(normalizar(valor));
 }
@@ -50,8 +67,10 @@ export function editalEstaAtivo(valor) {
   linhas do edital. Se um dia deixar de ser, a divergência é descartada aqui em
   silêncio, e é neste ponto que a checagem teria de entrar.
 */
-export function editaisDasLinhas(linhas) {
-  const porChave = new Map();
+export function editaisDasLinhas(
+  linhas: readonly (LinhaComEdital | null | undefined)[] | null | undefined,
+): EditalDasLinhas[] {
+  const porChave = new Map<string, EditalDasLinhas>();
 
   for (const linha of Array.isArray(linhas) ? linhas : []) {
     const grupo = texto(linha?.grupo);
@@ -59,7 +78,7 @@ export function editaisDasLinhas(linhas) {
     const edital = texto(linha?.edital);
     if (!unidade || !edital) continue;
 
-    const novo = {
+    const novo: EditalDasLinhas = {
       grupo: grupo || null,
       unidade,
       edital,

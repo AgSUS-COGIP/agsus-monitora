@@ -42,7 +42,7 @@ export const ORDEM_DAS_FASES = Object.freeze([
 ]);
 
 /** Minúsculas, sem acento, só letras/números e espaço simples. */
-export function normalizarAtividade(texto) {
+export function normalizarAtividade(texto: unknown): string {
   return String(texto ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -67,7 +67,7 @@ const EDITAL = /\b(edital|impugna\w*|elabora\w*|publicacao)\b/;
  * "Convocação para entrevista" é Entrevistas e "Prazo de recurso do resultado
  * final" é Recursos.
  */
-export function faseDaAtividade(texto) {
+export function faseDaAtividade(texto: unknown): string | null {
   const t = normalizarAtividade(texto).replace(/^aguardando\s+/, "");
   if (!t) return null;
   if (t.includes("cronograma pendente")) return "Sem cronograma";
@@ -84,10 +84,18 @@ export function faseDaAtividade(texto) {
   return "Outra";
 }
 
-const status = (linha) => normalizarAtividade(linha?.status);
+/** O que a fase lê da linha do monitoramento. */
+export interface LinhaDaFase {
+  status?: unknown;
+  cronograma_atividade_atual?: unknown;
+  etapa?: unknown;
+}
+
+const status = (linha: LinhaDaFase | null | undefined) =>
+  normalizarAtividade(linha?.status);
 
 /** A fase do edital: o status primeiro, depois a atividade do cronograma. */
-export function faseDoEdital(linha) {
+export function faseDoEdital(linha: LinhaDaFase | null | undefined): string {
   const s = status(linha);
   if (s.includes("cancel")) return "Cancelado";
   if (s.includes("conclu")) return "Concluído";
@@ -99,7 +107,7 @@ export function faseDoEdital(linha) {
 }
 
 /** O tom de cada fase (cor dos tokens). */
-export function tomDaFase(fase) {
+export function tomDaFase(fase: string | null | undefined): string {
   switch (fase) {
     case "Inscrições":
     case "Entrevistas":

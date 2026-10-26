@@ -40,40 +40,72 @@ const COLUNAS = Object.freeze({
   convocados: ["TOTAL CONVOCADOS PARA ENTREVISTA"],
 });
 
-const OBRIGATORIAS = Object.freeze(["vaga", "edital", "inscritos"]);
+type CampoDaAba = keyof typeof COLUNAS;
 
-export const CAMPOS_NUMERICOS = Object.freeze([
+const OBRIGATORIAS: readonly CampoDaAba[] = Object.freeze([
+  "vaga",
+  "edital",
   "inscritos",
-  "aptos",
-  "cancelados",
-  "reprovados_questionario",
-  "eliminados_nota",
-  "reprovados_analise",
-  "triados",
-  "total_eliminados",
-  "convocados",
 ]);
 
-const texto = (valor) =>
+export type CampoNumericoDaSelecao =
+  | "inscritos"
+  | "aptos"
+  | "cancelados"
+  | "reprovados_questionario"
+  | "eliminados_nota"
+  | "reprovados_analise"
+  | "triados"
+  | "total_eliminados"
+  | "convocados";
+
+/** Uma linha de `public.sincronizar_selecao`. */
+export type LinhaDaSelecao = {
+  edital: string;
+  vaga: string;
+  unidade: string;
+  cargo: string;
+  observacao: string;
+  /** 1, 2, 3… para vagas de mesmo nome com números diferentes. */
+  repeticao?: number;
+} & Record<CampoNumericoDaSelecao, number | null>;
+
+export const CAMPOS_NUMERICOS: readonly CampoNumericoDaSelecao[] =
+  Object.freeze([
+    "inscritos",
+    "aptos",
+    "cancelados",
+    "reprovados_questionario",
+    "eliminados_nota",
+    "reprovados_analise",
+    "triados",
+    "total_eliminados",
+    "convocados",
+  ]);
+
+const texto = (valor: unknown): string =>
   String(valor ?? "")
     .replace(/\s+/g, " ")
     .trim();
 
 /* Só nome exato: "TRIADOS" não pode pegar "TRIADOS SEGUNDA EXTRACAO". */
-function acharColuna(cabecalho, nomes) {
+function acharColuna(
+  cabecalho: readonly string[],
+  nomes: readonly string[],
+): number {
   const alvos = nomes.map(normalizarCabecalho);
   return cabecalho.findIndex((c) => alvos.includes(c));
 }
 
 /** "1.234" → 1234; "732,00" → 732; "-1" → -1; "" ou texto → null. */
-export function inteiroPtBr(valor) {
+export function inteiroPtBr(valor: unknown): number | null {
   const limpo = texto(valor).replace(/\./g, "").replace(",", ".");
   if (!/^-?\d+(\.\d+)?$/.test(limpo)) return null;
   return Math.round(Number(limpo));
 }
 
 /** "06/2026 (sanitarista)" → "6/2026"; sem número, o texto sem acento. */
-export function chaveDoEdital(edital) {
+export function chaveDoEdital(edital: unknown): string {
   const m = texto(edital).match(/(\d{1,4})\s*\/\s*(\d{4})/);
   if (m) return `${Number(m[1])}/${m[2]}`;
   return texto(edital)
@@ -83,7 +115,7 @@ export function chaveDoEdital(edital) {
 }
 
 /** Chave da linha, a mesma regra do banco: edital | código da vaga (ou cargo). */
-export function chaveDaVaga(edital, vaga) {
+export function chaveDaVaga(edital: unknown, vaga: unknown): string {
   const v = texto(vaga);
   const parteDaVaga = /^\d{1,20}$/.test(v)
     ? v
@@ -95,16 +127,18 @@ export function chaveDaVaga(edital, vaga) {
 }
 
 /** Linhas para `sincronizar_selecao` a partir da matriz da aba Resultado. */
-export function linhasDaAbaResultado(valores) {
+export function linhasDaAbaResultado(valores: unknown): LinhaDaSelecao[] {
   if (!Array.isArray(valores) || valores.length < 2) return [];
 
-  const cabecalho = (valores[0] || []).map(normalizarCabecalho);
+  const cabecalho = ((valores[0] || []) as readonly unknown[]).map(
+    normalizarCabecalho,
+  );
   const idx = Object.fromEntries(
     Object.entries(COLUNAS).map(([campo, nomes]) => [
       campo,
       acharColuna(cabecalho, nomes),
     ]),
-  );
+  ) as Record<CampoDaAba, number>;
   const faltando = OBRIGATORIAS.filter((campo) => idx[campo] < 0);
   if (faltando.length) {
     throw new Error(
@@ -113,17 +147,18 @@ export function linhasDaAbaResultado(valores) {
   }
 
   // A API corta as células vazias do fim de cada linha: índice ausente é "".
-  const celula = (linha, i) => (i < 0 ? "" : texto(linha[i]));
+  const celula = (linha: readonly unknown[], i: number) =>
+    i < 0 ? "" : texto(linha[i]);
 
   /*
     Mesma chave: cópia idêntica entra uma vez (a aba tem linhas duplicadas);
     com números diferentes é outra vaga de mesmo nome (outras bancas, sem
     código) e entra com `repeticao` 2, 3… — o banco põe "#2" na chave.
   */
-  const porChave = new Map();
-  const saida = [];
+  const porChave = new Map<string, string[]>();
+  const saida: LinhaDaSelecao[] = [];
   let copias = 0;
-  for (const linha of valores.slice(1)) {
+  for (const linha of valores.slice(1) as unknown[]) {
     if (!Array.isArray(linha)) continue;
     const vaga = celula(linha, idx.vaga);
     const edital = celula(linha, idx.edital);
@@ -135,7 +170,7 @@ export function linhasDaAbaResultado(valores) {
       unidade: celula(linha, idx.unidade),
       cargo: celula(linha, idx.cargo),
       observacao: celula(linha, idx.observacao),
-    };
+    } as LinhaDaSelecao;
     for (const campo of CAMPOS_NUMERICOS)
       registro[campo] = inteiroPtBr(celula(linha, idx[campo]));
 

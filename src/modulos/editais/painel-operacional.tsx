@@ -10,6 +10,19 @@ import {
   GradeDeKpis,
   Kpi,
 } from "../../ui/index.ts";
+import type { EstadoDoNucleo } from "./estado.ts";
+
+/** O que o painel usa do estado da página (`estado.ts`). */
+export interface EstadoDoPainelOperacional {
+  carregarResumo(opcoes?: { force?: boolean }): Promise<unknown>;
+  filtrarPor(filtro: string): void;
+}
+
+export interface PropriedadesDoPainelOperacional {
+  estado: EstadoDoPainelOperacional;
+  /** O estado com o resumo já recortado pela área. */
+  nucleo: Pick<EstadoDoNucleo, "resumo" | "statusDoResumo" | "filtro">;
+}
 
 /*
   "Cronogramas e alertas": os indicadores do resumo (`Kpi` de src/ui/, card
@@ -23,7 +36,7 @@ import {
 */
 
 /* A cor de cada indicador (`tone` de editais-do-nucleo.ts) no tom do Kpi. */
-const TOM = {
+const TOM: Partial<Record<string, string>> = {
   blue: "info",
   cyan: "info",
   green: "sucesso",
@@ -36,7 +49,10 @@ const TOM = {
 /* Os indicadores de sempre, sem número: o formato do skeleton. */
 const ESQUELETO = indicadoresDoResumo([]);
 
-export function PainelOperacional({ estado, nucleo }) {
+export function PainelOperacional({
+  estado,
+  nucleo,
+}: PropriedadesDoPainelOperacional) {
   const { resumo, statusDoResumo, filtro } = nucleo;
   const tentarDeNovo = () =>
     void estado.carregarResumo({ force: true }).catch(() => {});

@@ -17,9 +17,21 @@
   EM_ANDAMENTO no log do banco, começada há menos que o tempo limite do
   workflow) e por alguns minutos depois do pedido.
 */
+import type {
+  InputsDoPedido,
+  LinhaDaSaude,
+  OpcoesConferidas,
+  OpcoesDoRobo,
+  ResultadoDasOpcoes,
+  RoboDeCarga,
+  SituacaoDoPedido,
+} from "../componentes/saude-das-cargas/tipos.ts";
+
+/* O pedido de "Rodar com opções" como chega da tela (ainda sem conferir). */
+type PedidoBruto = Readonly<Record<string, unknown>>;
 
 /* O id é o mesmo da linha do Status das atualizações (visaoSimples). */
-export const ROBOS_DE_CARGA = Object.freeze([
+export const ROBOS_DE_CARGA: readonly RoboDeCarga[] = Object.freeze([
   Object.freeze({
     id: "empregare",
     nome: "Robô da Empregare",
@@ -72,7 +84,7 @@ export const ROBOS_DE_CARGA = Object.freeze([
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** O id de edital do pedido (uuid) ou "" (todos os editais). */
-export function editalDoPedido(valor) {
+export function editalDoPedido(valor: unknown): string {
   const texto = String(valor ?? "").trim();
   return UUID.test(texto) ? texto.toLowerCase() : "";
 }
@@ -96,100 +108,101 @@ export function editalDoPedido(valor) {
   O Só anexos grava respostas e anexos: desde 20261022170000 também pede a
   liberação no edital congelado, salvo com `seco` (só compara, não grava).
 */
-/** @type {Readonly<Record<string, import("../componentes/saude-das-cargas/tipos.ts").OpcoesDoRobo>>} */
-export const OPCOES_DOS_ROBOS = Object.freeze({
-  empregare: Object.freeze({
-    modos: Object.freeze([
-      {
-        valor: "normal",
-        rotulo: "Normal",
-        explicacao: "Exporta, baixa e grava os candidatos de cada vaga.",
-      },
-      {
-        valor: "seco",
-        rotulo: "Seco",
-        explicacao:
-          "Só lista as vagas que exportaria, sem entrar na Empregare. O resultado fica no resumo do GitHub.",
-      },
-      {
-        valor: "fumaca",
-        rotulo: "Fumaça",
-        explicacao:
-          "Só testa o login na Empregare; editais e vagas não contam.",
-      },
-      {
-        valor: "forcar",
-        rotulo: "Forçar",
-        explicacao:
-          "Grava mesmo se o arquivo vier com menos da metade dos candidatos ativos.",
-      },
-      {
-        valor: "sondar",
-        rotulo: "Sondar",
-        explicacao:
-          "Só lê a estrutura das respostas do questionário de 1 a 3 candidatos de uma vaga (diagnóstico); não grava nada.",
-      },
-      {
-        valor: "anexos",
-        rotulo: "Só anexos",
-        explicacao:
-          "Relê só os anexos do questionário: dos candidatos informados ou, sem eles, de quem respondeu depois da última captura.",
-      },
-    ]),
-    editais: "numero",
-    vagas: true,
-    limite: Object.freeze({ min: 1, max: 500, padrao: 60 }),
-    anexos: true,
-    candidatos: true,
-    seco: true,
-    forcar_congelado: Object.freeze(["normal", "forcar", "anexos"]),
-    motivo: true,
-  }),
-  pre_classificacao: Object.freeze({
-    modos: Object.freeze([
-      {
-        valor: "normal",
-        rotulo: "Normal",
-        explicacao: "Calcula e grava a Lista Provisória e o lote de cada vaga.",
-      },
-      {
-        valor: "seco",
-        rotulo: "Seco",
-        explicacao:
-          "Só calcula; nada é gravado. O resultado fica no resumo do GitHub.",
-      },
-      {
-        valor: "refazer_lote",
-        rotulo: "Refazer lote",
-        explicacao:
-          "Recorta o lote de convocação do zero. Só com todas as fichas do edital intocadas (nenhuma atribuída, aberta ou salva).",
-      },
-    ]),
-    editais: "numero_ou_id",
-    vagas: false,
-    limite: null,
-    forcar_congelado: Object.freeze(["normal", "refazer_lote"]),
-    motivo: true,
-  }),
-  conferencias: Object.freeze({
-    modos: Object.freeze([
-      {
-        valor: "normal",
-        rotulo: "Normal",
-        explicacao: "Confere e grava os avisos.",
-      },
-      {
-        valor: "seco",
-        rotulo: "Seco",
-        explicacao:
-          "Só confere; nenhum aviso muda. O resultado fica no resumo do GitHub.",
-      },
-    ]),
-    editais: null,
-    vagas: false,
-    limite: null,
-  }),
-});
+export const OPCOES_DOS_ROBOS: Readonly<Record<string, OpcoesDoRobo>> =
+  Object.freeze({
+    empregare: Object.freeze({
+      modos: Object.freeze([
+        {
+          valor: "normal",
+          rotulo: "Normal",
+          explicacao: "Exporta, baixa e grava os candidatos de cada vaga.",
+        },
+        {
+          valor: "seco",
+          rotulo: "Seco",
+          explicacao:
+            "Só lista as vagas que exportaria, sem entrar na Empregare. O resultado fica no resumo do GitHub.",
+        },
+        {
+          valor: "fumaca",
+          rotulo: "Fumaça",
+          explicacao:
+            "Só testa o login na Empregare; editais e vagas não contam.",
+        },
+        {
+          valor: "forcar",
+          rotulo: "Forçar",
+          explicacao:
+            "Grava mesmo se o arquivo vier com menos da metade dos candidatos ativos.",
+        },
+        {
+          valor: "sondar",
+          rotulo: "Sondar",
+          explicacao:
+            "Só lê a estrutura das respostas do questionário de 1 a 3 candidatos de uma vaga (diagnóstico); não grava nada.",
+        },
+        {
+          valor: "anexos",
+          rotulo: "Só anexos",
+          explicacao:
+            "Relê só os anexos do questionário: dos candidatos informados ou, sem eles, de quem respondeu depois da última captura.",
+        },
+      ]),
+      editais: "numero",
+      vagas: true,
+      limite: Object.freeze({ min: 1, max: 500, padrao: 60 }),
+      anexos: true,
+      candidatos: true,
+      seco: true,
+      forcar_congelado: Object.freeze(["normal", "forcar", "anexos"]),
+      motivo: true,
+    }),
+    pre_classificacao: Object.freeze({
+      modos: Object.freeze([
+        {
+          valor: "normal",
+          rotulo: "Normal",
+          explicacao:
+            "Calcula e grava a Lista Provisória e o lote de cada vaga.",
+        },
+        {
+          valor: "seco",
+          rotulo: "Seco",
+          explicacao:
+            "Só calcula; nada é gravado. O resultado fica no resumo do GitHub.",
+        },
+        {
+          valor: "refazer_lote",
+          rotulo: "Refazer lote",
+          explicacao:
+            "Recorta o lote de convocação do zero. Só com todas as fichas do edital intocadas (nenhuma atribuída, aberta ou salva).",
+        },
+      ]),
+      editais: "numero_ou_id",
+      vagas: false,
+      limite: null,
+      forcar_congelado: Object.freeze(["normal", "refazer_lote"]),
+      motivo: true,
+    }),
+    conferencias: Object.freeze({
+      modos: Object.freeze([
+        {
+          valor: "normal",
+          rotulo: "Normal",
+          explicacao: "Confere e grava os avisos.",
+        },
+        {
+          valor: "seco",
+          rotulo: "Seco",
+          explicacao:
+            "Só confere; nenhum aviso muda. O resultado fica no resumo do GitHub.",
+        },
+      ]),
+      editais: null,
+      vagas: false,
+      limite: null,
+    }),
+  });
 
 export const MAXIMO_DE_EDITAIS = 100;
 export const MAXIMO_DE_VAGAS = 500;
@@ -218,13 +231,15 @@ export const MAXIMO_DE_CANDIDATOS = 1000;
  * Códigos de vaga colados (vírgula, ponto e vírgula, espaço ou linha):
  * { codigos } só com dígitos, sem repetir, e { invalidos } — o resto.
  */
-/** @param {unknown} texto @returns {{ codigos: string[], invalidos: string[] }} */
-export function separarCodigos(texto) {
+export function separarCodigos(texto: unknown): {
+  codigos: string[];
+  invalidos: string[];
+} {
   const partes = (Array.isArray(texto) ? texto : [texto])
     .flatMap((t) => String(t ?? "").split(/[\s,;]+/))
     .filter(Boolean);
-  const codigos = [];
-  const invalidos = [];
+  const codigos: string[] = [];
+  const invalidos: string[] = [];
   for (const parte of partes) {
     const lista = CODIGO_DE_VAGA.test(parte) ? codigos : invalidos;
     if (!lista.includes(parte)) lista.push(parte);
@@ -232,7 +247,7 @@ export function separarCodigos(texto) {
   return { codigos, invalidos };
 }
 
-const listaDoPedido = (valor) =>
+const listaDoPedido = (valor: unknown): string[] =>
   (Array.isArray(valor) ? valor : String(valor ?? "").split(","))
     .map((v) => String(v ?? "").trim())
     .filter(Boolean);
@@ -242,13 +257,11 @@ const listaDoPedido = (valor) =>
  * Devolve { opcoes: { modo, editais, vagas, limite } } ou
  * { erro: <código>, texto } — texto curto para a tela.
  */
-/**
- * @param {import("../componentes/saude-das-cargas/tipos.ts").RoboDeCarga | null} robo
- * @param {unknown} bruto
- * @returns {import("../componentes/saude-das-cargas/tipos.ts").ResultadoDasOpcoes}
- */
-export function validarOpcoes(robo, bruto) {
-  const aceitas = OPCOES_DOS_ROBOS[robo?.id];
+export function validarOpcoes(
+  robo: RoboDeCarga | null,
+  bruto: unknown,
+): ResultadoDasOpcoes {
+  const aceitas = OPCOES_DOS_ROBOS[robo?.id as string];
   if (!aceitas)
     return {
       erro: "sem_opcoes",
@@ -257,7 +270,7 @@ export function validarOpcoes(robo, bruto) {
   if (!bruto || typeof bruto !== "object" || Array.isArray(bruto))
     return { erro: "opcoes_invalidas", texto: "Opções inválidas." };
   for (const chave of Object.keys(bruto)) {
-    const valor = bruto[chave];
+    const valor = (bruto as PedidoBruto)[chave];
     const vazio =
       valor === null ||
       valor === undefined ||
@@ -267,21 +280,22 @@ export function validarOpcoes(robo, bruto) {
       (Array.isArray(valor) && !valor.length);
     if (
       !CHAVES_DAS_OPCOES.includes(chave) ||
-      (!aceitas[chave] && !vazio && chave !== "modo")
+      (!aceitas[chave as keyof OpcoesDoRobo] && !vazio && chave !== "modo")
     )
       return {
         erro: "opcao_nao_aceita",
-        texto: `${robo.nome} não aceita “${String(chave).slice(0, 30)}”.`,
+        texto: `${robo!.nome} não aceita “${String(chave).slice(0, 30)}”.`,
       };
   }
 
-  const modo = String(bruto.modo ?? "normal").trim() || "normal";
+  const modo =
+    String((bruto as PedidoBruto).modo ?? "normal").trim() || "normal";
   if (!aceitas.modos.some((m) => m.valor === modo))
     return { erro: "modo_invalido", texto: "Modo inválido para este robô." };
 
-  const editais = [];
+  const editais: string[] = [];
   if (aceitas.editais)
-    for (const texto of listaDoPedido(bruto.editais)) {
+    for (const texto of listaDoPedido((bruto as PedidoBruto).editais)) {
       const id = editalDoPedido(texto);
       const valido =
         NUMERO_DO_EDITAL.test(texto) ||
@@ -303,9 +317,11 @@ export function validarOpcoes(robo, bruto) {
       texto: `No máximo ${MAXIMO_DE_EDITAIS} editais por vez.`,
     };
 
-  let vagas = [];
+  let vagas: string[] = [];
   if (aceitas.vagas) {
-    const { codigos, invalidos } = separarCodigos(bruto.vagas ?? "");
+    const { codigos, invalidos } = separarCodigos(
+      (bruto as PedidoBruto).vagas ?? "",
+    );
     if (invalidos.length)
       return {
         erro: "vaga_invalida",
@@ -319,8 +335,8 @@ export function validarOpcoes(robo, bruto) {
     vagas = codigos;
   }
 
-  let limite = null;
-  const textoDoLimite = String(bruto.limite ?? "").trim();
+  let limite: number | null = null;
+  const textoDoLimite = String((bruto as PedidoBruto).limite ?? "").trim();
   if (aceitas.limite && textoDoLimite) {
     const numero = /^\d{1,3}$/.test(textoDoLimite)
       ? Number(textoDoLimite)
@@ -348,16 +364,19 @@ export function validarOpcoes(robo, bruto) {
 
   const anexos =
     Boolean(aceitas.anexos) &&
-    (bruto.anexos === true || bruto.anexos === "true");
+    ((bruto as PedidoBruto).anexos === true ||
+      (bruto as PedidoBruto).anexos === "true");
   if (anexos && !MODOS_COM_ANEXOS.includes(modo))
     return {
       erro: "anexos_no_modo",
       texto: "Guardar os links dos anexos só nos modos Normal e Forçar.",
     };
 
-  let candidatos = [];
+  let candidatos: string[] = [];
   if (aceitas.candidatos) {
-    const { codigos, invalidos } = separarCodigos(bruto.candidatos ?? "");
+    const { codigos, invalidos } = separarCodigos(
+      (bruto as PedidoBruto).candidatos ?? "",
+    );
     if (invalidos.length)
       return {
         erro: "candidato_invalido",
@@ -371,7 +390,9 @@ export function validarOpcoes(robo, bruto) {
     candidatos = codigos;
   }
   const seco =
-    Boolean(aceitas.seco) && (bruto.seco === true || bruto.seco === "true");
+    Boolean(aceitas.seco) &&
+    ((bruto as PedidoBruto).seco === true ||
+      (bruto as PedidoBruto).seco === "true");
   if (modo === MODO_SO_ANEXOS && !vagas.length && !editais.length)
     return {
       erro: "anexos_sem_vagas",
@@ -387,10 +408,11 @@ export function validarOpcoes(robo, bruto) {
   // gravam, com o edital ou as vagas pedidos e o motivo.
   const forcarCongelado =
     Array.isArray(aceitas.forcar_congelado) &&
-    (bruto.forcar_congelado === true || bruto.forcar_congelado === "true");
-  const motivo = String(bruto.motivo ?? "").trim();
+    ((bruto as PedidoBruto).forcar_congelado === true ||
+      (bruto as PedidoBruto).forcar_congelado === "true");
+  const motivo = String((bruto as PedidoBruto).motivo ?? "").trim();
   if (forcarCongelado) {
-    if (!aceitas.forcar_congelado.includes(modo) || seco)
+    if (!aceitas.forcar_congelado!.includes(modo) || seco)
       return {
         erro: "congelado_no_modo",
         texto:
@@ -429,8 +451,7 @@ export function validarOpcoes(robo, bruto) {
   };
 }
 
-/** @param {unknown} id @returns {import("../componentes/saude-das-cargas/tipos.ts").RoboDeCarga | null} */
-export const roboDeCarga = (id) =>
+export const roboDeCarga = (id: unknown): RoboDeCarga | null =>
   ROBOS_DE_CARGA.find((r) => r.id === String(id || "")) || null;
 
 /* Depois do clique, o botão espera até o GitHub mostrar a execução. */
@@ -442,16 +463,18 @@ export const ESPERA_DO_PEDIDO_MIN = 3;
  *   pedidoEm  Date do último clique nesta tela, ou null
  * Devolve { desabilitado, rotulo }.
  */
-/**
- * @param {{ robo: import("../componentes/saude-das-cargas/tipos.ts").RoboDeCarga, linha: import("../componentes/saude-das-cargas/tipos.ts").LinhaDaSaude, pedidoEm?: Date | null, agora?: Date }} props
- */
 export function estadoDoBotao({
   robo,
   linha,
   pedidoEm = null,
   agora = new Date(),
-}) {
-  const minutos = (d) =>
+}: {
+  robo: RoboDeCarga;
+  linha: LinhaDaSaude | null | undefined;
+  pedidoEm?: Date | null;
+  agora?: Date;
+}): { desabilitado: boolean; rotulo: string } {
+  const minutos = (d: Date | null | undefined) =>
     d instanceof Date ? (agora.getTime() - d.getTime()) / 60000 : Infinity;
   const ultima = linha?.partes?.[0]?.ultima;
   if (
@@ -473,16 +496,18 @@ export const MENSAGEM_DA_CHAVE =
   "A chave de disparo dos robôs expirou ou foi recusada; um administrador precisa trocá-la no cofre (Vault) com o nome github_disparo_robos.";
 
 /* Os códigos HTTP do GitHub que querem dizer "a chave não serve". */
-const CHAVE_RECUSADA = new Set([401, 403, 404]);
+const CHAVE_RECUSADA = new Set<number | null>([401, 403, 404]);
 
 /**
  * O que vai em p_inputs de disparar_robo: as opções já conferidas por
  * validarOpcoes (modo, editais, vagas, limite, anexos) ou, no Recalcular da
  * coordenação, só o edital. Sem nada, {} (o banco usa o modo normal).
  */
-/** @param {{ opcoes?: import("../componentes/saude-das-cargas/tipos.ts").OpcoesConferidas | null, edital?: string }} [pedido] @returns {import("../componentes/saude-das-cargas/tipos.ts").InputsDoPedido} */
-export function inputsDoPedido({ opcoes = null, edital = "" } = {}) {
-  const inputs = {};
+export function inputsDoPedido({
+  opcoes = null,
+  edital = "",
+}: { opcoes?: OpcoesConferidas | null; edital?: string } = {}): InputsDoPedido {
+  const inputs: InputsDoPedido = {};
   if (opcoes?.modo) inputs.modo = opcoes.modo;
   if (opcoes?.editais?.length) inputs.editais = [...opcoes.editais];
   if (opcoes?.vagas?.length) inputs.vagas = [...opcoes.vagas];
@@ -504,12 +529,12 @@ export function inputsDoPedido({ opcoes = null, edital = "" } = {}) {
  * A resposta de situacao_do_disparo_robo em { situacao, http, mensagem,
  * terminou, aviso } — `aviso` ({ tom, texto }) só quando o GitHub não aceitou.
  */
-/** @param {unknown} entrada @returns {import("../componentes/saude-das-cargas/tipos.ts").SituacaoDoPedido} */
-export function situacaoDoPedido(entrada) {
-  const bruta =
+export function situacaoDoPedido(entrada: unknown): SituacaoDoPedido {
+  const bruta = (
     entrada !== null && typeof entrada === "object" && !Array.isArray(entrada)
       ? entrada
-      : {};
+      : {}
+  ) as { situacao?: unknown; http?: unknown; mensagem?: unknown };
   const situacao =
     typeof bruta.situacao === "string" && bruta.situacao
       ? bruta.situacao
@@ -522,7 +547,7 @@ export function situacaoDoPedido(entrada) {
       : null;
   const mensagem =
     typeof bruta.mensagem === "string" ? bruta.mensagem.trim() : "";
-  let aviso = null;
+  let aviso: SituacaoDoPedido["aviso"] = null;
   if (
     situacao === "SEM_TOKEN" ||
     (situacao === "FALHOU" && CHAVE_RECUSADA.has(http))
@@ -543,14 +568,15 @@ export function situacaoDoPedido(entrada) {
   };
 }
 
+type ErroDoDisparo = { code?: unknown; message?: unknown } | null | undefined;
+
 /* O erro da RPC em frase curta para a tela (a mensagem do banco já é em pt-BR). */
-/** @param {unknown} erro @param {string} [padrao] @returns {string} */
 export function mensagemDoErroDoDisparo(
-  erro,
+  erro: unknown,
   padrao = "Não consegui pedir a carga.",
-) {
-  if (erro?.code === "PGRST202")
+): string {
+  if ((erro as ErroDoDisparo)?.code === "PGRST202")
     return "O banco ainda não tem o disparo dos robôs (migration 20261008140000).";
-  const texto = String(erro?.message || "").trim();
+  const texto = String((erro as ErroDoDisparo)?.message || "").trim();
   return texto || padrao;
 }

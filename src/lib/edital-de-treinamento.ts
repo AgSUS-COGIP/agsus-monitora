@@ -12,29 +12,43 @@
 export const ROTULO_DO_TREINAMENTO = "Treinamento";
 export const MARCA_SEM_VALOR_OFICIAL = "TREINAMENTO — SEM VALOR OFICIAL";
 
+/** Os campos que marcam o edital de treinamento (linha ou item de RPC). */
+export interface MarcaDeTreinamento {
+  treinamento?: unknown;
+  ST_TREINAMENTO?: unknown;
+  st_treinamento?: unknown;
+}
+
 /** O edital (linha do monitoramento ou item de RPC) é de treinamento? */
-export function ehEditalDeTreinamento(edital) {
+export function ehEditalDeTreinamento(edital: unknown): boolean {
   if (!edital || typeof edital !== "object") return false;
-  if (edital.treinamento === true) return true;
-  const marca = edital.ST_TREINAMENTO ?? edital.st_treinamento;
+  if ((edital as MarcaDeTreinamento).treinamento === true) return true;
+  const marca =
+    (edital as MarcaDeTreinamento).ST_TREINAMENTO ??
+    (edital as MarcaDeTreinamento).st_treinamento;
   return String(marca ?? "").toUpperCase() === "S";
 }
 
 /** As linhas sem os editais de treinamento (indicadores, mapas, painéis). */
-export function semTreinamento(linhas) {
+export function semTreinamento<T>(
+  linhas: readonly T[] | null | undefined,
+): T[] {
   const lista = Array.isArray(linhas) ? linhas : [];
   return lista.some(ehEditalDeTreinamento)
     ? lista.filter((linha) => !ehEditalDeTreinamento(linha))
-    : lista;
+    : (lista as T[]);
 }
 
 /** O sufixo do edital no `<option>` do seletor (o `<option>` não leva selo). */
-export function sufixoDeTreinamento(edital) {
+export function sufixoDeTreinamento(edital: unknown): string {
   return ehEditalDeTreinamento(edital) ? ` · ${ROTULO_DO_TREINAMENTO}` : "";
 }
 
 /** O edital escolhido na lista (para o selo no topo da tela). */
-export function editalEscolhido(editais, id) {
+export function editalEscolhido<T extends { id?: unknown }>(
+  editais: readonly T[] | null | undefined,
+  id: unknown,
+): T | null {
   if (!id) return null;
   return (
     (Array.isArray(editais) ? editais : []).find(

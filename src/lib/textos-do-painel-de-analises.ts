@@ -16,22 +16,26 @@
   expressão da RPC.
 */
 import { ehAreaSaudeIndigena } from "./area-do-painel-de-analises.ts";
+import type { RegistroDaAnalise } from "../modulos/analises/tipos.ts";
 
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) => String(valor ?? "").trim();
 
 /* A mesma expressão de 20260928200000 (regexp_match no Postgres). */
 const PADRAO_DA_UBS_MOVEL = /UBS m[óo]vel ([^/]+)\/([A-Z]{2})/;
 
 /** "… UBS móvel Seropédica/RJ …" → "Seropédica/RJ"; sem UBS móvel, null. */
-export function municipioUfDaVaga(nomeDaVaga) {
+export function municipioUfDaVaga(nomeDaVaga: unknown): string | null {
   const partes = String(nomeDaVaga ?? "").match(PADRAO_DA_UBS_MOVEL);
   if (!partes) return null;
-  const municipio = partes[1].trim();
+  const municipio = partes[1]!.trim();
   return municipio ? `${municipio}/${partes[2]}` : null;
 }
 
 /** Município/UF da linha: o do payload ou, sem ele, o do nome da vaga. Na Saúde Indígena, sempre null. */
-export function municipioUfDaLinha(linha, area) {
+export function municipioUfDaLinha(
+  linha: Readonly<RegistroDaAnalise> | null | undefined,
+  area: unknown,
+): string | null {
   if (ehAreaSaudeIndigena(area)) return null;
   const doPayload = texto(linha?.municipio_uf);
   if (doPayload) return doPayload;
@@ -39,7 +43,7 @@ export function municipioUfDaLinha(linha, area) {
 }
 
 /** A linha veio sem o parecer (payload leve) e ele precisa ser buscado? */
-export function linhaSemParecer(linha) {
+export function linhaSemParecer(linha: unknown): boolean {
   return Boolean(
     linha &&
     typeof linha === "object" &&
@@ -48,7 +52,7 @@ export function linhaSemParecer(linha) {
 }
 
 /** Alguma linha da lista ainda está sem o parecer? */
-export function haLinhasSemParecer(linhas) {
+export function haLinhasSemParecer(linhas: unknown): boolean {
   return Array.isArray(linhas) && linhas.some(linhaSemParecer);
 }
 
@@ -56,19 +60,25 @@ export function haLinhasSemParecer(linhas) {
   `{ columns: ["id", "analise", "link_pdf", …], rows: [[id, …], …] }` →
   Map(id → { analise, link_pdf, … }): as colunas pelo nome, menos o id.
 */
-export function mapaDosTextos(payload) {
-  const mapa = new Map();
-  const colunas = Array.isArray(payload?.columns) ? payload.columns : [];
-  const linhas = Array.isArray(payload?.rows) ? payload.rows : [];
+export function mapaDosTextos(
+  payload: { columns?: unknown; rows?: unknown } | null | undefined,
+): Map<string, RegistroDaAnalise> {
+  const mapa = new Map<string, RegistroDaAnalise>();
+  const colunas: readonly unknown[] = Array.isArray(payload?.columns)
+    ? payload.columns
+    : [];
+  const linhas: readonly unknown[] = Array.isArray(payload?.rows)
+    ? payload.rows
+    : [];
   const posId = colunas.indexOf("id");
   if (posId < 0 || !colunas.includes("analise")) return mapa;
   linhas.forEach((valores) => {
     if (!Array.isArray(valores)) return;
     const id = texto(valores[posId]);
     if (!id) return;
-    const campos = {};
+    const campos: RegistroDaAnalise = {};
     colunas.forEach((coluna, pos) => {
-      if (pos !== posId) campos[coluna] = valores[pos] ?? null;
+      if (pos !== posId) campos[coluna as string] = valores[pos] ?? null;
     });
     mapa.set(id, campos);
   });
@@ -82,8 +92,11 @@ export function mapaDosTextos(payload) {
   não é trocado. Devolve as linhas alteradas (as mesmas referências), para o
   chamador refazer o que depende do texto (a busca).
 */
-export function mesclarTextos(linhas, mapa) {
-  const alteradas = [];
+export function mesclarTextos(
+  linhas: readonly RegistroDaAnalise[] | null | undefined,
+  mapa: ReadonlyMap<string, RegistroDaAnalise> | null | undefined,
+): RegistroDaAnalise[] {
+  const alteradas: RegistroDaAnalise[] = [];
   if (!Array.isArray(linhas) || !(mapa instanceof Map)) return alteradas;
   linhas.forEach((linha) => {
     if (!linhaSemParecer(linha)) return;
@@ -100,8 +113,8 @@ export function mesclarTextos(linhas, mapa) {
 }
 
 /** O parecer que o detalhe devolveu (`{ id, analise, … }`), ou null. */
-export function parecerDoDetalhe(payload) {
-  const dados = Array.isArray(payload) ? payload[0] : payload;
+export function parecerDoDetalhe(payload: unknown): unknown {
+  const dados: unknown = Array.isArray(payload) ? payload[0] : payload;
   if (!dados || typeof dados !== "object") return null;
-  return dados.analise ?? null;
+  return (dados as { analise?: unknown }).analise ?? null;
 }

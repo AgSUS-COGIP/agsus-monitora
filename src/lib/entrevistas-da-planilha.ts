@@ -32,9 +32,38 @@ const COLUNAS = Object.freeze({
   compareceu: ["COMPARECIMENTO"],
 });
 
-const OBRIGATORIAS = Object.freeze(["unidade", "edital", "vaga", "candidato"]);
+type CampoDaAba = keyof typeof COLUNAS;
 
-export function normalizarCabecalho(valor) {
+const OBRIGATORIAS: readonly CampoDaAba[] = Object.freeze([
+  "unidade",
+  "edital",
+  "vaga",
+  "candidato",
+]);
+
+/** Nota de um critério da entrevista ("Critério N" / "Nota N"). */
+export interface NotaDoCriterio {
+  criterio: string;
+  nota: string;
+}
+
+/** Uma linha de `public.sincronizar_entrevistas`. */
+export interface LinhaDaEntrevista {
+  unidade: string;
+  edital: string;
+  vaga: string;
+  candidato: string;
+  codigo: string;
+  modalidade: string;
+  cargo: string;
+  nota: string;
+  parecer: string;
+  compareceu: string;
+  link: string;
+  notas: NotaDoCriterio[];
+}
+
+export function normalizarCabecalho(valor: unknown): string {
   return String(valor ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -43,13 +72,16 @@ export function normalizarCabecalho(valor) {
     .trim();
 }
 
-function texto(valor) {
+function texto(valor: unknown): string {
   return String(valor ?? "")
     .replace(/\s+/g, " ")
     .trim();
 }
 
-function acharColuna(cabecalho, nomes) {
+function acharColuna(
+  cabecalho: readonly string[],
+  nomes: readonly string[],
+): number {
   const alvos = nomes.map(normalizarCabecalho);
   const exato = cabecalho.findIndex((c) => alvos.includes(c));
   if (exato >= 0) return exato;
@@ -57,16 +89,20 @@ function acharColuna(cabecalho, nomes) {
 }
 
 /** Linhas para `sincronizar_entrevistas` a partir da matriz da aba. */
-export function linhasDaAbaEntrevistados(valores) {
+export function linhasDaAbaEntrevistados(
+  valores: unknown,
+): LinhaDaEntrevista[] {
   if (!Array.isArray(valores) || valores.length < 2) return [];
 
-  const cabecalho = (valores[0] || []).map(normalizarCabecalho);
+  const cabecalho = ((valores[0] || []) as readonly unknown[]).map(
+    normalizarCabecalho,
+  );
   const idx = Object.fromEntries(
     Object.entries(COLUNAS).map(([campo, nomes]) => [
       campo,
       acharColuna(cabecalho, nomes),
     ]),
-  );
+  ) as Record<CampoDaAba, number>;
   const faltando = OBRIGATORIAS.filter((campo) => idx[campo] < 0);
   if (faltando.length) {
     throw new Error(
@@ -74,7 +110,7 @@ export function linhasDaAbaEntrevistados(valores) {
     );
   }
 
-  const criterios = [];
+  const criterios: { c: number; v: number }[] = [];
   for (let n = 1; n <= MAX_CRITERIOS; n++) {
     const c = cabecalho.indexOf(`CRITERIO ${n}`);
     const v = cabecalho.indexOf(`NOTA ${n}`);
@@ -83,10 +119,11 @@ export function linhasDaAbaEntrevistados(valores) {
   }
 
   // A API corta as células vazias do fim de cada linha: índice ausente é "".
-  const celula = (linha, i) => (i < 0 ? "" : texto(linha[i]));
+  const celula = (linha: readonly unknown[], i: number) =>
+    i < 0 ? "" : texto(linha[i]);
 
-  const saida = [];
-  for (const linha of valores.slice(1)) {
+  const saida: LinhaDaEntrevista[] = [];
+  for (const linha of valores.slice(1) as unknown[]) {
     if (!Array.isArray(linha)) continue;
     const candidato = celula(linha, idx.candidato);
     const vaga = celula(linha, idx.vaga).replace(/\D/g, "");
@@ -117,8 +154,8 @@ export function linhasDaAbaEntrevistados(valores) {
 }
 
 /** Divide as linhas em lotes (a RPC aceita de 1 a 1000 por chamada). */
-export function emLotes(linhas, tamanho = 500) {
-  const lotes = [];
+export function emLotes<T>(linhas: readonly T[], tamanho = 500): T[][] {
+  const lotes: T[][] = [];
   for (let i = 0; i < linhas.length; i += tamanho)
     lotes.push(linhas.slice(i, i + tamanho));
   return lotes;
@@ -127,7 +164,7 @@ export function emLotes(linhas, tamanho = 500) {
 /** Identificador da carga no formato que o banco aceita (^[A-Za-z0-9_-]{8,80}$). */
 export function identificadorDaCarga(agora = new Date(), sufixo = "") {
   const d = new Date(agora.getTime() - 3 * 60 * 60 * 1000); // horário de Brasília
-  const p = (n) => String(n).padStart(2, "0");
+  const p = (n: number) => String(n).padStart(2, "0");
   const data = `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}`;
   const hora = `${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}`;
   const limpo = String(sufixo)

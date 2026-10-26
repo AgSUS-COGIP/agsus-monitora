@@ -14,7 +14,123 @@ import {
   dataPlausivel,
 } from "./datas-do-cronograma.ts";
 
-const txt = (valor) => String(valor ?? "").trim();
+const txt = (valor: unknown) => String(valor ?? "").trim();
+
+/** Uma etapa como o formulário a guarda (a linha do cronograma no banco). */
+export interface EtapaDoCronograma {
+  ordem: number;
+  atividade: string;
+  data_inicio: string;
+  data_fim: string;
+  origem: string;
+  observacao: string;
+  concluida: boolean | null;
+  confianca_extracao: number | null;
+}
+
+/** O que `novaEtapa` aceita: a linha da RPC, do PDF ou do formulário. */
+export interface DadosDaEtapa {
+  ordem?: number | string | null;
+  atividade?: string | null;
+  data_inicio?: string | null;
+  data_fim?: string | null;
+  origem?: string | null;
+  observacao?: string | null;
+  concluida?: boolean | null;
+  confianca_extracao?: number | null;
+}
+
+/** Situação excepcional ou automático desligado, para `estadoDoCronograma`. */
+export interface OpcoesDoEstadoDoCronograma {
+  automatico?: boolean;
+  statusExcepcional?: string;
+  etapaExcepcional?: string;
+  hoje?: Date;
+}
+
+export interface EstadoDoCronograma {
+  status: string;
+  etapa: string;
+  proxima: string;
+  percentual: number;
+}
+
+/** Os campos do edital que `analisarCronograma` confere. */
+export interface EditalParaAnalise {
+  edital?: string | null;
+  unidade?: string | null;
+  cronograma_automatico?: boolean | null;
+  data_inicio?: string | null;
+  data_fim?: string | null;
+  status_override?: string | null;
+  status_override_motivo?: string | null;
+  status_override_data?: string | null;
+}
+
+export interface AnaliseDoCronograma {
+  erros: string[];
+  avisos: string[];
+}
+
+export interface IntervaloDeDatas {
+  inicio: string;
+  fim: string;
+}
+
+export type TomDoAviso = "error" | "warning" | "success";
+
+export interface ResultadoDoLote {
+  etapas: EtapaDoCronograma[];
+  aviso: { texto: string; tom: TomDoAviso };
+}
+
+export type SituacaoNaLinhaDoTempo = "done" | "current" | "next" | "future";
+
+/** Só as datas, para a linha do tempo. */
+export interface EtapaComDatas {
+  data_inicio?: string | null;
+  data_fim?: string | null;
+}
+
+/** Uma linha do histórico do cronograma (alteração ou errata). */
+export interface RegistroDoHistoricoDoCronograma {
+  created_at?: string | null;
+  acao?: string | null;
+  numero_errata?: string | null;
+  motivo?: string | null;
+  created_by_email?: string | null;
+  total_alteracoes?: number | null;
+}
+
+/** O que `get_monitoramento_cronograma` devolve. */
+export interface CronogramaNoBanco {
+  monitoramento?: {
+    cronograma_automatico?: boolean | null;
+    status_override?: string | null;
+    etapa_override?: string | null;
+    status_override_motivo?: string | null;
+    status_override_data?: string | null;
+    status_override_previsao_retomada?: string | null;
+  } | null;
+  etapas?: DadosDaEtapa[] | null;
+  historico?: RegistroDoHistoricoDoCronograma[] | null;
+}
+
+/** O rascunho do cronograma no formulário do edital (`modal-do-edital.tsx`). */
+export interface CronogramaDoFormulario {
+  carregando: boolean;
+  erroDeCarga: string;
+  automatico: boolean;
+  etapas: EtapaDoCronograma[];
+  historico: RegistroDoHistoricoDoCronograma[];
+  statusExcepcional: string;
+  etapaExcepcional: string;
+  motivoExcepcional: string;
+  dataExcepcional: string;
+  retomada: string;
+  motivo: string;
+  errata: string;
+}
 
 export const PENDENTE = "Cronograma pendente";
 
@@ -41,7 +157,10 @@ export const STATUS_EXCEPCIONAIS = Object.freeze([
 ]);
 
 /** Uma etapa como o formulário a guarda. */
-export function novaEtapa(dados = {}, ordem = 1) {
+export function novaEtapa(
+  dados: DadosDaEtapa = {},
+  ordem = 1,
+): EtapaDoCronograma {
   return {
     ordem: Number(dados.ordem || ordem),
     atividade: txt(dados.atividade),
@@ -54,7 +173,7 @@ export function novaEtapa(dados = {}, ordem = 1) {
   };
 }
 
-export const renumerar = (etapas) =>
+export const renumerar = <T extends object>(etapas: readonly T[]) =>
   etapas.map((etapa, indice) => ({ ...etapa, ordem: indice + 1 }));
 
 export const etapasDoModeloPadrao = () =>
@@ -62,13 +181,13 @@ export const etapasDoModeloPadrao = () =>
     novaEtapa({ atividade, origem: "MANUAL" }, indice + 1),
   );
 
-function dataLocal(valor) {
+function dataLocal(valor: string) {
   if (!valor) return null;
   const data = new Date(`${valor}T12:00:00`);
   return Number.isNaN(data.getTime()) ? null : data;
 }
 
-const dataCurta = (iso) => String(iso).split("-").reverse().join("/");
+const dataCurta = (iso: string) => String(iso).split("-").reverse().join("/");
 
 /**
  * O que o cronograma diz do edital hoje.
@@ -77,7 +196,10 @@ const dataCurta = (iso) => String(iso).split("-").reverse().join("/");
  * @param {{automatico?: boolean, statusExcepcional?: string, etapaExcepcional?: string, hoje?: Date}} opcoes
  * @returns {{status: string, etapa: string, proxima: string, percentual: number}}
  */
-export function estadoDoCronograma(etapas, opcoes = {}) {
+export function estadoDoCronograma(
+  etapas: readonly EtapaDoCronograma[] | null | undefined,
+  opcoes: OpcoesDoEstadoDoCronograma = {},
+): EstadoDoCronograma {
   const validas = (etapas || [])
     .filter((etapa) => etapa.atividade && etapa.data_inicio && etapa.data_fim)
     .slice()
@@ -96,26 +218,28 @@ export function estadoDoCronograma(etapas, opcoes = {}) {
     referencia.getDate(),
     12,
   );
-  const primeira = validas[0];
-  const ultima = validas[validas.length - 1];
+  const primeira = validas[0]!;
+  const ultima = validas[validas.length - 1]!;
+  // Datas inválidas viram null e comparam como 0, como no JS original.
   const atual = validas.find(
     (etapa) =>
-      hoje >= dataLocal(etapa.data_inicio) && hoje <= dataLocal(etapa.data_fim),
+      hoje >= dataLocal(etapa.data_inicio)! &&
+      hoje <= dataLocal(etapa.data_fim)!,
   );
-  const proxima = validas.find((etapa) => dataLocal(etapa.data_inicio) > hoje);
+  const proxima = validas.find((etapa) => dataLocal(etapa.data_inicio)! > hoje);
   const concluidas = validas.filter(
-    (etapa) => dataLocal(etapa.data_fim) < hoje,
+    (etapa) => dataLocal(etapa.data_fim)! < hoje,
   ).length;
 
   let status = "Em andamento";
   let etapa =
     atual?.atividade ||
     (proxima ? `Aguardando: ${proxima.atividade}` : ultima.atividade);
-  if (hoje < dataLocal(primeira.data_inicio)) {
+  if (hoje < dataLocal(primeira.data_inicio)!) {
     status = "Planejado";
     etapa = `Aguardando: ${primeira.atividade}`;
   }
-  const terminou = hoje > dataLocal(ultima.data_fim);
+  const terminou = hoje > dataLocal(ultima.data_fim)!;
   if (terminou) {
     status = "Concluído";
     etapa = ultima.atividade;
@@ -140,13 +264,13 @@ export function estadoDoCronograma(etapas, opcoes = {}) {
  * @param {string} motivo o motivo da alteração, que vai para o histórico
  */
 export function analisarCronograma(
-  edital,
-  etapas,
-  motivo,
-  { exigirMotivo = true } = {},
-) {
-  const erros = [];
-  const avisos = [];
+  edital: EditalParaAnalise,
+  etapas: readonly EtapaDoCronograma[],
+  motivo: unknown,
+  { exigirMotivo = true }: { exigirMotivo?: boolean } = {},
+): AnaliseDoCronograma {
+  const erros: string[] = [];
+  const avisos: string[] = [];
   if (!edital.edital || !edital.unidade)
     erros.push("Informe pelo menos edital e unidade.");
   if (edital.cronograma_automatico && !etapas.length)
@@ -158,7 +282,7 @@ export function analisarCronograma(
   for (const [campo, nome] of [
     ["data_inicio", "início"],
     ["data_fim", "encerramento"],
-  ]) {
+  ] as const) {
     if (edital[campo] && !dataPlausivel(edital[campo]))
       erros.push(
         `A data de ${nome} do edital (${edital[campo]}) não é possível. Use um ano entre ${ANO_MINIMO} e ${ANO_MAXIMO}.`,
@@ -173,7 +297,7 @@ export function analisarCronograma(
   )
     erros.push("A data de encerramento do edital é anterior à de início.");
 
-  const vistas = new Set();
+  const vistas = new Set<string>();
   const ano = Number((txt(edital.edital).match(/\b(20\d{2})\b/) || [])[1]);
   etapas.forEach((etapa, indice) => {
     const rotulo = `Etapa ${indice + 1}`;
@@ -192,7 +316,7 @@ export function analisarCronograma(
     for (const [campo, nome] of [
       ["data_inicio", "início"],
       ["data_fim", "fim"],
-    ]) {
+    ] as const) {
       if (etapa[campo] && !dataPlausivel(etapa[campo]))
         erros.push(
           `${rotulo}: o ano do ${nome} (${etapa[campo].slice(0, 4)}) não é possível. Use um ano entre ${ANO_MINIMO} e ${ANO_MAXIMO}.`,
@@ -217,8 +341,8 @@ export function analisarCronograma(
   )
     avisos.push("O cronograma não possui uma etapa de resultado final.");
   for (let i = 1; i < etapas.length; i += 1) {
-    const anterior = etapas[i - 1];
-    const atual = etapas[i];
+    const anterior = etapas[i - 1]!;
+    const atual = etapas[i]!;
     if (
       anterior.data_inicio &&
       atual.data_inicio &&
@@ -246,7 +370,11 @@ export function analisarCronograma(
 
 const DATA = /\b\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}\b/g;
 
-function paraIso(dia, mes, ano) {
+function paraIso(
+  dia: string | undefined,
+  mes: string | undefined,
+  ano: string | undefined,
+) {
   let y = Number(ano);
   if (y < 100) y += y >= 70 ? 1900 : 2000;
   const data = new Date(y, Number(mes) - 1, Number(dia), 12);
@@ -259,7 +387,7 @@ function paraIso(dia, mes, ano) {
   return `${String(y).padStart(4, "0")}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
 }
 
-function lerData(trecho) {
+function lerData(trecho: string) {
   const partes = String(trecho || "").match(
     /(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})/,
   );
@@ -270,14 +398,14 @@ function lerData(trecho) {
  * Uma linha colada: "17/06/2026", "18/06/2026 a 20/06/2026" ou "18 a 20/06/2026".
  * @returns {{inicio: string, fim: string} | null}
  */
-export function lerLinhaDeDatas(linha) {
+export function lerLinhaDeDatas(linha: unknown): IntervaloDeDatas | null {
   const limpa = String(linha || "")
     .replace(/[–—]/g, "-")
     .trim();
   const datas = [...limpa.matchAll(DATA)]
     .map((achado) => lerData(achado[0]))
     .filter(Boolean);
-  if (datas.length >= 2) return { inicio: datas[0], fim: datas[1] };
+  if (datas.length >= 2) return { inicio: datas[0]!, fim: datas[1]! };
   /*
     O intervalo curto ("18 a 20/06/2026") vem antes da data única: ele também
     contém uma data completa, "20/06/2026", e lido como data única perdia o
@@ -291,7 +419,7 @@ export function lerLinhaDeDatas(linha) {
       inicio: paraIso(curto[1], curto[3], curto[4]),
       fim: paraIso(curto[2], curto[3], curto[4]),
     };
-  if (datas.length === 1) return { inicio: datas[0], fim: datas[0] };
+  if (datas.length === 1) return { inicio: datas[0]!, fim: datas[0]! };
   return null;
 }
 
@@ -299,7 +427,10 @@ export function lerLinhaDeDatas(linha) {
  * Aplica as datas coladas às etapas, na ordem.
  * @returns {{etapas: Array, aviso: {texto: string, tom: "error"|"warning"|"success"}}}
  */
-export function aplicarDatasEmLote(etapas, texto) {
+export function aplicarDatasEmLote(
+  etapas: EtapaDoCronograma[],
+  texto: unknown,
+): ResultadoDoLote {
   const linhas = String(texto || "")
     .split(/\r?\n/)
     .map((linha) => linha.trim())
@@ -319,7 +450,7 @@ export function aplicarDatasEmLote(etapas, texto) {
     };
 
   const lidas = linhas.map(lerLinhaDeDatas);
-  const invalidas = lidas.reduce((lista, item, indice) => {
+  const invalidas = lidas.reduce<number[]>((lista, item, indice) => {
     if (!item?.inicio || !item?.fim) lista.push(indice + 1);
     return lista;
   }, []);
@@ -337,12 +468,12 @@ export function aplicarDatasEmLote(etapas, texto) {
     indice < total
       ? {
           ...etapa,
-          data_inicio: lidas[indice].inicio,
-          data_fim: lidas[indice].fim,
+          data_inicio: lidas[indice]!.inicio,
+          data_fim: lidas[indice]!.fim,
         }
       : etapa,
   );
-  const aviso =
+  const aviso: ResultadoDoLote["aviso"] =
     lidas.length < etapas.length
       ? {
           texto: `${total} datas aplicadas. Ainda faltam ${etapas.length - lidas.length} etapas para preencher.`,
@@ -373,7 +504,12 @@ export function hojeEmBrasilia(agora = new Date()) {
 }
 
 /** Concluída, em andamento, a próxima ou futura — só pelas datas. */
-export function situacaoNaLinhaDoTempo(etapa, indice, etapas, hoje) {
+export function situacaoNaLinhaDoTempo(
+  etapa: EtapaComDatas,
+  indice: number,
+  etapas: readonly EtapaComDatas[],
+  hoje: string,
+): SituacaoNaLinhaDoTempo {
   const inicio = String(etapa.data_inicio || "");
   const fim = String(etapa.data_fim || inicio);
   if (fim && hoje > fim) return "done";
@@ -384,14 +520,16 @@ export function situacaoNaLinhaDoTempo(etapa, indice, etapas, hoje) {
   return indice === primeiraFutura ? "next" : "future";
 }
 
-export function formatarData(valor) {
+export function formatarData(valor: unknown) {
   if (!valor) return "-";
   const bruto = String(valor).slice(0, 10);
   const partes = bruto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   return partes ? `${partes[3]}/${partes[2]}/${partes[1]}` : bruto;
 }
 
-export function formatarDataHora(valor) {
+export function formatarDataHora(
+  valor: string | number | Date | null | undefined,
+) {
   if (!valor) return "-";
   try {
     return new Intl.DateTimeFormat("pt-BR", {

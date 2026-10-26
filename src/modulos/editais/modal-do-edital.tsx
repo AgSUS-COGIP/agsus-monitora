@@ -5,6 +5,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import type { ChangeEvent } from "react";
 import { RESPONSAVEIS_DE_EDITAL } from "../../lib/responsavel-do-edital.ts";
 import { canMoveEditalBetweenAreas } from "../../lib/access-roles.ts";
 import { AREAS_DO_SISTEMA, nomeDaArea } from "../../lib/menu-lateral.ts";
@@ -25,10 +26,17 @@ import {
   estadoDoCronograma,
   novaEtapa,
 } from "../../lib/cronograma-do-edital.ts";
+import type {
+  CronogramaDoFormulario,
+  CronogramaNoBanco,
+  EtapaDoCronograma,
+} from "../../lib/cronograma-do-edital.ts";
+import type { QuadroParaSalvar } from "../../lib/anexos-do-edital.ts";
 import {
   numeroDoFunil,
   textoDaFonteDoFunil,
 } from "../../lib/funil-do-edital.ts";
+import type { LinhaComFunil } from "../../lib/funil-do-edital.ts";
 import {
   apagarRascunho,
   chaveDoRascunho,
@@ -45,7 +53,44 @@ import {
 } from "../../componentes/dados-do-monitoramento.ts";
 import { Aviso, Campo, Modal } from "../../ui/index.ts";
 import { EditorDeCronograma } from "./editor-de-cronograma.tsx";
+import type { EstadoDoEditorDeCronograma } from "./editor-de-cronograma.tsx";
 import { ImportarAnexos } from "./importar-anexos.tsx";
+import type { EstadoDosAnexos } from "./importar-anexos.tsx";
+
+/* O formulário e o payload são os de `editais-do-nucleo.ts`. */
+type FormularioDoEdital = ReturnType<typeof formularioDoEdital>;
+type EditalParaSalvar = ReturnType<typeof editalParaSalvar>;
+type UnidadesPorArea = NonNullable<Parameters<typeof opcoesDeUnidade>[3]>;
+
+/** O que o formulário usa do estado da página (`estado.ts`). */
+export interface EstadoDoModalDoEdital
+  extends EstadoDoEditorDeCronograma, EstadoDosAnexos {
+  obter(): { geracao: number; salvando: boolean; perfil: unknown };
+  lerUnidadesPorArea?(): Promise<UnidadesPorArea>;
+  fecharModal(): void;
+  moverEdital(dados: {
+    id: string;
+    area: string;
+    motivo: string;
+    rotulo: string;
+    de: string;
+    para: string;
+  }): Promise<unknown>;
+  salvarEdital(dados: {
+    edital: EditalParaSalvar;
+    etapas: EtapaDoCronograma[];
+    motivo: string;
+    errata: string;
+    quadro: QuadroParaSalvar | null;
+  }): Promise<boolean>;
+}
+
+export interface PropriedadesDoModalDoEdital {
+  estado: EstadoDoModalDoEdital;
+  /** Vazio no edital novo. */
+  id: string;
+  agora?: () => Date;
+}
 
 /*
   O formulário do edital: identificação, situação operacional, indicadores que
@@ -73,11 +118,11 @@ import { ImportarAnexos } from "./importar-anexos.tsx";
   outra área", `mover_edital_de_area`).
 */
 
-const txt = (valor) => String(valor ?? "").trim();
+const txt = (valor: unknown) => String(valor ?? "").trim();
 
 const RISCOS = ["Baixo", "Médio", "Alto"];
 
-const INDICADORES = [
+const INDICADORES: readonly (readonly [string, string, string])[] = [
   ["mAutoInscritos", "Inscritos", "inscritos"],
   ["mAutoAptosAnalise", "Aptos análise", "aptos_analise"],
   ["mAutoCancelados", "Cancelados", "cancelados"],
@@ -91,7 +136,7 @@ const INDICADORES = [
   ["mAutoOciosas", "Vagas ociosas", "vagas_ociosas"],
 ];
 
-const CRONOGRAMA_VAZIO = Object.freeze({
+const CRONOGRAMA_VAZIO: Readonly<CronogramaDoFormulario> = Object.freeze({
   carregando: false,
   erroDeCarga: "",
   automatico: true,
@@ -106,8 +151,12 @@ const CRONOGRAMA_VAZIO = Object.freeze({
   errata: "",
 });
 
-function cronogramaDoBanco(dados) {
-  const monitor = dados?.monitoramento || {};
+function cronogramaDoBanco(
+  dados: CronogramaNoBanco | null | undefined,
+): CronogramaDoFormulario {
+  const monitor = (dados?.monitoramento || {}) as NonNullable<
+    CronogramaNoBanco["monitoramento"]
+  >;
   return {
     ...CRONOGRAMA_VAZIO,
     automatico: monitor.cronograma_automatico !== false,
@@ -127,7 +176,11 @@ function cronogramaDoBanco(dados) {
    (o efeito abaixo depende de `agora`) sem que nada fosse editado. */
 const relogioDoNavegador = () => new Date();
 
-export function ModalDoEdital({ estado, id, agora = relogioDoNavegador }) {
+export function ModalDoEdital({
+  estado,
+  id,
+  agora = relogioDoNavegador,
+}: PropriedadesDoModalDoEdital) {
   const { linhas, unidades, areaAtual } = useSyncExternalStore(
     assinarDadosDoMonitoramento,
     obterDadosDoMonitoramento,
@@ -139,12 +192,15 @@ export function ModalDoEdital({ estado, id, agora = relogioDoNavegador }) {
   const [linha] = useState(
     () => linhas.find((item) => String(item.id) === String(id)) || null,
   );
-  const fonteDoFunil = textoDaFonteDoFunil(linha, agora());
+  const fonteDoFunil = textoDaFonteDoFunil(
+    linha as LinhaComFunil | null,
+    agora(),
+  );
   const [formularioInicial] = useState(() =>
     formularioDoEdital(linha, unidades, linhas),
   );
   const [formulario, setFormulario] = useState(formularioInicial);
-  const [cronograma, setCronograma] = useState(() => ({
+  const [cronograma, setCronograma] = useState<CronogramaDoFormulario>(() => ({
     ...CRONOGRAMA_VAZIO,
     carregando: Boolean(id),
   }));
@@ -164,19 +220,21 @@ export function ModalDoEdital({ estado, id, agora = relogioDoNavegador }) {
     lerRascunho(chaveDoRascunhoAtual, undefined, agora()),
   );
   const [confirmandoDescarte, setConfirmandoDescarte] = useState(false);
-  const continuarEditando = useRef(null);
+  const continuarEditando = useRef<HTMLButtonElement>(null);
   /*
     O motivo só é cobrado depois de mexer no cronograma ou ao salvar: o
     formulário abria já com "Corrija antes de salvar", antes de qualquer edição.
   */
   const [editorMexido, setEditorMexido] = useState(false);
   /* Quadro de vagas lido do PDF de anexos, gravado junto com o edital. */
-  const [quadroPendente, setQuadroPendente] = useState(null);
+  const [quadroPendente, setQuadroPendente] = useState<QuadroParaSalvar | null>(
+    null,
+  );
   /* Edital novo nasce na área do menu; o existente fica na dele. */
   const [areaDoEdital] = useState(() =>
     id ? areaDaLinha(linha) || areaAtual : areaAtual,
   );
-  const [unidadesPorArea, setUnidadesPorArea] = useState([]);
+  const [unidadesPorArea, setUnidadesPorArea] = useState<UnidadesPorArea>([]);
   const [movendo, setMovendo] = useState(false);
   const [destino, setDestino] = useState("");
   const [motivoDaMudanca, setMotivoDaMudanca] = useState("");
@@ -195,19 +253,19 @@ export function ModalDoEdital({ estado, id, agora = relogioDoNavegador }) {
   useEffect(() => {
     if (!id) return undefined;
     let vivo = true;
-    function chegou(carregado) {
+    function chegou(carregado: CronogramaDoFormulario) {
       if (!vivo) return;
       setCronograma(carregado);
       setBase(estadoComparavel(formularioInicial, carregado));
     }
     estado
       .lerCronograma(id)
-      .then((dados) => chegou(cronogramaDoBanco(dados)))
+      .then((dados) => chegou(cronogramaDoBanco(dados as CronogramaNoBanco)))
       .catch((erro) => {
         console.error("Erro ao carregar cronograma:", erro);
         chegou({
           ...CRONOGRAMA_VAZIO,
-          erroDeCarga: erro?.message || String(erro),
+          erroDeCarga: (erro as Error | null)?.message || String(erro),
         });
       });
     return () => {
@@ -297,10 +355,18 @@ export function ModalDoEdital({ estado, id, agora = relogioDoNavegador }) {
   );
   const automatico = cronograma.automatico;
 
-  const mudar = (campo) => (evento) =>
-    setFormulario((atual) => ({ ...atual, [campo]: evento.target.value }));
+  const mudar =
+    (campo: keyof FormularioDoEdital) =>
+    (
+      evento: ChangeEvent<
+        HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+      >,
+    ) =>
+      setFormulario((atual) => ({ ...atual, [campo]: evento.target.value }));
 
-  function mudarCronograma(transformar) {
+  function mudarCronograma(
+    transformar: (atual: CronogramaDoFormulario) => CronogramaDoFormulario,
+  ) {
     setEditorMexido(true);
     /*
       Desligar o automático devolve o status e a etapa à mão de quem edita, a

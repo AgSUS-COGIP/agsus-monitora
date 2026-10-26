@@ -8,27 +8,33 @@
 */
 
 /** "11/2026", "Edital 3/2025 - DSEI X" → 2026, 2025. Sem ano → null. */
-export function anoDoEdital(edital) {
+export function anoDoEdital(edital: unknown): number | null {
   const achado = String(edital ?? "").match(/\/((?:19|20)\d{2})\b/);
   return achado ? Number(achado[1]) : null;
 }
 
 /** Anos presentes nos editais, do mais recente para o mais antigo. */
-export function anosDosEditais(editais) {
-  return [...new Set(editais.map(anoDoEdital).filter(Boolean))].sort(
-    (a, b) => b - a,
-  );
+export function anosDosEditais(editais: readonly string[]): number[] {
+  return [
+    ...new Set(editais.map(anoDoEdital).filter(Boolean) as number[]),
+  ].sort((a, b) => b - a);
 }
 
-export function editaisDoAno(editais, ano) {
+export function editaisDoAno(
+  editais: readonly string[],
+  ano: number | string,
+): string[] {
   return editais.filter((edital) => anoDoEdital(edital) === Number(ano));
 }
 
-const mesmoConjunto = (a, b) =>
+const mesmoConjunto = (a: readonly string[], b: readonly string[]) =>
   a.length === b.length && b.every((valor) => a.includes(valor));
 
 /** Que ano a seleção de Edital representa: "" (nenhuma), um ano, ou "personalizado". */
-export function anoDaSelecao(selecionados, editais) {
+export function anoDaSelecao(
+  selecionados: readonly string[],
+  editais: readonly string[],
+): string {
   if (!selecionados.length) return "";
   for (const ano of anosDosEditais(editais)) {
     const doAno = editaisDoAno(editais, ano);

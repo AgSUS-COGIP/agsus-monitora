@@ -21,35 +21,36 @@
   simplificado erra perto das fronteiras, o CNES acerta.
 */
 
-export const UF_POR_CODIGO_IBGE = Object.freeze({
-  11: "RO",
-  12: "AC",
-  13: "AM",
-  14: "RR",
-  15: "PA",
-  16: "AP",
-  17: "TO",
-  21: "MA",
-  22: "PI",
-  23: "CE",
-  24: "RN",
-  25: "PB",
-  26: "PE",
-  27: "AL",
-  28: "SE",
-  29: "BA",
-  31: "MG",
-  32: "ES",
-  33: "RJ",
-  35: "SP",
-  41: "PR",
-  42: "SC",
-  43: "RS",
-  50: "MS",
-  51: "MT",
-  52: "GO",
-  53: "DF",
-});
+export const UF_POR_CODIGO_IBGE: Readonly<Record<number, string>> =
+  Object.freeze({
+    11: "RO",
+    12: "AC",
+    13: "AM",
+    14: "RR",
+    15: "PA",
+    16: "AP",
+    17: "TO",
+    21: "MA",
+    22: "PI",
+    23: "CE",
+    24: "RN",
+    25: "PB",
+    26: "PE",
+    27: "AL",
+    28: "SE",
+    29: "BA",
+    31: "MG",
+    32: "ES",
+    33: "RJ",
+    35: "SP",
+    41: "PR",
+    42: "SC",
+    43: "RS",
+    50: "MS",
+    51: "MT",
+    52: "GO",
+    53: "DF",
+  });
 
 const SIGLAS = Object.freeze(new Set(Object.values(UF_POR_CODIGO_IBGE)));
 
@@ -58,9 +59,7 @@ const SIGLAS = Object.freeze(new Set(Object.values(UF_POR_CODIGO_IBGE)));
   ou sigla. Devolve `null` para qualquer coisa que não seja uma UF reconhecível
   — e `null` significa "não classificar", nunca "está fora".
 */
-/** @param {unknown} valor
- * @returns {string | null} */
-export function siglaDaUf(valor) {
+export function siglaDaUf(valor: unknown): string | null {
   if (valor === null || valor === undefined) return null;
 
   if (typeof valor === "number") {
@@ -89,10 +88,19 @@ export const VINCULO_INDETERMINADO = "indeterminado";
   unidade ou sem abrangência declarada no DSEI, não há como afirmar que algo
   está fora. Afirmar assim mesmo desenharia uma relação que ninguém verificou.
 */
-/** @param {unknown} ufDaUnidade
- * @param {readonly string[]} ufsDoDsei
- * @returns {{vinculo: "normal" | "externo" | "indeterminado", uf: string | null, ufsDoDsei: string[]}} */
-export function classificarVinculoTerritorial(ufDaUnidade, ufsDoDsei) {
+export type VinculoTerritorial =
+  typeof VINCULO_NORMAL | typeof VINCULO_EXTERNO | typeof VINCULO_INDETERMINADO;
+
+export interface ClassificacaoTerritorial {
+  vinculo: VinculoTerritorial;
+  uf: string | null;
+  ufsDoDsei: string[];
+}
+
+export function classificarVinculoTerritorial(
+  ufDaUnidade: unknown,
+  ufsDoDsei: readonly unknown[] | null | undefined,
+): ClassificacaoTerritorial {
   const sigla = siglaDaUf(ufDaUnidade);
   if (!sigla) {
     return { vinculo: VINCULO_INDETERMINADO, uf: null, ufsDoDsei: [] };
@@ -100,7 +108,7 @@ export function classificarVinculoTerritorial(ufDaUnidade, ufsDoDsei) {
 
   const abrangencia = (Array.isArray(ufsDoDsei) ? ufsDoDsei : [])
     .map((item) => siglaDaUf(item))
-    .filter(Boolean);
+    .filter(Boolean) as string[];
 
   if (!abrangencia.length) {
     return { vinculo: VINCULO_INDETERMINADO, uf: sigla, ufsDoDsei: [] };

@@ -252,7 +252,7 @@ revoke all on function private."FC_CONFERIR_DISPAROS_ROBO"(bigint) from public, 
 
 -- 4b. Rodar agora, Opções e Recalcular pelo banco ---------------------------------------------
 /*
-  As mesmas regras de api/rodar-carga.js + validarOpcoes (src/lib/robos-de-carga.ts),
+  As mesmas regras de api/rodar-carga.js + validarOpcoes (src/lib/robos-de-carga.js),
   que saem: quem pode, a lista branca de cada robô e o formato de cada opção.
     - administrador global (pode_disparar_carga): qualquer robô, com opções;
     - coordenação (pode_recalcular_pre_classificacao): só a pré-classificação,

@@ -42,6 +42,11 @@
   não é duplicação de entidade e não se resolve fundindo: resolve-se no desenho,
   com agrupamento. Ver `agruparPorPontoDeRender` no fim deste ficheiro.
 */
+import type {
+  ResultadoDaReconciliacao,
+  UnidadeDaReconciliacao,
+  UnidadeReconciliada,
+} from "./tipos-da-reconciliacao.ts";
 
 export const RECONCILIACAO = Object.freeze({
   AUTOMATICA: "automatica",
@@ -75,6 +80,55 @@ export const DIVERGENCIA = Object.freeze({
 
   Quem quiser outro corte muda aqui, e o relatório recalcula.
 */
+export type Divergencia = (typeof DIVERGENCIA)[keyof typeof DIVERGENCIA];
+export type TipoDeclarado = "casai" | "polo" | "ubsi" | "posto" | "outro";
+
+/** Polo e estabelecimento unidos num marcador, com as duas fontes preservadas. */
+export interface UnidadeReconciliadaAutomatica extends UnidadeReconciliada {
+  dsei: string;
+  canonico: string;
+  tipo: string;
+  cnes: string | number;
+  cod: string | number | null;
+  coordenada_exibida: "lmap" | "rede_cnes";
+  coordenadas: {
+    lmap: Pick<UnidadeDaReconciliacao, "lat" | "lon">;
+    rede_cnes: Pick<UnidadeDaReconciliacao, "lat" | "lon">;
+  };
+  distancia_entre_fontes_km: number | null;
+  divergencia: Divergencia;
+  reconciliacao: typeof RECONCILIACAO.AUTOMATICA;
+}
+
+/** Polo com mais de um candidato (ambíguo) ou sem candidato do mesmo tipo (rejeitado). */
+export interface CasoDaReconciliacao {
+  dsei: string;
+  canonico: string;
+  polo: UnidadeDaReconciliacao;
+  candidatos: UnidadeDaReconciliacao[];
+  motivo: string;
+}
+
+export interface PoloSemPar {
+  polo: UnidadeDaReconciliacao;
+  motivo: string;
+}
+
+export interface ResultadoDaReconciliacaoDoDsei extends ResultadoDaReconciliacao {
+  reconciliados: UnidadeReconciliadaAutomatica[];
+  ambiguos: CasoDaReconciliacao[];
+  rejeitados: CasoDaReconciliacao[];
+  polosSemPar: PoloSemPar[];
+  estabelecimentosUsados: Set<string | number>;
+}
+
+export interface PontoDeRender<T> {
+  chave: string;
+  lat: number;
+  lon: number;
+  registros: T[];
+}
+
 export const LIMIAR_PROXIMA_KM = 5;
 export const LIMIAR_PENDENTE_KM = 50;
 
@@ -106,8 +160,8 @@ export const LIMIAR_MESMO_PONTO_KM = 0.2;
 */
 const MIN_PALAVRA = 4;
 
-function partilhamPalavra(nomeA, nomeB) {
-  const palavras = (nome) =>
+function partilhamPalavra(nomeA: unknown, nomeB: unknown): boolean {
+  const palavras = (nome: unknown) =>
     new Set(
       nomeCanonico(nome)
         .split(" ")
@@ -121,7 +175,7 @@ function partilhamPalavra(nomeA, nomeB) {
   return false;
 }
 
-const semAcento = (s) =>
+const semAcento = (s: unknown): string =>
   String(s ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "");
@@ -131,7 +185,7 @@ const semAcento = (s) =>
   `POLO BASE XITEI`, `PB XITEI` e `XITEI` convergem; `CASA NOVA` e
   `POLO BASE CASA NOVA` também.
 */
-export function nomeCanonico(nome) {
+export function nomeCanonico(nome: unknown): string {
   let u = semAcento(nome).toUpperCase();
   u = u.replace(/\([^)]*\)/g, " ");
   u = u.replace(
@@ -150,14 +204,15 @@ export function nomeCanonico(nome) {
   casar por `I` juntaria tudo o que tem um algarismo romano no nome.
 */
 const MIN_CANONICO = 3;
-export const canonicoUtilizavel = (c) => Boolean(c) && c.length >= MIN_CANONICO;
+export const canonicoUtilizavel = (c: string): boolean =>
+  Boolean(c) && c.length >= MIN_CANONICO;
 
 /*
   Tipo declarado pelo NOME do registo, que é a única informação de tipo que o
   payload traz. Deliberadamente conservador: o que não se reconhece é `outro`, e
   `outro` não reconcilia com nada.
 */
-export function tipoDeclarado(nome) {
+export function tipoDeclarado(nome: unknown): TipoDeclarado {
   const u = semAcento(nome).toUpperCase();
   if (/\bCASAI\b|CASA DE SAUDE/.test(u)) return "casai";
   if (/\bPOLO\b|^\s*PB\b/.test(u)) return "polo";
@@ -172,25 +227,34 @@ export function tipoDeclarado(nome) {
   com o nome igual — foi assim que a lógica antiga colou um polo sobre uma
   unidade que apenas o atende.
 */
-export function tiposCompativeis(tipoLmap, tipoCnes) {
+export function tiposCompativeis(tipoLmap: string, tipoCnes: string): boolean {
   if (tipoLmap === "polo") return tipoCnes === "polo";
   if (tipoLmap === "casai") return tipoCnes === "casai";
   return false;
 }
 
-export function distanciaKm(lat1, lon1, lat2, lon2) {
+export function distanciaKm(
+  lat1: unknown,
+  lon1: unknown,
+  lat2: unknown,
+  lon2: unknown,
+): number | null {
   if (![lat1, lon1, lat2, lon2].every(Number.isFinite)) return null;
   const R = 6371;
-  const rad = (g) => (g * Math.PI) / 180;
-  const dLat = rad(lat2 - lat1);
-  const dLon = rad(lon2 - lon1);
+  const rad = (g: number) => (g * Math.PI) / 180;
+  const dLat = rad((lat2 as number) - (lat1 as number));
+  const dLon = rad((lon2 as number) - (lon1 as number));
   const a =
     Math.sin(dLat / 2) ** 2 +
-    Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+    Math.cos(rad(lat1 as number)) *
+      Math.cos(rad(lat2 as number)) *
+      Math.sin(dLon / 2) ** 2;
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
 }
 
-export function classificarDivergencia(km) {
+export function classificarDivergencia(
+  km: number | null | undefined,
+): Divergencia {
   if (km == null) return DIVERGENCIA.PENDENTE;
   if (km < LIMIAR_PROXIMA_KM) return DIVERGENCIA.PROXIMA;
   if (km <= LIMIAR_PENDENTE_KM) return DIVERGENCIA.DIVERGENTE;
@@ -206,14 +270,19 @@ export function classificarDivergencia(km) {
   no banco contra fontes oficiais; o CNES fica só como comparação. Sem
   coordenada no `lmap`, vale a do próprio estabelecimento no `rede_cnes`.
 */
-function coordenadaDeExibicao(polo, estab) {
+function coordenadaDeExibicao(
+  polo: UnidadeDaReconciliacao,
+  estab: UnidadeDaReconciliacao,
+): Pick<UnidadeDaReconciliacao, "lat" | "lon"> & {
+  fonte: "lmap" | "rede_cnes";
+} {
   if (Number.isFinite(polo?.lat) && Number.isFinite(polo?.lon)) {
     return { lat: polo.lat, lon: polo.lon, fonte: "lmap" };
   }
   return { lat: estab.lat, lon: estab.lon, fonte: "rede_cnes" };
 }
 
-function identificadorCnes(valor) {
+function identificadorCnes(valor: unknown): string {
   return String(valor ?? "").trim();
 }
 
@@ -225,7 +294,15 @@ function registrarReconciliacao({
   tipoP,
   reconciliados,
   estabelecimentosUsados,
-}) {
+}: {
+  dseiChave: string;
+  polo: UnidadeDaReconciliacao;
+  estab: UnidadeDaReconciliacao;
+  canonico: string;
+  tipoP: string;
+  reconciliados: UnidadeReconciliadaAutomatica[];
+  estabelecimentosUsados: Set<string | number>;
+}): void {
   const km = distanciaKm(polo.lat, polo.lon, estab.lat, estab.lon);
   const exibicao = coordenadaDeExibicao(polo, estab);
   const chave = estab.chave || estab.cnes;
@@ -260,36 +337,36 @@ function registrarReconciliacao({
  * Trabalha SEMPRE dentro de um único DSEI: a função recebe já as duas listas
  * daquele distrito, e não tem como cruzar fronteira nenhuma.
  *
- * @param {object} entrada
- * @param {string} entrada.dseiChave
- * @param {readonly import("./tipos-da-reconciliacao.ts").UnidadeDaReconciliacao[]} entrada.polos registos do `lmap`
- * @param {readonly import("./tipos-da-reconciliacao.ts").UnidadeDaReconciliacao[]} entrada.estabelecimentos registos do `rede_cnes`
- * @returns {import("./tipos-da-reconciliacao.ts").ResultadoDaReconciliacao}
+ * `polos` são os registos do `lmap`; `estabelecimentos`, os do `rede_cnes`.
  */
 export function reconciliarDsei({
   dseiChave,
   polos = [],
   estabelecimentos = [],
-}) {
-  const reconciliados = [];
-  const ambiguos = [];
-  const rejeitados = [];
-  const polosSemPar = [];
-  const estabelecimentosUsados = new Set();
+}: {
+  dseiChave: string;
+  polos?: readonly UnidadeDaReconciliacao[];
+  estabelecimentos?: readonly UnidadeDaReconciliacao[];
+}): ResultadoDaReconciliacaoDoDsei {
+  const reconciliados: UnidadeReconciliadaAutomatica[] = [];
+  const ambiguos: CasoDaReconciliacao[] = [];
+  const rejeitados: CasoDaReconciliacao[] = [];
+  const polosSemPar: PoloSemPar[] = [];
+  const estabelecimentosUsados = new Set<string | number>();
 
-  const porCanonico = new Map();
-  const porCnes = new Map();
+  const porCanonico = new Map<string, UnidadeDaReconciliacao[]>();
+  const porCnes = new Map<string, UnidadeDaReconciliacao[]>();
   estabelecimentos.forEach((e) => {
     const c = nomeCanonico(e.nome);
     if (canonicoUtilizavel(c)) {
       if (!porCanonico.has(c)) porCanonico.set(c, []);
-      porCanonico.get(c).push(e);
+      porCanonico.get(c)!.push(e);
     }
 
     const cnes = identificadorCnes(e.cnes || e.chave);
     if (!cnes) return;
     if (!porCnes.has(cnes)) porCnes.set(cnes, []);
-    porCnes.get(cnes).push(e);
+    porCnes.get(cnes)!.push(e);
   });
 
   polos.forEach((p) => {
@@ -302,14 +379,14 @@ export function reconciliarDsei({
     // nome histórico ou razão cadastral diferente sem voltar a duplicar o ponto.
     if (poloCnes && porCnes.has(poloCnes)) {
       const mesmosCnes = porCnes
-        .get(poloCnes)
+        .get(poloCnes)!
         .filter((e) => tiposCompativeis(tipoP, tipoDeclarado(e.nome)));
 
       if (mesmosCnes.length === 1) {
         registrarReconciliacao({
           dseiChave,
           polo: p,
-          estab: mesmosCnes[0],
+          estab: mesmosCnes[0]!,
           canonico,
           tipoP,
           reconciliados,
@@ -370,7 +447,7 @@ export function reconciliarDsei({
     registrarReconciliacao({
       dseiChave,
       polo: p,
-      estab: compativeis[0],
+      estab: compativeis[0]!,
       canonico,
       tipoP,
       reconciliados,
@@ -430,7 +507,7 @@ export function reconciliarDsei({
     registrarReconciliacao({
       dseiChave,
       polo: p,
-      estab: proximos[0],
+      estab: proximos[0]!,
       canonico: nomeCanonico(p.nome),
       tipoP,
       reconciliados,
@@ -458,14 +535,17 @@ export function reconciliarDsei({
   sem tocar nas coordenadas de ninguém. Quem desenha decide se usa cluster,
   spiderfy ou um marcador com contagem.
 */
-export function agruparPorPontoDeRender(registros, casasDecimais = 5) {
-  const pontos = new Map();
+export function agruparPorPontoDeRender<T extends { lat: number; lon: number }>(
+  registros: readonly T[],
+  casasDecimais = 5,
+): PontoDeRender<T>[] {
+  const pontos = new Map<string, PontoDeRender<T>>();
   registros.forEach((r) => {
     if (!Number.isFinite(r.lat) || !Number.isFinite(r.lon)) return;
     const chave = `${r.lat.toFixed(casasDecimais)},${r.lon.toFixed(casasDecimais)}`;
     if (!pontos.has(chave))
       pontos.set(chave, { chave, lat: r.lat, lon: r.lon, registros: [] });
-    pontos.get(chave).registros.push(r);
+    pontos.get(chave)!.registros.push(r);
   });
   return [...pontos.values()];
 }
@@ -511,22 +591,24 @@ const EM_ATUALIZACAO = /\(\s*em\s+atualiza[cç][aã]o\s+cadastral\s*\)/i;
   como em atualização cadastral: é o registo corrente, e é o nome que quem
   procura a unidade no CNES vai encontrar.
 */
-function preferido(a, b) {
+function preferido<T extends UnidadeDaReconciliacao>(a: T, b: T): T {
   const aEmAtualizacao = EM_ATUALIZACAO.test(String(a?.nome ?? ""));
   const bEmAtualizacao = EM_ATUALIZACAO.test(String(b?.nome ?? ""));
   if (aEmAtualizacao !== bEmAtualizacao) return aEmAtualizacao ? b : a;
   return a;
 }
 
-/**
- * @template {import("./tipos-da-reconciliacao.ts").UnidadeDaReconciliacao} T
- * @param {readonly T[]} [estabelecimentos]
- * @returns {{estabelecimentos: (T & {cnes_absorvidos?: string[]})[], unidos: {mantido: T, absorvidos: T[]}[]}}
- */
-export function unirEstabelecimentosRepetidos(estabelecimentos = []) {
-  const lista = Array.isArray(estabelecimentos) ? estabelecimentos : [];
-  const grupos = new Map();
-  const soltos = [];
+export function unirEstabelecimentosRepetidos<T extends UnidadeDaReconciliacao>(
+  estabelecimentos: readonly T[] = [],
+): {
+  estabelecimentos: (T & { cnes_absorvidos?: string[] })[];
+  unidos: { mantido: T; absorvidos: T[] }[];
+} {
+  const lista: readonly T[] = Array.isArray(estabelecimentos)
+    ? estabelecimentos
+    : [];
+  const grupos = new Map<string, T[]>();
+  const soltos: T[] = [];
 
   for (const estabelecimento of lista) {
     const canonico = nomeCanonico(estabelecimento?.nome);
@@ -538,28 +620,28 @@ export function unirEstabelecimentosRepetidos(estabelecimentos = []) {
     }
     const chave = `${canonico}|${tipo}`;
     if (!grupos.has(chave)) grupos.set(chave, []);
-    grupos.get(chave).push(estabelecimento);
+    grupos.get(chave)!.push(estabelecimento);
   }
 
-  const resultado = [];
-  const unidos = [];
+  const resultado: (T & { cnes_absorvidos?: string[] })[] = [];
+  const unidos: { mantido: T; absorvidos: T[] }[] = [];
 
   for (const grupo of grupos.values()) {
     const pendentes = [...grupo];
     while (pendentes.length) {
-      let atual = pendentes.shift();
-      const absorvidos = [];
+      let atual = pendentes.shift()!;
+      const absorvidos: T[] = [];
 
       for (let i = pendentes.length - 1; i >= 0; i -= 1) {
         const km = distanciaKm(
           Number(atual.lat),
           Number(atual.lon),
-          Number(pendentes[i].lat),
-          Number(pendentes[i].lon),
+          Number(pendentes[i]!.lat),
+          Number(pendentes[i]!.lon),
         );
         if (km == null || km > LIMIAR_MESMO_ESTABELECIMENTO_KM) continue;
-        absorvidos.push(pendentes[i]);
-        atual = preferido(atual, pendentes[i]);
+        absorvidos.push(pendentes[i]!);
+        atual = preferido(atual, pendentes[i]!);
         pendentes.splice(i, 1);
       }
 

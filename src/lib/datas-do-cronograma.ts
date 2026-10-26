@@ -14,18 +14,26 @@ export const ANO_MAXIMO = 2100;
 
 /* "AAAA-MM-DD" com o ano entre os limites. O formato inteiro conta: um ano de
    cinco dígitos ("20206-09-14") passava como 2020 pelos 4 primeiros. */
-export function dataPlausivel(chave) {
+export function dataPlausivel(chave: unknown): boolean {
   const texto = String(chave ?? "").slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(texto)) return false;
   const ano = Number(texto.slice(0, 4));
   return ano >= ANO_MINIMO && ano <= ANO_MAXIMO;
 }
 
+/** As datas de uma etapa de cronograma ("AAAA-MM-DD"), como vêm do banco. */
+export interface DatasDaEtapa {
+  data_inicio?: string | null;
+  data_fim?: string | null;
+}
+
 /** A etapa tem início e fim possíveis, e o fim não vem antes do início? */
-export function etapaComDatasValidas(etapa) {
+export function etapaComDatasValidas(
+  etapa: DatasDaEtapa | null | undefined,
+): boolean {
   const inicio = etapa?.data_inicio;
   const fim = etapa?.data_fim || inicio;
-  return dataPlausivel(inicio) && dataPlausivel(fim) && fim >= inicio;
+  return dataPlausivel(inicio) && dataPlausivel(fim) && fim! >= inicio!;
 }
 
 /*
@@ -33,25 +41,20 @@ export function etapaComDatasValidas(etapa) {
   começar; o fim, se já está em andamento. Um prazo aberto desde agosto que
   termina amanhã é "amanhã", não "agosto".
 */
-/**
- * @param {{ data_inicio: string, data_fim: string }} etapa
- * @param {string} hoje
- * @returns {string}
- */
-export function proximaDataDaEtapa(etapa, hoje) {
+export function proximaDataDaEtapa(
+  etapa: { data_inicio: string; data_fim: string },
+  hoje: string,
+): string {
   return etapa.data_inicio >= hoje ? etapa.data_inicio : etapa.data_fim;
 }
 
 /**
  * Etapas ainda não encerradas, da mais próxima para a mais distante.
  * Etapas com data impossível ficam de fora: não há como dizer quando vêm.
- * @template {{ data_inicio: string, data_fim: string, ordem?: number }} T
- * @param {readonly T[]} etapas
- * @param {string} hoje
- * @param {number} [limite]
- * @returns {T[]}
  */
-export function proximasEtapas(etapas, hoje, limite = Infinity) {
+export function proximasEtapas<
+  T extends { data_inicio: string; data_fim: string; ordem?: number },
+>(etapas: readonly T[], hoje: string, limite: number = Infinity): T[] {
   return etapas
     .filter((etapa) => etapaComDatasValidas(etapa))
     .filter((etapa) => (etapa.data_fim || etapa.data_inicio) >= hoje)
@@ -65,12 +68,16 @@ export function proximasEtapas(etapas, hoje, limite = Infinity) {
     .map(({ etapa }) => etapa);
 }
 
-/** Editais com pelo menos uma etapa de data impossível, para quem vai corrigir.
- * @param {readonly { edital: string, unidade: string, data_inicio: string, data_fim: string }[]} etapas
- * @returns {{ edital: string, etapasComProblema: number }[]}
- */
-export function editaisComDatasARevisar(etapas) {
-  const porEdital = new Map();
+/** Editais com pelo menos uma etapa de data impossível, para quem vai corrigir. */
+export function editaisComDatasARevisar(
+  etapas: readonly {
+    edital: string;
+    unidade: string;
+    data_inicio: string;
+    data_fim: string;
+  }[],
+): { edital: string; etapasComProblema: number }[] {
+  const porEdital = new Map<string, number>();
   for (const etapa of etapas) {
     if (etapaComDatasValidas(etapa)) continue;
     const chave = `${etapa.edital} • ${etapa.unidade}`;

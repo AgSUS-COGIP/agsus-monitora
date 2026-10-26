@@ -36,7 +36,7 @@
   acento tem de encontrar o mesmo. Duas normalizações diferentes acabariam por
   divergir.
 */
-export function normalizarTexto(valor) {
+export function normalizarTexto(valor: unknown): string {
   return String(valor ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -44,12 +44,20 @@ export function normalizarTexto(valor) {
     .trim();
 }
 
+/** Um tipo de etapa: a cor da legenda e as palavras-chave que o reconhecem. */
+export interface TipoDeEtapa {
+  id: string;
+  rotulo: string;
+  cor: string;
+  termos: readonly string[];
+}
+
 /**
  * Tipos de etapa, em ordem de precedência (o primeiro que casar vence).
  * `cor` escolhe o token `--etapa-<cor>` (styles/tokens.css) pelo `data-cor`
  * (tabela no fim de `modulos/cronograma/cronograma.css`).
  */
-export const TIPOS_DE_ETAPA = [
+export const TIPOS_DE_ETAPA: TipoDeEtapa[] = [
   /*
     Impugnação antes de Recursos, e não dentro dele: acontece contra o edital,
     antes de existir qualquer resultado, enquanto os recursos contestam um
@@ -158,7 +166,7 @@ export const TIPOS_DE_ETAPA = [
 ];
 
 /** Usado quando nenhuma palavra-chave casa. Não faz parte da legenda colorida. */
-export const TIPO_OUTROS = {
+export const TIPO_OUTROS: TipoDeEtapa = {
   id: "outros",
   rotulo: "Outros",
   cor: "neutro",
@@ -167,10 +175,10 @@ export const TIPO_OUTROS = {
 
 /**
  * Deduz o tipo de uma etapa a partir do nome da atividade.
- * @param {string} atividade texto livre vindo do cronograma
- * @returns {{id: string, rotulo: string, cor: string}} nunca devolve null
+ * @param atividade texto livre vindo do cronograma
+ * @returns nunca devolve null
  */
-export function classificarEtapa(atividade) {
+export function classificarEtapa(atividade: unknown): TipoDeEtapa {
   const texto = normalizarTexto(atividade);
   if (!texto) return TIPO_OUTROS;
   const encontrado = TIPOS_DE_ETAPA.find((tipo) =>
@@ -186,7 +194,7 @@ export function classificarEtapa(atividade) {
   meio-dia local evita isso, e é a mesma convenção já usada em
   `nucleo-cronograma.js` (`dateLocal`). As duas precisam continuar iguais.
 */
-export function dataLocal(valor) {
+export function dataLocal(valor: unknown): Date | null {
   const texto = String(valor ?? "").trim();
   if (!texto) return null;
   const data = new Date(`${texto}T12:00:00`);
@@ -194,7 +202,7 @@ export function dataLocal(valor) {
 }
 
 /** Meio-dia local do dia de `referencia`, para comparar com `dataLocal`. */
-function meioDiaDe(referencia) {
+function meioDiaDe(referencia: Date) {
   return new Date(
     referencia.getFullYear(),
     referencia.getMonth(),
@@ -222,7 +230,17 @@ export const SITUACAO_ETAPA = {
   CONCLUIDA: "concluida",
   EM_ANDAMENTO: "em-andamento",
   FUTURA: "futura",
-};
+} as const;
+
+/** A situação de uma etapa pela data: "concluida", "em-andamento" ou "futura". */
+export type SituacaoDaEtapa =
+  (typeof SITUACAO_ETAPA)[keyof typeof SITUACAO_ETAPA];
+
+/** As datas que a situação lê (texto "AAAA-MM-DD"; o resto é ignorado). */
+export interface EtapaComDatas {
+  readonly data_inicio?: unknown;
+  readonly data_fim?: unknown;
+}
 
 /**
  * Situação de UMA etapa pela data de hoje.
@@ -230,11 +248,13 @@ export const SITUACAO_ETAPA = {
  * Diferente de `calculateState` em `nucleo-cronograma.js`, que resume o edital
  * inteiro numa situação só. Aqui é por etapa.
  *
- * @param {{data_inicio?: string, data_fim?: string}} etapa
- * @param {Date} [referencia] hoje; parametrizado para os testes não dependerem do relógio
- * @returns {string|null} null quando a etapa não tem datas utilizáveis
+ * @param referencia hoje; parametrizado para os testes não dependerem do relógio
+ * @returns null quando a etapa não tem datas utilizáveis
  */
-export function situacaoDaEtapa(etapa, referencia = new Date()) {
+export function situacaoDaEtapa(
+  etapa: EtapaComDatas | null | undefined,
+  referencia: Date = new Date(),
+): SituacaoDaEtapa | null {
   const inicio = dataLocal(etapa?.data_inicio);
   const fim = dataLocal(etapa?.data_fim) || inicio;
   if (!inicio || !fim) return null;
@@ -246,6 +266,9 @@ export function situacaoDaEtapa(etapa, referencia = new Date()) {
 }
 
 /** Atalho para o único uso que a tela faz da situação além da cor. */
-export function etapaConcluida(etapa, referencia = new Date()) {
+export function etapaConcluida(
+  etapa: EtapaComDatas | null | undefined,
+  referencia: Date = new Date(),
+): boolean {
   return situacaoDaEtapa(etapa, referencia) === SITUACAO_ETAPA.CONCLUIDA;
 }

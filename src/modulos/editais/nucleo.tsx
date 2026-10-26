@@ -31,6 +31,41 @@ import { criarEstadoDoNucleo } from "./estado.ts";
 import { PainelOperacional } from "./painel-operacional.tsx";
 import { ModalDoEdital } from "./modal-do-edital.tsx";
 import { ModalLinhaDoTempo } from "./modal-linha-do-tempo.tsx";
+import type { ItemDoResumo } from "../../lib/editais-do-nucleo.ts";
+import type { LinhaDoMonitoramento } from "../../componentes/tipos-do-monitoramento.ts";
+import type {
+  EstadoDoNucleo,
+  ModalDoNucleo,
+  OpcoesDoEstadoDoNucleo,
+} from "./estado.ts";
+
+declare global {
+  interface Window {
+    /** O controlador da Lista de aprovados (`lista-aprovados.tsx`). */
+    aprovadosController?: {
+      openImportModal(id: unknown, rotulo: string): unknown;
+    };
+  }
+}
+
+/** O estado da página (`criarEstadoDoNucleo`). */
+export type EstadoDaPaginaDoNucleo = ReturnType<typeof criarEstadoDoNucleo>;
+
+/** Uma linha da tabela: a do monitoramento e o item do resumo dela (se houver). */
+interface ItemDaTabela {
+  linha: LinhaDoMonitoramento;
+  item: ItemDoResumo | null;
+}
+
+export interface PropriedadesDoNucleo {
+  estado: EstadoDaPaginaDoNucleo;
+  agora?: () => Date;
+}
+
+export interface OpcoesDaPaginaDoNucleo extends OpcoesDoEstadoDoNucleo {
+  secao?: HTMLElement | null;
+  agora?: () => Date;
+}
 
 /*
   Editais (view `nucleo`), módulo do app — a página `#page-nucleo` e os seus
@@ -51,7 +86,7 @@ import { ModalLinhaDoTempo } from "./modal-linha-do-tempo.tsx";
 */
 
 /* As cores de antes (`.chip.<tom>`, editais-do-nucleo.ts) no tom do Selo. */
-const SELO = {
+const SELO: Partial<Record<string, string>> = {
   green: "aprovado",
   red: "reprovado",
   yellow: "pendente",
@@ -72,7 +107,10 @@ const COLUNAS = [
 ];
 
 /* A busca da tabela: edital, unidade, status, etapa, risco ou processo. */
-function pelaBusca(itens, busca) {
+function pelaBusca(
+  itens: readonly ItemDaTabela[],
+  busca: string,
+): readonly ItemDaTabela[] {
   if (!String(busca ?? "").trim()) return itens;
   const achadas = new Set(
     filtrarEditais(
@@ -83,7 +121,7 @@ function pelaBusca(itens, busca) {
   return itens.filter(({ linha }) => achadas.has(linha));
 }
 
-function textoDoStatus(nucleo, carregado) {
+function textoDoStatus(nucleo: EstadoDoNucleo, carregado: boolean) {
   if (!nucleo.carregadoEm)
     return carregado && nucleo.statusDoResumo === "error"
       ? "Alertas indisponíveis"
@@ -92,7 +130,12 @@ function textoDoStatus(nucleo, carregado) {
   return `Atualizado em ${formatarDataHora(nucleo.carregadoEm)}`;
 }
 
-function LinhaDoEdital({ linha, item, perfil, estado }) {
+function LinhaDoEdital({
+  linha,
+  item,
+  perfil,
+  estado,
+}: ItemDaTabela & { perfil: unknown; estado: EstadoDaPaginaDoNucleo }) {
   const url = safeHttpUrl(linha.link_edital);
   const nome = linha.edital || linha.unidade;
   const podeEditar = canManageEditais(perfil);
@@ -243,7 +286,11 @@ function LinhaDoEdital({ linha, item, perfil, estado }) {
   );
 }
 
-function ModalAberto({ estado, modal, agora }) {
+function ModalAberto({
+  estado,
+  modal,
+  agora,
+}: PropriedadesDoNucleo & { modal: ModalDoNucleo | null }) {
   if (modal?.tipo === "edital")
     return (
       <ModalDoEdital
@@ -265,7 +312,7 @@ function ModalAberto({ estado, modal, agora }) {
   return null;
 }
 
-export function Nucleo({ estado, agora }) {
+export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
   // Só os editais da área escolhida no menu; os indicadores contam os mesmos.
   const { linhas, carregado } = usarAreaAtual();
   const doResumo = useSyncExternalStore(estado.assinar, estado.obter);
@@ -369,7 +416,7 @@ export function montarNucleo({
   confirmar,
   aoSalvar,
   agora,
-} = {}) {
+}: OpcoesDaPaginaDoNucleo = {}) {
   const estado = criarEstadoDoNucleo({
     supabase,
     toast,

@@ -20,6 +20,121 @@ import { exigirSessao } from "../../lib/sessao";
 import { analisarCronograma } from "../../lib/cronograma-do-edital.ts";
 import { lerAnexoNoServidor } from "../../lib/anexos-do-edital.ts";
 import { carregarResumoDoNucleo, createNucleoSummaryStore } from "./resumo.ts";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ClienteDoResumo } from "./resumo.ts";
+import type {
+  CronogramaNoBanco,
+  EtapaDoCronograma,
+} from "../../lib/cronograma-do-edital.ts";
+import type { QuadroParaSalvar } from "../../lib/anexos-do-edital.ts";
+import type {
+  ItemDoResumo,
+  UnidadeComArea,
+  editalParaSalvar,
+} from "../../lib/editais-do-nucleo.ts";
+
+/** O cliente Supabase no que a página usa (o do app ou um falso nos testes). */
+export interface ClienteDoNucleo extends ClienteDoResumo {
+  auth?: Partial<
+    Pick<SupabaseClient["auth"], "getSession" | "onAuthStateChange">
+  > | null;
+}
+
+/** O modal aberto: o formulário do edital (id vazio = novo) ou a linha do tempo. */
+export interface ModalDoNucleo {
+  tipo: "edital" | "linha-do-tempo";
+  id: string;
+  /** Muda a cada abertura: é a `key` do componente. */
+  abertura: number;
+}
+
+/** "idle" (nada pedido), "loading", "ready" ou "error". */
+export type StatusDoResumo = "idle" | "loading" | "ready" | "error";
+
+/** O estado da página "Editais" (o que `obter()` devolve). */
+export interface EstadoDoNucleo {
+  perfil: unknown;
+  resumo: readonly ItemDoResumo[];
+  statusDoResumo: StatusDoResumo;
+  atualizandoResumo: boolean;
+  carregadoEm: string;
+  filtro: string;
+  modal: ModalDoNucleo | null;
+  salvando: boolean;
+  geracao: number;
+}
+
+/** A resposta de `get_monitoramento_cronograma`, com o que a linha do tempo lê. */
+export interface CronogramaLido extends CronogramaNoBanco {
+  monitoramento?:
+    | (NonNullable<CronogramaNoBanco["monitoramento"]> & {
+        edital?: string | null;
+        unidade?: string | null;
+      })
+    | null;
+  estado?: {
+    status?: string | null;
+    etapa?: string | null;
+    proxima_atividade?: string | null;
+    percentual?: number | string | null;
+  } | null;
+}
+
+/** O payload do edital (`editalParaSalvar`). */
+export type EditalParaSalvar = ReturnType<typeof editalParaSalvar>;
+
+/** O que `salvarEdital` recebe do formulário. */
+export interface DadosParaSalvarEdital {
+  edital: EditalParaSalvar;
+  etapas: readonly EtapaDoCronograma[];
+  motivo: unknown;
+  errata: unknown;
+  quadro?: QuadroParaSalvar | null;
+}
+
+/** O que `moverEdital` recebe: o destino, o motivo e os textos da confirmação. */
+export interface DadosParaMoverEdital {
+  id: string;
+  area: string;
+  motivo: string;
+  rotulo: string;
+  de: string;
+  para: string;
+}
+
+/** O aviso da tela (toast do app). */
+export type AvisoDoNucleo = (mensagem: string, tom?: string) => void;
+
+/** O carregador do app (o overlay de "Salvando..."). */
+export type CarregadorDoNucleo = (
+  ativo: boolean,
+  titulo?: string,
+  mensagem?: string,
+  progresso?: number,
+) => void;
+
+export interface OpcoesDoEstadoDoNucleo {
+  supabase?: ClienteDoNucleo | null;
+  toast?: AvisoDoNucleo;
+  loader?: CarregadorDoNucleo;
+  getProfile?: () => unknown;
+  confirmar?: (mensagem: string) => boolean;
+  aoSalvar?: () => unknown;
+}
+
+/** A linha que `reiniciarTreinamento` recebe (a do monitoramento). */
+interface LinhaParaReiniciar {
+  readonly id?: unknown;
+}
+
+/** A resposta de `salvar_monitoramento_com_cronograma_v2` e de `mover_edital_de_area`. */
+type ConfirmacaoDoBanco = {
+  ok?: boolean;
+  registro?: { id?: string } | null;
+} | null;
+
+/** O erro no que a página lê (PostgrestError, Error e afins). */
+type ErroLido = { message?: string } | null | undefined;
 
 const RPC_CRONOGRAMA = "get_monitoramento_cronograma";
 const RPC_SALVAR = "salvar_monitoramento_com_cronograma_v2";
@@ -30,13 +145,13 @@ const RPC_SALVAR_QUADRO = "salvar_quadro_de_vagas";
 const RPC_REINICIAR_TREINAMENTO = "reiniciar_edital_treinamento";
 export const EVENTO_CRONOGRAMA_SALVO = "agsus:nucleo-cronograma-saved";
 
-const txt = (valor) => String(valor ?? "").trim();
+const txt = (valor: unknown) => String(valor ?? "").trim();
 
-const ESTADO_INICIAL = Object.freeze({
+const ESTADO_INICIAL: EstadoDoNucleo = Object.freeze({
   perfil: null,
   resumo: Object.freeze([]),
   /** "idle" (nada pedido), "loading", "ready" ou "error". */
-  statusDoResumo: "idle",
+  statusDoResumo: "idle" as StatusDoResumo,
   atualizandoResumo: false,
   /** Quando o último resumo chegou (ISO), para a data discreta do topo. */
   carregadoEm: "",
@@ -66,19 +181,23 @@ export function criarEstadoDoNucleo({
   getProfile = () => null,
   confirmar = (mensagem) => window.confirm(mensagem),
   aoSalvar = recarregarPeloLegado,
-} = {}) {
+}: OpcoesDoEstadoDoNucleo = {}) {
   let estado = ESTADO_INICIAL;
   let aberturas = 0;
-  const ouvintes = new Set();
+  const ouvintes = new Set<() => void>();
   const resumo = createNucleoSummaryStore({
     loader: () => carregarResumoDoNucleo(supabase),
   });
-  let pedido = { fonte: null, pendente: null, token: 0 };
+  let pedido: {
+    fonte: Promise<ItemDoResumo[]> | null;
+    pendente: Promise<ItemDoResumo[]> | null;
+    token: number;
+  } = { fonte: null, pendente: null, token: 0 };
   /* Unidades com área (TA_UNIDADE_AREA): uma carga por sessão, refeita depois de salvar. */
-  let unidadesPorArea = null;
-  let identidade;
+  let unidadesPorArea: Promise<UnidadeComArea[]> | null = null;
+  let identidade: string | null | undefined;
 
-  function publicar(mudancas) {
+  function publicar(mudancas: Partial<EstadoDoNucleo>) {
     estado = { ...estado, ...mudancas };
     for (const ouvinte of ouvintes) ouvinte();
   }
@@ -87,11 +206,14 @@ export function criarEstadoDoNucleo({
 
   // ── Resumo ─────────────────────────────────────────────────────────────
 
-  function carregarResumo({ force = false, invalidate = false } = {}) {
+  function carregarResumo({
+    force = false,
+    invalidate = false,
+  }: { force?: boolean; invalidate?: boolean } = {}): Promise<ItemDoResumo[]> {
     if (invalidate) resumo.invalidate();
     const fonte = resumo.get({ force });
     // Duas chamadas seguidas partilham a mesma carga.
-    if (pedido.fonte === fonte) return pedido.pendente;
+    if (pedido.fonte === fonte) return pedido.pendente!;
     const token = pedido.token + 1;
     pedido = { fonte, pendente: null, token };
     publicar({
@@ -165,31 +287,33 @@ export function criarEstadoDoNucleo({
 
   // ── Cronograma ─────────────────────────────────────────────────────────
 
-  async function lerCronograma(id) {
+  async function lerCronograma(id: unknown): Promise<CronogramaLido> {
     if (!supabase) throw new Error("Supabase indisponível.");
     await exigirSessao(supabase);
     const { data, error } = await supabase.rpc(RPC_CRONOGRAMA, {
       p_monitoramento_id: id,
     });
     if (error) throw error;
-    return data || {};
+    // A fronteira com o banco: a resposta da RPC.
+    return (data || {}) as CronogramaLido;
   }
 
   // ── Anexos (PDF) e quadro de vagas ─────────────────────────────────────
 
   /** Lê os PDFs de anexos na função Python, um por vez. */
-  async function lerAnexos(arquivos) {
+  async function lerAnexos(arquivos: readonly File[] | null | undefined) {
     if (!supabase) throw new Error("Supabase indisponível.");
     const sessao = await exigirSessao(supabase);
-    const resultados = [];
+    const resultados: Awaited<ReturnType<typeof lerAnexoNoServidor>>[] = [];
     for (const arquivo of arquivos || [])
       resultados.push(
-        await lerAnexoNoServidor(arquivo, { token: sessao.access_token }),
+        // `exigirSessao` só volta com a sessão ativa; sem ela, lança.
+        await lerAnexoNoServidor(arquivo, { token: sessao!.access_token }),
       );
     return resultados;
   }
 
-  async function lerQuadroDeVagas(id) {
+  async function lerQuadroDeVagas(id: unknown): Promise<unknown> {
     if (!supabase) throw new Error("Supabase indisponível.");
     await exigirSessao(supabase);
     const { data, error } = await supabase.rpc(RPC_QUADRO, { p_edital: id });
@@ -198,7 +322,10 @@ export function criarEstadoDoNucleo({
   }
 
   /** Grava o quadro de vagas de um edital já cadastrado, sem esperar o Salvar do edital. */
-  async function salvarQuadroDeVagas(id, quadro) {
+  async function salvarQuadroDeVagas(
+    id: unknown,
+    quadro: QuadroParaSalvar,
+  ): Promise<unknown> {
     if (!supabase) throw new Error("Supabase indisponível.");
     await exigirSessao(supabase);
     const { data, error } = await supabase.rpc(RPC_SALVAR_QUADRO, {
@@ -214,19 +341,19 @@ export function criarEstadoDoNucleo({
     Falhar aqui não impede de editar: o formulário cai na área gravada nos
     editais, e o banco confere a unidade ao salvar.
   */
-  function lerUnidadesPorArea() {
+  function lerUnidadesPorArea(): Promise<UnidadeComArea[]> {
     if (!supabase) return Promise.resolve([]);
     if (!unidadesPorArea)
       unidadesPorArea = exigirSessao(supabase)
         .then(() => supabase.rpc(RPC_UNIDADES_POR_AREA))
         .then(({ data, error }) => {
           if (error) throw error;
-          return Array.isArray(data) ? data : [];
+          return Array.isArray(data) ? (data as UnidadeComArea[]) : [];
         })
-        .catch((erro) => {
+        .catch((erro: unknown) => {
           console.warn(
             "Unidades por área indisponíveis:",
-            erro?.message || erro,
+            (erro as ErroLido)?.message || erro,
           );
           unidadesPorArea = null;
           return [];
@@ -244,7 +371,7 @@ export function criarEstadoDoNucleo({
     motivo,
     errata,
     quadro = null,
-  }) {
+  }: DadosParaSalvarEdital): Promise<boolean> {
     if (estado.salvando) return false;
     if (!canManageEditais(perfil())) {
       toast("Sem permissão para salvar editais.", "warn");
@@ -255,7 +382,7 @@ export function criarEstadoDoNucleo({
       exigirMotivo: Boolean(edital.id),
     });
     if (analise.erros.length) {
-      toast(analise.erros[0], "warn");
+      toast(analise.erros[0]!, "warn");
       return false;
     }
     if (
@@ -274,14 +401,16 @@ export function criarEstadoDoNucleo({
         ...etapa,
         ordem: indice + 1,
       }));
-      const { data, error } = await supabase.rpc(RPC_SALVAR, {
+      // Sem Supabase, `exigirSessao` já lançou (o erro vira o aviso abaixo).
+      const { data, error } = await supabase!.rpc(RPC_SALVAR, {
         p_payload: edital,
         p_cronograma: cronograma,
         p_motivo: txt(motivo),
         p_numero_errata: txt(errata) || null,
       });
       if (error) throw error;
-      if (!data?.ok) throw new Error("O Supabase não confirmou o salvamento.");
+      if (!(data as ConfirmacaoDoBanco)?.ok)
+        throw new Error("O Supabase não confirmou o salvamento.");
       // Uma unidade nova pode ter sido registrada na área.
       unidadesPorArea = null;
 
@@ -290,9 +419,9 @@ export function criarEstadoDoNucleo({
         só tem id agora). Falhar aqui não desfaz o edital salvo: avisa.
       */
       let avisoDoQuadro = "";
-      const idSalvo = data?.registro?.id || edital.id;
+      const idSalvo = (data as ConfirmacaoDoBanco)?.registro?.id || edital.id;
       if (quadro?.linhas?.length && idSalvo) {
-        const gravou = await supabase.rpc(RPC_SALVAR_QUADRO, {
+        const gravou = await supabase!.rpc(RPC_SALVAR_QUADRO, {
           p_edital: idSalvo,
           p_dados: quadro,
         });
@@ -308,7 +437,7 @@ export function criarEstadoDoNucleo({
       publicar({ modal: null });
       document.dispatchEvent(
         new CustomEvent(EVENTO_CRONOGRAMA_SALVO, {
-          detail: { id: data?.registro?.id, data },
+          detail: { id: (data as ConfirmacaoDoBanco)?.registro?.id, data },
         }),
       );
       await aoSalvar();
@@ -317,7 +446,10 @@ export function criarEstadoDoNucleo({
       else toast(mensagem);
       return true;
     } catch (erro) {
-      toast(`Erro ao salvar edital: ${erro?.message || erro}`, "error");
+      toast(
+        `Erro ao salvar edital: ${(erro as ErroLido)?.message || erro}`,
+        "error",
+      );
       return false;
     } finally {
       loader(false);
@@ -329,7 +461,14 @@ export function criarEstadoDoNucleo({
    * Só admin: muda o edital de área, com motivo (auditado no banco). Pede
    * confirmação citando o edital e as duas áreas.
    */
-  async function moverEdital({ id, area, motivo, rotulo, de, para }) {
+  async function moverEdital({
+    id,
+    area,
+    motivo,
+    rotulo,
+    de,
+    para,
+  }: DadosParaMoverEdital): Promise<boolean> {
     if (estado.salvando) return false;
     if (!canMoveEditalBetweenAreas(perfil())) {
       toast("Só administradores podem mover editais de área.", "warn");
@@ -350,13 +489,14 @@ export function criarEstadoDoNucleo({
     loader(true, "Editais", "Movendo edital de área...", 70);
     try {
       await exigirSessao(supabase);
-      const { data, error } = await supabase.rpc(RPC_MOVER_DE_AREA, {
+      const { data, error } = await supabase!.rpc(RPC_MOVER_DE_AREA, {
         p_id: id,
         p_area: area,
         p_motivo: txt(motivo),
       });
       if (error) throw error;
-      if (!data?.ok) throw new Error("O Supabase não confirmou a mudança.");
+      if (!(data as ConfirmacaoDoBanco)?.ok)
+        throw new Error("O Supabase não confirmou a mudança.");
       publicar({ modal: null });
       document.dispatchEvent(
         new CustomEvent(EVENTO_CRONOGRAMA_SALVO, { detail: { id, data } }),
@@ -365,7 +505,10 @@ export function criarEstadoDoNucleo({
       toast(`${rotulo} movido para ${para}.`);
       return true;
     } catch (erro) {
-      toast(`Erro ao mover edital: ${erro?.message || erro}`, "error");
+      toast(
+        `Erro ao mover edital: ${(erro as ErroLido)?.message || erro}`,
+        "error",
+      );
       return false;
     } finally {
       loader(false);
@@ -378,7 +521,9 @@ export function criarEstadoDoNucleo({
    * início (o banco recusa edital real). A confirmação é na própria página
    * (LinhaDoEdital), por isso aqui não pergunta de novo.
    */
-  async function reiniciarTreinamento(linha) {
+  async function reiniciarTreinamento(
+    linha: LinhaParaReiniciar,
+  ): Promise<boolean> {
     if (estado.salvando) return false;
     if (!isAdminGlobal(perfil())) {
       toast("Só o administrador global reinicia o treinamento.", "warn");
@@ -392,7 +537,7 @@ export function criarEstadoDoNucleo({
     loader(true, "Editais", "Reiniciando o treinamento...", 70);
     try {
       await exigirSessao(supabase);
-      const { error } = await supabase.rpc(RPC_REINICIAR_TREINAMENTO, {
+      const { error } = await supabase!.rpc(RPC_REINICIAR_TREINAMENTO, {
         p_edital: linha.id,
       });
       if (error) throw error;
@@ -404,7 +549,7 @@ export function criarEstadoDoNucleo({
       return true;
     } catch (erro) {
       toast(
-        `Erro ao reiniciar o treinamento: ${erro?.message || erro}`,
+        `Erro ao reiniciar o treinamento: ${(erro as ErroLido)?.message || erro}`,
         "error",
       );
       return false;
@@ -416,12 +561,12 @@ export function criarEstadoDoNucleo({
 
   // ── Modais ─────────────────────────────────────────────────────────────
 
-  function abrir(modal) {
+  function abrir(modal: Omit<ModalDoNucleo, "abertura">) {
     aberturas += 1;
     publicar({ modal: { ...modal, abertura: aberturas }, perfil: perfil() });
   }
 
-  function abrirEdital(id = "") {
+  function abrirEdital(id: unknown = "") {
     if (!canManageEditais(perfil())) {
       toast(
         "Seu perfil pode consultar Editais, mas não editar editais.",
@@ -433,7 +578,7 @@ export function criarEstadoDoNucleo({
   }
 
   return {
-    assinar(ouvinte) {
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
@@ -444,9 +589,11 @@ export function criarEstadoDoNucleo({
     sincronizarPerfil: () => publicar({ perfil: perfil() }),
     carregarResumo,
     editaisParaCopiar,
-    filtrarPor: (filtro) => publicar({ filtro: filtro || "todos" }),
+    filtrarPor: (filtro: string | null | undefined) =>
+      publicar({ filtro: filtro || "todos" }),
     abrirEdital,
-    abrirLinhaDoTempo: (id) => abrir({ tipo: "linha-do-tempo", id: txt(id) }),
+    abrirLinhaDoTempo: (id: unknown) =>
+      abrir({ tipo: "linha-do-tempo", id: txt(id) }),
     fecharModal: () => estado.modal && publicar({ modal: null }),
     lerCronograma,
     lerUnidadesPorArea,

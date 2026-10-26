@@ -6,7 +6,10 @@
   prioritária e ponto vermelho no gráfico), não como análise válida.
   Compara só a data do calendário, no fuso de quem abre o painel.
 */
-export function dataDeAnaliseNoFuturo(data, agora = new Date()) {
+export function dataDeAnaliseNoFuturo(
+  data: unknown,
+  agora: Date = new Date(),
+): boolean {
   if (!(data instanceof Date) || Number.isNaN(data.getTime())) return false;
   const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
   const dia = new Date(data.getFullYear(), data.getMonth(), data.getDate());

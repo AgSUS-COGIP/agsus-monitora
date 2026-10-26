@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import {
   editalDiferente,
   etapasDoAnexo,
@@ -8,6 +9,45 @@ import {
   resumoDoQuadro,
   textoDaModalidade,
 } from "../../lib/anexos-do-edital.ts";
+import type {
+  AnexoLido,
+  AnexosJuntados,
+  QuadroDeVagasSalvo,
+  QuadroParaSalvar,
+  ResumoDoQuadro,
+  VagaDoAnexo,
+} from "../../lib/anexos-do-edital.ts";
+import type { EtapaDoCronograma } from "../../lib/cronograma-do-edital.ts";
+
+/** O que a seção usa do estado da página (`estado.ts`). */
+export interface EstadoDosAnexos {
+  confirmar(mensagem: string): boolean;
+  /** As respostas da função Python, uma por PDF. */
+  lerAnexos(
+    arquivos: File[],
+  ): Promise<readonly (AnexoLido | null | undefined)[]>;
+  /** O quadro de vagas salvo (`QuadroDeVagasSalvo`). */
+  lerQuadroDeVagas?(id: string): Promise<unknown>;
+  /** Grava o quadro e devolve o salvo (`QuadroDeVagasSalvo`). */
+  salvarQuadroDeVagas(id: string, quadro: QuadroParaSalvar): Promise<unknown>;
+}
+
+export interface PropriedadesDeImportarAnexos {
+  estado: EstadoDosAnexos;
+  idAtual: string;
+  numeroDoFormulario: string;
+  temEtapas: boolean;
+  quadroPendente: QuadroParaSalvar | null;
+  aoUsarCronograma: (etapas: EtapaDoCronograma[]) => void;
+  aoMudarQuadro: (quadro: QuadroParaSalvar | null) => void;
+  aoPreencherEdital: (numero: string) => void;
+}
+
+/** Resultado da gravação na hora do quadro de vagas. */
+interface GravacaoDoQuadro {
+  tom: "success" | "error";
+  texto: string;
+}
 
 /*
   "Anexos do edital (PDF)" no formulário do edital. A pessoa escolhe o PDF de
@@ -25,9 +65,10 @@ import {
   `src/lib/anexos-do-edital.ts`.
 */
 
-const plural = (total, um, varios) => `${total} ${total === 1 ? um : varios}`;
+const plural = (total: number, um: string, varios: string) =>
+  `${total} ${total === 1 ? um : varios}`;
 
-function frase(resumo) {
+function frase(resumo: ResumoDoQuadro) {
   const partes = [
     plural(resumo.linhas, "linha", "linhas"),
     plural(resumo.imediatas, "vaga imediata", "vagas imediatas"),
@@ -37,7 +78,13 @@ function frase(resumo) {
   return partes.join(" · ");
 }
 
-export function TabelaDoQuadro({ linhas, modalidades }) {
+export function TabelaDoQuadro({
+  linhas,
+  modalidades,
+}: {
+  linhas: readonly VagaDoAnexo[] | null | undefined;
+  modalidades?: readonly string[] | null;
+}) {
   const nomes = modalidades?.length
     ? modalidades
     : [
@@ -93,31 +140,31 @@ export function ImportarAnexos({
   aoUsarCronograma,
   aoMudarQuadro,
   aoPreencherEdital,
-}) {
-  const entrada = useRef(null);
+}: PropriedadesDeImportarAnexos) {
+  const entrada = useRef<HTMLInputElement>(null);
   const [lendo, setLendo] = useState(false);
   const [erro, setErro] = useState("");
-  const [lido, setLido] = useState(null);
+  const [lido, setLido] = useState<AnexosJuntados | null>(null);
   const [cronogramaUsado, setCronogramaUsado] = useState(false);
   const [verQuadro, setVerQuadro] = useState(false);
-  const [salvo, setSalvo] = useState(null);
+  const [salvo, setSalvo] = useState<QuadroDeVagasSalvo | null>(null);
   const [gravandoQuadro, setGravandoQuadro] = useState(false);
   /* Resultado da gravação na hora: { tom: "success" | "error", texto }. */
-  const [gravacao, setGravacao] = useState(null);
+  const [gravacao, setGravacao] = useState<GravacaoDoQuadro | null>(null);
 
   useEffect(() => {
     if (!idAtual || !estado.lerQuadroDeVagas) return undefined;
     let vivo = true;
     estado
       .lerQuadroDeVagas(idAtual)
-      .then((dados) => vivo && setSalvo(dados))
+      .then((dados) => vivo && setSalvo(dados as QuadroDeVagasSalvo | null))
       .catch(() => vivo && setSalvo(null));
     return () => {
       vivo = false;
     };
   }, [estado, idAtual]);
 
-  async function ler(evento) {
+  async function ler(evento: ChangeEvent<HTMLInputElement>) {
     const arquivos = [...(evento.target.files || [])];
     evento.target.value = "";
     if (!arquivos.length) return;
@@ -140,7 +187,7 @@ export function ImportarAnexos({
       );
       if (juntado.edital) aoPreencherEdital(juntado.edital);
     } catch (e) {
-      setErro(e?.message || String(e));
+      setErro((e as Error | null)?.message || String(e));
       aoMudarQuadro(null);
     } finally {
       setLendo(false);
@@ -160,10 +207,10 @@ export function ImportarAnexos({
     setGravandoQuadro(true);
     setGravacao(null);
     try {
-      const dados = await estado.salvarQuadroDeVagas(
+      const dados = (await estado.salvarQuadroDeVagas(
         idAtual,
         quadroParaSalvar(lido),
-      );
+      )) as QuadroDeVagasSalvo | null;
       setSalvo(dados);
       setGravacao({
         tom: "success",
@@ -172,7 +219,7 @@ export function ImportarAnexos({
     } catch (e) {
       setGravacao({
         tom: "error",
-        texto: `O quadro de vagas não foi salvo: ${e?.message || e}`,
+        texto: `O quadro de vagas não foi salvo: ${(e as Error | null)?.message || e}`,
       });
     } finally {
       setGravandoQuadro(false);

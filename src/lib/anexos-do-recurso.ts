@@ -11,12 +11,30 @@
   lê o que o Storage gravou — o navegador não decide.
 */
 
+/** Um tipo de arquivo aceito: extensões, o MIME gravado e o rótulo. */
+export interface TipoDeArquivo {
+  readonly extensoes: readonly string[];
+  readonly mime: string;
+  readonly rotulo: string;
+}
+
+/** O mínimo de um arquivo que a validação lê (File, nos testes um objeto). */
+export interface ArquivoDoAnexo {
+  name?: string;
+  type?: string;
+  size?: number;
+}
+
+/** `{ mime }` se o arquivo pode ir, `{ erro }` se não. */
+export type ValidacaoDoAnexo =
+  { erro: string; mime?: undefined } | { mime: string; erro?: undefined };
+
 export const BUCKET_DOS_ANEXOS = "recursos-anexos";
 export const LIMITE_DO_ANEXO = 20 * 1024 * 1024;
 /** Validade da URL assinada do download, em segundos. */
 export const VALIDADE_DO_DOWNLOAD = 60;
 
-export const TIPOS_DE_ARQUIVO = Object.freeze([
+export const TIPOS_DE_ARQUIVO: readonly TipoDeArquivo[] = Object.freeze([
   Object.freeze({ extensoes: ["pdf"], mime: "application/pdf", rotulo: "PDF" }),
   Object.freeze({
     extensoes: ["docx"],
@@ -53,14 +71,14 @@ export const TIPOS_DE_ANEXO = Object.freeze([
   Object.freeze({ id: "outro", rotulo: "Outro" }),
 ]);
 
-export const rotuloDoTipoDeAnexo = (id) =>
+export const rotuloDoTipoDeAnexo = (id: unknown) =>
   TIPOS_DE_ANEXO.find((t) => t.id === id)?.rotulo || "Anexo";
 
-const extensao = (nome) => {
+const extensao = (nome: unknown) => {
   const partes = String(nome ?? "")
     .toLowerCase()
     .split(".");
-  return partes.length > 1 ? partes.at(-1) : "";
+  return partes.length > 1 ? partes.at(-1)! : "";
 };
 
 /*
@@ -68,7 +86,9 @@ const extensao = (nome) => {
   se o navegador mandou um tipo e ele é outro dos aceitos, a extensão engana e
   o arquivo é recusado.
 */
-export function tipoDoArquivo(arquivo) {
+export function tipoDoArquivo(
+  arquivo: ArquivoDoAnexo | null | undefined,
+): TipoDeArquivo | null {
   const porExtensao = TIPOS_DE_ARQUIVO.find((t) =>
     t.extensoes.includes(extensao(arquivo?.name)),
   );
@@ -84,7 +104,9 @@ export function tipoDoArquivo(arquivo) {
 }
 
 /** `{ mime }` se o arquivo pode ir, `{ erro }` se não. */
-export function validarArquivoDoAnexo(arquivo) {
+export function validarArquivoDoAnexo(
+  arquivo: ArquivoDoAnexo | null | undefined,
+): ValidacaoDoAnexo {
   if (!arquivo) return { erro: "Escolha o arquivo." };
   const tipo = tipoDoArquivo(arquivo);
   if (!tipo)
@@ -100,7 +122,7 @@ export function validarArquivoDoAnexo(arquivo) {
 }
 
 /** Nome para a chave do Storage: sem acento, espaço nem símbolo; até 120 caracteres. */
-export function nomeSeguroDoAnexo(nome) {
+export function nomeSeguroDoAnexo(nome: unknown) {
   const limpo = String(nome ?? "")
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
@@ -122,7 +144,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  * `<área>/<recurso>/<uuid>-<nome seguro>` — a forma que as políticas do
  * bucket e a RPC de registro aceitam. Lança com área ou ids fora do formato.
  */
-export function caminhoDoAnexo(area, recursoId, id, nome) {
+export function caminhoDoAnexo(
+  area: unknown,
+  recursoId: unknown,
+  id: unknown,
+  nome: unknown,
+) {
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(String(area ?? "")))
     throw new Error("Área inválida para o anexo.");
   if (!UUID.test(String(recursoId ?? "")) || !UUID.test(String(id ?? "")))
@@ -130,7 +157,7 @@ export function caminhoDoAnexo(area, recursoId, id, nome) {
   return `${area}/${recursoId}/${id}-${nomeSeguroDoAnexo(nome)}`;
 }
 
-export function tamanhoLegivel(bytes) {
+export function tamanhoLegivel(bytes: unknown) {
   const n = Number(bytes);
   if (!Number.isFinite(n) || n < 0) return "";
   if (n < 1024) return `${n} B`;

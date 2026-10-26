@@ -22,22 +22,94 @@
 */
 import { comemoracoesLigadasNaResposta } from "./comemoracao.ts";
 
+/** A manutenção de uma linha (sistema, área ou aba). */
+export interface ManutencaoDaLinha {
+  readonly mensagem: string;
+  readonly previsao: string | null;
+}
+
+/** Uma área na situação do sistema. */
+export interface AreaDaSituacao {
+  readonly id: string;
+  readonly ativo: boolean;
+  readonly manutencao: ManutencaoDaLinha | null;
+}
+
+/** A situação do sistema no formato da tela (`normalizarSituacaoDoSistema`). */
+export interface SituacaoDoSistema {
+  readonly carregada: boolean;
+  readonly adminGlobal: boolean;
+  readonly comemoracoes: boolean;
+  readonly sistema: ManutencaoDaLinha | null;
+  readonly areas: readonly AreaDaSituacao[];
+}
+
+/** O que as consultas por área leem da situação (o menu passa só `areas`). */
+export type SituacaoDasAreas =
+  | {
+      readonly sistema?: ManutencaoDaLinha | null;
+      readonly areas?: readonly {
+        readonly id: string;
+        readonly ativo?: boolean;
+        readonly manutencao?: ManutencaoDaLinha | null;
+      }[];
+    }
+  | null
+  | undefined;
+
+/** Uma linha da resposta de `obter_situacao_do_sistema` (sistema ou área). */
+interface LinhaDaResposta {
+  co_area?: unknown;
+  ativo?: unknown;
+  situacao?: unknown;
+  mensagem?: unknown;
+  previsao?: unknown;
+}
+
+/** A resposta de `obter_situacao_do_sistema`, ainda sem conferir. */
+export interface RespostaDaSituacao {
+  sistema?: LinhaDaResposta | null;
+  areas?: unknown;
+  admin_global?: unknown;
+}
+
+/** A aba numa área (o recorte da área no catálogo). */
+export interface AreaDaAba {
+  readonly area?: string;
+  readonly view?: string | null;
+  readonly manutencao?: ManutencaoDaLinha | null;
+}
+
+/** Uma aba do catálogo, no que a situação lê dela. */
+export interface AbaDaSituacao {
+  readonly view?: string;
+  readonly manutencao?: ManutencaoDaLinha | null;
+  readonly areas?: readonly AreaDaAba[];
+}
+
+/** A manutenção que vale para a página, com o nível de onde veio. */
+export interface SituacaoEfetiva {
+  origem: "sistema" | "area" | "aba" | "aba_area";
+  mensagem: string;
+  previsao: string | null;
+}
+
 export const MANUTENCAO = "MANUTENCAO";
 
 export const MENSAGEM_PADRAO_DE_MANUTENCAO =
   "Esta parte do MONITORA está passando por manutenção. Tente de novo mais tarde.";
 
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) => String(valor ?? "").trim();
 const DATA_ISO = /^(\d{4})-(\d{2})-(\d{2})/;
 
 /** Data `aaaa-mm-dd` (o que o banco manda em `date`) ou `null`. */
-export function dataDaPrevisao(valor) {
+export function dataDaPrevisao(valor: unknown): string | null {
   const achado = DATA_ISO.exec(texto(valor));
   return achado ? `${achado[1]}-${achado[2]}-${achado[3]}` : null;
 }
 
 /** `aaaa-mm-dd` → `dd/mm/aaaa`; o resto, vazio. */
-export function formatarPrevisao(valor) {
+export function formatarPrevisao(valor: unknown): string {
   const data = dataDaPrevisao(valor);
   if (!data) return "";
   const [ano, mes, dia] = data.split("-");
@@ -48,7 +120,11 @@ export function formatarPrevisao(valor) {
  * A manutenção de uma linha (situação, mensagem, previsão), ou `null` quando
  * a linha está ativa. É o formato que o catálogo do menu e a tela usam.
  */
-export function manutencaoDaLinha(situacao, mensagem, previsao) {
+export function manutencaoDaLinha(
+  situacao: unknown,
+  mensagem: unknown,
+  previsao: unknown,
+): ManutencaoDaLinha | null {
   if (texto(situacao).toUpperCase() !== MANUTENCAO) return null;
   return Object.freeze({
     mensagem: texto(mensagem),
@@ -56,7 +132,7 @@ export function manutencaoDaLinha(situacao, mensagem, previsao) {
   });
 }
 
-export const SITUACAO_PADRAO = Object.freeze({
+export const SITUACAO_PADRAO: SituacaoDoSistema = Object.freeze({
   carregada: false,
   adminGlobal: false,
   /* Sem resposta do banco, comemoração nenhuma (src/lib/comemoracao.ts). */
@@ -69,11 +145,17 @@ export const SITUACAO_PADRAO = Object.freeze({
  * A resposta de `obter_situacao_do_sistema` no formato da tela. Resposta que
  * não é objeto vira `SITUACAO_PADRAO` (tudo ativo).
  */
-export function normalizarSituacaoDoSistema(dados) {
+export function normalizarSituacaoDoSistema(
+  dados: RespostaDaSituacao | null | undefined,
+): SituacaoDoSistema {
   if (!dados || typeof dados !== "object" || Array.isArray(dados))
     return SITUACAO_PADRAO;
-  const sistema = dados.sistema || {};
-  const areas = (Array.isArray(dados.areas) ? dados.areas : [])
+  const sistema: LinhaDaResposta = dados.sistema || {};
+  const areas = (
+    (Array.isArray(dados.areas) ? dados.areas : []) as readonly (
+      LinhaDaResposta | null | undefined
+    )[]
+  )
     .map((area) => ({
       id: texto(area?.co_area),
       ativo: area?.ativo !== false,
@@ -98,21 +180,30 @@ export function normalizarSituacaoDoSistema(dados) {
   });
 }
 
-const areaDa = (situacao, area) =>
+const areaDa = (situacao: SituacaoDasAreas, area: unknown) =>
   (situacao?.areas || []).find((item) => item.id === texto(area)) || null;
 
 /** Área desconhecida (ou sem situação carregada) conta como ativa. */
-export function areaEstaAtiva(situacao, area) {
+export function areaEstaAtiva(
+  situacao: SituacaoDasAreas,
+  area: unknown,
+): boolean {
   return areaDa(situacao, area)?.ativo !== false;
 }
 
-export function filtrarAreasAtivas(areas, situacao) {
+export function filtrarAreasAtivas<T>(
+  areas: readonly T[] | null | undefined,
+  situacao: SituacaoDasAreas,
+): T[] {
   return (Array.isArray(areas) ? areas : []).filter((area) =>
     areaEstaAtiva(situacao, area),
   );
 }
 
-export function manutencaoDaArea(situacao, area) {
+export function manutencaoDaArea(
+  situacao: SituacaoDasAreas,
+  area: unknown,
+): ManutencaoDaLinha | null {
   return areaDa(situacao, area)?.manutencao || null;
 }
 
@@ -121,8 +212,12 @@ export function manutencaoDaArea(situacao, area) {
   troca; senão, a da aba). Sem área que bata — página aberta sem área —, a
   aba de mesma view, sem o recorte da área.
 */
-export function abaDaPagina(abas, view, area) {
-  const lista = Array.isArray(abas) ? abas : [];
+export function abaDaPagina(
+  abas: readonly AbaDaSituacao[] | null | undefined,
+  view: unknown,
+  area: unknown,
+): { aba: AbaDaSituacao; naArea: AreaDaAba | null } | null {
+  const lista: readonly AbaDaSituacao[] = Array.isArray(abas) ? abas : [];
   const alvo = texto(view);
   if (!alvo) return null;
   for (const aba of lista) {
@@ -146,8 +241,16 @@ export function situacaoEfetiva({
   abas = [],
   view,
   area,
-} = {}) {
-  const comOrigem = (origem, manutencao) => ({
+}: {
+  situacao?: SituacaoDasAreas;
+  abas?: readonly AbaDaSituacao[] | null;
+  view?: unknown;
+  area?: unknown;
+} = {}): SituacaoEfetiva | null {
+  const comOrigem = (
+    origem: SituacaoEfetiva["origem"],
+    manutencao: ManutencaoDaLinha,
+  ): SituacaoEfetiva => ({
     origem,
     mensagem: manutencao.mensagem || "",
     previsao: manutencao.previsao || null,
@@ -165,7 +268,9 @@ export function situacaoEfetiva({
 }
 
 /** O que a tela de manutenção mostra (título, mensagem e previsão). */
-export function textosDaManutencao(efetiva) {
+export function textosDaManutencao(
+  efetiva: Partial<SituacaoEfetiva> | null | undefined,
+): { titulo: string; mensagem: string; previsao: string } {
   const previsao = formatarPrevisao(efetiva?.previsao);
   return {
     titulo: "Em manutenção",
@@ -175,7 +280,9 @@ export function textosDaManutencao(efetiva) {
 }
 
 /** A faixa que o administrador global vê no lugar da tela de manutenção. */
-export function textoDaFaixaDoAdministrador(efetiva) {
+export function textoDaFaixaDoAdministrador(
+  efetiva: SituacaoEfetiva | null | undefined,
+): string {
   if (!efetiva) return "";
   const previsao = formatarPrevisao(efetiva.previsao);
   const quem =
@@ -186,7 +293,9 @@ export function textoDaFaixaDoAdministrador(efetiva) {
 }
 
 /** Dica do indicador de manutenção no menu. */
-export function dicaDaManutencao(manutencao) {
+export function dicaDaManutencao(
+  manutencao: ManutencaoDaLinha | null | undefined,
+): string {
   if (!manutencao) return "";
   const previsao = formatarPrevisao(manutencao.previsao);
   return [

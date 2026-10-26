@@ -30,6 +30,26 @@ import {
   ehCancelado,
   ehConcluido,
 } from "./indicadores-do-monitoramento.ts";
+import type {
+  EtapaDoAcompanhamento,
+  LinhaDoMonitoramento,
+  Motivo,
+} from "../modulos/visao-geral/tipos.ts";
+
+/** Os limites do crítico (`LIMITES_DO_CRITICO`, ou outros no teste). */
+export interface LimitesDoCritico {
+  diasDoPrazo: number;
+  diasParado: number;
+  contratacaoMinima: number;
+}
+
+/** Os códigos dos motivos de atenção (chaves de `MOTIVOS_DO_CRITICO`). */
+export type CodigoDoMotivo =
+  "atrasada" | "parado" | "sem_inscritos" | "contratacao_baixa";
+
+/** Uma etapa do cronograma: só as datas importam aqui. */
+type EtapaDoCritico =
+  Pick<EtapaDoAcompanhamento, "data_inicio" | "data_fim"> | null | undefined;
 
 export const LIMITES_DO_CRITICO = Object.freeze({
   /** Próxima etapa em até N dias: só a cor vermelha na tabela (não é crítico). */
@@ -48,14 +68,14 @@ export const MOTIVOS_DO_CRITICO = Object.freeze({
   contratacao_baixa: Object.freeze({ peso: 4, tom: "alerta" }),
 });
 
-const txt = (valor) => String(valor ?? "").trim();
-const num = (valor) => {
+const txt = (valor: unknown) => String(valor ?? "").trim();
+const num = (valor: unknown) => {
   const numero = Number(valor || 0);
   return Number.isFinite(numero) ? numero : 0;
 };
 
 /** "AAAA-MM-DD…" → dia em número (dias desde 1970), ou null. */
-export function diaDoCalendario(valor) {
+export function diaDoCalendario(valor: unknown): number | null {
   const achado = txt(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!achado) return null;
   return Math.round(
@@ -64,15 +84,19 @@ export function diaDoCalendario(valor) {
   );
 }
 
-const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+const plural = (n: number, um: string, varios: string) =>
+  `${n} ${n === 1 ? um : varios}`;
 
 /** Há alguma etapa em curso hoje (início ≤ hoje ≤ fim)? */
-export function temEtapaEmCurso(etapas, hoje) {
+export function temEtapaEmCurso(
+  etapas: readonly EtapaDoCritico[] | null | undefined,
+  hoje: unknown,
+): boolean {
   const dia = diaDoCalendario(hoje);
   return (etapas || []).some((etapa) => {
     const inicio = diaDoCalendario(etapa?.data_inicio);
     const fim = diaDoCalendario(etapa?.data_fim) ?? inicio;
-    return inicio !== null && inicio <= dia && dia <= fim;
+    return inicio !== null && inicio <= dia! && dia! <= fim!;
   });
 }
 
@@ -80,16 +104,19 @@ export function temEtapaEmCurso(etapas, hoje) {
  * O último dia em que a etapa mudou até hoje: o início de uma etapa ou o dia
  * seguinte ao fim de outra. `null` sem etapa que já tenha começado.
  */
-export function ultimaMudancaDeEtapa(etapas, hoje) {
+export function ultimaMudancaDeEtapa(
+  etapas: readonly EtapaDoCritico[] | null | undefined,
+  hoje: unknown,
+): number | null {
   const dia = diaDoCalendario(hoje);
-  let ultima = null;
+  let ultima: number | null = null;
   for (const etapa of etapas || []) {
     const inicio = diaDoCalendario(etapa?.data_inicio);
     const fim = diaDoCalendario(etapa?.data_fim);
     for (const mudanca of [inicio, fim === null ? null : fim + 1])
       if (
         mudanca !== null &&
-        mudanca <= dia &&
+        mudanca <= dia! &&
         (ultima === null || mudanca > ultima)
       )
         ultima = mudanca;
@@ -97,7 +124,7 @@ export function ultimaMudancaDeEtapa(etapas, hoje) {
   return ultima;
 }
 
-const emAndamento = (linha) =>
+const emAndamento = (linha: LinhaDoMonitoramento) =>
   txt(linha?.status)
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -110,22 +137,25 @@ const emAndamento = (linha) =>
  * `hoje`: "AAAA-MM-DD" (Brasília). `etapas`: as etapas do cronograma deste
  * edital (`null` = não carregadas).
  */
-/**
- * @param {import("../modulos/visao-geral/tipos.ts").LinhaDoMonitoramento} linha
- * @param {{hoje?: string, etapas?: readonly import("../modulos/visao-geral/tipos.ts").EtapaDoAcompanhamento[] | null, limites?: {diasDoPrazo: number, diasParado: number, contratacaoMinima: number}}} [opcoes]
- * @returns {import("../modulos/visao-geral/tipos.ts").Motivo[]}
- */
 export function motivosDeAtencao(
-  linha,
-  { hoje, etapas = null, limites = LIMITES_DO_CRITICO } = {},
-) {
+  linha: LinhaDoMonitoramento | null | undefined,
+  {
+    hoje,
+    etapas = null,
+    limites = LIMITES_DO_CRITICO,
+  }: {
+    hoje?: string;
+    etapas?: readonly EtapaDoAcompanhamento[] | null;
+    limites?: LimitesDoCritico;
+  } = {},
+): Motivo[] {
   if (!linha || ehCancelado(linha)) return [];
-  const motivo = (codigo, rotulo) => ({
+  const motivo = (codigo: CodigoDoMotivo, rotulo: string) => ({
     codigo,
     rotulo,
     tom: MOTIVOS_DO_CRITICO[codigo].tom,
   });
-  const motivos = [];
+  const motivos: { codigo: CodigoDoMotivo; rotulo: string; tom: string }[] = [];
   const dia = diaDoCalendario(hoje);
 
   if (ehConcluido(linha)) {
@@ -163,10 +193,10 @@ export function motivosDeAtencao(
     if (
       ultima !== null &&
       !temEtapaEmCurso(etapas, hoje) &&
-      dia - ultima >= limites.diasParado
+      dia! - ultima >= limites.diasParado
     )
       motivos.push(
-        motivo("parado", `Parado há ${plural(dia - ultima, "dia", "dias")}`),
+        motivo("parado", `Parado há ${plural(dia! - ultima, "dia", "dias")}`),
       );
   }
 
@@ -188,9 +218,19 @@ export function motivosDeAtencao(
 }
 
 /** Gravidade para ordenar: o peso do motivo mais grave; sem motivo, 99. */
-export function gravidade(motivos) {
+export function gravidade(
+  motivos: readonly Pick<Motivo, "codigo">[] | null | undefined,
+): number {
   return (motivos || []).reduce(
-    (menor, m) => Math.min(menor, MOTIVOS_DO_CRITICO[m.codigo]?.peso ?? 99),
+    (menor, m) =>
+      Math.min(
+        menor,
+        (
+          MOTIVOS_DO_CRITICO as Readonly<
+            Record<string, { readonly peso: number } | undefined>
+          >
+        )[m.codigo]?.peso ?? 99,
+      ),
     99,
   );
 }

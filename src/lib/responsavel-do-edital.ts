@@ -12,7 +12,7 @@
   unidades não pertencem a um estado (SEDE, Saúde nas Fronteiras).
 */
 
-const text = (value) => String(value ?? "").trim();
+const text = (value: unknown) => String(value ?? "").trim();
 
 /** Código da área em `TB_AREA`. */
 export const AREA_SAUDE_INDIGENA = "saude-indigena";
@@ -20,10 +20,21 @@ export const AREA_SAUDE_INDIGENA = "saude-indigena";
 export const RESPONSAVEL_USI = "USI";
 export const RESPONSAVEL_CORES = "CORES";
 
-export const RESPONSAVEIS_DE_EDITAL = Object.freeze([
-  RESPONSAVEL_USI,
-  RESPONSAVEL_CORES,
-]);
+/** Quem responde por um edital. */
+export type ResponsavelDeEdital =
+  typeof RESPONSAVEL_USI | typeof RESPONSAVEL_CORES;
+
+/** Uma unidade do CORES: só o nome, sem id, sigla, tipo nem UF. */
+export interface UnidadeDoCores {
+  nome_oficial: string;
+  id_unidade: string;
+  sigla: string;
+  tipo: string;
+  uf_sede: string;
+}
+
+export const RESPONSAVEIS_DE_EDITAL: readonly ResponsavelDeEdital[] =
+  Object.freeze([RESPONSAVEL_USI, RESPONSAVEL_CORES]);
 
 export const UNIDADES_CORES = Object.freeze([
   "CCE",
@@ -42,23 +53,29 @@ export const UNIDADES_CORES = Object.freeze([
  * Esse valor não é USI nem CORES, então devolve `""`: o select abre vazio e o
  * nome antigo só é substituído quando aquele edital for salvo de novo.
  */
-export function normalizarResponsavel(valor) {
+export function normalizarResponsavel(
+  valor: unknown,
+): ResponsavelDeEdital | "" {
   const limpo = text(valor).toUpperCase();
-  return RESPONSAVEIS_DE_EDITAL.includes(limpo) ? limpo : "";
+  return (RESPONSAVEIS_DE_EDITAL as readonly string[]).includes(limpo)
+    ? (limpo as ResponsavelDeEdital)
+    : "";
 }
 
-export function ehResponsavelCores(valor) {
+export function ehResponsavelCores(valor: unknown): boolean {
   return normalizarResponsavel(valor) === RESPONSAVEL_CORES;
 }
 
 /**
  * Unidades que o formulário deve oferecer para o responsável escolhido.
  *
- * @param {string} responsavel USI, CORES ou vazio.
- * @param {Array<object>} unidadesDoCatalogo Linhas de `TD_UNIDADE`.
- * @returns {Array<{nome_oficial: string, id_unidade: string, sigla: string, tipo: string, uf_sede: string}>}
+ * @param responsavel USI, CORES ou vazio.
+ * @param unidadesDoCatalogo Linhas de `TD_UNIDADE`.
  */
-export function unidadesDoResponsavel(responsavel, unidadesDoCatalogo) {
+export function unidadesDoResponsavel<U>(
+  responsavel: unknown,
+  unidadesDoCatalogo: readonly U[] | null | undefined,
+): readonly (U | UnidadeDoCores)[] {
   if (ehResponsavelCores(responsavel)) {
     return UNIDADES_CORES.map((nome) => ({
       nome_oficial: nome,
@@ -72,7 +89,7 @@ export function unidadesDoResponsavel(responsavel, unidadesDoCatalogo) {
   return unidadesDoCatalogo || [];
 }
 
-const semAcento = (valor) =>
+const semAcento = (valor: unknown) =>
   text(valor).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 const UNIDADES_CORES_NORMALIZADAS = new Set(UNIDADES_CORES.map(semAcento));
@@ -93,7 +110,12 @@ const UNIDADES_CORES_NORMALIZADAS = new Set(UNIDADES_CORES.map(semAcento));
  * Quem não é admin já recebe do banco só editais das suas áreas; este filtro é
  * o do painel da Saúde Indígena, que também vale para o admin.
  */
-export function ehEditalDaSaudeIndigena(edital) {
+export function ehEditalDaSaudeIndigena(
+  edital:
+    | { CO_AREA?: unknown; responsavel?: unknown; unidade?: unknown }
+    | null
+    | undefined,
+): boolean {
   if (edital?.CO_AREA) return edital.CO_AREA === AREA_SAUDE_INDIGENA;
   if (ehResponsavelCores(edital?.responsavel)) return false;
   return !UNIDADES_CORES_NORMALIZADAS.has(semAcento(edital?.unidade));

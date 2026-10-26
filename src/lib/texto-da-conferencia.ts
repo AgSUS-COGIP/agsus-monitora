@@ -13,15 +13,15 @@
 
 const FUSO = "America/Sao_Paulo";
 
-const lerData = (valor) => {
+const lerData = (valor: unknown): Date | null => {
   if (valor instanceof Date)
     return Number.isNaN(valor.getTime()) ? null : valor;
   if (valor === null || valor === undefined || valor === "") return null;
-  const data = new Date(valor);
+  const data = new Date(valor as string | number);
   return Number.isNaN(data.getTime()) ? null : data;
 };
 
-const dia = (data) =>
+const dia = (data: Date) =>
   new Intl.DateTimeFormat("pt-BR", {
     timeZone: FUSO,
     day: "2-digit",
@@ -29,7 +29,7 @@ const dia = (data) =>
     year: "numeric",
   }).format(data);
 
-const hora = (data) =>
+const hora = (data: Date) =>
   new Intl.DateTimeFormat("pt-BR", {
     timeZone: FUSO,
     hour: "2-digit",
@@ -37,22 +37,22 @@ const hora = (data) =>
   }).format(data);
 
 /** "às 09:32" (mesmo dia de `agora`) ou "em 04/10, 13:05". */
-export function quandoFoi(valor, agora = new Date()) {
+export function quandoFoi(valor: unknown, agora: Date = new Date()): string {
   const data = lerData(valor);
   if (!data) return "";
   if (dia(data) === dia(agora)) return `às ${hora(data)}`;
   return `em ${dia(data).slice(0, 5)}, ${hora(data)}`;
 }
 
-/** @param {{ conferidoEm?: unknown, mudancaEm?: unknown, agora?: Date }} [opcoes] */
 export function textoDaConferencia({
   conferidoEm,
   mudancaEm,
   agora = new Date(),
-} = {}) {
+}: { conferidoEm?: unknown; mudancaEm?: unknown; agora?: Date } = {}):
+  string | null {
   const conferido = quandoFoi(conferidoEm, agora);
   const mudanca = quandoFoi(mudancaEm, agora);
-  if (conferido && mudanca && lerData(mudancaEm) < lerData(conferidoEm))
+  if (conferido && mudanca && lerData(mudancaEm)! < lerData(conferidoEm)!)
     return `Conferido ${conferido} · última mudança ${mudanca}`;
   if (conferido) return `Conferido ${conferido}`;
   if (mudanca) return `Atualizado ${mudanca}`;

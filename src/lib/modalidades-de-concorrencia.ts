@@ -1,17 +1,17 @@
-const texto = (valor) => String(valor ?? "").trim();
+const texto = (valor: unknown) => String(valor ?? "").trim();
 
-const normalizarBusca = (valor) =>
+const normalizarBusca = (valor: unknown) =>
   texto(valor)
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
-export function modalidadesDaConcorrencia(valor) {
+export function modalidadesDaConcorrencia(valor: unknown): string[] {
   const original = texto(valor);
   if (!original) return [];
 
   const busca = normalizarBusca(original);
-  const modalidades = [];
+  const modalidades: string[] = [];
 
   if (busca.includes("ampla") && busca.includes("concorr")) {
     modalidades.push("Ampla concorrência");

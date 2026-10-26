@@ -6,6 +6,28 @@ import {
   situacaoNaLinhaDoTempo,
 } from "../../lib/cronograma-do-edital.ts";
 import { BlocosEsqueleto, ErroAoCarregar, Modal } from "../../ui/index.ts";
+import type { CronogramaLido } from "./estado.ts";
+
+/** O que a linha do tempo usa do estado da página (`estado.ts`). */
+export interface EstadoDaLinhaDoTempo {
+  lerCronograma(id: string): Promise<CronogramaLido>;
+  fecharModal(): void;
+}
+
+export interface PropriedadesDaLinhaDoTempo {
+  estado: EstadoDaLinhaDoTempo;
+  id: string;
+  agora?: () => Date;
+}
+
+type MonitoramentoLido = NonNullable<CronogramaLido["monitoramento"]>;
+type SituacaoLida = NonNullable<CronogramaLido["estado"]>;
+
+/** A carga do cronograma: carregando, pronta (com os dados) ou com erro. */
+type Carga =
+  | { estado: "carregando"; dados?: undefined; mensagem?: undefined }
+  | { estado: "pronto"; dados: CronogramaLido; mensagem?: undefined }
+  | { estado: "erro"; dados?: undefined; mensagem: string };
 
 /*
   Consulta do cronograma de um edital, sem abrir o formulário: status atual,
@@ -27,9 +49,15 @@ const ICONES = {
   future: "fa-circle",
 };
 
-function Conteudo({ dados, agora }) {
-  const monitor = dados.monitoramento || {};
-  const atual = dados.estado || {};
+function Conteudo({
+  dados,
+  agora,
+}: {
+  dados: CronogramaLido;
+  agora: () => Date;
+}) {
+  const monitor: MonitoramentoLido = dados.monitoramento || {};
+  const atual: SituacaoLida = dados.estado || {};
   const etapas = Array.isArray(dados.etapas) ? dados.etapas : [];
   const historico = Array.isArray(dados.historico) ? dados.historico : [];
   const hoje = hojeEmBrasilia(agora());
@@ -168,8 +196,12 @@ function Conteudo({ dados, agora }) {
   );
 }
 
-export function ModalLinhaDoTempo({ estado, id, agora = () => new Date() }) {
-  const [carga, setCarga] = useState({ estado: "carregando" });
+export function ModalLinhaDoTempo({
+  estado,
+  id,
+  agora = () => new Date(),
+}: PropriedadesDaLinhaDoTempo) {
+  const [carga, setCarga] = useState<Carga>({ estado: "carregando" });
   const [tentativa, setTentativa] = useState(0);
 
   useEffect(() => {
@@ -187,7 +219,7 @@ export function ModalLinhaDoTempo({ estado, id, agora = () => new Date() }) {
     };
   }, [estado, id, tentativa]);
 
-  const monitor = carga.dados?.monitoramento || {};
+  const monitor: MonitoramentoLido = carga.dados?.monitoramento || {};
   return (
     <Modal
       id="nucleoTimelineModal"

@@ -63,19 +63,19 @@ export const PLANILHAS = Object.freeze({
   }),
 });
 
-function idGoogleValido(id) {
+function idGoogleValido(id: unknown): string {
   const limpo = String(id ?? "").trim();
   return /^[A-Za-z0-9_-]{10,}$/.test(limpo) ? limpo : "";
 }
 
 /** Link de edição de uma planilha do Google Sheets, ou "" se o id não servir. */
-export function urlDaPlanilhaGoogle(id) {
+export function urlDaPlanilhaGoogle(id: unknown): string {
   const limpo = idGoogleValido(id);
   return limpo ? `${GOOGLE_SHEETS}${limpo}/edit` : "";
 }
 
 /** Link que baixa a planilha do Google Sheets como .xlsx, ou "" se o id não servir. */
-export function urlDeExportacaoXlsx(id) {
+export function urlDeExportacaoXlsx(id: unknown): string {
   const limpo = idGoogleValido(id);
   return limpo ? `${GOOGLE_SHEETS}${limpo}/export?format=xlsx` : "";
 }

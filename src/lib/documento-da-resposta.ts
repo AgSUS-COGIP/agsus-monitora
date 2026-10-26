@@ -8,12 +8,18 @@
   elementos criados um a um — nunca como HTML.
 */
 
+/** Um arquivo do ZIP: o nome e o conteúdo (texto ou bytes). */
+export interface ArquivoDoZip {
+  nome: string;
+  conteudo: string | Uint8Array;
+}
+
 const MIME_DOCX =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 export { MIME_DOCX };
 
 /** As linhas do texto (quebras de Windows normalizadas). */
-export function linhasDoTexto(texto) {
+export function linhasDoTexto(texto: unknown) {
   return String(texto ?? "")
     .replace(/\r\n?/g, "\n")
     .split("\n");
@@ -23,7 +29,7 @@ export function linhasDoTexto(texto) {
 // eslint-disable-next-line no-control-regex
 const FORA_DO_XML = /[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]/g;
 
-export function escaparXml(valor) {
+export function escaparXml(valor: unknown) {
   return String(valor ?? "")
     .replace(FORA_DO_XML, "")
     .replace(/&/g, "&amp;")
@@ -36,14 +42,17 @@ export function escaparXml(valor) {
 const FONTE =
   '<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:cs="Arial"/><w:sz w:val="22"/>';
 
-function paragrafoXml(linha, { negrito = false } = {}) {
+function paragrafoXml(
+  linha: string,
+  { negrito = false }: { negrito?: boolean } = {},
+) {
   if (!linha.trim()) return "<w:p/>";
   const propriedades = `<w:rPr>${FONTE}${negrito ? "<w:b/>" : ""}</w:rPr>`;
   return `<w:p><w:pPr><w:spacing w:after="120"/><w:jc w:val="both"/></w:pPr><w:r>${propriedades}<w:t xml:space="preserve">${escaparXml(linha)}</w:t></w:r></w:p>`;
 }
 
 /** O `word/document.xml`: a primeira linha (o título) em negrito. */
-export function documentoXml(texto) {
+export function documentoXml(texto: unknown) {
   const linhas = linhasDoTexto(texto);
   const corpo = linhas
     .map((linha, indice) => paragrafoXml(linha, { negrito: indice === 0 }))
@@ -73,7 +82,7 @@ const RELS =
   '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>' +
   "</Relationships>";
 
-function propriedadesXml(titulo, quando) {
+function propriedadesXml(titulo: string, quando: Date) {
   const iso = quando.toISOString().replace(/\.\d{3}Z$/, "Z");
   return (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
@@ -98,14 +107,14 @@ const TABELA_CRC = (() => {
   return tabela;
 })();
 
-export function crc32(bytes) {
+export function crc32(bytes: ArrayLike<number>) {
   let crc = 0xffffffff;
   for (let i = 0; i < bytes.length; i += 1)
-    crc = TABELA_CRC[(crc ^ bytes[i]) & 0xff] ^ (crc >>> 8);
+    crc = TABELA_CRC[(crc ^ bytes[i]!) & 0xff]! ^ (crc >>> 8);
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-function dataDos(quando) {
+function dataDos(quando: Date) {
   const hora =
     (quando.getHours() << 11) |
     (quando.getMinutes() << 5) |
@@ -118,11 +127,14 @@ function dataDos(quando) {
 }
 
 /** ZIP com os arquivos `{ nome, conteudo }` (texto), sem compressão. */
-export function zipSemCompressao(arquivos, quando = new Date()) {
+export function zipSemCompressao(
+  arquivos: readonly ArquivoDoZip[],
+  quando = new Date(),
+) {
   const codificador = new TextEncoder();
   const { hora, dia } = dataDos(quando);
-  const partes = [];
-  const central = [];
+  const partes: Uint8Array[] = [];
+  const central: Uint8Array[] = [];
   let deslocamento = 0;
   for (const { nome, conteudo } of arquivos) {
     const nomeBytes = codificador.encode(nome);
@@ -178,8 +190,11 @@ export function zipSemCompressao(arquivos, quando = new Date()) {
 
 /** Os bytes do .docx da resposta. */
 export function gerarDocx(
-  texto,
-  { titulo = "Resposta a recurso", quando = new Date() } = {},
+  texto: unknown,
+  {
+    titulo = "Resposta a recurso",
+    quando = new Date(),
+  }: { titulo?: string; quando?: Date } = {},
 ) {
   return zipSemCompressao(
     [
@@ -193,7 +208,9 @@ export function gerarDocx(
 }
 
 /** "resposta-recurso-12-ana-ribeiro" (sem extensão). */
-export function nomeDoDocumento(recurso) {
+export function nomeDoDocumento(
+  recurso: { candidato?: unknown; nu?: unknown } | null | undefined,
+) {
   const candidato = String(recurso?.candidato ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -220,9 +237,9 @@ const ESTILO_DA_IMPRESSAO = `
  * linha, tudo como texto.
  */
 export function montarPaginaDeImpressao(
-  documento,
-  texto,
-  { titulo = "Resposta a recurso" } = {},
+  documento: Document,
+  texto: unknown,
+  { titulo = "Resposta a recurso" }: { titulo?: string } = {},
 ) {
   documento.title = titulo;
   const estilo = documento.createElement("style");
