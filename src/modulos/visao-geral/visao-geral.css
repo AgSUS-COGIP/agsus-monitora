@@ -10,7 +10,7 @@
   (`.visao-geral-mapa`) tem o CSS dele: o da Saúde Indígena em
   src/modulos/mapa-saude-indigena/, o de Projetos em
   src/modulos/mapa-de-projetos/.
-  Importado pelo src/main.js, depois do ui.css.
+  Importado pelo src/main.ts, depois do ui.css.
 */
 
 /* ── Boas-vindas e marcos do ano ─────────────────────────────────────── */

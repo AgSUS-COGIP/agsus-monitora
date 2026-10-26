@@ -12,7 +12,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { montarModulo } from "../../app/montar-modulo.jsx";
+import { montarModulo } from "../../app/montar-modulo.tsx";
 import {
   criarRascunhoDaRegra,
   type RascunhoDaRegra,
@@ -40,7 +40,7 @@ import "./classificacao.css";
   A tela de Classificação (view `classificacao`), módulo do app: monta direto
   na `<section id="page-classificacao">` do index.html, como Seleção e
   Entrevistas. A navegação é dona da classe `.active` da seção e chama `render()`
-  do controlador ao navegar (tabela `TELAS_REACT` de src/app/navegacao.js).
+  do controlador ao navegar (tabela `TELAS_REACT` de src/app/navegacao.ts).
 
   - Área: a área atual do app; trocar de área com a tela aberta recarrega.
   - Edital: escolhido no topo; a regra é DESTE edital (decidida pelo gestor).

@@ -49,7 +49,7 @@ import type {
   PointerEvent,
   RefObject,
 } from "react";
-import { montarModulo } from "../../app/montar-modulo.jsx";
+import { montarModulo } from "../../app/montar-modulo.tsx";
 import { comemorar } from "../../modules/comemoracao.js";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { Icone } from "../../componentes/icone.tsx";
@@ -81,7 +81,7 @@ import {
   perguntasGuardadas,
   textoDasPerguntas,
 } from "../../lib/perguntas-sem-resposta.ts";
-import { pedirFiltro } from "../../app/pedido-de-filtro.js";
+import { pedirFiltro } from "../../app/pedido-de-filtro.ts";
 import { criarFontesDaAya } from "./fontes.ts";
 import {
   esquecerConversa,

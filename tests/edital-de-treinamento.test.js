@@ -20,7 +20,7 @@ import { editaisParaConduzir } from "../src/lib/conducao-de-entrevista.ts";
 import { editaisDaEscolha } from "../src/lib/avaliacao-documental/editais.ts";
 import { indicadoresDaVisaoGeral } from "../src/lib/visao-geral.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
-import { COLUNAS_DO_MONITORAMENTO } from "../src/app/carga.js";
+import { COLUNAS_DO_MONITORAMENTO } from "../src/app/carga.ts";
 
 /*
   O edital de treinamento (migration 20261007230000): fora da Visão geral,

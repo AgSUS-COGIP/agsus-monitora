@@ -13,7 +13,7 @@ describe("platform shell invariants", () => {
   });
 
   it("mantém painéis no shell sem redirecionamento de página", () => {
-    const paineis = readFileSync("src/app/paineis-externos.js", "utf8");
+    const paineis = readFileSync("src/app/paineis-externos.ts", "utf8");
     const openPanel = paineis.slice(
       paineis.indexOf("function mostrar(codigo)"),
       paineis.indexOf("function descartar(codigo)"),
@@ -36,12 +36,12 @@ describe("platform shell invariants", () => {
     pertence, e a barra lateral não volta a ser sequestrada por ela.
   */
   it("normaliza a marca oficial na tela de acesso", () => {
-    const marca = readFileSync("src/app/entrada/marca.js", "utf8");
+    const marca = readFileSync("src/app/entrada/marca.ts", "utf8");
     expect(marca).toContain("normalizeAccessLogoUrl(logoDoBanco)");
   });
 
   it("não deixa a marca do login mandar na sidebar", () => {
-    const applyConfig = readFileSync("src/app/configuracao.js", "utf8");
+    const applyConfig = readFileSync("src/app/configuracao.ts", "utf8");
     expect(applyConfig).not.toContain('"sideLogo"');
   });
 });

@@ -3,7 +3,7 @@
   "motivos": {
     "src/app/entrada/icones-da-entrada.tsx": "marca: as quatro cores do G do Google",
     "src/app/entrada/solicitacao-de-acesso.css": "marca da solicitação de acesso: texto sobre a cor configurada do painel, igual nos dois temas",
-    "src/app/moldura.js": "impressão: cabeçalho do relatório impresso, sempre em papel branco",
+    "src/app/moldura.ts": "impressão: cabeçalho do relatório impresso, sempre em papel branco",
     "src/lib/access-branding.ts": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
     "src/lib/avaliacao-documental/anexo-na-empregare.ts": "falso positivo: entidade HTML (&#160;), não é cor",
     "src/lib/avaliacao-documental/espelho-de-nota.ts": "documento para impressão (espelho de nota do candidato): papel branco, texto escuro, azul e bordas do timbrado",
@@ -48,7 +48,7 @@
       "#fbbc05": 1,
       "#34a853": 1
     },
-    "src/app/moldura.js": {
+    "src/app/moldura.ts": {
       "#003b70": 2,
       "#555": 1,
       "#222": 1,

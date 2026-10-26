@@ -13,7 +13,7 @@
 
   Os controles soltos (fora de um <Campo>: notas da ficha, vagas imediatas)
   e as gavetas (portais no fim do body) também ganham o desenho dos campos
-  de src/ui/. Importado pelo src/main.js, depois do ui.css.
+  de src/ui/. Importado pelo src/main.ts, depois do ui.css.
 */
 
 /* ── Resultados ─────────────────────────────────────────────────────── */

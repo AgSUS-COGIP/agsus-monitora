@@ -1,7 +1,7 @@
 # `src/modulos/selecao/` — Seleção
 
 A tela `#page-selecao` (view `selecao`), módulo do app desde a Etapa 2: monta na própria
-`<section>` por `montarSelecao()` (`src/main.js` → `window.selecaoController`); o legado chama
+`<section>` por `montarSelecao()` (`src/main.ts` → `window.selecaoController`); o legado chama
 `render()` ao navegar (`TELAS_REACT`). Área = a atual do app; sessão, tema, aviso e tela cheia =
 os do app. Só leitura (`get_selecao_da_area`).
 

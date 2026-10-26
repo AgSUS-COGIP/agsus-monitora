@@ -1,27 +1,58 @@
 import { permissaoLegada, roleLabel } from "../lib/access-roles.ts";
 import { profileDisplayName } from "../lib/platform-context";
-import { sessaoDoApp } from "./sessao.js";
+import type { PerfilDaPlataforma } from "../lib/platform-context";
+import type {
+  PerfilDeAcesso,
+  PermissaoLegada,
+} from "../lib/tipos-dos-acessos.ts";
+import { sessaoDoApp } from "./sessao.ts";
+import type { EstadoDaSessaoDoApp } from "./sessao.ts";
 
 /*
   Quem entrou: o usuário e o perfil, copiados da sessão do app
-  (src/app/sessao.js) a cada mudança, e o que o app mostra deles (nome,
+  (src/app/sessao.ts) a cada mudança, e o que o app mostra deles (nome,
   e-mail e perfil no cabeçalho; `#appScreen` aberto ou escondido).
 
   As telas que ainda pedem o perfil por função recebem `obterPerfil`
-  (`window.getMonitoraProfile`, publicado por src/app/sistema.js); o React lê
+  (`window.getMonitoraProfile`, publicado por src/app/sistema.ts); o React lê
   `sessaoDoApp.obter()`. O perfil é relido a cada chamada: as permissões mudam
   sem aviso (USER_UPDATED).
 */
+
+/** O que o perfil lê do estado da sessão (src/app/sessao.ts). */
+export type EstadoDaSessaoDoPerfil = Pick<
+  EstadoDaSessaoDoApp,
+  "usuario" | "perfil" | "painelIds"
+>;
+export type UsuarioDoPerfil = EstadoDaSessaoDoPerfil["usuario"];
+/** O perfil do contexto (sem tipo no banco), lido na forma de `PerfilDeAcesso`. */
+export type PerfilDoApp = PerfilDaPlataforma & PerfilDeAcesso;
+
+/** A sessão que o perfil acompanha (`sessaoDoApp` ou uma falsa nos testes). */
+export type SessaoDoPerfil = {
+  obter(): EstadoDaSessaoDoPerfil;
+  assinar(ouvinte: () => void): () => unknown;
+};
+
+export type OuvinteDoPerfil = (estado: EstadoDaSessaoDoPerfil) => void;
+
+export type OpcoesDoPerfil = {
+  sessao?: SessaoDoPerfil;
+  documento?: Document;
+};
+
+export type Perfil = ReturnType<typeof criarPerfil>;
+
 export function criarPerfil({
   sessao = sessaoDoApp,
   documento = globalThis.document,
-} = {}) {
-  let usuario = null;
-  let perfil = null;
-  const ouvintes = new Set();
+}: OpcoesDoPerfil = {}) {
+  let usuario: UsuarioDoPerfil = null;
+  let perfil: PerfilDoApp | null = null;
+  const ouvintes = new Set<OuvinteDoPerfil>();
 
-  const $ = (id) => documento?.getElementById(id);
-  const escrever = (id, texto) => {
+  const $ = (id: string) => documento?.getElementById(id);
+  const escrever = (id: string, texto: string | null | undefined) => {
     const el = $(id);
     if (el) el.textContent = texto || "";
   };
@@ -31,7 +62,7 @@ export function criarPerfil({
     const atual = sessao.obter();
     usuario = atual.usuario;
     if (atual.perfil === perfil) return;
-    perfil = atual.perfil;
+    perfil = atual.perfil as PerfilDoApp | null;
     ouvintes.forEach((ouvinte) => ouvinte(atual));
   }
 
@@ -67,9 +98,10 @@ export function criarPerfil({
   return {
     obterUsuario: () => usuario,
     obterPerfil: () => perfil,
-    pode: (permissao) => permissaoLegada(perfil, permissao),
+    pode: (permissao: PermissaoLegada | (string & {})) =>
+      permissaoLegada(perfil, permissao),
     /** `ouvinte(estadoDaSessao)` quando o perfil muda (os painéis liberados vêm junto). */
-    aoMudarPerfil(ouvinte) {
+    aoMudarPerfil(ouvinte: OuvinteDoPerfil) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },

@@ -14,7 +14,7 @@ em `docs/arquitetura-react.md`. Aqui fica o que é próprio da seção
 | `src/lib/catalogo-de-comemoracoes.ts` | catálogo, normalização e JSON publicado, decisão de mostrar, personalizados, revisão campo a campo        |
 | `src/lib/motor-de-efeitos.ts`         | cena, física e desenho de confete, serpentina, estrelas, corações e balões; embute os fogos de `fogos.ts` |
 | `src/modules/comemoracao.js`          | canvas, `requestAnimationFrame`, aviso, som e o evento da Aya                                             |
-| `src/app/marcos-personalizados.js`    | avaliação dos personalizados com as linhas que o front já tem                                             |
+| `src/app/marcos-personalizados.ts`    | avaliação dos personalizados com as linhas que o front já tem                                             |
 
 **Persistência.** Chave `comemoracoes_marcos` de `TB_CONFIGURACAO`, publicada
 pela barra fixa como as outras seções (`salvar_configuracoes_e_paineis_v2`,

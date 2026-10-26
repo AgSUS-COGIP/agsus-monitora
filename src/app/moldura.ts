@@ -7,7 +7,7 @@ import { nomeDaArea } from "../lib/menu-lateral.ts";
 import { resumoDoRelatorio } from "../lib/visao-geral.ts";
 import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.ts";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
-import { avisar as avisarPadrao } from "./avisos.js";
+import { avisar as avisarPadrao } from "./avisos.ts";
 
 /*
   A moldura do app, sem React: a barra lateral recolhida (e aberta por cima no
@@ -18,13 +18,32 @@ import { avisar as avisarPadrao } from "./avisos.js";
 
   Contratos: `window.toggleSidebar`, `toggleDarkMode`, `toggleBrowserFullscreen`
   e `exportPDF` (onclick do index.html e barra lateral React), publicados por
-  src/app/sistema.js. A barra lateral (React) lê a classe de `body` e o tema
+  src/app/sistema.ts. A barra lateral (React) lê a classe de `body` e o tema
   de `html[data-theme]`, avisada pelos eventos de eventos-da-barra-lateral.ts.
 */
 
 export const CHAVE_DA_BARRA_RECOLHIDA = "agsus_monitora_sidebar_collapsed_v1";
 export const CHAVE_DO_TEMA = "agsus_dark_mode_v1";
 const LARGURA_DO_CELULAR = 900;
+
+type PedidoDoResumo = NonNullable<Parameters<typeof resumoDoRelatorio>[0]>;
+
+/** O recorte da Visão geral que vai para o relatório em PDF. */
+export interface RecorteDoRelatorio {
+  filtros: PedidoDoResumo["filtros"];
+  busca: PedidoDoResumo["busca"];
+  filtradas: PedidoDoResumo["linhas"];
+}
+
+export interface OpcoesDaMoldura {
+  documento?: Document;
+  janela?: Window;
+  armazenamento?: () => Storage | null | undefined;
+  avisar?: (texto: string, tom?: string) => void;
+  alvoDaTelaCheia?: () => Element | null | undefined;
+  relatorio?: () => RecorteDoRelatorio;
+  areaAtual?: () => string;
+}
 
 export function criarMoldura({
   documento = globalThis.document,
@@ -34,18 +53,18 @@ export function criarMoldura({
   alvoDaTelaCheia = () => null,
   relatorio = () => estadoDaVisaoGeral.obter(),
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
-} = {}) {
+}: OpcoesDaMoldura = {}) {
   const corpo = () => documento.body;
-  const $ = (id) => documento.getElementById(id);
+  const $ = (id: string) => documento.getElementById(id);
 
-  function guardar(chave, valor) {
+  function guardar(chave: string, valor: string) {
     try {
       armazenamento()?.setItem(chave, valor);
     } catch {
       // Sem localStorage (aba privada, bloqueio): vale só nesta visita.
     }
   }
-  function ler(chave) {
+  function ler(chave: string) {
     try {
       return armazenamento()?.getItem(chave) ?? null;
     } catch {
@@ -96,9 +115,9 @@ export function criarMoldura({
 
   /* Mudou a largura (ou a orientação): no celular, a barra volta a recolher. */
   function acompanharLargura() {
-    let espera = null;
-    const aoMudar = (atraso) => () => {
-      clearTimeout(espera);
+    let espera: ReturnType<typeof setTimeout> | null = null;
+    const aoMudar = (atraso: number) => () => {
+      clearTimeout(espera!);
       espera = setTimeout(ajustarBarra, atraso);
     };
     const aoRedimensionar = aoMudar(220);
@@ -106,7 +125,7 @@ export function criarMoldura({
     janela.addEventListener("resize", aoRedimensionar);
     janela.addEventListener("orientationchange", aoGirar);
     return () => {
-      clearTimeout(espera);
+      clearTimeout(espera!);
       janela.removeEventListener("resize", aoRedimensionar);
       janela.removeEventListener("orientationchange", aoGirar);
     };
@@ -117,7 +136,7 @@ export function criarMoldura({
   const temaEscuro = () =>
     documento.documentElement.getAttribute("data-theme") === "dark";
 
-  function aplicarTema(escuro) {
+  function aplicarTema(escuro: boolean) {
     documento.documentElement.setAttribute("data-theme", escuro ? "dark" : "");
     documento.documentElement.style.colorScheme = escuro ? "dark" : "light";
     // O CSS antigo ainda lê `body.dark-mode`; o novo, `html[data-theme]`.
@@ -138,7 +157,7 @@ export function criarMoldura({
 
   /* O tema trocado em outra aba chega pelo `storage`. Devolve o cancelamento. */
   function acompanharTemaDeOutraAba() {
-    const aoGuardar = (evento) => {
+    const aoGuardar = (evento: StorageEvent) => {
       if (evento.key && evento.key !== CHAVE_DO_TEMA) return;
       if (evento.newValue !== "1" && evento.newValue !== "0") return;
       aplicarTema(evento.newValue === "1");
@@ -163,7 +182,7 @@ export function criarMoldura({
   }
 
   /* Sem a tela cheia do navegador: o app se expande dentro da janela. */
-  function telaCheiaDoApp(forcar) {
+  function telaCheiaDoApp(forcar?: unknown) {
     const ativa =
       typeof forcar === "boolean"
         ? forcar
@@ -222,14 +241,14 @@ export function criarMoldura({
 
   // ── Relatório em PDF (pelo diálogo de impressão, funciona sem rede) ────
 
-  function elemento(tag, estilo, texto) {
+  function elemento(tag: string, estilo?: string, texto?: string) {
     const el = documento.createElement(tag);
     if (estilo) el.setAttribute("style", estilo);
     if (texto !== undefined) el.textContent = texto;
     return el;
   }
 
-  function numero(rotulo, valor, estilo = "") {
+  function numero(rotulo: string, valor: number, estilo = "") {
     const span = elemento("span", estilo);
     const b = elemento("b", "", Number(valor || 0).toLocaleString("pt-BR"));
     span.append(b, ` ${rotulo}`);
@@ -326,3 +345,5 @@ export function criarMoldura({
     exportarPdf,
   };
 }
+
+export type Moldura = ReturnType<typeof criarMoldura>;

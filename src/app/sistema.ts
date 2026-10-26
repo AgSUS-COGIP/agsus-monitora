@@ -9,7 +9,7 @@ import {
   esquecerSituacaoDoSistema,
   situacaoDoSistema,
 } from "../modules/situacao-dos-modulos.js";
-import { esconderEsqueleto, mostrarEsqueleto } from "./carregamento.js";
+import { esconderEsqueleto, mostrarEsqueleto } from "./carregamento.ts";
 import {
   esquecerVisaoGeral,
   estadoDaVisaoGeral,
@@ -26,39 +26,40 @@ import { criarEstadoDoEncerramento } from "../modulos/encerramento-do-edital/est
 import { montarEncerramentoDoEdital } from "../modulos/encerramento-do-edital/encerramento-do-edital.tsx";
 import { montarSelosDoEdital } from "../modulos/encerramento-do-edital/selos-do-edital.tsx";
 import { criarAvisoDeVersao } from "./aviso-de-versao.ts";
-import { avisar, mostrarCarregamento } from "./avisos.js";
-import { criarCarga } from "./carga.js";
-import { configuracaoDoApp as configuracao } from "./configuracao.js";
-import { criarMoldura } from "./moldura.js";
-import { confirmarSaidaPadrao, criarNavegacao } from "./navegacao.js";
-import { criarPaineisExternos } from "./paineis-externos.js";
-import { criarPerfil } from "./perfil.js";
-import { criarPresenca } from "./presenca.js";
+import { avisar, mostrarCarregamento } from "./avisos.ts";
+import { criarCarga } from "./carga.ts";
+import { configuracaoDoApp as configuracao } from "./configuracao.ts";
+import { criarMoldura } from "./moldura.ts";
+import { confirmarSaidaPadrao, criarNavegacao } from "./navegacao.ts";
+import { criarPaineisExternos } from "./paineis-externos.ts";
+import { criarPerfil } from "./perfil.ts";
+import { criarPresenca } from "./presenca.ts";
 import { criarVigiaDoCatalogo } from "./vigia-do-catalogo.ts";
-import { instalarMarcosDosEditais } from "./marcos-personalizados.js";
+import { instalarMarcosDosEditais } from "./marcos-personalizados.ts";
 import { acompanharPaginaAberta } from "./pagina-aberta.ts";
-import { sessaoDoApp } from "./sessao.js";
+import { sessaoDoApp } from "./sessao.ts";
+import type { OrigemDaEntrada } from "./sessao.ts";
 
 /*
-  O sistema depois de entrar: liga as peças do app à sessão (src/app/sessao.js)
+  O sistema depois de entrar: liga as peças do app à sessão (src/app/sessao.ts)
   — no lugar do antigo src/modules/legacy-app.js.
 
-    perfil.js            quem entrou (cópia da sessão) e o #appScreen
-    configuracao.js      TB_CONFIGURACAO e os textos do app
-    paineis-externos.js  painéis externos (lista, liberados, quadro)
-    navegacao.js         troca de tela, menu, título, permissões
-    carga.js             carga dos dados, cópia da sessão, Realtime
+    perfil.ts            quem entrou (cópia da sessão) e o #appScreen
+    configuracao.ts      TB_CONFIGURACAO e os textos do app
+    paineis-externos.ts  painéis externos (lista, liberados, quadro)
+    navegacao.ts         troca de tela, menu, título, permissões
+    carga.ts             carga dos dados, cópia da sessão, Realtime
     pagina-aberta.ts     a página aberta pede as linhas e abre a Visão geral
     aviso-de-versao.ts   versão nova publicada: aviso no topo, sem recarregar à força
     encerramento-do-edital/  tela de fim de edital e selos no perfil (src/modulos/)
-    presenca.js          auditoria, heartbeat e Pessoas online
+    presenca.ts          auditoria, heartbeat e Pessoas online
     vigia-do-catalogo.ts página desligada pela coordenação fecha sem recarregar
-    moldura.js           barra recolhida, tema, tela cheia, PDF
+    moldura.ts           barra recolhida, tema, tela cheia, PDF
 
   Os ganchos de `sessaoDoApp.ligarSistema` são o contrato com a sessão
   (docs/arquitetura-react.md, "Sessão ↔ sistema"). As funções em `window` são
   os contratos de quem ainda chama por elas: os `onclick` do index.html, a
-  barra lateral, a Aya e as telas montadas em src/main.js.
+  barra lateral, a Aya e as telas montadas em src/main.ts.
 */
 
 export const perfil = criarPerfil();
@@ -96,11 +97,12 @@ export const carga = criarCarga({
   obterUsuario: perfil.obterUsuario,
   mostrarApp: perfil.mostrarApp,
   comemorar: () =>
+    // O JS do módulo só infere as opções com padrão; usuario e perfil também são lidos.
     comemorarAcessoLiberado({
       usuario: perfil.obterUsuario(),
       perfil: perfil.obterPerfil(),
       ligadas: situacaoDoSistema().comemoracoes,
-    }),
+    } as Parameters<typeof comemorarAcessoLiberado>[0]),
 });
 
 /* A versão do catálogo de abas vem de carona na presença (sem chamada nova). */
@@ -128,7 +130,7 @@ export const encerramento = criarEstadoDoEncerramento({
 
 /*
   Relê a lista de painéis externos e refaz o menu: Configurações › Módulos e
-  abas grava ativo/manutenção dos painéis (src/main.js).
+  abas grava ativo/manutenção dos painéis (src/main.ts).
 */
 export async function recarregarPaineisExternos() {
   await paineis.carregar();
@@ -159,7 +161,7 @@ function sairDoPainelExterno() {
   troca junto (a Visão geral recorta pela área atual), e volta se a navegação
   for recusada.
 */
-export function localizarLinhaDoMonitoramento(id) {
+export function localizarLinhaDoMonitoramento(id: unknown) {
   const linha = carga.linhas().find((item) => String(item.id) === String(id));
   if (!linha) return;
   if (!perfil.pode("ind")) {
@@ -220,7 +222,7 @@ function prepararEntrada() {
 }
 
 /* Perfil confirmado: carrega e abre o sistema. `true` = aberto. */
-async function abrirSistema({ origem }) {
+async function abrirSistema({ origem }: { origem: OrigemDaEntrada }) {
   perfil.mostrarNaBarra();
   const pronto = await carga.carregarEntrada();
   if (!pronto) return false;
@@ -277,7 +279,7 @@ async function antesDeSair() {
   await apagarCacheDePayload();
 }
 
-/** Liga tudo (uma vez, importado por src/main.js antes de montar as telas). */
+/** Liga tudo (uma vez, importado por src/main.ts antes de montar as telas). */
 export function ligarSistema() {
   moldura.aplicarTemaGuardado();
   moldura.ajustarBarra();
@@ -321,7 +323,9 @@ export function ligarSistema() {
   avisoDeVersao.iniciar();
 
   document.addEventListener(EVENTO_ESCOLHA_DA_BUSCA, (evento) =>
-    localizarLinhaDoMonitoramento(evento.detail?.id),
+    localizarLinhaDoMonitoramento(
+      (evento as CustomEvent<{ id?: unknown } | null>).detail?.id,
+    ),
   );
   window.addEventListener("agsus:background-suspend", () => {
     presenca.pararHeartbeat();
@@ -334,7 +338,7 @@ export function ligarSistema() {
     carga.iniciarRealtime();
   });
 
-  // A entrada é da sessão do app (src/main.js chama sessaoDoApp.iniciar()).
+  // A entrada é da sessão do app (src/main.ts chama sessaoDoApp.iniciar()).
   sessaoDoApp.ligarSistema({
     carregarConfiguracao: () => configuracao.carregar({ silent: true }),
     mostrarEsqueleto: () => mostrarEsqueleto(navegacao.telaGuardada()),

@@ -48,14 +48,14 @@ let currentIdleLimitMs = SESSION_IDLE_LIMIT_MS;
   navegador esquecido aberto numa estação compartilhada perdia a sessão sozinho
   em uma hora; agora não perde. Se essa exposição voltar a incomodar, religar é
   uma linha: `installSessionLifecycle({ encerrarPorInatividade: true })` em
-  `src/main.js`.
+  `src/main.ts`.
 
   A mecânica foi mantida inteira de propósito — avisos, auditoria, sincronização
   entre abas. Arrancá-la exigiria desfazer a integração com o registro de
   auditoria, e reconstruir isso custaria muito mais do que a bandeira custa.
 */
 let encerrarPorInatividadeAtivo = false;
-/* Quem mostra a frase na tela de acesso (a sessão do app, src/app/sessao.js). */
+/* Quem mostra a frase na tela de acesso (a sessão do app, src/app/sessao.ts). */
 let avisarExpiracao: ((mensagem: string) => void) | null = null;
 
 export function formatSessionRemaining(milliseconds: unknown): string {

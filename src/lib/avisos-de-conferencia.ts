@@ -681,7 +681,7 @@ export const VIEW_DO_MODULO: Readonly<Record<string, string>> = Object.freeze({
 
 /**
  * Para onde o caso leva: `{ view, filtro }` (o pedido de filtro da tela, ver
- * src/app/pedido-de-filtro.js) ou `null` quando não há o que abrir (registro
+ * src/app/pedido-de-filtro.ts) ou `null` quando não há o que abrir (registro
  * removido, fora do acesso, cargas).
  *   análises     o Painel das análises na análise (busca pelo nome);
  *   aprovados    a Lista de aprovados só com as vagas da pessoa;
@@ -722,7 +722,7 @@ export function destinoDoCaso(caso: Caso | null): DestinoDoCaso | null {
 }
 
 /**
- * O pedido de filtro (src/app/pedido-de-filtro.js) que leva o Painel das
+ * O pedido de filtro (src/app/pedido-de-filtro.ts) que leva o Painel das
  * análises ao caso: a busca pelo nome e a análise a abrir na gaveta.
  */
 export function filtroDoCaso(caso: Partial<Caso> | null) {

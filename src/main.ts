@@ -1,6 +1,6 @@
 import { hasSupabaseEnv } from "./lib/env";
 // Antes de qualquer rede: pinta a tela de acesso com a marca da visita anterior.
-import "./app/entrada/marca.js";
+import "./app/entrada/marca.ts";
 import { installCsvBlobSecurityGuard } from "./lib/csv-security";
 import { installSessionLifecycle } from "./lib/session-lifecycle";
 import { installBackgroundResourceLifecycle } from "./lib/background-resource-lifecycle";
@@ -49,10 +49,10 @@ import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
 import { installIndigenousTerritoriesLayer } from "./modules/indigenous-territories-layer.js";
-// O sistema depois de entrar (navegação, carga, presença, moldura): src/app/sistema.js.
-import { ligarSistema, recarregarPaineisExternos } from "./app/sistema.js";
+// O sistema depois de entrar (navegação, carga, presença, moldura): src/app/sistema.ts.
+import { ligarSistema, recarregarPaineisExternos } from "./app/sistema.ts";
 import { initLoadingExperience } from "./modules/loading-experience.js";
-import { instalarCarregamento } from "./app/carregamento.js";
+import { instalarCarregamento } from "./app/carregamento.ts";
 import { initVisualPolish } from "./modules/visual-polish.js";
 import { initSidebarBranding } from "./modules/sidebar-branding.js";
 import {
@@ -72,13 +72,66 @@ import { montarNucleo } from "./modulos/editais/nucleo.tsx";
 import { montarVisaoGeral } from "./modulos/visao-geral/visao-geral.tsx";
 import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
 import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.tsx";
-import { montarEntrada } from "./app/entrada/entrada.jsx";
-import { telaSobDemanda } from "./app/tela-sob-demanda.js";
-import { TELAS_REACT } from "./app/navegacao.js";
+import { montarEntrada } from "./app/entrada/entrada.tsx";
+import { telaSobDemanda } from "./app/tela-sob-demanda.ts";
+import { TELAS_REACT } from "./app/navegacao.ts";
 import { registrarPreCarga } from "./lib/carga-de-telas";
-import { sessaoDoApp } from "./app/sessao.js";
+import { sessaoDoApp } from "./app/sessao.ts";
 
 import { montarAya } from "./modulos/aya/aya.tsx";
+import type { avisar, mostrarCarregamento } from "./app/avisos.ts";
+import type { TelaSobDemanda } from "./app/tela-sob-demanda.ts";
+import type { montarListaAprovados } from "./modulos/aprovados/lista-aprovados.tsx";
+import type { montarCalendarioEditais } from "./modulos/cronograma/calendario-editais.tsx";
+import type {
+  montarAnaliseDeRecursos,
+  montarRecursos,
+} from "./modulos/recursos/recursos.tsx";
+import type { montarEntrevistas } from "./modulos/entrevistas/entrevistas.tsx";
+import type { montarConducaoDeEntrevistas } from "./modulos/entrevistas/conduzir.tsx";
+import type { montarAnalises } from "./modulos/analises/analises.tsx";
+import type { montarSelecao } from "./modulos/selecao/selecao.tsx";
+import type { montarClassificacao } from "./modulos/classificacao/classificacao.tsx";
+import type { montarAvaliacaoDocumental } from "./modulos/avaliacao-documental/avaliacao-documental.tsx";
+import type { montarAcessos } from "./modulos/acessos/acessos.tsx";
+import type { montarModulos } from "./modulos/modulos/modulos.tsx";
+import type { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.tsx";
+import type { montarAutomacao } from "./modulos/automacao/automacao.tsx";
+
+/** O controlador de uma tela sob demanda, a partir da função que a monta. */
+type SobDemanda<F extends (...argumentos: never[]) => unknown> = TelaSobDemanda<
+  NonNullable<ReturnType<F>>
+>;
+
+/*
+  Os controladores e avisos que este arquivo e src/app/sistema.ts publicam em
+  window (contrato com o legado, a navegação e o index.html).
+*/
+declare global {
+  interface Window {
+    monitoraToast?: typeof avisar;
+    monitoraLoader?: typeof mostrarCarregamento;
+    visaoGeralController?: ReturnType<typeof montarVisaoGeral>;
+    aprovadosController?: SobDemanda<typeof montarListaAprovados>;
+    calendarioEditaisController?: SobDemanda<typeof montarCalendarioEditais>;
+    recursosController?: SobDemanda<typeof montarRecursos>;
+    analisarRecursosController?: SobDemanda<typeof montarAnaliseDeRecursos>;
+    entrevistasController?: SobDemanda<typeof montarEntrevistas>;
+    conduzirEntrevistasController?: SobDemanda<
+      typeof montarConducaoDeEntrevistas
+    >;
+    analisesController?: SobDemanda<typeof montarAnalises>;
+    selecaoController?: SobDemanda<typeof montarSelecao>;
+    classificacaoController?: SobDemanda<typeof montarClassificacao>;
+    avaliacaoDocumentalController?: SobDemanda<
+      typeof montarAvaliacaoDocumental
+    >;
+    acessosController?: SobDemanda<typeof montarAcessos>;
+    modulosController?: SobDemanda<typeof montarModulos>;
+    saudeDasCargasController?: SobDemanda<typeof montarSaudeDasCargas>;
+    automacaoController?: SobDemanda<typeof montarAutomacao>;
+  }
+}
 
 // Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
 document.documentElement.classList.remove("vite-dev-carregando");
@@ -92,7 +145,7 @@ ligarSistema();
 
 /*
   A tela de acesso (React, src/app/entrada/) monta primeiro: o cartão vazio do
-  index.html vira o de verdade. Quem entra é a sessão (src/app/sessao.js),
+  index.html vira o de verdade. Quem entra é a sessão (src/app/sessao.ts),
   iniciada no fim, depois de o legado e as telas se ligarem a ela.
 */
 montarEntrada();
@@ -120,7 +173,9 @@ montarBarraLateral();
 */
 window.visaoGeralController = montarVisaoGeral({
   toast: window.monitoraToast,
-  comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
+  // O JS de situacao-dos-modulos infere `false` (o padrão); a resposta traz boolean.
+  comemoracoesLigadas: () =>
+    (situacaoDoSistema().comemoracoes as boolean) === true,
 });
 instalarCarregamento();
 initLoadingExperience();
@@ -143,20 +198,22 @@ initNielsenShellUx();
   <section>. O legado as abre por estes controladores (`render()` ao navegar e
   `openImportModal` no Núcleo), nunca pelo DOM delas.
 */
+// nucleo.jsx é JS: só as opções com padrão entram no tipo inferido.
 window.nucleoController = montarNucleo({
   toast: window.monitoraToast,
   loader: window.monitoraLoader,
   getProfile: window.getMonitoraProfile,
-});
+} as Parameters<typeof montarNucleo>[0]);
 
 /*
   Daqui para baixo, as telas que não abrem na entrada carregam sob demanda
-  (src/app/tela-sob-demanda.js): o código baixa na primeira abertura (ou ao
+  (src/app/tela-sob-demanda.ts): o código baixa na primeira abertura (ou ao
   passar o mouse no item do menu) e o controlador em window mantém o mesmo
   contrato (render(), abrirVisao()…). A Visão geral e o casco ficam no
   pacote principal.
 */
-const comemoracoesLigadas = () => situacaoDoSistema().comemoracoes === true;
+const comemoracoesLigadas = () =>
+  (situacaoDoSistema().comemoracoes as boolean) === true;
 
 // Sem loader de tela cheia: skeleton na carga, e cada ação mostra o estado no botão.
 window.aprovadosController = telaSobDemanda({
@@ -360,9 +417,14 @@ registrarPreCarga((view, secao) => {
     automacao: window.automacaoController,
   }[secao ?? ""];
   const daTela = Object.hasOwn(TELAS_REACT, view)
-    ? TELAS_REACT[view](() => "", window)[2]
+    ? TELAS_REACT[view]!(() => "", window)[2]
     : null;
-  void Promise.resolve((daSecao ?? daTela)?.carregar?.()).catch(() => {});
+  // As telas de TELAS_REACT em window são sob demanda: têm `carregar()`.
+  void Promise.resolve(
+    (
+      (daSecao ?? daTela) as { carregar?: () => unknown } | null | undefined
+    )?.carregar?.(),
+  ).catch(() => {});
 });
 
 /*

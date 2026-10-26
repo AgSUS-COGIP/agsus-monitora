@@ -11,7 +11,7 @@
   antigas de `app.css` (`--card`, `--line`, `--muted`, `--navy`…) fazem o
   mesmo, lá. Divergências que ainda restam: DESIGN.md, seção "Design System AgSUS".
 
-  Importado antes de qualquer outro CSS em `src/main.js` e nos painéis do
+  Importado antes de qualquer outro CSS em `src/main.ts` e nos painéis do
   quadro (`src/entrevistas|selecao/main.jsx`). As camadas (`--z-*`) continuam em `app.css`.
 */
 /*

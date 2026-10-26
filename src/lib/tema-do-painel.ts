@@ -1,7 +1,7 @@
 /*
   A paleta de reserva dos gráficos (Chart.js) das telas do app: Recursos,
   Entrevistas, Análises curriculares e Seleção seguem o tema do app
-  (src/app/tema.js) e leem as cores dos tokens (paletaDosGraficos, src/ui/);
+  (src/app/tema.ts) e leem as cores dos tokens (paletaDosGraficos, src/ui/);
   esta paleta vale quando o CSS não está carregado (testes).
 */
 export interface PaletaDoPainel {

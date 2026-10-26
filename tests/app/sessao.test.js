@@ -5,7 +5,7 @@ import {
   configuracaoDaEntrada,
   criarSessao,
   nomeDoUsuario,
-} from "../../src/app/sessao.js";
+} from "../../src/app/sessao.ts";
 import {
   SAIDA_EXPIRADA,
   declararSaida,
@@ -13,7 +13,7 @@ import {
 } from "../../src/lib/estado-de-saida";
 
 /*
-  A sessão do app (src/app/sessao.js): entrar, sair, sessão expirada, troca de
+  A sessão do app (src/app/sessao.ts): entrar, sair, sessão expirada, troca de
   usuário, sem acesso → pedido, domínio não permitido, login Google. O
   Supabase e a janela são falsos; o legado é o adaptador `sistema`.
 */

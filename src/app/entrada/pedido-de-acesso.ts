@@ -35,7 +35,7 @@ import {
   type TelaDaSolicitacao,
 } from "../../lib/solicitacao-de-acesso.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { nomeDoUsuario } from "../sessao.js";
+import { nomeDoUsuario } from "../sessao.ts";
 
 const RPC_OPCOES = "listar_opcoes_da_solicitacao_acesso";
 const RPC_MINHA_SOLICITACAO = "obter_minha_solicitacao_acesso";

@@ -1,5 +1,5 @@
 /*
-  Quantas telas carregadas sob demanda (src/app/tela-sob-demanda.js) ainda
+  Quantas telas carregadas sob demanda (src/app/tela-sob-demanda.ts) ainda
   estão baixando. O tour da Aya consulta para esperar a tela pedida aparecer
   antes de desistir do passo. Sem DOM e sem React.
 */
@@ -23,7 +23,7 @@ export function haTelaCarregando(): boolean {
 
 /*
   Pré-carga ao passar o mouse (ou o foco) no item do menu: quem sabe qual
-  controlador baixa cada tela registra a função (src/main.js); a barra
+  controlador baixa cada tela registra a função (src/main.ts); a barra
   lateral só chama `preCarregarTela(view, secao)`. Sem registro, nada faz.
 */
 type PreCarga = (view: string, secao?: string) => void;

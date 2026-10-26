@@ -6,10 +6,10 @@ import type {
   OpcoesDaTelaDeEntrevistas,
 } from "./tipos-do-painel.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
+import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { filtrosDeEntrevistas } from "../../lib/filtro-da-aya.ts";
-import { montarModulo } from "../../app/montar-modulo.jsx";
-import { usarTemaEscuro } from "../../app/tema.js";
+import { montarModulo } from "../../app/montar-modulo.tsx";
+import { usarTemaEscuro } from "../../app/tema.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
@@ -51,7 +51,7 @@ import "./entrevistas.css";
   coordenação), um módulo do app: monta direto na
   `<section id="page-entrevistas">` do index.html, como Recursos. A navegação
   é dona da classe `.active` da seção e chama `render()` do controlador ao
-  navegar (tabela `TELAS_REACT` de src/app/navegacao.js).
+  navegar (tabela `TELAS_REACT` de src/app/navegacao.ts).
 
   Fazer é em outra entrada do menu: "Conduzir entrevistas" (view
   `conduzir-entrevistas`, conduzir.tsx) — a fila do dia, a ficha de notas, o
@@ -72,7 +72,7 @@ import "./entrevistas.css";
     recarrega (filtros, busca e gaveta recomeçam).
   - Sessão: o cliente Supabase único do app. Tema: o do app
     (`html[data-theme="dark"]`); os gráficos acompanham. Tela cheia: a do app.
-  - Aviso (toast): o do app (`window.monitoraToast`, passado por src/main.js).
+  - Aviso (toast): o do app (`window.monitoraToast`, passado por src/main.ts).
   - Comemorações: o liga/desliga do app, relido a cada abertura (marco "vaga
     pronta", marcos.ts).
 

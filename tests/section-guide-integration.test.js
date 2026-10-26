@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { obterPaginaDaAya } from "../src/modulos/aya/estado.ts";
-import { criarNavegacao } from "../src/app/navegacao.js";
+import { criarNavegacao } from "../src/app/navegacao.ts";
 
 /*
-  A navegação real (src/app/navegacao.js) avisa a Aya da página aberta: é daí
+  A navegação real (src/app/navegacao.ts) avisa a Aya da página aberta: é daí
   que saem a saudação, as sugestões e o contexto das perguntas.
 */
 describe("título e Aya conectados à navegação real", () => {

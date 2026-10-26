@@ -4,7 +4,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { montarModulo } from "../../app/montar-modulo.jsx";
+import { montarModulo } from "../../app/montar-modulo.tsx";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { abasDeAcessos } from "../../lib/teto-de-acessos.ts";
 import { criarEstadoDosAcessos } from "./estado.ts";

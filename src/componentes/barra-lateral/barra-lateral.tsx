@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.jsx";
+import { montarModulo } from "../../app/montar-modulo.tsx";
 import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.ts";
 import { AlcaDeRecolher, AlcaNoCabecalho } from "./alca-de-recolher.tsx";
 import { assinarBarraLateral, obterEstadoDaBarraLateral } from "./estado.ts";

@@ -11,13 +11,19 @@ import {
   obterDadosDoMonitoramento,
 } from "../componentes/dados-do-monitoramento.ts";
 import { comemorar as comemorarPadrao } from "../modules/comemoracao.js";
+import type {
+  ConfiguracaoDasComemoracoes,
+  MarcoPersonalizado,
+  TipoPersonalizado,
+} from "../lib/catalogo-de-comemoracoes.ts";
+import type { SnapshotDoMonitoramento } from "../componentes/tipos-do-monitoramento.ts";
 
 /*
   Marcos personalizados de Configurações › Comemorações, avaliados com o
   que o front já carregou (sem consulta nova ao banco):
 
     - "edital-contratados": as linhas do monitoramento (carga da entrada e
-      Realtime) — `instalarMarcosDosEditais`, ligado em src/main.js;
+      Realtime) — `instalarMarcosDosEditais`, ligado em src/main.ts;
     - "analises-no-dia": as linhas da tela de Análises curriculares, a cada
       carga dela (src/modulos/analises/marcos.ts).
 
@@ -26,6 +32,26 @@ import { comemorar as comemorarPadrao } from "../modules/comemoracao.js";
   neste navegador, uma vez. Desligadas (Módulos e abas), o estado segue
   guardado sem comemorar.
 */
+
+export interface OpcoesDosMarcosPersonalizados {
+  tipo: TipoPersonalizado;
+  linhas: unknown;
+  usuarioId: string;
+  area?: string;
+  ligadas?: boolean;
+  config?: ConfiguracaoDasComemoracoes;
+  armazenamento?: Storage;
+  agora?: Date;
+  comemorar?: typeof comemorarPadrao;
+}
+
+export interface DependenciasDosMarcosDosEditais {
+  obterUsuario?: () => { id?: unknown } | null | undefined;
+  ligadas?: () => boolean;
+  assinar?: (ouvinte: () => void) => () => void;
+  obter?: () => Pick<SnapshotDoMonitoramento, "linhas" | "carregado">;
+  avaliar?: (opcoes: OpcoesDosMarcosPersonalizados) => unknown;
+}
 
 /**
  * Avalia os personalizados de um `tipo` com `linhas`. Devolve os marcos
@@ -41,7 +67,7 @@ export function avaliarMarcosPersonalizados({
   armazenamento = globalThis.window?.localStorage,
   agora = new Date(),
   comemorar = comemorarPadrao,
-}) {
+}: OpcoesDosMarcosPersonalizados): MarcoPersonalizado[] {
   try {
     const personalizados = config.personalizados.filter(
       (p) => p.tipo === tipo && p.meta,
@@ -87,8 +113,8 @@ export function instalarMarcosDosEditais({
   assinar = assinarDadosDoMonitoramento,
   obter = obterDadosDoMonitoramento,
   avaliar = avaliarMarcosPersonalizados,
-}) {
-  let ultimas = null;
+}: DependenciasDosMarcosDosEditais): () => void {
+  let ultimas: SnapshotDoMonitoramento["linhas"] | null = null;
   const aoMudar = () => {
     const { linhas, carregado } = obter();
     if (!carregado || linhas === ultimas) return;

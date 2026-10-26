@@ -5,11 +5,11 @@ import { describe, expect, it } from "vitest";
   A carga da entrada: o comportamento da carga (consultas em paralelo, cópia da
   sessão, "Atualizar dados", Realtime) está em tests/app/carga.test.js e o dos
   painéis externos em tests/app/paineis-externos.test.js. Aqui fica o contrato
-  com a sessão (src/app/sessao.js): a ordem dos ganchos e quem apaga a cópia.
+  com a sessão (src/app/sessao.ts): a ordem dos ganchos e quem apaga a cópia.
 */
 
-const ligacao = readFileSync("src/app/sistema.js", "utf8");
-const sessao = readFileSync("src/app/sessao.js", "utf8");
+const ligacao = readFileSync("src/app/sistema.ts", "utf8");
+const sessao = readFileSync("src/app/sessao.ts", "utf8");
 
 const semComentarios = (fonte) =>
   fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
@@ -23,7 +23,7 @@ function funcao(cabecalho) {
   return semComentarios(cabecalho + resto.slice(0, fim < 0 ? undefined : fim));
 }
 
-/** Corpo de uma função de src/app/sessao.js (até a próxima do mesmo nível). */
+/** Corpo de uma função de src/app/sessao.ts (até a próxima do mesmo nível). */
 function funcaoDaSessao(cabecalho) {
   const inicio = sessao.indexOf(cabecalho);
   expect(inicio, cabecalho).toBeGreaterThan(-1);
@@ -125,7 +125,7 @@ describe("sem tela de carregamento na entrada", () => {
 describe("cada consulta sai para a rede na hora", () => {
   /*
     A consulta do Supabase só dispara quando alguém chama `then`. Sem o
-    `Promise.resolve` (em `iniciarConsultas`, src/app/carga.js), ela ficaria
+    `Promise.resolve` (em `iniciarConsultas`, src/app/carga.ts), ela ficaria
     parada até o `await` da sua carga e a entrada voltaria a ser sequencial.
   */
   it("a consulta preguiçosa começa ao passar por Promise.resolve", async () => {

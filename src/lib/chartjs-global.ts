@@ -1,7 +1,7 @@
 /*
   O Chart.js sob demanda: só baixa quando o primeiro gráfico aparece
   (src/ui/grafico.jsx). Antes, `import Chart from "chart.js/auto"` aqui —
-  importado por src/main.js — punha o chunk vendor-charts no modulepreload da
+  importado por src/main.ts — punha o chunk vendor-charts no modulepreload da
   tela de login, que não tem gráfico nenhum.
 */
 type ChartJs = typeof import("chart.js/auto").default;

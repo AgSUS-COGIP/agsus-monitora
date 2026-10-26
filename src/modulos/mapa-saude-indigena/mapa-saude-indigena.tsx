@@ -8,7 +8,7 @@ import {
 } from "../../lib/mapa-saude-indigena/dados-do-mapa.ts";
 import { leafletDoMapa } from "./tipos-do-leaflet.ts";
 import { useCallback, useMemo, useRef } from "react";
-import { usarTemaEscuro } from "../../app/tema.js";
+import { usarTemaEscuro } from "../../app/tema.ts";
 import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.ts";
 import {
   bolhasDosDsei,

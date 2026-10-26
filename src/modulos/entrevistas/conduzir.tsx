@@ -9,7 +9,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { montarModulo } from "../../app/montar-modulo.jsx";
+import { montarModulo } from "../../app/montar-modulo.tsx";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
@@ -44,7 +44,7 @@ import "./entrevistas.css";
   avaliadores), entrada própria no menu, ao lado do Painel de entrevistas
   (acompanhar) — como a Avaliação documental ao lado do Painel das análises.
   Monta na `<section id="page-conduzir-entrevistas">`; a navegação chama
-  `render()` ao abrir (TELAS_REACT de src/app/navegacao.js). Recurso de
+  `render()` ao abrir (TELAS_REACT de src/app/navegacao.ts). Recurso de
   permissão: o mesmo `entrevistas` (quem acessava a antiga tela acessa as
   duas; escrever continua exigindo Editor, conferido pelo banco).
 

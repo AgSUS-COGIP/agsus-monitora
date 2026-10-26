@@ -10,7 +10,7 @@ import type {
   PropsDoRobo,
 } from "./tipos.ts";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.jsx";
+import { montarModulo } from "../../app/montar-modulo.tsx";
 import { isAdminGlobal } from "../../lib/access-roles.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import {

@@ -24,7 +24,7 @@
     <!--
       Marca da tela de acesso, aplicada ANTES do primeiro paint.
 
-      `main.js` é `type="module"`, portanto adiado: ele só roda depois de o HTML
+      `main.ts` é `type="module"`, portanto adiado: ele só roda depois de o HTML
       ser analisado, quando o navegador já pintou a tela com os padrões neutros
       do CSS. Aplicar a marca guardada ali produzia uma piscada visível a cada
       recarga — claro e neutro primeiro, escuro e institucional logo depois.
@@ -105,7 +105,7 @@
       app.css, e cada recarga mostrava uma tela de acesso antiga, sem estilo e
       sem o botão do Google. O Vite põe `/@vite/client` no <head> antes deste
       script, e esse é o sinal. No build de produção o CSS vem em <link> e nada
-      disto se aplica. `src/main.js` tira a classe depois dos imports de CSS.
+      disto se aplica. `src/main.ts` tira a classe depois dos imports de CSS.
     -->
     <style>
       html.vite-dev-carregando #loginScreen {
@@ -435,7 +435,7 @@
         }
       </script>
       <!--
-        A tela de acesso é React (src/app/entrada/entrada.jsx) e monta aqui,
+        A tela de acesso é React (src/app/entrada/entrada.tsx) e monta aqui,
         no lugar do cartão abaixo. Ele segura o primeiro quadro, com a cor do
         painel já aplicada, até o JavaScript chegar — com a MESMA árvore e as
         MESMAS medidas do cartão do React (marca com logo 52×52 e ícone em SVG,
@@ -754,6 +754,6 @@
     <!-- Busca global (Ctrl+K), React: src/componentes/busca-global/ (o diálogo vai por portal no body). -->
     <div id="buscaGlobalApp"></div>
 
-    <script type="module" src="/src/main.js"></script>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

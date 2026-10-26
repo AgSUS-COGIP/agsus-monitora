@@ -234,7 +234,7 @@ describe("Busca global", () => {
 });
 
 describe("o legado recebe a escolha", () => {
-  const legado = readFileSync("src/app/sistema.js", "utf8");
+  const legado = readFileSync("src/app/sistema.ts", "utf8");
 
   it("escuta o evento e localiza a linha no painel", () => {
     expect(legado).toMatch(

@@ -168,7 +168,7 @@ describe("como o HTML e o app ficam", () => {
   */
   it("a configuração do app não escreve document.title", () => {
     const codigo = semComentarios(
-      readFileSync("src/app/configuracao.js", "utf8"),
+      readFileSync("src/app/configuracao.ts", "utf8"),
     );
     const fn = codigo.slice(
       codigo.indexOf("function aplicarNaTela"),
@@ -180,7 +180,7 @@ describe("como o HTML e o app ficam", () => {
   });
 
   it("o título da navegação delega a metade da página", () => {
-    const navegacao = readFileSync("src/app/navegacao.js", "utf8");
+    const navegacao = readFileSync("src/app/navegacao.ts", "utf8");
     const fn = navegacao.slice(
       navegacao.indexOf("function definirTitulo"),
       navegacao.indexOf("function subtituloDaArea"),

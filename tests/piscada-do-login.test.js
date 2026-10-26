@@ -14,7 +14,7 @@ const marca = readFileSync("src/lib/access-branding.ts", "utf8");
 /*
   A piscada ao recarregar a tela de acesso.
 
-  `main.js` é `type="module"`, portanto adiado: só roda depois de o HTML ser
+  `main.ts` é `type="module"`, portanto adiado: só roda depois de o HTML ser
   analisado, quando o navegador já pintou a tela com os padrões neutros do CSS.
   A marca guardada era aplicada ali — e a cada recarga via-se claro e neutro
   primeiro, escuro e institucional logo depois.
@@ -206,7 +206,7 @@ describe("uma resposta parcial não apaga o cache", () => {
   });
 
   it("quem aplica usa o resultado da mescla", () => {
-    const boot = readFileSync("src/app/entrada/marca.js", "utf8");
+    const boot = readFileSync("src/app/entrada/marca.ts", "utf8");
     expect(boot).toContain("const completa = guardarMarca(marca) || marca");
     expect(boot).toContain("aplicarMarcaNaTela(completa, documento, estado)");
   });

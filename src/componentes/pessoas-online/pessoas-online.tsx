@@ -1,11 +1,11 @@
 import { useEffect, useReducer, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.jsx";
+import { montarModulo } from "../../app/montar-modulo.tsx";
 import { situacaoDaPresenca } from "../../lib/online-presence";
 
 /*
   "Pessoas online" no cabeçalho (moldura do app): o botão com a contagem e a
   lista de quem está com o MONITORA aberto, com o lugar de cada um. O estado é
-  de src/app/presenca.js; aqui só se desenha.
+  de src/app/presenca.ts; aqui só se desenha.
 
   Os ids (`#onlinePresence`, `#onlinePresenceBtn`,
   `#onlinePresenceList`…) são os de antes: o CSS e os testes de ponta a ponta
@@ -22,7 +22,7 @@ export interface PessoaOnline {
   currentView: string;
 }
 
-/** O estado assinável de src/app/presenca.js. */
+/** O estado assinável de src/app/presenca.ts. */
 export interface EstadoDaPresenca {
   visivel: boolean;
   aberto: boolean;

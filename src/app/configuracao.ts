@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseClient } from "../lib/supabaseClient";
 import {
   DEFAULT_ACCESS_BRANDING,
@@ -9,11 +10,11 @@ import {
   aplicarFaviconDaMarca,
   definirSistemaDaAba,
 } from "../lib/identidade-da-aba";
-import { sessaoDoApp } from "./sessao.js";
-import { definirMarcaDaConfiguracao } from "./entrada/marca.js";
+import { sessaoDoApp } from "./sessao.ts";
+import { definirMarcaDaConfiguracao } from "./entrada/marca.ts";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
 import { aplicarMarcaDaConfiguracao } from "../modules/sidebar-branding.js";
-import { avisar as avisarPadrao } from "./avisos.js";
+import { avisar as avisarPadrao } from "./avisos.ts";
 import {
   CHAVE_DAS_COMEMORACOES,
   definirConfiguracaoDasComemoracoes,
@@ -42,6 +43,38 @@ export const PADROES = Object.freeze({
   auth_access_greeting: DEFAULT_ACCESS_BRANDING.greeting,
 });
 
+/** Uma linha de TB_CONFIGURACAO. */
+export type LinhaDaConfiguracao = {
+  chave?: string | null;
+  valor?: string | null;
+  descricao?: string | null;
+};
+
+/** O que a leitura de TB_CONFIGURACAO devolve (a consulta é "thenable"). */
+export type RespostaDaConfiguracao = { data: unknown; error: unknown };
+
+export type OpcoesDaCargaDaConfiguracao = {
+  /** A consulta já disparada (a cópia da sessão, src/app/carga.ts). */
+  consulta?: PromiseLike<RespostaDaConfiguracao>;
+  /** Sem toast de erro. */
+  silent?: boolean;
+};
+
+/** O detalhe de `agsus:fundo-do-acesso-definido`. */
+export type FundoDoAcessoDefinido = { url?: string; caminho?: string };
+
+export type DependenciasDaConfiguracao = {
+  cliente?: () => SupabaseClient | null;
+  documento?: Document;
+  avisar?: (texto: string, tom?: string) => void;
+  sessao?: { definirConfiguracao(valores?: Record<string, unknown>): void };
+  definirMarca?: typeof definirMarcaDaConfiguracao;
+  estado?: Pick<typeof estadoDasConfiguracoes, "definirValoresCarregados">;
+  pintarBarra?: (valores: Record<string, string>) => unknown;
+};
+
+export type Configuracao = ReturnType<typeof criarConfiguracao>;
+
 const VERDADEIROS = ["true", "1", "sim", "yes", "on"];
 const FALSOS = ["false", "0", "nao", "não", "no", "off"];
 
@@ -53,33 +86,39 @@ export function criarConfiguracao({
   definirMarca = definirMarcaDaConfiguracao,
   estado = estadoDasConfiguracoes,
   pintarBarra = aplicarMarcaDaConfiguracao,
-} = {}) {
-  let valores = {};
-  let chaves = new Set();
+}: DependenciasDaConfiguracao = {}) {
+  let valores: Record<string, string> = {};
+  let chaves = new Set<string>();
   let carregou = false;
 
-  const $ = (id) => documento?.getElementById(id);
-  const escrever = (id, texto) => {
+  const $ = (id: string) => documento?.getElementById(id);
+  const escrever = (id: string, texto: string | null | undefined) => {
     const el = $(id);
     if (el) el.textContent = texto || "";
   };
-  const atributo = (id, nome, texto) => {
+  const atributo = (
+    id: string,
+    nome: string,
+    texto: string | null | undefined,
+  ) => {
     const el = $(id);
     if (el) el.setAttribute(nome, texto || "");
   };
 
-  function valor(chave) {
-    return chaves.has(chave) ? (valores[chave] ?? "") : PADROES[chave] || "";
+  function valor(chave: string): string {
+    return chaves.has(chave)
+      ? (valores[chave] ?? "")
+      : (PADROES as Readonly<Record<string, string>>)[chave] || "";
   }
 
-  function booleano(chave, padrao = false) {
+  function booleano(chave: string, padrao = false) {
     const texto = String(valor(chave)).trim().toLowerCase();
     if (VERDADEIROS.includes(texto)) return true;
     if (FALSOS.includes(texto)) return false;
     return padrao;
   }
 
-  function inteiro(chave, padrao = 0) {
+  function inteiro(chave: string, padrao = 0) {
     const numero = parseInt(valor(chave), 10);
     return Number.isFinite(numero) ? numero : padrao;
   }
@@ -154,17 +193,21 @@ export function criarConfiguracao({
   }
 
   const consulta = () =>
-    cliente().from("TB_CONFIGURACAO").select("chave,valor,descricao");
+    cliente()!.from("TB_CONFIGURACAO").select("chave,valor,descricao");
 
   /**
    * Carrega TB_CONFIGURACAO (ou usa a `consulta` já disparada) e aplica.
    * `silent`: sem toast de erro (arranque, cópia da sessão). `true` = carregou.
    */
-  async function carregar({ consulta: disparada, silent = false } = {}) {
+  async function carregar({
+    consulta: disparada,
+    silent = false,
+  }: OpcoesDaCargaDaConfiguracao = {}) {
     valores = {};
     chaves = new Set();
     carregou = false;
-    const { data, error } = await (disparada || consulta());
+    const { data, error }: RespostaDaConfiguracao = await (disparada ||
+      consulta());
     if (error) {
       if (!silent)
         avisar(
@@ -172,11 +215,13 @@ export function criarConfiguracao({
           "error",
         );
     } else {
-      (Array.isArray(data) ? data : []).forEach((linha) => {
-        if (!linha.chave) return;
-        chaves.add(linha.chave);
-        valores[linha.chave] = linha.valor ?? "";
-      });
+      (Array.isArray(data) ? (data as LinhaDaConfiguracao[]) : []).forEach(
+        (linha) => {
+          if (!linha.chave) return;
+          chaves.add(linha.chave);
+          valores[linha.chave] = linha.valor ?? "";
+        },
+      );
       carregou = true;
     }
     aplicarNaTela();
@@ -196,10 +241,13 @@ export function criarConfiguracao({
     valor novo sem esperar a próxima carga. Devolve o cancelamento.
   */
   function acompanharFundoDoAcesso() {
-    const aoDefinir = (evento) => {
+    const aoDefinir = (evento: Event) => {
       valores.auth_access_background_url =
-        evento.detail?.url || DEFAULT_ACCESS_BRANDING.backgroundUrl;
-      valores.auth_access_background_path = evento.detail?.caminho || "";
+        (evento as CustomEvent<FundoDoAcessoDefinido | null>).detail?.url ||
+        DEFAULT_ACCESS_BRANDING.backgroundUrl;
+      valores.auth_access_background_path =
+        (evento as CustomEvent<FundoDoAcessoDefinido | null>).detail?.caminho ||
+        "";
       chaves.add("auth_access_background_url");
       chaves.add("auth_access_background_path");
       aplicarNaTela();

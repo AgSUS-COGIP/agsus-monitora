@@ -4,7 +4,7 @@ import {
   useSyncExternalStore,
   type FormEvent,
 } from "react";
-import { montarModulo } from "../../app/montar-modulo.jsx";
+import { montarModulo } from "../../app/montar-modulo.tsx";
 import { isAdminGlobal } from "../../lib/access-roles.ts";
 import {
   MOTIVO_MAXIMO,

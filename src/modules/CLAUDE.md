@@ -1,6 +1,6 @@
 # `src/modules/` — LEGADO (só encolhe)
 
-Features de UI sem framework, instaladas por `src/main.js` (a ordem importa). **Nada novo aqui:**
+Features de UI sem framework, instaladas por `src/main.ts` (a ordem importa). **Nada novo aqui:**
 tela ou feature nova é React (`src/componentes/` → `src/modulos/`, com `src/ui/` e `src/app/`; ver
 `docs/arquitetura-react.md`). `scripts/check-legado-so-encolhe.mjs` quebra o build e o CI se surgir
 arquivo novo nesta pasta. Ao migrar uma tela, o módulo dela sai daqui.
@@ -12,7 +12,7 @@ arquivo novo nesta pasta. Ao migrar uma tela, o módulo dela sai daqui.
 
 Grupos: `aya-*` (assistente) · `map-*`, `health-*`, `indigenous-*` (mapa e Saúde Indígena) ·
 `icones.js` (registro único de ícones Lucide, usado também pelo
-React), `mobile-*`, `nielsen-shell-ux.js` (shell e responsivo; tema, logout e presença) · `carregamento.js` (skeleton da
+React), `mobile-*`, `nielsen-shell-ux.js` (shell e responsivo; tema, logout e presença) · `src/app/carregamento.ts` (skeleton da
 entrada e barra do "Atualizar dados"; a antiga tela `#loader` ficou só para salvamentos) · a barra
 lateral, o Núcleo (Editais), o Calendário de Editais e a Lista de Aprovados são React, em
 `src/componentes/` · `access-*`,

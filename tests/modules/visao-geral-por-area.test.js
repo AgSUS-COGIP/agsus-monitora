@@ -43,7 +43,7 @@ describe("a Visão geral não tem mapa legado", () => {
   });
 
   it("o módulo e o CSS do mapa legado saíram", () => {
-    const main = readFileSync("src/main.js", "utf8");
+    const main = readFileSync("src/main.ts", "utf8");
     expect(main).not.toContain("health-map-workspace.css");
     expect(main).not.toContain("health-reference-kpis.css");
     expect(main).toContain("./modulos/mapa-de-projetos/mapa-de-projetos.css");
@@ -85,8 +85,8 @@ describe("o legado usa a área atual", () => {
   });
 
   it("trocar de área refaz o cabeçalho (o mapa é do estado da Visão geral)", () => {
-    // A navegação (src/app/navegacao.js; comportamento em tests/app/navegacao.test.js).
-    const navegacao = readFileSync("src/app/navegacao.js", "utf8");
+    // A navegação (src/app/navegacao.ts; comportamento em tests/app/navegacao.test.js).
+    const navegacao = readFileSync("src/app/navegacao.ts", "utf8");
     const troca = navegacao.slice(navegacao.indexOf("function acompanharArea"));
     expect(troca).toContain("assinarDadosDoMonitoramento(");
     // O DSEI aberto e os filtros são do estado da Visão geral, que ouve os mesmos dados.
@@ -95,7 +95,7 @@ describe("o legado usa a área atual", () => {
   });
 
   it("os dados do mapa da Saúde Indígena vão para o estado da Visão geral", () => {
-    const fonte = readFileSync("src/app/carga.js", "utf8");
+    const fonte = readFileSync("src/app/carga.ts", "utf8");
     const carga = fonte.slice(
       fonte.indexOf("async function carregarMapa"),
       fonte.indexOf("async function carregarLinhas"),

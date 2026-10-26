@@ -1,7 +1,7 @@
 # `src/modulos/aprovados/` — Lista de aprovados
 
 A tela `#page-approved` (view `approved`): monta na própria `<section>` por
-`montarListaAprovados()` (`src/main.js` → `window.aprovadosController`); o legado chama `render()` ao
+`montarListaAprovados()` (`src/main.ts` → `window.aprovadosController`); o legado chama `render()` ao
 navegar e `openImportModal(id, rótulo)` pelo botão de listas de Editais. Área = a atual do app.
 
 Duas visões no topo: **Aprovados** (indicadores, filtros, tabela paginada) e **Convocação** (a ordem

@@ -1,7 +1,7 @@
 # `src/modulos/aya/` — Aya, a assistente
 
 A arara flutuante e o painel de conversa (cartão no canto inferior direito; tela cheia até 600px),
-montados por `montarAya()` em `#ayaApp` (`src/main.js`). Substitui os antigos `arara-guide.js`,
+montados por `montarAya()` em `#ayaApp` (`src/main.ts`). Substitui os antigos `arara-guide.js`,
 `arara-speaking-effects.js` e `nina-panel-drag.js`.
 
 ```
@@ -51,7 +51,7 @@ componentes de `src/ui/`) existem só para eles.
 Perguntas com número ("quantas análises pendentes tem o 93/2026?"): o catálogo de intenções e
 entidades é `src/lib/intencoes-da-aya.ts`; as contas e a resposta, `src/lib/dados-da-aya.ts`
 (permissão conferida antes de buscar; só contagens e datas); o "Abrir" deixa o filtro em
-`src/app/pedido-de-filtro.js` e Recursos, Entrevistas e Seleção aplicam com
+`src/app/pedido-de-filtro.ts` e Recursos, Entrevistas e Seleção aplicam com
 `src/lib/filtro-da-aya.ts`. "Não aparece o botão": `src/lib/permissoes-da-aya.ts`, pelo perfil.
 "Não ajudou" e "não entendi" guardam a pergunta sem dado pessoal
 (`src/lib/perguntas-sem-resposta.ts`) e o administrador global copia a lista pelo painel.

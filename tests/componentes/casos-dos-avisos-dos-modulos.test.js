@@ -7,7 +7,7 @@ import {
   definirAreasDoUsuario,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { consumirPedidoDeFiltro } from "../../src/app/pedido-de-filtro.js";
+import { consumirPedidoDeFiltro } from "../../src/app/pedido-de-filtro.ts";
 
 /*
   Casos de um aviso da Lista de aprovados na gaveta (20261007240000): cada

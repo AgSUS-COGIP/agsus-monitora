@@ -1,5 +1,5 @@
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
-import { sessaoDoApp } from "../app/sessao.js";
+import { sessaoDoApp } from "../app/sessao.ts";
 
 let initialized = false;
 let logoutConfirmationResolver = null;
@@ -11,7 +11,7 @@ let logoutRunning = false;
   Tema: o seletor Claro/Escuro mora no rodapé da barra lateral, junto do Sair
   (`src/componentes/barra-lateral/rodape.tsx`). É o único controle de tema — o
   botão que ficava no cabeçalho saiu. Daqui saem o estado e a regra que o
-  rodapé usa; o tema em si (aplicar, alternar, outra aba) é de src/app/moldura.js.
+  rodapé usa; o tema em si (aplicar, alternar, outra aba) é de src/app/moldura.ts.
 */
 export const OPCOES_DE_TEMA = Object.freeze([
   Object.freeze({ tema: "claro", rotulo: "Claro", icone: "sun" }),
@@ -166,7 +166,7 @@ function installLogoutFlow() {
     }
   });
 
-  // Quem sai é a sessão do app (src/app/sessao.js), depois da confirmação.
+  // Quem sai é a sessão do app (src/app/sessao.ts), depois da confirmação.
   logoutAction = () => sessaoDoApp.sair();
 }
 

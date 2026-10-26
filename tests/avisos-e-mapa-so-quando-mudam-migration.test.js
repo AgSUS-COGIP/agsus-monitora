@@ -71,7 +71,7 @@ describe("mapa da Saúde Indígena", () => {
   });
 
   it("o front pede pela RPC, não mais pela tabela", () => {
-    const carga = ler("src/app/carga.js");
+    const carga = ler("src/app/carga.ts");
     expect(carga).toContain('"listar_mapa_da_saude_indigena"');
     expect(carga).not.toContain(".from(TABELA_DO_MAPA)");
     expect(carga).not.toContain('"TB_CONFIG_MAPA_SAUDE_INDIG"');

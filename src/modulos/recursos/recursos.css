@@ -6,7 +6,7 @@
   (ui.css). Aqui: as marcas das etapas, o tom do prazo, a lista de etapas e o histórico
   da gaveta, o formulário, a resposta, os anexos e os modelos.
 
-  Importado pelo src/main.js, depois do ui.css.
+  Importado pelo src/main.ts, depois do ui.css.
 */
 
 /* Oito KPIs numa fileira em tela larga; abaixo disso, a grade de src/ui/. */

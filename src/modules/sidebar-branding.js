@@ -16,7 +16,7 @@ import {
   `aplicarMarcaDaBarraLateral` enquanto a pessoa experimenta.
 
   Os valores vêm da leitura da configuração que o app já faz na entrada
-  (src/app/configuracao.js chama `aplicarMarcaDaConfiguracao`): sem consulta
+  (src/app/configuracao.ts chama `aplicarMarcaDaConfiguracao`): sem consulta
   própria. A consulta antiga relia TB_CONFIGURACAO a cada SIGNED_IN, e o
   Supabase emite SIGNED_IN toda vez que a aba volta a ficar visível.
 */

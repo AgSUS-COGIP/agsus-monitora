@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { criarCarga } from "../../src/app/carga.js";
+import { criarCarga } from "../../src/app/carga.ts";
 import { acompanharPaginaAberta } from "../../src/app/pagina-aberta.ts";
 import {
   linhasPedidas,
@@ -126,7 +126,7 @@ describe("acompanharPaginaAberta", () => {
 
 /*
   MEDIÇÃO: as chamadas ao banco de quem entra, com cliente falso, na carga de
-  verdade (src/app/carga.js), a página aberta de verdade e o estado da Visão
+  verdade (src/app/carga.ts), a página aberta de verdade e o estado da Visão
   geral de verdade (montado escondido, como no app).
 
   ANTES (main de 19/10/2026), um avaliador entrando direto na Avaliação

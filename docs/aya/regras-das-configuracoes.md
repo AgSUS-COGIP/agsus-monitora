@@ -97,7 +97,7 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 
 **perguntas:** o que a secao marca define | secao marca | para que serve marca | para que serve a secao marca | nome da equipe | logo da equipe | texto do rodape | onde aparece a equipe responsavel
 **resposta:** Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé do cartão da tela de acesso, o texto do rodapé (que entra no lugar do texto institucional quando ele está vazio) e, em "Documentos oficiais", o cabeçalho da agência (uma linha por linha do timbrado: nome, endereço e site) usado no Word e na prévia "Como fica no SEI" da Classificação. A barra lateral não mostra a equipe. Vale depois de "Salvar alterações".
-**fonte:** src/modulos/configuracoes/marca.tsx; src/lib/publicacao-de-configuracoes.ts; src/app/entrada/marca.js
+**fonte:** src/modulos/configuracoes/marca.tsx; src/lib/publicacao-de-configuracoes.ts; src/app/entrada/marca.ts
 **abrir:** config:marca
 
 ## Prévia da barra lateral
@@ -153,5 +153,5 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 
 **perguntas:** marco personalizado | como criar um marco personalizado | comemorar contratados do edital | meta de analises no dia | criar comemoracao
 **resposta:** Em Configurações › Comemorações › Marcos personalizados, Adicionar marco cria uma comemoração com nome e meta: "Edital chegou a N contratados" (soma os contratados das linhas daquele edital no monitoramento) ou "Área passou de N análises no dia" (conta as análises concluídas hoje na tela de Análises curriculares da área). Como os outros marcos, comemora quando a pessoa vê o número cruzar a meta, uma vez, e tem efeito, intensidade, duração, som e mensagem próprios. Vale depois de "Salvar alterações".
-**fonte:** src/lib/catalogo-de-comemoracoes.ts; src/app/marcos-personalizados.js
+**fonte:** src/lib/catalogo-de-comemoracoes.ts; src/app/marcos-personalizados.ts
 **abrir:** config:comemoracoes

@@ -2,14 +2,15 @@ import { getSupabaseClient } from "../lib/supabaseClient";
 import { permissaoLegada } from "../lib/access-roles.ts";
 import { enderecoDoPainel } from "../lib/endereco-do-painel";
 import { semOPainelAntigoDeAnalises } from "../lib/pagina-do-painel";
-import { acompanharCarregamentoDoPainel } from "./carregamento.js";
+import { acompanharCarregamentoDoPainel } from "./carregamento.ts";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
-import { avisar as avisarPadrao } from "./avisos.js";
+import { avisar as avisarPadrao } from "./avisos.ts";
+import type { PerfilDeAcesso } from "../lib/tipos-dos-acessos.ts";
 
 /*
   Os painéis externos (TB_PAINEL_EXTERNO): a lista, os liberados para o perfil
   e o quadro (`#page-external`, um iframe por painel). Quem troca de tela é a
-  navegação (src/app/navegacao.js), que chama `mostrar(codigo)` e põe o título.
+  navegação (src/app/navegacao.ts), que chama `mostrar(codigo)` e põe o título.
 
   O iframe nasce na primeira abertura e fica até a página fechar (ou até o
   "Atualizar dados", que descarta os abertos para recarregarem). Antes, a
@@ -65,6 +66,36 @@ const ATRIBUTOS_DO_QUADRO = Object.freeze({
   allowfullscreen: "true",
 });
 
+/** Uma linha de TB_PAINEL_EXTERNO (as colunas da consulta). */
+export interface PainelExternoDoApp {
+  id: string;
+  codigo: string;
+  titulo: string;
+  icone?: string | null;
+  url?: string | null;
+  ordem?: number | null;
+  ativo?: boolean | null;
+  em_manutencao?: boolean | null;
+  tipo_abertura?: string | null;
+}
+
+/** A resposta da consulta da lista (a do Supabase, ou uma já disparada). */
+export interface RespostaDosPaineis {
+  data: unknown;
+  error: unknown;
+}
+
+export interface OpcoesDosPaineisExternos {
+  cliente?: typeof getSupabaseClient;
+  documento?: Document;
+  origem?: () => string | undefined;
+  obterPerfil?: () => PerfilDeAcesso | null | undefined;
+  configuracao?: (chave: string) => string;
+  avisar?: (texto: string, tom?: string) => void;
+  aoTentarDeNovo?: () => void;
+  estado?: { definirPaineisCarregados(lista: unknown): void };
+}
+
 export function criarPaineisExternos({
   cliente = getSupabaseClient,
   documento = globalThis.document,
@@ -74,38 +105,41 @@ export function criarPaineisExternos({
   avisar = avisarPadrao,
   aoTentarDeNovo = () => {},
   estado = estadoDasConfiguracoes,
-} = {}) {
-  let lista = [];
-  let liberados = new Set();
-  let atual = null;
+}: OpcoesDosPaineisExternos = {}) {
+  let lista: PainelExternoDoApp[] = [];
+  let liberados = new Set<string>();
+  let atual: PainelExternoDoApp | null = null;
 
-  const $ = (id) => documento.getElementById(id);
+  const $ = (id: string) => documento.getElementById(id);
   const perfil = () => obterPerfil();
   const podeVerPaineis = () => permissaoLegada(perfil(), "paineis");
 
   // ── Lista e permissões ────────────────────────────────────────────────
 
   const consulta = () =>
-    cliente()
+    // Sem cliente (sem ambiente do Supabase) a consulta falha, como antes.
+    cliente()!
       .from("TB_PAINEL_EXTERNO")
       .select(
         "id,codigo,titulo,icone,url,ordem,ativo,em_manutencao,tipo_abertura",
       )
       .order("ordem", { ascending: true });
 
-  async function carregar({ consulta: disparada } = {}) {
+  async function carregar({
+    consulta: disparada,
+  }: { consulta?: PromiseLike<RespostaDosPaineis> } = {}): Promise<void> {
     const { data, error } = await (disparada || consulta());
     // Análises curriculares virou página (view `analises`): o painel antigo sai.
     lista =
       !error && Array.isArray(data) && data.length
-        ? semOPainelAntigoDeAnalises(data)
+        ? semOPainelAntigoDeAnalises<PainelExternoDoApp>(data)
         : [];
     // Configurações › Painéis externos (React) lê daqui.
     estado.definirPaineisCarregados(lista);
   }
 
   /** Os ids liberados que vieram da sessão (`obter_contexto_monitora`). */
-  function definirLiberados(ids) {
+  function definirLiberados(ids: Iterable<string> | null | undefined) {
     liberados = new Set(ids || []);
   }
 
@@ -121,7 +155,7 @@ export function criarPaineisExternos({
     );
   }
 
-  function permitido(painel) {
+  function permitido(painel: PainelExternoDoApp | null | undefined) {
     return (
       !!painel &&
       painel.ativo !== false &&
@@ -130,7 +164,7 @@ export function criarPaineisExternos({
     );
   }
 
-  const podeAbrir = (codigo) =>
+  const podeAbrir = (codigo: string) =>
     lista.some((painel) => painel.codigo === codigo && permitido(painel));
   const primeiro = () => lista.find(permitido) || null;
   const doMenu = () =>
@@ -142,7 +176,7 @@ export function criarPaineisExternos({
 
   // ── Quadro ────────────────────────────────────────────────────────────
 
-  function aviso(titulo, texto, icone = "") {
+  function aviso(titulo: string, texto: string, icone = "") {
     const caixa = documento.createElement("div");
     caixa.className = "external-placeholder";
     const corpo = documento.createElement("div");
@@ -163,7 +197,7 @@ export function criarPaineisExternos({
     return caixa;
   }
 
-  function montarQuadro(holder, painel) {
+  function montarQuadro(holder: HTMLElement, painel: PainelExternoDoApp) {
     if (painel.em_manutencao) {
       holder.replaceChildren(
         aviso(
@@ -197,7 +231,7 @@ export function criarPaineisExternos({
    * Mostra o quadro do painel (a navegação já trocou a tela). Devolve o painel,
    * ou `null` se ele não estiver liberado.
    */
-  function mostrar(codigo) {
+  function mostrar(codigo: string): PainelExternoDoApp | null {
     const painel = lista.find((p) => p.codigo === codigo && permitido(p));
     if (!painel) {
       avisar("Painel indisponível ou inativo.", "warn");
@@ -214,7 +248,7 @@ export function criarPaineisExternos({
     $("page-external")?.classList.add("active");
     const titulo = $("externalTitle");
     if (titulo) titulo.textContent = painel.titulo;
-    const abrir = $("externalOpen");
+    const abrir = $("externalOpen") as HTMLAnchorElement | null;
     if (abrir) abrir.href = enderecoDoPainel(painel.url, origem()) || "#";
     const montagem = $("externalMount");
     if (!montagem) return painel;
@@ -223,7 +257,7 @@ export function criarPaineisExternos({
       montagem.replaceChildren();
     }
     montagem
-      .querySelectorAll(".external-panel")
+      .querySelectorAll<HTMLElement>(".external-panel")
       .forEach((holder) => (holder.hidden = true));
     let holder = $("external-panel-" + codigo);
     if (!holder) {
@@ -238,7 +272,7 @@ export function criarPaineisExternos({
   }
 
   /** Tira o quadro do painel (o próximo `mostrar` cria de novo). */
-  function descartar(codigo) {
+  function descartar(codigo: string) {
     $("external-panel-" + codigo)?.remove();
   }
 
@@ -281,3 +315,5 @@ export function criarPaineisExternos({
     },
   };
 }
+
+export type PaineisExternos = ReturnType<typeof criarPaineisExternos>;

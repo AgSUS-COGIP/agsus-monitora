@@ -1,3 +1,4 @@
+import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseClient } from "../lib/supabaseClient";
 import { ordenarUnidades } from "../lib/editais-do-nucleo.ts";
 import { erroAmigavel } from "../lib/erro-amigavel";
@@ -15,6 +16,14 @@ import {
   partesQueMudaram,
   respostasDasConsultas,
 } from "../lib/copia-da-sessao";
+import type { CopiaDaSessao, DadosDaCopia } from "../lib/copia-da-sessao";
+import type {
+  PerfilDeAcesso,
+  PermissaoLegada,
+} from "../lib/tipos-dos-acessos.ts";
+import type { LinhaDoMonitoramento } from "../modulos/visao-geral/tipos.ts";
+import type { Configuracao } from "./configuracao.ts";
+import type { Navegacao } from "./navegacao.ts";
 import { ehPainelExterno, codigoDoPainel } from "../lib/navegacao";
 import {
   VERSAO_DA_COPIA,
@@ -30,7 +39,7 @@ import {
   carregarSituacaoDoSistema,
   consultaDaSituacaoDoSistema,
 } from "../modules/situacao-dos-modulos.js";
-import { esconderEsqueleto, marcarAtualizacao } from "./carregamento.js";
+import { esconderEsqueleto, marcarAtualizacao } from "./carregamento.ts";
 import {
   assinarPedidosDasLinhas,
   esquecerLinhasDoMonitoramento,
@@ -40,7 +49,7 @@ import {
 } from "../componentes/dados-do-monitoramento.ts";
 import { telaUsaAsLinhas } from "../lib/telas-com-linhas.ts";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
-import { avisar as avisarPadrao } from "./avisos.js";
+import { avisar as avisarPadrao } from "./avisos.ts";
 
 /*
   A carga dos dados do app, sem React.
@@ -108,70 +117,156 @@ const PEDIDOS_PADRAO = Object.freeze({
   ha: linhasPedidas,
 });
 
+/** Linhas com a versão do banco (`{ linhas, versao }`): o que a tela já tem. */
+export type ConhecidasComVersao = { linhas: unknown; versao: unknown };
+
+/** As conhecidas, já lidas ou ainda a caminho (a cópia da sessão). */
+export type ConhecidasDaCarga =
+  | ConhecidasComVersao
+  | PromiseLike<ConhecidasComVersao | null | undefined>
+  | null
+  | undefined;
+
+/** Resposta no formato do Supabase (`{ data, error }`), com a `versao` nas RPCs com versão. */
+export type RespostaComVersao = {
+  data: unknown;
+  versao?: unknown;
+  error: unknown;
+};
+
+/** Uma consulta já disparada (ou a resposta já pronta, da cópia). */
+export type ConsultaDaCarga = PromiseLike<RespostaComVersao>;
+
+export type OpcoesDaConsulta = { consulta?: ConsultaDaCarga | null };
+
+/** Uma linha de TB_CONFIG_MAPA_SAUDE_INDIG. */
+export type LinhaDoMapa = {
+  chave: string;
+  payload: { dsei?: unknown; rede?: unknown } | null | undefined;
+};
+
+/** O que a carga usa de src/app/paineis-externos.ts. */
+export type PaineisDaCarga = {
+  consulta(): ConsultaDaCarga;
+  carregar(opcoes?: { consulta?: ConsultaDaCarga }): Promise<unknown>;
+  completarLiberados(): void;
+  liberados(): Iterable<unknown>;
+  descartarAbertos(): void;
+  podeAbrir(codigo: string): boolean;
+  esquecerAtual(): void;
+};
+
+/** O catálogo de abas e a situação do sistema: consulta já disparada e aplicação. */
+export type ParteDaCarga = {
+  consulta(sb: SupabaseClient | null): Promise<RespostaComVersao>;
+  carregar(opcoes: OpcoesDaConsulta): Promise<unknown>;
+};
+
+/** A cópia da sessão (IndexedDB, src/modules/copia-da-sessao-indexeddb.js). */
+export type CopiaDaCarga = {
+  ler(): Promise<CopiaDaSessao | null>;
+  guardar(copia: CopiaDaSessao): Promise<unknown>;
+  apagar(): Promise<unknown>;
+  versao: string;
+};
+
 /**
- * @param {object} dependencias
- * @param {object} dependencias.configuracao src/app/configuracao.js
- * @param {object} dependencias.paineis src/app/paineis-externos.js
- * @param {object} dependencias.navegacao src/app/navegacao.js
- * @param {() => object|null} dependencias.obterPerfil
- * @param {() => object|null} dependencias.obterUsuario
- * @param {() => void} dependencias.mostrarApp mostra `#appScreen` com quem entrou
- * @param {() => void} dependencias.comemorar comemoração do acesso liberado
- * @param {{ assinar: (ouvinte: () => void) => () => void, ha: () => boolean }} [dependencias.pedidos]
- *   quem precisa das linhas do monitoramento (dados-do-monitoramento.ts)
+ * `configuracao` (src/app/configuracao.ts), `paineis`
+ * (src/app/paineis-externos.ts) e `navegacao` (src/app/navegacao.ts) são
+ * obrigatórios. `mostrarApp` mostra `#appScreen` com quem entrou; `comemorar`
+ * é a comemoração do acesso liberado; `pedidos`, quem precisa das linhas do
+ * monitoramento (dados-do-monitoramento.ts).
  */
-export function criarCarga({
-  cliente = getSupabaseClient,
-  configuracao,
-  paineis,
-  navegacao,
-  obterPerfil = () => null,
-  obterUsuario = () => null,
-  avisar = avisarPadrao,
-  mostrarApp = () => {},
-  comemorar = () => {},
-  copia = COPIA_PADRAO,
-  abas = ABAS_PADRAO,
-  situacao = SITUACAO_PADRAO,
-  esqueleto = { esconder: esconderEsqueleto, marcarAtualizacao },
-  visaoGeral = estadoDaVisaoGeral,
-  pedidos = PEDIDOS_PADRAO,
-  agora = () => Date.now(),
-} = {}) {
-  let linhas = [];
+export type DependenciasDaCarga = {
+  cliente?: () => SupabaseClient | null;
+  configuracao: Pick<Configuracao, "consulta" | "carregar" | "booleano">;
+  paineis: PaineisDaCarga;
+  navegacao: Pick<
+    Navegacao,
+    "montarMenu" | "obter" | "telaPermitida" | "irPara" | "telaDeEntrada"
+  >;
+  obterPerfil?: () => PerfilDeAcesso | null;
+  obterUsuario?: () => { id?: string | null } | null;
+  avisar?: (texto: string, tom?: string) => void;
+  mostrarApp?: () => void;
+  comemorar?: () => void;
+  copia?: CopiaDaCarga;
+  abas?: ParteDaCarga;
+  situacao?: ParteDaCarga;
+  esqueleto?: {
+    esconder(): void;
+    marcarAtualizacao(ativa: boolean): void;
+  };
+  visaoGeral?: Pick<typeof estadoDaVisaoGeral, "obter" | "definirDadosDoMapa">;
+  pedidos?: {
+    assinar(ouvinte: () => void): () => unknown;
+    ha(): boolean;
+  };
+  agora?: () => number;
+};
+
+/** Quem abriu a sessão: a cópia guardada só serve a ela. */
+type SessaoDaCopia = { usuarioId: unknown; acesso: unknown; versao: unknown };
+
+export type Carga = ReturnType<typeof criarCarga>;
+
+export function criarCarga(
+  {
+    cliente = getSupabaseClient,
+    configuracao,
+    paineis,
+    navegacao,
+    obterPerfil = () => null,
+    obterUsuario = () => null,
+    avisar = avisarPadrao,
+    mostrarApp = () => {},
+    comemorar = () => {},
+    copia = COPIA_PADRAO,
+    abas = ABAS_PADRAO,
+    situacao = SITUACAO_PADRAO,
+    esqueleto = { esconder: esconderEsqueleto, marcarAtualizacao },
+    visaoGeral = estadoDaVisaoGeral,
+    pedidos = PEDIDOS_PADRAO,
+    agora = () => Date.now(),
+    // `configuracao`, `paineis` e `navegacao` vêm sempre; o `{}` é o padrão do JS.
+  }: DependenciasDaCarga = {} as DependenciasDaCarga,
+) {
+  let linhas: LinhaDoMonitoramento[] = [];
   /* A versão das `linhas` que o banco mandou: a próxima carga pergunta só se mudou. */
-  let versaoDasLinhas = null;
+  let versaoDasLinhas: unknown = null;
   /* As linhas já publicadas no store (resposta `inalterada` não republica). */
-  let publicadas = null;
+  let publicadas: LinhaDoMonitoramento[] | null = null;
   /* As linhas vieram nesta sessão (do banco); antes disso, ninguém as pediu. */
   let linhasCarregadas = false;
   /* O Realtime avisou de mudança com ninguém precisando: a próxima página relê. */
   let desatualizadas = false;
   /* As linhas da cópia da sessão que serve (`{ linhas, versao }`, promessa), quando a entrada não as leu. */
-  let linhasDaCopia = null;
+  let linhasDaCopia: Promise<ConhecidasComVersao | null | undefined> | null =
+    null;
   /* A entrada terminou: daqui em diante, pedido de linhas vira leitura. */
   let sessaoAberta = false;
   /* A sessão quer o Realtime (`iniciarRealtime`); o canal só abre se alguém usa as linhas. */
   let realtimePermitido = false;
   /* O mapa que a tela tem (`{ linhas, versao }`), pelo mesmo motivo. */
-  let mapaAtual = null;
-  let unidades = [];
-  let copiaEmLeitura = null;
-  let cargaDasLinhas = null;
+  let mapaAtual: ConhecidasComVersao | null = null;
+  let unidades: unknown[] = [];
+  let copiaEmLeitura: Promise<CopiaDaSessao | null> | null = null;
+  let cargaDasLinhas: Promise<boolean> | null = null;
   let rodadaDasLinhas = 0;
-  let atualizacao = null;
-  let canal = null;
-  let esperaDoRealtime = null;
+  let atualizacao: Promise<boolean> | null = null;
+  let canal: RealtimeChannel | null = null;
+  let esperaDoRealtime: ReturnType<typeof setTimeout> | null = null;
 
   const sb = () => cliente();
   const perfil = () => obterPerfil();
-  const pode = (permissao) => permissaoLegada(perfil(), permissao);
+  const pode = (permissao: PermissaoLegada) =>
+    permissaoLegada(perfil(), permissao);
   const usuarioId = () => obterUsuario()?.id;
 
   // ── Consultas ─────────────────────────────────────────────────────────
 
   const consultaDeUnidades = () =>
-    sb()
+    sb()!
       .from("TD_UNIDADE")
       .select("id_unidade,sigla,nome_oficial,tipo,uf_sede,ativo")
       .eq("ativo", true)
@@ -195,15 +290,16 @@ export function criarCarga({
     `{ inalterado: true }` e voltam as mesmas linhas. Responde no formato do
     Supabase (`{ data, error }`) mais a `versao`.
   */
-  const consultaComVersao = (rpc, conhecidas) =>
+  const consultaComVersao = (rpc: string, conhecidas: ConhecidasDaCarga) =>
     Promise.resolve(conhecidas)
       .catch(() => null)
-      .then(async (base) => {
+      .then(async (base): Promise<RespostaComVersao> => {
         const versao = base?.versao || null;
-        const { data, error } = await sb().rpc(rpc, { p_versao: versao });
+        const { data, error } = await sb()!.rpc(rpc, { p_versao: versao });
         if (error) return { data: null, error };
+        // `versao` só existe com `base`.
         if (versao && data?.inalterado === true)
-          return { data: base.linhas, versao, error: null };
+          return { data: base!.linhas, versao, error: null };
         return {
           data: Array.isArray(data?.linhas) ? data.linhas : [],
           versao: typeof data?.versao === "string" ? data.versao : null,
@@ -215,17 +311,18 @@ export function criarCarga({
     As linhas que a tela já tem: as da memória ou, antes da primeira leitura
     da sessão, as da cópia da sessão (a versão dela ainda serve ao banco).
   */
-  const linhasConhecidas = () =>
+  const linhasConhecidas = (): ConhecidasDaCarga =>
     versaoDasLinhas || !linhasDaCopia
       ? { linhas, versao: versaoDasLinhas }
       : linhasDaCopia;
 
   /* As linhas ativas, por unidade e edital (sem a versão eram ~300 kB a cada entrada). */
-  const consultaDoMonitoramento = (conhecidas = linhasConhecidas()) =>
-    consultaComVersao(RPC_DO_MONITORAMENTO, conhecidas);
+  const consultaDoMonitoramento = (
+    conhecidas: ConhecidasDaCarga = linhasConhecidas(),
+  ) => consultaComVersao(RPC_DO_MONITORAMENTO, conhecidas);
 
   /* `lmap` e `rede_cnes` (~150 kB): `[{ chave, payload }]`, como a tabela. */
-  const consultaDoMapa = (conhecido = mapaAtual) =>
+  const consultaDoMapa = (conhecido: ConhecidasDaCarga = mapaAtual) =>
     consultaComVersao(RPC_DO_MAPA, conhecido);
 
   /*
@@ -236,8 +333,16 @@ export function criarCarga({
     chama `then`. As linhas do monitoramento só entram com `comLinhas` (alguém
     vai usá-las); sem elas, `monitoramento` fica `null`.
   */
-  function iniciarConsultas({ monitoramento, mapa, comLinhas = true } = {}) {
-    const iniciar = (consulta) => Promise.resolve(consulta);
+  function iniciarConsultas({
+    monitoramento,
+    mapa,
+    comLinhas = true,
+  }: {
+    monitoramento?: ConhecidasDaCarga;
+    mapa?: ConhecidasDaCarga;
+    comLinhas?: boolean;
+  } = {}) {
+    const iniciar = <T>(consulta: T) => Promise.resolve(consulta);
     return {
       config: iniciar(configuracao.consulta()),
       paineis: iniciar(paineis.consulta()),
@@ -253,7 +358,7 @@ export function criarCarga({
 
   // ── Cargas ────────────────────────────────────────────────────────────
 
-  async function carregarUnidades({ consulta } = {}) {
+  async function carregarUnidades({ consulta }: OpcoesDaConsulta = {}) {
     if (!sb()) {
       unidades = [];
       publicarUnidadesDoCatalogo(unidades);
@@ -275,7 +380,7 @@ export function criarCarga({
     return true;
   }
 
-  async function carregarMapa({ consulta } = {}) {
+  async function carregarMapa({ consulta }: OpcoesDaConsulta = {}) {
     if (!sb()) return false;
     const { data, error, versao } = await (consulta || consultaDoMapa());
     if (error) {
@@ -292,7 +397,10 @@ export function criarCarga({
       versao: versao || null,
     };
     const porChave = Object.fromEntries(
-      (data || []).map((linha) => [linha.chave, linha.payload]),
+      ((data || []) as LinhaDoMapa[]).map((linha) => [
+        linha.chave,
+        linha.payload,
+      ]),
     );
     // O mapa da Saúde Indígena (React) lê do estado da Visão geral.
     const anteriores = visaoGeral.obter().mapa || {};
@@ -313,7 +421,7 @@ export function criarCarga({
   }
 
   /* As linhas do monitoramento; duas chamadas juntas esperam a mesma carga. */
-  async function carregarLinhas({ consulta } = {}) {
+  async function carregarLinhas({ consulta }: OpcoesDaConsulta = {}) {
     if (cargaDasLinhas) return cargaDasLinhas;
     const rodada = ++rodadaDasLinhas;
     const carga = (async () => {
@@ -330,7 +438,7 @@ export function criarCarga({
         avisar("Erro ao carregar dados: " + erroAmigavel(error), "error");
         return false;
       }
-      linhas = Array.isArray(data) ? data : [];
+      linhas = Array.isArray(data) ? (data as LinhaDoMonitoramento[]) : [];
       versaoDasLinhas = versao || null;
       linhasCarregadas = true;
       desatualizadas = false;
@@ -363,7 +471,9 @@ export function criarCarga({
       if (!linhasCarregadas && linhasDaCopia && !publicadas) {
         const daCopia = await linhasDaCopia.catch(() => null);
         if (daCopia && sessaoAberta && !linhasCarregadas && !publicadas) {
-          linhas = Array.isArray(daCopia.linhas) ? daCopia.linhas : [];
+          linhas = Array.isArray(daCopia.linhas)
+            ? (daCopia.linhas as LinhaDoMonitoramento[])
+            : [];
           versaoDasLinhas = daCopia.versao || null;
           publicarLinhasDoMonitoramento(linhas);
           publicadas = linhas;
@@ -378,7 +488,7 @@ export function criarCarga({
     }
   }
 
-  async function carregarPaineis(consulta) {
+  async function carregarPaineis(consulta: ConsultaDaCarga | undefined) {
     await paineis.carregar({ consulta });
     paineis.completarLiberados();
   }
@@ -398,7 +508,11 @@ export function criarCarga({
     Se a tela abriu pela cópia (`anteriores`), reaplica antes só o que mudou;
     quase sempre nada, e nada pisca.
   */
-  async function atualizarCopia(sessao, consultas, anteriores) {
+  async function atualizarCopia(
+    sessao: SessaoDaCopia,
+    consultas: ReturnType<typeof iniciarConsultas>,
+    anteriores: DadosDaCopia | null,
+  ) {
     const dados = dadosDasRespostas(await respostasDasConsultas(consultas));
     if (usuarioId() !== sessao.usuarioId) return;
     // A entrada não leu as linhas: a cópia nova leva as que a tela tem (lidas
@@ -461,10 +575,10 @@ export function criarCarga({
       versao: copia.versao,
     };
     // A cópia que serve diz ao banco a versão das linhas e do mapa que a tela já tem.
-    const daCopiaQueServe = (parte) =>
+    const daCopiaQueServe = <T>(parte: (dados: DadosDaCopia) => T) =>
       Promise.resolve(copiaLida).then((guardada) =>
         copiaServe(guardada, { ...sessao, agora: agora() })
-          ? parte(guardada.dados)
+          ? parte(guardada!.dados)
           : null,
       );
     const linhasDaCopiaQueServe = daCopiaQueServe(
@@ -495,7 +609,7 @@ export function criarCarga({
     if (guardada && guardada.usuarioId !== sessao.usuarioId)
       void copia.apagar();
     const daCopia = copiaServe(guardada, { ...sessao, agora: agora() });
-    const fonte = daCopia ? consultasDosDados(guardada.dados) : consultas;
+    const fonte = daCopia ? consultasDosDados(guardada!.dados) : consultas;
     await configuracao.carregar({ consulta: fonte.config });
     await carregarPaineis(fonte.paineis);
     await abas.carregar({ consulta: fonte.abas });
@@ -523,7 +637,7 @@ export function criarCarga({
     if (linhasOk) void garantirLinhas();
     esqueleto.esconder();
     comemorar();
-    atualizarCopia(sessao, consultas, daCopia ? guardada.dados : null).catch(
+    atualizarCopia(sessao, consultas, daCopia ? guardada!.dados : null).catch(
       (erro) => console.warn("Falha ao atualizar a cópia da sessão:", erro),
     );
     return true;
@@ -633,14 +747,14 @@ export function criarCarga({
     if (!configuracao.booleano("feature_realtime_monitoramento", true)) return;
     if (canal) return;
     try {
-      canal = sb()
+      canal = sb()!
         .channel("monitoramento_changes")
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "TB_MONITORAMENTO_INDIGENA" },
           () => {
             // Mudanças em rajada viram uma releitura só.
-            clearTimeout(esperaDoRealtime);
+            clearTimeout(esperaDoRealtime!);
             esperaDoRealtime = setTimeout(releituraDoRealtime, 800);
           },
         )
@@ -652,7 +766,7 @@ export function criarCarga({
   }
 
   function fecharCanal() {
-    clearTimeout(esperaDoRealtime);
+    clearTimeout(esperaDoRealtime!);
     if (!canal) return;
     try {
       sb()?.removeChannel(canal);

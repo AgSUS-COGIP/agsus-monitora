@@ -134,9 +134,9 @@ describe("os guardas não podem mutilar o namespace do Leaflet", () => {
     A primeira versão deste teste instalava só o `map-guard` e dava verde — e a
     camada continuou a não existir em produção. Faltavam dois: o switcher de
     base e o zoom-range também envolvem `L.tileLayer`, e ambos correm DEPOIS do
-    guarda em `src/main.js`. O que o guarda restaurava, eles voltavam a apagar.
+    guarda em `src/main.ts`. O que o guarda restaurava, eles voltavam a apagar.
 
-    Esta ordem é a de `src/main.js` e tem de continuar a sê-lo. Um teste que
+    Esta ordem é a de `src/main.ts` e tem de continuar a sê-lo. Um teste que
     instale um instalador só volta a dar verde sobre uma aplicação partida.
   */
   const arrancarComoAAplicacao = async () => {

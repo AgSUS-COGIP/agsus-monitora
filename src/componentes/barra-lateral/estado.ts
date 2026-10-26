@@ -8,7 +8,7 @@ import type {
   Estado da barra lateral, fora do React.
 
   A navegação do app decide o que o perfil vê e qual página está aberta
-  (`montarMenu` e `marcarMenu`, em src/app/navegacao.js); ela só empurra isso
+  (`montarMenu` e `marcarMenu`, em src/app/navegacao.ts); ela só empurra isso
   para cá, e os componentes leem com `useSyncExternalStore`. Este arquivo não
   importa React.
 

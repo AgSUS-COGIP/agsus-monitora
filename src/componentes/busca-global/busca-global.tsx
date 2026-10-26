@@ -23,7 +23,7 @@ import type { ResultadoDaBusca, OpcoesDaBusca } from "./tipos.ts";
 */
 
 import { useEffect, useId, useRef, useState } from "react";
-import { montarModulo } from "../../app/montar-modulo.jsx";
+import { montarModulo } from "../../app/montar-modulo.tsx";
 import {
   buscarLinhas,
   ehAtalhoDaBusca,

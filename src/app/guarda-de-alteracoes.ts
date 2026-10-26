@@ -7,11 +7,11 @@
     naoGuardado()    há mudança que ainda não chegou a lugar durável (banco ou
                      este computador): a versão nova do sistema não recarrega
                      a página enquanto isso, nem a página desligada pela
-                     coordenação fecha (src/app/navegacao.js);
+                     coordenação fecha (src/app/navegacao.ts);
     guardarAgora()   grava já, sem esperar, o que dá para gravar sem rede (a
                      cópia neste computador), chamado no `beforeunload`.
   Acessos, Módulos e abas e Configurações têm a guarda própria de saída
-  (confirmarSaida em navegacao.js).
+  (confirmarSaida em navegacao.ts).
 */
 
 export type GuardaDaTela = {

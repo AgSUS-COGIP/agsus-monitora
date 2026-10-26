@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   avaliarMarcosPersonalizados,
   instalarMarcosDosEditais,
-} from "../src/app/marcos-personalizados.js";
+} from "../src/app/marcos-personalizados.ts";
 import {
   CHAVE_DA_PREFERENCIA_PESSOAL,
   definirConfiguracaoDasComemoracoes,

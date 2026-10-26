@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { callbackResultUrl } from "../../src/auth/callback.js";
+import { callbackResultUrl } from "../../src/auth/callback.ts";
 import {
   LOGIN_POPUP_MESSAGE,
   openLoginPopup,
@@ -22,7 +22,7 @@ describe("fluxo de autenticação Supabase", () => {
 
   it("mantém o callback independente do CDN e do global window.supabase", () => {
     const callbackHtml = source("auth/callback.html");
-    const callbackSource = source("src/auth/callback.js");
+    const callbackSource = source("src/auth/callback.ts");
 
     expect(callbackHtml).not.toContain(
       "cdn.jsdelivr.net/npm/@supabase/supabase-js",

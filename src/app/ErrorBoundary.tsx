@@ -1,4 +1,5 @@
 import { Component, Fragment } from "react";
+import type { ErrorInfo, ReactNode } from "react";
 
 /*
   Isola um módulo (uma tela, uma ilha React): erro de render num filho mostra
@@ -6,20 +7,33 @@ import { Component, Fragment } from "react";
   novo" remonta os filhos do zero (a `key` muda), e o erro vai para o console.
 
   Não pega erro de evento nem de promessa — esses continuam com quem os trata
-  (toast, aviso do estado). Montado por `montarModulo` (montar-modulo.jsx).
+  (toast, aviso do estado). Montado por `montarModulo` (montar-modulo.tsx).
 */
-export class ErrorBoundary extends Component {
-  constructor(props) {
+type PropsDoErrorBoundary = {
+  nome?: string | undefined;
+  children?: ReactNode;
+};
+
+type EstadoDoErrorBoundary = {
+  erro: unknown;
+  tentativa: number;
+};
+
+export class ErrorBoundary extends Component<
+  PropsDoErrorBoundary,
+  EstadoDoErrorBoundary
+> {
+  constructor(props: PropsDoErrorBoundary) {
     super(props);
     this.state = { erro: null, tentativa: 0 };
     this.tentarDeNovo = this.tentarDeNovo.bind(this);
   }
 
-  static getDerivedStateFromError(erro) {
+  static getDerivedStateFromError(erro: unknown) {
     return { erro };
   }
 
-  componentDidCatch(erro, info) {
+  componentDidCatch(erro: unknown, info: ErrorInfo) {
     console.error(
       `[MONITORA] Erro ao desenhar ${this.props.nome || "o módulo"}:`,
       erro,

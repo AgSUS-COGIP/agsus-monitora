@@ -51,14 +51,14 @@ gera conflito com quem está trabalhando em paralelo.
 
 | Hoje                                                                                                             | Alvo                                                      | Quando     |
 | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------- |
-| `src/app/` (`montar-modulo.jsx`, `ErrorBoundary.jsx`)                                                            | fica                                                      | —          |
+| `src/app/` (`montar-modulo.tsx`, `ErrorBoundary.tsx`)                                                            | fica                                                      | —          |
 | `src/ui/` (design system)                                                                                        | fica                                                      | —          |
 | `src/componentes/icone.tsx`, `multi-select-busca.tsx`                                                            | `src/ui/`                                                 | ao tocar   |
 | Configurações (moldura, seções e `secoes.ts`), Acessos, Módulos e abas                                           | `src/modulos/configuracoes/`, `acessos/`, `modulos/`      | concluído  |
 | `src/componentes/saude-das-cargas/` (Status das atualizações)                                                    | `src/modulos/`                                            | ao tocar   |
 | Editais, Cronograma e Lista de aprovados                                                                         | `src/modulos/editais/`, `cronograma/`, `aprovados/`       | concluído  |
 | `src/modules/map-*`, `health-*`, `indigenous-*`, (o dashboard já saiu do legado)                                 | `src/modulos/visao-geral/`                                | 5          |
-| `src/main.js`, `index.html`, `src/componentes/barra-lateral/`, `dados-do-monitoramento.ts`, `usar-area-atual.ts` | `src/app/` (entrada, layout, área atual)                  | 6          |
+| `src/main.ts`, `index.html`, `src/componentes/barra-lateral/`, `dados-do-monitoramento.ts`, `usar-area-atual.ts` | `src/app/` (entrada, layout, área atual)                  | 6          |
 | `auth-storage.js`, `sidebar-branding.js` (o login e o `legacy-app.js` já estão em `src/app/`)                    | `src/lib/` e barra lateral                                | 6          |
 | `src/modules/aya-*` (IA, base e memória; o painel já é `src/modulos/aya/`)                                       | `src/app/` (Aya no layout)                                | 7          |
 | `src/lib/`                                                                                                       | fica                                                      | —          |
@@ -91,7 +91,7 @@ tests/<nome>.test.js          teste das regras de src/lib/
 ## Como montar
 
 ```jsx
-import { montarModulo } from "../../app/montar-modulo.jsx";
+import { montarModulo } from "../../app/montar-modulo.tsx";
 
 export function montarTela({
   elemento = document.getElementById("telaApp"),
@@ -107,16 +107,16 @@ export function montarTela({
 ```
 
 `montarModulo(elemento, <Componente/>, { flushSync, nome })` = `createRoot` + `StrictMode` +
-`ErrorBoundary`; devolve `{ raiz, desmontar }`. Todas as ilhas React de hoje (as de `src/main.js`)
+`ErrorBoundary`; devolve `{ raiz, desmontar }`. Todas as ilhas React de hoje (as de `src/main.ts`)
 montam por ele. Usa `flushSync` a barra lateral (o legado lê `#nav` logo depois).
 
 **Seção de Configurações** (modelos: `src/modulos/acessos/` e `src/modulos/modulos/`): monta no bloco do `index.html` (`#acessosApp`, `#modulosApp`) que `src/modulos/configuracoes/secoes.ts` move para a seção; o controlador em `window` (`acessosController`) tem `render()` e `confirmarSaida()` (a guarda de saída). As seções que publicam pela barra fixa (Marca… Operação) entram por portal no corpo da seção, pela moldura `src/modulos/configuracoes/configuracoes.tsx`.
 
 **Tela de página inteira** (modelos: `src/modulos/recursos/`, `src/modulos/selecao/`, `src/modulos/entrevistas/`, esta com visões num `Segmentado` no topo, e `src/modulos/analises/`): monta na `<section id="page-<view>">`
-vazia do `index.html`, sem pedir nada ao banco; `src/main.js` guarda o controlador em `window`
-(`recursosController`) e a navegação (`src/app/navegacao.js`) chama `render()` ao abrir (tabela `TELAS_REACT`).
+vazia do `index.html`, sem pedir nada ao banco; `src/main.ts` guarda o controlador em `window`
+(`recursosController`) e a navegação (`src/app/navegacao.ts`) chama `render()` ao abrir (tabela `TELAS_REACT`).
 A área vem de `usarAreaAtual()`/`obterDadosDoMonitoramento()`, o tema de `usarTemaEscuro()`
-(`src/app/tema.js`), o aviso de `window.monitoraToast` (passado na montagem). O título e a área
+(`src/app/tema.ts`), o aviso de `window.monitoraToast` (passado na montagem). O título e a área
 ficam no cabeçalho do app (`navegacao.definirTitulo`); a tela não repete.
 
 ## Telas sob demanda (fora do pacote principal)
@@ -124,20 +124,20 @@ ficam no cabeçalho do app (`navegacao.definirTitulo`); a tela não repete.
 A Visão geral e o casco (menu, cabeçalho, sessão, Aya) ficam no pacote principal. As demais telas
 de página inteira (Avaliação documental, Classificação, Entrevistas, Recursos, Lista de aprovados,
 Cronograma, Análises, Seleção) e as seções Acessos, Módulos e abas e Status das atualizações
-baixam na primeira abertura: em `src/main.js`, `window.<tela>Controller = telaSobDemanda({ secao,
+baixam na primeira abertura: em `src/main.ts`, `window.<tela>Controller = telaSobDemanda({ secao,
 metodos, padroes, carregar: () => import("…").then((m) => m.montarX(…)) })`
-(`src/app/tela-sob-demanda.js`). O controlador mantém o contrato (`render()`, `abrirVisao()`…;
+(`src/app/tela-sob-demanda.ts`). O controlador mantém o contrato (`render()`, `abrirVisao()`…;
 `estado` só depois da carga, `carregar()` para esperar), a seção mostra "Carregando…" enquanto
 baixa, o item do menu pré-carrega no mouse/foco (`src/lib/carga-de-telas.ts`) e o tour da Aya
 espera a carga. A base de verbetes da Aya baixa ao abrir o painel. Tela nova de página inteira
-entra assim, não com import estático em `main.js`.
+entra assim, não com import estático em `main.ts`.
 
 ## Como usar `ui/`
 
 Importe do índice: `import { Kpi, GradeDeKpis, Aviso } from "../../ui/index.ts";`. O `ui.css` é
-importado uma vez no ponto de entrada (`src/main.js`); o CSS próprio de um módulo de
+importado uma vez no ponto de entrada (`src/main.ts`); o CSS próprio de um módulo de
 `src/modulos/` aberto sob demanda é importado pelo ponto de entrada da tela (baixa junto com o código,
-num CSS à parte); só fica no `src/main.js`, logo depois do `ui.css`, o CSS de módulo cujas classes
+num CSS à parte); só fica no `src/main.ts`, logo depois do `ui.css`, o CSS de módulo cujas classes
 aparecem fora da própria tela.
 
 Os componentes emitem só classes `.ui-*` (prefixo para não colidir com `.panel`,
@@ -194,14 +194,14 @@ iframe; só os painéis externos (`TB_PAINEL_EXTERNO`) continuam no quadro.
 ### Fase 1 (feita): a sessão e a tela de acesso em React
 
 ```
-src/app/sessao.js                     estado da sessão (sem React): sessaoDoApp
-src/app/entrada/entrada.jsx           <TelaDeEntrada>, montarEntrada(), ligarEntradaAPagina()
-src/app/entrada/marca.js              marca da tela de acesso (cache → RPC pública → configuração)
+src/app/sessao.ts                     estado da sessão (sem React): sessaoDoApp
+src/app/entrada/entrada.tsx           <TelaDeEntrada>, montarEntrada(), ligarEntradaAPagina()
+src/app/entrada/marca.ts              marca da tela de acesso (cache → RPC pública → configuração)
 src/app/entrada/pedido-de-acesso.ts        estado do pedido de acesso (RPCs; editar, cancelar)
 src/app/entrada/solicitacao-de-acesso.tsx  página "Solicitação de acesso" (abas por área, Aya) / "Acesso desativado"
 ```
 
-`src/main.js` importa `marca.js` primeiro (pinta a marca guardada antes da rede), monta a entrada
+`src/main.ts` importa `marca.ts` primeiro (pinta a marca guardada antes da rede), monta a entrada
 logo no início (`montarEntrada()` troca o cartão vazio do `#telaDeEntrada` pelo de verdade) e, no
 fim, chama `sessaoDoApp.iniciar()`. O `index.html` mantém o `#loginScreen` e os scripts do `<head>`
 (marca antes do primeiro quadro, `sessao-guardada`, `vite-dev-carregando`). Ids e classes da tela
@@ -218,7 +218,7 @@ Testes: `tests/app/sessao.test.js`, `tests/app/entrada.test.js`, `tests/solicita
 | `loginWithGoogle`, popup, `message`, `pageshow`, `mobile-google-oauth.js`               | `entrarComGoogle()`; `startMobileGoogleOAuth` em `src/lib/auth-flow.ts`      |
 | `logout`, `returnToLogin`, `clearLocalAuthState`, `aplicarSaida`                        | `sair()`, `limparSessao()`, `aplicarSaida()` na sessão                       |
 | `showAccessRequestState`, `submitAccessRequest`, `solicitacao-de-acesso.js` (legado) | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                          |
-| `access-branding-boot.js`, marca e rodapé de `applyConfigToUi`                          | `src/app/entrada/marca.js` (`definirMarcaDaConfiguracao`)                    |
+| `access-branding-boot.js`, marca e rodapé de `applyConfigToUi`                          | `src/app/entrada/marca.ts` (`definirMarcaDaConfiguracao`)                    |
 | marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.js`)                | `src/lib/acesso-liberado.ts` (a comemoração continua no legado)              |
 | `#loginMsg` escrito por `session-lifecycle.js`                                          | `installSessionLifecycle({ aoExpirar })` → `sessaoDoApp.mostrarMensagem`     |
 | `window.loginWithGoogle`, `logout`, `returnToLogin`, `submitAccessRequest`              | saíram; o Sair confirmado (`nielsen-shell-ux.js`) chama `sessaoDoApp.sair()` |
@@ -233,10 +233,10 @@ entrando, erroDeConfiguracao, consultarPedido, configuracao }`, com `fase` em `F
 `iniciando` → `deslogado` | `abrindo` → `conectado` | `sem-acesso` | `falha-na-entrada` (perfil
 ilegível ou abertura quebrada: a entrada mostra o erro e "Tentar de novo", nunca o pedido de acesso).
 
-O sistema depois de entrar é `src/app/sistema.js` (fase 2, abaixo): `ligarSistema()`, chamado no
-começo de `src/main.js`, cria as peças, publica os contratos em `window` e registra os ganchos de
-`sessaoDoApp.ligarSistema({...})`. `src/app/perfil.js` copia usuário e perfil da sessão; a
-configuração (`src/app/configuracao.js`) chama `sessaoDoApp.definirConfiguracao` e
+O sistema depois de entrar é `src/app/sistema.ts` (fase 2, abaixo): `ligarSistema()`, chamado no
+começo de `src/main.ts`, cria as peças, publica os contratos em `window` e registra os ganchos de
+`sessaoDoApp.ligarSistema({...})`. `src/app/perfil.ts` copia usuário e perfil da sessão; a
+configuração (`src/app/configuracao.ts`) chama `sessaoDoApp.definirConfiguracao` e
 `definirMarcaDaConfiguracao`.
 
 | Gancho                 | Quando                                        | O sistema faz                                                       |
@@ -260,22 +260,22 @@ configuração (`src/app/configuracao.js`) chama `sessaoDoApp.definirConfiguraca
 
 O `legacy-app.js` de `src/modules/` (1.946 linhas) saiu. Cada responsabilidade virou um módulo pequeno de
 `src/app/`, criado por fábrica (`criarX({ dependências })`, testável com dependências falsas em
-`tests/app/`) e ligado em `src/app/sistema.js`:
+`tests/app/`) e ligado em `src/app/sistema.ts`:
 
 ```
-src/app/sistema.js               cria as peças, contratos em window, ganchos da sessão, busca global
-src/app/navegacao.js             troca de tela (.active, título, menu marcado), permissões, guarda de
+src/app/sistema.ts               cria as peças, contratos em window, ganchos da sessão, busca global
+src/app/navegacao.ts             troca de tela (.active, título, menu marcado), permissões, guarda de
                                  saída, versão nova esperando, tela guardada, menu (TELAS_REACT)
 src/lib/navegacao.ts             regras puras: bloqueioDaTela, telaPermitida, telaInicialDoSistema…
-src/app/configuracao.js          TB_CONFIGURACAO, textos do app, aviso global, fundo do acesso
-src/app/paineis-externos.js      painéis externos: lista, liberados, quadro (iframe na 1ª abertura)
-src/app/carga.js                 consultas em paralelo, cópia da sessão, "Atualizar dados", Realtime
-src/app/presenca.js              auditoria, heartbeat, presença e a lista de Pessoas online
+src/app/configuracao.ts          TB_CONFIGURACAO, textos do app, aviso global, fundo do acesso
+src/app/paineis-externos.ts      painéis externos: lista, liberados, quadro (iframe na 1ª abertura)
+src/app/carga.ts                 consultas em paralelo, cópia da sessão, "Atualizar dados", Realtime
+src/app/presenca.ts              auditoria, heartbeat, presença e a lista de Pessoas online
 src/componentes/pessoas-online/  o botão e a lista no cabeçalho (React)
-src/app/perfil.js                usuário e perfil (cópia da sessão), cabeçalho, #appScreen
-src/app/moldura.js               barra recolhida, tema, tela cheia, relatório em PDF
-src/app/avisos.js                toast (window.monitoraToast) e loader (window.monitoraLoader)
-src/app/carregamento.js          skeleton da entrada e do painel externo, barra do "Atualizar dados"
+src/app/perfil.ts                usuário e perfil (cópia da sessão), cabeçalho, #appScreen
+src/app/moldura.ts               barra recolhida, tema, tela cheia, relatório em PDF
+src/app/avisos.ts                toast (window.monitoraToast) e loader (window.monitoraLoader)
+src/app/carregamento.ts          skeleton da entrada e do painel externo, barra do "Atualizar dados"
 src/lib/erro-amigavel.ts         a frase do erro (antigo friendlyError)
 ```
 

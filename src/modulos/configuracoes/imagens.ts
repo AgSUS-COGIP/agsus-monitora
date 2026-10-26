@@ -43,7 +43,7 @@ import type {
   SnapshotDasImagens,
 } from "./tipos.ts";
 
-/** A janela com o aviso (toast) do app, posto por src/main.js. */
+/** A janela com o aviso (toast) do app, posto por src/main.ts. */
 type JanelaComAviso = Window & {
   monitoraToast?: (mensagem: string, tipo?: string) => unknown;
 };

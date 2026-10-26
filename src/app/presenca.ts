@@ -4,6 +4,8 @@ import {
   normalizeOnlinePresenceList,
   ondeEstaNoMonitora,
 } from "../lib/online-presence";
+import type { PessoaOnline } from "../lib/online-presence";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.ts";
 import {
   SECOES,
@@ -42,7 +44,7 @@ export const LISTA_FECHADA_MS = 10 * 60_000;
 const HEARTBEAT_PADRAO_MINUTOS = 5;
 
 /* Onde a pessoa está agora, em texto para quem lê (página · área, ou a seção de Configurações). */
-function localPadrao(view, documento) {
+function localPadrao(view: string, documento: Document) {
   const secao = secaoAtualDeConfiguracao(documento);
   return (
     ondeEstaNoMonitora({
@@ -67,48 +69,95 @@ export function idDaAba(armazenamento = globalThis.sessionStorage) {
   }
 }
 
+/** O estado assinável de "Pessoas online". */
+export type EstadoDaPresenca = Readonly<{
+  visivel: boolean;
+  aberto: boolean;
+  sincronizado: boolean;
+  /** Desde quando está sincronizando (ms). */
+  desde: number;
+  pessoas: readonly PessoaOnline[];
+}>;
+
+/** O que a navegação avisa a quem a assina (src/app/navegacao.ts). */
+export type EventoDaNavegacaoNaPresenca = {
+  tipo: string;
+  view?: string;
+  anterior?: string;
+};
+
+/** Detalhes opcionais de um evento da auditoria. */
+export type OpcoesDoEventoDeAcesso = {
+  tela?: string | null;
+  detalhes?: Record<string, unknown>;
+};
+
 /**
- * @param {object} dependencias
- * @param {() => object|null} dependencias.obterUsuario
- * @param {() => object|null} dependencias.obterPerfil
- * @param {object} dependencias.configuracao `inteiro(chave, padrao)` e `versao()`
- * @param {object} dependencias.navegacao `obter()` (a tela atual) e `assinar`
+ * `obterUsuario`/`obterPerfil`: quem entrou; `configuracao`: `inteiro(chave,
+ * padrao)` e `versao()`; `navegacao`: `obter()` (a tela atual) e `assinar`.
  */
+export type DependenciasDaPresenca = {
+  cliente?: () => SupabaseClient | null;
+  documento?: Document;
+  agente?: () => string;
+  obterUsuario?: () => { id?: string | null } | null;
+  obterPerfil?: () => unknown;
+  configuracao?: {
+    inteiro(chave: string, padrao: number): number;
+    versao(): string;
+  };
+  navegacao?: {
+    obter(): { view: string };
+    assinar(
+      ouvinte: (evento: EventoDaNavegacaoNaPresenca) => void,
+    ): () => unknown;
+  };
+  local?: (view: string) => string | null;
+  agora?: () => number;
+  aoRegistrar?: (dados: unknown) => unknown;
+};
+
+export type Presenca = ReturnType<typeof criarPresenca>;
+
 export function criarPresenca({
   cliente = getSupabaseClient,
   documento = globalThis.document,
   agente = () => globalThis.navigator?.userAgent || "",
   obterUsuario = () => null,
   obterPerfil = () => null,
-  configuracao = { inteiro: (_c, padrao) => padrao, versao: () => "" },
+  configuracao = {
+    inteiro: (_c: string, padrao: number) => padrao,
+    versao: () => "",
+  },
   navegacao = { obter: () => ({ view: "" }), assinar: () => () => {} },
-  local = (view) => localPadrao(view, documento),
+  local = (view: string) => localPadrao(view, documento),
   agora = () => Date.now(),
   aoRegistrar = () => {},
-} = {}) {
-  let estado = Object.freeze({
+}: DependenciasDaPresenca = {}) {
+  let estado: EstadoDaPresenca = Object.freeze({
     visivel: false,
     aberto: false,
     sincronizado: false,
     desde: agora(),
     pessoas: [],
   });
-  const ouvintes = new Set();
-  let batida = null;
-  let heartbeat = null;
-  let ultimoLocal = null;
+  const ouvintes = new Set<() => void>();
+  let batida: ReturnType<typeof setInterval> | null = null;
+  let heartbeat: ReturnType<typeof setInterval> | null = null;
+  let ultimoLocal: string | null = null;
   /* `iniciar` ligou a presença (a aba oculta só pausa a batida). */
   let ligada = false;
-  let ultimaBatida = null;
-  let ultimaLista = null;
+  let ultimaBatida: number | null = null;
+  let ultimaLista: number | null = null;
 
-  const sb = () => cliente();
+  /* Só chamado depois de `sb()` conferido (ou dentro de `try`). */
+  const sb = () => cliente()!;
   const usuarioId = () => obterUsuario()?.id;
   const view = () => navegacao.obter().view;
   const visivelNaAba = () => documento.visibilityState === "visible";
   const podeVer = () => podeVerPessoasOnline(obterPerfil());
 
-  function definir(parcial) {
+  function definir(parcial: Partial<EstadoDaPresenca>) {
     const proximo = { ...estado, ...parcial };
     // "Sincronizando" conta o tempo desde que deixou de estar sincronizado.
     if (estado.sincronizado && proximo.sincronizado === false)
@@ -119,7 +168,10 @@ export function criarPresenca({
 
   // ── Auditoria ─────────────────────────────────────────────────────────
 
-  async function registrarEvento(evento, { tela, detalhes } = {}) {
+  async function registrarEvento(
+    evento: string,
+    { tela, detalhes }: OpcoesDoEventoDeAcesso = {},
+  ) {
     if (!sb() || !usuarioId() || !evento) return;
     try {
       await sb().rpc(RPC_EVENTO_DE_ACESSO, {
@@ -137,7 +189,7 @@ export function criarPresenca({
   }
 
   function pararHeartbeat() {
-    clearInterval(heartbeat);
+    clearInterval(heartbeat!);
     heartbeat = null;
   }
 
@@ -229,7 +281,7 @@ export function criarPresenca({
   }
 
   function pararBatida() {
-    clearInterval(batida);
+    clearInterval(batida!);
     batida = null;
   }
 
@@ -315,7 +367,7 @@ export function criarPresenca({
 
   return {
     obter: () => estado,
-    assinar(ouvinte) {
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { criarPaineisExternos } from "../../src/app/paineis-externos.js";
+import { criarPaineisExternos } from "../../src/app/paineis-externos.ts";
 
 /*
-  Os painéis externos (src/app/paineis-externos.js): a lista, os liberados
+  Os painéis externos (src/app/paineis-externos.ts): a lista, os liberados
   para o perfil e o quadro de cada painel (iframe na primeira abertura).
 */
 

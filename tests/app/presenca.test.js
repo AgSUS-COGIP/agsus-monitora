@@ -4,10 +4,10 @@ import {
   LISTA_FECHADA_MS,
   criarPresenca,
   idDaAba,
-} from "../../src/app/presenca.js";
+} from "../../src/app/presenca.ts";
 
 /*
-  Presença e acesso (src/app/presenca.js): auditoria, heartbeat, a batida da
+  Presença e acesso (src/app/presenca.ts): auditoria, heartbeat, a batida da
   presença com o lugar da pessoa e a lista de "Pessoas online".
 */
 

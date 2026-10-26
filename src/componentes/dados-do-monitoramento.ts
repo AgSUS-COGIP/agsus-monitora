@@ -11,7 +11,7 @@ import {
 /*
   Os dados de monitoramento que o app carrega, para os componentes React.
 
-  A carga é de src/app/carga.js: as linhas de `TB_MONITORAMENTO_INDIGENA`
+  A carga é de src/app/carga.ts: as linhas de `TB_MONITORAMENTO_INDIGENA`
   (`carregarLinhas`, só quando pedidas — ver "AS LINHAS SOB DEMANDA", abaixo)
   alimentam o mapa, a Visão geral e os editais do Núcleo, e
   o catálogo `TD_UNIDADE` (`carregarUnidades`) alimenta o formulário do
@@ -187,7 +187,7 @@ export function soDosEditais<T extends object>(
   AS LINHAS SOB DEMANDA. `listar_monitoramento_operacional` é das consultas
   mais caras do banco (~0,8 s, mesmo quando responde `inalterado`): em
   19/10/2026 o Supabase NANO saturou com ~10 avaliadores que nunca abriam uma
-  página com estas linhas. Por isso a carga (src/app/carga.js) só as pede
+  página com estas linhas. Por isso a carga (src/app/carga.ts) só as pede
   quando alguém precisa: a página aberta que as usa (src/app/pagina-aberta.ts,
   lista em src/lib/telas-com-linhas.ts) ou um componente fora dessas páginas
   (busca global, Coordenações de Acessos), por `pedirLinhasDoMonitoramento`
