@@ -43,7 +43,6 @@ import type {
   EntrevistaDoPainel,
 } from "../modulos/entrevistas/tipos-do-painel.ts";
 import type { VagaDaSelecao } from "../modulos/selecao/tipos.ts";
-import type { LinhaDaSaude } from "../componentes/saude-das-cargas/tipos.ts";
 import type { PaginasPermitidas } from "./tipos-dos-acessos.ts";
 import type { RecursoDoPainel } from "./tipos-dos-recursos.ts";
 
@@ -167,20 +166,12 @@ export function cargasQuePedemAtencao(
   dados: unknown,
   agora = new Date(),
 ): { total: number; atrasadas: string[] } {
-  /*
-    BUG anotado na migração (não corrigido aqui): visaoSimples devolve
-    `{ linhas, atencao }`, não a lista; `.filter` abaixo lança TypeError e a
-    pergunta "alguma carga atrasada?" não tem resposta. O tipo segue o uso.
-  */
-  const linhas = visaoSimples(
-    normalizarSaude(dados, agora),
-  ) as unknown as LinhaDaSaude[];
-  const atrasadas = linhas
-    .filter((linha) => ["falhou", "atrasada"].includes(linha.situacao))
-    .map(
-      (linha) =>
-        `${linha.titulo} (${SITUACOES[linha.situacao].rotulo.toLowerCase()})`,
-    );
+  // `atencao` é a mesma lista (falhou ou atrasada) que a tela destaca.
+  const { linhas, atencao } = visaoSimples(normalizarSaude(dados, agora));
+  const atrasadas = atencao.map(
+    (linha) =>
+      `${linha.titulo} (${SITUACOES[linha.situacao].rotulo.toLowerCase()})`,
+  );
   return { total: linhas.length, atrasadas };
 }
 

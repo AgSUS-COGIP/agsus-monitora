@@ -515,6 +515,40 @@ describe("Aparência", () => {
     );
   });
 
+  it("sem armazenamento, enviar e apagar arte avisam com clareza (sem TypeError)", async () => {
+    const semArmazenamento = { rpc: cliente.rpc };
+    const imagens = criarImagensDaAparencia({
+      supabase: () => semArmazenamento,
+      configuracoes: criarEstadoDasConfiguracoes({
+        supabase: () => semArmazenamento,
+        confirmar: () => true,
+        alertar: vi.fn(),
+        recarregar: vi.fn(),
+      }),
+      avisar: (...args) => avisar(...args),
+      confirmar: () => true,
+    });
+    const arquivo = new File(["x"], "arte.png", { type: "image/png" });
+    const aviso =
+      "Armazenamento indisponível: não foi possível conectar ao armazenamento das imagens.";
+
+    expect(await imagens.enviarFundo(arquivo)).toBe(false);
+    expect(avisar).toHaveBeenLastCalledWith(aviso, "error");
+    expect(
+      await imagens.apagarFundo({
+        caminho: "branding/acesso-2.png",
+        nome: "acesso-2.png",
+        url: "https://cdn.test/branding/acesso-2.png",
+      }),
+    ).toBe(false);
+    expect(avisar).toHaveBeenLastCalledWith(aviso, "error");
+    expect(String(avisar.mock.calls)).not.toMatch(/TypeError|undefined/);
+    expect(imagens.obter().fundoOcupado).toBe("");
+
+    // Restaurar o padrão só grava pela RPC: segue funcionando sem armazenamento.
+    expect(await imagens.restaurarFundo()).toBe(true);
+  });
+
   it("logo da barra: enviar guarda o arquivo e a escolha vai na publicação", async () => {
     await montar({ secao: "aparencia" });
     await esperar();

@@ -49,6 +49,7 @@ const ehObjeto = (v: unknown): v is Record<string, unknown> =>
 export const AVISOS_DA_VAGA = Object.freeze({
   SEM_QUADRO: "Sem quadro de vagas: defina o tamanho do lote da vaga.",
   SEM_VAGAS: "Vaga sem vagas imediatas nem cadastro reserva.",
+  SEM_FIXO: "Lote por número fixo sem o número: informe-o na regra.",
   SEM_NOTA_MINIMA: "Lote pela nota mínima sem a nota: informe-a na regra.",
   QUADRO_SEM_MODALIDADES: "Quadro sem vagas por modalidade: o lote saiu geral.",
   ART_AUSENTE:

@@ -170,6 +170,14 @@ export function criarImagensDaAparencia(
     falha: string,
   ) {
     if (estado.fundoOcupado || !supabase()) return false;
+    // Enviar e apagar mexem no arquivo; usar e restaurar só gravam pela RPC.
+    if ((acao === "enviar" || acao === "apagar") && !armazenamento()) {
+      avisar(
+        "Armazenamento indisponível: não foi possível conectar ao armazenamento das imagens.",
+        "error",
+      );
+      return false;
+    }
     publicar({ fundoOcupado: acao });
     try {
       await executar();

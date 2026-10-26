@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   diaDoCalendario,
   gravidade,
@@ -204,5 +204,45 @@ describe("regras gerais", () => {
         { hoje: HOJE, limites },
       )[0].rotulo,
     ).toBe("Contratação abaixo de 80%");
+  });
+});
+
+describe("sem `hoje` válido", () => {
+  afterEach(() => vi.useRealTimers());
+  const etapas = [
+    { atividade: "Análise", data_inicio: "2026-08-21", data_fim: "2026-09-16" },
+    {
+      atividade: "Entrevistas",
+      data_inicio: "2026-10-20",
+      data_fim: "2026-10-30",
+    },
+  ];
+  const linha = aberto({ etapa: "Aguardando: Entrevistas" });
+
+  it("o crítico usa o dia de Brasília de agora: parado e atrasada ainda acendem", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-02T15:00:00Z"));
+    for (const hoje of [undefined, "", "02/10/2026"]) {
+      expect(
+        motivosDeAtencao(linha, { hoje, etapas }).map((m) => m.codigo),
+      ).toEqual(["parado"]);
+      expect(
+        motivosDeAtencao(aberto({ data_fim: "2026-09-30" }), { hoje }).map(
+          (m) => m.codigo,
+        ),
+      ).toEqual(["atrasada"]);
+    }
+  });
+
+  it("as contas das etapas não comparam com null", () => {
+    expect(temEtapaEmCurso(etapas, null)).toBe(false);
+    expect(ultimaMudancaDeEtapa(etapas, "sem data")).toBeNull();
+    // Etapa que começa no dia 0 do calendário (1970-01-01): antes "em curso" sem hoje.
+    expect(
+      temEtapaEmCurso(
+        [{ data_inicio: "1970-01-01", data_fim: "2999-12-31" }],
+        undefined,
+      ),
+    ).toBe(false);
   });
 });

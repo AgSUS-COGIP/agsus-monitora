@@ -489,6 +489,9 @@ def tamanho_do_lote(lote, vaga):
         }
     if lote.get("base") == "FIXO":
         fixo = lote.get("fixo")
+        if not _numero_js(fixo):
+            # Regra incompleta (fixo nulo): sem tamanho e com aviso, como no JS.
+            return {"tamanho": None, "descricao": "", "por_modalidade": None, "aviso": "SEM_FIXO"}
         return {
             "tamanho": fixo,
             "descricao": f"{numero_no_texto(fixo)} (número fixo)",

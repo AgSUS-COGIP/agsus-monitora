@@ -89,6 +89,5 @@ compilação importa `aya-paginas.ts` e `termos-da-aya.ts` direto no Node.
 Limites dos contratos: o que vem do navegador (conversa, progresso, convites, perguntas sem
 resposta) e das RPCs chega como `unknown` e passa pelas leituras que já existiam; o resultado de
 cada fonte em `dados-da-aya.ts` é convertido no ponto de uso (pacote ou lista), sem validação
-nova. `cargasQuePedemAtencao` trata o retorno de `visaoSimples` como lista, mas ele é
-`{ linhas, atencao }`: a pergunta "alguma carga atrasada?" falha (anotado na migração, não
-corrigido).
+nova. `cargasQuePedemAtencao` usa o `atencao` de `visaoSimples`, a mesma lista (falhou ou
+atrasada) que o Status das atualizações destaca.

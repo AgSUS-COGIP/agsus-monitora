@@ -213,6 +213,13 @@ class PecasDaConta(unittest.TestCase):
         )
         self.assertEqual(pc.tamanho_do_lote({"base": "NOTA_MINIMA"}, {})["aviso"], "SEM_NOTA_MINIMA")
 
+    def test_lote_fixo_sem_o_numero(self):
+        self.assertEqual(
+            pc.tamanho_do_lote({"base": "FIXO", "fixo": None}, {}),
+            {"tamanho": None, "descricao": "", "por_modalidade": None, "aviso": "SEM_FIXO"},
+        )
+        self.assertEqual(pc.tamanho_do_lote({"base": "FIXO", "fixo": 40}, {})["descricao"], "40 (número fixo)")
+
     def test_meses_declarados_como_o_javascript(self):
         casos = {
             "De 1 a 2 anos": 12,

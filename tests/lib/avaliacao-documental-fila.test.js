@@ -228,6 +228,11 @@ describe("ações em lote e o plano da distribuição", () => {
     expect(f.atribuicoes).toEqual([{ ficha: "f2", usuario: null, versao: 2 }]);
     expect(f.resumo).toEqual([]);
   });
+  it("regra com distribuicao nula no banco: abre o Distribuir como sem critério", () => {
+    expect(planoDeDistribuicao([FILA[2], FILA[1]], EQUIPE, null)).toEqual(
+      planoDeDistribuicao([FILA[2], FILA[1]], EQUIPE, {}),
+    );
+  });
 });
 
 describe("editais vigentes no seletor", () => {
@@ -291,6 +296,10 @@ describe("colunas de cada aba, ordem e CSV", () => {
     expect(textoDaColuna(eliminado, "motivo")).toBe("Cancelou a inscrição");
     expect(textoDaColuna(eliminado, "art")).toBe("12,5");
     expect(textoDaSituacaoNaFila(eliminado)).toBe("Eliminado");
+    // Ficha sem situação (dado incompleto): texto vazio, nunca undefined.
+    expect(textoDaSituacaoNaFila({ ...eliminado, ficha: { id: "f9" } })).toBe(
+      "",
+    );
   });
 
   it("Concluídas: nota, resultado, responsável e data; Pendentes: posição, ART, responsável e reserva", () => {

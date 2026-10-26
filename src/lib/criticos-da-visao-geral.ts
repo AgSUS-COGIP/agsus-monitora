@@ -24,6 +24,7 @@
   Os limites ficam em LIMITES_DO_CRITICO (e em docs/aya/regras-da-visao-geral.md).
 */
 
+import { hojeEmBrasilia } from "./cronograma-do-edital.ts";
 import { faseDoEdital } from "./fases-do-processo.ts";
 import {
   contratadasImediatas,
@@ -93,10 +94,11 @@ export function temEtapaEmCurso(
   hoje: unknown,
 ): boolean {
   const dia = diaDoCalendario(hoje);
+  if (dia === null) return false;
   return (etapas || []).some((etapa) => {
     const inicio = diaDoCalendario(etapa?.data_inicio);
     const fim = diaDoCalendario(etapa?.data_fim) ?? inicio;
-    return inicio !== null && inicio <= dia! && dia! <= fim!;
+    return inicio !== null && fim !== null && inicio <= dia && dia <= fim;
   });
 }
 
@@ -109,6 +111,7 @@ export function ultimaMudancaDeEtapa(
   hoje: unknown,
 ): number | null {
   const dia = diaDoCalendario(hoje);
+  if (dia === null) return null;
   let ultima: number | null = null;
   for (const etapa of etapas || []) {
     const inicio = diaDoCalendario(etapa?.data_inicio);
@@ -156,7 +159,10 @@ export function motivosDeAtencao(
     tom: MOTIVOS_DO_CRITICO[codigo].tom,
   });
   const motivos: { codigo: CodigoDoMotivo; rotulo: string; tom: string }[] = [];
-  const dia = diaDoCalendario(hoje);
+  // `hoje` ausente ou fora do formato: o dia de agora em Brasília.
+  const diaDeHoje =
+    diaDoCalendario(hoje) === null ? hojeEmBrasilia() : (hoje as string);
+  const dia = diaDoCalendario(diaDeHoje)!;
 
   if (ehConcluido(linha)) {
     const vagas = num(linha.vagas_total);
@@ -174,7 +180,7 @@ export function motivosDeAtencao(
   }
 
   const fim = diaDoCalendario(linha.data_fim);
-  const atrasada = dia !== null && fim !== null && fim < dia;
+  const atrasada = fim !== null && fim < dia;
   if (atrasada)
     motivos.push(
       motivo(
@@ -189,14 +195,14 @@ export function motivosDeAtencao(
     Array.isArray(etapas) &&
     etapas.length
   ) {
-    const ultima = ultimaMudancaDeEtapa(etapas, hoje);
+    const ultima = ultimaMudancaDeEtapa(etapas, diaDeHoje);
     if (
       ultima !== null &&
-      !temEtapaEmCurso(etapas, hoje) &&
-      dia! - ultima >= limites.diasParado
+      !temEtapaEmCurso(etapas, diaDeHoje) &&
+      dia - ultima >= limites.diasParado
     )
       motivos.push(
-        motivo("parado", `Parado há ${plural(dia! - ultima, "dia", "dias")}`),
+        motivo("parado", `Parado há ${plural(dia - ultima, "dia", "dias")}`),
       );
   }
 

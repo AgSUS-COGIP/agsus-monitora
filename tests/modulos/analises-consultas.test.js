@@ -82,6 +82,51 @@ describe("a lista por escopo e a cópia do navegador", () => {
     expect(aoMudar.mock.calls[0][0].linhas).toHaveLength(2);
   });
 
+  it("a revalidação compara pela regra do painel: dado novo redesenha, o mesmo não, e nada cai no aviso do console", async () => {
+    const aviso = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const armazenamento = memoria();
+      let versao = pacote("ativo", ["a1"]);
+      const supabase = supabaseCom(() => ({ data: versao, error: null }));
+      const consultas = criarConsultasDasAnalises({
+        supabase,
+        armazenamento,
+        versao: "t",
+      });
+      await consultas.carregarEscopo({ ...opcoes, escopo: "ativo" });
+      await new Promise((ok) => setTimeout(ok, 0));
+
+      // O mesmo pacote (mesma generated_at e total): a cópia fica, sem redesenhar.
+      const semMudanca = vi.fn();
+      const mesma = await consultas.carregarEscopo({
+        ...opcoes,
+        escopo: "ativo",
+        aoMudar: semMudanca,
+      });
+      expect(await mesma.revalidacao).toMatchObject({ total: 1 });
+      expect(semMudanca).not.toHaveBeenCalled();
+
+      versao = pacote("ativo", ["a1", "a2", "a3"]);
+      const comMudanca = vi.fn();
+      const nova = await consultas.carregarEscopo({
+        ...opcoes,
+        escopo: "ativo",
+        aoMudar: comMudanca,
+      });
+      expect(nova.daCopia).toBe(true);
+      await nova.revalidacao;
+      expect(comMudanca).toHaveBeenCalledTimes(1);
+      expect(comMudanca.mock.calls[0][0].linhas.map((l) => l.id)).toEqual([
+        "a1",
+        "a2",
+        "a3",
+      ]);
+      expect(aviso).not.toHaveBeenCalled();
+    } finally {
+      aviso.mockRestore();
+    }
+  });
+
   it("acesso revogado na revalidação: as cópias saem e a tela é avisada", async () => {
     const armazenamento = memoria();
     let erro = null;
