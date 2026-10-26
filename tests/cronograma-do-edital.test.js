@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   PENDENTE,
   aplicarDatasEmLote,
@@ -113,6 +113,35 @@ describe("estado calculado pelo cronograma", () => {
       PENDENTE,
     );
     expect(estadoDoCronograma([etapa("Sem data", "")]).status).toBe(PENDENTE);
+  });
+
+  it("etapa com data que não se lê fica de fora (não conta como atual nem concluída)", () => {
+    const comDataRuim = [
+      etapa("Inscrições", "2026-09-01", "2026-09-10", 1),
+      // Início ilegível: antes contava como a etapa atual.
+      etapa("Recursos", "15/09/2026", "2026-09-30", 2),
+      // Fim ilegível: antes contava como concluída.
+      etapa("Análise", "2026-09-11", "2026-09-xx", 3),
+      etapa("Entrevistas", "2026-09-20", "2026-09-25", 4),
+    ];
+    expect(
+      estadoDoCronograma(comDataRuim, { hoje: new Date(2026, 8, 15) }),
+    ).toEqual(estadoDoCronograma(etapas, { hoje: new Date(2026, 8, 15) }));
+    expect(
+      estadoDoCronograma([etapa("Só data ruim", "2026-02-30x")]).status,
+    ).toBe(PENDENTE);
+  });
+
+  describe("sem `hoje` válido", () => {
+    afterEach(() => vi.useRealTimers());
+
+    it("usa o dia de agora, como sem `hoje`", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 8, 15, 9));
+      expect(
+        estadoDoCronograma(etapas, { hoje: new Date("não é data") }),
+      ).toEqual(estadoDoCronograma(etapas, { hoje: new Date(2026, 8, 15) }));
+    });
   });
 });
 

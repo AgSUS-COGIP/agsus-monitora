@@ -200,9 +200,18 @@ export function estadoDoCronograma(
   etapas: readonly EtapaDoCronograma[] | null | undefined,
   opcoes: OpcoesDoEstadoDoCronograma = {},
 ): EstadoDoCronograma {
+  // Só entram etapas com as duas datas legíveis: data que não se lê não é atual nem concluída.
   const validas = (etapas || [])
-    .filter((etapa) => etapa.atividade && etapa.data_inicio && etapa.data_fim)
-    .slice()
+    .filter((etapa) => etapa.atividade)
+    .map((etapa) => ({
+      ...etapa,
+      inicio: dataLocal(etapa.data_inicio),
+      fim: dataLocal(etapa.data_fim),
+    }))
+    .filter(
+      (etapa): etapa is typeof etapa & { inicio: Date; fim: Date } =>
+        etapa.inicio !== null && etapa.fim !== null,
+    )
     .sort(
       (a, b) =>
         String(a.data_inicio).localeCompare(String(b.data_inicio)) ||
@@ -211,7 +220,11 @@ export function estadoDoCronograma(
   if (!validas.length || opcoes.automatico === false)
     return { status: PENDENTE, etapa: PENDENTE, proxima: "-", percentual: 0 };
 
-  const referencia = opcoes.hoje || new Date();
+  // `hoje` ausente ou inválido: o dia de agora.
+  const referencia =
+    opcoes.hoje && !Number.isNaN(opcoes.hoje.getTime())
+      ? opcoes.hoje
+      : new Date();
   const hoje = new Date(
     referencia.getFullYear(),
     referencia.getMonth(),
@@ -220,26 +233,21 @@ export function estadoDoCronograma(
   );
   const primeira = validas[0]!;
   const ultima = validas[validas.length - 1]!;
-  // Datas inválidas viram null e comparam como 0, como no JS original.
   const atual = validas.find(
-    (etapa) =>
-      hoje >= dataLocal(etapa.data_inicio)! &&
-      hoje <= dataLocal(etapa.data_fim)!,
+    (etapa) => hoje >= etapa.inicio && hoje <= etapa.fim,
   );
-  const proxima = validas.find((etapa) => dataLocal(etapa.data_inicio)! > hoje);
-  const concluidas = validas.filter(
-    (etapa) => dataLocal(etapa.data_fim)! < hoje,
-  ).length;
+  const proxima = validas.find((etapa) => etapa.inicio > hoje);
+  const concluidas = validas.filter((etapa) => etapa.fim < hoje).length;
 
   let status = "Em andamento";
   let etapa =
     atual?.atividade ||
     (proxima ? `Aguardando: ${proxima.atividade}` : ultima.atividade);
-  if (hoje < dataLocal(primeira.data_inicio)!) {
+  if (hoje < primeira.inicio) {
     status = "Planejado";
     etapa = `Aguardando: ${primeira.atividade}`;
   }
-  const terminou = hoje > dataLocal(ultima.data_fim)!;
+  const terminou = hoje > ultima.fim;
   if (terminou) {
     status = "Concluído";
     etapa = ultima.atividade;
