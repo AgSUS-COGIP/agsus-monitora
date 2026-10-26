@@ -104,7 +104,7 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 
 **perguntas:** previa da barra lateral | a previa nao bate com a barra | previa diferente da barra | como fica a barra lateral | ver a cor da barra antes de salvar | previa do menu
 **resposta:** A prévia ao lado da seção Marca é a própria barra lateral, em miniatura e sem clique: a logo MONITORA, o seletor de área, os seus itens de menu com os selos BETA, Administração e o rodapé com Claro/Escuro, Recolher menu, Sair e a versão. Ela usa a cor e o logo escolhidos em Aparência antes de salvar e segue o tema claro ou escuro do sistema; para ver o outro tema, troque no rodapé da barra. Se a barra mudar, a prévia muda junto.
-**fonte:** src/modulos/configuracoes/previa-da-barra-lateral.tsx; src/componentes/barra-lateral/barra-lateral.jsx
+**fonte:** src/modulos/configuracoes/previa-da-barra-lateral.tsx; src/componentes/barra-lateral/barra-lateral.tsx
 **abrir:** config:marca
 
 ## Seção Aparência

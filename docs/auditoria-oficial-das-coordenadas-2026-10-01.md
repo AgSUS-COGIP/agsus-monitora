@@ -107,7 +107,7 @@ Essa conferência verifica a aplicação dos arquivos, não substitui a validaç
 das localizações. Continuam documentados 93 polos e 156 UBSI para revisão com
 fontes independentes ou confirmação do DSEI.
 
-O script `scripts/auditar-coordenadas.mjs` ainda reproduz o antigo casamento
+O script `scripts/arquivo/auditar-coordenadas.mjs` ainda reproduz o antigo casamento
 difuso entre polo e CNES e pode auditar uma coordenada diferente da que o mapa
 atual desenha. Seus alertas de deslocamento e níveis de confiança não devem
 ser usados como diagnóstico do mapa atual nem para desfazer as correções acima.

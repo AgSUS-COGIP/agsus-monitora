@@ -1,7 +1,7 @@
 """
 A revisão automática das fichas concluídas com pendência (scripts/conferencias/revisao_das_fichas.py,
 dentro do job de conferências) e a correção da experiência até o fim das inscrições
-(scripts/correcoes/experiencia_ate_o_fim_das_inscricoes.py). Com os casos dourados de
+(scripts/arquivo/experiencia_ate_o_fim_das_inscricoes.py). Com os casos dourados de
 tests/fixtures/avaliacao-documental/casos-do-calculo-no-banco.json. Nada fala com o Supabase.
 
     python -m pytest tests/python
@@ -21,7 +21,7 @@ import conferencias  # noqa: E402
 import revisao_das_fichas as rv  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location(
-    "correcao_experiencia", _RAIZ / "scripts" / "correcoes" / "experiencia_ate_o_fim_das_inscricoes.py"
+    "correcao_experiencia", _RAIZ / "scripts" / "arquivo" / "experiencia_ate_o_fim_das_inscricoes.py"
 )
 correcao = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(correcao)

@@ -143,7 +143,8 @@ pendência pela regra vigente vai para Em revisão (`scripts/conferencias/revisa
 `python/monitora/avaliacao_documental/pendencias_da_ficha.py`; grava pela RPC
 `revisar_ficha_concluida_com_pendencia`, que confere de novo no banco), sem mudar nota nem resultado e só
 com a chave "Conferências" ligada. Correções de dados em lote ficam em `scripts/correcoes/` (modo
-`--seco` primeiro; ex.: `experiencia_ate_o_fim_das_inscricoes.py`).
+`--seco` primeiro); depois de usadas, vão para `scripts/arquivo/` (ex.:
+`experiencia_ate_o_fim_das_inscricoes.py`, de 23/10/2026).
 
 Limites conhecidos (a acertar com os dados reais, depois do ensaio):
 

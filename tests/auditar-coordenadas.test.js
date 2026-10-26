@@ -5,7 +5,7 @@ import {
   classificar,
   coordenadaQuebrada,
   montarRegistros,
-} from "../scripts/auditar-coordenadas.mjs";
+} from "../scripts/arquivo/auditar-coordenadas.mjs";
 
 /*
   A auditoria só vale se as suas próprias regras estiverem certas. Um

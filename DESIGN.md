@@ -1,8 +1,8 @@
 # Design do MONITORA
 
 Guia **normativo** da interface: diz como a tela deve ficar e como sair do estado
-atual até lá. Vale para `index.html`, `analises.html` e tudo em `src/styles/` e
-`src/analises/*.css`.
+atual até lá. Vale para `index.html` e tudo em `src/styles/` (a `analises.html` e a pasta `src/analises/` já
+saíram).
 
 Parte do que o sistema já tem — as cores da marca AgSUS (`--agsus-*` em `app.css`), a fonte
 Geist, o shell de `platform-shell.css` — e organiza isso em tokens com papel definido, para que
@@ -70,10 +70,10 @@ Medido em 2026-09-22 na `main` (`e054867`). Os comandos para medir de novo estã
 | borda de campo | `#d7e5f2` sobre branco | 1,28 | `--border-control #7d8fa5` (3,31) |
 | vermelho como texto | `#d92d3a` sobre o fundo | 4,45 | `--state-danger #c02634` (5,47) |
 
-**Divergências entre páginas:** `src/analises/analises.css` redefine os tokens com
+**Divergências entre páginas:** o antigo `analises.css` (da `analises.html`, que já saiu) redefinia os tokens com
 outros valores (`--green #16934d` contra `#0b8f58`, `--red #e14444` contra `#d92d3a`,
 `--yellow #e2a400` contra `#f2b705`, `--radius 20px` contra `18px`). O mesmo estado
-tem cor diferente em cada tela.
+tinha cor diferente em cada tela.
 
 **Fonte:** Geist, do Google Fonts, como fonte variável (400 a 900 num arquivo só).
 **Ícones:** Font Awesome 6.5.2 via CDN (62 usos no `index.html`). A barra lateral e o que é dela
@@ -97,7 +97,7 @@ já usam o `lucide`, por `src/modules/icones.js` (ver "Ícones", seção 4).
 ## 3. Tokens
 
 Os valores abaixo são o alvo. Devem morar em **um único arquivo**, `src/styles/tokens.css`,
-importado antes de qualquer outro CSS no `src/main.js` e no `src/analises/main.js`.
+importado antes de qualquer outro CSS no `src/main.js`.
 O arquivo já existe, com o que pôde entrar sem repintar nada: fonte, tamanhos `--text-sm/md/base`,
 espaçamento, raio, `--shadow-overlay`, movimento e `--text-inverse`. As cores de texto e superfície
 entram quando cada componente migrar (as reservas atuais divergem). As camadas (`--z-*`) seguem em
@@ -231,7 +231,7 @@ Busca e filtros ficam acima, com a contagem de resultados. O cabeçalho usa `--s
 sticky (`--z-sticky`) e tem ordenação visível (`aria-sort` + ícone). Números ficam à direita, com
 `tabular-nums`. Linhas separadas por `--border-subtle`, hover `--surface-hover`. Abaixo de
 900px, a tabela vira cards (`src/modules/mobile-table-cards.js`). Com volume grande, use virtualização
-(`src/analises/analises-infinite-table.js`), não paginação improvisada. Exportação respeita os filtros ativos.
+(`src/ui/tabela-infinita.tsx`), não paginação improvisada. Exportação respeita os filtros ativos.
 
 ### Formulário — `.form-row`, `.form-grid`
 
@@ -323,8 +323,8 @@ Regras:
 
 - **Chave canônica: `html[data-theme="dark"]`**, definida em `src/app/moldura.js`
   (`setAttribute("data-theme", …)`). A análise usa a mesma chave.
-- `body.dark-mode` é um **espelho** mantido por `syncHealthDarkModeClass()`
-  (`src/modules/health-dashboard-interaction-fixes.js`). Não escreva regra nova com ele.
+- `body.dark-mode` é um **espelho** mantido pelo `src/app/moldura.js`, junto com o
+  `data-theme`. Não escreva regra nova com ele.
 - `body.sidebar-theme-dark` é o tema **configurável da barra lateral** (branding), um assunto
   à parte. Não use para o tema da página.
 - Com as cores em token, o escuro sai de graça: basta redefinir os tokens em `:root[data-theme="dark"]`.
@@ -336,7 +336,7 @@ Regras:
 
 ## 6. Gráficos
 
-Chart.js em todo o sistema (`legacy-app.js` e `analises-app.js`, `window.Chart` via `src/lib/chartjs-global.js`).
+Chart.js em todo o sistema (`src/ui/grafico.tsx`, `window.Chart` via `src/lib/chartjs-global.js`).
 
 **Paleta categórica, em ordem fixa**, validada com o validador da skill `dataviz`: faixa de luminosidade,
 croma, separação para daltonismo (CVD), visão normal e contraste ≥ 3:1. Passou em todos.
@@ -377,10 +377,7 @@ com `#id … !important` em quase toda regra.
 - Estilo de um módulo vai em `src/styles/<modulo>.css`, importado no `main.js`, no ponto da lista
   onde a ordem faz sentido.
 - Componentes compartilhados (botão, card, tabela, formulário, modal) devem convergir para um
-  único `src/styles/componentes.css`. Não redefina `.btn` em CSS de módulo.
-- `analises.html` carrega o próprio CSS (`analises.css`, `analises-layout-modern.css`,
-  `analises-infinite-table.css` e, pelo JS, `analises-responsive-fixes.css`). Os tokens precisam
-  chegar lá também.
+  único arquivo de componentes (os de React já estão em `src/ui/`, com o `ui.css`). Não redefina `.btn` em CSS de módulo.
 - **Fase final: `@layer`.** Camadas resolvem os `!important` sem guerra de especificidade, mas
   **CSS fora de camada vence qualquer camada**. Só funciona depois que o legado for envolvido
   (`@import url("./app.css") layer(legado);`). Não comece por aqui.
@@ -408,7 +405,7 @@ As fases 1 e 2 têm o maior retorno pelo menor risco: são poucas linhas e corri
 Rode na raiz do `agsus-monitora`. A linha de base de 2026-09-22 está na seção 1.
 
 ```bash
-S="src/styles/*.css src/analises/*.css"
+S="src/styles/*.css"
 cat $S | grep -o '!important' | wc -l                                          # !important
 cat $S | grep -oiE '#[0-9a-f]{6}\b' | tr A-F a-f | sort -u | wc -l              # cores hex distintas
 cat $S | grep -oE 'box-shadow:[^;]+' | tr -s ' ' | sort -u | wc -l              # sombras distintas

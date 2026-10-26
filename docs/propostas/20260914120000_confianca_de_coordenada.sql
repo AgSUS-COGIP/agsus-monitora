@@ -22,7 +22,7 @@
 -- ORDEM DE ADOÇÃO SUGERIDA
 --
 --   1. aplicar esta migration num Supabase de desenvolvimento;
---   2. carregar a tabela a partir do auditor (`scripts/auditar-coordenadas.mjs`),
+--   2. carregar a tabela a partir do auditor (`scripts/arquivo/auditar-coordenadas.mjs`),
 --      que já classifica cada registo;
 --   3. revisar à mão os registos em `inferida` e `pendente_validacao`;
 --   4. só então ligar a leitura do mapa a esta tabela.

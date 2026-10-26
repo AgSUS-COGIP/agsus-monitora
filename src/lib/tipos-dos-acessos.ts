@@ -222,9 +222,6 @@ export type GruposPorCodigo = Readonly<Partial<Record<string, GrupoDeAcesso>>>;
 
 // ── Rascunho da matriz ───────────────────────────────────────────────────────
 
-/** "#grupo", "#coordenacao" ou o recurso. */
-export type AlvoDoRascunho = string;
-
 /** Quem é a pessoa da alteração (guardado com ela). */
 export type PessoaDoRascunho = Readonly<{
   id: string;

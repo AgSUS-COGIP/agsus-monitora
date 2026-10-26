@@ -9,7 +9,7 @@ mais `schedule`; continuam com o **Rodar agora** e o **Run workflow**.
 O **Rodar agora**, as **Opções** e o **Recalcular** da pré-classificação também passam pelo banco
 (RPC `disparar_robo`, que confere quem pede e as opções e chama o mesmo `FC_DISPARAR_ROBO` com
 `disparado_por` = id de quem clicou): **uma chave só**, a do Vault. Funciona também no computador
-(localhost). A antiga função `api/rodar-carga.js` saiu e a variável **`GITHUB_DISPATCH_TOKEN` da
+(localhost). A antiga função `rodar-carga.js` (pasta `api/`) saiu e a variável **`GITHUB_DISPATCH_TOKEN` da
 Vercel pode ser apagada** (Vercel → projeto → Settings → Environment Variables).
 
 Migration: `supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql` (ensaio e rollback

@@ -622,7 +622,7 @@ Migration `20260929100000_analises_aba_interna.sql` (rollback em
 Análises curriculares era a linha `analises` de `TB_PAINEL_EXTERNO`, aberta
 como painel externo e repetida em cada área pelo menu. Para vê-la eram precisos
 três recursos: `analises`, `paineis` e `painel:<id do analises>`. Agora é a
-view `analises` do front (`src/modules/pagina-de-analises.js`), com endereço
+view `analises` do front (hoje o módulo `src/modulos/analises/`), com endereço
 fixo do app (`analises.html?area=<área atual>`) e permissão **só do recurso
 `analises`** (>= leitor). Nenhuma RPC mudou.
 
@@ -661,7 +661,7 @@ updated_at, updated_by) e a linha do painel idênticas.
 Cuidado: restaurar no Histórico de configurações uma versão anterior a esta
 migration reativa a linha (`ativo`), e a coluna `painel:<analises>` volta à
 matriz. O front ignora o painel `analises` de qualquer jeito
-(`semOPainelAntigoDeAnalises`, em `src/lib/pagina-de-analises.js`).
+(`semOPainelAntigoDeAnalises`, em `src/lib/pagina-do-painel.ts`).
 
 ## 9. Catálogo de abas (etapa 1 do "tudo vira aba")
 
@@ -853,7 +853,7 @@ Migration `20260929230000_recursos_modelos_anexos_respostas.sql` (rollback em
 - **Modelos de resposta**: `TB_MODELO_RESPOSTA_RECURSO`, uma linha por versão
   (PK modelo + versão, `ST_VIGENTE`); área e origem nulas = todas. Editar grava
   a versão seguinte; a resposta guarda a versão usada. Marcadores aceitos em
-  `private."FC_MARCADORES_MODELO_RESPOSTA"()` (= `src/lib/modelos-de-resposta.js`).
+  `private."FC_MARCADORES_MODELO_RESPOSTA"()` (= `src/lib/modelos-de-resposta.ts`).
   Seis modelos iniciais (deferido, indeferido, parcialmente indeferido ×
   análise curricular, entrevista). Manutenção só com `recursos` = admin, na
   gaveta "Modelos de resposta" do painel de recursos.
@@ -863,7 +863,7 @@ Migration `20260929230000_recursos_modelos_anexos_respostas.sql` (rollback em
   opcional, mas depois de ir à revisão quem escreveu ou enviou não aprova;
   aprovar exige o recurso decidido com a situação do modelo; marcar enviada
   marca a etapa `resposta_candidato` do recurso. Regras espelhadas em
-  `src/lib/resposta-do-recurso.js`.
+  `src/lib/resposta-do-recurso.ts`.
 - `TH_RECURSO_CANDIDATO` passa a aceitar `anexo` e `resposta` em `TP_ACAO`.
 - RPCs: `listar_modelos_resposta_recurso`, `salvar_modelo_resposta_recurso`,
   `arquivar_modelo_resposta_recurso`, `salvar_resposta_recurso`,
@@ -1220,7 +1220,7 @@ fim da análise do 114/2026 e com autorização.
   gatilho `TG_THFICHA_IMUTAVEL` dentro da transação e religa antes do commit; assina pela conta do
   setor (a01afddb-…) no comentário de `DS_RETRATO`, com o sha256 da exportação.
 - **Exportação antes (obrigatória; o FREE não tem backup):**
-  `scripts/exportar-retratos-do-rascunho.mjs` lê, só com SELECT e em lotes de 500 pela chave, as
+  `scripts/arquivo/exportar-retratos-do-rascunho.mjs` lê, só com SELECT e em lotes de 500 pela chave, as
   linhas que a correção vai zerar — a regra é a mesma, lida do trecho `-- >>> regra` da correção — e
   grava `.jsonl.gz` (`CO_HISTORICO_FICHA`, `CO_FICHA_ANALISE`, `NU_VERSAO`, `TP_ACAO`,
   `DT_REGISTRO`, `CO_USUARIO`, `DS_RETRATO`). Imprime linhas, tamanho, sha256 e a linha
@@ -1231,7 +1231,7 @@ Ordem de aplicação (depois de 22/10, com autorização, fora do expediente):
 
 1. Mesclar a PR.
 2. Aplicar a migration e registrar (`npm run db:estado -- --registrar=migrations/20261023220000_historico_do_rascunho_enxuto.sql`).
-3. Exportar: `node --env-file=.env.local scripts/exportar-retratos-do-rascunho.mjs --saida=retratos-do-rascunho-AAAAMMDD.jsonl.gz`
+3. Exportar: `node --env-file=.env.local scripts/arquivo/exportar-retratos-do-rascunho.mjs --saida=retratos-do-rascunho-AAAAMMDD.jsonl.gz`
    (`SUPABASE_DB_URL` com `psql`, ou `SUPABASE_ACCESS_TOKEN`/`SUPABASE_ACCESS_TOKEN_NOVO` +
    `SUPABASE_PROJECT_REF=tabmkiokfuxyqjuvfiha`; o `.env.local` tem só o token `_NOVO`, então o
    `SUPABASE_PROJECT_REF` vai no ambiente do comando). Guardar o arquivo
@@ -1245,10 +1245,14 @@ Ordem de aplicação (depois de 22/10, com autorização, fora do expediente):
 
 **Exportação dos retratos** (preencher na aplicação): caminho `…` · linhas `…` · sha256 `…` · data `…`.
 
+O exportador foi para `scripts/arquivo/` em 26/10/2026, depois de usado. O comentário de
+`DS_RETRATO` gravado no banco e a correção em `supabase/correcoes/` citam o caminho de antes
+(direto em `scripts/`); não mudam, porque registram o que foi aplicado.
+
 Consultar uma ficha pelo arquivo (só leitura; o histórico não é reescrito):
 
 ```
-node scripts/exportar-retratos-do-rascunho.mjs --ler=retratos-do-rascunho-AAAAMMDD.jsonl.gz --ficha=<uuid> --sha256=<sha>
+node scripts/arquivo/exportar-retratos-do-rascunho.mjs --ler=retratos-do-rascunho-AAAAMMDD.jsonl.gz --ficha=<uuid> --sha256=<sha>
 ```
 
 Mostra cada retrato da ficha (histórico, versão, data, quem) em ordem. Para ver ao lado do

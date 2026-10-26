@@ -8,7 +8,7 @@ import {
   nomeCanonico,
   reconciliarDsei,
   tipoDeclarado,
-} from "../src/lib/reconciliacao-unidades.js";
+} from "../../src/lib/reconciliacao-unidades.js";
 
 /*
   RELATÓRIO DA RECONCILIAÇÃO — SOMENTE LEITURA.
@@ -17,9 +17,9 @@ import {
   reconciliou sozinha, o que deixou ambíguo e o que recusou. Não escreve no
   banco, não altera payload, não corrige coordenada nenhuma.
 
-    node scripts/relatorio-reconciliacao.mjs                   # SUPABASE_DB_URL
-    node scripts/relatorio-reconciliacao.mjs --arquivo d.json
-    node scripts/relatorio-reconciliacao.mjs --csv pares.csv
+    node scripts/arquivo/relatorio-reconciliacao.mjs                   # SUPABASE_DB_URL
+    node scripts/arquivo/relatorio-reconciliacao.mjs --arquivo d.json
+    node scripts/arquivo/relatorio-reconciliacao.mjs --csv pares.csv
 
   A lista de ambíguos é a entrega mais importante deste relatório: é o trabalho
   que a máquina não pode fazer por ninguém, apresentado para decisão humana em

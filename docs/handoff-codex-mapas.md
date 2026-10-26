@@ -36,7 +36,7 @@ que me foi autorizado, em todas as rodadas deste trabalho.
    fora do país ou fora das UFs declaradas em `ufs`.
 3. Dar origem declarada a cada coordenada, como já existe para UBSI e CASAI
    (campo `localizacao` do CNES). O script
-   [`scripts/auditar-coordenadas.mjs`](../scripts/auditar-coordenadas.mjs) já lê
+   [`scripts/arquivo/auditar-coordenadas.mjs`](../scripts/arquivo/auditar-coordenadas.mjs) já lê
    `lmap` e monta os registos, incluindo a sede — falta-lhe só o teste de
    contenção e a coluna de origem.
 

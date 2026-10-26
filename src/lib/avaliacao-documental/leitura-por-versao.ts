@@ -23,13 +23,6 @@ export type ChamadaDeRpc = (
 
 type Registro = Record<string, unknown>;
 
-/** Uma lista de objetos em colunas (private."FC_COLUNAS_JSON"). */
-export interface PacoteEmColunas {
-  colunas: string[];
-  dicionarios?: Record<string, unknown[]> | null;
-  linhas: unknown[][];
-}
-
 const ehRegistro = (v: unknown): v is Registro =>
   v !== null && typeof v === "object" && !Array.isArray(v);
 

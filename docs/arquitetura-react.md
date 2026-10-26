@@ -185,7 +185,8 @@ só fica no módulo.
 
 O modo "no quadro" (`<PainelNoQuadro>`, a marcação do antigo painel de análises para as telas que
 rodavam em iframe) saiu com a Seleção, a última delas, ao fim da Etapa 2 — junto com o CSS que
-sobrava em `src/analises/` e `src/modules/pagina-do-painel.js`. Nenhuma tela do app abre mais em
+sobrava em `src/analises/` e o `pagina-do-painel.js` de `src/modules/` (o que restou dele é o
+`src/lib/pagina-do-painel.ts`). Nenhuma tela do app abre mais em
 iframe; só os painéis externos (`TB_PAINEL_EXTERNO`) continuam no quadro.
 
 ## Etapa 6 — login e entrada
@@ -216,7 +217,7 @@ Testes: `tests/app/sessao.test.js`, `tests/app/entrada.test.js`, `tests/solicita
 | `loadProfile` (`obter_contexto_monitora`, `meu_usuario`)                                | `carregarPerfil()` na sessão                                                 |
 | `loginWithGoogle`, popup, `message`, `pageshow`, `mobile-google-oauth.js`               | `entrarComGoogle()`; `startMobileGoogleOAuth` em `src/lib/auth-flow.ts`      |
 | `logout`, `returnToLogin`, `clearLocalAuthState`, `aplicarSaida`                        | `sair()`, `limparSessao()`, `aplicarSaida()` na sessão                       |
-| `showAccessRequestState`, `submitAccessRequest`, `src/modules/solicitacao-de-acesso.js` | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                          |
+| `showAccessRequestState`, `submitAccessRequest`, `solicitacao-de-acesso.js` (legado) | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                          |
 | `access-branding-boot.js`, marca e rodapé de `applyConfigToUi`                          | `src/app/entrada/marca.js` (`definirMarcaDaConfiguracao`)                    |
 | marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.js`)                | `src/lib/acesso-liberado.ts` (a comemoração continua no legado)              |
 | `#loginMsg` escrito por `session-lifecycle.js`                                          | `installSessionLifecycle({ aoExpirar })` → `sessaoDoApp.mostrarMensagem`     |
@@ -257,7 +258,7 @@ configuração (`src/app/configuracao.js`) chama `sessaoDoApp.definirConfiguraca
 
 ### Fase 2 (feita): o fim do `legacy-app.js`
 
-`src/modules/legacy-app.js` (1.946 linhas) saiu. Cada responsabilidade virou um módulo pequeno de
+O `legacy-app.js` de `src/modules/` (1.946 linhas) saiu. Cada responsabilidade virou um módulo pequeno de
 `src/app/`, criado por fábrica (`criarX({ dependências })`, testável com dependências falsas em
 `tests/app/`) e ligado em `src/app/sistema.js`:
 
@@ -304,6 +305,6 @@ Ficou para depois (ainda em `src/modules/` ou no `index.html`):
    `catalogo-de-abas.js`, `copia-da-sessao-indexeddb.js`, `cache-de-payload-indexeddb.js`,
    `comemoracao-do-acesso.js`, `notificacao.js` → `src/app/` ou React.
 4. O CSS da tela de acesso espalhado (`app.css`, `platform-shell.css`,
-   `post-152-regression-fixes.css`, `visual-polish.css`, `mobile-app.css`) consolidado em
-   `src/app/entrada/entrada.css`; `auth-storage.js` → `src/lib/`, `sidebar-branding.js` → barra
+   `post-152-regression-fixes.css`, `visual-polish.css`, `mobile-app.css`) consolidado num
+   CSS da entrada em `src/app/entrada/` (hoje só o `solicitacao-de-acesso.css`); `auth-storage.js` → `src/lib/`, `sidebar-branding.js` → barra
    lateral.

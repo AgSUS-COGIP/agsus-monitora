@@ -19,7 +19,7 @@ duas entradas, em `src/modulos/entrevistas/conduzir.tsx`, `src/lib/fila-de-condu
 **perguntas:** painel de entrevistas | tela de entrevistas | tela entrevistas | aba entrevistas | para que serve entrevistas | para que serve a tela de entrevistas | para que serve o painel de entrevistas | onde acompanho as entrevistas | entrevistas resultados
 **resposta:** O Painel de entrevistas é para acompanhar (gestão e coordenação), como o Painel das análises ao lado da Avaliação documental; fazer é em Conduzir entrevistas, outra entrada do menu. O painel mostra, da área atual: os filtros, os indicadores, a agenda dos próximos dias quando há um edital escolhido, os gráficos, as pendências (sem comparecimento, sem nota, sem parecer, aprovados sem entrevista, sem análise, sem edital e nota divergente), os empatados na nota da entrevista, a tabela e a exportação em CSV. Só leitura. O edital de treinamento não entra no painel. Quem tem Leitor em Entrevistas vê o painel e Conduzir entrevistas; escrever exige Editor.
 **fato:** O Painel de entrevistas acompanha; Conduzir entrevistas faz (fila do dia, ficha de notas, Preparar e roteiros). As duas usam o recurso Entrevistas.
-**fonte:** src/modulos/entrevistas/entrevistas.tsx; src/modulos/entrevistas/andamento.tsx; src/lib/painel-de-entrevistas.ts
+**fonte:** src/modulos/entrevistas/entrevistas.tsx; src/modulos/entrevistas/agenda-e-empates.tsx; src/lib/painel-de-entrevistas.ts
 **abrir:** entrevistas
 
 ## Conduzir entrevistas
@@ -203,7 +203,7 @@ duas entradas, em `src/modulos/entrevistas/conduzir.tsx`, `src/lib/fila-de-condu
 
 **perguntas:** agenda do dia | agenda da banca | horarios de hoje da entrevista | agenda dos proximos dias
 **resposta:** A agenda é montada e ajustada na Classificação, visão Agenda. Em Conduzir entrevistas, a Fila usa a agenda salva: Hoje são os convocados com horário hoje (Brasília), Próximos os dos dias seguintes (o cartão mostra o dia) e Todos inclui quem não tem horário; Preparar › Agenda mostra a agenda do edital por dia e quem ainda está sem horário. No Painel de entrevistas, com um edital escolhido, a "Agenda dos próximos dias" mostra até cinco dias com entrevista, um por coluna, com o botão Conduzir. Sem agenda salva, a Fila abre em Todos.
-**fonte:** src/modulos/entrevistas/fila-do-dia.tsx; src/modulos/entrevistas/andamento.tsx; src/lib/fila-de-conducao.ts
+**fonte:** src/modulos/entrevistas/fila-do-dia.tsx; src/modulos/entrevistas/agenda-e-empates.tsx; src/lib/fila-de-conducao.ts
 **abrir:** conduzir-entrevistas
 
 ## Quem pode conduzir entrevistas

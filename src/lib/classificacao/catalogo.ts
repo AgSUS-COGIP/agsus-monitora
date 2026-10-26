@@ -441,16 +441,6 @@ export const SITUACOES_AGUARDANDO_ANALISE = Object.freeze([
   "nao analisado",
 ]);
 
-/* As modalidades conhecidas. A regra de cada edital diz quais valem e como. */
-export const MODALIDADES_CONHECIDAS = Object.freeze([
-  ["AC", "Ampla concorrência"],
-  ["PCD", "Pessoas com deficiência"],
-  ["PP", "Pretos e pardos"],
-  ["PI", "Indígenas"],
-  ["PQ", "Quilombolas"],
-  ["TRANS", "Pessoas trans"],
-]);
-
 const semAcento = (valor: unknown) =>
   String(valor ?? "")
     .normalize("NFD")

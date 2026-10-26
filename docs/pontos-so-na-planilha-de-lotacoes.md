@@ -17,7 +17,7 @@ corrigiu as coordenadas **no banco**. Desde esta data o mapa desenha só o banco
 | "Fora" do território                                   | o `lmap` já traz `fora` em cada polo; a planilha não tinha esse campo                                                  | nada a fazer                                                      |
 
 Como nenhum atributo não geográfico era mostrado, a mesclagem saiu inteira: o
-transporte `src/modules/lotacoes-geograficas-transport.js`, os oito JSON de
+transporte `lotacoes-geograficas-transport.js` (de `src/modules/`), os oito JSON de
 `public/data/` e os testes que dependiam deles.
 
 ## Pontos que não estão no banco
