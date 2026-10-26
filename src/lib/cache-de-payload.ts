@@ -247,8 +247,10 @@ export function ehErroDeAcesso(erro: unknown): boolean {
  * ou de área apaga as cópias e chama `aoPerderAcesso(erro)`; outro erro (rede,
  * tempo) mantém a cópia na tela.
  *
- * `mudou` aparece como opcional só porque src/modulos/analises/consultas.ts
- * não o passa: aí a chamada lança dentro do `try` e cai no aviso do console.
+ * `mudou` aparece como opcional porque o painel de análises
+ * (src/modulos/analises/consultas.ts) chama pelo `revalidarPayload` de
+ * cache-do-painel-de-analises, que o injeta (`payloadMudou`); as outras telas
+ * (aprovados, entrevistas) o passam aqui direto. Sem ele não há revalidação.
  */
 export async function revalidarPayload<N>({
   guardado,
