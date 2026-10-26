@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { classes } from "./classes.js";
+import { classes } from "./classes.ts";
 
 export type PropriedadesDoPopover = {
   /** Nome acessível do botão (e o title, quando não há `dica`). */

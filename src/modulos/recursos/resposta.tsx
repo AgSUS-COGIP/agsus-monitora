@@ -29,7 +29,7 @@ import {
   erroDoComentario,
   podeEditarTexto,
 } from "../../lib/resposta-do-recurso.ts";
-import { Aviso, Kv, Secao } from "../../ui/index.js";
+import { Aviso, Kv, Secao } from "../../ui/index.ts";
 import { dataHora } from "./partes.ts";
 import { SeloDaResposta } from "./tabela.tsx";
 

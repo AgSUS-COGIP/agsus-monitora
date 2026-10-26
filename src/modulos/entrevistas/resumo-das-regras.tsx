@@ -6,7 +6,7 @@ import {
   type DestinoDoResumo,
   type EntradaDoResumo,
 } from "../../lib/resumo-da-entrevista.ts";
-import { Aviso } from "../../ui/index.js";
+import { Aviso } from "../../ui/index.ts";
 
 /*
   O resumo das regras da entrevista no topo de Conduzir › Preparar, em

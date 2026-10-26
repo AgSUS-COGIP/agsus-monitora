@@ -1,4 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import type { DependencyList } from "react";
+import type {
+  Chart as ChartJs,
+  ChartData,
+  ChartOptions,
+  ChartType,
+  Plugin,
+} from "chart.js";
 import { carregarChart, chartCarregado } from "../lib/chartjs-global.js";
 
 /*
@@ -23,17 +31,32 @@ const TOKENS_DA_PALETA = {
   },
 };
 
-/**
- * @param {boolean} escuro
- * @param {{ grid: string, text: string, ok: string, bad: string, warn: string, review: string, blue: string, surface: string, neutro?: string }} reserva
- */
-export function paletaDosGraficos(escuro, reserva) {
+export interface PaletaDeReserva {
+  grid: string;
+  text: string;
+  ok: string;
+  bad: string;
+  warn: string;
+  review: string;
+  blue: string;
+  surface: string;
+  neutro?: string;
+}
+
+export interface PaletaDosGraficos extends PaletaDeReserva {
+  neutro: string;
+}
+
+export function paletaDosGraficos(
+  escuro: boolean,
+  reserva: PaletaDeReserva,
+): PaletaDosGraficos {
   const estilo =
     typeof getComputedStyle === "function"
       ? getComputedStyle(document.documentElement)
       : null;
-  /** @param {string} nome @param {string} padrao */
-  const ler = (nome, padrao) => estilo?.getPropertyValue(nome).trim() || padrao;
+  const ler = (nome: string, padrao: string) =>
+    estilo?.getPropertyValue(nome).trim() || padrao;
   const estados = TOKENS_DA_PALETA[escuro ? "escuro" : "claro"];
   return {
     grid: ler("--border-subtle", reserva.grid),
@@ -60,17 +83,36 @@ export function paletaDosGraficos(escuro, reserva) {
   nas pendências e na tabela. `plugins` (opcional) são plugins do Chart.js só
   deste gráfico, fixos desde a criação (ex.: rótulo de valor nas barras).
 */
-/**
- * @template {import("chart.js").ChartType} T
- * @param {{ tipo: T, montar: () => { data: import("chart.js").ChartData<NoInfer<T>, number[], string>, options?: import("chart.js").ChartOptions<NoInfer<T>> }, dependencias: import("react").DependencyList, rotulo: string, id?: string, plugins?: import("chart.js").Plugin<NoInfer<T>>[] }} props
- */
-export function Grafico({ tipo, montar, dependencias, rotulo, id, plugins }) {
-  const canvas = useRef(null);
-  const grafico = useRef(null);
+export interface MontagemDoGrafico<T extends ChartType> {
+  data: ChartData<T, number[], string>;
+  options?: ChartOptions<T>;
+}
+
+export interface PropriedadesDoGrafico<T extends ChartType> {
+  tipo: T;
+  montar: () => MontagemDoGrafico<NoInfer<T>>;
+  dependencias: DependencyList;
+  rotulo: string;
+  id?: string;
+  plugins?: Plugin<NoInfer<T>>[];
+}
+
+export function Grafico<T extends ChartType>({
+  tipo,
+  montar,
+  dependencias,
+  rotulo,
+  id,
+  plugins,
+}: PropriedadesDoGrafico<T>) {
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const grafico = useRef<ChartJs<T, number[], string> | null>(null);
   const ultimoMontar = useRef(montar);
   const pluginsIniciais = useRef(plugins);
   // O Chart.js baixa no primeiro gráfico (chartjs-global.js); depois, desenha na hora.
-  const [Chart, definirChart] = useState(() => chartCarregado());
+  const [Chart, definirChart] = useState<typeof ChartJs | null>(() =>
+    chartCarregado(),
+  );
   useLayoutEffect(() => {
     ultimoMontar.current = montar;
   });
@@ -79,8 +121,9 @@ export function Grafico({ tipo, montar, dependencias, rotulo, id, plugins }) {
     if (Chart) return undefined;
     let vivo = true;
     carregarChart().then(
-      (carregado) => vivo && definirChart(() => carregado),
-      (erro) => console.warn("Não foi possível carregar os gráficos:", erro),
+      (carregado: typeof ChartJs) => vivo && definirChart(() => carregado),
+      (erro: unknown) =>
+        console.warn("Não foi possível carregar os gráficos:", erro),
     );
     return () => {
       vivo = false;
@@ -91,7 +134,7 @@ export function Grafico({ tipo, montar, dependencias, rotulo, id, plugins }) {
     if (!canvas.current || !Chart) return undefined;
     const { data, options } = ultimoMontar.current();
     try {
-      grafico.current = new Chart(canvas.current, {
+      grafico.current = new Chart<T, number[], string>(canvas.current, {
         type: tipo,
         data,
         options,
@@ -114,7 +157,7 @@ export function Grafico({ tipo, montar, dependencias, rotulo, id, plugins }) {
     const { data, options } = ultimoMontar.current();
     atual.data.labels = data.labels;
     atual.data.datasets = data.datasets;
-    atual.options = options;
+    atual.options = options as NonNullable<typeof atual.options>;
     atual.update();
     // `dependencias` é a lista do chamador (dados e tema), como num useMemo.
   }, dependencias);

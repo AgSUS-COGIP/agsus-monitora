@@ -12,7 +12,35 @@ import { situacaoDaPresenca } from "../../lib/online-presence";
   continuam valendo.
 */
 
-function assinarConexao(avisar) {
+/** Uma pessoa da lista (`normalizeOnlinePresenceList`, src/lib/online-presence.js). */
+export interface PessoaOnline {
+  userId: string;
+  fullName: string;
+  initials: string;
+  avatarUrl: string | null;
+  profileLabel: string;
+  currentView: string;
+}
+
+/** O estado assinável de src/app/presenca.js. */
+export interface EstadoDaPresenca {
+  visivel: boolean;
+  aberto: boolean;
+  sincronizado: boolean;
+  /** Desde quando está sincronizando (ms). */
+  desde: number;
+  pessoas: readonly PessoaOnline[];
+}
+
+/** O que o componente usa do controlador de `criarPresenca`. */
+export interface PresencaDoCabecalho {
+  assinar: (ouvinte: () => void) => () => void;
+  obter: () => EstadoDaPresenca;
+  alternar: () => void;
+  fechar: () => void;
+}
+
+function assinarConexao(avisar: () => void) {
   window.addEventListener("online", avisar);
   window.addEventListener("offline", avisar);
   return () => {
@@ -22,7 +50,7 @@ function assinarConexao(avisar) {
 }
 const conectado = () => globalThis.navigator?.onLine !== false;
 
-function Avatar({ pessoa }) {
+function Avatar({ pessoa }: { pessoa: PessoaOnline }) {
   return (
     <span className="online-presence-avatar">
       {pessoa.avatarUrl ? (
@@ -40,7 +68,7 @@ function Avatar({ pessoa }) {
   );
 }
 
-function Pessoa({ pessoa }) {
+function Pessoa({ pessoa }: { pessoa: PessoaOnline }) {
   return (
     <div className="online-presence-person">
       <Avatar pessoa={pessoa} />
@@ -55,10 +83,19 @@ function Pessoa({ pessoa }) {
   );
 }
 
-export function PessoasOnline({ presenca, agora = () => Date.now() }) {
+export interface PropriedadesDePessoasOnline {
+  presenca: PresencaDoCabecalho;
+  /** Relógio (ms); os testes trocam. */
+  agora?: () => number;
+}
+
+export function PessoasOnline({
+  presenca,
+  agora = () => Date.now(),
+}: PropriedadesDePessoasOnline) {
   const estado = useSyncExternalStore(presenca.assinar, presenca.obter);
   const online = useSyncExternalStore(assinarConexao, conectado);
-  const [, redesenhar] = useReducer((n) => n + 1, 0);
+  const [, redesenhar] = useReducer((n: number) => n + 1, 0);
   const esperaMs = Math.max(0, agora() - estado.desde);
   const situacao = situacaoDaPresenca({
     sincronizado: estado.sincronizado,
@@ -77,7 +114,7 @@ export function PessoasOnline({ presenca, agora = () => Date.now() }) {
   // Esc fecha a lista aberta.
   useEffect(() => {
     if (!estado.aberto) return undefined;
-    const aoTeclar = (evento) => {
+    const aoTeclar = (evento: KeyboardEvent) => {
       if (evento.key === "Escape") presenca.fechar();
     };
     document.addEventListener("keydown", aoTeclar);
@@ -143,11 +180,16 @@ export function PessoasOnline({ presenca, agora = () => Date.now() }) {
   );
 }
 
+export interface OpcoesDePessoasOnline {
+  elemento?: HTMLElement | null;
+  presenca?: PresencaDoCabecalho | null;
+}
+
 /** Monta "Pessoas online" no cabeçalho (`#pessoasOnlineApp`). */
 export function montarPessoasOnline({
   elemento = document.getElementById("pessoasOnlineApp"),
   presenca,
-} = {}) {
+}: OpcoesDePessoasOnline = {}) {
   if (!elemento || !presenca) return null;
   return montarModulo(elemento, <PessoasOnline presenca={presenca} />, {
     nome: "Pessoas online",

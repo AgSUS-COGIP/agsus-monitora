@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { PreviaDaBarraLateral } from "./tipos.ts";
 import { alternarTemaPelaJanela } from "./integracao.ts";
-import { Icone } from "../icone.jsx";
+import { Icone } from "../icone.tsx";
 import {
   deveAlternarTema,
   OPCOES_DE_TEMA,

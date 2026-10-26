@@ -12,7 +12,7 @@ import {
   BotaoDeAcao,
   Campo,
   Segmentado,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import { CampoMotivo, ListaMestre, motivoValido } from "./partes.jsx";
 
 /*

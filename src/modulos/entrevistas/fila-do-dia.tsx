@@ -13,7 +13,7 @@ import {
   type Situacao,
 } from "../../lib/fila-de-conducao.ts";
 import { formatNumberBR } from "../../lib/formatters";
-import { EstadoVazio, Segmentado, Selo } from "../../ui/index.js";
+import { EstadoVazio, Segmentado, Selo } from "../../ui/index.ts";
 import { numeroBR } from "./resultado-da-ficha.tsx";
 
 /*

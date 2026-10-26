@@ -21,7 +21,7 @@ import {
   opcoesDosFiltros,
 } from "../../lib/selecao-do-painel.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { Aviso } from "../../ui/index.js";
+import { Aviso } from "../../ui/index.ts";
 import { textoDaConferencia } from "../../lib/texto-da-conferencia.js";
 import { criarEstadoDaSelecao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import {

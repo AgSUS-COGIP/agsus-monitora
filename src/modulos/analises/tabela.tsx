@@ -5,7 +5,7 @@ import {
   tomDoStatus,
 } from "../../lib/analises-curriculares.ts";
 import { formatNumberBR } from "../../lib/formatters";
-import { Selo, TabelaInfinita } from "../../ui/index.js";
+import { Selo, TabelaInfinita } from "../../ui/index.ts";
 
 /*
   A fila de análises: TabelaInfinita de src/ui/ (50 por vez, mais ao rolar ou

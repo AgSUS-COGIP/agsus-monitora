@@ -53,7 +53,7 @@ import {
   MenuDeAcoes,
   Selo,
   TabelaInfinita,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import {
   IncluirPorDecisao,
   RevogarDecisao,

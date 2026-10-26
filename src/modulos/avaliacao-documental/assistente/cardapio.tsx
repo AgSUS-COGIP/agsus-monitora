@@ -28,7 +28,7 @@ import type {
   RegraAnalise,
   TituloAcademico,
 } from "../../../lib/avaliacao-documental/tipos-da-regra.ts";
-import { Segmentado } from "../../../ui/index.js";
+import { Segmentado } from "../../../ui/index.ts";
 import {
   BotaoMais,
   BotaoTirar,

@@ -9,7 +9,7 @@ import type {
   PropsDoTopoDoMapa,
 } from "./tipos-do-painel.ts";
 import { useEffect, useReducer, useRef, useState } from "react";
-import { EstadoVazio, classes } from "../../ui/index.js";
+import { EstadoVazio, classes } from "../../ui/index.ts";
 import { BotaoDeRecolher } from "../editor-de-coordenadas/modo-de-edicao.tsx";
 import { criarMapaDoBrasil, remedir, voltarAoBrasil } from "./leaflet.ts";
 import { usarUltimo } from "./usar-ultimo.ts";

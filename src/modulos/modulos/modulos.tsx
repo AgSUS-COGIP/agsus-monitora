@@ -36,8 +36,8 @@ import {
   EstadoVazio,
   Segmentado,
   Selo,
-} from "../../ui/index.js";
-import { Icone } from "../../componentes/icone.jsx";
+} from "../../ui/index.ts";
+import { Icone } from "../../componentes/icone.tsx";
 
 /*
   Configurações › Módulos e abas (só admin global): ativar, desativar e pôr

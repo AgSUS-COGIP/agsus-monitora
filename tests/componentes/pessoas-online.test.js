@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarPessoasOnline } from "../../src/componentes/pessoas-online/pessoas-online.jsx";
+import { montarPessoasOnline } from "../../src/componentes/pessoas-online/pessoas-online.tsx";
 import { situacaoDaPresenca } from "../../src/lib/online-presence";
 import { normalizeOnlinePresenceList } from "../../src/lib/online-presence";
 

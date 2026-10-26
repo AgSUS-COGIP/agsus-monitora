@@ -11,7 +11,7 @@ import {
   SECOES,
   secaoAtualDeConfiguracao,
 } from "./secoes.js";
-import { Icone } from "../../componentes/icone.jsx";
+import { Icone } from "../../componentes/icone.tsx";
 import {
   Aviso,
   BlocosEsqueleto,
@@ -19,7 +19,7 @@ import {
   classes,
   ErroAoCarregar,
   Modal,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import { SecaoAparencia } from "./aparencia.jsx";
 import { InterruptorPessoal, SecaoComemoracoes } from "./comemoracoes.tsx";
 import { estadoDasConfiguracoes, SECOES_COM_SALVAR_PROPRIO } from "./estado.js";

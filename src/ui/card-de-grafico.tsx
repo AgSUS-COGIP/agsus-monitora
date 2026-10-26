@@ -1,4 +1,5 @@
-import { classes } from "./classes.js";
+import type { ReactNode } from "react";
+import { classes } from "./classes.ts";
 
 /*
   Bloco de gráfico: título e o corpo (`altura`: "short", "alto"…). Sem
@@ -8,9 +9,16 @@ import { classes } from "./classes.js";
 
   Marcação: `.ui-card.ui-card-de-grafico` > `.ui-grafico[data-altura]`.
 */
-/**
- * @param {{ titulo: string, className?: string, altura?: string, carregando?: boolean, elemento?: "article" | "section", tour?: string, children?: import("react").ReactNode }} props
- */
+export interface PropriedadesDoCardDeGrafico {
+  titulo: string;
+  className?: string;
+  altura?: string;
+  carregando?: boolean;
+  elemento?: "article" | "section";
+  tour?: string;
+  children?: ReactNode;
+}
+
 export function CardDeGrafico({
   titulo,
   className,
@@ -19,7 +27,7 @@ export function CardDeGrafico({
   elemento: Elemento = "article",
   tour,
   children,
-}) {
+}: PropriedadesDoCardDeGrafico) {
   return (
     <Elemento
       className={classes("ui-card ui-card-de-grafico", className)}

@@ -94,7 +94,7 @@ import {
   dois conjuntos dentro do mesmo componente (DESIGN.md, "Ícones").
 
   Dois jeitos de desenhar, o mesmo registro: `criarIcone` devolve um SVG do DOM
-  (código sem framework) e `<Icone>` (`src/componentes/icone.jsx`) desenha o
+  (código sem framework) e `<Icone>` (`src/componentes/icone.tsx`) desenha o
   mesmo desenho em React.
 
   Cada ícone é importado pelo nome, e só os usados entram no bundle. Ícone

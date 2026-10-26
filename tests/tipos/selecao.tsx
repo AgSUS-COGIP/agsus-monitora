@@ -17,7 +17,7 @@ import {
   TelaDeSelecao,
   montarSelecao,
 } from "../../src/modulos/selecao/selecao.tsx";
-import { Grafico, TabelaInfinita } from "../../src/ui/index.js";
+import { Grafico, TabelaInfinita } from "../../src/ui/index.ts";
 import type { Plugin } from "chart.js";
 
 declare const clienteReal: SupabaseClient;

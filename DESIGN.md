@@ -238,7 +238,7 @@ sticky (`--z-sticky`) e tem ordenação visível (`aria-sort` + ícone). Número
 O rótulo é sempre visível; o placeholder não substitui o rótulo. Campo com borda
 `--border-control`, `--radius-md` e altura de 40px. No foco, anel `--focus-ring`. O erro
 aparece junto do campo, em `--state-danger`, com ícone. Campo obrigatório é marcado. Os dados
-digitados se mantêm depois de erro do servidor. Seleção múltipla: `src/componentes/multi-select-busca.jsx`
+digitados se mantêm depois de erro do servidor. Seleção múltipla: `src/componentes/multi-select-busca.tsx`
 no app principal e Tom Select em análises. Não crie um terceiro.
 
 ### Modal — `.modal` > `.modal-card` (`.modal-head`, `.modal-body`)
@@ -246,7 +246,7 @@ no app principal e Tom Select em análises. Não crie um terceiro.
 `--z-overlay`, `--radius-lg`, `--shadow-overlay` e fundo escurecido. O foco fica preso no modal,
 `Esc` fecha e, ao fechar, o foco volta ao elemento que abriu. Largura máxima de 560px (formulário)
 ou 880px (detalhe). Formulário longo não vai em modal pequeno: use página ou drawer.
-Em React, `<Modal>` (`src/ui/modal.jsx`) já faz o portal, o `Esc`, o foco preso e a volta
+Em React, `<Modal>` (`src/ui/modal.tsx`) já faz o portal, o `Esc`, o foco preso e a volta
 do foco; o legado ainda tem modais próprios (`#editModal`, `#searchModal`).
 
 ### Chip, badge e alerta — `.chip`, `.alert`
@@ -313,7 +313,7 @@ Regras:
 
 - Lucide sai de um registro só, `src/modules/icones.js`, que importa cada ícone pelo nome — só os
   usados entram no bundle. Ícone novo: registre lá. Sem framework, `criarIcone(nome, { tamanho })`;
-  em React, `<Icone nome="…" tamanho={…} />` (`src/componentes/icone.jsx`).
+  em React, `<Icone nome="…" tamanho={…} />` (`src/componentes/icone.tsx`).
 - Tamanhos 16, 18 e 20px, traço 1,75, na cor do texto ao lado (`stroke: currentColor`).
 - O ícone é decorativo (`aria-hidden`); quem nomeia o controle é o texto dele ou um `aria-label`.
 

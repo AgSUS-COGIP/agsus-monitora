@@ -11,7 +11,7 @@ import {
   ehEditalDeTreinamento,
   semTreinamento,
 } from "../../lib/edital-de-treinamento.js";
-import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
+import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
 import {
   alertaDoTipo,
@@ -26,7 +26,7 @@ import {
 } from "../../lib/editais-do-nucleo.js";
 import { formatNumberBR } from "../../lib/formatters";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import { Selo, TabelaInfinita, TopoDoPainel } from "../../ui/index.js";
+import { Selo, TabelaInfinita, TopoDoPainel } from "../../ui/index.ts";
 import { criarEstadoDoNucleo } from "./estado.js";
 import { PainelOperacional } from "./painel-operacional.jsx";
 import { ModalDoEdital } from "./modal-do-edital.jsx";

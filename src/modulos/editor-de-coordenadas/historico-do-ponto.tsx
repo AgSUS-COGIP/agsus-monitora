@@ -5,7 +5,7 @@ import {
   formatarCoordenada,
   rotuloDaAcao,
 } from "../../lib/editor-de-coordenadas.ts";
-import { Aviso, Campo, Carregando, EstadoVazio } from "../../ui/index.js";
+import { Aviso, Campo, Carregando, EstadoVazio } from "../../ui/index.ts";
 
 const quando = (valor: string | undefined) => {
   const data = new Date(valor ?? "");

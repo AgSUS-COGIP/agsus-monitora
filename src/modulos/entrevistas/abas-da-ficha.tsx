@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import type { KeyboardEvent } from "react";
-import { classes } from "../../ui/classes.js";
+import { classes } from "../../ui/classes.ts";
 
 /*
   As abas da ficha de notas: um avaliador por aba ("Avaliador Teste 1 ·

@@ -6,7 +6,7 @@ import {
   type Movimento,
   type Posicao,
 } from "../../lib/digitacao-de-notas.ts";
-import { classes } from "../../ui/classes.js";
+import { classes } from "../../ui/classes.ts";
 import { animar, CelulaDeNota, type OpcaoDeNota } from "./campo-de-nota.tsx";
 
 /*

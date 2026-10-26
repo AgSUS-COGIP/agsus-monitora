@@ -5,7 +5,7 @@ import {
   type DadosDoAcompanhamento,
   type PontoDaSerie,
 } from "../../lib/avaliacao-documental/acompanhamento-das-inscricoes.ts";
-import { Selo } from "../../ui/index.js";
+import { Selo } from "../../ui/index.ts";
 
 /*
   Cartão "Inscrições" no topo da aba Pré-classificação, só durante as

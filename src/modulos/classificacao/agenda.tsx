@@ -75,7 +75,7 @@ import {
   Modal,
   Segmentado,
   Selo,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 
 /*
   A visão "Agenda" da Classificação: a regra da agenda das entrevistas do

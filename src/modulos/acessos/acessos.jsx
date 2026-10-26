@@ -7,7 +7,7 @@ import { AbaUsuarios } from "./aba-usuarios.jsx";
 import { AbaGrupos } from "./aba-grupos.jsx";
 import { AbaCoordenacoes } from "./aba-coordenacoes.jsx";
 import { GavetaDoUsuario } from "./gaveta-do-usuario.jsx";
-import { Abas, ErroAoCarregar } from "../../ui/index.js";
+import { Abas, ErroAoCarregar } from "../../ui/index.ts";
 
 /*
   Configurações › Acessos: permissões individuais + grupos de permissões.

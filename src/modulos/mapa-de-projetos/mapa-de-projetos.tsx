@@ -24,7 +24,7 @@ import {
   pontosDosMunicipios,
   projetosDosMunicipios,
 } from "../../lib/visao-geral-da-area.ts";
-import { classes } from "../../ui/index.js";
+import { classes } from "../../ui/index.ts";
 import { LegendaFlutuante } from "../mapa-saude-indigena/legenda.tsx";
 import {
   criarLeque,

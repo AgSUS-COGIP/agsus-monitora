@@ -38,7 +38,7 @@ import {
   statusNeedsMatricula,
   uniqueCandidateCargos,
 } from "../../lib/lista-aprovados-rules.ts";
-import { Abas, BotaoDeAcao, classes, Modal } from "../../ui/index.js";
+import { Abas, BotaoDeAcao, classes, Modal } from "../../ui/index.ts";
 import { IconeDePdf } from "./partes.tsx";
 
 /*

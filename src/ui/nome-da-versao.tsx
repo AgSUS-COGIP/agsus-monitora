@@ -9,8 +9,8 @@ import {
 } from "../lib/nome-da-versao.ts";
 import type { VersaoComNome } from "../lib/nome-da-versao.ts";
 import { Aviso } from "./aviso.tsx";
-import { Campo } from "./campo.jsx";
-import { Modal } from "./modal.jsx";
+import { Campo } from "./campo.tsx";
+import { Modal } from "./modal.tsx";
 
 /*
   O nome das versões das três regras (avaliação documental, classificação e

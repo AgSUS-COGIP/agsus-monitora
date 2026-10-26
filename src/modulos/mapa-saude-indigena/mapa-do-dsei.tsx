@@ -40,7 +40,7 @@ import {
   tiposDoTerritorio,
   visiveis,
 } from "../../lib/mapa-saude-indigena/mapa-do-dsei.ts";
-import { EstadoVazio, classes } from "../../ui/index.js";
+import { EstadoVazio, classes } from "../../ui/index.ts";
 import { Forma, LegendaDoDsei } from "./legenda.tsx";
 import {
   adicionarFundo,

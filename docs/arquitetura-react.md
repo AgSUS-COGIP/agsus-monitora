@@ -53,7 +53,7 @@ gera conflito com quem está trabalhando em paralelo.
 | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------- |
 | `src/app/` (`montar-modulo.jsx`, `ErrorBoundary.jsx`)                                                            | fica                                                      | —          |
 | `src/ui/` (design system)                                                                                        | fica                                                      | —          |
-| `src/componentes/icone.jsx`, `multi-select-busca.jsx`                                                            | `src/ui/`                                                 | ao tocar   |
+| `src/componentes/icone.tsx`, `multi-select-busca.tsx`                                                            | `src/ui/`                                                 | ao tocar   |
 | Configurações (moldura, seções e `secoes.js`), Acessos, Módulos e abas                                           | `src/modulos/configuracoes/`, `acessos/`, `modulos/`      | concluído  |
 | `src/componentes/saude-das-cargas/` (Status das atualizações)                                                    | `src/modulos/`                                            | ao tocar   |
 | Editais, Cronograma e Lista de aprovados                                                                         | `src/modulos/editais/`, `cronograma/`, `aprovados/`       | concluído  |
@@ -134,7 +134,7 @@ entra assim, não com import estático em `main.js`.
 
 ## Como usar `ui/`
 
-Importe do índice: `import { Kpi, GradeDeKpis, Aviso } from "../../ui/index.js";`. O `ui.css` é
+Importe do índice: `import { Kpi, GradeDeKpis, Aviso } from "../../ui/index.ts";`. O `ui.css` é
 importado uma vez no ponto de entrada (`src/main.js`); o CSS próprio de um módulo de
 `src/modulos/` aberto sob demanda é importado pelo ponto de entrada da tela (baixa junto com o código,
 num CSS à parte); só fica no `src/main.js`, logo depois do `ui.css`, o CSS de módulo cujas classes

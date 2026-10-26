@@ -1,6 +1,6 @@
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { Popover } from "../../ui/popover.tsx";
-import { Segmentado } from "../../ui/index.js";
+import { Segmentado } from "../../ui/index.ts";
 import { numeroBR } from "./resultado-da-ficha.tsx";
 
 /*

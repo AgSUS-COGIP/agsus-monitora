@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent, Ref } from "react";
 import { lerDigitacao } from "../../lib/digitacao-de-notas.ts";
-import { classes } from "../../ui/classes.js";
+import { classes } from "../../ui/classes.ts";
 
 /*
   A célula da matriz de notas (matriz-de-notas.tsx): o campo grande de uma

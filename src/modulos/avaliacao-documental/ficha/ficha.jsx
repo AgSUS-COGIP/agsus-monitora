@@ -46,7 +46,7 @@ import { motivosDoResultado } from "../../../lib/avaliacao-documental/motivos-do
 import { pontuacaoInformativaDaFicha } from "../../../lib/avaliacao-documental/pontos-informativos.ts";
 import { modalidadesDoLancamento } from "../../../lib/avaliacao-documental/pontuacao.js";
 import { rotuloDaVersaoNaLista } from "../../../lib/nome-da-versao.ts";
-import { Aviso } from "../../../ui/index.js";
+import { Aviso } from "../../../ui/index.ts";
 import { guardaDeAlteracoes } from "../../../app/guarda-de-alteracoes.ts";
 import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";
 import { cpfDaFicha } from "../../../lib/avaliacao-documental/cpf-da-ficha.ts";

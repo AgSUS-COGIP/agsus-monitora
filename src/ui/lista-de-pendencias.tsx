@@ -1,5 +1,6 @@
-import { classes } from "./classes.js";
-import { EstadoVazio } from "./estados.jsx";
+import type { ReactNode } from "react";
+import { classes } from "./classes.ts";
+import { EstadoVazio } from "./estados.tsx";
 
 /*
   Pendências de uma tela (`.ui-pendencias`): cada item é um botão com o
@@ -16,7 +17,27 @@ import { EstadoVazio } from "./estados.jsx";
 
 const ITENS_DO_ESQUELETO = 4;
 
-export function ListaDePendencias({ itens, carregando = false, vazio }) {
+export interface Pendencia {
+  chave: string;
+  titulo: ReactNode;
+  detalhe: ReactNode;
+  /** "perigo" ou "alerta" (o padrão). */
+  tom?: string;
+  ativo?: boolean;
+  aoClicar: () => void;
+}
+
+export interface PropriedadesDaListaDePendencias {
+  itens: readonly Pendencia[];
+  carregando?: boolean;
+  vazio?: ReactNode;
+}
+
+export function ListaDePendencias({
+  itens,
+  carregando = false,
+  vazio,
+}: PropriedadesDaListaDePendencias) {
   if (carregando)
     return (
       <div className="ui-pendencias" aria-hidden="true">

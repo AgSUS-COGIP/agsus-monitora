@@ -1,10 +1,10 @@
-import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
+import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { marcaDoEdital } from "../../lib/conducao-de-entrevista.ts";
 import {
   editalEscolhido,
   sufixoDeTreinamento,
 } from "../../lib/edital-de-treinamento.js";
-import { Aviso } from "../../ui/index.js";
+import { Aviso } from "../../ui/index.ts";
 import { LiberacaoDoEdital } from "./conducao.tsx";
 import type { EstadoDaConducao, EstadoDaConducaoComAcoes } from "./tipos.ts";
 

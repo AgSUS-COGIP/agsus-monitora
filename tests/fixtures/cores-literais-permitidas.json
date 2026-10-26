@@ -39,7 +39,7 @@
     "src/styles/platform-shell.css": "tela de acesso (paleta própria sobre a cor configurada do painel) e dívida: valores escuros de [data-theme=dark] legados",
     "src/styles/post157-interface-tuning.css": "reserva antes do branding: fundo da tela de acesso e cor padrão da barra (configuração)",
     "src/styles/visual-polish.css": "mapa (fundo do Leaflet antes do mosaico) e texto da tela de acesso",
-    "src/ui/grafico.jsx": "reserva de cor do gráfico quando o token não é lido (a tela lê os tokens)"
+    "src/ui/grafico.tsx": "reserva de cor do gráfico quando o token não é lido (a tela lê os tokens)"
   },
   "cores": {
     "src/app/entrada/icones-da-entrada.tsx": {
@@ -415,7 +415,7 @@
       "#b7dce7": 1,
       "#60758f": 1
     },
-    "src/ui/grafico.jsx": {
+    "src/ui/grafico.tsx": {
       "#94a3b8": 1
     }
   },

@@ -61,7 +61,7 @@ import {
   Secao,
   Segmentado,
   Selo,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 
 /*
   A aba "Listas" da Classificação: preliminar (documental), convocação para

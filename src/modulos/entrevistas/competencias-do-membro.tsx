@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { Segmentado } from "../../ui/index.js";
+import { Segmentado } from "../../ui/index.ts";
 
 /*
   As competências que um membro da banca avalia, na configuração do edital

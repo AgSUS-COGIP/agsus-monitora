@@ -40,7 +40,7 @@ import {
   GradeDeKpis,
   Kpi,
   TabelaInfinita,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import { baixarNoNavegador } from "../classificacao/estado.ts";
 
 /*

@@ -44,7 +44,7 @@ import {
   paletaDosGraficos,
   PainelDeFiltros,
   TopoDoPainel,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 
 /*
   Os blocos das telas de Recursos, com os componentes de src/ui/: o topo (só
@@ -400,7 +400,7 @@ export function Recorte({
       icone: "fa-calendar-days",
       texto: `${formatNumberBR(pelaAbertura)} com prazo estimado (*)`,
     },
-  ].filter(Boolean);
+  ].filter((marca) => marca !== 0);
   return (
     <LinhaDoRecorte ativos={ativos}>
       {carregado ? <MarcasDoRecorte marcas={marcas} /> : null}

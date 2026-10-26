@@ -18,7 +18,7 @@ import {
   MOTIVO_MAXIMO,
   origemDaLista,
 } from "../../lib/publicacao-de-aprovados.ts";
-import { Abas, Aviso, BotaoDeAcao, classes, Modal } from "../../ui/index.js";
+import { Abas, Aviso, BotaoDeAcao, classes, Modal } from "../../ui/index.ts";
 import { FormularioDeConvocacao } from "./formulario-de-convocacao.tsx";
 
 /*

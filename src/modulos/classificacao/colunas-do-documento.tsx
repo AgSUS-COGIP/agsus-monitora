@@ -1,5 +1,5 @@
 import { useState, type DragEvent } from "react";
-import { Aviso, classes } from "../../ui/index.js";
+import { Aviso, classes } from "../../ui/index.ts";
 
 /*
   Aba "Colunas" de "Como fica no SEI": quais colunas a tabela de cada vaga

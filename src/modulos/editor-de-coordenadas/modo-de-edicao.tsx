@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { folgaDoEnquadramento } from "../../lib/editor-de-coordenadas.ts";
-import { classes } from "../../ui/index.js";
+import { classes } from "../../ui/index.ts";
 import { remedir } from "../mapa-saude-indigena/leaflet.ts";
 import { travarRolagemDaPagina } from "../mapa-saude-indigena/tela-cheia.tsx";
 import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.ts";

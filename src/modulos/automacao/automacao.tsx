@@ -26,7 +26,7 @@ import {
   EstadoVazio,
   ErroAoCarregar,
   Selo,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import {
   criarEstadoDaAutomacao,
   type ClienteDaAutomacao,

@@ -1,4 +1,5 @@
-import { classes } from "./classes.js";
+import type { ReactNode } from "react";
+import { classes } from "./classes.ts";
 
 /*
   Indicador em card compacto (~78px; DESIGN.md, "Indicador"): o ícone num tile
@@ -14,7 +15,7 @@ import { classes } from "./classes.js";
   põe um id no número (contrato de teste/DOM de telas antigas).
 */
 
-const TOM_DA_COR = {
+const TOM_DA_COR: Partial<Record<string, string>> = {
   "k-cyan": "info",
   "k-green": "sucesso",
   "k-yellow": "alerta",
@@ -24,9 +25,21 @@ const TOM_DA_COR = {
   "k-slate": "neutro",
 };
 
-/**
- * @param {{ rotulo: import("react").ReactNode, valor: import("react").ReactNode, cor?: string, tom?: string, icone?: string, chave?: string, titulo?: string, ativo?: boolean, aoClicar?: () => void, carregando?: boolean, idDoValor?: string, tour?: string }} props
- */
+export interface PropriedadesDoKpi {
+  rotulo: ReactNode;
+  valor: ReactNode;
+  cor?: string;
+  tom?: string;
+  icone?: string;
+  chave?: string;
+  titulo?: string;
+  ativo?: boolean;
+  aoClicar?: () => void;
+  carregando?: boolean;
+  idDoValor?: string;
+  tour?: string;
+}
+
 export function Kpi({
   cor,
   tom,
@@ -40,7 +53,7 @@ export function Kpi({
   carregando = false,
   idDoValor,
   tour,
-}) {
+}: PropriedadesDoKpi) {
   const conteudo = (
     <>
       <span className="ui-kpi-rotulo">
@@ -76,7 +89,7 @@ export function Kpi({
       )}
       data-kpi={chave}
       data-tour={tour}
-      data-tom={tom || TOM_DA_COR[cor] || "info"}
+      data-tom={tom || TOM_DA_COR[cor ?? ""] || "info"}
       title={aoClicar ? undefined : titulo}
       aria-busy={carregando || undefined}
     >
@@ -97,10 +110,22 @@ export function Kpi({
   );
 }
 
-/** A grade de indicadores.
- * @param {{ id?: string, className?: string, rotulo?: string, tour?: string, children?: import("react").ReactNode }} props
- */
-export function GradeDeKpis({ id, className, rotulo, tour, children }) {
+export interface PropriedadesDaGradeDeKpis {
+  id?: string;
+  className?: string;
+  rotulo?: string;
+  tour?: string;
+  children?: ReactNode;
+}
+
+/** A grade de indicadores. */
+export function GradeDeKpis({
+  id,
+  className,
+  rotulo,
+  tour,
+  children,
+}: PropriedadesDaGradeDeKpis) {
   return (
     <section
       className={classes("ui-kpis", className)}

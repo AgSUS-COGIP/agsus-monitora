@@ -4,7 +4,7 @@ import {
   MOTIVOS_DA_REABERTURA,
   validarReabertura,
 } from "../../../lib/avaliacao-documental/motivos-da-reabertura.ts";
-import { Campo } from "../../../ui/index.js";
+import { Campo } from "../../../ui/index.ts";
 
 /*
   O "Reabrir" da coordenação no rodapé da ficha concluída ou em revisão: o motivo numa

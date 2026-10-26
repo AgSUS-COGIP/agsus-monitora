@@ -9,7 +9,7 @@ import {
 } from "../../lib/lista-aprovados-rules.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import { resumoDasOrigens } from "../../lib/publicacao-de-aprovados.ts";
-import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import {
   BotaoDeAcao,
   Campo,
@@ -18,7 +18,7 @@ import {
   LinhasEsqueleto,
   PainelDeFiltros,
   classes,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import {
   AcaoDeAnexos,
   AcaoDeCarta,

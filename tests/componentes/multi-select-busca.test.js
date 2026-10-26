@@ -1,7 +1,7 @@
 import { act, createElement, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MultiSelectBusca } from "../../src/componentes/multi-select-busca.jsx";
+import { MultiSelectBusca } from "../../src/componentes/multi-select-busca.tsx";
 import { clicar, digitar, teclar } from "./interacoes.js";
 
 /*

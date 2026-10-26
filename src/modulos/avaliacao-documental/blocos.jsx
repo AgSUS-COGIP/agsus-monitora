@@ -11,7 +11,7 @@ import {
   blocoNovo,
   codigoLivre,
 } from "../../lib/avaliacao-documental/regra.js";
-import { Campo } from "../../ui/index.js";
+import { Campo } from "../../ui/index.ts";
 import {
   BotaoMais,
   BotaoTirar,

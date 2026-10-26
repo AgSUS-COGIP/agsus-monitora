@@ -11,7 +11,7 @@ import {
 import { espelhoDoDetalhe } from "../../lib/espelho-do-painel-de-analises.ts";
 import { mesclarDetalhe } from "../../lib/lista-do-painel-de-analises.js";
 import { linhaSemParecer } from "../../lib/textos-do-painel-de-analises.js";
-import { Gaveta, GradeDeKv, Kv, Secao, Selo } from "../../ui/index.js";
+import { Gaveta, GradeDeKv, Kv, Secao, Selo } from "../../ui/index.ts";
 import { EspelhoNaGaveta } from "./espelho-na-gaveta.tsx";
 
 /*

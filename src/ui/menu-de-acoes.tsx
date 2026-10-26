@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { classes } from "./classes.js";
+import type { KeyboardEvent, ReactNode } from "react";
+import { classes } from "./classes.ts";
 
 /*
   Menu de ações (ex.: "Ações da coordenação" na Fila): o botão abre a lista
@@ -10,6 +11,24 @@ import { classes } from "./classes.js";
   no botão (ex.: quantas fichas estão selecionadas). Quem não tem ação não
   recebe o menu: a tela simplesmente não o desenha.
 */
+export interface AcaoDoMenu {
+  id: string;
+  rotulo: ReactNode;
+  icone?: string;
+  aoEscolher: () => void;
+  desabilitado?: boolean;
+  dados?: Record<string, string>;
+}
+
+export interface PropriedadesDoMenuDeAcoes {
+  rotulo: ReactNode;
+  icone?: string;
+  acoes: readonly AcaoDoMenu[];
+  contagem?: number;
+  tour?: string;
+  className?: string;
+}
+
 export function MenuDeAcoes({
   rotulo,
   icone = "fa-ellipsis",
@@ -17,28 +36,29 @@ export function MenuDeAcoes({
   contagem = 0,
   tour,
   className,
-}) {
+}: PropriedadesDoMenuDeAcoes) {
   const [aberto, setAberto] = useState(false);
-  const raiz = useRef(null);
-  const botao = useRef(null);
+  const raiz = useRef<HTMLDivElement>(null);
+  const botao = useRef<HTMLButtonElement>(null);
   const idDaLista = useId();
 
   const itens = () => [
-    ...(raiz.current?.querySelectorAll("[role='menuitem']:not(:disabled)") ??
-      []),
+    ...(raiz.current?.querySelectorAll<HTMLElement>(
+      "[role='menuitem']:not(:disabled)",
+    ) ?? []),
   ];
 
   useEffect(() => {
     if (!aberto) return undefined;
     itens()[0]?.focus();
-    const foraDoMenu = (ev) => {
-      if (!raiz.current?.contains(ev.target)) setAberto(false);
+    const foraDoMenu = (ev: MouseEvent) => {
+      if (!raiz.current?.contains(ev.target as Node | null)) setAberto(false);
     };
     document.addEventListener("mousedown", foraDoMenu);
     return () => document.removeEventListener("mousedown", foraDoMenu);
   }, [aberto]);
 
-  function aoTeclar(ev) {
+  function aoTeclar(ev: KeyboardEvent<HTMLDivElement>) {
     if (ev.key === "Escape") {
       ev.preventDefault();
       ev.stopPropagation();
@@ -49,7 +69,7 @@ export function MenuDeAcoes({
     if (ev.key !== "ArrowDown" && ev.key !== "ArrowUp") return;
     ev.preventDefault();
     const lista = itens();
-    const atual = lista.indexOf(document.activeElement);
+    const atual = lista.indexOf(document.activeElement as HTMLElement);
     const passo = ev.key === "ArrowDown" ? 1 : -1;
     lista[(atual + passo + lista.length) % lista.length]?.focus();
   }

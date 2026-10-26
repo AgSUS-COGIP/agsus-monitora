@@ -26,8 +26,8 @@ import {
   statusTravado,
   tomDoStatus,
 } from "../../lib/lista-aprovados-rules.ts";
-import { Icone } from "../../componentes/icone.jsx";
-import { classes } from "../../ui/index.js";
+import { Icone } from "../../componentes/icone.tsx";
+import { classes } from "../../ui/index.ts";
 
 /*
   Peças que as duas abas (aprovados e convocação) e os modais repetem. As

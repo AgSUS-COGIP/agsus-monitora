@@ -5363,7 +5363,7 @@ export const VERBETES_AYA = Object.freeze([
       'Pessoas online fica no cabeçalho e só o administrador global e o Gestor veem. Mostra quem está com o MONITORA aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). A presença de cada pessoa é avisada a cada 90 segundos com a aba visível (e na hora de trocar de página, área ou seção); a contagem do botão se atualiza a cada 10 minutos, e a lista aberta, a cada 90 segundos.',
     fato: "",
     fonte:
-      "src/lib/online-presence.js; src/app/presenca.js; src/componentes/pessoas-online/pessoas-online.jsx; src/lib/access-roles.js (podeVerPessoasOnline)",
+      "src/lib/online-presence.js; src/app/presenca.js; src/componentes/pessoas-online/pessoas-online.tsx; src/lib/access-roles.js (podeVerPessoasOnline)",
   },
   {
     arquivo: "regras-do-sistema.md",

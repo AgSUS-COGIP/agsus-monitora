@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Aviso, Campo, Modal } from "../../ui/index.js";
+import { Aviso, Campo, Modal } from "../../ui/index.ts";
 
 /*
   O dono da avaliação documental do edital, ao lado do seletor: "Avaliação:

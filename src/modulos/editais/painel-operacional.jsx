@@ -9,7 +9,7 @@ import {
   ErroAoCarregar,
   GradeDeKpis,
   Kpi,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 
 /*
   "Cronogramas e alertas": os indicadores do resumo (`Kpi` de src/ui/, card

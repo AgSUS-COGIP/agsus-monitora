@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { textoDaNota } from "../../../lib/avaliacao-documental/ficha.js";
 import type { MotivoDoResultado } from "../../../lib/avaliacao-documental/motivos-do-resultado.ts";
 import type { PontuacaoInformativa } from "../../../lib/avaliacao-documental/pontos-informativos.ts";
-import { Selo } from "../../../ui/index.js";
+import { Selo } from "../../../ui/index.ts";
 import type { ParteDaNota } from "./tipos.ts";
 
 /*

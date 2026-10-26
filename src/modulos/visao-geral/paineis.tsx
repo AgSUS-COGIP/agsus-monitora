@@ -6,7 +6,7 @@ import type {
   SnapshotDaVisaoGeral,
 } from "./tipos.ts";
 import { useState } from "react";
-import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import {
   anoDaSelecao,
   anosDosEditais,
@@ -32,7 +32,7 @@ import {
   MaisOpcoes,
   PainelDeFiltros,
   TopoDoPainel,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 
 /*
   Os blocos da Visão geral, com os componentes de src/ui/: o topo (a hora da

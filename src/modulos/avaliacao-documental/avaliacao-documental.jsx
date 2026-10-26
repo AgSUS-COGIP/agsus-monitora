@@ -3,7 +3,7 @@ import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.js";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { criarRascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
-import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.jsx";
+import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   editalEscolhido,
@@ -16,7 +16,7 @@ import {
 } from "../../lib/avaliacao-documental/catalogo.js";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.js";
+import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
 import {

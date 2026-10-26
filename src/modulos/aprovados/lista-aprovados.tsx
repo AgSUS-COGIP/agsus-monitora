@@ -29,7 +29,7 @@ import { PLANILHAS } from "../../lib/planilhas.js";
 import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
 import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import { classes, ErroAoCarregar, TopoDoPainel } from "../../ui/index.js";
+import { classes, ErroAoCarregar, TopoDoPainel } from "../../ui/index.ts";
 import { AbaAprovados } from "./aba-aprovados.tsx";
 import { AbaConvocacao } from "./aba-convocacao.tsx";
 import { criarEstadoDaListaDeAprovados } from "./estado.js";

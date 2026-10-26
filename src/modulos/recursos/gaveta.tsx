@@ -18,7 +18,7 @@ import {
   Gaveta,
   Kv,
   Secao,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import { SecaoDoAjuste } from "./ajuste.tsx";
 import { SecaoDeAnexos } from "./anexos.tsx";
 import { SecaoDoParecer } from "./parecer.tsx";

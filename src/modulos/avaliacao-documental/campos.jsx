@@ -3,7 +3,7 @@ import {
   perguntaDoTexto,
   textoDaPergunta,
 } from "../../lib/avaliacao-documental/regra.js";
-import { Campo } from "../../ui/index.js";
+import { Campo } from "../../ui/index.ts";
 
 /*
   Peças de formulário da regra da avaliação documental (só desenho; o formato

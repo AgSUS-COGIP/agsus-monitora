@@ -1,5 +1,26 @@
 import { useRef } from "react";
-import { classes } from "./classes.js";
+import type { KeyboardEvent, ReactNode } from "react";
+import { classes } from "./classes.ts";
+
+export interface AbaDaLista {
+  id: string;
+  rotulo: ReactNode;
+  icone?: string;
+  contagem?: number | string;
+  idDaAba?: string;
+  idDoPainel?: string;
+  dados?: Record<string, string>;
+}
+
+export interface PropriedadesDasAbas {
+  rotulo: string;
+  abas: ReadonlyArray<AbaDaLista>;
+  ativa: string;
+  aoEscolher: (id: string) => void;
+  compactas?: boolean;
+  className?: string;
+  tour?: string;
+}
 
 /*
   Abas (DS 10.5, `.ui-abas`): sublinhado, sem caixas — a ativa leva a barra
@@ -18,16 +39,11 @@ import { classes } from "./classes.js";
   Lista de aprovados (listas do edital e sub judice) e pelas etapas da fila
   da Avaliação documental.
 */
-/**
- * @param {object} p
- * @param {string} p.rotulo
- * @param {ReadonlyArray<{ id: string, rotulo: import("react").ReactNode, icone?: string, contagem?: number | string, idDaAba?: string, idDoPainel?: string, dados?: Record<string, string> }>} p.abas
- * @param {string} p.ativa
- * @param {(id: string) => void} p.aoEscolher
- * @param {boolean} [p.compactas]
- * @param {string} [p.className]
- * @param {string} [p.tour]
- */
+const PASSO_DA_SETA: Partial<Record<string, number>> = {
+  ArrowRight: 1,
+  ArrowLeft: -1,
+};
+
 export function Abas({
   rotulo,
   abas,
@@ -36,15 +52,15 @@ export function Abas({
   compactas = false,
   className,
   tour,
-}) {
-  const botoes = useRef([]);
+}: PropriedadesDasAbas) {
+  const botoes = useRef<Array<HTMLButtonElement | null>>([]);
 
-  function aoTeclar(evento, indice) {
-    const passo = { ArrowRight: 1, ArrowLeft: -1 }[evento.key];
+  function aoTeclar(evento: KeyboardEvent<HTMLButtonElement>, indice: number) {
+    const passo = PASSO_DA_SETA[evento.key];
     if (!passo) return;
     evento.preventDefault();
     const proximo = (indice + passo + abas.length) % abas.length;
-    aoEscolher(abas[proximo].id);
+    aoEscolher(abas[proximo]!.id);
     botoes.current[proximo]?.focus();
   }
 
@@ -64,7 +80,9 @@ export function Abas({
         return (
           <button
             key={aba.id}
-            ref={(el) => (botoes.current[indice] = el)}
+            ref={(el) => {
+              botoes.current[indice] = el;
+            }}
             type="button"
             role="tab"
             id={aba.idDaAba}

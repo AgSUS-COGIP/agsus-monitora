@@ -2,8 +2,8 @@ import { useState } from "react";
 import { DEFAULT_ACCESS_BRANDING } from "../../lib/access-branding.js";
 import { urlDeImagem } from "../../lib/apresentacao-das-configuracoes.js";
 import { avaliarCor, corDoTextoPara } from "../../lib/contraste.js";
-import { Aviso, Campo } from "../../ui/index.js";
-import { Icone } from "../../componentes/icone.jsx";
+import { Aviso, Campo } from "../../ui/index.ts";
+import { Icone } from "../../componentes/icone.tsx";
 
 /*
   Peças comuns das seções de Configurações (Marca, Página inicial, Tela de

@@ -38,7 +38,7 @@ import {
   perfilDoContexto,
   resumoDoEscopo,
 } from "../../lib/ver-como.js";
-import { Icone } from "../../componentes/icone.jsx";
+import { Icone } from "../../componentes/icone.tsx";
 import {
   Aviso,
   BlocosEsqueleto,
@@ -47,7 +47,7 @@ import {
   classes,
   Modal,
   Selo,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import {
   AvisoSemArea,
   AvisoSemCoordenacao,

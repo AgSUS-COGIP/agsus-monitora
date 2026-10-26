@@ -12,7 +12,7 @@ const semComentarios = (arquivo) =>
 
 describe("gráficos sob demanda", () => {
   it("nenhum import estático de chart.js no código do app", () => {
-    for (const arquivo of ["src/lib/chartjs-global.js", "src/ui/grafico.jsx"])
+    for (const arquivo of ["src/lib/chartjs-global.js", "src/ui/grafico.tsx"])
       expect(semComentarios(arquivo)).not.toMatch(
         /^\s*import\s+(?!type\b)[^;]*from\s+["']chart\.js/m,
       );

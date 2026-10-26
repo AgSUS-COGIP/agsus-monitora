@@ -37,7 +37,7 @@ import {
   ordinalFeminino,
   resumirQuadro,
 } from "../../lib/configuracao-de-convocacao.ts";
-import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import { formatNumberBR } from "../../lib/formatters";
 import {
   Campo,
@@ -46,7 +46,7 @@ import {
   LinhasEsqueleto,
   PainelDeFiltros,
   classes,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import {
   AcaoDeCarta,
   AcaoDeStatus,

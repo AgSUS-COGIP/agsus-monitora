@@ -9,7 +9,7 @@ import {
   GRAVIDADES,
   textoDePendentes,
 } from "../../lib/editor-de-coordenadas.ts";
-import { Aviso, Carregando, EstadoVazio, Selo } from "../../ui/index.js";
+import { Aviso, Carregando, EstadoVazio, Selo } from "../../ui/index.ts";
 
 /* Quantos itens a lista desenha de uma vez (a visão nacional tem milhares). */
 export const LIMITE_DA_FILA = 200;

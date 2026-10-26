@@ -16,7 +16,7 @@ import type {
   RegraSalva,
 } from "../../../lib/avaliacao-documental/tipos-da-regra.ts";
 import { rotuloDaVersao } from "../../../lib/nome-da-versao.ts";
-import { Aviso, Campo, Selo } from "../../../ui/index.js";
+import { Aviso, Campo, Selo } from "../../../ui/index.ts";
 import { CampoNomeDaVersao } from "../../../ui/nome-da-versao.tsx";
 import {
   copiarParaAreaDeTransferencia,

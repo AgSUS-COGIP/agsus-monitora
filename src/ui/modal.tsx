@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
+import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { classes } from "./classes.js";
+import { classes } from "./classes.ts";
 
 /*
   Modal do DESIGN.md (seção 4): `.modal` > `.modal-card`, no fim do `body`
@@ -30,14 +31,23 @@ const FOCAVEIS = [
 ].join(",");
 
 /* Um painel de aba escondido continua no DOM; o que está nele não recebe foco. */
-const focaveisDe = (cartao) =>
-  [...cartao.querySelectorAll(FOCAVEIS)].filter(
+const focaveisDe = (cartao: HTMLElement) =>
+  [...cartao.querySelectorAll<HTMLElement>(FOCAVEIS)].filter(
     (elemento) => !elemento.closest(".hidden, [hidden]"),
   );
 
-/**
- * @param {{ id?: string, rotuloId?: string, rotulo?: string, aoFechar?: () => void, fecharAoClicarFora?: boolean, className?: string, cartaoClassName?: string, tour?: string, children?: import("react").ReactNode }} props
- */
+export interface PropriedadesDoModal {
+  id?: string;
+  rotuloId?: string;
+  rotulo?: string;
+  aoFechar: () => void;
+  fecharAoClicarFora?: boolean;
+  className?: string;
+  cartaoClassName?: string;
+  tour?: string;
+  children?: ReactNode;
+}
+
 export function Modal({
   id,
   rotuloId,
@@ -48,21 +58,21 @@ export function Modal({
   cartaoClassName = "",
   tour,
   children,
-}) {
-  const cartao = useRef(null);
+}: PropriedadesDoModal) {
+  const cartao = useRef<HTMLDivElement>(null);
   const fechar = useRef(aoFechar);
   useLayoutEffect(() => {
     fechar.current = aoFechar;
   });
 
   useEffect(() => {
-    const anterior = document.activeElement;
+    const anterior = document.activeElement as HTMLElement | null;
     const inicial =
-      cartao.current?.querySelector("[data-foco-inicial]") ||
-      focaveisDe(cartao.current)[0];
+      cartao.current?.querySelector<HTMLElement>("[data-foco-inicial]") ||
+      focaveisDe(cartao.current!)[0];
     inicial?.focus();
 
-    function aoTeclar(evento) {
+    function aoTeclar(evento: KeyboardEvent) {
       if (evento.key === "Escape") {
         // Um controle de dentro (menu aberto) já tratou o Esc: só ele fecha.
         if (!evento.defaultPrevented) fechar.current?.();
@@ -71,8 +81,8 @@ export function Modal({
       if (evento.key !== "Tab" || !cartao.current) return;
       const itens = focaveisDe(cartao.current);
       if (!itens.length) return;
-      const primeiro = itens[0];
-      const ultimo = itens.at(-1);
+      const primeiro = itens[0]!;
+      const ultimo = itens.at(-1)!;
       const foraDoCartao = !cartao.current.contains(document.activeElement);
       if (
         evento.shiftKey &&

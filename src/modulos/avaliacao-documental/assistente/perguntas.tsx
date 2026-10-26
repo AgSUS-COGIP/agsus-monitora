@@ -31,7 +31,7 @@ import type {
   PerguntaDaCarga,
   RegraAnalise,
 } from "../../../lib/avaliacao-documental/tipos-da-regra.ts";
-import { Aviso } from "../../../ui/index.js";
+import { Aviso } from "../../../ui/index.ts";
 import {
   BotaoTirar,
   Caixa,

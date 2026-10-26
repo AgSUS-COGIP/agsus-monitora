@@ -29,7 +29,7 @@ import {
   TabelaInfinita,
   textoDoRecorte,
   TopoDoPainel,
-} from "../../src/ui/index.js";
+} from "../../src/ui/index.ts";
 import { clicar, digitar, teclar } from "../componentes/interacoes.js";
 
 /*

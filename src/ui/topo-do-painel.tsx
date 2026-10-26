@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 /*
   O topo de uma tela (`.ui-topo`): as visões (um <Segmentado>, opcional), a
   data da última carga, discreta e uma vez só (`.status-discreto`), e as ações
@@ -8,10 +10,19 @@
   app (barra lateral e menu da conta): o topo não os repete.
 */
 
-/**
- * Sem `aoExportar`, o botão Exportar não aparece.
- * @param {{ status: import("react").ReactNode, aoAtualizar: () => void, atualizarDesativado?: boolean, aoExportar?: () => void, exportarDesativado?: boolean, visoes?: import("react").ReactNode, idDaAtualizacao?: string, tour?: string, children?: import("react").ReactNode }} props
- */
+/** Sem `aoExportar`, o botão Exportar não aparece. */
+export interface PropriedadesDoTopoDoPainel {
+  status: ReactNode;
+  aoAtualizar: () => void;
+  atualizarDesativado?: boolean;
+  aoExportar?: () => void;
+  exportarDesativado?: boolean;
+  visoes?: ReactNode;
+  idDaAtualizacao?: string;
+  tour?: string;
+  children?: ReactNode;
+}
+
 export function TopoDoPainel({
   visoes = null,
   status,
@@ -22,7 +33,7 @@ export function TopoDoPainel({
   exportarDesativado,
   tour,
   children,
-}) {
+}: PropriedadesDoTopoDoPainel) {
   return (
     <header className="ui-topo" data-tour={tour}>
       {visoes ? <div className="ui-topo-titulo">{visoes}</div> : null}

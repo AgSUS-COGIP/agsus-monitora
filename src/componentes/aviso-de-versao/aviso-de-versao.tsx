@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { Icone } from "../icone.jsx";
+import { Icone } from "../icone.tsx";
 import { Aviso } from "../../ui/aviso.tsx";
 import {
   AVISO_DE_PENDENCIA,

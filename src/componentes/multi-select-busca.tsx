@@ -15,21 +15,33 @@ import { useEffect, useMemo, useRef, useState } from "react";
     quem decide tirá-la da seleção (`manterSoAsOpcoes`).
 */
 
-const text = (value) => String(value ?? "").trim();
+const text = (value: unknown) => String(value ?? "").trim();
 
 /*
   Busca sem acento e sem caixa: quem procura "migracao" espera encontrar
   "Migração".
 */
-const norm = (value) =>
+const norm = (value: unknown) =>
   text(value).normalize("NFD").replace(/[̀-ͯ]/g, "").toLocaleLowerCase("pt-BR");
 
-const compara = (a, b) =>
+const compara = (a: unknown, b: unknown) =>
   String(a ?? "").localeCompare(String(b ?? ""), "pt-BR", { numeric: true });
 
-const classes = (...lista) => lista.filter(Boolean).join(" ");
+const classes = (...lista: ReadonlyArray<string | number | false>) =>
+  lista.filter(Boolean).join(" ");
 
-export function normalizarOpcoes(lista) {
+export interface OpcaoDaBusca {
+  value: string;
+  label: string;
+}
+
+/** Opção como chega: o valor (que também é o rótulo) ou `{ value, label? }`. */
+export type OpcaoDeEntrada =
+  string | number | { value: unknown; label?: unknown } | null | undefined;
+
+export function normalizarOpcoes(
+  lista: readonly OpcaoDeEntrada[] | null | undefined,
+): OpcaoDaBusca[] {
   return (lista || [])
     .map((item) =>
       typeof item === "object" && item !== null
@@ -42,28 +54,33 @@ export function normalizarOpcoes(lista) {
     .filter((item) => item.value);
 }
 
-/**
- * @param {{ id: string, opcoes?: readonly (string | { value: string, label?: string })[], selecionados?: readonly string[], placeholder?: string, aoMudar?: (valores: string[]) => void }} props
- */
+export interface PropriedadesDoMultiSelectBusca {
+  id: string;
+  opcoes?: readonly (string | { value: string; label?: string })[];
+  selecionados?: readonly string[];
+  placeholder?: string;
+  aoMudar?: (valores: string[]) => void;
+}
+
 export function MultiSelectBusca({
   id,
   opcoes = [],
   selecionados = [],
   placeholder = "Todos",
   aoMudar = () => {},
-}) {
+}: PropriedadesDoMultiSelectBusca) {
   const [aberto, setAberto] = useState(false);
   const [busca, setBusca] = useState("");
-  const raiz = useRef(null);
-  const gatilho = useRef(null);
-  const campoDeBusca = useRef(null);
-  const menu = useRef(null);
-  const lista = useRef(null);
+  const raiz = useRef<HTMLDivElement>(null);
+  const gatilho = useRef<HTMLButtonElement>(null);
+  const campoDeBusca = useRef<HTMLInputElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+  const lista = useRef<HTMLDivElement>(null);
   /* O que focar quando o menu acabar de abrir: a busca, ou a primeira opção. */
-  const focoAoAbrir = useRef("busca");
+  const focoAoAbrir = useRef<"busca" | "opcao">("busca");
 
   const todas = useMemo(() => normalizarOpcoes(opcoes), [opcoes]);
-  const rotuloDe = (valor) =>
+  const rotuloDe = (valor: string) =>
     todas.find((opcao) => opcao.value === valor)?.label || valor;
   const escolhidos = selecionados.filter((valor) =>
     todas.some((opcao) => opcao.value === valor),
@@ -79,13 +96,13 @@ export function MultiSelectBusca({
       )
     : todas;
 
-  const ordenar = (valores) =>
+  const ordenar = (valores: readonly string[]) =>
     [...new Set(valores)].sort((a, b) => compara(rotuloDe(a), rotuloDe(b)));
 
-  function focarOpcao(indice) {
+  function focarOpcao(indice: number) {
     const caixas = [...(lista.current?.querySelectorAll("input") || [])];
     if (!caixas.length) return;
-    caixas[Math.max(0, Math.min(indice, caixas.length - 1))].focus();
+    caixas[Math.max(0, Math.min(indice, caixas.length - 1))]!.focus();
   }
 
   useEffect(() => {
@@ -98,10 +115,11 @@ export function MultiSelectBusca({
       não cresce com o número de filtros na tela — e abrir outro fecha este,
       porque o clique no outro é um clique fora.
     */
-    function aoClicar(evento) {
-      if (!raiz.current?.contains(evento.target)) setAberto(false);
+    function aoClicar(evento: MouseEvent) {
+      if (!raiz.current?.contains(evento.target as Node | null))
+        setAberto(false);
     }
-    function aoTeclar(evento) {
+    function aoTeclar(evento: KeyboardEvent) {
       if (evento.key !== "Escape") return;
       setAberto(false);
       gatilho.current?.focus();
@@ -138,7 +156,7 @@ export function MultiSelectBusca({
     };
   }, [aberto]);
 
-  function abrir(foco) {
+  function abrir(foco: "busca" | "opcao") {
     focoAoAbrir.current = foco;
     setAberto(true);
   }
@@ -252,8 +270,8 @@ export function MultiSelectBusca({
           aria-multiselectable="true"
           onKeyDown={(evento) => {
             if (evento.key !== "ArrowDown" && evento.key !== "ArrowUp") return;
-            const caixas = [...lista.current.querySelectorAll("input")];
-            const atual = caixas.indexOf(evento.target);
+            const caixas = [...lista.current!.querySelectorAll("input")];
+            const atual = caixas.indexOf(evento.target as HTMLInputElement);
             evento.preventDefault();
             if (evento.key === "ArrowDown") focarOpcao(atual + 1);
             else if (atual <= 0) campoDeBusca.current?.focus();

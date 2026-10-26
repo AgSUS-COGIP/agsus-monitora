@@ -20,8 +20,8 @@ import {
   paletaDoTema,
   semMovimento,
 } from "../../modules/comemoracao.js";
-import { Segmentado } from "../../ui/index.js";
-import { Icone } from "../../componentes/icone.jsx";
+import { Segmentado } from "../../ui/index.ts";
+import { Icone } from "../../componentes/icone.tsx";
 
 /*
   Palco de testes de Configurações › Comemorações, no topo da seção: a

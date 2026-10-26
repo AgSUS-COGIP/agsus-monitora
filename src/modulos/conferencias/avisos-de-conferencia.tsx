@@ -21,7 +21,7 @@ import {
 } from "react";
 import { pedirFiltro } from "../../app/pedido-de-filtro.js";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import { Icone } from "../../componentes/icone.jsx";
+import { Icone } from "../../componentes/icone.tsx";
 import {
   casosRestantes,
   contagemPorModulo,
@@ -42,7 +42,7 @@ import {
 import { mensagemDeFalha } from "../../lib/falha-de-rede";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { formatNumberBR } from "../../lib/formatters";
-import { Gaveta, Segmentado } from "../../ui/index.js";
+import { Gaveta, Segmentado } from "../../ui/index.ts";
 import { criarEstadoDosAvisos } from "./estado.ts";
 
 declare global {

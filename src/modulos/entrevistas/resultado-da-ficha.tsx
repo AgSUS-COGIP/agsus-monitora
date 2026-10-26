@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { classes } from "../../ui/classes.js";
+import { classes } from "../../ui/classes.ts";
 import { animar } from "./campo-de-nota.tsx";
 
 /*

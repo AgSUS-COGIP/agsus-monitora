@@ -31,7 +31,7 @@ import {
   validarCorrecaoDoMapa,
 } from "../../lib/editor-de-coordenadas.ts";
 import { CORES_DO_MAPA } from "../../lib/mapa-saude-indigena/formas.ts";
-import { Aviso, Campo, Selo, classes } from "../../ui/index.js";
+import { Aviso, Campo, Selo, classes } from "../../ui/index.ts";
 import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.ts";
 import { FilaDeCoordenadas } from "./fila-de-coordenadas.tsx";
 import { HistoricoDoPonto } from "./historico-do-ponto.tsx";

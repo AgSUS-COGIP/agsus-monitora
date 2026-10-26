@@ -44,7 +44,7 @@ import {
   pontuacaoMaxima,
   rotuloDoPeso,
 } from "../../lib/roteiro-de-entrevista.ts";
-import { Aviso, classes, Segmentado } from "../../ui/index.js";
+import { Aviso, classes, Segmentado } from "../../ui/index.ts";
 import { Popover } from "../../ui/popover.tsx";
 import { AbasDaFicha } from "./abas-da-ficha.tsx";
 import { CabecalhoDaFicha } from "./cabecalho-da-ficha.tsx";

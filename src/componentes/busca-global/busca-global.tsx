@@ -35,7 +35,7 @@ import {
   tituloDoResultado,
 } from "../../lib/busca-global.ts";
 import { usarLinhasDoMonitoramento } from "../usar-linhas-do-monitoramento.ts";
-import { Modal } from "../../ui/modal.jsx";
+import { Modal } from "../../ui/modal.tsx";
 
 function Realce({ valor, termo }: { valor: string; termo: string }) {
   return partesRealcadas(valor, termo).map((parte, i) =>

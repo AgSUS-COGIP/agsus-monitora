@@ -13,7 +13,7 @@ import {
   periodoDaEtapa,
   tituloDoDia,
 } from "../../lib/calendario-editais.ts";
-import { Aviso, classes, Modal } from "../../ui/index.js";
+import { Aviso, classes, Modal } from "../../ui/index.ts";
 
 /*
   As peças do calendário: a grade do mês (e o skeleton dela), a linha de uma

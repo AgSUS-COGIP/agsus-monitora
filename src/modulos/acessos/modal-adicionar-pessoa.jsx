@@ -1,8 +1,8 @@
 import { useState, useSyncExternalStore } from "react";
 import { gruposAtribuiveis } from "../../lib/teto-de-acessos.js";
 import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.js";
-import { MultiSelectBusca } from "../../componentes/multi-select-busca.jsx";
-import { BotaoDeAcao, Campo, Modal } from "../../ui/index.js";
+import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
+import { BotaoDeAcao, Campo, Modal } from "../../ui/index.ts";
 import { CabecalhoDaGaveta, CampoMotivo, motivoValido } from "./partes.jsx";
 import { AcoesDoConvite } from "./convite.jsx";
 import {

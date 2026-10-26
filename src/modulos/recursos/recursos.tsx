@@ -27,7 +27,7 @@ import {
   pendenciasPrioritarias,
 } from "../../lib/recursos-dos-candidatos.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { Aviso } from "../../ui/index.js";
+import { Aviso } from "../../ui/index.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { criarEstadoDosRecursos } from "./estado.ts";
 import { FormularioDoRecurso } from "./formulario.tsx";

@@ -2,14 +2,23 @@ import {
   ROTULO_DO_TREINAMENTO,
   ehEditalDeTreinamento,
 } from "../lib/edital-de-treinamento.js";
-import { Selo } from "../ui/index.js";
+import { Selo } from "../ui/index.ts";
 
 /*
   O selo "Treinamento" do edital de treinamento (src/lib/edital-de-treinamento.js):
   no seletor e no topo das telas operacionais e na tabela de Editais. Edital
   real: nada.
 */
-export function SeloDeTreinamento({ edital, className }) {
+export interface PropriedadesDoSeloDeTreinamento {
+  /** A linha do monitoramento ou o item de RPC do edital (pode faltar). */
+  edital: unknown;
+  className?: string;
+}
+
+export function SeloDeTreinamento({
+  edital,
+  className,
+}: PropriedadesDoSeloDeTreinamento) {
   if (!ehEditalDeTreinamento(edital)) return null;
   return (
     <Selo

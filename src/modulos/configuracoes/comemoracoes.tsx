@@ -33,8 +33,8 @@ import {
 } from "../../lib/catalogo-de-comemoracoes.ts";
 import { EFEITOS, ROTULOS_DOS_EFEITOS } from "../../lib/motor-de-efeitos.js";
 import { comemorar, semMovimento } from "../../modules/comemoracao.js";
-import { Aviso, Campo, Segmentado } from "../../ui/index.js";
-import { Icone } from "../../componentes/icone.jsx";
+import { Aviso, Campo, Segmentado } from "../../ui/index.ts";
+import { Icone } from "../../componentes/icone.tsx";
 import {
   ICONES_DOS_EFEITOS,
   OPCOES_DE_INTENSIDADE,

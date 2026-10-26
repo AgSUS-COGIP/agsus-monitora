@@ -8,7 +8,7 @@ import {
   ordinalFeminino,
   previaDaConvocacao,
 } from "../../lib/configuracao-de-convocacao.ts";
-import { classes } from "../../ui/index.js";
+import { classes } from "../../ui/index.ts";
 import { CampoEditavel } from "./partes.tsx";
 
 /*

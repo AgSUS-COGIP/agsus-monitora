@@ -58,7 +58,7 @@ import {
   RenomearVersao,
   Segmentado,
   SituacaoDoRascunho,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import { usarRascunhoDaRegra } from "../../app/usar-rascunho-da-regra.ts";
 import {
   dataEHoraCurtas,

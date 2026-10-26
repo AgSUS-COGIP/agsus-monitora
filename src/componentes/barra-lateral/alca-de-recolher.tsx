@@ -1,7 +1,7 @@
 import { alternarBarraPelaJanela } from "./integracao.ts";
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { Icone } from "../icone.jsx";
+import { Icone } from "../icone.tsx";
 
 /*
   Um controle só para recolher a barra, com o id de sempre,

@@ -42,7 +42,7 @@ import {
   ErroAoCarregar,
   PainelDeFiltros,
   TopoDoPainel,
-} from "../../ui/index.js";
+} from "../../ui/index.ts";
 import { criarEstadoDoCalendario } from "./estado.ts";
 import {
   AvisoDeDatasARevisar,

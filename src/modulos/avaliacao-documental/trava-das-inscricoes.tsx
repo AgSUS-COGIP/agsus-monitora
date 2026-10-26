@@ -10,7 +10,7 @@ import {
   textoDoEvento,
   type TravaDasInscricoes as Trava,
 } from "../../lib/avaliacao-documental/trava-das-inscricoes.ts";
-import { Aviso, Campo, Selo } from "../../ui/index.js";
+import { Aviso, Campo, Selo } from "../../ui/index.ts";
 
 /*
   Cartão "Inscrições congeladas" da aba Pré-classificação (migration

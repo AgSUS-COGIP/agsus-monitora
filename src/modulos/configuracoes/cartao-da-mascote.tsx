@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Icone } from "../../componentes/icone.jsx";
-import { Segmentado } from "../../ui/index.js";
+import { Icone } from "../../componentes/icone.tsx";
+import { Segmentado } from "../../ui/index.ts";
 import {
   definirEstadoDaAya,
   ESTADOS_DA_MASCOTE,

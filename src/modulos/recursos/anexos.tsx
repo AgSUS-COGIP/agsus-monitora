@@ -20,7 +20,7 @@ import {
   TIPOS_DE_ANEXO,
   validarArquivoDoAnexo,
 } from "../../lib/anexos-do-recurso.js";
-import { Secao } from "../../ui/index.js";
+import { Secao } from "../../ui/index.ts";
 import { dataHora } from "./partes.ts";
 
 /*
