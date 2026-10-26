@@ -145,6 +145,7 @@ export const FA_PARA_LUCIDE = Object.freeze({
   "fa-user-group": "Users",
   "fa-user-minus": "UserMinus",
   "fa-user-plus": "UserPlus",
+  "fa-user-slash": "UserRoundX",
   "fa-user-xmark": "UserX",
   "fa-users": "Users",
   "fa-wand-magic-sparkles": "WandSparkles",
