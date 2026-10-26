@@ -7,7 +7,7 @@ dependências e ações estão definidos em `tipos.ts`.
 
 `src/lib/saude-das-cargas.ts` normaliza as cargas e calcula os selos e o resumo.
 `src/lib/painel-dos-robos.ts` normaliza editais, vagas, histórico; também monta filtros, prévia e acompanhamento.
-`src/lib/robos-de-carga.ts` permanece compartilhado com a Avaliação documental, com contratos JSDoc.
+`src/lib/robos-de-carga.ts` (TypeScript) permanece compartilhado com a Avaliação documental.
 O banco também confere os robôs, modos e opções permitidos.
 
 As fronteiras recebem `unknown`, conferem objetos e listas, descartam entradas que
