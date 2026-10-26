@@ -1,20 +1,34 @@
+import type { SupabaseClient, Subscription } from "@supabase/supabase-js";
 import { getSupabaseClient } from "../lib/supabaseClient";
+
+/** O usuário da sessão, no que a foto lê. */
+type UsuarioComFoto =
+  | { user_metadata?: { avatar_url?: unknown; picture?: unknown } | null }
+  | null
+  | undefined;
+
+/** O cliente do Supabase, no que a foto usa (a sessão e a troca dela). */
+type ClienteDaFoto = Pick<SupabaseClient, "auth"> | null | undefined;
 
 const PHOTO_ID = "googleProfilePhoto";
 
-function safeText(value) {
+function safeText(value: unknown): string {
   return String(value ?? "").trim();
 }
 
-export function getGoogleProfilePhotoUrl(user) {
+export function getGoogleProfilePhotoUrl(user: UsuarioComFoto): string {
   return (
     safeText(user?.user_metadata?.avatar_url) ||
     safeText(user?.user_metadata?.picture)
   );
 }
 
-export function renderGoogleProfilePhoto(user, root = document) {
-  const existing = root.getElementById?.(PHOTO_ID) || null;
+export function renderGoogleProfilePhoto(
+  user: UsuarioComFoto,
+  root: Document = document,
+): HTMLImageElement | null {
+  const existing =
+    (root.getElementById?.(PHOTO_ID) as HTMLImageElement | null) || null;
   const container = root.getElementById?.("topUserAvatar") || null;
   const photoUrl = getGoogleProfilePhotoUrl(user);
 
@@ -38,7 +52,10 @@ export function renderGoogleProfilePhoto(user, root = document) {
   return image;
 }
 
-export async function syncGoogleProfilePhoto(client, root = document) {
+export async function syncGoogleProfilePhoto(
+  client: ClienteDaFoto,
+  root: Document = document,
+): Promise<HTMLImageElement | null> {
   if (!client?.auth) return null;
 
   try {
@@ -50,9 +67,9 @@ export async function syncGoogleProfilePhoto(client, root = document) {
 }
 
 export function initGoogleProfilePhoto(
-  client = getSupabaseClient(),
-  root = document,
-) {
+  client: ClienteDaFoto = getSupabaseClient(),
+  root: Document = document,
+): Subscription | null {
   if (!client?.auth) return null;
 
   void syncGoogleProfilePhoto(client, root);

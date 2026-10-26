@@ -22,7 +22,7 @@ import {
   recortarArvorePorArea,
 } from "../src/lib/menu-lateral.ts";
 import { SECOES } from "../src/modulos/configuracoes/secoes.ts";
-import { NOMES_DE_ICONES } from "../src/modules/icones.js";
+import { NOMES_DE_ICONES } from "../src/modules/icones.ts";
 
 const TUDO = {
   dashboard: true,

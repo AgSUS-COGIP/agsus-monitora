@@ -13,7 +13,7 @@ import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.ts";
-import { esquecerConversa } from "../../modules/aya-memoria.js";
+import { esquecerConversa } from "../../modules/aya-memoria.ts";
 import {
   EVENTO_SECAO_ABERTA,
   secaoAtualDeConfiguracao,

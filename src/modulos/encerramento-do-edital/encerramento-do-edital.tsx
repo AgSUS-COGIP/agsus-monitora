@@ -1,6 +1,6 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.tsx";
-import { comemorar as comemorarPadrao } from "../../modules/comemoracao.js";
+import { comemorar as comemorarPadrao } from "../../modules/comemoracao.ts";
 import { GradeDeKpis, Kpi, Modal } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {
@@ -20,7 +20,7 @@ import "./encerramento-do-edital.css";
   cima, os totais do edital e o agradecimento à equipe; embaixo, só a parte
   de quem está vendo. Sem ranking, sem números de outras pessoas.
 
-  Os fogos são os do catálogo (src/modules/comemoracao.js): respeitam a
+  Os fogos são os do catálogo (src/modules/comemoracao.ts): respeitam a
   configuração, a preferência pessoal e prefers-reduced-motion.
 */
 

@@ -37,8 +37,8 @@ As regras nacionais e distritais de contagens, bolhas, CASAIs, unidades, víncul
 resumos e enquadramento estão em `src/lib/mapa-saude-indigena/chaves.ts`, `mapa-nacional.ts`
 e `mapa-do-dsei.ts`. A integração comum com o Leaflet também está em TypeScript (`leaflet.ts`), incluindo
 criação, fundo com recurso, tamanho, contornos, enquadramento, leque, ícones e balões.
-A reconciliação e as guardas globais (`src/modules/map-*.js`) permanecem em JavaScript,
-com contratos JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
+As guardas globais `map-guard.ts` e `map-zoom-range.ts` estão em TypeScript; a reconciliação e o
+seletor de Mapa/Satélite (`map-base-layer-switcher.js`) permanecem em JavaScript, com contratos JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
 mapas já estão em TypeScript, com contratos em `tipos-do-painel.ts`; formas e cores
 em `src/lib/mapa-saude-indigena/formas.ts`. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript:
@@ -95,6 +95,18 @@ só o mínimo que usa (por exemplo `MapaDaDica`, `DicaDoLeaflet`). A migração 
 gerado: a saída do esbuild (sem espaços, sintaxe minificada) de cada arquivo é idêntica à do
 original. `scripts/arquivo/auditar-coordenadas.mjs` e `scripts/gerar-icones-lucide.mjs` importam o `.ts`
 direto no Node, que remove os tipos.
+
+Os módulos não visuais de `src/modules/` também estão em TypeScript: sessão e armazenamento
+(`auth-storage.ts`), cópias no IndexedDB (`copia-da-sessao-indexeddb.ts`,
+`cache-de-payload-indexeddb.ts`), catálogo de abas e situação dos módulos (`catalogo-de-abas.ts`,
+`situacao-dos-modulos.ts`), memória e fontes da Aya (`aya-memoria.ts`, `aya-knowledge.ts`), guardas do
+mapa (`map-guard.ts`, `map-zoom-range.ts`), foto da conta Google, ciclo do service worker
+(`pwa-lifecycle.ts`), comemorações (`comemoracao.ts`, `comemoracao-do-acesso.ts`) e o registro de
+ícones (`icones.ts`). A migração foi só de tipos: a saída do esbuild (sem renomear identificadores) é
+igual à do JavaScript, arquivo a arquivo. O Leaflet, sem tipos instalados, é declarado em cada guarda
+só no que ela usa (`window.L` como `unknown`, lido no formato local). `aya-conhecimento-gerado.js`
+continua gerado em JavaScript. O `check-legado-so-encolhe` aceita `x.ts` no lugar de `x.js` (migração),
+mas não arquivo novo.
 
 Editais (`src/modulos/editais/`: estado, resumo, Núcleo, painel operacional, modal do edital,
 editor do cronograma, importação de anexos e linha do tempo) está todo em TypeScript, assim como as

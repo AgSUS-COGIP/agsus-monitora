@@ -305,7 +305,7 @@ describe("registro da aba", async () => {
   const { RESOURCES } = await import("../src/lib/permissoes-recursos.ts");
   const { canViewSelecao, paginasPermitidas } =
     await import("../src/lib/access-roles.ts");
-  const { NOMES_DE_ICONES } = await import("../src/modules/icones.js");
+  const { NOMES_DE_ICONES } = await import("../src/modules/icones.ts");
 
   it("Seleção é a última etapa, depois da Lista de aprovados, como beta", () => {
     const lista = ABAS_DO_MENU.map((aba) => aba.id);

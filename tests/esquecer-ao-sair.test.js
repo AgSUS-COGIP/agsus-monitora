@@ -8,7 +8,7 @@ import {
   esquecerConversaDaAya,
   obterPaginaDaAya,
 } from "../src/modulos/aya/estado.ts";
-import { salvarConversa } from "../src/modules/aya-memoria.js";
+import { salvarConversa } from "../src/modules/aya-memoria.ts";
 
 /*
   Sair do sistema (ou ficar sem acesso) esquece o que a pessoa deixou nas

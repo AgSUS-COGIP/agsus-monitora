@@ -1,5 +1,5 @@
 /*
-  Comemorações (src/modules/comemoracao.js): o aviso no topo, por cima de
+  Comemorações (src/modules/comemoracao.ts): o aviso no topo, por cima de
   tudo (com "Pular", som e ×); por baixo dele, o véu escuro, o canvas dos
   fogos e a Aya voando — nenhum deles recebe clique. Vale no MONITORA e nos
   painéis (análises, entrevistas), que importam tokens.css.

@@ -27,7 +27,7 @@ agradecimento, despedida; "bom dia, como dar acesso?" responde a pergunta com
 "Bom dia!" na frente) e os dados da tela. Contagens só são respondidas quando
 disponíveis no contexto, com o recorte indicado. A única resposta fora da busca é a
 composta do DSEI Alagoas e Sergipe (`curatedAnswerForQuestion` em
-`src/modules/aya-knowledge.js`), para duas perguntas num enunciado só.
+`src/modules/aya-knowledge.ts`), para duas perguntas num enunciado só.
 
 O chamado abre `https://mail.google.com/mail/` em outra aba, com destinatário,
 assunto e corpo codificados. O usuário revisa e envia. A opção permanente

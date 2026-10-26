@@ -8,9 +8,9 @@
 
   Foi o que aconteceu. Três módulos envolvem `L.tileLayer` no arranque:
 
-      map-guard.js              noWrap, updateWhenIdle, keepBuffer
+      map-guard.ts              noWrap, updateWhenIdle, keepBuffer
       map-base-layer-switcher.js  etiqueta a camada com o tipo de base
-      map-zoom-range.js         impõe o maxZoom
+      map-zoom-range.ts         impõe o maxZoom
 
   Nenhum copiava `.wms`. A camada de Terras Indígenas verifica
   `L.tileLayer?.wms` antes de se instalar e desistia a cada arranque: sem

@@ -169,7 +169,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     id: "acesso-liberado",
     rotulo: "Acesso liberado ou reativado",
     grupo: "Acesso",
-    onde: "src/modules/comemoracao-do-acesso.js",
+    onde: "src/modules/comemoracao-do-acesso.ts",
     forma: "check",
     padrao: opcoes("fogos", "normal"),
   },

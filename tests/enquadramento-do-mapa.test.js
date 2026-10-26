@@ -6,7 +6,7 @@ import {
   formaDoTipo,
 } from "../src/lib/mapa-saude-indigena/formas.ts";
 
-const guard = readFileSync("src/modules/map-guard.js", "utf8");
+const guard = readFileSync("src/modules/map-guard.ts", "utf8");
 const nacional = readFileSync(
   "src/modulos/mapa-saude-indigena/mapa-nacional.tsx",
   "utf8",

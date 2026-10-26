@@ -11,7 +11,7 @@
   A regra: a folga de cada lado é o maior ponto do mapa mais 12 px, e o zoom
   mínimo desce, em quartos (`zoomSnap` 0.25), até o país inteiro caber com essa
   folga — 4.5 continua sendo o limite quando a moldura é grande o bastante.
-  O `map-guard.js` usa `zoomQueCabe` antes de cada enquadramento do Brasil.
+  O `map-guard.ts` usa `zoomQueCabe` antes de cada enquadramento do Brasil.
 
   A conta é a mesma do Leaflet: Web Mercator com azulejos de 256 px.
 */

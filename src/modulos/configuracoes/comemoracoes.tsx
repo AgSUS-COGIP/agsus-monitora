@@ -32,7 +32,7 @@ import {
   type TipoPersonalizado,
 } from "../../lib/catalogo-de-comemoracoes.ts";
 import { EFEITOS, ROTULOS_DOS_EFEITOS } from "../../lib/motor-de-efeitos.ts";
-import { comemorar, semMovimento } from "../../modules/comemoracao.js";
+import { comemorar, semMovimento } from "../../modules/comemoracao.ts";
 import { Aviso, Campo, Segmentado } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {
@@ -56,7 +56,7 @@ import {
   `comemoracoes_marcos` e só vale depois de "Salvar alterações" (motivo e
   histórico, como as outras seções). "Testar" e o palco nunca gravam: soltam
   a comemoração com `teste: true`. Regras em
-  src/lib/catalogo-de-comemoracoes.ts; o desenho, em src/modules/comemoracao.js.
+  src/lib/catalogo-de-comemoracoes.ts; o desenho, em src/modules/comemoracao.ts.
 */
 
 interface EstadoDasConfiguracoes {

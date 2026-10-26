@@ -31,8 +31,43 @@ import {
   textoDaFaixaDoAdministrador,
   textosDaManutencao,
 } from "../lib/situacao-dos-modulos.ts";
+import type {
+  AbaDaSituacao,
+  RespostaDaSituacao,
+  SituacaoDoSistema,
+} from "../lib/situacao-dos-modulos.ts";
 import { TEXTOS_DA_PAGINA_DESLIGADA } from "../lib/pagina-desligada.ts";
-import { criarIcone } from "./icones.js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
+  OpcoesDaCargaDoBanco,
+  RespostaDaConsulta,
+} from "./catalogo-de-abas.ts";
+import { criarIcone } from "./icones.ts";
+import type { NomeDoIconeRegistrado } from "./icones.ts";
+
+/** O documento, no que a manutenção usa (os testes passam um parcial). */
+type DocumentoDaManutencao = Document | null | undefined;
+
+/** De onde veio a tela: página desligada ou a manutenção que vale. */
+type OrigemDaTela = "desligada" | "sistema" | "area" | "aba" | "aba_area";
+
+/** Os textos da tela de manutenção (ou de página desativada). */
+interface TextosDaTela {
+  readonly titulo: string;
+  readonly mensagem: string;
+  readonly previsao?: string;
+}
+
+/** As opções de `aplicarManutencaoNaNavegacao`. */
+export interface OpcoesDaManutencaoNaNavegacao {
+  documento?: DocumentoDaManutencao;
+  view?: string;
+  area?: string;
+  abas?: readonly AbaDaSituacao[] | null;
+  adminGlobal?: boolean;
+  desligada?: boolean;
+  aoIrParaInicio?: (() => void) | null;
+}
 
 const RPC_SITUACAO_DO_SISTEMA = "obter_situacao_do_sistema";
 /* PostgREST: a função não existe (migration ainda não aplicada). Não é falha. */
@@ -41,10 +76,12 @@ const FUNCAO_AUSENTE = "PGRST202";
 const ID_DA_PAGINA = "page-manutencao";
 const ID_DA_FAIXA = "faixaDeManutencao";
 
-let situacao = SITUACAO_PADRAO;
+let situacao: SituacaoDoSistema = SITUACAO_PADRAO;
 
 /** Dispara a consulta já; nunca rejeita. */
-export function consultaDaSituacaoDoSistema(sb) {
+export function consultaDaSituacaoDoSistema(
+  sb: Pick<SupabaseClient, "rpc"> | null | undefined,
+): Promise<RespostaDaConsulta> {
   if (!sb) return Promise.resolve({ data: null, error: null });
   return Promise.resolve(sb.rpc(RPC_SITUACAO_DO_SISTEMA)).catch((error) => ({
     data: null,
@@ -53,37 +90,45 @@ export function consultaDaSituacaoDoSistema(sb) {
 }
 
 /** Aplica a resposta; sem ela, tudo ativo. Devolve a situação em uso. */
-export async function carregarSituacaoDoSistema({ consulta } = {}) {
-  let resposta;
+export async function carregarSituacaoDoSistema({
+  consulta,
+}: OpcoesDaCargaDoBanco = {}): Promise<SituacaoDoSistema> {
+  let resposta: { data?: unknown; error?: unknown } | null | undefined;
   try {
     resposta = await consulta;
   } catch (error) {
     resposta = { data: null, error };
   }
   const { data, error } = resposta || {};
-  if (error && error.code !== FUNCAO_AUSENTE)
+  if (error && (error as { code?: unknown }).code !== FUNCAO_AUSENTE)
     console.warn("Situação do sistema indisponível; tudo ativo:", error);
-  situacao = error ? SITUACAO_PADRAO : normalizarSituacaoDoSistema(data);
+  situacao = error
+    ? SITUACAO_PADRAO
+    : normalizarSituacaoDoSistema(
+        data as RespostaDaSituacao | null | undefined,
+      );
   return situacao;
 }
 
-export function situacaoDoSistema() {
+export function situacaoDoSistema(): SituacaoDoSistema {
   return situacao;
 }
 
 /** Ao sair da conta: a próxima pessoa não herda a situação lida. */
-export function esquecerSituacaoDoSistema(documento = globalThis.document) {
+export function esquecerSituacaoDoSistema(
+  documento: DocumentoDaManutencao = globalThis.document,
+): void {
   situacao = SITUACAO_PADRAO;
   esconderFaixa(documento);
   documento?.getElementById?.(ID_DA_PAGINA)?.classList.remove("active");
 }
 
-function esconderFaixa(documento) {
+function esconderFaixa(documento: DocumentoDaManutencao) {
   const faixa = documento?.getElementById?.(ID_DA_FAIXA);
   if (faixa) faixa.hidden = true;
 }
 
-function garantirFaixa(documento) {
+function garantirFaixa(documento: Document): HTMLElement | null {
   let faixa = documento.getElementById(ID_DA_FAIXA);
   if (faixa) return faixa;
   const conteudo = documento.querySelector("#conteudoPrincipal > .content");
@@ -101,7 +146,10 @@ function garantirFaixa(documento) {
   return faixa;
 }
 
-function garantirPagina(documento, aoIrParaInicio) {
+function garantirPagina(
+  documento: Document,
+  aoIrParaInicio: (() => void) | null,
+): HTMLElement | null {
   let pagina = documento.getElementById(ID_DA_PAGINA);
   if (pagina) {
     irParaInicio = aoIrParaInicio;
@@ -134,27 +182,45 @@ function garantirPagina(documento, aoIrParaInicio) {
 }
 
 /* O botão leva à página inicial que a navegação escolher na hora do clique. */
-let irParaInicio = null;
+let irParaInicio: (() => void) | null = null;
 
-function mostrarPagina(documento, { textos, origem, icone, aoIrParaInicio }) {
+function mostrarPagina(
+  documento: Document,
+  {
+    textos,
+    origem,
+    icone,
+    aoIrParaInicio,
+  }: {
+    textos: TextosDaTela;
+    origem: OrigemDaTela;
+    icone: NomeDoIconeRegistrado;
+    aoIrParaInicio: (() => void) | null;
+  },
+): boolean {
   const pagina = garantirPagina(documento, aoIrParaInicio);
   if (!pagina) return false;
-  const lugarDoIcone = pagina.querySelector(".pagina-de-manutencao__icone");
+  const lugarDoIcone = pagina.querySelector(".pagina-de-manutencao__icone")!;
   lugarDoIcone.replaceChildren(criarIcone(icone, { tamanho: 28 }));
-  pagina.querySelector("h2").textContent = textos.titulo;
-  pagina.querySelector(".pagina-de-manutencao__mensagem").textContent =
+  pagina.querySelector("h2")!.textContent = textos.titulo;
+  pagina.querySelector(".pagina-de-manutencao__mensagem")!.textContent =
     textos.mensagem;
-  const previsao = pagina.querySelector(".pagina-de-manutencao__previsao");
+  const previsao = pagina.querySelector<HTMLElement>(
+    ".pagina-de-manutencao__previsao",
+  )!;
   previsao.textContent = textos.previsao || "";
   previsao.hidden = !textos.previsao;
-  pagina.querySelector(".pagina-de-manutencao__botao").hidden = !aoIrParaInicio;
+  pagina.querySelector<HTMLElement>(".pagina-de-manutencao__botao")!.hidden =
+    !aoIrParaInicio;
   pagina.dataset.origem = origem;
   pagina.classList.add("active");
   return true;
 }
 
 /** A tela de manutenção (ou de página desativada) está aberta no lugar da página. */
-export function avisoNoLugarDaPagina(documento = globalThis.document) {
+export function avisoNoLugarDaPagina(
+  documento: DocumentoDaManutencao = globalThis.document,
+): boolean {
   return Boolean(
     documento?.getElementById?.(ID_DA_PAGINA)?.classList.contains("active"),
   );
@@ -165,10 +231,14 @@ export function avisoNoLugarDaPagina(documento = globalThis.document) {
   salvo: ela fica, com a faixa avisando, até a próxima checagem depois de
   salvo (src/app/navegacao.ts, `reavaliarTelaAtual`).
 */
-export function avisarNaFaixa(documento, texto, origem) {
+export function avisarNaFaixa(
+  documento: DocumentoDaManutencao,
+  texto: string,
+  origem: string,
+): void {
   const faixa = documento && garantirFaixa(documento);
   if (!faixa) return;
-  faixa.querySelector("span").textContent = texto;
+  faixa.querySelector("span")!.textContent = texto;
   faixa.dataset.origem = origem;
   faixa.hidden = false;
 }
@@ -188,7 +258,7 @@ export function aplicarManutencaoNaNavegacao({
   adminGlobal = false,
   desligada = false,
   aoIrParaInicio = null,
-} = {}) {
+}: OpcoesDaManutencaoNaNavegacao = {}): boolean {
   if (!documento) return false;
   documento.getElementById(ID_DA_PAGINA)?.classList.remove("active");
   if (desligada) {
@@ -208,7 +278,7 @@ export function aplicarManutencaoNaNavegacao({
   if (adminGlobal || situacao.adminGlobal) {
     const faixa = garantirFaixa(documento);
     if (faixa) {
-      faixa.querySelector("span").textContent =
+      faixa.querySelector("span")!.textContent =
         textoDaFaixaDoAdministrador(efetiva);
       faixa.dataset.origem = efetiva.origem;
       faixa.hidden = false;

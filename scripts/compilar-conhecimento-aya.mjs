@@ -46,7 +46,7 @@ function lerCampo(bloco, nome) {
 
 /*
   O termo é comparado com a pergunta já sem acento (src/lib/termos-da-aya.ts e
-  `curatedAnswerForQuestion` em aya-knowledge.js). Guardar "parecer jurídico" com acento fazia o termo nunca
+  `curatedAnswerForQuestion` em aya-knowledge.ts). Guardar "parecer jurídico" com acento fazia o termo nunca
   casar; por isso ele sai daqui do mesmo jeito que a pergunta chega lá.
 */
 export function normalizarTermo(termo) {

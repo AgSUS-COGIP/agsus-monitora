@@ -59,7 +59,7 @@ gera conflito com quem está trabalhando em paralelo.
 | Editais, Cronograma e Lista de aprovados                                                                         | `src/modulos/editais/`, `cronograma/`, `aprovados/`       | concluído  |
 | `src/modules/map-*`, `health-*`, `indigenous-*`, (o dashboard já saiu do legado)                                 | `src/modulos/visao-geral/`                                | 5          |
 | `src/main.ts`, `index.html`, `src/componentes/barra-lateral/`, `dados-do-monitoramento.ts`, `usar-area-atual.ts` | `src/app/` (entrada, layout, área atual)                  | 6          |
-| `auth-storage.js`, `sidebar-branding.js` (o login e o `legacy-app.js` já estão em `src/app/`)                    | `src/lib/` e barra lateral                                | 6          |
+| `auth-storage.ts`, `sidebar-branding.js` (o login e o `legacy-app.js` já estão em `src/app/`)                    | `src/lib/` e barra lateral                                | 6          |
 | `src/modules/aya-*` (IA, base e memória; o painel já é `src/modulos/aya/`)                                       | `src/app/` (Aya no layout)                                | 7          |
 | `src/lib/`                                                                                                       | fica                                                      | —          |
 | `src/styles/tokens.css`                                                                                          | fica; os outros CSS vão com o módulo ou saem com o legado | cada etapa |
@@ -219,7 +219,7 @@ Testes: `tests/app/sessao.test.js`, `tests/app/entrada.test.js`, `tests/solicita
 | `logout`, `returnToLogin`, `clearLocalAuthState`, `aplicarSaida`                     | `sair()`, `limparSessao()`, `aplicarSaida()` na sessão                       |
 | `showAccessRequestState`, `submitAccessRequest`, `solicitacao-de-acesso.js` (legado) | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                          |
 | `access-branding-boot.js`, marca e rodapé de `applyConfigToUi`                       | `src/app/entrada/marca.ts` (`definirMarcaDaConfiguracao`)                    |
-| marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.js`)             | `src/lib/acesso-liberado.ts` (a comemoração continua no legado)              |
+| marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.ts`)             | `src/lib/acesso-liberado.ts` (a comemoração continua no legado)              |
 | `#loginMsg` escrito por `session-lifecycle.js`                                       | `installSessionLifecycle({ aoExpirar })` → `sessaoDoApp.mostrarMensagem`     |
 | `window.loginWithGoogle`, `logout`, `returnToLogin`, `submitAccessRequest`           | saíram; o Sair confirmado (`nielsen-shell-ux.js`) chama `sessaoDoApp.sair()` |
 
@@ -301,12 +301,12 @@ Ficou para depois (ainda em `src/modules/` ou no `index.html`):
 2. **Rotas**: sem endereço por tela (hash/history); a tela guardada continua no localStorage.
 3. `nielsen-shell-ux.js` (diálogo de saída por `insertAdjacentHTML` e os estados do seletor de
    tema), `mobile-bottom-navigation.js`, `mobile-app-experience.js`, `visual-polish.js`,
-   `loading-experience.js`, `connectivity-status.js`, `pwa-lifecycle.js`, `situacao-dos-modulos.js`,
-   `catalogo-de-abas.js`, `copia-da-sessao-indexeddb.js`, `cache-de-payload-indexeddb.js`,
-   `comemoracao-do-acesso.js`, `notificacao.js` → `src/app/` ou React.
+   `loading-experience.js`, `connectivity-status.js`, `pwa-lifecycle.ts`, `situacao-dos-modulos.ts`,
+   `catalogo-de-abas.ts`, `copia-da-sessao-indexeddb.ts`, `cache-de-payload-indexeddb.ts`,
+   `comemoracao-do-acesso.ts`, `notificacao.js` → `src/app/` ou React.
 4. O CSS da tela de acesso espalhado (`app.css`, `platform-shell.css`,
    `post-152-regression-fixes.css`, `visual-polish.css`, `mobile-app.css`) consolidado num
-   CSS da entrada em `src/app/entrada/` (hoje só o `solicitacao-de-acesso.css`); `auth-storage.js` → `src/lib/`, `sidebar-branding.js` → barra
+   CSS da entrada em `src/app/entrada/` (hoje só o `solicitacao-de-acesso.css`); `auth-storage.ts` → `src/lib/`, `sidebar-branding.js` → barra
    lateral.
 
 ### Casca em React (em partes)

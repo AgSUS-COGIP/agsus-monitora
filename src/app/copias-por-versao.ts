@@ -2,7 +2,7 @@
   A cópia no navegador das leituras por versão da Avaliação documental e da
   Classificação (src/lib/avaliacao-documental/leitura-por-versao.ts): o
   payload como o banco mandou (com a versão), no IndexedDB das cópias de
-  payload (src/modules/cache-de-payload-indexeddb.js), pelas regras de
+  payload (src/modules/cache-de-payload-indexeddb.ts), pelas regras de
   src/lib/cache-de-payload.ts — de um usuário só, por chave, por 7 dias.
 
   Reabrir a tela num dia seguinte (ou depois de recarregar a página) manda a
@@ -12,7 +12,7 @@
 */
 import { criarCacheDePayload } from "../lib/cache-de-payload";
 import type { CopiasPorChave } from "../lib/avaliacao-documental/leitura-por-versao.ts";
-import { armazenamentoDePayload } from "../modules/cache-de-payload-indexeddb.js";
+import { armazenamentoDePayload } from "../modules/cache-de-payload-indexeddb.ts";
 
 /* Sobe quando o formato guardado muda (a cópia antiga deixa de servir). */
 const VERSAO_DAS_COPIAS = "leitura-por-versao:1";

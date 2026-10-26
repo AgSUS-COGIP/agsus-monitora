@@ -23,7 +23,7 @@
   - a permissão é conferida pelo servidor a cada revalidação: acesso revogado
     (42501) ou área inválida (22023) apaga as cópias.
 
-  O armazenamento (IndexedDB) é de `src/modules/cache-de-payload-indexeddb.js`
+  O armazenamento (IndexedDB) é de `src/modules/cache-de-payload-indexeddb.ts`
   e chega aqui como `{ ler(chave), guardar(chave, valor), apagarTudo() }`.
   Nenhuma função daqui lança erro por causa dele: falhou, é "não há cópia".
 

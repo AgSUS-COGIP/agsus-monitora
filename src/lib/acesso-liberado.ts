@@ -21,8 +21,8 @@ type JanelaDasMarcas =
 /*
   Comemoração de quem acabou de ganhar (ou recuperar) acesso, com a lista do
   que a pessoa pode usar agora. Sem DOM; quem mostra é
-  src/modules/comemoracao-do-acesso.js, com os fogos e o aviso comuns a todas
-  as comemorações (src/modules/comemoracao.js, regra em src/lib/comemoracao.ts).
+  src/modules/comemoracao-do-acesso.ts, com os fogos e o aviso comuns a todas
+  as comemorações (src/modules/comemoracao.ts, regra em src/lib/comemoracao.ts).
   As marcas do fim do arquivo também são gravadas pela tela de pedido de
   acesso (src/app/entrada/pedido-de-acesso.ts).
 
