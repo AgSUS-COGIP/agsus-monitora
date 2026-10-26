@@ -10,6 +10,7 @@ import {
   linhasDosPaineis,
   normalizarPaineis,
 } from "../src/lib/paineis-externos-das-configuracoes.ts";
+import { htmlDaPagina } from "./pagina-montada.js";
 
 /*
   Análises curriculares deixou de ser o painel externo `analises` e virou a
@@ -98,7 +99,7 @@ describe("o legado trata Análises como página", () => {
   });
 
   it("o index.html tem a seção da página, sem quadro", () => {
-    expect(ler("index.html")).toContain(
+    expect(htmlDaPagina()).toContain(
       '<section id="page-analises" class="page"></section>',
     );
   });

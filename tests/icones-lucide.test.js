@@ -21,6 +21,8 @@ function arquivos(pasta, extensoes) {
 
 const fontes = [
   ...arquivos("src", [".js", ".jsx", ".html"]),
+  // A casca do app (antes marcação do index.html) é TSX.
+  ...arquivos("src/app/casca", [".tsx"]),
   "index.html",
   "auth/callback.html",
 ];

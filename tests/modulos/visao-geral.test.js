@@ -14,6 +14,7 @@ import {
   esperar,
 } from "../componentes/interacoes.js";
 import { criarLeafletFalso } from "./leaflet-falso.js";
+import { htmlDaPagina } from "../pagina-montada.js";
 
 /*
   A Visão geral como módulo do app (src/modulos/visao-geral/): monta na
@@ -861,7 +862,7 @@ describe("regras do código da tela", () => {
       "FILTER_CONFIG",
     ])
       expect(legado, nome).not.toContain(nome);
-    const html = readFileSync("index.html", "utf8");
+    const html = htmlDaPagina();
     expect(html).toMatch(
       /<section id="page-dashboard" class="page active"><\/section>/,
     );

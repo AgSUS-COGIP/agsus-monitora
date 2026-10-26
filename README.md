@@ -55,7 +55,7 @@ Planilhas (legado): Apps Script → Supabase
     190 `.js`/`.jsx` em 26/10/2026). O legado em `src/modules/` só encolhe (o CI barra
     crescimento). Estado por módulo em
     [docs/typescript-no-frontend.md](docs/typescript-no-frontend.md).
-  - **Casca para React:** a página de entrada (`index.html`, com marcação e `onclick` herdados)
+  - **Casca para React:** a página de entrada (`index.html`; a casca do app já é React em `src/app/casca/`)
     está sendo substituída, tela por tela, por um único app React com rotas por área e visual
     único em `src/ui/`. Alvo, regras e ordem em [docs/arquitetura-react.md](docs/arquitetura-react.md).
 - **Banco:** Supabase (PostgreSQL). RLS ligada em todas as tabelas; o navegador não lê tabela,
@@ -77,7 +77,7 @@ Planilhas (legado): Apps Script → Supabase
 ## Mapa de pastas
 
 ```text
-index.html            casca da entrada (em migração para React)
+index.html            raiz da página: <head>, tela de acesso e skeleton (a casca é src/app/casca/)
 src/app/              base do app React: entrada, sessão, layout, montagem dos módulos
 src/modulos/          telas em React/TypeScript, uma pasta por tela
 src/componentes/      componentes compartilhados entre telas

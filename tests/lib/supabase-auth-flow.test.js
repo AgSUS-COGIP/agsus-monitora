@@ -6,6 +6,7 @@ import {
   openLoginPopup,
   supportsLoginPopup,
 } from "../../src/lib/auth-flow";
+import { htmlDaPagina } from "../pagina-montada.js";
 
 function source(path) {
   return readFileSync(path, "utf8");
@@ -71,7 +72,7 @@ describe("fluxo de autenticação Supabase", () => {
   });
 
   it("mantém o cabeçalho sem horário e a barra sem identificação repetida", () => {
-    const html = source("index.html");
+    const html = htmlDaPagina();
     expect(html).not.toContain('id="updatedPill"');
     // O nome da Agência fica só no rodapé da tela de acesso (#loginScreen).
     const inicioDoLogin = html.indexOf('id="loginScreen"');

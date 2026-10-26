@@ -9,8 +9,9 @@ import {
   EVENTO_SECAO_ABERTA,
   secaoAtualDeConfiguracao,
 } from "../src/modulos/configuracoes/secoes.ts";
+import { htmlDaPagina } from "./pagina-montada.js";
 
-const html = readFileSync("index.html", "utf8");
+const html = htmlDaPagina();
 const main = readFileSync("src/main.ts", "utf8");
 const modulo = readFileSync("src/modulos/configuracoes/secoes.ts", "utf8");
 

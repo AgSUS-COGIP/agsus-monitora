@@ -21,6 +21,7 @@ import {
   obterDadosDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
+import { htmlDaPagina } from "../pagina-montada.js";
 
 vi.mock("../../src/modules/nielsen-shell-ux.js", async (original) => ({
   ...(await original()),
@@ -1188,7 +1189,7 @@ describe("contrato de CSS e ligação no arranque", () => {
   );
   const app = semComentarios(readFileSync("src/styles/app.css", "utf8"));
   const main = readFileSync("src/main.ts", "utf8");
-  const html = readFileSync("index.html", "utf8");
+  const html = htmlDaPagina();
 
   it("o hambúrguer antigo sai de cena e o botão único aparece em todo modo", () => {
     expect(css).toMatch(/#hambToggle\s*\{\s*display:\s*none\s*!important/);
