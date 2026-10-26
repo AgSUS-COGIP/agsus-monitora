@@ -124,7 +124,7 @@
       entrou. Para quem já tem sessão guardada, isso piscava a tela de login,
       com a arte de fundo, a cada F5. Este script roda antes da primeira
       pintura: havendo sessão (`refresh_token` em `agsus-monitora-auth`, a
-      chave de src/lib/env.js), a espera vira o skeleton da entrada
+      chave de src/lib/env.ts), a espera vira o skeleton da entrada
       (`.esqueleto-da-entrada`, src/modules/carregamento.js), já no
       formato da última tela, com a barra aberta ou recolhida e no tema escuro
       de quem o escolheu. Se a sessão tiver expirado, o skeleton sai e o login
@@ -151,7 +151,7 @@
             return;
           var raiz = document.documentElement;
           raiz.classList.add("sessao-guardada", "esqueleto-ativo");
-          // A mesma regra de src/lib/esqueleto-da-entrada.js.
+          // A mesma regra de src/lib/esqueleto-da-entrada.ts.
           var visao =
             localStorage.getItem("agsus_monitora_current_view_v268") || "";
           raiz.setAttribute(

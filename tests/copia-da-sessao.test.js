@@ -8,7 +8,7 @@ import {
   montarCopia,
   partesQueMudaram,
   respostasDasConsultas,
-} from "../src/lib/copia-da-sessao.js";
+} from "../src/lib/copia-da-sessao";
 import {
   apagarCopiaDaSessao,
   guardarCopiaDaSessao,

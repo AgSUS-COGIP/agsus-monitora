@@ -11,7 +11,7 @@
   - Passo de trilha tem `pagina`: o tour pede a troca de tela (`irPara`) e
     espera o elemento aparecer por alguns instantes, olhando de tempos em
     tempos (sem MutationObserver); se não aparecer, pula. Enquanto a tela
-    ainda baixa (telas sob demanda, src/lib/carga-de-telas.js), a espera não
+    ainda baixa (telas sob demanda, src/lib/carga-de-telas.ts), a espera não
     se esgota.
   - O elemento destacado continua clicável (o véu são quatro faixas em volta
     do recorte); o resto da página não recebe clique enquanto o tour corre.
@@ -40,7 +40,7 @@ import {
   posicaoDoBalao,
   rotuloDoPasso,
 } from "../../../lib/aya-tours.js";
-import { haTelaCarregando } from "../../../lib/carga-de-telas.js";
+import { haTelaCarregando } from "../../../lib/carga-de-telas";
 
 const FOCAVEIS =
   'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';

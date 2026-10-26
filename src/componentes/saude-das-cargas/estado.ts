@@ -30,7 +30,7 @@ import type {
   tela segue como antes.
 */
 import { isAdminGlobal } from "../../lib/access-roles.js";
-import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
+import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
 import {
   acompanhamentoDoPedido,
   normalizarPainel,

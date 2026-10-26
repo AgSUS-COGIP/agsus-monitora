@@ -1,11 +1,29 @@
 import { ABAS_DO_MENU, nomeDaArea } from "./menu-lateral.ts";
-import { rotuloDoPerfil } from "./access-roles.js";
+import { rotuloDoPerfil } from "./access-roles";
 
-function text(value) {
+/** Uma pessoa online, pronta para a lista de "Pessoas online". */
+export interface PessoaOnline {
+  userId: string;
+  fullName: string;
+  initials: string;
+  avatarUrl: string | null;
+  profileLabel: string;
+  currentView: string;
+  onlineAt: string;
+}
+
+/** O que o botão de "Pessoas online" mostra. */
+export interface SituacaoDaPresenca {
+  estado: "offline" | "ready" | "error" | "loading";
+  rotulo: string;
+  detalhe: string;
+}
+
+function text(value: unknown): string {
   return typeof value === "string" && value.trim() ? value.trim() : "";
 }
 
-function initials(name) {
+function initials(name: unknown): string {
   return (
     text(name)
       .split(/\s+/)
@@ -15,15 +33,17 @@ function initials(name) {
   );
 }
 
-export function normalizeOnlinePresenceList(value) {
-  const rows = Array.isArray(value)
+export function normalizeOnlinePresenceList(value: unknown): PessoaOnline[] {
+  const lista = value as { people?: unknown } | null | undefined;
+  const rows: unknown[] = Array.isArray(value)
     ? value
-    : Array.isArray(value?.people)
-      ? value.people
+    : Array.isArray(lista?.people)
+      ? lista.people
       : [];
-  const people = new Map();
-  for (const row of rows) {
-    if (!row || typeof row !== "object" || Array.isArray(row)) continue;
+  const people = new Map<string, PessoaOnline>();
+  for (const linha of rows) {
+    if (!linha || typeof linha !== "object" || Array.isArray(linha)) continue;
+    const row = linha as Record<string, unknown>;
     const userId = text(row.userId || row.user_id);
     const fullName = text(row.fullName || row.full_name || row.nome);
     if (!userId || !fullName) continue;
@@ -51,11 +71,11 @@ export function normalizeOnlinePresenceList(value) {
   ("Configurações › Acessos"). Antes ia o código da view ("analises",
   "approved"), que não diz nada a quem lê. O banco guarda até 120 caracteres.
 */
-const PAGINAS_SEM_AREA = Object.freeze({
+const PAGINAS_SEM_AREA: Readonly<Record<string, string>> = Object.freeze({
   config: "Configurações",
 });
 
-function rotuloDaView(view) {
+function rotuloDaView(view: string): string {
   if (view.startsWith("panel:")) return "Painel externo";
   return (
     ABAS_DO_MENU.find((aba) => aba.view === view)?.rotulo ||
@@ -64,7 +84,11 @@ function rotuloDaView(view) {
   );
 }
 
-export function ondeEstaNoMonitora({ view, area, rotuloDaSecao } = {}) {
+export function ondeEstaNoMonitora({
+  view,
+  area,
+  rotuloDaSecao,
+}: { view?: unknown; area?: unknown; rotuloDaSecao?: unknown } = {}): string {
   const codigo = text(view);
   if (!codigo) return "";
   const pagina = rotuloDaView(codigo) || codigo;
@@ -82,7 +106,7 @@ export function ondeEstaNoMonitora({ view, area, rotuloDaSecao } = {}) {
   O que chegou do banco, pronto para a tela. Quem ainda está com a versão
   anterior aberta manda só o código da view: vira o nome da página.
 */
-export function rotuloDoLocal(valor) {
+export function rotuloDoLocal(valor: unknown): string {
   const local = text(valor);
   return rotuloDaView(local) || local;
 }
@@ -101,7 +125,13 @@ export function situacaoDaPresenca({
   online = true,
   esperaMs = 0,
   limiteMs = ESPERA_DA_PRESENCA_MS,
-} = {}) {
+}: {
+  sincronizado?: boolean;
+  quantos?: number;
+  online?: boolean;
+  esperaMs?: number;
+  limiteMs?: number;
+} = {}): SituacaoDaPresenca {
   if (!online)
     return {
       estado: "offline",

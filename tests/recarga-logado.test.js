@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { readFileSync } from "node:fs";
 import { beforeEach, describe, expect, it } from "vitest";
-import { SUPABASE_AUTH_STORAGE_KEY } from "../src/lib/env.js";
+import { SUPABASE_AUTH_STORAGE_KEY } from "../src/lib/env";
 
 /*
   Recarregar a página já logado mostrava a tela de acesso (com a arte de

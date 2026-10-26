@@ -11,8 +11,8 @@
   entrevista, as notas como `[índice do critério, nota]`. O rótulo curto do
   critério é o texto antes do primeiro " (" — o texto inteiro fica no title.
 */
-import { sanitizeCsvCell } from "./csv-security.js";
-import { formatNumberBR } from "./formatters.js";
+import { sanitizeCsvCell } from "./csv-security";
+import { formatNumberBR } from "./formatters";
 
 import type {
   EntrevistaDoPainel,
@@ -667,7 +667,7 @@ export function csvDasEntrevistas(entrevistas: readonly EntrevistaDoPainel[]) {
 /* ── Cópia guardada no navegador ────────────────────────────────────── */
 
 /*
-  O tipo de payload para src/lib/cache-de-payload.js (a mesma cópia
+  O tipo de payload para src/lib/cache-de-payload.ts (a mesma cópia
   "stale-while-revalidate" do painel de análises e da lista de aprovados): o
   payload da Saúde Indígena passa de 2 MB, e a tela abre com a cópia enquanto
   a versão nova chega.

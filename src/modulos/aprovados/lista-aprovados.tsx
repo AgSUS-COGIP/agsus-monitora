@@ -9,7 +9,7 @@ import type { FiltrosDaTabelaDeAprovados } from "./tipos-da-aba-de-aprovados.ts"
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { getSupabaseClient } from "../../lib/supabaseClient";
 import {
   canAlterarPorDecisaoJudicial,
   canChangeCandidateStatus,

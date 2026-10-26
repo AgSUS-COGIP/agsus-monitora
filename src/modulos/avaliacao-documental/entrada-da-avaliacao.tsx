@@ -3,7 +3,7 @@ import {
   ROTULO_DO_TREINAMENTO,
 } from "../../lib/edital-de-treinamento.js";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import { Selo } from "../../ui/index.js";
 import type { EditalDaLista } from "./abas-e-entrada.ts";
 

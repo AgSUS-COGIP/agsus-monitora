@@ -1,4 +1,18 @@
-import { getSupabaseClient } from "./supabaseClient.js";
+import type { Session, SupabaseClient } from "@supabase/supabase-js";
+import { getSupabaseClient } from "./supabaseClient";
+
+/** Atividade registrada (e compartilhada entre as abas) de um usuário. */
+export interface RegistroDeAtividade {
+  userId: string;
+  at: number;
+}
+
+/** Mensagem entre as abas (BroadcastChannel). */
+type MensagemEntreAbas = {
+  type?: unknown;
+  userId?: unknown;
+  at?: unknown;
+};
 
 export const SESSION_IDLE_LIMIT_MS = 60 * 60 * 1000;
 export const SESSION_WARNING_MS = 10 * 60 * 1000;
@@ -16,8 +30,8 @@ let installed = false;
 let activeUserId = "";
 let lastActivityAt = 0;
 let lastPersistedActivityAt = 0;
-let tickHandle = null;
-let broadcastChannel = null;
+let tickHandle: number | null = null;
+let broadcastChannel: BroadcastChannel | null = null;
 let expirationInProgress = false;
 let warnedTenMinutes = false;
 let warnedOneMinute = false;
@@ -42,9 +56,9 @@ let currentIdleLimitMs = SESSION_IDLE_LIMIT_MS;
 */
 let encerrarPorInatividadeAtivo = false;
 /* Quem mostra a frase na tela de acesso (a sessão do app, src/app/sessao.js). */
-let avisarExpiracao = null;
+let avisarExpiracao: ((mensagem: string) => void) | null = null;
 
-export function formatSessionRemaining(milliseconds) {
+export function formatSessionRemaining(milliseconds: unknown): string {
   const totalSeconds = Math.max(0, Math.ceil(Number(milliseconds || 0) / 1000));
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -55,18 +69,21 @@ export function formatSessionRemaining(milliseconds) {
 }
 
 export function getRemainingSessionMs(
-  activityAt,
-  now = Date.now(),
-  idleLimitMs = SESSION_IDLE_LIMIT_MS,
-) {
+  activityAt: unknown,
+  now: unknown = Date.now(),
+  idleLimitMs: number = SESSION_IDLE_LIMIT_MS,
+): number {
   const activity = Number(activityAt || 0);
   if (!Number.isFinite(activity) || activity <= 0) return 0;
   return Math.max(0, idleLimitMs - Math.max(0, Number(now) - activity));
 }
 
-export function parseSessionActivityRecord(value) {
+export function parseSessionActivityRecord(
+  value: unknown,
+): RegistroDeAtividade | null {
   try {
-    const parsed = typeof value === "string" ? JSON.parse(value) : value;
+    const parsed = (typeof value === "string" ? JSON.parse(value) : value) as
+      { userId?: unknown; at?: unknown } | null | undefined;
     const userId = String(parsed?.userId || "").trim();
     const at = Number(parsed?.at || 0);
     if (!userId || !Number.isFinite(at) || at <= 0) return null;
@@ -76,7 +93,7 @@ export function parseSessionActivityRecord(value) {
   }
 }
 
-function storageGet(key) {
+function storageGet(key: string): string | null {
   try {
     return window.localStorage.getItem(key);
   } catch {
@@ -84,7 +101,7 @@ function storageGet(key) {
   }
 }
 
-function storageSet(key, value) {
+function storageSet(key: string, value: string): void {
   try {
     window.localStorage.setItem(key, value);
   } catch {
@@ -92,7 +109,7 @@ function storageSet(key, value) {
   }
 }
 
-function storageRemove(key) {
+function storageRemove(key: string): void {
   try {
     window.localStorage.removeItem(key);
   } catch {
@@ -181,7 +198,7 @@ function ensureSessionUi() {
   }
 }
 
-function updateTimerUi(remainingMs) {
+function updateTimerUi(remainingMs: number) {
   ensureSessionUi();
   const timer = document.getElementById("agsusSessionTimer");
   const text = document.getElementById("agsusSessionTimerText");
@@ -207,24 +224,32 @@ function updateTimerUi(remainingMs) {
   timer.title = "O tempo é reiniciado quando você interage com o sistema.";
 }
 
-function showNotice(message, level = "warning", durationMs = 12000) {
+/*
+  O temporizador que esconde o aviso fica no próprio `showNotice`
+  (`showNotice.hideHandle`); `avisoDaSessao` é o mesmo objeto, com o tipo.
+*/
+const avisoDaSessao = showNotice as typeof showNotice & {
+  hideHandle?: number | null;
+};
+
+function showNotice(message: string, level = "warning", durationMs = 12000) {
   ensureSessionUi();
   const notice = document.getElementById("agsusSessionNotice");
   if (!notice) return;
   notice.textContent = message;
   notice.dataset.level = level;
   notice.hidden = false;
-  window.clearTimeout(showNotice.hideHandle);
+  window.clearTimeout(avisoDaSessao.hideHandle as number | undefined);
   if (durationMs > 0) {
-    showNotice.hideHandle = window.setTimeout(() => {
+    avisoDaSessao.hideHandle = window.setTimeout(() => {
       notice.hidden = true;
     }, durationMs);
   }
 }
 
-export function dismissSessionNotice() {
-  window.clearTimeout(showNotice.hideHandle);
-  showNotice.hideHandle = null;
+export function dismissSessionNotice(): boolean {
+  window.clearTimeout(avisoDaSessao.hideHandle as number | undefined);
+  avisoDaSessao.hideHandle = null;
   const notice = document.getElementById("agsusSessionNotice");
   if (!notice) return false;
   notice.hidden = true;
@@ -254,12 +279,12 @@ function renderExpiredMessage() {
   }
 }
 
-function readSharedActivity(userId) {
+function readSharedActivity(userId: string): RegistroDeAtividade | null {
   const record = parseSessionActivityRecord(storageGet(ACTIVITY_STORAGE_KEY));
   return record?.userId === userId ? record : null;
 }
 
-function persistActivity(at) {
+function persistActivity(at: number) {
   if (!activeUserId) return;
   const record = { userId: activeUserId, at };
   storageSet(ACTIVITY_STORAGE_KEY, JSON.stringify(record));
@@ -280,7 +305,7 @@ function registerActivity(at = Date.now(), forcePersist = false) {
   }
 }
 
-function handleUserActivity(event) {
+function handleUserActivity(event: Event) {
   if (event && "isTrusted" in event && !event.isTrusted) return;
   registerActivity();
 }
@@ -299,7 +324,7 @@ function createClientSessionId() {
   }
 }
 
-async function auditExpiration(client) {
+async function auditExpiration(client: SupabaseClient) {
   try {
     const request = client.rpc("registrar_evento_acesso", {
       p_evento: "sessao_expirada_inatividade",
@@ -359,7 +384,7 @@ async function expireSession({ broadcast = true } = {}) {
   expirationInProgress = false;
 }
 
-function warnWhenNeeded(remainingMs) {
+function warnWhenNeeded(remainingMs: number) {
   /*
     Os dois avisos afirmam que a sessão "será encerrada por inatividade". Com a
     bandeira desligada isso é falso, e um alerta falso custa mais do que
@@ -410,7 +435,7 @@ function tickSession() {
   }
 }
 
-function startActiveSession(session) {
+function startActiveSession(session: Session | null | undefined) {
   const userId = String(session?.user?.id || "").trim();
   if (!userId) return;
 
@@ -453,7 +478,7 @@ function stopActiveSession({ clearActivity = true } = {}) {
   }
 }
 
-function handleBroadcastMessage(message) {
+function handleBroadcastMessage(message: MensagemEntreAbas | null | undefined) {
   if (!message || message.userId !== activeUserId) return;
   if (message.type === "activity" && Number(message.at) > lastActivityAt) {
     lastActivityAt = Number(message.at);
@@ -464,7 +489,7 @@ function handleBroadcastMessage(message) {
   }
 }
 
-function handleStorageEvent(event) {
+function handleStorageEvent(event: StorageEvent) {
   if (event.key === ACTIVITY_STORAGE_KEY) {
     const record = parseSessionActivityRecord(event.newValue);
     if (record?.userId === activeUserId && record.at > lastActivityAt) {
@@ -490,7 +515,11 @@ export function installSessionLifecycle({
   // Padrão desligado desde 08/09/2026. Ver a nota no topo do arquivo.
   encerrarPorInatividade = false,
   aoExpirar = null,
-} = {}) {
+}: {
+  idleLimitMs?: number;
+  encerrarPorInatividade?: boolean;
+  aoExpirar?: ((mensagem: string) => void) | null;
+} = {}): void {
   if (installed || typeof window === "undefined") return;
   installed = true;
   currentIdleLimitMs = Math.max(60 * 1000, Number(idleLimitMs));
@@ -509,7 +538,7 @@ export function installSessionLifecycle({
 
   if ("BroadcastChannel" in window) {
     broadcastChannel = new window.BroadcastChannel(BROADCAST_CHANNEL_NAME);
-    broadcastChannel.addEventListener("message", (event) => {
+    broadcastChannel.addEventListener("message", (event: MessageEvent) => {
       handleBroadcastMessage(event.data);
     });
   }

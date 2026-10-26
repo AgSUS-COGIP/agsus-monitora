@@ -4,7 +4,18 @@
   (src/app/tema.js) e leem as cores dos tokens (paletaDosGraficos, src/ui/);
   esta paleta vale quando o CSS não está carregado (testes).
 */
-export function paletaDoPainel(escuro) {
+export interface PaletaDoPainel {
+  grid: string;
+  text: string;
+  ok: string;
+  bad: string;
+  warn: string;
+  review: string;
+  blue: string;
+  surface: string;
+}
+
+export function paletaDoPainel(escuro: unknown): PaletaDoPainel {
   return {
     grid: escuro ? "rgba(255,255,255,.08)" : "rgba(7,59,121,.09)",
     text: escuro ? "#dbe8f5" : "#526780",

@@ -24,12 +24,12 @@ import { guardaDeAlteracoes } from "./guarda-de-alteracoes.ts";
   versão: uma mais nova o traz de volta.
 
   Tela antiga: uma RPC falhou como só falha a versão anterior (evento de
-  src/lib/supabaseClient.js). Confere a versão na hora e, se há mesmo uma nova,
+  src/lib/supabaseClient.ts). Confere a versão na hora e, se há mesmo uma nova,
   o aviso vira "Atualize para continuar" (sem fechar). Sem versão nova
   confirmada não muda nada: o PGRST202 também aparece quando o front chega
   antes da migration, e aí recarregar não resolve.
 
-  A recarga de src/lib/importar-com-recarga.js (pedaço antigo que sumiu)
+  A recarga de src/lib/importar-com-recarga.ts (pedaço antigo que sumiu)
   continua sendo o último recurso.
 */
 

@@ -19,10 +19,13 @@
 */
 export const CODIGO_DO_PAINEL_ANTIGO_DE_ANALISES = "analises";
 
-export function semOPainelAntigoDeAnalises(paineis) {
-  return (Array.isArray(paineis) ? paineis : []).filter(
+export function semOPainelAntigoDeAnalises<T>(
+  paineis: readonly T[] | unknown,
+): T[] {
+  return (Array.isArray(paineis) ? (paineis as T[]) : []).filter(
     (painel) =>
-      String(painel?.codigo ?? "").trim() !==
-      CODIGO_DO_PAINEL_ANTIGO_DE_ANALISES,
+      String(
+        (painel as { codigo?: unknown } | null | undefined)?.codigo ?? "",
+      ).trim() !== CODIGO_DO_PAINEL_ANTIGO_DE_ANALISES,
   );
 }

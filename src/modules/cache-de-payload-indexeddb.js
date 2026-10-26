@@ -7,7 +7,7 @@
 
   IndexedDB e não `localStorage`: o payload da Saúde Indígena (≈3,5 MB de
   texto) passa do limite do `localStorage`. As regras de quando a cópia serve
-  estão em `src/lib/cache-de-payload.js`; cada tela guarda com a própria chave
+  estão em `src/lib/cache-de-payload.ts`; cada tela guarda com a própria chave
   (área e escopo no painel, `aprovados:<área>` na lista de aprovados), e o dono
   das cópias é um só.
 

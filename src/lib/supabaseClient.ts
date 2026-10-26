@@ -1,20 +1,23 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import {
   SUPABASE_AUTH_STORAGE_KEY,
   SUPABASE_KEY,
   SUPABASE_URL,
   hasSupabaseEnv,
-} from "./env.js";
+} from "./env";
 import { createSafeAuthStorage } from "../modules/auth-storage.js";
 import {
   EVENTO_TELA_ANTIGA,
   observarRespostasDoBanco,
+  type SinalDeTelaAntiga,
 } from "./versao-do-sistema.ts";
 
-let supabaseClient = null;
-let authStorage = null;
+type ArmazenamentoDaSessao = ReturnType<typeof createSafeAuthStorage>;
 
-export function getSupabaseAuthStorage() {
+let supabaseClient: SupabaseClient | null = null;
+let authStorage: ArmazenamentoDaSessao | null = null;
+
+export function getSupabaseAuthStorage(): ArmazenamentoDaSessao {
   if (!authStorage) {
     authStorage = createSafeAuthStorage(SUPABASE_AUTH_STORAGE_KEY);
   }
@@ -26,14 +29,14 @@ export function getSupabaseAuthStorage() {
   evento: o aviso de versão (src/app/aviso-de-versao.ts) confere se há versão
   nova e pede para atualizar. A resposta segue igual para quem chamou.
 */
-function avisarTelaAntiga(sinal) {
+function avisarTelaAntiga(sinal: SinalDeTelaAntiga) {
   if (typeof CustomEvent !== "function") return;
   globalThis.dispatchEvent?.(
     new CustomEvent(EVENTO_TELA_ANTIGA, { detail: sinal }),
   );
 }
 
-export function getSupabaseClient() {
+export function getSupabaseClient(): SupabaseClient | null {
   if (!hasSupabaseEnv()) return null;
 
   if (!supabaseClient) {

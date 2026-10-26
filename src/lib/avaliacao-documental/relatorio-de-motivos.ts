@@ -6,7 +6,7 @@
   20261020120000), em páginas, com os blocos reduzidos a códigos; os textos
   (título do bloco, motivo, justificativa) saem da regra vigente do edital.
 */
-import { sanitizeCsvCell } from "../csv-security.js";
+import { sanitizeCsvCell } from "../csv-security";
 import { gerarXlsx } from "../classificacao/exportacao.ts";
 import { RESULTADOS, rotuloDe, SITUACOES_DO_BLOCO } from "./catalogo.js";
 import { nomeCurtoDoBloco } from "./ficha.js";

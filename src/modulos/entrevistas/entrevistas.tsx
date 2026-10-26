@@ -22,7 +22,7 @@ import {
   pendenciasDasEntrevistas,
   textoDasFontesDoPainel,
 } from "../../lib/entrevistas-do-painel.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { getSupabaseClient } from "../../lib/supabaseClient";
 import { Aviso } from "../../ui/index.js";
 import { hojeEmBrasilia } from "../../lib/fila-de-conducao.ts";
 import {
@@ -82,7 +82,7 @@ import "./entrevistas.css";
   acesso às Entrevistas".
 
   Links antigos para as visões "Conduzir entrevistas" e "Roteiros" desta
-  tela vão para a tela nova (src/lib/navegacao.js, `destinoDaTela`).
+  tela vão para a tela nova (src/lib/navegacao.ts, `destinoDaTela`).
 */
 
 const NUMEROS_ZERADOS = calcularIndicadores([]);

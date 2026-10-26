@@ -1,5 +1,5 @@
 import type { PlanilhaDaClassificacao } from "./tipos-dos-documentos.ts";
-import { escapeHtml } from "../sanitize.js";
+import { escapeHtml } from "../sanitize";
 import { dataBR, formatarNota } from "./numeros.ts";
 
 /*

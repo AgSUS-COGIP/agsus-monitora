@@ -28,7 +28,7 @@ import type {
   cada abertura. O resto da tela não precisa de saber de onde vieram as etapas.
 */
 
-import { exigirSessao } from "../../lib/sessao.js";
+import { exigirSessao } from "../../lib/sessao";
 import {
   comLimite,
   editaisComCronograma,

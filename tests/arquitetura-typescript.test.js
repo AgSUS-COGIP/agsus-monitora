@@ -71,7 +71,7 @@ describe("arquitetura nos arquivos migrados", () => {
       );
       expect(resultado.codigo).toBe(1);
       expect(resultado.saida).toContain(
-        "cliente Supabase fora de lib/supabaseClient.js",
+        "cliente Supabase fora de lib/supabaseClient.ts",
       );
     },
   );

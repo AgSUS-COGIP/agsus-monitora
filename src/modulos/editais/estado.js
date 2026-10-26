@@ -16,7 +16,7 @@ import {
   isAdminGlobal,
 } from "../../lib/access-roles.js";
 import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.js";
-import { exigirSessao } from "../../lib/sessao.js";
+import { exigirSessao } from "../../lib/sessao";
 import { analisarCronograma } from "../../lib/cronograma-do-edital.js";
 import { lerAnexoNoServidor } from "../../lib/anexos-do-edital.js";
 import { carregarResumoDoNucleo, createNucleoSummaryStore } from "./resumo.js";

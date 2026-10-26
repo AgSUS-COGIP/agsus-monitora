@@ -1,4 +1,17 @@
-import { getSupabaseClient } from "./supabaseClient.js";
+import { getSupabaseClient } from "./supabaseClient";
+
+/** Os campos lidos de um `SecurityPolicyViolationEvent`. */
+type ViolacaoLida = {
+  effectiveDirective?: unknown;
+  violatedDirective?: unknown;
+  blockedURI?: unknown;
+  disposition?: unknown;
+  sourceFile?: unknown;
+  lineNumber?: unknown;
+  columnNumber?: unknown;
+};
+
+export type DetalhesDaViolacao = ReturnType<typeof buildCspViolationDetails>;
 
 const APP_VERSION = "csp-report-monitor-v1";
 const REPORT_EVENT = "csp_report_only_violation";
@@ -6,9 +19,9 @@ const MAX_REPORTS_PER_SESSION = 20;
 const SESSION_COUNT_KEY = "agsus_csp_report_count_v1";
 
 let installed = false;
-const reportedSignatures = new Set();
+const reportedSignatures = new Set<string>();
 
-export function sanitizeBlockedUri(value) {
+export function sanitizeBlockedUri(value: unknown): string {
   const raw = String(value || "").trim();
   if (!raw) return "";
   if (["inline", "eval", "data", "blob"].includes(raw)) return raw;
@@ -24,7 +37,7 @@ export function sanitizeBlockedUri(value) {
   }
 }
 
-export function buildCspViolationDetails(event = {}) {
+export function buildCspViolationDetails(event: ViolacaoLida = {}) {
   return {
     effective_directive: String(event.effectiveDirective || ""),
     violated_directive: String(event.violatedDirective || ""),
@@ -37,7 +50,7 @@ export function buildCspViolationDetails(event = {}) {
   };
 }
 
-function getReportCount() {
+function getReportCount(): number {
   try {
     return Number(window.sessionStorage.getItem(SESSION_COUNT_KEY) || 0);
   } catch {
@@ -55,7 +68,7 @@ function incrementReportCount() {
   return next;
 }
 
-function buildSignature(details) {
+function buildSignature(details: DetalhesDaViolacao) {
   return [
     details.effective_directive,
     details.blocked_uri,
@@ -64,7 +77,7 @@ function buildSignature(details) {
   ].join("|");
 }
 
-async function reportViolation(event) {
+async function reportViolation(event: ViolacaoLida) {
   if (getReportCount() >= MAX_REPORTS_PER_SESSION) return;
 
   const details = buildCspViolationDetails(event);
@@ -96,7 +109,7 @@ async function reportViolation(event) {
   }
 }
 
-export function installCspReportMonitor() {
+export function installCspReportMonitor(): void {
   if (installed || typeof window === "undefined") return;
   installed = true;
   document.addEventListener("securitypolicyviolation", (event) => {

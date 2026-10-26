@@ -4,7 +4,7 @@
   trocar, o cache de uma versão seguia para a outra. Com a versão no nome,
   cada publicação abre um cache novo e o `activate` apaga os antigos.
 */
-export function swComVersao(fonte, versao) {
+export function swComVersao(fonte: unknown, versao: string): string {
   return String(fonte).replace(
     /const CACHE_VERSION = "[^"]*";/,
     `const CACHE_VERSION = "agsus-monitora-${versao}";`,

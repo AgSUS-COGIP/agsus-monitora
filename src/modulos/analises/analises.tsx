@@ -33,9 +33,9 @@ import {
   temPeriodo,
   ultimaAtualizacao,
 } from "../../lib/analises-curriculares.ts";
-import { getLoadingStage } from "../../lib/loading-copy.js";
+import { getLoadingStage } from "../../lib/loading-copy";
 import { textoDaConferencia } from "../../lib/texto-da-conferencia.js";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { getSupabaseClient } from "../../lib/supabaseClient";
 import { haLinhasSemParecer } from "../../lib/textos-do-painel-de-analises.js";
 import {
   Aviso,

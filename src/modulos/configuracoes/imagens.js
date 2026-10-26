@@ -25,7 +25,7 @@ import {
   validateAccessBackgroundFile,
 } from "../../lib/access-background-storage.js";
 import { DEFAULT_ACCESS_BRANDING } from "../../lib/access-branding.js";
-import { mensagemDeFalha } from "../../lib/falha-de-rede.js";
+import { mensagemDeFalha } from "../../lib/falha-de-rede";
 import {
   CHAVE_DO_LOGO_DA_BARRA,
   LOGO_PADRAO_DA_BARRA,

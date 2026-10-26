@@ -9,7 +9,7 @@ import {
   paginasPermitidas,
   permissaoLegada,
   podeAbrirConfiguracoes,
-} from "./access-roles.js";
+} from "./access-roles";
 
 /*
   Regras da navegação do app (sem DOM): que tela o perfil pode abrir, qual é a
@@ -20,6 +20,21 @@ import {
   `podeAbrir(codigo)` e `primeiro()` (o primeiro painel liberado, ou nada).
 */
 
+/** O perfil da sessão, como as regras de acesso o recebem. */
+type Perfil = Parameters<typeof permissaoLegada>[0];
+
+/** O que depende dos painéis externos carregados. */
+export interface PaineisDaNavegacao {
+  podeAbrir(codigo: string): unknown;
+  primeiro(): { codigo: string } | null | undefined;
+}
+
+/** A tela (view) e a visão dentro dela. */
+export interface DestinoDaTela {
+  view: string;
+  visao: string;
+}
+
 /** Chave do localStorage com a última tela aberta. */
 export const CHAVE_DA_TELA_GUARDADA = "agsus_monitora_current_view_v268";
 
@@ -29,14 +44,14 @@ export const TELA_SEM_ACESSO = "sem-acesso";
 const PREFIXO_DO_PAINEL = "panel:";
 
 /** `panel:<codigo>` → código do painel externo; outra tela → "". */
-export function codigoDoPainel(view) {
+export function codigoDoPainel(view: unknown): string {
   const texto = String(view || "");
   return texto.startsWith(PREFIXO_DO_PAINEL)
-    ? texto.slice(PREFIXO_DO_PAINEL.length).split(":")[0]
+    ? (texto.slice(PREFIXO_DO_PAINEL.length).split(":")[0] as string)
     : "";
 }
 
-export const ehPainelExterno = (view) =>
+export const ehPainelExterno = (view: unknown): boolean =>
   String(view || "").startsWith(PREFIXO_DO_PAINEL);
 
 /*
@@ -46,20 +61,21 @@ export const ehPainelExterno = (view) =>
   (view `conduzir-entrevistas`, com Fila e Preparar; os roteiros ficam no
   Preparar). `entrevistas:<visão>` vai para o lugar novo.
 */
-const TELAS_ANTIGAS = Object.freeze({
-  "entrevistas:resultados": Object.freeze({ view: "entrevistas", visao: "" }),
-  "entrevistas:conduzir": Object.freeze({
-    view: "conduzir-entrevistas",
-    visao: "fila",
-  }),
-  "entrevistas:roteiros": Object.freeze({
-    view: "conduzir-entrevistas",
-    visao: "preparar",
-  }),
-});
+const TELAS_ANTIGAS: Readonly<Record<string, Readonly<DestinoDaTela>>> =
+  Object.freeze({
+    "entrevistas:resultados": Object.freeze({ view: "entrevistas", visao: "" }),
+    "entrevistas:conduzir": Object.freeze({
+      view: "conduzir-entrevistas",
+      visao: "fila",
+    }),
+    "entrevistas:roteiros": Object.freeze({
+      view: "conduzir-entrevistas",
+      visao: "preparar",
+    }),
+  });
 
 /** A tela pedida (e a visão dela), já trocando um link antigo pelo novo. */
-export function destinoDaTela(pedida) {
+export function destinoDaTela(pedida: unknown): DestinoDaTela {
   const tela = String(pedida ?? "").trim();
   return TELAS_ANTIGAS[tela] || { view: tela, visao: "" };
 }
@@ -68,7 +84,9 @@ export function destinoDaTela(pedida) {
   O que pode o perfil, tela a tela, e o aviso de quem não pode. A ordem e os
   textos são os de sempre (o `navigate` do legado).
 */
-const BLOQUEIOS = Object.freeze({
+const BLOQUEIOS: Readonly<
+  Record<string, readonly [(perfil: Perfil) => unknown, string]>
+> = Object.freeze({
   dashboard: [
     (perfil) => permissaoLegada(perfil, "ind"),
     "Sem permissão para Saúde Indígena.",
@@ -110,7 +128,11 @@ const BLOQUEIOS = Object.freeze({
  * O aviso quando o perfil não pode abrir a tela (ou quando a tela não existe);
  * "" quando pode, e para "sem-acesso".
  */
-export function bloqueioDaTela(view, perfil, paineis) {
+export function bloqueioDaTela(
+  view: string,
+  perfil: Perfil,
+  paineis?: PaineisDaNavegacao | null,
+): string {
   if (ehPainelExterno(view))
     return paineis?.podeAbrir(codigoDoPainel(view))
       ? ""
@@ -128,18 +150,26 @@ export function bloqueioDaTela(view, perfil, paineis) {
 }
 
 /** A tela está liberada para o perfil (as mesmas regras do "Ver como" de Acessos). */
-export function telaPermitida(view, perfil, paineis) {
+export function telaPermitida(
+  view: string | null | undefined,
+  perfil: Perfil,
+  paineis?: PaineisDaNavegacao | null,
+): boolean {
   if (!view) return false;
   const paginas = paginasPermitidas(perfil);
-  if (Object.hasOwn(paginas, view)) return paginas[view];
+  if (Object.hasOwn(paginas, view))
+    return (paginas as Readonly<Record<string, boolean>>)[view] as boolean;
   if (ehPainelExterno(view))
     return Boolean(paineis?.podeAbrir(codigoDoPainel(view)));
   return false;
 }
 
 /** Tela inicial do SISTEMA (nunca um painel externo, salvo se for o único acesso). */
-export function telaInicialDoSistema(perfil, paineis) {
-  const pode = (permissao) => permissaoLegada(perfil, permissao);
+export function telaInicialDoSistema(
+  perfil: Perfil,
+  paineis?: PaineisDaNavegacao | null,
+): string {
+  const pode = (permissao: string) => permissaoLegada(perfil, permissao);
   if (pode("ind")) return "dashboard";
   if (pode("cores")) return "nucleo";
   if (pode("calendario")) return "calendario";
@@ -161,7 +191,11 @@ export function telaInicialDoSistema(perfil, paineis) {
   externo, para o app nunca abrir "preso" num painel (sem menu para voltar) ao
   recarregar —; senão, a inicial do sistema.
 */
-export function telaDeEntrada(guardada, perfil, paineis) {
+export function telaDeEntrada(
+  guardada: string | null | undefined,
+  perfil: Perfil,
+  paineis?: PaineisDaNavegacao | null,
+): string {
   if (
     guardada &&
     !ehPainelExterno(guardada) &&

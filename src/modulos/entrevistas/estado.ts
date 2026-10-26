@@ -15,7 +15,7 @@ import type { ItemDaAgenda } from "../../lib/painel-de-entrevistas.ts";
   `entrevistas` >= leitor), área e o recorte da coordenação
   (supabase/migrations/20260929235000_entrevistas.sql).
 
-  Cópia guardada ("stale-while-revalidate", src/lib/cache-de-payload.js, a
+  Cópia guardada ("stale-while-revalidate", src/lib/cache-de-payload.ts, a
   mesma do painel de análises e da lista de aprovados): na primeira carga da
   área, a cópia do navegador (do mesmo usuário e da mesma publicação) aparece
   na hora e a versão nova é pedida por trás; a tela só redesenha se ela mudou.
@@ -26,7 +26,7 @@ import type { ItemDaAgenda } from "../../lib/painel-de-entrevistas.ts";
   permissão (42501), `semAcesso`: a tela diz "Sem acesso às Entrevistas".
   Sessão vencida (o cliente Supabase do app sem sessão): `semSessao`. Outro
   usuário entrou na mesma aba: tudo volta ao início. Falha de rede usa a
-  mensagem de src/lib/falha-de-rede.js.
+  mensagem de src/lib/falha-de-rede.ts.
 */
 import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
 import {
@@ -35,12 +35,12 @@ import {
   respostaInalterada,
   revalidarPayload,
   versaoDoPacote,
-} from "../../lib/cache-de-payload.js";
+} from "../../lib/cache-de-payload";
 import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
-} from "../../lib/falha-de-rede.js";
+} from "../../lib/falha-de-rede";
 import {
   csvDasEntrevistas,
   normalizarPayload,

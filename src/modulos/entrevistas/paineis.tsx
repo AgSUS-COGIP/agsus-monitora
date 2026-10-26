@@ -11,7 +11,7 @@ import type {
   PropsDosGraficos,
 } from "./tipos-do-painel.ts";
 import { useEffect, useMemo, useRef } from "react";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import {
   contagemPorComparecimento,
   contagemPorParecer,
@@ -21,7 +21,7 @@ import {
   mediaPorCriterio,
   topUnidades,
 } from "../../lib/entrevistas-do-painel.ts";
-import { paletaDoPainel } from "../../lib/tema-do-painel.js";
+import { paletaDoPainel } from "../../lib/tema-do-painel";
 import {
   Campo,
   CardDeGrafico,

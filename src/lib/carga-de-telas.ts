@@ -6,7 +6,7 @@
 let pendentes = 0;
 
 /** Marca o começo de uma carga; devolve a função que marca o fim (uma vez só). */
-export function comecarCargaDeTela() {
+export function comecarCargaDeTela(): () => void {
   pendentes += 1;
   let terminou = false;
   return () => {
@@ -17,7 +17,7 @@ export function comecarCargaDeTela() {
 }
 
 /** Alguma tela ainda está baixando? */
-export function haTelaCarregando() {
+export function haTelaCarregando(): boolean {
   return pendentes > 0;
 }
 
@@ -26,15 +26,18 @@ export function haTelaCarregando() {
   controlador baixa cada tela registra a função (src/main.js); a barra
   lateral só chama `preCarregarTela(view, secao)`. Sem registro, nada faz.
 */
-let preCarga = null;
+type PreCarga = (view: string, secao?: string) => void;
 
-/** @param {((view: string, secao?: string) => void) | null} funcao */
-export function registrarPreCarga(funcao) {
+let preCarga: PreCarga | null = null;
+
+export function registrarPreCarga(funcao: PreCarga | null): void {
   preCarga = funcao;
 }
 
-/** @param {string | undefined} view @param {string} [secao] */
-export function preCarregarTela(view, secao) {
+export function preCarregarTela(
+  view: string | undefined,
+  secao?: string,
+): void {
   if (!view || !preCarga) return;
   try {
     preCarga(view, secao);

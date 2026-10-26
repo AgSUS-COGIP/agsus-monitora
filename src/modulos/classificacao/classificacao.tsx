@@ -26,7 +26,7 @@ import { sufixoDeTreinamento } from "../../lib/edital-de-treinamento.js";
 import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
 import { dataDeCorteDoCronograma } from "../../lib/classificacao/dados.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { getSupabaseClient } from "../../lib/supabaseClient";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.js";
 import { Agenda } from "./agenda.tsx";
 import { criarEstadoDaClassificacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";

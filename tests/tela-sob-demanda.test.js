@@ -4,7 +4,7 @@ import {
   haTelaCarregando,
   preCarregarTela,
   registrarPreCarga,
-} from "../src/lib/carga-de-telas.js";
+} from "../src/lib/carga-de-telas";
 
 /*
   As telas fora da abertura carregam sob demanda: o controlador em window

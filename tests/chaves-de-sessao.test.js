@@ -1,12 +1,12 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { SUPABASE_AUTH_STORAGE_KEY } from "../src/lib/env.js";
+import { SUPABASE_AUTH_STORAGE_KEY } from "../src/lib/env";
 
 /*
   As suítes de navegador semeiam a sessão escrevendo direto no armazenamento, e
   precisam usar a mesma chave que a aplicação lê. Elas não podem importar
-  `src/lib/env.js`: esse módulo lê `import.meta.env`, que não existe no runtime do
+  `src/lib/env.ts`: esse módulo lê `import.meta.env`, que não existe no runtime do
   Playwright e derruba o ficheiro inteiro ao ser carregado.
 
   A chave fica, portanto, literal nos specs — e este teste é o que impede a

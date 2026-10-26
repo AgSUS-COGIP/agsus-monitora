@@ -28,14 +28,44 @@ import {
   isAuthRetryableFetchError,
   isAuthSessionMissingError,
 } from "@supabase/supabase-js";
-import { SAIDA_EXPIRADA, declararSaida } from "./estado-de-saida.js";
+import { SAIDA_EXPIRADA, declararSaida } from "./estado-de-saida";
+
+/** Os campos que a classificação lê de um erro qualquer (todos opcionais). */
+type ErroLido = { name?: unknown; status?: unknown; code?: unknown };
+
+/** A parte da sessão que este módulo lê (a `Session` do Supabase serve). */
+export type SessaoLida = { access_token?: string };
+
+/**
+ * O cliente Supabase, do qual só `auth.getSession()` é usado. Sem `auth`, a
+ * chamada lança dentro do `try` e o estado fica indeterminado.
+ */
+export type ClienteDaSessao<S extends SessaoLida = SessaoLida> = {
+  auth?: {
+    getSession?(): PromiseLike<{
+      data?: { session?: S | null } | null;
+      error?: unknown;
+    }>;
+  } | null;
+};
 
 export const SESSAO_ATIVA = "ativa";
 export const SESSAO_ENCERRADA = "encerrada";
 export const SESSAO_INDETERMINADA = "indeterminada";
 
+export type EstadoDaSessao =
+  typeof SESSAO_ATIVA | typeof SESSAO_ENCERRADA | typeof SESSAO_INDETERMINADA;
+
+export interface LeituraDaSessao<S extends SessaoLida = SessaoLida> {
+  estado: EstadoDaSessao;
+  sessao: S | null;
+  erro: unknown;
+}
+
 /** Erro lançado quando a sessão comprovadamente acabou. */
 export class SessaoEncerrada extends Error {
+  declare sessaoEncerrada: boolean;
+
   constructor(mensagem = "Sessão expirada. Faça login novamente.") {
     super(mensagem);
     this.name = "SessaoEncerrada";
@@ -45,9 +75,12 @@ export class SessaoEncerrada extends Error {
 
 /** Erro lançado quando não deu para saber — rede, tempo esgotado, servidor fora. */
 export class FalhaDeConexao extends Error {
+  declare falhaTransitoria: boolean;
+  declare causa: unknown;
+
   constructor(
     mensagem = "Não foi possível falar com o servidor. Verifique a conexão e tente de novo.",
-    causa,
+    causa?: unknown,
   ) {
     super(mensagem);
     this.name = "FalhaDeConexao";
@@ -61,7 +94,7 @@ export class FalhaDeConexao extends Error {
   ("Failed to fetch") e um `AbortController` rejeita com `AbortError`. Nenhuma
   delas diz nada sobre a sessão.
 */
-const NOMES_TRANSITORIOS = new Set([
+const NOMES_TRANSITORIOS = new Set<unknown>([
   "AbortError",
   "TimeoutError",
   "NetworkError",
@@ -70,11 +103,12 @@ const NOMES_TRANSITORIOS = new Set([
 
 const CODIGOS_HTTP_TRANSITORIOS = new Set([408, 429, 500, 502, 503, 504]);
 
-export function ehFalhaTransitoria(erro) {
+export function ehFalhaTransitoria(erro: unknown): boolean {
   if (!erro) return false;
   if (isAuthRetryableFetchError(erro)) return true;
-  if (NOMES_TRANSITORIOS.has(erro.name)) return true;
-  if (CODIGOS_HTTP_TRANSITORIOS.has(Number(erro.status))) return true;
+  const lido = erro as ErroLido;
+  if (NOMES_TRANSITORIOS.has(lido.name)) return true;
+  if (CODIGOS_HTTP_TRANSITORIOS.has(Number(lido.status))) return true;
   if (typeof navigator !== "undefined" && navigator.onLine === false)
     return true;
   return false;
@@ -86,7 +120,7 @@ export function ehFalhaTransitoria(erro) {
   `AuthApiError` com 403 é falta de permissão, não expiração — a distinção
   importa porque a saída para a pessoa é completamente diferente.
 */
-const CODIGOS_DE_SESSAO_ENCERRADA = new Set([
+const CODIGOS_DE_SESSAO_ENCERRADA = new Set<unknown>([
   "session_not_found",
   "refresh_token_not_found",
   "refresh_token_already_used",
@@ -94,32 +128,34 @@ const CODIGOS_DE_SESSAO_ENCERRADA = new Set([
   "bad_jwt",
 ]);
 
-export function ehSessaoEncerrada(erro) {
+export function ehSessaoEncerrada(erro: unknown): boolean {
   if (!erro) return false;
   if (ehFalhaTransitoria(erro)) return false;
   if (isAuthSessionMissingError(erro)) return true;
-  if (CODIGOS_DE_SESSAO_ENCERRADA.has(erro.code)) return true;
+  const lido = erro as ErroLido;
+  if (CODIGOS_DE_SESSAO_ENCERRADA.has(lido.code)) return true;
   if (isAuthApiError(erro) && Number(erro.status) === 401) return true;
   /*
     PostgREST devolve estes códigos quando o JWT chega vencido ou ilegível.
     São códigos, não texto livre: nenhum outro erro os produz por acidente.
   */
-  if (erro.code === "PGRST301" || erro.code === "PGRST303") return true;
+  if (lido.code === "PGRST301" || lido.code === "PGRST303") return true;
   return false;
 }
 
 /**
  * Descobre o estado real da sessão, sem adivinhar.
- * @returns {Promise<{ estado: string, sessao: object|null, erro: unknown }>}
  */
-export async function estadoDaSessao(client) {
+export async function estadoDaSessao<S extends SessaoLida>(
+  client: ClienteDaSessao<S> | null | undefined,
+): Promise<LeituraDaSessao<S>> {
   if (!client) {
     return { estado: SESSAO_INDETERMINADA, sessao: null, erro: null };
   }
 
   let resposta;
   try {
-    resposta = await client.auth.getSession();
+    resposta = await client.auth!.getSession!();
   } catch (erro) {
     return {
       estado: ehSessaoEncerrada(erro) ? SESSAO_ENCERRADA : SESSAO_INDETERMINADA,
@@ -153,7 +189,9 @@ export async function estadoDaSessao(client) {
  * Exige sessão ativa. Substitui os quatro `ensureSession()` duplicados.
  * Lança `SessaoEncerrada` só com prova; `FalhaDeConexao` quando não deu para saber.
  */
-export async function exigirSessao(client) {
+export async function exigirSessao<S extends SessaoLida>(
+  client: ClienteDaSessao<S> | null | undefined,
+): Promise<S | null> {
   const { estado, sessao, erro } = await estadoDaSessao(client);
   if (estado === SESSAO_ATIVA) return sessao;
   if (estado === SESSAO_ENCERRADA) {

@@ -4,7 +4,7 @@ import {
   getLoadingStage,
   isGenericLoadingCopy,
   normalizeLoadingProgress,
-} from "../src/lib/loading-copy.js";
+} from "../src/lib/loading-copy";
 
 describe("loading copy", () => {
   it("normaliza o progresso dentro dos limites", () => {

@@ -5,7 +5,7 @@ import type {
   FocusEvent,
   KeyboardEvent,
 } from "react";
-import { preCarregarTela } from "../../lib/carga-de-telas.js";
+import { preCarregarTela } from "../../lib/carga-de-telas";
 import type {
   GrupoDoMenu,
   ItemDoMenu as Item,

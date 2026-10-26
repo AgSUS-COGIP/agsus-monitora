@@ -10,10 +10,10 @@
   app dentro dele, a sandbox não protegeria nada. Não há mais página do app em
   iframe — todas viraram módulos de src/modulos/.
 */
-export function enderecoDoPainel(url, origemAtual) {
+export function enderecoDoPainel(url: unknown, origemAtual?: unknown): string {
   const texto = String(url ?? "").trim();
   if (!texto) return "";
-  let endereco;
+  let endereco: URL;
   try {
     // Sem base: endereço relativo não é endereço de painel.
     endereco = new URL(texto);
@@ -24,7 +24,7 @@ export function enderecoDoPainel(url, origemAtual) {
     return "";
   let origem = "";
   try {
-    origem = origemAtual ? new URL(origemAtual).origin : "";
+    origem = origemAtual ? new URL(origemAtual as string | URL).origin : "";
   } catch {
     origem = "";
   }

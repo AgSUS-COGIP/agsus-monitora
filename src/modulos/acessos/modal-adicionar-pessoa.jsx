@@ -8,7 +8,7 @@ import { AcoesDoConvite } from "./convite.jsx";
 import {
   isAllowedInstitutionalEmail,
   normalizeAllowedDomains,
-} from "../../lib/platform-context.js";
+} from "../../lib/platform-context";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.js";
 
 /*

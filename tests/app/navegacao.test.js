@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { criarNavegacao, TELAS_REACT } from "../../src/app/navegacao.js";
-import { CHAVE_DA_TELA_GUARDADA } from "../../src/lib/navegacao.js";
+import { CHAVE_DA_TELA_GUARDADA } from "../../src/lib/navegacao";
 import {
   definirAreaAtual,
   definirAreasDoUsuario,

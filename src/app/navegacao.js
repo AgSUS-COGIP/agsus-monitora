@@ -36,10 +36,10 @@ import {
   telaDeEntrada,
   telaInicialDoSistema,
   telaPermitida,
-} from "../lib/navegacao.js";
-import { definirPaginaDaAba } from "../lib/identidade-da-aba.js";
+} from "../lib/navegacao";
+import { definirPaginaDaAba } from "../lib/identidade-da-aba";
 import { cabecalhoDaVisaoGeral } from "../lib/visao-geral-da-area.ts";
-import { erroAmigavel } from "../lib/erro-amigavel.js";
+import { erroAmigavel } from "../lib/erro-amigavel";
 import {
   assinarDadosDoMonitoramento,
   definirAreaAtual,
@@ -64,7 +64,7 @@ import { definirPaginaDaAya } from "../modulos/aya/estado.js";
   `.active` das `<section class="page">`, o título do cabeçalho, o menu
   marcado), as permissões por tela, a guarda de saída de Acessos, Módulos e
   abas e Configurações, a tela guardada para a próxima entrada e o menu da
-  barra lateral que o perfil vê. As regras puras estão em src/lib/navegacao.js.
+  barra lateral que o perfil vê. As regras puras estão em src/lib/navegacao.ts.
 
   Contratos mantidos: `window.navigate(view)` (é `irPara`), os itens
   `#nav [data-view][data-area]` da barra lateral (React, pelo estado dela) e o

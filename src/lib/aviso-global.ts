@@ -10,7 +10,7 @@
   `info` fica sem sufixo porque é a variante neutra da classe base.
 */
 
-const APARENCIA_POR_TIPO = {
+const APARENCIA_POR_TIPO: Readonly<Record<string, string>> = {
   info: "",
   warning: "warn",
   danger: "error",
@@ -18,11 +18,15 @@ const APARENCIA_POR_TIPO = {
 
 const CLASSE_BASE = "alert broadcast-bar";
 
-/**
- * @param {{ mensagem?: unknown, tipo?: unknown }} configurado
- * @returns {{ visivel: boolean, mensagem: string, classe: string }}
- */
-export function avisoGlobal(configurado = {}) {
+export interface AvisoGlobal {
+  visivel: boolean;
+  mensagem: string;
+  classe: string;
+}
+
+export function avisoGlobal(
+  configurado: { mensagem?: unknown; tipo?: unknown } = {},
+): AvisoGlobal {
   const mensagem = String(configurado.mensagem ?? "").trim();
   const tipo = String(configurado.tipo ?? "")
     .trim()

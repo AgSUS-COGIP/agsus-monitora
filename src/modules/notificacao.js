@@ -1,4 +1,4 @@
-import { escapeHtml } from "../lib/sanitize.js";
+import { escapeHtml } from "../lib/sanitize";
 
 /*
   Notificação curta (toast) do MONITORA.

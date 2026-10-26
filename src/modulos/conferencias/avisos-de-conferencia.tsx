@@ -39,9 +39,9 @@ import {
   tomDoSelo,
   VIEW_DO_MODULO,
 } from "../../lib/avisos-de-conferencia.ts";
-import { mensagemDeFalha } from "../../lib/falha-de-rede.js";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { mensagemDeFalha } from "../../lib/falha-de-rede";
+import { getSupabaseClient } from "../../lib/supabaseClient";
+import { formatNumberBR } from "../../lib/formatters";
 import { Gaveta, Segmentado } from "../../ui/index.js";
 import { criarEstadoDosAvisos } from "./estado.ts";
 

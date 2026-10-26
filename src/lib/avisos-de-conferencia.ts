@@ -27,7 +27,7 @@ import type {
   UUID interno nunca aparece: registro que sumiu é "Registro removido" e o
   que está fora do acesso, "Sem acesso".
 */
-import { sanitizeCsvCell } from "./csv-security.js";
+import { sanitizeCsvCell } from "./csv-security";
 import { PARECERES } from "./entrevistas-do-painel.ts";
 
 export const CONFERENCIAS: Readonly<

@@ -6,7 +6,7 @@ import {
   formatSessionRemaining,
   getRemainingSessionMs,
   parseSessionActivityRecord,
-} from "../src/lib/session-lifecycle.js";
+} from "../src/lib/session-lifecycle";
 
 describe("session lifecycle", () => {
   it("formata o contador de uma hora", () => {

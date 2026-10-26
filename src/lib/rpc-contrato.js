@@ -5,7 +5,7 @@
   ficheiros, metade como literal e metade como constante local. Nada garantia
   que a função existisse no banco, nem que a assinatura batesse: a descoberta
   vinha em produção, como mensagem de erro — e, pior, como mensagem *errada*,
-  porque "função ausente" era lida como sessão expirada (ver `lib/sessao.js`).
+  porque "função ausente" era lida como sessão expirada (ver `lib/sessao.ts`).
 
   Este ficheiro é a fonte de verdade. `scripts/check-rpc-contract.mjs` verifica
   duas coisas contra ele:

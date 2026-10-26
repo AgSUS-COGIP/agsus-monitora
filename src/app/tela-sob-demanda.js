@@ -1,5 +1,5 @@
-import { comecarCargaDeTela } from "../lib/carga-de-telas.js";
-import { importarComRecarga } from "../lib/importar-com-recarga.js";
+import { comecarCargaDeTela } from "../lib/carga-de-telas";
+import { importarComRecarga } from "../lib/importar-com-recarga";
 
 /*
   Tela carregada sob demanda: o código de uma tela (Avaliação documental,

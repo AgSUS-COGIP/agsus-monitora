@@ -38,11 +38,8 @@ import {
   normalizarCasos,
   termoDeBusca,
 } from "../../lib/avisos-de-conferencia.ts";
-import {
-  respostaInalterada,
-  versaoDoPacote,
-} from "../../lib/cache-de-payload.js";
-import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
+import { respostaInalterada, versaoDoPacote } from "../../lib/cache-de-payload";
+import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
 
 function baixarNoNavegador(conteudo: string, nome: string) {
   // O BOM faz o Excel abrir em UTF-8.

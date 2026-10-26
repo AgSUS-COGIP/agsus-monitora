@@ -32,6 +32,34 @@
   `LISTA_DE_APROVADOS` (candidatos-aprovados-compactos.ts).
 */
 
+/** O armazenamento (IndexedDB): pode lançar erro; aqui ele vira "não há cópia". */
+export interface ArmazenamentoDoCache {
+  ler(chave: string): unknown;
+  guardar(chave: string, valor: unknown): unknown;
+  apagarTudo(): unknown;
+}
+
+/** Um tipo de payload guardado; `C` é o contexto que dá a chave da cópia. */
+export interface TipoDePayload<C> {
+  readonly nome?: string;
+  chave(contexto: C): string;
+  esquema(payload: unknown): unknown;
+  readonly esquemas: readonly unknown[];
+  valido(payload: unknown): boolean;
+}
+
+/** O que identifica a abertura: o usuário da sessão e o resto da chave. */
+export type ContextoDoCache<C> = C & { usuarioId?: unknown };
+
+/** O registro gravado no armazenamento. */
+export interface RegistroDoCache {
+  usuarioId: unknown;
+  versao: unknown;
+  guardadoEm: number;
+  esquema: unknown;
+  texto: string;
+}
+
 export const VALIDADE_DO_CACHE_MS = 7 * 24 * 60 * 60 * 1000;
 
 /*
@@ -41,21 +69,35 @@ export const VALIDADE_DO_CACHE_MS = 7 * 24 * 60 * 60 * 1000;
 */
 
 /** A versão dos dados que o banco mandou junto do payload, ou `null`. */
-export function versaoDoPacote(payload) {
-  const versao = payload?.versao;
+export function versaoDoPacote(payload: unknown): string | null {
+  const versao = (payload as { versao?: unknown } | null | undefined)?.versao;
   return typeof versao === "string" && versao ? versao : null;
 }
 
 /** O banco disse que a versão enviada ainda vale? */
-export const respostaInalterada = (resposta) =>
-  Boolean(resposta) && resposta.inalterado === true;
+export const respostaInalterada = (resposta: unknown): boolean =>
+  Boolean(resposta) &&
+  (resposta as { inalterado?: unknown }).inalterado === true;
 
 /* Registro que diz de quem são as cópias guardadas. */
 export const CHAVE_DO_DONO = "__dono__";
 
-const esquemaAceito = (tipo, esquema) => tipo.esquemas.includes(esquema);
+const esquemaAceito = <C>(tipo: TipoDePayload<C>, esquema: unknown) =>
+  tipo.esquemas.includes(esquema);
 
-export function montarRegistro({ usuarioId, versao, agora, payload, tipo }) {
+export function montarRegistro<C>({
+  usuarioId,
+  versao,
+  agora,
+  payload,
+  tipo,
+}: {
+  usuarioId: unknown;
+  versao: unknown;
+  agora: number;
+  payload: unknown;
+  tipo: TipoDePayload<C>;
+}): RegistroDoCache {
   return {
     usuarioId,
     versao,
@@ -68,54 +110,83 @@ export function montarRegistro({ usuarioId, versao, agora, payload, tipo }) {
 }
 
 /** O payload do registro, se ele serve para esta abertura; senão `null`. */
-export function payloadDoRegistro(
-  registro,
-  { usuarioId, versao, agora, tipo },
-) {
+export function payloadDoRegistro<C>(
+  registro: unknown,
+  {
+    usuarioId,
+    versao,
+    agora,
+    tipo,
+  }: {
+    usuarioId: unknown;
+    versao: unknown;
+    agora: number;
+    tipo: TipoDePayload<C>;
+  },
+): unknown {
   if (!registro || typeof registro !== "object" || !usuarioId) return null;
-  const idade = agora - Number(registro.guardadoEm);
+  const lido = registro as Partial<Record<keyof RegistroDoCache, unknown>>;
+  const idade = agora - Number(lido.guardadoEm);
   if (
-    registro.usuarioId !== usuarioId ||
-    registro.versao !== versao ||
-    !esquemaAceito(tipo, registro.esquema) ||
+    lido.usuarioId !== usuarioId ||
+    lido.versao !== versao ||
+    !esquemaAceito(tipo, lido.esquema) ||
     !(idade >= 0 && idade <= VALIDADE_DO_CACHE_MS) ||
-    typeof registro.texto !== "string"
+    typeof lido.texto !== "string"
   )
     return null;
   try {
-    const payload = JSON.parse(registro.texto);
+    const payload: unknown = JSON.parse(lido.texto);
     return payload && tipo.valido(payload) ? payload : null;
   } catch {
     return null;
   }
 }
 
+/** As cópias de um tipo de payload: ler, guardar e apagar tudo. */
+export interface CacheDePayload<C> {
+  ler(contexto: ContextoDoCache<C> | null | undefined): Promise<unknown>;
+  guardar(
+    contexto: ContextoDoCache<C> | null | undefined,
+    payload: unknown,
+  ): Promise<boolean>;
+  apagarTudo(): Promise<unknown>;
+}
+
 /**
  * Cópias de um tipo de payload sobre um armazenamento. `versao` amarra a cópia
  * à publicação; `relogio` existe para o teste.
  */
-export function criarCacheDePayload({
+export function criarCacheDePayload<C>({
   armazenamento,
   versao,
   tipo,
   relogio = Date.now,
-}) {
-  async function seguro(operar, padrao) {
+}: {
+  armazenamento: ArmazenamentoDoCache;
+  versao: unknown;
+  tipo: TipoDePayload<C>;
+  relogio?: () => number;
+}): CacheDePayload<C> {
+  async function seguro<R, P = undefined>(
+    operar: () => R | PromiseLike<R>,
+    padrao?: P,
+  ): Promise<R | P> {
     try {
       return await operar();
     } catch {
-      return padrao;
+      return padrao as P;
     }
   }
 
-  const gravar = (chave, valor) =>
+  const gravar = (chave: string, valor: unknown) =>
     seguro(async () => {
       await armazenamento.guardar(chave, valor);
       return true;
     }, false);
 
   /** Apaga as cópias de outro usuário; devolve se o dono é este. */
-  async function confirmarDono(usuarioId) {
+  async function confirmarDono(usuarioId: unknown) {
     const dono = await seguro(() => armazenamento.ler(CHAVE_DO_DONO), null);
     if (dono === usuarioId) return true;
     if (dono) await seguro(() => armazenamento.apagarTudo());
@@ -127,7 +198,7 @@ export function criarCacheDePayload({
       const usuarioId = contexto?.usuarioId;
       if (!usuarioId || !(await confirmarDono(usuarioId))) return null;
       const registro = await seguro(
-        () => armazenamento.ler(tipo.chave(contexto)),
+        () => armazenamento.ler(tipo.chave(contexto as C)),
         null,
       );
       return payloadDoRegistro(registro, {
@@ -154,7 +225,7 @@ export function criarCacheDePayload({
         payload,
         tipo,
       });
-      return gravar(tipo.chave(contexto), registro);
+      return gravar(tipo.chave(contexto as C), registro);
     },
 
     apagarTudo() {
@@ -164,8 +235,10 @@ export function criarCacheDePayload({
 }
 
 /** Erro de permissão (42501) ou de área (22023): a cópia não vale mais. */
-export function ehErroDeAcesso(erro) {
-  return ["42501", "22023"].includes(String(erro?.code ?? ""));
+export function ehErroDeAcesso(erro: unknown): boolean {
+  return ["42501", "22023"].includes(
+    String((erro as { code?: unknown } | null | undefined)?.code ?? ""),
+  );
 }
 
 /**
@@ -173,8 +246,11 @@ export function ehErroDeAcesso(erro) {
  * `aoMudar(novo)` só se `mudou(guardado, novo)`, e guarda. Erro de permissão
  * ou de área apaga as cópias e chama `aoPerderAcesso(erro)`; outro erro (rede,
  * tempo) mantém a cópia na tela.
+ *
+ * `mudou` aparece como opcional só porque src/modulos/analises/consultas.ts
+ * não o passa: aí a chamada lança dentro do `try` e cai no aviso do console.
  */
-export async function revalidarPayload({
+export async function revalidarPayload<N>({
   guardado,
   buscar,
   guardar,
@@ -182,11 +258,19 @@ export async function revalidarPayload({
   aoMudar,
   aoPerderAcesso,
   apagarTudo,
-}) {
+}: {
+  guardado: unknown;
+  buscar: () => N | PromiseLike<N>;
+  guardar: (novo: N) => unknown;
+  mudou?: (guardado: unknown, novo: N) => boolean;
+  aoMudar: (novo: N) => void;
+  aoPerderAcesso: (erro: unknown) => void;
+  apagarTudo: () => unknown;
+}): Promise<N | null> {
   try {
     const novo = await buscar();
     // Redesenha primeiro; a cópia nova é gravada em seguida.
-    if (mudou(guardado, novo)) aoMudar(novo);
+    if ((mudou as NonNullable<typeof mudou>)(guardado, novo)) aoMudar(novo);
     await guardar(novo);
     return novo;
   } catch (erro) {

@@ -1,7 +1,7 @@
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
-import { safeHttpUrl } from "../../lib/sanitize.js";
+import { getSupabaseClient } from "../../lib/supabaseClient";
+import { safeHttpUrl } from "../../lib/sanitize";
 import {
   canImportApprovedList,
   canManageEditais,
@@ -24,7 +24,7 @@ import {
   tomDoRisco,
   tomDoStatusDoEdital,
 } from "../../lib/editais-do-nucleo.js";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { Selo, TabelaInfinita, TopoDoPainel } from "../../ui/index.js";
 import { criarEstadoDoNucleo } from "./estado.js";

@@ -12,7 +12,7 @@ import { expect, test } from "@playwright/test";
   Só corre com `E2E_SUPABASE_SESSION_JSON` definida, apontando para um Supabase de
   **desenvolvimento**. Sem ela, os testes são pulados — nunca passam por vacuidade.
 
-  A chave é literal porque `src/lib/env.js` lê `import.meta.env`, ausente no
+  A chave é literal porque `src/lib/env.ts` lê `import.meta.env`, ausente no
   runtime do Playwright. `tests/chaves-de-sessao.test.js` falha se ela divergir da
   que a aplicação usa.
 */
@@ -53,7 +53,7 @@ test.describe("sessão autenticada", () => {
   });
 
   /*
-    Esta é a regressão que motivou `src/lib/sessao.js`: recarregar não pode
+    Esta é a regressão que motivou `src/lib/sessao.ts`: recarregar não pode
     produzir "Sessão expirada".
   */
   test("recarregar a página mantém a sessão", async ({ page }) => {
@@ -121,7 +121,7 @@ test.describe("sessão autenticada", () => {
     A regressão original, encenada no navegador: a rede falha por um momento e o
     sistema anuncia "Sessão expirada" a quem está perfeitamente autenticado.
 
-    `lib/sessao.js` tem testes unitários para a classificação do erro. Este aqui
+    `lib/sessao.ts` tem testes unitários para a classificação do erro. Este aqui
     prova o outro lado — que a decisão chega até a tela. Derrubamos as chamadas ao
     Supabase **depois** de a aplicação já estar carregada e autenticada, forçamos
     uma ação que fala com o banco, e exigimos que a sessão sobreviva.

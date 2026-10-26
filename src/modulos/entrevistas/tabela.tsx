@@ -2,7 +2,7 @@ import type {
   EntrevistaDoPainel,
   AnaliseDaEntrevista,
 } from "./tipos-do-painel.ts";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import {
   badgeDoParecer,
   FILTROS_VAZIOS,

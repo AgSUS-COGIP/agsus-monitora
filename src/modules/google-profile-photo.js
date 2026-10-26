@@ -1,4 +1,4 @@
-import { getSupabaseClient } from "../lib/supabaseClient.js";
+import { getSupabaseClient } from "../lib/supabaseClient";
 
 const PHOTO_ID = "googleProfilePhoto";
 

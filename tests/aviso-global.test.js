@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { avisoGlobal } from "../src/lib/aviso-global.js";
+import { avisoGlobal } from "../src/lib/aviso-global";
 
 describe("aviso global", () => {
   it("fica oculto quando não há mensagem configurada", () => {

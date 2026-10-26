@@ -41,7 +41,7 @@ import {
   LIMITES_DO_CRITICO,
   motivosDeAtencao,
 } from "./criticos-da-visao-geral.js";
-import { sanitizeCsvCell } from "./csv-security.js";
+import { sanitizeCsvCell } from "./csv-security";
 import { tomDoStatusDoEdital } from "./editais-do-nucleo.js";
 import {
   faseDoEdital,

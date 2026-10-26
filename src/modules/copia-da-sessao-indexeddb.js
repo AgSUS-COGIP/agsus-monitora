@@ -3,7 +3,7 @@
 
   IndexedDB e não `localStorage`: o mapa (`lmap`, `rede_cnes`) passa com folga
   do limite de alguns megabytes do `localStorage`. As regras de quando a cópia
-  serve estão em `src/lib/copia-da-sessao.js`.
+  serve estão em `src/lib/copia-da-sessao.ts`.
 
   Nada aqui lança erro: janela anônima, armazenamento bloqueado ou cheio viram
   "não há cópia", e a entrada segue pela rede como antes.

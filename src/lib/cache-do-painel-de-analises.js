@@ -11,7 +11,7 @@ import { chaveDoCacheDoPayload } from "./area-do-painel-de-analises.js";
 import {
   criarCacheDePayload,
   revalidarPayload as revalidarCopia,
-} from "./cache-de-payload.js";
+} from "./cache-de-payload";
 
 /*
   `schema_version` do payload de get_analises_dashboard_payload_v2 que a cópia

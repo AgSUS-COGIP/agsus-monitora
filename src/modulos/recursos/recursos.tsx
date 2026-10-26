@@ -26,7 +26,7 @@ import {
   ORIGENS_PADRAO,
   pendenciasPrioritarias,
 } from "../../lib/recursos-dos-candidatos.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { getSupabaseClient } from "../../lib/supabaseClient";
 import { Aviso } from "../../ui/index.js";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { criarEstadoDosRecursos } from "./estado.ts";
@@ -65,7 +65,7 @@ import "./recursos.css";
   - Área: a área atual do app (menu lateral → dados-do-monitoramento.ts). Cada
     abertura carrega a área de agora; trocar de área com a tela aberta
     recarrega (e o que era da outra área sai: filtros, busca, gaveta).
-  - Sessão: o cliente Supabase único do app (src/lib/supabaseClient.js).
+  - Sessão: o cliente Supabase único do app (src/lib/supabaseClient.ts).
   - Tema: o do app (`html[data-theme="dark"]`, o seletor da barra lateral);
     os gráficos acompanham. Tela cheia: a do app (menu da conta).
   - Aviso (toast): o do app (`window.monitoraToast`, passado por src/main.js).

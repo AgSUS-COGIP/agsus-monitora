@@ -5,7 +5,7 @@ import {
   LOGIN_POPUP_MESSAGE,
   openLoginPopup,
   supportsLoginPopup,
-} from "../../src/lib/auth-flow.js";
+} from "../../src/lib/auth-flow";
 
 function source(path) {
   return readFileSync(path, "utf8");
@@ -13,7 +13,7 @@ function source(path) {
 
 describe("fluxo de autenticação Supabase", () => {
   it("mantém o cliente partilhado configurado com PKCE e troca explícita do código", () => {
-    const clientSource = source("src/lib/supabaseClient.js");
+    const clientSource = source("src/lib/supabaseClient.ts");
 
     expect(clientSource).toContain('flowType: "pkce"');
     expect(clientSource).toContain("detectSessionInUrl: false");
@@ -28,7 +28,7 @@ describe("fluxo de autenticação Supabase", () => {
       "cdn.jsdelivr.net/npm/@supabase/supabase-js",
     );
     expect(callbackSource).toContain(
-      'import { getSupabaseClient } from "../lib/supabaseClient.js"',
+      'import { getSupabaseClient } from "../lib/supabaseClient"',
     );
     expect(callbackSource).not.toContain("window.supabase.createClient");
   });

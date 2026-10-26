@@ -12,7 +12,7 @@ import {
   anosDosEditais,
   editaisDoAno,
 } from "../../lib/atalhos-de-filtro.js";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import {
   CAMPOS_DO_FILTRO,
   fasesDosProcessos,

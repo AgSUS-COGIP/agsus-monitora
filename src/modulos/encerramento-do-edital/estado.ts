@@ -12,7 +12,7 @@
     leitura que já estava no caminho não reabre o que a pessoa fechou: os
     vistos desta página valem por cima da resposta até a sessão acabar.
 */
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { getSupabaseClient } from "../../lib/supabaseClient";
 import {
   editaisDoEvento,
   encerramentoAMostrar,

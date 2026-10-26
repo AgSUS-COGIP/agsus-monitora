@@ -11,7 +11,7 @@ import {
   secaoDeConfiguracaoPermitida,
 } from "./access-roles.js";
 import { areasDoUsuario, montarArvoreDoMenu } from "./menu-lateral.ts";
-import { normalizePlatformContext } from "./platform-context.js";
+import { normalizePlatformContext } from "./platform-context";
 import { niveisDoRecurso } from "./permissoes-recursos.js";
 import {
   MODULOS,

@@ -6,7 +6,7 @@ import {
 } from "../src/lib/access-roles.js";
 import { linkInterno } from "../src/lib/link-interno.ts";
 import { ABAS_DO_MENU, montarArvoreDoMenu } from "../src/lib/menu-lateral.ts";
-import { bloqueioDaTela, destinoDaTela } from "../src/lib/navegacao.js";
+import { bloqueioDaTela, destinoDaTela } from "../src/lib/navegacao";
 
 /*
   Migrations 20261009230000 (Recursos vira "Painel de recursos"; "Analisar

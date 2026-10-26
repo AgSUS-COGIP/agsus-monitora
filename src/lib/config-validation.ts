@@ -1,8 +1,8 @@
-function clean(value) {
+function clean(value: unknown): string {
   return String(value ?? "").trim();
 }
 
-function hasControlCharacters(value) {
+function hasControlCharacters(value: unknown): boolean {
   for (const char of String(value || "")) {
     const code = char.charCodeAt(0);
     if (code < 32 || code === 127) return true;
@@ -10,7 +10,7 @@ function hasControlCharacters(value) {
   return false;
 }
 
-export function isValidAccessAssetUrl(value) {
+export function isValidAccessAssetUrl(value: unknown): boolean {
   const raw = clean(value);
   if (!raw) return true;
 

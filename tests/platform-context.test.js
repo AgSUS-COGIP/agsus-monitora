@@ -5,7 +5,7 @@ import {
   normalizeAllowedDomains,
   normalizePlatformContext,
   profileDisplayName,
-} from "../src/lib/platform-context.js";
+} from "../src/lib/platform-context";
 
 describe("contexto institucional da plataforma", () => {
   it("normaliza domínios e valida contas institucionais", () => {

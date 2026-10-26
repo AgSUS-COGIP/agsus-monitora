@@ -13,7 +13,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.jsx";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { getSupabaseClient } from "../../lib/supabaseClient";
 import {
   FILTROS_VAZIOS,
   TIPOS_DA_LEGENDA,

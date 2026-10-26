@@ -64,7 +64,7 @@ import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
-} from "../../lib/falha-de-rede.js";
+} from "../../lib/falha-de-rede";
 import { criarCopiasPorVersao } from "../../app/copias-por-versao.ts";
 import { criarLeituraPorVersao } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
 import { editalVigente } from "../../lib/avaliacao-documental/editais.js";

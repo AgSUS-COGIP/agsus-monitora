@@ -1,10 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { COLUNAS_DO_MONITORAMENTO, criarCarga } from "../../src/app/carga.js";
-import {
-  assinaturaDoAcesso,
-  montarCopia,
-} from "../../src/lib/copia-da-sessao.js";
+import { assinaturaDoAcesso, montarCopia } from "../../src/lib/copia-da-sessao";
 import {
   obterDadosDoMonitoramento,
   redefinirDadosDoMonitoramento,

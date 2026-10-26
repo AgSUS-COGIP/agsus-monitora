@@ -14,9 +14,17 @@
 export const CHAVE_DA_RECARGA = "monitora:recarga-por-versao";
 export const JANELA_DA_RECARGA_MS = 60 * 1000;
 
-const ehFalhaDeCarregamento = (erro) =>
+export interface OpcoesDaRecarga {
+  armazenamento?: Pick<Storage, "getItem" | "setItem"> | null;
+  recarregar?: () => void;
+  agora?: number;
+}
+
+const ehFalhaDeCarregamento = (erro: unknown) =>
   /dynamically imported module|Importing a module script failed|Failed to fetch|error loading dynamically|ChunkLoadError/i.test(
-    String(erro?.message || erro || ""),
+    String(
+      (erro as { message?: unknown } | null | undefined)?.message || erro || "",
+    ),
   );
 
 /** true quando recarregou agora; false quando já tinha recarregado há pouco. */
@@ -24,7 +32,7 @@ export function recarregarUmaVez({
   armazenamento = globalThis.sessionStorage,
   recarregar = () => globalThis.location?.reload(),
   agora = Date.now(),
-} = {}) {
+}: OpcoesDaRecarga = {}): boolean {
   let ultima = 0;
   try {
     ultima = Number(armazenamento?.getItem(CHAVE_DA_RECARGA)) || 0;
@@ -46,11 +54,14 @@ export function recarregarUmaVez({
  * vez (e a promessa fica pendente, a página vai embora); outro erro, ou falha
  * logo depois de uma recarga, é repassado.
  */
-export function importarComRecarga(carregar, opcoes) {
+export function importarComRecarga<T>(
+  carregar: () => Promise<T>,
+  opcoes?: OpcoesDaRecarga,
+): () => Promise<T> {
   return () =>
-    carregar().catch((erro) => {
+    carregar().catch((erro: unknown) => {
       if (ehFalhaDeCarregamento(erro) && recarregarUmaVez(opcoes))
-        return new Promise(() => {});
+        return new Promise<T>(() => {});
       throw erro;
     });
 }

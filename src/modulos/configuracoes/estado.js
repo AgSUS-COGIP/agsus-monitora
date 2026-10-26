@@ -10,7 +10,7 @@
   imagens da Aparência (arte de fundo e logo da barra) são de `imagens.js`.
 */
 
-import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede.js";
+import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
 import {
   alteracoesDaVersao,
   buildChanges,
@@ -27,7 +27,7 @@ import {
   normalizarPaineis,
   paineisComRascunho,
 } from "../../lib/paineis-externos-das-configuracoes.js";
-import { getSupabaseClient } from "../../lib/supabaseClient.js";
+import { getSupabaseClient } from "../../lib/supabaseClient";
 
 const RPC_SNAPSHOT = "get_configuracoes_snapshot";
 const RPC_SAVE_V2 = "salvar_configuracoes_e_paineis_v2";

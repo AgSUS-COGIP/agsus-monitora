@@ -2,7 +2,7 @@ import type {
   EntrevistaDoPainel,
   AprovadoSemEntrevista,
 } from "./tipos-do-painel.ts";
-import { formatNumberBR } from "../../lib/formatters.js";
+import { formatNumberBR } from "../../lib/formatters";
 import {
   agruparAprovadosSemEntrevista,
   formatarNota,

@@ -21,7 +21,7 @@
   pontos do contrato (docs/arquitetura-react.md, "Sessão ↔ sistema").
 
   Por que a sessão termina (manual, expirada, revogada) continua em
-  src/lib/estado-de-saida.js; "a sessão acabou mesmo?", em src/lib/sessao.js.
+  src/lib/estado-de-saida.ts; "a sessão acabou mesmo?", em src/lib/sessao.ts.
 */
 
 import {
@@ -31,9 +31,9 @@ import {
   LOGIN_POPUP_MESSAGE,
   openLoginPopup,
   startMobileGoogleOAuth,
-} from "../lib/auth-flow.js";
+} from "../lib/auth-flow";
 import { DEFAULT_ACCESS_BRANDING } from "../lib/access-branding.js";
-import { hasSupabaseEnv } from "../lib/env.js";
+import { hasSupabaseEnv } from "../lib/env";
 import {
   SAIDA_DESCONHECIDA,
   SAIDA_MANUAL,
@@ -43,17 +43,17 @@ import {
   encerrarTransicaoDeSaida,
   mensagemDaSaida,
   reivindicarSaida,
-} from "../lib/estado-de-saida.js";
+} from "../lib/estado-de-saida";
 import {
   isAllowedInstitutionalEmail,
   normalizeAllowedDomains,
   normalizePlatformContext,
-} from "../lib/platform-context.js";
-import { SESSAO_ATIVA, estadoDaSessao } from "../lib/sessao.js";
+} from "../lib/platform-context";
+import { SESSAO_ATIVA, estadoDaSessao } from "../lib/sessao";
 import {
   getSupabaseAuthStorage,
   getSupabaseClient,
-} from "../lib/supabaseClient.js";
+} from "../lib/supabaseClient";
 
 const RPC_CONTEXTO = "obter_contexto_monitora";
 const RPC_MEU_USUARIO = "meu_usuario";

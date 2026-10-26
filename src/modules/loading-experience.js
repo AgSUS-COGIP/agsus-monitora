@@ -2,7 +2,7 @@ import {
   getLoadingStage,
   isGenericLoadingCopy,
   normalizeLoadingProgress,
-} from "../lib/loading-copy.js";
+} from "../lib/loading-copy";
 import { EVENTO_DO_CARREGAMENTO } from "../app/avisos.js";
 
 const UPDATE_INTERVAL_MS = 1_000;

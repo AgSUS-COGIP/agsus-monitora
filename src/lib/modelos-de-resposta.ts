@@ -26,7 +26,7 @@ export type ErrosDoModelo = Partial<
   .docx) põe o texto como texto — nada de innerHTML.
 */
 import { hojeEmBrasilia } from "./agenda-das-entrevistas.ts";
-import { formatNumberBR } from "./formatters.js";
+import { formatNumberBR } from "./formatters";
 import { rotuloDaOrigem, situacaoDecidida } from "./recursos-dos-candidatos.ts";
 
 export const MARCADORES = Object.freeze([
