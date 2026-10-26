@@ -12,7 +12,13 @@ export function shouldCheckForUpdate({
   online,
   visible,
   minimumInterval = UPDATE_CHECK_INTERVAL_MS,
-}) {
+}: {
+  now: number;
+  lastCheckedAt: number;
+  online: boolean;
+  visible: boolean;
+  minimumInterval?: number;
+}): boolean {
   if (!online || !visible) return false;
   if (!lastCheckedAt) return true;
   return now - lastCheckedAt >= minimumInterval;
@@ -21,18 +27,21 @@ export function shouldCheckForUpdate({
 export function shouldReloadAfterControllerChange({
   updateRequested,
   alreadyReloading,
-}) {
+}: {
+  updateRequested: unknown;
+  alreadyReloading: unknown;
+}): boolean {
   return Boolean(updateRequested && !alreadyReloading);
 }
 
-function showUpdateNotice(worker) {
+function showUpdateNotice(worker: ServiceWorker) {
   // Atualiza o service worker em segundo plano. O MONITORA continua sendo
   // uma aplicação web: não há prompt, banner nem orientação de instalação.
   updateReloadRequested = true;
   worker.postMessage({ type: "SKIP_WAITING" });
 }
 
-function watchRegistration(registration) {
+function watchRegistration(registration: ServiceWorkerRegistration) {
   if (registration.waiting) showUpdateNotice(registration.waiting);
 
   registration.addEventListener("updatefound", () => {
@@ -47,7 +56,7 @@ function watchRegistration(registration) {
   });
 }
 
-function checkRegistrationForUpdate(registration) {
+function checkRegistrationForUpdate(registration: ServiceWorkerRegistration) {
   const now = Date.now();
   const shouldCheck = shouldCheckForUpdate({
     now,
@@ -62,7 +71,7 @@ function checkRegistrationForUpdate(registration) {
   registration.update().catch(() => {});
 }
 
-function bindUpdateRefresh(registration) {
+function bindUpdateRefresh(registration: ServiceWorkerRegistration) {
   const requestUpdateCheck = () => checkRegistrationForUpdate(registration);
 
   document.addEventListener("visibilitychange", requestUpdateCheck);
@@ -107,8 +116,8 @@ function bindServiceWorkerUpdates() {
  * guardou a última tela. Sem versão nova, devolve false.
  */
 export function aplicarAtualizacaoPendente(
-  recarregar = () => window.location.reload(),
-) {
+  recarregar: () => void = () => window.location.reload(),
+): boolean {
   if (!atualizacaoPendente || refreshingForUpdate) return false;
   atualizacaoPendente = false;
   refreshingForUpdate = true;
@@ -117,11 +126,11 @@ export function aplicarAtualizacaoPendente(
 }
 
 /** Só para teste: simula a versão nova ativa esperando a troca de página. */
-export function marcarAtualizacaoPendenteParaTeste(valor = true) {
+export function marcarAtualizacaoPendenteParaTeste(valor = true): void {
   atualizacaoPendente = valor;
   refreshingForUpdate = false;
 }
 
-export function initPwaLifecycle() {
+export function initPwaLifecycle(): void {
   bindServiceWorkerUpdates();
 }

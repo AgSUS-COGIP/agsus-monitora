@@ -22,7 +22,7 @@ describe("sem novas camadas de remendo", () => {
     for (const caminho of [
       "src/lib/prefixos.js",
       "src/lib/sufixo-do-edital.js",
-      "src/modules/map-guard.js",
+      "src/modules/map-guard.ts",
       "src/lib/paginas-em-paralelo.js",
       "src/componentes/modal.jsx",
       "src/lib/matriz-acessos.js",

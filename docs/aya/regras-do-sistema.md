@@ -5,7 +5,7 @@ O que vale em todas as telas: Pessoas online, atualização do sistema e busca g
 `supabase/migrations/20261005151618_presenca_para_gestor.sql` (admin global e Gestor ativos),
 `supabase/migrations/20261005200000_foto_do_google_no_perfil.sql` (foto do perfil),
 `src/app/navegacao.ts` (`navigate`), `src/componentes/pessoas-online/`,
-`src/modules/pwa-lifecycle.js`, `src/app/aviso-de-versao.ts`, `src/lib/busca-global.ts` e
+`src/modules/pwa-lifecycle.ts`, `src/app/aviso-de-versao.ts`, `src/lib/busca-global.ts` e
 `src/componentes/busca-global/busca-global.tsx`.
 
 ## Pessoas online
@@ -18,7 +18,7 @@ O que vale em todas as telas: Pessoas online, atualização do sistema e busca g
 
 **perguntas:** como funciona a atualizacao do sistema | atualizacao do sistema | versao nova do sistema | o sistema recarregou sozinho | nova versao | ha uma versao nova | atualizar agora | atualize para continuar
 **resposta:** Quando sai uma versão nova do MONITORA, aparece no topo da página a faixa "Há uma versão nova do MONITORA.", com "Atualizar agora" e o X para fechar (fechada, ela só volta numa versão mais nova). Se a versão trouxe uma mudança que importa, a faixa diz o que é, como "Novo: motivo padronizado na reabertura". O sistema confere a versão a cada 5 minutos com a aba aberta e ao voltar para ela, sem consultar o banco. Nada recarrega à força: com rascunho ou alteração não salva, "Atualizar agora" pede para salvar antes. Se uma ação falhar porque a tela é de uma versão anterior, a faixa fica amarela e pede "Atualize para continuar". Só uma tela que não consegue abrir por ser da versão antiga recarrega sozinha, uma vez.
-**fonte:** src/app/aviso-de-versao.ts; src/componentes/aviso-de-versao/aviso-de-versao.tsx; src/lib/versao-do-sistema.ts; src/lib/novidades.ts; src/lib/importar-com-recarga.ts; src/modules/pwa-lifecycle.js; src/app/navegacao.ts (navigate)
+**fonte:** src/app/aviso-de-versao.ts; src/componentes/aviso-de-versao/aviso-de-versao.tsx; src/lib/versao-do-sistema.ts; src/lib/novidades.ts; src/lib/importar-com-recarga.ts; src/modules/pwa-lifecycle.ts; src/app/navegacao.ts (navigate)
 
 ## Busca global
 

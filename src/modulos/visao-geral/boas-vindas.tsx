@@ -22,7 +22,7 @@ import {
 } from "../../lib/comemoracao.ts";
 import { semTreinamento } from "../../lib/edital-de-treinamento.ts";
 import { nomeDaArea } from "../../lib/menu-lateral.ts";
-import { comemorar } from "../../modules/comemoracao.js";
+import { comemorar } from "../../modules/comemoracao.ts";
 import { lerMarcosDaArea } from "./marcos.ts";
 import { linhasDaResposta } from "../../lib/visao-geral.ts";
 

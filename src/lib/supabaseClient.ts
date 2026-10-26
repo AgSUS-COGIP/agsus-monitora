@@ -5,7 +5,7 @@ import {
   SUPABASE_URL,
   hasSupabaseEnv,
 } from "./env";
-import { createSafeAuthStorage } from "../modules/auth-storage.js";
+import { createSafeAuthStorage } from "../modules/auth-storage.ts";
 import {
   EVENTO_TELA_ANTIGA,
   observarRespostasDoBanco,

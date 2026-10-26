@@ -20,7 +20,7 @@
   - vale só para a mesma versão publicada do sistema e por `VALIDADE_DA_COPIA_MS`;
   - o perfil é sempre consultado antes: acesso revogado não chega a ver a cópia.
 
-  A leitura e a gravação no IndexedDB são de `src/modules/copia-da-sessao-indexeddb.js`.
+  A leitura e a gravação no IndexedDB são de `src/modules/copia-da-sessao-indexeddb.ts`.
 */
 
 export const VALIDADE_DA_COPIA_MS = 7 * 24 * 60 * 60 * 1000;

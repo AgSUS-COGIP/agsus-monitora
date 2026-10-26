@@ -387,7 +387,7 @@ describe("registro da aba", async () => {
   const { RESOURCES } = await import("../src/lib/permissoes-recursos.ts");
   const { canViewEntrevistas, paginasPermitidas } =
     await import("../src/lib/access-roles.ts");
-  const { NOMES_DE_ICONES } = await import("../src/modules/icones.js");
+  const { NOMES_DE_ICONES } = await import("../src/modules/icones.ts");
 
   it("Painel de entrevistas e Conduzir entrevistas vêm depois de Recursos (painel e análise) e antes da Classificação e da Lista de aprovados, como beta", () => {
     const ids = ABAS_DO_MENU.map((aba) => aba.id);

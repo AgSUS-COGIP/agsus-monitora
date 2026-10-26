@@ -13,7 +13,7 @@ import {
   comemorar,
   EVENTO_DA_AYA,
   planoDaComemoracao,
-} from "../src/modules/comemoracao.js";
+} from "../src/modules/comemoracao.ts";
 import { encerrarShowsAoFimDeCadaTeste } from "./shows-de-comemoracao.js";
 
 /*

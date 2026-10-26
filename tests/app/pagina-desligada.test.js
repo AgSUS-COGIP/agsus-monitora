@@ -24,11 +24,11 @@ import {
   primeiraPaginaLigada,
 } from "../../src/lib/pagina-desligada.ts";
 import { normalizarSituacaoDoSistema } from "../../src/lib/situacao-dos-modulos.ts";
-import { carregarCatalogoDeAbas } from "../../src/modules/catalogo-de-abas.js";
+import { carregarCatalogoDeAbas } from "../../src/modules/catalogo-de-abas.ts";
 import {
   carregarSituacaoDoSistema,
   esquecerSituacaoDoSistema,
-} from "../../src/modules/situacao-dos-modulos.js";
+} from "../../src/modules/situacao-dos-modulos.ts";
 import { redefinirPaginaDaAya } from "../../src/modulos/aya/estado.ts";
 
 /*

@@ -23,7 +23,7 @@ O que a Aya faz, o que ela não faz e como abrir um chamado ao suporte. Fontes:
 
 **perguntas:** voce consulta meus dados | a aya ve meus dados | privacidade da aya | a conversa fica guardada
 **resposta:** Eu uso só o que já está disponível para você no MONITORA e não amplio seu acesso. A conversa fica guardada só nesta aba do navegador e some quando ela fecha; "Limpar conversa" apaga antes. A avaliação "Isso ajudou?" fica só no seu navegador.
-**fonte:** src/modules/aya-memoria.js; src/modulos/aya/
+**fonte:** src/modules/aya-memoria.ts; src/modulos/aya/
 
 ## Alterações pela Aya
 

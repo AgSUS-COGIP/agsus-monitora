@@ -36,8 +36,124 @@ import {
   EVENTO_ESTADO_DA_AYA,
 } from "../lib/estado-da-aya.ts";
 import { montarMascoteAvulsa } from "../modulos/aya/mascote/mascote.tsx";
-import { criarIcone } from "./icones.js";
+import { criarIcone } from "./icones.ts";
 import "../styles/comemoracao.css";
+import type { PaletaDosFogos, ShowDeFogos } from "../lib/fogos.ts";
+import type { CenaDeEfeitos } from "../lib/motor-de-efeitos.ts";
+import type { SomDoEstouro, TrajetoDaAya } from "../lib/fogos-cena.ts";
+import type { EstadoDaMascote } from "../lib/estado-da-aya.ts";
+import type { ArmazenamentoSimples } from "../lib/comemoracao.ts";
+import type { FormaDoMarco } from "../lib/catalogo-de-comemoracoes.ts";
+
+/** A janela das comemorações (o `webkitAudioContext` do Safari antigo). */
+export type JanelaDaComemoracao = Window & {
+  AudioContext?: typeof AudioContext;
+  webkitAudioContext?: typeof AudioContext;
+  CustomEvent?: typeof CustomEvent;
+};
+
+/** O halo de uma cor (canvas pronto para `drawImage`), ou null sem gradiente. */
+export type Halo = (cor: string) => HTMLCanvasElement | null;
+
+/** O que cada quadro desenha: o tamanho da tela, o tempo do quadro e o halo. */
+export interface QuadroDoDesenho {
+  largura: number;
+  altura: number;
+  dt: number;
+  halo: Halo;
+}
+
+/** O som das comemorações (`criarSom`). */
+export interface SomDasComemoracoes {
+  readonly ligado: boolean;
+  alternar(): boolean;
+  tocar(som: SomDoEstouro): boolean;
+  fechar(): void;
+}
+
+/** O efeito em andamento: `parar` encerra (e chama `aoTerminar`). */
+export interface EfeitoEmAndamento {
+  parar: () => void;
+}
+
+/** As opções de `soltarFogos`. */
+export interface OpcoesDosFogos {
+  efeito?: string;
+  intensidade?: string;
+  duracaoMs?: number | null;
+  forma?: FormaDoMarco | string;
+  comAya?: boolean;
+  som?: SomDasComemoracoes | null;
+  aoTerminar?: (() => void) | null;
+  aleatorio?: () => number;
+}
+
+/** As opções de `mostrarAviso`. */
+export interface OpcoesDoAviso {
+  texto?: string;
+  itens?: readonly string[];
+  tituloDosItens?: string;
+  tempoMs?: number | null;
+  aoFechar?: (() => void) | null;
+}
+
+/** O pedido de comemoração: o marco do catálogo ou o efeito direto. */
+export interface PedidoDoPlano {
+  marco?: string;
+  teste?: boolean;
+  confete?: string | boolean;
+  efeito?: string | null;
+  intensidade?: string | null;
+  duracaoMs?: number | null;
+  som?: boolean;
+  janela?: JanelaDaComemoracao;
+}
+
+/** O que soltar: o efeito, a intensidade, a duração, o som e a mensagem. */
+export interface PlanoDaComemoracao {
+  efeito: string | null;
+  intensidade: string | null;
+  duracaoMs: number | null;
+  som: boolean;
+  mensagem: string;
+}
+
+/** As opções de `comemorar`. */
+export interface OpcoesDaComemoracao {
+  texto?: string;
+  itens?: readonly string[];
+  tituloDosItens?: string;
+  forma?: FormaDoMarco | string;
+  confete?: string | boolean;
+  marco?: string;
+  teste?: boolean;
+  efeito?: string | null;
+  intensidade?: string | null;
+  duracaoMs?: number | null;
+  som?: boolean;
+  doc?: Document;
+  janela?: JanelaDaComemoracao;
+  aleatorio?: () => number;
+}
+
+/** O cliente do Supabase, no que o painel usa (só a RPC da situação). */
+interface ClienteDoPainel {
+  rpc?: (
+    funcao: string,
+  ) => PromiseLike<{ data?: unknown; error?: unknown } | undefined>;
+}
+
+/** As opções de `avaliarMarco`; `A` é o estado guardado, `C` a comemoração. */
+export interface OpcoesDoMarco<A, C> {
+  armazenamento?: ArmazenamentoSimples | null;
+  chave: string;
+  atual: unknown;
+  ligadas: boolean;
+  decidir: (anterior: A) => C | null | undefined;
+  confete?: string | boolean;
+  doc?: Document;
+  janela?: JanelaDaComemoracao;
+}
 
 /*
   O desenho das comemorações, sem biblioteca: o efeito escolhido (fogos,
@@ -62,7 +178,7 @@ import "../styles/comemoracao.css";
   O roteiro e a física dos fogos são de src/lib/fogos.ts; a cena (voo, véu,
   som), de src/lib/fogos-cena.ts; a regra de quando comemorar, de
   src/lib/comemoracao.ts. Quem usa: o acesso liberado
-  (comemoracao-do-acesso.js), o painel de análises, a tela de Entrevistas
+  (comemoracao-do-acesso.ts), o painel de análises, a tela de Entrevistas
   (src/modulos/entrevistas/marcos.ts), os marcos do ano
   (src/modulos/visao-geral/boas-vindas.tsx) e a Aya (fim de tour e de trilha).
 */
@@ -71,8 +187,9 @@ export const TEMPO_DO_AVISO_MS = 12000;
 /* Densidade de pixels no canvas: nítido em tela retina, sem passar de 2x. */
 const DPR_MAXIMO = 2;
 
-/** @param {Window | undefined} [janela] */
-export function semMovimento(janela = globalThis.window) {
+export function semMovimento(
+  janela: JanelaDaComemoracao | undefined = globalThis.window,
+): boolean {
   try {
     return Boolean(
       janela?.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches,
@@ -83,10 +200,10 @@ export function semMovimento(janela = globalThis.window) {
 }
 
 /* O tema do app (html[data-theme="dark"]) e as cores dele para os fogos. */
-function paletaDoTema(doc, janela) {
+function paletaDoTema(doc: Document, janela: Window): PaletaDosFogos {
   const raiz = doc.documentElement;
   const escuro = raiz?.getAttribute?.("data-theme") === "dark";
-  let estilo = null;
+  let estilo: CSSStyleDeclaration | null = null;
   try {
     estilo = janela.getComputedStyle?.(raiz) || null;
   } catch {
@@ -102,11 +219,11 @@ function paletaDoTema(doc, janela) {
   some, tingido com 'source-in' —, feito uma vez e reaproveitado com
   drawImage. Sem gradiente (canvas limitado), sem halo.
 */
-function criarHalos(doc) {
-  const feitos = new Map();
+function criarHalos(doc: Document): Halo {
+  const feitos = new Map<string, HTMLCanvasElement | null>();
   return (cor) => {
-    if (feitos.has(cor)) return feitos.get(cor);
-    let halo = null;
+    if (feitos.has(cor)) return feitos.get(cor)!;
+    let halo: HTMLCanvasElement | null = null;
     try {
       const canvas = doc.createElement("canvas");
       canvas.width = 64;
@@ -117,11 +234,11 @@ function criarHalos(doc) {
         gradiente.addColorStop(0, "rgba(255, 255, 255, 1)");
         gradiente.addColorStop(0.2, "rgba(255, 255, 255, 0.55)");
         gradiente.addColorStop(1, "rgba(255, 255, 255, 0)");
-        contexto.fillStyle = gradiente;
-        contexto.fillRect(0, 0, 64, 64);
-        contexto.globalCompositeOperation = "source-in";
-        contexto.fillStyle = cor;
-        contexto.fillRect(0, 0, 64, 64);
+        contexto!.fillStyle = gradiente;
+        contexto!.fillRect(0, 0, 64, 64);
+        contexto!.globalCompositeOperation = "source-in";
+        contexto!.fillStyle = cor;
+        contexto!.fillRect(0, 0, 64, 64);
         halo = canvas;
       }
     } catch {
@@ -132,7 +249,12 @@ function criarHalos(doc) {
   };
 }
 
-function ponto(contexto, x, y, raio) {
+function ponto(
+  contexto: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  raio: number,
+) {
   contexto.beginPath();
   contexto.arc(x, y, raio, 0, Math.PI * 2);
   contexto.fill();
@@ -142,7 +264,11 @@ function ponto(contexto, x, y, raio) {
   Um quadro: apaga parte do anterior (rastro), desenha a fumaça por cima do
   véu e acende, somando luz, foguetes, faíscas, halos e o marco.
 */
-function desenhar(contexto, show, { largura, altura, dt, halo }) {
+function desenhar(
+  contexto: CanvasRenderingContext2D,
+  show: ShowDeFogos,
+  { largura, altura, dt, halo }: QuadroDoDesenho,
+) {
   contexto.globalCompositeOperation = "destination-out";
   contexto.globalAlpha = 1;
   contexto.fillStyle = `rgba(0, 0, 0, ${alfaDoRastro(dt)})`;
@@ -220,7 +346,11 @@ function desenhar(contexto, show, { largura, altura, dt, halo }) {
  * Um quadro de uma cena inteira (fogos + motor) num contexto só, limpo a
  * cada quadro: a prévia do Palco de testes (Configurações › Comemorações).
  */
-export function desenharPrevia(contexto, cena, { largura, altura, dt, halo }) {
+export function desenharPrevia(
+  contexto: CanvasRenderingContext2D,
+  cena: CenaDeEfeitos,
+  { largura, altura, dt, halo }: QuadroDoDesenho,
+): void {
   contexto.globalCompositeOperation = "source-over";
   contexto.clearRect?.(0, 0, largura, altura);
   if (cena.show) desenhar(contexto, cena.show, { largura, altura, dt, halo });
@@ -235,7 +365,11 @@ export { criarHalos, paletaDoTema };
   lido com getImageData. Sem canvas 2D, null (src/lib/fogos-formas.ts usa a fonte de
   pontos).
 */
-function amostrarTexto(doc, janela, texto) {
+function amostrarTexto(
+  doc: Document,
+  janela: Window,
+  texto: string,
+): ImageData | null {
   try {
     const canvas = doc.createElement("canvas");
     const largura = 640;
@@ -272,9 +406,9 @@ function amostrarTexto(doc, janela, texto) {
   A Aya: a mesma arara viva do painel (src/modulos/aya/mascote/), batendo as
   asas ("comemorando", sem poleiro), movida por transform a cada quadro.
 */
-const desmontarAya = new WeakMap();
+const desmontarAya = new WeakMap<HTMLElement, () => void>();
 
-function criarAya(doc, trajeto) {
+function criarAya(doc: Document, trajeto: TrajetoDaAya): HTMLSpanElement {
   const aya = doc.createElement("span");
   aya.className = "comemoracao__aya";
   aya.setAttribute("aria-hidden", "true");
@@ -295,7 +429,7 @@ function criarAya(doc, trajeto) {
   return aya;
 }
 
-function tirarAya(aya) {
+function tirarAya(aya: HTMLElement | null) {
   if (!aya) return;
   const desmontar = desmontarAya.get(aya);
   desmontarAya.delete(aya);
@@ -304,7 +438,7 @@ function tirarAya(aya) {
   if (desmontar) setTimeout(desmontar, 0);
 }
 
-function moverAya(imagem, trajeto, t) {
+function moverAya(imagem: HTMLElement, trajeto: TrajetoDaAya, t: number) {
   if (!imagem?.isConnected) return;
   if (t > trajeto.inicio + trajeto.duracao) {
     tirarAya(imagem);
@@ -320,7 +454,7 @@ function moverAya(imagem, trajeto, t) {
 // ── Som (opcional, desligado por padrão) ────────────────────────────────────
 
 /* Ruído branco que decai: a matéria-prima do estalo. */
-function ruido(audio, duracao) {
+function ruido(audio: BaseAudioContext, duracao: number): AudioBuffer {
   const tamanho = Math.max(1, Math.ceil(audio.sampleRate * duracao));
   const buffer = audio.createBuffer(1, tamanho, audio.sampleRate);
   const dados = buffer.getChannelData(0);
@@ -329,7 +463,21 @@ function ruido(audio, duracao) {
   return buffer;
 }
 
-function rajada(audio, saida, { inicio, duracao, corte, filtro = "lowpass" }) {
+function rajada(
+  audio: BaseAudioContext,
+  saida: AudioNode,
+  {
+    inicio,
+    duracao,
+    corte,
+    filtro = "lowpass",
+  }: {
+    inicio: number;
+    duracao: number;
+    corte: number;
+    filtro?: BiquadFilterType;
+  },
+) {
   const fonte = audio.createBufferSource();
   fonte.buffer = ruido(audio, duracao);
   const passa = audio.createBiquadFilter();
@@ -345,7 +493,15 @@ function rajada(audio, saida, { inicio, duracao, corte, filtro = "lowpass" }) {
   fonte.stop(inicio + duracao);
 }
 
-function baque(audio, saida, { inicio, frequencia, duracao }) {
+function baque(
+  audio: BaseAudioContext,
+  saida: AudioNode,
+  {
+    inicio,
+    frequencia,
+    duracao,
+  }: { inicio: number; frequencia: number; duracao: number },
+) {
   const oscilador = audio.createOscillator();
   oscilador.type = "sine";
   oscilador.frequency.setValueAtTime(frequencia * 1.6, inicio);
@@ -363,7 +519,7 @@ function baque(audio, saida, { inicio, frequencia, duracao }) {
 }
 
 /* Estalos suaves sintetizados (sem arquivo): baque + chiado, ou crepitar. */
-function sintetizar(audio, { tipo, volume }) {
+function sintetizar(audio: BaseAudioContext, { tipo, volume }: SomDoEstouro) {
   const agora = audio.currentTime || 0;
   const mestre = audio.createGain();
   mestre.gain.value = 0.2 * volume;
@@ -397,10 +553,10 @@ function sintetizar(audio, { tipo, volume }) {
  * página; o AudioContext só nasce quando vai tocar.
  */
 export function criarSom(
-  janela = globalThis.window,
-  { ligadoPorPadrao = false } = {},
-) {
-  let armazenamento = null;
+  janela: JanelaDaComemoracao | undefined = globalThis.window,
+  { ligadoPorPadrao = false }: { ligadoPorPadrao?: boolean } = {},
+): SomDasComemoracoes {
+  let armazenamento: Storage | null = null;
   try {
     armazenamento = janela?.localStorage || null;
   } catch {
@@ -409,7 +565,7 @@ export function criarSom(
   // O marco configurado com som começa ligado (sem guardar a escolha).
   let ligado = ligadoPorPadrao === true || somLigado(armazenamento);
   let interagiu = janela?.navigator?.userActivation?.hasBeenActive === true;
-  let audio = null;
+  let audio: AudioContext | null = null;
   const contexto = () => {
     if (audio) return audio;
     const Classe = janela?.AudioContext || janela?.webkitAudioContext;
@@ -464,7 +620,11 @@ export function criarSom(
   comemoração, com a duração do efeito; "parada" ao terminar.
 */
 export const EVENTO_DA_AYA = EVENTO_ESTADO_DA_AYA;
-function avisarAya(janela, estado, duracaoMs) {
+function avisarAya(
+  janela: JanelaDaComemoracao | undefined,
+  estado: EstadoDaMascote,
+  duracaoMs?: number,
+) {
   try {
     definirEstadoDaAya(estado, duracaoMs, janela);
   } catch {
@@ -472,11 +632,14 @@ function avisarAya(janela, estado, duracaoMs) {
   }
 }
 
-function criarCanvas(doc, classe) {
+function criarCanvas(
+  doc: Document,
+  classe: string,
+): { canvas: HTMLCanvasElement; contexto: CanvasRenderingContext2D | null } {
   const canvas = doc.createElement("canvas");
   canvas.className = classe;
   canvas.setAttribute("aria-hidden", "true");
-  let contexto = null;
+  let contexto: CanvasRenderingContext2D | null = null;
   try {
     contexto = canvas.getContext?.("2d") || null;
   } catch {
@@ -499,8 +662,8 @@ function criarCanvas(doc, classe) {
  * (devolve false); senão, devolve `{ parar }`.
  */
 export function soltarFogos(
-  doc = globalThis.document,
-  janela = globalThis.window,
+  doc: Document | undefined = globalThis.document,
+  janela: JanelaDaComemoracao | undefined = globalThis.window,
   {
     efeito = "fogos",
     intensidade = "cheio",
@@ -510,8 +673,8 @@ export function soltarFogos(
     som = null,
     aoTerminar = null,
     aleatorio = Math.random,
-  } = {},
-) {
+  }: OpcoesDosFogos = {},
+): EfeitoEmAndamento | false {
   if (!doc?.body || semMovimento(janela)) return false;
   if (!janela?.requestAnimationFrame) return false;
   const chamaAya = efeitoChamaAya(efeito);
@@ -568,7 +731,7 @@ export function soltarFogos(
     doc.body.append(canvas);
     canvas.width = Math.round(largura * dpr);
     canvas.height = Math.round(altura * dpr);
-    contexto.setTransform?.(dpr, 0, 0, dpr, 0, 0);
+    contexto!.setTransform?.(dpr, 0, 0, dpr, 0, 0);
   }
   const aya = show?.aya ? criarAya(doc, show.aya) : null;
   if (aya) doc.body.append(aya);
@@ -585,20 +748,20 @@ export function soltarFogos(
     avisarAya(janela, "parada");
     aoTerminar?.();
   };
-  let anterior = null;
-  const quadro = (agora) => {
+  let anterior: number | null = null;
+  const quadro = (agora: number) => {
     if (parado) return;
     // Aba oculta: não avança (o navegador também segura os quadros).
     const dt = anterior === null || doc.hidden ? 0 : (agora - anterior) / 1000;
     anterior = agora;
     avancarCena(cena, dt);
-    if (show) desenhar(fogos.contexto, show, { largura, altura, dt, halo });
+    if (show) desenhar(fogos.contexto!, show, { largura, altura, dt, halo });
     if (motor) {
-      motor.contexto.clearRect?.(0, 0, largura, altura);
-      desenharParticulasDoMotor(motor.contexto, cena);
+      motor.contexto!.clearRect?.(0, 0, largura, altura);
+      desenharParticulasDoMotor(motor.contexto!, cena);
     }
     if (veu) veu.style.opacity = String(opacidadeDoVeu(cena.t, cena.duracao));
-    if (aya) moverAya(aya, show.aya, show.t);
+    if (aya) moverAya(aya, show!.aya!, show!.t);
     for (const evento of cena.eventos.splice(0))
       som?.tocar?.(somDoEstouro(evento));
     if (cenaAcabou(cena)) parar();
@@ -614,15 +777,15 @@ export function soltarFogos(
  * (quem chama fecha — a comemoração com efeito espera o efeito acabar).
  */
 export function mostrarAviso(
-  doc = globalThis.document,
+  doc: Document | undefined = globalThis.document,
   {
     texto,
     itens = [],
     tituloDosItens = "",
     tempoMs = TEMPO_DO_AVISO_MS,
     aoFechar = null,
-  } = {},
-) {
+  }: OpcoesDoAviso = {},
+): HTMLDivElement | null {
   if (!doc?.body) return null;
   const aviso = doc.createElement("div");
   aviso.className = "comemoracao";
@@ -631,7 +794,7 @@ export function mostrarAviso(
   const corpo = doc.createElement("div");
   corpo.className = "comemoracao__corpo";
   const frase = doc.createElement("strong");
-  frase.textContent = texto;
+  frase.textContent = texto as string | null;
   corpo.append(frase);
   if (itens.length) {
     if (tituloDosItens) {
@@ -667,7 +830,7 @@ export function mostrarAviso(
 }
 
 /* O ícone e o rótulo do botão de som, conforme o estado. */
-function marcarSom(botao, ligado) {
+function marcarSom(botao: HTMLButtonElement, ligado: boolean) {
   const rotulo = ligado ? "Desligar som" : "Ligar som";
   botao.setAttribute("aria-pressed", String(ligado));
   botao.setAttribute("aria-label", rotulo);
@@ -677,7 +840,7 @@ function marcarSom(botao, ligado) {
   );
 }
 
-function armazenamentoDa(janela) {
+function armazenamentoDa(janela: Window | undefined): Storage | null {
   try {
     return janela?.localStorage || null;
   } catch {
@@ -700,7 +863,7 @@ export function planoDaComemoracao({
   duracaoMs = null,
   som = false,
   janela = globalThis.window,
-} = {}) {
+}: PedidoDoPlano = {}): PlanoDaComemoracao | null {
   if (marco) {
     const { mostrar, opcoes } = decidirComemoracao({
       marco,
@@ -754,9 +917,6 @@ export function planoDaComemoracao({
  * quando o efeito acaba) e o botão de som; o × também encerra. Sem efeito
  * quando a pessoa pediu menos movimento. Devolve o aviso (ou null).
  */
-/**
- * @param {{texto?: string, itens?: readonly string[], tituloDosItens?: string, forma?: string | {tipo: string, texto: string} | null, confete?: string | boolean, marco?: string, teste?: boolean, efeito?: string | null, intensidade?: string | null, duracaoMs?: number | null, som?: boolean, doc?: Document, janela?: Window, aleatorio?: () => number}} [opcoes]
- */
 export function comemorar({
   texto,
   itens = [],
@@ -772,7 +932,7 @@ export function comemorar({
   doc = globalThis.document,
   janela = globalThis.window,
   aleatorio,
-} = {}) {
+}: OpcoesDaComemoracao = {}): HTMLDivElement | null {
   const plano = planoDaComemoracao({
     marco,
     teste,
@@ -789,7 +949,7 @@ export function comemorar({
   const som = animar
     ? criarSom(janela, { ligadoPorPadrao: plano.som === true })
     : null;
-  let fogos = null;
+  let fogos: EfeitoEmAndamento | false | null = null;
   const inicio = Date.now();
   /*
     Com efeito, o aviso não fecha no tempo fixo (cortaria um efeito mais
@@ -802,14 +962,15 @@ export function comemorar({
     tituloDosItens,
     tempoMs: animar ? null : TEMPO_DO_AVISO_MS,
     aoFechar: () => {
-      fogos?.parar?.();
+      // `false` (sem efeito) não tem `parar`: o `?.` cobre os dois casos.
+      (fogos as EfeitoEmAndamento | null)?.parar?.();
       som?.fechar();
     },
   });
   if (!aviso || !animar) return aviso;
   const fecharDepois = () =>
     setTimeout(
-      () => aviso.querySelector(".comemoracao__fechar")?.click(),
+      () => aviso.querySelector<HTMLElement>(".comemoracao__fechar")?.click(),
       Math.max(0, TEMPO_DO_AVISO_MS - (Date.now() - inicio)),
     );
   const acoes = doc.createElement("div");
@@ -817,17 +978,22 @@ export function comemorar({
   const botaoSom = doc.createElement("button");
   botaoSom.type = "button";
   botaoSom.className = "comemoracao__som";
-  marcarSom(botaoSom, som.ligado);
-  botaoSom.addEventListener("click", () => marcarSom(botaoSom, som.alternar()));
+  marcarSom(botaoSom, som!.ligado);
+  botaoSom.addEventListener("click", () =>
+    marcarSom(botaoSom, som!.alternar()),
+  );
   const pular = doc.createElement("button");
   pular.type = "button";
   pular.className = "comemoracao__pular";
   pular.textContent = "Pular";
-  pular.addEventListener("click", () => fogos?.parar?.());
+  pular.addEventListener("click", () =>
+    (fogos as EfeitoEmAndamento | null)?.parar?.(),
+  );
   acoes.append(botaoSom, pular);
   fogos = soltarFogos(doc, janela, {
-    efeito: plano.efeito,
-    intensidade: plano.intensidade,
+    // Com `animar`, o plano tem efeito (e intensidade).
+    efeito: plano.efeito!,
+    intensidade: plano.intensidade!,
     duracaoMs: plano.duracaoMs,
     forma,
     som,
@@ -840,7 +1006,7 @@ export function comemorar({
   if (fogos)
     aviso.insertBefore(acoes, aviso.querySelector(".comemoracao__fechar"));
   else {
-    som.fechar();
+    som!.fechar();
     fecharDepois();
   }
   return aviso;
@@ -851,12 +1017,14 @@ export function comemorar({
   liga/desliga por conta própria, uma vez por página. Falhou (rede,
   sem sessão), desligado — e nada mais depende disso.
 */
-let consultaDoPainel = null;
-export function comemoracoesLigadasNoPainel(supabase) {
+let consultaDoPainel: Promise<boolean> | null = null;
+export function comemoracoesLigadasNoPainel(
+  supabase: ClienteDoPainel | null | undefined,
+): Promise<boolean> {
   if (!supabase?.rpc) return Promise.resolve(false);
   consultaDoPainel ??= Promise.resolve()
-    .then(() => supabase.rpc("obter_situacao_do_sistema"))
-    .then(({ data, error } = {}) =>
+    .then(() => supabase.rpc!("obter_situacao_do_sistema"))
+    .then(({ data, error }: { data?: unknown; error?: unknown } = {}) =>
       error ? false : comemoracoesLigadasNaResposta(data),
     )
     .catch(() => false);
@@ -864,7 +1032,7 @@ export function comemoracoesLigadasNoPainel(supabase) {
 }
 
 /** Só para os testes: esquece a leitura do liga/desliga. */
-export function esquecerComemoracoesDoPainel() {
+export function esquecerComemoracoesDoPainel(): void {
   consultaDoPainel = null;
 }
 
@@ -875,7 +1043,7 @@ export function esquecerComemoracoesDoPainel() {
  * do catálogo: a configuração dele decide o efeito). O estado é guardado
  * mesmo desligado, para que religar não traga o que aconteceu no meio.
  */
-export function avaliarMarco({
+export function avaliarMarco<A, C extends OpcoesDaComemoracao>({
   armazenamento = globalThis.window?.localStorage,
   chave,
   atual,
@@ -884,10 +1052,11 @@ export function avaliarMarco({
   confete = "cheio",
   doc = globalThis.document,
   janela = globalThis.window,
-}) {
+}: OpcoesDoMarco<A, C>): C | null {
   const anterior = trocarEstadoGuardado({ armazenamento, chave, atual });
   if (anterior === null || !ligadas) return null;
-  const comemoracao = decidir(anterior);
+  // O estado guardado é o JSON que o próprio painel gravou (`atual`).
+  const comemoracao = decidir(anterior as A);
   if (!comemoracao) return null;
   comemorar({ ...comemoracao, confete, doc, janela });
   return comemoracao;

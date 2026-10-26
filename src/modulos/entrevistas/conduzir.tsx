@@ -26,7 +26,7 @@ import {
 } from "../../lib/fila-de-conducao.ts";
 import { importarComRecarga } from "../../lib/importar-com-recarga";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { comemorar } from "../../modules/comemoracao.js";
+import { comemorar } from "../../modules/comemoracao.ts";
 import {
   Aviso,
   EstadoVazio,
@@ -56,7 +56,7 @@ import "./entrevistas.css";
     O contador "7 de 12 hoje" fica no topo; clicar no cartão abre a ficha de
     notas em tela cheia (ficha.tsx), com "Salvar e abrir o próximo" na ordem
     da tela (vaga a vaga). Concluir o dia (todas as de hoje concluídas ou com
-    falta) solta os fogos (src/modules/comemoracao.js, com o liga/desliga das
+    falta) solta os fogos (src/modules/comemoracao.ts, com o liga/desliga das
     comemorações do app), uma vez, na passagem.
   - Preparar: o resumo das regras e os passos Roteiro, Banca, Convocação e
     Agenda (preparar.tsx) — a configuração do gestor, como Regra e Equipe
@@ -386,7 +386,7 @@ export function montarConducaoDeEntrevistas({
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
   aoMudarResultados = () => {},
   doPainel = () => [],
-  aoComemorar = comemorar as unknown as Comemorar,
+  aoComemorar = comemorar,
   hojeDe = () => hojeEmBrasilia(),
   armazenamento = () => globalThis.localStorage,
 }: {

@@ -13,18 +13,35 @@ import { execFileSync } from "node:child_process";
   Compara a lista de arquivos de HEAD com a do ponto onde o ramo saiu da base
   (o ramo de destino). Renomear dentro da pasta também conta como arquivo novo
   — o nome antigo some e o novo aparece; quem precisa mover um arquivo do
-  legado move para fora dele.
+  legado move para fora dele. A exceção é a migração para TypeScript: `x.ts`
+  (ou `x.tsx`) no lugar de `x.js` (ou `x.jsx`), que sumiu, é o mesmo arquivo.
 */
 
 export const PASTAS_DO_LEGADO = ["src/modules/", "src/analises/"];
 
-/** Os arquivos de `agora` que estão numa pasta do legado e não existiam `antes`. */
+/* Os nomes em JavaScript de que um arquivo TypeScript pode ser a migração. */
+function origensEmJavaScript(caminho) {
+  const base = caminho.replace(/.tsx?$/, "");
+  return base === caminho ? [] : [`${base}.js`, `${base}.jsx`];
+}
+
+/**
+ * Os arquivos de `agora` que estão numa pasta do legado e não existiam `antes`.
+ * O `.ts`/`.tsx` que substitui um `.js`/`.jsx` de `antes` (que já não está em
+ * `agora`) é migração, não arquivo novo.
+ */
 export function arquivosNovosNoLegado(antes, agora, pastas = PASTAS_DO_LEGADO) {
   const existiam = new Set(antes);
+  const continuam = new Set(agora);
+  const migrado = (caminho) =>
+    origensEmJavaScript(caminho).some(
+      (origem) => existiam.has(origem) && !continuam.has(origem),
+    );
   return agora.filter(
     (caminho) =>
       pastas.some((pasta) => caminho.startsWith(pasta)) &&
-      !existiam.has(caminho),
+      !existiam.has(caminho) &&
+      !migrado(caminho),
   );
 }
 

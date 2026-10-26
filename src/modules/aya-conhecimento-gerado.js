@@ -535,7 +535,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'Eu uso só o que já está disponível para você no MONITORA e não amplio seu acesso. A conversa fica guardada só nesta aba do navegador e some quando ela fecha; "Limpar conversa" apaga antes. A avaliação "Isso ajudou?" fica só no seu navegador.',
     fato: "",
-    fonte: "src/modules/aya-memoria.js; src/modulos/aya/",
+    fonte: "src/modules/aya-memoria.ts; src/modulos/aya/",
   },
   {
     arquivo: "assistente-aya.md",
@@ -5382,7 +5382,7 @@ export const VERBETES_AYA = Object.freeze([
       'Quando sai uma versão nova do MONITORA, aparece no topo da página a faixa "Há uma versão nova do MONITORA.", com "Atualizar agora" e o X para fechar (fechada, ela só volta numa versão mais nova). Se a versão trouxe uma mudança que importa, a faixa diz o que é, como "Novo: motivo padronizado na reabertura". O sistema confere a versão a cada 5 minutos com a aba aberta e ao voltar para ela, sem consultar o banco. Nada recarrega à força: com rascunho ou alteração não salva, "Atualizar agora" pede para salvar antes. Se uma ação falhar porque a tela é de uma versão anterior, a faixa fica amarela e pede "Atualize para continuar". Só uma tela que não consegue abrir por ser da versão antiga recarrega sozinha, uma vez.',
     fato: "",
     fonte:
-      "src/app/aviso-de-versao.ts; src/componentes/aviso-de-versao/aviso-de-versao.tsx; src/lib/versao-do-sistema.ts; src/lib/novidades.ts; src/lib/importar-com-recarga.ts; src/modules/pwa-lifecycle.js; src/app/navegacao.ts (navigate)",
+      "src/app/aviso-de-versao.ts; src/componentes/aviso-de-versao/aviso-de-versao.tsx; src/lib/versao-do-sistema.ts; src/lib/novidades.ts; src/lib/importar-com-recarga.ts; src/modules/pwa-lifecycle.ts; src/app/navegacao.ts (navigate)",
   },
   {
     arquivo: "regras-do-sistema.md",

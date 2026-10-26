@@ -16,7 +16,7 @@ arquivo em kebab-case, componente em PascalCase.
 ## Mapa
 
 ```
-icone.tsx                    <Icone nome="…"> — Lucide, do mesmo registro de src/modules/icones.js
+icone.tsx                    <Icone nome="…"> — Lucide, do mesmo registro de src/modules/icones.ts
 selo-de-treinamento.tsx      <SeloDeTreinamento>: selo "Treinamento" do edital de treinamento
 pessoas-online/              "Pessoas online" no cabeçalho (montarPessoasOnline); estado em src/app/presenca.ts
 aviso-de-versao/             faixa "Há uma versão nova" no topo (montarAvisoDeVersao); regra em src/app/aviso-de-versao.ts

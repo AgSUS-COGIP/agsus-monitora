@@ -98,7 +98,7 @@ describe("o Brasil inteiro cabe na moldura", () => {
 });
 
 describe("o map-guard usa a regra", () => {
-  const guarda = readFileSync("src/modules/map-guard.js", "utf8");
+  const guarda = readFileSync("src/modules/map-guard.ts", "utf8");
 
   it("folga do Brasil e zoom mínimo que cabe em todo enquadramento do país", () => {
     expect(guarda).toContain("zoomQueCabe(");

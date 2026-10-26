@@ -11,7 +11,7 @@ import { LOGO_PADRAO_DA_BARRA } from "../src/lib/marca-da-barra-lateral.ts";
 const app = fonteDoApp();
 const governance = readFileSync("src/modulos/configuracoes/estado.ts", "utf8");
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
-const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
+const mapGuard = readFileSync("src/modules/map-guard.ts", "utf8");
 const lifecycle = readFileSync("src/lib/session-lifecycle.ts", "utf8");
 // A barra lateral é React: o <img id="sideLogo"> nasce no componente da marca.
 const barraLateral = readFileSync(

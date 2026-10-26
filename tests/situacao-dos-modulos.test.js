@@ -25,7 +25,7 @@ import {
   consultaDaSituacaoDoSistema,
   esquecerSituacaoDoSistema,
   situacaoDoSistema,
-} from "../src/modules/situacao-dos-modulos.js";
+} from "../src/modules/situacao-dos-modulos.ts";
 
 /*
   Módulos e abas: o sistema, cada área, cada aba (em todas as áreas ou só

@@ -76,7 +76,7 @@ import {
   criarCacheDePayload,
   revalidarPayload,
 } from "../../lib/cache-de-payload";
-import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
+import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import {
   canAlterarPorDecisaoJudicial,

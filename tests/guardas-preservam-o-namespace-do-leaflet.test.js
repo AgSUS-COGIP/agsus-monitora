@@ -63,7 +63,7 @@ describe("os guardas não podem mutilar o namespace do Leaflet", () => {
 
   it("L.tileLayer.wms sobrevive ao guarda", async () => {
     const { installLeafletMapGuard } =
-      await import("../src/modules/map-guard.js");
+      await import("../src/modules/map-guard.ts");
     expect(typeof window.L.tileLayer.wms).toBe("function");
 
     expect(installLeafletMapGuard()).toBe(true);
@@ -76,7 +76,7 @@ describe("os guardas não podem mutilar o namespace do Leaflet", () => {
 
   it("o guarda continua a aplicar as suas opções aos azulejos comuns", async () => {
     const { installLeafletMapGuard } =
-      await import("../src/modules/map-guard.js");
+      await import("../src/modules/map-guard.ts");
     const original = window.L.tileLayer;
     installLeafletMapGuard();
 
@@ -104,7 +104,7 @@ describe("os guardas não podem mutilar o namespace do Leaflet", () => {
   */
   it("o guarda não recorta os azulejos por bounds", async () => {
     const { installLeafletMapGuard } =
-      await import("../src/modules/map-guard.js");
+      await import("../src/modules/map-guard.ts");
     const original = window.L.tileLayer;
     installLeafletMapGuard();
 
@@ -121,7 +121,7 @@ describe("os guardas não podem mutilar o namespace do Leaflet", () => {
   */
   it("o .wms é copiado tal e qual, sem as opções do guarda", async () => {
     const { installLeafletMapGuard } =
-      await import("../src/modules/map-guard.js");
+      await import("../src/modules/map-guard.ts");
     const wmsOriginal = window.L.tileLayer.wms;
     installLeafletMapGuard();
 
@@ -141,11 +141,11 @@ describe("os guardas não podem mutilar o namespace do Leaflet", () => {
   */
   const arrancarComoAAplicacao = async () => {
     const { installLeafletMapGuard } =
-      await import("../src/modules/map-guard.js");
+      await import("../src/modules/map-guard.ts");
     const { installMapBaseLayerSwitcher } =
       await import("../src/modules/map-base-layer-switcher.js");
     const { installMapZoomRange } =
-      await import("../src/modules/map-zoom-range.js");
+      await import("../src/modules/map-zoom-range.ts");
     const { installIndigenousTerritoriesLayer } =
       await import("../src/modules/indigenous-territories-layer.js");
 

@@ -5,7 +5,7 @@
   número do marco ("1.000", "2.500").
 
   Formas geométricas saem de curvas (contorno amostrado por comprimento). O
-  texto sai de uma imagem: src/modules/comemoracao.js escreve o texto num
+  texto sai de uma imagem: src/modules/comemoracao.ts escreve o texto num
   canvas fora da tela (fillText) e passa os pixels para `pontosDaImagem`. Sem
   canvas (testes, navegador sem 2D), uma fonte de pontos 5×7 própria.
 

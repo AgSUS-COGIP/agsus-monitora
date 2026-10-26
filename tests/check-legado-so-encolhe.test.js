@@ -51,6 +51,24 @@ describe("arquivosNovosNoLegado", () => {
     ).toEqual(["src/modules/novo.js"]);
   });
 
+  it("migrar para TypeScript (o .js vira .ts) não é arquivo novo", () => {
+    expect(
+      arquivosNovosNoLegado(
+        ["src/modules/a.js", "src/modules/b.jsx"],
+        ["src/modules/a.ts", "src/modules/b.tsx"],
+      ),
+    ).toEqual([]);
+  });
+
+  it("o .ts ao lado do .js que continua, ou de outro nome, é arquivo novo", () => {
+    expect(
+      arquivosNovosNoLegado(
+        ["src/modules/a.js", "src/modules/velho.js"],
+        ["src/modules/a.js", "src/modules/a.ts", "src/modules/novo.ts"],
+      ),
+    ).toEqual(["src/modules/a.ts", "src/modules/novo.ts"]);
+  });
+
   it("não confunde pasta com prefixo parecido", () => {
     expect(
       arquivosNovosNoLegado([], ["src/modules-extra/a.js", "src/analisesx.js"]),

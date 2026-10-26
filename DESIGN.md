@@ -77,7 +77,7 @@ tinha cor diferente em cada tela.
 
 **Fonte:** Geist, do Google Fonts, como fonte variável (400 a 900 num arquivo só).
 **Ícones:** Font Awesome 6.5.2 via CDN (62 usos no `index.html`). A barra lateral e o que é dela
-já usam o `lucide`, por `src/modules/icones.js` (ver "Ícones", seção 4).
+já usam o `lucide`, por `src/modules/icones.ts` (ver "Ícones", seção 4).
 
 `runtime-critical-fixes.css` é carregado de dentro de `src/modules/connectivity-status.js`.
 
@@ -311,7 +311,7 @@ que não são de área entram em Painéis; as seções de Configurações são a
 
 Regras:
 
-- Lucide sai de um registro só, `src/modules/icones.js`, que importa cada ícone pelo nome — só os
+- Lucide sai de um registro só, `src/modules/icones.ts`, que importa cada ícone pelo nome — só os
   usados entram no bundle. Ícone novo: registre lá. Sem framework, `criarIcone(nome, { tamanho })`;
   em React, `<Icone nome="…" tamanho={…} />` (`src/componentes/icone.tsx`).
 - Tamanhos 16, 18 e 20px, traço 1,75, na cor do texto ao lado (`stroke: currentColor`).
@@ -462,6 +462,6 @@ mutirão.
 | **Exceção aceita:** KPIs em card | Cards no padrão do DS 11.6 (fundo claro, borda sutil, sem sombra), por decisão do responsável (25/09/2026). Feito na Saúde Indígena, em Editais e na Lista de aprovados (as duas abas): o mesmo card compacto de 78px. | Manter card. |
 | **Exceção aceita:** filtros, tabela, mapa e "unidades com mais de um processo" em card | Na Visão geral, no mesmo card dos KPIs (DS 11.6, sem sombra), por decisão do responsável (25/09/2026). Editais, Cronograma e Lista de aprovados mantêm o card em volta da tabela e dos blocos, sem sombra, com 12px entre os blocos. | Manter card; não aninhar card dentro de card. Entre os blocos, 12px (ritmo compacto de antes), não os 48px de seção do DS 5.2. |
 | Botão verde arredondado (`.btn.green`) | feito: `.btn`, `.btn.green` e `.btn.primary` no primário azul (`app.css`); `analises.html` ainda tem o seu | `--color-action-primary`, `--radius-md`, sem sombra |
-| Emoji como ícone | feito no mapa da Visão geral: "Brasil" e "Calor" com Lucide `map` e `flame` (16px, `aria-hidden`), pelo registro `icones.js` (`controles-do-mapa.js`). A legenda do mapa nacional é recolhível (`ChevronDown`/`ChevronUp`) e começa fechada abaixo de 768px. | Nenhum emoji no lugar de ícone (DS 14). |
+| Emoji como ícone | feito no mapa da Visão geral: "Brasil" e "Calor" com Lucide `map` e `flame` (16px, `aria-hidden`), pelo registro `icones.ts` (`controles-do-mapa.js`). A legenda do mapa nacional é recolhível (`ChevronDown`/`ChevronUp`) e começa fechada abaixo de 768px. | Nenhum emoji no lugar de ícone (DS 14). |
 | Modo escuro | existe | fora do escopo do DS: manter, sem investir |
 | **Exceção aceita:** cor da barra lateral | Segue a cor configurada em Configurações → Aparência (`ui_sidebar_background_color`), identidade do MONITORA — exceção aceita ao `--color-sidebar-bg` oficial (decisão do responsável, 25/09/2026). | Não trocar. |

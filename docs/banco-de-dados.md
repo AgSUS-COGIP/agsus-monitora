@@ -691,7 +691,7 @@ recurso; `CO_RECURSO` é o ponto de partida) e os painéis externos (Seleção,
 Entrevistas, Recursos seguem em `TB_PAINEL_EXTERNO`, grupo "Painéis"; quando
 virarem aba, entram com `TP_ABA = 'externa'`).
 
-O front (`src/modules/catalogo-de-abas.js`) pede a função junto com as outras
+O front (`src/modules/catalogo-de-abas.ts`) pede a função junto com as outras
 consultas da entrada e guarda a resposta na cópia da sessão (parte opcional
 `abas`). Sem a função (PostgREST `PGRST202`), com erro ou resposta vazia, usa
 `ABAS_DO_MENU` (`src/lib/menu-lateral.ts`), o mesmo catálogo no código — por

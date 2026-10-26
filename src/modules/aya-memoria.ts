@@ -24,11 +24,20 @@
   pelas mais recentes é pior em capacidade e melhor em confiabilidade.
 */
 
+/** Um turno da conversa guardada. */
+export interface TurnoDaConversa {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/** A janela, no que a memória usa. */
+type JanelaDaMemoria = { readonly sessionStorage?: Storage | null } | null;
+
 const CHAVE = "agsus_aya_conversa_v1";
 const MAX_TURNOS = 40;
 const MAX_CARACTERES = 4000;
 
-function armazenamento(win) {
+function armazenamento(win: JanelaDaMemoria | undefined): Storage | null {
   try {
     return win?.sessionStorage || null;
   } catch {
@@ -38,10 +47,13 @@ function armazenamento(win) {
   }
 }
 
-function turnoValido(item) {
+/** Devolve o texto do turno (verdadeiro) quando ele vale; senão, falso. */
+function turnoValido(
+  item: { role?: unknown; content?: unknown } | null | undefined,
+): unknown {
   return (
     item &&
-    ["user", "assistant"].includes(item.role) &&
+    (["user", "assistant"] as unknown[]).includes(item.role) &&
     typeof item.content === "string" &&
     item.content.trim()
   );
@@ -52,23 +64,25 @@ function turnoValido(item) {
   uma lista sem fim; o de caracteres evita que poucas respostas longas encham
   tudo sozinhas.
 */
-export function limitarConversa(historico) {
-  const validos = (Array.isArray(historico) ? historico : []).filter(
-    turnoValido,
-  );
+export function limitarConversa(historico: unknown): TurnoDaConversa[] {
+  const validos: TurnoDaConversa[] = (
+    Array.isArray(historico) ? historico : []
+  ).filter(turnoValido);
   const recentes = validos.slice(-MAX_TURNOS);
 
   let total = 0;
-  const mantidos = [];
+  const mantidos: TurnoDaConversa[] = [];
   for (let i = recentes.length - 1; i >= 0; i -= 1) {
-    total += recentes[i].content.length;
+    total += recentes[i]!.content.length;
     if (total > MAX_CARACTERES && mantidos.length) break;
-    mantidos.unshift(recentes[i]);
+    mantidos.unshift(recentes[i]!);
   }
   return mantidos;
 }
 
-export function lerConversa(win = globalThis) {
+export function lerConversa(
+  win: JanelaDaMemoria | undefined = globalThis,
+): TurnoDaConversa[] {
   const loja = armazenamento(win);
   if (!loja) return [];
   try {
@@ -81,7 +95,10 @@ export function lerConversa(win = globalThis) {
   }
 }
 
-export function salvarConversa(historico, win = globalThis) {
+export function salvarConversa(
+  historico: unknown,
+  win: JanelaDaMemoria | undefined = globalThis,
+): boolean {
   const loja = armazenamento(win);
   if (!loja) return false;
   try {
@@ -94,7 +111,9 @@ export function salvarConversa(historico, win = globalThis) {
   }
 }
 
-export function esquecerConversa(win = globalThis) {
+export function esquecerConversa(
+  win: JanelaDaMemoria | undefined = globalThis,
+): void {
   const loja = armazenamento(win);
   if (!loja) return;
   try {

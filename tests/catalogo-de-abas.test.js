@@ -13,7 +13,7 @@ import {
   abasDoMenu,
   carregarCatalogoDeAbas,
   consultaDoCatalogoDeAbas,
-} from "../src/modules/catalogo-de-abas.js";
+} from "../src/modules/catalogo-de-abas.ts";
 
 /*
   Etapa 1 do "tudo vira aba": as abas de cada área saem do código para o banco

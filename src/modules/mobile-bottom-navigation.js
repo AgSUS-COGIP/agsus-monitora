@@ -1,4 +1,4 @@
-import { criarIcone } from "./icones.js";
+import { criarIcone } from "./icones.ts";
 import {
   avisar,
   EVENTO_BARRA_ALTERNADA,

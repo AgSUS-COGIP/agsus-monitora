@@ -30,15 +30,15 @@ import {
   apagarCopiaDaSessao,
   guardarCopiaDaSessao,
   lerCopiaDaSessao,
-} from "../modules/copia-da-sessao-indexeddb.js";
+} from "../modules/copia-da-sessao-indexeddb.ts";
 import {
   carregarCatalogoDeAbas,
   consultaDoCatalogoDeAbas,
-} from "../modules/catalogo-de-abas.js";
+} from "../modules/catalogo-de-abas.ts";
 import {
   carregarSituacaoDoSistema,
   consultaDaSituacaoDoSistema,
-} from "../modules/situacao-dos-modulos.js";
+} from "../modules/situacao-dos-modulos.ts";
 import { esconderEsqueleto, marcarAtualizacao } from "./carregamento.ts";
 import {
   assinarPedidosDasLinhas,
@@ -162,7 +162,7 @@ export type ParteDaCarga = {
   carregar(opcoes: OpcoesDaConsulta): Promise<unknown>;
 };
 
-/** A cópia da sessão (IndexedDB, src/modules/copia-da-sessao-indexeddb.js). */
+/** A cópia da sessão (IndexedDB, src/modules/copia-da-sessao-indexeddb.ts). */
 export type CopiaDaCarga = {
   ler(): Promise<CopiaDaSessao | null>;
   guardar(copia: CopiaDaSessao): Promise<unknown>;

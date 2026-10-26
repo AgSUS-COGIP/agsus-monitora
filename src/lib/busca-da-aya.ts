@@ -28,7 +28,7 @@ import { VERBETES_AYA } from "../modules/aya-conhecimento-gerado.js";
 import {
   curatedAnswerForQuestion,
   officialSourcesForQuestion,
-} from "../modules/aya-knowledge.js";
+} from "../modules/aya-knowledge.ts";
 import { paginaDaAya } from "./aya-paginas.ts";
 import type { SugestaoDaAya } from "./aya-paginas.ts";
 import { nomeDaArea } from "./menu-lateral.ts";
@@ -71,7 +71,7 @@ export interface VerbeteDaAya {
   readonly fonte?: string;
 }
 
-/** Uma fonte oficial citada (aya-knowledge.js). */
+/** Uma fonte oficial citada (aya-knowledge.ts). */
 export interface FonteOficial {
   readonly id: string;
   readonly label: string;
@@ -557,7 +557,7 @@ export function responderAya({
   if (FORA_DO_SISTEMA.test(texto)) return foraDoEscopo();
 
   const pergunta = resolverReferencia(original, history);
-  // Duas perguntas sobre o DSEI Alagoas e Sergipe numa só (aya-knowledge.js).
+  // Duas perguntas sobre o DSEI Alagoas e Sergipe numa só (aya-knowledge.ts).
   const composta = curatedAnswerForQuestion(pergunta);
   if (composta)
     return responder({

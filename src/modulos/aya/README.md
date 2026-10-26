@@ -73,7 +73,7 @@ A borda: qual borda vale ao soltar, as setas e a posição guardada ficam em
 A mascote: a regra dos estados (prioridade, movimento reduzido, comemorações desligadas,
 tempos sorteados) fica em `src/lib/estado-da-aya.ts`. Qualquer tela pede um estado com
 `definirEstadoDaAya("comemorando", 3000)` ou com o evento `aya:estado`
-(`{ detail: { estado, duracaoMs } }`); os fogos (`src/modules/comemoracao.js`) já pedem
+(`{ detail: { estado, duracaoMs } }`); os fogos (`src/modules/comemoracao.ts`) já pedem
 "comemorando". A prévia de cada estado fica em Configurações › Marca › Mascote
 (`src/modulos/configuracoes/cartao-da-mascote.tsx`).
 

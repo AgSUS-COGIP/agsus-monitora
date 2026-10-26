@@ -13,7 +13,7 @@ import {
   apagarCopiaDaSessao,
   guardarCopiaDaSessao,
   lerCopiaDaSessao,
-} from "../src/modules/copia-da-sessao-indexeddb.js";
+} from "../src/modules/copia-da-sessao-indexeddb.ts";
 
 const ok = (data) => ({ data, error: null });
 const falha = { data: null, error: { message: "401" } };

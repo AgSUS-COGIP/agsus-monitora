@@ -4,6 +4,13 @@
   (src/lib/busca-da-aya.ts).
 */
 
+/** Uma fonte oficial citada junto da resposta. */
+export interface FonteOficialDaAya {
+  readonly id: string;
+  readonly label: string;
+  readonly url: string;
+}
+
 export const AYA_SOURCE_CATALOG = Object.freeze({
   sesai: Object.freeze({
     id: "sesai",
@@ -47,7 +54,13 @@ export const AYA_SOURCE_CATALOG = Object.freeze({
   }),
 });
 
-const SOURCE_RULES = Object.freeze([
+/** O nome de uma fonte em `AYA_SOURCE_CATALOG`. */
+export type ChaveDaFonteOficial = keyof typeof AYA_SOURCE_CATALOG;
+
+const SOURCE_RULES: readonly (readonly [
+  RegExp,
+  readonly ChaveDaFonteOficial[],
+])[] = Object.freeze([
   [
     /\b(?:dsei\s+(?:de\s+)?alagoas|alagoas\s+e\s+sergipe|dsei\s+al\/?se|al\/?se|kariri[-\s]?xoc[oó])\b/i,
     ["pdsiAlSe", "funaiKaririXoco"],
@@ -71,7 +84,7 @@ const SOURCE_RULES = Object.freeze([
   ],
 ]);
 
-function normalizeText(value) {
+function normalizeText(value: unknown): string {
   return String(value || "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -86,7 +99,7 @@ function normalizeText(value) {
   composta vem antes da busca; sem nenhuma das duas, devolve vazio e a busca
   segue para os verbetes ("DSEI Alagoas e Sergipe", "Povo Kariri-Xocó").
 */
-export function curatedAnswerForQuestion(question) {
+export function curatedAnswerForQuestion(question: unknown): string {
   const normalized = normalizeText(question);
   if (!normalized) return "";
 
@@ -100,7 +113,7 @@ export function curatedAnswerForQuestion(question) {
     );
   const asksKariri = /\bkariri[\s-]?xoco\b/i.test(normalized);
 
-  const parts = [];
+  const parts: string[] = [];
   if (isAlSe && asksVillageCount) {
     parts.push(
       "O DSEI Alagoas e Sergipe (AL/SE) registra 30 aldeias atendidas na caracterização oficial com base de 2023 do PDSI 2024–2027.",
@@ -114,8 +127,10 @@ export function curatedAnswerForQuestion(question) {
   return parts.join("\n\n");
 }
 
-export function officialSourcesForQuestion(question) {
-  const sourceIds = new Set();
+export function officialSourcesForQuestion(
+  question: unknown,
+): FonteOficialDaAya[] {
+  const sourceIds = new Set<ChaveDaFonteOficial>();
   for (const [pattern, ids] of SOURCE_RULES) {
     if (!pattern.test(String(question || ""))) continue;
     ids.forEach((id) => sourceIds.add(id));

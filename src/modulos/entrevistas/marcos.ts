@@ -11,7 +11,7 @@ type ContextoDosMarcos = Parameters<
   que o app leu na entrada; o controlador relê a cada abertura da tela). A
   regra (linha de base, transição, frase) é de src/lib/comemoracao.ts; o
   aviso e o efeito (o do marco "vaga-pronta" em Configurações ›
-  Comemorações; padrão: fogos suaves), de src/modules/comemoracao.js. Este arquivo não
+  Comemorações; padrão: fogos suaves), de src/modules/comemoracao.ts. Este arquivo não
   importa React.
 */
 import {
@@ -20,7 +20,7 @@ import {
   estadoGuardadoDasVagas,
   situacaoDasVagas,
 } from "../../lib/comemoracao.ts";
-import { avaliarMarco } from "../../modules/comemoracao.js";
+import { avaliarMarco } from "../../modules/comemoracao.ts";
 
 export function avaliarMarcosDasEntrevistas({
   usuarioId,

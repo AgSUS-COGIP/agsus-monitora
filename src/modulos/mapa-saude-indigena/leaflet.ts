@@ -3,8 +3,8 @@
 
   Usado pelo mapa da Saúde Indígena e pelo de Projetos
   (src/modulos/mapa-de-projetos/). O Leaflet vem do CDN como `window.L`,
-  envolvido no arranque por `map-guard.js` (limites do Brasil, zoom, régua,
-  teclado), `map-base-layer-switcher.js` (Mapa/Satélite), `map-zoom-range.js`
+  envolvido no arranque por `map-guard.ts` (limites do Brasil, zoom, régua,
+  teclado), `map-base-layer-switcher.js` (Mapa/Satélite), `map-zoom-range.ts`
   e `indigenous-territories-layer.js` (Terras Indígenas e abrangência dos
   DSEI). Os dois últimos só enfeitam mapas cujo contêiner tem id `map` ou
   `detailMap` (o Mapa/Satélite também `mapaDosProjetos`) — por isso os ids
