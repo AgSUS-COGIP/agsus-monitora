@@ -7,7 +7,7 @@
   Página inicial, Tela de acesso, Aparência, Painéis externos, Operação e
   Comemorações) entram por portal no corpo da
   própria seção (src/modulos/configuracoes/configuracoes.tsx); Acessos, Módulos e abas,
-  Status das atualizações e Automação são ilhas próprias, cujos blocos do index.html
+  Status das atualizações e Automação são ilhas próprias, cujos blocos da casca (src/app/casca/)
   este módulo move para a seção certa (SECAO_POR_BLOCO).
 */
 
@@ -129,7 +129,7 @@ const controladorDaSecao = (
       ]
     : null;
 
-/* As ilhas React com bloco próprio no index.html, e a seção que as recebe. */
+/* As ilhas React com bloco próprio na casca (src/app/casca/), e a seção que as recebe. */
 export const SECAO_POR_BLOCO: Readonly<Record<string, string>> = Object.freeze({
   acessosApp: "acessos",
   modulosApp: "modulos",

@@ -44,7 +44,7 @@ moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS 
 ## Como o legado fala com um componente
 
 - **Página inteira** (Núcleo, calendário, aprovados): o componente monta dentro da `<section class="page">`
-  de sempre, que fica vazia no `index.html`. O legado continua dono da classe `.active` e chama o
+  de sempre, que a casca (`src/app/casca/`) desenha vazia. O legado continua dono da classe `.active` e chama o
   controlador que `montar…()` devolve (`render()` ao navegar; `openImportModal(id, rótulo)` pelo
   botão da tabela do Núcleo). Os dados e as ações moram no `estado.js` da pasta, sem React; o que
   é só da tela (filtros, página, aba, rascunho) é estado do componente e sobrevive a trocar de página.

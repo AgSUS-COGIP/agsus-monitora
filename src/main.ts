@@ -49,6 +49,7 @@ import { installLeafletMapGuard } from "./modules/map-guard.js";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.js";
 import { installIndigenousTerritoriesLayer } from "./modules/indigenous-territories-layer.js";
+import { montarCasca } from "./app/casca/casca.tsx";
 // O sistema depois de entrar (navegação, carga, presença, moldura): src/app/sistema.ts.
 import { ligarSistema, recarregarPaineisExternos } from "./app/sistema.ts";
 import { initLoadingExperience } from "./modules/loading-experience.js";
@@ -133,6 +134,13 @@ declare global {
 
 // Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
 document.documentElement.classList.remove("vite-dev-carregando");
+
+/*
+  A casca do app (src/app/casca/: barra lateral, cabeçalho e as áreas das
+  telas) desenha primeiro, na hora: o sistema, as ilhas React e o legado
+  abaixo a encontram no DOM pelos ids de sempre.
+*/
+montarCasca();
 
 /*
   O sistema se liga à sessão antes de tudo: tema e barra guardados, as funções

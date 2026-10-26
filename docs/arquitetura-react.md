@@ -210,18 +210,18 @@ os testes de ponta a ponta continuam valendo; o formulário do pedido usa `Campo
 Testes: `tests/app/sessao.test.js`, `tests/app/entrada.test.js`, `tests/solicitacao-de-acesso.test.js`,
 `tests/solicitacao-de-acesso-migration.test.js`.
 
-| Antes (legado)                                                                          | Agora                                                                        |
-| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `boot()`, `onAuthStateChange`, `?code=`, `?auth=google`, recuperação de senha           | `sessaoDoApp.iniciar()`, `aoMudarAutenticacao`, `trocarCodigoDoOAuth`        |
-| `handleSignedInSession` (domínio, mesmo usuário, carga única)                           | `entrar()`                                                                   |
-| `loadProfile` (`obter_contexto_monitora`, `meu_usuario`)                                | `carregarPerfil()` na sessão                                                 |
-| `loginWithGoogle`, popup, `message`, `pageshow`, `mobile-google-oauth.js`               | `entrarComGoogle()`; `startMobileGoogleOAuth` em `src/lib/auth-flow.ts`      |
-| `logout`, `returnToLogin`, `clearLocalAuthState`, `aplicarSaida`                        | `sair()`, `limparSessao()`, `aplicarSaida()` na sessão                       |
+| Antes (legado)                                                                       | Agora                                                                        |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| `boot()`, `onAuthStateChange`, `?code=`, `?auth=google`, recuperação de senha        | `sessaoDoApp.iniciar()`, `aoMudarAutenticacao`, `trocarCodigoDoOAuth`        |
+| `handleSignedInSession` (domínio, mesmo usuário, carga única)                        | `entrar()`                                                                   |
+| `loadProfile` (`obter_contexto_monitora`, `meu_usuario`)                             | `carregarPerfil()` na sessão                                                 |
+| `loginWithGoogle`, popup, `message`, `pageshow`, `mobile-google-oauth.js`            | `entrarComGoogle()`; `startMobileGoogleOAuth` em `src/lib/auth-flow.ts`      |
+| `logout`, `returnToLogin`, `clearLocalAuthState`, `aplicarSaida`                     | `sair()`, `limparSessao()`, `aplicarSaida()` na sessão                       |
 | `showAccessRequestState`, `submitAccessRequest`, `solicitacao-de-acesso.js` (legado) | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                          |
-| `access-branding-boot.js`, marca e rodapé de `applyConfigToUi`                          | `src/app/entrada/marca.ts` (`definirMarcaDaConfiguracao`)                    |
-| marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.js`)                | `src/lib/acesso-liberado.ts` (a comemoração continua no legado)              |
-| `#loginMsg` escrito por `session-lifecycle.js`                                          | `installSessionLifecycle({ aoExpirar })` → `sessaoDoApp.mostrarMensagem`     |
-| `window.loginWithGoogle`, `logout`, `returnToLogin`, `submitAccessRequest`              | saíram; o Sair confirmado (`nielsen-shell-ux.js`) chama `sessaoDoApp.sair()` |
+| `access-branding-boot.js`, marca e rodapé de `applyConfigToUi`                       | `src/app/entrada/marca.ts` (`definirMarcaDaConfiguracao`)                    |
+| marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.js`)             | `src/lib/acesso-liberado.ts` (a comemoração continua no legado)              |
+| `#loginMsg` escrito por `session-lifecycle.js`                                       | `installSessionLifecycle({ aoExpirar })` → `sessaoDoApp.mostrarMensagem`     |
+| `window.loginWithGoogle`, `logout`, `returnToLogin`, `submitAccessRequest`           | saíram; o Sair confirmado (`nielsen-shell-ux.js`) chama `sessaoDoApp.sair()` |
 
 Acesso só por convite: a sessão não chama mais `garantir_acesso_basico` (saiu do front e do
 contrato de RPC); quem não tem perfil ativo vê o pedido de acesso.
@@ -294,10 +294,10 @@ que conferem que algo antigo não voltou leem `src/app/` inteiro (`tests/fonte-d
 
 Ficou para depois (ainda em `src/modules/` ou no `index.html`):
 
-1. **Layout em React**: `#appScreen` (cabeçalho, barra lateral, conteúdo) ainda é marcação do
-   `index.html` com `onclick` (`refreshData`, `exportPDF`, `toggleSidebar`…); as telas ainda são
-   `<section class="page">` com `.active`. `src/componentes/barra-lateral/`,
-   `dados-do-monitoramento.ts` e `usar-area-atual.ts` mudam para `src/app/` junto.
+1. **Layout em React**: a casca saiu do `index.html` (ver "Casca em React", abaixo); falta o
+   resto das partes. As telas continuam `<section class="page">` com `.active`.
+   `src/componentes/barra-lateral/`, `dados-do-monitoramento.ts` e `usar-area-atual.ts` mudam
+   para `src/app/` quando a barra virar filha da casca.
 2. **Rotas**: sem endereço por tela (hash/history); a tela guardada continua no localStorage.
 3. `nielsen-shell-ux.js` (diálogo de saída por `insertAdjacentHTML` e os estados do seletor de
    tema), `mobile-bottom-navigation.js`, `mobile-app-experience.js`, `visual-polish.js`,
@@ -308,3 +308,33 @@ Ficou para depois (ainda em `src/modules/` ou no `index.html`):
    `post-152-regression-fixes.css`, `visual-polish.css`, `mobile-app.css`) consolidado num
    CSS da entrada em `src/app/entrada/` (hoje só o `solicitacao-de-acesso.css`); `auth-storage.js` → `src/lib/`, `sidebar-branding.js` → barra
    lateral.
+
+### Casca em React (em partes)
+
+A marcação fixa do `index.html` vira React em PRs pequenos, com o mesmo DOM (ids, classes, ordem)
+e a mesma ordem de arranque. Conferência de cada parte: prints antes/depois (desktop e 375px,
+claro e escuro) e o DOM do `#appScreen` com posição e tamanho de cada elemento.
+
+| Parte | O quê                                                                                                                                                                                   | Situação |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| A     | `#appScreen`: volta do painel externo, `<aside>` da barra, cabeçalho e menu da conta, pontos de montagem do topo, aviso global, seções das telas, quadro externo, Configurações         | feita    |
+| B     | Celular: `mobile-bottom-navigation.js`, `mobile-app-experience.js` (gaveta e fundo), `mobile-table-cards.js` → componentes/hooks em `src/app/casca/`                                    | a fazer  |
+| C     | Carregamento e avisos: `#loader`, `#toastBox`, `#offlineBar`, `loading-experience.js`, `connectivity-status.js`, `notificacao.js`; o skeleton da entrada fica no HTML (primeiro quadro) | a fazer  |
+| D     | `nielsen-shell-ux.js` (diálogo de saída), `sidebar-branding.js`, `visual-polish.js`, `map-base-layer-switcher.js` (`indigenous-territories-layer.js` só vira TS)                        | a fazer  |
+
+**Parte A** — `src/app/casca/`:
+
+```
+casca.tsx            <Casca> (memo, sem props) e montarCasca(): desenha em #appScreen com flushSync
+topo.tsx             header.top: ☰, título, Pessoas online, menu da conta
+areas-das-telas.tsx  .content: as <section class="page"> (TELAS_DA_CASCA), quadro externo, Configurações
+acoes.ts             os botões chamam window.refreshData, exportPDF… na hora do clique (como os onclick)
+```
+
+`src/main.ts` chama `montarCasca()` antes de `ligarSistema()`: tudo que procura um id da casca
+(sistema, ilhas, legado) já o encontra. O `#appScreen` continua no `index.html` (raiz e classe
+`hidden` desde o primeiro quadro). A casca desenha **uma vez** e o React não volta a mexer nela:
+título, perfil, textos configuráveis, `.active` e a faixa de manutenção continuam escritos de fora,
+e as ilhas (barra lateral, Pessoas online, Aya, aviso de versão, encerramento, selos) são raízes
+próprias nos elementos vazios dela. Testes que leem a marcação do app usam
+`tests/pagina-montada.js` (`htmlDaPagina()`: o `index.html` com a casca desenhada).

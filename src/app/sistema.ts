@@ -58,7 +58,7 @@ import type { OrigemDaEntrada } from "./sessao.ts";
 
   Os ganchos de `sessaoDoApp.ligarSistema` são o contrato com a sessão
   (docs/arquitetura-react.md, "Sessão ↔ sistema"). As funções em `window` são
-  os contratos de quem ainda chama por elas: os `onclick` do index.html, a
+  os contratos de quem ainda chama por elas: os botões da casca (src/app/casca/), a
   barra lateral, a Aya e as telas montadas em src/main.ts.
 */
 

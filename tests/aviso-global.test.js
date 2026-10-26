@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { avisoGlobal } from "../src/lib/aviso-global";
+import { htmlDaPagina } from "./pagina-montada.js";
 
 describe("aviso global", () => {
   it("fica oculto quando não há mensagem configurada", () => {
@@ -49,7 +50,7 @@ describe("aviso global", () => {
 });
 
 describe("ligação do aviso global com a interface", () => {
-  const html = readFileSync("index.html", "utf8");
+  const html = htmlDaPagina();
   const app = readFileSync("src/app/configuracao.ts", "utf8");
 
   it("tem no HTML o elemento que recebe o aviso", () => {

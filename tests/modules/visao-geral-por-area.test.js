@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fonteDoApp } from "../fonte-do-app.js";
 import { describe, expect, it } from "vitest";
+import { htmlDaPagina } from "../pagina-montada.js";
 
 /*
   Saúde Indígena, SEDE e Projetos abrem a mesma Visão geral (#page-dashboard,
@@ -11,7 +12,7 @@ import { describe, expect, it } from "vitest";
   legado ainda faz por área e o que saiu dele.
 */
 
-const indexHtml = readFileSync("index.html", "utf8");
+const indexHtml = htmlDaPagina();
 const legado = fonteDoApp();
 
 describe("a Visão geral não tem mapa legado", () => {
