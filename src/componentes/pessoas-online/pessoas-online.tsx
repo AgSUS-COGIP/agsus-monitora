@@ -12,7 +12,7 @@ import { situacaoDaPresenca } from "../../lib/online-presence";
   continuam valendo.
 */
 
-/** Uma pessoa da lista (`normalizeOnlinePresenceList`, src/lib/online-presence.js). */
+/** Uma pessoa da lista (`normalizeOnlinePresenceList`, src/lib/online-presence.ts). */
 export interface PessoaOnline {
   userId: string;
   fullName: string;
