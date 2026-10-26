@@ -15,7 +15,7 @@ import {
   canChangeCandidateStatus,
   canManageSubJudice,
 } from "../../lib/access-roles.ts";
-import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
+import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import {
   candidateCargosForEdital,
@@ -25,8 +25,8 @@ import {
   opcoesDeEdital,
   paginateApprovedCandidates,
 } from "../../lib/lista-aprovados-rules.ts";
-import { PLANILHAS } from "../../lib/planilhas.js";
-import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
+import { PLANILHAS } from "../../lib/planilhas.ts";
+import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
 import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { classes, ErroAoCarregar, TopoDoPainel } from "../../ui/index.ts";

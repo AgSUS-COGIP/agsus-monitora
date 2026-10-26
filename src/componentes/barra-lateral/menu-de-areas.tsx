@@ -63,7 +63,7 @@ import {
   definirAreaAtual,
   obterDadosDoMonitoramento,
 } from "../dados-do-monitoramento.ts";
-import { dicaDaManutencao } from "../../lib/situacao-dos-modulos.js";
+import { dicaDaManutencao } from "../../lib/situacao-dos-modulos.ts";
 import { marcarItemAtivoNoMenu } from "./estado.ts";
 
 /*
@@ -260,7 +260,7 @@ function usarGatilhoFlutuante({
   ponteiro e no foco.
 
   Aba em manutenção (`item.manutencao`, do catálogo; ver
-  `src/lib/situacao-dos-modulos.js`) leva a chave inglesa âmbar ao lado do
+  `src/lib/situacao-dos-modulos.ts`) leva a chave inglesa âmbar ao lado do
   nome, com a mensagem e a previsão na dica (`title`). A página continua no
   menu: quem abre vê a tela de manutenção (o administrador global entra).
 */

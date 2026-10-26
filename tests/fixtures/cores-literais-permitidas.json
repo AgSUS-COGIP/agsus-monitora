@@ -11,7 +11,7 @@
     "src/lib/classificacao/documento-sei.ts": "documento no padrão do SEI: papel branco, texto preto, bordas e faixas do modelo",
     "src/lib/classificacao/relatorio-de-desempate.ts": "documento para impressão (PDF do relatório de desempate): papel branco, texto escuro, faixas e selo de cota",
     "src/lib/contraste.ts": "regra de contraste: as duas cores de texto sobre cor configurada (barra, painel de acesso)",
-    "src/lib/documento-da-resposta.js": "documento gerado para impressão/arquivo: papel branco, texto preto",
+    "src/lib/documento-da-resposta.ts": "documento gerado para impressão/arquivo: papel branco, texto preto",
     "src/lib/fogos.ts": "efeito de comemoração (canvas): cores do fogo de artifício",
     "src/lib/mapa-saude-indigena/formas.ts": "mapa: cores de domínio das camadas e marcadores (iguais nos dois temas)",
     "src/lib/marca-da-barra-lateral.ts": "valor padrão gravado da cor da barra lateral (configuração, não tema)",
@@ -102,7 +102,7 @@
       "#f7fbff": 1,
       "#102a43": 1
     },
-    "src/lib/documento-da-resposta.js": {
+    "src/lib/documento-da-resposta.ts": {
       "#000": 1
     },
     "src/lib/fogos.ts": {

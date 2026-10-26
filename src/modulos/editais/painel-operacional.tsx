@@ -1,7 +1,7 @@
 import {
   indicadoresDoResumo,
   rotuloDoFiltroOperacional,
-} from "../../lib/editais-do-nucleo.js";
+} from "../../lib/editais-do-nucleo.ts";
 import {
   ChipDeFiltro,
   ChipsDeFiltro,
@@ -22,7 +22,7 @@ import {
   O filtro ativo aparece como chip, com o "x" que o tira.
 */
 
-/* A cor de cada indicador (`tone` de editais-do-nucleo.js) no tom do Kpi. */
+/* A cor de cada indicador (`tone` de editais-do-nucleo.ts) no tom do Kpi. */
 const TOM = {
   blue: "info",
   cyan: "info",

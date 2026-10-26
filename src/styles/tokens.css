@@ -299,7 +299,7 @@ body:not(.access-request-mode) .login-screen,
   --terra-em-processo: #c8520f;
 
   /* Tipos de etapa do edital (domínio, não paleta): o campo `cor` de
-     `src/lib/etapas-de-edital.js` escolhe um deles pelo `data-cor`
+     `src/lib/etapas-de-edital.ts` escolhe um deles pelo `data-cor`
      (src/modulos/cronograma/cronograma.css). São só preenchimento — bolinha
      e barra —, nunca cor de texto. */
   --etapa-laranja: #d97706;

@@ -1,6 +1,6 @@
 /*
   CONTORNOS DO BRASIL E DAS UFs para o mapa da Saúde Indígena (desenho e
-  referência; não decidem UF de unidade — ver `src/lib/uf-ibge.js`).
+  referência; não decidem UF de unidade — ver `src/lib/uf-ibge.ts`).
 
   Copiados de `UF_GEO` e `BR_OUTLINE` do `legacy-app.js` (01/10/2026). Ao ligar
   o mapa React na Visão geral, o legado passa a importar daqui e a cópia dele

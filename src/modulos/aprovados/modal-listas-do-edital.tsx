@@ -13,7 +13,7 @@ import {
   canReplaceApprovedList,
 } from "../../lib/access-roles.ts";
 import { formatNumberBR } from "../../lib/formatters";
-import { PLANILHAS } from "../../lib/planilhas.js";
+import { PLANILHAS } from "../../lib/planilhas.ts";
 import {
   MOTIVO_MAXIMO,
   origemDaLista,

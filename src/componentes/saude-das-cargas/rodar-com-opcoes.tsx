@@ -20,7 +20,7 @@ import {
   MODOS_COM_ANEXOS,
   MODO_SO_ANEXOS,
   MOTIVO_DO_CONGELADO,
-} from "../../lib/robos-de-carga.js";
+} from "../../lib/robos-de-carga.ts";
 import { Aviso, Campo, Gaveta, Segmentado } from "../../ui/index.ts";
 import { Icone } from "../icone.tsx";
 import { MultiSelectBusca } from "../multi-select-busca.tsx";

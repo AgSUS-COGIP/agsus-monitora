@@ -12,7 +12,7 @@ import type {
   O documento oficial da lista em .docx, com papel timbrado, para quem prefere
   anexar ou ajustar no Word antes de subir no SEI. Mesmo modelo de
   documento-sei.ts (documentoOficial), sem dependência nova: o ZIP sem
-  compressão de documento-da-resposta.js com
+  compressão de documento-da-resposta.ts com
 
     word/header1.xml   o logo da AgSUS (PNG embutido) e o cabeçalho da agência
                        (Configurações › Marca), centralizados;
@@ -28,7 +28,7 @@ import type {
   O logo chega pronto ({ bytes: PNG, largura, altura }); sem logo, o
   cabeçalho vai só com o texto.
 */
-import { escaparXml, zipSemCompressao } from "../documento-da-resposta.js";
+import { escaparXml, zipSemCompressao } from "../documento-da-resposta.ts";
 import { CABECALHO_PADRAO, numeracao, trechos } from "./documento-sei.ts";
 
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";

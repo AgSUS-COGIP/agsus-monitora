@@ -5,10 +5,10 @@ import {
   PLANILHAS,
   urlDaPlanilhaGoogle,
   urlDeExportacaoXlsx,
-} from "../src/lib/planilhas.js";
+} from "../src/lib/planilhas.ts";
 
 const RAIZ = process.cwd();
-const CATALOGO = join("src", "lib", "planilhas.js");
+const CATALOGO = join("src", "lib", "planilhas.ts");
 
 function arquivosDeCodigo(pasta) {
   const saida = [];

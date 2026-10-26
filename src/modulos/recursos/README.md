@@ -33,8 +33,8 @@ recursos.css    só o que é desta tela (tokens); o resto vem de src/ui/
 ```
 
 Regras puras em `src/lib/` (`recursos-dos-candidatos.ts`, `prazo-do-recurso.ts`,
-`resposta-do-recurso.ts`, `parecer-do-recurso.ts`, `anexos-do-recurso.js`,
-`modelos-de-resposta.ts`, `documento-da-resposta.js`). Testes: `tests/modulos/recursos*.test.js`.
+`resposta-do-recurso.ts`, `parecer-do-recurso.ts`, `anexos-do-recurso.ts`,
+`modelos-de-resposta.ts`, `documento-da-resposta.ts`). Testes: `tests/modulos/recursos*.test.js`.
 
 Decidir é só de quem tem `recursos_parecer` (Acessos › "Parecer jurídico (Recursos)", grupo
 "Jurídico"); o banco confere (`20261001170000_recursos_parecer_juridico.sql`). As regras

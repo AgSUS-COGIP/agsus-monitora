@@ -1,7 +1,7 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
-import { PLANILHAS } from "../../src/lib/planilhas.js";
+import { PLANILHAS } from "../../src/lib/planilhas.ts";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 import {
   compactarCandidatos,

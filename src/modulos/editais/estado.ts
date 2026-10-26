@@ -5,7 +5,7 @@
   são do legado (`dados-do-monitoramento.ts`). Este arquivo não importa React.
 
   O resumo alimenta duas coisas — os indicadores e a lista de "copiar
-  cronograma" — com UMA carga (`resumo.js`). Trocar de usuário na mesma aba
+  cronograma" — com UMA carga (`resumo.ts`). Trocar de usuário na mesma aba
   apaga tudo o que era da sessão anterior, inclusive a resposta que ainda
   estiver a caminho.
 */
@@ -15,11 +15,11 @@ import {
   canManageEditais,
   isAdminGlobal,
 } from "../../lib/access-roles.ts";
-import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.js";
+import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.ts";
 import { exigirSessao } from "../../lib/sessao";
-import { analisarCronograma } from "../../lib/cronograma-do-edital.js";
-import { lerAnexoNoServidor } from "../../lib/anexos-do-edital.js";
-import { carregarResumoDoNucleo, createNucleoSummaryStore } from "./resumo.js";
+import { analisarCronograma } from "../../lib/cronograma-do-edital.ts";
+import { lerAnexoNoServidor } from "../../lib/anexos-do-edital.ts";
+import { carregarResumoDoNucleo, createNucleoSummaryStore } from "./resumo.ts";
 
 const RPC_CRONOGRAMA = "get_monitoramento_cronograma";
 const RPC_SALVAR = "salvar_monitoramento_com_cronograma_v2";

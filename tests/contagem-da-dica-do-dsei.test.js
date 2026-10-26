@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   reconciliarDsei,
   unirEstabelecimentosRepetidos,
-} from "../src/lib/reconciliacao-unidades.js";
+} from "../src/lib/reconciliacao-unidades.ts";
 
 /*
   A DICA DO DSEI RESPONDIA MAL A DUAS PERGUNTAS DIFERENTES

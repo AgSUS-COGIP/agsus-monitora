@@ -4,7 +4,7 @@ import {
   anoDoEdital,
   anosDosEditais,
   editaisDoAno,
-} from "../src/lib/atalhos-de-filtro.js";
+} from "../src/lib/atalhos-de-filtro.ts";
 
 const editais = ["11/2025", "81/2026", "105/2026", "FGV", "05/2026"];
 

@@ -7,7 +7,7 @@ import {
   quadroParaSalvar,
   resumoDoQuadro,
   textoDaModalidade,
-} from "../../lib/anexos-do-edital.js";
+} from "../../lib/anexos-do-edital.ts";
 
 /*
   "Anexos do edital (PDF)" no formulário do edital. A pessoa escolhe o PDF de
@@ -22,7 +22,7 @@ import {
     edital (`estado.salvarEdital({ quadro })`).
 
   Para edital existente mostra também o quadro já salvo. Regras puras em
-  `src/lib/anexos-do-edital.js`.
+  `src/lib/anexos-do-edital.ts`.
 */
 
 const plural = (total, um, varios) => `${total} ${total === 1 ? um : varios}`;

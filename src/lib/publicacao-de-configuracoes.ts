@@ -27,7 +27,7 @@ import { EMAIL_DO_SUPORTE_PADRAO, emailValido } from "./chamado-da-aya.ts";
 import {
   CABECALHO_PADRAO,
   CHAVE_DO_CABECALHO,
-} from "./cabecalho-dos-documentos.js";
+} from "./cabecalho-dos-documentos.ts";
 import {
   alteracoesDasComemoracoes,
   CHAVE_DAS_COMEMORACOES,

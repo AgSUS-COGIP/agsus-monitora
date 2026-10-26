@@ -7,7 +7,7 @@
   mais que os 5 MB do `localStorage` — e falhava calado: na prática não havia
   cache. As chaves dele são apagadas ao abrir o painel (`chavesDoCacheAntigo`).
 */
-import { chaveDoCacheDoPayload } from "./area-do-painel-de-analises.js";
+import { chaveDoCacheDoPayload } from "./area-do-painel-de-analises.ts";
 import {
   criarCacheDePayload,
   revalidarPayload as revalidarCopia,

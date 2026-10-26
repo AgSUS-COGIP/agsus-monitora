@@ -4,7 +4,7 @@ import {
   contratacoesDoCadastroReserva,
   contratadasImediatas,
   vagasSemContratacao,
-} from "../../lib/indicadores-do-monitoramento.js";
+} from "../../lib/indicadores-do-monitoramento.ts";
 import {
   numeroDoFunil,
   textoDaFonteDoFunil,

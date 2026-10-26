@@ -21,7 +21,7 @@
   inscritos e eliminados — não é erro. Linha repetida (mesmo edital e vaga)
   entra uma vez.
 */
-import { normalizarCabecalho } from "./entrevistas-da-planilha.js";
+import { normalizarCabecalho } from "./entrevistas-da-planilha.ts";
 
 const COLUNAS = Object.freeze({
   vaga: ["VAGA"],

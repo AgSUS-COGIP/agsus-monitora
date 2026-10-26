@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createNucleoSummaryStore } from "../../src/modulos/editais/resumo.js";
+import { createNucleoSummaryStore } from "../../src/modulos/editais/resumo.ts";
 
 function deferred() {
   let resolve;

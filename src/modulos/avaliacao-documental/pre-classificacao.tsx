@@ -21,7 +21,7 @@ import {
   vagasDaTela,
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
-import { ESPERA_DO_PEDIDO_MIN } from "../../lib/robos-de-carga.js";
+import { ESPERA_DO_PEDIDO_MIN } from "../../lib/robos-de-carga.ts";
 import { Aviso, GradeDeKpis, Kpi, Selo } from "../../ui/index.ts";
 import {
   IncluirPorDecisao,

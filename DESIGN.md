@@ -437,7 +437,7 @@ Para contraste, calcule e não estime: a razão WCAG sai da luminância relativa
 Português do Brasil, com acentos. Verbos de ação ("Importar lista", "Publicar edital",
 "Tentar de novo"). Nada de termo de banco ou de código na tela. Erro diz o que aconteceu e o
 que fazer. Confirmação cita o objeto ("Excluir o edital 101/2026?"). Número segue o formato
-brasileiro (`1.308`, `60,5%`), com `toLocaleString("pt-BR")` (ex.: `formatarNumero` em `src/lib/editais-do-nucleo.js`).
+brasileiro (`1.308`, `60,5%`), com `toLocaleString("pt-BR")` (ex.: `formatarNumero` em `src/lib/editais-do-nucleo.ts`).
 
 ---
 

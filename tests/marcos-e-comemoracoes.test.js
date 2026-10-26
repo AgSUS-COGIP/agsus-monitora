@@ -23,7 +23,7 @@ import {
 } from "../src/lib/comemoracao.ts";
 import { decididoNoPrazo } from "../src/lib/prazo-do-recurso.ts";
 import { enriquecerRecurso } from "../src/lib/recursos-dos-candidatos.ts";
-import { normalizarSituacaoDoSistema } from "../src/lib/situacao-dos-modulos.js";
+import { normalizarSituacaoDoSistema } from "../src/lib/situacao-dos-modulos.ts";
 import {
   avaliarMarco,
   comemoracoesLigadasNoPainel,

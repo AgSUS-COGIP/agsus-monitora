@@ -28,7 +28,7 @@ import { PARCIAL_DO_TIPO } from "./catalogo.ts";
 import { composicaoDaNota } from "./ficha.ts";
 import { motivosDoResultado } from "./motivos-do-resultado.ts";
 import { numeroDoParecer, textosDasJustificativas } from "./pontuacao.ts";
-import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.js";
+import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.ts";
 import {
   comOCandidato,
   TEXTOS_PADRAO_DO_ESPELHO,

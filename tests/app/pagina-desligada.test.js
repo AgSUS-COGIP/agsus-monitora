@@ -23,7 +23,7 @@ import {
   paginaDesligada,
   primeiraPaginaLigada,
 } from "../../src/lib/pagina-desligada.ts";
-import { normalizarSituacaoDoSistema } from "../../src/lib/situacao-dos-modulos.js";
+import { normalizarSituacaoDoSistema } from "../../src/lib/situacao-dos-modulos.ts";
 import { carregarCatalogoDeAbas } from "../../src/modules/catalogo-de-abas.js";
 import {
   carregarSituacaoDoSistema,

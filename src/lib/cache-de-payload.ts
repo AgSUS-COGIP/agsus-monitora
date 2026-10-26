@@ -28,7 +28,7 @@
   Nenhuma função daqui lança erro por causa dele: falhou, é "não há cópia".
 
   Um tipo é `{ nome, chave(contexto), esquema(payload), esquemas, valido(payload) }`
-  — ver `PAINEL_DE_ANALISES` (cache-do-painel-de-analises.js) e
+  — ver `PAINEL_DE_ANALISES` (cache-do-painel-de-analises.ts) e
   `LISTA_DE_APROVADOS` (candidatos-aprovados-compactos.ts).
 */
 

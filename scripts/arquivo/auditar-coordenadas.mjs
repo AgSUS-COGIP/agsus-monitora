@@ -5,7 +5,7 @@ import {
   classificarVinculoTerritorial,
   siglaDaUf,
   VINCULO_EXTERNO,
-} from "../../src/lib/uf-ibge.js";
+} from "../../src/lib/uf-ibge.ts";
 
 /*
   AUDITORIA DAS COORDENADAS DO MAPA — SOMENTE LEITURA.
@@ -33,7 +33,7 @@ import {
   Não decide UF por geometria. Medido em 09/09/2026 sobre os dados reais, o ray
   casting no `UF_GEO` diverge do CNES em 20 unidades e aponta 12 como fora do
   DSEI, das quais 9 são falso positivo perto de fronteira. Quem decide UF
-  administrativa é o CNES — ver `src/lib/uf-ibge.js`. Aqui a geometria só serve
+  administrativa é o CNES — ver `src/lib/uf-ibge.ts`. Aqui a geometria só serve
   para achar coordenada quebrada (fora do Brasil, invertida, sinal trocado).
 */
 

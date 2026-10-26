@@ -6,10 +6,10 @@
   publica cada anexo num arquivo), transformar o Anexo I em etapas do editor e
   o Anexo II nas linhas que `salvar_quadro_de_vagas` grava.
 
-  A tela é `src/modulos/editais/importar-anexos.jsx`.
+  A tela é `src/modulos/editais/importar-anexos.tsx`.
 */
 
-import { novaEtapa } from "./cronograma-do-edital.js";
+import { novaEtapa } from "./cronograma-do-edital.ts";
 import { numeroDoEdital } from "./numero-do-edital.ts";
 
 const txt = (valor) => String(valor ?? "").trim();

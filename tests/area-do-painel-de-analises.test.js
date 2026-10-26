@@ -9,7 +9,7 @@ import {
   nomeDoCsvDeAnalises,
   parametroDeAreaDaRpc,
   rotuloDaAreaDoPainel,
-} from "../src/lib/area-do-painel-de-analises.js";
+} from "../src/lib/area-do-painel-de-analises.ts";
 
 /*
   Saúde Indígena, SEDE e Projetos usam a MESMA tela de análises (a área do

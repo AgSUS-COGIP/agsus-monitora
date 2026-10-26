@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { modalidadesDaConcorrencia } from "../src/lib/modalidades-de-concorrencia.js";
+import { modalidadesDaConcorrencia } from "../src/lib/modalidades-de-concorrencia.ts";
 
 describe("modalidadesDaConcorrencia", () => {
   it("mantém uma modalidade canônica", () => {

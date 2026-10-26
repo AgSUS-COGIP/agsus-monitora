@@ -19,7 +19,7 @@ begin;
   - Corrige as datas acima (cada UPDATE só age se o valor ainda for o errado;
     o valor anterior está neste comentário).
   - CK nas datas do edital e das etapas: ano entre 2015 e 2100 (os mesmos
-    limites de src/lib/datas-do-cronograma.js) e início <= fim no edital.
+    limites de src/lib/datas-do-cronograma.ts) e início <= fim no edital.
   - private."FC_ATUALIZAR_KPIS_PELA_SELECAO": inscritos vem da Seleção; sem
     vaga do edital na Seleção, vem do total de candidatos das análises do
     edital (mesma chave única de aprovados_analise). É um piso: as análises

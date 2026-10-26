@@ -4,7 +4,7 @@ import {
   inputsDoPedido,
   roboDeCarga,
   validarOpcoes,
-} from "../src/lib/robos-de-carga.js";
+} from "../src/lib/robos-de-carga.ts";
 
 /*
   Inscrições congeladas por edital e o registro de todos os disparos

@@ -7,7 +7,7 @@ import {
   readApprovedWorkbook,
   validateApprovedRows,
 } from "../../src/lib/aprovados-import.ts";
-import { zipSemCompressao } from "../../src/lib/documento-da-resposta.js";
+import { zipSemCompressao } from "../../src/lib/documento-da-resposta.ts";
 
 const cabecalhos = [
   "Código Vaga",

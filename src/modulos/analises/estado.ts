@@ -39,18 +39,18 @@ import {
 import {
   nomeDoCsvDeAnalises,
   rotuloDaAreaDoPainel,
-} from "../../lib/area-do-painel-de-analises.js";
-import { chavesDoCacheAntigo } from "../../lib/cache-do-painel-de-analises.js";
-import { editaisDasLinhas } from "../../lib/editais-das-linhas.js";
+} from "../../lib/area-do-painel-de-analises.ts";
+import { chavesDoCacheAntigo } from "../../lib/cache-do-painel-de-analises.ts";
+import { editaisDasLinhas } from "../../lib/editais-das-linhas.ts";
 import { ehErroDeAcesso } from "../../lib/cache-de-payload";
 import { mensagemDeFalha } from "../../lib/falha-de-rede";
 import { formatNumberBR } from "../../lib/formatters";
-import { linhaSemDetalhe } from "../../lib/lista-do-painel-de-analises.js";
+import { linhaSemDetalhe } from "../../lib/lista-do-painel-de-analises.ts";
 import {
   haLinhasSemParecer,
   linhaSemParecer,
   mesclarTextos,
-} from "../../lib/textos-do-painel-de-analises.js";
+} from "../../lib/textos-do-painel-de-analises.ts";
 import { criarConsultasDasAnalises } from "./consultas.ts";
 import { avaliarMarcosDasAnalises } from "./marcos.ts";
 

@@ -46,10 +46,10 @@ import {
   textoParaSei,
 } from "../../lib/classificacao/documento-sei.ts";
 import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.ts";
-import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.js";
+import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.ts";
 import { nomeDoArquivo } from "../../lib/classificacao/exportacao.ts";
-import { CABECALHO_PADRAO } from "../../lib/cabecalho-dos-documentos.js";
-import { MIME_DOCX } from "../../lib/documento-da-resposta.js";
+import { CABECALHO_PADRAO } from "../../lib/cabecalho-dos-documentos.ts";
+import { MIME_DOCX } from "../../lib/documento-da-resposta.ts";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
 import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.ts";
 import {
@@ -59,7 +59,7 @@ import {
   RPC_DISPARAR_ROBO,
   RPC_SITUACAO_DO_DISPARO,
   situacaoDoPedido,
-} from "../../lib/robos-de-carga.js";
+} from "../../lib/robos-de-carga.ts";
 import { baixarNoNavegador } from "../classificacao/estado.ts";
 import {
   copiarParaAreaDeTransferencia,

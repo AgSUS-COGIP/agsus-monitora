@@ -58,7 +58,7 @@ import type {
   do anterior fica na tela). Uma ação por vez (`executar`): o botão dela
   mostra o rótulo, os outros ficam desativados.
 */
-import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.js";
+import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
 import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 import { csvDosRecursos } from "../../lib/recursos-dos-candidatos.ts";
 import {
@@ -66,13 +66,13 @@ import {
   caminhoDoAnexo,
   validarArquivoDoAnexo,
   VALIDADE_DO_DOWNLOAD,
-} from "../../lib/anexos-do-recurso.js";
+} from "../../lib/anexos-do-recurso.ts";
 import {
   gerarDocx,
   MIME_DOCX,
   montarPaginaDeImpressao,
   nomeDoDocumento,
-} from "../../lib/documento-da-resposta.js";
+} from "../../lib/documento-da-resposta.ts";
 import { dadosDoModelo } from "../../lib/modelos-de-resposta.ts";
 
 export const MENSAGEM_SEM_SESSAO =
@@ -154,7 +154,7 @@ function baixarPeloEndereco(url: string) {
 
 /*
   Impressão (e "Salvar como PDF") por um iframe escondido: a página é montada
-  com elementos e texto (documento-da-resposta.js), sem HTML.
+  com elementos e texto (documento-da-resposta.ts), sem HTML.
 */
 function imprimirNoNavegador(texto: string, titulo: string) {
   const quadro = document.createElement("iframe");

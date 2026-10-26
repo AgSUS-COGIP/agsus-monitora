@@ -89,5 +89,5 @@ desativadas. O acesso ao MONITORA é só por convite. Fontes: `src/modulos/acess
 
 **perguntas:** nao consigo entrar | por que nao consigo entrar | pessoa nao consegue entrar | o convite nao funciona | erro ao entrar no monitora
 **resposta:** Confira, nesta ordem: a pessoa entrou com a conta Google do e-mail convidado (o link sozinho não dá acesso e outra conta não serve); o e-mail é de um domínio permitido (Configurações › Tela de acesso); e o cadastro está ativo — conta desativada vê "Seu acesso ao MONITORA foi desativado." e pode pedir reativação. Quem entra sem convite vê a tela de pedido de acesso, que vai para Acessos › Usuários › Pendentes. Se o Login Google estiver Inativo, o botão some da tela de entrada; com o sistema inteiro em manutenção, quem não é administrador global vê a tela de manutenção.
-**fonte:** src/lib/convite-de-acesso.ts; src/lib/solicitacao-de-acesso.ts; supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/lib/situacao-dos-modulos.js
+**fonte:** src/lib/convite-de-acesso.ts; src/lib/solicitacao-de-acesso.ts; supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/lib/situacao-dos-modulos.ts
 **abrir:** config:acessos

@@ -21,15 +21,15 @@ import type {
     - a prévia do que vai rodar ("5 vagas do 93/2026: 179698, 180231…");
     - as execuções normalizadas (parâmetros, quem pediu, resultado, por vaga)
       e o acompanhamento depois do pedido.
-  A lista branca e a validação dos parâmetros são de src/lib/robos-de-carga.js
+  A lista branca e a validação dos parâmetros são de src/lib/robos-de-carga.ts
   (as mesmas de disparar_robo, no banco).
 */
 import { editalVigente } from "./avaliacao-documental/editais.ts";
 import {
   ehEditalDeTreinamento,
   sufixoDeTreinamento,
-} from "./edital-de-treinamento.js";
-import { OPCOES_DOS_ROBOS, roboDeCarga } from "./robos-de-carga.js";
+} from "./edital-de-treinamento.ts";
+import { OPCOES_DOS_ROBOS, roboDeCarga } from "./robos-de-carga.ts";
 
 const registro = (valor: unknown): Record<string, unknown> =>
   valor !== null && typeof valor === "object" && !Array.isArray(valor)
@@ -540,7 +540,7 @@ const FOLGA_MS = 2 * 60000;
  * O acompanhamento de um pedido feito nesta tela:
  *   pedido     { em: Date, modo, disparo } — o último pedido do robô;
  *              `disparo` é a situação do pedido no banco (situacaoDoPedido de
- *              src/lib/robos-de-carga.js: PEDIDO, ACEITO, FALHOU, SEM_TOKEN)
+ *              src/lib/robos-de-carga.ts: PEDIDO, ACEITO, FALHOU, SEM_TOKEN)
  *   execucoes  as execuções normalizadas do banco (pode ser [])
  * Devolve { etapa, execucao, url } — etapa: "aguardando" (o GitHub ainda não
  * respondeu), "recusado" (o GitHub não aceitou ou falta a chave; `texto` diz

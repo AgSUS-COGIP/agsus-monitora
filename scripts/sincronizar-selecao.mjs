@@ -9,8 +9,8 @@
   e aprovados/contratados (lista de aprovados).
   Roda de hora em hora (o dia todo) pelo GitHub Actions (.github/workflows/sincronizar-selecao.yml).
 
-  Onde está a planilha: `PLANILHAS.auditoriaDaSelecao` em src/lib/planilhas.js.
-  Como a aba vira linhas: src/lib/selecao-da-planilha.js.
+  Onde está a planilha: `PLANILHAS.auditoriaDaSelecao` em src/lib/planilhas.ts.
+  Como a aba vira linhas: src/lib/selecao-da-planilha.ts.
   Credenciais e variáveis: scripts/carga-de-planilha.mjs.
   Guia para quem for operar: docs/sincronizacao-das-planilhas.md.
 
@@ -24,12 +24,12 @@
   linhas ativas — nada foi desativado).
 */
 import { randomUUID } from "node:crypto";
-import { PLANILHAS } from "../src/lib/planilhas.js";
+import { PLANILHAS } from "../src/lib/planilhas.ts";
 import {
   emLotes,
   identificadorDaCarga,
-} from "../src/lib/entrevistas-da-planilha.js";
-import { linhasDaAbaResultado } from "../src/lib/selecao-da-planilha.js";
+} from "../src/lib/entrevistas-da-planilha.ts";
+import { linhasDaAbaResultado } from "../src/lib/selecao-da-planilha.ts";
 import {
   argumentos,
   carregarEnvLocal,

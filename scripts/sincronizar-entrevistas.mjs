@@ -8,8 +8,8 @@
   TB_ENTREVISTA_NOTA, TL_SYNC_ENTREVISTA) não mudam; muda só quem as alimenta.
   Roda de hora em hora (o dia todo) pelo GitHub Actions (.github/workflows/sincronizar-entrevistas.yml).
 
-  Onde está a planilha: `PLANILHAS.entrevistados` em src/lib/planilhas.js.
-  Como a aba vira linhas: src/lib/entrevistas-da-planilha.js.
+  Onde está a planilha: `PLANILHAS.entrevistados` em src/lib/planilhas.ts.
+  Como a aba vira linhas: src/lib/entrevistas-da-planilha.ts.
   Credenciais e variáveis: scripts/carga-de-planilha.mjs.
   Guia para quem for operar: docs/sincronizacao-das-planilhas.md.
 
@@ -23,12 +23,12 @@
   linhas ativas — nada foi desativado).
 */
 import { randomUUID } from "node:crypto";
-import { PLANILHAS } from "../src/lib/planilhas.js";
+import { PLANILHAS } from "../src/lib/planilhas.ts";
 import {
   emLotes,
   identificadorDaCarga,
   linhasDaAbaEntrevistados,
-} from "../src/lib/entrevistas-da-planilha.js";
+} from "../src/lib/entrevistas-da-planilha.ts";
 import {
   argumentos,
   carregarEnvLocal,

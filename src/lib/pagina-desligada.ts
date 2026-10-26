@@ -8,7 +8,7 @@ import {
   ehAreaDoSistema,
   paginasDaArea,
 } from "./menu-lateral.ts";
-import { areaEstaAtiva } from "./situacao-dos-modulos.js";
+import { areaEstaAtiva } from "./situacao-dos-modulos.ts";
 
 /*
   Página desligada pela coordenação — sem DOM.
@@ -30,7 +30,7 @@ import { areaEstaAtiva } from "./situacao-dos-modulos.js";
 
   A regra é a mesma para todos, administrador global inclusive: o catálogo do
   banco não mostra aba desligada para ninguém (só a manutenção tem a exceção
-  do administrador, em src/lib/situacao-dos-modulos.js).
+  do administrador, em src/lib/situacao-dos-modulos.ts).
 */
 
 type Situacao = Parameters<typeof areaEstaAtiva>[0];

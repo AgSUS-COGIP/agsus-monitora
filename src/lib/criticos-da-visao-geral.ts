@@ -24,12 +24,12 @@
   Os limites ficam em LIMITES_DO_CRITICO (e em docs/aya/regras-da-visao-geral.md).
 */
 
-import { faseDoEdital } from "./fases-do-processo.js";
+import { faseDoEdital } from "./fases-do-processo.ts";
 import {
   contratadasImediatas,
   ehCancelado,
   ehConcluido,
-} from "./indicadores-do-monitoramento.js";
+} from "./indicadores-do-monitoramento.ts";
 
 export const LIMITES_DO_CRITICO = Object.freeze({
   /** Próxima etapa em até N dias: só a cor vermelha na tabela (não é crítico). */

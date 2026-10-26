@@ -12,7 +12,7 @@ import {
   ANO_MAXIMO,
   ANO_MINIMO,
   dataPlausivel,
-} from "./datas-do-cronograma.js";
+} from "./datas-do-cronograma.ts";
 
 const txt = (valor) => String(valor ?? "").trim();
 

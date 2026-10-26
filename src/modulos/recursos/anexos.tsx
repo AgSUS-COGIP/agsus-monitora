@@ -19,7 +19,7 @@ import {
   tamanhoLegivel,
   TIPOS_DE_ANEXO,
   validarArquivoDoAnexo,
-} from "../../lib/anexos-do-recurso.js";
+} from "../../lib/anexos-do-recurso.ts";
 import { Secao } from "../../ui/index.ts";
 import { dataHora } from "./partes.ts";
 

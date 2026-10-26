@@ -15,13 +15,13 @@
     fase Contratação).
   - Cancelados não entram em nenhum (nem em Inscritos): as vagas deles não
     estão em seleção nem ociosas.
-  - Críticos: editais com algum motivo de atenção (`criticos-da-visao-geral.js`).
+  - Críticos: editais com algum motivo de atenção (`criticos-da-visao-geral.ts`).
 
   `contratados` vem da lista de aprovados vigente (Contratado/Migração) e
   `vagas_total` do cadastro do edital.
 */
 
-import { faseDoEdital } from "./fases-do-processo.js";
+import { faseDoEdital } from "./fases-do-processo.ts";
 
 const num = (valor) => {
   const numero = Number(valor || 0);

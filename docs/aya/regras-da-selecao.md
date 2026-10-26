@@ -3,7 +3,7 @@
 Como a tela de Seleção (funil por vaga) calcula os números. Estas explicações ficavam em dicas e
 textos da própria tela; saíram da interface quando a Seleção virou módulo do app (Etapa 2) e
 ficam aqui, com a Aya. Fontes: `src/modulos/selecao/`, `src/lib/selecao-do-painel.ts`,
-`src/lib/selecao-da-planilha.js`, `.github/workflows/sincronizar-selecao.yml` e as migrations
+`src/lib/selecao-da-planilha.ts`, `.github/workflows/sincronizar-selecao.yml` e as migrations
 `20261001090000_selecao.sql`, `20261001100000_selecao_area_pelos_editais.sql` e
 `20261001130000_selecao_aprovados_outras_bancas.sql`.
 

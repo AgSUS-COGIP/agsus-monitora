@@ -34,7 +34,7 @@ import type {
   comemorações (marcos do processo) é só do sistema inteiro. São as regras do banco,
   repetidas aqui para a tela não oferecer o que vai ser recusado.
 */
-import { dataDaPrevisao, formatarPrevisao } from "./situacao-dos-modulos.js";
+import { dataDaPrevisao, formatarPrevisao } from "./situacao-dos-modulos.ts";
 
 export const ESTADOS = Object.freeze(["ativa", "manutencao", "desativada"]);
 export const LIMITE_DA_MENSAGEM = 500;

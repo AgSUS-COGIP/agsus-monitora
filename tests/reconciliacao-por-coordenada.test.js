@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   LIMIAR_MESMO_PONTO_KM,
   reconciliarDsei,
-} from "../src/lib/reconciliacao-unidades.js";
+} from "../src/lib/reconciliacao-unidades.ts";
 
 /*
   O DSEI CEARÁ MOSTRAVA O MESMO POLO DUAS VEZES

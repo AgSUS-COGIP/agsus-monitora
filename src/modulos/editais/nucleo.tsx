@@ -10,9 +10,9 @@ import {
 import {
   ehEditalDeTreinamento,
   semTreinamento,
-} from "../../lib/edital-de-treinamento.js";
+} from "../../lib/edital-de-treinamento.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
-import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
+import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
 import {
   alertaDoTipo,
   filtrarEditais,
@@ -23,14 +23,14 @@ import {
   resumoDoEdital,
   tomDoRisco,
   tomDoStatusDoEdital,
-} from "../../lib/editais-do-nucleo.js";
+} from "../../lib/editais-do-nucleo.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { Selo, TabelaInfinita, TopoDoPainel } from "../../ui/index.ts";
-import { criarEstadoDoNucleo } from "./estado.js";
-import { PainelOperacional } from "./painel-operacional.jsx";
-import { ModalDoEdital } from "./modal-do-edital.jsx";
-import { ModalLinhaDoTempo } from "./modal-linha-do-tempo.jsx";
+import { criarEstadoDoNucleo } from "./estado.ts";
+import { PainelOperacional } from "./painel-operacional.tsx";
+import { ModalDoEdital } from "./modal-do-edital.tsx";
+import { ModalLinhaDoTempo } from "./modal-linha-do-tempo.tsx";
 
 /*
   Editais (view `nucleo`), módulo do app — a página `#page-nucleo` e os seus
@@ -50,7 +50,7 @@ import { ModalLinhaDoTempo } from "./modal-linha-do-tempo.jsx";
   saber o que está na tela.
 */
 
-/* As cores de antes (`.chip.<tom>`, editais-do-nucleo.js) no tom do Selo. */
+/* As cores de antes (`.chip.<tom>`, editais-do-nucleo.ts) no tom do Selo. */
 const SELO = {
   green: "aprovado",
   red: "reprovado",

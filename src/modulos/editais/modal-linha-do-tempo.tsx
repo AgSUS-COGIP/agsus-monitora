@@ -4,7 +4,7 @@ import {
   formatarDataHora,
   hojeEmBrasilia,
   situacaoNaLinhaDoTempo,
-} from "../../lib/cronograma-do-edital.js";
+} from "../../lib/cronograma-do-edital.ts";
 import { BlocosEsqueleto, ErroAoCarregar, Modal } from "../../ui/index.ts";
 
 /*

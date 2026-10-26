@@ -6,13 +6,13 @@ import {
   formatarDataHora,
   novaEtapa,
   renumerar,
-} from "../../lib/cronograma-do-edital.js";
-import { editaisComCronogramaParaCopiar } from "../../lib/editais-do-nucleo.js";
+} from "../../lib/cronograma-do-edital.ts";
+import { editaisComCronogramaParaCopiar } from "../../lib/editais-do-nucleo.ts";
 import { Aviso, Campo, LinhasEsqueleto, Selo } from "../../ui/index.ts";
 
 /*
   A seção "Cronograma do edital" do formulário. O rascunho (`cronograma`) e o
-  que o calculado diz (`previa`) são de `modal-do-edital.jsx`; aqui fica o
+  que o calculado diz (`previa`) são de `modal-do-edital.tsx`; aqui fica o
   desenho e as ferramentas de preenchimento:
 
   - o modelo padrão, que cria as doze atividades de um edital da AgSUS e abre

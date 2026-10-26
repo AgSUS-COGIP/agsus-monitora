@@ -5,7 +5,7 @@
 
   As cores dos tipos de etapa são tokens de domínio (`--etapa-*`, em
   src/styles/tokens.css), referenciados pelo campo `cor` de cada tipo em
-  `src/lib/etapas-de-edital.js` — o JS escreve `data-cor="rosa"` e a tabela
+  `src/lib/etapas-de-edital.ts` — o JS escreve `data-cor="rosa"` e a tabela
   do fim deste arquivo decide o que é "rosa". Acrescentar um tipo lá exige
   acrescentar o token e a linha da tabela, senão a etapa sai sem cor.
 */

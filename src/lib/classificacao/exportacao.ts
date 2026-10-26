@@ -19,14 +19,14 @@ import { retratoParaDocumento } from "./dados-dos-documentos.ts";
   SpreadsheetML mínimo, duas planilhas — Classificação e Eliminados) e o
   nome do arquivo.
 */
-import { escaparXml, zipSemCompressao } from "../documento-da-resposta.js";
+import { escaparXml, zipSemCompressao } from "../documento-da-resposta.ts";
 import {
   MOTIVOS_DE_ELIMINACAO,
   TIPOS_DE_LISTA,
   TIPOS_DE_LISTA_DA_PRE_CLASSIFICACAO,
 } from "./catalogo.ts";
 import { normalizarRegra } from "./regra.ts";
-import { ehEditalDeTreinamento } from "../edital-de-treinamento.js";
+import { ehEditalDeTreinamento } from "../edital-de-treinamento.ts";
 
 export const MIME_XLSX =
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";

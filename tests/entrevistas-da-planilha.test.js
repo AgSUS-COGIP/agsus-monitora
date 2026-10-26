@@ -4,8 +4,8 @@ import {
   identificadorDaCarga,
   linhasDaAbaEntrevistados,
   normalizarCabecalho,
-} from "../src/lib/entrevistas-da-planilha.js";
-import { PLANILHAS } from "../src/lib/planilhas.js";
+} from "../src/lib/entrevistas-da-planilha.ts";
+import { PLANILHAS } from "../src/lib/planilhas.ts";
 
 const CABECALHO = [
   "DSEI",

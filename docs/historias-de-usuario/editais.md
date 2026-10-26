@@ -1,6 +1,6 @@
 # Histórias de usuário — Editais
 
-Tela `Editais` (`src/modulos/editais/`), regras em `src/lib/editais-do-nucleo.js`. Cada critério
+Tela `Editais` (`src/modulos/editais/`), regras em `src/lib/editais-do-nucleo.ts`. Cada critério
 de aceite tem um teste com o mesmo código (`ED-n.m`) em `tests/editais-do-nucleo.test.js` (regra)
 ou `tests/componentes/nucleo.test.js` (tela).
 

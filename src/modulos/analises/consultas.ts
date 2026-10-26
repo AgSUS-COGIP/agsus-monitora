@@ -14,8 +14,8 @@ import type {
   - `carregarEscopo()`: a lista enxuta da área (get_analises_dashboard_payload_v2)
     no escopo da "Situação do processo". "Ativo" e "Inativo" são um pacote
     cada; "Todos" são os pacotes 'ativo' e 'inativo' juntos (sem as desativadas), na
-    ordem do banco (src/lib/lista-do-painel-de-analises.js).
-    Cópia no navegador (IndexedDB, src/lib/cache-do-painel-de-analises.js): com
+    ordem do banco (src/lib/lista-do-painel-de-analises.ts).
+    Cópia no navegador (IndexedDB, src/lib/cache-do-painel-de-analises.ts): com
     cópia, devolve na hora (`daCopia`) e revalida por trás (`revalidacao`);
     `aoMudar` recebe o payload novo se o servidor mandou outro, e
     `aoPerderAcesso` é chamado se o acesso caiu (as cópias são apagadas).
@@ -30,7 +30,7 @@ import type {
     (obter_ritmo_da_analise, migration 20261019170000); null se não der.
   - `esquecer()`: o "Atualizar" e a troca de usuário descartam o guardado.
 */
-import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.js";
+import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.ts";
 import {
   linhasDoPayload,
   normalizarPayloadDasAnalises,
@@ -38,16 +38,16 @@ import {
 import {
   criarCacheDoPainel,
   revalidarPayload,
-} from "../../lib/cache-do-painel-de-analises.js";
+} from "../../lib/cache-do-painel-de-analises.ts";
 import { respostaInalterada, versaoDoPacote } from "../../lib/cache-de-payload";
 import { comTempoLimite } from "../../lib/falha-de-rede";
 import {
   envelopeDeTodos,
   juntarPartesDoPainel,
   partesDoEscopo,
-} from "../../lib/lista-do-painel-de-analises.js";
+} from "../../lib/lista-do-painel-de-analises.ts";
 import { lerRitmoDaAnalise } from "../../lib/ritmo-da-analise.ts";
-import { mapaDosTextos } from "../../lib/textos-do-painel-de-analises.js";
+import { mapaDosTextos } from "../../lib/textos-do-painel-de-analises.ts";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
 
 const RPC_PORTEIRO = "usuario_pode_ler_analises";

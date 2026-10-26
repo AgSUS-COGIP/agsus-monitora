@@ -15,7 +15,7 @@ tabela.tsx      base operacional consolidada (TabelaInfinita)
 selecao.css     só o que é desta tela (tokens); o resto vem de src/ui/
 ```
 
-Regras puras em `src/lib/selecao-do-painel.ts` (carga: `selecao-da-planilha.js`,
+Regras puras em `src/lib/selecao-do-painel.ts` (carga: `selecao-da-planilha.ts`,
 `scripts/sincronizar-selecao.mjs`). Explicações das regras para a Aya:
 `docs/aya/regras-da-selecao.md`. Testes: `tests/modulos/selecao.test.js` e
 `tests/selecao-do-painel.test.js`.

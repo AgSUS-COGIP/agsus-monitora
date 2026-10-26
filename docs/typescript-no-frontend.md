@@ -12,7 +12,7 @@ estado, cartão, selos, gaveta, busca e paginação dos casos, CSV, ação de ig
 navegação e regras em `src/lib/avisos-de-conferencia.ts`. Status das atualizações inclui
 saúde das cargas, agenda, histórico, acompanhamento, formulário de opções, estado e regras em
 `src/lib/saude-das-cargas.ts` e `src/lib/painel-dos-robos.ts`. A validação das opções em
-`src/lib/robos-de-carga.js` continua compartilhada com a Avaliação documental, com contratos JSDoc.
+`src/lib/robos-de-carga.ts` continua compartilhada com a Avaliação documental, com contratos JSDoc.
 Em Entrevistas, as peças novas do Painel e de Conduzir (`agenda-e-empates.tsx`, `conduzir.tsx`,
 `fila-do-dia.tsx`, as peças da ficha de notas — cabeçalho, abas, matriz, célula, resultado —, o resumo das
 regras e as competências de cada membro da banca (`resumo-das-regras.tsx`, `competencias-do-membro.tsx`), o seletor do

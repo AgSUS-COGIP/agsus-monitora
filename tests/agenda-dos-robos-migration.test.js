@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { OPCOES_DOS_ROBOS, ROBOS_DE_CARGA } from "../src/lib/robos-de-carga.js";
+import { OPCOES_DOS_ROBOS, ROBOS_DE_CARGA } from "../src/lib/robos-de-carga.ts";
 
 /*
   Migration 20261008140000 (agenda dos robôs pelo banco: pg_cron + pg_net →

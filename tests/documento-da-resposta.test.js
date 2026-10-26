@@ -8,7 +8,7 @@ import {
   montarPaginaDeImpressao,
   nomeDoDocumento,
   zipSemCompressao,
-} from "../src/lib/documento-da-resposta.js";
+} from "../src/lib/documento-da-resposta.ts";
 
 /*
   O documento da resposta sem dependência: o .docx é um ZIP "stored" com o

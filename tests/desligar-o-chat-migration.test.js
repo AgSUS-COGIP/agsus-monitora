@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { ROBOS_DE_CARGA } from "../src/lib/robos-de-carga.js";
+import { ROBOS_DE_CARGA } from "../src/lib/robos-de-carga.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 
 /*

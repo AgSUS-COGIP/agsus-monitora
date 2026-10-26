@@ -3,7 +3,7 @@ import { marcaDoEdital } from "../../lib/conducao-de-entrevista.ts";
 import {
   editalEscolhido,
   sufixoDeTreinamento,
-} from "../../lib/edital-de-treinamento.js";
+} from "../../lib/edital-de-treinamento.ts";
 import { Aviso } from "../../ui/index.ts";
 import { LiberacaoDoEdital } from "./conducao.tsx";
 import type { EstadoDaConducao, EstadoDaConducaoComAcoes } from "./tipos.ts";

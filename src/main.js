@@ -68,7 +68,7 @@ import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.js";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
 import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.tsx";
-import { montarNucleo } from "./modulos/editais/nucleo.jsx";
+import { montarNucleo } from "./modulos/editais/nucleo.tsx";
 import { montarVisaoGeral } from "./modulos/visao-geral/visao-geral.tsx";
 import { situacaoDoSistema } from "./modules/situacao-dos-modulos.js";
 import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.tsx";

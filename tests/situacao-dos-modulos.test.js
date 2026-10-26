@@ -11,7 +11,7 @@ import {
   SITUACAO_PADRAO,
   textoDaFaixaDoAdministrador,
   textosDaManutencao,
-} from "../src/lib/situacao-dos-modulos.js";
+} from "../src/lib/situacao-dos-modulos.ts";
 import {
   abasDoCatalogo,
   ABAS_DO_MENU,

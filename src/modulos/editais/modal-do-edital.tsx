@@ -5,7 +5,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { RESPONSAVEIS_DE_EDITAL } from "../../lib/responsavel-do-edital.js";
+import { RESPONSAVEIS_DE_EDITAL } from "../../lib/responsavel-do-edital.ts";
 import { canMoveEditalBetweenAreas } from "../../lib/access-roles.ts";
 import { AREAS_DO_SISTEMA, nomeDaArea } from "../../lib/menu-lateral.ts";
 import {
@@ -19,12 +19,12 @@ import {
   rotuloDaUnidade,
   unidadesDaArea,
   valorDaUnidade,
-} from "../../lib/editais-do-nucleo.js";
+} from "../../lib/editais-do-nucleo.ts";
 import {
   analisarCronograma,
   estadoDoCronograma,
   novaEtapa,
-} from "../../lib/cronograma-do-edital.js";
+} from "../../lib/cronograma-do-edital.ts";
 import {
   numeroDoFunil,
   textoDaFonteDoFunil,
@@ -37,15 +37,15 @@ import {
   horaDoRascunho,
   lerRascunho,
   usuarioDoPerfil,
-} from "../../lib/rascunho-do-edital.js";
+} from "../../lib/rascunho-do-edital.ts";
 import {
   areaDaLinha,
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.ts";
 import { Aviso, Campo, Modal } from "../../ui/index.ts";
-import { EditorDeCronograma } from "./editor-de-cronograma.jsx";
-import { ImportarAnexos } from "./importar-anexos.jsx";
+import { EditorDeCronograma } from "./editor-de-cronograma.tsx";
+import { ImportarAnexos } from "./importar-anexos.tsx";
 
 /*
   O formulário do edital: identificação, situação operacional, indicadores que
@@ -61,7 +61,7 @@ import { ImportarAnexos } from "./importar-anexos.jsx";
   Esc, Fechar e Cancelar perguntam "Descartar as alterações?" quando algo
   mudou desde a abertura (a pergunta aparece no próprio cabeçalho — não se abre
   modal a partir de modal). E o formulário mexido vai para um rascunho no
-  navegador (`rascunho-do-edital.js`): reabrir o mesmo edital (ou "Novo" na
+  navegador (`rascunho-do-edital.ts`): reabrir o mesmo edital (ou "Novo" na
   mesma área) oferece Retomar ou Descartar. Salvar ou descartar apaga o
   rascunho.
 

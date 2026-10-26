@@ -19,10 +19,10 @@ import {
 } from "../../app/rascunho-da-regra.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
-import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.js";
+import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
-import { sufixoDeTreinamento } from "../../lib/edital-de-treinamento.js";
+import { sufixoDeTreinamento } from "../../lib/edital-de-treinamento.ts";
 import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
 import { dataDeCorteDoCronograma } from "../../lib/classificacao/dados.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";

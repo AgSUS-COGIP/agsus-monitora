@@ -6,7 +6,7 @@ import {
   VINCULO_NORMAL,
   classificarVinculoTerritorial,
   siglaDaUf,
-} from "../src/lib/uf-ibge.js";
+} from "../src/lib/uf-ibge.ts";
 import {
   DESENHO_DAS_FORMAS,
   ESTILO_DA_LINHA_DE_VINCULO as ESTILO_DA_LINHA,

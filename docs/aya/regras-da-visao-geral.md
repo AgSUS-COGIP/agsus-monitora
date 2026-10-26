@@ -15,14 +15,14 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 **perguntas:** indicadores da visao geral | kpis da visao geral | vagas ociosas da visao geral | kpi vagas imediatas | contratadas | em selecao | cadastro reserva | como fecham os kpis | conta dos indicadores
 **resposta:** Na Visão geral, os sete indicadores contam os editais do recorte e fecham entre si: Vagas imediatas = Contratadas + Em seleção + Ociosas. Vagas imediatas é a soma das vagas do cadastro do edital. Contratadas são as contratações de cada edital limitadas às vagas imediatas dele (o que passa disso é Cadastro reserva, mostrado à parte). Em seleção são as vagas ainda sem contratação dos editais sem resultado (em andamento, planejados ou sem cronograma). Ociosas são as vagas sem contratação dos editais com resultado (concluídos ou na fase Contratação). Editais cancelados não entram em nenhum indicador, nem em Inscritos. Críticos conta os editais com algum motivo de atenção e Inscritos soma os inscritos. Os rótulos podem ser trocados em Configurações › Página inicial.
 **fato:** Na Visão geral, Vagas imediatas = Contratadas (contratações limitadas às vagas de cada edital) + Em seleção (editais sem resultado) + Ociosas (editais concluídos ou na fase Contratação); contratações além das vagas são Cadastro reserva; cancelados não entram.
-**fonte:** src/lib/indicadores-do-monitoramento.js
+**fonte:** src/lib/indicadores-do-monitoramento.ts
 
 ## Processos críticos
 
 **perguntas:** processos criticos | o que e critico | quando um edital fica critico | criterio de critico | bloco atencao | edital parado | etapa atrasada | contratacao abaixo de 50 | sem inscritos
 **resposta:** Na Visão geral, "crítico" é calculado (o risco preenchido no edital não entra). Um edital aberto é crítico quando: o fim do cronograma já passou e o edital não concluiu ("Etapa atrasada há N dias"); está em andamento, sem etapa em curso e sem mudança de etapa (início ou fim de uma etapa do cronograma) há 15 dias ou mais ("Parado há N dias"); ou está em andamento, já depois das inscrições, com 0 inscritos ("Sem inscritos"). Um edital concluído é crítico quando as contratadas ficam abaixo de 50% das vagas imediatas ("Contratação abaixo de 50%"). Cancelado nunca é crítico. Etapa chegando (próxima em até 3 dias) é agenda, não problema: não faz o edital crítico — aparece nas boas-vindas ("N editais têm etapa nos próximos 7 dias") e em vermelho na coluna de cronograma da tabela. O KPI Críticos, os detalhes do processo e a ordem da tabela usam os mesmos motivos; clicar em Críticos filtra a página pelos críticos e clicar de novo tira.
 **fato:** Crítico na Visão geral: cronograma vencido sem concluir, parado há 15 dias ou mais, em andamento sem inscritos depois das inscrições, ou concluído com menos de 50% das vagas imediatas contratadas.
-**fonte:** src/lib/criticos-da-visao-geral.js
+**fonte:** src/lib/criticos-da-visao-geral.ts
 
 ## Filtros da Visão geral
 
@@ -46,7 +46,7 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 
 **perguntas:** como a fase e calculada | de onde vem a fase | fase do edital | etapa e fase
 **resposta:** A fase do edital na Visão geral vem primeiro do status (cancelado é Cancelado, concluído é Concluído, planejado é Edital) e, nos demais, do texto da atividade do cronograma (a de hoje, ou a etapa mostrada), sem acento nem caixa: contratação, admissão ou posse é Contratação; prazo ou abertura de recurso é Recursos; resultado final ou homologação do resultado é Resultado; outro recurso é Recursos; entrevista é Entrevistas; análise curricular, documental, títulos, prova ou resultado preliminar é Análise curricular; inscrição é Inscrições; outro resultado é Resultado; edital, impugnação ou publicação é Edital. "Aguardando: X" conta como a fase de X; texto que nenhuma regra reconhece fica em Outra e "Cronograma pendente" em Sem cronograma.
-**fonte:** src/lib/fases-do-processo.js
+**fonte:** src/lib/fases-do-processo.ts
 
 ## Tabela de processos da Visão geral
 
@@ -59,13 +59,13 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 **perguntas:** de onde vem os kpis da visao geral | de onde vem os indicadores da visao geral | de onde vem os numeros da visao geral | origem dos kpis | kpis do edital | de onde vem os kpis
 **resposta:** Os números de cada edital (inscritos, aptos, cancelados, eliminados, reprovados e aprovados na análise, entrevistados e contratados) são recalculados pelo banco no fim de cada carga da Seleção e, de novo, às 10h de Brasília. Valem para todo edital ativo que tem a fonte, com ou sem vaga na Seleção: as vagas da planilha Auditoria ligadas ao edital somadas, a lista de aprovados vigente do edital (Contratado ou Migração), as entrevistas do edital com parecer e as análises com status Aprovado do mesmo número de edital (ou do mesmo nome, para editais sem número, quando o nome é único na área). Sem a fonte, o valor anterior fica. As Vagas e o cronograma continuam vindo do cadastro do edital, em Editais. A Visão geral soma esses números dos editais do recorte.
 **fato:** Os KPIs dos editais na Visão geral são recalculados pelo banco no fim de cada carga da Seleção e às 10h de Brasília, para todo edital ativo que tem a fonte (Seleção, lista de aprovados vigente, entrevistas, análises); sem a fonte, o valor anterior fica; as vagas vêm do cadastro do edital.
-**fonte:** supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; src/lib/indicadores-do-monitoramento.js
+**fonte:** supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; src/lib/indicadores-do-monitoramento.ts
 
 ## Números da Visão geral que não batem
 
 **perguntas:** por que o numero da visao geral nao bate | kpi da visao geral diferente | contratados diferente da lista de aprovados | numero da visao geral desatualizado | vagas nao batem
 **resposta:** Os números de cada edital são recalculados pelo banco no fim de cada carga da Seleção e, de novo, às 10h; entre uma carga e outra, a lista de aprovados pode já ter mudado. Contratadas ficam limitadas às vagas imediatas de cada edital (o excedente vai para Cadastro reserva), editais cancelados não entram em nenhum indicador e as Vagas vêm do cadastro do edital, em Editais. Confira também a área atual, os filtros (guardados no navegador) e a busca, que valem para a página toda.
-**fonte:** src/lib/indicadores-do-monitoramento.js; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql
+**fonte:** src/lib/indicadores-do-monitoramento.ts; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql
 **abrir:** dashboard
 
 ## Quem vê a Visão geral

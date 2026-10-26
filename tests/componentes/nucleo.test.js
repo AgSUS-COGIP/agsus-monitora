@@ -1,13 +1,13 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarNucleo } from "../../src/modulos/editais/nucleo.jsx";
+import { montarNucleo } from "../../src/modulos/editais/nucleo.tsx";
 import {
   definirAreaAtual,
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { UNIDADES_CORES } from "../../src/lib/responsavel-do-edital.js";
+import { UNIDADES_CORES } from "../../src/lib/responsavel-do-edital.ts";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 
 /*

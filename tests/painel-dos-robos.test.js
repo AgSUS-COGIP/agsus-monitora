@@ -16,11 +16,11 @@ import {
   separarCodigos,
   situacaoDoPedido,
   validarOpcoes,
-} from "../src/lib/robos-de-carga.js";
+} from "../src/lib/robos-de-carga.ts";
 
 /*
   "Rodar com opções" dos robôs, sem DOM: a lista branca e a validação
-  (src/lib/robos-de-carga.js, a mesma de disparar_robo) e a escolha de editais, a
+  (src/lib/robos-de-carga.ts, a mesma de disparar_robo) e a escolha de editais, a
   prévia, o histórico e o acompanhamento (src/lib/painel-dos-robos.ts).
 */
 

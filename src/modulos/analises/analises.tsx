@@ -34,9 +34,9 @@ import {
   ultimaAtualizacao,
 } from "../../lib/analises-curriculares.ts";
 import { getLoadingStage } from "../../lib/loading-copy";
-import { textoDaConferencia } from "../../lib/texto-da-conferencia.js";
+import { textoDaConferencia } from "../../lib/texto-da-conferencia.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { haLinhasSemParecer } from "../../lib/textos-do-painel-de-analises.js";
+import { haLinhasSemParecer } from "../../lib/textos-do-painel-de-analises.ts";
 import {
   Aviso,
   ChipDeFiltro,

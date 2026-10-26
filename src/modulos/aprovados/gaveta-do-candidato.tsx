@@ -8,7 +8,7 @@ import {
   formatarNota,
   modalidadeSemAspas,
 } from "../../lib/lista-aprovados-rules.ts";
-import { formatarDataHora } from "../../lib/cronograma-do-edital.js";
+import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
 import {
   BlocosEsqueleto,
   Gaveta,

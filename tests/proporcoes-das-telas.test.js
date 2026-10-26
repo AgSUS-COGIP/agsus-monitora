@@ -71,7 +71,7 @@ describe("KPIs: mesma altura, rótulo em até duas linhas", () => {
 
   it("Editais e Lista de aprovados usam o Kpi de src/ui (sem KPI próprio)", () => {
     for (const caminho of [
-      "src/modulos/editais/painel-operacional.jsx",
+      "src/modulos/editais/painel-operacional.tsx",
       "src/modulos/aprovados/aba-aprovados.tsx",
       "src/modulos/aprovados/aba-convocacao.tsx",
     ]) {

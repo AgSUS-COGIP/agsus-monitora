@@ -6,7 +6,7 @@ import {
   ehEditalDeTreinamento,
   semTreinamento,
   sufixoDeTreinamento,
-} from "../src/lib/edital-de-treinamento.js";
+} from "../src/lib/edital-de-treinamento.ts";
 import {
   normalizarPainel,
   opcoesDosEditais,
@@ -98,7 +98,7 @@ describe("fora dos indicadores e da Visão geral", () => {
     expect(ler("src/modulos/visao-geral/boas-vindas.tsx")).toContain(
       "semTreinamento(linhasDaArea(linhasDaResposta(linhas), areaAtual))",
     );
-    expect(ler("src/modulos/editais/nucleo.jsx")).toContain(
+    expect(ler("src/modulos/editais/nucleo.tsx")).toContain(
       "resumoDasLinhas(doResumo.resumo, semTreinamento(linhas))",
     );
   });

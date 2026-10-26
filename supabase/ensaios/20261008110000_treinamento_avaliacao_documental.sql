@@ -122,7 +122,7 @@ union all select 'teste_cronograma', count(*)::text from public."TB_CRONOGRAMA_M
        O treinamento continua fora de painéis, KPIs, conferências e robôs no modo
        padrão (os predicados de 20261007230000).
 
-  Dependentes: src/lib/edital-de-treinamento.js (sem mudança de contrato),
+  Dependentes: src/lib/edital-de-treinamento.ts (sem mudança de contrato),
   docs/aya/ (verbetes do edital de treinamento), tests/fixtures/avaliacao-documental/
   treinamento-projetos.json. Nenhuma assinatura de RPC muda.
 

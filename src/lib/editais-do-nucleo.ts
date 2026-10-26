@@ -9,13 +9,13 @@
   mapa (`legacy-app.js`): as duas telas têm de concordar.
 */
 
-import { etapaComDatasValidas } from "./datas-do-cronograma.js";
+import { etapaComDatasValidas } from "./datas-do-cronograma.ts";
 import {
   AREA_SAUDE_INDIGENA,
   ehResponsavelCores,
   normalizarResponsavel,
   unidadesDoResponsavel,
-} from "./responsavel-do-edital.js";
+} from "./responsavel-do-edital.ts";
 
 const txt = (valor) => String(valor ?? "").trim();
 const low = (valor) => txt(valor).toLowerCase();

@@ -74,7 +74,7 @@
     (`lerMetaComemorada`/`gravarMetaComemorada`).
 */
 
-import { quandoFoi } from "./texto-da-conferencia.js";
+import { quandoFoi } from "./texto-da-conferencia.ts";
 import { numeroDoEdital } from "./numero-do-edital.ts";
 
 export interface EtapaDoCronograma {

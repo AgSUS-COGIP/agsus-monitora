@@ -15,7 +15,7 @@
   as linhas que vêm de outro caminho são lidas do nome da vaga com a mesma
   expressão da RPC.
 */
-import { ehAreaSaudeIndigena } from "./area-do-painel-de-analises.js";
+import { ehAreaSaudeIndigena } from "./area-do-painel-de-analises.ts";
 
 const texto = (valor) => String(valor ?? "").trim();
 

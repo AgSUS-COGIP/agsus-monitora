@@ -93,7 +93,7 @@ publicações do SEI, textos-padrão do 83/2026 e do 100/2026 —, `documento-do
 timbrado —, `dados.ts`). Os textos e as colunas do documento ajustados pelo gestor ficam na regra
 (`DS_CONFIGURACAO.documento`, `.colunas` por publicação, `.desempate` = a nota abaixo de
 cada tabela, geral ou de cota, com empate de nota resolvido; sem migration); o cabeçalho da agência, em Configurações › Marca
-(`documento_cabecalho`, `src/lib/cabecalho-dos-documentos.js`). Banco:
+(`documento_cabecalho`, `src/lib/cabecalho-dos-documentos.ts`). Banco:
 `supabase/migrations/20261002150000_classificacao.sql` (+ `20261002150500_liga_aba_classificacao.sql`),
 `20261002170000_classificacao_lista_da_entrevista.sql` (lista ENTREVISTA e critérios novos do
 catálogo), `20261009130000_hora_de_nascimento_na_classificacao.sql` (hora da certidão para a maior

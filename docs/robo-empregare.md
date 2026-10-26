@@ -247,7 +247,7 @@ vigentes, salvo "Mostrar todos"), **códigos de vaga** (lista colada, separada p
 linha; só dígitos; com sugestões das vagas conhecidas do edital e o cargo de cada uma —
 `listar_vagas_dos_robos`), **modo** (com a explicação de cada um; `sondar` pede um único código de vaga, sem editais, e limite de 1 a 3), **limite**, a caixa **Guardar links dos anexos do questionário** (só nos modos Normal e Forçar; vai ao workflow como `anexos`) e a **prévia** do
 que vai rodar ("5 vagas do 93/2026: 179698, 180231…"). A função valida tudo de novo pela lista
-branca do robô (`validarOpcoes` em `src/lib/robos-de-carga.js`) e recusa com 400 o que não couber.
+branca do robô (`validarOpcoes` em `src/lib/robos-de-carga.ts`) e recusa com 400 o que não couber.
 Depois do pedido, a linha acompanha a execução (aguardando o GitHub → rodando → resultado por vaga:
 gravada, candidatos no arquivo, ativos e com link), com o link da execução no GitHub. A
 pré-classificação e as conferências têm a mesma gaveta, com os campos que aceitam.
@@ -379,7 +379,7 @@ computador: rode-os pelo GitHub.
   `planilha_empregare.py` (leitura do Excel e chave), `requirements.txt` (separado do da raiz,
   para não pesar as funções da Vercel). RPC e mascaramento vêm da base comum `python/monitora/`
   (`supabase_rpc.py`, `mascaramento.py`; guia em `docs/python-no-monitora.md`).
-- `src/lib/robos-de-carga.js` e a RPC `disparar_robo` (`20261008140000_agenda_dos_robos_pelo_banco.sql`):
+- `src/lib/robos-de-carga.ts` e a RPC `disparar_robo` (`20261008140000_agenda_dos_robos_pelo_banco.sql`):
   o **Rodar agora** (lista fixa robô → workflow, opções, quem pode, regras do botão).
 - `src/componentes/saude-das-cargas/` e `src/lib/saude-das-cargas.ts`: a tela de status.
 - `supabase/migrations/20261005170000_robo_empregare.sql`, `20261006080000_robo_empregare_vagas_do_quadro.sql`
