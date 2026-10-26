@@ -66,6 +66,7 @@ import {
   Selo,
   TabelaInfinita,
 } from "../../ui/index.ts";
+import type { AcaoDoMenu } from "../../ui/index.ts";
 import {
   IncluirPorDecisao,
   RevogarDecisao,
@@ -1212,7 +1213,7 @@ export function Fila({ e, fila }: FilaProps) {
   const minhas = st.filtro.responsavel === "eu";
 
   // As ações da coordenação num menu só (quem não coordena não vê o menu).
-  const acoesDaCoordenacao = [
+  const acoesDaCoordenacao: AcaoDoMenu[] = [
     {
       id: "incluir",
       rotulo: "Incluir por decisão da coordenação",
@@ -1479,7 +1480,6 @@ export function Fila({ e, fila }: FilaProps) {
               tour="avd-fila-acoes-coordenacao"
               contagem={selecionados.length}
               acoes={acoesDaCoordenacao}
-              className={undefined}
             />
           ) : null}
         </div>

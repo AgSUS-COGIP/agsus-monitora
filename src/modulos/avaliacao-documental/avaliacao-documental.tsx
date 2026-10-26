@@ -157,7 +157,7 @@ function TelaDaArea({
             !e.area || e.carregandoEditais || e.carregandoEdital
           }
         >
-          <SeloDeTreinamento edital={escolhido} className={undefined} />
+          <SeloDeTreinamento edital={escolhido} />
         </TopoDoPainel>
       )}
 
@@ -210,7 +210,7 @@ function TelaDaArea({
                   ))}
                 </select>
               </Campo>
-              <SeloDeTreinamento edital={escolhido} className={undefined} />
+              <SeloDeTreinamento edital={escolhido} />
               {ocultos || todos ? (
                 <label className="avd-caixa" data-tour="avd-todos-editais">
                   <input
