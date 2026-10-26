@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   BASES_DA_NOTA_DO_LOTE,
   BASES_DO_LOTE,
@@ -45,11 +45,25 @@ import {
   SituacaoDoRascunho,
 } from "../../ui/index.ts";
 import { usarRascunhoDaRegra } from "../../app/usar-rascunho-da-regra.ts";
+import type { Conteudo, RascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
+import type {
+  EliminacaoAutomatica as ItemDaEliminacao,
+  ItemDaNotaDeclarada,
+  Nivel,
+  ObservacaoPronta,
+  PerguntaDaCarga,
+  RegraAnalise,
+  RegraSalva,
+} from "../../lib/avaliacao-documental/tipos-da-regra.ts";
 import {
   dataEHoraCurtas,
   textoDaGravacao,
 } from "../../lib/rascunho-da-regra.ts";
-import { AssistenteDaRegra } from "./assistente/assistente.tsx";
+import {
+  AssistenteDaRegra,
+  type ClassificacaoDoRascunho,
+} from "./assistente/assistente.tsx";
+import type { EstadoDaRegra } from "./assistente/tipos.ts";
 import { ComparacaoDeVersoes, ResumoDaRegra } from "./assistente/conferir.tsx";
 import { Blocos } from "./blocos.tsx";
 import {
@@ -62,8 +76,15 @@ import {
   CampoTexto,
   comValor,
   Escolha,
+  type Caminho,
 } from "./campos.tsx";
 import { Previa } from "./previa.tsx";
+import type {
+  AldeiasDoEdital,
+  EstadoDaAvaliacao,
+  ResultadoDaRegra,
+  ResultadoDasAldeias,
+} from "./tipos-do-estado.ts";
 
 /*
   Aba "Regra" da Avaliação documental: a regra da avaliação do edital, que a
@@ -76,8 +97,43 @@ import { Previa } from "./previa.tsx";
   candidato fictício" usa o rascunho e não grava.
 */
 
+/** O que a aba Regra usa do estado da avaliação (estado.ts). */
+interface EstadoDaAbaRegra extends EstadoDaRegra {
+  copiarModelo: (modelo: string) => Promise<ResultadoDaRegra>;
+  salvarRegra: (
+    configuracao: unknown,
+    motivo: string,
+    nome?: string | null,
+  ) => Promise<ResultadoDaRegra>;
+  conferirRegra: () => Promise<ResultadoDaRegra>;
+  renomearVersao: (
+    versao: number,
+    nome: string | null,
+    motivo: string,
+  ) => Promise<ResultadoDaRegra>;
+  salvarAldeias: (
+    unidade: string | number | null | undefined,
+    aldeias: string[],
+    fonte: string,
+  ) => Promise<ResultadoDasAldeias>;
+}
+
+/** O snapshot e o estado, como a tela da avaliação passa às peças da aba. */
+interface PropsDoEstado {
+  e: EstadoDaAvaliacao;
+  estado: EstadoDaAbaRegra;
+}
+
+/** Uma parte do formulário que muda a regra inteira (o rascunho). */
+interface PropsDaRegra {
+  regra: RegraAnalise;
+  aoMudar: (regra: RegraAnalise) => void;
+}
+
+type Modo = "assistente" | "avancado";
+
 const CHAVE_DO_MODO = "avd-regra-modo";
-const MODOS = [
+const MODOS: ReadonlyArray<{ valor: Modo; rotulo: string; icone: string }> = [
   {
     valor: "assistente",
     rotulo: "Assistente",
@@ -85,7 +141,7 @@ const MODOS = [
   },
   { valor: "avancado", rotulo: "Modo avançado", icone: "fa-sliders" },
 ];
-function lerModo() {
+function lerModo(): Modo {
   try {
     return globalThis.localStorage?.getItem(CHAVE_DO_MODO) === "avancado"
       ? "avancado"
@@ -94,7 +150,7 @@ function lerModo() {
     return "assistente";
   }
 }
-function guardarModo(modo) {
+function guardarModo(modo: Modo) {
   try {
     globalThis.localStorage?.setItem(CHAVE_DO_MODO, modo);
   } catch {
@@ -107,17 +163,22 @@ function guardarModo(modo) {
   { regra, classificacao? } — a regra inteira e, se o assistente mudou a nota
   mínima ou o desempate, a regra de classificação com a versão de onde partiu.
 */
-const ehObjeto = (v) =>
+const ehObjeto = (v: unknown): v is Record<string, unknown> =>
   Boolean(v) && typeof v === "object" && !Array.isArray(v);
-function classificacaoDoGuardado(conteudo) {
+function classificacaoDoGuardado(
+  conteudo: Conteudo | null | undefined,
+): ClassificacaoDoRascunho | null {
   const c = conteudo?.classificacao;
   return ehObjeto(c) &&
     Number.isInteger(c.versao_base) &&
     ehObjeto(c.configuracao)
-    ? c
+    ? (c as ClassificacaoDoRascunho)
     : null;
 }
-function guardadoIgualAoVigente(conteudo, inicial) {
+function guardadoIgualAoVigente(
+  conteudo: Conteudo | null | undefined,
+  inicial: RegraAnalise | null,
+) {
   if (!ehObjeto(conteudo?.regra)) return true;
   if (classificacaoDoGuardado(conteudo)) return false;
   return (
@@ -126,7 +187,7 @@ function guardadoIgualAoVigente(conteudo, inicial) {
   );
 }
 
-const dataHora = (iso) =>
+const dataHora = (iso: string | null | undefined) =>
   iso
     ? new Date(iso).toLocaleString("pt-BR", {
         dateStyle: "short",
@@ -134,7 +195,7 @@ const dataHora = (iso) =>
       })
     : "";
 
-function SemRegra({ e, estado }) {
+function SemRegra({ e, estado }: PropsDoEstado) {
   const modelos = e.dados?.modelos ?? [];
   const [modelo, setModelo] = useState(modelos[0]?.codigo ?? "");
   const [erro, setErro] = useState("");
@@ -180,7 +241,12 @@ function SemRegra({ e, estado }) {
 }
 
 /* As perguntas da carga são lidas só aqui (e no passo das perguntas do assistente). */
-function Perguntas({ e, estado, regra, aoMudar }) {
+function Perguntas({
+  e,
+  estado,
+  regra,
+  aoMudar,
+}: PropsDoEstado & PropsDaRegra) {
   const [blocoAlvo, setBlocoAlvo] = useState("");
   useEffect(() => {
     void estado.carregarPerguntas?.();
@@ -200,7 +266,7 @@ function Perguntas({ e, estado, regra, aoMudar }) {
       </Aviso>
     );
   if (!perguntas?.length) return null;
-  const ligar = (coluna) => {
+  const ligar = (coluna: string) => {
     const prefixo = comecoDoEnunciado(coluna);
     aoMudar(
       comValor(
@@ -214,7 +280,7 @@ function Perguntas({ e, estado, regra, aoMudar }) {
       ),
     );
   };
-  const paraNotaDeclarada = (p) =>
+  const paraNotaDeclarada = (p: PerguntaDaCarga) =>
     aoMudar(
       comValor(
         regra,
@@ -298,12 +364,35 @@ function Perguntas({ e, estado, regra, aoMudar }) {
 }
 
 /* Os níveis que um item por nível mostra: os do mapa, na ordem do catálogo. */
-const NIVEIS_DA_DECLARADA = ["superior", "tecnico", "medio"];
-const niveisDoItem = (item) =>
+const NIVEIS_DA_DECLARADA: ReadonlyArray<Nivel> = [
+  "superior",
+  "tecnico",
+  "medio",
+];
+
+/*
+  Um item da nota declarada como o formulário lê e devolve: os níveis pelas
+  chaves do catálogo e, nos mapas (resposta → pontos ou meses), o que foi
+  digitado (pode ser texto; validarRegraAnalise confere ao salvar).
+*/
+type MapaNoFormulario = Record<string, unknown>;
+type ItemNoFormulario = Omit<
+  ItemDaNotaDeclarada,
+  "pontos" | "meses" | "pontos_por_nivel"
+> & {
+  pontos?: MapaNoFormulario;
+  meses?: MapaNoFormulario;
+  pontos_por_nivel?: Partial<Record<string, MapaNoFormulario>>;
+};
+
+const niveisDoItem = (item: ItemNoFormulario) =>
   NIVEIS.map(([n]) => n).filter((n) => item.pontos_por_nivel?.[n]);
 
 /* Liga ou desliga os pontos por nível (uma coluna por nível, as mesmas respostas). */
-function comPontosPorNivel(item, ligar) {
+function comPontosPorNivel(
+  item: ItemNoFormulario,
+  ligar: boolean,
+): ItemNoFormulario {
   const novo = { ...item };
   if (ligar) {
     const base = item.pontos ?? {};
@@ -313,21 +402,21 @@ function comPontosPorNivel(item, ligar) {
     delete novo.pontos;
   } else {
     const primeiro = niveisDoItem(item)[0];
-    novo.pontos = { ...(item.pontos_por_nivel?.[primeiro] ?? {}) };
+    novo.pontos = { ...(item.pontos_por_nivel?.[primeiro as string] ?? {}) };
     delete novo.pontos_por_nivel;
   }
   return novo;
 }
 
 /* As respostas de um item por nível: a união das respostas de todos os níveis. */
-const respostasPorNivel = (item) => [
+const respostasPorNivel = (item: ItemNoFormulario) => [
   ...new Set(
-    niveisDoItem(item).flatMap((n) => Object.keys(item.pontos_por_nivel[n])),
+    niveisDoItem(item).flatMap((n) => Object.keys(item.pontos_por_nivel![n]!)),
   ),
 ];
 
 /* As diferenças por cargo no modo avançado: as vagas e os cargos do quadro vêm do apoio do assistente. */
-function PorCargo({ e, estado, regra, aoMudar }) {
+function PorCargo({ e, estado, regra, aoMudar }: PropsDoEstado & PropsDaRegra) {
   useEffect(() => {
     if (!e.apoio && !e.carregandoApoio && !e.erroDoApoio)
       void estado.carregarApoio?.();
@@ -344,13 +433,20 @@ function PorCargo({ e, estado, regra, aoMudar }) {
   );
 }
 
-function RespostasPorNivel({ item, aoMudar }) {
+interface RespostasPorNivelProps {
+  item: ItemNoFormulario;
+  aoMudar: (item: ItemNoFormulario) => void;
+}
+
+function RespostasPorNivel({ item, aoMudar }: RespostasPorNivelProps) {
   const niveis = niveisDoItem(item);
-  const comMapa = (transformar) =>
+  const comMapa = (
+    transformar: (nivel: string, mapa: MapaNoFormulario) => MapaNoFormulario,
+  ) =>
     aoMudar({
       ...item,
       pontos_por_nivel: Object.fromEntries(
-        niveis.map((n) => [n, transformar(n, item.pontos_por_nivel[n])]),
+        niveis.map((n) => [n, transformar(n, item.pontos_por_nivel![n]!)]),
       ),
     });
   return (
@@ -362,7 +458,7 @@ function RespostasPorNivel({ item, aoMudar }) {
             <CampoNumero
               key={n}
               rotulo={rotuloDe(NIVEIS, n)}
-              valor={item.pontos_por_nivel[n][resposta]}
+              valor={item.pontos_por_nivel![n]![resposta]}
               aoMudar={(v) =>
                 comMapa((nivel, mapa) =>
                   nivel === n ? { ...mapa, [resposta]: v } : mapa,
@@ -399,9 +495,10 @@ function RespostasPorNivel({ item, aoMudar }) {
   );
 }
 
-function NotaDeclarada({ regra, aoMudar }) {
-  const itens = regra.provisoria.nota_declarada;
-  const mudar = (i, item) =>
+function NotaDeclarada({ regra, aoMudar }: PropsDaRegra) {
+  const itens: ReadonlyArray<ItemNoFormulario> =
+    regra.provisoria.nota_declarada;
+  const mudar = (i: number, item: unknown) =>
     aoMudar(comValor(regra, ["provisoria", "nota_declarada", i], item));
   return (
     <div className="avd-subgrupo">
@@ -550,12 +647,12 @@ function NotaDeclarada({ regra, aoMudar }) {
   );
 }
 
-function EliminacaoAutomatica({ regra, aoMudar }) {
+function EliminacaoAutomatica({ regra, aoMudar }: PropsDaRegra) {
   const itens = regra.provisoria.eliminacao_automatica;
-  const mudar = (i, item) =>
+  const mudar = (i: number, item: unknown) =>
     aoMudar(comValor(regra, ["provisoria", "eliminacao_automatica", i], item));
-  const fonteDe = (item) =>
-    ["coluna", "coluna_prefixo", "pergunta"].find(
+  const fonteDe = (item: ItemDaEliminacao) =>
+    (["coluna", "coluna_prefixo", "pergunta"] as const).find(
       (k) => item[k] !== undefined,
     ) ?? "coluna";
   return (
@@ -580,7 +677,7 @@ function EliminacaoAutomatica({ regra, aoMudar }) {
                 ["pergunta", "Pergunta"],
               ]}
               aoMudar={(v) => {
-                const novo = { ...item, [v]: item[fonte] ?? "" };
+                const novo = { ...item, [v!]: item[fonte] ?? "" };
                 if (v !== fonte) delete novo[fonte];
                 mudar(i, novo);
               }}
@@ -645,9 +742,9 @@ function EliminacaoAutomatica({ regra, aoMudar }) {
   );
 }
 
-function ObservacoesProntas({ regra, aoMudar }) {
+function ObservacoesProntas({ regra, aoMudar }: PropsDaRegra) {
   const itens = regra.observacoes_prontas;
-  const mudar = (i, chave, valor) =>
+  const mudar = (i: number, chave: keyof ObservacaoPronta, valor: unknown) =>
     aoMudar(comValor(regra, ["observacoes_prontas", i, chave], valor));
   return (
     <div className="avd-subgrupo">
@@ -719,7 +816,16 @@ function ObservacoesProntas({ regra, aoMudar }) {
   );
 }
 
-function Versoes({ regra, podeUsar, aoUsar, aoRenomear }) {
+interface VersoesProps {
+  regra: RegraSalva | null;
+  podeUsar?: boolean;
+  /** Leva a configuração da versão ao formulário. */
+  aoUsar: (configuracao: RegraAnalise) => void;
+  /** Sem ele (quem só lê), as versões não se renomeiam. */
+  aoRenomear?: EstadoDaAbaRegra["renomearVersao"] | null;
+}
+
+function Versoes({ regra, podeUsar, aoUsar, aoRenomear }: VersoesProps) {
   if (!regra?.versoes?.length) return null;
   return (
     <section className="ui-card" aria-labelledby="avdVersoes">
@@ -763,7 +869,11 @@ function Versoes({ regra, podeUsar, aoUsar, aoRenomear }) {
   );
 }
 
-function CarregarAldeias({ e, estado, aoFechar }) {
+function CarregarAldeias({
+  e,
+  estado,
+  aoFechar,
+}: PropsDoEstado & { aoFechar: () => void }) {
   const [texto, setTexto] = useState("");
   const [fonte, setFonte] = useState("");
   const [erro, setErro] = useState("");
@@ -819,7 +929,22 @@ function CarregarAldeias({ e, estado, aoFechar }) {
   );
 }
 
-function CabecalhoDaRegra({ regraSalva, leitura, mudou, e, estado, aoErro }) {
+interface CabecalhoDaRegraProps extends PropsDoEstado {
+  regraSalva: RegraSalva;
+  leitura: boolean;
+  /** O rascunho difere da versão vigente (não confere antes de salvar). */
+  mudou: boolean;
+  aoErro: (erro: string) => void;
+}
+
+function CabecalhoDaRegra({
+  regraSalva,
+  leitura,
+  mudou,
+  e,
+  estado,
+  aoErro,
+}: CabecalhoDaRegraProps) {
   const outraPessoa = Boolean(regraSalva.conferir_pede_outra_pessoa);
   return (
     <section
@@ -881,7 +1006,12 @@ function CabecalhoDaRegra({ regraSalva, leitura, mudou, e, estado, aoErro }) {
   );
 }
 
-export function Regra({ e, estado, rascunhoGuardado }) {
+export interface RegraProps extends PropsDoEstado {
+  /** O rascunho guardado da regra (src/app/rascunho-da-regra.ts, tipo ANALISE). */
+  rascunhoGuardado: RascunhoDaRegra;
+}
+
+export function Regra({ e, estado, rascunhoGuardado }: RegraProps) {
   const dados = e.dados;
   const regraSalva = dados?.regra ?? null;
   const leitura = !dados?.pode_coordenar;
@@ -891,7 +1021,7 @@ export function Regra({ e, estado, rascunhoGuardado }) {
   );
   const [rascunho, setRascunho] = useState(inicial);
   const [motivo, setMotivo] = useState("");
-  const [nome, setNome] = useState(null);
+  const [nome, setNome] = useState<string | null>(null);
   const [tentou, setTentou] = useState(false);
   const [erroDoBanco, setErroDoBanco] = useState("");
   const [aldeiasAbertas, setAldeiasAbertas] = useState(false);
@@ -899,8 +1029,10 @@ export function Regra({ e, estado, rascunhoGuardado }) {
   // "Fechar o assistente" (passo 5): a regra em resumo, com "Abrir o assistente".
   const [assistenteFechado, setAssistenteFechado] = useState(false);
   // Nota mínima e desempate mudados no assistente (vão no rascunho guardado).
-  const [classificacaoDoRascunho, setClassificacaoDoRascunho] = useState(null);
-  const [classificacaoRetomada, setClassificacaoRetomada] = useState(null);
+  const [classificacaoDoRascunho, setClassificacaoDoRascunho] =
+    useState<ClassificacaoDoRascunho | null>(null);
+  const [classificacaoRetomada, setClassificacaoRetomada] =
+    useState<ClassificacaoDoRascunho | null>(null);
   const conteudoDoRascunho = useMemo(
     () =>
       rascunho
@@ -943,7 +1075,7 @@ export function Regra({ e, estado, rascunhoGuardado }) {
     setClassificacaoDoRascunho(null);
     setClassificacaoRetomada(null);
   };
-  const mudarModo = (novo) => {
+  const mudarModo = (novo: Modo) => {
     setModo(novo);
     guardarModo(novo);
   };
@@ -1050,13 +1182,13 @@ export function Regra({ e, estado, rascunhoGuardado }) {
               </button>
             </div>
             <ResumoDaRegra
-              regra={inicial}
+              regra={inicial!}
               contexto={{
                 versao: regraSalva.versao,
                 nome: regraSalva.nome ?? null,
-                notaMinima: dados.nota_minima?.nota_minima ?? null,
+                notaMinima: dados!.nota_minima?.nota_minima ?? null,
                 notaMinimaPorNivel:
-                  dados.nota_minima?.nota_minima_por_nivel ?? {},
+                  dados!.nota_minima?.nota_minima_por_nivel ?? {},
               }}
             />
           </section>
@@ -1077,17 +1209,17 @@ export function Regra({ e, estado, rascunhoGuardado }) {
   const motivoCurto = motivo.trim().length < 10;
   const sugestao = sugerirNomeDaVersao({
     tipo: "regra",
-    edital: dados.edital?.numero,
+    edital: dados!.edital?.numero,
     motivo,
   });
   const nomeEscolhido = nomeDoCampo(nome, sugestao);
   const nomeRuim = Boolean(erroDoNomeDaVersao(nomeEscolhido));
-  const mudar = (caminho, valor) =>
+  const mudar = (caminho: Caminho, valor: unknown) =>
     setRascunho(comValor(rascunho, caminho, valor));
   const temEtnico = rascunho.blocos.some((b) => b.tipo === "PONTUACAO");
-  const aldeias = dados.aldeias ?? {};
+  const aldeias: AldeiasDoEdital = dados!.aldeias ?? {};
 
-  async function salvar(ev) {
+  async function salvar(ev: FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     setTentou(true);
     if (erros.length || motivoCurto || nomeRuim) return;
@@ -1143,7 +1275,7 @@ export function Regra({ e, estado, rascunhoGuardado }) {
                 <select
                   value=""
                   onChange={(ev) => {
-                    const m = dados.modelos.find(
+                    const m = dados!.modelos.find(
                       (x) => x.codigo === ev.target.value,
                     );
                     if (m)
@@ -1159,7 +1291,7 @@ export function Regra({ e, estado, rascunhoGuardado }) {
                   }}
                 >
                   <option value="">…</option>
-                  {dados.modelos.map((m) => (
+                  {dados!.modelos.map((m) => (
                     <option key={m.codigo} value={m.codigo}>
                       {m.nome}
                     </option>
@@ -1175,7 +1307,7 @@ export function Regra({ e, estado, rascunhoGuardado }) {
               {aldeias.fonte ? (
                 <span className="ui-texto-secundario"> · {aldeias.fonte}</span>
               ) : null}{" "}
-              {dados.pode_carregar_aldeias && dados.edital?.id_unidade ? (
+              {dados!.pode_carregar_aldeias && dados!.edital?.id_unidade ? (
                 <button
                   type="button"
                   className="btn secondary small"
@@ -1240,7 +1372,8 @@ export function Regra({ e, estado, rascunhoGuardado }) {
           </div>
           <div className="ui-grade-de-campos" data-tour="avd-regra-desempate">
             {DESEMPATES_DA_PROVISORIA.map((_d, i) => {
-              const desempate = rascunho.provisoria.desempate ?? [];
+              const desempate: ReadonlyArray<string> =
+                rascunho.provisoria.desempate ?? [];
               return (
                 <Escolha
                   key={i}
@@ -1283,7 +1416,7 @@ export function Regra({ e, estado, rascunhoGuardado }) {
               valor={rascunho.lote.base}
               opcoes={BASES_DO_LOTE}
               aoMudar={(v) => {
-                const minima = dados.nota_minima?.nota_minima;
+                const minima = dados!.nota_minima?.nota_minima;
                 const comBase = comValor(rascunho, ["lote", "base"], v);
                 setRascunho(
                   v === "NOTA_MINIMA" &&
@@ -1358,7 +1491,7 @@ export function Regra({ e, estado, rascunhoGuardado }) {
           <div className="ui-grade-de-campos">
             <Escolha
               rotulo="Distribuição"
-              valor={rascunho.distribuicao.modo}
+              valor={rascunho.distribuicao.modo as string | undefined}
               opcoes={MODOS_DE_DISTRIBUICAO}
               aoMudar={(v) => mudar(["distribuicao", "modo"], v)}
             />
@@ -1366,7 +1499,7 @@ export function Regra({ e, estado, rascunhoGuardado }) {
               <>
                 <Escolha
                   rotulo="Como reparte"
-                  valor={rascunho.distribuicao.criterio}
+                  valor={rascunho.distribuicao.criterio as string | undefined}
                   opcoes={CRITERIOS_DA_DISTRIBUICAO}
                   aoMudar={(v) => mudar(["distribuicao", "criterio"], v)}
                 />
@@ -1379,7 +1512,7 @@ export function Regra({ e, estado, rascunhoGuardado }) {
                 />
                 <Escolha
                   rotulo="Quem entra depois"
-                  valor={rascunho.distribuicao.novos}
+                  valor={rascunho.distribuicao.novos as string | undefined}
                   opcoes={DESTINO_DOS_NOVOS}
                   aoMudar={(v) => mudar(["distribuicao", "novos"], v)}
                 />
@@ -1409,27 +1542,31 @@ export function Regra({ e, estado, rascunhoGuardado }) {
           <div className="avd-caixas">
             <Caixa
               rotulo="Revisa todas"
-              marcado={rascunho.revisao.todas}
+              marcado={rascunho.revisao.todas as boolean | undefined}
               aoMudar={(v) => mudar(["revisao", "todas"], v)}
             />
             <Caixa
               rotulo="Inaptos por requisito"
-              marcado={rascunho.revisao.inaptos_requisito}
+              marcado={
+                rascunho.revisao.inaptos_requisito as boolean | undefined
+              }
               aoMudar={(v) => mudar(["revisao", "inaptos_requisito"], v)}
             />
             <Caixa
               rotulo="Inaptos por nota"
-              marcado={rascunho.revisao.inaptos_nota}
+              marcado={rascunho.revisao.inaptos_nota as boolean | undefined}
               aoMudar={(v) => mudar(["revisao", "inaptos_nota"], v)}
             />
             <Caixa
               rotulo="Os que entraram pela linha"
-              marcado={rascunho.revisao.entrou_pela_linha}
+              marcado={
+                rascunho.revisao.entrou_pela_linha as boolean | undefined
+              }
               aoMudar={(v) => mudar(["revisao", "entrou_pela_linha"], v)}
             />
             <Caixa
               rotulo="Duplo-cego"
-              marcado={rascunho.revisao.duplo_cego}
+              marcado={rascunho.revisao.duplo_cego as boolean | undefined}
               aoMudar={(v) => mudar(["revisao", "duplo_cego"], v)}
             />
             {SINAIS_DA_REVISAO.map(([sinal, rotulo]) => (
@@ -1454,12 +1591,14 @@ export function Regra({ e, estado, rascunhoGuardado }) {
           <h2 className="ui-titulo" id="avdParecer">
             Parecer
           </h2>
-          {[
-            ["APTO", "Apto"],
-            ["INAPTO_REQUISITO", "Inapto (requisito)"],
-            ["INAPTO_NOTA", "Inapto (nota mínima)"],
-            ["observacoes", "Observações"],
-          ].map(([chave, rotulo]) => (
+          {(
+            [
+              ["APTO", "Apto"],
+              ["INAPTO_REQUISITO", "Inapto (requisito)"],
+              ["INAPTO_NOTA", "Inapto (nota mínima)"],
+              ["observacoes", "Observações"],
+            ] as const
+          ).map(([chave, rotulo]) => (
             <Campo key={chave} rotulo={`Modelo: ${rotulo}`} largo>
               <textarea
                 rows={3}
@@ -1548,7 +1687,7 @@ export function Regra({ e, estado, rascunhoGuardado }) {
         </section>
       )}
 
-      <Previa regra={rascunho} notaMinima={dados.nota_minima} />
+      <Previa regra={rascunho} notaMinima={dados!.nota_minima} />
 
       {leitura ? (
         <ResumoDaRegra
@@ -1556,8 +1695,8 @@ export function Regra({ e, estado, rascunhoGuardado }) {
           contexto={{
             versao: regraSalva.versao,
             nome: regraSalva.nome ?? null,
-            notaMinima: dados.nota_minima?.nota_minima ?? null,
-            notaMinimaPorNivel: dados.nota_minima?.nota_minima_por_nivel ?? {},
+            notaMinima: dados!.nota_minima?.nota_minima ?? null,
+            notaMinimaPorNivel: dados!.nota_minima?.nota_minima_por_nivel ?? {},
           }}
         />
       ) : null}

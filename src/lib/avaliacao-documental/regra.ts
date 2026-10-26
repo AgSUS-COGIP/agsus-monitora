@@ -66,15 +66,37 @@ import {
   TITULO_PADRAO_DA_ETAPA,
   TITULOS_ACADEMICOS,
 } from "./catalogo.ts";
+import type { ListaDoCatalogo } from "./catalogo.ts";
 import { validarPorCargo } from "./regra-por-cargo.ts";
+import type {
+  Bloco,
+  DesempateDaProvisoria,
+  DiferencaDoCargo,
+  EliminacaoAutomatica,
+  ItemDaNotaDeclarada,
+  Lote,
+  ObservacaoPronta,
+  Pergunta,
+  Provisoria,
+  RegraAnalise,
+  TipoDeBloco,
+} from "./tipos-da-regra.ts";
 
-const valores = (lista) => new Set(lista.map(([v]) => v));
-const TIPOS = valores(TIPOS_DE_BLOCO);
+/** Um objeto do JSON da regra ainda não conferido (campos desconhecidos). */
+type Solto = Record<string, unknown>;
+
+const valores = (lista: ListaDoCatalogo): Set<unknown> =>
+  new Set(lista.map(([v]) => v));
+/** Os tipos de bloco conhecidos (has estreita o texto lido para TipoDeBloco). */
+interface TiposDeBloco extends Set<unknown> {
+  has(v: unknown): v is TipoDeBloco;
+}
+const TIPOS = valores(TIPOS_DE_BLOCO) as TiposDeBloco;
 const EFEITO = valores(EFEITOS);
 const NIVEL = valores(NIVEIS);
 const TITULO = valores(TITULOS_ACADEMICOS);
 const TIPO_DECLARADA = valores(TIPOS_DA_NOTA_DECLARADA);
-const PARCIAIS_VALIDAS = new Set(Object.values(PARCIAL_DO_TIPO));
+const PARCIAIS_VALIDAS: Set<unknown> = new Set(Object.values(PARCIAL_DO_TIPO));
 
 export const CODIGO = /^[A-Z][A-Z0-9_]{1,29}$/;
 const CONDICAO = /^(INDIGENA|MODALIDADE=[A-Z]{2,12})$/;
@@ -145,24 +167,28 @@ export const REVISAO_PADRAO = Object.freeze({
   duplo_cego: false,
 });
 
-const ehObjeto = (v) =>
+const ehObjeto = (v: unknown): v is Solto =>
   v !== null && typeof v === "object" && !Array.isArray(v);
-const ehNumero = (v) => typeof v === "number" && Number.isFinite(v);
-const entre = (v, min, max) => ehNumero(v) && v >= min && v <= max;
-const nuloOuEntre = (v, min, max) =>
+const ehNumero = (v: unknown): v is number =>
+  typeof v === "number" && Number.isFinite(v);
+const entre = (v: unknown, min: number, max: number): v is number =>
+  ehNumero(v) && v >= min && v <= max;
+const nuloOuEntre = (v: unknown, min: number, max: number) =>
   v === null || v === undefined || entre(v, min, max);
-const texto = (v) => (typeof v === "string" ? v : "");
-const lista = (v) => (Array.isArray(v) ? v : []);
-const bool = (v, padrao) => (typeof v === "boolean" ? v : padrao);
+const texto = (v: unknown) => (typeof v === "string" ? v : "");
+const lista = <T = unknown>(v: unknown): T[] =>
+  Array.isArray(v) ? (v as T[]) : [];
+const bool = (v: unknown, padrao: boolean) =>
+  typeof v === "boolean" ? v : padrao;
 
 /**
  * A pergunta da regra: o começo do enunciado (texto) ou alternativas (lista;
  * casa com qualquer uma). Sem texto, null.
  */
-export function normalizarPergunta(valor) {
+export function normalizarPergunta(valor: unknown): Pergunta | null {
   if (Array.isArray(valor)) {
-    const textos = valor
-      .filter((t) => typeof t === "string")
+    const textos = (valor as unknown[])
+      .filter((t): t is string => typeof t === "string")
       .map((t) => t.trim())
       .filter(Boolean);
     return textos.length ? textos : null;
@@ -171,12 +197,12 @@ export function normalizarPergunta(valor) {
 }
 
 /** A pergunta como a tela mostra: as alternativas separadas por "; ". */
-export function textoDaPergunta(valor) {
+export function textoDaPergunta(valor: unknown): string {
   return Array.isArray(valor) ? valor.join("; ") : texto(valor);
 }
 
 /** O que a tela digitou: um texto, ou a lista quando há mais de um (";"). */
-export function perguntaDoTexto(digitado) {
+export function perguntaDoTexto(digitado: unknown): Pergunta {
   const partes = String(digitado ?? "")
     .split(/[;\n]/)
     .map((t) => t.trim())
@@ -190,16 +216,22 @@ export function perguntaDoTexto(digitado) {
  * declarada configurada (senão ART). Valor desconhecido fica como está, para a
  * validação recusar.
  */
-export function baseDaNota(provisoria) {
+export function baseDaNota(provisoria: unknown): unknown {
   const base = ehObjeto(provisoria) ? provisoria.base_da_nota : undefined;
   if (base !== undefined && base !== null) return base;
-  return lista(provisoria?.nota_declarada).length ? "DECLARADA" : "ART";
+  return lista((provisoria as Solto | null | undefined)?.nota_declarada).length
+    ? "DECLARADA"
+    : "ART";
 }
 
-/** A regra com os valores padrão onde faltam (não muda a entrada). */
-export function normalizarRegraAnalise(entrada) {
-  const r = ehObjeto(entrada) ? structuredClone(entrada) : {};
-  const provisoria = ehObjeto(r.provisoria) ? r.provisoria : {};
+/**
+ * A regra com os valores padrão onde faltam (não muda a entrada). O resultado
+ * tem a forma de RegraAnalise, mas o conteúdo (blocos, motivos, base da nota
+ * desconhecida...) só é conferido por validarRegraAnalise.
+ */
+export function normalizarRegraAnalise(entrada: unknown): RegraAnalise {
+  const r: Solto = ehObjeto(entrada) ? structuredClone(entrada) : {};
+  const provisoria: Solto = ehObjeto(r.provisoria) ? r.provisoria : {};
   return {
     schema: SCHEMA_DA_REGRA,
     modelo: texto(r.modelo) || null,
@@ -207,18 +239,21 @@ export function normalizarRegraAnalise(entrada) {
     edital_rotulo: texto(r.edital_rotulo),
     casas_parecer: entre(r.casas_parecer, 0, 4) ? r.casas_parecer : 1,
     provisoria: {
-      eliminacao_automatica: lista(provisoria.eliminacao_automatica),
-      nota_declarada: lista(provisoria.nota_declarada),
+      eliminacao_automatica: lista<EliminacaoAutomatica>(
+        provisoria.eliminacao_automatica,
+      ),
+      nota_declarada: lista<ItemDaNotaDeclarada>(provisoria.nota_declarada),
       divergencia_tolerancia: entre(provisoria.divergencia_tolerancia, 0, 30)
         ? provisoria.divergencia_tolerancia
         : 0,
       desempate: Array.isArray(provisoria.desempate)
-        ? provisoria.desempate
+        ? (provisoria.desempate as DesempateDaProvisoria[])
         : [...DESEMPATE_PADRAO_DA_PROVISORIA],
       pergunta_experiencia: normalizarPergunta(provisoria.pergunta_experiencia),
-      base_da_nota: baseDaNota(provisoria),
+      // Valor desconhecido fica como está (validarRegraAnalise recusa).
+      base_da_nota: baseDaNota(provisoria) as Provisoria["base_da_nota"],
     },
-    lote: { ...LOTE_PADRAO, ...(ehObjeto(r.lote) ? r.lote : {}) },
+    lote: { ...LOTE_PADRAO, ...(ehObjeto(r.lote) ? r.lote : {}) } as Lote,
     distribuicao: {
       ...DISTRIBUICAO_PADRAO,
       ...(ehObjeto(r.distribuicao) ? r.distribuicao : {}),
@@ -226,23 +261,30 @@ export function normalizarRegraAnalise(entrada) {
     revisao: {
       ...REVISAO_PADRAO,
       ...(ehObjeto(r.revisao) ? r.revisao : {}),
-      sinais: lista(r.revisao?.sinais),
+      sinais: lista<string>((r.revisao as Solto | null | undefined)?.sinais),
     },
-    blocos: lista(r.blocos),
+    blocos: lista<Bloco>(r.blocos),
     corte: {
       fonte: "REGRA_CLASSIFICACAO",
-      item_edital: texto(r.corte?.item_edital),
+      item_edital: texto((r.corte as Solto | null | undefined)?.item_edital),
     },
     parecer: {
       ...PARECER_PADRAO,
       ...(ehObjeto(r.parecer) ? r.parecer : {}),
     },
-    observacoes_prontas: lista(r.observacoes_prontas),
-    ...(lista(r.por_cargo).length ? { por_cargo: r.por_cargo } : {}),
+    observacoes_prontas: lista<ObservacaoPronta>(r.observacoes_prontas),
+    ...(lista(r.por_cargo).length
+      ? { por_cargo: r.por_cargo as DiferencaDoCargo[] }
+      : {}),
   };
 }
 
-function conferirTexto(erros, valor, rotulo, { obrigatorio, max }) {
+function conferirTexto(
+  erros: string[],
+  valor: unknown,
+  rotulo: string,
+  { obrigatorio, max }: { obrigatorio?: boolean; max: number },
+): void {
   if (valor === undefined || valor === null || valor === "") {
     if (obrigatorio) erros.push(`${rotulo}: obrigatório.`);
     return;
@@ -252,7 +294,12 @@ function conferirTexto(erros, valor, rotulo, { obrigatorio, max }) {
 }
 
 /** Pergunta da regra: um texto ou uma lista de 1 a 10 alternativas. */
-function conferirPergunta(erros, valor, rotulo, obrigatorio) {
+function conferirPergunta(
+  erros: string[],
+  valor: unknown,
+  rotulo: string,
+  obrigatorio: boolean,
+): void {
   if (!Array.isArray(valor)) {
     conferirTexto(erros, valor, rotulo, { obrigatorio, max: LIMITES.texto });
     return;
@@ -260,7 +307,7 @@ function conferirPergunta(erros, valor, rotulo, obrigatorio) {
   if (
     !valor.length ||
     valor.length > LIMITES.perguntas ||
-    valor.some(
+    (valor as unknown[]).some(
       (t) => typeof t !== "string" || !t.trim() || t.length > LIMITES.texto,
     )
   )
@@ -269,31 +316,41 @@ function conferirPergunta(erros, valor, rotulo, obrigatorio) {
     );
 }
 
-const temPergunta = (valor) =>
+const temPergunta = (valor: unknown): boolean =>
   Array.isArray(valor)
-    ? valor.some((t) => typeof t === "string" && t.trim())
+    ? (valor as unknown[]).some((t) => typeof t === "string" && t.trim())
     : typeof valor === "string" && Boolean(valor.trim());
 
-function conferirListaDeTextos(erros, valor, rotulo, max) {
+function conferirListaDeTextos(
+  erros: string[],
+  valor: unknown,
+  rotulo: string,
+  max: number,
+): void {
   if (valor === undefined || valor === null) return;
   if (!Array.isArray(valor) || valor.length > max)
     erros.push(`${rotulo}: lista de até ${max} textos.`);
   else if (
-    valor.some(
+    (valor as unknown[]).some(
       (t) => typeof t !== "string" || !t.trim() || t.length > LIMITES.texto,
     )
   )
     erros.push(`${rotulo}: textos de 1 a ${LIMITES.texto} caracteres.`);
 }
 
-function conferirMotivos(erros, motivos, rotulo, tipo) {
+function conferirMotivos(
+  erros: string[],
+  motivos: unknown,
+  rotulo: string,
+  tipo: TipoDeBloco,
+): void {
   if (motivos === undefined || motivos === null) return;
   if (!Array.isArray(motivos) || motivos.length > LIMITES.motivos) {
     erros.push(`${rotulo}: até ${LIMITES.motivos} motivos.`);
     return;
   }
-  const codigos = new Set();
-  motivos.forEach((m, i) => {
+  const codigos = new Set<unknown>();
+  (motivos as unknown[]).forEach((m, i) => {
     const onde = `${rotulo}, motivo ${i + 1}`;
     if (!ehObjeto(m)) {
       erros.push(`${onde}: inválido.`);
@@ -315,21 +372,32 @@ function conferirMotivos(erros, motivos, rotulo, tipo) {
   });
 }
 
-function conferirEfeito(erros, efeito, rotulo, tipo) {
+function conferirEfeito(
+  erros: string[],
+  efeito: unknown,
+  rotulo: string,
+  tipo: TipoDeBloco,
+): void {
   if (!EFEITO.has(efeito)) {
     erros.push(`${rotulo}: efeito desconhecido.`);
     return;
   }
-  if (EFEITOS_DE_PONTUACAO.includes(efeito) && !PARCIAL_DO_TIPO[tipo])
+  if (
+    (EFEITOS_DE_PONTUACAO as readonly unknown[]).includes(efeito) &&
+    !PARCIAL_DO_TIPO[tipo]
+  )
     erros.push(`${rotulo}: só bloco que pontua zera ou ajusta pontos.`);
   if (efeito === "SEM_PONTOS_ALDEIA" && tipo !== "PONTUACAO")
     erros.push(`${rotulo}: só o critério étnico tira os pontos de aldeia.`);
-  if (EFEITOS_DE_ENCAMINHAMENTO.includes(efeito) && tipo !== "COTA")
+  if (
+    (EFEITOS_DE_ENCAMINHAMENTO as readonly unknown[]).includes(efeito) &&
+    tipo !== "COTA"
+  )
     erros.push(`${rotulo}: só bloco de cota encaminha.`);
 }
 
-function conferirBloco(erros, b, i) {
-  const rotulo = `Bloco ${i + 1}${b?.codigo ? ` (${b.codigo})` : ""}`;
+function conferirBloco(erros: string[], b: unknown, i: number): void {
+  const rotulo = `Bloco ${i + 1}${(b as Solto | null | undefined)?.codigo ? ` (${(b as Solto).codigo})` : ""}`;
   if (!ehObjeto(b)) {
     erros.push(`${rotulo}: inválido.`);
     return;
@@ -370,7 +438,9 @@ function conferirBloco(erros, b, i) {
         }
         if (
           situacao === "CONFORME" &&
-          ["ELIMINA", "ZERA_PONTOS", "SEM_PONTOS_ALDEIA"].includes(efeito)
+          (
+            ["ELIMINA", "ZERA_PONTOS", "SEM_PONTOS_ALDEIA"] as unknown[]
+          ).includes(efeito)
         ) {
           erros.push(`${rotulo}: Conforme não pode eliminar nem tirar pontos.`);
           continue;
@@ -425,7 +495,7 @@ function conferirBloco(erros, b, i) {
           );
           continue;
         }
-        const vistos = new Set();
+        const vistos = new Set<unknown>();
         for (const t of titulos) {
           if (!ehObjeto(t) || !TITULO.has(t.titulo) || !entre(t.pontos, 0, 100))
             erros.push(
@@ -452,8 +522,8 @@ function conferirBloco(erros, b, i) {
     )
       erros.push(`${rotulo}: de 1 a ${LIMITES.categorias} categorias.`);
     else {
-      const codigos = new Set();
-      const desempates = new Set();
+      const codigos = new Set<unknown>();
+      const desempates = new Set<number>();
       categorias.forEach((c, j) => {
         const onde = `${rotulo}, categoria ${j + 1}`;
         if (!ehObjeto(c) || !CODIGO.test(texto(c.codigo))) {
@@ -482,11 +552,11 @@ function conferirBloco(erros, b, i) {
     if (
       b.efeito_minimo !== undefined &&
       b.efeito_minimo !== null &&
-      !["ELIMINA", "SO_REGISTRO"].includes(b.efeito_minimo)
+      !(["ELIMINA", "SO_REGISTRO"] as unknown[]).includes(b.efeito_minimo)
     )
       erros.push(`${rotulo}: abaixo do mínimo elimina ou só registra.`);
     const pontuacao = b.pontuacao ?? "POR_MES";
-    if (!["POR_MES", "POR_PERIODO"].includes(pontuacao))
+    if (!(["POR_MES", "POR_PERIODO"] as unknown[]).includes(pontuacao))
       erros.push(`${rotulo}: pontuação por mês ou por período.`);
     if (pontuacao === "POR_PERIODO" && !entre(b.periodo_meses, 1, 120))
       erros.push(`${rotulo}: período de 1 a 120 meses.`);
@@ -524,7 +594,7 @@ function conferirBloco(erros, b, i) {
   }
 }
 
-function conferirFaixas(erros, alvo, rotulo) {
+function conferirFaixas(erros: string[], alvo: unknown, rotulo: string): void {
   if (!ehObjeto(alvo)) {
     erros.push(`${rotulo}: faixas inválidas.`);
     return;
@@ -553,7 +623,12 @@ function conferirFaixas(erros, alvo, rotulo) {
     });
 }
 
-function conferirPontosDaExperiencia(erros, alvo, rotulo, pontuacao) {
+function conferirPontosDaExperiencia(
+  erros: string[],
+  alvo: unknown,
+  rotulo: string,
+  pontuacao: unknown,
+): void {
   if (!ehObjeto(alvo)) {
     erros.push(`${rotulo}: pontos inválidos.`);
     return;
@@ -568,7 +643,12 @@ function conferirPontosDaExperiencia(erros, alvo, rotulo, pontuacao) {
 }
 
 /* Pontos que mudam com o nível da vaga: { superior: {…}, tecnico: {…} }. */
-function conferirPorNivel(erros, porNivel, rotulo, conferir) {
+function conferirPorNivel(
+  erros: string[],
+  porNivel: unknown,
+  rotulo: string,
+  conferir: (valor: unknown, onde: string) => void,
+): void {
   if (porNivel === undefined || porNivel === null) return;
   if (!ehObjeto(porNivel)) {
     erros.push(`${rotulo}: pontos por nível inválidos.`);
@@ -581,7 +661,7 @@ function conferirPorNivel(erros, porNivel, rotulo, conferir) {
   }
 }
 
-export function dataValida(valor) {
+export function dataValida(valor: unknown): valor is string {
   if (typeof valor !== "string" || !DATA.test(valor)) return false;
   const d = new Date(`${valor}T00:00:00Z`);
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === valor;
@@ -591,8 +671,8 @@ export function dataValida(valor) {
  * Confere a regra. Devolve a lista de erros (vazia = válida), com mensagens
  * para a tela. O banco recusa o mesmo (22023).
  */
-export function validarRegraAnalise(regra) {
-  const erros = [];
+export function validarRegraAnalise(regra: unknown): string[] {
+  const erros: string[] = [];
   if (!ehObjeto(regra)) return ["Regra inválida: envie um objeto."];
   if (JSON.stringify(regra).length > LIMITES.tamanhoJson)
     return ["Regra grande demais."];
@@ -608,14 +688,15 @@ export function validarRegraAnalise(regra) {
     erros.push("Casas decimais do parecer entre 0 e 4.");
 
   // Provisória: eliminação automática e nota declarada.
-  const provisoria = regra.provisoria ?? {};
+  // Provisória que não é objeto: o erro abaixo; os campos lidos dela dão undefined.
+  const provisoria = (regra.provisoria ?? {}) as Solto;
   if (!ehObjeto(provisoria)) erros.push("Provisória inválida.");
   const eliminacao = provisoria.eliminacao_automatica ?? [];
   if (!Array.isArray(eliminacao) || eliminacao.length > LIMITES.eliminacao)
     erros.push(`Eliminação automática: até ${LIMITES.eliminacao} regras.`);
   else {
-    const codigos = new Set();
-    eliminacao.forEach((e, i) => {
+    const codigos = new Set<unknown>();
+    (eliminacao as unknown[]).forEach((e, i) => {
       const onde = `Eliminação automática ${i + 1}`;
       if (!ehObjeto(e) || !CODIGO.test(texto(e.codigo))) {
         erros.push(`${onde}: código em maiúsculas.`);
@@ -646,7 +727,7 @@ export function validarRegraAnalise(regra) {
   if (!Array.isArray(declarada) || declarada.length > LIMITES.declarada)
     erros.push(`Nota declarada: até ${LIMITES.declarada} perguntas.`);
   else
-    declarada.forEach((d, i) => {
+    (declarada as unknown[]).forEach((d, i) => {
       const onde = `Nota declarada ${i + 1}`;
       if (!ehObjeto(d)) {
         erros.push(`${onde}: inválida.`);
@@ -659,7 +740,7 @@ export function validarRegraAnalise(regra) {
         erros.push(`${onde}: tipo OPCAO, OPCOES_SOMADAS ou FAIXA_EM_MESES.`);
         return;
       }
-      const mapaOk = (mapa, max) =>
+      const mapaOk = (mapa: unknown, max: number): boolean =>
         ehObjeto(mapa) &&
         Object.keys(mapa).length <= 50 &&
         !Object.entries(mapa).some(
@@ -781,8 +862,9 @@ export function validarRegraAnalise(regra) {
           ([vaga, n]) =>
             !/^[0-9]{1,20}$/.test(vaga) ||
             !Number.isInteger(n) ||
-            n < 1 ||
-            n > 100000,
+            // Inteiro (conferido acima): um número.
+            (n as number) < 1 ||
+            (n as number) > 100000,
         )
       )
         erros.push(
@@ -824,7 +906,7 @@ export function validarRegraAnalise(regra) {
     const sinais = revisao.sinais ?? [];
     if (
       !Array.isArray(sinais) ||
-      sinais.some((s) => !valores(SINAIS_DA_REVISAO).has(s))
+      (sinais as unknown[]).some((s) => !valores(SINAIS_DA_REVISAO).has(s))
     )
       erros.push("Revisão: sinais desconhecidos.");
     for (const chave of [
@@ -847,12 +929,18 @@ export function validarRegraAnalise(regra) {
   )
     erros.push(`De 1 a ${LIMITES.blocos} blocos.`);
   else {
-    blocos.forEach((b, i) => conferirBloco(erros, b, i));
-    const codigos = blocos.map((b) => b?.codigo).filter(Boolean);
+    (blocos as unknown[]).forEach((b, i) => conferirBloco(erros, b, i));
+    const codigos = (blocos as unknown[])
+      .map((b) => (b as Solto | null | undefined)?.codigo)
+      .filter(Boolean);
     if (new Set(codigos).size !== codigos.length)
       erros.push("Código de bloco repetido.");
     for (const tipo of Object.keys(PARCIAL_DO_TIPO))
-      if (blocos.filter((b) => b?.tipo === tipo).length > 1)
+      if (
+        (blocos as unknown[]).filter(
+          (b) => (b as Solto | null | undefined)?.tipo === tipo,
+        ).length > 1
+      )
         erros.push(`Só um bloco do tipo ${tipo} (uma parcial por regra).`);
   }
 
@@ -898,8 +986,8 @@ export function validarRegraAnalise(regra) {
   if (!Array.isArray(prontas) || prontas.length > LIMITES.observacoes)
     erros.push(`Até ${LIMITES.observacoes} observações prontas.`);
   else {
-    const codigos = new Set();
-    prontas.forEach((o, i) => {
+    const codigos = new Set<unknown>();
+    (prontas as unknown[]).forEach((o, i) => {
       const onde = `Observação pronta ${i + 1}`;
       if (!ehObjeto(o) || !CODIGO.test(texto(o.codigo))) {
         erros.push(`${onde}: código em maiúsculas.`);
@@ -925,12 +1013,13 @@ export function validarRegraAnalise(regra) {
 }
 
 /** Um bloco novo do tipo, com os campos que o tipo pede (sem pesos inventados: tudo zero). */
-export function blocoNovo(tipo, codigo) {
-  const base = {
+export function blocoNovo(tipo: string, codigo: string): Bloco {
+  // A tela só oferece os tipos do catálogo (TIPOS_DE_BLOCO).
+  const base: Bloco = {
     codigo,
     titulo: "",
     item_edital: "",
-    tipo,
+    tipo: tipo as TipoDeBloco,
     perguntas: [],
     efeitos: {},
     motivos: [],
@@ -1003,9 +1092,19 @@ export function blocoNovo(tipo, codigo) {
   return { ...base };
 }
 
+/** Algo com código (bloco, motivo, categoria, observação...). */
+export interface ComCodigo {
+  codigo?: string | null;
+}
+
 /** Um código de bloco livre a partir de um prefixo (BLOCO_2, BLOCO_3…). */
-export function codigoLivre(blocos, prefixo = "BLOCO") {
-  const usados = new Set(lista(blocos).map((b) => b?.codigo));
+export function codigoLivre(
+  blocos: ReadonlyArray<ComCodigo | null | undefined> | null | undefined,
+  prefixo = "BLOCO",
+): string {
+  const usados = new Set(
+    lista<ComCodigo | null | undefined>(blocos).map((b) => b?.codigo),
+  );
   for (let n = lista(blocos).length + 1; n < 1000; n += 1) {
     const codigo = `${prefixo}_${n}`;
     if (!usados.has(codigo)) return codigo;
@@ -1014,8 +1113,8 @@ export function codigoLivre(blocos, prefixo = "BLOCO") {
 }
 
 /** Duas regras iguais (ignora a ordem das chaves). */
-export function regrasIguais(a, b) {
-  const ordenar = (v) =>
+export function regrasIguais(a: unknown, b: unknown): boolean {
+  const ordenar = (v: unknown): unknown =>
     Array.isArray(v)
       ? v.map(ordenar)
       : ehObjeto(v)

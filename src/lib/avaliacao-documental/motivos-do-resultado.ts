@@ -23,7 +23,7 @@ type BlocoDaRegra = {
   titulo?: string;
   item_edital?: string;
   minimo_meses?: number | null;
-  efeito_minimo?: string;
+  efeito_minimo?: string | null;
   item_minimo?: string;
   minimo_conta_estagio?: boolean;
 };

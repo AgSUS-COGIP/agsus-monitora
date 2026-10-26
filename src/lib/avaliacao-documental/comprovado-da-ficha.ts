@@ -35,7 +35,7 @@ type BlocoDeVinculos = {
   teto?: number | null;
   por_nivel?: Record<string, unknown>;
   minimo_conta_estagio?: boolean;
-  efeito_minimo?: string;
+  efeito_minimo?: string | null;
   item_minimo?: string;
   item_edital?: string;
   categorias?: { codigo: string; pontua?: boolean }[];

@@ -194,7 +194,11 @@ function justificativasDoCriterio(
     textos.push(item ? `Item ${item}: ${m.texto}` : m.texto);
   }
   const lancado = lancamento.blocos?.[bloco.codigo];
-  for (const t of textosDasJustificativas(regra, bloco, lancado) as string[])
+  for (const t of textosDasJustificativas(
+    regra,
+    bloco,
+    lancado as Parameters<typeof textosDasJustificativas>[2],
+  ) as string[])
     if (!textos.includes(t)) textos.push(t);
   return textos.map(texto).filter(Boolean);
 }

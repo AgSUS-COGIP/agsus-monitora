@@ -17,14 +17,17 @@ import { Popover } from "../../../ui/index.ts";
   na dica). Volta ao normal quando a rolagem volta ao alto. Estilo: ficha.css.
 */
 
-export type FichaVizinha = { id: string; codigo: string } | null;
+export type FichaVizinha = {
+  id: string;
+  codigo?: string | number | null;
+} | null;
 
 export type PropriedadesDoCabecalho = {
   codigo: string;
   nome?: string | null;
   /** O CPF que o candidato informou no questionário, já formatado (cpfDaFicha). */
   cpf?: string | null;
-  vaga: string;
+  vaga?: string | null;
   cargo?: string | null;
   /** O rótulo do nível da vaga ("Superior"), quando a ficha já carregou. */
   nivel?: string | null;

@@ -41,8 +41,7 @@ A reconciliação, as guardas globais e o recuo dos tiles permanecem em JavaScri
 com contratos JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
 mapas já estão em TypeScript, com contratos em `tipos-do-painel.ts`; formas e cores
 em `src/lib/mapa-saude-indigena/formas.ts`. Outros módulos
-combinam JavaScript/JSX com migrações pontuais para TypeScript: a ficha da Avaliação documental
-tem os componentes em `src/modulos/avaliacao-documental/ficha/*.tsx` (contratos em `tipos.ts`) e
+combinam JavaScript/JSX com migrações pontuais para TypeScript:
 `Popover` está em `src/ui/popover.tsx`. Em Configurações › Marca, a prévia da barra lateral
 (`previa-da-barra-lateral.tsx`) e o quadro das prévias (`moldura-da-previa.tsx`) são TSX. Componentes e helpers
 compartilhados consumidos por esses módulos declaram seus contratos em JSDoc.
@@ -147,6 +146,11 @@ das linhas e unidades e o hook de área atual. Contratos e limites estão em
 O Mapa de Projetos também está migrado; contratos, normalização dos municípios e limites
 da integração com as peças comuns estão em
 [../src/modulos/mapa-de-projetos/README.md](../src/modulos/mapa-de-projetos/README.md).
+
+A Avaliação documental também está migrada por inteiro (módulo e `src/lib/avaliacao-documental/`,
+sem JS/JSX): stores, abas Regra, Equipe, Pré-classificação e Fila, a ficha e as regras de pontuação,
+pré-classificação, distribuição e fila. Contratos e limites estão em
+[../src/modulos/avaliacao-documental/README.md](../src/modulos/avaliacao-documental/README.md).
 
 O editor de coordenadas também está migrado; contratos e limites estão em
 [../src/modulos/editor-de-coordenadas/README.md](../src/modulos/editor-de-coordenadas/README.md).

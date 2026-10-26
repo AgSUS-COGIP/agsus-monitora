@@ -285,6 +285,19 @@ campos.tsx                peças de formulário da regra
 avaliacao-documental.css  só tokens
 ```
 
+## TypeScript
+
+O módulo e a lib (`src/lib/avaliacao-documental/`) estão todos em TypeScript/TSX, sem JS/JSX.
+Contratos: `tipos-do-estado.ts` (snapshot e ações dos stores da avaliação e da fila, linhas das
+RPCs, resultados das gravações), `tipos-da-pre-classificacao.ts` (linhas de
+`obter_pre_classificacao`, store da aba, decisão do lote), `ficha/tipos.ts` (o que os componentes
+da ficha leem), `assistente/tipos.ts` (rascunho da regra), e na lib `tipos-da-regra.ts` (a regra
+normalizada) e `tipos-da-ficha.ts` (lançamento, conta, pendências e passos da ficha). O que vem do
+banco entra como `unknown` ou é afirmado na fronteira (`as` na resposta da RPC); a anotação não
+valida JSON em tempo de execução — quem valida a forma continua sendo `normalizarRegraAnalise`,
+`validarRegraAnalise`, `normalizarFiltro` e o banco. Componentes JS de `src/ui/` e
+`src/componentes/` ainda são lidos pelos tipos inferidos do JS.
+
 ## Regras
 
 - A regra é **dado** do edital. Nenhum peso no código: o formato, os valores padrão e a validação

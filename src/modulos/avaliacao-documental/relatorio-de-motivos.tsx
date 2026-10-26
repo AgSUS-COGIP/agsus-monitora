@@ -110,7 +110,7 @@ export async function lerRelatorioDeMotivos({
 }
 
 type Vaga = { codigo: string | number; cargo?: string | null };
-type Pessoa = { usuario: string; nome: string };
+type Pessoa = { usuario: string; nome?: string | null };
 type Baixar = (conteudo: BlobPart, nome: string, tipo: string) => void;
 type Catalogo = ReturnType<typeof catalogoDoRelatorio>;
 type Grupo = ReturnType<typeof agruparPorOutroMotivo>[number];

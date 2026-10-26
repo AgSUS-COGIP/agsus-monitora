@@ -8,6 +8,36 @@ import {
   seloDaDecisao,
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import { Aviso, Campo, Gaveta, Selo } from "../../ui/index.ts";
+import type {
+  CandidatoForaDoLote,
+  InscritoComDecisao,
+  RespostaDaDecisao,
+} from "./tipos-da-pre-classificacao.ts";
+
+export type {
+  CandidatoForaDoLote,
+  InscritoComDecisao,
+  RespostaDaDecisao,
+} from "./tipos-da-pre-classificacao.ts";
+
+export interface SeloDaDecisaoProps {
+  c: InscritoComDecisao | null | undefined;
+}
+
+export interface IncluirPorDecisaoProps<C extends CandidatoForaDoLote> {
+  candidatos: C[];
+  aoIncluir: (
+    escolhidos: C[],
+    motivo: string,
+  ) => Promise<RespostaDaDecisao | null | undefined>;
+  /** true quando incluiu (a gaveta fecha). */
+  aoFechar: (incluiu: boolean) => void;
+}
+
+export interface RevogarDecisaoProps {
+  c: InscritoComDecisao;
+  aoRevogar: (motivo: string) => Promise<RespostaDaDecisao | null | undefined>;
+}
 
 /*
   Inclusão no lote por decisão da coordenação (aba Pré-classificação e Fila):
@@ -17,7 +47,7 @@ import { Aviso, Campo, Gaveta, Selo } from "../../ui/index.ts";
   Explicação: docs/aya/regras-da-avaliacao-documental.md.
 */
 
-const quando = (valor) =>
+const quando = (valor: string | null | undefined) =>
   valor
     ? new Date(valor).toLocaleString("pt-BR", {
         dateStyle: "short",
@@ -26,7 +56,7 @@ const quando = (valor) =>
     : "";
 
 /** "Decisão: Critério CORES", com quem decidiu, quando e o que a regra dizia. */
-export function SeloDaDecisao({ c }) {
+export function SeloDaDecisao({ c }: SeloDaDecisaoProps) {
   const texto = seloDaDecisao(c);
   if (!texto) return null;
   const d = c?.decisao && typeof c.decisao === "object" ? c.decisao : null;
@@ -50,7 +80,7 @@ export function SeloDaDecisao({ c }) {
   );
 }
 
-const textoDaSituacao = (c) =>
+const textoDaSituacao = (c: CandidatoForaDoLote) =>
   c.situacao === "ELIMINADO"
     ? `Eliminado${c.motivo ? `: ${c.motivo}` : ""}`
     : "Fora do lote";
@@ -60,8 +90,14 @@ const textoDaSituacao = (c) =>
  *   candidatos  os de fora do lote [{ id, codigo, nome, vaga, situacao, motivo, nota }]
  *   aoIncluir   (escolhidos, motivo) => Promise<{ ok, erro }>
  */
-export function IncluirPorDecisao({ candidatos, aoIncluir, aoFechar }) {
-  const [marcados, setMarcados] = useState(() => new Set());
+export function IncluirPorDecisao<C extends CandidatoForaDoLote>({
+  candidatos,
+  aoIncluir,
+  aoFechar,
+}: IncluirPorDecisaoProps<C>) {
+  const [marcados, setMarcados] = useState(
+    () => new Set<CandidatoForaDoLote["id"]>(),
+  );
   const [motivo, setMotivo] = useState(MOTIVO_SUGERIDO_DA_DECISAO);
   const [busca, setBusca] = useState("");
   const [erro, setErro] = useState("");
@@ -79,7 +115,7 @@ export function IncluirPorDecisao({ candidatos, aoIncluir, aoFechar }) {
       : candidatos;
   }, [candidatos, busca]);
   const erroDoTexto = erroDoMotivo(motivo, MOTIVO_DA_DECISAO);
-  const marcar = (id, sim) =>
+  const marcar = (id: CandidatoForaDoLote["id"], sim: boolean) =>
     setMarcados((atual) => {
       const novo = new Set(atual);
       if (sim) novo.add(id);
@@ -210,7 +246,7 @@ export function IncluirPorDecisao({ candidatos, aoIncluir, aoFechar }) {
  * "Revogar decisão" de um candidato, com motivo (o banco recusa com a ficha
  * concluída). aoRevogar(motivo) => Promise<{ ok, erro }>.
  */
-export function RevogarDecisao({ c, aoRevogar }) {
+export function RevogarDecisao({ c, aoRevogar }: RevogarDecisaoProps) {
   const [aberto, setAberto] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [erro, setErro] = useState("");

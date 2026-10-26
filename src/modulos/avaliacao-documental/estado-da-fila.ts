@@ -58,6 +58,28 @@ import {
 import { funcaoAusente } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
 import { decidirNoLote } from "./decisao-no-banco.ts";
 import { mensagemDoBanco } from "./estado.ts";
+import type { CandidatoDaDecisao } from "./decisao-no-banco.ts";
+import type {
+  AtribuicaoNoPlano,
+  InscritoNaFila,
+} from "../../lib/avaliacao-documental/fila.ts";
+import type {
+  Armazenamento,
+  ContagemDaAcao,
+  DadosDaFilaNaTela,
+  FichaAberta,
+  FichaDaFila,
+  FichaLembrada,
+  FiltroDaFila,
+  FiltroSalvo,
+  ForaDoLote,
+  OpcoesDaFila,
+  Registro,
+  ResultadoDaAcao,
+  SnapshotDaFila,
+} from "./tipos-do-estado.ts";
+
+export type { SnapshotDaFila } from "./tipos-do-estado.ts";
 
 const RPC_OBTER_FILA = "obter_fila_avaliacao";
 const RPC_PEGAR_PROXIMA = "pegar_proxima_ficha";
@@ -78,14 +100,14 @@ const CHAVE_DO_FILTRO = "monitora.avaliacao-documental.fila.filtro";
 const CHAVE_DA_FICHA_ABERTA = "monitora.avaliacao-documental.ficha-aberta";
 
 /* As linhas de fora do lote: null = ainda não lidas (ou a versão mudou). */
-const FORA_INICIAL = Object.freeze({
+const FORA_INICIAL: Readonly<ForaDoLote> = Object.freeze({
   linhas: null,
   versao: "",
   carregando: false,
   erro: "",
 });
 
-const INICIAL = Object.freeze({
+const INICIAL: Readonly<SnapshotDaFila> = Object.freeze({
   editalId: "",
   dados: null,
   fora: FORA_INICIAL,
@@ -97,7 +119,7 @@ const INICIAL = Object.freeze({
   acao: "",
 });
 
-function armazenamentoPadrao() {
+function armazenamentoPadrao(): Armazenamento | null {
   try {
     return globalThis.localStorage ?? null;
   } catch {
@@ -105,7 +127,7 @@ function armazenamentoPadrao() {
   }
 }
 
-function sessaoPadrao() {
+function sessaoPadrao(): Armazenamento | null {
   try {
     return globalThis.sessionStorage ?? null;
   } catch {
@@ -114,9 +136,14 @@ function sessaoPadrao() {
 }
 
 /** A ficha aberta lembrada na sessão da aba: { edital, ficha } ou null. */
-export function lerFichaLembrada(sessao = sessaoPadrao()) {
+export function lerFichaLembrada(
+  sessao: Armazenamento | null = sessaoPadrao(),
+): FichaLembrada | null {
   try {
-    const v = JSON.parse(sessao?.getItem(CHAVE_DA_FICHA_ABERTA) || "null");
+    const v = JSON.parse(sessao?.getItem(CHAVE_DA_FICHA_ABERTA) || "null") as {
+      edital?: unknown;
+      ficha?: unknown;
+    } | null;
     return v && typeof v.edital === "string" && typeof v.ficha === "string"
       ? { edital: v.edital, ficha: v.ficha }
       : null;
@@ -125,7 +152,10 @@ export function lerFichaLembrada(sessao = sessaoPadrao()) {
   }
 }
 
-function lembrarFicha(sessao, valor) {
+function lembrarFicha(
+  sessao: Armazenamento | null,
+  valor: FichaLembrada | null,
+) {
   try {
     if (valor) sessao?.setItem(CHAVE_DA_FICHA_ABERTA, JSON.stringify(valor));
     else sessao?.removeItem(CHAVE_DA_FICHA_ABERTA);
@@ -134,7 +164,7 @@ function lembrarFicha(sessao, valor) {
   }
 }
 
-function lerFiltro(armazenamento) {
+function lerFiltro(armazenamento: Armazenamento | null): FiltroDaFila {
   try {
     const texto = armazenamento?.getItem(CHAVE_DO_FILTRO);
     return texto ? normalizarFiltro(JSON.parse(texto)) : FILTRO_INICIAL;
@@ -143,7 +173,10 @@ function lerFiltro(armazenamento) {
   }
 }
 
-function guardarFiltro(armazenamento, filtro) {
+function guardarFiltro(
+  armazenamento: Armazenamento | null,
+  filtro: FiltroDaFila,
+) {
   try {
     armazenamento?.setItem(CHAVE_DO_FILTRO, JSON.stringify(filtro));
   } catch {
@@ -152,7 +185,7 @@ function guardarFiltro(armazenamento, filtro) {
 }
 
 /* O CSV já vem com o BOM (o Excel abre em UTF-8); o Blob "text/csv" passa pela guarda de csv-security. */
-function baixarNoNavegador(conteudo, nome) {
+function baixarNoNavegador(conteudo: BlobPart, nome: string) {
   const url = URL.createObjectURL(
     new Blob([conteudo], { type: "text/csv;charset=utf-8;" }),
   );
@@ -169,28 +202,32 @@ export function criarEstadoDaFila({
   armazenamento = armazenamentoPadrao(),
   sessao = sessaoPadrao(),
   agendar = (fn, ms) => setInterval(fn, ms),
-  cancelar = (id) => clearInterval(id),
+  cancelar = (id) => clearInterval(id as ReturnType<typeof setInterval>),
   tempoLimiteMs = TEMPO_LIMITE_MS,
   baixar = baixarNoNavegador,
   getProfile = () => null,
-} = {}) {
-  let estado = { ...INICIAL, filtro: lerFiltro(armazenamento) };
+}: OpcoesDaFila = {}) {
+  let estado: SnapshotDaFila = { ...INICIAL, filtro: lerFiltro(armazenamento) };
   let pedido = 0;
-  let renovacao = null;
+  let renovacao: unknown = null;
   let restaurou = false;
-  let leituraDeFora = null;
+  let leituraDeFora: {
+    editalId: string;
+    versao: string;
+    promessa: Promise<boolean>;
+  } | null = null;
   let semFilaDesde = false;
   /* A lista mudou desde a última leitura e ninguém a está vendo (modo de análise). */
   let desatualizada = false;
   /* O salvamento da ficha aberta (ficha.tsx): fechar espera por ele antes de liberar. */
-  const salvamentos = new Map();
-  const ouvintes = new Set();
-  const publicar = (mudancas) => {
+  const salvamentos = new Map<string | undefined, () => unknown>();
+  const ouvintes = new Set<() => void>();
+  const publicar = (mudancas: Partial<SnapshotDaFila>) => {
     estado = { ...estado, ...mudancas };
     for (const ouvinte of ouvintes) ouvinte();
   };
 
-  async function rpc(nome, argumentos) {
+  async function rpc(nome: string, argumentos?: Registro): Promise<unknown> {
     if (!supabase) throw new Error("Sem conexão com o banco.");
     const { data, error } = await comTempoLimite(
       supabase.rpc(nome, argumentos),
@@ -210,7 +247,7 @@ export function criarEstadoDaFila({
     edital), ou inteira quando não dá para juntar; banco sem a RPC nova, a de
     sempre.
   */
-  async function lerFila(editalId) {
+  async function lerFila(editalId: string): Promise<DadosDaFilaNaTela> {
     const anterior = estado.editalId === editalId ? estado.dados : null;
     if (!semFilaDesde) {
       try {
@@ -219,23 +256,25 @@ export function criarEstadoDaFila({
           argumentosDaFilaDesde(editalId, anterior),
         );
         const junta = aplicarMudancasDaFila(anterior, r);
-        if (junta) return junta;
+        if (junta) return junta as DadosDaFilaNaTela;
         if (r && typeof r === "object") {
           const inteira = aplicarMudancasDaFila(
             null,
             await rpc(RPC_FILA_DESDE, argumentosDaFilaDesde(editalId, null)),
           );
-          if (inteira) return inteira;
+          if (inteira) return inteira as DadosDaFilaNaTela;
         }
       } catch (erro) {
         if (!funcaoAusente(erro)) throw erro;
         semFilaDesde = true;
       }
     }
-    return rpc(RPC_OBTER_FILA, { p_edital: editalId });
+    return rpc(RPC_OBTER_FILA, {
+      p_edital: editalId,
+    }) as Promise<DadosDaFilaNaTela>;
   }
 
-  async function carregar(editalId = estado.editalId) {
+  async function carregar(editalId = estado.editalId): Promise<boolean> {
     const meu = ++pedido;
     desatualizada = false;
     if (!editalId) {
@@ -286,7 +325,7 @@ export function criarEstadoDaFila({
     na versão atual: não vai ao banco. Uma leitura por vez (quem pede durante
     a leitura espera a mesma).
   */
-  function carregarForaDoLote() {
+  function carregarForaDoLote(): Promise<boolean> {
     const editalId = estado.editalId;
     const versao = resumoForaDoLote(estado.dados).versao;
     if (!editalId || !estado.dados) return Promise.resolve(false);
@@ -301,7 +340,7 @@ export function criarEstadoDaFila({
     if (leituraDeFora?.editalId === editalId && leituraDeFora.versao === versao)
       return leituraDeFora.promessa;
     publicar({ fora: { ...estado.fora, carregando: true, erro: "" } });
-    const promessa = lerForaDoLote(rpc, editalId)
+    const promessa: Promise<boolean> = lerForaDoLote(rpc, editalId)
       .then((linhas) => {
         // Outro edital ou outra versão no meio da leitura: vale a leitura mais nova.
         if (
@@ -330,13 +369,13 @@ export function criarEstadoDaFila({
     return promessa;
   }
 
-  function mudarFiltro(mudancas) {
+  function mudarFiltro(mudancas: Partial<FiltroDaFila>) {
     const filtro = normalizarFiltro({ ...estado.filtro, ...mudancas });
     guardarFiltro(armazenamento, filtro);
     publicar({ filtro });
   }
 
-  function mostrarFicha(r) {
+  function mostrarFicha(r: FichaAberta | null) {
     pararRenovacao();
     publicar({ aberta: r, abrindo: false });
     lembrarFicha(
@@ -351,12 +390,14 @@ export function criarEstadoDaFila({
     }
   }
 
-  async function abrir(fichaId) {
+  async function abrir(fichaId: string): Promise<boolean> {
     if (!fichaId) return false;
     await fechar({ reler: false });
     publicar({ abrindo: true });
     try {
-      mostrarFicha(await rpc(RPC_RESERVAR, { p_ficha: fichaId }));
+      mostrarFicha(
+        (await rpc(RPC_RESERVAR, { p_ficha: fichaId })) as FichaAberta | null,
+      );
       return true;
     } catch (erro) {
       publicar({ abrindo: false });
@@ -369,14 +410,14 @@ export function criarEstadoDaFila({
     }
   }
 
-  async function pegarProxima(vaga = "") {
+  async function pegarProxima(vaga = ""): Promise<boolean> {
     await fechar({ esquecer: true, reler: false });
     publicar({ abrindo: true });
     try {
-      const r = await rpc(RPC_PEGAR_PROXIMA, {
+      const r = (await rpc(RPC_PEGAR_PROXIMA, {
         p_edital: estado.editalId,
         p_vaga: vaga || null,
-      });
+      })) as FichaAberta | null;
       if (!r?.ficha) {
         publicar({ abrindo: false });
         toast(r?.motivo || "Nenhuma ficha livre na fila.", "info");
@@ -397,10 +438,12 @@ export function criarEstadoDaFila({
     }
   }
 
-  async function renovar(fichaId) {
+  async function renovar(fichaId: string): Promise<void> {
     if (estado.aberta?.ficha?.id !== fichaId) return pararRenovacao();
     try {
-      const r = await rpc(RPC_RENOVAR, { p_ficha: fichaId });
+      const r = (await rpc(RPC_RENOVAR, { p_ficha: fichaId })) as {
+        ficha?: FichaDaFila | null;
+      } | null;
       if (estado.aberta?.ficha?.id === fichaId)
         publicar({
           aberta: { ...estado.aberta, ficha: r?.ficha ?? estado.aberta.ficha },
@@ -426,7 +469,10 @@ export function criarEstadoDaFila({
     { reler: false }: outra ficha vai abrir em seguida (ou a página está
     saindo) e a lista não aparece; ela fica desatualizada até voltar à tela.
   */
-  async function fechar({ esquecer = false, reler = true } = {}) {
+  async function fechar({
+    esquecer = false,
+    reler = true,
+  }: { esquecer?: boolean; reler?: boolean } = {}): Promise<boolean> {
     const aberta = estado.aberta;
     pararRenovacao();
     if (esquecer) lembrarFicha(sessao, null);
@@ -457,7 +503,11 @@ export function criarEstadoDaFila({
     return true;
   }
 
-  async function executar(nome, chamada, sucesso) {
+  async function executar<T>(
+    nome: string,
+    chamada: () => Promise<T>,
+    sucesso?: (r: T) => string,
+  ): Promise<ResultadoDaAcao<T>> {
     publicar({ acao: nome });
     try {
       const r = await chamada();
@@ -473,7 +523,10 @@ export function criarEstadoDaFila({
     }
   }
 
-  const distribuir = (atribuicoes, motivo) =>
+  const distribuir = (
+    atribuicoes: ReadonlyArray<AtribuicaoNoPlano>,
+    motivo?: string | null,
+  ) =>
     executar(
       "distribuir",
       () =>
@@ -481,11 +534,14 @@ export function criarEstadoDaFila({
           p_edital: estado.editalId,
           p_atribuicoes: atribuicoes,
           p_motivo: motivo || null,
-        }),
+        }) as Promise<ContagemDaAcao | null>,
       (r) => `${r?.alteradas ?? 0} ficha(s) distribuída(s).`,
     );
 
-  const liberarReservas = (fichas, motivo) =>
+  const liberarReservas = (
+    fichas: ReadonlyArray<string>,
+    motivo?: string | null,
+  ) =>
     executar(
       "liberar",
       () =>
@@ -493,11 +549,14 @@ export function criarEstadoDaFila({
           p_edital: estado.editalId,
           p_fichas: fichas,
           p_motivo: motivo || null,
-        }),
+        }) as Promise<ContagemDaAcao | null>,
       (r) => `${r?.liberadas ?? 0} reserva(s) liberada(s).`,
     );
 
-  const mandarParaRevisao = (fichas, motivo) =>
+  const mandarParaRevisao = (
+    fichas: ReadonlyArray<{ ficha: string; versao: number | null | undefined }>,
+    motivo: string,
+  ) =>
     executar(
       "revisao",
       () =>
@@ -505,50 +564,59 @@ export function criarEstadoDaFila({
           p_edital: estado.editalId,
           p_fichas: fichas,
           p_motivo: motivo,
-        }),
+        }) as Promise<ContagemDaAcao | null>,
       (r) => `${r?.alteradas ?? 0} ficha(s) mandada(s) para revisão.`,
     );
 
   const abrirFichasDoLote = () =>
     executar(
       "abrir-fichas",
-      () => rpc(RPC_ABRIR_FICHAS, { p_edital: estado.editalId }),
+      () =>
+        rpc(RPC_ABRIR_FICHAS, {
+          p_edital: estado.editalId,
+        }) as Promise<ContagemDaAcao | null>,
       (r) => `${r?.criadas ?? 0} ficha(s) aberta(s).`,
     );
 
   /* Só o administrador global e só em edital sem ficha trabalhada (o banco confere; com
      ficha concluída ou em análise, o pedido com dois administradores: reinicio-das-fichas.tsx). */
-  const reiniciarFichas = (motivo) =>
+  const reiniciarFichas = (motivo: string) =>
     executar(
       "reiniciar",
       () =>
         rpc(RPC_REINICIAR_FICHAS, {
           p_edital: estado.editalId,
           p_motivo: motivo,
-        }),
+        }) as Promise<ContagemDaAcao | null>,
       (r) => `${r?.reiniciadas ?? 0} ficha(s) de volta ao início.`,
     );
 
   /* Inclusão no lote por decisão da coordenação e revogação ([{ codigo, vaga }], motivo). */
-  const incluirPorDecisao = (candidatos, motivo) =>
+  const incluirPorDecisao = (
+    candidatos: ReadonlyArray<CandidatoDaDecisao>,
+    motivo: string,
+  ) =>
     executar(
       "decisao",
       () => decidirNoLote(rpc, "incluir", estado.editalId, candidatos, motivo),
       (r) => r.texto,
     );
-  const revogarDecisao = (candidatos, motivo) =>
+  const revogarDecisao = (
+    candidatos: ReadonlyArray<CandidatoDaDecisao>,
+    motivo: string,
+  ) =>
     executar(
       "decisao",
       () => decidirNoLote(rpc, "revogar", estado.editalId, candidatos, motivo),
       (r) => r.texto,
     );
 
-  async function salvarFiltro(nome) {
+  async function salvarFiltro(nome: string): Promise<boolean> {
     try {
-      const filtros = await rpc(RPC_SALVAR_FILTRO, {
+      const filtros = (await rpc(RPC_SALVAR_FILTRO, {
         p_nome: nome,
         p_filtro: estado.filtro,
-      });
+      })) as FiltroSalvo[] | null;
       if (estado.dados) publicar({ dados: { ...estado.dados, filtros } });
       toast("Filtro salvo.", "success");
       return true;
@@ -561,9 +629,10 @@ export function criarEstadoDaFila({
     }
   }
 
-  async function excluirFiltro(id) {
+  async function excluirFiltro(id: string): Promise<boolean> {
     try {
-      const filtros = await rpc(RPC_EXCLUIR_FILTRO, { p_filtro: id });
+      const filtros = (await rpc(RPC_EXCLUIR_FILTRO, { p_filtro: id })) as
+        FiltroSalvo[] | null;
       if (estado.dados) publicar({ dados: { ...estado.dados, filtros } });
       return true;
     } catch (erro) {
@@ -576,7 +645,7 @@ export function criarEstadoDaFila({
   }
 
   /* "Exportar CSV": as linhas da aba, na ordem e nas colunas da tela. */
-  function exportarCsv(linhas, etapa) {
+  function exportarCsv(linhas: ReadonlyArray<InscritoNaFila>, etapa: string) {
     baixar(
       csvDaFila(linhas, etapa, estado.dados?.eu),
       nomeDoCsvDaFila(estado.dados?.edital?.rotulo, etapa),
@@ -585,11 +654,11 @@ export function criarEstadoDaFila({
 
   return {
     /** A ficha aberta diz como salvar o que falta (fechar espera antes de liberar). */
-    registrarSalvamento(fichaId, salvar) {
+    registrarSalvamento(fichaId: string, salvar: () => unknown) {
       if (fichaId) salvamentos.set(fichaId, salvar);
     },
     obter: () => estado,
-    assinar(ouvinte) {
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
@@ -618,3 +687,6 @@ export function criarEstadoDaFila({
     toast,
   };
 }
+
+/** A loja da fila (o que criarEstadoDaFila devolve). */
+export type LojaDaFila = ReturnType<typeof criarEstadoDaFila>;

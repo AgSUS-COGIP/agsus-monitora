@@ -70,21 +70,57 @@ import {
   normalizarRegraAnalise,
 } from "./regra.ts";
 import { pontosDosExtras, regraDaVaga } from "./regra-por-cargo.ts";
+import type {
+  Avaliacao,
+  AjusteDaParcial,
+  BlocoAvaliado,
+  Candidato,
+  CotasDaClassificacao,
+  ExperienciaApurada,
+  ItemDoLancamento,
+  LancadoDoBloco,
+  MotivoAvaliado,
+  OpcoesDaAvaliacao,
+  TempoDaCategoria,
+} from "./tipos-da-ficha.ts";
+import type { PontosInformativos } from "./pontos-informativos.ts";
+import type {
+  Bloco,
+  Faixa,
+  Motivo,
+  ObservacaoPronta,
+  RegraAnalise,
+  TituloComPontos,
+} from "./tipos-da-regra.ts";
+
+/** Um intervalo de datas AAAA-MM-DD (vínculo). */
+type Intervalo = { inicio?: unknown; fim?: unknown };
+
+/** Um bloco avaliado por dentro da conta (com o bloco da regra). */
+type Avaliado = {
+  bloco: Bloco;
+  situacao: string;
+  efeito: string | null;
+  motivos: MotivoAvaliado[];
+};
 
 const DIA_MS = 24 * 60 * 60 * 1000;
-const arredondar = (n, casas = 4) => {
+const arredondar = (n: unknown, casas = 4) => {
   const fator = 10 ** casas;
   return Math.round((Number(n) + Number.EPSILON) * fator) / fator;
 };
-const lista = (v) => (Array.isArray(v) ? v : []);
-const numero = (v) => {
+const lista: {
+  <T>(v: readonly T[] | null | undefined): readonly T[];
+  (v: unknown): readonly unknown[];
+} = (v: unknown): readonly unknown[] => (Array.isArray(v) ? v : []);
+const numero = (v: unknown) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 };
-const comTeto = (valor, teto) =>
+const comTeto = (valor: number, teto: number | null | undefined) =>
   teto === null || teto === undefined ? valor : Math.min(valor, teto);
 
-function diaUtc(texto) {
+function diaUtc(texto: unknown): number | null {
   if (typeof texto !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(texto))
     return null;
   const t = Date.parse(`${texto}T00:00:00Z`);
@@ -102,19 +138,33 @@ function diaUtc(texto) {
  * @returns {number}
  */
 export function diasDosIntervalos(
-  intervalos,
-  { unir = true, limite = null } = {},
-) {
+  intervalos: readonly Intervalo[] | null | undefined,
+  {
+    unir = true,
+    limite = null,
+  }: { unir?: boolean; limite?: string | null } = {},
+): number {
   const corte = limite ? diaUtc(limite) : null;
-  const dias = lista(intervalos)
-    .map(({ inicio, fim }) => [diaUtc(inicio), diaUtc(fim)])
-    .filter(([a, b]) => a !== null && b !== null && b >= a)
-    .map(([a, b]) => [a, corte !== null ? Math.min(b, corte) : b])
+  const dias = (
+    lista(intervalos)
+      .map(({ inicio, fim }): [number | null, number | null] => [
+        diaUtc(inicio),
+        diaUtc(fim),
+      ])
+      .filter(([a, b]) => a !== null && b !== null && b >= a) as [
+      number,
+      number,
+    ][]
+  )
+    .map(([a, b]): [number, number] => [
+      a,
+      corte !== null ? Math.min(b, corte) : b,
+    ])
     .filter(([a, b]) => b >= a)
     .sort((x, y) => x[0] - y[0] || x[1] - y[1]);
   if (!unir) return dias.reduce((soma, [a, b]) => soma + (b - a + 1), 0);
   let total = 0;
-  let atual = null;
+  let atual: [number, number] | null = null;
   for (const [a, b] of dias) {
     if (atual && a <= atual[1] + 1) atual[1] = Math.max(atual[1], b);
     else {
@@ -133,7 +183,11 @@ export function diasDosIntervalos(
  * (FC_ANOS_MESES_DIAS, migration 20261023090000) e o Python também
  * (anos_meses_dias).
  */
-export function anosMesesDias(dias) {
+export function anosMesesDias(dias: unknown): {
+  anos: number;
+  meses: number;
+  dias: number;
+} {
   const total = Math.max(0, Math.floor(numero(dias)));
   const anos = Math.floor(total / 365);
   const resto = total % 365;
@@ -141,12 +195,14 @@ export function anosMesesDias(dias) {
   return { anos, meses, dias: resto - meses * 30 };
 }
 
-const forca = (efeito) => {
+const forca = (efeito: string) => {
   const i = FORCA_DO_EFEITO.indexOf(efeito);
   return i === -1 ? FORCA_DO_EFEITO.length : i;
 };
-const maisForte = (efeitos) =>
-  efeitos.filter(Boolean).sort((a, b) => forca(a) - forca(b))[0] ?? null;
+const maisForte = (efeitos: readonly (string | null | undefined)[]) =>
+  (efeitos.filter(Boolean) as string[]).sort(
+    (a, b) => forca(a) - forca(b),
+  )[0] ?? null;
 
 const CODIGO_DE_MODALIDADE = /^[A-Z]{2,10}$/;
 const COTA_NEGADA = ["NAO_CONFORME", "NAO_ENVIADO"];
@@ -157,11 +213,13 @@ const COTA_NEGADA = ["NAO_CONFORME", "NAO_ENVIADO"];
  * lista, a `modalidade` única. [] = só a ampla (modalidades_do_lancamento do
  * Python; o banco lê igual em FC_MODALIDADES_DO_LANCAMENTO).
  */
-export function modalidadesDoLancamento(candidato) {
-  const bruta = Array.isArray(candidato?.modalidades)
+export function modalidadesDoLancamento(
+  candidato: { modalidade?: unknown; modalidades?: unknown } | null | undefined,
+): string[] {
+  const bruta: readonly unknown[] = Array.isArray(candidato?.modalidades)
     ? candidato.modalidades
     : [candidato?.modalidade];
-  const saida = [];
+  const saida: string[] = [];
   for (const valor of bruta) {
     const codigo = String(valor ?? "")
       .trim()
@@ -177,14 +235,14 @@ export function modalidadesDoLancamento(candidato) {
 }
 
 /** A cota da condição "MODALIDADE=PP" (ou null). */
-function modalidadeDaCondicao(condicao) {
+function modalidadeDaCondicao(condicao: unknown): string | null {
   const [tipo, modalidade] = String(condicao ?? "").split("=");
   return tipo?.trim().toUpperCase() === "MODALIDADE" && modalidade
     ? modalidade.trim().toUpperCase()
     : null;
 }
 
-function condicaoVale(condicao, candidato) {
+function condicaoVale(condicao: string | null, candidato: Candidato) {
   if (!condicao) return true;
   if (condicao === "INDIGENA") return Boolean(candidato.indigena);
   // O bloco de cota vale para quem optou pela cota, entre as várias (114/2026, 5.8.1).
@@ -204,7 +262,11 @@ function condicaoVale(condicao, candidato) {
  * PcD primeiro; depois o maior percentual (114/2026, 5.8.5); empate na ordem
  * optada.
  */
-export function cotasConfirmadas(avaliados, candidato, cotas) {
+export function cotasConfirmadas(
+  avaliados: readonly Pick<Avaliado, "situacao" | "bloco">[],
+  candidato: Candidato,
+  cotas: CotasDaClassificacao | null | undefined,
+): string[] {
   const negadas = new Set(
     avaliados
       .filter((a) => COTA_NEGADA.includes(a.situacao))
@@ -212,16 +274,16 @@ export function cotasConfirmadas(avaliados, candidato, cotas) {
       .filter(Boolean),
   );
   const optadas = modalidadesDoLancamento(candidato);
-  const percentuais =
+  const percentuais: Readonly<Record<string, number | undefined>> =
     cotas?.percentuais && typeof cotas.percentuais === "object"
       ? cotas.percentuais
       : {};
   const pcdPrimeiro = cotas?.acumulo === "PCD_MAIS_UMA";
-  const percentual = (c) =>
+  const percentual = (c: string): number =>
     typeof percentuais[c] === "number" && Number.isFinite(percentuais[c])
       ? percentuais[c]
       : 0;
-  const chave = (c) => [
+  const chave = (c: string): [number, number, number] => [
     pcdPrimeiro && c === "PCD" ? 0 : 1,
     -percentual(c),
     optadas.indexOf(c),
@@ -229,12 +291,15 @@ export function cotasConfirmadas(avaliados, candidato, cotas) {
   return optadas
     .filter((c) => !negadas.has(c))
     .sort((a, b) => {
-      const [x, y] = [chave(a), chave(b)];
+      const [x, y]: [[number, number, number], [number, number, number]] = [
+        chave(a),
+        chave(b),
+      ];
       return x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
     });
 }
 
-const comItem = (item, textoDoMotivo) =>
+const comItem = (item: string | null | undefined, textoDoMotivo: string) =>
   item ? `Item ${item}: ${textoDoMotivo}` : textoDoMotivo;
 
 /**
@@ -251,7 +316,7 @@ export const OUTRO_MOTIVO = "OUTRO";
   (textosDasJustificativas). Fora disso (texto que ficou de outra escolha),
   não entra no parecer.
 */
-function motivoLivreDoNaoConfere(bloco, lancado) {
+function motivoLivreDoNaoConfere(bloco: Bloco, lancado: LancadoDoBloco) {
   const livre = String(lancado.motivo_livre ?? "").trim();
   if (!livre) return "";
   return lista(lancado.motivos).includes(OUTRO_MOTIVO) ||
@@ -261,15 +326,19 @@ function motivoLivreDoNaoConfere(bloco, lancado) {
 }
 
 /* Uma linha só: o parecer lista uma observação por linha. */
-const umaLinha = (t) =>
+const umaLinha = (t: unknown) =>
   String(t ?? "")
     .replace(/\s+/g, " ")
     .trim();
 
 /** Situação, efeito e motivos de cada bloco. */
-function avaliarBlocos(regra, candidato, situacaoPadrao) {
-  return regra.blocos.map((bloco) => {
-    const lancado = candidato.blocos?.[bloco.codigo] ?? {};
+function avaliarBlocos(
+  regra: RegraAnalise,
+  candidato: Candidato,
+  situacaoPadrao: string,
+): Avaliado[] {
+  return regra.blocos.map((bloco): Avaliado => {
+    const lancado: LancadoDoBloco = candidato.blocos?.[bloco.codigo] ?? {};
     // O critério étnico só vale para quem se declarou indígena.
     const condicao =
       bloco.condicao ?? (bloco.tipo === "PONTUACAO" ? "INDIGENA" : null);
@@ -281,17 +350,19 @@ function avaliarBlocos(regra, candidato, situacaoPadrao) {
       : "NAO_SE_APLICA";
     const escolhidos =
       situacao === "NAO_CONFORME" || situacao === "NAO_ENVIADO"
-        ? lista(lancado.motivos)
+        ? (lista(lancado.motivos)
             .map((codigo) =>
               lista(bloco.motivos).find((m) => m.codigo === codigo),
             )
-            .filter(Boolean)
+            .filter(Boolean) as Motivo[])
         : [];
     const efeitoDaSituacao =
       situacao === "NAO_SE_APLICA"
         ? null
-        : (bloco.efeitos?.[situacao] ??
-          (situacao === "CONFORME" ? null : "SO_REGISTRO"));
+        : ((
+            bloco.efeitos as
+              Readonly<Record<string, string | undefined>> | undefined
+          )?.[situacao] ?? (situacao === "CONFORME" ? null : "SO_REGISTRO"));
     // O motivo é mais específico que a situação: se algum motivo escolhido
     // tem efeito, vale o mais forte deles (ex.: "Aldeia fora do DSEI" só tira
     // os pontos de aldeia, mesmo com o bloco Não conforme).
@@ -303,7 +374,7 @@ function avaliarBlocos(regra, candidato, situacaoPadrao) {
       situacao === "NAO_CONFORME" || situacao === "NAO_ENVIADO"
         ? motivoLivreDoNaoConfere(bloco, lancado)
         : "";
-    const motivos = escolhidos.map((m) => ({
+    const motivos = escolhidos.map((m): MotivoAvaliado => ({
       codigo: m.codigo,
       texto: m.texto,
       item_edital: m.item_edital || bloco.item_edital || "",
@@ -322,10 +393,13 @@ function avaliarBlocos(regra, candidato, situacaoPadrao) {
  * COREs, 15/10/2026). A observação igual à justificativa do ajuste ou ao
  * motivo escrito não se repete.
  */
-export function observacoesDosItens(avaliados, candidato) {
-  const textos = [];
+export function observacoesDosItens(
+  avaliados: readonly { bloco: { codigo: string } }[],
+  candidato: Candidato,
+): string[] {
+  const textos: string[] = [];
   for (const { bloco } of avaliados) {
-    const lancado = candidato.blocos?.[bloco.codigo] ?? {};
+    const lancado: LancadoDoBloco = candidato.blocos?.[bloco.codigo] ?? {};
     const obs = umaLinha(lancado.observacao);
     if (!obs) continue;
     const repetida = [lancado.justificativa_livre, lancado.motivo_livre].some(
@@ -337,9 +411,12 @@ export function observacoesDosItens(avaliados, candidato) {
   return textos;
 }
 
-function pontosEtnicos(bloco, avaliado, candidato) {
+function pontosEtnicos(bloco: Bloco, avaliado: Avaliado, candidato: Candidato) {
   if (avaliado.situacao === "NAO_SE_APLICA" || !candidato.indigena) return 0;
-  if (["ELIMINA", "ZERA_PONTOS"].includes(avaliado.efeito)) return 0;
+  if (
+    (["ELIMINA", "ZERA_PONTOS"] as (string | null)[]).includes(avaliado.efeito)
+  )
+    return 0;
   let pontos = numero(bloco.indigena);
   const aldeiaVale =
     candidato.mora_aldeia &&
@@ -349,11 +426,16 @@ function pontosEtnicos(bloco, avaliado, candidato) {
   return comTeto(pontos, bloco.teto);
 }
 
-function pontosDosTitulos(bloco, candidato) {
-  const tabela = lista(bloco.pontos_por_nivel?.[candidato.nivel]);
+function pontosDosTitulos(bloco: Bloco, candidato: Candidato) {
+  const tabela = lista(
+    (
+      bloco.pontos_por_nivel as
+        Readonly<Record<string, TituloComPontos[] | undefined>> | undefined
+    )?.[candidato.nivel as string],
+  );
   const valores = lista(candidato.titulos)
     .filter((t) => t && t.aceito !== false)
-    .map((t) => numero(tabela.find((x) => x.titulo === t.titulo)?.pontos));
+    .map((t) => numero(tabela.find((x) => x.titulo === t!.titulo)?.pontos));
   const extras = pontosDosExtras(bloco, candidato.blocos?.[bloco.codigo]);
   if (!valores.length && !extras) return 0;
   const dosTitulos = !valores.length
@@ -364,7 +446,9 @@ function pontosDosTitulos(bloco, candidato) {
   return comTeto(dosTitulos + extras, bloco.teto);
 }
 
-export function faixaDoCurso(faixas, horas) {
+export function faixaDoCurso<
+  F extends { min_horas?: unknown; max_horas?: number | null },
+>(faixas: readonly F[] | null | undefined, horas: unknown): F | null {
   const h = numero(horas);
   return (
     lista(faixas).find(
@@ -376,27 +460,35 @@ export function faixaDoCurso(faixas, horas) {
 }
 
 /* O que vale para o nível da vaga: a parte de por_nivel, por cima do bloco. */
-export function doNivel(bloco, nivel) {
-  const doNivelDaVaga = bloco.por_nivel?.[nivel];
+export function doNivel<B extends object>(bloco: B, nivel: unknown): B {
+  const doNivelDaVaga = (
+    (bloco as { por_nivel?: unknown }).por_nivel as
+      Readonly<Record<string, Partial<B> | undefined>> | null | undefined
+  )?.[nivel as string];
   return doNivelDaVaga ? { ...bloco, ...doNivelDaVaga } : bloco;
 }
 
 /** O teto de um bloco que pontua no nível da vaga (null = sem teto). */
-export function tetoDoBloco(bloco, nivel) {
-  const teto = ["CURSOS", "VINCULOS"].includes(bloco.tipo)
+export function tetoDoBloco(
+  bloco: { tipo?: unknown; teto?: unknown; por_nivel?: unknown },
+  nivel: unknown,
+): number | null {
+  const teto = (["CURSOS", "VINCULOS"] as unknown[]).includes(bloco.tipo)
     ? doNivel(bloco, nivel).teto
     : bloco.teto;
   return teto === null || teto === undefined ? null : numero(teto);
 }
 
 /** A nota ajustada pela ficha, ou null quando o bloco segue o cálculo. */
-export function notaAjustada(lancado) {
+export function notaAjustada(
+  lancado: { nota_ajustada?: unknown } | null | undefined,
+): number | null {
   const v = lancado?.nota_ajustada;
   return typeof v === "number" && Number.isFinite(v) ? v : null;
 }
 
 /* Para comparar textos: minúsculo, espaços simples, sem a pontuação do fim. */
-const textoComparavel = (t) =>
+const textoComparavel = (t: unknown) =>
   String(t ?? "")
     .toLowerCase()
     .replace(/\s+/g, " ")
@@ -410,10 +502,25 @@ const textoComparavel = (t) =>
  * ajuste). O motivo ou a observação cujo texto já está no texto livre sai
  * (sem duplicar).
  */
-export function textosDasJustificativas(regra, bloco, lancado) {
-  const textos = [];
+export function textosDasJustificativas(
+  regra: {
+    observacoes_prontas?: readonly Pick<ObservacaoPronta, "codigo" | "texto">[];
+    [chave: string]: unknown;
+  },
+  bloco: {
+    item_edital?: string | null;
+    motivos?: readonly {
+      codigo: string;
+      texto: string;
+      item_edital?: string | null;
+    }[];
+  },
+  // O lançado do bloco como o banco gravou (FC_VALIDAR_LANCAMENTO_FICHA).
+  lancado: LancadoDoBloco | null | undefined,
+): string[] {
+  const textos: string[] = [];
   const livre = String(lancado?.justificativa_livre ?? "").trim();
-  const noLivre = (texto) =>
+  const noLivre = (texto: unknown) =>
     Boolean(livre) &&
     Boolean(textoComparavel(texto)) &&
     textoComparavel(livre).includes(textoComparavel(texto));
@@ -440,29 +547,35 @@ export function textosDasJustificativas(regra, bloco, lancado) {
   return textos;
 }
 
-function pontosDosCursos(blocoGeral, candidato) {
+function pontosDosCursos(blocoGeral: Bloco, candidato: Candidato) {
   const bloco = doNivel(blocoGeral, candidato.nivel);
   const total =
     lista(candidato.cursos)
       .filter((c) => c && c.aceito !== false)
       .reduce(
-        (soma, c) => soma + numero(faixaDoCurso(bloco.faixas, c.horas)?.pontos),
+        (soma, c) =>
+          soma + numero(faixaDoCurso<Faixa>(bloco.faixas, c!.horas)?.pontos),
         0,
       ) + pontosDosExtras(bloco, candidato.blocos?.[bloco.codigo]);
   return comTeto(arredondar(total), bloco.teto);
 }
 
 /** Experiência: dias por categoria, total unido, meses, estágio e pontos. */
-export function apurarExperiencia(bloco, candidato) {
+export function apurarExperiencia(
+  bloco: Bloco,
+  candidato: Candidato,
+): ExperienciaApurada {
   const opcoes = {
     unir: bloco.unir_sobreposicao !== false,
     limite: bloco.data_limite || null,
   };
   const categorias = lista(bloco.categorias);
-  const aceitos = lista(candidato.vinculos)
-    .filter((v) => v && v.aceito !== false)
-    .slice(0, bloco.max_vinculos ?? 20);
-  const porCategoria = {};
+  const aceitos = (
+    lista(candidato.vinculos).filter(
+      (v) => v && v.aceito !== false,
+    ) as ItemDoLancamento[]
+  ).slice(0, bloco.max_vinculos ?? 20);
+  const porCategoria: Record<string, TempoDaCategoria> = {};
   for (const c of categorias) {
     const dias = diasDosIntervalos(
       aceitos.filter((v) => v.categoria === c.codigo),
@@ -474,7 +587,7 @@ export function apurarExperiencia(bloco, candidato) {
       desempate: c.desempate ?? null,
     };
   }
-  const queContam = new Set(
+  const queContam = new Set<string | undefined>(
     categorias.filter((c) => c.pontua !== false).map((c) => c.codigo),
   );
   const diasTotal = diasDosIntervalos(
@@ -483,7 +596,8 @@ export function apurarExperiencia(bloco, candidato) {
   );
   const diasPorMes = bloco.dias_por_mes ?? 30;
   const meses = Math.floor(diasTotal / diasPorMes);
-  const estagio = bloco.estagio_indigena ?? {};
+  const estagio: Partial<NonNullable<Bloco["estagio_indigena"]>> =
+    bloco.estagio_indigena ?? {};
   let mesesEstagio = 0;
   if (
     estagio.ativo &&
@@ -532,7 +646,7 @@ export function apurarExperiencia(bloco, candidato) {
 }
 
 /** Número no parecer: vírgula decimal, com as casas da regra. */
-export function numeroDoParecer(valor, casas = 1) {
+export function numeroDoParecer(valor: unknown, casas = 1): string {
   return numero(valor).toLocaleString("pt-BR", {
     minimumFractionDigits: casas,
     maximumFractionDigits: casas,
@@ -546,7 +660,7 @@ export function numeroDoParecer(valor, casas = 1) {
  * parecer inteiro em concluir_ficha). A mesma conta em
  * linhas_sem_espacos_nas_pontas de python/monitora/avaliacao_documental/pontuacao.py.
  */
-export function linhasSemEspacosNasPontas(texto) {
+export function linhasSemEspacosNasPontas(texto: unknown): string {
   return String(texto ?? "")
     .split("\n")
     .map((linha) => linha.replace(/^[ \t]+|[ \t]+$/g, ""))
@@ -554,9 +668,14 @@ export function linhasSemEspacosNasPontas(texto) {
 }
 
 /** Troca os {campos} do modelo; campo desconhecido fica como está. */
-export function preencherModelo(modelo, campos) {
-  return String(modelo ?? "").replace(/\{([a-z_]+)\}/g, (inteiro, chave) =>
-    Object.hasOwn(campos, chave) ? String(campos[chave] ?? "") : inteiro,
+export function preencherModelo(
+  modelo: unknown,
+  campos: Readonly<Record<string, unknown>>,
+): string {
+  return String(modelo ?? "").replace(
+    /\{([a-z_]+)\}/g,
+    (inteiro, chave: string) =>
+      Object.hasOwn(campos, chave) ? String(campos[chave] ?? "") : inteiro,
   );
 }
 
@@ -570,19 +689,23 @@ export function preencherModelo(modelo, campos) {
  * @param {Record<string, number>} [opcoes.notaMinimaPorNivel] a mínima por nível (vale primeiro)
  * @param {string} [opcoes.situacaoPadrao] situação do bloco não lançado ("CONFORME")
  */
-export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
+export function calcularAvaliacao(
+  regraEntrada: unknown,
+  candidato: Candidato = {},
+  opcoes: OpcoesDaAvaliacao = {},
+): Avaliacao {
   // A regra da vaga: a diferença do cargo por cima do nível (cargo > nível > padrão).
   const regra = regraDaVaga(normalizarRegraAnalise(regraEntrada), candidato);
   const situacaoPadrao = opcoes.situacaoPadrao ?? "CONFORME";
   const avaliados = avaliarBlocos(regra, candidato, situacaoPadrao);
 
-  const parciais = {};
-  const calculados = {};
-  const ajustes = {};
-  let experiencia = null;
-  const eliminatorios = [];
-  const encaminhamentos = [];
-  const observacoes = [];
+  const parciais: Record<string, number> = {};
+  const calculados: Record<string, number> = {};
+  const ajustes: Record<string, AjusteDaParcial> = {};
+  let experiencia: ExperienciaApurada | null = null;
+  const eliminatorios: string[] = [];
+  const encaminhamentos: string[] = [];
+  const observacoes: string[] = [];
 
   for (const avaliado of avaliados) {
     const { bloco, efeito, motivos } = avaliado;
@@ -618,7 +741,9 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
             );
         }
       }
-      const zera = ["ELIMINA", "ZERA_PONTOS"].includes(efeito);
+      const zera = (["ELIMINA", "ZERA_PONTOS"] as (string | null)[]).includes(
+        efeito,
+      );
       calculados[parcial] = zera ? 0 : arredondar(pontos);
       const ajuste = notaAjustada(candidato.blocos?.[bloco.codigo]);
       if (ajuste !== null) {
@@ -680,7 +805,7 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
   const notaApurada = arredondar(
     Object.values(parciais).reduce((a, b) => a + b, 0),
   );
-  const porNivel = opcoes.notaMinimaPorNivel?.[candidato.nivel];
+  const porNivel = opcoes.notaMinimaPorNivel?.[candidato.nivel as string];
   const notaMinima =
     porNivel !== undefined && porNivel !== null
       ? numero(porNivel)
@@ -695,7 +820,7 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
       : "APTO";
   const notaFinal = resultado === "INAPTO_REQUISITO" ? 0 : notaApurada;
   // Inapto por requisito com a opção ligada: a pontuação apurada, só informativa.
-  const pontosInformativos =
+  const pontosInformativos: PontosInformativos | null =
     resultado === "INAPTO_REQUISITO" &&
     regra.parecer.mostrar_pontos_quando_inapto === true
       ? { nota: notaApurada, parciais: { ...parciais } }
@@ -704,7 +829,7 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
   const casas = regra.casas_parecer;
   const ordemDosBlocos = regra.blocos
     .map((b) => PARCIAL_DO_TIPO[b.tipo])
-    .filter((p) => p && Object.hasOwn(parciais, p));
+    .filter((p) => p && Object.hasOwn(parciais, p)) as string[];
   const distribuicao = ordemDosBlocos
     .map(
       (p) =>
@@ -753,12 +878,14 @@ export function calcularAvaliacao(regraEntrada, candidato = {}, opcoes = {}) {
     parciais,
     calculados,
     ajustes,
-    blocos: avaliados.map(({ bloco, situacao, efeito, motivos }) => ({
-      codigo: bloco.codigo,
-      situacao,
-      efeito,
-      motivos,
-    })),
+    blocos: avaliados.map(
+      ({ bloco, situacao, efeito, motivos }): BlocoAvaliado => ({
+        codigo: bloco.codigo,
+        situacao,
+        efeito,
+        motivos,
+      }),
+    ),
     eliminatorios,
     encaminhamentos,
     observacoes,

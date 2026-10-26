@@ -7,19 +7,30 @@
 */
 import { ehEditalEncerrado } from "../indicadores-do-monitoramento.js";
 
+/** O mínimo de um edital da lista que o seletor confere (id e ativo). */
+export interface EditalDaEscolha {
+  id?: string | null;
+  ativo?: boolean | null;
+}
+
 /** O edital está vigente (ativo e nem concluído nem cancelado)? */
-export const editalVigente = (edital) =>
-  Boolean(edital) && edital.ativo !== false && !ehEditalEncerrado(edital);
+export const editalVigente = (
+  edital: EditalDaEscolha | null | undefined,
+): boolean =>
+  Boolean(edital) && edital!.ativo !== false && !ehEditalEncerrado(edital);
 
 /**
  * Os editais da escolha: os vigentes (ou todos, com `todos`) e o escolhido.
  * Devolve { lista, ocultos } — ocultos = quantos ficaram de fora.
  */
-export function editaisDaEscolha(
-  editais,
-  { todos = false, escolhido = "" } = {},
-) {
-  const base = Array.isArray(editais) ? editais : [];
+export function editaisDaEscolha<T extends EditalDaEscolha>(
+  editais: ReadonlyArray<T> | null | undefined,
+  {
+    todos = false,
+    escolhido = "",
+  }: { todos?: boolean; escolhido?: string } = {},
+): { lista: ReadonlyArray<T>; ocultos: number } {
+  const base: ReadonlyArray<T> = Array.isArray(editais) ? editais : [];
   const lista = todos
     ? base
     : base.filter((e) => editalVigente(e) || (escolhido && e.id === escolhido));

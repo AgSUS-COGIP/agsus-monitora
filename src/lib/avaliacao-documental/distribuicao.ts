@@ -18,18 +18,68 @@
   Ficha que ninguém pode pegar fica na sobra (livre na fila).
 */
 
-const inteiroPositivo = (v) =>
+/** Uma ficha a distribuir, na ordem da Provisória. */
+export interface FichaADistribuir {
+  id: string;
+  vaga?: string | number | null;
+}
+
+/** Um analista da equipe: vagas null = todas; limite = QT_LIMITE_FICHA. */
+export interface AnalistaDaDistribuicao {
+  usuario?: string | null;
+  vagas?: ReadonlyArray<string | number> | null;
+  limite?: number | null;
+  pendentes?: number | null;
+}
+
+export type CriterioDaDistribuicao = "PARTES_IGUAIS" | "LIMITE";
+
+export interface PedidoDeDistribuicao {
+  fichas?: ReadonlyArray<FichaADistribuir>;
+  analistas?: ReadonlyArray<AnalistaDaDistribuicao>;
+  criterio?: CriterioDaDistribuicao | string;
+  limite_por_analista?: number | null;
+}
+
+export interface AtribuicaoDaFicha {
+  ficha: string;
+  usuario: string;
+}
+
+export interface ResultadoDaDistribuicao {
+  atribuicoes: AtribuicaoDaFicha[];
+  sobra: string[];
+  por_analista: Record<string, number>;
+}
+
+/** O analista já normalizado, com a carga contada durante a distribuição. */
+interface PessoaNaDistribuicao {
+  usuario: string;
+  vagas: string[] | null;
+  teto: number | null;
+  carga: number;
+  novas: number;
+}
+
+const inteiroPositivo = (v: unknown): number | null =>
   typeof v === "number" && Number.isFinite(v) && v >= 1 ? Math.floor(v) : null;
 
 /** O teto de fichas (pendentes + novas) de um analista; null = sem teto. */
-export function tetoDoAnalista(analista, criterio, limitePorAnalista) {
+export function tetoDoAnalista(
+  analista: AnalistaDaDistribuicao | null | undefined,
+  criterio: string | null | undefined,
+  limitePorAnalista: unknown,
+): number | null {
   const tetos = [inteiroPositivo(analista?.limite)];
   if (criterio === "LIMITE") tetos.push(inteiroPositivo(limitePorAnalista));
   const validos = tetos.filter((t) => t !== null);
   return validos.length ? Math.min(...validos) : null;
 }
 
-const analisaVaga = (analista, vaga) =>
+const analisaVaga = (
+  analista: PessoaNaDistribuicao,
+  vaga: FichaADistribuir["vaga"],
+): boolean =>
   !Array.isArray(analista?.vagas) || analista.vagas.includes(String(vaga));
 
 /**
@@ -45,10 +95,10 @@ export function distribuirFichas({
   analistas = [],
   criterio = "PARTES_IGUAIS",
   limite_por_analista: limitePorAnalista = null,
-} = {}) {
+}: PedidoDeDistribuicao = {}): ResultadoDaDistribuicao {
   const pessoas = (Array.isArray(analistas) ? analistas : [])
     .filter((a) => a?.usuario)
-    .map((a) => ({
+    .map((a): PessoaNaDistribuicao => ({
       usuario: String(a.usuario),
       vagas: Array.isArray(a.vagas) ? a.vagas.map(String) : null,
       teto: tetoDoAnalista(a, criterio, limitePorAnalista),
@@ -58,10 +108,10 @@ export function distribuirFichas({
           : 0,
       novas: 0,
     }));
-  const atribuicoes = [];
-  const sobra = [];
+  const atribuicoes: AtribuicaoDaFicha[] = [];
+  const sobra: string[] = [];
   for (const ficha of Array.isArray(fichas) ? fichas : []) {
-    let escolhido = null;
+    let escolhido: PessoaNaDistribuicao | null = null;
     for (const p of pessoas) {
       if (!analisaVaga(p, ficha.vaga)) continue;
       if (p.teto !== null && p.carga >= p.teto) continue;
@@ -75,7 +125,7 @@ export function distribuirFichas({
     escolhido.novas += 1;
     atribuicoes.push({ ficha: ficha.id, usuario: escolhido.usuario });
   }
-  const porAnalista = {};
+  const porAnalista: Record<string, number> = {};
   for (const p of pessoas) porAnalista[p.usuario] = p.novas;
   return { atribuicoes, sobra, por_analista: porAnalista };
 }
