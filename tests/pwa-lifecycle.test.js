@@ -5,9 +5,9 @@ import { criarNavegacao } from "../src/app/navegacao.ts";
 import {
   shouldCheckForUpdate,
   shouldReloadAfterControllerChange,
-} from "../src/modules/pwa-lifecycle.js";
+} from "../src/modules/pwa-lifecycle.ts";
 
-const lifecycleSource = readFileSync("src/modules/pwa-lifecycle.js", "utf8");
+const lifecycleSource = readFileSync("src/modules/pwa-lifecycle.ts", "utf8");
 const mobileSource = readFileSync(
   "src/modules/mobile-app-experience.js",
   "utf8",
@@ -93,7 +93,7 @@ describe("ciclo web sem oferta de instalação", () => {
 describe("versão nova espera a troca de página", () => {
   it("sem versão nova esperando, não recarrega", async () => {
     const { aplicarAtualizacaoPendente, marcarAtualizacaoPendenteParaTeste } =
-      await import("../src/modules/pwa-lifecycle.js");
+      await import("../src/modules/pwa-lifecycle.ts");
     marcarAtualizacaoPendenteParaTeste(false);
     let recargas = 0;
     expect(aplicarAtualizacaoPendente(() => (recargas += 1))).toBe(false);
@@ -102,7 +102,7 @@ describe("versão nova espera a troca de página", () => {
 
   it("com versão nova esperando, recarrega uma vez só", async () => {
     const { aplicarAtualizacaoPendente, marcarAtualizacaoPendenteParaTeste } =
-      await import("../src/modules/pwa-lifecycle.js");
+      await import("../src/modules/pwa-lifecycle.ts");
     marcarAtualizacaoPendenteParaTeste(true);
     let recargas = 0;
     expect(aplicarAtualizacaoPendente(() => (recargas += 1))).toBe(true);

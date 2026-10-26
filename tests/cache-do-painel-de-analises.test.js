@@ -13,7 +13,7 @@ import {
 import {
   apagarCacheDePayload,
   armazenamentoDePayload,
-} from "../src/modules/cache-de-payload-indexeddb.js";
+} from "../src/modules/cache-de-payload-indexeddb.ts";
 import { indexedDBFalso } from "./indexeddb-falso.js";
 
 const payload = (geradoEm, total = 2) => ({

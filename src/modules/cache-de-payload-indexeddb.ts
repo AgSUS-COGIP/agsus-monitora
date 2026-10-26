@@ -22,7 +22,7 @@
 const BANCO = "agsus-monitora-analises";
 const LOJA = "payload";
 
-function abrirBanco() {
+function abrirBanco(): Promise<IDBDatabase> {
   return new Promise((resolver, rejeitar) => {
     const pedido = globalThis.indexedDB.open(BANCO, 1);
     pedido.onupgradeneeded = () => pedido.result.createObjectStore(LOJA);
@@ -32,10 +32,13 @@ function abrirBanco() {
   });
 }
 
-async function naLoja(modo, operar) {
+async function naLoja<T>(
+  modo: IDBTransactionMode,
+  operar: (loja: IDBObjectStore) => IDBRequest<T>,
+): Promise<T> {
   const banco = await abrirBanco();
   try {
-    return await new Promise((resolver, rejeitar) => {
+    return await new Promise<T>((resolver, rejeitar) => {
       const transacao = banco.transaction(LOJA, modo);
       const pedido = operar(transacao.objectStore(LOJA));
       transacao.oncomplete = () => resolver(pedido.result);
@@ -50,13 +53,15 @@ async function naLoja(modo, operar) {
 
 /** O armazenamento que `criarCacheDePayload` espera. Estas funções podem lançar. */
 export const armazenamentoDePayload = Object.freeze({
-  async ler(chave) {
-    return (await naLoja("readonly", (loja) => loja.get(chave))) ?? null;
+  async ler(chave: string): Promise<unknown> {
+    return (
+      (await naLoja<unknown>("readonly", (loja) => loja.get(chave))) ?? null
+    );
   },
-  async guardar(chave, valor) {
+  async guardar(chave: string, valor: unknown): Promise<void> {
     await naLoja("readwrite", (loja) => loja.put(valor, chave));
   },
-  async apagarTudo() {
+  async apagarTudo(): Promise<void> {
     await naLoja("readwrite", (loja) => loja.clear());
   },
 });
@@ -65,7 +70,7 @@ export const armazenamentoDePayload = Object.freeze({
  * Apaga o banco inteiro (todas as telas, áreas e escopos). Não cria o banco se ele não
  * existir e não espera além do necessário: bloqueado, segue.
  */
-export function apagarCacheDePayload() {
+export function apagarCacheDePayload(): Promise<void> {
   return new Promise((resolver) => {
     try {
       const pedido = globalThis.indexedDB.deleteDatabase(BANCO);

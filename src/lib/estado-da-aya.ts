@@ -90,7 +90,9 @@ export function lerPedido(
 export function definirEstadoDaAya(
   estado: EstadoDaMascote,
   duracaoMs?: number,
-  janela: (Window & typeof globalThis) | undefined = globalThis.window,
+  janela:
+    | (Pick<Window, "dispatchEvent"> & { CustomEvent?: typeof CustomEvent })
+    | undefined = globalThis.window,
 ): boolean {
   const pedido = lerPedido(estado, duracaoMs);
   if (!pedido || !janela?.dispatchEvent) return false;

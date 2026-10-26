@@ -1,6 +1,6 @@
 /*
   Fogos de artifício das comemorações, sem DOM: o roteiro do show, a física
-  das faíscas e a paleta. O desenho no <canvas> é de src/modules/comemoracao.js,
+  das faíscas e a paleta. O desenho no <canvas> é de src/modules/comemoracao.ts,
   que só chama `criarShow`, `avancarShow` e as funções de brilho e cor daqui.
   A Aya, o véu e o som são de src/lib/fogos-cena.ts; o marco desenhado no
   céu (pontos da forma ou do número), de src/lib/fogos-formas.ts.

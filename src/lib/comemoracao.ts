@@ -1,7 +1,7 @@
 /*
   Comemorações do MONITORA, sem DOM: a regra de QUANDO comemorar e O QUE dizer.
   O desenho (fogos de artifício em <canvas>, a Aya voando e o aviso) é de
-  src/modules/comemoracao.js; o roteiro e a física dos fogos, de src/lib/fogos.ts
+  src/modules/comemoracao.ts; o roteiro e a física dos fogos, de src/lib/fogos.ts
   (com a cena em fogos-cena.ts e o marco desenhado no céu em fogos-formas.ts).
   Cada comemoração diz que FORMA o estouro do marco desenha: coração (edital
   100% analisado), estrela (fila zerada), o número (marco do ano), visto

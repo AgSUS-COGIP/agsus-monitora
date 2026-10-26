@@ -1,12 +1,12 @@
-import { aplicarAtualizacaoPendente } from "../modules/pwa-lifecycle.js";
+import { aplicarAtualizacaoPendente } from "../modules/pwa-lifecycle.ts";
 import { guardaDeAlteracoes } from "./guarda-de-alteracoes.ts";
 import {
   aplicarManutencaoNaNavegacao,
   avisarNaFaixa,
   avisoNoLugarDaPagina,
   situacaoDoSistema,
-} from "../modules/situacao-dos-modulos.js";
-import { abasDoMenu, catalogoDoBanco } from "../modules/catalogo-de-abas.js";
+} from "../modules/situacao-dos-modulos.ts";
+import { abasDoMenu, catalogoDoBanco } from "../modules/catalogo-de-abas.ts";
 import {
   filtrarAreasAtivas,
   situacaoEfetiva,
@@ -247,21 +247,6 @@ const PAINEIS_VAZIOS: PaineisDoApp = Object.freeze({
   mostrar: () => {},
   esquecerAtual: () => {},
 });
-
-/*
-  src/modules/situacao-dos-modulos.js ainda é JS: os padrões (`abas = []`,
-  `aoIrParaInicio = null`) fecham o tipo inferido; este é o contrato de verdade.
-*/
-type AbasDoMenu = ReturnType<typeof abasDoMenu>;
-type AplicarManutencao = (opcoes: {
-  documento?: Document;
-  view: string;
-  area: string;
-  abas: AbasDoMenu;
-  adminGlobal?: boolean;
-  desligada?: boolean;
-  aoIrParaInicio?: () => void;
-}) => boolean;
 
 const TEXTO_SEM_ACESSO =
   "Seu usuário ainda não tem módulos liberados. Solicite a liberação a um administrador.";
@@ -532,7 +517,7 @@ export function criarNavegacao({
     // aba em manutenção: quem não é admin global vê a tela de manutenção.
     const fechada = desligada(tela);
     if (
-      (aplicarManutencaoNaNavegacao as AplicarManutencao)({
+      aplicarManutencaoNaNavegacao({
         documento,
         view: tela,
         area: areaAtual(),
@@ -620,7 +605,7 @@ export function criarNavegacao({
       });
     if (!fechada && !manutencao) {
       // Continua aberta: só a faixa (a do administrador, ou nenhuma) se ajusta.
-      (aplicarManutencaoNaNavegacao as AplicarManutencao)({
+      aplicarManutencaoNaNavegacao({
         documento,
         view,
         area,

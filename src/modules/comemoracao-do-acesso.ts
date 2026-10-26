@@ -10,13 +10,41 @@ import {
   gravarArmazenamento as gravar,
   lerArmazenamento as ler,
 } from "../lib/comemoracao.ts";
-import { comemorar } from "./comemoracao.js";
+import { comemorar } from "./comemoracao.ts";
+import type { JanelaDaComemoracao } from "./comemoracao.ts";
+import type {
+  InstanteRecebido,
+  PerfilDeAcesso,
+} from "../lib/tipos-dos-acessos.ts";
+import type { TipoDeComemoracao } from "../lib/tipos-dos-acessos.ts";
+
+/** A conta do auth, no que a comemoração lê. */
+export interface UsuarioDaComemoracao {
+  id?: unknown;
+  email?: string | null;
+  created_at?: InstanteRecebido;
+}
+
+/** O perfil de acesso, com a data em que foi criado. */
+export type PerfilDaComemoracao = PerfilDeAcesso & {
+  created_at?: InstanteRecebido;
+};
+
+/** As opções de `comemorarAcessoLiberado`. */
+export interface OpcoesDoAcessoLiberado {
+  usuario?: UsuarioDaComemoracao | null;
+  perfil?: PerfilDaComemoracao | null;
+  ligadas?: boolean;
+  doc?: Document;
+  janela?: JanelaDaComemoracao;
+  agora?: number;
+}
 
 /*
   "Parabéns, Ana! Seu acesso ao MONITORA foi liberado." (ou "Bem-vindo(a) de
   volta…" na reativação), com o que a pessoa pode usar agora. Regra em
   src/lib/acesso-liberado.ts; os fogos (com um visto desenhado no céu) e o
-  aviso são os de todas as comemorações (src/modules/comemoracao.js), que
+  aviso são os de todas as comemorações (src/modules/comemoracao.ts), que
   respeitam prefers-reduced-motion. Armazenamento sempre em try/catch (janela privada,
   bloqueado): sem ele, as marcas não ficam e a regra da primeira entrada ainda
   limita a um dia.
@@ -36,7 +64,7 @@ export function comemorarAcessoLiberado({
   doc = globalThis.document,
   janela = globalThis.window,
   agora = Date.now(),
-} = {}) {
+}: OpcoesDoAcessoLiberado = {}): TipoDeComemoracao | null {
   const usuarioId = usuario?.id;
   const pedidoLiberado = ler(janela?.sessionStorage, CHAVE_PENDENTE) === "1";
   gravar(janela?.sessionStorage, CHAVE_PENDENTE, null);

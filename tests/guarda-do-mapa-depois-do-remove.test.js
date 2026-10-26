@@ -54,7 +54,7 @@ describe("guarda do mapa depois do remove()", () => {
   });
 
   it("não estabiliza um mapa que já foi removido", async () => {
-    await import("../src/modules/map-guard.js");
+    await import("../src/modules/map-guard.ts");
     window.L.map("detailMap");
 
     mapa.disparar("move");
@@ -69,7 +69,7 @@ describe("guarda do mapa depois do remove()", () => {
   });
 
   it("continua a estabilizar enquanto o mapa existe", async () => {
-    await import("../src/modules/map-guard.js");
+    await import("../src/modules/map-guard.ts");
     window.L.map("detailMap");
 
     mapa.disparar("move");
@@ -123,7 +123,7 @@ describe("guarda do mapa: enquadrar um ponto só e o nome do mapa", () => {
   });
 
   it("ir até um ponto não vira o continente com zoom 4,5", async () => {
-    await import("../src/modules/map-guard.js");
+    await import("../src/modules/map-guard.ts");
     window.L.map(container);
     mapa.flyToBounds(caixa([-3.1, -60.0], [-3.1, -60.0]), { maxZoom: 11 });
     const [limites, opcoes] = flyToBoundsOriginal.mock.calls.at(-1);
@@ -134,7 +134,7 @@ describe("guarda do mapa: enquadrar um ponto só e o nome do mapa", () => {
 
   it("não troca o nome que o mapa já tem", async () => {
     container.setAttribute("aria-label", "Mapa de Projetos");
-    await import("../src/modules/map-guard.js");
+    await import("../src/modules/map-guard.ts");
     window.L.map(container);
     expect(container.getAttribute("aria-label")).toBe("Mapa de Projetos");
   });

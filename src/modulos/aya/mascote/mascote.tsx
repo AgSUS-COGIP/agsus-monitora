@@ -484,7 +484,7 @@ export function Mascote({
 
 /**
  * Monta uma arara fora de uma árvore React (os fogos, em
- * src/modules/comemoracao.js). Devolve `desmontar`.
+ * src/modules/comemoracao.ts). Devolve `desmontar`.
  */
 export function montarMascoteAvulsa(
   elemento: Element,

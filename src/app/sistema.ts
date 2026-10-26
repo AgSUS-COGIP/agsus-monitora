@@ -3,12 +3,12 @@ import {
   areaParaLocalizar,
 } from "../lib/busca-global.ts";
 import { codigoDoPainel } from "../lib/navegacao";
-import { apagarCacheDePayload } from "../modules/cache-de-payload-indexeddb.js";
-import { comemorarAcessoLiberado } from "../modules/comemoracao-do-acesso.js";
+import { apagarCacheDePayload } from "../modules/cache-de-payload-indexeddb.ts";
+import { comemorarAcessoLiberado } from "../modules/comemoracao-do-acesso.ts";
 import {
   esquecerSituacaoDoSistema,
   situacaoDoSistema,
-} from "../modules/situacao-dos-modulos.js";
+} from "../modules/situacao-dos-modulos.ts";
 import { esconderEsqueleto, mostrarEsqueleto } from "./carregamento.ts";
 import {
   esquecerVisaoGeral,
@@ -97,12 +97,11 @@ export const carga = criarCarga({
   obterUsuario: perfil.obterUsuario,
   mostrarApp: perfil.mostrarApp,
   comemorar: () =>
-    // O JS do módulo só infere as opções com padrão; usuario e perfil também são lidos.
     comemorarAcessoLiberado({
       usuario: perfil.obterUsuario(),
       perfil: perfil.obterPerfil(),
       ligadas: situacaoDoSistema().comemoracoes,
-    } as Parameters<typeof comemorarAcessoLiberado>[0]),
+    }),
 });
 
 /* A versão do catálogo de abas vem de carona na presença (sem chamada nova). */

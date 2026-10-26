@@ -284,7 +284,7 @@ function TabelaDoGrupo({
             <th>Nome</th>
             <th className="num">Nota</th>
             <th>Modalidade declarada</th>
-            <th>Status</th>
+            <th>Situação</th>
             <th className="approved-th-acoes">Ações</th>
           </tr>
         </thead>
@@ -625,10 +625,10 @@ export function AbaConvocacao({
               aoMudar={(valores) => mudarFiltro("cargo", valores)}
             />
           </Campo>
-          <Campo rotulo="Status" idDoControle="convocacaoFilterStatus">
+          <Campo rotulo="Situação" idDoControle="convocacaoFilterStatus">
             <MultiSelectBusca
               id="convocacaoFilterStatus"
-              placeholder="Todos os status"
+              placeholder="Todas as situações"
               opcoes={OPCOES_DO_FILTRO_DE_STATUS}
               selecionados={filtros.status}
               aoMudar={(valores) => mudarFiltro("status", valores)}

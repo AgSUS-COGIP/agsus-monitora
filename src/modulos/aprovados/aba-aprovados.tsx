@@ -1,12 +1,27 @@
-import type { PropsDaAbaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
-import { useEffect, useRef } from "react";
+import type {
+  CandidatoDaTabelaDeAprovados,
+  EstadoDaAbaDeAprovados,
+  PropsDaAbaDeAprovados,
+} from "./tipos-da-aba-de-aprovados.ts";
+import type { ConvocacoesDaTabela } from "./tipos-da-aba-de-convocacao.ts";
+import type {
+  ChaveDaOrdemDosAprovados,
+  OrdemDosAprovados,
+} from "../../lib/ordem-dos-aprovados.ts";
+import { memo, useMemo, useState } from "react";
 import {
   OPCOES_DO_FILTRO_DE_STATUS,
   canAlterarCandidatoSubJudice,
   canEditSubJudice,
+  filterApprovedCandidates,
   nomeDosCandidatosFiltrados,
   summarizeApprovedCandidates,
 } from "../../lib/lista-aprovados-rules.ts";
+import {
+  SEM_ORDEM,
+  ordenarAprovados,
+  proximaOrdemDosAprovados,
+} from "../../lib/ordem-dos-aprovados.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import { resumoDasOrigens } from "../../lib/publicacao-de-aprovados.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
@@ -15,8 +30,8 @@ import {
   Campo,
   GradeDeKpis,
   Kpi,
-  LinhasEsqueleto,
   PainelDeFiltros,
+  TabelaInfinita,
   classes,
 } from "../../ui/index.ts";
 import {
@@ -26,18 +41,26 @@ import {
   ModalidadeDoCandidato,
   NomeDoCandidato,
   NotaDoCandidato,
-  Paginacao,
   plural,
   SeloDeStatus,
 } from "./partes.tsx";
 
 /*
-  A aba "Lista de aprovados": indicadores, filtros e a tabela paginada.
+  A aba "Lista de aprovados": indicadores, filtros e a tabela.
 
-  Os filtros e a página moram em `lista-aprovados.jsx`, porque o contador do topo
-  da página também os lê. A lista inteira continua em memória; o que a
-  paginação corta é o custo de DESENHAR — com milhares de candidatos, montar
-  todas as linhas a cada escolha num filtro travava o navegador.
+  A tabela é a das outras telas (TabelaInfinita, src/ui/): 50 linhas por vez
+  e mais 50 ao rolar (ou no "Carregar mais"), cabeçalho fixo, "Mostrando N de
+  M", busca só da tabela e ordenação pelo cabeçalho. A lista inteira da área
+  já está em memória (o pacote compacto): a rolagem contínua só corta o custo
+  de DESENHAR — com milhares de candidatos, montar todas as linhas a cada
+  escolha num filtro travava o navegador. Filtrar, buscar e ordenar mexem só
+  nas linhas já carregadas; números consolidados vêm do pacote.
+
+  Os filtros e a busca moram em `lista-aprovados.tsx`, porque o contador do
+  topo da página também os lê, e "Limpar filtros" limpa a busca junto.
+
+  Clique na linha (ou Enter/Espaço com ela em foco) abre a gaveta do
+  candidato, como o nome; os botões da linha fazem só a própria ação.
 
   A origem das listas (publicada da Classificação ou manual, por planilha) fica
   numa linha discreta acima da tabela: a do edital, quando o filtro deixa um só.
@@ -48,7 +71,150 @@ import {
 
 const text = (value: unknown) => String(value ?? "").trim();
 
-const COLUNAS = 7;
+/* A busca da tabela: nome, cargo, edital… (a regra do filtro). Estável, de módulo. */
+const pelaBusca = (
+  linhas: readonly CandidatoDaTabelaDeAprovados[],
+  busca: string,
+) =>
+  text(busca) ? filterApprovedCandidates(linhas, { query: busca }) : linhas;
+
+const COLUNAS: ReadonlyArray<{
+  rotulo: string;
+  chave?: ChaveDaOrdemDosAprovados;
+  numero?: boolean;
+  largura?: string;
+}> = [
+  // Nome primeiro: é por ele que se procura; na última coluna ficava cortado
+  // pela rolagem horizontal.
+  { rotulo: "Nome", chave: "nome", largura: "26%" },
+  { rotulo: "Cargo", chave: "cargo", largura: "17%" },
+  { rotulo: "Modalidade", chave: "modalidade", largura: "14%" },
+  {
+    rotulo: "Classificação",
+    chave: "classificacao",
+    numero: true,
+    largura: "9%",
+  },
+  { rotulo: "Nota", chave: "nota", numero: true, largura: "7%" },
+  { rotulo: "Situação", chave: "situacao", largura: "13%" },
+  { rotulo: "Ações", largura: "14%" },
+];
+
+/* Sem `convocacoes`, o mesmo Map sempre (a linha memorizada compara por referência). */
+const SEM_CONVOCACOES: ConvocacoesDaTabela = new Map();
+
+/* O clique que caiu num botão, link ou campo da linha é dele, e não da linha. */
+const doControle = (alvo: EventTarget | null) =>
+  alvo instanceof Element &&
+  Boolean(alvo.closest("button, a, input, select, textarea, label"));
+
+/*
+  A linha é memorizada: carregar mais 50 (ou abrir um modal) não redesenha as
+  linhas já na tela — com milhares delas, era isso que pesava na rolagem.
+*/
+const LinhaDoAprovado = memo(function LinhaDoAprovado({
+  row,
+  estado,
+  perfil,
+  anexos,
+  convocacoes,
+}: {
+  row: CandidatoDaTabelaDeAprovados;
+  estado: EstadoDaAbaDeAprovados;
+  perfil: unknown;
+  anexos: ReadonlyMap<string, readonly unknown[]>;
+  convocacoes: ConvocacoesDaTabela;
+}) {
+  const abrir = () => estado.abrirCandidato(row.candidato_id);
+  return (
+    <tr
+      className="approved-linha"
+      tabIndex={0}
+      aria-label={`Candidato ${row.nome}`}
+      onClick={(evento) => {
+        if (!doControle(evento.target)) abrir();
+      }}
+      onKeyDown={(evento) => {
+        if (
+          evento.target === evento.currentTarget &&
+          (evento.key === "Enter" || evento.key === " ")
+        ) {
+          evento.preventDefault();
+          abrir();
+        }
+      }}
+    >
+      <td>
+        <NomeDoCandidato candidato={row} aoAbrir={estado.abrirCandidato} />
+      </td>
+      <td>{row.cargo || "-"}</td>
+      <td>
+        <ModalidadeDoCandidato candidato={row} />
+      </td>
+      <td className="num">{row.classificacao ?? "-"}</td>
+      <td className="num">
+        <NotaDoCandidato candidato={row} />
+      </td>
+      <td>
+        <SeloDeStatus
+          status={text(row.status)}
+          situacao={text(row.contratacao_situacao)}
+          motivo={text(row.contratacao_motivo)}
+          dataConvocacao={convocacoes.get(String(row.candidato_id))?.data}
+        />
+      </td>
+      <td className="approved-actions">
+        <div className="approved-actions-grupo">
+          <AcaoDeAnexos
+            candidato={row}
+            anexos={anexos.get(String(row.candidato_id))}
+            aoAbrir={estado.abrirAnexos}
+          />
+          <AcaoDeStatus
+            perfil={perfil}
+            candidato={row}
+            atributos={{ "data-approved-action": "status" }}
+            aoAbrir={estado.abrirStatus}
+          />
+          <AcaoDeCarta
+            perfil={perfil}
+            candidato={row}
+            atributos={{ "data-approved-action": "carta" }}
+            aoAbrir={estado.abrirCarta}
+          />
+          {canAlterarCandidatoSubJudice(perfil, row) ? (
+            <button
+              type="button"
+              className="approved-icone-acao"
+              data-approved-action="alteracao-judicial"
+              data-candidate-id={row.candidato_id}
+              title="Alterar nota ou modalidade por decisão judicial"
+              aria-label={`Alterar nota ou modalidade de ${row.nome} por decisão judicial`}
+              onClick={() => estado.abrirAlteracaoJudicial(row.candidato_id)}
+            >
+              <i className="fa-solid fa-gavel" aria-hidden="true" />
+            </button>
+          ) : null}
+          {canEditSubJudice(perfil, row) ? (
+            <BotaoDeAcao
+              estado={estado}
+              acao={`remover-sub-judice:${row.candidato_id}`}
+              soIcone
+              className="btn icon red"
+              data-approved-action="remove-subjudice"
+              data-candidate-id={row.candidato_id}
+              title="Remover sub judice"
+              aria-label={`Remover ${row.nome} da lista como sub judice`}
+              onClick={() => void estado.removerSubJudice(row.candidato_id)}
+            >
+              <i className="fa-solid fa-user-minus" aria-hidden="true" />
+            </BotaoDeAcao>
+          ) : null}
+        </div>
+      </td>
+    </tr>
+  );
+});
 
 export function AbaAprovados({
   ativa,
@@ -57,20 +223,43 @@ export function AbaAprovados({
   candidatos,
   listas = [],
   anexos,
-  convocacoes = new Map(),
+  convocacoes = SEM_CONVOCACOES,
   carregado,
   erroAoCarregar,
   opcoes,
   filtros,
   aoMudarFiltro,
   aoLimparFiltros,
-  pagina,
-  tamanho,
-  aoIrPara,
-  aoMudarTamanho,
+  linhas,
+  busca,
+  aoBuscar,
 }: PropsDaAbaDeAprovados) {
-  const tabela = useRef<HTMLDivElement>(null);
-  const resumo = summarizeApprovedCandidates(candidatos, filtros);
+  const [ordem, setOrdem] = useState<OrdemDosAprovados>(SEM_ORDEM);
+  const chaveDosFiltros = JSON.stringify(filtros);
+  const resumo = useMemo(
+    () => summarizeApprovedCandidates(candidatos, filtros),
+    // `filtros` chega novo a cada desenho; a chave é o conteúdo.
+    [candidatos, chaveDosFiltros],
+  );
+  const ordenadas = useMemo(
+    () => ordenarAprovados(linhas, ordem),
+    [linhas, ordem],
+  );
+  const colunas = useMemo(
+    () =>
+      COLUNAS.map(({ chave, ...coluna }) =>
+        chave
+          ? {
+              ...coluna,
+              chave,
+              ordem: ordem.chave === chave ? ordem.sentido : "",
+              aoOrdenar: () =>
+                setOrdem((atual) => proximaOrdemDosAprovados(atual, chave)),
+            }
+          : coluna,
+      ),
+    [ordem],
+  );
   const carregando = !carregado && !erroAoCarregar;
   const quantos = Object.values(filtros).filter((lista) => lista.length).length;
   const origens = carregado
@@ -80,17 +269,6 @@ export function AbaAprovados({
           : listas,
       )
     : "";
-
-  // As linhas novas precisam dos rótulos do modo cartão (menu ≤ 900px).
-  useEffect(() => {
-    document.dispatchEvent(new CustomEvent("agsus:content-updated"));
-  }, [pagina.rows]);
-
-  function irPara(destino: number) {
-    if (!aoIrPara(destino)) return;
-    // Trocar de página com a tabela rolada deixaria a pessoa a meio da lista.
-    tabela.current?.scrollIntoView?.({ block: "nearest", behavior: "smooth" });
-  }
 
   const kpi = (
     idDoValor: string,
@@ -190,6 +368,7 @@ export function AbaAprovados({
         idDoTitulo="approvedFiltrosTitulo"
         className="approved-filters"
         quantos={quantos}
+        podeLimpar={quantos > 0 || Boolean(busca)}
         aoLimpar={aoLimparFiltros}
       >
         <div className="ui-grade-de-campos">
@@ -220,10 +399,10 @@ export function AbaAprovados({
               aoMudar={(valores) => aoMudarFiltro("modalidade", valores)}
             />
           </Campo>
-          <Campo rotulo="Status" idDoControle="approvedFilterStatus">
+          <Campo rotulo="Situação" idDoControle="approvedFilterStatus">
             <MultiSelectBusca
               id="approvedFilterStatus"
-              placeholder="Todos os status"
+              placeholder="Todas as situações"
               opcoes={OPCOES_DO_FILTRO_DE_STATUS}
               selecionados={filtros.status}
               aoMudar={(valores) => aoMudarFiltro("status", valores)}
@@ -260,148 +439,51 @@ export function AbaAprovados({
           {origens}
         </p>
       ) : null}
-      <section
-        className="ui-card ui-tabela approved-page-card"
-        aria-label="Candidatos aprovados"
-        data-tour="aprovados-tabela"
-      >
-        <div className="ui-tabela-rolagem" ref={tabela}>
-          <table className="approved-table">
-            <thead>
-              <tr>
-                {/* Nome primeiro: é por ele que se procura; na última coluna
-                    ficava cortado pela rolagem horizontal. */}
-                <th scope="col">Nome</th>
-                <th scope="col">Cargo</th>
-                <th scope="col">Modalidade</th>
-                <th scope="col" className="num">
-                  Classificação
-                </th>
-                <th scope="col" className="num">
-                  Nota
-                </th>
-                <th scope="col">Status</th>
-                <th scope="col" className="approved-th-acoes">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody id="approvedRows" aria-busy={carregando || undefined}>
-              {carregando ? (
-                <LinhasEsqueleto colunas={COLUNAS} />
-              ) : erroAoCarregar ? (
-                <tr>
-                  <td colSpan={COLUNAS} className="ui-vazio">
-                    Sem dados.
-                  </td>
-                </tr>
-              ) : pagina.rows.length ? (
-                pagina.rows.map((row) => (
-                  <tr key={row.candidato_id}>
-                    <td>
-                      <NomeDoCandidato
-                        candidato={row}
-                        aoAbrir={estado.abrirCandidato}
-                      />
-                    </td>
-                    <td>{row.cargo || "-"}</td>
-                    <td>
-                      <ModalidadeDoCandidato candidato={row} />
-                    </td>
-                    <td className="num">{row.classificacao ?? "-"}</td>
-                    <td className="num">
-                      <NotaDoCandidato candidato={row} />
-                    </td>
-                    <td>
-                      <SeloDeStatus
-                        status={text(row.status)}
-                        situacao={text(row.contratacao_situacao)}
-                        motivo={text(row.contratacao_motivo)}
-                        dataConvocacao={
-                          convocacoes.get(String(row.candidato_id))?.data
-                        }
-                      />
-                    </td>
-                    <td className="approved-actions">
-                      <div className="approved-actions-grupo">
-                        <AcaoDeAnexos
-                          candidato={row}
-                          anexos={anexos.get(String(row.candidato_id))}
-                          aoAbrir={estado.abrirAnexos}
-                        />
-                        <AcaoDeStatus
-                          perfil={perfil}
-                          candidato={row}
-                          atributos={{ "data-approved-action": "status" }}
-                          aoAbrir={estado.abrirStatus}
-                        />
-                        <AcaoDeCarta
-                          perfil={perfil}
-                          candidato={row}
-                          atributos={{ "data-approved-action": "carta" }}
-                          aoAbrir={estado.abrirCarta}
-                        />
-                        {canAlterarCandidatoSubJudice(perfil, row) ? (
-                          <button
-                            type="button"
-                            className="approved-icone-acao"
-                            data-approved-action="alteracao-judicial"
-                            data-candidate-id={row.candidato_id}
-                            title="Alterar nota ou modalidade por decisão judicial"
-                            aria-label={`Alterar nota ou modalidade de ${row.nome} por decisão judicial`}
-                            onClick={() =>
-                              estado.abrirAlteracaoJudicial(row.candidato_id)
-                            }
-                          >
-                            <i
-                              className="fa-solid fa-gavel"
-                              aria-hidden="true"
-                            />
-                          </button>
-                        ) : null}
-                        {canEditSubJudice(perfil, row) ? (
-                          <BotaoDeAcao
-                            estado={estado}
-                            acao={`remover-sub-judice:${row.candidato_id}`}
-                            soIcone
-                            className="btn icon red"
-                            data-approved-action="remove-subjudice"
-                            data-candidate-id={row.candidato_id}
-                            title="Remover sub judice"
-                            aria-label={`Remover ${row.nome} da lista como sub judice`}
-                            onClick={() =>
-                              void estado.removerSubJudice(row.candidato_id)
-                            }
-                          >
-                            <i
-                              className="fa-solid fa-user-minus"
-                              aria-hidden="true"
-                            />
-                          </BotaoDeAcao>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={COLUNAS} className="ui-vazio">
-                    Nenhum candidato encontrado para os filtros selecionados.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-        <Paginacao
-          prefixo="approved"
-          pagina={pagina}
-          tamanho={tamanho}
-          unidade="candidatos"
-          aoIrPara={irPara}
-          aoMudarTamanho={aoMudarTamanho}
-        />
-      </section>
+      <TabelaInfinita
+        tour="aprovados-tabela"
+        idDoTitulo="approvedTabelaTitulo"
+        titulo="Candidatos aprovados"
+        className="approved-page-card"
+        classeDaTabela="approved-table"
+        idDoCorpo="approvedRows"
+        busca={{
+          placeholder: "Buscar somente na tabela",
+          rotulo: "Buscar somente na tabela de aprovados",
+          id: "approvedBusca",
+          valor: busca,
+          aoMudar: aoBuscar,
+        }}
+        // Com a carga falha, a tabela sai do esqueleto e diz "Sem dados.".
+        carregado={carregado || Boolean(erroAoCarregar)}
+        itens={ordenadas}
+        filtrarPelaBusca={pelaBusca}
+        colunas={colunas}
+        total={erroAoCarregar ? 0 : linhas.length}
+        vazio={
+          erroAoCarregar
+            ? "Sem dados."
+            : candidatos.length
+              ? "Nenhum candidato encontrado para os filtros selecionados."
+              : "Nenhum candidato aprovado nesta área."
+        }
+        informacao={(quantos) =>
+          quantos === null
+            ? "Carregando…"
+            : quantos === candidatos.length
+              ? plural(quantos, "candidato", "candidatos")
+              : `${formatNumberBR(quantos)} de ${plural(candidatos.length, "candidato", "candidatos")}`
+        }
+        linha={(row) => (
+          <LinhaDoAprovado
+            key={row.candidato_id}
+            row={row}
+            estado={estado}
+            perfil={perfil}
+            anexos={anexos}
+            convocacoes={convocacoes}
+          />
+        )}
+      />
     </div>
   );
 }

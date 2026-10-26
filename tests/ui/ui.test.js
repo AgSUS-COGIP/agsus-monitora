@@ -267,6 +267,37 @@ describe("TabelaInfinita", () => {
   });
   const linhas = () => document.querySelectorAll(".ui-tabela-rolagem tbody tr");
 
+  it("recorte novo volta às 50 primeiras já no primeiro desenho (sem desenhar o limite antigo)", async () => {
+    const muitos = Array.from({ length: 300 }, (_, i) => ({
+      nome: `n${i}`,
+      total: i,
+    }));
+    await montarNoApp(
+      h(TabelaInfinita, props({ itens: muitos, total: muitos.length })),
+    );
+    await clicar($('[data-acao="carregar-mais"]'));
+    await clicar($('[data-acao="carregar-mais"]'));
+    expect(linhas()).toHaveLength(150);
+    const desenhadas = [];
+    const invertidos = [...muitos].reverse();
+    await redesenhar(
+      h(
+        TabelaInfinita,
+        props({
+          itens: invertidos,
+          total: invertidos.length,
+          linha: (item) => {
+            desenhadas.push(item.nome);
+            return h("tr", { key: item.nome }, h("td", null, item.nome));
+          },
+        }),
+      ),
+    );
+    expect(linhas()).toHaveLength(50);
+    // Só as 50 do recorte novo foram desenhadas, e não 150.
+    expect(desenhadas).toHaveLength(50);
+  });
+
   it("carregando: esqueleto, busca desligada e a informação de carga", async () => {
     await montarNoApp(h(TabelaInfinita, props({ carregado: false })));
     expect($(".ui-tabela-busca").disabled).toBe(true);

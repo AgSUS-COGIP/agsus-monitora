@@ -17,7 +17,7 @@
     "src/lib/marca-da-barra-lateral.ts": "valor padrão gravado da cor da barra lateral (configuração, não tema)",
     "src/lib/motor-de-efeitos.ts": "efeito de comemoração (canvas): corações e brilho",
     "src/lib/tema-do-painel.ts": "reserva dos gráficos quando o CSS não carregou (testes); a tela lê os tokens",
-    "src/modules/comemoracao.js": "efeito de comemoração (canvas, legado)",
+    "src/modules/comemoracao.ts": "efeito de comemoração (canvas, legado)",
     "src/modules/indigenous-territories-layer.js": "mapa: cores de domínio das Terras Indígenas (tests/cor-da-terra-indigena.test.js)",
     "src/modulos/analises/paineis.tsx": "monta rgba() a partir de um token lido em tempo de execução (não é cor fixa)",
     "src/modulos/aya/mascote/contornos.ts": "marca: desenho da mascote AYA",
@@ -159,7 +159,7 @@
       "rgba(255,255,255,.08)": 1,
       "rgba(7,59,121,.09)": 1
     },
-    "src/modules/comemoracao.js": {
+    "src/modules/comemoracao.ts": {
       "#fff": 1,
       "rgba(255,255,255,1)": 1,
       "rgba(255,255,255,0.55)": 1,

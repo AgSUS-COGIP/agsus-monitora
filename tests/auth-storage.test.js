@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { createSafeAuthStorage } from "../src/modules/auth-storage.js";
+import { createSafeAuthStorage } from "../src/modules/auth-storage.ts";
 
 function createMemoryStorage() {
   const data = new Map();

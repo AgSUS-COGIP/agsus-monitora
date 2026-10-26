@@ -35,7 +35,7 @@ import {
   PAINEL_DE_SELECAO,
   payloadMudou,
 } from "../../lib/selecao-do-painel.ts";
-import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
+import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.ts";
 import type {
   EstadoDaSelecao,
   OpcoesDoEstadoDaSelecao,

@@ -8,7 +8,7 @@ import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
   Os textos são escritos de fora, como antes: o título por
   `navegacao.definirTitulo`, nome, e-mail e perfil por `src/app/perfil.ts`, os
   rótulos configuráveis por `src/app/configuracao.ts` e a foto por
-  `google-profile-photo.js`. Por isso o React desenha o cabeçalho uma vez e
+  `google-profile-photo.ts`. Por isso o React desenha o cabeçalho uma vez e
   não volta a mexer nele (ver `casca.tsx`).
 
   `#pessoasOnlineApp`, `#seloNoAvatarApp` e `#selosDoEditalApp` são pontos de

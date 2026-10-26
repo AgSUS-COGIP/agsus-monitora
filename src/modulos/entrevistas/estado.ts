@@ -48,7 +48,7 @@ import {
   PAINEL_DE_ENTREVISTAS,
   payloadMudou,
 } from "../../lib/entrevistas-do-painel.ts";
-import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
+import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.ts";
 import { avaliarMarcosDasEntrevistas } from "./marcos.ts";
 
 export const MENSAGEM_SEM_SESSAO =

@@ -1,7 +1,7 @@
 /*
   A cena em volta dos fogos, sem DOM: o voo da Aya (a arara azul que solta o
   primeiro foguete), o véu escuro que faz as cores brilharem e a regra do som
-  (opcional, desligado por padrão). O desenho é de src/modules/comemoracao.js;
+  (opcional, desligado por padrão). O desenho é de src/modules/comemoracao.ts;
   o roteiro e a física dos fogos, de src/lib/fogos.ts.
 
   Unidades: tempo em segundos desde o começo do show, posição em px CSS.

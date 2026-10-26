@@ -91,7 +91,7 @@ Saúde Indígena (`mapaDaVisaoGeral(area) === MAPA_DOS_DSEIS`). Lê o MESMO esta
 (`idDoMapaNacional`/`idDoMapaDoDsei`), porque `indigenous-territories-layer.js` e
 `map-base-layer-switcher.js` só enfeitam mapas com esses ids (Terras Indígenas, abrangência,
 Mapa/Satélite). A marcação antiga saiu do `index.html`: nenhum outro `#map`/`#detailMap` na página.
-O mapa de Projetos usa `#mapaDosProjetos` (só o Mapa/Satélite o enfeita). O `map-guard.js` e o `map-zoom-range.js` valem
+O mapa de Projetos usa `#mapaDosProjetos` (só o Mapa/Satélite o enfeita). O `map-guard.ts` e o `map-zoom-range.ts` valem
 para qualquer mapa. Ganchos da camada de terras usados (todos opcionais): `__agsusSetDseiCoverage`,
 `__agsusAoMudarTerras`, `__agsusEnquadrarTerra`, `__agsusDseiCoverageBounds`,
 `agsus:dsei-coverage-ready`, `__agsusDseiCoverageLayer`, `__agsusFaseDaTerraVisivel`,

@@ -8,7 +8,7 @@
   e nina-panel-drag.js) fazia e continua aqui:
   - respostas da base: resposta direta dos verbetes de docs/aya, contexto da tela e,
     busca na base de conhecimento, sem servidor nem modelo local;
-  - a conversa guardada na aba (aya-memoria.js, sessionStorage), restaurada ao
+  - a conversa guardada na aba (aya-memoria.ts, sessionStorage), restaurada ao
     recarregar e apagada por "Limpar conversa";
   - aberto/fechado lembrado no navegador (mesma chave de antes);
   - a arara pode ser arrastada para outro lugar da tela, e a posição fica
@@ -50,7 +50,7 @@ import type {
   RefObject,
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.tsx";
-import { comemorar } from "../../modules/comemoracao.js";
+import { comemorar } from "../../modules/comemoracao.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {
@@ -87,7 +87,7 @@ import {
   esquecerConversa,
   lerConversa,
   salvarConversa,
-} from "../../modules/aya-memoria.js";
+} from "../../modules/aya-memoria.ts";
 import { assinarPaginaDaAya, obterPaginaDaAya } from "./estado.ts";
 import { OfertaDePrimeirosPassos, SecaoAprender } from "./tour/aprender.tsx";
 import {

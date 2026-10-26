@@ -4,7 +4,7 @@
   comemorando ou o combinado), avança a física quadro a quadro e desenha as
   partículas num contexto 2D recebido. Quem cria o <canvas>, chama
   requestAnimationFrame, pausa com a aba oculta e limpa ao fim é
-  src/modules/comemoracao.js (`soltarFogos`).
+  src/modules/comemoracao.ts (`soltarFogos`).
 
   Os fogos continuam sendo o show de src/lib/fogos.ts (roteiro, rastro de
   subida, estouros em camadas, cintilação, gravidade, fumaça e o marco
@@ -842,7 +842,7 @@ function desenharRastro(
 
 /**
  * Desenha as partículas do motor (não os fogos, que são de
- * src/modules/comemoracao.js). `saida` (0–1) apaga tudo no fim da cena.
+ * src/modules/comemoracao.ts). `saida` (0–1) apaga tudo no fim da cena.
  */
 export function desenharParticulasDoMotor(
   contexto: CanvasRenderingContext2D,

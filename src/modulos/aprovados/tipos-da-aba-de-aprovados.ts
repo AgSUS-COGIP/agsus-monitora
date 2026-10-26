@@ -1,6 +1,5 @@
 import type {
   CandidatoDasRegrasDeAprovados,
-  PaginaDosAprovados,
   OpcaoDosAprovados,
   ListaParaFiltroDeAprovados,
 } from "../../lib/tipos-das-regras-de-aprovados.ts";
@@ -51,8 +50,9 @@ export interface PropsDaAbaDeAprovados {
     valores: string[],
   ) => void;
   aoLimparFiltros: () => void;
-  pagina: PaginaDosAprovados<CandidatoDaTabelaDeAprovados>;
-  tamanho: number;
-  aoIrPara: (pagina: number) => boolean;
-  aoMudarTamanho: (tamanho: number) => void;
+  /** Os candidatos que passaram pelos filtros, na ordem da lista. */
+  linhas: readonly CandidatoDaTabelaDeAprovados[];
+  /** A busca só da tabela (a tela a limpa junto com os filtros). */
+  busca: string;
+  aoBuscar: (busca: string) => void;
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getGoogleProfilePhotoUrl,
   renderGoogleProfilePhoto,
-} from "../src/modules/google-profile-photo.js";
+} from "../src/modules/google-profile-photo.ts";
 
 function createRoot() {
   document.body.innerHTML = '<div id="topUserAvatar"></div>';

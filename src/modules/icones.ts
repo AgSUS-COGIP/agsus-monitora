@@ -84,6 +84,7 @@ import {
   Wrench,
   X,
 } from "lucide";
+import type { IconNode } from "lucide";
 
 /*
   Registro único dos ícones Lucide.
@@ -106,7 +107,7 @@ import {
   (MIT, tabler.io/icons): mesma grade de 24, traço e pontas redondas, então
   desenha igual aos outros. Mesmo formato de nó do Lucide.
 */
-const ArquivoPdf = [
+const ArquivoPdf: IconNode = [
   ["path", { d: "M14 3v4a1 1 0 0 0 1 1h4" }],
   ["path", { d: "M5 12v-7a2 2 0 0 1 2 -2h7l5 5v4" }],
   ["path", { d: "M5 18h1.5a1.5 1.5 0 0 0 0 -3h-1.5v6" }],
@@ -202,15 +203,29 @@ export const ICONES = Object.freeze({
   x: X,
 });
 
-export const NOMES_DE_ICONES = Object.freeze(Object.keys(ICONES));
+/** O nome de um ícone do registro. */
+export type NomeDoIconeRegistrado = keyof typeof ICONES;
 
-export const ICONE_RESERVA = "circle";
+export const NOMES_DE_ICONES = Object.freeze(
+  Object.keys(ICONES),
+) as readonly NomeDoIconeRegistrado[];
+
+export const ICONE_RESERVA: NomeDoIconeRegistrado = "circle";
+
+/** As opções do desenho: classe extra, tamanho (px) e espessura do traço. */
+export interface OpcoesDoIcone {
+  classe?: string;
+  tamanho?: number;
+  traco?: number;
+}
 
 export function criarIcone(
-  nome,
-  { classe = "", tamanho = 18, traco = 1.75 } = {},
-) {
-  const conhecido = Object.hasOwn(ICONES, nome) ? nome : ICONE_RESERVA;
+  nome: string,
+  { classe = "", tamanho = 18, traco = 1.75 }: OpcoesDoIcone = {},
+): SVGElement {
+  const conhecido = Object.hasOwn(ICONES, nome)
+    ? (nome as NomeDoIconeRegistrado)
+    : ICONE_RESERVA;
   const svg = createElement(ICONES[conhecido], {
     width: tamanho,
     height: tamanho,

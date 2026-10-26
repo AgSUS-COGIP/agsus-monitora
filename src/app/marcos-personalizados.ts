@@ -10,7 +10,7 @@ import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
 } from "../componentes/dados-do-monitoramento.ts";
-import { comemorar as comemorarPadrao } from "../modules/comemoracao.js";
+import { comemorar as comemorarPadrao } from "../modules/comemoracao.ts";
 import type {
   ConfiguracaoDasComemoracoes,
   MarcoPersonalizado,

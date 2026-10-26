@@ -1,10 +1,9 @@
 import { createElement } from "react";
-import type { IconNode } from "lucide";
-import { ICONE_RESERVA, ICONES } from "../modules/icones.js";
+import { ICONE_RESERVA, ICONES } from "../modules/icones.ts";
 
 /*
   Ícone Lucide em React, a partir do mesmo registro de `criarIcone`
-  (`src/modules/icones.js`). Sempre decorativo: quem nomeia o controle é o
+  (`src/modules/icones.ts`). Sempre decorativo: quem nomeia o controle é o
   texto dele ou um `aria-label`.
 */
 export type NomeDoIcone = keyof typeof ICONES;
@@ -43,7 +42,7 @@ export function Icone({
       focusable="false"
       data-icone={conhecido}
     >
-      {(ICONES[conhecido] as IconNode).map(([tag, atributos], indice) =>
+      {ICONES[conhecido].map(([tag, atributos], indice) =>
         createElement(tag, { key: indice, ...atributos }),
       )}
     </svg>

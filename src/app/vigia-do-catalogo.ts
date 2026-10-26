@@ -1,12 +1,13 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseClient } from "../lib/supabaseClient";
 import {
   carregarCatalogoDeAbas,
   consultaDoCatalogoDeAbas,
-} from "../modules/catalogo-de-abas.js";
+} from "../modules/catalogo-de-abas.ts";
 import {
   carregarSituacaoDoSistema,
   consultaDaSituacaoDoSistema,
-} from "../modules/situacao-dos-modulos.js";
+} from "../modules/situacao-dos-modulos.ts";
 
 /*
   O vigia do catálogo de abas: a página desligada fecha sem recarregar.
@@ -35,7 +36,7 @@ import {
 */
 
 type Resposta = { data?: unknown; error?: { code?: string } | null };
-type Cliente = unknown;
+type Cliente = SupabaseClient | null;
 
 export interface DependenciasDoVigia {
   cliente?: () => Cliente;

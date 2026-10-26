@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import { CHAVE_DO_SOM } from "../src/lib/fogos-cena.ts";
 import { criarAleatorio } from "../src/lib/fogos.ts";
-import { TEMPO_DO_AVISO_MS, comemorar } from "../src/modules/comemoracao.js";
+import { TEMPO_DO_AVISO_MS, comemorar } from "../src/modules/comemoracao.ts";
 import { encerrarShowsAoFimDeCadaTeste } from "./shows-de-comemoracao.js";
 
 /*

@@ -13,8 +13,16 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
-.approved-th-acoes {
+.approved-th-acoes,
+.approved-page-card .approved-table thead th:last-child {
   text-align: center;
+}
+/* Aba Aprovados: a linha abre a gaveta do candidato (como Recursos e Entrevistas). */
+.approved-linha {
+  cursor: pointer;
+}
+.approved-linha:focus-visible td {
+  background: var(--state-info-soft);
 }
 .approved-head-actions {
   display: flex;

@@ -1,5 +1,5 @@
 import { afterEach, expect } from "vitest";
-import { soltarFogos as soltarFogosDoModulo } from "../src/modules/comemoracao.js";
+import { soltarFogos as soltarFogosDoModulo } from "../src/modules/comemoracao.ts";
 
 /*
   Nenhum show de comemoração sobrevive ao teste.
@@ -7,7 +7,7 @@ import { soltarFogos as soltarFogosDoModulo } from "../src/modules/comemoracao.j
   A Aya que voa nos fogos é uma raiz React (montarMascoteAvulsa, em
   src/modulos/aya/mascote/mascote.tsx): o render inicial fica na fila do
   scheduler do React (setImmediate) e o desmontar sai num setTimeout(0)
-  (tirarAya, em src/modules/comemoracao.js). Teste que olha só o começo do
+  (tirarAya, em src/modules/comemoracao.ts). Teste que olha só o começo do
   show e não o encerra deixava essas tarefas na fila; quando o Vitest
   desmontava o jsdom antes de a fila andar, cada uma estourava
   "ReferenceError: window is not defined" fora de qualquer teste (26

@@ -6,6 +6,132 @@ import {
 import { envolverFabricaDoLeaflet } from "../lib/fabrica-do-leaflet.ts";
 
 /*
+  O Leaflet vem do CDN como `window.L`, sem tipos instalados: este arquivo
+  declara só o que usa dele (o namespace, os limites e o mapa).
+*/
+declare global {
+  interface Window {
+    L?: unknown;
+  }
+}
+
+/** `L.latLng`: um ponto. */
+interface PontoDoLeaflet {
+  lat: number;
+  lng: number;
+}
+
+/** `L.latLngBounds`: uma caixa de limites. */
+interface LimitesDoLeaflet {
+  getSouth(): number;
+  getWest(): number;
+  getNorth(): number;
+  getEast(): number;
+}
+
+/** A folga do enquadramento: `[x, y]` ou um ponto do Leaflet. */
+type FolgaDoEnquadramento =
+  unknown[] | { x?: unknown; y?: unknown } | null | undefined;
+
+/** As opções de `fitBounds`/`flyToBounds`/`flyTo`/`setView`/`panTo`. */
+interface OpcoesDoEnquadramento {
+  maxZoom?: number;
+  padding?: FolgaDoEnquadramento;
+  [opcao: string]: unknown;
+}
+
+type Ouvinte = () => void;
+
+/** Um interruptor de interação (`scrollWheelZoom`, `keyboard`…). */
+type InteracaoDoMapa = { enable?: () => unknown } | undefined;
+
+/** O mapa do Leaflet, no que o guarda usa, com as marcas que ele grava. */
+interface MapaDaGuarda {
+  options?: { enquadramentoProprio?: unknown; maxZoom?: unknown };
+  setMaxBounds(limites: LimitesDoLeaflet): unknown;
+  fitBounds(limites: unknown, opcoes?: OpcoesDoEnquadramento): unknown;
+  flyToBounds?: (limites: unknown, opcoes?: OpcoesDoEnquadramento) => unknown;
+  flyTo?: (
+    centro: unknown,
+    zoom?: unknown,
+    opcoes?: OpcoesDoEnquadramento,
+  ) => unknown;
+  setView(
+    centro: unknown,
+    zoom?: unknown,
+    opcoes?: OpcoesDoEnquadramento,
+  ): unknown;
+  panTo?: (centro: unknown, opcoes?: OpcoesDoEnquadramento) => unknown;
+  setMinZoom?: (zoom: number) => unknown;
+  setMaxZoom?: (zoom: number) => unknown;
+  getSize?: () => { x?: number; y?: number } | undefined;
+  getZoom?: () => number | undefined;
+  getMinZoom?: () => number | undefined;
+  getMaxZoom?: () => number | undefined;
+  getContainer?: () => HTMLElement | undefined;
+  eachLayer?: (
+    visitar: (camada: { options?: { maxZoom?: unknown } } | undefined) => void,
+  ) => unknown;
+  invalidateSize(opcoes: { animate: boolean; pan: boolean }): unknown;
+  panInsideBounds(
+    limites: LimitesDoLeaflet,
+    opcoes: { animate: boolean },
+  ): unknown;
+  whenReady(pronto: Ouvinte): unknown;
+  on(eventos: string, ouvinte: Ouvinte): unknown;
+  zoomIn(passo: number): unknown;
+  zoomOut(passo: number): unknown;
+  scrollWheelZoom?: InteracaoDoMapa;
+  doubleClickZoom?: InteracaoDoMapa;
+  touchZoom?: InteracaoDoMapa;
+  boxZoom?: InteracaoDoMapa;
+  keyboard?: InteracaoDoMapa;
+  __agsusMapGuarded?: boolean;
+  __agsusOverviewMode?: boolean;
+  __agsusRemovido?: boolean;
+  __agsusStabilizeTimer?: number;
+  __agsusResizeObserver?: ResizeObserver;
+  __agsusScaleControlAdded?: boolean;
+}
+
+type FabricaDeMapa = (
+  this: unknown,
+  elemento: unknown,
+  opcoes?: OpcoesDoEnquadramento,
+) => MapaDaGuarda;
+
+type FabricaDeCamada = (
+  this: unknown,
+  url: unknown,
+  opcoes?: Record<string, unknown>,
+) => unknown;
+
+/** O namespace `L`, no que o guarda usa, com as marcas de instalação. */
+interface LeafletDaGuarda {
+  map?: FabricaDeMapa;
+  tileLayer?: FabricaDeCamada;
+  latLngBounds: (a: unknown, b?: unknown) => LimitesDoLeaflet;
+  latLng: (a: unknown, b?: unknown) => PontoDoLeaflet;
+  control?: {
+    scale?: (opcoes: {
+      position: string;
+      imperial: boolean;
+      metric: boolean;
+      maxWidth: number;
+    }) => { addTo(mapa: MapaDaGuarda): unknown };
+  };
+  __agsusMapGuardInstalled?: boolean;
+  __agsusTileLayerGuardInstalled?: boolean;
+  __agsusMapFactoryGuardInstalled?: boolean;
+}
+
+/** O namespace já conferido: as duas fábricas existem. */
+type LeafletComFabricas = LeafletDaGuarda & {
+  map: FabricaDeMapa;
+  tileLayer: FabricaDeCamada;
+};
+
+/*
   Os limites agora vêm do contorno real do país, não de um retângulo estimado.
   Ver `src/lib/brasil-bounds.ts` para a medição e para o que a diferença custava.
 */
@@ -33,25 +159,25 @@ const DEFAULT_MAP_OPTIONS = {
 
 let installed = false;
 
-export function installLeafletMapGuard() {
+export function installLeafletMapGuard(): boolean {
   if (installed) return true;
 
-  const L = window.L;
+  const L = window.L as LeafletDaGuarda | undefined;
   if (!L?.map || !L.latLngBounds || !L.tileLayer) return false;
   if (L.__agsusMapGuardInstalled) {
     installed = true;
     return true;
   }
 
-  installTileLayerGuard(L);
-  installMapGuard(L);
+  installTileLayerGuard(L as LeafletComFabricas);
+  installMapGuard(L as LeafletComFabricas);
 
   L.__agsusMapGuardInstalled = true;
   installed = true;
   return true;
 }
 
-function installTileLayerGuard(L) {
+function installTileLayerGuard(L: LeafletComFabricas) {
   if (L.__agsusTileLayerGuardInstalled) return;
 
   const originalTileLayer = L.tileLayer;
@@ -77,7 +203,11 @@ function installTileLayerGuard(L) {
   */
   L.tileLayer = envolverFabricaDoLeaflet(
     originalTileLayer,
-    function guardedTileLayer(urlTemplate, options = {}) {
+    function guardedTileLayer(
+      this: unknown,
+      urlTemplate: unknown,
+      options: Record<string, unknown> = {},
+    ) {
       return originalTileLayer.call(this, urlTemplate, {
         ...options,
         noWrap: true,
@@ -90,12 +220,16 @@ function installTileLayerGuard(L) {
   L.__agsusTileLayerGuardInstalled = true;
 }
 
-function installMapGuard(L) {
+function installMapGuard(L: LeafletComFabricas) {
   if (L.__agsusMapFactoryGuardInstalled) return;
 
   const originalMap = L.map;
 
-  L.map = function guardedLeafletMap(element, options = {}) {
+  L.map = function guardedLeafletMap(
+    this: unknown,
+    element: unknown,
+    options: OpcoesDoEnquadramento = {},
+  ) {
     const map = originalMap.call(this, element, {
       ...DEFAULT_MAP_OPTIONS,
       ...options,
@@ -112,7 +246,7 @@ function installMapGuard(L) {
   L.__agsusMapFactoryGuardInstalled = true;
 }
 
-function hardenMapInstance(L, map) {
+function hardenMapInstance(L: LeafletDaGuarda, map: MapaDaGuarda) {
   if (!map || map.__agsusMapGuarded) return;
 
   const maxBounds = toMaxBounds(L);
@@ -137,7 +271,10 @@ function hardenMapInstance(L, map) {
     a moldura que cresce volta a 4.5.
   */
   const folgaDoBrasil = [FOLGA_DO_BRASIL, FOLGA_DO_BRASIL];
-  const liberarZoomParaCaber = (bounds, padding) => {
+  const liberarZoomParaCaber = (
+    bounds: unknown,
+    padding: FolgaDoEnquadramento,
+  ) => {
     const tamanho = map.getSize?.();
     if (!originalSetMinZoom || !tamanho?.x || !tamanho?.y) return;
     const caixa = L.latLngBounds(bounds);
@@ -167,7 +304,7 @@ function hardenMapInstance(L, map) {
   };
 
   if (originalSetMinZoom) {
-    map.setMinZoom = function setGuardedMinZoom(value) {
+    map.setMinZoom = function setGuardedMinZoom(value: unknown) {
       const requested = Number(value);
       const allowed = Number.isFinite(requested)
         ? Math.max(requested, HEALTH_MAP_MIN_ZOOM)
@@ -196,7 +333,10 @@ function hardenMapInstance(L, map) {
     depois de o card mudar de largura — o Brasil ficava encostado à esquerda com
     um vazio à direita.
   */
-  map.fitBounds = function fitGuardedBounds(bounds, options = {}) {
+  map.fitBounds = function fitGuardedBounds(
+    bounds: unknown,
+    options: OpcoesDoEnquadramento = {},
+  ) {
     const limited = limitBounds(L, bounds, maxBounds);
     const overview = isBrazilOverviewBounds(L, limited);
     const requestedMax = Number(options.maxZoom);
@@ -223,7 +363,10 @@ function hardenMapInstance(L, map) {
   };
 
   if (originalFlyToBounds) {
-    map.flyToBounds = function flyToGuardedBounds(bounds, options = {}) {
+    map.flyToBounds = function flyToGuardedBounds(
+      bounds: unknown,
+      options: OpcoesDoEnquadramento = {},
+    ) {
       const limited = limitBounds(L, bounds, maxBounds);
       const overview = isBrazilOverviewBounds(L, limited);
       if (overview) liberarZoomParaCaber(limited, folgaDoBrasil);
@@ -246,7 +389,11 @@ function hardenMapInstance(L, map) {
   }
 
   if (originalFlyTo) {
-    map.flyTo = function flyToGuardedCenter(center, zoom, options = {}) {
+    map.flyTo = function flyToGuardedCenter(
+      center: unknown,
+      zoom: unknown,
+      options: OpcoesDoEnquadramento = {},
+    ) {
       map.__agsusOverviewMode = false;
       return originalFlyTo(
         clampLatLng(L, center, maxBounds),
@@ -259,7 +406,11 @@ function hardenMapInstance(L, map) {
     };
   }
 
-  map.setView = function setGuardedView(center, zoom, options = {}) {
+  map.setView = function setGuardedView(
+    center: unknown,
+    zoom: unknown,
+    options: OpcoesDoEnquadramento = {},
+  ) {
     map.__agsusOverviewMode = false;
     return originalSetView(
       clampLatLng(L, center, maxBounds),
@@ -269,7 +420,10 @@ function hardenMapInstance(L, map) {
   };
 
   if (originalPanTo) {
-    map.panTo = function panToGuardedCenter(center, options = {}) {
+    map.panTo = function panToGuardedCenter(
+      center: unknown,
+      options: OpcoesDoEnquadramento = {},
+    ) {
       return originalPanTo(clampLatLng(L, center, maxBounds), {
         animate: false,
         ...options,
@@ -356,14 +510,14 @@ function hardenMapInstance(L, map) {
   um zoom por pinça, que não passa por `setView` nem por `flyTo`. O zoom corrente
   é a prova.
 */
-function emOverview(map) {
+function emOverview(map: MapaDaGuarda): boolean {
   return (
     Boolean(map.__agsusOverviewMode) &&
     Number(map.getZoom?.() ?? 0) <= HEALTH_MAP_OVERVIEW_MAX_ZOOM
   );
 }
 
-function observarTamanhoDoCard(map, reenquadrar) {
+function observarTamanhoDoCard(map: MapaDaGuarda, reenquadrar: () => void) {
   const container = map.getContainer?.();
   if (!container || typeof ResizeObserver === "undefined") return;
 
@@ -397,7 +551,7 @@ function observarTamanhoDoCard(map, reenquadrar) {
   });
 }
 
-function enhanceMapAccessibility(L, map) {
+function enhanceMapAccessibility(L: LeafletDaGuarda, map: MapaDaGuarda) {
   const container = map.getContainer?.();
   if (!container) return;
 
@@ -438,7 +592,7 @@ function enhanceMapAccessibility(L, map) {
   });
 }
 
-function ensureFullManualZoomRange(map) {
+function ensureFullManualZoomRange(map: MapaDaGuarda) {
   const configuredMax = Number(map.options?.maxZoom);
   const layerMax = getLayerMaxZoom(map);
   const maxZoom = Number.isFinite(layerMax)
@@ -450,7 +604,7 @@ function ensureFullManualZoomRange(map) {
   map.setMaxZoom?.(Math.max(18, maxZoom));
 }
 
-function getLayerMaxZoom(map) {
+function getLayerMaxZoom(map: MapaDaGuarda): number {
   let maxZoom = Number.NaN;
   map.eachLayer?.((layer) => {
     const value = Number(layer?.options?.maxZoom);
@@ -461,7 +615,7 @@ function getLayerMaxZoom(map) {
   return maxZoom;
 }
 
-function addScaleControl(L, map) {
+function addScaleControl(L: LeafletDaGuarda, map: MapaDaGuarda) {
   if (map.__agsusScaleControlAdded || !L.control?.scale) return;
   L.control
     .scale({
@@ -474,7 +628,7 @@ function addScaleControl(L, map) {
   map.__agsusScaleControlAdded = true;
 }
 
-function stabilizeMap(map, maxBounds) {
+function stabilizeMap(map: MapaDaGuarda, maxBounds: LimitesDoLeaflet) {
   window.clearTimeout(map.__agsusStabilizeTimer);
   if (map.__agsusRemovido) return;
   map.__agsusStabilizeTimer = window.setTimeout(() => {
@@ -489,22 +643,26 @@ function stabilizeMap(map, maxBounds) {
   }, 40);
 }
 
-function toViewBounds(L) {
+function toViewBounds(L: LeafletDaGuarda): LimitesDoLeaflet {
   return L.latLngBounds(BRAZIL_VIEW_BOUNDS);
 }
 
-function toMaxBounds(L) {
+function toMaxBounds(L: LeafletDaGuarda): LimitesDoLeaflet {
   return L.latLngBounds(SOUTH_AMERICA_MAX_BOUNDS);
 }
 
-function isBrazilOverviewBounds(L, bounds) {
+function isBrazilOverviewBounds(L: LeafletDaGuarda, bounds: unknown): boolean {
   const incoming = L.latLngBounds(bounds);
   const latSpan = incoming.getNorth() - incoming.getSouth();
   const lngSpan = incoming.getEast() - incoming.getWest();
   return latSpan >= 30 && lngSpan >= 30;
 }
 
-function limitBounds(L, bounds, maxBounds) {
+function limitBounds(
+  L: LeafletDaGuarda,
+  bounds: unknown,
+  maxBounds: LimitesDoLeaflet,
+): LimitesDoLeaflet {
   const incoming = L.latLngBounds(bounds);
   const south = Math.max(incoming.getSouth(), maxBounds.getSouth());
   const west = Math.max(incoming.getWest(), maxBounds.getWest());
@@ -520,7 +678,11 @@ function limitBounds(L, bounds, maxBounds) {
   return L.latLngBounds([south, west], [north, east]);
 }
 
-function clampLatLng(L, center, maxBounds) {
+function clampLatLng(
+  L: LeafletDaGuarda,
+  center: unknown,
+  maxBounds: LimitesDoLeaflet,
+): PontoDoLeaflet {
   const point = Array.isArray(center)
     ? L.latLng(center[0], center[1])
     : L.latLng(center);
@@ -530,7 +692,7 @@ function clampLatLng(L, center, maxBounds) {
   );
 }
 
-function clampZoom(map, zoom) {
+function clampZoom(map: MapaDaGuarda, zoom: unknown): number {
   const value = Number(zoom ?? map.getZoom?.() ?? 4);
   const min = Number(map.getMinZoom?.() ?? 3);
   const configuredMax = Number(

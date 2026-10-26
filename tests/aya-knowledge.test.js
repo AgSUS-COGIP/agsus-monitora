@@ -3,7 +3,7 @@ import {
   AYA_SOURCE_CATALOG,
   curatedAnswerForQuestion,
   officialSourcesForQuestion,
-} from "../src/modules/aya-knowledge.js";
+} from "../src/modules/aya-knowledge.ts";
 import { responderAya } from "../src/lib/busca-da-aya.ts";
 
 const responder = (question) =>

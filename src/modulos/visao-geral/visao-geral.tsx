@@ -11,7 +11,7 @@ import { useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.tsx";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { apagarCopiaDaSessao } from "../../modules/copia-da-sessao-indexeddb.js";
+import { apagarCopiaDaSessao } from "../../modules/copia-da-sessao-indexeddb.ts";
 import {
   temProcessosPorProjeto,
   textosDaVisaoGeral,

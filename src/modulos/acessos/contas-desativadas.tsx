@@ -41,7 +41,7 @@ import type {
   quando, por quem e por quê, com o grupo e as áreas de antes. "Reativar"
   abre um modal com o que a pessoa tinha (editável, com as mesmas travas da
   gaveta) e pede motivo. Na próxima entrada, a pessoa vê "Bem-vindo(a) de
-  volta" (src/modules/comemoracao-do-acesso.js).
+  volta" (src/modules/comemoracao-do-acesso.ts).
 */
 
 function ModalReativarConta({

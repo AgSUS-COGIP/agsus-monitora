@@ -9,7 +9,8 @@
   "não há cópia", e a entrada segue pela rede como antes.
 */
 
-import { apagarCacheDePayload } from "./cache-de-payload-indexeddb.js";
+import type { CopiaDaSessao } from "../lib/copia-da-sessao";
+import { apagarCacheDePayload } from "./cache-de-payload-indexeddb.ts";
 
 const BANCO = "agsus-monitora";
 const LOJA = "copia-da-sessao";
@@ -23,7 +24,7 @@ const CHAVE = "sessao";
 */
 export const VERSAO_DA_COPIA = `2:${import.meta.url}`;
 
-function abrirBanco() {
+function abrirBanco(): Promise<IDBDatabase> {
   return new Promise((resolver, rejeitar) => {
     const pedido = globalThis.indexedDB.open(BANCO, 1);
     pedido.onupgradeneeded = () => pedido.result.createObjectStore(LOJA);
@@ -33,10 +34,13 @@ function abrirBanco() {
   });
 }
 
-async function naLoja(modo, operar) {
+async function naLoja<T>(
+  modo: IDBTransactionMode,
+  operar: (loja: IDBObjectStore) => IDBRequest<T>,
+): Promise<T> {
   const banco = await abrirBanco();
   try {
-    return await new Promise((resolver, rejeitar) => {
+    return await new Promise<T>((resolver, rejeitar) => {
       const transacao = banco.transaction(LOJA, modo);
       const pedido = operar(transacao.objectStore(LOJA));
       transacao.oncomplete = () => resolver(pedido.result);
@@ -49,16 +53,22 @@ async function naLoja(modo, operar) {
 }
 
 /** A cópia guardada, ou `null` se não houver ou o armazenamento falhar. */
-export async function lerCopiaDaSessao() {
+export async function lerCopiaDaSessao(): Promise<CopiaDaSessao | null> {
   try {
-    return (await naLoja("readonly", (loja) => loja.get(CHAVE))) ?? null;
+    return (
+      (await naLoja<CopiaDaSessao | undefined>("readonly", (loja) =>
+        loja.get(CHAVE),
+      )) ?? null
+    );
   } catch {
     return null;
   }
 }
 
 /** Substitui a cópia guardada. Devolve se conseguiu. */
-export async function guardarCopiaDaSessao(copia) {
+export async function guardarCopiaDaSessao(
+  copia: CopiaDaSessao,
+): Promise<boolean> {
   try {
     await naLoja("readwrite", (loja) => loja.put(copia, CHAVE));
     return true;
@@ -72,7 +82,7 @@ export async function guardarCopiaDaSessao(copia) {
   mesma pessoa): "Limpar sessão", acesso revogado e outro usuário entrando
   levam as duas.
 */
-export async function apagarCopiaDaSessao() {
+export async function apagarCopiaDaSessao(): Promise<void> {
   try {
     await naLoja("readwrite", (loja) => loja.delete(CHAVE));
   } catch {

@@ -4,7 +4,7 @@ import {
   lerConversa,
   limitarConversa,
   salvarConversa,
-} from "../src/modules/aya-memoria.js";
+} from "../src/modules/aya-memoria.ts";
 
 function janelaComArmazenamento() {
   const dados = new Map();

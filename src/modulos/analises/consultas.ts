@@ -48,7 +48,7 @@ import {
 } from "../../lib/lista-do-painel-de-analises.ts";
 import { lerRitmoDaAnalise } from "../../lib/ritmo-da-analise.ts";
 import { mapaDosTextos } from "../../lib/textos-do-painel-de-analises.ts";
-import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.js";
+import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.ts";
 
 const RPC_PORTEIRO = "usuario_pode_ler_analises";
 const RPC_LISTA = "get_analises_dashboard_payload_v2_se_mudou";

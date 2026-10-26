@@ -28,7 +28,7 @@ import {
   avaliarMarco,
   comemoracoesLigadasNoPainel,
   esquecerComemoracoesDoPainel,
-} from "../src/modules/comemoracao.js";
+} from "../src/modules/comemoracao.ts";
 
 /*
   Marcos e comemorações: só transições vistas por esta pessoa (linha de base
