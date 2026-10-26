@@ -36,7 +36,6 @@ import {
 } from "../../lib/avaliacao-documental/fila.ts";
 import type {
   ChaveDaColuna,
-  DistribuicaoDaRegra,
   EtapaDaFila,
   FiltroDaFila,
   InscritoComFicha,
@@ -261,13 +260,7 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }: AcaoEmLoteProps) {
   const plano = useMemo(
     () =>
       acao.tipo === "distribuir"
-        ? planoDeDistribuicao(
-            acao.fichas,
-            analistas,
-            // Só undefined usa o padrão {} de planoDeDistribuicao (como antes).
-            dados.distribuicao as DistribuicaoDaRegra | undefined,
-            para,
-          )
+        ? planoDeDistribuicao(acao.fichas, analistas, dados.distribuicao, para)
         : null,
     [acao, analistas, dados.distribuicao, para],
   );

@@ -17,6 +17,7 @@ import {
   vagasPorModalidade,
 } from "../../src/lib/avaliacao-documental/pre-classificacao.ts";
 import { nivelDaVaga } from "../../src/lib/classificacao/vagas.ts";
+import { AVISOS_DA_VAGA } from "../../src/lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import {
   calcularNotaDeclarada,
   chaveDaOpcao,
@@ -249,6 +250,21 @@ describe("peças da conta", () => {
     expect(
       tamanhoDoLote({ base: "NOTA_MINIMA", nota_minima: null }, {}).aviso,
     ).toBe("SEM_NOTA_MINIMA");
+  });
+
+  it("lote por número fixo sem o número: sem tamanho, aviso e nada de 'null' na descrição", () => {
+    expect(tamanhoDoLote({ base: "FIXO", fixo: null }, {})).toEqual({
+      tamanho: null,
+      descricao: "",
+      por_modalidade: null,
+      aviso: "SEM_FIXO",
+    });
+    expect(tamanhoDoLote({ base: "FIXO", fixo: 40 }, {})).toMatchObject({
+      tamanho: 40,
+      descricao: "40 (número fixo)",
+      aviso: null,
+    });
+    expect(AVISOS_DA_VAGA.SEM_FIXO).toBeTruthy();
   });
 
   it("meses de experiência declarados pela faixa", () => {

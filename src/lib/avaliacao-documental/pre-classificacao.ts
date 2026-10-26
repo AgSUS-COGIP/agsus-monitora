@@ -109,7 +109,11 @@ export interface VagaDoLote {
 
 /** Os códigos de aviso que o tamanho do lote pode dar. */
 export type AvisoDoTamanho =
-  "SEM_NOTA_MINIMA" | "SEM_QUADRO" | "SEM_VAGAS" | "QUADRO_SEM_MODALIDADES";
+  | "SEM_FIXO"
+  | "SEM_NOTA_MINIMA"
+  | "SEM_QUADRO"
+  | "SEM_VAGAS"
+  | "QUADRO_SEM_MODALIDADES";
 
 /** O tamanho do lote de uma vaga (tamanhoDoLote). */
 export interface TamanhoDoLote {
@@ -537,14 +541,23 @@ export function tamanhoDoLote(
       por_modalidade: null,
       aviso: null,
     };
-  if (lote?.base === "FIXO")
+  if (lote?.base === "FIXO") {
+    // A regra normalizada traz o fixo como número ou null (regra incompleta).
+    const fixo = lote.fixo;
+    if (typeof fixo !== "number" || !Number.isFinite(fixo))
+      return {
+        tamanho: null,
+        descricao: "",
+        por_modalidade: null,
+        aviso: "SEM_FIXO",
+      };
     return {
-      // A regra normalizada sempre traz o fixo (número ou null).
-      tamanho: lote.fixo as number | null,
-      descricao: `${lote.fixo} (número fixo)`,
+      tamanho: fixo,
+      descricao: `${numeroNoTexto(fixo)} (número fixo)`,
       por_modalidade: null,
       aviso: null,
     };
+  }
   if (lote?.base === "NOTA_MINIMA") {
     const minimo =
       typeof lote.nota_minima === "number" && Number.isFinite(lote.nota_minima)

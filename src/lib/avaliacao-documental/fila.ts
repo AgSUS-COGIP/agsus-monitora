@@ -557,9 +557,11 @@ export function planoDeDistribuicao(
   selecionados:
     readonly (InscritoNaFila | null | undefined)[] | null | undefined,
   analistas: readonly AnalistaDaFila[] | null | undefined,
-  distribuicao: DistribuicaoDaRegra = {},
+  distribuicao: DistribuicaoDaRegra | null = {},
   para = "",
 ): PlanoDeDistribuicao {
+  // A regra gravada sem distribuição vem null do banco: vale como vazia.
+  const regra = distribuicao ?? {};
   const fichas = (
     (Array.isArray(selecionados) ? selecionados : []).filter(
       (c) => c?.ficha?.id,
@@ -591,8 +593,8 @@ export function planoDeDistribuicao(
           ...a,
           pendentes: Math.max(0, (a.pendentes ?? 0) - (saindo[a.usuario] ?? 0)),
         })),
-      criterio: para ? "PARTES_IGUAIS" : distribuicao.criterio,
-      limite_por_analista: para ? null : distribuicao.limite_por_analista,
+      criterio: para ? "PARTES_IGUAIS" : regra.criterio,
+      limite_por_analista: para ? null : regra.limite_por_analista,
     });
     atribuicoes = r.atribuicoes;
     sobra = r.sobra;
@@ -654,12 +656,13 @@ const dataHoraBR = (iso: string | null | undefined): string => {
 /** A situação da linha em texto ("Pendente", "Apto", "Fora do lote · sem ficha"). */
 export function textoDaSituacaoNaFila(
   c: InscritoNaFila | null | undefined,
-): string | undefined {
+): string {
   if (c?.ficha?.situacao === "CONCLUIDA" && c.ficha.resultado)
     return RESULTADO_DA_FICHA[c.ficha.resultado] || c.ficha.resultado;
   if (c?.ficha)
     return (
-      SITUACOES_DA_FICHA[c.ficha.situacao as string]?.rotulo || c.ficha.situacao
+      SITUACOES_DA_FICHA[c.ficha.situacao as string]?.rotulo ||
+      String(c.ficha.situacao ?? "")
     );
   const rotulo =
     ROTULO_DA_PRE[c?.situacao_pre as string] || c?.situacao_pre || "";
