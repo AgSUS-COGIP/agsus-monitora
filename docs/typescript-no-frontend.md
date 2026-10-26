@@ -152,6 +152,10 @@ sem JS/JSX): stores, abas Regra, Equipe, Pré-classificação e Fila, a ficha e 
 pré-classificação, distribuição e fila. Contratos e limites estão em
 [../src/modulos/avaliacao-documental/README.md](../src/modulos/avaliacao-documental/README.md).
 
+A Aya também está migrada (módulo, tour e as regras de `src/lib/` — páginas, tours, busca, termos,
+conversa, contexto, chamado, intenções, dados, filtros, permissões e perguntas sem resposta), sem JS/JSX
+fora da base gerada. Contratos e limites estão em [../src/modulos/aya/README.md](../src/modulos/aya/README.md).
+
 O editor de coordenadas também está migrado; contratos e limites estão em
 [../src/modulos/editor-de-coordenadas/README.md](../src/modulos/editor-de-coordenadas/README.md).
 
