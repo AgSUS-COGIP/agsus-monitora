@@ -19,7 +19,7 @@ const CARGA_NOME = "20261002-pendencias-das-coordenadas-dos-projetos.sql";
 const CARGA = ler(`supabase/correcoes/${CARGA_NOME}`);
 const CARGA_ENSAIO = ler(`supabase/ensaios/${CARGA_NOME}`);
 const CARGA_ROLLBACK = ler(`supabase/rollback/${CARGA_NOME}`);
-const MUNICIPIOS_DO_FRONT = ler("src/lib/coordenadas-dos-municipios.js");
+const MUNICIPIOS_DO_FRONT = ler("src/lib/coordenadas-dos-municipios.ts");
 
 const RPCS = {
   salvar_coordenada_mapa_projetos: [

@@ -12,7 +12,7 @@ em `docs/arquitetura-react.md`. Aqui fica o que é próprio da seção
 | `comemoracoes.tsx`                    | a seção: catálogo de marcos, marcos personalizados, palco de testes e preferência pessoal                 |
 | `palco-de-testes.tsx`                 | efeito, intensidade, duração e som escolhidos na hora, sem gravar                                         |
 | `src/lib/catalogo-de-comemoracoes.ts` | catálogo, normalização e JSON publicado, decisão de mostrar, personalizados, revisão campo a campo        |
-| `src/lib/motor-de-efeitos.js`         | cena, física e desenho de confete, serpentina, estrelas, corações e balões; embute os fogos de `fogos.js` |
+| `src/lib/motor-de-efeitos.ts`         | cena, física e desenho de confete, serpentina, estrelas, corações e balões; embute os fogos de `fogos.ts` |
 | `src/modules/comemoracao.js`          | canvas, `requestAnimationFrame`, aviso, som e o evento da Aya                                             |
 | `src/app/marcos-personalizados.js`    | avaliação dos personalizados com as linhas que o front já tem                                             |
 
@@ -38,7 +38,7 @@ depois de entrar.
 
 **Respeita.** `prefers-reduced-motion` (só o aviso), o liga/desliga geral
 (Módulos e abas › Sistema inteiro) e a preferência pessoal deste navegador
-(`agsus_monitora_comemoracoes_desligadas` = `"1"`, `CHAVE_COMEMORACOES_PESSOAIS` em `src/lib/preferencia-de-comemoracoes.js`, a mesma que a mascote lê). "Testar" e o palco passam
+(`agsus_monitora_comemoracoes_desligadas` = `"1"`, `CHAVE_COMEMORACOES_PESSOAIS` em `src/lib/preferencia-de-comemoracoes.ts`, a mesma que a mascote lê). "Testar" e o palco passam
 `teste: true`: ignoram a configuração e a preferência pessoal e não gravam.
 
 **Marcos personalizados.** "Edital X chegou a N contratados" (soma de

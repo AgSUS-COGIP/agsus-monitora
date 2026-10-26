@@ -16,13 +16,13 @@ import {
   ordemDasDirecoes,
   retanguloDaDica,
   transbordamento,
-} from "../src/lib/dica-dentro-do-mapa.js";
+} from "../src/lib/dica-dentro-do-mapa.ts";
 
 /*
   "O mapa quebra o nome quando passo o mouse ou clico em algum extremo": a dica
   centrada acima do ponto saía até 134 px para fora do contêiner do mapa (que
   corta o que transborda) — o DSEI Potiguara, na ponta leste, perdia o nome.
-  src/lib/dica-dentro-do-mapa.js escolhe a direção que cabe.
+  src/lib/dica-dentro-do-mapa.ts escolhe a direção que cabe.
 */
 
 const MAPA = { largura: 800, altura: 500 };

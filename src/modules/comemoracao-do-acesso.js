@@ -9,7 +9,7 @@ import {
 import {
   gravarArmazenamento as gravar,
   lerArmazenamento as ler,
-} from "../lib/comemoracao.js";
+} from "../lib/comemoracao.ts";
 import { comemorar } from "./comemoracao.js";
 
 /*

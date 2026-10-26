@@ -34,7 +34,7 @@ import {
   ehImagemGuardada,
   ehLogoDaBarraGuardada,
   logoDaBarraSegura,
-} from "../../lib/marca-da-barra-lateral.js";
+} from "../../lib/marca-da-barra-lateral.ts";
 import type {
   AcaoDaImagem,
   GaleriaDeImagens,

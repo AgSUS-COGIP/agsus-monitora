@@ -8,7 +8,7 @@ import {
   definirConfiguracaoDasComemoracoes,
   normalizarConfiguracao,
 } from "../src/lib/catalogo-de-comemoracoes.ts";
-import { criarAleatorio } from "../src/lib/fogos.js";
+import { criarAleatorio } from "../src/lib/fogos.ts";
 import {
   comemorar,
   EVENTO_DA_AYA,

@@ -17,7 +17,11 @@ export const EVENTO_BARRA_ALTERNADA = "agsus:barra-lateral-alternada";
 /* O legado avisa: o tema da página trocou (`html[data-theme]`). */
 export const EVENTO_TEMA_ALTERADO = "agsus:tema-alterado";
 
-export function avisar(nome, detalhe, documento = globalThis.document) {
+export function avisar(
+  nome: string,
+  detalhe?: unknown,
+  documento: Document | undefined = globalThis.document,
+): void {
   const janela = documento?.defaultView || globalThis;
   documento?.dispatchEvent(new janela.CustomEvent(nome, { detail: detalhe }));
 }

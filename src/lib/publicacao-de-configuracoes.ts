@@ -17,11 +17,11 @@ import {
   normalizeAccessPanelColor,
 } from "./access-branding.ts";
 import { isValidAccessAssetUrl } from "./config-validation";
-import { normalizarModo } from "./contraste.js";
+import { normalizarModo } from "./contraste.ts";
 import {
   corDaBarraSegura,
   logoDaBarraSegura,
-} from "./marca-da-barra-lateral.js";
+} from "./marca-da-barra-lateral.ts";
 import { normalizeAllowedDomains } from "./platform-context";
 import { EMAIL_DO_SUPORTE_PADRAO, emailValido } from "./chamado-da-aya.ts";
 import {

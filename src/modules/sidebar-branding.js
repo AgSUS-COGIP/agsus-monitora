@@ -6,7 +6,7 @@ import {
   LOGO_PADRAO_DA_BARRA,
   corDaBarraSegura,
   logoDaBarraSegura,
-} from "../lib/marca-da-barra-lateral.js";
+} from "../lib/marca-da-barra-lateral.ts";
 
 /*
   Pinta a barra lateral com a logo e a cor gravadas (`ui_sidebar_logo_url`,

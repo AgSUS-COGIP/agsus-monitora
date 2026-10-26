@@ -18,33 +18,44 @@
   coisas se separarem — é o que impede a constante de envelhecer em silêncio.
 */
 
-/** @type {readonly [readonly [number, number], readonly [number, number]]} */
-export const BRASIL_BOUNDS = Object.freeze([
-  Object.freeze([-33.75, -73.99]),
-  Object.freeze([5.27, -32.42]),
-]);
+/** Um ponto `[latitude, longitude]`. */
+export type ParDeCoordenadas = readonly [number, number];
+/** `[[sul, oeste], [norte, leste]]`. */
+export type LimitesGeograficos = readonly [ParDeCoordenadas, ParDeCoordenadas];
+
+export const BRASIL_BOUNDS: LimitesGeograficos = Object.freeze([
+  Object.freeze([-33.75, -73.99] as const),
+  Object.freeze([5.27, -32.42] as const),
+] as const);
 
 /*
   Margem de navegação em volta do país. Não é enquadramento: serve para o
   `maxBounds`, para que arrastar o mapa mostre o contexto sul-americano sem
   permitir sair para o oceano aberto nem criar cópias laterais do mundo.
 */
-export const NAVEGACAO_BOUNDS = Object.freeze([
-  Object.freeze([-58.5, -84.5]),
-  Object.freeze([15.5, -27.0]),
-]);
+export const NAVEGACAO_BOUNDS: LimitesGeograficos = Object.freeze([
+  Object.freeze([-58.5, -84.5] as const),
+  Object.freeze([15.5, -27.0] as const),
+] as const);
+
+export interface EnvolventeDoGeoJson {
+  vertices: number;
+  bounds: [[number, number], [number, number]];
+}
 
 /* Calcula o retângulo envolvente de uma geometria GeoJSON, em [[sul, oeste], [norte, leste]]. */
-export function boundsDoGeoJson(geometria) {
+export function boundsDoGeoJson(
+  geometria: unknown,
+): EnvolventeDoGeoJson | null {
   let minLat = Infinity;
   let maxLat = -Infinity;
   let minLng = Infinity;
   let maxLng = -Infinity;
   let vertices = 0;
 
-  const visitar = (no) => {
+  const visitar = (no: unknown): void => {
     if (Array.isArray(no) && typeof no[0] === "number") {
-      const [lng, lat] = no;
+      const [lng, lat] = no as [number, number];
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
       vertices += 1;
       if (lat < minLat) minLat = lat;

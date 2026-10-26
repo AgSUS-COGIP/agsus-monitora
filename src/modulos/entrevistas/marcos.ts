@@ -9,7 +9,7 @@ type ContextoDosMarcos = Parameters<
   Chamado pelo estado da tela (estado.ts) sempre que os dados da área chegam.
   `ligadas` é o liga/desliga das comemorações do app (a situação do sistema
   que o app leu na entrada; o controlador relê a cada abertura da tela). A
-  regra (linha de base, transição, frase) é de src/lib/comemoracao.js; o
+  regra (linha de base, transição, frase) é de src/lib/comemoracao.ts; o
   aviso e o efeito (o do marco "vaga-pronta" em Configurações ›
   Comemorações; padrão: fogos suaves), de src/modules/comemoracao.js. Este arquivo não
   importa React.
@@ -19,7 +19,7 @@ import {
   comemoracaoDasEntrevistas,
   estadoGuardadoDasVagas,
   situacaoDasVagas,
-} from "../../lib/comemoracao.js";
+} from "../../lib/comemoracao.ts";
 import { avaliarMarco } from "../../modules/comemoracao.js";
 
 export function avaliarMarcosDasEntrevistas({

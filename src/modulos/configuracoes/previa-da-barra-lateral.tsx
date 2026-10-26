@@ -10,7 +10,7 @@ import { needsLightForeground } from "../../lib/access-branding.ts";
 import {
   corDaBarraSegura,
   logoDaBarraSegura,
-} from "../../lib/marca-da-barra-lateral.js";
+} from "../../lib/marca-da-barra-lateral.ts";
 import {
   ABAS_DO_MENU,
   AREAS_DO_SISTEMA,

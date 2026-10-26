@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { DURACAO_DOS_FOGOS_MS } from "../src/lib/comemoracao.js";
-import { trajetoDaAya, pontoDaSoltura } from "../src/lib/fogos-cena.js";
+import { DURACAO_DOS_FOGOS_MS } from "../src/lib/comemoracao.ts";
+import { trajetoDaAya, pontoDaSoltura } from "../src/lib/fogos-cena.ts";
 import {
   alfaDoRastro,
   avancarShow,
@@ -27,7 +27,7 @@ import {
   paletaDosFogos,
   planejarShow,
   showAcabou,
-} from "../src/lib/fogos.js";
+} from "../src/lib/fogos.ts";
 
 /*
   Tudo com sorteio fixo (criarAleatorio): nada aqui depende de Math.random.

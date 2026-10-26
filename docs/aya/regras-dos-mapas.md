@@ -22,7 +22,7 @@ Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-
 
 **perguntas:** o mapa de projetos segue os filtros | filtro da visao geral no mapa de projetos | por que o mapa de projetos mostra o brasil inteiro | mapa de projetos igual ao da saude indigena | tamanho do ponto no mapa de projetos
 **resposta:** O mapa de Projetos segue as mesmas regras do mapa da Saúde Indígena. Os filtros e a busca da Visão geral valem para ele: com algum filtro, só ficam os lugares que têm edital no recorte, e cada lugar mostra só esses editais; sem nenhum, a lista diz "Nenhum município no recorte.". Sem filtro, o mapa mostra o Brasil inteiro; com filtro da página ou com um projeto escolhido no campo "Projeto", ele aproxima do único lugar que sobrou ou enquadra todos os que sobraram. "Agrupar por projeto" não muda o enquadramento, e "Brasil" volta ao país inteiro. O tamanho do ponto segue as vagas do lugar com a mesma escala da bolha do DSEI e não muda quando se filtra. Lugares que caem no mesmo ponto abrem em leque, com um traço até a posição real.
-**fonte:** src/modulos/mapa-de-projetos/README.md; src/lib/enquadramento-do-brasil.js; src/lib/visao-geral-da-area.ts
+**fonte:** src/modulos/mapa-de-projetos/README.md; src/lib/enquadramento-do-brasil.ts; src/lib/visao-geral-da-area.ts
 
 ## Coordenadas dos lugares do mapa de Projetos
 

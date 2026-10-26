@@ -13,7 +13,7 @@ import {
   EFEITOS,
   ROTULOS_DOS_EFEITOS,
   ROTULOS_DOS_NIVEIS,
-} from "../../lib/motor-de-efeitos.js";
+} from "../../lib/motor-de-efeitos.ts";
 import {
   criarHalos,
   desenharPrevia,

@@ -1,14 +1,14 @@
 import {
   comemoracoesLigadasNaResposta,
   trocarEstadoGuardado,
-} from "../lib/comemoracao.js";
+} from "../lib/comemoracao.ts";
 import {
   alfaDoRastro,
   brilhoDaParticula,
   corDaParticula,
   fatorDeSaida,
   paletaDosFogos,
-} from "../lib/fogos.js";
+} from "../lib/fogos.ts";
 import {
   avancarCena,
   cenaAcabou,
@@ -17,7 +17,7 @@ import {
   efeitoChamaAya,
   normalizarDuracao,
   DURACAO_PADRAO_MS,
-} from "../lib/motor-de-efeitos.js";
+} from "../lib/motor-de-efeitos.ts";
 import {
   comemoracoesPessoaisLigadas,
   decidirComemoracao,
@@ -30,7 +30,7 @@ import {
   posicaoDaAya,
   somDoEstouro,
   somLigado,
-} from "../lib/fogos-cena.js";
+} from "../lib/fogos-cena.ts";
 import {
   definirEstadoDaAya,
   EVENTO_ESTADO_DA_AYA,
@@ -42,7 +42,7 @@ import "../styles/comemoracao.css";
 /*
   O desenho das comemorações, sem biblioteca: o efeito escolhido (fogos,
   confete, serpentina, chuva de estrelas, corações, balões, a Aya comemorando
-  ou o combinado — src/lib/motor-de-efeitos.js) num <canvas>, um véu escuro
+  ou o combinado — src/lib/motor-de-efeitos.ts) num <canvas>, um véu escuro
   suave quando há fogos ou estrelas, e um aviso no topo (role="status") com
   "Pular", o botão de som (desligado por padrão) e o ×. Os fogos: luz
   somada, halos e fumaça por 5–6 s (ou a duração configurada), a Aya (arara
@@ -59,9 +59,9 @@ import "../styles/comemoracao.css";
   `aya:estado` na janela (detail: { estado: "comemorando", duracaoMs }) e,
   ao terminar, `{ estado: "parada" }` — a mascote decide como reage.
 
-  O roteiro e a física dos fogos são de src/lib/fogos.js; a cena (voo, véu,
-  som), de src/lib/fogos-cena.js; a regra de quando comemorar, de
-  src/lib/comemoracao.js. Quem usa: o acesso liberado
+  O roteiro e a física dos fogos são de src/lib/fogos.ts; a cena (voo, véu,
+  som), de src/lib/fogos-cena.ts; a regra de quando comemorar, de
+  src/lib/comemoracao.ts. Quem usa: o acesso liberado
   (comemoracao-do-acesso.js), o painel de análises, a tela de Entrevistas
   (src/modulos/entrevistas/marcos.ts), os marcos do ano
   (src/modulos/visao-geral/boas-vindas.tsx) e a Aya (fim de tour e de trilha).
@@ -232,7 +232,7 @@ export { criarHalos, paletaDoTema };
 
 /*
   O texto do marco em pixels: escrito num canvas fora da tela (fillText) e
-  lido com getImageData. Sem canvas 2D, null (fogos-formas.js usa a fonte de
+  lido com getImageData. Sem canvas 2D, null (src/lib/fogos-formas.ts usa a fonte de
   pontos).
 */
 function amostrarTexto(doc, janela, texto) {

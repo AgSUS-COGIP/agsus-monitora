@@ -29,7 +29,13 @@
 */
 
 /** [Município, UF, código IBGE, latitude, longitude] */
-const MUNICIPIOS = Object.freeze([
+const MUNICIPIOS: readonly (readonly [
+  string,
+  string,
+  number,
+  number,
+  number,
+])[] = Object.freeze([
   ["Cruzeiro do Sul", "AC", 1200203, -7.6276, -72.6756],
   ["Rio Branco", "AC", 1200401, -9.975, -67.8243],
   ["Maceió", "AL", 2704302, -9.666, -35.735],
@@ -79,43 +85,61 @@ const MUNICIPIOS = Object.freeze([
 ]);
 
 /** UF → [nome, latitude, longitude] (média das sedes municipais da UF). */
-const UFS = Object.freeze({
-  AC: ["Acre", -9.4017, -69.7098],
-  AL: ["Alagoas", -9.5154, -36.4828],
-  AM: ["Amazonas", -3.9313, -63.2203],
-  AP: ["Amapá", 0.9128, -51.3585],
-  BA: ["Bahia", -12.911, -40.4106],
-  CE: ["Ceará", -4.9409, -39.4942],
-  DF: ["Distrito Federal", -15.7795, -47.9297],
-  ES: ["Espírito Santo", -19.8864, -40.8154],
-  GO: ["Goiás", -16.1978, -49.4475],
-  MA: ["Maranhão", -4.2359, -44.9113],
-  MG: ["Minas Gerais", -19.5842, -44.102],
-  MS: ["Mato Grosso do Sul", -21.2376, -54.4798],
-  MT: ["Mato Grosso", -13.6058, -55.5486],
-  PA: ["Pará", -2.9668, -49.7614],
-  PB: ["Paraíba", -7.0593, -36.6429],
-  PE: ["Pernambuco", -8.2183, -36.6585],
-  PI: ["Piauí", -6.7032, -42.4093],
-  PR: ["Paraná", -24.3961, -51.878],
-  RJ: ["Rio de Janeiro", -22.2889, -42.8243],
-  RN: ["Rio Grande do Norte", -5.9785, -36.6061],
-  RO: ["Rondônia", -11.1715, -62.321],
-  RR: ["Roraima", 2.5756, -60.5275],
-  RS: ["Rio Grande do Sul", -28.9607, -52.6113],
-  SC: ["Santa Catarina", -27.2638, -50.7068],
-  SE: ["Sergipe", -10.6177, -37.275],
-  SP: ["São Paulo", -22.1385, -48.6441],
-  TO: ["Tocantins", -9.2729, -48.1896],
-});
+const UFS: Readonly<Record<string, readonly [string, number, number]>> =
+  Object.freeze({
+    AC: ["Acre", -9.4017, -69.7098],
+    AL: ["Alagoas", -9.5154, -36.4828],
+    AM: ["Amazonas", -3.9313, -63.2203],
+    AP: ["Amapá", 0.9128, -51.3585],
+    BA: ["Bahia", -12.911, -40.4106],
+    CE: ["Ceará", -4.9409, -39.4942],
+    DF: ["Distrito Federal", -15.7795, -47.9297],
+    ES: ["Espírito Santo", -19.8864, -40.8154],
+    GO: ["Goiás", -16.1978, -49.4475],
+    MA: ["Maranhão", -4.2359, -44.9113],
+    MG: ["Minas Gerais", -19.5842, -44.102],
+    MS: ["Mato Grosso do Sul", -21.2376, -54.4798],
+    MT: ["Mato Grosso", -13.6058, -55.5486],
+    PA: ["Pará", -2.9668, -49.7614],
+    PB: ["Paraíba", -7.0593, -36.6429],
+    PE: ["Pernambuco", -8.2183, -36.6585],
+    PI: ["Piauí", -6.7032, -42.4093],
+    PR: ["Paraná", -24.3961, -51.878],
+    RJ: ["Rio de Janeiro", -22.2889, -42.8243],
+    RN: ["Rio Grande do Norte", -5.9785, -36.6061],
+    RO: ["Rondônia", -11.1715, -62.321],
+    RR: ["Roraima", 2.5756, -60.5275],
+    RS: ["Rio Grande do Sul", -28.9607, -52.6113],
+    SC: ["Santa Catarina", -27.2638, -50.7068],
+    SE: ["Sergipe", -10.6177, -37.275],
+    SP: ["São Paulo", -22.1385, -48.6441],
+    TO: ["Tocantins", -9.2729, -48.1896],
+  });
 
 /*
   Chave de comparação: sem acento, sem diferença de caixa e de espaços.
   "Seropédica/RJ", "seropedica / rj" e "SEROPÉDICA/RJ" são o mesmo lugar.
 */
-export function chaveDoMunicipio(municipioUf) {
+/** Sede municipal do IBGE. */
+export interface LugarDoMunicipio {
+  readonly municipio: string;
+  readonly uf: string;
+  readonly ibge: number;
+  readonly latitude: number;
+  readonly longitude: number;
+}
+
+/** Ponto de uma UF (média das sedes municipais). */
+export interface LugarDaUf {
+  uf: string;
+  nome: string;
+  latitude: number;
+  longitude: number;
+}
+
+export function chaveDoMunicipio(municipioUf: unknown): string {
   const [municipio = "", uf = ""] = String(municipioUf ?? "").split("/");
-  const limpar = (valor) =>
+  const limpar = (valor: string): string =>
     valor
       .normalize("NFD")
       .replace(/[̀-ͯ]/g, "")
@@ -127,8 +151,9 @@ export function chaveDoMunicipio(municipioUf) {
   return nome && sigla ? `${nome}/${sigla}` : "";
 }
 
-const LUGARES = MUNICIPIOS.map(([municipio, uf, ibge, latitude, longitude]) =>
-  Object.freeze({ municipio, uf, ibge, latitude, longitude }),
+const LUGARES = MUNICIPIOS.map(
+  ([municipio, uf, ibge, latitude, longitude]): LugarDoMunicipio =>
+    Object.freeze({ municipio, uf, ibge, latitude, longitude }),
 );
 const POR_CHAVE = new Map(
   LUGARES.map((lugar) => [
@@ -141,17 +166,18 @@ const POR_CODIGO = new Map(LUGARES.map((lugar) => [lugar.ibge, lugar]));
 /**
  * { municipio, uf, ibge, latitude, longitude } do "Município/UF" — ou do
  * código do IBGE, que manda quando vem —, ou null.
- * @param {string} municipioUf
- * @param {number | null} [codigoIbge]
  */
-export function coordenadasDoMunicipio(municipioUf, codigoIbge = null) {
+export function coordenadasDoMunicipio(
+  municipioUf: unknown,
+  codigoIbge: number | string | null | undefined = null,
+): LugarDoMunicipio | null {
   const porCodigo = POR_CODIGO.get(Number(codigoIbge));
   if (porCodigo) return porCodigo;
   return POR_CHAVE.get(chaveDoMunicipio(municipioUf)) ?? null;
 }
 
 /** { uf, nome, latitude, longitude } do ponto da UF, ou null. */
-export function coordenadasDaUf(uf) {
+export function coordenadasDaUf(uf: unknown): LugarDaUf | null {
   const sigla = String(uf ?? "")
     .trim()
     .toUpperCase();

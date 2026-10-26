@@ -24,13 +24,18 @@
   da Funai declara `updateWhenIdle: false` e `keepBuffer: 3` de propósito, e
   envolver o `.wms` sobreporia ambos.
 */
-export function envolverFabricaDoLeaflet(original, involucro) {
+export function envolverFabricaDoLeaflet<T>(
+  original: unknown,
+  involucro: T,
+): T {
   if (typeof original !== "function" || typeof involucro !== "function") {
     return involucro;
   }
 
   for (const chave of Object.keys(original)) {
-    involucro[chave] = original[chave];
+    (involucro as Record<string, unknown>)[chave] = (
+      original as unknown as Record<string, unknown>
+    )[chave];
   }
 
   return involucro;

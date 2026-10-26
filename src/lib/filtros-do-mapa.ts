@@ -17,8 +17,29 @@
      encadeavam".
 */
 
+/** Valores selecionados de um campo. */
+export type SelecaoDoFiltro = ReadonlySet<string> | readonly string[];
+/** Valores selecionados por campo. */
+export type EstadoDosFiltros = Readonly<
+  Record<string, SelecaoDoFiltro | null | undefined>
+>;
+
+export interface OpcoesDoFiltro<L> {
+  /** Campos considerados (padrão: chaves do estado). */
+  campos?: readonly string[];
+  /** Campo desconsiderado (para montar as opções dele). */
+  ignorarCampo?: string;
+  /** Regra extra de exclusão (ex.: encerrados). */
+  excluir?: (linha: L) => boolean;
+  /** Chave do DSEI selecionado no mapa. */
+  dsei?: string;
+  /** Chave do DSEI da linha. */
+  chaveDsei?: (linha: L) => string;
+  comparar?: (a: string, b: string) => number;
+}
+
 /** Chave de comparação de um valor de filtro. */
-export function chaveDeFiltro(valor) {
+export function chaveDeFiltro(valor: unknown): string {
   return String(valor ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -27,12 +48,16 @@ export function chaveDeFiltro(valor) {
     .trim();
 }
 
-function valorDoCampo(linha, campo) {
-  return String(linha?.[campo] ?? "").trim();
+function valorDoCampo(linha: unknown, campo: string): string {
+  return String(
+    (linha as Record<string, unknown> | null | undefined)?.[campo] ?? "",
+  ).trim();
 }
 
-function chavesSelecionadas(selecionados) {
-  const chaves = new Set();
+function chavesSelecionadas(
+  selecionados: SelecaoDoFiltro | null | undefined,
+): Set<string> {
+  const chaves = new Set<string>();
   (selecionados || []).forEach((valor) => {
     const chave = chaveDeFiltro(valor);
     if (chave) chaves.add(chave);
@@ -43,16 +68,13 @@ function chavesSelecionadas(selecionados) {
 /**
  * A linha entra no recorte?
  *
- * @param {object} linha
- * @param {Record<string, Iterable<string>>} estado  valores selecionados por campo
- * @param {object} [opcoes]
- * @param {readonly string[]} [opcoes.campos]           campos considerados (padrão: chaves do estado)
- * @param {string} [opcoes.ignorarCampo]       campo desconsiderado (para montar as opções dele)
- * @param {(linha: object) => boolean} [opcoes.excluir]  regra extra de exclusão (ex.: encerrados)
- * @param {string} [opcoes.dsei]               chave do DSEI selecionado no mapa
- * @param {(linha: Record<string, unknown>) => string} [opcoes.chaveDsei]  chave do DSEI da linha
+ * `estado`: valores selecionados por campo.
  */
-export function linhaAtende(linha, estado, opcoes = {}) {
+export function linhaAtende<L>(
+  linha: L,
+  estado: EstadoDosFiltros | null | undefined,
+  opcoes: OpcoesDoFiltro<L> = {},
+): boolean {
   const { ignorarCampo = "", excluir, dsei = "", chaveDsei } = opcoes;
   if (excluir && excluir(linha)) return false;
   if (dsei && chaveDsei && chaveDsei(linha) !== dsei) return false;
@@ -70,10 +92,15 @@ export function linhaAtende(linha, estado, opcoes = {}) {
  * OUTROS filtros, sem duplicata pela chave. O rótulo é a grafia mais frequente
  * (empate: a primeira que apareceu).
  *
- * @returns {string[]} rótulos, na ordem de `comparar` (ou alfabética)
+ * Devolve os rótulos, na ordem de `comparar` (ou alfabética).
  */
-export function opcoesDoCampo(linhas, estado, campo, opcoes = {}) {
-  const porChave = new Map();
+export function opcoesDoCampo<L>(
+  linhas: readonly L[] | null | undefined,
+  estado: EstadoDosFiltros | null | undefined,
+  campo: string,
+  opcoes: OpcoesDoFiltro<L> = {},
+): string[] {
+  const porChave = new Map<string, Map<string, number>>();
   (linhas || []).forEach((linha) => {
     if (!linhaAtende(linha, estado, { ...opcoes, ignorarCampo: campo })) return;
     const valor = valorDoCampo(linha, campo);
@@ -96,7 +123,7 @@ export function opcoesDoCampo(linhas, estado, campo, opcoes = {}) {
   });
   const comparar =
     opcoes.comparar ||
-    ((a, b) =>
+    ((a: string, b: string) =>
       a.localeCompare(b, "pt-BR", { numeric: true, sensitivity: "base" }));
   return rotulos.sort(comparar);
 }
@@ -106,9 +133,13 @@ export function opcoesDoCampo(linhas, estado, campo, opcoes = {}) {
  * Uma seleção que sobrevive é reescrita com o rótulo canônico da opção.
  * Altera `estado` no lugar.
  *
- * @returns {boolean} se alguma seleção mudou
+ * Devolve se alguma seleção mudou.
  */
-export function podarSelecoes(linhas, estado, opcoes = {}) {
+export function podarSelecoes<L>(
+  linhas: readonly L[] | null | undefined,
+  estado: Record<string, Set<string> | undefined>,
+  opcoes: OpcoesDoFiltro<L> = {},
+): boolean {
   const campos = opcoes.campos || Object.keys(estado || {});
   let mudou = false;
   // Cada volta só pode remover seleções; o limite é uma trava de segurança.
@@ -122,7 +153,7 @@ export function podarSelecoes(linhas, estado, opcoes = {}) {
           (rotulo) => [chaveDeFiltro(rotulo), rotulo],
         ),
       );
-      const proximos = new Set();
+      const proximos = new Set<string>();
       selecionados.forEach((valor) => {
         const rotulo = disponiveis.get(chaveDeFiltro(valor));
         if (rotulo) proximos.add(rotulo);

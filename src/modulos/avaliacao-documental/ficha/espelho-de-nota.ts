@@ -33,7 +33,7 @@ import {
   type TextosDoEspelho,
 } from "../../../lib/avaliacao-documental/modelo-do-espelho.ts";
 import { CHAVE_DO_CABECALHO } from "../../../lib/cabecalho-dos-documentos.js";
-import { LOGO_PADRAO_DA_BARRA } from "../../../lib/marca-da-barra-lateral.js";
+import { LOGO_PADRAO_DA_BARRA } from "../../../lib/marca-da-barra-lateral.ts";
 import {
   imprimirPagina,
   logoEmPng,

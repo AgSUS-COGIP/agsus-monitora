@@ -1,7 +1,7 @@
 import {
   avisar,
   EVENTO_BARRA_ALTERNADA,
-} from "../lib/eventos-da-barra-lateral.js";
+} from "../lib/eventos-da-barra-lateral.ts";
 
 const MOBILE_BREAKPOINT = 900;
 /*

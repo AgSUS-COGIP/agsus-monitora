@@ -37,7 +37,7 @@ As regras nacionais e distritais de contagens, bolhas, CASAIs, unidades, víncul
 resumos e enquadramento estão em `src/lib/mapa-saude-indigena/chaves.ts`, `mapa-nacional.ts`
 e `mapa-do-dsei.ts`. A integração comum com o Leaflet também está em TypeScript (`leaflet.ts`), incluindo
 criação, fundo com recurso, tamanho, contornos, enquadramento, leque, ícones e balões.
-A reconciliação, as guardas globais e o recuo dos tiles permanecem em JavaScript,
+A reconciliação e as guardas globais (`src/modules/map-*.js`) permanecem em JavaScript,
 com contratos JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
 mapas já estão em TypeScript, com contratos em `tipos-do-painel.ts`; formas e cores
 em `src/lib/mapa-saude-indigena/formas.ts`. Outros módulos
@@ -73,6 +73,19 @@ segurança (`sanitize.ts`, `html-security.ts`, `csv-security.ts`, `config-valida
 navegador (`copia-da-sessao.ts`, `cache-de-payload.ts`), navegação, presença, carregamento e
 monitores de desempenho e CSP. Esses módulos são importados sem extensão. `origem-da-requisicao.js`
 continua em JavaScript porque as funções da Vercel em `api/` o importam direto, no Node.
+
+As regras de mapas, comemorações e visual de `src/lib/` também estão em TypeScript, importadas
+com a extensão `.ts`: limites e enquadramento do Brasil (`brasil-bounds.ts`,
+`enquadramento-do-brasil.ts`), sedes municipais (`coordenadas-dos-municipios.ts`), dicas e popups
+dentro do mapa (`dica-dentro-do-mapa.ts`), fábrica do Leaflet, filtros, leque, bolhas e
+agrupamentos (`mapa-render.ts`), recuo dos tiles, ícones Lucide, Chart.js sob demanda,
+contraste, boas-vindas, eventos e marca da barra lateral; e as comemorações (`comemoracao.ts`,
+`preferencia-de-comemoracoes.ts`), os fogos (`fogos.ts`, `fogos-cena.ts`, `fogos-formas.ts`) e o
+motor de efeitos (`motor-de-efeitos.ts`). O Leaflet não tem tipos instalados: cada arquivo declara
+só o mínimo que usa (por exemplo `MapaDaDica`, `DicaDoLeaflet`). A migração não mudou o JavaScript
+gerado: a saída do esbuild (sem espaços, sintaxe minificada) de cada arquivo é idêntica à do
+original. `scripts/arquivo/auditar-coordenadas.mjs` e `scripts/gerar-icones-lucide.mjs` importam o `.ts`
+direto no Node, que remove os tipos.
 
 ## Verificação
 

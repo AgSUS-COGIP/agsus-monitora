@@ -1,7 +1,7 @@
 import { StrictMode, act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.js";
+import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.ts";
 import { CORES_DO_MAPA } from "../../src/lib/mapa-saude-indigena/formas.ts";
 import { EVENTO_DAS_TERRAS } from "../../src/modules/indigenous-territories-layer.js";
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
@@ -704,7 +704,7 @@ describe("tema", () => {
 /*
   "O mapa quebra o nome quando passo o mouse ou clico em algum extremo": a
   dica centrada acima de um ponto na borda saía do contêiner do mapa. Os dois
-  mapas (nacional e do DSEI) ligam src/lib/dica-dentro-do-mapa.js.
+  mapas (nacional e do DSEI) ligam src/lib/dica-dentro-do-mapa.ts.
 */
 describe("dicas e popups dentro do mapa", () => {
   /* Mede como o navegador: contêiner 600 × 400, dica 268 × 58. */

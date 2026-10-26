@@ -26,7 +26,7 @@ import { criarLeafletFalso } from "./leaflet-falso.js";
 
 // O Chart.js não desenha no jsdom (sem canvas): um falso guarda o que recebeu.
 const graficos = vi.hoisted(() => []);
-vi.mock("../../src/lib/chartjs-global.js", () => {
+vi.mock("../../src/lib/chartjs-global.ts", () => {
   const Chart = class {
     constructor(canvas, configuracao) {
       this.canvas = canvas;

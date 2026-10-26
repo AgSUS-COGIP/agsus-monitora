@@ -4,7 +4,7 @@ import {
   agruparNaTela,
   anguloNoLeque,
   calcularLeque,
-} from "../src/lib/leque-de-marcadores.js";
+} from "../src/lib/leque-de-marcadores.ts";
 
 const destino = (p, o) => ({ x: p.x + o.dx, y: p.y + o.dy });
 

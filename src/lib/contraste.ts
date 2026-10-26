@@ -26,25 +26,25 @@ export const MINIMO_AA = 4.5;
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
-function canais(cor) {
+function canais(cor: string): number[] {
   return [1, 3, 5].map((i) => parseInt(cor.slice(i, i + 2), 16));
 }
 
-function canalLinear(valor) {
+function canalLinear(valor: number): number {
   const v = valor / 255;
   return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
 }
 
-export function luminanciaRelativa(cor) {
-  const [r, g, b] = canais(cor).map(canalLinear);
+export function luminanciaRelativa(cor: string): number {
+  const [r, g, b] = canais(cor).map(canalLinear) as [number, number, number];
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
-export function razaoDeContraste(uma, outra) {
+export function razaoDeContraste(uma: string, outra: string): number {
   const [maior, menor] = [
     luminanciaRelativa(uma),
     luminanciaRelativa(outra),
-  ].sort((a, b) => b - a);
+  ].sort((a, b) => b - a) as [number, number];
   return (maior + 0.05) / (menor + 0.05);
 }
 
@@ -66,24 +66,41 @@ export function razaoDeContraste(uma, outra) {
 export const MODO_AUTO = "auto";
 export const MODO_CLARO = "claro";
 export const MODO_ESCURO = "escuro";
-const MODOS = new Set([MODO_AUTO, MODO_CLARO, MODO_ESCURO]);
+export type ModoDoTexto =
+  typeof MODO_AUTO | typeof MODO_CLARO | typeof MODO_ESCURO;
+const MODOS: ReadonlySet<string> = new Set([
+  MODO_AUTO,
+  MODO_CLARO,
+  MODO_ESCURO,
+]);
 
-export function normalizarModo(valor) {
+export function normalizarModo(valor: unknown): ModoDoTexto {
   const bruto = String(valor ?? "")
     .trim()
     .toLowerCase();
-  return MODOS.has(bruto) ? bruto : MODO_AUTO;
+  return MODOS.has(bruto) ? (bruto as ModoDoTexto) : MODO_AUTO;
 }
 
 /** O primeiro plano que a tela vai usar, já considerando o modo escolhido. */
-export function corDoTextoPara(cor, modo = MODO_AUTO) {
+export function corDoTextoPara(cor: string, modo: unknown = MODO_AUTO): string {
   const escolhido = normalizarModo(modo);
   if (escolhido === MODO_CLARO) return TEXTO_CLARO;
   if (escolhido === MODO_ESCURO) return TEXTO_ESCURO;
   return needsLightForeground(cor) ? TEXTO_CLARO : TEXTO_ESCURO;
 }
 
-export function avaliarCor(cor, modo = MODO_AUTO) {
+export interface AvaliacaoDaCor {
+  cor: string;
+  corDoTexto: string;
+  razao: number;
+  passa: boolean;
+  mensagem: string;
+}
+
+export function avaliarCor(
+  cor: unknown,
+  modo: unknown = MODO_AUTO,
+): AvaliacaoDaCor | null {
   if (typeof cor !== "string" || !HEX.test(cor.trim())) return null;
 
   const normalizada = cor.trim().toLowerCase();

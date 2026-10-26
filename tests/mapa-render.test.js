@@ -7,7 +7,7 @@ import {
   criarRegistroDeDescarte,
   posicoesSpiderfy,
   raioDaBolha,
-} from "../src/lib/mapa-render.js";
+} from "../src/lib/mapa-render.ts";
 
 describe("raio da bolha do DSEI", () => {
   it("respeita o mínimo e o máximo declarados", () => {

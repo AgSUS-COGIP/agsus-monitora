@@ -2,8 +2,8 @@
   Fogos de artifício das comemorações, sem DOM: o roteiro do show, a física
   das faíscas e a paleta. O desenho no <canvas> é de src/modules/comemoracao.js,
   que só chama `criarShow`, `avancarShow` e as funções de brilho e cor daqui.
-  A Aya, o véu e o som são de src/lib/fogos-cena.js; o marco desenhado no
-  céu (pontos da forma ou do número), de src/lib/fogos-formas.js.
+  A Aya, o véu e o som são de src/lib/fogos-cena.ts; o marco desenhado no
+  céu (pontos da forma ou do número), de src/lib/fogos-formas.ts.
 
   O show (5–6 s):
     1. a Aya atravessa a tela voando e solta o primeiro foguete;
@@ -24,9 +24,180 @@
   semente com `criarAleatorio`.
 */
 
-import { DURACAO_DOS_FOGOS_MS } from "./comemoracao.js";
-import { pontoDaSoltura, trajetoDaAya } from "./fogos-cena.js";
-import { pontosDaForma } from "./fogos-formas.js";
+import { DURACAO_DOS_FOGOS_MS } from "./comemoracao.ts";
+import { pontoDaSoltura, trajetoDaAya } from "./fogos-cena.ts";
+import { pontosDaForma } from "./fogos-formas.ts";
+import type { TrajetoDaAya } from "./fogos-cena.ts";
+import type { AmostrarTexto, PontoDaForma } from "./fogos-formas.ts";
+
+/** Sorteio de 0 (inclusive) a 1 (exclusive), como Math.random. */
+export type Aleatorio = () => number;
+
+/** Ponto em px CSS. */
+export interface PontoXY {
+  x: number;
+  y: number;
+}
+
+export interface IntensidadeDoShow {
+  explosoes: number;
+  final: number;
+  duracaoMs: number;
+}
+
+export type NomeDoFormato =
+  | "peonia"
+  | "crisantemo"
+  | "anel"
+  | "salgueiro"
+  | "estalinho"
+  | "kamuro"
+  | "glitter"
+  | "palmeira"
+  | "pistilo"
+  | "bombaDupla";
+
+/** Um formato de estouro (ver o comentário de FORMATOS). */
+export interface FormatoDosFogos {
+  faiscas: number;
+  forca: number;
+  atrito: number;
+  peso: number;
+  vida: readonly [number, number];
+  rastro: number;
+  tamanho: number;
+  cintila?: boolean;
+  dourado?: boolean;
+  estala?: boolean;
+  pisca?: readonly [number, number];
+  emite?: number;
+  nucleo?: number;
+  segundo?: { formato: NomeDoFormato; atraso: number };
+}
+
+/** O formato pelo nome, de um texto qualquer. */
+type FormatosPorNome = Readonly<Record<string, FormatoDosFogos | undefined>>;
+
+export interface PaletaDosFogos {
+  cores: string[];
+  dourado: string;
+  ambar: string;
+  centelha: string;
+  fumaca: string;
+  composicao: GlobalCompositeOperation;
+}
+
+export type PapelDoEstouro = "aya" | "comum" | "marco" | "final";
+
+/** Um foguete do roteiro. `formato` é um NomeDoFormato ou "marco". */
+export interface PlanoDoFoguete {
+  formato: string;
+  papel: PapelDoEstouro;
+  estouro: number;
+  lancamento: number;
+  xBase: number;
+  yBase: number;
+  xAlvo: number;
+  yAlvo: number;
+  cor: string;
+  cor2: string | null;
+  corFinal: string | null;
+  vidaFator: number;
+  /** Só no marco com forma: os pontos do desenho. */
+  pontos?: readonly PontoDaForma[] | null;
+  fimDaForma?: number;
+}
+
+export interface FogueteNoAr extends PontoXY {
+  plano: PlanoDoFoguete;
+  vx: number;
+  vy: number;
+  gravidade: number;
+  idade: number;
+  subida: number;
+}
+
+/** O que toda partícula dos fogos tem. */
+interface BaseDaParticula extends PontoXY {
+  vx: number;
+  vy: number;
+  atrito: number;
+  gravidade: number;
+  vida: number;
+  vidaMax: number;
+  cor: string;
+  tamanho: number;
+  rastro: number;
+  corFinal?: string | null;
+  cintila?: boolean;
+  estala?: boolean;
+  /** Glitter: piscadas por segundo (0, não pisca). */
+  pisca?: number;
+  fase?: number;
+  /** Palmeira: brasas por segundo. */
+  emite?: number;
+  /** Fumaça: quanto cresce por segundo. */
+  cresce?: number;
+}
+export interface ParticulaComum extends BaseDaParticula {
+  tipo: "faisca" | "clarao" | "fumaca" | "centelha";
+}
+/** A faísca do marco: curva até o lugar, brilha e cai. */
+export interface ParticulaDoAlvo extends BaseDaParticula {
+  tipo: "alvo";
+  x0: number;
+  y0: number;
+  cx: number;
+  cy: number;
+  xa: number;
+  ya: number;
+  idade: number;
+  convergencia: number;
+  segura: number;
+  fase: number;
+  caindo?: number;
+}
+/** O segundo tempo da bomba dupla: estoura de novo ao apagar. */
+export interface SementeDosFogos extends BaseDaParticula {
+  tipo: "semente";
+  plano: PlanoDoFoguete;
+}
+export type ParticulaDosFogos =
+  ParticulaComum | ParticulaDoAlvo | SementeDosFogos;
+
+/** Estouro ainda não tocado (som). */
+export interface EventoDoEstouro extends PontoXY {
+  tipo: "estouro";
+  formato: string;
+  papel: PapelDoEstouro;
+}
+
+export interface ShowDeFogos {
+  t: number;
+  duracao: number;
+  escala: number;
+  fator: number;
+  paleta: PaletaDosFogos;
+  limite: number;
+  aleatorio: Aleatorio;
+  aya: TrajetoDaAya | null;
+  pontos: PontoDaForma[];
+  planos: PlanoDoFoguete[];
+  proximo: number;
+  foguetes: FogueteNoAr[];
+  particulas: ParticulaDosFogos[];
+  estouros: number;
+  eventos: EventoDoEstouro[];
+}
+
+interface ContextoDoPlano {
+  largura: number;
+  altura: number;
+  duracao: number;
+  gravidade: number;
+  paleta: PaletaDosFogos;
+  aleatorio: Aleatorio;
+}
 
 /* Gravidade das faíscas e dos foguetes (px/s² numa tela de referência). */
 export const GRAVIDADE = 240;
@@ -52,8 +223,10 @@ export const INTENSIDADES = Object.freeze({
   festa: Object.freeze({ explosoes: 12, final: 8, duracaoMs: 6000 }),
 });
 
-export const intensidadeDoShow = (nome) =>
-  INTENSIDADES[nome] || INTENSIDADES.cheio;
+export const intensidadeDoShow = (nome: unknown): IntensidadeDoShow =>
+  (INTENSIDADES as Readonly<Record<string, IntensidadeDoShow | undefined>>)[
+    nome as string
+  ] || INTENSIDADES.cheio;
 
 /* A duração que Configurações › Comemorações pode pedir aos fogos (s). */
 export const DURACAO_MINIMA_DOS_FOGOS_S = 4;
@@ -63,7 +236,10 @@ export const DURACAO_MAXIMA_DOS_FOGOS_S = 15;
  * A duração do show (s): a pedida (`duracaoMs`, limitada a 4–15 s) ou a da
  * intensidade. Show mais longo solta proporcionalmente mais estouros comuns.
  */
-export function duracaoDoShow(intensidade, duracaoMs = null) {
+export function duracaoDoShow(
+  intensidade: unknown,
+  duracaoMs: unknown = null,
+): number {
   const base = intensidadeDoShow(intensidade).duracaoMs / 1000;
   const pedida = Number(duracaoMs);
   if (!duracaoMs || !Number.isFinite(pedida)) return base;
@@ -80,114 +256,117 @@ export function duracaoDoShow(intensidade, duracaoMs = null) {
   piscadas por segundo), se solta brasas pelo caminho (palmeira: por
   segundo), se é dourado e se tem um segundo tempo (bomba dupla).
 */
-export const FORMATOS = Object.freeze({
-  peonia: {
-    faiscas: 160,
-    forca: 1,
-    atrito: 1.7,
-    peso: 1,
-    vida: [1.0, 1.4],
-    rastro: 0.5,
-    tamanho: 2,
-  },
-  crisantemo: {
-    faiscas: 180,
-    forca: 1.05,
-    atrito: 1.4,
-    peso: 0.9,
-    vida: [1.3, 1.75],
-    rastro: 1.5,
-    tamanho: 1.7,
-    cintila: true,
-  },
-  anel: {
-    faiscas: 90,
-    forca: 0.95,
-    atrito: 1.6,
-    peso: 0.8,
-    vida: [1.0, 1.3],
-    rastro: 0.6,
-    tamanho: 2.1,
-  },
-  salgueiro: {
-    faiscas: 120,
-    forca: 0.8,
-    atrito: 2.6,
-    peso: 0.55,
-    vida: [1.9, 2.4],
-    rastro: 2.2,
-    tamanho: 1.5,
-    cintila: true,
-    dourado: true,
-  },
-  estalinho: {
-    faiscas: 100,
-    forca: 0.85,
-    atrito: 1.9,
-    peso: 1,
-    vida: [0.75, 1.05],
-    rastro: 0.4,
-    tamanho: 1.8,
-    estala: true,
-  },
-  kamuro: {
-    faiscas: 150,
-    forca: 0.9,
-    atrito: 2.3,
-    peso: 0.32,
-    vida: [2.3, 2.8],
-    rastro: 2.8,
-    tamanho: 1.6,
-    cintila: true,
-    dourado: true,
-  },
-  glitter: {
-    faiscas: 130,
-    forca: 0.95,
-    atrito: 1.8,
-    peso: 0.8,
-    vida: [1.2, 1.6],
-    rastro: 0.25,
-    tamanho: 2,
-    pisca: [9, 16],
-  },
-  palmeira: {
-    faiscas: 14,
-    forca: 1.15,
-    atrito: 1.2,
-    peso: 0.9,
-    vida: [1.4, 1.8],
-    rastro: 3,
-    tamanho: 3.6,
-    emite: 26,
-    dourado: true,
-  },
-  /* Camadas: casca por fora e um miolo (pistilo) de outra cor, mais lento. */
-  pistilo: {
-    faiscas: 170,
-    nucleo: 0.3,
-    forca: 1,
-    atrito: 1.7,
-    peso: 0.95,
-    vida: [1.1, 1.5],
-    rastro: 0.7,
-    tamanho: 2,
-    cintila: true,
-  },
-  bombaDupla: {
-    faiscas: 80,
-    forca: 0.55,
-    atrito: 1.9,
-    peso: 0.9,
-    vida: [0.45, 0.6],
-    rastro: 0.5,
-    tamanho: 1.8,
-    segundo: { formato: "peonia", atraso: 0.38 },
-  },
-});
-export const NOMES_DOS_FORMATOS = Object.freeze(Object.keys(FORMATOS));
+export const FORMATOS: Readonly<Record<NomeDoFormato, FormatoDosFogos>> =
+  Object.freeze({
+    peonia: {
+      faiscas: 160,
+      forca: 1,
+      atrito: 1.7,
+      peso: 1,
+      vida: [1.0, 1.4],
+      rastro: 0.5,
+      tamanho: 2,
+    },
+    crisantemo: {
+      faiscas: 180,
+      forca: 1.05,
+      atrito: 1.4,
+      peso: 0.9,
+      vida: [1.3, 1.75],
+      rastro: 1.5,
+      tamanho: 1.7,
+      cintila: true,
+    },
+    anel: {
+      faiscas: 90,
+      forca: 0.95,
+      atrito: 1.6,
+      peso: 0.8,
+      vida: [1.0, 1.3],
+      rastro: 0.6,
+      tamanho: 2.1,
+    },
+    salgueiro: {
+      faiscas: 120,
+      forca: 0.8,
+      atrito: 2.6,
+      peso: 0.55,
+      vida: [1.9, 2.4],
+      rastro: 2.2,
+      tamanho: 1.5,
+      cintila: true,
+      dourado: true,
+    },
+    estalinho: {
+      faiscas: 100,
+      forca: 0.85,
+      atrito: 1.9,
+      peso: 1,
+      vida: [0.75, 1.05],
+      rastro: 0.4,
+      tamanho: 1.8,
+      estala: true,
+    },
+    kamuro: {
+      faiscas: 150,
+      forca: 0.9,
+      atrito: 2.3,
+      peso: 0.32,
+      vida: [2.3, 2.8],
+      rastro: 2.8,
+      tamanho: 1.6,
+      cintila: true,
+      dourado: true,
+    },
+    glitter: {
+      faiscas: 130,
+      forca: 0.95,
+      atrito: 1.8,
+      peso: 0.8,
+      vida: [1.2, 1.6],
+      rastro: 0.25,
+      tamanho: 2,
+      pisca: [9, 16],
+    },
+    palmeira: {
+      faiscas: 14,
+      forca: 1.15,
+      atrito: 1.2,
+      peso: 0.9,
+      vida: [1.4, 1.8],
+      rastro: 3,
+      tamanho: 3.6,
+      emite: 26,
+      dourado: true,
+    },
+    /* Camadas: casca por fora e um miolo (pistilo) de outra cor, mais lento. */
+    pistilo: {
+      faiscas: 170,
+      nucleo: 0.3,
+      forca: 1,
+      atrito: 1.7,
+      peso: 0.95,
+      vida: [1.1, 1.5],
+      rastro: 0.7,
+      tamanho: 2,
+      cintila: true,
+    },
+    bombaDupla: {
+      faiscas: 80,
+      forca: 0.55,
+      atrito: 1.9,
+      peso: 0.9,
+      vida: [0.45, 0.6],
+      rastro: 0.5,
+      tamanho: 1.8,
+      segundo: { formato: "peonia", atraso: 0.38 },
+    },
+  });
+export const NOMES_DOS_FORMATOS: readonly string[] = Object.freeze(
+  Object.keys(FORMATOS),
+);
 /* O grande final usa só formatos curtos e cheios. */
-export const FORMATOS_DO_FINAL = Object.freeze([
+export const FORMATOS_DO_FINAL: readonly string[] = Object.freeze([
   "peonia",
   "crisantemo",
   "glitter",
@@ -197,8 +376,9 @@ export const FORMATOS_DO_FINAL = Object.freeze([
 ]);
 
 /* Quanto tempo um formato brilha depois do estouro (com o segundo tempo). */
-export function duracaoDoFormato(nome) {
-  const formato = FORMATOS[nome] || FORMATOS.peonia;
+export function duracaoDoFormato(nome: unknown): number {
+  const formato =
+    (FORMATOS as FormatosPorNome)[nome as string] || FORMATOS.peonia;
   const segundo = formato.segundo;
   return (
     formato.vida[1] +
@@ -218,7 +398,7 @@ export const MARCO = Object.freeze({
 });
 
 /* Gerador com semente (mulberry32), para testes repetíveis. */
-export function criarAleatorio(semente = 1) {
+export function criarAleatorio(semente = 1): Aleatorio {
   let a = semente >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -229,26 +409,28 @@ export function criarAleatorio(semente = 1) {
   };
 }
 
-const entre = (aleatorio, min, max) => min + (max - min) * aleatorio();
-const limitar = (valor, min, max) => Math.min(max, Math.max(min, valor));
-const sortear = (aleatorio, lista) =>
-  lista[Math.floor(aleatorio() * lista.length) % lista.length];
+const entre = (aleatorio: Aleatorio, min: number, max: number): number =>
+  min + (max - min) * aleatorio();
+const limitar = (valor: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, valor));
+const sortear = <T>(aleatorio: Aleatorio, lista: readonly T[]): T =>
+  lista[Math.floor(aleatorio() * lista.length) % lista.length]!;
 
-function embaralhar(lista, aleatorio) {
+function embaralhar<T>(lista: readonly T[], aleatorio: Aleatorio): T[] {
   const copia = [...lista];
   for (let i = copia.length - 1; i > 0; i -= 1) {
     const j = Math.floor(aleatorio() * (i + 1));
-    [copia[i], copia[j]] = [copia[j], copia[i]];
+    [copia[i], copia[j]] = [copia[j]!, copia[i]!];
   }
   return copia;
 }
 
 /* A escala da tela: estouros proporcionais ao menor lado (tela de 800 px = 1). */
-export const escalaDaTela = (largura, altura) =>
+export const escalaDaTela = (largura: number, altura: number): number =>
   limitar(Math.min(largura, altura) / 800, 0.55, 1.4);
 
 /* Telas pequenas soltam menos faíscas (metade, no mínimo). */
-export const fatorDeFaiscas = (largura, altura) =>
+export const fatorDeFaiscas = (largura: number, altura: number): number =>
   limitar((largura * altura) / (1280 * 720), 0.5, 1);
 
 // ── Paleta ──────────────────────────────────────────────────────────────────
@@ -263,7 +445,7 @@ export const TOKENS_DA_PALETA = Object.freeze([
   "--series-4",
   "--series-5",
 ]);
-const DOURADOS = ["#ffd23f", "#ffb627"];
+const DOURADOS = ["#ffd23f", "#ffb627"] as const;
 const BRANCO = "#fff6dc";
 /* Cores vivas que brilham sobre o véu; no tema claro, somam-se às da marca. */
 const VIVAS = ["#59f2c8", "#4fdcff", "#ff7a59", "#c38cff"];
@@ -274,7 +456,10 @@ const VIVAS = ["#59f2c8", "#4fdcff", "#ff7a59", "#c38cff"];
  * temas; no claro, que tem tokens escuros, entram também cores vivas.
  * `lerToken` devolve o valor do token (ou vazio). Sem token, a reserva.
  */
-export function paletaDosFogos(lerToken = () => "", { escuro = true } = {}) {
+export function paletaDosFogos(
+  lerToken: (nome: string) => unknown = () => "",
+  { escuro = true }: { escuro?: boolean } = {},
+): PaletaDosFogos {
   const daMarca = TOKENS_DA_PALETA.map((nome) => {
     try {
       return String(lerToken(nome) || "").trim();
@@ -298,15 +483,27 @@ export function paletaDosFogos(lerToken = () => "", { escuro = true } = {}) {
 // ── Roteiro ─────────────────────────────────────────────────────────────────
 
 /* Tempo de subida até o ápice a `altura` px acima da base. */
-export const tempoDeSubida = (altura, gravidade = GRAVIDADE_DO_FOGUETE) =>
-  Math.sqrt((2 * Math.max(0, altura)) / gravidade);
+export const tempoDeSubida = (
+  altura: number,
+  gravidade: number = GRAVIDADE_DO_FOGUETE,
+): number => Math.sqrt((2 * Math.max(0, altura)) / gravidade);
 
 /* Quanto o foguete solto pela Aya leva até estourar. */
 export const SUBIDA_DA_AYA = 0.55;
 
 /* Os instantes dos estouros comuns: salvas de 1 a 3 entre `primeiro` e `ultimo`. */
-function instantesComuns({ explosoes, primeiro, ultimo, aleatorio }) {
-  const instantes = [];
+function instantesComuns({
+  explosoes,
+  primeiro,
+  ultimo,
+  aleatorio,
+}: {
+  explosoes: number;
+  primeiro: number;
+  ultimo: number;
+  aleatorio: Aleatorio;
+}): number[] {
+  const instantes: number[] = [];
   const salvas = Math.max(2, Math.round(explosoes / 1.6));
   for (let s = 0; instantes.length < explosoes; s += 1) {
     const base = primeiro + ((ultimo - primeiro) * (s % salvas)) / (salvas - 1);
@@ -329,9 +526,23 @@ function instantesComuns({ explosoes, primeiro, ultimo, aleatorio }) {
 
 /* Um plano de foguete: base, alvo, instante do estouro e cores. */
 function planoDoFoguete(
-  { formato, estouro, papel, xAlvo, yAlvo, base = null },
-  { largura, altura, duracao, gravidade, paleta, aleatorio },
-) {
+  {
+    formato,
+    estouro,
+    papel,
+    xAlvo,
+    yAlvo,
+    base = null,
+  }: {
+    formato: string;
+    estouro: number;
+    papel: PapelDoEstouro;
+    xAlvo: number;
+    yAlvo: number;
+    base?: PontoXY | null;
+  },
+  { largura, altura, duracao, gravidade, paleta, aleatorio }: ContextoDoPlano,
+): PlanoDoFoguete {
   const xBase =
     base?.x ??
     limitar(
@@ -343,7 +554,7 @@ function planoDoFoguete(
   const subida = base
     ? SUBIDA_DA_AYA
     : Math.min(estouro, tempoDeSubida(yBase - yAlvo, gravidade));
-  const dourado = FORMATOS[formato]?.dourado;
+  const dourado = (FORMATOS as FormatosPorNome)[formato]?.dourado;
   return {
     formato,
     papel,
@@ -393,7 +604,16 @@ export function planejarShow({
   aya = null,
   pontos = [],
   duracaoMs = null,
-} = {}) {
+}: {
+  largura?: number;
+  altura?: number;
+  intensidade?: string;
+  paleta?: PaletaDosFogos;
+  aleatorio?: Aleatorio;
+  aya?: TrajetoDaAya | null;
+  pontos?: readonly PontoDaForma[];
+  duracaoMs?: number | null;
+} = {}): PlanoDoFoguete[] {
   const base = intensidadeDoShow(intensidade);
   const duracao = duracaoDoShow(intensidade, duracaoMs);
   const final = base.final;
@@ -402,7 +622,7 @@ export function planejarShow({
     Math.round((base.explosoes * duracao) / (base.duracaoMs / 1000)),
   );
   const escala = escalaDaTela(largura, altura);
-  const contexto = {
+  const contexto: ContextoDoPlano = {
     largura,
     altura,
     duracao,
@@ -422,22 +642,22 @@ export function planejarShow({
   });
   // Faixas da largura embaralhadas: cada estouro numa parte da tela.
   const faixas = embaralhar([...Array(explosoes).keys()], aleatorio);
-  let sacola = [];
+  let sacola: string[] = [];
   const comuns = instantes.map((estouro, i) => {
     if (!sacola.length) sacola = embaralhar(NOMES_DOS_FORMATOS, aleatorio);
     const daAya = Boolean(soltura) && i === 0;
     return planoDoFoguete(
       {
-        formato: sacola.pop(),
+        formato: sacola.pop()!,
         estouro: daAya ? primeiro : estouro,
         papel: daAya ? "aya" : "comum",
         xAlvo:
           largura *
           (0.08 +
-            (0.84 * (faixas[i] + entre(aleatorio, 0.2, 0.8))) / explosoes),
+            (0.84 * (faixas[i]! + entre(aleatorio, 0.2, 0.8))) / explosoes),
         yAlvo: daAya
           ? Math.min(
-              soltura.y - altura * 0.18,
+              soltura!.y - altura * 0.18,
               altura * entre(aleatorio, 0.12, 0.3),
             )
           : altura * entre(aleatorio, 0.1, 0.45),
@@ -455,7 +675,7 @@ export function planejarShow({
         y: pontos.reduce((s, p) => s + p.y, 0) / pontos.length,
       }
     : { x: largura / 2, y: altura * 0.3 };
-  const marco = {
+  const marco: PlanoDoFoguete = {
     ...planoDoFoguete(
       {
         formato: comForma ? "peonia" : "crisantemo",
@@ -479,7 +699,7 @@ export function planejarShow({
   // O grande final: `final` estouros quase juntos, dos lados do marco.
   const inicioDoFinal = duracao - 1.6;
   const fimDoFinal = duracao - 1.2;
-  let formatosDoFinal = [];
+  let formatosDoFinal: string[] = [];
   const finais = Array.from({ length: final }, (_, j) => {
     if (!formatosDoFinal.length)
       formatosDoFinal = embaralhar(FORMATOS_DO_FINAL, aleatorio);
@@ -491,7 +711,7 @@ export function planejarShow({
       : 0.06 + (0.88 * (j + 0.5)) / final;
     return planoDoFoguete(
       {
-        formato: formatosDoFinal.pop(),
+        formato: formatosDoFinal.pop()!,
         estouro: limitar(
           inicioDoFinal +
             ((fimDoFinal - inicioDoFinal) * j) / Math.max(1, final - 1) +
@@ -516,7 +736,7 @@ export function planejarShow({
  * O foguete de um plano no instante do lançamento: sobe com velocidade para
  * chegar ao alvo exatamente no instante do estouro (do chão, é o ápice).
  */
-export function lancarFoguete(plano, escala = 1) {
+export function lancarFoguete(plano: PlanoDoFoguete, escala = 1): FogueteNoAr {
   const gravidade = GRAVIDADE_DO_FOGUETE * escala;
   const subida = Math.max(0.05, plano.estouro - plano.lancamento);
   return {
@@ -533,7 +753,7 @@ export function lancarFoguete(plano, escala = 1) {
 }
 
 /** Move o foguete `dt` s. Devolve se chegou ao alvo (hora de estourar). */
-export function moverFoguete(foguete, dt) {
+export function moverFoguete(foguete: FogueteNoAr, dt: number): boolean {
   const resta = foguete.subida - foguete.idade;
   const passo = Math.min(dt, Math.max(0, resta));
   foguete.x += foguete.vx * passo;
@@ -549,7 +769,14 @@ export function moverFoguete(foguete, dt) {
   Direção de uma faísca: esfera vista de frente (mais densa na borda), anel
   inclinado ou os braços da palmeira (igualmente espaçados).
 */
-function direcao(formato, i, total, aleatorio, inclinacao, giro) {
+function direcao(
+  formato: string,
+  i: number,
+  total: number,
+  aleatorio: Aleatorio,
+  inclinacao: number,
+  giro: number,
+): [number, number] {
   if (formato === "anel") {
     const angulo = (i / total) * Math.PI * 2;
     const x = Math.cos(angulo);
@@ -570,7 +797,12 @@ function direcao(formato, i, total, aleatorio, inclinacao, giro) {
   return [Math.cos(angulo) * raio, Math.sin(angulo) * raio];
 }
 
-const clarao = (x, y, cor, escala) => ({
+const clarao = (
+  x: number,
+  y: number,
+  cor: string,
+  escala: number,
+): ParticulaComum => ({
   tipo: "clarao",
   x,
   y,
@@ -589,13 +821,28 @@ const clarao = (x, y, cor, escala) => ({
   As faíscas do marco: saem do centro numa curva (para fora e depois para o
   lugar), chegam em ~0,8 s, brilham na forma até `fimDaForma` e caem.
 */
-function faiscasDoMarco(plano, { x, y, escala, cabem, aleatorio }) {
-  const pontos = plano.pontos.slice(0, Math.max(0, cabem));
+function faiscasDoMarco(
+  plano: PlanoDoFoguete,
+  {
+    x,
+    y,
+    escala,
+    cabem,
+    aleatorio,
+  }: {
+    x: number;
+    y: number;
+    escala: number;
+    cabem: number;
+    aleatorio: Aleatorio;
+  },
+): ParticulaDoAlvo[] {
+  const pontos = plano.pontos!.slice(0, Math.max(0, cabem));
   const segura = Math.max(
     MARCO.convergencia + 0.1,
     (plano.fimDaForma ?? plano.estouro + 1.6) - plano.estouro,
   );
-  return pontos.map((alvo, i) => {
+  return pontos.map((alvo, i): ParticulaDoAlvo => {
     const angulo = aleatorio() * Math.PI * 2;
     const abertura = entre(aleatorio, 60, 150) * escala;
     const convergencia = MARCO.convergencia * entre(aleatorio, 0.85, 1.1);
@@ -633,8 +880,16 @@ function faiscasDoMarco(plano, { x, y, escala, cabem, aleatorio }) {
  * bomba dupla leva uma "semente" que estoura de novo; o marco, as faíscas da
  * forma (e um enfeite de peônia).
  */
+/** Onde e como estourar. `x` e `y` são obrigatórios: os padrões valem para o resto. */
+export interface OpcoesDoEstouro extends PontoXY {
+  escala?: number;
+  fator?: number;
+  cabem?: number;
+  aleatorio?: Aleatorio;
+}
+
 export function estourar(
-  plano,
+  plano: PlanoDoFoguete,
   {
     x,
     y,
@@ -642,8 +897,8 @@ export function estourar(
     fator = 1,
     cabem = Infinity,
     aleatorio = Math.random,
-  } = {},
-) {
+  }: OpcoesDoEstouro = {} as OpcoesDoEstouro,
+): ParticulaDosFogos[] {
   if (plano.formato === "marco" && plano.pontos?.length) {
     const forma = faiscasDoMarco(plano, {
       x,
@@ -665,7 +920,8 @@ export function estourar(
     );
     return [...forma, ...enfeite];
   }
-  const formato = FORMATOS[plano.formato] || FORMATOS.peonia;
+  const formato =
+    (FORMATOS as FormatosPorNome)[plano.formato] || FORMATOS.peonia;
   const segundo = formato.segundo;
   const total = Math.max(
     0,
@@ -679,7 +935,7 @@ export function estourar(
   const vidaFator = plano.vidaFator ?? 1;
   const inclinacao = entre(aleatorio, 0.25, 0.7);
   const giro = aleatorio() * Math.PI;
-  const faiscas = [];
+  const faiscas: ParticulaDosFogos[] = [];
   // O miolo do pistilo: as primeiras faíscas, mais lentas e da segunda cor.
   const miolo = formato.nucleo ? Math.round(total * formato.nucleo) : 0;
   for (let i = 0; i < total; i += 1) {
@@ -750,13 +1006,26 @@ export function estourar(
   return faiscas;
 }
 
+/** Cor e escala das partículas avulsas (fumaça, centelhas). */
+export interface OpcoesDaFumaca {
+  cor: string;
+  escala?: number;
+  cabem?: number;
+  aleatorio?: Aleatorio;
+}
+
 /* Fumaça de um estouro: algumas nuvens claras, que crescem, sobem e somem. */
 export function fumacaDoEstouro(
-  { x, y },
-  { cor, escala = 1, cabem = Infinity, aleatorio = Math.random } = {},
-) {
+  { x, y }: PontoXY,
+  {
+    cor,
+    escala = 1,
+    cabem = Infinity,
+    aleatorio = Math.random,
+  }: OpcoesDaFumaca = {} as OpcoesDaFumaca,
+): ParticulaComum[] {
   const quantas = Math.max(0, Math.min(3 + Math.floor(aleatorio() * 2), cabem));
-  return Array.from({ length: quantas }, () => {
+  return Array.from({ length: quantas }, (): ParticulaComum => {
     const vida = entre(aleatorio, 1.6, 2.4);
     return {
       tipo: "fumaca",
@@ -777,7 +1046,7 @@ export function fumacaDoEstouro(
 }
 
 /* A faísca do marco: curva até o lugar, brilha parada e depois cai. */
-function moverAlvo(p, dt) {
+function moverAlvo(p: ParticulaDoAlvo, dt: number): boolean {
   const xAntes = p.x;
   const yAntes = p.y;
   p.idade += dt;
@@ -803,7 +1072,7 @@ function moverAlvo(p, dt) {
 }
 
 /** Física de uma partícula por `dt` s: atrito do ar, gravidade, posição, vida. */
-export function moverParticula(p, dt) {
+export function moverParticula(p: ParticulaDosFogos, dt: number): boolean {
   if (p.tipo === "alvo") return moverAlvo(p, dt);
   const freio = Math.exp(-p.atrito * dt);
   p.vx *= freio;
@@ -817,11 +1086,16 @@ export function moverParticula(p, dt) {
 
 /* Os estalos de uma faísca de estalinho que se apaga: centelhas curtas. */
 export function centelhas(
-  p,
-  { cor, escala = 1, cabem = Infinity, aleatorio = Math.random } = {},
-) {
+  p: PontoXY,
+  {
+    cor,
+    escala = 1,
+    cabem = Infinity,
+    aleatorio = Math.random,
+  }: OpcoesDaFumaca = {} as OpcoesDaFumaca,
+): ParticulaComum[] {
   const quantas = Math.max(0, Math.min(2 + Math.floor(aleatorio() * 3), cabem));
-  return Array.from({ length: quantas }, () => {
+  return Array.from({ length: quantas }, (): ParticulaComum => {
     const vida = entre(aleatorio, 0.08, 0.22);
     const angulo = aleatorio() * Math.PI * 2;
     const impulso = entre(aleatorio, 20, 70) * escala;
@@ -844,9 +1118,19 @@ export function centelhas(
 
 /* Brasas que caem pelo caminho: do foguete subindo e dos braços da palmeira. */
 export function brasa(
-  origem,
-  { escala = 1, cor, aleatorio = Math.random, vida = [0.25, 0.5] } = {},
-) {
+  origem: PontoXY,
+  {
+    escala = 1,
+    cor,
+    aleatorio = Math.random,
+    vida = [0.25, 0.5],
+  }: {
+    escala?: number;
+    cor: string;
+    aleatorio?: Aleatorio;
+    vida?: readonly [number, number];
+  } = {} as { cor: string },
+): ParticulaComum {
   const tempo = entre(aleatorio, ...vida);
   return {
     tipo: "faisca",
@@ -871,7 +1155,10 @@ export function brasa(
  * ritmo próprio. O clarão some em curva; a fumaça é sempre tênue; a faísca
  * do marco ganha força ao chegar e pulsa enquanto forma o desenho.
  */
-export function brilhoDaParticula(p, aleatorio = Math.random) {
+export function brilhoDaParticula(
+  p: ParticulaDosFogos,
+  aleatorio: Aleatorio = Math.random,
+): number {
   const resto = limitar(p.vida / p.vidaMax, 0, 1);
   if (p.tipo === "clarao") return 0.4 * resto * resto;
   if (p.tipo === "semente") return 0;
@@ -896,14 +1183,16 @@ export function brilhoDaParticula(p, aleatorio = Math.random) {
 }
 
 /** A cor do momento: crisântemo e kamuro mudam no último terço da vida. */
-export const corDaParticula = (p) =>
-  p.corFinal && p.vida / p.vidaMax < 0.35 ? p.corFinal : p.cor;
+export const corDaParticula = (
+  p: Pick<BaseDaParticula, "corFinal" | "vida" | "vidaMax" | "cor">,
+): string => (p.corFinal && p.vida / p.vidaMax < 0.35 ? p.corFinal : p.cor);
 
 /** Quanto do quadro anterior apagar (rastro), pelo tempo do quadro. */
-export const alfaDoRastro = (dt) => 1 - Math.pow(0.74, Math.max(0, dt) * 60);
+export const alfaDoRastro = (dt: number): number =>
+  1 - Math.pow(0.74, Math.max(0, dt) * 60);
 
 /** O fim do show apaga tudo em 0,4 s em vez de cortar. */
-export function fatorDeSaida(t, duracao) {
+export function fatorDeSaida(t: number, duracao: number): number {
   return limitar((duracao - t) / 0.4, 0, 1);
 }
 
@@ -911,7 +1200,7 @@ export function fatorDeSaida(t, duracao) {
 
 /**
  * O estado inicial do show para uma tela e intensidade. `comAya` põe a Aya
- * voando (e soltando o primeiro foguete); `forma` (ver fogos-formas.js) é o
+ * voando (e soltando o primeiro foguete); `forma` (ver fogos-formas.ts) é o
  * marco desenhado no estouro do marco, e `amostrarTexto`, quem desenha texto
  * em pixels (o canvas fora da tela, no navegador).
  */
@@ -926,7 +1215,18 @@ export function criarShow({
   forma = null,
   amostrarTexto = null,
   duracaoMs = null,
-} = {}) {
+}: {
+  largura?: number;
+  altura?: number;
+  intensidade?: string;
+  paleta?: PaletaDosFogos;
+  aleatorio?: Aleatorio;
+  limite?: number;
+  comAya?: boolean;
+  forma?: unknown;
+  amostrarTexto?: AmostrarTexto | null;
+  duracaoMs?: number | null;
+} = {}): ShowDeFogos {
   const fator = fatorDeFaiscas(largura, altura);
   const aya = comAya ? trajetoDaAya({ largura, altura }) : null;
   const pontos = pontosDaForma(forma, {
@@ -965,7 +1265,13 @@ export function criarShow({
 }
 
 /* Um estouro: faíscas, fumaça e o evento (para o som). */
-function registrarEstouro(show, plano, { x, y }, novas, cabem) {
+function registrarEstouro(
+  show: ShowDeFogos,
+  plano: PlanoDoFoguete,
+  { x, y }: PontoXY,
+  novas: ParticulaDosFogos[],
+  cabem: () => number,
+): void {
   const { escala, aleatorio, paleta } = show;
   novas.push(
     ...estourar(plano, {
@@ -998,7 +1304,7 @@ function registrarEstouro(show, plano, { x, y }, novas, cabem) {
  * estalos, o segundo tempo da bomba dupla e as brasas da palmeira. Nunca
  * passa de `limite` partículas. Devolve o próprio estado.
  */
-export function avancarShow(show, dt) {
+export function avancarShow(show: ShowDeFogos, dt: unknown): ShowDeFogos {
   // Nunca passa da duração: o último passo só vai até o fim.
   const passo = limitar(
     Number(dt) || 0,
@@ -1009,12 +1315,12 @@ export function avancarShow(show, dt) {
   show.t += passo;
   while (
     show.proximo < show.planos.length &&
-    show.planos[show.proximo].lancamento <= show.t
+    show.planos[show.proximo]!.lancamento <= show.t
   ) {
-    show.foguetes.push(lancarFoguete(show.planos[show.proximo], escala));
+    show.foguetes.push(lancarFoguete(show.planos[show.proximo]!, escala));
     show.proximo += 1;
   }
-  const novas = [];
+  const novas: ParticulaDosFogos[] = [];
   const cabem = () => limite - show.particulas.length - novas.length;
   show.foguetes = show.foguetes.filter((foguete) => {
     const chegou = moverFoguete(foguete, passo);
@@ -1059,7 +1365,7 @@ export function avancarShow(show, dt) {
 }
 
 /** Acabou: passou da duração, ou já estourou tudo e nada mais brilha. */
-export function showAcabou(show) {
+export function showAcabou(show: ShowDeFogos): boolean {
   if (show.t >= show.duracao) return true;
   return (
     show.proximo >= show.planos.length &&

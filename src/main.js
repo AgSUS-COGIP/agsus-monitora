@@ -6,7 +6,7 @@ import { installSessionLifecycle } from "./lib/session-lifecycle";
 import { installBackgroundResourceLifecycle } from "./lib/background-resource-lifecycle";
 import { installFrontendPerformanceMonitor } from "./lib/frontend-performance-monitor";
 import { installCspReportMonitor } from "./lib/csp-report-monitor";
-import "./lib/chartjs-global.js";
+import "./lib/chartjs-global.ts";
 import "./styles/tokens.css";
 import "./styles/icones-lucide.css";
 import "./styles/visual-polish.css";

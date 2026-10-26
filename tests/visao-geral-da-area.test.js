@@ -4,7 +4,7 @@ import {
   chaveDoMunicipio,
   coordenadasDaUf,
   coordenadasDoMunicipio,
-} from "../src/lib/coordenadas-dos-municipios.js";
+} from "../src/lib/coordenadas-dos-municipios.ts";
 import {
   MAPA_DOS_DSEIS,
   MAPA_DOS_MUNICIPIOS,
@@ -27,7 +27,7 @@ import {
   RAIO_MAXIMO,
   RAIO_MINIMO,
   raioDaBolha,
-} from "../src/lib/mapa-render.js";
+} from "../src/lib/mapa-render.ts";
 
 const html = readFileSync("index.html", "utf8").replace(/\s+/g, " ");
 

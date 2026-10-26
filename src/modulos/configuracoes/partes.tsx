@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent, type ReactNode } from "react";
 import { DEFAULT_ACCESS_BRANDING } from "../../lib/access-branding.ts";
 import { urlDeImagem } from "../../lib/apresentacao-das-configuracoes.ts";
-import { avaliarCor, corDoTextoPara } from "../../lib/contraste.js";
+import { avaliarCor, corDoTextoPara } from "../../lib/contraste.ts";
 import { Aviso, Campo } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import type {
@@ -183,7 +183,7 @@ export function AvisoDeContraste({
   comBotao = false,
 }: {
   cor: string;
-  /** Modo do texto (contraste.js); sem ele, o automático. */
+  /** Modo do texto (contraste.ts); sem ele, o automático. */
   modo?: string;
   comBotao?: boolean;
 }) {

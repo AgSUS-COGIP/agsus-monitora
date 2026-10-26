@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
-import { BRASIL_BOUNDS } from "../../src/lib/brasil-bounds.js";
+import { BRASIL_BOUNDS } from "../../src/lib/brasil-bounds.ts";
 import {
   classificarVinculoTerritorial,
   siglaDaUf,

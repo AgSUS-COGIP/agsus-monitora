@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import {
   CHAVE_DA_COR_DA_BARRA,
   CHAVE_DO_LOGO_DA_BARRA,
-} from "../../lib/marca-da-barra-lateral.js";
+} from "../../lib/marca-da-barra-lateral.ts";
 import { camposDaSecao } from "../../lib/publicacao-de-configuracoes.ts";
 import { CartaoDaMascote } from "./cartao-da-mascote.tsx";
 import { CampoDaSecao, Grupo, Previa } from "./partes.tsx";

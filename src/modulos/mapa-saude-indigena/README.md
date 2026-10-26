@@ -104,7 +104,7 @@ Ele tem as mesmas regras deste e usa as mesmas peças (`painel-do-mapa.tsx`, `le
 `legenda.tsx`, `tela-cheia.tsx`, o CSS `.mapa-si-*`); a tabela das regras lado a lado e as
 diferenças de propósito estão em `src/modulos/mapa-de-projetos/README.md`.
 
-**Dicas e popups.** `criarMapa` liga `manterDicasDentroDoMapa` (`src/lib/dica-dentro-do-mapa.js`,
+**Dicas e popups.** `criarMapa` liga `manterDicasDentroDoMapa` (`src/lib/dica-dentro-do-mapa.ts`,
 também no mapa de Projetos): a dica que abre perto da borda troca de direção (em cima → embaixo →
 o lado com mais espaço) em vez de sair do contêiner, tem largura máxima relativa ao mapa e quebra
 na palavra (`.dica-no-mapa`, `src/ui/ui.css`); o popup tem `autoPan` com folga para os controles,
@@ -165,7 +165,7 @@ ResizeObserver não reenquadra por cima.
   de azul por cima, com o `health-map-contrast.css` (que saiu), e a legenda dele dizia verde.
 - Dicas que não saem do mapa perto da borda; popups que cabem no celular.
 - Enquadramento do Brasil com folga da maior bolha (raio + traço + 12 px) e zoom mínimo que desce
-  em quartos até o país caber (`src/lib/enquadramento-do-brasil.js`, usado pelo `map-guard`); os
+  em quartos até o país caber (`src/lib/enquadramento-do-brasil.ts`, usado pelo `map-guard`); os
   mapas React têm `enquadramentoProprio` (o guarda não reenquadra por cima) e reenquadram ao
   mudar de tamanho até a pessoa mexer (`criarMapaDoBrasil`). A legenda começa recolhida.
 

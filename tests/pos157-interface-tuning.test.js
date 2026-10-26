@@ -6,7 +6,7 @@ const main = readFileSync("src/main.js", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.js", "utf8");
 const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
 // A escolha da logo e da cor é de Configurações › Aparência (React).
-const marcaDaBarra = readFileSync("src/lib/marca-da-barra-lateral.js", "utf8");
+const marcaDaBarra = readFileSync("src/lib/marca-da-barra-lateral.ts", "utf8");
 const imagens = readFileSync("src/modulos/configuracoes/imagens.ts", "utf8");
 const aparencia = readFileSync(
   "src/modulos/configuracoes/aparencia.tsx",
@@ -66,7 +66,7 @@ describe("overview inicial dos mapas", () => {
     expect(mapGuard).toContain("map.__agsusOverviewMode = true");
     expect(mapGuard).toContain("HEALTH_MAP_OVERVIEW_MAX_ZOOM = 4.5");
     expect(mapGuard).toContain("maxZoom: HEALTH_MAP_OVERVIEW_MAX_ZOOM");
-    // A folga cobre a maior bolha (src/lib/enquadramento-do-brasil.js).
+    // A folga cobre a maior bolha (src/lib/enquadramento-do-brasil.ts).
     expect(mapGuard).toContain("padding: folgaDoBrasil");
     expect(mapGuard).toContain("isBrazilOverviewBounds");
   });

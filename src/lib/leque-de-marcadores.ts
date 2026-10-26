@@ -19,11 +19,24 @@
 
 export const RAIO_DO_LEQUE = 16;
 
+/** Ponto em pixels de tela. */
+export interface PontoNaTela {
+  x: number;
+  y: number;
+}
+
+/** Deslocamento a somar ao ponto de tela de um marcador. */
+export interface DeslocamentoNoLeque {
+  dx: number;
+  dy: number;
+  emLeque: boolean;
+}
+
 /*
   Ângulo do i-ésimo de n, igualmente espaçados e começando EM CIMA. Em
   coordenadas de tela o y cresce para baixo, por isso "em cima" é −π/2.
 */
-export function anguloNoLeque(indice, total) {
+export function anguloNoLeque(indice: number, total: unknown): number {
   const n = Math.max(1, Number(total) || 1);
   return -Math.PI / 2 + (2 * Math.PI * indice) / n;
 }
@@ -34,23 +47,30 @@ export function anguloNoLeque(indice, total) {
   ordem é a da entrada — os grupos pela posição do primeiro membro e os
   membros por índice —, para que a mesma entrada dê sempre o mesmo leque.
 */
-export function agruparNaTela(pontos, limitePx = 2 * RAIO_DO_LEQUE) {
-  const lista = Array.isArray(pontos) ? pontos : [];
+export function agruparNaTela(
+  pontos: unknown,
+  limitePx: number = 2 * RAIO_DO_LEQUE,
+): number[][] {
+  const lista = (Array.isArray(pontos) ? pontos : []) as readonly PontoNaTela[];
   const pai = lista.map((_, i) => i);
-  const raiz = (i) => {
+  const raiz = (i: number): number => {
     while (pai[i] !== i) {
-      pai[i] = pai[pai[i]];
-      i = pai[i];
+      pai[i] = pai[pai[i]!]!;
+      i = pai[i]!;
     }
     return i;
   };
-  const valido = (p) => Number.isFinite(p?.x) && Number.isFinite(p?.y);
+  const valido = (p: PontoNaTela | null | undefined): boolean =>
+    Number.isFinite(p?.x) && Number.isFinite(p?.y);
 
   for (let i = 0; i < lista.length; i++) {
     if (!valido(lista[i])) continue;
     for (let j = i + 1; j < lista.length; j++) {
       if (!valido(lista[j])) continue;
-      const d = Math.hypot(lista[i].x - lista[j].x, lista[i].y - lista[j].y);
+      const d = Math.hypot(
+        lista[i]!.x - lista[j]!.x,
+        lista[i]!.y - lista[j]!.y,
+      );
       if (d > limitePx) continue;
       const a = raiz(i);
       const b = raiz(j);
@@ -59,11 +79,11 @@ export function agruparNaTela(pontos, limitePx = 2 * RAIO_DO_LEQUE) {
     }
   }
 
-  const grupos = new Map();
+  const grupos = new Map<number, number[]>();
   lista.forEach((_, i) => {
     const r = raiz(i);
     if (!grupos.has(r)) grupos.set(r, []);
-    grupos.get(r).push(i);
+    grupos.get(r)!.push(i);
   });
   return [...grupos.values()];
 }
@@ -75,21 +95,28 @@ export function agruparNaTela(pontos, limitePx = 2 * RAIO_DO_LEQUE) {
   no caso de sedes coincidentes, o próprio ponto.
 */
 export function calcularLeque(
-  pontos,
-  { raio = RAIO_DO_LEQUE, limitePx = 2 * raio } = {},
-) {
-  const lista = Array.isArray(pontos) ? pontos : [];
-  const saida = lista.map(() => ({ dx: 0, dy: 0, emLeque: false }));
+  pontos: unknown,
+  {
+    raio = RAIO_DO_LEQUE,
+    limitePx = 2 * raio,
+  }: { raio?: number; limitePx?: number } = {},
+): DeslocamentoNoLeque[] {
+  const lista = (Array.isArray(pontos) ? pontos : []) as readonly PontoNaTela[];
+  const saida = lista.map((): DeslocamentoNoLeque => ({
+    dx: 0,
+    dy: 0,
+    emLeque: false,
+  }));
 
   agruparNaTela(lista, limitePx).forEach((grupo) => {
     if (grupo.length < 2) return;
-    const cx = grupo.reduce((s, i) => s + lista[i].x, 0) / grupo.length;
-    const cy = grupo.reduce((s, i) => s + lista[i].y, 0) / grupo.length;
+    const cx = grupo.reduce((s, i) => s + lista[i]!.x, 0) / grupo.length;
+    const cy = grupo.reduce((s, i) => s + lista[i]!.y, 0) / grupo.length;
     grupo.forEach((i, k) => {
       const theta = anguloNoLeque(k, grupo.length);
       saida[i] = {
-        dx: cx + raio * Math.cos(theta) - lista[i].x,
-        dy: cy + raio * Math.sin(theta) - lista[i].y,
+        dx: cx + raio * Math.cos(theta) - lista[i]!.x,
+        dy: cy + raio * Math.sin(theta) - lista[i]!.y,
         emLeque: true,
       };
     });

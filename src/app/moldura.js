@@ -2,7 +2,7 @@ import {
   avisar as avisarEvento,
   EVENTO_BARRA_ALTERNADA,
   EVENTO_TEMA_ALTERADO,
-} from "../lib/eventos-da-barra-lateral.js";
+} from "../lib/eventos-da-barra-lateral.ts";
 import { nomeDaArea } from "../lib/menu-lateral.ts";
 import { resumoDoRelatorio } from "../lib/visao-geral.ts";
 import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.ts";
@@ -19,7 +19,7 @@ import { avisar as avisarPadrao } from "./avisos.js";
   Contratos: `window.toggleSidebar`, `toggleDarkMode`, `toggleBrowserFullscreen`
   e `exportPDF` (onclick do index.html e barra lateral React), publicados por
   src/app/sistema.js. A barra lateral (React) lê a classe de `body` e o tema
-  de `html[data-theme]`, avisada pelos eventos de eventos-da-barra-lateral.js.
+  de `html[data-theme]`, avisada pelos eventos de eventos-da-barra-lateral.ts.
 */
 
 export const CHAVE_DA_BARRA_RECOLHIDA = "agsus_monitora_sidebar_collapsed_v1";

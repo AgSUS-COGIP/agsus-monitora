@@ -1,4 +1,4 @@
-import { envolverFabricaDoLeaflet } from "../lib/fabrica-do-leaflet.js";
+import { envolverFabricaDoLeaflet } from "../lib/fabrica-do-leaflet.ts";
 
 const MIN_ZOOM = 4;
 const MAX_ZOOM = 19;
@@ -26,7 +26,7 @@ export function installMapZoomRange() {
 
   const originalTileLayer = L.tileLayer;
   // `envolverFabricaDoLeaflet` preserva o que está pendurado na fábrica —
-  // nomeadamente `L.tileLayer.wms`. Ver `src/lib/fabrica-do-leaflet.js`.
+  // nomeadamente `L.tileLayer.wms`. Ver `src/lib/fabrica-do-leaflet.ts`.
   L.tileLayer = envolverFabricaDoLeaflet(
     originalTileLayer,
     function agsusTileLayerWithZoomRange(urlTemplate, options = {}) {

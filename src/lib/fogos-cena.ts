@@ -2,14 +2,44 @@
   A cena em volta dos fogos, sem DOM: o voo da Aya (a arara azul que solta o
   primeiro foguete), o véu escuro que faz as cores brilharem e a regra do som
   (opcional, desligado por padrão). O desenho é de src/modules/comemoracao.js;
-  o roteiro e a física dos fogos, de src/lib/fogos.js.
+  o roteiro e a física dos fogos, de src/lib/fogos.ts.
 
   Unidades: tempo em segundos desde o começo do show, posição em px CSS.
 */
 
-import { gravarArmazenamento, lerArmazenamento } from "./comemoracao.js";
+import { gravarArmazenamento, lerArmazenamento } from "./comemoracao.ts";
+import type { ArmazenamentoSimples } from "./comemoracao.ts";
 
-const limitar = (valor, min, max) => Math.min(max, Math.max(min, valor));
+/** Ponto de controle `[x, y]` em px CSS. */
+export type PontoDoTrajeto = [number, number];
+
+export interface TrajetoDaAya {
+  inicio: number;
+  duracao: number;
+  soltura: number;
+  batidas: number;
+  /** Tamanho da Aya (px). */
+  tamanho: number;
+  /** Os quatro pontos da curva de Bézier cúbica. */
+  pontos: [PontoDoTrajeto, PontoDoTrajeto, PontoDoTrajeto, PontoDoTrajeto];
+}
+
+export interface PosicaoDaAya {
+  x: number;
+  y: number;
+  rotacao: number;
+  escalaX: number;
+  escalaY: number;
+  opacidade: number;
+}
+
+export interface SomDoEstouro {
+  tipo: "grave" | "crepitar" | "estalo";
+  volume: number;
+}
+
+const limitar = (valor: number, min: number, max: number): number =>
+  Math.min(max, Math.max(min, valor));
 
 /*
   O voo: entra pela esquerda, sobe numa curva suave, passa pelo meio da tela
@@ -24,7 +54,10 @@ export const VOO_DA_AYA = Object.freeze({
 });
 
 /** O trajeto da Aya numa tela: curva de Bézier cúbica e o tamanho (px). */
-export function trajetoDaAya({ largura = 800, altura = 600 } = {}) {
+export function trajetoDaAya({
+  largura = 800,
+  altura = 600,
+}: { largura?: number; altura?: number } = {}): TrajetoDaAya {
   const tamanho = Math.round(
     limitar(Math.min(largura, altura) * 0.13, 64, 128),
   );
@@ -40,16 +73,20 @@ export function trajetoDaAya({ largura = 800, altura = 600 } = {}) {
   };
 }
 
-const suave = (u) => 0.5 - 0.5 * Math.cos(Math.PI * limitar(u, 0, 1));
+const suave = (u: number): number =>
+  0.5 - 0.5 * Math.cos(Math.PI * limitar(u, 0, 1));
 
-function bezier([p0, p1, p2, p3], u) {
+function bezier(
+  [p0, p1, p2, p3]: TrajetoDaAya["pontos"],
+  u: number,
+): { x: number; y: number; dx: number; dy: number } {
   const v = 1 - u;
-  const ponto = (i) =>
+  const ponto = (i: 0 | 1): number =>
     v * v * v * p0[i] +
     3 * v * v * u * p1[i] +
     3 * v * u * u * p2[i] +
     u * u * u * p3[i];
-  const derivada = (i) =>
+  const derivada = (i: 0 | 1): number =>
     3 * v * v * (p1[i] - p0[i]) +
     6 * v * u * (p2[i] - p1[i]) +
     3 * u * u * (p3[i] - p2[i]);
@@ -61,7 +98,10 @@ function bezier([p0, p1, p2, p3], u) {
  * curva), escala (o bater de asas: achata e estica de leve) e opacidade.
  * Fora do voo, `null`.
  */
-export function posicaoDaAya(trajeto, t) {
+export function posicaoDaAya(
+  trajeto: TrajetoDaAya | null | undefined,
+  t: number,
+): PosicaoDaAya | null {
   if (!trajeto) return null;
   const idade = t - trajeto.inicio;
   if (idade < 0 || idade > trajeto.duracao) return null;
@@ -84,9 +124,12 @@ export function posicaoDaAya(trajeto, t) {
 }
 
 /** Onde nasce o foguete que a Aya solta: logo abaixo dela, na soltura. */
-export function pontoDaSoltura(trajeto) {
+export function pontoDaSoltura(trajeto: TrajetoDaAya): {
+  x: number;
+  y: number;
+} {
   const aya = posicaoDaAya(trajeto, trajeto.inicio + trajeto.soltura);
-  return { x: aya.x, y: aya.y + trajeto.tamanho * 0.3 };
+  return { x: aya!.x, y: aya!.y + trajeto.tamanho * 0.3 };
 }
 
 // ── Véu ─────────────────────────────────────────────────────────────────────
@@ -95,7 +138,7 @@ export function pontoDaSoltura(trajeto) {
   O véu escuro sobre a tela: entra em 0,5 s e sai nos últimos 0,7 s. Devolve
   0–1; a cor e a força máxima de cada tema ficam no CSS (.comemoracao__veu).
 */
-export function opacidadeDoVeu(t, duracao) {
+export function opacidadeDoVeu(t: number, duracao: number): number {
   return limitar(Math.min(t / 0.5, (duracao - t) / 0.7), 0, 1);
 }
 
@@ -104,26 +147,37 @@ export function opacidadeDoVeu(t, duracao) {
 /* A preferência fica neste navegador; sem ela (ou sem armazenamento), mudo. */
 export const CHAVE_DO_SOM = "agsus_monitora_som_das_comemoracoes";
 
-export const somLigado = (armazenamento) =>
-  lerArmazenamento(armazenamento, CHAVE_DO_SOM) === "1";
+export const somLigado = (
+  armazenamento: ArmazenamentoSimples | null | undefined,
+): boolean => lerArmazenamento(armazenamento, CHAVE_DO_SOM) === "1";
 
 /** Guarda a escolha (try/catch dentro). Devolve se conseguiu guardar. */
-export const guardarSom = (armazenamento, ligado) =>
+export const guardarSom = (
+  armazenamento: ArmazenamentoSimples | null | undefined,
+  ligado: unknown,
+): boolean =>
   gravarArmazenamento(armazenamento, CHAVE_DO_SOM, ligado ? "1" : "0");
 
 /*
   Só toca com o som ligado E depois de a pessoa interagir com a página (o
   navegador bloqueia áudio antes disso, e som que surge sozinho assusta).
 */
-export const podeTocarSom = ({ ligado, interagiu }) =>
-  ligado === true && interagiu === true;
+export const podeTocarSom = ({
+  ligado,
+  interagiu,
+}: {
+  ligado?: unknown;
+  interagiu?: unknown;
+}): boolean => ligado === true && interagiu === true;
 
 /**
  * O som de um estouro (evento de avancarShow): "crepitar" para faíscas que
  * piscam e estalam, "grave" para o estouro do marco, "estalo" para o resto.
  * Volume baixo (0–1, relativo), menor nas salvas do grande final.
  */
-export function somDoEstouro(evento = {}) {
+export function somDoEstouro(
+  evento: { papel?: unknown; formato?: unknown } = {},
+): SomDoEstouro {
   if (evento.papel === "marco") return { tipo: "grave", volume: 0.9 };
   if (evento.formato === "glitter" || evento.formato === "estalinho")
     return { tipo: "crepitar", volume: 0.5 };

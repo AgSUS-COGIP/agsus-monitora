@@ -10,12 +10,12 @@
     "src/lib/avaliacao-documental/resumo-da-regra.ts": "documento gerado para impressão/arquivo: papel branco, texto preto",
     "src/lib/classificacao/documento-sei.ts": "documento no padrão do SEI: papel branco, texto preto, bordas e faixas do modelo",
     "src/lib/classificacao/relatorio-de-desempate.ts": "documento para impressão (PDF do relatório de desempate): papel branco, texto escuro, faixas e selo de cota",
-    "src/lib/contraste.js": "regra de contraste: as duas cores de texto sobre cor configurada (barra, painel de acesso)",
+    "src/lib/contraste.ts": "regra de contraste: as duas cores de texto sobre cor configurada (barra, painel de acesso)",
     "src/lib/documento-da-resposta.js": "documento gerado para impressão/arquivo: papel branco, texto preto",
-    "src/lib/fogos.js": "efeito de comemoração (canvas): cores do fogo de artifício",
+    "src/lib/fogos.ts": "efeito de comemoração (canvas): cores do fogo de artifício",
     "src/lib/mapa-saude-indigena/formas.ts": "mapa: cores de domínio das camadas e marcadores (iguais nos dois temas)",
-    "src/lib/marca-da-barra-lateral.js": "valor padrão gravado da cor da barra lateral (configuração, não tema)",
-    "src/lib/motor-de-efeitos.js": "efeito de comemoração (canvas): corações e brilho",
+    "src/lib/marca-da-barra-lateral.ts": "valor padrão gravado da cor da barra lateral (configuração, não tema)",
+    "src/lib/motor-de-efeitos.ts": "efeito de comemoração (canvas): corações e brilho",
     "src/lib/tema-do-painel.ts": "reserva dos gráficos quando o CSS não carregou (testes); a tela lê os tokens",
     "src/modules/comemoracao.js": "efeito de comemoração (canvas, legado)",
     "src/modules/indigenous-territories-layer.js": "mapa: cores de domínio das Terras Indígenas (tests/cor-da-terra-indigena.test.js)",
@@ -98,14 +98,14 @@
       "#fff3e0": 1,
       "#0b3d91": 1
     },
-    "src/lib/contraste.js": {
+    "src/lib/contraste.ts": {
       "#f7fbff": 1,
       "#102a43": 1
     },
     "src/lib/documento-da-resposta.js": {
       "#000": 1
     },
-    "src/lib/fogos.js": {
+    "src/lib/fogos.ts": {
       "#ffd23f": 1,
       "#ffb627": 1,
       "#fff6dc": 1,
@@ -136,10 +136,10 @@
       "#c2410c": 1,
       "#2f6fb0": 1
     },
-    "src/lib/marca-da-barra-lateral.js": {
+    "src/lib/marca-da-barra-lateral.ts": {
       "#ffffff": 1
     },
-    "src/lib/motor-de-efeitos.js": {
+    "src/lib/motor-de-efeitos.ts": {
       "#ff4d6d": 1,
       "#ff758f": 1,
       "#ff8fab": 1,

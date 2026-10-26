@@ -31,7 +31,7 @@ que me foi autorizado, em todas as rodadas deste trabalho.
 
 1. Fazer uma cópia versionada do `lmap` antes de qualquer outra coisa — hoje um
    `UPDATE` acidental pela interface é irreversível.
-2. Conferir cada sede de DSEI contra o contorno em `src/lib/brasil-bounds.js`
+2. Conferir cada sede de DSEI contra o contorno em `src/lib/brasil-bounds.ts`
    (`BR_OUTLINE`, 1227 vértices) com ponto-em-polígono, e listar as que caem
    fora do país ou fora das UFs declaradas em `ufs`.
 3. Dar origem declarada a cada coordenada, como já existe para UBSI e CASAI

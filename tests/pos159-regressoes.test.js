@@ -6,7 +6,7 @@ import {
   linhasDasSecoes,
   normalizarValoresCarregados,
 } from "../src/lib/publicacao-de-configuracoes.ts";
-import { LOGO_PADRAO_DA_BARRA } from "../src/lib/marca-da-barra-lateral.js";
+import { LOGO_PADRAO_DA_BARRA } from "../src/lib/marca-da-barra-lateral.ts";
 
 const app = fonteDoApp();
 const governance = readFileSync("src/modulos/configuracoes/estado.ts", "utf8");
@@ -149,7 +149,7 @@ describe("enquadramento do Brasil medido no contorno real", () => {
   */
   it("o map-guard usa a medição, não um retângulo à mão", () => {
     expect(mapGuard).toContain(
-      'import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../lib/brasil-bounds.js"',
+      'import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../lib/brasil-bounds.ts"',
     );
     expect(semComentarios(mapGuard)).not.toContain("-34.9");
     expect(semComentarios(mapGuard)).not.toContain("-74.2");

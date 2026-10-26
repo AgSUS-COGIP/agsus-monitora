@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { BRASIL_BOUNDS } from "../src/lib/brasil-bounds.js";
+import { BRASIL_BOUNDS } from "../src/lib/brasil-bounds.ts";
 import {
   FOLGA_ALEM_DO_RAIO,
   FOLGA_DO_BRASIL,
@@ -13,8 +13,8 @@ import {
   OPCOES_DA_CAIXA,
   ZOOM_DO_PONTO,
   enquadramentoDoRecorte,
-} from "../src/lib/enquadramento-do-brasil.js";
-import { RAIO_MAXIMO as RAIO_DA_BOLHA } from "../src/lib/mapa-render.js";
+} from "../src/lib/enquadramento-do-brasil.ts";
+import { RAIO_MAXIMO as RAIO_DA_BOLHA } from "../src/lib/mapa-render.ts";
 
 /*
   O enquadramento do Brasil nos mapas da Visão geral (Saúde Indígena e

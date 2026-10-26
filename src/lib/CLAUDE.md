@@ -14,23 +14,23 @@ Arquivos que exigem cuidado:
   `grupos-e-coordenacoes.ts`, `ver-como.ts`, `solicitacao-de-acesso.ts` (pedido de acesso por área: listas, situação, validação, recusa) — Configurações › Acessos.
 - `apresentacao-das-configuracoes.ts` — tom da faixa de aviso global e endereço de imagem aceito nas
   prévias de Configurações (telas em `src/modulos/configuracoes/`).
-- `marca-da-barra-lateral.js` — logo e cor da barra lateral publicadas e em rascunho, sem DOM.
+- `marca-da-barra-lateral.ts` — logo e cor da barra lateral publicadas e em rascunho, sem DOM.
 - `publicacao-de-configuracoes.ts` — publicação de Configurações sem DOM: chaves de cada seção (legado e
   React), comparação com o retrato do banco, validação de URL e domínio.
 - `sanitize.ts`, `html-security.ts`, `csv-security.ts` — fronteira de segurança. Não afrouxar.
-- `reconciliacao-unidades.js`, `uf-ibge.js`, `brasil-bounds.js` — referência geográfica usada pelos
+- `reconciliacao-unidades.js`, `uf-ibge.js`, `brasil-bounds.ts` — referência geográfica usada pelos
   scripts de auditoria (as coordenadas do mapa vêm só do banco).
-- `fabrica-do-leaflet.js` — único lugar que cria mapa Leaflet (as guardas preservam o namespace `L`).
-- `filtros-do-mapa.js` — regra dos filtros da página do mapa: comparação sem acento, opções sem
+- `fabrica-do-leaflet.ts` — único lugar que cria mapa Leaflet (as guardas preservam o namespace `L`).
+- `filtros-do-mapa.ts` — regra dos filtros da página do mapa: comparação sem acento, opções sem
   duplicata, poda até estabilizar. A Visão geral guarda o estado e delega para cá.
 - `planilhas.js` — **catálogo de todas as planilhas** (modelo de aprovados, bucket da lista importada,
   link da origem das análises, planilha de Lotações). Planilha nova entra aqui, com `usadaEm`.
-- `contraste.js` — cálculo de contraste usado pelo aviso de branding; reutilize em vez de reescrever.
+- `contraste.ts` — cálculo de contraste usado pelo aviso de branding; reutilize em vez de reescrever.
 - `menu-lateral.ts` — **catálogo dos grupos do menu lateral** (as áreas do usuário — Saúde
   Indígena, SEDE, Projetos —, Painéis e Administração), blocos da área (Acompanhamento e Processo seletivo,
   `BLOCOS_DA_AREA`/`blocoDaAba`), árvore por permissão e por área, página ativa
   (considera a área atual), áreas abertas por padrão e estado do painel flutuante. Área ou página nova entra aqui; o desenho é de `src/componentes/barra-lateral/`.
-- `eventos-da-barra-lateral.js` — nomes dos eventos entre o legado e a barra lateral (React).
+- `eventos-da-barra-lateral.ts` — nomes dos eventos entre o legado e a barra lateral (React).
 - `editais-do-nucleo.js` — a página Editais sem DOM: ordem da fila (risco, vagas ociosas), tons de
   status e risco (também usados pelo mapa), unidades do formulário (catálogo + as que só existem nos
   editais, USI × CORES), rascunho e payload do edital, índice do resumo e filtro dos indicadores.

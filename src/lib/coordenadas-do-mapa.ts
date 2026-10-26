@@ -13,7 +13,7 @@ import {
   pendenciasDoEditor,
   registroDoEditor,
 } from "./respostas-do-editor-de-coordenadas.ts";
-import { coordenadasDoMunicipio } from "./coordenadas-dos-municipios.js";
+import { coordenadasDoMunicipio } from "./coordenadas-dos-municipios.ts";
 import {
   filaDoEditor,
   formatarDistancia,

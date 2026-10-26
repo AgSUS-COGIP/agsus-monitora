@@ -4,7 +4,7 @@ import type { LogoDoDocumento } from "../../lib/classificacao/tipos-dos-document
   toca DOM): a área de transferência, o logo em PNG para o .docx e a
   impressão (PDF) da página "Como fica no SEI".
 */
-import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.js";
+import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.ts";
 
 /*
   Copia o documento com os dois formatos: text/html (o editor do SEI cola com

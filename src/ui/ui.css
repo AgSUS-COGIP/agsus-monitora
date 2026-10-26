@@ -1176,7 +1176,7 @@ th[aria-sort="descending"] .ui-ordenar i {
   }
 }
 
-/* ── Dicas e popups dos mapas (src/lib/dica-dentro-do-mapa.js) ───────── */
+/* ── Dicas e popups dos mapas (src/lib/dica-dentro-do-mapa.ts) ───────── */
 
 /*
   A dica do Leaflet vive numa camada de largura zero: com `white-space:

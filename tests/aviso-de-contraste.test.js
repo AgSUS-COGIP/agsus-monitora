@@ -15,7 +15,7 @@ import {
   corDoTextoPara,
   normalizarModo,
   razaoDeContraste,
-} from "../src/lib/contraste.js";
+} from "../src/lib/contraste.ts";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 

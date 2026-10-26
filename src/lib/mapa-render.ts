@@ -34,14 +34,35 @@
   faz a ÁREA ser proporcional à população. Escalar o raio linearmente, como é
   tentador, exagera os grandes por um fator igual à razão das populações.
 */
+/** Ponto em pixels de tela. */
+export interface PontoNaTela {
+  x: number;
+  y: number;
+}
+/** Registro com coordenada. */
+export interface PontoGeografico {
+  lat: number;
+  lon: number;
+}
+/** Registros que caem no mesmo ponto (ou na mesma célula). */
+export interface GrupoDePontos<T> {
+  chave: string;
+  lat: number;
+  lon: number;
+  registros: T[];
+}
+
 export const RAIO_MINIMO = 5;
 export const RAIO_MAXIMO = 15;
 
 export function raioDaBolha(
-  populacao,
-  populacaoMaxima,
-  { minimo = RAIO_MINIMO, maximo = RAIO_MAXIMO } = {},
-) {
+  populacao: unknown,
+  populacaoMaxima: unknown,
+  {
+    minimo = RAIO_MINIMO,
+    maximo = RAIO_MAXIMO,
+  }: { minimo?: number; maximo?: number } = {},
+): number {
   const pop = Number(populacao) || 0;
   const max = Number(populacaoMaxima) || 0;
   if (max <= 0 || pop <= 0) return minimo;
@@ -72,11 +93,11 @@ export const OPACIDADE_DA_BOLHA = 0.7;
 const ANGULO_AUREO = 2.399963229728653;
 
 export function posicoesSpiderfy(
-  quantidade,
-  { raioBase = 34, passo = 13 } = {},
-) {
+  quantidade: unknown,
+  { raioBase = 34, passo = 13 }: { raioBase?: number; passo?: number } = {},
+): PontoNaTela[] {
   const total = Math.max(0, Number(quantidade) || 0);
-  const posicoes = [];
+  const posicoes: PontoNaTela[] = [];
   for (let i = 0; i < total; i++) {
     const anel = Math.floor(i / 8);
     const raio = raioBase + passo * anel;
@@ -94,14 +115,17 @@ export function posicoesSpiderfy(
   auditoria — estabelecimentos genuinamente diferentes na mesma coordenada, que
   não se fundem: mostram-se agrupados e expandem-se a pedido.
 */
-export function agruparCoincidentes(registros, casas = 5) {
-  const grupos = new Map();
+export function agruparCoincidentes<T extends PontoGeografico>(
+  registros: readonly T[] | null | undefined,
+  casas = 5,
+): GrupoDePontos<T>[] {
+  const grupos = new Map<string, GrupoDePontos<T>>();
   (registros || []).forEach((r) => {
     if (!Number.isFinite(r?.lat) || !Number.isFinite(r?.lon)) return;
     const chave = `${r.lat.toFixed(casas)},${r.lon.toFixed(casas)}`;
     if (!grupos.has(chave))
       grupos.set(chave, { chave, lat: r.lat, lon: r.lon, registros: [] });
-    grupos.get(chave).registros.push(r);
+    grupos.get(chave)!.registros.push(r);
   });
   return [...grupos.values()];
 }
@@ -133,27 +157,22 @@ export function agruparCoincidentes(registros, casas = 5) {
 */
 export const SOBREPOSICAO_EM_PIXELS = 14;
 
-/** @template {{lat: number, lon: number}} T
- * @param {readonly T[]} registros
- * @param {(registro: T) => {x: number, y: number}} projetar
- * @param {number} [toleranciaPx]
- * @returns {{chave: string, lat: number, lon: number, registros: T[]}[]} */
-export function agruparPorProximidadeNaTela(
-  registros,
-  projetar,
-  toleranciaPx = SOBREPOSICAO_EM_PIXELS,
-) {
+export function agruparPorProximidadeNaTela<T extends PontoGeografico>(
+  registros: readonly T[] | null | undefined,
+  projetar: (registro: T) => PontoNaTela | null | undefined,
+  toleranciaPx: number = SOBREPOSICAO_EM_PIXELS,
+): GrupoDePontos<T>[] {
   if (typeof projetar !== "function") return agruparCoincidentes(registros);
 
-  const pontos = [];
+  const pontos: (PontoNaTela & { registro: T })[] = [];
   for (const r of registros || []) {
     if (!Number.isFinite(r?.lat) || !Number.isFinite(r?.lon)) continue;
     const tela = projetar(r);
     if (!Number.isFinite(tela?.x) || !Number.isFinite(tela?.y)) continue;
-    pontos.push({ registro: r, x: tela.x, y: tela.y });
+    pontos.push({ registro: r, x: tela!.x, y: tela!.y });
   }
 
-  const grupos = [];
+  const grupos: (GrupoDePontos<T> & PontoNaTela)[] = [];
   for (const ponto of pontos) {
     const perto = grupos.find(
       (g) => Math.hypot(g.x - ponto.x, g.y - ponto.y) <= toleranciaPx,
@@ -200,17 +219,27 @@ export function agruparPorProximidadeNaTela(
   cada um: regista-se o que foi criado, e `descartarTudo()` desfaz na ordem
   inversa.
 */
+/** Mapa do Leaflet visto pelo registro de descarte: só `on`/`off`. */
+export interface MapaComOuvintes {
+  on?(evento: string, ouvinte: OuvinteDoMapa): unknown;
+  off?(evento: string, ouvinte: OuvinteDoMapa): unknown;
+}
+export type OuvinteDoMapa = (...argumentos: never[]) => unknown;
+
 export function criarRegistroDeDescarte() {
-  const acoes = [];
+  const acoes: (() => unknown)[] = [];
 
   return {
     /** Regista uma função de limpeza qualquer. */
-    aoDescartar(fn) {
-      if (typeof fn === "function") acoes.push(fn);
+    aoDescartar<F>(fn: F): F {
+      if (typeof fn === "function") acoes.push(fn as () => unknown);
       return fn;
     },
 
-    observarTamanho(elemento, callback) {
+    observarTamanho(
+      elemento: Element | null | undefined,
+      callback: ResizeObserverCallback,
+    ): ResizeObserver | null {
       if (typeof ResizeObserver !== "function" || !elemento) return null;
       const observador = new ResizeObserver(callback);
       observador.observe(elemento);
@@ -218,7 +247,12 @@ export function criarRegistroDeDescarte() {
       return observador;
     },
 
-    ouvir(alvo, evento, handler, opcoes) {
+    ouvir<H extends EventListenerOrEventListenerObject>(
+      alvo: EventTarget | null | undefined,
+      evento: string,
+      handler: H,
+      opcoes?: boolean | AddEventListenerOptions,
+    ): H | null {
       if (!alvo?.addEventListener) return null;
       alvo.addEventListener(evento, handler, opcoes);
       acoes.push(() => alvo.removeEventListener(evento, handler, opcoes));
@@ -226,23 +260,27 @@ export function criarRegistroDeDescarte() {
     },
 
     /** Ouvinte do Leaflet, que usa `on`/`off` em vez do DOM. */
-    ouvirMapa(mapa, evento, handler) {
+    ouvirMapa<H extends OuvinteDoMapa>(
+      mapa: MapaComOuvintes | null | undefined,
+      evento: string,
+      handler: H,
+    ): H | null {
       if (!mapa?.on) return null;
       mapa.on(evento, handler);
       acoes.push(() => mapa.off?.(evento, handler));
       return handler;
     },
 
-    get pendentes() {
+    get pendentes(): number {
       return acoes.length;
     },
 
-    descartarTudo() {
+    descartarTudo(): number {
       let desfeitas = 0;
       while (acoes.length) {
         const acao = acoes.pop();
         try {
-          acao();
+          acao!();
           desfeitas++;
         } catch {
           // Uma limpeza que falha não pode impedir as seguintes.
@@ -284,12 +322,12 @@ export function criarRegistroDeDescarte() {
 */
 export const CELULA_PADRAO_PX = 60;
 
-export function agruparPorCelula(
-  registros,
-  paraPonto,
-  celula = CELULA_PADRAO_PX,
+export function agruparPorCelula<T extends PontoGeografico>(
+  registros: readonly T[] | null | undefined,
+  paraPonto: (registro: T) => PontoNaTela | null | undefined,
+  celula: number = CELULA_PADRAO_PX,
 ) {
-  const grupos = new Map();
+  const grupos = new Map<string, GrupoDePontos<T>>();
   (registros || []).forEach((registro) => {
     if (!Number.isFinite(registro?.lat) || !Number.isFinite(registro?.lon))
       return;
@@ -299,7 +337,7 @@ export function agruparPorCelula(
     const chave = `${Math.floor(ponto.x / celula)}:${Math.floor(ponto.y / celula)}`;
     if (!grupos.has(chave))
       grupos.set(chave, { chave, registros: [], lat: 0, lon: 0 });
-    grupos.get(chave).registros.push(registro);
+    grupos.get(chave)!.registros.push(registro);
   });
 
   /*

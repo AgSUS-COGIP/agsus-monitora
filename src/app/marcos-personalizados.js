@@ -1,4 +1,4 @@
-import { chaveDoMarco, trocarEstadoGuardado } from "../lib/comemoracao.js";
+import { chaveDoMarco, trocarEstadoGuardado } from "../lib/comemoracao.ts";
 import {
   configuracaoDasComemoracoes,
   estadoDosPersonalizados,
@@ -21,7 +21,7 @@ import { comemorar as comemorarPadrao } from "../modules/comemoracao.js";
     - "analises-no-dia": as linhas da tela de Análises curriculares, a cada
       carga dela (src/modulos/analises/marcos.ts).
 
-  Mesma regra dos outros marcos (src/lib/comemoracao.js): linha de base em
+  Mesma regra dos outros marcos (src/lib/comemoracao.ts): linha de base em
   silêncio na primeira leitura, comemora a TRANSIÇÃO vista por esta pessoa
   neste navegador, uma vez. Desligadas (Módulos e abas), o estado segue
   guardado sem comemorar.

@@ -56,7 +56,7 @@ moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS 
   (`barra-lateral/estado.ts`: `atualizarMenuLateral`, `marcarItemAtivoNoMenu`) e o componente lê com
   `useSyncExternalStore`. O arquivo de estado não importa React, então o legado pode importá-lo.
 - **O que o componente não percebe sozinho chega por evento** em `document`
-  (`src/lib/eventos-da-barra-lateral.js`): barra recolhida/expandida, tema trocado. Nada de
+  (`src/lib/eventos-da-barra-lateral.ts`): barra recolhida/expandida, tema trocado. Nada de
   `MutationObserver`.
 - **O componente avisa por evento** quando o DOM dele mudou (`agsus:menu-lateral-atualizado`) — o
   menu inferior do celular, ainda sem framework, espelha a partir daí.

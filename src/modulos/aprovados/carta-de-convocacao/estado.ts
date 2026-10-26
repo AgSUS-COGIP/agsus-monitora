@@ -55,7 +55,7 @@ import {
   soACarta,
   textoParaSei,
 } from "../../../lib/carta-de-convocacao-documento.ts";
-import { LOGO_PADRAO_DA_BARRA } from "../../../lib/marca-da-barra-lateral.js";
+import { LOGO_PADRAO_DA_BARRA } from "../../../lib/marca-da-barra-lateral.ts";
 
 const texto = (valor: unknown) => String(valor ?? "").trim();
 const mensagemDe = (erro: unknown) =>

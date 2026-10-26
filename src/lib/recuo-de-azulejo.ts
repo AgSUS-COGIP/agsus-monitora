@@ -25,15 +25,31 @@
 /** Quantos níveis se sobe, no máximo, antes de desistir do azulejo. */
 export const RECUO_MAXIMO = 4;
 
+/** Coordenadas de um azulejo do Leaflet. */
+export interface CoordenadasDoAzulejo {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface AzulejoDoRecuo extends CoordenadasDoAzulejo {
+  escala: number;
+  dx: number;
+  dy: number;
+}
+
 /*
   O azulejo `niveis` acima de `coords`, e onde recortá-lo. Num recuo de um nível
   cada azulejo do nível de cima cobre 2 x 2 dos de baixo; `dx`/`dy` dizem qual
   dos quatro é este, e `escala` quanto a imagem tem de crescer.
 */
-export function azulejoDoRecuo(coords, niveis = 0) {
+export function azulejoDoRecuo(
+  coords: CoordenadasDoAzulejo,
+  niveis: unknown = 0,
+): AzulejoDoRecuo {
   const n = Math.max(0, Math.trunc(Number(niveis) || 0));
   const fator = 2 ** n;
-  const resto = (valor) => ((valor % fator) + fator) % fator;
+  const resto = (valor: number): number => ((valor % fator) + fator) % fator;
   return {
     x: Math.floor(coords.x / fator),
     y: Math.floor(coords.y / fator),
@@ -49,16 +65,16 @@ export function azulejoDoRecuo(coords, niveis = 0) {
   da camada: abaixo dele não há o que pedir.
 */
 export function podeRecuar(
-  coords,
-  niveis,
+  coords: CoordenadasDoAzulejo,
+  niveis: number,
   zoomMinimo = 0,
   maximo = RECUO_MAXIMO,
-) {
+): boolean {
   return niveis < maximo && coords.z - (niveis + 1) >= zoomMinimo;
 }
 
 /** A URL com o aviso em forma de imagem desligado (ArcGIS `blankTile=false`). */
-export function semAzulejoDeAviso(url) {
+export function semAzulejoDeAviso(url: unknown): string {
   const texto = String(url ?? "");
   if (/[?&]blankTile=/.test(texto)) return texto;
   return `${texto}${texto.includes("?") ? "&" : "?"}blankTile=false`;
