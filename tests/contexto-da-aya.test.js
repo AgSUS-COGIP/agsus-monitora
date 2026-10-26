@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { collectAyaPageContext } from "../src/modulos/aya/contexto.js";
+import { collectAyaPageContext } from "../src/modulos/aya/contexto.ts";
 import {
   contextualAyaAnswer,
   resolverReferencia,
-} from "../src/lib/contexto-da-aya.js";
+} from "../src/lib/contexto-da-aya.ts";
 
 describe("contexto da tela para a Aya", () => {
   beforeEach(() => {

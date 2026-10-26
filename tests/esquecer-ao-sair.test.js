@@ -7,7 +7,7 @@ import {
 import {
   esquecerConversaDaAya,
   obterPaginaDaAya,
-} from "../src/modulos/aya/estado.js";
+} from "../src/modulos/aya/estado.ts";
 import { salvarConversa } from "../src/modules/aya-memoria.js";
 
 /*

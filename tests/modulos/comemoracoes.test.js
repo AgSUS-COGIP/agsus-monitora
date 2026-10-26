@@ -2,7 +2,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { secaoDeConfiguracaoPermitida } from "../../src/lib/access-roles.ts";
-import { SECOES_DA_AYA } from "../../src/lib/aya-paginas.js";
+import { SECOES_DA_AYA } from "../../src/lib/aya-paginas.ts";
 import {
   CHAVE_DA_PREFERENCIA_PESSOAL,
   CHAVE_DAS_COMEMORACOES,

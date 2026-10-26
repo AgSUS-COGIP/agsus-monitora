@@ -55,34 +55,34 @@ import {
   SECOES_DA_AYA,
   SEGUNDA_MENSAGEM,
   VIEWS_DA_AYA,
-} from "../../lib/aya-paginas.js";
+} from "../../lib/aya-paginas.ts";
 import {
   chaveDoTour,
   deveConvidar,
   passoParaRetomar,
   tourDaPagina,
   trilhasDoPerfil,
-} from "../../lib/aya-tours.js";
-import { montarChamado, pedeSuporte } from "../../lib/chamado-da-aya.js";
+} from "../../lib/aya-tours.ts";
+import { montarChamado, pedeSuporte } from "../../lib/chamado-da-aya.ts";
 import { nomeDaArea } from "../../lib/menu-lateral.ts";
 import { abrirSecaoDeConfiguracao } from "../configuracoes/secoes.ts";
-import { collectAyaPageContext, estadoDaTela } from "./contexto.js";
-import { responderComDados } from "../../lib/dados-da-aya.js";
+import { collectAyaPageContext, estadoDaTela } from "./contexto.ts";
+import { responderComDados } from "../../lib/dados-da-aya.ts";
 import { isAdminGlobal } from "../../lib/access-roles.ts";
 import {
   comPerguntaSemResposta,
   perguntasGuardadas,
   textoDasPerguntas,
-} from "../../lib/perguntas-sem-resposta.js";
+} from "../../lib/perguntas-sem-resposta.ts";
 import { pedirFiltro } from "../../app/pedido-de-filtro.js";
-import { criarFontesDaAya } from "./fontes.js";
+import { criarFontesDaAya } from "./fontes.ts";
 import {
   esquecerConversa,
   lerConversa,
   salvarConversa,
 } from "../../modules/aya-memoria.js";
-import { assinarPaginaDaAya, obterPaginaDaAya } from "./estado.js";
-import { OfertaDePrimeirosPassos, SecaoAprender } from "./tour/aprender.jsx";
+import { assinarPaginaDaAya, obterPaginaDaAya } from "./estado.ts";
+import { OfertaDePrimeirosPassos, SecaoAprender } from "./tour/aprender.tsx";
 import {
   concluirTrilha,
   lerConvitesDeTour,
@@ -91,8 +91,8 @@ import {
   marcarOfertaDePrimeirosPassos,
   ofertaDePrimeirosPassosFeita,
   salvarPassoDaTrilha,
-} from "./tour/progresso.js";
-import { acharAlvo, Tour } from "./tour/tour.jsx";
+} from "./tour/progresso.ts";
+import { acharAlvo, Tour } from "./tour/tour.tsx";
 import {
   ALTURA_DA_ARARA,
   Mascote,
@@ -180,13 +180,13 @@ function guardarSemResposta(janela, item) {
 */
 let fontesPadrao = null;
 /*
-  A base de verbetes (busca-da-aya.js e src/modules/aya-conhecimento-gerado.js,
+  A base de verbetes (busca-da-aya.ts e src/modules/aya-conhecimento-gerado.js,
   ~100 KB gzip) baixa na primeira pergunta ou ao abrir o painel
   (preCarregarBase), fora do pacote principal.
 */
 let buscaDaBase = null;
 const preCarregarBase = () =>
-  (buscaDaBase ??= import("../../lib/busca-da-aya.js").catch((erro) => {
+  (buscaDaBase ??= import("../../lib/busca-da-aya.ts").catch((erro) => {
     buscaDaBase = null;
     throw erro;
   }));

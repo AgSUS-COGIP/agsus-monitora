@@ -78,7 +78,7 @@ import { TELAS_REACT } from "./app/navegacao.js";
 import { registrarPreCarga } from "./lib/carga-de-telas";
 import { sessaoDoApp } from "./app/sessao.js";
 
-import { montarAya } from "./modulos/aya/aya.jsx";
+import { montarAya } from "./modulos/aya/aya.tsx";
 
 // Os imports de CSS acima já rodaram: a tela de acesso pode aparecer (index.html, `vite-dev-carregando`).
 document.documentElement.classList.remove("vite-dev-carregando");

@@ -4,14 +4,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clicar, teclar } from "../componentes/interacoes.js";
 
 /*
-  O tour guiado da Aya (src/modulos/aya/tour/tour.jsx): mostra um passo por
+  O tour guiado da Aya (src/modulos/aya/tour/tour.tsx): mostra um passo por
   vez com contador, pula o passo cujo elemento não existe (nas duas
   direções), navega pelas setas, sai com Esc, prende o foco no balão,
   anuncia o passo ao leitor de tela e, no passo de outra tela, pede a troca
   e espera o elemento aparecer.
 */
 
-const { Tour, acharAlvo } = await import("../../src/modulos/aya/tour/tour.jsx");
+const { Tour, acharAlvo } = await import("../../src/modulos/aya/tour/tour.tsx");
 
 let raiz;
 let reactRoot;

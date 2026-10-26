@@ -6,10 +6,10 @@ import {
   numeroDoEdital,
   reconhecerIntencao,
   textoDaIntencao,
-} from "../src/lib/intencoes-da-aya.js";
+} from "../src/lib/intencoes-da-aya.ts";
 
 /*
-  O catálogo de perguntas com número da Aya (src/lib/intencoes-da-aya.js):
+  O catálogo de perguntas com número da Aya (src/lib/intencoes-da-aya.ts):
   reconhece a intenção e as entidades (edital, área, métrica), deixa as
   perguntas de "o que é" para a base e escreve a resposta só com números.
 */

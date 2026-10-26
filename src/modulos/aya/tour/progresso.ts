@@ -5,7 +5,7 @@
   o tour ("Quer que eu mostre esta tela?") já apareceu. Só localStorage, sempre com
   try/catch: sem armazenamento (janela privada, bloqueio), as trilhas
   funcionam, só não lembram. As regras (normalizar, rótulo, onde retomar)
-  são de src/lib/aya-tours.js.
+  são de src/lib/aya-tours.ts.
 */
 
 import {
@@ -13,7 +13,7 @@ import {
   comTrilhaConcluida,
   convitesFeitos,
   progressoDasTrilhas,
-} from "../../../lib/aya-tours.js";
+} from "../../../lib/aya-tours.ts";
 
 export const CHAVE_PROGRESSO_DAS_TRILHAS = "agsus_aya_trilhas_v1";
 export const CHAVE_OFERTA_DE_PRIMEIROS_PASSOS =

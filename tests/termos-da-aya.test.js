@@ -7,7 +7,7 @@ import {
   singular,
   termosDe,
   toleranciaPara,
-} from "../src/lib/termos-da-aya.js";
+} from "../src/lib/termos-da-aya.ts";
 
 describe("sinônimos em grupos", () => {
   it("tem os 26 grupos do domínio, com as siglas do processo seletivo", () => {

@@ -1,5 +1,5 @@
 /*
-  O tour guiado da Aya (src/modulos/aya/tour/tour.jsx): véu em quatro faixas
+  O tour guiado da Aya (src/modulos/aya/tour/tour.tsx): véu em quatro faixas
   em volta do recorte, o contorno do elemento destacado e o balão.
   Só tokens (src/styles/tokens.css); o tema escuro vem deles.
 

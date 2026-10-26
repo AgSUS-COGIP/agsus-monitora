@@ -8,7 +8,7 @@
 
 import { useId, useState } from "react";
 import { Icone } from "../../../componentes/icone.tsx";
-import { passoParaRetomar, rotuloDoProgresso } from "../../../lib/aya-tours.js";
+import { passoParaRetomar, rotuloDoProgresso } from "../../../lib/aya-tours.ts";
 
 export function SecaoAprender({ trilhas, progresso, aoIniciar, desabilitada }) {
   const [aberta, setAberta] = useState(false);

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { buscarNaBase, responderAya } from "../src/lib/busca-da-aya.js";
-import { montarChamado } from "../src/lib/chamado-da-aya.js";
+import { buscarNaBase, responderAya } from "../src/lib/busca-da-aya.ts";
+import { montarChamado } from "../src/lib/chamado-da-aya.ts";
 
 const responder = (question, extra = {}) =>
   responderAya({ question, section: "recursos", area: "sede", ...extra });

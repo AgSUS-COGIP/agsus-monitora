@@ -4,14 +4,14 @@ import {
   contarEntrevistas,
   contarSelecao,
   responderComDados,
-} from "../src/lib/dados-da-aya.js";
+} from "../src/lib/dados-da-aya.ts";
 import {
   consumirPedidoDeFiltro,
   pedirFiltro,
 } from "../src/app/pedido-de-filtro.js";
 
 /*
-  As perguntas com número da Aya (src/lib/dados-da-aya.js): contas iguais às
+  As perguntas com número da Aya (src/lib/dados-da-aya.ts): contas iguais às
   dos indicadores das telas, só leitura, respeitando a permissão do perfil
   antes de buscar, e nenhum nome na resposta.
 */

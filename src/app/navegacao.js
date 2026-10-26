@@ -57,7 +57,7 @@ import {
   secaoAtualDeConfiguracao,
 } from "../modulos/configuracoes/secoes.ts";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
-import { definirPaginaDaAya } from "../modulos/aya/estado.js";
+import { definirPaginaDaAya } from "../modulos/aya/estado.ts";
 
 /*
   A navegação do app, sem React: qual tela está aberta, a troca de tela (a

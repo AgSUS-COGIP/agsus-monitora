@@ -24,7 +24,7 @@ import {
   roleLabel,
 } from "./access-roles.ts";
 import { hasResource } from "./permissoes-recursos.ts";
-import { normalizar } from "./termos-da-aya.js";
+import { normalizar } from "./termos-da-aya.ts";
 
 const acao = (id, palavras, nome, pode, quem, onde, abrir = "") =>
   Object.freeze({ id, palavras, nome, pode, quem, onde, abrir });

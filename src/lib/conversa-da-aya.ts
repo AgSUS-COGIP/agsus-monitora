@@ -1,11 +1,11 @@
 /*
   Intenções de conversa da Aya: saudação, ajuda, agradecimento e despedida.
-  Não precisam de verbete. A busca (src/lib/busca-da-aya.js) consulta isto
+  Não precisam de verbete. A busca (src/lib/busca-da-aya.ts) consulta isto
   antes da base: mensagem que é só conversa recebe a resposta de conversa;
   com pergunta junto ("bom dia, como dar acesso?"), a pergunta vai para a base
   e a saudação abre a resposta ("Bom dia! …").
 */
-import { normalizar } from "./termos-da-aya.js";
+import { normalizar } from "./termos-da-aya.ts";
 
 const SAUDACOES = [
   ["bom dia", "Bom dia!"],

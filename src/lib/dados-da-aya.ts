@@ -1,9 +1,9 @@
 /*
-  As contas da Aya para as perguntas com número (src/lib/intencoes-da-aya.js)
+  As contas da Aya para as perguntas com número (src/lib/intencoes-da-aya.ts)
   e a orquestração da resposta com dados ao vivo.
 
   Sem DOM e sem rede: `responderComDados` recebe `buscar(fonte, { area })`
-  injetado (em produção, src/modulos/aya/fontes.js chama as RPCs de leitura
+  injetado (em produção, src/modulos/aya/fontes.ts chama as RPCs de leitura
   que a tela já usa). As contas usam as mesmas regras puras das telas
   (calcularKpis das Análises, calcularIndicadores de Recursos, Entrevistas e
   Seleção, normalizarSaude do Status das atualizações), para o número da Aya
@@ -29,7 +29,7 @@ import {
   NOMES_DAS_AREAS,
   reconhecerIntencao,
   textoDaIntencao,
-} from "./intencoes-da-aya.js";
+} from "./intencoes-da-aya.ts";
 
 const NOME_DA_TELA = Object.freeze({
   analises: "Análises curriculares",

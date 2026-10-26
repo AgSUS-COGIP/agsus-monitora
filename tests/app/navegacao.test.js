@@ -13,7 +13,7 @@ import {
 import {
   obterPaginaDaAya,
   redefinirPaginaDaAya,
-} from "../../src/modulos/aya/estado.js";
+} from "../../src/modulos/aya/estado.ts";
 
 /*
   A navegação do app (src/app/navegacao.js): troca de tela, título, menu,

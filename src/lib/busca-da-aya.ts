@@ -5,7 +5,7 @@
 
   COMO O VERBETE É PONTUADO
 
-  A pergunta vira termos (src/lib/termos-da-aya.js: stopwords, singular,
+  A pergunta vira termos (src/lib/termos-da-aya.ts: stopwords, singular,
   sinônimos em grupo, radical) depois de corrigir a digitação de cada palavra
   que a base não conhece. Cada termo vale pela raridade na base (IDF) e pelo
   lugar em que aparece no verbete: nas `perguntas` (peso 3), no título (2) ou na
@@ -21,17 +21,17 @@
   - abaixo de LIMIAR_INCERTO sem termo do domínio, ou com metade ou mais das
     palavras desconhecidas pela base ("me conta uma piada"): fora do escopo.
 
-  Antes da base vêm a conversa (src/lib/conversa-da-aya.js) e os dados da tela
-  (src/lib/contexto-da-aya.js).
+  Antes da base vêm a conversa (src/lib/conversa-da-aya.ts) e os dados da tela
+  (src/lib/contexto-da-aya.ts).
 */
 import { VERBETES_AYA } from "../modules/aya-conhecimento-gerado.js";
 import {
   curatedAnswerForQuestion,
   officialSourcesForQuestion,
 } from "../modules/aya-knowledge.js";
-import { paginaDaAya } from "./aya-paginas.js";
+import { paginaDaAya } from "./aya-paginas.ts";
 import { nomeDaArea } from "./menu-lateral.ts";
-import { contextualAyaAnswer, resolverReferencia } from "./contexto-da-aya.js";
+import { contextualAyaAnswer, resolverReferencia } from "./contexto-da-aya.ts";
 import {
   EXPRESSOES,
   aplicarSinonimos,
@@ -41,9 +41,9 @@ import {
   radical,
   termosDe,
   toleranciaPara,
-} from "./termos-da-aya.js";
-import { intencaoDeConversa, textoDaConversa } from "./conversa-da-aya.js";
-import { explicarPermissao } from "./permissoes-da-aya.js";
+} from "./termos-da-aya.ts";
+import { intencaoDeConversa, textoDaConversa } from "./conversa-da-aya.ts";
+import { explicarPermissao } from "./permissoes-da-aya.ts";
 
 export const LIMIAR_CONFIANTE = 0.6;
 export const LIMIAR_INCERTO = 0.3;
@@ -56,7 +56,7 @@ const MARGEM_DE_EMPATE = 0.06;
 
 /*
   Página de cada arquivo de docs/aya, para o bônus da página aberta. As chaves
-  são as de `paginaDaAya` (src/lib/aya-paginas.js): a view do menu ou
+  são as de `paginaDaAya` (src/lib/aya-paginas.ts): a view do menu ou
   `config:<seção>`.
 */
 const PAGINAS_DO_ARQUIVO = Object.freeze({

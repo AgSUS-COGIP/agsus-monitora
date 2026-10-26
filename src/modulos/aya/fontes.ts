@@ -1,6 +1,6 @@
 /*
   De onde a Aya tira os números das perguntas com dado ao vivo
-  (src/lib/dados-da-aya.js). Só leitura, e só pelas RPCs que as telas já
+  (src/lib/dados-da-aya.ts). Só leitura, e só pelas RPCs que as telas já
   chamam — com a sessão da própria pessoa, então o banco confere a permissão
   de novo em cada uma. Nenhuma RPC nova e nada de nome ou CPF na resposta: a
   Aya só conta.

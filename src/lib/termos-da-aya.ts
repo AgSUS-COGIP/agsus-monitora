@@ -1,5 +1,5 @@
 /*
-  Como uma frase vira termos para a busca da Aya (src/lib/busca-da-aya.js).
+  Como uma frase vira termos para a busca da Aya (src/lib/busca-da-aya.ts).
 
   1. normalização: minúsculas, sem acento, pontuação vira espaço;
   2. stopwords do português saem ("o", "de", "como", "qual"…); "não" e "sem"

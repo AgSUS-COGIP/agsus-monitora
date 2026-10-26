@@ -5,11 +5,11 @@ import {
   filtrosDeEntrevistas,
   filtrosDeRecursos,
   opcoesDoEdital,
-} from "../src/lib/filtro-da-aya.js";
+} from "../src/lib/filtro-da-aya.ts";
 
 /*
   O "Abrir" das respostas com número da Aya vira os filtros de cada tela
-  (src/lib/filtro-da-aya.js): o edital pelo número, a métrica pelo filtro
+  (src/lib/filtro-da-aya.ts): o edital pelo número, a métrica pelo filtro
   do indicador; o que não casa fica como estava.
 */
 

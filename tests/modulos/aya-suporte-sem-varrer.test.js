@@ -14,7 +14,7 @@ import { clicar, digitar } from "../componentes/interacoes.js";
 */
 
 const varrer = vi.hoisted(() => ({ vezes: 0 }));
-vi.mock("../../src/modulos/aya/contexto.js", async (original) => {
+vi.mock("../../src/modulos/aya/contexto.ts", async (original) => {
   const real = await original();
   return {
     ...real,
@@ -25,9 +25,9 @@ vi.mock("../../src/modulos/aya/contexto.js", async (original) => {
   };
 });
 
-const { montarAya } = await import("../../src/modulos/aya/aya.jsx");
+const { montarAya } = await import("../../src/modulos/aya/aya.tsx");
 const { definirPaginaDaAya, redefinirPaginaDaAya } =
-  await import("../../src/modulos/aya/estado.js");
+  await import("../../src/modulos/aya/estado.ts");
 
 let raiz;
 let controlador;

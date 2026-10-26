@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { criarFontesDaAya } from "../../src/modulos/aya/fontes.js";
+import { criarFontesDaAya } from "../../src/modulos/aya/fontes.ts";
 
 /*
   A Aya guarda os números por um minuto. A chave não tinha a pessoa: depois

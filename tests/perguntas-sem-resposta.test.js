@@ -5,11 +5,11 @@ import {
   limparPergunta,
   perguntasGuardadas,
   textoDasPerguntas,
-} from "../src/lib/perguntas-sem-resposta.js";
+} from "../src/lib/perguntas-sem-resposta.ts";
 
 /*
   As perguntas que a Aya não resolveu, guardadas sem dado pessoal para o
-  administrador melhorar a base (src/lib/perguntas-sem-resposta.js).
+  administrador melhorar a base (src/lib/perguntas-sem-resposta.ts).
 */
 
 describe("sem dado pessoal", () => {

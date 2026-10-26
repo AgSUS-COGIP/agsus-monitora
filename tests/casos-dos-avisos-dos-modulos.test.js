@@ -7,7 +7,7 @@ import {
   ondeDoCaso,
   quemDoCaso,
 } from "../src/lib/avisos-de-conferencia.ts";
-import { filtrosDeEntrevistas } from "../src/lib/filtro-da-aya.js";
+import { filtrosDeEntrevistas } from "../src/lib/filtro-da-aya.ts";
 import {
   filterApprovedCandidates,
   nomeDosCandidatosFiltrados,

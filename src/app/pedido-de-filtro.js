@@ -4,7 +4,7 @@
   Aya deixa aqui o pedido (`pedirFiltro`) e navega; a tela pega o pedido que
   é dela (`consumirPedidoDeFiltro`) uma vez só, quando os dados estão
   prontos, e aplica nos filtros que ela já tem (as regras de cada tela ficam
-  em src/lib/filtro-da-aya.js). Sem DOM e sem evento do navegador: um valor
+  em src/lib/filtro-da-aya.ts). Sem DOM e sem evento do navegador: um valor
   guardado, com validade curta, para um pedido velho não recortar uma
   abertura qualquer. A tela que já está montada fica sabendo pela assinatura
   (`usarPedidoDeFiltro`).

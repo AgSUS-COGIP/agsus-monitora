@@ -5,9 +5,9 @@
 
   Sem DOM, sem rede e sem estado: aqui só se reconhece a intenção e as
   entidades (edital, área, módulo, métrica) e se escreve a resposta a partir
-  dos números já calculados. Quem busca os dados é src/modulos/aya/fontes.js
+  dos números já calculados. Quem busca os dados é src/modulos/aya/fontes.ts
   (RPCs de leitura que a pessoa já pode chamar); quem conta é
-  src/lib/dados-da-aya.js. A resposta só traz números e datas — nunca nome,
+  src/lib/dados-da-aya.ts. A resposta só traz números e datas — nunca nome,
   CPF ou outro dado de pessoa.
 
   Uma intenção:
@@ -19,7 +19,7 @@
   Pergunta sem gatilho de número ("quantos", "quando foi", "tem"…) não é
   intenção de dado: vai para a base de verbetes.
 */
-import { normalizar } from "./termos-da-aya.js";
+import { normalizar } from "./termos-da-aya.ts";
 
 /* ---------- Entidades ---------- */
 
@@ -293,7 +293,7 @@ export function reconhecerIntencao(pergunta, contexto = {}) {
   }
 
   if (!GATILHO_DE_NUMERO.test(texto)) return null;
-  // "Quantos DSEIs…" e "quantos filtros…" são da tela (contexto-da-aya.js).
+  // "Quantos DSEIs…" e "quantos filtros…" são da tela (contexto-da-aya.ts).
   if (/\b(dseis?|filtros?|casais?|polos?)\b/.test(texto)) return null;
 
   const porModulo = INTENCOES.filter((i) => i.modulo.test(texto));

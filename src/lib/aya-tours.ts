@@ -2,8 +2,8 @@
   A educação guiada da Aya, em dados, sem DOM nem estado global: os tours
   "item por item" de cada tela e aba ("Me mostra esta tela") e as trilhas
   ("Aprender"), que juntam telas em sequência. Quem desenha é
-  src/modulos/aya/tour/tour.jsx; quem guarda o progresso e os convites no
-  navegador, src/modulos/aya/tour/progresso.js.
+  src/modulos/aya/tour/tour.tsx; quem guarda o progresso e os convites no
+  navegador, src/modulos/aya/tour/progresso.ts.
 
   Passo: `{ alvo, titulo, texto }`.
   - `alvo`: o elemento da vez, por atributo estável `data-tour="…"` (posto

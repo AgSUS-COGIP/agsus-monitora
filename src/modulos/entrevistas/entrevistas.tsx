@@ -7,7 +7,7 @@ import type {
 } from "./tipos-do-painel.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.js";
-import { filtrosDeEntrevistas } from "../../lib/filtro-da-aya.js";
+import { filtrosDeEntrevistas } from "../../lib/filtro-da-aya.ts";
 import { montarModulo } from "../../app/montar-modulo.jsx";
 import { usarTemaEscuro } from "../../app/tema.js";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";

@@ -1,14 +1,14 @@
 /*
   O botão "Abrir" de uma resposta com número da Aya leva à tela já
   recortada: o pedido (`{ edital: "93/2026", metrica: "pendente" }`, de
-  src/lib/intencoes-da-aya.js) vira os filtros que cada tela já tem. Sem DOM:
+  src/lib/intencoes-da-aya.ts) vira os filtros que cada tela já tem. Sem DOM:
   a tela passa as opções dos filtros dela e recebe os filtros novos.
 
   O edital casa pelo número ("93/2026" ou só "93"); a métrica, pelo filtro
   que o indicador da tela aplica quando é clicado. O que não casa fica como
   estava (a tela abre sem aquele recorte, nunca com um recorte errado).
 */
-import { mesmoEdital } from "./intencoes-da-aya.js";
+import { mesmoEdital } from "./intencoes-da-aya.ts";
 
 const valorDe = (opcao) =>
   typeof opcao === "string" ? opcao : String(opcao?.valor ?? "");

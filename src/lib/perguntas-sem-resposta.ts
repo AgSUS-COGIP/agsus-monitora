@@ -1,7 +1,7 @@
 /*
   As perguntas que a Aya não resolveu ("não ajudou" ou "não entendi"), para
   melhorar a base de docs/aya. Sem DOM e sem rede: quem guarda no navegador
-  é o painel (src/modulos/aya/aya.jsx, localStorage com try/catch) e quem
+  é o painel (src/modulos/aya/aya.tsx, localStorage com try/catch) e quem
   leva para a base é o administrador global, pelo botão "Copiar perguntas
   sem resposta".
 

@@ -23,13 +23,13 @@ importa; o que falta é simplesmente omitido.
 | `resposta`  | texto devolvido pela busca da Aya, sem gerar conteúdo                                                                   |
 | `fato`      | referência complementar; a busca responde apenas com o campo `resposta`                                                 |
 | `fonte`     | de onde veio; obrigatório quando não for a própria interface                                                            |
-| `abrir`     | opcional: botão que leva à tela citada (`recursos`, `config:acessos`… — ver `ACOES_DA_AYA` em `src/lib/aya-paginas.js`) |
+| `abrir`     | opcional: botão que leva à tela citada (`recursos`, `config:acessos`… — ver `ACOES_DA_AYA` em `src/lib/aya-paginas.ts`) |
 
 ## Busca no navegador
 
-A Aya usa apenas respostas escritas na base (`src/lib/busca-da-aya.js`). Acentos,
+A Aya usa apenas respostas escritas na base (`src/lib/busca-da-aya.ts`). Acentos,
 plurais, sufixos comuns, sinônimos do domínio (`SINONIMOS` em
-`src/lib/termos-da-aya.js`) e pequenos erros de digitação são normalizados; o
+`src/lib/termos-da-aya.ts`) e pequenos erros de digitação são normalizados; o
 documento de origem permite preferir a tela atual. Uma pergunta igual a uma das
 `perguntas` do verbete recebe a resposta dele; por isso duas frases que a busca
 lê igual ("lista de aprovados" e "as listas dos aprovados") não podem estar em
