@@ -62,7 +62,12 @@ describe("migration da integridade das listas: as RPCs", () => {
       const corpo = corpoDaFuncao(cabecaDe(nome));
       expect(corpo).toContain("security definer");
       expect(corpo).toContain("set search_path to ''");
-      expect(CONTRATO_RPC[nome]?.argumentos).toEqual(argumentosDe(corpo));
+      // Migrations depois desta só acrescentam parâmetros com default no fim
+      // (20261026150000: p_motivo no publicar).
+      const argumentos = argumentosDe(corpo);
+      expect(
+        CONTRATO_RPC[nome]?.argumentos.slice(0, argumentos.length),
+      ).toEqual(argumentos);
     },
   );
 

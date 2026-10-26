@@ -30,7 +30,15 @@ describe("Dados para a publicação de aprovados", () => {
       matricula: "M1",
       sub_judice: true,
     });
-    expect(situacaoDaPublicacao({ vigente: null })).toEqual({ vigente: null });
+    expect(situacaoDaPublicacao({ vigente: null })).toEqual({
+      vigente: null,
+      pode_substituir: true,
+    });
+    // pode_substituir vem do banco (20261026150000); sem ele, quem barra é o banco.
+    expect(
+      situacaoDaPublicacao({ vigente: null, pode_substituir: false })
+        .pode_substituir,
+    ).toBe(false);
   });
   it.each([
     {},
