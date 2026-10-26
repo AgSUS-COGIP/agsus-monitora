@@ -1,5 +1,18 @@
 /* Respostas sobre os dados fornecidos pela tela e referências da conversa. */
-function normalizeQuestion(value) {
+/** O que a tela forneceu (ver `collectAyaPageContext`); só o que esta conta usa. */
+export interface ContextoParaResposta {
+  territories?: readonly unknown[];
+  mapSummary?: unknown;
+  activeFilters?: readonly string[];
+}
+
+/** Uma mensagem da conversa (`role`: "user" ou "assistant"). */
+export interface MensagemDaConversa {
+  role?: string;
+  content?: unknown;
+}
+
+function normalizeQuestion(value: unknown): string {
   return String(value || "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -9,7 +22,9 @@ function normalizeQuestion(value) {
     .trim();
 }
 
-function countDseisFromContext(context) {
+function countDseisFromContext(
+  context: ContextoParaResposta | null | undefined,
+): number | null {
   if (Array.isArray(context?.territories) && context.territories.length) {
     const dseis = context.territories.filter((nome) =>
       /^DSEI\b/i.test(String(nome)),
@@ -22,7 +37,10 @@ function countDseisFromContext(context) {
   return null;
 }
 
-export function contextualAyaAnswer(question, context = {}) {
+export function contextualAyaAnswer(
+  question: unknown,
+  context: ContextoParaResposta = {},
+): string {
   const cleanQuestion = String(question || "");
   const normalized = normalizeQuestion(cleanQuestion);
   const asksIdentity =
@@ -73,7 +91,10 @@ export function contextualAyaAnswer(question, context = {}) {
 const REFERENCIA_VAGA =
   /\b(?:esse|essa|este|esta|desse|dessa|deste|desta|nele|nela|dele|dela|isso|disso|o mesmo|a mesma)\b/i;
 
-export function resolverReferencia(question, history = []) {
+export function resolverReferencia(
+  question: unknown,
+  history: readonly (MensagemDaConversa | null | undefined)[] = [],
+): string {
   const atual = String(question || "");
   if (!REFERENCIA_VAGA.test(atual)) return atual;
 

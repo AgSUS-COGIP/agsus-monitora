@@ -30,8 +30,13 @@ import {
   officialSourcesForQuestion,
 } from "../modules/aya-knowledge.js";
 import { paginaDaAya } from "./aya-paginas.ts";
+import type { SugestaoDaAya } from "./aya-paginas.ts";
 import { nomeDaArea } from "./menu-lateral.ts";
 import { contextualAyaAnswer, resolverReferencia } from "./contexto-da-aya.ts";
+import type {
+  ContextoParaResposta,
+  MensagemDaConversa,
+} from "./contexto-da-aya.ts";
 import {
   EXPRESSOES,
   aplicarSinonimos,
@@ -52,6 +57,101 @@ const BONUS_DA_AREA = 1.1;
 const MAXIMO_DE_SUGESTOES = 3;
 const MARGEM_DE_EMPATE = 0.06;
 
+/* ---------- Tipos ---------- */
+
+/** Um verbete da base (docs/aya/*.md, compilado). */
+export interface VerbeteDaAya {
+  readonly arquivo: string;
+  readonly titulo: string;
+  readonly perguntas: readonly string[];
+  readonly resposta: string;
+  /** O código de ACOES_DA_AYA do botão "Abrir". */
+  readonly abrir?: string;
+  readonly fato?: string;
+  readonly fonte?: string;
+}
+
+/** Uma fonte oficial citada (aya-knowledge.js). */
+export interface FonteOficial {
+  readonly id: string;
+  readonly label: string;
+  readonly url: string;
+}
+
+/** A página aberta e a área, para os bônus da busca. */
+export interface OpcoesDaBusca {
+  pagina?: string;
+  area?: string;
+}
+
+/** Um verbete do ranking, com a pontuação de 0 a 1 e a bruta. */
+export interface AchadoDaBusca {
+  verbete: VerbeteDaAya;
+  bruta: number;
+  pontuacao: number;
+}
+
+/** O resultado da busca na base. */
+export interface ResultadoDaBusca {
+  termos: string[];
+  dominio: boolean;
+  desconhecidos: number;
+  ranking: AchadoDaBusca[];
+}
+
+/** O que o painel pergunta: a mensagem e onde a pessoa está. */
+export interface PerguntaDaAya {
+  question?: unknown;
+  section?: string;
+  title?: string;
+  area?: string;
+  secao?: string;
+  history?: readonly (MensagemDaConversa | null | undefined)[];
+  context?: ContextoParaResposta;
+  perfil?: unknown;
+}
+
+/** A resposta da Aya. */
+export interface RespostaDaAya {
+  answer: string;
+  provider: string;
+  unavailable: boolean;
+  sources: readonly FonteOficial[];
+  sugestoes?: readonly SugestaoDaAya[];
+  acao?: string;
+  oferecerChamado?: boolean;
+  semResposta?: boolean;
+}
+
+interface FraseDoVerbete {
+  literal: string;
+  termos: string[];
+}
+
+interface ItemDoIndice {
+  verbete: VerbeteDaAya;
+  frases: FraseDoVerbete[];
+  perguntas: Set<string>;
+  titulo: Set<string>;
+  listaDoTitulo: string[];
+  resposta: Set<string>;
+}
+
+interface IndiceDaBase {
+  itens: ItemDoIndice[];
+  df: Map<string, number>;
+  dominio: Set<string>;
+  vocabulario: Map<string, number>;
+  total: number;
+}
+
+/* A pergunta corrigida: as palavras, os termos na ordem e o conjunto deles. */
+interface ConsultaDaBusca {
+  literal: string;
+  lista: string[];
+  termos: Set<string>;
+}
+
 /* ---------- Índice da base ---------- */
 
 /*
@@ -59,24 +159,25 @@ const MARGEM_DE_EMPATE = 0.06;
   são as de `paginaDaAya` (src/lib/aya-paginas.ts): a view do menu ou
   `config:<seção>`.
 */
-const PAGINAS_DO_ARQUIVO = Object.freeze({
-  "regras-da-visao-geral.md": ["dashboard"],
-  "regras-dos-mapas.md": ["dashboard"],
-  "regras-do-mapa-saude-indigena.md": ["dashboard"],
-  "regras-dos-editais.md": ["nucleo"],
-  "regras-do-cronograma.md": ["calendario"],
-  "regras-das-analises.md": ["analises"],
-  "regras-da-avaliacao-documental.md": ["avaliacao-documental"],
-  "regras-dos-recursos.md": ["recursos", "analisar-recursos"],
-  "regras-das-entrevistas.md": ["entrevistas", "conduzir-entrevistas"],
-  "regras-da-classificacao.md": ["classificacao"],
-  "regras-da-lista-de-aprovados.md": ["approved"],
-  "regras-da-selecao.md": ["selecao"],
-  "regras-das-configuracoes.md": ["config"],
-  "regras-dos-acessos.md": ["config:acessos", "config"],
-  "regras-dos-modulos-e-abas.md": ["config:modulos", "config"],
-  "regras-do-status-das-atualizacoes.md": ["config:cargas", "config"],
-});
+const PAGINAS_DO_ARQUIVO: Readonly<Record<string, readonly string[]>> =
+  Object.freeze({
+    "regras-da-visao-geral.md": ["dashboard"],
+    "regras-dos-mapas.md": ["dashboard"],
+    "regras-do-mapa-saude-indigena.md": ["dashboard"],
+    "regras-dos-editais.md": ["nucleo"],
+    "regras-do-cronograma.md": ["calendario"],
+    "regras-das-analises.md": ["analises"],
+    "regras-da-avaliacao-documental.md": ["avaliacao-documental"],
+    "regras-dos-recursos.md": ["recursos", "analisar-recursos"],
+    "regras-das-entrevistas.md": ["entrevistas", "conduzir-entrevistas"],
+    "regras-da-classificacao.md": ["classificacao"],
+    "regras-da-lista-de-aprovados.md": ["approved"],
+    "regras-da-selecao.md": ["selecao"],
+    "regras-das-configuracoes.md": ["config"],
+    "regras-dos-acessos.md": ["config:acessos", "config"],
+    "regras-dos-modulos-e-abas.md": ["config:modulos", "config"],
+    "regras-do-status-das-atualizacoes.md": ["config:cargas", "config"],
+  });
 
 const ARQUIVOS_DA_SAUDE_INDIGENA = new Set([
   "01-saude-indigena.md",
@@ -86,11 +187,11 @@ const ARQUIVOS_DA_SAUDE_INDIGENA = new Set([
   "regras-do-mapa-saude-indigena.md",
 ]);
 
-const indices = new WeakMap();
+const indices = new WeakMap<readonly VerbeteDaAya[], IndiceDaBase>();
 
-function indexar(verbetes) {
-  if (indices.has(verbetes)) return indices.get(verbetes);
-  const itens = verbetes
+function indexar(verbetes: readonly VerbeteDaAya[]): IndiceDaBase {
+  if (indices.has(verbetes)) return indices.get(verbetes)!;
+  const itens: ItemDoIndice[] = verbetes
     .filter((verbete) => verbete.resposta && verbete.perguntas?.length)
     .map((verbete) => {
       const frases = verbete.perguntas
@@ -108,8 +209,8 @@ function indexar(verbetes) {
         resposta: new Set(termosDe(verbete.resposta)),
       };
     });
-  const df = new Map();
-  const dominio = new Set();
+  const df = new Map<string, number>();
+  const dominio = new Set<string>();
   for (const item of itens) {
     const todos = new Set([
       ...item.perguntas,
@@ -121,7 +222,7 @@ function indexar(verbetes) {
   }
   // Vocabulário da correção: as palavras (no singular) da base e as dos
   // sinônimos, com a frequência do radical ou do conceito para desempatar.
-  const vocabulario = new Map();
+  const vocabulario = new Map<string, number>();
   for (const { verbete } of itens) {
     const texto = [...verbete.perguntas, verbete.titulo, verbete.resposta];
     for (const palavra of palavrasDe(texto.join(" ")))
@@ -143,12 +244,13 @@ function indexar(verbetes) {
   vira "entrevista", que os sinônimos depois trocam pelo conceito. Palavra
   conhecida, ou cujo radical a base conhece, fica como está.
 */
-function corrigir(palavra, indice) {
+function corrigir(palavra: string, indice: IndiceDaBase): string {
   if (indice.vocabulario.has(palavra) || indice.df.has(radical(palavra)))
     return palavra;
   const teto = toleranciaPara(palavra);
   if (!teto) return palavra;
-  let melhor = null;
+  let melhor: { candidato: string; custo: number; frequencia: number } | null =
+    null;
   for (const [candidato, frequencia] of indice.vocabulario) {
     if (candidato.length < 3) continue;
     const d = distancia(palavra, candidato, teto);
@@ -165,10 +267,10 @@ function corrigir(palavra, indice) {
   return melhor && melhor.custo <= teto ? melhor.candidato : palavra;
 }
 
-const idf = (indice, termo) =>
+const idf = (indice: IndiceDaBase, termo: string): number =>
   Math.log(1 + indice.total / (1 + (indice.df.get(termo) || 0)));
 
-function daPagina(verbete, pagina) {
+function daPagina(verbete: VerbeteDaAya, pagina: unknown): boolean {
   const chave = String(pagina || "");
   if (!chave) return false;
   if (verbete.abrir && verbete.abrir === chave) return true;
@@ -179,14 +281,19 @@ function daPagina(verbete, pagina) {
   );
 }
 
-const mesmaLista = (a, b) =>
+const mesmaLista = (a: readonly string[], b: readonly string[]): boolean =>
   a.length === b.length && [...a].sort().join(" ") === [...b].sort().join(" ");
 
 /*
   `pergunta`: { literal, lista, termos } — as palavras corrigidas, os termos na
   ordem (com repetição) e o conjunto deles.
 */
-function pontuar(item, pergunta, { pagina, area }, indice) {
+function pontuar(
+  item: ItemDoIndice,
+  pergunta: ConsultaDaBusca,
+  { pagina, area }: OpcoesDaBusca,
+  indice: IndiceDaBase,
+): number {
   const { termos } = pergunta;
   let obtido = 0;
   let maximo = 0;
@@ -253,10 +360,10 @@ function pontuar(item, pergunta, { pagina, area }, indice) {
  * que a base não tem nem depois da correção.
  */
 export function buscarNaBase(
-  pergunta,
-  { pagina = "", area = "" } = {},
-  verbetes = VERBETES_AYA,
-) {
+  pergunta: unknown,
+  { pagina = "", area = "" }: OpcoesDaBusca = {},
+  verbetes: readonly VerbeteDaAya[] = VERBETES_AYA,
+): ResultadoDaBusca {
   const indice = indexar(verbetes);
   const palavras = palavrasDe(pergunta).map((palavra) =>
     corrigir(palavra, indice),
@@ -300,13 +407,13 @@ const INTERROGATIVA =
   das perguntas que já é interrogativa ("O que é <frase>?" se nenhuma for).
   Clicar nele responde, porque a frase é exatamente uma das do verbete.
 */
-function sugestaoDoVerbete(verbete) {
+function sugestaoDoVerbete(verbete: VerbeteDaAya): SugestaoDaAya {
   const frase =
     verbete.perguntas.find((p) => INTERROGATIVA.test(p)) ||
     `o que é ${verbete.perguntas[0]}`;
   return {
     rotulo: verbete.titulo,
-    pergunta: `${frase[0].toUpperCase()}${frase.slice(1)}?`,
+    pergunta: `${frase[0]!.toUpperCase()}${frase.slice(1)}?`,
   };
 }
 
@@ -328,14 +435,17 @@ const FORA_DO_SISTEMA =
 const CORTE_DA_COMPOSTA =
   /\?\s+|;\s*|\s+e\s+(?:tambem\s+|também\s+)?(?=(?:como|quem|quando|onde|por que|porque|o que|qual|quais|quanto|quantos|quantas|pode|posso)\s)/i;
 
-export function partesDaPergunta(pergunta) {
+export function partesDaPergunta(pergunta: unknown): string[] {
   return String(pergunta || "")
     .split(CORTE_DA_COMPOSTA)
     .map((parte) => parte.replace(/[?]+$/, "").trim())
     .filter((parte) => termosDe(parte).length >= 1 && parte.length >= 4);
 }
 
-function melhorConfiante(parte, opcoes) {
+function melhorConfiante(
+  parte: string,
+  opcoes: OpcoesDaBusca,
+): VerbeteDaAya | null {
   const { ranking } = buscarNaBase(parte, opcoes);
   const [melhor, segundo] = ranking;
   if (!melhor || melhor.pontuacao < LIMIAR_CONFIANTE) return null;
@@ -346,7 +456,10 @@ function melhorConfiante(parte, opcoes) {
   return destacado ? melhor.verbete : null;
 }
 
-function responderComposta(pergunta, opcoes) {
+function responderComposta(
+  pergunta: string,
+  opcoes: OpcoesDaBusca,
+): { answer: string; acao: string } | null {
   const partes = partesDaPergunta(pergunta);
   if (partes.length < 2) return null;
   const verbetes = partes.slice(0, 3).map((p) => melhorConfiante(p, opcoes));
@@ -354,9 +467,9 @@ function responderComposta(pergunta, opcoes) {
   if (new Set(verbetes).size !== verbetes.length) return null;
   return {
     answer: verbetes
-      .map((v, i) => `${i + 1}. ${v.titulo}: ${v.resposta}`)
+      .map((v, i) => `${i + 1}. ${v!.titulo}: ${v!.resposta}`)
       .join("\n"),
-    acao: verbetes.find((v) => v.abrir)?.abrir || "",
+    acao: verbetes.find((v) => v!.abrir)?.abrir || "",
   };
 }
 
@@ -369,7 +482,7 @@ export function responderAya({
   history = [],
   context = {},
   perfil = undefined,
-} = {}) {
+}: PerguntaDaAya = {}): RespostaDaAya {
   const pagina = paginaDaAya({
     view: section,
     titulo: title,
@@ -394,7 +507,9 @@ export function responderAya({
   // Sem conversa, a pergunta segue como veio (a resposta direta lê "AL/SE").
   const original = conversa.intencao ? conversa.pergunta : question;
   const texto = normalizar(original);
-  const responder = (resposta) => ({
+  const responder = (
+    resposta: Partial<RespostaDaAya> & { answer: string },
+  ): RespostaDaAya => ({
     ...base,
     ...resposta,
     answer: `${prefixo}${resposta.answer}`,
@@ -466,8 +581,8 @@ export function responderAya({
   // o primeiro seja exatamente uma das frases, a diferença tem de ser clara.
   const destacado =
     !segundo ||
-    melhor.bruta - segundo.bruta >= MARGEM_DE_EMPATE ||
-    (melhor.bruta >= 2 && segundo.bruta < 2);
+    melhor!.bruta - segundo.bruta >= MARGEM_DE_EMPATE ||
+    (melhor!.bruta >= 2 && segundo.bruta < 2);
   if (melhor && pontuacao >= LIMIAR_CONFIANTE && destacado)
     return responder({
       answer: melhor.verbete.resposta,
@@ -481,7 +596,7 @@ export function responderAya({
   if (maisDesconhecida || (pontuacao < LIMIAR_INCERTO && !dominio))
     return foraDoEscopo();
 
-  const vistas = new Set();
+  const vistas = new Set<string>();
   const sugestoes = ranking
     .filter((achado) => achado.pontuacao >= LIMIAR_INCERTO / 2)
     .map(({ verbete }) => sugestaoDoVerbete(verbete))

@@ -14,7 +14,7 @@
   Sem DOM e sem estado: a pergunta e os verbetes passam pelas mesmas funções.
 */
 
-export function normalizar(texto) {
+export function normalizar(texto: unknown): string {
   return String(texto ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -39,7 +39,7 @@ const STOPWORDS = new Set(
   coisas certo`.split(/\s+/),
 );
 
-const PLURAIS = [
+const PLURAIS: readonly (readonly [string, string])[] = [
   ["oes", "ao"],
   ["aes", "ao"],
   ["ais", "al"],
@@ -84,12 +84,15 @@ const SUFIXOS = [
 ];
 
 // Siglas cujo plural a regra geral erraria ("casais" viraria "casal").
-const PLURAIS_IRREGULARES = Object.freeze({ casais: "casai", ubsis: "ubsi" });
+const PLURAIS_IRREGULARES: Readonly<Record<string, string>> = Object.freeze({
+  casais: "casai",
+  ubsis: "ubsi",
+});
 
 /** A palavra (já normalizada) sem plural: "editais" → "edital". */
-export function singular(palavra) {
+export function singular(palavra: string | null | undefined): string {
   const p = String(palavra || "");
-  if (PLURAIS_IRREGULARES[p]) return PLURAIS_IRREGULARES[p];
+  if (PLURAIS_IRREGULARES[p]) return PLURAIS_IRREGULARES[p]!;
   if (p.length <= 3 || /^\d+$/.test(p) || p.endsWith("ss")) return p;
   for (const [fim, troca] of PLURAIS) {
     if (p.endsWith(fim) && p.length - fim.length >= 3)
@@ -99,7 +102,7 @@ export function singular(palavra) {
 }
 
 /** O radical: sem plural e sem sufixo comum ("convocados" → "convoc"). */
-export function radical(palavra) {
+export function radical(palavra: string | null | undefined): string {
   const p = singular(palavra);
   if (p.length <= 3 || /^\d+$/.test(p)) return p;
   for (const sufixo of SUFIXOS) {
@@ -116,79 +119,96 @@ export function radical(palavra) {
   "aprovação" têm o mesmo radical e não são a mesma coisa. Por isso cada forma
   verbal que importa está escrita ("contestar", "convocado"…).
 */
-export const SINONIMOS = Object.freeze({
-  edital: [
-    "edital",
-    "processo seletivo",
-    "processo de selecao",
-    "pss",
-    "certame",
-    "chamamento publico",
-    "selecao publica",
-  ],
-  vaga: ["vaga", "cargo", "posto de trabalho"],
-  candidato: ["candidato", "candidata", "inscrito", "inscrita", "concorrente"],
-  aprovado: [
-    "aprovado",
-    "aprovada",
-    "classificado",
-    "classificada",
-    "habilitado",
-    "habilitada",
-  ],
-  recurso: [
-    "recurso",
-    "contestacao",
-    "contestar",
-    "impugnacao",
-    "impugnar",
-    "recorrer",
-  ],
-  entrevista: ["entrevista", "entrevistar", "entrevistador", "banca"],
-  analise: [
-    "analise curricular",
-    "analise de curriculo",
-    "analise",
-    "triagem",
-    "curriculo",
-  ],
-  acesso: ["acesso", "acessar", "permissao", "login", "logar", "autorizacao"],
-  dsei: [
-    "dsei",
-    "distrito sanitario especial indigena",
-    "distrito sanitario",
-    "distrito",
-  ],
-  polo: ["polo base", "polo"],
-  ubsi: ["ubsi", "unidade basica de saude indigena", "posto de saude", "posto"],
-  casai: ["casai", "casa de saude indigena", "casa de apoio"],
-  cronograma: ["cronograma", "calendario"],
-  convocacao: ["convocacao", "convocar", "convocado", "convocada"],
-  contratacao: ["contratacao", "contratar", "contratado", "admissao"],
-  chamado: ["chamado", "suporte", "ticket", "helpdesk"],
-  indicador: ["indicador", "kpi", "metrica"],
-  parecer: ["parecer juridico", "parecer", "juridico"],
-  // Siglas e jeitos de falar do processo seletivo.
-  art: ["art", "nota da art", "autodeclaracao", "nota da autodeclaracao"],
-  lote: ["lote de convocacao", "lote", "leva de convocacao"],
-  reserva: ["cr", "cadastro reserva", "cadastro de reserva"],
-  ampla: ["ac", "ampla concorrencia"],
-  negro: [
-    "pp",
-    "ppp",
-    "pretos e pardos",
-    "pessoas pretas e pardas",
-    "cota racial",
-    "negro",
-    "negra",
-  ],
-  cotaindigena: ["pi", "cota indigena", "vaga indigena", "candidato indigena"],
-  pcd: ["pcd", "pessoa com deficiencia", "deficiencia", "deficiente"],
-  subjudice: ["sub judice", "subjudice", "decisao judicial", "liminar"],
-});
+export const SINONIMOS: Readonly<Record<string, readonly string[]>> =
+  Object.freeze({
+    edital: [
+      "edital",
+      "processo seletivo",
+      "processo de selecao",
+      "pss",
+      "certame",
+      "chamamento publico",
+      "selecao publica",
+    ],
+    vaga: ["vaga", "cargo", "posto de trabalho"],
+    candidato: [
+      "candidato",
+      "candidata",
+      "inscrito",
+      "inscrita",
+      "concorrente",
+    ],
+    aprovado: [
+      "aprovado",
+      "aprovada",
+      "classificado",
+      "classificada",
+      "habilitado",
+      "habilitada",
+    ],
+    recurso: [
+      "recurso",
+      "contestacao",
+      "contestar",
+      "impugnacao",
+      "impugnar",
+      "recorrer",
+    ],
+    entrevista: ["entrevista", "entrevistar", "entrevistador", "banca"],
+    analise: [
+      "analise curricular",
+      "analise de curriculo",
+      "analise",
+      "triagem",
+      "curriculo",
+    ],
+    acesso: ["acesso", "acessar", "permissao", "login", "logar", "autorizacao"],
+    dsei: [
+      "dsei",
+      "distrito sanitario especial indigena",
+      "distrito sanitario",
+      "distrito",
+    ],
+    polo: ["polo base", "polo"],
+    ubsi: [
+      "ubsi",
+      "unidade basica de saude indigena",
+      "posto de saude",
+      "posto",
+    ],
+    casai: ["casai", "casa de saude indigena", "casa de apoio"],
+    cronograma: ["cronograma", "calendario"],
+    convocacao: ["convocacao", "convocar", "convocado", "convocada"],
+    contratacao: ["contratacao", "contratar", "contratado", "admissao"],
+    chamado: ["chamado", "suporte", "ticket", "helpdesk"],
+    indicador: ["indicador", "kpi", "metrica"],
+    parecer: ["parecer juridico", "parecer", "juridico"],
+    // Siglas e jeitos de falar do processo seletivo.
+    art: ["art", "nota da art", "autodeclaracao", "nota da autodeclaracao"],
+    lote: ["lote de convocacao", "lote", "leva de convocacao"],
+    reserva: ["cr", "cadastro reserva", "cadastro de reserva"],
+    ampla: ["ac", "ampla concorrencia"],
+    negro: [
+      "pp",
+      "ppp",
+      "pretos e pardos",
+      "pessoas pretas e pardas",
+      "cota racial",
+      "negro",
+      "negra",
+    ],
+    cotaindigena: [
+      "pi",
+      "cota indigena",
+      "vaga indigena",
+      "candidato indigena",
+    ],
+    pcd: ["pcd", "pessoa com deficiencia", "deficiencia", "deficiente"],
+    subjudice: ["sub judice", "subjudice", "decisao judicial", "liminar"],
+  });
 
 /** As palavras de um texto, sem stopwords, no singular. */
-export function palavrasDe(texto) {
+export function palavrasDe(texto: unknown): string[] {
   return normalizar(texto)
     .split(" ")
     .filter((palavra) => palavra && !STOPWORDS.has(palavra))
@@ -196,7 +216,12 @@ export function palavrasDe(texto) {
 }
 
 /* As expressões dos sinônimos, no singular, da mais longa à mais curta. */
-export const EXPRESSOES = Object.freeze(
+export interface ExpressaoDaAya {
+  conceito: string;
+  termos: string[];
+}
+
+export const EXPRESSOES: readonly ExpressaoDaAya[] = Object.freeze(
   Object.entries(SINONIMOS)
     .flatMap(([conceito, lista]) =>
       lista.map((expressao) => ({
@@ -209,8 +234,8 @@ export const EXPRESSOES = Object.freeze(
 );
 
 /** Troca as expressões pelos conceitos; o resto vira radical. */
-export function aplicarSinonimos(palavras) {
-  const saida = [];
+export function aplicarSinonimos(palavras: readonly string[]): string[] {
+  const saida: string[] = [];
   for (let i = 0; i < palavras.length;) {
     const achada = EXPRESSOES.find((item) =>
       item.termos.every((termo, j) => palavras[i + j] === termo),
@@ -227,7 +252,7 @@ export function aplicarSinonimos(palavras) {
 }
 
 /** Os termos de um texto: sem stopwords, com sinônimos trocados e em radical. */
-export function termosDe(texto) {
+export function termosDe(texto: unknown): string[] {
   return aplicarSinonimos(palavrasDe(texto));
 }
 
@@ -235,33 +260,34 @@ export function termosDe(texto) {
  * Distância de edição com transposição (Damerau, versão OSA): "entrevsita"
  * fica a 1 de "entrevista". Passou do `teto`, devolve `teto + 1` sem terminar.
  */
-export function distancia(a, b, teto = Infinity) {
+export function distancia(a: string, b: string, teto = Infinity): number {
   if (a === b) return 0;
   if (Math.abs(a.length - b.length) > teto) return teto + 1;
-  const linhas = [];
+  /* Matriz (a.length + 1) × (b.length + 1), toda preenchida no laço abaixo. */
+  const linhas: number[][] = [];
   for (let i = 0; i <= a.length; i += 1) {
     linhas[i] = [i];
-    for (let j = 1; j <= b.length; j += 1) linhas[i][j] = i === 0 ? j : 0;
+    for (let j = 1; j <= b.length; j += 1) linhas[i]![j] = i === 0 ? j : 0;
   }
   for (let i = 1; i <= a.length; i += 1) {
     let menorDaLinha = Infinity;
     for (let j = 1; j <= b.length; j += 1) {
       const custo = a[i - 1] === b[j - 1] ? 0 : 1;
       let valor = Math.min(
-        linhas[i - 1][j] + 1,
-        linhas[i][j - 1] + 1,
-        linhas[i - 1][j - 1] + custo,
+        linhas[i - 1]![j]! + 1,
+        linhas[i]![j - 1]! + 1,
+        linhas[i - 1]![j - 1]! + custo,
       );
       if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1])
-        valor = Math.min(valor, linhas[i - 2][j - 2] + 1);
-      linhas[i][j] = valor;
+        valor = Math.min(valor, linhas[i - 2]![j - 2]! + 1);
+      linhas[i]![j] = valor;
       menorDaLinha = Math.min(menorDaLinha, valor);
     }
     if (menorDaLinha > teto) return teto + 1;
   }
-  return linhas[a.length][b.length];
+  return linhas[a.length]![b.length]!;
 }
 
 /** Quantos erros a correção aceita: 0 até 3 letras, 1 até 7, 2 a partir de 8. */
-export const toleranciaPara = (palavra) =>
+export const toleranciaPara = (palavra: string): number =>
   palavra.length >= 8 ? 2 : palavra.length >= 4 ? 1 : 0;

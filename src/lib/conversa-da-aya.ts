@@ -7,7 +7,25 @@
 */
 import { normalizar } from "./termos-da-aya.ts";
 
-const SAUDACOES = [
+/** "saudacao", "ajuda", "agradecimento", "despedida" ou "" (nenhuma). */
+export type IntencaoDeConversa =
+  "" | "saudacao" | "ajuda" | "agradecimento" | "despedida";
+
+/** A conversa contida numa mensagem (ver `intencaoDeConversa`). */
+export interface ConversaDaMensagem {
+  intencao: IntencaoDeConversa;
+  saudacao: string;
+  resto: string;
+  pergunta: string;
+}
+
+interface IntencaoComExpressoes {
+  nome: "ajuda" | "agradecimento" | "despedida";
+  tirar: boolean;
+  expressoes: string[];
+}
+
+const SAUDACOES: readonly (readonly [string, string])[] = [
   ["bom dia", "Bom dia!"],
   ["boa tarde", "Boa tarde!"],
   ["boa noite", "Boa noite!"],
@@ -29,7 +47,7 @@ const SAUDACOES = [
   `tirar`: a expressão sai da pergunta que vai para a base. As de ajuda ficam,
   porque "como funciona o processo seletivo?" é pergunta, não pedido de ajuda.
 */
-const INTENCOES = [
+const INTENCOES: readonly IntencaoComExpressoes[] = [
   {
     nome: "ajuda",
     tirar: false,
@@ -96,7 +114,10 @@ const ENCHIMENTO = new Set(
 // Sozinhas, também não são pergunta ("e então, tudo bem?").
 const LIGACOES = new Set("a o e entao bem certo".split(" "));
 
-function tirarExpressao(texto, expressao) {
+function tirarExpressao(
+  texto: string,
+  expressao: string,
+): { achou: boolean; resto: string } {
   const padrao = new RegExp(`(^| )${expressao}(?= |$)`, "g");
   return padrao.test(texto)
     ? {
@@ -106,7 +127,7 @@ function tirarExpressao(texto, expressao) {
     : { achou: false, resto: texto };
 }
 
-const semEnchimento = (texto, tambem = new Set()) =>
+const semEnchimento = (texto: string, tambem = new Set<string>()): string =>
   texto
     .split(" ")
     .filter((p) => p && !ENCHIMENTO.has(p) && !tambem.has(p))
@@ -122,7 +143,7 @@ const semEnchimento = (texto, tambem = new Set()) =>
  * - `pergunta`: o texto (normalizado) que segue para a base, sem a saudação,
  *   o agradecimento e a despedida.
  */
-export function intencaoDeConversa(mensagem) {
+export function intencaoDeConversa(mensagem: unknown): ConversaDaMensagem {
   let texto = normalizar(mensagem);
   let saudacao = "";
   for (const [expressao, frase] of SAUDACOES) {
@@ -132,7 +153,7 @@ export function intencaoDeConversa(mensagem) {
       texto = resto;
     }
   }
-  let intencao = "";
+  let intencao: IntencaoDeConversa = "";
   let pergunta = texto;
   for (const { nome, tirar, expressoes } of INTENCOES) {
     for (const expressao of expressoes) {
@@ -156,8 +177,17 @@ export const O_QUE_A_AYA_FAZ =
   "editais, cronogramas, análises, recursos, entrevistas, aprovados, seleção, mapas e acessos";
 
 /** O texto da resposta de conversa; `intro` é a apresentação da página aberta. */
-export function textoDaConversa({ intencao, saudacao = "", intro = "" }) {
-  const comIntro = (texto) => (intro ? `${texto} ${intro}` : texto);
+export function textoDaConversa({
+  intencao,
+  saudacao = "",
+  intro = "",
+}: {
+  intencao: IntencaoDeConversa;
+  saudacao?: string;
+  intro?: string;
+}): string {
+  const comIntro = (texto: string): string =>
+    intro ? `${texto} ${intro}` : texto;
   if (intencao === "ajuda")
     return comIntro(
       `Sou a Aya, assistente do MONITORA. Explico as telas e as regras de ${O_QUE_A_AYA_FAZ}, olhando a página em que você está; também mostro a tela com um tour e, quando eu não resolver, abro um chamado ao suporte.`,

@@ -1,14 +1,38 @@
 /* Contexto já visível na tela; nenhuma consulta à rede. */
-function compactText(value, maxLength = 180) {
+/** O que a tela mostra agora, para a Aya responder sobre ela. */
+export interface ContextoDaPagina {
+  registroAberto: string;
+  pathname: string;
+  pageTitle: string;
+  mapSummary: string;
+  activeFilters: string[];
+  search: string;
+  kpis: string[];
+  territories: string[];
+  dseis: string[];
+  editais: string[];
+}
+
+/** A aba e o edital escolhidos na tela aberta. */
+export interface EstadoDaTela {
+  aba: string;
+  edital: string;
+}
+
+function compactText(value: unknown, maxLength = 180): string {
   return String(value || "")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, maxLength);
 }
 
-function uniqueTexts(values, limit = 10, maxLength = 180) {
-  const seen = new Set();
-  const output = [];
+function uniqueTexts(
+  values: Iterable<unknown>,
+  limit = 10,
+  maxLength = 180,
+): string[] {
+  const seen = new Set<string>();
+  const output: string[] = [];
   for (const value of values) {
     const text = compactText(value, maxLength);
     const key = text.toLocaleLowerCase("pt-BR");
@@ -20,13 +44,18 @@ function uniqueTexts(values, limit = 10, maxLength = 180) {
   return output;
 }
 
-function textOf(doc, selector, maxLength = 240) {
+function textOf(doc: ParentNode, selector: string, maxLength = 240): string {
   return compactText(doc.querySelector(selector)?.textContent, maxLength);
 }
 
-function visibleTextList(doc, selector, limit = 10, maxLength = 220) {
+function visibleTextList(
+  doc: ParentNode,
+  selector: string,
+  limit = 10,
+  maxLength = 220,
+): string[] {
   return uniqueTexts(
-    Array.from(doc.querySelectorAll(selector))
+    Array.from(doc.querySelectorAll<HTMLElement>(selector))
       .filter((item) => !item.hidden)
       .map((item) => item.textContent),
     limit,
@@ -42,8 +71,8 @@ function visibleTextList(doc, selector, limit = 10, maxLength = 220) {
 */
 const NUMERO_DO_EDITAL = /\b\d{1,4}\/\d{4}\b/;
 
-function editalAberto(doc) {
-  const formulario = doc.querySelector("#editModal #mEdital");
+function editalAberto(doc: ParentNode): string {
+  const formulario = doc.querySelector<HTMLInputElement>("#editModal #mEdital");
   const doFormulario = compactText(formulario?.value, 40);
   if (doFormulario) return `Edital ${doFormulario}`;
   for (const topo of doc.querySelectorAll(".ui-gaveta-topo")) {
@@ -53,7 +82,9 @@ function editalAberto(doc) {
   return "";
 }
 
-export function collectAyaPageContext(doc = document) {
+export function collectAyaPageContext(
+  doc: Document = document,
+): ContextoDaPagina {
   // "Territórios por vagas" do mapa da Saúde Indígena (src/modulos/mapa-saude-indigena/).
   const territories = uniqueTexts(
     Array.from(doc.querySelectorAll(".mapa-si-territorio")).map((item) => {
@@ -112,7 +143,8 @@ export function collectAyaPageContext(doc = document) {
     mapSummary: textOf(doc, ".mapa-si-painel__contagem", 120),
     activeFilters,
     search: compactText(
-      doc.querySelector(".visao-geral-tela .ui-tabela-busca")?.value,
+      doc.querySelector<HTMLInputElement>(".visao-geral-tela .ui-tabela-busca")
+        ?.value,
       120,
     ),
     kpis,
@@ -131,8 +163,8 @@ export function collectAyaPageContext(doc = document) {
 const MARCADA =
   "[aria-checked='true'], [aria-selected='true'], [aria-pressed='true']";
 
-export function estadoDaTela(doc = document) {
-  const pagina = doc.querySelector(".page.active") || doc;
+export function estadoDaTela(doc: Document = document): EstadoDaTela {
+  const pagina: ParentNode = doc.querySelector(".page.active") || doc;
   let aba = "";
   for (const grupo of pagina.querySelectorAll(
     "[data-tour][role='radiogroup'], [data-tour][role='tablist'], [role='tablist'][data-tour]",
@@ -158,7 +190,7 @@ export function estadoDaTela(doc = document) {
     "[data-tour$='seletor-edital'], [data-tour$='-edital']",
   )) {
     const select = campo.matches("select")
-      ? campo
+      ? (campo as HTMLSelectElement)
       : campo.querySelector("select");
     const texto = select
       ? select.selectedOptions?.[0]?.textContent || ""

@@ -21,18 +21,142 @@
 */
 import { normalizar } from "./termos-da-aya.ts";
 
+/* ---------- Tipos ---------- */
+
+/** As fontes de contagem (uma por tela com indicadores). */
+export type FonteDeContagem =
+  "analises" | "recursos" | "entrevistas" | "selecao";
+
+/** Uma métrica: as palavras que a pedem e o rótulo [singular, plural]. */
+export interface MetricaDaIntencao {
+  readonly id: string;
+  readonly palavras: RegExp;
+  readonly rotulo: readonly string[];
+  readonly porcentagem?: boolean;
+}
+
+/** Uma intenção do catálogo de contagens. */
+export interface IntencaoDoCatalogo {
+  readonly id: FonteDeContagem;
+  readonly fonte: FonteDeContagem;
+  readonly view: string;
+  readonly pagina: string;
+  readonly padrao: string;
+  readonly modulo: RegExp;
+  readonly metricas: readonly MetricaDaIntencao[];
+}
+
+/** Edital e área da pergunta (completados pela tela). */
+export interface EntidadesDaPergunta {
+  edital: string;
+  editalExplicito: boolean;
+  area: string;
+  areaExplicita: boolean;
+}
+
+/** O que a tela aberta diz: `{ view, area, edital }`. */
+export interface ContextoDaPergunta {
+  view?: unknown;
+  area?: unknown;
+  edital?: unknown;
+}
+
+interface BaseDaIntencao {
+  entidades: EntidadesDaPergunta;
+  /** Posto por dados-da-aya.ts quando o edital pedido não tem dados. */
+  editalSemDados?: boolean;
+  /** Só a intenção de última carga diz de qual fonte. */
+  cargaDe?: string;
+}
+
+export interface IntencaoDeConferencia extends BaseDaIntencao {
+  id: "conferencias";
+  tipo: "conferencia";
+  fonte: "";
+}
+
+export interface IntencaoDeAtrasos extends BaseDaIntencao {
+  id: "cargas";
+  tipo: "atrasos";
+  fonte: "cargas";
+  view: "config";
+  secao: "cargas";
+}
+
+export interface IntencaoDeCarga extends BaseDaIntencao {
+  id: "ultima-carga";
+  tipo: "carga";
+  fonte: "conferencia";
+  cargaDe: string;
+  nome: string;
+  view: string;
+  pagina: string;
+}
+
+export interface IntencaoDeContagem extends BaseDaIntencao {
+  id: FonteDeContagem;
+  tipo: "contagem";
+  fonte: FonteDeContagem;
+  view: string;
+  pagina: string;
+  metrica: MetricaDaIntencao;
+}
+
+/** A intenção de dado reconhecida numa pergunta. */
+export type IntencaoDeDado =
+  | IntencaoDeConferencia
+  | IntencaoDeAtrasos
+  | IntencaoDeCarga
+  | IntencaoDeContagem;
+
+/**
+ * O que foi contado para a resposta. Os números vêm das contas das telas
+ * (número ou `null`); a data da carga, da RPC — por isso `unknown`.
+ */
+export interface ResultadoDaIntencao {
+  valor?: unknown;
+  total?: unknown;
+  em?: unknown;
+  editalSemDados?: boolean;
+  atrasadas?: readonly string[];
+  desativadas?: unknown;
+  contratados?: unknown;
+  aprovados?: unknown;
+}
+
+/** O filtro que o botão "Abrir" pede à tela. */
+export interface FiltroDaAcao {
+  edital?: string;
+  metrica?: string;
+}
+
+/** O botão "Abrir" de uma resposta com número. */
+export interface AcaoDaIntencao {
+  view: string;
+  secao?: string;
+  filtro: FiltroDaAcao;
+}
+
+/** O mínimo que `acaoDaIntencao` lê de uma intenção. */
+export interface IntencaoParaAcao {
+  view?: string;
+  secao?: string;
+  entidades?: { edital?: string };
+  metrica?: { id: string } | null;
+}
+
 /* ---------- Entidades ---------- */
 
 /**
  * O número do edital ("93/2026") num texto: "93/2026", "93-2026", "nº 93/26",
  * "edital 93 de 2026". Ano de 2 dígitos vira 20xx. Sem número, "".
  */
-export function numeroDoEdital(texto) {
+export function numeroDoEdital(texto: unknown): string {
   const bruto = String(texto ?? "");
   const completo = bruto.match(/\b(\d{1,4})\s*[/-]\s*(\d{4}|\d{2})\b/);
   if (completo) {
     const ano =
-      completo[2].length === 2 ? `20${completo[2]}` : String(completo[2]);
+      completo[2]!.length === 2 ? `20${completo[2]}` : String(completo[2]);
     return `${Number(completo[1])}/${ano}`;
   }
   const deAno = normalizar(bruto).match(/\b(\d{1,4}) de (\d{4})\b/);
@@ -41,7 +165,7 @@ export function numeroDoEdital(texto) {
 }
 
 /** "edital 93" sem ano: só o número ("93"), para casar com qualquer ano. */
-function numeroSemAno(texto) {
+function numeroSemAno(texto: unknown): string {
   const achado = normalizar(texto).match(
     /\b(?:edital|edt|n|no|numero)\s+(\d{1,4})\b(?!\s*(?:de\s+)?\d)/,
   );
@@ -49,7 +173,7 @@ function numeroSemAno(texto) {
 }
 
 /** O edital `alvo` ("93/2026" ou "93") casa com o texto do edital da linha? */
-export function mesmoEdital(textoDaLinha, alvo) {
+export function mesmoEdital(textoDaLinha: unknown, alvo: unknown): boolean {
   const pedido = String(alvo || "");
   if (!pedido) return true;
   const daLinha = numeroDoEdital(textoDaLinha);
@@ -58,13 +182,13 @@ export function mesmoEdital(textoDaLinha, alvo) {
   return daLinha.split("/")[0] === pedido;
 }
 
-const AREAS = Object.freeze([
+const AREAS: readonly (readonly [string, RegExp])[] = Object.freeze([
   ["saude-indigena", /\b(saude indigena|indigena|si|dsei|dseis)\b/],
   ["sede", /\b(sede)\b/],
   ["projetos", /\b(projetos?)\b/],
 ]);
 
-export const NOMES_DAS_AREAS = Object.freeze({
+export const NOMES_DAS_AREAS: Readonly<Record<string, string>> = Object.freeze({
   "saude-indigena": "Saúde Indígena",
   sede: "SEDE",
   projetos: "Projetos",
@@ -75,7 +199,10 @@ export const NOMES_DAS_AREAS = Object.freeze({
  * (a área atual e o edital escolhido na tela). `editalExplicito` e
  * `areaExplicita` dizem se veio da pergunta.
  */
-export function extrairEntidades(pergunta, contexto = {}) {
+export function extrairEntidades(
+  pergunta: unknown,
+  contexto: ContextoDaPergunta = {},
+): EntidadesDaPergunta {
   const texto = normalizar(pergunta);
   const edital = numeroDoEdital(pergunta) || numeroSemAno(pergunta);
   const area = AREAS.find(([, padrao]) => padrao.test(texto))?.[0] || "";
@@ -90,10 +217,14 @@ export function extrairEntidades(pergunta, contexto = {}) {
 
 /* ---------- Catálogo ---------- */
 
-const m = (id, palavras, rotulo, extra = {}) =>
-  Object.freeze({ id, palavras, rotulo, ...extra });
+const m = (
+  id: string,
+  palavras: RegExp,
+  rotulo: readonly string[],
+  extra: { porcentagem?: boolean } = {},
+): MetricaDaIntencao => Object.freeze({ id, palavras, rotulo, ...extra });
 
-export const INTENCOES = Object.freeze([
+export const INTENCOES: readonly IntencaoDoCatalogo[] = Object.freeze([
   Object.freeze({
     id: "analises",
     fonte: "analises",
@@ -207,7 +338,12 @@ export const INTENCOES = Object.freeze([
 ]);
 
 /* "Quando foi a última carga da Seleção?" — por fonte de carga. */
-const FONTES_DA_CARGA = Object.freeze([
+const FONTES_DA_CARGA: readonly (readonly [
+  cargaDe: string,
+  padrao: RegExp,
+  nome: string,
+  view: string,
+])[] = Object.freeze([
   ["selecao", /\b(selecao|funil|auditoria)\b/, "Seleção", "selecao"],
   ["entrevistas", /\b(entrevistas?)\b/, "Entrevistas", "entrevistas"],
   [
@@ -229,7 +365,10 @@ const GATILHO_DE_ATRASO =
 const GATILHO_DE_CONFERENCIA = /\b(avisos? de conferencia|conferencias?)\b/;
 
 /* A intenção pela palavra da métrica, quando o módulo não foi dito. */
-const METRICA_QUE_DIZ_O_MODULO = Object.freeze([
+const METRICA_QUE_DIZ_O_MODULO: readonly (readonly [
+  FonteDeContagem,
+  RegExp,
+])[] = Object.freeze([
   [
     "recursos",
     /\b(aguardando parecer|parecer|deferid\w*|indeferid\w*|prazo vencido)\b/,
@@ -245,7 +384,10 @@ const METRICA_QUE_DIZ_O_MODULO = Object.freeze([
  *    pagina, metrica, entidades, cargaDe? }`.
  * `contexto`: `{ view, area, edital }` da tela aberta.
  */
-export function reconhecerIntencao(pergunta, contexto = {}) {
+export function reconhecerIntencao(
+  pergunta: unknown,
+  contexto: ContextoDaPergunta = {},
+): IntencaoDeDado | null {
   const texto = normalizar(pergunta);
   if (!texto) return null;
   const entidades = extrairEntidades(pergunta, contexto);
@@ -319,8 +461,9 @@ export function reconhecerIntencao(pergunta, contexto = {}) {
     !GATILHO_FORTE.test(texto)
   )
     return null;
+  // O catálogo sempre tem a métrica `padrao` entre as `metricas`.
   const metrica =
-    dita || intencao.metricas.find((item) => item.id === intencao.padrao);
+    dita || intencao.metricas.find((item) => item.id === intencao.padrao)!;
   return {
     id: intencao.id,
     tipo: "contagem",
@@ -334,11 +477,12 @@ export function reconhecerIntencao(pergunta, contexto = {}) {
 
 /* ---------- Resposta ---------- */
 
-const inteiro = (valor) => Number(valor || 0).toLocaleString("pt-BR");
+const inteiro = (valor: unknown): string =>
+  Number(valor || 0).toLocaleString("pt-BR");
 
-function dataHora(valor) {
+function dataHora(valor: unknown): string {
   if (!valor) return "";
-  const data = new Date(valor);
+  const data = new Date(valor as string | number | Date);
   if (Number.isNaN(data.getTime())) return "";
   return data.toLocaleString("pt-BR", {
     timeZone: "America/Sao_Paulo",
@@ -350,8 +494,8 @@ function dataHora(valor) {
   });
 }
 
-function recorte({ edital, area }) {
-  const partes = [];
+function recorte({ edital, area }: { edital?: string; area?: string }): string {
+  const partes: string[] = [];
   if (edital)
     partes.push(
       edital.includes("/") ? `no edital ${edital}` : `no edital nº ${edital}`,
@@ -364,7 +508,10 @@ function recorte({ edital, area }) {
  * O texto da resposta de uma intenção, a partir do `resultado` contado:
  * `{ valor, total?, em?, editalSemDados?, atrasadas?, falhas? }`.
  */
-export function textoDaIntencao(intencao, resultado = {}) {
+export function textoDaIntencao(
+  intencao: Exclude<IntencaoDeDado, IntencaoDeConferencia>,
+  resultado: ResultadoDaIntencao = {},
+): string {
   const onde = recorte(intencao.entidades || {});
   const sufixo = onde ? ` ${onde}` : "";
   if (intencao.tipo === "carga") {
@@ -402,9 +549,11 @@ export function textoDaIntencao(intencao, resultado = {}) {
 }
 
 /** O botão "Abrir" da resposta: a tela e o filtro que ela aplica ao abrir. */
-export function acaoDaIntencao(intencao) {
+export function acaoDaIntencao(
+  intencao: IntencaoParaAcao | null | undefined,
+): AcaoDaIntencao | null {
   if (!intencao?.view) return null;
-  const filtro = {};
+  const filtro: FiltroDaAcao = {};
   if (intencao.entidades?.edital) filtro.edital = intencao.entidades.edital;
   if (intencao.metrica && intencao.metrica.id !== "total")
     filtro.metrica = intencao.metrica.id;

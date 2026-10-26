@@ -31,22 +31,45 @@ const QUEBRA = "\r\n";
 const RETICENCIAS = "…";
 const ORIENTACAO = "Descreva aqui o problema e anexe prints, se quiser:";
 
-const txt = (valor) => String(valor ?? "").trim();
+const txt = (valor: unknown): string => String(valor ?? "").trim();
+
+/** O que o chamado leva: a conversa e o contexto da tela. */
+export interface DadosDoChamado {
+  email?: unknown;
+  pergunta?: unknown;
+  resposta?: unknown;
+  pagina?: unknown;
+  area?: unknown;
+  secao?: unknown;
+  registro?: unknown;
+  versao?: unknown;
+  quando?: Date;
+  limite?: number;
+}
+
+/** O chamado pronto: endereço, assunto, corpo e os dois links. */
+export interface ChamadoDaAya {
+  para: string;
+  assunto: string;
+  corpo: string;
+  href: string;
+  mailto: string;
+}
 
 /** E-mail num formato aceitável (nome@dominio.tld, sem espaço). */
-export function emailValido(valor) {
+export function emailValido(valor: unknown): boolean {
   return /^[^\s@<>()",;:]+@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/i.test(
     txt(valor),
   );
 }
 
 /** O endereço do suporte: o configurado, se válido; senão, o padrão. */
-export function emailDoSuporte(configurado) {
+export function emailDoSuporte(configurado: unknown): string {
   return emailValido(configurado) ? txt(configurado) : EMAIL_DO_SUPORTE_PADRAO;
 }
 
 /* Mascara e-mails e CPFs (com ou sem pontuação) de um texto. */
-export function semDadosPessoais(texto) {
+export function semDadosPessoais(texto: unknown): string {
   return String(texto ?? "")
     .replace(/[^\s@<>()",;:]+@[^\s@<>()",;:]+\.[a-z]{2,}/gi, "[e-mail omitido]")
     .replace(/\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g, "[CPF omitido]");
@@ -56,7 +79,7 @@ export function semDadosPessoais(texto) {
 const PEDE_SUPORTE =
   /\b(?:falar com (?:o |a )?(?:suporte|atendimento|alguem|uma pessoa|um humano)|abrir (?:um )?chamado|abre (?:um )?chamado|preciso de suporte|quero suporte|contato do suporte|atendimento humano)\b/;
 
-export function pedeSuporte(pergunta) {
+export function pedeSuporte(pergunta: unknown): boolean {
   const normalizada = String(pergunta ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -65,7 +88,7 @@ export function pedeSuporte(pergunta) {
 }
 
 /** Data e hora de Brasília, como "01/10/2026 14:05". */
-export function dataDeBrasilia(quando = new Date()) {
+export function dataDeBrasilia(quando: Date | number = new Date()): string {
   const partes = new Intl.DateTimeFormat("pt-BR", {
     timeZone: "America/Sao_Paulo",
     day: "2-digit",
@@ -75,16 +98,25 @@ export function dataDeBrasilia(quando = new Date()) {
     minute: "2-digit",
     hour12: false,
   }).formatToParts(quando);
-  const valor = (tipo) => partes.find((parte) => parte.type === tipo)?.value;
+  const valor = (tipo: Intl.DateTimeFormatPartTypes) =>
+    partes.find((parte) => parte.type === tipo)?.value;
   return `${valor("day")}/${valor("month")}/${valor("year")} ${valor("hour")}:${valor("minute")}`;
 }
 
-function cortar(texto, tamanho) {
+function cortar(texto: string, tamanho: number): string {
   if (texto.length <= tamanho) return texto;
   return `${texto.slice(0, Math.max(0, tamanho - 1)).trimEnd()}${RETICENCIAS}`;
 }
 
-function linhasDoCorpo({ pergunta, resposta, contexto }) {
+function linhasDoCorpo({
+  pergunta,
+  resposta,
+  contexto,
+}: {
+  pergunta: string;
+  resposta: string;
+  contexto: readonly string[];
+}): string[] {
   return [
     "Chamado aberto pela Aya, assistente do MONITORA.",
     "",
@@ -99,14 +131,18 @@ function linhasDoCorpo({ pergunta, resposta, contexto }) {
   ];
 }
 
-const tamanhoCodificado = (linhas) =>
+const tamanhoCodificado = (linhas: readonly string[]): number =>
   encodeURIComponent(linhas.join(QUEBRA)).length;
 
 /*
   Corta `texto` até o corpo caber no limite, mantendo o resto. Busca binária no
   tamanho: a codificação muda o peso de cada caractere (acentos ocupam 6).
 */
-function caberNoLimite(texto, montar, limite) {
+function caberNoLimite(
+  texto: string,
+  montar: (texto: string) => readonly string[],
+  limite: number,
+): string {
   if (tamanhoCodificado(montar(texto)) <= limite) return texto;
   let menor = 0;
   let maior = texto.length;
@@ -134,7 +170,7 @@ export function montarChamado({
   versao = "",
   quando = new Date(),
   limite = LIMITE_DO_CORPO,
-} = {}) {
+}: DadosDoChamado = {}): ChamadoDaAya {
   const para = emailDoSuporte(email);
   const nomeDaPagina = txt(pagina) || "MONITORA";
   const assunto = ["MONITORA", "Chamado", nomeDaPagina, txt(area)]

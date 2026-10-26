@@ -25,13 +25,64 @@
 
 const AREA_SAUDE_INDIGENA = "saude-indigena";
 
-const sug = (rotulo, pergunta) => Object.freeze({ rotulo, pergunta });
+/** Uma pergunta típica da página: o `rotulo` curto e a `pergunta` que vai para a Aya. */
+export interface SugestaoDaAya {
+  readonly rotulo: string;
+  readonly pergunta: string;
+}
+
+/** Uma página do menu: o nome e o que a Aya diz nela, conforme a área. */
+interface PaginaDoMenu {
+  readonly nome: string;
+  readonly intro: (area: string, nomeDaArea: string) => string;
+  readonly sugestoes: (area: string) => readonly SugestaoDaAya[];
+}
+
+/** Uma seção de Configurações. */
+export interface SecaoDaAya {
+  readonly nome: string;
+  readonly intro: string;
+  readonly sugestoes: readonly SugestaoDaAya[];
+}
+
+/** Um botão de navegação de uma resposta (`abrir` do verbete). */
+export interface AcaoDaAya {
+  readonly rotulo: string;
+  readonly view: string;
+  readonly secao?: string;
+}
+
+/** O que a Aya mostra para a página aberta. */
+export interface PaginaDaAya {
+  chave: string;
+  nome: string;
+  intro: string;
+  sugestoes: readonly SugestaoDaAya[];
+}
+
+/** O que está aberto: view do legado, título do cabeçalho, área e seção. */
+export interface AberturaDaPagina {
+  view?: string;
+  titulo?: string;
+  area?: string;
+  nomeDaArea?: string;
+  secao?: string;
+}
+
+/** Um bloco seguro para desenhar: parágrafo, lista ou lista numerada. */
+export interface BlocoDoTexto {
+  tipo: "lista" | "numerada" | "paragrafo";
+  itens: string[];
+}
+
+const sug = (rotulo: string, pergunta: string): SugestaoDaAya =>
+  Object.freeze({ rotulo, pergunta });
 
 const SEGUNDA_MENSAGEM = "Para começar, digite sua pergunta.";
 
 export { SEGUNDA_MENSAGEM };
 
-function sugestoesDaVisaoGeral(area) {
+function sugestoesDaVisaoGeral(area: string): SugestaoDaAya[] {
   const base = [
     sug("Indicadores", "De onde vêm os KPIs da Visão geral?"),
     sug("Filtros", "Como funcionam os filtros da Visão geral?"),
@@ -50,7 +101,7 @@ function sugestoesDaVisaoGeral(area) {
   return base;
 }
 
-function introDaVisaoGeral(area, nomeDaArea) {
+function introDaVisaoGeral(area: string, nomeDaArea: string): string {
   if (area === AREA_SAUDE_INDIGENA)
     return "Posso explicar os indicadores, os filtros, o mapa dos DSEIs e CASAIs e de onde vêm os números da Visão geral da Saúde Indígena.";
   if (area === "projetos")
@@ -60,7 +111,7 @@ function introDaVisaoGeral(area, nomeDaArea) {
   return `Posso explicar os indicadores, os filtros e a tabela de processos da Visão geral${nomeDaArea ? ` de ${nomeDaArea}` : ""}.`;
 }
 
-const PAGINAS = Object.freeze({
+const PAGINAS: Readonly<Record<string, PaginaDoMenu>> = Object.freeze({
   dashboard: {
     nome: "Visão geral",
     intro: introDaVisaoGeral,
@@ -209,118 +260,125 @@ const PAGINAS = Object.freeze({
 });
 
 /* As seções de Configurações (ids de modulos/configuracoes/secoes.ts), na ordem do menu. */
-export const SECOES_DA_AYA = Object.freeze({
-  marca: Object.freeze({
-    nome: "Marca",
-    intro:
-      "Posso explicar os nomes e a identidade que aparecem em todo o sistema e como publicar uma mudança.",
-    sugestoes: [
-      sug("O que define", "O que a seção Marca define?"),
-      sug("Publicar", "Como publicar uma alteração nas Configurações?"),
-    ],
-  }),
-  inicio: Object.freeze({
-    nome: "Página inicial",
-    intro:
-      "Posso explicar o título da página inicial, o aviso global e os rótulos dos indicadores.",
-    sugestoes: [
-      sug("O que define", "O que a seção Página inicial define?"),
-      sug("Aviso global", "Como funciona o aviso global?"),
-      sug("Publicar", "Como publicar uma alteração nas Configurações?"),
-    ],
-  }),
-  acesso: Object.freeze({
-    nome: "Tela de acesso",
-    intro:
-      "Posso explicar a saudação, o login com Google e os domínios que podem entrar.",
-    sugestoes: [
-      sug("O que define", "O que a seção Tela de acesso define?"),
-      sug("Domínios", "Quais domínios podem entrar?"),
-      sug("Login Google", "O que acontece se desligar o login Google?"),
-    ],
-  }),
-  aparencia: Object.freeze({
-    nome: "Aparência",
-    intro:
-      "Posso explicar a arte de fundo, o logo e as cores, com o contraste de cada uma.",
-    sugestoes: [
-      sug("Arte de fundo", "Como trocar a arte de fundo da tela de acesso?"),
-      sug("Logo da barra", "Como trocar a logo da barra lateral?"),
-      sug("Contraste", "O que significa o contraste da cor do painel?"),
-    ],
-  }),
-  recursos: Object.freeze({
-    nome: "Painéis externos",
-    intro:
-      "Posso explicar os painéis externos do menu: título, endereço e situação.",
-    sugestoes: [
-      sug("O que são", "O que são os painéis externos?"),
-      sug("Manutenção", "Como pôr um painel em manutenção?"),
-    ],
-  }),
-  operacao: Object.freeze({
-    nome: "Operação",
-    intro:
-      "Posso explicar a versão, a atualização em tempo real e o histórico de publicações.",
-    sugestoes: [
-      sug("Restaurar", "Como restaurar uma versão publicada?"),
-      sug("Atualização do sistema", "Como funciona a atualização do sistema?"),
-      sug("Pessoas online", "O que mostra Pessoas online?"),
-    ],
-  }),
-  comemoracoes: Object.freeze({
-    nome: "Comemorações",
-    intro:
-      "Posso explicar os marcos comemorados, os efeitos, como testar uma comemoração e os marcos personalizados.",
-    sugestoes: [
-      sug("O que são", "O que são as comemorações?"),
-      sug("Testar", "Como testar uma comemoração?"),
-      sug("Personalizado", "Como criar um marco personalizado?"),
-    ],
-  }),
-  acessos: Object.freeze({
-    nome: "Acessos",
-    intro:
-      "Posso explicar como dar acesso a alguém, os grupos de permissões, as coordenações, os pedidos e as contas desativadas.",
-    sugestoes: [
-      sug("Dar acesso", "Como dar acesso a alguém?"),
-      sug("Grupos", "O que são os grupos de permissões?"),
-      sug("Coordenações", "O que é uma coordenação nos acessos?"),
-      sug("Pedidos", "Como funcionam os pedidos de acesso?"),
-      sug("Conta desativada", "Como reativar uma conta desativada?"),
-    ],
-  }),
-  modulos: Object.freeze({
-    nome: "Módulos e abas",
-    intro:
-      "Posso explicar como ativar, desativar ou pôr em manutenção o sistema, as áreas, as abas e os painéis, e o selo BETA.",
-    sugestoes: [
-      sug("Manutenção", "O que acontece quando uma aba fica em manutenção?"),
-      sug("Selo BETA", "O que é o selo BETA?"),
-      sug("Área desativada", "O que acontece quando uma área é desativada?"),
-    ],
-  }),
-  cargas: Object.freeze({
-    nome: "Status das atualizações",
-    intro:
-      "Posso explicar quando roda cada atualização de dados e o que conta como atraso ou falha.",
-    sugestoes: [
-      sug("O que é", "O que é o Status das atualizações?"),
-      sug("Horários", "Quando cada atualização de dados roda?"),
-    ],
-  }),
-  automacao: Object.freeze({
-    nome: "Automação",
-    intro:
-      "Posso explicar o que cada chave liga e desliga e como rodar uma carga com a automação desligada.",
-    sugestoes: [
-      sug("O que é", "O que as chaves da automação desligam?"),
-      sug("Rodar agora", "Dá para rodar uma carga com a automação desligada?"),
-    ],
-  }),
-});
+export const SECOES_DA_AYA: Readonly<Record<string, SecaoDaAya>> =
+  Object.freeze({
+    marca: Object.freeze({
+      nome: "Marca",
+      intro:
+        "Posso explicar os nomes e a identidade que aparecem em todo o sistema e como publicar uma mudança.",
+      sugestoes: [
+        sug("O que define", "O que a seção Marca define?"),
+        sug("Publicar", "Como publicar uma alteração nas Configurações?"),
+      ],
+    }),
+    inicio: Object.freeze({
+      nome: "Página inicial",
+      intro:
+        "Posso explicar o título da página inicial, o aviso global e os rótulos dos indicadores.",
+      sugestoes: [
+        sug("O que define", "O que a seção Página inicial define?"),
+        sug("Aviso global", "Como funciona o aviso global?"),
+        sug("Publicar", "Como publicar uma alteração nas Configurações?"),
+      ],
+    }),
+    acesso: Object.freeze({
+      nome: "Tela de acesso",
+      intro:
+        "Posso explicar a saudação, o login com Google e os domínios que podem entrar.",
+      sugestoes: [
+        sug("O que define", "O que a seção Tela de acesso define?"),
+        sug("Domínios", "Quais domínios podem entrar?"),
+        sug("Login Google", "O que acontece se desligar o login Google?"),
+      ],
+    }),
+    aparencia: Object.freeze({
+      nome: "Aparência",
+      intro:
+        "Posso explicar a arte de fundo, o logo e as cores, com o contraste de cada uma.",
+      sugestoes: [
+        sug("Arte de fundo", "Como trocar a arte de fundo da tela de acesso?"),
+        sug("Logo da barra", "Como trocar a logo da barra lateral?"),
+        sug("Contraste", "O que significa o contraste da cor do painel?"),
+      ],
+    }),
+    recursos: Object.freeze({
+      nome: "Painéis externos",
+      intro:
+        "Posso explicar os painéis externos do menu: título, endereço e situação.",
+      sugestoes: [
+        sug("O que são", "O que são os painéis externos?"),
+        sug("Manutenção", "Como pôr um painel em manutenção?"),
+      ],
+    }),
+    operacao: Object.freeze({
+      nome: "Operação",
+      intro:
+        "Posso explicar a versão, a atualização em tempo real e o histórico de publicações.",
+      sugestoes: [
+        sug("Restaurar", "Como restaurar uma versão publicada?"),
+        sug(
+          "Atualização do sistema",
+          "Como funciona a atualização do sistema?",
+        ),
+        sug("Pessoas online", "O que mostra Pessoas online?"),
+      ],
+    }),
+    comemoracoes: Object.freeze({
+      nome: "Comemorações",
+      intro:
+        "Posso explicar os marcos comemorados, os efeitos, como testar uma comemoração e os marcos personalizados.",
+      sugestoes: [
+        sug("O que são", "O que são as comemorações?"),
+        sug("Testar", "Como testar uma comemoração?"),
+        sug("Personalizado", "Como criar um marco personalizado?"),
+      ],
+    }),
+    acessos: Object.freeze({
+      nome: "Acessos",
+      intro:
+        "Posso explicar como dar acesso a alguém, os grupos de permissões, as coordenações, os pedidos e as contas desativadas.",
+      sugestoes: [
+        sug("Dar acesso", "Como dar acesso a alguém?"),
+        sug("Grupos", "O que são os grupos de permissões?"),
+        sug("Coordenações", "O que é uma coordenação nos acessos?"),
+        sug("Pedidos", "Como funcionam os pedidos de acesso?"),
+        sug("Conta desativada", "Como reativar uma conta desativada?"),
+      ],
+    }),
+    modulos: Object.freeze({
+      nome: "Módulos e abas",
+      intro:
+        "Posso explicar como ativar, desativar ou pôr em manutenção o sistema, as áreas, as abas e os painéis, e o selo BETA.",
+      sugestoes: [
+        sug("Manutenção", "O que acontece quando uma aba fica em manutenção?"),
+        sug("Selo BETA", "O que é o selo BETA?"),
+        sug("Área desativada", "O que acontece quando uma área é desativada?"),
+      ],
+    }),
+    cargas: Object.freeze({
+      nome: "Status das atualizações",
+      intro:
+        "Posso explicar quando roda cada atualização de dados e o que conta como atraso ou falha.",
+      sugestoes: [
+        sug("O que é", "O que é o Status das atualizações?"),
+        sug("Horários", "Quando cada atualização de dados roda?"),
+      ],
+    }),
+    automacao: Object.freeze({
+      nome: "Automação",
+      intro:
+        "Posso explicar o que cada chave liga e desliga e como rodar uma carga com a automação desligada.",
+      sugestoes: [
+        sug("O que é", "O que as chaves da automação desligam?"),
+        sug(
+          "Rodar agora",
+          "Dá para rodar uma carga com a automação desligada?",
+        ),
+      ],
+    }),
+  });
 
-const GENERICA = Object.freeze({
+const GENERICA: SecaoDaAya = Object.freeze({
   nome: "MONITORA",
   intro:
     "Posso explicar as telas do MONITORA, as regras de cada etapa do processo seletivo e o que estiver carregado aqui.",
@@ -332,7 +390,7 @@ const GENERICA = Object.freeze({
 });
 
 /* Os botões de navegação que um verbete pode oferecer (campo `abrir`). */
-export const ACOES_DA_AYA = Object.freeze({
+export const ACOES_DA_AYA: Readonly<Record<string, AcaoDaAya>> = Object.freeze({
   dashboard: Object.freeze({ rotulo: "Abrir Visão geral", view: "dashboard" }),
   nucleo: Object.freeze({ rotulo: "Abrir Editais", view: "nucleo" }),
   calendario: Object.freeze({ rotulo: "Abrir Cronograma", view: "calendario" }),
@@ -382,13 +440,15 @@ export const ACOES_DA_AYA = Object.freeze({
 });
 
 /** A ação de navegação de um código (`recursos`, `config:acessos`) ou `null`. */
-export function acaoDaAya(codigo) {
+export function acaoDaAya(codigo: unknown): AcaoDaAya | null {
   const chave = String(codigo || "").trim();
-  return Object.hasOwn(ACOES_DA_AYA, chave) ? ACOES_DA_AYA[chave] : null;
+  return Object.hasOwn(ACOES_DA_AYA, chave) ? ACOES_DA_AYA[chave]! : null;
 }
 
 /** As views que têm página própria na Aya (as do menu), na ordem do menu. */
-export const VIEWS_DA_AYA = Object.freeze(Object.keys(PAGINAS));
+export const VIEWS_DA_AYA: readonly string[] = Object.freeze(
+  Object.keys(PAGINAS),
+);
 
 /*
   A página da Aya para o que está aberto: a view do legado, o título do
@@ -403,7 +463,7 @@ export function paginaDaAya({
   area = "",
   nomeDaArea = "",
   secao = "",
-} = {}) {
+}: AberturaDaPagina = {}): PaginaDaAya {
   const chave = String(view || "").trim();
   if (chave === "config") {
     const s = SECOES_DA_AYA[String(secao || "").trim()];
@@ -448,9 +508,9 @@ export function paginaDaAya({
   linhas "- x" ou "• x" viram lista; "1. x", lista numerada; linha em branco
   separa parágrafos. O componente desenha cada bloco como elementos com texto.
 */
-export function blocosDoTexto(texto) {
-  const blocos = [];
-  let atual = null;
+export function blocosDoTexto(texto: unknown): BlocoDoTexto[] {
+  const blocos: BlocoDoTexto[] = [];
+  let atual: BlocoDoTexto | null = null;
   const fechar = () => {
     if (atual) blocos.push(atual);
     atual = null;
@@ -490,13 +550,13 @@ export function blocosDoTexto(texto) {
   passos. Devolve quantos caracteres mostrar no instante `decorrido` (ms),
   com a mesma duração de antes (18 ms por caractere, de 650 ms a 3,4 s).
 */
-export function duracaoDaRevelacao(texto) {
+export function duracaoDaRevelacao(texto: unknown): number {
   const tamanho = String(texto || "").trim().length;
   if (!tamanho) return 0;
   return Math.min(3400, Math.max(650, tamanho * 18));
 }
 
-export function caracteresRevelados(texto, decorrido) {
+export function caracteresRevelados(texto: unknown, decorrido: number): number {
   const total = String(texto || "").length;
   const duracao = duracaoDaRevelacao(texto);
   if (!duracao || decorrido >= duracao) return total;

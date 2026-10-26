@@ -30,8 +30,69 @@ import {
   reconhecerIntencao,
   textoDaIntencao,
 } from "./intencoes-da-aya.ts";
+import type {
+  AcaoDaIntencao,
+  ContextoDaPergunta,
+  FonteDeContagem,
+  IntencaoDeContagem,
+  ResultadoDaIntencao,
+} from "./intencoes-da-aya.ts";
+import type { RegistroDaAnalise } from "../modulos/analises/tipos.ts";
+import type {
+  AprovadoSemEntrevista,
+  EntrevistaDoPainel,
+} from "../modulos/entrevistas/tipos-do-painel.ts";
+import type { VagaDaSelecao } from "../modulos/selecao/tipos.ts";
+import type { LinhaDaSaude } from "../componentes/saude-das-cargas/tipos.ts";
+import type { PaginasPermitidas } from "./tipos-dos-acessos.ts";
+import type { RecursoDoPainel } from "./tipos-dos-recursos.ts";
 
-const NOME_DA_TELA = Object.freeze({
+/** O recorte das contas: o edital pedido ("93/2026", "93" ou ""). */
+export interface RecorteDaConta {
+  edital?: string;
+}
+
+/** Os dados de Entrevistas que a conta usa. */
+export interface DadosDasEntrevistasDaAya {
+  entrevistas?: readonly EntrevistaDoPainel[];
+  aprovadosSemEntrevista?: readonly AprovadoSemEntrevista[];
+}
+
+/**
+ * Os dados normalizados de uma fonte (`fonte`: analises, recursos,
+ * entrevistas, selecao, conferencia ou cargas). Lança o erro da RPC.
+ */
+export type BuscarDaAya = (
+  fonte: string,
+  opcoes: { area: string; cargaDe?: string },
+) => Promise<unknown>;
+
+/** A resposta com dados ao vivo, no formato das respostas da Aya. */
+export interface RespostaComDados {
+  answer: string;
+  provider: string;
+  unavailable: boolean;
+  sources: readonly never[];
+  acaoDados?: AcaoDaIntencao | null;
+  oferecerChamado?: boolean;
+}
+
+/** O pedido de resposta com dados. */
+export interface PerguntaComDados {
+  pergunta?: unknown;
+  contexto?: ContextoDaPergunta;
+  perfil?: unknown;
+  buscar?: BuscarDaAya;
+  agora?: () => Date;
+}
+
+/** Os números de uma conta pelo id da métrica; `vazio`: o recorte não tem linha. */
+type NumerosDaConta = Readonly<Record<string, unknown>> & {
+  readonly vazio: boolean;
+  readonly desativadas?: Readonly<Record<string, unknown>>;
+};
+
+const NOME_DA_TELA: Readonly<Record<string, string>> = Object.freeze({
   analises: "Análises curriculares",
   recursos: "Recursos",
   entrevistas: "Entrevistas",
@@ -41,11 +102,16 @@ const NOME_DA_TELA = Object.freeze({
 
 /* ---------- Contas ---------- */
 
-const doEdital = (lista, edital) =>
-  (lista || []).filter((item) => mesmoEdital(item?.edital, edital));
+const doEdital = <T extends { edital?: unknown } | null | undefined>(
+  lista: readonly T[] | null | undefined,
+  edital: string,
+): T[] => (lista || []).filter((item) => mesmoEdital(item?.edital, edital));
 
 /** Os números das Análises (linhas do painel) no recorte do edital. */
-export function contarAnalises(linhas, { edital = "" } = {}) {
+export function contarAnalises(
+  linhas: readonly RegistroDaAnalise[] | null | undefined,
+  { edital = "" }: RecorteDaConta = {},
+) {
   const recorte = doEdital(linhas, edital);
   const desativadas = recorte.filter((linha) => linha?.__desativada === true);
   return {
@@ -57,7 +123,10 @@ export function contarAnalises(linhas, { edital = "" } = {}) {
 }
 
 /** Os números de Recursos (já enriquecidos com prazo e situação). */
-export function contarRecursos(recursos, { edital = "" } = {}) {
+export function contarRecursos(
+  recursos: readonly RecursoDoPainel[] | null | undefined,
+  { edital = "" }: RecorteDaConta = {},
+) {
   const recorte = doEdital(recursos, edital);
   return { ...indicadoresDosRecursos(recorte), vazio: !recorte.length };
 }
@@ -67,8 +136,11 @@ export function contarRecursos(recursos, { edital = "" } = {}) {
   tem nota final e em que a pessoa não foi marcada como ausente.
 */
 export function contarEntrevistas(
-  { entrevistas = [], aprovadosSemEntrevista = [] } = {},
-  { edital = "" } = {},
+  {
+    entrevistas = [],
+    aprovadosSemEntrevista = [],
+  }: DadosDasEntrevistasDaAya = {},
+  { edital = "" }: RecorteDaConta = {},
 ) {
   const recorte = doEdital(entrevistas, edital);
   const semEntrevista = doEdital(aprovadosSemEntrevista, edital);
@@ -82,14 +154,27 @@ export function contarEntrevistas(
 }
 
 /** O funil da Seleção (vagas da área) no recorte do edital. */
-export function contarSelecao(vagas, { edital = "" } = {}) {
+export function contarSelecao(
+  vagas: readonly VagaDaSelecao[] | null | undefined,
+  { edital = "" }: RecorteDaConta = {},
+) {
   const recorte = doEdital(vagas, edital);
   return { ...indicadoresDaSelecao(recorte), vazio: !recorte.length };
 }
 
 /** As cargas que pedem atenção (atrasada, falhou…), pela visão simples da tela. */
-export function cargasQuePedemAtencao(dados, agora = new Date()) {
-  const linhas = visaoSimples(normalizarSaude(dados, agora));
+export function cargasQuePedemAtencao(
+  dados: unknown,
+  agora = new Date(),
+): { total: number; atrasadas: string[] } {
+  /*
+    BUG anotado na migração (não corrigido aqui): visaoSimples devolve
+    `{ linhas, atencao }`, não a lista; `.filter` abaixo lança TypeError e a
+    pergunta "alguma carga atrasada?" não tem resposta. O tipo segue o uso.
+  */
+  const linhas = visaoSimples(
+    normalizarSaude(dados, agora),
+  ) as unknown as LinhaDaSaude[];
   const atrasadas = linhas
     .filter((linha) => ["falhou", "atrasada"].includes(linha.situacao))
     .map(
@@ -101,17 +186,32 @@ export function cargasQuePedemAtencao(dados, agora = new Date()) {
 
 /* ---------- Orquestração ---------- */
 
-function podeVer(perfil, intencao) {
+function podeVer(
+  perfil: unknown,
+  intencao: { fonte: string; pagina?: string },
+): boolean {
   if (intencao.fonte === "cargas") return isAdminGlobal(perfil);
   if (!intencao.pagina) return true;
-  return paginasPermitidas(perfil)[intencao.pagina] === true;
+  return (
+    paginasPermitidas(perfil)[intencao.pagina as keyof PaginasPermitidas] ===
+    true
+  );
 }
 
-const ehErroDeAcesso = (erro) =>
-  ["42501", "PGRST301", "401", "403"].includes(String(erro?.code ?? "")) ||
-  /permiss|acesso|not allowed|denied/i.test(String(erro?.message ?? ""));
+type ErroDaRpc = { code?: unknown; message?: unknown } | null | undefined;
 
-function resultadoDaContagem(intencao, numeros) {
+const ehErroDeAcesso = (erro: unknown): boolean =>
+  ["42501", "PGRST301", "401", "403"].includes(
+    String((erro as ErroDaRpc)?.code ?? ""),
+  ) ||
+  /permiss|acesso|not allowed|denied/i.test(
+    String((erro as ErroDaRpc)?.message ?? ""),
+  );
+
+function resultadoDaContagem(
+  intencao: IntencaoDeContagem,
+  numeros: NumerosDaConta,
+): ResultadoDaIntencao {
   const id = intencao.metrica.id;
   if (intencao.id === "selecao" && id === "taxa")
     return {
@@ -127,11 +227,34 @@ function resultadoDaContagem(intencao, numeros) {
   };
 }
 
-const CONTAS = Object.freeze({
-  analises: (dados, filtro) => contarAnalises(dados?.linhas || dados, filtro),
-  recursos: (dados, filtro) => contarRecursos(dados?.recursos || dados, filtro),
-  entrevistas: (dados, filtro) => contarEntrevistas(dados, filtro),
-  selecao: (dados, filtro) => contarSelecao(dados?.vagas || dados, filtro),
+/*
+  `dados`: o que a fonte devolveu (fontes.ts) — o pacote (`{ linhas }`,
+  `{ recursos }`, `{ vagas }`) ou a própria lista.
+*/
+type Conta = (dados: unknown, filtro: RecorteDaConta) => NumerosDaConta;
+type Lista<T> = readonly T[] | null | undefined;
+
+const CONTAS: Readonly<Record<FonteDeContagem, Conta>> = Object.freeze({
+  analises: (dados, filtro) =>
+    contarAnalises(
+      (dados as { linhas?: Lista<RegistroDaAnalise> } | null)?.linhas ||
+        (dados as Lista<RegistroDaAnalise>),
+      filtro,
+    ),
+  recursos: (dados, filtro) =>
+    contarRecursos(
+      (dados as { recursos?: Lista<RecursoDoPainel> } | null)?.recursos ||
+        (dados as Lista<RecursoDoPainel>),
+      filtro,
+    ),
+  entrevistas: (dados, filtro) =>
+    contarEntrevistas(dados as DadosDasEntrevistasDaAya, filtro),
+  selecao: (dados, filtro) =>
+    contarSelecao(
+      (dados as { vagas?: Lista<VagaDaSelecao> } | null)?.vagas ||
+        (dados as Lista<VagaDaSelecao>),
+      filtro,
+    ),
 });
 
 /**
@@ -148,7 +271,7 @@ export async function responderComDados({
   perfil = null,
   buscar,
   agora = () => new Date(),
-} = {}) {
+}: PerguntaComDados = {}): Promise<RespostaComDados | null> {
   const intencao = reconhecerIntencao(pergunta, contexto);
   if (!intencao) return null;
   const base = { provider: "monitora-dados", unavailable: false, sources: [] };
@@ -175,7 +298,7 @@ export async function responderComDados({
   if (typeof buscar !== "function") return null;
 
   const area = intencao.entidades.area || String(contexto.area || "");
-  let dados;
+  let dados: unknown;
   try {
     dados = await buscar(intencao.fonte, { area, cargaDe: intencao.cargaDe });
   } catch (erro) {
@@ -196,7 +319,9 @@ export async function responderComDados({
   if (intencao.tipo === "carga")
     return {
       ...base,
-      answer: textoDaIntencao(comArea, { em: dados?.em ?? dados }),
+      answer: textoDaIntencao(comArea, {
+        em: (dados as { em?: unknown } | null | undefined)?.em ?? dados,
+      }),
       acaoDados: acaoDaIntencao({ ...comArea, metrica: null, entidades: {} }),
     };
   if (intencao.tipo === "atrasos")
