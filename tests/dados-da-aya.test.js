@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  cargasQuePedemAtencao,
   contarAnalises,
   contarEntrevistas,
   contarSelecao,
@@ -187,5 +188,44 @@ describe("pedido de filtro (Abrir)", () => {
     expect(consumirPedidoDeFiltro("analises", 2000)).toBeNull();
     pedirFiltro("analises", { edital: "1/2026" }, 1000);
     expect(consumirPedidoDeFiltro("analises", 60_000)).toBeNull();
+  });
+});
+
+describe("cargas que pedem atenção (pergunta 'alguma carga atrasada?')", () => {
+  const AGORA = new Date("2026-10-01T12:00:00Z");
+  const ha = (min) => new Date(AGORA.getTime() - min * 60000).toISOString();
+  const execucao = (situacao, minAtras, extra = {}) => ({
+    inicio: ha(minAtras + 1),
+    fim: ha(minAtras),
+    situacao,
+    ...extra,
+  });
+
+  it("usa a visão simples da tela: conta as linhas e lista só as que pedem atenção", () => {
+    const r = cargasQuePedemAtencao(
+      {
+        analises: [
+          {
+            origem: "apps_script_analises_incremental_v1",
+            area: "saude-indigena",
+            tipo: "INCREMENTAL",
+            execucoes: [execucao("processado", 10)],
+          },
+          {
+            origem: "apps_script_analises_projetos_incremental_v1",
+            area: "projetos",
+            tipo: "INCREMENTAL",
+            execucoes: [execucao("erro", 5, { mensagem: "Timeout" })],
+          },
+        ],
+      },
+      AGORA,
+    );
+    expect(r.atrasadas).toEqual(["Análises curriculares · Projetos (falhou)"]);
+    expect(r.total).toBeGreaterThan(2);
+  });
+
+  it("sem dado nenhum não lança: responde com as linhas vazias da visão", () => {
+    expect(() => cargasQuePedemAtencao(null, AGORA)).not.toThrow();
   });
 });
