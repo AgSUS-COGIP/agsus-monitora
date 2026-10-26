@@ -1153,6 +1153,11 @@ describe("Classificação com ajuste da pontuação aprovado em recurso", () => 
 });
 
 describe("Classificação: publicar o resultado final como lista de aprovados", () => {
+  // A prévia é do job Python (migration 20261026150000): o banco devolve o plano.
+  const C1 = "c1c1c1c1-0000-4000-8000-000000000001";
+  const C2 = "c2c2c2c2-0000-4000-8000-000000000002";
+  const P1 = "a1a1a1a1-0000-4000-8000-000000000001";
+  const P2 = "b2b2b2b2-0000-4000-8000-000000000002";
   const VIGENTE = {
     edital_id: "e83",
     pode_publicar: true,
@@ -1162,37 +1167,90 @@ describe("Classificação: publicar o resultado final como lista de aprovados", 
       lista_id: "lv1",
       origem: "XLSX",
       importado_em: "2026-09-20T12:00:00Z",
-      candidatos: [
-        {
-          candidato_id: "c1",
-          nome: "ANA EMPATADA",
-          codigo_vaga: "169681",
-          classificacao: 1,
-          nota: 20,
-          status: "Contratado",
-          matricula: "M1",
-        },
-        {
-          candidato_id: "c2",
-          nome: "Pessoa Que Saiu",
-          codigo_vaga: "169681",
-          classificacao: 2,
-          nota: 15,
-          status: "Desistente",
-        },
-      ],
+      candidatos: null,
     },
     publicacoes: [],
   };
+  const plano = (manuais = {}) => ({
+    pedido_id: Object.keys(manuais).length ? P2 : P1,
+    origem: "CLASSIFICACAO",
+    situacao: "CALCULADO",
+    disparo: "ACEITO",
+    exige_motivo: true,
+    pode_substituir: true,
+    anteriores: 2,
+    novos_total: 3,
+    manuais,
+    plano: {
+      versao: 1,
+      vinculos: [
+        { candidato_id: C1, chave: A(1), forma: "NOME" },
+        ...(manuais[C2]
+          ? [{ candidato_id: C2, chave: A(2), forma: "MANUAL" }]
+          : []),
+      ],
+      resumo: {
+        casados: manuais[C2] ? 2 : 1,
+        entram: manuais[C2] ? 1 : 2,
+        sem_par: manuais[C2] ? 0 : 1,
+        sem_dono: manuais[C2] ? 0 : 1,
+        preservados: manuais[C2] ? 2 : 1,
+        mudam: 0,
+        sub_judice_mantidos: 0,
+        ambiguos: 0,
+      },
+      pendencias: manuais[C2]
+        ? []
+        : [{ candidato_id: C2, nome: "Pessoa Que Saiu", status: "Desistente" }],
+      mudam: [],
+      revisar: [C2],
+    },
+    novos: [1, 2, 3].map((n) => ({
+      chave: A(n),
+      nome: ["Ana Empatada", "Bia Nova", "Caio Novo"][n - 1],
+      codigo_vaga: "169681",
+      posicao: n,
+      nota: 20 - n,
+    })),
+    revisar: [
+      {
+        candidato_id: C2,
+        nome: "Pessoa Que Saiu",
+        codigo_vaga: "169681",
+        classificacao: 2,
+        status: "Desistente",
+      },
+    ],
+  });
+  const comCasamento = (extra = {}) => {
+    let manuais = {};
+    return supabaseFalso({
+      obter_publicacao_lista_aprovados: () => structuredClone(VIGENTE),
+      pedir_casamento_da_lista: ({ p_manuais }) => {
+        manuais = p_manuais || {};
+        return {
+          pedido_id: Object.keys(manuais).length ? P2 : P1,
+          situacao: "PENDENTE",
+        };
+      },
+      obter_casamento_da_lista: () => plano(manuais),
+      aplicar_casamento_da_lista: () => ({
+        ok: true,
+        lista_id: "nova",
+        candidatos: 3,
+        pendencias: [],
+      }),
+      ...extra,
+    });
+  };
+  const chamadas = (supabase, nome) =>
+    supabase.rpc.mock.calls.filter(([n]) => n === nome).map(([, a]) => a);
 
-  it("bloqueia a publicação quando a lista vigente não traz todos os dados para revisão", async () => {
-    const supabase = supabaseFalso({
+  it("bloqueia a publicação quando a lista vigente vem fora do formato", async () => {
+    const supabase = comCasamento({
       obter_publicacao_lista_aprovados: () => ({
         ...VIGENTE,
-        vigente: {
-          ...VIGENTE.vigente,
-          candidatos: [VIGENTE.vigente.candidatos[0], null],
-        },
+        vigente: { ...VIGENTE.vigente, candidatos: [null] },
       }),
     });
     await montar(supabase);
@@ -1208,23 +1266,11 @@ describe("Classificação: publicar o resultado final como lista de aprovados", 
     expect(
       modal.querySelector("[data-acao='confirmar-publicacao-aprovados']"),
     ).toBeNull();
-    expect(
-      supabase.rpc.mock.calls.some(
-        ([nome]) => nome === "publicar_lista_aprovados_da_classificacao",
-      ),
-    ).toBe(false);
+    expect(chamadas(supabase, "pedir_casamento_da_lista")).toEqual([]);
   });
 
-  it("mostra o que muda, pede revisão de quem saiu com status e publica com os vínculos", async () => {
-    const supabase = supabaseFalso({
-      obter_publicacao_lista_aprovados: () => structuredClone(VIGENTE),
-      publicar_lista_aprovados_da_classificacao: () => ({
-        ok: true,
-        lista_id: "nova",
-        candidatos: 3,
-        pendencias: [],
-      }),
-    });
+  it("mostra o plano do Python, recalcula com a revisão e publica pelo pedido, com motivo", async () => {
+    const supabase = comCasamento();
     await montar(supabase);
     await abrirEdital();
     expect(secao.querySelector("[data-acao='publicar-aprovados']")).toBeNull();
@@ -1233,6 +1279,15 @@ describe("Classificação: publicar o resultado final como lista de aprovados", 
     await clicar(secao.querySelector("[data-acao='publicar-aprovados']"));
     await esperar();
 
+    expect(chamadas(supabase, "pedir_casamento_da_lista")).toEqual([
+      {
+        p_edital: "e83",
+        p_origem: "CLASSIFICACAO",
+        p_lista_classificacao: "l1",
+        p_lista_vigente: "lv1",
+        p_manuais: {},
+      },
+    ]);
     const modal = document.getElementById("classificacaoPublicarAprovados");
     expect(modal.textContent).toContain("Lista manual (planilha)");
     const valor = (chave) =>
@@ -1244,39 +1299,37 @@ describe("Classificação: publicar o resultado final como lista de aprovados", 
     expect(modal.querySelector(".classificacao-revisao").textContent).toContain(
       "Pessoa Que Saiu",
     );
-    await escolher(modal.querySelector("#revisao-c2"), A(2));
-    // A lista vigente tem status: como no XLSX, substituir pede o motivo.
-    const confirmar = modal.querySelector(
-      "[data-acao='confirmar-publicacao-aprovados']",
+    await escolher(modal.querySelector(`#revisao-${C2}`), A(2));
+    const confirmar = () =>
+      document.querySelector("[data-acao='confirmar-publicacao-aprovados']");
+    // A revisão mudou: publicar espera o recálculo.
+    expect(confirmar().disabled).toBe(true);
+    await clicar(modal.querySelector("[data-acao='recalcular-casamento']"));
+    await esperar();
+    expect(chamadas(supabase, "pedir_casamento_da_lista")[1].p_manuais).toEqual(
+      { [C2]: A(2) },
     );
-    expect(confirmar.disabled).toBe(true);
+    expect(valor("saem")).toBe("0");
+    // A lista vigente tem status: como no XLSX, substituir pede o motivo.
+    expect(confirmar().disabled).toBe(true);
     await digitar(
-      modal.querySelector("#classificacaoPublicarMotivo"),
+      document.querySelector("#classificacaoPublicarMotivo"),
       "Resultado após os recursos",
     );
-    expect(confirmar.disabled).toBe(false);
-    await clicar(confirmar);
+    expect(confirmar().disabled).toBe(false);
+    await clicar(confirmar());
     await esperar();
 
-    const chamada = supabase.rpc.mock.calls.find(
-      ([nome]) => nome === "publicar_lista_aprovados_da_classificacao",
-    );
-    expect(chamada[1]).toEqual({
-      p_lista_classificacao: "l1",
-      p_lista_vigente: "lv1",
-      p_vinculos: [
-        { candidato_id: "c2", analise_id: A(2), forma: "MANUAL" },
-        { candidato_id: "c1", analise_id: A(1), forma: "NOME" },
-      ],
-      p_motivo: "Resultado após os recursos",
-    });
-    expect(modal.textContent).toContain(
-      "Lista de aprovados publicada com 3 candidato(s).",
-    );
+    expect(chamadas(supabase, "aplicar_casamento_da_lista")).toEqual([
+      { p_pedido: P2, p_motivo: "Resultado após os recursos" },
+    ]);
+    expect(
+      document.getElementById("classificacaoPublicarAprovados").textContent,
+    ).toContain("Lista de aprovados publicada com 3 candidato(s).");
   });
 
-  it("a mesma permissão do XLSX: sem poder substituir, avisa e não publica", async () => {
-    const supabase = supabaseFalso({
+  it("a mesma permissão do XLSX: sem poder substituir, avisa e não pede a prévia", async () => {
+    const supabase = comCasamento({
       obter_publicacao_lista_aprovados: () => ({
         ...structuredClone(VIGENTE),
         pode_substituir: false,
@@ -1292,11 +1345,33 @@ describe("Classificação: publicar o resultado final como lista de aprovados", 
     expect(modal.querySelector("[role='alert']").textContent).toContain(
       "Só o admin da Importação substitui a lista de aprovados vigente.",
     );
-    expect(modal.querySelector("#classificacaoPublicarMotivo")).toBeNull();
+    expect(chamadas(supabase, "pedir_casamento_da_lista")).toEqual([]);
     expect(
       modal.querySelector("[data-acao='confirmar-publicacao-aprovados']")
         .disabled,
     ).toBe(true);
+  });
+
+  it("o job falhou: a prévia diz por quê e não publica", async () => {
+    const supabase = comCasamento({
+      obter_casamento_da_lista: () => ({
+        ...plano(),
+        situacao: "ERRO",
+        plano: null,
+        erro: "A lista vigente mudou desde o pedido; peça a prévia de novo.",
+      }),
+    });
+    await montar(supabase);
+    await abrirEdital();
+    await clicar(secao.querySelector("[data-acao='gerar']"));
+    await esperar();
+    await clicar(secao.querySelector("[data-acao='publicar-aprovados']"));
+    await esperar();
+    const modal = document.getElementById("classificacaoPublicarAprovados");
+    expect(modal.querySelector("[role='alert']").textContent).toContain(
+      "A lista vigente mudou desde o pedido",
+    );
+    expect(chamadas(supabase, "aplicar_casamento_da_lista")).toEqual([]);
   });
 
   it("leitor não vê o botão de publicar", async () => {
@@ -1521,9 +1596,7 @@ describe("Classificação: convocação e publicação conferidas", () => {
     expect(
       modal.querySelector("[data-acao='confirmar-publicacao-aprovados']"),
     ).toBeNull();
-    expect(chamou(supabase, "publicar_lista_aprovados_da_classificacao")).toBe(
-      false,
-    );
+    expect(chamou(supabase, "pedir_casamento_da_lista")).toBe(false);
   });
 });
 

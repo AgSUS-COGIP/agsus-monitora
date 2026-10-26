@@ -111,7 +111,9 @@ export type RpcDaClassificacao =
   | "obter_lista_classificacao"
   | "registrar_desempate_classificacao"
   | "obter_publicacao_lista_aprovados"
-  | "publicar_lista_aprovados_da_classificacao"
+  | "pedir_casamento_da_lista"
+  | "obter_casamento_da_lista"
+  | "aplicar_casamento_da_lista"
   | "listar_configuracao_convocacao"
   | "listar_modelos_convocacao"
   | "salvar_hora_nascimento_candidato"
@@ -164,6 +166,8 @@ export interface OpcoesDoEstado {
   /** Cálculo pelo Python: de quanto em quanto tempo relê o pedido e quanto espera (testes). */
   intervaloDoCalculoMs?: number;
   prazoDoCalculoMs?: number;
+  /** Prazo da prévia do casamento (job Python, 20261026150000). */
+  prazoDoCasamentoMs?: number;
   agora?: () => number;
 }
 export type EstadoDaClassificacao = ReturnType<

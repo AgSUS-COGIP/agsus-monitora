@@ -53,6 +53,10 @@ banco depois de uma mudança de status que envolve Contratado ou de uma lista no
 (gatilhos em `TH_CANDIDATO_APROVADO` e `TH_PUBLICACAO_APROVADO`), com a chave **Conferências**
 ligada.
 
+O **Casamento da lista de aprovados** (`casamento-da-lista.yml`, 20261026150000) também não tem
+tarefa: o banco o pede a cada prévia de substituição da lista (`pedir_casamento_da_lista`, origem
+MONITORA, com o id do pedido).
+
 Robô da Empregare e triagem estão na lista fixa da função; fora a agenda das inscrições
 (abaixo), não têm agenda.
 

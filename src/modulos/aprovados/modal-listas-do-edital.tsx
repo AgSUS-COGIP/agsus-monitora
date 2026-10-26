@@ -14,7 +14,7 @@ import {
 } from "../../lib/access-roles.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import { PLANILHAS } from "../../lib/planilhas.ts";
-import type { PreviaDaSubstituicao } from "../../lib/previa-da-substituicao-de-aprovados.ts";
+import type { PreviaDaSubstituicao } from "./tipos-do-estado.ts";
 import { origemDaLista } from "../../lib/publicacao-de-aprovados.ts";
 import { Abas, Aviso, BotaoDeAcao, classes, Modal } from "../../ui/index.ts";
 import { FormularioDeConvocacao } from "./formulario-de-convocacao.tsx";

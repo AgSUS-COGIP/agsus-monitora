@@ -1,17 +1,16 @@
-import type { PreviaDaSubstituicao } from "../../lib/previa-da-substituicao-de-aprovados.ts";
-import { numerosDaPrevia } from "../../lib/previa-da-substituicao-de-aprovados.ts";
+import type { PreviaDaSubstituicao } from "./tipos-do-estado.ts";
+import { numerosDoCasamento } from "../../lib/casamento-da-lista.ts";
 import { MOTIVO_MAXIMO } from "../../lib/publicacao-de-aprovados.ts";
 import { Aviso, GradeDeKpis, Kpi } from "../../ui/index.ts";
 
 /*
-  O resumo do casamento antes de confirmar "Substituir XLSX" (a conta é de
-  src/lib/previa-da-substituicao-de-aprovados.ts): quantos casam e levam o
-  estado, quantos entram, quantos ficam sem par e quais status ficariam sem
-  dono. Com status na lista vigente (ou lista publicada da Classificação),
-  pede o motivo.
+  O resumo do casamento antes de confirmar "Substituir XLSX" (migration
+  20261026150000): a conta é do job Python (python/monitora/aprovados/
+  casamento.py); a tela mostra quantos casam e levam o estado, quantos entram,
+  quantos ficam sem par e quais status ficariam sem dono. Com status na lista
+  vigente (ou lista publicada da Classificação), pede o motivo.
 */
 
-const texto = (valor: unknown) => String(valor ?? "").trim();
 const LIMITE_DE_NOMES = 50;
 
 export function PreviaDaSubstituicaoDaLista({
@@ -23,7 +22,8 @@ export function PreviaDaSubstituicaoDaLista({
   motivo: string;
   aoMudarMotivo: (valor: string) => void;
 }) {
-  const n = numerosDaPrevia(previa);
+  const { casamento } = previa;
+  const n = numerosDoCasamento(casamento);
   const kpis: [string, string, string, string, number][] = [
     ["casados", "sucesso", "fa-link", "Casados (levam o estado)", n.casados],
     ["entram", "info", "fa-user-plus", "Entram", n.entram],
@@ -44,7 +44,7 @@ export function PreviaDaSubstituicaoDaLista({
       "Sub judice mantidos",
       n.subJudiceMantidos,
     ]);
-  const semDono = previa.resumo.pendencias;
+  const semDono = casamento.plano?.pendencias ?? [];
   return (
     <section
       id="approvedImportPrevia"
@@ -53,8 +53,8 @@ export function PreviaDaSubstituicaoDaLista({
       data-tour="aprovados-listas-previa"
     >
       <h4 id="approvedImportPreviaTitulo">
-        Prévia: {previa.anteriores.length} na lista vigente ·{" "}
-        {previa.novos.length} na planilha
+        Prévia: {casamento.anteriores} na lista vigente ·{" "}
+        {casamento.novos_total} na planilha
       </h4>
       <GradeDeKpis rotulo="O que a substituição faz">
         {kpis.map(([chave, tom, icone, rotulo, valor]) => (
@@ -81,8 +81,8 @@ export function PreviaDaSubstituicaoDaLista({
                 <span className="ui-texto-secundario">
                   {[
                     a.codigo_vaga || a.cargo,
-                    texto(a.status),
-                    texto(a.matricula) ? `matrícula ${a.matricula}` : "",
+                    a.status,
+                    a.matricula ? `matrícula ${a.matricula}` : "",
                   ]
                     .filter(Boolean)
                     .join(" · ")}
@@ -92,7 +92,7 @@ export function PreviaDaSubstituicaoDaLista({
           </ul>
         </Aviso>
       ) : null}
-      {previa.exigeMotivo ? (
+      {casamento.exige_motivo ? (
         <div className="form-row full">
           <label htmlFor="approvedImportMotivo">Motivo da substituição</label>
           <textarea

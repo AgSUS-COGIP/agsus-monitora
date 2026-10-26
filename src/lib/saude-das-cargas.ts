@@ -119,6 +119,8 @@ const NOMES_DOS_WORKFLOWS: Readonly<Record<string, string>> = Object.freeze({
   "contratacao-dos-aprovados.yml": "Contratado em outra lista",
   // Pedido pela rodada do pg_cron dos pacotes prontos dos painéis (20261029180000).
   "pacotes-dos-paineis.yml": "Pacotes dos painéis",
+  // Pedido pelo banco a cada prévia de substituição da lista de aprovados (20261026150000).
+  "casamento-da-lista.yml": "Casamento da lista de aprovados",
 });
 
 /* O estado de cada tipo de execução, em ok / falha / andamento. */

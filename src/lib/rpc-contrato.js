@@ -451,20 +451,32 @@ export const CONTRATO_RPC = {
     resumo:
       "Candidatos vigentes da lista de aprovados de uma área numa chamada só: listas uma vez, cargo/modalidade/status/código da vaga em dicionário e linhas posicionais; p_versao igual à atual devolve só `inalterado`.",
   },
-  importar_lista_aprovados: {
+
+  pedir_casamento_da_lista: {
     argumentos: [
-      "p_edital_id",
-      "p_ativo",
-      "p_arquivo_nome",
-      "p_arquivo_path",
+      "p_edital",
+      "p_origem",
       "p_candidatos",
-      "p_substituir",
-      "p_motivo",
-      "p_vinculos",
+      "p_lista_classificacao",
+      "p_lista_vigente",
+      "p_arquivo_nome",
+      "p_manuais",
     ],
     critica: true,
     resumo:
-      "Importa ou substitui a lista XLSX de aprovados de um edital pela nova versão comum (20261026150000): leva status, matrícula, convocação, sub judice e anexos de quem casou (p_vinculos {candidato_id, linha, forma}; nulo = o banco casa) e recalcula os contratados. Lista já cadastrada só o admin; com status (ou publicada da Classificação), exige p_motivo. Vai para o histórico das publicações.",
+      "A prévia de uma nova versão da lista de aprovados (XLSX ou Classificação, 20261026150000): guarda o pedido e pede o job Python do casamento; sem lista vigente, o plano sai na hora. Mesma permissão nos dois caminhos (admin global; Importação ou Classificação nível 2; lista já cadastrada, Importação nível 3).",
+  },
+  obter_casamento_da_lista: {
+    argumentos: ["p_pedido"],
+    critica: true,
+    resumo:
+      "A prévia do casamento: situação do pedido, plano do job Python (casados, entram, sem par, status sem dono, quem muda), se exige motivo e se pode substituir; na Classificação, quem entra e quem revisar.",
+  },
+  aplicar_casamento_da_lista: {
+    argumentos: ["p_pedido", "p_motivo", "p_ativo", "p_arquivo_path"],
+    critica: true,
+    resumo:
+      "Aplica a prévia calculada (os dois caminhos): confere permissão, lista vigente e motivo (PT409 se a lista mudou) e grava a nova versão levando status, matrícula, convocação, sub judice e anexos de quem casou; grava o histórico e recalcula os contratados.",
   },
   definir_lista_aprovados_ativa: {
     argumentos: ["p_lista_id", "p_ativo"],
@@ -1096,17 +1108,7 @@ export const CONTRATO_RPC = {
     resumo:
       "Lista de aprovados vigente do edital (origem; com p_com_candidatos, os candidatos para a prévia), se a pessoa pode substituí-la (pode_substituir), último resultado final da Classificação, se há análises e o histórico das publicações. Classificação, Aprovados ou Importação.",
   },
-  publicar_lista_aprovados_da_classificacao: {
-    argumentos: [
-      "p_lista_classificacao",
-      "p_lista_vigente",
-      "p_vinculos",
-      "p_motivo",
-    ],
-    critica: false,
-    resumo:
-      "Publica o resultado final da Classificação como a lista de aprovados vigente pela mesma nova versão do XLSX (a anterior fica no histórico), levando status, matrícula, convocação, sub judice e anexos de quem casou (p_vinculos). Mesma permissão do XLSX: lista já cadastrada só o admin; com status, p_motivo. PT409 se a lista vigente mudou. Classificação editor.",
-  },
+
   obter_desempate_da_lista: {
     argumentos: ["p_lista"],
     critica: false,

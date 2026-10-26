@@ -1,14 +1,10 @@
 import { ModalDePublicacaoDeAprovados } from "../../src/modulos/classificacao/publicar-aprovados.tsx";
-import {
-  argumentosDaPublicacao,
-  casarCandidatos,
-} from "../../src/lib/publicacao-de-aprovados.ts";
 import type { EstadoDaClassificacao } from "../../src/modulos/classificacao/tipos-do-estado.ts";
-import type { VinculoDaPublicacao } from "../../src/lib/tipos-da-publicacao-de-aprovados.ts";
+import type { VinculoDoPlano } from "../../src/lib/casamento-da-lista.ts";
 
 export function conferirPublicacao(estado: EstadoDaClassificacao) {
-  const vinculos = argumentosDaPublicacao(casarCandidatos([], []));
-  void estado.publicarComoListaDeAprovados({ listaId: "l1", vinculos });
+  void estado.publicarComoListaDeAprovados({ pedidoId: "p1", motivo: "" });
+  void estado.prepararPublicacaoDeAprovados(null, null, { c1: "a1" });
   return (
     <ModalDePublicacaoDeAprovados
       estado={estado}
@@ -20,9 +16,9 @@ export function conferirPublicacao(estado: EstadoDaClassificacao) {
   );
 }
 export function rejeitarVinculoInvalido() {
-  const vinculo: VinculoDaPublicacao = {
+  const vinculo: VinculoDoPlano = {
     candidato_id: "c1",
-    analise_id: "a1",
+    chave: "a1",
     // @ts-expect-error O banco aceita apenas as quatro formas de vínculo conhecidas.
     forma: "AUTOMATICO",
   };

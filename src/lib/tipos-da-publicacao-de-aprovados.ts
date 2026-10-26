@@ -22,16 +22,6 @@ export interface CandidatoDaListaFinal {
   situacao: "VAGA" | "CR" | null;
   modalidades: unknown[];
 }
-export type FormaDoVinculo = "ANALISE" | "NOME" | "NOME_VAGA" | "MANUAL";
-export interface VinculoDaPublicacao {
-  candidato_id: string;
-  analise_id: string;
-  forma: FormaDoVinculo;
-}
-export interface CasamentoDeCandidatos {
-  vinculos: VinculoDaPublicacao[];
-  naoCasados: (CandidatoAnterior & { ambiguo: boolean; decidido: boolean })[];
-}
 export interface OrigemDaLista {
   tipo: "CLASSIFICACAO" | "XLSX";
   texto: string;

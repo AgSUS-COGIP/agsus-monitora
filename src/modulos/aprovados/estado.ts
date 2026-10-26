@@ -112,15 +112,14 @@ import {
   somaDasReservas,
 } from "../../lib/configuracao-de-convocacao.ts";
 import { PLANILHAS } from "../../lib/planilhas.ts";
+import { motivoValido } from "../../lib/publicacao-de-aprovados.ts";
 import {
-  argumentosDaImportacao,
-  motivoValido,
-} from "../../lib/publicacao-de-aprovados.ts";
-import { situacaoDaPublicacao } from "../../lib/dados-da-publicacao-de-aprovados.ts";
-import {
-  montarPreviaDaSubstituicao,
-  type PreviaDaSubstituicao,
-} from "../../lib/previa-da-substituicao-de-aprovados.ts";
+  acompanharCasamento,
+  INTERVALO_DO_CASAMENTO_MS,
+  pedidoLido,
+  PRAZO_DO_CASAMENTO_MS,
+} from "../../lib/casamento-da-lista.ts";
+import type { PreviaDaSubstituicao } from "./tipos-do-estado.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { criarEstadoDaCarta } from "./carta-de-convocacao/estado.ts";
 import {
@@ -248,6 +247,11 @@ export function criarEstadoDaListaDeAprovados({
   novaAba = abrirEmNovaAba,
   armazenamento = armazenamentoDePayload,
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
+  esperar = (ms: number) =>
+    new Promise<void>((pronto) => setTimeout(pronto, ms)),
+  agora = () => Date.now(),
+  intervaloDoCasamentoMs = INTERVALO_DO_CASAMENTO_MS,
+  prazoDoCasamentoMs = PRAZO_DO_CASAMENTO_MS,
   copiar = copiarParaAreaDeTransferencia,
   imprimir = imprimirPagina,
   carregarLogo = logoEmPng,
@@ -1377,11 +1381,12 @@ export function criarEstadoDaListaDeAprovados({
   // ── Listas (XLSX) ──────────────────────────────────────────────────────
 
   /*
-    Substituir a lista pelo XLSX (migration 20261026150000): antes de gravar, a
-    prévia lê a planilha e a lista vigente com os candidatos
-    (obter_publicacao_lista_aprovados) e casa as pessoas com a mesma conta da
-    Classificação (src/lib/publicacao-de-aprovados.ts). O banco leva o estado de
-    quem casou e confere os vínculos.
+    Importar ou substituir a lista pelo XLSX (migration 20261026150000): a
+    planilha vira um pedido (pedir_casamento_da_lista); com lista vigente, o
+    job Python casa as pessoas e a tela mostra a prévia antes de gravar; sem
+    lista, o plano sai na hora e a importação segue direto. Ao confirmar, o
+    XLSX vai para o bucket e o banco aplica o plano
+    (aplicar_casamento_da_lista), levando o estado de quem casou.
   */
   function conferirArquivo(arquivo: File | null): arquivo is File {
     if (!arquivo) {
@@ -1404,6 +1409,55 @@ export function criarEstadoDaListaDeAprovados({
     }
   }
 
+  /* Pede o casamento da planilha e espera o plano; null com o aviso já dado. */
+  async function pedirCasamento(
+    editalId: string,
+    arquivo: File,
+    candidatos: readonly Record<string, unknown>[],
+    rotular: (rotulo: string) => void,
+  ) {
+    if (!supabase) return null;
+    let pedidoId = "";
+    try {
+      const resposta = await supabase.rpc("pedir_casamento_da_lista", {
+        p_edital: editalId,
+        p_origem: "XLSX",
+        p_candidatos: candidatos,
+        p_arquivo_nome: arquivo.name,
+      });
+      if (resposta.error) throw resposta.error;
+      pedidoId = pedidoLido(resposta.data).pedido_id;
+    } catch (erro) {
+      toast(`Não foi possível pedir a prévia: ${mensagemDe(erro)}`, "error");
+      return null;
+    }
+    rotular("Casando as pessoas…");
+    try {
+      const r = await acompanharCasamento({
+        pedidoId,
+        obter: async (id) => {
+          const resposta = await supabase.rpc("obter_casamento_da_lista", {
+            p_pedido: id,
+          });
+          if (resposta.error) throw resposta.error;
+          return resposta.data;
+        },
+        esperar,
+        agora,
+        intervaloMs: intervaloDoCasamentoMs,
+        prazoMs: prazoDoCasamentoMs,
+      });
+      if ("erro" in r) {
+        if (r.erro) toast(r.erro, "warn");
+        return null;
+      }
+      return r.casamento;
+    } catch (erro) {
+      toast(`Não foi possível ler a prévia: ${mensagemDe(erro)}`, "error");
+      return null;
+    }
+  }
+
   async function prepararSubstituicao({
     editalId,
     arquivo,
@@ -1415,50 +1469,31 @@ export function criarEstadoDaListaDeAprovados({
     const atual = listaDoEdital(editalId);
     if (!atual) return null;
     if (!canReplaceApprovedList(perfil())) {
-      toast("Somente admin pode substituir uma lista existente.", "warn");
+      toast("Sem permissão para substituir uma lista existente.", "warn");
       return null;
     }
     if (!conferirArquivo(arquivo)) return null;
     const previa = await executar(
       "importar",
-      "Conferindo o XLSX…",
-      async () => {
+      "Lendo o XLSX…",
+      async (rotular) => {
         const candidatos = await lerArquivo(arquivo);
         if (!candidatos) return null;
-        let situacao;
-        try {
-          const resposta = await supabase.rpc(
-            "obter_publicacao_lista_aprovados",
-            {
-              p_edital: editalId,
-              p_com_candidatos: true,
-            },
-          );
-          if (resposta.error) throw resposta.error;
-          situacao = situacaoDaPublicacao(resposta.data);
-        } catch (erro) {
-          toast(
-            `Não foi possível ler a lista vigente: ${mensagemDe(erro)}`,
-            "error",
-          );
-          return null;
-        }
-        const vigente = situacao.vigente;
-        if (!vigente || vigente.lista_id !== String(atual.lista_id)) {
-          toast(
-            "A lista do edital mudou. Recarregue a página e confira de novo.",
-            "warn",
-          );
-          return null;
-        }
-        return montarPreviaDaSubstituicao({
+        rotular("Pedindo a prévia…");
+        const casamento = await pedirCasamento(
           editalId,
           arquivo,
           candidatos,
-          listaId: vigente.lista_id,
-          origemAtual: vigente.origem,
-          anteriores: vigente.candidatos,
-        });
+          rotular,
+        );
+        if (!casamento) return null;
+        return {
+          editalId,
+          arquivo,
+          candidatos,
+          listaId: String(atual.lista_id),
+          casamento,
+        };
       },
     );
     return previa || null;
@@ -1480,14 +1515,14 @@ export function criarEstadoDaListaDeAprovados({
     if (!supabase) return false;
     const atual = listaDoEdital(editalId);
     if (atual && !canReplaceApprovedList(perfil())) {
-      toast("Somente admin pode substituir uma lista existente.", "warn");
+      toast("Sem permissão para substituir uma lista existente.", "warn");
       return false;
     }
     if (atual && (!previa || previa.listaId !== String(atual.lista_id))) {
       toast("Confira a prévia da substituição antes de confirmar.", "warn");
       return false;
     }
-    if (previa?.exigeMotivo && !motivoValido(motivo)) {
+    if (previa?.casamento.exige_motivo && !motivoValido(motivo)) {
       toast(
         "Informe o motivo da substituição (3 a 500 caracteres): a lista vigente tem status, matrícula ou sub judice, ou foi publicada da Classificação.",
         "warn",
@@ -1499,6 +1534,10 @@ export function criarEstadoDaListaDeAprovados({
     return executar("importar", "Validando o XLSX…", async (rotular) => {
       const candidatos = previa?.candidatos ?? (await lerArquivo(escolhido));
       if (!candidatos) return false;
+      const casamento =
+        previa?.casamento ??
+        (await pedirCasamento(editalId, escolhido, candidatos, rotular));
+      if (!casamento) return false;
       const caminho = `${editalId}/${Date.now()}-${uuid()}-${nomeDeArquivoSeguro(escolhido.name)}`;
       rotular(`Enviando ${candidatos.length} candidato(s)…`);
       const envio = await supabase.storage
@@ -1511,18 +1550,19 @@ export function criarEstadoDaListaDeAprovados({
         toast(`Erro ao anexar XLSX: ${mensagemDe(envio.error)}`, "error");
         return false;
       }
-      const { data, error } = await supabase.rpc("importar_lista_aprovados", {
-        p_edital_id: editalId,
-        p_ativo: ativo,
-        p_arquivo_nome: escolhido.name,
-        p_arquivo_path: caminho,
-        p_candidatos: candidatos,
-        p_substituir: Boolean(atual),
+      const { data, error } = await supabase.rpc("aplicar_casamento_da_lista", {
+        p_pedido: casamento.pedido_id,
         p_motivo: text(motivo) || null,
-        p_vinculos: previa ? argumentosDaImportacao(previa.casamento) : [],
+        p_ativo: ativo,
+        p_arquivo_path: caminho,
       });
       if (error) {
-        toast(`Erro ao importar lista: ${mensagemDe(error)}`, "error");
+        toast(
+          registroDosAprovados(error).code === "PT409"
+            ? "A lista do edital mudou depois da prévia. Confira a substituição de novo."
+            : `Erro ao importar lista: ${mensagemDe(error)}`,
+          "error",
+        );
         return false;
       }
       fecharModal();

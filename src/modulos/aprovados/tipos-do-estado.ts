@@ -1,5 +1,6 @@
 import type { DadosDaPublicacaoDoEdital } from "../../lib/tipos-do-estado-de-aprovados.ts";
 import type { OpcoesDoEstadoDaCarta } from "../../lib/tipos-da-carta.ts";
+import type { CasamentoDaLista } from "../../lib/casamento-da-lista.ts";
 import type {
   ConfiguracoesDaConvocacao,
   ModelosDaConvocacao,
@@ -42,6 +43,15 @@ export interface SnapshotDosAprovados {
     dados: DadosDaPublicacaoDoEdital | null;
     erro?: string;
   } | null;
+}
+/** A prévia de "Substituir XLSX": a planilha lida e o casamento do job Python (20261026150000). */
+export interface PreviaDaSubstituicao {
+  editalId: string;
+  arquivo: File;
+  candidatos: readonly Record<string, unknown>[];
+  /** A lista vigente quando a prévia foi pedida. */
+  listaId: string;
+  casamento: CasamentoDaLista;
 }
 export interface RespostaDosAprovados {
   data: unknown;
@@ -95,6 +105,11 @@ export interface OpcoesDoEstadoDosAprovados extends Pick<
     receber: (area: string, dados: unknown) => void;
     carregar: (area: string) => unknown;
   } | null;
+  /* A espera do job do casamento (os testes passam uma que não espera). */
+  esperar?: (ms: number) => Promise<void>;
+  agora?: () => number;
+  intervaloDoCasamentoMs?: number;
+  prazoDoCasamentoMs?: number;
 }
 export interface CamposDoStatus {
   status?: unknown;

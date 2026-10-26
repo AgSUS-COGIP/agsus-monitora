@@ -54,7 +54,8 @@ export function situacaoDaPublicacao(valor: unknown): SituacaoDaPublicacao {
   if (dados.vigente === null) return { vigente: null, pode_substituir };
   const vigente = registroObrigatorio(dados.vigente);
   const vistos = new Set<string>();
-  const candidatos: CandidatoAnterior[] = linhas(vigente.candidatos).map(
+  // Sem p_com_candidatos, o banco não manda os candidatos (null).
+  const candidatos: CandidatoAnterior[] = linhas(vigente.candidatos, true).map(
     (c) => {
       const id = identificador(c.candidato_id);
       if (vistos.has(id)) throw erro();
