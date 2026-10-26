@@ -437,30 +437,126 @@ describe("filtros e paginação", () => {
     expect($("approvedKpiTotal").textContent).toBe("4");
   });
 
-  it("pagina de 50 em 50, e filtrar volta à primeira página", async () => {
+  it("rolagem contínua da TabelaInfinita: 50 por vez, sem paginação", async () => {
     const muitos = Array.from({ length: 120 }, (_, indice) =>
       candidato({ cargo: indice < 60 ? "Enfermeiro" : "Médico" }),
     );
     await montar({ supabase: supabaseFalso({ candidatos: muitos }) });
-    expect($("approvedPaginacao").hidden).toBe(false);
-    expect($("approvedPaginacaoInfo").textContent).toBe(
-      "Mostrando 1–50 de 120 candidatos",
+    const card = $("approvedRows").closest(".ui-card.ui-tabela");
+    expect(card.querySelector("#approvedTabelaTitulo").textContent).toBe(
+      "Candidatos aprovados",
     );
-    expect($("approvedPagePrev").disabled).toBe(true);
+    // A barra de páginas saiu: é a tabela das outras telas.
+    expect($("approvedPaginacao")).toBeNull();
+    expect(document.querySelectorAll("#approvedRows tr")).toHaveLength(50);
+    expect(card.querySelector("[data-tabela-mostrando]").textContent).toBe(
+      "Mostrando 50 de 120 registros",
+    );
+    expect(card.querySelector("[data-tabela-contagem]").textContent).toBe(
+      "120 candidatos",
+    );
 
-    await clicar($("approvedPageNext"));
-    await clicar($("approvedPageNext"));
-    expect($("approvedPaginaAtual").textContent).toBe("Página 3 de 3");
-    expect($("approvedPageNext").disabled).toBe(true);
-    expect(document.querySelectorAll("#approvedRows tr")).toHaveLength(20);
+    await clicar(card.querySelector('[data-acao="carregar-mais"]'));
+    expect(document.querySelectorAll("#approvedRows tr")).toHaveLength(100);
+    await clicar(card.querySelector('[data-acao="carregar-mais"]'));
+    expect(document.querySelectorAll("#approvedRows tr")).toHaveLength(120);
+    expect(card.querySelector('[data-acao="carregar-mais"]')).toBeNull();
+    expect(card.querySelector(".ui-tabela-status").textContent).toBe(
+      "Todos os 120 registros do recorte foram carregados",
+    );
 
+    // Filtrar recomeça do topo, com 50 linhas.
     await clicar(opcaoDoFiltro("approvedFilterCargo", "Médico"));
-    expect($("approvedPaginaAtual").textContent).toBe("Página 1 de 2");
+    expect(document.querySelectorAll("#approvedRows tr")).toHaveLength(50);
+    expect(card.querySelector("[data-tabela-contagem]").textContent).toBe(
+      "60 de 120 candidatos",
+    );
+  });
 
-    await escolher($("approvedPageSize"), "100");
-    // Com tudo numa página, a barra some: controles de página seriam ruído.
-    expect($("approvedPaginacao").hidden).toBe(true);
-    expect(document.querySelectorAll("#approvedRows tr")).toHaveLength(60);
+  it("rolar até perto do fim carrega mais 50", async () => {
+    const muitos = Array.from({ length: 80 }, () => candidato());
+    await montar({ supabase: supabaseFalso({ candidatos: muitos }) });
+    const caixa = $("approvedRows").closest(".ui-tabela-rolagem");
+    Object.defineProperties(caixa, {
+      scrollHeight: { configurable: true, value: 1000 },
+      clientHeight: { configurable: true, value: 400 },
+    });
+    caixa.scrollTop = 500;
+    await act(async () => caixa.dispatchEvent(new Event("scroll")));
+    expect(document.querySelectorAll("#approvedRows tr")).toHaveLength(80);
+  });
+
+  it("a busca da tabela procura pelo nome, e Limpar filtros a limpa", async () => {
+    await montar();
+    await digitar($("approvedBusca"), "bruno");
+    expect(nomes()).toEqual(["Bruno Lima"]);
+    // A busca é só da tabela: o contador do topo segue os filtros.
+    expect($("approvedCount").textContent).toBe("4 candidatos");
+    await digitar($("approvedBusca"), "ninguém com esse nome");
+    expect($("approvedRows").textContent).toBe("Nenhum registro encontrado.");
+    await clicar(
+      $("approvedFiltrosTitulo")
+        .closest(".ui-filtros")
+        .querySelector('[data-acao="limpar-filtros"]'),
+    );
+    expect($("approvedBusca").value).toBe("");
+    expect(nomes()).toHaveLength(4);
+  });
+
+  it("ordena pelo cabeçalho (asc → desc → ordem da lista), com aria-sort", async () => {
+    await montar();
+    const original = nomes();
+    const cabecalho = (rotulo) =>
+      [...document.querySelectorAll("#page-approved thead th")].find(
+        (th) => th.textContent === rotulo,
+      );
+    const nome = cabecalho("Nome");
+    expect(nome.getAttribute("aria-sort")).toBe("none");
+    await clicar(nome.querySelector("button.ui-ordenar"));
+    expect(nome.getAttribute("aria-sort")).toBe("ascending");
+    expect(nomes()).toEqual([...original].sort((a, b) => a.localeCompare(b)));
+    await clicar(nome.querySelector("button.ui-ordenar"));
+    expect(nome.getAttribute("aria-sort")).toBe("descending");
+    expect(nomes()).toEqual([...original].sort((a, b) => b.localeCompare(a)));
+    await clicar(nome.querySelector("button.ui-ordenar"));
+    expect(nome.getAttribute("aria-sort")).toBe("none");
+    expect(nomes()).toEqual(original);
+    // "Ações" não ordena.
+    expect(cabecalho("Ações").querySelector("button")).toBeNull();
+  });
+
+  it("o cabeçalho e o filtro dizem Situação, como nas outras telas", async () => {
+    await montar();
+    const cabecalhos = [
+      ...document.querySelectorAll("#approvedPanelAprovados thead th"),
+    ].map((th) => th.textContent);
+    expect(cabecalhos).toEqual([
+      "Nome",
+      "Cargo",
+      "Modalidade",
+      "Classificação",
+      "Nota",
+      "Situação",
+      "Ações",
+    ]);
+    expect(
+      document.querySelector('label[for="approvedFilterStatus"]').textContent,
+    ).toBe("Situação");
+  });
+
+  it("clicar na linha (ou Enter nela) abre a gaveta; os botões da linha não", async () => {
+    await montar();
+    const ana = linhaDe("Ana Ribeiro");
+    expect(ana.tabIndex).toBe(0);
+    await clicar(ana.querySelector("td:nth-child(2)"));
+    expect($("approvedCandidatoGaveta")).not.toBeNull();
+  });
+
+  it("sem candidato na área, a tabela diz isso", async () => {
+    await montar({ supabase: supabaseFalso({ candidatos: [] }) });
+    expect($("approvedRows").textContent).toBe(
+      "Nenhum candidato aprovado nesta área.",
+    );
   });
 });
 
