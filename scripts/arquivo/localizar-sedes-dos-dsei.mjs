@@ -555,7 +555,9 @@ function enderecoLegivel(d) {
 async function principal() {
   const [caminhoLmap] = process.argv.slice(2);
   if (!caminhoLmap) {
-    console.error("uso: node scripts/arquivo/localizar-sedes-dos-dsei.mjs <lmap.json>");
+    console.error(
+      "uso: node scripts/arquivo/localizar-sedes-dos-dsei.mjs <lmap.json>",
+    );
     process.exitCode = 1;
     return;
   }
