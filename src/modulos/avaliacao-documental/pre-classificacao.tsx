@@ -174,6 +174,7 @@ interface VagaDaPreProps {
   editalId: string;
   rotuloEdital: string;
   unidade: string;
+  buscaEliminado?: string;
 }
 
 function VagaDaPre({
@@ -186,10 +187,18 @@ function VagaDaPre({
   editalId,
   rotuloEdital,
   unidade,
+  buscaEliminado = "",
 }: VagaDaPreProps) {
   const [incluindo, setIncluindo] = useState(false);
   const [emitindo, setEmitindo] = useState("");
   const [erroDoEspelho, setErroDoEspelho] = useState("");
+  const eliminadosVisiveis = buscaEliminado
+    ? v.eliminados.filter((c) =>
+        `${c.codigo} ${c.nome}`
+          .toLocaleLowerCase("pt-BR")
+          .includes(buscaEliminado),
+      )
+    : v.eliminados;
   async function emitirEspelho(c: InscritoDaPre) {
     if (emitindo || !editalId || c.situacao !== "ELIMINADO") return;
     setErroDoEspelho("");
@@ -309,7 +318,7 @@ function VagaDaPre({
           ))}
         </ul>
       ) : null}
-      {v.lote.length || v.fora.length ? (
+      {!buscaEliminado && (v.lote.length || v.fora.length) ? (
         <div className="ui-tabela-rolagem">
           <table className="avd-tabela">
             <thead>
@@ -348,9 +357,13 @@ function VagaDaPre({
           </table>
         </div>
       ) : null}
-      {v.eliminados.length ? (
-        <details className="avd-eliminados">
-          <summary>Eliminados ({v.eliminados.length})</summary>
+      {eliminadosVisiveis.length ? (
+        <details
+          key={buscaEliminado || "todos"}
+          className="avd-eliminados"
+          open={buscaEliminado ? true : undefined}
+        >
+          <summary>Eliminados ({eliminadosVisiveis.length})</summary>
           {/* Na mesma rolagem da tabela do lote: sem ela, a tabela global de
               app.css (min-width 1180px) estourava o cartão e a página rolava
               de lado ao abrir os eliminados. */}
@@ -365,7 +378,7 @@ function VagaDaPre({
                 </tr>
               </thead>
               <tbody>
-                {v.eliminados.map((c) => (
+                {eliminadosVisiveis.map((c) => (
                   <tr
                     key={c.id}
                     data-candidato={c.codigo}
@@ -573,6 +586,7 @@ export interface PreClassificacaoProps {
 export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
   const p = useSyncExternalStore(pre.assinar, pre.obter);
   const [tamanhos, setTamanhos] = useState<Record<string, string>>({});
+  const [buscaDeEspelho, setBuscaDeEspelho] = useState("");
   const [motivo, setMotivo] = useState("");
   const [erroAoSalvar, setErroAoSalvar] = useState("");
   const [abrirDescongelar, setAbrirDescongelar] = useState(false);
@@ -607,6 +621,16 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
 
   const cont = contadoresDaPreClassificacao(d);
   const vagas = vagasDaTela(d);
+  const buscaEliminado = buscaDeEspelho.trim().toLocaleLowerCase("pt-BR");
+  const vagasVisiveis = buscaEliminado
+    ? vagas.filter((v) =>
+        v.eliminados.some((c) =>
+          `${c.codigo} ${c.nome}`
+            .toLocaleLowerCase("pt-BR")
+            .includes(buscaEliminado),
+        ),
+      )
+    : vagas;
   const ultima = d.ultima_execucao;
   const situacaoDoEdital = ultima?.edital?.situacao;
   const conferida = d.regra?.situacao === "CONFERIDA";
@@ -796,10 +820,31 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
         </Aviso>
       ) : null}
 
-      <ListasOficiais d={d} p={p} pre={pre} />
+      <section className="ui-card" aria-label="Emitir comunicado de eliminação">
+        <h3 className="ui-titulo">
+          Comunicados de eliminação antes da análise
+        </h3>
+        <p className="ui-texto-secundario">
+          Busque pelo código ou nome. A vaga será exibida com o botão de PDF.
+        </p>
+        <label className="ui-campo">
+          <span>Buscar candidato eliminado</span>
+          <input
+            type="search"
+            value={buscaDeEspelho}
+            placeholder="Código ou nome"
+            data-acao="buscar-espelho-eliminado"
+            onChange={(ev) => setBuscaDeEspelho(ev.target.value)}
+          />
+        </label>
+        {buscaEliminado && !vagasVisiveis.length ? (
+          <Aviso tom="warning">Nenhum eliminado encontrado.</Aviso>
+        ) : null}
+      </section>
+      {!buscaEliminado ? <ListasOficiais d={d} p={p} pre={pre} /> : null}
 
-      {vagas.length ? (
-        vagas.map((v) => (
+      {vagasVisiveis.length ? (
+        vagasVisiveis.map((v) => (
           <VagaDaPre
             key={v.codigo}
             v={v}
@@ -810,6 +855,7 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
             editalId={e.editalId}
             rotuloEdital={String(d.edital?.edital || d.edital?.rotulo || "")}
             unidade={String(d.edital?.unidade || "")}
+            buscaEliminado={buscaEliminado}
             aoMudarTamanho={(codigo, valor) =>
               setTamanhos((t) => ({ ...t, [codigo]: valor }))
             }
