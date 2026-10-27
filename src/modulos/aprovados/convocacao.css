@@ -797,3 +797,27 @@
 .convocacao-linha-imediata:not([data-a-convocar]) td {
   background: none;
 }
+
+/* Etapa 1: uma entrada visual, sem montar outro estado ou duplicar tabelas. */
+.central-convocacoes {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.central-convocacoes-titulo {
+  margin: 0;
+}
+.central-convocacoes-ajuda,
+.central-convocacoes-destino p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+.central-convocacoes-escolha,
+.central-convocacoes-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.central-convocacoes-modo-entrevista > :not(.central-convocacoes) {
+  display: none;
+}
