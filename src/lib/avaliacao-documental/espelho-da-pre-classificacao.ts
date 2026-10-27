@@ -80,9 +80,7 @@ export function espelhoDaEliminacaoPreAnalise(
     "CANCELADO",
     "REPROVADO_EMPREGARE",
   ]);
-  const exibirNotas = !notasAdministrativas.has(
-    texto(candidato.motivo_codigo),
-  );
+  const exibirNotas = !notasAdministrativas.has(texto(candidato.motivo_codigo));
   const notas: LinhaDoEspelho[] = [
     ...(exibirNotas && candidato.art != null
       ? [
