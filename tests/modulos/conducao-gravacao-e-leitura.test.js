@@ -40,6 +40,11 @@ describe("condução: gravação e leitura fora de ordem", () => {
     });
     const abrir = conducao.abrirEdital("m1");
     responder(pedidos(supabase, "obter_entrevistas_do_edital")[0], edital(1));
+    responder(pedidos(supabase, "obter_previsao_entrevista_edital")[0], {
+      situacao: "NAO_INFORMADA",
+      motivo: null,
+      pode_alterar: false,
+    });
     responder(pedidos(supabase, "obter_agenda_entrevista")[0], null);
     await abrir;
 
@@ -50,6 +55,11 @@ describe("condução: gravação e leitura fora de ordem", () => {
     expect(conducao.obter().edital.versao).toBe(3);
 
     responder(pedidos(supabase, "obter_entrevistas_do_edital")[1], edital(2));
+    responder(pedidos(supabase, "obter_previsao_entrevista_edital")[1], {
+      situacao: "NAO_INFORMADA",
+      motivo: null,
+      pode_alterar: false,
+    });
     responder(pedidos(supabase, "obter_agenda_entrevista")[1], null);
     await releitura;
     expect(conducao.obter().edital.versao).toBe(3);
