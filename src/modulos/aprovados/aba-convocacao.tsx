@@ -555,7 +555,8 @@ export function AbaConvocacao({
       className={classes(
         "approved-tabpanel",
         !ativa && "hidden",
-        visaoDaCentral === "entrevista" && "central-convocacoes-modo-entrevista",
+        visaoDaCentral === "entrevista" &&
+          "central-convocacoes-modo-entrevista",
       )}
       role="tabpanel"
       aria-labelledby="approvedTabConvocacao"
