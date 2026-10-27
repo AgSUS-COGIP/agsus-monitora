@@ -143,6 +143,11 @@ describe("abas por papel", () => {
     await montar(supabase);
     expect(abas()).toEqual(["regra", "equipe", "pre", "fila"]);
     expect(chamou(supabase, "obter_equipe_edital")).toBe(true);
+    expect(botoes()).toContain("Abrir pré-classificação");
+    act(() => painel.estado.mudarVisao("pre"));
+    expect(botoes()).not.toContain("Abrir pré-classificação");
+    act(() => painel.estado.mudarVisao("regra"));
+    expect(botoes()).toContain("Abrir pré-classificação");
   });
 
   it("quem analisa vê só a Fila, sem o seletor, e a tela abre nela", async () => {

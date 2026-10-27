@@ -259,7 +259,7 @@ function TelaDaArea({
                   etapas Concluídas e nas ações da coordenação.
                 </p>
               </div>
-              {coordena ? (
+              {coordena && visao !== "pre" ? (
                 <button
                   type="button"
                   className="btn secondary small"
