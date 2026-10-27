@@ -28,7 +28,9 @@ import {
   RevogarDecisao,
   SeloDaDecisao,
 } from "./decisao-do-lote.tsx";
+import { espelhoDaEliminacaoPreAnalise } from "../../lib/avaliacao-documental/espelho-da-pre-classificacao.ts";
 import { chaveDaLista } from "./estado-da-pre-classificacao.ts";
+import { baixarEspelhoProntoEmPdf } from "./ficha/espelho-de-nota.ts";
 import { InscricoesDoEdital } from "./inscricoes-do-edital.tsx";
 import { TravaDasInscricoes } from "./trava-das-inscricoes.tsx";
 import type { EstadoDaAvaliacao, LojaDaAvaliacao } from "./estado.ts";
@@ -169,6 +171,9 @@ interface VagaDaPreProps {
   tamanho: string | undefined;
   aoMudarTamanho: (codigo: string, valor: string) => void;
   pre: EstadoDaPreClassificacao;
+  editalId: string;
+  rotuloEdital: string;
+  unidade: string;
 }
 
 function VagaDaPre({
@@ -178,8 +183,60 @@ function VagaDaPre({
   tamanho,
   aoMudarTamanho,
   pre,
+  editalId,
+  rotuloEdital,
+  unidade,
 }: VagaDaPreProps) {
   const [incluindo, setIncluindo] = useState(false);
+  const [emitindo, setEmitindo] = useState("");
+  const [erroDoEspelho, setErroDoEspelho] = useState("");
+  async function emitirEspelho(c: InscritoDaPre) {
+    if (emitindo || !editalId || c.situacao !== "ELIMINADO") return;
+    setErroDoEspelho("");
+    setEmitindo(c.codigo);
+    try {
+      const atual = (await pre.rpc("obter_pre_classificacao", {
+        p_edital: editalId,
+      })) as DadosDaPreClassificacao | null;
+      if (!atual || atual.edital?.id !== editalId)
+        throw new Error("Não foi possível confirmar o edital.");
+      const registros = atual.candidatos.filter(
+        (p) => p.codigo === c.codigo && p.vaga === c.vaga,
+      );
+      const confirmado = registros[0];
+      if (
+        registros.length !== 1 ||
+        !confirmado ||
+        confirmado.situacao !== "ELIMINADO"
+      )
+        throw new Error(
+          "Situação alterada ou candidatura não encontrada. Atualize a lista.",
+        );
+      const espelho = espelhoDaEliminacaoPreAnalise({
+        codigo: confirmado.codigo,
+        nome: confirmado.nome,
+        vaga: confirmado.vaga,
+        cargo: v.cargo,
+        edital: rotuloEdital,
+        unidade,
+        modalidade: confirmado.modalidade,
+        situacao: confirmado.situacao,
+        motivo: confirmado.motivo,
+        motivo_codigo: confirmado.motivo_codigo,
+        art: confirmado.art,
+        declarada: confirmado.declarada,
+        nota: confirmado.nota,
+        origem_nota: confirmado.origem_nota,
+      });
+      await baixarEspelhoProntoEmPdf(espelho);
+    } catch (erro) {
+      setErroDoEspelho(
+        erro instanceof Error ? erro.message : "Não foi possível gerar o PDF.",
+      );
+    } finally {
+      setEmitindo("");
+    }
+  }
   const definido = tamanhoDefinido(configuracao, v.codigo);
   const sugerido = tamanhoSugerido(configuracao, v);
   const processada = v.inscritos !== null && v.inscritos !== undefined;
@@ -304,6 +361,7 @@ function VagaDaPre({
                   <th scope="col">Código</th>
                   <th scope="col">Nome</th>
                   <th scope="col">Motivo</th>
+                  <th scope="col">Documento</th>
                 </tr>
               </thead>
               <tbody>
@@ -316,11 +374,29 @@ function VagaDaPre({
                     <td>{c.codigo}</td>
                     <td>{c.nome}</td>
                     <td>{c.motivo}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn secondary small"
+                        data-acao="espelho-eliminado-pre"
+                        disabled={Boolean(emitindo) || !c.motivo}
+                        onClick={() => void emitirEspelho(c)}
+                      >
+                        {emitindo === c.codigo
+                          ? "Gerando PDF…"
+                          : "Baixar comunicado PDF"}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          {erroDoEspelho ? (
+            <Aviso tom="danger" papel="alert">
+              {erroDoEspelho}
+            </Aviso>
+          ) : null}
         </details>
       ) : null}
     </article>
@@ -731,6 +807,9 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
             podeCoordenar={d.pode_coordenar}
             tamanho={tamanhos[v.codigo]}
             pre={pre}
+            editalId={e.editalId}
+            rotuloEdital={String(d.edital?.edital || d.edital?.rotulo || "")}
+            unidade={String(d.edital?.unidade || "")}
             aoMudarTamanho={(codigo, valor) =>
               setTamanhos((t) => ({ ...t, [codigo]: valor }))
             }
