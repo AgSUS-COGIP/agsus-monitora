@@ -827,12 +827,14 @@ export const CONTRATO_RPC = {
   obter_previsao_entrevista_edital: {
     argumentos: ["p_edital"],
     critica: false,
-    resumo: "Retorna previsão explícita da etapa de entrevista para um edital autorizado; ausência é NAO_INFORMADA.",
+    resumo:
+      "Retorna previsão explícita da etapa de entrevista para um edital autorizado; ausência é NAO_INFORMADA.",
   },
   definir_previsao_entrevista_edital: {
     argumentos: ["p_edital", "p_situacao", "p_motivo"],
     critica: false,
-    resumo: "Somente administrador global registra com justificativa a previsão da etapa de entrevista, com histórico e proteção de dados existentes.",
+    resumo:
+      "Somente administrador global registra com justificativa a previsão da etapa de entrevista, com histórico e proteção de dados existentes.",
   },
   liberar_entrevista_edital: {
     argumentos: ["p_edital", "p_ate", "p_motivo"],
