@@ -75,8 +75,14 @@ export function espelhoDaEliminacaoPreAnalise(
     { rotulo: "Etapa", valor: "Pré-classificação da inscrição" },
     { rotulo: "Situação", valor: "Eliminado(a) antes da análise documental" },
   ];
-  const notasAdministrativas = new Set(["QUESTIONARIO", "CANCELADO", "REPROVADO_EMPREGARE"]);
-  const exibirNotas = !notasAdministrativas.has(texto(candidato.motivo_codigo));
+  const notasAdministrativas = new Set([
+    "QUESTIONARIO",
+    "CANCELADO",
+    "REPROVADO_EMPREGARE",
+  ]);
+  const exibirNotas = !notasAdministrativas.has(
+    texto(candidato.motivo_codigo),
+  );
   const notas: LinhaDoEspelho[] = [
     ...(exibirNotas && candidato.art != null
       ? [
@@ -109,7 +115,9 @@ export function espelhoDaEliminacaoPreAnalise(
     justificativas: [
       texto(candidato.motivo),
       ...(texto(candidato.item_edital)
-        ? [`Fundamento cadastrado na regra do edital: item ${texto(candidato.item_edital)}`]
+        ? [
+            `Fundamento cadastrado na regra do edital: item ${texto(candidato.item_edital)}`,
+          ]
         : []),
     ],
     nomeDoArquivo: `Comunicado de eliminação ${texto(candidato.codigo)}`,
