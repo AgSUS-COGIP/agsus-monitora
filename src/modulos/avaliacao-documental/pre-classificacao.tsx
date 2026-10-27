@@ -820,10 +820,7 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
         </Aviso>
       ) : null}
 
-      <section
-        className="ui-card"
-        aria-label="Emitir comunicado de eliminação"
-      >
+      <section className="ui-card" aria-label="Emitir comunicado de eliminação">
         <h3 className="ui-titulo">
           Comunicados de eliminação antes da análise
         </h3>
