@@ -40,6 +40,7 @@
 import { isAdminGlobal } from "../../lib/access-roles.ts";
 import { comTempoLimite } from "../../lib/falha-de-rede";
 import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
+import { lerFilaComRecuperacao } from "../../lib/avaliacao-documental/repetir-leitura-da-fila.ts";
 import {
   csvDaFila,
   FILTRO_INICIAL,
@@ -288,7 +289,7 @@ export function criarEstadoDaFila({
         : { carregando: true, erro: "" },
     );
     try {
-      const dados = await lerFila(editalId);
+      const dados = await lerFilaComRecuperacao(() => lerFila(editalId));
       if (meu !== pedido) return false;
       const versao = resumoForaDoLote(dados).versao;
       const foraMudou =
