@@ -191,7 +191,8 @@ export function ModeloDoEspelhoDeNota({
           </span>
           <h2 id="avdModeloEspelhoTitulo">Modelo do espelho de nota</h2>
           <p className="avd-espelho-editor-resumo">
-            Configure os textos do edital e confira a apresentação antes de salvar.
+            Configure os textos do edital e confira a apresentação antes de
+            salvar.
           </p>
         </div>
         <button
@@ -218,10 +219,12 @@ export function ModeloDoEspelhoDeNota({
               <i className="fa-solid fa-file-lines" aria-hidden="true" />{" "}
               {podeEditar ? "Modelo editável" : "Somente consulta"}
             </span>
-            <span>{mudou ? "Alterações ainda não salvas" : "Sem alterações pendentes"}</span>
+            <span>
+              {mudou ? "Alterações ainda não salvas" : "Sem alterações pendentes"}
+            </span>
           </div>
           <div className="avd-modelo-espelho-corpo">
-          <form
+            <form
             className="avd-modelo-espelho-campos"
             onSubmit={(ev) => {
               ev.preventDefault();
@@ -267,7 +270,10 @@ export function ModeloDoEspelhoDeNota({
               </fieldset>
             ))}
           </form>
-          <section className="avd-modelo-espelho-previa" aria-label="Prévia do documento">
+            <section
+              className="avd-modelo-espelho-previa"
+              aria-label="Prévia do documento"
+            >
             <div className="avd-espelho-editor-previa-topo">
               <div>
                 <strong>Prévia do documento</strong>
@@ -292,7 +298,7 @@ export function ModeloDoEspelhoDeNota({
               Confira o PDF gerado antes de encaminhar ao candidato.
             </small>
           </section>
-        </div>
+          </div>
         </>
       ) : null}
       {aviso ? (
