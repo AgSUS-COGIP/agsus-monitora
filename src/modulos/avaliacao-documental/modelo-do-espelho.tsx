@@ -15,6 +15,7 @@ import {
 import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
 import { Aviso, Campo, Carregando, Modal, Segmentado } from "../../ui/index.ts";
 import { marcaDaPagina } from "./ficha/espelho-de-nota.ts";
+import "./espelho-editor.css";
 import {
   mensagemDoErroDoModelo,
   obterModeloDoEspelho,
@@ -184,7 +185,12 @@ export function ModeloDoEspelhoDeNota({
       tour="avd-modelo-espelho"
     >
       <div className="avd-modelo-espelho-topo">
-        <h2 id="avdModeloEspelhoTitulo">Modelo do espelho de nota</h2>
+        <div className="avd-espelho-editor-identidade">
+          <span className="avd-espelho-editor-sobretitulo">
+            Avaliação documental · Documentos oficiais
+          </span>
+          <h2 id="avdModeloEspelhoTitulo">Modelo do espelho de nota</h2>
+        </div>
         <button
           type="button"
           className="ui-gaveta-fechar"
@@ -211,6 +217,10 @@ export function ModeloDoEspelhoDeNota({
               if (podeEditar && mudou && !temErro) void salvar();
             }}
           >
+            <div className="avd-espelho-editor-orientacao">
+              <strong>Textos do documento</strong>
+              <span>Edite os campos e confira a prévia antes de salvar.</span>
+            </div>
             {GRUPOS.map((grupo) => (
               <fieldset key={grupo} className="avd-modelo-espelho-grupo">
                 <legend>{grupo}</legend>
@@ -244,6 +254,10 @@ export function ModeloDoEspelhoDeNota({
             ))}
           </form>
           <div className="avd-modelo-espelho-previa">
+            <div className="avd-espelho-editor-previa-topo">
+              <strong>Prévia do documento</strong>
+              <small>Dados fictícios</small>
+            </div>
             <Segmentado
               rotulo="Prévia"
               opcoes={PREVIAS}
