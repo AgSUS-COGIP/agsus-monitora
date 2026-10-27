@@ -12,12 +12,10 @@ describe("recuperação da leitura da fila", () => {
 
   it("identifica apenas statement_timeout (57014)", () => {
     expect(ehTimeoutDaFila(timeout)).toBe(true);
-    expect(ehTimeoutDaFila({ code: "57014", message: "user request" })).toBe(
-      false,
-    );
-    expect(ehTimeoutDaFila({ code: "42501", message: timeout.message })).toBe(
-      false,
-    );
+    const cancelado = { code: "57014", message: "user request" };
+    expect(ehTimeoutDaFila(cancelado)).toBe(false);
+    const semPermissao = { code: "42501", message: timeout.message };
+    expect(ehTimeoutDaFila(semPermissao)).toBe(false);
     expect(ehTimeoutDaFila(null)).toBe(false);
   });
 
