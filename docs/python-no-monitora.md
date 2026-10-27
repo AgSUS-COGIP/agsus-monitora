@@ -195,6 +195,37 @@ vaga —, sem mudar o status gravado.
 - Migration: `supabase/migrations/20261024120000_contratado_em_outra_lista.sql`. Testes:
   `tests/python/test_contratacao_dos_aprovados.py`.
 
+## Pendências do edital: o gestor decide no sistema (26/10/2026)
+
+O que antes ia em planilha por área agora é decidido na aba **Pendências** da Lista de aprovados,
+com motivo obrigatório, autor, data e histórico (migration `20261026190000_pendencias_do_edital.sql`).
+
+- Detecção (Python): `python/monitora/aprovados/pendencias.py` — Contratado com duas matrículas no
+  mesmo edital, Contratado em duas listas que a regra "Contratado em outra lista" não decide (os
+  AMBIGUO do instantâneo), pessoa repetida na mesma lista/vaga/modalidade, posição repetida (pessoas
+  diferentes) e Convocado há mais de `CONFERENCIA_DIAS_CONVOCADO` dias (padrão 15) em lista ativa.
+  Cada pendência tem uma chave estável (sha256): o empate confirmado e as "pessoas diferentes" não voltam.
+- Job: `scripts/aprovados/pendencias.py` (`--seco` resume por área e tipo e o que mudaria no
+  instantâneo). Lê `pendencias_ler_aprovados` (sem nome, CPF nem matrícula: hashes curtos) e grava o
+  instantâneo inteiro por `gravar_pendencias_do_edital` (só service_role; o banco só valida e guarda:
+  novas, mantidas, reabertas, permanentes e saneadas — a aberta que sumiu da lista).
+- Quando roda: no mesmo job do "Contratado em outra lista" (`.github/workflows/contratacao-dos-aprovados.yml`),
+  logo depois dele — pedido pelo banco depois de mudança que envolve Contratado ou de lista nova, todo
+  dia antes das conferências e pelo "Run workflow".
+- Decisão (banco, RPCs curtas): `escolher_vinculo_do_contratado`, `escolher_lista_da_contratacao`,
+  `manter_linha_da_pessoa_repetida`, `confirmar_empate_da_posicao`, `corrigir_posicao_da_pendencia`
+  e `registrar_desfecho_da_pendencia`. Quem decide: o administrador global sempre; os outros, pela
+  permissão **Pendências dos aprovados** (`aprovados_pendencias`, Editor ou acima) que o administrador
+  global concede na tela de Acessos (grupo ou pessoa), no recorte de área e edital. Cada decisão grava o
+  status pelo histórico do status, o histórico da pendência (`TH_PENDENCIA_APROVADO`), recalcula os
+  contratados do edital e tira o caso dos avisos `APROVADOS_CONTRATADO_DUPLICADO`,
+  `APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS` e `APROVADOS_CONVOCADO_SEM_DESFECHO` (o aviso sem caso
+  fica resolvido); o caso desses avisos abre a aba Pendências no edital.
+- Testes: `tests/python/test_pendencias_do_edital.py` (casos dourados em
+  `tests/fixtures/pendencias-do-edital/casos.json`), `supabase/tests/pendencias_do_edital.sql`
+  (permissões, motivo, histórico), `tests/pendencias-do-edital-migration.test.js`,
+  `tests/lib/pendencias-do-edital.test.js` e `tests/componentes/pendencias-do-edital.test.js`.
+
 ## Segunda entrega: pré-classificação da Avaliação documental
 
 Job `scripts/pre_classificacao/pre_classificacao.py`, workflow `pre-classificacao.yml`, migration

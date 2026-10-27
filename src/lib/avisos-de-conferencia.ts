@@ -680,11 +680,23 @@ export const VIEW_DO_MODULO: Readonly<Record<string, string>> = Object.freeze({
 });
 
 /**
+ * Os avisos dos aprovados que o gestor decide na aba Pendências da Lista de
+ * aprovados (o caso sai do aviso quando a pendência é decidida).
+ */
+export const CONFERENCIAS_COM_PENDENCIA: ReadonlySet<string> = new Set([
+  "APROVADOS_CONTRATADO_DUPLICADO",
+  "APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS",
+  "APROVADOS_CONVOCADO_SEM_DESFECHO",
+]);
+
+/**
  * Para onde o caso leva: `{ view, filtro }` (o pedido de filtro da tela, ver
  * src/app/pedido-de-filtro.ts) ou `null` quando não há o que abrir (registro
  * removido, fora do acesso, cargas).
  *   análises     o Painel das análises na análise (busca pelo nome);
- *   aprovados    a Lista de aprovados só com as vagas da pessoa;
+ *   aprovados    a Lista de aprovados só com as vagas da pessoa; os avisos que
+ *                viraram pendência do edital (CONFERENCIAS_COM_PENDENCIA, migration
+ *                20261026190000) abrem a aba Pendências no edital do caso;
  *   entrevistas  Resultados, buscando o candidato e com a entrevista aberta;
  *   classificação a tela da Classificação.
  */
@@ -703,9 +715,18 @@ export function destinoDoCaso(caso: Caso | null): DestinoDoCaso | null {
         ),
       ),
     ];
-    return candidatos.length
-      ? { view: "approved", filtro: { candidatos, nome: texto(caso.nome) } }
-      : null;
+    if (!candidatos.length) return null;
+    if (CONFERENCIAS_COM_PENDENCIA.has(caso.conferencia))
+      return {
+        view: "approved",
+        filtro: {
+          candidatos,
+          nome: texto(caso.nome),
+          pendencias: true,
+          edital: texto(caso.editalId),
+        },
+      };
+    return { view: "approved", filtro: { candidatos, nome: texto(caso.nome) } };
   }
   if (modulo === "entrevistas") {
     const busca = texto(caso.nome) || texto(caso.codigo);

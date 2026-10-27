@@ -30,6 +30,7 @@ export type ModuloDeAcesso =
   | "nucleo"
   | "calendario"
   | "aprovados"
+  | "aprovados_pendencias"
   | "entrevistas"
   | "classificacao"
   | "recursos"

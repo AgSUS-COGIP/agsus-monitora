@@ -16,6 +16,8 @@ export const RESOURCES: readonly RecursoDoCatalogo[] = Object.freeze([
   ["nucleo", "Editais"],
   ["calendario", "Cronograma"],
   ["aprovados", "Lista de aprovados"],
+  // Quem decide as pendências do edital (Editor ou acima; migration 20261026190000).
+  ["aprovados_pendencias", "Pendências dos aprovados"],
   ["entrevistas", "Entrevistas"],
   ["classificacao", "Classificação"],
   ["recursos", "Recursos"],

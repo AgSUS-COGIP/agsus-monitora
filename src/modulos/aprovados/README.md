@@ -4,9 +4,11 @@ A tela `#page-approved` (view `approved`): monta na própria `<section>` por
 `montarListaAprovados()` (`src/main.ts` → `window.aprovadosController`); o legado chama `render()` ao
 navegar e `openImportModal(id, rótulo)` pelo botão de listas de Editais. Área = a atual do app.
 
-Duas visões no topo: **Aprovados** (indicadores, filtros, tabela de rolagem contínua) e **Convocação** (a ordem
-de chamada de cada vaga, calculada pelo modelo de convocação e pelas vagas imediatas do edital). As
-duas leem os mesmos candidatos: mudar um status redesenha as duas.
+Três visões no topo: **Aprovados** (indicadores, filtros, tabela de rolagem contínua),
+**Convocação** (a ordem de chamada de cada vaga, calculada pelo modelo de convocação e pelas vagas
+imediatas do edital) e **Pendências** (decisões do gestor com motivo e histórico, com selo de abertas).
+As duas primeiras leem os mesmos candidatos: mudar um status redesenha ambas; decidir uma pendência
+recarrega a lista.
 
 ```
 lista-aprovados.tsx        <ListaAprovados>, montarListaAprovados() e os modais abertos (ModalAberto)
@@ -36,6 +38,10 @@ carta-de-convocacao/       a carta de convocação para contratação
                            Convocado"
   modelos-da-carta.tsx     os modelos: lista, editor com os campos, prévia, versões, inativar/reativar
   carta.css                só desta parte (e da gaveta do candidato)
+pendencias/                a aba Pendências (migration 20261026190000; detecção no job Python
+                           scripts/aprovados/pendencias.py; regras em src/lib/pendencias-do-edital.ts)
+  estado-das-pendencias.ts store: as pendências da área, o modal e a decisão (RPC por tipo)
+  aba-pendencias.tsx       indicadores por tipo, edital e situação, cartões, histórico e o modal da decisão
 aprovados.css, convocacao.css
 ```
 

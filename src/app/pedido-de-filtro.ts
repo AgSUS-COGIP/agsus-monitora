@@ -23,6 +23,8 @@ export type FiltroDoPedido = {
   busca?: string;
   entrevista?: string;
   candidatos?: readonly (string | number)[];
+  /** O caso de um aviso que virou pendência do edital: a Lista de aprovados abre a aba Pendências. */
+  pendencias?: boolean;
 };
 
 interface PedidoGuardado {

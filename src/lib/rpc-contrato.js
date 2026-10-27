@@ -468,6 +468,59 @@ export const CONTRATO_RPC = {
     critica: true,
     resumo: "Arquiva a lista vigente de aprovados preservando o histórico.",
   },
+  listar_pendencias_do_edital: {
+    argumentos: ["p_area", "p_edital"],
+    critica: false,
+    resumo:
+      "Aba Pendências da Lista de aprovados (20261026190000): as pendências da área (e do edital) no recorte de quem lê — abertas e resolvidas nos últimos 30 dias — com as linhas, quem pode decidir e o histórico. O administrador global lê toda área.",
+  },
+  escolher_vinculo_do_contratado: {
+    argumentos: [
+      "p_pendencia",
+      "p_candidato",
+      "p_status_das_outras",
+      "p_motivo",
+    ],
+    critica: false,
+    resumo:
+      "Pendência Contratado com duas matrículas: a linha que vale fica Contratado; as outras, Contratado em outra lista (mesma matrícula) ou o desfecho escolhido. Administrador global ou permissão Pendências dos aprovados (Editor), com motivo e histórico.",
+  },
+  escolher_lista_da_contratacao: {
+    argumentos: ["p_pendencia", "p_candidato", "p_motivo"],
+    critica: false,
+    resumo:
+      "Pendência Contratado em duas listas (AMBIGUO do job): as outras linhas ficam Contratado em outra lista explícito. Administrador global ou permissão Pendências dos aprovados, com motivo e histórico.",
+  },
+  manter_linha_da_pessoa_repetida: {
+    argumentos: ["p_pendencia", "p_candidato", "p_motivo"],
+    critica: false,
+    resumo:
+      "Pendência Pessoa repetida: a linha escolhida fica e as outras saem por remoção lógica; sem linha, são pessoas diferentes. Administrador global ou permissão Pendências dos aprovados, com motivo e histórico.",
+  },
+  confirmar_empate_da_posicao: {
+    argumentos: ["p_pendencia", "p_motivo"],
+    critica: false,
+    resumo:
+      "Pendência Posição repetida: confirma o empate previsto no edital (não volta). Administrador global ou permissão Pendências dos aprovados, com motivo e histórico.",
+  },
+  corrigir_posicao_da_pendencia: {
+    argumentos: ["p_pendencia", "p_candidato", "p_posicao", "p_motivo"],
+    critica: false,
+    resumo:
+      "Pendência Posição repetida: corrige a posição de uma linha, com o antes e o depois no histórico. Administrador global ou permissão Pendências dos aprovados, com motivo.",
+  },
+  registrar_desfecho_da_pendencia: {
+    argumentos: [
+      "p_pendencia",
+      "p_status",
+      "p_matricula",
+      "p_data_convocacao",
+      "p_motivo",
+    ],
+    critica: false,
+    resumo:
+      "Pendência Convocado sem desfecho: registra o desfecho ou a nova data da convocação. Administrador global ou permissão Pendências dos aprovados, com motivo; histórico do status e da pendência.",
+  },
   alterar_status_candidato_aprovado: {
     argumentos: [
       "p_candidato_id",

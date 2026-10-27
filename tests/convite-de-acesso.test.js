@@ -131,6 +131,7 @@ const GRUPOS = [
       nucleo: "leitor",
       calendario: "leitor",
       aprovados: "leitor",
+      aprovados_pendencias: "leitor",
       entrevistas: "leitor",
       classificacao: "leitor",
       recursos: "leitor",

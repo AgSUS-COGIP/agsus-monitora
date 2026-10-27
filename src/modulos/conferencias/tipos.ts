@@ -90,7 +90,16 @@ export interface Caso {
 }
 export type DestinoDoCaso =
   | { view: "analises"; filtro: { busca: string; analise: string | null } }
-  | { view: "approved"; filtro: { candidatos: string[]; nome: string } }
+  | {
+      view: "approved";
+      filtro: {
+        candidatos: string[];
+        nome: string;
+        /** O aviso virou pendência do edital: abre a aba Pendências no edital. */
+        pendencias?: true;
+        edital?: string;
+      };
+    }
   | {
       view: "entrevistas";
       filtro: { busca: string; entrevista: string | null };
