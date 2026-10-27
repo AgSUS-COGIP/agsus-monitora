@@ -26,10 +26,10 @@ function supabaseCom(respostas) {
       if (nome === "obter_previsao_entrevista_edital")
         return {
           data: {
-        situacao: "NAO_INFORMADA",
-        motivo: null,
-        pode_alterar: false,
-      },
+            situacao: "NAO_INFORMADA",
+            motivo: null,
+            pode_alterar: false,
+          },
           error: null,
         };
       return respostas[nome] ? respostas[nome]() : { data: null, error: null };
