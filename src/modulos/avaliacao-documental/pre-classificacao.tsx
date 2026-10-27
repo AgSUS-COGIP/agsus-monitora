@@ -223,20 +223,6 @@ function VagaDaPre({
         situacao: confirmado.situacao,
         motivo: confirmado.motivo,
         motivo_codigo: confirmado.motivo_codigo,
-        item_edital: (() => {
-          const provisoria = configuracao.provisoria;
-          if (!provisoria || typeof provisoria !== "object") return null;
-          const regras = (provisoria as RegistroDaPre).eliminacao_automatica;
-          if (!Array.isArray(regras)) return null;
-          const regra = regras.find(
-            (r: unknown) =>
-              r && typeof r === "object" &&
-              (r as RegistroDaPre).codigo === confirmado.motivo_codigo,
-          ) as RegistroDaPre | undefined;
-          return typeof regra?.item_edital === "string"
-            ? regra.item_edital
-            : null;
-        })(),
         art: confirmado.art,
         declarada: confirmado.declarada,
         nota: confirmado.nota,
