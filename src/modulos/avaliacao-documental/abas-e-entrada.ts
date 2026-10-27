@@ -82,6 +82,7 @@ const VISOES_DE_LEITURA = VISOES.filter(
 
 /** As abas que a pessoa vê após confirmar seu papel no edital. */
 export function visoesDaPessoa(e: EstadoDasAbas): typeof VISOES {
+  if (!e.dados) return [];
   const coordena = coordenaOEdital(e);
   return coordena === true
     ? VISOES
