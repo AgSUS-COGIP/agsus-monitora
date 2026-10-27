@@ -18,8 +18,7 @@ export function CentralDeConvocacoes({
   podeEntrevistas: boolean;
   podeClassificacao: boolean;
 }) {
-  const visao =
-    podeEntrevistas && tipo === "entrevista" ? tipo : "contratacao";
+  const visao = podeEntrevistas && tipo === "entrevista" ? tipo : "contratacao";
   return (
     <section
       className="central-convocacoes ui-card"
