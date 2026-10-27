@@ -20,6 +20,8 @@ export interface InscritoEliminadoDaPre {
   situacao: string;
   motivo: string | null;
   motivo_codigo?: string | null;
+  /** Item expressamente cadastrado na regra do edital, nunca presumido. */
+  item_edital?: string | null;
   art?: number | null;
   declarada?: number | null;
   /** Nota da ordenação provisória, nunca é nota apurada pela comissão. */
@@ -73,8 +75,10 @@ export function espelhoDaEliminacaoPreAnalise(
     { rotulo: "Etapa", valor: "Pré-classificação da inscrição" },
     { rotulo: "Situação", valor: "Eliminado(a) antes da análise documental" },
   ];
+  const notasAdministrativas = new Set(["QUESTIONARIO", "CANCELADO", "REPROVADO_EMPREGARE"]);
+  const exibirNotas = !notasAdministrativas.has(texto(candidato.motivo_codigo));
   const notas: LinhaDoEspelho[] = [
-    ...(candidato.art != null
+    ...(exibirNotas && candidato.art != null
       ? [
           {
             rotulo: "Nota ART informada na inscrição (não apurada)",
@@ -82,7 +86,7 @@ export function espelhoDaEliminacaoPreAnalise(
           },
         ]
       : []),
-    ...(candidato.declarada != null
+    ...(exibirNotas && candidato.declarada != null
       ? [
           {
             rotulo: "Nota declarada/recalculada da inscrição (não apurada)",
@@ -102,7 +106,12 @@ export function espelhoDaEliminacaoPreAnalise(
     dados,
     notas,
     criterios: [],
-    justificativas: [texto(candidato.motivo)],
+    justificativas: [
+      texto(candidato.motivo),
+      ...(texto(candidato.item_edital)
+        ? [`Fundamento cadastrado na regra do edital: item ${texto(candidato.item_edital)}`]
+        : []),
+    ],
     nomeDoArquivo: `Comunicado de eliminação ${texto(candidato.codigo)}`,
     codigoDoCandidato: texto(candidato.codigo),
     codigoDaVaga: texto(candidato.vaga),
@@ -110,7 +119,7 @@ export function espelhoDaEliminacaoPreAnalise(
       ...textos,
       subtitulo: "Registro da decisão anterior à análise documental",
       abertura:
-        "A inscrição foi eliminada na pré-classificação. Não houve análise documental nem atribuição de nota pela comissão avaliadora. As eventuais notas de inscrição abaixo são apenas informativas.",
+        "A inscrição foi eliminada na pré-classificação. Não houve análise documental nem atribuição de nota pela comissão avaliadora. Quando exibidas, as notas da inscrição são apenas informativas.",
       secao_notas: "Notas da inscrição (informativas)",
       secao_justificativas: "Motivo da eliminação registrado no sistema",
       rodape:
