@@ -15,6 +15,7 @@ import {
 import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
 import { Aviso, Campo, Carregando, Modal, Segmentado } from "../../ui/index.ts";
 import { marcaDaPagina } from "./ficha/espelho-de-nota.ts";
+import "./espelho-editor.css";
 import {
   mensagemDoErroDoModelo,
   obterModeloDoEspelho,
@@ -184,7 +185,15 @@ export function ModeloDoEspelhoDeNota({
       tour="avd-modelo-espelho"
     >
       <div className="avd-modelo-espelho-topo">
-        <h2 id="avdModeloEspelhoTitulo">Modelo do espelho de nota</h2>
+        <div className="avd-espelho-editor-identidade">
+          <span className="avd-espelho-editor-sobretitulo">
+            Avaliação documental · Documentos oficiais
+          </span>
+          <h2 id="avdModeloEspelhoTitulo">Modelo do espelho de nota</h2>
+          <p className="avd-espelho-editor-resumo">
+            Configure os textos do edital e confira a apresentação antes de salvar.
+          </p>
+        </div>
         <button
           type="button"
           className="ui-gaveta-fechar"
@@ -203,7 +212,15 @@ export function ModeloDoEspelhoDeNota({
       ) : null}
       {!modelo && !erro ? <Carregando /> : null}
       {modelo ? (
-        <div className="avd-modelo-espelho-corpo">
+        <>
+          <div className="avd-espelho-editor-status" role="status">
+            <span>
+              <i className="fa-solid fa-file-lines" aria-hidden="true" />{" "}
+              {podeEditar ? "Modelo editável" : "Somente consulta"}
+            </span>
+            <span>{mudou ? "Alterações ainda não salvas" : "Sem alterações pendentes"}</span>
+          </div>
+          <div className="avd-modelo-espelho-corpo">
           <form
             className="avd-modelo-espelho-campos"
             onSubmit={(ev) => {
@@ -211,6 +228,13 @@ export function ModeloDoEspelhoDeNota({
               if (podeEditar && mudou && !temErro) void salvar();
             }}
           >
+            <div className="avd-espelho-editor-orientacao">
+              <strong>Textos do documento</strong>
+              <span>
+                Os campos atualizam a prévia automaticamente. Notas e
+                justificativas reais não são alteradas aqui.
+              </span>
+            </div>
             {GRUPOS.map((grupo) => (
               <fieldset key={grupo} className="avd-modelo-espelho-grupo">
                 <legend>{grupo}</legend>
@@ -243,7 +267,14 @@ export function ModeloDoEspelhoDeNota({
               </fieldset>
             ))}
           </form>
-          <div className="avd-modelo-espelho-previa">
+          <section className="avd-modelo-espelho-previa" aria-label="Prévia do documento">
+            <div className="avd-espelho-editor-previa-topo">
+              <div>
+                <strong>Prévia do documento</strong>
+                <small>Simulação com dados fictícios</small>
+              </div>
+              <span className="avd-espelho-editor-etiqueta">Visualização</span>
+            </div>
             <Segmentado
               rotulo="Prévia"
               opcoes={PREVIAS}
@@ -256,8 +287,13 @@ export function ModeloDoEspelhoDeNota({
               sandbox=""
               srcDoc={pagina}
             />
-          </div>
+            <small className="avd-espelho-editor-nota">
+              O arquivo oficial utiliza os dados registrados no edital.
+              Confira o PDF gerado antes de encaminhar ao candidato.
+            </small>
+          </section>
         </div>
+        </>
       ) : null}
       {aviso ? (
         <Aviso tom="info" papel="status">
