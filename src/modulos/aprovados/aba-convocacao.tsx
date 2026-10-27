@@ -26,7 +26,15 @@ import {
   montarListaDeConvocacao,
   resumirConvocacao,
 } from "../../lib/lista-convocacao-rules.ts";
-import { canChangeCandidateStatus } from "../../lib/access-roles.ts";
+import {
+  canChangeCandidateStatus,
+  canViewClassificacao,
+  canViewEntrevistas,
+} from "../../lib/access-roles.ts";
+import {
+  CentralDeConvocacoes,
+  type TipoDaCentralDeConvocacoes,
+} from "./central-de-convocacoes.tsx";
 import {
   lerModalidade,
   rotuloDaCategoria,
@@ -384,6 +392,10 @@ export function AbaConvocacao({
   carregado,
   erroAoCarregar,
 }: PropsDaAbaDaConvocacao) {
+  const [tipoConvocacao, setTipoConvocacao] =
+    useState<TipoDaCentralDeConvocacoes>("contratacao");
+  const podeEntrevistas = canViewEntrevistas(perfil);
+  const visaoDaCentral = podeEntrevistas ? tipoConvocacao : "contratacao";
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
   /*
     Os escolhidos para a carta: sobrevivem a trocar de página e de filtro (a
@@ -540,10 +552,21 @@ export function AbaConvocacao({
     <div
       id="approvedPanelConvocacao"
       data-tour="aprovados-painel-convocacao"
-      className={classes("approved-tabpanel", !ativa && "hidden")}
+      className={classes(
+        "approved-tabpanel",
+        !ativa && "hidden",
+        visaoDaCentral === "entrevista" &&
+          "central-convocacoes-modo-entrevista",
+      )}
       role="tabpanel"
       aria-labelledby="approvedTabConvocacao"
     >
+      <CentralDeConvocacoes
+        tipo={visaoDaCentral}
+        aoMudar={setTipoConvocacao}
+        podeEntrevistas={podeEntrevistas}
+        podeClassificacao={canViewClassificacao(perfil)}
+      />
       <GradeDeKpis
         tour="aprovados-convocacao-kpis"
         className="approved-kpis"
