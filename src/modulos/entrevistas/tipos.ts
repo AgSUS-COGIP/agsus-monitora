@@ -83,13 +83,23 @@ export type EstadoDaConducao = {
   carregandoEdital: boolean;
   erroDoEdital: string;
   podeEditar: boolean | null;
-  previsao: { situacao: "PREVISTA" | "NAO_PREVISTA" | "NAO_INFORMADA"; motivo: string | null; pode_alterar: boolean } | null;
+  previsao: {
+    situacao: "PREVISTA" | "NAO_PREVISTA" | "NAO_INFORMADA";
+    motivo: string | null;
+    pode_alterar: boolean;
+  } | null;
   acao: { tipo: TipoDaAcaoDaConducao; rotulo: string } | null;
   fichaAberta: string | null;
 };
 
 export type TipoDaAcaoDaConducao =
-  "roteiro" | "liberar" | "previsao" | "configurar" | "convocar" | "desconvocar" | "notas";
+  | "roteiro"
+  | "liberar"
+  | "previsao"
+  | "configurar"
+  | "convocar"
+  | "desconvocar"
+  | "notas";
 export type DadosDaConfiguracaoDaEntrevista = {
   roteiro: string;
   lancamento: "AVALIADOR" | "SECRETARIA";
@@ -123,7 +133,10 @@ export type EstadoDaConducaoComAcoes = {
     opcoes?: { todos?: boolean },
   ) => Promise<EditalDaLista[]>;
   abrirEdital: (id: string) => Promise<boolean>;
-  definirPrevisao: (situacao: "PREVISTA" | "NAO_PREVISTA" | "NAO_INFORMADA", motivo: string) => Promise<Resultado>;
+  definirPrevisao: (
+    situacao: "PREVISTA" | "NAO_PREVISTA" | "NAO_INFORMADA",
+    motivo: string,
+  ) => Promise<Resultado>;
   recarregarEdital: () => Promise<boolean>;
   lancarNotas: (
     entrevista: string,
