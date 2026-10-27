@@ -128,9 +128,10 @@ export async function baixarEspelhoProntoEmPdf(
 export async function baixarEspelhoEmPdf(
   st: EstadoCarregado,
   ficha: FichaCarregada,
-  { textos = TEXTOS_PADRAO_DO_ESPELHO, ...opcoes }: OpcoesDoPdf & {
-    textos?: TextosDoEspelho;
-  } = {},
+  {
+    textos = TEXTOS_PADRAO_DO_ESPELHO,
+    ...opcoes
+  }: OpcoesDoPdf & { textos?: TextosDoEspelho } = {},
 ) {
   const espelho = montarEspelho(entradaDoEspelho(st, ficha), textos);
   return baixarEspelhoProntoEmPdf(espelho, opcoes);
