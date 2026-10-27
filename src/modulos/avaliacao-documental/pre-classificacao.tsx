@@ -203,11 +203,15 @@ function VagaDaPre({
       const registros = atual.candidatos.filter(
         (p) => p.codigo === c.codigo && p.vaga === c.vaga,
       );
-      if (registros.length !== 1 || registros[0].situacao !== "ELIMINADO")
+      const confirmado = registros[0];
+      if (
+        registros.length !== 1 ||
+        !confirmado ||
+        confirmado.situacao !== "ELIMINADO"
+      )
         throw new Error(
           "Situação alterada ou candidatura não encontrada. Atualize a lista.",
         );
-      const confirmado = registros[0];
       const espelho = espelhoDaEliminacaoPreAnalise({
         codigo: confirmado.codigo,
         nome: confirmado.nome,
