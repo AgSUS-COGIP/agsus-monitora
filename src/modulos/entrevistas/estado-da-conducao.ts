@@ -412,7 +412,7 @@ export function criarEstadoDaConducao({
     });
     if (!id) return false;
     try {
-      const [resposta, agenda, previsao] = await Promise.all([
+      const [resposta, previsao, agenda] = await Promise.all([
         rpc(RPC_OBTER_EDITAL, { p_edital: id }),
         rpc(RPC_PREVISAO, { p_edital: id }),
         // A agenda que falhou não impede abrir o edital: a fila fica em Todos, com aviso.
@@ -437,8 +437,21 @@ export function criarEstadoDaConducao({
       if (meu !== pedidoDoEdital) return false;
       const p = objetoDaConducao(previsao);
       const situacao = p?.situacao;
-      if (situacao !== "PREVISTA" && situacao !== "NAO_PREVISTA" && situacao !== "NAO_INFORMADA") throw new Error("Situação de entrevistas inválida.");
-      publicar({ agenda: agendaDaConducao(agenda), calculo, previsao: { situacao, motivo: typeof p?.motivo === "string" ? p.motivo : null, pode_alterar: p?.pode_alterar === true } });
+      if (
+        situacao !== "PREVISTA" &&
+        situacao !== "NAO_PREVISTA" &&
+        situacao !== "NAO_INFORMADA"
+      )
+        throw new Error("Situação de entrevistas inválida.");
+      publicar({
+        agenda: agendaDaConducao(agenda),
+        calculo,
+        previsao: {
+          situacao,
+          motivo: typeof p?.motivo === "string" ? p.motivo : null,
+          pode_alterar: p?.pode_alterar === true,
+        },
+      });
       mostrarEdital(dados);
       return true;
     } catch (erro) {
@@ -450,11 +463,20 @@ export function criarEstadoDaConducao({
 
   const recarregarEdital = () => abrirEdital(estado.editalId);
 
-  function definirPrevisao(situacao: "PREVISTA" | "NAO_PREVISTA" | "NAO_INFORMADA", motivo: string) {
+  function definirPrevisao(
+    situacao: "PREVISTA" | "NAO_PREVISTA" | "NAO_INFORMADA",
+    motivo: string,
+  ) {
     const edital = estado.editalId;
     return executar("previsao", "Salvando a etapa…", async () => {
-      await rpc(RPC_DEFINIR_PREVISAO, { p_edital: edital, p_situacao: situacao, p_motivo: motivo });
-      await abrirEdital(edital);
+      await rpc(RPC_DEFINIR_PREVISAO, {
+        p_edital: edital,
+        p_situacao: situacao,
+        p_motivo: motivo,
+      });
+      const atualizado = await abrirEdital(edital);
+      if (!atualizado)
+        throw new Error("Etapa salva, mas não foi possível atualizar a tela.");
       toast("Etapa de entrevista atualizada.", "ok");
       return { ok: true };
     });
