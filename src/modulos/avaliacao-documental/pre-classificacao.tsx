@@ -28,8 +28,8 @@ import {
   RevogarDecisao,
   SeloDaDecisao,
 } from "./decisao-do-lote.tsx";
-import { chaveDaLista } from "./estado-da-pre-classificacao.ts";
 import { espelhoDaEliminacaoPreAnalise } from "../../lib/avaliacao-documental/espelho-da-pre-classificacao.ts";
+import { chaveDaLista } from "./estado-da-pre-classificacao.ts";
 import { baixarEspelhoProntoEmPdf } from "./ficha/espelho-de-nota.ts";
 import { InscricoesDoEdital } from "./inscricoes-do-edital.tsx";
 import { TravaDasInscricoes } from "./trava-das-inscricoes.tsx";
@@ -204,7 +204,9 @@ function VagaDaPre({
         (p) => p.codigo === c.codigo && p.vaga === c.vaga,
       );
       if (registros.length !== 1 || registros[0].situacao !== "ELIMINADO")
-        throw new Error("Situação alterada ou candidatura não encontrada. Atualize a lista.");
+        throw new Error(
+          "Situação alterada ou candidatura não encontrada. Atualize a lista.",
+        );
       const confirmado = registros[0];
       const espelho = espelhoDaEliminacaoPreAnalise({
         codigo: confirmado.codigo,
@@ -376,7 +378,9 @@ function VagaDaPre({
                         disabled={Boolean(emitindo) || !c.motivo}
                         onClick={() => void emitirEspelho(c)}
                       >
-                        {emitindo === c.codigo ? "Gerando PDF…" : "Baixar comunicado PDF"}
+                        {emitindo === c.codigo
+                          ? "Gerando PDF…"
+                          : "Baixar comunicado PDF"}
                       </button>
                     </td>
                   </tr>
@@ -384,7 +388,11 @@ function VagaDaPre({
               </tbody>
             </table>
           </div>
-          {erroDoEspelho ? <Aviso tom="danger" papel="alert">{erroDoEspelho}</Aviso> : null}
+          {erroDoEspelho ? (
+            <Aviso tom="danger" papel="alert">
+              {erroDoEspelho}
+            </Aviso>
+          ) : null}
         </details>
       ) : null}
     </article>
