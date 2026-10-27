@@ -190,10 +190,6 @@ export function ModeloDoEspelhoDeNota({
             Avaliação documental · Documentos oficiais
           </span>
           <h2 id="avdModeloEspelhoTitulo">Modelo do espelho de nota</h2>
-          <p className="avd-espelho-editor-resumo">
-            Configure os textos do edital e confira a apresentação antes de
-            salvar.
-          </p>
         </div>
         <button
           type="button"
@@ -213,18 +209,8 @@ export function ModeloDoEspelhoDeNota({
       ) : null}
       {!modelo && !erro ? <Carregando /> : null}
       {modelo ? (
-        <>
-          <div className="avd-espelho-editor-status" role="status">
-            <span>
-              <i className="fa-solid fa-file-lines" aria-hidden="true" />{" "}
-              {podeEditar ? "Modelo editável" : "Somente consulta"}
-            </span>
-            <span>
-              {mudou ? "Alterações ainda não salvas" : "Sem alterações pendentes"}
-            </span>
-          </div>
-          <div className="avd-modelo-espelho-corpo">
-            <form
+        <div className="avd-modelo-espelho-corpo">
+          <form
             className="avd-modelo-espelho-campos"
             onSubmit={(ev) => {
               ev.preventDefault();
@@ -233,10 +219,7 @@ export function ModeloDoEspelhoDeNota({
           >
             <div className="avd-espelho-editor-orientacao">
               <strong>Textos do documento</strong>
-              <span>
-                Os campos atualizam a prévia automaticamente. Notas e
-                justificativas reais não são alteradas aqui.
-              </span>
+              <span>Edite os campos e confira a prévia antes de salvar.</span>
             </div>
             {GRUPOS.map((grupo) => (
               <fieldset key={grupo} className="avd-modelo-espelho-grupo">
@@ -270,16 +253,10 @@ export function ModeloDoEspelhoDeNota({
               </fieldset>
             ))}
           </form>
-            <section
-              className="avd-modelo-espelho-previa"
-              aria-label="Prévia do documento"
-            >
+          <div className="avd-modelo-espelho-previa">
             <div className="avd-espelho-editor-previa-topo">
-              <div>
-                <strong>Prévia do documento</strong>
-                <small>Simulação com dados fictícios</small>
-              </div>
-              <span className="avd-espelho-editor-etiqueta">Visualização</span>
+              <strong>Prévia do documento</strong>
+              <small>Dados fictícios</small>
             </div>
             <Segmentado
               rotulo="Prévia"
@@ -293,13 +270,8 @@ export function ModeloDoEspelhoDeNota({
               sandbox=""
               srcDoc={pagina}
             />
-            <small className="avd-espelho-editor-nota">
-              O arquivo oficial utiliza os dados registrados no edital.
-              Confira o PDF gerado antes de encaminhar ao candidato.
-            </small>
-          </section>
           </div>
-        </>
+        </div>
       ) : null}
       {aviso ? (
         <Aviso tom="info" papel="status">
