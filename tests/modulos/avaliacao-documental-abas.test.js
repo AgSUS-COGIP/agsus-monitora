@@ -66,7 +66,7 @@ const FILA = (coordena) => ({
   ],
 });
 
-function supabaseFalso({ editais, coordena, regraAtrasada = null }) {
+function supabaseFalso({ editais, coordena, regraAtrasada = null, concluida = null }) {
   const respostas = {
     listar_editais_avaliacao: () => ({ area: "projetos", editais }),
     obter_regra_analise: ({ p_edital }) => ({
@@ -86,7 +86,13 @@ function supabaseFalso({ editais, coordena, regraAtrasada = null }) {
       pessoas: [],
       vagas: [],
     }),
-    obter_fila_avaliacao: () => FILA(coordena),
+    obter_fila_avaliacao: () => ({
+      ...FILA(coordena),
+      candidatos: [
+        ...FILA(coordena).candidatos,
+        ...(concluida ? [concluida] : []),
+      ],
+    }),
   };
   return {
     rpc: vi.fn(async (nome, args) => {
@@ -135,31 +141,32 @@ afterEach(async () => {
 });
 
 describe("abas por papel", () => {
-  it("quem coordena o edital vê Regra, Equipe, Pré-classificação e Fila", async () => {
+  it("quem coordena vê as quatro áreas, a configuração e o atalho legado", async () => {
     const supabase = supabaseFalso({
       editais: [edital("e93", "93/2026", "COORDENADOR")],
       coordena: true,
     });
     await montar(supabase);
-    expect(abas()).toEqual(["regra", "equipe", "pre", "fila"]);
+    expect(abas()).toEqual(["fila", "resultados", "espelhos", "configuracoes"]);
+    expect(painel.estado.obter().visao).toBe("fila");
     expect(chamou(supabase, "obter_equipe_edital")).toBe(true);
     expect(botoes()).toContain("Abrir pré-classificação");
     act(() => painel.estado.mudarVisao("pre"));
     expect(botoes()).not.toContain("Abrir pré-classificação");
-    act(() => painel.estado.mudarVisao("regra"));
+    act(() => painel.estado.mudarVisao("configuracoes"));
+    expect(secao.querySelector("[aria-label='Configurações da avaliação documental']")).not.toBeNull();
     expect(botoes()).toContain("Abrir pré-classificação");
+    act(() => painel.estado.mudarVisao("espelhos"));
+    expect(secao.querySelector("[aria-label='Emissão dos espelhos de nota']")).not.toBeNull();
   });
 
-  it("quem analisa vê só a Fila, sem o seletor, e a tela abre nela", async () => {
+  it("quem analisa vê Fila e Resultados sem operações da coordenação", async () => {
     const supabase = supabaseFalso({
       editais: [edital("e93", "93/2026", "ANALISTA")],
       coordena: false,
     });
     await montar(supabase);
-    expect(secao.querySelector("[data-tour='avd-visoes']")).toBeNull();
-    expect(secao.querySelector("[data-aba-unica='fila']").textContent).toBe(
-      " Fila",
-    );
+    expect(abas()).toEqual(["fila", "resultados"]);
     expect(painel.estado.obter().visao).toBe("fila");
     expect(secao.querySelector("[data-candidato='7001']")).not.toBeNull();
     // Nenhum atalho para as abas da coordenação, e a equipe nem é lida.
@@ -167,6 +174,40 @@ describe("abas por papel", () => {
       expect(botoes()).not.toContain(rotulo);
     expect(chamou(supabase, "obter_equipe_edital")).toBe(false);
     expect(chamou(supabase, "obter_pre_classificacao")).toBe(false);
+    act(() => painel.estado.mudarVisao("resultados"));
+    expect(secao.querySelector("[aria-label='Resultados da avaliação documental']")).not.toBeNull();
+    act(() => painel.estado.mudarVisao("espelhos"));
+    act(() => painel.estado.mudarVisao("configuracoes"));
+    expect(painel.estado.obter().visao).toBe("resultados");
+  });
+
+  it("mostra somente resultados registrados, sem recalcular nota", async () => {
+    const supabase = supabaseFalso({
+      editais: [edital("e93", "93/2026", "ANALISTA")],
+      coordena: false,
+      concluida: {
+        id: "c-7002",
+        codigo: "7002",
+        nome: "Pessoa 7002",
+        vaga: "179698",
+        modalidade: "AC",
+        ficha: {
+          id: "f2",
+          situacao: "CONCLUIDA",
+          resultado: "APTO",
+          nota_final: 17,
+          motivo_saida: "Avaliação concluída",
+        },
+      },
+    });
+    await montar(supabase);
+    act(() => painel.estado.mudarVisao("resultados"));
+    await esperar();
+    const linha = secao.querySelector("[data-resultado-candidato='7002']");
+    expect(linha).not.toBeNull();
+    expect(linha.textContent).toContain("17");
+    expect(linha.textContent).toContain("APTO");
+    expect(secao.querySelector("[data-resultado-candidato='7001']")).toBeNull();
   });
 
   it("a visão 'regra' guardada vira Fila para quem analisa (e não volta)", async () => {
@@ -175,7 +216,7 @@ describe("abas por papel", () => {
       coordena: false,
     });
     await montar(supabase);
-    // O estado começa em "regra"; para quem não coordena cai na Fila.
+    // O estado agora começa na Fila, sem expor configurações.
     expect(painel.estado.obter().visao).toBe("fila");
     act(() => painel.estado.mudarVisao("regra"));
     act(() => painel.estado.mudarVisao("pre"));
@@ -197,7 +238,7 @@ describe("abas por papel", () => {
     expect(botoes()).not.toContain("Regra");
     await act(async () => soltar());
     await esperar();
-    expect(abas()).toEqual([]);
+    expect(abas()).toEqual(["fila", "resultados"]);
   });
 });
 
