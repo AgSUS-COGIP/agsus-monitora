@@ -30,6 +30,35 @@ describe("espelho da eliminação antes da análise", () => {
     expect(espelho.textos.abertura).toContain("Não houve análise documental");
   });
 
+  it("não exibe ART ou declarada quando a eliminação é administrativa", () => {
+    for (const motivo_codigo of [
+      "QUESTIONARIO",
+      "CANCELADO",
+      "REPROVADO_EMPREGARE",
+    ]) {
+      const espelho = espelhoDaEliminacaoPreAnalise({
+        ...exemplo,
+        motivo_codigo,
+        art: 0,
+        declarada: 0,
+      });
+      expect(espelho.notas).toHaveLength(1);
+      expect(espelho.notas[0].valor).toContain("Não se aplica");
+    }
+  });
+
+  it("referência normativa só aparece quando explicitamente cadastrada", () => {
+    const semItem = espelhoDaEliminacaoPreAnalise(exemplo);
+    expect(semItem.justificativas).toEqual([exemplo.motivo]);
+    const comItem = espelhoDaEliminacaoPreAnalise({
+      ...exemplo,
+      item_edital: "6.11.2",
+    });
+    expect(comItem.justificativas).toContain(
+      "Fundamento cadastrado na regra do edital: item 6.11.2",
+    );
+  });
+
   it("nota ausente não vira zero e as notas da inscrição são informativas", () => {
     const espelho = espelhoDaEliminacaoPreAnalise({
       ...exemplo,
