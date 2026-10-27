@@ -47,7 +47,9 @@ export function espelhoDaEliminacaoPreAnalise(
   if (!texto(candidato.codigo) || !texto(candidato.edital))
     throw new Error("Código de candidato e edital são obrigatórios.");
   if (!texto(candidato.motivo))
-    throw new Error("Eliminação sem justificativa registrada: verificar antes de emitir.");
+    throw new Error(
+      "Eliminação sem justificativa registrada: verificar antes de emitir.",
+    );
 
   const dados: LinhaDoEspelho[] = [
     { rotulo: "Edital", valor: texto(candidato.edital) },
@@ -56,21 +58,42 @@ export function espelhoDaEliminacaoPreAnalise(
       : []),
     { rotulo: "Candidato(a)", valor: texto(candidato.nome) },
     { rotulo: "Código do candidato", valor: texto(candidato.codigo) },
-    { rotulo: "Vaga", valor: [candidato.vaga, candidato.cargo].filter(Boolean).join(" - ") },
+    {
+      rotulo: "Vaga",
+      valor: [candidato.vaga, candidato.cargo].filter(Boolean).join(" - "),
+    },
     ...(texto(candidato.modalidade)
-      ? [{ rotulo: "Modalidade de concorrência", valor: texto(candidato.modalidade) }]
+      ? [
+          {
+            rotulo: "Modalidade de concorrência",
+            valor: texto(candidato.modalidade),
+          },
+        ]
       : []),
     { rotulo: "Etapa", valor: "Pré-classificação da inscrição" },
     { rotulo: "Situação", valor: "Eliminado(a) antes da análise documental" },
   ];
   const notas: LinhaDoEspelho[] = [
     ...(candidato.art != null
-      ? [{ rotulo: "Nota ART informada na inscrição (não apurada)", valor: nota(candidato.art) }]
+      ? [
+          {
+            rotulo: "Nota ART informada na inscrição (não apurada)",
+            valor: nota(candidato.art),
+          },
+        ]
       : []),
     ...(candidato.declarada != null
-      ? [{ rotulo: "Nota declarada/recalculada da inscrição (não apurada)", valor: nota(candidato.declarada) }]
+      ? [
+          {
+            rotulo: "Nota declarada/recalculada da inscrição (não apurada)",
+            valor: nota(candidato.declarada),
+          },
+        ]
       : []),
-    { rotulo: "Nota da análise documental", valor: "Não se aplica — análise não realizada" },
+    {
+      rotulo: "Nota da análise documental",
+      valor: "Não se aplica — análise não realizada",
+    },
   ];
   return {
     modelo: "ELIMINADO",
