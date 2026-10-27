@@ -10,6 +10,8 @@ export type RpcDaConducao =
   | "lancar_notas_entrevista"
   | "listar_editais_entrevista"
   | "liberar_entrevista_edital"
+  | "obter_previsao_entrevista_edital"
+  | "definir_previsao_entrevista_edital"
   | "obter_agenda_entrevista"
   | "obter_classificacao_do_edital"
   | "listar_configuracao_convocacao"

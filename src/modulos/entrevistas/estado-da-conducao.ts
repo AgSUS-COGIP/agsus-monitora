@@ -84,6 +84,8 @@ const RPC_LANCAR_NOTAS = "lancar_notas_entrevista";
 const RPC_LISTAR_EDITAIS = "listar_editais_entrevista";
 const RPC_LIBERAR_EDITAL = "liberar_entrevista_edital";
 const RPC_OBTER_AGENDA = "obter_agenda_entrevista";
+const RPC_PREVISAO = "obter_previsao_entrevista_edital";
+const RPC_DEFINIR_PREVISAO = "definir_previsao_entrevista_edital";
 /* O cálculo atual da convocação, quando a Classificação ainda não gerou a lista. */
 const RPC_OBTER_CLASSIFICACAO = "obter_classificacao_do_edital";
 const RPC_CONFIGURACAO_CONVOCACAO = "listar_configuracao_convocacao";
@@ -121,6 +123,7 @@ const ESTADO_INICIAL: EstadoDaConducao = Object.freeze({
   erroDoEdital: "",
   /** `pode_editar` do último edital aberto (os roteiros não o devolvem). */
   podeEditar: null,
+  previsao: null,
   /** `{ tipo, rotulo }` da gravação em curso, ou `null`. */
   acao: null,
   /** Convocado com a ficha de notas aberta (modo de análise, tela inteira). */
@@ -405,11 +408,13 @@ export function criarEstadoDaConducao({
       fichaAberta: mesmo ? estado.fichaAberta : null,
       carregandoEdital: Boolean(id),
       erroDoEdital: "",
+      previsao: mesmo ? estado.previsao : null,
     });
     if (!id) return false;
     try {
-      const [resposta, agenda] = await Promise.all([
+      const [resposta, previsao, agenda] = await Promise.all([
         rpc(RPC_OBTER_EDITAL, { p_edital: id }),
+        rpc(RPC_PREVISAO, { p_edital: id }),
         // A agenda que falhou não impede abrir o edital: a fila fica em Todos, com aviso.
         opcionalDaConducao(rpc(RPC_OBTER_AGENDA, { p_edital: id })).catch(
           (erro: unknown) => {
@@ -430,7 +435,23 @@ export function criarEstadoDaConducao({
         ? null
         : await calcularConvocacao(id);
       if (meu !== pedidoDoEdital) return false;
-      publicar({ agenda: agendaDaConducao(agenda), calculo });
+      const p = objetoDaConducao(previsao);
+      const situacao = p?.situacao;
+      if (
+        situacao !== "PREVISTA" &&
+        situacao !== "NAO_PREVISTA" &&
+        situacao !== "NAO_INFORMADA"
+      )
+        throw new Error("Situação de entrevistas inválida.");
+      publicar({
+        agenda: agendaDaConducao(agenda),
+        calculo,
+        previsao: {
+          situacao,
+          motivo: typeof p?.motivo === "string" ? p.motivo : null,
+          pode_alterar: p?.pode_alterar === true,
+        },
+      });
       mostrarEdital(dados);
       return true;
     } catch (erro) {
@@ -441,6 +462,25 @@ export function criarEstadoDaConducao({
   }
 
   const recarregarEdital = () => abrirEdital(estado.editalId);
+
+  function definirPrevisao(
+    situacao: "PREVISTA" | "NAO_PREVISTA" | "NAO_INFORMADA",
+    motivo: string,
+  ) {
+    const edital = estado.editalId;
+    return executar("previsao", "Salvando a etapa…", async () => {
+      await rpc(RPC_DEFINIR_PREVISAO, {
+        p_edital: edital,
+        p_situacao: situacao,
+        p_motivo: motivo,
+      });
+      const atualizado = await abrirEdital(edital);
+      if (!atualizado)
+        throw new Error("Etapa salva, mas não foi possível atualizar a tela.");
+      toast("Etapa de entrevista atualizada.", "ok");
+      return { ok: true };
+    });
+  }
 
   /*
     Sem lista gerada: a convocação como a Classificação a calcula agora (mesmo
@@ -578,6 +618,7 @@ export function criarEstadoDaConducao({
     liberarEdital,
     abrirEdital,
     recarregarEdital,
+    definirPrevisao,
     configurar,
     convocar,
     desconvocar,

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { marcaDoEdital } from "../../lib/conducao-de-entrevista.ts";
 import {
@@ -31,6 +32,15 @@ export function SeletorDoEdital({
   doPainel?: unknown[];
 }) {
   const { editais } = e;
+  const [editar, setEditar] = useState(false);
+  const [situacao, setSituacao] = useState<
+    "PREVISTA" | "NAO_PREVISTA" | "NAO_INFORMADA"
+  >("NAO_INFORMADA");
+  const [motivo, setMotivo] = useState("");
+  useEffect(() => {
+    setEditar(false);
+    setMotivo("");
+  }, [e.editalId]);
   const escolhido = editalEscolhido(editais.lista, e.editalId);
   const item = editais.lista.find((m) => m.id === e.editalId);
   const vazio = editais.carregado && !editais.lista.length;
@@ -92,6 +102,32 @@ export function SeletorDoEdital({
           </select>
         </label>
         <SeloDeTreinamento edital={escolhido} className={undefined} />
+        {e.editalId && e.previsao && !e.carregandoEdital ? (
+          <span
+            className="entrevistas-seletor-marca"
+            role="status"
+            title={e.previsao.motivo || "Etapa ainda não confirmada"}
+          >
+            {e.previsao.situacao === "NAO_PREVISTA"
+              ? "Entrevistas não previstas"
+              : e.previsao.situacao === "PREVISTA"
+                ? "Entrevistas previstas"
+                : "Entrevistas: não informado"}
+          </span>
+        ) : null}
+        {e.editalId && e.previsao?.pode_alterar && !e.carregandoEdital ? (
+          <button
+            type="button"
+            className="btn secondary small"
+            onClick={() => {
+              setSituacao(e.previsao?.situacao || "NAO_INFORMADA");
+              setMotivo("");
+              setEditar(!editar);
+            }}
+          >
+            Classificar etapa
+          </button>
+        ) : null}
         {editais.admin && editais.todos ? (
           <span className="entrevistas-seletor-marca">
             Todos os editais da área
@@ -104,6 +140,57 @@ export function SeletorDoEdital({
           </span>
         ) : null}
       </section>
+      {editar && e.previsao?.pode_alterar && e.editalId ? (
+        <form
+          className="ui-card"
+          onSubmit={(ev) => {
+            ev.preventDefault();
+            void conducao
+              .definirPrevisao(situacao, motivo)
+              .then((resultado) => {
+                if (resultado.ok) setEditar(false);
+              });
+          }}
+        >
+          <label>
+            Etapa de entrevista
+            <select
+              aria-label="Etapa de entrevista"
+              value={situacao}
+              onChange={(ev) => setSituacao(ev.target.value as typeof situacao)}
+            >
+              <option value="NAO_INFORMADA">Não informado</option>
+              <option value="PREVISTA">Prevista no edital</option>
+              <option value="NAO_PREVISTA">Não prevista no edital</option>
+            </select>
+          </label>
+          <label>
+            Justificativa (conferir o edital oficial)
+            <textarea
+              aria-label="Justificativa da classificação"
+              value={motivo}
+              onChange={(ev) => setMotivo(ev.target.value)}
+              minLength={5}
+              maxLength={500}
+              required
+            />
+          </label>
+          <button
+            type="submit"
+            className="btn primary small"
+            disabled={Boolean(e.acao) || motivo.trim().length < 5}
+          >
+            Salvar
+          </button>
+          <button
+            type="button"
+            className="btn secondary small"
+            onClick={() => setEditar(false)}
+          >
+            Cancelar
+          </button>
+        </form>
+      ) : null}
       {editais.admin && item ? (
         <LiberacaoDoEdital
           key={e.editalId}

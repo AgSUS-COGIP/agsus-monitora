@@ -824,6 +824,18 @@ export const CONTRATO_RPC = {
     resumo:
       "Editais da área para conduzir entrevistas: na janela do cronograma, liberados pelo administrador global ou com convocado sem parecer; p_todos (administrador global) traz todos. Devolve {admin_global, hoje, editais}.",
   },
+  obter_previsao_entrevista_edital: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Retorna previsão explícita da etapa de entrevista para um edital autorizado; ausência é NAO_INFORMADA.",
+  },
+  definir_previsao_entrevista_edital: {
+    argumentos: ["p_edital", "p_situacao", "p_motivo"],
+    critica: false,
+    resumo:
+      "Somente administrador global registra com justificativa a previsão da etapa de entrevista, com histórico e proteção de dados existentes.",
+  },
   liberar_entrevista_edital: {
     argumentos: ["p_edital", "p_ate", "p_motivo"],
     critica: false,

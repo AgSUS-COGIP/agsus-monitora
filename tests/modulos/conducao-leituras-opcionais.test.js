@@ -22,9 +22,18 @@ const EDITAL_SEM_LISTA = { ...EDITAL_COM_LISTA, lista_convocacao: null };
 
 function supabaseCom(respostas) {
   return {
-    rpc: vi.fn(async (nome) =>
-      respostas[nome] ? respostas[nome]() : { data: null, error: null },
-    ),
+    rpc: vi.fn(async (nome) => {
+      if (nome === "obter_previsao_entrevista_edital")
+        return {
+          data: {
+            situacao: "NAO_INFORMADA",
+            motivo: null,
+            pode_alterar: false,
+          },
+          error: null,
+        };
+      return respostas[nome] ? respostas[nome]() : { data: null, error: null };
+    }),
   };
 }
 

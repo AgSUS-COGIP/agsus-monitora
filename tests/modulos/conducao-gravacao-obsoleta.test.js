@@ -30,7 +30,12 @@ async function abrir(estado, supabase, versao) {
   const posicao = supabase.pendentes.length;
   const abertura = estado.abrirEdital("e1");
   responder(supabase.pendentes[posicao], payload(versao));
-  responder(supabase.pendentes[posicao + 1], null);
+  responder(supabase.pendentes[posicao + 1], {
+    situacao: "NAO_INFORMADA",
+    motivo: null,
+    pode_alterar: false,
+  });
+  responder(supabase.pendentes[posicao + 2], null);
   await abertura;
 }
 

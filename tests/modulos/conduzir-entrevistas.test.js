@@ -282,6 +282,22 @@ function supabaseDaConducao({ edital = EDITAL, respostas = {} } = {}) {
       error: null,
     }),
     obter_entrevistas_do_edital: () => ({ data: edital, error: null }),
+    obter_previsao_entrevista_edital: () => ({
+      data: {
+        situacao: "NAO_INFORMADA",
+        motivo: null,
+        pode_alterar: false,
+      },
+      error: null,
+    }),
+    definir_previsao_entrevista_edital: () => ({
+      data: {
+        situacao: "PREVISTA",
+        motivo: "Conforme edital",
+        pode_alterar: true,
+      },
+      error: null,
+    }),
     salvar_roteiro_entrevista: (args) => ({
       data: { ...ROTEIRO, id: "r1b", versao: 2, nome: args.p_dados.nome },
       error: null,
