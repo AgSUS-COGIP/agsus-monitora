@@ -123,15 +123,18 @@ export const MENSAGEM_SEM_ACESSO = "Sem acesso à Avaliação documental";
 const TEMPO_LIMITE_MS = 45000;
 
 export const VISOES_DA_AVALIACAO: ReadonlyArray<Visao> = Object.freeze([
+  "fila",
+  "resultados",
+  "espelhos",
+  "configuracoes",
   "regra",
   "equipe",
   "pre",
-  "fila",
 ]);
 
 const ESTADO_INICIAL: Readonly<EstadoDaAvaliacao> = Object.freeze({
   area: "",
-  visao: "regra",
+  visao: "fila",
   editais: [],
   carregado: false,
   carregandoEditais: false,
