@@ -255,8 +255,8 @@ function TelaDaArea({
                 <strong>Fluxo da avaliação</strong>
                 <p className="ui-texto-secundario">
                   Fila para analisar documentos; Regra e Equipe para configurar
-                  o edital. Os resultados e os espelhos ficam na fila, nas etapas
-                  Concluídas e nas ações da coordenação.
+                  o edital. Os resultados e os espelhos ficam na fila, nas
+                  etapas Concluídas e nas ações da coordenação.
                 </p>
               </div>
               {coordena ? (
