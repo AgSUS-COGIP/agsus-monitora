@@ -31,7 +31,11 @@ describe("espelho da eliminação antes da análise", () => {
   });
 
   it("não exibe ART ou declarada quando a eliminação é administrativa", () => {
-    for (const motivo_codigo of ["QUESTIONARIO", "CANCELADO", "REPROVADO_EMPREGARE"]) {
+    for (const motivo_codigo of [
+      "QUESTIONARIO",
+      "CANCELADO",
+      "REPROVADO_EMPREGARE",
+    ]) {
       const espelho = espelhoDaEliminacaoPreAnalise({
         ...exemplo,
         motivo_codigo,
