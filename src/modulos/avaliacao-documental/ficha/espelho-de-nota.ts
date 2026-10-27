@@ -101,29 +101,39 @@ async function marcaDoPdf(cabecalho: () => string): Promise<MarcaDoPdf> {
 
 type Baixar = (bytes: BlobPart, nome: string, tipo: string) => void;
 
-/** Baixa o PDF do espelho da ficha concluída (as bibliotecas vêm sob demanda). */
-export async function baixarEspelhoEmPdf(
-  st: EstadoCarregado,
-  ficha: FichaCarregada,
+type OpcoesDoPdf = {
+  carregar?: () => Promise<BibliotecasDoPdf>;
+  baixar?: Baixar;
+  cabecalho?: () => string;
+  marca?: (cabecalho: () => string) => Promise<MarcaDoPdf>;
+};
+
+/** PDF de um espelho já montado: uma implementação para ficha e pré-classificação. */
+export async function baixarEspelhoProntoEmPdf(
+  espelho: Espelho,
   {
     carregar = carregarBibliotecasDoPdf,
     baixar = baixarNoNavegador,
     cabecalho = cabecalhoConfigurado,
     marca = marcaDoPdf,
-    textos = TEXTOS_PADRAO_DO_ESPELHO,
-  }: {
-    carregar?: () => Promise<BibliotecasDoPdf>;
-    baixar?: Baixar;
-    cabecalho?: () => string;
-    marca?: (cabecalho: () => string) => Promise<MarcaDoPdf>;
-    textos?: TextosDoEspelho;
-  } = {},
+  }: OpcoesDoPdf = {},
 ) {
-  const espelho = montarEspelho(entradaDoEspelho(st, ficha), textos);
   const [libs, timbrado] = await Promise.all([carregar(), marca(cabecalho)]);
   const nome = nomeDoPdfDoEspelho(espelho);
   baixar(pdfDoEspelho(espelho, libs, timbrado), nome, "application/pdf");
   return nome;
+}
+
+/** Baixa o PDF do espelho da ficha concluída (as bibliotecas vêm sob demanda). */
+export async function baixarEspelhoEmPdf(
+  st: EstadoCarregado,
+  ficha: FichaCarregada,
+  { textos = TEXTOS_PADRAO_DO_ESPELHO, ...opcoes }: OpcoesDoPdf & {
+    textos?: TextosDoEspelho;
+  } = {},
+) {
+  const espelho = montarEspelho(entradaDoEspelho(st, ficha), textos);
+  return baixarEspelhoProntoEmPdf(espelho, opcoes);
 }
 
 /**
