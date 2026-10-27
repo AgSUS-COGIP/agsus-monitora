@@ -113,6 +113,7 @@ function TelaDaArea({
 }: PropsDaTelaDaArea) {
   const visao = visaoNaTela(e);
   const visoes = visoesDaPessoa(e);
+  const coordena = coordenaOEdital(e) === true;
   const [todos, setTodos] = useState(false);
   const { lista: editais, ocultos } = editaisDaEscolha(e.editais, {
     todos,
@@ -245,6 +246,30 @@ function TelaDaArea({
             </Aviso>
           ) : null}
 
+          {e.editalId && e.dados && !emAnalise ? (
+            <section
+              className="ui-card avd-orientacao"
+              aria-label="Organização da avaliação documental"
+            >
+              <div>
+                <strong>Fluxo da avaliação</strong>
+                <p className="ui-texto-secundario">
+                  Fila para analisar documentos; Regra e Equipe para configurar
+                  o edital. Os resultados e os espelhos ficam na fila, nas
+                  etapas Concluídas e nas ações da coordenação.
+                </p>
+              </div>
+              {coordena ? (
+                <button
+                  type="button"
+                  className="btn secondary small"
+                  onClick={() => estado.mudarVisao("pre")}
+                >
+                  Abrir pré-classificação
+                </button>
+              ) : null}
+            </section>
+          ) : null}
           {e.editalId ? (
             e.dados ? (
               visao === "regra" ? (
