@@ -10,39 +10,38 @@ describe("recuperação da leitura da fila", () => {
     message: "canceling statement due to statement timeout",
   };
 
-  it("identifica apenas statement_timeout (57014)", () => {
+  it("reconhece somente o timeout do banco", () => {
     expect(ehTimeoutDaFila(timeout)).toBe(true);
     const cancelado = { code: "57014", message: "user request" };
-    expect(ehTimeoutDaFila(cancelado)).toBe(false);
     const semPermissao = { code: "42501", message: timeout.message };
+    expect(ehTimeoutDaFila(cancelado)).toBe(false);
     expect(ehTimeoutDaFila(semPermissao)).toBe(false);
     expect(ehTimeoutDaFila(null)).toBe(false);
   });
 
-  it("repete uma vez quando a primeira leitura excede o tempo", async () => {
-    const leitura = vi
-      .fn()
-      .mockRejectedValueOnce(timeout)
-      .mockResolvedValueOnce({ candidatos: [] });
+  it("faz uma segunda leitura após timeout", async () => {
+    const leitura = vi.fn();
+    leitura.mockRejectedValueOnce(timeout);
+    leitura.mockResolvedValueOnce({ candidatos: [] });
     const pausa = vi.fn(async () => {});
-    await expect(lerFilaComRecuperacao(leitura, pausa)).resolves.toEqual({
-      candidatos: [],
-    });
+    const resultado = lerFilaComRecuperacao(leitura, pausa);
+    await expect(resultado).resolves.toEqual({ candidatos: [] });
     expect(leitura).toHaveBeenCalledTimes(2);
     expect(pausa).toHaveBeenCalledWith(1200);
   });
 
-  it("não repete timeout duas vezes nem erros de permissão", async () => {
+  it("interrompe após dois timeouts", async () => {
     const leitura = vi.fn(async () => Promise.reject(timeout));
-    await expect(lerFilaComRecuperacao(leitura, async () => {})).rejects.toEqual(
-      timeout,
-    );
+    const resultado = lerFilaComRecuperacao(leitura, async () => {});
+    await expect(resultado).rejects.toEqual(timeout);
     expect(leitura).toHaveBeenCalledTimes(2);
+  });
+
+  it("não repete erros de autorização", async () => {
     const proibido = { code: "42501", message: "permission denied" };
-    const outra = vi.fn(async () => Promise.reject(proibido));
-    await expect(lerFilaComRecuperacao(outra, async () => {})).rejects.toEqual(
-      proibido,
-    );
-    expect(outra).toHaveBeenCalledTimes(1);
+    const leitura = vi.fn(async () => Promise.reject(proibido));
+    const resultado = lerFilaComRecuperacao(leitura, async () => {});
+    await expect(resultado).rejects.toEqual(proibido);
+    expect(leitura).toHaveBeenCalledTimes(1);
   });
 });
