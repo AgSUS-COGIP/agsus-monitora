@@ -55,16 +55,20 @@ describe("bloqueioDaTela", () => {
     expect(
       bloqueioDaTela("pre-classificacao", somentePainel, SEM_PAINEIS),
     ).toBe("Sem permissão para a Pré-classificação.");
-    expect(
-      telaPermitida("pre-classificacao", somentePainel, SEM_PAINEIS),
-    ).toBe(false);
+    expect(telaPermitida("pre-classificacao", somentePainel, SEM_PAINEIS)).toBe(
+      false,
+    );
 
     const avaliador = comMatriz({
       selecao: "sem_acesso",
       avaliacao_documental: "leitor",
     });
-    expect(bloqueioDaTela("pre-classificacao", avaliador, SEM_PAINEIS)).toBe("");
-    expect(telaPermitida("pre-classificacao", avaliador, SEM_PAINEIS)).toBe(true);
+    expect(bloqueioDaTela("pre-classificacao", avaliador, SEM_PAINEIS)).toBe(
+      "",
+    );
+    expect(telaPermitida("pre-classificacao", avaliador, SEM_PAINEIS)).toBe(
+      true,
+    );
     expect(telaPermitida("selecao", avaliador, SEM_PAINEIS)).toBe(false);
     // O papel por edital continua obrigatório na RPC e no componente:
     // esta checagem concede apenas a rota, não a operação.
