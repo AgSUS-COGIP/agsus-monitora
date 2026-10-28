@@ -314,11 +314,11 @@ describe("registro da aba", async () => {
       view: "selecao",
       recurso: "selecao",
       icone: "funnel",
-      ordem: 12,
+      ordem: 13,
       beta: true,
     });
     expect(NOMES_DE_ICONES).toContain("funnel");
-    expect(RESOURCES).toContainEqual(["selecao", "Seleção"]);
+    expect(RESOURCES).toContainEqual(["selecao", "Painel da Seleção"]);
   });
 
   it("leitor vê; sem a chave na matriz, a aba some", () => {
