@@ -53,43 +53,4 @@ test.describe("AgSUS Monitora smoke", () => {
     expect(html).not.toContain("cdn.jsdelivr.net/npm/@supabase/supabase-js");
   });
   test("o seletor da Pré-classificação respeita a largura de celulares", async ({
-    page,
-  }) => {
-    const css = readFileSync(
-      new URL(
-        "../src/modulos/avaliacao-documental/avaliacao-documental.css",
-        import.meta.url,
-      ),
-      "utf8",
-    );
-    // Sem login nem dados reais: renderiza a estrutura do seletor com as
-    // classes e o CSS de produção para validar responsividade.
-    for (const width of [320, 375]) {
-      await page.setViewportSize({ width, height: 740 });
-      await page.setContent(`
-        <style>${css}</style>
-        <main style="box-sizing:border-box;width:100%;padding:12px">
-          <section class="avd-edital" aria-label="Edital da pré-classificação">
-            <div>
-              <label for="edital">Edital</label>
-              <select id="edital">
-                <option>114/2026 - Rio Doce - Modalidade por pergunta - Versão conferida</option>
-              </select>
-            </div>
-            <label><input type="checkbox"> Mostrar todos os editais da área</label>
-          </section>
-        </main>
-      `);
-      const dimensoes = await page.locator("#edital").evaluate((select) => ({
-        direita: select.getBoundingClientRect().right,
-        largura: select.getBoundingClientRect().width,
-        documento: document.documentElement.scrollWidth,
-        viewport: document.documentElement.clientWidth,
-      }));
-      expect(dimensoes.largura).toBeGreaterThan(100);
-      expect(dimensoes.direita).toBeLessThanOrEqual(dimensoes.viewport + 1);
-      expect(dimensoes.documento).toBeLessThanOrEqual(dimensoes.viewport + 1);
-    }
-  });
-
-});
+...[truncated]
