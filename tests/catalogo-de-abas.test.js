@@ -122,7 +122,7 @@ const MIGRATION_QUE_LIGA_PRE = ler(
   "supabase/migrations/20261028100707_ativar_entrada_pre_classificacao.sql",
 );
 const RESPOSTA_DO_ENSAIO = JSON.parse(
-  ler("tests/fixtures/listar-abas-do-menu.json"),
+  ler("tests/fixtures/listar-abas-do-menu-pre-classificacao.json"),
 );
 const ARVORES_DE_ANTES = JSON.parse(
   ler("tests/fixtures/menu-lateral-antes-do-catalogo.json"),
