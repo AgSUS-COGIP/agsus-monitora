@@ -366,7 +366,7 @@ window.avaliacaoDocumentalController = telaSobDemanda({
    documental e mesmas RPCs que exigem coordenação por edital. */
 window.preClassificacaoController = telaSobDemanda({
   secao: "page-pre-classificacao",
-  metodos: ["render"],
+  metodos: ["render", "abrirEdital"],
   carregar: () =>
     import("./modulos/avaliacao-documental/entrada-da-pre-classificacao.tsx").then(
       (m) => m.montarPreClassificacao({ toast: window.monitoraToast }),
