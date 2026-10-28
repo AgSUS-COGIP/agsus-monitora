@@ -1,6 +1,8 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { lerCodigos } from "../../lib/avaliacao-documental/espelhos-em-massa.ts";
 import { Aviso, Campo } from "../../ui/index.ts";
+import { espelhoDaEliminacaoPreAnalise } from "../../lib/avaliacao-documental/espelho-da-pre-classificacao.ts";
+import type { DadosDaPreClassificacao } from "./tipos-da-pre-classificacao.ts";
 import {
   EspelhosEmMassa,
   lerFichasDosEspelhos,
@@ -16,12 +18,18 @@ import type { LojaDaFila } from "./estado-da-fila.ts";
 export function EspelhosDaAvaliacao({
   editalId,
   fila,
+  rotuloEdital = "",
+  unidade = "",
 }: {
   editalId: string;
   fila: LojaDaFila;
+  rotuloEdital?: string;
+  unidade?: string;
 }) {
   const st = useSyncExternalStore(fila.assinar, fila.obter);
   const [codigo, setCodigo] = useState("");
+  const [codigoEliminado, setCodigoEliminado] = useState("");
+  const [vagaEliminada, setVagaEliminada] = useState("");
   const [gerando, setGerando] = useState(false);
   const [erro, setErro] = useState("");
   const [aviso, setAviso] = useState("");
@@ -76,6 +84,65 @@ export function EspelhosDaAvaliacao({
     }
   }
 
+  async function emitirComunicado() {
+    const codigos = lerCodigos(codigoEliminado);
+    if (codigos.length !== 1) {
+      setErro("Informe apenas um código de inscrição.");
+      return;
+    }
+    setErro("");
+    setAviso("");
+    setGerando(true);
+    try {
+      const pre = (await fila.rpc("obter_pre_classificacao", {
+        p_edital: editalId,
+      })) as DadosDaPreClassificacao | null;
+      if (!pre || String(pre.edital?.id ?? "") !== editalId)
+        throw new Error("Não foi possível confirmar a pré-classificação do edital.");
+      if (!pre.pode_coordenar)
+        throw new Error("A emissão exige permissão de coordenação.");
+      const encontrados = (pre.candidatos || []).filter(
+        (c) =>
+          String(c.codigo) === codigos[0] &&
+          (!vagaEliminada || String(c.vaga) === vagaEliminada),
+      );
+      if (encontrados.length !== 1)
+        throw new Error(
+          encontrados.length
+            ? "Inscrição em mais de uma vaga. Selecione a vaga."
+            : "Inscrição não encontrada na pré-classificação deste edital.",
+        );
+      const candidato = encontrados[0]!;
+      if (candidato.situacao !== "ELIMINADO")
+        throw new Error("A inscrição não está eliminada antes da análise documental.");
+      const cargo = pre.vagas.find((v) => String(v.codigo) === candidato.vaga)?.cargo;
+      const documento = espelhoDaEliminacaoPreAnalise({
+        codigo: candidato.codigo,
+        nome: candidato.nome,
+        vaga: candidato.vaga,
+        cargo,
+        edital: rotuloEdital || String(pre.edital?.edital ?? ""),
+        unidade,
+        modalidade: candidato.modalidade,
+        situacao: candidato.situacao,
+        motivo: candidato.motivo,
+        motivo_codigo: candidato.motivo_codigo,
+        art: candidato.art,
+        declarada: candidato.declarada,
+        nota: candidato.nota,
+        origem_nota: candidato.origem_nota,
+      });
+      const arquivo = await baixarEspelhoProntoEmPdf(documento);
+      setAviso(`Comunicado preparado: ${arquivo}`);
+    } catch (e) {
+      setErro(
+        e instanceof Error ? e.message : "Não foi possível emitir o comunicado.",
+      );
+    } finally {
+      setGerando(false);
+    }
+  }
+
   if (st.erro && !dados)
     return (
       <Aviso tom="danger" papel="alert">
@@ -101,11 +168,11 @@ export function EspelhosDaAvaliacao({
       className="ui-card avd-espelhos"
       aria-label="Emissão dos espelhos de nota"
     >
-      <h3 className="ui-titulo">Espelhos de nota</h3>
+      <h3 className="ui-titulo">Documentos do edital</h3>
       <p className="ui-texto-secundario">
-        Emita uma ficha concluída pelo código ou exporte documentos em massa. O
-        modelo e as notas oficiais são preservados.
+        Espelhos de avaliações concluídas e comunicados de eliminação anterior à análise documental são documentos diferentes.
       </p>
+      <h4>Espelhos das avaliações concluídas</h4>
       <div className="avd-espelhos-individual">
         <Campo rotulo="Código de inscrição para PDF individual">
           <input
@@ -148,6 +215,49 @@ export function EspelhosDaAvaliacao({
         >
           Modelo e pré-visualização
         </button>
+      </div>
+      <div className="avd-espelhos-comunicados">
+        <h4>Eliminados antes da análise documental</h4>
+        <p className="ui-texto-secundario">
+          Comunicado individual com o motivo registrado na pré-classificação.
+          Não informa nota da comissão, pois não houve avaliação documental.
+          Não substitui a publicação oficial.
+        </p>
+        <div className="avd-espelhos-individual">
+          <Campo rotulo="Código da inscrição eliminada">
+            <input
+              type="search"
+              value={codigoEliminado}
+              onChange={(ev) => setCodigoEliminado(ev.target.value)}
+              disabled={gerando}
+              data-acao="comunicado-eliminado-codigo"
+              placeholder="Código da Empregare"
+            />
+          </Campo>
+          <Campo rotulo="Vaga (se necessário)">
+            <select
+              value={vagaEliminada}
+              onChange={(ev) => setVagaEliminada(ev.target.value)}
+              disabled={gerando}
+            >
+              <option value="">Identificar pelo código</option>
+              {(dados.vagas || []).map((v) => (
+                <option key={String(v.codigo)} value={String(v.codigo)}>
+                  {v.codigo}{v.cargo ? ` · ${v.cargo}` : ""}
+                </option>
+              ))}
+            </select>
+          </Campo>
+          <button
+            type="button"
+            className="btn primary"
+            data-acao="baixar-comunicado-eliminacao"
+            disabled={gerando || !codigoEliminado.trim()}
+            onClick={() => void emitirComunicado()}
+          >
+            {gerando ? "Preparando…" : "Baixar comunicado"}
+          </button>
+        </div>
       </div>
       {erro ? (
         <Aviso tom="danger" papel="alert">
