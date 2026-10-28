@@ -18,6 +18,7 @@ export type JanelaDoApp = {
   navigate?: (view: string) => unknown;
   classificacaoController?: Controle;
   conduzirEntrevistasController?: Controle;
+  preClassificacaoController?: Controle;
 };
 
 /** Devolve false se o destino não vale ou se a navegação não está disponível. */
@@ -42,5 +43,9 @@ export function irParaTela(
     void Promise.resolve(
       janela.conduzirEntrevistasController?.abrirEdital?.(edital),
     ).catch(() => {});
+  if (link.view === "pre-classificacao")
+    void Promise.resolve(janela.preClassificacaoController?.carregar?.())
+      .then(() => janela.preClassificacaoController?.abrirEdital?.(edital))
+      .catch(() => {});
   return true;
 }
