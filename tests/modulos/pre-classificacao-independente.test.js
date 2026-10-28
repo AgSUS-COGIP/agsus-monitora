@@ -39,7 +39,11 @@ function supabaseFalso(coordena) {
         case "obter_regra_analise":
           return {
             data: {
-              edital: { id: args.p_edital, edital: "114/2026", area: "projetos" },
+              edital: {
+                id: args.p_edital,
+                edital: "114/2026",
+                area: "projetos",
+              },
               papel: coordena ? "COORDENADOR" : "ANALISTA",
               pode_coordenar: coordena,
               origem: "PLANILHA",
@@ -111,7 +115,9 @@ describe("entrada independente de Pré-classificação", () => {
     await montar(supabase);
     expect(secao.textContent).toContain("restrita à coordenação");
     expect(
-      supabase.rpc.mock.calls.some(([nome]) => nome === "obter_pre_classificacao"),
+      supabase.rpc.mock.calls.some(
+        ([nome]) => nome === "obter_pre_classificacao",
+      ),
     ).toBe(false);
     expect(
       supabase.rpc.mock.calls.some(([nome]) => nome === "obter_regra_analise"),
@@ -122,16 +128,22 @@ describe("entrada independente de Pré-classificação", () => {
     const supabase = supabaseFalso(true);
     await montar(supabase);
     expect(
-      supabase.rpc.mock.calls.some(([nome]) => nome === "obter_pre_classificacao"),
+      supabase.rpc.mock.calls.some(
+        ([nome]) => nome === "obter_pre_classificacao",
+      ),
     ).toBe(true);
-    expect(secao.querySelector("[data-tour='pre-seletor-edital']")).not.toBeNull();
+    expect(
+      secao.querySelector("[data-tour='pre-seletor-edital']"),
+    ).not.toBeNull();
   });
 
   it("a entrada não concede acesso ao recurso Seleção", async () => {
     const supabase = supabaseFalso(false);
     await montar(supabase);
     expect(
-      supabase.rpc.mock.calls.some(([nome]) => nome === "obter_pre_classificacao"),
+      supabase.rpc.mock.calls.some(
+        ([nome]) => nome === "obter_pre_classificacao",
+      ),
     ).toBe(false);
     expect(secao.textContent).toContain("Painel da Seleção");
   });
