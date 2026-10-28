@@ -93,6 +93,7 @@ import type { montarAnalises } from "./modulos/analises/analises.tsx";
 import type { montarSelecao } from "./modulos/selecao/selecao.tsx";
 import type { montarClassificacao } from "./modulos/classificacao/classificacao.tsx";
 import type { montarAvaliacaoDocumental } from "./modulos/avaliacao-documental/avaliacao-documental.tsx";
+import type { montarPreClassificacao } from "./modulos/avaliacao-documental/entrada-da-pre-classificacao.tsx";
 import type { montarAcessos } from "./modulos/acessos/acessos.tsx";
 import type { montarModulos } from "./modulos/modulos/modulos.tsx";
 import type { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.tsx";
@@ -125,6 +126,7 @@ declare global {
     avaliacaoDocumentalController?: SobDemanda<
       typeof montarAvaliacaoDocumental
     >;
+    preClassificacaoController?: SobDemanda<typeof montarPreClassificacao>;
     acessosController?: SobDemanda<typeof montarAcessos>;
     modulosController?: SobDemanda<typeof montarModulos>;
     saudeDasCargasController?: SobDemanda<typeof montarSaudeDasCargas>;
@@ -357,6 +359,17 @@ window.avaliacaoDocumentalController = telaSobDemanda({
           toast: window.monitoraToast,
           getProfile: window.getMonitoraProfile,
         }),
+    ),
+});
+
+/* Pré-classificação: página operacional independente, mesmo recurso de avaliação
+   documental e mesmas RPCs que exigem coordenação por edital. */
+window.preClassificacaoController = telaSobDemanda({
+  secao: "page-pre-classificacao",
+  metodos: ["render", "abrirEdital"],
+  carregar: () =>
+    import("./modulos/avaliacao-documental/entrada-da-pre-classificacao.tsx").then(
+      (m) => m.montarPreClassificacao({ toast: window.monitoraToast }),
     ),
 });
 

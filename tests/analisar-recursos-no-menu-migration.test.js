@@ -50,7 +50,7 @@ describe("migration de Analisar recursos no menu", () => {
     expect(doCodigo).toMatchObject({
       rotulo: "Analisar recursos",
       icone: "gavel",
-      ordem: 7,
+      ordem: 8,
       view: "analisar-recursos",
       recurso: "recursos",
       tipo: "nativa",
@@ -81,8 +81,12 @@ describe("migration de Analisar recursos no menu", () => {
         ),
       ].map(([, ordem, aba]) => [aba, Number(ordem)]),
     );
+    // A migration histórica foi aplicada antes da nova entrada:
+    // 20261028100644 desloca as ordens posteriores em +1.
     for (const [aba, ordem] of Object.entries(ordens))
-      expect(ABAS_DO_MENU.find((a) => a.id === aba)?.ordem, aba).toBe(ordem);
+      expect(ABAS_DO_MENU.find((a) => a.id === aba)?.ordem, aba).toBe(
+        ordem + 1,
+      );
     expect(Object.keys(ordens).sort()).toEqual(
       [
         "aprovados",

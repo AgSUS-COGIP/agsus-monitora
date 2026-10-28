@@ -45,6 +45,35 @@ describe("bloqueioDaTela", () => {
     );
   });
 
+  it("Pré-classificação exige recurso próprio, não permissão do Painel da Seleção", () => {
+    const somentePainel = comMatriz({
+      selecao: "editor",
+      avaliacao_documental: "sem_acesso",
+    });
+    expect(bloqueioDaTela("selecao", somentePainel, SEM_PAINEIS)).toBe("");
+    expect(telaPermitida("selecao", somentePainel, SEM_PAINEIS)).toBe(true);
+    expect(
+      bloqueioDaTela("pre-classificacao", somentePainel, SEM_PAINEIS),
+    ).toBe("Sem permissão para a Pré-classificação.");
+    expect(telaPermitida("pre-classificacao", somentePainel, SEM_PAINEIS)).toBe(
+      false,
+    );
+
+    const avaliador = comMatriz({
+      selecao: "sem_acesso",
+      avaliacao_documental: "leitor",
+    });
+    expect(bloqueioDaTela("pre-classificacao", avaliador, SEM_PAINEIS)).toBe(
+      "",
+    );
+    expect(telaPermitida("pre-classificacao", avaliador, SEM_PAINEIS)).toBe(
+      true,
+    );
+    expect(telaPermitida("selecao", avaliador, SEM_PAINEIS)).toBe(false);
+    // O papel por edital continua obrigatório na RPC e no componente:
+    // esta checagem concede apenas a rota, não a operação.
+  });
+
   it("tela que não existe é bloqueada com aviso (antes ficava em branco)", () => {
     expect(bloqueioDaTela("chat", GESTOR, SEM_PAINEIS)).toBe(
       'A tela "chat" não existe.',

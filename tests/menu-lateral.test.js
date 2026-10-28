@@ -551,7 +551,7 @@ describe("blocos da área", () => {
             "Painel das análises",
             "Painel de recursos",
             "Painel de entrevistas",
-            "Seleção",
+            "Painel da Seleção",
           ],
         ],
         [

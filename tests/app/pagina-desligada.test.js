@@ -92,6 +92,66 @@ describe("a regra da página desligada", () => {
     );
   });
 
+  it("a Pré-classificação independente permanece bloqueada até a ativação da aba", () => {
+    const semPre = abasDoCatalogo(catalogo());
+    // Sem catálogo (inclusive falha de rede), o atalho antigo permanece,
+    // mas o link direto para a entrada ainda não publicada não pode abrir.
+    expect(
+      paginaDesligada({
+        abas: ABAS_DO_MENU,
+        doBanco: false,
+        view: "pre-classificacao",
+        area: "projetos",
+      }),
+    ).toBe(true);
+    expect(
+      paginaDesligada({
+        abas: ABAS_DO_MENU,
+        doBanco: false,
+        view: "avaliacao-documental",
+        area: "projetos",
+      }),
+    ).toBe(false);
+    expect(
+      paginaDesligada({
+        abas: semPre,
+        doBanco: true,
+        view: "pre-classificacao",
+        area: "projetos",
+      }),
+    ).toBe(true);
+
+    const catalogoAtivado = abasDoCatalogo([
+      ...catalogo(),
+      {
+        co_aba: "pre-classificacao",
+        no_aba: "Pré-classificação",
+        ds_icone: "list-ordered",
+        nu_ordem: 6,
+        co_view: "pre-classificacao",
+        co_recurso: "avaliacao_documental",
+        tp_aba: "nativa",
+        areas: [{ co_area: "projetos", nu_ordem: 6 }],
+      },
+    ]);
+    expect(
+      paginaDesligada({
+        abas: catalogoAtivado,
+        doBanco: true,
+        view: "pre-classificacao",
+        area: "projetos",
+      }),
+    ).toBe(false);
+    expect(
+      paginaDesligada({
+        abas: catalogoAtivado,
+        doBanco: true,
+        view: "pre-classificacao",
+        area: "sede",
+      }),
+    ).toBe(true);
+  });
+
   it("área desligada fecha as páginas dela", () => {
     const abas = abasDoCatalogo(catalogo());
     const situacao = situacaoCom([

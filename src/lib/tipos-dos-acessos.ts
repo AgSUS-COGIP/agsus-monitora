@@ -105,6 +105,7 @@ export type PaginasPermitidas = {
   approved: boolean;
   analises: boolean;
   "avaliacao-documental": boolean;
+  "pre-classificacao": boolean;
   entrevistas: boolean;
   "conduzir-entrevistas": boolean;
   classificacao: boolean;

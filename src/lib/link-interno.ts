@@ -23,7 +23,10 @@ export function linkInterno(entrada: unknown): LinkInterno | null {
   const view = texto(bruta).trim();
   if (
     !/^[a-z][a-z_-]{0,39}$/.test(view) ||
-    !ABAS_DO_MENU.some((aba) => aba.view === view)
+    // Pré-classificação tem view própria, mas só aparece após a ativação no
+    // catálogo do banco; permanece válida para o atalho de um edital.
+    (!ABAS_DO_MENU.some((aba) => aba.view === view) &&
+      view !== "pre-classificacao")
   )
     return null;
   if (edital == null) return { view };

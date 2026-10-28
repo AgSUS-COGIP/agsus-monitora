@@ -109,6 +109,7 @@ type NomeDoControlador =
   | "classificacaoController"
   | "analisesController"
   | "avaliacaoDocumentalController"
+  | "preClassificacaoController"
   | "selecaoController";
 
 /** Os controladores das telas em `window` (cada um com o seu tipo lá). */
@@ -173,8 +174,13 @@ export const TELAS_REACT: Readonly<Record<string, TelaReact>> = Object.freeze({
     "",
     janela.avaliacaoDocumentalController as Controle,
   ],
+  "pre-classificacao": (_valor, janela) => [
+    "Pré-classificação",
+    "",
+    janela.preClassificacaoController as Controle,
+  ],
   selecao: (_valor, janela) => [
-    "Seleção",
+    "Painel da Seleção",
     "",
     janela.selecaoController as Controle,
   ],

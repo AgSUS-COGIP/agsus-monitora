@@ -14,6 +14,7 @@ import {
 import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
 import { editalVigente } from "../../src/lib/avaliacao-documental/editais.ts";
 import { clicar, esperar } from "../componentes/interacoes.js";
+import { carregarCatalogoDeAbas } from "../../src/modules/catalogo-de-abas.ts";
 
 /*
   Abas por papel e entrada da Avaliação documental (abas-e-entrada.ts):
@@ -143,6 +144,8 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => painel?.raiz?.unmount());
   secao?.remove();
+  await carregarCatalogoDeAbas({ consulta: Promise.resolve(null) });
+  vi.unstubAllGlobals();
 });
 
 describe("abas por papel", () => {
@@ -252,6 +255,73 @@ describe("abas por papel", () => {
     await act(async () => soltar());
     await esperar();
     expect(abas()).toEqual(["fila", "resultados"]);
+  });
+});
+
+describe("transição do atalho da Pré-classificação", () => {
+  const UUID = "a153f5d2-37bc-41a5-8d0f-67606f0de114";
+
+  it("mantém acesso legado quando a aba nova está desativada no banco", async () => {
+    await carregarCatalogoDeAbas({
+      consulta: Promise.resolve({
+        data: [
+          {
+            co_aba: "avaliacao-documental",
+            no_aba: "Avaliação documental",
+            co_view: "avaliacao-documental",
+            co_recurso: "avaliacao_documental",
+            areas: [{ co_area: "projetos" }],
+          },
+        ],
+        error: null,
+      }),
+    });
+    const navegar = vi.fn();
+    vi.stubGlobal("navigate", navegar);
+    await montar(
+      supabaseFalso({
+        editais: [edital(UUID, "114/2026", "COORDENADOR")],
+        coordena: true,
+      }),
+    );
+    const botao = [...secao.querySelectorAll("button")].find((el) =>
+      el.textContent.includes("Abrir pré-classificação"),
+    );
+    expect(botao).toBeDefined();
+    await clicar(botao);
+    expect(painel.estado.obter().visao).toBe("pre");
+    expect(navegar).not.toHaveBeenCalled();
+  });
+
+  it("com a aba ativa no catálogo, abre rota independente e preserva edital", async () => {
+    await carregarCatalogoDeAbas({
+      consulta: Promise.resolve({
+        data: [
+          {
+            co_aba: "pre-classificacao",
+            no_aba: "Pré-classificação",
+            co_view: "pre-classificacao",
+            co_recurso: "avaliacao_documental",
+            areas: [{ co_area: "projetos" }],
+          },
+        ],
+        error: null,
+      }),
+    });
+    const navegar = vi.fn();
+    vi.stubGlobal("navigate", navegar);
+    await montar(
+      supabaseFalso({
+        editais: [edital(UUID, "114/2026", "COORDENADOR")],
+        coordena: true,
+      }),
+    );
+    const botao = [...secao.querySelectorAll("button")].find((el) =>
+      el.textContent.includes("Abrir pré-classificação"),
+    );
+    expect(botao).toBeDefined();
+    await clicar(botao);
+    expect(navegar).toHaveBeenCalledWith("pre-classificacao");
   });
 });
 

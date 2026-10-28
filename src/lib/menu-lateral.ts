@@ -157,6 +157,9 @@ const NAS_TRES_AREAS = [
   { area: "projetos" },
 ];
 
+/* A Pré-classificação não entra no fallback: o banco a cadastra inativa no
+   PR #596 e só a ativa em #597. Sem catálogo carregado, não antecipar o
+   lançamento; uma entrada ativa do banco passa a ser exibida normalmente. */
 export const ABAS_DO_MENU = Object.freeze(
   [
     {
@@ -214,7 +217,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "recursos",
       rotulo: "Painel de recursos",
       icone: "scale",
-      ordem: 6,
+      ordem: 7,
       view: "recursos",
       recurso: "recursos",
       tipo: "nativa",
@@ -224,7 +227,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "analisar-recursos",
       rotulo: "Analisar recursos",
       icone: "gavel",
-      ordem: 7,
+      ordem: 8,
       view: "analisar-recursos",
       recurso: "recursos",
       tipo: "nativa",
@@ -235,7 +238,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "entrevistas",
       rotulo: "Painel de entrevistas",
       icone: "messages-square",
-      ordem: 8,
+      ordem: 9,
       view: "entrevistas",
       recurso: "entrevistas",
       tipo: "nativa",
@@ -246,7 +249,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "conduzir-entrevistas",
       rotulo: "Conduzir entrevistas",
       icone: "clipboard-pen-line",
-      ordem: 9,
+      ordem: 10,
       view: "conduzir-entrevistas",
       recurso: "entrevistas",
       tipo: "nativa",
@@ -257,7 +260,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "classificacao",
       rotulo: "Classificação",
       icone: "list-ordered",
-      ordem: 10,
+      ordem: 11,
       view: "classificacao",
       recurso: "classificacao",
       tipo: "nativa",
@@ -268,7 +271,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "aprovados",
       rotulo: "Lista de aprovados",
       icone: "user-round-check",
-      ordem: 11,
+      ordem: 12,
       view: "approved",
       recurso: "aprovados",
       tipo: "nativa",
@@ -276,9 +279,9 @@ export const ABAS_DO_MENU = Object.freeze(
     },
     {
       id: "selecao",
-      rotulo: "Seleção",
+      rotulo: "Painel da Seleção",
       icone: "funnel",
-      ordem: 12,
+      ordem: 13,
       view: "selecao",
       recurso: "selecao",
       tipo: "nativa",

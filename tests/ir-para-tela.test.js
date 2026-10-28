@@ -71,6 +71,27 @@ describe("irParaTela", () => {
     await vi.waitFor(() => expect(abrirEdital).toHaveBeenCalledWith(EDITAL));
   });
 
+  it("abre o edital na Pré-classificação independente", async () => {
+    const carregar = vi.fn(async () => {});
+    const abrirEdital = vi.fn(async () => {});
+    const janela = {
+      navigate: vi.fn(),
+      preClassificacaoController: { carregar, abrirEdital },
+    };
+    expect(
+      irParaTela(
+        {
+          view: "pre-classificacao",
+          edital: { id: EDITAL, titulo: "114/2026" },
+        },
+        janela,
+      ),
+    ).toBe(true);
+    expect(janela.navigate).toHaveBeenCalledWith("pre-classificacao");
+    await vi.waitFor(() => expect(abrirEdital).toHaveBeenCalledWith(EDITAL));
+    expect(carregar).toHaveBeenCalledOnce();
+  });
+
   it("destino que não vale ou sem navigate: não navega", () => {
     const janela = { navigate: vi.fn() };
     expect(irParaTela({ view: "https://exemplo.invalid" }, janela)).toBe(false);

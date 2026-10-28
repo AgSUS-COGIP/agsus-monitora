@@ -115,8 +115,17 @@ const MIGRATION_QUE_LIGA_ANALISAR = ler(
 const MIGRATION_DA_ORDEM = ler(
   "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql",
 );
+const MIGRATION_DA_PRE = ler(
+  "supabase/migrations/20261028100644_entrada_propria_pre_classificacao.sql",
+);
+const ROLLBACK_DA_PRE = ler(
+  "supabase/rollback/20261028100644_entrada_propria_pre_classificacao.sql",
+);
+const ENSAIO_DA_PRE = ler(
+  "supabase/ensaios/20261028100644_entrada_propria_pre_classificacao.sql",
+);
 const RESPOSTA_DO_ENSAIO = JSON.parse(
-  ler("tests/fixtures/listar-abas-do-menu.json"),
+  ler("tests/fixtures/listar-abas-do-menu-pre-classificacao.json"),
 );
 const ARVORES_DE_ANTES = JSON.parse(
   ler("tests/fixtures/menu-lateral-antes-do-catalogo.json"),
@@ -135,7 +144,9 @@ function linhasDoInsert(tabela) {
 
 function linhasDoInsertEm(sql, tabela) {
   const inicio = sql.indexOf(`insert into public."${tabela}"`);
-  const insert = sql.slice(inicio, sql.indexOf(";", inicio));
+  const insert = sql
+    .slice(inicio, sql.indexOf(";", inicio))
+    .split(/\bon conflict\b/i)[0];
   const [cabecalho, valores] = insert.split(/\)\s*values\s*/);
   const colunas = [...cabecalho.matchAll(/"([A-Z_]+)"/g)]
     .map((m) => m[1])
@@ -164,6 +175,7 @@ function abasDoSeed() {
     ...linhasDoInsertEm(MIGRATION_DA_AVALIACAO, "TB_ABA"),
     ...linhasDoInsertEm(MIGRATION_DE_CONDUZIR, "TB_ABA"),
     ...linhasDoInsertEm(MIGRATION_DE_ANALISAR, "TB_ABA"),
+    ...linhasDoInsertEm(MIGRATION_DA_PRE, "TB_ABA"),
   ];
   for (const sql of [
     MIGRATION_DAS_ENTREVISTAS,
@@ -186,6 +198,14 @@ function abasDoSeed() {
       /update public."TB_ABA" set "NO_ABA" = '([^']+)'[^;]*where "CO_ABA" = '([^']+)'/g,
     ))
       abas.find((linha) => linha.CO_ABA === aba).NO_ABA = rotulo;
+  for (const [, codigo, antiga, nova] of MIGRATION_DA_PRE.matchAll(
+    /\('([^']+)', (\d+), (\d+)\)/g,
+  )) {
+    const aba = abas.find((linha) => linha.CO_ABA === codigo);
+    if (aba && aba.NU_ORDEM === Number(antiga)) aba.NU_ORDEM = Number(nova);
+  }
+  const selecao = abas.find((linha) => linha.CO_ABA === "selecao");
+  if (selecao?.NO_ABA === "Seleção") selecao.NO_ABA = "Painel da Seleção";
   return abas;
 }
 
@@ -226,6 +246,13 @@ function ligacoesDoSeed() {
   expect(MIGRATION_QUE_LIGA_ANALISAR).toContain(
     `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'analisar-recursos'`,
   );
+  expect(MIGRATION_DA_PRE).toContain(
+    `select 'pre-classificacao', a."CO_AREA", 'S'`,
+  );
+  expect(MIGRATION_DA_PRE).toContain("'avaliacao_documental'");
+  expect(MIGRATION_DA_PRE).toContain(
+    "'pre-classificacao', 'Pré-classificação', 'list-ordered', 6",
+  );
   return [
     ...linhasDoInsert("RL_ABA_AREA"),
     ...[
@@ -236,6 +263,7 @@ function ligacoesDoSeed() {
       "conduzir-entrevistas",
       // As áreas do painel de recursos (as três no seed).
       "analisar-recursos",
+      "pre-classificacao",
     ].flatMap((aba) =>
       AREAS_DO_SISTEMA.map((area) => ({ CO_ABA: aba, CO_AREA: area.id })),
     ),
@@ -284,15 +312,65 @@ const paginasPorArea = (abas) =>
     AREAS_DO_SISTEMA.map((area) => [area.id, paginasDaArea(abas, area.id)]),
   );
 
+describe("proteções da migração da Pré-classificação", () => {
+  it("fecha corretamente os blocos PL/pgSQL no deploy e no rollback", () => {
+    for (const sql of [MIGRATION_DA_PRE, ROLLBACK_DA_PRE]) {
+      const inicio = "do " + "$" + "$";
+      const fim = "\n" + "$" + "$" + ";\n";
+      expect(sql.split(inicio)).toHaveLength(2);
+      expect(sql.split(fim)).toHaveLength(2);
+      expect(sql).not.toContain("\n" + "$" + ";\n");
+    }
+  });
+
+  it("ensaia exatamente o corpo do SQL sem persistir alterações", () => {
+    const inicio = MIGRATION_DA_PRE.indexOf("\nbegin;\n") + 1;
+    const fim = MIGRATION_DA_PRE.lastIndexOf("\ncommit;");
+    const corpo = MIGRATION_DA_PRE.slice(inicio, fim);
+    expect(ENSAIO_DA_PRE).toContain(corpo);
+    for (const etapa of ["E1", "E2", "E3", "E4"])
+      expect(ENSAIO_DA_PRE).toContain("FALHOU " + etapa);
+    expect(ENSAIO_DA_PRE.trimEnd().endsWith("rollback;")).toBe(true);
+  });
+
+  it("recusa colisão, ordem personalizada e rollback com a entrada ativa", () => {
+    expect(MIGRATION_DA_PRE).toContain(
+      "A aba pre-classificacao já existe: conferir antes de aplicar.",
+    );
+    expect(MIGRATION_DA_PRE).toContain(
+      "Ordem do catálogo personalizada ou incompleta",
+    );
+    expect(ROLLBACK_DA_PRE).toContain(
+      "Desative a Pré-classificação e confira a entrada antes do rollback.",
+    );
+    expect(ROLLBACK_DA_PRE).toContain("Ordem alterada desde a migration");
+  });
+});
+
 describe("o seed da migration é o catálogo do código", () => {
   const doBanco = abasDoCatalogo(respostaDoSeed());
 
   it("as mesmas abas, com os mesmos campos", () => {
-    expect(doBanco.map(camposDaAba)).toEqual(ABAS_DO_MENU.map(camposDaAba));
+    // A migração cria a Pré-classificação desligada; a entrada só é
+    // visível quando o catálogo do banco a publicar. Não vai no fallback.
+    expect(
+      doBanco.filter((aba) => aba.id !== "pre-classificacao").map(camposDaAba),
+    ).toEqual(ABAS_DO_MENU.map(camposDaAba));
+    expect(doBanco.find((aba) => aba.id === "pre-classificacao")).toMatchObject(
+      {
+        id: "pre-classificacao",
+        rotulo: "Pré-classificação",
+        view: "pre-classificacao",
+        ordem: 6,
+        recurso: "avaliacao_documental",
+      },
+    );
   });
 
   it("as mesmas páginas em cada área (view, rótulo, ícone e ordem)", () => {
-    expect(paginasPorArea(doBanco)).toEqual(paginasPorArea(ABAS_DO_MENU));
+    expect(
+      paginasPorArea(doBanco.filter((aba) => aba.id !== "pre-classificacao")),
+    ).toEqual(paginasPorArea(ABAS_DO_MENU));
   });
 
   it("a resposta real da função, no ensaio, é a que o seed produz", () => {
@@ -314,6 +392,7 @@ describe("o seed da migration é o catálogo do código", () => {
       "approved",
       "analises",
       "avaliacao-documental",
+      "pre-classificacao",
       "entrevistas",
       "conduzir-entrevistas",
       "recursos",
@@ -499,8 +578,13 @@ describe("carga do catálogo na sessão", () => {
     });
     expect(usou).toBe(true);
     expect(abasDoMenu()).not.toBe(ABAS_DO_MENU);
-    expect(abasDoMenu().map((aba) => aba.id)).toEqual(
-      ABAS_DO_MENU.map((aba) => aba.id),
+    expect(
+      abasDoMenu()
+        .filter((aba) => aba.id !== "pre-classificacao")
+        .map((aba) => aba.id),
+    ).toEqual(ABAS_DO_MENU.map((aba) => aba.id));
+    expect(abasDoMenu().some((aba) => aba.id === "pre-classificacao")).toBe(
+      true,
     );
   });
 
@@ -583,7 +667,7 @@ describe("selo beta das abas", () => {
   const recursosDe = (abas) =>
     abas.find((aba) => aba.id === "analisar-recursos");
 
-  it("no código, só Avaliação documental, Analisar recursos, Entrevistas (painel e conduzir), Classificação e Seleção são beta; as outras nem têm o campo", () => {
+  it("no fallback, somente as abas já publicadas no banco são beta", () => {
     const beta = [
       "avaliacao-documental",
       "analisar-recursos",
