@@ -1,6 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.ts";
 import { montarModulo } from "../../app/montar-modulo.tsx";
+import { irParaTela } from "../../app/ir-para-tela.ts";
 import { criarRascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
 import type { RascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
@@ -269,7 +270,18 @@ function TelaDaArea({
                 <button
                   type="button"
                   className="btn secondary small"
-                  onClick={() => estado.mudarVisao("pre")}
+                  onClick={() => {
+                    if (
+                      !irParaTela({
+                        view: "pre-classificacao",
+                        edital: {
+                          id: e.editalId,
+                          titulo: String(escolhido?.edital ?? ""),
+                        },
+                      })
+                    )
+                      estado.mudarVisao("pre");
+                  }}
                 >
                   Abrir pré-classificação
                 </button>
