@@ -115,6 +115,12 @@ const MIGRATION_QUE_LIGA_ANALISAR = ler(
 const MIGRATION_DA_ORDEM = ler(
   "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql",
 );
+const MIGRATION_DA_PRE = ler(
+  "supabase/migrations/20261028100644_entrada_propria_pre_classificacao.sql",
+);
+const MIGRATION_QUE_LIGA_PRE = ler(
+  "supabase/migrations/20261028100707_ativar_entrada_pre_classificacao.sql",
+);
 const RESPOSTA_DO_ENSAIO = JSON.parse(
   ler("tests/fixtures/listar-abas-do-menu.json"),
 );
@@ -135,7 +141,9 @@ function linhasDoInsert(tabela) {
 
 function linhasDoInsertEm(sql, tabela) {
   const inicio = sql.indexOf(`insert into public."${tabela}"`);
-  const insert = sql.slice(inicio, sql.indexOf(";", inicio));
+  const insert = sql
+    .slice(inicio, sql.indexOf(";", inicio))
+    .split(/\bon conflict\b/i)[0];
   const [cabecalho, valores] = insert.split(/\)\s*values\s*/);
   const colunas = [...cabecalho.matchAll(/"([A-Z_]+)"/g)]
     .map((m) => m[1])
@@ -164,6 +172,7 @@ function abasDoSeed() {
     ...linhasDoInsertEm(MIGRATION_DA_AVALIACAO, "TB_ABA"),
     ...linhasDoInsertEm(MIGRATION_DE_CONDUZIR, "TB_ABA"),
     ...linhasDoInsertEm(MIGRATION_DE_ANALISAR, "TB_ABA"),
+    ...linhasDoInsertEm(MIGRATION_DA_PRE, "TB_ABA"),
   ];
   for (const sql of [
     MIGRATION_DAS_ENTREVISTAS,
@@ -186,6 +195,14 @@ function abasDoSeed() {
       /update public."TB_ABA" set "NO_ABA" = '([^']+)'[^;]*where "CO_ABA" = '([^']+)'/g,
     ))
       abas.find((linha) => linha.CO_ABA === aba).NO_ABA = rotulo;
+  for (const [, codigo, antiga, nova] of MIGRATION_DA_PRE.matchAll(
+    /\('([^']+)', (\d+), (\d+)\)/g,
+  )) {
+    const aba = abas.find((linha) => linha.CO_ABA === codigo);
+    if (aba && aba.NU_ORDEM === Number(antiga)) aba.NU_ORDEM = Number(nova);
+  }
+  const selecao = abas.find((linha) => linha.CO_ABA === "selecao");
+  if (selecao?.NO_ABA === "Seleção") selecao.NO_ABA = "Painel da Seleção";
   return abas;
 }
 
@@ -226,6 +243,13 @@ function ligacoesDoSeed() {
   expect(MIGRATION_QUE_LIGA_ANALISAR).toContain(
     `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'analisar-recursos'`,
   );
+  expect(MIGRATION_DA_PRE).toContain(
+    `select 'pre-classificacao', a."CO_AREA", 'S'`,
+  );
+  expect(MIGRATION_DA_PRE).toContain("'avaliacao_documental'");
+  expect(MIGRATION_QUE_LIGA_PRE).toContain(
+    `"CO_ABA" = 'pre-classificacao'`,
+  );
   return [
     ...linhasDoInsert("RL_ABA_AREA"),
     ...[
@@ -236,6 +260,7 @@ function ligacoesDoSeed() {
       "conduzir-entrevistas",
       // As áreas do painel de recursos (as três no seed).
       "analisar-recursos",
+      "pre-classificacao",
     ].flatMap((aba) =>
       AREAS_DO_SISTEMA.map((area) => ({ CO_ABA: aba, CO_AREA: area.id })),
     ),
@@ -314,6 +339,7 @@ describe("o seed da migration é o catálogo do código", () => {
       "approved",
       "analises",
       "avaliacao-documental",
+      "pre-classificacao",
       "entrevistas",
       "conduzir-entrevistas",
       "recursos",
