@@ -195,7 +195,8 @@ function VagaDaPre({
   const [emitindo, setEmitindo] = useState("");
   const [erroDoEspelho, setErroDoEspelho] = useState("");
   const [limiteEliminados, setLimiteEliminados] = useState(LIMITE_VISIVEL);
-  const [limiteClassificados, setLimiteClassificados] = useState(LIMITE_VISIVEL);
+  const [limiteClassificados, setLimiteClassificados] =
+    useState(LIMITE_VISIVEL);
   const [eliminadosAbertos, setEliminadosAbertos] = useState(false);
   const eliminadosVisiveis = buscaEliminado
     ? v.eliminados.filter((c) =>
@@ -206,7 +207,10 @@ function VagaDaPre({
     : v.eliminados;
   const eliminadosNaPagina = eliminadosVisiveis.slice(0, limiteEliminados);
   const classificadosNaPagina = v.lote.slice(0, limiteClassificados);
-  const foraNaPagina = v.fora.slice(0, Math.max(0, limiteClassificados - v.lote.length));
+  const foraNaPagina = v.fora.slice(
+    0,
+    Math.max(0, limiteClassificados - v.lote.length),
+  );
   async function emitirEspelho(c: InscritoDaPre) {
     if (emitindo || !editalId || c.situacao !== "ELIMINADO") return;
     setErroDoEspelho("");
@@ -365,9 +369,16 @@ function VagaDaPre({
           </table>
         </div>
       ) : null}
-      {v.lote.length + v.fora.length > limiteClassificados && !buscaEliminado ? (
-        <button type="button" className="btn secondary small" onClick={() => setLimiteClassificados((n) => n + LIMITE_VISIVEL)}>
-          Mostrar mais classificados ({Math.min(limiteClassificados, v.lote.length + v.fora.length)} de {v.lote.length + v.fora.length})
+      {v.lote.length + v.fora.length > limiteClassificados &&
+      !buscaEliminado ? (
+        <button
+          type="button"
+          className="btn secondary small"
+          onClick={() => setLimiteClassificados((n) => n + LIMITE_VISIVEL)}
+        >
+          Mostrar mais classificados (
+          {Math.min(limiteClassificados, v.lote.length + v.fora.length)} de{" "}
+          {v.lote.length + v.fora.length})
         </button>
       ) : null}
       {eliminadosVisiveis.length ? (
@@ -381,47 +392,55 @@ function VagaDaPre({
           {/* Na mesma rolagem da tabela do lote: sem ela, a tabela global de
               app.css (min-width 1180px) estourava o cartão e a página rolava
               de lado ao abrir os eliminados. */}
-          {(eliminadosAbertos || buscaEliminado) ? <div className="ui-tabela-rolagem">
-            <table className="avd-tabela">
-              <thead>
-                <tr>
-                  <th scope="col">Código</th>
-                  <th scope="col">Nome</th>
-                  <th scope="col">Motivo</th>
-                  <th scope="col">Documento</th>
-                </tr>
-              </thead>
-              <tbody>
-                {eliminadosNaPagina.map((c) => (
-                  <tr
-                    key={c.id}
-                    data-candidato={c.codigo}
-                    data-situacao="ELIMINADO"
-                  >
-                    <td>{c.codigo}</td>
-                    <td>{c.nome}</td>
-                    <td>{c.motivo}</td>
-                    <td>
-                      <button
-                        type="button"
-                        className="btn secondary small"
-                        data-acao="espelho-eliminado-pre"
-                        disabled={Boolean(emitindo) || !c.motivo}
-                        onClick={() => void emitirEspelho(c)}
-                      >
-                        {emitindo === c.codigo
-                          ? "Gerando PDF…"
-                          : "Baixar comunicado PDF"}
-                      </button>
-                    </td>
+          {eliminadosAbertos || buscaEliminado ? (
+            <div className="ui-tabela-rolagem">
+              <table className="avd-tabela">
+                <thead>
+                  <tr>
+                    <th scope="col">Código</th>
+                    <th scope="col">Nome</th>
+                    <th scope="col">Motivo</th>
+                    <th scope="col">Documento</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div> : null}
-          {(eliminadosAbertos || buscaEliminado) && eliminadosVisiveis.length > limiteEliminados ? (
-            <button type="button" className="btn secondary small" onClick={() => setLimiteEliminados((n) => n + LIMITE_VISIVEL)}>
-              Mostrar mais eliminados ({limiteEliminados} de {eliminadosVisiveis.length})
+                </thead>
+                <tbody>
+                  {eliminadosNaPagina.map((c) => (
+                    <tr
+                      key={c.id}
+                      data-candidato={c.codigo}
+                      data-situacao="ELIMINADO"
+                    >
+                      <td>{c.codigo}</td>
+                      <td>{c.nome}</td>
+                      <td>{c.motivo}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn secondary small"
+                          data-acao="espelho-eliminado-pre"
+                          disabled={Boolean(emitindo) || !c.motivo}
+                          onClick={() => void emitirEspelho(c)}
+                        >
+                          {emitindo === c.codigo
+                            ? "Gerando PDF…"
+                            : "Baixar comunicado PDF"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+          {(eliminadosAbertos || buscaEliminado) &&
+          eliminadosVisiveis.length > limiteEliminados ? (
+            <button
+              type="button"
+              className="btn secondary small"
+              onClick={() => setLimiteEliminados((n) => n + LIMITE_VISIVEL)}
+            >
+              Mostrar mais eliminados ({limiteEliminados} de{" "}
+              {eliminadosVisiveis.length})
             </button>
           ) : null}
           {erroDoEspelho ? (
