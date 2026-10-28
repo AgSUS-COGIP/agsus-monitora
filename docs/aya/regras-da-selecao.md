@@ -9,8 +9,8 @@ ficam aqui, com a Aya. Fontes: `src/modulos/selecao/`, `src/lib/selecao-do-paine
 
 ## Tela de Seleção
 
-**perguntas:** tela de selecao | aba selecao | funil por vaga | painel de selecao | como funciona a tela de selecao | para que serve selecao | para que serve a tela de selecao
-**resposta:** A tela de Seleção do MONITORA mostra o funil de cada vaga, a partir da planilha Auditoria carregada de hora em hora no banco. Os sete indicadores são inscritos, aptos, triados, convocados, aprovados, contratados e a taxa de contratação. Ela é só de consulta e mostra a área escolhida no menu. Os quatro filtros (DSEI ou unidade, edital, cargo e vaga) aceitam vários valores, e as opções de cada um seguem os outros já escolhidos. Clicar numa barra do ranking de unidades filtra a tela por aquela unidade; clicar de novo tira o filtro. A busca da tabela vale só para a tabela.
+**perguntas:** tela de selecao | aba selecao | funil por vaga | painel de selecao | como funciona a tela de selecao | para que serve selecao | para que serve a tela de selecao | para que serve painel da selecao
+**resposta:** O Painel da Seleção do MONITORA mostra o funil de cada vaga, a partir da planilha Auditoria carregada de hora em hora no banco. Os sete indicadores são inscritos, aptos, triados, convocados, aprovados, contratados e a taxa de contratação. Ela é só de consulta e mostra a área escolhida no menu. Os quatro filtros (DSEI ou unidade, edital, cargo e vaga) aceitam vários valores, e as opções de cada um seguem os outros já escolhidos. Clicar numa barra do ranking de unidades filtra a tela por aquela unidade; clicar de novo tira o filtro. A busca da tabela vale só para a tabela.
 **fonte:** src/modulos/selecao/; src/lib/selecao-do-painel.ts
 **abrir:** selecao
 
