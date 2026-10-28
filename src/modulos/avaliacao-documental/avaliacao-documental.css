@@ -1951,5 +1951,9 @@
   padding-top: var(--space-4);
 }
 .avd-espelhos-comunicados h4,
-.avd-espelhos-comunicados p { margin: 0; }
-.avd-espelhos-comunicados select { width: 100%; }
+.avd-espelhos-comunicados p {
+  margin: 0;
+}
+.avd-espelhos-comunicados select {
+  width: 100%;
+}
