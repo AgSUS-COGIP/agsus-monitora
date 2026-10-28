@@ -259,8 +259,12 @@ function TelaDaArea({
             </Aviso>
           ) : null}
 
-          {e.editalId && e.dados && !emAnalise && coordena &&
-          !preIndependenteAtiva && visao !== "pre" ? (
+          {e.editalId &&
+          e.dados &&
+          !emAnalise &&
+          coordena &&
+          !preIndependenteAtiva &&
+          visao !== "pre" ? (
             <div className="avd-atalho-pre-legado">
               <button
                 type="button"
