@@ -192,5 +192,9 @@ export function montarPreClassificacao({
     raiz,
     atualizar,
     render: atualizar,
+    async abrirEdital(editalId: string) {
+      if (!estado.obter().carregado) await atualizar();
+      return estado.escolherEdital(editalId);
+    },
   };
 }
