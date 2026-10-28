@@ -17,10 +17,7 @@ import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import { criarEstadoDaPreClassificacao } from "./estado-da-pre-classificacao.ts";
 import { PreClassificacao } from "./pre-classificacao.tsx";
 import type { LojaDaAvaliacao } from "./estado.ts";
-import type {
-  Avisar,
-  ClienteDaAvaliacao,
-} from "./tipos-do-estado.ts";
+import type { Avisar, ClienteDaAvaliacao } from "./tipos-do-estado.ts";
 import "./avaliacao-documental.css";
 
 /*
@@ -60,22 +57,25 @@ function TelaDaPreClassificacao({
   });
   const escolhido = editalEscolhido(e.editais, e.editalId);
   // Não montar PreClassificacao sem a confirmação do papel do edital.
-  const coordena = Boolean(e.editalId && e.dados && coordenaOEdital(e) === true);
+  const coordena = Boolean(
+    e.editalId && e.dados && coordenaOEdital(e) === true,
+  );
 
   return (
     <div className="ui-tela avd-tela">
       <TopoDoPainel
         status={e.carregandoEdital ? "Carregando o edital…" : ""}
         aoAtualizar={() => void atualizar()}
-        atualizarDesativado={!e.area || e.carregandoEditais || e.carregandoEdital}
+        atualizarDesativado={
+          !e.area || e.carregandoEditais || e.carregandoEdital
+        }
       >
         <SeloDeTreinamento edital={escolhido} />
       </TopoDoPainel>
 
       {e.semAcesso ? (
         <Aviso tom="warning" papel="alert">
-          <strong>{MENSAGEM_SEM_ACESSO}</strong>{" "}
-          <span>{e.erroAoCarregar}</span>
+          <strong>{MENSAGEM_SEM_ACESSO}</strong> <span>{e.erroAoCarregar}</span>
         </Aviso>
       ) : null}
       {e.erroAoCarregar && !e.semAcesso ? (
@@ -91,7 +91,10 @@ function TelaDaPreClassificacao({
         </Aviso>
       ) : null}
       {!e.semAcesso ? (
-        <section className="ui-card avd-edital" aria-label="Edital da pré-classificação">
+        <section
+          className="ui-card avd-edital"
+          aria-label="Edital da pré-classificação"
+        >
           <Campo rotulo="Edital">
             <select
               value={e.editalId}
@@ -130,12 +133,7 @@ function TelaDaPreClassificacao({
       ) : null}
       {e.editalId && e.dados && !e.semAcesso ? (
         coordena ? (
-          <PreClassificacao
-            key={e.editalId}
-            e={e}
-            estado={estado}
-            pre={pre}
-          />
+          <PreClassificacao key={e.editalId} e={e} estado={estado} pre={pre} />
         ) : (
           <Aviso tom="warning" papel="alert">
             A Pré-classificação é restrita à coordenação do edital e ao
@@ -175,14 +173,17 @@ export function montarPreClassificacao({
     const area = String(areaAtual() ?? "").trim();
     const editais = await estado.carregar(area);
     const e = estado.obter();
-    if (e.editalId && e.dados?.pode_coordenar)
-      await pre.carregar(e.editalId);
+    if (e.editalId && e.dados?.pode_coordenar) await pre.carregar(e.editalId);
     return editais;
   };
   const raiz = secao
     ? montarModulo(
         secao,
-        <TelaDaPreClassificacao estado={estado} pre={pre} atualizar={atualizar} />,
+        <TelaDaPreClassificacao
+          estado={estado}
+          pre={pre}
+          atualizar={atualizar}
+        />,
         { nome: "a Pré-classificação" },
       ).raiz
     : null;
