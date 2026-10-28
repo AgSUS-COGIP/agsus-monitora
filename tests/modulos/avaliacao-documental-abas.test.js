@@ -155,7 +155,7 @@ describe("abas por papel", () => {
       coordena: true,
     });
     await montar(supabase);
-    expect(abas()).toEqual(["fila", "resultados", "espelhos", "configuracoes"]);
+    expect(abas()).toEqual(["fila", "espelhos", "configuracoes"]);
     expect(painel.estado.obter().visao).toBe("fila");
     expect(chamou(supabase, "obter_equipe_edital")).toBe(true);
     expect(botoes()).toContain("Abrir pré-classificação");
@@ -172,15 +172,18 @@ describe("abas por papel", () => {
     expect(
       secao.querySelector("[aria-label='Emissão dos espelhos de nota']"),
     ).not.toBeNull();
+    expect(
+      secao.querySelector("[data-acao='baixar-comunicado-eliminacao']"),
+    ).not.toBeNull();
   });
 
-  it("quem analisa vê Fila e Resultados sem operações da coordenação", async () => {
+  it("quem analisa vê Fila sem operações da coordenação", async () => {
     const supabase = supabaseFalso({
       editais: [edital("e93", "93/2026", "ANALISTA")],
       coordena: false,
     });
     await montar(supabase);
-    expect(abas()).toEqual(["fila", "resultados"]);
+    expect(abas()).toEqual(["fila"]);
     expect(painel.estado.obter().visao).toBe("fila");
     expect(secao.querySelector("[data-candidato='7001']")).not.toBeNull();
     // Nenhum atalho para as abas da coordenação, e a equipe nem é lida.
@@ -189,41 +192,21 @@ describe("abas por papel", () => {
     expect(chamou(supabase, "obter_equipe_edital")).toBe(false);
     expect(chamou(supabase, "obter_pre_classificacao")).toBe(false);
     act(() => painel.estado.mudarVisao("resultados"));
-    expect(
-      secao.querySelector("[aria-label='Resultados da avaliação documental']"),
-    ).not.toBeNull();
+    expect(painel.estado.obter().visao).toBe("fila");
     act(() => painel.estado.mudarVisao("espelhos"));
     act(() => painel.estado.mudarVisao("configuracoes"));
-    expect(painel.estado.obter().visao).toBe("resultados");
+    expect(painel.estado.obter().visao).toBe("fila");
   });
 
-  it("mostra somente resultados registrados, sem recalcular nota", async () => {
+  it("a visão antiga Resultados direciona para a Fila sem modificar fichas", async () => {
     const supabase = supabaseFalso({
       editais: [edital("e93", "93/2026", "ANALISTA")],
       coordena: false,
-      concluida: {
-        id: "c-7002",
-        codigo: "7002",
-        nome: "Pessoa 7002",
-        vaga: "179698",
-        modalidade: "AC",
-        ficha: {
-          id: "f2",
-          situacao: "CONCLUIDA",
-          resultado: "APTO",
-          nota_final: 17,
-          motivo_saida: "Avaliação concluída",
-        },
-      },
     });
     await montar(supabase);
     act(() => painel.estado.mudarVisao("resultados"));
-    await esperar();
-    const linha = secao.querySelector("[data-resultado-candidato='7002']");
-    expect(linha).not.toBeNull();
-    expect(linha.textContent).toContain("17");
-    expect(linha.textContent).toContain("APTO");
-    expect(secao.querySelector("[data-resultado-candidato='7001']")).toBeNull();
+    expect(painel.estado.obter().visao).toBe("fila");
+    expect(secao.querySelector("[data-tour='avd-fila-tabela']")).not.toBeNull();
   });
 
   it("a visão 'regra' guardada vira Fila para quem analisa (e não volta)", async () => {
@@ -254,7 +237,7 @@ describe("abas por papel", () => {
     expect(botoes()).not.toContain("Regra");
     await act(async () => soltar());
     await esperar();
-    expect(abas()).toEqual(["fila", "resultados"]);
+    expect(abas()).toEqual(["fila"]);
   });
 });
 
@@ -293,7 +276,7 @@ describe("transição do atalho da Pré-classificação", () => {
     expect(navegar).not.toHaveBeenCalled();
   });
 
-  it("com a aba ativa no catálogo, abre rota independente e preserva edital", async () => {
+  it("com a aba ativa no catálogo, remove o atalho duplicado", async () => {
     await carregarCatalogoDeAbas({
       consulta: Promise.resolve({
         data: [
@@ -319,9 +302,8 @@ describe("transição do atalho da Pré-classificação", () => {
     const botao = [...secao.querySelectorAll("button")].find((el) =>
       el.textContent.includes("Abrir pré-classificação"),
     );
-    expect(botao).toBeDefined();
-    await clicar(botao);
-    expect(navegar).toHaveBeenCalledWith("pre-classificacao");
+    expect(botao).toBeUndefined();
+    expect(navegar).not.toHaveBeenCalled();
   });
 });
 

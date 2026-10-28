@@ -28,12 +28,7 @@ export const VISOES: ReadonlyArray<{
   icone: string;
 }> = Object.freeze([
   { valor: "fila", rotulo: "Fila de análise", icone: "fa-list-check" },
-  {
-    valor: "resultados",
-    rotulo: "Resultados",
-    icone: "fa-list-ol",
-  },
-  { valor: "espelhos", rotulo: "Espelhos", icone: "fa-file-pdf" },
+  { valor: "espelhos", rotulo: "Documentos", icone: "fa-file-pdf" },
   { valor: "configuracoes", rotulo: "Configurações", icone: "fa-sliders" },
 ]);
 
@@ -80,9 +75,7 @@ export function coordenaOEdital(e: EstadoDasAbas): boolean | null {
 }
 
 /** A leitura de resultados já existentes não concede ações de coordenação. */
-const VISOES_DE_LEITURA = VISOES.filter(
-  (v) => v.valor === "fila" || v.valor === "resultados",
-);
+const VISOES_DE_LEITURA = VISOES.filter((v) => v.valor === "fila");
 
 /** As abas que a pessoa vê após confirmar seu papel no edital. */
 export function visoesDaPessoa(e: EstadoDasAbas): typeof VISOES {
@@ -102,7 +95,7 @@ export function visoesDaPessoa(e: EstadoDasAbas): typeof VISOES {
  */
 export function visaoNaTela(e: EstadoDasAbas): Visao {
   const visao = e.visao as Visao;
-  if (visao === "fila" || visao === "resultados") return visao;
+  if (visao === "fila" || visao === "resultados") return "fila";
   if (coordenaOEdital(e) !== true) return VISAO_DE_QUEM_AVALIA;
   if (visao === "pre" || visao === "espelhos") return visao;
   if (visao === "regra" || visao === "equipe" || visao === "configuracoes")

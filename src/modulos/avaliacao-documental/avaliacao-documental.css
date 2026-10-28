@@ -1941,3 +1941,19 @@
   margin: var(--space-1) 0 0;
   max-width: 72ch;
 }
+
+/* Separa espelhos de fichas concluídas dos comunicados de pré-análise. */
+.avd-espelhos-comunicados {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-4);
+}
+.avd-espelhos-comunicados h4,
+.avd-espelhos-comunicados p {
+  margin: 0;
+}
+.avd-espelhos-comunicados select {
+  width: 100%;
+}

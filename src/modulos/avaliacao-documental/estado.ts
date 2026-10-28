@@ -495,12 +495,14 @@ export function criarEstadoDaAvaliacao({
     escolherEdital,
     /* Aba da coordenação para quem não coordena: fica na Fila. */
     mudarVisao(visao: string) {
+      // Compatibilidade com links/sessoes antigas: Resultados foi unido a Fila.
+      const destino = visao === "resultados" ? "fila" : visao;
       if (
-        (VISOES_DA_AVALIACAO as ReadonlyArray<string>).includes(visao) &&
-        visao !== estado.visao &&
-        !visaoProibida({ ...estado, visao: visao as Visao })
+        (VISOES_DA_AVALIACAO as ReadonlyArray<string>).includes(destino) &&
+        destino !== estado.visao &&
+        !visaoProibida({ ...estado, visao: destino as Visao })
       )
-        publicar({ visao: visao as Visao });
+        publicar({ visao: destino as Visao });
     },
     copiarModelo: (modelo: string) =>
       gravarRegra(
