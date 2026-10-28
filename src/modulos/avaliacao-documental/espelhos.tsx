@@ -1,7 +1,11 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { lerCodigos } from "../../lib/avaliacao-documental/espelhos-em-massa.ts";
 import { Aviso, Campo } from "../../ui/index.ts";
-import { EspelhosEmMassa, lerFichasDosEspelhos, montarEspelhosLidos } from "./espelhos-em-massa.tsx";
+import {
+  EspelhosEmMassa,
+  lerFichasDosEspelhos,
+  montarEspelhosLidos,
+} from "./espelhos-em-massa.tsx";
 import { textosParaOEspelho } from "./modelo-do-espelho-no-banco.ts";
 import { ModeloDoEspelhoDeNota } from "./modelo-do-espelho.tsx";
 import { baixarEspelhoProntoEmPdf } from "./ficha/espelho-de-nota.ts";
@@ -31,7 +35,11 @@ export function EspelhosDaAvaliacao({
 
   const dados = st.editalId === editalId ? st.dados : null;
   if (dados && !dados.pode_coordenar)
-    return <Aviso tom="warning">Somente a coordenação do edital pode emitir espelhos em massa.</Aviso>;
+    return (
+      <Aviso tom="warning">
+        Somente a coordenação do edital pode emitir espelhos em massa.
+      </Aviso>
+    );
 
   async function emitirIndividual() {
     const codigos = lerCodigos(codigo);
@@ -60,7 +68,9 @@ export function EspelhosDaAvaliacao({
       const arquivo = await baixarEspelhoProntoEmPdf(espelho);
       setAviso(`Arquivo preparado: ${arquivo}`);
     } catch (e) {
-      setErro(e instanceof Error ? e.message : "Não foi possível emitir o espelho.");
+      setErro(
+        e instanceof Error ? e.message : "Não foi possível emitir o espelho.",
+      );
     } finally {
       setGerando(false);
     }
@@ -70,20 +80,31 @@ export function EspelhosDaAvaliacao({
     return (
       <Aviso tom="danger" papel="alert">
         Não foi possível carregar as fichas: {st.erro}
-        <button type="button" className="btn secondary small" onClick={() => void fila.carregar(editalId)}>
+        <button
+          type="button"
+          className="btn secondary small"
+          onClick={() => void fila.carregar(editalId)}
+        >
           Tentar novamente
         </button>
       </Aviso>
     );
   if (!dados)
-    return <div className="ui-card" aria-busy="true">Carregando espelhos do edital…</div>;
+    return (
+      <div className="ui-card" aria-busy="true">
+        Carregando espelhos do edital…
+      </div>
+    );
 
   return (
-    <section className="ui-card avd-espelhos" aria-label="Emissão dos espelhos de nota">
+    <section
+      className="ui-card avd-espelhos"
+      aria-label="Emissão dos espelhos de nota"
+    >
       <h3 className="ui-titulo">Espelhos de nota</h3>
       <p className="ui-texto-secundario">
-        Emita uma ficha concluída pelo código ou exporte documentos em massa.
-        O modelo e as notas oficiais são preservados.
+        Emita uma ficha concluída pelo código ou exporte documentos em massa. O
+        modelo e as notas oficiais são preservados.
       </p>
       <div className="avd-espelhos-individual">
         <Campo rotulo="Código de inscrição para PDF individual">
@@ -91,7 +112,11 @@ export function EspelhosDaAvaliacao({
             type="search"
             value={codigo}
             placeholder="Código da Empregare"
-            onChange={(ev) => { setCodigo(ev.target.value); setErro(""); setAviso(""); }}
+            onChange={(ev) => {
+              setCodigo(ev.target.value);
+              setErro("");
+              setAviso("");
+            }}
             disabled={gerando}
             data-acao="espelho-individual-codigo"
           />
@@ -124,8 +149,16 @@ export function EspelhosDaAvaliacao({
           Modelo e pré-visualização
         </button>
       </div>
-      {erro ? <Aviso tom="danger" papel="alert">{erro}</Aviso> : null}
-      {aviso ? <Aviso tom="info" papel="status">{aviso}</Aviso> : null}
+      {erro ? (
+        <Aviso tom="danger" papel="alert">
+          {erro}
+        </Aviso>
+      ) : null}
+      {aviso ? (
+        <Aviso tom="info" papel="status">
+          {aviso}
+        </Aviso>
+      ) : null}
       {massa ? (
         <EspelhosEmMassa
           editalId={editalId}
@@ -133,7 +166,10 @@ export function EspelhosDaAvaliacao({
           fila={dados.candidatos || []}
           rpc={fila.rpc}
           aoFechar={() => setMassa(false)}
-          aoEditarModelo={() => { setMassa(false); setModelo(true); }}
+          aoEditarModelo={() => {
+            setMassa(false);
+            setModelo(true);
+          }}
         />
       ) : null}
       {modelo ? (
