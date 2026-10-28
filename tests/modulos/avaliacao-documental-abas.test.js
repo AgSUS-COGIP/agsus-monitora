@@ -66,7 +66,12 @@ const FILA = (coordena) => ({
   ],
 });
 
-function supabaseFalso({ editais, coordena, regraAtrasada = null, concluida = null }) {
+function supabaseFalso({
+  editais,
+  coordena,
+  regraAtrasada = null,
+  concluida = null,
+}) {
   const respostas = {
     listar_editais_avaliacao: () => ({ area: "projetos", editais }),
     obter_regra_analise: ({ p_edital }) => ({
@@ -154,10 +159,16 @@ describe("abas por papel", () => {
     act(() => painel.estado.mudarVisao("pre"));
     expect(botoes()).not.toContain("Abrir pré-classificação");
     act(() => painel.estado.mudarVisao("configuracoes"));
-    expect(secao.querySelector("[aria-label='Configurações da avaliação documental']")).not.toBeNull();
+    expect(
+      secao.querySelector(
+        "[aria-label='Configurações da avaliação documental']",
+      ),
+    ).not.toBeNull();
     expect(botoes()).toContain("Abrir pré-classificação");
     act(() => painel.estado.mudarVisao("espelhos"));
-    expect(secao.querySelector("[aria-label='Emissão dos espelhos de nota']")).not.toBeNull();
+    expect(
+      secao.querySelector("[aria-label='Emissão dos espelhos de nota']"),
+    ).not.toBeNull();
   });
 
   it("quem analisa vê Fila e Resultados sem operações da coordenação", async () => {
@@ -175,7 +186,9 @@ describe("abas por papel", () => {
     expect(chamou(supabase, "obter_equipe_edital")).toBe(false);
     expect(chamou(supabase, "obter_pre_classificacao")).toBe(false);
     act(() => painel.estado.mudarVisao("resultados"));
-    expect(secao.querySelector("[aria-label='Resultados da avaliação documental']")).not.toBeNull();
+    expect(
+      secao.querySelector("[aria-label='Resultados da avaliação documental']"),
+    ).not.toBeNull();
     act(() => painel.estado.mudarVisao("espelhos"));
     act(() => painel.estado.mudarVisao("configuracoes"));
     expect(painel.estado.obter().visao).toBe("resultados");
