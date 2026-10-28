@@ -609,9 +609,10 @@ describe("selo beta das abas", () => {
   const recursosDe = (abas) =>
     abas.find((aba) => aba.id === "analisar-recursos");
 
-  it("no código, só Avaliação documental, Analisar recursos, Entrevistas (painel e conduzir), Classificação e Seleção são beta; as outras nem têm o campo", () => {
+  it("no código, só Avaliação documental, Pré-classificação, Analisar recursos, Entrevistas (painel e conduzir), Classificação e Seleção são beta; as outras nem têm o campo", () => {
     const beta = [
       "avaliacao-documental",
+      "pre-classificacao",
       "analisar-recursos",
       "entrevistas",
       "conduzir-entrevistas",
