@@ -121,6 +121,9 @@ const MIGRATION_DA_PRE = ler(
 const ROLLBACK_DA_PRE = ler(
   "supabase/rollback/20261028100644_entrada_propria_pre_classificacao.sql",
 );
+const ENSAIO_DA_PRE = ler(
+  "supabase/ensaios/20261028100644_entrada_propria_pre_classificacao.sql",
+);
 const RESPOSTA_DO_ENSAIO = JSON.parse(
   ler("tests/fixtures/listar-abas-do-menu-pre-classificacao.json"),
 );
@@ -318,6 +321,16 @@ describe("proteções da migração da Pré-classificação", () => {
       expect(sql.split(fim)).toHaveLength(2);
       expect(sql).not.toContain("\n" + "$" + ";\n");
     }
+  });
+
+  it("ensaia exatamente o corpo do SQL sem persistir alterações", () => {
+    const inicio = MIGRATION_DA_PRE.indexOf("\nbegin;\n") + 1;
+    const fim = MIGRATION_DA_PRE.lastIndexOf("\ncommit;");
+    const corpo = MIGRATION_DA_PRE.slice(inicio, fim);
+    expect(ENSAIO_DA_PRE).toContain(corpo);
+    for (const etapa of ["E1", "E2", "E3", "E4"])
+      expect(ENSAIO_DA_PRE).toContain("FALHOU " + etapa);
+    expect(ENSAIO_DA_PRE.trimEnd().endsWith("rollback;")).toBe(true);
   });
 
   it("recusa colisão, ordem personalizada e rollback com a entrada ativa", () => {
