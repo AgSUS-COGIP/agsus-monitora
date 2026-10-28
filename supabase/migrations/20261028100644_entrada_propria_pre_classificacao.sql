@@ -56,7 +56,7 @@ begin
     raise exception 'Ordem do catálogo personalizada ou incompleta: revisar migration sem sobrescrever ajustes.';
   end if;
 end;
-$;
+$$;
 
 -- Desloca somente o baseline conferido; a pré-verificação recusa ordens personalizadas.
 update public."TB_ABA" a
