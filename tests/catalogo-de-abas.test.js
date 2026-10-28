@@ -315,13 +315,15 @@ describe("o seed da migration é o catálogo do código", () => {
     expect(
       doBanco.filter((aba) => aba.id !== "pre-classificacao").map(camposDaAba),
     ).toEqual(ABAS_DO_MENU.map(camposDaAba));
-    expect(doBanco.find((aba) => aba.id === "pre-classificacao")).toMatchObject({
-      id: "pre-classificacao",
-      rotulo: "Pré-classificação",
-      view: "pre-classificacao",
-      ordem: 6,
-      recurso: "avaliacao_documental",
-    });
+    expect(doBanco.find((aba) => aba.id === "pre-classificacao")).toMatchObject(
+      {
+        id: "pre-classificacao",
+        rotulo: "Pré-classificação",
+        view: "pre-classificacao",
+        ordem: 6,
+        recurso: "avaliacao_documental",
+      },
+    );
   });
 
   it("as mesmas páginas em cada área (view, rótulo, ícone e ordem)", () => {
