@@ -28,7 +28,11 @@ export const VISOES: ReadonlyArray<{
   icone: string;
 }> = Object.freeze([
   { valor: "fila", rotulo: "Fila de análise", icone: "fa-list-check" },
-  { valor: "resultados", rotulo: "Resultados", icone: "fa-square-poll-vertical" },
+  {
+    valor: "resultados",
+    rotulo: "Resultados",
+    icone: "fa-square-poll-vertical",
+  },
   { valor: "espelhos", rotulo: "Espelhos", icone: "fa-file-pdf" },
   { valor: "configuracoes", rotulo: "Configurações", icone: "fa-sliders" },
 ]);
@@ -101,11 +105,7 @@ export function visaoNaTela(e: EstadoDasAbas): Visao {
   if (visao === "fila" || visao === "resultados") return visao;
   if (coordenaOEdital(e) !== true) return VISAO_DE_QUEM_AVALIA;
   if (visao === "pre" || visao === "espelhos") return visao;
-  if (
-    visao === "regra" ||
-    visao === "equipe" ||
-    visao === "configuracoes"
-  )
+  if (visao === "regra" || visao === "equipe" || visao === "configuracoes")
     return "configuracoes";
   return VISAO_DE_QUEM_AVALIA;
 }
