@@ -124,3 +124,20 @@
     min-height: 55vh;
   }
 }
+
+/* Dialogo institucional: rolagem restrita ao conteudo, com acoes persistentes. */
+.modal-card.avd-modelo-espelho { gap: 0; }
+.avd-modelo-espelho-corpo { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); align-items: start; }
+.avd-modelo-espelho-campos { min-width: 0; }
+.avd-modelo-espelho-previa { min-width: 0; }
+.avd-modelo-espelho-folha { min-height: 520px; height: 65dvh; max-height: 700px; }
+@media (max-width: 900px) {
+  .avd-modelo-espelho-corpo { grid-template-columns: minmax(0, 1fr); }
+  .avd-modelo-espelho-folha { height: 440px; min-height: 340px; }
+}
+@media (max-width: 700px) {
+  .modal-card.avd-modelo-espelho { padding: 0 !important; }
+  .avd-modelo-espelho-corpo { gap: 20px; }
+  .avd-modelo-espelho-previa { padding: 12px; }
+  .avd-modelo-espelho-folha { min-height: 330px; height: 45dvh; }
+}
