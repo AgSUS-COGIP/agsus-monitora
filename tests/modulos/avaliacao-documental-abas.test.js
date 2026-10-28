@@ -172,7 +172,9 @@ describe("abas por papel", () => {
     expect(
       secao.querySelector("[aria-label='Emissão dos espelhos de nota']"),
     ).not.toBeNull();
-    expect(secao.querySelector("[data-acao='baixar-comunicado-eliminacao']")).not.toBeNull();
+    expect(
+      secao.querySelector("[data-acao='baixar-comunicado-eliminacao']"),
+    ).not.toBeNull();
   });
 
   it("quem analisa vê Fila sem operações da coordenação", async () => {
@@ -235,7 +237,7 @@ describe("abas por papel", () => {
     expect(botoes()).not.toContain("Regra");
     await act(async () => soltar());
     await esperar();
-    expect(abas()).toEqual(["fila", "resultados"]);
+    expect(abas()).toEqual(["fila"]);
   });
 });
 
