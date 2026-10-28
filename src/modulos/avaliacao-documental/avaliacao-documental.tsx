@@ -1,7 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.ts";
 import { montarModulo } from "../../app/montar-modulo.tsx";
-import { irParaTela } from "../../app/ir-para-tela.ts";
 import { abasDoMenu, catalogoDoBanco } from "../../modules/catalogo-de-abas.ts";
 import { criarRascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
 import type { RascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
@@ -31,7 +30,6 @@ import {
 import { EntradaDaAvaliacao } from "./entrada-da-avaliacao.tsx";
 import { Equipe } from "./equipe.tsx";
 import { EspelhosDaAvaliacao } from "./espelhos.tsx";
-import { ResultadosDaAvaliacao } from "./resultados.tsx";
 import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import type { LojaDaAvaliacao } from "./estado.ts";
 import { criarEstadoDaFila, lerFichaLembrada } from "./estado-da-fila.ts";
@@ -130,6 +128,13 @@ function TelaDaArea({
   const recarregar = () => void estado.carregar(e.area);
   const papel = e.dados?.papel;
   const escolhido = editalEscolhido(e.editais, e.editalId);
+  const preIndependenteAtiva =
+    Boolean(catalogoDoBanco()) &&
+    abasDoMenu().some(
+      (aba) =>
+        aba.id === "pre-classificacao" &&
+        aba.areas.some((item) => item.area === e.area),
+    );
   // Modo de análise: a ficha aberta ocupa a tela; só a Fila (que a desenha) fica montada.
   const sf = useSyncExternalStore(fila.assinar, fila.obter);
   const emAnalise = visao === "fila" && Boolean(sf.aberta?.ficha || sf.abrindo);
@@ -254,67 +259,29 @@ function TelaDaArea({
             </Aviso>
           ) : null}
 
-          {e.editalId && e.dados && !emAnalise ? (
-            <section
-              className="ui-card avd-orientacao"
-              aria-label="Organização da avaliação documental"
-            >
-              <div>
-                <strong>Fluxo da avaliação</strong>
-                <p className="ui-texto-secundario">
-                  A Fila reúne as fichas para análise. Resultados consulta as
-                  avaliações concluídas; Espelhos emite documentos;
-                  Configurações reúne critérios, equipe e permissões.
-                </p>
-              </div>
-              {coordena && visao !== "pre" ? (
-                <button
-                  type="button"
-                  className="btn secondary small"
-                  onClick={() => {
-                    // A migração cadastra a nova aba inativa antes de ativá-la
-                    // num PR separado. Durante a transição, o atalho antigo
-                    // continua funcional dentro da Avaliação Documental.
-                    const entradaAtiva =
-                      catalogoDoBanco() &&
-                      abasDoMenu().some(
-                        (aba) =>
-                          aba.id === "pre-classificacao" &&
-                          aba.areas.some((item) => item.area === e.area),
-                      );
-                    if (
-                      !entradaAtiva ||
-                      !irParaTela({
-                        view: "pre-classificacao",
-                        edital: {
-                          id: e.editalId,
-                          titulo: String(escolhido?.edital ?? ""),
-                        },
-                      })
-                    )
-                      estado.mudarVisao("pre");
-                  }}
-                >
-                  Abrir pré-classificação
-                </button>
-              ) : null}
-            </section>
+          {e.editalId && e.dados && !emAnalise && coordena &&
+          !preIndependenteAtiva && visao !== "pre" ? (
+            <div className="avd-atalho-pre-legado">
+              <button
+                type="button"
+                className="btn secondary small"
+                onClick={() => estado.mudarVisao("pre")}
+              >
+                Abrir pré-classificação
+              </button>
+            </div>
           ) : null}
           {e.editalId ? (
             e.dados ? (
               visao === "fila" ? (
                 <Fila key={e.editalId} e={e} fila={fila} />
-              ) : visao === "resultados" ? (
-                <ResultadosDaAvaliacao
-                  key={e.editalId}
-                  editalId={e.editalId}
-                  fila={fila}
-                />
               ) : visao === "espelhos" ? (
                 <EspelhosDaAvaliacao
                   key={e.editalId}
                   editalId={e.editalId}
                   fila={fila}
+                  rotuloEdital={String(escolhido?.edital ?? "")}
+                  unidade={String(escolhido?.unidade ?? "")}
                 />
               ) : visao === "configuracoes" ? (
                 <section
