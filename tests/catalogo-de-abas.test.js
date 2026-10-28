@@ -247,9 +247,7 @@ function ligacoesDoSeed() {
     `select 'pre-classificacao', a."CO_AREA", 'S'`,
   );
   expect(MIGRATION_DA_PRE).toContain("'avaliacao_documental'");
-  expect(MIGRATION_QUE_LIGA_PRE).toContain(
-    `"CO_ABA" = 'pre-classificacao'`,
-  );
+  expect(MIGRATION_QUE_LIGA_PRE).toContain(`"CO_ABA" = 'pre-classificacao'`);
   return [
     ...linhasDoInsert("RL_ABA_AREA"),
     ...[
