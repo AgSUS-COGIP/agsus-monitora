@@ -29,10 +29,36 @@ begin
   if not ('avaliacao_documental' = any (private."FC_RECURSOS_MODULO"())) then
     raise exception 'Recurso avaliacao_documental indisponível.';
   end if;
+  -- Reexecutar sobre uma entrada já existente pode ocultar conflito de
+  -- recurso e ligar áreas a uma aba alheia. Falhar antes de qualquer UPDATE.
+  if exists (
+    select 1 from public."TB_ABA" where "CO_ABA" = 'pre-classificacao'
+  ) then
+    raise exception 'A aba pre-classificacao já existe: conferir antes de aplicar.';
+  end if;
+  -- O rollback não dispõe de histórico da ordenação personalizada.
+  -- Exigir o baseline conhecido evita deslocar uma aba cujo gestor já
+  -- personalizou a ordem e depois desfazer indevidamente essa escolha.
+  if exists (
+    select 1 from (values
+      ('recursos', 6),
+      ('analisar-recursos', 7),
+      ('entrevistas', 8),
+      ('conduzir-entrevistas', 9),
+      ('classificacao', 10),
+      ('aprovados', 11),
+      ('selecao', 12)
+    ) as v(codigo, ordem_esperada)
+    left join public."TB_ABA" a on a."CO_ABA" = v.codigo
+    where a."CO_ABA" is null
+       or a."NU_ORDEM" is distinct from v.ordem_esperada
+  ) then
+    raise exception 'Ordem do catálogo personalizada ou incompleta: revisar migration sem sobrescrever ajustes.';
+  end if;
 end;
-$$;
+$;
 
--- Preserva ordens personalizadas: desloca apenas os valores padrão atuais.
+-- Desloca somente o baseline conferido; a pré-verificação recusa ordens personalizadas.
 update public."TB_ABA" a
    set "NU_ORDEM" = v.ordem_nova, "DT_ATUALIZACAO" = now()
   from (values
@@ -58,8 +84,7 @@ insert into public."TB_ABA"
    "CO_RECURSO", "TP_ABA", "ST_ATIVO", "ST_BETA")
 values
   ('pre-classificacao', 'Pré-classificação', 'list-ordered', 6,
-   'pre-classificacao', 'avaliacao_documental', 'nativa', 'N', 'S')
-on conflict ("CO_ABA") do nothing;
+   'pre-classificacao', 'avaliacao_documental', 'nativa', 'N', 'S');
 
 insert into public."RL_ABA_AREA" ("CO_ABA", "CO_AREA", "ST_ATIVO")
 select 'pre-classificacao', a."CO_AREA", 'S'
