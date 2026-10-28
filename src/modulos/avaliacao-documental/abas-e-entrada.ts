@@ -13,17 +13,28 @@
   Lista sem `papel` (banco antigo): espera o edital carregar (`null`).
 */
 
-export type Visao = "regra" | "equipe" | "pre" | "fila";
+export type Visao =
+  | "fila"
+  | "resultados"
+  | "espelhos"
+  | "configuracoes"
+  | "pre"
+  | "regra"
+  | "equipe";
 
 export const VISOES: ReadonlyArray<{
   valor: Visao;
   rotulo: string;
   icone: string;
 }> = Object.freeze([
-  { valor: "regra", rotulo: "Regra", icone: "fa-sliders" },
-  { valor: "equipe", rotulo: "Equipe", icone: "fa-users" },
-  { valor: "pre", rotulo: "Pré-classificação", icone: "fa-ranking-star" },
-  { valor: "fila", rotulo: "Fila", icone: "fa-list-check" },
+  { valor: "fila", rotulo: "Fila de análise", icone: "fa-list-check" },
+  {
+    valor: "resultados",
+    rotulo: "Resultados",
+    icone: "fa-list-ol",
+  },
+  { valor: "espelhos", rotulo: "Espelhos", icone: "fa-file-pdf" },
+  { valor: "configuracoes", rotulo: "Configurações", icone: "fa-sliders" },
 ]);
 
 /** A aba de quem não coordena (e o destino de uma visão proibida). */
@@ -68,26 +79,43 @@ export function coordenaOEdital(e: EstadoDasAbas): boolean | null {
   return ed.papel === "COORDENADOR";
 }
 
-/** As abas que a pessoa vê no edital escolhido ([] = nenhuma: sem seletor). */
+/** A leitura de resultados já existentes não concede ações de coordenação. */
+const VISOES_DE_LEITURA = VISOES.filter(
+  (v) => v.valor === "fila" || v.valor === "resultados",
+);
+
+/** As abas que a pessoa vê após confirmar seu papel no edital. */
 export function visoesDaPessoa(e: EstadoDasAbas): typeof VISOES {
-  return coordenaOEdital(e) === true ? VISOES : [];
+  if (!e.dados) return [];
+  const coordena = coordenaOEdital(e);
+  return coordena === true
+    ? VISOES
+    : coordena === false
+      ? VISOES_DE_LEITURA
+      : [];
 }
 
-/** A aba que a tela mostra: quem não coordena (ou ainda não se sabe) fica na Fila. */
+/**
+ * Regra e Equipe antigas convergem em Configurações. A Pré-classificação
+ * continua acessível por atalho somente até ganhar sua entrada independente.
+ * Quem não coordena nunca vê Espelhos em massa, Configurações ou Pré.
+ */
 export function visaoNaTela(e: EstadoDasAbas): Visao {
   const visao = e.visao as Visao;
-  if (visao === VISAO_DE_QUEM_AVALIA) return visao;
-  return coordenaOEdital(e) === true && VISOES.some((v) => v.valor === visao)
-    ? visao
-    : VISAO_DE_QUEM_AVALIA;
+  if (visao === "fila" || visao === "resultados") return visao;
+  if (coordenaOEdital(e) !== true) return VISAO_DE_QUEM_AVALIA;
+  if (visao === "pre" || visao === "espelhos") return visao;
+  if (visao === "regra" || visao === "equipe" || visao === "configuracoes")
+    return "configuracoes";
+  return VISAO_DE_QUEM_AVALIA;
 }
 
-/** A visão guardada no estado precisa cair para a Fila? (só quando já se sabe que não coordena) */
+/** Descarta visões privilegiadas guardadas quando a pessoa não coordena. */
 export function visaoProibida(e: EstadoDasAbas): boolean {
   return (
-    e.visao !== VISAO_DE_QUEM_AVALIA &&
     Boolean(e.editalId) &&
-    coordenaOEdital(e) === false
+    coordenaOEdital(e) === false &&
+    !["fila", "resultados"].includes(e.visao || "")
   );
 }
 

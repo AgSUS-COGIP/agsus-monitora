@@ -28,6 +28,8 @@ import {
 } from "./abas-e-entrada.ts";
 import { EntradaDaAvaliacao } from "./entrada-da-avaliacao.tsx";
 import { Equipe } from "./equipe.tsx";
+import { EspelhosDaAvaliacao } from "./espelhos.tsx";
+import { ResultadosDaAvaliacao } from "./resultados.tsx";
 import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import type { LojaDaAvaliacao } from "./estado.ts";
 import { criarEstadoDaFila, lerFichaLembrada } from "./estado-da-fila.ts";
@@ -67,6 +69,10 @@ import "./ficha/ficha.css";
   edital escolhido não há abas: a entrada mostra os cartões dos editais.
 */
 const FILA = VISOES.find((v) => v.valor === "fila")!;
+const ABAS_CONFIGURACOES = [
+  { valor: "regra", rotulo: "Regras e critérios" },
+  { valor: "equipe", rotulo: "Equipe e permissões" },
+] as const;
 
 type LojaDaPreClassificacao = ReturnType<typeof criarEstadoDaPreClassificacao>;
 type OpcoesDaPreClassificacao = NonNullable<
@@ -254,9 +260,9 @@ function TelaDaArea({
               <div>
                 <strong>Fluxo da avaliação</strong>
                 <p className="ui-texto-secundario">
-                  Fila para analisar documentos; Regra e Equipe para configurar
-                  o edital. Os resultados e os espelhos ficam na fila, nas
-                  etapas Concluídas e nas ações da coordenação.
+                  A Fila reúne as fichas para análise. Resultados consulta as
+                  avaliações concluídas; Espelhos emite documentos;
+                  Configurações reúne critérios, equipe e permissões.
                 </p>
               </div>
               {coordena && visao !== "pre" ? (
@@ -272,27 +278,53 @@ function TelaDaArea({
           ) : null}
           {e.editalId ? (
             e.dados ? (
-              visao === "regra" ? (
-                <Regra
-                  key={`${e.editalId}:${e.dados.regra?.versao ?? 0}`}
-                  e={e}
-                  estado={estado}
-                  rascunhoGuardado={rascunho}
-                />
-              ) : visao === "fila" ? (
+              visao === "fila" ? (
                 <Fila key={e.editalId} e={e} fila={fila} />
-              ) : visao === "pre" ? (
+              ) : visao === "resultados" ? (
+                <ResultadosDaAvaliacao
+                  key={e.editalId}
+                  editalId={e.editalId}
+                  fila={fila}
+                />
+              ) : visao === "espelhos" ? (
+                <EspelhosDaAvaliacao
+                  key={e.editalId}
+                  editalId={e.editalId}
+                  fila={fila}
+                />
+              ) : visao === "configuracoes" ? (
+                <section
+                  className="avd-configuracoes"
+                  aria-label="Configurações da avaliação documental"
+                >
+                  <Segmentado
+                    rotulo="Configurações"
+                    opcoes={ABAS_CONFIGURACOES}
+                    valor={e.visao === "equipe" ? "equipe" : "regra"}
+                    aoMudar={estado.mudarVisao}
+                    tour="avd-configuracoes"
+                  />
+                  {e.visao === "equipe" ? (
+                    <Equipe
+                      key={`${e.editalId}:${JSON.stringify(e.equipe?.equipe ?? [])}`}
+                      e={e}
+                      estado={estado}
+                    />
+                  ) : (
+                    <Regra
+                      key={`${e.editalId}:${e.dados.regra?.versao ?? 0}`}
+                      e={e}
+                      estado={estado}
+                      rascunhoGuardado={rascunho}
+                    />
+                  )}
+                </section>
+              ) : (
                 <PreClassificacao
                   key={`${e.editalId}:${e.dados.regra?.versao ?? 0}`}
                   e={e}
                   estado={estado}
                   pre={pre}
-                />
-              ) : (
-                <Equipe
-                  key={`${e.editalId}:${JSON.stringify(e.equipe?.equipe ?? [])}`}
-                  e={e}
-                  estado={estado}
                 />
               )
             ) : (

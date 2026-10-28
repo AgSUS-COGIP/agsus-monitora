@@ -185,6 +185,8 @@ async function montar(supabase) {
   await esperar();
   await escolher(secao.querySelector(".avd-edital select"), "e93");
   await esperar();
+  act(() => painel.estado.mudarVisao("regra"));
+  await esperar();
 }
 const botao = (texto, raiz = document) =>
   [...raiz.querySelectorAll("button")].find((b) =>

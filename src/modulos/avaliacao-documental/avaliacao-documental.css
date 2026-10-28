@@ -279,6 +279,49 @@
   align-self: center;
 }
 
+/* As visões de resultados e espelhos reutilizam a fila já autorizada do edital. */
+.avd-resultados,
+.avd-espelhos,
+.avd-configuracoes {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.avd-resultados-filtros,
+.avd-espelhos-individual {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+.avd-resultados-filtros > .ui-campo,
+.avd-espelhos-individual > .ui-campo {
+  flex: 1 1 250px;
+  min-width: 0;
+}
+.avd-resultados-filtros input,
+.avd-resultados-filtros select,
+.avd-espelhos-individual input {
+  width: 100%;
+}
+.avd-resultados-resumo,
+.avd-espelhos-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+.avd-resultados .ui-tabela-rolagem {
+  max-width: 100%;
+}
+.avd-resultados .avd-tabela {
+  min-width: 820px;
+}
+.avd-configuracoes [data-tour="avd-configuracoes"] {
+  justify-self: start;
+}
+
 /* Aba Pré-classificação (fase F2). */
 .avd-pre {
   display: grid;
