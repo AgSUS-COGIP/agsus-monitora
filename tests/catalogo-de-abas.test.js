@@ -330,9 +330,7 @@ describe("proteções da migração da Pré-classificação", () => {
     expect(ROLLBACK_DA_PRE).toContain(
       "Desative a Pré-classificação e confira a entrada antes do rollback.",
     );
-    expect(ROLLBACK_DA_PRE).toContain(
-      "Ordem alterada desde a migration",
-    );
+    expect(ROLLBACK_DA_PRE).toContain("Ordem alterada desde a migration");
   });
 });
 
