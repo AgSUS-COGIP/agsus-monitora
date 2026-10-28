@@ -660,7 +660,6 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
       </div>
     );
 
-
   const buscaEliminado = buscaDeEspelho.trim().toLocaleLowerCase("pt-BR");
   const vagasVisiveis = buscaEliminado
     ? vagas.filter((v) =>
