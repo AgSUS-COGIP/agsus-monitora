@@ -426,7 +426,10 @@ export const ACOES_DA_AYA: Readonly<Record<string, AcaoDaAya>> = Object.freeze({
     rotulo: "Abrir Lista de aprovados",
     view: "approved",
   }),
-  selecao: Object.freeze({ rotulo: "Abrir Painel da Seleção", view: "selecao" }),
+  selecao: Object.freeze({
+    rotulo: "Abrir Painel da Seleção",
+    view: "selecao",
+  }),
   ...Object.fromEntries(
     Object.entries(SECOES_DA_AYA).map(([id, secao]) => [
       `config:${id}`,
