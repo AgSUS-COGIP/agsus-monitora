@@ -32,7 +32,7 @@ begin
     raise exception 'Pré-classificação sem ligação ativa em todas as áreas.';
   end if;
 end;
-$;
+$$;
 
 update public."TB_ABA"
    set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now()
