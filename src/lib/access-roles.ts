@@ -352,6 +352,7 @@ export function paginasPermitidas(profile: unknown): PaginasPermitidas {
     approved: canViewCore(profile),
     analises: pode("analises"),
     "avaliacao-documental": canViewAvaliacaoDocumental(profile),
+    "pre-classificacao": canViewAvaliacaoDocumental(profile),
     entrevistas: canViewEntrevistas(profile),
     "conduzir-entrevistas": canViewEntrevistas(profile),
     classificacao: canViewClassificacao(profile),
