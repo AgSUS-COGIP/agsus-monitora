@@ -118,6 +118,9 @@ const MIGRATION_DA_ORDEM = ler(
 const MIGRATION_DA_PRE = ler(
   "supabase/migrations/20261028100644_entrada_propria_pre_classificacao.sql",
 );
+const ROLLBACK_DA_PRE = ler(
+  "supabase/rollback/20261028100644_entrada_propria_pre_classificacao.sql",
+);
 const RESPOSTA_DO_ENSAIO = JSON.parse(
   ler("tests/fixtures/listar-abas-do-menu-pre-classificacao.json"),
 );
@@ -305,6 +308,31 @@ const paginasPorArea = (abas) =>
   Object.fromEntries(
     AREAS_DO_SISTEMA.map((area) => [area.id, paginasDaArea(abas, area.id)]),
   );
+
+describe("proteções da migração da Pré-classificação", () => {
+  it("fecha corretamente os blocos PL/pgSQL no deploy e no rollback", () => {
+    for (const sql of [MIGRATION_DA_PRE, ROLLBACK_DA_PRE]) {
+      expect(sql.match(/do \\$\\$/gi)).toHaveLength(1);
+      expect(sql.match(/^\\$\\$;$/gm)).toHaveLength(1);
+      expect(sql).not.toMatch(/^\\$;$/gm);
+    }
+  });
+
+  it("recusa colisão, ordem personalizada e rollback com a entrada ativa", () => {
+    expect(MIGRATION_DA_PRE).toContain(
+      "A aba pre-classificacao já existe: conferir antes de aplicar.",
+    );
+    expect(MIGRATION_DA_PRE).toContain(
+      "Ordem do catálogo personalizada ou incompleta",
+    );
+    expect(ROLLBACK_DA_PRE).toContain(
+      "Desative a Pré-classificação e confira a entrada antes do rollback.",
+    );
+    expect(ROLLBACK_DA_PRE).toContain(
+      "Ordem alterada desde a migration",
+    );
+  });
+});
 
 describe("o seed da migration é o catálogo do código", () => {
   const doBanco = abasDoCatalogo(respostaDoSeed());
