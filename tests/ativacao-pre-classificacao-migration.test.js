@@ -9,6 +9,10 @@ const ROLLBACK = readFileSync(
   "supabase/rollback/20261028100707_ativar_entrada_pre_classificacao.sql",
   "utf8",
 );
+const ENSAIO = readFileSync(
+  "supabase/ensaios/20261028100707_ativar_entrada_pre_classificacao.sql",
+  "utf8",
+);
 
 describe("ativação controlada da Pré-classificação", () => {
   it("possui bloco PL/pgSQL íntegro", () => {
@@ -16,6 +20,15 @@ describe("ativação controlada da Pré-classificação", () => {
     expect(MIGRATION.split("do " + delimitador)).toHaveLength(2);
     expect(MIGRATION.split("\n" + delimitador + ";\n")).toHaveLength(2);
     expect(MIGRATION).not.toContain("\n$;\n");
+  });
+
+  it("o ensaio reproduz a migration e sempre desfaz a transação", () => {
+    const inicio = MIGRATION.indexOf("\nbegin;\n") + 1;
+    const fim = MIGRATION.lastIndexOf("\ncommit;");
+    expect(ENSAIO).toContain(MIGRATION.slice(inicio, fim));
+    for (const etapa of ["E1", "E2", "E3"])
+      expect(ENSAIO).toContain("FALHOU " + etapa);
+    expect(ENSAIO.trimEnd().endsWith("rollback;")).toBe(true);
   });
 
   it("recusa ativar uma entrada inexistente, já ativa ou com áreas incompletas", () => {
