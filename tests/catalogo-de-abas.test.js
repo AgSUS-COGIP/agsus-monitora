@@ -312,9 +312,11 @@ const paginasPorArea = (abas) =>
 describe("proteções da migração da Pré-classificação", () => {
   it("fecha corretamente os blocos PL/pgSQL no deploy e no rollback", () => {
     for (const sql of [MIGRATION_DA_PRE, ROLLBACK_DA_PRE]) {
-      expect(sql.match(/do \\$\\$/gi)).toHaveLength(1);
-      expect(sql.match(/^\\$\\$;$/gm)).toHaveLength(1);
-      expect(sql).not.toMatch(/^\\$;$/gm);
+      const inicio = "do " + "$" + "$";
+      const fim = "\n" + "$" + "$" + ";\n";
+      expect(sql.split(inicio)).toHaveLength(2);
+      expect(sql.split(fim)).toHaveLength(2);
+      expect(sql).not.toContain("\n" + "$" + ";\n");
     }
   });
 
