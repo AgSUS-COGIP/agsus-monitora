@@ -261,8 +261,8 @@ function TelaDaArea({
                 <strong>Fluxo da avaliação</strong>
                 <p className="ui-texto-secundario">
                   A Fila reúne as fichas para análise. Resultados consulta as
-                  avaliações concluídas; Espelhos emite documentos; Configurações
-                  reúne critérios, equipe e permissões.
+                  avaliações concluídas; Espelhos emite documentos;
+                  Configurações reúne critérios, equipe e permissões.
                 </p>
               </div>
               {coordena && visao !== "pre" ? (
