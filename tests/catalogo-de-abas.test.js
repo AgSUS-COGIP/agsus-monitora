@@ -118,9 +118,6 @@ const MIGRATION_DA_ORDEM = ler(
 const MIGRATION_DA_PRE = ler(
   "supabase/migrations/20261028100644_entrada_propria_pre_classificacao.sql",
 );
-const MIGRATION_QUE_LIGA_PRE = ler(
-  "supabase/migrations/20261028100707_ativar_entrada_pre_classificacao.sql",
-);
 const RESPOSTA_DO_ENSAIO = JSON.parse(
   ler("tests/fixtures/listar-abas-do-menu-pre-classificacao.json"),
 );
@@ -247,7 +244,9 @@ function ligacoesDoSeed() {
     `select 'pre-classificacao', a."CO_AREA", 'S'`,
   );
   expect(MIGRATION_DA_PRE).toContain("'avaliacao_documental'");
-  expect(MIGRATION_QUE_LIGA_PRE).toContain(`"CO_ABA" = 'pre-classificacao'`);
+  expect(MIGRATION_DA_PRE).toContain(
+    "'pre-classificacao', 'Pré-classificação', 'list-ordered', 6",
+  );
   return [
     ...linhasDoInsert("RL_ABA_AREA"),
     ...[
