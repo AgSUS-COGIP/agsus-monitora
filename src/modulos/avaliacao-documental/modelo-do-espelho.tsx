@@ -13,7 +13,8 @@ import {
   type TextosDoEspelho,
 } from "../../lib/avaliacao-documental/modelo-do-espelho.ts";
 import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
-import { Aviso, Campo, Carregando, Modal, Segmentado } from "../../ui/index.ts";
+import { Aviso, Campo, Carregando, Segmentado } from "../../ui/index.ts";
+import { ModalInstitucional } from "../../ui/modal-institucional.tsx";
 import { marcaDaPagina } from "./ficha/espelho-de-nota.ts";
 import "./espelho-editor.css";
 import {
@@ -177,36 +178,49 @@ export function ModeloDoEspelhoDeNota({
   }
 
   return (
-    <Modal
-      rotuloId="avdModeloEspelhoTitulo"
+    <ModalInstitucional
+      tituloId="avdModeloEspelhoTitulo"
+      titulo="Modelo do espelho de nota"
+      contexto="Avaliação documental · Documentos oficiais"
+      descricao="Personalize os textos e confira a prévia antes de salvar."
+      icone="fa-file-lines"
       aoFechar={aoFechar}
-      fecharAoClicarFora={false}
-      cartaoClassName="avd-modelo-espelho"
+      fecharDesabilitado={salvando}
+      amplo
+      classeDoCartao="avd-modelo-espelho"
       tour="avd-modelo-espelho"
-    >
-      <div className="avd-modelo-espelho-topo">
-        <div className="avd-espelho-editor-identidade">
-          <span className="avd-espelho-editor-sobretitulo">
-            Avaliação documental · Documentos oficiais
+      complemento={
+        modelo?.atualizadoEm ? (
+          <span className="avd-modelo-espelho-salvo">
+            Versão {modelo.versao} · {formatarDataHora(modelo.atualizadoEm)}
+            {modelo.atualizadoPor ? ` · ${modelo.atualizadoPor}` : ""}
           </span>
-          <h2 id="avdModeloEspelhoTitulo">Modelo do espelho de nota</h2>
-        </div>
-        <button
-          type="button"
-          className="ui-gaveta-fechar"
-          aria-label="Fechar"
-          title="Fechar"
-          onClick={aoFechar}
-        >
-          <i className="fa-solid fa-xmark" aria-hidden="true" />
-        </button>
-      </div>
-      {modelo?.atualizadoEm ? (
-        <small className="avd-modelo-espelho-salvo">
-          Versão {modelo.versao} · {formatarDataHora(modelo.atualizadoEm)}
-          {modelo.atualizadoPor ? ` · ${modelo.atualizadoPor}` : ""}
-        </small>
-      ) : null}
+        ) : null
+      }
+      infoRodape="As alterações afetam os próximos documentos emitidos, sem modificar avaliações."
+      acoes={
+        <>
+          <button type="button" className="btn secondary" disabled={salvando} onClick={aoFechar}>
+            {mudou ? "Descartar e fechar" : "Fechar"}
+          </button>
+          {podeEditar ? (
+            <>
+              <button type="button" className="btn secondary" data-acao="modelo-espelho-padrao"
+                disabled={salvando || noPadrao}
+                onClick={() => { setAviso(""); setRascunho({ ...TEXTOS_PADRAO_DO_ESPELHO }); }}>
+                Restaurar padrão
+              </button>
+              <button type="button" className="btn primary" data-acao="modelo-espelho-salvar"
+                disabled={salvando || !mudou || temErro}
+                onClick={() => void salvar()}>
+                <i className="fa-solid fa-floppy-disk" aria-hidden="true" />{" "}
+                {salvando ? "Salvando…" : "Salvar modelo"}
+              </button>
+            </>
+          ) : null}
+        </>
+      }
+    >
       {!modelo && !erro ? <Carregando /> : null}
       {modelo ? (
         <div className="avd-modelo-espelho-corpo">
@@ -293,37 +307,6 @@ export function ModeloDoEspelhoDeNota({
           </button>
         </Aviso>
       ) : null}
-      <div className="ui-acoes">
-        <button type="button" className="btn secondary" onClick={aoFechar}>
-          {mudou ? "Descartar e fechar" : "Fechar"}
-        </button>
-        {podeEditar ? (
-          <>
-            <button
-              type="button"
-              className="btn secondary"
-              data-acao="modelo-espelho-padrao"
-              disabled={salvando || noPadrao}
-              onClick={() => {
-                setAviso("");
-                setRascunho({ ...TEXTOS_PADRAO_DO_ESPELHO });
-              }}
-            >
-              Restaurar padrão
-            </button>
-            <button
-              type="button"
-              className="btn green"
-              data-acao="modelo-espelho-salvar"
-              disabled={salvando || !mudou || temErro}
-              onClick={() => void salvar()}
-            >
-              <i className="fa-solid fa-floppy-disk" aria-hidden="true" />{" "}
-              {salvando ? "Salvando…" : "Salvar modelo"}
-            </button>
-          </>
-        ) : null}
-      </div>
-    </Modal>
+    </ModalInstitucional>
   );
 }
