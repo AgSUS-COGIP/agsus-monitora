@@ -98,7 +98,9 @@ export function EspelhosDaAvaliacao({
         p_edital: editalId,
       })) as DadosDaPreClassificacao | null;
       if (!pre || String(pre.edital?.id ?? "") !== editalId)
-        throw new Error("Não foi possível confirmar a pré-classificação do edital.");
+        throw new Error(
+          "Não foi possível confirmar a pré-classificação do edital.",
+        );
       if (!pre.pode_coordenar)
         throw new Error("A emissão exige permissão de coordenação.");
       const encontrados = (pre.candidatos || []).filter(
@@ -114,8 +116,12 @@ export function EspelhosDaAvaliacao({
         );
       const candidato = encontrados[0]!;
       if (candidato.situacao !== "ELIMINADO")
-        throw new Error("A inscrição não está eliminada antes da análise documental.");
-      const cargo = pre.vagas.find((v) => String(v.codigo) === candidato.vaga)?.cargo;
+        throw new Error(
+          "A inscrição não está eliminada antes da análise documental.",
+        );
+      const cargo = pre.vagas.find(
+        (v) => String(v.codigo) === candidato.vaga,
+      )?.cargo;
       const documento = espelhoDaEliminacaoPreAnalise({
         codigo: candidato.codigo,
         nome: candidato.nome,
@@ -136,7 +142,9 @@ export function EspelhosDaAvaliacao({
       setAviso(`Comunicado preparado: ${arquivo}`);
     } catch (e) {
       setErro(
-        e instanceof Error ? e.message : "Não foi possível emitir o comunicado.",
+        e instanceof Error
+          ? e.message
+          : "Não foi possível emitir o comunicado.",
       );
     } finally {
       setGerando(false);
@@ -170,7 +178,8 @@ export function EspelhosDaAvaliacao({
     >
       <h3 className="ui-titulo">Documentos do edital</h3>
       <p className="ui-texto-secundario">
-        Espelhos de avaliações concluídas e comunicados de eliminação anterior à análise documental são documentos diferentes.
+        Espelhos de avaliações concluídas e comunicados de eliminação anterior
+        à análise documental são documentos diferentes.
       </p>
       <h4>Espelhos das avaliações concluídas</h4>
       <div className="avd-espelhos-individual">
@@ -243,7 +252,8 @@ export function EspelhosDaAvaliacao({
               <option value="">Identificar pelo código</option>
               {(dados.vagas || []).map((v) => (
                 <option key={String(v.codigo)} value={String(v.codigo)}>
-                  {v.codigo}{v.cargo ? ` · ${v.cargo}` : ""}
+                  {v.codigo}
+                  {v.cargo ? ` · ${v.cargo}` : ""}
                 </option>
               ))}
             </select>
