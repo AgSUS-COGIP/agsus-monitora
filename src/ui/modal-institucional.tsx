@@ -78,7 +78,9 @@ export function ModalInstitucional({
       {complemento ? (
         <div className="ui-modal-institucional-complemento">{complemento}</div>
       ) : null}
-      <div className={classes("ui-modal-institucional-conteudo", classeDoConteudo)}>
+      <div
+        className={classes("ui-modal-institucional-conteudo", classeDoConteudo)}
+      >
         {children}
       </div>
       <footer className="ui-modal-institucional-rodape">
