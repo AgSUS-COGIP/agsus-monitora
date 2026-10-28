@@ -31,7 +31,7 @@ export const VISOES: ReadonlyArray<{
   {
     valor: "resultados",
     rotulo: "Resultados",
-    icone: "fa-square-poll-vertical",
+    icone: "fa-list-ol",
   },
   { valor: "espelhos", rotulo: "Espelhos", icone: "fa-file-pdf" },
   { valor: "configuracoes", rotulo: "Configurações", icone: "fa-sliders" },
