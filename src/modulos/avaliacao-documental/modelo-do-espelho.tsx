@@ -200,19 +200,35 @@ export function ModeloDoEspelhoDeNota({
       infoRodape="As alterações afetam os próximos documentos emitidos, sem modificar avaliações."
       acoes={
         <>
-          <button type="button" className="btn secondary" disabled={salvando} onClick={aoFechar}>
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={salvando}
+            onClick={aoFechar}
+          >
             {mudou ? "Descartar e fechar" : "Fechar"}
           </button>
           {podeEditar ? (
             <>
-              <button type="button" className="btn secondary" data-acao="modelo-espelho-padrao"
+              <button
+                type="button"
+                className="btn secondary"
+                data-acao="modelo-espelho-padrao"
                 disabled={salvando || noPadrao}
-                onClick={() => { setAviso(""); setRascunho({ ...TEXTOS_PADRAO_DO_ESPELHO }); }}>
+                onClick={() => {
+                  setAviso("");
+                  setRascunho({ ...TEXTOS_PADRAO_DO_ESPELHO });
+                }}
+              >
                 Restaurar padrão
               </button>
-              <button type="button" className="btn primary" data-acao="modelo-espelho-salvar"
+              <button
+                type="button"
+                className="btn primary"
+                data-acao="modelo-espelho-salvar"
                 disabled={salvando || !mudou || temErro}
-                onClick={() => void salvar()}>
+                onClick={() => void salvar()}
+              >
                 <i className="fa-solid fa-floppy-disk" aria-hidden="true" />{" "}
                 {salvando ? "Salvando…" : "Salvar modelo"}
               </button>
