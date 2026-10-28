@@ -355,7 +355,9 @@ describe("Pré-classificação (AM-4)", () => {
     expect(
       vaga.querySelector(".avd-eliminados > .ui-tabela-rolagem"),
     ).toBeNull();
-    await clicar(vaga.querySelector(".avd-eliminados summary"));
+    const detalhes = vaga.querySelector(".avd-eliminados");
+    detalhes.open = true;
+    await act(async () => detalhes.dispatchEvent(new Event("toggle")));
     expect(vaga.querySelector(".avd-eliminados").textContent).toContain(
       "Cancelou a inscrição",
     );
