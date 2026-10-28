@@ -102,8 +102,21 @@ export function OrigemDaAnalise({
           infoRodape="A alteração é registrada no histórico do edital."
           acoes={
             <>
-              <button type="button" className="btn secondary" onClick={fechar} disabled={gravando}>Cancelar</button>
-              <button type="button" className="btn primary" data-acao="confirmar-origem-da-analise" disabled={!motivoOk || gravando} onClick={() => void confirmar()}>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={fechar}
+                disabled={gravando}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn primary"
+                data-acao="confirmar-origem-da-analise"
+                disabled={!motivoOk || gravando}
+                onClick={() => void confirmar()}
+              >
                 {gravando ? "Gravando…" : "Confirmar alteração"}
               </button>
             </>
@@ -128,7 +141,6 @@ export function OrigemDaAnalise({
               {erro}
             </Aviso>
           ) : null}
-
         </ModalInstitucional>
       ) : null}
     </span>
