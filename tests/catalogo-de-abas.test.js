@@ -310,11 +310,24 @@ describe("o seed da migration é o catálogo do código", () => {
   const doBanco = abasDoCatalogo(respostaDoSeed());
 
   it("as mesmas abas, com os mesmos campos", () => {
-    expect(doBanco.map(camposDaAba)).toEqual(ABAS_DO_MENU.map(camposDaAba));
+    // A migração cria a Pré-classificação desligada; a entrada só é
+    // visível quando o catálogo do banco a publicar. Não vai no fallback.
+    expect(
+      doBanco.filter((aba) => aba.id !== "pre-classificacao").map(camposDaAba),
+    ).toEqual(ABAS_DO_MENU.map(camposDaAba));
+    expect(doBanco.find((aba) => aba.id === "pre-classificacao")).toMatchObject({
+      id: "pre-classificacao",
+      rotulo: "Pré-classificação",
+      view: "pre-classificacao",
+      ordem: 6,
+      recurso: "avaliacao_documental",
+    });
   });
 
   it("as mesmas páginas em cada área (view, rótulo, ícone e ordem)", () => {
-    expect(paginasPorArea(doBanco)).toEqual(paginasPorArea(ABAS_DO_MENU));
+    expect(
+      paginasPorArea(doBanco.filter((aba) => aba.id !== "pre-classificacao")),
+    ).toEqual(paginasPorArea(ABAS_DO_MENU));
   });
 
   it("a resposta real da função, no ensaio, é a que o seed produz", () => {
@@ -522,8 +535,13 @@ describe("carga do catálogo na sessão", () => {
     });
     expect(usou).toBe(true);
     expect(abasDoMenu()).not.toBe(ABAS_DO_MENU);
-    expect(abasDoMenu().map((aba) => aba.id)).toEqual(
-      ABAS_DO_MENU.map((aba) => aba.id),
+    expect(
+      abasDoMenu()
+        .filter((aba) => aba.id !== "pre-classificacao")
+        .map((aba) => aba.id),
+    ).toEqual(ABAS_DO_MENU.map((aba) => aba.id));
+    expect(abasDoMenu().some((aba) => aba.id === "pre-classificacao")).toBe(
+      true,
     );
   });
 
@@ -606,10 +624,9 @@ describe("selo beta das abas", () => {
   const recursosDe = (abas) =>
     abas.find((aba) => aba.id === "analisar-recursos");
 
-  it("no código, só Avaliação documental, Pré-classificação, Analisar recursos, Entrevistas (painel e conduzir), Classificação e Seleção são beta; as outras nem têm o campo", () => {
+  it("no fallback, somente as abas já publicadas no banco são beta", () => {
     const beta = [
       "avaliacao-documental",
-      "pre-classificacao",
       "analisar-recursos",
       "entrevistas",
       "conduzir-entrevistas",
