@@ -407,7 +407,7 @@ describe("registro da aba", async () => {
       view: "conduzir-entrevistas",
       recurso: "entrevistas",
       icone: "clipboard-pen-line",
-      ordem: 9,
+      ordem: 10,
       beta: true,
     });
     expect(NOMES_DE_ICONES).toContain("clipboard-pen-line");
@@ -417,10 +417,10 @@ describe("registro da aba", async () => {
       view: "entrevistas",
       recurso: "entrevistas",
       icone: "messages-square",
-      ordem: 8,
+      ordem: 9,
       beta: true,
     });
-    expect(ABAS_DO_MENU.find((aba) => aba.id === "recursos").ordem).toBe(6);
+    expect(ABAS_DO_MENU.find((aba) => aba.id === "recursos").ordem).toBe(7);
     expect(NOMES_DE_ICONES).toContain("messages-square");
     expect(RESOURCES).toContainEqual(["entrevistas", "Entrevistas"]);
   });
