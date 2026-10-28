@@ -93,7 +93,7 @@ export function OrigemDaAnalise({
       {aberta ? (
         <ModalInstitucional
           tituloId="avdOrigemTitulo"
-          titulo={ROTULO_DO_BOTAO[destino]}
+          titulo={ROTULO_DO_BOTAO[destino] ?? "Alterar origem da análise"}
           contexto="Avaliação documental · Configuração do edital"
           descricao="Confirme a alteração da origem da análise e registre sua justificativa."
           icone="fa-shield-halved"
