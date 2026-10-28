@@ -80,7 +80,10 @@ describe("irParaTela", () => {
     };
     expect(
       irParaTela(
-        { view: "pre-classificacao", edital: { id: EDITAL, titulo: "114/2026" } },
+        {
+          view: "pre-classificacao",
+          edital: { id: EDITAL, titulo: "114/2026" },
+        },
         janela,
       ),
     ).toBe(true);
