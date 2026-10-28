@@ -157,6 +157,9 @@ const NAS_TRES_AREAS = [
   { area: "projetos" },
 ];
 
+/* A Pré-classificação não entra no fallback: o banco a cadastra inativa no
+   PR #596 e só a ativa em #597. Sem catálogo carregado, não antecipar o
+   lançamento; uma entrada ativa do banco passa a ser exibida normalmente. */
 export const ABAS_DO_MENU = Object.freeze(
   [
     {
@@ -205,17 +208,6 @@ export const ABAS_DO_MENU = Object.freeze(
       icone: "graduation-cap",
       ordem: 5,
       view: "avaliacao-documental",
-      recurso: "avaliacao_documental",
-      tipo: "nativa",
-      beta: true,
-      areas: NAS_TRES_AREAS,
-    },
-    {
-      id: "pre-classificacao",
-      rotulo: "Pré-classificação",
-      icone: "list-ordered",
-      ordem: 6,
-      view: "pre-classificacao",
       recurso: "avaliacao_documental",
       tipo: "nativa",
       beta: true,
