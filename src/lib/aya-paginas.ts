@@ -247,7 +247,7 @@ const PAGINAS: Readonly<Record<string, PaginaDoMenu>> = Object.freeze({
     ],
   },
   selecao: {
-    nome: "Seleção",
+    nome: "Painel da Seleção",
     intro: () =>
       "Posso explicar o funil por vaga, a taxa de contratação e quando os dados são atualizados.",
     sugestoes: () => [
@@ -426,7 +426,7 @@ export const ACOES_DA_AYA: Readonly<Record<string, AcaoDaAya>> = Object.freeze({
     rotulo: "Abrir Lista de aprovados",
     view: "approved",
   }),
-  selecao: Object.freeze({ rotulo: "Abrir Seleção", view: "selecao" }),
+  selecao: Object.freeze({ rotulo: "Abrir Painel da Seleção", view: "selecao" }),
   ...Object.fromEntries(
     Object.entries(SECOES_DA_AYA).map(([id, secao]) => [
       `config:${id}`,
