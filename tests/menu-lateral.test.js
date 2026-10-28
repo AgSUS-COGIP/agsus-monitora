@@ -560,7 +560,6 @@ describe("blocos da área", () => {
             "Editais",
             "Cronograma",
             "Avaliação documental",
-            "Pré-classificação",
             "Analisar recursos",
             "Conduzir entrevistas",
             "Classificação",
