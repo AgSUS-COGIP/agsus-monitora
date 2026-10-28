@@ -79,10 +79,20 @@ describe("editor do modelo do espelho", () => {
     expect(rpc).toHaveBeenCalledWith("obter_modelo_espelho_nota", {
       p_edital: "e114",
     });
-    expect(document.querySelector(".ui-modal-institucional-topo h2")?.textContent).toBe("Modelo do espelho de nota");
-    expect(document.querySelector(".ui-modal-institucional-rodape")).not.toBeNull();
-    expect(document.querySelector(".ui-modal-institucional-conteudo")).not.toBeNull();
-    expect(document.querySelector(".ui-modal-institucional-acoes [data-acao='modelo-espelho-salvar']")).not.toBeNull();
+    expect(
+      document.querySelector(".ui-modal-institucional-topo h2")?.textContent,
+    ).toBe("Modelo do espelho de nota");
+    expect(
+      document.querySelector(".ui-modal-institucional-rodape"),
+    ).not.toBeNull();
+    expect(
+      document.querySelector(".ui-modal-institucional-conteudo"),
+    ).not.toBeNull();
+    expect(
+      document.querySelector(
+        ".ui-modal-institucional-acoes [data-acao='modelo-espelho-salvar']",
+      ),
+    ).not.toBeNull();
     expect(campo("titulo").value).toBe("Título do edital");
     expect(previa()).toContain("<h1>Título do edital</h1>");
     expect(previa()).toContain("AGÊNCIA DE TESTE");
