@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Aviso, Campo, Modal } from "../../ui/index.ts";
+import { Aviso, Campo } from "../../ui/index.ts";
+import { ModalInstitucional } from "../../ui/modal-institucional.tsx";
 
 /*
   O dono da avaliação documental do edital, ao lado do seletor: "Avaliação:
@@ -90,12 +91,37 @@ export function OrigemDaAnalise({
         </>
       ) : null}
       {aberta ? (
-        <Modal
-          rotuloId="avdOrigemTitulo"
+        <ModalInstitucional
+          tituloId="avdOrigemTitulo"
+          titulo={ROTULO_DO_BOTAO[destino] ?? "Alterar origem da análise"}
+          contexto="Avaliação documental · Configuração do edital"
+          descricao="Confirme a alteração da origem da análise e registre sua justificativa."
+          icone="fa-shield-halved"
           aoFechar={fechar}
-          fecharAoClicarFora={false}
+          fecharDesabilitado={gravando}
+          infoRodape="A alteração é registrada no histórico do edital."
+          acoes={
+            <>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={fechar}
+                disabled={gravando}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn primary"
+                data-acao="confirmar-origem-da-analise"
+                disabled={!motivoOk || gravando}
+                onClick={() => void confirmar()}
+              >
+                {gravando ? "Gravando…" : "Confirmar alteração"}
+              </button>
+            </>
+          }
         >
-          <h2 id="avdOrigemTitulo">{ROTULO_DO_BOTAO[destino]}</h2>
           <Aviso tom="warning">{AVISO_DA_TROCA[destino]}</Aviso>
           <Campo
             rotulo="Motivo"
@@ -115,26 +141,7 @@ export function OrigemDaAnalise({
               {erro}
             </Aviso>
           ) : null}
-          <div className="ui-acoes">
-            <button
-              type="button"
-              className="btn secondary"
-              onClick={fechar}
-              disabled={gravando}
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              className="btn"
-              data-acao="confirmar-origem-da-analise"
-              disabled={!motivoOk || gravando}
-              onClick={() => void confirmar()}
-            >
-              {gravando ? "Gravando…" : "Confirmar"}
-            </button>
-          </div>
-        </Modal>
+        </ModalInstitucional>
       ) : null}
     </span>
   );
