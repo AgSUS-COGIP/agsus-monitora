@@ -12,9 +12,7 @@ import type { LojaDaFila } from "./estado-da-fila.ts";
 const POR_PAGINA = 100;
 
 const valor = (v: unknown) =>
-  v === null || v === undefined || String(v).trim() === ""
-    ? "—"
-    : String(v);
+  v === null || v === undefined || String(v).trim() === "" ? "—" : String(v);
 
 function dataDaConclusao(v: string | null | undefined) {
   if (!v) return "—";
@@ -76,16 +74,27 @@ export function ResultadosDaAvaliacao({
     return (
       <Aviso tom="danger" papel="alert">
         Não foi possível carregar os resultados: {st.erro}
-        <button type="button" className="btn secondary small" onClick={() => void fila.carregar(editalId)}>
+        <button
+          type="button"
+          className="btn secondary small"
+          onClick={() => void fila.carregar(editalId)}
+        >
           Tentar novamente
         </button>
       </Aviso>
     );
   if (!dados)
-    return <div className="ui-card" aria-busy="true">Carregando resultados do edital…</div>;
+    return (
+      <div className="ui-card" aria-busy="true">
+        Carregando resultados do edital…
+      </div>
+    );
 
   return (
-    <section className="ui-card avd-resultados" aria-label="Resultados da avaliação documental">
+    <section
+      className="ui-card avd-resultados"
+      aria-label="Resultados da avaliação documental"
+    >
       <h3 className="ui-titulo">Avaliações concluídas</h3>
       <p className="ui-texto-secundario">
         Consulta dos resultados e justificativas gravados nas fichas. Os valores
@@ -93,22 +102,43 @@ export function ResultadosDaAvaliacao({
       </p>
       <div className="avd-resultados-filtros">
         <Campo rotulo="Código ou nome">
-          <input type="search" value={busca} onChange={(ev) => trocarBusca(ev.target.value)} placeholder="Buscar resultado" />
+          <input
+            type="search"
+            value={busca}
+            onChange={(ev) => trocarBusca(ev.target.value)}
+            placeholder="Buscar resultado"
+          />
         </Campo>
         <Campo rotulo="Vaga">
-          <select value={vaga} onChange={(ev) => { setVaga(ev.target.value); setPaginas(1); }}>
+          <select
+            value={vaga}
+            onChange={(ev) => {
+              setVaga(ev.target.value);
+              setPaginas(1);
+            }}
+          >
             <option value="">Todas as vagas</option>
             {(dados.vagas || []).map((v) => (
               <option key={v.codigo} value={String(v.codigo)}>
-                {v.codigo}{v.cargo ? ` · ${v.cargo}` : ""}
+                {v.codigo}
+                {v.cargo ? ` · ${v.cargo}` : ""}
               </option>
             ))}
           </select>
         </Campo>
       </div>
       <div className="avd-resultados-resumo" role="status">
-        <span>{concluidos.length.toLocaleString("pt-BR")} avaliação(ões) concluída(s) na seleção.</span>
-        <button type="button" className="btn secondary small" data-acao="exportar-resultados-avd" disabled={!concluidos.length} onClick={() => fila.exportarCsv(concluidos, "concluidas")}>
+        <span>
+          {concluidos.length.toLocaleString("pt-BR")} avaliação(ões)
+          concluída(s) na seleção.
+        </span>
+        <button
+          type="button"
+          className="btn secondary small"
+          data-acao="exportar-resultados-avd"
+          disabled={!concluidos.length}
+          onClick={() => fila.exportarCsv(concluidos, "concluidas")}
+        >
           Exportar resultados CSV
         </button>
       </div>
@@ -131,11 +161,19 @@ export function ResultadosDaAvaliacao({
         </table>
       </div>
       {!concluidos.length ? (
-        <p className="ui-texto-secundario">Nenhuma avaliação concluída para os filtros informados.</p>
+        <p className="ui-texto-secundario">
+          Nenhuma avaliação concluída para os filtros informados.
+        </p>
       ) : null}
       {exibidos.length < concluidos.length ? (
-        <button type="button" className="btn secondary small" onClick={() => setPaginas((n) => n + 1)}>
-          Mostrar mais ({(concluidos.length - exibidos.length).toLocaleString("pt-BR")} restantes)
+        <button
+          type="button"
+          className="btn secondary small"
+          onClick={() => setPaginas((n) => n + 1)}
+        >
+          Mostrar mais (
+          {(concluidos.length - exibidos.length).toLocaleString("pt-BR")}{" "}
+          restantes)
         </button>
       ) : null}
     </section>
