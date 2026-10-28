@@ -1,0 +1,110 @@
+.modal-card.ui-modal-institucional {
+  display: flex;
+  flex-direction: column;
+  width: min(900px, calc(100vw - 40px));
+  max-height: min(88dvh, 900px);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text-primary);
+}
+.modal-card.ui-modal-institucional-amplo {
+  width: min(1200px, calc(100vw - 48px));
+  max-height: min(92dvh, 1000px);
+}
+.ui-modal-institucional-topo {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px 28px 22px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex: 0 0 auto;
+}
+.ui-modal-institucional-icone {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: var(--brand-primary);
+  background: var(--state-info-soft);
+  font-size: 19px;
+}
+.ui-modal-institucional-identidade { display: grid; gap: 5px; min-width: 0; flex: 1; }
+.ui-modal-institucional-contexto {
+  font-size: var(--text-caption);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.ui-modal-institucional-identidade h2 {
+  margin: 0;
+  font-size: clamp(19px, 2vw, 24px);
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+.ui-modal-institucional-identidade p {
+  margin: 0;
+  font-size: var(--text-body-sm);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.ui-modal-institucional-fechar {
+  display: grid;
+  place-items: center;
+  width: 40px; height: 40px;
+  border: 0;
+  border-radius: 9px;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+}
+.ui-modal-institucional-fechar:hover { background: var(--surface-hover); }
+.ui-modal-institucional-fechar:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
+.ui-modal-institucional-complemento {
+  flex: 0 0 auto;
+  padding: 12px 28px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.ui-modal-institucional-conteudo {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px 28px;
+  overscroll-behavior: contain;
+}
+.ui-modal-institucional-rodape {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex: 0 0 auto;
+  padding: 16px 28px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+}
+.ui-modal-institucional-rodape-info { flex: 1; min-width: 0; color: var(--text-secondary); font-size: var(--text-caption); }
+.ui-modal-institucional-acoes { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 700px) {
+  .modal.ui-modal-institucional-fundo { align-items: flex-end; }
+  .modal-card.ui-modal-institucional,
+  .modal-card.ui-modal-institucional-amplo {
+    width: 100%;
+    max-width: 100%;
+    max-height: 95dvh;
+    border-radius: 18px 18px 0 0;
+  }
+  .ui-modal-institucional-topo { padding: 16px; gap: 10px; }
+  .ui-modal-institucional-icone { flex-basis: 36px; height: 36px; }
+  .ui-modal-institucional-conteudo { padding: 16px; }
+  .ui-modal-institucional-complemento { padding: 10px 16px; }
+  .ui-modal-institucional-rodape { padding: 12px 16px; flex-wrap: wrap; }
+  .ui-modal-institucional-rodape-info { flex-basis: 100%; }
+  .ui-modal-institucional-acoes { width: 100%; }
+}
