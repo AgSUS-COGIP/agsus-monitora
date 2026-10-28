@@ -244,7 +244,14 @@ const porPosicao = (a: InscritoDaPre, b: InscritoDaPre): number =>
 export function vagasDaTela(
   dados: DadosDaPreClassificacao | null | undefined,
 ): VagaDaTela[] {
-  const grupos = new Map<string, { lote: InscritoDaPre[]; fora: InscritoDaPre[]; eliminados: InscritoDaPre[] }>();
+  const grupos = new Map<
+    string,
+    {
+      lote: InscritoDaPre[];
+      fora: InscritoDaPre[];
+      eliminados: InscritoDaPre[];
+    }
+  >();
   for (const c of lista(dados?.candidatos) as readonly InscritoDaPre[]) {
     const codigo = String(c.vaga);
     let grupo = grupos.get(codigo);
@@ -252,7 +259,8 @@ export function vagasDaTela(
       grupo = { lote: [], fora: [], eliminados: [] };
       grupos.set(codigo, grupo);
     }
-    if (c.situacao === "NO_LOTE" || c.situacao === "ANALISADO") grupo.lote.push(c);
+    if (c.situacao === "NO_LOTE" || c.situacao === "ANALISADO")
+      grupo.lote.push(c);
     else if (c.situacao === "RANQUEADO") grupo.fora.push(c);
     else if (c.situacao === "ELIMINADO") grupo.eliminados.push(c);
   }
