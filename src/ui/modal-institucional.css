@@ -33,10 +33,15 @@
   background: var(--state-info-soft);
   font-size: 19px;
 }
-.ui-modal-institucional-identidade { display: grid; gap: 5px; min-width: 0; flex: 1; }
+.ui-modal-institucional-identidade {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+}
 .ui-modal-institucional-contexto {
   font-size: var(--text-caption);
-  letter-spacing: .04em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   font-weight: 600;
   color: var(--text-secondary);
@@ -56,15 +61,21 @@
 .ui-modal-institucional-fechar {
   display: grid;
   place-items: center;
-  width: 40px; height: 40px;
+  width: 40px;
+  height: 40px;
   border: 0;
   border-radius: 9px;
   color: var(--text-secondary);
   background: transparent;
   cursor: pointer;
 }
-.ui-modal-institucional-fechar:hover { background: var(--surface-hover); }
-.ui-modal-institucional-fechar:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
+.ui-modal-institucional-fechar:hover {
+  background: var(--surface-hover);
+}
+.ui-modal-institucional-fechar:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
 .ui-modal-institucional-complemento {
   flex: 0 0 auto;
   padding: 12px 28px;
@@ -89,10 +100,22 @@
   border-top: 1px solid var(--border-subtle);
   background: var(--surface-card);
 }
-.ui-modal-institucional-rodape-info { flex: 1; min-width: 0; color: var(--text-secondary); font-size: var(--text-caption); }
-.ui-modal-institucional-acoes { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+.ui-modal-institucional-rodape-info {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.ui-modal-institucional-acoes {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
 @media (max-width: 700px) {
-  .modal.ui-modal-institucional-fundo { align-items: flex-end; }
+  .modal.ui-modal-institucional-fundo {
+    align-items: flex-end;
+  }
   .modal-card.ui-modal-institucional,
   .modal-card.ui-modal-institucional-amplo {
     width: 100%;
@@ -100,11 +123,28 @@
     max-height: 95dvh;
     border-radius: 18px 18px 0 0;
   }
-  .ui-modal-institucional-topo { padding: 16px; gap: 10px; }
-  .ui-modal-institucional-icone { flex-basis: 36px; height: 36px; }
-  .ui-modal-institucional-conteudo { padding: 16px; }
-  .ui-modal-institucional-complemento { padding: 10px 16px; }
-  .ui-modal-institucional-rodape { padding: 12px 16px; flex-wrap: wrap; }
-  .ui-modal-institucional-rodape-info { flex-basis: 100%; }
-  .ui-modal-institucional-acoes { width: 100%; }
+  .ui-modal-institucional-topo {
+    padding: 16px;
+    gap: 10px;
+  }
+  .ui-modal-institucional-icone {
+    flex-basis: 36px;
+    height: 36px;
+  }
+  .ui-modal-institucional-conteudo {
+    padding: 16px;
+  }
+  .ui-modal-institucional-complemento {
+    padding: 10px 16px;
+  }
+  .ui-modal-institucional-rodape {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+  .ui-modal-institucional-rodape-info {
+    flex-basis: 100%;
+  }
+  .ui-modal-institucional-acoes {
+    width: 100%;
+  }
 }
