@@ -75,9 +75,7 @@ export function coordenaOEdital(e: EstadoDasAbas): boolean | null {
 }
 
 /** A leitura de resultados já existentes não concede ações de coordenação. */
-const VISOES_DE_LEITURA = VISOES.filter(
-  (v) => v.valor === "fila",
-);
+const VISOES_DE_LEITURA = VISOES.filter((v) => v.valor === "fila");
 
 /** As abas que a pessoa vê após confirmar seu papel no edital. */
 export function visoesDaPessoa(e: EstadoDasAbas): typeof VISOES {
