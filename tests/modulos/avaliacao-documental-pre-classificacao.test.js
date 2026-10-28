@@ -298,8 +298,10 @@ async function montar(supabase) {
   await esperar();
 }
 const abaDaPre = () =>
-  [...secao.querySelectorAll("button")].find((b) =>
-    b.textContent.includes("Pré-classificação"),
+  [...secao.querySelectorAll("button")].find(
+    (b) =>
+      b.textContent.includes("Pré-classificação") ||
+      b.textContent.includes("Abrir pré-classificação"),
   );
 const botao = (texto) =>
   [...secao.querySelectorAll("button")].find((b) =>
