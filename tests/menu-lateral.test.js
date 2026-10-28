@@ -551,7 +551,7 @@ describe("blocos da área", () => {
             "Painel das análises",
             "Painel de recursos",
             "Painel de entrevistas",
-            "Seleção",
+            "Painel da Seleção",
           ],
         ],
         [
@@ -560,6 +560,7 @@ describe("blocos da área", () => {
             "Editais",
             "Cronograma",
             "Avaliação documental",
+            "Pré-classificação",
             "Analisar recursos",
             "Conduzir entrevistas",
             "Classificação",
