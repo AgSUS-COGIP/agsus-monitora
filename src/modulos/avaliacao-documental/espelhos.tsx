@@ -178,8 +178,8 @@ export function EspelhosDaAvaliacao({
     >
       <h3 className="ui-titulo">Documentos do edital</h3>
       <p className="ui-texto-secundario">
-        Espelhos de avaliações concluídas e comunicados de eliminação anterior
-        à análise documental são documentos diferentes.
+        Espelhos de avaliações concluídas e comunicados de eliminação anterior à
+        análise documental são documentos diferentes.
       </p>
       <h4>Espelhos das avaliações concluídas</h4>
       <div className="avd-espelhos-individual">
@@ -229,8 +229,8 @@ export function EspelhosDaAvaliacao({
         <h4>Eliminados antes da análise documental</h4>
         <p className="ui-texto-secundario">
           Comunicado individual com o motivo registrado na pré-classificação.
-          Não informa nota da comissão, pois não houve avaliação documental.
-          Não substitui a publicação oficial.
+          Não informa nota da comissão, pois não houve avaliação documental. Não
+          substitui a publicação oficial.
         </p>
         <div className="avd-espelhos-individual">
           <Campo rotulo="Código da inscrição eliminada">
