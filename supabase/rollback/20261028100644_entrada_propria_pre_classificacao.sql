@@ -5,7 +5,7 @@
 begin;
 set local lock_timeout = '5s';
 
-do $
+do $$
 begin
   -- A ativação tem rollback próprio. Recusar remoção de entrada ainda ativa.
   if not exists (
@@ -35,7 +35,7 @@ begin
     raise exception 'Ordem alterada desde a migration: conferir rollback antes de continuar.';
   end if;
 end;
-$;
+$$;
 
 delete from public."RL_ABA_AREA" where "CO_ABA" = 'pre-classificacao';
 delete from public."TB_ABA"
