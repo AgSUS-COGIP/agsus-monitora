@@ -179,7 +179,7 @@ Limites conhecidos (a acertar com os dados reais, depois do ensaio):
   chave **Pacotes dos painéis**); o banco monta como antes na reserva ([agenda-dos-robos.md](agenda-dos-robos.md)).
 - Testes: `tests/python/test_pacotes_dos_paineis.py`, com o caso dourado
   `tests/fixtures/paineis/dourado.json` (fontes e o que o SQL montou na mesma foto, numa área de mentira, tirado
-  do ensaio `supabase/ensaios/20261029160000_pacotes_dos_paineis_em_python.sql`).
+  do ensaio `supabase/ensaios/20261029180000_pacotes_dos_paineis_em_python.sql`).
 
 ## Contratado em outra lista (24/10/2026)
 

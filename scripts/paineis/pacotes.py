@@ -4,7 +4,7 @@ PACOTES DOS PAINÉIS (job Python)
 Monta os pacotes prontos do Painel de análises (TA_PAINEL_ANALISE), da Lista de aprovados
 (TA_CANDIDATO_APROVADO_AREA) e do Painel de entrevistas (TA_PAINEL_ENTREVISTA) das áreas
 desatualizadas — marca de mudança (TL_ALTERACAO_CACHE), sem pacote ou pacote de mais de 24 h — e
-grava (migration 20261029160000). A montagem (cópia fiel das funções SQL de antes) está em
+grava (migration 20261029180000). A montagem (cópia fiel das funções SQL de antes) está em
 python/monitora/paineis/pacotes.py; o banco só lê as fontes e valida o que grava.
 
 RPCs (todas só service_role):

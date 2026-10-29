@@ -1,5 +1,5 @@
 /*
-  ROLLBACK de 20261029160000_pacotes_dos_paineis_em_python.sql
+  ROLLBACK de 20261029180000_pacotes_dos_paineis_em_python.sql
 
   Volta a rodada do pg_cron a montar os pacotes no banco (PR_REMONTAR_CACHE_AGENDADO de antes),
   tira pacotes-dos-paineis.yml da lista fixa de FC_DISPARAR_ROBO, de FC_CHAVE_DO_WORKFLOW e do

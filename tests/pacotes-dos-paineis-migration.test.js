@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 /*
-  A migration "Pacotes dos painéis em Python" (20261029160000), ainda não aplicada:
+  A migration "Pacotes dos painéis em Python" (20261029180000), ainda não aplicada:
   o ensaio begin…rollback está em supabase/ensaios/ e o teste dourado (o Python
   monta igual ao SQL) em tests/python/test_pacotes_dos_paineis.py. Aqui, as
   invariantes estáticas: o ensaio roda o mesmo corpo da migration; as RPCs do job
@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
   o rollback devolve as funções de antes.
 */
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
-const NOME = "20261029160000_pacotes_dos_paineis_em_python.sql";
+const NOME = "20261029180000_pacotes_dos_paineis_em_python.sql";
 const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);

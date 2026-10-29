@@ -1,5 +1,5 @@
 """
-A montagem dos pacotes prontos dos painéis (migration 20261029160000).
+A montagem dos pacotes prontos dos painéis (migration 20261029180000).
 
 Cópia fiel, sem recorte de coordenação, de:
     montar_analises     private."FC_MONTAR_PAINEL_ANALISE" (com a VW_ANALISES_DASHBOARD_BASE_TODOS)

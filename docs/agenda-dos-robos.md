@@ -28,7 +28,7 @@ Como está no `cron.job` do banco (conferido em 22/10/2026):
 
 Pacotes dos painéis: `agsus_analises_cache_do_painel` roda a cada 5 min (`*/5 * * * *`, desde
 20261024100000), `agsus_entrevistas_cache_do_painel` aos :25 e `agsus_aprovados_cache_por_area` aos :35.
-Desde 20261029160000 a rodada **não monta mais no banco**: com área desatualizada (marca de mudança em
+Desde 20261029180000 a rodada **não monta mais no banco**: com área desatualizada (marca de mudança em
 `TL_ALTERACAO_CACHE`, sem pacote ou pacote de mais de 24 h) ela pede o job Python
 `pacotes-dos-paineis.yml` (`private."FC_PAINEIS_RODADA"` → `FC_DISPARAR_ROBO`, origem `AGENDA`, chave
 **Pacotes dos painéis**), sem repetir um pedido de menos de 4 min; o job monta os três pacotes de todas as

@@ -1,5 +1,5 @@
 """
-Pacotes prontos dos painéis, montados em Python (migration 20261029160000).
+Pacotes prontos dos painéis, montados em Python (migration 20261029180000).
 
     monitora.paineis.pacotes     a montagem dos pacotes do Painel de análises (TA_PAINEL_ANALISE),
                                  da Lista de aprovados (TA_CANDIDATO_APROVADO_AREA) e do Painel de

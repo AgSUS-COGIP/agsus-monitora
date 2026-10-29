@@ -1,8 +1,8 @@
 """
 Testes dos pacotes dos painéis em Python (python/monitora/paineis/ e scripts/paineis/pacotes.py).
 
-O caso dourado (tests/fixtures/paineis/dourado.json) sai do ensaio da migration 20261029160000
-(supabase/ensaios/20261029160000_pacotes_dos_paineis_em_python.sql, chave "dourado"): numa área de
+O caso dourado (tests/fixtures/paineis/dourado.json) sai do ensaio da migration 20261029180000
+(supabase/ensaios/20261029180000_pacotes_dos_paineis_em_python.sql, chave "dourado"): numa área de
 mentira, as fontes que paineis_ler_fontes devolve e o que as funções SQL de antes montam na mesma
 foto. A montagem em Python tem de sair igual. Dados fictícios; nada fala com o Supabase.
 

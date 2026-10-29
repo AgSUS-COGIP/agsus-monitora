@@ -1,4 +1,4 @@
--- ENSAIO de supabase/migrations/20261029160000_pacotes_dos_paineis_em_python.sql: roda o corpo e desfaz (rollback).
+-- ENSAIO de supabase/migrations/20261029180000_pacotes_dos_paineis_em_python.sql: roda o corpo e desfaz (rollback).
 -- Esperado (todas as chaves true; "recusas" = 15; ms/mb = medidas): as RPCs do job são só do service_role e
 -- as do pg_cron de ninguém; o workflow fica na chave "Pacotes dos painéis"; numa área de mentira (com acento,
 -- caixa, nulos, editais repetidos, treinamento e "Fora do lote"), a leitura traz as marcas e as fontes, e
@@ -81,7 +81,7 @@ as $function$
 $function$;
 
 comment on function private."FC_PAINEIS_VENCIDOS"(text) is
-  'Áreas com o pacote do painel desatualizado (ANALISES, APROVADOS ou ENTREVISTAS): SEM_PACOTE, MARCA (TL_ALTERACAO_CACHE; DT_DESDE = a mais antiga) ou VELHO (mais de 24 h; DT_DESDE = a geração). O critério das rodadas atualizar_cache_*_vencidos. 20261029160000.';
+  'Áreas com o pacote do painel desatualizado (ANALISES, APROVADOS ou ENTREVISTAS): SEM_PACOTE, MARCA (TL_ALTERACAO_CACHE; DT_DESDE = a mais antiga) ou VELHO (mais de 24 h; DT_DESDE = a geração). O critério das rodadas atualizar_cache_*_vencidos. 20261029180000.';
 revoke all on function private."FC_PAINEIS_VENCIDOS"(text) from public, anon, authenticated, service_role;
 
 create or replace function public.paineis_ler_pendentes()
@@ -101,7 +101,7 @@ as $function$
 $function$;
 
 comment on function public.paineis_ler_pendentes() is
-  'Job "Pacotes dos painéis" (Python, só service_role): os pacotes desatualizados, { schema_version, pendentes: [{ cache, area, motivo }] }. 20261029160000.';
+  'Job "Pacotes dos painéis" (Python, só service_role): os pacotes desatualizados, { schema_version, pendentes: [{ cache, area, motivo }] }. 20261029180000.';
 revoke all on function public.paineis_ler_pendentes() from public, anon, authenticated;
 grant execute on function public.paineis_ler_pendentes() to service_role;
 
@@ -295,7 +295,7 @@ end;
 $function$;
 
 comment on function public.paineis_ler_fontes(text, text) is
-  'Job "Pacotes dos painéis" (Python, só service_role): as fontes de um pacote (ANALISES, APROVADOS ou ENTREVISTAS) de uma área, em listas cruas, sem montar; marcas (TL_ALTERACAO_CACHE) lidas antes das fontes; lido_em; vocabulario = os textos que ordenam, na ordem da colação do banco. 20261029160000.';
+  'Job "Pacotes dos painéis" (Python, só service_role): as fontes de um pacote (ANALISES, APROVADOS ou ENTREVISTAS) de uma área, em listas cruas, sem montar; marcas (TL_ALTERACAO_CACHE) lidas antes das fontes; lido_em; vocabulario = os textos que ordenam, na ordem da colação do banco. 20261029180000.';
 revoke all on function public.paineis_ler_fontes(text, text) from public, anon, authenticated;
 grant execute on function public.paineis_ler_fontes(text, text) to service_role;
 
@@ -460,7 +460,7 @@ end;
 $function$;
 
 comment on function public.paineis_gravar_pacote(text, text, timestamptz, bigint[], json, text) is
-  'Job "Pacotes dos painéis" (Python, só service_role): só valida o formato e grava o pacote montado (TA_PAINEL_ANALISE, TA_CANDIDATO_APROVADO_AREA ou TA_PAINEL_ENTREVISTA), com DT_GERACAO = lido_em; nunca troca um pacote mais novo; apaga só as marcas que a leitura viu. 20261029160000.';
+  'Job "Pacotes dos painéis" (Python, só service_role): só valida o formato e grava o pacote montado (TA_PAINEL_ANALISE, TA_CANDIDATO_APROVADO_AREA ou TA_PAINEL_ENTREVISTA), com DT_GERACAO = lido_em; nunca troca um pacote mais novo; apaga só as marcas que a leitura viu. 20261029180000.';
 revoke all on function public.paineis_gravar_pacote(text, text, timestamptz, bigint[], json, text) from public, anon, authenticated;
 grant execute on function public.paineis_gravar_pacote(text, text, timestamptz, bigint[], json, text) to service_role;
 
@@ -471,7 +471,7 @@ alter table public."TL_DISPARO_ROBO" add constraint "CK_DISPROBO_NOWORKFLOW" che
   'robo-empregare.yml', 'pre-classificacao.yml', 'leitura-de-arquivos.yml', 'classificacao.yml',
   'contratacao-dos-aprovados.yml', 'pacotes-dos-paineis.yml']));
 comment on constraint "CK_DISPROBO_NOWORKFLOW" on public."TL_DISPARO_ROBO" is
-  'Workflows que o banco pede (lista fixa de FC_DISPARAR_ROBO) ou registra; pacotes-dos-paineis.yml desde 20261029160000.';
+  'Workflows que o banco pede (lista fixa de FC_DISPARAR_ROBO) ou registra; pacotes-dos-paineis.yml desde 20261029180000.';
 
 CREATE OR REPLACE FUNCTION private."FC_DISPARAR_ROBO"(p_workflow text, p_inputs jsonb DEFAULT '{}'::jsonb, p_usuario uuid DEFAULT NULL::uuid, p_origem text DEFAULT NULL::text)
  RETURNS bigint
@@ -489,7 +489,7 @@ declare
     'pre-classificacao.yml', jsonb_build_array('modo', 'editais', 'forcar_congelado'),
     'classificacao.yml', jsonb_build_array('modo', 'listas'),
     'contratacao-dos-aprovados.yml', jsonb_build_array('modo'),
-    -- Pacotes dos painéis (20261029160000): pedido pela rodada do pg_cron dos pacotes.
+    -- Pacotes dos painéis (20261029180000): pedido pela rodada do pg_cron dos pacotes.
     'pacotes-dos-paineis.yml', jsonb_build_array('modo'));
   v_inputs jsonb := coalesce(p_inputs, '{}'::jsonb);
   -- AGENDA só do pg_cron: as tarefas passam p_origem = 'AGENDA' (e a sessão do pg_cron
@@ -667,7 +667,7 @@ end;
 $function$;
 
 comment on function private."FC_PAINEIS_RODADA"(text) is
-  'Uma rodada dos pacotes dos painéis: pede o job Python pacotes-dos-paineis.yml quando há área desatualizada (sem repetir pedido de 4 min); monta no banco (atualizar_cache_*) só na reserva — sem pacote, marca de mais de 30 min, pacote de mais de 25 h ou último pedido FALHOU/SEM_TOKEN. Devolve { pediu, disparo, situacao_do_pedido, reserva, falhas }. 20261029160000.';
+  'Uma rodada dos pacotes dos painéis: pede o job Python pacotes-dos-paineis.yml quando há área desatualizada (sem repetir pedido de 4 min); monta no banco (atualizar_cache_*) só na reserva — sem pacote, marca de mais de 30 min, pacote de mais de 25 h ou último pedido FALHOU/SEM_TOKEN. Devolve { pediu, disparo, situacao_do_pedido, reserva, falhas }. 20261029180000.';
 revoke all on function private."FC_PAINEIS_RODADA"(text) from public, anon, authenticated, service_role;
 
 create or replace procedure private."PR_REMONTAR_CACHE_AGENDADO"(in p_cache text)
@@ -684,7 +684,7 @@ begin
        when 'ENTREVISTAS' then 'agsus_entrevistas_cache_do_painel' end)) then
     return;
   end if;
-  -- Pede o job Python (20261029160000); a montagem no banco ficou só como reserva.
+  -- Pede o job Python (20261029180000); a montagem no banco ficou só como reserva.
   v_rodada := private."FC_PAINEIS_RODADA"(p_cache);
   -- O que deu certo fica gravado (e o pedido ao GitHub sai no commit); a falha vai para a
   -- execução do job (Status das atualizações).
@@ -696,7 +696,7 @@ end;
 $procedure$;
 
 comment on procedure private."PR_REMONTAR_CACHE_AGENDADO"(text) is
-  'Rodada do pg_cron dos pacotes dos painéis: private."FC_PAINEIS_RODADA" (pede o job Python; monta no banco só na reserva) e commit. 20261029160000.';
+  'Rodada do pg_cron dos pacotes dos painéis: private."FC_PAINEIS_RODADA" (pede o job Python; monta no banco só na reserva) e commit. 20261029180000.';
 
 -- ═══ CORPO DA MIGRATION (fim) ═══
 

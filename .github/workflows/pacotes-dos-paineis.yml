@@ -4,7 +4,7 @@ name: Pacotes dos painéis
 # aprovados e do Painel de entrevistas das áreas desatualizadas (marca de mudança, sem pacote ou pacote
 # de mais de 24 h) e grava pelas RPCs paineis_ler_pendentes, paineis_ler_fontes e paineis_gravar_pacote
 # (só service_role; a de gravação só valida e guarda). Montagem: python/monitora/paineis/pacotes.py,
-# cópia fiel das funções SQL de antes (migration 20261029160000).
+# cópia fiel das funções SQL de antes (migration 20261029180000).
 #
 # Quando roda:
 #   - pedido pela rodada do pg_cron dos pacotes (private."PR_REMONTAR_CACHE_AGENDADO": análises a cada
