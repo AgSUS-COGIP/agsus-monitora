@@ -38,6 +38,8 @@ import type {
   ModalDoNucleo,
   OpcoesDoEstadoDoNucleo,
 } from "./estado.ts";
+import { ModalDaRegraDaTriagem } from "../triagem/modal-da-regra.tsx";
+import type { ClienteDaRegra } from "../../lib/triagem/regra-da-triagem.ts";
 
 declare global {
   interface Window {
@@ -228,6 +230,18 @@ function LinhaDoEdital({
           {item ? (
             <button
               type="button"
+              className="btn icon outline"
+              title="Regras da Triagem"
+              data-tour="editais-regras-da-triagem"
+              aria-label={`Regras da Triagem ${item.edital || ""}`}
+              onClick={() => estado.abrirRegrasDaTriagem(item.id)}
+            >
+              <i className="fa-solid fa-list-check" aria-hidden="true" />
+            </button>
+          ) : null}
+          {item ? (
+            <button
+              type="button"
               className="btn icon outline nucleo-view-timeline"
               title="Ver cronograma"
               data-tour="editais-linha-do-tempo"
@@ -298,6 +312,15 @@ function ModalAberto({
         estado={estado}
         id={modal.id}
         agora={agora}
+      />
+    );
+  if (modal?.tipo === "regras-triagem")
+    return (
+      <ModalDaRegraDaTriagem
+        key={modal.abertura}
+        edital={modal.id}
+        cliente={estado.clienteDaRegra() as ClienteDaRegra | null}
+        aoFechar={estado.fecharModal}
       />
     );
   if (modal?.tipo === "linha-do-tempo")
@@ -439,5 +462,7 @@ export function montarNucleo({
       return estado.carregarResumo().catch(() => {});
     },
     abrirEdital: estado.abrirEdital,
+    /* "Editar nas Regras do edital" da tela da Triagem. */
+    abrirRegrasDaTriagem: estado.abrirRegrasDaTriagem,
   };
 }

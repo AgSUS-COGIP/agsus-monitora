@@ -1188,6 +1188,26 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Regras da Triagem",
+    perguntas: [
+      "regras da triagem",
+      "regra da triagem",
+      "editar a regra da triagem",
+      "onde mudo o lote da triagem",
+      "requisitos da triagem",
+      "motivos de eliminacao da triagem",
+      "conferir a regra da triagem",
+      "editar nas regras do edital",
+    ],
+    resposta:
+      'A Triagem tem regra própria, com versões, separada da regra da Avaliação documental e da Classificação: requisitos e motivos de eliminação, nota da lista (declarada ou ART) e tolerância, desempate, modalidade das cotas, nível da vaga e formação do lote. Ela aparece resumida no topo da tela da Triagem; para mudar, use "Editar nas Regras do edital" ou, em Editais, o botão Regras da Triagem da linha do edital. Só a coordenação do edital (ou o administrador global) grava uma versão nova, sempre com motivo; a versão nova fica "a conferir" e outra pessoa da coordenação confere. Salvar não recalcula: a Triagem usa a regra na próxima execução (fim do robô da Empregare ou Recalcular).',
+    fato: "No MONITORA, a regra da Triagem mora em TB_REGRA_TRIAGEM e TH_REGRA_TRIAGEM desde 29/10/2026; a primeira versão de cada edital é a cópia exata do que a Triagem usava antes, com o mesmo resultado.",
+    fonte:
+      "supabase/migrations/20261029160000_regras_proprias_da_triagem.sql; python/monitora/avaliacao_documental/regra_da_triagem.py",
+    abrir: "pre-classificacao",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "Triagem: Provisória por ART",
     perguntas: [
       "triagem",

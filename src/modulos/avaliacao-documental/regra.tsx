@@ -1350,6 +1350,11 @@ export function Regra({ e, estado, rascunhoGuardado }: RegraProps) {
           <h2 className="ui-titulo" id="avdProvisoria">
             Provisória por ART
           </h2>
+          <Aviso tom="info">
+            A Triagem usa a regra própria dela (Editais › Regras da Triagem,
+            desde 29/10/2026): mudar aqui não muda a lista, os eliminados nem o
+            lote da Triagem.
+          </Aviso>
           <EliminacaoAutomatica regra={rascunho} aoMudar={setRascunho} />
           <NotaDeclarada regra={rascunho} aoMudar={setRascunho} />
           <div
@@ -1410,6 +1415,11 @@ export function Regra({ e, estado, rascunhoGuardado }: RegraProps) {
           <h2 className="ui-titulo" id="avdLote">
             Lote e linha de corte
           </h2>
+          <Aviso tom="info">
+            A Triagem usa a regra própria dela (Editais › Regras da Triagem,
+            desde 29/10/2026): mudar aqui não muda a lista, os eliminados nem o
+            lote da Triagem.
+          </Aviso>
           <div className="ui-grade-de-campos">
             <Escolha
               rotulo="Tamanho do lote"

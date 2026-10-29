@@ -112,6 +112,7 @@ from monitora.avaliacao_documental.pre_classificacao import (  # noqa: E402
     normalizar_regra,
     pre_classificar_vaga,
 )
+from monitora.avaliacao_documental.regra_da_triagem import regra_do_calculo  # noqa: E402
 from monitora.avaliacao_documental.retrato_das_inscricoes import retrata_hoje, retrato_da_vaga  # noqa: E402
 from monitora.avaliacao_documental.sugestoes_da_ficha import (  # noqa: E402
     ITENS_DO_TIPO,
@@ -147,8 +148,8 @@ CAMPOS_DA_LINHA = (
 )
 # O que o resumo da execução diz de cada situação de edital.
 EXPLICACOES = {
-    "SEM_REGRA": "edital sem regra conferida: crie a regra na aba Regra da Avaliação documental e marque como conferida",
-    "REGRA_NAO_CONFERIDA": "edital sem regra conferida: a regra existe, mas falta a coordenação marcar como conferida",
+    "SEM_REGRA": "edital sem regra da Triagem conferida: crie a regra da Triagem (Editais › Regras da Triagem) e confira",
+    "REGRA_NAO_CONFERIDA": "edital sem regra da Triagem conferida: a regra existe, mas falta a coordenação conferir",
     "SEM_VAGAS": "nenhuma vaga da Empregare ligada ao edital: rode o robô da Empregare para ele",
     "PREVIA": "regra ainda não conferida: prévia calculada, nada seria gravado",
 }
@@ -223,12 +224,30 @@ def dados_da_vaga(vaga, documental=None):
 
 
 def situacao_da_regra(edital):
-    regra = edital.get("regra")
+    """
+    A situação da regra da Triagem (TB_REGRA_TRIAGEM, desde 20261029160000):
+    é ela, e não a regra da análise, que decide se o edital é calculado.
+    """
+    regra = edital.get("triagem")
     if not regra:
         return "SEM_REGRA"
     if regra.get("situacao") != "CONFERIDA":
         return "REGRA_NAO_CONFERIDA"
     return None
+
+
+def entradas_do_calculo(edital):
+    """
+    (regra, documental) do cálculo: a regra da Triagem do edital, no formato que
+    pre_classificacao.py lê (regra_da_triagem.regra_do_calculo). Da regra da
+    análise vêm só os blocos da ficha (títulos, cursos, vínculos), para as
+    sugestões da ficha e as colunas que elas olham.
+    """
+    regra, documental = regra_do_calculo(
+        (edital.get("triagem") or {}).get("configuracao"),
+        (edital.get("regra") or {}).get("configuracao"),
+    )
+    return normalizar_regra(regra), documental
 
 
 def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, gravar_sugestoes=None):
@@ -292,7 +311,7 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
         resultado["mensagem"] = mensagem_do_refazer_recusado(edital)
         return resultado
 
-    regra = normalizar_regra(edital["regra"].get("configuracao"))
+    regra, documental = entradas_do_calculo(edital)
     # A declarada congela na primeira triagem depois do fim das inscrições (ou já, sem data).
     congelar = congela_a_declarada(hoje, fim_das_inscricoes(edital.get("cronograma")))
     retratos = []
@@ -309,7 +328,7 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
         vaga = {**vaga, **(lidos.get("vaga") or {})}
         r = pre_classificar_vaga(
             regra,
-            dados_da_vaga(vaga, edital.get("documental")),
+            dados_da_vaga(vaga, documental),
             lidos.get("candidatos") or [],
             anterior=lidos.get("anterior") or {},
             ultimo_lote=vaga.get("ultimo_lote") or 0,
@@ -333,7 +352,7 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
             r["quadro"] = (vaga.get("quadro") or {}).get("id")
             gravar(vaga["codigo"], r)
         if gravar_sugestoes is not None and tem_blocos_com_itens(regra):
-            nivel = dados_da_vaga(vaga, edital.get("documental"))["nivel"]
+            nivel = dados_da_vaga(vaga, documental)["nivel"]
             candidatos = lidos.get("candidatos") or []
             resultado["sugestoes"] += gravar_sugestoes(
                 vaga["codigo"], lambda candidatos=candidatos, nivel=nivel: sugestoes_da_vaga(regra, candidatos, nivel)

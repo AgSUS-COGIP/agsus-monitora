@@ -250,7 +250,28 @@ function supabaseFalso({
   disparo = "ACEITO",
 } = {}) {
   let regra = regraSalva(2, CONFIG, situacao);
+  /* A regra própria da Triagem (20261029160000): a seção tirada da regra acima. */
+  let triagem = {
+    versao: 1,
+    situacao,
+    configuracao: { formato: 1, lote: CONFIG.lote },
+    versoes: [{ versao: 1, nome: null }],
+  };
   const respostas = {
+    obter_regra_triagem: () => ({
+      pode_coordenar: pode,
+      papel: pode ? "COORDENADOR" : null,
+      regra: triagem,
+    }),
+    salvar_regra_triagem: ({ p_configuracao, p_versao_atual }) => {
+      triagem = {
+        versao: p_versao_atual + 1,
+        situacao: "CONFERIR",
+        configuracao: p_configuracao,
+        versoes: [],
+      };
+      return { regra: triagem };
+    },
     disparar_robo: () => 61,
     situacao_do_disparo_robo: () => ({ disparo: 61, situacao: disparo }),
     listar_editais_avaliacao: () => ({
@@ -652,7 +673,7 @@ describe("Triagem (AM-4)", () => {
     await montar(supabaseFalso({ situacao: "CONFERIR" }));
     expect(secao.querySelector("[data-acao='recalcular']").disabled).toBe(true);
     expect(secao.textContent).toContain(
-      "Marque a regra como conferida na aba Regra para recalcular.",
+      "Confira a regra da Triagem (Editais › Regras da Triagem) para recalcular.",
     );
   });
 
@@ -676,7 +697,7 @@ describe("Triagem (AM-4)", () => {
 });
 
 describe("lote por vaga (AM-5.0)", () => {
-  it("o tamanho editado vira versão nova da regra com motivo", async () => {
+  it("o tamanho editado vira versão nova da regra da Triagem com motivo", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
     const campo = secao.querySelector(
@@ -694,11 +715,16 @@ describe("lote por vaga (AM-5.0)", () => {
     await clicar(secao.querySelector("[data-acao='salvar-tamanhos']"));
     await esperar();
     const chamada = supabase.rpc.mock.calls.find(
-      ([nome]) => nome === "salvar_regra_analise",
+      ([nome]) => nome === "salvar_regra_triagem",
     );
     expect(chamada[1].p_configuracao.lote.por_vaga).toEqual({ 179698: 4 });
+    expect(chamada[1].p_configuracao.formato).toBe(1);
     expect(chamada[1].p_motivo).toBe("Lote do 93 definido pela coordenação");
-    expect(chamada[1].p_versao_atual).toBe(2);
+    expect(chamada[1].p_versao_atual).toBe(1);
+    // A regra da análise não é mais tocada pela Triagem.
+    expect(
+      supabase.rpc.mock.calls.some(([nome]) => nome === "salvar_regra_analise"),
+    ).toBe(false);
   });
 });
 
