@@ -829,38 +829,10 @@ describe("fila: inclusão no lote por decisão da coordenação", () => {
     });
   });
 
-  it("incluir por decisão: só os de fora do lote; o analista não vê a ação", async () => {
-    const incluir = vi.fn(() => ({ incluidos: 1, fichas_criadas: 1 }));
-    await montar(
-      supabaseFalso(comDecisao(), { incluir_no_lote_por_decisao: incluir }),
-    );
+  it("a inclusão por decisão não fica na Fila (só na Pré-classificação); o selo continua", async () => {
+    await montar(supabaseFalso(comDecisao()));
     await abrirMenu();
-    await clicar(secao.querySelector("[data-acao='incluir-por-decisao']"));
-    const opcoes = [
-      ...document.querySelectorAll(
-        "table[aria-label='Candidatos fora do lote pela regra'] tbody tr",
-      ),
-    ].map((tr) => tr.dataset.candidato);
-    expect(opcoes).toEqual(["7009"]);
-    await clicar(document.querySelector("input[aria-label='Incluir 7009']"));
-    await clicar(
-      document.querySelector("[data-acao='confirmar-incluir-por-decisao']"),
-    );
-    await esperar();
-    expect(incluir).toHaveBeenCalledWith({
-      p_edital: "e93",
-      p_codigos: ["7009"],
-      p_motivo: "Critério CORES",
-      p_vaga: "179698",
-    });
-
-    await act(async () => painel?.raiz?.unmount());
-    secao.remove();
-    await montar(supabaseFalso(comDecisao(false)));
     expect(secao.querySelector("[data-acao='incluir-por-decisao']")).toBeNull();
-    expect(
-      secao.querySelector("[data-tour='avd-fila-acoes-coordenacao']"),
-    ).toBeNull();
     expect(
       secao.querySelector("[data-candidato='7003'] .avd-selo-decisao"),
     ).not.toBeNull();
@@ -990,13 +962,10 @@ describe("fila: andamento, menu da coordenação e tabela agrupada por vaga", ()
     expect(
       [...menu.querySelectorAll("[role='menuitem']")].map((b) => b.textContent),
     ).toEqual([
-      "Incluir por decisão da coordenação",
       "Distribuir as livres (2)",
       "Distribuir as selecionadas (1)",
       "Liberar reservas (0)",
       "Mandar para revisão (1)",
-      "Espelhos de nota em massa",
-      "Modelo do espelho de nota",
       "Relatório de motivos",
       "Abrir fichas do lote (1)",
     ]);
@@ -1394,26 +1363,6 @@ describe("fila leve: o lote em toda leitura, os de fora do lote sob demanda", ()
     await esperar();
     expect(linhas()).toEqual(["7001", "7002", "7003", "7004", "7009"]);
     expect(chamadasDeFora(supabase)).toHaveLength(1);
-  });
-
-  it("Incluir por decisão lê os de fora do lote antes de abrir", async () => {
-    const supabase = supabaseFalso(filaLeve(), {
-      obter_fila_fora_do_lote: () => ({
-        candidatos: [eliminado()],
-        proximo: null,
-      }),
-    });
-    await montar(supabase);
-    await abrirMenu();
-    await clicar(secao.querySelector("[data-acao='incluir-por-decisao']"));
-    await esperar();
-    expect(chamadasDeFora(supabase)).toHaveLength(1);
-    const opcoes = [
-      ...document.querySelectorAll(
-        "table[aria-label='Candidatos fora do lote pela regra'] tbody tr",
-      ),
-    ].map((tr) => tr.dataset.candidato);
-    expect(opcoes).toEqual(["7009"]);
   });
 
   it("estado: lê todas as páginas; só relê quando a versão de fora muda", async () => {

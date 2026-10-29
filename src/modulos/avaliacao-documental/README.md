@@ -119,9 +119,8 @@ até a 10ª posição do cadastro reserva) é regra da lista CONVOCACAO da Class
 
 Os textos da folha do espelho (título, subtítulo, saudação com `{candidato}`, abertura, nomes dos
 quadros, rótulos das notas, "Não se aplica" do eliminado, "Sem observação registrada.", rodapé e a
-nota autodeclarada no modelo com pontos) são do edital: a coordenação edita em Fila › Ações da
-coordenação › "Modelo do espelho de nota" (ao lado dos espelhos em massa, onde a coordenação já vai
-para gerar os espelhos; não vira mais uma aba), com a prévia ao lado e "Restaurar padrão". O espelho
+nota autodeclarada no modelo com pontos) são do edital: a coordenação edita em Documentos ›
+"Modelo e pré-visualização" (ao lado dos espelhos em massa, o único lugar dos documentos), com a prévia ao lado e "Restaurar padrão". O espelho
 da ficha, os em massa, a impressão e o PDF/ZIP leem o modelo na hora (`textosParaOEspelho`; sem
 modelo ou sem a RPC, o padrão). O conteúdo não se edita. Banco: `TB_MODELO_ESPELHO_NOTA` /
 `TH_MODELO_ESPELHO_NOTA`, `obter_modelo_espelho_nota` e `salvar_modelo_espelho_nota` (PT409),
@@ -256,15 +255,22 @@ ficha/espelho-de-nota.ts  botão "Espelho de nota": monta (src/lib/avaliacao-doc
                           a mesma montagem dos espelhos em massa e da gaveta do Painel das
                           análises) em src/lib/avaliacao-documental/espelho-da-ficha-gravada.ts;
                           baixarZipDosEspelhos: o ZIP (fflate)
-modelo-do-espelho.tsx     Ações da coordenação › "Modelo do espelho de nota" (também pelo link na
+modelo-do-espelho.tsx     Documentos › "Modelo e pré-visualização" (também pelo link na
                           gaveta dos espelhos em massa): os textos da folha do edital, prévia com
                           dados fictícios e "Restaurar padrão"; regras e padrão em
                           src/lib/avaliacao-documental/modelo-do-espelho.ts, banco em
                           modelo-do-espelho-no-banco.ts (20261019120000)
-espelhos-em-massa.tsx     Ações da coordenação › "Espelhos de nota em massa": vaga e filtro
+espelhos-em-massa.tsx     Documentos › "Espelhos em massa (por vaga e filtro)": vaga e filtro
                           ou códigos colados, obter_espelhos_de_nota em páginas de 200
                           (20261015180000); ZIP com um PDF por candidato (padrão, em lotes,
                           "x de N") ou um documento só para imprimir, um espelho por página
+espelhos.tsx              A aba Documentos (só coordenação): espelhos das avaliações concluídas
+                          (lista por código ou nome, marcação múltipla), espelhos em massa,
+                          modelo e o atalho para os comunicados (que ficam na Pré-classificação)
+documentos-em-lote.tsx    AcoesEmLote (PDF / ZIP / impressão, "x de N" e Cancelar) e
+                          DocumentosEmLote (lista pesquisável e marcável); regras puras em
+                          src/lib/avaliacao-documental/documentos-em-lote.ts. A Pré-classificação
+                          usa AcoesEmLote nos comunicados de eliminação em lote
 relatorio-de-motivos.tsx  Ações da coordenação › "Relatório de motivos": filtros (critério, situação,
                           motivo, resultado, situação da ficha, vaga, avaliador, período), atalhos,
                           listar_relatorio_de_motivos em páginas de 500 (20261020120000), tabela,

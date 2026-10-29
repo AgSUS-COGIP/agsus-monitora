@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { ordinal } from "../../lib/classificacao/numeros.ts";
 import {
   contadoresDaPreClassificacao,
@@ -29,6 +35,13 @@ import {
   SeloDaDecisao,
 } from "./decisao-do-lote.tsx";
 import { espelhoDaEliminacaoPreAnalise } from "../../lib/avaliacao-documental/espelho-da-pre-classificacao.ts";
+import {
+  chaveDaPessoa,
+  comunicadosDosEliminados,
+  eliminadosDaPre,
+  marcadas,
+} from "../../lib/avaliacao-documental/documentos-em-lote.ts";
+import { AcoesEmLote, type MontarDocumentos } from "./documentos-em-lote.tsx";
 import { chaveDaLista } from "./estado-da-pre-classificacao.ts";
 import { baixarEspelhoProntoEmPdf } from "./ficha/espelho-de-nota.ts";
 import { InscricoesDoEdital } from "./inscricoes-do-edital.tsx";
@@ -175,6 +188,9 @@ interface VagaDaPreProps {
   rotuloEdital: string;
   unidade: string;
   buscaEliminado?: string;
+  /** As chaves (vaga|código) dos eliminados marcados para comunicado em lote. */
+  marcados?: ReadonlySet<string>;
+  aoMarcar?: (chave: string, sim: boolean) => void;
 }
 
 const LIMITE_VISIVEL = 50;
@@ -190,6 +206,8 @@ function VagaDaPre({
   rotuloEdital,
   unidade,
   buscaEliminado = "",
+  marcados,
+  aoMarcar,
 }: VagaDaPreProps) {
   const [incluindo, setIncluindo] = useState(false);
   const [emitindo, setEmitindo] = useState("");
@@ -397,6 +415,11 @@ function VagaDaPre({
               <table className="avd-tabela">
                 <thead>
                   <tr>
+                    {aoMarcar ? (
+                      <th scope="col">
+                        <span className="sr-only">Marcar para o lote</span>
+                      </th>
+                    ) : null}
                     <th scope="col">Código</th>
                     <th scope="col">Nome</th>
                     <th scope="col">Motivo</th>
@@ -410,6 +433,25 @@ function VagaDaPre({
                       data-candidato={c.codigo}
                       data-situacao="ELIMINADO"
                     >
+                      {aoMarcar ? (
+                        <td>
+                          <input
+                            type="checkbox"
+                            aria-label={`Marcar ${c.codigo} para o lote`}
+                            data-acao="marcar-comunicado"
+                            checked={
+                              marcados?.has(chaveDaPessoa(c.vaga, c.codigo)) ??
+                              false
+                            }
+                            onChange={(ev) =>
+                              aoMarcar(
+                                chaveDaPessoa(c.vaga, c.codigo),
+                                ev.target.checked,
+                              )
+                            }
+                          />
+                        </td>
+                      ) : null}
                       <td>{c.codigo}</td>
                       <td>{c.nome}</td>
                       <td>{c.motivo}</td>
@@ -625,6 +667,24 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
   const p = useSyncExternalStore(pre.assinar, pre.obter);
   const [tamanhos, setTamanhos] = useState<Record<string, string>>({});
   const [buscaDeEspelho, setBuscaDeEspelho] = useState("");
+  const [marcados, setMarcados] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const aoMarcar = useCallback(
+    (chave: string, sim: boolean) =>
+      setMarcados((atual) => {
+        const nova = new Set(atual);
+        if (sim) nova.add(chave);
+        else nova.delete(chave);
+        return nova;
+      }),
+    [],
+  );
+  const dadosDoEdital = p.editalId === e.editalId ? p.dados : null;
+  const eliminados = useMemo(
+    () => eliminadosDaPre(dadosDoEdital?.candidatos),
+    [dadosDoEdital],
+  );
   const [motivo, setMotivo] = useState("");
   const [erroAoSalvar, setErroAoSalvar] = useState("");
   const [abrirDescongelar, setAbrirDescongelar] = useState(false);
@@ -670,6 +730,47 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
         ),
       )
     : vagas;
+  const daBusca = buscaEliminado
+    ? eliminados.filter((c) =>
+        `${c.codigo} ${c.nome}`
+          .toLocaleLowerCase("pt-BR")
+          .includes(buscaEliminado),
+      )
+    : eliminados;
+  const escolhidos = marcadas(eliminados, marcados);
+  const todosDaBuscaMarcados =
+    daBusca.length > 0 && daBusca.every((c) => marcados.has(c.chave));
+  const rotuloEdital = String(d.edital?.edital || d.edital?.rotulo || "");
+  const unidade = String(d.edital?.unidade || "");
+  // Relê a pré-classificação antes de emitir: quem deixou de estar eliminado sai.
+  const montarComunicados: MontarDocumentos = async (escolhidas) => {
+    const atual = (await pre.rpc("obter_pre_classificacao", {
+      p_edital: e.editalId,
+    })) as DadosDaPreClassificacao | null;
+    if (!atual || atual.edital?.id !== e.editalId)
+      throw new Error("Não foi possível confirmar o edital.");
+    const r = comunicadosDosEliminados(
+      atual.candidatos || [],
+      atual.vagas || [],
+      escolhidas,
+      { edital: rotuloEdital, unidade },
+    );
+    return {
+      documentos: r.documentos,
+      avisos: [
+        ...(r.foraDaSituacao.length
+          ? [
+              `Não estão mais eliminados (${r.foraDaSituacao.length}): ${r.foraDaSituacao.join(", ")}. Atualize a lista.`,
+            ]
+          : []),
+        ...(r.semMotivo.length
+          ? [
+              `Sem justificativa registrada, verificar antes de emitir (${r.semMotivo.length}): ${r.semMotivo.join(", ")}.`,
+            ]
+          : []),
+      ],
+    };
+  };
   const ultima = d.ultima_execucao;
   const situacaoDoEdital = ultima?.edital?.situacao;
   const conferida = d.regra?.situacao === "CONFERIDA";
@@ -864,7 +965,8 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
           Comunicados de eliminação antes da análise
         </h3>
         <p className="ui-texto-secundario">
-          Busque pelo código ou nome. A vaga será exibida com o botão de PDF.
+          Busque pelo código ou nome. A vaga será exibida com o botão de PDF;
+          marque várias pessoas para baixar em ZIP ou imprimir juntas.
         </p>
         <label className="ui-campo">
           <span>Buscar candidato eliminado</span>
@@ -879,6 +981,58 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
         {buscaEliminado && !vagasVisiveis.length ? (
           <Aviso tom="warning">Nenhum eliminado encontrado.</Aviso>
         ) : null}
+        <div className="avd-docs-lote-resumo" data-acao="comunicados-lote">
+          <span>
+            Marque na lista de eliminados de cada vaga para emitir vários de uma
+            vez ·{" "}
+            <strong data-acao="comunicados-marcados">
+              {escolhidos.length.toLocaleString("pt-BR")} marcado(s)
+            </strong>
+          </span>
+          <span className="ui-acoes">
+            <button
+              type="button"
+              className="btn ghost small"
+              data-acao="comunicados-marcar-busca"
+              disabled={!daBusca.length}
+              onClick={() =>
+                setMarcados((atual) => {
+                  const nova = new Set(atual);
+                  for (const c of daBusca)
+                    if (todosDaBuscaMarcados) nova.delete(c.chave);
+                    else nova.add(c.chave);
+                  return nova;
+                })
+              }
+            >
+              {todosDaBuscaMarcados
+                ? buscaEliminado
+                  ? "Desmarcar os da busca"
+                  : "Desmarcar todos"
+                : buscaEliminado
+                  ? `Marcar os da busca (${daBusca.length.toLocaleString("pt-BR")})`
+                  : `Marcar todos os eliminados (${daBusca.length.toLocaleString("pt-BR")})`}
+            </button>
+            {marcados.size ? (
+              <button
+                type="button"
+                className="btn ghost small"
+                onClick={() => setMarcados(new Set())}
+              >
+                Limpar marcação
+              </button>
+            ) : null}
+          </span>
+        </div>
+        <AcoesEmLote
+          id="comunicados"
+          escolhidas={escolhidos}
+          rotuloDoDocumento="comunicado"
+          tituloDaImpressao="Comunicados de eliminação"
+          prefixoDoZip="comunicados"
+          edital={rotuloEdital}
+          montar={montarComunicados}
+        />
       </section>
       {!buscaEliminado ? <ListasOficiais d={d} p={p} pre={pre} /> : null}
 
@@ -892,9 +1046,11 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
             tamanho={tamanhos[v.codigo]}
             pre={pre}
             editalId={e.editalId}
-            rotuloEdital={String(d.edital?.edital || d.edital?.rotulo || "")}
-            unidade={String(d.edital?.unidade || "")}
+            rotuloEdital={rotuloEdital}
+            unidade={unidade}
             buscaEliminado={buscaEliminado}
+            marcados={marcados}
+            aoMarcar={aoMarcar}
             aoMudarTamanho={(codigo, valor) =>
               setTamanhos((t) => ({ ...t, [codigo]: valor }))
             }

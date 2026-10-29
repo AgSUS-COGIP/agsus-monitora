@@ -1,5 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.ts";
+import { irParaTela } from "../../app/ir-para-tela.ts";
 import { montarModulo } from "../../app/montar-modulo.tsx";
 import { abasDoMenu, catalogoDoBanco } from "../../modules/catalogo-de-abas.ts";
 import { criarRascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
@@ -170,9 +171,7 @@ function TelaDaArea({
           atualizarDesativado={
             !e.area || e.carregandoEditais || e.carregandoEdital
           }
-        >
-          <SeloDeTreinamento edital={escolhido} />
-        </TopoDoPainel>
+        />
       )}
 
       {e.semAcesso ? (
@@ -216,9 +215,6 @@ function TelaDaArea({
                   {editais.map((ed) => (
                     <option key={ed.id} value={ed.id}>
                       {[ed.edital, ed.unidade].filter(Boolean).join(" - ")}
-                      {ed.versao_regra
-                        ? ` · ${rotuloDaVersao({ versao: ed.versao_regra, nome: ed.nome_regra })}`
-                        : ""}
                       {sufixoDeTreinamento(ed)}
                     </option>
                   ))}
@@ -235,11 +231,11 @@ function TelaDaArea({
                   Mostrar todos os editais da área
                 </label>
               ) : null}
-              {e.dados ? (
+              {/* Quem coordena vê a origem (e a troca) só em Configurações. */}
+              {e.dados && !coordena ? (
                 <OrigemDaAnalise
                   origem={e.dados.origem}
                   rotuloDoPapel={papel ? rotuloDe(PAPEIS_DA_EQUIPE, papel) : ""}
-                  podeTrocar={Boolean(e.dados.pode_coordenar)}
                   aoTrocar={estado.definirOrigem}
                 />
               ) : null}
@@ -285,13 +281,33 @@ function TelaDaArea({
                   editalId={e.editalId}
                   fila={fila}
                   rotuloEdital={String(escolhido?.edital ?? "")}
-                  unidade={String(escolhido?.unidade ?? "")}
+                  aoAbrirPreClassificacao={() =>
+                    preIndependenteAtiva
+                      ? irParaTela({
+                          view: "pre-classificacao",
+                          edital: {
+                            id: e.editalId,
+                            titulo: String(escolhido?.edital ?? ""),
+                          },
+                        })
+                      : estado.mudarVisao("pre")
+                  }
                 />
               ) : visao === "configuracoes" ? (
                 <section
                   className="avd-configuracoes"
                   aria-label="Configurações da avaliação documental"
                 >
+                  <div className="ui-card avd-origem" data-tour="avd-origem">
+                    <OrigemDaAnalise
+                      origem={e.dados.origem}
+                      rotuloDoPapel={
+                        papel ? rotuloDe(PAPEIS_DA_EQUIPE, papel) : ""
+                      }
+                      podeTrocar={Boolean(e.dados.pode_coordenar)}
+                      aoTrocar={estado.definirOrigem}
+                    />
+                  </div>
                   <Segmentado
                     rotulo="Configurações"
                     opcoes={ABAS_CONFIGURACOES}
