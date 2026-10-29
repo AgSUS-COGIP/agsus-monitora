@@ -73,6 +73,13 @@ begin
     end if;
   end if;
 
+  -- Não servir pacote marcado como sujo, inclusive se a remontagem falhar
+  -- ou houver concorrência. Nessa situação, consulta os dados atuais.
+  if v_tem_cache and private."FC_CACHE_DESATUALIZADO"('ANALISES', v_area) then
+    v_tem_cache := false;
+    v_hit := false;
+  end if;
+
   if v_tem_cache then
     v_rows := v_cache."DS_LINHAS";
     v_editais := v_cache."DS_EDITAIS";
