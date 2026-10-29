@@ -12,6 +12,7 @@ import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
+import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.js";
 
 /*
   A tela só mostra os editais da área atual (a padrão é a Saúde Indígena); os
@@ -149,7 +150,7 @@ function supabaseFalso({
       error: null,
     };
   };
-  const rpc = vi.fn((nome, argumentos) => {
+  const responderRpc = (nome, argumentos) => {
     if (nome === "listar_candidatos_aprovados_compacto")
       return Promise.resolve(pacote(argumentos));
     // Toda escrita muda a versão dos dados no banco.
@@ -158,7 +159,13 @@ function supabaseFalso({
     const resposta = Promise.resolve(responder(nome));
     resposta.range = () => resposta;
     return resposta;
-  });
+  };
+  // A abertura da página numa chamada, montada com as respostas acima.
+  const rpc = vi.fn((nome, argumentos) =>
+    nome === "abrir_lista_aprovados"
+      ? aberturaPelasChamadasDeAntes(responderRpc, argumentos)
+      : responderRpc(nome, argumentos),
+  );
   const bucket = {
     upload: vi.fn(async () => ({ data: {}, error: null })),
     download: vi.fn(async () => ({ data: new Blob(["x"]), error: null })),
@@ -207,10 +214,22 @@ afterEach(async () => {
 
 const $ = (id) => document.getElementById(id);
 /* Os argumentos de cada chamada a listar_candidatos_aprovados_compacto. */
+/* O pacote da área: pela abertura numa chamada ou, banco antigo, pela RPC dele. */
 const chamadasDoPacote = (supabase) =>
   supabase.rpc.mock.calls
-    .filter(([nome]) => nome === "listar_candidatos_aprovados_compacto")
-    .map(([, argumentos]) => argumentos);
+    .filter(([nome]) =>
+      [
+        "abrir_lista_aprovados",
+        "listar_candidatos_aprovados_compacto",
+      ].includes(nome),
+    )
+    .map(
+      ([, argumentos]) =>
+        argumentos && {
+          p_area: argumentos.p_area,
+          p_versao: argumentos.p_versao,
+        },
+    );
 const nomes = () =>
   [...document.querySelectorAll("#approvedRows .approved-name strong")].map(
     (item) => item.textContent,
@@ -360,13 +379,29 @@ describe("carregamento", () => {
     expect($("approvedKpiTotal").textContent).toBe("1.003");
   });
 
+  it("busca a abertura inteira numa chamada só (abrir_lista_aprovados)", async () => {
+    const supabase = supabaseFalso();
+    await montar({ supabase });
+    expect(supabase.rpc.mock.calls.map(([nome]) => nome)).toEqual([
+      "abrir_lista_aprovados",
+    ]);
+    expect(supabase.rpc).toHaveBeenCalledWith("abrir_lista_aprovados", {
+      p_area: "saude-indigena",
+      p_versao: null,
+      p_com_candidatos: true,
+    });
+  });
+
   it("sem a função por área no banco, usa a de antes (todas as áreas)", async () => {
     const supabase = supabaseFalso({ porArea: false });
     await montar({ supabase });
+    // Banco antigo: sem a abertura numa chamada, nem o pacote por área.
     expect(chamadasDoPacote(supabase)).toEqual([
+      { p_area: "saude-indigena", p_versao: null },
       { p_area: "saude-indigena", p_versao: null },
       undefined,
     ]);
+    expect(supabase.rpc).toHaveBeenCalledWith("listar_listas_aprovados");
     // A tela recorta pela área, como sempre: os 4 são de editais da área.
     expect($("approvedKpiTotal").textContent).toBe("4");
   });
@@ -651,7 +686,10 @@ describe("modal de status", () => {
     );
     expect($("approvedStatusModal")).toBeNull();
     expect(toast).toHaveBeenCalledWith("Status do candidato atualizado.");
-    expect(supabase.rpc).toHaveBeenCalledWith("listar_listas_aprovados");
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "abrir_lista_aprovados",
+      expect.objectContaining({ p_area: "saude-indigena" }),
+    );
   });
 
   it("Esc fecha e devolve o foco ao botão que abriu", async () => {
@@ -712,7 +750,7 @@ describe("anexos do candidato", () => {
   function segurarRecarga(supabase) {
     const responder = supabase.rpc.getMockImplementation();
     supabase.rpc.mockImplementation((nome, ...resto) =>
-      nome === "listar_listas_aprovados"
+      nome === "abrir_lista_aprovados"
         ? new Promise(() => {})
         : responder(nome, ...resto),
     );
@@ -843,7 +881,10 @@ describe("anexos do candidato", () => {
     await escolherArquivos([pdf("termo.pdf"), pdf("rg.pdf")]);
     await clicar($("approvedStatusSave"));
 
-    expect(supabase.rpc).toHaveBeenCalledWith("listar_listas_aprovados");
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "abrir_lista_aprovados",
+      expect.objectContaining({ p_area: "saude-indigena" }),
+    );
     expect(
       linhaDe("Bruno Lima").querySelector(".approved-status").textContent,
     ).toBe("Desistente");
@@ -1700,14 +1741,19 @@ describe("candidatos por área, com a cópia do navegador", () => {
 
     const supabase = supabaseFalso();
     const responder = supabase.rpc.getMockImplementation();
-    supabase.rpc.mockImplementation((nome, ...resto) =>
-      nome === "listar_candidatos_aprovados_compacto"
-        ? Promise.resolve({
-            data: null,
-            error: { code: "42501", message: "Sem permissão" },
-          })
-        : responder(nome, ...resto),
-    );
+    // A abertura volta com o pacote recusado (as outras partes vêm).
+    supabase.rpc.mockImplementation(async (nome, ...resto) => {
+      const resposta = await responder(nome, ...resto);
+      if (nome !== "abrir_lista_aprovados") return resposta;
+      return {
+        ...resposta,
+        data: {
+          ...resposta.data,
+          pacote: null,
+          erros: { pacote: { code: "42501", message: "Sem permissão" } },
+        },
+      };
+    });
     const { toast } = await montar({
       perfil: USUARIO,
       armazenamento,

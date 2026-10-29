@@ -8,6 +8,7 @@ import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
+import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.js";
 
 /*
   A aba Pendências da Lista de aprovados (migration 20261026190000), com dados
@@ -120,7 +121,7 @@ const PENDENCIAS = (podeDecidir = true) => [
 
 function supabaseFalso({ podeDecidir = true } = {}) {
   const banco = { pendencias: PENDENCIAS(podeDecidir) };
-  const rpc = vi.fn((nome, argumentos) => {
+  const responderRpc = (nome, argumentos) => {
     if (nome === "listar_pendencias_do_edital")
       return Promise.resolve({
         data: {
@@ -153,7 +154,13 @@ function supabaseFalso({ podeDecidir = true } = {}) {
     const resposta = Promise.resolve({ data: [], error: null });
     resposta.range = () => resposta;
     return resposta;
-  });
+  };
+  // A abertura da página numa chamada, montada com as respostas acima.
+  const rpc = vi.fn((nome, argumentos) =>
+    nome === "abrir_lista_aprovados"
+      ? aberturaPelasChamadasDeAntes(responderRpc, argumentos)
+      : responderRpc(nome, argumentos),
+  );
   return { rpc, storage: { from: vi.fn() } };
 }
 
@@ -189,6 +196,27 @@ const cartoes = () => [
 ];
 
 describe("aba Pendências", () => {
+  it("o selo vem com a abertura da página; abrir a aba não lê de novo", async () => {
+    document.body.innerHTML = `<section id="page-approved" class="page active"></section>`;
+    const supabase = supabaseFalso();
+    await act(async () => {
+      controlador = montarListaAprovados({
+        secao: document.getElementById("page-approved"),
+        supabase,
+        toast: vi.fn(),
+        getProfile: () => ({ perfil: "edital_gestor" }),
+        hoje: () => "2026-10-26",
+      });
+    });
+    await esperar(() => controlador.render());
+    expect($("approvedPendenciasSelo").textContent).toBe("3");
+    await clicar($("approvedTabPendencias"));
+    expect(cartoes()).toHaveLength(3);
+    expect(supabase.rpc.mock.calls.map(([nome]) => nome)).toEqual([
+      "abrir_lista_aprovados",
+    ]);
+  });
+
   it("é a terceira aba, com o selo das abertas", async () => {
     await montar();
     const aba = $("approvedTabPendencias");
@@ -278,9 +306,8 @@ describe("aba Pendências", () => {
     expect($("approvedPendenciasSelo").textContent).toBe("2");
     // A lista de aprovados recarrega (status mudou lá).
     expect(
-      supabase.rpc.mock.calls.filter(
-        ([n]) => n === "listar_candidatos_aprovados_compacto",
-      ).length,
+      supabase.rpc.mock.calls.filter(([n]) => n === "abrir_lista_aprovados")
+        .length,
     ).toBeGreaterThan(1);
   });
 

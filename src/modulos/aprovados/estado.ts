@@ -74,6 +74,7 @@ import {
 import {
   versaoDoPacote,
   criarCacheDePayload,
+  ehErroDeAcesso,
   revalidarPayload,
 } from "../../lib/cache-de-payload";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.ts";
@@ -184,6 +185,18 @@ const ESTADO_INICIAL: Readonly<SnapshotDosAprovados> = Object.freeze({
   publicacao: null,
 });
 
+/* O que a carga junta: listas, candidatos, configuração, anexos e convocações. */
+type ResultadosDaCarga = [
+  RespostaDosAprovados,
+  ResultadoDosCandidatos,
+  {
+    modelos: SnapshotDosAprovados["modelos"];
+    configs: SnapshotDosAprovados["configs"];
+  } | null,
+  ReadonlyMap<string, readonly AnexoDoAprovado[]> | null,
+  ReadonlyMap<string, ConvocacaoDoAprovado> | null,
+];
+
 function uuid() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -232,6 +245,7 @@ export function criarEstadoDaListaDeAprovados({
   carregarLogo = logoEmPng,
   cabecalho = () => "",
   hoje = () => hojeEmBrasilia(),
+  pendencias = () => null,
 }: OpcoesDoEstadoDosAprovados = {}) {
   let estado: SnapshotDosAprovados = ESTADO_INICIAL;
   let aberturas = 0;
@@ -462,6 +476,140 @@ export function criarEstadoDaListaDeAprovados({
     return convocacoesDoEstado(data);
   }
 
+  /*
+    A abertura numa chamada: `abrir_lista_aprovados` (migration
+    20261029133000) traz o pacote da área (do instantâneo
+    TA_CANDIDATO_APROVADO_AREA, com a versão que a tela ou a cópia guardada já
+    tem), as listas da área, a configuração de convocação, os anexos, as
+    convocações e as pendências — antes, seis chamadas (mais a revalidação da
+    cópia). Cada parte volta com o erro de sempre em `erros.<parte>` e é
+    tratada como era: listas e candidatos interrompem; configuração, anexos e
+    convocações só avisam. Banco sem a função (PGRST202): null, e a carga
+    segue pelas chamadas de antes.
+  */
+  async function abrirNumaChamada(
+    area: string,
+    { usarCopia }: { usarCopia: boolean },
+  ): Promise<ResultadosDaCarga | null> {
+    if (!supabase) return null;
+    const comCandidatos = canViewCore(perfil());
+    const contexto = contextoDaCopia(area);
+    const guardado: unknown =
+      comCandidatos && usarCopia ? await copias.ler(contexto) : null;
+    const versao = guardado
+      ? versaoDoPacote(guardado)
+      : !usarCopia && area === areaCarregada
+        ? versaoCarregada
+        : null;
+    const { data, error } = await supabase.rpc("abrir_lista_aprovados", {
+      p_area: area,
+      p_versao: versao,
+      p_com_candidatos: comCandidatos,
+    });
+    if (registroDosAprovados(error).code === "PGRST202") return null;
+    if (error)
+      return [{ data: null, error }, { error: null }, null, null, null];
+    const aberto = registroDosAprovados(data);
+    const erros = registroDosAprovados(aberto.erros);
+
+    let candidatos: ResultadoDosCandidatos;
+    if (!comCandidatos) candidatos = { data: [], error: null, versao: null };
+    else if (erros.pacote) {
+      // Sem acesso à área (42501/22023): as cópias guardadas não valem mais.
+      if (ehErroDeAcesso(erros.pacote)) void copias.apagarTudo();
+      candidatos = { data: null, error: erros.pacote };
+    } else if (pacoteInalterado(aberto.pacote))
+      candidatos = guardado
+        ? {
+            data: candidatosDoPacote(guardado),
+            error: null,
+            versao: versaoDoPacote(guardado),
+          }
+        : { inalterado: true, error: null };
+    else {
+      void copias.guardar(contexto, aberto.pacote);
+      candidatos = {
+        data: candidatosDoPacote(aberto.pacote),
+        error: null,
+        versao: versaoDoPacote(aberto.pacote),
+      };
+    }
+
+    let configuracao: Awaited<ReturnType<typeof lerConfiguracoes>> = null;
+    if (erros.configuracao)
+      console.warn(
+        "Configuração de convocação indisponível:",
+        erros.configuracao,
+      );
+    else
+      try {
+        configuracao = {
+          modelos: lerModelosDoBanco(aberto.modelos),
+          configs: lerConfiguracoesDoBanco(aberto.configs),
+        };
+      } catch (erro) {
+        toast(mensagemDe(erro), "warn");
+      }
+
+    // Como antes: anexos e convocações ilegíveis não interrompem a carga.
+    const ler = <T>(lerParte: () => T): T | null => {
+      try {
+        return lerParte();
+      } catch {
+        return null;
+      }
+    };
+    let anexos: Awaited<ReturnType<typeof lerAnexos>> = new Map();
+    let convocacoes: Awaited<ReturnType<typeof lerConvocacoes>> = new Map();
+    if (comCandidatos) {
+      if (erros.anexos) {
+        console.warn("Anexos dos candidatos indisponíveis:", erros.anexos);
+        anexos = null;
+      } else anexos = ler(() => anexosDoEstado(aberto.anexos));
+      if (!area) convocacoes = new Map();
+      else if (erros.convocacoes) {
+        console.warn(
+          "Convocações dos candidatos indisponíveis:",
+          erros.convocacoes,
+        );
+        convocacoes = null;
+      } else convocacoes = ler(() => convocacoesDoEstado(aberto.convocacoes));
+    }
+
+    // O selo da aba Pendências; com erro, a aba lê de novo quando for aberta.
+    if (!erros.pendencias && aberto.pendencias)
+      pendencias()?.receber(area, aberto.pendencias);
+
+    return [
+      erros.listas
+        ? { data: null, error: erros.listas }
+        : { data: aberto.listas, error: null },
+      candidatos,
+      configuracao,
+      anexos,
+      convocacoes,
+    ];
+  }
+
+  /* As seis chamadas de antes (banco sem abrir_lista_aprovados). */
+  async function abrirPelasChamadasDeAntes(
+    area: string,
+    { usarCopia }: { usarCopia: boolean },
+  ): Promise<ResultadosDaCarga> {
+    if (area) void pendencias()?.carregar(area);
+    return Promise.all([
+      Promise.resolve(supabase!.rpc("listar_listas_aprovados")).then((r) =>
+        r.error ? r : { ...r, data: listasDoEstado(r.data) },
+      ),
+      canViewCore(perfil())
+        ? buscarCandidatos(area, { usarCopia })
+        : Promise.resolve({ data: [], error: null, versao: null }),
+      lerConfiguracoes(),
+      lerAnexos().catch(() => null),
+      lerConvocacoes(area).catch(() => null),
+    ]);
+  }
+
   async function carregarConfiguracoes() {
     if (!supabase) return;
     const lidas = await lerConfiguracoes();
@@ -492,30 +640,16 @@ export function criarEstadoDaListaDeAprovados({
     const usarCopia = !emSegundoPlano && (outraArea || !estado.carregado);
     if (outraArea && estado.carregado) publicar({ carregado: false });
     if (estado.erroAoCarregar) publicar({ erroAoCarregar: "" });
-    let resultados: [
-      RespostaDosAprovados,
-      ResultadoDosCandidatos,
-      Awaited<ReturnType<typeof lerConfiguracoes>>,
-      Awaited<ReturnType<typeof lerAnexos>>,
-      Awaited<ReturnType<typeof lerConvocacoes>>,
-    ];
+    let resultados: ResultadosDaCarga;
     try {
       /*
         A configuração de convocação vai no mesmo lote: ela é lida a cada desenho
         da aba e pedi-la à parte adiaria a primeira ordem de convocação por uma
         ida à rede, com a tabela já na tela a dizer "cadastro de reserva".
       */
-      resultados = await Promise.all([
-        Promise.resolve(supabase.rpc("listar_listas_aprovados")).then((r) =>
-          r.error ? r : { ...r, data: listasDoEstado(r.data) },
-        ),
-        canViewCore(perfil())
-          ? buscarCandidatos(area, { usarCopia })
-          : Promise.resolve({ data: [], error: null, versao: null }),
-        lerConfiguracoes(),
-        lerAnexos().catch(() => null),
-        lerConvocacoes(area).catch(() => null),
-      ]);
+      resultados =
+        (await abrirNumaChamada(area, { usarCopia })) ??
+        (await abrirPelasChamadasDeAntes(area, { usarCopia }));
     } catch (erro) {
       resultados = [
         { data: null, error: erro },

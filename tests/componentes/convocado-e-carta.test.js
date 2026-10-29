@@ -7,6 +7,7 @@ import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
+import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.js";
 
 /*
   O status Convocado e a carta de convocação na Lista de aprovados, pelas
@@ -118,7 +119,7 @@ const MODELOS = {
 
 function supabaseFalso({ modelos = MODELOS, candidatos = CANDIDATOS() } = {}) {
   let versao = 1;
-  const rpc = vi.fn((nome, argumentos) => {
+  const responderRpc = (nome, argumentos) => {
     let resposta = { data: { ok: true }, error: null };
     if (nome === "listar_candidatos_aprovados_compacto")
       resposta = {
@@ -194,7 +195,13 @@ function supabaseFalso({ modelos = MODELOS, candidatos = CANDIDATOS() } = {}) {
       };
     if (/^(alterar|marcar|salvar|registrar)_/.test(nome)) versao += 1;
     return Promise.resolve(resposta);
-  });
+  };
+  // A abertura da página numa chamada, montada com as respostas acima.
+  const rpc = vi.fn((nome, argumentos) =>
+    nome === "abrir_lista_aprovados"
+      ? aberturaPelasChamadasDeAntes(responderRpc, argumentos)
+      : responderRpc(nome, argumentos),
+  );
   return { rpc, storage: { from: vi.fn() } };
 }
 

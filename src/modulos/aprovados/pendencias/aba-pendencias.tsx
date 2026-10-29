@@ -499,9 +499,17 @@ export function AbaPendencias({
   const [edital, setEdital] = useState(editalFixo || editalPedido);
   const [situacao, setSituacao] = useState<SituacaoDaPendencia>("ABERTA");
   const [tipo, setTipo] = useState<TipoDePendencia | "">("");
+  /*
+    As pendências da área chegam com a abertura da Lista de aprovados (o selo
+    da aba). Aberta a aba sem elas — outra área, ou a abertura não as trouxe —,
+    lê aqui; com erro, "Tentar de novo" relê (sem laço).
+  */
+  const temAsDaArea =
+    dados.area === area &&
+    (dados.carregado || dados.carregando || Boolean(dados.erro));
   useEffect(() => {
-    if (area) void estado.carregar(area);
-  }, [estado, area]);
+    if (area && ativa && !temAsDaArea) void estado.carregar(area);
+  }, [estado, area, ativa, temAsDaArea]);
   useEffect(() => {
     if (editalPedido && !editalFixo) setEdital(editalPedido);
   }, [editalPedido, editalFixo]);

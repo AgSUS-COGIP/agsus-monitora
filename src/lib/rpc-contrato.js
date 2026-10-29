@@ -392,6 +392,12 @@ export const CONTRATO_RPC = {
   },
 
   // ── Lista de Aprovados ─────────────────────────────────────────────────
+  abrir_lista_aprovados: {
+    argumentos: ["p_area", "p_versao", "p_com_candidatos"],
+    critica: false,
+    resumo:
+      "A abertura da Lista de aprovados numa chamada (20261029133000): o pacote da área (o instantâneo, com a versão que a tela já tem), as listas da área, a configuração de convocação, os anexos e as convocações da área e as pendências; cada parte com a permissão e o erro de sempre em erros.<parte>. Sem ela (PGRST202), o front faz as chamadas de antes.",
+  },
   listar_listas_aprovados: {
     argumentos: [],
     critica: true,

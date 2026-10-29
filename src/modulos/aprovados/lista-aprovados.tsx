@@ -520,7 +520,16 @@ export function montarListaAprovados({
   cabecalho = () =>
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
 }: OpcoesDaTelaDosAprovados = {}) {
+  // Decidir uma pendência muda status, posição ou remove linha: a lista recarrega.
+  const pendencias = criarEstadoDasPendencias({
+    supabase,
+    ...(toast ? { toast } : {}),
+    ...(hoje ? { hoje } : {}),
+    // `estado` é criado logo abaixo; a decisão só chega depois da montagem.
+    aoDecidir: () => void estado.carregar({ emSegundoPlano: true }),
+  });
   const estado = criarEstadoDaListaDeAprovados({
+    pendencias: () => pendencias,
     supabase,
     toast,
     getProfile,
@@ -535,13 +544,6 @@ export function montarListaAprovados({
     ...(carregarLogo ? { carregarLogo } : {}),
     ...(baixar ? { baixar } : {}),
     ...(hoje ? { hoje } : {}),
-  });
-  // Decidir uma pendência muda status, posição ou remove linha: a lista recarrega.
-  const pendencias = criarEstadoDasPendencias({
-    supabase,
-    ...(toast ? { toast } : {}),
-    ...(hoje ? { hoje } : {}),
-    aoDecidir: () => void estado.carregar({ emSegundoPlano: true }),
   });
   const raiz = secao
     ? montarModulo(
