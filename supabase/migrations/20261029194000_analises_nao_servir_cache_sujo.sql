@@ -111,7 +111,7 @@ begin
     'cache', json_build_object('hit', v_hit, 'refreshed_at', v_gerado_em)
   );
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION private."FC_MARCA_DA_RPC"(p_rpc text, p_area text DEFAULT NULL::text, p_edital uuid DEFAULT NULL::uuid, p_escopo text DEFAULT NULL::text, p_modulo text DEFAULT NULL::text)
  RETURNS text
@@ -222,6 +222,6 @@ begin
     raise exception 'RPC sem marca: %', p_rpc using errcode = '22023';
   end case;
 end;
-$function$
+$function$;
 
 commit;
