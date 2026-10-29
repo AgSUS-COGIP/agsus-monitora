@@ -360,55 +360,53 @@ export function DocumentosEmLote({
 
   return (
     <div className="avd-docs-lote" data-acao={`${id}-lote`}>
-      {pessoas.length ? (
-        <TabelaInfinita
-          idDoTitulo={`${id}-titulo`}
-          titulo={tituloDaTabela}
-          className="avd-docs-lote-tabela"
-          classeDaTabela="avd-tabela"
-          busca={{
-            placeholder: "Código da Empregare ou nome",
-            rotulo: "Buscar por código ou nome",
-            id: `${id}-busca`,
-            valor: busca,
-            aoMudar: setBusca,
-          }}
-          ferramentas={
-            <select
-              className="ui-tabela-busca avd-docs-lote-vaga"
-              aria-label="Vaga"
-              value={vaga}
-              data-acao={`${id}-vaga`}
-              onChange={(ev) => setVaga(ev.target.value)}
-            >
-              <option value="">Todas as vagas</option>
-              {vagas.map((v) => (
-                <option key={String(v.codigo)} value={String(v.codigo)}>
-                  {v.cargo ? `${v.codigo} · ${v.cargo}` : String(v.codigo)}
-                </option>
-              ))}
-            </select>
-          }
-          colunas={colunas}
-          carregado
-          itens={filtradas}
-          filtrarPelaBusca={semFiltro}
-          linha={linha}
-          total={pessoas.length}
-          informacao={(quantos) =>
-            quantos === null
-              ? ""
-              : busca || vaga
-                ? `${formatNumberBR(quantos)} na busca`
-                : `${formatNumberBR(quantos)} no edital`
-          }
-          vazio="Ninguém neste edital para este documento."
-        />
-      ) : (
-        <p className="ui-texto-secundario" data-acao={`${id}-vazio`}>
-          Ninguém neste edital para este documento.
-        </p>
-      )}
+      <TabelaInfinita
+        idDoTitulo={`${id}-titulo`}
+        titulo={tituloDaTabela}
+        className="avd-docs-lote-tabela"
+        classeDaTabela="avd-tabela"
+        busca={{
+          placeholder: "Código da Empregare ou nome",
+          rotulo: "Buscar por código ou nome",
+          id: `${id}-busca`,
+          valor: busca,
+          aoMudar: setBusca,
+        }}
+        ferramentas={
+          <select
+            className="ui-tabela-busca avd-docs-lote-vaga"
+            aria-label="Vaga"
+            value={vaga}
+            data-acao={`${id}-vaga`}
+            onChange={(ev) => setVaga(ev.target.value)}
+          >
+            <option value="">Todas as vagas</option>
+            {vagas.map((v) => (
+              <option key={String(v.codigo)} value={String(v.codigo)}>
+                {v.cargo ? `${v.codigo} · ${v.cargo}` : String(v.codigo)}
+              </option>
+            ))}
+          </select>
+        }
+        colunas={colunas}
+        carregado
+        itens={filtradas}
+        filtrarPelaBusca={semFiltro}
+        linha={linha}
+        total={pessoas.length}
+        informacao={(quantos) =>
+          quantos === null
+            ? ""
+            : busca || vaga
+              ? `${formatNumberBR(quantos)} na busca`
+              : `${formatNumberBR(quantos)} no edital`
+        }
+        vazio={
+          <span data-acao={`${id}-vazio`}>
+            Ninguém neste edital para este documento.
+          </span>
+        }
+      />
 
       <AcoesEmLote
         {...acoes}
