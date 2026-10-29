@@ -211,12 +211,11 @@ describe("decisão da coordenação no banco", () => {
 
   it("o store relê depois de incluir e devolve o erro do banco (permissão, ficha concluída)", async () => {
     const respostas = {
-      // Banco sem a leitura por versão (20261014230000): a tela lê pela de sempre.
-      obter_pre_classificacao_se_mudou: () => ({
-        data: null,
-        error: { code: "PGRST202", message: "Could not find the function" },
+      // A abertura lê só o resumo (20261029120000).
+      obter_resumo_pre_classificacao: () => ({
+        data: { vagas: [] },
+        error: null,
       }),
-      obter_pre_classificacao: () => ({ data: { vagas: [] }, error: null }),
       incluir_no_lote_por_decisao: () => ({
         data: null,
         error: {
@@ -268,10 +267,11 @@ describe("decisão da coordenação no banco", () => {
       "1 candidato incluído no lote por decisão da coordenação.",
       "success",
     );
-    // Releu a pré-classificação depois de incluir.
+    // Releu o resumo da pré-classificação depois de incluir.
     expect(
-      supabase.rpc.mock.calls.filter(([n]) => n === "obter_pre_classificacao")
-        .length,
+      supabase.rpc.mock.calls.filter(
+        ([n]) => n === "obter_resumo_pre_classificacao",
+      ).length,
     ).toBe(2);
   });
 });

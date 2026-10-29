@@ -89,6 +89,8 @@ interface CamposDaVaga {
   inscritos?: number | null;
   /* "eliminados" (a contagem) fica no índice: na tela, vagasDaTela troca pela lista. */
   ranqueados?: number | null;
+  /** Quantos fora do lote (RANQUEADO), do resumo (obter_resumo_pre_classificacao). */
+  fora_do_lote?: number | null;
   no_lote?: number | null;
   no_lote_regra?: number | null;
   no_lote_decisao?: number | null;
@@ -161,8 +163,34 @@ export interface DadosDaPreClassificacao extends RegistroDaPre {
   em_andamento: boolean;
   ultima_execucao: ExecucaoDaPre | null;
   vagas: VagaDaPre[];
-  candidatos: InscritoDaPre[];
+  /**
+   * Só na leitura inteira (obter_pre_classificacao): a tela lê o resumo e as
+   * linhas em páginas (listar_pre_classificacao).
+   */
+  candidatos?: InscritoDaPre[];
+  /** Os lotes com gente: [{ lote, quantidade }] (resumo). */
+  lotes?: { lote: number; quantidade: number }[];
+  /** Os totais do edital (resumo: somas do instantâneo por vaga). */
+  totais?: TotaisDaPre | null;
+  /** A trava das inscrições (resumo; o mesmo de obter_congelamento_inscricoes). */
+  congelamento?: unknown;
+  /** As notas declaradas congeladas: quantas e desde quando (resumo). */
+  congeladas?: { quantidade: number; em: string | null } | null;
   listas: ListaDaPre[];
+}
+
+/** Os totais do edital no resumo (obter_resumo_pre_classificacao). */
+export interface TotaisDaPre {
+  vagas?: number;
+  vagas_sem_pre?: number;
+  inscritos?: number;
+  eliminados?: number;
+  ranqueados?: number;
+  no_lote?: number;
+  no_lote_regra?: number;
+  no_lote_decisao?: number;
+  tamanho?: number | null;
+  divergencias?: number;
 }
 
 /** obter_situacao_pre_classificacao: só a execução. */
@@ -193,6 +221,13 @@ export interface SnapshotDaPreClassificacao {
   editalId: string;
   dados: DadosDaPreClassificacao | null;
   inscricoes: DadosDoAcompanhamento | null;
+  /**
+   * A resposta de obter_congelamento_inscricoes, lida junto com o resumo
+   * (undefined = ainda não lida; null = banco sem a trava ou falhou).
+   */
+  congelamento?: unknown;
+  /** As partes já lidas para o edital (cada uma quando a parte da tela abre). */
+  partes: Readonly<Record<ParteDaPre, boolean>>;
   carregando: boolean;
   erro: string;
   pedidoEm: Date | null;
@@ -203,6 +238,9 @@ export interface SnapshotDaPreClassificacao {
 }
 
 export type TipoDaListaDaPre = "PROVISORIA" | "LOTE";
+
+/** As partes da aba lidas sob demanda (o resumo vem sempre). */
+export type ParteDaPre = "vagas" | "listas";
 
 /** O cliente do banco que o store usa (só a RPC). */
 export interface ClienteDaPreClassificacao {

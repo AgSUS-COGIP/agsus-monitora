@@ -1,10 +1,15 @@
 import {
+  Fragment,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
+import type { RefObject } from "react";
+import { formatNumberBR } from "../../lib/formatters";
+import type { RecorteDaPre } from "../../lib/avaliacao-documental/paginas-da-pre-classificacao.ts";
 import { ordinal } from "../../lib/classificacao/numeros.ts";
 import {
   contadoresDaPreClassificacao,
@@ -24,11 +29,18 @@ import {
   tamanhoSugerido,
   textoDoAviso,
   textoDoLote,
-  vagasDaTela,
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
 import { ESPERA_DO_PEDIDO_MIN } from "../../lib/robos-de-carga.ts";
-import { Aviso, GradeDeKpis, Kpi, Selo } from "../../ui/index.ts";
+import {
+  Aviso,
+  GradeDeKpis,
+  Kpi,
+  Selo,
+  TabelaInfinita,
+  usarListaNoServidor,
+} from "../../ui/index.ts";
+import type { BuscarPagina, ColunaDaTabela } from "../../ui/index.ts";
 import {
   IncluirPorDecisao,
   RevogarDecisao,
@@ -38,9 +50,10 @@ import { espelhoDaEliminacaoPreAnalise } from "../../lib/avaliacao-documental/es
 import {
   chaveDaPessoa,
   comunicadosDosEliminados,
-  eliminadosDaPre,
-  marcadas,
+  ordenarPessoas,
+  pessoaEliminada,
 } from "../../lib/avaliacao-documental/documentos-em-lote.ts";
+import type { PessoaDoDocumento } from "../../lib/avaliacao-documental/documentos-em-lote.ts";
 import { AcoesEmLote, type MontarDocumentos } from "./documentos-em-lote.tsx";
 import { chaveDaLista } from "./estado-da-pre-classificacao.ts";
 import { baixarEspelhoProntoEmPdf } from "./ficha/espelho-de-nota.ts";
@@ -55,7 +68,7 @@ import type {
   SituacaoDoInscrito,
   SnapshotDaPreClassificacao,
   TipoDaListaDaPre,
-  VagaDaTela,
+  VagaDaPre as VagaDoResumo,
   InscritoDaPre,
 } from "./tipos-da-pre-classificacao.ts";
 
@@ -69,6 +82,13 @@ import type {
   CORES") quem a regra deixa fora, e revoga (decisao-do-lote.tsx); o lote
   mostra "N pela regra + M por decisão". Explicações:
   docs/aya/regras-da-avaliacao-documental.md.
+
+  Desempenho (114/2026: 7.726 inscritos, 29 vagas): a aba abre só com o
+  resumo (obter_resumo_pre_classificacao); as vagas e as listas oficiais são
+  partes lidas quando aparecem (pre.garantirParte); as listas de cada vaga vêm
+  do banco 50 por vez (TabelaInfinita com rolagem contínua), só quando o
+  cartão chega perto da tela; os eliminados, só ao abrir; a busca de
+  eliminados é feita no banco; os comunicados conferem só os marcados.
 */
 
 const SITUACAO_DA_EXECUCAO: Record<string, string> = {
@@ -94,7 +114,7 @@ const quando = (valor: string | null | undefined) =>
       })
     : "";
 
-function cabecalhoDaVaga(v: VagaDaTela) {
+function cabecalhoDaVaga(v: VagaDoResumo) {
   const vagas =
     v.vagas_imediatas === null || v.vagas_imediatas === undefined
       ? ""
@@ -177,7 +197,7 @@ function LinhaDoInscrito({ c, podeCoordenar, pre }: LinhaDoInscritoProps) {
 }
 
 interface VagaDaPreProps {
-  v: VagaDaTela;
+  v: VagaDoResumo;
   configuracao: RegistroDaPre;
   podeCoordenar: boolean;
   /** O tamanho digitado e ainda não salvo ("" tira o definido). */
@@ -187,13 +207,79 @@ interface VagaDaPreProps {
   editalId: string;
   rotuloEdital: string;
   unidade: string;
+  /** A leitura do resumo: muda a cada releitura e recomeça as listas. */
+  leitura: string;
+  /** A busca de eliminados (já sem acento e aparada) e quantos ela achou nesta vaga. */
   buscaEliminado?: string;
+  achadosNaBusca?: number;
   /** As chaves (vaga|código) dos eliminados marcados para comunicado em lote. */
   marcados?: ReadonlySet<string>;
-  aoMarcar?: (chave: string, sim: boolean) => void;
+  aoMarcar?: (pessoa: PessoaDoDocumento, sim: boolean) => void;
 }
 
-const LIMITE_VISIVEL = 50;
+/* As listas vêm do banco já recortadas: a tabela não filtra de novo. */
+const semFiltro = <T,>(itens: readonly T[]) => itens;
+const numeroOuZero = (v: unknown) =>
+  Number.isFinite(Number(v)) ? Number(v) : 0;
+const noLote = (c: InscritoDaPre | undefined) =>
+  c?.situacao === "NO_LOTE" || c?.situacao === "ANALISADO";
+
+const COLUNAS_DOS_CLASSIFICADOS: ColunaDaTabela[] = [
+  { rotulo: "Classificação" },
+  { rotulo: "Código" },
+  { rotulo: "Nome" },
+  { rotulo: "Modalidade" },
+  { rotulo: ROTULO_DA_ART, dica: DICA_DA_ART },
+  { rotulo: "Recalculada", dica: DICA_DA_RECALCULADA },
+  { rotulo: "Situação" },
+];
+const COLUNA_DE_MARCAR: ColunaDaTabela = {
+  rotulo: "Marcar",
+  chave: "marcar",
+  cabecalho: <span className="sr-only">Marcar para o lote</span>,
+};
+const COLUNAS_DOS_ELIMINADOS: ColunaDaTabela[] = [
+  { rotulo: "Código" },
+  { rotulo: "Nome" },
+  { rotulo: "Motivo" },
+  { rotulo: "Documento" },
+];
+
+/*
+  O cartão já está perto da tela? As listas da vaga só pedem a primeira página
+  quando ele chega a ~1 tela de distância (29 vagas no 114/2026: abrir a aba
+  não pede as 29). Sem IntersectionObserver (testes, navegador antigo): já.
+*/
+function usarPertoDaTela(ref: RefObject<HTMLElement | null>): boolean {
+  const [perto, setPerto] = useState(
+    () => typeof IntersectionObserver === "undefined",
+  );
+  useEffect(() => {
+    const alvo = ref.current;
+    if (perto || !alvo || typeof IntersectionObserver === "undefined")
+      return undefined;
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        if (entradas.some((e) => e.isIntersecting)) setPerto(true);
+      },
+      { rootMargin: "800px 0px" },
+    );
+    observador.observe(alvo);
+    return () => observador.disconnect();
+  }, [ref, perto]);
+  return perto;
+}
+
+/* A página de uma lista da vaga, no formato da tabela. */
+function buscarDaVaga(
+  pre: EstadoDaPreClassificacao,
+  recorte: RecorteDaPre,
+): BuscarPagina<InscritoDaPre> {
+  return async (apos, limite) => {
+    const r = await pre.listar(recorte, apos, limite);
+    return { linhas: r.linhas, proximo: r.proximo, total: r.total };
+  };
+}
 
 function VagaDaPre({
   v,
@@ -205,40 +291,77 @@ function VagaDaPre({
   editalId,
   rotuloEdital,
   unidade,
+  leitura,
   buscaEliminado = "",
+  achadosNaBusca = 0,
   marcados,
   aoMarcar,
 }: VagaDaPreProps) {
   const [incluindo, setIncluindo] = useState(false);
+  const [foraDoLote, setForaDoLote] = useState<InscritoDaPre[]>([]);
+  const [lendoForaDoLote, setLendoForaDoLote] = useState(false);
+  const [erroDoForaDoLote, setErroDoForaDoLote] = useState("");
   const [emitindo, setEmitindo] = useState("");
   const [erroDoEspelho, setErroDoEspelho] = useState("");
-  const [limiteEliminados, setLimiteEliminados] = useState(LIMITE_VISIVEL);
-  const [limiteClassificados, setLimiteClassificados] =
-    useState(LIMITE_VISIVEL);
   const [eliminadosAbertos, setEliminadosAbertos] = useState(false);
-  const eliminadosVisiveis = buscaEliminado
-    ? v.eliminados.filter((c) =>
-        `${c.codigo} ${c.nome}`
-          .toLocaleLowerCase("pt-BR")
-          .includes(buscaEliminado),
-      )
-    : v.eliminados;
-  const eliminadosNaPagina = eliminadosVisiveis.slice(0, limiteEliminados);
-  const classificadosNaPagina = v.lote.slice(0, limiteClassificados);
-  const foraNaPagina = v.fora.slice(
-    0,
-    Math.max(0, limiteClassificados - v.lote.length),
+  const cartao = useRef<HTMLElement>(null);
+  const perto = usarPertoDaTela(cartao);
+
+  const lote = loteDaVaga(v);
+  const foraDaVaga = numeroOuZero(v.fora_do_lote);
+  const eliminadosDaVaga = numeroOuZero(v.eliminados);
+  const processada = v.inscritos !== null && v.inscritos !== undefined;
+  // Banco antigo (sem fora_do_lote no resumo): a lista pergunta ao banco.
+  const temClassificados =
+    v.fora_do_lote === undefined ||
+    lote.pelaRegra + lote.porDecisao + foraDaVaga > 0;
+
+  const classificados = usarListaNoServidor(
+    useMemo(
+      () => buscarDaVaga(pre, { vaga: v.codigo, grupo: "CLASSIFICADOS" }),
+      [pre, v.codigo],
+    ),
+    `${leitura}:${v.codigo}:classificados`,
+    { ativo: perto && !buscaEliminado && processada && temClassificados },
   );
+  const mostrarEliminados = eliminadosAbertos || Boolean(buscaEliminado);
+  const eliminados = usarListaNoServidor(
+    useMemo(
+      () =>
+        buscarDaVaga(pre, {
+          vaga: v.codigo,
+          grupo: "ELIMINADOS",
+          busca: buscaEliminado,
+        }),
+      [pre, v.codigo, buscaEliminado],
+    ),
+    `${leitura}:${v.codigo}:eliminados:${buscaEliminado}`,
+    { ativo: mostrarEliminados },
+  );
+
+  // A linha de corte vai antes do primeiro de fora do lote que vem depois do lote.
+  const depoisDoCorte = useMemo(() => {
+    const ids = new Set<string>();
+    classificados.itens.forEach((c, i) => {
+      if (
+        c.situacao === "RANQUEADO" &&
+        i > 0 &&
+        noLote(classificados.itens[i - 1])
+      )
+        ids.add(String(c.id));
+    });
+    return ids;
+  }, [classificados.itens]);
+
   async function emitirEspelho(c: InscritoDaPre) {
     if (emitindo || !editalId || c.situacao !== "ELIMINADO") return;
     setErroDoEspelho("");
     setEmitindo(c.codigo);
     try {
-      const atual = (await pre.rpc("obter_pre_classificacao", {
-        p_edital: editalId,
-      })) as DadosDaPreClassificacao | null;
-      if (!atual || atual.edital?.id !== editalId)
-        throw new Error("Não foi possível confirmar o edital.");
+      // A situação de agora só desta pessoa (não a pré-classificação inteira).
+      const atual = await pre.conferirEliminados([
+        chaveDaPessoa(c.vaga, c.codigo),
+      ]);
       const registros = atual.candidatos.filter(
         (p) => p.codigo === c.codigo && p.vaga === c.vaga,
       );
@@ -276,15 +399,76 @@ function VagaDaPre({
       setEmitindo("");
     }
   }
+
+  /* "Incluir por decisão": quem pode entrar (fora do lote e eliminados da vaga), lido ao abrir. */
+  async function abrirInclusao() {
+    setErroDoForaDoLote("");
+    setLendoForaDoLote(true);
+    try {
+      const linhas = await pre.listarTudo({
+        vaga: v.codigo,
+        grupo: "PODE_INCLUIR",
+      });
+      setForaDoLote(linhas.map((c) => ({ ...c, nota: c.nota ?? c.art })));
+      setIncluindo(true);
+    } catch (erro) {
+      setErroDoForaDoLote(
+        erro instanceof Error ? erro.message : "Não foi possível ler a lista.",
+      );
+    } finally {
+      setLendoForaDoLote(false);
+    }
+  }
+
+  const linhaDoClassificado = (c: InscritoDaPre) => (
+    <Fragment key={c.id}>
+      {depoisDoCorte.has(String(c.id)) ? (
+        <tr className="avd-linha-de-corte">
+          <td colSpan={COLUNAS_DOS_CLASSIFICADOS.length}>Linha de corte</td>
+        </tr>
+      ) : null}
+      <LinhaDoInscrito
+        c={c}
+        podeCoordenar={podeCoordenar && noLote(c)}
+        pre={pre}
+      />
+    </Fragment>
+  );
+  const linhaDoEliminado = (c: InscritoDaPre) => (
+    <tr key={c.id} data-candidato={c.codigo} data-situacao="ELIMINADO">
+      {aoMarcar ? (
+        <td>
+          <input
+            type="checkbox"
+            aria-label={`Marcar ${c.codigo} para o lote`}
+            data-acao="marcar-comunicado"
+            checked={marcados?.has(chaveDaPessoa(c.vaga, c.codigo)) ?? false}
+            onChange={(ev) => aoMarcar(pessoaEliminada(c), ev.target.checked)}
+          />
+        </td>
+      ) : null}
+      <td>{c.codigo}</td>
+      <td>{c.nome}</td>
+      <td>{c.motivo}</td>
+      <td>
+        <button
+          type="button"
+          className="btn secondary small"
+          data-acao="espelho-eliminado-pre"
+          disabled={Boolean(emitindo) || !c.motivo}
+          onClick={() => void emitirEspelho(c)}
+        >
+          {emitindo === c.codigo ? "Gerando PDF…" : "Baixar comunicado PDF"}
+        </button>
+      </td>
+    </tr>
+  );
+
   const definido = tamanhoDefinido(configuracao, v.codigo);
   const sugerido = tamanhoSugerido(configuracao, v);
-  const processada = v.inscritos !== null && v.inscritos !== undefined;
-  const lote = loteDaVaga(v, v.lote);
-  const foraDoLote = [...v.fora, ...v.eliminados]
-    .filter(podeIncluirPorDecisao)
-    .map((c) => ({ ...c, nota: c.nota ?? c.art }));
+  const quantosEliminados = buscaEliminado ? achadosNaBusca : eliminadosDaVaga;
   return (
-    <article className="ui-card avd-vaga" data-vaga={v.codigo}>
+    <article ref={cartao} className="ui-card avd-vaga" data-vaga={v.codigo}>
       <h3 className="ui-titulo">{cabecalhoDaVaga(v)}</h3>
       <div className="avd-inline ui-texto-secundario">
         {processada ? (
@@ -325,13 +509,23 @@ function VagaDaPre({
             type="button"
             className="btn secondary small"
             data-acao="incluir-por-decisao"
-            disabled={!foraDoLote.length}
-            onClick={() => setIncluindo(true)}
+            disabled={
+              lendoForaDoLote ||
+              (v.fora_do_lote !== undefined && !(foraDaVaga + eliminadosDaVaga))
+            }
+            onClick={() => void abrirInclusao()}
           >
-            Incluir por decisão da coordenação
+            {lendoForaDoLote
+              ? "Lendo a lista…"
+              : "Incluir por decisão da coordenação"}
           </button>
         ) : null}
       </div>
+      {erroDoForaDoLote ? (
+        <Aviso tom="danger" papel="alert">
+          {erroDoForaDoLote}
+        </Aviso>
+      ) : null}
       {incluindo ? (
         <IncluirPorDecisao
           candidatos={foraDoLote}
@@ -348,142 +542,90 @@ function VagaDaPre({
           ))}
         </ul>
       ) : null}
-      {!buscaEliminado && (v.lote.length || v.fora.length) ? (
-        <div className="ui-tabela-rolagem">
-          <table className="avd-tabela">
-            <thead>
-              <tr>
-                <th scope="col">Classificação</th>
-                <th scope="col">Código</th>
-                <th scope="col">Nome</th>
-                <th scope="col">Modalidade</th>
-                <th scope="col" title={DICA_DA_ART}>
-                  {ROTULO_DA_ART}
-                </th>
-                <th scope="col" title={DICA_DA_RECALCULADA}>
-                  Recalculada
-                </th>
-                <th scope="col">Situação</th>
-              </tr>
-            </thead>
-            <tbody>
-              {classificadosNaPagina.map((c) => (
-                <LinhaDoInscrito
-                  key={c.id}
-                  c={c}
-                  podeCoordenar={podeCoordenar}
-                  pre={pre}
-                />
-              ))}
-              {v.lote.length && v.fora.length ? (
-                <tr className="avd-linha-de-corte">
-                  <td colSpan={7}>Linha de corte</td>
-                </tr>
-              ) : null}
-              {foraNaPagina.map((c) => (
-                <LinhaDoInscrito key={c.id} c={c} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {!buscaEliminado && processada && temClassificados && !perto ? (
+        // Longe da tela: nem a tabela é desenhada (29 vagas no 114/2026).
+        <p className="ui-texto-secundario" data-lista-adiada>
+          A lista da vaga aparece ao rolar até aqui.
+        </p>
+      ) : !buscaEliminado && processada && temClassificados ? (
+        classificados.erro ? (
+          <Aviso tom="danger" papel="alert">
+            Não foi possível ler a lista da vaga: {classificados.erro}{" "}
+            <button
+              type="button"
+              className="btn secondary small"
+              onClick={classificados.recarregar}
+            >
+              Tentar novamente
+            </button>
+          </Aviso>
+        ) : (
+          <TabelaInfinita
+            idDoTitulo={`avdPreClassificados${v.codigo}`}
+            titulo="Classificação"
+            className="avd-pre-lista"
+            classeDaTabela="avd-tabela"
+            colunas={COLUNAS_DOS_CLASSIFICADOS}
+            carregado={classificados.carregado}
+            itens={classificados.itens}
+            filtrarPelaBusca={semFiltro}
+            linha={linhaDoClassificado}
+            total={classificados.total}
+            informacao={(quantos) =>
+              quantos === null
+                ? ""
+                : `${formatNumberBR(quantos)} ${quantos === 1 ? "classificado" : "classificados"}`
+            }
+            vazio="Nenhum classificado nesta vaga."
+            servidor={classificados}
+          />
+        )
       ) : null}
-      {v.lote.length + v.fora.length > limiteClassificados &&
-      !buscaEliminado ? (
-        <button
-          type="button"
-          className="btn secondary small"
-          onClick={() => setLimiteClassificados((n) => n + LIMITE_VISIVEL)}
-        >
-          Mostrar mais classificados (
-          {Math.min(limiteClassificados, v.lote.length + v.fora.length)} de{" "}
-          {v.lote.length + v.fora.length})
-        </button>
-      ) : null}
-      {eliminadosVisiveis.length ? (
+      {quantosEliminados ? (
         <details
           key={buscaEliminado || "todos"}
           className="avd-eliminados"
           open={buscaEliminado ? true : undefined}
           onToggle={(ev) => setEliminadosAbertos(ev.currentTarget.open)}
         >
-          <summary>Eliminados ({eliminadosVisiveis.length})</summary>
-          {/* Na mesma rolagem da tabela do lote: sem ela, a tabela global de
-              app.css (min-width 1180px) estourava o cartão e a página rolava
-              de lado ao abrir os eliminados. */}
-          {eliminadosAbertos || buscaEliminado ? (
-            <div className="ui-tabela-rolagem">
-              <table className="avd-tabela">
-                <thead>
-                  <tr>
-                    {aoMarcar ? (
-                      <th scope="col">
-                        <span className="sr-only">Marcar para o lote</span>
-                      </th>
-                    ) : null}
-                    <th scope="col">Código</th>
-                    <th scope="col">Nome</th>
-                    <th scope="col">Motivo</th>
-                    <th scope="col">Documento</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {eliminadosNaPagina.map((c) => (
-                    <tr
-                      key={c.id}
-                      data-candidato={c.codigo}
-                      data-situacao="ELIMINADO"
-                    >
-                      {aoMarcar ? (
-                        <td>
-                          <input
-                            type="checkbox"
-                            aria-label={`Marcar ${c.codigo} para o lote`}
-                            data-acao="marcar-comunicado"
-                            checked={
-                              marcados?.has(chaveDaPessoa(c.vaga, c.codigo)) ??
-                              false
-                            }
-                            onChange={(ev) =>
-                              aoMarcar(
-                                chaveDaPessoa(c.vaga, c.codigo),
-                                ev.target.checked,
-                              )
-                            }
-                          />
-                        </td>
-                      ) : null}
-                      <td>{c.codigo}</td>
-                      <td>{c.nome}</td>
-                      <td>{c.motivo}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn secondary small"
-                          data-acao="espelho-eliminado-pre"
-                          disabled={Boolean(emitindo) || !c.motivo}
-                          onClick={() => void emitirEspelho(c)}
-                        >
-                          {emitindo === c.codigo
-                            ? "Gerando PDF…"
-                            : "Baixar comunicado PDF"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : null}
-          {(eliminadosAbertos || buscaEliminado) &&
-          eliminadosVisiveis.length > limiteEliminados ? (
-            <button
-              type="button"
-              className="btn secondary small"
-              onClick={() => setLimiteEliminados((n) => n + LIMITE_VISIVEL)}
-            >
-              Mostrar mais eliminados ({limiteEliminados} de{" "}
-              {eliminadosVisiveis.length})
-            </button>
+          <summary>Eliminados ({formatNumberBR(quantosEliminados)})</summary>
+          {mostrarEliminados ? (
+            eliminados.erro ? (
+              <Aviso tom="danger" papel="alert">
+                Não foi possível ler os eliminados: {eliminados.erro}{" "}
+                <button
+                  type="button"
+                  className="btn secondary small"
+                  onClick={eliminados.recarregar}
+                >
+                  Tentar novamente
+                </button>
+              </Aviso>
+            ) : (
+              <TabelaInfinita
+                idDoTitulo={`avdPreEliminados${v.codigo}`}
+                titulo="Eliminados"
+                className="avd-pre-lista"
+                classeDaTabela="avd-tabela"
+                colunas={
+                  aoMarcar
+                    ? [COLUNA_DE_MARCAR, ...COLUNAS_DOS_ELIMINADOS]
+                    : COLUNAS_DOS_ELIMINADOS
+                }
+                carregado={eliminados.carregado}
+                itens={eliminados.itens}
+                filtrarPelaBusca={semFiltro}
+                linha={linhaDoEliminado}
+                total={eliminados.total}
+                informacao={(quantos) =>
+                  quantos === null
+                    ? ""
+                    : `${formatNumberBR(quantos)} ${quantos === 1 ? "eliminado" : "eliminados"}`
+                }
+                vazio="Nenhum eliminado."
+                servidor={eliminados}
+              />
+            )
           ) : null}
           {erroDoEspelho ? (
             <Aviso tom="danger" papel="alert">
@@ -657,6 +799,58 @@ function ListasOficiais({ d, p, pre }: ListasOficiaisProps) {
   );
 }
 
+/*
+  A busca de eliminados (cartão "Comunicados de eliminação"): no banco, no
+  edital todo, 300 ms depois da última tecla. Devolve o termo buscado e quantos
+  eliminados ele achou em cada vaga (as vagas sem achado somem da tela; cada
+  vaga lista os seus achados em páginas).
+*/
+function usarBuscaDeEliminados(
+  pre: EstadoDaPreClassificacao,
+  digitado: string,
+  dados: DadosDaPreClassificacao | null,
+) {
+  const [termo, setTermo] = useState("");
+  const [resultado, setResultado] = useState<{
+    termo: string;
+    porVaga: Record<string, number>;
+    erro: string;
+  }>({ termo: "", porVaga: {}, erro: "" });
+  useEffect(() => {
+    const limpo = digitado.trim().toLocaleLowerCase("pt-BR");
+    const espera = setTimeout(() => setTermo(limpo), limpo ? 300 : 0);
+    return () => clearTimeout(espera);
+  }, [digitado]);
+  const lido = Boolean(dados);
+  useEffect(() => {
+    if (!termo || !lido) return undefined;
+    let vivo = true;
+    pre.listar({ vaga: null, grupo: "ELIMINADOS", busca: termo }, null, 1).then(
+      (r) => {
+        if (vivo) setResultado({ termo, porVaga: r.porVaga, erro: "" });
+      },
+      (erro: unknown) => {
+        if (vivo)
+          setResultado({
+            termo,
+            porVaga: {},
+            erro: erro instanceof Error ? erro.message : String(erro),
+          });
+      },
+    );
+    return () => {
+      vivo = false;
+    };
+  }, [pre, termo, lido]);
+  const pronto = resultado.termo === termo;
+  return {
+    termo: pronto ? termo : "",
+    porVaga: pronto ? resultado.porVaga : {},
+    erro: pronto ? resultado.erro : "",
+    buscando: Boolean(termo) && !pronto,
+  };
+}
+
 export interface PreClassificacaoProps {
   e: EstadoDaAvaliacao;
   estado: LojaDaAvaliacao;
@@ -667,24 +861,36 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
   const p = useSyncExternalStore(pre.assinar, pre.obter);
   const [tamanhos, setTamanhos] = useState<Record<string, string>>({});
   const [buscaDeEspelho, setBuscaDeEspelho] = useState("");
-  const [marcados, setMarcados] = useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
+  // Os eliminados marcados para comunicado em lote (chave vaga|código → pessoa).
+  const [marcadas, setMarcadas] = useState<
+    ReadonlyMap<string, PessoaDoDocumento>
+  >(() => new Map());
+  const marcados = useMemo(() => new Set(marcadas.keys()), [marcadas]);
   const aoMarcar = useCallback(
-    (chave: string, sim: boolean) =>
-      setMarcados((atual) => {
-        const nova = new Set(atual);
-        if (sim) nova.add(chave);
-        else nova.delete(chave);
+    (pessoa: PessoaDoDocumento, sim: boolean) =>
+      setMarcadas((atual) => {
+        const nova = new Map(atual);
+        if (sim) nova.set(pessoa.chave, pessoa);
+        else nova.delete(pessoa.chave);
         return nova;
       }),
     [],
   );
+  // "Marcar todos" (ou os da busca): as chaves que a última marcação em bloco trouxe.
+  const [bloco, setBloco] = useState<{ termo: string; chaves: string[] }>({
+    termo: "",
+    chaves: [],
+  });
+  const [marcandoBloco, setMarcandoBloco] = useState(false);
   const dadosDoEdital = p.editalId === e.editalId ? p.dados : null;
-  const eliminados = useMemo(
-    () => eliminadosDaPre(dadosDoEdital?.candidatos),
-    [dadosDoEdital],
-  );
+  const busca = usarBuscaDeEliminados(pre, buscaDeEspelho, dadosDoEdital);
+  // A tela de hoje mostra as vagas e as listas oficiais juntas: as duas partes já ao abrir.
+  const resumoLido = Boolean(dadosDoEdital);
+  useEffect(() => {
+    if (!resumoLido) return;
+    void pre.garantirParte("vagas");
+    void pre.garantirParte("listas");
+  }, [pre, resumoLido, e.editalId]);
   const [motivo, setMotivo] = useState("");
   const [erroAoSalvar, setErroAoSalvar] = useState("");
   const [abrirDescongelar, setAbrirDescongelar] = useState(false);
@@ -692,12 +898,11 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
   const [descongelando, setDescongelando] = useState(false);
   const versaoDaRegra = e.dados?.regra?.versao ?? 0;
   useEffect(() => {
+    // As partes que esta tela mostra saem junto com o resumo (a casca já as
+    // pede ao escolher o edital; aqui, para a entrada própria da aba).
+    pre.pedirPartes(["vagas", "listas"]);
     void pre.garantirCarregado(e.editalId, String(versaoDaRegra));
   }, [pre, e.editalId, versaoDaRegra]);
-
-  const d = p.editalId === e.editalId ? p.dados : null;
-  const cont = useMemo(() => contadoresDaPreClassificacao(d), [d]);
-  const vagas = useMemo(() => vagasDaTela(d), [d]);
 
   if (p.erro)
     return (
@@ -712,6 +917,7 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
         </button>
       </Aviso>
     );
+  const d = p.editalId === e.editalId ? p.dados : null;
   if (!d)
     return (
       <div className="ui-card" aria-busy="true">
@@ -720,38 +926,62 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
       </div>
     );
 
-  const buscaEliminado = buscaDeEspelho.trim().toLocaleLowerCase("pt-BR");
+  const cont = contadoresDaPreClassificacao(d);
+  const vagas = d.vagas ?? [];
+  const buscaEliminado = busca.termo;
   const vagasVisiveis = buscaEliminado
-    ? vagas.filter((v) =>
-        v.eliminados.some((c) =>
-          `${c.codigo} ${c.nome}`
-            .toLocaleLowerCase("pt-BR")
-            .includes(buscaEliminado),
-        ),
-      )
+    ? vagas.filter((v) => (busca.porVaga[String(v.codigo)] ?? 0) > 0)
     : vagas;
-  const daBusca = buscaEliminado
-    ? eliminados.filter((c) =>
-        `${c.codigo} ${c.nome}`
-          .toLocaleLowerCase("pt-BR")
-          .includes(buscaEliminado),
-      )
-    : eliminados;
-  const escolhidos = marcadas(eliminados, marcados);
+  const leitura = String(d.gerado_em ?? "");
+  const noBloco = buscaEliminado
+    ? Object.values(busca.porVaga).reduce((n, q) => n + q, 0)
+    : cont.eliminados;
+  const escolhidos = ordenarPessoas(marcadas.values());
   const todosDaBuscaMarcados =
-    daBusca.length > 0 && daBusca.every((c) => marcados.has(c.chave));
+    bloco.termo === buscaEliminado &&
+    bloco.chaves.length > 0 &&
+    bloco.chaves.length === noBloco &&
+    bloco.chaves.every((c) => marcados.has(c));
   const rotuloEdital = String(d.edital?.edital || d.edital?.rotulo || "");
   const unidade = String(d.edital?.unidade || "");
-  // Relê a pré-classificação antes de emitir: quem deixou de estar eliminado sai.
+
+  /* Marca (ou desmarca) todos os eliminados da busca, lidos do banco em páginas. */
+  async function marcarOsDaBusca() {
+    if (todosDaBuscaMarcados) {
+      setMarcadas((atual) => {
+        const nova = new Map(atual);
+        for (const chave of bloco.chaves) nova.delete(chave);
+        return nova;
+      });
+      setBloco({ termo: "", chaves: [] });
+      return;
+    }
+    setMarcandoBloco(true);
+    try {
+      const termo = buscaEliminado;
+      const linhas = await pre.listarTudo({
+        vaga: null,
+        grupo: "ELIMINADOS",
+        busca: termo,
+      });
+      const pessoas = linhas.map(pessoaEliminada);
+      setMarcadas((atual) => {
+        const nova = new Map(atual);
+        for (const pessoa of pessoas) nova.set(pessoa.chave, pessoa);
+        return nova;
+      });
+      setBloco({ termo, chaves: pessoas.map((x) => x.chave) });
+    } finally {
+      setMarcandoBloco(false);
+    }
+  }
+
+  // Confere só os marcados, como estão agora: quem deixou de estar eliminado sai.
   const montarComunicados: MontarDocumentos = async (escolhidas) => {
-    const atual = (await pre.rpc("obter_pre_classificacao", {
-      p_edital: e.editalId,
-    })) as DadosDaPreClassificacao | null;
-    if (!atual || atual.edital?.id !== e.editalId)
-      throw new Error("Não foi possível confirmar o edital.");
+    const atual = await pre.conferirEliminados(escolhidas.map((x) => x.chave));
     const r = comunicadosDosEliminados(
-      atual.candidatos || [],
-      atual.vagas || [],
+      atual.candidatos as Parameters<typeof comunicadosDosEliminados>[0],
+      atual.vagas,
       escolhidas,
       { edital: rotuloEdital, unidade },
     );
@@ -806,7 +1036,11 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
 
   return (
     <div className="avd-pre">
-      <TravaDasInscricoes editalId={e.editalId} rpc={pre.rpc} />
+      <TravaDasInscricoes
+        editalId={e.editalId}
+        rpc={pre.rpc}
+        inicial={p.congelamento}
+      />
       <InscricoesDoEdital dados={p.inscricoes} />
       <GradeDeKpis rotulo="Pré-classificação">
         <Kpi
@@ -978,7 +1212,15 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
             onChange={(ev) => setBuscaDeEspelho(ev.target.value)}
           />
         </label>
-        {buscaEliminado && !vagasVisiveis.length ? (
+        {busca.erro ? (
+          <Aviso tom="danger" papel="alert">
+            Não foi possível buscar: {busca.erro}
+          </Aviso>
+        ) : busca.buscando ? (
+          <p className="ui-texto-secundario" role="status">
+            Buscando…
+          </p>
+        ) : buscaEliminado && !vagasVisiveis.length ? (
           <Aviso tom="warning">Nenhum eliminado encontrado.</Aviso>
         ) : null}
         <div className="avd-docs-lote-resumo" data-acao="comunicados-lote">
@@ -994,30 +1236,27 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
               type="button"
               className="btn ghost small"
               data-acao="comunicados-marcar-busca"
-              disabled={!daBusca.length}
-              onClick={() =>
-                setMarcados((atual) => {
-                  const nova = new Set(atual);
-                  for (const c of daBusca)
-                    if (todosDaBuscaMarcados) nova.delete(c.chave);
-                    else nova.add(c.chave);
-                  return nova;
-                })
-              }
+              disabled={!noBloco || marcandoBloco || busca.buscando}
+              onClick={() => void marcarOsDaBusca()}
             >
-              {todosDaBuscaMarcados
-                ? buscaEliminado
-                  ? "Desmarcar os da busca"
-                  : "Desmarcar todos"
-                : buscaEliminado
-                  ? `Marcar os da busca (${daBusca.length.toLocaleString("pt-BR")})`
-                  : `Marcar todos os eliminados (${daBusca.length.toLocaleString("pt-BR")})`}
+              {marcandoBloco
+                ? "Marcando…"
+                : todosDaBuscaMarcados
+                  ? buscaEliminado
+                    ? "Desmarcar os da busca"
+                    : "Desmarcar todos"
+                  : buscaEliminado
+                    ? `Marcar os da busca (${noBloco.toLocaleString("pt-BR")})`
+                    : `Marcar todos os eliminados (${noBloco.toLocaleString("pt-BR")})`}
             </button>
             {marcados.size ? (
               <button
                 type="button"
                 className="btn ghost small"
-                onClick={() => setMarcados(new Set())}
+                onClick={() => {
+                  setMarcadas(new Map());
+                  setBloco({ termo: "", chaves: [] });
+                }}
               >
                 Limpar marcação
               </button>
@@ -1048,7 +1287,9 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
             editalId={e.editalId}
             rotuloEdital={rotuloEdital}
             unidade={unidade}
+            leitura={leitura}
             buscaEliminado={buscaEliminado}
+            achadosNaBusca={busca.porVaga[String(v.codigo)] ?? 0}
             marcados={marcados}
             aoMarcar={aoMarcar}
             aoMudarTamanho={(codigo, valor) =>

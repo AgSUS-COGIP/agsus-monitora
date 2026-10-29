@@ -44,12 +44,24 @@ import { lerFilaComRecuperacao } from "../../lib/avaliacao-documental/repetir-le
 import {
   csvDaFila,
   FILTRO_INICIAL,
+  filtrarFila,
   nomeDoCsvDaFila,
   normalizarFiltro,
+  ordenarFila,
 } from "../../lib/avaliacao-documental/fila.ts";
 import {
+  argumentosDosEliminados,
+  juntarFila,
   lerForaDoLote,
+  PAGINA_DO_CSV,
+  paginaDosEliminados,
   resumoForaDoLote,
+  RPC_ELIMINADOS_DA_FILA,
+} from "../../lib/avaliacao-documental/fila-fora-do-lote.ts";
+import type {
+  FiltroDosEliminados,
+  OrdemDosEliminados,
+  PaginaDosEliminados,
 } from "../../lib/avaliacao-documental/fila-fora-do-lote.ts";
 import {
   aplicarMudancasDaFila,
@@ -370,6 +382,77 @@ export function criarEstadoDaFila({
     return promessa;
   }
 
+  /*
+    A aba Eliminados em páginas (50 por vez, na tela): vaga, modalidade, busca
+    e ordem vão ao banco. Banco sem listar_eliminados_fila (antes de
+    20261029120000): a lista de fora do lote inteira, como antes, recortada e
+    ordenada aqui (o cursor vira o deslocamento).
+  */
+  let semEliminadosNoBanco = false;
+  async function listarEliminados(
+    filtro: FiltroDosEliminados,
+    ordem: OrdemDosEliminados | null,
+    apos: unknown = null,
+    limite = 50,
+  ): Promise<PaginaDosEliminados> {
+    const editalId = estado.editalId;
+    if (!editalId) throw new Error("Escolha o edital.");
+    if (!semEliminadosNoBanco) {
+      try {
+        return paginaDosEliminados(
+          await rpc(
+            RPC_ELIMINADOS_DA_FILA,
+            argumentosDosEliminados(editalId, filtro, ordem, apos, limite),
+          ),
+        );
+      } catch (erro) {
+        if (!funcaoAusente(erro)) throw erro;
+        semEliminadosNoBanco = true;
+      }
+    }
+    if (!(await carregarForaDoLote()))
+      throw new Error(
+        estado.fora.erro || "Não foi possível ler os eliminados.",
+      );
+    const todos = ordenarFila(
+      filtrarFila(
+        juntarFila(estado.dados?.candidatos, estado.fora.linhas),
+        { ...normalizarFiltro(filtro), etapa: "eliminados" },
+        estado.dados?.eu,
+      ),
+      ordem,
+    );
+    const inicio = Number.isInteger(apos) ? (apos as number) : 0;
+    const fim = inicio + limite;
+    return {
+      linhas: todos.slice(inicio, fim),
+      proximo: fim < todos.length ? fim : null,
+      total: todos.length,
+    };
+  }
+
+  /* "Exportar CSV" da aba Eliminados: o recorte inteiro, página a página. */
+  async function exportarEliminados(
+    filtro: FiltroDosEliminados,
+    ordem: OrdemDosEliminados | null,
+  ): Promise<boolean> {
+    try {
+      const linhas: PaginaDosEliminados["linhas"] = [];
+      let apos: unknown = null;
+      for (let pagina = 0; pagina < 100; pagina += 1) {
+        const r = await listarEliminados(filtro, ordem, apos, PAGINA_DO_CSV);
+        linhas.push(...r.linhas);
+        apos = r.proximo;
+        if (apos === null || apos === undefined) break;
+      }
+      exportarCsv(linhas as InscritoNaFila[], "eliminados");
+      return true;
+    } catch (erro) {
+      toast(`Não foi possível exportar: ${mensagemDoBanco(erro)}`, "error");
+      return false;
+    }
+  }
+
   function mudarFiltro(mudancas: Partial<FiltroDaFila>) {
     const filtro = normalizarFiltro({ ...estado.filtro, ...mudancas });
     guardarFiltro(armazenamento, filtro);
@@ -667,6 +750,8 @@ export function criarEstadoDaFila({
     /* A lista mudou no modo de análise e ainda não foi relida. */
     estaDesatualizada: () => desatualizada,
     carregarForaDoLote,
+    listarEliminados,
+    exportarEliminados,
     mudarFiltro,
     abrir,
     pegarProxima,

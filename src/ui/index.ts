@@ -93,11 +93,18 @@ export type {
 export { Selo } from "./selo.tsx";
 export type { PropriedadesDoSelo } from "./selo.tsx";
 export { TabelaInfinita } from "./tabela-infinita.tsx";
+export { LINHAS_POR_PAGINA, usarListaNoServidor } from "./lista-no-servidor.ts";
+export type {
+  BuscarPagina,
+  ListaNoServidor,
+  PaginaDoServidor,
+} from "./lista-no-servidor.ts";
 export type {
   BuscaDaTabela,
   ColunaDaTabela,
   GrupoDaTabela,
   PropriedadesDaTabelaInfinita,
+  TabelaNoServidor,
 } from "./tabela-infinita.tsx";
 export { TopoDoPainel } from "./topo-do-painel.tsx";
 export type { PropriedadesDoTopoDoPainel } from "./topo-do-painel.tsx";

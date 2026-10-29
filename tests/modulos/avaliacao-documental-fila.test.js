@@ -193,6 +193,11 @@ function supabaseFalso(dados = fila(), extra = {}) {
       { id: "fs2", nome: p_nome, filtro: p_filtro },
     ],
     excluir_filtro_fila: () => [],
+    // Banco sem as páginas dos eliminados (antes de 20261029120000): a lista inteira.
+    listar_eliminados_fila: () =>
+      Object.assign(new Error("Could not find the function"), {
+        code: "PGRST202",
+      }),
     ...extra,
   };
   return {
@@ -1335,6 +1340,50 @@ describe("fila leve: o lote em toda leitura, os de fora do lote sob demanda", ()
     supabase.rpc.mock.calls.filter(
       ([nome]) => nome === "obter_fila_fora_do_lote",
     );
+
+  it("Eliminados no banco (20261029120000): 50 por vez, ordem no banco, sem ler os de fora do lote", async () => {
+    const pedidos = [];
+    const supabase = supabaseFalso(filaLeve(), {
+      listar_eliminados_fila: (args) => {
+        pedidos.push(args);
+        return { candidatos: [eliminado()], proximo: null, total: 1 };
+      },
+    });
+    await montar(supabase);
+    const etapas = secao.querySelector("[data-tour='avd-fila-etapas']");
+    await clicar(etapas.querySelector("[data-valor='eliminados']"));
+    await esperar();
+    expect(linhas()).toEqual(["7009"]);
+    expect(chamadasDeFora(supabase)).toHaveLength(0);
+    expect(pedidos.at(-1)).toEqual({
+      p_edital: "e93",
+      p_vaga: null,
+      p_modalidade: null,
+      p_busca: null,
+      p_ordem: null,
+      p_sentido: "asc",
+      p_apos: null,
+      p_limite: 50,
+    });
+    expect(secao.querySelector("[data-tabela-mostrando]").textContent).toBe(
+      "Mostrando 1 de 1 registros",
+    );
+    // Ordenar pela coluna pede de novo ao banco, na ordem da coluna.
+    const nome = [...secao.querySelectorAll("button.ui-ordenar")].find((b) =>
+      b.textContent.startsWith("Nome"),
+    );
+    await clicar(nome);
+    await esperar();
+    expect(pedidos.at(-1)).toMatchObject({
+      p_ordem: "nome",
+      p_sentido: "asc",
+      p_apos: null,
+    });
+    // O CSV lê o recorte inteiro em páginas maiores.
+    await clicar(secao.querySelector("[data-acao='exportar-csv']"));
+    await esperar();
+    expect(pedidos.at(-1)).toMatchObject({ p_ordem: "nome", p_limite: 2000 });
+  });
 
   it("No lote não pede os de fora; Eliminados pede uma vez (em páginas) e guarda", async () => {
     const supabase = supabaseFalso(filaLeve(), {

@@ -18,6 +18,11 @@ import { LinhasEsqueleto } from "./esqueleto.tsx";
   desenhar, avisa `agsus:content-updated` (o modo cartão do celular,
   src/app/casca/tabelas-em-cartoes.ts, põe os rótulos); enquanto falta linha,
   "Carregar mais" faz o mesmo que rolar (teclado e leitor de tela).
+
+  Com `servidor` (usarListaNoServidor, lista-no-servidor.ts), as linhas vêm do
+  banco 50 por vez: `itens` são as já recebidas, `servidor.total` é o do
+  recorte (o "N de M") e chegar ao fim da rolagem pede a próxima página. Busca
+  e filtros vão ao banco: `filtrarPelaBusca` não se aplica.
 */
 
 const POR_VEZ = 50;
@@ -69,6 +74,14 @@ export interface GrupoDaTabela<T> {
  * `busca` é opcional: sem ela, a tabela não desenha o campo (a tela o põe
  * junto dos filtros) e `filtrarPelaBusca` recebe "".
  */
+/** A tabela alimentada pelo banco em páginas (ver usarListaNoServidor). */
+export interface TabelaNoServidor {
+  total: number;
+  temMais: boolean;
+  carregando: boolean;
+  carregarMais: () => void;
+}
+
 export interface PropriedadesDaTabelaInfinita<T> {
   idDoTitulo: string;
   titulo: string;
@@ -95,6 +108,7 @@ export interface PropriedadesDaTabelaInfinita<T> {
   classeDaTabela?: string;
   tour?: string;
   grupo?: GrupoDaTabela<T> | null;
+  servidor?: TabelaNoServidor | null;
 }
 
 /*
@@ -183,6 +197,7 @@ export function TabelaInfinita<T>({
   idDoCorpo,
   tour,
   grupo = null,
+  servidor = null,
 }: PropriedadesDaTabelaInfinita<T>) {
   const {
     placeholder,
@@ -201,8 +216,8 @@ export function TabelaInfinita<T>({
     aoMudar?.(nova);
   };
   const naTabela = useMemo(
-    () => filtrarPelaBusca(itens, busca),
-    [itens, busca, filtrarPelaBusca],
+    () => (servidor ? itens : filtrarPelaBusca(itens, busca)),
+    [servidor, itens, busca, filtrarPelaBusca],
   );
   /*
     Quantas linhas estão carregadas, guardado junto do recorte a que se refere:
@@ -214,10 +229,13 @@ export function TabelaInfinita<T>({
   const [carga, setCarga] = useState({ recorte: naTabela, limite: POR_VEZ });
   const limite = carga.recorte === naTabela ? carga.limite : POR_VEZ;
   const carregarMais = () =>
-    setCarga((atual) => ({
-      recorte: naTabela,
-      limite: (atual.recorte === naTabela ? atual.limite : POR_VEZ) + POR_VEZ,
-    }));
+    servidor
+      ? servidor.carregarMais()
+      : setCarga((atual) => ({
+          recorte: naTabela,
+          limite:
+            (atual.recorte === naTabela ? atual.limite : POR_VEZ) + POR_VEZ,
+        }));
   const recolhidos = grupo?.recolhidos;
   // Agrupada: os itens dos grupos recolhidos não contam para o carregamento contínuo.
   const abertos = useMemo(
@@ -227,8 +245,14 @@ export function TabelaInfinita<T>({
         : naTabela,
     [naTabela, grupo, recolhidos],
   );
-  const visiveis = abertos.slice(0, limite);
-  const faltam = abertos.length - visiveis.length;
+  const visiveis = servidor ? abertos : abertos.slice(0, limite);
+  // No banco: o que ainda não veio (só se pede quando há mais páginas).
+  const noRecorte = servidor ? servidor.total : naTabela.length;
+  const faltam = servidor
+    ? servidor.temMais
+      ? Math.max(1, servidor.total - visiveis.length)
+      : 0
+    : abertos.length - visiveis.length;
 
   // O modo cartão do celular relê os cabeçalhos a cada desenho.
   const desenhadas = carregado ? visiveis.length : -1;
@@ -240,6 +264,7 @@ export function TabelaInfinita<T>({
     const caixa = evento.currentTarget;
     if (
       faltam > 0 &&
+      !servidor?.carregando &&
       caixa.scrollTop + caixa.clientHeight >=
         caixa.scrollHeight - PERTO_DO_FIM_PX
     )
@@ -279,11 +304,11 @@ export function TabelaInfinita<T>({
       <div className="ui-tabela-meta">
         <span data-tabela-mostrando="">
           {carregado
-            ? `Mostrando ${formatNumberBR(visiveis.length)} de ${formatNumberBR(naTabela.length)} registros`
+            ? `Mostrando ${formatNumberBR(visiveis.length)} de ${formatNumberBR(noRecorte)} registros`
             : "Mostrando 0 de 0 registros"}
         </span>
         <span data-tabela-contagem="">
-          {informacao(carregado ? naTabela.length : null)}
+          {informacao(carregado ? noRecorte : null)}
         </span>
       </div>
       <div className="ui-tabela-rolagem" onScroll={aoRolar}>
@@ -361,9 +386,11 @@ export function TabelaInfinita<T>({
       </div>
       {carregado && naTabela.length ? (
         <div className="ui-tabela-status" role="status" aria-live="polite">
-          {faltam > 0
-            ? `${formatNumberBR(visiveis.length)} de ${formatNumberBR(naTabela.length)} registros`
-            : `Todos os ${formatNumberBR(naTabela.length)} registros do recorte foram carregados`}
+          {servidor?.carregando
+            ? `Carregando mais… ${formatNumberBR(visiveis.length)} de ${formatNumberBR(noRecorte)} registros`
+            : faltam > 0
+              ? `${formatNumberBR(visiveis.length)} de ${formatNumberBR(noRecorte)} registros`
+              : `Todos os ${formatNumberBR(noRecorte)} registros do recorte foram carregados`}
         </div>
       ) : null}
       {carregado && faltam > 0 ? (
@@ -371,6 +398,7 @@ export function TabelaInfinita<T>({
           type="button"
           className="btn secondary small ui-tabela-mais"
           data-acao="carregar-mais"
+          disabled={Boolean(servidor?.carregando)}
           onClick={() => carregarMais()}
         >
           <i className="fa-solid fa-plus" aria-hidden="true" /> Carregar mais{" "}

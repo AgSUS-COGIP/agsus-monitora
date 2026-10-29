@@ -54,7 +54,14 @@ export function Equipe({ e, estado }: PropsDaEquipe) {
   const [motivo, setMotivo] = useState("");
   const [erro, setErro] = useState("");
   const [tentou, setTentou] = useState(false);
-  if (!equipe) return null;
+  // A equipe é lida quando a aba abre (estado.carregarEquipe).
+  if (!equipe)
+    return (
+      <div className="ui-card" aria-busy="true">
+        <div className="ui-esqueleto-linha" />
+        <div className="ui-esqueleto-linha" />
+      </div>
+    );
   const coordena = Boolean(equipe.pode_coordenar);
   const gestores = equipe.gestores ?? [];
   const pessoas = new Map<string, PessoaNoSeletor>();

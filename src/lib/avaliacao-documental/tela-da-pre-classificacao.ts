@@ -3,9 +3,10 @@
   ordem, tamanho sugerido do lote (prévia pela mesma conta do job), os lotes
   a publicar e os rótulos dos avisos e das situações. Sem estado.
 
-  Os dados vêm de obter_pre_classificacao
-  (supabase/migrations/20261006110000_pre_classificacao_e_lote.sql): o
-  resultado que o job Python gravou. Aqui não se recalcula ninguém.
+  Os dados vêm de obter_resumo_pre_classificacao (o resumo, sem os inscritos;
+  as linhas, em páginas: paginas-da-pre-classificacao.ts) ou, em banco sem
+  ele, de obter_pre_classificacao: o resultado que o job Python gravou. Aqui
+  não se recalcula ninguém.
 */
 import { normalizarRegraAnalise } from "./regra.ts";
 import {
@@ -209,6 +210,23 @@ export const ROTULOS_DA_SITUACAO = Object.freeze({
 export function contadoresDaPreClassificacao(
   dados: DadosDaPreClassificacao | null | undefined,
 ) {
+  // O resumo da abertura já traz os totais do edital (somas do instantâneo).
+  const t = dados?.totais;
+  if (t)
+    return {
+      inscritos: numero(t.inscritos),
+      eliminados: numero(t.eliminados),
+      ranqueados: numero(t.ranqueados),
+      noLote: numero(t.no_lote),
+      noLotePelaRegra: numero(t.no_lote_regra),
+      noLotePorDecisao: numero(t.no_lote_decisao),
+      tamanho:
+        t.tamanho === null || t.tamanho === undefined
+          ? null
+          : numero(t.tamanho),
+      divergencias: numero(t.divergencias),
+      vagasSemPreClassificacao: numero(t.vagas_sem_pre),
+    };
   const vagas = lista(dados?.vagas);
   const conta = (campo: string) =>
     vagas.reduce((s, v) => s + numero(v?.[campo]), 0);
@@ -345,9 +363,14 @@ export function lotesAPublicar(
       .filter((l) => l?.meta?.tipo === "LOTE" && l.lote !== null)
       .map((l) => Number(l.lote)),
   );
+  // O resumo já traz quantos há em cada lote; a leitura inteira conta os inscritos.
   const contagem = new Map<number, number>();
-  for (const c of lista(dados?.candidatos))
-    if (c.lote) contagem.set(c.lote, (contagem.get(c.lote) ?? 0) + 1);
+  if (Array.isArray(dados?.lotes))
+    for (const { lote, quantidade } of dados.lotes)
+      contagem.set(Number(lote), numero(quantidade));
+  else
+    for (const c of lista(dados?.candidatos))
+      if (c.lote) contagem.set(c.lote, (contagem.get(c.lote) ?? 0) + 1);
   return [...contagem.entries()]
     .filter(([lote]) => (publica || lote === 1) && !registrados.has(lote))
     .sort(([a], [b]) => a - b)
@@ -379,6 +402,11 @@ export const DICA_DA_NOTA_DO_LOTE = "Usada no corte e na ordem do lote";
 export function declaradasCongeladas(
   dados: DadosDaPreClassificacao | null | undefined,
 ): { quantidade: number; em: string | null } {
+  if (dados?.congeladas)
+    return {
+      quantidade: numero(dados.congeladas.quantidade),
+      em: dados.congeladas.em ?? null,
+    };
   const datas = lista(dados?.candidatos)
     .filter(
       (c) =>
