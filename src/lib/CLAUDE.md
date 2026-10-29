@@ -7,6 +7,9 @@ Arquivos que exigem cuidado:
 
 - `rpc-contrato.js` — contrato das RPCs. Mudou no banco, muda aqui (`npm run check:rpc-contract`).
 - `sessao.ts`, `session-lifecycle.ts`, `supabaseClient.ts`, `auth-flow.ts` — único caminho de auth.
+- `novas-tentativas.ts` — **regra única de nova tentativa automática** de chamada ao Supabase (leitura passageira, token
+  vencido), com espera crescente sorteada, teto, limite e orçamento comum; o cliente único a aplica no `fetch`. Nada de
+  laço próprio de repetição em tela: espera crescente usa `esperaAntesDaTentativa`.
 - `access-roles.ts`, `permissoes-recursos.ts` — matriz de permissão; costuma exigir migration junto.
   `access-roles.ts` também é a regra única de páginas e seções liberadas (`paginasPermitidas`,
   `secaoDeConfiguracaoPermitida`), usada pela barra e pelo "Ver como".

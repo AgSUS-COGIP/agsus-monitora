@@ -96,6 +96,7 @@ import {
   esperaOJob,
   INTERVALO_DO_CALCULO_MS,
   PRAZO_DO_CALCULO_MS,
+  TETO_DA_ESPERA_SEM_CONEXAO_MS,
   respostaDoPedido,
   textoDoPedidoParado,
 } from "../../lib/classificacao/calculo-em-python.ts";
@@ -129,6 +130,7 @@ import {
   ehFalhaDeConexao,
   mensagemDeFalha,
 } from "../../lib/falha-de-rede";
+import { esperaAntesDaTentativa } from "../../lib/novas-tentativas.ts";
 import { criarCopiasPorVersao } from "../../app/copias-por-versao.ts";
 import { criarLeituraPorVersao } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
 
@@ -568,6 +570,8 @@ export function criarEstadoDaClassificacao({
     avisar("calculando");
     const inicio = agora();
     let lido = calculoLido({ ...pedido, retrato: null });
+    // Conexão caída: a espera cresce a cada falha seguida (src/lib/novas-tentativas.ts).
+    let falhasSeguidas = 0;
     while (esperaOJob(lido.situacao)) {
       if (agora() - inicio >= prazoDoCalculoMs) {
         avisar(
@@ -576,15 +580,27 @@ export function criarEstadoDaClassificacao({
         );
         return null;
       }
-      await esperar(intervaloDoCalculoMs);
+      await esperar(
+        falhasSeguidas
+          ? Math.max(
+              intervaloDoCalculoMs,
+              esperaAntesDaTentativa(falhasSeguidas, {
+                baseMs: intervaloDoCalculoMs,
+                tetoMs: TETO_DA_ESPERA_SEM_CONEXAO_MS,
+              }),
+            )
+          : intervaloDoCalculoMs,
+      );
       if (!vigente()) return null;
       try {
         lido = calculoLido(
           await rpc(RPC_OBTER_CALCULO, { p_pedido: pedido.pedido }),
         );
+        falhasSeguidas = 0;
       } catch (erro) {
-        // A conexão caiu: tenta de novo até o prazo.
+        // A conexão caiu: tenta de novo até o prazo, esperando mais a cada falha.
         if (!ehFalhaDeConexao(erro)) throw erro;
+        falhasSeguidas += 1;
       }
       if (!vigente()) return null;
     }

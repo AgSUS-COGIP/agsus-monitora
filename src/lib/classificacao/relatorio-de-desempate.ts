@@ -1,6 +1,7 @@
 import type { PlanilhaDaClassificacao } from "./tipos-dos-documentos.ts";
 import { escapeHtml } from "../sanitize";
 import { dataBR, formatarNota } from "./numeros.ts";
+import { esperaAntesDaTentativa } from "../novas-tentativas.ts";
 
 /*
   O relatório de desempate de uma lista gerada, como a tela o mostra e exporta
@@ -330,8 +331,18 @@ export interface RespostaDoDesempate {
 
 /** Quanto a tela espera o relatório (o job leva ~1 min) antes de dizer que não chegou. */
 export const ESPERA_DO_RELATORIO_MS = 15 * 60 * 1000;
-/** De quanto em quanto tempo a tela relê enquanto o relatório é preparado. */
+/** A primeira releitura enquanto o relatório é preparado; as seguintes crescem até o teto. */
 export const RELEITURA_DO_PREPARO_MS = 10 * 1000;
+export const TETO_DA_RELEITURA_MS = 60 * 1000;
+
+/** Espera antes da `n`-ésima releitura do preparo (src/lib/novas-tentativas.ts). */
+export function esperaDaReleitura(n: number, sorteio?: () => number) {
+  return esperaAntesDaTentativa(
+    n,
+    { baseMs: RELEITURA_DO_PREPARO_MS, tetoMs: TETO_DA_RELEITURA_MS },
+    sorteio,
+  );
+}
 
 const ehSituacao = (v: unknown): v is SituacaoDoPreparo =>
   SITUACOES_DO_PREPARO.some((s) => s === v);
