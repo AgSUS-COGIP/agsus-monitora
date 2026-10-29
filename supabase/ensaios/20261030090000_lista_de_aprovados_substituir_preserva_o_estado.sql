@@ -1,73 +1,17 @@
-/*
-  LISTA DE APROVADOS: SUBSTITUIR PRESERVA O ESTADO E ATUALIZA OS CONTRATADOS
-
-  Achados do diagnóstico da jornada da contratação (26/10/2026):
-
-  1. importar_lista_aprovados (substituir a lista pelo XLSX) gravava só vaga,
-     cargo, classificação, nota, nome e modalidade, com sub_judice = false:
-     perdia status, matrícula, processo SEI, DT_CONVOCACAO, sub judice, a
-     alteração judicial, os anexos e o vínculo CO_CANDIDATO_ANTERIOR — e não
-     recalculava os contratados. publicar_lista_aprovados_da_classificacao
-     preservava tudo, com o casamento das pessoas feito na tela.
-
-     Agora os DOIS caminhos (XLSX e Classificação) passam pelo mesmo fluxo:
-       a) pedir_casamento_da_lista: a tela pede a prévia; o banco guarda quem
-          entra (a planilha, ou o resultado final da Classificação montado do
-          retrato gravado), a lista vigente de referência e a assinatura dela
-          (FC_BASE_DA_LISTA) em TB_PEDIDO_CASAMENTO_LISTA e pede o job Python
-          (casamento-da-lista.yml). Sem lista vigente não há o que casar: o
-          plano sai na hora, vazio.
-       b) o job (scripts/aprovados/casamento_da_lista.py, regra em
-          python/monitora/aprovados/casamento.py) lê o pedido
-          (casamento_ler_pedidos), casa as pessoas — revisão à mão, mesma
-          análise, nome normalizado único, homônimo pela vaga — e grava o
-          plano (gravar_casamento_da_lista: só valida e guarda);
-       c) a tela mostra o plano (obter_casamento_da_lista): casados, entram,
-          sem par, status sem dono;
-       d) aplicar_casamento_da_lista: confere de novo (permissão, lista vigente
-          e assinatura iguais às da prévia, motivo) e grava a nova versão pela
-          função comum private."FC_GRAVAR_NOVA_VERSAO_DA_LISTA", numa transação
-          curta: tira a anterior de vigor, leva o estado de quem casou (status,
-          processo SEI, matrícula, DT_CONVOCACAO, sub judice, alteração
-          judicial, análise, CO_CANDIDATO_ANTERIOR), mantém os sub judice sem
-          par, copia os anexos, recoloca quem tem nota da decisão, grava
-          TH_PUBLICACAO_APROVADO e recalcula os contratados.
-     importar_lista_aprovados e publicar_lista_aprovados_da_classificacao saem
-     (o front passa a usar só as RPCs acima).
-
-  2. CONTRATADOS
-     Aplicar, remover e ativar/inativar chamam
-     private."FC_ATUALIZAR_CONTRATADOS_DO_EDITAL". Sem lista vigente, ela agora
-     ZERA os contratados do edital que já teve lista (antes devolvia 0 sem
-     gravar, e o recálculo em lote mantinha o número antigo pelo coalesce).
-     Edital que nunca teve lista não é tocado. FC_EM_OUTRA_LISTA: linha nova
-     ainda sem decisão do job "Contratado em outra lista" segue a da linha
-     anterior até o job voltar.
-
-  3. PERMISSÕES IGUAIS NOS DOIS CAMINHOS, PELA MATRIZ DE ACESSOS
-     Nada amarrado a perfil fixo: vale o nível do recurso que o administrador
-     global define na tela de Acessos (private.pode_recurso — grupo ou
-     permissão individual), e o ADMINISTRADOR GLOBAL
-     (private."FC_ADMIN_GLOBAL_ATIVO", grupo com ST_ADMIN_GLOBAL) passa em
-     todas as checagens, inclusive as de área.
-       - pedir/aplicar: XLSX, Importação nível 2 na área do edital;
-         Classificação, Classificação nível 2 no edital (como antes);
-       - private."FC_PODE_SUBSTITUIR_LISTA"(): admin global ou Importação
-         nível 3 — o nível que a tela já usa para substituir/remover
-         (canReplaceApprovedList). Edital que já teve lista só quem pode
-         substituir publica de novo, pelo XLSX ou pela Classificação;
-       - motivo (3 a 500 caracteres) ao sobrescrever lista com estado
-         (status, matrícula, processo SEI, sub judice ou alteração judicial)
-         e, como antes, ao trocar pela planilha uma lista da Classificação;
-       - remover: FC_PODE_SUBSTITUIR_LISTA (antes, monitora_role() = 'admin',
-         um perfil fixo); ativar/inativar: Importação nível 2.
-     obter_publicacao_lista_aprovados diz pode_substituir.
-
-  Ensaio:   supabase/ensaios/20261026150000_lista_de_aprovados_substituir_preserva_o_estado.sql
-  Testes:   supabase/tests/nova_versao_da_lista_de_aprovados.sql; tests/python/test_casamento_da_lista.py
-  Rollback: supabase/rollback/20261026150000_lista_de_aprovados_substituir_preserva_o_estado.sql
-*/
+-- ENSAIO de supabase/migrations/20261030090000_lista_de_aprovados_substituir_preserva_o_estado.sql: roda o corpo e desfaz (rollback).
+-- Com duas listas vigentes reais (E1: a XLSX com mais status; E2: a XLSX com mais status entre as que têm sub judice),
+-- como um administrador global: a prévia (pedir_casamento_da_lista) da "mesma planilha" (no E1 sem 5 pessoas com status)
+-- fica PENDENTE esperando o job; o plano — o do job Python quando o roteiro o põe em t_plano_python, senão por construção —
+-- é gravado como o job grava (gravar_casamento_da_lista); aplicar sem motivo é recusado; com motivo, cada casada leva
+-- status, matrícula, processo, DT_CONVOCACAO e sub judice; quem ficou fora com status vira pendência; os sub judice sem
+-- par continuam; o histórico ganha a publicação com motivo; os contratados batem com a lista nova; inativar recalcula;
+-- remover zera. Nada sai do banco: o pedido do job fica sem chave (agsus.segredo_disparo_robos). O resultado (json)
+-- traz só números e verdadeiro/falso.
 begin;
+
+set local agsus.segredo_disparo_robos = 'ensaio-sem-chave';
+
+-- ═══ CORPO DA MIGRATION (início) ═══
 
 set local lock_timeout = '5s';
 
@@ -84,6 +28,11 @@ begin
   end if;
   if to_regprocedure('private."FC_EM_OUTRA_LISTA"(uuid)') is null then
     raise exception 'Aplique antes 20261024120000_contratado_em_outra_lista.sql.';
+  end if;
+  if to_regprocedure('private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"(boolean)') is null
+     or position('pacotes-dos-paineis.yml' in (select prosrc from pg_proc
+                   where oid = 'private."FC_DISPARAR_ROBO"(text, jsonb, uuid, text)'::regprocedure)) = 0 then
+    raise exception 'Aplique antes 20261029170000 e 20261029180000.';
   end if;
 end;
 $$;
@@ -111,7 +60,7 @@ begin
 end;
 $function$;
 comment on function private."FC_PREPARAR_NOVA_VERSAO_DA_LISTA"() is
-  'Cria (ou esvazia) pg_temp.tmp_lista_nova (quem entra, uma linha por chave) e pg_temp.tmp_lista_vinculo (quem da lista vigente é quem entra: o plano do job). 20261026150000.';
+  'Cria (ou esvazia) pg_temp.tmp_lista_nova (quem entra, uma linha por chave) e pg_temp.tmp_lista_vinculo (quem da lista vigente é quem entra: o plano do job). 20261030090000.';
 revoke all on function private."FC_PREPARAR_NOVA_VERSAO_DA_LISTA"() from public, anon, authenticated;
 
 -- 2. A assinatura da lista vigente (mudou entre a prévia e o aplicar?) ------------------------
@@ -129,7 +78,7 @@ as $function$
    where p_lista is not null and c.lista_id = p_lista and c.removido_em is null;
 $function$;
 comment on function private."FC_BASE_DA_LISTA"(uuid) is
-  'Assinatura (md5) do que o casamento lê da lista vigente: pessoas, posição, vaga, status, matrícula, processo, sub judice e análise. O plano só vale se ela não mudou. 20261026150000.';
+  'Assinatura (md5) do que o casamento lê da lista vigente: pessoas, posição, vaga, status, matrícula, processo, sub judice e análise. O plano só vale se ela não mudou. 20261030090000.';
 revoke all on function private."FC_BASE_DA_LISTA"(uuid) from public, anon, authenticated;
 
 -- 3. Quem pode publicar uma nova versão (o mesmo nos dois caminhos, pela matriz de Acessos) -----
@@ -143,7 +92,7 @@ as $function$
   select private."FC_ADMIN_GLOBAL_ATIVO"((select auth.uid())) or private.pode_recurso('importacao', 3);
 $function$;
 comment on function private."FC_PODE_SUBSTITUIR_LISTA"() is
-  'Quem substitui, publica de novo ou remove a lista de aprovados de um edital: o administrador global, ou quem tem Importação nível 3 na matriz de Acessos (grupo ou permissão individual). 20261026150000.';
+  'Quem substitui, publica de novo ou remove a lista de aprovados de um edital: o administrador global, ou quem tem Importação nível 3 na matriz de Acessos (grupo ou permissão individual). 20261030090000.';
 revoke all on function private."FC_PODE_SUBSTITUIR_LISTA"() from public, anon, authenticated;
 
 create or replace function private."FC_EXIGE_MOTIVO_PARA_SUBSTITUIR"(p_anterior uuid, p_origem_nova text)
@@ -164,7 +113,7 @@ as $function$
               or nullif(btrim(coalesce(c.processo_sei, '')), '') is not null)));
 $function$;
 comment on function private."FC_EXIGE_MOTIVO_PARA_SUBSTITUIR"(uuid, text) is
-  'Substituir a lista vigente exige motivo: alguém nela tem status, matrícula, processo, sub judice ou alteração judicial — ou ela foi publicada da Classificação e a nova vem da planilha. 20261026150000.';
+  'Substituir a lista vigente exige motivo: alguém nela tem status, matrícula, processo, sub judice ou alteração judicial — ou ela foi publicada da Classificação e a nova vem da planilha. 20261030090000.';
 revoke all on function private."FC_EXIGE_MOTIVO_PARA_SUBSTITUIR"(uuid, text) from public, anon, authenticated;
 
 create or replace function private."FC_EXIGIR_PODE_SUBSTITUIR_LISTA"(
@@ -193,7 +142,7 @@ begin
 end;
 $function$;
 comment on function private."FC_EXIGIR_PODE_SUBSTITUIR_LISTA"(text, uuid, text, text, boolean) is
-  'A mesma regra para o XLSX e a Classificação: edital que já teve lista só quem pode substituir (FC_PODE_SUBSTITUIR_LISTA: admin global ou Importação nível 3) publica de novo; com p_conferir_motivo, exige o motivo de 3 a 500 caracteres quando FC_EXIGE_MOTIVO_PARA_SUBSTITUIR. 20261026150000.';
+  'A mesma regra para o XLSX e a Classificação: edital que já teve lista só quem pode substituir (FC_PODE_SUBSTITUIR_LISTA: admin global ou Importação nível 3) publica de novo; com p_conferir_motivo, exige o motivo de 3 a 500 caracteres quando FC_EXIGE_MOTIVO_PARA_SUBSTITUIR. 20261030090000.';
 revoke all on function private."FC_EXIGIR_PODE_SUBSTITUIR_LISTA"(text, uuid, text, text, boolean) from public, anon, authenticated;
 
 create or replace function private."FC_EXIGIR_PEDIR_NOVA_VERSAO"(p_edital uuid, p_origem text)
@@ -225,7 +174,7 @@ begin
 end;
 $function$;
 comment on function private."FC_EXIGIR_PEDIR_NOVA_VERSAO"(uuid, text) is
-  'Quem pede e aplica uma nova versão da lista: o administrador global; pela planilha, Importação nível 2 na área do edital; pela Classificação, Classificação nível 2 no edital (matriz de Acessos). 20261026150000.';
+  'Quem pede e aplica uma nova versão da lista: o administrador global; pela planilha, Importação nível 2 na área do edital; pela Classificação, Classificação nível 2 no edital (matriz de Acessos). 20261030090000.';
 revoke all on function private."FC_EXIGIR_PEDIR_NOVA_VERSAO"(uuid, text) from public, anon, authenticated;
 
 -- 4. Contratados ---------------------------------------------------------------------------------
@@ -251,7 +200,7 @@ as $function$
                and x."TP_SITUACAO" = 'OUTRA_LISTA'));
 $function$;
 comment on function private."FC_EM_OUTRA_LISTA"(uuid) is
-  'A linha Contratado está "em outra lista" pelo instantâneo do job (TB_CONTRATACAO_APROVADO): não conta nos contratados. Linha sem decisão segue a da linha anterior (CO_CANDIDATO_ANTERIOR) até o job voltar. 20261024120000, 20261026150000.';
+  'A linha Contratado está "em outra lista" pelo instantâneo do job (TB_CONTRATACAO_APROVADO): não conta nos contratados. Linha sem decisão segue a da linha anterior (CO_CANDIDATO_ANTERIOR) até o job voltar. 20261024120000, 20261030090000.';
 revoke all on function private."FC_EM_OUTRA_LISTA"(uuid) from public, anon, authenticated;
 
 -- Sem lista vigente, zera (se o edital já teve lista).
@@ -280,7 +229,7 @@ begin
 end;
 $function$;
 comment on function private."FC_ATUALIZAR_CONTRATADOS_DO_EDITAL"(uuid) is
-  'Atualiza TB_MONITORAMENTO_INDIGENA.contratados de um edital ativo pela lista de aprovados vigente (Contratado ou Migração, menos os em outra lista); sem lista vigente, zera — só quando o edital já teve lista (20261026150000). Só grava se mudou.';
+  'Atualiza TB_MONITORAMENTO_INDIGENA.contratados de um edital ativo pela lista de aprovados vigente (Contratado ou Migração, menos os em outra lista); sem lista vigente, zera — só quando o edital já teve lista (20261030090000). Só grava se mudou.';
 revoke all on function private."FC_ATUALIZAR_CONTRATADOS_DO_EDITAL"(uuid) from public, anon, authenticated;
 
 -- 5. A nova versão da lista: a gravação comum aos dois caminhos ---------------------------------
@@ -490,7 +439,7 @@ begin
 end;
 $function$;
 comment on function private."FC_GRAVAR_NOVA_VERSAO_DA_LISTA"(uuid, uuid, text, boolean, text, text, uuid, uuid, integer, text, text) is
-  'A nova versão da lista de aprovados (XLSX ou Classificação), a partir de pg_temp.tmp_lista_nova e tmp_lista_vinculo: confere os vínculos, tira a anterior de vigor, leva o estado de quem casou (status, processo SEI, matrícula, DT_CONVOCACAO, sub judice, alteração judicial, análise, CO_CANDIDATO_ANTERIOR, anexos), mantém os sub judice sem par, grava TH_PUBLICACAO_APROVADO e recalcula os contratados. 20261026150000.';
+  'A nova versão da lista de aprovados (XLSX ou Classificação), a partir de pg_temp.tmp_lista_nova e tmp_lista_vinculo: confere os vínculos, tira a anterior de vigor, leva o estado de quem casou (status, processo SEI, matrícula, DT_CONVOCACAO, sub judice, alteração judicial, análise, CO_CANDIDATO_ANTERIOR, anexos), mantém os sub judice sem par, grava TH_PUBLICACAO_APROVADO e recalcula os contratados. 20261030090000.';
 revoke all on function private."FC_GRAVAR_NOVA_VERSAO_DA_LISTA"(uuid, uuid, text, boolean, text, text, uuid, uuid, integer, text, text) from public, anon, authenticated;
 
 -- 6. Remover e ativar/inativar recalculam os contratados ----------------------------------------
@@ -607,7 +556,7 @@ create table public."TB_PEDIDO_CASAMENTO_LISTA" (
   constraint "CK_PEDCASAMENTO_COEXECUCAO" check ("CO_EXECUCAO" is null or "CO_EXECUCAO" ~ '^(casam-[0-9]{8}T[0-9]{6}-[0-9a-f]{8}|banco)$')
 );
 comment on table public."TB_PEDIDO_CASAMENTO_LISTA" is
-  'Instantâneo do casamento da lista de aprovados (20261026150000): o pedido da prévia de uma nova versão (XLSX ou Classificação) — quem entra, a lista vigente de referência e a assinatura dela — e o plano que o job Python (scripts/aprovados/casamento_da_lista.py) grava: quem da lista vigente é quem entra, o resumo e as pendências. aplicar_casamento_da_lista confere e aplica. Pedidos de mais de 2 dias saem no próximo pedido. Só pelas RPCs.';
+  'Instantâneo do casamento da lista de aprovados (20261030090000): o pedido da prévia de uma nova versão (XLSX ou Classificação) — quem entra, a lista vigente de referência e a assinatura dela — e o plano que o job Python (scripts/aprovados/casamento_da_lista.py) grava: quem da lista vigente é quem entra, o resumo e as pendências. aplicar_casamento_da_lista confere e aplica. Pedidos de mais de 2 dias saem no próximo pedido. Só pelas RPCs.';
 comment on column public."TB_PEDIDO_CASAMENTO_LISTA"."CO_PEDIDO" is 'O pedido.';
 comment on column public."TB_PEDIDO_CASAMENTO_LISTA"."CO_MONITORAMENTO" is 'O edital (TB_MONITORAMENTO_INDIGENA).';
 comment on column public."TB_PEDIDO_CASAMENTO_LISTA"."CO_LISTA_APROVADO_ANTERIOR" is 'A lista vigente quando a prévia foi pedida (nula: o edital não tinha lista).';
@@ -747,7 +696,7 @@ begin
 end;
 $function$;
 comment on function private."FC_NOVOS_DA_CLASSIFICACAO"(uuid, uuid) is
-  'Quem entra pela Classificação, montado do retrato gravado do resultado final (um por análise), com as conferências de antes: só o FINAL mais recente, sem empate pendente, candidatos do edital, nem a lista que já é a vigente. 20261026150000.';
+  'Quem entra pela Classificação, montado do retrato gravado do resultado final (um por análise), com as conferências de antes: só o FINAL mais recente, sem empate pendente, candidatos do edital, nem a lista que já é a vigente. 20261030090000.';
 revoke all on function private."FC_NOVOS_DA_CLASSIFICACAO"(uuid, uuid) from public, anon, authenticated;
 
 -- 9. O job do casamento na lista fixa dos robôs --------------------------------------------------
@@ -755,9 +704,9 @@ alter table public."TL_DISPARO_ROBO" drop constraint "CK_DISPROBO_NOWORKFLOW";
 alter table public."TL_DISPARO_ROBO" add constraint "CK_DISPROBO_NOWORKFLOW" check ("NO_WORKFLOW" = any (array[
   'sincronizar-entrevistas.yml', 'sincronizar-selecao.yml', 'conferencias.yml', 'expurgo-anexos-chat.yml',
   'robo-empregare.yml', 'pre-classificacao.yml', 'leitura-de-arquivos.yml', 'classificacao.yml',
-  'contratacao-dos-aprovados.yml', 'casamento-da-lista.yml']));
+  'contratacao-dos-aprovados.yml', 'pacotes-dos-paineis.yml', 'casamento-da-lista.yml']));
 comment on constraint "CK_DISPROBO_NOWORKFLOW" on public."TL_DISPARO_ROBO" is
-  'Workflows que o banco pede (lista fixa de FC_DISPARAR_ROBO) ou registra; contratacao-dos-aprovados.yml desde 20261024120000; casamento-da-lista.yml desde 20261026150000.';
+  'Workflows que o banco pede (lista fixa de FC_DISPARAR_ROBO) ou registra; pacotes-dos-paineis.yml desde 20261029180000; casamento-da-lista.yml desde 20261030090000.';
 
 CREATE OR REPLACE FUNCTION private."FC_DISPARAR_ROBO"(p_workflow text, p_inputs jsonb DEFAULT '{}'::jsonb, p_usuario uuid DEFAULT NULL::uuid, p_origem text DEFAULT NULL::text)
  RETURNS bigint
@@ -775,6 +724,9 @@ declare
     'pre-classificacao.yml', jsonb_build_array('modo', 'editais', 'forcar_congelado'),
     'classificacao.yml', jsonb_build_array('modo', 'listas'),
     'contratacao-dos-aprovados.yml', jsonb_build_array('modo'),
+    -- Pacotes dos painéis (20261029180000): pedido pela rodada do pg_cron dos pacotes.
+    'pacotes-dos-paineis.yml', jsonb_build_array('modo'),
+    -- Casamento da lista de aprovados (20261030090000): pedido a cada prévia, com o id do pedido.
     'casamento-da-lista.yml', jsonb_build_array('modo', 'pedido'));
   v_inputs jsonb := coalesce(p_inputs, '{}'::jsonb);
   -- AGENDA só do pg_cron: as tarefas passam p_origem = 'AGENDA' (e a sessão do pg_cron
@@ -970,7 +922,7 @@ begin
 end;
 $function$;
 comment on function public.pedir_casamento_da_lista(uuid, text, jsonb, uuid, uuid, text, jsonb) is
-  'A prévia de uma nova versão da lista de aprovados (XLSX: p_candidatos e p_arquivo_nome; Classificação: p_lista_classificacao e p_lista_vigente), com a revisão à mão (p_manuais). Guarda o pedido e pede o job Python do casamento; sem lista vigente, o plano sai na hora. Mesma permissão nos dois caminhos (FC_EXIGIR_PEDIR_NOVA_VERSAO, FC_EXIGIR_PODE_SUBSTITUIR_LISTA). 20261026150000.';
+  'A prévia de uma nova versão da lista de aprovados (XLSX: p_candidatos e p_arquivo_nome; Classificação: p_lista_classificacao e p_lista_vigente), com a revisão à mão (p_manuais). Guarda o pedido e pede o job Python do casamento; sem lista vigente, o plano sai na hora. Mesma permissão nos dois caminhos (FC_EXIGIR_PEDIR_NOVA_VERSAO, FC_EXIGIR_PODE_SUBSTITUIR_LISTA). 20261030090000.';
 revoke all on function public.pedir_casamento_da_lista(uuid, text, jsonb, uuid, uuid, text, jsonb) from public, anon;
 grant execute on function public.pedir_casamento_da_lista(uuid, text, jsonb, uuid, uuid, text, jsonb) to authenticated;
 
@@ -1000,7 +952,7 @@ as $function$
            order by x."DT_PEDIDO" limit 20) p;
 $function$;
 comment on function public.casamento_ler_pedidos(uuid) is
-  'Job do casamento (Python, só service_role): os pedidos pendentes (ou o p_pedido), com quem entra, a revisão à mão e a lista vigente (na ordem da tela). 20261026150000.';
+  'Job do casamento (Python, só service_role): os pedidos pendentes (ou o p_pedido), com quem entra, a revisão à mão e a lista vigente (na ordem da tela). 20261030090000.';
 revoke all on function public.casamento_ler_pedidos(uuid) from public, anon, authenticated;
 grant execute on function public.casamento_ler_pedidos(uuid) to service_role;
 
@@ -1107,7 +1059,7 @@ begin
 end;
 $function$;
 comment on function public.gravar_casamento_da_lista(text, uuid, jsonb, text) is
-  'Job do casamento (Python, só service_role): grava o plano do pedido pendente — ou o erro. Só valida (formato, cada vínculo da lista vigente e de quem entra, uma vez, análise igual na forma ANALISE, revisão à mão respeitada, lista vigente igual à do pedido) e guarda. 20261026150000.';
+  'Job do casamento (Python, só service_role): grava o plano do pedido pendente — ou o erro. Só valida (formato, cada vínculo da lista vigente e de quem entra, uma vez, análise igual na forma ANALISE, revisão à mão respeitada, lista vigente igual à do pedido) e guarda. 20261030090000.';
 revoke all on function public.gravar_casamento_da_lista(text, uuid, jsonb, text) from public, anon, authenticated;
 grant execute on function public.gravar_casamento_da_lista(text, uuid, jsonb, text) to service_role;
 
@@ -1163,7 +1115,7 @@ begin
 end;
 $function$;
 comment on function public.obter_casamento_da_lista(uuid) is
-  'A prévia de uma nova versão da lista de aprovados: a situação do pedido (e do pedido ao GitHub), o plano do job Python (casados, entram, sem par, status sem dono, quem muda, pendências), se exige motivo e se a pessoa pode substituir; na Classificação, quem entra e quem revisar. Só quem pediu, ou o administrador global. 20261026150000.';
+  'A prévia de uma nova versão da lista de aprovados: a situação do pedido (e do pedido ao GitHub), o plano do job Python (casados, entram, sem par, status sem dono, quem muda, pendências), se exige motivo e se a pessoa pode substituir; na Classificação, quem entra e quem revisar. Só quem pediu, ou o administrador global. 20261030090000.';
 revoke all on function public.obter_casamento_da_lista(uuid) from public, anon;
 grant execute on function public.obter_casamento_da_lista(uuid) to authenticated;
 
@@ -1241,7 +1193,7 @@ begin
 end;
 $function$;
 comment on function public.aplicar_casamento_da_lista(uuid, text, boolean, text) is
-  'Aplica a prévia calculada: confere de novo a permissão (a mesma nos dois caminhos), a lista vigente e a assinatura dela (PT409 se mudaram), o motivo (com estado na lista) e, na Classificação, o resultado final; grava a nova versão pela função comum (FC_GRAVAR_NOVA_VERSAO_DA_LISTA) com os vínculos do plano do job. XLSX: p_ativo e p_arquivo_path. 20261026150000.';
+  'Aplica a prévia calculada: confere de novo a permissão (a mesma nos dois caminhos), a lista vigente e a assinatura dela (PT409 se mudaram), o motivo (com estado na lista) e, na Classificação, o resultado final; grava a nova versão pela função comum (FC_GRAVAR_NOVA_VERSAO_DA_LISTA) com os vínculos do plano do job. XLSX: p_ativo e p_arquivo_path. 20261030090000.';
 revoke all on function public.aplicar_casamento_da_lista(uuid, text, boolean, text) from public, anon;
 grant execute on function public.aplicar_casamento_da_lista(uuid, text, boolean, text) to authenticated;
 
@@ -1324,4 +1276,176 @@ begin
 end;
 $function$;
 
-commit;
+-- 13. As leituras por versão (20261029170000) ---------------------------------------------------
+-- FC_EM_OUTRA_LISTA está no fecho das leituras (Visão geral, Seleção): recalcula as fontes delas.
+select private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"();
+
+-- ═══ CORPO DA MIGRATION (fim) ═══
+
+-- A sessão do ensaio: um administrador global ativo (o banco escolhe; o id não sai no resultado).
+select set_config('request.jwt.claims',
+  json_build_object('sub', (select p.user_id from public."TB_PERFIL_USUARIO" p
+                             join public."TB_GRUPO_ACESSO" g on g."CO_GRUPO_ACESSO" = p.perfil
+                             where p.ativo and g."ST_ADMIN_GLOBAL" and p.user_id is not null
+                             order by p.updated_at limit 1)::text,
+                    'role', 'authenticated')::text, true);
+
+create temporary table t_ensaio (chave text primary key, valor jsonb) on commit drop;
+
+/*
+  Os editais do ensaio: E1 = a lista vigente XLSX com mais status (hoje ~3.150 linhas, 700 status,
+  DT_CONVOCACAO); E2 = a lista vigente XLSX com mais status entre as que têm sub judice.
+*/
+create temporary table t_editais on commit drop as
+with listas as (
+  select l.id, l.edital_id,
+         count(c.id) filter (where c.status is not null) qt_status,
+         count(c.id) filter (where c.sub_judice) qt_sub_judice
+    from public."TB_LISTA_APROVADO" l
+    join public."TB_MONITORAMENTO_INDIGENA" m on m.id::text = l.edital_id and m.ativo
+    join public."TB_CANDIDATO_APROVADO" c on c.lista_id = l.id and c.removido_em is null
+   where l.vigente and l."TP_ORIGEM" = 'XLSX'
+   group by 1, 2
+)
+select 'E1' as nome, x.* from (select * from listas order by qt_status desc limit 1) x
+union all
+select 'E2', y.* from (select * from listas where qt_sub_judice > 0 order by qt_status desc limit 1) y;
+
+-- O estado de cada lista vigente antes, por pessoa.
+create temporary table t_estado_antes on commit drop as
+select e.nome as edital, c.id, c.status, c.matricula, c.processo_sei, c."DT_CONVOCACAO", c.sub_judice
+  from t_editais e
+  join public."TB_CANDIDATO_APROVADO" c on c.lista_id = e.id and c.removido_em is null;
+
+-- A planilha de cada edital: as linhas não sub judice da lista vigente; no E1, sem 5 pessoas com status.
+create temporary table t_fora on commit drop as
+select c.id from t_editais e
+  join public."TB_CANDIDATO_APROVADO" c on c.lista_id = e.id and c.removido_em is null
+ where e.nome = 'E1' and c.status is not null and not c.sub_judice
+ order by c.nome, c.id limit 5;
+
+create temporary table t_planilha on commit drop as
+select e.nome as edital, c.id as candidato_id,
+       row_number() over (partition by e.nome order by c.cargo, c.classificacao, c.nome, c.id) as linha,
+       jsonb_build_object('codigo_vaga', c.codigo_vaga, 'cargo', c.cargo, 'classificacao', c.classificacao,
+                          'nota', c.nota, 'nome', c.nome, 'modalidade', c.modalidade) as valor
+  from t_editais e
+  join public."TB_CANDIDATO_APROVADO" c on c.lista_id = e.id and c.removido_em is null
+ where not c.sub_judice and c.id not in (select id from t_fora);
+
+/*
+  O plano do casamento é do job Python (casamento-da-lista.yml). No ensaio, sem o GitHub, ele é
+  escrito por construção — a planilha saiu da própria lista, então cada linha é a pessoa de onde
+  veio — ou, quando t_plano_python tem o plano que o Python calculou para o edital (o roteiro do
+  ensaio roda o job local e o põe aqui), é esse o gravado.
+*/
+create temporary table t_plano_python (edital text primary key, plano jsonb) on commit drop;
+-- [plano do Python]
+
+do $$
+declare
+  v_e record;
+  v_r jsonb;
+  v_ini timestamptz;
+  v_contr_antes integer;
+  v_nova uuid;
+  v_hist_antes integer;
+  v_pedido uuid;
+  v_plano jsonb;
+  v_gravado jsonb;
+begin
+  for v_e in select * from t_editais order by nome loop
+    select m.contratados into v_contr_antes from public."TB_MONITORAMENTO_INDIGENA" m where m.id = v_e.edital_id::uuid;
+    select count(*) into v_hist_antes from public."TH_PUBLICACAO_APROVADO" h where h."CO_MONITORAMENTO" = v_e.edital_id::uuid;
+
+    -- 1. A prévia: o pedido espera o job (há lista vigente).
+    v_pedido := (public.pedir_casamento_da_lista(v_e.edital_id::uuid, 'XLSX',
+                   (select jsonb_agg(p.valor order by p.linha) from t_planilha p where p.edital = v_e.nome),
+                   null, null, 'ensaio.xlsx') ->> 'pedido_id')::uuid;
+    insert into t_ensaio values (v_e.nome || '_pedido_pendente',
+      to_jsonb((public.obter_casamento_da_lista(v_pedido) ->> 'situacao') = 'PENDENTE'));
+
+    -- 2. O plano (do Python, ou por construção) gravado como o job grava.
+    v_plano := coalesce((select t.plano from t_plano_python t where t.edital = v_e.nome), jsonb_build_object(
+      'versao', 1, 'pendencias', '[]'::jsonb, 'mudam', '[]'::jsonb, 'revisar', '[]'::jsonb,
+      'vinculos', (select coalesce(jsonb_agg(jsonb_build_object('candidato_id', p.candidato_id, 'chave', p.linha::text,
+                                                               'forma', 'NOME') order by p.linha), '[]'::jsonb)
+                     from t_planilha p where p.edital = v_e.nome),
+      'resumo', jsonb_build_object('casados', (select count(*) from t_planilha p where p.edital = v_e.nome),
+                                   'entram', 0, 'sem_par', 0, 'sem_dono', 0, 'preservados', 0, 'mudam', 0,
+                                   'sub_judice_mantidos', 0, 'ambiguos', 0)));
+    v_gravado := public.gravar_casamento_da_lista('casam-20261026T150000-0000e5a1', v_pedido, v_plano, null)::jsonb;
+    insert into t_ensaio values (v_e.nome || '_plano', jsonb_build_object(
+      'origem', case when exists (select 1 from t_plano_python t where t.edital = v_e.nome) then 'python' else 'construcao' end,
+      'aceito', v_gravado -> 'ok', 'resumo', v_plano -> 'resumo'));
+
+    -- 3. Sem motivo, a lista com status não é substituída.
+    begin
+      perform public.aplicar_casamento_da_lista(v_pedido, null, true, 'ensaio/ensaio.xlsx');
+      insert into t_ensaio values (v_e.nome || '_sem_motivo_recusado', 'false');
+    exception when others then
+      insert into t_ensaio values (v_e.nome || '_sem_motivo_recusado', to_jsonb(sqlerrm like '%informe o motivo%'));
+    end;
+
+    -- 4. Com motivo: aplica.
+    v_ini := clock_timestamp();
+    v_r := public.aplicar_casamento_da_lista(v_pedido, 'Ensaio da migration 20261030090000', true, 'ensaio/ensaio.xlsx');
+    v_nova := (v_r ->> 'lista_id')::uuid;
+
+    insert into t_ensaio values (v_e.nome, jsonb_build_object(
+      'linhas_antes', (select count(*) from t_estado_antes a where a.edital = v_e.nome),
+      'linhas_planilha', (select count(*) from t_planilha p where p.edital = v_e.nome),
+      'linhas_depois', v_r -> 'candidatos',
+      'ms_aplicar', round(extract(epoch from clock_timestamp() - v_ini) * 1000),
+      'casados', v_r -> 'casados', 'entram', v_r -> 'entram', 'saem', v_r -> 'saem',
+      'status_sem_dono', jsonb_array_length(v_r -> 'pendencias'),
+      'sub_judice_mantidos', v_r -> 'sub_judice_mantidos',
+      'status_antes', (select count(*) from t_estado_antes a where a.edital = v_e.nome and a.status is not null),
+      'status_depois', (select count(*) from public."TB_CANDIDATO_APROVADO" c where c.lista_id = v_nova and c.status is not null),
+      'matricula_antes', (select count(*) from t_estado_antes a where a.edital = v_e.nome and a.matricula is not null),
+      'matricula_depois', (select count(*) from public."TB_CANDIDATO_APROVADO" c where c.lista_id = v_nova and c.matricula is not null),
+      'convocacao_antes', (select count(*) from t_estado_antes a where a.edital = v_e.nome and a."DT_CONVOCACAO" is not null),
+      'convocacao_depois', (select count(*) from public."TB_CANDIDATO_APROVADO" c where c.lista_id = v_nova and c."DT_CONVOCACAO" is not null),
+      'sub_judice_antes', (select count(*) from t_estado_antes a where a.edital = v_e.nome and a.sub_judice),
+      'sub_judice_depois', (select count(*) from public."TB_CANDIDATO_APROVADO" c where c.lista_id = v_nova and c.sub_judice),
+      'com_anterior', (select count(*) from public."TB_CANDIDATO_APROVADO" c where c.lista_id = v_nova and c."CO_CANDIDATO_ANTERIOR" is not null),
+      -- Cada pessoa casada leva exatamente o estado que tinha.
+      'estado_igual_ao_anterior', (select bool_and(c.status is not distinct from a.status
+                                                   and c.matricula is not distinct from a.matricula
+                                                   and c.processo_sei is not distinct from a.processo_sei
+                                                   and c."DT_CONVOCACAO" is not distinct from a."DT_CONVOCACAO"
+                                                   and c.sub_judice = a.sub_judice)
+                                     from public."TB_CANDIDATO_APROVADO" c
+                                     join t_estado_antes a on a.id = c."CO_CANDIDATO_ANTERIOR"
+                                    where c.lista_id = v_nova),
+      'fora_viraram_pendencia', (select count(*) from jsonb_array_elements(v_r -> 'pendencias') x(v)
+                                  where (x.v ->> 'candidato_id')::uuid in (select id from t_fora)),
+      'historico_novo', (select count(*) from public."TH_PUBLICACAO_APROVADO" h
+                          where h."CO_MONITORAMENTO" = v_e.edital_id::uuid) - v_hist_antes,
+      'historico_com_motivo', exists (select 1 from public."TH_PUBLICACAO_APROVADO" h
+                                       where h."CO_LISTA_APROVADO" = v_nova and h."DS_MOTIVO" is not null
+                                         and h."TP_ORIGEM" = 'XLSX'),
+      'pedido_aplicado', (select "TP_SITUACAO" = 'APLICADO' from public."TB_PEDIDO_CASAMENTO_LISTA" where "CO_PEDIDO" = v_pedido),
+      'contratados_antes', v_contr_antes,
+      'contratados_depois', (select m.contratados from public."TB_MONITORAMENTO_INDIGENA" m where m.id = v_e.edital_id::uuid),
+      'contratados_esperado', (select count(*) from public."TB_CANDIDATO_APROVADO" c
+                                where c.lista_id = v_nova and c.status in ('Contratado', 'Migração')
+                                  and not private."FC_EM_OUTRA_LISTA"(c.id))));
+
+    -- 5. Ativar/inativar recalcula (o número não muda: contratado continua contratado).
+    perform public.definir_lista_aprovados_ativa(v_nova, false);
+    insert into t_ensaio values (v_e.nome || '_inativar_contratados',
+      (select to_jsonb(m.contratados) from public."TB_MONITORAMENTO_INDIGENA" m where m.id = v_e.edital_id::uuid));
+
+    -- 6. Remover a lista vigente zera os contratados.
+    perform public.remover_lista_aprovados(v_nova);
+    insert into t_ensaio values (v_e.nome || '_remover_contratados',
+      (select to_jsonb(m.contratados) from public."TB_MONITORAMENTO_INDIGENA" m where m.id = v_e.edital_id::uuid));
+  end loop;
+end;
+$$;
+
+-- O que muda só no ensaio: o resultado. Tudo acima é desfeito pelo rollback.
+select json_object_agg(chave, valor order by chave) as ensaio from t_ensaio;
+
+rollback;

@@ -4,7 +4,7 @@ CASAMENTO DA LISTA DE APROVADOS (versão 1)
 Quando uma lista de aprovados nova substitui a vigente — pela planilha (XLSX) ou pelo
 resultado final da Classificação —, quem da lista vigente é a mesma pessoa de quem entra?
 Quem casa leva o estado da lista (status, matrícula, processo SEI, data da convocação, sub
-judice, anexos, CO_CANDIDATO_ANTERIOR); o banco aplica o plano (migration 20261026150000,
+judice, anexos, CO_CANDIDATO_ANTERIOR); o banco aplica o plano (migration 20261030090000,
 aplicar_casamento_da_lista) depois de conferir cada vínculo.
 
 As regras, nesta ordem (as mesmas da tela desde 20261005160000):

@@ -1,5 +1,5 @@
 /*
-  ROLLBACK de 20261026150000_lista_de_aprovados_substituir_preserva_o_estado.sql.
+  ROLLBACK de 20261030090000_lista_de_aprovados_substituir_preserva_o_estado.sql.
 
   Tira o fluxo do casamento (pedido, RPCs, tabela TB_PEDIDO_CASAMENTO_LISTA, o job na lista fixa dos
   robôs) e volta importar_lista_aprovados e publicar_lista_aprovados_da_classificacao às definições de antes (as do banco em 26/10/2026), remover/ativar a lista sem recalcular os
@@ -32,9 +32,9 @@ alter table public."TL_DISPARO_ROBO" drop constraint "CK_DISPROBO_NOWORKFLOW";
 alter table public."TL_DISPARO_ROBO" add constraint "CK_DISPROBO_NOWORKFLOW" check ("NO_WORKFLOW" = any (array[
   'sincronizar-entrevistas.yml', 'sincronizar-selecao.yml', 'conferencias.yml', 'expurgo-anexos-chat.yml',
   'robo-empregare.yml', 'pre-classificacao.yml', 'leitura-de-arquivos.yml', 'classificacao.yml',
-  'contratacao-dos-aprovados.yml'])) not valid;
+  'contratacao-dos-aprovados.yml', 'pacotes-dos-paineis.yml'])) not valid;
 comment on constraint "CK_DISPROBO_NOWORKFLOW" on public."TL_DISPARO_ROBO" is
-  'Workflows que o banco pede (lista fixa de FC_DISPARAR_ROBO) ou registra; contratacao-dos-aprovados.yml desde 20261024120000.';
+  'Workflows que o banco pede (lista fixa de FC_DISPARAR_ROBO) ou registra; pacotes-dos-paineis.yml desde 20261029180000.';
 
 CREATE OR REPLACE FUNCTION private."FC_DISPARAR_ROBO"(p_workflow text, p_inputs jsonb DEFAULT '{}'::jsonb, p_usuario uuid DEFAULT NULL::uuid, p_origem text DEFAULT NULL::text)
  RETURNS bigint
@@ -51,7 +51,9 @@ declare
     'robo-empregare.yml', jsonb_build_array('modo', 'editais', 'vagas', 'limite', 'anexos', 'candidatos', 'seco', 'forcar_congelado'),
     'pre-classificacao.yml', jsonb_build_array('modo', 'editais', 'forcar_congelado'),
     'classificacao.yml', jsonb_build_array('modo', 'listas'),
-    'contratacao-dos-aprovados.yml', jsonb_build_array('modo'));
+    'contratacao-dos-aprovados.yml', jsonb_build_array('modo'),
+    -- Pacotes dos painéis (20261029180000): pedido pela rodada do pg_cron dos pacotes.
+    'pacotes-dos-paineis.yml', jsonb_build_array('modo'));
   v_inputs jsonb := coalesce(p_inputs, '{}'::jsonb);
   -- AGENDA só do pg_cron: as tarefas passam p_origem = 'AGENDA' (e a sessão do pg_cron
   -- se chama pg_cron); MONITORA com o usuário da tela; MANUAL = SQL direto, sem usuário.
@@ -721,5 +723,8 @@ $function$;
 
 comment on function private."FC_EM_OUTRA_LISTA"(uuid) is
   'A linha Contratado está "em outra lista" pelo instantâneo do job (TB_CONTRATACAO_APROVADO): não conta nos contratados. 20261024120000.';
+
+-- FC_EM_OUTRA_LISTA está no fecho das leituras por versão (20261029170000): recalcula as fontes.
+select private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"();
 
 commit;

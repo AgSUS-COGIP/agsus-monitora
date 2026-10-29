@@ -2,7 +2,7 @@
 Testes do casamento da lista de aprovados (python/monitora/aprovados/casamento.py) e do job
 (scripts/aprovados/casamento_da_lista.py) com o banco falso. Dados fictícios; nada fala com o
 Supabase. Os casos vêm dos que a tela tinha em tests/lib/publicacao-de-aprovados.test.js antes
-de o casamento passar para o Python (migration 20261026150000).
+de o casamento passar para o Python (migration 20261030090000).
 
     python -m pytest tests/python/test_casamento_da_lista.py
 """

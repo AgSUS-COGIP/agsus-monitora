@@ -1,11 +1,12 @@
 import type { PreviaDaSubstituicao } from "./tipos-do-estado.ts";
 import { numerosDoCasamento } from "../../lib/casamento-da-lista.ts";
+import { formatNumberBR } from "../../lib/formatters";
 import { MOTIVO_MAXIMO } from "../../lib/publicacao-de-aprovados.ts";
 import { Aviso, GradeDeKpis, Kpi } from "../../ui/index.ts";
 
 /*
   O resumo do casamento antes de confirmar "Substituir XLSX" (migration
-  20261026150000): a conta é do job Python (python/monitora/aprovados/
+  20261030090000): a conta é do job Python (python/monitora/aprovados/
   casamento.py); a tela mostra quantos casam e levam o estado, quantos entram,
   quantos ficam sem par e quais status ficariam sem dono. Com status na lista
   vigente (ou lista publicada da Classificação), pede o motivo.
@@ -53,8 +54,8 @@ export function PreviaDaSubstituicaoDaLista({
       data-tour="aprovados-listas-previa"
     >
       <h4 id="approvedImportPreviaTitulo">
-        Prévia: {casamento.anteriores} na lista vigente ·{" "}
-        {casamento.novos_total} na planilha
+        Prévia: {formatNumberBR(casamento.anteriores)} na lista vigente ·{" "}
+        {formatNumberBR(casamento.novos_total)} na planilha
       </h4>
       <GradeDeKpis rotulo="O que a substituição faz">
         {kpis.map(([chave, tom, icone, rotulo, valor]) => (
@@ -64,7 +65,7 @@ export function PreviaDaSubstituicaoDaLista({
             tom={tom}
             icone={icone}
             rotulo={rotulo}
-            valor={String(valor)}
+            valor={formatNumberBR(valor)}
           />
         ))}
       </GradeDeKpis>

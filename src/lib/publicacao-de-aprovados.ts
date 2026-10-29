@@ -17,7 +17,7 @@ import {
   da Lista de aprovados de quem já estava na lista anterior.
 
   Quem da lista vigente é a mesma pessoa de quem entra (o casamento) é conta do
-  job Python desde 20261026150000 (python/monitora/aprovados/casamento.py); a
+  job Python desde 20261030090000 (python/monitora/aprovados/casamento.py); a
   tela mostra o plano (src/lib/casamento-da-lista.ts). Aqui, sem DOM e sem rede:
   - `candidatosDaListaFinal`: os candidatos do retrato, um por análise (a
     posição da lista geral; quem só está na lista da modalidade, a posição

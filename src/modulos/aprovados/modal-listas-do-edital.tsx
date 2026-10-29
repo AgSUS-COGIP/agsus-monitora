@@ -32,7 +32,7 @@ import { PreviaDaSubstituicaoDaLista } from "./previa-da-substituicao.tsx";
   edital) e, para trocar pela planilha uma lista publicada de lá, pede o
   motivo. O XLSX continua para os editais sem análise no sistema.
 
-  Substituir o XLSX tem dois passos (migration 20261026150000): "Substituir
+  Substituir o XLSX tem dois passos (migration 20261030090000): "Substituir
   XLSX" lê a planilha e mostra a prévia do casamento (quem leva o estado, quem
   entra, quem fica sem par, quais status ficariam sem dono) e, se preciso,
   pede o motivo; só "Confirmar substituição" grava.

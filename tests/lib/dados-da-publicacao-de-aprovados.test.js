@@ -34,7 +34,7 @@ describe("Dados para a publicação de aprovados", () => {
       vigente: null,
       pode_substituir: true,
     });
-    // pode_substituir vem do banco (20261026150000); sem ele, quem barra é o banco.
+    // pode_substituir vem do banco (20261030090000); sem ele, quem barra é o banco.
     expect(
       situacaoDaPublicacao({ vigente: null, pode_substituir: false })
         .pode_substituir,

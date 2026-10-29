@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 
 /*
-  A migration "Lista de aprovados: substituir preserva o estado" (20261026150000),
+  A migration "Lista de aprovados: substituir preserva o estado" (20261030090000),
   ainda não aplicada. O ensaio (supabase/ensaios/) roda o corpo em duas listas
   reais e desfaz; os casos das RPCs estão em
   supabase/tests/nova_versao_da_lista_de_aprovados.sql e a regra do casamento,
@@ -15,7 +15,7 @@ import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 */
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
 const NOME =
-  "20261026150000_lista_de_aprovados_substituir_preserva_o_estado.sql";
+  "20261030090000_lista_de_aprovados_substituir_preserva_o_estado.sql";
 const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);
@@ -44,7 +44,7 @@ const COMUM = 'private."FC_GRAVAR_NOVA_VERSAO_DA_LISTA"';
 const CONTRATADOS = 'private."FC_ATUALIZAR_CONTRATADOS_DO_EDITAL"';
 const GLOBAL = 'private."FC_ADMIN_GLOBAL_ATIVO"((select auth.uid()))';
 
-describe("Lista de aprovados: substituir preserva o estado (20261026150000)", () => {
+describe("Lista de aprovados: substituir preserva o estado (20261030090000)", () => {
   it("é uma transação, com pré-requisitos; o ensaio roda o mesmo corpo e desfaz", () => {
     expect(MIGRATION.startsWith("/*")).toBe(true);
     expect(MIGRATION).toMatch(/\nbegin;\n/);
@@ -125,8 +125,8 @@ describe("Lista de aprovados: substituir preserva o estado (20261026150000)", ()
     expect(MIGRATION).toContain(
       "'casamento-da-lista.yml', jsonb_build_array('modo', 'pedido'))",
     );
-    expect(MIGRATION).toMatch(
-      /'contratacao-dos-aprovados.yml', 'casamento-da-lista.yml'\]\)\);/,
+    expect(MIGRATION).toContain(
+      "'pacotes-dos-paineis.yml', 'casamento-da-lista.yml']));",
     );
   });
 
@@ -232,6 +232,15 @@ describe("Lista de aprovados: substituir preserva o estado (20261026150000)", ()
       "p_ativo",
       "p_arquivo_path",
     ]);
+  });
+
+  it("FC_EM_OUTRA_LISTA está no fecho das leituras por versão: recalcula as fontes", () => {
+    expect(MIGRATION).toContain(
+      'select private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"();',
+    );
+    expect(ROLLBACK).toContain(
+      'select private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"();',
+    );
   });
 
   it("o rollback tira o fluxo novo e volta os caminhos antigos", () => {

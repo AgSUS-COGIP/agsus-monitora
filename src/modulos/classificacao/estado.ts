@@ -61,7 +61,7 @@ import {
     pedir_casamento_da_lista(...)            a prévia: o job Python casa a lista
     obter_casamento_da_lista(p_pedido)       vigente com o resultado final
     aplicar_casamento_da_lista(...)          o resultado final vira a lista de
-                                             aprovados (migration 20261026150000)
+                                             aprovados (migration 20261030090000)
     listar_configuracao_convocacao()         a configuração de convocação
     listar_modelos_convocacao()              dos editais (Lista de aprovados):
                                              as vagas por modalidade saem da
@@ -828,7 +828,7 @@ export function criarEstadoDaClassificacao({
   }
 
   /*
-    A prévia de "Publicar como lista de aprovados" (migration 20261026150000):
+    A prévia de "Publicar como lista de aprovados" (migration 20261030090000):
     confere o retrato, lê a lista vigente do edital (e se a pessoa pode
     substituí-la) e pede o casamento das pessoas ao job Python
     (pedir_casamento_da_lista), com a revisão à mão (`manuais`); espera o
@@ -890,7 +890,7 @@ export function criarEstadoDaClassificacao({
     motivo = "",
   }: {
     pedidoId: string;
-    /** Sobrescrever lista com status exige motivo (20261026150000). */
+    /** Sobrescrever lista com status exige motivo (20261030090000). */
     motivo?: string;
   }) {
     const minhaGeracao = geracao;

@@ -263,7 +263,7 @@ do Python; o banco só valida e aplica.
 - Job: `scripts/aprovados/casamento_da_lista.py` (`--pedido <uuid>`; `--seco` só casa e
   resume). Workflow `.github/workflows/casamento-da-lista.yml`, pedido pelo banco a cada prévia.
   Uma lista de 3.150 linhas casa em ~0,25 s.
-- Migration: `supabase/migrations/20261026150000_lista_de_aprovados_substituir_preserva_o_estado.sql`.
+- Migration: `supabase/migrations/20261030090000_lista_de_aprovados_substituir_preserva_o_estado.sql`.
   Testes: `tests/python/test_casamento_da_lista.py` e `supabase/tests/nova_versao_da_lista_de_aprovados.sql`.
 
 ## Segunda entrega: triagem da Avaliação documental

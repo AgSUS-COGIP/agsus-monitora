@@ -166,7 +166,7 @@ export interface OpcoesDoEstado {
   /** Cálculo pelo Python: de quanto em quanto tempo relê o pedido e quanto espera (testes). */
   intervaloDoCalculoMs?: number;
   prazoDoCalculoMs?: number;
-  /** Prazo da prévia do casamento (job Python, 20261026150000). */
+  /** Prazo da prévia do casamento (job Python, 20261030090000). */
   prazoDoCasamentoMs?: number;
   agora?: () => number;
 }

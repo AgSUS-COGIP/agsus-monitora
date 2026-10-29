@@ -1381,7 +1381,7 @@ export function criarEstadoDaListaDeAprovados({
   // ── Listas (XLSX) ──────────────────────────────────────────────────────
 
   /*
-    Importar ou substituir a lista pelo XLSX (migration 20261026150000): a
+    Importar ou substituir a lista pelo XLSX (migration 20261030090000): a
     planilha vira um pedido (pedir_casamento_da_lista); com lista vigente, o
     job Python casa as pessoas e a tela mostra a prévia antes de gravar; sem
     lista, o plano sai na hora e a importação segue direto. Ao confirmar, o

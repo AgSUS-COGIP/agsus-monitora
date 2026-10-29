@@ -464,7 +464,7 @@ export const CONTRATO_RPC = {
     ],
     critica: true,
     resumo:
-      "A prévia de uma nova versão da lista de aprovados (XLSX ou Classificação, 20261026150000): guarda o pedido e pede o job Python do casamento; sem lista vigente, o plano sai na hora. Mesma permissão nos dois caminhos (admin global; Importação ou Classificação nível 2; lista já cadastrada, Importação nível 3).",
+      "A prévia de uma nova versão da lista de aprovados (XLSX ou Classificação, 20261030090000): guarda o pedido e pede o job Python do casamento; sem lista vigente, o plano sai na hora. Mesma permissão nos dois caminhos (admin global; Importação ou Classificação nível 2; lista já cadastrada, Importação nível 3).",
   },
   obter_casamento_da_lista: {
     argumentos: ["p_pedido"],

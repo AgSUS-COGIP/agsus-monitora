@@ -1,4 +1,4 @@
--- TESTE das RPCs da nova versão da lista de aprovados (20261026150000), em begin…rollback: não grava.
+-- TESTE das RPCs da nova versão da lista de aprovados (20261030090000), em begin…rollback: não grava.
 -- Roda com a migration aplicada (ou depois do corpo dela, na mesma transação). Cada falha é um
 -- "raise exception" dizendo o caso; tudo certo, o resultado é {"ok": true, ...}.
 --

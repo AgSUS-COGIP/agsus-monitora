@@ -5,7 +5,7 @@ name: Casamento da lista de aprovados
 # a mesma pessoa de quem entra e grava o plano (vínculos e resumo) no instantâneo
 # TB_PEDIDO_CASAMENTO_LISTA, pelas RPCs casamento_ler_pedidos e gravar_casamento_da_lista (só
 # service_role). O banco só aplica o plano quando a pessoa confirma (aplicar_casamento_da_lista).
-# Regra (versão 1): python/monitora/aprovados/casamento.py. Migration 20261026150000.
+# Regra (versão 1): python/monitora/aprovados/casamento.py. Migration 20261030090000.
 #
 # Quando roda:
 #   - pedido pelo banco (FC_DISPARAR_ROBO) a cada prévia, com o id do pedido;

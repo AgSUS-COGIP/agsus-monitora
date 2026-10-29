@@ -8,7 +8,7 @@ import {
 } from "../../src/lib/casamento-da-lista.ts";
 
 /*
-  A prévia do casamento da lista de aprovados (migration 20261026150000): a
+  A prévia do casamento da lista de aprovados (migration 20261030090000): a
   conta é do job Python; a tela lê o plano, espera o job e mostra os números.
 */
 

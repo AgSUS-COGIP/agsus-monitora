@@ -37,7 +37,7 @@ import { Aviso, GradeDeKpis, Kpi, Modal } from "../../ui/index.ts";
 /*
   "Publicar como lista de aprovados" (Classificação › Listas › Resultado final):
   o resultado final registrado vira a lista de aprovados vigente do edital.
-  Desde 20261026150000 a prévia é do job Python (o mesmo fluxo de "Substituir
+  Desde 20261030090000 a prévia é do job Python (o mesmo fluxo de "Substituir
   XLSX" na Lista de aprovados): quem da lista vigente casa com quem entra e leva
   o estado (status, matrícula, convocação, sub judice, anexos), quantos entram,
   saem e mudam de posição, e quem saiu com dados e precisa de revisão — ali dá

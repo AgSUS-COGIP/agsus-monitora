@@ -3,7 +3,7 @@ CASAMENTO DA LISTA DE APROVADOS (job Python)
 
 Quando a lista de aprovados de um edital vai ser substituída — pela planilha (XLSX) ou pelo
 resultado final da Classificação —, a tela pede a prévia (RPC pedir_casamento_da_lista,
-migration 20261026150000) e o banco pede este job. Ele lê o pedido (quem entra, a lista
+migration 20261030090000) e o banco pede este job. Ele lê o pedido (quem entra, a lista
 vigente e as revisões à mão), casa as pessoas com a regra de python/monitora/aprovados/
 casamento.py e grava o plano (vínculos e resumo) no instantâneo TB_PEDIDO_CASAMENTO_LISTA.
 A tela mostra o plano; ao confirmar, o banco confere e aplica numa transação curta

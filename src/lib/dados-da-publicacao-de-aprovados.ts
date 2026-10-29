@@ -49,7 +49,7 @@ function posicao(valor: unknown): number | null {
 /** Não descarta pessoas: uma resposta incompleta impediria a revisão dos vínculos. */
 export function situacaoDaPublicacao(valor: unknown): SituacaoDaPublicacao {
   const dados = registroObrigatorio(valor);
-  // Antes de 20261026150000 o banco não dizia: quem barra é o banco.
+  // Antes de 20261030090000 o banco não dizia: quem barra é o banco.
   const pode_substituir = booleano(dados.pode_substituir) !== false;
   if (dados.vigente === null) return { vigente: null, pode_substituir };
   const vigente = registroObrigatorio(dados.vigente);

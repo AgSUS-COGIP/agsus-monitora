@@ -1153,7 +1153,7 @@ describe("Classificação com ajuste da pontuação aprovado em recurso", () => 
 });
 
 describe("Classificação: publicar o resultado final como lista de aprovados", () => {
-  // A prévia é do job Python (migration 20261026150000): o banco devolve o plano.
+  // A prévia é do job Python (migration 20261030090000): o banco devolve o plano.
   const C1 = "c1c1c1c1-0000-4000-8000-000000000001";
   const C2 = "c2c2c2c2-0000-4000-8000-000000000002";
   const P1 = "a1a1a1a1-0000-4000-8000-000000000001";

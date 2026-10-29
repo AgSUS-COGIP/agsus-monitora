@@ -1,5 +1,5 @@
 /*
-  O casamento da lista de aprovados (migration 20261026150000): quando uma
+  O casamento da lista de aprovados (migration 20261030090000): quando uma
   lista nova substitui a vigente — pela planilha (XLSX) ou pelo resultado final
   da Classificação —, quem da lista vigente é a mesma pessoa de quem entra.
 

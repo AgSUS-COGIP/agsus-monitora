@@ -62,7 +62,7 @@ describe("migration da integridade das listas: as RPCs", () => {
       const corpo = corpoDaFuncao(cabecaDe(nome));
       expect(corpo).toContain("security definer");
       expect(corpo).toContain("set search_path to ''");
-      // 20261026150000 tirou publicar_lista_aprovados_da_classificacao e
+      // 20261030090000 tirou publicar_lista_aprovados_da_classificacao e
       // importar_lista_aprovados (o fluxo do casamento): as que saíram não se conferem.
       if (CONTRATO_RPC[nome])
         expect(CONTRATO_RPC[nome].argumentos).toEqual(argumentosDe(corpo));

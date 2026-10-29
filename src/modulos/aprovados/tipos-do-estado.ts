@@ -44,7 +44,7 @@ export interface SnapshotDosAprovados {
     erro?: string;
   } | null;
 }
-/** A prévia de "Substituir XLSX": a planilha lida e o casamento do job Python (20261026150000). */
+/** A prévia de "Substituir XLSX": a planilha lida e o casamento do job Python (20261030090000). */
 export interface PreviaDaSubstituicao {
   editalId: string;
   arquivo: File;
