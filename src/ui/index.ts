@@ -8,6 +8,14 @@ export type { AbaDaLista, PropriedadesDasAbas } from "./abas.tsx";
 export { Aviso } from "./aviso.tsx";
 export type { PropriedadesDoAviso } from "./aviso.tsx";
 export { BotaoDeAcao } from "./botao-de-acao.tsx";
+export {
+  CaixaDeMarcarTodos,
+  estadoDaMarcacao,
+} from "./caixa-de-marcar-todos.tsx";
+export type {
+  EstadoDaMarcacao,
+  PropriedadesDaCaixaDeMarcarTodos,
+} from "./caixa-de-marcar-todos.tsx";
 export { Campo } from "./campo.tsx";
 export type { PropriedadesDoCampo } from "./campo.tsx";
 export { CardDeGrafico } from "./card-de-grafico.tsx";

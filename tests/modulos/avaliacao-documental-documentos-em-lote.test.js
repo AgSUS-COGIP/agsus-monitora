@@ -56,6 +56,7 @@ async function montar(props) {
     );
   });
 }
+const busca = () => caixa.querySelector("#espelhos-concluidos-busca");
 const linhas = () =>
   [...caixa.querySelectorAll("tbody tr")].map((tr) => tr.dataset.pessoa);
 const acao = (nome) =>
@@ -72,10 +73,12 @@ describe("Documentos em lote", () => {
     await montar({ montar: montarDocs, baixarZip });
     expect(linhas()).toEqual(["9001", "9002", "9003"]);
     expect(acao("zip").disabled).toBe(true);
-    await digitar(acao("busca"), "ana");
+    await digitar(busca(), "ana");
     expect(linhas()).toEqual(["9001", "9003"]);
-    await clicar(acao("marcar-filtradas"));
+    await clicar(acao("marcar-todos"));
     expect(acao("marcadas").textContent).toBe("2 marcada(s)");
+    expect(acao("marcar-todos").checked).toBe(true);
+    expect(acao("barra").className).toContain("avd-docs-lote-acoes-fixa");
     expect(acao("pdf").disabled).toBe(true);
     await clicar(acao("zip"));
     await esperar();
@@ -114,5 +117,34 @@ describe("Documentos em lote", () => {
       [{ candidato: "Ana Conceição" }, { candidato: "Bruno Alves" }],
       { titulo: "Espelhos de nota" },
     );
+  });
+
+  it("50 por vez; a caixa do cabeçalho marca todos da busca, não só os desenhados", async () => {
+    const muitas = concluidosDaFila(
+      Array.from({ length: 120 }, (_, i) => ({
+        vaga: "1",
+        codigo: String(8000 + i),
+        nome: `Pessoa Fictícia ${String(i).padStart(3, "0")}`,
+        ficha: concluida("APTO"),
+      })),
+    );
+    await montar({ pessoas: muitas, montar: vi.fn(comoDocumentos) });
+    expect(linhas()).toHaveLength(50);
+    expect(caixa.querySelector("[data-tabela-mostrando]").textContent).toBe(
+      "Mostrando 50 de 120 registros",
+    );
+    expect(acao("barra").className).not.toContain("avd-docs-lote-acoes-fixa");
+    await clicar(caixa.querySelector("input[aria-label='Marcar 8000']"));
+    expect(acao("marcar-todos").indeterminate).toBe(true);
+    expect(acao("marcar-todos").dataset.estado).toBe("parte");
+    await clicar(acao("marcar-todos"));
+    expect(acao("marcadas").textContent).toBe("120 marcada(s)");
+    expect(acao("marcar-todos").checked).toBe(true);
+    expect(acao("marcar-todos").indeterminate).toBe(false);
+    await clicar(caixa.querySelector("[data-acao='carregar-mais']"));
+    expect(linhas()).toHaveLength(100);
+    await clicar(acao("limpar"));
+    expect(acao("marcadas").textContent).toBe("0 marcada(s)");
+    expect(acao("marcar-todos").checked).toBe(false);
   });
 });

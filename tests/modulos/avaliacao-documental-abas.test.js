@@ -178,9 +178,7 @@ describe("abas por papel", () => {
       secao.querySelector("[aria-label='Emissão dos espelhos de nota']"),
     ).not.toBeNull();
     // Espelhos concluídos: busca por código ou nome e marcação múltipla.
-    expect(
-      secao.querySelector("[data-acao='espelhos-concluidos-busca']"),
-    ).not.toBeNull();
+    expect(secao.querySelector("#espelhos-concluidos-busca")).not.toBeNull();
     // Os comunicados de eliminação ficam na Triagem: aqui, só o atalho.
     expect(
       secao.querySelector("[data-acao='baixar-comunicado-eliminacao']"),

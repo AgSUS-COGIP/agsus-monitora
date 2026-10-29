@@ -1080,4 +1080,35 @@ describe("comunicados de eliminação em lote (Triagem)", () => {
       "1 comunicado no documento para imprimir.",
     );
   });
+
+  it("a caixa do cabeçalho dos eliminados marca todos do recorte da vaga", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await digitar(
+      secao.querySelector("[data-acao='buscar-espelho-eliminado']"),
+      "pessoa 7000009",
+    );
+    await esperarBusca();
+    await esperar();
+    const todos = () =>
+      secao.querySelector("[data-acao='marcar-todos-eliminados']");
+    expect(todos().dataset.estado).toBe("nenhuma");
+    await clicar(todos());
+    await esperar();
+    expect(chamadasDe(supabase.rpc, "listar_pre_classificacao")).toContainEqual(
+      expect.objectContaining({
+        p_vaga: "179698",
+        p_grupo: "ELIMINADOS",
+        p_busca: "pessoa 7000009",
+      }),
+    );
+    expect(
+      secao.querySelector("[data-acao='comunicados-marcados']").textContent,
+    ).toBe("1 marcado(s)");
+    expect(todos().checked).toBe(true);
+    await clicar(todos());
+    expect(
+      secao.querySelector("[data-acao='comunicados-marcados']").textContent,
+    ).toBe("0 marcado(s)");
+  });
 });

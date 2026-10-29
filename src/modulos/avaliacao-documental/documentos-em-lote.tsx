@@ -1,13 +1,20 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import type { Espelho } from "../../lib/avaliacao-documental/espelho-de-nota.ts";
 import { nomeDoZipDosEspelhos } from "../../lib/avaliacao-documental/espelho-em-pdf.ts";
 import {
   filtrarPessoas,
-  LINHAS_VISIVEIS,
   marcadas,
   type PessoaDoDocumento,
 } from "../../lib/avaliacao-documental/documentos-em-lote.ts";
-import { Aviso, Campo } from "../../ui/index.ts";
+import { formatNumberBR } from "../../lib/formatters";
+import {
+  Aviso,
+  CaixaDeMarcarTodos,
+  estadoDaMarcacao,
+  TabelaInfinita,
+  type ColunaDaTabela,
+} from "../../ui/index.ts";
 import {
   abrirEspelhosEmMassa,
   baixarEspelhoProntoEmPdf,
@@ -22,8 +29,10 @@ import {
   - <AcoesEmLote>: só os botões, o progresso e os avisos, para quem já tem a
     própria lista marcável (Triagem › Comunicados de eliminação).
   - <DocumentosEmLote>: a lista pesquisável por código OU nome, com filtro de
-    vaga e "Marcar as da busca", mais as ações (Avaliação documental ›
-    Documentos › Espelhos das avaliações concluídas).
+    vaga, na TabelaInfinita (50 por vez, cabeçalho fixo, "Mostrando N de M")
+    e a caixa "marcar todos" no cabeçalho (todos da busca, não só os
+    desenhados), mais as ações numa barra fixa ao pé enquanto há marcação
+    (Avaliação documental › Documentos › Espelhos das avaliações concluídas).
 
   Regras puras: src/lib/avaliacao-documental/documentos-em-lote.ts.
 */
@@ -56,6 +65,10 @@ export interface PropsDasAcoesEmLote {
   baixarZip?: typeof baixarZipDosEspelhos;
   abrir?: (espelhos: Espelho[], opcoes?: { titulo?: string }) => void;
   agora?: () => Date;
+  /** Com marcação, a barra fica presa ao pé da tela (a lista é longa). */
+  fixa?: boolean;
+  /** O que vai à esquerda dos botões (ex.: "N marcada(s)" e "Limpar marcação"). */
+  resumo?: ReactNode;
 }
 
 export function AcoesEmLote({
@@ -72,6 +85,8 @@ export function AcoesEmLote({
   baixarZip = baixarZipDosEspelhos,
   abrir = abrirEspelhosEmMassa,
   agora = () => new Date(),
+  fixa = false,
+  resumo = null,
 }: PropsDasAcoesEmLote) {
   const [etapa, setEtapa] = useState<"" | "lendo" | "pdfs">("");
   const [pdfs, setPdfs] = useState<{ feitos: number; total: number } | null>(
@@ -158,7 +173,13 @@ export function AcoesEmLote({
         </p>
       ) : null}
 
-      <div className="ui-acoes avd-docs-lote-acoes">
+      <div
+        className={`ui-acoes avd-docs-lote-acoes${fixa && (escolhidas.length || ocupado) ? " avd-docs-lote-acoes-fixa" : ""}`}
+        data-acao={`${id}-barra`}
+      >
+        {resumo ? (
+          <span className="avd-docs-lote-acoes-resumo">{resumo}</span>
+        ) : null}
         {ocupado ? (
           <button
             type="button"
@@ -223,15 +244,21 @@ export function AcoesEmLote({
   );
 }
 
+/* A busca e a vaga já recortam a lista: a tabela não filtra de novo. */
+const semFiltro = <T,>(itens: readonly T[]) => itens;
+
 export function DocumentosEmLote({
   pessoas,
   vagas,
   rotuloDoDetalhe,
+  tituloDaTabela,
   ...acoes
 }: Omit<PropsDasAcoesEmLote, "escolhidas" | "vaga" | "aoMudarOcupado"> & {
   pessoas: PessoaDoDocumento[];
   vagas: Vaga[];
   rotuloDoDetalhe: string;
+  /** O título da tabela (ex.: "Avaliações concluídas"). */
+  tituloDaTabela: string;
 }) {
   const { id } = acoes;
   const [busca, setBusca] = useState("");
@@ -243,51 +270,114 @@ export function DocumentosEmLote({
     () => filtrarPessoas(pessoas, busca, vaga),
     [pessoas, busca, vaga],
   );
-  const visiveis = filtradas.slice(0, LINHAS_VISIVEIS);
   const escolhidas = useMemo(
     () => marcadas(pessoas, selecao),
     [pessoas, selecao],
   );
-  const todasFiltradasMarcadas =
-    filtradas.length > 0 && filtradas.every((p) => selecao.has(p.chave));
+  const marcadasNaBusca = useMemo(
+    () => filtradas.filter((p) => selecao.has(p.chave)).length,
+    [filtradas, selecao],
+  );
 
-  function alternar(chave: string, sim: boolean) {
+  const alternar = useCallback((chave: string, sim: boolean) => {
     setSelecao((atual) => {
       const nova = new Set(atual);
       if (sim) nova.add(chave);
       else nova.delete(chave);
       return nova;
     });
-  }
+  }, []);
 
-  function marcarFiltradas(sim: boolean) {
-    setSelecao((atual) => {
-      const nova = new Set(atual);
-      for (const p of filtradas) {
-        if (sim) nova.add(p.chave);
-        else nova.delete(p.chave);
-      }
-      return nova;
-    });
-  }
+  // A caixa do cabeçalho: todos da busca e da vaga, não só as linhas desenhadas.
+  const marcarFiltradas = useCallback(
+    (sim: boolean) =>
+      setSelecao((atual) => {
+        const nova = new Set(atual);
+        for (const p of filtradas) {
+          if (sim) nova.add(p.chave);
+          else nova.delete(p.chave);
+        }
+        return nova;
+      }),
+    [filtradas],
+  );
+
+  const colunas = useMemo<ColunaDaTabela[]>(
+    () => [
+      {
+        rotulo: "Marcar",
+        chave: "marcar",
+        largura: "2.75rem",
+        cabecalho: (
+          <CaixaDeMarcarTodos
+            rotulo={
+              busca || vaga ? "Marcar todos da busca" : "Marcar todos da lista"
+            }
+            estado={estadoDaMarcacao(marcadasNaBusca, filtradas.length)}
+            desabilitada={ocupado || !filtradas.length}
+            acao={`${id}-marcar-todos`}
+            aoMudar={marcarFiltradas}
+          />
+        ),
+      },
+      { rotulo: "Código" },
+      { rotulo: "Nome" },
+      { rotulo: "Vaga" },
+      { rotulo: rotuloDoDetalhe },
+    ],
+    [
+      busca,
+      vaga,
+      marcadasNaBusca,
+      filtradas.length,
+      ocupado,
+      id,
+      marcarFiltradas,
+      rotuloDoDetalhe,
+    ],
+  );
+
+  const linha = useCallback(
+    (p: PessoaDoDocumento) => (
+      <tr key={p.chave} data-pessoa={p.codigo}>
+        <td className="avd-docs-lote-marca">
+          <input
+            type="checkbox"
+            aria-label={`Marcar ${p.codigo}`}
+            checked={selecao.has(p.chave)}
+            disabled={ocupado}
+            onChange={(ev) => alternar(p.chave, ev.target.checked)}
+          />
+        </td>
+        <td>{p.codigo}</td>
+        <td>{p.nome}</td>
+        <td>{p.vaga}</td>
+        <td>{p.detalhe}</td>
+      </tr>
+    ),
+    [selecao, ocupado, alternar],
+  );
 
   return (
     <div className="avd-docs-lote" data-acao={`${id}-lote`}>
-      <div className="avd-espelhos-individual">
-        <Campo rotulo="Buscar por código ou nome">
-          <input
-            type="search"
-            value={busca}
-            placeholder="Código da Empregare ou nome"
-            disabled={ocupado}
-            data-acao={`${id}-busca`}
-            onChange={(ev) => setBusca(ev.target.value)}
-          />
-        </Campo>
-        <Campo rotulo="Vaga">
+      <TabelaInfinita
+        idDoTitulo={`${id}-titulo`}
+        titulo={tituloDaTabela}
+        className="avd-docs-lote-tabela"
+        classeDaTabela="avd-tabela"
+        busca={{
+          placeholder: "Código da Empregare ou nome",
+          rotulo: "Buscar por código ou nome",
+          id: `${id}-busca`,
+          valor: busca,
+          aoMudar: setBusca,
+        }}
+        ferramentas={
           <select
+            className="ui-tabela-busca avd-docs-lote-vaga"
+            aria-label="Vaga"
             value={vaga}
-            disabled={ocupado}
+            data-acao={`${id}-vaga`}
             onChange={(ev) => setVaga(ev.target.value)}
           >
             <option value="">Todas as vagas</option>
@@ -297,97 +387,51 @@ export function DocumentosEmLote({
               </option>
             ))}
           </select>
-        </Campo>
-      </div>
-
-      <div className="avd-docs-lote-resumo">
-        <span>
-          {filtradas.length.toLocaleString("pt-BR")} na busca ·{" "}
-          <strong data-acao={`${id}-marcadas`}>
-            {escolhidas.length.toLocaleString("pt-BR")} marcada(s)
-          </strong>
-        </span>
-        <span className="ui-acoes">
-          <button
-            type="button"
-            className="btn ghost small"
-            disabled={ocupado || !filtradas.length}
-            data-acao={`${id}-marcar-filtradas`}
-            onClick={() => marcarFiltradas(!todasFiltradasMarcadas)}
-          >
-            {todasFiltradasMarcadas
-              ? "Desmarcar as da busca"
-              : `Marcar as da busca (${filtradas.length.toLocaleString("pt-BR")})`}
-          </button>
-          {selecao.size ? (
-            <button
-              type="button"
-              className="btn ghost small"
-              disabled={ocupado}
-              onClick={() => setSelecao(new Set())}
-            >
-              Limpar marcação
-            </button>
-          ) : null}
-        </span>
-      </div>
-
-      {pessoas.length ? (
-        <div className="ui-tabela-rolagem avd-docs-lote-tabela">
-          <table className="avd-tabela">
-            <thead>
-              <tr>
-                <th scope="col" className="avd-docs-lote-marca">
-                  <span className="sr-only">Marcar</span>
-                </th>
-                <th scope="col">Código</th>
-                <th scope="col">Nome</th>
-                <th scope="col">Vaga</th>
-                <th scope="col">{rotuloDoDetalhe}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visiveis.map((p) => (
-                <tr key={p.chave} data-pessoa={p.codigo}>
-                  <td className="avd-docs-lote-marca">
-                    <input
-                      type="checkbox"
-                      aria-label={`Marcar ${p.codigo}`}
-                      checked={selecao.has(p.chave)}
-                      disabled={ocupado}
-                      onChange={(ev) => alternar(p.chave, ev.target.checked)}
-                    />
-                  </td>
-                  <td>{p.codigo}</td>
-                  <td>{p.nome}</td>
-                  <td>{p.vaga}</td>
-                  <td>{p.detalhe}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {filtradas.length > visiveis.length ? (
-            <p className="ui-texto-secundario">
-              Mostrando {visiveis.length.toLocaleString("pt-BR")} de{" "}
-              {filtradas.length.toLocaleString("pt-BR")}. Refine a busca ou use
-              “Marcar as da busca”.
-            </p>
-          ) : null}
-          {!filtradas.length ? (
-            <p className="ui-texto-secundario">Ninguém encontrado na busca.</p>
-          ) : null}
-        </div>
-      ) : (
-        <p className="ui-texto-secundario" data-acao={`${id}-vazio`}>
-          Ninguém neste edital para este documento.
-        </p>
-      )}
+        }
+        colunas={colunas}
+        carregado
+        itens={filtradas}
+        filtrarPelaBusca={semFiltro}
+        linha={linha}
+        total={pessoas.length}
+        informacao={(quantos) =>
+          quantos === null
+            ? ""
+            : busca || vaga
+              ? `${formatNumberBR(quantos)} na busca`
+              : `${formatNumberBR(quantos)} no edital`
+        }
+        vazio={
+          <span data-acao={`${id}-vazio`}>
+            Ninguém neste edital para este documento.
+          </span>
+        }
+      />
 
       <AcoesEmLote
         {...acoes}
         escolhidas={escolhidas}
         vaga={vaga}
         aoMudarOcupado={setOcupado}
+        fixa
+        resumo={
+          <>
+            <strong data-acao={`${id}-marcadas`}>
+              {escolhidas.length.toLocaleString("pt-BR")} marcada(s)
+            </strong>
+            {selecao.size ? (
+              <button
+                type="button"
+                className="btn ghost small"
+                disabled={ocupado}
+                data-acao={`${id}-limpar`}
+                onClick={() => setSelecao(new Set())}
+              >
+                Limpar marcação
+              </button>
+            ) : null}
+          </>
+        }
       />
     </div>
   );
