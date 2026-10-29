@@ -886,3 +886,39 @@ describe("Pré-classificação por versão (20261014230000)", () => {
     expect(pre.obter().aviso.texto).toMatch(/^Pré-classificação recalculada/);
   });
 });
+
+describe("comunicados de eliminação em lote (Pré-classificação)", () => {
+  it("busca por nome, marca os da busca e imprime relendo a pré-classificação", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    expect(secao.querySelector("[data-acao='comunicados-zip']").disabled).toBe(
+      true,
+    );
+    await digitar(
+      secao.querySelector("[data-acao='buscar-espelho-eliminado']"),
+      "pessoa 7000009",
+    );
+    await clicar(secao.querySelector("[data-acao='comunicados-marcar-busca']"));
+    expect(
+      secao.querySelector("[data-acao='comunicados-marcados']").textContent,
+    ).toBe("1 marcado(s)");
+    expect(
+      secao.querySelector(
+        "[data-candidato='7000009'] [data-acao='marcar-comunicado']",
+      ).checked,
+    ).toBe(true);
+    expect(secao.querySelector("[data-acao='comunicados-pdf']").disabled).toBe(
+      false,
+    );
+    const leituras = () =>
+      supabase.rpc.mock.calls.filter(([n]) => n === "obter_pre_classificacao")
+        .length;
+    const antes = leituras();
+    await clicar(secao.querySelector("[data-acao='comunicados-imprimir']"));
+    await esperar();
+    expect(leituras()).toBe(antes + 1);
+    expect(secao.textContent).toContain(
+      "1 comunicado no documento para imprimir.",
+    );
+  });
+});

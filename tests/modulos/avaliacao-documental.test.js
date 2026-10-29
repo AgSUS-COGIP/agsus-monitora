@@ -550,6 +550,11 @@ describe("dono da avaliação do edital (20261009200000)", () => {
     );
     expect(botao("Voltar para a planilha", secao)).toBeTruthy();
     expect(document.querySelector(".modal")).toBeNull();
+    // Quem coordena vê a origem e a troca só em Configurações (não na faixa do edital).
+    act(() => painel.estado.mudarVisao("fila"));
+    await esperar();
+    expect(secao.querySelector("[data-origem]")).toBeNull();
+    expect(botao("Voltar para a planilha", secao)).toBeUndefined();
   });
 
   it("quem não coordena só vê o dono, sem o botão", async () => {

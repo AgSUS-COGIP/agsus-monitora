@@ -1,5 +1,5 @@
 /*
-  ESPELHOS DE NOTA EM MASSA (Avaliação documental › Ações da coordenação):
+  ESPELHOS DE NOTA EM MASSA (Avaliação documental › Documentos):
   as regras puras da escolha (vaga, filtro ou lista de códigos colada), da
   ordem dos espelhos no documento e do relato dos códigos sem espelho. Sem DOM
   e sem banco: as fichas vêm de obter_espelhos_de_nota (migration

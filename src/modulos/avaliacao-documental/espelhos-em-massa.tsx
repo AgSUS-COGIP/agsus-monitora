@@ -29,8 +29,8 @@ import {
 } from "./ficha/espelho-de-nota.ts";
 
 /*
-  "Espelhos de nota em massa" (Avaliação documental › Fila › Ações da
-  coordenação; só quem coordena o edital vê o menu, e o banco confere de novo):
+  "Espelhos de nota em massa" (Avaliação documental › Documentos › Espelhos
+  em massa; só quem coordena o edital vê a aba, e o banco confere de novo):
   escolhe a vaga (ou todas) e o filtro, ou cola a lista de códigos do
   candidato na Empregare; busca as fichas concluídas em páginas de 200
   (obter_espelhos_de_nota, migration 20261015180000: ~1 KB por ficha, nada da

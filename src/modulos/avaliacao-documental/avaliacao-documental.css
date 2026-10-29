@@ -1957,3 +1957,47 @@
 .avd-espelhos-comunicados select {
   width: 100%;
 }
+
+/*
+  Documentos em lote (documentos-em-lote.tsx): a lista pesquisável e
+  marcável dos espelhos concluídos e a barra de marcação dos comunicados da
+  Pré-classificação, com as ações PDF / Imprimir / ZIP.
+*/
+.avd-docs-lote {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.avd-docs-lote-resumo {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+.avd-docs-lote-tabela {
+  max-height: 420px;
+  overflow: auto;
+}
+.avd-docs-lote-marca {
+  width: 2.5rem;
+  text-align: center;
+}
+.avd-docs-lote-acoes {
+  justify-content: flex-end;
+}
+.avd-origem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.avd-docs-atalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-3);
+}
