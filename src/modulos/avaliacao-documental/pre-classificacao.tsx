@@ -7,7 +7,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import type { RefObject } from "react";
+import type { ReactNode, RefObject } from "react";
 import { formatNumberBR } from "../../lib/formatters";
 import type { RecorteDaPre } from "../../lib/avaliacao-documental/paginas-da-pre-classificacao.ts";
 import { ordinal } from "../../lib/classificacao/numeros.ts";
@@ -39,36 +39,39 @@ import {
 } from "../triagem/usar-regra-da-triagem.ts";
 import { ESPERA_DO_PEDIDO_MIN } from "../../lib/robos-de-carga.ts";
 import {
+  Abas,
   Aviso,
   CaixaDeMarcarTodos,
   estadoDaMarcacao,
   GradeDeKpis,
   Kpi,
+  MenuDeAcoes,
   Selo,
   TabelaInfinita,
   usarListaNoServidor,
 } from "../../ui/index.ts";
 import type {
+  AbaDaLista,
+  AcaoDoMenu,
   BuscarPagina,
   ColunaDaTabela,
   EstadoDaMarcacao,
 } from "../../ui/index.ts";
+import { lerTrava } from "../../lib/avaliacao-documental/trava-das-inscricoes.ts";
+import { EliminadosDaTriagem } from "./eliminados-da-triagem.tsx";
+import "./triagem-em-abas.css";
 import {
   IncluirPorDecisao,
   RevogarDecisao,
   SeloDaDecisao,
 } from "./decisao-do-lote.tsx";
-import { espelhoDaEliminacaoPreAnalise } from "../../lib/avaliacao-documental/espelho-da-pre-classificacao.ts";
 import {
   chaveDaPessoa,
-  comunicadosDosEliminados,
-  ordenarPessoas,
   pessoaEliminada,
 } from "../../lib/avaliacao-documental/documentos-em-lote.ts";
 import type { PessoaDoDocumento } from "../../lib/avaliacao-documental/documentos-em-lote.ts";
-import { AcoesEmLote, type MontarDocumentos } from "./documentos-em-lote.tsx";
 import { chaveDaLista } from "./estado-da-pre-classificacao.ts";
-import { baixarEspelhoProntoEmPdf } from "./ficha/espelho-de-nota.ts";
+import { baixarComunicadoDoEliminado } from "./comunicado-do-eliminado.ts";
 import { InscricoesDoEdital } from "./inscricoes-do-edital.tsx";
 import { TravaDasInscricoes } from "./trava-das-inscricoes.tsx";
 import type { EstadoDaAvaliacao, LojaDaAvaliacao } from "./estado.ts";
@@ -450,38 +453,11 @@ function VagaDaPre({
     setEmitindo(c.codigo);
     try {
       // A situação de agora só desta pessoa (não a triagem inteira).
-      const atual = await pre.conferirEliminados([
-        chaveDaPessoa(c.vaga, c.codigo),
-      ]);
-      const registros = atual.candidatos.filter(
-        (p) => p.codigo === c.codigo && p.vaga === c.vaga,
-      );
-      const confirmado = registros[0];
-      if (
-        registros.length !== 1 ||
-        !confirmado ||
-        confirmado.situacao !== "ELIMINADO"
-      )
-        throw new Error(
-          "Situação alterada ou candidatura não encontrada. Atualize a lista.",
-        );
-      const espelho = espelhoDaEliminacaoPreAnalise({
-        codigo: confirmado.codigo,
-        nome: confirmado.nome,
-        vaga: confirmado.vaga,
+      await baixarComunicadoDoEliminado(pre, c, {
         cargo: v.cargo,
         edital: rotuloEdital,
         unidade,
-        modalidade: confirmado.modalidade,
-        situacao: confirmado.situacao,
-        motivo: confirmado.motivo,
-        motivo_codigo: confirmado.motivo_codigo,
-        art: confirmado.art,
-        declarada: confirmado.declarada,
-        nota: confirmado.nota,
-        origem_nota: confirmado.origem_nota,
       });
-      await baixarEspelhoProntoEmPdf(espelho);
     } catch (erro) {
       setErroDoEspelho(
         erro instanceof Error ? erro.message : "Não foi possível gerar o PDF.",
@@ -890,62 +866,54 @@ function ListasOficiais({ d, p, pre }: ListasOficiaisProps) {
   );
 }
 
-/*
-  A busca de eliminados (cartão "Comunicados de eliminação"): no banco, no
-  edital todo, 300 ms depois da última tecla. Devolve o termo buscado e quantos
-  eliminados ele achou em cada vaga (as vagas sem achado somem da tela; cada
-  vaga lista os seus achados em páginas).
-*/
-function usarBuscaDeEliminados(
-  pre: EstadoDaPreClassificacao,
-  digitado: string,
-  dados: DadosDaPreClassificacao | null,
-) {
-  const [termo, setTermo] = useState("");
-  const [resultado, setResultado] = useState<{
-    termo: string;
-    porVaga: Record<string, number>;
-    erro: string;
-  }>({ termo: "", porVaga: {}, erro: "" });
-  useEffect(() => {
-    const limpo = digitado.trim().toLocaleLowerCase("pt-BR");
-    const espera = setTimeout(() => setTermo(limpo), limpo ? 300 : 0);
-    return () => clearTimeout(espera);
-  }, [digitado]);
-  const lido = Boolean(dados);
-  useEffect(() => {
-    if (!termo || !lido) return undefined;
-    let vivo = true;
-    pre.listar({ vaga: null, grupo: "ELIMINADOS", busca: termo }, null, 1).then(
-      (r) => {
-        if (vivo) setResultado({ termo, porVaga: r.porVaga, erro: "" });
-      },
-      (erro: unknown) => {
-        if (vivo)
-          setResultado({
-            termo,
-            porVaga: {},
-            erro: erro instanceof Error ? erro.message : String(erro),
-          });
-      },
-    );
-    return () => {
-      vivo = false;
-    };
-  }, [pre, termo, lido]);
-  const pronto = resultado.termo === termo;
-  return {
-    termo: pronto ? termo : "",
-    porVaga: pronto ? resultado.porVaga : {},
-    erro: pronto ? resultado.erro : "",
-    buscando: Boolean(termo) && !pronto,
-  };
-}
-
 export interface PreClassificacaoProps {
   e: EstadoDaAvaliacao;
   estado: LojaDaAvaliacao;
   pre: EstadoDaPreClassificacao;
+}
+
+/* As abas da tela; cada uma lê a sua parte só ao abrir. */
+type AbaDaTriagem = "resumo" | "vagas" | "eliminados" | "listas";
+const PARTE_DA_ABA: Partial<Record<AbaDaTriagem, "vagas" | "listas">> = {
+  vagas: "vagas",
+  eliminados: "vagas",
+  listas: "listas",
+};
+/* A ação do menu "Ações" que espera confirmação. */
+type AcaoAConfirmar = "recalcular" | "descongelar" | null;
+
+/* Uma vaga na aba Por vaga: os números à vista; aberta, a vaga carrega as listas. */
+function VagaRecolhida({
+  v,
+  children,
+}: {
+  v: VagaDoResumo;
+  children: (aberta: boolean) => ReactNode;
+}) {
+  const [aberta, setAberta] = useState(false);
+  const lote = loteDaVaga(v);
+  const processada = v.inscritos !== null && v.inscritos !== undefined;
+  return (
+    <details
+      className="ui-card avd-vaga-recolhida"
+      data-vaga-recolhida={v.codigo}
+      onToggle={(ev) => setAberta(ev.currentTarget.open)}
+    >
+      <summary>
+        <span className="avd-vaga-recolhida__titulo">{cabecalhoDaVaga(v)}</span>
+        <span className="avd-vaga-recolhida__numeros ui-texto-secundario">
+          {processada
+            ? [
+                `${formatNumberBR(numeroOuZero(v.inscritos))} inscritos`,
+                `${formatNumberBR(numeroOuZero(v.eliminados))} eliminados`,
+                textoDoLote(lote.pelaRegra, lote.porDecisao, v.tamanho),
+              ].join(" · ")
+            : `${formatNumberBR(numeroOuZero(v.candidatos_empregare))} inscritos na Empregare, ainda sem triagem`}
+        </span>
+      </summary>
+      {aberta ? children(aberta) : null}
+    </details>
+  );
 }
 
 export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
@@ -954,25 +922,15 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
   const regraDaTriagem = triagem.resposta;
   const aoSalvarRegraDaTriagem = triagem.salvar;
   const p = useSyncExternalStore(pre.assinar, pre.obter);
+  const [aba, setAba] = useState<AbaDaTriagem>("resumo");
   const [tamanhos, setTamanhos] = useState<Record<string, string>>({});
-  const [buscaDeEspelho, setBuscaDeEspelho] = useState("");
   // Os eliminados marcados para comunicado em lote (chave vaga|código → pessoa).
   const [marcadas, setMarcadas] = useState<
     ReadonlyMap<string, PessoaDoDocumento>
   >(() => new Map());
   const marcados = useMemo(() => new Set(marcadas.keys()), [marcadas]);
-  const aoMarcar = useCallback(
-    (pessoa: PessoaDoDocumento, sim: boolean) =>
-      setMarcadas((atual) => {
-        const nova = new Map(atual);
-        if (sim) nova.set(pessoa.chave, pessoa);
-        else nova.delete(pessoa.chave);
-        return nova;
-      }),
-    [],
-  );
   const aoMarcarVarias = useCallback(
-    (pessoas: PessoaDoDocumento[], sim: boolean) =>
+    (pessoas: readonly PessoaDoDocumento[], sim: boolean) =>
       setMarcadas((atual) => {
         const nova = new Map(atual);
         for (const pessoa of pessoas) {
@@ -983,33 +941,26 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
       }),
     [],
   );
-  // "Marcar todos" (ou os da busca): as chaves que a última marcação em bloco trouxe.
-  const [bloco, setBloco] = useState<{ termo: string; chaves: string[] }>({
-    termo: "",
-    chaves: [],
-  });
-  const [marcandoBloco, setMarcandoBloco] = useState(false);
-  const dadosDoEdital = p.editalId === e.editalId ? p.dados : null;
-  const busca = usarBuscaDeEliminados(pre, buscaDeEspelho, dadosDoEdital);
-  // A tela de hoje mostra as vagas e as listas oficiais juntas: as duas partes já ao abrir.
-  const resumoLido = Boolean(dadosDoEdital);
-  useEffect(() => {
-    if (!resumoLido) return;
-    void pre.garantirParte("vagas");
-    void pre.garantirParte("listas");
-  }, [pre, resumoLido, e.editalId]);
+  const aoMarcar = useCallback(
+    (pessoa: PessoaDoDocumento, sim: boolean) => aoMarcarVarias([pessoa], sim),
+    [aoMarcarVarias],
+  );
   const [motivo, setMotivo] = useState("");
   const [erroAoSalvar, setErroAoSalvar] = useState("");
-  const [abrirDescongelar, setAbrirDescongelar] = useState(false);
+  const [confirmando, setConfirmando] = useState<AcaoAConfirmar>(null);
   const [motivoDescongelar, setMotivoDescongelar] = useState("");
   const [descongelando, setDescongelando] = useState(false);
+  const [pedidoDaTrava, setPedidoDaTrava] = useState(0);
   const versaoDaRegra = e.dados?.regra?.versao ?? 0;
   useEffect(() => {
-    // As partes que esta tela mostra saem junto com o resumo (a casca já as
-    // pede ao escolher o edital; aqui, para a entrada própria da aba).
-    pre.pedirPartes(["vagas", "listas"]);
+    // A tela abre só com o resumo; cada aba pede a sua parte ao abrir.
     void pre.garantirCarregado(e.editalId, String(versaoDaRegra));
   }, [pre, e.editalId, versaoDaRegra]);
+  const resumoLido = p.editalId === e.editalId && Boolean(p.dados);
+  useEffect(() => {
+    const parte = PARTE_DA_ABA[aba];
+    if (resumoLido && parte) void pre.garantirParte(parte);
+  }, [pre, aba, resumoLido, e.editalId]);
 
   if (p.erro)
     return (
@@ -1035,79 +986,9 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
 
   const cont = contadoresDaPreClassificacao(d);
   const vagas = d.vagas ?? [];
-  const buscaEliminado = busca.termo;
-  const vagasVisiveis = buscaEliminado
-    ? vagas.filter((v) => (busca.porVaga[String(v.codigo)] ?? 0) > 0)
-    : vagas;
   const leitura = String(d.gerado_em ?? "");
-  const noBloco = buscaEliminado
-    ? Object.values(busca.porVaga).reduce((n, q) => n + q, 0)
-    : cont.eliminados;
-  const escolhidos = ordenarPessoas(marcadas.values());
-  const todosDaBuscaMarcados =
-    bloco.termo === buscaEliminado &&
-    bloco.chaves.length > 0 &&
-    bloco.chaves.length === noBloco &&
-    bloco.chaves.every((c) => marcados.has(c));
   const rotuloEdital = String(d.edital?.edital || d.edital?.rotulo || "");
   const unidade = String(d.edital?.unidade || "");
-
-  /* Marca (ou desmarca) todos os eliminados da busca, lidos do banco em páginas. */
-  async function marcarOsDaBusca() {
-    if (todosDaBuscaMarcados) {
-      setMarcadas((atual) => {
-        const nova = new Map(atual);
-        for (const chave of bloco.chaves) nova.delete(chave);
-        return nova;
-      });
-      setBloco({ termo: "", chaves: [] });
-      return;
-    }
-    setMarcandoBloco(true);
-    try {
-      const termo = buscaEliminado;
-      const linhas = await pre.listarTudo({
-        vaga: null,
-        grupo: "ELIMINADOS",
-        busca: termo,
-      });
-      const pessoas = linhas.map(pessoaEliminada);
-      setMarcadas((atual) => {
-        const nova = new Map(atual);
-        for (const pessoa of pessoas) nova.set(pessoa.chave, pessoa);
-        return nova;
-      });
-      setBloco({ termo, chaves: pessoas.map((x) => x.chave) });
-    } finally {
-      setMarcandoBloco(false);
-    }
-  }
-
-  // Confere só os marcados, como estão agora: quem deixou de estar eliminado sai.
-  const montarComunicados: MontarDocumentos = async (escolhidas) => {
-    const atual = await pre.conferirEliminados(escolhidas.map((x) => x.chave));
-    const r = comunicadosDosEliminados(
-      atual.candidatos as Parameters<typeof comunicadosDosEliminados>[0],
-      atual.vagas,
-      escolhidas,
-      { edital: rotuloEdital, unidade },
-    );
-    return {
-      documentos: r.documentos,
-      avisos: [
-        ...(r.foraDaSituacao.length
-          ? [
-              `Não estão mais eliminados (${r.foraDaSituacao.length}): ${r.foraDaSituacao.join(", ")}. Atualize a lista.`,
-            ]
-          : []),
-        ...(r.semMotivo.length
-          ? [
-              `Sem justificativa registrada, verificar antes de emitir (${r.semMotivo.length}): ${r.semMotivo.join(", ")}.`,
-            ]
-          : []),
-      ],
-    };
-  };
   const ultima = d.ultima_execucao;
   const situacaoDoEdital = ultima?.edital?.situacao;
   const regraDaTela = regraDaTriagem?.regra ?? null;
@@ -1120,13 +1001,15 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
   };
   const mudou = Object.keys(tamanhos).length > 0;
   const congeladas = declaradasCongeladas(d);
+  const trava = p.congelamento ? lerTrava(p.congelamento) : null;
+  const vagasProntas = Boolean(p.partes?.vagas) || vagas.length > 0;
 
   async function descongelar() {
     setDescongelando(true);
     const ok = await pre.descongelar(motivoDescongelar.trim());
     setDescongelando(false);
     if (ok) {
-      setAbrirDescongelar(false);
+      setConfirmando(null);
       setMotivoDescongelar("");
     }
   }
@@ -1146,147 +1029,94 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
     } else setErroAoSalvar(r.erro);
   }
 
-  return (
-    <div className="avd-pre">
-      <ResumoDaRegraDaTriagem
-        resposta={regraDaTriagem}
-        erro={triagem.erro}
-        aoEditar={() => abrirRegrasDoEdital(e.editalId)}
-      />
-      <TravaDasInscricoes
-        editalId={e.editalId}
-        rpc={pre.rpc}
-        inicial={p.congelamento}
-      />
-      <InscricoesDoEdital dados={p.inscricoes} />
-      <GradeDeKpis rotulo="Triagem">
-        <Kpi
-          tom="info"
-          icone="fa-users"
-          rotulo="Inscritos"
-          valor={cont.inscritos}
-        />
-        <Kpi
-          tom="perigo"
-          icone="fa-user-xmark"
-          rotulo="Eliminados"
-          valor={cont.eliminados}
-        />
-        <Kpi
-          tom="neutro"
-          icone="fa-list-ol"
-          rotulo="Ranqueados"
-          valor={cont.ranqueados}
-        />
-        <Kpi
-          tom="sucesso"
-          icone="fa-user-check"
-          rotulo="Lote (aptos para análise)"
-          valor={
-            cont.noLotePorDecisao
-              ? textoDoLote(
-                  cont.noLotePelaRegra,
-                  cont.noLotePorDecisao,
-                  cont.tamanho,
-                ).replace(/^Lote: /, "")
-              : cont.tamanho === null
-                ? cont.noLote
-                : `${cont.noLote} de ${cont.tamanho}`
-          }
-        />
-        <Kpi
-          tom="alerta"
-          icone="fa-scale-balanced"
-          rotulo="ART × recalculada"
-          valor={cont.divergencias}
-        />
-      </GradeDeKpis>
-
-      <section className="ui-card avd-inline" aria-label="Execução">
-        <span
-          className="ui-texto-secundario"
-          data-execucao={ultima?.situacao || "nenhuma"}
-        >
-          {ultima
-            ? `Triagem de ${quando(ultima.fim || ultima.inicio)} · ${SITUACAO_DA_EXECUCAO[ultima.situacao] || ultima.situacao}`
-            : "Ainda sem triagem"}
-          {regraDaTela
-            ? ` · regra da Triagem: ${rotuloDaVersaoNaLista(regraDaTela.versoes, regraDaTela.versao)}`
-            : ""}
-        </span>
-        {d.pode_coordenar ? (
-          <button
-            type="button"
-            className="btn primary small"
-            data-acao="recalcular"
-            disabled={!conferida || d.em_andamento || pedidoRecente}
-            onClick={() => void pre.recalcular()}
-          >
-            {d.em_andamento
-              ? "Rodando…"
+  // O menu "Ações": cada ação pede confirmação (o banco confere a permissão de novo).
+  const acoes: AcaoDoMenu[] = [
+    ...(d.pode_coordenar
+      ? [
+          {
+            id: "recalcular",
+            rotulo: d.em_andamento
+              ? "Recalcular (rodando…)"
               : pedidoRecente
-                ? "Pedido enviado"
-                : "Recalcular"}
-          </button>
-        ) : null}
-        {congeladas.quantidade ? (
-          <span className="ui-texto-secundario" data-congeladas>
-            <i className="fa-solid fa-lock" aria-hidden="true" /> Notas
-            declaradas congeladas em {quando(congeladas.em)}
-          </span>
-        ) : null}
-        {d.pode_coordenar && congeladas.quantidade && !abrirDescongelar ? (
-          <button
-            type="button"
-            className="btn secondary small"
-            data-acao="abrir-descongelar"
-            onClick={() => setAbrirDescongelar(true)}
-          >
-            Descongelar
-          </button>
-        ) : null}
-      </section>
+                ? "Recalcular (pedido enviado)"
+                : "Recalcular",
+            icone: "fa-rotate",
+            desabilitado: !conferida || d.em_andamento || pedidoRecente,
+            dados: { "data-acao": "recalcular" },
+            aoEscolher: () => {
+              setAba("resumo");
+              setConfirmando("recalcular");
+            },
+          },
+        ]
+      : []),
+    ...(d.pode_coordenar && congeladas.quantidade
+      ? [
+          {
+            id: "descongelar",
+            rotulo: "Descongelar notas declaradas",
+            icone: "fa-lock-open",
+            desabilitado: !conferida || d.em_andamento,
+            dados: { "data-acao": "abrir-descongelar" },
+            aoEscolher: () => {
+              setAba("resumo");
+              setConfirmando("descongelar");
+            },
+          },
+        ]
+      : []),
+    ...(trava?.podeAlterar
+      ? [
+          {
+            id: "trava",
+            rotulo: trava.congelado
+              ? "Liberar inscrições"
+              : "Congelar inscrições",
+            icone: trava.congelado ? "fa-lock-open" : "fa-lock",
+            dados: {
+              "data-acao": trava.congelado ? "abrir-liberar" : "abrir-congelar",
+            },
+            aoEscolher: () => {
+              setAba("resumo");
+              setPedidoDaTrava((n) => n + 1);
+            },
+          },
+        ]
+      : []),
+  ];
 
-      {d.pode_coordenar && congeladas.quantidade && abrirDescongelar ? (
-        <section
-          className="ui-card avd-inline"
-          aria-label="Descongelar as notas declaradas"
-        >
-          <label className="ui-campo ui-campo-largo">
-            <span>Motivo para descongelar</span>
-            <input
-              type="text"
-              maxLength={250}
-              value={motivoDescongelar}
-              onChange={(ev) => setMotivoDescongelar(ev.target.value)}
-            />
-          </label>
-          <button
-            type="button"
-            className="btn primary small"
-            data-acao="descongelar"
-            disabled={
-              descongelando ||
-              !conferida ||
-              d.em_andamento ||
-              motivoDescongelar.trim().length < 10
-            }
-            onClick={() => void descongelar()}
-          >
-            {descongelando ? "Descongelando…" : "Descongelar e recalcular"}
-          </button>
-          <button
-            type="button"
-            className="btn secondary small"
-            onClick={() => {
-              setAbrirDescongelar(false);
-              setMotivoDescongelar("");
-            }}
-          >
-            Cancelar
-          </button>
-        </section>
-      ) : null}
+  const abas: AbaDaLista[] = [
+    { id: "resumo", rotulo: "Resumo" },
+    {
+      id: "vagas",
+      rotulo: "Por vaga",
+      contagem: vagas.length || undefined,
+    },
+    {
+      id: "eliminados",
+      rotulo: "Eliminados",
+      contagem: cont.eliminados || undefined,
+    },
+    {
+      id: "listas",
+      rotulo: "Listas oficiais",
+    },
+  ];
+
+  return (
+    <div className="avd-pre" data-aba-aberta={aba}>
+      <div className="avd-pre-topo">
+        <Abas
+          rotulo="Partes da Triagem"
+          abas={abas}
+          ativa={aba}
+          aoEscolher={(id) => setAba(id as AbaDaTriagem)}
+          tour="triagem-abas"
+        />
+        {acoes.length ? (
+          <MenuDeAcoes rotulo="Ações" acoes={acoes} tour="triagem-acoes" />
+        ) : null}
+      </div>
 
       {p.aviso ? (
         <Aviso
@@ -1296,167 +1126,291 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
           {p.aviso.texto}
         </Aviso>
       ) : null}
-      {d.pode_coordenar && !conferida ? (
-        <Aviso tom="warning">
-          {regraDaTela
-            ? "Confira a regra da Triagem (Editais › Regras da Triagem) para recalcular."
-            : "Crie a regra da Triagem (Editais › Regras da Triagem) para recalcular."}
-        </Aviso>
-      ) : null}
-      {situacaoDoEdital &&
-      (SITUACOES_DO_EDITAL as AvisosDaSituacao)[situacaoDoEdital] ? (
-        <Aviso tom="warning">
-          {(SITUACOES_DO_EDITAL as AvisosDaSituacao)[situacaoDoEdital]}
-          {ultima?.edital?.mensagem ? ` ${ultima.edital.mensagem}` : ""}
-        </Aviso>
-      ) : null}
 
-      <section className="ui-card" aria-label="Emitir comunicado de eliminação">
-        <h3 className="ui-titulo">
-          Comunicados de eliminação antes da análise
-        </h3>
-        <p className="ui-texto-secundario">
-          Busque pelo código ou nome. A vaga será exibida com o botão de PDF;
-          marque várias pessoas para baixar em ZIP ou imprimir juntas.
-        </p>
-        <label className="ui-campo">
-          <span>Buscar candidato eliminado</span>
-          <input
-            type="search"
-            value={buscaDeEspelho}
-            placeholder="Código ou nome"
-            data-acao="buscar-espelho-eliminado"
-            onChange={(ev) => setBuscaDeEspelho(ev.target.value)}
-          />
-        </label>
-        {busca.erro ? (
-          <Aviso tom="danger" papel="alert">
-            Não foi possível buscar: {busca.erro}
-          </Aviso>
-        ) : busca.buscando ? (
-          <p className="ui-texto-secundario" role="status">
-            Buscando…
-          </p>
-        ) : buscaEliminado && !vagasVisiveis.length ? (
-          <Aviso tom="warning">Nenhum eliminado encontrado.</Aviso>
-        ) : null}
-        <div className="avd-docs-lote-resumo" data-acao="comunicados-lote">
-          <span>
-            Marque na lista de eliminados de cada vaga para emitir vários de uma
-            vez ·{" "}
-            <strong data-acao="comunicados-marcados">
-              {escolhidos.length.toLocaleString("pt-BR")} marcado(s)
-            </strong>
-          </span>
-          <span className="ui-acoes">
-            <button
-              type="button"
-              className="btn ghost small"
-              data-acao="comunicados-marcar-busca"
-              disabled={!noBloco || marcandoBloco || busca.buscando}
-              onClick={() => void marcarOsDaBusca()}
+      {aba === "resumo" ? (
+        <div className="avd-pre-resumo" data-aba-da-triagem="resumo">
+          {confirmando === "recalcular" ? (
+            <section
+              className="ui-card avd-confirmar"
+              role="alertdialog"
+              aria-label="Confirmar o recálculo"
             >
-              {marcandoBloco
-                ? "Marcando…"
-                : todosDaBuscaMarcados
-                  ? buscaEliminado
-                    ? "Desmarcar os da busca"
-                    : "Desmarcar todos"
-                  : buscaEliminado
-                    ? `Marcar os da busca (${noBloco.toLocaleString("pt-BR")})`
-                    : `Marcar todos os eliminados (${noBloco.toLocaleString("pt-BR")})`}
-            </button>
-            {marcados.size ? (
+              <p>
+                Recalcular a triagem de <strong>{rotuloEdital}</strong>? O job
+                relê os inscritos da Empregare, aplica a regra da Triagem
+                {regraDaTela ? ` (versão ${regraDaTela.versao})` : ""} e
+                atualiza a lista e o lote; quem já foi analisado não sai.
+              </p>
+              <div className="ui-acoes">
+                <button
+                  type="button"
+                  className="btn primary small"
+                  data-acao="confirmar-recalcular"
+                  disabled={!conferida || d.em_andamento || pedidoRecente}
+                  onClick={() => {
+                    setConfirmando(null);
+                    void pre.recalcular();
+                  }}
+                >
+                  Recalcular agora
+                </button>
+                <button
+                  type="button"
+                  className="btn secondary small"
+                  onClick={() => setConfirmando(null)}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </section>
+          ) : null}
+          {confirmando === "descongelar" && d.pode_coordenar ? (
+            <section
+              className="ui-card avd-inline"
+              role="alertdialog"
+              aria-label="Descongelar as notas declaradas"
+            >
+              <label className="ui-campo ui-campo-largo">
+                <span>Motivo para descongelar</span>
+                <input
+                  type="text"
+                  maxLength={250}
+                  value={motivoDescongelar}
+                  onChange={(ev) => setMotivoDescongelar(ev.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="btn primary small"
+                data-acao="descongelar"
+                disabled={
+                  descongelando ||
+                  !conferida ||
+                  d.em_andamento ||
+                  motivoDescongelar.trim().length < 10
+                }
+                onClick={() => void descongelar()}
+              >
+                {descongelando ? "Descongelando…" : "Descongelar e recalcular"}
+              </button>
+              <button
+                type="button"
+                className="btn secondary small"
+                onClick={() => {
+                  setConfirmando(null);
+                  setMotivoDescongelar("");
+                }}
+              >
+                Cancelar
+              </button>
+            </section>
+          ) : null}
+
+          <GradeDeKpis rotulo="Triagem">
+            <Kpi
+              tom="info"
+              icone="fa-users"
+              rotulo="Inscritos"
+              valor={cont.inscritos}
+            />
+            <Kpi
+              tom="perigo"
+              icone="fa-user-xmark"
+              rotulo="Eliminados"
+              valor={cont.eliminados}
+              aoClicar={() => setAba("eliminados")}
+            />
+            <Kpi
+              tom="neutro"
+              icone="fa-list-ol"
+              rotulo="Ranqueados"
+              valor={cont.ranqueados}
+            />
+            <Kpi
+              tom="sucesso"
+              icone="fa-user-check"
+              rotulo="Lote (aptos para análise)"
+              valor={
+                cont.noLotePorDecisao
+                  ? textoDoLote(
+                      cont.noLotePelaRegra,
+                      cont.noLotePorDecisao,
+                      cont.tamanho,
+                    ).replace(/^Lote: /, "")
+                  : cont.tamanho === null
+                    ? cont.noLote
+                    : `${cont.noLote} de ${cont.tamanho}`
+              }
+            />
+          </GradeDeKpis>
+
+          <section
+            className="ui-card avd-faixa"
+            aria-label="Situação da triagem"
+            data-tour="triagem-situacao"
+          >
+            <span data-execucao={ultima?.situacao || "nenhuma"}>
+              <strong>Último cálculo:</strong>{" "}
+              {ultima
+                ? `${quando(ultima.fim || ultima.inicio)} · ${SITUACAO_DA_EXECUCAO[ultima.situacao] || ultima.situacao}`
+                : "ainda sem triagem"}
+            </span>
+            <span>
+              <strong>Regra:</strong>{" "}
+              {regraDaTela
+                ? `${rotuloDaVersaoNaLista(regraDaTela.versoes, regraDaTela.versao)} · ${conferida ? "conferida" : "a conferir"}`
+                : "sem regra da Triagem"}
+            </span>
+            {trava ? (
+              <span data-trava={trava.congelado ? "congelada" : "liberada"}>
+                <strong>Inscrições:</strong>{" "}
+                {trava.congelado ? "congeladas" : "abertas para o robô"}
+              </span>
+            ) : null}
+            <span data-congeladas={congeladas.quantidade ? "" : undefined}>
+              <strong>Notas declaradas:</strong>{" "}
+              {congeladas.quantidade
+                ? `congeladas em ${quando(congeladas.em)}`
+                : "não congeladas"}
+            </span>
+            {cont.divergencias ? (
               <button
                 type="button"
                 className="btn ghost small"
-                onClick={() => {
-                  setMarcadas(new Map());
-                  setBloco({ termo: "", chaves: [] });
-                }}
+                data-acao="ver-divergencias"
+                title="ART diferente da nota declarada recalculada, além da tolerância da regra"
+                onClick={() => setAba("vagas")}
               >
-                Limpar marcação
+                {formatNumberBR(cont.divergencias)} com ART × recalculada
+                divergente · ver os casos
               </button>
             ) : null}
-          </span>
-        </div>
-        <AcoesEmLote
-          id="comunicados"
-          escolhidas={escolhidos}
-          rotuloDoDocumento="comunicado"
-          tituloDaImpressao="Comunicados de eliminação"
-          prefixoDoZip="comunicados"
-          edital={rotuloEdital}
-          montar={montarComunicados}
-        />
-      </section>
-      {!buscaEliminado ? <ListasOficiais d={d} p={p} pre={pre} /> : null}
+          </section>
 
-      {vagasVisiveis.length ? (
-        vagasVisiveis.map((v) => (
-          <VagaDaPre
-            key={v.codigo}
-            v={v}
-            configuracao={configuracao as unknown as RegistroDaPre}
-            podeCoordenar={d.pode_coordenar}
-            tamanho={tamanhos[v.codigo]}
-            pre={pre}
-            editalId={e.editalId}
-            rotuloEdital={rotuloEdital}
-            unidade={unidade}
-            leitura={leitura}
-            buscaEliminado={buscaEliminado}
-            achadosNaBusca={busca.porVaga[String(v.codigo)] ?? 0}
-            marcados={marcados}
-            aoMarcar={aoMarcar}
-            aoMarcarVarias={aoMarcarVarias}
-            aoMudarTamanho={(codigo, valor) =>
-              setTamanhos((t) => ({ ...t, [codigo]: valor }))
-            }
-          />
-        ))
-      ) : (
-        <p className="ui-texto-secundario">
-          Nenhuma vaga da Empregare neste edital.
-        </p>
-      )}
-
-      {d.pode_coordenar && mudou ? (
-        <section
-          className="ui-card avd-inline"
-          aria-label="Salvar os tamanhos do lote"
-        >
-          <label className="ui-campo ui-campo-largo">
-            <span>Motivo da mudança</span>
-            <input
-              type="text"
-              maxLength={2000}
-              value={motivo}
-              onChange={(ev) => setMotivo(ev.target.value)}
-            />
-          </label>
-          <button
-            type="button"
-            className="btn primary small"
-            data-acao="salvar-tamanhos"
-            disabled={e.salvando || motivo.trim().length < 10}
-            onClick={() => void salvarTamanhos()}
-          >
-            Salvar tamanhos
-          </button>
-          <button
-            type="button"
-            className="btn secondary small"
-            onClick={() => setTamanhos({})}
-          >
-            Desfazer
-          </button>
-          {erroAoSalvar ? (
-            <Aviso tom="danger" papel="alert">
-              {erroAoSalvar}
+          {d.pode_coordenar && !conferida ? (
+            <Aviso tom="warning">
+              {regraDaTela
+                ? "Confira a regra da Triagem (Editais › Regras da Triagem) para recalcular."
+                : "Crie a regra da Triagem (Editais › Regras da Triagem) para recalcular."}
             </Aviso>
           ) : null}
-        </section>
+          {situacaoDoEdital &&
+          (SITUACOES_DO_EDITAL as AvisosDaSituacao)[situacaoDoEdital] ? (
+            <Aviso tom="warning">
+              {(SITUACOES_DO_EDITAL as AvisosDaSituacao)[situacaoDoEdital]}
+              {ultima?.edital?.mensagem ? ` ${ultima.edital.mensagem}` : ""}
+            </Aviso>
+          ) : null}
+
+          <ResumoDaRegraDaTriagem
+            resposta={regraDaTriagem}
+            erro={triagem.erro}
+            aoEditar={() => abrirRegrasDoEdital(e.editalId)}
+          />
+          <TravaDasInscricoes
+            editalId={e.editalId}
+            rpc={pre.rpc}
+            inicial={p.congelamento}
+            aberturaPedida={pedidoDaTrava}
+          />
+          <InscricoesDoEdital dados={p.inscricoes} />
+        </div>
+      ) : null}
+
+      {aba === "vagas" ? (
+        <div className="avd-pre-vagas" data-aba-da-triagem="vagas">
+          {!vagasProntas ? (
+            <div className="ui-card" aria-busy="true">
+              <div className="ui-esqueleto-linha" />
+            </div>
+          ) : vagas.length ? (
+            vagas.map((v) => (
+              <VagaRecolhida key={v.codigo} v={v}>
+                {() => (
+                  <VagaDaPre
+                    v={v}
+                    configuracao={configuracao as unknown as RegistroDaPre}
+                    podeCoordenar={d.pode_coordenar}
+                    tamanho={tamanhos[v.codigo]}
+                    pre={pre}
+                    editalId={e.editalId}
+                    rotuloEdital={rotuloEdital}
+                    unidade={unidade}
+                    leitura={leitura}
+                    marcados={marcados}
+                    aoMarcar={aoMarcar}
+                    aoMarcarVarias={aoMarcarVarias}
+                    aoMudarTamanho={(codigo, valor) =>
+                      setTamanhos((t) => ({ ...t, [codigo]: valor }))
+                    }
+                  />
+                )}
+              </VagaRecolhida>
+            ))
+          ) : (
+            <p className="ui-texto-secundario">
+              Nenhuma vaga da Empregare neste edital.
+            </p>
+          )}
+
+          {d.pode_coordenar && mudou ? (
+            <section
+              className="ui-card avd-inline"
+              aria-label="Salvar os tamanhos do lote"
+            >
+              <label className="ui-campo ui-campo-largo">
+                <span>Motivo da mudança</span>
+                <input
+                  type="text"
+                  maxLength={2000}
+                  value={motivo}
+                  onChange={(ev) => setMotivo(ev.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="btn primary small"
+                data-acao="salvar-tamanhos"
+                disabled={e.salvando || motivo.trim().length < 10}
+                onClick={() => void salvarTamanhos()}
+              >
+                Salvar tamanhos
+              </button>
+              <button
+                type="button"
+                className="btn secondary small"
+                onClick={() => setTamanhos({})}
+              >
+                Desfazer
+              </button>
+              {erroAoSalvar ? (
+                <Aviso tom="danger" papel="alert">
+                  {erroAoSalvar}
+                </Aviso>
+              ) : null}
+            </section>
+          ) : null}
+        </div>
+      ) : null}
+
+      {aba === "eliminados" ? (
+        <EliminadosDaTriagem
+          pre={pre}
+          vagas={vagas}
+          leitura={leitura}
+          rotuloEdital={rotuloEdital}
+          unidade={unidade}
+          totalDeEliminados={cont.eliminados}
+          marcadas={marcadas}
+          aoMarcar={aoMarcarVarias}
+          aoLimpar={() => setMarcadas(new Map())}
+        />
+      ) : null}
+
+      {aba === "listas" ? (
+        <div data-aba-da-triagem="listas">
+          <ListasOficiais d={d} p={p} pre={pre} />
+        </div>
       ) : null}
     </div>
   );

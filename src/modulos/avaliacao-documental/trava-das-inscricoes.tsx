@@ -36,10 +36,13 @@ export function TravaDasInscricoes({
   editalId,
   rpc,
   inicial,
+  aberturaPedida = 0,
 }: {
   editalId: string;
   rpc: Rpc | null | undefined;
   inicial?: unknown;
+  /* Muda a cada pedido do menu "Ações" da Triagem: abre o formulário (com motivo). */
+  aberturaPedida?: number;
 }) {
   const [trava, setTrava] = useState<Trava | null>(null);
   const [abrir, setAbrir] = useState(false);
@@ -69,6 +72,10 @@ export function TravaDasInscricoes({
       vivo = false;
     };
   }, [rpc, editalId, inicial]);
+
+  useEffect(() => {
+    if (aberturaPedida) setAbrir(true);
+  }, [aberturaPedida]);
 
   if (!mostrarTrava(trava) || !trava) return null;
   const congelar = !trava.congelado;

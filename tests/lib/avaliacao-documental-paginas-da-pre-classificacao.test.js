@@ -3,6 +3,7 @@ import {
   argumentosDaPagina,
   contarPorVaga,
   linhasDaPreInteira,
+  motivosDasLinhas,
   paginaDaResposta,
   resumoDaPreInteira,
 } from "../../src/lib/avaliacao-documental/paginas-da-pre-classificacao.ts";
@@ -124,13 +125,81 @@ describe("a página do banco", () => {
       proximo: { vaga: "10", grupo: 0, posicao: 1, codigo: "1" },
       total: 120,
       porVaga: { 10: 3, 20: 4 },
+      porMotivo: [],
     });
     expect(paginaDaResposta(null)).toEqual({
       linhas: [],
       proximo: null,
       total: 0,
       porVaga: {},
+      porMotivo: [],
     });
+  });
+
+  it("lê as opções de motivo dos eliminados (20261029210000)", () => {
+    expect(
+      paginaDaResposta({
+        candidatos: [],
+        total: 3,
+        por_motivo: [
+          { codigo: "CANCELADO", motivo: "Cancelou a inscrição", total: "2" },
+          { codigo: "", motivo: "sem código", total: 1 },
+          null,
+        ],
+      }).porMotivo,
+    ).toEqual([
+      { codigo: "CANCELADO", motivo: "Cancelou a inscrição", total: 2 },
+    ]);
+  });
+
+  it("manda p_motivo só com motivo escolhido (o banco antigo não o conhece)", () => {
+    expect(
+      argumentosDaPagina("e1", { vaga: null, grupo: "ELIMINADOS" }, null, 50),
+    ).not.toHaveProperty("p_motivo");
+    expect(
+      argumentosDaPagina(
+        "e1",
+        { vaga: null, grupo: "ELIMINADOS", motivo: "CANCELADO" },
+        null,
+        50,
+      ).p_motivo,
+    ).toBe("CANCELADO");
+  });
+
+  it("conta os motivos dos eliminados (leitura inteira) e filtra por motivo", () => {
+    const linhas = [
+      {
+        vaga: "1",
+        codigo: "a",
+        situacao: "ELIMINADO",
+        motivo_codigo: "X",
+        motivo: "Xis",
+      },
+      {
+        vaga: "1",
+        codigo: "b",
+        situacao: "ELIMINADO",
+        motivo_codigo: "Y",
+        motivo: "Ípsilon",
+      },
+      {
+        vaga: "2",
+        codigo: "c",
+        situacao: "ELIMINADO",
+        motivo_codigo: "Y",
+        motivo: "Ípsilon",
+      },
+    ];
+    expect(motivosDasLinhas(linhas)).toEqual([
+      { codigo: "Y", motivo: "Ípsilon", total: 2 },
+      { codigo: "X", motivo: "Xis", total: 1 },
+    ]);
+    expect(
+      linhasDaPreInteira(
+        { candidatos: linhas },
+        { vaga: null, grupo: "ELIMINADOS", motivo: "X" },
+      ).map((c) => c.codigo),
+    ).toEqual(["a"]);
   });
 
   it("monta os argumentos (busca vazia vira nulo)", () => {

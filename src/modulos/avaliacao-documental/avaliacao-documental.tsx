@@ -106,9 +106,6 @@ function textoDoStatus(e: EstadoDaAvaliacao) {
   return e.dados ? "Sem regra" : "";
 }
 
-/* As partes da Triagem que a tela de hoje mostra ao abrir. */
-const PARTES_DA_TELA = ["vagas", "listas"] as const;
-
 const AVISO_AO_ATUALIZAR =
   "A regra tem alterações ainda não salvas como versão (o rascunho fica guardado e volta ao abrir a regra). Atualizar agora?";
 
@@ -131,8 +128,7 @@ function TelaDaArea({
   */
   useEffect(() => {
     if (!e.editalId || visao !== "pre") return;
-    // A tela de hoje mostra as vagas e as listas oficiais junto com o resumo.
-    pre.pedirPartes(PARTES_DA_TELA);
+    // A Triagem abre só com o resumo; cada aba pede a sua parte ao abrir.
     void pre.garantirCarregado(e.editalId);
   }, [pre, e.editalId, visao]);
   // A equipe (com gestores e pessoas) só quando a aba Equipe abre.
