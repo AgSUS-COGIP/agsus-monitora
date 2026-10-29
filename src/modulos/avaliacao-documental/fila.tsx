@@ -54,7 +54,6 @@ import {
 import {
   DICA_DA_ART,
   nota,
-  podeIncluirPorDecisao,
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import {
   Abas,
@@ -66,15 +65,9 @@ import {
   TabelaInfinita,
 } from "../../ui/index.ts";
 import type { AcaoDoMenu } from "../../ui/index.ts";
-import {
-  IncluirPorDecisao,
-  RevogarDecisao,
-  SeloDaDecisao,
-} from "./decisao-do-lote.tsx";
-import { EspelhosEmMassa } from "./espelhos-em-massa.tsx";
+import { RevogarDecisao, SeloDaDecisao } from "./decisao-do-lote.tsx";
 import { RelatorioDeMotivosDaFila } from "./relatorio-de-motivos.tsx";
 import { erroDoMotivoDaFila } from "../../lib/avaliacao-documental/qualidade-do-motivo.ts";
-import { ModeloDoEspelhoDeNota } from "./modelo-do-espelho.tsx";
 import { ConteudoDaFicha } from "./ficha/ficha.tsx";
 import { ResumoDoAndamento } from "./resumo-do-andamento.tsx";
 import { ReinicioDasFichas } from "./reinicio-das-fichas.tsx";
@@ -87,11 +80,11 @@ import type { AberturaDoRelatorio } from "./relatorio-de-motivos.tsx";
   "Por vaga", clicável como filtro: resumo-do-andamento.tsx), as etapas com contadores (clicáveis como filtro), os filtros
   compactos numa linha com os filtros salvos, "Pegar próximo" e "Minhas
   fichas" para o analista, o menu "Ações da coordenação" (distribuir,
-  redistribuir, liberar reservas, mandar para revisão, abrir fichas do lote e
-  incluir por decisão, com confirmação e motivo; espelhos em massa e o
-  relatório de motivos: relatorio-de-motivos.tsx), a tabela agrupada por vaga
-  quando a vaga é "Todas", a inclusão no
-  lote por decisão da coordenação (selo "Decisão: …" na lista e no topo da
+  redistribuir, liberar reservas, mandar para revisão e abrir fichas do lote,
+  com confirmação e motivo; o relatório de motivos: relatorio-de-motivos.tsx;
+  espelhos e modelo do espelho ficam só na aba Documentos: espelhos.tsx; a
+  inclusão por decisão da coordenação fica só na Pré-classificação), a tabela
+  agrupada por vaga quando a vaga é "Todas", a decisão da coordenação (selo "Decisão: …" na lista e no topo da
   ficha, com "Revogar decisão": decisao-do-lote.tsx) e a ficha aberta
   com a reserva; o conteúdo da análise (F4) é ficha/ficha.tsx. Explicações:
   docs/aya/regras-da-avaliacao-documental.md.
@@ -1001,9 +994,6 @@ export function Fila({ e, fila }: FilaProps) {
   const st = useSyncExternalStore(fila.assinar, fila.obter);
   const [selecao, setSelecao] = useState(() => new Set<string>());
   const [acao, setAcao] = useState<AcaoPedida | null>(null);
-  const [incluindo, setIncluindo] = useState(false);
-  const [espelhos, setEspelhos] = useState(false);
-  const [modeloDoEspelho, setModeloDoEspelho] = useState(false);
   const [reiniciando, setReiniciando] = useState(false);
   // A gaveta do relatório abre pelo próprio estado: abrir e fechar não redesenham a lista.
   const relatorio = useRef<AberturaDoRelatorio>(null);
@@ -1110,21 +1100,6 @@ export function Fila({ e, fila }: FilaProps) {
     () => loteDaFila(candidatos, vagaDoFiltro),
     [candidatos, vagaDoFiltro],
   );
-  const foraDoLote = useMemo(
-    () =>
-      todos
-        .filter(
-          (c) =>
-            (!vagaDoFiltro || c.vaga === vagaDoFiltro) &&
-            podeIncluirPorDecisao(c),
-        )
-        .map((c) => ({
-          ...c,
-          situacao: c.situacao_pre,
-          motivo: c.motivo_eliminacao,
-        })),
-    [todos, vagaDoFiltro],
-  );
 
   const marcar = useCallback(
     (id: string, sim: boolean) =>
@@ -1208,23 +1183,6 @@ export function Fila({ e, fila }: FilaProps) {
   // As ações da coordenação num menu só (quem não coordena não vê o menu).
   const acoesDaCoordenacao: AcaoDoMenu[] = [
     {
-      id: "incluir",
-      rotulo: "Incluir por decisão da coordenação",
-      icone: "fa-user-plus",
-      desabilitado:
-        !(foraDoLote.length || resumoDeFora.total) ||
-        Boolean(st.acao) ||
-        st.fora.carregando,
-      // A lista de fora do lote vem antes de abrir (uma vez por versão).
-      aoEscolher: async () => {
-        if (await fila.carregarForaDoLote()) setIncluindo(true);
-      },
-      dados: {
-        "data-acao": "incluir-por-decisao",
-        "data-tour": "avd-fila-incluir-por-decisao",
-      },
-    },
-    {
       id: "distribuir-livres",
       rotulo: `Distribuir as livres (${livres.length})`,
       icone: "fa-user-group",
@@ -1256,26 +1214,6 @@ export function Fila({ e, fila }: FilaProps) {
       desabilitado: !acoes.revisao.length,
       aoEscolher: () => setAcao({ tipo: "revisao", fichas: acoes.revisao }),
       dados: { "data-acao": "mandar-para-revisao" },
-    },
-    {
-      id: "espelhos-em-massa",
-      rotulo: "Espelhos de nota em massa",
-      icone: "fa-print",
-      aoEscolher: () => setEspelhos(true),
-      dados: {
-        "data-acao": "espelhos-em-massa",
-        "data-tour": "avd-fila-espelhos-em-massa",
-      },
-    },
-    {
-      id: "modelo-do-espelho",
-      rotulo: "Modelo do espelho de nota",
-      icone: "fa-file-pen",
-      aoEscolher: () => setModeloDoEspelho(true),
-      dados: {
-        "data-acao": "modelo-do-espelho",
-        "data-tour": "avd-fila-modelo-do-espelho",
-      },
     },
     {
       id: "relatorio-de-motivos",
@@ -1500,35 +1438,6 @@ export function Fila({ e, fila }: FilaProps) {
         grupo={grupo as GrupoDaTabela}
       />
 
-      {incluindo ? (
-        <IncluirPorDecisao
-          candidatos={foraDoLote}
-          aoIncluir={(escolhidos, motivo) =>
-            fila.incluirPorDecisao(escolhidos, motivo)
-          }
-          aoFechar={() => setIncluindo(false)}
-        />
-      ) : null}
-      {espelhos && coordena ? (
-        <EspelhosEmMassa
-          editalId={st.editalId || e.editalId}
-          vagas={dados.vagas || []}
-          fila={candidatos}
-          rpc={fila.rpc}
-          aoFechar={() => setEspelhos(false)}
-          aoEditarModelo={() => {
-            setEspelhos(false);
-            setModeloDoEspelho(true);
-          }}
-        />
-      ) : null}
-      {modeloDoEspelho && coordena ? (
-        <ModeloDoEspelhoDeNota
-          editalId={st.editalId || e.editalId}
-          rpc={fila.rpc}
-          aoFechar={() => setModeloDoEspelho(false)}
-        />
-      ) : null}
       <RelatorioDeMotivosDaFila
         ref={relatorio}
         coordena={coordena}

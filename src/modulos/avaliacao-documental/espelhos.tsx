@@ -1,8 +1,15 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { lerCodigos } from "../../lib/avaliacao-documental/espelhos-em-massa.ts";
-import { Aviso, Campo } from "../../ui/index.ts";
-import { espelhoDaEliminacaoPreAnalise } from "../../lib/avaliacao-documental/espelho-da-pre-classificacao.ts";
-import type { DadosDaPreClassificacao } from "./tipos-da-pre-classificacao.ts";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { Aviso } from "../../ui/index.ts";
+import {
+  chaveDaPessoa,
+  concluidosDaFila,
+} from "../../lib/avaliacao-documental/documentos-em-lote.ts";
 import {
   EspelhosEmMassa,
   lerFichasDosEspelhos,
@@ -10,29 +17,35 @@ import {
 } from "./espelhos-em-massa.tsx";
 import { textosParaOEspelho } from "./modelo-do-espelho-no-banco.ts";
 import { ModeloDoEspelhoDeNota } from "./modelo-do-espelho.tsx";
-import { baixarEspelhoProntoEmPdf } from "./ficha/espelho-de-nota.ts";
+import {
+  DocumentosEmLote,
+  type MontarDocumentos,
+} from "./documentos-em-lote.tsx";
 import type { LojaDaFila } from "./estado-da-fila.ts";
 
-/* A emissão individual e em massa compartilham a RPC e o modelo existente.
-   Somente a coordenação do edital chega a esta visão; o banco valida de novo. */
+/*
+  A aba Documentos: o ÚNICO lugar dos espelhos de nota do edital (lista das
+  avaliações concluídas com busca por código ou nome e marcação múltipla,
+  espelhos em massa por vaga e filtro, e o modelo do espelho). Somente a
+  coordenação do edital chega a esta visão; o banco valida de novo.
+
+  Os comunicados de eliminação antes da análise pertencem à Pré-classificação
+  (é ela que elimina e forma o lote): aqui fica só o atalho para lá.
+*/
+
 export function EspelhosDaAvaliacao({
   editalId,
   fila,
   rotuloEdital = "",
-  unidade = "",
+  aoAbrirPreClassificacao = null,
 }: {
   editalId: string;
   fila: LojaDaFila;
   rotuloEdital?: string;
-  unidade?: string;
+  /** Leva aos comunicados de eliminação, na Pré-classificação. */
+  aoAbrirPreClassificacao?: (() => void) | null;
 }) {
   const st = useSyncExternalStore(fila.assinar, fila.obter);
-  const [codigo, setCodigo] = useState("");
-  const [codigoEliminado, setCodigoEliminado] = useState("");
-  const [vagaEliminada, setVagaEliminada] = useState("");
-  const [gerando, setGerando] = useState(false);
-  const [erro, setErro] = useState("");
-  const [aviso, setAviso] = useState("");
   const [massa, setMassa] = useState(false);
   const [modelo, setModelo] = useState(false);
 
@@ -42,115 +55,54 @@ export function EspelhosDaAvaliacao({
   }, [fila, editalId]);
 
   const dados = st.editalId === editalId ? st.dados : null;
-  if (dados && !dados.pode_coordenar)
-    return (
-      <Aviso tom="warning">
-        Somente a coordenação do edital pode emitir espelhos em massa.
-      </Aviso>
-    );
+  const concluidos = useMemo(
+    () => concluidosDaFila(dados?.candidatos),
+    [dados?.candidatos],
+  );
+  const edital = rotuloEdital || String(dados?.edital?.rotulo ?? "");
 
-  async function emitirIndividual() {
-    const codigos = lerCodigos(codigo);
-    if (codigos.length !== 1) {
-      setErro("Informe apenas um código de inscrição.");
-      return;
-    }
-    setErro("");
-    setAviso("");
-    setGerando(true);
-    try {
+  const montarEspelhos: MontarDocumentos = useCallback(
+    async (escolhidas, cancelado) => {
+      const codigos = [...new Set(escolhidas.map((p) => p.codigo))];
       const [lidas, textos] = await Promise.all([
         lerFichasDosEspelhos({
           rpc: fila.rpc,
           editalId,
           escolha: { modo: "codigos", codigos },
+          cancelado,
         }),
         textosParaOEspelho(fila.rpc, editalId),
       ]);
-      if (!lidas || lidas.fichas.length !== 1)
-        throw new Error(
-          "Não foi localizada exatamente uma ficha concluída para esse código neste edital.",
-        );
-      const [espelho] = montarEspelhosLidos(lidas, codigos, textos);
-      if (!espelho) throw new Error("O espelho não está disponível.");
-      const arquivo = await baixarEspelhoProntoEmPdf(espelho);
-      setAviso(`Arquivo preparado: ${arquivo}`);
-    } catch (e) {
-      setErro(
-        e instanceof Error ? e.message : "Não foi possível emitir o espelho.",
+      if (!lidas) return null;
+      // O mesmo código em duas vagas: só a vaga marcada entra.
+      const chaves = new Set(escolhidas.map((p) => p.chave));
+      const fichas = lidas.fichas.filter((f) =>
+        chaves.has(chaveDaPessoa(f.vaga, f.codigo)),
       );
-    } finally {
-      setGerando(false);
-    }
-  }
+      const documentos = montarEspelhosLidos(
+        { ...lidas, fichas },
+        codigos,
+        textos,
+      );
+      const faltam = escolhidas.length - documentos.length;
+      return {
+        documentos,
+        avisos: faltam
+          ? [
+              `${faltam} marcada(s) sem ficha concluída disponível agora (atualize a fila).`,
+            ]
+          : [],
+      };
+    },
+    [fila, editalId],
+  );
 
-  async function emitirComunicado() {
-    const codigos = lerCodigos(codigoEliminado);
-    if (codigos.length !== 1) {
-      setErro("Informe apenas um código de inscrição.");
-      return;
-    }
-    setErro("");
-    setAviso("");
-    setGerando(true);
-    try {
-      const pre = (await fila.rpc("obter_pre_classificacao", {
-        p_edital: editalId,
-      })) as DadosDaPreClassificacao | null;
-      if (!pre || String(pre.edital?.id ?? "") !== editalId)
-        throw new Error(
-          "Não foi possível confirmar a pré-classificação do edital.",
-        );
-      if (!pre.pode_coordenar)
-        throw new Error("A emissão exige permissão de coordenação.");
-      const encontrados = (pre.candidatos || []).filter(
-        (c) =>
-          String(c.codigo) === codigos[0] &&
-          (!vagaEliminada || String(c.vaga) === vagaEliminada),
-      );
-      if (encontrados.length !== 1)
-        throw new Error(
-          encontrados.length
-            ? "Inscrição em mais de uma vaga. Selecione a vaga."
-            : "Inscrição não encontrada na pré-classificação deste edital.",
-        );
-      const candidato = encontrados[0]!;
-      if (candidato.situacao !== "ELIMINADO")
-        throw new Error(
-          "A inscrição não está eliminada antes da análise documental.",
-        );
-      const cargo = pre.vagas.find(
-        (v) => String(v.codigo) === candidato.vaga,
-      )?.cargo;
-      const documento = espelhoDaEliminacaoPreAnalise({
-        codigo: candidato.codigo,
-        nome: candidato.nome,
-        vaga: candidato.vaga,
-        cargo,
-        edital: rotuloEdital || String(pre.edital?.edital ?? ""),
-        unidade,
-        modalidade: candidato.modalidade,
-        situacao: candidato.situacao,
-        motivo: candidato.motivo,
-        motivo_codigo: candidato.motivo_codigo,
-        art: candidato.art,
-        declarada: candidato.declarada,
-        nota: candidato.nota,
-        origem_nota: candidato.origem_nota,
-      });
-      const arquivo = await baixarEspelhoProntoEmPdf(documento);
-      setAviso(`Comunicado preparado: ${arquivo}`);
-    } catch (e) {
-      setErro(
-        e instanceof Error
-          ? e.message
-          : "Não foi possível emitir o comunicado.",
-      );
-    } finally {
-      setGerando(false);
-    }
-  }
-
+  if (dados && !dados.pode_coordenar)
+    return (
+      <Aviso tom="warning">
+        Somente a coordenação do edital pode emitir documentos.
+      </Aviso>
+    );
   if (st.erro && !dados)
     return (
       <Aviso tom="danger" papel="alert">
@@ -167,7 +119,7 @@ export function EspelhosDaAvaliacao({
   if (!dados)
     return (
       <div className="ui-card" aria-busy="true">
-        Carregando espelhos do edital…
+        Carregando documentos do edital…
       </div>
     );
 
@@ -176,108 +128,57 @@ export function EspelhosDaAvaliacao({
       className="ui-card avd-espelhos"
       aria-label="Emissão dos espelhos de nota"
     >
-      <h3 className="ui-titulo">Documentos do edital</h3>
-      <p className="ui-texto-secundario">
-        Espelhos de avaliações concluídas e comunicados de eliminação anterior à
-        análise documental são documentos diferentes.
-      </p>
-      <h4>Espelhos das avaliações concluídas</h4>
-      <div className="avd-espelhos-individual">
-        <Campo rotulo="Código de inscrição para PDF individual">
-          <input
-            type="search"
-            value={codigo}
-            placeholder="Código da Empregare"
-            onChange={(ev) => {
-              setCodigo(ev.target.value);
-              setErro("");
-              setAviso("");
-            }}
-            disabled={gerando}
-            data-acao="espelho-individual-codigo"
-          />
-        </Campo>
-        <button
-          type="button"
-          className="btn primary"
-          data-acao="baixar-espelho-individual"
-          disabled={gerando || !codigo.trim()}
-          onClick={() => void emitirIndividual()}
-        >
-          {gerando ? "Gerando PDF…" : "Baixar PDF individual"}
-        </button>
-      </div>
-      <div className="ui-acoes avd-espelhos-acoes">
-        <button
-          type="button"
-          className="btn secondary"
-          data-acao="abrir-espelhos-em-massa"
-          onClick={() => setMassa(true)}
-        >
-          Espelhos em massa (ZIP e impressão)
-        </button>
-        <button
-          type="button"
-          className="btn secondary"
-          data-acao="abrir-modelo-espelho"
-          onClick={() => setModelo(true)}
-        >
-          Modelo e pré-visualização
-        </button>
-      </div>
-      <div className="avd-espelhos-comunicados">
-        <h4>Eliminados antes da análise documental</h4>
-        <p className="ui-texto-secundario">
-          Comunicado individual com o motivo registrado na pré-classificação.
-          Não informa nota da comissão, pois não houve avaliação documental. Não
-          substitui a publicação oficial.
-        </p>
-        <div className="avd-espelhos-individual">
-          <Campo rotulo="Código da inscrição eliminada">
-            <input
-              type="search"
-              value={codigoEliminado}
-              onChange={(ev) => setCodigoEliminado(ev.target.value)}
-              disabled={gerando}
-              data-acao="comunicado-eliminado-codigo"
-              placeholder="Código da Empregare"
-            />
-          </Campo>
-          <Campo rotulo="Vaga (se necessário)">
-            <select
-              value={vagaEliminada}
-              onChange={(ev) => setVagaEliminada(ev.target.value)}
-              disabled={gerando}
-            >
-              <option value="">Identificar pelo código</option>
-              {(dados.vagas || []).map((v) => (
-                <option key={String(v.codigo)} value={String(v.codigo)}>
-                  {v.codigo}
-                  {v.cargo ? ` · ${v.cargo}` : ""}
-                </option>
-              ))}
-            </select>
-          </Campo>
+      <div className="avd-espelhos-acoes">
+        <h3 className="ui-titulo">Espelhos das avaliações concluídas</h3>
+        <div className="ui-acoes">
           <button
             type="button"
-            className="btn primary"
-            data-acao="baixar-comunicado-eliminacao"
-            disabled={gerando || !codigoEliminado.trim()}
-            onClick={() => void emitirComunicado()}
+            className="btn secondary"
+            data-acao="abrir-espelhos-em-massa"
+            onClick={() => setMassa(true)}
           >
-            {gerando ? "Preparando…" : "Baixar comunicado"}
+            Espelhos em massa (por vaga e filtro)
+          </button>
+          <button
+            type="button"
+            className="btn secondary"
+            data-acao="abrir-modelo-espelho"
+            onClick={() => setModelo(true)}
+          >
+            Modelo e pré-visualização
           </button>
         </div>
       </div>
-      {erro ? (
-        <Aviso tom="danger" papel="alert">
-          {erro}
-        </Aviso>
-      ) : null}
-      {aviso ? (
-        <Aviso tom="info" papel="status">
-          {aviso}
-        </Aviso>
+      <p className="ui-texto-secundario">
+        Busque por código ou nome e marque uma ou várias pessoas.
+      </p>
+      <DocumentosEmLote
+        key={editalId}
+        id="espelhos-concluidos"
+        pessoas={concluidos}
+        vagas={dados.vagas || []}
+        rotuloDoDetalhe="Resultado"
+        rotuloDoDocumento="espelho"
+        tituloDaImpressao="Espelhos de nota"
+        prefixoDoZip="espelhos"
+        edital={edital}
+        montar={montarEspelhos}
+      />
+      {aoAbrirPreClassificacao ? (
+        <p
+          className="ui-texto-secundario avd-espelhos-comunicados"
+          data-acao="comunicados-na-pre"
+        >
+          Comunicados de eliminação antes da análise ficam na Pré-classificação.{" "}
+          <button
+            type="button"
+            className="btn ghost small"
+            data-acao="abrir-comunicados-na-pre"
+            onClick={aoAbrirPreClassificacao}
+          >
+            Abrir comunicados de eliminação
+          </button>
+        </p>
       ) : null}
       {massa ? (
         <EspelhosEmMassa

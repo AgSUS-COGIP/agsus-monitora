@@ -172,9 +172,16 @@ describe("abas por papel", () => {
     expect(
       secao.querySelector("[aria-label='Emissão dos espelhos de nota']"),
     ).not.toBeNull();
+    // Espelhos concluídos: busca por código ou nome e marcação múltipla.
+    expect(
+      secao.querySelector("[data-acao='espelhos-concluidos-busca']"),
+    ).not.toBeNull();
+    // Os comunicados de eliminação ficam na Pré-classificação: aqui, só o atalho.
     expect(
       secao.querySelector("[data-acao='baixar-comunicado-eliminacao']"),
-    ).not.toBeNull();
+    ).toBeNull();
+    await clicar(secao.querySelector("[data-acao='abrir-comunicados-na-pre']"));
+    expect(painel.estado.obter().visao).toBe("pre");
   });
 
   it("quem analisa vê Fila sem operações da coordenação", async () => {

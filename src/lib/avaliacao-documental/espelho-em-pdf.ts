@@ -127,15 +127,16 @@ export function nomeDoPdfDoEspelho(espelho: Espelho): string {
 
 const doisDigitos = (n: number) => String(n).padStart(2, "0");
 
-/** "espelhos-<edital>[-vaga-<vaga>]-<AAAA-MM-DD>.zip". */
+/** "<prefixo>-<edital>[-vaga-<vaga>]-<AAAA-MM-DD>.zip" (prefixo "espelhos" ou "comunicados"). */
 export function nomeDoZipDosEspelhos(
   edital: string | null | undefined,
   quando: Date,
   vaga: string | null = null,
+  prefixo = "espelhos",
 ): string {
   const data = `${quando.getFullYear()}-${doisDigitos(quando.getMonth() + 1)}-${doisDigitos(quando.getDate())}`;
   const partes = [
-    "espelhos",
+    prefixo,
     trechoDoNome(String(edital ?? "").replace(/^edital\s*/i, ""), 30),
     vaga ? `vaga-${trechoDoNome(vaga, 20)}` : "",
     data,
