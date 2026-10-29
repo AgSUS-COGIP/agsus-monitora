@@ -5,6 +5,20 @@
 
   RPCs (supabase/migrations/20261006110000_pre_classificacao_e_lote.sql;
   contrato em src/lib/rpc-contrato.js):
+    A pré-classificação em partes (20261029120000), cada uma lida quando a
+    parte da tela abre (garantirParte):
+    obter_resumo_pre_classificacao(p_edital)          a abertura (~35 KB no 114/2026): edital,
+                                                      regra, execução, totais, congeladas e a
+                                                      trava das inscrições
+    obter_vagas_pre_classificacao(p_edital)           parte "vagas": o resumo por vaga
+    obter_listas_pre_classificacao(p_edital)          parte "listas": listas registradas e lotes
+    listar_pre_classificacao(p_edital, p_vaga, p_grupo, p_busca, p_apos, p_limite)
+                                                      as linhas, 50 por vez (listar)
+    conferir_eliminados_pre_classificacao(p_edital, p_chaves)
+                                                      a situação de agora dos comunicados
+                                                      marcados (conferirEliminados)
+    O resumo, o cartão "Inscrições" e as partes já pedidas saem juntos (em
+    paralelo). Banco sem elas (antes de 20261029120000), a leitura inteira:
     obter_pre_classificacao_se_mudou(p_edital, p_versao)
                                                       (20261014230000) o resultado gravado,
                                                       por versão: os inscritos em colunas e,
@@ -71,6 +85,24 @@ import {
   criarLeituraPorVersao,
   funcaoAusente,
 } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
+import {
+  argumentosDaPagina,
+  contarPorVaga,
+  linhasDaPreInteira,
+  paginaDaResposta,
+  resumoDaPreInteira,
+  RPC_CONFERIR_ELIMINADOS,
+  RPC_LISTAS_DA_PRE,
+  RPC_PAGINA_DA_PRE,
+  RPC_RESUMO_DA_PRE,
+  RPC_VAGAS_DA_PRE,
+} from "../../lib/avaliacao-documental/paginas-da-pre-classificacao.ts";
+import type {
+  PaginaDaPre,
+  RecorteDaPre,
+} from "../../lib/avaliacao-documental/paginas-da-pre-classificacao.ts";
+import { RPC_OBTER_CONGELAMENTO } from "../../lib/avaliacao-documental/trava-das-inscricoes.ts";
+import type { ParteDaPre } from "./tipos-da-pre-classificacao.ts";
 import { decidirNoLote } from "./decisao-no-banco.ts";
 import { mensagemDoBanco } from "./estado.ts";
 import type { DadosDoAcompanhamento } from "../../lib/avaliacao-documental/acompanhamento-das-inscricoes.ts";
@@ -118,6 +150,8 @@ const INICIAL: Readonly<SnapshotDaPreClassificacao> = Object.freeze({
   editalId: "",
   dados: null,
   inscricoes: null,
+  congelamento: undefined,
+  partes: Object.freeze({ vagas: false, listas: false }),
   carregando: false,
   erro: "",
   pedidoEm: null,
@@ -156,6 +190,20 @@ export function criarEstadoDaPreClassificacao({
     copias,
   });
   let semSituacao = false;
+  // Banco sem o resumo e as páginas (antes de 20261029120000): lê tudo, como antes.
+  let semPaginas = false;
+  // A leitura inteira (só nesse banco), de onde saem o resumo e as páginas.
+  let inteira: {
+    editalId: string;
+    dados: DadosDaPreClassificacao | null;
+  } | null = null;
+  let emCurso: { editalId: string; promessa: Promise<boolean> } | null = null;
+  let lendoInteira: {
+    editalId: string;
+    promessa: Promise<DadosDaPreClassificacao | null>;
+  } | null = null;
+  // As partes que a tela já abriu: "Atualizar" e as releituras as trazem de novo.
+  const partesPedidas = new Set<ParteDaPre>();
   let pedido = 0;
   let lidoEm = 0;
   let chaveLida = "";
@@ -179,10 +227,192 @@ export function criarEstadoDaPreClassificacao({
     return data;
   }
 
+  /* A leitura inteira (banco antigo), uma por vez por edital. */
+  function lerInteira(
+    editalId: string,
+  ): Promise<DadosDaPreClassificacao | null> {
+    if (lendoInteira?.editalId === editalId) return lendoInteira.promessa;
+    const promessa = (
+      leitura.ler(
+        rpc,
+        { p_edital: editalId },
+        editalId,
+      ) as Promise<DadosDaPreClassificacao | null>
+    )
+      .then((dados) => {
+        inteira = { editalId, dados };
+        return dados;
+      })
+      .finally(() => {
+        if (lendoInteira?.promessa === promessa) lendoInteira = null;
+      });
+    lendoInteira = { editalId, promessa };
+    return promessa;
+  }
+
+  /* Uma parte nova; banco sem ela, tirada da leitura inteira (já resumida). */
+  async function lerParte(
+    nome: string,
+    editalId: string,
+  ): Promise<DadosDaPreClassificacao | null> {
+    if (!semPaginas) {
+      try {
+        return (await rpc(nome, {
+          p_edital: editalId,
+        })) as DadosDaPreClassificacao | null;
+      } catch (erro) {
+        if (!funcaoAusente(erro)) throw erro;
+        semPaginas = true;
+      }
+    }
+    // Leituras ao mesmo tempo (o resumo e as partes) dividem a mesma; com a
+    // versão, reler o que não mudou custa ~70 bytes.
+    const dados = await lerInteira(editalId);
+    return dados ? resumoDaPreInteira(dados) : null;
+  }
+
+  /* O que cada parte põe nos dados da aba. */
+  function daParte(
+    parte: ParteDaPre,
+    r: DadosDaPreClassificacao | null,
+  ): Partial<DadosDaPreClassificacao> {
+    if (parte === "vagas") return { vagas: r?.vagas ?? [] };
+    return {
+      listas: r?.listas ?? [],
+      lotes: r?.lotes ?? [],
+      regra_classificacao: r?.regra_classificacao ?? null,
+    };
+  }
+  const RPC_DA_PARTE: Record<ParteDaPre, string> = {
+    vagas: RPC_VAGAS_DA_PRE,
+    listas: RPC_LISTAS_DA_PRE,
+  };
+
   /*
-    Lê o resultado gravado do edital (troca de edital recomeça do zero). As
+    Garante uma parte da aba ("vagas" ou "listas"), lida só quando a parte
+    abre na tela (uma aba de cada vez). Já lida para o edital: não relê.
+  */
+  async function garantirParte(parte: ParteDaPre): Promise<boolean> {
+    partesPedidas.add(parte);
+    if (emCurso) await emCurso.promessa;
+    const editalId = estado.editalId;
+    if (!editalId || !estado.dados) return false;
+    if (estado.partes[parte]) return true;
+    try {
+      const r = await lerParte(RPC_DA_PARTE[parte], editalId);
+      if (editalId !== estado.editalId || !estado.dados) return false;
+      publicar({
+        dados: { ...estado.dados, ...daParte(parte, r) },
+        partes: { ...estado.partes, [parte]: true },
+      });
+      return true;
+    } catch (erro) {
+      if (editalId === estado.editalId)
+        publicar({ erro: mensagemDoBanco(erro) });
+      return false;
+    }
+  }
+
+  /*
+    As partes que a tela vai mostrar, avisadas antes da leitura: saem junto
+    com o resumo (em paralelo), e não depois dele.
+  */
+  function pedirPartes(partes: readonly ParteDaPre[]) {
+    for (const parte of partes) partesPedidas.add(parte);
+  }
+
+  /*
+    Os comunicados de eliminação (um ou em lote): a situação de agora só dos
+    marcados (chaves "vaga|código") e o cargo das vagas deles. Banco sem a RPC:
+    a leitura inteira, como antes.
+  */
+  async function conferirEliminados(chaves: readonly string[]): Promise<{
+    candidatos: NonNullable<DadosDaPreClassificacao["candidatos"]>;
+    vagas: DadosDaPreClassificacao["vagas"];
+  }> {
+    const editalId = estado.editalId;
+    if (!editalId) throw new Error("Escolha o edital.");
+    if (!semPaginas) {
+      try {
+        const r = (await rpc(RPC_CONFERIR_ELIMINADOS, {
+          p_edital: editalId,
+          p_chaves: [...chaves],
+        })) as Partial<DadosDaPreClassificacao> | null;
+        return { candidatos: r?.candidatos ?? [], vagas: r?.vagas ?? [] };
+      } catch (erro) {
+        if (!funcaoAusente(erro)) throw erro;
+        semPaginas = true;
+      }
+    }
+    const atual = (await rpc(RPC_OBTER_PRE_CLASSIFICACAO, {
+      p_edital: editalId,
+    })) as DadosDaPreClassificacao | null;
+    if (!atual || atual.edital?.id !== editalId)
+      throw new Error("Não foi possível confirmar o edital.");
+    return { candidatos: atual.candidatos ?? [], vagas: atual.vagas ?? [] };
+  }
+
+  /*
+    Uma página de uma lista da aba (50 por vez): as linhas de uma vaga num
+    grupo (CLASSIFICADOS, ELIMINADOS, PODE_INCLUIR) ou, sem vaga, a busca no
+    edital todo. Banco sem a RPC: a página sai da leitura inteira, na mesma
+    ordem (o cursor vira o deslocamento).
+  */
+  async function listar(
+    recorte: RecorteDaPre,
+    apos: unknown = null,
+    limite = 50,
+  ): Promise<PaginaDaPre> {
+    const editalId = estado.editalId;
+    if (!editalId) throw new Error("Escolha o edital.");
+    if (!semPaginas) {
+      try {
+        return paginaDaResposta(
+          await rpc(
+            RPC_PAGINA_DA_PRE,
+            argumentosDaPagina(editalId, recorte, apos, limite),
+          ),
+        );
+      } catch (erro) {
+        if (!funcaoAusente(erro)) throw erro;
+        semPaginas = true;
+      }
+    }
+    const dados =
+      inteira?.editalId === editalId
+        ? inteira.dados
+        : await lerInteira(editalId);
+    const todos = linhasDaPreInteira(dados, recorte);
+    const inicio = Number.isInteger(apos) ? (apos as number) : 0;
+    const fim = inicio + limite;
+    return {
+      linhas: todos.slice(inicio, fim),
+      proximo: fim < todos.length ? fim : null,
+      total: todos.length,
+      porVaga: recorte.vaga === null ? contarPorVaga(todos) : {},
+    };
+  }
+
+  /* Todas as linhas de um recorte (ex.: quem pode entrar por decisão numa vaga), página a página. */
+  async function listarTudo(
+    recorte: RecorteDaPre,
+  ): Promise<PaginaDaPre["linhas"]> {
+    const linhas: PaginaDaPre["linhas"] = [];
+    let apos: unknown = null;
+    for (let pagina = 0; pagina < 100; pagina += 1) {
+      const r = await listar(recorte, apos, 500);
+      linhas.push(...r.linhas);
+      apos = r.proximo;
+      if (apos === null || apos === undefined) return linhas;
+    }
+    throw new Error("A lista não terminou de carregar.");
+  }
+
+  /*
+    Lê o resultado gravado do edital (troca de edital recomeça do zero): o
+    resumo, o cartão "Inscrições" e a trava das inscrições, juntos. As
     releituras depois de uma gravação passam { inscricoes: false }: o cartão
-    "Inscrições" (retratos diários) não muda com elas.
+    "Inscrições" (retratos diários) e a trava não mudam com elas.
   */
   async function carregar(
     editalId: string = estado.editalId,
@@ -199,20 +429,43 @@ export function criarEstadoDaPreClassificacao({
         : { carregando: true, erro: "" },
     );
     try {
-      const mesmo = editalId === estado.editalId && estado.inscricoes;
-      const [dados, inscricoes] = await Promise.all([
-        leitura.ler(rpc, { p_edital: editalId }, editalId),
+      const releitura =
+        !lerInscricoes && editalId === estado.editalId && estado.inscricoes;
+      const partes = [...partesPedidas];
+      const [resumo, inscricoes, ...lidas] = await Promise.all([
+        lerParte(RPC_RESUMO_DA_PRE, editalId),
         // O cartão "Inscrições" é extra: banco sem a migration ou falha = sem cartão.
-        !lerInscricoes && mesmo
+        releitura
           ? estado.inscricoes
           : rpc(RPC_OBTER_INSCRICOES, { p_edital: editalId }).catch(() => null),
+        ...partes.map((parte) => lerParte(RPC_DA_PARTE[parte], editalId)),
       ]);
       if (meu !== pedido) return false;
+      // A trava vem no resumo; banco antigo, na RPC dela (falha = sem cartão).
+      const congelamento =
+        resumo && "congelamento" in resumo
+          ? resumo.congelamento
+          : releitura
+            ? estado.congelamento
+            : await rpc(RPC_OBTER_CONGELAMENTO, { p_edital: editalId }).catch(
+                () => null,
+              );
+      if (meu !== pedido) return false;
       lidoEm = agora().getTime();
-      // O payload validado no banco (obter_pre_classificacao[_se_mudou]).
+      // Os payloads validados no banco: o resumo e as partes abertas.
+      let dados: DadosDaPreClassificacao | null = resumo
+        ? { ...resumo, vagas: resumo.vagas ?? [], listas: resumo.listas ?? [] }
+        : null;
+      const lidasAgora = { vagas: false, listas: false };
+      partes.forEach((parte, i) => {
+        lidasAgora[parte] = true;
+        if (dados) dados = { ...dados, ...daParte(parte, lidas[i] ?? null) };
+      });
       publicar({
-        dados: dados as DadosDaPreClassificacao | null,
+        dados,
         inscricoes: inscricoes as DadosDoAcompanhamento | null,
+        congelamento,
+        partes: lidasAgora,
         carregando: false,
         erro: "",
       });
@@ -226,21 +479,34 @@ export function criarEstadoDaPreClassificacao({
 
   /*
     Ao abrir a aba: relê só com outro edital, outra chave (a versão da regra)
-    ou leitura com mais de 5 minutos. "Atualizar" e o acompanhamento do
+    ou leitura com mais de 5 minutos. A tela pede a leitura assim que o edital
+    é escolhido (sem chave), junto com a regra; a aba, ao montar, passa a
+    versão da regra: se é a que veio no resumo, não relê. Leitura do mesmo
+    edital já em curso é reaproveitada. "Atualizar" e o acompanhamento do
     recálculo chamam carregar e sempre relêem.
   */
   async function garantirCarregado(
     editalId: string,
     chave = "",
   ): Promise<boolean> {
+    if (emCurso?.editalId === editalId) {
+      if (chave) chaveLida = chave;
+      return emCurso.promessa;
+    }
+    const daLeitura = String(estado.dados?.regra?.versao ?? 0);
     const recente =
       Boolean(estado.dados) &&
       !estado.erro &&
       estado.editalId === editalId &&
-      chaveLida === chave &&
+      (!chave || chave === chaveLida || chave === daLeitura) &&
       agora().getTime() - lidoEm < VALIDADE_DA_LEITURA_MS;
-    chaveLida = chave;
-    return recente ? true : carregar(editalId);
+    if (chave) chaveLida = chave;
+    if (recente) return true;
+    const promessa = carregar(editalId).finally(() => {
+      if (emCurso?.promessa === promessa) emCurso = null;
+    });
+    emCurso = { editalId, promessa };
+    return promessa;
   }
 
   /* "Recalcular": pede o job da pré-classificação só deste edital. */
@@ -581,6 +847,11 @@ export function criarEstadoDaPreClassificacao({
     rpc,
     carregar,
     garantirCarregado,
+    garantirParte,
+    pedirPartes,
+    listar,
+    listarTudo,
+    conferirEliminados,
     recalcular,
     descongelar,
     incluirPorDecisao: (

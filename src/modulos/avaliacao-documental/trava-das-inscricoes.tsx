@@ -20,6 +20,8 @@ import { Aviso, Campo, Selo } from "../../ui/index.ts";
   não aparece. Banco sem a migration: não aparece. Regras em
   src/lib/avaliacao-documental/trava-das-inscricoes.ts; explicação na Aya
   ("Inscrições congeladas", docs/aya/regras-da-avaliacao-documental.md).
+  `inicial`: a resposta já lida junto com o resumo da aba (o estado da
+  Pré-classificação lê tudo em paralelo); sem ela (undefined), o cartão lê.
 */
 
 type Rpc = (
@@ -33,9 +35,11 @@ const diaEMes = (d: Date | null) =>
 export function TravaDasInscricoes({
   editalId,
   rpc,
+  inicial,
 }: {
   editalId: string;
   rpc: Rpc | null | undefined;
+  inicial?: unknown;
 }) {
   const [trava, setTrava] = useState<Trava | null>(null);
   const [abrir, setAbrir] = useState(false);
@@ -50,6 +54,10 @@ export function TravaDasInscricoes({
     setMotivo("");
     setErro("");
     if (!rpc || !editalId) return undefined;
+    if (inicial !== undefined) {
+      setTrava(inicial === null ? null : lerTrava(inicial));
+      return undefined;
+    }
     rpc(RPC_OBTER_CONGELAMENTO, { p_edital: editalId })
       .then((r) => {
         if (vivo) setTrava(lerTrava(r));
@@ -60,7 +68,7 @@ export function TravaDasInscricoes({
     return () => {
       vivo = false;
     };
-  }, [rpc, editalId]);
+  }, [rpc, editalId, inicial]);
 
   if (!mostrarTrava(trava) || !trava) return null;
   const congelar = !trava.congelado;

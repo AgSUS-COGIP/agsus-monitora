@@ -157,7 +157,8 @@ describe("abas por papel", () => {
     await montar(supabase);
     expect(abas()).toEqual(["fila", "espelhos", "configuracoes"]);
     expect(painel.estado.obter().visao).toBe("fila");
-    expect(chamou(supabase, "obter_equipe_edital")).toBe(true);
+    // A equipe (com as pessoas) só é lida quando a aba Equipe abre.
+    expect(chamou(supabase, "obter_equipe_edital")).toBe(false);
     expect(botoes()).toContain("Abrir pré-classificação");
     act(() => painel.estado.mudarVisao("pre"));
     expect(botoes()).not.toContain("Abrir pré-classificação");
@@ -168,6 +169,10 @@ describe("abas por papel", () => {
       ),
     ).not.toBeNull();
     expect(botoes()).toContain("Abrir pré-classificação");
+    // A aba Equipe abre e só então lê a equipe.
+    await act(async () => painel.estado.mudarVisao("equipe"));
+    await act(async () => new Promise((r) => setTimeout(r, 0)));
+    expect(chamou(supabase, "obter_equipe_edital")).toBe(true);
     act(() => painel.estado.mudarVisao("espelhos"));
     expect(
       secao.querySelector("[aria-label='Emissão dos espelhos de nota']"),

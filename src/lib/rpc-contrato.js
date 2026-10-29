@@ -1140,7 +1140,45 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Pré-classificação gravada pelo job Python: regra, última execução, vagas (quadro, tamanho do lote, linha de corte, avisos), inscritos (código, nome, situação, ART, nota declarada, posição, lote e motivo; sem CPF nem contato) e as listas PROVISORIA/LOTE registradas. Só a coordenação do edital (FC_EXIGIR_COORD_AVALIACAO; os demais 42501, desde 20261016130000).",
+      "Pré-classificação gravada pelo job Python: regra, última execução, vagas (quadro, tamanho do lote, linha de corte, avisos), inscritos (código, nome, situação, ART, nota declarada, posição, lote e motivo; sem CPF nem contato) e as listas PROVISORIA/LOTE registradas. Só a coordenação do edital (FC_EXIGIR_COORD_AVALIACAO; os demais 42501, desde 20261016130000). Desde 20261029120000 o cabeçalho é o de obter_resumo_pre_classificacao (mais lotes e congeladas); a aba lê o resumo e as páginas, e esta só no comunicado de eliminação e em banco sem elas.",
+  },
+  // ── Pré-classificação em páginas (20261029120000_triagem_e_eliminados_em_paginas.sql)
+  obter_resumo_pre_classificacao: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "A abertura da Pré-classificação, só do instantâneo (114/2026: ~35 KB em vez de ~4,8 MB): edital, papel, regra vigente, execução, totais do edital (somas de TB_PRE_CLASSIF_VAGA e o lote pela regra/por decisão), congeladas { quantidade, em } e a trava das inscrições (congelamento). Vagas, listas e inscritos vêm cada um na sua RPC, quando a parte da tela abre. Mesma permissão de obter_pre_classificacao.",
+  },
+  obter_vagas_pre_classificacao: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "O resumo por vaga da Pré-classificação (contagens do instantâneo, tamanho e corte do lote, avisos, lote pela regra e por decisão, fora_do_lote), lido quando a parte das vagas abre. Mesma permissão.",
+  },
+  obter_listas_pre_classificacao: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "A parte Listas oficiais da Pré-classificação: regra de classificação, listas PROVISORIA/LOTE registradas e lotes [{ lote, quantidade }]. Mesma permissão.",
+  },
+  conferir_eliminados_pre_classificacao: {
+    argumentos: ["p_edital", "p_chaves"],
+    critica: false,
+    resumo:
+      "Comunicados de eliminação (um ou em lote): a situação de agora só dos marcados (p_chaves = vaga|código, até 10.000) e o cargo das vagas deles, em vez de reler a pré-classificação inteira antes de emitir. Mesma permissão.",
+  },
+  listar_pre_classificacao: {
+    argumentos: [
+      "p_edital",
+      "p_vaga",
+      "p_grupo",
+      "p_busca",
+      "p_apos",
+      "p_limite",
+    ],
+    critica: false,
+    resumo:
+      "Os inscritos da pré-classificação em páginas (a tela pede 50; até 500) por cursor estável { vaga, grupo, posicao, codigo }: CLASSIFICADOS (no lote e depois fora do lote, pela posição), ELIMINADOS (pelo código) ou PODE_INCLUIR, de uma vaga ou (p_vaga nulo) do edital, com busca por código ou nome sem acento; devolve { candidatos, proximo, total, por_vaga }. Só leitura do que o job gravou. Mesma permissão de obter_pre_classificacao.",
   },
   // ── Leitura por versão (20261014230000_avaliacao_leitura_por_versao.sql): chamam a função de
   // sempre e devolvem o payload com `versao` (md5 sem `gerado_em`) e as listas grandes em colunas
@@ -1162,7 +1200,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Cartão Inscrições da Pré-classificação: cronograma, vagas da Empregare do edital (código e cargo) e os retratos diários dos últimos 60 dias (inscritos, finalizaram o questionário, aptos pela regra, eliminados; só contagens). Leitor da Avaliação documental.",
+      "Cartão Inscrições da Pré-classificação: cronograma, vagas da Empregare do edital (código e cargo) e os retratos diários dos últimos 60 dias (inscritos, finalizaram o questionário, aptos pela regra, eliminados; só contagens). Leitor da Avaliação documental. Desde 20261029120000 o cargo da vaga pré-classificada vem de TB_PRE_CLASSIF_VAGA (gravado pelo job), sem procurar o quadro na hora.",
   },
   // ── Avaliação documental: inscrições congeladas (20261020170000_inscricoes_congeladas.sql)
   obter_congelamento_inscricoes: {
@@ -1215,6 +1253,21 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo:
       "obter_fila_avaliacao só com o que mudou (20261014231000_fila_e_ficha_so_o_que_mudou.sql): sem p_desde (ou outra marca), a fila inteira com marca e parcial false; com o gerado_em e a marca da leitura anterior, só as linhas do núcleo cuja ficha mudou (ou cuja reserva vence) desde p_desde − 2 min, saiu, total_nucleo e o resto sem vagas (~1,5 KB). Desde 20261019150000_fila_parcial_sem_montar_tudo.sql a parcial não monta a fila inteira: só as linhas desses inscritos (FC_LINHAS_DA_FILA com p_candidatos) e o total do núcleo por contagem; mesmo contrato. Mesma permissão.",
+  },
+  listar_eliminados_fila: {
+    argumentos: [
+      "p_edital",
+      "p_vaga",
+      "p_modalidade",
+      "p_busca",
+      "p_ordem",
+      "p_sentido",
+      "p_apos",
+      "p_limite",
+    ],
+    critica: false,
+    resumo:
+      "A aba Eliminados da fila em páginas (a tela pede 50; até 2.000 para o CSV), com vaga, modalidade, busca (código ou nome, sem acento) e ordem por coluna (codigo, nome, vaga, motivo, art; asc/desc) no banco, cursor estável { chave, codigo, id } e o total do recorte; as linhas no formato da fila (FC_LINHAS_DA_FILA). Leitor da Avaliação documental; o analista só nas vagas dele. 20261029120000_triagem_e_eliminados_em_paginas.sql.",
   },
   obter_fila_fora_do_lote: {
     argumentos: ["p_edital", "p_apos", "p_limite"],

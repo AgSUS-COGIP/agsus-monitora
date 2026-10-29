@@ -115,8 +115,8 @@ describe("entrada independente de Pré-classificação", () => {
     await montar(supabase);
     expect(secao.textContent).toContain("restrita à coordenação");
     expect(
-      supabase.rpc.mock.calls.some(
-        ([nome]) => nome === "obter_pre_classificacao",
+      supabase.rpc.mock.calls.some(([nome]) =>
+        /^obter_(resumo_)?pre_classificacao$/.test(nome),
       ),
     ).toBe(false);
     expect(
@@ -128,8 +128,8 @@ describe("entrada independente de Pré-classificação", () => {
     const supabase = supabaseFalso(true);
     await montar(supabase);
     expect(
-      supabase.rpc.mock.calls.some(
-        ([nome]) => nome === "obter_pre_classificacao",
+      supabase.rpc.mock.calls.some(([nome]) =>
+        /^obter_(resumo_)?pre_classificacao$/.test(nome),
       ),
     ).toBe(true);
     expect(
@@ -141,8 +141,8 @@ describe("entrada independente de Pré-classificação", () => {
     const supabase = supabaseFalso(false);
     await montar(supabase);
     expect(
-      supabase.rpc.mock.calls.some(
-        ([nome]) => nome === "obter_pre_classificacao",
+      supabase.rpc.mock.calls.some(([nome]) =>
+        /^obter_(resumo_)?pre_classificacao$/.test(nome),
       ),
     ).toBe(false);
     expect(secao.textContent).toContain("Painel da Seleção");

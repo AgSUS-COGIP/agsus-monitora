@@ -34,7 +34,8 @@
                                                 de classificação
     salvar_regra_classificacao(...)             nota mínima e desempate, pela
                                                 RPC da Classificação (Editor)
-    obter_equipe_edital(p_edital)               gestores, equipe e pessoas
+    obter_equipe_edital(p_edital)               gestores, equipe e pessoas, lidos só
+                                                quando a aba Equipe abre (carregarEquipe)
     salvar_equipe_edital(...)                   a equipe inteira
     salvar_aldeias_dsei(...)                    lista de aldeias (admin global)
     definir_origem_analise(...)                 dono da avaliação: MONITORA (as
@@ -304,9 +305,9 @@ export function criarEstadoDaAvaliacao({
   }
 
   /*
-    Abre o edital: a regra e, para quem coordena, a equipe juntas (a lista já
-    diz o papel; sem ele, lê a equipe e confere depois). Lembra o edital
-    aberto ("" esquece: a próxima entrada mostra os cartões).
+    Abre o edital: só a regra (a equipe, com gestores e pessoas, vem quando a
+    aba Equipe abre: carregarEquipe). Lembra o edital aberto ("" esquece: a
+    próxima entrada mostra os cartões).
   */
   async function escolherEdital(editalId: string): Promise<boolean> {
     const meu = ++pedidoDoEdital;
@@ -334,23 +335,15 @@ export function criarEstadoDaAvaliacao({
     });
     const gravacoesAntes = gravacoes;
     try {
-      const coordena = coordenaOEdital({ ...estado, dados: null });
-      const [dados, equipeLida] = (await Promise.all([
-        leituraDaRegra.ler(rpc, { p_edital: editalId }, editalId),
-        coordena === false
-          ? null
-          : rpc(RPC_OBTER_EQUIPE, { p_edital: editalId }),
-      ])) as [DadosDoEdital | null, unknown];
-      if (meu !== pedidoDoEdital) return false;
-      // A lista disse que não coordena, mas o edital diz que sim (papel mudou).
-      const equipe = (equipeLida ??
-        (dados?.pode_coordenar
-          ? await rpc(RPC_OBTER_EQUIPE, { p_edital: editalId })
-          : null)) as EquipeDoEdital | null;
+      const dados = (await leituraDaRegra.ler(
+        rpc,
+        { p_edital: editalId },
+        editalId,
+      )) as DadosDoEdital | null;
       if (meu !== pedidoDoEdital) return false;
       // Gravou-se no meio da leitura: ela pode ser de antes; lê de novo.
       if (gravacoesAntes !== gravacoes) return escolherEdital(editalId);
-      publicar({ dados, equipe, carregandoEdital: false });
+      publicar({ dados, carregandoEdital: false });
       return true;
     } catch (erro) {
       if (meu !== pedidoDoEdital) return false;
@@ -358,6 +351,32 @@ export function criarEstadoDaAvaliacao({
         carregandoEdital: false,
         erroDoEdital: mensagemDoBanco(erro),
       });
+      return false;
+    }
+  }
+
+  /*
+    A equipe do edital (gestores, equipe e quem pode entrar), só para a
+    coordenação e só quando a aba Equipe abre: obter_equipe_edital monta a
+    lista de pessoas, e abrir o edital (Pré-classificação, Fila) não precisa
+    dela. Falha vira erroDoEdital (a aba mostra "Tentar novamente").
+  */
+  let pedidoDaEquipe = 0;
+  async function carregarEquipe(
+    editalId: string = estado.editalId,
+  ): Promise<boolean> {
+    if (!editalId) return false;
+    const meu = ++pedidoDaEquipe;
+    try {
+      const equipe = (await rpc(RPC_OBTER_EQUIPE, {
+        p_edital: editalId,
+      })) as EquipeDoEdital | null;
+      if (meu !== pedidoDaEquipe || editalId !== estado.editalId) return false;
+      publicar({ equipe });
+      return true;
+    } catch (erro) {
+      if (meu !== pedidoDaEquipe || editalId !== estado.editalId) return false;
+      publicar({ erroDoEdital: mensagemDoBanco(erro) });
       return false;
     }
   }
@@ -493,6 +512,7 @@ export function criarEstadoDaAvaliacao({
     },
     carregar,
     escolherEdital,
+    carregarEquipe,
     /* Aba da coordenação para quem não coordena: fica na Fila. */
     mudarVisao(visao: string) {
       // Compatibilidade com links/sessoes antigas: Resultados foi unido a Fila.

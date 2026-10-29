@@ -8,6 +8,10 @@ import {
 import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
 import { criarEstadoDaPreClassificacao } from "../../src/modulos/avaliacao-documental/estado-da-pre-classificacao.ts";
 import {
+  linhasDaPreInteira,
+  resumoDaPreInteira,
+} from "../../src/lib/avaliacao-documental/paginas-da-pre-classificacao.ts";
+import {
   clicar,
   digitar,
   escolher,
@@ -160,6 +164,85 @@ const PRE = (regra, pode = true, extra = {}) => ({
   ...extra,
 });
 
+/*
+  O banco em partes (20261029120000), tirado da mesma pré-classificação
+  inteira: o resumo da abertura, as vagas, as listas, as páginas de cada
+  vaga (cursor = deslocamento) e a conferência dos comunicados marcados.
+*/
+function partesDoBanco(atual) {
+  return {
+    obter_resumo_pre_classificacao: () => {
+      const {
+        vagas: _vagas,
+        listas: _listas,
+        lotes: _lotes,
+        regra_classificacao: _rc,
+        ...cabecalho
+      } = resumoDaPreInteira(atual());
+      return { ...cabecalho, congelamento: null };
+    },
+    obter_vagas_pre_classificacao: () => ({
+      vagas: resumoDaPreInteira(atual()).vagas,
+    }),
+    obter_listas_pre_classificacao: () => {
+      const r = resumoDaPreInteira(atual());
+      return {
+        listas: r.listas,
+        lotes: r.lotes,
+        regra_classificacao: r.regra_classificacao,
+      };
+    },
+    listar_pre_classificacao: ({
+      p_vaga,
+      p_grupo,
+      p_busca,
+      p_apos,
+      p_limite,
+    }) => {
+      const todos = linhasDaPreInteira(atual(), {
+        vaga: p_vaga,
+        grupo: p_grupo,
+        busca: p_busca ?? "",
+      });
+      const inicio = p_apos ?? 0;
+      const por_vaga = {};
+      for (const c of todos) por_vaga[c.vaga] = (por_vaga[c.vaga] ?? 0) + 1;
+      return {
+        candidatos: todos.slice(inicio, inicio + p_limite),
+        proximo: inicio + p_limite < todos.length ? inicio + p_limite : null,
+        total: todos.length,
+        por_vaga,
+      };
+    },
+    conferir_eliminados_pre_classificacao: ({ p_chaves }) => ({
+      candidatos: atual().candidatos.filter((c) =>
+        p_chaves.includes(`${c.vaga}|${c.codigo}`),
+      ),
+      vagas: atual().vagas,
+    }),
+  };
+}
+
+/* Responde a leitura inteira e as partes com esta pré-classificação; o resto, como antes. */
+const comPre = (pre, normal) => {
+  const partes = {
+    obter_pre_classificacao: () => pre,
+    ...partesDoBanco(() => pre),
+  };
+  return async (nome, args) =>
+    partes[nome]
+      ? { data: partes[nome](args), error: null }
+      : normal(nome, args);
+};
+const ausente = () => ({
+  data: null,
+  error: { code: "PGRST202", message: "Could not find the function" },
+});
+const chamadasDe = (rpc, nome) =>
+  rpc.mock.calls.filter(([n]) => n === nome).map(([, a]) => a);
+const esperarBusca = () =>
+  act(async () => new Promise((r) => setTimeout(r, 350)));
+
 function supabaseFalso({
   pode = true,
   situacao = "CONFERIDA",
@@ -202,6 +285,7 @@ function supabaseFalso({
       vagas: [],
     }),
     obter_pre_classificacao: () => pre ?? PRE(regra, pode),
+    ...partesDoBanco(() => pre ?? PRE(regra, pode)),
     salvar_regra_analise: ({ p_configuracao, p_versao_atual }) => {
       regra = regraSalva(p_versao_atual + 1, p_configuracao, "CONFERIR");
       return { regra, fichas_afetadas: [] };
@@ -325,9 +409,38 @@ describe("Pré-classificação (AM-4)", () => {
   it("AM-4.4: contadores, linha de corte, divergência e eliminados à parte", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
-    expect(supabase.rpc).toHaveBeenCalledWith("obter_pre_classificacao", {
-      p_edital: "e93",
-    });
+    // A abertura lê o resumo e as partes da tela, nunca a pré-classificação inteira.
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "obter_resumo_pre_classificacao",
+      {
+        p_edital: "e93",
+      },
+    );
+    expect(
+      chamadasDe(supabase.rpc, "obter_vagas_pre_classificacao"),
+    ).toHaveLength(1);
+    expect(
+      chamadasDe(supabase.rpc, "obter_listas_pre_classificacao"),
+    ).toHaveLength(1);
+    expect(chamadasDe(supabase.rpc, "obter_pre_classificacao")).toHaveLength(0);
+    expect(
+      chamadasDe(supabase.rpc, "obter_pre_classificacao_se_mudou"),
+    ).toHaveLength(0);
+    // A trava vem no resumo: nada de chamada à parte.
+    expect(
+      chamadasDe(supabase.rpc, "obter_congelamento_inscricoes"),
+    ).toHaveLength(0);
+    // As linhas de cada vaga vêm 50 por vez.
+    expect(chamadasDe(supabase.rpc, "listar_pre_classificacao")).toContainEqual(
+      {
+        p_edital: "e93",
+        p_vaga: "179698",
+        p_grupo: "CLASSIFICADOS",
+        p_busca: null,
+        p_apos: null,
+        p_limite: 50,
+      },
+    );
     const kpis = secao.querySelector(".ui-kpis").textContent;
     expect(kpis).toContain("Inscritos5");
     expect(kpis).toContain("Eliminados1");
@@ -350,19 +463,23 @@ describe("Pré-classificação (AM-4)", () => {
     expect(
       vaga.querySelector("[data-candidato='7000003']").textContent,
     ).toContain("diverge");
+    // Os eliminados só são lidos quando o grupo abre.
+    expect(
+      chamadasDe(supabase.rpc, "listar_pre_classificacao").some(
+        (a) => a.p_grupo === "ELIMINADOS",
+      ),
+    ).toBe(false);
+    const grupo = vaga.querySelector(".avd-eliminados");
+    await act(async () => {
+      grupo.open = true;
+      grupo.dispatchEvent(new Event("toggle"));
+    });
+    await esperar();
+    expect(grupo.textContent).toContain("Cancelou a inscrição");
     // Os eliminados rolam dentro do cartão, como o lote (a tabela solta
     // herdava min-width 1180px de app.css e a página rolava de lado).
     expect(
-      vaga.querySelector(".avd-eliminados > .ui-tabela-rolagem"),
-    ).toBeNull();
-    const detalhes = vaga.querySelector(".avd-eliminados");
-    detalhes.open = true;
-    await act(async () => detalhes.dispatchEvent(new Event("toggle")));
-    expect(vaga.querySelector(".avd-eliminados").textContent).toContain(
-      "Cancelou a inscrição",
-    );
-    expect(
-      vaga.querySelector(".avd-eliminados > .ui-tabela-rolagem > table"),
+      vaga.querySelector(".avd-eliminados .ui-tabela-rolagem > table"),
     ).not.toBeNull();
     expect(vaga.textContent).toContain(
       "Fora do lote com nota acima da linha de corte",
@@ -408,11 +525,7 @@ describe("Pré-classificação (AM-4)", () => {
     const comInscritos = (n) => {
       const pre = PRE(regraSalva(2));
       pre.vagas[0] = { ...pre.vagas[0], inscritos: n };
-      supabase.rpc.mockImplementation(async (nome, args) =>
-        nome === "obter_pre_classificacao"
-          ? { data: pre, error: null }
-          : normal(nome, args),
-      );
+      supabase.rpc.mockImplementation(comPre(pre, normal));
     };
     comInscritos(9);
     await clicar(secao.querySelector("[data-acao='atualizar']"));
@@ -500,11 +613,7 @@ describe("Pré-classificação (AM-4)", () => {
 
     const normal = supabase.rpc.getMockImplementation();
     const responder = (pre) =>
-      supabase.rpc.mockImplementation(async (nome, args) =>
-        nome === "obter_pre_classificacao"
-          ? { data: pre, error: null }
-          : normal(nome, args),
-      );
+      supabase.rpc.mockImplementation(comPre(pre, normal));
     // 1ª releitura: o job está rodando.
     responder(PRE(regraSalva(2), true, { em_andamento: true }));
     await rodarAgendado();
@@ -561,11 +670,7 @@ describe("Pré-classificação (AM-4)", () => {
     });
     await montar({
       ...supabase,
-      rpc: vi.fn(async (nome, args) =>
-        nome === "obter_pre_classificacao"
-          ? { data: pre, error: null }
-          : supabase.rpc(nome, args),
-      ),
+      rpc: vi.fn(comPre(pre, (nome, args) => supabase.rpc(nome, args))),
     });
     expect(secao.textContent).toContain("Edital sem regra conferida");
   });
@@ -766,7 +871,7 @@ describe("estado da pré-classificação: voltar à aba não relê", () => {
   it("relê só com outro edital, outra versão da regra ou depois de 5 minutos", async () => {
     let agora = new Date("2026-10-15T12:00:00Z");
     const rpc = vi.fn(async (nome) => ({
-      data: nome === "obter_pre_classificacao" ? { vagas: [] } : null,
+      data: nome === "obter_resumo_pre_classificacao" ? { vagas: [] } : null,
       error: null,
     }));
     const pre = criarEstadoDaPreClassificacao({
@@ -774,7 +879,8 @@ describe("estado da pré-classificação: voltar à aba não relê", () => {
       agora: () => agora,
     });
     const leituras = () =>
-      rpc.mock.calls.filter(([n]) => n === "obter_pre_classificacao").length;
+      rpc.mock.calls.filter(([n]) => n === "obter_resumo_pre_classificacao")
+        .length;
     await pre.garantirCarregado("e1", "2");
     await pre.garantirCarregado("e1", "2");
     expect(leituras()).toBe(1);
@@ -790,8 +896,8 @@ describe("estado da pré-classificação: voltar à aba não relê", () => {
   });
 });
 
-describe("Pré-classificação por versão (20261014230000)", () => {
-  /* Um banco com as RPCs novas: a leitura por versão e a situação leve. */
+describe("Pré-classificação por versão (20261014230000), banco sem as partes (antes de 20261029120000)", () => {
+  /* Um banco com a leitura por versão e a situação leve, sem o resumo nem as páginas. */
   function bancoNovo() {
     const estado = {
       versao: "v1",
@@ -831,6 +937,11 @@ describe("Pré-classificação por versão (20261014230000)", () => {
           error: null,
         };
       if (nome === "disparar_robo") return { data: 61, error: null };
+      if (
+        nome.endsWith("_pre_classificacao") &&
+        nome !== "obter_situacao_pre_classificacao"
+      )
+        return ausente();
       return { data: null, error: null };
     });
     return { estado, rpc };
@@ -846,17 +957,21 @@ describe("Pré-classificação por versão (20261014230000)", () => {
     });
     await pre.carregar("e1");
     const dados = pre.obter().dados;
-    expect(dados.candidatos).toEqual([
-      { codigo: "7000001", situacao: "NO_LOTE", vaga: "179698" },
-      { codigo: "7000003", situacao: "NO_LOTE", vaga: "179698" },
-    ]);
+    // O resumo sai da leitura inteira; as páginas, dela também.
+    expect(dados.candidatos).toBeUndefined();
+    expect(dados.lotes).toEqual([]);
+    const pagina = await pre.listar({ vaga: "179698", grupo: "CLASSIFICADOS" });
+    expect(pagina.linhas.map((c) => c.codigo)).toEqual(["7000001", "7000003"]);
+    expect(pagina.total).toBe(2);
     await pre.carregar("e1");
     expect(chamadas(rpc, "obter_pre_classificacao_se_mudou")).toEqual([
       { p_edital: "e1", p_versao: null },
       { p_edital: "e1", p_versao: "v1" },
     ]);
-    expect(pre.obter().dados).toBe(dados);
+    expect(pre.obter().dados).toEqual(dados);
     expect(chamadas(rpc, "obter_pre_classificacao")).toHaveLength(0);
+    // Banco sem as partes: depois da primeira recusa, a página vem da leitura guardada.
+    expect(chamadas(rpc, "listar_pre_classificacao")).toHaveLength(0);
   });
 
   it("Recalcular acompanha pela situação leve e relê o pacote só no fim", async () => {
@@ -894,7 +1009,7 @@ describe("Pré-classificação por versão (20261014230000)", () => {
 });
 
 describe("comunicados de eliminação em lote (Pré-classificação)", () => {
-  it("busca por nome, marca os da busca e imprime relendo a pré-classificação", async () => {
+  it("busca por nome no banco, marca os da busca e imprime conferindo só os marcados", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
     expect(secao.querySelector("[data-acao='comunicados-zip']").disabled).toBe(
@@ -904,7 +1019,20 @@ describe("comunicados de eliminação em lote (Pré-classificação)", () => {
       secao.querySelector("[data-acao='buscar-espelho-eliminado']"),
       "pessoa 7000009",
     );
+    await esperarBusca();
+    await esperar();
+    expect(chamadasDe(supabase.rpc, "listar_pre_classificacao")).toContainEqual(
+      {
+        p_edital: "e93",
+        p_vaga: null,
+        p_grupo: "ELIMINADOS",
+        p_busca: "pessoa 7000009",
+        p_apos: null,
+        p_limite: 1,
+      },
+    );
     await clicar(secao.querySelector("[data-acao='comunicados-marcar-busca']"));
+    await esperar();
     expect(
       secao.querySelector("[data-acao='comunicados-marcados']").textContent,
     ).toBe("1 marcado(s)");
@@ -916,13 +1044,13 @@ describe("comunicados de eliminação em lote (Pré-classificação)", () => {
     expect(secao.querySelector("[data-acao='comunicados-pdf']").disabled).toBe(
       false,
     );
-    const leituras = () =>
-      supabase.rpc.mock.calls.filter(([n]) => n === "obter_pre_classificacao")
-        .length;
-    const antes = leituras();
     await clicar(secao.querySelector("[data-acao='comunicados-imprimir']"));
     await esperar();
-    expect(leituras()).toBe(antes + 1);
+    // Confere só os marcados, como estão agora (nunca a pré-classificação inteira).
+    expect(
+      chamadasDe(supabase.rpc, "conferir_eliminados_pre_classificacao"),
+    ).toEqual([{ p_edital: "e93", p_chaves: ["179698|7000009"] }]);
+    expect(chamadasDe(supabase.rpc, "obter_pre_classificacao")).toHaveLength(0);
     expect(secao.textContent).toContain(
       "1 comunicado no documento para imprimir.",
     );

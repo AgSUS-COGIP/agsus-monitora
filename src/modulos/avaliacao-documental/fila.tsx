@@ -46,6 +46,7 @@ import type {
 import { tomDoResultado } from "../../lib/avaliacao-documental/ficha.ts";
 import {
   contadoresComForaDoLote,
+  eliminadosNoBanco,
   juntarFila,
   modalidadesDaFila,
   precisaDoForaDoLote,
@@ -63,8 +64,13 @@ import {
   MenuDeAcoes,
   Selo,
   TabelaInfinita,
+  usarListaNoServidor,
 } from "../../ui/index.ts";
-import type { AcaoDoMenu } from "../../ui/index.ts";
+import type {
+  AcaoDoMenu,
+  BuscarPagina,
+  TabelaNoServidor,
+} from "../../ui/index.ts";
 import { RevogarDecisao, SeloDaDecisao } from "./decisao-do-lote.tsx";
 import { RelatorioDeMotivosDaFila } from "./relatorio-de-motivos.tsx";
 import { erroDoMotivoDaFila } from "../../lib/avaliacao-documental/qualidade-do-motivo.ts";
@@ -776,6 +782,10 @@ interface TabelaDaFilaProps {
   marcar: (id: string, sim: boolean) => void;
   limparSelecao: () => void;
   grupo: GrupoDaTabela | null;
+  /** Aba Eliminados no banco: as páginas, o CSV do recorte e o "Tentar novamente". */
+  servidor?: TabelaNoServidor | null;
+  aoExportar?: (() => void) | null;
+  aoTentarDeNovo?: (() => void) | null;
 }
 
 const TabelaDaFila = memo(function TabelaDaFila({
@@ -797,6 +807,9 @@ const TabelaDaFila = memo(function TabelaDaFila({
   marcar,
   limparSelecao,
   grupo,
+  servidor = null,
+  aoExportar = null,
+  aoTentarDeNovo = null,
 }: TabelaDaFilaProps) {
   const chaves = colunasDaEtapa(etapa);
   const comFicha = useMemo(() => linhas.filter((c) => c.ficha), [linhas]);
@@ -892,7 +905,9 @@ const TabelaDaFila = memo(function TabelaDaFila({
         <button
           type="button"
           className="btn secondary small"
-          onClick={() => void fila.carregarForaDoLote()}
+          onClick={() =>
+            aoTentarDeNovo ? aoTentarDeNovo() : void fila.carregarForaDoLote()
+          }
         >
           Tentar novamente
         </button>
@@ -919,6 +934,7 @@ const TabelaDaFila = memo(function TabelaDaFila({
       informacao={informacao}
       // A tabela trata null como sem grupo (o padrão dela).
       grupo={grupo as GrupoDaTabela}
+      servidor={servidor}
       ferramentas={
         <>
           {coordena && selecao.size ? (
@@ -940,7 +956,9 @@ const TabelaDaFila = memo(function TabelaDaFila({
             className="btn secondary small"
             data-acao="exportar-csv"
             disabled={!ordenadas.length}
-            onClick={() => fila.exportarCsv(ordenadas, etapa)}
+            onClick={() =>
+              aoExportar ? aoExportar() : fila.exportarCsv(ordenadas, etapa)
+            }
           >
             <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
             CSV
@@ -1028,7 +1046,59 @@ export function Fila({ e, fila }: FilaProps) {
     () => juntarFila(candidatos, st.fora.linhas),
     [candidatos, st.fora.linhas],
   );
-  const precisaDeFora = precisaDoForaDoLote(etapa) && resumoDeFora.total > 0;
+  /*
+    Aba Eliminados (5.753 no 114/2026): 50 por vez do banco, com filtros,
+    busca (300 ms depois da última tecla) e ordem aplicados lá; não lê a lista
+    de fora do lote inteira. Com filtro de responsável, a lista de sempre.
+  */
+  const noBanco = eliminadosNoBanco(st.filtro);
+  const [buscaNoBanco, setBuscaNoBanco] = useState(st.filtro.busca);
+  useEffect(() => {
+    const espera = setTimeout(() => setBuscaNoBanco(st.filtro.busca), 300);
+    return () => clearTimeout(espera);
+  }, [st.filtro.busca]);
+  const filtroNoBanco = useMemo(
+    () => ({
+      etapa,
+      vaga: st.filtro.vaga,
+      modalidade: st.filtro.modalidade,
+      responsavel: st.filtro.responsavel,
+      busca: buscaNoBanco,
+    }),
+    [
+      etapa,
+      st.filtro.vaga,
+      st.filtro.modalidade,
+      st.filtro.responsavel,
+      buscaNoBanco,
+    ],
+  );
+  const buscarEliminados = useMemo<BuscarPagina<Inscrito> | null>(
+    () =>
+      noBanco
+        ? async (apos, limite) => {
+            const r = await fila.listarEliminados(
+              filtroNoBanco,
+              ordem,
+              apos,
+              limite,
+            );
+            return { ...r, linhas: r.linhas as Inscrito[] };
+          }
+        : null,
+    [noBanco, fila, filtroNoBanco, ordem],
+  );
+  const doBanco = usarListaNoServidor(
+    buscarEliminados,
+    JSON.stringify([e.editalId, filtroNoBanco, ordem, resumoDeFora.versao]),
+    { ativo: noBanco },
+  );
+  const exportarDoBanco = useCallback(
+    () => void fila.exportarEliminados(filtroNoBanco, ordem),
+    [fila, filtroNoBanco, ordem],
+  );
+  const precisaDeFora =
+    precisaDoForaDoLote(etapa) && !noBanco && resumoDeFora.total > 0;
   const foraPronto = !precisaDeFora || st.fora.linhas !== null;
   useEffect(() => {
     if (precisaDeFora) void fila.carregarForaDoLote();
@@ -1041,13 +1111,18 @@ export function Fila({ e, fila }: FilaProps) {
     () => andamentoDaFila(candidatos, dados?.vagas),
     [candidatos, dados?.vagas],
   );
-  const linhas = useMemo(
-    () => filtrarFila(todos, st.filtro, dados?.eu),
-    [todos, st.filtro, dados?.eu],
+  const naMemoria = useMemo(
+    () => (noBanco ? [] : filtrarFila(todos, st.filtro, dados?.eu)),
+    [noBanco, todos, st.filtro, dados?.eu],
   );
-  const ordenadas = useMemo(() => ordenarFila(linhas, ordem), [linhas, ordem]);
+  // No banco, as linhas já vêm filtradas e na ordem da coluna (sem agrupar: a vaga é coluna).
+  const linhas = noBanco ? (doBanco.itens as Inscrito[]) : naMemoria;
+  const ordenadas = useMemo(
+    () => (noBanco ? linhas : ordenarFila(linhas, ordem)),
+    [noBanco, linhas, ordem],
+  );
   // Todas as vagas: a tabela agrupa por vaga (o CSV sai sem agrupar, na ordem da coluna).
-  const agrupada = !st.filtro.vaga;
+  const agrupada = !st.filtro.vaga && !noBanco;
   const exibidas = useMemo(
     () => (agrupada ? agruparPorVaga(ordenadas, dados?.vagas) : ordenadas),
     [agrupada, ordenadas, dados?.vagas],
@@ -1427,8 +1502,11 @@ export function Fila({ e, fila }: FilaProps) {
         ordem={ordem}
         setOrdem={setOrdem}
         total={contadores[st.filtro.etapa] ?? 0}
-        carregado={foraPronto}
-        erroDeFora={precisaDeFora ? st.fora.erro : ""}
+        carregado={noBanco ? doBanco.carregado : foraPronto}
+        erroDeFora={noBanco ? doBanco.erro : precisaDeFora ? st.fora.erro : ""}
+        servidor={noBanco ? doBanco : null}
+        aoExportar={noBanco ? exportarDoBanco : null}
+        aoTentarDeNovo={noBanco ? doBanco.recarregar : null}
         semPreClassificacao={!candidatos.length && !resumoDeFora.total}
         coordena={coordena}
         selecao={selecao}

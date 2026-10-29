@@ -6,8 +6,13 @@
   precisa delas (Inscritos, Eliminados) ou a coordenação vai incluir por
   decisão. Aqui, sem DOM e sem estado: as contagens das abas com os de fora,
   a lista inteira na ordem do banco e a leitura das páginas.
+
+  A aba Eliminados (sem filtro de responsável) não lê a lista de fora do lote:
+  pede ao banco 50 por vez, com vaga, modalidade, busca e ordem aplicadas lá
+  (listar_eliminados_fila, 20261029120000_triagem_e_eliminados_em_paginas.sql).
 */
 import { contadoresDaFila } from "./fila.ts";
+import type { OrdemDaFila } from "./fila.ts";
 
 /** O inscrito na fila, como o banco devolve (as chaves nulas não vêm). */
 export interface InscritoDaFila {
@@ -159,4 +164,88 @@ export async function lerForaDoLote(
     if (!apos) return linhas;
   }
   throw new Error("A lista de fora do lote não terminou de carregar.");
+}
+
+/* ─── A aba Eliminados em páginas (listar_eliminados_fila) ─── */
+
+export const RPC_ELIMINADOS_DA_FILA = "listar_eliminados_fila";
+/* O CSV da aba lê o recorte inteiro em páginas maiores. */
+export const PAGINA_DO_CSV = 2000;
+
+/** As colunas que o banco sabe ordenar (as da aba Eliminados). */
+const ORDENS_DOS_ELIMINADOS = new Set([
+  "codigo",
+  "nome",
+  "vaga",
+  "motivo",
+  "art",
+]);
+
+/** O filtro da fila no que vale para os eliminados. */
+export interface FiltroDosEliminados {
+  etapa?: string;
+  vaga?: string;
+  modalidade?: string;
+  responsavel?: string;
+  busca?: string;
+}
+
+/** A ordem da tabela (chave da coluna e sentido; "" = a do banco). */
+export type OrdemDosEliminados = OrdemDaFila;
+
+/** Uma página da aba Eliminados. */
+export interface PaginaDosEliminados {
+  linhas: InscritoDaFila[];
+  proximo: unknown;
+  total: number;
+}
+
+/**
+ * A aba vem do banco em páginas? Sim nos Eliminados, salvo com filtro de
+ * responsável (quem tem ficha: a lista do núcleo, já na tela).
+ */
+export const eliminadosNoBanco = (
+  filtro: FiltroDosEliminados | null | undefined,
+): boolean => filtro?.etapa === "eliminados" && !filtro?.responsavel;
+
+/** O que listar_eliminados_fila recebe. */
+export function argumentosDosEliminados(
+  editalId: string,
+  filtro: FiltroDosEliminados,
+  ordem: OrdemDosEliminados | null | undefined,
+  apos: unknown,
+  limite: number,
+) {
+  const coluna =
+    ordem?.chave && ORDENS_DOS_ELIMINADOS.has(ordem.chave) && ordem.sentido
+      ? ordem.chave
+      : null;
+  return {
+    p_edital: editalId,
+    p_vaga: filtro.vaga || null,
+    p_modalidade: filtro.modalidade || null,
+    p_busca: (filtro.busca ?? "").trim() || null,
+    p_ordem: coluna,
+    p_sentido: coluna && ordem?.sentido === "desc" ? "desc" : "asc",
+    p_apos: apos ?? null,
+    p_limite: limite,
+  };
+}
+
+/** A resposta de listar_eliminados_fila como a tabela usa. */
+export function paginaDosEliminados(resposta: unknown): PaginaDosEliminados {
+  const r = (resposta && typeof resposta === "object" ? resposta : {}) as {
+    candidatos?: unknown;
+    proximo?: unknown;
+    total?: unknown;
+  };
+  const linhas = Array.isArray(r.candidatos)
+    ? (r.candidatos as InscritoDaFila[])
+    : [];
+  const total = Number(r.total);
+  return {
+    linhas,
+    proximo: r.proximo ?? null,
+    total: Number.isFinite(total) ? total : linhas.length,
+  };
 }

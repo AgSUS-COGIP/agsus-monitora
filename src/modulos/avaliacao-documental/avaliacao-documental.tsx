@@ -106,6 +106,9 @@ function textoDoStatus(e: EstadoDaAvaliacao) {
   return e.dados ? "Sem regra" : "";
 }
 
+/* As partes da Pré-classificação que a tela de hoje mostra ao abrir. */
+const PARTES_DA_TELA = ["vagas", "listas"] as const;
+
 const AVISO_AO_ATUALIZAR =
   "A regra tem alterações ainda não salvas como versão (o rascunho fica guardado e volta ao abrir a regra). Atualizar agora?";
 
@@ -121,6 +124,26 @@ function TelaDaArea({
   const visao = visaoNaTela(e);
   const visoes = visoesDaPessoa(e);
   const coordena = coordenaOEdital(e) === true;
+  /*
+    A Pré-classificação começa a ler assim que o edital é escolhido (a lista
+    de editais já diz se a pessoa coordena), junto com a regra, e não depois
+    dela: resumo, cartão "Inscrições" e trava saem em paralelo.
+  */
+  useEffect(() => {
+    if (!e.editalId || visao !== "pre") return;
+    // A tela de hoje mostra as vagas e as listas oficiais junto com o resumo.
+    pre.pedirPartes(PARTES_DA_TELA);
+    void pre.garantirCarregado(e.editalId);
+  }, [pre, e.editalId, visao]);
+  // A equipe (com gestores e pessoas) só quando a aba Equipe abre.
+  const lerEquipe =
+    Boolean(e.editalId) &&
+    Boolean(e.dados?.pode_coordenar) &&
+    e.visao === "equipe" &&
+    !e.equipe;
+  useEffect(() => {
+    if (lerEquipe) void estado.carregarEquipe(e.editalId);
+  }, [estado, lerEquipe, e.editalId]);
   const [todos, setTodos] = useState(false);
   const { lista: editais, ocultos } = editaisDaEscolha(e.editais, {
     todos,

@@ -5,7 +5,9 @@
   - Espelhos das avaliações concluídas: as fichas CONCLUIDA da fila
     (obter_fila_avaliacao, o núcleo já carregado na tela).
   - Comunicados de eliminação antes da análise (Pré-classificação): os
-    ELIMINADO da pré-classificação gravada (obter_pre_classificacao).
+    ELIMINADO da pré-classificação gravada, marcados nas listas em páginas
+    (listar_pre_classificacao) e conferidos antes de emitir só pelas chaves
+    marcadas (conferir_eliminados_pre_classificacao).
 
   A busca acha pelo código OU pelo nome (sem acento, sem caixa); a chave de
   cada pessoa é vaga + código, porque o mesmo código pode estar em duas vagas.
@@ -80,20 +82,29 @@ type InscritoDaPre = {
   motivo?: string | null;
 };
 
+/** Um eliminado da pré-classificação como pessoa da lista (a linha da página ou da leitura inteira). */
+export const pessoaEliminada = (c: InscritoDaPre): PessoaDoDocumento => ({
+  chave: chaveDaPessoa(c.vaga, c.codigo),
+  codigo: texto(c.codigo),
+  nome: texto(c.nome),
+  vaga: texto(c.vaga),
+  detalhe: texto(c.motivo) || "Sem justificativa registrada",
+});
+
+/** As pessoas por vaga e nome (a ordem das listas). */
+export const ordenarPessoas = (
+  pessoas: Iterable<PessoaDoDocumento>,
+): PessoaDoDocumento[] => [...pessoas].sort(porVagaENome);
+
 /** Os eliminados antes da análise documental, por vaga e nome. */
 export function eliminadosDaPre(
   candidatos: ReadonlyArray<InscritoDaPre> | null | undefined,
 ): PessoaDoDocumento[] {
-  return (candidatos || [])
-    .filter((c) => c.situacao === "ELIMINADO" && texto(c.codigo))
-    .map((c) => ({
-      chave: chaveDaPessoa(c.vaga, c.codigo),
-      codigo: texto(c.codigo),
-      nome: texto(c.nome),
-      vaga: texto(c.vaga),
-      detalhe: texto(c.motivo) || "Sem justificativa registrada",
-    }))
-    .sort(porVagaENome);
+  return ordenarPessoas(
+    (candidatos || [])
+      .filter((c) => c.situacao === "ELIMINADO" && texto(c.codigo))
+      .map(pessoaEliminada),
+  );
 }
 
 /**
