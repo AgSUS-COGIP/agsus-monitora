@@ -224,4 +224,6 @@ begin
 end;
 $function$;
 
+-- Recalcula o cadastro das fontes das leituras rápidas após alterar o fecho.
+select private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"();
 commit;
