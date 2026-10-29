@@ -35,6 +35,8 @@ import { criarPaineisExternos } from "./paineis-externos.ts";
 import { criarPerfil } from "./perfil.ts";
 import { criarPresenca } from "./presenca.ts";
 import { criarVigiaDoCatalogo } from "./vigia-do-catalogo.ts";
+import { inicioDaSessao } from "./inicio-da-sessao.ts";
+import { getSupabaseClient } from "../lib/supabaseClient";
 import { instalarMarcosDosEditais } from "./marcos-personalizados.ts";
 import { acompanharPaginaAberta } from "./pagina-aberta.ts";
 import { sessaoDoApp } from "./sessao.ts";
@@ -49,6 +51,7 @@ import type { OrigemDaEntrada } from "./sessao.ts";
     paineis-externos.ts  painéis externos (lista, liberados, quadro)
     navegacao.ts         troca de tela, menu, título, permissões
     carga.ts             carga dos dados, cópia da sessão, Realtime
+    inicio-da-sessao.ts  configuração, painéis, abas, situação e unidades numa chamada
     pagina-aberta.ts     a página aberta pede as linhas e abre a Visão geral
     aviso-de-versao.ts   versão nova publicada: aviso no topo, sem recarregar à força
     encerramento-do-edital/  tela de fim de edital e selos no perfil (src/modulos/)
@@ -90,6 +93,7 @@ export const navegacao = criarNavegacao({
 });
 
 export const carga = criarCarga({
+  inicio: inicioDaSessao,
   configuracao,
   paineis,
   navegacao,
@@ -188,6 +192,7 @@ export function localizarLinhaDoMonitoramento(id: unknown) {
 */
 function limparEstadoDeslogado() {
   esquecerDaPessoa();
+  inicioDaSessao.esquecer();
   carga.esquecer();
   encerramento.esquecer();
   presenca.pararTudo();
@@ -218,6 +223,23 @@ function encerrarEspera() {
 function prepararEntrada() {
   mostrarEsqueleto(navegacao.telaGuardada());
   carga.prepararEntrada();
+  // O início da sessão sai junto com o perfil (a carga da entrada usa o mesmo).
+  void inicioDaSessao.pedir();
+}
+
+/*
+  A configuração da entrada (domínios, Google, textos). Com sessão guardada,
+  vem do início da sessão — a mesma chamada que a carga usa depois, em vez de
+  ler TB_CONFIGURACAO duas vezes; sem sessão, a consulta de sempre.
+*/
+async function carregarConfiguracaoDaEntrada() {
+  const { data } = (await getSupabaseClient()
+    ?.auth.getSession()
+    .catch(() => null)) ?? { data: null };
+  const consulta = data?.session
+    ? inicioDaSessao.parte("config", () => configuracao.consulta())
+    : undefined;
+  return configuracao.carregar({ silent: true, consulta });
 }
 
 /* Perfil confirmado: carrega e abre o sistema. `true` = aberto. */
@@ -225,13 +247,12 @@ async function abrirSistema({ origem }: { origem: OrigemDaEntrada }) {
   perfil.mostrarNaBarra();
   const pronto = await carga.carregarEntrada();
   if (!pronto) return false;
-  // Sem esperar: a tela já abriu (a sessão esconde a de acesso ao voltar daqui).
-  void presenca.registrarEvento(
-    origem === "boot" ? "sessao_restaurada" : "login_google",
-    { tela: origem },
-  );
   presenca.iniciarHeartbeat();
-  presenca.iniciar();
+  // Sem esperar: a tela já abriu. O evento da entrada vai com a primeira batida.
+  presenca.iniciar({
+    nome: origem === "boot" ? "sessao_restaurada" : "login_google",
+    tela: origem,
+  });
   carga.iniciarRealtime();
   void encerramento.verificar();
   return true;
@@ -242,6 +263,7 @@ async function abrirSistema({ origem }: { origem: OrigemDaEntrada }) {
   dela continua batendo no banco (heartbeat e Pessoas online param juntos).
 */
 function fecharSistema() {
+  inicioDaSessao.esquecer();
   carga.esquecer();
   encerramento.esquecer();
   presenca.pararTudo();
@@ -339,7 +361,7 @@ export function ligarSistema() {
 
   // A entrada é da sessão do app (src/main.ts chama sessaoDoApp.iniciar()).
   sessaoDoApp.ligarSistema({
-    carregarConfiguracao: () => configuracao.carregar({ silent: true }),
+    carregarConfiguracao: carregarConfiguracaoDaEntrada,
     mostrarEsqueleto: () => mostrarEsqueleto(navegacao.telaGuardada()),
     aoVerificar: prepararEntrada,
     abrir: abrirSistema,

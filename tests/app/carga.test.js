@@ -76,6 +76,8 @@ function montar({
   // Por padrão, a página aberta usa as linhas (o comportamento de antes).
   pedindo = true,
   telaDeEntrada = "nucleo",
+  // O banco sem obter_inicio_da_sessao (migration ainda não aplicada).
+  semInicio = false,
 } = {}) {
   const saidas = [];
   const ordem = [];
@@ -101,6 +103,20 @@ function montar({
         return p_versao === VERSAO_DO_MAPA
           ? { data: { inalterado: true, versao: p_versao }, error: null }
           : { data: { versao: VERSAO_DO_MAPA, linhas: MAPA }, error: null };
+      // Configuração, painéis, abas, situação e unidades numa chamada (20261029121700).
+      if (nome === "obter_inicio_da_sessao")
+        return semInicio
+          ? { data: null, error: { code: "PGRST202" } }
+          : {
+              data: {
+                configuracao: respostas.TB_CONFIGURACAO,
+                paineis: respostas.TB_PAINEL_EXTERNO,
+                unidades: respostas.TD_UNIDADE,
+                abas: null,
+                situacao: null,
+              },
+              error: null,
+            };
       if (nome !== "listar_monitoramento_operacional")
         return { data: { resumo: true }, error: null };
       if (erroNasLinhas) return { data: null, error: erroNasLinhas };
@@ -228,14 +244,42 @@ describe("entrada", () => {
   it("dispara todas as consultas antes da primeira espera", async () => {
     const { carga, ordem, saidas } = montar();
     await carga.carregarEntrada();
-    // Quando a configuração começou a ser aplicada, as três consultas sem versão
-    // já tinham saído; mapa e monitoramento saem assim que a cópia local é lida
-    // (levam a versão que ela tem).
+    // Quando a configuração começou a ser aplicada, o início da sessão (uma
+    // chamada para configuração, painéis, abas, situação e unidades) já tinha
+    // saído; mapa e monitoramento saem assim que a cópia local é lida.
     expect(
       ordem.find(([etapa]) => etapa === "config")[1],
-    ).toBeGreaterThanOrEqual(3);
+    ).toBeGreaterThanOrEqual(1);
+    expect(saidas).toContain("obter_inicio_da_sessao");
     expect(saidas).toContain("listar_monitoramento_operacional");
     expect(saidas).toContain("listar_mapa_da_saude_indigena");
+  });
+
+  it("configuração, painéis, abas, situação e unidades: uma chamada, não cinco", async () => {
+    const { carga, saidas, cliente } = montar();
+    await carga.carregarEntrada();
+    await esperarTudo();
+    expect(saidas.filter((s) => s === "obter_inicio_da_sessao")).toHaveLength(
+      1,
+    );
+    expect(cliente.from).not.toHaveBeenCalled();
+    expect(obterDadosDoMonitoramento().unidades).toHaveLength(1);
+    // "Atualizar dados" pergunta de novo (o início usado na entrada foi esquecido).
+    await carga.atualizarDados();
+    expect(saidas.filter((s) => s === "obter_inicio_da_sessao")).toHaveLength(
+      2,
+    );
+    expect(cliente.from).not.toHaveBeenCalled();
+  });
+
+  it("banco sem obter_inicio_da_sessao: as consultas de antes, cada uma uma vez", async () => {
+    const { carga, saidas, configuracao } = montar({ semInicio: true });
+    await expect(carga.carregarEntrada()).resolves.toBe(true);
+    await esperarTudo();
+    for (const tabela of ["TB_CONFIGURACAO", "TB_PAINEL_EXTERNO", "TD_UNIDADE"])
+      expect(saidas.filter((s) => s === tabela)).toHaveLength(1);
+    expect(configuracao.carregar).toHaveBeenCalled();
+    expect(obterDadosDoMonitoramento().unidades).toHaveLength(1);
   });
 
   it("abre o app na tela de entrada, esconde o skeleton e comemora, nessa ordem", async () => {
@@ -300,6 +344,7 @@ describe("entrada", () => {
     expect([...nomes].sort()).toEqual([
       "listar_mapa_da_saude_indigena",
       "listar_monitoramento_operacional",
+      "obter_inicio_da_sessao",
     ]);
   });
 
@@ -443,7 +488,9 @@ describe("atualizar dados", () => {
     expect(await a).toBe(false);
     expect(await b).toBe(false);
     expect(
-      cliente.from.mock.calls.filter(([t]) => t === "TB_CONFIGURACAO"),
+      cliente.rpc.mock.calls.filter(
+        ([nome]) => nome === "obter_inicio_da_sessao",
+      ),
     ).toHaveLength(1);
     expect(esqueleto.marcarAtualizacao).toHaveBeenLastCalledWith(false);
   });

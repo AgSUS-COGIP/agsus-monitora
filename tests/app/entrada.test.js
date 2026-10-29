@@ -401,6 +401,17 @@ describe("a fase da sessão na página", () => {
     expect(pedido.limpar).toHaveBeenCalled();
   });
 
+  it("a marca pública só é pedida quando a tela de acesso aparece", () => {
+    const sessao = sessaoFalsa({ fase: FASES.ABRINDO });
+    const atualizarMarca = vi.fn();
+    ligarEntradaAPagina({ sessao, pedido: pedidoFalso(), atualizarMarca });
+    sessao.definir({ fase: FASES.CONECTADO });
+    // Sessão guardada que abriu o sistema: a tela de acesso não apareceu.
+    expect(atualizarMarca).not.toHaveBeenCalled();
+    sessao.definir({ fase: FASES.DESLOGADO });
+    expect(atualizarMarca).toHaveBeenCalled();
+  });
+
   it("ligar e desligar não deixa assinatura para trás", () => {
     const sessao = sessaoFalsa();
     const desligar = ligarEntradaAPagina({ sessao, pedido: pedidoFalso() });

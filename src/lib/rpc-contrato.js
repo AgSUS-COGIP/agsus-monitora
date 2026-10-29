@@ -1502,6 +1502,28 @@ export const CONTRATO_RPC = {
     resumo:
       "Carrega a lista oficial de aldeias de um DSEI (a enviada vira a vigente; as que saem são desativadas). Só o administrador global.",
   },
+  registrar_navegacao_monitora: {
+    argumentos: [
+      "p_evento",
+      "p_tela",
+      "p_detalhes",
+      "p_client_session_id",
+      "p_user_agent",
+      "p_app_version",
+      "p_origem",
+      "p_presenca",
+      "p_current_view",
+    ],
+    critica: false,
+    resumo:
+      "Uma chamada por navegação (20261029121700): o evento de auditoria (registrar_evento_acesso) e a presença (registrar_presenca_monitora, com a versão do catálogo de carona). Falha da presença volta em presenca_erro e não desfaz o evento. Sem ela (PGRST202), o front volta às duas chamadas.",
+  },
+  obter_inicio_da_sessao: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "O que a entrada lê depois do perfil, numa chamada (20261029121700): configuração, painéis externos, catálogo de abas, situação do sistema e unidades ativas. SECURITY INVOKER (a RLS de cada tabela vale). Falhou ou não existe: o front faz as cinco consultas de antes.",
+  },
   registrar_presenca_monitora: {
     argumentos: ["p_current_view"],
     critica: false,

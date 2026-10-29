@@ -173,6 +173,17 @@ describe("entrada: chamadas ao banco", () => {
           return { data: { versao: "v", linhas: LINHAS }, error: null };
         if (nome === "listar_mapa_da_saude_indigena")
           return { data: { versao: "m", linhas: [] }, error: null };
+        if (nome === "obter_inicio_da_sessao")
+          return {
+            data: {
+              configuracao: [],
+              paineis: [],
+              abas: null,
+              situacao: null,
+              unidades: [],
+            },
+            error: null,
+          };
         return { data: null, error: null };
       }),
       channel: vi.fn(() => {
@@ -240,20 +251,14 @@ describe("entrada: chamadas ao banco", () => {
     redefinirDadosDoMonitoramento();
   });
 
-  it("avaliador direto na Avaliação documental: 6 chamadas, sem linhas, acompanhamento nem Realtime", async () => {
+  it("avaliador direto na Avaliação documental: 2 chamadas, sem linhas, acompanhamento nem Realtime", async () => {
     const { chamadas, cliente } = montar("avaliacao-documental");
     await carga.carregarEntrada();
     carga.iniciarRealtime();
     await esperar();
     expect([...chamadas].sort()).toEqual(
-      [
-        "TB_CONFIGURACAO",
-        "TB_PAINEL_EXTERNO",
-        "TD_UNIDADE",
-        "listar_abas_do_menu",
-        "listar_mapa_da_saude_indigena",
-        "obter_situacao_do_sistema",
-      ].sort(),
+      // Configuração, painéis, abas, situação e unidades: obter_inicio_da_sessao.
+      ["listar_mapa_da_saude_indigena", "obter_inicio_da_sessao"].sort(),
     );
     expect(cliente.channel).not.toHaveBeenCalled();
     expect(linhasPedidas()).toBe(false);
