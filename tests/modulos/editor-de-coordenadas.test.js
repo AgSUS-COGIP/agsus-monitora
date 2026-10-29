@@ -16,7 +16,9 @@ import { criarLeafletFalso } from "./leaflet-falso.js";
 import { carregarEditorDeCoordenadas } from "../../src/modulos/editor-de-coordenadas/editor-sob-demanda.ts";
 
 // O editor chega sob demanda (fora do pacote principal): carregado antes, desenha na hora.
-beforeAll(() => carregarEditorDeCoordenadas());
+beforeAll(async () => {
+  await carregarEditorDeCoordenadas();
+});
 
 const RPC_SALVAR = "salvar_coordenada_mapa_saude_indigena";
 const RPC_DESFAZER = "desfazer_coordenada_mapa_saude_indigena";

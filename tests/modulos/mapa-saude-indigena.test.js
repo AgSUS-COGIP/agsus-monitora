@@ -18,7 +18,9 @@ import { criarLeafletFalso } from "./leaflet-falso.js";
 import { carregarEditorDeCoordenadas } from "../../src/modulos/editor-de-coordenadas/editor-sob-demanda.ts";
 
 // O editor chega sob demanda (fora do pacote principal): carregado antes, desenha na hora.
-beforeAll(() => carregarEditorDeCoordenadas());
+beforeAll(async () => {
+  await carregarEditorDeCoordenadas();
+});
 
 /*
   O mapa da Saúde Indígena em React (src/modulos/mapa-saude-indigena/), com o
