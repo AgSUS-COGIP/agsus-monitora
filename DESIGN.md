@@ -45,30 +45,30 @@ Configurações e Análises.
 
 Medido em 2026-09-22 na `main` (`e054867`). Os comandos para medir de novo estão na seção 9.
 
-| Métrica                         | Hoje                                                                          | Meta                                      |
-| ------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------- |
-| Arquivos CSS / linhas           | 47 / 16.748                                                                   | ~15 arquivos por módulo                   |
-| `!important`                    | 795 (140 em `app.css`, 107 em `health-reference-kpis.css`)                    | só `.hidden`, `.sr-only` e reduced-motion |
-| Cores hex distintas (6 dígitos) | 796                                                                           | ~40 tokens                                |
-| `box-shadow` distintos          | 146                                                                           | 3                                         |
-| `border-radius` distintos       | 20                                                                            | 4                                         |
-| Tamanhos de fonte distintos     | 43 (10px ×60, 9px ×17, 8px ×6)                                                | 8, com mínimo de 11px                     |
-| Pesos de fonte                  | 12 (800 ×92, 900 ×91, 850, 750, 950, 1000)                                    | 4                                         |
-| `text-transform: uppercase`     | 55                                                                            | só o eyebrow de seção                     |
-| Seletores com `#id`             | 618                                                                           | só em código legado                       |
-| z-index distintos               | 38 (máximo 2147483000)                                                        | a escada da seção 3.7                     |
-| Mecanismos de tema escuro       | 3 (`[data-theme]` ×401, `body.dark-mode` ×100, `body.sidebar-theme-dark` ×32) | 1                                         |
-| Breakpoints distintos           | ~15                                                                           | 4                                         |
+| Métrica | Hoje | Meta |
+|---|---|---|
+| Arquivos CSS / linhas | 47 / 16.748 | ~15 arquivos por módulo |
+| `!important` | 795 (140 em `app.css`, 107 em `health-reference-kpis.css`) | só `.hidden`, `.sr-only` e reduced-motion |
+| Cores hex distintas (6 dígitos) | 796 | ~40 tokens |
+| `box-shadow` distintos | 146 | 3 |
+| `border-radius` distintos | 20 | 4 |
+| Tamanhos de fonte distintos | 43 (10px ×60, 9px ×17, 8px ×6) | 8, com mínimo de 11px |
+| Pesos de fonte | 12 (800 ×92, 900 ×91, 850, 750, 950, 1000) | 4 |
+| `text-transform: uppercase` | 55 | só o eyebrow de seção |
+| Seletores com `#id` | 618 | só em código legado |
+| z-index distintos | 38 (máximo 2147483000) | a escada da seção 3.7 |
+| Mecanismos de tema escuro | 3 (`[data-theme]` ×401, `body.dark-mode` ×100, `body.sidebar-theme-dark` ×32) | 1 |
+| Breakpoints distintos | ~15 | 4 |
 
 **Falhas de contraste que existem hoje (WCAG AA):**
 
-| Onde                | Par                                               | Razão | Correção                                |
-| ------------------- | ------------------------------------------------- | ----- | --------------------------------------- |
-| `.btn` primário     | branco sobre o fim do gradiente, `--cyan #00a8d6` | 2,77  | fundo sólido `--brand-primary` (11,29)  |
-| `.btn.green`        | branco sobre `#0b8f58`                            | 4,13  | `--state-success-strong #087a4b` (5,39) |
-| texto secundário    | `#63748d` / `#64748b` sobre o fundo `#f3f7fb`     | 4,42  | `--text-secondary #5f6f86` (4,75)       |
-| borda de campo      | `#d7e5f2` sobre branco                            | 1,28  | `--border-control #7d8fa5` (3,31)       |
-| vermelho como texto | `#d92d3a` sobre o fundo                           | 4,45  | `--state-danger #c02634` (5,47)         |
+| Onde | Par | Razão | Correção |
+|---|---|---|---|
+| `.btn` primário | branco sobre o fim do gradiente, `--cyan #00a8d6` | 2,77 | fundo sólido `--brand-primary` (11,29) |
+| `.btn.green` | branco sobre `#0b8f58` | 4,13 | `--state-success-strong #087a4b` (5,39) |
+| texto secundário | `#63748d` / `#64748b` sobre o fundo `#f3f7fb` | 4,42 | `--text-secondary #5f6f86` (4,75) |
+| borda de campo | `#d7e5f2` sobre branco | 1,28 | `--border-control #7d8fa5` (3,31) |
+| vermelho como texto | `#d92d3a` sobre o fundo | 4,45 | `--state-danger #c02634` (5,47) |
 
 **Divergências entre páginas:** o antigo `analises.css` (da `analises.html`, que já saiu) redefinia os tokens com
 outros valores (`--green #16934d` contra `#0b8f58`, `--red #e14444` contra `#d92d3a`,
@@ -113,19 +113,19 @@ nomes oficiais** (`--color-text-secondary`, `--color-bg-subtle`, `--radius-lg`, 
 Os nomes que o MONITORA já usava continuam valendo e apontam para os oficiais, para que o código
 existente mude de cor sem mudar de código:
 
-| Nome do MONITORA                                                                                                            | Aponta para                                                       |
-| --------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `--brand-primary` / `--brand-primary-strong`                                                                                | `--color-action-primary` / `-hover` (blue-600 / blue-700)         |
-| `--brand-accent`                                                                                                            | `--color-blue-400` (o ciano saiu: não existe na paleta oficial)   |
-| `--surface-page`, `--surface-card`                                                                                          | `--color-bg-canvas` (branco)                                      |
-| `--surface-raised` / `--surface-hover`                                                                                      | `--color-bg-subtle` / `--color-bg-muted`                          |
-| `--text-primary` / `--text-secondary`                                                                                       | `--color-text-primary` / `--color-text-secondary`                 |
-| `--border-subtle` / `--border-control`                                                                                      | `--color-border-subtle` / `--color-border-input`                  |
-| `--state-*` / `--state-*-soft`                                                                                              | `--color-status-*-text` / `--color-status-*-bg`                   |
-| `--series-1…5`                                                                                                              | `--color-chart-1…5` (`--series-6`: `--color-blue-200`)            |
-| `--shadow-card` / `--shadow-raised` / `--shadow-overlay`                                                                    | `none` / `--shadow-md` / `--shadow-lg`                            |
-| `--text-kpi` / `--text-kpi-sm`                                                                                              | `--text-metric` / `--text-metric-sm`                              |
-| `--sidebar` / `--sidebar-mini` (platform-shell.css)                                                                         | `--sidebar-width` (256px) / `--sidebar-width-collapsed` (64px)    |
+| Nome do MONITORA | Aponta para |
+|---|---|
+| `--brand-primary` / `--brand-primary-strong` | `--color-action-primary` / `-hover` (blue-600 / blue-700) |
+| `--brand-accent` | `--color-blue-400` (o ciano saiu: não existe na paleta oficial) |
+| `--surface-page`, `--surface-card` | `--color-bg-canvas` (branco) |
+| `--surface-raised` / `--surface-hover` | `--color-bg-subtle` / `--color-bg-muted` |
+| `--text-primary` / `--text-secondary` | `--color-text-primary` / `--color-text-secondary` |
+| `--border-subtle` / `--border-control` | `--color-border-subtle` / `--color-border-input` |
+| `--state-*` / `--state-*-soft` | `--color-status-*-text` / `--color-status-*-bg` |
+| `--series-1…5` | `--color-chart-1…5` (`--series-6`: `--color-blue-200`) |
+| `--shadow-card` / `--shadow-raised` / `--shadow-overlay` | `none` / `--shadow-md` / `--shadow-lg` |
+| `--text-kpi` / `--text-kpi-sm` | `--text-metric` / `--text-metric-sm` |
+| `--sidebar` / `--sidebar-mini` (platform-shell.css) | `--sidebar-width` (256px) / `--sidebar-width-collapsed` (64px) |
 | Antigas de `app.css`: `--card`, `--bg`, `--line`, `--soft`, `--muted`, `--slate`, `--navy`, `--blue`, `--cyan`, `--agsus-*` | os tokens oficiais equivalentes (comentário no topo de `app.css`) |
 
 **Raio:** os nomes `--radius-sm/md/lg` agora têm os valores oficiais (4/6/8px) e `--radius-xl` é
@@ -141,17 +141,17 @@ pela cor oficial (seção 12).
 
 A escada já existe em parte (`app.css:40-42`). Formalizada:
 
-| Token               | Valor | Quem                                                                                                       |
-| ------------------- | ----- | ---------------------------------------------------------------------------------------------------------- |
-| `--z-sticky`        | 100   | cabeçalho de tabela, barra de filtros                                                                      |
-| `--z-header`        | 10010 | `.app .top`                                                                                                |
-| `--z-sidebar`       | 10020 | barra lateral acima de 900px: o painel flutuante do menu e as dicas do trilho passam por cima do cabeçalho |
-| `--z-popover`       | 10040 | popovers do cabeçalho                                                                                      |
-| `--z-map-immersive` | 12050 | mapa imersivo                                                                                              |
-| `--z-exit-dialog`   | 15000 | diálogo de saída da Saúde Indígena                                                                         |
-| `--z-overlay`       | 20000 | modais                                                                                                     |
-| `--z-loader`        | 20025 | skeleton da entrada e a tela de carregamento dos salvamentos                                               |
-| `--z-toast`         | 20050 | toast (o topo)                                                                                             |
+| Token | Valor | Quem |
+|---|---|---|
+| `--z-sticky` | 100 | cabeçalho de tabela, barra de filtros |
+| `--z-header` | 10010 | `.app .top` |
+| `--z-sidebar` | 10020 | barra lateral acima de 900px: o painel flutuante do menu e as dicas do trilho passam por cima do cabeçalho |
+| `--z-popover` | 10040 | popovers do cabeçalho |
+| `--z-map-immersive` | 12050 | mapa imersivo |
+| `--z-exit-dialog` | 15000 | diálogo de saída da Saúde Indígena |
+| `--z-overlay` | 20000 | modais |
+| `--z-loader` | 20025 | skeleton da entrada e a tela de carregamento dos salvamentos |
+| `--z-toast` | 20050 | toast (o topo) |
 
 Nada acima de `--z-toast`. O `2147483000` de `analises-residual-ui-fixes.js` deve descer para essa
 escada. A Aya (`src/modulos/aya/aya.css`) fica em 10042: acima do cabeçalho e da barra lateral do
@@ -339,14 +339,14 @@ Chart.js em todo o sistema (`src/ui/grafico.tsx`, `window.Chart` via `src/lib/ch
 **Paleta categórica, em ordem fixa**, validada com o validador da skill `dataviz`: faixa de luminosidade,
 croma, separação para daltonismo (CVD), visão normal e contraste ≥ 3:1. Passou em todos.
 
-| Série     | Claro (sobre `#ffffff`) | Escuro (sobre `#0e1e2e`) |
-| --------- | ----------------------- | ------------------------ |
-| 1 azul    | `#0f5db7`               | `#4f8ff0`                |
-| 2 laranja | `#eb6834`               | `#d95f2b`                |
-| 3 ciano   | `#0090bc`               | `#1a9fc8`                |
-| 4 violeta | `#6d5efc`               | `#8e6cf2`                |
-| 5 magenta | `#d55181`               | `#d55181`                |
-| 6 oliva   | `#8a6d00`               | `#a8861a`                |
+| Série | Claro (sobre `#ffffff`) | Escuro (sobre `#0e1e2e`) |
+|---|---|---|
+| 1 azul | `#0f5db7` | `#4f8ff0` |
+| 2 laranja | `#eb6834` | `#d95f2b` |
+| 3 ciano | `#0090bc` | `#1a9fc8` |
+| 4 violeta | `#6d5efc` | `#8e6cf2` |
+| 5 magenta | `#d55181` | `#d55181` |
+| 6 oliva | `#8a6d00` | `#a8861a` |
 
 Viram `--series-1` … `--series-6` no `tokens.css`. Regras:
 
@@ -386,13 +386,13 @@ com `#id … !important` em quase toda regra.
 
 Cada fase é independente, entregável em PR próprio e reversível.
 
-| Fase               | O quê                                                                                                                                                                                                                                               | Pronto quando                                                                                                                              |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **1. Tokens**      | Criar `src/styles/tokens.css` (seção 3) com os aliases e importar primeiro nos dois `main.js`. Remover o `:root` de cor de `app.css` e o `:root` de `nielsen-shell-ux.css`.                                                                         | Existe um só bloco `:root` de cor e um só `[data-theme="dark"]` de token. Nada muda visualmente, exceto as cores corrigidas pelos aliases. |
-| **2. Contraste**   | Corrigir as 5 falhas da seção 1: `.btn` sólido, `.btn.green`, texto secundário, borda de campo, vermelho de texto.                                                                                                                                  | As falhas da tabela da seção 1 passam no AA.                                                                                               |
-| **3. Tipografia**  | Pesos ≤ 700; nada abaixo de 11px; `uppercase` só no eyebrow; tirar `800;900` do Google Fonts.                                                                                                                                                       | `grep` da seção 9 não encontra 750–1000 nem 8–10px.                                                                                        |
-| **4. Componentes** | Consolidar botão, card, tabela, formulário e modal em `componentes.css`, usando só tokens.                                                                                                                                                          | `.btn` é definido em um arquivo só.                                                                                                        |
-| **5. Dívida**      | Dissolver `system-ui-fixes`, `post-152-regression-fixes`, `post157-interface-tuning`, `runtime-critical-fixes` e `health-*-fix*` no CSS do módulo; trocar `body.dark-mode` por `[data-theme]`; alinhar `analises.css` aos tokens; aplicar `@layer`. | `!important` < 50 e cores hex distintas < 80.                                                                                              |
+| Fase | O quê | Pronto quando |
+|---|---|---|
+| **1. Tokens** | Criar `src/styles/tokens.css` (seção 3) com os aliases e importar primeiro nos dois `main.js`. Remover o `:root` de cor de `app.css` e o `:root` de `nielsen-shell-ux.css`. | Existe um só bloco `:root` de cor e um só `[data-theme="dark"]` de token. Nada muda visualmente, exceto as cores corrigidas pelos aliases. |
+| **2. Contraste** | Corrigir as 5 falhas da seção 1: `.btn` sólido, `.btn.green`, texto secundário, borda de campo, vermelho de texto. | As falhas da tabela da seção 1 passam no AA. |
+| **3. Tipografia** | Pesos ≤ 700; nada abaixo de 11px; `uppercase` só no eyebrow; tirar `800;900` do Google Fonts. | `grep` da seção 9 não encontra 750–1000 nem 8–10px. |
+| **4. Componentes** | Consolidar botão, card, tabela, formulário e modal em `componentes.css`, usando só tokens. | `.btn` é definido em um arquivo só. |
+| **5. Dívida** | Dissolver `system-ui-fixes`, `post-152-regression-fixes`, `post157-interface-tuning`, `runtime-critical-fixes` e `health-*-fix*` no CSS do módulo; trocar `body.dark-mode` por `[data-theme]`; alinhar `analises.css` aos tokens; aplicar `@layer`. | `!important` < 50 e cores hex distintas < 80. |
 
 As fases 1 e 2 têm o maior retorno pelo menor risco: são poucas linhas e corrigem problemas de acessibilidade reais.
 
@@ -449,17 +449,17 @@ tokens: 215 · 54 · 28 · 157 · 547 · 1645). Ocorrências em `src/styles/*.cs
 da seção 8: resolver ao migrar cada tela (de preferência junto com a passagem para React), não num
 mutirão.
 
-| Divergência                                                                            | Hoje                                                                                                                                                                                                                                                         | Alvo                                                                                                                           |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| Peso ≥ 700 (`font-weight: 700/800/900/bold`)                                           | 106                                                                                                                                                                                                                                                          | 0 (máximo 600)                                                                                                                 |
-| `text-transform: uppercase`                                                            | 24                                                                                                                                                                                                                                                           | 0 (sentence case)                                                                                                              |
-| `linear-gradient`                                                                      | 7                                                                                                                                                                                                                                                            | 0 (proibido)                                                                                                                   |
-| `box-shadow`                                                                           | 138                                                                                                                                                                                                                                                          | só menus, popovers, modais e toasts                                                                                            |
-| `!important`                                                                           | 489                                                                                                                                                                                                                                                          | < 50 (seção 8)                                                                                                                 |
-| Hex chumbado em CSS                                                                    | 1414                                                                                                                                                                                                                                                         | só dentro de `tokens.css`                                                                                                      |
-| **Exceção aceita:** KPIs em card                                                       | Cards no padrão do DS 11.6 (fundo claro, borda sutil, sem sombra), por decisão do responsável (25/09/2026). Feito na Saúde Indígena, em Editais e na Lista de aprovados (as duas abas): o mesmo card compacto de 78px.                                       | Manter card.                                                                                                                   |
-| **Exceção aceita:** filtros, tabela, mapa e "unidades com mais de um processo" em card | Na Visão geral, no mesmo card dos KPIs (DS 11.6, sem sombra), por decisão do responsável (25/09/2026). Editais, Cronograma e Lista de aprovados mantêm o card em volta da tabela e dos blocos, sem sombra, com 12px entre os blocos.                         | Manter card; não aninhar card dentro de card. Entre os blocos, 12px (ritmo compacto de antes), não os 48px de seção do DS 5.2. |
-| Botão verde arredondado (`.btn.green`)                                                 | feito: `.btn`, `.btn.green` e `.btn.primary` no primário azul (`app.css`); `analises.html` ainda tem o seu                                                                                                                                                   | `--color-action-primary`, `--radius-md`, sem sombra                                                                            |
-| Emoji como ícone                                                                       | feito no mapa da Visão geral: "Brasil" e "Calor" com Lucide `map` e `flame` (16px, `aria-hidden`), pelo registro `icones.ts` (`controles-do-mapa.js`). A legenda do mapa nacional é recolhível (`ChevronDown`/`ChevronUp`) e começa fechada abaixo de 768px. | Nenhum emoji no lugar de ícone (DS 14).                                                                                        |
-| Modo escuro                                                                            | existe                                                                                                                                                                                                                                                       | fora do escopo do DS: manter, sem investir                                                                                     |
-| **Exceção aceita:** cor da barra lateral                                               | Segue a cor configurada em Configurações → Aparência (`ui_sidebar_background_color`), identidade do MONITORA — exceção aceita ao `--color-sidebar-bg` oficial (decisão do responsável, 25/09/2026).                                                          | Não trocar.                                                                                                                    |
+| Divergência | Hoje | Alvo |
+|---|---|---|
+| Peso ≥ 700 (`font-weight: 700/800/900/bold`) | 106 | 0 (máximo 600) |
+| `text-transform: uppercase` | 24 | 0 (sentence case) |
+| `linear-gradient` | 7 | 0 (proibido) |
+| `box-shadow` | 138 | só menus, popovers, modais e toasts |
+| `!important` | 489 | < 50 (seção 8) |
+| Hex chumbado em CSS | 1414 | só dentro de `tokens.css` |
+| **Exceção aceita:** KPIs em card | Cards no padrão do DS 11.6 (fundo claro, borda sutil, sem sombra), por decisão do responsável (25/09/2026). Feito na Saúde Indígena, em Editais e na Lista de aprovados (as duas abas): o mesmo card compacto de 78px. | Manter card. |
+| **Exceção aceita:** filtros, tabela, mapa e "unidades com mais de um processo" em card | Na Visão geral, no mesmo card dos KPIs (DS 11.6, sem sombra), por decisão do responsável (25/09/2026). Editais, Cronograma e Lista de aprovados mantêm o card em volta da tabela e dos blocos, sem sombra, com 12px entre os blocos. | Manter card; não aninhar card dentro de card. Entre os blocos, 12px (ritmo compacto de antes), não os 48px de seção do DS 5.2. |
+| Botão verde arredondado (`.btn.green`) | feito: `.btn`, `.btn.green` e `.btn.primary` no primário azul (`app.css`); `analises.html` ainda tem o seu | `--color-action-primary`, `--radius-md`, sem sombra |
+| Emoji como ícone | feito no mapa da Visão geral: "Brasil" e "Calor" com Lucide `map` e `flame` (16px, `aria-hidden`), pelo registro `icones.ts` (`controles-do-mapa.js`). A legenda do mapa nacional é recolhível (`ChevronDown`/`ChevronUp`) e começa fechada abaixo de 768px. | Nenhum emoji no lugar de ícone (DS 14). |
+| Modo escuro | existe | fora do escopo do DS: manter, sem investir |
+| **Exceção aceita:** cor da barra lateral | Segue a cor configurada em Configurações → Aparência (`ui_sidebar_background_color`), identidade do MONITORA — exceção aceita ao `--color-sidebar-bg` oficial (decisão do responsável, 25/09/2026). | Não trocar. |
