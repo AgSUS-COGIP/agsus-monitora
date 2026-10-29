@@ -73,7 +73,7 @@ import { montarEntrada } from "./app/entrada/entrada.tsx";
 import { telaSobDemanda } from "./app/tela-sob-demanda.ts";
 import { TELAS_REACT } from "./app/navegacao.ts";
 import { registrarPreCarga } from "./lib/carga-de-telas";
-import { sessaoDoApp } from "./app/sessao.ts";
+import { FASES, sessaoDoApp } from "./app/sessao.ts";
 
 import type { avisar, mostrarCarregamento } from "./app/avisos.ts";
 import type { TelaSobDemanda } from "./app/tela-sob-demanda.ts";
@@ -450,13 +450,26 @@ void sessaoDoApp.iniciar();
   A Aya (src/modulos/aya/): a arara flutuante e o painel de conversa. Sabe a
   página pelo estado que o legado atualiza a cada navegação (setPageTitle →
   definirPaginaDaAya) e a área pelo estado do monitoramento. Fora do pacote
-  principal (com os tours, ~110 kB): o pedido sai já, sem segurar a primeira
-  pintura; o estado dela (src/modulos/aya/estado.ts) é do pacote principal e
-  já guarda a página.
+  principal (com os tours, ~110 kB): ela só existe dentro do app (#ayaApp, no
+  #appScreen), então chega por `import()` quando a sessão abre — a tela de
+  acesso não a carrega. O estado dela (src/modulos/aya/estado.ts) é do pacote
+  principal e já guarda a página.
 */
-void import("./modulos/aya/aya.tsx").then(({ montarAya }) => {
-  montarAya();
-});
+const FASES_COM_O_APP: ReadonlySet<string> = new Set([
+  FASES.ABRINDO,
+  FASES.CONECTADO,
+]);
+let ayaPedida = false;
+const pararDeEsperarAAya = sessaoDoApp.assinar(montarAyaAoEntrar);
+function montarAyaAoEntrar() {
+  if (ayaPedida || !FASES_COM_O_APP.has(sessaoDoApp.obter().fase)) return;
+  ayaPedida = true;
+  pararDeEsperarAAya();
+  void import("./modulos/aya/aya.tsx").then(({ montarAya }) => {
+    montarAya();
+  });
+}
+montarAyaAoEntrar();
 
 if (!hasSupabaseEnv()) {
   console.warn(
