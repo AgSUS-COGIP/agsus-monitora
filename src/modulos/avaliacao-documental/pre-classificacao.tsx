@@ -193,6 +193,8 @@ interface VagaDaPreProps {
   aoMarcar?: (chave: string, sim: boolean) => void;
 }
 
+const LIMITE_VISIVEL = 50;
+
 function VagaDaPre({
   v,
   configuracao,
@@ -210,6 +212,10 @@ function VagaDaPre({
   const [incluindo, setIncluindo] = useState(false);
   const [emitindo, setEmitindo] = useState("");
   const [erroDoEspelho, setErroDoEspelho] = useState("");
+  const [limiteEliminados, setLimiteEliminados] = useState(LIMITE_VISIVEL);
+  const [limiteClassificados, setLimiteClassificados] =
+    useState(LIMITE_VISIVEL);
+  const [eliminadosAbertos, setEliminadosAbertos] = useState(false);
   const eliminadosVisiveis = buscaEliminado
     ? v.eliminados.filter((c) =>
         `${c.codigo} ${c.nome}`
@@ -217,6 +223,12 @@ function VagaDaPre({
           .includes(buscaEliminado),
       )
     : v.eliminados;
+  const eliminadosNaPagina = eliminadosVisiveis.slice(0, limiteEliminados);
+  const classificadosNaPagina = v.lote.slice(0, limiteClassificados);
+  const foraNaPagina = v.fora.slice(
+    0,
+    Math.max(0, limiteClassificados - v.lote.length),
+  );
   async function emitirEspelho(c: InscritoDaPre) {
     if (emitindo || !editalId || c.situacao !== "ELIMINADO") return;
     setErroDoEspelho("");
@@ -355,7 +367,7 @@ function VagaDaPre({
               </tr>
             </thead>
             <tbody>
-              {v.lote.map((c) => (
+              {classificadosNaPagina.map((c) => (
                 <LinhaDoInscrito
                   key={c.id}
                   c={c}
@@ -368,85 +380,111 @@ function VagaDaPre({
                   <td colSpan={7}>Linha de corte</td>
                 </tr>
               ) : null}
-              {v.fora.map((c) => (
+              {foraNaPagina.map((c) => (
                 <LinhaDoInscrito key={c.id} c={c} />
               ))}
             </tbody>
           </table>
         </div>
       ) : null}
+      {v.lote.length + v.fora.length > limiteClassificados &&
+      !buscaEliminado ? (
+        <button
+          type="button"
+          className="btn secondary small"
+          onClick={() => setLimiteClassificados((n) => n + LIMITE_VISIVEL)}
+        >
+          Mostrar mais classificados (
+          {Math.min(limiteClassificados, v.lote.length + v.fora.length)} de{" "}
+          {v.lote.length + v.fora.length})
+        </button>
+      ) : null}
       {eliminadosVisiveis.length ? (
         <details
           key={buscaEliminado || "todos"}
           className="avd-eliminados"
           open={buscaEliminado ? true : undefined}
+          onToggle={(ev) => setEliminadosAbertos(ev.currentTarget.open)}
         >
           <summary>Eliminados ({eliminadosVisiveis.length})</summary>
           {/* Na mesma rolagem da tabela do lote: sem ela, a tabela global de
               app.css (min-width 1180px) estourava o cartão e a página rolava
               de lado ao abrir os eliminados. */}
-          <div className="ui-tabela-rolagem">
-            <table className="avd-tabela">
-              <thead>
-                <tr>
-                  {aoMarcar ? (
-                    <th scope="col">
-                      <span className="sr-only">Marcar para o lote</span>
-                    </th>
-                  ) : null}
-                  <th scope="col">Código</th>
-                  <th scope="col">Nome</th>
-                  <th scope="col">Motivo</th>
-                  <th scope="col">Documento</th>
-                </tr>
-              </thead>
-              <tbody>
-                {eliminadosVisiveis.map((c) => (
-                  <tr
-                    key={c.id}
-                    data-candidato={c.codigo}
-                    data-situacao="ELIMINADO"
-                  >
+          {eliminadosAbertos || buscaEliminado ? (
+            <div className="ui-tabela-rolagem">
+              <table className="avd-tabela">
+                <thead>
+                  <tr>
                     {aoMarcar ? (
-                      <td>
-                        <input
-                          type="checkbox"
-                          aria-label={`Marcar ${c.codigo} para o lote`}
-                          data-acao="marcar-comunicado"
-                          checked={
-                            marcados?.has(chaveDaPessoa(c.vaga, c.codigo)) ??
-                            false
-                          }
-                          onChange={(ev) =>
-                            aoMarcar(
-                              chaveDaPessoa(c.vaga, c.codigo),
-                              ev.target.checked,
-                            )
-                          }
-                        />
-                      </td>
+                      <th scope="col">
+                        <span className="sr-only">Marcar para o lote</span>
+                      </th>
                     ) : null}
-                    <td>{c.codigo}</td>
-                    <td>{c.nome}</td>
-                    <td>{c.motivo}</td>
-                    <td>
-                      <button
-                        type="button"
-                        className="btn secondary small"
-                        data-acao="espelho-eliminado-pre"
-                        disabled={Boolean(emitindo) || !c.motivo}
-                        onClick={() => void emitirEspelho(c)}
-                      >
-                        {emitindo === c.codigo
-                          ? "Gerando PDF…"
-                          : "Baixar comunicado PDF"}
-                      </button>
-                    </td>
+                    <th scope="col">Código</th>
+                    <th scope="col">Nome</th>
+                    <th scope="col">Motivo</th>
+                    <th scope="col">Documento</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {eliminadosNaPagina.map((c) => (
+                    <tr
+                      key={c.id}
+                      data-candidato={c.codigo}
+                      data-situacao="ELIMINADO"
+                    >
+                      {aoMarcar ? (
+                        <td>
+                          <input
+                            type="checkbox"
+                            aria-label={`Marcar ${c.codigo} para o lote`}
+                            data-acao="marcar-comunicado"
+                            checked={
+                              marcados?.has(chaveDaPessoa(c.vaga, c.codigo)) ??
+                              false
+                            }
+                            onChange={(ev) =>
+                              aoMarcar(
+                                chaveDaPessoa(c.vaga, c.codigo),
+                                ev.target.checked,
+                              )
+                            }
+                          />
+                        </td>
+                      ) : null}
+                      <td>{c.codigo}</td>
+                      <td>{c.nome}</td>
+                      <td>{c.motivo}</td>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn secondary small"
+                          data-acao="espelho-eliminado-pre"
+                          disabled={Boolean(emitindo) || !c.motivo}
+                          onClick={() => void emitirEspelho(c)}
+                        >
+                          {emitindo === c.codigo
+                            ? "Gerando PDF…"
+                            : "Baixar comunicado PDF"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+          {(eliminadosAbertos || buscaEliminado) &&
+          eliminadosVisiveis.length > limiteEliminados ? (
+            <button
+              type="button"
+              className="btn secondary small"
+              onClick={() => setLimiteEliminados((n) => n + LIMITE_VISIVEL)}
+            >
+              Mostrar mais eliminados ({limiteEliminados} de{" "}
+              {eliminadosVisiveis.length})
+            </button>
+          ) : null}
           {erroDoEspelho ? (
             <Aviso tom="danger" papel="alert">
               {erroDoEspelho}
@@ -657,6 +695,10 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
     void pre.garantirCarregado(e.editalId, String(versaoDaRegra));
   }, [pre, e.editalId, versaoDaRegra]);
 
+  const d = p.editalId === e.editalId ? p.dados : null;
+  const cont = useMemo(() => contadoresDaPreClassificacao(d), [d]);
+  const vagas = useMemo(() => vagasDaTela(d), [d]);
+
   if (p.erro)
     return (
       <Aviso tom="danger" papel="alert">
@@ -670,7 +712,6 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
         </button>
       </Aviso>
     );
-  const d = p.editalId === e.editalId ? p.dados : null;
   if (!d)
     return (
       <div className="ui-card" aria-busy="true">
@@ -679,8 +720,6 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
       </div>
     );
 
-  const cont = contadoresDaPreClassificacao(d);
-  const vagas = vagasDaTela(d);
   const buscaEliminado = buscaDeEspelho.trim().toLocaleLowerCase("pt-BR");
   const vagasVisiveis = buscaEliminado
     ? vagas.filter((v) =>
