@@ -48,10 +48,10 @@ import { installLeafletMapGuard } from "./modules/map-guard.ts";
 import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
 import { installMapZoomRange } from "./modules/map-zoom-range.ts";
 import { installIndigenousTerritoriesLayer } from "./modules/indigenous-territories-layer.js";
+import { montarAvisos } from "./app/casca/avisos.tsx";
 import { montarCasca } from "./app/casca/casca.tsx";
 // O sistema depois de entrar (navegação, carga, presença, moldura): src/app/sistema.ts.
 import { ligarSistema, recarregarPaineisExternos } from "./app/sistema.ts";
-import { initLoadingExperience } from "./modules/loading-experience.js";
 import { instalarCarregamento } from "./app/carregamento.ts";
 import { initVisualPolish } from "./modules/visual-polish.js";
 import { initSidebarBranding } from "./modules/sidebar-branding.js";
@@ -61,7 +61,6 @@ import {
 } from "./modulos/configuracoes/secoes.ts";
 import { montarConfiguracoes } from "./modulos/configuracoes/configuracoes.tsx";
 import { initPwaLifecycle } from "./modules/pwa-lifecycle.ts";
-import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.ts";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
 import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.tsx";
@@ -133,6 +132,13 @@ declare global {
 document.documentElement.classList.remove("vite-dev-carregando");
 
 /*
+  Os avisos por cima de tudo (notificações, carregamento dos salvamentos e
+  conexão, src/app/casca/avisos.tsx) montam antes de qualquer peça que possa
+  avisar algo, inclusive na tela de acesso.
+*/
+montarAvisos();
+
+/*
   A casca do app (src/app/casca/: barra lateral, cabeçalho e as áreas das
   telas) desenha primeiro, na hora: o sistema, as ilhas React e o legado
   abaixo a encontram no DOM pelos ids de sempre.
@@ -179,7 +185,6 @@ window.visaoGeralController = montarVisaoGeral({
   comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
 });
 instalarCarregamento();
-initLoadingExperience();
 initVisualPolish();
 // A logo e a cor gravadas da barra lateral (a escolha é de Configurações › Aparência).
 initSidebarBranding();
@@ -187,7 +192,6 @@ initSidebarBranding();
 organizarConfiguracoesEmSecoes();
 montarConfiguracoes();
 initPwaLifecycle();
-initConnectivityStatus();
 initGoogleProfilePhoto();
 initNielsenShellUx();
 

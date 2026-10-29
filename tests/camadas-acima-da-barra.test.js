@@ -46,9 +46,8 @@ describe("camadas acima da barra lateral", () => {
     expect(ler("src/lib/session-lifecycle.ts")).toMatch(
       /#agsusSessionNotice\s*\{[^}]*z-index:\s*var\(--z-toast, 20050\)/,
     );
-    expect(ler("index.html")).toMatch(
-      /id="offlineBar"[\s\S]*?z-index:\s*var\(--z-toast, 20050\)/,
-    );
+    expect(app).toMatch(/\.toast-box\s*\{[^}]*z-index:\s*var\(--z-toast\)/);
+    expect(app).toMatch(/\.loader\s*\{[^}]*z-index:\s*var\(--z-loader\)/);
   });
 
   it("a barra travada não sobrescreve a camada com um número solto", () => {
