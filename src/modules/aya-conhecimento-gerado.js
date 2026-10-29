@@ -1188,6 +1188,26 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-avaliacao-documental.md",
+    titulo: "Abas da Triagem",
+    perguntas: [
+      "partes da tela da triagem",
+      "resumo da triagem",
+      "aba por vaga",
+      "aba eliminados",
+      "listas oficiais da triagem",
+      "menu acoes da triagem",
+      "filtrar eliminados por motivo",
+      "eliminados por vaga e motivo",
+    ],
+    resposta:
+      'A Triagem abre no Resumo: os números do edital (inscritos, eliminados, ranqueados e lote), a faixa de situação (último cálculo, versão da regra e se está conferida, inscrições e notas declaradas congeladas, e quantos têm a ART diferente da nota recalculada, com atalho para os casos), o resumo da regra da Triagem e o cartão das inscrições. Em "Por vaga", cada vaga aparece com os números; aberta, carrega a classificação 50 por vez, com o tamanho do lote e a inclusão por decisão. Em "Eliminados", a lista do edital todo, com busca por código ou nome, filtro por vaga e por motivo, marcação de várias pessoas e os comunicados em PDF, ZIP ou para imprimir. Em "Listas oficiais", a Lista Geral (ART) e o lote de convocação, para registrar e exportar. Recalcular, descongelar as notas declaradas e congelar ou liberar as inscrições ficam no menu "Ações" (só para quem coordena o edital), sempre com confirmação.',
+    fato: "",
+    fonte:
+      "src/modulos/avaliacao-documental/pre-classificacao.tsx; supabase/migrations/20261029210000_eliminados_da_triagem_por_motivo.sql",
+    abrir: "pre-classificacao",
+  },
+  {
+    arquivo: "regras-da-avaliacao-documental.md",
     titulo: "Regras da Triagem",
     perguntas: [
       "regras da triagem",
