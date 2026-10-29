@@ -183,9 +183,7 @@ export function criarConfiguracao({
     const quadro = $("externalMount");
     if (quadro?.classList.contains("external-placeholder"))
       quadro.textContent = valor("external_placeholder");
-    // O botão de recolher da barra lateral é React e tem rótulo próprio (recolher/expandir).
-    atributo("hambToggle", "title", valor("sidebar_toggle_label"));
-    atributo("hambToggle", "aria-label", valor("sidebar_toggle_label"));
+    // O botão de recolher da barra lateral (e ☰ no celular) é React e tem rótulo próprio.
     atributo("externalBackBtn", "title", valor("external_back_text"));
     atributo("externalBackBtn", "aria-label", valor("external_back_text"));
     aplicarAvisoGlobal();

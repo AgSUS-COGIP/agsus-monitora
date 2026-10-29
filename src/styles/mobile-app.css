@@ -29,12 +29,12 @@ textarea,
   touch-action: manipulation;
 }
 
-/* No celular o cabeçalho sobe para 10030 (app.css: --z-header 10010). */
-body.mobile-app .app .top {
-  z-index: 10030;
-}
-
 @media (max-width: 900px) {
+  /* No celular o cabeçalho sobe para 10030 (app.css: --z-header 10010). */
+  .app .top {
+    z-index: 10030;
+  }
+
   body {
     background: var(--surface-raised);
     padding-top: var(--mobile-safe-top);
@@ -100,7 +100,7 @@ body.mobile-app .app .top {
     width: min(86vw, 320px) !important;
     max-width: 320px;
     height: auto !important;
-    /* Acima do cabeçalho (body.mobile-app .app .top = 10030, no início deste arquivo):
+    /* Acima do cabeçalho (.app .top = 10030, no início deste bloco):
        com 10020 o topo cobria a logo e o primeiro grupo da gaveta aberta. */
     z-index: 10036;
     transform: translateX(-105%);

@@ -1,11 +1,15 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { enhanceTableForMobile } from "../src/modules/mobile-table-cards.js";
+import {
+  cabecalhosDaTabela,
+  tabelaEmCartoes,
+  tabelasDaTelaEmCartoes,
+} from "../src/app/casca/tabelas-em-cartoes.ts";
 
 /*
   Auditoria das telas (13/10/2026), no celular (375px):
-  - os cartões das tabelas (mobile-table-cards) guardavam a largura mínima da
+  - os cartões das tabelas (tabelas-em-cartoes) guardavam a largura mínima da
     tela — 560px na Classificação, 760px na Fila, 980px nas demais tabelas da
     rolagem — e passavam da borda; o reset valia só para Editais e Aprovados;
   - o "Gerada em … · SHA-256 …" da Classificação (.status-discreto, nowrap)
@@ -78,7 +82,7 @@ describe("tabelas no celular", () => {
     document.body.innerHTML =
       "<table><thead><tr><th>Nome</th></tr></thead><tbody><tr><td>Ana</td></tr></tbody></table>";
     const tabela = document.querySelector("table");
-    expect(enhanceTableForMobile(tabela)).toBe(true);
+    expect(tabelaEmCartoes(tabela)).toBe(true);
     expect(tabela.classList.contains("mobile-card-table")).toBe(true);
     expect(tabela.dataset.mobileEnhanced).toBe("true");
   });
@@ -104,13 +108,48 @@ describe("abas no celular", () => {
   });
 });
 
+describe("quais tabelas viram cartão", () => {
+  const TABELA =
+    "<thead><tr><th>Nome</th><th>UF</th></tr></thead><tbody><tr><td>Ana</td><td>AM</td></tr></tbody>";
+  const larguraOriginal = window.innerWidth;
+  const largura = (px) =>
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: px,
+    });
+
+  it("só no celular, com rótulo por coluna, sem as que rolam de lado ou são grade", () => {
+    document.body.innerHTML = `
+      <table id="comum">${TABELA}</table>
+      <table id="rola" data-mobile-table="scroll">${TABELA}</table>
+      <table id="grade" role="grid">${TABELA}</table>`;
+    try {
+      largura(1280);
+      expect(tabelasDaTelaEmCartoes()).toBe(0);
+      largura(390);
+      expect(tabelasDaTelaEmCartoes()).toBe(1);
+    } finally {
+      largura(larguraOriginal);
+    }
+    expect(
+      [...document.querySelectorAll("#comum td")].map(
+        (td) => td.dataset.mobileLabel,
+      ),
+    ).toEqual(["Nome", "UF"]);
+    expect(document.getElementById("rola").dataset.mobileEnhanced).toBe(
+      undefined,
+    );
+    expect(document.getElementById("grade").dataset.mobileEnhanced).toBe(
+      undefined,
+    );
+  });
+});
+
 describe("rótulo do cartão sem texto no cabeçalho", () => {
-  it("usa o nome acessível do controle, não 'Campo 1'", async () => {
-    const { getTableHeaders } =
-      await import("../src/modules/mobile-table-cards.js");
+  it("usa o nome acessível do controle, não 'Campo 1'", () => {
     document.body.innerHTML =
       '<table><thead><tr><th><input type="checkbox" aria-label="Selecionar as fichas da lista"></th><th>Nome</th><th></th></tr></thead><tbody><tr><td></td><td>Ana</td><td></td></tr></tbody></table>';
-    expect(getTableHeaders(document.querySelector("table"))).toEqual([
+    expect(cabecalhosDaTabela(document.querySelector("table"))).toEqual([
       "Selecionar as fichas da lista",
       "Nome",
       "Campo 3",

@@ -508,8 +508,7 @@ table.entrevistas-tabela {
   A ficha aberta ocupa a área de conteúdo, no desenho da ficha da Avaliação
   documental: cabeçalho enxuto e preso (sem caixa: hierarquia e espaço), a
   folha do avaliador (abas + matriz) num cartão, a lateral do resultado
-  presa ao rolar e o rodapé mínimo preso embaixo (acima do menu inferior do
-  celular). Cores: verde ok, vermelho abaixo do mínimo/inapto, cinza vazio.
+  presa ao rolar e o rodapé mínimo preso embaixo. Cores: verde ok, vermelho abaixo do mínimo/inapto, cinza vazio.
 */
 .entrevistas-analise {
   display: grid;
@@ -1305,7 +1304,7 @@ table.entrevistas-tabela {
 /* Rodapé mínimo */
 .entrevistas-analise-barra {
   position: sticky;
-  bottom: var(--recuo-da-navegacao-inferior, 0px);
+  bottom: 0;
   z-index: 3;
   display: flex;
   margin-top: auto;

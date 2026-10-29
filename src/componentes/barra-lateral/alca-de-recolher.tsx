@@ -18,8 +18,9 @@ import { Icone } from "../icone.tsx";
 
   No estreito ele não pode ficar dentro da barra: a gaveta é `position: fixed`
   com `transform: translateX(-105%)`, e um botão lá dentro sairia da tela junto
-  com ela — inalcançável justamente com a gaveta fechada. O `#hambToggle` fica
-  no markup, escondido pelo CSS, porque `applyConfigToUi` ainda escreve nele.
+  com ela — inalcançável justamente com a gaveta fechada. É o único botão da
+  gaveta no celular: não há outro ☰ nem menu no pé da tela
+  (`src/app/casca/gaveta-do-celular.tsx` fecha a gaveta e cuida do foco).
 
   Quem recolhe é `window.toggleSidebar` (legado: classes de `body`,
   preferência salva, redesenho do mapa).

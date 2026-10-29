@@ -1289,7 +1289,7 @@ const TRILHAS: readonly TrilhaDaAya[] = Object.freeze([
         { pagina: "dashboard" },
       ),
       passo(
-        [t("barra-menu"), "#nav", "#mobileBottomNav"],
+        [t("barra-abrir-menu"), t("barra-menu"), "#nav"],
         "Menu",
         "Em Acompanhamento ficam as páginas de consulta; em Processo seletivo, onde se trabalha, na ordem das etapas.",
         { pagina: "dashboard" },

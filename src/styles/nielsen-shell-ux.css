@@ -219,7 +219,7 @@ html[data-theme="dark"] .content {
   color: var(--ux-dark-text) !important;
 }
 
-/* O fundo da página (também o `body.mobile-app`, que mobile-app.css clareia). */
+/* O fundo da página (também no celular, que mobile-app.css clareia). */
 html[data-theme="dark"] body {
   background: #0b1424 !important;
   color: var(--ux-dark-text) !important;

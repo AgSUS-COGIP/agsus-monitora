@@ -300,7 +300,7 @@ Ficou para depois (ainda em `src/modules/` ou no `index.html`):
    para `src/app/` quando a barra virar filha da casca.
 2. **Rotas**: sem endereço por tela (hash/history); a tela guardada continua no localStorage.
 3. `nielsen-shell-ux.js` (diálogo de saída por `insertAdjacentHTML` e os estados do seletor de
-   tema), `mobile-bottom-navigation.js`, `mobile-app-experience.js`, `visual-polish.js`,
+   tema), `visual-polish.js`,
    `loading-experience.js`, `connectivity-status.js`, `pwa-lifecycle.ts`, `situacao-dos-modulos.ts`,
    `catalogo-de-abas.ts`, `copia-da-sessao-indexeddb.ts`, `cache-de-payload-indexeddb.ts`,
    `comemoracao-do-acesso.ts`, `notificacao.js` → `src/app/` ou React.
@@ -318,7 +318,7 @@ claro e escuro) e o DOM do `#appScreen` com posição e tamanho de cada elemento
 | Parte | O quê                                                                                                                                                                                   | Situação |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | A     | `#appScreen`: volta do painel externo, `<aside>` da barra, cabeçalho e menu da conta, pontos de montagem do topo, aviso global, seções das telas, quadro externo, Configurações         | feita    |
-| B     | Celular: `mobile-bottom-navigation.js`, `mobile-app-experience.js` (gaveta e fundo), `mobile-table-cards.js` → componentes/hooks em `src/app/casca/`                                    | a fazer  |
+| B     | Celular: sem menu no pé da tela; a gaveta (☰) e as tabelas em cartão viram `src/app/casca/` (`mobile-*.js` saíram)                                                                     | feita    |
 | C     | Carregamento e avisos: `#loader`, `#toastBox`, `#offlineBar`, `loading-experience.js`, `connectivity-status.js`, `notificacao.js`; o skeleton da entrada fica no HTML (primeiro quadro) | a fazer  |
 | D     | `nielsen-shell-ux.js` (diálogo de saída), `sidebar-branding.js`, `visual-polish.js`, `map-base-layer-switcher.js` (`indigenous-territories-layer.js` só vira TS)                        | a fazer  |
 
@@ -326,7 +326,7 @@ claro e escuro) e o DOM do `#appScreen` com posição e tamanho de cada elemento
 
 ```
 casca.tsx            <Casca> (memo, sem props) e montarCasca(): desenha em #appScreen com flushSync
-topo.tsx             header.top: ☰, título, Pessoas online, menu da conta
+topo.tsx             header.top: título, Pessoas online, menu da conta (o ☰ é da barra lateral)
 areas-das-telas.tsx  .content: as <section class="page"> (TELAS_DA_CASCA), quadro externo, Configurações
 acoes.ts             os botões chamam window.refreshData, exportPDF… na hora do clique (como os onclick)
 ```
@@ -338,3 +338,17 @@ título, perfil, textos configuráveis, `.active` e a faixa de manutenção cont
 e as ilhas (barra lateral, Pessoas online, Aya, aviso de versão, encerramento, selos) são raízes
 próprias nos elementos vazios dela. Testes que leem a marcação do app usam
 `tests/pagina-montada.js` (`htmlDaPagina()`: o `index.html` com a casca desenhada).
+
+**Parte B** — o celular (até 900px), em `src/app/casca/`:
+
+```
+gaveta-do-celular.tsx  <GavetaDoCelular>: o véu #sidebarOverlay e a gaveta (fecha ao escolher página,
+                       ao tocar fora e com Esc; inert na gaveta fechada ou no conteúdo com ela aberta;
+                       foco na página atual ao abrir e de volta no ☰ ao fechar)
+tabelas-em-cartoes.ts  usarTabelasEmCartoes(): cada linha de tabela vira cartão (data-mobile-label)
+```
+
+Não há menu no pé da tela: a navegação é uma só, o ☰ do topo (`#globalSidebarToggle`, da barra
+lateral) abre a mesma barra lateral como gaveta. O topo é uma linha só e o conteúdo usa a altura
+toda (nenhuma barra soma recuo de menu inferior). O registro do service worker foi para
+`pwa-lifecycle.ts`. Testes: `tests/app/gaveta-do-celular.test.js` e `tests/layout-no-celular.test.js`.

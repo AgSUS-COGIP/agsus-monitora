@@ -90,7 +90,7 @@ import type { IconNode } from "lucide";
   Registro único dos ícones Lucide.
 
   A migração do Font Awesome para o Lucide começa pela barra lateral e pelo
-  que é dela: menu inferior do celular, Sair, tema e o botão de recolher. O
+  que é dela: Sair, tema e o botão de recolher (o ☰ do celular). O
   resto do app continua em Font Awesome até cada componente migrar — nunca os
   dois conjuntos dentro do mesmo componente (DESIGN.md, "Ícones").
 

@@ -87,7 +87,7 @@
     cartão ocupa a largura do celular). Antes valia só para Editais e Lista de
     aprovados: na Classificação (560px), na Fila (760px) e nas demais tabelas
     da rolagem (980px) os cartões passavam da borda do celular. O
-    [data-mobile-enhanced] (posto junto com a classe, mobile-table-cards.js)
+    [data-mobile-enhanced] (posto junto com a classe, tabelas-em-cartoes.ts)
     deixa a regra acima das larguras das telas (.ui-tabela-rolagem
     table.avd-fila-lista e afins).
   */

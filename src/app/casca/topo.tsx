@@ -2,8 +2,9 @@ import type { MouseEvent } from "react";
 import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
 
 /*
-  O cabeçalho do app (`header.top`): o botão da gaveta (☰), o título da
-  página e, à direita, Pessoas online e o menu da conta.
+  O cabeçalho do app (`header.top`): o título da página e, à direita, Pessoas
+  online e o menu da conta. No celular, uma linha só, com o ☰ da gaveta antes
+  do título.
 
   Os textos são escritos de fora, como antes: o título por
   `navegacao.definirTitulo`, nome, e-mail e perfil por `src/app/perfil.ts`, os
@@ -12,21 +13,13 @@ import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
   não volta a mexer nele (ver `casca.tsx`).
 
   `#pessoasOnlineApp`, `#seloNoAvatarApp` e `#selosDoEditalApp` são pontos de
-  montagem de outras ilhas React; a alça da barra lateral entra por portal no
-  `.title-row` até 900px (`alca-de-recolher.tsx`).
+  montagem de outras ilhas React; o ☰ (`#globalSidebarToggle`) é da barra
+  lateral e entra por portal no `.title-row` até 900px (`alca-de-recolher.tsx`).
 */
 export function Topo() {
   return (
     <header className="top">
       <div className="title-row">
-        <button
-          id="hambToggle"
-          className="hamb"
-          onClick={() => void chamarAcaoDaCasca("toggleSidebar")}
-          title=""
-        >
-          ☰
-        </button>
         <div className="page-title">
           <h1 id="pageTitle"></h1>
           <p id="pageSubtitle"></p>

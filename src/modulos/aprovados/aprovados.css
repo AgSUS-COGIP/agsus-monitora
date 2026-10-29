@@ -218,7 +218,7 @@
   align-items: center;
   gap: var(--space-2);
 }
-/* No cartão do celular (mobile-table-cards.js), rótulo e ícones à esquerda, como os outros campos. */
+/* No cartão do celular (tabelas-em-cartoes.ts), rótulo e ícones à esquerda, como os outros campos. */
 table.mobile-card-table td.approved-actions {
   text-align: start;
 }

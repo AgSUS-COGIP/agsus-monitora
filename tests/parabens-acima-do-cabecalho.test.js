@@ -32,7 +32,7 @@ describe("o aviso de parabéns fica visível", () => {
     // O cabeçalho: --z-header em app.css; no celular, 10030 (mobile-app.css).
     const cabecalho = Math.max(
       zDoBloco(app, ".top"),
-      zDoBloco(ler("src/styles/mobile-app.css"), "body.mobile-app .app .top"),
+      zDoBloco(ler("src/styles/mobile-app.css"), "  .app .top"),
     );
     const pessoasOnline = zDoBloco(
       ler("src/styles/platform-shell.css"),

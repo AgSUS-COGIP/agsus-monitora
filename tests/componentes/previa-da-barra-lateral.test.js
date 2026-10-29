@@ -2,7 +2,6 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.ts";
-import { EVENTO_MENU_ATUALIZADO } from "../../src/lib/eventos-da-barra-lateral.ts";
 import { SECOES } from "../../src/modulos/configuracoes/secoes.ts";
 import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
 import {
@@ -238,17 +237,12 @@ describe("a prévia mostra o rascunho, sem interação", () => {
     ).toBe("escuro");
   });
 
-  it("é inerte: fora da tabulação e da leitura, sem gravar nem avisar", async () => {
-    const avisos = [];
-    const ouvir = (evento) => avisos.push(evento);
-    document.addEventListener(EVENTO_MENU_ATUALIZADO, ouvir);
+  it("é inerte: fora da tabulação e da leitura", async () => {
     const { quadro, documento } = await montarPrevia();
-    document.removeEventListener(EVENTO_MENU_ATUALIZADO, ouvir);
 
     expect(quadro.getAttribute("tabindex")).toBe("-1");
     expect(quadro.getAttribute("aria-hidden")).toBe("true");
     expect(barraDaPrevia(documento).hasAttribute("inert")).toBe(true);
-    expect(avisos).toHaveLength(0);
     // Os ids da barra ficam no documento do quadro, sem repetir os da página.
     expect(document.getElementById("nav")).toBeNull();
     expect(documento.getElementById("nav")).not.toBeNull();

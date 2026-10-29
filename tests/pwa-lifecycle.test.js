@@ -8,10 +8,6 @@ import {
 } from "../src/modules/pwa-lifecycle.ts";
 
 const lifecycleSource = readFileSync("src/modules/pwa-lifecycle.ts", "utf8");
-const mobileSource = readFileSync(
-  "src/modules/mobile-app-experience.js",
-  "utf8",
-);
 
 describe("ciclo web sem oferta de instalação", () => {
   it("não registra prompt nem orientação de instalação", () => {
@@ -23,13 +19,13 @@ describe("ciclo web sem oferta de instalação", () => {
   });
 
   it("não injeta manifest nem meta tags de app instalável", () => {
-    expect(mobileSource).not.toContain("manifest.webmanifest");
-    expect(mobileSource).not.toContain("mobile-web-app-capable");
-    expect(mobileSource).not.toContain("apple-mobile-web-app-capable");
+    expect(lifecycleSource).not.toContain("manifest.webmanifest");
+    expect(lifecycleSource).not.toContain("mobile-web-app-capable");
+    expect(lifecycleSource).not.toContain("apple-mobile-web-app-capable");
   });
 
   it("preserva o service worker para atualização e operação offline", () => {
-    expect(mobileSource).toContain(
+    expect(lifecycleSource).toContain(
       'navigator.serviceWorker.register("/sw.js")',
     );
     expect(lifecycleSource).toContain("navigator.serviceWorker.ready");

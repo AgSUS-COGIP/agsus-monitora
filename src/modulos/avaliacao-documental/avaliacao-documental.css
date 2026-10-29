@@ -1368,7 +1368,7 @@
 /* Passo 5: a ação principal (salvar, concluir, fechar) presa ao pé, sempre à vista. */
 .avd-ast-navegacao[data-fixa="sim"] {
   position: sticky;
-  bottom: var(--recuo-da-navegacao-inferior, 0px);
+  bottom: 0;
   z-index: var(--z-sticky, 100);
   padding: var(--space-3) 0;
   border-top: 1px solid var(--border-subtle);

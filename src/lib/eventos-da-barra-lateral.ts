@@ -8,9 +8,6 @@
   `MutationObserver` observa classe de `body` ou atributo de `html`.
 */
 
-/* A barra avisa: o menu foi montado ou a página ativa trocou. O menu inferior do celular espelha. */
-export const EVENTO_MENU_ATUALIZADO = "agsus:menu-lateral-atualizado";
-
 /* O legado avisa: a barra foi recolhida, expandida, ou a gaveta abriu ou fechou. */
 export const EVENTO_BARRA_ALTERNADA = "agsus:barra-lateral-alternada";
 

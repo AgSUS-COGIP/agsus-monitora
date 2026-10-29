@@ -3,8 +3,7 @@
 /*
   Modo de análise (fila.tsx, ModoDeAnalise): a ficha ocupa a área de conteúdo.
   O cabeçalho com o stepper fica preso logo abaixo do cabeçalho do app; a
-  lateral, abaixo dos dois; o rodapé preso ao pé, acima do menu inferior do
-  celular. Os recuos (--avd-recuo-do-cabecalho, --avd-altura-do-topo) são
+  lateral, abaixo dos dois; o rodapé preso ao pé da tela. Os recuos (--avd-recuo-do-cabecalho, --avd-altura-do-topo) são
   medidos pela tela.
 */
 .avd-analise {
@@ -1819,7 +1818,7 @@
   padding-bottom: calc(var(--space-2) + var(--mobile-safe-bottom, 0px));
 }
 .avd-analise .avd-ficha-barra {
-  bottom: var(--recuo-da-navegacao-inferior, 0px);
+  bottom: 0;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-md);

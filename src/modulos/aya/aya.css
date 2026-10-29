@@ -600,15 +600,9 @@
   }
 }
 
-/* Celular: acima do menu inferior (o recuo é 0 sem ele). */
+/* Celular: acima da área segura do pé da tela (barra de gestos). */
 @media (max-width: 900px) {
   .aya-arara {
-    bottom: calc(
-      max(
-          env(safe-area-inset-bottom, 0px),
-          var(--recuo-da-navegacao-inferior)
-        ) +
-        var(--space-4)
-    );
+    bottom: calc(env(safe-area-inset-bottom, 0px) + var(--space-4));
   }
 }

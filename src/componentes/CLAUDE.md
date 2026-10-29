@@ -58,8 +58,6 @@ moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS 
 - **O que o componente não percebe sozinho chega por evento** em `document`
   (`src/lib/eventos-da-barra-lateral.ts`): barra recolhida/expandida, tema trocado. Nada de
   `MutationObserver`.
-- **O componente avisa por evento** quando o DOM dele mudou (`agsus:menu-lateral-atualizado`) — o
-  menu inferior do celular, ainda sem framework, espelha a partir daí.
 - **O DOM continua sendo contrato** enquanto houver consumidor legado: `#nav [data-view]`,
   `data-area`, `data-rotulo`, `data-icone`, `aria-current`, `#sideLogo`, `#sidebarLogoutBtn.side-logout`,
   `#globalSidebarToggle`. Não renomeie sem procurar quem lê.
@@ -85,6 +83,6 @@ moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS 
 - Campo cujo texto não é o valor (número, lista separada por `;`) usa `CampoEditavel`
   (`src/modulos/aprovados/partes.tsx`): amarrar o `value` ao valor lido apaga o que a pessoa digita.
 - Tabela nova avisa `agsus:content-updated` depois de desenhar: é o que põe os rótulos do modo
-  cartão (`src/modules/mobile-table-cards.js`, ≤ 900px).
+  cartão (`src/app/casca/tabelas-em-cartoes.ts`, ≤ 900px).
 - Teste em `tests/componentes/` (`.test.js`, sem JSX, com `act`) — modelo em
   `tests/componentes/barra-lateral.test.js`; interações em `tests/componentes/interacoes.js`.
