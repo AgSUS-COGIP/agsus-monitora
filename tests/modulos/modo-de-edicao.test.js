@@ -1,6 +1,14 @@
 import { StrictMode, act, createElement } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  beforeAll,
+} from "vitest";
 import {
   RPC_DOS_MUNICIPIOS,
   criarCarregadorDeMunicipios,
@@ -9,6 +17,12 @@ import { MapaDeProjetos } from "../../src/modulos/mapa-de-projetos/mapa-de-proje
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
 import { clicar, esperar, teclar } from "../componentes/interacoes.js";
 import { criarLeafletFalso } from "./leaflet-falso.js";
+import { carregarEditorDeCoordenadas } from "../../src/modulos/editor-de-coordenadas/editor-sob-demanda.ts";
+
+// O editor chega sob demanda (fora do pacote principal): carregado antes, desenha na hora.
+beforeAll(async () => {
+  await carregarEditorDeCoordenadas();
+});
 
 /*
   O modo de edição de coordenadas (src/modulos/editor-de-coordenadas/

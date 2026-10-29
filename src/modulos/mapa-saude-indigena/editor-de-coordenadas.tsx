@@ -12,7 +12,8 @@ import {
   pontosEditaveisDoMapa,
   sugestoesDaPendencia,
 } from "../../lib/coordenadas-do-mapa.ts";
-import { EditorDeCoordenadas as EditorComum } from "../editor-de-coordenadas/editor-de-coordenadas.tsx";
+// O editor comum chega sob demanda (fora do pacote principal).
+import { usarEditorDeCoordenadas } from "../editor-de-coordenadas/editor-sob-demanda.ts";
 
 /*
   O editor de coordenadas do mapa da Saúde Indígena: o editor comum
@@ -91,6 +92,8 @@ export function EditorDeCoordenadas({
     () => pontosEditaveisDoMapa(lmap, redeCnes, dsei),
     [lmap, redeCnes, dsei],
   );
+  const EditorComum = usarEditorDeCoordenadas();
+  if (!EditorComum) return null;
   return (
     <EditorComum
       pontos={pontos}
