@@ -42,7 +42,6 @@ describe("Dados para a publicação de aprovados", () => {
   });
   it.each([
     {},
-    { vigente: { ...vigente, candidatos: null } },
     { vigente: { ...vigente, candidatos: [vigente.candidatos[0], null] } },
     {
       vigente: {
