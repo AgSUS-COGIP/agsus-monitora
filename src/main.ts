@@ -75,7 +75,6 @@ import { TELAS_REACT } from "./app/navegacao.ts";
 import { registrarPreCarga } from "./lib/carga-de-telas";
 import { sessaoDoApp } from "./app/sessao.ts";
 
-import { montarAya } from "./modulos/aya/aya.tsx";
 import type { avisar, mostrarCarregamento } from "./app/avisos.ts";
 import type { TelaSobDemanda } from "./app/tela-sob-demanda.ts";
 import type { montarCalendarioEditais } from "./modulos/cronograma/calendario-editais.tsx";
@@ -450,9 +449,14 @@ void sessaoDoApp.iniciar();
 /*
   A Aya (src/modulos/aya/): a arara flutuante e o painel de conversa. Sabe a
   página pelo estado que o legado atualiza a cada navegação (setPageTitle →
-  definirPaginaDaAya) e a área pelo estado do monitoramento.
+  definirPaginaDaAya) e a área pelo estado do monitoramento. Fora do pacote
+  principal (com os tours, ~110 kB): o pedido sai já, sem segurar a primeira
+  pintura; o estado dela (src/modulos/aya/estado.ts) é do pacote principal e
+  já guarda a página.
 */
-montarAya();
+void import("./modulos/aya/aya.tsx").then(({ montarAya }) => {
+  montarAya();
+});
 
 if (!hasSupabaseEnv()) {
   console.warn(

@@ -1,12 +1,24 @@
 import { StrictMode, act, createElement } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  beforeAll,
+} from "vitest";
 import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.ts";
 import { CORES_DO_MAPA } from "../../src/lib/mapa-saude-indigena/formas.ts";
 import { EVENTO_DAS_TERRAS } from "../../src/modules/indigenous-territories-layer.js";
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
 import { clicar, teclar } from "../componentes/interacoes.js";
 import { criarLeafletFalso } from "./leaflet-falso.js";
+import { carregarEditorDeCoordenadas } from "../../src/modulos/editor-de-coordenadas/editor-sob-demanda.ts";
+
+// O editor chega sob demanda (fora do pacote principal): carregado antes, desenha na hora.
+beforeAll(() => carregarEditorDeCoordenadas());
 
 /*
   O mapa da Saúde Indígena em React (src/modulos/mapa-saude-indigena/), com o

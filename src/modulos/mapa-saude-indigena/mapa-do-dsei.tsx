@@ -154,7 +154,7 @@ export function MapaDoDsei({
     });
     const base = L.layerGroup().addTo(novo);
     const unidades = L.layerGroup().addTo(novo);
-    desenharContornos(L, base, "detalhe");
+    void desenharContornos(L, base, "detalhe");
     camada.current = unidades;
 
     /*

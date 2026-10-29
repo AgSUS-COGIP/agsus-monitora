@@ -12,7 +12,8 @@ import {
   REGRAS_DA_FILA_DOS_PROJETOS,
   sugestoesDoLugar,
 } from "../../lib/coordenadas-dos-projetos.ts";
-import { EditorDeCoordenadas } from "../editor-de-coordenadas/editor-de-coordenadas.tsx";
+// O editor comum chega sob demanda (fora do pacote principal).
+import { usarEditorDeCoordenadas } from "../editor-de-coordenadas/editor-sob-demanda.ts";
 
 /*
   O editor de coordenadas do mapa de Projetos: o editor comum
@@ -84,6 +85,8 @@ export function EditorDeCoordenadasDosProjetos({
     () => pontosEditaveisDosProjetos(municipios),
     [municipios],
   );
+  const EditorDeCoordenadas = usarEditorDeCoordenadas();
+  if (!EditorDeCoordenadas) return null;
   return (
     <EditorDeCoordenadas<PontoEditavelDoProjeto>
       pontos={pontos}

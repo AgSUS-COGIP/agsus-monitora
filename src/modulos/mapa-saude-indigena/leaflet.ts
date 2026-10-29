@@ -50,7 +50,6 @@ import {
   DESENHO_DAS_FORMAS,
   formaDoTipo,
 } from "../../lib/mapa-saude-indigena/formas.ts";
-import { BR_OUTLINE, UF_GEO } from "../../lib/mapa-saude-indigena/contornos.js";
 import {
   manterDicasDentroDoMapa,
   opcoesDoPopup,
@@ -338,7 +337,7 @@ export function criarMapaDoBrasil(
       if (!mexido) aoReenquadrar?.();
     },
   });
-  desenharContornos(L, L.layerGroup().addTo(mapa), "nacional");
+  void desenharContornos(L, L.layerGroup().addTo(mapa), "nacional");
   return {
     mapa,
     pegar: aoMexer,
@@ -352,14 +351,27 @@ export function criarMapaDoBrasil(
   };
 }
 
+/*
+  Os contornos (~140 kB de GeoJSON) saem do pacote principal: chegam sob
+  demanda, uma vez, quando o primeiro mapa os desenha.
+*/
+let contornos: Promise<
+  typeof import("../../lib/mapa-saude-indigena/contornos.js")
+> | null = null;
+export function carregarContornos() {
+  contornos ??= import("../../lib/mapa-saude-indigena/contornos.js");
+  return contornos;
+}
+
 /* Contorno do Brasil e divisas das UFs: referência, sem clique. */
-export function desenharContornos(
+export async function desenharContornos(
   L: LeafletDoMapa,
   camada: CamadaDoMapa,
   variante = "nacional",
 ) {
   const nacional = variante === "nacional";
   try {
+    const { BR_OUTLINE, UF_GEO } = await carregarContornos();
     L.geoJSON?.(UF_GEO, {
       style: nacional
         ? {
