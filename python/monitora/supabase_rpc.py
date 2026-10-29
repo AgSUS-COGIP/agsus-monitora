@@ -102,8 +102,20 @@ def configuracao(guia=GUIA_PADRAO, ambiente=None):
     return {"url": url, "chave": chave}
 
 
-def chamar(config, funcao, corpo, tentativas=3, abrir=urllib.request.urlopen, esperar=time.sleep, tempo_limite=120):
-    dados = json.dumps(corpo, ensure_ascii=False).encode("utf-8")
+def chamar(
+    config,
+    funcao,
+    corpo,
+    tentativas=3,
+    abrir=urllib.request.urlopen,
+    esperar=time.sleep,
+    tempo_limite=120,
+    codificar=None,
+    decodificar=None,
+):
+    """A RPC com a service_role. `codificar`/`decodificar` trocam o json.dumps/json.loads (o job dos
+    pacotes dos painéis lê e devolve os números como o banco os escreveu: monitora.paineis.json_exato)."""
+    dados = (codificar or (lambda c: json.dumps(c, ensure_ascii=False)))(corpo).encode("utf-8")
     ultimo = None
     for tentativa in range(1, tentativas + 1):
         pedido = urllib.request.Request(
@@ -120,7 +132,7 @@ def chamar(config, funcao, corpo, tentativas=3, abrir=urllib.request.urlopen, es
         try:
             with abrir(pedido, timeout=tempo_limite) as resposta:
                 texto = ler_corpo(resposta)
-                return json.loads(texto) if texto else None
+                return (decodificar or json.loads)(texto) if texto else None
         except urllib.error.HTTPError as erro:
             texto = ler_corpo(erro)
             ultimo = ErroDoSupabase(funcao, erro.code, texto_do_erro(texto))
