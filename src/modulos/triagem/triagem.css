@@ -12,7 +12,7 @@
 }
 
 .triagem-regra__versao {
-  color: var(--text-muted, inherit);
+  color: var(--color-text-secondary);
   font-size: 0.875rem;
 }
 
@@ -56,7 +56,7 @@
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--space-2);
   padding: var(--space-2);
-  border: 1px solid var(--border, rgba(0, 0, 0, 0.12));
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
 }
 
