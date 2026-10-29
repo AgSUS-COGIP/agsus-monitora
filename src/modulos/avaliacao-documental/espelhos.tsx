@@ -166,7 +166,7 @@ export function EspelhosDaAvaliacao({
       />
       {aoAbrirPreClassificacao ? (
         <p
-          className="ui-texto-secundario avd-espelhos-comunicados"
+          className="ui-texto-secundario avd-docs-atalho"
           data-acao="comunicados-na-pre"
         >
           Comunicados de eliminação antes da análise ficam na Pré-classificação.{" "}
