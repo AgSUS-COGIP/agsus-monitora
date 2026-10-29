@@ -65,7 +65,7 @@ class SqlIgualAoPython(unittest.TestCase):
 
     def test_a_migration_nao_mexe_em_candidato_nem_dispara_calculo(self):
         corpo = MIGRATION.split("-- 4. Migração das regras de hoje")[1]
-        for proibido in ("TB_PRE_CLASSIFICACAO\" set", "disparar_robo", "TB_FICHA_ANALISE", "delete from"):
+        for proibido in ('TB_PRE_CLASSIFICACAO" set', "disparar_robo", "TB_FICHA_ANALISE", "delete from"):
             self.assertNotIn(proibido, corpo)
         self.assertIn("a01afddb-f64b-47d9-80e8-476a1ed14e43", MIGRATION)
 
