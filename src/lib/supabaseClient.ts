@@ -11,6 +11,7 @@ import {
   observarRespostasDoBanco,
   type SinalDeTelaAntiga,
 } from "./versao-do-sistema.ts";
+import { comNovasTentativas, criarOrcamento } from "./novas-tentativas.ts";
 
 type ArmazenamentoDaSessao = ReturnType<typeof createSafeAuthStorage>;
 
@@ -36,6 +37,27 @@ function avisarTelaAntiga(sinal: SinalDeTelaAntiga) {
   );
 }
 
+/*
+  Token vencido (401 do PostgREST): uma renovação para todas as chamadas que
+  falharam juntas. Se outra já renovou, usa o token novo da sessão.
+*/
+let renovacao: Promise<string | null> | null = null;
+function renovarToken(antigo: string): Promise<string | null> {
+  if (renovacao) return renovacao;
+  renovacao = (async () => {
+    const auth = supabaseClient?.auth;
+    if (!auth) return null;
+    const { data } = await auth.getSession();
+    const atual = data.session?.access_token || null;
+    if (atual && atual !== antigo) return atual;
+    const renovada = await auth.refreshSession();
+    return renovada.error ? null : renovada.data.session?.access_token || null;
+  })().finally(() => {
+    renovacao = null;
+  });
+  return renovacao;
+}
+
 export function getSupabaseClient(): SupabaseClient | null {
   if (!hasSupabaseEnv()) return null;
 
@@ -52,9 +74,14 @@ export function getSupabaseClient(): SupabaseClient | null {
         // duas tentativas concorrentes de exchangeCodeForSession.
         detectSessionInUrl: false,
       },
+      // Repetir chamada é com src/lib/novas-tentativas.ts, não com a biblioteca.
+      db: { retry: false },
       global: {
         fetch: observarRespostasDoBanco(
-          (...argumentos) => globalThis.fetch(...argumentos),
+          comNovasTentativas(
+            (...argumentos) => globalThis.fetch(...argumentos),
+            { orcamento: criarOrcamento(), renovarToken },
+          ),
           avisarTelaAntiga,
         ),
       },

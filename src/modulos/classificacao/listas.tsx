@@ -19,8 +19,8 @@ import type {
 
 import type { RespostaDoDesempate } from "../../lib/classificacao/relatorio-de-desempate.ts";
 import {
+  esperaDaReleitura,
   estadoDoRelatorio,
-  RELEITURA_DO_PREPARO_MS,
 } from "../../lib/classificacao/relatorio-de-desempate.ts";
 import { PRAZO_DO_CALCULO_MS } from "../../lib/classificacao/calculo-em-python.ts";
 import { useEffect, useId, useMemo, useState } from "react";
@@ -852,7 +852,7 @@ function Acoes({
   const desatualizada = listaDesatualizada(ultima, dados?.ajustes_mudaram_em);
   /*
     O relatório de desempate da lista gerada (do Python): gerar pede o
-    relatório; enquanto ele é preparado, relê a cada RELEITURA_DO_PREPARO_MS.
+    relatório; enquanto ele é preparado, relê com espera crescente (esperaDaReleitura).
   */
   const [respostaDoDesempate, setRespostaDoDesempate] =
     useState<RespostaDoDesempate | null>(null);
@@ -860,6 +860,7 @@ function Acoes({
   useEffect(() => {
     let vigente = true;
     let espera: ReturnType<typeof setTimeout> | undefined;
+    let releituras = 0;
     setRespostaDoDesempate(null);
     const ler = () => {
       if (!idDaUltima) return;
@@ -867,7 +868,7 @@ function Acoes({
         if (!vigente) return;
         setRespostaDoDesempate(resposta);
         if (estadoDoRelatorio(resposta) === "preparando")
-          espera = setTimeout(ler, RELEITURA_DO_PREPARO_MS);
+          espera = setTimeout(ler, esperaDaReleitura(++releituras));
       });
     };
     ler();

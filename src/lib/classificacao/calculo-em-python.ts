@@ -16,6 +16,8 @@
 /* De quanto em quanto tempo a tela relê o pedido e quanto espera o job. */
 export const INTERVALO_DO_CALCULO_MS = 3000;
 export const PRAZO_DO_CALCULO_MS = 5 * 60 * 1000;
+/** Sem conexão, a espera entre leituras do pedido cresce até este teto. */
+export const TETO_DA_ESPERA_SEM_CONEXAO_MS = 30 * 1000;
 /* Quantos caminhos de diferença vão ao banco (o banco aceita até 20). */
 export const MAXIMO_DE_CAMINHOS = 20;
 
