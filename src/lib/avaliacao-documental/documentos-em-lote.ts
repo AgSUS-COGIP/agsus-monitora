@@ -25,9 +25,6 @@ export type PessoaDoDocumento = {
   detalhe: string;
 };
 
-/** Quantas linhas a lista desenha de uma vez (o resto pede uma busca mais estreita). */
-export const LINHAS_VISIVEIS = 200;
-
 const texto = (v: unknown) => String(v ?? "").trim();
 
 export const chaveDaPessoa = (vaga: unknown, codigo: unknown) =>

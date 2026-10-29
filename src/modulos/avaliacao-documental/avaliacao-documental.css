@@ -1975,9 +1975,12 @@
   align-items: center;
   gap: var(--space-2);
 }
-.avd-docs-lote-tabela {
-  max-height: 420px;
-  overflow: auto;
+/* A TabelaInfinita dos espelhos: rolagem mais baixa, para a barra de ações caber na tela. */
+.avd-docs-lote-tabela .ui-tabela-rolagem {
+  max-height: min(55vh, 560px);
+}
+.avd-docs-lote-vaga {
+  width: min(260px, 100%);
 }
 .avd-docs-lote-marca {
   width: 2.5rem;
@@ -1985,6 +1988,24 @@
 }
 .avd-docs-lote-acoes {
   justify-content: flex-end;
+}
+.avd-docs-lote-acoes-resumo {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-right: auto;
+}
+/* Com marcação: a barra fica presa ao pé da área que rola, sempre visível. */
+.avd-docs-lote-acoes-fixa {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-md);
 }
 .avd-origem {
   display: flex;

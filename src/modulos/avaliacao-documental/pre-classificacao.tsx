@@ -40,13 +40,19 @@ import {
 import { ESPERA_DO_PEDIDO_MIN } from "../../lib/robos-de-carga.ts";
 import {
   Aviso,
+  CaixaDeMarcarTodos,
+  estadoDaMarcacao,
   GradeDeKpis,
   Kpi,
   Selo,
   TabelaInfinita,
   usarListaNoServidor,
 } from "../../ui/index.ts";
-import type { BuscarPagina, ColunaDaTabela } from "../../ui/index.ts";
+import type {
+  BuscarPagina,
+  ColunaDaTabela,
+  EstadoDaMarcacao,
+} from "../../ui/index.ts";
 import {
   IncluirPorDecisao,
   RevogarDecisao,
@@ -221,6 +227,8 @@ interface VagaDaPreProps {
   /** As chaves (vaga|código) dos eliminados marcados para comunicado em lote. */
   marcados?: ReadonlySet<string>;
   aoMarcar?: (pessoa: PessoaDoDocumento, sim: boolean) => void;
+  /** A caixa do cabeçalho: marca (ou desmarca) várias de uma vez. */
+  aoMarcarVarias?: (pessoas: PessoaDoDocumento[], sim: boolean) => void;
 }
 
 /* As listas vêm do banco já recortadas: a tabela não filtra de novo. */
@@ -239,11 +247,6 @@ const COLUNAS_DOS_CLASSIFICADOS: ColunaDaTabela[] = [
   { rotulo: "Recalculada", dica: DICA_DA_RECALCULADA },
   { rotulo: "Situação" },
 ];
-const COLUNA_DE_MARCAR: ColunaDaTabela = {
-  rotulo: "Marcar",
-  chave: "marcar",
-  cabecalho: <span className="sr-only">Marcar para o lote</span>,
-};
 const COLUNAS_DOS_ELIMINADOS: ColunaDaTabela[] = [
   { rotulo: "Código" },
   { rotulo: "Nome" },
@@ -302,6 +305,7 @@ function VagaDaPre({
   achadosNaBusca = 0,
   marcados,
   aoMarcar,
+  aoMarcarVarias,
 }: VagaDaPreProps) {
   const [incluindo, setIncluindo] = useState(false);
   const [foraDoLote, setForaDoLote] = useState<InscritoDaPre[]>([]);
@@ -310,6 +314,12 @@ function VagaDaPre({
   const [emitindo, setEmitindo] = useState("");
   const [erroDoEspelho, setErroDoEspelho] = useState("");
   const [eliminadosAbertos, setEliminadosAbertos] = useState(false);
+  // Todos os eliminados do recorte (vaga + busca), lidos ao usar a caixa do cabeçalho.
+  const [todosDoRecorte, setTodosDoRecorte] = useState<{
+    recorte: string;
+    pessoas: PessoaDoDocumento[];
+  } | null>(null);
+  const [marcandoTodos, setMarcandoTodos] = useState(false);
   const cartao = useRef<HTMLElement>(null);
   const perto = usarPertoDaTela(cartao);
 
@@ -344,6 +354,81 @@ function VagaDaPre({
     `${leitura}:${v.codigo}:eliminados:${buscaEliminado}`,
     { ativo: mostrarEliminados },
   );
+
+  /*
+    A caixa "marcar todos" do cabeçalho dos eliminados vale para o recorte
+    inteiro (vaga + busca), não só as 50 já vindas do banco. Sabe-se o
+    recorte inteiro quando a caixa já o leu ou quando todas as páginas vieram.
+  */
+  const recorteDosEliminados = `${leitura}:${v.codigo}:${buscaEliminado}`;
+  const chavesDoRecorte =
+    todosDoRecorte?.recorte === recorteDosEliminados
+      ? todosDoRecorte.pessoas.map((x) => x.chave)
+      : eliminados.carregado && !eliminados.temMais
+        ? eliminados.itens.map((c) => chaveDaPessoa(c.vaga, c.codigo))
+        : null;
+  let estadoDosEliminados: EstadoDaMarcacao;
+  if (chavesDoRecorte)
+    estadoDosEliminados = estadoDaMarcacao(
+      chavesDoRecorte.filter((chave) => marcados?.has(chave)).length,
+      chavesDoRecorte.length,
+    );
+  else
+    estadoDosEliminados = eliminados.itens.some((c) =>
+      marcados?.has(chaveDaPessoa(c.vaga, c.codigo)),
+    )
+      ? "parte"
+      : "nenhuma";
+
+  async function marcarTodosDaVaga(sim: boolean) {
+    if (!aoMarcarVarias) return;
+    if (!sim) {
+      const pessoas =
+        todosDoRecorte?.recorte === recorteDosEliminados
+          ? todosDoRecorte.pessoas
+          : eliminados.itens.map(pessoaEliminada);
+      aoMarcarVarias(pessoas, false);
+      return;
+    }
+    setErroDoEspelho("");
+    setMarcandoTodos(true);
+    try {
+      const linhas = await pre.listarTudo({
+        vaga: v.codigo,
+        grupo: "ELIMINADOS",
+        busca: buscaEliminado,
+      });
+      const pessoas = linhas.map(pessoaEliminada);
+      setTodosDoRecorte({ recorte: recorteDosEliminados, pessoas });
+      aoMarcarVarias(pessoas, true);
+    } catch (erro) {
+      setErroDoEspelho(
+        erro instanceof Error
+          ? `Não foi possível marcar todos: ${erro.message}`
+          : "Não foi possível marcar todos.",
+      );
+    } finally {
+      setMarcandoTodos(false);
+    }
+  }
+  const colunaDeMarcar: ColunaDaTabela = {
+    rotulo: "Marcar",
+    chave: "marcar",
+    largura: "2.75rem",
+    cabecalho: (
+      <CaixaDeMarcarTodos
+        rotulo={
+          buscaEliminado
+            ? `Marcar todos os eliminados da busca na vaga ${v.codigo}`
+            : `Marcar todos os eliminados da vaga ${v.codigo}`
+        }
+        estado={estadoDosEliminados}
+        desabilitada={marcandoTodos || !aoMarcarVarias || !eliminados.carregado}
+        acao="marcar-todos-eliminados"
+        aoMudar={(sim) => void marcarTodosDaVaga(sim)}
+      />
+    ),
+  };
 
   // A linha de corte vai antes do primeiro de fora do lote que vem depois do lote.
   const depoisDoCorte = useMemo(() => {
@@ -615,7 +700,7 @@ function VagaDaPre({
                 classeDaTabela="avd-tabela"
                 colunas={
                   aoMarcar
-                    ? [COLUNA_DE_MARCAR, ...COLUNAS_DOS_ELIMINADOS]
+                    ? [colunaDeMarcar, ...COLUNAS_DOS_ELIMINADOS]
                     : COLUNAS_DOS_ELIMINADOS
                 }
                 carregado={eliminados.carregado}
@@ -882,6 +967,18 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
         const nova = new Map(atual);
         if (sim) nova.set(pessoa.chave, pessoa);
         else nova.delete(pessoa.chave);
+        return nova;
+      }),
+    [],
+  );
+  const aoMarcarVarias = useCallback(
+    (pessoas: PessoaDoDocumento[], sim: boolean) =>
+      setMarcadas((atual) => {
+        const nova = new Map(atual);
+        for (const pessoa of pessoas) {
+          if (sim) nova.set(pessoa.chave, pessoa);
+          else nova.delete(pessoa.chave);
+        }
         return nova;
       }),
     [],
@@ -1312,6 +1409,7 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
             achadosNaBusca={busca.porVaga[String(v.codigo)] ?? 0}
             marcados={marcados}
             aoMarcar={aoMarcar}
+            aoMarcarVarias={aoMarcarVarias}
             aoMudarTamanho={(codigo, valor) =>
               setTamanhos((t) => ({ ...t, [codigo]: valor }))
             }

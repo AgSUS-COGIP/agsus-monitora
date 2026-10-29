@@ -158,6 +158,7 @@ export function EspelhosDaAvaliacao({
         pessoas={concluidos}
         vagas={dados.vagas || []}
         rotuloDoDetalhe="Resultado"
+        tituloDaTabela="Avaliações concluídas"
         rotuloDoDocumento="espelho"
         tituloDaImpressao="Espelhos de nota"
         prefixoDoZip="espelhos"
