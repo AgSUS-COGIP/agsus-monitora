@@ -9,6 +9,7 @@ import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
+import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.js";
 
 /*
   A tela só mostra os editais da área atual (a padrão é a Saúde Indígena); os
@@ -118,11 +119,17 @@ const supabaseFalso = ({
       };
     return { data: { ok: true }, error: null };
   };
-  const rpc = vi.fn((nome) => {
+  const responderRpc = (nome, argumentos) => {
     const resposta = Promise.resolve(responder(nome));
     resposta.range = () => resposta;
     return resposta;
-  });
+  };
+  // A abertura da página numa chamada, montada com as respostas acima.
+  const rpc = vi.fn((nome, argumentos) =>
+    nome === "abrir_lista_aprovados"
+      ? aberturaPelasChamadasDeAntes(responderRpc, argumentos)
+      : responderRpc(nome, argumentos),
+  );
   return { rpc };
 };
 
@@ -440,7 +447,7 @@ describe("formulário de convocação do edital", () => {
     ]);
     // Salvar recarrega a página: a ordem de convocação depende destas vagas.
     expect(supabase.rpc).toHaveBeenCalledWith(
-      "listar_candidatos_aprovados_compacto",
+      "abrir_lista_aprovados",
       expect.objectContaining({ p_area: "saude-indigena" }),
     );
   });

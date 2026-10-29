@@ -86,6 +86,15 @@ export interface OpcoesDoEstadoDosAprovados extends Pick<
     apagarTudo: () => Promise<unknown>;
   };
   areaAtual?: () => unknown;
+  /**
+   * As pendências da área que vieram na abertura (abrir_lista_aprovados), para
+   * o selo da aba sem outra chamada; `carregar` é o caminho de antes (banco
+   * sem a função).
+   */
+  pendencias?: () => {
+    receber: (area: string, dados: unknown) => void;
+    carregar: (area: string) => unknown;
+  } | null;
 }
 export interface CamposDoStatus {
   status?: unknown;

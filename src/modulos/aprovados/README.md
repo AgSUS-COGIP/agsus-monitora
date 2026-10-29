@@ -100,6 +100,12 @@ componentes e estados desta pasta estão tipados. Contratos em `tipos-do-estado.
 candidatos e listas antes de publicá-los. A marcação de convocados exige confirmação
 completa dos IDs do pedido antes de mudar os status locais.
 
+A abertura é uma chamada só: `abrir_lista_aprovados` (migration 20261029133000) traz o pacote
+da área (o instantâneo, com a versão que a tela ou a cópia guardada já tem), as listas da área,
+a configuração de convocação, os anexos, as convocações e as pendências (o selo da aba; a aba
+Pendências só lê sozinha quando é aberta sem elas). Cada parte volta com o erro de sempre em
+`erros.<parte>`. Banco sem a função (PGRST202): as chamadas de antes.
+
 Os históricos de cartas e publicações são validados antes de chegar à interface.
 Falha de rede ou resposta malformada libera uma nova tentativa na gaveta ou no modal
 de listas; rejeição da chamada não deixa o histórico de cartas preso no carregamento.

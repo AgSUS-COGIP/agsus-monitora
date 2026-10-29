@@ -8,6 +8,7 @@ import {
 } from "../../src/lib/dados-do-estado-de-aprovados.ts";
 import { criarEstadoDaListaDeAprovados } from "../../src/modulos/aprovados/estado.ts";
 import { compactarPorArea } from "../componentes/candidatos-compactos-falsos.js";
+import { aberturaPelasChamadasDeAntes } from "../componentes/abertura-dos-aprovados.js";
 
 const candidato = (id) => ({
   candidato_id: id,
@@ -22,7 +23,7 @@ const candidato = (id) => ({
 function preparar(confirmacao) {
   let pacote = compactarPorArea([candidato("ana"), candidato("bia")]);
   const toast = vi.fn();
-  const rpc = vi.fn(async (nome) => {
+  const responder = async (nome) => {
     if (nome === "listar_candidatos_aprovados_compacto")
       return { data: pacote, error: null };
     if (nome === "listar_listas_aprovados")
@@ -33,7 +34,13 @@ function preparar(confirmacao) {
     if (nome === "marcar_candidatos_convocados")
       return { data: confirmacao, error: null };
     return { data: [], error: null };
-  });
+  };
+  // A abertura da página numa chamada, montada com as respostas acima.
+  const rpc = vi.fn((nome, argumentos) =>
+    nome === "abrir_lista_aprovados"
+      ? aberturaPelasChamadasDeAntes(responder, argumentos)
+      : responder(nome, argumentos),
+  );
   const estado = criarEstadoDaListaDeAprovados({
     supabase: { rpc },
     getProfile: () => ({ perfil: "admin" }),
@@ -134,9 +141,7 @@ describe("Dados do estado de Aprovados", () => {
         "error",
       );
       expect(
-        rpc.mock.calls.filter(
-          ([nome]) => nome === "listar_candidatos_aprovados_compacto",
-        ),
+        rpc.mock.calls.filter(([nome]) => nome === "abrir_lista_aprovados"),
       ).toHaveLength(1);
     },
   );

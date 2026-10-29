@@ -18,6 +18,10 @@ import { hojeEmBrasilia } from "../../../lib/carta-de-convocacao.ts";
 
   A mesma peça entra depois na jornada por edital: `carregar(area)` e o filtro
   de edital da tela bastam.
+
+  Na abertura da Lista de aprovados as pendências chegam junto
+  (`abrir_lista_aprovados`, por `receber`): o selo da aba aparece sem outra
+  chamada, e a aba só lê sozinha quando é aberta sem elas.
 */
 
 interface Resposta {
@@ -122,6 +126,23 @@ export function criarEstadoDasPendencias({
     }
   }
 
+  /** As pendências da área que vieram na abertura da Lista de aprovados. */
+  function receber(area: string, dados: unknown) {
+    if (!area) return;
+    ++pedido; // uma leitura em curso, mais velha, não sobrescreve
+    try {
+      publicar({
+        area,
+        carregando: false,
+        carregado: true,
+        erro: "",
+        pendencias: normalizarResposta(dados).pendencias,
+      });
+    } catch (erro) {
+      publicar({ area, carregando: false, erro: mensagemDe(erro) });
+    }
+  }
+
   function abrir(pendenciaId: string) {
     aberturas += 1;
     publicar({
@@ -178,6 +199,7 @@ export function criarEstadoDasPendencias({
     },
     obter: () => estado,
     carregar,
+    receber,
     abrir,
     fechar,
     decidir,
