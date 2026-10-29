@@ -1,13 +1,13 @@
 /*
   O acompanhamento das inscrições de um edital (cartão "Inscrições" da aba
-  Pré-classificação), sem DOM: a janela das inscrições pelo cronograma, os
+  Triagem), sem DOM: a janela das inscrições pelo cronograma, os
   totais do último retrato de cada vaga, a série diária (soma das vagas, o
   retrato de cada vaga vale até o próximo) e, por vaga, o "hoje +N" (inscritos
   do retrato de hoje menos os do último retrato de antes de hoje).
 
   Os retratos vêm de obter_acompanhamento_inscricoes
   (supabase/migrations/20261009140000_acompanhamento_das_inscricoes.sql),
-  gravados pelo job da pré-classificação
+  gravados pelo job da triagem
   (python/monitora/avaliacao_documental/retrato_das_inscricoes.py), que só
   grava da véspera do início a 3 dias depois do fim: o cartão aparece na mesma
   janela (DIAS_DEPOIS_DO_FIM igual ao Python).

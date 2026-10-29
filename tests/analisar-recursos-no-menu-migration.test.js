@@ -22,6 +22,14 @@ const MIGRATION = ler(`supabase/migrations/${NOME}`);
 const ENSAIO = ler(`supabase/ensaios/${NOME}`);
 const ROLLBACK = ler(`supabase/rollback/${NOME}`);
 const MIGRATION_LIGA = ler(`supabase/migrations/${LIGA}`);
+/* O menu reorganizado de 29/10 renomeia e reordena as abas (o rótulo e a ordem de hoje). */
+const MENU_NOVO = ler(
+  "supabase/migrations/20261029150000_menu_reorganizado_e_triagem.sql",
+);
+const ordemAntesDoMenuNovo = (aba) =>
+  Number(
+    MENU_NOVO.match(new RegExp(`\\('${aba}', '[^']+', '[^']+', (\\d+), `))?.[1],
+  );
 const ROLLBACK_LIGA = ler(`supabase/rollback/${LIGA}`);
 const corpo = (texto) =>
   texto.slice(texto.indexOf("\nbegin;\n") + 8, texto.lastIndexOf("\ncommit;"));
@@ -47,10 +55,14 @@ describe("migration de Analisar recursos no menu", () => {
       `values ('analisar-recursos', 'Analisar recursos', 'gavel', 7, 'analisar-recursos', 'recursos', 'nativa', 'N', 'S');`,
     );
     const doCodigo = ABAS_DO_MENU.find((aba) => aba.id === "analisar-recursos");
+    // Desde o menu de 29/10 o rótulo é "Recursos" e a ordem, 10.
+    expect(MENU_NOVO).toContain(
+      "('analisar-recursos', 'Analisar recursos', 'gavel', 8, 'Recursos', 'gavel', 10)",
+    );
     expect(doCodigo).toMatchObject({
-      rotulo: "Analisar recursos",
+      rotulo: "Recursos",
       icone: "gavel",
-      ordem: 8,
+      ordem: 10,
       view: "analisar-recursos",
       recurso: "recursos",
       tipo: "nativa",
@@ -82,11 +94,10 @@ describe("migration de Analisar recursos no menu", () => {
       ].map(([, ordem, aba]) => [aba, Number(ordem)]),
     );
     // A migration histórica foi aplicada antes da nova entrada:
-    // 20261028100644 desloca as ordens posteriores em +1.
+    // 20261028100644 desloca as ordens posteriores em +1, e o menu de 29/10
+    // parte exatamente dessas ordens.
     for (const [aba, ordem] of Object.entries(ordens))
-      expect(ABAS_DO_MENU.find((a) => a.id === aba)?.ordem, aba).toBe(
-        ordem + 1,
-      );
+      expect(ordemAntesDoMenuNovo(aba), aba).toBe(ordem + 1);
     expect(Object.keys(ordens).sort()).toEqual(
       [
         "aprovados",
@@ -169,13 +180,10 @@ describe("quem vê cada entrada de Recursos", () => {
 
   it("quem só acompanha (Leitor) vê o painel; quem analisa vê os dois", () => {
     expect(itens(perfil("leitor"))).toEqual(["Painel de recursos"]);
-    expect(itens(perfil("editor"))).toEqual([
-      "Painel de recursos",
-      "Analisar recursos",
-    ]);
+    expect(itens(perfil("editor"))).toEqual(["Painel de recursos", "Recursos"]);
     expect(itens(perfil("leitor", "editor"))).toEqual([
       "Painel de recursos",
-      "Analisar recursos",
+      "Recursos",
     ]);
     expect(itens(perfil("sem_acesso", "editor"))).toEqual([]);
   });

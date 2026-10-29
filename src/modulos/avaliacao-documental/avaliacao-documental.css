@@ -323,7 +323,7 @@
   justify-self: start;
 }
 
-/* Aba Pré-classificação (fase F2). */
+/* Aba Triagem (fase F2). */
 .avd-pre {
   display: grid;
   gap: var(--space-4);
@@ -1452,7 +1452,7 @@
   gap: var(--space-3);
 }
 
-/* Cartão "Inscrições" da Pré-classificação (inscricoes-do-edital.tsx). */
+/* Cartão "Inscrições" da Triagem (inscricoes-do-edital.tsx). */
 .avd-inscricoes {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -1961,7 +1961,7 @@
 /*
   Documentos em lote (documentos-em-lote.tsx): a lista pesquisável e
   marcável dos espelhos concluídos e a barra de marcação dos comunicados da
-  Pré-classificação, com as ações PDF / Imprimir / ZIP.
+  Triagem, com as ações PDF / Imprimir / ZIP.
 */
 .avd-docs-lote {
   display: grid;

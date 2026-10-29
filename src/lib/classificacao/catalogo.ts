@@ -307,7 +307,7 @@ export const TIPOS_DE_LISTA = Object.freeze([
 ]);
 
 /*
-  As listas que vêm da pré-classificação da Avaliação documental (fase F2;
+  As listas que vêm da triagem da Avaliação documental (fase F2;
   registradas por registrar_lista_pre_classificacao, não pelo motor). Ficam
   fora de TIPOS_DE_LISTA para a tela da Classificação não oferecê-las.
 */

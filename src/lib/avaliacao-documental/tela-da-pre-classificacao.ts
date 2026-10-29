@@ -1,5 +1,5 @@
 /*
-  A aba Pré-classificação sem DOM: contadores, vagas com os inscritos em
+  A aba Triagem sem DOM: contadores, vagas com os inscritos em
   ordem, tamanho sugerido do lote (prévia pela mesma conta do job), os lotes
   a publicar e os rótulos dos avisos e das situações. Sem estado.
 
@@ -30,7 +30,7 @@ export interface ConfiguracaoComLote {
   [chave: string]: unknown;
 }
 
-/** O que diz se o candidato pode entrar por decisão (pré-classificação ou fila). */
+/** O que diz se o candidato pode entrar por decisão (triagem ou fila). */
 export interface SituacaoParaDecidir {
   situacao?: string | null;
   situacao_pre?: string | null;
@@ -81,7 +81,7 @@ export const entrouPorDecisao = (
   c: Pick<InscritoComDecisao, "entrada"> | null | undefined,
 ): boolean => c?.entrada === ENTRADA_POR_DECISAO;
 
-/** O motivo da decisão do candidato (da pré-classificação ou da fila), ou "". */
+/** O motivo da decisão do candidato (da triagem ou da fila), ou "". */
 export function motivoDaDecisao(
   c: InscritoComDecisao | null | undefined,
 ): string {
@@ -196,7 +196,7 @@ export const SITUACOES_DO_EDITAL = Object.freeze({
   REGRA_NAO_CONFERIDA:
     "Edital sem regra conferida: marque a regra como conferida e recalcule.",
   SEM_VAGAS: "Nenhuma vaga da Empregare no edital: rode o robô.",
-  FALHOU: "A última pré-classificação deste edital falhou.",
+  FALHOU: "A última triagem deste edital falhou.",
 });
 
 export const ROTULOS_DA_SITUACAO = Object.freeze({

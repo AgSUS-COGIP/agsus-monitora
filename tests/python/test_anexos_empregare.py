@@ -858,7 +858,7 @@ class PrioridadeDosAnexos(unittest.TestCase):
             "8000004": {"pessoa": "", "respostas": [r("1004")]},  # no lote, sem resposta lida
             "8000005": {"pessoa": "", "respostas": [r("1005")]},  # desconhecido do banco
             "8000006": {"pessoa": "", "respostas": [r("1106")]},  # no lote, resposta mudou (lida a 1006)
-            "8000007": {"pessoa": "", "respostas": [r("1007")]},  # outro edital (sem pré-classificação)
+            "8000007": {"pessoa": "", "respostas": [r("1007")]},  # outro edital (sem triagem)
         }
 
     PRIORIDADES = {
@@ -963,7 +963,7 @@ class PrioridadeDosAnexos(unittest.TestCase):
             )
         finally:
             anexos.PEDIDOS_POR_VEZ = antigo
-        # Só o primeiro grupo de GETs coube no prazo: os dois do lote da pré-classificação.
+        # Só o primeiro grupo de GETs coube no prazo: os dois do lote da triagem.
         self.assertEqual(sorted(capturados), ["8000004", "8000006"])
         self.assertIn("tempo esgotado", logs[-1])
 

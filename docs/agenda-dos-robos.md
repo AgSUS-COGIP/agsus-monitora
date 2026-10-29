@@ -6,7 +6,7 @@ o pg_cron chama `private."FC_DISPARAR_ROBO"`, que pede a execução ao GitHub pe
 (`workflow_dispatch`, ramo `main`, `disparado_por = AGENDA`) com o pg_net. Os workflows não têm
 mais `schedule`; continuam com o **Rodar agora** e o **Run workflow**.
 
-O **Rodar agora**, as **Opções** e o **Recalcular** da pré-classificação também passam pelo banco
+O **Rodar agora**, as **Opções** e o **Recalcular** da triagem também passam pelo banco
 (RPC `disparar_robo`, que confere quem pede e as opções e chama o mesmo `FC_DISPARAR_ROBO` com
 `disparado_por` = id de quem clicou): **uma chave só**, a do Vault. Funciona também no computador
 (localhost). A antiga função `rodar-carga.js` (pasta `api/`) saiu e a variável **`GITHUB_DISPATCH_TOKEN` da
@@ -53,7 +53,7 @@ banco depois de uma mudança de status que envolve Contratado ou de uma lista no
 (gatilhos em `TH_CANDIDATO_APROVADO` e `TH_PUBLICACAO_APROVADO`), com a chave **Conferências**
 ligada.
 
-Robô da Empregare e pré-classificação estão na lista fixa da função; fora a agenda das inscrições
+Robô da Empregare e triagem estão na lista fixa da função; fora a agenda das inscrições
 (abaixo), não têm agenda.
 
 No banco em 22/10/2026: entrevistas com `5 0-10,15,21-23 * * *` e conferir disparos com
@@ -85,7 +85,7 @@ chave por aba; desligada:
 | Seleção                      | `agsus_robo_sincronizar_selecao`                                                                                                      | `sincronizar-selecao.yml`                                                     |
 | KPIs do edital               | `agsus_kpis_do_edital_pela_selecao`                                                                                                   | —                                                                             |
 | Robô de inscrições           | `agsus_robo_inscricoes_*`                                                                                                             | `robo-empregare.yml`                                                          |
-| Pré-classificação automática | —                                                                                                                                     | `pre-classificacao.yml` chamado no fim do `robo-empregare.yml` (apos_robo)    |
+| Triagem automática | —                                                                                                                                     | `pre-classificacao.yml` chamado no fim do `robo-empregare.yml` (apos_robo)    |
 | Conferências                 | `agsus_robo_conferencias`                                                                                                             | `conferencias.yml` (chama `contratacao-dos-aprovados.yml` antes)              |
 | Pacotes dos painéis          | `agsus_analises_cache_do_painel`, `agsus_aprovados_cache_por_area`, `agsus_entrevistas_cache_do_painel`                               | `pacotes-dos-paineis.yml` (pedido pela rodada)                                |
 | Manutenção do banco          | `agsus_analises_analyze_diario`, `agsus_fila_estatisticas`, `agsus_analises_encerrar_inativas`, `agsus_eventos_acesso_limpeza_mensal` | —                                                                             |
@@ -98,12 +98,12 @@ análises (incremental a cada 20 min) ficam no Google; a Leitura de arquivos só
 workflow. Os workflows dos robôs só têm `workflow_dispatch` (`tests/workflows-dos-robos.test.js`
 impede `push` e `schedule`).
 
-## Agenda das inscrições (robô da Empregare + pré-classificação)
+## Agenda das inscrições (robô da Empregare + triagem)
 
 Durante as inscrições de um edital, a coordenação acompanha inscritos e aptos no cartão
-**Inscrições** da aba Pré-classificação (Aya: "Acompanhar inscrições"). Para os números andarem
+**Inscrições** da aba Triagem (Aya: "Acompanhar inscrições"). Para os números andarem
 sozinhos, uma tarefa do pg_cron pede o **robô da Empregare** do edital (`editais` = o número, modo
-`normal`); no fim da carga, o próprio workflow roda a **pré-classificação** dos editais carregados
+`normal`); no fim da carga, o próprio workflow roda a **triagem** dos editais carregados
 (`--apos-robo`), que grava o retrato diário das inscrições. Uma tarefa só faz as duas coisas.
 
 A tarefa chama `private."FC_AGENDA_DAS_INSCRICOES"(tarefa, editais, até)`: até a data `até`
@@ -197,9 +197,9 @@ falhar (banco fora, migration não aplicada), o workflow só mostra um aviso e s
 **Os "AGENDA" de 13 a 15/10/2026 sem tarefa no cron.** Antes desta migration, todo pedido sem
 usuário virava `AGENDA`. Na auditoria de 20/10, os pedidos do robô da Empregare às 7h e às 13h de
 13, 14 e 15/10 batem com a tarefa `agsus_robo_inscricoes_114_2026` (removida em 22/10). Os outros —
-robô em 14/10 17h06, 15/10 00h00, 01h40, 08h06 e 12h14, e pré-classificação em 13/10 20h10,
+robô em 14/10 17h06, 15/10 00h00, 01h40, 08h06 e 12h14, e triagem em 13/10 20h10,
 14/10 17h02, 15/10 01h10, 08h03 e 12h12 — não têm tarefa: são `FC_DISPARAR_ROBO` chamados à mão
-pelo SQL (papel postgres), quase todos em par "pré-classificação + robô do 114/2026 com
+pelo SQL (papel postgres), quase todos em par "triagem + robô do 114/2026 com
 `anexos = true`" (o filtro gravado em `TL_SYNC_EMPREGARE`), durante a recaptura dos anexos.
 O das 00h00 de 15/10 tem horário redondo (pode ter sido uma tarefa avulsa criada e apagada); o
 histórico do pg_cron daquele dia ficou no banco antigo e não pôde ser conferido. Daqui em diante,

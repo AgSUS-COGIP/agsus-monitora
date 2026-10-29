@@ -71,7 +71,7 @@ describe("irParaTela", () => {
     await vi.waitFor(() => expect(abrirEdital).toHaveBeenCalledWith(EDITAL));
   });
 
-  it("abre o edital na Pré-classificação independente", async () => {
+  it("abre o edital na Triagem independente", async () => {
     const carregar = vi.fn(async () => {});
     const abrirEdital = vi.fn(async () => {});
     const janela = {

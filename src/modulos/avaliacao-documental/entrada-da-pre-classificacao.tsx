@@ -21,7 +21,7 @@ import type { Avisar, ClienteDaAvaliacao } from "./tipos-do-estado.ts";
 import "./avaliacao-documental.css";
 
 /*
-  Página independente "Pré-classificação" do Processo Seletivo.
+  Página independente "Triagem" do Processo Seletivo.
   Reutiliza os stores, a RPC e a tela da Avaliação Documental, sem copiar
   cálculos, estados de lote, regras do edital ou funções de persistência.
   O backend (FC_EXIGIR_COORD_AVALIACAO) é a autoridade final: navegar até
@@ -91,10 +91,7 @@ function TelaDaPreClassificacao({
         </Aviso>
       ) : null}
       {!e.semAcesso ? (
-        <section
-          className="ui-card avd-edital"
-          aria-label="Edital da pré-classificação"
-        >
+        <section className="ui-card avd-edital" aria-label="Edital da triagem">
           <Campo rotulo="Edital">
             <select
               value={e.editalId}
@@ -136,9 +133,9 @@ function TelaDaPreClassificacao({
           <PreClassificacao key={e.editalId} e={e} estado={estado} pre={pre} />
         ) : (
           <Aviso tom="warning" papel="alert">
-            A Pré-classificação é restrita à coordenação do edital e ao
-            administrador global autorizado. A permissão de acesso ao Painel da
-            Seleção não libera essa operação.
+            A Triagem é restrita à coordenação do edital e ao administrador
+            global autorizado. A permissão de acesso ao Painel da Seleção não
+            libera essa operação.
           </Aviso>
         )
       ) : null}
@@ -184,7 +181,7 @@ export function montarPreClassificacao({
           pre={pre}
           atualizar={atualizar}
         />,
-        { nome: "a Pré-classificação" },
+        { nome: "a Triagem" },
       ).raiz
     : null;
   return {

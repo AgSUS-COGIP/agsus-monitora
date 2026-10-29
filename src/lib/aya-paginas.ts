@@ -117,30 +117,6 @@ const PAGINAS: Readonly<Record<string, PaginaDoMenu>> = Object.freeze({
     intro: introDaVisaoGeral,
     sugestoes: sugestoesDaVisaoGeral,
   },
-  nucleo: {
-    nome: "Editais",
-    intro: () =>
-      "Posso explicar como o status do edital é calculado, o cronograma, os anexos em PDF e o quadro de vagas.",
-    sugestoes: () => [
-      sug("Status do edital", "Como o status do edital é calculado?"),
-      sug(
-        "Anexos do PDF",
-        "Como importar o cronograma e o quadro de vagas do PDF?",
-      ),
-      sug("Vagas imediatas", "De onde vêm as vagas imediatas?"),
-      sug("Mudar de área", "Como mover um edital de área?"),
-    ],
-  },
-  calendario: {
-    nome: "Cronograma",
-    intro: () =>
-      "Posso explicar o que o Cronograma mostra e de onde vêm as datas das etapas.",
-    sugestoes: () => [
-      sug("O que aparece", "O que o Cronograma mostra?"),
-      sug("Quem altera", "Quem pode alterar as etapas do cronograma?"),
-      sug("Status do edital", "Como o status do edital é calculado?"),
-    ],
-  },
   analises: {
     nome: "Painel das análises",
     intro: () =>
@@ -149,21 +125,6 @@ const PAGINAS: Readonly<Record<string, PaginaDoMenu>> = Object.freeze({
       sug("Escopo", "O que é o escopo Ativo, Inativo e Todos?"),
       sug("Pendências", "Quais são as pendências das análises curriculares?"),
       sug("Atualização", "Como as análises curriculares são atualizadas?"),
-      sug(
-        "Painel × Avaliação",
-        "Qual a diferença entre o Painel das análises e a Avaliação documental?",
-      ),
-    ],
-  },
-  "avaliacao-documental": {
-    nome: "Avaliação documental",
-    intro: () =>
-      "Posso explicar a regra da avaliação do edital, as versões, os modelos, a prévia e a equipe.",
-    sugestoes: () => [
-      sug("Regra", "Como funciona a regra da avaliação documental?"),
-      sug("Modelos", "Quais são os modelos da regra da avaliação?"),
-      sug("Equipe", "Quem pode entrar na equipe da avaliação documental?"),
-      sug("Prévia", "Como testar a regra com um candidato fictício?"),
       sug(
         "Painel × Avaliação",
         "Qual a diferença entre o Painel das análises e a Avaliação documental?",
@@ -182,18 +143,6 @@ const PAGINAS: Readonly<Record<string, PaginaDoMenu>> = Object.freeze({
       sug("Quem decide", "Quem pode decidir um recurso?"),
     ],
   },
-  "analisar-recursos": {
-    nome: "Analisar recursos",
-    intro: () =>
-      "Posso explicar como registrar, enviar ao parecer, decidir, responder e ajustar a pontuação.",
-    sugestoes: () => [
-      sug("Registrar", "Como registrar um recurso?"),
-      sug("Fluxo do parecer", "Como funciona o fluxo do parecer jurídico?"),
-      sug("Quem decide", "Quem pode decidir um recurso?"),
-      sug("Ajuste da pontuação", "Como ajustar a pontuação no recurso?"),
-      sug("Resposta enviada", "Quem marca a resposta como enviada?"),
-    ],
-  },
   entrevistas: {
     nome: "Painel de entrevistas",
     intro: () =>
@@ -205,8 +154,81 @@ const PAGINAS: Readonly<Record<string, PaginaDoMenu>> = Object.freeze({
       sug("Carga", "Quando as entrevistas são atualizadas?"),
     ],
   },
+  selecao: {
+    nome: "Painel da Seleção",
+    intro: () =>
+      "Posso explicar o funil por vaga, a taxa de contratação e quando os dados são atualizados.",
+    sugestoes: () => [
+      sug("Funil", "Como funciona a tela de Seleção?"),
+      sug("Taxa", "Como é calculada a taxa de contratação?"),
+      sug("Atualização", "Quando a Seleção é atualizada?"),
+      sug("Convocados", "De onde vêm os convocados para entrevista?"),
+    ],
+  },
+  calendario: {
+    nome: "Cronograma",
+    intro: () =>
+      "Posso explicar o que o Cronograma mostra e de onde vêm as datas das etapas.",
+    sugestoes: () => [
+      sug("O que aparece", "O que o Cronograma mostra?"),
+      sug("Quem altera", "Quem pode alterar as etapas do cronograma?"),
+      sug("Status do edital", "Como o status do edital é calculado?"),
+    ],
+  },
+  nucleo: {
+    nome: "Editais",
+    intro: () =>
+      "Posso explicar como o status do edital é calculado, o cronograma, os anexos em PDF e o quadro de vagas.",
+    sugestoes: () => [
+      sug("Status do edital", "Como o status do edital é calculado?"),
+      sug(
+        "Anexos do PDF",
+        "Como importar o cronograma e o quadro de vagas do PDF?",
+      ),
+      sug("Vagas imediatas", "De onde vêm as vagas imediatas?"),
+      sug("Mudar de área", "Como mover um edital de área?"),
+    ],
+  },
+  "pre-classificacao": {
+    nome: "Triagem",
+    intro: () =>
+      "Posso explicar a Lista Provisória, os eliminados e os motivos, o lote de convocação e o Recalcular.",
+    sugestoes: () => [
+      sug("O que é", "O que é a Triagem?"),
+      sug("Eliminação", "Por que o candidato foi eliminado na provisória?"),
+      sug("Lote", "Como é calculado o lote?"),
+      sug("Recalcular", "Como recalcular a triagem?"),
+    ],
+  },
+  "avaliacao-documental": {
+    nome: "Avaliação documental",
+    intro: () =>
+      "Posso explicar a regra da avaliação do edital, as versões, os modelos, a prévia e a equipe.",
+    sugestoes: () => [
+      sug("Regra", "Como funciona a regra da avaliação documental?"),
+      sug("Modelos", "Quais são os modelos da regra da avaliação?"),
+      sug("Equipe", "Quem pode entrar na equipe da avaliação documental?"),
+      sug("Prévia", "Como testar a regra com um candidato fictício?"),
+      sug(
+        "Painel × Avaliação",
+        "Qual a diferença entre o Painel das análises e a Avaliação documental?",
+      ),
+    ],
+  },
+  "analisar-recursos": {
+    nome: "Recursos",
+    intro: () =>
+      "Posso explicar como registrar, enviar ao parecer, decidir, responder e ajustar a pontuação.",
+    sugestoes: () => [
+      sug("Registrar", "Como registrar um recurso?"),
+      sug("Fluxo do parecer", "Como funciona o fluxo do parecer jurídico?"),
+      sug("Quem decide", "Quem pode decidir um recurso?"),
+      sug("Ajuste da pontuação", "Como ajustar a pontuação no recurso?"),
+      sug("Resposta enviada", "Quem marca a resposta como enviada?"),
+    ],
+  },
   "conduzir-entrevistas": {
-    nome: "Conduzir entrevistas",
+    nome: "Entrevistas",
     intro: () =>
       "Posso explicar a fila do dia, a ficha de notas, o Preparar (configuração e convocação) e os roteiros.",
     sugestoes: () => [
@@ -244,17 +266,6 @@ const PAGINAS: Readonly<Record<string, PaginaDoMenu>> = Object.freeze({
       sug("Modelo de convocação", "Como funciona o modelo de convocação?"),
       sug("Anexos", "Quem pode anexar documentos ao candidato?"),
       sug("Sub judice", "Como funciona o candidato sub judice?"),
-    ],
-  },
-  selecao: {
-    nome: "Painel da Seleção",
-    intro: () =>
-      "Posso explicar o funil por vaga, a taxa de contratação e quando os dados são atualizados.",
-    sugestoes: () => [
-      sug("Funil", "Como funciona a tela de Seleção?"),
-      sug("Taxa", "Como é calculada a taxa de contratação?"),
-      sug("Atualização", "Quando a Seleção é atualizada?"),
-      sug("Convocados", "De onde vêm os convocados para entrevista?"),
     ],
   },
 });
@@ -301,28 +312,6 @@ export const SECOES_DA_AYA: Readonly<Record<string, SecaoDaAya>> =
         sug("Contraste", "O que significa o contraste da cor do painel?"),
       ],
     }),
-    recursos: Object.freeze({
-      nome: "Painéis externos",
-      intro:
-        "Posso explicar os painéis externos do menu: título, endereço e situação.",
-      sugestoes: [
-        sug("O que são", "O que são os painéis externos?"),
-        sug("Manutenção", "Como pôr um painel em manutenção?"),
-      ],
-    }),
-    operacao: Object.freeze({
-      nome: "Operação",
-      intro:
-        "Posso explicar a versão, a atualização em tempo real e o histórico de publicações.",
-      sugestoes: [
-        sug("Restaurar", "Como restaurar uma versão publicada?"),
-        sug(
-          "Atualização do sistema",
-          "Como funciona a atualização do sistema?",
-        ),
-        sug("Pessoas online", "O que mostra Pessoas online?"),
-      ],
-    }),
     comemoracoes: Object.freeze({
       nome: "Comemorações",
       intro:
@@ -345,6 +334,15 @@ export const SECOES_DA_AYA: Readonly<Record<string, SecaoDaAya>> =
         sug("Conta desativada", "Como reativar uma conta desativada?"),
       ],
     }),
+    recursos: Object.freeze({
+      nome: "Painéis externos",
+      intro:
+        "Posso explicar os painéis externos do menu: título, endereço e situação.",
+      sugestoes: [
+        sug("O que são", "O que são os painéis externos?"),
+        sug("Manutenção", "Como pôr um painel em manutenção?"),
+      ],
+    }),
     modulos: Object.freeze({
       nome: "Módulos e abas",
       intro:
@@ -353,6 +351,19 @@ export const SECOES_DA_AYA: Readonly<Record<string, SecaoDaAya>> =
         sug("Manutenção", "O que acontece quando uma aba fica em manutenção?"),
         sug("Selo BETA", "O que é o selo BETA?"),
         sug("Área desativada", "O que acontece quando uma área é desativada?"),
+      ],
+    }),
+    operacao: Object.freeze({
+      nome: "Operação",
+      intro:
+        "Posso explicar a versão, a atualização em tempo real e o histórico de publicações.",
+      sugestoes: [
+        sug("Restaurar", "Como restaurar uma versão publicada?"),
+        sug(
+          "Atualização do sistema",
+          "Como funciona a atualização do sistema?",
+        ),
+        sug("Pessoas online", "O que mostra Pessoas online?"),
       ],
     }),
     cargas: Object.freeze({

@@ -143,7 +143,7 @@ const ENTREVISTA_ELIMINADOS_PRELIMINARES = linhas(
   "A relação apresentada neste documento contempla os candidatos eliminados na etapa de Entrevistas, com o nome completo, a nota obtida e o respectivo motivo da eliminação.",
 );
 /*
-  As listas da pré-classificação (Avaliação documental, fase F2): a Lista
+  As listas da triagem (Avaliação documental, fase F2): a Lista
   Geral de Classificação Provisória por ART (item 8.3.1, caráter provisório,
   não valida documentos) e o Lote de Convocação (item 8.4). Os itens do
   edital ficam no texto e podem ser trocados por edital (regra.documento).
@@ -327,7 +327,7 @@ export const MODELOS_PADRAO: Readonly<
 const FASE_PADRAO: Readonly<Record<string, string | undefined>> = Object.freeze(
   { FINAL: "FINAL" },
 );
-/* Listas sem fase no título (a convocação e as da pré-classificação). */
+/* Listas sem fase no título (a convocação e as da triagem). */
 const SEM_FASE = new Set(["CONVOCACAO", "PROVISORIA", "LOTE"]);
 
 /** A fase da publicação: a escolhida, ou a padrão da etapa (FINAL no resultado final). */

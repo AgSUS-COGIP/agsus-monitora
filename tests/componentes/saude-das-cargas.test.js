@@ -335,7 +335,7 @@ describe("a seção na Administração", async () => {
   it("existe e é só do administrador global", () => {
     expect(SECOES.find((s) => s.id === "cargas")).toMatchObject({
       rotulo: "Status das atualizações",
-      iconeDoMenu: "heart-pulse",
+      iconeDoMenu: "activity",
     });
     expect(secaoDeConfiguracaoPermitida(ADMIN, "cargas")).toBe(true);
     expect(

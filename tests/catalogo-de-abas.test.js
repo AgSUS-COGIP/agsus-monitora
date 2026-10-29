@@ -124,8 +124,66 @@ const ROLLBACK_DA_PRE = ler(
 const ENSAIO_DA_PRE = ler(
   "supabase/ensaios/20261028100644_entrada_propria_pre_classificacao.sql",
 );
-const RESPOSTA_DO_ENSAIO = JSON.parse(
-  ler("tests/fixtures/listar-abas-do-menu-pre-classificacao.json"),
+/*
+  Menu reorganizado e Pré-classificação vira Triagem
+  (20261029150000_menu_reorganizado_e_triagem.sql): só troca rótulo, ícone e
+  ordem das abas (`(codigo, rotulo_antigo, icone_antigo, ordem_antiga,
+  rotulo_novo, icone_novo, ordem_nova)`), aplicado por último no seed e na
+  resposta do ensaio anterior. A resposta real da função no ensaio desta
+  migration fica em `fixtures/listar-abas-do-menu-triagem.json`.
+*/
+const MIGRATION_DO_MENU = ler(
+  "supabase/migrations/20261029150000_menu_reorganizado_e_triagem.sql",
+);
+const MENU_NOVO = new Map(
+  [
+    ...MIGRATION_DO_MENU.matchAll(
+      /\('([^']+)', '([^']+)', '([^']+)', (\d+), '([^']+)', '([^']+)', (\d+)\)/g,
+    ),
+  ].map(
+    ([
+      ,
+      codigo,
+      rotuloAntigo,
+      iconeAntigo,
+      ordemAntiga,
+      rotulo,
+      icone,
+      ordem,
+    ]) => [
+      codigo,
+      {
+        antes: [rotuloAntigo, iconeAntigo, Number(ordemAntiga)],
+        depois: { rotulo, icone, ordem: Number(ordem) },
+      },
+    ],
+  ),
+);
+function comMenuNovo(resposta) {
+  return resposta
+    .map((aba) => {
+      const troca = MENU_NOVO.get(aba.co_aba);
+      if (!troca) return aba;
+      const { rotulo, icone, ordem } = troca.depois;
+      return {
+        ...aba,
+        no_aba: rotulo,
+        ds_icone: icone,
+        nu_ordem: ordem,
+        areas: aba.areas.map((area) => ({
+          ...area,
+          nu_ordem: ordem,
+          ds_icone: icone,
+        })),
+      };
+    })
+    .sort((a, b) => a.nu_ordem - b.nu_ordem);
+}
+const RESPOSTA_DO_ENSAIO = comMenuNovo(
+  JSON.parse(ler("tests/fixtures/listar-abas-do-menu-pre-classificacao.json")),
+);
+const RESPOSTA_DO_ENSAIO_DO_MENU = JSON.parse(
+  ler("tests/fixtures/listar-abas-do-menu-triagem.json"),
 );
 const ARVORES_DE_ANTES = JSON.parse(
   ler("tests/fixtures/menu-lateral-antes-do-catalogo.json"),
@@ -206,6 +264,16 @@ function abasDoSeed() {
   }
   const selecao = abas.find((linha) => linha.CO_ABA === "selecao");
   if (selecao?.NO_ABA === "Seleção") selecao.NO_ABA = "Painel da Seleção";
+  for (const aba of abas) {
+    const troca = MENU_NOVO.get(aba.CO_ABA);
+    if (!troca) continue;
+    expect([aba.NO_ABA, aba.DS_ICONE, aba.NU_ORDEM], aba.CO_ABA).toEqual(
+      troca.antes,
+    );
+    aba.NO_ABA = troca.depois.rotulo;
+    aba.DS_ICONE = troca.depois.icone;
+    aba.NU_ORDEM = troca.depois.ordem;
+  }
   return abas;
 }
 
@@ -351,26 +419,29 @@ describe("o seed da migration é o catálogo do código", () => {
   const doBanco = abasDoCatalogo(respostaDoSeed());
 
   it("as mesmas abas, com os mesmos campos", () => {
-    // A migração cria a Pré-classificação desligada; a entrada só é
-    // visível quando o catálogo do banco a publicar. Não vai no fallback.
-    expect(
-      doBanco.filter((aba) => aba.id !== "pre-classificacao").map(camposDaAba),
-    ).toEqual(ABAS_DO_MENU.map(camposDaAba));
+    // A Triagem (código técnico pre-classificacao) já está ligada no banco
+    // (#597) e entra também no catálogo do código.
+    expect(doBanco.map(camposDaAba)).toEqual(ABAS_DO_MENU.map(camposDaAba));
     expect(doBanco.find((aba) => aba.id === "pre-classificacao")).toMatchObject(
       {
         id: "pre-classificacao",
-        rotulo: "Pré-classificação",
+        rotulo: "Triagem",
+        icone: "list-checks",
         view: "pre-classificacao",
-        ordem: 6,
+        ordem: 8,
         recurso: "avaliacao_documental",
       },
     );
   });
 
   it("as mesmas páginas em cada área (view, rótulo, ícone e ordem)", () => {
-    expect(
-      paginasPorArea(doBanco.filter((aba) => aba.id !== "pre-classificacao")),
-    ).toEqual(paginasPorArea(ABAS_DO_MENU));
+    expect(paginasPorArea(doBanco)).toEqual(paginasPorArea(ABAS_DO_MENU));
+  });
+
+  it("a resposta real do ensaio do menu novo é o catálogo do código", () => {
+    expect(abasDoCatalogo(RESPOSTA_DO_ENSAIO_DO_MENU).map(camposDaAba)).toEqual(
+      ABAS_DO_MENU.map(camposDaAba),
+    );
   });
 
   it("a resposta real da função, no ensaio, é a que o seed produz", () => {
@@ -461,7 +532,13 @@ const arvore = (permitidas, areas, abas) =>
     abas,
   });
 
-describe("nenhuma mudança visível: a árvore é a de antes", () => {
+/*
+  A fixture guarda a árvore de cada combinação (permissão × área). Foi gerada
+  com o código de antes do catálogo e regenerada no menu reorganizado de
+  29/10 (blocos Acompanhar/Processo seletivo, nova ordem): com o catálogo do
+  banco ou com o do código, a árvore é a mesma.
+*/
+describe("a árvore é a mesma com o catálogo do banco ou do código", () => {
   it("a fixture cobre todas as combinações", () => {
     expect(Object.keys(ARVORES_DE_ANTES).sort()).toEqual(
       COMBINACOES.map(([nome]) => nome).sort(),
@@ -488,7 +565,7 @@ describe("a árvore segue o catálogo do banco quando ele chega", () => {
     const editais = resposta.find((aba) => aba.co_aba === "editais");
     Object.assign(
       editais.areas.find((a) => a.co_area === "projetos"),
-      { nu_ordem: 13, ds_icone: "folder" },
+      { nu_ordem: 99, ds_icone: "folder" },
     );
     const grupos = Object.fromEntries(
       arvore(PERMISSOES.admin, AREAS.todas, abasDoCatalogo(resposta)).map(
@@ -578,13 +655,8 @@ describe("carga do catálogo na sessão", () => {
     });
     expect(usou).toBe(true);
     expect(abasDoMenu()).not.toBe(ABAS_DO_MENU);
-    expect(
-      abasDoMenu()
-        .filter((aba) => aba.id !== "pre-classificacao")
-        .map((aba) => aba.id),
-    ).toEqual(ABAS_DO_MENU.map((aba) => aba.id));
-    expect(abasDoMenu().some((aba) => aba.id === "pre-classificacao")).toBe(
-      true,
+    expect(abasDoMenu().map((aba) => aba.id)).toEqual(
+      ABAS_DO_MENU.map((aba) => aba.id),
     );
   });
 
@@ -669,12 +741,13 @@ describe("selo beta das abas", () => {
 
   it("no fallback, somente as abas já publicadas no banco são beta", () => {
     const beta = [
+      "entrevistas",
+      "selecao",
+      "pre-classificacao",
       "avaliacao-documental",
       "analisar-recursos",
-      "entrevistas",
       "conduzir-entrevistas",
       "classificacao",
-      "selecao",
     ];
     expect(ABAS_DO_MENU.filter((aba) => aba.beta).map((aba) => aba.id)).toEqual(
       beta,
@@ -694,7 +767,7 @@ describe("selo beta das abas", () => {
       ),
     ).toEqual({
       view: "analisar-recursos",
-      rotulo: "Analisar recursos",
+      rotulo: "Recursos",
       icone: "gavel",
       bloco: "processo",
       beta: true,

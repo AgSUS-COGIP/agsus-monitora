@@ -13,7 +13,7 @@ import {
 import { Aviso, Campo, Selo } from "../../ui/index.ts";
 
 /*
-  Cartão "Inscrições congeladas" da aba Pré-classificação (migration
+  Cartão "Inscrições congeladas" da aba Triagem (migration
   20261020170000): mostra se a trava do edital está ligada (quem, quando e o
   motivo) e, para a coordenação da avaliação do edital ou o administrador
   global, Congelar / Liberar com motivo. Liberado e sem permissão, o cartão
@@ -21,7 +21,7 @@ import { Aviso, Campo, Selo } from "../../ui/index.ts";
   src/lib/avaliacao-documental/trava-das-inscricoes.ts; explicação na Aya
   ("Inscrições congeladas", docs/aya/regras-da-avaliacao-documental.md).
   `inicial`: a resposta já lida junto com o resumo da aba (o estado da
-  Pré-classificação lê tudo em paralelo); sem ela (undefined), o cartão lê.
+  Triagem lê tudo em paralelo); sem ela (undefined), o cartão lê.
 */
 
 type Rpc = (
@@ -138,8 +138,8 @@ export function TravaDasInscricoes({
         <div className="avd-trava-form">
           <Aviso tom="warning">
             {congelar
-              ? "O robô da Empregare e a pré-classificação deixam de mexer neste edital (inscrições e lote). O Só anexos só compara, salvo com a liberação do administrador global."
-              : "O robô da Empregare e a pré-classificação voltam a atualizar inscrições e lote deste edital."}
+              ? "O robô da Empregare e a triagem deixam de mexer neste edital (inscrições e lote). O Só anexos só compara, salvo com a liberação do administrador global."
+              : "O robô da Empregare e a triagem voltam a atualizar inscrições e lote deste edital."}
           </Aviso>
           <Campo
             rotulo={congelar ? "Motivo para congelar" : "Motivo para liberar"}

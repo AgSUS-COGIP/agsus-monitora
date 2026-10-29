@@ -61,13 +61,7 @@ export function paginaDesligada({
   view,
   area,
 }: ConsultaDaPagina): boolean {
-  if (view === "pre-classificacao" && !doBanco) return true;
-  if (
-    !doBanco ||
-    !view ||
-    (!ehViewDeAba(abas, view) && view !== "pre-classificacao")
-  )
-    return false;
+  if (!doBanco || !view || !ehViewDeAba(abas, view)) return false;
   if (area && ehAreaDoSistema(area)) {
     if (!areaEstaAtiva(situacao, area)) return true;
     return !paginasDaArea(abas, area).some((pagina) => pagina.view === view);

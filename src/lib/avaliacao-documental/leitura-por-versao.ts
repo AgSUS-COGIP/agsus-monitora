@@ -108,7 +108,7 @@ interface Conhecido {
 
 /**
  * A leitura de uma RPC por versão. Guarda só o último payload na memória (o
- * da pré-classificação passa de 4 MB refeito); a cópia do navegador, se
+ * da triagem passa de 4 MB refeito); a cópia do navegador, se
  * houver, guarda o payload como veio (em colunas, ~1/4 do tamanho).
  */
 export function criarLeituraPorVersao({

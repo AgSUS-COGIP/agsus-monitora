@@ -43,7 +43,7 @@ const daPre = (codigo, extra = {}) => ({
 });
 
 describe("decisão da coordenação na tela", () => {
-  it("selo e motivo: só de quem entrou por decisão (pré-classificação e fila)", () => {
+  it("selo e motivo: só de quem entrou por decisão (triagem e fila)", () => {
     const pre = daPre("6975425", {
       situacao: "NO_LOTE",
       entrada: "DECISAO",
@@ -267,7 +267,7 @@ describe("decisão da coordenação no banco", () => {
       "1 candidato incluído no lote por decisão da coordenação.",
       "success",
     );
-    // Releu o resumo da pré-classificação depois de incluir.
+    // Releu o resumo da triagem depois de incluir.
     expect(
       supabase.rpc.mock.calls.filter(
         ([n]) => n === "obter_resumo_pre_classificacao",

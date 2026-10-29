@@ -447,8 +447,8 @@ export function RodarComOpcoes({
               data-tour="robos-opcoes-so-anexos"
             >
               <Aviso tom="warning">
-                Não exporta: situação, ativos, lote e pré-classificação não
-                mudam. Releitura com anexo a menos não é gravada.
+                Não exporta: situação, ativos, lote e triagem não mudam.
+                Releitura com anexo a menos não é gravada.
               </Aviso>
               <Campo
                 rotulo="Códigos de candidato (opcional)"

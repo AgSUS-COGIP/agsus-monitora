@@ -52,7 +52,7 @@ test.describe("AgSUS Monitora smoke", () => {
     expect(html).not.toContain("fonts.googleapis.com");
     expect(html).not.toContain("cdn.jsdelivr.net/npm/@supabase/supabase-js");
   });
-  test("o seletor da Pré-classificação respeita a largura de celulares", async ({
+  test("o seletor da Triagem respeita a largura de celulares", async ({
     page,
   }) => {
     const css = readFileSync(
@@ -69,7 +69,7 @@ test.describe("AgSUS Monitora smoke", () => {
       await page.setContent(`
         <style>${css}</style>
         <main style="box-sizing:border-box;width:100%;padding:12px">
-          <section class="avd-edital" aria-label="Edital da pré-classificação">
+          <section class="avd-edital" aria-label="Edital da triagem">
             <div>
               <label for="edital">Edital</label>
               <select id="edital">

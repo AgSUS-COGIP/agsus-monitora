@@ -275,7 +275,7 @@ _COTA_NEGADA = ("NAO_CONFORME", "NAO_ENVIADO")
 def modalidades_do_lancamento(candidato):
     """
     As cotas que o candidato optou, em ordem de prioridade (modalidadesDoLancamento
-    do JS): o lançamento `modalidades` (a lista da pré-classificação) ou, na ficha
+    do JS): o lançamento `modalidades` (a lista da triagem) ou, na ficha
     antiga sem a lista, a `modalidade` única. [] = só a ampla.
     """
     candidato = _objeto(candidato)

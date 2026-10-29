@@ -1,5 +1,5 @@
 /*
-  Comprovante da eliminação na pré-classificação, ANTES da análise documental.
+  Comprovante da eliminação na triagem, ANTES da análise documental.
   Não reutiliza montarEspelho(ficha): sem ficha concluída, não existe nota
   apurada pela comissão. Reutiliza apenas o contrato/diagramação Espelho.
 */
@@ -36,7 +36,7 @@ const nota = (v: unknown) =>
     : "Não disponível";
 
 /**
- * Modelo único de comunicação de decisão de pré-classificação.
+ * Modelo único de comunicação de decisão de triagem.
  * Rejeita candidatos de outra situação e motivo ausente; não transforma
  * ausência de nota em zero. Não consulta banco nem altera classificação.
  */
@@ -45,7 +45,7 @@ export function espelhoDaEliminacaoPreAnalise(
   textos: TextosDoEspelho = TEXTOS_PADRAO_DO_ESPELHO,
 ): Espelho {
   if (candidato.situacao !== "ELIMINADO")
-    throw new Error("Somente eliminados na pré-classificação.");
+    throw new Error("Somente eliminados na triagem.");
   if (!texto(candidato.codigo) || !texto(candidato.edital))
     throw new Error("Código de candidato e edital são obrigatórios.");
   if (!texto(candidato.motivo))
@@ -72,7 +72,7 @@ export function espelhoDaEliminacaoPreAnalise(
           },
         ]
       : []),
-    { rotulo: "Etapa", valor: "Pré-classificação da inscrição" },
+    { rotulo: "Etapa", valor: "Triagem da inscrição" },
     { rotulo: "Situação", valor: "Eliminado(a) antes da análise documental" },
   ];
   const notasAdministrativas = new Set([
@@ -105,7 +105,7 @@ export function espelhoDaEliminacaoPreAnalise(
   ];
   return {
     modelo: "ELIMINADO",
-    titulo: "Comunicado de eliminação na pré-classificação",
+    titulo: "Comunicado de eliminação na triagem",
     candidato: texto(candidato.nome) || "candidato(a)",
     dados,
     notas,
@@ -125,11 +125,11 @@ export function espelhoDaEliminacaoPreAnalise(
       ...textos,
       subtitulo: "Registro da decisão anterior à análise documental",
       abertura:
-        "A inscrição foi eliminada na pré-classificação. Não houve análise documental nem atribuição de nota pela comissão avaliadora. Quando exibidas, as notas da inscrição são apenas informativas.",
+        "A inscrição foi eliminada na triagem. Não houve análise documental nem atribuição de nota pela comissão avaliadora. Quando exibidas, as notas da inscrição são apenas informativas.",
       secao_notas: "Notas da inscrição (informativas)",
       secao_justificativas: "Motivo da eliminação registrado no sistema",
       rodape:
-        "Documento informativo gerado a partir da pré-classificação registrada para o edital. Não substitui a publicação oficial ou o procedimento de recurso previsto no edital.",
+        "Documento informativo gerado a partir da triagem registrada para o edital. Não substitui a publicação oficial ou o procedimento de recurso previsto no edital.",
     },
   };
 }

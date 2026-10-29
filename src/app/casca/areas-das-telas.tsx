@@ -30,7 +30,7 @@ export const TELAS_DA_CASCA = [
   "page-analises",
   // React: src/modulos/avaliacao-documental/.
   "page-avaliacao-documental",
-  // Pré-classificação independente, sob o mesmo recurso de avaliação documental.
+  // Triagem independente, sob o mesmo recurso de avaliação documental.
   "page-pre-classificacao",
   // React: src/modulos/classificacao/.
   "page-classificacao",

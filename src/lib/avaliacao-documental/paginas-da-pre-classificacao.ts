@@ -1,5 +1,5 @@
 /*
-  A pré-classificação em páginas, sem DOM e sem estado. A aba lê o resumo
+  A triagem em páginas, sem DOM e sem estado. A aba lê o resumo
   (obter_resumo_pre_classificacao: vagas com as contagens, lotes, congeladas e
   listas, sem os inscritos) e as linhas de cada vaga 50 por vez
   (listar_pre_classificacao), como o job Python gravou: nada se recalcula

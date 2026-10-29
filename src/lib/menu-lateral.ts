@@ -157,9 +157,15 @@ const NAS_TRES_AREAS = [
   { area: "projetos" },
 ];
 
-/* A Pré-classificação não entra no fallback: o banco a cadastra inativa no
-   PR #596 e só a ativa em #597. Sem catálogo carregado, não antecipar o
-   lançamento; uma entrada ativa do banco passa a ser exibida normalmente. */
+/*
+  A ordem do catálogo (migration `20261029150000_menu_reorganizado_e_triagem.sql`):
+  primeiro o que se acompanha (Visão geral e os painéis, Cronograma), depois o
+  processo seletivo na ordem do fluxo — Editais → Triagem → Avaliação
+  documental → Recursos → Entrevistas → Classificação → Lista de aprovados.
+  Cada página tem ícone próprio (`tests/menu-lateral.test.js` falha se dois
+  itens do menu repetirem o ícone). A Triagem guarda o código técnico
+  `pre-classificacao` (rota, recurso e tabelas não mudaram de nome).
+*/
 export const ABAS_DO_MENU = Object.freeze(
   [
     {
@@ -173,72 +179,30 @@ export const ABAS_DO_MENU = Object.freeze(
       areas: NAS_TRES_AREAS,
     },
     {
-      id: "editais",
-      rotulo: "Editais",
-      icone: "file-text",
-      ordem: 2,
-      view: "nucleo",
-      recurso: "nucleo",
-      tipo: "nativa",
-      areas: NAS_TRES_AREAS,
-    },
-    {
-      id: "cronograma",
-      rotulo: "Cronograma",
-      icone: "calendar-days",
-      ordem: 3,
-      view: "calendario",
-      recurso: "calendario",
-      tipo: "nativa",
-      areas: NAS_TRES_AREAS,
-    },
-    {
       id: "analises",
       rotulo: "Painel das análises",
       icone: "file-search",
-      ordem: 4,
+      ordem: 2,
       view: "analises",
       recurso: "analises",
       tipo: "nativa",
       areas: NAS_TRES_AREAS,
     },
     {
-      id: "avaliacao-documental",
-      rotulo: "Avaliação documental",
-      icone: "graduation-cap",
-      ordem: 5,
-      view: "avaliacao-documental",
-      recurso: "avaliacao_documental",
-      tipo: "nativa",
-      beta: true,
-      areas: NAS_TRES_AREAS,
-    },
-    {
       id: "recursos",
       rotulo: "Painel de recursos",
       icone: "scale",
-      ordem: 7,
+      ordem: 3,
       view: "recursos",
       recurso: "recursos",
       tipo: "nativa",
       areas: NAS_TRES_AREAS,
     },
     {
-      id: "analisar-recursos",
-      rotulo: "Analisar recursos",
-      icone: "gavel",
-      ordem: 8,
-      view: "analisar-recursos",
-      recurso: "recursos",
-      tipo: "nativa",
-      beta: true,
-      areas: NAS_TRES_AREAS,
-    },
-    {
       id: "entrevistas",
       rotulo: "Painel de entrevistas",
       icone: "messages-square",
-      ordem: 9,
+      ordem: 4,
       view: "entrevistas",
       recurso: "entrevistas",
       tipo: "nativa",
@@ -246,10 +210,74 @@ export const ABAS_DO_MENU = Object.freeze(
       areas: NAS_TRES_AREAS,
     },
     {
-      id: "conduzir-entrevistas",
-      rotulo: "Conduzir entrevistas",
-      icone: "clipboard-pen-line",
+      id: "selecao",
+      rotulo: "Painel da Seleção",
+      icone: "funnel",
+      ordem: 5,
+      view: "selecao",
+      recurso: "selecao",
+      tipo: "nativa",
+      beta: true,
+      areas: NAS_TRES_AREAS,
+    },
+    {
+      id: "cronograma",
+      rotulo: "Cronograma",
+      icone: "calendar-days",
+      ordem: 6,
+      view: "calendario",
+      recurso: "calendario",
+      tipo: "nativa",
+      areas: NAS_TRES_AREAS,
+    },
+    {
+      id: "editais",
+      rotulo: "Editais",
+      icone: "file-text",
+      ordem: 7,
+      view: "nucleo",
+      recurso: "nucleo",
+      tipo: "nativa",
+      areas: NAS_TRES_AREAS,
+    },
+    {
+      id: "pre-classificacao",
+      rotulo: "Triagem",
+      icone: "list-checks",
+      ordem: 8,
+      view: "pre-classificacao",
+      recurso: "avaliacao_documental",
+      tipo: "nativa",
+      beta: true,
+      areas: NAS_TRES_AREAS,
+    },
+    {
+      id: "avaliacao-documental",
+      rotulo: "Avaliação documental",
+      icone: "graduation-cap",
+      ordem: 9,
+      view: "avaliacao-documental",
+      recurso: "avaliacao_documental",
+      tipo: "nativa",
+      beta: true,
+      areas: NAS_TRES_AREAS,
+    },
+    {
+      id: "analisar-recursos",
+      rotulo: "Recursos",
+      icone: "gavel",
       ordem: 10,
+      view: "analisar-recursos",
+      recurso: "recursos",
+      tipo: "nativa",
+      beta: true,
+      areas: NAS_TRES_AREAS,
+    },
+    {
+      id: "conduzir-entrevistas",
+      rotulo: "Entrevistas",
+      icone: "clipboard-pen-line",
+      ordem: 11,
       view: "conduzir-entrevistas",
       recurso: "entrevistas",
       tipo: "nativa",
@@ -260,7 +288,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "classificacao",
       rotulo: "Classificação",
       icone: "list-ordered",
-      ordem: 11,
+      ordem: 12,
       view: "classificacao",
       recurso: "classificacao",
       tipo: "nativa",
@@ -271,46 +299,53 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "aprovados",
       rotulo: "Lista de aprovados",
       icone: "user-round-check",
-      ordem: 12,
+      ordem: 13,
       view: "approved",
       recurso: "aprovados",
       tipo: "nativa",
-      areas: NAS_TRES_AREAS,
-    },
-    {
-      id: "selecao",
-      rotulo: "Painel da Seleção",
-      icone: "funnel",
-      ordem: 13,
-      view: "selecao",
-      recurso: "selecao",
-      tipo: "nativa",
-      beta: true,
       areas: NAS_TRES_AREAS,
     },
   ].map(congelarAba),
 );
 
 /*
-  Os dois blocos de cada área, com título no menu:
+  Os dois blocos de cada área, com título no menu — iguais em todas as áreas
+  (cada uma mostra só as abas ligadas nela):
 
-  - Acompanhamento: as páginas de consulta (Visão geral e os painéis —
-    análises, recursos, entrevistas e Seleção) e os painéis externos.
-  - Processo seletivo: onde se trabalha, na ordem das etapas (Editais,
-    Cronograma, Avaliação documental, Analisar recursos, Conduzir
-    entrevistas, Classificação, Lista de aprovados).
+  - Acompanhar: as páginas de consulta (Visão geral, os painéis — análises,
+    recursos, entrevistas e Seleção — e o Cronograma) e os painéis externos.
+  - Processo seletivo: onde se trabalha, na ordem do fluxo (Editais, Triagem,
+    Avaliação documental, Recursos, Entrevistas, Classificação, Lista de
+    aprovados).
 
   Dentro de cada bloco vale a ordem do catálogo, que já segue as etapas. O
   bloco é da ABA (o código, não a view, que a área pode trocar): aba nova
   nativa entra em Processo seletivo até ser listada aqui; aba externa (um
-  painel no catálogo, `tp_aba = 'externa'`) entra em Acompanhamento.
+  painel no catálogo, `tp_aba = 'externa'`) entra em Acompanhar.
 */
 export const BLOCO_DE_ACOMPANHAMENTO: BlocoDoMenu = "acompanhamento";
 export const BLOCO_DO_PROCESSO: BlocoDoMenu = "processo";
 
-export const BLOCOS_DA_AREA = Object.freeze([
-  Object.freeze({ id: BLOCO_DE_ACOMPANHAMENTO, rotulo: "Acompanhamento" }),
-  Object.freeze({ id: BLOCO_DO_PROCESSO, rotulo: "Processo seletivo" }),
+export const BLOCOS_DA_AREA: readonly { id: BlocoDoMenu; rotulo: string }[] =
+  Object.freeze([
+    Object.freeze({ id: BLOCO_DE_ACOMPANHAMENTO, rotulo: "Acompanhar" }),
+    Object.freeze({ id: BLOCO_DO_PROCESSO, rotulo: "Processo seletivo" }),
+  ]);
+
+/*
+  Administração em três grupos, cada seção de Configurações no seu
+  (`grupo` em src/modulos/configuracoes/secoes.ts): Aparência (Marca, Página
+  inicial, Tela de acesso, Aparência, Comemorações), Pessoas e acessos
+  (Acessos, Painéis externos) e Sistema (Módulos e abas, Operação, Status das
+  atualizações, Automação).
+*/
+export const BLOCOS_DA_ADMINISTRACAO: readonly {
+  id: BlocoDoMenu;
+  rotulo: string;
+}[] = Object.freeze([
+  Object.freeze({ id: "aparencia" as const, rotulo: "Aparência" }),
+  Object.freeze({ id: "pessoas" as const, rotulo: "Pessoas e acessos" }),
+  Object.freeze({ id: "sistema" as const, rotulo: "Sistema" }),
 ]);
 
 const ABAS_DE_ACOMPANHAMENTO = new Set([
@@ -319,6 +354,7 @@ const ABAS_DE_ACOMPANHAMENTO = new Set([
   "recursos",
   "entrevistas",
   "selecao",
+  "cronograma",
 ]);
 
 export function blocoDaAba(aba: Pick<AbaDoCatalogo, "id" | "tipo">) {
@@ -333,14 +369,40 @@ export function blocoDaAba(aba: Pick<AbaDoCatalogo, "id" | "tipo">) {
   `bloco` (árvore montada à mão) vale como Processo seletivo.
 */
 export function blocosDaArea(itens: readonly ItemDoMenu[]): BlocoDaArea[] {
-  return BLOCOS_DA_AREA.map((bloco) => ({
-    ...bloco,
-    itens: itens.filter(
-      (item) => (item.bloco ?? BLOCO_DO_PROCESSO) === bloco.id,
-    ),
-  })).filter((bloco) => bloco.itens.length > 0);
+  return separarEmBlocos(itens, BLOCOS_DA_AREA, BLOCO_DO_PROCESSO);
 }
 
+/*
+  As seções de Administração nos três grupos; seção sem grupo conhecido vai
+  para Sistema (o último), para nunca sumir do menu.
+*/
+export function blocosDaAdministracao(
+  itens: readonly ItemDoMenu[],
+): BlocoDaArea[] {
+  const conhecidos = new Set(BLOCOS_DA_ADMINISTRACAO.map((b) => b.id));
+  return separarEmBlocos(
+    itens.map((item) =>
+      item.bloco && conhecidos.has(item.bloco)
+        ? item
+        : { ...item, bloco: "sistema" as const },
+    ),
+    BLOCOS_DA_ADMINISTRACAO,
+    "sistema",
+  );
+}
+
+function separarEmBlocos(
+  itens: readonly ItemDoMenu[],
+  blocos: readonly { id: BlocoDoMenu; rotulo: string }[],
+  padrao: BlocoDoMenu,
+): BlocoDaArea[] {
+  return blocos
+    .map((bloco) => ({
+      ...bloco,
+      itens: itens.filter((item) => (item.bloco ?? padrao) === bloco.id),
+    }))
+    .filter((bloco) => bloco.itens.length > 0);
+}
 /* A área de quem ainda recebe o contexto antigo, sem `profile.areas`. */
 const AREAS_PADRAO = Object.freeze(["saude-indigena"]);
 
@@ -535,6 +597,7 @@ export function montarArvoreDoMenu({
         secao: secao.id,
         rotulo: secao.rotulo,
         icone: secao.iconeDoMenu || ICONE_DAS_CONFIGURACOES,
+        ...(secao.grupo ? { bloco: secao.grupo } : {}),
       });
     }
   }

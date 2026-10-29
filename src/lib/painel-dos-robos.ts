@@ -17,7 +17,7 @@ import type {
       Avaliação documental, salvo "mostrar todos"; os escolhidos ficam; o
       edital de treinamento só com "mostrar todos", com "· Treinamento");
     - o valor de cada edital no pedido (o robô da Empregare só aceita o
-      número; a pré-classificação recebe o id, que não confunde áreas);
+      número; a triagem recebe o id, que não confunde áreas);
     - a prévia do que vai rodar ("5 vagas do 93/2026: 179698, 180231…");
     - as execuções normalizadas (parâmetros, quem pediu, resultado, por vaga)
       e o acompanhamento depois do pedido.
@@ -432,7 +432,7 @@ export function previaDoDisparo({
         ? "Calcula sem gravar"
         : modo === "refazer_lote"
           ? "Refaz o lote de"
-          : "Pré-classifica";
+          : "Faz a triagem de";
     return { frase: `${prefixo} ${alvo}.`, codigos: [], avisos };
   }
 

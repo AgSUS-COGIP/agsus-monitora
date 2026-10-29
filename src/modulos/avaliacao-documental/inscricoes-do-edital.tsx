@@ -8,14 +8,14 @@ import {
 import { Selo } from "../../ui/index.ts";
 
 /*
-  Cartão "Inscrições" no topo da aba Pré-classificação, só durante as
+  Cartão "Inscrições" no topo da aba Triagem, só durante as
   inscrições do cronograma (da véspera do início a 3 dias depois do fim):
   os totais do último retrato (inscritos, finalizaram o questionário, aptos
   para análise pela regra, eliminados), o mini-gráfico diário até o fim das
   inscrições e, por vaga, inscritos · aptos · hoje +N. A conta é de
   src/lib/avaliacao-documental/acompanhamento-das-inscricoes.ts; os retratos
   vêm de obter_acompanhamento_inscricoes (20261009140000), gravados pelo job
-  da pré-classificação a cada execução. Explicação: Aya, "Acompanhar
+  da triagem a cada execução. Explicação: Aya, "Acompanhar
   inscrições" (docs/aya/regras-da-avaliacao-documental.md).
 */
 

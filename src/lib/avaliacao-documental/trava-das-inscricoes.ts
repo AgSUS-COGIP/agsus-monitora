@@ -1,7 +1,7 @@
 /*
   Trava "inscrições congeladas" de um edital (migration
   20261020170000_inscricoes_congeladas.sql): com ela ligada, o robô da
-  Empregare não exporta nem grava candidatos do edital e a pré-classificação
+  Empregare não exporta nem grava candidatos do edital e a triagem
   não recalcula nem refaz o lote; o modo "Só anexos" continua. Liga e desliga
   a coordenação da avaliação do edital ou o administrador global, com motivo.
   Aqui só a leitura da resposta de obter_congelamento_inscricoes e as regras

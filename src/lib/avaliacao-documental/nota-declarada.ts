@@ -18,7 +18,7 @@
   A comparação é sem acento, sem caixa, com os espaços colapsados e o &nbsp;
   da Empregare como espaço. Se o texto casar com mais de uma coluna, é
   ambíguo: não vale nenhuma (colunaDaPergunta devolve null) e a
-  pré-classificação avisa (PERGUNTA_AMBIGUA:<de onde>). Prefira o começo do
+  triagem avisa (PERGUNTA_AMBIGUA:<de onde>). Prefira o começo do
   enunciado ao número.
 
   As respostas vêm como a Empregare exporta (DS_COLUNA_ORIGINAL): escolha
@@ -33,7 +33,7 @@
   4 no técnico), o item traz pontos_por_nivel ({ superior: {opção: pontos},
   tecnico: {…}, medio: {…} }) no lugar de pontos (só OPCAO e OPCOES_SOMADAS).
   A conta usa o mapa do nível da vaga; sem nível conhecido (ou sem mapa para
-  ele), o item não soma e fica nivel_desconhecido — a pré-classificação avisa
+  ele), o item não soma e fica nivel_desconhecido — a triagem avisa
   (SEM_NIVEL:NOTA_<parcial>) e a declarada fica incompleta.
 
   Declarada completa: todo item resolvido — a pergunta não é ambígua, o nível

@@ -89,7 +89,7 @@ import type { AberturaDoRelatorio } from "./relatorio-de-motivos.tsx";
   redistribuir, liberar reservas, mandar para revisão e abrir fichas do lote,
   com confirmação e motivo; o relatório de motivos: relatorio-de-motivos.tsx;
   espelhos e modelo do espelho ficam só na aba Documentos: espelhos.tsx; a
-  inclusão por decisão da coordenação fica só na Pré-classificação), a tabela
+  inclusão por decisão da coordenação fica só na Triagem), a tabela
   agrupada por vaga quando a vaga é "Todas", a decisão da coordenação (selo "Decisão: …" na lista e no topo da
   ficha, com "Revogar decisão": decisao-do-lote.tsx) e a ficha aberta
   com a reserva; o conteúdo da análise (F4) é ficha/ficha.tsx. Explicações:
@@ -928,7 +928,7 @@ const TabelaDaFila = memo(function TabelaDaFila({
       total={total}
       vazio={
         semPreClassificacao
-          ? "O edital ainda não tem pré-classificação."
+          ? "O edital ainda não tem triagem."
           : "Nenhum inscrito nesta etapa."
       }
       informacao={informacao}

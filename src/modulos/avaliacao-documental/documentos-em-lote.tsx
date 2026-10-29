@@ -20,7 +20,7 @@ import {
   com "x de N" e Cancelar) ou um documento só para imprimir. Nada é gravado.
 
   - <AcoesEmLote>: só os botões, o progresso e os avisos, para quem já tem a
-    própria lista marcável (Pré-classificação › Comunicados de eliminação).
+    própria lista marcável (Triagem › Comunicados de eliminação).
   - <DocumentosEmLote>: a lista pesquisável por código OU nome, com filtro de
     vaga e "Marcar as da busca", mais as ações (Avaliação documental ›
     Documentos › Espelhos das avaliações concluídas).

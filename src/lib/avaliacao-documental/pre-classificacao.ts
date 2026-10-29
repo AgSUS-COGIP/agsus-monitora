@@ -1,5 +1,5 @@
 /*
-  Pré-classificação de uma vaga: a Lista Geral de Classificação Provisória
+  Triagem de uma vaga: a Lista Geral de Classificação Provisória
   por ART (item 8.3.1) e o lote de convocação (item 8.4). Sem DOM e sem estado.
 
   A conta OFICIAL, em lote, é do job Python (scripts/pre_classificacao/, com
@@ -29,7 +29,7 @@
     provisoria.pergunta_experiencia, em meses pelo limite de baixo ("Menos de
     6 meses" vale 0) —, MAIOR_IDADE ou MAIS_VELHO, CANDIDATURA) e o código do
     candidato;
-  - declarada congelada: com `congelar` (a primeira pré-classificação depois
+  - declarada congelada: com `congelar` (a primeira triagem depois
     do fim das inscrições do cronograma, ou sem data de fim: congelaADeclarada)
     a declarada COMPLETA de cada candidato é guardada com as respostas usadas
     (linha.declarada_congelada; o banco grava em TB_PRE_CLASSIFICACAO) e não se
@@ -88,7 +88,7 @@ import type {
 /** As colunas da Empregare de um inscrito (DS_COLUNA_ORIGINAL): nome → resposta. */
 export type ColunasDoCandidato = Record<string, unknown>;
 
-/** A regra que a pré-classificação lê (a do edital, já normalizada; aqui tudo opcional). */
+/** A regra que a triagem lê (a do edital, já normalizada; aqui tudo opcional). */
 export interface RegraDaPreClassificacao {
   provisoria?: Partial<Provisoria> | null;
   lote?: Partial<Lote> | null;
@@ -180,7 +180,7 @@ export type DecisoesDoLote = Readonly<
   Record<string, { motivo?: unknown } | null | undefined>
 >;
 
-/** Uma linha da pré-classificação (o que se grava em TB_PRE_CLASSIFICACAO). */
+/** Uma linha da triagem (o que se grava em TB_PRE_CLASSIFICACAO). */
 export interface LinhaDaPreClassificacao {
   id: string;
   codigo: string;
@@ -297,7 +297,7 @@ export const dataDaIdade = (
 ): string | null => fimDasInscricoes(cronograma) ?? hoje ?? null;
 
 /**
- * Esta pré-classificação congela a nota declarada? Sim depois do fim das
+ * Esta triagem congela a nota declarada? Sim depois do fim das
  * inscrições (hoje > fim) ou, sem data de fim no cronograma, já na primeira.
  */
 export function congelaADeclarada(

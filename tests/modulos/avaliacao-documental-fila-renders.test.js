@@ -262,7 +262,7 @@ describe("Fila com 7.726 inscritos: redesenhos e recontagens", () => {
     expect(r.celulas).toBe(0);
     // Uma recontagem só (a da lista relida), não uma por mensagem do estado.
     expect(r.tabela).toBe(1);
-    // A inclusão por decisão saiu da Fila (fica na Pré-classificação): nada a recontar.
+    // A inclusão por decisão saiu da Fila (fica na Triagem): nada a recontar.
     expect(r.podeIncluir).toBe(0);
     expect(r.lote).toBe(1);
   });
@@ -280,7 +280,7 @@ describe("Fila com 7.726 inscritos: redesenhos e recontagens", () => {
     expect(r.tabela).toBe(1);
     // A lista mudou: recontar o lote é devido, mas as linhas iguais ficam.
     expect(r.celulas).toBe(colunasPorLinha());
-    // A inclusão por decisão saiu da Fila (fica na Pré-classificação): nada a recontar.
+    // A inclusão por decisão saiu da Fila (fica na Triagem): nada a recontar.
     expect(r.podeIncluir).toBe(0);
   });
 });

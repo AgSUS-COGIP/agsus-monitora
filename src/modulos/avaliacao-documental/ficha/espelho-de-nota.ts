@@ -108,7 +108,7 @@ type OpcoesDoPdf = {
   marca?: (cabecalho: () => string) => Promise<MarcaDoPdf>;
 };
 
-/** PDF de um espelho já montado: uma implementação para ficha e pré-classificação. */
+/** PDF de um espelho já montado: uma implementação para ficha e triagem. */
 export async function baixarEspelhoProntoEmPdf(
   espelho: Espelho,
   {

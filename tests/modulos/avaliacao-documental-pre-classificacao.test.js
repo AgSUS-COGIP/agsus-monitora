@@ -19,7 +19,7 @@ import {
 } from "../componentes/interacoes.js";
 
 /*
-  A aba Pré-classificação da Avaliação documental (fase F2): lê o que o job
+  A aba Triagem da Avaliação documental (fase F2): lê o que o job
   Python gravou (obter_pre_classificacao), mostra os contadores, a linha de
   corte, a divergência ART × declarada e os eliminados; a coordenação pede o
   recálculo (RPC disparar_robo com o edital), muda o tamanho do lote por
@@ -165,7 +165,7 @@ const PRE = (regra, pode = true, extra = {}) => ({
 });
 
 /*
-  O banco em partes (20261029120000), tirado da mesma pré-classificação
+  O banco em partes (20261029120000), tirado da mesma triagem
   inteira: o resumo da abertura, as vagas, as listas, as páginas de cada
   vaga (cursor = deslocamento) e a conferência dos comunicados marcados.
 */
@@ -223,7 +223,7 @@ function partesDoBanco(atual) {
   };
 }
 
-/* Responde a leitura inteira e as partes com esta pré-classificação; o resto, como antes. */
+/* Responde a leitura inteira e as partes com esta triagem; o resto, como antes. */
 const comPre = (pre, normal) => {
   const partes = {
     obter_pre_classificacao: () => pre,
@@ -384,8 +384,8 @@ async function montar(supabase) {
 const abaDaPre = () =>
   [...secao.querySelectorAll("button")].find(
     (b) =>
-      b.textContent.includes("Pré-classificação") ||
-      b.textContent.includes("Abrir pré-classificação"),
+      b.textContent.includes("Triagem") ||
+      b.textContent.includes("Abrir triagem"),
   );
 const botao = (texto) =>
   [...secao.querySelectorAll("button")].find((b) =>
@@ -405,11 +405,11 @@ afterEach(async () => {
   agendados = [];
 });
 
-describe("Pré-classificação (AM-4)", () => {
+describe("Triagem (AM-4)", () => {
   it("AM-4.4: contadores, linha de corte, divergência e eliminados à parte", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
-    // A abertura lê o resumo e as partes da tela, nunca a pré-classificação inteira.
+    // A abertura lê o resumo e as partes da tela, nunca a triagem inteira.
     expect(supabase.rpc).toHaveBeenCalledWith(
       "obter_resumo_pre_classificacao",
       {
@@ -485,7 +485,7 @@ describe("Pré-classificação (AM-4)", () => {
       "Fora do lote com nota acima da linha de corte",
     );
     expect(secao.querySelector("[data-vaga='180231']").textContent).toContain(
-      "ainda sem pré-classificação",
+      "ainda sem triagem",
     );
   });
 
@@ -503,7 +503,7 @@ describe("Pré-classificação (AM-4)", () => {
     );
     await act(async () => painel.raiz.unmount());
     secao.remove();
-    // Quem não coordena nem tem a aba Pré-classificação (nem a lê do banco).
+    // Quem não coordena nem tem a aba Triagem (nem a lê do banco).
     const leitor = supabaseFalso({ pode: false });
     await montar(leitor);
     expect(abaDaPre()).toBeUndefined();
@@ -516,7 +516,7 @@ describe("Pré-classificação (AM-4)", () => {
     ).toBe(false);
   });
 
-  it("Atualizar e a reabertura da tela relêem a pré-classificação da aba aberta", async () => {
+  it("Atualizar e a reabertura da tela relêem a triagem da aba aberta", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
     const kpis = () => secao.querySelector(".ui-kpis").textContent;
@@ -546,19 +546,18 @@ describe("Pré-classificação (AM-4)", () => {
       data: null,
       error: {
         code: "42501",
-        message:
-          "Só a coordenação da avaliação do edital recalcula a pré-classificação.",
+        message: "Só a coordenação da avaliação do edital recalcula a triagem.",
       },
     }));
     await clicar(recalcular());
     await esperar();
     expect(secao.querySelector("[role='alert']").textContent).toBe(
-      "Recálculo não pedido: Só a coordenação da avaliação do edital recalcula a pré-classificação.",
+      "Recálculo não pedido: Só a coordenação da avaliação do edital recalcula a triagem.",
     );
     expect(recalcular().textContent).toBe("Recalcular");
     expect(recalcular().disabled).toBe(false);
     expect(toast).toHaveBeenLastCalledWith(
-      "Recálculo não pedido: Só a coordenação da avaliação do edital recalcula a pré-classificação.",
+      "Recálculo não pedido: Só a coordenação da avaliação do edital recalcula a triagem.",
       "error",
     );
 
@@ -638,13 +637,13 @@ describe("Pré-classificação (AM-4)", () => {
     expect(agendados).toHaveLength(0);
     expect(secao.querySelector(".ui-kpis").textContent).toContain("Inscritos9");
     expect(secao.querySelector("[role='status']").textContent).toMatch(
-      /^Pré-classificação recalculada às \d\d:\d\d\.$/,
+      /^Triagem recalculada às \d\d:\d\d\.$/,
     );
     expect(secao.querySelector("[data-acao='recalcular']").textContent).toBe(
       "Recalcular",
     );
     expect(toast).toHaveBeenLastCalledWith(
-      expect.stringMatching(/^Pré-classificação recalculada/),
+      expect.stringMatching(/^Triagem recalculada/),
       "success",
     );
   });
@@ -867,7 +866,7 @@ describe("inclusão no lote por decisão da coordenação", () => {
   });
 });
 
-describe("estado da pré-classificação: voltar à aba não relê", () => {
+describe("estado da triagem: voltar à aba não relê", () => {
   it("relê só com outro edital, outra versão da regra ou depois de 5 minutos", async () => {
     let agora = new Date("2026-10-15T12:00:00Z");
     const rpc = vi.fn(async (nome) => ({
@@ -896,7 +895,7 @@ describe("estado da pré-classificação: voltar à aba não relê", () => {
   });
 });
 
-describe("Pré-classificação por versão (20261014230000), banco sem as partes (antes de 20261029120000)", () => {
+describe("Triagem por versão (20261014230000), banco sem as partes (antes de 20261029120000)", () => {
   /* Um banco com a leitura por versão e a situação leve, sem o resumo nem as páginas. */
   function bancoNovo() {
     const estado = {
@@ -1004,11 +1003,11 @@ describe("Pré-classificação por versão (20261014230000), banco sem as partes
       { p_edital: "e1", p_versao: "v1" },
     ]);
     expect(pre.obter().dados.ultima_execucao.id).toBe("precl-2");
-    expect(pre.obter().aviso.texto).toMatch(/^Pré-classificação recalculada/);
+    expect(pre.obter().aviso.texto).toMatch(/^Triagem recalculada/);
   });
 });
 
-describe("comunicados de eliminação em lote (Pré-classificação)", () => {
+describe("comunicados de eliminação em lote (Triagem)", () => {
   it("busca por nome no banco, marca os da busca e imprime conferindo só os marcados", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
@@ -1046,7 +1045,7 @@ describe("comunicados de eliminação em lote (Pré-classificação)", () => {
     );
     await clicar(secao.querySelector("[data-acao='comunicados-imprimir']"));
     await esperar();
-    // Confere só os marcados, como estão agora (nunca a pré-classificação inteira).
+    // Confere só os marcados, como estão agora (nunca a triagem inteira).
     expect(
       chamadasDe(supabase.rpc, "conferir_eliminados_pre_classificacao"),
     ).toEqual([{ p_edital: "e93", p_chaves: ["179698|7000009"] }]);

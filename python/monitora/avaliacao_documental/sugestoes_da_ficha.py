@@ -22,7 +22,7 @@ candidato), que traz o questionário mais novo — mesmo de quem respondeu mais
 de uma vez. Quem não respondeu o retificado vem com "--" e fica sem sugestão
 (a ficha mostra a resposta anterior dele, 20261009210000).
 
-O job da pré-classificação (scripts/pre_classificacao/pre_classificacao.py)
+O job da triagem (scripts/pre_classificacao/pre_classificacao.py)
 calcula por candidato e grava (gravar_sugestoes_da_ficha, migration
 20261009190000_sugestoes_da_ficha.sql); obter_ficha_analise devolve em
 `sugestoes` e a tela só exibe, com cada linha marcada "da resposta do

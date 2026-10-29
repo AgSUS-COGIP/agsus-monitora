@@ -1,5 +1,5 @@
 """
-Edital de treinamento de Projetos (992/2099): a pré-classificação que a migration
+Edital de treinamento de Projetos (992/2099): a triagem que a migration
 20261008110000 grava é a que o Python calcula (o mesmo processar_edital do job)
 sobre os 40 fictícios — tests/fixtures/avaliacao-documental/treinamento-projetos.json.
 Mudou o cálculo, a regra ou os fictícios? Rode scripts/pre_classificacao/gerar_treinamento.py

@@ -40,7 +40,7 @@ export interface RevogarDecisaoProps {
 }
 
 /*
-  Inclusão no lote por decisão da coordenação (aba Pré-classificação e Fila):
+  Inclusão no lote por decisão da coordenação (aba Triagem e Fila):
   o selo "Decisão: <motivo>", a gaveta "Incluir por decisão da coordenação"
   (candidatos fora do lote, motivo com a sugestão "Critério CORES") e o
   "Revogar decisão" (com motivo). As ações são dos stores (decisao-no-banco.ts).

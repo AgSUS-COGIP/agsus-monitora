@@ -75,7 +75,7 @@ const PAYLOAD_DAS_CHAVES = () => ({
     },
     {
       chave: "pre_classificacao",
-      nome: "Pré-classificação automática",
+      nome: "Triagem automática",
       ligada: true,
       motivo: "Estado inicial (migração 20261022190000).",
       tarefas: [],
@@ -186,7 +186,7 @@ describe("cada chave na tela", () => {
   const dados = normalizarChaves(PAYLOAD_DAS_CHAVES());
   const [entrevistas, paineis, pre] = dados.chaves;
 
-  it("última: a tarefa mais recente, ou a pré-classificação do fim do robô", () => {
+  it("última: a tarefa mais recente, ou a triagem do fim do robô", () => {
     expect(ultimaExecucao(paineis).inicio).toEqual(new Date(ha(1)));
     expect(ultimaExecucao(pre).situacao).toBe("CONCLUIDA");
     expect(ultimaExecucao(entrevistas).inicio).toEqual(

@@ -11,7 +11,7 @@ import { retratoParaDocumento } from "./dados-dos-documentos.ts";
   FINAL_FINAL_ELIMINADOS…) tem as suas colunas disponíveis — conforme o que
   o retrato da lista traz — e um padrão enxuto:
     listas classificadas  Classificação | Nome | [Modalidade] | Nota
-                          (na entrevista e na pré-classificação, sem a
+                          (na entrevista e na triagem, sem a
                           modalidade, como nas publicações)
     eliminados            Nome | Nota | Justificativa
   As pontuações parciais da avaliação documental (Formação Acadêmica,

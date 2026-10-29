@@ -159,7 +159,6 @@ export const SINONIMOS: Readonly<Record<string, readonly string[]>> =
       "analise curricular",
       "analise de curriculo",
       "analise",
-      "triagem",
       "curriculo",
     ],
     acesso: ["acesso", "acessar", "permissao", "login", "logar", "autorizacao"],

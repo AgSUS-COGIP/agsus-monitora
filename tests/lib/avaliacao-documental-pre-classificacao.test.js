@@ -72,7 +72,7 @@ const rodar = (c) =>
     cronograma: c.cronograma ?? null,
   });
 
-describe("casos dourados da pré-classificação", () => {
+describe("casos dourados da triagem", () => {
   it.each(CASOS.casos.map((c) => [`${c.historia} — ${c.nome}`, c]))(
     "%s",
     (_nome, c) => {

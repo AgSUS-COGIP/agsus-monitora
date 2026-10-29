@@ -145,7 +145,7 @@ export const TELAS_REACT: Readonly<Record<string, TelaReact>> = Object.freeze({
     janela.recursosController as Controle,
   ],
   "analisar-recursos": (_valor, janela) => [
-    "Analisar recursos",
+    "Recursos",
     "",
     janela.analisarRecursosController as Controle,
   ],
@@ -155,7 +155,7 @@ export const TELAS_REACT: Readonly<Record<string, TelaReact>> = Object.freeze({
     janela.entrevistasController as Controle,
   ],
   "conduzir-entrevistas": (_valor, janela) => [
-    "Conduzir entrevistas",
+    "Entrevistas",
     "",
     janela.conduzirEntrevistasController as Controle,
   ],
@@ -175,7 +175,7 @@ export const TELAS_REACT: Readonly<Record<string, TelaReact>> = Object.freeze({
     janela.avaliacaoDocumentalController as Controle,
   ],
   "pre-classificacao": (_valor, janela) => [
-    "Pré-classificação",
+    "Triagem",
     "",
     janela.preClassificacaoController as Controle,
   ],

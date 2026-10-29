@@ -38,7 +38,7 @@ describe("Aya sem máquina, sessão de IA ou túnel", () => {
     expect(responder("como funciona o processo seletivo?").answer).toContain(
       "edital",
     );
-    expect(responder("O que é triagem?").answer).toContain("Análises");
+    expect(responder("O que é triagem?").answer).toContain("Triagem");
   });
 
   it("não inventa número nem transforma uma pergunta factual em definição", () => {

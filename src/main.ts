@@ -354,7 +354,7 @@ window.avaliacaoDocumentalController = telaSobDemanda({
     ),
 });
 
-/* Pré-classificação: página operacional independente, mesmo recurso de avaliação
+/* Triagem: página operacional independente, mesmo recurso de avaliação
    documental e mesmas RPCs que exigem coordenação por edital. */
 window.preClassificacaoController = telaSobDemanda({
   secao: "page-pre-classificacao",

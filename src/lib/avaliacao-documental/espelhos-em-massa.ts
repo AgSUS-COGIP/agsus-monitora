@@ -125,7 +125,7 @@ const porNome = (a: FichaDoEspelho, b: FichaDoEspelho) =>
 /**
  * A ordem dos espelhos no documento. Com a lista colada, a ordem colada.
  * Senão, por vaga e, dentro dela, os aptos pela nota final (maior primeiro;
- * empate pela posição da pré-classificação e pelo nome), depois os inaptos
+ * empate pela posição da triagem e pelo nome), depois os inaptos
  * pela nota e por fim os eliminados (inapto por requisito) pelo nome.
  */
 export function ordenarParaOsEspelhos(

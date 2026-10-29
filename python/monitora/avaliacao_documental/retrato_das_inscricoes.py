@@ -6,7 +6,7 @@ eliminados — só contagens, sem dado pessoal.
 O job scripts/pre_classificacao/ grava um retrato por vaga e por dia (o último
 do dia vale) em TH_INSCRICAO_VAGA_EDITAL pela RPC gravar_retrato_inscricoes
 (migration 20261009140000_acompanhamento_das_inscricoes.sql), durante as
-inscrições do cronograma. O cartão "Inscrições" da aba Pré-classificação lê a
+inscrições do cronograma. O cartão "Inscrições" da aba Triagem lê a
 série (obter_acompanhamento_inscricoes) e mostra a evolução diária.
 
     inscritos    candidatos ativos na Empregare (quem saiu do arquivo não conta)

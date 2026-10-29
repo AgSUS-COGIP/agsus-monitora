@@ -307,14 +307,14 @@ describe("registro da aba", async () => {
     await import("../src/lib/access-roles.ts");
   const { NOMES_DE_ICONES } = await import("../src/modules/icones.ts");
 
-  it("Seleção é a última etapa, depois da Lista de aprovados, como beta", () => {
+  it("o Painel da Seleção fica em Acompanhar, depois do Painel de entrevistas, como beta", () => {
     const lista = ABAS_DO_MENU.map((aba) => aba.id);
-    expect(lista.indexOf("selecao")).toBe(lista.indexOf("aprovados") + 1);
+    expect(lista.indexOf("selecao")).toBe(lista.indexOf("entrevistas") + 1);
     expect(ABAS_DO_MENU.find((aba) => aba.id === "selecao")).toMatchObject({
       view: "selecao",
       recurso: "selecao",
       icone: "funnel",
-      ordem: 13,
+      ordem: 5,
       beta: true,
     });
     expect(NOMES_DE_ICONES).toContain("funnel");

@@ -92,48 +92,20 @@ describe("a regra da página desligada", () => {
     );
   });
 
-  it("a Pré-classificação independente permanece bloqueada até a ativação da aba", () => {
-    const semPre = abasDoCatalogo(catalogo());
-    // Sem catálogo (inclusive falha de rede), o atalho antigo permanece,
-    // mas o link direto para a entrada ainda não publicada não pode abrir.
+  it("a Triagem (já ativada) segue a regra das outras abas", () => {
+    // Sem catálogo (inclusive falha de rede), nada está desligado: a Triagem
+    // está no catálogo do código desde a ativação (#597).
     expect(
       paginaDesligada({
         abas: ABAS_DO_MENU,
         doBanco: false,
         view: "pre-classificacao",
-        area: "projetos",
-      }),
-    ).toBe(true);
-    expect(
-      paginaDesligada({
-        abas: ABAS_DO_MENU,
-        doBanco: false,
-        view: "avaliacao-documental",
         area: "projetos",
       }),
     ).toBe(false);
-    expect(
-      paginaDesligada({
-        abas: semPre,
-        doBanco: true,
-        view: "pre-classificacao",
-        area: "projetos",
-      }),
-    ).toBe(true);
-
-    const catalogoAtivado = abasDoCatalogo([
-      ...catalogo(),
-      {
-        co_aba: "pre-classificacao",
-        no_aba: "Pré-classificação",
-        ds_icone: "list-ordered",
-        nu_ordem: 6,
-        co_view: "pre-classificacao",
-        co_recurso: "avaliacao_documental",
-        tp_aba: "nativa",
-        areas: [{ co_area: "projetos", nu_ordem: 6 }],
-      },
-    ]);
+    const catalogoAtivado = abasDoCatalogo(
+      catalogo(["pre-classificacao@sede", "pre-classificacao@saude-indigena"]),
+    );
     expect(
       paginaDesligada({
         abas: catalogoAtivado,
@@ -579,8 +551,13 @@ describe("a página aberta que foi desligada vira o aviso", () => {
       definirAreaAtual("saude-indigena");
     });
 
+    // A Triagem (mesmo recurso, antes da Avaliação documental no menu) fica
+    // desligada aqui para a primeira página ligada ser a Avaliação documental.
     it("sem tela guardada, entra na primeira página ligada (Avaliação documental)", async () => {
-      await usarCatalogo(["visao-geral@saude-indigena"]);
+      await usarCatalogo([
+        "visao-geral@saude-indigena",
+        "pre-classificacao@saude-indigena",
+      ]);
       const { navegacao, janela } = criarAvaliador();
       navegacao.montarMenu();
       expect(navegacao.telaDeEntrada()).toBe("avaliacao-documental");
@@ -590,7 +567,10 @@ describe("a página aberta que foi desligada vira o aviso", () => {
     });
 
     it("a inicial do sistema (sair do painel externo) também", async () => {
-      await usarCatalogo(["visao-geral@saude-indigena"]);
+      await usarCatalogo([
+        "visao-geral@saude-indigena",
+        "pre-classificacao@saude-indigena",
+      ]);
       const { navegacao } = criarAvaliador();
       navegacao.montarMenu();
       expect(navegacao.telaInicialDoSistema()).toBe("avaliacao-documental");
@@ -607,6 +587,8 @@ describe("a página aberta que foi desligada vira o aviso", () => {
       await usarCatalogo([
         "visao-geral@saude-indigena",
         "avaliacao-documental@saude-indigena",
+        "pre-classificacao@saude-indigena",
+        "pre-classificacao@sede",
       ]);
       const { navegacao } = criarAvaliador(
         avaliador(["saude-indigena", "sede"]),

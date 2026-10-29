@@ -53,7 +53,7 @@ describe("sinônimos em grupos", () => {
     ["aprovado", "classificado", "aprovadas", "classificados"],
     ["recurso", "contestação", "impugnação", "contestar", "recorrer"],
     ["entrevista", "banca", "entrevistador"],
-    ["análise", "triagem", "currículo", "análise curricular"],
+    ["análise", "currículo", "análise curricular"],
     ["acesso", "permissão", "login", "permissões"],
     ["DSEI", "distrito", "distrito sanitário especial indígena", "DSEIs"],
     ["polo base", "polos base", "polo"],

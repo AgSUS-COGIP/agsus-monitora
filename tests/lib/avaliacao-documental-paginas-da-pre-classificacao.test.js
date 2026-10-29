@@ -12,7 +12,7 @@ import {
 } from "../../src/lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 
 /*
-  A pré-classificação em páginas: a leitura de reserva (banco sem
+  A triagem em páginas: a leitura de reserva (banco sem
   listar_pre_classificacao) tem de dar as mesmas linhas, na mesma ordem, que o
   banco (CLASSIFICADOS: no lote e depois fora do lote, pela posição;
   ELIMINADOS: pelo código; PODE_INCLUIR: fora do lote e eliminados que não

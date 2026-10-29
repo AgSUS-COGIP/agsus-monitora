@@ -1,6 +1,6 @@
 """
 Testes do retrato das inscrições (python/monitora/avaliacao_documental/
-retrato_das_inscricoes.py) e da gravação pelo job da pré-classificação
+retrato_das_inscricoes.py) e da gravação pelo job da triagem
 (scripts/pre_classificacao/): só contagens por vaga, durante as inscrições do
 cronograma, também com a regra a conferir (prévia) e sem regra. Dados
 fictícios; nada fala com o Supabase.

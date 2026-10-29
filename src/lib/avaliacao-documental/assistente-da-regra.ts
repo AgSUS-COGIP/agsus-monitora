@@ -749,7 +749,7 @@ const temTexto = (pergunta: Pergunta | null | undefined) =>
 /**
  * Onde a pergunta da regra cai nas colunas de cada vaga, com a mesma regra da
  * nota declarada e da ficha (colunasDaPergunta): verde (uma coluna em cada
- * vaga onde aparece), amarelo (mais de uma numa vaga: a pré-classificação não
+ * vaga onde aparece), amarelo (mais de uma numa vaga: a triagem não
  * usa nenhuma) e vermelho (nenhuma vaga tem).
  */
 export function situacaoDaPergunta(

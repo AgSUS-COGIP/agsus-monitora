@@ -1,5 +1,5 @@
 /*
-  Os tipos da aba Pré-classificação: o resultado de obter_pre_classificacao
+  Os tipos da aba Triagem: o resultado de obter_pre_classificacao
   (supabase/migrations/20261006110000_pre_classificacao_e_lote.sql, gravado
   pelo job Python), o estado do store (estado-da-pre-classificacao.ts) e as
   formas que a inclusão no lote por decisão usa (decisao-do-lote.tsx).
@@ -10,7 +10,7 @@ import type { DadosDoAcompanhamento } from "../../lib/avaliacao-documental/acomp
 
 export type RegistroDaPre = Record<string, unknown>;
 
-/** A situação do inscrito na pré-classificação (gravada pelo job). */
+/** A situação do inscrito na triagem (gravada pelo job). */
 export type SituacaoDoInscrito =
   "NO_LOTE" | "ANALISADO" | "RANQUEADO" | "ELIMINADO";
 
@@ -24,7 +24,7 @@ export interface DecisaoDoLote {
   situacao_regra?: string | null;
 }
 
-/** O que o selo e o "Revogar decisão" leem do candidato (pré-classificação ou fila). */
+/** O que o selo e o "Revogar decisão" leem do candidato (triagem ou fila). */
 export interface InscritoComDecisao {
   codigo?: string | number | null;
   entrada?: string | null;
@@ -39,7 +39,7 @@ export interface CandidatoForaDoLote {
   nome?: string | null;
   vaga?: string | number | null;
   situacao?: string | null;
-  /** O motivo da eliminação (da pré-classificação ou da fila). */
+  /** O motivo da eliminação (da triagem ou da fila). */
   motivo?: unknown;
   nota?: unknown;
 }
@@ -78,7 +78,7 @@ export interface InscritoDaPre extends RegistroDaPre, InscritoComDecisao {
   motivo_entrada: string | null;
 }
 
-/** Os campos de uma vaga do resultado gravado (sem inscritos = ainda sem pré-classificação). */
+/** Os campos de uma vaga do resultado gravado (sem inscritos = ainda sem triagem). */
 interface CamposDaVaga {
   codigo: string;
   candidatos_empregare?: number | null;

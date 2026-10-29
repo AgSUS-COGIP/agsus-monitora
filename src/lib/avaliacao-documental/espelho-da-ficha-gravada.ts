@@ -76,7 +76,7 @@ export function entradaDoEspelho(
       nome: ficha.nome,
       codigo: ficha.codigo,
       // A modalidade final da conta (a cota confirmada de maior percentual, ou a
-      // ampla); sem ela, a da pré-classificação.
+      // ampla); sem ela, a da triagem.
       modalidade: modalidadeFinal(st.avaliacao) ?? ficha.modalidade,
     },
     vaga: {

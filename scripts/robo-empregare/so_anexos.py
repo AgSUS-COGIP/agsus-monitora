@@ -277,7 +277,7 @@ def linhas_do_relatorio(relatorios, pedidos, seco):
     }
     linhas = [
         ("SECO: nada foi gravado. " if seco else "")
-        + "Só anexos: não exportou, não mudou situação, ativos, lote nem pré-classificação.",
+        + "Só anexos: não exportou, não mudou situação, ativos, lote nem triagem.",
         f"Vagas: {len(relatorios)} · com falha: {sum(r['situacao'] == 'FALHA' for r in relatorios)} · "
         f"sem candidato a reler: {sum(r['situacao'] == 'SEM_ALVO' for r in relatorios)}.",
         f"Candidatos a reler: {soma['alvo']} · relidos: {soma['relidos']} · com mudança: {soma['com_mudanca']} · "

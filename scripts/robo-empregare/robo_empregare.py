@@ -100,7 +100,7 @@ PRAZO_PARA_NOVO_LOTE = 95 * 60  # segundos: depois disso, não começa outro lot
 PRAZO_PARA_SEGUNDA_PASSADA = 90 * 60  # segundos: depois disso, sem segunda passada
 # Prazo único da execução: nenhuma espera, download ou nova volta na Central passa dele. O que
 # faltar vira falha e a execução fecha normal (finalizar_sync_empregare), com folga para o
-# fechamento, o resumo das perguntas e o passo de pré-classificação antes dos 120 min.
+# fechamento, o resumo das perguntas e o passo de triagem antes dos 120 min.
 PRAZO_DA_EXECUCAO = 105 * 60
 # Anexos do questionário (--anexos): além do orçamento (anexos.ORCAMENTO_DOS_ANEXOS), param
 # em PRAZO_DOS_ANEXOS menos RESERVA_POR_VAGA por vaga ainda não pedida: a carga das vagas
@@ -830,7 +830,7 @@ def principal(args):
         return 1
 
     baixadas, falhas = contagem["baixadas"], contagem["falhas"]
-    # O passo seguinte do workflow (pré-classificação) só roda se alguma vaga foi gravada.
+    # O passo seguinte do workflow (triagem) só roda se alguma vaga foi gravada.
     execucao.saida_do_passo("carga", "sim" if contagem.get("gravadas") else "nao")
     fim = (
         supabase_rpc.chamar(

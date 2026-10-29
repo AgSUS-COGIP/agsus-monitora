@@ -215,7 +215,7 @@ afterEach(async () => {
 });
 
 describe("Rodar com opções", () => {
-  it("só o robô da Empregare, a pré-classificação e as conferências têm Opções", async () => {
+  it("só o robô da Empregare, a triagem e as conferências têm Opções", async () => {
     await montar();
     const comOpcoes = [...document.querySelectorAll(".saude-opcoes")].map(
       (b) => b.closest("[data-carga]").dataset.carga,
@@ -398,7 +398,7 @@ describe("Rodar com opções", () => {
     await clicar(gaveta().querySelector('[data-valor="anexos"]'));
     const bloco = gaveta().querySelector(".robos-opcoes__so-anexos");
     expect(bloco.textContent).toContain(
-      "Não exporta: situação, ativos, lote e pré-classificação não mudam.",
+      "Não exporta: situação, ativos, lote e triagem não mudam.",
     );
     expect(gaveta().querySelector(".robos-opcoes__frase").textContent).toBe(
       "O modo Só anexos pede vagas ou editais.",
@@ -430,7 +430,7 @@ describe("Rodar com opções", () => {
     });
   });
 
-  it("pré-classificação: editais pelo id, sem vagas nem limite", async () => {
+  it("triagem: editais pelo id, sem vagas nem limite", async () => {
     const { supabase } = await montar();
     await abrirOpcoes("pre_classificacao");
     expect(gaveta().querySelector("textarea")).toBeNull();

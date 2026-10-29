@@ -10,7 +10,7 @@ import {
 import { nomeDoZipDosEspelhos } from "../../src/lib/avaliacao-documental/espelho-em-pdf.ts";
 
 /*
-  Documentos em lote (Avaliação documental › Documentos e Pré-classificação ›
+  Documentos em lote (Avaliação documental › Documentos e Triagem ›
   Comunicados): listas pesquisáveis por código OU nome, marcação por vaga +
   código e a montagem dos comunicados. Dados fictícios.
 */

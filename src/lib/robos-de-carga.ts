@@ -8,7 +8,7 @@
                              robô), separarCodigos e validarOpcoes — a mesma
                              conferência que o banco refaz em disparar_robo;
     Avaliação documental ›   o "Recalcular" da coordenação, que pede a
-    Pré-classificação        pré-classificação de um edital só.
+    Triagem        triagem de um edital só.
 
   O pedido vai pela RPC disparar_robo (20261008140000): o banco confere quem
   pede e as opções e chama o GitHub com a chave do Vault (github_disparo_robos).
@@ -59,11 +59,11 @@ export const ROBOS_DE_CARGA: readonly RoboDeCarga[] = Object.freeze([
   /*
     porEdital: além do administrador global (Rodar agora, todos os editais),
     a coordenação do edital dispara para um edital só (Recalcular da aba
-    Pré-classificação); o banco decide em pode_recalcular_pre_classificacao.
+    Triagem); o banco decide em pode_recalcular_pre_classificacao.
   */
   Object.freeze({
     id: "pre_classificacao",
-    nome: "Pré-classificação (Avaliação documental)",
+    nome: "Triagem (Avaliação documental)",
     workflow: "pre-classificacao.yml",
     limiteMin: 20,
     porEdital: true,

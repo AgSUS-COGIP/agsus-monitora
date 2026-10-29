@@ -1,5 +1,5 @@
 """
-Edital de treinamento da Saúde Indígena (991/2099): a pré-classificação que a migration
+Edital de treinamento da Saúde Indígena (991/2099): a triagem que a migration
 20261009120000 grava é a que o Python calcula (o mesmo processar_edital do job) sobre os
 30 fictícios com a regra do Edital 111/2026 (SI26-PARINTINS) —
 tests/fixtures/avaliacao-documental/treinamento-saude-indigena.json.

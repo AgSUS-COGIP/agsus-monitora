@@ -42,7 +42,7 @@ Só biblioteca padrão — não pesa na Vercel nem nos jobs.
 | `monitora.fuso`         | `FUSO` (America/Sao_Paulo) e `hoje_em_brasilia()`: a data de hoje das regras (o runner é UTC; nunca `date.today()`)                                         |
 
 Quem usa hoje: o robô da Empregare (`scripts/robo-empregare/`), as conferências
-(`scripts/conferencias/`) e a pré-classificação da Avaliação documental (`scripts/pre_classificacao/`,
+(`scripts/conferencias/`) e a triagem da Avaliação documental (`scripts/pre_classificacao/`,
 com a conta em `monitora.avaliacao_documental`).
 
 | Módulo de domínio                                 | O que faz                                                                                                                                |
@@ -244,7 +244,7 @@ com motivo obrigatório, autor, data e histórico (migration `20261026190000_pen
   (permissões, motivo, histórico), `tests/pendencias-do-edital-migration.test.js`,
   `tests/lib/pendencias-do-edital.test.js` e `tests/componentes/pendencias-do-edital.test.js`.
 
-## Segunda entrega: pré-classificação da Avaliação documental
+## Segunda entrega: triagem da Avaliação documental
 
 Job `scripts/pre_classificacao/pre_classificacao.py`, workflow `pre-classificacao.yml`, migration
 `20261006110000_pre_classificacao_e_lote.sql`. Para cada edital (os pedidos, os da última carga do
@@ -261,7 +261,7 @@ menos pendentes (`distribuicao.atribuicoes_dos_novos`); o banco valida cada atri
 - **Quando roda:** no fim de cada carga normal ou forçada do robô da Empregare que gravou alguma
   vaga (job "Pré-classificar" em `robo-empregare.yml`, que chama `pre-classificacao.yml` por
   `workflow_call` com `apos_robo`, no grupo de concorrência `pre-classificacao`;
-  `DISPARADO_POR=robo`, `--apos-robo`; uma falha ali não muda o resultado do robô), pelo "Recalcular" da aba Pré-classificação (só a coordenação do edital;
+  `DISPARADO_POR=robo`, `--apos-robo`; uma falha ali não muda o resultado do robô), pelo "Recalcular" da aba Triagem (só a coordenação do edital;
   a RPC `disparar_robo` confere `pode_recalcular_pre_classificacao` de quem clicou e
   manda `editais` = o id do edital), pelo "Rodar agora" do Status das atualizações (todos) e pelo
   "Run workflow".
@@ -545,11 +545,11 @@ tarefas deixava todo o resto lento.
 Prioridade de cima para baixo. Estimativas em dias de trabalho de uma pessoa, contando testes,
 ensaio e conferência no navegador.
 
-### 1. Pré-classificação e lote de convocação depois do robô da Empregare (feita: ver acima)
+### 1. Triagem e lote de convocação depois do robô da Empregare (feita: ver acima)
 
 Insumo da futura **Avaliação documental** (`docs/analises-no-monitora/` no branch
 `docs/analises-no-monitora`, fases F2/F7/F8): depois que o robô grava os candidatos, um job lê as
-respostas do questionário (nota declarada), calcula a pré-classificação e o lote de convocação de
+respostas do questionário (nota declarada), calcula a triagem e o lote de convocação de
 cada vaga e grava por RPC; compara com a planilha enquanto ela existir.
 
 - **Como:** job `scripts/pre-classificacao/`, disparado ao fim do robô (passo novo no workflow) e

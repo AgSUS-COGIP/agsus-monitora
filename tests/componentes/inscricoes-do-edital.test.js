@@ -5,7 +5,7 @@ import { InscricoesDoEdital } from "../../src/modulos/avaliacao-documental/inscr
 import { DADOS_114 } from "../fixtures/acompanhamento-das-inscricoes.js";
 
 /*
-  Cartão "Inscrições" no topo da Pré-classificação: aparece só durante as
+  Cartão "Inscrições" no topo da Triagem: aparece só durante as
   inscrições, mostra os totais, o mini-gráfico e a tabela por vaga; sem
   retrato, um estado vazio curto; com prévia, o selo.
 */

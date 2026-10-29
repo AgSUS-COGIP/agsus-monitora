@@ -22,8 +22,12 @@ export interface AbaDoCatalogo {
   readonly manutencao?: ManutencaoDoMenu | null;
   readonly areas: readonly AreaDoCatalogo[];
 }
-/** O bloco da página dentro da área: consulta ou trabalho do processo. */
-export type BlocoDoMenu = "acompanhamento" | "processo";
+/**
+ * O bloco do item: dentro da área, consulta (Acompanhar) ou trabalho do
+ * processo; em Administração, um dos três grupos das seções.
+ */
+export type BlocoDoMenu =
+  "acompanhamento" | "processo" | "aparencia" | "pessoas" | "sistema";
 export interface ItemDoMenu {
   readonly view: string;
   readonly rotulo: string;
@@ -88,6 +92,7 @@ export interface OpcoesDoMenu {
     id: string;
     rotulo: string;
     iconeDoMenu?: string;
+    grupo?: BlocoDoMenu;
   }[];
   areas?: unknown;
   abas?: readonly AbaDoCatalogo[] | null;

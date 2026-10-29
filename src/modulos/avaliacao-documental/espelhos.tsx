@@ -29,7 +29,7 @@ import type { LojaDaFila } from "./estado-da-fila.ts";
   espelhos em massa por vaga e filtro, e o modelo do espelho). Somente a
   coordenação do edital chega a esta visão; o banco valida de novo.
 
-  Os comunicados de eliminação antes da análise pertencem à Pré-classificação
+  Os comunicados de eliminação antes da análise pertencem à Triagem
   (é ela que elimina e forma o lote): aqui fica só o atalho para lá.
 */
 
@@ -42,7 +42,7 @@ export function EspelhosDaAvaliacao({
   editalId: string;
   fila: LojaDaFila;
   rotuloEdital?: string;
-  /** Leva aos comunicados de eliminação, na Pré-classificação. */
+  /** Leva aos comunicados de eliminação, na Triagem. */
   aoAbrirPreClassificacao?: (() => void) | null;
 }) {
   const st = useSyncExternalStore(fila.assinar, fila.obter);
@@ -169,7 +169,7 @@ export function EspelhosDaAvaliacao({
           className="ui-texto-secundario avd-docs-atalho"
           data-acao="comunicados-na-pre"
         >
-          Comunicados de eliminação antes da análise ficam na Pré-classificação.{" "}
+          Comunicados de eliminação antes da análise ficam na Triagem.{" "}
           <button
             type="button"
             className="btn ghost small"

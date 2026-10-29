@@ -231,7 +231,7 @@ export const INTENCOES: readonly IntencaoDoCatalogo[] = Object.freeze([
     view: "analises",
     pagina: "analises",
     padrao: "total",
-    modulo: /\b(analises?|curricul\w*|triagem|planilha de analises?)\b/,
+    modulo: /\b(analises?|curricul\w*|planilha de analises?)\b/,
     metricas: Object.freeze([
       m("pendente", /\bpendente?s?\b|\bfalta\w* analisar\b/, [
         "análise pendente",
