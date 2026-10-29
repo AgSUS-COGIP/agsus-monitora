@@ -5,7 +5,6 @@ import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.ts";
 import {
   avisar,
   EVENTO_BARRA_ALTERNADA,
-  EVENTO_MENU_ATUALIZADO,
   EVENTO_TEMA_ALTERADO,
 } from "../../src/lib/eventos-da-barra-lateral.ts";
 import { SECOES } from "../../src/modulos/configuracoes/secoes.ts";
@@ -60,7 +59,6 @@ function prepararPagina() {
       <main class="main">
         <header class="top">
           <div class="title-row">
-            <button id="hambToggle" class="hamb">☰</button>
             <div class="page-title"><h1 id="pageTitle">Editais</h1></div>
           </div>
         </header>
@@ -279,13 +277,8 @@ describe("áreas abertas por padrão", () => {
 });
 
 describe("página ativa", () => {
-  it("marca o item, destaca a área e avisa quem espelha o menu", async () => {
+  it("marca o item e destaca a área", async () => {
     await montar();
-    let aviso = null;
-    document.addEventListener(
-      EVENTO_MENU_ATUALIZADO,
-      (evento) => (aviso = evento.detail),
-    );
 
     await act(async () => marcarItemAtivoNoMenu("calendario"));
 
@@ -297,11 +290,6 @@ describe("página ativa", () => {
     expect(
       document.querySelectorAll('#nav [aria-current="page"]'),
     ).toHaveLength(1);
-    expect(aviso).toEqual({
-      view: "calendario",
-      secao: null,
-      area: "saude-indigena",
-    });
   });
 
   it("abrir uma página reabre a área dela, se estava fechada", async () => {
@@ -774,7 +762,7 @@ describe("ícones e selo beta no menu aberto", () => {
     expect(selos[0].previousElementSibling.textContent).toBe(
       "Analisar recursos",
     );
-    // O mobile lê o nome de `data-rotulo`: o selo não entra nele.
+    // `data-rotulo` é o nome da página: o selo não entra nele.
     expect(item("analisar-recursos").dataset.rotulo).toBe("Analisar recursos");
     expect(item("recursos").querySelector(".menu-item__selo")).toBeNull();
     expect(item("nucleo").querySelector(".menu-item__selo")).toBeNull();
@@ -1048,7 +1036,7 @@ describe("o botão de recolher", () => {
     expect(botao.dataset.dica).toBe("Recolher menu");
   });
 
-  it("até 900px vai para o cabeçalho, e o hambúrguer antigo fica onde está", async () => {
+  it("até 900px vai para o cabeçalho, como o único ☰", async () => {
     await montar();
     await larguraDaJanela(390);
 
@@ -1057,9 +1045,7 @@ describe("o botão de recolher", () => {
     expect(botao.parentElement.classList.contains("title-row")).toBe(true);
     expect(botao.closest(".sidebar")).toBeNull();
     expect(botao.querySelector("svg").dataset.icone).toBe("menu");
-    expect(
-      document.getElementById("hambToggle").closest("header.top"),
-    ).not.toBeNull();
+    expect(document.querySelectorAll("header.top button")).toHaveLength(1);
     // Na gaveta, `sidebar-collapsed` quer dizer fechada.
     await recolher();
     expect(
@@ -1191,8 +1177,8 @@ describe("contrato de CSS e ligação no arranque", () => {
   const main = readFileSync("src/main.ts", "utf8");
   const html = htmlDaPagina();
 
-  it("o hambúrguer antigo sai de cena e o botão único aparece em todo modo", () => {
-    expect(css).toMatch(/#hambToggle\s*\{\s*display:\s*none\s*!important/);
+  it("o botão único aparece em todo modo, sem outro hambúrguer", () => {
+    expect(css).not.toContain("#hambToggle");
     expect(css).toMatch(
       /#appScreen \.global-side-toggle\s*\{\s*display:\s*grid\s*!important/,
     );

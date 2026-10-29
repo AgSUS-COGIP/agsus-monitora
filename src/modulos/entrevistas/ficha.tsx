@@ -67,7 +67,7 @@ import { numeroBR, ResultadoDaFicha } from "./resultado-da-ficha.tsx";
   (só o menu lateral do sistema fica), no desenho da ficha da Avaliação
   documental — cabeçalho enxuto e preso (cabecalho-da-ficha.tsx), a matriz
   de notas à esquerda, o resultado vivo numa lateral (resultado-da-ficha.tsx)
-  e um rodapé mínimo preso embaixo (acima do menu inferior no celular).
+  e um rodapé mínimo preso embaixo.
 
   Componente independente: recebe o payload do edital (`dados`: roteiro,
   banca, permissões), o convocado, a lista para anterior/próximo

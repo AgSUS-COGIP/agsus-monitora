@@ -1465,13 +1465,34 @@ body.system-fullscreen-mode.external-clean .external-panel {
   body.sidebar-collapsed .app {
     grid-template-columns: 1fr;
   }
+  /*
+    Topo compacto: uma linha só (☰ da gaveta, título, Pessoas online e conta),
+    preso no alto. Não há navegação no pé da tela: o menu é a gaveta.
+  */
   .top {
-    position: relative;
-    align-items: flex-start;
-    flex-direction: column;
+    gap: 8px;
+    padding: 6px 12px;
+  }
+  .title-row {
+    flex: 1 1 auto;
+    gap: 10px;
+  }
+  .page-title h1,
+  .page-title p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .page-title h1 {
+    font-size: 20px;
+  }
+  .page-title p {
+    margin-top: 2px;
   }
   .actions {
-    justify-content: flex-start;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    gap: 6px;
   }
 }
 @media (max-width: 540px) {

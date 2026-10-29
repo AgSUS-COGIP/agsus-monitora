@@ -12,7 +12,6 @@ import "./styles/icones-lucide.css";
 import "./styles/visual-polish.css";
 import "./styles/loading-experience.css";
 import "./styles/mobile-app.css";
-import "./styles/mobile-bottom-navigation.css";
 import "./styles/mobile-table-cards.css";
 import "./styles/connectivity-status.css";
 import "./styles/google-profile-photo.css";
@@ -61,9 +60,6 @@ import {
   SECOES,
 } from "./modulos/configuracoes/secoes.ts";
 import { montarConfiguracoes } from "./modulos/configuracoes/configuracoes.tsx";
-import { initMobileAppExperience } from "./modules/mobile-app-experience.js";
-import { initMobileBottomNavigation } from "./modules/mobile-bottom-navigation.js";
-import { initMobileTableCards } from "./modules/mobile-table-cards.js";
 import { initPwaLifecycle } from "./modules/pwa-lifecycle.ts";
 import { initConnectivityStatus } from "./modules/connectivity-status.js";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.ts";
@@ -170,8 +166,8 @@ installBackgroundResourceLifecycle();
 installFrontendPerformanceMonitor();
 installCspReportMonitor();
 /*
-  A barra lateral é React e monta primeiro, de forma síncrona: o branding, o
-  legado e o menu do celular a encontram no DOM quando rodam.
+  A barra lateral é React e monta primeiro, de forma síncrona: o branding e o
+  legado a encontram no DOM quando rodam.
 */
 montarBarraLateral();
 /*
@@ -191,9 +187,6 @@ initSidebarBranding();
 // O esqueleto das seções de Configurações, depois a moldura e as seções em React (portais).
 organizarConfiguracoesEmSecoes();
 montarConfiguracoes();
-initMobileAppExperience();
-initMobileBottomNavigation();
-initMobileTableCards();
 initPwaLifecycle();
 initConnectivityStatus();
 initGoogleProfilePhoto();

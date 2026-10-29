@@ -16,7 +16,7 @@ import { LinhasEsqueleto } from "./esqueleto.tsx";
 
   Marcação: `.ui-card.ui-tabela` (topo, meta, rolagem, status); depois de
   desenhar, avisa `agsus:content-updated` (o modo cartão do celular,
-  src/modules/mobile-table-cards.js, põe os rótulos); enquanto falta linha,
+  src/app/casca/tabelas-em-cartoes.ts, põe os rótulos); enquanto falta linha,
   "Carregar mais" faz o mesmo que rolar (teclado e leitor de tela).
 */
 

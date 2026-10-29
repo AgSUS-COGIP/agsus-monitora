@@ -63,7 +63,6 @@ describe("montarCasca", () => {
     for (const id of [
       "externalBackBtn",
       "externalBackText",
-      "hambToggle",
       "pageTitle",
       "pageSubtitle",
       "pessoasOnlineApp",
@@ -137,7 +136,6 @@ describe("montarCasca", () => {
       act(() => botao.click());
     };
     clicar(document.getElementById("externalBackBtn"));
-    clicar(document.getElementById("hambToggle"));
     for (const botao of document.querySelectorAll(
       ".top-user-popover-actions button",
     ))
@@ -145,7 +143,6 @@ describe("montarCasca", () => {
     clicar(document.getElementById("externalRefreshBtn"));
     expect(chamadas).toEqual([
       "exitExternalPanel:aberto",
-      "toggleSidebar:aberto",
       // Atualizar chama e depois fecha; Tela cheia e PDF fecham antes.
       "refreshData:aberto",
       "toggleBrowserFullscreen:fechado",
@@ -158,7 +155,7 @@ describe("montarCasca", () => {
   it("sem o contrato em window (antes de ligarSistema), o clique não quebra", () => {
     montar();
     expect(() =>
-      act(() => document.getElementById("hambToggle").click()),
+      act(() => document.getElementById("externalBackBtn").click()),
     ).not.toThrow();
   });
 

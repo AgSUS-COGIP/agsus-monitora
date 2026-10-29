@@ -230,7 +230,7 @@ de aprovados (nas duas abas) inclusive: card de 78px, padding `--space-3 --space
 Busca e filtros ficam acima, com a contagem de resultados. O cabeçalho usa `--surface-raised`, é
 sticky (`--z-sticky`) e tem ordenação visível (`aria-sort` + ícone). Números ficam à direita, com
 `tabular-nums`. Linhas separadas por `--border-subtle`, hover `--surface-hover`. Abaixo de
-900px, a tabela vira cards (`src/modules/mobile-table-cards.js`). Com volume grande, use virtualização
+900px, a tabela vira cards (`src/app/casca/tabelas-em-cartoes.ts`). Com volume grande, use virtualização
 (`src/ui/tabela-infinita.tsx`), não paginação improvisada. Exportação respeita os filtros ativos.
 
 ### Formulário — `.form-row`, `.form-grid`
@@ -300,7 +300,7 @@ que não são de área entram em Painéis; as seções de Configurações são a
 
 **Todo o sistema desenha Lucide.** O Font Awesome não é mais carregado. Dois caminhos:
 
-- **Barra lateral e o que é dela** (menu inferior do celular, Sair, tema, botão de recolher): SVG
+- **Barra lateral e o que é dela** (Sair, tema, botão de recolher e o ☰ do celular): SVG
   Lucide de verdade, pelo registro abaixo.
 - **Resto do sistema:** o HTML e os módulos ainda escrevem `<i class="fa-solid fa-…">`, mas
   `src/styles/icones-lucide.css` (gerado por `npm run icones` a partir de

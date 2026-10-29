@@ -55,10 +55,6 @@ import {
   recortarArvorePorArea,
 } from "../../lib/menu-lateral.ts";
 import {
-  avisar,
-  EVENTO_MENU_ATUALIZADO,
-} from "../../lib/eventos-da-barra-lateral.ts";
-import {
   assinarDadosDoMonitoramento,
   definirAreaAtual,
   obterDadosDoMonitoramento,
@@ -92,9 +88,9 @@ import { marcarItemAtivoNoMenu } from "./estado.ts";
     `proximoFlutuante`: um por vez, `Esc` fecha, um clique não prende o painel.
 
   O DOM continua sendo contrato: `#nav`, `[data-view]`, `[data-secao]`,
-  `[data-area]`, `data-rotulo`, `data-icone` e `aria-current` são lidos pelo
-  menu inferior do celular, pelos ganchos do mapa (`[data-view="dashboard"]`)
-  e pelos testes de ponta a ponta. As opções do seletor não têm `data-view`:
+  `[data-area]`, `data-rotulo`, `data-icone` e `aria-current` são lidos pela
+  gaveta do celular (escolher uma página a fecha), pelos ganchos do mapa
+  (`[data-view="dashboard"]`) e pelos testes de ponta a ponta. As opções do seletor não têm `data-view`:
   não são páginas.
 */
 
@@ -282,13 +278,11 @@ function ItemDoMenu({
   item,
   ativo,
   direto = false,
-  ordem,
   aoEscolher,
 }: {
   item: Item;
   ativo: boolean;
   direto?: boolean;
-  ordem?: number;
   aoEscolher: () => void;
 }) {
   const dica = [
@@ -309,7 +303,6 @@ function ItemDoMenu({
           item.manutencao && "menu-item--manutencao",
         )}
         data-view={item.view}
-        data-ordem={ordem}
         data-secao={item.secao}
         data-area={item.area}
         data-rotulo={item.rotulo}
@@ -373,9 +366,7 @@ function Area({
   /*
     As áreas do sistema dividem as páginas em blocos com título
     (Acompanhamento e Processo seletivo); bloco vazio não aparece.
-    Administração (e Painéis, sem área) é uma lista só. Nos blocos, cada item
-    leva `data-ordem`, a posição dele no catálogo: o menu inferior do celular
-    escolhe as primeiras páginas por ela, e não pela ordem dos blocos.
+    Administração (e Painéis, sem área) é uma lista só.
   */
   const blocos = ehAreaDoSistema(area.id) ? blocosDaArea(area.itens) : null;
   const lista = (
@@ -389,7 +380,6 @@ function Area({
           item={item}
           ativo={item === itemAtivo}
           direto={direto}
-          ordem={blocos ? area.itens.indexOf(item) : undefined}
           aoEscolher={() => aoEscolher(item, area.id, refCabecalho)}
         />
       ))}
@@ -606,8 +596,7 @@ function SeletorDeArea({
 
 /*
   Com `previa` (a prévia de Configurações › Marca), o menu é o mesmo, mas não
-  grava as áreas fechadas nem avisa `EVENTO_MENU_ATUALIZADO`: quem espelha o
-  menu é a barra de verdade.
+  grava as áreas fechadas.
 */
 export function Navegacao({
   arvore,
@@ -665,20 +654,6 @@ export function Navegacao({
     proximas.delete(areaAtiva);
     guardarFechadas(proximas);
   }, [areaAtiva, ativo.view, ativo.secao]);
-
-  /*
-    Depois de o DOM refletir o menu e a página ativa, avisa quem o espelha. A
-    área atual entra: o menu do celular mostra as páginas dela.
-  */
-  const secaoAtiva = itemAtivo?.item.secao ?? null;
-  useEffect(() => {
-    if (previa) return;
-    avisar(EVENTO_MENU_ATUALIZADO, {
-      view: ativo.view,
-      secao: secaoAtiva,
-      area: areaAtual,
-    });
-  }, [arvore, ativo, secaoAtiva, areaAtual, previa]);
 
   useEffect(() => {
     if (!trilho) despachar({ tipo: "fechar" });

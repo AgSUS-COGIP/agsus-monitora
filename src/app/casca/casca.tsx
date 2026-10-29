@@ -2,6 +2,8 @@ import { memo } from "react";
 import { montarModulo } from "../montar-modulo.tsx";
 import { chamarAcaoDaCasca } from "./acoes.ts";
 import { AreasDasTelas } from "./areas-das-telas.tsx";
+import { GavetaDoCelular } from "./gaveta-do-celular.tsx";
+import { usarTabelasEmCartoes } from "./tabelas-em-cartoes.ts";
 import { Topo } from "./topo.tsx";
 
 /*
@@ -16,6 +18,9 @@ import { Topo } from "./topo.tsx";
   React não mexe mais nesta árvore: não há estado nem props que mudem (`memo`
   sem props), e quem escreve nela continua escrevendo como antes (título,
   perfil, textos configuráveis, `.active` das seções, a faixa de manutenção).
+  A exceção é o celular: o véu da gaveta (`gaveta-do-celular.tsx`) se
+  redesenha sozinho ao abrir e fechar, e as tabelas viram cartões
+  (`tabelas-em-cartoes.ts`).
   As ilhas (barra lateral, Pessoas online, Aya…) são raízes React próprias que
   montam nos elementos vazios daqui.
 
@@ -23,6 +28,7 @@ import { Topo } from "./topo.tsx";
   é de `perfil.mostrarApp()`/`esconderApp()` desde o primeiro quadro.
 */
 export const Casca = memo(function Casca() {
+  usarTabelasEmCartoes();
   return (
     <>
       <RetornoDoPainelExterno />
@@ -31,6 +37,7 @@ export const Casca = memo(function Casca() {
         inteiro, e o botão de recolher, são montados por montarBarraLateral().
       */}
       <aside className="sidebar" aria-label="Navegação principal"></aside>
+      <GavetaDoCelular />
 
       <main className="main" id="conteudoPrincipal" tabIndex={-1}>
         <Topo />

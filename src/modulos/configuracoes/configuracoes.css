@@ -171,7 +171,7 @@
   position: fixed;
   /* "Salvar alterações" fora do canto da arara da Aya (--aya-reserva). */
   right: calc(var(--space-4) + var(--aya-reserva, 0px));
-  bottom: calc(var(--space-4) + var(--recuo-da-navegacao-inferior, 0px));
+  bottom: var(--space-4);
   left: calc(var(--sidebar-mini) + var(--space-4));
   z-index: calc(var(--z-header) - 1);
   display: flex;

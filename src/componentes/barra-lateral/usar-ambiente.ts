@@ -33,10 +33,16 @@ export const barraRecolhida = () =>
   document.body.classList.contains("sidebar-collapsed");
 export const emGaveta = () => window.innerWidth <= LARGURA_DE_GAVETA;
 
+/*
+  Fora do navegador (a casca desenhada em texto, `tests/pagina-montada.js`),
+  a barra é a do computador: expandida e sem gaveta.
+*/
+const naoNoServidor = () => false;
+
 export function usarBarraRecolhida() {
-  return useSyncExternalStore(assinarBarra, barraRecolhida);
+  return useSyncExternalStore(assinarBarra, barraRecolhida, naoNoServidor);
 }
 
 export function usarGaveta() {
-  return useSyncExternalStore(assinarBarra, emGaveta);
+  return useSyncExternalStore(assinarBarra, emGaveta, naoNoServidor);
 }
