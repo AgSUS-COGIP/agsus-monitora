@@ -1,0 +1,85 @@
+name: Pacotes dos painéis
+
+# Job Python (scripts/paineis/pacotes.py): monta os pacotes prontos do Painel de análises, da Lista de
+# aprovados e do Painel de entrevistas das áreas desatualizadas (marca de mudança, sem pacote ou pacote
+# de mais de 24 h) e grava pelas RPCs paineis_ler_pendentes, paineis_ler_fontes e paineis_gravar_pacote
+# (só service_role; a de gravação só valida e guarda). Montagem: python/monitora/paineis/pacotes.py,
+# cópia fiel das funções SQL de antes (migration 20261029160000).
+#
+# Quando roda:
+#   - pedido pela rodada do pg_cron dos pacotes (private."PR_REMONTAR_CACHE_AGENDADO": análises a cada
+#     5 min, entrevistas aos :25, aprovados aos :35), só quando há área desatualizada, com a chave
+#     "Pacotes dos painéis" ligada; se o job não der conta (marca esperando mais de 30 min, pedido que
+#     falhou), o banco monta como antes;
+#   - pelo botão "Run workflow" desta aba Actions.
+# Não mexe nas sincronizações de Entrevistas e Seleção (pausadas de propósito): o pacote das entrevistas
+# sai dos dados que já estão no banco.
+# Guia: docs/python-no-monitora.md · agenda: docs/agenda-dos-robos.md.
+#
+# O REPOSITÓRIO É PÚBLICO e este log também: o job só imprime pacotes, áreas e contagens.
+#
+# Secrets do repositório (os mesmos das conferências):
+#   SUPABASE_URL                 https://<projeto>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY    chave service_role do Supabase
+
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "normal = monta e grava; seco = só monta e mostra o resumo"
+        type: choice
+        options:
+          - normal
+          - seco
+        default: normal
+      caches:
+        description: "Só estes pacotes (ANALISES,APROVADOS,ENTREVISTAS); em branco = todos os desatualizados"
+        type: string
+        required: false
+        default: ""
+      disparado_por:
+        description: "Pedido do MONITORA = id do usuário; agenda do banco = AGENDA; em branco = GitHub"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  montar:
+    name: Fontes → pacotes prontos
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Pedidos em sequência (várias rodadas seguidas) viram uma execução só na fila.
+    concurrency:
+      group: pacotes-dos-paineis
+      cancel-in-progress: false
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          show-progress: false
+
+      # Só biblioteca padrão (python/monitora/ e scripts/paineis/): sem pip install.
+      - name: Configurar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # Os inputs vão por variável de ambiente (nunca interpolados no shell).
+      - name: Montar e gravar
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MODO: ${{ inputs.modo || 'normal' }}
+          CACHES: ${{ inputs.caches }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
+        run: |
+          if [ "$MODO" = "seco" ]; then
+            python scripts/paineis/pacotes.py --seco
+          else
+            python scripts/paineis/pacotes.py
+          fi

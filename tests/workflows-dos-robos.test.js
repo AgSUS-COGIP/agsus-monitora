@@ -18,6 +18,7 @@ const ROBOS = [
   "leitura-de-arquivos.yml",
   "classificacao.yml",
   "contratacao-dos-aprovados.yml",
+  "pacotes-dos-paineis.yml",
 ];
 const gatilhos = (texto) => {
   const bloco =

@@ -163,6 +163,24 @@ Limites conhecidos (a acertar com os dados reais, depois do ensaio):
   outra lista" não decide (ambíguo) e a mesma matrícula em editais diferentes; editais diferentes com matrículas diferentes
   (recontratação) não geram aviso, porque o MONITORA não tem as datas de admissão e desligamento.
 
+## Pacotes dos painéis (29/10/2026)
+
+- O quê: os pacotes prontos do Painel de análises (`TA_PAINEL_ANALISE`), da Lista de aprovados
+  (`TA_CANDIDATO_APROVADO_AREA`) e do Painel de entrevistas (`TA_PAINEL_ENTREVISTA`), que o banco montava
+  pelo pg_cron (rodadas de até 117 s), agora são montados em Python: `monitora.paineis.pacotes`, cópia fiel
+  de `FC_MONTAR_PAINEL_ANALISE`, `FC_MONTAR_APROVADOS_AREA` e `FC_MONTAR_ENTREVISTAS_AREA` (sem recorte).
+- Ordem igual à do banco: a leitura manda o "vocabulário" (os textos que ordenam, na ordem da colação ICU do
+  banco) e o Python ordena pela posição neles, nunca pela ordem do Python. Números voltam como o banco os
+  escreveu (`monitora.paineis.json_exato`).
+- Job: `scripts/paineis/pacotes.py` (`--seco` só monta e resume; `--caches`). Lê `paineis_ler_pendentes`
+  e `paineis_ler_fontes` e grava por `paineis_gravar_pacote` (as três só service_role; a de gravação só
+  valida o formato, nunca troca um pacote mais novo e apaga só as marcas que a leitura viu).
+- Quando roda: pedido pela rodada do pg_cron dos pacotes (`.github/workflows/pacotes-dos-paineis.yml`,
+  chave **Pacotes dos painéis**); o banco monta como antes na reserva ([agenda-dos-robos.md](agenda-dos-robos.md)).
+- Testes: `tests/python/test_pacotes_dos_paineis.py`, com o caso dourado
+  `tests/fixtures/paineis/dourado.json` (fontes e o que o SQL montou na mesma foto, numa área de mentira, tirado
+  do ensaio `supabase/ensaios/20261029160000_pacotes_dos_paineis_em_python.sql`).
+
 ## Contratado em outra lista (24/10/2026)
 
 A mesma matrícula Contratado em duas ou mais linhas do mesmo edital (a lista da ampla e a da cota;

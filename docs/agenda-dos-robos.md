@@ -26,10 +26,17 @@ Como está no `cron.job` do banco (conferido em 22/10/2026):
 | `agsus_robo_conferencias`            | `0 9 * * *`             | 6h                                        | sim                   | `conferencias.yml`            |
 | `agsus_robo_conferir_disparos`       | `*/15 * * * *`          | a cada 15 min (lê as respostas do GitHub) | sim                   | —                             |
 
-Pacotes dos painéis (só no banco, sem GitHub): `agsus_analises_cache_do_painel` roda a cada 5 min
-(`*/5 * * * *`, desde 20261024100000) e só remonta a área marcada por uma carga nova em
-`TB_ANALISE_CURRICULAR` (ou com pacote de mais de 24 h); sem marca, a rodada custa milissegundos.
-`agsus_entrevistas_cache_do_painel` roda aos :25 e `agsus_aprovados_cache_por_area` aos :35.
+Pacotes dos painéis: `agsus_analises_cache_do_painel` roda a cada 5 min (`*/5 * * * *`, desde
+20261024100000), `agsus_entrevistas_cache_do_painel` aos :25 e `agsus_aprovados_cache_por_area` aos :35.
+Desde 20261029160000 a rodada **não monta mais no banco**: com área desatualizada (marca de mudança em
+`TL_ALTERACAO_CACHE`, sem pacote ou pacote de mais de 24 h) ela pede o job Python
+`pacotes-dos-paineis.yml` (`private."FC_PAINEIS_RODADA"` → `FC_DISPARAR_ROBO`, origem `AGENDA`, chave
+**Pacotes dos painéis**), sem repetir um pedido de menos de 4 min; o job monta os três pacotes de todas as
+áreas desatualizadas e grava por `paineis_gravar_pacote`, que só valida. Sem área desatualizada, a rodada
+custa milissegundos. **Reserva** (o banco monta como antes, com `atualizar_cache_*`): área sem pacote, marca
+esperando há mais de 30 min, pacote com mais de 25 h, ou último pedido do job `FALHOU`/`SEM_TOKEN` nos
+últimos 30 min. O pacote das entrevistas sai dos dados que já estão no banco: o job não religa nem pede as
+sincronizações de Entrevistas e Seleção.
 
 **Entrevistas e Seleção estão DESLIGADAS DE PROPÓSITO desde 16/10/2026** (`active = false`; o
 último pedido `AGENDA` de cada uma em `TL_DISPARO_ROBO` é de 16/10, 7h05 e 8h10 de Brasília). As
@@ -80,7 +87,7 @@ chave por aba; desligada:
 | Robô de inscrições           | `agsus_robo_inscricoes_*`                                                                                                             | `robo-empregare.yml`                                                          |
 | Pré-classificação automática | —                                                                                                                                     | `pre-classificacao.yml` chamado no fim do `robo-empregare.yml` (apos_robo)    |
 | Conferências                 | `agsus_robo_conferencias`                                                                                                             | `conferencias.yml` (chama `contratacao-dos-aprovados.yml` antes)              |
-| Pacotes dos painéis          | `agsus_analises_cache_do_painel`, `agsus_aprovados_cache_por_area`, `agsus_entrevistas_cache_do_painel`                               | —                                                                             |
+| Pacotes dos painéis          | `agsus_analises_cache_do_painel`, `agsus_aprovados_cache_por_area`, `agsus_entrevistas_cache_do_painel`                               | `pacotes-dos-paineis.yml` (pedido pela rodada)                                |
 | Manutenção do banco          | `agsus_analises_analyze_diario`, `agsus_fila_estatisticas`, `agsus_analises_encerrar_inativas`, `agsus_eventos_acesso_limpeza_mensal` | —                                                                             |
 | Classificação em Python      | —                                                                                                                                     | `classificacao.yml` pedido ao gerar uma lista (20261023170000)                |
 | Gerar listas pelo Python     | —                                                                                                                                     | `classificacao.yml` (modo calculo) pedido ao clicar em Gerar (20261023200000) |
