@@ -562,7 +562,7 @@ análises (6.3/6.4), a lista de aprovados (12) e a aba Entrevistas.
 
 ### 6.6 Leituras por versão: a marca sai antes de montar (29/10/2026)
 
-Migration `20261029150000_marca_barata_das_leituras_por_versao.sql` (rollback e
+Migration `20261029170000_marca_barata_das_leituras_por_versao.sql` (rollback e
 ensaio com o mesmo nome). Vale para as sete RPCs `*_se_mudou` de Análises,
 Entrevistas, Seleção, Visão geral (acompanhamento), regra da avaliação,
 Classificação e avisos das conferências (a da pré-classificação fica de fora).

@@ -59,8 +59,8 @@
   Para aplicar, a migration confere que as sete RPCs são as de 20261013160000,
   20261014230000 e 20261015000000 (para se outra PR tiver mexido nelas).
 
-  Ensaio: supabase/ensaios/20261029150000_marca_barata_das_leituras_por_versao.sql
-  Rollback: supabase/rollback/20261029150000_marca_barata_das_leituras_por_versao.sql
+  Ensaio: supabase/ensaios/20261029170000_marca_barata_das_leituras_por_versao.sql
+  Rollback: supabase/rollback/20261029170000_marca_barata_das_leituras_por_versao.sql
 */
 begin;
 
@@ -105,7 +105,7 @@ alter table private."TL_VERSAO_FONTE" enable row level security;
 revoke all on table private."TL_VERSAO_FONTE" from public, anon, authenticated, service_role;
 
 comment on table private."TL_VERSAO_FONTE" is
-  'Versão de cada tabela de origem das leituras por versão (20261029150000): uma linha por transação que escreveu na tabela (gatilho TG_VERSAO_FONTE), ou uma linha compactada com a soma. A versão da fonte é sum(QT_ALTERACAO): só cresce. Nunca apagar linhas fora de FC_COMPACTAR_VERSAO_FONTE (a soma voltaria a um valor já usado).';
+  'Versão de cada tabela de origem das leituras por versão (20261029170000): uma linha por transação que escreveu na tabela (gatilho TG_VERSAO_FONTE), ou uma linha compactada com a soma. A versão da fonte é sum(QT_ALTERACAO): só cresce. Nunca apagar linhas fora de FC_COMPACTAR_VERSAO_FONTE (a soma voltaria a um valor já usado).';
 comment on column private."TL_VERSAO_FONTE"."CO_VERSAO_FONTE" is 'Identificador da linha (sequencial).';
 comment on column private."TL_VERSAO_FONTE"."NO_FONTE" is 'Tabela de origem, como esquema.TABELA (TD_FONTE_DA_LEITURA.NO_FONTE).';
 comment on column private."TL_VERSAO_FONTE"."QT_ALTERACAO" is 'Transações confirmadas que esta linha representa: 1, ou a soma das linhas juntadas pela compactação.';
@@ -122,7 +122,7 @@ create table if not exists private."TD_LEITURA_POR_MARCA" (
 alter table private."TD_LEITURA_POR_MARCA" enable row level security;
 revoke all on table private."TD_LEITURA_POR_MARCA" from public, anon, authenticated, service_role;
 comment on table private."TD_LEITURA_POR_MARCA" is
-  'Leituras com marca barata (20261029150000): as funções raiz de cada uma (o fecho delas dá as fontes) e fontes extras que o fecho não alcança.';
+  'Leituras com marca barata (20261029170000): as funções raiz de cada uma (o fecho delas dá as fontes) e fontes extras que o fecho não alcança.';
 comment on column private."TD_LEITURA_POR_MARCA"."NO_LEITURA" is 'Nome da leitura (FC_MARCA_DA_LEITURA).';
 comment on column private."TD_LEITURA_POR_MARCA"."DS_FUNCOES" is 'Funções (public/private) cujo fecho de chamadas e views dá as tabelas de origem.';
 comment on column private."TD_LEITURA_POR_MARCA"."DS_FONTES_EXTRAS" is 'Tabelas (esquema.TABELA) lidas fora das funções raiz (ex.: pela própria RPC por versão).';
@@ -139,7 +139,7 @@ create table if not exists private."TD_FONTE_DA_LEITURA" (
 alter table private."TD_FONTE_DA_LEITURA" enable row level security;
 revoke all on table private."TD_FONTE_DA_LEITURA" from public, anon, authenticated, service_role;
 comment on table private."TD_FONTE_DA_LEITURA" is
-  'Tabelas de origem de cada leitura com marca (20261029150000), calculadas por FC_ATUALIZAR_FONTES_DAS_LEITURAS. Toda fonte tem o gatilho TG_VERSAO_FONTE.';
+  'Tabelas de origem de cada leitura com marca (20261029170000), calculadas por FC_ATUALIZAR_FONTES_DAS_LEITURAS. Toda fonte tem o gatilho TG_VERSAO_FONTE.';
 comment on column private."TD_FONTE_DA_LEITURA"."NO_LEITURA" is 'Leitura (TD_LEITURA_POR_MARCA).';
 comment on column private."TD_FONTE_DA_LEITURA"."NO_FONTE" is 'Tabela de origem, como esquema.TABELA.';
 comment on column private."TD_FONTE_DA_LEITURA"."DT_ATUALIZACAO" is 'Quando a fonte entrou na lista.';
@@ -180,7 +180,7 @@ $function$;
 
 revoke all on function private."FC_COMPACTAR_VERSAO_FONTE"(text) from public, anon, authenticated;
 comment on function private."FC_COMPACTAR_VERSAO_FONTE"(text) is
-  'Junta as linhas de TL_VERSAO_FONTE de cada fonte (ou só de p_fonte) numa linha com a mesma soma (20261029150000). Devolve quantas fontes juntou.';
+  'Junta as linhas de TL_VERSAO_FONTE de cada fonte (ou só de p_fonte) numa linha com a mesma soma (20261029170000). Devolve quantas fontes juntou.';
 
 create or replace function private."FC_TG_VERSAO_FONTE"()
 returns trigger
@@ -207,7 +207,7 @@ $function$;
 
 revoke all on function private."FC_TG_VERSAO_FONTE"() from public, anon, authenticated;
 comment on function private."FC_TG_VERSAO_FONTE"() is
-  'Gatilho por comando TG_VERSAO_FONTE (20261029150000): uma linha em TL_VERSAO_FONTE por transação que escreveu na tabela.';
+  'Gatilho por comando TG_VERSAO_FONTE (20261029170000): uma linha em TL_VERSAO_FONTE por transação que escreveu na tabela.';
 
 -- 4. As fontes pelo código ------------------------------------------------------------------
 create or replace function private."FC_FONTES_PELO_CODIGO"(p_funcoes text[])
@@ -264,7 +264,7 @@ $function$;
 
 revoke all on function private."FC_FONTES_PELO_CODIGO"(text[]) from public, anon, authenticated;
 comment on function private."FC_FONTES_PELO_CODIGO"(text[]) is
-  'As tabelas (esquema.TABELA) que as funções p_funcoes leem, pelo fecho do código das funções e views de public/private (20261029150000).';
+  'As tabelas (esquema.TABELA) que as funções p_funcoes leem, pelo fecho do código das funções e views de public/private (20261029170000).';
 
 create or replace function private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"(p_gatilhos boolean default true)
 returns jsonb
@@ -316,7 +316,7 @@ $function$;
 
 revoke all on function private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"(boolean) from public, anon, authenticated, service_role;
 comment on function private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"(boolean) is
-  'Recalcula TD_FONTE_DA_LEITURA pelo código (FC_FONTES_PELO_CODIGO das funções de cada leitura, mais as extras) e, com p_gatilhos, põe o gatilho TG_VERSAO_FONTE (ENABLE ALWAYS) em toda fonte (20261029150000; o ensaio usa p_gatilhos = false para não travar as escritas nas chamadas pesadas). Rodar na migration que mudar uma função do fecho de uma leitura.';
+  'Recalcula TD_FONTE_DA_LEITURA pelo código (FC_FONTES_PELO_CODIGO das funções de cada leitura, mais as extras) e, com p_gatilhos, põe o gatilho TG_VERSAO_FONTE (ENABLE ALWAYS) em toda fonte (20261029170000; o ensaio usa p_gatilhos = false para não travar as escritas nas chamadas pesadas). Rodar na migration que mudar uma função do fecho de uma leitura.';
 
 -- 5. As marcas -------------------------------------------------------------------------------
 create or replace function private."FC_MARCA_DA_LEITURA"(p_leitura text, p_chave text)
@@ -346,7 +346,7 @@ $function$;
 
 revoke all on function private."FC_MARCA_DA_LEITURA"(text, text) from public, anon, authenticated;
 comment on function private."FC_MARCA_DA_LEITURA"(text, text) is
-  'Marca barata de uma leitura (20261029150000): md5 da leitura, da chave (parâmetros), de quem lê (auth.uid, e-mail, papel) e da versão de cada fonte (TL_VERSAO_FONTE). Nula se a leitura não tem fontes.';
+  'Marca barata de uma leitura (20261029170000): md5 da leitura, da chave (parâmetros), de quem lê (auth.uid, e-mail, papel) e da versão de cada fonte (TL_VERSAO_FONTE). Nula se a leitura não tem fontes.';
 
 create or replace function private."FC_MARCA_DA_RPC"(
   p_rpc text, p_area text default null, p_edital uuid default null,
@@ -464,7 +464,7 @@ $function$;
 revoke all on function private."FC_MARCA_DA_RPC"(text, text, uuid, text, text) from public, anon;
 grant execute on function private."FC_MARCA_DA_RPC"(text, text, uuid, text, text) to authenticated, service_role;
 comment on function private."FC_MARCA_DA_RPC"(text, text, uuid, text, text) is
-  'A marca da leitura de uma RPC por versão, depois de conferir a permissão dela com os mesmos erros (20261029150000). Análises e Entrevistas sem recorte com pacote pronto: marca da linha do pacote (DT_GERACAO, DS_VERSAO_DADOS) e das permissões.';
+  'A marca da leitura de uma RPC por versão, depois de conferir a permissão dela com os mesmos erros (20261029170000). Análises e Entrevistas sem recorte com pacote pronto: marca da linha do pacote (DT_GERACAO, DS_VERSAO_DADOS) e das permissões.';
 
 -- 6. Payload em colunas com a versão dada --------------------------------------------------
 create or replace function private."FC_PAYLOAD_EM_COLUNAS"(
@@ -486,7 +486,7 @@ $function$;
 revoke all on function private."FC_PAYLOAD_EM_COLUNAS"(jsonb, text, text[], text) from public, anon;
 grant execute on function private."FC_PAYLOAD_EM_COLUNAS"(jsonb, text, text[], text) to authenticated, service_role;
 comment on function private."FC_PAYLOAD_EM_COLUNAS"(jsonb, text, text[], text) is
-  'O payload com p_campo em colunas (<campo>_em_colunas, FC_COLUNAS_JSON) e versao = p_versao (20261029150000; o formato de FC_SE_MUDOU_EM_COLUNAS com a versão vinda da marca).';
+  'O payload com p_campo em colunas (<campo>_em_colunas, FC_COLUNAS_JSON) e versao = p_versao (20261029170000; o formato de FC_SE_MUDOU_EM_COLUNAS com a versão vinda da marca).';
 
 -- Os avisos como a tela recebe: sem nulos e sem `exemplos` em aviso com casos (20261015000000).
 create or replace function private."FC_AVISOS_PARA_A_TELA"(p_avisos jsonb)
@@ -514,7 +514,7 @@ $function$;
 
 revoke all on function private."FC_AVISOS_PARA_A_TELA"(jsonb) from public, anon, authenticated;
 comment on function private."FC_AVISOS_PARA_A_TELA"(jsonb) is
-  'listar_avisos_conferencia como a tela recebe: sem chaves nulas e sem exemplos em aviso com casos (20261015000000; separada em 20261029150000).';
+  'listar_avisos_conferencia como a tela recebe: sem chaves nulas e sem exemplos em aviso com casos (20261015000000; separada em 20261029170000).';
 
 -- 7. As sete RPCs por versão -------------------------------------------------------------------
 create or replace function public.get_analises_dashboard_payload_v2_se_mudou(
@@ -657,19 +657,19 @@ end;
 $function$;
 
 comment on function public.get_analises_dashboard_payload_v2_se_mudou(text, text, text) is
-  'get_analises_dashboard_payload_v2 com versão: a marca (FC_MARCA_DA_RPC; sem recorte, a do pacote pronto) sai antes de montar; p_versao igual devolve só { inalterado, versao } (20261029150000). Mesma permissão.';
+  'get_analises_dashboard_payload_v2 com versão: a marca (FC_MARCA_DA_RPC; sem recorte, a do pacote pronto) sai antes de montar; p_versao igual devolve só { inalterado, versao } (20261029170000). Mesma permissão.';
 comment on function public.get_entrevistas_da_area_se_mudou(text, text) is
-  'get_entrevistas_da_area com versão: a marca (FC_MARCA_DA_RPC; sem recorte, a do pacote pronto) sai antes de montar; p_versao igual devolve só { inalterado, versao } (20261029150000). Mesma permissão.';
+  'get_entrevistas_da_area com versão: a marca (FC_MARCA_DA_RPC; sem recorte, a do pacote pronto) sai antes de montar; p_versao igual devolve só { inalterado, versao } (20261029170000). Mesma permissão.';
 comment on function public.get_selecao_da_area_se_mudou(text, text) is
-  'get_selecao_da_area com versão: a marca das fontes (FC_MARCA_DA_RPC) sai antes de montar; p_versao igual devolve só { inalterado, versao } (20261029150000). Mesma permissão.';
+  'get_selecao_da_area com versão: a marca das fontes (FC_MARCA_DA_RPC) sai antes de montar; p_versao igual devolve só { inalterado, versao } (20261029170000). Mesma permissão.';
 comment on function public.listar_acompanhamento_da_visao_geral_se_mudou(text, text) is
-  'listar_acompanhamento_da_visao_geral com versão: a marca das fontes (FC_MARCA_DA_RPC) sai antes de montar; p_versao igual devolve só { inalterado, versao } (20261029150000). Mesma permissão.';
+  'listar_acompanhamento_da_visao_geral com versão: a marca das fontes (FC_MARCA_DA_RPC) sai antes de montar; p_versao igual devolve só { inalterado, versao } (20261029170000). Mesma permissão.';
 comment on function public.obter_regra_analise_se_mudou(uuid, text) is
-  'obter_regra_analise com versão: a marca das fontes (FC_MARCA_DA_RPC) sai antes de montar; p_versao igual devolve só { inalterado, versao } (20261029150000). Mesma permissão.';
+  'obter_regra_analise com versão: a marca das fontes (FC_MARCA_DA_RPC) sai antes de montar; p_versao igual devolve só { inalterado, versao } (20261029170000). Mesma permissão.';
 comment on function public.obter_classificacao_do_edital_se_mudou(uuid, text) is
-  'obter_classificacao_do_edital com versão e os candidatos em colunas (candidatos_em_colunas): a marca das fontes (FC_MARCA_DA_RPC) sai antes de montar; p_versao igual devolve só { inalterado, versao } (20261029150000). Mesma permissão.';
+  'obter_classificacao_do_edital com versão e os candidatos em colunas (candidatos_em_colunas): a marca das fontes (FC_MARCA_DA_RPC) sai antes de montar; p_versao igual devolve só { inalterado, versao } (20261029170000). Mesma permissão.';
 comment on function public.listar_avisos_conferencia_se_mudou(text, text, text) is
-  'listar_avisos_conferencia com versão, sem nulos e sem exemplos em aviso com casos (FC_AVISOS_PARA_A_TELA): a marca das fontes (FC_MARCA_DA_RPC) sai antes de montar; p_versao igual devolve só { inalterado, versao } (20261029150000).';
+  'listar_avisos_conferencia com versão, sem nulos e sem exemplos em aviso com casos (FC_AVISOS_PARA_A_TELA): a marca das fontes (FC_MARCA_DA_RPC) sai antes de montar; p_versao igual devolve só { inalterado, versao } (20261029170000).';
 
 -- As permissões de sempre (create or replace mantém; repetidas para a migration valer sozinha).
 revoke all on function public.get_analises_dashboard_payload_v2_se_mudou(text, text, text) from public, anon;

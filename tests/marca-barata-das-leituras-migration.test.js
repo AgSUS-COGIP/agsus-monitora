@@ -2,14 +2,14 @@ import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 /*
-  Leituras por versão com marca barata (20261029150000): as sete RPCs
+  Leituras por versão com marca barata (20261029170000): as sete RPCs
   `*_se_mudou` tiram a marca (versão das fontes, gravada por gatilho) ANTES de
   montar o payload. O ensaio no banco confere payload, permissão e que toda
   fonte muda a marca; aqui, o que dá para conferir no arquivo — e a trava para
   quem mudar depois uma função que essas leituras chamam.
 */
 const ler = (f) => readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-const NOME = "20261029150000_marca_barata_das_leituras_por_versao.sql";
+const NOME = "20261029170000_marca_barata_das_leituras_por_versao.sql";
 const migration = ler(`supabase/migrations/${NOME}`);
 const ensaio = ler(`supabase/ensaios/${NOME}`);
 const rollback = ler(`supabase/rollback/${NOME}`);

@@ -1,4 +1,4 @@
--- Desfaz 20261029150000: as sete RPCs por versão voltam a montar o payload e tirar o md5
+-- Desfaz 20261029170000: as sete RPCs por versão voltam a montar o payload e tirar o md5
 -- (as definições de 20261013160000, 20261014230000 e 20261015000000, iguais às do banco
 -- em 29/10/2026); saem os gatilhos TG_VERSAO_FONTE, as tabelas de versão e as funções da
 -- marca. A tela não muda: a versão é opaca e a primeira chamada depois manda o payload.

@@ -1,5 +1,5 @@
 /*
-  Ensaio de 20261029150000 (leituras por versão: a marca sai antes de montar).
+  Ensaio de 20261029170000 (leituras por versão: a marca sai antes de montar).
   Sempre termina em rollback. Cole a migration no ponto marcado, SEM o
   begin/commit dela (o ensaio é uma transação só) e com a última chamada como
   FC_ATUALIZAR_FONTES_DAS_LEITURAS(p_gatilhos => false): as chamadas pesadas
@@ -126,7 +126,7 @@ set local role authenticated;
 select pg_temp.medir('antes');
 reset role;
 
--- >>> cole aqui supabase/migrations/20261029150000_marca_barata_das_leituras_por_versao.sql
+-- >>> cole aqui supabase/migrations/20261029170000_marca_barata_das_leituras_por_versao.sql
 --     (sem begin/commit; a última chamada como FC_ATUALIZAR_FONTES_DAS_LEITURAS(p_gatilhos => false)) <<<
 
 -- DEPOIS.
