@@ -73,7 +73,7 @@ import type {
 } from "./tipos-da-pre-classificacao.ts";
 
 /*
-  Aba Pré-classificação (fase F2): a Lista Geral de Classificação Provisória
+  Aba Triagem (fase F2): a Lista Geral de Classificação Provisória
   por ART e o lote de convocação de cada vaga, como o job Python gravou
   (scripts/pre_classificacao/). A tela só lê; "Recalcular" (coordenação) pede
   o job; os tamanhos do lote por vaga viram versão nova da regra; as listas
@@ -358,7 +358,7 @@ function VagaDaPre({
     setErroDoEspelho("");
     setEmitindo(c.codigo);
     try {
-      // A situação de agora só desta pessoa (não a pré-classificação inteira).
+      // A situação de agora só desta pessoa (não a triagem inteira).
       const atual = await pre.conferirEliminados([
         chaveDaPessoa(c.vaga, c.codigo),
       ]);
@@ -482,7 +482,7 @@ function VagaDaPre({
         ) : (
           <span>
             {v.candidatos_empregare ?? 0} inscritos na Empregare, ainda sem
-            pré-classificação
+            triagem
           </span>
         )}
         {podeCoordenar ? (
@@ -907,7 +907,7 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
   if (p.erro)
     return (
       <Aviso tom="danger" papel="alert">
-        Não foi possível ler a pré-classificação: {p.erro}{" "}
+        Não foi possível ler a triagem: {p.erro}{" "}
         <button
           type="button"
           className="btn secondary small"
@@ -1042,7 +1042,7 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
         inicial={p.congelamento}
       />
       <InscricoesDoEdital dados={p.inscricoes} />
-      <GradeDeKpis rotulo="Pré-classificação">
+      <GradeDeKpis rotulo="Triagem">
         <Kpi
           tom="info"
           icone="fa-users"
@@ -1091,8 +1091,8 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
           data-execucao={ultima?.situacao || "nenhuma"}
         >
           {ultima
-            ? `Pré-classificação de ${quando(ultima.fim || ultima.inicio)} · ${SITUACAO_DA_EXECUCAO[ultima.situacao] || ultima.situacao}`
-            : "Ainda sem pré-classificação"}
+            ? `Triagem de ${quando(ultima.fim || ultima.inicio)} · ${SITUACAO_DA_EXECUCAO[ultima.situacao] || ultima.situacao}`
+            : "Ainda sem triagem"}
           {d.regra
             ? ` · regra: ${rotuloDaVersaoNaLista(e.dados?.regra?.versoes, d.regra.versao)}`
             : ""}

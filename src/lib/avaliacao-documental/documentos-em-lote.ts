@@ -4,8 +4,8 @@
 
   - Espelhos das avaliações concluídas: as fichas CONCLUIDA da fila
     (obter_fila_avaliacao, o núcleo já carregado na tela).
-  - Comunicados de eliminação antes da análise (Pré-classificação): os
-    ELIMINADO da pré-classificação gravada, marcados nas listas em páginas
+  - Comunicados de eliminação antes da análise (Triagem): os
+    ELIMINADO da triagem gravada, marcados nas listas em páginas
     (listar_pre_classificacao) e conferidos antes de emitir só pelas chaves
     marcadas (conferir_eliminados_pre_classificacao).
 
@@ -82,7 +82,7 @@ type InscritoDaPre = {
   motivo?: string | null;
 };
 
-/** Um eliminado da pré-classificação como pessoa da lista (a linha da página ou da leitura inteira). */
+/** Um eliminado da triagem como pessoa da lista (a linha da página ou da leitura inteira). */
 export const pessoaEliminada = (c: InscritoDaPre): PessoaDoDocumento => ({
   chave: chaveDaPessoa(c.vaga, c.codigo),
   codigo: texto(c.codigo),
@@ -150,7 +150,7 @@ type EliminadoParaComunicado = {
 
 /**
  * Os comunicados de eliminação das pessoas marcadas, a partir da
- * pré-classificação LIDA AGORA (quem deixou de estar eliminado fica de fora).
+ * triagem LIDA AGORA (quem deixou de estar eliminado fica de fora).
  * Sem justificativa registrada não há comunicado: o código volta em
  * `semMotivo`, para verificar antes de emitir.
  */

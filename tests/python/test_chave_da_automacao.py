@@ -1,6 +1,6 @@
 """
-monitora.chave_da_automacao: a pré-classificação chamada no fim do robô da
-Empregare pergunta ao banco se a chave "Pré-classificação automática" está
+monitora.chave_da_automacao: a triagem chamada no fim do robô da
+Empregare pergunta ao banco se a chave "Triagem automática" está
 ligada (migration 20261022190000) antes de rodar. Desligada só quando o banco diz false; na dúvida,
 ligada, com aviso.
 """

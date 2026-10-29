@@ -369,7 +369,7 @@ export function lancamentoInicial({
   const base = {
     nivel: nivelDaFicha(cargo, documental),
     modalidade: modalidade || "AC",
-    // As cotas optadas na pré-classificação (a principal primeiro); [] = só a ampla.
+    // As cotas optadas na triagem (a principal primeiro); [] = só a ampla.
     modalidades: Array.isArray(modalidades)
       ? (modalidades as string[])
       : modalidadesDoLancamento({ modalidade }),

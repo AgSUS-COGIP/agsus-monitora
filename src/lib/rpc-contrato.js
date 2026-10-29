@@ -722,14 +722,14 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "Rodar com opções e histórico dos robôs: áreas, editais (com status, para a regra de vigente) e as 8 últimas execuções do robô da Empregare (filtro, quem pediu, contagens e, por vaga, situação, candidatos e com link) e da pré-classificação (pedido, quem pediu). Só administrador global.",
+      "Rodar com opções e histórico dos robôs: áreas, editais (com status, para a regra de vigente) e as 8 últimas execuções do robô da Empregare (filtro, quem pediu, contagens e, por vaga, situação, candidatos e com link) e da triagem (pedido, quem pediu). Só administrador global.",
   },
   // ── Rodar agora pelo banco (20261008140000_agenda_dos_robos_pelo_banco.sql) ──
   disparar_robo: {
     argumentos: ["p_robo", "p_inputs"],
     critica: false,
     resumo:
-      "Rodar agora, Opções e Recalcular: confere quem pede (administrador global; coordenação só na pré-classificação de um edital) e as opções do robô (no da Empregare, desde 20261020130000, o modo anexos com candidatos e seco), pede o workflow ao GitHub com a chave do Vault e devolve o id do pedido (TL_DISPARO_ROBO). Inscrições congeladas (20261020170000): 55000 para edital/vaga congelada nos modos que gravam (desde 20261022170000 também o Só anexos sem seco), salvo forcar_congelado + motivo do administrador global. 28000, 42501, 22023 e 55006 (pedido repetido em 2 min ou, desde 20261022170000, execução já esperando a vez no grupo de concorrência do GitHub).",
+      "Rodar agora, Opções e Recalcular: confere quem pede (administrador global; coordenação só na triagem de um edital) e as opções do robô (no da Empregare, desde 20261020130000, o modo anexos com candidatos e seco), pede o workflow ao GitHub com a chave do Vault e devolve o id do pedido (TL_DISPARO_ROBO). Inscrições congeladas (20261020170000): 55000 para edital/vaga congelada nos modos que gravam (desde 20261022170000 também o Só anexos sem seco), salvo forcar_congelado + motivo do administrador global. 28000, 42501, 22023 e 55006 (pedido repetido em 2 min ou, desde 20261022170000, execução já esperando a vez no grupo de concorrência do GitHub).",
   },
   situacao_do_disparo_robo: {
     argumentos: ["p_disparo"],
@@ -1142,37 +1142,37 @@ export const CONTRATO_RPC = {
     resumo:
       "Grava a agenda inteira (GERAR, AJUSTAR ou LIMPAR) e o que mudou no histórico; recusa repetido, fora do edital e mesma banca com horário sobreposto. Entrevistas ou Classificação editor.",
   },
-  // ── Avaliação documental: pré-classificação e listas (20261006110000_pre_classificacao_e_lote.sql)
+  // ── Avaliação documental: triagem e listas (20261006110000_pre_classificacao_e_lote.sql)
   obter_pre_classificacao: {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Pré-classificação gravada pelo job Python: regra, última execução, vagas (quadro, tamanho do lote, linha de corte, avisos), inscritos (código, nome, situação, ART, nota declarada, posição, lote e motivo; sem CPF nem contato) e as listas PROVISORIA/LOTE registradas. Só a coordenação do edital (FC_EXIGIR_COORD_AVALIACAO; os demais 42501, desde 20261016130000). Desde 20261029120000 o cabeçalho é o de obter_resumo_pre_classificacao (mais lotes e congeladas); a aba lê o resumo e as páginas, e esta só no comunicado de eliminação e em banco sem elas.",
+      "Triagem gravada pelo job Python: regra, última execução, vagas (quadro, tamanho do lote, linha de corte, avisos), inscritos (código, nome, situação, ART, nota declarada, posição, lote e motivo; sem CPF nem contato) e as listas PROVISORIA/LOTE registradas. Só a coordenação do edital (FC_EXIGIR_COORD_AVALIACAO; os demais 42501, desde 20261016130000). Desde 20261029120000 o cabeçalho é o de obter_resumo_pre_classificacao (mais lotes e congeladas); a aba lê o resumo e as páginas, e esta só no comunicado de eliminação e em banco sem elas.",
   },
-  // ── Pré-classificação em páginas (20261029120000_triagem_e_eliminados_em_paginas.sql)
+  // ── Triagem em páginas (20261029120000_triagem_e_eliminados_em_paginas.sql)
   obter_resumo_pre_classificacao: {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "A abertura da Pré-classificação, só do instantâneo (114/2026: ~35 KB em vez de ~4,8 MB): edital, papel, regra vigente, execução, totais do edital (somas de TB_PRE_CLASSIF_VAGA e o lote pela regra/por decisão), congeladas { quantidade, em } e a trava das inscrições (congelamento). Vagas, listas e inscritos vêm cada um na sua RPC, quando a parte da tela abre. Mesma permissão de obter_pre_classificacao.",
+      "A abertura da Triagem, só do instantâneo (114/2026: ~35 KB em vez de ~4,8 MB): edital, papel, regra vigente, execução, totais do edital (somas de TB_PRE_CLASSIF_VAGA e o lote pela regra/por decisão), congeladas { quantidade, em } e a trava das inscrições (congelamento). Vagas, listas e inscritos vêm cada um na sua RPC, quando a parte da tela abre. Mesma permissão de obter_pre_classificacao.",
   },
   obter_vagas_pre_classificacao: {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "O resumo por vaga da Pré-classificação (contagens do instantâneo, tamanho e corte do lote, avisos, lote pela regra e por decisão, fora_do_lote), lido quando a parte das vagas abre. Mesma permissão.",
+      "O resumo por vaga da Triagem (contagens do instantâneo, tamanho e corte do lote, avisos, lote pela regra e por decisão, fora_do_lote), lido quando a parte das vagas abre. Mesma permissão.",
   },
   obter_listas_pre_classificacao: {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "A parte Listas oficiais da Pré-classificação: regra de classificação, listas PROVISORIA/LOTE registradas e lotes [{ lote, quantidade }]. Mesma permissão.",
+      "A parte Listas oficiais da Triagem: regra de classificação, listas PROVISORIA/LOTE registradas e lotes [{ lote, quantidade }]. Mesma permissão.",
   },
   conferir_eliminados_pre_classificacao: {
     argumentos: ["p_edital", "p_chaves"],
     critica: false,
     resumo:
-      "Comunicados de eliminação (um ou em lote): a situação de agora só dos marcados (p_chaves = vaga|código, até 10.000) e o cargo das vagas deles, em vez de reler a pré-classificação inteira antes de emitir. Mesma permissão.",
+      "Comunicados de eliminação (um ou em lote): a situação de agora só dos marcados (p_chaves = vaga|código, até 10.000) e o cargo das vagas deles, em vez de reler a triagem inteira antes de emitir. Mesma permissão.",
   },
   listar_pre_classificacao: {
     argumentos: [
@@ -1185,7 +1185,7 @@ export const CONTRATO_RPC = {
     ],
     critica: false,
     resumo:
-      "Os inscritos da pré-classificação em páginas (a tela pede 50; até 500) por cursor estável { vaga, grupo, posicao, codigo }: CLASSIFICADOS (no lote e depois fora do lote, pela posição), ELIMINADOS (pelo código) ou PODE_INCLUIR, de uma vaga ou (p_vaga nulo) do edital, com busca por código ou nome sem acento; devolve { candidatos, proximo, total, por_vaga }. Só leitura do que o job gravou. Mesma permissão de obter_pre_classificacao.",
+      "Os inscritos da triagem em páginas (a tela pede 50; até 500) por cursor estável { vaga, grupo, posicao, codigo }: CLASSIFICADOS (no lote e depois fora do lote, pela posição), ELIMINADOS (pelo código) ou PODE_INCLUIR, de uma vaga ou (p_vaga nulo) do edital, com busca por código ou nome sem acento; devolve { candidatos, proximo, total, por_vaga }. Só leitura do que o job gravou. Mesma permissão de obter_pre_classificacao.",
   },
   // ── Leitura por versão (20261014230000_avaliacao_leitura_por_versao.sql): chamam a função de
   // sempre e devolvem o payload com `versao` (md5 sem `gerado_em`) e as listas grandes em colunas
@@ -1200,53 +1200,53 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Só em_andamento e ultima_execucao da pré-classificação do edital (~0,4 KB): o acompanhamento do Recalcular a cada 15 s, sem reler o pacote. Só a coordenação do edital (FC_EXIGIR_COORD_AVALIACAO; os demais 42501, desde 20261016130000).",
+      "Só em_andamento e ultima_execucao da triagem do edital (~0,4 KB): o acompanhamento do Recalcular a cada 15 s, sem reler o pacote. Só a coordenação do edital (FC_EXIGIR_COORD_AVALIACAO; os demais 42501, desde 20261016130000).",
   },
   // ── Avaliação documental: acompanhamento das inscrições (20261009140000_acompanhamento_das_inscricoes.sql)
   obter_acompanhamento_inscricoes: {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Cartão Inscrições da Pré-classificação: cronograma, vagas da Empregare do edital (código e cargo) e os retratos diários dos últimos 60 dias (inscritos, finalizaram o questionário, aptos pela regra, eliminados; só contagens). Leitor da Avaliação documental. Desde 20261029120000 o cargo da vaga pré-classificada vem de TB_PRE_CLASSIF_VAGA (gravado pelo job), sem procurar o quadro na hora.",
+      "Cartão Inscrições da Triagem: cronograma, vagas da Empregare do edital (código e cargo) e os retratos diários dos últimos 60 dias (inscritos, finalizaram o questionário, aptos pela regra, eliminados; só contagens). Leitor da Avaliação documental. Desde 20261029120000 o cargo da vaga pré-classificada vem de TB_PRE_CLASSIF_VAGA (gravado pelo job), sem procurar o quadro na hora.",
   },
   // ── Avaliação documental: inscrições congeladas (20261020170000_inscricoes_congeladas.sql)
   obter_congelamento_inscricoes: {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Cartão Inscrições congeladas da Pré-classificação: congelado, motivo, em, por, pode_alterar e os últimos eventos (congelar, liberar, override do administrador global). Leitor da Avaliação documental do edital.",
+      "Cartão Inscrições congeladas da Triagem: congelado, motivo, em, por, pode_alterar e os últimos eventos (congelar, liberar, override do administrador global). Leitor da Avaliação documental do edital.",
   },
   alterar_congelamento_inscricoes: {
     argumentos: ["p_edital", "p_congelar", "p_motivo"],
     critica: false,
     resumo:
-      "Congela ou libera as inscrições do edital (robô da Empregare e pré-classificação não mexem; Só anexos só compara, salvo liberação), com motivo de 10 a 500 caracteres. Coordenação da avaliação do edital ou administrador global; 55000 se já estiver no estado pedido.",
+      "Congela ou libera as inscrições do edital (robô da Empregare e triagem não mexem; Só anexos só compara, salvo liberação), com motivo de 10 a 500 caracteres. Coordenação da avaliação do edital ou administrador global; 55000 se já estiver no estado pedido.",
   },
   registrar_lista_pre_classificacao: {
     argumentos: ["p_edital", "p_tipo", "p_lote"],
     critica: false,
     resumo:
-      "Registra a lista PROVISORIA ou LOTE (p_lote = só aquela reposição) em TB_LISTA_CLASSIFICACAO, com o retrato montado no banco a partir da pré-classificação. Coordenação do edital ou Editor na Classificação; exige a regra de classificação.",
+      "Registra a lista PROVISORIA ou LOTE (p_lote = só aquela reposição) em TB_LISTA_CLASSIFICACAO, com o retrato montado no banco a partir da triagem. Coordenação do edital ou Editor na Classificação; exige a regra de classificação.",
   },
   // ── Avaliação documental: lote pela nota declarada e declarada congelada (20261007180000_lote_pela_declarada.sql)
   descongelar_declarada_pre_classificacao: {
     argumentos: ["p_edital", "p_motivo", "p_vaga"],
     critica: false,
     resumo:
-      "Descongela a nota declarada dos inscritos do edital (ou da vaga p_vaga): apaga o valor congelado e registra no histórico o valor que era, quem pediu e o motivo (10 a 250 caracteres); o próximo recálculo congela de novo com as respostas de agora. Só a coordenação da avaliação do edital; recusa (55P03) com pré-classificação rodando.",
+      "Descongela a nota declarada dos inscritos do edital (ou da vaga p_vaga): apaga o valor congelado e registra no histórico o valor que era, quem pediu e o motivo (10 a 250 caracteres); o próximo recálculo congela de novo com as respostas de agora. Só a coordenação da avaliação do edital; recusa (55P03) com triagem rodando.",
   },
   // ── Avaliação documental: inclusão no lote por decisão (20261007200000_inclusao_no_lote_por_decisao.sql)
   incluir_no_lote_por_decisao: {
     argumentos: ["p_edital", "p_codigos", "p_motivo", "p_vaga"],
     critica: false,
     resumo:
-      'A coordenação inclui no lote, por decisão, candidatos que a regra deixa fora (eliminados ou abaixo do corte), pelos códigos da Empregare (1 a 200; p_vaga opcional), com motivo de 5 a 250 caracteres (ex.: "Critério CORES"): entrada DECISAO, no último lote da vaga, ficha aberta; os recálculos mantêm até a revogação. Recusa quem já está no lote, saiu da Empregare ou já tem decisão; 55P03 com pré-classificação rodando.',
+      'A coordenação inclui no lote, por decisão, candidatos que a regra deixa fora (eliminados ou abaixo do corte), pelos códigos da Empregare (1 a 200; p_vaga opcional), com motivo de 5 a 250 caracteres (ex.: "Critério CORES"): entrada DECISAO, no último lote da vaga, ficha aberta; os recálculos mantêm até a revogação. Recusa quem já está no lote, saiu da Empregare ou já tem decisão; 55P03 com triagem rodando.',
   },
   revogar_decisao_lote: {
     argumentos: ["p_edital", "p_codigos", "p_motivo", "p_vaga"],
     critica: false,
     resumo:
-      "A coordenação revoga decisões de lote (exclusão lógica, motivo de 10 a 250 caracteres, histórico): quem entrou por decisão volta à situação da regra e a ficha não concluída fica fora do lote. Recusa sem decisão vigente ou com a ficha concluída; 55P03 com pré-classificação rodando.",
+      "A coordenação revoga decisões de lote (exclusão lógica, motivo de 10 a 250 caracteres, histórico): quem entrou por decisão volta à situação da regra e a ficha não concluída fica fora do lote. Recusa sem decisão vigente ou com a ficha concluída; 55P03 com triagem rodando.",
   },
   // ── Avaliação documental: fila, distribuição e reserva (20261006120000_fichas_fila_e_reserva.sql)
   obter_fila_avaliacao: {
@@ -1354,7 +1354,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "A coordenação abre as fichas do lote que faltam (o job já faz no fim da pré-classificação), marca fora do lote quem saiu e devolve quem voltou.",
+      "A coordenação abre as fichas do lote que faltam (o job já faz no fim da triagem), marca fora do lote quem saiu e devolve quem voltou.",
   },
   salvar_filtro_fila: {
     argumentos: ["p_nome", "p_filtro"],

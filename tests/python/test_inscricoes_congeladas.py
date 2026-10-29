@@ -4,7 +4,7 @@ Inscrições congeladas e o registro dos disparos (migration
 congelado sem filtro e recusa o pedido explícito; o modo "só anexos" pede a
 liberação (ou --seco) desde 20261022170000;
 o override (--forcar-congelado) vai ao banco e a execução registra o uso; a
-pré-classificação faz o mesmo; e o registro das execuções iniciadas direto no
+triagem faz o mesmo; e o registro das execuções iniciadas direto no
 GitHub (python/monitora/disparo_externo.py) nunca derruba o robô. Banco falso:
 nada fala com a Empregare nem com o Supabase.
 """

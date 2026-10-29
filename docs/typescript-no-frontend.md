@@ -194,8 +194,8 @@ da integração com as peças comuns estão em
 [../src/modulos/mapa-de-projetos/README.md](../src/modulos/mapa-de-projetos/README.md).
 
 A Avaliação documental também está migrada por inteiro (módulo e `src/lib/avaliacao-documental/`,
-sem JS/JSX): stores, abas Regra, Equipe, Pré-classificação e Fila, a ficha e as regras de pontuação,
-pré-classificação, distribuição e fila. Contratos e limites estão em
+sem JS/JSX): stores, abas Regra, Equipe, Triagem e Fila, a ficha e as regras de pontuação,
+triagem, distribuição e fila. Contratos e limites estão em
 [../src/modulos/avaliacao-documental/README.md](../src/modulos/avaliacao-documental/README.md).
 
 A Aya também está migrada (módulo, tour e as regras de `src/lib/` — páginas, tours, busca, termos,

@@ -13,7 +13,7 @@ AM-2.3 e AM-3.3 dependem das fichas (F3). Os testes levam o mesmo código (`AM-n
 
 **Implementadas (fase F2, 06/10/2026):** AM-4.1 a AM-4.4, AM-5.0 a AM-5.2, AM-5.5, AM-5.6 e AM-16.1
 a AM-16.3 (`supabase/migrations/20261006110000…`, job `scripts/pre_classificacao/`, aba
-Pré-classificação). AM-5.3 e AM-5.4 ("a linha anda" pela conclusão da ficha) esperam as fichas
+Triagem). AM-5.3 e AM-5.4 ("a linha anda" pela conclusão da ficha) esperam as fichas
 (F3/F4); nesta fase o lote é reposto quando alguém do lote é eliminado na carga seguinte.
 
 **Implementadas (fase F3, 06/10/2026):** AM-6.1 a AM-6.4, AM-12.2 e AM-3.3

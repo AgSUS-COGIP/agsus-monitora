@@ -30,11 +30,11 @@ describe("as seções (as sete do SIGAV + Módulos e abas + Status das atualiza�
       "Página inicial",
       "Tela de acesso",
       "Aparência",
-      "Painéis externos",
-      "Operação",
       "Comemorações",
       "Acessos",
+      "Painéis externos",
       "Módulos e abas",
+      "Operação",
       "Status das atualizações",
       "Automação",
     ]);

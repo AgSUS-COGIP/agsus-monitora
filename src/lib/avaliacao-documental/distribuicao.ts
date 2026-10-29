@@ -3,7 +3,7 @@
   edital (docs/analises-no-monitora/, fase F3). Sem DOM e sem estado.
 
   A mesma conta existe em Python (python/monitora/avaliacao_documental/
-  distribuicao.py), que o job da pré-classificação usa para dar as fichas
+  distribuicao.py), que o job da triagem usa para dar as fichas
   que entram depois a quem tem menos pendentes. Os dois lados rodam os
   MESMOS casos dourados: tests/fixtures/avaliacao-documental/
   casos-de-distribuicao.json (vitest e pytest). Mudou aqui, muda lá.

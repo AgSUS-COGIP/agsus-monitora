@@ -194,7 +194,7 @@ class ModoAnexos(unittest.TestCase):
         self.assertEqual(portal.localizadas, [VAGA])
         texto = "\n".join(self.logs + self.resumo)
         self.assertIn("candidato 2160872: 2 anexo(s) novo(s) · 0 alterado(s) · 0 removido(s) · perguntas 23→25", texto)
-        self.assertIn("não mudou situação, ativos, lote nem pré-classificação", texto)
+        self.assertIn("não mudou situação, ativos, lote nem triagem", texto)
 
     def test_nunca_reduz_anexos(self):
         banco = BancoFalso(

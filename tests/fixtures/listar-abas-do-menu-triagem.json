@@ -1,0 +1,311 @@
+[
+  {
+    "co_aba": "visao-geral",
+    "no_aba": "Visão geral",
+    "ds_icone": "map",
+    "nu_ordem": 1,
+    "co_view": "dashboard",
+    "co_recurso": "dashboard",
+    "tp_aba": "nativa",
+    "st_beta": false,
+    "tp_situacao": "ATIVA",
+    "ds_mensagem": null,
+    "dt_previsao": null,
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 1,
+        "co_view": "dashboard",
+        "ds_icone": "map",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      }
+    ]
+  },
+  {
+    "co_aba": "analises",
+    "no_aba": "Painel das análises",
+    "ds_icone": "file-search",
+    "nu_ordem": 2,
+    "co_view": "analises",
+    "co_recurso": "analises",
+    "tp_aba": "nativa",
+    "st_beta": false,
+    "tp_situacao": "ATIVA",
+    "ds_mensagem": null,
+    "dt_previsao": null,
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 2,
+        "co_view": "analises",
+        "ds_icone": "file-search",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      },
+      {
+        "co_area": "projetos",
+        "nu_ordem": 2,
+        "co_view": "analises",
+        "ds_icone": "file-search",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      }
+    ]
+  },
+  {
+    "co_aba": "recursos",
+    "no_aba": "Painel de recursos",
+    "ds_icone": "scale",
+    "nu_ordem": 3,
+    "co_view": "recursos",
+    "co_recurso": "recursos",
+    "tp_aba": "nativa",
+    "st_beta": false,
+    "tp_situacao": "ATIVA",
+    "ds_mensagem": null,
+    "dt_previsao": null,
+    "areas": []
+  },
+  {
+    "co_aba": "entrevistas",
+    "no_aba": "Painel de entrevistas",
+    "ds_icone": "messages-square",
+    "nu_ordem": 4,
+    "co_view": "entrevistas",
+    "co_recurso": "entrevistas",
+    "tp_aba": "nativa",
+    "st_beta": false,
+    "tp_situacao": "ATIVA",
+    "ds_mensagem": null,
+    "dt_previsao": null,
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 4,
+        "co_view": "entrevistas",
+        "ds_icone": "messages-square",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      }
+    ]
+  },
+  {
+    "co_aba": "selecao",
+    "no_aba": "Painel da Seleção",
+    "ds_icone": "funnel",
+    "nu_ordem": 5,
+    "co_view": "selecao",
+    "co_recurso": "selecao",
+    "tp_aba": "nativa",
+    "st_beta": false,
+    "tp_situacao": "ATIVA",
+    "ds_mensagem": null,
+    "dt_previsao": null,
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 5,
+        "co_view": "selecao",
+        "ds_icone": "funnel",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      }
+    ]
+  },
+  {
+    "co_aba": "cronograma",
+    "no_aba": "Cronograma",
+    "ds_icone": "calendar-days",
+    "nu_ordem": 6,
+    "co_view": "calendario",
+    "co_recurso": "calendario",
+    "tp_aba": "nativa",
+    "st_beta": false,
+    "tp_situacao": "ATIVA",
+    "ds_mensagem": null,
+    "dt_previsao": null,
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 6,
+        "co_view": "calendario",
+        "ds_icone": "calendar-days",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      }
+    ]
+  },
+  {
+    "co_aba": "editais",
+    "no_aba": "Editais",
+    "ds_icone": "file-text",
+    "nu_ordem": 7,
+    "co_view": "nucleo",
+    "co_recurso": "nucleo",
+    "tp_aba": "nativa",
+    "st_beta": false,
+    "tp_situacao": "ATIVA",
+    "ds_mensagem": null,
+    "dt_previsao": null,
+    "areas": [
+      {
+        "co_area": "projetos",
+        "nu_ordem": 7,
+        "co_view": "nucleo",
+        "ds_icone": "file-text",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      }
+    ]
+  },
+  {
+    "co_aba": "pre-classificacao",
+    "no_aba": "Triagem",
+    "ds_icone": "list-checks",
+    "nu_ordem": 8,
+    "co_view": "pre-classificacao",
+    "co_recurso": "avaliacao_documental",
+    "tp_aba": "nativa",
+    "st_beta": true,
+    "tp_situacao": "ATIVA",
+    "ds_mensagem": null,
+    "dt_previsao": null,
+    "areas": [
+      {
+        "co_area": "projetos",
+        "nu_ordem": 8,
+        "co_view": "pre-classificacao",
+        "ds_icone": "list-checks",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      }
+    ]
+  },
+  {
+    "co_aba": "avaliacao-documental",
+    "no_aba": "Avaliação documental",
+    "ds_icone": "graduation-cap",
+    "nu_ordem": 9,
+    "co_view": "avaliacao-documental",
+    "co_recurso": "avaliacao_documental",
+    "tp_aba": "nativa",
+    "st_beta": true,
+    "tp_situacao": "ATIVA",
+    "ds_mensagem": null,
+    "dt_previsao": null,
+    "areas": [
+      {
+        "co_area": "projetos",
+        "nu_ordem": 9,
+        "co_view": "avaliacao-documental",
+        "ds_icone": "graduation-cap",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      }
+    ]
+  },
+  {
+    "co_aba": "analisar-recursos",
+    "no_aba": "Recursos",
+    "ds_icone": "gavel",
+    "nu_ordem": 10,
+    "co_view": "analisar-recursos",
+    "co_recurso": "recursos",
+    "tp_aba": "nativa",
+    "st_beta": true,
+    "tp_situacao": "ATIVA",
+    "ds_mensagem": null,
+    "dt_previsao": null,
+    "areas": []
+  },
+  {
+    "co_aba": "conduzir-entrevistas",
+    "no_aba": "Entrevistas",
+    "ds_icone": "clipboard-pen-line",
+    "nu_ordem": 11,
+    "co_view": "conduzir-entrevistas",
+    "co_recurso": "entrevistas",
+    "tp_aba": "nativa",
+    "st_beta": true,
+    "tp_situacao": "ATIVA",
+    "ds_mensagem": null,
+    "dt_previsao": null,
+    "areas": []
+  },
+  {
+    "co_aba": "classificacao",
+    "no_aba": "Classificação",
+    "ds_icone": "list-ordered",
+    "nu_ordem": 12,
+    "co_view": "classificacao",
+    "co_recurso": "classificacao",
+    "tp_aba": "nativa",
+    "st_beta": true,
+    "tp_situacao": "ATIVA",
+    "ds_mensagem": null,
+    "dt_previsao": null,
+    "areas": [
+      {
+        "co_area": "projetos",
+        "nu_ordem": 12,
+        "co_view": "classificacao",
+        "ds_icone": "list-ordered",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      }
+    ]
+  },
+  {
+    "co_aba": "aprovados",
+    "no_aba": "Lista de aprovados",
+    "ds_icone": "user-round-check",
+    "nu_ordem": 13,
+    "co_view": "approved",
+    "co_recurso": "aprovados",
+    "tp_aba": "nativa",
+    "st_beta": true,
+    "tp_situacao": "ATIVA",
+    "ds_mensagem": null,
+    "dt_previsao": null,
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 13,
+        "co_view": "approved",
+        "ds_icone": "user-round-check",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      },
+      {
+        "co_area": "sede",
+        "nu_ordem": 13,
+        "co_view": "approved",
+        "ds_icone": "user-round-check",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      },
+      {
+        "co_area": "projetos",
+        "nu_ordem": 13,
+        "co_view": "approved",
+        "ds_icone": "user-round-check",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      }
+    ]
+  }
+]

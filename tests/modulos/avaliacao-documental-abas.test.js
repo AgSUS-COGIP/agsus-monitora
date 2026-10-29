@@ -18,7 +18,7 @@ import { carregarCatalogoDeAbas } from "../../src/modules/catalogo-de-abas.ts";
 
 /*
   Abas por papel e entrada da Avaliação documental (abas-e-entrada.ts):
-  Regra, Equipe e Pré-classificação só para quem coordena o edital; quem
+  Regra, Equipe e Triagem só para quem coordena o edital; quem
   analisa vê só a Fila (sem seletor). Sem edital escolhido, cartões dos
   editais vigentes; com um só (ou o último aberto), abre direto nele.
   Fixtures sem dado pessoal.
@@ -159,16 +159,16 @@ describe("abas por papel", () => {
     expect(painel.estado.obter().visao).toBe("fila");
     // A equipe (com as pessoas) só é lida quando a aba Equipe abre.
     expect(chamou(supabase, "obter_equipe_edital")).toBe(false);
-    expect(botoes()).toContain("Abrir pré-classificação");
+    expect(botoes()).toContain("Abrir triagem");
     act(() => painel.estado.mudarVisao("pre"));
-    expect(botoes()).not.toContain("Abrir pré-classificação");
+    expect(botoes()).not.toContain("Abrir triagem");
     act(() => painel.estado.mudarVisao("configuracoes"));
     expect(
       secao.querySelector(
         "[aria-label='Configurações da avaliação documental']",
       ),
     ).not.toBeNull();
-    expect(botoes()).toContain("Abrir pré-classificação");
+    expect(botoes()).toContain("Abrir triagem");
     // A aba Equipe abre e só então lê a equipe.
     await act(async () => painel.estado.mudarVisao("equipe"));
     await act(async () => new Promise((r) => setTimeout(r, 0)));
@@ -181,7 +181,7 @@ describe("abas por papel", () => {
     expect(
       secao.querySelector("[data-acao='espelhos-concluidos-busca']"),
     ).not.toBeNull();
-    // Os comunicados de eliminação ficam na Pré-classificação: aqui, só o atalho.
+    // Os comunicados de eliminação ficam na Triagem: aqui, só o atalho.
     expect(
       secao.querySelector("[data-acao='baixar-comunicado-eliminacao']"),
     ).toBeNull();
@@ -199,7 +199,7 @@ describe("abas por papel", () => {
     expect(painel.estado.obter().visao).toBe("fila");
     expect(secao.querySelector("[data-candidato='7001']")).not.toBeNull();
     // Nenhum atalho para as abas da coordenação, e a equipe nem é lida.
-    for (const rotulo of ["Regra", "Equipe", "Pré-classificação"])
+    for (const rotulo of ["Regra", "Equipe", "Triagem"])
       expect(botoes()).not.toContain(rotulo);
     expect(chamou(supabase, "obter_equipe_edital")).toBe(false);
     expect(chamou(supabase, "obter_pre_classificacao")).toBe(false);
@@ -253,7 +253,7 @@ describe("abas por papel", () => {
   });
 });
 
-describe("transição do atalho da Pré-classificação", () => {
+describe("transição do atalho da Triagem", () => {
   const UUID = "a153f5d2-37bc-41a5-8d0f-67606f0de114";
 
   it("mantém acesso legado quando a aba nova está desativada no banco", async () => {
@@ -280,7 +280,7 @@ describe("transição do atalho da Pré-classificação", () => {
       }),
     );
     const botao = [...secao.querySelectorAll("button")].find((el) =>
-      el.textContent.includes("Abrir pré-classificação"),
+      el.textContent.includes("Abrir triagem"),
     );
     expect(botao).toBeDefined();
     await clicar(botao);
@@ -294,7 +294,7 @@ describe("transição do atalho da Pré-classificação", () => {
         data: [
           {
             co_aba: "pre-classificacao",
-            no_aba: "Pré-classificação",
+            no_aba: "Triagem",
             co_view: "pre-classificacao",
             co_recurso: "avaliacao_documental",
             areas: [{ co_area: "projetos" }],
@@ -312,7 +312,7 @@ describe("transição do atalho da Pré-classificação", () => {
       }),
     );
     const botao = [...secao.querySelectorAll("button")].find((el) =>
-      el.textContent.includes("Abrir pré-classificação"),
+      el.textContent.includes("Abrir triagem"),
     );
     expect(botao).toBeUndefined();
     expect(navegar).not.toHaveBeenCalled();

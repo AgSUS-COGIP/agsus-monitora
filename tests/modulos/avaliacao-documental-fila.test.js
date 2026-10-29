@@ -834,7 +834,7 @@ describe("fila: inclusão no lote por decisão da coordenação", () => {
     });
   });
 
-  it("a inclusão por decisão não fica na Fila (só na Pré-classificação); o selo continua", async () => {
+  it("a inclusão por decisão não fica na Fila (só na Triagem); o selo continua", async () => {
     await montar(supabaseFalso(comDecisao()));
     await abrirMenu();
     expect(secao.querySelector("[data-acao='incluir-por-decisao']")).toBeNull();
@@ -1270,7 +1270,7 @@ describe("fila: reiniciar as fichas do edital (dois administradores)", () => {
         obter_reinicio_fichas_do_edital: () =>
           leitura({
             bloqueio:
-              "As inscrições deste edital estão congeladas. Libere o congelamento na Pré-classificação antes de reiniciar as fichas.",
+              "As inscrições deste edital estão congeladas. Libere o congelamento na Triagem antes de reiniciar as fichas.",
           }),
       }),
       ADMIN,

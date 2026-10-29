@@ -1,11 +1,11 @@
 /*
-  Estado da aba Pré-classificação, fora do React (useSyncExternalStore). Não
+  Estado da aba Triagem, fora do React (useSyncExternalStore). Não
   importa React. A conta é do job Python (scripts/pre_classificacao/); aqui só
   a leitura, o pedido de recálculo, o registro das listas e a exportação.
 
   RPCs (supabase/migrations/20261006110000_pre_classificacao_e_lote.sql;
   contrato em src/lib/rpc-contrato.js):
-    A pré-classificação em partes (20261029120000), cada uma lida quando a
+    A triagem em partes (20261029120000), cada uma lida quando a
     parte da tela abre (garantirParte):
     obter_resumo_pre_classificacao(p_edital)          a abertura (~35 KB no 114/2026): edital,
                                                       regra, execução, totais, congeladas e a
@@ -509,7 +509,7 @@ export function criarEstadoDaPreClassificacao({
     return promessa;
   }
 
-  /* "Recalcular": pede o job da pré-classificação só deste edital. */
+  /* "Recalcular": pede o job da triagem só deste edital. */
   async function recalcular(): Promise<boolean> {
     const editalId = estado.editalId;
     if (!editalId) return false;
@@ -695,7 +695,7 @@ export function criarEstadoDaPreClassificacao({
         const falhou = ultima.situacao === "FALHOU";
         const texto = falhou
           ? `O recálculo falhou${ultima.mensagem ? `: ${ultima.mensagem}` : "."}`
-          : `Pré-classificação recalculada às ${hora(ultima.fim ? new Date(ultima.fim) : agora())}.`;
+          : `Triagem recalculada às ${hora(ultima.fim ? new Date(ultima.fim) : agora())}.`;
         publicar({
           pedidoEm: null,
           aviso: { tom: falhou ? "danger" : "info", texto },

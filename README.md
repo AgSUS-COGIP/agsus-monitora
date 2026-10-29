@@ -15,20 +15,20 @@ em manutenção em **Configurações → Módulos e abas**, sem deploy.
 
 ## Módulos
 
-| Módulo                  | O que faz                                                                                                                                                                   |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Visão geral e mapas     | editais, terras indígenas, DSEIs e mapa de Projetos                                                                                                                         |
-| Editais e Cronograma    | cadastro do edital e do cronograma (importa cronograma e quadro de vagas do PDF de anexos); calendário das etapas                                                           |
-| Seleção                 | funil por vaga (inscritos, aptos, eliminados)                                                                                                                               |
-| Avaliação documental    | análise curricular no sistema: regra do edital, equipe, pré-classificação e lote, fila de fichas, pendências, espelho de nota em PDF/ZIP, relatório de motivos e reabertura |
-| Painel das análises     | leitura das análises (fichas publicadas e planilhas legadas): filtros, indicadores, ritmo da análise, nota declarada × após a análise                                       |
-| Classificação           | regras por edital, listas, desempate e sorteio, agenda das entrevistas, exportação (XLSX, SEI/DOCX) e publicação na Lista de aprovados                                      |
-| Lista de aprovados      | aprovados, convocação, cartas de convocação e acompanhamento da contratação                                                                                                 |
-| Entrevistas             | painel de resultados e condução (roteiro, convocação, banca, notas e parecer)                                                                                               |
-| Recursos                | recursos dos candidatos: fila, etapas, parecer, resposta com modelos, anexos e ajuste de pontuação                                                                          |
-| Conferências            | avisos diários de inconsistência entre análises, entrevistas, classificação, aprovados e cargas                                                                             |
-| Aya                     | assistente lateral com base de conhecimento local (`docs/aya/`), sem IA externa; abre chamado ao suporte por e-mail                                                         |
-| Acessos e Configurações | convites, solicitações de acesso, grupos, coordenações, contas desativadas; marca, painéis externos, status das atualizações e robôs                                        |
+| Módulo                  | O que faz                                                                                                                                                         |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Visão geral e mapas     | editais, terras indígenas, DSEIs e mapa de Projetos                                                                                                               |
+| Editais e Cronograma    | cadastro do edital e do cronograma (importa cronograma e quadro de vagas do PDF de anexos); calendário das etapas                                                 |
+| Seleção                 | funil por vaga (inscritos, aptos, eliminados)                                                                                                                     |
+| Avaliação documental    | análise curricular no sistema: regra do edital, equipe, triagem e lote, fila de fichas, pendências, espelho de nota em PDF/ZIP, relatório de motivos e reabertura |
+| Painel das análises     | leitura das análises (fichas publicadas e planilhas legadas): filtros, indicadores, ritmo da análise, nota declarada × após a análise                             |
+| Classificação           | regras por edital, listas, desempate e sorteio, agenda das entrevistas, exportação (XLSX, SEI/DOCX) e publicação na Lista de aprovados                            |
+| Lista de aprovados      | aprovados, convocação, cartas de convocação e acompanhamento da contratação                                                                                       |
+| Entrevistas             | painel de resultados e condução (roteiro, convocação, banca, notas e parecer)                                                                                     |
+| Recursos                | recursos dos candidatos: fila, etapas, parecer, resposta com modelos, anexos e ajuste de pontuação                                                                |
+| Conferências            | avisos diários de inconsistência entre análises, entrevistas, classificação, aprovados e cargas                                                                   |
+| Aya                     | assistente lateral com base de conhecimento local (`docs/aya/`), sem IA externa; abre chamado ao suporte por e-mail                                               |
+| Acessos e Configurações | convites, solicitações de acesso, grupos, coordenações, contas desativadas; marca, painéis externos, status das atualizações e robôs                              |
 
 Os editais novos são analisados no próprio sistema (Avaliação documental → fichas publicadas no
 Painel das análises). As planilhas do Google com Apps Script (`apps-script/`) seguem só para
@@ -61,14 +61,14 @@ Planilhas (legado): Apps Script → Supabase
 - **Banco:** Supabase (PostgreSQL). RLS ligada em todas as tabelas; o navegador não lê tabela,
   só chama RPCs (`SECURITY DEFINER`, `search_path` fixado), conferidas pelo contrato em
   `src/lib/rpc-contrato.js`. Modelo em [docs/banco-de-dados.md](docs/banco-de-dados.md).
-- **Cálculo pesado em Python** (`python/monitora/`), rodando no GitHub Actions: pré-classificação,
+- **Cálculo pesado em Python** (`python/monitora/`), rodando no GitHub Actions: triagem,
   classificação, leitura dos arquivos dos candidatos, conferências e contratação dos aprovados. O
   banco guarda o resultado e valida; os robôs são disparados pelo `pg_cron` ou pela tela
   ([docs/python-no-monitora.md](docs/python-no-monitora.md),
   [docs/agenda-dos-robos.md](docs/agenda-dos-robos.md)).
 - **Robô da Empregare** (carga de inscritos) e sincronização das planilhas de seleção e
   entrevistas, também no Actions ([docs/robo-empregare.md](docs/robo-empregare.md)). Editais com
-  **inscrições congeladas** ficam fora da carga e da pré-classificação.
+  **inscrições congeladas** ficam fora da carga e da triagem.
 - **Apps Script** (`apps-script/`): código das planilhas de análise da Saúde Indígena (e das de
   Projetos e SEDE que ainda existem), colado no Google ([apps-script/LEIA-ME.md](apps-script/LEIA-ME.md)).
 - **Servidor opcional:** `server/servidor.ts` (Node 24, sem dependências) serve o mesmo `dist/`

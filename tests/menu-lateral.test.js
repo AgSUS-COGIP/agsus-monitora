@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   AREA_DOS_PAINEIS,
@@ -9,6 +10,7 @@ import {
   areaAberta,
   areasDoUsuario,
   blocoDaAba,
+  blocosDaAdministracao,
   blocosDaArea,
   destinoAoTrocarDeArea,
   ehAreaDoSistema,
@@ -112,9 +114,9 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
     ]);
     expect(grupos["saude-indigena"].map((item) => item.rotulo)).toEqual([
       "Visão geral",
-      "Editais",
-      "Cronograma",
       "Painel das análises",
+      "Cronograma",
+      "Editais",
       "Lista de aprovados",
     ]);
     expect(grupos["saude-indigena"].at(-1)).toEqual({
@@ -127,7 +129,7 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
     expect(
       grupos["saude-indigena"].every((item) => item.area === "saude-indigena"),
     ).toBe(true);
-    // Os painéis externos vão para Painéis, sem área, no bloco Acompanhamento.
+    // Os painéis externos vão para Painéis, sem área, no bloco Acompanhar.
     expect(grupos.paineis).toEqual([
       {
         view: "panel:recursos",
@@ -144,6 +146,10 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
     ]);
     expect(grupos.administracao.map((item) => item.secao)).toEqual(
       SECOES.map((secao) => secao.id),
+    );
+    // Cada seção leva o grupo dela em Administração.
+    expect(grupos.administracao.map((item) => item.bloco)).toEqual(
+      SECOES.map((secao) => secao.grupo),
     );
     expect(grupos.administracao.every((item) => item.view === "config")).toBe(
       true,
@@ -169,9 +175,9 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
       expect(grupos[area][0].icone).toBe("map");
       expect(grupos[area].map((item) => item.view)).toEqual([
         "dashboard",
-        "nucleo",
-        "calendario",
         "analises",
+        "calendario",
+        "nucleo",
         "approved",
       ]);
       expect(grupos[area][0].rotulo).toBe("Visão geral");
@@ -199,8 +205,8 @@ describe("a árvore do menu segue o perfil e as áreas", () => {
     );
     expect(Object.keys(grupos)).toEqual(["sede"]);
     expect(grupos.sede.map((item) => item.view)).toEqual([
-      "nucleo",
       "analises",
+      "nucleo",
     ]);
   });
 
@@ -515,7 +521,7 @@ describe("seletor de área", () => {
 });
 
 /*
-  Dentro de cada área, dois blocos: Acompanhamento (consulta) e Processo
+  Dentro de cada área, dois blocos: Acompanhar (consulta) e Processo
   seletivo (onde se trabalha, na ordem das etapas). A árvore guarda o bloco
   em cada item; o desenho separa com `blocosDaArea`.
 */
@@ -524,9 +530,9 @@ describe("blocos da área", () => {
     ABAS_DO_MENU.map((aba) => [aba.view, true]),
   );
 
-  it("são Acompanhamento e Processo seletivo, nessa ordem", () => {
+  it("são Acompanhar e Processo seletivo, nessa ordem", () => {
     expect(BLOCOS_DA_AREA.map((bloco) => bloco.rotulo)).toEqual([
-      "Acompanhamento",
+      "Acompanhar",
       "Processo seletivo",
     ]);
   });
@@ -545,23 +551,24 @@ describe("blocos da área", () => {
         ]),
       ).toEqual([
         [
-          "Acompanhamento",
+          "Acompanhar",
           [
             "Visão geral",
             "Painel das análises",
             "Painel de recursos",
             "Painel de entrevistas",
             "Painel da Seleção",
+            "Cronograma",
           ],
         ],
         [
           "Processo seletivo",
           [
             "Editais",
-            "Cronograma",
+            "Triagem",
             "Avaliação documental",
-            "Analisar recursos",
-            "Conduzir entrevistas",
+            "Recursos",
+            "Entrevistas",
             "Classificação",
             "Lista de aprovados",
           ],
@@ -572,7 +579,7 @@ describe("blocos da área", () => {
 
   it("bloco sem página permitida some", () => {
     const soTrabalho = montarArvoreDoMenu({
-      permitidas: { nucleo: true, calendario: true },
+      permitidas: { nucleo: true, approved: true },
     });
     expect(blocosDaArea(soTrabalho[0].itens).map((b) => b.id)).toEqual([
       "processo",
@@ -584,7 +591,7 @@ describe("blocos da área", () => {
     expect(blocosDaArea([])).toEqual([]);
   });
 
-  it("painel externo entra em Acompanhamento, depois das páginas", () => {
+  it("painel externo entra em Acompanhar, depois das páginas", () => {
     const arvore = montarArvoreDoMenu({
       permitidas: TUDO,
       paineis: [{ codigo: "bi", titulo: "BI" }],
@@ -595,20 +602,134 @@ describe("blocos da área", () => {
     expect(acompanhamento.itens.map((item) => item.view)).toEqual([
       "dashboard",
       "analises",
+      "calendario",
       "panel:bi",
     ]);
   });
 
-  it("aba nova nativa vai para Processo seletivo; aba externa, para Acompanhamento", () => {
+  it("aba nova nativa vai para Processo seletivo; aba externa, para Acompanhar", () => {
     expect(blocoDaAba({ id: "nova", tipo: "nativa" })).toBe("processo");
     expect(blocoDaAba({ id: "bi", tipo: "externa" })).toBe("acompanhamento");
     expect(blocoDaAba({ id: "aprovados", tipo: "nativa" })).toBe("processo");
     expect(blocoDaAba({ id: "selecao", tipo: "nativa" })).toBe(
       "acompanhamento",
     );
+    expect(blocoDaAba({ id: "cronograma", tipo: "nativa" })).toBe(
+      "acompanhamento",
+    );
+    expect(blocoDaAba({ id: "pre-classificacao", tipo: "nativa" })).toBe(
+      "processo",
+    );
     // Item sem bloco (árvore montada à mão) vale como Processo seletivo.
     expect(
       blocosDaArea([{ view: "x", rotulo: "X", icone: "map" }]).map((b) => b.id),
     ).toEqual(["processo"]);
+  });
+});
+
+/*
+  Administração em três grupos (decisão de 29/10): Aparência, Pessoas e
+  acessos, Sistema. Seção sem grupo conhecido vai para Sistema.
+*/
+describe("grupos de Administração", () => {
+  it("cada seção no grupo pedido, na ordem do menu", () => {
+    const arvore = montarArvoreDoMenu({
+      permitidas: { config: true },
+      secoesDeConfiguracao: SECOES,
+    });
+    const admin = arvore.find((grupo) => grupo.id === "administracao");
+    expect(
+      blocosDaAdministracao(admin.itens).map((bloco) => [
+        bloco.rotulo,
+        bloco.itens.map((item) => item.rotulo),
+      ]),
+    ).toEqual([
+      [
+        "Aparência",
+        [
+          "Marca",
+          "Página inicial",
+          "Tela de acesso",
+          "Aparência",
+          "Comemorações",
+        ],
+      ],
+      ["Pessoas e acessos", ["Acessos", "Painéis externos"]],
+      [
+        "Sistema",
+        ["Módulos e abas", "Operação", "Status das atualizações", "Automação"],
+      ],
+    ]);
+  });
+
+  it("grupo vazio some; seção sem grupo vai para Sistema", () => {
+    expect(
+      blocosDaAdministracao([
+        { view: "config", secao: "x", rotulo: "X", icone: "x" },
+      ]).map((bloco) => bloco.id),
+    ).toEqual(["sistema"]);
+    expect(blocosDaAdministracao([])).toEqual([]);
+  });
+});
+
+/*
+  Ícones únicos: cada item do menu (páginas do catálogo, em qualquer área,
+  seções de Administração e os grupos) tem o seu. Os painéis externos são
+  links do mesmo grupo e dividem o ícone dele, de propósito.
+*/
+describe("ícones do menu", () => {
+  const repetidos = (usos) => {
+    const donos = new Map();
+    for (const [icone, dono] of usos)
+      donos.set(icone, new Set([...(donos.get(icone) ?? []), dono]));
+    return [...donos]
+      .filter(([, lista]) => lista.size > 1)
+      .map(([icone, lista]) => [icone, [...lista]]);
+  };
+
+  it("nenhum ícone se repete entre os itens do menu", () => {
+    expect(
+      repetidos([
+        ...AREAS_DO_MENU.map((area) => [area.icone, `grupo ${area.id}`]),
+        ...ABAS_DO_MENU.flatMap((aba) =>
+          [aba.icone, ...aba.areas.map((area) => area.icone)]
+            .filter(Boolean)
+            .map((icone) => [icone, `aba ${aba.id}`]),
+        ),
+        ...SECOES.map((secao) => [secao.iconeDoMenu, `seção ${secao.id}`]),
+      ]),
+    ).toEqual([]);
+  });
+
+  it("o catálogo do banco (ensaio do menu novo) também não repete ícone", () => {
+    const resposta = JSON.parse(
+      readFileSync("tests/fixtures/listar-abas-do-menu-triagem.json", "utf8"),
+    );
+    expect(resposta.length).toBeGreaterThan(0);
+    expect(
+      repetidos(
+        resposta.flatMap((aba) =>
+          [aba.ds_icone, ...aba.areas.map((area) => area.ds_icone)].map(
+            (icone) => [icone, aba.co_aba],
+          ),
+        ),
+      ),
+    ).toEqual([]);
+  });
+
+  it("todo ícone do menu existe no Lucide (o pacote de `npm run icones`)", async () => {
+    const lucide = await import("lucide");
+    const pascal = (nome) =>
+      nome
+        .split("-")
+        .map((parte) => parte[0].toUpperCase() + parte.slice(1))
+        .join("");
+    const nomes = [
+      ...iconesDoCatalogo(),
+      ...SECOES.map((secao) => secao.iconeDoMenu),
+    ];
+    expect(
+      nomes.filter((nome) => !Array.isArray(lucide[pascal(nome)])),
+    ).toEqual([]);
   });
 });

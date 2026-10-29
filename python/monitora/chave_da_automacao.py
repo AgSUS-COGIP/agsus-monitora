@@ -4,7 +4,7 @@ Pergunta ao MONITORA se uma chave da automação está ligada.
 Configurações › Automação (migration 20261022190000_chaves_da_automacao.sql)
 liga e desliga o que roda sozinho em cada aba. A agenda dos robôs já respeita
 as chaves no banco (FC_DISPARAR_ROBO); o que roda dentro de um workflow, sem
-passar pelo banco — a pré-classificação chamada no fim do robô da Empregare
+passar pelo banco — a triagem chamada no fim do robô da Empregare
 (pre-classificacao.yml com apos_robo) — pergunta aqui antes, pela RPC automacao_ligada (service_role).
 
 Escreve `ligada=true` ou `ligada=false` em $GITHUB_OUTPUT (o passo seguinte

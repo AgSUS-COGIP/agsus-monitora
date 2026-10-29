@@ -20,12 +20,18 @@ import type {
 /* Disparado a cada troca de seção, com { detail: { secao } }. */
 export const EVENTO_SECAO_ABERTA = "agsus:secao-de-configuracao-aberta";
 
+/*
+  Na ordem do menu, em três grupos (`grupo`, desenhados por
+  `blocosDaAdministracao` em src/lib/menu-lateral.ts): Aparência, Pessoas e
+  acessos, Sistema. Cada seção tem ícone próprio no menu.
+*/
 export const SECOES: readonly SecaoDeConfiguracao[] = Object.freeze([
   {
     id: "marca",
     rotulo: "Marca",
     icone: "fa-font",
     iconeDoMenu: "type",
+    grupo: "aparencia",
     descricao: "Nomes, versão e identidade que aparecem em todo o sistema.",
   },
   {
@@ -33,6 +39,7 @@ export const SECOES: readonly SecaoDeConfiguracao[] = Object.freeze([
     rotulo: "Página inicial",
     icone: "fa-bullhorn",
     iconeDoMenu: "house",
+    grupo: "aparencia",
     descricao: "Comunicado, títulos e rótulos do painel de monitoramento.",
   },
   {
@@ -40,6 +47,7 @@ export const SECOES: readonly SecaoDeConfiguracao[] = Object.freeze([
     rotulo: "Tela de acesso",
     icone: "fa-right-to-bracket",
     iconeDoMenu: "door-open",
+    grupo: "aparencia",
     descricao: "Textos do login e regras de autenticação institucional.",
   },
   {
@@ -47,27 +55,15 @@ export const SECOES: readonly SecaoDeConfiguracao[] = Object.freeze([
     rotulo: "Aparência",
     icone: "fa-image",
     iconeDoMenu: "image",
+    grupo: "aparencia",
     descricao: "Arte de fundo, cores e logotipos. Cada cor mostra o contraste.",
-  },
-  {
-    id: "recursos",
-    rotulo: "Painéis externos",
-    icone: "fa-tower-broadcast",
-    iconeDoMenu: "monitor",
-    descricao: "Os painéis externos do menu: título, endereço e situação.",
-  },
-  {
-    id: "operacao",
-    rotulo: "Operação",
-    icone: "fa-sliders",
-    iconeDoMenu: "sliders-horizontal",
-    descricao: "Versão, atualização em tempo real e histórico de publicações.",
   },
   {
     id: "comemoracoes",
     rotulo: "Comemorações",
     icone: "fa-star",
     iconeDoMenu: "party-popper",
+    grupo: "aparencia",
     descricao:
       "Os marcos comemorados, o efeito de cada um e o palco para testar.",
   },
@@ -76,21 +72,40 @@ export const SECOES: readonly SecaoDeConfiguracao[] = Object.freeze([
     rotulo: "Acessos",
     icone: "fa-user-group",
     iconeDoMenu: "users",
+    grupo: "pessoas",
     descricao: "Pessoas, grupos de permissões e coordenações.",
+  },
+  {
+    id: "recursos",
+    rotulo: "Painéis externos",
+    icone: "fa-tower-broadcast",
+    iconeDoMenu: "monitor",
+    grupo: "pessoas",
+    descricao: "Os painéis externos do menu: título, endereço e situação.",
   },
   {
     id: "modulos",
     rotulo: "Módulos e abas",
     icone: "fa-layer-group",
     iconeDoMenu: "layers",
+    grupo: "sistema",
     descricao:
       "Ativar, desativar e pôr em manutenção o sistema, as áreas, as abas e os painéis; selo BETA.",
+  },
+  {
+    id: "operacao",
+    rotulo: "Operação",
+    icone: "fa-sliders",
+    iconeDoMenu: "sliders-horizontal",
+    grupo: "sistema",
+    descricao: "Versão, atualização em tempo real e histórico de publicações.",
   },
   {
     id: "cargas",
     rotulo: "Status das atualizações",
     icone: "fa-clock",
-    iconeDoMenu: "heart-pulse",
+    iconeDoMenu: "activity",
+    grupo: "sistema",
     descricao:
       "Se os dados de cada aba estão atualizados: quando rodou cada atualização, o que atrasou e o que falhou.",
   },
@@ -99,6 +114,7 @@ export const SECOES: readonly SecaoDeConfiguracao[] = Object.freeze([
     rotulo: "Automação",
     icone: "fa-power-off",
     iconeDoMenu: "play",
+    grupo: "sistema",
     descricao:
       "Ligar e desligar o que roda sozinho em cada aba, com motivo e histórico.",
   },

@@ -1,6 +1,6 @@
 /*
   As abas da Avaliação documental por papel e a entrada da tela (sem React,
-  sem DOM): quem vê Regra, Equipe e Pré-classificação, a aba que a tela
+  sem DOM): quem vê Regra, Equipe e Triagem, a aba que a tela
   mostra, o edital que abre sozinho e o último edital aberto, lembrado no
   navegador.
 
@@ -89,7 +89,7 @@ export function visoesDaPessoa(e: EstadoDasAbas): typeof VISOES {
 }
 
 /**
- * Regra e Equipe antigas convergem em Configurações. A Pré-classificação
+ * Regra e Equipe antigas convergem em Configurações. A Triagem
  * continua acessível por atalho somente até ganhar sua entrada independente.
  * Quem não coordena nunca vê Espelhos em massa, Configurações ou Pré.
  */

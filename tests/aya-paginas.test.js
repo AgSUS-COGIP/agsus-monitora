@@ -165,7 +165,7 @@ describe("ações das respostas", () => {
       view: "recursos",
     });
     expect(acaoDaAya("analisar-recursos")).toMatchObject({
-      rotulo: "Abrir Analisar recursos",
+      rotulo: "Abrir Recursos",
       view: "analisar-recursos",
     });
     expect(acaoDaAya("config:acessos")).toMatchObject({

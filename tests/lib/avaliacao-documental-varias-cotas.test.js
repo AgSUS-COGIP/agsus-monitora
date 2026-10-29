@@ -132,7 +132,7 @@ describe("várias cotas", () => {
     ).toEqual(["PI", "PQ"]);
   });
 
-  it("a ficha nova leva a lista da pré-classificação", () => {
+  it("a ficha nova leva a lista da triagem", () => {
     const lanc = lancamentoInicial({
       regra: REGRA,
       respostas: {},

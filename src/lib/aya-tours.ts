@@ -945,7 +945,7 @@ const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       ),
       passo(
         t("avd-visoes"),
-        "Regra, Equipe, Pré-classificação e Fila",
+        "Regra, Equipe, Triagem e Fila",
         "Só quem coordena o edital vê as quatro abas (preparar, ordenar o lote e distribuir as fichas). Quem analisa vê só a Fila.",
       ),
       PASSO_DA_AYA,

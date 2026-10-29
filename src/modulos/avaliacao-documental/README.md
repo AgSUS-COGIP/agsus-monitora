@@ -7,7 +7,7 @@ continua sendo a leitura. Desenho e fases: `docs/analises-no-monitora/`; histór
 
 ## Abas por papel e entrada
 
-Regra, Equipe e Pré-classificação são só de quem coordena o edital (`pode_coordenar`, ou o
+Regra, Equipe e Triagem são só de quem coordena o edital (`pode_coordenar`, ou o
 `papel` = `COORDENADOR` da lista de editais antes de o edital carregar); os demais veem só a Fila,
 sem o seletor de abas, e a equipe nem é lida (`abas-e-entrada.ts`). Sem edital escolhido não há
 abas: a tela abre sozinha a ficha que estava aberta, o último edital aberto (localStorage, por
@@ -27,7 +27,7 @@ pessoa e área) ou o único vigente; senão, mostra os cartões dos editais vige
 
 ## Fase F2
 
-- **Pré-classificação**: a Lista Geral de Classificação Provisória por ART e o lote de convocação
+- **Triagem**: a Lista Geral de Classificação Provisória por ART e o lote de convocação
   de cada vaga, como o job Python gravou (`scripts/pre_classificacao/`); contadores (inscritos,
   eliminados, ranqueados, lote "N de M", divergência ART × declarada), a linha de corte, os
   eliminados com o motivo e os avisos da vaga;
@@ -128,7 +128,7 @@ migration `20261019120000_modelo_do_espelho_de_nota.sql`.
 
 ## Inclusão no lote por decisão da coordenação
 
-- na aba Pré-classificação (cada vaga) e na Fila, a coordenação inclui no lote, por decisão e com
+- na aba Triagem (cada vaga) e na Fila, a coordenação inclui no lote, por decisão e com
   motivo (sugestão "Critério CORES"), candidatos que a regra deixa fora (eliminados ou abaixo do
   corte); selo "Decisão: …" nas listas e no topo da ficha; "Revogar decisão" com motivo (o banco
   recusa com a ficha concluída); contadores "N pela regra + M por decisão"; nos documentos oficiais,
@@ -214,8 +214,8 @@ não vira MONITORA por aqui (a virada com adoção é da F8).
 As leituras grandes vão por versão (migrations `20261014230000_avaliacao_leitura_por_versao.sql` e
 `20261014231000_fila_e_ficha_so_o_que_mudou.sql`; lógica pura em
 `src/lib/avaliacao-documental/leitura-por-versao.ts` e `fila-por-mudancas.ts`; cópia no navegador
-em `src/app/copias-por-versao.ts`): a pré-classificação, a regra e a Classificação mandam a versão
-que a tela tem e recebem só `{ inalterado }` quando nada mudou (a pré-classificação e a
+em `src/app/copias-por-versao.ts`): a triagem, a regra e a Classificação mandam a versão
+que a tela tem e recebem só `{ inalterado }` quando nada mudou (a triagem e a
 Classificação, quando mudou, com os inscritos em colunas); a fila, depois da primeira leitura, só as
 linhas que mudaram, e não é relida ao passar de uma ficha a outra no modo de análise (só ao voltar à
 lista); a ficha não traz a configuração da regra que a tela já guardou. O rascunho automático sai 10 s
@@ -236,7 +236,7 @@ blocos.tsx                os blocos da ficha na regra
 previa.tsx                "Testar com um candidato fictício" (entradas à esquerda, resultado preso
                           à direita; uma coluna em largura estreita)
 equipe.tsx                aba Equipe
-pre-classificacao.tsx     aba Pré-classificação (contadores, vagas, listas oficiais)
+pre-classificacao.tsx     aba Triagem (contadores, vagas, listas oficiais)
 fila.tsx                  aba Fila (etapas, filtros, ações em lote, ficha aberta)
 estado-da-fila.ts         store da aba: obter_fila_avaliacao (só o lote e as contagens),
                           os de fora do lote sob demanda e em páginas (obter_fila_fora_do_lote,
@@ -266,10 +266,10 @@ espelhos-em-massa.tsx     Documentos › "Espelhos em massa (por vaga e filtro)"
                           "x de N") ou um documento só para imprimir, um espelho por página
 espelhos.tsx              A aba Documentos (só coordenação): espelhos das avaliações concluídas
                           (lista por código ou nome, marcação múltipla), espelhos em massa,
-                          modelo e o atalho para os comunicados (que ficam na Pré-classificação)
+                          modelo e o atalho para os comunicados (que ficam na Triagem)
 documentos-em-lote.tsx    AcoesEmLote (PDF / ZIP / impressão, "x de N" e Cancelar) e
                           DocumentosEmLote (lista pesquisável e marcável); regras puras em
-                          src/lib/avaliacao-documental/documentos-em-lote.ts. A Pré-classificação
+                          src/lib/avaliacao-documental/documentos-em-lote.ts. A Triagem
                           usa AcoesEmLote nos comunicados de eliminação em lote
 relatorio-de-motivos.tsx  Ações da coordenação › "Relatório de motivos": filtros (critério, situação,
                           motivo, resultado, situação da ficha, vaga, avaliador, período), atalhos,
@@ -285,7 +285,7 @@ ficha/ficha.css           estilos da ficha (só tokens)
 estado-da-pre-classificacao.ts  store da aba: obter_pre_classificacao, Recalcular,
                           registrar/publicar as listas, Copiar para o SEI e DOCX
 decisao-do-lote.tsx       selo "Decisão: …", "Incluir por decisão da coordenação" e
-                          "Revogar decisão" (Pré-classificação e Fila)
+                          "Revogar decisão" (Triagem e Fila)
 decisao-no-banco.ts       incluir_no_lote_por_decisao / revogar_decisao_lote (uma chamada por vaga)
 campos.tsx                peças de formulário da regra
 avaliacao-documental.css  só tokens
@@ -309,7 +309,7 @@ valida JSON em tempo de execução — quem valida a forma continua sendo `norma
 - A regra é **dado** do edital. Nenhum peso no código: o formato, os valores padrão e a validação
   ficam em `src/lib/avaliacao-documental/regra.ts`, e o banco repete a validação em
   `private."FC_VALIDAR_REGRA_ANALISE"` (`supabase/migrations/20261006100000_regra_da_analise.sql`).
-- A conta da pré-classificação é do job Python (`python/monitora/avaliacao_documental/`); a
+- A conta da triagem é do job Python (`python/monitora/avaliacao_documental/`); a
   cópia em `src/lib/avaliacao-documental/pre-classificacao.ts` só faz a prévia (tamanho sugerido do
   lote) e é conferida com o Python pelos casos de
   `tests/fixtures/avaliacao-documental/casos-de-pre-classificacao.json`. A aba não recalcula

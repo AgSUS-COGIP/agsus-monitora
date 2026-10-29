@@ -43,7 +43,7 @@ O robô liga cada vaga ao edital pela Seleção (`TB_EMPREGARE_VAGA.CO_MONITORAM
   permissão e consultas leves. A lib pura de `src/lib/avaliacao-documental/` serve à prévia
   instantânea da tela e é a referência dos **casos dourados**
   (`tests/fixtures/avaliacao-documental/casos-de-pontuacao.json`), que o Python reproduz a partir da
-  F2 (pré-classificação e nota declarada em lote).
+  F2 (triagem e nota declarada em lote).
 - Cada fase termina com: testes verdes, `npm run build`, conferência no navegador e a Aya
   atualizada (`docs/aya/regras-da-avaliacao-documental.md`).
 
@@ -147,7 +147,7 @@ aplicar). Pela decisão de 06/10/2026, a conta pesada é do **Python**, não de 
   `normal`/`seco`/`refazer_lote`, `disparado_por`); roda sozinho no fim do robô da Empregare (passo
   novo em `robo-empregare.yml`, `--apos-robo`), pelo "Recalcular" da coordenação e pelo "Rodar
   agora" (hoje pela RPC `disparar_robo`, que aceita o robô por edital).
-- Aba **Pré-classificação** (`src/modulos/avaliacao-documental/pre-classificacao.tsx`): contadores,
+- Aba **Triagem** (`src/modulos/avaliacao-documental/pre-classificacao.tsx`): contadores,
   tabela por vaga com a linha de corte, divergência ART × declarada, eliminados à parte, tamanho do
   lote por vaga (versão nova da regra) e o registro/exportação das listas PROVISORIA e LOTE com o
   gerador da Classificação (`documento-sei.js` ganhou os modelos dos itens 8.3.1 e 8.4). As abas
@@ -198,7 +198,7 @@ aplicar). O que entrou:
   `salvar_filtro_fila` e `excluir_filtro_fila`, e as do job (`service_role`)
   `pre_classificacao_ler_distribuicao` e `abrir_fichas_pre_classificacao`; as travas de quem tem
   ficha não sair do lote por "refazer" e de analista com fichas abertas não sair da equipe (AM-3.3).
-  As fichas são abertas pelo **job da pré-classificação** no fim de cada edital (o banco valida e
+  As fichas são abertas pelo **job da triagem** no fim de cada edital (o banco valida e
   grava em `FC_ABRIR_FICHAS`); a distribuição dos que entram depois é calculada em Python
   (`python/monitora/avaliacao_documental/distribuicao.py`), com a mesma conta da prévia da tela
   (`src/lib/avaliacao-documental/distribuicao.ts`) e casos dourados comuns. No lugar de

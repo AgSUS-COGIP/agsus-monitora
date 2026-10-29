@@ -20,7 +20,8 @@ describe("sinônimos na busca", () => {
     ["o que é posto de saúde?", "Unidade Básica de Saúde Indígena"],
     ["o que é distrito sanitário especial indígena?", "34 no Brasil"],
     ["quem decide uma impugnação?", "Parecer jurídico"],
-    ["o que é triagem?", "Análises curriculares"],
+    // "Triagem" é a etapa do Processo seletivo (antiga Pré-classificação).
+    ["o que é triagem?", "Triagem"],
   ])("%s", (pergunta, trecho) => {
     expect(responder(pergunta).answer).toContain(trecho);
   });

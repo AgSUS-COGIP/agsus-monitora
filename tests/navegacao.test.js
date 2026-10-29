@@ -45,7 +45,7 @@ describe("bloqueioDaTela", () => {
     );
   });
 
-  it("Pré-classificação exige recurso próprio, não permissão do Painel da Seleção", () => {
+  it("Triagem exige recurso próprio, não permissão do Painel da Seleção", () => {
     const somentePainel = comMatriz({
       selecao: "editor",
       avaliacao_documental: "sem_acesso",
@@ -54,7 +54,7 @@ describe("bloqueioDaTela", () => {
     expect(telaPermitida("selecao", somentePainel, SEM_PAINEIS)).toBe(true);
     expect(
       bloqueioDaTela("pre-classificacao", somentePainel, SEM_PAINEIS),
-    ).toBe("Sem permissão para a Pré-classificação.");
+    ).toBe("Sem permissão para a Triagem.");
     expect(telaPermitida("pre-classificacao", somentePainel, SEM_PAINEIS)).toBe(
       false,
     );

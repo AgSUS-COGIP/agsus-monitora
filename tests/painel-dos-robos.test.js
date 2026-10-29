@@ -220,7 +220,7 @@ describe("lista branca de cada robô (validarOpcoes)", () => {
     });
   });
 
-  it("Pré-classificação: editais pelo número ou pelo id (minúsculo); modos do workflow", () => {
+  it("Triagem: editais pelo número ou pelo id (minúsculo); modos do workflow", () => {
     expect(
       validarOpcoes(PRE, {
         modo: "refazer_lote",
@@ -351,7 +351,7 @@ describe("editais da escolha", () => {
     ).toEqual({ opcoes: [], ocultos: 1 });
   });
 
-  it("no pedido: o número para o robô da Empregare (sem repetir), o id para a pré-classificação", () => {
+  it("no pedido: o número para o robô da Empregare (sem repetir), o id para a triagem", () => {
     expect(
       editaisDoPedido("empregare", [ID_93, ID_93_SEDE], PAINEL.editais),
     ).toEqual(["93/2026"]);
@@ -437,12 +437,12 @@ describe("prévia do que vai rodar", () => {
     ).toBe("Só o teste de login na Empregare.");
   });
 
-  it("pré-classificação e conferências", () => {
+  it("triagem e conferências", () => {
     const p = { editais: PAINEL.editais };
     expect(
       previaDoDisparo({ ...p, robo: "pre_classificacao", editaisIds: [ID_93] })
         .frase,
-    ).toBe("Pré-classifica 1 edital: 93/2026.");
+    ).toBe("Faz a triagem de 1 edital: 93/2026.");
     expect(
       previaDoDisparo({ ...p, robo: "pre_classificacao", modo: "seco" }).frase,
     ).toBe("Calcula sem gravar os editais ativos com vagas da Empregare.");
@@ -480,7 +480,7 @@ describe("histórico dos robôs", () => {
     });
   });
 
-  it("pré-classificação: o id pedido vira o número; disparo do robô diz de onde vieram os editais", () => {
+  it("triagem: o id pedido vira o número; disparo do robô diz de onde vieram os editais", () => {
     const [monitora, robo] = PAINEL.execucoes.pre_classificacao;
     expect(monitora.parametros.texto).toBe("Edital 93/2026 · refazer lote");
     expect(monitora.resultado).toBe(

@@ -15,7 +15,7 @@ import {
 } from "../fixtures/acompanhamento-das-inscricoes.js";
 
 /*
-  O acompanhamento das inscrições (cartão "Inscrições" da Pré-classificação):
+  O acompanhamento das inscrições (cartão "Inscrições" da Triagem):
   a janela pelo cronograma (a "Validação das inscrições" dos Projetos não é
   inscrição), os totais do último retrato de cada vaga, a série diária com o
   retrato de cada vaga valendo até o próximo e o "hoje +N" por vaga.

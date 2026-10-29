@@ -1,7 +1,7 @@
 """
-PRÉ-CLASSIFICAÇÃO DOS EDITAIS DE TREINAMENTO (992/2099 PROJETOS E 991/2099 SAÚDE INDÍGENA)
+TRIAGEM DOS EDITAIS DE TREINAMENTO (992/2099 PROJETOS E 991/2099 SAÚDE INDÍGENA)
 
-Os editais de treinamento já nascem com a pré-classificação rodada. Quem calcula
+Os editais de treinamento já nascem com a triagem rodada. Quem calcula
 é o MESMO código do job (scripts/pre_classificacao/pre_classificacao.py →
 processar_edital, com python/monitora/avaliacao_documental/): este script roda
 o cálculo sobre os candidatos fictícios da área e grava o resultado pronto no
@@ -53,7 +53,7 @@ AREAS = {
         "migration": MIGRATIONS / "20261008110000_treinamento_avaliacao_documental.sql",
         "marcador": "pre-classificacao-do-treinamento",
         "sobre": (
-            "Edital de treinamento de Projetos (992/2099): a entrada é o que o job da pré-classificação lê do banco "
+            "Edital de treinamento de Projetos (992/2099): a entrada é o que o job da triagem lê do banco "
             "(pre_classificacao_ler_editais e pre_classificacao_ler_candidatos, só fictícios, com o código no lugar do id) "
             "e o resultado é o que o Python calcula e a migration 20261008110000 grava. Gerado por "
             "scripts/pre_classificacao/gerar_treinamento.py (depois: npx prettier --write neste arquivo); "
@@ -66,7 +66,7 @@ AREAS = {
         "migration": MIGRATIONS / "20261009120000_treinamentos_completos.sql",
         "marcador": "pre-classificacao-do-treinamento-si",
         "sobre": (
-            "Edital de treinamento da Saúde Indígena (991/2099): a entrada é o que o job da pré-classificação lê do "
+            "Edital de treinamento da Saúde Indígena (991/2099): a entrada é o que o job da triagem lê do "
             "banco (pre_classificacao_ler_editais e pre_classificacao_ler_candidatos, só fictícios, com o código no "
             "lugar do id) e o resultado é o que o Python calcula e a migration 20261009120000 grava. Gerado por "
             "scripts/pre_classificacao/gerar_treinamento.py --area saude-indigena (depois: npx prettier --write neste "
@@ -183,7 +183,7 @@ def com_bloco(texto, resultado, area="projetos"):
 
 
 def principal(lista=None):
-    p = argparse.ArgumentParser(description="Pré-classificação dos editais de treinamento")
+    p = argparse.ArgumentParser(description="Triagem dos editais de treinamento")
     p.add_argument("--area", choices=sorted(AREAS), default="projetos", help="edital de treinamento da área")
     p.add_argument("--leitura", help="JSON lido do banco num ensaio (editais e candidatos)")
     args = p.parse_args(lista)

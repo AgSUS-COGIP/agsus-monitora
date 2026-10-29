@@ -565,7 +565,7 @@ análises (6.3/6.4), a lista de aprovados (12) e a aba Entrevistas.
 Migration `20261029170000_marca_barata_das_leituras_por_versao.sql` (rollback e
 ensaio com o mesmo nome). Vale para as sete RPCs `*_se_mudou` de Análises,
 Entrevistas, Seleção, Visão geral (acompanhamento), regra da avaliação,
-Classificação e avisos das conferências (a da pré-classificação fica de fora).
+Classificação e avisos das conferências (a da triagem fica de fora).
 
 - **Antes**, a RPC montava o payload inteiro e só então comparava o md5 com a
   versão da tela: `inalterado` custava o mesmo que mandar tudo (Seleção da SI
@@ -977,18 +977,18 @@ Migration `20261007230000_edital_de_treinamento.sql` (ensaio e rollback com o me
     classificação e a regra da avaliação documental do Edital 111/2026 (modelo SI26-PARINTINS, com
     as perguntas do questionário NERSSI ligadas) CONFERIDA e nomeada ("SI26-PARINTINS — Edital
     111/2026"), 30 fictícios na Empregare (cotas, cancelado, pendente, reprovado, empate, abaixo
-    da linha do lote) e a pré-classificação gravada (migration
+    da linha do lote) e a triagem gravada (migration
     `20261009120000_treinamentos_completos.sql`);
   - Projetos: "Treinamento – Projetos (992/2099)", unidade "Escritório Treinamento"
     (`private."FC_PREPARAR_TREINAMENTO_PROJETOS"`, migration
     `20261008110000_treinamento_avaliacao_documental.sql`): espelho do Edital 93/2026 (5 vagas com
     códigos fictícios `99099200x`, quadro, cronograma relativo), cópia **independente** (só o JSON)
     da regra conferida do 93/2026 (versão 7) e da regra da classificação, 40 candidatos fictícios
-    no formato da exportação da Empregare e a pré-classificação já gravada; e a entrevista
+    no formato da exportação da Empregare e a triagem já gravada; e a entrevista
     (`private."FC_PREPARAR_ENTREVISTA_TREINAMENTO_PROJETOS"`, `20261009120000`): roteiro
     "Treinamento — Entrevista Projetos (exemplo)" (cópia do modelo do SESMT), lançamento pela
     secretaria, banca com o Avaliador Teste P3 só em "Habilidade intercultural", liberação da
-    janela e a lista de convocação dos que estão no lote da pré-classificação.
+    janela e a lista de convocação dos que estão no lote da triagem.
   - Nos dois, `private."FC_CONVOCAR_E_AGENDAR_TREINAMENTO"` convoca a lista vigente (entrevistas
     do sistema, como `convocar_para_entrevista`) e monta a agenda a partir de hoje (6 hoje, as
     demais nos dias úteis seguintes), sem mexer no que já existe.
@@ -1012,7 +1012,7 @@ Migration `20261007230000_edital_de_treinamento.sql` (ensaio e rollback com o me
   `listar_editais_classificacao`, `FC_DADOS_CLASSIFICACAO_EDITAL`, `obter_pre_classificacao`,
   `pre_classificacao_ler_editais`, `get_painel_dos_robos`. O documento oficial gerado sai com
   "TREINAMENTO — SEM VALOR OFICIAL" no título (`documento-sei.js`).
-- **A pré-classificação pronta dos treinamentos:** o resultado do cálculo Python (o
+- **A triagem pronta dos treinamentos:** o resultado do cálculo Python (o
   mesmo `processar_edital` do job, gerado por `scripts/pre_classificacao/gerar_treinamento.py`
   com `--area projetos` ou `--area saude-indigena` a partir de
   `tests/fixtures/avaliacao-documental/treinamento-<área>.json`, conferido por
@@ -1078,7 +1078,7 @@ ficha que não está `FORA_LOTE`) voltam a `PENDENTE`, sem responsável, reserva
 resultado, parecer, notas, rascunho e conclusão, com `NU_VERSAO` + 1, e cada uma ganha uma linha
 `REINICIAR` em `TH_FICHA_ANALISE` (motivo de 10 a 2.000, autor e, em `DS_ALTERACAO`, o que foi
 limpo, com o lançamento, o resultado e o parecer de antes; o retrato da conclusão segue no `CONCLUIR`). `FORA_LOTE`, regra, decisões de
-inclusão, pré-classificação, Classificação e `TB_ANALISE_CURRICULAR` não mudam; ficha já no início
+inclusão, triagem, Classificação e `TB_ANALISE_CURRICULAR` não mudam; ficha já no início
 não ganha histórico.
 
 - `public.reiniciar_fichas_do_edital(p_edital, p_motivo)`: só administrador global (42501) e, desde

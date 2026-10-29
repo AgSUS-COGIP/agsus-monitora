@@ -2,7 +2,7 @@
 Distribuição das fichas da avaliação documental entre os analistas do edital
 (docs/analises-no-monitora/, fase F3).
 
-O job da pré-classificação (scripts/pre_classificacao/) usa esta conta para dar
+O job da triagem (scripts/pre_classificacao/) usa esta conta para dar
 as fichas que entram depois a quem tem menos pendentes. A mesma conta existe em
 src/lib/avaliacao-documental/distribuicao.ts (a prévia da tela), e os dois lados
 rodam os MESMOS casos dourados:

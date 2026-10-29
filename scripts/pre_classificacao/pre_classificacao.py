@@ -1,5 +1,5 @@
 """
-PRÉ-CLASSIFICAÇÃO DA AVALIAÇÃO DOCUMENTAL (job Python, fase F2)
+TRIAGEM DA AVALIAÇÃO DOCUMENTAL (job Python, fase F2)
 
 Para cada edital, lê do MONITORA (RPCs só do service_role) a regra da avaliação
 e os inscritos que o robô da Empregare trouxe em cada vaga — sem o cadastro
@@ -30,7 +30,7 @@ gravar_sugestoes_da_ficha, 20261009190000_sugestoes_da_ficha.sql), para a
 ficha vir pronta para conferir. Falha só vira aviso.
 
 Roda pelo GitHub Actions (.github/workflows/pre-classificacao.yml): pelo
-"Recalcular" da aba Pré-classificação e pelo "Rodar agora" das Configurações
+"Recalcular" da aba Triagem e pelo "Rodar agora" das Configurações
 (RPC disparar_robo), pelo "Run workflow" e, sozinho, no fim do robô da
 Empregare (--apos-robo: os editais das vagas da última carga). Guia:
 docs/python-no-monitora.md.
@@ -85,7 +85,7 @@ nomes das colunas do edital uma vez (pre_classificacao_ler_colunas), escolhe as
 que a regra olha (colunas_da_leitura.py) e lê só elas de cada inscrito
 (p_colunas; o 114/2026 caiu de 38,9 MB para 4,6 MB por execução, com o mesmo
 resultado). No fim do robô (--apos-robo), o edital que não mudou desde a última
-pré-classificação concluída de hoje ("sem_mudanca") não é recalculado; sem
+triagem concluída de hoje ("sem_mudanca") não é recalculado; sem
 nenhum edital a recalcular, nem abre execução.
 
 Saída: 0 concluída; 2 parcial (algum edital falhou ou não foi encontrado); 1 erro;
@@ -120,7 +120,7 @@ from monitora.avaliacao_documental.sugestoes_da_ficha import (  # noqa: E402
 from monitora.mascaramento import resumo_do_erro  # noqa: E402
 from monitora.registro import registro  # noqa: E402
 
-TITULO = "Pré-classificação da Avaliação documental → MONITORA"
+TITULO = "Triagem da Avaliação documental → MONITORA"
 GUIA = "docs/python-no-monitora.md"
 CAMPOS_DA_LINHA = (
     "id",
@@ -293,7 +293,7 @@ def processar_edital(chamar, edital, hoje, refazer, gravar, retratar=False, grav
         return resultado
 
     regra = normalizar_regra(edital["regra"].get("configuracao"))
-    # A declarada congela na primeira pré-classificação depois do fim das inscrições (ou já, sem data).
+    # A declarada congela na primeira triagem depois do fim das inscrições (ou já, sem data).
     congelar = congela_a_declarada(hoje, fim_das_inscricoes(edital.get("cronograma")))
     retratos = []
     if not so_retrato:
@@ -432,7 +432,7 @@ def ler_candidatos(chamar, edital, vaga, tamanho=None, colunas=None):
 def gravar_retrato(chamar, id_execucao, resultado):
     """
     Grava o retrato das inscrições do edital (gravar_retrato_inscricoes). Uma
-    falha (ex.: banco sem a migration) só vira aviso: a pré-classificação segue.
+    falha (ex.: banco sem a migration) só vira aviso: a triagem segue.
     Devolve quantas vagas foram retratadas.
     """
     retrato = resultado.get("retrato") or []
@@ -610,13 +610,13 @@ def principal(args, configuracao=None, chamar_rpc=None):
             + rotulos([e for e in editais if e.get("congelado")])
             + "."
         )
-    # No fim do robô, o edital que não mudou desde a última pré-classificação de hoje não é
+    # No fim do robô, o edital que não mudou desde a última triagem de hoje não é
     # recalculado (20261014220000): nada a ler nem gravar.
     sem_mudanca = [e for e in editais if e.get("sem_mudanca")]
     if sem_mudanca:
         editais = [e for e in editais if not e.get("sem_mudanca")]
         cabecalho.append(
-            "Sem mudança desde a última pré-classificação de hoje (não recalculado): "
+            "Sem mudança desde a última triagem de hoje (não recalculado): "
             + ", ".join(str(e.get("rotulo") or e.get("id")) for e in sem_mudanca)
             + "."
         )
@@ -666,7 +666,7 @@ def principal(args, configuracao=None, chamar_rpc=None):
         )
     except supabase_rpc.ErroDoSupabase as erro:
         if "55P03" in str(erro) or "em andamento" in str(erro):
-            execucao.resumir(TITULO, ["Já há uma pré-classificação em andamento; esta não rodou."])
+            execucao.resumir(TITULO, ["Já há uma triagem em andamento; esta não rodou."])
             return 1
         raise
     log.info("Execução %s (disparo %s, %s edital(is)).", id_execucao, tipo.lower(), len(editais))

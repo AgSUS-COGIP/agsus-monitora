@@ -1,5 +1,5 @@
 """
-Testes do job da pré-classificação (scripts/pre_classificacao/): o fluxo de
+Testes do job da triagem (scripts/pre_classificacao/): o fluxo de
 uma execução com o banco falso (função `chamar` injetada) e dados fictícios —
 edital sem regra conferida, prévia no modo seco, gravação por vaga, falha de
 um edital, execução em andamento e nada de dado pessoal no resumo. Nada fala
@@ -604,7 +604,7 @@ class Fluxo(unittest.TestCase):
         banco = BancoFalso([sem_mudanca], CANDIDATOS)
         codigo, saida = rodar(banco, ["--apos-robo"])
         self.assertEqual(codigo, 0)
-        self.assertIn("Sem mudança desde a última pré-classificação de hoje", saida)
+        self.assertIn("Sem mudança desde a última triagem de hoje", saida)
         self.assertEqual(banco.de("iniciar_pre_classificacao"), [])
         self.assertEqual(banco.de("pre_classificacao_ler_candidatos"), [])
         # Com outro edital que mudou, só ele é recalculado.

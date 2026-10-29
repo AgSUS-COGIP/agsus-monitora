@@ -389,13 +389,11 @@ describe("registro da aba", async () => {
     await import("../src/lib/access-roles.ts");
   const { NOMES_DE_ICONES } = await import("../src/modules/icones.ts");
 
-  it("Painel de entrevistas e Conduzir entrevistas vêm depois de Recursos (painel e análise) e antes da Classificação e da Lista de aprovados, como beta", () => {
+  it("Painel de entrevistas fica em Acompanhar (depois do Painel de recursos); Entrevistas, no processo, entre Recursos e Classificação, como beta", () => {
     const ids = ABAS_DO_MENU.map((aba) => aba.id);
-    expect(ids.indexOf("entrevistas")).toBe(
-      ids.indexOf("analisar-recursos") + 1,
-    );
+    expect(ids.indexOf("entrevistas")).toBe(ids.indexOf("recursos") + 1);
     expect(ids.indexOf("conduzir-entrevistas")).toBe(
-      ids.indexOf("entrevistas") + 1,
+      ids.indexOf("analisar-recursos") + 1,
     );
     expect(ids.indexOf("classificacao")).toBe(
       ids.indexOf("conduzir-entrevistas") + 1,
@@ -403,11 +401,11 @@ describe("registro da aba", async () => {
     expect(
       ABAS_DO_MENU.find((aba) => aba.id === "conduzir-entrevistas"),
     ).toMatchObject({
-      rotulo: "Conduzir entrevistas",
+      rotulo: "Entrevistas",
       view: "conduzir-entrevistas",
       recurso: "entrevistas",
       icone: "clipboard-pen-line",
-      ordem: 10,
+      ordem: 11,
       beta: true,
     });
     expect(NOMES_DE_ICONES).toContain("clipboard-pen-line");
@@ -417,10 +415,10 @@ describe("registro da aba", async () => {
       view: "entrevistas",
       recurso: "entrevistas",
       icone: "messages-square",
-      ordem: 9,
+      ordem: 4,
       beta: true,
     });
-    expect(ABAS_DO_MENU.find((aba) => aba.id === "recursos").ordem).toBe(7);
+    expect(ABAS_DO_MENU.find((aba) => aba.id === "recursos").ordem).toBe(3);
     expect(NOMES_DE_ICONES).toContain("messages-square");
     expect(RESOURCES).toContainEqual(["entrevistas", "Entrevistas"]);
   });

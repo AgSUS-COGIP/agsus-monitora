@@ -15,7 +15,7 @@ para vaga dentro do mesmo edital. O texto da regra casa com a coluna quando é
 o começo do nome inteiro ("Pergunta 15 -", como sempre foi) ou do enunciado
 depois do prefixo "Pergunta N - " ("Experiência Profissional"), sem acento,
 sem caixa, com os espaços colapsados e o &nbsp; como espaço. Mais de uma
-coluna casando é ambíguo: não vale nenhuma e a pré-classificação avisa
+coluna casando é ambíguo: não vale nenhuma e a triagem avisa
 (PERGUNTA_AMBIGUA:<de onde>). Quando o enunciado muda de questionário para
 questionário, a regra traz uma lista de alternativas e casa com qualquer uma.
 """

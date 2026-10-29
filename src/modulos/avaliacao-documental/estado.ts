@@ -46,7 +46,7 @@
   A conta da prévia é a de src/lib/avaliacao-documental/pontuacao.ts, feita no
   componente; aqui só a carga e a gravação. A aba aberta (`visao`) mora aqui
   para o "Atualizar" e a reabertura da tela relerem a aba certa. Regra, Equipe
-  e Pré-classificação são só de quem coordena o edital (abas-e-entrada.ts):
+  e Triagem são só de quem coordena o edital (abas-e-entrada.ts):
   para os demais a visão cai na Fila e a equipe nem é lida.
 
   Entrada: ao chegar na área, abre sozinho o edital da ficha que estava
@@ -358,7 +358,7 @@ export function criarEstadoDaAvaliacao({
   /*
     A equipe do edital (gestores, equipe e quem pode entrar), só para a
     coordenação e só quando a aba Equipe abre: obter_equipe_edital monta a
-    lista de pessoas, e abrir o edital (Pré-classificação, Fila) não precisa
+    lista de pessoas, e abrir o edital (Triagem, Fila) não precisa
     dela. Falha vira erroDoEdital (a aba mostra "Tentar novamente").
   */
   let pedidoDaEquipe = 0;

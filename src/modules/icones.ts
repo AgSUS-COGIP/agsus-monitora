@@ -1,4 +1,5 @@
 import {
+  Activity,
   ArrowRight,
   ArrowUp,
   Award,
@@ -39,6 +40,7 @@ import {
   Info,
   Layers,
   LayoutDashboard,
+  ListChecks,
   ListFilter,
   ListOrdered,
   LogIn,
@@ -117,6 +119,7 @@ const ArquivoPdf: IconNode = [
 ];
 
 export const ICONES = Object.freeze({
+  activity: Activity,
   "arrow-right": ArrowRight,
   "arrow-up": ArrowUp,
   award: Award,
@@ -161,6 +164,7 @@ export const ICONES = Object.freeze({
   info: Info,
   layers: Layers,
   "layout-dashboard": LayoutDashboard,
+  "list-checks": ListChecks,
   "list-filter": ListFilter,
   "list-ordered": ListOrdered,
   "log-in": LogIn,

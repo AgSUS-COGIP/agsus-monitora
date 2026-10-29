@@ -250,7 +250,7 @@ que vai rodar ("5 vagas do 93/2026: 179698, 180231…"). A função valida tudo 
 branca do robô (`validarOpcoes` em `src/lib/robos-de-carga.ts`) e recusa com 400 o que não couber.
 Depois do pedido, a linha acompanha a execução (aguardando o GitHub → rodando → resultado por vaga:
 gravada, candidatos no arquivo, ativos e com link), com o link da execução no GitHub. A
-pré-classificação e as conferências têm a mesma gaveta, com os campos que aceitam.
+triagem e as conferências têm a mesma gaveta, com os campos que aceitam.
 
 **Pelo GitHub:** aba **Actions** → **Robô da Empregare** → **Run workflow**:
 
@@ -268,9 +268,9 @@ pré-classificação e as conferências têm a mesma gaveta, com os campos que a
 
 ### Inscrições congeladas (migration 20261020170000)
 
-Edital com a trava **Inscrições congeladas** ligada (aba Pré-classificação, coordenação do edital
+Edital com a trava **Inscrições congeladas** ligada (aba Triagem, coordenação do edital
 ou administrador global; `TB_CONGELAMENTO_INSCRICAO`) não muda mais pelo robô nem pela
-pré-classificação:
+triagem:
 
 - **sem filtro** ("Rodar agora"): as vagas do edital ficam fora da lista
   (`listar_vagas_empregare`, finalidade `carga`) e o resumo diz "Editais com inscrições congeladas
@@ -279,7 +279,7 @@ pré-classificação:
   pelo GitHub, o robô recusa a execução inteira — nada exportado;
 - **de raiz**: `FC_EMPREGARE_ABRIR_VAGA` dá RECUSADA à vaga de edital congelado (nada gravado nem
   desativado), inclusive para versões antigas do robô;
-- a **pré-classificação** (após robô, normal, refazer lote) pula ou recusa o edital;
+- a **triagem** (após robô, normal, refazer lote) pula ou recusa o edital;
 - continuam: seco, fumaça, sondar e o **Só anexos** com "só comparar" (seco). O Só anexos que
   grava (respostas e anexos) pede a liberação desde `20261022170000`: sem ela, a tela recusa
   (55000), o robô recusa a execução inteira e `gravar_anexos_empregare` recusa a vaga.
@@ -307,7 +307,7 @@ do workflow; se falhar, só avisa).
   com erro.
 - **Concorrência:** robô e leitura dos arquivos dividem o grupo `empregare`; o GitHub guarda só uma
   execução esperando por grupo (a nova cancelaria a que espera), então `disparar_robo` recusa
-  (55006) o pedido quando já há uma esperando. A pré-classificação do fim do robô é um job que chama
+  (55006) o pedido quando já há uma esperando. A triagem do fim do robô é um job que chama
   `pre-classificacao.yml` (grupo `pre-classificacao`) e só roda se alguma vaga foi gravada.
 
 ### Teste de fumaça (depois de cadastrar os segredos)
@@ -341,18 +341,18 @@ dado de candidato em issue, PR ou log.
 
 ## Quando falha
 
-| O que aparece                                              | O que fazer                                                                                                                                                                                                                       |
-| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Falta EMPREGARE_EMAIL` / `EMPREGARE_SENHA`                | Cadastre os secrets (acima).                                                                                                                                                                                                      |
-| `A Empregare não aceitou o login`                          | A senha mudou ou o usuário foi bloqueado. Entre no portal com o usuário do robô, acerte e atualize o secret `EMPREGARE_SENHA`. Rode `fumaca`.                                                                                     |
-| `não consegui pedir a exportação` em todas as vagas        | A Empregare mudou a tela (botões, textos ou ids). Rode `fumaca`; se o login passa, os seletores em `scripts/robo-empregare/navegador_empregare.py` (`exportar_vaga`) precisam de ajuste.                                          |
+| O que aparece                                              | O que fazer                                                                                                                                                                                                                        |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Falta EMPREGARE_EMAIL` / `EMPREGARE_SENHA`                | Cadastre os secrets (acima).                                                                                                                                                                                                       |
+| `A Empregare não aceitou o login`                          | A senha mudou ou o usuário foi bloqueado. Entre no portal com o usuário do robô, acerte e atualize o secret `EMPREGARE_SENHA`. Rode `fumaca`.                                                                                      |
+| `não consegui pedir a exportação` em todas as vagas        | A Empregare mudou a tela (botões, textos ou ids). Rode `fumaca`; se o login passa, os seletores em `scripts/robo-empregare/navegador_empregare.py` (`exportar_vaga`) precisam de ajuste.                                           |
 | `0 link(s) de candidato` ou `não consegui ler a lista`     | A tela de candidaturas mudou (o `data-pessoa-id` ou o link de detalhes). A exportação não é afetada; ajuste `ler_lista_de_candidatos` e os `JS_…` da lista em `navegador_empregare.py`. A ficha cai em "Abrir vagas na Empregare". |
-| `exportação ainda não disponível` até acabar as tentativas | A Empregare demorou a gerar os arquivos. Rode de novo mais tarde (as vagas que faltaram vão primeiro).                                                                                                                            |
-| `RECUSADA pela trava`                                      | O arquivo veio com menos da metade dos candidatos. Confira a vaga na Empregare; se a redução for real, rode `forcar` com `vagas` = o código.                                                                                      |
-| `Já há uma execução do robô da Empregare em andamento`     | Outra execução está aberta. Espere; uma execução que morreu sem fechar é liberada sozinha depois de 3 h.                                                                                                                          |
-| `… respondeu 404` com `listar_vagas_empregare`             | A migration `20261005170000_robo_empregare.sql` ainda não foi aplicada.                                                                                                                                                           |
-| `… respondeu 401`                                          | A `service_role` do Supabase mudou: atualize `SUPABASE_SERVICE_ROLE_KEY`.                                                                                                                                                         |
-| "A chave de disparo dos robôs expirou ou foi recusada"     | O token do Vault (`github_disparo_robos`) venceu ou não tem "Actions: read and write" no repositório. Gere outro e troque o valor no Vault, com o mesmo nome (docs/agenda-dos-robos.md).                                          |
+| `exportação ainda não disponível` até acabar as tentativas | A Empregare demorou a gerar os arquivos. Rode de novo mais tarde (as vagas que faltaram vão primeiro).                                                                                                                             |
+| `RECUSADA pela trava`                                      | O arquivo veio com menos da metade dos candidatos. Confira a vaga na Empregare; se a redução for real, rode `forcar` com `vagas` = o código.                                                                                       |
+| `Já há uma execução do robô da Empregare em andamento`     | Outra execução está aberta. Espere; uma execução que morreu sem fechar é liberada sozinha depois de 3 h.                                                                                                                           |
+| `… respondeu 404` com `listar_vagas_empregare`             | A migration `20261005170000_robo_empregare.sql` ainda não foi aplicada.                                                                                                                                                            |
+| `… respondeu 401`                                          | A `service_role` do Supabase mudou: atualize `SUPABASE_SERVICE_ROLE_KEY`.                                                                                                                                                          |
+| "A chave de disparo dos robôs expirou ou foi recusada"     | O token do Vault (`github_disparo_robos`) venceu ou não tem "Actions: read and write" no repositório. Gere outro e troque o valor no Vault, com o mesmo nome (docs/agenda-dos-robos.md).                                           |
 
 Situações da execução: **CONCLUIDA** (todas as vagas gravadas), **PARCIAL** (alguma vaga falhou,
 foi recusada ou ficou no meio — o workflow fica vermelho para avisar), **FALHOU** (erro geral ou

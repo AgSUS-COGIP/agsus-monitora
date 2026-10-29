@@ -44,6 +44,7 @@ import { Icone } from "../icone.tsx";
 import {
   AREA_DAS_CONFIGURACOES,
   areaAberta,
+  blocosDaAdministracao,
   blocosDaArea,
   destinoAoTrocarDeArea,
   ehAreaDoSistema,
@@ -73,8 +74,10 @@ import { marcarItemAtivoNoMenu } from "./estado.ts";
     primeira dela (`destinoAoTrocarDeArea`). Com uma área só, não há seletor:
     a área aparece como acordeão, como antes.
   - As páginas da área vêm em dois blocos com título pequeno em caixa alta,
-    Acompanhamento (consulta, com os painéis externos) e Processo seletivo
-    (onde se trabalha); bloco vazio não aparece (`blocosDaArea`).
+    Acompanhar (consulta, com os painéis externos) e Processo seletivo
+    (onde se trabalha); bloco vazio não aparece (`blocosDaArea`). As seções
+    de Administração, em três: Aparência, Pessoas e acessos e Sistema
+    (`blocosDaAdministracao`).
   - Expandida (e na gaveta do celular): Administração é acordeão, e todos
     nascem abertos. O que se guarda é a lista dos que a pessoa fechou.
     Só a seta gira; a altura não anima (Design System AgSUS, 7.1).
@@ -364,11 +367,17 @@ function Area({
   const semCabecalhoNemPainel = semCabecalho || direto;
   const idDoPainel = `menuArea-${area.id}`;
   /*
-    As áreas do sistema dividem as páginas em blocos com título
-    (Acompanhamento e Processo seletivo); bloco vazio não aparece.
-    Administração (e Painéis, sem área) é uma lista só.
+    As áreas do sistema dividem as páginas em blocos com título (Acompanhar
+    e Processo seletivo), e Administração, as seções em três (Aparência,
+    Pessoas e acessos, Sistema); bloco vazio não aparece. Painéis (sem área)
+    é uma lista só.
   */
-  const blocos = ehAreaDoSistema(area.id) ? blocosDaArea(area.itens) : null;
+  const daArea = ehAreaDoSistema(area.id);
+  const blocos = daArea
+    ? blocosDaArea(area.itens)
+    : area.id === AREA_DAS_CONFIGURACOES
+      ? blocosDaAdministracao(area.itens)
+      : null;
   const lista = (
     itens: readonly Item[],
     nome: { "aria-label"?: string; "aria-labelledby"?: string },

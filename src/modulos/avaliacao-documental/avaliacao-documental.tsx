@@ -58,7 +58,7 @@ import "./ficha/ficha.css";
   Fases F1 a F3 (docs/analises-no-monitora/plano-de-construcao.md): escolha
   do edital (só os vigentes, com "Mostrar todos os editais da área"), a regra
   da avaliação (modelo, versões com motivo, perguntas da Empregare, prévia com
-  candidato fictício), a equipe, a pré-classificação (Provisória por ART e
+  candidato fictício), a equipe, a triagem (Provisória por ART e
   lote, gravados pelo job Python; listas PROVISORIA e LOTE) e a fila (etapas,
   distribuição e reserva da ficha). O conteúdo da ficha entra na F4. O Painel
   das análises (view `analises`) continua sendo a leitura.
@@ -66,7 +66,7 @@ import "./ficha/ficha.css";
 
 /*
   Abas por papel (abas-e-entrada.ts): quem coordena o edital vê Regra,
-  Equipe, Pré-classificação e Fila; os demais, só a Fila, sem o seletor. Sem
+  Equipe, Triagem e Fila; os demais, só a Fila, sem o seletor. Sem
   edital escolhido não há abas: a entrada mostra os cartões dos editais.
 */
 const FILA = VISOES.find((v) => v.valor === "fila")!;
@@ -106,7 +106,7 @@ function textoDoStatus(e: EstadoDaAvaliacao) {
   return e.dados ? "Sem regra" : "";
 }
 
-/* As partes da Pré-classificação que a tela de hoje mostra ao abrir. */
+/* As partes da Triagem que a tela de hoje mostra ao abrir. */
 const PARTES_DA_TELA = ["vagas", "listas"] as const;
 
 const AVISO_AO_ATUALIZAR =
@@ -125,7 +125,7 @@ function TelaDaArea({
   const visoes = visoesDaPessoa(e);
   const coordena = coordenaOEdital(e) === true;
   /*
-    A Pré-classificação começa a ler assim que o edital é escolhido (a lista
+    A Triagem começa a ler assim que o edital é escolhido (a lista
     de editais já diz se a pessoa coordena), junto com a regra, e não depois
     dela: resumo, cartão "Inscrições" e trava saem em paralelo.
   */
@@ -290,7 +290,7 @@ function TelaDaArea({
                 className="btn secondary small"
                 onClick={() => estado.mudarVisao("pre")}
               >
-                Abrir pré-classificação
+                Abrir triagem
               </button>
             </div>
           ) : null}
@@ -419,7 +419,7 @@ export function TelaDaAvaliacaoDocumental({
 
 /**
  * "Atualizar" e reabertura da tela: os editais da área e o edital aberto
- * (regra e equipe) e, na Pré-classificação ou na Fila, a aba aberta.
+ * (regra e equipe) e, na Triagem ou na Fila, a aba aberta.
  */
 export function criarAtualizacao({
   estado,

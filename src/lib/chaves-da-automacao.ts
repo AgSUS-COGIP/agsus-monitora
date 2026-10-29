@@ -251,7 +251,7 @@ const maisRecente = (lista: (ExecucaoDaTarefa | null)[]) =>
       (a, b) => (b.inicio?.getTime() ?? 0) - (a.inicio?.getTime() ?? 0),
     )[0] || null;
 
-/** A última execução automática: a tarefa mais recente ou a pré-classificação do fim do robô. */
+/** A última execução automática: a tarefa mais recente ou a triagem do fim do robô. */
 export function ultimaExecucao(chave: ChaveDaAutomacao) {
   return maisRecente([
     ...chave.tarefas.map((t) => t.ultima),

@@ -11,7 +11,7 @@ import {
 import { clicar, digitar, esperar } from "./interacoes.js";
 
 /*
-  Cartão "Inscrições congeladas" da aba Pré-classificação (migration
+  Cartão "Inscrições congeladas" da aba Triagem (migration
   20261020170000): congelado, todos veem (quem, quando, motivo); a
   coordenação/administrador congela ou libera com motivo; liberado e sem
   permissão, não aparece; banco sem a migration, não aparece. RPC falsa.

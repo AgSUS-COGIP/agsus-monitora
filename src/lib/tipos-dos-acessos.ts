@@ -133,6 +133,7 @@ export type SecaoDeConfiguracaoDoMenu = {
   id: string;
   rotulo: string;
   iconeDoMenu?: string;
+  grupo?: "aparencia" | "pessoas" | "sistema";
 };
 
 // ── Matriz de acessos (obter_matriz_acessos) ─────────────────────────────────

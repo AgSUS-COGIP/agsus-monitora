@@ -111,7 +111,7 @@ const BLOQUEIOS: Readonly<
   ],
   "pre-classificacao": [
     canViewAvaliacaoDocumental,
-    "Sem permissão para a Pré-classificação.",
+    "Sem permissão para a Triagem.",
   ],
   recursos: [canViewRecursos, "Sem permissão para Recursos."],
   "analisar-recursos": [

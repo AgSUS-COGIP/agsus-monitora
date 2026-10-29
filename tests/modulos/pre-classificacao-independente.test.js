@@ -7,7 +7,7 @@ import {
 import { montarPreClassificacao } from "../../src/modulos/avaliacao-documental/entrada-da-pre-classificacao.tsx";
 import { esperar } from "../componentes/interacoes.js";
 
-/* A página não acessa a RPC de pré-classificação até o backend confirmar
+/* A página não acessa a RPC de triagem até o backend confirmar
    pode_coordenar para aquele edital; perfil que só lê Seleção não a libera. */
 const ID = "00000000-0000-4000-8000-000000000114";
 function supabaseFalso(coordena) {
@@ -109,8 +109,8 @@ afterEach(async () => {
   secao = null;
 });
 
-describe("entrada independente de Pré-classificação", () => {
-  it("analista vê o aviso e não consulta dados da pré-classificação", async () => {
+describe("entrada independente de Triagem", () => {
+  it("analista vê o aviso e não consulta dados da triagem", async () => {
     const supabase = supabaseFalso(false);
     await montar(supabase);
     expect(secao.textContent).toContain("restrita à coordenação");
@@ -124,7 +124,7 @@ describe("entrada independente de Pré-classificação", () => {
     ).toBe(true);
   });
 
-  it("coordenação autenticada chega à mesma RPC da Pré-classificação", async () => {
+  it("coordenação autenticada chega à mesma RPC da Triagem", async () => {
     const supabase = supabaseFalso(true);
     await montar(supabase);
     expect(

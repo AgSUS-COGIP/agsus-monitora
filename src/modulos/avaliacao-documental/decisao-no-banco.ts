@@ -1,6 +1,6 @@
 /*
   Inclusão no lote por decisão da coordenação e revogação, usadas pela aba
-  Pré-classificação e pela Fila (sem React). RPCs
+  Triagem e pela Fila (sem React). RPCs
   (supabase/migrations/20261007200000_inclusao_no_lote_por_decisao.sql;
   contrato em src/lib/rpc-contrato.js):
     incluir_no_lote_por_decisao(p_edital, p_codigos, p_motivo, p_vaga)

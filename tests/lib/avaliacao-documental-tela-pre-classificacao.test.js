@@ -20,7 +20,7 @@ import {
 import { nomeDoArquivo } from "../../src/lib/classificacao/exportacao.ts";
 
 /*
-  A aba Pré-classificação sem DOM (src/lib/avaliacao-documental/
+  A aba Triagem sem DOM (src/lib/avaliacao-documental/
   tela-da-pre-classificacao.ts) e o documento das listas PROVISORIA e LOTE no
   gerador da Classificação (src/lib/classificacao/documento-sei.ts) — AM-4.4,
   AM-5.0, AM-5.6 e AM-16.
@@ -80,7 +80,7 @@ const DADOS = {
   listas: [{ meta: { tipo: "LOTE" }, lote: 1 }],
 };
 
-describe("tela da pré-classificação", () => {
+describe("tela da triagem", () => {
   it("AM-4.4: contadores e 'N de M' só das vagas já pré-classificadas", () => {
     expect(contadoresDaPreClassificacao(DADOS)).toEqual({
       inscritos: 7,

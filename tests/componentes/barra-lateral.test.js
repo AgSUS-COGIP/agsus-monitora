@@ -202,7 +202,7 @@ describe("áreas abertas por padrão", () => {
     expect(aberta("administracao")).toBe(false);
   });
 
-  it("Saúde Indígena é submenu, com os blocos Acompanhamento e Processo seletivo", async () => {
+  it("Saúde Indígena é submenu, com os blocos Acompanhar e Processo seletivo", async () => {
     await montar();
     const cabecalhoDaArea = cabecalho("saude-indigena");
     expect(cabecalhoDaArea.hasAttribute("data-view")).toBe(false);
@@ -214,8 +214,8 @@ describe("áreas abertas por padrão", () => {
     ).toEqual([
       ["Visão geral", "saude-indigena"],
       ["Painel das análises", "saude-indigena"],
-      ["Editais", "saude-indigena"],
       ["Cronograma", "saude-indigena"],
+      ["Editais", "saude-indigena"],
       ["Lista de aprovados", "saude-indigena"],
     ]);
     // Cada bloco tem o título e uma lista nomeada por ele.
@@ -227,21 +227,38 @@ describe("áreas abertas por padrão", () => {
         [...bloco.querySelectorAll(".menu-item")].map((b) => b.dataset.view),
       ]),
     ).toEqual([
-      ["acompanhamento", "Acompanhamento", ["dashboard", "analises"]],
-      ["processo", "Processo seletivo", ["nucleo", "calendario", "approved"]],
+      ["acompanhamento", "Acompanhar", ["dashboard", "analises", "calendario"]],
+      ["processo", "Processo seletivo", ["nucleo", "approved"]],
     ]);
     const titulo = blocos[1].querySelector(".menu-bloco__titulo");
     expect(blocos[1].querySelector("ul").getAttribute("aria-labelledby")).toBe(
       titulo.id,
     );
-    // Administração continua uma lista só, sem blocos.
-    expect(area("administracao").querySelector(".menu-bloco")).toBeNull();
+    // Administração em três grupos com título: Aparência, Pessoas e
+    // acessos, Sistema.
+    expect(
+      [...area("administracao").querySelectorAll(".menu-bloco")].map(
+        (bloco) => [
+          bloco.dataset.bloco,
+          bloco.querySelector(".menu-bloco__titulo").textContent,
+          [...bloco.querySelectorAll(".menu-item")].map((b) => b.dataset.secao),
+        ],
+      ),
+    ).toEqual([
+      [
+        "aparencia",
+        "Aparência",
+        ["marca", "inicio", "acesso", "aparencia", "comemoracoes"],
+      ],
+      ["pessoas", "Pessoas e acessos", ["acessos", "recursos"]],
+      ["sistema", "Sistema", ["modulos", "operacao", "cargas", "automacao"]],
+    ]);
   });
 
   it("bloco sem página que o perfil vê não aparece", async () => {
     await montar(
       montarArvoreDoMenu({
-        permitidas: { nucleo: true, calendario: true },
+        permitidas: { nucleo: true, approved: true },
       }),
     );
     expect(
@@ -251,7 +268,7 @@ describe("áreas abertas por padrão", () => {
     ).toEqual(["Processo seletivo"]);
   });
 
-  it("painel externo entra no fim de Acompanhamento, sem grupo próprio", async () => {
+  it("painel externo entra no fim de Acompanhar, sem grupo próprio", async () => {
     await montar(arvoreCompleta(PAINEL_X));
     expect(area("paineis")).toBeNull();
     expect(item("panel:x").closest(".menu-bloco").dataset.bloco).toBe(
@@ -263,7 +280,7 @@ describe("áreas abertas por padrão", () => {
           '[data-bloco="acompanhamento"] .menu-item',
         ),
       ].map((botao) => botao.dataset.view),
-    ).toEqual(["dashboard", "analises", "panel:x"]);
+    ).toEqual(["dashboard", "analises", "calendario", "panel:x"]);
   });
 
   it("painel externo aberto acende o item e a área onde está", async () => {
@@ -378,7 +395,7 @@ describe("as áreas do usuário: seletor de área", () => {
       [...area("sede").querySelectorAll(".menu-item")].map(
         (botao) => botao.dataset.view,
       ),
-    ).toEqual(["dashboard", "analises", "nucleo", "calendario", "approved"]);
+    ).toEqual(["dashboard", "analises", "calendario", "nucleo", "approved"]);
     expect(new Set(viewsDoGrupo(arvore, "sede"))).toEqual(
       new Set(["dashboard", "analises", "approved", "nucleo", "calendario"]),
     );
@@ -617,9 +634,9 @@ describe("barra recolhida: páginas da área como ícones", () => {
       ["Visão geral", "map", "Visão geral"],
       ["Painel das análises", "file-search", "Painel das análises"],
       ["Painel de recursos", "scale", "Painel de recursos"],
+      ["Cronograma", "calendar-days", "Cronograma"],
       ["Painel X", "square-arrow-out-up-right", "Painel X"],
       ["Editais", "file-text", "Editais"],
-      ["Cronograma", "calendar-days", "Cronograma"],
       ["Lista de aprovados", "user-round-check", "Lista de aprovados"],
     ]);
     // Os dois blocos continuam no trilho (o título só sai de vista no CSS).
@@ -759,11 +776,9 @@ describe("ícones e selo beta no menu aberto", () => {
     expect(
       item("analisar-recursos").classList.contains("menu-item--beta"),
     ).toBe(true);
-    expect(selos[0].previousElementSibling.textContent).toBe(
-      "Analisar recursos",
-    );
+    expect(selos[0].previousElementSibling.textContent).toBe("Recursos");
     // `data-rotulo` é o nome da página: o selo não entra nele.
-    expect(item("analisar-recursos").dataset.rotulo).toBe("Analisar recursos");
+    expect(item("analisar-recursos").dataset.rotulo).toBe("Recursos");
     expect(item("recursos").querySelector(".menu-item__selo")).toBeNull();
     expect(item("nucleo").querySelector(".menu-item__selo")).toBeNull();
   });

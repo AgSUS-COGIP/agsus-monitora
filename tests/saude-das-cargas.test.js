@@ -429,7 +429,7 @@ describe("conferências de consistência (20261005210000)", () => {
   });
 });
 
-describe("pré-classificação da Avaliação documental (20261006110000)", () => {
+describe("triagem da Avaliação documental (20261006110000)", () => {
   it("sem a chave no payload, a linha não aparece; com ela, vem depois das conferências", () => {
     expect(
       visaoSimples(
@@ -454,7 +454,7 @@ describe("pré-classificação da Avaliação documental (20261006110000)", () =
     );
     const { linhas } = visaoSimples(s);
     expect(linhas.map((l) => l.titulo).slice(-2)).toEqual([
-      "Pré-classificação (Avaliação documental)",
+      "Triagem (Avaliação documental)",
       "Atualização automática do banco",
     ]);
     const linha = linhas.find((l) => l.id === "pre_classificacao");
@@ -547,7 +547,7 @@ describe("agenda dos robôs pelo banco (20261008140000)", () => {
     });
     expect(linha.partes[0].historico.map((e) => e.mensagem)).toEqual([
       "Robô da Empregare · iniciada no GitHub por fulano · modo normal · editais 93/2026",
-      "Pré-classificação · SQL direto, sem usuário · HTTP 204",
+      "Triagem · SQL direto, sem usuário · HTTP 204",
       "Entrevistas · HTTP 204",
     ]);
     expect(linha.partes[0].historico[0].situacao).toBe("ok");

@@ -1,5 +1,5 @@
 """
-Pré-classificação de uma vaga: a Lista Geral de Classificação Provisória por
+Triagem de uma vaga: a Lista Geral de Classificação Provisória por
 ART (item 8.3.1) e o lote de convocação (item 8.4).
 
 Esta é a conta OFICIAL, em lote: o job scripts/pre_classificacao/ roda aqui
@@ -107,7 +107,7 @@ def erros_da_base_da_nota(provisoria):
 
 def normalizar_regra(entrada):
     """
-    A parte da regra (normalizarRegraAnalise do JS) que a pré-classificação usa.
+    A parte da regra (normalizarRegraAnalise do JS) que a triagem usa.
     Base da nota inválida levanta ValueError (o edital falha com a mensagem).
     """
     r = _objeto(entrada)
@@ -244,7 +244,7 @@ def _data_valida(valor):
 
 
 def congela_a_declarada(hoje, fim):
-    """Esta pré-classificação congela a nota declarada? Depois do fim das inscrições (hoje > fim) ou sem data de fim."""
+    """Esta triagem congela a nota declarada? Depois do fim das inscrições (hoje > fim) ou sem data de fim."""
     if not fim:
         return True
     dia = _DATA.match(str(hoje or ""))
@@ -985,7 +985,7 @@ def mudancas_do_lote(anterior, linhas):
     O que o recorte novo muda no lote gravado: quantos FICAM (estavam e
     continuam), ENTRAM (não estavam) e SAEM (estavam e não estão mais —
     eliminados ou fora do recorte). No lote = NO_LOTE ou ANALISADO.
-      anterior  {id: {situacao, ...}} (a pré-classificação gravada da vaga)
+      anterior  {id: {situacao, ...}} (a triagem gravada da vaga)
       linhas    as linhas de pre_classificar_vaga
     Só contagens: é o resumo do "refazer o lote" (quem fica mantém a ficha,
     quem sai tem a ficha FORA_LOTE e quem entra ganha ficha nova, no banco).

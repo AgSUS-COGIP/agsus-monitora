@@ -65,7 +65,7 @@ export type Candidato = {
   vaga?: string | number | null;
   cargo?: string | null;
   modalidade?: string | null;
-  /** As cotas optadas na pré-classificação (a principal primeiro); [] = só a ampla. */
+  /** As cotas optadas na triagem (a principal primeiro); [] = só a ampla. */
   modalidades?: readonly string[];
   indigena?: boolean;
   mora_aldeia?: boolean;

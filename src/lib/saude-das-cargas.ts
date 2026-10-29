@@ -111,7 +111,7 @@ const NOMES_DOS_WORKFLOWS: Readonly<Record<string, string>> = Object.freeze({
   "sincronizar-selecao.yml": "Seleção",
   "conferencias.yml": "Conferências",
   "robo-empregare.yml": "Robô da Empregare",
-  "pre-classificacao.yml": "Pré-classificação",
+  "pre-classificacao.yml": "Triagem",
   // Só pelo Run workflow do GitHub (registrar_disparo_externo, 20261022170000).
   "leitura-de-arquivos.yml": "Leitura dos arquivos",
   "classificacao.yml": "Classificação em Python",
@@ -290,7 +290,7 @@ function execucaoDaConferencia(entrada: unknown) {
   };
 }
 
-/* Execução da pré-classificação: editais, vagas e o lote entram na mensagem. */
+/* Execução da triagem: editais, vagas e o lote entram na mensagem. */
 function execucaoDaPreClassificacao(entrada: unknown) {
   const bruta = registro(entrada);
   const n = (campo: string) => inteiro(bruta?.[campo]) ?? 0;
@@ -544,14 +544,14 @@ export function normalizarSaude(
       ),
     );
 
-  // A pré-classificação só aparece depois da migration 20261006110000 (a chave vem no payload).
+  // A triagem só aparece depois da migration 20261006110000 (a chave vem no payload).
   if (Array.isArray(dados?.pre_classificacao))
     robos.push(
       montarCarga(
         {
           id: "pre_classificacao",
-          nome: "Pré-classificação (Avaliação documental)",
-          onde: "GitHub Actions · Pré-classificação da Avaliação documental",
+          nome: "Triagem (Avaliação documental)",
+          onde: "GitHub Actions · Triagem da Avaliação documental",
           esperado: "no fim do robô da Empregare e no Recalcular",
           prazoMin: null,
           tipo: "conferencia",
@@ -855,7 +855,7 @@ export function visaoSimples(
       "Confere análises, entrevistas, classificação, aprovados e cargas e lista os avisos abaixo, todo dia às 6h.",
     ],
     pre_classificacao: [
-      "Pré-classificação (Avaliação documental)",
+      "Triagem (Avaliação documental)",
       "Monta a Provisória por ART e o lote de convocação de cada vaga no fim do robô da Empregare e quando a coordenação clica em Recalcular.",
     ],
     classificacao_desempate: [

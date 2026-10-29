@@ -1,5 +1,5 @@
 """
-Colunas da leitura: quais colunas dos inscritos a pré-classificação precisa
+Colunas da leitura: quais colunas dos inscritos a triagem precisa
 ler do banco (menos egress do Supabase; 20261014220000_jobs_leem_so_o_necessario.sql).
 
 O cálculo (pre_classificacao.py, nota_declarada.py, retrato_das_inscricoes.py,

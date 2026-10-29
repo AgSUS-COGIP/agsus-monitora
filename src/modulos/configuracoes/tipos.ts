@@ -318,6 +318,8 @@ export interface SecaoDeConfiguracao {
   icone: string;
   /** Ícone Lucide do menu lateral. */
   iconeDoMenu: string;
+  /** O grupo de Administração no menu lateral. */
+  grupo: "aparencia" | "pessoas" | "sistema";
   descricao: string;
 }
 

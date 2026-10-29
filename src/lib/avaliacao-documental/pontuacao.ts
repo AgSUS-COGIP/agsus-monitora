@@ -209,7 +209,7 @@ const COTA_NEGADA = ["NAO_CONFORME", "NAO_ENVIADO"];
 
 /**
  * As cotas que o candidato optou, em ordem de prioridade: o lançamento
- * `modalidades` (a lista da pré-classificação) ou, na ficha antiga sem a
+ * `modalidades` (a lista da triagem) ou, na ficha antiga sem a
  * lista, a `modalidade` única. [] = só a ampla (modalidades_do_lancamento do
  * Python; o banco lê igual em FC_MODALIDADES_DO_LANCAMENTO).
  */
