@@ -400,8 +400,9 @@ export const CONTRATO_RPC = {
   },
   // ── Payload só quando muda (20261013160000_payload_so_quando_muda.sql) ──
   // As quatro primeiras chamam a função de sempre e devolvem o payload com
-  // `versao` (md5 sem `gerado_em`), ou só `{ inalterado, versao }` quando
-  // p_versao é a atual.
+  // `versao`, ou só `{ inalterado, versao }` quando p_versao é a atual. Desde
+  // 20261029150000 a `versao` é a marca das fontes (private."FC_MARCA_DA_RPC"),
+  // tirada ANTES de montar: `inalterado` não monta nada. Opaca para a tela.
   get_analises_dashboard_payload_v2_se_mudou: {
     argumentos: ["p_scope", "p_area", "p_versao"],
     critica: true,

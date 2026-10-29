@@ -560,6 +560,32 @@ análises (6.3/6.4), a lista de aprovados (12) e a aba Entrevistas.
   Postgres os esvazia: os caches são remontados e o sync interrompido é
   encerrado por `agsus_analises_encerrar_inativas`.
 
+### 6.6 Leituras por versão: a marca sai antes de montar (29/10/2026)
+
+Migration `20261029150000_marca_barata_das_leituras_por_versao.sql` (rollback e
+ensaio com o mesmo nome). Vale para as sete RPCs `*_se_mudou` de Análises,
+Entrevistas, Seleção, Visão geral (acompanhamento), regra da avaliação,
+Classificação e avisos das conferências (a da pré-classificação fica de fora).
+
+- **Antes**, a RPC montava o payload inteiro e só então comparava o md5 com a
+  versão da tela: `inalterado` custava o mesmo que mandar tudo (Seleção da SI
+  ~0,6–2,8 s, Visão geral ~0,1–0,9 s, Entrevistas da SI ~0,4 s).
+- **Versão das fontes**: o gatilho por comando `TG_VERSAO_FONTE` (ENABLE ALWAYS)
+  grava em `private."TL_VERSAO_FONTE"` uma linha por transação que escreveu na
+  tabela; a versão da fonte é a soma de `QT_ALTERACAO` (só insere; compactada
+  sem mudar a soma). As fontes de cada leitura (`TD_FONTE_DA_LEITURA`) saem do
+  código: `FC_FONTES_PELO_CODIGO` segue as funções e views que a RPC chama até as
+  tabelas, inclusive as de permissão e recorte.
+- **Marca**: `FC_MARCA_DA_RPC` confere a permissão da RPC (mesmos erros) e devolve
+  o md5 da leitura, dos parâmetros, de quem lê e da versão de cada fonte. Análises
+  e Entrevistas sem recorte, com pacote pronto: a marca é a da linha do pacote
+  (`DT_GERACAO`, `DS_VERSAO_DADOS`) mais permissões e área. Ensaio: `inalterado`
+  em ~1–3 ms em todas (Entrevistas da SI ~20 ms).
+- **Quem mudar** uma função ou view do fecho (lista em
+  `tests/marca-barata-das-leituras-migration.test.js`) roda
+  `select private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"();` na mesma migration — o
+  teste reprova a migration posterior que não rodar.
+
 ## 7. Edital sempre na área certa
 
 Migration `20260928220000_edital_na_area_certa.sql` (rollback em
