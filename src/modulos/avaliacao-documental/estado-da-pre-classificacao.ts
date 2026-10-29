@@ -88,6 +88,7 @@ import {
 import {
   argumentosDaPagina,
   contarPorVaga,
+  motivosDasLinhas,
   linhasDaPreInteira,
   paginaDaResposta,
   resumoDaPreInteira,
@@ -390,6 +391,12 @@ export function criarEstadoDaPreClassificacao({
       proximo: fim < todos.length ? fim : null,
       total: todos.length,
       porVaga: recorte.vaga === null ? contarPorVaga(todos) : {},
+      porMotivo:
+        recorte.grupo === "ELIMINADOS"
+          ? motivosDasLinhas(
+              linhasDaPreInteira(dados, { ...recorte, motivo: "" }),
+            )
+          : [],
     };
   }
 

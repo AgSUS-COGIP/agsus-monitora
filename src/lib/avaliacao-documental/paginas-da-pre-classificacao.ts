@@ -29,11 +29,22 @@ export const RPC_CONFERIR_ELIMINADOS = "conferir_eliminados_pre_classificacao";
 
 export type GrupoDaPre = "CLASSIFICADOS" | "ELIMINADOS" | "PODE_INCLUIR";
 
-/** O recorte de uma lista: a vaga (null = o edital todo, na busca), o grupo e a busca. */
+/**
+ * O recorte de uma lista: a vaga (null = o edital todo), o grupo, a busca e,
+ * nos eliminados, o código do motivo (20261029210000).
+ */
 export interface RecorteDaPre {
   vaga: string | null;
   grupo: GrupoDaPre;
   busca?: string;
+  motivo?: string;
+}
+
+/** Um motivo de eliminação com quantos eliminados ele tem no recorte. */
+export interface MotivoDaPre {
+  codigo: string;
+  motivo: string;
+  total: number;
 }
 
 /** Uma página como a tela usa (o cursor é opaco: o do banco ou o deslocamento). */
@@ -43,6 +54,8 @@ export interface PaginaDaPre {
   total: number;
   /** Sem vaga: quantos por vaga no recorte. */
   porVaga: Record<string, number>;
+  /** Nos eliminados: quantos por motivo no recorte, sem o filtro de motivo. */
+  porMotivo: MotivoDaPre[];
 }
 
 const numero = (v: unknown): number =>
@@ -68,7 +81,7 @@ function noGrupo(c: InscritoDaPre, grupo: GrupoDaPre): boolean {
 /** As linhas do recorte, na ordem do banco, tiradas da leitura inteira. */
 export function linhasDaPreInteira(
   dados: DadosDaPreClassificacao | null | undefined,
-  { vaga, grupo, busca = "" }: RecorteDaPre,
+  { vaga, grupo, busca = "", motivo = "" }: RecorteDaPre,
 ): InscritoDaPre[] {
   const termo = semAcento(busca).trim();
   const posicao = (c: InscritoDaPre) =>
@@ -78,6 +91,7 @@ export function linhasDaPreInteira(
       (c) =>
         (vaga === null || String(c.vaga) === vaga) &&
         noGrupo(c, grupo) &&
+        (!motivo || c.motivo_codigo === motivo) &&
         (!termo ||
           semAcento(`${c.codigo ?? ""} ${c.nome ?? ""}`).includes(termo)),
     )
@@ -88,6 +102,28 @@ export function linhasDaPreInteira(
         posicao(a) - posicao(b) ||
         porTexto(String(a.codigo ?? ""), String(b.codigo ?? "")),
     );
+}
+
+/** Quantos por motivo numa lista de eliminados (a mesma ordem do banco: mais primeiro). */
+export function motivosDasLinhas(
+  linhas: readonly InscritoDaPre[],
+): MotivoDaPre[] {
+  const contagem = new Map<string, MotivoDaPre>();
+  for (const c of linhas) {
+    const codigo = String(c.motivo_codigo ?? "");
+    if (!codigo) continue;
+    const atual = contagem.get(codigo);
+    if (atual) atual.total += 1;
+    else
+      contagem.set(codigo, {
+        codigo,
+        motivo: String(c.motivo ?? codigo),
+        total: 1,
+      });
+  }
+  return [...contagem.values()].sort(
+    (a, b) => b.total - a.total || porTexto(a.codigo, b.codigo),
+  );
 }
 
 /** Quantos por vaga numa lista de linhas. */
@@ -143,6 +179,7 @@ export function paginaDaResposta(resposta: unknown): PaginaDaPre {
     proximo?: unknown;
     total?: unknown;
     por_vaga?: unknown;
+    por_motivo?: unknown;
   };
   const linhas = Array.isArray(r.candidatos)
     ? (r.candidatos as InscritoDaPre[])
@@ -151,18 +188,29 @@ export function paginaDaResposta(resposta: unknown): PaginaDaPre {
   if (r.por_vaga && typeof r.por_vaga === "object")
     for (const [vaga, n] of Object.entries(r.por_vaga))
       porVaga[vaga] = numero(n);
+  const porMotivo = (Array.isArray(r.por_motivo) ? r.por_motivo : [])
+    .filter(
+      (m): m is Record<string, unknown> => Boolean(m) && typeof m === "object",
+    )
+    .map((m) => ({
+      codigo: String(m.codigo ?? ""),
+      motivo: String(m.motivo ?? m.codigo ?? ""),
+      total: numero(m.total),
+    }))
+    .filter((m) => m.codigo);
   return {
     linhas,
     proximo: r.proximo ?? null,
     total: r.total === undefined ? linhas.length : numero(r.total),
     porVaga,
+    porMotivo,
   };
 }
 
 /** O que listar_pre_classificacao recebe. */
 export function argumentosDaPagina(
   editalId: string,
-  { vaga, grupo, busca = "" }: RecorteDaPre,
+  { vaga, grupo, busca = "", motivo = "" }: RecorteDaPre,
   apos: unknown,
   limite: number,
 ) {
@@ -173,5 +221,7 @@ export function argumentosDaPagina(
     p_busca: busca.trim() || null,
     p_apos: apos ?? null,
     p_limite: limite,
+    // Só com motivo escolhido: o banco antes de 20261029210000 não conhece o parâmetro.
+    ...(motivo ? { p_motivo: motivo } : {}),
   };
 }

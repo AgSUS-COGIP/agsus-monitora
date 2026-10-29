@@ -1182,10 +1182,11 @@ export const CONTRATO_RPC = {
       "p_busca",
       "p_apos",
       "p_limite",
+      "p_motivo",
     ],
     critica: false,
     resumo:
-      "Os inscritos da triagem em páginas (a tela pede 50; até 500) por cursor estável { vaga, grupo, posicao, codigo }: CLASSIFICADOS (no lote e depois fora do lote, pela posição), ELIMINADOS (pelo código) ou PODE_INCLUIR, de uma vaga ou (p_vaga nulo) do edital, com busca por código ou nome sem acento; devolve { candidatos, proximo, total, por_vaga }. Só leitura do que o job gravou. Mesma permissão de obter_pre_classificacao.",
+      "Nos eliminados, p_motivo (código do motivo) recorta e a resposta traz por_motivo (quantos por motivo no recorte, sem esse filtro; 20261029210000). Os inscritos da triagem em páginas (a tela pede 50; até 500) por cursor estável { vaga, grupo, posicao, codigo }: CLASSIFICADOS (no lote e depois fora do lote, pela posição), ELIMINADOS (pelo código) ou PODE_INCLUIR, de uma vaga ou (p_vaga nulo) do edital, com busca por código ou nome sem acento; devolve { candidatos, proximo, total, por_vaga }. Só leitura do que o job gravou. Mesma permissão de obter_pre_classificacao.",
   },
   // ── Leitura por versão (20261014230000_avaliacao_leitura_por_versao.sql): chamam a função de
   // sempre e devolvem o payload com `versao` (md5 sem `gerado_em`) e as listas grandes em colunas

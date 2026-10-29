@@ -1,0 +1,76 @@
+/* Tela da Triagem em abas (pre-classificacao.tsx): topo, faixa de situação e vagas recolhidas. */
+.avd-pre-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.avd-pre-topo > .ui-abas {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.avd-pre-resumo,
+.avd-pre-vagas,
+.avd-pre-eliminados {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.avd-faixa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.avd-faixa strong {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.avd-faixa .btn {
+  margin-inline-start: auto;
+}
+
+.avd-confirmar p {
+  margin: 0 0 var(--space-2);
+}
+
+.avd-vaga-recolhida > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  cursor: pointer;
+  list-style-position: outside;
+}
+
+.avd-vaga-recolhida__titulo {
+  font-weight: 600;
+}
+
+.avd-vaga-recolhida__numeros {
+  font-size: 0.875rem;
+}
+
+.avd-vaga-recolhida[open] > summary {
+  margin-bottom: var(--space-2);
+}
+
+.avd-vaga-recolhida > .avd-vaga {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+/* O título da vaga já está no resumo da vaga recolhida. */
+.avd-vaga-recolhida > .avd-vaga > .ui-titulo {
+  display: none;
+}

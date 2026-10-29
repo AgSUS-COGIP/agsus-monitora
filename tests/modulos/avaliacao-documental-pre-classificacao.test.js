@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { contadoresDaPreClassificacao } from "../../src/lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
@@ -9,6 +10,7 @@ import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documenta
 import { criarEstadoDaPreClassificacao } from "../../src/modulos/avaliacao-documental/estado-da-pre-classificacao.ts";
 import {
   linhasDaPreInteira,
+  motivosDasLinhas,
   resumoDaPreInteira,
 } from "../../src/lib/avaliacao-documental/paginas-da-pre-classificacao.ts";
 import {
@@ -179,7 +181,23 @@ function partesDoBanco(atual) {
         regra_classificacao: _rc,
         ...cabecalho
       } = resumoDaPreInteira(atual());
-      return { ...cabecalho, congelamento: null };
+      // Os totais do edital, como o banco soma do instantâneo.
+      const c = contadoresDaPreClassificacao(atual());
+      return {
+        ...cabecalho,
+        congelamento: null,
+        totais: {
+          inscritos: c.inscritos,
+          eliminados: c.eliminados,
+          ranqueados: c.ranqueados,
+          no_lote: c.noLote,
+          no_lote_regra: c.noLotePelaRegra,
+          no_lote_decisao: c.noLotePorDecisao,
+          tamanho: c.tamanho,
+          divergencias: c.divergencias,
+          vagas_sem_pre: c.vagasSemPreClassificacao,
+        },
+      };
     },
     obter_vagas_pre_classificacao: () => ({
       vagas: resumoDaPreInteira(atual()).vagas,
@@ -198,11 +216,16 @@ function partesDoBanco(atual) {
       p_busca,
       p_apos,
       p_limite,
+      p_motivo,
     }) => {
-      const todos = linhasDaPreInteira(atual(), {
+      const recorte = {
         vaga: p_vaga,
         grupo: p_grupo,
         busca: p_busca ?? "",
+      };
+      const todos = linhasDaPreInteira(atual(), {
+        ...recorte,
+        motivo: p_motivo ?? "",
       });
       const inicio = p_apos ?? 0;
       const por_vaga = {};
@@ -212,6 +235,13 @@ function partesDoBanco(atual) {
         proximo: inicio + p_limite < todos.length ? inicio + p_limite : null,
         total: todos.length,
         por_vaga,
+        ...(p_grupo === "ELIMINADOS"
+          ? {
+              por_motivo: motivosDasLinhas(
+                linhasDaPreInteira(atual(), recorte),
+              ),
+            }
+          : {}),
       };
     },
     conferir_eliminados_pre_classificacao: ({ p_chaves }) => ({
@@ -412,6 +442,33 @@ const botao = (texto) =>
   [...secao.querySelectorAll("button")].find((b) =>
     b.textContent.trim().startsWith(texto),
   );
+/* A tela da Triagem em abas: Resumo, Por vaga, Eliminados, Listas oficiais. */
+async function abrirAba(id) {
+  await clicar(secao.querySelector(`.avd-pre [data-aba='${id}']`));
+  await esperar();
+}
+/* Na aba Por vaga, abre a vaga (as listas dela só carregam aberta). */
+async function abrirVaga(codigo) {
+  if (!secao.querySelector(".avd-pre-vagas")) await abrirAba("vagas");
+  const vaga = secao.querySelector(`[data-vaga-recolhida='${codigo}']`);
+  await act(async () => {
+    vaga.open = true;
+    vaga.dispatchEvent(new Event("toggle"));
+  });
+  await esperar();
+  return secao.querySelector(`[data-vaga='${codigo}']`);
+}
+/* Uma ação do menu "Ações" (abre o menu se estiver fechado). */
+async function itemDoMenu(acao) {
+  if (!secao.querySelector(".avd-pre [role='menu']"))
+    await clicar(secao.querySelector(".avd-pre [data-acao='abrir-menu']"));
+  return secao.querySelector(`[role='menuitem'][data-acao='${acao}']`);
+}
+/* Recalcular: escolher no menu e confirmar. */
+async function pedirRecalculo() {
+  await clicar(await itemDoMenu("recalcular"));
+  await clicar(secao.querySelector("[data-acao='confirmar-recalcular']"));
+}
 
 beforeEach(() => {
   redefinirDadosDoMonitoramento();
@@ -430,7 +487,7 @@ describe("Triagem (AM-4)", () => {
   it("AM-4.4: contadores, linha de corte, divergência e eliminados à parte", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
-    // A abertura lê o resumo e as partes da tela, nunca a triagem inteira.
+    // A tela abre só com o Resumo: nem vagas, nem listas, nem linhas.
     expect(supabase.rpc).toHaveBeenCalledWith(
       "obter_resumo_pre_classificacao",
       {
@@ -438,11 +495,17 @@ describe("Triagem (AM-4)", () => {
       },
     );
     expect(
+      secao.querySelector(".avd-pre [aria-selected='true']").dataset.aba,
+    ).toBe("resumo");
+    expect(
       chamadasDe(supabase.rpc, "obter_vagas_pre_classificacao"),
-    ).toHaveLength(1);
+    ).toHaveLength(0);
     expect(
       chamadasDe(supabase.rpc, "obter_listas_pre_classificacao"),
-    ).toHaveLength(1);
+    ).toHaveLength(0);
+    expect(chamadasDe(supabase.rpc, "listar_pre_classificacao")).toHaveLength(
+      0,
+    );
     expect(chamadasDe(supabase.rpc, "obter_pre_classificacao")).toHaveLength(0);
     expect(
       chamadasDe(supabase.rpc, "obter_pre_classificacao_se_mudou"),
@@ -451,7 +514,27 @@ describe("Triagem (AM-4)", () => {
     expect(
       chamadasDe(supabase.rpc, "obter_congelamento_inscricoes"),
     ).toHaveLength(0);
-    // As linhas de cada vaga vêm 50 por vez.
+    const kpis = secao.querySelector(".ui-kpis").textContent;
+    expect(kpis).toContain("Inscritos5");
+    expect(kpis).toContain("Eliminados1");
+    expect(kpis).toContain("2 de 2");
+    // ART × recalculada vira indicador na faixa, com o atalho para os casos.
+    expect(
+      secao.querySelector("[data-acao='ver-divergencias']").textContent,
+    ).toContain("1 com ART × recalculada");
+    // Por vaga: a parte das vagas só agora; cada vaga com os números à vista.
+    await abrirAba("vagas");
+    expect(
+      chamadasDe(supabase.rpc, "obter_vagas_pre_classificacao"),
+    ).toHaveLength(1);
+    expect(
+      secao.querySelector("[data-vaga-recolhida='179698'] summary").textContent,
+    ).toContain("5 inscritos · 1 eliminados");
+    expect(chamadasDe(supabase.rpc, "listar_pre_classificacao")).toHaveLength(
+      0,
+    );
+    const vaga = await abrirVaga("179698");
+    // As linhas de cada vaga vêm 50 por vez, só com a vaga aberta.
     expect(chamadasDe(supabase.rpc, "listar_pre_classificacao")).toContainEqual(
       {
         p_edital: "e93",
@@ -462,11 +545,6 @@ describe("Triagem (AM-4)", () => {
         p_limite: 50,
       },
     );
-    const kpis = secao.querySelector(".ui-kpis").textContent;
-    expect(kpis).toContain("Inscritos5");
-    expect(kpis).toContain("Eliminados1");
-    expect(kpis).toContain("2 de 2");
-    const vaga = secao.querySelector("[data-vaga='179698']");
     expect(vaga.textContent).toContain(
       "VAGA 179698 - Técnico de Segurança do Trabalho - Boa Vista - 1 vaga + CR",
     );
@@ -505,22 +583,33 @@ describe("Triagem (AM-4)", () => {
     expect(vaga.textContent).toContain(
       "Fora do lote com nota acima da linha de corte",
     );
-    expect(secao.querySelector("[data-vaga='180231']").textContent).toContain(
-      "ainda sem triagem",
-    );
+    expect(
+      secao.querySelector("[data-vaga-recolhida='180231']").textContent,
+    ).toContain("ainda sem triagem");
+    // Listas oficiais: a parte só ao abrir a aba.
+    await abrirAba("listas");
+    expect(
+      chamadasDe(supabase.rpc, "obter_listas_pre_classificacao"),
+    ).toHaveLength(1);
   });
 
   it("Recalcular pede o job só do edital; leitor não vê o botão", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
-    await clicar(secao.querySelector("[data-acao='recalcular']"));
+    // O menu pede confirmação antes de disparar.
+    await clicar(await itemDoMenu("recalcular"));
+    expect(chamadasDe(supabase.rpc, "disparar_robo")).toHaveLength(0);
+    expect(
+      secao.querySelector("[aria-label='Confirmar o recálculo']").textContent,
+    ).toContain("Recalcular a triagem de");
+    await clicar(secao.querySelector("[data-acao='confirmar-recalcular']"));
     await esperar();
     expect(supabase.rpc).toHaveBeenCalledWith("disparar_robo", {
       p_robo: "pre_classificacao",
       p_inputs: { editais: ["e93"] },
     });
-    expect(secao.querySelector("[data-acao='recalcular']").textContent).toBe(
-      "Pedido enviado",
+    expect((await itemDoMenu("recalcular")).textContent).toBe(
+      "Recalcular (pedido enviado)",
     );
     await act(async () => painel.raiz.unmount());
     secao.remove();
@@ -528,6 +617,7 @@ describe("Triagem (AM-4)", () => {
     const leitor = supabaseFalso({ pode: false });
     await montar(leitor);
     expect(abaDaPre()).toBeUndefined();
+    expect(secao.querySelector("[data-acao='abrir-menu']")).toBeNull();
     expect(secao.querySelector("[data-acao='recalcular']")).toBeNull();
     expect(secao.querySelector(".avd-vaga input")).toBeNull();
     expect(
@@ -562,7 +652,6 @@ describe("Triagem (AM-4)", () => {
   it("Recalcular que falha diz por quê e o botão volta", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
-    const recalcular = () => secao.querySelector("[data-acao='recalcular']");
     supabase.rpc.mockImplementationOnce(async () => ({
       data: null,
       error: {
@@ -570,13 +659,13 @@ describe("Triagem (AM-4)", () => {
         message: "Só a coordenação da avaliação do edital recalcula a triagem.",
       },
     }));
-    await clicar(recalcular());
+    await pedirRecalculo();
     await esperar();
     expect(secao.querySelector("[role='alert']").textContent).toBe(
       "Recálculo não pedido: Só a coordenação da avaliação do edital recalcula a triagem.",
     );
-    expect(recalcular().textContent).toBe("Recalcular");
-    expect(recalcular().disabled).toBe(false);
+    expect((await itemDoMenu("recalcular")).textContent).toBe("Recalcular");
+    expect((await itemDoMenu("recalcular")).disabled).toBe(false);
     expect(toast).toHaveBeenLastCalledWith(
       "Recálculo não pedido: Só a coordenação da avaliação do edital recalcula a triagem.",
       "error",
@@ -585,19 +674,19 @@ describe("Triagem (AM-4)", () => {
     supabase.rpc.mockImplementationOnce(async () => {
       throw new TypeError("Failed to fetch");
     });
-    await clicar(recalcular());
+    await pedirRecalculo();
     await esperar();
     expect(secao.querySelector("[role='alert']").textContent).toMatch(
       /^Recálculo não pedido: /,
     );
-    expect(recalcular().disabled).toBe(false);
+    expect((await itemDoMenu("recalcular")).disabled).toBe(false);
     expect(agendados).toHaveLength(0);
   });
 
   it("Recalcular com a chave do cofre vencida: diz o que fazer e o botão volta", async () => {
     const supabase = supabaseFalso({ disparo: "SEM_TOKEN" });
     await montar(supabase);
-    await clicar(secao.querySelector("[data-acao='recalcular']"));
+    await pedirRecalculo();
     await esperar();
     expect(supabase.rpc).toHaveBeenCalledWith("disparar_robo", {
       p_robo: "pre_classificacao",
@@ -612,15 +701,13 @@ describe("Triagem (AM-4)", () => {
     expect(secao.querySelector("[role='alert']").textContent).toBe(
       "Recálculo não pedido: A chave de disparo dos robôs expirou ou foi recusada; um administrador precisa trocá-la no cofre (Vault) com o nome github_disparo_robos.",
     );
-    expect(secao.querySelector("[data-acao='recalcular']").disabled).toBe(
-      false,
-    );
+    expect((await itemDoMenu("recalcular")).disabled).toBe(false);
   });
 
   it("Recalcular pedido avisa e relê sozinho até a execução terminar", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
-    await clicar(secao.querySelector("[data-acao='recalcular']"));
+    await pedirRecalculo();
     await esperar();
     expect(secao.querySelector("[role='status']").textContent).toMatch(
       /^Recálculo pedido às \d\d:\d\d\. A lista atualiza sozinha quando terminar\.$/,
@@ -637,8 +724,8 @@ describe("Triagem (AM-4)", () => {
     // 1ª releitura: o job está rodando.
     responder(PRE(regraSalva(2), true, { em_andamento: true }));
     await rodarAgendado();
-    expect(secao.querySelector("[data-acao='recalcular']").textContent).toBe(
-      "Rodando…",
+    expect((await itemDoMenu("recalcular")).textContent).toBe(
+      "Recalcular (rodando…)",
     );
     expect(agendados).toHaveLength(1);
     // 2ª releitura: terminou, com a execução nova e os números novos.
@@ -660,9 +747,7 @@ describe("Triagem (AM-4)", () => {
     expect(secao.querySelector("[role='status']").textContent).toMatch(
       /^Triagem recalculada às \d\d:\d\d\.$/,
     );
-    expect(secao.querySelector("[data-acao='recalcular']").textContent).toBe(
-      "Recalcular",
-    );
+    expect((await itemDoMenu("recalcular")).textContent).toBe("Recalcular");
     expect(toast).toHaveBeenLastCalledWith(
       expect.stringMatching(/^Triagem recalculada/),
       "success",
@@ -671,7 +756,7 @@ describe("Triagem (AM-4)", () => {
 
   it("regra não conferida trava o Recalcular e diz o que fazer", async () => {
     await montar(supabaseFalso({ situacao: "CONFERIR" }));
-    expect(secao.querySelector("[data-acao='recalcular']").disabled).toBe(true);
+    expect((await itemDoMenu("recalcular")).disabled).toBe(true);
     expect(secao.textContent).toContain(
       "Confira a regra da Triagem (Editais › Regras da Triagem) para recalcular.",
     );
@@ -700,6 +785,7 @@ describe("lote por vaga (AM-5.0)", () => {
   it("o tamanho editado vira versão nova da regra da Triagem com motivo", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
+    await abrirVaga("179698");
     const campo = secao.querySelector(
       "[data-vaga='179698'] input[type='number']",
     );
@@ -732,6 +818,7 @@ describe("listas PROVISORIA e LOTE (AM-16)", () => {
   it("registra a Provisória e o lote de cada reposição e exporta pelo gerador da Classificação", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
+    await abrirAba("listas");
     await clicar(botao("Registrar"));
     await esperar();
     expect(supabase.rpc).toHaveBeenCalledWith(
@@ -810,7 +897,7 @@ describe("inclusão no lote por decisão da coordenação", () => {
     expect(secao.querySelector(".ui-kpis").textContent).toContain(
       "2 de 2 pela regra + 1 por decisão",
     );
-    const vaga = secao.querySelector("[data-vaga='179698']");
+    const vaga = await abrirVaga("179698");
     expect(vaga.querySelector("[data-lote-da-vaga]").textContent).toContain(
       "Lote: 2 de 2 pela regra + 1 por decisão",
     );
@@ -862,6 +949,7 @@ describe("inclusão no lote por decisão da coordenação", () => {
     await montar(
       comRespostas(COM_DECISAO(), { revogar_decisao_lote: revogar }),
     );
+    await abrirVaga("179698");
     const linha = () => secao.querySelector("[data-candidato='7000005']");
     await clicar(linha().querySelector("[data-acao='abrir-revogar-decisao']"));
     const campo = linha().querySelector("[data-revogar='7000005'] input");
@@ -1033,29 +1121,61 @@ describe("Triagem por versão (20261014230000), banco sem as partes (antes de 20
   });
 });
 
-describe("comunicados de eliminação em lote (Triagem)", () => {
-  it("busca por nome no banco, marca os da busca e imprime conferindo só os marcados", async () => {
-    const supabase = supabaseFalso();
+describe("aba Eliminados da Triagem", () => {
+  it("busca e filtra no banco (vaga e motivo), marca o filtro e imprime conferindo só os marcados", async () => {
+    const base = PRE(regraSalva(2));
+    const supabase = supabaseFalso({
+      pre: {
+        ...base,
+        candidatos: base.candidatos.map((c) =>
+          c.codigo === "7000009" ? { ...c, motivo_codigo: "CANCELADO" } : c,
+        ),
+      },
+    });
     await montar(supabase);
-    expect(secao.querySelector("[data-acao='comunicados-zip']").disabled).toBe(
-      true,
-    );
-    await digitar(
-      secao.querySelector("[data-acao='buscar-espelho-eliminado']"),
-      "pessoa 7000009",
-    );
-    await esperarBusca();
-    await esperar();
+    await abrirAba("eliminados");
+    // A lista é a do edital todo, 50 por vez, com as opções de motivo.
     expect(chamadasDe(supabase.rpc, "listar_pre_classificacao")).toContainEqual(
       {
         p_edital: "e93",
         p_vaga: null,
         p_grupo: "ELIMINADOS",
-        p_busca: "pessoa 7000009",
+        p_busca: null,
         p_apos: null,
-        p_limite: 1,
+        p_limite: 50,
       },
     );
+    const motivos = [
+      ...secao.querySelectorAll(
+        "[data-acao='filtro-motivo-eliminados'] option",
+      ),
+    ].map((o) => o.textContent);
+    expect(motivos).toEqual(["Todos os motivos", "Cancelou a inscrição (1)"]);
+    expect(secao.querySelector("[data-acao='comunicados-zip']").disabled).toBe(
+      true,
+    );
+    await escolher(
+      secao.querySelector("[data-acao='filtro-motivo-eliminados']"),
+      secao.querySelector(
+        "[data-acao='filtro-motivo-eliminados'] option:last-child",
+      ).value,
+    );
+    await esperar();
+    expect(
+      chamadasDe(supabase.rpc, "listar_pre_classificacao").some(
+        (a) => a.p_grupo === "ELIMINADOS" && a.p_motivo,
+      ),
+    ).toBe(true);
+    await digitar(
+      secao.querySelector("[data-acao='buscar-espelho-eliminado']"),
+      "pessoa 7000009",
+    );
+    await esperar();
+    expect(
+      chamadasDe(supabase.rpc, "listar_pre_classificacao").some(
+        (a) => a.p_grupo === "ELIMINADOS" && a.p_busca === "pessoa 7000009",
+      ),
+    ).toBe(true);
     await clicar(secao.querySelector("[data-acao='comunicados-marcar-busca']"));
     await esperar();
     expect(
@@ -1081,25 +1201,51 @@ describe("comunicados de eliminação em lote (Triagem)", () => {
     );
   });
 
-  it("a caixa do cabeçalho dos eliminados marca todos do recorte da vaga", async () => {
+  it("a marcação vale nas duas abas: marcar na vaga aparece em Eliminados", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
+    const vaga = await abrirVaga("179698");
+    const grupo = vaga.querySelector(".avd-eliminados");
+    await act(async () => {
+      grupo.open = true;
+      grupo.dispatchEvent(new Event("toggle"));
+    });
+    await esperar();
+    await clicar(
+      vaga.querySelector(
+        "[data-candidato='7000009'] [data-acao='marcar-comunicado']",
+      ),
+    );
+    await abrirAba("eliminados");
+    expect(
+      secao.querySelector("[data-acao='comunicados-marcados']").textContent,
+    ).toBe("1 marcado(s)");
+  });
+});
+
+describe("caixa marcar todos no cabeçalho dos eliminados", () => {
+  it("na aba Eliminados, marca e desmarca todos do filtro (não só a página)", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await abrirAba("eliminados");
     await digitar(
       secao.querySelector("[data-acao='buscar-espelho-eliminado']"),
       "pessoa 7000009",
     );
-    await esperarBusca();
     await esperar();
     const todos = () =>
-      secao.querySelector("[data-acao='marcar-todos-eliminados']");
+      secao.querySelector(
+        "[data-aba-da-triagem='eliminados'] [data-acao='marcar-todos-eliminados']",
+      );
     expect(todos().dataset.estado).toBe("nenhuma");
     await clicar(todos());
     await esperar();
     expect(chamadasDe(supabase.rpc, "listar_pre_classificacao")).toContainEqual(
       expect.objectContaining({
-        p_vaga: "179698",
+        p_vaga: null,
         p_grupo: "ELIMINADOS",
         p_busca: "pessoa 7000009",
+        p_limite: 500,
       }),
     );
     expect(
@@ -1110,5 +1256,39 @@ describe("comunicados de eliminação em lote (Triagem)", () => {
     expect(
       secao.querySelector("[data-acao='comunicados-marcados']").textContent,
     ).toBe("0 marcado(s)");
+  });
+
+  it("na aba Por vaga, a caixa da vaga marca os eliminados da vaga", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    const vaga = await abrirVaga("179698");
+    const grupo = vaga.querySelector(".avd-eliminados");
+    await act(async () => {
+      grupo.open = true;
+      grupo.dispatchEvent(new Event("toggle"));
+    });
+    await esperar();
+    await clicar(vaga.querySelector("[data-acao='marcar-todos-eliminados']"));
+    await esperar();
+    expect(chamadasDe(supabase.rpc, "listar_pre_classificacao")).toContainEqual(
+      expect.objectContaining({ p_vaga: "179698", p_grupo: "ELIMINADOS" }),
+    );
+    await abrirAba("eliminados");
+    expect(
+      secao.querySelector("[data-acao='comunicados-marcados']").textContent,
+    ).toBe("1 marcado(s)");
+  });
+});
+
+describe("menu Ações da Triagem", () => {
+  it("só quem coordena tem o menu; Recalcular espera a confirmação e Cancelar não dispara", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await clicar(await itemDoMenu("recalcular"));
+    await clicar(botao("Cancelar"));
+    expect(chamadasDe(supabase.rpc, "disparar_robo")).toHaveLength(0);
+    expect(
+      secao.querySelector("[data-acao='confirmar-recalcular']"),
+    ).toBeNull();
   });
 });
