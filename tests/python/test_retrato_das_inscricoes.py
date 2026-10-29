@@ -126,7 +126,11 @@ class BancoComRetrato(base.BancoFalso):
     def __call__(self, cfg, funcao, corpo, **opcoes):
         if funcao == "pre_classificacao_ler_editais":
             self.chamadas.append((funcao, json.loads(json.dumps(corpo))))
-            return {"hoje": self.hoje, "nao_encontrados": [], "editais": self.editais}
+            return {
+                "hoje": self.hoje,
+                "nao_encontrados": [],
+                "editais": [base.com_regra_da_triagem(e) for e in self.editais],
+            }
         if funcao == "gravar_retrato_inscricoes":
             self.chamadas.append((funcao, json.loads(json.dumps(corpo))))
             if self.recusar_retrato:

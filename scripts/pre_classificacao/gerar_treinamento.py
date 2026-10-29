@@ -42,6 +42,8 @@ sys.path.insert(0, str(RAIZ / "scripts" / "pre_classificacao"))
 
 import pre_classificacao as job  # noqa: E402
 
+from monitora.avaliacao_documental.regra_da_triagem import secao_da_regra_antiga  # noqa: E402
+
 FIXTURES = RAIZ / "tests" / "fixtures" / "avaliacao-documental"
 MIGRATIONS = RAIZ / "supabase" / "migrations"
 ID_DO_EDITAL = "edital-de-treinamento"
@@ -107,6 +109,19 @@ def entrada_da_leitura(leitura):
     return {"hoje": (leitura.get("editais") or {}).get("hoje"), "edital": edital, "candidatos": candidatos}
 
 
+def edital_com_triagem(edital):
+    """
+    A entrada guardada é de antes da regra própria da Triagem (20261029160000):
+    a regra da Triagem é a seção tirada da regra da análise e do documental,
+    a mesma conta da migration (regra_da_triagem.secao_da_regra_antiga).
+    """
+    if edital.get("triagem") or not edital.get("regra"):
+        return edital
+    regra = edital["regra"]
+    secao = secao_da_regra_antiga(regra.get("configuracao"), edital.get("documental"))
+    return {**edital, "triagem": {"versao": 1, "situacao": regra.get("situacao"), "configuracao": secao}}
+
+
 def calcular(entrada):
     """
     O resultado do job para a entrada: {"edital": resumo do edital (o que vai a
@@ -132,7 +147,7 @@ def calcular(entrada):
         linhas = sorted(({"codigo": linha.pop("id"), **linha} for linha in linhas), key=lambda linha: linha["codigo"])
         vagas[codigo] = {"resumo": resumo, "linhas": linhas}
 
-    resumo = job.processar_edital(chamar, entrada["edital"], entrada["hoje"], False, gravar)
+    resumo = job.processar_edital(chamar, edital_com_triagem(entrada["edital"]), entrada["hoje"], False, gravar)
     if resumo["situacao"] != "PROCESSADO":
         raise ValueError(f"o edital de treinamento não foi processado: {resumo['situacao']}")
     edital = {k: v for k, v in job.para_o_banco(resumo).items() if k != "edital"}

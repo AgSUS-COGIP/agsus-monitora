@@ -31,6 +31,12 @@ import {
   textoDoLote,
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
+import type { ConfiguracaoDaTriagem } from "../../lib/triagem/regra-da-triagem.ts";
+import { ResumoDaRegraDaTriagem } from "../triagem/resumo-da-regra.tsx";
+import {
+  abrirRegrasDoEdital,
+  usarRegraDaTriagem,
+} from "../triagem/usar-regra-da-triagem.ts";
 import { ESPERA_DO_PEDIDO_MIN } from "../../lib/robos-de-carga.ts";
 import {
   Aviso,
@@ -858,6 +864,10 @@ export interface PreClassificacaoProps {
 }
 
 export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
+  // A regra própria da Triagem (20261029160000): resumo, conferência e lote por vaga.
+  const triagem = usarRegraDaTriagem(pre.rpc, e.editalId);
+  const regraDaTriagem = triagem.resposta;
+  const aoSalvarRegraDaTriagem = triagem.salvar;
   const p = useSyncExternalStore(pre.assinar, pre.obter);
   const [tamanhos, setTamanhos] = useState<Record<string, string>>({});
   const [buscaDeEspelho, setBuscaDeEspelho] = useState("");
@@ -1003,12 +1013,14 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
   };
   const ultima = d.ultima_execucao;
   const situacaoDoEdital = ultima?.edital?.situacao;
-  const conferida = d.regra?.situacao === "CONFERIDA";
+  const regraDaTela = regraDaTriagem?.regra ?? null;
+  const conferida = regraDaTela?.situacao === "CONFERIDA";
   const pedidoRecente =
     p.pedidoEm instanceof Date &&
     (Date.now() - p.pedidoEm.getTime()) / 60000 < ESPERA_DO_PEDIDO_MIN;
-  const configuracao =
-    e.dados?.regra?.configuracao || d.regra?.configuracao || {};
+  const configuracao: ConfiguracaoDaTriagem = regraDaTela?.configuracao || {
+    formato: 1,
+  };
   const mudou = Object.keys(tamanhos).length > 0;
   const congeladas = declaradasCongeladas(d);
 
@@ -1024,8 +1036,11 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
 
   async function salvarTamanhos() {
     setErroAoSalvar("");
-    const r = await estado.salvarRegra(
-      regraComTamanhos(configuracao, tamanhos),
+    const r = await aoSalvarRegraDaTriagem(
+      regraComTamanhos(
+        configuracao,
+        tamanhos,
+      ) as unknown as ConfiguracaoDaTriagem,
       motivo.trim(),
     );
     if (r.ok) {
@@ -1036,6 +1051,11 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
 
   return (
     <div className="avd-pre">
+      <ResumoDaRegraDaTriagem
+        resposta={regraDaTriagem}
+        erro={triagem.erro}
+        aoEditar={() => abrirRegrasDoEdital(e.editalId)}
+      />
       <TravaDasInscricoes
         editalId={e.editalId}
         rpc={pre.rpc}
@@ -1093,8 +1113,8 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
           {ultima
             ? `Triagem de ${quando(ultima.fim || ultima.inicio)} · ${SITUACAO_DA_EXECUCAO[ultima.situacao] || ultima.situacao}`
             : "Ainda sem triagem"}
-          {d.regra
-            ? ` · regra: ${rotuloDaVersaoNaLista(e.dados?.regra?.versoes, d.regra.versao)}`
+          {regraDaTela
+            ? ` · regra da Triagem: ${rotuloDaVersaoNaLista(regraDaTela.versoes, regraDaTela.versao)}`
             : ""}
         </span>
         {d.pode_coordenar ? (
@@ -1181,9 +1201,9 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
       ) : null}
       {d.pode_coordenar && !conferida ? (
         <Aviso tom="warning">
-          {d.regra
-            ? "Marque a regra como conferida na aba Regra para recalcular."
-            : "Crie a regra na aba Regra para recalcular."}
+          {regraDaTela
+            ? "Confira a regra da Triagem (Editais › Regras da Triagem) para recalcular."
+            : "Crie a regra da Triagem (Editais › Regras da Triagem) para recalcular."}
         </Aviso>
       ) : null}
       {situacaoDoEdital &&
@@ -1280,7 +1300,7 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
           <VagaDaPre
             key={v.codigo}
             v={v}
-            configuracao={configuracao}
+            configuracao={configuracao as unknown as RegistroDaPre}
             podeCoordenar={d.pode_coordenar}
             tamanho={tamanhos[v.codigo]}
             pre={pre}

@@ -196,6 +196,14 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 **fonte:** supabase/migrations/20261006100000_regra_da_analise.sql
 **abrir:** avaliacao-documental
 
+## Regras da Triagem
+
+**perguntas:** regras da triagem | regra da triagem | editar a regra da triagem | onde mudo o lote da triagem | requisitos da triagem | motivos de eliminacao da triagem | conferir a regra da triagem | editar nas regras do edital
+**resposta:** A Triagem tem regra própria, com versões, separada da regra da Avaliação documental e da Classificação: requisitos e motivos de eliminação, nota da lista (declarada ou ART) e tolerância, desempate, modalidade das cotas, nível da vaga e formação do lote. Ela aparece resumida no topo da tela da Triagem; para mudar, use "Editar nas Regras do edital" ou, em Editais, o botão Regras da Triagem da linha do edital. Só a coordenação do edital (ou o administrador global) grava uma versão nova, sempre com motivo; a versão nova fica "a conferir" e outra pessoa da coordenação confere. Salvar não recalcula: a Triagem usa a regra na próxima execução (fim do robô da Empregare ou Recalcular).
+**fato:** No MONITORA, a regra da Triagem mora em TB_REGRA_TRIAGEM e TH_REGRA_TRIAGEM desde 29/10/2026; a primeira versão de cada edital é a cópia exata do que a Triagem usava antes, com o mesmo resultado.
+**fonte:** supabase/migrations/20261029160000_regras_proprias_da_triagem.sql; python/monitora/avaliacao_documental/regra_da_triagem.py
+**abrir:** pre-classificacao
+
 ## Triagem: Provisória por ART
 
 **perguntas:** triagem | aba triagem | o que e a triagem | para que serve triagem | para que serve a triagem | tela da triagem | pre-classificacao | pre classificacao | provisoria por art | lista provisoria | lista geral de classificacao provisoria | ranqueamento eletronico | como e montada a provisoria | ordem da provisoria | aba pre-classificacao

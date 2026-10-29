@@ -1,0 +1,68 @@
+/* Regra da Triagem: resumo no topo da tela e o editor (Editais › Regras da Triagem). */
+.triagem-regra__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.triagem-regra__topo .ui-titulo {
+  margin: 0;
+}
+
+.triagem-regra__versao {
+  color: var(--text-muted, inherit);
+  font-size: 0.875rem;
+}
+
+.triagem-regra__editar {
+  margin-inline-start: auto;
+}
+
+.triagem-regra-card {
+  width: min(960px, 100%);
+}
+
+.triagem-regra-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.triagem-regra-form fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.triagem-regra-secao {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.triagem-regra-secao > h4,
+.triagem-regra-secao > summary,
+.triagem-regra-secao > .btn,
+.triagem-regra-secao > .triagem-desempate {
+  grid-column: 1 / -1;
+}
+
+.triagem-eliminacao {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.12));
+  border-radius: 8px;
+}
+
+.triagem-historico {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  padding-inline-start: var(--space-4);
+}

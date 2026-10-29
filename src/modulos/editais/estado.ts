@@ -40,9 +40,12 @@ export interface ClienteDoNucleo extends ClienteDoResumo {
   > | null;
 }
 
-/** O modal aberto: o formulário do edital (id vazio = novo) ou a linha do tempo. */
+/**
+ * O modal aberto: o formulário do edital (id vazio = novo), a linha do tempo
+ * ou as Regras da Triagem do edital (id do monitoramento).
+ */
 export interface ModalDoNucleo {
-  tipo: "edital" | "linha-do-tempo";
+  tipo: "edital" | "linha-do-tempo" | "regras-triagem";
   id: string;
   /** Muda a cada abertura: é a `key` do componente. */
   abertura: number;
@@ -594,6 +597,11 @@ export function criarEstadoDoNucleo({
     abrirEdital,
     abrirLinhaDoTempo: (id: unknown) =>
       abrir({ tipo: "linha-do-tempo", id: txt(id) }),
+    /* Quem lê e quem edita é o banco (obter/salvar_regra_triagem). */
+    abrirRegrasDaTriagem: (id: unknown) =>
+      abrir({ tipo: "regras-triagem", id: txt(id) }),
+    /* O cliente das RPCs da regra da Triagem (o modal chama direto). */
+    clienteDaRegra: () => supabase,
     fecharModal: () => estado.modal && publicar({ modal: null }),
     lerCronograma,
     lerUnidadesPorArea,

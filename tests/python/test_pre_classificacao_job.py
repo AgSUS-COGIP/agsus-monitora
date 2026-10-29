@@ -24,6 +24,7 @@ sys.path.insert(0, str(_RAIZ / "python"))
 import pre_classificacao as job  # noqa: E402
 
 from monitora import supabase_rpc  # noqa: E402
+from monitora.avaliacao_documental.regra_da_triagem import secao_da_regra_antiga  # noqa: E402
 
 E93 = "00000000-0000-4000-a000-000000000093"
 EFCC = "00000000-0000-4000-a000-0000000000fc"
@@ -87,7 +88,11 @@ class BancoFalso:
         self.chamadas.append((funcao, json.loads(json.dumps(corpo))))
         self.opcoes.setdefault(funcao, []).append(opcoes)
         if funcao == "pre_classificacao_ler_editais":
-            return {"hoje": "2026-10-06", "nao_encontrados": self.nao_encontrados, "editais": self.editais}
+            return {
+                "hoje": "2026-10-06",
+                "nao_encontrados": self.nao_encontrados,
+                "editais": [com_regra_da_triagem(e) for e in self.editais],
+            }
         if funcao == "pre_classificacao_ler_colunas":
             return {"colunas": sorted({k for cs in self.candidatos.values() for c in cs for k in c["colunas"]})}
         if funcao == "pre_classificacao_ler_candidatos":
@@ -121,6 +126,25 @@ class BancoFalso:
 
     def de(self, funcao):
         return [c for f, c in self.chamadas if f == funcao]
+
+
+def com_regra_da_triagem(edital):
+    """
+    O banco depois de 20261029160000: a regra da Triagem é a seção tirada da
+    regra da análise (e do documental), com a mesma situação — a mesma conta
+    da migration.
+    """
+    regra = edital.get("regra")
+    triagem = (
+        {
+            "versao": 1,
+            "situacao": regra.get("situacao"),
+            "configuracao": secao_da_regra_antiga(regra.get("configuracao"), edital.get("documental")),
+        }
+        if regra
+        else None
+    )
+    return {**edital, "triagem": triagem}
 
 
 def edital_93(situacao="CONFERIDA", vagas=None):
@@ -159,7 +183,7 @@ class Fluxo(unittest.TestCase):
         codigo, saida = rodar(banco, ["--seco", "--editais", "93/2026,99/2099"])
         # Edital pedido que não existe não é sucesso: parcial.
         self.assertEqual(codigo, 2)
-        self.assertIn("93/2026: edital sem regra conferida", saida)
+        self.assertIn("93/2026: edital sem regra da Triagem conferida", saida)
         self.assertIn("3 inscritos em 1 vaga(s) aguardam", saida)
         self.assertIn("Editais não encontrados: 99/2099", saida)
         self.assertEqual(banco.de("pre_classificacao_ler_candidatos"), [])
@@ -176,7 +200,7 @@ class Fluxo(unittest.TestCase):
         self.assertEqual(codigo, 0)
         self.assertEqual(banco.de("gravar_pre_classificacao_vaga"), [])
         self.assertEqual(banco.de("finalizar_pre_classificacao")[0]["p_editais"][0]["situacao"], "REGRA_NAO_CONFERIDA")
-        self.assertIn("falta a coordenação marcar como conferida", saida)
+        self.assertIn("falta a coordenação conferir", saida)
 
     def test_grava_cada_vaga_com_a_versao_da_regra_e_fecha_a_execucao(self):
         banco = BancoFalso([edital_93()], CANDIDATOS)
@@ -441,7 +465,7 @@ class Fluxo(unittest.TestCase):
             with mock.patch.object(job, "TAMANHO_DA_PARTE", tamanho):
                 job.processar_edital(
                     banco,
-                    edital_93(vagas=[vaga]),
+                    com_regra_da_triagem(edital_93(vagas=[vaga])),
                     "2026-10-06",
                     True,
                     lambda codigo, r: gravados.setdefault(codigo, job.payload_da_vaga(r)),
@@ -476,7 +500,7 @@ class Fluxo(unittest.TestCase):
             gravados = {}
             job.processar_edital(
                 banco,
-                edital_93(vagas=[{"codigo": "179698", "candidatos_ativos": 3, "ultimo_lote": 0}]),
+                com_regra_da_triagem(edital_93(vagas=[{"codigo": "179698", "candidatos_ativos": 3, "ultimo_lote": 0}])),
                 "2026-10-06",
                 True,
                 lambda codigo, r: gravados.setdefault(codigo, job.payload_da_vaga(r)),

@@ -1532,6 +1532,31 @@ export const CONTRATO_RPC = {
     resumo:
       "Cria a versão 1 da regra copiando um modelo (Conferir); edital com regra = 23505. Só a coordenação do edital.",
   },
+  // ── Regra própria da Triagem (20261029160000_regras_proprias_da_triagem.sql)
+  obter_regra_triagem: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Regra da Triagem do edital (TB_REGRA_TRIAGEM × TH_REGRA_TRIAGEM): versão vigente, situação (CONFERIR/CONFERIDA), configuração (requisitos, nota, desempate, modalidade, nível, lote) e versões. Mesma permissão de leitura da regra da análise; pode_coordenar diz quem edita.",
+  },
+  salvar_regra_triagem: {
+    argumentos: [
+      "p_edital",
+      "p_configuracao",
+      "p_versao_atual",
+      "p_motivo",
+      "p_nome",
+    ],
+    critica: false,
+    resumo:
+      "Grava versão nova da regra da Triagem (FC_VALIDAR_REGRA_TRIAGEM; motivo de 10 a 2.000 caracteres; PT409 se a vigente mudou) e volta a 'conferir'. Não dispara cálculo. Só a coordenação do edital (FC_EXIGIR_COORD_AVALIACAO; administrador global passa).",
+  },
+  conferir_regra_triagem: {
+    argumentos: ["p_edital", "p_versao"],
+    critica: false,
+    resumo:
+      "Marca a versão vigente da regra da Triagem como conferida. Dupla conferência: quem salvou não confere, salvo o administrador global. Só a coordenação do edital.",
+  },
   conferir_regra_analise: {
     argumentos: ["p_edital", "p_versao"],
     critica: false,
