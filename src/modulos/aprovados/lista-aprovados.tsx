@@ -517,6 +517,7 @@ export function montarListaAprovados({
   carregarLogo,
   baixar,
   hoje,
+  esperar,
   cabecalho = () =>
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
 }: OpcoesDaTelaDosAprovados = {}) {
@@ -544,6 +545,7 @@ export function montarListaAprovados({
     ...(carregarLogo ? { carregarLogo } : {}),
     ...(baixar ? { baixar } : {}),
     ...(hoje ? { hoje } : {}),
+    ...(esperar ? { esperar } : {}),
   });
   const raiz = secao
     ? montarModulo(

@@ -124,7 +124,10 @@ describe("migration da lista de aprovados da Classificação: RPCs", () => {
         .split(",")
         .map((a) => a.trim().split(" ")[0])
         .filter(Boolean);
-      expect(CONTRATO_RPC[nome]?.argumentos).toEqual(argumentos);
+      // 20261030090000 tirou publicar_lista_aprovados_da_classificacao e
+      // importar_lista_aprovados (o fluxo do casamento): as que saíram não se conferem.
+      if (CONTRATO_RPC[nome])
+        expect(CONTRATO_RPC[nome].argumentos).toEqual(argumentos);
     },
   );
 

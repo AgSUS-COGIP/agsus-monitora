@@ -22,16 +22,6 @@ export interface CandidatoDaListaFinal {
   situacao: "VAGA" | "CR" | null;
   modalidades: unknown[];
 }
-export type FormaDoVinculo = "ANALISE" | "NOME" | "NOME_VAGA" | "MANUAL";
-export interface VinculoDaPublicacao {
-  candidato_id: string;
-  analise_id: string;
-  forma: FormaDoVinculo;
-}
-export interface CasamentoDeCandidatos {
-  vinculos: VinculoDaPublicacao[];
-  naoCasados: (CandidatoAnterior & { ambiguo: boolean; decidido: boolean })[];
-}
 export interface OrigemDaLista {
   tipo: "CLASSIFICACAO" | "XLSX";
   texto: string;
@@ -44,6 +34,8 @@ export interface ListaVigenteDaPublicacao {
 }
 export interface SituacaoDaPublicacao {
   vigente: ListaVigenteDaPublicacao | null;
+  /** Pode substituir a lista vigente (admin da Importação, ou o edital nunca teve lista). */
+  pode_substituir: boolean;
 }
 export interface ResultadoDaPublicacao {
   candidatos: number;

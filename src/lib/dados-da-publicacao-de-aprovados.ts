@@ -49,10 +49,13 @@ function posicao(valor: unknown): number | null {
 /** Não descarta pessoas: uma resposta incompleta impediria a revisão dos vínculos. */
 export function situacaoDaPublicacao(valor: unknown): SituacaoDaPublicacao {
   const dados = registroObrigatorio(valor);
-  if (dados.vigente === null) return { vigente: null };
+  // Antes de 20261030090000 o banco não dizia: quem barra é o banco.
+  const pode_substituir = booleano(dados.pode_substituir) !== false;
+  if (dados.vigente === null) return { vigente: null, pode_substituir };
   const vigente = registroObrigatorio(dados.vigente);
   const vistos = new Set<string>();
-  const candidatos: CandidatoAnterior[] = linhas(vigente.candidatos).map(
+  // Sem p_com_candidatos, o banco não manda os candidatos (null).
+  const candidatos: CandidatoAnterior[] = linhas(vigente.candidatos, true).map(
     (c) => {
       const id = identificador(c.candidato_id);
       if (vistos.has(id)) throw erro();
@@ -79,6 +82,7 @@ export function situacaoDaPublicacao(valor: unknown): SituacaoDaPublicacao {
       importado_em: texto(vigente.importado_em),
       candidatos,
     },
+    pode_substituir,
   };
 }
 

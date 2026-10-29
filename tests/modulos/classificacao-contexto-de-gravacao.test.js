@@ -50,7 +50,7 @@ describe("Classificação após mudança de contexto", () => {
       toast = vi.fn(),
       e = criarEstadoDaClassificacao({ supabase: b.supabase, toast });
     await e.escolherEdital("A");
-    const p = e.publicarComoListaDeAprovados({ listaId: "l1", vinculos: [] });
+    const p = e.publicarComoListaDeAprovados({ pedidoId: "p1" });
     b.pendentes[0].resolver({ data: { ok: true }, error: null });
     expect(await p).toBeNull();
     expect(toast).toHaveBeenCalledWith(
@@ -67,7 +67,7 @@ describe("Classificação após mudança de contexto", () => {
       toast = vi.fn(),
       e = criarEstadoDaClassificacao({ supabase: b.supabase, toast });
     await e.escolherEdital("A");
-    const p = e.publicarComoListaDeAprovados({ listaId: "l1", vinculos: [] });
+    const p = e.publicarComoListaDeAprovados({ pedidoId: "p1" });
     await e.escolherEdital("B");
     await e.escolherEdital("A");
     b.pendentes[0].resolver({

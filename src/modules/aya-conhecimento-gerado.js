@@ -3120,12 +3120,14 @@ export const VERBETES_AYA = Object.freeze([
       "casamento dos candidatos",
       "quem nao casou na publicacao",
       "revisar candidatos da publicacao",
+      "substituir xlsx perde status",
+      "trocar planilha mantem status",
     ],
     resposta:
-      'Quem já estava na lista vigente leva para a lista nova o status (Contratado, Desistente…), a matrícula, o processo SEI, o sub judice e os anexos. A pessoa é reconhecida pela análise (lista já publicada da Classificação) ou, nas listas de planilha — que não trazem CPF nem código do candidato —, pelo nome sem acento e sem diferença de maiúsculas no mesmo edital, desempatando pela vaga. Quem tinha nota ou modalidade alterada por decisão judicial continua com a da decisão (a da Classificação vira a original, para desfazer) e é recolocado pela nota; quem foi incluído sub judice e não está no resultado continua na lista como sub judice. Homônimo que não se resolve e quem sai com status ou matrícula aparecem em "Revisar" na confirmação, para dizer quem é na lista nova ou que não está; quem sai continua na lista anterior, com tudo, e fica registrado na publicação. Sub judice segue editável na Lista de aprovados.',
+      'Publicar da Classificação ou substituir o XLSX fazem a mesma coisa: quem já estava na lista vigente leva para a lista nova o status (Contratado, Desistente…), a matrícula, o processo SEI, a data da convocação, o sub judice e os anexos. A pessoa é reconhecida pela análise (lista já publicada da Classificação) ou, nas listas de planilha — que não trazem CPF nem código do candidato —, pelo nome sem acento e sem diferença de maiúsculas no mesmo edital, desempatando pela vaga. Quem tinha nota ou modalidade alterada por decisão judicial continua com a da decisão (a da Classificação vira a original, para desfazer) e é recolocado pela nota; quem foi incluído sub judice e não está no resultado continua na lista como sub judice. Homônimo que não se resolve e quem sai com status ou matrícula aparecem em "Revisar" na confirmação, para dizer quem é na lista nova ou que não está; quem sai continua na lista anterior, com tudo, e fica registrado na publicação. Sub judice segue editável na Lista de aprovados. Quem é a mesma pessoa é calculado por um processo à parte (leva alguns segundos, às vezes até um minuto): "Substituir XLSX" e "Publicar como lista de aprovados" mostram antes a prévia — casados (levam o estado), quem entra, quem fica sem par e os status que ficariam sem dono — e só a confirmação grava; se a lista mudar entre a prévia e a confirmação, é preciso conferir de novo. Os contratados do edital são recontados na hora: ao publicar, substituir, ativar ou inativar a lista; ao remover a lista vigente, voltam a zero.',
     fato: "",
     fonte:
-      "src/lib/publicacao-de-aprovados.ts; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+      "src/lib/casamento-da-lista.ts; python/monitora/aprovados/casamento.py; supabase/migrations/20261030090000_lista_de_aprovados_substituir_preserva_o_estado.sql",
     abrir: "approved",
   },
   {
@@ -3136,12 +3138,14 @@ export const VERBETES_AYA = Object.freeze([
       "motivo para trocar pela planilha",
       "substituir lista publicada da classificacao",
       "planilha depois da classificacao",
+      "quem pode substituir a lista de aprovados",
+      "motivo da substituicao",
     ],
     resposta:
-      "Se a lista vigente foi publicada da Classificação, o administrador de Importação ainda pode trocá-la por um XLSX, mas precisa informar o motivo (de 3 a 500 caracteres), que fica no histórico das publicações junto com quem e quando. Editais sem análise no sistema continuam importando a planilha como antes, sem motivo.",
+      "A regra é a mesma pela planilha e pela Classificação: um edital que já teve lista só publica de novo quem tem Administrador em Importação na matriz de Acessos (ou o administrador global). Informar o motivo (de 3 a 500 caracteres) é obrigatório quando a lista vigente tem alguém com status, matrícula, processo ou sub judice, e para trocar pela planilha uma lista publicada da Classificação; o motivo fica no histórico das publicações junto com quem e quando. A primeira lista de um edital, ou uma lista sem nada disso, entra sem motivo.",
     fato: "",
     fonte:
-      "src/modulos/aprovados/modal-listas-do-edital.tsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+      "src/modulos/aprovados/modal-listas-do-edital.tsx; src/modulos/classificacao/publicar-aprovados.tsx; supabase/migrations/20261030090000_lista_de_aprovados_substituir_preserva_o_estado.sql",
     abrir: "approved",
   },
   {
@@ -3154,7 +3158,7 @@ export const VERBETES_AYA = Object.freeze([
       "versao da regra da lista de aprovados",
     ],
     resposta:
-      'Cada lista que entra em vigor num edital fica registrada: publicada da Classificação (quem, quando, a lista de classificação, a versão da regra, o hash, quantos entraram, saíram, mudaram de posição, preservados e sub judice mantidos, os vínculos aplicados e quem ficou para revisão) ou importada por planilha (quem, quando e o motivo, quando trocou uma lista da Classificação). O modal "Listas do edital" mostra as últimas publicações. Se a leitura do histórico falhar, use "Tentar de novo" no próprio modal.',
+      'Cada lista que entra em vigor num edital fica registrada: publicada da Classificação (quem, quando, a lista de classificação, a versão da regra, o hash, quantos entraram, saíram, mudaram de posição, preservados e sub judice mantidos, os vínculos aplicados e quem ficou para revisão) ou importada por planilha (quem, quando, quantos entraram e saíram, os preservados, quem ficou sem par e o motivo, quando houve). O modal "Listas do edital" mostra as últimas publicações. Se a leitura do histórico falhar, use "Tentar de novo" no próprio modal.',
     fato: "",
     fonte:
       "src/modulos/aprovados/modal-listas-do-edital.tsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql (TH_PUBLICACAO_APROVADO)",

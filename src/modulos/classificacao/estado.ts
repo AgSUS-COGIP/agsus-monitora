@@ -9,7 +9,11 @@ import type {
   ResultadoDaClassificacao,
   OpcoesDoDocumento,
 } from "./tipos-do-estado.ts";
-import type { VinculoDaPublicacao } from "../../lib/tipos-da-publicacao-de-aprovados.ts";
+import {
+  acompanharCasamento,
+  pedidoLido,
+  PRAZO_DO_CASAMENTO_MS,
+} from "../../lib/casamento-da-lista.ts";
 import { candidatosDaListaFinal } from "../../lib/publicacao-de-aprovados.ts";
 import {
   situacaoDaPublicacao,
@@ -53,10 +57,11 @@ import {
     obter_lista_classificacao(p_lista)       retrato de uma geração anterior
     registrar_desempate_classificacao(...)   sorteio ou decisão manual
     obter_publicacao_lista_aprovados(...)    a lista de aprovados vigente do
-                                             edital e os candidatos (prévia)
-    publicar_lista_aprovados_da_classificacao(...)  o resultado final vira a
-                                             lista de aprovados (migration
-                                             20261005160000)
+                                             edital e se a pessoa pode substituí-la
+    pedir_casamento_da_lista(...)            a prévia: o job Python casa a lista
+    obter_casamento_da_lista(p_pedido)       vigente com o resultado final
+    aplicar_casamento_da_lista(...)          o resultado final vira a lista de
+                                             aprovados (migration 20261030090000)
     listar_configuracao_convocacao()         a configuração de convocação
     listar_modelos_convocacao()              dos editais (Lista de aprovados):
                                              as vagas por modalidade saem da
@@ -145,7 +150,9 @@ const RPC_PUBLICAR_LISTA = "publicar_lista_classificacao";
 const RPC_OBTER_LISTA = "obter_lista_classificacao";
 const RPC_REGISTRAR_DESEMPATE = "registrar_desempate_classificacao";
 const RPC_OBTER_PUBLICACAO = "obter_publicacao_lista_aprovados";
-const RPC_PUBLICAR_APROVADOS = "publicar_lista_aprovados_da_classificacao";
+const RPC_PEDIR_CASAMENTO = "pedir_casamento_da_lista";
+const RPC_OBTER_CASAMENTO = "obter_casamento_da_lista";
+const RPC_APLICAR_CASAMENTO = "aplicar_casamento_da_lista";
 const RPC_CONFIGURACAO_CONVOCACAO = "listar_configuracao_convocacao";
 const RPC_MODELOS_CONVOCACAO = "listar_modelos_convocacao";
 const RPC_SALVAR_HORA = "salvar_hora_nascimento_candidato";
@@ -216,6 +223,7 @@ export function criarEstadoDaClassificacao({
   copias = criarCopiasPorVersao(supabase, RPC_OBTER_EDITAL_SE_MUDOU),
   intervaloDoCalculoMs = INTERVALO_DO_CALCULO_MS,
   prazoDoCalculoMs = PRAZO_DO_CALCULO_MS,
+  prazoDoCasamentoMs = PRAZO_DO_CASAMENTO_MS,
   agora = () => Date.now(),
 }: OpcoesDoEstado = {}) {
   let estado: SnapshotDaClassificacao = ESTADO_INICIAL;
@@ -820,50 +828,76 @@ export function criarEstadoDaClassificacao({
   }
 
   /*
-    A prévia de "Publicar como lista de aprovados": o retrato da lista FINAL e
-    a lista de aprovados vigente do edital, com os candidatos (o casamento das
-    pessoas e o resumo são de src/lib/publicacao-de-aprovados.ts).
+    A prévia de "Publicar como lista de aprovados" (migration 20261030090000):
+    confere o retrato, lê a lista vigente do edital (e se a pessoa pode
+    substituí-la) e pede o casamento das pessoas ao job Python
+    (pedir_casamento_da_lista), com a revisão à mão (`manuais`); espera o
+    plano (src/lib/casamento-da-lista.ts). Sem permissão para substituir a
+    lista vigente, não pede nada: a tela avisa.
   */
   async function prepararPublicacaoDeAprovados(
     registrado: ListaRegistrada | null,
     resultado: ResultadoDaClassificacao | null,
+    manuais: Record<string, string> = {},
   ) {
     if (!registrado?.id || !estado.editalId) return null;
     const minhaGeracao = geracao;
+    const edital = estado.editalId;
     try {
-      const [{ alvo, motivo }, situacao] = await Promise.all([
+      const [{ alvo, motivo }, bruto] = await Promise.all([
         conferirAntesDePublicar(registrado, resultado),
         rpc(RPC_OBTER_PUBLICACAO, {
-          p_edital: estado.editalId,
-          p_com_candidatos: true,
+          p_edital: edital,
+          p_com_candidatos: false,
         }),
       ]);
       if (minhaGeracao !== geracao) return null;
       if (motivo) return { erro: motivo };
       candidatosDaListaFinal(alvo.retrato);
-      return { registrado: alvo, situacao: situacaoDaPublicacao(situacao) };
+      const situacao = situacaoDaPublicacao(bruto);
+      if (situacao.vigente && !situacao.pode_substituir)
+        return { registrado: alvo, situacao, casamento: null };
+      const pedido = pedidoLido(
+        await rpc(RPC_PEDIR_CASAMENTO, {
+          p_edital: edital,
+          p_origem: "CLASSIFICACAO",
+          p_lista_classificacao: alvo.id,
+          p_lista_vigente: situacao.vigente?.lista_id ?? null,
+          p_manuais: manuais,
+        }),
+      );
+      const r = await acompanharCasamento({
+        pedidoId: pedido.pedido_id,
+        obter: (id) => rpc(RPC_OBTER_CASAMENTO, { p_pedido: id }),
+        esperar,
+        agora,
+        intervaloMs: intervaloDoCalculoMs,
+        prazoMs: prazoDoCasamentoMs,
+        vigente: () => minhaGeracao === geracao,
+      });
+      if (minhaGeracao !== geracao) return null;
+      if ("erro" in r) return { erro: r.erro || "A prévia foi interrompida." };
+      return { registrado: alvo, situacao, casamento: r.casamento };
     } catch (erro) {
       if (minhaGeracao !== geracao) return null;
       return { erro: mensagemDoBanco(erro) };
     }
   }
 
-  /* Publica o resultado final como a lista de aprovados vigente. */
+  /* Aplica o plano da prévia: o resultado final vira a lista de aprovados vigente. */
   async function publicarComoListaDeAprovados({
-    listaId,
-    listaVigente,
-    vinculos,
+    pedidoId,
+    motivo = "",
   }: {
-    listaId: string;
-    listaVigente?: string | null;
-    vinculos?: VinculoDaPublicacao[];
+    pedidoId: string;
+    /** Sobrescrever lista com status exige motivo (20261030090000). */
+    motivo?: string;
   }) {
     const minhaGeracao = geracao;
     try {
-      const resposta = await rpc(RPC_PUBLICAR_APROVADOS, {
-        p_lista_classificacao: listaId,
-        p_lista_vigente: listaVigente || null,
-        p_vinculos: vinculos || [],
+      const resposta = await rpc(RPC_APLICAR_CASAMENTO, {
+        p_pedido: pedidoId,
+        p_motivo: motivo.trim() || null,
       });
       if (minhaGeracao !== geracao) return null;
       let resultado;
@@ -884,7 +918,9 @@ export function criarEstadoDaClassificacao({
     } catch (erro) {
       if (minhaGeracao !== geracao) return null;
       toast(
-        `Não foi possível publicar a lista de aprovados: ${mensagemDoBanco(erro)}`,
+        objeto(erro).code === "PT409"
+          ? "A lista de aprovados do edital mudou depois da prévia. Abra a publicação de novo."
+          : `Não foi possível publicar a lista de aprovados: ${mensagemDoBanco(erro)}`,
         "error",
       );
       return null;
