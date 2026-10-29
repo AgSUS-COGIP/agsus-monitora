@@ -79,8 +79,6 @@ tinha cor diferente em cada tela.
 **Ícones:** Font Awesome 6.5.2 via CDN (62 usos no `index.html`). A barra lateral e o que é dela
 já usam o `lucide`, por `src/modules/icones.ts` (ver "Ícones", seção 4).
 
-`runtime-critical-fixes.css` é carregado de dentro de `src/modules/connectivity-status.js`.
-
 ---
 
 ## 2. Princípios
@@ -258,7 +256,7 @@ Fundo `--state-*-soft`, texto `--state-*`, **ícone obrigatório**, `--radius-pi
 
 Toda consulta prevê: carregando (skeleton com o formato do conteúdo, não um spinner solto), com
 dados, vazio (o que significa e qual é a próxima ação), erro recuperável (com "Tentar de novo"),
-sem permissão e offline (`src/modules/connectivity-status.js`).
+sem permissão e offline (`src/app/casca/aviso-de-conexao.tsx`).
 
 O bloco do skeleton é `.esqueleto` (`src/styles/carregamento.css`): fundo `--border-subtle`,
 `--radius-sm` e pulso de `opacity`. Dê a ele o tamanho do conteúdo que vai substituir. A entrada

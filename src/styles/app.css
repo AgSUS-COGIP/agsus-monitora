@@ -555,7 +555,7 @@ textarea:focus-visible,
   pointer-events: none;
 }
 /*
-  Notificação: cartão claro com ícone na cor do estado (src/modules/notificacao.js).
+  Notificação: cartão claro com ícone na cor do estado (src/app/casca/notificacoes.tsx).
   Antes era um bloco verde/vermelho/amarelo saturado com texto branco em
   negrito — gritava mais que o conteúdo, e o amarelo com texto escuro fugia
   do padrão dos outros três.

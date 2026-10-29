@@ -210,31 +210,11 @@
 
   <body class="sidebar-collapsed config-loading">
     <a id="skipLink" href="#conteudoPrincipal" class="skip-link"></a>
-    <div
-      id="offlineBar"
-      role="alert"
-      style="
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: var(--z-toast, 20050);
-        background: #7a3a00;
-        color: #fff;
-        text-align: center;
-        padding: 7px 12px;
-        font-size: 13px;
-        font-weight: 600;
-      "
-    ></div>
-    <div
-      id="toastBox"
-      class="toast-box"
-      role="status"
-      aria-live="polite"
-      aria-atomic="false"
-    ></div>
+    <!--
+      Avisos por cima de tudo (notificações, carregamento dos salvamentos e
+      conexão): React, src/app/casca/avisos.tsx.
+    -->
+    <div id="avisosApp"></div>
 
     <!--
       Skeleton da entrada: o formato do sistema enquanto a sessão e os dados
@@ -386,32 +366,6 @@
         <button type="button" class="btn secondary" hidden>
           Tentar novamente
         </button>
-      </div>
-    </div>
-
-    <div id="loader" class="loader">
-      <div class="loader-card">
-        <div class="loader-brand" aria-hidden="true">
-          <img src="/assets/agsus-logo.webp" alt="" />
-          <span></span>
-          <div>
-            <strong>MONITORA</strong>
-            <small>Ambiente institucional AgSUS</small>
-          </div>
-        </div>
-        <div class="loader-status">
-          <div class="loader-spin"></div>
-          <div class="loader-copy">
-            <div id="loaderTitle" class="loader-title"></div>
-            <div id="loaderSub" class="loader-sub"></div>
-          </div>
-          <div id="loaderPct" class="loader-pct">0%</div>
-        </div>
-        <div class="loader-bar"><span id="loaderBar"></span></div>
-        <div class="loader-safe">
-          <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-          Carregamento seguro dos painéis autorizados
-        </div>
       </div>
     </div>
 

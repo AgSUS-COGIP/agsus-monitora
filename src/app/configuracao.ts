@@ -158,7 +158,6 @@ export function criarConfiguracao({
         "AgSUS Monitora - Monitoramento de Processos Seletivos",
       );
     escrever("skipLink", valor("skip_link_text"));
-    escrever("offlineBar", valor("offline_message"));
     /*
       A tela de acesso (src/app/entrada/) é React: a marca dela (arte, cor,
       logo, saudação e rodapé) e as chaves do login vão para o app, que só grava

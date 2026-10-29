@@ -301,9 +301,9 @@ Ficou para depois (ainda em `src/modules/` ou no `index.html`):
 2. **Rotas**: sem endereço por tela (hash/history); a tela guardada continua no localStorage.
 3. `nielsen-shell-ux.js` (diálogo de saída por `insertAdjacentHTML` e os estados do seletor de
    tema), `visual-polish.js`,
-   `loading-experience.js`, `connectivity-status.js`, `pwa-lifecycle.ts`, `situacao-dos-modulos.ts`,
+   `pwa-lifecycle.ts`, `situacao-dos-modulos.ts`,
    `catalogo-de-abas.ts`, `copia-da-sessao-indexeddb.ts`, `cache-de-payload-indexeddb.ts`,
-   `comemoracao-do-acesso.ts`, `notificacao.js` → `src/app/` ou React.
+   `comemoracao-do-acesso.ts` → `src/app/` ou React.
 4. O CSS da tela de acesso espalhado (`app.css`, `platform-shell.css`,
    `post-152-regression-fixes.css`, `visual-polish.css`, `mobile-app.css`) consolidado num
    CSS da entrada em `src/app/entrada/` (hoje só o `solicitacao-de-acesso.css`); `auth-storage.ts` → `src/lib/`, `sidebar-branding.js` → barra
@@ -319,7 +319,7 @@ claro e escuro) e o DOM do `#appScreen` com posição e tamanho de cada elemento
 | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | A     | `#appScreen`: volta do painel externo, `<aside>` da barra, cabeçalho e menu da conta, pontos de montagem do topo, aviso global, seções das telas, quadro externo, Configurações         | feita    |
 | B     | Celular: sem menu no pé da tela; a gaveta (☰) e as tabelas em cartão viram `src/app/casca/` (`mobile-*.js` saíram)                                                                     | feita    |
-| C     | Carregamento e avisos: `#loader`, `#toastBox`, `#offlineBar`, `loading-experience.js`, `connectivity-status.js`, `notificacao.js`; o skeleton da entrada fica no HTML (primeiro quadro) | a fazer  |
+| C     | Carregamento e avisos: `#loader`, `#toastBox`, `#offlineBar`, `loading-experience.js`, `connectivity-status.js`, `notificacao.js`; o skeleton da entrada fica no HTML (primeiro quadro) | feita    |
 | D     | `nielsen-shell-ux.js` (diálogo de saída), `sidebar-branding.js`, `visual-polish.js`, `map-base-layer-switcher.js` (`indigenous-territories-layer.js` só vira TS)                        | a fazer  |
 
 **Parte A** — `src/app/casca/`:
@@ -352,3 +352,21 @@ Não há menu no pé da tela: a navegação é uma só, o ☰ do topo (`#globalS
 lateral) abre a mesma barra lateral como gaveta. O topo é uma linha só e o conteúdo usa a altura
 toda (nenhuma barra soma recuo de menu inferior). O registro do service worker foi para
 `pwa-lifecycle.ts`. Testes: `tests/app/gaveta-do-celular.test.js` e `tests/layout-no-celular.test.js`.
+
+**Parte C** — carregamento e avisos, em `src/app/casca/`, numa raiz própria (`#avisosApp`, no começo
+do `<body>`), fora do `#appScreen` porque a tela de acesso também usa:
+
+```
+avisos.tsx               <Avisos> e montarAvisos() (flushSync), chamado no começo de src/main.ts
+notificacoes.tsx         #toastBox e os cartões .toast (somem em 4,5s; parados sob o mouse, esperam)
+tela-de-carregamento.tsx #loader: etapa no lugar do texto genérico, "Etapa X de Y", demora e
+                         "Tentar novamente" (getLoadingStage); o relógio só corre com ele à vista
+aviso-de-conexao.tsx     #connectivityStatusNotice: "Sem conexão" e "Conexão restabelecida" (3,2s)
+```
+
+O estado fica em `src/app/avisos.ts` (sem React): `avisar(texto, tom)` e
+`mostrarCarregamento(mostrar, titulo, subtitulo, percentual)` continuam sendo
+`window.monitoraToast`/`window.monitoraLoader`, e quem chama antes da montagem não perde o aviso.
+O `#offlineBar` (sempre escondido; só recebia o texto `offline_message`) saiu: o aviso de
+conexão é o `#connectivityStatusNotice`. Ids e classes são os de antes (CSS em `app.css`,
+`loading-experience.css` e `connectivity-status.css`). Testes: `tests/app/avisos.test.js`.
