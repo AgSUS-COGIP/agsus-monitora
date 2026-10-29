@@ -14,6 +14,7 @@ import {
   MarcaDoGoogle,
 } from "./icones-da-entrada.tsx";
 import {
+  atualizarMarcaUmaVez,
   marcaDaEntrada,
   type EstadoDaMarcaDaEntrada,
   type RodapeDaEntrada,
@@ -85,6 +86,8 @@ export type OpcoesDaLigacaoDaEntrada = {
   sessao: SessaoDaEntrada;
   pedido: PedidoDeAcesso;
   documento?: Document;
+  /** A marca pública da tela de acesso (src/app/entrada/marca.ts). */
+  atualizarMarca?: () => unknown;
 };
 
 /** As opções de `montarEntrada` (todas com padrão). */
@@ -261,6 +264,13 @@ export function TelaDeEntrada({ sessao, marca, pedido }: PropsDaTelaDeEntrada) {
   );
 }
 
+/* As fases em que a tela de acesso fica à vista. */
+const FASES_COM_A_TELA_DE_ACESSO: ReadonlySet<FaseDaSessao> = new Set([
+  FASES.DESLOGADO,
+  FASES.SEM_ACESSO,
+  FASES.FALHA_NA_ENTRADA,
+]);
+
 /**
  * O que a fase da sessão muda fora da tela: `#loginScreen` some com o
  * sistema aberto, o `body` ganha `access-request-mode` no pedido de acesso e
@@ -271,6 +281,7 @@ export function ligarEntradaAPagina({
   sessao,
   pedido,
   documento = globalThis.document,
+  atualizarMarca = atualizarMarcaUmaVez,
 }: OpcoesDaLigacaoDaEntrada): () => unknown {
   let anterior: { fase: FaseDaSessao | null; usuarioId: string } = {
     fase: null,
@@ -279,6 +290,8 @@ export function ligarEntradaAPagina({
   const aplicar = () => {
     const { fase, usuario, consultarPedido } = sessao.obter();
     const usuarioId = usuario?.id || "";
+    // A tela de acesso vai aparecer: a marca atual (uma vez por página).
+    if (FASES_COM_A_TELA_DE_ACESSO.has(fase)) void atualizarMarca();
     documento
       .getElementById("loginScreen")
       ?.classList.toggle("hidden", fase === FASES.CONECTADO);

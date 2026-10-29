@@ -50,12 +50,16 @@ import {
 import { telaUsaAsLinhas } from "../lib/telas-com-linhas.ts";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 import { avisar as avisarPadrao } from "./avisos.ts";
+import { criarInicioDaSessao } from "./inicio-da-sessao.ts";
+import type { InicioDaSessao, PartesDoInicio } from "./inicio-da-sessao.ts";
 
 /*
   A carga dos dados do app, sem React.
 
   Na entrada, as consultas (configuração, painéis, mapa, unidades, catálogo de
   abas e, se a tela de entrada as usa, as linhas do monitoramento) saem juntas
+  — configuração, painéis, abas, situação e unidades numa chamada só
+  (`obter_inicio_da_sessao`, src/app/inicio-da-sessao.ts) —
   e cada uma é aplicada na ordem de sempre; a espera é a da mais lenta. Se a
   cópia da sessão (IndexedDB, regras em src/lib/copia-da-sessao.ts) servir, a
   tela abre por ela e as consultas reais atualizam por trás, reaplicando só o
@@ -202,6 +206,8 @@ export type DependenciasDaCarga = {
     assinar(ouvinte: () => void): () => unknown;
     ha(): boolean;
   };
+  /** O início da sessão numa chamada (src/app/inicio-da-sessao.ts). */
+  inicio?: Pick<InicioDaSessao, "partes" | "esquecer">;
   agora?: () => number;
 };
 
@@ -227,6 +233,7 @@ export function criarCarga(
     esqueleto = { esconder: esconderEsqueleto, marcarAtualizacao },
     visaoGeral = estadoDaVisaoGeral,
     pedidos = PEDIDOS_PADRAO,
+    inicio = criarInicioDaSessao({ cliente }),
     agora = () => Date.now(),
     // `configuracao`, `paineis` e `navegacao` vêm sempre; o `{}` é o padrão do JS.
   }: DependenciasDaCarga = {} as DependenciasDaCarga,
@@ -333,22 +340,40 @@ export function criarCarga(
     chama `then`. As linhas do monitoramento só entram com `comLinhas` (alguém
     vai usá-las); sem elas, `monitoramento` fica `null`.
   */
+  /*
+    Configuração, painéis, abas, situação e unidades: do início da sessão (uma
+    chamada, que pode já ter saído junto com o perfil). Usado aqui, ele é
+    esquecido: o próximo "Atualizar dados" pergunta de novo.
+  */
+  function partesDoInicio(): PartesDoInicio {
+    const partes = inicio.partes({
+      config: () => configuracao.consulta(),
+      paineis: () => paineis.consulta(),
+      unidades: () => consultaDeUnidades(),
+      abas: () => abas.consulta(sb()),
+      situacao: () => situacao.consulta(sb()),
+    });
+    inicio.esquecer();
+    return partes;
+  }
+
   function iniciarConsultas({
+    partes,
     monitoramento,
     mapa,
     comLinhas = true,
   }: {
+    partes: PartesDoInicio;
     monitoramento?: ConhecidasDaCarga;
     mapa?: ConhecidasDaCarga;
     comLinhas?: boolean;
-  } = {}) {
-    const iniciar = <T>(consulta: T) => Promise.resolve(consulta);
+  }) {
     return {
-      config: iniciar(configuracao.consulta()),
-      paineis: iniciar(paineis.consulta()),
+      config: partes.config,
+      paineis: partes.paineis,
       mapa: consultaDoMapa(mapa),
-      unidades: iniciar(consultaDeUnidades()),
-      abas: abas.consulta(sb()),
+      unidades: partes.unidades,
+      abas: partes.abas,
       monitoramento:
         comLinhas && podeCarregarMonitoramento()
           ? consultaDoMonitoramento(monitoramento)
@@ -593,7 +618,9 @@ export function criarCarga(
     const comLinhas = telaUsaAsLinhas(navegacao.telaDeEntrada());
     // Sem elas agora, a cópia que serve guarda as linhas para a primeira página que as pedir.
     linhasDaCopia = comLinhas ? null : linhasDaCopiaQueServe;
+    const partes = partesDoInicio();
     const consultas = iniciarConsultas({
+      partes,
       comLinhas,
       monitoramento: linhasDaCopiaQueServe,
       mapa: daCopiaQueServe((dados) =>
@@ -603,7 +630,7 @@ export function criarCarga(
       ),
     });
     // Fora da cópia da sessão: a manutenção é sempre a do banco, nesta entrada.
-    const situacaoDoBanco = situacao.consulta(sb());
+    const situacaoDoBanco = partes.situacao;
     const guardada = await copiaLida;
     // Outra pessoa entrou neste navegador: a cópia de quem saiu vai embora.
     if (guardada && guardada.usuarioId !== sessao.usuarioId)
@@ -657,8 +684,9 @@ export function criarCarga(
       // As linhas, só se alguém as usa agora; lidas antes, ficam para a próxima página que as pedir.
       const comLinhas = pedidos.ha();
       if (!comLinhas && linhasCarregadas) desatualizadas = true;
-      const consultas = iniciarConsultas({ comLinhas });
-      const situacaoDoBanco = situacao.consulta(sb());
+      const partes = partesDoInicio();
+      const consultas = iniciarConsultas({ partes, comLinhas });
+      const situacaoDoBanco = partes.situacao;
       await respostasDasConsultas(consultas);
       await configuracao.carregar({ consulta: consultas.config });
       await carregarPaineis(consultas.paineis);

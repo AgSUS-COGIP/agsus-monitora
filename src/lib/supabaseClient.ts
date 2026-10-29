@@ -58,6 +58,22 @@ function renovarToken(antigo: string): Promise<string | null> {
   return renovacao;
 }
 
+/*
+  Registro de navegação e de auditoria: ninguém espera por eles, e eles não
+  podem se perder quando a pessoa fecha ou troca a página. `keepalive` deixa a
+  chamada terminar depois que a página sai (o corpo é pequeno, bem abaixo do
+  limite de 64 KB do navegador).
+*/
+const RPCS_SEM_ESPERA =
+  /\/rest\/v1\/rpc\/(registrar_navegacao_monitora|registrar_evento_acesso)$/;
+
+function semPrenderAPagina(base: typeof fetch): typeof fetch {
+  return (entrada, opcoes) =>
+    typeof entrada === "string" && RPCS_SEM_ESPERA.test(entrada)
+      ? base(entrada, { ...opcoes, keepalive: true })
+      : base(entrada, opcoes);
+}
+
 export function getSupabaseClient(): SupabaseClient | null {
   if (!hasSupabaseEnv()) return null;
 
@@ -79,7 +95,9 @@ export function getSupabaseClient(): SupabaseClient | null {
       global: {
         fetch: observarRespostasDoBanco(
           comNovasTentativas(
-            (...argumentos) => globalThis.fetch(...argumentos),
+            semPrenderAPagina((...argumentos) =>
+              globalThis.fetch(...argumentos),
+            ),
             { orcamento: criarOrcamento(), renovarToken },
           ),
           avisarTelaAntiga,

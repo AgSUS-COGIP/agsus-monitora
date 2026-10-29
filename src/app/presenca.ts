@@ -31,12 +31,22 @@ import {
     `podeVerPessoasOnline` (admin global e Gestor). Com a lista aberta, relê a
     cada batida; fechada, só a contagem do botão, no máximo a cada 10 min.
 
+  A navegação (abertura de tela e troca de lugar) e a entrada (o evento de
+  entrada com a primeira batida) vão numa chamada só,
+  `registrar_navegacao_monitora` (migration 20261029121700): ela grava o
+  mesmo evento e a mesma presença das duas RPCs acima. Ninguém espera por
+  ela (o cliente a envia com `keepalive`, src/lib/supabaseClient.ts). Banco
+  sem essa função (PGRST202): volta às duas chamadas de antes.
+
   O estado de "Pessoas online" é assinável (`obter()` / `assinar(ouvinte)`).
 */
 
 const RPC_EVENTO_DE_ACESSO = "registrar_evento_acesso";
 const RPC_REGISTRAR_PRESENCA = "registrar_presenca_monitora";
 const RPC_LISTAR_PRESENCA = "listar_presenca_online_monitora";
+const RPC_NAVEGACAO = "registrar_navegacao_monitora";
+/* PostgREST: a função não existe (migration ainda não aplicada). */
+const FUNCAO_AUSENTE = "PGRST202";
 const CHAVE_DA_ABA = "agsus_monitora_client_session_id";
 export const INTERVALO_DA_PRESENCA_MS = 90_000;
 /* Lista fechada: a contagem do botão é relida no máximo a cada 10 min. */
@@ -85,6 +95,9 @@ export type EventoDaNavegacaoNaPresenca = {
   view?: string;
   anterior?: string;
 };
+
+/** Um evento da auditoria que vai junto com a navegação. */
+export type EventoDaNavegacao = { nome: string; tela?: string | null };
 
 /** Detalhes opcionais de um evento da auditoria. */
 export type OpcoesDoEventoDeAcesso = {
@@ -149,6 +162,8 @@ export function criarPresenca({
   let ligada = false;
   let ultimaBatida: number | null = null;
   let ultimaLista: number | null = null;
+  /* O banco não tem registrar_navegacao_monitora: as duas chamadas de antes. */
+  let semNavegacaoNoBanco = false;
 
   /* Só chamado depois de `sb()` conferido (ou dentro de `try`). */
   const sb = () => cliente()!;
@@ -221,21 +236,78 @@ export function criarPresenca({
       p_current_view: lugar,
     });
     if (resposta.error) throw resposta.error;
+    presencaGravada(lugar, resposta.data);
+  }
+
+  /* A presença foi gravada (pela batida ou pela navegação). */
+  function presencaGravada(lugar: string | null, dados: unknown) {
     ultimoLocal = lugar;
     ultimaBatida = agora();
     try {
-      aoRegistrar(resposta.data);
+      aoRegistrar(dados);
     } catch (erro) {
       // Quem ouve a resposta não derruba a presença.
       console.warn("Falha ao tratar a resposta da presença:", erro);
     }
   }
 
+  /*
+    Evento e presença numa chamada só (`registrar_navegacao_monitora`).
+    `presenca`: grava também o lugar atual (a aba precisa estar visível).
+    Rejeita quando a presença não foi gravada; o evento, não: a falha dele só
+    avisa, como em `registrarEvento`.
+  */
+  async function registrarNavegacao({
+    evento = null,
+    presenca = false,
+  }: {
+    evento?: EventoDaNavegacao | null;
+    presenca?: boolean;
+  }) {
+    if (!sb() || !usuarioId()) return;
+    const comPresenca = presenca && visivelNaAba();
+    if (!evento && !comPresenca) return;
+    if (semNavegacaoNoBanco) {
+      if (evento) void registrarEvento(evento.nome, { tela: evento.tela });
+      if (comPresenca) await registrarLocal();
+      return;
+    }
+    const lugar = comPresenca ? local(view()) : null;
+    const resposta = await sb().rpc(RPC_NAVEGACAO, {
+      p_evento: evento?.nome ?? null,
+      p_tela: evento ? (evento.tela ?? view() ?? null) : null,
+      p_origem: "index",
+      p_detalhes: {},
+      p_client_session_id: idDaAba(),
+      p_user_agent: agente(),
+      p_app_version: configuracao.versao(),
+      p_presenca: comPresenca,
+      p_current_view: lugar,
+    });
+    if (
+      (resposta.error as { code?: unknown } | null)?.code === FUNCAO_AUSENTE
+    ) {
+      semNavegacaoNoBanco = true;
+      return registrarNavegacao({ evento, presenca });
+    }
+    if (resposta.error) {
+      if (evento) console.warn("Falha ao registrar auditoria:", resposta.error);
+      throw resposta.error;
+    }
+    if (!comPresenca) return;
+    const dados = resposta.data as { presenca_erro?: unknown } | null;
+    if (dados?.presenca_erro) throw dados.presenca_erro;
+    presencaGravada(lugar, dados);
+  }
+
   /* Ao trocar de página, área ou seção, avisa na hora (sem esperar os 90 s). */
+  function trocouDeLocal() {
+    return Boolean(ligada && batida) && local(view()) !== ultimoLocal;
+  }
+
   function avisarTrocaDeLocal() {
-    if (!ligada || !batida) return;
-    if (local(view()) === ultimoLocal) return;
-    registrarLocal().catch(() => {});
+    if (!trocouDeLocal()) return;
+    registrarNavegacao({ presenca: true }).catch(() => {});
   }
 
   function falhou() {
@@ -269,10 +341,16 @@ export function criarPresenca({
     ultimaLista === null ||
     agora() - ultimaLista >= LISTA_FECHADA_MS;
 
-  async function sincronizar() {
-    if (!sb() || !usuarioId() || !visivelNaAba()) return;
+  /* `evento`: o da entrada, que vai junto com a primeira batida. */
+  async function sincronizar(evento: EventoDaNavegacao | null = null) {
+    if (!sb() || !usuarioId()) return;
+    if (!visivelNaAba()) {
+      if (evento) void registrarEvento(evento.nome, { tela: evento.tela });
+      return;
+    }
     try {
-      await registrarLocal();
+      if (evento) await registrarNavegacao({ evento, presenca: true });
+      else await registrarLocal();
       if (!podeVer()) definir({ visivel: false });
       else if (listaVencida()) await listar();
     } catch {
@@ -298,12 +376,17 @@ export function criarPresenca({
     definir({ visivel: false, aberto: false });
   }
 
-  function iniciar() {
+  /** Liga a presença; `evento` (a entrada) vai junto com a primeira batida. */
+  function iniciar(evento: EventoDaNavegacao | null = null) {
     parar();
     if (!usuarioId()) return;
     ligada = true;
-    if (!visivelNaAba()) return; // começa quando a aba ficar visível
-    void sincronizar();
+    if (!visivelNaAba()) {
+      // A presença começa quando a aba ficar visível; o evento, agora.
+      if (evento) void registrarEvento(evento.nome, { tela: evento.tela });
+      return;
+    }
+    void sincronizar(evento);
     ligarBatida();
   }
 
@@ -339,14 +422,20 @@ export function criarPresenca({
 
   /*
     A navegação avisa: tela aberta → auditoria; qualquer troca (tela, menu,
-    seção) → o lugar na presença. A aba oculta pausa a batida; a que volta a
-    ficar visível retoma. Devolve o cancelamento.
+    seção) → o lugar na presença — as duas numa chamada só. A aba oculta pausa
+    a batida; a que volta a ficar visível retoma. Devolve o cancelamento.
   */
   function acompanhar() {
+    // Uma chamada por navegação: a abertura da tela e o lugar novo juntos.
     const pararNavegacao = navegacao.assinar((evento) => {
-      if (evento.tipo === "abertura" && evento.view !== evento.anterior)
-        void registrarEvento("abertura_tela", { tela: evento.view });
-      avisarTrocaDeLocal();
+      const abriu =
+        evento.tipo === "abertura" && evento.view !== evento.anterior;
+      const presenca = trocouDeLocal();
+      if (!abriu && !presenca) return;
+      registrarNavegacao({
+        evento: abriu ? { nome: "abertura_tela", tela: evento.view } : null,
+        presenca,
+      }).catch(() => {});
     });
     const aoMudarVisibilidade = () => {
       if (visivelNaAba()) retomar();

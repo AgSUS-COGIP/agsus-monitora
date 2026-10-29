@@ -9,7 +9,12 @@
     1. ao avaliar este módulo (é o primeiro import de src/main.ts) — a marca
        guardada da visita anterior, sem rede;
     2. em paralelo — `obter_branding_acesso_publico()`, que traz a identidade
-       atual e não exige autenticação;
+       atual e não exige autenticação. Só quando a tela de acesso vai
+       aparecer: com sessão guardada (`html.sessao-guardada`, script
+       `marcarSessaoGuardada` do index.html) ela não aparece, e a
+       configuração completa (passo 4) atualiza a cópia guardada; se a sessão
+       não servir, a tela de acesso pede a marca ao aparecer
+       (`atualizarMarcaUmaVez`, src/app/entrada/entrada.tsx);
     3. se a RPC respondeu, o cache é atualizado e os campos reaplicados;
     4. depois que o legado carrega TB_CONFIGURACAO, `definirMarcaDaConfiguracao`
        aplica a configuração completa (só as chaves que vieram do banco).
@@ -189,6 +194,14 @@ export function aplicarMarcaGuardadaNoArranque(
   return aplicarMarcaNaTela(guardada, documento, estado);
 }
 
+let marcaPedida: Promise<boolean> | null = null;
+
+/** A busca pública, no máximo uma vez por página (a tela de acesso apareceu). */
+export function atualizarMarcaUmaVez(): Promise<boolean> {
+  marcaPedida ??= atualizarMarcaComBrandingPublico();
+  return marcaPedida;
+}
+
 /**
  * Busca a identidade atual e aplica-a, guardando-a para a próxima visita.
  * Falhar aqui é inofensivo por construção: nada é aplicado e nada é guardado.
@@ -308,7 +321,9 @@ if (typeof document !== "undefined") {
 
   /*
     A busca não é aguardada: o primeiro quadro já foi pintado com o que havia, e
-    esta chamada apenas o corrige quando a resposta chega.
+    esta chamada apenas o corrige quando a resposta chega. Com sessão guardada a
+    tela de acesso não aparece: quem pede é ela, se aparecer.
   */
-  void atualizarMarcaComBrandingPublico();
+  if (!document.documentElement?.classList.contains("sessao-guardada"))
+    void atualizarMarcaUmaVez();
 }

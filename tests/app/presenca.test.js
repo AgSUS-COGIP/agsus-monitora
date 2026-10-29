@@ -31,7 +31,14 @@ function criarDocumento() {
   return documento;
 }
 
-function montar({ perfil = GESTOR, lista = [], erroNaLista = null } = {}) {
+function montar({
+  perfil = GESTOR,
+  lista = [],
+  erroNaLista = null,
+  // O banco sem registrar_navegacao_monitora (migration ainda não aplicada).
+  semNavegacao = false,
+  respostaDaNavegacao = { status: "OK", versao_do_catalogo: "c1" },
+} = {}) {
   const ouvintesDaNavegacao = new Set();
   const documento = criarDocumento();
   let view = "recursos";
@@ -42,6 +49,10 @@ function montar({ perfil = GESTOR, lista = [], erroNaLista = null } = {}) {
         return erroNaLista
           ? { data: null, error: erroNaLista }
           : { data: lista, error: null };
+      if (nome === "registrar_navegacao_monitora")
+        return semNavegacao
+          ? { data: null, error: { code: "PGRST202" } }
+          : { data: respostaDaNavegacao, error: null };
       return { data: null, error: null };
     }),
   };
@@ -113,7 +124,7 @@ describe("auditoria", () => {
     expect(chamadas(cliente, "registrar_evento_acesso")).toHaveLength(1);
   });
 
-  it("a navegação avisa a abertura de tela (só quando muda)", async () => {
+  it("a navegação avisa a abertura de tela (só quando muda), numa chamada", async () => {
     const { presenca, cliente, avisarNavegacao } = montar();
     presenca.acompanhar();
     avisarNavegacao({
@@ -123,12 +134,113 @@ describe("auditoria", () => {
     });
     avisarNavegacao({ tipo: "abertura", view: "nucleo", anterior: "nucleo" });
     await Promise.resolve();
-    const eventos = chamadas(cliente, "registrar_evento_acesso");
+    const eventos = chamadas(cliente, "registrar_navegacao_monitora");
     expect(eventos).toHaveLength(1);
     expect(eventos[0][1]).toMatchObject({
       p_evento: "abertura_tela",
       p_tela: "nucleo",
+      p_origem: "index",
+      p_client_session_id: idDaAba(),
+      p_user_agent: "teste",
+      p_app_version: "V9",
+      // A presença não estava ligada: só o evento.
+      p_presenca: false,
     });
+    expect(chamadas(cliente, "registrar_evento_acesso")).toHaveLength(0);
+  });
+
+  it("abrir outra tela com a presença ligada: evento e lugar numa chamada só", async () => {
+    vi.useFakeTimers();
+    const { presenca, cliente, avisarNavegacao, mudar } = montar();
+    presenca.acompanhar();
+    presenca.iniciar();
+    await vi.advanceTimersByTimeAsync(0);
+    const antes = cliente.rpc.mock.calls.length;
+    mudar("nucleo", "Editais · SEDE");
+    avisarNavegacao({ tipo: "abertura", view: "nucleo", anterior: "recursos" });
+    await vi.advanceTimersByTimeAsync(0);
+    const depois = cliente.rpc.mock.calls.slice(antes);
+    expect(depois.map(([nome]) => nome)).toEqual([
+      "registrar_navegacao_monitora",
+    ]);
+    expect(depois[0][1]).toMatchObject({
+      p_evento: "abertura_tela",
+      p_tela: "nucleo",
+      p_presenca: true,
+      p_current_view: "Editais · SEDE",
+    });
+  });
+
+  it("a entrada vai junto com a primeira batida", async () => {
+    vi.useFakeTimers();
+    const { presenca, cliente } = montar();
+    presenca.iniciar({ nome: "sessao_restaurada", tela: "boot" });
+    await vi.advanceTimersByTimeAsync(0);
+    const navegacao = chamadas(cliente, "registrar_navegacao_monitora");
+    expect(navegacao).toHaveLength(1);
+    expect(navegacao[0][1]).toMatchObject({
+      p_evento: "sessao_restaurada",
+      p_tela: "boot",
+      p_presenca: true,
+      p_current_view: "Recursos · Saúde Indígena",
+    });
+    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(0);
+    expect(chamadas(cliente, "registrar_evento_acesso")).toHaveLength(0);
+    presenca.parar();
+  });
+
+  it("banco sem registrar_navegacao_monitora: as duas chamadas de antes", async () => {
+    vi.useFakeTimers();
+    const { presenca, cliente, avisarNavegacao, mudar } = montar({
+      semNavegacao: true,
+    });
+    presenca.acompanhar();
+    presenca.iniciar();
+    await vi.advanceTimersByTimeAsync(0);
+    mudar("nucleo", "Editais · SEDE");
+    avisarNavegacao({ tipo: "abertura", view: "nucleo", anterior: "recursos" });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(chamadas(cliente, "registrar_evento_acesso")[0][1]).toMatchObject({
+      p_evento: "abertura_tela",
+      p_tela: "nucleo",
+    });
+    expect(chamadas(cliente, "registrar_presenca_monitora").at(-1)[1]).toEqual({
+      p_current_view: "Editais · SEDE",
+    });
+    // Descoberto uma vez: a navegação seguinte já vai direto às duas.
+    mudar("dashboard", "Visão geral · SEDE");
+    avisarNavegacao({
+      tipo: "abertura",
+      view: "dashboard",
+      anterior: "nucleo",
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(chamadas(cliente, "registrar_navegacao_monitora")).toHaveLength(1);
+    presenca.parar();
+  });
+
+  it("presença recusada na navegação (perfil inativo): o lugar não conta como gravado", async () => {
+    vi.useFakeTimers();
+    const { presenca, cliente, avisarNavegacao, mudar } = montar({
+      respostaDaNavegacao: {
+        evento_id: 1,
+        presenca_erro: {
+          codigo: "P0002",
+          mensagem: "Perfil institucional nao localizado.",
+        },
+      },
+    });
+    presenca.acompanhar();
+    presenca.iniciar();
+    await vi.advanceTimersByTimeAsync(0);
+    mudar("nucleo", "Editais · SEDE");
+    avisarNavegacao({ tipo: "menu" });
+    await vi.advanceTimersByTimeAsync(0);
+    // A próxima troca de menu, com o mesmo lugar, tenta de novo.
+    avisarNavegacao({ tipo: "menu" });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(chamadas(cliente, "registrar_navegacao_monitora")).toHaveLength(2);
+    presenca.parar();
   });
 });
 
@@ -195,12 +307,19 @@ describe("presença", () => {
     mudar("nucleo", "Editais · SEDE");
     avisarNavegacao({ tipo: "menu" });
     await vi.advanceTimersByTimeAsync(0);
-    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(2);
+    // A troca de lugar vai pela navegação (uma chamada, só a presença).
+    const troca = chamadas(cliente, "registrar_navegacao_monitora");
+    expect(troca).toHaveLength(1);
+    expect(troca[0][1]).toMatchObject({
+      p_evento: null,
+      p_presenca: true,
+      p_current_view: "Editais · SEDE",
+    });
     await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS);
-    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(3);
+    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(2);
     presenca.parar();
     await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS * 3);
-    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(3);
+    expect(chamadas(cliente, "registrar_presenca_monitora")).toHaveLength(2);
     expect(presenca.obter()).toMatchObject({ visivel: false, aberto: false });
   });
 
