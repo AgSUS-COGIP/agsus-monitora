@@ -409,6 +409,10 @@ export const ACOES_DA_AYA: Readonly<Record<string, AcaoDaAya>> = Object.freeze({
     rotulo: "Abrir Painel das análises",
     view: "analises",
   }),
+  "pre-classificacao": Object.freeze({
+    rotulo: "Abrir Triagem",
+    view: "pre-classificacao",
+  }),
   "avaliacao-documental": Object.freeze({
     rotulo: "Abrir Avaliação documental",
     view: "avaliacao-documental",
@@ -418,7 +422,7 @@ export const ACOES_DA_AYA: Readonly<Record<string, AcaoDaAya>> = Object.freeze({
     view: "recursos",
   }),
   "analisar-recursos": Object.freeze({
-    rotulo: "Abrir Analisar recursos",
+    rotulo: "Abrir Recursos",
     view: "analisar-recursos",
   }),
   entrevistas: Object.freeze({
@@ -426,7 +430,7 @@ export const ACOES_DA_AYA: Readonly<Record<string, AcaoDaAya>> = Object.freeze({
     view: "entrevistas",
   }),
   "conduzir-entrevistas": Object.freeze({
-    rotulo: "Abrir Conduzir entrevistas",
+    rotulo: "Abrir Entrevistas",
     view: "conduzir-entrevistas",
   }),
   classificacao: Object.freeze({
