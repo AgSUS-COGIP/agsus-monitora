@@ -105,7 +105,7 @@ jobs:
 
       # Só biblioteca padrão (python/monitora/ e scripts/pre_classificacao/): sem pip install.
       - name: Configurar Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
