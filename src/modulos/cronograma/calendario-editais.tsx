@@ -14,24 +14,35 @@ import {
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.tsx";
 import { getSupabaseClient } from "../../lib/supabaseClient";
+import type { VisaoDoCalendario } from "../../lib/calendario-editais.ts";
 import {
+  CHAVE_DA_VISAO,
   FILTROS_VAZIOS,
   TIPOS_DA_LEGENDA,
   chaveDoDia,
+  chavesDaSemana,
+  contarEtapasNoIntervalo,
   contarEtapasNoMes,
   editaisComDatasARevisar,
   editaisDoFiltro,
   editalDaLinhaDoTempo,
   etapasDoEdital,
   filtrarEtapas,
+  inicioDaSemana,
+  intervaloDoMes,
   montarGradeDoMes,
   primeiroDoMes,
   proximasEtapas,
   rotuloDaContagem,
+  rotuloDaContagemDaSemana,
+  rotuloDaSemana,
   rotuloDoEdital,
   rotuloDoMes,
+  somarDias,
   somarMeses,
   unidadesDasEtapas,
+  visaoInicial,
+  visaoValida,
 } from "../../lib/calendario-editais.ts";
 import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
 import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
@@ -41,6 +52,7 @@ import {
   Campo,
   ErroAoCarregar,
   PainelDeFiltros,
+  Segmentado,
   TopoDoPainel,
 } from "../../ui/index.ts";
 import { criarEstadoDoCalendario } from "./estado.ts";
@@ -53,6 +65,7 @@ import {
   ProximasEtapas,
   Seletor,
 } from "./partes.tsx";
+import { VistaDaLista, VistaDaSemana } from "./vistas.tsx";
 
 /*
   Cronograma (view `calendario`), módulo do app — a página `#page-calendario`.
@@ -76,6 +89,38 @@ import {
 const EVENTO_CRONOGRAMA_SALVO = "agsus:nucleo-cronograma-saved";
 const TIPOS_DO_FILTRO: readonly (readonly [string, string])[] =
   TIPOS_DA_LEGENDA.map((tipo) => [tipo.id, tipo.rotulo]);
+
+const OPCOES_DE_VISAO = [
+  { valor: "mes", rotulo: "Mês" },
+  { valor: "semana", rotulo: "Semana" },
+  { valor: "lista", rotulo: "Lista" },
+] as const;
+
+/*
+  A vista escolhida fica neste navegador (localStorage), por pessoa. Aba
+  privada ou armazenamento bloqueado: vale só nesta visita.
+*/
+function visaoGuardada(): unknown {
+  try {
+    return globalThis.localStorage?.getItem(CHAVE_DA_VISAO);
+  } catch {
+    return null;
+  }
+}
+function guardarVisao(visao: VisaoDoCalendario) {
+  try {
+    globalThis.localStorage?.setItem(CHAVE_DA_VISAO, visao);
+  } catch {
+    // Sem localStorage: a próxima visita abre na vista padrão.
+  }
+}
+function ehCelular() {
+  try {
+    return Boolean(globalThis.matchMedia?.("(max-width: 640px)").matches);
+  } catch {
+    return false;
+  }
+}
 
 function textoDoStatus({
   carregando,
@@ -115,6 +160,10 @@ export function CalendarioEditais({
     [carga.editais, ids],
   );
   const [mes, setMes] = useState(() => primeiroDoMes(agora()));
+  const [semana, setSemana] = useState(() => inicioDaSemana(agora()));
+  const [visao, setVisao] = useState<VisaoDoCalendario>(() =>
+    visaoInicial(visaoGuardada(), ehCelular()),
+  );
   const [diaAberto, setDiaAberto] = useState("");
   const [editalEscolhido, setEditalEscolhido] = useState("");
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
@@ -144,6 +193,8 @@ export function CalendarioEditais({
     () => montarGradeDoMes(mes, filtradas, { hoje }),
     [mes, filtradas, hojeChave],
   );
+  const chavesDaSemanaAberta = useMemo(() => chavesDaSemana(semana), [semana]);
+  const doMes = intervaloDoMes(mes);
   const unidades = useMemo(() => unidadesDasEtapas(etapas), [etapas]);
   const editaisVisiveis = useMemo(
     () => editaisDoFiltro(editais, filtradas),
@@ -174,16 +225,42 @@ export function CalendarioEditais({
     setFiltros((atuais) => ({ ...atuais, [chave]: valor }));
 
   function moverMes(passo: number) {
-    setMes((atual) => somarMeses(atual, passo));
-    // O dia aberto era do mês anterior; deixá-lo aberto confundiria.
+    // O dia aberto era do mês (ou da semana) anterior; deixá-lo aberto confundiria.
     setDiaAberto("");
+    if (visao === "semana") {
+      const nova = somarDias(semana, 7 * passo);
+      setSemana(nova);
+      // O mês acompanha a semana (pela quarta-feira): voltar ao Mês cai nela.
+      setMes(primeiroDoMes(somarDias(nova, 3)));
+      return;
+    }
+    setMes((atual) => somarMeses(atual, passo));
   }
 
   function irParaHoje() {
     // Volta ao mês corrente sem abrir o popup: "Hoje" é navegação, não consulta.
     setMes(primeiroDoMes(agora()));
+    setSemana(inicioDaSemana(agora()));
     setDiaAberto("");
   }
+
+  function mudarVisao(nova: VisaoDoCalendario) {
+    if (!visaoValida(nova)) return;
+    setVisao(nova);
+    guardarVisao(nova);
+    setDiaAberto("");
+    // A Semana abre na semana de hoje, se o mês à vista é o de hoje; senão na do dia 1.
+    if (nova === "semana" && visao !== "semana") {
+      const hojeAgora = agora();
+      const mesmoMes =
+        primeiroDoMes(hojeAgora).getTime() === primeiroDoMes(mes).getTime();
+      setSemana(inicioDaSemana(mesmoMes ? hojeAgora : mes));
+    }
+  }
+
+  const naSemana = visao === "semana";
+  const passoAnterior = naSemana ? "Semana anterior" : "Mês anterior";
+  const passoSeguinte = naSemana ? "Próxima semana" : "Próximo mês";
 
   function limparFiltros() {
     setFiltros(FILTROS_VAZIOS);
@@ -281,8 +358,8 @@ export function CalendarioEditais({
               data-tour="cronograma-mes-anterior"
               className="btn secondary small"
               type="button"
-              aria-label="Mês anterior"
-              title="Mês anterior"
+              aria-label={passoAnterior}
+              title={passoAnterior}
               onClick={() => moverMes(-1)}
             >
               <i className="fa-solid fa-chevron-left" aria-hidden="true" />
@@ -292,15 +369,15 @@ export function CalendarioEditais({
               data-tour="cronograma-mes-seguinte"
               className="btn secondary small"
               type="button"
-              aria-label="Próximo mês"
-              title="Próximo mês"
+              aria-label={passoSeguinte}
+              title={passoSeguinte}
               onClick={() => moverMes(1)}
             >
               <i className="fa-solid fa-chevron-right" aria-hidden="true" />
             </button>
           </span>
           <h2 id="calMesTitulo" className="ui-titulo" aria-live="polite">
-            {rotuloDoMes(mes)}
+            {naSemana ? rotuloDaSemana(semana) : rotuloDoMes(mes)}
           </h2>
           <button
             id="calHoje"
@@ -318,10 +395,26 @@ export function CalendarioEditais({
                 className="ui-esqueleto ui-esqueleto-linha cal-contador-esqueleto"
                 aria-hidden="true"
               />
+            ) : naSemana ? (
+              rotuloDaContagemDaSemana(
+                contarEtapasNoIntervalo(
+                  filtradas,
+                  chavesDaSemanaAberta[0] ?? "",
+                  chavesDaSemanaAberta[6] ?? "",
+                ),
+              )
             ) : (
               rotuloDaContagem(contarEtapasNoMes(filtradas, mes))
             )}
           </span>
+          <Segmentado
+            rotulo="Vista do calendário"
+            className="cal-visoes"
+            tour="cronograma-visoes"
+            opcoes={OPCOES_DE_VISAO}
+            valor={visao}
+            aoMudar={mudarVisao}
+          />
         </div>
 
         <div
@@ -339,6 +432,7 @@ export function CalendarioEditais({
         <div
           id="calGrade"
           data-tour="cronograma-grade"
+          data-visao={visao}
           aria-busy={primeiraCarga || undefined}
         >
           {erro ? (
@@ -349,6 +443,21 @@ export function CalendarioEditais({
             />
           ) : primeiraCarga ? (
             <GradeEsqueleto />
+          ) : visao === "lista" ? (
+            <VistaDaLista
+              etapas={filtradas}
+              inicio={doMes.inicio}
+              fim={doMes.fim}
+              hojeChave={hojeChave}
+              aoAbrirDia={setDiaAberto}
+            />
+          ) : visao === "semana" ? (
+            <VistaDaSemana
+              etapas={filtradas}
+              chaves={chavesDaSemanaAberta}
+              hojeChave={hojeChave}
+              aoAbrirDia={setDiaAberto}
+            />
           ) : (
             <GradeDoMes
               celulas={celulas}

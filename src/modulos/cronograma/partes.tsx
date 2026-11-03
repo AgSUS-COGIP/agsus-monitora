@@ -7,6 +7,7 @@ import type {
 import { dataLocal, situacaoDaEtapa } from "../../lib/etapas-de-edital.ts";
 import {
   DIAS_SEMANA,
+  corDaUnidade,
   dataExibidaNasProximas,
   etapasDoDia,
   formatarCurto,
@@ -133,12 +134,15 @@ export function ItemDeEtapa({
   marco = "",
   mostrarData = false,
   dataExibida = null,
+  textoDoMarco,
   aoEscolher,
 }: {
   etapa: EtapaDoCalendario;
   marco?: MarcoDaEtapa;
   mostrarData?: boolean;
   dataExibida?: string | null;
+  /** Texto da marca quando não é o próprio `marco` ("começa", "até 20/11"). */
+  textoDoMarco?: string;
   aoEscolher: (editalId: string) => void;
 }) {
   return (
@@ -165,20 +169,37 @@ export function ItemDeEtapa({
           */}
           {marco ? (
             <span className="cal-marco" data-marco={marco}>
-              {marco}
+              {textoDoMarco || marco}
             </span>
           ) : null}
           {etapa.atividade}
         </strong>
         <small>
-          Ed. {etapa.edital} • {etapa.unidade} • {periodoDaEtapa(etapa)}
+          Ed. {etapa.edital} • <BolinhaDaUnidade unidade={etapa.unidade} />
+          {etapa.unidade} • {periodoDaEtapa(etapa)}
         </small>
       </span>
     </button>
   );
 }
 
-const chaveDaEtapa = (etapa: EtapaDoCalendario, indice: number) =>
+/*
+  A cor da unidade (`corDaUnidade`): uma bolinha antes do nome, nunca no
+  lugar dele — seis cores se repetem entre dezenas de unidades. A cor do TIPO
+  continua na barra à esquerda do item e nas bolinhas da grade do mês.
+*/
+export function BolinhaDaUnidade({ unidade }: { unidade: string }) {
+  return (
+    <i
+      className="cal-unidade"
+      data-cor-unidade={corDaUnidade(unidade)}
+      title={unidade}
+      aria-hidden="true"
+    />
+  );
+}
+
+export const chaveDaEtapa = (etapa: EtapaDoCalendario, indice: number) =>
   `${etapa.editalId}:${etapa.ordem}:${etapa.data_inicio}:${indice}`;
 
 /*

@@ -396,6 +396,236 @@
   text-align: center;
 }
 
+/* ── Vistas: alternância, Lista e Semana ─────────────────────────────── */
+
+.cal-visoes {
+  margin-left: var(--space-2);
+}
+/*
+  Itens de grade encolhem abaixo do conteúdo: sem isto, o nome longo (que já
+  corta com reticências) alargava o card e a página rolava de lado no celular.
+*/
+.cal-card > *,
+.cal-inferior .ui-pilha > *,
+.cal-lista-vista > *,
+.cal-lista > li {
+  min-width: 0;
+}
+
+/*
+  Cor da unidade: bolinha antes do nome. Seis séries da paleta, escolhidas por
+  hash do nome (`corDaUnidade`); o tema escuro vem dos próprios tokens.
+*/
+.cal-unidade {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--cor-unidade, var(--text-secondary));
+  vertical-align: 0;
+}
+[data-cor-unidade="1"] {
+  --cor-unidade: var(--series-1);
+}
+[data-cor-unidade="2"] {
+  --cor-unidade: var(--series-2);
+}
+[data-cor-unidade="3"] {
+  --cor-unidade: var(--series-3);
+}
+[data-cor-unidade="4"] {
+  --cor-unidade: var(--series-4);
+}
+[data-cor-unidade="5"] {
+  --cor-unidade: var(--series-5);
+}
+[data-cor-unidade="6"] {
+  --cor-unidade: var(--series-6);
+}
+
+.cal-lista-vista {
+  display: grid;
+  gap: var(--space-3);
+}
+.cal-lista,
+.cal-lista-itens,
+.cal-semana-vista,
+.cal-semana-itens {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* Rola dentro do card, como a linha do tempo, e abre no dia de hoje. */
+.cal-lista {
+  display: grid;
+  gap: var(--space-3);
+  max-height: 560px;
+  overflow-y: auto;
+}
+.cal-lista-dia-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1);
+  padding: var(--space-1);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+}
+.cal-lista-dia-titulo small {
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+.cal-lista-dia.hoje .cal-lista-dia-titulo {
+  border-bottom-color: var(--brand-primary);
+}
+.cal-hoje-selo {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.cal-andamento {
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+.cal-andamento .cal-lista-itens {
+  max-height: 220px;
+  overflow-y: auto;
+}
+.cal-item:focus-visible,
+.cal-mini:focus-visible,
+.cal-semana-cabeca:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: -2px;
+}
+
+/* Semana: sete colunas de etapas ativas; em tela estreita, uma coluna. */
+.cal-semana-vista {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-1-5);
+}
+.cal-semana-dia {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+  min-width: 0;
+  min-height: 160px;
+  padding: var(--space-1-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+.cal-semana-dia.hoje {
+  border-color: var(--brand-primary);
+}
+.cal-semana-cabeca {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.cal-semana-cabeca:hover {
+  background: var(--surface-hover);
+}
+.cal-semana-dia.hoje .cal-numero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+.cal-semana-itens {
+  display: grid;
+  gap: var(--space-1);
+  max-height: 420px;
+  overflow-y: auto;
+}
+.cal-mini {
+  display: grid;
+  gap: var(--space-0-5);
+  width: 100%;
+  padding: var(--space-1) var(--space-1-5);
+  border: 0;
+  border-left: 4px solid var(--cal-cor, var(--text-secondary));
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.cal-mini:hover {
+  background: var(--surface-hover);
+}
+/* O que só atravessa o dia: barra tracejada, sem fundo — é contexto. */
+.cal-mini[data-marca="em andamento"] {
+  border-left-style: dashed;
+  background: transparent;
+}
+.cal-mini-marca {
+  justify-self: start;
+  padding: 0 var(--space-1-5);
+  border: 1px solid var(--state-neutral);
+  border-radius: var(--radius-pill);
+  color: var(--state-neutral);
+  font-size: var(--text-caption);
+  line-height: 1.4;
+}
+.cal-mini[data-marca="começa"] .cal-mini-marca {
+  background: var(--state-neutral);
+  color: var(--text-inverse);
+}
+.cal-mini-nome,
+.cal-mini small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cal-mini-nome {
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.cal-mini small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.cal-semana-vazio {
+  margin: 0;
+  padding: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+@media (max-width: 900px) {
+  .cal-semana-vista {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cal-semana-dia {
+    min-height: 0;
+  }
+}
+
 /*
   Mapeia `data-cor` para a variável. Tabela de tradução, não estilo: cada
   linha existe para casar com um `cor:` do JS.
@@ -429,7 +659,8 @@
 }
 
 @media (max-width: 640px) {
-  .cal-contador {
+  .cal-contador,
+  .cal-visoes {
     margin-left: 0;
   }
   .cal-celula {
