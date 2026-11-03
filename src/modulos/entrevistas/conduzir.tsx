@@ -26,7 +26,7 @@ import {
 } from "../../lib/fila-de-conducao.ts";
 import { importarComRecarga } from "../../lib/importar-com-recarga";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { comemorar } from "../../modules/comemoracao.ts";
+import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
 import {
   Aviso,
   EstadoVazio,

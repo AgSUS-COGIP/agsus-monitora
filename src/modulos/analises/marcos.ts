@@ -19,7 +19,7 @@ import {
   pendentesDaFila,
   situacaoDosEditais,
 } from "../../lib/comemoracao.ts";
-import { avaliarMarco, comemorar } from "../../modules/comemoracao.ts";
+import { avaliarMarco, comemorar } from "../../app/comemoracao-sob-demanda.ts";
 import {
   gravarMetaComemorada,
   lerMetaComemorada,
@@ -103,7 +103,7 @@ export function comemorarMetaDoDia({
     const batida = metaDaEquipeBatida(ritmos);
     if (!batida || lerMetaComemorada(usuario) === hoje) return false;
     gravarMetaComemorada(usuario, hoje);
-    soltar({
+    void soltar({
       texto: TEXTO_DA_META_BATIDA,
       marco: "meta-do-dia",
       forma: "estrela",

@@ -257,6 +257,7 @@ export function ModalDePublicacaoDeAprovados({
       aoFechar={aoFechar}
       fecharAoClicarFora={false}
       cartaoClassName="classificacao-publicar-aprovados"
+      tamanho="grande"
     >
       <div className="classificacao-publicar-corpo">
         <h2 id="classificacaoPublicarAprovadosTitulo">

@@ -15,3 +15,52 @@ export function dataDeAnaliseNoFuturo(
   const dia = new Date(data.getFullYear(), data.getMonth(), data.getDate());
   return dia > hoje;
 }
+
+const texto = (valor: unknown) =>
+  typeof valor === "string" ||
+  typeof valor === "number" ||
+  typeof valor === "boolean"
+    ? String(valor).trim()
+    : "";
+
+const doisDigitos = (numero: number) => String(numero).padStart(2, "0");
+
+/*
+  dd/mm/aaaa, aaaa-mm-dd ou data e hora ISO. Outro formato fica sem data (não
+  adivinha mês/dia trocados).
+*/
+export function dataDaPlanilha(valor: unknown) {
+  const bruto = texto(valor);
+  if (!bruto) return null;
+  let partes = bruto.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (partes)
+    return new Date(
+      Number(partes[3]),
+      Number(partes[2]) - 1,
+      Number(partes[1]),
+    );
+  partes = bruto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (partes)
+    return new Date(
+      Number(partes[1]),
+      Number(partes[2]) - 1,
+      Number(partes[3]),
+    );
+  if (/^\d{4}-\d{2}-\d{2}[T ]/.test(bruto)) {
+    const data = new Date(bruto);
+    return Number.isNaN(data.getTime()) ? null : data;
+  }
+  return null;
+}
+
+/**
+ * O dia da data da análise como chave `aaaa-mm-dd` (no fuso do navegador, o
+ * mesmo do rótulo do gráfico); "" sem data reconhecida. É o formato do
+ * `<input type="date">`, então o clique no gráfico e o campo falam a mesma
+ * língua.
+ */
+export function chaveDoDia(valor: unknown) {
+  const data = dataDaPlanilha(valor);
+  if (!data) return "";
+  return `${data.getFullYear()}-${doisDigitos(data.getMonth() + 1)}-${doisDigitos(data.getDate())}`;
+}

@@ -510,7 +510,11 @@ function CarregarAldeias({
   const [erro, setErro] = useState("");
   const unidade = e.dados?.edital?.id_unidade;
   return (
-    <Modal rotulo="Lista de aldeias do DSEI" aoFechar={aoFechar}>
+    <Modal
+      rotulo="Lista de aldeias do DSEI"
+      aoFechar={aoFechar}
+      tamanho="medio"
+    >
       <h2 className="ui-titulo">Lista de aldeias do DSEI</h2>
       {erro ? (
         <Aviso tom="danger" papel="alert">

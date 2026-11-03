@@ -5,13 +5,22 @@ import { gzipSync } from "node:zlib";
 const DIST_DIR = "dist";
 const KB = 1024;
 
+/*
+  Limites (KB). A entrada é o JavaScript que o index.html baixa antes da tela
+  de acesso (o script principal e os modulepreload): o que só uma tela, um
+  modal, um mapa ou uma comemoração usa vai por import() e fica fora dela.
+  Medido em 03/11/2026: entrada 953 KB bruto / 304 KB gzip; maior JS 459 KB
+  bruto (busca da Aya) / 156 KB gzip (main).
+*/
 const limits = {
-  largestJsRaw: Number(process.env.BUNDLE_MAX_JS_RAW_KB || 2500) * KB,
-  largestJsGzip: Number(process.env.BUNDLE_MAX_JS_GZIP_KB || 700) * KB,
-  totalJsRaw: Number(process.env.BUNDLE_MAX_TOTAL_JS_RAW_KB || 6000) * KB,
-  totalJsGzip: Number(process.env.BUNDLE_MAX_TOTAL_JS_GZIP_KB || 1800) * KB,
-  totalCssRaw: Number(process.env.BUNDLE_MAX_TOTAL_CSS_RAW_KB || 1500) * KB,
-  totalCssGzip: Number(process.env.BUNDLE_MAX_TOTAL_CSS_GZIP_KB || 300) * KB,
+  entryJsRaw: Number(process.env.BUNDLE_MAX_ENTRY_JS_RAW_KB || 1000) * KB,
+  entryJsGzip: Number(process.env.BUNDLE_MAX_ENTRY_JS_GZIP_KB || 320) * KB,
+  largestJsRaw: Number(process.env.BUNDLE_MAX_JS_RAW_KB || 600) * KB,
+  largestJsGzip: Number(process.env.BUNDLE_MAX_JS_GZIP_KB || 180) * KB,
+  totalJsRaw: Number(process.env.BUNDLE_MAX_TOTAL_JS_RAW_KB || 5000) * KB,
+  totalJsGzip: Number(process.env.BUNDLE_MAX_TOTAL_JS_GZIP_KB || 1600) * KB,
+  totalCssRaw: Number(process.env.BUNDLE_MAX_TOTAL_CSS_RAW_KB || 700) * KB,
+  totalCssGzip: Number(process.env.BUNDLE_MAX_TOTAL_CSS_GZIP_KB || 150) * KB,
 };
 
 function walk(directory) {
@@ -56,6 +65,17 @@ if (!js.length) {
   process.exit(1);
 }
 
+/* O JavaScript que o index.html pede de saída (script e modulepreload). */
+const indexHtml = existsSync(`${DIST_DIR}/index.html`)
+  ? readFileSync(`${DIST_DIR}/index.html`, "utf8")
+  : "";
+const entrada = new Set(
+  [...indexHtml.matchAll(/(?:src|href)="\/?(assets\/[^"]+\.js)"/g)].map(
+    (match) => match[1],
+  ),
+);
+const entry = js.filter((arquivo) => entrada.has(arquivo.path));
+
 const largestJsRaw = [...js].sort((a, b) => b.raw - a.raw)[0];
 const largestJsGzip = [...js].sort((a, b) => b.gzip - a.gzip)[0];
 const totals = {
@@ -63,11 +83,16 @@ const totals = {
   jsGzip: total(js, "gzip"),
   cssRaw: total(css, "raw"),
   cssGzip: total(css, "gzip"),
+  entryRaw: total(entry, "raw"),
+  entryGzip: total(entry, "gzip"),
 };
 
 console.log("Orçamento de bundles:");
 console.log(
   `- JavaScript: ${js.length} ficheiro(s), ${formatBytes(totals.jsRaw)} bruto, ${formatBytes(totals.jsGzip)} gzip`,
+);
+console.log(
+  `- Entrada (index.html): ${entry.length} ficheiro(s), ${formatBytes(totals.entryRaw)} bruto, ${formatBytes(totals.entryGzip)} gzip`,
 );
 console.log(
   `- Maior JS bruto: ${largestJsRaw.path} (${formatBytes(largestJsRaw.raw)})`,
@@ -80,6 +105,20 @@ console.log(
 );
 
 const violations = [];
+
+if (!entry.length) {
+  violations.push("Entrada: o index.html gerado não pede nenhum JavaScript.");
+}
+if (totals.entryRaw > limits.entryJsRaw) {
+  violations.push(
+    `Entrada (index.html): ${formatBytes(totals.entryRaw)} bruto; limite ${formatBytes(limits.entryJsRaw)}`,
+  );
+}
+if (totals.entryGzip > limits.entryJsGzip) {
+  violations.push(
+    `Entrada (index.html): ${formatBytes(totals.entryGzip)} gzip; limite ${formatBytes(limits.entryJsGzip)}`,
+  );
+}
 
 if (largestJsRaw.raw > limits.largestJsRaw) {
   violations.push(

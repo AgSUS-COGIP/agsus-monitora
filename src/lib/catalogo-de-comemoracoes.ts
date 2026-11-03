@@ -18,13 +18,13 @@
 */
 
 import { analisePendente } from "./comemoracao.ts";
-import { chaveDoDia } from "./analises-curriculares.ts";
+import { chaveDoDia } from "./data-de-analise.ts";
 import {
   DURACAO_MAXIMA_MS,
   DURACAO_MINIMA_MS,
   EFEITOS,
   NIVEIS,
-} from "./motor-de-efeitos.ts";
+} from "./efeitos-das-comemoracoes.ts";
 
 export type Efeito =
   | "fogos"

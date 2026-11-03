@@ -22,7 +22,7 @@ import {
 } from "../../lib/comemoracao.ts";
 import { semTreinamento } from "../../lib/edital-de-treinamento.ts";
 import { nomeDaArea } from "../../lib/menu-lateral.ts";
-import { comemorar } from "../../modules/comemoracao.ts";
+import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
 import { lerMarcosDaArea } from "./marcos.ts";
 import { linhasDaResposta } from "../../lib/visao-geral.ts";
 
@@ -154,7 +154,7 @@ export function MarcosDoAno({
       };
       setMensagem({ area, texto: mensagemDoMarcoDoAno(marco) });
       // Os fogos do marco: o número desenhado no céu e o agradecimento à equipe.
-      comemorar({
+      void comemorar({
         texto: agradecimentoDoMarco(marco),
         marco: "marco-do-ano",
         forma: formaDoMarco(novo),

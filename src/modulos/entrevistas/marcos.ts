@@ -20,7 +20,7 @@ import {
   estadoGuardadoDasVagas,
   situacaoDasVagas,
 } from "../../lib/comemoracao.ts";
-import { avaliarMarco } from "../../modules/comemoracao.ts";
+import { avaliarMarco } from "../../app/comemoracao-sob-demanda.ts";
 
 export function avaliarMarcosDasEntrevistas({
   usuarioId,

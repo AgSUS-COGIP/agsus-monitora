@@ -50,7 +50,7 @@ import type {
   RefObject,
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.tsx";
-import { comemorar } from "../../modules/comemoracao.ts";
+import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {
@@ -958,7 +958,7 @@ export function Aya({
   function celebrarFimDoTour(concluido: TourEmCurso | null): void {
     if (!concluido) return;
     const nome = String(concluido.rotulo || "").replace(/^(Tour|Trilha): /, "");
-    comemorar({
+    void comemorar({
       texto: concluido.trilha
         ? `Parabéns! Você concluiu a trilha "${nome}".`
         : `Parabéns! Você conheceu a tela ${nome}.`,

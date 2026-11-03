@@ -10,7 +10,7 @@ import {
   gravarArmazenamento as gravar,
   lerArmazenamento as ler,
 } from "../lib/comemoracao.ts";
-import { comemorar } from "./comemoracao.ts";
+import { comemorar } from "../app/comemoracao-sob-demanda.ts";
 import type { JanelaDaComemoracao } from "./comemoracao.ts";
 import type {
   InstanteRecebido,
@@ -88,7 +88,7 @@ export function comemorarAcessoLiberado({
     new Date(agora).toISOString(),
   );
   if (!ligadas) return null;
-  comemorar({
+  void comemorar({
     texto: mensagemDaComemoracao(
       tipo,
       perfil?.nome,

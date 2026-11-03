@@ -6,7 +6,8 @@
   o que estava pendurado apaga essas propriedades do namespace, e apaga-as em
   silêncio — nada estoira, porque quem envolve não usa o que apagou.
 
-  Foi o que aconteceu. Três módulos envolvem `L.tileLayer` no arranque:
+  Foi o que aconteceu. Três módulos envolvem `L.tileLayer` quando o Leaflet chega
+  (src/modulos/mapa-saude-indigena/carregar-leaflet.ts):
 
       map-guard.ts              noWrap, updateWhenIdle, keepBuffer
       map-base-layer-switcher.js  etiqueta a camada com o tipo de base

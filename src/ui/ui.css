@@ -655,6 +655,51 @@ th[aria-sort="descending"] .ui-ordenar i {
   color: var(--state-info);
 }
 
+/* ── Modal padrão (<Modal tamanho>): respiro, largura e coluna ────────── */
+
+.modal-card.ui-modal {
+  --largura-do-modal: 640px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--space-4);
+  width: min(var(--largura-do-modal), calc(100vw - 28px));
+  padding: var(--space-6);
+  border-color: var(--border-subtle);
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+.modal-card.ui-modal-pequeno {
+  --largura-do-modal: 440px;
+}
+.modal-card.ui-modal-grande {
+  --largura-do-modal: 960px;
+}
+/* O formulário (ou o bloco) que envolve o conteúdo segue a mesma coluna. */
+.modal-card.ui-modal > :is(form, div):only-child {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.modal-card.ui-modal :is(h2, h3):first-child {
+  margin: 0;
+  font-size: var(--text-h3);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-h3);
+}
+.modal-card.ui-modal :is(h2, h3):first-child + .ui-texto-secundario {
+  margin: calc(var(--space-3) * -1) 0 0;
+}
+.modal-card.ui-modal p {
+  margin: 0;
+}
+.modal-card.ui-modal .ui-acoes {
+  justify-content: flex-end;
+  padding-top: var(--space-2);
+}
+
 /* ── Gaveta (o <Modal> do app, encostado à direita) ─────────────────── */
 
 .modal.ui-gaveta-fundo {
@@ -1137,6 +1182,15 @@ th[aria-sort="descending"] .ui-ordenar i {
   }
 }
 @media (max-width: 640px) {
+  /* Modal padrão no celular: folha de baixo (mobile-app.css), respiro menor e ações empilhadas. */
+  .modal-card.ui-modal {
+    padding: var(--space-5) var(--space-4);
+    padding-bottom: calc(var(--space-5) + var(--mobile-safe-bottom, 0px));
+  }
+  .modal-card.ui-modal .ui-acoes {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
   /*
     As abas dividem a largura e, se não cabem, descem para a linha de baixo:
     com rolagem lateral, a última ficava cortada; encolhidas abaixo do texto

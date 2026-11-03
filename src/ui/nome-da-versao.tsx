@@ -185,7 +185,11 @@ export function RenomearVersao({
         <i className="fa-solid fa-pen" aria-hidden="true" /> Renomear
       </button>
       {aberto ? (
-        <Modal rotulo="Renomear a versão" aoFechar={() => setAberto(false)}>
+        <Modal
+          rotulo="Renomear a versão"
+          aoFechar={() => setAberto(false)}
+          tamanho="medio"
+        >
           <h2 className="ui-titulo">
             Renomear <NomeDaVersao versao={versao} nome={nome} />
           </h2>

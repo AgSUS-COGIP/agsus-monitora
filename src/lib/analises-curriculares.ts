@@ -33,7 +33,13 @@ import {
 } from "./area-do-painel-de-analises.ts";
 import { sanitizeCsvCell } from "./csv-security";
 import { STATUS_PENDENTES } from "./status-da-analise.ts";
-import { dataDeAnaliseNoFuturo } from "./data-de-analise.ts";
+import {
+  chaveDoDia,
+  dataDaPlanilha,
+  dataDeAnaliseNoFuturo,
+} from "./data-de-analise.ts";
+
+export { chaveDoDia, dataDaPlanilha } from "./data-de-analise.ts";
 import { completarLinhaPeloEnvelope } from "./lista-do-painel-de-analises.ts";
 import { modalidadesDaConcorrencia } from "./modalidades-de-concorrencia.ts";
 import { urlDaPlanilhaGoogle } from "./planilhas.ts";
@@ -119,34 +125,6 @@ export function linhasDoPayload(entrada: unknown): RegistroDaAnalise[] {
 }
 
 /* ── Datas da planilha ─────────────────────────────────────────────── */
-
-/*
-  dd/mm/aaaa, aaaa-mm-dd ou data e hora ISO. Outro formato fica sem data (não
-  adivinha mês/dia trocados).
-*/
-export function dataDaPlanilha(valor: unknown) {
-  const bruto = texto(valor);
-  if (!bruto) return null;
-  let partes = bruto.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (partes)
-    return new Date(
-      Number(partes[3]),
-      Number(partes[2]) - 1,
-      Number(partes[1]),
-    );
-  partes = bruto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (partes)
-    return new Date(
-      Number(partes[1]),
-      Number(partes[2]) - 1,
-      Number(partes[3]),
-    );
-  if (/^\d{4}-\d{2}-\d{2}[T ]/.test(bruto)) {
-    const data = new Date(bruto);
-    return Number.isNaN(data.getTime()) ? null : data;
-  }
-  return null;
-}
 
 /* A data em dd/mm/aaaa; sem formato conhecido, o texto como veio. */
 export function formatarData(valor: unknown) {
@@ -695,20 +673,7 @@ export function tendenciaDiaria(linhas: readonly RegistroDaAnalise[]) {
 
 /* ── Filtro por data (o dia clicado em "Análises por data") ────────── */
 
-const doisDigitos = (numero: number) => String(numero).padStart(2, "0");
 const CHAVE_DO_DIA = /^\d{4}-\d{2}-\d{2}$/;
-
-/**
- * O dia da data da análise como chave `aaaa-mm-dd` (no fuso do navegador, o
- * mesmo do rótulo do gráfico); "" sem data reconhecida. É o formato do
- * `<input type="date">`, então o clique no gráfico e o campo falam a mesma
- * língua.
- */
-export function chaveDoDia(valor: unknown) {
-  const data = dataDaPlanilha(valor);
-  if (!data) return "";
-  return `${data.getFullYear()}-${doisDigitos(data.getMonth() + 1)}-${doisDigitos(data.getDate())}`;
-}
 
 /** Sem filtro de data. */
 export const PERIODO_VAZIO: PeriodoDasAnalises = Object.freeze({

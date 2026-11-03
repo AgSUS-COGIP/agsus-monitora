@@ -1,6 +1,6 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.tsx";
-import { comemorar as comemorarPadrao } from "../../modules/comemoracao.ts";
+import { comemorar as comemorarPadrao } from "../../app/comemoracao-sob-demanda.ts";
 import { GradeDeKpis, Kpi, Modal } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {
@@ -135,7 +135,7 @@ export function EncerramentoDoEdital({
     if (!aberto || comemorados.current.has(aberto.id)) return;
     comemorados.current.add(aberto.id);
     const fogos = fogosDoEncerramento(aberto, estado.obter().fogosJaSoltos);
-    if (fogos) comemorar(fogos);
+    if (fogos) void comemorar(fogos);
   }, [aberto, estado, comemorar]);
 
   if (!aberto) return null;

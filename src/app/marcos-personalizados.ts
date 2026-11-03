@@ -10,7 +10,7 @@ import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
 } from "../componentes/dados-do-monitoramento.ts";
-import { comemorar as comemorarPadrao } from "../modules/comemoracao.ts";
+import { comemorar as comemorarPadrao } from "./comemoracao-sob-demanda.ts";
 import type {
   ConfiguracaoDasComemoracoes,
   MarcoPersonalizado,
@@ -90,7 +90,7 @@ export function avaliarMarcosPersonalizados({
     );
     const [primeiro, ...demais] = alcancados;
     if (!primeiro) return [];
-    comemorar({
+    void comemorar({
       texto: mensagemDoPersonalizado(primeiro),
       itens: demais.map(mensagemDoPersonalizado),
       marco: primeiro.id,
