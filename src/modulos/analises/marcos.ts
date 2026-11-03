@@ -19,7 +19,7 @@ import {
   pendentesDaFila,
   situacaoDosEditais,
 } from "../../lib/comemoracao.ts";
-import { avaliarMarco, comemorar } from "../../modules/comemoracao.ts";
+import { avaliarMarco, comemorar } from "../../app/comemoracao-sob-demanda.ts";
 import {
   gravarMetaComemorada,
   lerMetaComemorada,

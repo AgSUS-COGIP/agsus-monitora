@@ -1,5 +1,13 @@
 import { act } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { montarNucleo } from "../../src/modulos/editais/nucleo.tsx";
 import {
   definirAreaAtual,
@@ -18,6 +26,9 @@ import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 */
 
 const HOJE = new Date(2026, 8, 15, 10);
+
+// O formulário do edital chega por import() (lazy): já baixado, abre no clique.
+beforeAll(() => import("../../src/modulos/editais/modal-do-edital.tsx"));
 
 const UNIDADES = [
   {

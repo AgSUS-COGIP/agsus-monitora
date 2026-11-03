@@ -25,10 +25,11 @@ import { decididoNoPrazo } from "../src/lib/prazo-do-recurso.ts";
 import { enriquecerRecurso } from "../src/lib/recursos-dos-candidatos.ts";
 import { normalizarSituacaoDoSistema } from "../src/lib/situacao-dos-modulos.ts";
 import {
-  avaliarMarco,
   comemoracoesLigadasNoPainel,
   esquecerComemoracoesDoPainel,
 } from "../src/modules/comemoracao.ts";
+// O desenho chega por import(): o aviso aparece depois da promessa.
+import { avaliarMarco } from "../src/app/comemoracao-sob-demanda.ts";
 
 /*
   Marcos e comemorações: só transições vistas por esta pessoa (linha de base
@@ -380,7 +381,7 @@ describe("avaliar um marco na tela", () => {
     requestAnimationFrame: vi.fn(),
   };
 
-  it("primeira vez em silêncio; na transição, o aviso (sem fogos com menos movimento), uma vez", () => {
+  it("primeira vez em silêncio; na transição, o aviso (sem fogos com menos movimento), uma vez", async () => {
     const armazenamento = armazenamentoFalso();
     const decidir = (anterior) =>
       anterior > 0 ? { texto: "Fila zerada!", itens: [] } : null;
@@ -396,6 +397,9 @@ describe("avaliar um marco na tela", () => {
     expect(avaliar(2)).toBeNull();
     expect(document.querySelector(".comemoracao")).toBeNull();
     expect(avaliar(0)).toEqual({ texto: "Fila zerada!", itens: [] });
+    await vi.waitFor(() =>
+      expect(document.querySelector(".comemoracao")).not.toBeNull(),
+    );
     expect(document.querySelector(".comemoracao").textContent).toContain(
       "Fila zerada!",
     );
@@ -406,7 +410,7 @@ describe("avaliar um marco na tela", () => {
     expect(avaliar(0)).toBeNull();
   });
 
-  it("desligadas: guarda o estado, não mostra nada", () => {
+  it("desligadas: guarda o estado, não mostra nada", async () => {
     const armazenamento = armazenamentoFalso();
     const decidir = () => ({ texto: "x", itens: [] });
     avaliarMarco({
@@ -426,10 +430,11 @@ describe("avaliar um marco na tela", () => {
       }),
     ).toBeNull();
     expect(armazenamento.getItem("k")).toBe("0");
+    await new Promise((resolver) => setTimeout(resolver, 20));
     expect(document.querySelector(".comemoracao")).toBeNull();
   });
 
-  it("o × fecha o aviso", () => {
+  it("o × fecha o aviso", async () => {
     const armazenamento = armazenamentoFalso();
     armazenamento.setItem("k", "1");
     avaliarMarco({
@@ -440,6 +445,9 @@ describe("avaliar um marco na tela", () => {
       decidir: () => ({ texto: "Pronto", itens: [] }),
       janela: janelaSemMovimento,
     });
+    await vi.waitFor(() =>
+      expect(document.querySelector(".comemoracao__fechar")).not.toBeNull(),
+    );
     document.querySelector(".comemoracao__fechar").click();
     expect(document.querySelector(".comemoracao")).toBeNull();
   });

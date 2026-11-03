@@ -1,6 +1,6 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.tsx";
-import { comemorar as comemorarPadrao } from "../../modules/comemoracao.ts";
+import { comemorar as comemorarPadrao } from "../../app/comemoracao-sob-demanda.ts";
 import { GradeDeKpis, Kpi, Modal } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {

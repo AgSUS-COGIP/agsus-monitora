@@ -50,7 +50,7 @@ import type {
   RefObject,
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.tsx";
-import { comemorar } from "../../modules/comemoracao.ts";
+import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {

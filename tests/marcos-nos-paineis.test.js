@@ -4,6 +4,13 @@ import {
   comemorarMetaDoDia,
 } from "../src/modulos/analises/marcos.ts";
 import { calcularRitmo } from "../src/lib/ritmo-da-analise.ts";
+import { carregarComemoracao } from "../src/app/comemoracao-sob-demanda.ts";
+
+/* O desenho da comemoração chega por import(): espera ele e o aviso. */
+async function depoisDoDesenho() {
+  await carregarComemoracao();
+  await new Promise((resolver) => setTimeout(resolver, 0));
+}
 
 /*
   Onde os marcos aparecem: o aviso de edital concluído / fila zerada na tela
@@ -44,12 +51,14 @@ describe("marcos de Análises curriculares", () => {
     expect(comemoracao.itens).toEqual([
       "Fila de análises zerada! Obrigado, equipe da SEDE. 🎉",
     ]);
+    await depoisDoDesenho();
     expect(document.querySelector(".comemoracao")).not.toBeNull();
   });
 
   it("comemorações desligadas: guarda o estado em silêncio, sem aviso", async () => {
     expect(await avaliar("Pendente", "ativo", false)).toBeNull();
     expect(await avaliar("Reprovado", "ativo", false)).toBeNull();
+    await depoisDoDesenho();
     expect(document.querySelector(".comemoracao")).toBeNull();
     expect(localStorage.length).toBe(1);
   });
@@ -149,7 +158,7 @@ describe("meta de hoje batida pela equipe (Ritmo da análise)", () => {
     expect(soltar).toHaveBeenCalledTimes(1);
   });
 
-  it("preferência pessoal desligada: sem aviso", () => {
+  it("preferência pessoal desligada: sem aviso", async () => {
     localStorage.setItem("agsus_monitora_comemoracoes_desligadas", "1");
     comemorarMetaDoDia({
       ritmos: batida,
@@ -157,10 +166,11 @@ describe("meta de hoje batida pela equipe (Ritmo da análise)", () => {
       usuario: "u1",
       ligadas: true,
     });
+    await depoisDoDesenho();
     expect(document.querySelector(".comemoracao")).toBeNull();
   });
 
-  it("prefers-reduced-motion: só o aviso, sem os fogos", () => {
+  it("prefers-reduced-motion: só o aviso, sem os fogos", async () => {
     window.matchMedia = () => ({ matches: true });
     comemorarMetaDoDia({
       ritmos: batida,
@@ -168,6 +178,7 @@ describe("meta de hoje batida pela equipe (Ritmo da análise)", () => {
       usuario: "u1",
       ligadas: true,
     });
+    await depoisDoDesenho();
     const aviso = document.querySelector(".comemoracao");
     expect(aviso?.textContent).toContain("Meta de hoje batida pela equipe!");
     expect(document.querySelector("canvas")).toBeNull();

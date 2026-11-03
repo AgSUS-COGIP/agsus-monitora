@@ -22,8 +22,8 @@ import {
   mapaDaVisaoGeral,
 } from "../../lib/visao-geral-da-area.ts";
 import { criarCarregadorDeMunicipios } from "../mapa-de-projetos/carregador.ts";
-import { MapaDeProjetos } from "../mapa-de-projetos/mapa-de-projetos.tsx";
-import { MapaSaudeIndigena } from "../mapa-saude-indigena/mapa-saude-indigena.tsx";
+// Os mapas (e o Leaflet) baixam quando montam: ./mapas-sob-demanda.tsx.
+import { MapaDeProjetos, MapaSaudeIndigena } from "./mapas-sob-demanda.tsx";
 import { BoasVindas, MarcosDoAno } from "./boas-vindas.tsx";
 import {
   buscarAcompanhamentoNoSupabase,

@@ -134,26 +134,23 @@ describe("os guardas não podem mutilar o namespace do Leaflet", () => {
     A primeira versão deste teste instalava só o `map-guard` e dava verde — e a
     camada continuou a não existir em produção. Faltavam dois: o switcher de
     base e o zoom-range também envolvem `L.tileLayer`, e ambos correm DEPOIS do
-    guarda em `src/main.ts`. O que o guarda restaurava, eles voltavam a apagar.
+    guarda no arranque dos mapas. O que o guarda restaurava, eles voltavam a apagar.
 
-    Esta ordem é a de `src/main.ts` e tem de continuar a sê-lo. Um teste que
-    instale um instalador só volta a dar verde sobre uma aplicação partida.
+    Esta ordem é a de `carregarLeaflet`
+    (src/modulos/mapa-saude-indigena/carregar-leaflet.ts, quando um mapa monta)
+    e o teste chama a função de verdade: um teste que instale um instalador só
+    volta a dar verde sobre uma aplicação partida.
   */
   const arrancarComoAAplicacao = async () => {
-    const { installLeafletMapGuard } =
-      await import("../src/modules/map-guard.ts");
-    const { installMapBaseLayerSwitcher } =
-      await import("../src/modules/map-base-layer-switcher.js");
-    const { installMapZoomRange } =
-      await import("../src/modules/map-zoom-range.ts");
-    const { installIndigenousTerritoriesLayer } =
-      await import("../src/modules/indigenous-territories-layer.js");
-
+    const { carregarLeaflet } =
+      await import("../src/modulos/mapa-saude-indigena/carregar-leaflet.ts");
+    await carregarLeaflet({ janela: window });
+    const L = window.L;
     return {
-      guarda: installLeafletMapGuard(),
-      switcher: installMapBaseLayerSwitcher(),
-      zoom: installMapZoomRange(),
-      terras: installIndigenousTerritoriesLayer(),
+      guarda: L.__agsusMapGuardInstalled === true,
+      switcher: L.__agsusBaseLayerSwitcherInstalled === true,
+      zoom: L.__agsusZoomRangeInstalled === true,
+      terras: L.__agsusIndigenousTerritoriesInstalled === true,
     };
   };
 

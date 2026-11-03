@@ -639,6 +639,7 @@ function ModalDeDesempate({
       rotuloId="classificacaoDesempateTitulo"
       aoFechar={aoFechar}
       cartaoClassName="classificacao-desempate"
+      tamanho="medio"
     >
       <form onSubmit={enviar}>
         <h2 id="classificacaoDesempateTitulo">

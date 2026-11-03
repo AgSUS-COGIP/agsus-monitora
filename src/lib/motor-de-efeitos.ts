@@ -38,17 +38,25 @@ import type {
   ShowDeFogos,
 } from "./fogos.ts";
 import type { AmostrarTexto } from "./fogos-formas.ts";
+import {
+  DURACAO_MAXIMA_MS,
+  DURACAO_MINIMA_MS,
+  DURACAO_PADRAO_MS,
+  EFEITOS,
+  NIVEIS,
+} from "./efeitos-das-comemoracoes.ts";
+import type { NomeDoEfeito, NomeDoNivel } from "./efeitos-das-comemoracoes.ts";
 
-export type NomeDoEfeito =
-  | "fogos"
-  | "confete"
-  | "serpentina"
-  | "estrelas"
-  | "coracoes"
-  | "baloes"
-  | "aya"
-  | "combinado";
-export type NomeDoNivel = "suave" | "normal" | "festa";
+export {
+  DURACAO_MAXIMA_MS,
+  DURACAO_MINIMA_MS,
+  DURACAO_PADRAO_MS,
+  EFEITOS,
+  NIVEIS,
+  ROTULOS_DOS_EFEITOS,
+  ROTULOS_DOS_NIVEIS,
+} from "./efeitos-das-comemoracoes.ts";
+export type { NomeDoEfeito, NomeDoNivel } from "./efeitos-das-comemoracoes.ts";
 
 /** Uma leva de partículas: quando, de que peça, quantas e de onde. */
 export interface LoteDoMotor {
@@ -172,43 +180,6 @@ export type CenaParaNascer = Pick<
   "largura" | "altura" | "escala" | "aleatorio" | "paleta"
 >;
 
-export const EFEITOS: readonly NomeDoEfeito[] = Object.freeze([
-  "fogos",
-  "confete",
-  "serpentina",
-  "estrelas",
-  "coracoes",
-  "baloes",
-  "aya",
-  "combinado",
-]);
-
-export const ROTULOS_DOS_EFEITOS = Object.freeze({
-  fogos: "Fogos",
-  confete: "Confete",
-  serpentina: "Serpentina",
-  estrelas: "Chuva de estrelas",
-  coracoes: "Corações",
-  baloes: "Balões",
-  aya: "Aya comemorando",
-  combinado: "Combinado",
-});
-
-/*
-  Intensidade: quanto de partícula (multiplicador) e o show de fogos
-  equivalente (src/lib/fogos.ts INTENSIDADES).
-*/
-export const NIVEIS = Object.freeze({
-  suave: Object.freeze({ quantidade: 0.55, fogos: "pequeno" }),
-  normal: Object.freeze({ quantidade: 1, fogos: "cheio" }),
-  festa: Object.freeze({ quantidade: 1.7, fogos: "festa" }),
-});
-export const ROTULOS_DOS_NIVEIS = Object.freeze({
-  suave: "Suave",
-  normal: "Normal",
-  festa: "Festa",
-});
-
 /* Os nomes antigos das intensidades dos fogos, no nível equivalente. */
 const NIVEL_DOS_FOGOS: Readonly<Record<string, NomeDoNivel>> = Object.freeze({
   pequeno: "suave",
@@ -225,9 +196,6 @@ export const nivelDaIntensidade = (intensidade: unknown): NomeDoNivel =>
         intensidade as string
       ] || "normal";
 
-export const DURACAO_PADRAO_MS = 5000;
-export const DURACAO_MINIMA_MS = 2000;
-export const DURACAO_MAXIMA_MS = 15000;
 /* Partículas vivas do motor ao mesmo tempo (os fogos têm o teto deles). */
 export const LIMITE_DO_MOTOR = 900;
 

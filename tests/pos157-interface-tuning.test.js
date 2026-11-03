@@ -159,8 +159,10 @@ describe("branding independente da sidebar", () => {
 
   it("é inicializado antes da moldura de Configurações", () => {
     expect(main.indexOf("initSidebarBranding();")).toBeGreaterThan(-1);
+    // A moldura de Configurações monta sob demanda (carregarConfiguracoes).
+    expect(main.indexOf("function carregarConfiguracoes")).toBeGreaterThan(-1);
     expect(main.indexOf("initSidebarBranding();")).toBeLessThan(
-      main.indexOf("montarConfiguracoes();"),
+      main.indexOf("function carregarConfiguracoes"),
     );
   });
 });

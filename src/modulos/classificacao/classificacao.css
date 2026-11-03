@@ -206,11 +206,6 @@
 
 /* ── Registro do empate ─────────────────────────────────────────────── */
 
-.classificacao-desempate form {
-  display: grid;
-  gap: var(--space-3);
-  min-width: min(520px, 90vw);
-}
 .classificacao-ordem {
   display: grid;
   gap: var(--space-1);
@@ -537,12 +532,7 @@
   gap: var(--space-1);
 }
 
-/* Publicar como lista de aprovados (publicar-aprovados.jsx) */
-.classificacao-publicar-corpo {
-  display: grid;
-  gap: var(--space-3);
-  width: min(760px, 92vw);
-}
+/* Publicar como lista de aprovados (publicar-aprovados.tsx): respiro e largura do <Modal tamanho="grande">. */
 .classificacao-publicar-detalhe ul,
 .classificacao-revisao ul {
   display: grid;

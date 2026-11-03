@@ -55,6 +55,11 @@ const { criarCarregadorDeMunicipios } =
   await import("../../src/modulos/mapa-de-projetos/carregador.ts");
 const { criarEstadoDaVisaoGeral, CHAVE_DAS_COLUNAS, CHAVE_DOS_FILTROS } =
   await import("../../src/modulos/visao-geral/estado.ts");
+// Os mapas chegam por import() (mapas-sob-demanda.tsx): já baixados, montam na hora.
+// O Leaflet é o falso de cada teste (globalThis.L), sem CDN.
+const { carregarMapasDaVisaoGeral } =
+  await import("../../src/modulos/visao-geral/mapas-sob-demanda.tsx");
+await carregarMapasDaVisaoGeral({ leaflet: async () => {} });
 
 const ETAPA_PERIGOSA = `"');alert(1);('" <img src=x onerror=alert(1)> d'água`;
 
@@ -808,7 +813,11 @@ describe("boas-vindas e marcos do ano", () => {
     });
     const marco = secao.querySelector(".marcos-do-ano");
     expect(marco.textContent).toContain("Saúde Indígena passou de");
-    // E os fogos do marco, com o agradecimento à equipe (o número vai no céu).
+    // E os fogos do marco, com o agradecimento à equipe (o número vai no céu);
+    // o desenho chega por import() (src/app/comemoracao-sob-demanda.ts).
+    await vi.waitFor(() =>
+      expect(document.querySelector(".comemoracao")).not.toBeNull(),
+    );
     expect(document.querySelector(".comemoracao").textContent).toContain(
       "7.500 análises concluídas em 2026. Obrigado, equipe da Saúde Indígena!",
     );

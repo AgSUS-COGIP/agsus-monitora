@@ -246,6 +246,11 @@ no app principal e Tom Select em análises. Não crie um terceiro.
 ou 880px (detalhe). Formulário longo não vai em modal pequeno: use página ou drawer.
 Em React, `<Modal>` (`src/ui/modal.tsx`) já faz o portal, o `Esc`, o foco preso e a volta
 do foco; o legado ainda tem modais próprios (`#editModal`, `#searchModal`).
+Modal novo usa `tamanho`: `pequeno` (confirmação, até 440px), `medio` (formulário curto, até
+640px) ou `grande` (listas e prévias, até 960px). O cartão já traz o respiro (`--space-6`), o
+título, o espaço entre os blocos e as ações à direita; no celular, folha de baixo em uma coluna
+com as ações empilhadas. Sem `tamanho`, o cartão não tem respiro: só para quem monta
+`.modal-head` + `.modal-body` ou um cartão próprio (`cartaoClassName`).
 
 ### Chip, badge e alerta — `.chip`, `.alert`
 

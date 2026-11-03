@@ -32,7 +32,8 @@ import {
   type TipoPersonalizado,
 } from "../../lib/catalogo-de-comemoracoes.ts";
 import { EFEITOS, ROTULOS_DOS_EFEITOS } from "../../lib/motor-de-efeitos.ts";
-import { comemorar, semMovimento } from "../../modules/comemoracao.ts";
+import { semMovimento } from "../../modules/comemoracao.ts";
+import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
 import { Aviso, Campo, Segmentado } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {

@@ -625,6 +625,7 @@ function ModalDeAjuste({
       rotuloId="agendaAjusteTitulo"
       aoFechar={aoFechar}
       cartaoClassName="agenda-ajuste"
+      tamanho="medio"
     >
       <form onSubmit={aplicar}>
         <h2 id="agendaAjusteTitulo">{item.nome}</h2>
@@ -707,6 +708,7 @@ function ConfirmarGerar({
       rotuloId="agendaConfirmarTitulo"
       aoFechar={aoFechar}
       cartaoClassName="agenda-confirmar"
+      tamanho="pequeno"
     >
       <h2 id="agendaConfirmarTitulo">Gerar a agenda de novo?</h2>
       <p>

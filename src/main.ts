@@ -16,8 +16,6 @@ import "./styles/mobile-table-cards.css";
 import "./styles/connectivity-status.css";
 import "./styles/google-profile-photo.css";
 import "./styles/platform-shell.css";
-import "./styles/map-base-layer-switcher.css";
-import "./styles/indigenous-territories-layer.css";
 import "./styles/nielsen-shell-ux.css";
 import "./styles/post157-interface-tuning.css";
 import "./styles/barra-lateral.css";
@@ -44,10 +42,6 @@ import "./modulos/aya/aya.css";
 import "./modulos/aya/tour/tour.css";
 import "./modulos/mapa-saude-indigena/mapa-saude-indigena.css";
 import "./modulos/mapa-de-projetos/mapa-de-projetos.css";
-import { installLeafletMapGuard } from "./modules/map-guard.ts";
-import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";
-import { installMapZoomRange } from "./modules/map-zoom-range.ts";
-import { installIndigenousTerritoriesLayer } from "./modules/indigenous-territories-layer.js";
 import { montarAvisos } from "./app/casca/avisos.tsx";
 import { montarCasca } from "./app/casca/casca.tsx";
 // O sistema depois de entrar (navegação, carga, presença, moldura): src/app/sistema.ts.
@@ -56,10 +50,11 @@ import { instalarCarregamento } from "./app/carregamento.ts";
 import { initVisualPolish } from "./modules/visual-polish.js";
 import { initSidebarBranding } from "./modules/sidebar-branding.js";
 import {
+  EVENTO_SECAO_ABERTA,
   organizarConfiguracoesEmSecoes,
   SECOES,
 } from "./modulos/configuracoes/secoes.ts";
-import { montarConfiguracoes } from "./modulos/configuracoes/configuracoes.tsx";
+import { importarComRecarga } from "./lib/importar-com-recarga";
 import { initPwaLifecycle } from "./modules/pwa-lifecycle.ts";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.ts";
 import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
@@ -160,10 +155,6 @@ ligarSistema();
 montarEntrada();
 
 installCsvBlobSecurityGuard();
-installLeafletMapGuard();
-installMapBaseLayerSwitcher();
-installMapZoomRange();
-installIndigenousTerritoriesLayer();
 installSessionLifecycle({
   aoExpirar: (mensagem) => sessaoDoApp.mostrarMensagem(mensagem, "warn"),
 });
@@ -188,9 +179,34 @@ instalarCarregamento();
 initVisualPolish();
 // A logo e a cor gravadas da barra lateral (a escolha é de Configurações › Aparência).
 initSidebarBranding();
-// O esqueleto das seções de Configurações, depois a moldura e as seções em React (portais).
+/*
+  O esqueleto das seções de Configurações já; a moldura e as seções em React
+  (portais, src/modulos/configuracoes/configuracoes.tsx) só para quem abre a
+  página (quem administra): baixam na primeira seção aberta com a página
+  ativa, ou antes, com o mouse em Configurações no menu.
+*/
 organizarConfiguracoesEmSecoes();
-montarConfiguracoes();
+const baixarConfiguracoes = importarComRecarga(
+  () => import("./modulos/configuracoes/configuracoes.tsx"),
+);
+let configuracoesPedidas: Promise<unknown> | null = null;
+function carregarConfiguracoes() {
+  configuracoesPedidas ??= baixarConfiguracoes()
+    .then(({ montarConfiguracoes }) => montarConfiguracoes())
+    .catch((erro: unknown) => {
+      configuracoesPedidas = null;
+      console.error("Falha ao abrir Configurações:", erro);
+      window.monitoraToast?.(
+        "Não foi possível abrir Configurações. Tente de novo.",
+        "error",
+      );
+    });
+  return configuracoesPedidas;
+}
+document.addEventListener(EVENTO_SECAO_ABERTA, () => {
+  if (document.getElementById("page-config")?.classList.contains("active"))
+    void carregarConfiguracoes();
+});
 initPwaLifecycle();
 initGoogleProfilePhoto();
 initNielsenShellUx();
@@ -422,6 +438,7 @@ window.automacaoController = telaSobDemanda({
 
 // Mouse ou foco no item do menu: a tela começa a baixar antes do clique.
 registrarPreCarga((view, secao) => {
+  if (view === "config") void carregarConfiguracoes();
   const daSecao = {
     acessos: window.acessosController,
     modulos: window.modulosController,

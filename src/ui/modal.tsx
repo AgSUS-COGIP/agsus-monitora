@@ -19,7 +19,19 @@ import { classes } from "./classes.ts";
   continua chamando `aoFechar`, e quem usa decide se pergunta antes de fechar.
 
   Sem título visível (a busca global), `rotulo` dá o nome do diálogo.
+
+  `tamanho` (pequeno, medio, grande) é o modal padrão: o cartão ganha o
+  respiro (padding), a largura da variante e o conteúdo em coluna, com o
+  mesmo espaço entre título, campos e ações — quem usa só escreve o
+  conteúdo. Sem `tamanho`, o cartão é livre: o layout vem de quem usa
+  (`.modal-head` + `.modal-body`, ou a classe própria em `cartaoClassName`).
+    - pequeno: confirmação curta (até 440 px);
+    - medio: formulário de poucos campos (até 640 px);
+    - grande: listas, tabelas e prévias (até 960 px).
+  No celular (mobile-app.css) todos ocupam a largura toda, em uma coluna.
 */
+
+export type TamanhoDoModal = "pequeno" | "medio" | "grande";
 
 const FOCAVEIS = [
   "a[href]",
@@ -44,6 +56,7 @@ export interface PropriedadesDoModal {
   fecharAoClicarFora?: boolean;
   className?: string;
   cartaoClassName?: string;
+  tamanho?: TamanhoDoModal;
   tour?: string;
   children?: ReactNode;
 }
@@ -56,6 +69,7 @@ export function Modal({
   fecharAoClicarFora = true,
   className = "",
   cartaoClassName = "",
+  tamanho,
   tour,
   children,
 }: PropriedadesDoModal) {
@@ -121,7 +135,14 @@ export function Modal({
           aoFechar();
       }}
     >
-      <div ref={cartao} className={classes("modal-card", cartaoClassName)}>
+      <div
+        ref={cartao}
+        className={classes(
+          "modal-card",
+          tamanho && `ui-modal ui-modal-${tamanho}`,
+          cartaoClassName,
+        )}
+      >
         {children}
       </div>
     </div>,

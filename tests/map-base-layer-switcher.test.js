@@ -2,7 +2,11 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const source = readFileSync("src/modules/map-base-layer-switcher.js", "utf8");
-const main = readFileSync("src/main.ts", "utf8");
+// Os mapas instalam as guardas quando o Leaflet chega (sob demanda).
+const carga = readFileSync(
+  "src/modulos/mapa-saude-indigena/carregar-leaflet.ts",
+  "utf8",
+);
 const css = readFileSync("src/styles/map-base-layer-switcher.css", "utf8");
 
 describe("seletor Mapa | Satélite", () => {
@@ -60,13 +64,15 @@ describe("seletor Mapa | Satélite", () => {
   });
 
   it("é instalado depois do guard do Leaflet e carrega o CSS próprio", () => {
-    const guardCall = main.indexOf("installLeafletMapGuard();");
-    const switcherCall = main.indexOf("installMapBaseLayerSwitcher();");
+    const guardCall = carga.indexOf("guarda.installLeafletMapGuard();");
+    const switcherCall = carga.indexOf("fundo.installMapBaseLayerSwitcher();");
     expect(guardCall).toBeGreaterThan(-1);
     expect(switcherCall).toBeGreaterThan(guardCall);
-    expect(main).toContain('import "./styles/map-base-layer-switcher.css";');
-    expect(main).toContain(
-      'import { installMapBaseLayerSwitcher } from "./modules/map-base-layer-switcher.js";',
+    expect(carga).toContain(
+      'import("../../styles/map-base-layer-switcher.css")',
+    );
+    expect(carga).toContain(
+      'import("../../modules/map-base-layer-switcher.js")',
     );
   });
 

@@ -1,7 +1,8 @@
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { lazy, Suspense, useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.tsx";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { safeHttpUrl } from "../../lib/sanitize";
+import { importarComRecarga } from "../../lib/importar-com-recarga.ts";
 import {
   canImportApprovedList,
   canManageEditais,
@@ -29,7 +30,6 @@ import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { Selo, TabelaInfinita, TopoDoPainel } from "../../ui/index.ts";
 import { criarEstadoDoNucleo } from "./estado.ts";
 import { PainelOperacional } from "./painel-operacional.tsx";
-import { ModalDoEdital } from "./modal-do-edital.tsx";
 import { ModalLinhaDoTempo } from "./modal-linha-do-tempo.tsx";
 import type { ItemDoResumo } from "../../lib/editais-do-nucleo.ts";
 import type { LinhaDoMonitoramento } from "../../componentes/tipos-do-monitoramento.ts";
@@ -300,6 +300,19 @@ function LinhaDoEdital({
   );
 }
 
+/*
+  O formulário do edital (com o editor de cronograma) só baixa no clique em
+  Novo/Editar. Versão nova publicada com a página aberta: recarrega em vez de
+  quebrar.
+*/
+const ModalDoEdital = lazy(
+  importarComRecarga(() =>
+    import("./modal-do-edital.tsx").then((modulo) => ({
+      default: modulo.ModalDoEdital,
+    })),
+  ),
+);
+
 function ModalAberto({
   estado,
   modal,
@@ -307,12 +320,14 @@ function ModalAberto({
 }: PropriedadesDoNucleo & { modal: ModalDoNucleo | null }) {
   if (modal?.tipo === "edital")
     return (
-      <ModalDoEdital
-        key={modal.abertura}
-        estado={estado}
-        id={modal.id}
-        agora={agora}
-      />
+      <Suspense fallback={null}>
+        <ModalDoEdital
+          key={modal.abertura}
+          estado={estado}
+          id={modal.id}
+          agora={agora}
+        />
+      </Suspense>
     );
   if (modal?.tipo === "regras-triagem")
     return (

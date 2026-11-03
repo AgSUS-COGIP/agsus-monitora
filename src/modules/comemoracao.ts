@@ -1,7 +1,4 @@
-import {
-  comemoracoesLigadasNaResposta,
-  trocarEstadoGuardado,
-} from "../lib/comemoracao.ts";
+import { comemoracoesLigadasNaResposta } from "../lib/comemoracao.ts";
 import {
   alfaDoRastro,
   brilhoDaParticula,
@@ -141,18 +138,6 @@ interface ClienteDoPainel {
   rpc?: (
     funcao: string,
   ) => PromiseLike<{ data?: unknown; error?: unknown } | undefined>;
-}
-
-/** As opções de `avaliarMarco`; `A` é o estado guardado, `C` a comemoração. */
-export interface OpcoesDoMarco<A, C> {
-  armazenamento?: ArmazenamentoSimples | null;
-  chave: string;
-  atual: unknown;
-  ligadas: boolean;
-  decidir: (anterior: A) => C | null | undefined;
-  confete?: string | boolean;
-  doc?: Document;
-  janela?: JanelaDaComemoracao;
 }
 
 /*
@@ -1034,30 +1019,4 @@ export function comemoracoesLigadasNoPainel(
 /** Só para os testes: esquece a leitura do liga/desliga. */
 export function esquecerComemoracoesDoPainel(): void {
   consultaDoPainel = null;
-}
-
-/**
- * Um tipo de marco num painel: troca o estado guardado (linha de base na
- * primeira vez) e, se `decidir(anterior)` devolver `{ texto, itens, forma,
- * marco }` e as comemorações estiverem ligadas, comemora (`marco` é o id
- * do catálogo: a configuração dele decide o efeito). O estado é guardado
- * mesmo desligado, para que religar não traga o que aconteceu no meio.
- */
-export function avaliarMarco<A, C extends OpcoesDaComemoracao>({
-  armazenamento = globalThis.window?.localStorage,
-  chave,
-  atual,
-  ligadas,
-  decidir,
-  confete = "cheio",
-  doc = globalThis.document,
-  janela = globalThis.window,
-}: OpcoesDoMarco<A, C>): C | null {
-  const anterior = trocarEstadoGuardado({ armazenamento, chave, atual });
-  if (anterior === null || !ligadas) return null;
-  // O estado guardado é o JSON que o próprio painel gravou (`atual`).
-  const comemoracao = decidir(anterior as A);
-  if (!comemoracao) return null;
-  comemorar({ ...comemoracao, confete, doc, janela });
-  return comemoracao;
 }
