@@ -16,11 +16,11 @@
   "rewrites": [
     {
       "source": "/:area(saude-indigena|sede|projetos|paineis|administracao)/:caminho*",
-      "destination": "/index.html"
+      "destination": "/"
     },
     {
       "source": "/sem-acesso",
-      "destination": "/index.html"
+      "destination": "/"
     }
   ],
   "headers": [
