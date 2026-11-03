@@ -23,16 +23,28 @@ O card do calendário tem a alternância Mês · Semana · Lista (`Segmentado`, 
 `radiogroup`). A escolha fica no `localStorage` deste navegador
 (`agsus:cronograma:visao`); sem escolha guardada, abre em Mês no computador e
 em Lista no celular. As três vistas usam as mesmas etapas filtradas e abrem o
-mesmo popup do dia.
+mesmo popup do dia, que lista tudo o que está ativo naquele dia.
 
-- **Lista**: um grupo por dia em que alguma etapa começa ou termina, com as
-  marcas "começa" e "último dia". O que atravessa o primeiro dia mostrado (hoje,
-  no mês corrente) aparece uma vez só, no bloco "Em andamento", com a data final.
-  A lista rola dentro do card e abre em hoje; ‹ › andam de mês em mês.
-- **Semana**: sete dias com as etapas ativas em cada um; ‹ › andam de semana.
-- A bolinha antes da unidade tem a cor da unidade (`corDaUnidade`, hash do nome
-  sobre `--series-1..6`). A cor do tipo de etapa continua na barra do item e nas
-  bolinhas da grade do mês, que não mudaram de sentido.
+**Uma cor só: a do tipo de etapa** (a da legenda). A unidade é texto, sem cor
+própria, e o rótulo do tipo vai escrito ao lado ("● Entrevistas") — a cor
+nunca é o único sinal.
+
+- **Mês**: como uma agenda. Cada etapa é uma faixa "unidade – etapa" (sem o
+  "DSEI " da frente; o nome inteiro no `title`) que atravessa os dias do
+  intervalo, um pedaço por semana (`faixasDaSemana`). Até três faixas por dia;
+  o resto vira "+N mais", e o clique no dia abre o popup. A legenda só aparece
+  aqui. No celular as faixas não cabem: o dia mostra as bolinhas dos tipos e o
+  total. Embaixo, "Próximas etapas" (as 5 seguintes) com "Ver todas na Lista".
+- **Lista**: um grupo por dia em que alguma etapa começa ou termina ("Ter, 3 de
+  novembro"), com "início" e "último dia" em texto discreto à direita; dentro
+  do dia, pela ordem da legenda e depois pela unidade. No mês de hoje ela
+  começa hoje (os dias anteriores ficam atrás de um botão) e o que já está em
+  andamento aparece uma vez, em "Acontecendo agora · N etapas", recolhido
+  quando são mais de três. Rola com a página, sem rolagem dentro do card.
+- **Semana**: sete dias com as etapas ativas em cada um, na mesma linha da
+  Lista; ‹ › andam de semana.
+- Na Lista e na Semana, "Próximas etapas" sai (seria a mesma informação) e a
+  linha do tempo ocupa a largura toda.
 
 ## Carregamento
 
@@ -56,5 +68,5 @@ conferem o cliente Supabase instalado, RPCs de leitura, filtros, datas, callback
 snapshots. `tests/componentes/calendario-editais.test.js` verifica navegação por mês,
 área, cache, filtros, modal e foco. `tests/calendario-editais.test.js` cobre normalização,
 intervalos, concorrência e falhas; `tests/calendario-editais-lista.test.js`, as regras
-da Lista e da Semana (pontas do dia, "Em andamento", bordas de mês e de fuso). As regras compartilhadas são verificadas também por
+da Lista, da Semana e das faixas do Mês (pontas do dia, "Acontecendo agora", ordem no dia, bordas de mês e de fuso). As regras compartilhadas são verificadas também por
 `tests/etapas-de-edital.test.js` e `tests/datas-do-cronograma.test.js`.

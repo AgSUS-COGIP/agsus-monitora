@@ -35,7 +35,15 @@ export type CelulaDoCalendario = {
   total: number;
   pontos: { tipo: TipoDaEtapa; total: number }[];
 };
-export type MarcoDaEtapa = "" | "início" | "fim";
+/** Um pedaço de etapa numa linha (semana) da grade do mês: colunas 0 a 6. */
+export type FaixaDaSemana = {
+  etapa: EtapaDoCalendario;
+  de: number;
+  ate: number;
+  faixa: number;
+  continuaAntes: boolean;
+  continuaDepois: boolean;
+};
 export type EditalComDataARevisar = {
   edital: string;
   etapasComProblema: number;

@@ -4,15 +4,17 @@ import {
   chaveDoDia,
   chavesDaSemana,
   contarEtapasNoIntervalo,
-  corDaUnidade,
   diasDaLista,
   emAndamentoNoDia,
   etapasAtivasNoDia,
+  faixasDaSemana,
   inicioDaSemana,
   intervaloDoMes,
   marcaNoDia,
   montarEtapasDosEditais,
   rotuloDaSemana,
+  rotuloDoNumeroDoEdital,
+  unidadeCurta,
   visaoInicial,
 } from "../src/lib/calendario-editais.ts";
 
@@ -82,7 +84,7 @@ describe("diasDaLista", () => {
   const { inicio, fim } = intervaloDoMes(new Date(2026, 10, 15));
 
   it("agrupa por dia só o que começa ou termina, sem repetir o período longo", () => {
-    const dias = diasDaLista(TODAS, inicio, fim);
+    const dias = diasDaLista(TODAS, inicio, fim, 2026);
     expect(dias.map((dia) => dia.chave)).toEqual([
       "2026-11-01",
       "2026-11-03",
@@ -90,7 +92,7 @@ describe("diasDaLista", () => {
       "2026-11-20",
       "2026-11-30",
     ]);
-    expect(dias[0].titulo).toBe("1 de novembro de 2026 · domingo");
+    expect(dias[0].titulo).toBe("Dom, 1 de novembro");
     expect(
       dias.map((dia) =>
         dia.itens.map(({ etapa, marca }) => `${etapa.atividade}:${marca}`),
@@ -201,18 +203,117 @@ describe("semana", () => {
   });
 });
 
-describe("cor da unidade e vista inicial", () => {
-  it("a cor é estável, de 1 a 6, e ignora acento e caixa", () => {
-    const cor = corDaUnidade("DSEI Alto Rio Negro");
-    expect(cor).toBeGreaterThanOrEqual(1);
-    expect(cor).toBeLessThanOrEqual(6);
-    expect(corDaUnidade("DSEI Alto Rio Negro")).toBe(cor);
-    expect(corDaUnidade("dsei alto rio negro")).toBe(cor);
-    expect(corDaUnidade("CASAI São Paulo")).toBe(
-      corDaUnidade("CASAI Sao Paulo"),
+describe("dentro do dia: pela legenda, depois pela unidade", () => {
+  const varias = montarEtapasDosEditais(
+    [
+      { id: 1, unidade: "DSEI Xingu", edital: "1/2026", cronograma_total: 2 },
+      {
+        id: 2,
+        unidade: "DSEI Alto Rio Purus",
+        edital: "2/2026",
+        cronograma_total: 2,
+      },
+    ],
+    [
+      [
+        {
+          atividade: "Período de Entrevistas",
+          data_inicio: "2026-11-03",
+          data_fim: "2026-11-03",
+          ordem: 1,
+        },
+        {
+          atividade: "Prazo de recurso",
+          data_inicio: "2026-11-03",
+          data_fim: "2026-11-03",
+          ordem: 2,
+        },
+      ],
+      [
+        {
+          atividade: "Período de Entrevistas",
+          data_inicio: "2026-11-03",
+          data_fim: "2026-11-03",
+          ordem: 1,
+        },
+        {
+          atividade: "Resultado final do processo seletivo",
+          data_inicio: "2026-11-03",
+          data_fim: "2026-11-03",
+          ordem: 2,
+        },
+      ],
+    ],
+  ).etapas;
+
+  it("Recursos, Resultado final, Entrevistas; empate pela unidade", () => {
+    const [dia] = diasDaLista(varias, "2026-11-01", "2026-11-30", 2026);
+    expect(
+      dia.itens.map(({ etapa }) => `${etapa.tipo.rotulo}:${etapa.unidade}`),
+    ).toEqual([
+      "Recursos:DSEI Xingu",
+      "Resultado final:DSEI Alto Rio Purus",
+      "Entrevistas:DSEI Alto Rio Purus",
+      "Entrevistas:DSEI Xingu",
+    ]);
+  });
+});
+
+describe("faixasDaSemana (o mês como agenda)", () => {
+  const semana = chavesDaSemana(inicioDaSemana(new Date(2026, 10, 1)));
+
+  it("cada etapa vira uma faixa das colunas em que está ativa, sem repetir", () => {
+    const { faixas, ocultas } = faixasDaSemana(TODAS, semana);
+    const resumo = faixas.map(
+      ({ etapa, de, ate, faixa, continuaAntes, continuaDepois }) =>
+        `${etapa.atividade}:${de}-${ate}@${faixa}${continuaAntes ? "<" : ""}${continuaDepois ? ">" : ""}`,
     );
+    // O recurso vem de outubro e segue para a semana seguinte; as inscrições
+    // vão de domingo a terça.
+    expect(resumo).toEqual(["Prazo de recurso:0-6@0<>", "Inscrições:0-2@1"]);
+    expect(ocultas).toEqual([0, 0, 0, 0, 0, 0, 0]);
   });
 
+  it("acima do limite, a faixa sai e conta no '+N mais' de cada dia dela", () => {
+    const { faixas, ocultas } = faixasDaSemana(TODAS, semana, 1);
+    expect(faixas.map(({ etapa }) => etapa.atividade)).toEqual([
+      "Prazo de recurso",
+    ]);
+    expect(ocultas).toEqual([1, 1, 1, 0, 0, 0, 0]);
+  });
+
+  it("reaproveita a altura que ficou livre e corta no fim do mês", () => {
+    const fimDoMes = chavesDaSemana(inicioDaSemana(new Date(2026, 10, 30)));
+    const { faixas } = faixasDaSemana(TODAS, fimDoMes);
+    expect(
+      faixas.map(({ etapa, de, ate, faixa, continuaDepois }) => [
+        etapa.atividade,
+        de,
+        ate,
+        faixa,
+        continuaDepois,
+      ]),
+    ).toEqual([["Entrevistas", 1, 3, 0, false]]);
+  });
+});
+
+describe("textos curtos", () => {
+  it("tira o 'DSEI ' da frente; o resto fica como está", () => {
+    expect(unidadeCurta("DSEI Alto Rio Purus")).toBe("Alto Rio Purus");
+    expect(unidadeCurta("dsei - Litoral Sul")).toBe("Litoral Sul");
+    expect(unidadeCurta("CASAI São Paulo")).toBe("CASAI São Paulo");
+    expect(unidadeCurta("DSEI")).toBe("DSEI");
+  });
+
+  it("o edital sai como está guardado, sem inventar ano nem repetir 'Ed.'", () => {
+    expect(rotuloDoNumeroDoEdital("112/2026")).toBe("Ed. 112/2026");
+    expect(rotuloDoNumeroDoEdital("115")).toBe("Ed. 115");
+    expect(rotuloDoNumeroDoEdital("Edital 115")).toBe("Ed. 115");
+    expect(rotuloDoNumeroDoEdital("Ed. 115")).toBe("Ed. 115");
+  });
+});
+
+describe("vista inicial e cabeçalho do dia", () => {
   it("guardada vale; senão Mês no computador e Lista no celular", () => {
     expect(visaoInicial("semana", true)).toBe("semana");
     expect(visaoInicial(null, false)).toBe("mes");
@@ -220,9 +321,12 @@ describe("cor da unidade e vista inicial", () => {
     expect(visaoInicial("ano", false)).toBe("mes");
   });
 
-  it("o cabeçalho do dia é por extenso, com o dia da semana", () => {
-    expect(cabecalhoDoDiaDaLista("2026-11-03")).toBe(
-      "3 de novembro de 2026 · terça-feira",
+  it("o cabeçalho do dia é curto; o ano só quando não é o de hoje", () => {
+    expect(cabecalhoDoDiaDaLista("2026-11-03", 2026)).toBe(
+      "Ter, 3 de novembro",
+    );
+    expect(cabecalhoDoDiaDaLista("2027-01-01", 2026)).toBe(
+      "Sex, 1 de janeiro de 2027",
     );
   });
 });

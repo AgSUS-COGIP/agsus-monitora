@@ -126,10 +126,14 @@ afterEach(async () => {
 
 const $ = (id) => document.getElementById(id);
 const celula = (chave) => document.querySelector(`[data-dia="${chave}"]`);
-const pontos = (chave) =>
-  [...celula(chave).querySelectorAll(".cal-ponto")].map((ponto) =>
-    Number(ponto.textContent),
-  );
+/* As faixas do mês que passam pelo dia: "Manaus – Prazo de recurso…". */
+const faixas = (chave) =>
+  [...document.querySelectorAll(".cal-faixa")]
+    .filter(
+      (faixa) => faixa.dataset.inicio <= chave && chave <= faixa.dataset.fim,
+    )
+    .map((faixa) => faixa.textContent);
+const RECURSO = "Manaus – Prazo de recurso do resultado preliminar";
 const contador = () => $("calContador").textContent;
 const etapasDaLinhaDoTempo = () =>
   [...document.querySelectorAll("#calTimeline .cal-passo strong")].map(
@@ -266,8 +270,8 @@ describe("carregamento", () => {
       "1 edital(is) não puderam ser lidos. O calendário está incompleto.",
       "warn",
     );
-    expect(pontos("2026-09-14")).toEqual([1]);
-    expect(pontos("2026-09-22")).toEqual([1]);
+    expect(faixas("2026-09-14")).toEqual([RECURSO]);
+    expect(faixas("2026-09-22")).toEqual([RECURSO]);
   });
 });
 
@@ -286,16 +290,40 @@ describe("grade do mês", () => {
   });
 
   /*
-    Um recurso de nove dias contado nos nove empurrava para cima a contagem de
-    todos eles e escondia o que era pontual.
+    Como numa agenda: a etapa longa é uma faixa legível ("unidade – etapa")
+    que atravessa os dias, um pedaço por semana — não um número em cada dia.
   */
-  it("conta a etapa longa no dia em que começa e no dia em que termina, e não no meio", () => {
-    expect(pontos("2026-09-14")).toEqual([1]);
-    expect(celula("2026-09-18").classList.contains("vazio")).toBe(true);
-    // O fim do recurso e as inscrições, de tipos diferentes.
-    expect(pontos("2026-09-22")).toEqual([1, 1]);
+  it("mostra a etapa longa como faixa, do dia em que começa ao dia em que termina", () => {
+    expect(faixas("2026-09-14")).toEqual([RECURSO]);
+    expect(faixas("2026-09-18")).toEqual([RECURSO]);
+    expect(celula("2026-09-18").getAttribute("aria-label")).toBe(
+      "18 de setembro: 1 etapa",
+    );
+    // Um pedaço por semana: o primeiro segue para a semana seguinte.
+    const pedacos = [...document.querySelectorAll(".cal-faixa")].filter(
+      (faixa) => faixa.textContent === RECURSO,
+    );
+    expect(pedacos.map((faixa) => faixa.dataset.inicio)).toEqual([
+      "2026-09-14",
+      "2026-09-20",
+    ]);
+    expect(pedacos[0].hasAttribute("data-continua-depois")).toBe(true);
+    expect(pedacos[1].hasAttribute("data-continua-antes")).toBe(true);
+    // O fim do recurso e as inscrições; a unidade sem o "DSEI " da frente.
+    expect(faixas("2026-09-22")).toEqual([
+      RECURSO,
+      "CASAI São Paulo – Inscrições",
+    ]);
+    expect(faixas("2026-09-23")).toEqual([]);
+    expect(celula("2026-09-23").classList.contains("vazio")).toBe(true);
     // A data que veio como timestamp cai no dia certo.
-    expect(pontos("2026-09-29")).toEqual([1]);
+    expect(faixas("2026-09-29")).toEqual([
+      "Manaus – Homologação do resultado final",
+    ]);
+    // O nome inteiro e o tipo ficam no title.
+    expect(
+      document.querySelector('.cal-faixa[data-inicio="2026-09-29"]').title,
+    ).toContain("DSEI Manaus · Ed. 10/2026");
   });
 
   it("navega entre meses e volta a hoje", async () => {
@@ -307,6 +335,48 @@ describe("grade do mês", () => {
   });
 });
 
+describe("dia cheio no mês", () => {
+  it("mostra três faixas e '+N mais'; o dia abre com todas", async () => {
+    const supabase = supabaseFalso();
+    const nomes = [
+      "Entrevista A",
+      "Entrevista B",
+      "Entrevista C",
+      "Entrevista D",
+      "Entrevista E",
+    ];
+    supabase.rpc.mockImplementation(async (nome, argumentos) => {
+      if (nome === "get_nucleo_cronograma_resumo")
+        return { data: RESUMO, error: null };
+      if (nome === "listar_etapas_do_cronograma")
+        return { data: null, error: { code: "PGRST202" } };
+      if (argumentos.p_monitoramento_id !== 1)
+        return { data: { etapas: [] }, error: null };
+      return {
+        data: {
+          etapas: nomes.map((atividade, indice) => ({
+            atividade,
+            data_inicio: "2026-09-24",
+            data_fim: "2026-09-24",
+            ordem: indice + 1,
+          })),
+        },
+        error: null,
+      };
+    });
+    await montar({ supabase });
+    expect(faixas("2026-09-24")).toHaveLength(3);
+    const mais = document.querySelector(".cal-mais");
+    expect(mais.textContent).toBe("+2 mais");
+    // O "+N mais" deixa o clique passar para o dia, que é o botão.
+    await clicar(celula("2026-09-24"));
+    expect($("calDiaTitulo").textContent).toBe(
+      "Quinta-feira, 24 de setembro — 5 etapas",
+    );
+    expect(document.querySelectorAll("#calDiaLista .cal-item")).toHaveLength(5);
+  });
+});
+
 describe("filtros", () => {
   beforeEach(async () => {
     await montar();
@@ -315,7 +385,7 @@ describe("filtros", () => {
   it("busca cada palavra, em qualquer ordem, sem acento", async () => {
     await digitar($("calBusca"), "final homologacao");
     expect(contador()).toBe("1 etapa no mês");
-    expect(pontos("2026-09-29")).toEqual([1]);
+    expect(faixas("2026-09-29")).toHaveLength(1);
     expect(celula("2026-09-14").classList.contains("vazio")).toBe(true);
   });
 
@@ -334,7 +404,9 @@ describe("filtros", () => {
     );
     expect($("calBusca").value).toBe("");
     expect($("calOcultarConcluidas").checked).toBe(false);
-    expect(pontos("2026-09-10")).toEqual([1]);
+    expect(faixas("2026-09-10")).toEqual([
+      "Manaus – Entrevista com candidatos",
+    ]);
     expect(contador()).toBe("4 etapas no mês");
   });
 
@@ -357,15 +429,24 @@ describe("popup do dia", () => {
     await montar();
   });
 
-  it("abre com as etapas que começam ou terminam no dia, marcando a célula", async () => {
+  it("abre com as etapas ativas no dia, marcando a célula", async () => {
     await clicar(celula("2026-09-22"));
     expect($("calDiaTitulo").textContent).toBe(
       "Terça-feira, 22 de setembro — 2 etapas",
     );
-    const marcos = [
-      ...document.querySelectorAll("#calDiaLista .cal-marco"),
-    ].map((marco) => marco.textContent);
-    expect(marcos).toEqual(["fim"]);
+    const marcas = [
+      ...document.querySelectorAll("#calDiaLista .cal-item-marca"),
+    ].map((marca) => marca.textContent);
+    expect(marcas).toEqual(["último dia"]);
+    // O tipo vai escrito, não só na cor; a unidade é texto, sem bolinha própria.
+    const linhas = [
+      ...document.querySelectorAll("#calDiaLista .cal-item small"),
+    ];
+    expect(linhas.map((linha) => linha.textContent)).toEqual([
+      "Recursos · DSEI Manaus · Ed. 10/2026 · 14/09 a 22/09 (9 dias)",
+      "Inscrições · CASAI São Paulo · Ed. 11/2026 · 22/09",
+    ]);
+    expect(document.querySelector("#calDiaLista .cal-unidade")).toBeNull();
     expect(celula("2026-09-22").getAttribute("aria-current")).toBe("true");
     expect(document.activeElement).toBe($("calDiaFechar"));
   });
@@ -501,7 +582,7 @@ describe("área atual", () => {
 
     await act(async () => definirAreaAtual("sede"));
     expect(contador()).toBe("1 etapa no mês");
-    expect(pontos("2026-09-14")).toEqual([]);
+    expect(faixas("2026-09-14")).toEqual([]);
 
     await act(async () => definirAreaAtual("projetos"));
     expect(contador()).toBe("0 etapas no mês");
@@ -526,6 +607,12 @@ describe("vistas Mês, Semana e Lista", () => {
         `.cal-lista-dia[data-dia="${chave}"] .cal-item`,
       ),
     ].map((item) => item.querySelector("strong").textContent);
+  const marcasDoDia = (chave) =>
+    [
+      ...document.querySelectorAll(
+        `.cal-lista-dia[data-dia="${chave}"] .cal-item-marca`,
+      ),
+    ].map((marca) => marca.textContent);
 
   beforeEach(() => localStorage.clear());
   afterEach(() => localStorage.clear());
@@ -543,39 +630,95 @@ describe("vistas Mês, Semana e Lista", () => {
     expect(document.querySelectorAll(".cal-celula")).toHaveLength(42);
   });
 
-  it("Lista agrupa por dia o que começa ou termina, com 'Em andamento' no topo", async () => {
+  it("Lista começa hoje, com 'Acontecendo agora' no topo e os dias anteriores recolhidos", async () => {
     await montar();
     await clicar(visao("lista"));
     expect($("calGrade").dataset.visao).toBe("lista");
     expect(document.querySelector(".cal-celula")).toBeNull();
+    // Na Lista o tipo vai escrito em cada linha: a legenda sai.
+    expect($("calLegenda")).toBeNull();
     expect(titulosDaLista()).toEqual([
-      "Em andamento em 15/09",
-      "14 de setembro de 2026 · segunda-feira",
-      "22 de setembro de 2026 · terça-feira",
-      "29 de setembro de 2026 · terça-feira",
+      "Ter, 22 de setembro",
+      "Ter, 29 de setembro",
     ]);
-    // O recurso de 14 a 22/09 aparece no começo, no fim e uma vez no bloco.
+    // O recurso de 14 a 22/09 está acontecendo: uma vez só, até quando.
     const andamento = document.querySelector(".cal-andamento");
-    expect(andamento.textContent).toContain(
+    const cabeca = andamento.querySelector(".cal-andamento-cabeca");
+    expect(cabeca.textContent).toBe("Acontecendo agora · 1 etapa");
+    expect(cabeca.getAttribute("aria-expanded")).toBe("true");
+    expect(andamento.querySelector("strong").textContent).toBe(
       "Prazo de recurso do resultado preliminar",
     );
-    expect(andamento.querySelector(".cal-marco").textContent).toBe("até 22/09");
+    expect(andamento.querySelector(".cal-item-marca").textContent).toBe(
+      "até 22/09",
+    );
+    await clicar(cabeca);
+    expect(andamento.querySelector(".cal-lista-itens").hidden).toBe(true);
+
+    // 14/09 já passou: fica atrás do botão, sem rolagem dentro do card.
+    const anteriores = document.querySelector(".cal-anteriores");
+    expect(anteriores.textContent).toBe("Ver 1 dia anterior deste mês");
+    await clicar(anteriores);
+    expect(titulosDaLista()[0]).toBe("Seg, 14 de setembro");
     expect(itensDoDia("2026-09-14")).toEqual([
-      "começaPrazo de recurso do resultado preliminar",
+      "Prazo de recurso do resultado preliminar",
     ]);
+    expect(marcasDoDia("2026-09-14")).toEqual(["início"]);
+    // Dentro do dia, pela ordem da legenda: Recursos antes de Inscrições.
     expect(itensDoDia("2026-09-22")).toEqual([
-      "último diaPrazo de recurso do resultado preliminar",
+      "Prazo de recurso do resultado preliminar",
       "Inscrições",
     ]);
-    // A cor da unidade: uma bolinha antes do nome, igual em toda parte.
-    const bolinhas = [
-      ...document.querySelectorAll(
-        '.cal-lista-dia[data-dia="2026-09-22"] .cal-unidade',
-      ),
-    ];
-    expect(bolinhas).toHaveLength(2);
-    expect(bolinhas[0].dataset.corUnidade).toMatch(/^[1-6]$/);
+    expect(marcasDoDia("2026-09-22")).toEqual(["último dia"]);
+    expect(
+      document.querySelector('.cal-lista-dia[data-dia="2026-09-22"] .cal-tipo')
+        .textContent,
+    ).toBe("Recursos");
+    expect(document.querySelector(".cal-unidade")).toBeNull();
+    // As próximas etapas só aparecem no Mês: aqui seriam a mesma lista.
+    expect($("calProximas")).toBeNull();
     expect(localStorage.getItem("agsus:cronograma:visao")).toBe("lista");
+  });
+
+  it("'Acontecendo agora' nasce recolhido com mais de três etapas", async () => {
+    const supabase = supabaseFalso();
+    supabase.rpc.mockImplementation(async (nome, argumentos) => {
+      if (nome === "get_nucleo_cronograma_resumo")
+        return { data: RESUMO, error: null };
+      if (nome === "listar_etapas_do_cronograma")
+        return { data: null, error: { code: "PGRST202" } };
+      if (argumentos.p_monitoramento_id !== 1)
+        return { data: { etapas: [] }, error: null };
+      return {
+        data: {
+          etapas: [1, 2, 3, 4].map((ordem) => ({
+            atividade: `Análise curricular ${ordem}`,
+            data_inicio: "2026-09-10",
+            data_fim: `2026-09-2${ordem}`,
+            ordem,
+          })),
+        },
+        error: null,
+      };
+    });
+    localStorage.setItem("agsus:cronograma:visao", "lista");
+    await montar({ supabase });
+    const cabeca = document.querySelector(".cal-andamento-cabeca");
+    expect(cabeca.textContent).toBe("Acontecendo agora · 4 etapas");
+    expect(cabeca.getAttribute("aria-expanded")).toBe("false");
+    expect(
+      document.querySelector(".cal-andamento .cal-lista-itens").hidden,
+    ).toBe(true);
+  });
+
+  it("'Ver todas na Lista' sai do Mês para a Lista no dia de hoje", async () => {
+    await montar();
+    expect($("calProximas").querySelectorAll(".cal-item")).toHaveLength(4);
+    await clicar($("calMesSeguinte"));
+    await clicar($("calVerNaLista"));
+    expect(visao("lista").getAttribute("aria-checked")).toBe("true");
+    expect($("calMesTitulo").textContent).toBe("Setembro 2026");
+    expect(titulosDaLista()[0]).toBe("Ter, 22 de setembro");
   });
 
   it("clicar numa linha abre o mesmo popup do dia", async () => {
@@ -602,7 +745,7 @@ describe("vistas Mês, Semana e Lista", () => {
     await montar();
     await clicar(visao("lista"));
     await escolher($("calUnidade"), "CASAI São Paulo");
-    expect(titulosDaLista()).toEqual(["22 de setembro de 2026 · terça-feira"]);
+    expect(titulosDaLista()).toEqual(["Ter, 22 de setembro"]);
 
     await clicar($("calMesSeguinte"));
     await clicar($("calMesSeguinte"));

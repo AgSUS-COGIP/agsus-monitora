@@ -4,7 +4,7 @@ import {
   editaisComCronograma,
   montarEtapasDosEditais,
   montarGradeDoMes,
-  etapasDoDia,
+  etapasAtivasNoDia,
   proximasEtapas,
 } from "../src/lib/calendario-editais.ts";
 import { criarEstadoDoCalendario } from "../src/modulos/cronograma/estado.ts";
@@ -79,9 +79,13 @@ describe("normalização das respostas do calendário", () => {
       hoje: true,
       total: 1,
     });
-    expect(etapasDoDia(etapas, "2026-09-15")[0].marco).toBe("início");
-    expect(etapasDoDia(etapas, "2026-09-16")).toEqual([]);
-    expect(etapasDoDia(etapas, "2026-09-17")[0].marco).toBe("fim");
+    // O dia do meio do intervalo também conta: a faixa passa por ele.
+    expect(grade.find((c) => c.chave === "2026-09-16")?.total).toBe(1);
+    expect(etapasAtivasNoDia(etapas, "2026-09-15")[0].marca).toBe("começa");
+    expect(etapasAtivasNoDia(etapas, "2026-09-16")[0].marca).toBe(
+      "em andamento",
+    );
+    expect(etapasAtivasNoDia(etapas, "2026-09-17")[0].marca).toBe("último dia");
     expect(proximasEtapas(etapas, new Date(2026, 8, 16))).toEqual(etapas);
     const campoMalformado = { toString: null, valueOf: null };
     const comCamposInvalidos = montarEtapasDosEditais(

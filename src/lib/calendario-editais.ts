@@ -1,10 +1,10 @@
 import type {
   CelulaDoCalendario,
   EditalComCronograma,
+  FaixaDaSemana,
   EditalDoCalendario,
   EtapaDoCalendario,
   FiltrosDoCalendario,
-  MarcoDaEtapa,
   TipoDaEtapa,
 } from "../modulos/cronograma/tipos.ts";
 
@@ -20,20 +20,19 @@ export function registroDoCalendario(valor: unknown): Record<string, unknown> {
   A tela (`src/modulos/cronograma/`) só desenha o que sai daqui, e o
   carregamento (`estado.ts` de lá) só entrega as linhas cruas das RPCs. O que
   fica neste arquivo é o que decide o que aparece: como as etapas viram dias,
-  quais passam nos filtros e o que cada célula do mês conta.
+  quais passam nos filtros e o que cada dia do mês mostra.
 
-  POR QUE O MÊS MOSTRA CONTAGENS E NÃO OS NOMES DAS ETAPAS.
-  São perto de 800 etapas em cerca de uma centena de editais — umas doze por dia.
-  A primeira versão escrevia o nome de cada uma dentro da célula do dia; o mês
-  virava uma parede de cartões cortados a meio, e as etapas isoladas, que são as
-  que alguém procura, desapareciam no meio das longas. Agora a célula mostra
-  quantas etapas de cada tipo caem naquele dia, e o detalhe abre ao clicar. O mês
-  passa a responder "onde é que há movimento" — que é o que uma vista de mês faz
-  bem — e o painel de baixo responde "o que é, exatamente".
+  UMA COR SÓ: A DO TIPO DE ETAPA. É a cor da legenda, da faixa no mês, da borda
+  e da bolinha nas listas e do ponto na linha do tempo. A unidade é texto (sem
+  cor própria): seis cores repetidas entre dezenas de DSEIs só competiam com a
+  do tipo. O rótulo do tipo vai sempre escrito ao lado — a cor nunca é o único
+  sinal.
 
-  Uma etapa com intervalo conta no dia em que COMEÇA e no dia em que TERMINA, não
-  nos dias pelo meio. Um recurso de três semanas contado nos vinte e um dias
-  empurrava para cima a contagem de todos eles e escondia o que era pontual.
+  O MÊS MOSTRA FAIXAS LEGÍVEIS, COMO UMA AGENDA. Cada etapa é uma faixa
+  "unidade – etapa" que atravessa os dias do intervalo, uma linha por semana
+  (`faixasDaSemana`). Cada dia mostra até três faixas e "+N mais"; o dia inteiro
+  abre o popup com tudo o que acontece nele. A versão anterior trocava os nomes
+  por bolinhas com contagens, e ninguém sabia o que era cada uma sem clicar.
 */
 
 import {
@@ -89,8 +88,8 @@ const DIAS_EXTENSO = Object.freeze([
 /** A legenda e o filtro de tipo: os tipos conhecidos e, por último, "Outros". */
 export const TIPOS_DA_LEGENDA = Object.freeze([...TIPOS_DE_ETAPA, TIPO_OUTROS]);
 
-/** Etapas listadas no painel quando nenhum dia está escolhido. */
-export const PROXIMAS_NO_PAINEL = 8;
+/** O bloco compacto de próximas etapas, embaixo do Mês. */
+export const PROXIMAS_NO_PAINEL = 5;
 
 export const FILTROS_VAZIOS: FiltrosDoCalendario = Object.freeze({
   unidade: "",
@@ -270,27 +269,6 @@ export function filtrarEtapas(
   });
 }
 
-/*
-  Etapas que COMEÇAM ou TERMINAM no dia — não as que apenas o atravessam.
-  `marco` fica vazio quando a etapa dura um dia só, que é começo e fim.
-*/
-export function etapasDoDia(
-  etapas: readonly EtapaDoCalendario[],
-  chave: string,
-) {
-  const doDia: { etapa: EtapaDoCalendario; marco: MarcoDaEtapa }[] = [];
-  for (const etapa of etapas || []) {
-    const comeca = etapa.data_inicio === chave;
-    const termina = etapa.data_fim === chave;
-    if (!comeca && !termina) continue;
-    doDia.push({
-      etapa,
-      marco: comeca && termina ? "" : comeca ? "início" : "fim",
-    });
-  }
-  return doDia;
-}
-
 /** Editais que ainda têm alguma etapa depois dos filtros, na ordem original. */
 export function editaisDoFiltro(
   editais: readonly EditalDoCalendario[],
@@ -359,12 +337,50 @@ export function tituloDoDia(chave: string, total: number) {
 
 // ── Grade do mês ─────────────────────────────────────────────────────────
 
+/** A posição do tipo na legenda: a ordem das etapas dentro de um dia. */
+const ORDEM_DOS_TIPOS = new Map(
+  TIPOS_DA_LEGENDA.map((tipo, indice) => [tipo.id, indice]),
+);
+const ordemDoTipo = (tipo: TipoDaEtapa) =>
+  ORDEM_DOS_TIPOS.get(tipo.id) ?? TIPOS_DA_LEGENDA.length;
+
+/** Dentro de um dia: pela ordem da legenda, depois pela unidade. */
+export const pelaOrdemNoDia = (a: EtapaDoCalendario, b: EtapaDoCalendario) =>
+  ordemDoTipo(a.tipo) - ordemDoTipo(b.tipo) ||
+  a.unidade.localeCompare(b.unidade, "pt-BR") ||
+  a.ordem - b.ordem;
+
+/**
+ * O nome da unidade sem o "DSEI " da frente, para caber na faixa do mês
+ * ("DSEI Alto Rio Purus" → "Alto Rio Purus"). O nome inteiro fica no `title`.
+ */
+export function unidadeCurta(unidade: string) {
+  const curta = unidade
+    .replace(
+      /^\s*(dsei|distrito sanit[aá]rio especial ind[ií]gena)\s*[-–—:]?\s+/i,
+      "",
+    )
+    .trim();
+  return curta || unidade;
+}
+
+/** "Ed. 112/2026" — o número como está guardado, sem inventar o ano. */
+export function rotuloDoNumeroDoEdital(edital: string) {
+  const numero = edital.replace(/^\s*ed(ital)?\.?\s+/i, "").trim();
+  return `Ed. ${numero || edital}`;
+}
+
+/** "DSEI Alto Rio Purus · Ed. 112/2026 · 03/11 a 09/11 (7 dias)" */
+export const detalheDaEtapa = (etapa: EtapaDoCalendario) =>
+  `${etapa.unidade} · ${rotuloDoNumeroDoEdital(etapa.edital)} · ${periodoDaEtapa(etapa)}`;
+
 /**
  * As 42 células da grade de `mes`. A grade começa no domingo da semana do dia 1
  * e tem sempre 6 linhas, para a altura não saltar quando se muda de mês.
  *
- * Cada célula traz uma bolinha por tipo presente, com o total. É o que
- * substitui a lista de nomes: mostra a natureza e o volume do dia numa linha.
+ * `total` conta as etapas ATIVAS no dia (começam, terminam ou atravessam), as
+ * mesmas que o popup do dia lista. `pontos` traz os tipos presentes, na ordem
+ * da legenda: é o resumo do celular, onde as faixas não cabem.
  */
 export function montarGradeDoMes(
   mes: Date,
@@ -381,10 +397,10 @@ export function montarGradeDoMes(
     const dia = new Date(inicio);
     dia.setDate(inicio.getDate() + i);
     const chave = chaveDoDia(dia);
-    const doDia = etapasDoDia(etapas, chave);
+    const ativas = etapasAtivasNoDia(etapas, chave);
 
     const porTipo = new Map<string, { tipo: TipoDaEtapa; total: number }>();
-    for (const { etapa } of doDia) {
+    for (const { etapa } of ativas) {
       const atual = porTipo.get(etapa.tipo.id);
       if (atual) atual.total += 1;
       else porTipo.set(etapa.tipo.id, { tipo: etapa.tipo, total: 1 });
@@ -393,14 +409,75 @@ export function montarGradeDoMes(
     celulas.push({
       chave,
       dia: dia.getDate(),
-      rotulo: `${dia.getDate()} de ${MESES[dia.getMonth()]}: ${doDia.length} etapa(s)`,
+      rotulo: `${dia.getDate()} de ${MESES[dia.getMonth()]?.toLowerCase()}: ${
+        ativas.length
+      } ${plural(ativas.length, "etapa", "etapas")}`,
       doMes: dia.getMonth() === primeiro.getMonth(),
       hoje: chave === hojeChave,
-      total: doDia.length,
-      pontos: [...porTipo.values()].sort((a, b) => b.total - a.total),
+      total: ativas.length,
+      pontos: [...porTipo.values()].sort(
+        (a, b) => ordemDoTipo(a.tipo) - ordemDoTipo(b.tipo),
+      ),
     });
   }
   return celulas;
+}
+
+/** Faixas visíveis por dia no mês; o resto vira "+N mais". */
+export const FAIXAS_POR_DIA = 3;
+
+/**
+ * As faixas de uma linha da grade (`chaves`: os 7 dias da semana). Cada etapa
+ * ativa na semana vira uma faixa da coluna em que entra à coluna em que sai,
+ * numa altura (`faixa`) fixa na semana inteira — como numa agenda. A ordem de
+ * empilhar é a de uma agenda: quem começa antes, depois quem dura mais, depois
+ * a legenda e a unidade. Só voltam as faixas abaixo de `limite`; `ocultas[i]`
+ * diz quantas ficaram de fora no dia `i`, para o "+N mais".
+ */
+export function faixasDaSemana(
+  etapas: readonly EtapaDoCalendario[],
+  chaves: readonly string[],
+  limite = FAIXAS_POR_DIA,
+) {
+  const primeira = chaves[0] ?? "";
+  const ultima = chaves[chaves.length - 1] ?? "";
+  const pedacos: Omit<FaixaDaSemana, "faixa">[] = [];
+  for (const etapa of etapas || []) {
+    if (!etapaComDatasValidas(etapa)) continue;
+    const inicio = etapa.data_inicio;
+    const fim = etapa.data_fim || inicio;
+    if (inicio > ultima || fim < primeira) continue;
+    const de = chaves.findIndex((chave) => chave >= inicio);
+    let ate = chaves.length - 1;
+    while (ate > 0 && (chaves[ate] ?? "") > fim) ate -= 1;
+    pedacos.push({
+      etapa,
+      de,
+      ate,
+      continuaAntes: inicio < primeira,
+      continuaDepois: fim > ultima,
+    });
+  }
+  pedacos.sort(
+    (a, b) =>
+      a.de - b.de ||
+      b.ate - b.de - (a.ate - a.de) ||
+      pelaOrdemNoDia(a.etapa, b.etapa),
+  );
+
+  const fimDaFaixa: number[] = [];
+  const ocultas = chaves.map(() => 0);
+  const faixas: FaixaDaSemana[] = [];
+  for (const pedaco of pedacos) {
+    let faixa = fimDaFaixa.findIndex((fim) => fim < pedaco.de);
+    if (faixa < 0) faixa = fimDaFaixa.length;
+    fimDaFaixa[faixa] = pedaco.ate;
+    if (faixa < limite) faixas.push({ ...pedaco, faixa });
+    else
+      for (let coluna = pedaco.de; coluna <= pedaco.ate; coluna += 1)
+        ocultas[coluna] = (ocultas[coluna] ?? 0) + 1;
+  }
+  return { faixas, ocultas };
 }
 
 /*
@@ -478,10 +555,6 @@ export type VisaoDoCalendario = "mes" | "semana" | "lista";
 /** A marca da etapa num dia da Lista ou da Semana. */
 export type MarcaNoDia = "começa" | "último dia" | "no dia" | "em andamento";
 
-const DIAS_DA_SEMANA_MINUSCULOS = Object.freeze(
-  DIAS_EXTENSO.map((dia) => dia.toLowerCase()),
-);
-
 /** `dias` dias depois de `data` (ou antes, se negativo), ao meio-dia local. */
 export function somarDias(data: Date, dias: number) {
   return new Date(
@@ -525,16 +598,21 @@ export function marcaNoDia(
   return "em andamento";
 }
 
-const pelaOrdem = (a: EtapaDoCalendario, b: EtapaDoCalendario) =>
-  a.data_inicio.localeCompare(b.data_inicio) ||
-  a.ordem - b.ordem ||
-  a.unidade.localeCompare(b.unidade, "pt-BR");
-
-/** "1 de novembro de 2026 · domingo" */
-export function cabecalhoDoDiaDaLista(chave: string) {
+/**
+ * "Ter, 3 de novembro". O ano só aparece quando não é o de `anoDeReferencia`
+ * (o de hoje): "Sex, 1 de janeiro de 2027".
+ */
+export function cabecalhoDoDiaDaLista(
+  chave: string,
+  anoDeReferencia = new Date().getFullYear(),
+) {
   const data = dataLocal(chave);
   if (!data) return chave;
-  return `${data.getDate()} de ${MESES[data.getMonth()]?.toLowerCase()} de ${data.getFullYear()} · ${DIAS_DA_SEMANA_MINUSCULOS[data.getDay()]}`;
+  const ano =
+    data.getFullYear() === anoDeReferencia ? "" : ` de ${data.getFullYear()}`;
+  return `${DIAS_SEMANA[data.getDay()]}, ${data.getDate()} de ${MESES[
+    data.getMonth()
+  ]?.toLowerCase()}${ano}`;
 }
 
 export type ItemDoDia = { etapa: EtapaDoCalendario; marca: MarcaNoDia };
@@ -550,6 +628,7 @@ export function diasDaLista(
   etapas: readonly EtapaDoCalendario[],
   inicio: string,
   fim: string,
+  anoDeReferencia = new Date().getFullYear(),
 ): DiaDaLista[] {
   const porDia = new Map<string, ItemDoDia[]>();
   const incluir = (chave: string, etapa: EtapaDoCalendario) => {
@@ -570,8 +649,8 @@ export function diasDaLista(
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([chave, itens]) => ({
       chave,
-      titulo: cabecalhoDoDiaDaLista(chave),
-      itens: itens.sort((a, b) => pelaOrdem(a.etapa, b.etapa)),
+      titulo: cabecalhoDoDiaDaLista(chave, anoDeReferencia),
+      itens: itens.sort((a, b) => pelaOrdemNoDia(a.etapa, b.etapa)),
     }));
 }
 
@@ -590,7 +669,9 @@ export function emAndamentoNoDia(
         etapaComDatasValidas(etapa) &&
         marcaNoDia(etapa, chave) === "em andamento",
     )
-    .sort((a, b) => a.data_fim.localeCompare(b.data_fim) || pelaOrdem(a, b));
+    .sort(
+      (a, b) => a.data_fim.localeCompare(b.data_fim) || pelaOrdemNoDia(a, b),
+    );
 }
 
 /** Etapas ativas no dia (começam, terminam ou atravessam), para a Semana. */
@@ -607,7 +688,7 @@ export function etapasAtivasNoDia(
   // As pontas do dia primeiro; o que só atravessa vai para o fim da coluna.
   const peso = (marca: MarcaNoDia) => (marca === "em andamento" ? 1 : 0);
   return ativas.sort(
-    (a, b) => peso(a.marca) - peso(b.marca) || pelaOrdem(a.etapa, b.etapa),
+    (a, b) => peso(a.marca) - peso(b.marca) || pelaOrdemNoDia(a.etapa, b.etapa),
   );
 }
 
@@ -637,24 +718,6 @@ export function rotuloDaSemana(inicio: Date) {
   if (inicio.getMonth() !== fim.getMonth())
     return `${inicio.getDate()} de ${mes(inicio)} a ${fim.getDate()} de ${mes(fim)} de ${fim.getFullYear()}`;
   return `${inicio.getDate()} a ${fim.getDate()} de ${mes(fim)} de ${fim.getFullYear()}`;
-}
-
-/*
-  Cor da unidade: um hash estável do nome escolhe uma das seis séries da
-  paleta (`--series-1..6`, que já têm versão no tema escuro). A mesma unidade
-  sai sempre com a mesma cor, em qualquer vista e em qualquer máquina. Seis
-  cores para dezenas de DSEIs se repetem — por isso a bolinha vem sempre ao
-  lado do nome, nunca sozinha. NÃO É a cor do tipo de etapa: essa continua na
-  barra à esquerda do item e nas bolinhas da grade do mês, que não mudam.
-*/
-export const CORES_DE_UNIDADE = 6;
-
-export function corDaUnidade(unidade: string) {
-  const texto = normalizarTexto(unidade);
-  let hash = 0;
-  for (let i = 0; i < texto.length; i += 1)
-    hash = (Math.imul(hash, 31) + texto.charCodeAt(i)) >>> 0;
-  return (hash % CORES_DE_UNIDADE) + 1;
 }
 
 /*

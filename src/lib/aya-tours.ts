@@ -313,7 +313,7 @@ const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       passo(
         [t("cronograma-grade"), "#calGrade"],
         "Calendário",
-        "Cada dia mostra quantas etapas há; a etapa conta no dia em que começa e no dia em que termina.",
+        "Cada etapa é uma faixa com a unidade e o nome, na cor do tipo. Clique num dia para ver todas as etapas dele.",
       ),
       passo(
         [t("cronograma-proximas"), "#calProximas"],
