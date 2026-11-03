@@ -14,12 +14,11 @@ import {
 } from "../../lib/access-roles.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import { PLANILHAS } from "../../lib/planilhas.ts";
-import {
-  MOTIVO_MAXIMO,
-  origemDaLista,
-} from "../../lib/publicacao-de-aprovados.ts";
+import type { PreviaDaSubstituicao } from "./tipos-do-estado.ts";
+import { origemDaLista } from "../../lib/publicacao-de-aprovados.ts";
 import { Abas, Aviso, BotaoDeAcao, classes, Modal } from "../../ui/index.ts";
 import { FormularioDeConvocacao } from "./formulario-de-convocacao.tsx";
+import { PreviaDaSubstituicaoDaLista } from "./previa-da-substituicao.tsx";
 
 /*
   O modal "Listas do edital", aberto pelo Núcleo (`openImportModal` do
@@ -32,6 +31,11 @@ import { FormularioDeConvocacao } from "./formulario-de-convocacao.tsx";
   lista vigente, oferece "Publicar da Classificação" (leva à Classificação no
   edital) e, para trocar pela planilha uma lista publicada de lá, pede o
   motivo. O XLSX continua para os editais sem análise no sistema.
+
+  Substituir o XLSX tem dois passos (migration 20261030090000): "Substituir
+  XLSX" lê a planilha e mostra a prévia do casamento (quem leva o estado, quem
+  entra, quem fica sem par, quais status ficariam sem dono) e, se preciso,
+  pede o motivo; só "Confirmar substituição" grava.
 */
 
 const dataBR = (valor?: string | null) => {
@@ -95,10 +99,13 @@ function ResumoDaListaAtual({
       {podeSubstituir ? (
         <div className="approved-import-replace-warning">
           <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />
-          <span>
+          <span data-aviso-substituicao>
+            Substituir mantém status, matrícula, convocação, sub judice e anexos
+            de quem estiver na planilha nova (casado pelo nome e pela vaga); a
+            prévia mostra quem fica sem par antes de confirmar.
             {daClassificacao
-              ? "Atenção: a lista foi publicada da Classificação; trocar pela planilha exige motivo."
-              : "Atenção: enviar um novo XLSX substituirá a lista atual."}
+              ? " A lista foi publicada da Classificação: trocar pela planilha exige motivo."
+              : " Com status na lista, substituir exige motivo."}
           </span>
         </div>
       ) : null}
@@ -153,7 +160,9 @@ function HistoricoDasPublicacoes({
             <strong>{dataBR(p.em)}</strong> ·{" "}
             {p.origem === "CLASSIFICACAO"
               ? `Classificação (regra v${p.versao_regra}): ${p.candidatos} candidatos, +${p.entram} −${p.saem}, ${p.mudam} mudaram de posição`
-              : `Planilha: ${p.candidatos} candidatos`}
+              : p.entram == null
+                ? `Planilha: ${p.candidatos} candidatos`
+                : `Planilha: ${p.candidatos} candidatos, +${p.entram} −${p.saem}`}
             {p.por ? ` · ${p.por}` : ""}
             {p.motivo ? ` · Motivo: ${p.motivo}` : ""}
             {p.pendencias?.length
@@ -177,6 +186,7 @@ function PainelDoArquivo({
 }: PropsDoPainelDoArquivo) {
   const arquivo = useRef<HTMLInputElement>(null);
   const [motivo, setMotivo] = useState("");
+  const [previa, setPrevia] = useState<PreviaDaSubstituicao | null>(null);
   const daClassificacao = origemDaLista(lista)?.tipo === "CLASSIFICACAO";
   const podeImportar = canImportApprovedList(perfil);
   const podeSubstituir = canReplaceApprovedList(perfil);
@@ -247,26 +257,13 @@ function PainelDoArquivo({
             id="approvedImportFile"
             type="file"
             accept={TIPOS_ACEITOS}
+            onChange={() => setPrevia(null)}
           />
           <small className="approved-field-hint">
             Colunas obrigatórias: codigo_vaga, cargo, classificacao, nota, nome
             e modalidade.
           </small>
         </div>
-        {daClassificacao && !soLeitura ? (
-          <div className="form-row full">
-            <label htmlFor="approvedImportMotivo">
-              Motivo para trocar pela planilha
-            </label>
-            <textarea
-              id="approvedImportMotivo"
-              rows={2}
-              maxLength={MOTIVO_MAXIMO}
-              value={motivo}
-              onChange={(evento) => setMotivo(evento.target.value)}
-            />
-          </div>
-        ) : null}
         <div className="form-row full">
           <label htmlFor="approvedImportActive">Situação da lista</label>
           <select
@@ -279,6 +276,13 @@ function PainelDoArquivo({
           </select>
         </div>
       </div>
+      {previa && lista && previa.listaId === String(lista.lista_id) ? (
+        <PreviaDaSubstituicaoDaLista
+          previa={previa}
+          motivo={motivo}
+          aoMudarMotivo={setMotivo}
+        />
+      ) : null}
       <div className="approved-import-links">
         <a
           id="approvedImportModelLink"
@@ -326,7 +330,63 @@ function PainelDoArquivo({
             situação
           </BotaoDeAcao>
         ) : null}
-        {podeImportar && !soLeitura ? (
+        {previa && lista ? (
+          <button
+            type="button"
+            id="approvedImportCancelPrevia"
+            className="btn secondary"
+            onClick={() => setPrevia(null)}
+          >
+            Cancelar
+          </button>
+        ) : null}
+        {podeImportar && !soLeitura && lista && previa ? (
+          <BotaoDeAcao
+            estado={estado}
+            acao="importar"
+            id="approvedImportConfirm"
+            className="btn green"
+            onClick={() =>
+              void estado
+                .importarLista({
+                  editalId,
+                  arquivo: previa.arquivo,
+                  ativo,
+                  motivo,
+                  previa,
+                })
+                .then((foi) => {
+                  if (foi) setPrevia(null);
+                })
+            }
+          >
+            <i className="fa-solid fa-check" aria-hidden="true" /> Confirmar
+            substituição
+          </BotaoDeAcao>
+        ) : null}
+        {podeImportar && !soLeitura && lista && !previa ? (
+          <BotaoDeAcao
+            estado={estado}
+            acao="importar"
+            id="approvedImportSubmit"
+            data-tour="aprovados-listas-importar"
+            className="btn green"
+            onClick={() =>
+              void estado
+                .prepararSubstituicao({
+                  editalId,
+                  arquivo: arquivo.current?.files?.[0] || null,
+                })
+                .then((nova) => {
+                  if (nova) setPrevia(nova);
+                })
+            }
+          >
+            <i className="fa-solid fa-rotate" aria-hidden="true" /> Substituir
+            XLSX
+          </BotaoDeAcao>
+        ) : null}
+        {podeImportar && !soLeitura && !lista ? (
           <BotaoDeAcao
             estado={estado}
             acao="importar"
@@ -342,17 +402,8 @@ function PainelDoArquivo({
               })
             }
           >
-            {lista ? (
-              <>
-                <i className="fa-solid fa-rotate" aria-hidden="true" />{" "}
-                Substituir XLSX
-              </>
-            ) : (
-              <>
-                <i className="fa-solid fa-file-import" aria-hidden="true" />{" "}
-                Importar lista
-              </>
-            )}
+            <i className="fa-solid fa-file-import" aria-hidden="true" />{" "}
+            Importar lista
           </BotaoDeAcao>
         ) : null}
       </div>

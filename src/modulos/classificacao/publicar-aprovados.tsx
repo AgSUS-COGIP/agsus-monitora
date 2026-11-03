@@ -1,8 +1,9 @@
+import type { ResultadoDaPublicacao } from "../../lib/tipos-da-publicacao-de-aprovados.ts";
 import type {
-  CandidatoAnterior,
-  CandidatoDaListaFinal,
-  ResultadoDaPublicacao,
-} from "../../lib/tipos-da-publicacao-de-aprovados.ts";
+  CasamentoDaLista,
+  PessoaDaListaVigente,
+  QuemEntra,
+} from "../../lib/casamento-da-lista.ts";
 import type {
   EstadoDaClassificacao,
   ListaRegistrada,
@@ -23,32 +24,30 @@ type Props = {
   aoFechar: () => void;
 };
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatarNota } from "../../lib/classificacao/numeros.ts";
+import { numerosDoCasamento } from "../../lib/casamento-da-lista.ts";
 import {
-  argumentosDaPublicacao,
-  candidatosDaListaFinal,
-  casarCandidatos,
+  MOTIVO_MAXIMO,
+  motivoValido,
   origemDaLista,
-  resumoDaPublicacao,
-  temDadosDaLista,
 } from "../../lib/publicacao-de-aprovados.ts";
 import { Aviso, GradeDeKpis, Kpi, Modal } from "../../ui/index.ts";
 
 /*
   "Publicar como lista de aprovados" (Classificação › Listas › Resultado final):
-  o resultado final registrado vira a lista de aprovados vigente do edital
-  (migration 20261005160000). A confirmação mostra, em relação à lista
-  vigente, quantos entram, saem e mudam de posição, o que é preservado
-  (status, matrícula, sub judice) e quem saiu com dados e precisa de revisão:
-  ali dá para dizer quem é a mesma pessoa na lista nova. A conta é de
-  src/lib/publicacao-de-aprovados.ts; o banco confere e grava o histórico.
+  o resultado final registrado vira a lista de aprovados vigente do edital.
+  Desde 20261030090000 a prévia é do job Python (o mesmo fluxo de "Substituir
+  XLSX" na Lista de aprovados): quem da lista vigente casa com quem entra e leva
+  o estado (status, matrícula, convocação, sub judice, anexos), quantos entram,
+  saem e mudam de posição, e quem saiu com dados e precisa de revisão — ali dá
+  para dizer quem é a mesma pessoa; "Recalcular" pede o casamento de novo com a
+  revisão. A mesma permissão do XLSX: lista já cadastrada só quem pode
+  substituir; lista com status pede o motivo.
 */
 
-const texto = (valor: unknown) => String(valor ?? "").trim();
-
-function rotuloDoNovo(n: CandidatoDaListaFinal) {
-  return `${n.nome} — ${n.codigo_vaga || n.cargo} · ${n.posicao}º`;
+function rotuloDoNovo(n: QuemEntra) {
+  return `${n.nome} — ${n.codigo_vaga || n.cargo} · ${n.posicao ?? "—"}º`;
 }
 
 function LinhaDeRevisao({
@@ -57,8 +56,8 @@ function LinhaDeRevisao({
   escolhido,
   aoEscolher,
 }: {
-  anterior: CandidatoAnterior;
-  novos: CandidatoDaListaFinal[];
+  anterior: PessoaDaListaVigente;
+  novos: QuemEntra[];
   escolhido: string;
   aoEscolher: (valor: string) => void;
 }) {
@@ -71,8 +70,8 @@ function LinhaDeRevisao({
           {[
             anterior.codigo_vaga || anterior.cargo,
             anterior.classificacao ? `${anterior.classificacao}º` : "",
-            texto(anterior.status),
-            texto(anterior.matricula) ? `matrícula ${anterior.matricula}` : "",
+            anterior.status,
+            anterior.matricula ? `matrícula ${anterior.matricula}` : "",
           ]
             .filter(Boolean)
             .join(" · ")}
@@ -80,12 +79,12 @@ function LinhaDeRevisao({
       </label>
       <select
         id={id}
-        value={escolhido ?? ""}
+        value={escolhido}
         onChange={(evento) => aoEscolher(evento.target.value)}
       >
         <option value="">Não está na lista nova</option>
         {novos.map((n) => (
-          <option key={n.analise_id} value={n.analise_id}>
+          <option key={n.chave} value={n.chave}>
             {rotuloDoNovo(n)}
           </option>
         ))}
@@ -94,114 +93,161 @@ function LinhaDeRevisao({
   );
 }
 
+const iguais = (a: Record<string, string>, b: Record<string, string>) => {
+  const ka = Object.keys(a);
+  return ka.length === Object.keys(b).length && ka.every((k) => a[k] === b[k]);
+};
+
+function Revisao({
+  casamento,
+  manuais,
+  aoEscolher,
+}: {
+  casamento: CasamentoDaLista;
+  manuais: Record<string, string>;
+  aoEscolher: (candidatoId: string, chave: string) => void;
+}) {
+  const vinculos = casamento.plano?.vinculos ?? [];
+  const novosPorNome = useMemo(
+    () =>
+      [...casamento.novos].sort((a, b) =>
+        a.nome.localeCompare(b.nome, "pt-BR"),
+      ),
+    [casamento.novos],
+  );
+  if (!casamento.revisar.length) return null;
+  // Quem já tem par (no plano ou na revisão de agora) sai das opções dos outros.
+  const ocupados = new Set([
+    ...vinculos.map((v) => v.chave),
+    ...Object.values(manuais).filter(Boolean),
+  ]);
+  return (
+    <section
+      className="classificacao-revisao"
+      aria-labelledby="classificacaoRevisaoTitulo"
+    >
+      <h3 id="classificacaoRevisaoTitulo">
+        Revisar: {casamento.revisar.length} pessoa(s) da lista vigente sem par
+        na lista nova
+      </h3>
+      <ul>
+        {casamento.revisar.map((anterior) => {
+          const id = anterior.candidato_id;
+          const doPlano =
+            vinculos.find((v) => v.candidato_id === id)?.chave ?? "";
+          const escolhido = Object.prototype.hasOwnProperty.call(manuais, id)
+            ? (manuais[id] ?? "")
+            : doPlano;
+          return (
+            <LinhaDeRevisao
+              key={id}
+              anterior={anterior}
+              novos={novosPorNome.filter(
+                (n) => n.chave === escolhido || !ocupados.has(n.chave),
+              )}
+              escolhido={escolhido}
+              aoEscolher={(valor) => aoEscolher(id, valor)}
+            />
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 export function ModalDePublicacaoDeAprovados({
   estado,
   registro,
   resultado: calculado,
-  analises,
   aoFechar,
 }: Props) {
   const [preparo, setPreparo] = useState<Preparo | null>(null);
+  const [pedidoDeManuais, setPedidoDeManuais] = useState<
+    Record<string, string>
+  >({});
   const [manuais, setManuais] = useState<Record<string, string>>({});
+  const [motivo, setMotivo] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [publicado, setPublicado] = useState<ResultadoDaPublicacao | null>(
     null,
   );
 
+  /*
+    Cada prévia é um pedido ao job Python: um por lista e revisão, mesmo que o
+    efeito rode de novo (nova renderização do pai, StrictMode).
+  */
+  const pedidos = useRef(new Map<string, Promise<Preparo | null>>());
+  const ultimo = useRef({ registro, calculado });
+  ultimo.current = { registro, calculado };
   useEffect(() => {
     let vivo = true;
-    void estado.prepararPublicacaoDeAprovados(registro, calculado).then((p) => {
+    const chave = `${registro.id}|${JSON.stringify(pedidoDeManuais)}`;
+    if (!pedidos.current.has(chave))
+      pedidos.current.set(
+        chave,
+        estado.prepararPublicacaoDeAprovados(
+          ultimo.current.registro,
+          ultimo.current.calculado,
+          pedidoDeManuais,
+        ),
+      );
+    setPreparo(null);
+    void pedidos.current.get(chave)?.then((p) => {
       if (vivo) setPreparo(p || { erro: "Lista não encontrada." });
     });
     return () => {
       vivo = false;
     };
-  }, [estado, registro, calculado]);
+  }, [estado, registro.id, pedidoDeManuais]);
 
-  const vigente = preparo?.situacao?.vigente || null;
-  const anteriores = useMemo(() => vigente?.candidatos || [], [vigente]);
-  const novos = useMemo(
-    () =>
-      preparo?.registrado
-        ? candidatosDaListaFinal(preparo.registrado.retrato, { analises })
-        : [],
-    [preparo, analises],
-  );
-  const casamento = useMemo(
-    () => casarCandidatos(anteriores, novos, { manuais }),
-    [anteriores, novos, manuais],
-  );
-  const resumo = useMemo(
-    () => resumoDaPublicacao(anteriores, novos, casamento),
-    [anteriores, novos, casamento],
-  );
-  const novosPorNome = useMemo(
-    () =>
-      [...novos].sort((a, b) =>
-        texto(a.nome).localeCompare(texto(b.nome), "pt-BR"),
-      ),
-    [novos],
-  );
-
-  /* Para revisar: quem não casou e tem dados da lista (ou é homônimo), e quem já foi revisto. */
-  const paraRevisar = anteriores.filter((a) => {
-    const id = texto(a.candidato_id);
-    if (Object.prototype.hasOwnProperty.call(manuais, id)) return true;
-    const naoCasado = casamento.naoCasados.find(
-      (n) => texto(n.candidato_id) === id,
-    );
-    return (
-      naoCasado && !a.sub_judice && (temDadosDaLista(a) || naoCasado.ambiguo)
-    );
-  });
-  const ocupados = new Set(casamento.vinculos.map((v) => v.analise_id));
-  const opcoesPara = (anterior: CandidatoAnterior) => {
-    const meu = casamento.vinculos.find(
-      (v) => v.candidato_id === texto(anterior.candidato_id),
-    )?.analise_id;
-    return novosPorNome.filter(
-      (n) => n.analise_id === meu || !ocupados.has(n.analise_id),
-    );
-  };
+  const situacao = preparo && "situacao" in preparo ? preparo.situacao : null;
+  const casamento =
+    preparo && "casamento" in preparo ? preparo.casamento : null;
+  const vigente = situacao?.vigente || null;
+  const podeSubstituir = !vigente || situacao?.pode_substituir !== false;
+  const revisaoMudou = casamento ? !iguais(manuais, casamento.manuais) : false;
+  const exigeMotivo = Boolean(casamento?.exige_motivo);
+  const bloqueada =
+    !casamento ||
+    !podeSubstituir ||
+    revisaoMudou ||
+    (exigeMotivo && !motivoValido(motivo));
 
   async function publicar() {
-    if (enviando || !preparo?.registrado) return;
+    if (enviando || bloqueada || !casamento) return;
     setEnviando(true);
-    const resultado = await estado.publicarComoListaDeAprovados({
-      listaId: preparo.registrado.id,
-      listaVigente: vigente?.lista_id || null,
-      vinculos: argumentosDaPublicacao(casamento),
+    const r = await estado.publicarComoListaDeAprovados({
+      pedidoId: casamento.pedido_id,
+      motivo: exigeMotivo ? motivo : "",
     });
     setEnviando(false);
-    if (resultado) setPublicado(resultado);
+    if (r) setPublicado(r);
   }
 
+  const n = casamento ? numerosDoCasamento(casamento) : null;
+  const nomeDoNovo = new Map((casamento?.novos ?? []).map((x) => [x.chave, x]));
   const origem = origemDaLista(vigente);
-  const kpis: [string, string, string, string, number][] = [
-    ["entram", "sucesso", "fa-user-plus", "Entram", resumo.entram.length],
-    ["saem", "perigo", "fa-user-minus", "Saem", resumo.saem.length],
-    [
-      "mudam",
-      "alerta",
-      "fa-right-left",
-      "Mudam de posição",
-      resumo.mudam.length,
-    ],
-    [
-      "preservados",
-      "info",
-      "fa-user-check",
-      "Status e sub judice preservados",
-      resumo.preservados.length,
-    ],
-  ];
-  if (resumo.subJudiceMantidos.length)
+  const kpis: [string, string, string, string, number][] = n
+    ? [
+        ["entram", "sucesso", "fa-user-plus", "Entram", n.entram],
+        ["saem", "perigo", "fa-user-minus", "Saem", n.semPar],
+        ["mudam", "alerta", "fa-right-left", "Mudam de posição", n.mudam],
+        [
+          "preservados",
+          "info",
+          "fa-user-check",
+          "Status e sub judice preservados",
+          n.preservados,
+        ],
+      ]
+    : [];
+  if (n?.subJudiceMantidos)
     kpis.push([
       "sub-judice",
       "destaque",
       "fa-gavel",
       "Sub judice mantidos",
-      resumo.subJudiceMantidos.length,
+      n.subJudiceMantidos,
     ]);
 
   return (
@@ -217,7 +263,8 @@ export function ModalDePublicacaoDeAprovados({
           Publicar como lista de aprovados
         </h2>
         {!preparo ? (
-          <div aria-busy="true">
+          <div aria-busy="true" data-casando>
+            <p className="ui-texto-secundario">Casando as pessoas…</p>
             <div className="ui-esqueleto-linha" />
             <div className="ui-esqueleto-linha" />
           </div>
@@ -248,74 +295,93 @@ export function ModalDePublicacaoDeAprovados({
           <>
             <p className="ui-texto-secundario" data-origem-vigente>
               {vigente
-                ? `Lista vigente: ${origem?.texto ?? ""} · ${anteriores.length} candidato(s)`
-                : "O edital ainda não tem lista de aprovados."}{" "}
-              · Resultado final: {novos.length} candidato(s)
+                ? `Lista vigente: ${origem?.texto ?? ""} · ${casamento?.anteriores ?? 0} candidato(s)`
+                : "O edital ainda não tem lista de aprovados."}
+              {casamento
+                ? ` · Resultado final: ${casamento.novos_total} candidato(s)`
+                : ""}
             </p>
-            <GradeDeKpis rotulo="O que muda na lista de aprovados">
-              {kpis.map(([chave, tom, icone, rotulo, valor]) => (
-                <Kpi
-                  key={chave}
-                  chave={chave}
-                  tom={tom}
-                  icone={icone}
-                  rotulo={rotulo}
-                  valor={String(valor)}
-                />
-              ))}
-            </GradeDeKpis>
-            {resumo.mudam.length ? (
-              <details className="classificacao-publicar-detalhe">
-                <summary>Quem muda de posição</summary>
-                <ul>
-                  {resumo.mudam.slice(0, 200).map(({ anterior, novo }) => (
-                    <li key={anterior.candidato_id}>
-                      {novo.nome}: {anterior.classificacao ?? "—"}º →{" "}
-                      {novo.posicao}º{" "}
-                      <span className="ui-texto-secundario">
-                        (nota {formatarNota(novo.nota, 2)})
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            ) : null}
-            {paraRevisar.length ? (
-              <section
-                className="classificacao-revisao"
-                aria-labelledby="classificacaoRevisaoTitulo"
-              >
-                <h3 id="classificacaoRevisaoTitulo">
-                  Revisar: {paraRevisar.length} pessoa(s) da lista vigente sem
-                  par na lista nova
-                </h3>
-                <ul>
-                  {paraRevisar.map((anterior) => {
-                    const id = texto(anterior.candidato_id);
-                    const vinculo = casamento.vinculos.find(
-                      (v) => v.candidato_id === id,
-                    );
-                    return (
-                      <LinhaDeRevisao
-                        key={id}
-                        anterior={anterior}
-                        novos={opcoesPara(anterior)}
-                        escolhido={vinculo?.analise_id ?? manuais[id] ?? ""}
-                        aoEscolher={(valor) =>
-                          setManuais((atual) => ({ ...atual, [id]: valor }))
-                        }
-                      />
-                    );
-                  })}
-                </ul>
-              </section>
-            ) : null}
-            {resumo.pendencias.length ? (
-              <Aviso tom="warning" papel="status">
-                {resumo.pendencias.length} pessoa(s) com status ou matrícula
-                saem da lista: o que têm fica na lista anterior (histórico) e no
-                registro desta publicação.
+            {!podeSubstituir ? (
+              <Aviso tom="warning" papel="alert">
+                Só o admin da Importação substitui a lista de aprovados vigente.
               </Aviso>
+            ) : null}
+            {casamento ? (
+              <>
+                <GradeDeKpis rotulo="O que muda na lista de aprovados">
+                  {kpis.map(([chave, tom, icone, rotulo, valor]) => (
+                    <Kpi
+                      key={chave}
+                      chave={chave}
+                      tom={tom}
+                      icone={icone}
+                      rotulo={rotulo}
+                      valor={String(valor)}
+                    />
+                  ))}
+                </GradeDeKpis>
+                {casamento.plano?.mudam.length ? (
+                  <details className="classificacao-publicar-detalhe">
+                    <summary>Quem muda de posição</summary>
+                    <ul>
+                      {casamento.plano.mudam.slice(0, 200).map((m) => {
+                        const novo = nomeDoNovo.get(m.chave);
+                        return (
+                          <li key={m.candidato_id}>
+                            {novo?.nome}: {m.de ?? "—"}º → {m.para ?? "—"}º{" "}
+                            {novo?.nota != null ? (
+                              <span className="ui-texto-secundario">
+                                (nota {formatarNota(novo.nota, 2)})
+                              </span>
+                            ) : null}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </details>
+                ) : null}
+                <Revisao
+                  casamento={casamento}
+                  manuais={manuais}
+                  aoEscolher={(id, chave) =>
+                    setManuais((atual) => ({ ...atual, [id]: chave }))
+                  }
+                />
+                {revisaoMudou ? (
+                  <Aviso tom="info" papel="status">
+                    A revisão mudou: recalcule o casamento antes de publicar.
+                    <button
+                      type="button"
+                      className="btn secondary small"
+                      data-acao="recalcular-casamento"
+                      onClick={() => setPedidoDeManuais({ ...manuais })}
+                    >
+                      Recalcular
+                    </button>
+                  </Aviso>
+                ) : null}
+                {casamento.plano?.pendencias.length ? (
+                  <Aviso tom="warning" papel="status">
+                    {casamento.plano.pendencias.length} pessoa(s) com status ou
+                    matrícula saem da lista: o que têm fica na lista anterior
+                    (histórico) e no registro desta publicação.
+                  </Aviso>
+                ) : null}
+                {exigeMotivo ? (
+                  <div className="form-row full">
+                    <label htmlFor="classificacaoPublicarMotivo">
+                      Motivo da substituição
+                    </label>
+                    <textarea
+                      id="classificacaoPublicarMotivo"
+                      rows={2}
+                      maxLength={MOTIVO_MAXIMO}
+                      value={motivo}
+                      onChange={(evento) => setMotivo(evento.target.value)}
+                    />
+                  </div>
+                ) : null}
+              </>
             ) : null}
             <div className="ui-acoes">
               <button
@@ -329,7 +395,7 @@ export function ModalDePublicacaoDeAprovados({
                 type="button"
                 className="btn"
                 data-acao="confirmar-publicacao-aprovados"
-                disabled={enviando || !novos.length}
+                disabled={enviando || bloqueada}
                 onClick={publicar}
               >
                 {enviando ? "Publicando…" : "Publicar"}

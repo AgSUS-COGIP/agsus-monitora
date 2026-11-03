@@ -1,0 +1,81 @@
+name: Casamento da lista de aprovados
+
+# Job Python (scripts/aprovados/casamento_da_lista.py): na prévia de "Substituir XLSX" (Lista de
+# aprovados) e de "Publicar como lista de aprovados" (Classificação), casa quem da lista vigente é
+# a mesma pessoa de quem entra e grava o plano (vínculos e resumo) no instantâneo
+# TB_PEDIDO_CASAMENTO_LISTA, pelas RPCs casamento_ler_pedidos e gravar_casamento_da_lista (só
+# service_role). O banco só aplica o plano quando a pessoa confirma (aplicar_casamento_da_lista).
+# Regra (versão 1): python/monitora/aprovados/casamento.py. Migration 20261030090000.
+#
+# Quando roda:
+#   - pedido pelo banco (FC_DISPARAR_ROBO) a cada prévia, com o id do pedido;
+#   - pelo botão "Run workflow" desta aba Actions (sem pedido: todos os pendentes).
+# Guia: docs/python-no-monitora.md.
+#
+# O REPOSITÓRIO É PÚBLICO e este log também: o job só imprime contagens.
+#
+# Secrets do repositório (os mesmos das conferências):
+#   SUPABASE_URL                 https://<projeto>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY    chave service_role do Supabase
+
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: "normal = casa e grava; seco = só casa e mostra o resumo"
+        type: choice
+        options:
+          - normal
+          - seco
+        default: normal
+      pedido:
+        description: "Id do pedido (em branco = todos os pendentes)"
+        type: string
+        required: false
+        default: ""
+      disparado_por:
+        description: "Pedido do MONITORA = id do usuário; em branco = GitHub"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  casar:
+    name: Lista vigente × lista nova → plano
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Um pedido por execução; vários pedidos seguidos esperam na fila (nenhum é cancelado).
+    concurrency:
+      group: casamento-da-lista-${{ inputs.pedido || 'todos' }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          show-progress: false
+
+      # Só biblioteca padrão (python/monitora/ e scripts/aprovados/): sem pip install.
+      - name: Configurar Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # Os inputs vão por variável de ambiente (nunca interpolados no shell).
+      - name: Casar
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MODO: ${{ inputs.modo || 'normal' }}
+          PEDIDO: ${{ inputs.pedido }}
+          DISPARADO_POR: ${{ inputs.disparado_por }}
+        run: |
+          if [ "$MODO" = "seco" ]; then
+            python scripts/aprovados/casamento_da_lista.py --seco
+          else
+            python scripts/aprovados/casamento_da_lista.py
+          fi

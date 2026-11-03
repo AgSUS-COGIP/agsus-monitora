@@ -674,6 +674,25 @@ table.mobile-card-table td.approved-actions {
 .approved-import-historico {
   margin-top: var(--space-3);
 }
+/* A prévia da substituição pelo XLSX (20261030090000). */
+.approved-import-previa {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.approved-import-previa h4 {
+  margin: 0;
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+}
+.approved-import-sem-dono {
+  display: grid;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-4);
+  max-height: 20vh;
+  overflow: auto;
+}
 .approved-import-historico ul {
   display: grid;
   gap: var(--space-1);

@@ -243,6 +243,28 @@ com motivo obrigatório, autor, data e histórico (migration `20261026190000_pen
   `tests/fixtures/pendencias-do-edital/casos.json`), `supabase/tests/pendencias_do_edital.sql`
   (permissões, motivo, histórico), `tests/pendencias-do-edital-migration.test.js`,
   `tests/lib/pendencias-do-edital.test.js` e `tests/componentes/pendencias-do-edital.test.js`.
+## Casamento da lista de aprovados (26/10/2026)
+
+Substituir a lista de aprovados de um edital — pela planilha (XLSX) ou pelo resultado final da
+Classificação — leva o estado de quem já estava na lista vigente (status, matrícula, processo SEI,
+data da convocação, sub judice, anexos, `CO_CANDIDATO_ANTERIOR`). Quem é a mesma pessoa é conta
+do Python; o banco só valida e aplica.
+
+- Regra: `python/monitora/aprovados/casamento.py` (versão 1): a revisão à mão manda; depois a
+  mesma análise; depois o nome normalizado (sem acento, sem caixa, só letras e números) único dos
+  dois lados; homônimo desempata pela vaga. Plano: vínculos, resumo (casados, entram, sem par,
+  status sem dono, preservados, mudam, sub judice mantidos), pendências e quem revisar.
+- Fluxo: a tela pede a prévia (`pedir_casamento_da_lista`, que guarda o pedido em
+  `TB_PEDIDO_CASAMENTO_LISTA` e pede o job); o job lê (`casamento_ler_pedidos`) e grava o plano
+  (`gravar_casamento_da_lista`, só service_role: confere cada vínculo, a revisão à mão e se a
+  lista vigente mudou); a tela mostra o plano (`obter_casamento_da_lista`) e, ao confirmar, o
+  banco aplica numa transação curta (`aplicar_casamento_da_lista` → `FC_GRAVAR_NOVA_VERSAO_DA_LISTA`).
+  Sem lista vigente não há o que casar: o plano sai na hora, sem job.
+- Job: `scripts/aprovados/casamento_da_lista.py` (`--pedido <uuid>`; `--seco` só casa e
+  resume). Workflow `.github/workflows/casamento-da-lista.yml`, pedido pelo banco a cada prévia.
+  Uma lista de 3.150 linhas casa em ~0,25 s.
+- Migration: `supabase/migrations/20261030090000_lista_de_aprovados_substituir_preserva_o_estado.sql`.
+  Testes: `tests/python/test_casamento_da_lista.py` e `supabase/tests/nova_versao_da_lista_de_aprovados.sql`.
 
 ## Segunda entrega: triagem da Avaliação documental
 
