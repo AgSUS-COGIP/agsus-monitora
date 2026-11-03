@@ -17,6 +17,9 @@ const ROLLBACK = ler(`supabase/rollback/${NOME}`);
 const VIEW = 'public."VW_ANALISES_DASHBOARD_BASE_TODOS"';
 const VIEW_ATIVA = 'public."VW_ANALISES_DASHBOARD_BASE"';
 
+/** O texto literal dentro de uma expressão regular. */
+const escaparRegex = (texto) => texto.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const corpo = (sql) =>
   sql.slice(sql.indexOf("begin;\n") + 7, sql.lastIndexOf("commit;")).trim();
 
@@ -60,7 +63,7 @@ describe(NOME, () => {
       );
       expect(MIGRATION).not.toMatch(
         new RegExp(
-          `grant\\s+\\w+[^;]*on\\s+${view.replace(/[."]/g, "\\$&")}\\s+to\\s+[^;]*(authenticated|anon|public)`,
+          `grant\\s+\\w+[^;]*on\\s+${escaparRegex(view)}\\s+to\\s+[^;]*(authenticated|anon|public)`,
           "i",
         ),
       );
