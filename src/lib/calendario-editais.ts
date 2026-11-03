@@ -463,3 +463,214 @@ export function etapasDoEdital(
       (a, b) => a.data_inicio.localeCompare(b.data_inicio) || a.ordem - b.ordem,
     );
 }
+
+// ── Lista e semana ───────────────────────────────────────────────────────
+
+/*
+  As vistas Lista e Semana. As chaves de dia são texto "AAAA-MM-DD" e se
+  comparam como texto, como em `etapasDoDia`: nada de `Date` no meio, e por
+  isso nada de fuso a empurrar uma etapa para o dia ao lado. Os `Date` que
+  entram (hoje, o mês, a semana) viram chave pela data local (`chaveDoDia`).
+*/
+
+export type VisaoDoCalendario = "mes" | "semana" | "lista";
+
+/** A marca da etapa num dia da Lista ou da Semana. */
+export type MarcaNoDia = "começa" | "último dia" | "no dia" | "em andamento";
+
+const DIAS_DA_SEMANA_MINUSCULOS = Object.freeze(
+  DIAS_EXTENSO.map((dia) => dia.toLowerCase()),
+);
+
+/** `dias` dias depois de `data` (ou antes, se negativo), ao meio-dia local. */
+export function somarDias(data: Date, dias: number) {
+  return new Date(
+    data.getFullYear(),
+    data.getMonth(),
+    data.getDate() + dias,
+    12,
+  );
+}
+
+/** O domingo da semana de `data`, ao meio-dia local (a grade começa no domingo). */
+export const inicioDaSemana = (data: Date) => somarDias(data, -data.getDay());
+
+/** As 7 chaves da semana que começa em `inicio`. */
+export const chavesDaSemana = (inicio: Date) =>
+  Array.from({ length: 7 }, (_, indice) =>
+    chaveDoDia(somarDias(inicio, indice)),
+  );
+
+/** Primeira e última chave do mês de `mes`. */
+export function intervaloDoMes(mes: Date) {
+  const primeiro = primeiroDoMes(mes);
+  const ultimo = new Date(primeiro.getFullYear(), primeiro.getMonth() + 1, 0);
+  return { inicio: chaveDoDia(primeiro), fim: chaveDoDia(ultimo) };
+}
+
+/**
+ * A marca da etapa no dia `chave`, ou `null` se ela não está ativa nele.
+ * Começa e termina no mesmo dia: "no dia". Atravessa o dia: "em andamento".
+ */
+export function marcaNoDia(
+  etapa: EtapaDoCalendario,
+  chave: string,
+): MarcaNoDia | null {
+  const inicio = etapa.data_inicio;
+  const fim = etapa.data_fim || inicio;
+  if (!inicio || chave < inicio || chave > fim) return null;
+  if (inicio === fim) return "no dia";
+  if (chave === inicio) return "começa";
+  if (chave === fim) return "último dia";
+  return "em andamento";
+}
+
+const pelaOrdem = (a: EtapaDoCalendario, b: EtapaDoCalendario) =>
+  a.data_inicio.localeCompare(b.data_inicio) ||
+  a.ordem - b.ordem ||
+  a.unidade.localeCompare(b.unidade, "pt-BR");
+
+/** "1 de novembro de 2026 · domingo" */
+export function cabecalhoDoDiaDaLista(chave: string) {
+  const data = dataLocal(chave);
+  if (!data) return chave;
+  return `${data.getDate()} de ${MESES[data.getMonth()]?.toLowerCase()} de ${data.getFullYear()} · ${DIAS_DA_SEMANA_MINUSCULOS[data.getDay()]}`;
+}
+
+export type ItemDoDia = { etapa: EtapaDoCalendario; marca: MarcaNoDia };
+export type DiaDaLista = { chave: string; titulo: string; itens: ItemDoDia[] };
+
+/**
+ * A Lista de `inicio` a `fim` (chaves, inclusivas): um grupo por dia em que
+ * alguma etapa COMEÇA ou TERMINA, como na grade do mês. Os dias pelo meio de
+ * um intervalo não repetem a etapa — quem está em andamento vai, uma vez só,
+ * para `emAndamentoNoDia`. Etapas de data impossível ficam de fora.
+ */
+export function diasDaLista(
+  etapas: readonly EtapaDoCalendario[],
+  inicio: string,
+  fim: string,
+): DiaDaLista[] {
+  const porDia = new Map<string, ItemDoDia[]>();
+  const incluir = (chave: string, etapa: EtapaDoCalendario) => {
+    if (chave < inicio || chave > fim) return;
+    const marca = marcaNoDia(etapa, chave);
+    if (!marca) return;
+    const itens = porDia.get(chave);
+    if (itens) itens.push({ etapa, marca });
+    else porDia.set(chave, [{ etapa, marca }]);
+  };
+  for (const etapa of etapas || []) {
+    if (!etapaComDatasValidas(etapa)) continue;
+    incluir(etapa.data_inicio, etapa);
+    if (etapa.data_fim && etapa.data_fim !== etapa.data_inicio)
+      incluir(etapa.data_fim, etapa);
+  }
+  return [...porDia.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([chave, itens]) => ({
+      chave,
+      titulo: cabecalhoDoDiaDaLista(chave),
+      itens: itens.sort((a, b) => pelaOrdem(a.etapa, b.etapa)),
+    }));
+}
+
+/**
+ * Etapas que atravessam o dia `chave`: começaram antes e terminam depois. É o
+ * bloco "Em andamento" do topo da Lista — quem começa ou termina no próprio
+ * dia já aparece no grupo dele. Pelo fim mais próximo.
+ */
+export function emAndamentoNoDia(
+  etapas: readonly EtapaDoCalendario[],
+  chave: string,
+) {
+  return (etapas || [])
+    .filter(
+      (etapa) =>
+        etapaComDatasValidas(etapa) &&
+        marcaNoDia(etapa, chave) === "em andamento",
+    )
+    .sort((a, b) => a.data_fim.localeCompare(b.data_fim) || pelaOrdem(a, b));
+}
+
+/** Etapas ativas no dia (começam, terminam ou atravessam), para a Semana. */
+export function etapasAtivasNoDia(
+  etapas: readonly EtapaDoCalendario[],
+  chave: string,
+) {
+  const ativas: ItemDoDia[] = [];
+  for (const etapa of etapas || []) {
+    if (!etapaComDatasValidas(etapa)) continue;
+    const marca = marcaNoDia(etapa, chave);
+    if (marca) ativas.push({ etapa, marca });
+  }
+  // As pontas do dia primeiro; o que só atravessa vai para o fim da coluna.
+  const peso = (marca: MarcaNoDia) => (marca === "em andamento" ? 1 : 0);
+  return ativas.sort(
+    (a, b) => peso(a.marca) - peso(b.marca) || pelaOrdem(a.etapa, b.etapa),
+  );
+}
+
+/** Quantas etapas estão ativas em algum dia entre `inicio` e `fim`. */
+export function contarEtapasNoIntervalo(
+  etapas: readonly EtapaDoCalendario[],
+  inicio: string,
+  fim: string,
+) {
+  return (etapas || []).filter(
+    (etapa) =>
+      etapaComDatasValidas(etapa) &&
+      etapa.data_inicio <= fim &&
+      (etapa.data_fim || etapa.data_inicio) >= inicio,
+  ).length;
+}
+
+export const rotuloDaContagemDaSemana = (total: number) =>
+  `${total} ${plural(total, "etapa", "etapas")} na semana`;
+
+/** "1 a 7 de novembro de 2026", ou "29 de novembro a 5 de dezembro de 2026". */
+export function rotuloDaSemana(inicio: Date) {
+  const fim = somarDias(inicio, 6);
+  const mes = (data: Date) => MESES[data.getMonth()]?.toLowerCase();
+  if (inicio.getFullYear() !== fim.getFullYear())
+    return `${inicio.getDate()} de ${mes(inicio)} de ${inicio.getFullYear()} a ${fim.getDate()} de ${mes(fim)} de ${fim.getFullYear()}`;
+  if (inicio.getMonth() !== fim.getMonth())
+    return `${inicio.getDate()} de ${mes(inicio)} a ${fim.getDate()} de ${mes(fim)} de ${fim.getFullYear()}`;
+  return `${inicio.getDate()} a ${fim.getDate()} de ${mes(fim)} de ${fim.getFullYear()}`;
+}
+
+/*
+  Cor da unidade: um hash estável do nome escolhe uma das seis séries da
+  paleta (`--series-1..6`, que já têm versão no tema escuro). A mesma unidade
+  sai sempre com a mesma cor, em qualquer vista e em qualquer máquina. Seis
+  cores para dezenas de DSEIs se repetem — por isso a bolinha vem sempre ao
+  lado do nome, nunca sozinha. NÃO É a cor do tipo de etapa: essa continua na
+  barra à esquerda do item e nas bolinhas da grade do mês, que não mudam.
+*/
+export const CORES_DE_UNIDADE = 6;
+
+export function corDaUnidade(unidade: string) {
+  const texto = normalizarTexto(unidade);
+  let hash = 0;
+  for (let i = 0; i < texto.length; i += 1)
+    hash = (Math.imul(hash, 31) + texto.charCodeAt(i)) >>> 0;
+  return (hash % CORES_DE_UNIDADE) + 1;
+}
+
+/*
+  A vista que abre: a última escolhida pela pessoa neste navegador, ou Mês no
+  computador e Lista no celular (a grade de 7 colunas não cabe a 375px).
+*/
+export const CHAVE_DA_VISAO = "agsus:cronograma:visao";
+const VISOES: readonly VisaoDoCalendario[] = ["mes", "semana", "lista"];
+
+export const visaoValida = (valor: unknown): valor is VisaoDoCalendario =>
+  VISOES.includes(valor as VisaoDoCalendario);
+
+export function visaoInicial(
+  guardada: unknown,
+  celular: boolean,
+): VisaoDoCalendario {
+  if (visaoValida(guardada)) return guardada;
+  return celular ? "lista" : "mes";
+}

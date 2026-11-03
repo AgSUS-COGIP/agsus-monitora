@@ -507,3 +507,162 @@ describe("área atual", () => {
     expect(contador()).toBe("0 etapas no mês");
   });
 });
+
+/*
+  Vistas Mês · Semana · Lista. As mesmas etapas filtradas da grade; a Lista
+  agrupa por dia o que começa ou termina e põe o que atravessa o período num
+  bloco "Em andamento", uma vez só.
+*/
+describe("vistas Mês, Semana e Lista", () => {
+  const visao = (valor) =>
+    document.querySelector(`.cal-visoes [data-valor="${valor}"]`);
+  const titulosDaLista = () =>
+    [...document.querySelectorAll(".cal-lista-dia-titulo")].map((titulo) =>
+      titulo.textContent.trim(),
+    );
+  const itensDoDia = (chave) =>
+    [
+      ...document.querySelectorAll(
+        `.cal-lista-dia[data-dia="${chave}"] .cal-item`,
+      ),
+    ].map((item) => item.querySelector("strong").textContent);
+
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+
+  it("o seletor é um radiogroup e abre em Mês no computador", async () => {
+    await montar();
+    const grupo = document.querySelector(".cal-visoes");
+    expect(grupo.getAttribute("role")).toBe("radiogroup");
+    expect(
+      [...grupo.querySelectorAll('[role="radio"]')].map((botao) =>
+        botao.textContent.trim(),
+      ),
+    ).toEqual(["Mês", "Semana", "Lista"]);
+    expect(visao("mes").getAttribute("aria-checked")).toBe("true");
+    expect(document.querySelectorAll(".cal-celula")).toHaveLength(42);
+  });
+
+  it("Lista agrupa por dia o que começa ou termina, com 'Em andamento' no topo", async () => {
+    await montar();
+    await clicar(visao("lista"));
+    expect($("calGrade").dataset.visao).toBe("lista");
+    expect(document.querySelector(".cal-celula")).toBeNull();
+    expect(titulosDaLista()).toEqual([
+      "Em andamento em 15/09",
+      "14 de setembro de 2026 · segunda-feira",
+      "22 de setembro de 2026 · terça-feira",
+      "29 de setembro de 2026 · terça-feira",
+    ]);
+    // O recurso de 14 a 22/09 aparece no começo, no fim e uma vez no bloco.
+    const andamento = document.querySelector(".cal-andamento");
+    expect(andamento.textContent).toContain(
+      "Prazo de recurso do resultado preliminar",
+    );
+    expect(andamento.querySelector(".cal-marco").textContent).toBe("até 22/09");
+    expect(itensDoDia("2026-09-14")).toEqual([
+      "começaPrazo de recurso do resultado preliminar",
+    ]);
+    expect(itensDoDia("2026-09-22")).toEqual([
+      "último diaPrazo de recurso do resultado preliminar",
+      "Inscrições",
+    ]);
+    // A cor da unidade: uma bolinha antes do nome, igual em toda parte.
+    const bolinhas = [
+      ...document.querySelectorAll(
+        '.cal-lista-dia[data-dia="2026-09-22"] .cal-unidade',
+      ),
+    ];
+    expect(bolinhas).toHaveLength(2);
+    expect(bolinhas[0].dataset.corUnidade).toMatch(/^[1-6]$/);
+    expect(localStorage.getItem("agsus:cronograma:visao")).toBe("lista");
+  });
+
+  it("clicar numa linha abre o mesmo popup do dia", async () => {
+    await montar();
+    await clicar(visao("lista"));
+    const inscricoes = [
+      ...document.querySelectorAll(
+        '.cal-lista-dia[data-dia="2026-09-22"] .cal-item',
+      ),
+    ].find((item) => item.textContent.includes("Inscrições"));
+    await clicar(inscricoes);
+    expect($("calDiaTitulo").textContent).toBe(
+      "Terça-feira, 22 de setembro — 2 etapas",
+    );
+    await clicar($("calDiaFechar"));
+    // O bloco "Em andamento" abre o dia em que a etapa termina.
+    await clicar(document.querySelector(".cal-andamento .cal-item"));
+    expect($("calDiaTitulo").textContent).toMatch(
+      /^Terça-feira, 22 de setembro/,
+    );
+  });
+
+  it("os filtros valem na Lista; mês sem etapa mostra o vazio; Hoje volta", async () => {
+    await montar();
+    await clicar(visao("lista"));
+    await escolher($("calUnidade"), "CASAI São Paulo");
+    expect(titulosDaLista()).toEqual(["22 de setembro de 2026 · terça-feira"]);
+
+    await clicar($("calMesSeguinte"));
+    await clicar($("calMesSeguinte"));
+    expect($("calMesTitulo").textContent).toBe("Novembro 2026");
+    expect($("calGrade").textContent).toContain(
+      "Nenhuma etapa neste período com os filtros atuais",
+    );
+    await clicar($("calHoje"));
+    expect($("calMesTitulo").textContent).toBe("Setembro 2026");
+    expect(
+      document
+        .querySelector('.cal-lista-dia[data-dia="2026-09-22"]')
+        .getAttribute("aria-current"),
+    ).toBeNull();
+  });
+
+  it("lembra a última vista escolhida", async () => {
+    localStorage.setItem("agsus:cronograma:visao", "lista");
+    await montar();
+    expect(visao("lista").getAttribute("aria-checked")).toBe("true");
+    expect(document.querySelector(".cal-lista")).not.toBeNull();
+  });
+
+  it("Semana mostra 7 dias com as etapas ativas e anda de semana em semana", async () => {
+    await montar();
+    // Pelo teclado: → de Mês vai para Semana, com o foco junto.
+    visao("mes").focus();
+    await teclar(visao("mes"), "ArrowRight");
+    expect(document.activeElement).toBe(visao("semana"));
+    expect(visao("semana").getAttribute("aria-checked")).toBe("true");
+    expect($("calMesTitulo").textContent).toBe("13 a 19 de setembro de 2026");
+    expect(contador()).toBe("1 etapa na semana");
+    const dias = document.querySelectorAll(".cal-semana-dia");
+    expect(dias).toHaveLength(7);
+    const hoje = document.querySelector(
+      '.cal-semana-dia[data-dia="2026-09-15"]',
+    );
+    expect(hoje.getAttribute("aria-current")).toBe("date");
+    // O recurso atravessa a semana inteira: está em cada dia dela.
+    expect(hoje.querySelector(".cal-mini").dataset.marca).toBe("em andamento");
+    expect(
+      document.querySelector('.cal-semana-dia[data-dia="2026-09-14"] .cal-mini')
+        .dataset.marca,
+    ).toBe("começa");
+    expect($("calMesSeguinte").getAttribute("aria-label")).toBe(
+      "Próxima semana",
+    );
+
+    await clicar($("calMesSeguinte"));
+    expect($("calMesTitulo").textContent).toBe("20 a 26 de setembro de 2026");
+    expect(contador()).toBe("2 etapas na semana");
+
+    // Clicar numa etapa que só atravessa o dia abre o dia em que ela termina.
+    await clicar(
+      document.querySelector(
+        '.cal-semana-dia[data-dia="2026-09-21"] .cal-mini',
+      ),
+    );
+    expect($("calDiaTitulo").textContent).toMatch(
+      /^Terça-feira, 22 de setembro/,
+    );
+  });
+});
