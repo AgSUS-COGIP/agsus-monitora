@@ -6,7 +6,8 @@ import { clicar, digitar, esperar } from "../componentes/interacoes.js";
 /*
   Configurações › Automação (20261022190000): só o administrador global vê;
   cada chave mostra estado, última e próxima execução e quem mudou; ligar e
-  desligar pede motivo (10 a 500) e vai por alterar_chave_da_automacao; as
+  desligar pede motivo de verdade (15 a 500 caracteres, 3 palavras, sem
+  teclado batido; 20261103213000) e vai por alterar_chave_da_automacao; as
   recusas do banco aparecem em português; a função que falta é dita.
 */
 
@@ -172,7 +173,7 @@ describe("Configurações › Automação", () => {
     expect(linha("classificacao").textContent).not.toContain("Sem efeito");
   });
 
-  it("ligar pede motivo de 10 caracteres e manda a chave ao banco", async () => {
+  it("ligar pede motivo de verdade (mostra a regra) e manda a chave ao banco", async () => {
     const { supabase, toast } = await montar({
       rpc: async (nome) =>
         nome === "obter_chaves_da_automacao"
@@ -181,11 +182,16 @@ describe("Configurações › Automação", () => {
     });
     await clicar(botao(linha("entrevistas"), "Ligar"));
     const campo = raiz.querySelector("#automacaoMotivo-entrevistas");
-    await digitar(campo, "curto");
-    await clicar(botao(linha("entrevistas"), "Ligar"));
     expect(raiz.textContent).toContain(
-      "Informe o motivo (de 10 a 500 caracteres).",
+      "Uma frase com pelo menos 15 caracteres e 3 palavras.",
     );
+    for (const lixo of ["curto", "sadasdsadsadasdas", "testegcgbgfbg"]) {
+      await digitar(campo, lixo);
+      await clicar(botao(linha("entrevistas"), "Ligar"));
+      expect(raiz.textContent).toContain(
+        "Escreva o motivo numa frase de verdade.",
+      );
+    }
     expect(supabase.rpc).not.toHaveBeenCalledWith(
       "alterar_chave_da_automacao",
       expect.anything(),

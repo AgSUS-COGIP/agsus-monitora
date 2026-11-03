@@ -70,6 +70,12 @@ const PARTES_SIMPLES = Object.freeze(["config", "paineis", "mapa", "unidades"]);
 */
 const PARTES_OPCIONAIS = Object.freeze(["abas"]);
 
+/** Todas as partes guardadas na cópia, na ordem (entram na versão da cópia). */
+export const PARTES_DA_COPIA: readonly string[] = Object.freeze([
+  ...PARTES_SIMPLES,
+  ...PARTES_OPCIONAIS,
+]);
+
 /** O que muda a cada acesso sem mudar o que a pessoa pode ver. */
 const CAMPO_DE_DATA = /(^|_)(em|at)$|^ultimo_|^last_/;
 
@@ -215,4 +221,18 @@ export function partesQueMudaram(
       (parte) => texto(anteriores?.[parte]) !== texto(atuais?.[parte]),
     ),
   );
+}
+
+/**
+  Assinatura curta e estável de um texto (FNV-1a de 32 bits, em hexadecimal):
+  a lista de colunas do monitoramento entra na versão da cópia sem o texto
+  inteiro (src/app/carga.ts).
+*/
+export function assinaturaDoTexto(texto: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < texto.length; i += 1) {
+    h ^= texto.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, "0");
 }

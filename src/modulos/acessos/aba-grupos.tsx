@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -313,7 +314,7 @@ export function AbaGrupos({
   aoVerPessoas: (codigo: string) => void;
 }) {
   const atual = useSyncExternalStore(estado.assinar, estado.obter);
-  const grupos = atual.matriz?.grupos || [];
+  const grupos = useMemo(() => atual.matriz?.grupos || [], [atual.matriz]);
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const alterado = useRef(false);
   const aoAlterar = useRef(

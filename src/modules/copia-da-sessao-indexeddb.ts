@@ -9,7 +9,7 @@
   "não há cópia", e a entrada segue pela rede como antes.
 */
 
-import type { CopiaDaSessao } from "../lib/copia-da-sessao";
+import { PARTES_DA_COPIA, type CopiaDaSessao } from "../lib/copia-da-sessao";
 import { apagarCacheDePayload } from "./cache-de-payload-indexeddb.ts";
 
 const BANCO = "agsus-monitora";
@@ -17,12 +17,16 @@ const LOJA = "copia-da-sessao";
 const CHAVE = "sessao";
 
 /*
-  Versão da cópia. `import.meta.url` é o endereço do bundle publicado, que traz o
-  hash do conteúdo: cada publicação nova invalida as cópias antigas sozinha, sem
-  depender de alguém lembrar de mudar um número quando as colunas mudarem. O
-  número à frente é para mudança do formato do registro.
+  Versão da cópia: o formato do registro, não a publicação. Antes era
+  `import.meta.url` (o endereço do bundle, com o hash do conteúdo): cada
+  publicação do front jogava fora a cópia de todo mundo e a entrada voltava
+  inteira da rede. Os dados velhos não dependem disto — a próxima entrada
+  pergunta ao banco só se mudou (a `versao` de cada parte) —, e a lista de
+  partes entra aqui sozinha. Mudou o que se guarda de uma parte (não o banco)?
+  Suba ESQUEMA_DA_COPIA. Como em src/modulos/analises/consultas.ts.
 */
-export const VERSAO_DA_COPIA = `2:${import.meta.url}`;
+export const ESQUEMA_DA_COPIA = 3;
+export const VERSAO_DA_COPIA = `${ESQUEMA_DA_COPIA}:partes-${PARTES_DA_COPIA.join(",")}`;
 
 function abrirBanco(): Promise<IDBDatabase> {
   return new Promise((resolver, rejeitar) => {

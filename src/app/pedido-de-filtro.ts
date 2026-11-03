@@ -85,6 +85,6 @@ export function usarPedidoDeFiltro(
     if (!pronta) return;
     const filtro = consumirPedidoDeFiltro(view);
     if (filtro) aplicar(filtro);
-    // `aplicar` muda a cada desenho; só o pedido novo e a prontidão disparam.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `aplicar` muda a cada desenho; só o pedido novo e a prontidão disparam.
   }, [atual, pronta, view]);
 }

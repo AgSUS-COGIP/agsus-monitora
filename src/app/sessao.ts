@@ -847,6 +847,7 @@ export function criarSessao({
   function instalarOuvintesDaJanela() {
     if (ouvintesDaJanela || !janela?.addEventListener) return;
     ouvintesDaJanela = true;
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises -- devolve a promessa de propósito (o teste aguarda o login entrar); o navegador ignora o retorno.
     janela.addEventListener("message", aoReceberMensagem);
     janela.addEventListener("pageshow", aoMostrarPagina);
   }

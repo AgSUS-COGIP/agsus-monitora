@@ -270,8 +270,20 @@ describe("cada chave na tela", () => {
 });
 
 describe("motivo e recusas", () => {
-  it("motivo de 10 a 500 caracteres", () => {
+  it("motivo com sentido: 15 a 500 caracteres, 3 palavras, sem teclado batido", () => {
     expect(motivoValido("curto")).toBe(false);
+    // Os dois aceitos antes da regra (TB_CHAVE_AUTOMACAO, 23 e 28/10/2026).
+    expect(motivoValido("sadasdsadsadasdas")).toBe(false);
+    expect(motivoValido("testegcgbgfbg")).toBe(false);
+    expect(motivoValido("asdf asdf asdf asdf")).toBe(false);
+    expect(motivoValido("teste teste teste")).toBe(false);
+    expect(motivoValido("aaaaaa bbbbbb cccccc")).toBe(false);
+    expect(motivoValido("Pausa da coordenação")).toBe(true);
+    expect(motivoValido("Pausa pedida")).toBe(false);
+    expect(
+      motivoValido("Religar a sincronização da seleção do edital 120/2026"),
+    ).toBe(true);
+    expect(motivoValido("  Instrução da COGIP para pausar  ")).toBe(true);
     expect(motivoValido("          ".repeat(3))).toBe(false);
     expect(motivoValido("Pausa pedida pela coordenação")).toBe(true);
     expect(motivoValido("x".repeat(501))).toBe(false);

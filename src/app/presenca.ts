@@ -397,7 +397,7 @@ export function criarPresenca({
 
   function ligarBatida() {
     pararBatida();
-    batida = setInterval(sincronizar, INTERVALO_DA_PRESENCA_MS);
+    batida = setInterval(() => void sincronizar(), INTERVALO_DA_PRESENCA_MS);
   }
 
   function parar() {
@@ -458,16 +458,35 @@ export function criarPresenca({
     a batida; a que volta a ficar visível retoma. Devolve o cancelamento.
   */
   function acompanhar() {
-    // Uma chamada por navegação: a abertura da tela e o lugar novo juntos.
-    const pararNavegacao = navegacao.assinar((evento) => {
-      const abriu =
-        evento.tipo === "abertura" && evento.view !== evento.anterior;
+    /*
+      Uma chamada por navegação: a abertura da tela e o lugar novo juntos.
+      Abrir uma tela avisa duas vezes no mesmo instante — `menu` (marcarMenu)
+      e depois `abertura` (src/app/navegacao.ts) — e o lugar só conta como
+      gravado quando a resposta volta; por isso os avisos do mesmo instante
+      são juntados num só (microtarefa) antes de chamar o banco.
+    */
+    let pendente: { abertura: string | null } | null = null;
+    const enviarPendente = () => {
+      const abertura = pendente?.abertura ?? null;
+      pendente = null;
       const presenca = trocouDeLocal();
-      if (!abriu && !presenca) return;
+      if (!abertura && !presenca) return;
       registrarNavegacao({
-        evento: abriu ? { nome: "abertura_tela", tela: evento.view } : null,
+        evento: abertura ? { nome: "abertura_tela", tela: abertura } : null,
         presenca,
       }).catch(() => {});
+    };
+    const pararNavegacao = navegacao.assinar((evento) => {
+      const abertura =
+        evento.tipo === "abertura" && evento.view !== evento.anterior
+          ? (evento.view ?? null)
+          : null;
+      if (pendente) {
+        if (abertura) pendente.abertura = abertura;
+        return;
+      }
+      pendente = { abertura };
+      queueMicrotask(enviarPendente);
     });
     const aoMudarVisibilidade = () => {
       if (visivelNaAba()) retomar();

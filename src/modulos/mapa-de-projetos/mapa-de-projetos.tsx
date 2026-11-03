@@ -105,7 +105,7 @@ function usarLugares(
   useEffect(() => {
     if (!pronto) return undefined;
     let vale = true;
-    carregador.carregar(area).then((resultado) => {
+    void carregador.carregar(area).then((resultado) => {
       if (vale) definirLidos({ area, resultado });
     });
     return () => {

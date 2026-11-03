@@ -114,9 +114,9 @@ function TelaDaArea({
   const escuro = usarTemaEscuro();
   const { carregado, dados, area } = e;
 
-  const entrevistas = dados?.entrevistas || [];
+  const entrevistas = useMemo(() => dados?.entrevistas || [], [dados]);
   const criterios = dados?.criterios || [];
-  const aprovados = dados?.aprovadosSemEntrevista || [];
+  const aprovados = useMemo(() => dados?.aprovadosSemEntrevista || [], [dados]);
   const filtradas = useMemo(
     () => filtrarEntrevistas(entrevistas, filtros),
     [entrevistas, filtros],

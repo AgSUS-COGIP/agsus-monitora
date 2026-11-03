@@ -257,7 +257,7 @@ export function Tour({
       cancelado = true;
       janela.clearTimeout(temporizador);
     };
-    // `passos` e as funções não mudam durante o tour: só o pedido dispara.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `passos` e as funções não mudam durante o tour: só o pedido dispara.
   }, [pedido]);
 
   // Rola até o elemento e mede; mede de novo ao rolar, redimensionar ou clicar.

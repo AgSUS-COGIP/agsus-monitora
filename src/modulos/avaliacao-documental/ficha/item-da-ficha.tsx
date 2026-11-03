@@ -719,7 +719,7 @@ function Itens({
   useEffect(() => {
     if (!abrir) return;
     mudar((l) => comLinhaAberta(bloco, l, declarada, respostas, sugestoes));
-    // Só quando volta a ficar vazia.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só quando volta a ficar vazia, não a cada mudança do lançamento.
   }, [abrir]);
   const itens = lista(lancamento);
   // A posição de cada linha na lista do lançamento (pelos itens, só as à mão).
@@ -738,6 +738,7 @@ function Itens({
         ".avd-ficha-item input, .avd-ficha-item select",
       )
       ?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- foca só quando a primeira linha fica em branco, não ao destravar a ficha.
   }, [primeiraEmBranco]);
   if (!chave) return null;
   const alterar = (i: number, campos: Partial<ItemLancado>) =>

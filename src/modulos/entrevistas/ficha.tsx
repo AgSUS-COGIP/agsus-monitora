@@ -459,6 +459,7 @@ export function FichaDoCandidato({
       if (globalThis.matchMedia?.("(pointer: coarse)").matches !== true)
         setFocarNaAba(ativa.id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só a troca da aba ativa (pelo id) dispara, não cada novo objeto.
   }, [ativa?.id, aba]);
   const abasRef = useRef(abas);
   abasRef.current = abas;
@@ -481,7 +482,7 @@ export function FichaDoCandidato({
       } else principal.current?.focus();
     }, 380);
     return () => clearTimeout(t);
-    // Só a cada pedido: o resto é lido no momento.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só a cada pedido: o resto é lido no momento.
   }, [pedidoDeAvanco]);
 
   const linhas = !ativa

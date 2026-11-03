@@ -83,7 +83,7 @@ export function usarMapaDoBrasil<T extends object>(
       camadas.current = null;
       definirMapa(null);
     };
-    // `emVoo` é um ref estável; `aoCriar` vem do ref `chamadas`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `emVoo` é um ref estável; `aoCriar` vem do ref `chamadas`.
   }, [L]);
 
   // Voltou a aparecer, ou mudou para tela cheia: o Leaflet remede.

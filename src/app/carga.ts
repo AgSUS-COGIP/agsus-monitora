@@ -11,6 +11,7 @@ import {
   assinaturaDoAcesso,
   consultasDosDados,
   copiaServe,
+  assinaturaDoTexto,
   dadosDasRespostas,
   montarCopia,
   partesQueMudaram,
@@ -116,7 +117,8 @@ const COPIA_PADRAO = Object.freeze({
   ler: lerCopiaDaSessao,
   guardar: guardarCopiaDaSessao,
   apagar: apagarCopiaDaSessao,
-  versao: VERSAO_DA_COPIA,
+  // O formato do registro (não a publicação) e as colunas que se leem do monitoramento.
+  versao: `${VERSAO_DA_COPIA}:colunas-${assinaturaDoTexto(COLUNAS_DO_MONITORAMENTO)}`,
 });
 const ABAS_PADRAO = Object.freeze({
   consulta: consultaDoCatalogoDeAbas,
@@ -811,7 +813,7 @@ export function criarCarga(
       ESPERA_DA_RAJADA_MS,
       ultimaLeitura + INTERVALO_DO_REALTIME_MS - agora(),
     );
-    esperaDoRealtime = setTimeout(releituraDoRealtime, espera);
+    esperaDoRealtime = setTimeout(() => void releituraDoRealtime(), espera);
   }
 
   function abrirCanal() {
@@ -838,7 +840,7 @@ export function criarCarga(
     esperaDoRealtime = null;
     if (!canal) return;
     try {
-      sb()?.removeChannel(canal);
+      void sb()?.removeChannel(canal);
     } catch {
       // O canal já caiu junto com a conexão.
     }

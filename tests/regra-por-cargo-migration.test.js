@@ -168,7 +168,7 @@ describe("rollback, ensaio e correção", () => {
     expect(ROLLBACK.trimEnd().endsWith("commit;")).toBe(true);
     for (const [nome, args] of NOVAS)
       expect(ROLLBACK).toContain(
-        `drop function if exists private."${nome}"${args.replace(/, /g, ", ")};`,
+        `drop function if exists private."${nome}"${args};`,
       );
     expect(corpoDa("FC_VALIDAR_REGRA_ANALISE", ROLLBACK)).not.toContain(
       "FC_VALIDAR_POR_CARGO_ANALISE",

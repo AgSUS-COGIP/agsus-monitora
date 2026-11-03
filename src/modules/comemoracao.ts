@@ -579,7 +579,7 @@ export function criarSom(
       const atual = contexto();
       if (!atual) return false;
       try {
-        atual.resume?.();
+        void atual.resume?.();
         sintetizar(atual, som);
         return true;
       } catch {
@@ -588,7 +588,7 @@ export function criarSom(
     },
     fechar() {
       try {
-        audio?.close?.();
+        void audio?.close?.();
       } catch {
         /* nada a fazer */
       }

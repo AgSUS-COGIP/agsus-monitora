@@ -130,5 +130,5 @@ export async function finishOAuth(
 }
 
 if (typeof window !== "undefined") {
-  finishOAuth();
+  void finishOAuth();
 }

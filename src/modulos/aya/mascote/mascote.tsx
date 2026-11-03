@@ -249,7 +249,7 @@ export function Mascote({
     setMomento(estadoDoMomento);
     const tempo = setTimeout(() => setMomento(null), Math.max(duracao, 300));
     return () => clearTimeout(tempo);
-    // Só ao montar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só ao montar.
   }, []);
 
   // Dois quadros depois de montar (o navegador já pintou a entrada): vai ao pedido.
@@ -346,6 +346,8 @@ export function Mascote({
   const acompanhar = livre && atencao && !reduzido;
   useEffect(() => {
     if (!acompanhar || !janela?.addEventListener) return undefined;
+    // O svg da raiz é sempre desenhado: o mesmo nó do início vale na limpeza.
+    const raizDoEfeito = refRaiz.current;
     let quadro = 0;
     let ultimo: { x: number; y: number } | null = null;
     let pertoAgora = false;
@@ -384,8 +386,8 @@ export function Mascote({
     return () => {
       janela.removeEventListener("pointermove", aoMover);
       if (quadro) janela.cancelAnimationFrame?.(quadro);
-      refRaiz.current?.style.removeProperty("--olho-x");
-      refRaiz.current?.style.removeProperty("--olho-y");
+      raizDoEfeito?.style.removeProperty("--olho-x");
+      raizDoEfeito?.style.removeProperty("--olho-y");
     };
   }, [acompanhar, janela]);
 

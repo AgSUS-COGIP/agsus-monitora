@@ -939,6 +939,7 @@ export function Aya({
     }
     marcarConviteDeTour(janela, chaveDaTela);
     setConvite({ chave: chaveDaTela, titulo: tituloDoTourDaTela });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- convida pela tela (chave) e pelo que ocupa a Aya; o resto se lê no momento.
   }, [chaveDaTela, temTourNaTela, temPerfil, tour, oferta]);
 
   /* Leva à tela do passo da trilha; diz se precisou trocar de tela. */
@@ -1132,6 +1133,7 @@ export function Aya({
   const hrefDoSuporte = useMemo(
     () => chamadoDe(ultimaResposta).href,
     // chamadoDe lê as mensagens, a página e a configuração do momento.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chamadoDe é nova a cada desenho; estas são as entradas que ela lê.
     [ultimaResposta, local, nomeDaAreaAtual],
   );
   const renovarSuporte = (evento: MouseEvent<HTMLAnchorElement>) => {
