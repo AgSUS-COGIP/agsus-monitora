@@ -120,17 +120,19 @@ describe("hospedagem: toda rota entrega o app", () => {
       expect(paginaDoCaminho(caminho), caminho).toBe("index.html");
   });
 
-  it("a Vercel reescreve as mesmas áreas para o index.html", () => {
+  it("a Vercel reescreve as mesmas áreas para a página inicial", () => {
     const vercel = JSON.parse(readFileSync("vercel.json", "utf8"));
     const [areas, semAcesso] = vercel.rewrites;
-    expect(areas.destination).toBe("/index.html");
+    // Com cleanUrls, /index.html responde 308; o destino tem de ser "/".
+    expect(vercel.cleanUrls).toBe(true);
+    expect(areas.destination).toBe("/");
     const lista = /\/:area\(([^)]+)\)\/:caminho\*/.exec(areas.source)?.[1];
     expect(lista?.split("|").sort()).toEqual(
       AREAS_DO_MENU.map((area) => area.id).sort(),
     );
     expect(semAcesso).toEqual({
       source: "/sem-acesso",
-      destination: "/index.html",
+      destination: "/",
     });
     // Arquivos e funções continuam com a Vercel (o sistema de arquivos vem antes).
     for (const fora of ["/api/", "/assets/", "/auth/", "/icons/", "/data/"])
