@@ -1,6 +1,6 @@
-import type { EtapaDoCalendario, MarcoDaEtapa } from "./tipos.ts";
+import type { EtapaDoCalendario } from "./tipos.ts";
 import type { MarcaNoDia } from "../../lib/calendario-editais.ts";
-import { useEffect, useMemo, useRef } from "react";
+import { useId, useMemo, useState } from "react";
 import { dataLocal } from "../../lib/etapas-de-edital.ts";
 import {
   DIAS_SEMANA,
@@ -9,25 +9,29 @@ import {
   emAndamentoNoDia,
   etapasAtivasNoDia,
   formatarCurto,
+  unidadeCurta,
 } from "../../lib/calendario-editais.ts";
 import { classes } from "../../ui/index.ts";
-import { BolinhaDaUnidade, ItemDeEtapa, chaveDaEtapa } from "./partes.tsx";
+import {
+  ItemDeEtapa,
+  TipoDaEtapa,
+  chaveDaEtapa,
+  textoDaMarca,
+} from "./partes.tsx";
 
 /*
   As vistas Lista e Semana do card do calendário. Recebem as etapas JÁ
   filtradas (as mesmas da grade do mês) e só desenham; as regras de quem entra
   em cada dia estão em `src/lib/calendario-editais.ts`. Clicar numa etapa abre
-  o mesmo popup do dia da grade (`DiaDoCalendario`), no dia em que ela começa
-  ou termina — o popup só lista as pontas dos intervalos.
+  o mesmo popup do dia da grade (`DiaDoCalendario`).
+
+  A Lista rola com a página (sem barra de rolagem dentro do card). No mês de
+  hoje ela começa hoje: os dias anteriores ficam recolhidos num botão, e o que
+  já está em andamento aparece uma vez, em "Acontecendo agora".
 */
 
-/* "começa" e "último dia" reaproveitam a marca da grade (sólida e contornada). */
-const MARCO_DA_MARCA: Record<MarcaNoDia, MarcoDaEtapa> = {
-  começa: "início",
-  "último dia": "fim",
-  "no dia": "",
-  "em andamento": "",
-};
+/** Acima disto, "Acontecendo agora" nasce recolhido. */
+const ANDAMENTO_ABERTO_ATE = 3;
 
 /** O dia do popup para uma etapa vista em `chave`: a ponta dela naquele dia, ou o fim. */
 const diaDoPopup = (
@@ -35,6 +39,9 @@ const diaDoPopup = (
   marca: MarcaNoDia,
   chave: string,
 ) => (marca === "em andamento" ? etapa.data_fim || etapa.data_inicio : chave);
+
+const quantasEtapas = (total: number) =>
+  `${total} ${total === 1 ? "etapa" : "etapas"}`;
 
 export function VistaDaLista({
   etapas,
@@ -50,30 +57,27 @@ export function VistaDaLista({
   aoAbrirDia: (chave: string) => void;
 }) {
   /*
-    "Em andamento" vale para o primeiro dia que a lista mostra: hoje, se o
-    período o contém (a lista abre nele), senão o primeiro dia do período.
+    "Acontecendo agora" vale para o primeiro dia que a lista mostra: hoje, se o
+    período o contém, senão o primeiro dia do período.
   */
   const referencia =
     hojeChave >= inicio && hojeChave <= fim ? hojeChave : inicio;
+  const ano = Number(hojeChave.slice(0, 4)) || new Date().getFullYear();
   const dias = useMemo(
-    () => diasDaLista(etapas, inicio, fim),
-    [etapas, inicio, fim],
+    () => diasDaLista(etapas, inicio, fim, ano),
+    [etapas, inicio, fim, ano],
   );
   const andamento = useMemo(
     () => emAndamentoNoDia(etapas, referencia),
     [etapas, referencia],
   );
-  const lista = useRef<HTMLOListElement>(null);
-
-  // A lista rola dentro do card e abre em hoje (ou no próximo dia com etapa).
-  useEffect(() => {
-    const ol = lista.current;
-    if (!ol) return;
-    const alvo = [...ol.querySelectorAll<HTMLElement>("[data-dia]")].find(
-      (dia) => (dia.dataset.dia || "") >= referencia,
-    );
-    ol.scrollTop = alvo ? Math.max(0, alvo.offsetTop - ol.offsetTop) : 0;
-  }, [dias, referencia]);
+  const anteriores = dias.filter((dia) => dia.chave < referencia);
+  const seguintes = dias.filter((dia) => dia.chave >= referencia);
+  const [verAnteriores, setVerAnteriores] = useState(false);
+  const [andamentoAberto, setAndamentoAberto] = useState(
+    andamento.length <= ANDAMENTO_ABERTO_ATE,
+  );
+  const idDoAndamento = useId();
 
   if (!dias.length && !andamento.length)
     return (
@@ -82,21 +86,63 @@ export function VistaDaLista({
       </p>
     );
 
+  const desenharDia = (dia: (typeof dias)[number]) => {
+    const hoje = dia.chave === hojeChave;
+    return (
+      <li
+        key={dia.chave}
+        className={classes("cal-lista-dia", hoje && "hoje")}
+        data-dia={dia.chave}
+        aria-current={hoje ? "date" : undefined}
+      >
+        <h3 className="cal-lista-dia-titulo">
+          {dia.titulo}
+          {hoje ? <span className="cal-hoje-selo">Hoje</span> : null}
+        </h3>
+        <ul className="cal-lista-itens">
+          {dia.itens.map(({ etapa, marca }, indice) => (
+            <li key={chaveDaEtapa(etapa, indice)}>
+              <ItemDeEtapa
+                etapa={etapa}
+                marca={textoDaMarca(etapa, marca)}
+                aoEscolher={() => aoAbrirDia(dia.chave)}
+              />
+            </li>
+          ))}
+        </ul>
+      </li>
+    );
+  };
+
   return (
     <div className="cal-lista-vista">
       {andamento.length ? (
-        <section className="cal-andamento" aria-labelledby="calAndamentoTitulo">
-          <h3 id="calAndamentoTitulo" className="cal-lista-dia-titulo">
-            Em andamento
-            <small> em {formatarCurto(dataLocal(referencia))}</small>
-          </h3>
-          <ul className="cal-lista-itens">
+        <section className="cal-andamento" aria-label="Acontecendo agora">
+          <button
+            type="button"
+            className="cal-andamento-cabeca"
+            aria-expanded={andamentoAberto}
+            aria-controls={idDoAndamento}
+            onClick={() => setAndamentoAberto((aberto) => !aberto)}
+          >
+            <i
+              className={`fa-solid fa-chevron-${andamentoAberto ? "down" : "right"}`}
+              aria-hidden="true"
+            />
+            <span className="cal-andamento-titulo">
+              Acontecendo agora · {quantasEtapas(andamento.length)}
+            </span>
+          </button>
+          <ul
+            id={idDoAndamento}
+            className="cal-lista-itens"
+            hidden={!andamentoAberto}
+          >
             {andamento.map((etapa, indice) => (
               <li key={chaveDaEtapa(etapa, indice)}>
                 <ItemDeEtapa
                   etapa={etapa}
-                  marco="fim"
-                  textoDoMarco={`até ${formatarCurto(dataLocal(etapa.data_fim))}`}
+                  marca={`até ${formatarCurto(dataLocal(etapa.data_fim))}`}
                   aoEscolher={() => aoAbrirDia(etapa.data_fim)}
                 />
               </li>
@@ -104,35 +150,23 @@ export function VistaDaLista({
           </ul>
         </section>
       ) : null}
-      <ol className="cal-lista" ref={lista} aria-label="Etapas por dia">
-        {dias.map((dia) => {
-          const hoje = dia.chave === hojeChave;
-          return (
-            <li
-              key={dia.chave}
-              className={classes("cal-lista-dia", hoje && "hoje")}
-              data-dia={dia.chave}
-              aria-current={hoje ? "date" : undefined}
-            >
-              <h3 className="cal-lista-dia-titulo">
-                {dia.titulo}
-                {hoje ? <span className="cal-hoje-selo">Hoje</span> : null}
-              </h3>
-              <ul className="cal-lista-itens">
-                {dia.itens.map(({ etapa, marca }, indice) => (
-                  <li key={chaveDaEtapa(etapa, indice)}>
-                    <ItemDeEtapa
-                      etapa={etapa}
-                      marco={MARCO_DA_MARCA[marca]}
-                      textoDoMarco={marca === "no dia" ? "" : marca}
-                      aoEscolher={() => aoAbrirDia(dia.chave)}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </li>
-          );
-        })}
+      {anteriores.length ? (
+        <button
+          type="button"
+          className="cal-anteriores"
+          aria-expanded={verAnteriores}
+          onClick={() => setVerAnteriores((ver) => !ver)}
+        >
+          {verAnteriores
+            ? "Esconder os dias anteriores"
+            : `Ver ${anteriores.length} ${
+                anteriores.length === 1 ? "dia anterior" : "dias anteriores"
+              } deste mês`}
+        </button>
+      ) : null}
+      <ol className="cal-lista" aria-label="Etapas por dia">
+        {verAnteriores ? anteriores.map(desenharDia) : null}
+        {seguintes.map(desenharDia)}
       </ol>
     </div>
   );
@@ -149,6 +183,7 @@ export function VistaDaSemana({
   hojeChave: string;
   aoAbrirDia: (chave: string) => void;
 }) {
+  const ano = Number(hojeChave.slice(0, 4)) || new Date().getFullYear();
   const dias = useMemo(
     () =>
       chaves.map((chave) => ({
@@ -173,39 +208,47 @@ export function VistaDaSemana({
             <button
               type="button"
               className="cal-semana-cabeca"
-              aria-label={`${cabecalhoDoDiaDaLista(chave)}: ${total} ${
+              aria-label={`${cabecalhoDoDiaDaLista(chave, ano)}: ${total} ${
                 total === 1 ? "etapa ativa" : "etapas ativas"
               }`}
               onClick={() => aoAbrirDia(chave)}
             >
               <span>{data ? DIAS_SEMANA[data.getDay()] : ""}</span>
               <strong className="cal-numero">{data?.getDate()}</strong>
+              {hoje ? <span className="cal-hoje-selo">Hoje</span> : null}
             </button>
             {total ? (
               <ul className="cal-semana-itens">
-                {itens.map(({ etapa, marca }, indice) => (
-                  <li key={chaveDaEtapa(etapa, indice)}>
-                    <button
-                      type="button"
-                      className="cal-mini"
-                      data-cor={etapa.tipo.cor}
-                      data-marca={marca}
-                      title={`${etapa.atividade} — ${etapa.unidade}, Ed. ${etapa.edital}`}
-                      onClick={() =>
-                        aoAbrirDia(diaDoPopup(etapa, marca, chave))
-                      }
-                    >
-                      {marca === "começa" || marca === "último dia" ? (
-                        <span className="cal-mini-marca">{marca}</span>
-                      ) : null}
-                      <span className="cal-mini-nome">{etapa.atividade}</span>
-                      <small>
-                        <BolinhaDaUnidade unidade={etapa.unidade} />
-                        {etapa.unidade}
-                      </small>
-                    </button>
-                  </li>
-                ))}
+                {itens.map(({ etapa, marca }, indice) => {
+                  const texto = textoDaMarca(etapa, marca);
+                  return (
+                    <li key={chaveDaEtapa(etapa, indice)}>
+                      <button
+                        type="button"
+                        className="cal-mini"
+                        data-cor={etapa.tipo.cor}
+                        data-marca={marca}
+                        title={`${etapa.atividade} — ${etapa.unidade}, Ed. ${etapa.edital}`}
+                        onClick={() =>
+                          aoAbrirDia(diaDoPopup(etapa, marca, chave))
+                        }
+                      >
+                        <strong className="cal-mini-nome">
+                          {etapa.atividade}
+                        </strong>
+                        <small>
+                          <TipoDaEtapa etapa={etapa} />
+                        </small>
+                        <small>
+                          {unidadeCurta(etapa.unidade)}
+                          {texto ? (
+                            <span className="cal-mini-marca"> · {texto}</span>
+                          ) : null}
+                        </small>
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className="cal-semana-vazio">Sem etapas</p>

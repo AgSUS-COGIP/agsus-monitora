@@ -3,11 +3,13 @@
   tempo e o popup do dia. Topo, filtros, cards, skeleton e avisos vêm de
   src/ui/ (ui.css). Só tokens: o tema escuro vem deles.
 
-  As cores dos tipos de etapa são tokens de domínio (`--etapa-*`, em
-  src/styles/tokens.css), referenciados pelo campo `cor` de cada tipo em
+  UMA COR SÓ: A DO TIPO DE ETAPA. As cores são tokens de domínio (`--etapa-*`,
+  em src/styles/tokens.css), referenciados pelo campo `cor` de cada tipo em
   `src/lib/etapas-de-edital.ts` — o JS escreve `data-cor="rosa"` e a tabela
   do fim deste arquivo decide o que é "rosa". Acrescentar um tipo lá exige
-  acrescentar o token e a linha da tabela, senão a etapa sai sem cor.
+  acrescentar o token e a linha da tabela, senão a etapa sai sem cor. O TEXTO
+  nunca é da cor do tipo (o âmbar do Resultado não chega a 2:1 sobre branco):
+  a cor fica na faixa, na borda e na bolinha; o rótulo do tipo vai escrito.
 */
 
 /* ── Filtros ─────────────────────────────────────────────────────────── */
@@ -59,10 +61,7 @@
   font-weight: var(--font-weight-medium);
 }
 
-/*
-  Acima da grade: a legenda é a chave de leitura das bolinhas, e no rodapé
-  obrigava a descer o olhar e voltar para decifrar a primeira célula.
-*/
+/* Só no Mês: a chave das cores das faixas. Na Lista e na Semana o tipo vem escrito. */
 .cal-legenda {
   display: flex;
   flex-wrap: wrap;
@@ -80,19 +79,16 @@
 .cal-legenda-item i {
   width: 10px;
   height: 10px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-sm);
   background: var(--cal-cor, var(--text-secondary));
 }
 
 /* ── Grade do mês ────────────────────────────────────────────────────── */
 
-.cal-semana,
-.cal-dias {
+.cal-semana {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: var(--space-1-5);
-}
-.cal-semana {
   margin-bottom: var(--space-1-5);
 }
 .cal-semana span {
@@ -102,18 +98,40 @@
   font-weight: var(--font-weight-medium);
   text-align: center;
 }
+.cal-dias {
+  display: grid;
+  gap: var(--space-1-5);
+}
+.cal-dias-esqueleto {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.cal-dias-esqueleto .cal-celula {
+  min-height: 120px;
+}
 
 /*
-  A célula é um botão: o dia inteiro é a área de clique que abre o detalhe.
-  Só leva o número e uma linha de contagens.
+  Uma linha por semana. Os sete dias ocupam a linha inteira (a coluna de
+  cada um, de cima a baixo); as faixas das etapas ficam por cima, nas três
+  alturas do meio, e atravessam os dias do intervalo, por cima do espaço entre
+  as colunas — como numa agenda. A última altura é a do "+N mais".
 */
+.cal-semana-linha {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: 32px repeat(3, 24px) 22px;
+  column-gap: var(--space-1-5);
+  row-gap: 2px;
+}
+
+/* A célula é um botão: o dia inteiro é a área de clique que abre o popup. */
 .cal-celula {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-2);
-  min-height: 84px;
-  padding: var(--space-2);
+  grid-row: 1 / -1;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-1-5) var(--space-2);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   background: var(--surface-card);
@@ -151,6 +169,10 @@
   outline: 1px solid var(--brand-primary);
   outline-offset: -2px;
 }
+.cal-celula:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 1px;
+}
 /* Skeleton: a célula sem número nem contagem, que não se clica. */
 .cal-celula-esqueleto {
   cursor: default;
@@ -175,37 +197,96 @@
   background: var(--brand-primary);
   color: var(--text-inverse);
 }
+
+/*
+  A faixa de uma etapa: "Alto Rio Purus – Período de Entrevistas", numa linha,
+  com reticências. Fundo claro da cor do tipo e a borda esquerda cheia no dia
+  em que começa; quando vem da semana anterior ou segue para a próxima, a ponta
+  daquele lado fica reta, sem borda.
+*/
+.cal-faixa {
+  z-index: 1;
+  align-self: stretch;
+  min-width: 0;
+  margin: 0 var(--space-1);
+  padding: 0 var(--space-1-5);
+  overflow: hidden;
+  border-left: 3px solid var(--cal-cor, var(--text-secondary));
+  border-radius: var(--radius-sm);
+  background: color-mix(
+    in srgb,
+    var(--cal-cor, var(--text-secondary)) 16%,
+    var(--surface-card)
+  );
+  color: var(--text-primary);
+  font-size: var(--text-caption);
+  line-height: 24px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.cal-faixa:hover {
+  background: color-mix(
+    in srgb,
+    var(--cal-cor, var(--text-secondary)) 28%,
+    var(--surface-card)
+  );
+}
+.cal-faixa b {
+  font-weight: var(--font-weight-semibold);
+}
+.cal-faixa[data-continua-antes] {
+  margin-left: 0;
+  border-left: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.cal-faixa[data-continua-depois] {
+  margin-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+/* "+N mais": o clique passa para o dia, que abre o popup com tudo. */
+.cal-mais {
+  z-index: 1;
+  grid-row: 5;
+  align-self: center;
+  padding: 0 var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  pointer-events: none;
+}
+
+/* O resumo do celular: bolinhas dos tipos e o total. No computador, as faixas. */
+.cal-resumo {
+  display: none;
+}
 .cal-pontos {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1) var(--space-2);
+  gap: 3px;
 }
-
-/*
-  Bolinha + total: diz o tipo pela cor e o volume pelo número. O NÚMERO É
-  CINZENTO, NÃO DA COR DO TIPO: o amarelo do Resultado tem cerca de 1.9:1 de
-  contraste sobre branco, abaixo dos 4.5 de texto pequeno. A cor vive na
-  bolinha, que não precisa de ser lida — só reconhecida.
-*/
 .cal-ponto {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--cal-cor, var(--text-secondary));
+}
+.cal-resumo-total {
   color: var(--text-secondary);
   font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
 }
-.cal-ponto i {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background: var(--cal-cor, var(--text-secondary));
-}
 
-/* ── Próximas etapas e popup do dia ──────────────────────────────────── */
+/* ── Linhas de etapa (Lista, próximas etapas e popup do dia) ─────────── */
 
 .cal-inferior {
   align-items: start;
+}
+/* Na Lista e na Semana, a linha do tempo fica sozinha e ocupa a linha toda. */
+.cal-inferior.so-linha-do-tempo {
+  grid-template-columns: minmax(0, 1fr);
 }
 .cal-cabecalho {
   display: flex;
@@ -230,13 +311,12 @@
 }
 .cal-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
   width: 100%;
   padding: var(--space-2) var(--space-3);
   border: 0;
-  /* Larga o suficiente para a cor identificar o tipo de relance. */
-  border-left: 6px solid var(--cal-cor, var(--text-secondary));
+  border-left: 3px solid var(--cal-cor, var(--text-secondary));
   border-bottom: 1px solid var(--border-subtle);
   background: none;
   color: var(--text-primary);
@@ -244,6 +324,7 @@
   text-align: left;
   cursor: pointer;
 }
+.cal-lista-itens > li:last-child .cal-item,
 .cal-item:last-child {
   border-bottom: 0;
 }
@@ -252,54 +333,54 @@
 }
 .cal-item-data {
   min-width: 42px;
+  padding-top: 1px;
   color: var(--text-secondary);
   font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
 }
 .cal-item-corpo {
+  display: grid;
   flex: 1;
+  gap: 2px;
   min-width: 0;
-}
-.cal-item-corpo strong,
-.cal-item-corpo small {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .cal-item-corpo strong {
   color: var(--text-primary);
   font-size: var(--text-body-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 .cal-item-corpo small {
   color: var(--text-secondary);
   font-size: var(--text-caption);
+  line-height: 1.4;
+}
+/* "início", "último dia", "até 13/11": texto discreto à direita, não etiqueta. */
+.cal-item-marca {
+  flex: none;
+  margin-left: auto;
+  padding-top: 2px;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  white-space: nowrap;
 }
 
-/*
-  Marca de ponta do intervalo, antes do nome da etapa: início sólido e fim
-  contornado, legível sem depender de ler a palavra. Cinzenta, não da cor do
-  tipo (que já está na barra de 6px à esquerda).
-*/
-.cal-marco {
-  display: inline-block;
-  margin-right: var(--space-2);
-  padding: var(--space-0-5) var(--space-2);
-  border: 1px solid var(--state-neutral);
-  border-radius: var(--radius-pill);
-  font-size: var(--text-caption);
+/* "● Entrevistas": a bolinha na cor do tipo; o texto, cinzento. */
+.cal-tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-secondary);
   font-weight: var(--font-weight-medium);
-  line-height: 1.4;
-  vertical-align: 1px;
+  white-space: nowrap;
 }
-.cal-marco[data-marco="início"] {
-  background: var(--state-neutral);
-  color: var(--text-inverse);
-}
-.cal-marco[data-marco="fim"] {
-  background: transparent;
-  color: var(--state-neutral);
+.cal-tipo i {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--cal-cor, var(--text-secondary));
 }
 
 /* Estreito de propósito: o conteúdo é uma lista de etapas. */
@@ -313,6 +394,14 @@
 .cal-modal .cal-item {
   padding-right: var(--space-5);
   padding-left: var(--space-4);
+}
+.cal-modal-secao {
+  margin: 0;
+  padding: var(--space-3) var(--space-4) var(--space-1);
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
 }
 
 /* ── Linha do tempo ──────────────────────────────────────────────────── */
@@ -361,8 +450,8 @@
   outline: 1px solid var(--border-subtle);
 }
 /*
-  Só a forma do ponto distingue as três situações: cheio para o que passou,
-  com halo para o que está a acontecer, cinzento para o que ainda vem.
+  A cor é a do tipo, como no resto da tela; a forma diz a situação: cheio para
+  o que passou, com halo para o que está a acontecer, vazado para o que vem.
 */
 .cal-passo[data-situacao="concluida"] .cal-passo-marca {
   outline: 1px solid var(--cal-cor, var(--text-secondary));
@@ -371,7 +460,9 @@
   outline: 3px solid color-mix(in srgb, var(--state-info) 30%, transparent);
 }
 .cal-passo[data-situacao="futura"] .cal-passo-marca {
-  background: var(--state-neutral);
+  border-color: var(--cal-cor, var(--text-secondary));
+  background: var(--surface-card);
+  outline: 0;
 }
 .cal-passo strong {
   display: block;
@@ -402,8 +493,8 @@
   margin-left: var(--space-2);
 }
 /*
-  Itens de grade encolhem abaixo do conteúdo: sem isto, o nome longo (que já
-  corta com reticências) alargava o card e a página rolava de lado no celular.
+  Itens de grade encolhem abaixo do conteúdo: sem isto, o nome longo alargava
+  o card e a página rolava de lado no celular.
 */
 .cal-card > *,
 .cal-inferior .ui-pilha > *,
@@ -412,41 +503,11 @@
   min-width: 0;
 }
 
-/*
-  Cor da unidade: bolinha antes do nome. Seis séries da paleta, escolhidas por
-  hash do nome (`corDaUnidade`); o tema escuro vem dos próprios tokens.
-*/
-.cal-unidade {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: var(--space-1);
-  border-radius: var(--radius-full);
-  background: var(--cor-unidade, var(--text-secondary));
-  vertical-align: 0;
-}
-[data-cor-unidade="1"] {
-  --cor-unidade: var(--series-1);
-}
-[data-cor-unidade="2"] {
-  --cor-unidade: var(--series-2);
-}
-[data-cor-unidade="3"] {
-  --cor-unidade: var(--series-3);
-}
-[data-cor-unidade="4"] {
-  --cor-unidade: var(--series-4);
-}
-[data-cor-unidade="5"] {
-  --cor-unidade: var(--series-5);
-}
-[data-cor-unidade="6"] {
-  --cor-unidade: var(--series-6);
-}
-
+/* Largura de leitura: num monitor largo, a marca à direita não fica longe do nome. */
 .cal-lista-vista {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-4);
+  max-width: 1040px;
 }
 .cal-lista,
 .cal-lista-itens,
@@ -456,31 +517,23 @@
   padding: 0;
   list-style: none;
 }
-/* Rola dentro do card, como a linha do tempo, e abre no dia de hoje. */
+/* A Lista rola com a página: nada de barra de rolagem dentro do card. */
 .cal-lista {
   display: grid;
-  gap: var(--space-3);
-  max-height: 560px;
-  overflow-y: auto;
+  gap: var(--space-4);
 }
+/* "Ter, 3 de novembro" e, quando é hoje, o selo; um traço leve embaixo. */
 .cal-lista-dia-titulo {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   margin: 0 0 var(--space-1);
-  padding: var(--space-1);
+  padding: 0 0 var(--space-1-5);
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-primary);
-  font-size: var(--text-body-sm);
+  font-size: var(--text-body);
   font-weight: var(--font-weight-semibold);
-}
-.cal-lista-dia-titulo small {
-  color: var(--text-secondary);
-  font-weight: var(--font-weight-medium);
-}
-.cal-lista-dia.hoje .cal-lista-dia-titulo {
-  border-bottom-color: var(--brand-primary);
 }
 .cal-hoje-selo {
   padding: 0 var(--space-2);
@@ -489,20 +542,60 @@
   color: var(--text-inverse);
   font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
+  line-height: 1.6;
 }
 .cal-andamento {
-  padding: var(--space-2);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   background: var(--surface-raised);
 }
+.cal-andamento-cabeca {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+  cursor: pointer;
+}
+.cal-andamento-cabeca:hover {
+  background: var(--surface-hover);
+}
+.cal-andamento-cabeca i {
+  width: 12px;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
 .cal-andamento .cal-lista-itens {
-  max-height: 220px;
-  overflow-y: auto;
+  border-top: 1px solid var(--border-subtle);
+}
+.cal-anteriores {
+  justify-self: start;
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--brand-primary);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.cal-anteriores:hover {
+  background: var(--surface-hover);
 }
 .cal-item:focus-visible,
 .cal-mini:focus-visible,
-.cal-semana-cabeca:focus-visible {
+.cal-semana-cabeca:focus-visible,
+.cal-andamento-cabeca:focus-visible,
+.cal-anteriores:focus-visible {
   outline: 2px solid var(--brand-primary);
   outline-offset: -2px;
 }
@@ -545,29 +638,20 @@
   background: var(--surface-hover);
 }
 .cal-semana-dia.hoje .cal-numero {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  padding: 0 var(--space-1);
-  border-radius: var(--radius-pill);
-  background: var(--brand-primary);
-  color: var(--text-inverse);
+  color: var(--brand-primary);
 }
 .cal-semana-itens {
   display: grid;
   gap: var(--space-1);
-  max-height: 420px;
-  overflow-y: auto;
 }
+/* A mesma linha da Lista, em coluna estreita: nome, tipo, unidade e marca. */
 .cal-mini {
   display: grid;
-  gap: var(--space-0-5);
+  gap: 2px;
   width: 100%;
-  padding: var(--space-1) var(--space-1-5);
+  padding: var(--space-1-5) var(--space-2);
   border: 0;
-  border-left: 4px solid var(--cal-cor, var(--text-secondary));
+  border-left: 3px solid var(--cal-cor, var(--text-secondary));
   border-radius: var(--radius-sm);
   background: var(--surface-raised);
   color: var(--text-primary);
@@ -578,37 +662,25 @@
 .cal-mini:hover {
   background: var(--surface-hover);
 }
-/* O que só atravessa o dia: barra tracejada, sem fundo — é contexto. */
+/* O que só atravessa o dia: sem fundo — é contexto. */
 .cal-mini[data-marca="em andamento"] {
-  border-left-style: dashed;
   background: transparent;
 }
-.cal-mini-marca {
-  justify-self: start;
-  padding: 0 var(--space-1-5);
-  border: 1px solid var(--state-neutral);
-  border-radius: var(--radius-pill);
-  color: var(--state-neutral);
+.cal-mini-nome {
+  display: -webkit-box;
+  overflow: hidden;
   font-size: var(--text-caption);
-  line-height: 1.4;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
-.cal-mini[data-marca="começa"] .cal-mini-marca {
-  background: var(--state-neutral);
-  color: var(--text-inverse);
-}
-.cal-mini-nome,
 .cal-mini small {
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.cal-mini-nome {
-  font-size: var(--text-caption);
-  font-weight: var(--font-weight-medium);
-}
-.cal-mini small {
   color: var(--text-secondary);
   font-size: var(--text-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .cal-semana-vazio {
   margin: 0;
@@ -658,18 +730,38 @@
   --cal-cor: var(--text-secondary);
 }
 
+/*
+  Celular: sete colunas de ~45px não comportam faixas com texto. Cada dia
+  mostra as bolinhas dos tipos e o total; tocar abre o popup com tudo.
+*/
 @media (max-width: 640px) {
   .cal-contador,
   .cal-visoes {
     margin-left: 0;
   }
-  .cal-celula {
-    gap: var(--space-1);
-    min-height: 62px;
-    padding: var(--space-1-5);
+  .cal-semana,
+  .cal-semana-linha {
+    column-gap: var(--space-1);
   }
-  .cal-ponto i {
-    width: 7px;
-    height: 7px;
+  .cal-semana-linha {
+    grid-template-rows: minmax(62px, auto);
+  }
+  .cal-faixa,
+  .cal-mais {
+    display: none;
+  }
+  .cal-celula {
+    padding: var(--space-1);
+  }
+  .cal-resumo {
+    display: grid;
+    gap: 2px;
+  }
+  .cal-item {
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+  }
+  .cal-item-marca {
+    padding-top: 0;
   }
 }

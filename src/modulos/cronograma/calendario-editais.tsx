@@ -50,6 +50,7 @@ import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   BlocosEsqueleto,
   Campo,
+  classes,
   ErroAoCarregar,
   PainelDeFiltros,
   Segmentado,
@@ -87,6 +88,7 @@ import { VistaDaLista, VistaDaSemana } from "./vistas.tsx";
 */
 
 const EVENTO_CRONOGRAMA_SALVO = "agsus:nucleo-cronograma-saved";
+
 const TIPOS_DO_FILTRO: readonly (readonly [string, string])[] =
   TIPOS_DA_LEGENDA.map((tipo) => [tipo.id, tipo.rotulo]);
 
@@ -258,6 +260,12 @@ export function CalendarioEditais({
     }
   }
 
+  // "Ver todas na Lista": a Lista do mês de hoje, que já começa hoje.
+  function verTodasNaLista() {
+    irParaHoje();
+    mudarVisao("lista");
+  }
+
   const naSemana = visao === "semana";
   const passoAnterior = naSemana ? "Semana anterior" : "Mês anterior";
   const passoSeguinte = naSemana ? "Próxima semana" : "Próximo mês";
@@ -417,18 +425,21 @@ export function CalendarioEditais({
           />
         </div>
 
-        <div
-          id="calLegenda"
-          className="cal-legenda"
-          data-tour="cronograma-legenda"
-        >
-          {TIPOS_DA_LEGENDA.map((tipo) => (
-            <span key={tipo.id} className="cal-legenda-item">
-              <i data-cor={tipo.cor} />
-              {tipo.rotulo}
-            </span>
-          ))}
-        </div>
+        {/* Na Lista e na Semana o tipo vem escrito em cada linha. */}
+        {visao === "mes" ? (
+          <div
+            id="calLegenda"
+            className="cal-legenda"
+            data-tour="cronograma-legenda"
+          >
+            {TIPOS_DA_LEGENDA.map((tipo) => (
+              <span key={tipo.id} className="cal-legenda-item">
+                <i data-cor={tipo.cor} aria-hidden="true" />
+                {tipo.rotulo}
+              </span>
+            ))}
+          </div>
+        ) : null}
         <div
           id="calGrade"
           data-tour="cronograma-grade"
@@ -445,6 +456,7 @@ export function CalendarioEditais({
             <GradeEsqueleto />
           ) : visao === "lista" ? (
             <VistaDaLista
+              key={doMes.inicio}
               etapas={filtradas}
               inicio={doMes.inicio}
               fim={doMes.fim}
@@ -461,6 +473,7 @@ export function CalendarioEditais({
           ) : (
             <GradeDoMes
               celulas={celulas}
+              etapas={filtradas}
               selecionado={diaAberto}
               aoEscolherDia={setDiaAberto}
             />
@@ -468,32 +481,53 @@ export function CalendarioEditais({
         </div>
       </section>
 
-      <div className="ui-linha-de-cards cal-inferior">
-        <section
-          className="ui-card ui-pilha"
-          data-tour="cronograma-proximas"
-          aria-labelledby="calProximasTitulo"
-        >
-          <h2 className="ui-titulo" id="calProximasTitulo">
-            Próximas etapas
-          </h2>
-          <div id="calProximas" aria-busy={primeiraCarga || undefined}>
-            {primeiraCarga ? (
-              <BlocosEsqueleto quantos={4} className="cal-item-esqueleto" />
-            ) : (
-              <>
-                <AvisoDeDatasARevisar
-                  editais={editaisComDatasARevisar(etapas)}
-                />
-                <ProximasEtapas
-                  etapas={proximasEtapas(filtradas, hoje)}
-                  hoje={hoje}
-                  aoEscolher={setEditalEscolhido}
-                />
-              </>
-            )}
-          </div>
-        </section>
+      <div
+        className={classes(
+          "ui-linha-de-cards cal-inferior",
+          visao !== "mes" && "so-linha-do-tempo",
+        )}
+      >
+        {/*
+          Só no Mês: na Lista e na Semana as mesmas etapas já estão no card de
+          cima, e repetir a lista aqui embaixo era informação em dobro.
+        */}
+        {visao === "mes" ? (
+          <section
+            className="ui-card ui-pilha"
+            data-tour="cronograma-proximas"
+            aria-labelledby="calProximasTitulo"
+          >
+            <div className="cal-cabecalho">
+              <h2 className="ui-titulo" id="calProximasTitulo">
+                Próximas etapas
+              </h2>
+              <button
+                id="calVerNaLista"
+                type="button"
+                className="btn secondary small"
+                onClick={verTodasNaLista}
+              >
+                Ver todas na Lista
+              </button>
+            </div>
+            <div id="calProximas" aria-busy={primeiraCarga || undefined}>
+              {primeiraCarga ? (
+                <BlocosEsqueleto quantos={4} className="cal-item-esqueleto" />
+              ) : (
+                <>
+                  <AvisoDeDatasARevisar
+                    editais={editaisComDatasARevisar(etapas)}
+                  />
+                  <ProximasEtapas
+                    etapas={proximasEtapas(filtradas, hoje)}
+                    hoje={hoje}
+                    aoEscolher={setEditalEscolhido}
+                  />
+                </>
+              )}
+            </div>
+          </section>
+        ) : null}
 
         <section
           className="ui-card ui-pilha"
