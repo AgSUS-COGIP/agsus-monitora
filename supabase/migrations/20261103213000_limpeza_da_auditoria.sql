@@ -67,6 +67,10 @@
      últimas execuções de cada tarefa: get_saude_das_cargas lê as 10 últimas
      e obter_chaves_da_automacao a última (a mensal de acessos não some).
 
+  is_master() está no fecho das leituras por versão (20261029170000):
+  recalcula as fontes delas (FC_ATUALIZAR_FONTES_DAS_LEITURAS), como a
+  20261103120000.
+
   Fica de fora (relatado, não aplicado): o REINDEX CONCURRENTLY do
   TM_MANIFESTO_ANALISE (não roda em transação) e o TL_DISPARO_ROBO
   (INICIADO é a situação final da origem GITHUB por desenho — CK_DISPROBO_GITHUB
@@ -100,6 +104,10 @@ begin
   v_corpo := pg_get_functiondef('public.alterar_chave_da_automacao(text, boolean, text)'::regprocedure);
   if position('if length(v_motivo) not between 10 and 500 then' in v_corpo) = 0 then
     raise exception 'alterar_chave_da_automacao diferente da que esta migration conhece.';
+  end if;
+
+  if to_regprocedure('private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"(boolean)') is null then
+    raise exception 'Aplique antes 20261029170000_marca_barata_das_leituras_por_versao.sql.';
   end if;
 
   if to_regclass('cron.job_run_details') is null then
@@ -182,6 +190,9 @@ $function$;
 
 comment on function private.is_master() is
   'Administrador global ativo, pelo user_id da sessão (auth.uid()) — sem o e-mail do JWT desde 20261103213000. Uma leitura pelo índice único de user_id.';
+
+-- is_master() está no fecho das leituras por versão (20261029170000): recalcula as fontes delas.
+select private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"();
 
 -- 3. Motivo de verdade nas chaves da automação ----------------------------------------------------
 create or replace function private."FC_MOTIVO_COM_SENTIDO"(p_motivo text)

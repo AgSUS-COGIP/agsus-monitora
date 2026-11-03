@@ -110,6 +110,9 @@ $function$;
 
 comment on function private.is_master() is null;
 
+-- is_master() está no fecho das leituras por versão: recalcula as fontes delas.
+select private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"();
+
 drop trigger if exists "TG_PERFILUSUARIO_AUTH_PELO_EMAIL" on public."TB_PERFIL_USUARIO";
 drop function if exists private."FC_PERFIL_LIGAR_USUARIO_AUTH"();
 

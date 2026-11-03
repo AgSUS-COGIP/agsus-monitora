@@ -76,6 +76,10 @@ begin
     raise exception 'alterar_chave_da_automacao diferente da que esta migration conhece.';
   end if;
 
+  if to_regprocedure('private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"(boolean)') is null then
+    raise exception 'Aplique antes 20261029170000_marca_barata_das_leituras_por_versao.sql.';
+  end if;
+
   if to_regclass('cron.job_run_details') is null then
     raise exception 'pg_cron ausente.';
   end if;
@@ -156,6 +160,9 @@ $function$;
 
 comment on function private.is_master() is
   'Administrador global ativo, pelo user_id da sessão (auth.uid()) — sem o e-mail do JWT desde 20261103213000. Uma leitura pelo índice único de user_id.';
+
+-- is_master() está no fecho das leituras por versão (20261029170000): recalcula as fontes delas.
+select private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"();
 
 -- 3. Motivo de verdade nas chaves da automação ----------------------------------------------------
 create or replace function private."FC_MOTIVO_COM_SENTIDO"(p_motivo text)
