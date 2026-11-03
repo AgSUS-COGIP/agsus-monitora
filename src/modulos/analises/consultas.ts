@@ -37,6 +37,7 @@ import {
 } from "../../lib/analises-curriculares.ts";
 import {
   criarCacheDoPainel,
+  ESQUEMAS_DO_PAYLOAD,
   revalidarPayload,
 } from "../../lib/cache-do-painel-de-analises.ts";
 import { respostaInalterada, versaoDoPacote } from "../../lib/cache-de-payload";
@@ -57,8 +58,14 @@ const RPC_TEXTOS = "get_analises_texto_do_painel";
 const RPC_CONFERENCIA = "obter_ultima_conferencia";
 const RPC_RITMO = "obter_ritmo_da_analise";
 
-/* A cópia vale só para a mesma publicação do front (o endereço do módulo muda a cada build). */
-const VERSAO_DA_COPIA = `1:${import.meta.url}`;
+/*
+  A cópia vale enquanto o formato do payload for o mesmo: os `schema_version`
+  aceitos (ESQUEMAS_DO_PAYLOAD). Antes era o endereço do módulo, que muda a
+  cada build — toda publicação do front jogava fora a cópia de todo mundo e o
+  painel inteiro voltava do banco. Mudou o que se guarda (não o payload)? Suba
+  o número da frente.
+*/
+export const VERSAO_DA_COPIA = `2:esquemas-${ESQUEMAS_DO_PAYLOAD.join(",")}`;
 const TEMPO_LIMITE_MS = 30000;
 
 const primeiro = (data: unknown) => (Array.isArray(data) ? data[0] : data);

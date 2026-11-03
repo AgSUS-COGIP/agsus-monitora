@@ -16,7 +16,14 @@ import {
   Presença e acesso, sem React:
 
   - auditoria (`registrar_evento_acesso`): entrada, abertura de tela, heartbeat
-    a cada `access_heartbeat_minutos` e saída;
+    a cada `access_heartbeat_minutos` e saída. O heartbeat vai de carona na
+    batida da presença (`registrar_navegacao_monitora`, evento + presença numa
+    chamada): a primeira batida depois do intervalo leva o evento "heartbeat",
+    com os mesmos detalhes de antes. Antes era um `setInterval` à parte, uma
+    chamada a mais a cada 5 min que só repetia o que a presença já dizia. A
+    linha em TL_EVENTO_ACESSO continua igual (o "último acesso",
+    private."FC_ULTIMO_ACESSO", e a duração da sessão por
+    `client_session_id` leem dela); com a aba oculta, como a batida, não sai;
   - presença (`registrar_presenca_monitora`, TB_PRESENCA_ONLINE_MONITORA): a
     batida a cada 90 s com o lugar da pessoa ("Recursos · SEDE"), na hora em
     que ela troca de página, área ou seção. O banco conta "online" por 4 min
@@ -97,7 +104,11 @@ export type EventoDaNavegacaoNaPresenca = {
 };
 
 /** Um evento da auditoria que vai junto com a navegação. */
-export type EventoDaNavegacao = { nome: string; tela?: string | null };
+export type EventoDaNavegacao = {
+  nome: string;
+  tela?: string | null;
+  detalhes?: Record<string, unknown>;
+};
 
 /** Detalhes opcionais de um evento da auditoria. */
 export type OpcoesDoEventoDeAcesso = {
@@ -156,7 +167,9 @@ export function criarPresenca({
   });
   const ouvintes = new Set<() => void>();
   let batida: ReturnType<typeof setInterval> | null = null;
-  let heartbeat: ReturnType<typeof setInterval> | null = null;
+  /* O heartbeat da auditoria está ligado; vai na primeira batida depois do intervalo. */
+  let heartbeatLigado = false;
+  let ultimoHeartbeat = 0;
   let ultimoLocal: string | null = null;
   /* `iniciar` ligou a presença (a aba oculta só pausa a batida). */
   let ligada = false;
@@ -204,13 +217,19 @@ export function criarPresenca({
   }
 
   function pararHeartbeat() {
-    clearInterval(heartbeat!);
-    heartbeat = null;
+    heartbeatLigado = false;
   }
 
+  /* Liga o heartbeat; o intervalo conta daqui (a batida o leva quando vencer). */
   function iniciarHeartbeat() {
     pararHeartbeat();
     if (!usuarioId()) return;
+    heartbeatLigado = true;
+    ultimoHeartbeat = agora();
+  }
+
+  function heartbeatVencido() {
+    if (!heartbeatLigado) return false;
     const minutos = Math.max(
       1,
       configuracao.inteiro(
@@ -218,13 +237,16 @@ export function criarPresenca({
         HEARTBEAT_PADRAO_MINUTOS,
       ),
     );
-    heartbeat = setInterval(
-      () =>
-        registrarEvento("heartbeat", {
-          detalhes: { current_view: view(), page_title: documento.title },
-        }),
-      minutos * 60 * 1000,
-    );
+    return agora() - ultimoHeartbeat >= minutos * 60 * 1000;
+  }
+
+  /* O evento "heartbeat" da auditoria, com o que ele sempre levou. */
+  function eventoDeHeartbeat(): EventoDaNavegacao {
+    ultimoHeartbeat = agora();
+    return {
+      nome: "heartbeat",
+      detalhes: { current_view: view(), page_title: documento.title },
+    };
   }
 
   // ── Presença ──────────────────────────────────────────────────────────
@@ -268,7 +290,11 @@ export function criarPresenca({
     const comPresenca = presenca && visivelNaAba();
     if (!evento && !comPresenca) return;
     if (semNavegacaoNoBanco) {
-      if (evento) void registrarEvento(evento.nome, { tela: evento.tela });
+      if (evento)
+        void registrarEvento(evento.nome, {
+          tela: evento.tela,
+          detalhes: evento.detalhes,
+        });
       if (comPresenca) await registrarLocal();
       return;
     }
@@ -277,7 +303,7 @@ export function criarPresenca({
       p_evento: evento?.nome ?? null,
       p_tela: evento ? (evento.tela ?? view() ?? null) : null,
       p_origem: "index",
-      p_detalhes: {},
+      p_detalhes: evento?.detalhes ?? {},
       p_client_session_id: idDaAba(),
       p_user_agent: agente(),
       p_app_version: configuracao.versao(),
@@ -341,7 +367,10 @@ export function criarPresenca({
     ultimaLista === null ||
     agora() - ultimaLista >= LISTA_FECHADA_MS;
 
-  /* `evento`: o da entrada, que vai junto com a primeira batida. */
+  /*
+    `evento`: o da entrada, que vai junto com a primeira batida. Sem ele, o
+    heartbeat vencido vai junto (uma chamada, não duas).
+  */
   async function sincronizar(evento: EventoDaNavegacao | null = null) {
     if (!sb() || !usuarioId()) return;
     if (!visivelNaAba()) {
@@ -349,7 +378,10 @@ export function criarPresenca({
       return;
     }
     try {
-      if (evento) await registrarNavegacao({ evento, presenca: true });
+      const comEvento =
+        evento ?? (heartbeatVencido() ? eventoDeHeartbeat() : null);
+      if (comEvento)
+        await registrarNavegacao({ evento: comEvento, presenca: true });
       else await registrarLocal();
       if (!podeVer()) definir({ visivel: false });
       else if (listaVencida()) await listar();

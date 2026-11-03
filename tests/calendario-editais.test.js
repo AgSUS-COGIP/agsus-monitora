@@ -154,6 +154,32 @@ describe("fronteiras das RPCs do calendário", () => {
     expect(rpc).toHaveBeenCalledTimes(2);
   });
 
+  it("o resumo e as etapas saem juntos, sem um esperar o outro", async () => {
+    const soltar = new Map();
+    const rpc = vi.fn(
+      (nome) =>
+        new Promise((resolver) =>
+          soltar.set(nome, () =>
+            resolver({
+              data: nome === "get_nucleo_cronograma_resumo" ? RESUMO : [ETAPA],
+              error: null,
+            }),
+          ),
+        ),
+    );
+    const estado = criarEstadoDoCalendario({ supabase: { auth, rpc } });
+    const carga = estado.carregar();
+    await vi.waitFor(() => expect(rpc).toHaveBeenCalledTimes(2));
+    expect(rpc.mock.calls.map(([nome]) => nome).sort()).toEqual([
+      "get_nucleo_cronograma_resumo",
+      "listar_etapas_do_cronograma",
+    ]);
+    soltar.get("listar_etapas_do_cronograma")();
+    soltar.get("get_nucleo_cronograma_resumo")();
+    await carga;
+    expect(estado.obter().etapas).toHaveLength(1);
+  });
+
   it("erros sem mensagem textual mostram a reserva e permitem tentar novamente", async () => {
     const rpc = vi.fn(async () => ({
       data: null,

@@ -91,6 +91,16 @@ import type { InicioDaSessao, PartesDoInicio } from "./inicio-da-sessao.ts";
 const RPC_DO_MAPA = "listar_mapa_da_saude_indigena";
 
 /*
+  O Realtime avisa de qualquer escrita em TB_MONITORAMENTO_INDIGENA, e cada
+  aviso fazia TODOS os clientes relerem as linhas (~0,8 s no banco cada). Agora
+  a rajada espera um pouco (`ESPERA_DA_RAJADA_MS`) e cada cliente relê no
+  máximo uma vez a cada `INTERVALO_DO_REALTIME_MS`: o aviso que chega antes
+  fica para o fim do intervalo (a última mudança nunca se perde).
+*/
+export const ESPERA_DA_RAJADA_MS = 800;
+export const INTERVALO_DO_REALTIME_MS = 30_000;
+
+/*
   As colunas de cada linha do monitoramento, as que
   `listar_monitoramento_operacional` devolve (migration 20261022200000, da view
   VW_MONITORAMENTO_INDIGENA_OPERACIONAL). As seis `cronograma_*` entram de
@@ -263,6 +273,8 @@ export function criarCarga(
   let atualizacao: Promise<boolean> | null = null;
   let canal: RealtimeChannel | null = null;
   let esperaDoRealtime: ReturnType<typeof setTimeout> | null = null;
+  /* Quando as linhas foram lidas do banco pela última vez (o Realtime espaça a partir daí). */
+  let ultimaLeitura = Number.NEGATIVE_INFINITY;
 
   const sb = () => cliente();
   const perfil = () => obterPerfil();
@@ -456,6 +468,8 @@ export function criarCarga(
         navegacao.montarMenu();
         return true;
       }
+      // Conta do começo: um aviso que chega durante a leitura espera o intervalo inteiro.
+      ultimaLeitura = agora();
       const { data, error, versao } = await (consulta ||
         consultaDoMonitoramento());
       if (rodada !== rodadaDasLinhas) return false;
@@ -724,17 +738,20 @@ export function criarCarga(
   // ── Realtime do monitoramento ─────────────────────────────────────────
 
   /*
-    Sucesso só quando as linhas vieram; a falha já foi avisada pela carga.
-    Ninguém usando as linhas agora: não relê — ficam desatualizadas, e a
-    próxima página que as pedir relê (`garantirLinhas`).
+    Avisa só quando as linhas mudaram: a resposta `inalterado` (`p_versao`)
+    devolve as mesmas linhas e não republica nada. A falha já foi avisada pela
+    carga. Ninguém usando as linhas agora: não relê — ficam desatualizadas, e
+    a próxima página que as pedir relê (`garantirLinhas`).
   */
   async function releituraDoRealtime() {
+    esperaDoRealtime = null;
     if (!pedidos.ha()) {
       desatualizadas = true;
       return;
     }
     try {
-      if (await carregarLinhas())
+      const antes = publicadas;
+      if ((await carregarLinhas()) && publicadas !== antes)
         avisar("Dashboard atualizado automaticamente.", "ok");
     } catch (erro) {
       console.warn("Falha na releitura do Realtime:", erro);
@@ -770,6 +787,33 @@ export function criarCarga(
     fecharCanal();
   }
 
+  /*
+    A aba voltou do fundo (src/lib/background-resource-lifecycle.ts): com o
+    canal fechado, o que mudou enquanto isso não chegou. As linhas já lidas
+    ficam desatualizadas e a página que as usa relê com a versão — quase
+    sempre `inalterado`, sem trazer as linhas de novo.
+  */
+  function retomarRealtime() {
+    iniciarRealtime();
+    if (!linhasCarregadas) return;
+    desatualizadas = true;
+    void garantirLinhas();
+  }
+
+  /*
+    Aviso do Realtime: a rajada vira uma releitura só, no máximo uma a cada
+    `INTERVALO_DO_REALTIME_MS` desde a última leitura. Já há uma marcada: ela
+    cobre este aviso também.
+  */
+  function agendarReleitura() {
+    if (esperaDoRealtime) return;
+    const espera = Math.max(
+      ESPERA_DA_RAJADA_MS,
+      ultimaLeitura + INTERVALO_DO_REALTIME_MS - agora(),
+    );
+    esperaDoRealtime = setTimeout(releituraDoRealtime, espera);
+  }
+
   function abrirCanal() {
     if (!sb() || !obterUsuario()) return;
     if (!configuracao.booleano("feature_realtime_monitoramento", true)) return;
@@ -780,11 +824,7 @@ export function criarCarga(
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "TB_MONITORAMENTO_INDIGENA" },
-          () => {
-            // Mudanças em rajada viram uma releitura só.
-            clearTimeout(esperaDoRealtime!);
-            esperaDoRealtime = setTimeout(releituraDoRealtime, 800);
-          },
+          agendarReleitura,
         )
         .subscribe();
     } catch (erro) {
@@ -795,6 +835,7 @@ export function criarCarga(
 
   function fecharCanal() {
     clearTimeout(esperaDoRealtime!);
+    esperaDoRealtime = null;
     if (!canal) return;
     try {
       sb()?.removeChannel(canal);
@@ -816,6 +857,7 @@ export function criarCarga(
     linhas = [];
     versaoDasLinhas = null;
     publicadas = null;
+    ultimaLeitura = Number.NEGATIVE_INFINITY;
     linhasCarregadas = false;
     desatualizadas = false;
     linhasDaCopia = null;
@@ -841,6 +883,7 @@ export function criarCarga(
     carregarMapa,
     iniciarRealtime,
     pararRealtime,
+    retomarRealtime,
     esquecer,
     linhas: () => linhas,
     apagarCopia: () => copia.apagar(),

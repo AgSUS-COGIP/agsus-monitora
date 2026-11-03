@@ -576,6 +576,49 @@ describe("tela de Classificação", () => {
     }
   });
 
+  it("Relatório de desempate: preparo sem fim para no prazo, com 'Tentar de novo'", async () => {
+    const supabase = supabaseFalso({
+      obter_desempate_da_lista: ({ p_lista }) =>
+        p_lista !== "l1"
+          ? null
+          : // Sem pedido_em legível, só o prazo da tela para a releitura.
+            { lista_id: "l1", preparo: { situacao: "PEDIDO", pedido_em: "" } },
+    });
+    await montar(supabase);
+    await abrirEdital();
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    const leituras = () =>
+      supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "obter_desempate_da_lista",
+      ).length;
+    try {
+      await clicar(secao.querySelector("[data-acao='gerar']"));
+      await esperar();
+      expect(
+        secao.querySelector("[data-desempate-preparo='preparando']"),
+      ).not.toBeNull();
+      for (let minuto = 0; minuto < 17; minuto += 1) {
+        await act(async () => void vi.advanceTimersByTime(60_000));
+        await esperar();
+      }
+      const aviso = secao.querySelector(".classificacao-desempate-esgotado");
+      expect(aviso?.textContent).toContain("ainda não ficou pronto");
+      expect(secao.querySelector("[data-desempate-preparo]")).toBeNull();
+      const lidas = leituras();
+      await act(async () => void vi.advanceTimersByTime(30 * 60_000));
+      await esperar();
+      expect(leituras()).toBe(lidas);
+      await clicar(aviso.querySelector("[data-acao='tentar-desempate']"));
+      await esperar();
+      expect(leituras()).toBe(lidas + 1);
+      expect(
+        secao.querySelector("[data-desempate-preparo='preparando']"),
+      ).not.toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("Relatório de desempate: não confere ou não saiu → aviso; automação desligada → nada", async () => {
     for (const [situacao, seletor, trecho] of [
       [

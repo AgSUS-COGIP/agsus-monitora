@@ -288,6 +288,12 @@ export interface SnapshotDaFila {
 
 export type Armazenamento = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
+/** O que a renovação da reserva precisa do `document` (visibilidade e atividade). */
+export type DocumentoDaReserva = Pick<
+  Document,
+  "visibilityState" | "addEventListener" | "removeEventListener"
+>;
+
 export interface OpcoesDaFila {
   supabase?: ClienteDaAvaliacao | null;
   toast?: Avisar;
@@ -295,6 +301,9 @@ export interface OpcoesDaFila {
   sessao?: Armazenamento | null;
   agendar?: (fn: () => void, ms: number) => unknown;
   cancelar?: (id: unknown) => void;
+  /** A aba (visibilidade) e a atividade da pessoa: a reserva só é renovada com alguém na ficha. */
+  documento?: DocumentoDaReserva | null;
+  agora?: () => number;
   tempoLimiteMs?: number;
   baixar?: (conteudo: BlobPart, nome: string) => void;
   getProfile?: () => unknown;

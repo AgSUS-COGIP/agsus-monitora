@@ -11,7 +11,8 @@ import { clicar, teclar } from "../componentes/interacoes.js";
   e espera o elemento aparecer.
 */
 
-const { Tour, acharAlvo } = await import("../../src/modulos/aya/tour/tour.tsx");
+const { Tour, acharAlvo, LIMITE_DA_PROCURA_MS } =
+  await import("../../src/modulos/aya/tour/tour.tsx");
 
 let raiz;
 let reactRoot;
@@ -198,6 +199,23 @@ describe("passo em outra tela", () => {
     });
     await act(async () => vi.advanceTimersByTime(2000));
     expect(aoFechar).toHaveBeenCalledWith("concluiu", 0);
+  });
+
+  it("com a tela ainda baixando, espera mais — mas não para sempre", async () => {
+    vi.useFakeTimers();
+    const aoFechar = vi.fn();
+    await montar({
+      aoFechar,
+      irPara: () => true,
+      carregando: () => true,
+      passos: [{ pagina: "recursos", alvo: "#nunca", titulo: "N", texto: "." }],
+    });
+    await act(async () => vi.advanceTimersByTime(5000));
+    expect(aoFechar).not.toHaveBeenCalled();
+    await act(async () => vi.advanceTimersByTime(LIMITE_DA_PROCURA_MS));
+    expect(aoFechar).toHaveBeenCalledWith("concluiu", 0);
+    // Parou de procurar: nenhum temporizador da procura ficou para trás.
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
 

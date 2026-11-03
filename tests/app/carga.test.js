@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
-import { COLUNAS_DO_MONITORAMENTO, criarCarga } from "../../src/app/carga.ts";
+import {
+  COLUNAS_DO_MONITORAMENTO,
+  INTERVALO_DO_REALTIME_MS,
+  criarCarga,
+} from "../../src/app/carga.ts";
 import { assinaturaDoAcesso, montarCopia } from "../../src/lib/copia-da-sessao";
 import {
   obterDadosDoMonitoramento,
@@ -78,6 +82,8 @@ function montar({
   telaDeEntrada = "nucleo",
   // O banco sem obter_inicio_da_sessao (migration ainda não aplicada).
   semInicio = false,
+  // O relógio da cópia da sessão; o Realtime usa o falso do vitest (`Date.now`).
+  agora = () => 1_000,
 } = {}) {
   const saidas = [];
   const ordem = [];
@@ -214,7 +220,7 @@ function montar({
     esqueleto,
     visaoGeral,
     pedidos,
-    agora: () => 1_000,
+    agora,
   });
   return {
     carga,
@@ -575,6 +581,86 @@ describe("Realtime do monitoramento", () => {
     expect(cliente.channel).toHaveBeenCalledTimes(2);
   });
 
+  it("relê no máximo uma vez por intervalo, sem perder a última mudança", async () => {
+    vi.useFakeTimers();
+    const { carga, cliente, canais } = montar({ agora: () => Date.now() });
+    const leituras = () =>
+      cliente.rpc.mock.calls.filter(
+        ([nome]) => nome === "listar_monitoramento_operacional",
+      ).length;
+    carga.iniciarRealtime();
+    canais[0].ao();
+    await vi.advanceTimersByTimeAsync(800);
+    expect(leituras()).toBe(1);
+    // Escritas seguidas por 20 s: nenhuma releitura antes do intervalo.
+    for (let i = 0; i < 20; i += 1) {
+      canais[0].ao();
+      await vi.advanceTimersByTimeAsync(1_000);
+    }
+    expect(leituras()).toBe(1);
+    // A última vira uma releitura só, no fim do intervalo.
+    await vi.advanceTimersByTimeAsync(INTERVALO_DO_REALTIME_MS);
+    expect(leituras()).toBe(2);
+    await vi.advanceTimersByTimeAsync(INTERVALO_DO_REALTIME_MS * 3);
+    expect(leituras()).toBe(2);
+  });
+
+  it("resposta inalterada não avisa que atualizou", async () => {
+    vi.useFakeTimers();
+    const { carga, cliente, canais, avisar } = montar({
+      agora: () => Date.now(),
+    });
+    await carga.carregarEntrada();
+    carga.iniciarRealtime();
+    canais[0].ao();
+    await vi.advanceTimersByTimeAsync(INTERVALO_DO_REALTIME_MS);
+    const leituras = cliente.rpc.mock.calls.filter(
+      ([nome]) => nome === "listar_monitoramento_operacional",
+    );
+    expect(leituras).toHaveLength(2);
+    expect(leituras[1][1]).toEqual({ p_versao: VERSAO_DAS_LINHAS });
+    expect(avisar).not.toHaveBeenCalledWith(
+      "Dashboard atualizado automaticamente.",
+      "ok",
+    );
+  });
+
+  it("a volta do fundo relê com a versão as linhas já lidas", async () => {
+    vi.useFakeTimers();
+    const { carga, cliente } = montar({ agora: () => Date.now() });
+    const leituras = () =>
+      cliente.rpc.mock.calls.filter(
+        ([nome]) => nome === "listar_monitoramento_operacional",
+      );
+    await carga.carregarEntrada();
+    carga.iniciarRealtime();
+    expect(leituras()).toHaveLength(1);
+    carga.pararRealtime();
+    await vi.advanceTimersByTimeAsync(5 * 60_000);
+    carga.retomarRealtime();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(cliente.channel).toHaveBeenCalledTimes(2);
+    expect(leituras()).toHaveLength(2);
+    expect(leituras()[1][1]).toEqual({ p_versao: VERSAO_DAS_LINHAS });
+  });
+
+  it("a volta do fundo sem linhas lidas não lê nada", async () => {
+    const { carga, cliente } = montar({
+      pedindo: false,
+      telaDeEntrada: "avaliacao-documental",
+    });
+    await carga.carregarEntrada();
+    carga.iniciarRealtime();
+    carga.pararRealtime();
+    carga.retomarRealtime();
+    await esperarTudo();
+    expect(
+      cliente.rpc.mock.calls.filter(
+        ([nome]) => nome === "listar_monitoramento_operacional",
+      ),
+    ).toHaveLength(0);
+  });
+
   it("desligado na configuração, não assina", () => {
     const { carga, cliente, configuracao } = montar();
     configuracao.booleano.mockReturnValue(false);
@@ -735,7 +821,7 @@ describe("linhas do monitoramento sob demanda", () => {
     expect(cliente.removeChannel).not.toHaveBeenCalled();
     canais[0].ao();
     canais[0].ao();
-    await vi.advanceTimersByTimeAsync(800);
+    await vi.advanceTimersByTimeAsync(INTERVALO_DO_REALTIME_MS);
     expect(pedidosDasLinhas(cliente)).toHaveLength(1);
     expect(avisar).not.toHaveBeenCalledWith(
       "Dashboard atualizado automaticamente.",

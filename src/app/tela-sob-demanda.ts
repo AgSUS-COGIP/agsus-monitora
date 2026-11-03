@@ -20,7 +20,12 @@ import { importarComRecarga } from "../lib/importar-com-recarga";
   Enquanto baixa, a seção da tela mostra o estado de carregamento padrão
   (`.ui-vazio`, "Carregando…"); o React troca pelo módulo ao montar. Versão
   nova publicada com a página aberta: recarrega uma vez em vez de quebrar
-  (importarComRecarga).
+  (importarComRecarga). Outra falha (rede caída, recarga recente que falhou de
+  novo): o "Carregando…" vira o erro com "Tentar de novo", que chama o mesmo
+  método outra vez — antes, ficava "Carregando…" para sempre e a rejeição
+  escapava solta. O método chamado antes da carga, então, nunca rejeita:
+  resolve `undefined` com o erro na tela (o `carregar()` direto, da pré-carga
+  do menu, continua rejeitando para quem chamou).
 */
 
 export interface OpcoesDaTelaSobDemanda<C extends object> {
@@ -63,13 +68,45 @@ export function telaSobDemanda<C extends object>({
   let pedido: Promise<C> | null = null;
   const baixar = importarComRecarga(carregar);
 
+  const elementoDaSecao = () =>
+    secao ? (documento?.getElementById(secao) ?? null) : null;
+
+  /* Os avisos desta carga na seção ("Carregando…" e o erro): só estes são trocados. */
+  const avisosDaCarga = (elemento: HTMLElement) =>
+    elemento.querySelectorAll(":scope > [data-tela-sob-demanda]");
+
   function mostrarCarregando() {
-    const elemento = secao ? documento?.getElementById(secao) : null;
-    if (!elemento || elemento.childElementCount) return;
+    const elemento = elementoDaSecao();
+    if (!elemento) return;
+    avisosDaCarga(elemento).forEach((aviso) => aviso.remove());
+    if (elemento.childElementCount) return;
     const aviso = documento.createElement("div");
     aviso.className = "ui-vazio";
+    aviso.dataset.telaSobDemanda = "carregando";
     aviso.setAttribute("role", "status");
     aviso.textContent = "Carregando…";
+    elemento.append(aviso);
+  }
+
+  /* A carga falhou: o "Carregando…" vira o erro, com "Tentar de novo". */
+  function mostrarErro(tentarDeNovo: () => void) {
+    const elemento = elementoDaSecao();
+    if (!elemento) return;
+    avisosDaCarga(elemento).forEach((aviso) => aviso.remove());
+    const aviso = documento.createElement("div");
+    aviso.className = "ui-vazio";
+    aviso.dataset.telaSobDemanda = "erro";
+    aviso.setAttribute("role", "alert");
+    const texto = documento.createElement("p");
+    texto.textContent =
+      "Não foi possível carregar esta tela. Confira a conexão e tente de novo.";
+    const botao = documento.createElement("button");
+    botao.type = "button";
+    botao.className = "btn secondary";
+    botao.dataset.acao = "tentar-carregar-tela";
+    botao.textContent = "Tentar de novo";
+    botao.addEventListener("click", tentarDeNovo, { once: true });
+    aviso.append(texto, botao);
     elemento.append(aviso);
   }
 
@@ -108,13 +145,21 @@ export function telaSobDemanda<C extends object>({
       }
       if (typeof chave === "string" && Object.hasOwn(padroes, chave))
         return padroes[chave];
-      if (typeof chave === "string" && metodos.includes(chave))
-        return (...argumentos: unknown[]) => {
+      if (typeof chave === "string" && metodos.includes(chave)) {
+        const chamar = (...argumentos: unknown[]): Promise<unknown> => {
           mostrarCarregando();
-          return garantir().then((controlador) =>
-            (controlador as MetodosDoControlador)[chave]?.(...argumentos),
+          return garantir().then(
+            (controlador) =>
+              (controlador as MetodosDoControlador)[chave]?.(...argumentos),
+            (erro: unknown) => {
+              console.warn("Não foi possível carregar a tela:", erro);
+              mostrarErro(() => void chamar(...argumentos));
+              return undefined;
+            },
           );
         };
+        return chamar;
+      }
       return undefined;
     },
   }) as TelaSobDemanda<C>;

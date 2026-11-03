@@ -19,7 +19,7 @@ import type {
 
 import type { RespostaDoDesempate } from "../../lib/classificacao/relatorio-de-desempate.ts";
 import {
-  esperaDaReleitura,
+  acompanharPreparoDoDesempate,
   estadoDoRelatorio,
 } from "../../lib/classificacao/relatorio-de-desempate.ts";
 import { PRAZO_DO_CALCULO_MS } from "../../lib/classificacao/calculo-em-python.ts";
@@ -852,33 +852,31 @@ function Acoes({
   const desatualizada = listaDesatualizada(ultima, dados?.ajustes_mudaram_em);
   /*
     O relatório de desempate da lista gerada (do Python): gerar pede o
-    relatório; enquanto ele é preparado, relê com espera crescente (esperaDaReleitura).
+    relatório; enquanto ele é preparado, relê com espera crescente, só com a
+    aba à frente e até o prazo (acompanharPreparoDoDesempate). Passado o
+    prazo, o aviso com "Tentar de novo" (que recomeça a contar).
   */
   const [respostaDoDesempate, setRespostaDoDesempate] =
     useState<RespostaDoDesempate | null>(null);
+  const [preparoEsgotado, setPreparoEsgotado] = useState(false);
+  const [tentativaDoPreparo, setTentativaDoPreparo] = useState(0);
   const idDaUltima = ultima?.id || "";
   useEffect(() => {
-    let vigente = true;
-    let espera: ReturnType<typeof setTimeout> | undefined;
-    let releituras = 0;
     setRespostaDoDesempate(null);
-    const ler = () => {
-      if (!idDaUltima) return;
-      void estado.obterDesempate(idDaUltima).then((resposta) => {
-        if (!vigente) return;
-        setRespostaDoDesempate(resposta);
-        if (estadoDoRelatorio(resposta) === "preparando")
-          espera = setTimeout(ler, esperaDaReleitura(++releituras));
-      });
-    };
-    ler();
-    return () => {
-      vigente = false;
-      clearTimeout(espera);
-    };
-  }, [estado, idDaUltima]);
+    setPreparoEsgotado(false);
+    if (!idDaUltima) return undefined;
+    return acompanharPreparoDoDesempate({
+      ler: () => estado.obterDesempate(idDaUltima),
+      aoLer: setRespostaDoDesempate,
+      aoEsgotar: () => setPreparoEsgotado(true),
+    });
+  }, [estado, idDaUltima, tentativaDoPreparo]);
   const desempate = respostaDoDesempate?.desempate ?? null;
-  const relatorio = estadoDoRelatorio(respostaDoDesempate);
+  const relatorioLido = estadoDoRelatorio(respostaDoDesempate);
+  const relatorio =
+    preparoEsgotado && relatorioLido === "preparando"
+      ? "esgotado"
+      : relatorioLido;
   // O cálculo pelo Python desta lista (chave "Gerar listas pelo Python" ligada).
   const calculo = e.calculo?.tipo === tipo ? e.calculo : null;
   // A geração guardada não bate com os dados de agora (fichas, notas, regra…).
@@ -1170,6 +1168,26 @@ Usar esta geração assim mesmo?`,
         >
           Relatório de desempate sendo preparado…
         </p>
+      ) : null}
+      {relatorio === "esgotado" ? (
+        <Aviso
+          tom="warning"
+          papel="alert"
+          className="classificacao-desempate-esgotado"
+        >
+          <p>
+            O relatório de desempate ainda não ficou pronto. Tente de novo em
+            alguns minutos; se continuar, avise o suporte.
+          </p>
+          <button
+            type="button"
+            className="btn secondary"
+            data-acao="tentar-desempate"
+            onClick={() => setTentativaDoPreparo((n) => n + 1)}
+          >
+            Tentar de novo
+          </button>
+        </Aviso>
       ) : null}
       {relatorio === "nao_confere" ? (
         <Aviso

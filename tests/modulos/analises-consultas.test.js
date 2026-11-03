@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { criarConsultasDasAnalises } from "../../src/modulos/analises/consultas.ts";
+import {
+  criarConsultasDasAnalises,
+  VERSAO_DA_COPIA,
+} from "../../src/modulos/analises/consultas.ts";
+import { ESQUEMAS_DO_PAYLOAD } from "../../src/lib/cache-do-painel-de-analises.ts";
 
 /*
   As consultas de Análises curriculares (src/modulos/analises/consultas.ts):
@@ -44,6 +48,15 @@ function supabaseCom(responder) {
 }
 
 const opcoes = { area: "saude-indigena", usuarioId: "u1" };
+
+describe("a versão da cópia do painel", () => {
+  it("segue o formato do payload, não a publicação do front", () => {
+    expect(VERSAO_DA_COPIA).not.toContain("http");
+    expect(VERSAO_DA_COPIA).not.toContain("file:");
+    for (const esquema of ESQUEMAS_DO_PAYLOAD)
+      expect(VERSAO_DA_COPIA).toContain(String(esquema));
+  });
+});
 
 describe("a lista por escopo e a cópia do navegador", () => {
   it("sem cópia, pede ao servidor e guarda; com cópia, devolve na hora e revalida por trás", async () => {

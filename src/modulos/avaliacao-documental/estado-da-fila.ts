@@ -17,7 +17,8 @@
                                                        páginas (20261014180000_fila_leve.sql)
     pegar_proxima_ficha(p_edital, p_vaga)              "Pegar próximo"
     reservar_ficha(p_ficha)                            abre (reserva 15 min)
-    renovar_reserva(p_ficha)                           a cada 5 min, enquanto aberta
+    renovar_reserva(p_ficha)                           a cada 5 min, enquanto aberta e com
+                                                       alguém nela (ver abaixo)
     liberar_reserva(p_edital, p_fichas, p_motivo)      ao fechar; coordenação, com motivo
     distribuir_fichas(p_edital, p_atribuicoes, p_motivo)
     mandar_fichas_revisao(p_edital, p_fichas, p_motivo)
@@ -36,6 +37,17 @@
   próximo, Anterior / Próxima, "Concluir e próxima") não relê a fila; ela fica
   marcada como desatualizada e é relida ao voltar à lista ("Voltar à fila",
   remontar a aba).
+
+  A reserva só é renovada com alguém na ficha: aba no fundo ou
+  INATIVIDADE_MAXIMA_MS sem mexer (tecla, clique, rolagem) param a renovação
+  (o rascunho pendente é salvo antes) e a reserva vence sozinha no banco em 15
+  minutos — antes, uma aba esquecida renovava para sempre e prendia a ficha. A
+  volta (aba à frente ou qualquer atividade) renova na hora: renovar_reserva
+  reserva de novo a vencida para o mesmo responsável SEM subir a versão
+  (20261022130000), e o rascunho da tela segue salvando — reservar_ficha
+  subiria a versão e o próximo rascunho voltaria com "Esta ficha mudou…". Se
+  outra pessoa pegou a ficha no intervalo, a ficha fica só para leitura com o
+  aviso; o que foi salvo continua nela e o que está na tela não é apagado.
 */
 import { isAdminGlobal } from "../../lib/access-roles.ts";
 import { comTempoLimite } from "../../lib/falha-de-rede";
@@ -109,6 +121,9 @@ const RPC_EXCLUIR_FILTRO = "excluir_filtro_fila";
 const TEMPO_LIMITE_MS = 45000;
 /* A reserva dura 15 minutos; a tela renova bem antes. */
 export const RENOVAR_A_CADA_MS = 5 * 60 * 1000;
+/* Sem tecla, clique nem rolagem por este tempo, a renovação para (a reserva vence sozinha). */
+export const INATIVIDADE_MAXIMA_MS = 20 * 60 * 1000;
+const EVENTOS_DE_ATIVIDADE = ["pointerdown", "keydown", "wheel", "touchstart"];
 const CHAVE_DO_FILTRO = "monitora.avaliacao-documental.fila.filtro";
 const CHAVE_DA_FICHA_ABERTA = "monitora.avaliacao-documental.ficha-aberta";
 
@@ -216,6 +231,8 @@ export function criarEstadoDaFila({
   sessao = sessaoPadrao(),
   agendar = (fn, ms) => setInterval(fn, ms),
   cancelar = (id) => clearInterval(id as ReturnType<typeof setInterval>),
+  documento = globalThis.document ?? null,
+  agora = () => Date.now(),
   tempoLimiteMs = TEMPO_LIMITE_MS,
   baixar = baixarNoNavegador,
   getProfile = () => null,
@@ -223,6 +240,9 @@ export function criarEstadoDaFila({
   let estado: SnapshotDaFila = { ...INICIAL, filtro: lerFiltro(armazenamento) };
   let pedido = 0;
   let renovacao: unknown = null;
+  /* A ficha cuja renovação parou (aba no fundo ou sem atividade); a volta renova. */
+  let pausada: string | null = null;
+  let ultimaAtividade = agora();
   let restaurou = false;
   let leituraDeFora: {
     editalId: string;
@@ -253,6 +273,57 @@ export function criarEstadoDaFila({
   function pararRenovacao() {
     if (renovacao !== null) cancelar(renovacao);
     renovacao = null;
+    pausada = null;
+    acompanharAtividade(false);
+  }
+
+  /* Renova a cada RENOVAR_A_CADA_MS enquanto houver alguém na ficha. */
+  function agendarRenovacao(fichaId: string) {
+    if (renovacao !== null) cancelar(renovacao);
+    pausada = null;
+    ultimaAtividade = agora();
+    renovacao = agendar(() => aCadaRenovacao(fichaId), RENOVAR_A_CADA_MS);
+    acompanharAtividade(true);
+  }
+
+  const alguemNaFicha = () =>
+    documento?.visibilityState !== "hidden" &&
+    agora() - ultimaAtividade < INATIVIDADE_MAXIMA_MS;
+
+  /*
+    Aba no fundo ou ninguém mexendo: não renova. O rascunho pendente vai
+    agora, com a reserva ainda valendo; ela vence sozinha no banco.
+  */
+  async function aCadaRenovacao(fichaId: string): Promise<void> {
+    if (alguemNaFicha()) return renovar(fichaId);
+    if (renovacao !== null) cancelar(renovacao);
+    renovacao = null;
+    pausada = fichaId;
+    try {
+      await salvamentos.get(fichaId)?.();
+    } catch {
+      /* O aviso da falha é da ficha. */
+    }
+  }
+
+  /* A pessoa voltou (aba à frente ou atividade): a renovação pausada recomeça já. */
+  function aoVoltar() {
+    if (documento?.visibilityState === "hidden") return;
+    ultimaAtividade = agora();
+    const fichaId = pausada;
+    if (!fichaId || estado.aberta?.ficha?.id !== fichaId) return;
+    agendarRenovacao(fichaId);
+    void renovar(fichaId, { naVolta: true });
+  }
+
+  let acompanhando = false;
+  function acompanharAtividade(ligar: boolean) {
+    if (!documento || ligar === acompanhando) return;
+    acompanhando = ligar;
+    const metodo = ligar ? "addEventListener" : "removeEventListener";
+    documento[metodo]("visibilitychange", aoVoltar);
+    for (const evento of EVENTOS_DE_ATIVIDADE)
+      documento[metodo](evento, aoVoltar, { passive: true, capture: true });
   }
 
   /*
@@ -469,8 +540,7 @@ export function criarEstadoDaFila({
     if (r?.reservada && r.ficha?.id) {
       // A reserva mudou a linha da ficha: a lista é relida ao voltar a ela.
       desatualizada = true;
-      const id = r.ficha.id;
-      renovacao = agendar(() => renovar(id), RENOVAR_A_CADA_MS);
+      agendarRenovacao(r.ficha.id);
     }
   }
 
@@ -522,7 +592,10 @@ export function criarEstadoDaFila({
     }
   }
 
-  async function renovar(fichaId: string): Promise<void> {
+  async function renovar(
+    fichaId: string,
+    { naVolta = false }: { naVolta?: boolean } = {},
+  ): Promise<void> {
     if (estado.aberta?.ficha?.id !== fichaId) return pararRenovacao();
     try {
       const r = (await rpc(RPC_RENOVAR, { p_ficha: fichaId })) as {
@@ -540,7 +613,9 @@ export function criarEstadoDaFila({
             ...estado.aberta,
             reservada: false,
             somente_leitura: true,
-            motivo: mensagemDoBanco(erro),
+            motivo: naVolta
+              ? `sua reserva venceu enquanto você estava fora e não deu para retomá-la (${mensagemDoBanco(erro)}). O rascunho salvo continua na ficha.`
+              : mensagemDoBanco(erro),
           },
         });
     }
