@@ -293,7 +293,7 @@ export function EditorDaConfiguracaoDaEntrevista({
       >
         <div className="entrevistas-preparar-titulo">
           <h3 id="entrevistaConfiguracaoRoteiro">
-            <i className="fa-solid fa-clipboard-list" aria-hidden="true" />{" "}
+            <i className="fa-solid fa-clipboard-check" aria-hidden="true" />{" "}
             Roteiro
           </h3>
         </div>
