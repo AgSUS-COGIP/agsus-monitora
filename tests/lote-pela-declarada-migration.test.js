@@ -75,9 +75,14 @@ describe("migration: lote pela nota declarada e declarada congelada", () => {
       "Base da nota do lote pela declarada: configure a nota declarada.",
     ]) {
       expect(validar).toContain(mensagem);
-      expect(REGRA_JS).toContain(mensagem);
       expect(REGRA_PY).toContain(mensagem);
     }
+    // No formulário da análise só fica o par que a nota declarada (editada
+    // ali) pode quebrar: a base em si é da Triagem e não trava o salvar.
+    expect(REGRA_JS).toContain(
+      "Base da nota do lote pela declarada: configure a nota declarada.",
+    );
+    expect(REGRA_JS).not.toContain("Base da nota do lote: DECLARADA ou ART.");
     // O resto da validação é o de 20261007140000.
     const antes = corpoDaFuncao(
       ANTES_VALIDAR,
