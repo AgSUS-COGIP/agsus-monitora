@@ -7,7 +7,7 @@ repetida e Convocado sem desfecho — e grava o instantâneo TB_PENDENCIA_APROVA
 20261026190000). A regra está em python/monitora/aprovados/pendencias.py; quem decide é o gestor,
 na tela Lista de aprovados › Pendências, pelas RPCs que marcam a pendência resolvida na hora.
 
-Lê pela RPC pendencias_ler_aprovados e grava pela gravar_pendencias_do_edital (as duas só
+Lê pela RPC pendencias_ler_aprovados (em páginas de 5.000 linhas) e grava pela gravar_pendencias_do_edital (as duas só
 service_role; a de gravação só valida e guarda: abre as novas, reabre a resolvida que voltou, mantém
 o empate confirmado e dá como saneada a aberta que sumiu da lista).
 
@@ -42,6 +42,7 @@ from monitora.mascaramento import resumo_do_erro  # noqa: E402
 from monitora.registro import registro  # noqa: E402
 
 TITULO = "Pendências do edital → MONITORA"
+TAMANHO_DA_PAGINA = 5000
 ROTULOS = {
     pendencias.DUAS_MATRICULAS: "duas matrículas",
     pendencias.DUAS_LISTAS: "duas listas",
@@ -65,11 +66,44 @@ def argumentos(lista=None):
     return args
 
 
-def ler(chamar):
-    dados = chamar("pendencias_ler_aprovados", {}) or {}
+def _pagina(chamar, apos, tamanho):
+    dados = chamar("pendencias_ler_aprovados", {"p_apos": apos, "p_limite": tamanho}) or {}
     if dados.get("schema_version") != 1:
         raise ValueError("pendencias_ler_aprovados: versão do formato desconhecida")
     return dados
+
+
+def _ler_uma_vez(chamar, tamanho):
+    """As páginas juntas no formato da leitura inteira; None se as listas mudaram no meio (a posição
+    da lista em cada linha é o índice em "listas" daquela página)."""
+    primeira = _pagina(chamar, None, tamanho)
+    linhas = list(primeira.get("linhas") or [])
+    proximo = primeira.get("proximo")
+    while proximo:
+        pagina = _pagina(chamar, proximo, tamanho)
+        if pagina.get("listas") != primeira.get("listas"):
+            return None
+        linhas += pagina.get("linhas") or []
+        # Cursor que não anda encerraria o job só no tempo limite.
+        if pagina.get("proximo") == proximo:
+            break
+        proximo = pagina.get("proximo")
+    dados = {k: v for k, v in primeira.items() if k != "proximo"}
+    dados["linhas"] = linhas
+    return dados
+
+
+def ler(chamar, tamanho=TAMANHO_DA_PAGINA, tentativas=3):
+    """pendencias_ler_aprovados em páginas de `tamanho` linhas (20261103181500: a leitura inteira,
+    5 MB numa resposta, levava 5 s em média e chegou a 28 s, perto do limite de 30 s). "lido_em",
+    "ambiguos" e "pendencias" são os da primeira página. Se as listas vigentes mudarem no meio da
+    leitura, lê de novo (até `tentativas` vezes)."""
+    for _ in range(tentativas):
+        dados = _ler_uma_vez(chamar, tamanho)
+        if dados is not None:
+            return dados
+        log.info("As listas vigentes mudaram durante a leitura; lendo de novo.")
+    raise RuntimeError("pendencias_ler_aprovados: as listas vigentes mudaram em todas as tentativas")
 
 
 def linhas_do_resumo(detectadas, existentes):

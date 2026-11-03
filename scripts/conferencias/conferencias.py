@@ -99,10 +99,12 @@ def paginas_de_fichas(chamar):
         apos = proximo
 
 
-def conferir_o_modulo_de_analises(chamar, contexto, acumulador, pendentes):
+def conferir_o_modulo_de_analises(chamar, contexto, acumulador, pendentes, da_classificacao):
     """As análises do painel e, das fichas concluídas no MONITORA, a conta gravada e as
-    pendências pela regra vigente (em `pendentes`, para a revisão automática)."""
-    regras.conferir_analises(paginas_de_analises(chamar), contexto, acumulador)
+    pendências pela regra vigente (em `pendentes`, para a revisão automática). As mesmas páginas
+    alimentam `da_classificacao` (regras.AnalisesDaClassificacao): a última atualização por edital
+    e as vagas, para a classificação não reler a tabela."""
+    regras.conferir_analises(da_classificacao.paginas(paginas_de_analises(chamar)), contexto, acumulador)
     paginas = list(paginas_de_fichas(chamar))  # lidas uma vez, usadas duas
     regras.conferir_fichas(paginas, acumulador)
     pendentes.extend(revisao_das_fichas.fichas_com_pendencia(paginas, hoje_em_brasilia().isoformat()))
@@ -129,13 +131,14 @@ def conferir(chamar, dias_convocado):
     editais = {e["id"]: e for e in contexto.get("editais") or []}
     acumulador = regras.Acumulador(editais)
     pendentes = []
+    da_classificacao = regras.AnalisesDaClassificacao()
     etapas = {
-        "analises": lambda: conferir_o_modulo_de_analises(chamar, contexto, acumulador, pendentes),
+        "analises": lambda: conferir_o_modulo_de_analises(chamar, contexto, acumulador, pendentes, da_classificacao),
         "entrevistas": lambda: regras.conferir_entrevistas(
             chamar("conferencia_ler_entrevistas", {}) or {}, contexto, acumulador
         ),
         "classificacao": lambda: regras.conferir_classificacao(
-            chamar("conferencia_ler_classificacao", {}) or {}, acumulador
+            chamar("conferencia_ler_listas_e_quadros", {}) or {}, acumulador, da_classificacao, editais
         ),
         "aprovados": lambda: regras.conferir_aprovados(
             chamar("conferencia_ler_aprovados", {}) or {}, contexto, acumulador, dias_convocado

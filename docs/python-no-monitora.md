@@ -138,6 +138,13 @@ RPCs `conferencia_ler_*` e grava avisos (`TB_AVISO_CONFERENCIA`), que aparecem n
 no cartão "Avisos de conferência" do Status das atualizações. Histórias e critérios:
 [historias-de-usuario/conferencias.md](historias-de-usuario/conferencias.md).
 
+A classificação não pede conta ao banco (20261103181500): a última atualização das análises por
+edital e as vagas saem das mesmas páginas de `conferencia_ler_analises`, e a linha do quadro de cada
+vaga é procurada em `python/monitora/classificacao/quadro_da_vaga.py` (cópia de `FC_TOKENS_VAGA` e
+`FC_QUADRO_DA_VAGA`) com as linhas cruas de `conferencia_ler_listas_e_quadros`. Mudou uma das duas
+funções do banco? Mude a cópia e rode a seção PARIDADE do ensaio de 20261103181500
+(`scripts/conferencias/paridade_do_quadro.py`).
+
 A única escrita além dos avisos: a ficha concluída da Avaliação documental que passou a ter
 pendência pela regra vigente vai para Em revisão (`scripts/conferencias/revisao_das_fichas.py`, com
 `python/monitora/avaliacao_documental/pendencias_da_ficha.py`; grava pela RPC
@@ -224,7 +231,7 @@ com motivo obrigatório, autor, data e histórico (migration `20261026190000_pen
   diferentes) e Convocado há mais de `CONFERENCIA_DIAS_CONVOCADO` dias (padrão 15) em lista ativa.
   Cada pendência tem uma chave estável (sha256): o empate confirmado e as "pessoas diferentes" não voltam.
 - Job: `scripts/aprovados/pendencias.py` (`--seco` resume por área e tipo e o que mudaria no
-  instantâneo). Lê `pendencias_ler_aprovados` (sem nome, CPF nem matrícula: hashes curtos) e grava o
+  instantâneo). Lê `pendencias_ler_aprovados` em páginas de 5.000 linhas (sem nome, CPF nem matrícula: hashes curtos) e grava o
   instantâneo inteiro por `gravar_pendencias_do_edital` (só service_role; o banco só valida e guarda:
   novas, mantidas, reabertas, permanentes e saneadas — a aberta que sumiu da lista).
 - Quando roda: no mesmo job do "Contratado em outra lista" (`.github/workflows/contratacao-dos-aprovados.yml`),
