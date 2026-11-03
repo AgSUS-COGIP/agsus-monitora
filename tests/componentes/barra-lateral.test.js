@@ -11,7 +11,6 @@ import { SECOES } from "../../src/modulos/configuracoes/secoes.ts";
 import { sairDoSistema } from "../../src/app/casca/saida.ts";
 import { BarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
 import { desenharNoTeste } from "../montar-tela.js";
-import { aplicarMarcaDaBarraLateral } from "../../src/componentes/barra-lateral/marca.ts";
 import {
   aplicarMarcaDaBarraLateral,
   aplicarMarcaDaConfiguracao,
