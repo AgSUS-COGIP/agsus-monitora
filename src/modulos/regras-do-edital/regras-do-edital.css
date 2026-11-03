@@ -33,3 +33,16 @@
   gap: var(--space-3);
   min-width: 0;
 }
+
+/* Entrevista: o botão de editar roteiro e banca vai para o canto do topo. */
+.regras-do-edital .entrevistas-configuracao-editar {
+  margin-inline-start: auto;
+}
+
+.regras-do-edital__nota {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+}

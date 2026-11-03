@@ -3,8 +3,13 @@
   regras puras (sem DOM e sem estado). É uma interface sobre o MESMO JSON da
   regra (src/lib/avaliacao-documental/regra.ts, schema 1): cada cartão do
   cardápio liga ou desliga um pedaço da regra (um bloco, uma eliminação
-  automática, o corte pelos pontos mínimos), e o resultado é salvo como versão
-  nova pelo salvar_regra_analise de sempre. Nada de formato novo.
+  automática), e o resultado é salvo como versão nova pelo
+  salvar_regra_analise de sempre. Nada de formato novo.
+
+  O que é da Triagem (o corte por pontos mínimos e o resto do lote, a base da
+  nota do lote, o desempate da lista e a pergunta da experiência declarada)
+  não passa por aqui: edita-se nas Regras do edital, etapa Triagem. Esses
+  campos seguem gravados na regra como estavam (a cópia leva o valor igual).
 
   - Ponto de partida: a versão vigente, a regra conferida de outro edital da
     área, um modelo ou do zero. Sempre uma cópia independente.
@@ -19,7 +24,6 @@
 */
 import {
   CODIGO,
-  LOTE_PADRAO,
   blocoNovo,
   codigoLivre,
   normalizarRegraAnalise,
@@ -35,7 +39,6 @@ import {
 import type {
   Bloco,
   ColunasDaVaga,
-  DesempateDaProvisoria,
   EliminacaoAutomatica,
   ItemDaNotaDeclarada,
   Motivo,
@@ -124,7 +127,7 @@ export function areaDoModelo(codigo: string): string | null {
 
 export type GrupoDoCartao = "eliminatorios" | "pontos" | "cotas" | "inscricao";
 
-/* "Na inscrição" vem primeiro: o que elimina antes da análise (inscrição cancelada, questionário, Empregare, termo, pontos mínimos). */
+/* "Na inscrição" vem primeiro: o que elimina antes da análise (inscrição cancelada, questionário, Empregare, termo). */
 export const GRUPOS_DO_CARDAPIO: ReadonlyArray<[GrupoDoCartao, string]> =
   Object.freeze([
     ["inscricao", "Na inscrição"],
@@ -150,7 +153,6 @@ export type Cartao = {
   marcado: boolean;
   bloco?: DefinicaoDoBloco;
   eliminacao?: EliminacaoAutomatica;
-  corte?: true;
   area?: string;
   /** Não está no catálogo: veio da regra (bloco ou eliminação próprios). */
   proprio?: boolean;
@@ -314,13 +316,6 @@ export const CATALOGO_DO_CARDAPIO: ReadonlyArray<DefinicaoDoCartao> =
       "Termo de responsabilidade recusado elimina",
       ["termo de responsabilidade", "declaro"],
     ),
-    {
-      id: "corte",
-      grupo: "inscricao",
-      rotulo: "Corte por pontos mínimos (nota declarada)",
-      palavras: [],
-      corte: true,
-    },
   ]);
 
 const ORDEM_DO_TIPO: Record<TipoDeBloco, number> = {
@@ -367,7 +362,7 @@ const cartaoMarcado = (regra: RegraAnalise, def: DefinicaoDoCartao) => {
   if (def.bloco) return indiceDoBloco(regra, def.bloco) >= 0;
   if (def.eliminacao)
     return indiceDaEliminacao(regra, def.eliminacao.codigo) >= 0;
-  return regra.lote.base === "NOTA_MINIMA";
+  return false;
 };
 
 /** O que foi desmarcado nesta edição, para voltar igual ao marcar de novo. */
@@ -569,8 +564,6 @@ function inserirEliminacao(
 export type ContextoDoCardapio = {
   fontes?: ReadonlyArray<RegraAnalise>;
   guardados?: Guardados;
-  /** A nota mínima da regra de classificação (sugestão do corte). */
-  notaMinima?: number | null;
 };
 
 /**
@@ -582,7 +575,7 @@ export function alternarCartao(
   regra: RegraAnalise,
   cartao: Cartao,
   marcar: boolean,
-  { fontes = [], guardados = {}, notaMinima = null }: ContextoDoCardapio = {},
+  { fontes = [], guardados = {} }: ContextoDoCardapio = {},
 ): { regra: RegraAnalise; guardados: Guardados } {
   const nova = copia(regra);
   const guardadosNovos: Record<string, unknown> = { ...guardados };
@@ -619,38 +612,6 @@ export function alternarCartao(
         eliminacao,
       );
       delete guardadosNovos[cartao.id];
-    }
-  } else if (cartao.corte) {
-    if (!marcar) {
-      if (nova.lote.base !== "NOTA_MINIMA") return { regra, guardados };
-      guardadosNovos.corte = {
-        nota_minima: nova.lote.nota_minima ?? null,
-        item_edital: nova.lote.item_edital ?? null,
-      };
-      nova.lote = {
-        ...nova.lote,
-        base: "MULTIPLO_VAGAS",
-        multiplo: nova.lote.multiplo ?? LOTE_PADRAO.multiplo,
-      };
-    } else {
-      if (nova.lote.base === "NOTA_MINIMA") return { regra, guardados };
-      const g = ehObjeto(guardados.corte)
-        ? (guardados.corte as { nota_minima?: number; item_edital?: string })
-        : {};
-      nova.lote = {
-        ...nova.lote,
-        base: "NOTA_MINIMA",
-        nota_minima:
-          g.nota_minima ?? nova.lote.nota_minima ?? notaMinima ?? null,
-        item_edital:
-          g.item_edital ??
-          nova.lote.item_edital ??
-          (nova.corte.item_edital || null),
-      };
-      nova.provisoria.base_da_nota = nova.provisoria.nota_declarada.length
-        ? "DECLARADA"
-        : "ART";
-      delete guardadosNovos.corte;
     }
   }
   return { regra: nova, guardados: guardadosNovos };
@@ -841,8 +802,7 @@ export function sugerirPerguntas(
   });
 }
 
-export type GrupoDaLigacao =
-  "bloco" | "declarada" | "experiencia" | "eliminacao";
+export type GrupoDaLigacao = "bloco" | "declarada" | "eliminacao";
 
 export type Ligacao = {
   id: string;
@@ -894,16 +854,6 @@ export function ligacoesDaRegra(regra: RegraAnalise): Ligacao[] {
       indice,
     }),
   );
-  if (
-    regra.provisoria.desempate.includes("EXPERIENCIA_DECLARADA") ||
-    temTexto(regra.provisoria.pergunta_experiencia)
-  )
-    ligacoes.push({
-      id: "experiencia",
-      grupo: "experiencia",
-      rotulo: "Desempate · experiência declarada",
-      pergunta: regra.provisoria.pergunta_experiencia,
-    });
   for (const e of regra.provisoria.eliminacao_automatica)
     if (e.pergunta !== undefined)
       ligacoes.push({
@@ -941,8 +891,6 @@ export function comPergunta(
     const item = nova.provisoria.nota_declarada[ligacao.indice];
     if (!item) return regra;
     item.pergunta = pergunta ?? "";
-  } else if (ligacao.grupo === "experiencia") {
-    nova.provisoria.pergunta_experiencia = pergunta;
   } else if (ligacao.grupo === "eliminacao") {
     const e = nova.provisoria.eliminacao_automatica.find(
       (x) => x.codigo === ligacao.codigo,
@@ -1142,7 +1090,7 @@ export function comItemDaDeclarada(
   return nova;
 }
 
-/* ---------- 4. Desempate da Provisória ---------- */
+/* ---------- 4. Listas ordenáveis ---------- */
 
 /** Move um item da lista (arrastar ou as setas), sem mudar a original. */
 export function moverNaLista<T>(
@@ -1161,15 +1109,5 @@ export function moverNaLista<T>(
     return nova;
   const [item] = nova.splice(de, 1);
   nova.splice(para, 0, item as T);
-  return nova;
-}
-
-/** Liga ou desliga um desempate da Provisória (entra no fim). */
-export function comDesempateDaProvisoria(
-  regra: RegraAnalise,
-  desempate: ReadonlyArray<DesempateDaProvisoria>,
-): RegraAnalise {
-  const nova = copia(regra);
-  nova.provisoria.desempate = [...desempate];
   return nova;
 }

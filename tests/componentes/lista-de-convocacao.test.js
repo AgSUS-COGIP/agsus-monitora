@@ -1,4 +1,6 @@
-import { act } from "react";
+import { act, createElement } from "react";
+import { createRoot } from "react-dom/client";
+import { EditorDaChamada } from "../../src/modulos/aprovados/chamada-para-contratacao.tsx";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
 import { modeloDeReferencia } from "../../src/lib/modelo-de-convocacao.ts";
@@ -167,7 +169,11 @@ async function montar({
   return { supabase };
 }
 
+let raizDoFormulario = null;
+
 afterEach(async () => {
+  await act(async () => raizDoFormulario?.unmount());
+  raizDoFormulario = null;
   await act(async () => controlador?.raiz?.unmount());
   controlador = null;
   document.body.innerHTML = "";
@@ -181,9 +187,24 @@ const nomesNaTabela = () =>
     .map((linha) => linha.querySelector(".approved-name strong")?.textContent)
     .filter(Boolean);
 
+/*
+  O formulário da convocação mora nas Regras do edital (etapa Chamada para
+  contratação): o EditorDaChamada sobre a MESMA loja da Lista de aprovados.
+*/
 async function abrirFormulario() {
-  await esperar(() => controlador.openImportModal("7", "53/2025 · CASAI"));
-  await clicar(document.querySelector('[data-import-tab="convocacao"]'));
+  const lugar = document.createElement("div");
+  lugar.id = "regrasChamada";
+  document.body.append(lugar);
+  await act(async () => {
+    raizDoFormulario = createRoot(lugar);
+    raizDoFormulario.render(
+      createElement(EditorDaChamada, {
+        estado: controlador.estado,
+        editalId: "7",
+      }),
+    );
+  });
+  await esperar(() => Promise.resolve());
 }
 
 describe("aba da lista de convocação", () => {
@@ -364,6 +385,53 @@ describe("aba da lista de convocação", () => {
     expect($("approvedPanelAprovados").classList.contains("hidden")).toBe(true);
     await clicar(document.querySelector('[data-approved-tab="aprovados"]'));
     expect(acoes()).toBe(false);
+  });
+});
+
+describe("aba Lista de convocação do modal de listas", () => {
+  it("só resume a chamada e leva às Regras do edital para editar", async () => {
+    await montar({
+      candidatos: [candidato("A", "Ampla", { codigo_vaga: "VG-001" })],
+      padraoImediata: 3,
+    });
+    await esperar(() => controlador.openImportModal("7", "53/2025 · CASAI"));
+    await clicar(document.querySelector('[data-import-tab="convocacao"]'));
+    const painel = $("approvedImportPanelConvocacao");
+    expect(painel.textContent).toContain("Com reserva de vagas");
+    expect(painel.textContent).toContain("3 por vaga (padrão)");
+    expect($("convocacaoSalvar")).toBeNull();
+    expect(painel.querySelector("select, input")).toBeNull();
+    window.navigate = vi.fn();
+    window.nucleoController = { abrirRegrasDoEdital: vi.fn() };
+    try {
+      await clicar(
+        painel.querySelector("[data-acao='editar-nas-regras-do-edital']"),
+      );
+      expect(window.navigate).toHaveBeenCalledWith("nucleo");
+      expect(window.nucleoController.abrirRegrasDoEdital).toHaveBeenCalledWith(
+        "7",
+        "chamada",
+      );
+      expect($("approvedImportModal")).toBeNull();
+    } finally {
+      delete window.navigate;
+      delete window.nucleoController;
+    }
+  });
+
+  it("quem não configura a convocação vê o resumo sem o botão", async () => {
+    await montar({
+      candidatos: [candidato("A", "Ampla", { codigo_vaga: "VG-001" })],
+    });
+    await esperar(() => controlador.openImportModal("7", "53/2025 · CASAI"));
+    perfilAtual = { perfil: "usuario" };
+    await esperar(() => controlador.render());
+    await clicar(document.querySelector('[data-import-tab="convocacao"]'));
+    expect(
+      $("approvedImportPanelConvocacao").querySelector(
+        "[data-acao='editar-nas-regras-do-edital']",
+      ),
+    ).toBeNull();
   });
 });
 

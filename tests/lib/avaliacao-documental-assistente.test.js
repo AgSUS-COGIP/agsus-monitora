@@ -73,8 +73,10 @@ function refazerA_v7() {
     ...eliminacaoDoCartao(regra, questionario),
     motivo: "Não finalizou o questionário (decisão da coordenação CORES)",
   });
-  // O corte por pontos mínimos já vem do modelo (15, item 8.2.6).
-  expect(cartao(regra, "corte").marcado).toBe(true);
+  // O corte por pontos mínimos já vem do modelo (15, item 8.2.6). É da
+  // Triagem: o assistente não tem mais o cartão do corte e leva o lote igual.
+  expect(cartao(regra, "corte")).toBeUndefined();
+  expect(regra.lote).toMatchObject({ base: "NOTA_MINIMA", nota_minima: 15 });
 
   // 3. Perguntas da Empregare: as que a coordenação escolheu na lista.
   const ligar = (codigo, textos) => {
@@ -138,16 +140,18 @@ function refazerA_v7() {
     pergunta: "Experiência Profissional",
     pontos_por_nivel: experiencia.pontos_por_nivel,
   });
-  // Desempate pela experiência declarada: a mesma pergunta.
-  regra = comPergunta(
-    regra,
-    ligacoesDaRegra(regra).find((l) => l.id === "experiencia"),
-    "Experiência Profissional",
+  // O desempate pela experiência declarada (a pergunta) e a base da nota do
+  // lote são da Triagem: o assistente não os mostra; na v7 vieram assim.
+  expect(ligacoesDaRegra(regra).some((l) => l.id === "experiencia")).toBe(
+    false,
   );
-  // O corte e a ordem do lote pela nota declarada (item 8.2.6).
   regra = {
     ...regra,
-    provisoria: { ...regra.provisoria, base_da_nota: "DECLARADA" },
+    provisoria: {
+      ...regra.provisoria,
+      pergunta_experiencia: "Experiência Profissional",
+      base_da_nota: "DECLARADA",
+    },
   };
   return regra;
 }
@@ -168,7 +172,8 @@ describe("critério de aceite: a v7 do 93/2026 pelo assistente", () => {
     );
     expect(situacoes["declarada:2"].situacao).toBe("achou");
     expect(situacoes["declarada:2"].comUma).toBe(5);
-    expect(situacoes.experiencia.situacao).toBe("achou");
+    // A pergunta da experiência do desempate é da Triagem: não é ligação aqui.
+    expect(situacoes.experiencia).toBeUndefined();
     expect(situacoes["bloco:EXPERIENCIA:0"].situacao).toBe("achou");
     // "Você possui Graduação…" só existe nas 3 vagas de nível superior.
     expect(situacoes["bloco:ESCOLARIDADE:0"]).toMatchObject({
@@ -285,21 +290,20 @@ describe("cardápio", () => {
     ]);
   });
 
-  it("corte por pontos mínimos: desmarcar volta ao múltiplo das vagas; marcar traz a nota de volta", () => {
+  it("o corte por pontos mínimos é da Triagem: sem cartão, e o lote passa igual", () => {
     let regra = base();
     let guardados = {};
-    const corte = cartao(regra, "corte");
-    ({ regra, guardados } = alternarCartao(regra, corte, false, { guardados }));
-    expect(regra.lote.base).toBe("MULTIPLO_VAGAS");
-    ({ regra, guardados } = alternarCartao(regra, corte, true, {
-      guardados,
-      notaMinima: 20,
-    }));
-    expect(regra.lote).toMatchObject({
-      base: "NOTA_MINIMA",
-      nota_minima: 15,
-      item_edital: "8.2.6",
-    });
+    const lote = structuredClone(regra.lote);
+    const cartoes = cartoesDaRegra(regra);
+    expect(cartoes.some((c) => c.id === "corte")).toBe(false);
+    expect(
+      cartoes.filter((c) => c.grupo === "inscricao").map((c) => c.id),
+    ).toEqual(cartoes.filter((c) => c.eliminacao).map((c) => c.id));
+    for (const c of cartoes)
+      ({ regra, guardados } = alternarCartao(regra, c, !c.marcado, {
+        guardados,
+      }));
+    expect(regra.lote).toEqual(lote);
   });
 
   it("código de motivo a partir do texto", () => {

@@ -11,6 +11,7 @@ import {
   esperar,
   teclar,
 } from "../componentes/interacoes.js";
+import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
 
 /*
   "Conduzir entrevistas" (view `conduzir-entrevistas`), o fazer, separado do
@@ -31,6 +32,28 @@ await import("../../src/modulos/entrevistas/preparar.tsx");
 
 let secao;
 let tela;
+/*
+  O roteiro e a banca do edital se editam nas Regras do edital (etapa
+  Entrevista), com o editor de editor-da-configuracao.tsx sobre a loja de
+  condução; Preparar só mostra o gravado com "Editar nas Regras do edital".
+*/
+let regras = null;
+async function abrirConfiguracaoNasRegras(supabase) {
+  regras = await montarRegrasDoEdital({
+    supabase,
+    editalId: "m1",
+    etapa: "entrevista",
+  });
+  for (let i = 0; i < 20; i += 1) {
+    const editor = regras.secao.querySelector(
+      "[data-tour='regras-do-edital-entrevista']",
+    );
+    if (editor) return editor;
+    await esperar();
+  }
+  throw new Error("O editor da entrevista não abriu.");
+}
+
 const toast = vi.fn();
 const aoMudarResultados = vi.fn();
 const aoComemorar = vi.fn();
@@ -84,6 +107,8 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  await act(async () => regras?.raiz?.unmount());
+  regras = null;
   await act(async () => tela?.raiz?.unmount());
   secao?.remove();
   document.body.innerHTML = "";
@@ -852,14 +877,32 @@ describe("a tela de Conduzir entrevistas", () => {
       ),
     );
     expect(visao("preparar").getAttribute("aria-checked")).toBe("true");
-    // Sem configuração, Preparar abre no passo 1, já com o roteiro para escolher.
+    // Sem configuração, Preparar abre no passo 1: o roteiro se escolhe nas
+    // Regras do edital (o atalho "Escolher o roteiro nas Regras do edital").
     expect(corpoDoPasso().dataset.passoAtual).toBe("roteiro");
     expect(
       document.querySelector('[data-campo="roteiro-do-edital"]'),
-    ).not.toBeNull();
+    ).toBeNull();
     expect(corpoDoPasso().textContent).toContain(
-      "Escolha o roteiro da entrevista.",
+      "Escolher o roteiro nas Regras do edital",
     );
+    window.navigate = vi.fn();
+    window.nucleoController = { abrirRegrasDoEdital: vi.fn() };
+    try {
+      await clicar(
+        corpoDoPasso().querySelector(
+          "[data-acao='editar-nas-regras-do-edital']",
+        ),
+      );
+      expect(window.navigate).toHaveBeenCalledWith("nucleo");
+      expect(window.nucleoController.abrirRegrasDoEdital).toHaveBeenCalledWith(
+        "m1",
+        "entrevista",
+      );
+    } finally {
+      delete window.navigate;
+      delete window.nucleoController;
+    }
   });
 });
 
@@ -1005,12 +1048,22 @@ describe("Preparar, roteiros e ficha", () => {
     expect(bloco("banca").textContent).toContain(
       "Banca 1 — Ana (AgSUS) avalia todas as competências; Beto (CONDISI) avalia todas as competências.",
     );
-    // "Editar" de quem avalia abre a configuração; o da nota abre o roteiro do edital.
-    await clicar(bloco("banca").querySelector('[data-ir-para="configuracao"]'));
-    expect(corpoDoPasso().dataset.passoAtual).toBe("banca");
-    expect(
-      corpoDoPasso().querySelectorAll(".entrevistas-linha-membro"),
-    ).toHaveLength(2);
+    // "Editar" de quem avalia leva às Regras do edital (etapa Entrevista); o
+    // da nota abre o roteiro do edital aqui.
+    window.navigate = vi.fn();
+    window.nucleoController = { abrirRegrasDoEdital: vi.fn() };
+    try {
+      await clicar(
+        bloco("banca").querySelector('[data-ir-para="configuracao"]'),
+      );
+      expect(window.nucleoController.abrirRegrasDoEdital).toHaveBeenCalledWith(
+        "m1",
+        "entrevista",
+      );
+    } finally {
+      delete window.navigate;
+      delete window.nucleoController;
+    }
     await clicar(bloco("nota").querySelector('[data-ir-para="roteiro"]'));
     expect(
       document.getElementById("entrevistasEditorDeRoteiro"),
@@ -1046,9 +1099,7 @@ describe("Preparar, roteiros e ficha", () => {
 
   it("avaliador por competência: a configuração grava só estas, valida a cobertura e a ficha mostra só o atribuído", async () => {
     const supabase = supabaseDaConducao();
-    await montar(supabase);
-    await abrirEdital();
-    const passo = await abrirPasso("banca");
+    const passo = await abrirConfiguracaoNasRegras(supabase);
     await clicar(editarConfiguracao());
     const membros = passo.querySelectorAll(".entrevistas-linha-membro");
     // Beto: só "Habilidade interpessoal".
@@ -1234,12 +1285,8 @@ describe("Preparar, roteiros e ficha", () => {
 
   it("salva a configuração com o modo de lançamento e a banca", async () => {
     const supabase = supabaseDaConducao();
-    await montar(supabase);
-    await abrirEdital();
-    expect((await abrirPasso("roteiro")).textContent).toContain(
-      "Saúde Indígena 2026",
-    );
-    const passo = await abrirPasso("banca");
+    const passo = await abrirConfiguracaoNasRegras(supabase);
+    expect(passo.textContent).toContain("Saúde Indígena 2026");
     await clicar(editarConfiguracao());
     await clicar(passo.querySelector('button[data-valor="AVALIADOR"]'));
     await clicar(salvarConfiguracao());
@@ -1913,12 +1960,16 @@ describe("entrevistas mais claras: fila, Preparar em passos e parecer pronto", (
     const banca = await abrirPasso("banca");
     expect(banca.textContent).toContain("Banca 1");
     expect(banca.textContent).toContain("Avalia todas as competências");
-    // Editar a banca: a lista do que falta fica perto do Salvar.
-    await clicar(editarConfiguracao());
-    const nome = banca.querySelector(".entrevistas-linha-membro input");
+    // Preparar só mostra: editar a banca é nas Regras do edital.
+    expect(editarConfiguracao()).toBeNull();
+    expect(banca.textContent).toContain("Editar a banca nas Regras do edital");
+    // Lá, a lista do que falta fica perto do Salvar.
+    const editor = await abrirConfiguracaoNasRegras(supabaseDaConducao());
+    await clicar(editor.querySelector('[data-acao="editar-configuracao"]'));
+    const nome = editor.querySelector(".entrevistas-linha-membro input");
     await digitar(nome, "A");
     expect(
-      banca.querySelector(".entrevistas-pendencias").textContent,
+      editor.querySelector(".entrevistas-pendencias").textContent,
     ).toContain("Membro 1 (A): Nome do avaliador: de 2 a 150 caracteres.");
   });
 

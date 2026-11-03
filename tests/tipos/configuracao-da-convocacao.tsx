@@ -36,7 +36,6 @@ const estado: EstadoDaConfiguracao = {
 };
 void (
   <FormularioDeConvocacao
-    ativa
     estado={estado}
     perfil={null}
     editalId="e1"

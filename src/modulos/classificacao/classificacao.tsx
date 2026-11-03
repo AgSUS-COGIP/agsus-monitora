@@ -27,7 +27,6 @@ import { Agenda } from "./agenda.tsx";
 import { criarEstadoDaClassificacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import { criarEstadoDaAgenda } from "./estado-da-agenda.ts";
 import { Listas } from "./listas.tsx";
-import { resumoDaRegraDaClassificacao } from "../../lib/regras-do-edital.ts";
 import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
 import { ResumoDaRegraDaEtapa } from "../regras-do-edital/resumo-da-regra-da-etapa.tsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
@@ -230,9 +229,11 @@ function TelaDaArea({
                 titulo="Regra da Classificação"
                 versao={e.dados.regra?.versao ?? null}
                 nome={e.dados.regra?.nome ?? null}
-                linhas={resumoDaRegraDaClassificacao(
-                  e.dados.regra?.configuracao,
-                )}
+                linhas={(resumos) =>
+                  resumos.resumoDaRegraDaClassificacao(
+                    e.dados?.regra?.configuracao,
+                  )
+                }
                 semRegra="O edital ainda não tem regra da Classificação."
                 aoEditar={() =>
                   abrirRegrasDoEdital(e.editalId, "classificacao")

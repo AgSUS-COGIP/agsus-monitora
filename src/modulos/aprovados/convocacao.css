@@ -821,3 +821,13 @@
 .central-convocacoes-modo-entrevista > :not(.central-convocacoes) {
   display: none;
 }
+
+/* Resumo só-leitura da Chamada para contratação (aba "Lista de convocação"). */
+.resumo-da-chamada {
+  display: grid;
+  gap: var(--space-3);
+}
+.resumo-da-chamada__acao {
+  display: flex;
+  justify-content: flex-end;
+}

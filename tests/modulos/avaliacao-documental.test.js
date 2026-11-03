@@ -400,6 +400,10 @@ describe("regra da avaliação (AM-2)", () => {
 
   it("a tela mostra a regra resumida e leva às Regras do edital", async () => {
     await montar(supabaseFalso());
+    // O resumo baixa as regras por import() (fora do pacote de entrada).
+    await act(async () => {
+      await import("../../src/lib/regras-do-edital-resumos.ts");
+    });
     const resumo = secao.querySelector("[data-tour='avd-regra-resumo']");
     expect(resumo.textContent).toContain("Regra da Avaliação documental");
     expect(resumo.textContent).toContain("Nota mínima");

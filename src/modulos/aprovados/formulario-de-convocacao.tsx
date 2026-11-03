@@ -10,7 +10,7 @@ import type {
   EstadoDaConfiguracao,
 } from "../../lib/tipos-da-configuracao-de-convocacao.ts";
 import { useMemo, useState } from "react";
-import { canImportApprovedList } from "../../lib/access-roles.ts";
+import { canConfigureCallList } from "../../lib/access-roles.ts";
 import {
   categoriasDeReserva,
   modeloDeReferencia,
@@ -33,10 +33,11 @@ import { BotaoDeAcao, classes } from "../../ui/index.ts";
 import { CampoEditavel, plural } from "./partes.tsx";
 
 /*
-  A aba "Lista de convocação" do modal de listas do edital: o MODELO de regras
-  e quantas vagas imediatas cada vaga tem. O rascunho mora aqui, criado do que
-  está no banco a cada abertura do modal, e só vai para o banco em "Salvar
-  convocação". O que se guarda é a entrada (percentual no modelo, total na
+  O formulário da Chamada para contratação do edital (Regras do edital, etapa
+  5, por chamada-para-contratacao.tsx): o tipo de convocação, o MODELO de
+  regras e quantas vagas imediatas cada vaga tem. O rascunho mora aqui,
+  criado do que está no banco a cada abertura da etapa, e só vai para o banco
+  em "Salvar convocação". O que se guarda é a entrada (percentual no modelo, total na
   vaga); o quadro por categoria é derivado na hora.
 */
 
@@ -83,7 +84,6 @@ function QuadroDaVaga({
 }
 
 export function FormularioDeConvocacao({
-  ativa,
   estado,
   perfil,
   editalId,
@@ -91,7 +91,6 @@ export function FormularioDeConvocacao({
   configs,
   modelos,
 }: {
-  ativa: boolean;
   estado: EstadoDaConfiguracao;
   perfil: unknown;
   editalId: unknown;
@@ -105,7 +104,7 @@ export function FormularioDeConvocacao({
   /* O modelo em edição, ou `null`: { novo, modelo, editais, abertura }. */
   const [editor, setEditor] = useState<EditorDaConvocacao | null>(null);
 
-  const editavel = canImportApprovedList(perfil);
+  const editavel = canConfigureCallList(perfil);
   const escolhido = modeloPorId(modelos, formulario.modeloId);
   const modelo = useMemo(() => escolhido || modeloEmBranco(), [escolhido]);
   /*
@@ -215,12 +214,7 @@ export function FormularioDeConvocacao({
   }
 
   return (
-    <div
-      id="approvedImportPanelConvocacao"
-      className={classes("approved-tabpanel", !ativa && "hidden")}
-      role="tabpanel"
-      aria-labelledby="approvedImportTabConvocacao"
-    >
+    <div id="convocacaoFormulario" className="convocacao-formulario">
       <fieldset className="convocacao-tipo" data-tour="aprovados-modelo-tipo">
         <legend>Tipo de convocação</legend>
         <label className="convocacao-tipo-card">

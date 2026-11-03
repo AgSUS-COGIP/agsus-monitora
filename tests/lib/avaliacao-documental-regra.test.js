@@ -169,39 +169,6 @@ describe("validarRegraAnalise", () => {
       "data limite",
     ],
     [
-      "lote sem múltiplo",
-      () => ({
-        ...boa(),
-        lote: { ...boa().lote, base: "MULTIPLO_VAGAS", multiplo: 0 },
-      }),
-      "múltiplo",
-    ],
-    [
-      "lote pela nota mínima sem a nota",
-      () => ({
-        ...boa(),
-        lote: { ...boa().lote, base: "NOTA_MINIMA", nota_minima: null },
-      }),
-      "nota mínima",
-    ],
-    [
-      "desempate pela experiência sem a pergunta",
-      () => ({
-        ...boa(),
-        provisoria: {
-          ...boa().provisoria,
-          desempate: ["EXPERIENCIA_DECLARADA"],
-          pergunta_experiencia: null,
-        },
-      }),
-      "pergunta da experiência",
-    ],
-    [
-      "lote fixo sem número",
-      () => ({ ...boa(), lote: { ...boa().lote, base: "FIXO", fixo: null } }),
-      "número fixo",
-    ],
-    [
       "distribuição inventada",
       () => ({ ...boa(), distribuicao: { modo: "SORTEIO" } }),
       "Distribuição",
@@ -254,14 +221,6 @@ describe("validarRegraAnalise", () => {
       "pontos de cada resposta",
     ],
     [
-      "pergunta da experiência em lista vazia",
-      () => ({
-        ...boa(),
-        provisoria: { ...boa().provisoria, pergunta_experiencia: [] },
-      }),
-      "lista de 1 a 10 textos",
-    ],
-    [
       "pergunta da nota declarada em lista com texto vazio",
       () => ({
         ...boa(),
@@ -293,6 +252,64 @@ describe("validarRegraAnalise", () => {
   ])("recusa %s", (_nome, montar, trecho) => {
     const erros = validarRegraAnalise(montar());
     expect(erros.join(" | ")).toContain(trecho);
+  });
+});
+
+/*
+  O que é da Triagem (lote, base da nota do lote, desempate da lista e a
+  pergunta da experiência) não trava o salvar da regra da análise: a Triagem
+  tem a regra própria (Regras do edital, etapa Triagem), e uma regra antiga
+  com um valor estranho ali continua salvável pelo formulário.
+*/
+describe("campos da Triagem na regra da análise", () => {
+  it.each([
+    [
+      "lote sem múltiplo",
+      () => ({
+        ...boa(),
+        lote: { ...boa().lote, base: "MULTIPLO_VAGAS", multiplo: 0 },
+      }),
+    ],
+    [
+      "lote pela nota mínima sem a nota",
+      () => ({
+        ...boa(),
+        lote: { ...boa().lote, base: "NOTA_MINIMA", nota_minima: null },
+      }),
+    ],
+    [
+      "desempate pela experiência sem a pergunta",
+      () => ({
+        ...boa(),
+        provisoria: {
+          ...boa().provisoria,
+          desempate: ["EXPERIENCIA_DECLARADA"],
+          pergunta_experiencia: null,
+        },
+      }),
+    ],
+    [
+      "lote fixo sem número",
+      () => ({ ...boa(), lote: { ...boa().lote, base: "FIXO", fixo: null } }),
+    ],
+    [
+      "pergunta da experiência em lista vazia",
+      () => ({
+        ...boa(),
+        provisoria: { ...boa().provisoria, pergunta_experiencia: [] },
+      }),
+    ],
+  ])("não trava o salvar: %s", (_nome, montar) => {
+    expect(validarRegraAnalise(montar())).toEqual([]);
+  });
+
+  it("a base pela declarada sem nota declarada continua recusada (o banco também recusa)", () => {
+    const r = boa();
+    r.provisoria.base_da_nota = "DECLARADA";
+    r.provisoria.nota_declarada = [];
+    expect(validarRegraAnalise(r)).toEqual([
+      "Base da nota do lote pela declarada: configure a nota declarada.",
+    ]);
   });
 });
 

@@ -321,14 +321,14 @@ describe("base da nota do lote e declarada congelada (os mesmos casos no pytest)
     ).toBe("ART");
   });
 
-  it("recusa base desconhecida e a declarada sem nota declarada", () => {
+  it("base desconhecida não trava (é da Triagem); a declarada sem nota declarada, sim", () => {
     const com = (provisoria) =>
       validarRegraAnalise(
         normalizarRegraAnalise({ ...casoDaBase.regra, provisoria }),
       ).join(" ");
-    expect(
-      com({ ...casoDaBase.regra.provisoria, base_da_nota: "MAIOR" }),
-    ).toMatch(/Base da nota do lote: DECLARADA ou ART/);
+    expect(com({ ...casoDaBase.regra.provisoria, base_da_nota: "MAIOR" })).toBe(
+      "",
+    );
     expect(
       com({
         ...casoDaBase.regra.provisoria,
@@ -403,25 +403,17 @@ describe("regra: desempate e lote por vaga", () => {
     ]);
   });
 
-  it("recusa desempate desconhecido ou repetido e lote por vaga inválido", () => {
+  it("desempate e lote por vaga são da Triagem: não travam o salvar da análise", () => {
     const base = normalizarRegraAnalise(CASOS.casos[0].regra);
     const com = (mudar) => {
       const r = structuredClone(base);
       mudar(r);
       return validarRegraAnalise(r).join(" ");
     };
-    expect(com((r) => (r.provisoria.desempate = ["SORTEIO"]))).toMatch(
-      /Desempate da Provisória/,
-    );
-    expect(com((r) => (r.provisoria.desempate = ["IDOSO", "IDOSO"]))).toMatch(
-      /Desempate da Provisória/,
-    );
-    expect(com((r) => (r.lote.por_vaga = { "17A": 3 }))).toMatch(
-      /Lote por vaga/,
-    );
-    expect(com((r) => (r.lote.por_vaga = { 179698: 0 }))).toMatch(
-      /Lote por vaga/,
-    );
+    expect(com((r) => (r.provisoria.desempate = ["SORTEIO"]))).toBe("");
+    expect(com((r) => (r.provisoria.desempate = ["IDOSO", "IDOSO"]))).toBe("");
+    expect(com((r) => (r.lote.por_vaga = { "17A": 3 }))).toBe("");
+    expect(com((r) => (r.lote.por_vaga = { 179698: 0 }))).toBe("");
     expect(com((r) => (r.lote.por_vaga = { 179698: 40 }))).toBe("");
   });
 });

@@ -6,7 +6,6 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
-import { DESEMPATES_DA_PROVISORIA } from "../../src/lib/avaliacao-documental/catalogo.ts";
 import { CATALOGO_DE_CRITERIOS } from "../../src/lib/classificacao/catalogo.ts";
 import {
   clicar,
@@ -288,14 +287,24 @@ describe("assistente da regra", () => {
     expect(grupos.map((g) => g.getAttribute("aria-label"))).toEqual(
       expect.arrayContaining(["Requisitos que eliminam", "O que vale ponto"]),
     );
+    // O corte por pontos mínimos (e a base da nota do lote) é da Triagem.
+    expect(secao.querySelector("[data-cartao='corte']")).toBeNull();
+    expect(secao.textContent).not.toContain("Corte por pontos mínimos");
+    expect(secao.textContent).not.toContain("Nota do corte e da ordem do lote");
   });
 
   it("passo 4: o catálogo inteiro de desempate, em grupos, marca os usados e acrescenta", async () => {
     await montar(supabaseFalso({ regra: regraSalva(1) }));
     await clicar(passo("nota"));
-    const [daClassificacao, daProvisoria] = secao.querySelectorAll(
+    // Só o desempate da Classificação: o da lista do lote é da Triagem.
+    const seletores = secao.querySelectorAll(
       "[data-acao='acrescentar-criterio']",
     );
+    expect(seletores).toHaveLength(1);
+    expect(
+      secao.querySelector("[data-tour='avd-assistente-desempate-provisoria']"),
+    ).toBeNull();
+    const [daClassificacao] = seletores;
     await clicar(daClassificacao);
     const painel = secao.querySelector(".avd-ast-catalogo-painel");
     const itens = painel.querySelectorAll("[data-criterio]");
@@ -316,12 +325,6 @@ describe("assistente da regra", () => {
         (b) => b.dataset.criterio,
       ),
     ).toEqual(["EXP_SAUDE_INDIGENA", "EXP_SAUDE_DIGITAL"]);
-    // A Provisória mostra o catálogo dela inteiro.
-    await clicar(daProvisoria);
-    const paineis = secao.querySelectorAll(".avd-ast-catalogo-painel");
-    expect(
-      paineis[paineis.length - 1].querySelectorAll("[data-criterio]").length,
-    ).toBe(DESEMPATES_DA_PROVISORIA.length);
   });
 
   it("passo 4: quem só lê a Classificação vê o aviso, sem seletor vazio", async () => {

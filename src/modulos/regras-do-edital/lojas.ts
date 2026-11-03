@@ -4,11 +4,13 @@ import {
 } from "../../app/rascunho-da-regra.ts";
 import { criarEstadoDaAvaliacao } from "../avaliacao-documental/estado.ts";
 import { criarEstadoDaClassificacao } from "../classificacao/estado.ts";
+import { criarEstadoDaConducao } from "../entrevistas/estado-da-conducao.ts";
 import type { Avisar } from "../avaliacao-documental/tipos-do-estado.ts";
 
 /*
   As lojas que as Regras do edital usam para os editores da Avaliação
-  documental e da Classificação: as MESMAS das telas (estado.ts de cada uma),
+  documental, da Entrevista (a loja de condução de Conduzir entrevistas) e
+  da Classificação: as MESMAS das telas (o estado de cada uma),
   criadas uma vez por cliente do banco e reaproveitadas a cada abertura da
   página (cada loja escuta a troca de sessão e recomeça sozinha). O rascunho
   guardado de cada regra também é o mesmo (tipos ANALISE e CLASSIFICACAO).
@@ -20,12 +22,16 @@ type OpcoesDaAvaliacao = NonNullable<
 type OpcoesDaClassificacao = NonNullable<
   Parameters<typeof criarEstadoDaClassificacao>[0]
 >;
+type OpcoesDaConducao = NonNullable<
+  Parameters<typeof criarEstadoDaConducao>[0]
+>;
 
 export interface LojasDasRegras {
   avaliacao: ReturnType<typeof criarEstadoDaAvaliacao>;
   rascunhoDaAvaliacao: RascunhoDaRegra;
   classificacao: ReturnType<typeof criarEstadoDaClassificacao>;
   rascunhoDaClassificacao: RascunhoDaRegra;
+  entrevista: ReturnType<typeof criarEstadoDaConducao>;
 }
 
 const criadas = new WeakMap<object, LojasDasRegras>();
@@ -63,6 +69,10 @@ export function lojasDasRegras(
         void rascunhoDaClassificacao.esquecer(editalId),
     }),
     rascunhoDaClassificacao,
+    entrevista: criarEstadoDaConducao({
+      supabase: supabase as OpcoesDaConducao["supabase"],
+      ...(toast ? { toast } : {}),
+    }),
   };
   criadas.set(supabase, lojas);
   return lojas;

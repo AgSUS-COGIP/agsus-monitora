@@ -1,10 +1,6 @@
 import { useMemo } from "react";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import {
-  canImportApprovedList,
-  isAdminGlobal,
-} from "../../lib/access-roles.ts";
-import {
   ETAPAS_DAS_REGRAS,
   type EtapaDasRegras,
 } from "../../lib/regras-do-edital.ts";
@@ -12,6 +8,7 @@ import type { ClienteDaRegra } from "../../lib/triagem/regra-da-triagem.ts";
 import { Segmentado } from "../../ui/index.ts";
 import { EditorDaRegraDaTriagem } from "../triagem/editor-da-regra.tsx";
 import type { Avisar } from "../avaliacao-documental/tipos-do-estado.ts";
+import type { EstadoDosAprovados } from "../aprovados/tipos-do-estado.ts";
 import {
   EtapaDaAvaliacao,
   EtapaDaChamada,
@@ -19,6 +16,7 @@ import {
   EtapaDaEntrevista,
 } from "./etapas.tsx";
 import { lojasDasRegras } from "./lojas.ts";
+import "../aprovados/convocacao.css";
 import "../avaliacao-documental/avaliacao-documental.css";
 import "../avaliacao-documental/ficha/ficha.css";
 import "../classificacao/classificacao.css";
@@ -30,13 +28,14 @@ import "./regras-do-edital.css";
   todas as regras do processo, na ordem das etapas — 1 Triagem, 2 Avaliação
   documental, 3 Entrevista, 4 Classificação e 5 Chamada para contratação.
 
-  Cada etapa usa o editor (e as RPCs) que já existia: Triagem, Avaliação
-  documental e Classificação editam aqui, com a permissão de sempre (o banco
-  decide: coordenação do edital, gestor da classificação ou administrador
-  global); quem não pode vê a regra travada. Entrevista e Chamada mostram o
-  resumo e levam para onde se mudam hoje (Conduzir entrevistas › Preparar e a
-  configuração de convocação da Lista de aprovados). Salvar não recalcula
-  nada (o 114/2026 segue congelado).
+  Cada etapa usa o editor (e as RPCs) que já existia, e todas editam aqui,
+  com a permissão de sempre (o banco decide: coordenação do edital, gestor
+  da classificação, quem configura a entrevista ou a convocação, ou o
+  administrador global); quem não pode vê a regra travada. A Entrevista edita
+  o roteiro e a banca (editor-da-configuracao.tsx, loja de condução) e a
+  Chamada para contratação, a configuração de convocação
+  (chamada-para-contratacao.tsx, loja da Lista de aprovados). Salvar não
+  recalcula nada (o 114/2026 segue congelado).
 
   As telas de cada etapa mostram a regra resumida com "Editar nas Regras do
   edital", que abre esta página na etapa certa (abrir.ts). Carrega sob
@@ -51,12 +50,11 @@ export interface PropriedadesDasRegras {
   titulo: string;
   etapa: EtapaDasRegras;
   supabase: ClienteDasRegras | null;
-  perfil: unknown;
   toast?: Avisar;
   aoMudarEtapa: (etapa: EtapaDasRegras) => void;
   aoVoltar: () => void;
-  /** A configuração de convocação (modal de listas da Lista de aprovados). */
-  aoEditarChamada: () => void;
+  /** A loja da Lista de aprovados do app (para a Chamada para contratação). */
+  aprovados: () => Promise<EstadoDosAprovados | null | undefined>;
 }
 
 export default function RegrasDoEdital({
@@ -64,11 +62,10 @@ export default function RegrasDoEdital({
   titulo,
   etapa,
   supabase,
-  perfil,
   toast,
   aoMudarEtapa,
   aoVoltar,
-  aoEditarChamada,
+  aprovados,
 }: PropriedadesDasRegras) {
   const lojas = useMemo(
     () => (supabase ? lojasDasRegras(supabase, toast) : null),
@@ -112,7 +109,7 @@ export default function RegrasDoEdital({
         <EtapaDaAvaliacao lojas={lojas} editalId={editalId} />
       ) : etapa === "entrevista" ? (
         <EtapaDaEntrevista
-          cliente={supabase}
+          lojas={lojas}
           editalId={editalId}
           aoIrParaClassificacao={() => aoMudarEtapa("classificacao")}
           aoIrParaPreparar={() =>
@@ -125,12 +122,7 @@ export default function RegrasDoEdital({
       ) : etapa === "classificacao" ? (
         <EtapaDaClassificacao lojas={lojas} editalId={editalId} />
       ) : (
-        <EtapaDaChamada
-          cliente={supabase}
-          editalId={editalId}
-          podeEditar={isAdminGlobal(perfil) || canImportApprovedList(perfil)}
-          aoEditar={aoEditarChamada}
-        />
+        <EtapaDaChamada aprovados={aprovados} editalId={editalId} />
       )}
     </div>
   );

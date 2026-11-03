@@ -416,6 +416,45 @@ describe("tabela de editais", () => {
     expect(document.querySelector("[data-tour='regras-do-edital']")).toBeNull();
     expect(document.getElementById("nucleoRows")).not.toBeNull();
   });
+
+  it("Regras do edital no histórico: o voltar do navegador fecha a página; trocar de etapa não empilha", async () => {
+    await import("../../src/modulos/regras-do-edital/regras-do-edital.tsx");
+    await montar();
+    const antes = window.history.state;
+    await clicar(linha("1").querySelector('[aria-label^="Regras do edital"]'));
+    expect(antes?.monitoraRegrasDoEdital).toBeUndefined();
+    expect(window.history.state?.monitoraRegrasDoEdital).toMatchObject({
+      id: "1",
+      etapa: "triagem",
+    });
+    // Outra etapa (e o "Editar nas Regras" de outra tela): troca a entrada.
+    await act(async () =>
+      controlador.abrirRegrasDoEdital("1", "classificacao"),
+    );
+    expect(window.history.state.monitoraRegrasDoEdital.etapa).toBe(
+      "classificacao",
+    );
+    // Um voltar só (a troca de etapa não empilhou): popstate sem a marca fecha.
+    await act(async () => {
+      window.history.back();
+      await new Promise((r) =>
+        window.addEventListener("popstate", r, { once: true }),
+      );
+    });
+    expect(document.querySelector("[data-tour='regras-do-edital']")).toBeNull();
+    expect(document.getElementById("nucleoRows")).not.toBeNull();
+    // Reabrir e sair pelo "← Editais": volta pelo histórico (sem entrada órfã).
+    await clicar(linha("1").querySelector('[aria-label^="Regras do edital"]'));
+    await act(async () => {
+      const voltou = new Promise((r) =>
+        window.addEventListener("popstate", r, { once: true }),
+      );
+      document.querySelector("[data-acao='voltar-aos-editais']")?.click();
+      await voltou;
+    });
+    expect(window.history.state?.monitoraRegrasDoEdital).toBeUndefined();
+    expect(document.getElementById("nucleoRows")).not.toBeNull();
+  });
 });
 
 describe("painel operacional", () => {

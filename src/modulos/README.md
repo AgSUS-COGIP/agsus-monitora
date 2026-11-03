@@ -20,8 +20,10 @@ peça, não uma tela: o mapa da Visão geral da Saúde Indígena, ligado em `vis
 desfazer) comum aos mapas da Saúde Indígena e de Projetos.
 `regras-do-edital/` é a página Regras do edital, aberta em Editais (no lugar da tabela, sob
 demanda): as regras de cada etapa (Triagem, Avaliação documental, Entrevista, Classificação e
-Chamada para contratação) com os editores e as lojas de cada tela; `abrir.ts` é o "Editar nas
-Regras do edital" das telas das etapas.
+Chamada para contratação) com os editores e as lojas de cada tela (a da Entrevista é
+`entrevistas/editor-da-configuracao.tsx` e a da Chamada, `aprovados/chamada-para-contratacao.tsx`);
+`abrir.ts` é o "Editar nas Regras do edital" das telas das etapas. O "voltar" do navegador
+fecha a página (histórico, em `editais/estado.ts`).
 `encerramento-do-edital/` também é peça: a tela de fim de edital (uma vez por pessoa) e os selos
 no menu da conta, montados pela moldura em `src/app/sistema.ts`.
 Guia completo, com o mapa de hoje → alvo: `docs/arquitetura-react.md`.

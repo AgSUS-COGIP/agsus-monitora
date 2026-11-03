@@ -67,8 +67,11 @@ tipos.ts                contratos da tela nova com o estado da condução (TS)
 estado-da-conducao.ts   store da condução e dos roteiros: editais, edital aberto, escritas (RPC), uma por vez
 preparar.tsx            Preparar em passos: Roteiro, Banca, Convocação, Agenda (estado e o que falta, de
                         src/lib/passos-do-preparar.ts), o resumo das regras no topo
-configuracao-do-edital.tsx  os campos do roteiro (passo 1) e da banca (passo 2) sobre um rascunho só e a
-                        barra "Salvar configuração" com a lista do que falta
+configuracao-do-edital.tsx  os campos do roteiro e da banca sobre um rascunho só e a barra "Salvar
+                        configuração" com a lista do que falta
+editor-da-configuracao.tsx  roteiro e banca do edital: o gravado (RoteiroEscolhido, BancaGravada, os passos
+                        1 e 2 de Preparar, só leitura) e o editor com o rascunho próprio (Regras do edital,
+                        etapa Entrevista; grava pelo configurar da loja de condução)
 conducao.tsx            BotaoIrPara, ConvocacaoDaClassificacao ("Ver detalhes"), DesempateDaClassificacao,
                         ListaDeConvocacao (passo 3) e LiberacaoDoEdital
 resumo-das-regras.tsx   "Regras da entrevista": quem é chamado (tabelinha por vaga), como a nota é calculada,

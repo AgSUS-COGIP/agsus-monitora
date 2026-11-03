@@ -293,12 +293,11 @@ export function AssistenteDaRegra({
       const r = alternarCartao(rascunho, cartao, marcar, {
         fontes,
         guardados,
-        notaMinima,
       });
       setGuardados(r.guardados);
       aoMudarRascunho(r.regra);
     },
-    [rascunho, fontes, guardados, notaMinima, aoMudarRascunho],
+    [rascunho, fontes, guardados, aoMudarRascunho],
   );
   const mudar = useCallback(
     (regra: RegraAnalise) => aoMudarRascunho(regra),
@@ -527,7 +526,6 @@ export function AssistenteDaRegra({
             regra={rascunho}
             area={area}
             guardados={guardados}
-            notaMinima={notaMinima}
             aoMudar={mudar}
             aoAlternar={alternar}
             vagas={apoio?.perguntas_por_vaga ?? []}

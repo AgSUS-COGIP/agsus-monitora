@@ -82,6 +82,7 @@ import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitorame
 import {
   canAlterarPorDecisaoJudicial,
   canChangeCandidateStatus,
+  canConfigureCallList,
   canImportApprovedList,
   canManageSubJudice,
   canReplaceApprovedList,
@@ -1707,7 +1708,7 @@ export function criarEstadoDaListaDeAprovados({
 
   async function salvarConfiguracao(formulario: FormularioDaConvocacao) {
     if (!formulario || !supabase) return false;
-    if (!canImportApprovedList(perfil())) {
+    if (!canConfigureCallList(perfil())) {
       toast("Sem permissão para configurar a convocação.", "warn");
       return false;
     }
