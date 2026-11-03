@@ -479,6 +479,37 @@ describe("enquadramento: rosto (fechada) e corpo (painel aberto, fogos)", () => 
   });
 });
 
+describe("montarMascoteAvulsa: erro no desenho não derruba a página", () => {
+  it("o erro fica na ilha da arara (ErrorBoundary de montarModulo)", async () => {
+    const alvo = document.createElement("span");
+    document.body.append(alvo);
+    const erro = vi.spyOn(console, "error").mockImplementation(() => {});
+    let desmontar;
+    await act(async () => {
+      desmontar = montarMascoteAvulsa(alvo, {
+        // Um tamanho que estoura ao ser lido no desenho.
+        tamanho: {
+          valueOf() {
+            throw new Error("desenho quebrado");
+          },
+        },
+        ouvirAya: false,
+        atencao: false,
+        dormir: false,
+      });
+    });
+    expect(alvo.querySelector(".ui-erro-do-modulo")).not.toBeNull();
+    expect(
+      erro.mock.calls.some(([texto]) =>
+        String(texto).includes("a arara da comemoração"),
+      ),
+    ).toBe(true);
+    await act(async () => desmontar());
+    erro.mockRestore();
+    alvo.remove();
+  });
+});
+
 describe("Configurações › Marca › Mascote (prévia para o administrador)", () => {
   it("um botão por estado; 'Ver na arara do canto' manda o estado pelo evento", async () => {
     await act(async () => raiz.render(createElement(CartaoDaMascote)));

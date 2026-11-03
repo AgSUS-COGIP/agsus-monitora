@@ -31,7 +31,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { createRoot } from "react-dom/client";
+import { montarModulo } from "../../../app/montar-modulo.tsx";
 import {
   comemoracoesPessoaisDesligadas,
   deveAcenar,
@@ -484,13 +484,14 @@ export function Mascote({
 
 /**
  * Monta uma arara fora de uma árvore React (os fogos, em
- * src/modules/comemoracao.ts). Devolve `desmontar`.
+ * src/modules/comemoracao.ts), pelo jeito único (montarModulo: um erro no
+ * desenho não derruba a página). Devolve `desmontar`.
  */
 export function montarMascoteAvulsa(
   elemento: Element,
   props: PropsDaMascote = {},
 ) {
-  const raiz = createRoot(elemento);
-  raiz.render(<Mascote {...props} />);
-  return () => raiz.unmount();
+  return montarModulo(elemento, <Mascote {...props} />, {
+    nome: "a arara da comemoração",
+  }).desmontar;
 }

@@ -61,10 +61,14 @@ describe("ligarSistema", () => {
       "hidden",
     );
 
-    // Sair esconde o app e limpa o que era da pessoa.
+    // Sair esconde o app e limpa o que era da pessoa (os avisos de conferência lidos também).
+    const { memoriaDosAvisos } =
+      await import("../../src/modulos/conferencias/memoria-dos-avisos.ts");
+    memoriaDosAvisos.set("|", { lista: null, versao: "v1" });
     document.getElementById("appScreen").classList.remove("hidden");
     await act(async () => ganchos.aoSair());
     expect(document.getElementById("appScreen").classList).toContain("hidden");
+    expect(memoriaDosAvisos.size).toBe(0);
 
     // Sem acesso: a memória sai e a presença para inteira (heartbeat e a batida de Pessoas online).
     const esquecer = vi.spyOn(sistema.carga, "esquecer");

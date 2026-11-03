@@ -15,6 +15,7 @@ import {
   estadoDaVisaoGeral,
 } from "../modulos/visao-geral/estado.ts";
 import { esquecerConversaDaAya } from "../modulos/aya/estado.ts";
+import { esquecerAvisosGuardados } from "../modulos/conferencias/memoria-dos-avisos.ts";
 import {
   areaDaLinha,
   definirAreaAtual,
@@ -203,10 +204,11 @@ function limparEstadoDeslogado() {
   perfil.esconderApp();
 }
 
-/* O que a pessoa deixou nas telas: a conversa da Aya e o recorte da Visão geral. */
+/* O que a pessoa deixou nas telas: a conversa da Aya, o recorte da Visão geral e os avisos de conferência lidos. */
 function esquecerDaPessoa() {
   esquecerConversaDaAya();
   esquecerVisaoGeral();
+  esquecerAvisosGuardados();
 }
 
 /* Fim da espera da entrada, aconteça o que acontecer: sem skeleton. */
@@ -353,10 +355,11 @@ export function ligarSistema() {
     carga.pararRealtime();
   });
   // A batida da presença pausa e retoma sozinha com a aba (presenca.acompanhar).
+  // As linhas já lidas voltam desatualizadas: o que mudou com o canal fechado não chegou.
   window.addEventListener("agsus:background-resume", () => {
     if (!perfil.obterUsuario()?.id) return;
     presenca.iniciarHeartbeat();
-    carga.iniciarRealtime();
+    carga.retomarRealtime();
   });
 
   // A entrada é da sessão do app (src/main.ts chama sessaoDoApp.iniciar()).

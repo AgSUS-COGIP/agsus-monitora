@@ -40,6 +40,10 @@ import {
 } from "../../lib/avisos-de-conferencia.ts";
 import { respostaInalterada, versaoDoPacote } from "../../lib/cache-de-payload";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
+import {
+  esquecerAvisosGuardados,
+  memoriaDosAvisos,
+} from "./memoria-dos-avisos.ts";
 
 function baixarNoNavegador(conteudo: string, nome: string) {
   // O BOM faz o Excel abrir em UTF-8.
@@ -56,18 +60,12 @@ function baixarNoNavegador(conteudo: string, nome: string) {
 
 const RPC_DOS_AVISOS = "listar_avisos_conferencia_se_mudou";
 
-/* Recorte → a última lista lida e a versão dela (só nesta página). */
-const memoria = new Map<
-  string,
-  { lista: SnapshotDosAvisos["lista"]; versao: string }
->();
+/* Recorte → a última lista lida e a versão dela (só nesta página; a saída apaga). */
+const memoria = memoriaDosAvisos;
 const chaveDoRecorte = ({ area, modulo }: FiltroDosAvisos) =>
   `${area || ""}|${modulo || ""}`;
 
-/** Só para os testes: esquece as listas guardadas na memória. */
-export function esquecerAvisosGuardados() {
-  memoria.clear();
-}
+export { esquecerAvisosGuardados };
 
 export function criarEstadoDosAvisos({
   supabase,

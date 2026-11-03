@@ -50,14 +50,64 @@ describe("tela sob demanda", () => {
     expect(tela.then).toBeUndefined();
   });
 
-  it("falha de rede deixa tentar de novo", async () => {
+  it('falha de rede vira o erro com "Tentar de novo", sem rejeição solta', async () => {
+    document.body.innerHTML = `<section id="page-x"></section>`;
+    const aviso = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const render = vi.fn(() => 1);
+    const carregar = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("rede"))
+      .mockResolvedValueOnce({ render });
+    const tela = telaSobDemanda({ carregar, secao: "page-x" });
+    await expect(tela.render("a")).resolves.toBeUndefined();
+    const secao = document.getElementById("page-x");
+    expect(secao.textContent).not.toContain("Carregando…");
+    expect(secao.querySelector("[role=alert]").textContent).toContain(
+      "Não foi possível carregar esta tela",
+    );
+    expect(haTelaCarregando()).toBe(false);
+    secao.querySelector("[data-acao=tentar-carregar-tela]").click();
+    expect(secao.textContent).toBe("Carregando…");
+    await vi.waitFor(() => expect(render).toHaveBeenCalledWith("a"));
+    expect(carregar).toHaveBeenCalledTimes(2);
+    expect(secao.querySelector("[role=alert]")).toBeNull();
+    aviso.mockRestore();
+  });
+
+  it("o carregar() direto (pré-carga do menu) continua rejeitando e deixa tentar de novo", async () => {
     const carregar = vi
       .fn()
       .mockRejectedValueOnce(new Error("rede"))
       .mockResolvedValueOnce({ render: () => 1 });
     const tela = telaSobDemanda({ carregar });
-    await expect(tela.render()).rejects.toThrow("rede");
+    await expect(tela.carregar()).rejects.toThrow("rede");
     expect(await tela.render()).toBe(1);
+  });
+
+  it('versão nova: a falha do import recarrega a página e o "Carregando…" fica', async () => {
+    document.body.innerHTML = `<section id="page-x"></section>`;
+    const recarregar = vi.fn();
+    sessionStorage.clear();
+    const original = window.location;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: { ...window.location, reload: recarregar },
+    });
+    const tela = telaSobDemanda({
+      carregar: () =>
+        Promise.reject(
+          new TypeError("Failed to fetch dynamically imported module"),
+        ),
+      secao: "page-x",
+    });
+    void tela.render();
+    await vi.waitFor(() => expect(recarregar).toHaveBeenCalledTimes(1));
+    expect(document.getElementById("page-x").textContent).toBe("Carregando…");
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: original,
+    });
+    sessionStorage.clear();
   });
 
   it("a pré-carga do menu chama quem foi registrado", () => {

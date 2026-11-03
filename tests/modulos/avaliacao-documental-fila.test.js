@@ -6,7 +6,11 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
-import { criarEstadoDaFila } from "../../src/modulos/avaliacao-documental/estado-da-fila.ts";
+import {
+  criarEstadoDaFila,
+  INATIVIDADE_MAXIMA_MS,
+  RENOVAR_A_CADA_MS,
+} from "../../src/modulos/avaliacao-documental/estado-da-fila.ts";
 import {
   clicar,
   digitar,
@@ -757,6 +761,155 @@ describe("estado da fila: reserva", () => {
     await agendados[0]();
     expect(estado.obter().aberta.somente_leitura).toBe(true);
     expect(estado.obter().aberta.motivo).toContain("não está mais com você");
+  });
+});
+
+/*
+  A reserva só é renovada com alguém na ficha: aba no fundo ou 20 minutos sem
+  mexer param a renovação (a reserva vence sozinha no banco); a volta renova.
+*/
+describe("estado da fila: reserva só com alguém na ficha", () => {
+  function documentoFalso() {
+    const alvo = new EventTarget();
+    return Object.assign(alvo, { visibilityState: "visible" });
+  }
+  async function montarReserva({ renovar } = {}) {
+    vi.useFakeTimers();
+    const documento = documentoFalso();
+    const salvar = vi.fn(async () => true);
+    const supabase = supabaseFalso(fila(), {
+      reservar_ficha: ({ p_ficha }) => ({
+        ficha: { id: p_ficha, versao: 2 },
+        reservada: true,
+        somente_leitura: false,
+      }),
+      renovar_reserva:
+        renovar ??
+        (({ p_ficha }) => ({
+          ficha: { id: p_ficha, versao: 2, reserva: { expira: AGORA_MAIS } },
+        })),
+    });
+    const estado = criarEstadoDaFila({
+      supabase,
+      toast,
+      armazenamento: null,
+      sessao: null,
+      documento,
+      agora: () => Date.now(),
+    });
+    await estado.carregar("e93");
+    await estado.abrir("f2");
+    estado.registrarSalvamento("f2", salvar);
+    const renovacoes = () =>
+      supabase.rpc.mock.calls.filter(([nome]) => nome === "renovar_reserva")
+        .length;
+    return { documento, estado, salvar, renovacoes };
+  }
+  afterEach(() => vi.useRealTimers());
+
+  it("aba no fundo não renova; a volta renova na hora", async () => {
+    const { documento, salvar, renovacoes } = await montarReserva();
+    await vi.advanceTimersByTimeAsync(RENOVAR_A_CADA_MS);
+    expect(renovacoes()).toBe(1);
+    documento.visibilityState = "hidden";
+    documento.dispatchEvent(new Event("visibilitychange"));
+    await vi.advanceTimersByTimeAsync(RENOVAR_A_CADA_MS);
+    expect(renovacoes()).toBe(1);
+    // Parou: o rascunho pendente foi salvo e nada mais vai ao banco.
+    expect(salvar).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(RENOVAR_A_CADA_MS * 12);
+    expect(renovacoes()).toBe(1);
+    documento.visibilityState = "visible";
+    documento.dispatchEvent(new Event("visibilitychange"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(renovacoes()).toBe(2);
+    await vi.advanceTimersByTimeAsync(RENOVAR_A_CADA_MS);
+    expect(renovacoes()).toBe(3);
+  });
+
+  it("20 minutos sem atividade param a renovação; a atividade a retoma", async () => {
+    const { documento, renovacoes } = await montarReserva();
+    await vi.advanceTimersByTimeAsync(INATIVIDADE_MAXIMA_MS);
+    // Renovou nos 5, 10 e 15 minutos; aos 20, ninguém mexeu: para.
+    expect(renovacoes()).toBe(3);
+    await vi.advanceTimersByTimeAsync(RENOVAR_A_CADA_MS * 6);
+    expect(renovacoes()).toBe(3);
+    documento.dispatchEvent(new Event("keydown"));
+    documento.dispatchEvent(new Event("pointerdown"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(renovacoes()).toBe(4);
+  });
+
+  it("atividade adia a pausa", async () => {
+    const { documento, renovacoes } = await montarReserva();
+    for (let i = 0; i < 8; i += 1) {
+      await vi.advanceTimersByTimeAsync(RENOVAR_A_CADA_MS);
+      documento.dispatchEvent(new Event("wheel"));
+    }
+    expect(renovacoes()).toBe(8);
+  });
+
+  it("outra pessoa pegou a ficha no intervalo: só leitura com o aviso, sem apagar o rascunho", async () => {
+    let vezes = 0;
+    const { documento, estado, renovacoes } = await montarReserva({
+      renovar: ({ p_ficha }) =>
+        (vezes += 1) === 1
+          ? { ficha: { id: p_ficha, versao: 2 } }
+          : Object.assign(
+              new Error(
+                "A ficha não está mais com você (reserva liberada ou com outra pessoa); abra de novo.",
+              ),
+              { code: "PT409" },
+            ),
+    });
+    documento.visibilityState = "hidden";
+    await vi.advanceTimersByTimeAsync(RENOVAR_A_CADA_MS);
+    expect(renovacoes()).toBe(0);
+    documento.visibilityState = "visible";
+    documento.dispatchEvent(new Event("visibilitychange"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(renovacoes()).toBe(1);
+    expect(estado.obter().aberta.reservada).toBe(true);
+    await vi.advanceTimersByTimeAsync(RENOVAR_A_CADA_MS);
+    expect(renovacoes()).toBe(2);
+    const aberta = estado.obter().aberta;
+    expect(aberta.somente_leitura).toBe(true);
+    expect(aberta.ficha.id).toBe("f2");
+    expect(aberta.motivo).toContain("não está mais com você");
+  });
+
+  it("volta com a reserva tomada: avisa que venceu enquanto estava fora", async () => {
+    const { documento, estado, renovacoes } = await montarReserva({
+      renovar: () =>
+        Object.assign(new Error("A ficha não está mais com você"), {
+          code: "PT409",
+        }),
+    });
+    documento.visibilityState = "hidden";
+    await vi.advanceTimersByTimeAsync(RENOVAR_A_CADA_MS);
+    documento.visibilityState = "visible";
+    documento.dispatchEvent(new Event("visibilitychange"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(renovacoes()).toBe(1);
+    expect(estado.obter().aberta.somente_leitura).toBe(true);
+    expect(estado.obter().aberta.motivo).toContain(
+      "venceu enquanto você estava fora",
+    );
+    // Sem reserva, nada mais é renovado.
+    documento.dispatchEvent(new Event("keydown"));
+    await vi.advanceTimersByTimeAsync(RENOVAR_A_CADA_MS * 3);
+    expect(renovacoes()).toBe(1);
+  });
+
+  it("fechar a ficha solta a escuta da atividade", async () => {
+    const { documento, estado, renovacoes } = await montarReserva();
+    documento.visibilityState = "hidden";
+    await vi.advanceTimersByTimeAsync(RENOVAR_A_CADA_MS);
+    await estado.fechar();
+    documento.visibilityState = "visible";
+    documento.dispatchEvent(new Event("visibilitychange"));
+    await vi.advanceTimersByTimeAsync(RENOVAR_A_CADA_MS);
+    expect(renovacoes()).toBe(0);
   });
 });
 

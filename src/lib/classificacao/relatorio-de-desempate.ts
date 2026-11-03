@@ -993,3 +993,83 @@ th.idade,td.idade{text-align:center;white-space:nowrap;width:7%}
 <p class="regra">${html(regraDoEmpate(r))}</p>
 <h2>Resumo</h2>${totais}${porCriterio}${ateOFim}${indice}${vagas}</body></html>`;
 }
+
+/** O que o acompanhamento do preparo precisa do `document`. */
+export type DocumentoDoPreparo = Pick<
+  Document,
+  "visibilityState" | "addEventListener" | "removeEventListener"
+>;
+
+export interface AcompanhamentoDoPreparo {
+  /** Lê a resposta (obter_desempate_da_lista); null quando não deu. */
+  ler: () => Promise<RespostaDoDesempate | null>;
+  /** Cada resposta lida. */
+  aoLer: (resposta: RespostaDoDesempate | null) => void;
+  /** O prazo passou com o relatório ainda "sendo preparado". */
+  aoEsgotar: () => void;
+  documento?: DocumentoDoPreparo | null;
+  agora?: () => number;
+  prazoMs?: number;
+  espera?: (n: number) => number;
+}
+
+/**
+ * Lê o relatório e, enquanto ele é preparado, relê com espera crescente
+ * (esperaDaReleitura) — mas só até `prazoMs` (ESPERA_DO_RELATORIO_MS) desde a
+ * primeira leitura, e só com a aba à frente: no fundo, a próxima releitura
+ * espera a volta (visibilitychange). Passado o prazo, `aoEsgotar` (a tela
+ * mostra o erro com "Tentar de novo", que chama de novo). Antes, o pedido sem
+ * `pedido_em` legível relia para sempre, também com a aba esquecida no fundo.
+ * Devolve quem para tudo (desmontar, trocar de lista).
+ */
+export function acompanharPreparoDoDesempate({
+  ler,
+  aoLer,
+  aoEsgotar,
+  documento = globalThis.document ?? null,
+  agora = () => Date.now(),
+  prazoMs = ESPERA_DO_RELATORIO_MS,
+  espera = (n) => esperaDaReleitura(n),
+}: AcompanhamentoDoPreparo): () => void {
+  const inicio = agora();
+  let vigente = true;
+  let releituras = 0;
+  let temporizador: ReturnType<typeof setTimeout> | undefined;
+  let esperandoAVolta = false;
+  const noFundo = () => documento?.visibilityState === "hidden";
+
+  const aoVoltar = () => {
+    if (!vigente || !esperandoAVolta || noFundo()) return;
+    esperandoAVolta = false;
+    lerAgora();
+  };
+
+  function lerAgora() {
+    void ler()
+      .catch(() => null)
+      .then((resposta) => {
+        if (!vigente) return;
+        aoLer(resposta);
+        if (estadoDoRelatorio(resposta, agora()) !== "preparando") return;
+        if (agora() - inicio >= prazoMs) return aoEsgotar();
+        temporizador = setTimeout(proxima, espera(++releituras));
+      });
+  }
+
+  function proxima() {
+    if (!vigente) return;
+    if (noFundo()) {
+      esperandoAVolta = true;
+      return;
+    }
+    lerAgora();
+  }
+
+  documento?.addEventListener("visibilitychange", aoVoltar);
+  lerAgora();
+  return () => {
+    vigente = false;
+    clearTimeout(temporizador);
+    documento?.removeEventListener("visibilitychange", aoVoltar);
+  };
+}

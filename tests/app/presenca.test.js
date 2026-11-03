@@ -110,18 +110,61 @@ describe("auditoria", () => {
     expect(idDaAba()).toBe(idDaAba());
   });
 
-  it("heartbeat a cada N minutos da configuração; para quando pedido", async () => {
+  it("heartbeat a cada N minutos da configuração, de carona na batida; para quando pedido", async () => {
     vi.useFakeTimers();
-    const { presenca, cliente } = montar();
+    const { presenca, cliente } = montar({ perfil: USUARIO_COMUM });
     presenca.iniciarHeartbeat();
-    await vi.advanceTimersByTimeAsync(2 * 60 * 1000);
-    expect(chamadas(cliente, "registrar_evento_acesso")).toHaveLength(1);
-    expect(chamadas(cliente, "registrar_evento_acesso")[0][1].p_evento).toBe(
-      "heartbeat",
-    );
+    presenca.iniciar();
+    const heartbeats = () =>
+      chamadas(cliente, "registrar_navegacao_monitora").filter(
+        ([, args]) => args.p_evento === "heartbeat",
+      );
+    // Batidas aos 90 e 180 s; o heartbeat (2 min) vai na de 180 s.
+    await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS * 2);
+    expect(heartbeats()).toHaveLength(1);
+    expect(heartbeats()[0][1]).toMatchObject({
+      p_tela: "recursos",
+      p_detalhes: { current_view: "recursos", page_title: "MONITORA" },
+      p_presenca: true,
+      p_current_view: "Recursos · Saúde Indígena",
+    });
+    // Nenhuma chamada à parte para a auditoria.
+    expect(chamadas(cliente, "registrar_evento_acesso")).toHaveLength(0);
+    // A batida da entrada e as de 90 e 180 s (esta com o heartbeat): nada a mais.
+    expect(cliente.rpc).toHaveBeenCalledTimes(3);
     presenca.pararHeartbeat();
     await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
-    expect(chamadas(cliente, "registrar_evento_acesso")).toHaveLength(1);
+    expect(heartbeats()).toHaveLength(1);
+  });
+
+  it("heartbeat com o banco sem registrar_navegacao_monitora: as duas chamadas de antes", async () => {
+    vi.useFakeTimers();
+    const { presenca, cliente } = montar({
+      perfil: USUARIO_COMUM,
+      semNavegacao: true,
+    });
+    presenca.iniciarHeartbeat();
+    presenca.iniciar();
+    await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS * 2);
+    const eventos = chamadas(cliente, "registrar_evento_acesso");
+    expect(eventos).toHaveLength(1);
+    expect(eventos[0][1]).toMatchObject({
+      p_evento: "heartbeat",
+      p_detalhes: { current_view: "recursos", page_title: "MONITORA" },
+    });
+  });
+
+  it("com a aba oculta, nem batida nem heartbeat", async () => {
+    vi.useFakeTimers();
+    const { presenca, cliente, documento } = montar({ perfil: USUARIO_COMUM });
+    presenca.acompanhar();
+    presenca.iniciarHeartbeat();
+    presenca.iniciar();
+    await vi.advanceTimersByTimeAsync(0);
+    const antes = cliente.rpc.mock.calls.length;
+    documento.mudar("hidden");
+    await vi.advanceTimersByTimeAsync(30 * 60 * 1000);
+    expect(cliente.rpc).toHaveBeenCalledTimes(antes);
   });
 
   it("a navegação avisa a abertura de tela (só quando muda), numa chamada", async () => {

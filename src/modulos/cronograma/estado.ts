@@ -77,13 +77,14 @@ export function criarEstadoDoCalendario({
   /*
     Um pedido para todas as etapas; eram 118, um por edital (6 a 7 s). Com o
     banco ainda sem a função nova (PGRST202), volta ao pedido por edital.
-    Devolve um bloco de etapas por edital, na ordem de `editais`.
+    Devolve um bloco de etapas por edital, na ordem de `editais`. `todas` é
+    a resposta de RPC_TODAS_AS_ETAPAS, pedida junto com o resumo (`buscar`).
   */
   async function buscarEtapasDosEditais(
     editais: readonly EditalComCronograma[],
+    todas: { data: unknown; error: unknown },
   ): Promise<(readonly unknown[] | null)[]> {
     if (!supabase) throw new Error("Supabase indisponível.");
-    const todas = await supabase.rpc(RPC_TODAS_AS_ETAPAS);
     if (!todas.error) {
       const porEdital = new Map<string, unknown[]>(
         editais.map((edital) => [String(edital.id), []]),
@@ -113,11 +114,15 @@ export function criarEstadoDoCalendario({
   async function buscar() {
     if (!supabase) throw new Error("Supabase indisponível.");
     await exigirSessao(supabase);
-    const { data, error } = await supabase.rpc(RPC_RESUMO);
-    if (error) throw error;
+    // O resumo e as etapas não dependem um do outro: saem juntos.
+    const [resumo, todas] = await Promise.all([
+      supabase.rpc(RPC_RESUMO),
+      supabase.rpc(RPC_TODAS_AS_ETAPAS),
+    ]);
+    if (resumo.error) throw resumo.error;
 
-    const editais = editaisComCronograma(data);
-    const blocos = await buscarEtapasDosEditais(editais);
+    const editais = editaisComCronograma(resumo.data);
+    const blocos = await buscarEtapasDosEditais(editais, todas);
     return montarEtapasDosEditais(editais, blocos);
   }
 

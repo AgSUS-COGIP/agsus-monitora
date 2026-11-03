@@ -11,8 +11,9 @@
   - Passo de trilha tem `pagina`: o tour pede a troca de tela (`irPara`) e
     espera o elemento aparecer por alguns instantes, olhando de tempos em
     tempos (sem MutationObserver); se não aparecer, pula. Enquanto a tela
-    ainda baixa (telas sob demanda, src/lib/carga-de-telas.ts), a espera não
-    se esgota.
+    ainda baixa (telas sob demanda, src/lib/carga-de-telas.ts), a espera se
+    estende — mas nunca além de LIMITE_DA_PROCURA_MS: uma tela que não termina
+    de baixar não deixa a procura rodando para sempre.
   - O elemento destacado continua clicável (o véu são quatro faixas em volta
     do recorte); o resto da página não recebe clique enquanto o tour corre.
   - Teclado: Esc sai, ← e → navegam, Tab fica preso no balão. O leitor de
@@ -79,6 +80,8 @@ interface PassoAtual {
 const FOCAVEIS =
   'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])';
 const INTERVALO_DA_PROCURA = 120;
+/* Teto da procura do elemento, mesmo com a tela ainda baixando: depois, pula o passo. */
+export const LIMITE_DA_PROCURA_MS = 20_000;
 
 /* O elemento está na tela? Escondido por `hidden`, página inativa ou display:none não conta. */
 export function elementoVisivel(elemento: Element | null | undefined): boolean {
@@ -236,13 +239,16 @@ export function Tour({
     } else if (!vaiMudar || espera <= 0) {
       pular();
     } else {
-      const limite = Date.now() + espera;
+      const inicio = Date.now();
+      const limite = inicio + espera;
+      const teto = inicio + Math.max(espera, LIMITE_DA_PROCURA_MS);
       const procurar = () => {
         if (cancelado) return;
         preparar();
         const achado = acharAlvo(passo, documento, visivel);
+        const agora = Date.now();
         if (achado) aceitar(achado);
-        else if (Date.now() >= limite && !carregando()) pular();
+        else if (agora >= teto || (agora >= limite && !carregando())) pular();
         else temporizador = janela.setTimeout(procurar, INTERVALO_DA_PROCURA);
       };
       temporizador = janela.setTimeout(procurar, INTERVALO_DA_PROCURA);
