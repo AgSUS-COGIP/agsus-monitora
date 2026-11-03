@@ -128,3 +128,32 @@ describe("aplicarMudancasDaFila", () => {
     expect(aplicarMudancasDaFila(ANTERIOR, [])).toBeNull();
   });
 });
+
+describe("parcial vazia (20261103171500_leituras_pesadas_sem_refazer)", () => {
+  it("sem mudança, o banco não monta nada e a fila da tela fica a mesma (com o gerado_em de antes)", () => {
+    const vazia = {
+      marca: "m1",
+      parcial: true,
+      total_nucleo: ANTERIOR.candidatos.length,
+      candidatos: [],
+      saiu: [],
+    };
+    const r = aplicarMudancasDaFila(ANTERIOR, vazia);
+    expect(r).toEqual(ANTERIOR);
+    expect(argumentosDaFilaDesde("e1", r)).toEqual(
+      argumentosDaFilaDesde("e1", ANTERIOR),
+    );
+  });
+
+  it("com outro total do núcleo, lê a fila inteira", () => {
+    expect(
+      aplicarMudancasDaFila(ANTERIOR, {
+        marca: "m1",
+        parcial: true,
+        total_nucleo: 7,
+        candidatos: [],
+        saiu: [],
+      }),
+    ).toBeNull();
+  });
+});
