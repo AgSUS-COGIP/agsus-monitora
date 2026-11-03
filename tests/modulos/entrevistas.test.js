@@ -421,18 +421,14 @@ describe("agenda, empates e pendências", () => {
     );
     expect(aviso.textContent).toContain("o desempate é feito na Classificação");
     window.navigate = vi.fn();
-    window.classificacaoController = {
-      estado: { escolherEdital: vi.fn(async () => true) },
-    };
     try {
       await clicar(aviso.querySelector('[data-ir-para="classificacao"]'));
-      expect(window.navigate).toHaveBeenCalledWith("classificacao");
-      expect(
-        window.classificacaoController.estado.escolherEdital,
-      ).toHaveBeenCalledWith(EDITAL_ID);
+      // O edital vai junto no endereço; a rota abre a Classificação nele.
+      expect(window.navigate).toHaveBeenCalledWith("classificacao", {
+        edital: EDITAL_ID,
+      });
     } finally {
       delete window.navigate;
-      delete window.classificacaoController;
     }
   });
 

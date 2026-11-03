@@ -1,8 +1,8 @@
 # `src/modulos/classificacao/` — Classificação
 
-A tela `#page-classificacao` (view `classificacao`): monta na própria `<section>` por
-`montarClassificacao()` (`src/main.ts` → `window.classificacaoController`); o legado chama
-`render()` ao navegar (`TELAS_REACT`). Área = a atual do app; o edital é escolhido no topo.
+A tela `#page-classificacao` (view `classificacao`, rota `/<área>/classificacao[/<edital>]`):
+`criarClassificacao()` devolve o conteúdo e o controlador; a rota (`src/app/telas.tsx`) chama
+`render()` a cada abertura e `abrirEdital()` com o edital do endereço. Área = a atual do app; o edital é escolhido no topo.
 O seletor traz só os editais da área com análise curricular ativa (qualquer origem) ou com
 lista gerada, ativos e em andamento primeiro (`listar_editais_classificacao`,
 `supabase/migrations/20261023120000_classificacao_so_editais_analisados.sql`).

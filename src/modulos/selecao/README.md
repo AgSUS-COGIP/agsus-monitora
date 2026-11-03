@@ -1,12 +1,12 @@
 # `src/modulos/selecao/` — Seleção
 
-A tela `#page-selecao` (view `selecao`), módulo do app desde a Etapa 2: monta na própria
-`<section>` por `montarSelecao()` (`src/main.ts` → `window.selecaoController`); o legado chama
-`render()` ao navegar (`TELAS_REACT`). Área = a atual do app; sessão, tema, aviso e tela cheia =
+A tela `#page-selecao` (view `selecao`, rota `/<área>/selecao`), módulo do app desde a Etapa 2:
+`criarSelecao()` devolve o conteúdo e o controlador; a rota (`src/app/telas.tsx`) desenha na
+própria `<section>` e chama `render()` a cada abertura. Área = a atual do app; sessão, tema, aviso e tela cheia =
 os do app. Só leitura (`get_selecao_da_area`).
 
 ```
-selecao.tsx     <TelaDeSelecao> e montarSelecao() (área atual, troca de área, controlador)
+selecao.tsx     <TelaDeSelecao> e criarSelecao() (área atual, troca de área, controlador)
 estado.ts       store tipado sem React: carga da área (cópia guardada), sessão, CSV
 tipos.ts        contratos do cliente, snapshot, dados normalizados e armazenamento
 paineis.tsx     topo (status e ações), filtros de escolha múltipla, KPIs, recorte, gráficos,

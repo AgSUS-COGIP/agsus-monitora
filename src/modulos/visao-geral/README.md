@@ -1,7 +1,8 @@
 # Visão geral
 
-Módulo React/TypeScript da página `dashboard`. `montarVisaoGeral` monta a tela com
-`montarModulo`, dentro do ErrorBoundary do app. O bootstrap, a navegação e a carga do
+Módulo React/TypeScript da página `dashboard` (rota `/<área>/visao-geral`). `criarVisaoGeral`
+devolve o conteúdo, que a rota (`src/app/telas.tsx`) desenha no pacote principal, dentro do
+ErrorBoundary da tela. O bootstrap, a navegação e a carga do
 monitoramento continuam em `src/app/`.
 
 - `estado.ts`: recorte por área, filtros, busca, DSEI, atalhos, colunas, ordenação,

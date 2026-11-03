@@ -16,6 +16,7 @@ import {
   teclar,
 } from "../componentes/interacoes.js";
 import { montarTela } from "../montar-tela.js";
+import { registrarTelas } from "../../src/app/registro-das-telas.ts";
 
 /*
   A tela Avaliação documental como módulo do app
@@ -413,19 +414,26 @@ describe("regra da avaliação (AM-2)", () => {
     expect(resumo.textContent).toContain("Nota mínima");
     expect(secao.querySelector(".avd-campos")).toBeNull();
     window.navigate = vi.fn();
-    window.nucleoController = { abrirRegrasDoEdital: vi.fn() };
+    // Editais no registro das telas (src/app/telas.tsx), como no app.
+    const editais = {
+      nome: "Editais",
+      conteudo: null,
+      render() {},
+      abrirRegrasDoEdital: vi.fn(),
+    };
+    registrarTelas({ nucleo: { criar: () => editais } });
     try {
       await clicar(
         resumo.querySelector("[data-acao='editar-nas-regras-do-edital']"),
       );
       expect(window.navigate).toHaveBeenCalledWith("nucleo");
-      expect(window.nucleoController.abrirRegrasDoEdital).toHaveBeenCalledWith(
+      expect(editais.abrirRegrasDoEdital).toHaveBeenCalledWith(
         "e93",
         "avaliacao",
       );
     } finally {
       delete window.navigate;
-      delete window.nucleoController;
+      registrarTelas({});
     }
   });
 

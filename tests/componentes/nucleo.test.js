@@ -18,6 +18,7 @@ import {
 import { UNIDADES_CORES } from "../../src/lib/responsavel-do-edital.ts";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 import { montarTela } from "../montar-tela.js";
+import { registrarTelas } from "../../src/app/registro-das-telas.ts";
 
 /*
   A página "Editais" (Equipe Núcleo) em React: a tabela com as linhas que o
@@ -365,16 +366,28 @@ describe("tabela de editais", () => {
     expect(linha("1").querySelector(".approved-no-action")).not.toBeNull();
   });
 
-  it("o botão de listas abre o modal da Lista de Aprovados", async () => {
-    window.aprovadosController = { openImportModal: vi.fn() };
-    await montar();
-    await clicar(
-      linha("1").querySelector('[aria-label^="Lista de aprovados"]'),
-    );
-    expect(window.aprovadosController.openImportModal).toHaveBeenCalledWith(
-      "1",
-      "10/2026 · DSEI Manaus",
-    );
+  it("o botão de listas abre o modal da Lista de Aprovados (pelo registro das telas)", async () => {
+    const aprovados = {
+      nome: "Lista de aprovados",
+      conteudo: null,
+      render() {},
+      openImportModal: vi.fn(),
+    };
+    registrarTelas({ approved: { carregar: async () => aprovados } });
+    try {
+      await montar();
+      await clicar(
+        linha("1").querySelector('[aria-label^="Lista de aprovados"]'),
+      );
+      await vi.waitFor(() =>
+        expect(aprovados.openImportModal).toHaveBeenCalledWith(
+          "1",
+          "10/2026 · DSEI Manaus",
+        ),
+      );
+    } finally {
+      registrarTelas({});
+    }
   });
 
   it("Regras do edital: abre no lugar da tabela, troca de etapa e volta", async () => {

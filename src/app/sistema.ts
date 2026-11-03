@@ -224,7 +224,7 @@ function encerrarEspera() {
   consulta do perfil.
 */
 function prepararEntrada() {
-  mostrarEsqueleto(navegacao.telaGuardada());
+  mostrarEsqueleto(navegacao.telaEsperada());
   carga.prepararEntrada();
   // O início da sessão sai junto com o perfil (a carga da entrada usa o mesmo).
   void inicioDaSessao.pedir();
@@ -367,7 +367,7 @@ export function ligarSistema() {
   // A entrada é da sessão do app (src/main.ts chama sessaoDoApp.iniciar()).
   sessaoDoApp.ligarSistema({
     carregarConfiguracao: carregarConfiguracaoDaEntrada,
-    mostrarEsqueleto: () => mostrarEsqueleto(navegacao.telaGuardada()),
+    mostrarEsqueleto: () => mostrarEsqueleto(navegacao.telaEsperada()),
     aoVerificar: prepararEntrada,
     abrir: abrirSistema,
     aoFicarSemAcesso: ficarSemAcesso,

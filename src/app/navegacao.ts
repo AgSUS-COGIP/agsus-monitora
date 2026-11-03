@@ -385,6 +385,14 @@ export function criarNavegacao({
     return ligadaOuPrimeira(telaDeEntrada(telaGuardada(), perfil(), paineis));
   }
 
+  /*
+    A tela que deve abrir, antes do perfil chegar (o formato do skeleton da
+    entrada): a do endereço, ou a guardada. Sem conferir permissão.
+  */
+  function telaEsperada() {
+    return destinoPedido().destino?.view || telaGuardada();
+  }
+
   /* O botão da página desativada (e da manutenção): a primeira página ligada do menu. */
   function irParaInicio() {
     const item = primeiraPaginaLigada(arvore, areaAtual(), view());
@@ -802,6 +810,7 @@ export function criarNavegacao({
     telaInicialDoSistema: inicialDoSistema,
     telaDeEntrada: deEntrada,
     telaGuardada,
+    telaEsperada,
     guardarTela,
   };
 }

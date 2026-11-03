@@ -16,6 +16,7 @@ import {
 import { criarLeafletFalso } from "./leaflet-falso.js";
 import { htmlDaPagina } from "../pagina-montada.js";
 import { montarTela } from "../montar-tela.js";
+import { registrarTelas } from "../../src/app/registro-das-telas.ts";
 
 /*
   A Visão geral como módulo do app (src/modulos/visao-geral/): monta na
@@ -741,14 +742,24 @@ describe("tabela de processos", () => {
 
   it("a linha do tempo do cronograma abre a do Núcleo", async () => {
     const abrirLinhaDoTempo = vi.fn();
-    window.nucleoController = { estado: { abrirLinhaDoTempo } };
+    // Editais no registro das telas (src/app/telas.tsx), como no app.
+    registrarTelas({
+      nucleo: {
+        criar: () => ({
+          nome: "Editais",
+          conteudo: null,
+          render() {},
+          estado: { abrirLinhaDoTempo },
+        }),
+      },
+    });
     await montar();
     await clicar(linhas()[0]);
     await clicar(
       botao("Linha do", document.querySelector("#visaoGeralGaveta")),
     );
     expect(abrirLinhaDoTempo).toHaveBeenCalledWith(1);
-    delete window.nucleoController;
+    registrarTelas({});
   });
 
   it("busca global: localizar troca o recorte pela linha e a destaca", async () => {

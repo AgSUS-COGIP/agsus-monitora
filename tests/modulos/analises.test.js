@@ -255,6 +255,8 @@ async function montar(
         armazenamento: armazenamento || armazenamentoEmMemoria(),
         versao: "teste",
       }),
+      // A página está à vista quando a seção está ativa (no app, a navegação diz).
+      visivel: () => secao.classList.contains("active"),
       ...opcoes,
     });
   });

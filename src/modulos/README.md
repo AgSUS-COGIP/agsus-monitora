@@ -1,7 +1,8 @@
 # `src/modulos/` — uma pasta por tela
 
-Cada tela do MONITORA mora aqui: `<nome>/<nome>.jsx` ou `.tsx` (componente e
-`montar<Nome>()`, que usa `montarModulo` de `src/app/`), `estado.js` ou `.ts` (store sem React, lido com
+Cada tela do MONITORA mora aqui: `<nome>/<nome>.tsx` (componente e `criar<Nome>()`, que devolve
+`{ conteudo, nome, render() }` para a rota em `src/app/telas.tsx`; a seção de Configurações ainda
+usa `montar<Nome>()` com `montarModulo`), `estado.js` ou `.ts` (store sem React, lido com
 `useSyncExternalStore`), as consultas RPC e, se precisar, um CSS só da tela. O visual vem de
 `src/ui/`; as regras puras, de `src/lib/`.
 

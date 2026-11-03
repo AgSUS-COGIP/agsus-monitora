@@ -1245,13 +1245,12 @@ describe("Preparar, roteiros e ficha", () => {
           (b) => b.textContent === "Gerar na Classificação",
         ),
       );
-      expect(window.navigate).toHaveBeenCalledWith("classificacao");
-      expect(
-        window.classificacaoController.estado.escolherEdital,
-      ).toHaveBeenCalledWith(UUID);
+      // O edital vai junto no endereço; a rota abre a Classificação nele.
+      expect(window.navigate).toHaveBeenCalledWith("classificacao", {
+        edital: UUID,
+      });
     } finally {
       delete window.navigate;
-      delete window.classificacaoController;
     }
   });
 
