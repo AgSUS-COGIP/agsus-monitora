@@ -59,18 +59,19 @@ function useVagasConhecidas(
   useEffect(() => {
     if (!ids.length && !codigos.length) return undefined;
     let vivo = true;
-    const espera = setTimeout(async () => {
+    const buscar = async () => {
       const { vagas, erro } = await estado.buscarVagas({
         editais: ids,
         vagas: codigos,
       });
       if (vivo) setResultado({ chave, vagas, erro });
-    }, ESPERA_DA_BUSCA_MS);
+    };
+    const espera = setTimeout(() => void buscar(), ESPERA_DA_BUSCA_MS);
     return () => {
       vivo = false;
       clearTimeout(espera);
     };
-    // A chave resume ids e códigos.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- a chave resume ids e códigos (arrays novos a cada render).
   }, [chave, estado]);
   if (!ids.length && !codigos.length)
     return { vagas: [], erro: "", buscando: false };

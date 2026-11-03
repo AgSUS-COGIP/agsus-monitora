@@ -19,3 +19,22 @@ export function fonteDoApp() {
     .map((arquivo) => readFileSync(arquivo, "utf8"))
     .join("\n");
 }
+
+/**
+ * O texto sem os trechos entre `abre` e `fecha` (comentários HTML ou de
+ * bloco), por indexOf: um trecho não remonta outro depois de tirado, como
+ * aconteceria com um replace de expressão regular (CodeQL
+ * js/incomplete-multi-character-sanitization).
+ */
+export function semTrechos(texto, abre, fecha) {
+  let saida = "";
+  let posicao = 0;
+  for (;;) {
+    const inicio = texto.indexOf(abre, posicao);
+    if (inicio < 0) return saida + texto.slice(posicao);
+    saida += texto.slice(posicao, inicio);
+    const fim = texto.indexOf(fecha, inicio + abre.length);
+    if (fim < 0) return saida;
+    posicao = fim + fecha.length;
+  }
+}

@@ -127,7 +127,7 @@ function BuscaDoCandidato({
     }
     const meu = ++ultimo.current;
     setBuscando(true);
-    const espera = setTimeout(async () => {
+    const buscar = async () => {
       try {
         const itens = await estado.buscarCandidatos(editalId, busca);
         if (meu === ultimo.current)
@@ -142,7 +142,8 @@ function BuscaDoCandidato({
       } finally {
         if (meu === ultimo.current) setBuscando(false);
       }
-    }, ESPERA_DA_BUSCA_MS);
+    };
+    const espera = setTimeout(() => void buscar(), ESPERA_DA_BUSCA_MS);
     return () => {
       ultimo.current += 1;
       clearTimeout(espera);

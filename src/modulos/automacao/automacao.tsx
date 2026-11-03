@@ -8,6 +8,7 @@ import { montarModulo } from "../../app/montar-modulo.tsx";
 import { isAdminGlobal } from "../../lib/access-roles.ts";
 import {
   MOTIVO_MAXIMO,
+  REGRA_DO_MOTIVO,
   avisoSemEfeito,
   motivoValido,
   proximaDaChave,
@@ -88,9 +89,10 @@ function FormularioDoMotivo({
     <form className="automacao-motivo" onSubmit={enviar} noValidate>
       <Campo
         rotulo={ligar ? "Motivo para ligar" : "Motivo para desligar"}
+        dica={REGRA_DO_MOTIVO}
         erro={
           tentou && !motivoValido(motivo)
-            ? "Informe o motivo (de 10 a 500 caracteres)."
+            ? "Escreva o motivo numa frase de verdade."
             : undefined
         }
       >

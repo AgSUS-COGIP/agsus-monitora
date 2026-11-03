@@ -159,7 +159,7 @@ export function Grafico<T extends ChartType>({
     atual.data.datasets = data.datasets;
     atual.options = options as NonNullable<typeof atual.options>;
     atual.update();
-    // `dependencias` é a lista do chamador (dados e tema), como num useMemo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `dependencias` é a lista do chamador (dados e tema), como num useMemo.
   }, dependencias);
 
   return <canvas id={id} ref={canvas} role="img" aria-label={rotulo} />;

@@ -6,6 +6,7 @@ import {
   limparMarcaGuardada,
 } from "../src/lib/access-branding-cache.ts";
 import { needsLightForeground } from "../src/lib/access-branding.ts";
+import { semTrechos } from "./fonte-do-app.js";
 
 const html = readFileSync("index.html", "utf8");
 const cache = readFileSync("src/lib/access-branding-cache.ts", "utf8");
@@ -52,7 +53,7 @@ describe("a marca é aplicada antes do primeiro paint", () => {
     explicação; o que vale é o documento sem comentários.
   */
   it("roda no <head>, antes do <body>", () => {
-    const semComentarios = html.replace(/<!--[\s\S]*?-->/g, "");
+    const semComentarios = semTrechos(html, "<!--", "-->");
     expect(
       semComentarios.indexOf("aplicarMarcaAntesDoPrimeiroPaint"),
     ).toBeLessThan(semComentarios.indexOf("<body"));

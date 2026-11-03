@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { fonteDoApp } from "./fonte-do-app.js";
+import { fonteDoApp, semTrechos } from "./fonte-do-app.js";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   FAVICON_PADRAO,
@@ -13,7 +13,7 @@ const html = readFileSync("index.html", "utf8");
 const app = fonteDoApp();
 
 const semComentarios = (fonte) =>
-  fonte.replace(/<!--[\s\S]*?-->/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+  semTrechos(semTrechos(fonte, "<!--", "-->"), "/*", "*/");
 
 /*
   Dois defeitos, medidos antes de mexer.

@@ -214,6 +214,44 @@ describe("auditoria", () => {
     });
   });
 
+  it("abrir tela pelo menu (menu + abertura no mesmo instante): uma chamada só", async () => {
+    vi.useFakeTimers();
+    const { presenca, cliente, avisarNavegacao, mudar } = montar();
+    presenca.acompanhar();
+    presenca.iniciar();
+    await vi.advanceTimersByTimeAsync(0);
+    // O que navegacao.ts faz ao abrir: marcarMenu (menu) e depois abriu (abertura).
+    const abrir = async (view, lugar, anterior) => {
+      const antes = cliente.rpc.mock.calls.length;
+      mudar(view, lugar);
+      avisarNavegacao({ tipo: "menu" });
+      avisarNavegacao({ tipo: "abertura", view, anterior });
+      await vi.advanceTimersByTimeAsync(0);
+      return cliente.rpc.mock.calls.slice(antes);
+    };
+    const primeira = await abrir(
+      "aprovados",
+      "Lista de aprovados · SEDE",
+      "recursos",
+    );
+    expect(primeira.map(([nome]) => nome)).toEqual([
+      "registrar_navegacao_monitora",
+    ]);
+    expect(primeira[0][1]).toMatchObject({
+      p_evento: "abertura_tela",
+      p_tela: "aprovados",
+      p_presenca: true,
+      p_current_view: "Lista de aprovados · SEDE",
+    });
+    // A tela seguinte é outra navegação: outra chamada, também uma só.
+    const segunda = await abrir("nucleo", "Editais · SEDE", "aprovados");
+    expect(segunda.map(([nome]) => nome)).toEqual([
+      "registrar_navegacao_monitora",
+    ]);
+    expect(segunda[0][1]).toMatchObject({ p_tela: "nucleo" });
+    presenca.parar();
+  });
+
   it("a entrada vai junto com a primeira batida", async () => {
     vi.useFakeTimers();
     const { presenca, cliente } = montar();

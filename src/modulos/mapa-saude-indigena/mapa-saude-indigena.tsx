@@ -103,6 +103,7 @@ export function MapaSaudeIndigena({
     O resumo da dica conta o que o mapa do DSEI desenha (mesma função): fica
     guardado por DSEI até chegarem dados novos (11 ms para os 34, medido).
   */
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `dseis` e `rede` só zeram o guardado quando chegam dados novos.
   const resumos = useMemo(() => new Map<string, string[]>(), [dseis, rede]);
   const resumoDaRedeDoDsei = useCallback(
     (d: DseiDoMapa) => {

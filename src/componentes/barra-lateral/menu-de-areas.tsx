@@ -662,6 +662,7 @@ export function Navegacao({
     const proximas = new Set(fechadas);
     proximas.delete(areaAtiva);
     guardarFechadas(proximas);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- depende só da página (ver acima), não de `fechadas`.
   }, [areaAtiva, ativo.view, ativo.secao]);
 
   useEffect(() => {

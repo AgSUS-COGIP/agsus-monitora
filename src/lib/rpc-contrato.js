@@ -769,7 +769,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_chave", "p_ligar", "p_motivo"],
     critica: false,
     resumo:
-      "Liga ou desliga uma chave da automação, com motivo de 10 a 500 caracteres: as tarefas do pg_cron da chave acompanham e a agenda dos robôs para de pedir; grava o histórico e devolve obter_chaves_da_automacao. Só administrador global; 55000 se já estiver no estado pedido.",
+      "Liga ou desliga uma chave da automação, com motivo de verdade (20261103213000: 15 a 500 caracteres, 3 palavras ou mais, sem teclado batido; 22023 se não): as tarefas do pg_cron da chave acompanham e a agenda dos robôs para de pedir; grava o histórico e devolve obter_chaves_da_automacao. Só administrador global; 55000 se já estiver no estado pedido.",
   },
   // ── Conferências de consistência (20261005210000_conferencias_de_consistencia.sql) ──
   listar_avisos_conferencia_se_mudou: {

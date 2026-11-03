@@ -137,8 +137,8 @@ export function usarListaNoServidor<T>(
     if (!ativo || !pronto || pedida.current === chave) return;
     pedida.current = chave;
     pedir(null, vazia<T>(chave));
-    // A primeira página só depende da chave e de a lista estar ativa.
-  }, [chave, ativo, pronto]);
+    // A primeira página só depende da chave e de a lista estar ativa (`pedida` evita pedir de novo).
+  }, [chave, ativo, pronto, pedir]);
 
   const carregarMais = useCallback(() => {
     if (atual.carregando || atual.proximo === null || atual.erro) return;

@@ -255,7 +255,7 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }: AcaoEmLoteProps) {
   const [motivo, setMotivo] = useState("");
   const [erro, setErro] = useState("");
   const st = useSyncExternalStore(fila.assinar, fila.obter);
-  const analistas = dados.analistas || [];
+  const analistas = useMemo(() => dados.analistas || [], [dados.analistas]);
   const plano = useMemo(
     () =>
       acao.tipo === "distribuir"

@@ -253,7 +253,7 @@ export interface ClienteDaPreClassificacao {
 export interface OpcoesDaPreClassificacao {
   supabase?: ClienteDaPreClassificacao | null;
   toast?: (mensagem: string, tom?: string) => void;
-  agendar?: (fn: () => void, ms: number) => unknown;
+  agendar?: (fn: () => unknown, ms: number) => unknown;
   agora?: () => Date;
   baixar?: (bytes: BlobPart, nome: string, tipo: string) => void;
   copiar?: (conteudo: {

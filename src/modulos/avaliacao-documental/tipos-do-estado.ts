@@ -299,7 +299,7 @@ export interface OpcoesDaFila {
   toast?: Avisar;
   armazenamento?: Armazenamento | null;
   sessao?: Armazenamento | null;
-  agendar?: (fn: () => void, ms: number) => unknown;
+  agendar?: (fn: () => unknown, ms: number) => unknown;
   cancelar?: (id: unknown) => void;
   /** A aba (visibilidade) e a atividade da pessoa: a reserva só é renovada com alguém na ficha. */
   documento?: DocumentoDaReserva | null;

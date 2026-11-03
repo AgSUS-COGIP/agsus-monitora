@@ -153,6 +153,7 @@ export function MatrizDeNotas({
     if (!focarAoMontar) return;
     const vazia = primeiraVazia();
     if (vazia) focar(vazia);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- foca só quando pedem (ao montar), não a cada nota digitada.
   }, [focarAoMontar]);
 
   useEffect(() => {

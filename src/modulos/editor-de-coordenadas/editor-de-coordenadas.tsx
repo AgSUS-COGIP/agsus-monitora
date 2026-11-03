@@ -102,7 +102,7 @@ function usarLista<T>(
     return () => {
       vivo = false;
     };
-    // `argumentos` é derivado de `chave` (só ela dispara nova leitura).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `argumentos` é derivado de `chave` (só ela dispara nova leitura).
   }, [ativo, nome, chave, ultimos, erroPadrao, normalizar]);
   return [estado, definirEstado];
 }
@@ -353,7 +353,7 @@ export function EditorDeCoordenadas<P extends PontoDoEditor>({
     return () => {
       mapa.removeLayer(camada);
     };
-    // `folga` lê o último `areaLivre` (ref): não redesenha a cada renderização.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `folga` lê o último `areaLivre` (ref): não redesenha a cada renderização.
   }, [permitido, mapa, L, ponto, sugestoes, idDaMelhor]);
 
   // O painel recolheu ou abriu: o pin volta para dentro da área livre.
@@ -363,6 +363,7 @@ export function EditorDeCoordenadas<P extends PontoDoEditor>({
     versaoVista.current = versaoDaArea;
     const posicao = marcador.current?.getLatLng?.();
     if (posicao) mapa?.panInside?.(posicao, folga());
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `folga` lê o último `areaLivre` (ref); só a troca de área dispara.
   }, [versaoDaArea, mapa]);
 
   useEffect(() => {
@@ -500,7 +501,7 @@ export function EditorDeCoordenadas<P extends PontoDoEditor>({
       )}
       onSubmit={(evento) => {
         evento.preventDefault();
-        enviar("corrigir");
+        void enviar("corrigir");
       }}
       aria-label="Corrigir coordenadas"
     >

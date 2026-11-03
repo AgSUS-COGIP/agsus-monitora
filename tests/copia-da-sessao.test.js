@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  PARTES_DA_COPIA,
   VALIDADE_DA_COPIA_MS,
   assinaturaDoAcesso,
+  assinaturaDoTexto,
   consultasDosDados,
   copiaServe,
   dadosDasRespostas,
@@ -10,6 +12,8 @@ import {
   respostasDasConsultas,
 } from "../src/lib/copia-da-sessao";
 import {
+  ESQUEMA_DA_COPIA,
+  VERSAO_DA_COPIA,
   apagarCopiaDaSessao,
   guardarCopiaDaSessao,
   lerCopiaDaSessao,
@@ -264,5 +268,19 @@ describe("armazenamento da cópia", () => {
     expect(await lerCopiaDaSessao()).toBeNull();
     expect(await guardarCopiaDaSessao({ usuarioId: "u1" })).toBe(false);
     await expect(apagarCopiaDaSessao()).resolves.toBeUndefined();
+  });
+});
+
+describe("versão da cópia", () => {
+  it("é o formato do registro, não o endereço do bundle: uma publicação nova não perde a cópia", () => {
+    expect(VERSAO_DA_COPIA).not.toMatch(/https?:|file:|/assets//);
+    expect(VERSAO_DA_COPIA.startsWith(`${ESQUEMA_DA_COPIA}:`)).toBe(true);
+    for (const parte of PARTES_DA_COPIA) expect(VERSAO_DA_COPIA).toContain(parte);
+  });
+
+  it("a assinatura das colunas é estável e muda quando a lista muda", () => {
+    expect(assinaturaDoTexto("a,b,c")).toBe(assinaturaDoTexto("a,b,c"));
+    expect(assinaturaDoTexto("a,b,c")).not.toBe(assinaturaDoTexto("a,b,c,d"));
+    expect(assinaturaDoTexto("")).toMatch(/^[0-9a-f]{8}$/);
   });
 });

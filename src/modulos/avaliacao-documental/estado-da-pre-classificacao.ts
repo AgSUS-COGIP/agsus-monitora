@@ -174,7 +174,7 @@ export function chaveDaLista(
 export function criarEstadoDaPreClassificacao({
   supabase = null,
   toast = (mensagem: string) => console.info(mensagem),
-  agendar = (fn: () => void, ms: number) => setTimeout(fn, ms),
+  agendar = (fn: () => unknown, ms: number) => setTimeout(() => void fn(), ms),
   agora = () => new Date(),
   baixar = baixarNoNavegador,
   copiar = copiarParaAreaDeTransferencia,

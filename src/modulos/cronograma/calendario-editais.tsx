@@ -186,11 +186,12 @@ export function CalendarioEditais({
 
   const filtradas = useMemo(
     () => filtrarEtapas(etapas, filtros, { ocultarConcluidas, hoje }),
-    // `hoje` entra pela chave do dia: o objeto Date muda a cada desenho.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `hoje` entra pela chave do dia: o objeto Date muda a cada desenho.
     [etapas, filtros, ocultarConcluidas, hojeChave],
   );
   const celulas = useMemo(
     () => montarGradeDoMes(mes, filtradas, { hoje }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `hoje` entra pela chave do dia (ver acima).
     [mes, filtradas, hojeChave],
   );
   const chavesDaSemanaAberta = useMemo(() => chavesDaSemana(semana), [semana]);

@@ -208,7 +208,7 @@ export function MapaDoDsei({
       camada.current = null;
       definirMapa(null);
     };
-    // Um mapa por DSEI: o pai troca a `key` quando o distrito muda.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- um mapa por DSEI: o pai troca a `key` quando o distrito muda.
   }, [L]);
 
   /*

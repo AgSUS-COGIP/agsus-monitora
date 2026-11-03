@@ -143,7 +143,7 @@ function registerServiceWorker() {
   if (import.meta.env?.DEV && import.meta.env?.MODE !== "test") {
     navigator.serviceWorker
       .getRegistrations()
-      .then((registros) => registros.forEach((r) => r.unregister()))
+      .then((registros) => registros.forEach((r) => void r.unregister()))
       .catch(() => {});
     return;
   }

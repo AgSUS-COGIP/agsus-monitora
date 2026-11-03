@@ -229,7 +229,7 @@ export function criarEstadoDaFila({
   toast = (mensagem) => console.info(mensagem),
   armazenamento = armazenamentoPadrao(),
   sessao = sessaoPadrao(),
-  agendar = (fn, ms) => setInterval(fn, ms),
+  agendar = (fn, ms) => setInterval(() => void fn(), ms),
   cancelar = (id) => clearInterval(id as ReturnType<typeof setInterval>),
   documento = globalThis.document ?? null,
   agora = () => Date.now(),

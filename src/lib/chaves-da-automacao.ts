@@ -53,8 +53,11 @@ export interface ChavesDaAutomacao {
   historico: EventoDaChave[];
 }
 
-export const MOTIVO_MINIMO = 10;
+export const MOTIVO_MINIMO = 15;
 export const MOTIVO_MAXIMO = 500;
+export const MOTIVO_PALAVRAS = 3;
+/** A regra do motivo, mostrada no formulário (a mesma do banco). */
+export const REGRA_DO_MOTIVO = `Uma frase com pelo menos ${MOTIVO_MINIMO} caracteres e ${MOTIVO_PALAVRAS} palavras.`;
 
 /* Linhas do Status das atualizações que obedecem a uma chave (id da linha → chave). */
 export const CHAVE_DA_LINHA: Readonly<Record<string, string>> = Object.freeze({
@@ -164,10 +167,34 @@ export function normalizarChaves(entrada: unknown): ChavesDaAutomacao {
   };
 }
 
-/** Motivo de 10 a 500 caracteres (sem contar os espaços das pontas). */
+const VOGAL = /[aeiouyáàâãäéèêëíìîïóòôõöúùûü]/u;
+const CINCO_CONSOANTES = /[^aeiouyáàâãäéèêëíìîïóòôõöúùûü]{5}/u;
+const TRES_IGUAIS = /(.)\1\1/u;
+
+/** Palavra de verdade: 3 letras ou mais, com vogal, sem 5 consoantes nem 3 letras iguais seguidas. */
+function palavraDeVerdade(letras: string) {
+  return (
+    letras.length >= 3 &&
+    VOGAL.test(letras) &&
+    !CINCO_CONSOANTES.test(letras) &&
+    !TRES_IGUAIS.test(letras)
+  );
+}
+
+/**
+  Motivo com sentido, a mesma regra do banco (private."FC_MOTIVO_COM_SENTIDO",
+  20261103213000): de 15 a 500 caracteres (sem os espaços das pontas), 3
+  palavras ou mais, ao menos 2 palavras de verdade e 5 letras diferentes.
+  Recusa teclado batido ("sadasdsadsadasdas", "testegcgbgfbg", "asdf asdf asdf").
+*/
 export function motivoValido(motivo: unknown) {
-  const t = typeof motivo === "string" ? motivo.trim() : "";
-  return t.length >= MOTIVO_MINIMO && t.length <= MOTIVO_MAXIMO;
+  const t = typeof motivo === "string" ? motivo.trim().toLowerCase() : "";
+  if (t.length < MOTIVO_MINIMO || t.length > MOTIVO_MAXIMO) return false;
+  const palavras = t.split(/\s+/u);
+  if (palavras.length < MOTIVO_PALAVRAS) return false;
+  const letras = palavras.map((p) => p.replace(/\P{L}/gu, ""));
+  if (letras.filter(palavraDeVerdade).length < 2) return false;
+  return new Set(letras.join("")).size >= 5;
 }
 
 /* ── Agenda do pg_cron ─────────────────────────────────────────────────── */
