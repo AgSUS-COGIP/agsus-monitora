@@ -273,9 +273,10 @@ describe("armazenamento da cópia", () => {
 
 describe("versão da cópia", () => {
   it("é o formato do registro, não o endereço do bundle: uma publicação nova não perde a cópia", () => {
-    expect(VERSAO_DA_COPIA).not.toMatch(/https?:|file:|/assets//);
+    expect(VERSAO_DA_COPIA).not.toMatch(/https?:|file:|\/assets\//);
     expect(VERSAO_DA_COPIA.startsWith(`${ESQUEMA_DA_COPIA}:`)).toBe(true);
-    for (const parte of PARTES_DA_COPIA) expect(VERSAO_DA_COPIA).toContain(parte);
+    for (const parte of PARTES_DA_COPIA)
+      expect(VERSAO_DA_COPIA).toContain(parte);
   });
 
   it("a assinatura das colunas é estável e muda quando a lista muda", () => {

@@ -52,10 +52,13 @@ describe(NOME, () => {
       "perfil(is) sem user_id com conta no auth.users",
     );
     // Nada de apagar tabela/função nem de mexer em dados fora das funções.
-    const foraDasFuncoes = MIGRATION.replace(/$function$[sS]*?$function$/g, "");
-    expect(foraDasFuncoes).not.toMatch(/drops+(table|function|policy)/i);
+    const foraDasFuncoes = MIGRATION.split("$function$")
+      .filter((_, i) => i % 2 === 0)
+      .join("");
+    expect(foraDasFuncoes).not.toBe(MIGRATION);
+    expect(foraDasFuncoes).not.toMatch(/\bdrop\s+(table|function|policy)\b/i);
     expect(foraDasFuncoes).not.toMatch(
-      /(update|truncate|deletes+from)s+(public|auth|cron)./i,
+      /\b(update|truncate|delete\s+from)\s+(public|auth|cron)\./i,
     );
   });
 
