@@ -7,7 +7,7 @@ import {
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import {
   calcularClassificacao,
-  montarClassificacao,
+  criarClassificacao,
 } from "../../src/modulos/classificacao/classificacao.tsx";
 import { ordemDoSorteio } from "../../src/lib/classificacao/sorteio.ts";
 import { retratoDaClassificacao } from "../../src/lib/classificacao/dados-do-estado.ts";
@@ -19,6 +19,7 @@ import {
   esperar,
 } from "../componentes/interacoes.js";
 import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A tela de Classificação como módulo do app (src/modulos/classificacao/):
@@ -227,7 +228,7 @@ async function montar(supabase) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarClassificacao({
+    painel = montarTela(criarClassificacao, "page-classificacao", {
       supabase,
       toast,
       baixar,

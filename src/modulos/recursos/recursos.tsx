@@ -12,7 +12,6 @@ import type {
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { pedirFiltro, usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { filtrosDeRecursos } from "../../lib/filtro-da-aya.ts";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { usarTemaEscuro } from "../../app/tema.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
@@ -359,11 +358,8 @@ export function TelaDeRecursos({
  * app e relê as comemorações), mais o estado e a raiz do React (os testes
  * desmontam por ela).
  */
-export function montarRecursos({
+export function criarRecursos({
   modo = "painel",
-  secao = document.getElementById(
-    modo === "analise" ? "page-analisar-recursos" : "page-recursos",
-  ),
   supabase = getSupabaseClient(),
   toast,
   comemoracoesLigadas = () => false,
@@ -375,7 +371,6 @@ export function montarRecursos({
   novoId,
 }: OpcoesDoEstadoDosRecursos & {
   modo?: ModoDosRecursos;
-  secao?: HTMLElement | null;
   comemoracoesLigadas?: () => boolean;
   areaAtual?: () => unknown;
 } = {}) {
@@ -388,17 +383,13 @@ export function montarRecursos({
     imprimir,
     novoId,
   });
-  const raiz = secao
-    ? montarModulo(secao, <TelaDeRecursos estado={estado} modo={modo} />, {
-        nome:
-          modo === "analise"
-            ? "a tela de análise dos recursos"
-            : "o painel de recursos",
-      }).raiz
-    : null;
   return {
     estado,
-    raiz,
+    nome:
+      modo === "analise"
+        ? "a tela de análise dos recursos"
+        : "o painel de recursos",
+    conteudo: <TelaDeRecursos estado={estado} modo={modo} />,
     render() {
       estado.definirComemoracoes(comemoracoesLigadas());
       return estado.carregar(String(areaAtual() ?? "").trim());
@@ -407,8 +398,8 @@ export function montarRecursos({
 }
 
 /** Analisar recursos (view `analisar-recursos`): a operação. */
-export function montarAnaliseDeRecursos(
-  opcoes: Omit<NonNullable<Parameters<typeof montarRecursos>[0]>, "modo"> = {},
+export function criarAnaliseDeRecursos(
+  opcoes: Omit<NonNullable<Parameters<typeof criarRecursos>[0]>, "modo"> = {},
 ) {
-  return montarRecursos({ ...opcoes, modo: "analise" });
+  return criarRecursos({ ...opcoes, modo: "analise" });
 }

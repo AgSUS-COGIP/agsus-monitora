@@ -5,7 +5,6 @@ import { semOPainelAntigoDeAnalises } from "../src/lib/pagina-do-painel";
 import { RESOURCES } from "../src/lib/permissoes-recursos.ts";
 import { paginasPermitidas, permissaoLegada } from "../src/lib/access-roles.ts";
 import { bloqueioDaTela, telaPermitida } from "../src/lib/navegacao";
-import { TELAS_REACT } from "../src/app/navegacao.ts";
 import {
   linhasDosPaineis,
   normalizarPaineis,
@@ -71,17 +70,12 @@ describe("o legado trata Análises como página", () => {
     );
   });
 
-  it("navegar abre a tela React (TELAS_REACT → analisesController.render())", () => {
-    const controlador = { render() {} };
-    expect(
-      TELAS_REACT.analises(() => "", { analisesController: controlador }),
-    ).toEqual(["Painel das análises", "", controlador]);
+  it("navegar abre a tela React (a rota analises → criarAnalises, render())", () => {
     expect(ler("src/app/navegacao.ts")).not.toContain("abrirPaginaDoPainel");
-    // Sob demanda (src/app/tela-sob-demanda.ts): o módulo baixa na abertura.
-    const main = ler("src/main.ts");
-    expect(main).toContain("window.analisesController = telaSobDemanda({");
-    expect(main).toContain('import("./modulos/analises/analises.tsx")');
-    expect(main).toContain("m.montarAnalises({");
+    // Sob demanda (src/app/telas.tsx): o módulo baixa na abertura.
+    const telas = ler("src/app/telas.tsx");
+    expect(telas).toContain('import("../modulos/analises/analises.tsx")');
+    expect(telas).toContain("m.criarAnalises({");
   });
 
   it("os painéis carregados perdem o antigo de análises", () => {

@@ -15,7 +15,7 @@ import {
 import { Filtros, Indicadores } from "../../src/modulos/selecao/paineis.tsx";
 import {
   TelaDeSelecao,
-  montarSelecao,
+  criarSelecao,
 } from "../../src/modulos/selecao/selecao.tsx";
 import { Grafico, TabelaInfinita } from "../../src/ui/index.ts";
 import type { Plugin } from "chart.js";
@@ -85,8 +85,8 @@ const filtroInvalido = {
 />;
 // @ts-expect-error — indicadores exigem as contagens e a taxa do recorte.
 <Indicadores indicadores={{ vagas: 1 }} carregado />;
-// @ts-expect-error — a montagem exige um elemento do DOM ou null.
-montarSelecao({ secao: "page-selecao" });
+// @ts-expect-error — a tela é criada sem lugar no DOM (a rota a desenha).
+criarSelecao({ secao: "page-selecao" });
 
 declare const pluginDeRosca: Plugin<"doughnut">;
 <Grafico

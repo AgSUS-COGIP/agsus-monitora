@@ -7,7 +7,7 @@ import type {
 import { criarEstadoDoCalendario } from "../../src/modulos/cronograma/estado.ts";
 import {
   CalendarioEditais,
-  montarCalendarioEditais,
+  criarCalendarioEditais,
 } from "../../src/modulos/cronograma/calendario-editais.tsx";
 import { Seletor, GradeDoMes } from "../../src/modulos/cronograma/partes.tsx";
 import {
@@ -47,8 +47,8 @@ estado.carregar("forçar");
 <CalendarioEditais estado={estado} agora={() => new Date()} />;
 // @ts-expect-error — o relógio da tela entrega Date.
 <CalendarioEditais estado={estado} agora={() => "2026-10-07"} />;
-// @ts-expect-error — montar exige um elemento do DOM.
-montarCalendarioEditais({ secao: "page-calendario" });
+// @ts-expect-error — a tela é criada sem lugar no DOM (a rota a desenha).
+criarCalendarioEditais({ secao: "page-calendario" });
 
 declare const json: unknown;
 const editais = editaisComCronograma(json);

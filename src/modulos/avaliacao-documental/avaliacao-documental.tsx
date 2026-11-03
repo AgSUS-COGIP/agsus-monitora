@@ -1,7 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { abasDoMenu, catalogoDoBanco } from "../../modules/catalogo-de-abas.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
@@ -448,8 +447,7 @@ export function criarAtualizacao({
  * controlador do legado: `render()` a cada abertura e no "Atualizar dados"
  * do app (relê a área atual e a aba aberta).
  */
-export function montarAvaliacaoDocumental({
-  secao = document.getElementById("page-avaliacao-documental"),
+export function criarAvaliacaoDocumental({
   supabase = getSupabaseClient(),
   toast,
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
@@ -458,7 +456,6 @@ export function montarAvaliacaoDocumental({
   cabecalho = () =>
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
 }: {
-  secao?: HTMLElement | null;
   supabase?: ClienteDaAvaliacao | null;
   toast?: Avisar;
   areaAtual?: () => string | null | undefined;
@@ -475,23 +472,19 @@ export function montarAvaliacaoDocumental({
   });
   const fila = criarEstadoDaFila({ supabase, toast, getProfile });
   const atualizar = criarAtualizacao({ estado, pre, fila });
-  const raiz = secao
-    ? montarModulo(
-        secao,
-        <TelaDaAvaliacaoDocumental
-          estado={estado}
-          pre={pre}
-          fila={fila}
-          atualizar={atualizar}
-        />,
-        { nome: "a tela de avaliação documental" },
-      ).raiz
-    : null;
   return {
     estado,
     pre,
     fila,
-    raiz,
+    nome: "a tela de avaliação documental",
+    conteudo: (
+      <TelaDaAvaliacaoDocumental
+        estado={estado}
+        pre={pre}
+        fila={fila}
+        atualizar={atualizar}
+      />
+    ),
     atualizar,
     render() {
       return atualizar(String(areaAtual() ?? "").trim());

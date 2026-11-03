@@ -12,7 +12,6 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import type { VisaoDoCalendario } from "../../lib/calendario-editais.ts";
 import {
@@ -593,21 +592,16 @@ export function CalendarioEditais({
  * legado chama (`window.calendarioEditaisController`): `render()` ao abrir a
  * página, `recarregar()` para ignorar o cache.
  */
-export function montarCalendarioEditais({
-  secao = document.getElementById("page-calendario"),
+export function criarCalendarioEditais({
   supabase = getSupabaseClient(),
   toast,
   agora,
 }: OpcoesDaTelaDoCalendario = {}) {
   const estado = criarEstadoDoCalendario({ supabase, toast });
-  const raiz = secao
-    ? montarModulo(secao, <CalendarioEditais estado={estado} agora={agora} />, {
-        nome: "a tela de cronograma",
-      }).raiz
-    : null;
   return {
     estado,
-    raiz,
+    nome: "a tela de cronograma",
+    conteudo: <CalendarioEditais estado={estado} agora={agora} />,
     /*
       Sem o carregamento de tela cheia: ele travava a navegação inteira. A
       grade e as listas são skeleton enquanto a primeira carga não chega; nas

@@ -144,9 +144,6 @@ describe("quadro", () => {
     expect(document.getElementById("externalOpen").href).toBe(
       "https://bi.exemplo/rh",
     );
-    expect(document.getElementById("page-external").classList).toContain(
-      "active",
-    );
     expect(document.body.classList).toContain("external-panel-mode");
     paineis.mostrar("obras");
     expect(document.getElementById("external-panel-bi").hidden).toBe(true);

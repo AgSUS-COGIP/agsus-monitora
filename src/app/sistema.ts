@@ -201,6 +201,7 @@ function limparEstadoDeslogado() {
   paineis.limpar();
   esquecerSituacaoDoSistema(document);
   esconderEsqueleto();
+  navegacao.fechar();
   perfil.esconderApp();
 }
 
@@ -271,6 +272,7 @@ function fecharSistema() {
   presenca.pararTudo();
   vigiaDoCatalogo.esquecer();
   encerrarEspera();
+  navegacao.fechar();
   perfil.esconderApp();
 }
 

@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { act } from "react";
+import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.ts";
 import {
@@ -9,7 +9,8 @@ import {
 } from "../../src/lib/eventos-da-barra-lateral.ts";
 import { SECOES } from "../../src/modulos/configuracoes/secoes.ts";
 import { sairDoSistema } from "../../src/app/casca/saida.ts";
-import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
+import { BarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
+import { desenharNoTeste } from "../montar-tela.js";
 import {
   aplicarMarcaDaBarraLateral,
   aplicarMarcaDaConfiguracao,
@@ -54,6 +55,14 @@ function arvoreCompleta(paineis = []) {
 }
 
 let raiz = null;
+
+/* A barra como a casca a desenha (src/app/casca/casca.tsx): na hora, no <aside>. */
+function montarBarraLateral(aside) {
+  return desenharNoTeste(aside, createElement(BarraLateral), {
+    sincrono: true,
+    nome: "a barra lateral",
+  }).raiz;
+}
 
 function prepararPagina() {
   document.body.className = "";
@@ -1327,23 +1336,26 @@ describe("contrato de CSS e ligação no arranque", () => {
     );
   });
 
-  it("o main.ts monta a barra (com a marca, sem branding do legado) e importa o CSS dela", () => {
-    expect(main).toContain(
-      'import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.tsx"',
+  it("a barra desenha com a raiz (na casca, com a marca, sem branding do legado) e o main.ts importa o CSS dela", () => {
+    expect(readFileSync("src/app/casca/casca.tsx", "utf8")).toContain(
+      'import { BarraLateral } from "../../componentes/barra-lateral/barra-lateral.tsx"',
     );
     expect(main).toContain('import "./styles/barra-lateral.css"');
-    expect(main.indexOf("montarBarraLateral();")).toBeGreaterThan(-1);
+    expect(main.indexOf("aplicarMarcaDaBarraLateral();")).toBeGreaterThan(-1);
+    expect(main.indexOf("aplicarMarcaDaBarraLateral();")).toBeLessThan(
+      main.indexOf("montarRaiz({"),
+    );
     expect(main).not.toContain("initSidebarBranding");
     expect(main).not.toContain("sidebar-branding");
     expect(main).not.toContain("colapsar-a-sidebar");
     expect(main).not.toContain("menu-lateral.css");
   });
 
-  it("o <aside> do index.html é só o ponto de montagem", () => {
+  it("o <aside> é da casca e a barra desenha dentro dele, sem marcação no index.html", () => {
+    expect(readFileSync("index.html", "utf8")).not.toContain("<aside");
     const aside = html.match(/<aside class="sidebar"[^>]*>([\s\S]*?)<\/aside>/);
     expect(aside).not.toBeNull();
-    expect(aside[1].trim()).toBe("");
-    expect(html).not.toContain('id="globalSidebarToggle"');
-    expect(html).not.toContain('id="nav"');
+    expect(aside[1]).toContain('id="sideLogo"');
+    expect(aside[1]).toContain('id="globalSidebarToggle"');
   });
 });

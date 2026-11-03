@@ -89,6 +89,5 @@ export type OpcoesDaTelaDoCalendario = Pick<
   OpcoesDoEstadoDoCalendario,
   "supabase" | "toast"
 > & {
-  secao?: HTMLElement | null;
   agora?: () => Date;
 };

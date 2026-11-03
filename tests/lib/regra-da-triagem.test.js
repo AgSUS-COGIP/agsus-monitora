@@ -110,18 +110,30 @@ describe("regra da Triagem: contrato e resumo", () => {
   });
 
   it("Editar nas Regras do edital abre Editais nas Regras do edital, na etapa", () => {
-    const janela = {
-      navigate: vi.fn(),
-      nucleoController: { abrirRegrasDoEdital: vi.fn() },
-    };
-    expect(abrirRegrasDoEdital("e93", "triagem", janela)).toBe(true);
-    expect(janela.navigate).toHaveBeenCalledWith("nucleo");
-    expect(janela.nucleoController.abrirRegrasDoEdital).toHaveBeenCalledWith(
-      "e93",
-      "triagem",
+    const janela = { navigate: vi.fn() };
+    const editais = { abrirRegrasDoEdital: vi.fn() };
+    expect(abrirRegrasDoEdital("e93", "triagem", janela, () => editais)).toBe(
+      true,
     );
-    expect(abrirRegrasDoEdital("e93", "triagem", {})).toBe(false);
-    expect(abrirRegrasDoEdital("", "triagem", janela)).toBe(false);
+    expect(janela.navigate).toHaveBeenCalledWith("nucleo");
+    expect(editais.abrirRegrasDoEdital).toHaveBeenCalledWith("e93", "triagem");
+    expect(abrirRegrasDoEdital("e93", "triagem", {}, () => editais)).toBe(
+      false,
+    );
+    expect(abrirRegrasDoEdital("", "triagem", janela, () => editais)).toBe(
+      false,
+    );
+    // Navegação recusada (alteração não salva): as regras não abrem.
+    editais.abrirRegrasDoEdital.mockClear();
+    expect(
+      abrirRegrasDoEdital(
+        "e93",
+        "triagem",
+        { navigate: () => false },
+        () => editais,
+      ),
+    ).toBe(false);
+    expect(editais.abrirRegrasDoEdital).not.toHaveBeenCalled();
   });
 });
 

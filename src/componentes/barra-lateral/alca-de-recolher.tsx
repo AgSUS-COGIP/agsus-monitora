@@ -1,5 +1,5 @@
 import { alternarBarraPelaJanela } from "./integracao.ts";
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Icone } from "../icone.tsx";
 
@@ -51,13 +51,18 @@ export function AlcaDeRecolher({ recolhida }: { recolhida: boolean }) {
 }
 
 /*
-  Até 900px: no `.title-row` do cabeçalho (legado), abre e fecha a gaveta.
-  Aqui `sidebar-collapsed` quer dizer gaveta fechada.
+  Até 900px: no `.title-row` do cabeçalho, abre e fecha a gaveta. Aqui
+  `sidebar-collapsed` quer dizer gaveta fechada. A barra e o cabeçalho
+  desenham juntos (a casca, src/app/casca/casca.tsx): o lugar é procurado
+  depois do desenho, antes da pintura.
 */
 export function AlcaNoCabecalho({ recolhida }: { recolhida: boolean }) {
-  const [destino] = useState(() =>
-    document.querySelector("#appScreen .main > header.top .title-row"),
-  );
+  const [destino, definirDestino] = useState<Element | null>(null);
+  useLayoutEffect(() => {
+    definirDestino(
+      document.querySelector("#appScreen .main > header.top .title-row"),
+    );
+  }, []);
   if (!destino) return null;
   const rotulo = recolhida ? "Abrir menu" : "Fechar menu";
   return createPortal(

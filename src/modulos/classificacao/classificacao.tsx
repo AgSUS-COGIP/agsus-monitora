@@ -12,7 +12,6 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
@@ -284,8 +283,7 @@ export function TelaDeClassificacao({
  * Monta a tela na `<section id="page-classificacao">` e devolve o
  * controlador do legado: `render()` a cada abertura (carrega a área atual).
  */
-export function montarClassificacao({
-  secao = document.getElementById("page-classificacao"),
+export function criarClassificacao({
   supabase = getSupabaseClient(),
   toast,
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
@@ -312,25 +310,21 @@ export function montarClassificacao({
     ...(copiar ? { copiar } : {}),
     ...(carregarLogo ? { carregarLogo } : {}),
   });
-  const raiz = secao
-    ? montarModulo(
-        secao,
-        <TelaDeClassificacao
-          estado={estado}
-          agenda={agenda}
-          {...(confirmar ? { confirmar } : {})}
-        />,
-        {
-          nome: "a tela de classificação",
-        },
-      ).raiz
-    : null;
   return {
     estado,
     agenda,
-    raiz,
+    nome: "a tela de classificação",
+    conteudo: (
+      <TelaDeClassificacao
+        estado={estado}
+        agenda={agenda}
+        {...(confirmar ? { confirmar } : {})}
+      />
+    ),
     render() {
       return estado.carregar(String(areaAtual() ?? "").trim());
     },
+    /* O edital do endereço ("Ir para…" com edital), depois da carga. */
+    abrirEdital: (edital: string) => estado.escolherEdital(edital),
   };
 }

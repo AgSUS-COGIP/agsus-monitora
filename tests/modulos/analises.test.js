@@ -15,6 +15,7 @@ import {
   esperar,
   teclar,
 } from "../componentes/interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   Análises curriculares como módulo do app (src/modulos/analises/): monta na
@@ -49,7 +50,7 @@ vi.mock("../../src/lib/chartjs-global.ts", () => {
   };
 });
 
-const { montarAnalises } =
+const { criarAnalises } =
   await import("../../src/modulos/analises/analises.tsx");
 const { criarConsultasDasAnalises } =
   await import("../../src/modulos/analises/consultas.ts");
@@ -245,7 +246,7 @@ async function montar(
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarAnalises({
+    painel = montarTela(criarAnalises, "page-analises", {
       supabase,
       toast,
       baixar,

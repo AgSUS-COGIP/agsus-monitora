@@ -102,6 +102,20 @@ describe("servidor web do MONITORA", () => {
     expect(res.corpo.toString()).toBe(PAGINAS[arquivo]);
   });
 
+  it.each([
+    "/saude-indigena/visao-geral",
+    "/sede/cronograma",
+    "/projetos/classificacao/0b7c9a52-2d55-4c4e-9f7a-1c3d5e7f9a1b",
+    "/paineis/bi-rh",
+    "/administracao/configuracoes/acessos",
+    "/sem-acesso",
+  ])("rota do app %s entrega o index.html (link direto e F5)", async (url) => {
+    const res = await pedir(url);
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toBe("text/html; charset=UTF-8");
+    expect(res.corpo.toString()).toBe(PAGINAS["index.html"]);
+  });
+
   it("não deixa o callback ir para cache", async () => {
     const res = await pedir("/auth/callback");
     expect(res.headers["cache-control"]).toContain("no-store");
@@ -153,6 +167,10 @@ describe("servidor web do MONITORA", () => {
     "/assets/%2e%2e/.env",
     "/data/%2e%2e%2f.env",
     "/assets/..%5c.env",
+    "/sede",
+    "/sede/.env",
+    "/sede/editais/x/y/z",
+    "/outra-area/editais",
   ])("não entrega %s", async (caminho) => {
     expect((await pedir(caminho)).status).toBe(404);
   });

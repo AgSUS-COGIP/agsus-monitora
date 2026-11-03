@@ -7,6 +7,7 @@ import {
   esperar,
 } from "../componentes/interacoes.js";
 import { proximoEstado } from "../../src/lib/resposta-do-recurso.ts";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A resposta ao candidato e os anexos, na gaveta do painel de recursos: modelo
@@ -33,7 +34,7 @@ vi.mock("../../src/lib/chartjs-global.ts", () => {
   };
 });
 
-const { montarRecursos } =
+const { criarRecursos } =
   await import("../../src/modulos/recursos/recursos.tsx");
 const { criarEstadoDosRecursos } =
   await import("../../src/modulos/recursos/estado.ts");
@@ -296,7 +297,7 @@ async function montar(servidor) {
   raiz = document.createElement("div");
   document.body.append(raiz);
   await act(async () => {
-    painel = montarRecursos({
+    painel = montarTela(criarRecursos, "page-recursos", {
       modo: "analise",
       secao: raiz,
       supabase: servidor.supabase,
@@ -314,7 +315,7 @@ async function montar(servidor) {
   raizDoPainel = document.createElement("div");
   document.body.append(raizDoPainel);
   await act(async () => {
-    acompanhamento = montarRecursos({
+    acompanhamento = montarTela(criarRecursos, "page-recursos", {
       secao: raizDoPainel,
       supabase: servidor.supabase,
       areaAtual: () => "saude-indigena",

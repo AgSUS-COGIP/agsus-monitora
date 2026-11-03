@@ -633,6 +633,7 @@ export function Navegacao({
   const areaAtual = useSyncExternalStore(
     assinarDadosDoMonitoramento,
     () => obterDadosDoMonitoramento().areaAtual,
+    () => obterDadosDoMonitoramento().areaAtual,
   );
   const recorte = recortarArvorePorArea(arvore, areaAtual);
   const itemAtivo = itemAtivoDaArvore(

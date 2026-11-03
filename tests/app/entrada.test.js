@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { act } from "react";
+import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ACCESS_INSTRUCTION,
@@ -8,9 +8,10 @@ import {
 import {
   INSTITUICAO,
   SLOGAN,
+  TelaDeEntrada,
   ligarEntradaAPagina,
-  montarEntrada,
 } from "../../src/app/entrada/entrada.tsx";
+import { desenharNoTeste } from "../montar-tela.js";
 import { criarMarcaDaEntrada } from "../../src/app/entrada/marca.ts";
 import {
   FASES,
@@ -76,18 +77,35 @@ function pedidoFalso() {
 
 let tela = null;
 
+/*
+  Como a raiz do app (src/app/raiz.tsx) faz: o cartão do primeiro quadro sai,
+  a tela de acesso desenha na hora no #telaDeEntrada e a página acompanha a
+  fase da sessão (src/main.ts: ligarEntradaAPagina).
+*/
+function montarEntrada({ sessao, marca, pedido }) {
+  const elemento = document.getElementById("telaDeEntrada");
+  elemento.replaceChildren();
+  const desligar = ligarEntradaAPagina({ sessao, pedido });
+  const desenho = desenharNoTeste(
+    elemento,
+    createElement(TelaDeEntrada, { sessao, marca, pedido }),
+    { sincrono: true, nome: "a tela de acesso" },
+  );
+  return {
+    desmontar() {
+      desligar();
+      desenho.desmontar();
+    },
+  };
+}
+
 async function montar({
   sessao = sessaoFalsa(),
   marca = criarMarcaDaEntrada(),
   pedido = pedidoFalso(),
 } = {}) {
   await act(async () => {
-    tela = montarEntrada({
-      elemento: document.getElementById("telaDeEntrada"),
-      sessao,
-      marca,
-      pedido,
-    });
+    tela = montarEntrada({ sessao, marca, pedido });
   });
   return { sessao, marca, pedido };
 }

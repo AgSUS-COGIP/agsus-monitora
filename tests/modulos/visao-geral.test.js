@@ -15,6 +15,7 @@ import {
 } from "../componentes/interacoes.js";
 import { criarLeafletFalso } from "./leaflet-falso.js";
 import { htmlDaPagina } from "../pagina-montada.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A Visão geral como módulo do app (src/modulos/visao-geral/): monta na
@@ -49,7 +50,7 @@ vi.mock("../../src/lib/chartjs-global.ts", () => {
   };
 });
 
-const { montarVisaoGeral } =
+const { criarVisaoGeral } =
   await import("../../src/modulos/visao-geral/visao-geral.tsx");
 const { criarCarregadorDeMunicipios } =
   await import("../../src/modulos/mapa-de-projetos/carregador.ts");
@@ -189,7 +190,7 @@ async function montar({
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    tela = montarVisaoGeral({
+    tela = montarTela(criarVisaoGeral, "page-dashboard", {
       secao,
       estado,
       configuracoes: configuracoesFalsas(valores),

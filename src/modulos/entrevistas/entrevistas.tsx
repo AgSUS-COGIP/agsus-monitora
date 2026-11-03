@@ -8,7 +8,6 @@ import type {
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { filtrosDeEntrevistas } from "../../lib/filtro-da-aya.ts";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { usarTemaEscuro } from "../../app/tema.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
@@ -321,8 +320,7 @@ export function TelaDeEntrevistas({
  * do legado: `render()` a cada abertura (carrega a área atual do app e relê
  * as comemorações), o estado e a raiz do React (os testes desmontam por ela).
  */
-export function montarEntrevistas({
-  secao = document.getElementById("page-entrevistas"),
+export function criarEntrevistas({
   supabase = getSupabaseClient(),
   toast,
   comemoracoesLigadas = () => false,
@@ -336,14 +334,10 @@ export function montarEntrevistas({
     baixar,
     armazenamento,
   });
-  const raiz = secao
-    ? montarModulo(secao, <TelaDeEntrevistas estado={estado} />, {
-        nome: "o painel de entrevistas",
-      }).raiz
-    : null;
   return {
     estado,
-    raiz,
+    nome: "o painel de entrevistas",
+    conteudo: <TelaDeEntrevistas estado={estado} />,
     render() {
       estado.definirComemoracoes(comemoracoesLigadas());
       const area = String(areaAtual() ?? "").trim();

@@ -12,6 +12,7 @@ import {
   teclar,
 } from "../componentes/interacoes.js";
 import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   "Conduzir entrevistas" (view `conduzir-entrevistas`), o fazer, separado do
@@ -25,7 +26,7 @@ import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js"
 
 const { guardaDeAlteracoes } =
   await import("../../src/app/guarda-de-alteracoes.ts");
-const { montarConducaoDeEntrevistas } =
+const { criarConducaoDeEntrevistas } =
   await import("../../src/modulos/entrevistas/conduzir.tsx");
 // Preparar baixa sob demanda (lazy): já carregado aqui, o import da tela resolve na hora.
 await import("../../src/modulos/entrevistas/preparar.tsx");
@@ -78,7 +79,7 @@ async function montar(
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    tela = montarConducaoDeEntrevistas({
+    tela = montarTela(criarConducaoDeEntrevistas, "page-conduzir-entrevistas", {
       secao,
       supabase,
       toast,

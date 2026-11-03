@@ -5,7 +5,7 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
+import { criarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
 import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
 import { comecoDoEnunciado } from "../../src/lib/avaliacao-documental/nota-declarada.ts";
 import {
@@ -15,6 +15,7 @@ import {
   esperar,
   teclar,
 } from "../componentes/interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A tela Avaliação documental como módulo do app
@@ -180,7 +181,10 @@ async function montar(supabase) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarAvaliacaoDocumental({ supabase, toast });
+    painel = montarTela(criarAvaliacaoDocumental, "page-avaliacao-documental", {
+      supabase,
+      toast,
+    });
   });
   await act(async () => void painel.render());
   await esperar();

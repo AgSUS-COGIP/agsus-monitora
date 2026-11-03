@@ -6,11 +6,6 @@ declare global {
   interface Window {
     getMonitoraProfile?: () => Perfil | null;
     refreshData?: () => unknown;
-    nucleoController?: {
-      estado?: {
-        abrirLinhaDoTempo?: (id: string | number | undefined) => void;
-      };
-    };
   }
 }
 
@@ -270,6 +265,5 @@ export type PropsDaTela = {
   agora: () => Date;
 };
 export type OpcoesDaTela = Partial<PropsDaTela> & {
-  secao?: HTMLElement | null;
   toast?: (mensagem: string) => void;
 };

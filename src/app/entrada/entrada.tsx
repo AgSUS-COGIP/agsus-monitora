@@ -1,13 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../montar-modulo.tsx";
 import { classes } from "../../ui/index.ts";
 import { ACCESS_INSTRUCTION } from "../../lib/access-branding.ts";
-import {
-  FASES,
-  TEXTO_DO_BOTAO,
-  TEXTO_DO_BOTAO_OCUPADO,
-  sessaoDoApp,
-} from "../sessao.ts";
+import { FASES, TEXTO_DO_BOTAO, TEXTO_DO_BOTAO_OCUPADO } from "../sessao.ts";
 import {
   IconeDeEscudo,
   IconeDoMonitora,
@@ -15,15 +9,10 @@ import {
 } from "./icones-da-entrada.tsx";
 import {
   atualizarMarcaUmaVez,
-  marcaDaEntrada,
   type EstadoDaMarcaDaEntrada,
   type RodapeDaEntrada,
 } from "./marca.ts";
-import {
-  criarPedidoDeAcesso,
-  type PedidoDeAcesso,
-} from "./pedido-de-acesso.ts";
-import type { ModuloMontado } from "../montar-modulo.tsx";
+import type { PedidoDeAcesso } from "./pedido-de-acesso.ts";
 import { PaginaDaSolicitacao } from "./solicitacao-de-acesso.tsx";
 
 /*
@@ -89,17 +78,6 @@ export type OpcoesDaLigacaoDaEntrada = {
   /** A marca pública da tela de acesso (src/app/entrada/marca.ts). */
   atualizarMarca?: () => unknown;
 };
-
-/** As opções de `montarEntrada` (todas com padrão). */
-export type OpcoesDaEntrada = {
-  elemento?: HTMLElement | null;
-  sessao?: SessaoDaEntrada;
-  marca?: EstadoDaMarcaDaEntrada;
-  pedido?: PedidoDeAcesso;
-};
-
-/** O que `montarEntrada` devolve quando há onde montar. */
-export type EntradaMontada = ModuloMontado & { pedido: PedidoDeAcesso };
 
 /**
  * O logo fica invisível se a imagem falhar (e volta se o endereço mudar),
@@ -310,32 +288,4 @@ export function ligarEntradaAPagina({
   };
   aplicar();
   return sessao.assinar(aplicar);
-}
-
-/**
- * Monta a tela de acesso no `#telaDeEntrada` (dentro do `#loginScreen`).
- * Desenha na hora (`flushSync`): o cartão vazio do index.html dá lugar ao
- * de verdade sem um quadro em branco no meio.
- */
-export function montarEntrada({
-  elemento = document.getElementById("telaDeEntrada"),
-  sessao = sessaoDoApp,
-  marca = marcaDaEntrada,
-  pedido = criarPedidoDeAcesso(),
-}: OpcoesDaEntrada = {}): EntradaMontada | null {
-  if (!elemento) return null;
-  const desligar = ligarEntradaAPagina({ sessao, pedido });
-  const { raiz, desmontar } = montarModulo(
-    elemento,
-    <TelaDeEntrada sessao={sessao} marca={marca} pedido={pedido} />,
-    { nome: "a tela de acesso", flushSync: true },
-  );
-  return {
-    raiz,
-    pedido,
-    desmontar: () => {
-      desligar();
-      desmontar();
-    },
-  };
 }

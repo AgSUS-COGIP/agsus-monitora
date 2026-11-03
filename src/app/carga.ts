@@ -199,7 +199,13 @@ export type DependenciasDaCarga = {
   paineis: PaineisDaCarga;
   navegacao: Pick<
     Navegacao,
-    "montarMenu" | "obter" | "telaPermitida" | "irPara" | "telaDeEntrada"
+    | "montarMenu"
+    | "obter"
+    | "telaPermitida"
+    | "irPara"
+    | "reabrir"
+    | "abrirEntrada"
+    | "telaDeEntrada"
   >;
   obterPerfil?: () => PerfilDeAcesso | null;
   obterUsuario?: () => { id?: string | null } | null;
@@ -585,7 +591,7 @@ export function criarCarga(
         navegacao.irPara(navegacao.telaDeEntrada());
       // A cópia trazia o catálogo antigo: a manutenção das abas pode ter mudado.
       // Configurações fica (reabrir repreencheria os campos que a pessoa edita).
-      else if (mudou.has("abas") && view !== "config") navegacao.irPara(view);
+      else if (mudou.has("abas") && view !== "config") navegacao.reabrir();
       if (mudou.has("mapa")) await carregarMapa({ consulta: novas.mapa });
       if (mudou.has("unidades"))
         await carregarUnidades({ consulta: novas.unidades });
@@ -674,7 +680,8 @@ export function criarCarga(
         : true;
     mostrarApp();
     sessaoAberta = true;
-    navegacao.irPara(navegacao.telaDeEntrada());
+    // A tela do endereço (link, F5), a guardada ou a inicial.
+    navegacao.abrirEntrada();
     // A página aberta já pediu as linhas (ou o pedido ficou da sessão anterior).
     // Se acabaram de falhar, não repete na hora (seria o mesmo erro, avisado duas vezes).
     if (linhasOk) void garantirLinhas();
@@ -720,8 +727,8 @@ export function criarCarga(
       paineis.descartarAbertos();
       const view = navegacao.obter().view;
       const painel = codigoDoPainel(view);
-      if (painel && paineis.podeAbrir(painel)) navegacao.irPara(view);
-      else if (!painel && navegacao.telaPermitida(view)) navegacao.irPara(view);
+      if (painel && paineis.podeAbrir(painel)) navegacao.reabrir();
+      else if (!painel && navegacao.telaPermitida(view)) navegacao.reabrir();
       else {
         paineis.esquecerAtual();
         navegacao.irPara(navegacao.telaDeEntrada());

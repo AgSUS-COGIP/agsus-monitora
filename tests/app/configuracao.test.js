@@ -103,7 +103,8 @@ describe("carregar", () => {
     await expect(configuracao.carregar()).resolves.toBe(true);
     expect($("sidebarVersion").textContent).toBe("V3");
     expect(configuracao.versao()).toBe("V3");
-    expect($("pageTitle").textContent).toBe("Visão geral");
+    // O título da página é da navegação, não da configuração.
+    expect($("pageTitle").textContent).toBe("");
     expect($("externalMount").textContent).toBe("Escolha um painel");
     expect($("externalBackText").textContent).toBe("Voltar ao sistema");
     expect($("externalBackBtn").getAttribute("aria-label")).toBe(

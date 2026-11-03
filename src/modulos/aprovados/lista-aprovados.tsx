@@ -7,7 +7,6 @@ import type {
 } from "./tipos-do-estado.ts";
 import type { FiltrosDaTabelaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
 import { useMemo, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import {
@@ -502,8 +501,7 @@ export function ListaAprovados({
  * Monta a página em `#page-approved` e devolve o controlador que o legado
  * chama (`window.aprovadosController`).
  */
-export function montarListaAprovados({
-  secao = document.getElementById("page-approved"),
+export function criarListaAprovados({
   supabase = getSupabaseClient(),
   toast,
   getProfile,
@@ -547,19 +545,11 @@ export function montarListaAprovados({
     ...(hoje ? { hoje } : {}),
     ...(esperar ? { esperar } : {}),
   });
-  const raiz = secao
-    ? montarModulo(
-        secao,
-        <ListaAprovados estado={estado} pendencias={pendencias} />,
-        {
-          nome: "a lista de aprovados",
-        },
-      ).raiz
-    : null;
   return {
     estado,
     pendencias,
-    raiz,
+    nome: "a lista de aprovados",
+    conteudo: <ListaAprovados estado={estado} pendencias={pendencias} />,
     render: () => estado.garantirCarregado(),
     openImportModal: (editalId: string, rotulo = "") =>
       estado.abrirListasDoEdital(editalId, rotulo),

@@ -8,7 +8,6 @@ import type {
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { filtrosDaSelecao } from "../../lib/filtro-da-aya.ts";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { usarTemaEscuro } from "../../app/tema.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
@@ -226,8 +225,7 @@ export function TelaDeSelecao({ estado }: { estado: EstadoDaSelecao }) {
  * legado: `render()` a cada abertura (carrega a área atual do app), mais o
  * estado e a raiz do React (os testes desmontam por ela).
  */
-export function montarSelecao({
-  secao = document.getElementById("page-selecao"),
+export function criarSelecao({
   supabase = getSupabaseClient(),
   toast,
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
@@ -240,14 +238,10 @@ export function montarSelecao({
     baixar,
     ...(armazenamento ? { armazenamento } : {}),
   });
-  const raiz = secao
-    ? montarModulo(secao, <TelaDeSelecao estado={estado} />, {
-        nome: "a tela de seleção",
-      }).raiz
-    : null;
   return {
     estado,
-    raiz,
+    nome: "a tela de seleção",
+    conteudo: <TelaDeSelecao estado={estado} />,
     render() {
       return estado.carregar(String(areaAtual() ?? "").trim());
     },

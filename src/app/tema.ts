@@ -23,5 +23,5 @@ function assinarTema(avisar: () => void) {
 
 /** Verdadeiro com o tema escuro do app ligado; muda junto com ele. */
 export function usarTemaEscuro() {
-  return useSyncExternalStore(assinarTema, temaEscuro);
+  return useSyncExternalStore(assinarTema, temaEscuro, temaEscuro);
 }

@@ -1,24 +1,16 @@
 /*
   Vai para outra tela do app (os botões "Ir para…" de Entrevistas, Recursos e
   Lista de aprovados). O destino é conferido (src/lib/link-interno.ts) e a
-  troca é a do legado (`window.navigate`, que confere a permissão da página e
-  avisa). Com edital, a Classificação e Conduzir entrevistas já abrem nele;
-  as telas carregam sob demanda (src/app/tela-sob-demanda.ts), então espera
-  montar.
+  troca é a da navegação (`window.navigate`, que confere a permissão da
+  página e avisa). Com edital, ele vai junto no endereço
+  (`/<área>/classificacao/<edital>`), e a rota abre a tela já nele
+  (`abrirEdital`, src/app/telas.tsx) depois de carregá-la.
 */
 import { linkInterno } from "../lib/link-interno.ts";
-
-type Controle = {
-  carregar?: () => unknown;
-  estado?: { escolherEdital?: (id: string) => unknown };
-  abrirEdital?: (id: string) => unknown;
-};
+import type { ExtrasDaNavegacao } from "./navegacao.ts";
 
 export type JanelaDoApp = {
-  navigate?: (view: string) => unknown;
-  classificacaoController?: Controle;
-  conduzirEntrevistasController?: Controle;
-  preClassificacaoController?: Controle;
+  navigate?: (view: string, extras?: ExtrasDaNavegacao) => unknown;
 };
 
 /** Devolve false se o destino não vale ou se a navegação não está disponível. */
@@ -28,24 +20,8 @@ export function irParaTela(
 ): boolean {
   const link = linkInterno(entrada);
   if (!link || typeof janela?.navigate !== "function") return false;
-  janela.navigate(link.view);
   const edital = link.edital?.id;
-  if (!edital) return true;
-  if (link.view === "classificacao") {
-    const controle = janela.classificacaoController;
-    void Promise.resolve(controle?.carregar?.())
-      .then(() =>
-        janela.classificacaoController?.estado?.escolherEdital?.(edital),
-      )
-      .catch(() => {});
-  }
-  if (link.view === "conduzir-entrevistas")
-    void Promise.resolve(
-      janela.conduzirEntrevistasController?.abrirEdital?.(edital),
-    ).catch(() => {});
-  if (link.view === "pre-classificacao")
-    void Promise.resolve(janela.preClassificacaoController?.carregar?.())
-      .then(() => janela.preClassificacaoController?.abrirEdital?.(edital))
-      .catch(() => {});
+  if (edital) janela.navigate(link.view, { edital });
+  else janela.navigate(link.view);
   return true;
 }

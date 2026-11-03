@@ -9,7 +9,7 @@ export default defineConfig({
     globals: false,
     include: ["tests/**/*.test.js"],
     // A rede é bloqueada por omissão. Ver tests/setup/rede-bloqueada.js.
-    setupFiles: ["tests/setup/rede-bloqueada.js"],
+    setupFiles: ["tests/setup/rede-bloqueada.js", "tests/setup/endereco.js"],
     /*
       Os testes de tela montam React no jsdom (a Lista de aprovados com 120
       linhas, a publicação das Configurações): sozinhos levam de 2 a 5,4 s numa

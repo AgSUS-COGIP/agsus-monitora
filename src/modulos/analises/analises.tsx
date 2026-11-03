@@ -8,7 +8,6 @@ import type {
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { filtrosDasAnalises } from "../../lib/filtro-da-aya.ts";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { usarTemaEscuro } from "../../app/tema.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
@@ -476,17 +475,18 @@ export function TelaDeAnalises({
  * legado: `render()` a cada abertura (a área atual do app), mais o estado e a
  * raiz do React (os testes desmontam por ela).
  */
-export function montarAnalises({
-  secao = document.getElementById("page-analises"),
+export function criarAnalises({
   supabase = getSupabaseClient(),
   toast,
   comemoracoesLigadas = () => false,
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
   baixar,
   consultas,
+  visivel = () => true,
 }: DependenciasDasAnalises & {
-  secao?: HTMLElement | null;
   areaAtual?(): unknown;
+  /** A página está à vista (a navegação diz: src/app/telas.tsx). */
+  visivel?: () => boolean;
 } = {}) {
   const estado = criarEstadoDasAnalises({
     supabase,
@@ -495,21 +495,10 @@ export function montarAnalises({
     ...(consultas ? { consultas } : {}),
     comemoracoesLigadas,
   });
-  const raiz = secao
-    ? montarModulo(
-        secao,
-        <TelaDeAnalises
-          estado={estado}
-          visivel={() => secao.classList.contains("active")}
-        />,
-        {
-          nome: "a tela de análises curriculares",
-        },
-      ).raiz
-    : null;
   return {
     estado,
-    raiz,
+    nome: "a tela de análises curriculares",
+    conteudo: <TelaDeAnalises estado={estado} visivel={visivel} />,
     render: () => estado.abrir(String(areaAtual() ?? "").trim()),
   };
 }

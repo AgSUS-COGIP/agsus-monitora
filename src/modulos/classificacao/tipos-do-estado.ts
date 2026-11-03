@@ -177,7 +177,6 @@ export type EstadoDaAgenda = ReturnType<
   typeof import("./estado-da-agenda.ts").criarEstadoDaAgenda
 >;
 export interface OpcoesDaTela extends OpcoesDoEstado {
-  secao?: HTMLElement | null;
   areaAtual?: () => string | null;
   confirmar?: (mensagem: string) => boolean;
 }

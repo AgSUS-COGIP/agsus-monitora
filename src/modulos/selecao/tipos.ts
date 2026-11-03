@@ -120,4 +120,4 @@ export type AtivoDoRecorte = [CampoDoFiltro, string, string];
 export type OpcoesDaTelaDeSelecao = Pick<
   OpcoesDoEstadoDaSelecao,
   "supabase" | "toast" | "baixar" | "armazenamento"
-> & { secao?: HTMLElement | null; areaAtual?: () => unknown };
+> & { areaAtual?: () => unknown };

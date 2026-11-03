@@ -6,6 +6,7 @@ import {
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.ts";
 import { clicar, digitar, esperar, teclar } from "../componentes/interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A tela de Seleção como módulo do app (src/modulos/selecao/): monta na
@@ -43,7 +44,7 @@ vi.mock("../../src/lib/chartjs-global.ts", () => {
   };
 });
 
-const { montarSelecao } = await import("../../src/modulos/selecao/selecao.tsx");
+const { criarSelecao } = await import("../../src/modulos/selecao/selecao.tsx");
 const { criarEstadoDaSelecao } =
   await import("../../src/modulos/selecao/estado.ts");
 
@@ -126,7 +127,7 @@ async function montar(supabase, { abrir = true, ...opcoes } = {}) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarSelecao({
+    painel = montarTela(criarSelecao, "page-selecao", {
       supabase,
       toast,
       baixar,

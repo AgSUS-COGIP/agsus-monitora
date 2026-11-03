@@ -139,6 +139,4 @@ export interface ResultadoDosCandidatos {
 export type EstadoDosAprovados = ReturnType<
   typeof import("./estado.ts").criarEstadoDaListaDeAprovados
 >;
-export interface OpcoesDaTelaDosAprovados extends OpcoesDoEstadoDosAprovados {
-  secao?: HTMLElement | null;
-}
+export interface OpcoesDaTelaDosAprovados extends OpcoesDoEstadoDosAprovados {}

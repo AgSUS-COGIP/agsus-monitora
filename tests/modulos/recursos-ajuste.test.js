@@ -5,6 +5,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { clicar, digitar, esperar } from "../componentes/interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   "Ajuste da pontuação" na gaveta do recurso (migration 20261005130000):
@@ -28,7 +29,7 @@ vi.mock("../../src/lib/chartjs-global.ts", () => {
   };
 });
 
-const { montarRecursos } =
+const { criarRecursos } =
   await import("../../src/modulos/recursos/recursos.tsx");
 
 const REGRA = {
@@ -185,7 +186,7 @@ async function montar(supabase, modo = "analise") {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarRecursos({
+    painel = montarTela(criarRecursos, "page-recursos", {
       modo,
       secao,
       supabase,

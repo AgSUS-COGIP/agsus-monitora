@@ -5,7 +5,7 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
+import { criarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
 import {
   criarEstadoDaFila,
   INATIVIDADE_MAXIMA_MS,
@@ -18,6 +18,7 @@ import {
   esperar,
   teclar,
 } from "../componentes/interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A aba Fila da Avaliação documental (fase F3): etapas com contadores,
@@ -226,7 +227,11 @@ async function montar(supabase, { abrirFila = true, getProfile } = {}) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarAvaliacaoDocumental({ supabase, toast, getProfile });
+    painel = montarTela(criarAvaliacaoDocumental, "page-avaliacao-documental", {
+      supabase,
+      toast,
+      getProfile,
+    });
   });
   await act(async () => void painel.render());
   await esperar();
@@ -687,7 +692,11 @@ describe("modo de análise: a ficha ocupa a tela", () => {
     secao.className = "page active";
     document.body.append(secao);
     await act(async () => {
-      painel = montarAvaliacaoDocumental({ supabase, toast });
+      painel = montarTela(
+        criarAvaliacaoDocumental,
+        "page-avaliacao-documental",
+        { supabase, toast },
+      );
     });
     await act(async () => void painel.render());
     await esperar();

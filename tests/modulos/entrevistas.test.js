@@ -12,6 +12,7 @@ import {
   esperar,
   teclar,
 } from "../componentes/interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   O Painel de entrevistas como módulo do app (src/modulos/entrevistas/): monta
@@ -49,7 +50,7 @@ vi.mock("../../src/lib/chartjs-global.ts", () => {
   };
 });
 
-const { montarEntrevistas } =
+const { criarEntrevistas } =
   await import("../../src/modulos/entrevistas/entrevistas.tsx");
 
 const PAYLOAD = {
@@ -156,7 +157,7 @@ async function montar(supabase, { abrir = true, ...opcoes } = {}) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarEntrevistas({
+    painel = montarTela(criarEntrevistas, "page-entrevistas", {
       supabase,
       toast,
       baixar,

@@ -12,6 +12,7 @@ import {
   esperar,
   teclar,
 } from "../componentes/interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A tela de Recursos como módulo do app (src/modulos/recursos/): monta na
@@ -47,7 +48,7 @@ vi.mock("../../src/lib/chartjs-global.ts", () => {
   };
 });
 
-const { montarRecursos } =
+const { criarRecursos } =
   await import("../../src/modulos/recursos/recursos.tsx");
 
 const RECURSO_EXISTENTE = {
@@ -186,7 +187,13 @@ async function montar(supabase, { abrir = true, ...opcoes } = {}) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarRecursos({ secao, supabase, toast, baixar, ...opcoes });
+    painel = montarTela(criarRecursos, "page-recursos", {
+      secao,
+      supabase,
+      toast,
+      baixar,
+      ...opcoes,
+    });
   });
   if (abrir) await abrirATela();
   return painel;

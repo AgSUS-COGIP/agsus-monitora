@@ -169,8 +169,7 @@ export function criarConfiguracao({
     escrever("sidebarVersionLabel", valor("sidebar_version_label"));
     escrever("sidebarVersion", versao());
     escrever("logoutText", valor("logout_text"));
-    escrever("pageTitle", valor("page_title"));
-    escrever("pageSubtitle", valor("page_subtitle"));
+    // O título da página é da navegação (a Visão geral usa page_title e page_subtitle).
     escrever("externalBackText", valor("external_back_text"));
     escrever("darkModeLabel", valor("dark_mode_label"));
     escrever("fullscreenActionText", valor("action_fullscreen_text"));

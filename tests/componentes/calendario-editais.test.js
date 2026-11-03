@@ -1,12 +1,13 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarCalendarioEditais } from "../../src/modulos/cronograma/calendario-editais.tsx";
+import { criarCalendarioEditais } from "../../src/modulos/cronograma/calendario-editais.tsx";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 import {
   definirAreaAtual,
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A tela só mostra os editais da área atual (a padrão é a Saúde Indígena); os
@@ -107,7 +108,7 @@ async function montar(opcoes = {}) {
   const supabase = opcoes.supabase || supabaseFalso();
   const toast = opcoes.toast || vi.fn();
   await act(async () => {
-    controlador = montarCalendarioEditais({
+    controlador = montarTela(criarCalendarioEditais, "page-calendario", {
       secao: document.getElementById("page-calendario"),
       supabase,
       toast,
@@ -204,7 +205,7 @@ describe("carregamento", () => {
     });
     document.body.innerHTML = `<section id="page-calendario" class="page active"></section>`;
     await act(async () => {
-      controlador = montarCalendarioEditais({
+      controlador = montarTela(criarCalendarioEditais, "page-calendario", {
         secao: document.getElementById("page-calendario"),
         supabase,
         toast: vi.fn(),

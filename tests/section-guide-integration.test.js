@@ -4,28 +4,28 @@ import { criarNavegacao } from "../src/app/navegacao.ts";
 
 /*
   A navegação real (src/app/navegacao.ts) avisa a Aya da página aberta: é daí
-  que saem a saudação, as sugestões e o contexto das perguntas.
+  que saem a saudação, as sugestões e o contexto das perguntas. O título vai
+  para o store da navegação (o cabeçalho React lê), não para o nome da aba.
 */
 describe("título e Aya conectados à navegação real", () => {
   it.each([
     ["dashboard", "Saúde Indígena"],
     ["nucleo", "Editais"],
-    ["recursos", "Recursos"],
-    ["config", "Configurações"],
-  ])("avisa a Aya de %s sem renomear a aba", (view, title) => {
-    document.body.innerHTML = `<h1 id="pageTitle"></h1><p id="pageSubtitle"></p>
-      <section id="page-dashboard" class="page"></section>
-      <section id="page-${view}" class="page"></section>`;
+    ["recursos", "Painel de recursos"],
+    ["config", ""],
+  ])("avisa a Aya de %s sem renomear a aba", (view, titulo) => {
+    document.body.innerHTML = "";
     const navegacao = criarNavegacao({
       janela: {},
       obterPerfil: () => ({ id: "a", ativo: true, perfil: "admin" }),
+      configuracao: (chave) => ({ page_title: "Saúde Indígena" })[chave] || "",
       confirmarSaida: () => true,
       aplicarAtualizacao: () => false,
     });
     navegacao.irPara(view);
-    navegacao.definirTitulo(title, "Orientações da seção");
     expect(document.title).toBe("MONITORA");
-    expect(document.getElementById("pageTitle").textContent).toBe(title);
-    expect(obterPaginaDaAya()).toMatchObject({ view, titulo: title });
+    expect(navegacao.obter().titulo).toBe(titulo);
+    expect(obterPaginaDaAya()).toMatchObject({ view, titulo });
+    navegacao.desligar();
   });
 });

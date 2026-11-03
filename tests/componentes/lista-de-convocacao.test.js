@@ -2,7 +2,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { EditorDaChamada } from "../../src/modulos/aprovados/chamada-para-contratacao.tsx";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
+import { criarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
 import { modeloDeReferencia } from "../../src/lib/modelo-de-convocacao.ts";
 import { LEI_15142_ESPALHADA } from "../modelos-de-convocacao-antigos.js";
 import { clicar, digitar, escolher, esperar } from "./interacoes.js";
@@ -12,6 +12,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A tela só mostra os editais da área atual (a padrão é a Saúde Indígena); os
@@ -157,7 +158,7 @@ async function montar({
   perfilAtual = perfil;
   const supabase = supabaseFalso({ candidatos, ...banco });
   await act(async () => {
-    controlador = montarListaAprovados({
+    controlador = montarTela(criarListaAprovados, "page-approved", {
       secao: document.getElementById("page-approved"),
       supabase,
       toast,

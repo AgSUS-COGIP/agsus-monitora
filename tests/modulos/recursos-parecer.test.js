@@ -5,6 +5,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { clicar, digitar, esperar } from "../componentes/interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A tela de Recursos com o parecer jurídico: os 4 KPIs, quem vê os botões de
@@ -27,7 +28,7 @@ vi.mock("../../src/lib/chartjs-global.ts", () => {
   };
 });
 
-const { montarRecursos } =
+const { criarRecursos } =
   await import("../../src/modulos/recursos/recursos.tsx");
 
 const recurso = (extra = {}) => ({
@@ -103,7 +104,7 @@ async function montar(supabase, modo = "analise") {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarRecursos({
+    painel = montarTela(criarRecursos, "page-recursos", {
       modo,
       secao,
       supabase,

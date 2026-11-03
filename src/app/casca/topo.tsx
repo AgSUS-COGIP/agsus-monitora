@@ -1,16 +1,17 @@
 import type { MouseEvent } from "react";
 import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
+import { usarEstadoDaNavegacao } from "../contexto-do-app.ts";
 
 /*
   O cabeçalho do app (`header.top`): o título da página e, à direita, Pessoas
   online e o menu da conta. No celular, uma linha só, com o ☰ da gaveta antes
   do título.
 
-  Os textos são escritos de fora, como antes: o título por
-  `navegacao.definirTitulo`, nome, e-mail e perfil por `src/app/perfil.ts`, os
-  rótulos configuráveis por `src/app/configuracao.ts` e a foto por
-  `google-profile-photo.ts`. Por isso o React desenha o cabeçalho uma vez e
-  não volta a mexer nele (ver `casca.tsx`).
+  O título da página vem da navegação (src/app/navegacao.ts), pelo contexto
+  da raiz. Os outros textos ainda são escritos de fora: nome, e-mail e perfil
+  por `src/app/perfil.ts`, os rótulos configuráveis por
+  `src/app/configuracao.ts` e a foto por `google-profile-photo.ts`. Por isso
+  só o título se redesenha; o resto o React desenha uma vez.
 
   `#pessoasOnlineApp`, `#seloNoAvatarApp` e `#selosDoEditalApp` são pontos de
   montagem de outras ilhas React; o ☰ (`#globalSidebarToggle`) é da barra
@@ -20,10 +21,7 @@ export function Topo() {
   return (
     <header className="top">
       <div className="title-row">
-        <div className="page-title">
-          <h1 id="pageTitle"></h1>
-          <p id="pageSubtitle"></p>
-        </div>
+        <TituloDaPagina />
       </div>
       <div className="actions">
         {/* Pessoas online (React: src/componentes/pessoas-online/) */}
@@ -31,6 +29,16 @@ export function Topo() {
         <MenuDaConta />
       </div>
     </header>
+  );
+}
+
+function TituloDaPagina() {
+  const { titulo, subtitulo } = usarEstadoDaNavegacao();
+  return (
+    <div className="page-title">
+      <h1 id="pageTitle">{titulo}</h1>
+      <p id="pageSubtitle">{subtitulo}</p>
+    </div>
   );
 }
 

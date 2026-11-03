@@ -8,7 +8,7 @@ import {
   it,
   vi,
 } from "vitest";
-import { montarNucleo } from "../../src/modulos/editais/nucleo.tsx";
+import { criarNucleo } from "../../src/modulos/editais/nucleo.tsx";
 import {
   definirAreaAtual,
   publicarLinhasDoMonitoramento,
@@ -17,6 +17,7 @@ import {
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { UNIDADES_CORES } from "../../src/lib/responsavel-do-edital.ts";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A página "Editais" (Equipe Núcleo) em React: a tabela com as linhas que o
@@ -251,7 +252,7 @@ async function montar({
   document.body.innerHTML = `<section id="page-nucleo" class="page active"></section>`;
   perfilAtual = perfil;
   await act(async () => {
-    controlador = montarNucleo({
+    controlador = montarTela(criarNucleo, "page-nucleo", {
       secao: document.getElementById("page-nucleo"),
       supabase,
       toast,

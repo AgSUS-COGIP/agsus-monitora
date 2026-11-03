@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
-import { act } from "react";
+import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { montarCasca } from "../../src/app/casca/casca.tsx";
+import { Casca } from "../../src/app/casca/casca.tsx";
+import { desenharNoTeste } from "../montar-tela.js";
 import { criarMoldura } from "../../src/app/moldura.ts";
-import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
 import {
   atualizarMenuLateral,
   marcarItemAtivoNoMenu,
@@ -25,7 +25,6 @@ const LARGURA_ORIGINAL = window.innerWidth;
 const MATCH_MEDIA_ORIGINAL = window.matchMedia;
 
 let casca = null;
-let barra = null;
 
 async function largura(px) {
   Object.defineProperty(window, "innerWidth", {
@@ -44,9 +43,13 @@ async function montar(px = 390) {
   document.body.innerHTML = '<section id="appScreen" class="app"></section>';
   const moldura = criarMoldura({ armazenamento: () => null });
   window.toggleSidebar = moldura.alternarBarra;
-  casca = montarCasca();
+  // A casca já traz a barra lateral (src/app/casca/casca.tsx).
   await act(async () => {
-    barra = montarBarraLateral();
+    casca = desenharNoTeste(
+      document.getElementById("appScreen"),
+      createElement(Casca),
+      { sincrono: true },
+    );
   });
   await act(async () =>
     atualizarMenuLateral(
@@ -82,9 +85,7 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
-  await act(async () => barra?.unmount());
   await act(async () => casca?.desmontar());
-  barra = null;
   casca = null;
   await act(async () => redefinirBarraLateral());
   await act(async () => redefinirDadosDoMonitoramento());

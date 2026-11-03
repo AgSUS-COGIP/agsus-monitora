@@ -37,9 +37,15 @@ import {
   telaInicialDoSistema,
   telaPermitida,
 } from "../lib/navegacao";
+import {
+  caminhoDoDestino,
+  destinoDoCaminho,
+  ehRaizDoApp,
+  telaDaRota,
+} from "../lib/rotas.ts";
+import type { DestinoDaRota } from "../lib/rotas.ts";
 import { definirPaginaDaAba } from "../lib/identidade-da-aba";
 import { cabecalhoDaVisaoGeral } from "../lib/visao-geral-da-area.ts";
-import { erroAmigavel } from "../lib/erro-amigavel";
 import {
   assinarDadosDoMonitoramento,
   definirAreaAtual,
@@ -58,21 +64,25 @@ import {
 } from "../modulos/configuracoes/secoes.ts";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
 import { definirPaginaDaAya } from "../modulos/aya/estado.ts";
+import { criarEndereco } from "./endereco.ts";
+import type { Endereco } from "./endereco.ts";
 import type { PerfilDeAcesso } from "../lib/tipos-dos-acessos.ts";
 import type { PaineisDaNavegacao } from "../lib/navegacao";
 import type { ArvoreDoMenu } from "../componentes/barra-lateral/tipos.ts";
 
 /*
-  A navegação do app, sem React: qual tela está aberta, a troca de tela (a
-  `.active` das `<section class="page">`, o título do cabeçalho, o menu
-  marcado), as permissões por tela, a guarda de saída de Acessos, Módulos e
-  abas e Configurações, a tela guardada para a próxima entrada e o menu da
-  barra lateral que o perfil vê. As regras puras estão em src/lib/navegacao.ts.
+  A navegação do app, sem React e sem mexer nas telas pelo DOM: um store com
+  a tela aberta (view, área, edital, visão, seção, título) que o React lê
+  (src/app/telas.tsx desenha as `<section class="page">` e marca a ativa; o
+  cabeçalho lê o título) e o endereço da página (src/app/endereco.ts, regras
+  em src/lib/rotas.ts): a área e a tela ficam na URL, e o voltar/avançar do
+  navegador, o recarregar e o link compartilhado funcionam.
 
-  Contratos mantidos: `window.navigate(view)` (é `irPara`), os itens
-  `#nav [data-view][data-area]` da barra lateral (React, pelo estado dela) e o
-  `render()` dos controladores em `window` (`recursosController`…) ao abrir a
-  tela de cada um.
+  Também decide: as permissões por tela (src/lib/navegacao.ts), a guarda de
+  saída de Acessos, Módulos e abas e Configurações, a versão nova esperando,
+  a tela guardada para a próxima entrada e o menu da barra lateral que o
+  perfil vê. `window.navigate(view)` (é `irPara`) continua sendo o contrato
+  de quem troca de tela fora do React.
 
   Página desligada pela coordenação (ou em manutenção) também fecha no meio
   da sessão: o vigia do catálogo (src/app/vigia-do-catalogo.ts) relê o
@@ -80,115 +90,51 @@ import type { ArvoreDoMenu } from "../componentes/barra-lateral/tipos.ts";
   pelo aviso — ou, com trabalho não salvo (`temTrabalhoNaoSalvo`), só mostra
   a faixa e espera salvar.
 
-  Quem acompanha a navegação assina: `assinar(ouvinte)` recebe
-  `{ tipo: "menu" }` a cada marcação do menu (o lugar da pessoa pode ter
-  mudado), `{ tipo: "abertura", view, anterior }` quando uma tela abriu
-  (auditoria e presença, em src/app/presenca.ts) e `{ tipo: "aviso", view }`
-  quando, no lugar dela, ficou um aviso (sem acesso, desligada, manutenção).
-  A página aberta decide o que se carrega (src/app/pagina-aberta.ts).
+  Quem acompanha assina: `assinar(ouvinte)` recebe `{ tipo: "abertura",
+  view, anterior }` uma vez por tela aberta (auditoria e presença, em
+  src/app/presenca.ts; a página aberta, em src/app/pagina-aberta.ts),
+  `{ tipo: "aviso", view }` quando, no lugar dela, ficou um aviso (sem
+  acesso, desligada, manutenção), `{ tipo: "menu" }` quando o menu mudou sem
+  trocar de tela (menu refeito, seção de Configurações) e `{ tipo: "estado" }`
+  nas outras mudanças do store. O React assina o mesmo canal
+  (`useSyncExternalStore(assinar, obter)`).
 */
 
-/*
-  Telas React de página inteira (montadas por src/main.ts na própria
-  `#page-<view>`): título, subtítulo (depois da área) e o controlador.
-*/
-/** O controlador de uma tela React em `window` (montado por src/main.ts). */
-export interface ControladorDaTela {
-  render(): unknown;
-  abrirVisao?(visao: string): unknown;
+/** O que a navegação avisa a quem assina. */
+export type EventoDaNavegacao =
+  | { tipo: "menu" }
+  | { tipo: "abertura"; view: string; anterior: string }
+  | { tipo: "aviso"; view: string }
+  | { tipo: "estado" };
+export type OuvinteDaNavegacao = (evento: EventoDaNavegacao) => void;
+
+/**
+ * A tela aberta. `abertura` conta as aberturas (cada uma chama `render()`
+ * da tela, como antes); `aviso` diz o que está no lugar da página.
+ */
+export interface EstadoDaNavegacao {
+  readonly view: string;
+  readonly area: string;
+  readonly edital: string;
+  readonly visao: string;
+  readonly secao: string;
+  readonly aviso: "" | "sem-acesso" | "fechada";
+  readonly titulo: string;
+  readonly subtitulo: string;
+  readonly abertura: number;
 }
 
-type NomeDoControlador =
-  | "nucleoController"
-  | "calendarioEditaisController"
-  | "aprovadosController"
-  | "recursosController"
-  | "analisarRecursosController"
-  | "entrevistasController"
-  | "conduzirEntrevistasController"
-  | "classificacaoController"
-  | "analisesController"
-  | "avaliacaoDocumentalController"
-  | "preClassificacaoController"
-  | "selecaoController";
-
-/** Os controladores das telas em `window` (cada um com o seu tipo lá). */
-export type JanelaDasTelas = { readonly [nome in NomeDoControlador]?: unknown };
-
-/** Título, subtítulo e controlador de uma tela React. */
-export type TelaReact = (
-  valor: (chave: string) => string,
-  janela: JanelaDasTelas,
-) => readonly [string, string, ControladorDaTela | undefined];
-
-type Controle = ControladorDaTela | undefined;
-
-export const TELAS_REACT: Readonly<Record<string, TelaReact>> = Object.freeze({
-  nucleo: (valor, janela) => [
-    "Editais",
-    valor("nucleo_page_subtitle"),
-    janela.nucleoController as Controle,
-  ],
-  calendario: (_valor, janela) => [
-    "Cronograma",
-    "Etapas dos editais, por data.",
-    janela.calendarioEditaisController as Controle,
-  ],
-  approved: (_valor, janela) => [
-    "Lista de Aprovados",
-    "Candidatos por edital e situação de contratação.",
-    janela.aprovadosController as Controle,
-  ],
-  recursos: (_valor, janela) => [
-    "Painel de recursos",
-    "",
-    janela.recursosController as Controle,
-  ],
-  "analisar-recursos": (_valor, janela) => [
-    "Recursos",
-    "",
-    janela.analisarRecursosController as Controle,
-  ],
-  entrevistas: (_valor, janela) => [
-    "Painel de entrevistas",
-    "",
-    janela.entrevistasController as Controle,
-  ],
-  "conduzir-entrevistas": (_valor, janela) => [
-    "Entrevistas",
-    "",
-    janela.conduzirEntrevistasController as Controle,
-  ],
-  classificacao: (_valor, janela) => [
-    "Classificação",
-    "",
-    janela.classificacaoController as Controle,
-  ],
-  analises: (_valor, janela) => [
-    "Painel das análises",
-    "",
-    janela.analisesController as Controle,
-  ],
-  "avaliacao-documental": (_valor, janela) => [
-    "Avaliação documental",
-    "",
-    janela.avaliacaoDocumentalController as Controle,
-  ],
-  "pre-classificacao": (_valor, janela) => [
-    "Triagem",
-    "",
-    janela.preClassificacaoController as Controle,
-  ],
-  selecao: (_valor, janela) => [
-    "Painel da Seleção",
-    "",
-    janela.selecaoController as Controle,
-  ],
-});
+/** O que o React lê da navegação (src/app/contexto-do-app.ts). */
+export interface LeituraDaNavegacao {
+  obter(): EstadoDaNavegacao;
+  assinar(ouvinte: OuvinteDaNavegacao): () => void;
+  /** O edital e a visão do endereço já foram abertos pela tela. */
+  esquecerEditalEVisao(): void;
+}
 
 /** O que pergunta antes de sair (Acessos, Módulos e abas). */
 interface ControleComSaida {
-  confirmarSaida(): unknown;
+  confirmarSaida?(): unknown;
 }
 /** As telas de `window` que guardam alteração não salva. */
 export type JanelaComSaida = {
@@ -203,10 +149,10 @@ export function confirmarSaidaPadrao(
   return (
     (
       janela as JanelaComSaida | null | undefined
-    )?.acessosController?.confirmarSaida() !== false &&
+    )?.acessosController?.confirmarSaida?.() !== false &&
     (
       janela as JanelaComSaida | null | undefined
-    )?.modulosController?.confirmarSaida() !== false &&
+    )?.modulosController?.confirmarSaida?.() !== false &&
     estadoDasConfiguracoes.confirmarSaida()
   );
 }
@@ -218,22 +164,24 @@ export interface PaineisDoApp extends PaineisDaNavegacao {
   esquecerAtual(): void;
 }
 
-/** O que a navegação avisa a quem assina. */
-export type EventoDaNavegacao =
-  | { tipo: "menu" }
-  | { tipo: "abertura"; view: string; anterior: string }
-  | { tipo: "aviso"; view: string };
-export type OuvinteDaNavegacao = (evento: EventoDaNavegacao) => void;
-
-/** A janela: os controladores das telas e a recarga. */
-export type JanelaDaNavegacao = JanelaDasTelas & {
+/** A janela: a guarda de saída e a recarga. */
+export type JanelaDaNavegacao = JanelaComSaida & {
   location: { reload(): void };
 };
+
+/** O que vai junto com a tela pedida. */
+export interface ExtrasDaNavegacao {
+  edital?: string | null | undefined;
+  visao?: string | null | undefined;
+  secao?: string | null | undefined;
+}
 
 export interface OpcoesDaNavegacao {
   documento?: Document;
   janela?: JanelaDaNavegacao;
+  endereco?: Endereco;
   armazenamento?: () => Storage | null | undefined;
+  armazenamentoDaAba?: () => Storage | null | undefined;
   obterPerfil?: () => PerfilDeAcesso | null | undefined;
   paineis?: PaineisDoApp;
   configuracao?: (chave: string) => string;
@@ -254,19 +202,40 @@ const PAINEIS_VAZIOS: PaineisDoApp = Object.freeze({
   esquecerAtual: () => {},
 });
 
-const TEXTO_SEM_ACESSO =
-  "Seu usuário ainda não tem módulos liberados. Solicite a liberação a um administrador.";
+/** Endereço aberto antes de entrar (link compartilhado, volta do Google). */
+export const CHAVE_DA_ROTA_PEDIDA = "monitora:rota-pedida";
+
+export const TEXTO_ROTA_DESCONHECIDA =
+  "Este endereço não é uma tela do MONITORA. Abrimos a tela inicial.";
+
+export const ESTADO_INICIAL_DA_NAVEGACAO: EstadoDaNavegacao = Object.freeze({
+  view: "dashboard",
+  area: "",
+  edital: "",
+  visao: "",
+  secao: "",
+  aviso: "",
+  titulo: "",
+  subtitulo: "",
+  abertura: 0,
+});
+
+/* O que fazer com o endereço ao abrir: nova entrada, trocar a atual. */
+type ModoDoEndereco = "empilhar" | "substituir";
 
 /**
  * Dependências: `obterPerfil` (perfil de quem entrou), `paineis` (painéis
  * externos: `podeAbrir(codigo)`, `primeiro()`, `doMenu()`, `mostrar(codigo)`
  * e `esquecerAtual()`), `configuracao` (valor de TB_CONFIGURACAO), `avisar`
- * (toast) e `ajustarBarra` (barra lateral recolhida no celular).
+ * (toast), `ajustarBarra` (barra lateral recolhida no celular) e `endereco`
+ * (o histórico do navegador).
  */
 export function criarNavegacao({
   documento = globalThis.document,
   janela = globalThis.window,
+  endereco = criarEndereco(),
   armazenamento = () => globalThis.localStorage,
+  armazenamentoDaAba = () => globalThis.sessionStorage,
   obterPerfil = () => null,
   paineis = PAINEIS_VAZIOS,
   configuracao = () => "",
@@ -279,27 +248,26 @@ export function criarNavegacao({
   // Fechar a página agora perderia algo (ainda não guardado em lugar nenhum).
   temTrabalhoNaoSalvo = () => !guardaDeAlteracoes.podeRecarregar(),
 }: OpcoesDaNavegacao = {}) {
-  let view = "dashboard";
-  let estado = Object.freeze({ view });
+  let estado: EstadoDaNavegacao = ESTADO_INICIAL_DA_NAVEGACAO;
   /* A última árvore do menu: dela sai a página do botão "Ir para a página inicial". */
   let arvore: ArvoreDoMenu = [];
+  /* Fora do sistema (tela de acesso), o voltar do navegador não troca de tela. */
+  let sistemaAberto = false;
   const ouvintes = new Set<OuvinteDaNavegacao>();
 
-  const $ = (id: string) => documento.getElementById(id);
   const perfil = () => obterPerfil();
   const areaAtual = () => obterDadosDoMonitoramento().areaAtual;
+  const view = () => estado.view;
 
   function avisarOuvintes(evento: EventoDaNavegacao) {
     ouvintes.forEach((ouvinte) => ouvinte(evento));
   }
 
-  function definirView(nova: string) {
-    if (nova === view) return;
-    view = nova;
-    estado = Object.freeze({ view });
+  function publicar(mudancas: Partial<EstadoDaNavegacao>) {
+    estado = Object.freeze({ ...estado, ...mudancas });
   }
 
-  // ── Tela guardada ─────────────────────────────────────────────────────
+  // ── Tela guardada e endereço pedido antes de entrar ────────────────────
 
   function guardarTela(tela: string) {
     if (!tela) return;
@@ -317,6 +285,56 @@ export function criarNavegacao({
       return "";
     }
   }
+
+  /*
+    O endereço com que a página abriu (link compartilhado, F5) fica na aba:
+    o retorno do Google volta para `/?auth=google`, e a tela pedida abre
+    depois de entrar, se o perfil puder.
+  */
+  function anotarRotaPedida() {
+    const { caminho, busca } = endereco.obter();
+    if (ehRaizDoApp(caminho)) return;
+    try {
+      armazenamentoDaAba()?.setItem(CHAVE_DA_ROTA_PEDIDA, caminho + busca);
+    } catch {
+      // Sem sessionStorage: o link só abre direto com a sessão já guardada.
+    }
+  }
+  anotarRotaPedida();
+
+  function rotaPedida() {
+    try {
+      return armazenamentoDaAba()?.getItem(CHAVE_DA_ROTA_PEDIDA) || "";
+    } catch {
+      return "";
+    }
+  }
+
+  function esquecerRotaPedida() {
+    try {
+      armazenamentoDaAba()?.removeItem(CHAVE_DA_ROTA_PEDIDA);
+    } catch {
+      // Nada a esquecer.
+    }
+  }
+
+  /*
+    O destino pedido: o do endereço; na raiz (volta do Google), o anotado
+    quando a página abriu. `desconhecido`: havia um endereço, mas não é tela.
+  */
+  function destinoPedido(): {
+    destino: DestinoDaRota | null;
+    desconhecido: boolean;
+  } {
+    const { caminho, busca } = endereco.obter();
+    const pedido = ehRaizDoApp(caminho) ? rotaPedida() : caminho + busca;
+    if (!pedido) return { destino: null, desconhecido: false };
+    const [so = "", ...resto] = pedido.split("?");
+    const destino = destinoDoCaminho(so, resto.join("?"));
+    return { destino, desconhecido: !destino && !ehRaizDoApp(so) };
+  }
+
+  // ── Permissões e páginas desligadas ────────────────────────────────────
 
   const permitida = (tela: string) => telaPermitida(tela, perfil(), paineis);
 
@@ -348,12 +366,28 @@ export function criarNavegacao({
   const inicialDoSistema = () =>
     ligadaOuPrimeira(telaInicialDoSistema(perfil(), paineis));
 
-  const deEntrada = () =>
-    ligadaOuPrimeira(telaDeEntrada(telaGuardada(), perfil(), paineis));
+  /* A área do endereço vale se for do usuário; senão, fica a atual. */
+  function usarAreaDoEndereco(area: string | undefined) {
+    if (area && obterDadosDoMonitoramento().areas.includes(area))
+      definirAreaAtual(area);
+  }
+
+  /*
+    A tela ao entrar: a do endereço (link, F5), se o perfil puder; senão a
+    última aberta, se ainda for permitida; senão, a inicial do sistema.
+  */
+  function deEntrada() {
+    const { destino } = destinoPedido();
+    if (destino?.view && permitida(destino.view)) {
+      usarAreaDoEndereco(destino.area);
+      return ligadaOuPrimeira(destino.view);
+    }
+    return ligadaOuPrimeira(telaDeEntrada(telaGuardada(), perfil(), paineis));
+  }
 
   /* O botão da página desativada (e da manutenção): a primeira página ligada do menu. */
   function irParaInicio() {
-    const item = primeiraPaginaLigada(arvore, areaAtual(), view);
+    const item = primeiraPaginaLigada(arvore, areaAtual(), view());
     if (!item) {
       irPara(inicialDoSistema());
       return;
@@ -364,18 +398,16 @@ export function criarNavegacao({
 
   // ── Cabeçalho e menu ──────────────────────────────────────────────────
 
+  /* O título vai para o store (o cabeçalho React lê), a aba do navegador e a Aya. */
   function definirTitulo(titulo: string, subtitulo: string) {
-    const h1 = $("pageTitle");
-    const sub = $("pageSubtitle");
-    if (h1) h1.textContent = titulo || "";
-    if (sub) sub.textContent = subtitulo || "";
+    publicar({ titulo: titulo || "", subtitulo: subtitulo || "" });
     // O nome da aba tem um dono só; aqui entra apenas a metade da página.
     definirPaginaDaAba(titulo);
     // A Aya (src/modulos/aya/) acompanha a página: saudação, sugestões e contexto.
-    definirPaginaDaAya(view, titulo);
+    definirPaginaDaAya(view(), titulo);
   }
 
-  /* Editais, Cronograma e Aprovados mostram só a área atual; o subtítulo diz qual. */
+  /* As telas das áreas mostram só a área atual; o subtítulo diz qual. */
   function subtituloDaArea(sub: string) {
     return [nomeDaArea(areaAtual()), sub].filter(Boolean).join(" · ");
   }
@@ -385,7 +417,6 @@ export function criarNavegacao({
     daqui sai só o cabeçalho, que muda com a área.
   */
   function tituloDaVisaoGeral() {
-    if (view !== "dashboard") return;
     const { titulo, subtitulo } = cabecalhoDaVisaoGeral(areaAtual(), {
       titulo: configuracao("page_title"),
       subtitulo: configuracao("page_subtitle"),
@@ -393,9 +424,8 @@ export function criarNavegacao({
     definirTitulo(titulo, subtitulo);
   }
 
-  function marcarMenu(tela: string = view) {
+  function marcarMenu(tela: string = view()) {
     marcarItemAtivoNoMenu(tela, secaoAtualDeConfiguracao(documento));
-    avisarOuvintes({ tipo: "menu" });
   }
 
   /*
@@ -429,73 +459,131 @@ export function criarNavegacao({
       situacao,
     });
     atualizarMenuLateral(arvore, {
-      aoAbrirSecao: (_view, secao) =>
-        abrirSecaoDeConfiguracao(documento, secao),
+      aoAbrirSecao: (_view, secao) => abrirSecao(secao),
+      paginaAtiva: (tela) => estado.view === tela && !estado.aviso,
       textoVazio: configuracao("permissions_empty_text"),
     });
-    marcarMenu(view);
+    marcarMenu();
+    avisarOuvintes({ tipo: "menu" });
   }
+
+  /*
+    Seção de Configurações (o menu, com a página já aberta): a seção vai para
+    o endereço. A seção pode recusar (saída de Acessos com alteração não salva).
+  */
+  function abrirSecao(secao: string): boolean {
+    if (!abrirSecaoDeConfiguracao(documento, secao)) return false;
+    publicar({ secao: secaoAtualDeConfiguracao(documento) });
+    endereco.ir(caminhoAtual());
+    marcarMenu();
+    avisarOuvintes({ tipo: "menu" });
+    return true;
+  }
+
+  // ── Endereço ───────────────────────────────────────────────────────────
+
+  const caminhoAtual = () =>
+    caminhoDoDestino(
+      estado.aviso === "sem-acesso"
+        ? { view: TELA_SEM_ACESSO }
+        : {
+            view: estado.view,
+            area: estado.area,
+            edital: estado.edital,
+            visao: estado.visao,
+            secao: estado.secao,
+          },
+    );
 
   // ── Troca de tela ─────────────────────────────────────────────────────
 
-  function mostrarSemAcesso() {
-    let vazia = $("page-sem-acesso");
-    if (!vazia) {
-      vazia = documento.createElement("section");
-      vazia.id = "page-sem-acesso";
-      vazia.className = "page";
-      const aviso = documento.createElement("div");
-      aviso.className = "alert warn";
-      aviso.textContent = TEXTO_SEM_ACESSO;
-      vazia.append(aviso);
-      $("page-dashboard")?.parentElement?.append(vazia);
-    }
-    vazia.classList.add("active");
-    definirTitulo(
-      "Acesso aos módulos",
-      "Nenhum módulo disponível para seu perfil.",
+  /**
+   * Abre a tela (o `navigate` de sempre). Sem permissão, avisa e fica onde
+   * está. Devolve `false` quando a navegação foi recusada (saída não
+   * confirmada ou sem permissão): quem trocou a área antes de navegar a
+   * devolve. `extras` leva o edital e a visão (links "Ir para…").
+   */
+  function irPara(pedida: unknown, extras: ExtrasDaNavegacao = {}): boolean {
+    // Link antigo (`entrevistas:conduzir`…) vai para a tela e a visão novas.
+    const destino = destinoDaTela(pedida);
+    return (
+      abrir(
+        {
+          view: destino.view || deEntrada(),
+          visao: extras.visao || destino.visao,
+          edital: extras.edital || "",
+          secao: extras.secao || "",
+        },
+        "empilhar",
+      ) !== false
     );
   }
 
-  function abriu(tela: string, anterior: string) {
-    avisarOuvintes({ tipo: "abertura", view: tela, anterior });
+  /*
+    A tela de agora de novo ("Atualizar dados", catálogo novo): chama o
+    `render()` outra vez, sem empilhar endereço nem perguntar nada.
+  */
+  function reabrir(): boolean {
+    return (
+      abrir({ view: estado.view, secao: estado.secao }, "substituir") !== false
+    );
   }
 
-  /* No lugar da página ficou um aviso (sem acesso, desligada, manutenção). */
-  function ficouAviso(tela: string) {
-    avisarOuvintes({ tipo: "aviso", view: tela });
+  /* Depois de entrar: a tela do endereço (link, F5), a guardada ou a inicial. */
+  function abrirEntrada(): boolean {
+    sistemaAberto = true;
+    const { destino, desconhecido } = destinoPedido();
+    esquecerRotaPedida();
+    if (desconhecido) avisar(TEXTO_ROTA_DESCONHECIDA, "warn");
+    if (destino?.view && permitida(destino.view)) {
+      usarAreaDoEndereco(destino.area);
+      const tela = ligadaOuPrimeira(destino.view);
+      if (
+        abrir(
+          tela === destino.view ? destino : { view: tela },
+          "substituir",
+        ) !== false
+      )
+        return true;
+    } else if (destino?.view) {
+      // Link para uma tela que o perfil não abre: o aviso de sempre.
+      const bloqueio = bloqueioDaTela(destino.view, perfil(), paineis);
+      if (bloqueio) avisar(bloqueio, "warn");
+    }
+    const tela = ligadaOuPrimeira(
+      telaDeEntrada(telaGuardada(), perfil(), paineis),
+    );
+    return abrir({ view: tela }, "substituir") !== false;
   }
 
-  /**
-   * Abre a tela (o `navigate` de sempre). Sem permissão, avisa e fica onde está.
-   * Devolve `false` quando a navegação foi recusada (saída não confirmada ou
-   * sem permissão): quem trocou a área antes de navegar a devolve.
-   */
-  function irPara(pedida: unknown): boolean {
-    return abrirTela(pedida) !== false;
+  /* Saiu (ou ficou sem acesso): o voltar do navegador não abre mais tela. */
+  function fechar() {
+    sistemaAberto = false;
   }
 
-  function abrirTela(pedida: unknown) {
-    const anterior = view;
-    // Link antigo (`entrevistas:conduzir`…) vai para a tela e a visão novas.
-    const destino = destinoDaTela(pedida);
-    const tela = destino.view || deEntrada();
-    if (tela !== view && !confirmarSaida()) return false;
-    // Versão nova do sistema esperando: entra agora. A tela pedida fica guardada
-    // e abre depois da recarga (a tela de entrada confere a permissão). Com
-    // rascunho ainda não guardado (ex.: a regra, src/app/guarda-de-alteracoes.ts),
-    // a versão nova espera a próxima troca de tela.
+  function abrir(
+    destino: DestinoDaRota,
+    modo: ModoDoEndereco,
+  ): boolean | undefined {
+    const anterior = estado.view;
+    const tela = destino.view;
+    if (tela !== anterior && !confirmarSaida()) return false;
+    // Versão nova do sistema esperando: entra agora, já no endereço da tela
+    // pedida (e ela fica guardada; a tela de entrada confere a permissão).
+    // Com rascunho ainda não guardado (ex.: a regra,
+    // src/app/guarda-de-alteracoes.ts), a versão nova espera a próxima troca.
     if (
-      tela !== view &&
+      tela !== anterior &&
       podeRecarregar() &&
       aplicarAtualizacao(() => {
         guardarTela(tela);
+        endereco.ir(caminhoDoDestino({ ...destino, area: areaAtual() }));
         recarregar();
       })
     )
-      return;
+      return undefined;
 
-    // A permissão vem antes de mudar a tela atual e de esconder as páginas.
+    // A permissão vem antes de mudar a tela atual.
     const bloqueio = bloqueioDaTela(tela, perfil(), paineis);
     if (bloqueio) {
       avisar(bloqueio, "warn");
@@ -504,19 +592,26 @@ export function criarNavegacao({
 
     documento.body.classList.remove("external-clean");
     documento.body.classList.remove("external-panel-mode");
-    definirView(tela);
     guardarTela(tela);
     if (!ehPainelExterno(tela)) paineis.esquecerAtual();
     ajustarBarra();
+    publicar({
+      view: tela,
+      area: areaAtual(),
+      edital: destino.edital || "",
+      visao: destino.visao || "",
+      secao: tela === "config" ? destino.secao || "" : "",
+      aviso: "",
+    });
     marcarMenu(tela);
-    documento
-      .querySelectorAll(".page")
-      .forEach((pagina) => pagina.classList.remove("active"));
 
     if (tela === TELA_SEM_ACESSO) {
-      mostrarSemAcesso();
-      ficouAviso(tela);
-      return;
+      publicar({ aviso: "sem-acesso", abertura: estado.abertura + 1 });
+      definirTitulo(
+        "Acesso aos módulos",
+        "Nenhum módulo disponível para seu perfil.",
+      );
+      return concluir(modo, { tipo: "aviso", view: tela });
     }
 
     // Página desligada pela coordenação: o aviso, para todos. Sistema, área ou
@@ -533,58 +628,93 @@ export function criarNavegacao({
         aoIrParaInicio: irParaInicio,
       })
     ) {
+      publicar({ aviso: "fechada", abertura: estado.abertura + 1 });
       definirTitulo(
         fechada ? "Página desativada" : "Em manutenção",
         subtituloDaArea(""),
       );
-      ficouAviso(tela);
-      return;
+      return concluir(modo, { tipo: "aviso", view: tela });
     }
 
-    if (tela === "dashboard") {
-      $("page-dashboard")?.classList.add("active");
-      // A página, com os mapas, é React (src/modulos/visao-geral/); aqui só o título.
-      tituloDaVisaoGeral();
-      abriu(tela, anterior);
-      return;
-    }
-    if (Object.hasOwn(TELAS_REACT, tela)) {
-      const [titulo, subtitulo, controlador] = TELAS_REACT[tela]!(
-        configuracao,
-        janela,
+    publicar({ abertura: estado.abertura + 1 });
+    const daRota = telaDaRota(tela);
+    if (tela === "dashboard") tituloDaVisaoGeral();
+    else if (daRota)
+      definirTitulo(
+        daRota.titulo,
+        subtituloDaArea(daRota.subtitulo?.(configuracao) ?? ""),
       );
-      $("page-" + tela)?.classList.add("active");
-      definirTitulo(titulo, subtituloDaArea(subtitulo));
-      if (destino.visao) controlador?.abrirVisao?.(destino.visao);
-      // O render das telas React costuma carregar dados: a falha vira aviso.
-      Promise.resolve(controlador?.render()).catch((erro) => {
-        console.error(`Falha ao abrir ${titulo}:`, erro);
-        avisar(
-          `Não foi possível abrir ${titulo}: ${erroAmigavel(erro)}`,
-          "error",
-        );
-      });
-      abriu(tela, anterior);
-      return;
-    }
-    if (tela === "config") {
-      $("page-config")?.classList.add("active");
+    else if (tela === "config") {
       definirTitulo(
         configuracao("config_nav_title"),
         configuracao("config_page_subtitle"),
       );
-      // Reabre a seção guardada (ou a primeira permitida); em Acessos, carrega a tela React.
-      abrirSecaoDeConfiguracao(documento, secaoAtualDeConfiguracao(documento));
-      abriu(tela, anterior);
-      return;
-    }
-    if (ehPainelExterno(tela)) {
+      // A seção do endereço, ou a guardada (ou a primeira permitida); em Acessos, carrega a tela React.
+      abrirSecaoDeConfiguracao(
+        documento,
+        destino.secao || secaoAtualDeConfiguracao(documento),
+      );
+      publicar({ secao: secaoAtualDeConfiguracao(documento) });
+      marcarMenu(tela);
+    } else if (ehPainelExterno(tela)) {
       const painel = paineis.mostrar(codigoDoPainel(tela));
       if (painel)
         definirTitulo(painel.titulo, configuracao("external_default_title"));
-      abriu(tela, anterior);
+    }
+    return concluir(modo, { tipo: "abertura", view: tela, anterior });
+  }
+
+  /* Endereço escrito e quem assina avisado: uma vez por abertura. */
+  function concluir(modo: ModoDoEndereco, evento: EventoDaNavegacao) {
+    endereco.ir(caminhoAtual(), { substituir: modo === "substituir" });
+    avisarOuvintes(evento);
+    return true;
+  }
+
+  /*
+    O edital e a visão do endereço valem uma vez: a tela os abriu
+    (src/app/telas.tsx), e o endereço volta a ser o da tela, sem empilhar —
+    escolher outro edital lá dentro não deixa a URL mentindo.
+  */
+  function esquecerEditalEVisao() {
+    if (!estado.edital && !estado.visao) return;
+    publicar({ edital: "", visao: "" });
+    endereco.ir(caminhoAtual(), { substituir: true });
+    avisarOuvintes({ tipo: "estado" });
+  }
+
+  /*
+    Voltar/avançar do navegador: o endereço já mudou. Passa pelas mesmas
+    guardas do clique; recusado (alteração não salva, sem permissão), o
+    endereço volta a ser o da tela aberta. Rota que não existe vai para a
+    tela de entrada, com aviso. O mesmo endereço (as Regras do edital marcam
+    o histórico sem mudar a URL) não troca nada.
+  */
+  function aoMudarEndereco() {
+    if (!sistemaAberto) return;
+    const { caminho, busca } = endereco.obter();
+    if (caminho + busca === caminhoAtual()) return;
+    const destino = destinoDoCaminho(caminho, busca);
+    if (!destino) {
+      if (!ehRaizDoApp(caminho)) avisar(TEXTO_ROTA_DESCONHECIDA, "warn");
+      abrir(
+        {
+          view: ligadaOuPrimeira(
+            telaDeEntrada(telaGuardada(), perfil(), paineis),
+          ),
+        },
+        "substituir",
+      );
+      return;
+    }
+    const areaAnterior = areaAtual();
+    usarAreaDoEndereco(destino.area);
+    if (abrir(destino, "substituir") === false) {
+      definirAreaAtual(areaAnterior);
+      endereco.ir(caminhoAtual());
     }
   }
+  const pararDeOuvirOEndereco = endereco.assinar(aoMudarEndereco);
 
   /*
     O catálogo ou a situação mudou no meio da sessão (src/app/vigia-do-catalogo.ts,
@@ -595,10 +725,11 @@ export function criarNavegacao({
     Página religada não reabre sozinha: o menu já a mostra de novo.
   */
   function reavaliarTelaAtual() {
-    if (view === TELA_SEM_ACESSO || avisoNoLugarDaPagina(documento)) return;
+    if (estado.aviso === "sem-acesso" || avisoNoLugarDaPagina(documento))
+      return;
     const area = areaAtual();
     const situacao = situacaoDoSistema();
-    const fechada = desligada(view, area);
+    const fechada = desligada(view(), area);
     const manutencao =
       !fechada &&
       !isAdminGlobal(perfil()) &&
@@ -606,14 +737,14 @@ export function criarNavegacao({
       situacaoEfetiva({
         situacao,
         abas: abasDoMenu(),
-        view,
+        view: view(),
         area,
       });
     if (!fechada && !manutencao) {
       // Continua aberta: só a faixa (a do administrador, ou nenhuma) se ajusta.
       aplicarManutencaoNaNavegacao({
         documento,
-        view,
+        view: view(),
         area,
         abas: abasDoMenu(),
         adminGlobal: isAdminGlobal(perfil()),
@@ -628,7 +759,7 @@ export function criarNavegacao({
       );
       return;
     }
-    irPara(view);
+    reabrir();
   }
 
   /*
@@ -641,7 +772,9 @@ export function criarNavegacao({
       const nova = areaAtual();
       if (nova === area) return;
       area = nova;
+      if (view() !== "dashboard" || estado.aviso) return;
       tituloDaVisaoGeral();
+      avisarOuvintes({ tipo: "estado" });
     });
   }
 
@@ -649,13 +782,21 @@ export function criarNavegacao({
     obter: () => estado,
     assinar(ouvinte: OuvinteDaNavegacao) {
       ouvintes.add(ouvinte);
-      return () => ouvintes.delete(ouvinte);
+      return () => {
+        ouvintes.delete(ouvinte);
+      };
     },
     irPara,
+    reabrir,
+    abrirEntrada,
+    abrirSecao,
+    fechar,
+    /** Para de ouvir o voltar/avançar (testes; o app tem uma navegação só). */
+    desligar: pararDeOuvirOEndereco,
+    esquecerEditalEVisao,
     montarMenu,
     reavaliarTelaAtual,
     marcarMenu,
-    definirTitulo,
     acompanharArea,
     telaPermitida: permitida,
     telaInicialDoSistema: inicialDoSistema,

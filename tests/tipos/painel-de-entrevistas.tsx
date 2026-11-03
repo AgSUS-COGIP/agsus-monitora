@@ -5,7 +5,7 @@ import type { ClienteDoPainel } from "../../src/modulos/entrevistas/tipos-do-pai
 import { criarEstadoDasEntrevistas } from "../../src/modulos/entrevistas/estado.ts";
 import {
   TelaDeEntrevistas,
-  montarEntrevistas,
+  criarEntrevistas,
 } from "../../src/modulos/entrevistas/entrevistas.tsx";
 import { normalizarPayload } from "../../src/lib/entrevistas-do-painel.ts";
 import type {
@@ -89,7 +89,7 @@ declare const supabase: SupabaseClient;
 const cliente: ClienteDoPainel = supabase;
 const estado = criarEstadoDasEntrevistas({ supabase: cliente });
 <TelaDeEntrevistas estado={estado} />;
-montarEntrevistas({ supabase: cliente, areaAtual: () => "sede" });
+criarEntrevistas({ supabase: cliente, areaAtual: () => "sede" });
 estado.carregar("sede");
 estado.carregarAgenda("edital-1");
 estado.abrirGaveta("e1");

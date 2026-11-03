@@ -1,7 +1,4 @@
-import {
-  BarraLateral,
-  montarBarraLateral,
-} from "../../src/componentes/barra-lateral/barra-lateral.tsx";
+import { BarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
 import {
   atualizarMenuLateral,
   obterEstadoDaBarraLateral,
@@ -24,7 +21,6 @@ atualizarMenuLateral(arvore, {
 marcarItemAtivoNoMenu("nucleo");
 const barra = <BarraLateral />;
 void barra;
-montarBarraLateral(document.createElement("aside"));
 proximoFlutuante(FLUTUANTE_FECHADO, { tipo: "focar", area: "sede" });
 
 // @ts-expect-error A árvore publicada é somente para leitura.
