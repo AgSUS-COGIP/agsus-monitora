@@ -179,7 +179,5 @@ export type EstadoDaAgenda = ReturnType<
 export interface OpcoesDaTela extends OpcoesDoEstado {
   secao?: HTMLElement | null;
   areaAtual?: () => string | null;
-  /** O rascunho guardado da regra (src/app/rascunho-da-regra.ts, tipo CLASSIFICACAO). */
-  rascunho?: import("../../app/rascunho-da-regra.ts").RascunhoDaRegra;
   confirmar?: (mensagem: string) => boolean;
 }

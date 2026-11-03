@@ -74,19 +74,3 @@ export function usarRegraDaTriagem(rpc: RpcDireta, editalId: string) {
   );
   return { resposta, erro, salvar };
 }
-
-/* "Editar nas Regras do edital": abre Editais com as Regras da Triagem do edital. */
-export function abrirRegrasDoEdital(
-  editalId: string,
-  janela = globalThis.window as
-    | {
-        navigate?: (view: string) => unknown;
-        nucleoController?: { abrirRegrasDaTriagem?: (id: string) => unknown };
-      }
-    | undefined,
-) {
-  if (typeof janela?.navigate !== "function") return false;
-  janela.navigate("nucleo");
-  janela.nucleoController?.abrirRegrasDaTriagem?.(editalId);
-  return true;
-}

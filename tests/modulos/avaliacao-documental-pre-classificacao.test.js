@@ -758,7 +758,7 @@ describe("Triagem (AM-4)", () => {
     await montar(supabaseFalso({ situacao: "CONFERIR" }));
     expect((await itemDoMenu("recalcular")).disabled).toBe(true);
     expect(secao.textContent).toContain(
-      "Confira a regra da Triagem (Editais › Regras da Triagem) para recalcular.",
+      "Confira a regra da Triagem (Editais › Regras do edital) para recalcular.",
     );
   });
 

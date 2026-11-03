@@ -3,8 +3,6 @@ import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { montarModulo } from "../../app/montar-modulo.tsx";
 import { abasDoMenu, catalogoDoBanco } from "../../modules/catalogo-de-abas.ts";
-import { criarRascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
-import type { RascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
@@ -45,7 +43,10 @@ import type {
 import { Fila } from "./fila.tsx";
 import { OrigemDaAnalise } from "./origem-da-analise.tsx";
 import { PreClassificacao } from "./pre-classificacao.tsx";
-import { Regra } from "./regra.tsx";
+import { normalizarRegraAnalise } from "../../lib/avaliacao-documental/regra.ts";
+import { resumoDaRegraDaAvaliacao } from "../../lib/regras-do-edital.ts";
+import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
+import { ResumoDaRegraDaEtapa } from "../regras-do-edital/resumo-da-regra-da-etapa.tsx";
 import "./avaliacao-documental.css";
 import "./ficha/ficha.css";
 
@@ -57,8 +58,8 @@ import "./ficha/ficha.css";
 
   Fases F1 a F3 (docs/analises-no-monitora/plano-de-construcao.md): escolha
   do edital (só os vigentes, com "Mostrar todos os editais da área"), a regra
-  da avaliação (modelo, versões com motivo, perguntas da Empregare, prévia com
-  candidato fictício), a equipe, a triagem (Provisória por ART e
+  da avaliação resumida (editar é nas Regras do edital, em Editais, desde
+  03/11/2026), a equipe, a triagem (Provisória por ART e
   lote, gravados pelo job Python; listas PROVISORIA e LOTE) e a fila (etapas,
   distribuição e reserva da ficha). O conteúdo da ficha entra na F4. O Painel
   das análises (view `analises`) continua sendo a leitura.
@@ -87,9 +88,7 @@ interface PropsDaTela {
   estado: LojaDaAvaliacao;
   pre: LojaDaPreClassificacao;
   fila: LojaDaFila;
-  rascunho: RascunhoDaRegra;
   atualizar: Atualizar;
-  confirmar: (mensagem: string) => boolean;
 }
 
 interface PropsDaTelaDaArea extends PropsDaTela {
@@ -106,18 +105,7 @@ function textoDoStatus(e: EstadoDaAvaliacao) {
   return e.dados ? "Sem regra" : "";
 }
 
-const AVISO_AO_ATUALIZAR =
-  "A regra tem alterações ainda não salvas como versão (o rascunho fica guardado e volta ao abrir a regra). Atualizar agora?";
-
-function TelaDaArea({
-  estado,
-  pre,
-  fila,
-  rascunho,
-  atualizar,
-  confirmar,
-  e,
-}: PropsDaTelaDaArea) {
+function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
   const visao = visaoNaTela(e);
   const visoes = visoesDaPessoa(e);
   const coordena = coordenaOEdital(e) === true;
@@ -182,11 +170,7 @@ function TelaDaArea({
             ) : null
           }
           status={textoDoStatus(e)}
-          aoAtualizar={() => {
-            if (rascunho.comAlteracoes() && !confirmar(AVISO_AO_ATUALIZAR))
-              return;
-            void atualizar();
-          }}
+          aoAtualizar={() => void atualizar()}
           atualizarDesativado={
             !e.area || e.carregandoEditais || e.carregandoEdital
           }
@@ -341,11 +325,27 @@ function TelaDaArea({
                       estado={estado}
                     />
                   ) : (
-                    <Regra
-                      key={`${e.editalId}:${e.dados.regra?.versao ?? 0}`}
-                      e={e}
-                      estado={estado}
-                      rascunhoGuardado={rascunho}
+                    <ResumoDaRegraDaEtapa
+                      id="avdRegraResumoTitulo"
+                      tour="avd-regra-resumo"
+                      titulo="Regra da Avaliação documental"
+                      versao={e.dados.regra?.versao ?? null}
+                      nome={e.dados.regra?.nome ?? null}
+                      conferida={
+                        e.dados.regra
+                          ? e.dados.regra.situacao === "CONFERIDA"
+                          : null
+                      }
+                      linhas={resumoDaRegraDaAvaliacao(
+                        e.dados.regra
+                          ? normalizarRegraAnalise(e.dados.regra.configuracao)
+                          : null,
+                        e.dados.nota_minima?.nota_minima ?? null,
+                      )}
+                      semRegra="O edital ainda não tem regra da Avaliação documental."
+                      aoEditar={() =>
+                        abrirRegrasDoEdital(e.editalId, "avaliacao")
+                      }
                     />
                   )}
                 </section>
@@ -379,12 +379,8 @@ export function TelaDaAvaliacaoDocumental({
   estado,
   pre,
   fila,
-  rascunho,
   atualizar,
-  confirmar = (mensagem) => globalThis.confirm?.(mensagem) ?? true,
-}: Omit<PropsDaTela, "confirmar"> & {
-  confirmar?: PropsDaTela["confirmar"];
-}) {
+}: PropsDaTela) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
   useEffect(() => {
@@ -405,9 +401,7 @@ export function TelaDaAvaliacaoDocumental({
       estado={estado}
       pre={pre}
       fila={fila}
-      rascunho={rascunho}
       atualizar={atualizar}
-      confirmar={confirmar}
       e={e}
     />
   );
@@ -462,8 +456,6 @@ export function montarAvaliacaoDocumental({
   getProfile = () => null,
   cabecalho = () =>
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
-  rascunho = criarRascunhoDaRegra({ tipo: "ANALISE", supabase }),
-  confirmar,
 }: {
   secao?: HTMLElement | null;
   supabase?: ClienteDaAvaliacao | null;
@@ -472,15 +464,8 @@ export function montarAvaliacaoDocumental({
   agendar?: OpcoesDaPreClassificacao["agendar"];
   getProfile?: () => unknown;
   cabecalho?: OpcoesDaPreClassificacao["cabecalho"];
-  rascunho?: RascunhoDaRegra;
-  confirmar?: (mensagem: string) => boolean;
 } = {}) {
-  // Versão nova salva: o rascunho guardado acaba antes de a aba Regra remontar.
-  const estado = criarEstadoDaAvaliacao({
-    supabase,
-    toast,
-    aoGravarVersao: (editalId) => void rascunho.esquecer(editalId),
-  });
+  const estado = criarEstadoDaAvaliacao({ supabase, toast });
   const pre = criarEstadoDaPreClassificacao({
     supabase,
     toast,
@@ -496,9 +481,7 @@ export function montarAvaliacaoDocumental({
           estado={estado}
           pre={pre}
           fila={fila}
-          rascunho={rascunho}
           atualizar={atualizar}
-          {...(confirmar ? { confirmar } : {})}
         />,
         { nome: "a tela de avaliação documental" },
       ).raiz
@@ -507,7 +490,6 @@ export function montarAvaliacaoDocumental({
     estado,
     pre,
     fila,
-    rascunho,
     raiz,
     atualizar,
     render() {

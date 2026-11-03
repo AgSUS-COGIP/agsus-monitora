@@ -20,6 +20,8 @@ import { exigirSessao } from "../../lib/sessao";
 import { analisarCronograma } from "../../lib/cronograma-do-edital.ts";
 import { lerAnexoNoServidor } from "../../lib/anexos-do-edital.ts";
 import { carregarResumoDoNucleo, createNucleoSummaryStore } from "./resumo.ts";
+import { etapaDasRegras } from "../../lib/regras-do-edital.ts";
+import type { EtapaDasRegras } from "../../lib/regras-do-edital.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ClienteDoResumo } from "./resumo.ts";
 import type {
@@ -41,14 +43,21 @@ export interface ClienteDoNucleo extends ClienteDoResumo {
 }
 
 /**
- * O modal aberto: o formulário do edital (id vazio = novo), a linha do tempo
- * ou as Regras da Triagem do edital (id do monitoramento).
+ * O modal aberto: o formulário do edital (id vazio = novo) ou a linha do
+ * tempo (id do monitoramento).
  */
 export interface ModalDoNucleo {
-  tipo: "edital" | "linha-do-tempo" | "regras-triagem";
+  tipo: "edital" | "linha-do-tempo";
   id: string;
   /** Muda a cada abertura: é a `key` do componente. */
   abertura: number;
+}
+
+/** A página Regras do edital aberta no lugar da tabela: o edital e a etapa. */
+export interface RegrasAbertas {
+  id: string;
+  titulo: string;
+  etapa: EtapaDasRegras;
 }
 
 /** "idle" (nada pedido), "loading", "ready" ou "error". */
@@ -63,6 +72,7 @@ export interface EstadoDoNucleo {
   carregadoEm: string;
   filtro: string;
   modal: ModalDoNucleo | null;
+  regras: RegrasAbertas | null;
   salvando: boolean;
   geracao: number;
 }
@@ -166,6 +176,8 @@ const ESTADO_INICIAL: EstadoDoNucleo = Object.freeze({
       { tipo: "linha-do-tempo", id }
   */
   modal: null,
+  /* Regras do edital abertas (a página toma o lugar da tabela), ou `null`. */
+  regras: null,
   salvando: false,
   /** Muda quando a sessão troca de usuário: o que foi pedido antes não vale. */
   geracao: 0,
@@ -265,6 +277,7 @@ export function criarEstadoDoNucleo({
     unidadesPorArea = null;
     pedido = { fonte: null, pendente: null, token: pedido.token + 1 };
     publicar({
+      regras: null,
       resumo: [],
       statusDoResumo: "idle",
       atualizandoResumo: false,
@@ -597,11 +610,31 @@ export function criarEstadoDoNucleo({
     abrirEdital,
     abrirLinhaDoTempo: (id: unknown) =>
       abrir({ tipo: "linha-do-tempo", id: txt(id) }),
-    /* Quem lê e quem edita é o banco (obter/salvar_regra_triagem). */
-    abrirRegrasDaTriagem: (id: unknown) =>
-      abrir({ tipo: "regras-triagem", id: txt(id) }),
-    /* O cliente das RPCs da regra da Triagem (o modal chama direto). */
-    clienteDaRegra: () => supabase,
+    /*
+      Regras do edital (todas as etapas). Quem lê e quem edita cada regra é o
+      banco, pelas RPCs de cada etapa. O título sai do resumo, se o edital
+      estiver nele.
+    */
+    abrirRegrasDoEdital: (id: unknown, etapa?: unknown) => {
+      const alvo = txt(id);
+      if (!alvo) return;
+      const item = estado.resumo.find((r) => txt(r.id) === alvo);
+      publicar({
+        modal: null,
+        perfil: perfil(),
+        regras: {
+          id: alvo,
+          titulo: txt(item?.edital) || estado.regras?.titulo || "",
+          etapa: etapaDasRegras(etapa),
+        },
+      });
+    },
+    mudarEtapaDasRegras: (etapa: EtapaDasRegras) =>
+      estado.regras &&
+      publicar({ regras: { ...estado.regras, etapa: etapaDasRegras(etapa) } }),
+    fecharRegrasDoEdital: () => estado.regras && publicar({ regras: null }),
+    /* O cliente das RPCs das regras (as etapas chamam direto). */
+    clienteDasRegras: () => supabase,
     fecharModal: () => estado.modal && publicar({ modal: null }),
     lerCronograma,
     lerUnidadesPorArea,

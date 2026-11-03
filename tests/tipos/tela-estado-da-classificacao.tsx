@@ -22,10 +22,8 @@ function conferir(agenda: EstadoDaAgenda, lista: ListaRegistrada) {
     },
   });
   const snapshot: SnapshotDaClassificacao = estado.obter();
-  const rascunho = criarRascunhoDaRegra({ tipo: "CLASSIFICACAO" });
-  const tela = (
-    <TelaDeClassificacao estado={estado} agenda={agenda} rascunho={rascunho} />
-  );
+  void criarRascunhoDaRegra({ tipo: "CLASSIFICACAO" });
+  const tela = <TelaDeClassificacao estado={estado} agenda={agenda} />;
   // @ts-expect-error O tipo do rascunho é ANALISE ou CLASSIFICACAO.
   void criarRascunhoDaRegra({ tipo: "OUTRA" });
   void montarClassificacao({ secao: null, areaAtual: () => "sede" });

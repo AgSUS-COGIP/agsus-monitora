@@ -33,10 +33,8 @@ import {
 import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
 import type { ConfiguracaoDaTriagem } from "../../lib/triagem/regra-da-triagem.ts";
 import { ResumoDaRegraDaTriagem } from "../triagem/resumo-da-regra.tsx";
-import {
-  abrirRegrasDoEdital,
-  usarRegraDaTriagem,
-} from "../triagem/usar-regra-da-triagem.ts";
+import { usarRegraDaTriagem } from "../triagem/usar-regra-da-triagem.ts";
+import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
 import { ESPERA_DO_PEDIDO_MIN } from "../../lib/robos-de-carga.ts";
 import {
   Abas,
@@ -1290,8 +1288,8 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
           {d.pode_coordenar && !conferida ? (
             <Aviso tom="warning">
               {regraDaTela
-                ? "Confira a regra da Triagem (Editais › Regras da Triagem) para recalcular."
-                : "Crie a regra da Triagem (Editais › Regras da Triagem) para recalcular."}
+                ? "Confira a regra da Triagem (Editais › Regras do edital) para recalcular."
+                : "Crie a regra da Triagem (Editais › Regras do edital) para recalcular."}
             </Aviso>
           ) : null}
           {situacaoDoEdital &&
@@ -1305,7 +1303,7 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
           <ResumoDaRegraDaTriagem
             resposta={regraDaTriagem}
             erro={triagem.erro}
-            aoEditar={() => abrirRegrasDoEdital(e.editalId)}
+            aoEditar={() => abrirRegrasDoEdital(e.editalId, "triagem")}
           />
           <TravaDasInscricoes
             editalId={e.editalId}

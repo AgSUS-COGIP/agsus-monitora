@@ -10,8 +10,8 @@ import {
   textoDoLote,
 } from "../../src/lib/triagem/regra-da-triagem.ts";
 import { CONTRATO_RPC } from "../../src/lib/rpc-contrato.js";
-import { ModalDaRegraDaTriagem } from "../../src/modulos/triagem/modal-da-regra.tsx";
-import { abrirRegrasDoEdital } from "../../src/modulos/triagem/usar-regra-da-triagem.ts";
+import { EditorDaRegraDaTriagem } from "../../src/modulos/triagem/editor-da-regra.tsx";
+import { abrirRegrasDoEdital } from "../../src/modulos/regras-do-edital/abrir.ts";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -109,21 +109,23 @@ describe("regra da Triagem: contrato e resumo", () => {
     );
   });
 
-  it("Editar nas Regras do edital abre Editais com o modal da regra", () => {
+  it("Editar nas Regras do edital abre Editais nas Regras do edital, na etapa", () => {
     const janela = {
       navigate: vi.fn(),
-      nucleoController: { abrirRegrasDaTriagem: vi.fn() },
+      nucleoController: { abrirRegrasDoEdital: vi.fn() },
     };
-    expect(abrirRegrasDoEdital("e93", janela)).toBe(true);
+    expect(abrirRegrasDoEdital("e93", "triagem", janela)).toBe(true);
     expect(janela.navigate).toHaveBeenCalledWith("nucleo");
-    expect(janela.nucleoController.abrirRegrasDaTriagem).toHaveBeenCalledWith(
+    expect(janela.nucleoController.abrirRegrasDoEdital).toHaveBeenCalledWith(
       "e93",
+      "triagem",
     );
-    expect(abrirRegrasDoEdital("e93", {})).toBe(false);
+    expect(abrirRegrasDoEdital("e93", "triagem", {})).toBe(false);
+    expect(abrirRegrasDoEdital("", "triagem", janela)).toBe(false);
   });
 });
 
-describe("modal das Regras da Triagem", () => {
+describe("editor da regra da Triagem (Regras do edital, etapa 1)", () => {
   let raiz = null;
   afterEach(async () => {
     await act(async () => raiz?.unmount());
@@ -160,12 +162,7 @@ describe("modal das Regras da Triagem", () => {
     await act(async () => {
       raiz = createRoot(div);
       raiz.render(
-        createElement(ModalDaRegraDaTriagem, {
-          edital: "e93",
-          titulo: "93/2026",
-          cliente,
-          aoFechar: () => {},
-        }),
+        createElement(EditorDaRegraDaTriagem, { edital: "e93", cliente }),
       );
     });
     await act(async () => {});
@@ -207,5 +204,36 @@ describe("modal das Regras da Triagem", () => {
     await act(async () => botao("Conferir versão 2").click());
     await act(async () => {});
     expect(chamadas.some(([n]) => n === "conferir_regra_triagem")).toBe(true);
+  });
+
+  it("desempate em lista ordenada: liga, desliga e muda a ordem pelas setas", async () => {
+    const chamadas = await montar(true);
+    const ordem = () =>
+      [...document.querySelectorAll(".triagem-criterio[data-ligado]")].map(
+        (li) =>
+          `${li.querySelector(".triagem-criterio__ordem").textContent} ${li.dataset.criterio}`,
+      );
+    const antes = ordem();
+    expect(antes.length).toBeGreaterThan(0);
+    expect(antes[0]).toMatch(/^1º /);
+    const segundo = antes[1]?.split(" ")[1];
+    if (segundo) {
+      await act(async () =>
+        document
+          .querySelector(`[data-criterio='${segundo}'] [aria-label^='Subir']`)
+          .click(),
+      );
+      expect(ordem()[0]).toBe(`1º ${segundo}`);
+    }
+    const desligado = document.querySelector(
+      ".triagem-criterio:not([data-ligado]) input[role='switch']",
+    );
+    if (desligado) {
+      await act(async () => desligado.click());
+      expect(ordem().at(-1)).toMatch(new RegExp(`^${ordem().length}º `));
+    }
+    // Requisitos com o botão comum e sem chamar o banco antes de salvar.
+    expect(botao("Acrescentar requisito").className).toContain("secondary");
+    expect(chamadas.filter(([n]) => n === "salvar_regra_triagem")).toEqual([]);
   });
 });

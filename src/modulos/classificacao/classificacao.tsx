@@ -13,10 +13,6 @@ import {
   useSyncExternalStore,
 } from "react";
 import { montarModulo } from "../../app/montar-modulo.tsx";
-import {
-  criarRascunhoDaRegra,
-  type RascunhoDaRegra,
-} from "../../app/rascunho-da-regra.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
@@ -24,7 +20,6 @@ import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { sufixoDeTreinamento } from "../../lib/edital-de-treinamento.ts";
 import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
-import { dataDeCorteDoCronograma } from "../../lib/classificacao/dados.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.ts";
@@ -32,7 +27,9 @@ import { Agenda } from "./agenda.tsx";
 import { criarEstadoDaClassificacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import { criarEstadoDaAgenda } from "./estado-da-agenda.ts";
 import { Listas } from "./listas.tsx";
-import { Regra } from "./regra.tsx";
+import { resumoDaRegraDaClassificacao } from "../../lib/regras-do-edital.ts";
+import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
+import { ResumoDaRegraDaEtapa } from "../regras-do-edital/resumo-da-regra-da-etapa.tsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 import "./classificacao.css";
 
@@ -45,7 +42,8 @@ import "./classificacao.css";
   - Área: a área atual do app; trocar de área com a tela aberta recarrega.
   - Edital: escolhido no topo; a regra é DESTE edital (decidida pelo gestor).
   - Visões: "Listas" (preliminar, convocação, resultado final), "Agenda"
-    (regra e agenda das entrevistas dos convocados; agenda.tsx) e "Regra".
+    (regra e agenda das entrevistas dos convocados; agenda.tsx) e "Regra"
+    (resumo; editar é nas Regras do edital, em Editais).
     A agenda fica aqui, junto da lista de convocação de onde saem os
     convocados e do documento que ela preenche (DATA e HORA); quem conduz vê
     a agenda do dia em Entrevistas › Conduzir entrevistas.
@@ -82,20 +80,15 @@ export function calcularClassificacao(
   return classificarEdital(dados, tipo);
 }
 
-const AVISO_AO_ATUALIZAR =
-  "A regra tem alterações ainda não salvas como versão (o rascunho fica guardado e volta ao abrir a regra). Atualizar agora?";
-
 type PropsDaTela = {
   estado: EstadoDaClassificacao;
   agenda: EstadoDaAgenda;
-  rascunho: RascunhoDaRegra;
   confirmar: (mensagem: string) => boolean;
 };
 
 function TelaDaArea({
   estado,
   agenda,
-  rascunho,
   confirmar,
   e,
 }: PropsDaTela & { e: SnapshotDaClassificacao }) {
@@ -116,10 +109,6 @@ function TelaDaArea({
     void agenda.carregar(e.editalId);
   }, [agenda, e.editalId]);
 
-  const dataDeCorte = e.dados
-    ? dataDeCorteDoCronograma(e.dados.cronograma)
-    : null;
-
   return (
     <div className="ui-tela classificacao-tela" data-tour="classificacao-tela">
       <TopoDoPainel
@@ -134,8 +123,6 @@ function TelaDaArea({
         }
         status={textoDoStatus(e)}
         aoAtualizar={() => {
-          if (rascunho.comAlteracoes() && !confirmar(AVISO_AO_ATUALIZAR))
-            return;
           // Os editais e o escolhido (uma leitura só) e a configuração de convocação.
           void estado.carregar(e.area, { releitura: true });
           if (e.editalId) void agenda.carregar(e.editalId);
@@ -237,12 +224,19 @@ function TelaDaArea({
                 calcular={calcular}
               />
             ) : visao === "regra" && e.dados ? (
-              <Regra
-                key={`${e.editalId}:${e.dados.regra?.versao ?? 0}`}
-                estado={estado}
-                e={e}
-                dataDeCorte={dataDeCorte}
-                rascunhoGuardado={rascunho}
+              <ResumoDaRegraDaEtapa
+                id="classificacaoRegraResumoTitulo"
+                tour="classificacao-regra"
+                titulo="Regra da Classificação"
+                versao={e.dados.regra?.versao ?? null}
+                nome={e.dados.regra?.nome ?? null}
+                linhas={resumoDaRegraDaClassificacao(
+                  e.dados.regra?.configuracao,
+                )}
+                semRegra="O edital ainda não tem regra da Classificação."
+                aoEditar={() =>
+                  abrirRegrasDoEdital(e.editalId, "classificacao")
+                }
               />
             ) : e.carregandoEdital ? (
               <div className="ui-card" aria-busy="true">
@@ -260,7 +254,6 @@ function TelaDaArea({
 export function TelaDeClassificacao({
   estado,
   agenda,
-  rascunho,
   confirmar = (mensagem) => globalThis.confirm?.(mensagem) ?? true,
 }: Omit<PropsDaTela, "confirmar"> & {
   confirmar?: PropsDaTela["confirmar"];
@@ -280,7 +273,6 @@ export function TelaDeClassificacao({
       key={e.area || "sem-area"}
       estado={estado}
       agenda={agenda}
-      rascunho={rascunho}
       confirmar={confirmar}
       e={e}
     />
@@ -302,7 +294,6 @@ export function montarClassificacao({
   carregarLogo,
   cabecalho = () =>
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
-  rascunho = criarRascunhoDaRegra({ tipo: "CLASSIFICACAO", supabase }),
   confirmar,
 }: OpcoesDaTela = {}) {
   const agenda = criarEstadoDaAgenda({
@@ -315,8 +306,6 @@ export function montarClassificacao({
     toast,
     cabecalho,
     agendaDoEdital: (editalId) => agenda.agendaDoDocumento(editalId),
-    // Versão nova salva: o rascunho guardado acaba antes de a aba Regra remontar.
-    aoGravarVersao: (editalId) => void rascunho.esquecer(editalId),
     ...(baixar ? { baixar } : {}),
     ...(imprimir ? { imprimir } : {}),
     ...(copiar ? { copiar } : {}),
@@ -328,7 +317,6 @@ export function montarClassificacao({
         <TelaDeClassificacao
           estado={estado}
           agenda={agenda}
-          rascunho={rascunho}
           {...(confirmar ? { confirmar } : {})}
         />,
         {
@@ -339,7 +327,6 @@ export function montarClassificacao({
   return {
     estado,
     agenda,
-    rascunho,
     raiz,
     render() {
       return estado.carregar(String(areaAtual() ?? "").trim());
