@@ -13,37 +13,38 @@ import {
 } from "../modulos/configuracoes/secoes.ts";
 
 /*
-  Presença e acesso, sem React:
+  Presença e acesso, sem React. Uma chamada por batida, sempre a mesma:
+  `registrar_navegacao_monitora` (migration 20261103230000), que leva junto o
+  que coincide com ela.
 
-  - auditoria (`registrar_evento_acesso`): entrada, abertura de tela, heartbeat
-    a cada `access_heartbeat_minutos` e saída. O heartbeat vai de carona na
-    batida da presença (`registrar_navegacao_monitora`, evento + presença numa
-    chamada): a primeira batida depois do intervalo leva o evento "heartbeat",
-    com os mesmos detalhes de antes. Antes era um `setInterval` à parte, uma
-    chamada a mais a cada 5 min que só repetia o que a presença já dizia. A
-    linha em TL_EVENTO_ACESSO continua igual (o "último acesso",
-    private."FC_ULTIMO_ACESSO", e a duração da sessão por
-    `client_session_id` leem dela); com a aba oculta, como a batida, não sai;
-  - presença (`registrar_presenca_monitora`, TB_PRESENCA_ONLINE_MONITORA): a
-    batida a cada 90 s com o lugar da pessoa ("Recursos · SEDE"), na hora em
-    que ela troca de página, área ou seção. O banco conta "online" por 4 min
-    (migration 20261013140000): uma batida perdida não derruba ninguém. Com a
-    aba oculta, a batida para; na volta, bate uma vez só (se a última passou
-    do intervalo) e o relógio recomeça dali. A resposta traz, de carona, a
-    versão do catálogo de abas (migration 20261019160000), entregue a
-    `aoRegistrar` — o vigia do catálogo (src/app/vigia-do-catalogo.ts) relê o
-    menu só quando ela muda, sem chamada nova ao banco;
-  - "Pessoas online" (`listar_presenca_online_monitora`): a lista que o
-    cabeçalho mostra (src/componentes/pessoas-online/), só para quem
-    `podeVerPessoasOnline` (admin global e Gestor). Com a lista aberta, relê a
-    cada batida; fechada, só a contagem do botão, no máximo a cada 10 min.
+  - presença (TB_PRESENCA_ONLINE_MONITORA): a batida a cada 150 s com o lugar
+    da pessoa ("Recursos · SEDE"), e na hora em que ela troca de página, área
+    ou seção. O banco conta "online" por 6 min (duas batidas e um minuto de
+    folga): uma batida perdida não derruba ninguém. Com a aba oculta, a batida
+    para; na volta, bate uma vez só (se a última passou do intervalo) e o
+    relógio recomeça dali. A resposta traz, de carona, a versão do catálogo de
+    abas (migration 20261019160000), entregue a `aoRegistrar` — o vigia do
+    catálogo (src/app/vigia-do-catalogo.ts) relê o menu só quando ela muda;
+  - auditoria (TL_EVENTO_ACESSO): entrada, abertura de tela, heartbeat a cada
+    `access_heartbeat_minutos` e saída. A entrada vai com a primeira batida, a
+    abertura com a troca de lugar e o heartbeat com a primeira batida depois do
+    intervalo. Eventos de outros módulos (o retrato de desempenho do front,
+    src/lib/frontend-performance-monitor.ts) entram na fila de carona
+    (`enfileirarEvento`) e vão com a próxima chamada; a aba que fica oculta
+    os despacha na hora. A linha gravada é a de sempre (o "último acesso",
+    private."FC_ULTIMO_ACESSO", e a duração da sessão por `client_session_id`
+    leem dela);
+  - "Pessoas online": a lista que o cabeçalho mostra
+    (src/componentes/pessoas-online/), só para quem `podeVerPessoasOnline`
+    (admin global e Gestor). Vai de carona na batida (`p_listar`): com a lista
+    aberta, a cada batida; fechada, só a contagem do botão, no máximo a cada
+    10 min. Abrir a lista é uma batida adiantada (o relógio recomeça dali).
 
-  A navegação (abertura de tela e troca de lugar) e a entrada (o evento de
-  entrada com a primeira batida) vão numa chamada só,
-  `registrar_navegacao_monitora` (migration 20261029121700): ela grava o
-  mesmo evento e a mesma presença das duas RPCs acima. Ninguém espera por
-  ela (o cliente a envia com `keepalive`, src/lib/supabaseClient.ts). Banco
-  sem essa função (PGRST202): volta às duas chamadas de antes.
+  Ninguém espera pela chamada (o cliente a envia com `keepalive`,
+  src/lib/supabaseClient.ts). Banco antigo (PGRST202), um degrau por vez:
+  sem `p_eventos`/`p_listar` (antes de 20261103230000), a lista e os eventos
+  de carona saem em chamadas à parte; sem a função (antes de 20261029121700),
+  `registrar_evento_acesso` + `registrar_presenca_monitora`.
 
   O estado de "Pessoas online" é assinável (`obter()` / `assinar(ouvinte)`).
 */
@@ -55,10 +56,26 @@ const RPC_NAVEGACAO = "registrar_navegacao_monitora";
 /* PostgREST: a função não existe (migration ainda não aplicada). */
 const FUNCAO_AUSENTE = "PGRST202";
 const CHAVE_DA_ABA = "agsus_monitora_client_session_id";
-export const INTERVALO_DA_PRESENCA_MS = 90_000;
+/** A batida da presença: 150 s com a aba visível. */
+export const INTERVALO_DA_PRESENCA_MS = 150_000;
+/**
+ * Quanto o banco conta "online" depois da última batida
+ * (`listar_presenca_online_monitora`, migration 20261103230000): duas batidas
+ * e um minuto de folga.
+ */
+export const ONLINE_NO_BANCO_MS = 6 * 60_000;
 /* Lista fechada: a contagem do botão é relida no máximo a cada 10 min. */
 export const LISTA_FECHADA_MS = 10 * 60_000;
+/** Eventos de carona por chamada (o banco aceita até 10). */
+export const CARONA_MAXIMA = 10;
 const HEARTBEAT_PADRAO_MINUTOS = 5;
+
+/*
+  O que o banco sabe fazer numa chamada, descoberto pela primeira recusa:
+  "batida" (presença, eventos de carona e lista), "navegacao" (evento e
+  presença) e "antiga" (uma RPC para cada coisa).
+*/
+type NivelDoBanco = "batida" | "navegacao" | "antiga";
 
 /* Onde a pessoa está agora, em texto para quem lê (página · área, ou a seção de Configurações). */
 function localPadrao(view: string, documento: Document) {
@@ -110,11 +127,31 @@ export type EventoDaNavegacao = {
   detalhes?: Record<string, unknown>;
 };
 
+/**
+ * Um evento de outro módulo que vai de carona na próxima chamada. Sem
+ * `origem`, `client_session_id` ou `app_version`, valem os da aba.
+ */
+export type EventoDeCarona = {
+  evento: string;
+  tela?: string | null;
+  origem?: string;
+  detalhes?: Record<string, unknown>;
+  client_session_id?: string;
+  app_version?: string;
+};
+
 /** Detalhes opcionais de um evento da auditoria. */
 export type OpcoesDoEventoDeAcesso = {
   tela?: string | null;
   detalhes?: Record<string, unknown>;
 };
+
+/* A resposta de registrar_navegacao_monitora (o que a tela lê dela). */
+type RespostaDaBatida = {
+  presenca_erro?: unknown;
+  pessoas?: unknown;
+  pessoas_erro?: unknown;
+} & Record<string, unknown>;
 
 /**
  * `obterUsuario`/`obterPerfil`: quem entrou; `configuracao`: `inteiro(chave,
@@ -175,8 +212,9 @@ export function criarPresenca({
   let ligada = false;
   let ultimaBatida: number | null = null;
   let ultimaLista: number | null = null;
-  /* O banco não tem registrar_navegacao_monitora: as duas chamadas de antes. */
-  let semNavegacaoNoBanco = false;
+  let nivel: NivelDoBanco = "batida";
+  /* Eventos de outros módulos esperando a próxima chamada. */
+  let carona: EventoDeCarona[] = [];
 
   /* Só chamado depois de `sb()` conferido (ou dentro de `try`). */
   const sb = () => cliente()!;
@@ -184,6 +222,8 @@ export function criarPresenca({
   const view = () => navegacao.obter().view;
   const visivelNaAba = () => documento.visibilityState === "visible";
   const podeVer = () => podeVerPessoasOnline(obterPerfil());
+  const codigoDoErro = (erro: unknown) =>
+    (erro as { code?: unknown } | null)?.code;
 
   function definir(parcial: Partial<EstadoDaPresenca>) {
     const proximo = { ...estado, ...parcial };
@@ -196,24 +236,54 @@ export function criarPresenca({
 
   // ── Auditoria ─────────────────────────────────────────────────────────
 
+  /* Um evento numa chamada à parte (banco sem a batida, ou aba sem presença). */
+  async function enviarEventoAvulso(evento: EventoDeCarona) {
+    try {
+      await sb().rpc(RPC_EVENTO_DE_ACESSO, {
+        p_evento: evento.evento,
+        p_tela: evento.tela ?? view() ?? null,
+        p_origem: evento.origem ?? "index",
+        p_detalhes: evento.detalhes ?? {},
+        p_client_session_id: evento.client_session_id ?? idDaAba(),
+        p_user_agent: agente(),
+        p_app_version: evento.app_version ?? configuracao.versao(),
+      });
+    } catch (erro) {
+      console.warn("Falha ao registrar auditoria:", erro);
+    }
+  }
+
   async function registrarEvento(
     evento: string,
     { tela, detalhes }: OpcoesDoEventoDeAcesso = {},
   ) {
     if (!sb() || !usuarioId() || !evento) return;
-    try {
-      await sb().rpc(RPC_EVENTO_DE_ACESSO, {
-        p_evento: evento,
-        p_tela: tela ?? view() ?? null,
-        p_origem: "index",
-        p_detalhes: detalhes ?? {},
-        p_client_session_id: idDaAba(),
-        p_user_agent: agente(),
-        p_app_version: configuracao.versao(),
-      });
-    } catch (erro) {
-      console.warn("Falha ao registrar auditoria:", erro);
+    // Com eventos na fila, o evento os leva (a saída, por exemplo).
+    if (carona.length && nivel === "batida") {
+      await registrarNavegacao({
+        evento: { nome: evento, tela, detalhes },
+      }).catch(() => {});
+      return;
     }
+    await enviarEventoAvulso({ evento, tela, detalhes });
+  }
+
+  /* Manda já o que está na fila (a aba vai ficar oculta, ou não há batida). */
+  function despacharCarona() {
+    if (!carona.length || !sb() || !usuarioId()) return;
+    registrarNavegacao({}).catch(() => {});
+  }
+
+  /**
+   * Põe um evento na fila de carona: vai com a próxima chamada (batida ou
+   * navegação). Com a pessoa conhecida mas sem presença batendo, ou com a
+   * aba oculta, vai na hora; antes de a pessoa ser conhecida (a entrada
+   * ainda carregando), espera a primeira batida.
+   */
+  function enfileirarEvento(evento: EventoDeCarona) {
+    if (!evento?.evento) return;
+    carona = [...carona, evento].slice(-CARONA_MAXIMA);
+    if (!ligada || !visivelNaAba()) despacharCarona();
   }
 
   function pararHeartbeat() {
@@ -251,16 +321,6 @@ export function criarPresenca({
 
   // ── Presença ──────────────────────────────────────────────────────────
 
-  async function registrarLocal() {
-    if (!sb() || !usuarioId() || !visivelNaAba()) return;
-    const lugar = local(view());
-    const resposta = await sb().rpc(RPC_REGISTRAR_PRESENCA, {
-      p_current_view: lugar,
-    });
-    if (resposta.error) throw resposta.error;
-    presencaGravada(lugar, resposta.data);
-  }
-
   /* A presença foi gravada (pela batida ou pela navegação). */
   function presencaGravada(lugar: string | null, dados: unknown) {
     ultimoLocal = lugar;
@@ -273,31 +333,51 @@ export function criarPresenca({
     }
   }
 
+  /* Banco antigo (antes de 20261029121700): uma RPC para cada coisa. */
+  async function registrarNaAntiga(
+    evento: EventoDaNavegacao | null,
+    comPresenca: boolean,
+  ): Promise<RespostaDaBatida | null> {
+    if (evento)
+      void enviarEventoAvulso({
+        evento: evento.nome,
+        tela: evento.tela,
+        detalhes: evento.detalhes,
+      });
+    if (!comPresenca) return null;
+    const lugar = local(view());
+    const resposta = await sb().rpc(RPC_REGISTRAR_PRESENCA, {
+      p_current_view: lugar,
+    });
+    if (resposta.error) throw resposta.error;
+    presencaGravada(lugar, resposta.data);
+    return (resposta.data as RespostaDaBatida | null) ?? null;
+  }
+
   /*
-    Evento e presença numa chamada só (`registrar_navegacao_monitora`).
-    `presenca`: grava também o lugar atual (a aba precisa estar visível).
-    Rejeita quando a presença não foi gravada; o evento, não: a falha dele só
-    avisa, como em `registrarEvento`.
+    A chamada única (`registrar_navegacao_monitora`): o evento, os de carona,
+    a presença (o lugar atual, com a aba visível) e, com `listar`, a lista de
+    "Pessoas online". Devolve a resposta (com `pessoas` quando o banco a
+    mandou). Rejeita quando a presença não foi gravada; o evento, não: a falha
+    dele só avisa.
   */
   async function registrarNavegacao({
     evento = null,
     presenca = false,
+    listar = false,
   }: {
     evento?: EventoDaNavegacao | null;
     presenca?: boolean;
-  }) {
-    if (!sb() || !usuarioId()) return;
+    listar?: boolean;
+  }): Promise<RespostaDaBatida | null> {
+    if (!sb() || !usuarioId()) return null;
     const comPresenca = presenca && visivelNaAba();
-    if (!evento && !comPresenca) return;
-    if (semNavegacaoNoBanco) {
-      if (evento)
-        void registrarEvento(evento.nome, {
-          tela: evento.tela,
-          detalhes: evento.detalhes,
-        });
-      if (comPresenca) await registrarLocal();
-      return;
-    }
+    // Abaixo da batida, a fila sai em chamadas à parte.
+    if (nivel !== "batida")
+      carona.splice(0).forEach((e) => void enviarEventoAvulso(e));
+    const eventos = carona.splice(0);
+    if (!evento && !comPresenca && !eventos.length) return null;
+    if (nivel === "antiga") return registrarNaAntiga(evento, comPresenca);
     const lugar = comPresenca ? local(view()) : null;
     const resposta = await sb().rpc(RPC_NAVEGACAO, {
       p_evento: evento?.nome ?? null,
@@ -309,24 +389,30 @@ export function criarPresenca({
       p_app_version: configuracao.versao(),
       p_presenca: comPresenca,
       p_current_view: lugar,
+      // Só a batida (20261103230000) conhece estes dois; pelos nove nomes, cai na de antes.
+      ...(nivel === "batida"
+        ? { p_eventos: eventos, p_listar: listar && comPresenca }
+        : {}),
     });
-    if (
-      (resposta.error as { code?: unknown } | null)?.code === FUNCAO_AUSENTE
-    ) {
-      semNavegacaoNoBanco = true;
-      return registrarNavegacao({ evento, presenca });
+    if (codigoDoErro(resposta.error) === FUNCAO_AUSENTE) {
+      // Um degrau abaixo, com os mesmos eventos de volta na fila.
+      carona = [...eventos, ...carona];
+      nivel = nivel === "batida" ? "navegacao" : "antiga";
+      return registrarNavegacao({ evento, presenca, listar });
     }
     if (resposta.error) {
-      if (evento) console.warn("Falha ao registrar auditoria:", resposta.error);
+      if (evento || eventos.length)
+        console.warn("Falha ao registrar auditoria:", resposta.error);
       throw resposta.error;
     }
-    if (!comPresenca) return;
-    const dados = resposta.data as { presenca_erro?: unknown } | null;
+    const dados = resposta.data as RespostaDaBatida | null;
+    if (!comPresenca) return dados;
     if (dados?.presenca_erro) throw dados.presenca_erro;
     presencaGravada(lugar, dados);
+    return dados;
   }
 
-  /* Ao trocar de página, área ou seção, avisa na hora (sem esperar os 90 s). */
+  /* Ao trocar de página, área ou seção, avisa na hora (sem esperar a batida). */
   function trocouDeLocal() {
     return Boolean(ligada && batida) && local(view()) !== ultimoLocal;
   }
@@ -344,7 +430,16 @@ export function criarPresenca({
     );
   }
 
-  /* A lista de "Pessoas online" (só quem pode ver). */
+  function mostrarLista(dados: unknown) {
+    ultimaLista = agora();
+    definir({
+      visivel: true,
+      sincronizado: true,
+      pessoas: normalizeOnlinePresenceList(dados),
+    });
+  }
+
+  /* A lista numa chamada à parte (banco sem a batida, ou presença parada). */
   async function listar() {
     // Sem permissão (inclusive quem a perdeu nesta sessão): o indicador some.
     if (!podeVer()) {
@@ -353,12 +448,7 @@ export function criarPresenca({
     }
     const resposta = await sb().rpc(RPC_LISTAR_PRESENCA);
     if (resposta.error) throw resposta.error;
-    ultimaLista = agora();
-    definir({
-      visivel: true,
-      sincronizado: true,
-      pessoas: normalizeOnlinePresenceList(resposta.data),
-    });
+    mostrarLista(resposta.data);
   }
 
   /* Lista aberta: a cada batida. Fechada: a primeira e, depois, a cada 10 min. */
@@ -368,10 +458,15 @@ export function criarPresenca({
     agora() - ultimaLista >= LISTA_FECHADA_MS;
 
   /*
-    `evento`: o da entrada, que vai junto com a primeira batida. Sem ele, o
-    heartbeat vencido vai junto (uma chamada, não duas).
+    A batida: presença, o evento pendente e, quando vencida, a lista — uma
+    chamada. `evento`: o da entrada, que vai junto com a primeira batida; sem
+    ele, o heartbeat vencido vai junto. `lista`: relê a lista mesmo sem vencer
+    (a pessoa acabou de abri-la).
   */
-  async function sincronizar(evento: EventoDaNavegacao | null = null) {
+  async function sincronizar(
+    evento: EventoDaNavegacao | null = null,
+    { lista = false }: { lista?: boolean } = {},
+  ) {
     if (!sb() || !usuarioId()) return;
     if (!visivelNaAba()) {
       if (evento) void registrarEvento(evento.nome, { tela: evento.tela });
@@ -380,11 +475,17 @@ export function criarPresenca({
     try {
       const comEvento =
         evento ?? (heartbeatVencido() ? eventoDeHeartbeat() : null);
-      if (comEvento)
-        await registrarNavegacao({ evento: comEvento, presenca: true });
-      else await registrarLocal();
+      const querLista = podeVer() && (lista || listaVencida());
+      const dados = await registrarNavegacao({
+        evento: comEvento,
+        presenca: true,
+        listar: querLista,
+      });
       if (!podeVer()) definir({ visivel: false });
-      else if (listaVencida()) await listar();
+      else if (!querLista) return;
+      else if (dados?.pessoas_erro) falhou();
+      else if (dados && "pessoas" in dados) mostrarLista(dados.pessoas);
+      else await listar();
     } catch {
       falhou();
     }
@@ -422,9 +523,13 @@ export function criarPresenca({
     ligarBatida();
   }
 
-  /* Aba oculta: a batida para (o banco ainda conta 4 min de "online"). */
+  /*
+    Aba oculta: a batida para (o banco ainda conta 6 min de "online"); o que
+    estava na fila de carona sai agora, porque a aba pode não voltar.
+  */
   function pausar() {
     pararBatida();
+    despacharCarona();
   }
 
   /*
@@ -441,11 +546,20 @@ export function criarPresenca({
     ligarBatida();
   }
 
-  /** Abre ou fecha a lista; ao abrir, relê só a lista. */
+  /**
+   * Abre ou fecha a lista. Com a presença batendo, abrir é uma batida
+   * adiantada com a lista de carona, e o relógio recomeça dali.
+   */
   function alternar() {
     const aberto = !estado.aberto;
     definir({ aberto });
-    if (aberto && sb() && usuarioId()) listar().catch(falhou);
+    if (!aberto || !sb() || !usuarioId()) return;
+    if (ligada && batida && visivelNaAba()) {
+      void sincronizar(null, { lista: true });
+      ligarBatida();
+      return;
+    }
+    listar().catch(falhou);
   }
 
   function fechar() {
@@ -504,6 +618,7 @@ export function criarPresenca({
   /** Para tudo (saída, sem acesso, aba em segundo plano). */
   function pararTudo() {
     pararHeartbeat();
+    carona = [];
     parar();
   }
 
@@ -514,6 +629,7 @@ export function criarPresenca({
       return () => ouvintes.delete(ouvinte);
     },
     registrarEvento,
+    enfileirarEvento,
     iniciarHeartbeat,
     pararHeartbeat,
     iniciar,

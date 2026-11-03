@@ -299,53 +299,6 @@ html[data-esqueleto="calendario"] [data-formato="calendario"] {
 }
 
 /*
-  Painel externo: o skeleton cobre o iframe até o `load` dele. Não se sabe o
-  que o site de fora desenha; o formato é o de um painel de indicadores, que é
-  o que os painéis cadastrados são. `.external-panel` não tinha posição
-  (app.css, platform-shell.css): passa a segurar a cobertura.
-*/
-.external-panel {
-  position: relative;
-}
-.esqueleto-do-painel {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: var(--surface-page);
-  transition: opacity var(--motion-fast) var(--ease-standard);
-}
-.esqueleto-do-painel--saindo {
-  opacity: 0;
-}
-.esqueleto-do-painel__conteudo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  height: 100%;
-  padding: var(--space-4);
-}
-.esqueleto-do-painel__topo {
-  display: grid;
-  gap: var(--space-2);
-  padding: var(--space-2) 0;
-}
-.esqueleto-do-painel__kpis {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-3);
-}
-.esqueleto-do-painel__graficos {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: var(--space-3);
-}
-.esqueleto-do-painel__graficos .esqueleto-cartao {
-  min-height: 0;
-}
-
-/*
   Ação em curso dentro do próprio botão (`BotaoDeAcao`, src/ui/), no lugar
   da tela cheia. Gira por `transform`; com movimento reduzido, fica parado.
 */
@@ -366,7 +319,7 @@ html[data-esqueleto="calendario"] [data-formato="calendario"] {
   }
 }
 
-/* Demora: o aviso e o "Tentar novamente" da antiga tela, na entrada e no painel. */
+/* Demora: o aviso e o "Tentar novamente" da antiga tela, na entrada. */
 .esqueleto-aviso {
   position: absolute;
   bottom: var(--space-8);
@@ -455,12 +408,8 @@ html.dados-atualizando .app .top::after {
   .esqueleto-tabela__linha .esqueleto:nth-child(n + 4) {
     display: none;
   }
-  .esqueleto-calendario__filtros,
-  .esqueleto-do-painel__kpis {
+  .esqueleto-calendario__filtros {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .esqueleto-do-painel__graficos {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 

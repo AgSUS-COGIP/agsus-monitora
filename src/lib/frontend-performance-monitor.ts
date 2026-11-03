@@ -44,6 +44,46 @@ let requestCompleted = 0;
 let requestFailed = 0;
 let observer: PerformanceObserver | null = null;
 
+/** O evento do retrato, como vai à auditoria (TL_EVENTO_ACESSO). */
+export type EventoDoRetrato = {
+  evento: string;
+  tela: string;
+  origem: string;
+  detalhes: RetratoDeDesempenho;
+  client_session_id: string;
+  app_version: string;
+};
+
+/*
+  Quem leva o retrato. Com a presença ligada (src/app/sistema.ts), ele vai de
+  carona na próxima batida (`presenca.enfileirarEvento`), sem chamada própria;
+  sem ela (antes do login, outra página), numa chamada à parte, como antes.
+*/
+let enviarDeCarona: ((evento: EventoDoRetrato) => void) | null = null;
+
+/** Liga (ou desliga, com `null`) o envio do retrato de carona. */
+export function definirEnvioDoRetrato(
+  envio: ((evento: EventoDoRetrato) => void) | null,
+) {
+  enviarDeCarona = envio;
+}
+
+/** O retrato como evento da auditoria (o mesmo de sempre). */
+export function eventoDoRetrato(
+  snapshot: RetratoDeDesempenho,
+): EventoDoRetrato {
+  return {
+    evento: "frontend_performance",
+    tela: window.location.pathname.includes("analises")
+      ? "analises"
+      : "monitora",
+    origem: "frontend",
+    detalhes: snapshot,
+    client_session_id: "performance-monitor",
+    app_version: APP_VERSION,
+  };
+}
+
 export function roundMetric(value: unknown): number {
   const number = Number(value || 0);
   return Number.isFinite(number) ? Math.round(number) : 0;
@@ -209,16 +249,19 @@ async function reportSnapshot(snapshot: RetratoDeDesempenho) {
     const { data } = await client.auth.getSession();
     if (!data?.session?.user?.id) return;
 
+    const evento = eventoDoRetrato(snapshot);
+    if (enviarDeCarona) {
+      enviarDeCarona(evento);
+      return;
+    }
     await client.rpc("registrar_evento_acesso", {
-      p_evento: "frontend_performance",
-      p_tela: window.location.pathname.includes("analises")
-        ? "analises"
-        : "monitora",
-      p_origem: "frontend",
-      p_detalhes: snapshot,
-      p_client_session_id: "performance-monitor",
+      p_evento: evento.evento,
+      p_tela: evento.tela,
+      p_origem: evento.origem,
+      p_detalhes: evento.detalhes,
+      p_client_session_id: evento.client_session_id,
       p_user_agent: navigator.userAgent || "",
-      p_app_version: APP_VERSION,
+      p_app_version: evento.app_version,
     });
   } catch (error) {
     console.warn("Falha ao registrar métricas de desempenho:", error);

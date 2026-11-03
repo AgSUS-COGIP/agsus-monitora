@@ -92,12 +92,12 @@ describe(NOME, () => {
     );
   });
 
-  it("os argumentos do contrato são os da função", () => {
+  it("os argumentos do contrato são os da função (mais os dois de 20261103230000)", () => {
     const argumentos = [...sql.matchAll(/^\s+(p_\w+) \w+ default/gm)].map(
       (m) => m[1],
     );
-    expect(argumentos.sort()).toEqual(
-      [...CONTRATO_RPC.registrar_navegacao_monitora.argumentos].sort(),
+    expect([...argumentos, "p_eventos", "p_listar"]).toEqual(
+      CONTRATO_RPC.registrar_navegacao_monitora.argumentos,
     );
     expect(CONTRATO_RPC.obter_inicio_da_sessao.argumentos).toEqual([]);
   });

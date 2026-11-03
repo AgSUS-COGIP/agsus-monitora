@@ -1,23 +1,26 @@
 # Painel externo que avisa quando carregou
 
-Ao abrir um painel externo, o MONITORA cobre o quadro com um skeleton
-(`acompanharCarregamentoDoPainel`, em `src/app/carregamento.ts`). Sozinho, ele só sabe quando
-a **página** do painel chegou (o `load` do iframe), e não quando os **dados** chegaram.
+Ao abrir um painel externo, o MONITORA cobre o quadro com "Carregando o painel…" e um giro
+(`acompanharCarregamentoDoPainel`, em `src/modulos/paineis-externos/carregamento-do-painel.tsx`;
+o nome do serviço, como "Looker Studio", sai do endereço). Aos 20 s, avisa que está demorando, com
+"Abrir em nova aba" e "Tentar novamente". Sozinha, a cobertura só sabe quando a **página** do
+painel chegou (o `load` do iframe), e não quando os **dados** chegaram.
 
 Num painel feito em Google Apps Script (como o de Recursos), a página abre e só depois o script
-busca os dados, mostrando o carregamento dele. Para o skeleton ficar até os dados aparecerem, o
-painel avisa o MONITORA com duas mensagens:
+busca os dados, mostrando o carregamento dele. Para a cobertura ficar até os dados aparecerem, o
+painel avisa o MONITORA com estas mensagens:
 
-| Mensagem                              | Quando mandar                                            | Efeito                       |
-| ------------------------------------- | -------------------------------------------------------- | ---------------------------- |
-| `{ tipo: "agsus:painel-carregando" }` | logo no início da página                                 | o skeleton não sai no `load` |
-| `{ tipo: "agsus:painel-pronto" }`     | quando os dados estiverem desenhados (ou o erro na tela) | o skeleton sai               |
+| Mensagem                              | Quando mandar                                            | Efeito                                         |
+| ------------------------------------- | -------------------------------------------------------- | ---------------------------------------------- |
+| `{ tipo: "agsus:painel-carregando" }` | logo no início da página                                 | a cobertura não sai no `load`                  |
+| `{ tipo: "agsus:painel-pronto" }`     | quando os dados estiverem desenhados (ou o erro na tela) | a cobertura sai                                |
+| `{ tipo: "agsus:painel-erro" }`       | opcional: quando os dados não vieram                     | "Não foi possível carregar o painel." e saídas |
 
-Painel que não manda nada continua como sempre: o skeleton sai no `load`. Um painel que avisou e
+Painel que não manda nada continua como sempre: a cobertura sai no `load`. Um painel que avisou e
 nunca mandou o "pronto" é descoberto depois de 45 s.
 
 Nenhuma página do próprio MONITORA roda mais no quadro: Recursos, Entrevistas, Análises curriculares e
-Seleção são módulos de `src/modulos/`, sem avisos (o skeleton é o da própria tela).
+Seleção são módulos de `src/modulos/`, sem avisos (o carregamento é o da própria tela).
 
 ## O que colar no Apps Script
 
@@ -45,13 +48,13 @@ google.script.run
   })
   .withFailureHandler((erro) => {
     mostrarErro(erro);
-    avisarMonitoraQueCarregou(); // sem isto, o erro ficaria escondido sob o skeleton
+    avisarMonitoraQueCarregou(); // sem isto, o erro ficaria escondido sob a cobertura
   })
   .buscarDados();
 ```
 
 Depois disso, a tela de carregamento do próprio script pode sair: dentro do MONITORA ela fica
-escondida sob o skeleton.
+escondida sob a cobertura.
 
 ## Por que assim
 
