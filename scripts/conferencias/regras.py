@@ -22,6 +22,7 @@ from datetime import date, datetime, time, timedelta
 from catalogo import CATALOGO
 
 from monitora.avaliacao_documental.pontuacao import conferir_ficha
+from monitora.classificacao.quadro_da_vaga import preparar_quadros, quadro_da_vaga
 from monitora.fuso import hoje_em_brasilia
 
 MAX_EXEMPLOS = 20
@@ -551,10 +552,67 @@ def conferir_entrevistas(dados, contexto, acumulador):
 # ── Classificação ───────────────────────────────────────────────────────────
 
 
-def conferir_classificacao(dados, acumulador):
+class AnalisesDaClassificacao:
+    """
+    O que a conferência da classificação usa das análises, tirado das MESMAS páginas de
+    conferencia_ler_analises (antes o banco relia a tabela inteira em conferencia_ler_classificacao
+    e procurava a linha do quadro de cada vaga lá: 12 a 15 s; 20261103181500):
+      alteradas  edital -> a última atualização das análises dele (max de `atualizado`);
+      vagas      (edital, área, código da vaga, nome da vaga) distintos, das análises com nome de vaga.
+    `completa` só fica verdadeira quando todas as páginas passaram: com o módulo das análises
+    interrompido, a classificação não confere vaga nenhuma (falha, e os avisos dela ficam como estão).
+    """
+
+    def __init__(self):
+        self.alteradas = {}
+        self.vagas = set()
+        self.completa = False
+
+    def anotar(self, linha):
+        edital = linha.get("edital")
+        if not edital:
+            return
+        quando = momento(linha.get("atualizado"))
+        if edital not in self.alteradas or (
+            quando and (self.alteradas[edital] is None or quando > self.alteradas[edital])
+        ):
+            self.alteradas[edital] = quando
+        if linha.get("nome_vaga") is not None:
+            self.vagas.add((edital, linha.get("area"), linha.get("vaga"), linha["nome_vaga"]))
+
+    def paginas(self, paginas):
+        """As páginas como vieram, anotando cada linha; no fim, completa."""
+        for linhas in paginas:
+            for linha in linhas:
+                self.anotar(linha)
+            yield linhas
+        self.completa = True
+
+
+def vagas_sem_quadro(analises, quadros, editais):
+    """As vagas das análises de edital ativo sem uma linha do quadro de vagas pelo nome (a regra de
+    private."FC_QUADRO_DA_VAGA", em monitora.classificacao.quadro_da_vaga), em ordem estável."""
+    por_edital = preparar_quadros(quadros)
+    saida = []
+    for edital, area, codigo, nome in sorted(analises.vagas, key=lambda v: tuple(str(x) for x in v)):
+        if not (editais.get(edital) or {}).get("ativo"):
+            continue
+        if quadro_da_vaga(por_edital.get(edital), nome) is None:
+            saida.append({"edital": edital, "area": area, "vaga": codigo or "sem-codigo"})
+    return saida
+
+
+def conferir_classificacao(dados, acumulador, analises, editais):
+    """
+    dados: conferencia_ler_listas_e_quadros (listas, ajustes e as linhas ativas do quadro de vagas).
+    analises: AnalisesDaClassificacao das páginas de conferencia_ler_analises (já lidas).
+    editais: os editais do contexto (id -> {ativo, ...}).
+    """
+    if not analises.completa:
+        raise RuntimeError("as análises não foram lidas inteiras: a classificação não confere")
     listas = dados.get("listas") or []
     ultima = {(lista.get("edital"), lista.get("tipo")): lista for lista in listas}
-    alteradas = {a["edital"]: momento(a.get("alterada_em")) for a in dados.get("analises_alteradas") or []}
+    alteradas = analises.alteradas
 
     for lista in listas:
         edital = lista.get("edital")
@@ -584,7 +642,7 @@ def conferir_classificacao(dados, acumulador):
             for vaga in lista.get("vagas_pendentes") or []:
                 Acumulador.acrescentar(aviso, vaga, {"referencia": vaga, "tipo": "vaga"})
 
-    for v in dados.get("vagas_sem_quadro") or []:
+    for v in vagas_sem_quadro(analises, dados.get("quadros"), editais):
         acumulador.anotar(
             "CLASSIFICACAO_VAGA_SEM_QUADRO",
             edital=v.get("edital"),

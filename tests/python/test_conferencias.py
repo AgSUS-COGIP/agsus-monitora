@@ -316,16 +316,28 @@ class Classificacao(unittest.TestCase):
                 {"id": "lp", "edital": E2, "area": "saude-indigena", "tipo": "PRELIMINAR",
                  "gerada_em": "2026-10-01T10:00:00+00:00", "pendencias": 0},
             ],
-            "analises_alteradas": [{"edital": E1, "alterada_em": "2026-10-02T08:00:00+00:00"},
-                                   {"edital": E2, "alterada_em": "2026-10-03T08:00:00+00:00"}],
-            "vagas_sem_quadro": [{"edital": E1, "area": "saude-indigena", "vaga": "180001"}],
+            # O quadro de E1 tem "Enfermeiro"; a vaga 180001 ("Médico") fica sem linha.
+            "quadros": [{"id": "q1", "edital": E1, "cargo": "Enfermeiro", "lotacao": None}],
             "ajustes": [{"id": "aj1", "edital": E2, "area": "saude-indigena", "tipo": "PRELIMINAR",
                          "aprovado_em": "2026-10-02T00:00:00+00:00"},
                         {"id": "aj2", "edital": E1, "area": "saude-indigena", "tipo": "ENTREVISTA",
                          "aprovado_em": "2026-10-02T00:00:00+00:00"}],
         }  # fmt: skip
-        ac = regras.Acumulador({e["id"]: e for e in CONTEXTO["editais"]})
-        regras.conferir_classificacao(dados, ac)
+        editais = {e["id"]: e for e in CONTEXTO["editais"]}
+        analises = regras.AnalisesDaClassificacao()
+        paginas = [
+            [
+                {"id": A1, "area": "saude-indigena", "edital": E1, "atualizado": "2026-10-02T08:00:00+00:00",
+                 "vaga": "180001", "nome_vaga": "Médico - Polo Base X"},
+                {"id": A2, "area": "saude-indigena", "edital": E1, "atualizado": "2026-09-30T08:00:00+00:00",
+                 "vaga": "180002", "nome_vaga": "Enfermeiro (40h)"},
+            ],
+            [{"id": A3, "area": "saude-indigena", "edital": E2, "atualizado": "2026-10-03T08:00:00+00:00",
+              "vaga": None, "nome_vaga": None}],
+        ]  # fmt: skip
+        self.assertEqual(sum(len(p) for p in analises.paginas(paginas)), 3)
+        ac = regras.Acumulador(editais)
+        regras.conferir_classificacao(dados, ac, analises, editais)
         avisos = _avisos(ac)
         self.assertIn(("CLASSIFICACAO_LISTA_FINAL_DESATUALIZADA", f"edital:{E1}"), avisos)
         # Lista preliminar mais velha que as análises não é a final: sem aviso de desatualizada.
@@ -355,6 +367,40 @@ class Classificacao(unittest.TestCase):
             avisos[("CLASSIFICACAO_AJUSTE_APOS_LISTA", f"edital:{E2}")]["casos"],
             [{"referencia": "aj1", "tipo": "ajuste_recurso"}],
         )
+
+    def test_analises_da_classificacao_pelas_paginas(self):
+        analises = regras.AnalisesDaClassificacao()
+        linhas = [
+            {"edital": E1, "area": "si", "atualizado": None, "vaga": "1", "nome_vaga": "Médico"},
+            {"edital": E1, "area": "si", "atualizado": "2026-10-02T08:00:00+00:00", "vaga": "1", "nome_vaga": "Médico"},
+            {"edital": E1, "area": "si", "atualizado": "2026-10-01T08:00:00+00:00", "vaga": "1", "nome_vaga": "Médico "},
+            {"edital": None, "area": "si", "atualizado": "2026-10-05T08:00:00+00:00", "vaga": "9", "nome_vaga": "X"},
+        ]  # fmt: skip
+        self.assertFalse(analises.completa)
+        list(analises.paginas([linhas]))
+        self.assertTrue(analises.completa)
+        # O máximo por edital (nulo não conta); sem edital, fora (como a junção do banco).
+        self.assertEqual(analises.alteradas, {E1: regras.momento("2026-10-02T08:00:00+00:00")})
+        # Distintas pelo nome como veio (o banco só apara para saber se é vazio).
+        self.assertEqual(len(analises.vagas), 2)
+
+    def test_vaga_sem_quadro_so_de_edital_ativo_e_sem_codigo(self):
+        analises = regras.AnalisesDaClassificacao()
+        list(analises.paginas([[
+            {"edital": E1, "area": "si", "vaga": None, "nome_vaga": "Psicólogo"},
+            {"edital": E2, "area": "si", "vaga": "7", "nome_vaga": "Psicólogo"},
+        ]]))  # fmt: skip
+        editais = {E1: {"ativo": True}, E2: {"ativo": False}}
+        self.assertEqual(
+            regras.vagas_sem_quadro(analises, [], editais), [{"edital": E1, "area": "si", "vaga": "sem-codigo"}]
+        )
+
+    def test_sem_todas_as_paginas_a_classificacao_nao_confere(self):
+        analises = regras.AnalisesDaClassificacao()
+        paginas = analises.paginas([[{"edital": E1}], [{"edital": E2}]])
+        next(paginas)  # o módulo das análises parou no meio
+        with self.assertRaises(RuntimeError):
+            regras.conferir_classificacao({}, regras.Acumulador({}), analises, {})
 
 
 class Aprovados(unittest.TestCase):
@@ -585,6 +631,17 @@ class Fluxo(unittest.TestCase):
         self.assertNotIn("CARGA_VARIACAO_BRUSCA", fim["p_conferencias"])
         gravados = [c for f, c in banco.chamadas if f == "gravar_avisos_conferencia"][0]["p_avisos"]
         self.assertNotIn("CARGA_VARIACAO_BRUSCA", [a["conferencia"] for a in gravados])
+
+    def test_classificacao_le_a_rpc_nova_e_cai_com_as_analises(self):
+        banco = _BancoFalso()
+        self._rodar(banco)
+        funcoes = [f for f, _ in banco.chamadas]
+        self.assertIn("conferencia_ler_listas_e_quadros", funcoes)
+        self.assertNotIn("conferencia_ler_classificacao", funcoes)
+        # Análises que caem no meio: a classificação também não roda (os avisos dela ficam).
+        banco = _BancoFalso(falhar={"conferencia_ler_analises"})
+        self.assertEqual(self._rodar(banco), 2)
+        self.assertTrue(set(do_modulo("classificacao")) <= set(banco.chamadas[-1][1]["p_falhas"]))
 
     def test_seco_nao_grava(self):
         banco = _BancoFalso()

@@ -155,6 +155,58 @@ class Job(unittest.TestCase):
         with self.assertRaises(ValueError):
             job.ler(lambda _f, _c: {"schema_version": 2})
 
+    def test_le_em_paginas_e_junta_como_a_leitura_inteira(self):
+        entrada = copy.deepcopy(CASOS["entrada"])
+        linhas = sorted(entrada["linhas"], key=lambda x: str(x[0]))
+        chamadas = []
+
+        def chamar(funcao, corpo):
+            chamadas.append(corpo)
+            # Como o banco (20261103181500): linhas em ordem do id depois de p_apos; ambiguos e
+            # pendências só na primeira página; proximo com a página cheia.
+            depois = [x for x in linhas if corpo["p_apos"] is None or str(x[0]) > corpo["p_apos"]]
+            pagina = depois[: corpo["p_limite"]]
+            r = {"schema_version": 1, "lido_em": entrada["lido_em"], "listas": entrada["listas"], "linhas": pagina}
+            if corpo["p_apos"] is None:
+                r.update(ambiguos=entrada.get("ambiguos"), pendencias=entrada.get("pendencias"))
+            if len(pagina) == corpo["p_limite"]:
+                r["proximo"] = str(pagina[-1][0])
+            return r
+
+        dados = job.ler(chamar, tamanho=2)
+        self.assertGreater(len(chamadas), 2)
+        self.assertEqual(dados["linhas"], linhas)
+        self.assertNotIn("proximo", dados)
+        self.assertEqual(regra.detectar(dados, HOJE, 15), regra.detectar(entrada, HOJE, 15))
+
+    def test_listas_que_mudam_no_meio_leem_de_novo(self):
+        entrada = copy.deepcopy(CASOS["entrada"])
+        vezes = {"n": 0}
+
+        def chamar(funcao, corpo):
+            if corpo["p_apos"] is None:
+                vezes["n"] += 1
+                return {**entrada, "linhas": entrada["linhas"][:1], "proximo": "x"}
+            listas = entrada["listas"] if vezes["n"] > 1 else entrada["listas"][:-1]
+            return {"schema_version": 1, "listas": listas, "linhas": entrada["linhas"][1:]}
+
+        dados = job.ler(chamar, tamanho=1)
+        self.assertEqual(vezes["n"], 2)
+        self.assertEqual(len(dados["linhas"]), len(entrada["linhas"]))
+
+        def sempre_muda(funcao, corpo):
+            if corpo["p_apos"] is None:
+                return {**entrada, "proximo": "x"}
+            return {"schema_version": 1, "listas": [], "linhas": []}
+
+        with self.assertRaises(RuntimeError):
+            job.ler(sempre_muda, tamanho=1)
+
+    def test_cursor_parado_encerra(self):
+        entrada = copy.deepcopy(CASOS["entrada"])
+        dados = job.ler(lambda _f, corpo: {**entrada, "proximo": "x"}, tamanho=1)
+        self.assertEqual(len(dados["linhas"]), 2 * len(entrada["linhas"]))
+
     def test_prazo_fora_da_faixa_e_entrada_invalida(self):
         with self.assertRaises(SystemExit), redirect_stdout(io.StringIO()):
             job.argumentos(["--dias-convocado", "0"])

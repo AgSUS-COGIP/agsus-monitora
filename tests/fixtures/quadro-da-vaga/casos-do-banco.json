@@ -1,0 +1,172 @@
+{
+  "_leia": "Saídas de private.\"FC_TOKENS_VAGA\" e private.\"FC_QUADRO_DA_VAGA\" no banco (03/11/2026; o quadro foi montado num begin … rollback). Textos fictícios. tests/python/test_quadro_da_vaga.py confere a cópia em Python contra eles.",
+  "tokens": {
+    "Ab Cd": [
+      "ab",
+      "cd"
+    ],
+    "ÁGUA ÇÉU Ñandu İx ẞ": [
+      "agua",
+      "andu",
+      "ceu",
+      "i",
+      "x"
+    ],
+    "Médico (40h) em excel x": [
+      "medico"
+    ],
+    "Enfermeiro\nem excel\nfoo": [
+      "enfermeiro"
+    ],
+    "Técnico em excel y": [
+      "tecnico"
+    ],
+    "Vaga (CR) - Polo Base Bauru": [
+      "base",
+      "bauru",
+      "polo",
+      "vaga"
+    ],
+    "ÀS Ãão": [
+      "aao"
+    ],
+    "ENFERMEIRO(A) 40H - DSEI Xavante EM EXCEL (planilha)": [
+      "40h",
+      "dsei",
+      "enfermeiro",
+      "xavante"
+    ],
+    "Agente Indígena de Saúde – AIS / Polo-Base São João": [
+      "agente",
+      "ais",
+      "base",
+      "indigena",
+      "joao",
+      "polo",
+      "sao",
+      "saude"
+    ],
+    "": [],
+    "Cargo\t(manhã\n) X": [
+      "cargo",
+      "x"
+    ],
+    "Médico   Em   Excel": [
+      "medico"
+    ],
+    "excel em excel": [
+      "excel"
+    ],
+    "Psicólogo(a) Ñ ü ö": [
+      "psicologo",
+      "u"
+    ]
+  },
+  "quadros": [
+    {
+      "id": "00000000-0000-4000-a000-000000000001",
+      "cargo": "Enfermeiro",
+      "lotacao": null
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000002",
+      "cargo": "Médico",
+      "lotacao": "Polo Base Bauru"
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000003",
+      "cargo": "Médico",
+      "lotacao": "Polo Base Marília"
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000004",
+      "cargo": "Agente Indígena de Saúde",
+      "lotacao": "DSEI Xavante"
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000005",
+      "cargo": "Agente de Saúde",
+      "lotacao": null
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000006",
+      "cargo": "Técnico de Enfermagem",
+      "lotacao": "CASAI Brasília"
+    },
+    {
+      "id": "00000000-0000-4000-a000-000000000007",
+      "cargo": "Técnico de Enfermagem",
+      "lotacao": "Polo Base Sul"
+    }
+  ],
+  "casos": [
+    [
+      "",
+      null
+    ],
+    [
+      "Agente de Saúde",
+      "00000000-0000-4000-a000-000000000005"
+    ],
+    [
+      "Agente Indígena de Saúde",
+      "00000000-0000-4000-a000-000000000004"
+    ],
+    [
+      "Agente Indígena de Saúde - DSEI Xavante",
+      "00000000-0000-4000-a000-000000000004"
+    ],
+    [
+      "Agente Indígena de Saúde - Polo Norte",
+      null
+    ],
+    [
+      "Enfermeiro - Polo Base Bauru",
+      "00000000-0000-4000-a000-000000000001"
+    ],
+    [
+      "Enfermeiro 40h (CR)",
+      "00000000-0000-4000-a000-000000000001"
+    ],
+    [
+      "Médico",
+      null
+    ],
+    [
+      "Médico - Polo Base Bauru",
+      "00000000-0000-4000-a000-000000000002"
+    ],
+    [
+      "Médico - Polo Base Lins",
+      null
+    ],
+    [
+      "Médico - Polo Base Marília",
+      "00000000-0000-4000-a000-000000000003"
+    ],
+    [
+      "Médico Cadastro Reserva",
+      null
+    ],
+    [
+      "Psicólogo",
+      null
+    ],
+    [
+      "Técnico de Enfermagem",
+      null
+    ],
+    [
+      "Técnico de Enfermagem - CASAI Brasília em Excel (questionário)",
+      "00000000-0000-4000-a000-000000000006"
+    ],
+    [
+      "Técnico de Enfermagem - Polo Base Sul vaga 3",
+      "00000000-0000-4000-a000-000000000007"
+    ],
+    [
+      "Técnico de Enfermagem Polo Base",
+      null
+    ]
+  ]
+}
