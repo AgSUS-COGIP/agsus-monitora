@@ -90,7 +90,7 @@ export function avaliarMarcosPersonalizados({
     );
     const [primeiro, ...demais] = alcancados;
     if (!primeiro) return [];
-    comemorar({
+    void comemorar({
       texto: mensagemDoPersonalizado(primeiro),
       itens: demais.map(mensagemDoPersonalizado),
       marco: primeiro.id,

@@ -154,7 +154,7 @@ export function MarcosDoAno({
       };
       setMensagem({ area, texto: mensagemDoMarcoDoAno(marco) });
       // Os fogos do marco: o número desenhado no céu e o agradecimento à equipe.
-      comemorar({
+      void comemorar({
         texto: agradecimentoDoMarco(marco),
         marco: "marco-do-ano",
         forma: formaDoMarco(novo),

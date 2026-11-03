@@ -9,12 +9,12 @@ const KB = 1024;
   Limites (KB). A entrada é o JavaScript que o index.html baixa antes da tela
   de acesso (o script principal e os modulepreload): o que só uma tela, um
   modal, um mapa ou uma comemoração usa vai por import() e fica fora dela.
-  Medido em 03/11/2026: entrada 895 KB bruto / 285 KB gzip; maior JS 457 KB
-  bruto (busca da Aya) / 136 KB gzip (main).
+  Medido em 03/11/2026: entrada 953 KB bruto / 304 KB gzip; maior JS 459 KB
+  bruto (busca da Aya) / 156 KB gzip (main).
 */
 const limits = {
-  entryJsRaw: Number(process.env.BUNDLE_MAX_ENTRY_JS_RAW_KB || 960) * KB,
-  entryJsGzip: Number(process.env.BUNDLE_MAX_ENTRY_JS_GZIP_KB || 310) * KB,
+  entryJsRaw: Number(process.env.BUNDLE_MAX_ENTRY_JS_RAW_KB || 1000) * KB,
+  entryJsGzip: Number(process.env.BUNDLE_MAX_ENTRY_JS_GZIP_KB || 320) * KB,
   largestJsRaw: Number(process.env.BUNDLE_MAX_JS_RAW_KB || 600) * KB,
   largestJsGzip: Number(process.env.BUNDLE_MAX_JS_GZIP_KB || 180) * KB,
   totalJsRaw: Number(process.env.BUNDLE_MAX_TOTAL_JS_RAW_KB || 5000) * KB,

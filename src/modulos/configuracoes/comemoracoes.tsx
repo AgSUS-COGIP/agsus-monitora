@@ -69,7 +69,7 @@ interface EstadoDasConfiguracoes {
 
 function testarPadrao(janela: Window | undefined) {
   return (pedido: PedidoDeTeste) => {
-    comemorar({ ...pedido, teste: true, janela });
+    void comemorar({ ...pedido, teste: true, janela });
   };
 }
 

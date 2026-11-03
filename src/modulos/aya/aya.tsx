@@ -958,7 +958,7 @@ export function Aya({
   function celebrarFimDoTour(concluido: TourEmCurso | null): void {
     if (!concluido) return;
     const nome = String(concluido.rotulo || "").replace(/^(Tour|Trilha): /, "");
-    comemorar({
+    void comemorar({
       texto: concluido.trilha
         ? `Parabéns! Você concluiu a trilha "${nome}".`
         : `Parabéns! Você conheceu a tela ${nome}.`,

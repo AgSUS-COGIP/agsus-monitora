@@ -135,7 +135,7 @@ export function EncerramentoDoEdital({
     if (!aberto || comemorados.current.has(aberto.id)) return;
     comemorados.current.add(aberto.id);
     const fogos = fogosDoEncerramento(aberto, estado.obter().fogosJaSoltos);
-    if (fogos) comemorar(fogos);
+    if (fogos) void comemorar(fogos);
   }, [aberto, estado, comemorar]);
 
   if (!aberto) return null;

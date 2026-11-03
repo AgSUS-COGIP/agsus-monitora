@@ -2,7 +2,6 @@ import { lazy, Suspense, useMemo, useState, useSyncExternalStore } from "react";
 import { montarModulo } from "../../app/montar-modulo.tsx";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { safeHttpUrl } from "../../lib/sanitize";
-import { importarComRecarga } from "../../lib/importar-com-recarga.ts";
 import {
   canImportApprovedList,
   canManageEditais,
