@@ -11,6 +11,7 @@ import { SECOES } from "../../src/modulos/configuracoes/secoes.ts";
 import { sairDoSistema } from "../../src/app/casca/saida.ts";
 import { BarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
 import { desenharNoTeste } from "../montar-tela.js";
+import { aplicarMarcaDaBarraLateral } from "../../src/componentes/barra-lateral/marca.ts";
 import {
   aplicarMarcaDaBarraLateral,
   aplicarMarcaDaConfiguracao,
@@ -56,8 +57,12 @@ function arvoreCompleta(paineis = []) {
 
 let raiz = null;
 
-/* A barra como a casca a desenha (src/app/casca/casca.tsx): na hora, no <aside>. */
+/*
+  A barra como o app a desenha: src/main.ts aplica a marca padrão e a raiz
+  desenha a casca (src/app/casca/casca.tsx) na hora, com a barra no <aside>.
+*/
 function montarBarraLateral(aside) {
+  aplicarMarcaDaBarraLateral();
   return desenharNoTeste(aside, createElement(BarraLateral), {
     sincrono: true,
     nome: "a barra lateral",

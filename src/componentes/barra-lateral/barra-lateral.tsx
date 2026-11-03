@@ -57,6 +57,7 @@ function Marca({ logo }: { logo?: string }) {
   const gravada = useSyncExternalStore(
     assinarMarcaDaBarraLateral,
     logoDaBarraLateral,
+    logoDaBarraLateral,
   );
   const imagem = usarLogo(logo ?? gravada);
   return (
