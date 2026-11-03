@@ -35,6 +35,23 @@ function cleanText(value: unknown) {
   return String(value ?? "").trim();
 }
 
+/*
+  A modalidade como o banco guarda: sem aspas e com "; " entre as modalidades.
+  A planilha de resultado traz a célula como `"Ampla concorrência"`,
+  `"Ampla concorrência", "Pretos e pardos"` ou com aspas tipográficas; sem limpar,
+  a lista gravava as aspas (26,8 mil linhas em TB_CANDIDATO_APROVADO até 03/11/2026,
+  corrigidas por supabase/correcoes/20261103-modalidade-sem-aspas.sql, com a mesma regra).
+*/
+export function limparModalidade(value: unknown) {
+  return cleanText(value)
+    .replace(/["“”]\s*[,;]?\s*["“”]/g, ";")
+    .replace(/["“”]/g, "")
+    .split(";")
+    .map((parte) => parte.trim())
+    .filter(Boolean)
+    .join("; ");
+}
+
 function stripDiacritics(value: unknown) {
   return cleanText(value)
     .normalize("NFD")
@@ -86,6 +103,8 @@ export function validateApprovedRows(
     );
 
     if (rowIsEmpty(row)) return;
+    // Modalidade só de aspas (`""`) conta como vazia.
+    row.modalidade = limparModalidade(row.modalidade);
 
     const missing = [
       "codigo_vaga",

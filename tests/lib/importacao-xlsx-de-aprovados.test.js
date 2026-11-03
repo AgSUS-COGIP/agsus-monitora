@@ -3,6 +3,7 @@
 import { deflateRawSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import {
+  limparModalidade,
   normalizeApprovedHeaders,
   readApprovedWorkbook,
   validateApprovedRows,
@@ -154,6 +155,39 @@ describe("Importação real de XLSX de Aprovados", () => {
     ).rejects.toThrow(/Linha 13:.*\n\.\.\. e mais 2 erro\(s\)\./);
     const r = validateApprovedRows([{}, { ...esperado, classificacao: 0 }]);
     expect(r.errors[0]).toMatch(/^Linha 3:/);
+  });
+  it('tira as aspas da modalidade e separa várias por "; " (como o banco guarda)', async () => {
+    for (const [celula, limpa] of [
+      ['"Ampla concorrência"', "Ampla concorrência"],
+      ["“Ampla Concorrência”", "Ampla Concorrência"],
+      ['Ampla Concorrência"', "Ampla Concorrência"],
+      [
+        '"Ampla concorrência", "Pretos e pardos"',
+        "Ampla concorrência; Pretos e pardos",
+      ],
+      ['"Ampla concorrência" "Indígenas"', "Ampla concorrência; Indígenas"],
+      [
+        '"Ampla concorrência", "Indígenas", "Pessoas com deficiência (PCD)"',
+        "Ampla concorrência; Indígenas; Pessoas com deficiência (PCD)",
+      ],
+      [
+        "Ampla Concorrência; Pretos e Pardos",
+        "Ampla Concorrência; Pretos e Pardos",
+      ],
+      ["  PCD  ", "PCD"],
+    ]) {
+      expect(limparModalidade(celula)).toBe(limpa);
+    }
+    const lida = await readApprovedWorkbook(
+      planilha([
+        cabecalhos,
+        [...valores.slice(0, 5), '"Ampla concorrência", "Pretos e pardos"'],
+      ]),
+    );
+    expect(lida[0].modalidade).toBe("Ampla concorrência; Pretos e pardos");
+    const soAspas = validateApprovedRows([{ ...esperado, modalidade: '""' }]);
+    expect(soAspas.rows).toEqual([]);
+    expect(soAspas.errors[0]).toMatch(/campos obrigatórios vazios: modalidade/);
   });
   it("recusa extensão errada e ZIP inválido", async () => {
     await expect(
