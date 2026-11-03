@@ -6,7 +6,10 @@
   linhas cuja ficha mudou desde então (parcial), os ids que saíram do núcleo
   e quantas linhas ele tem. Aqui, sem DOM e sem estado, a junção com a fila
   que a tela já tem; quando algo não bate (linha nova no núcleo, que mudaria a
-  ordem, ou total diferente), `null`: a tela lê a fila inteira.
+  ordem, ou total diferente), `null`: a tela lê a fila inteira. Sem mudança
+  nenhuma, o banco devolve a parcial vazia sem montar nada
+  (20261103171500_leituras_pesadas_sem_refazer.sql) e a fila fica a mesma,
+  com o gerado_em anterior.
 */
 import type { InscritoDaFila } from "./fila-fora-do-lote.ts";
 

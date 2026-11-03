@@ -443,7 +443,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_versao"],
     critica: true,
     resumo:
-      "As linhas ativas do monitoramento (VW_MONITORAMENTO_INDIGENA_OPERACIONAL, 40 colunas, por unidade e edital; SECURITY INVOKER, a RLS de sempre), com versão: a entrada, o F5 e o 'Atualizar dados' não baixam de novo o que não mudou. Substitui o select direto na view.",
+      "As linhas ativas do monitoramento (VW_MONITORAMENTO_INDIGENA_OPERACIONAL, 40 colunas, por unidade e edital; SECURITY INVOKER, a RLS de sempre), com versão: a entrada, o F5 e o 'Atualizar dados' não baixam de novo o que não mudou. Substitui o select direto na view. Desde 20261103171500 a versão é a marca barata (fontes da view e da RLS, quem lê e a data): igual, { inalterado, versao } sem montar.",
   },
   listar_candidatos_aprovados_compacto: {
     argumentos: ["p_area", "p_versao"],
@@ -1270,7 +1270,7 @@ export const CONTRATO_RPC = {
     argumentos: ["p_edital", "p_desde", "p_marca"],
     critica: false,
     resumo:
-      "obter_fila_avaliacao só com o que mudou (20261014231000_fila_e_ficha_so_o_que_mudou.sql): sem p_desde (ou outra marca), a fila inteira com marca e parcial false; com o gerado_em e a marca da leitura anterior, só as linhas do núcleo cuja ficha mudou (ou cuja reserva vence) desde p_desde − 2 min, saiu, total_nucleo e o resto sem vagas (~1,5 KB). Desde 20261019150000_fila_parcial_sem_montar_tudo.sql a parcial não monta a fila inteira: só as linhas desses inscritos (FC_LINHAS_DA_FILA com p_candidatos) e o total do núcleo por contagem; mesmo contrato. Mesma permissão.",
+      "obter_fila_avaliacao só com o que mudou (20261014231000_fila_e_ficha_so_o_que_mudou.sql): sem p_desde (ou outra marca), a fila inteira com marca e parcial false; com o gerado_em e a marca da leitura anterior, só as linhas do núcleo cuja ficha mudou (ou cuja reserva vence) desde p_desde − 2 min, saiu, total_nucleo e o resto sem vagas (~1,5 KB). Desde 20261019150000_fila_parcial_sem_montar_tudo.sql a parcial não monta a fila inteira: só as linhas desses inscritos (FC_LINHAS_DA_FILA com p_candidatos) e o total do núcleo por contagem; mesmo contrato. Desde 20261103171500_leituras_pesadas_sem_refazer.sql a marca leva a marca barata e o total do núcleo: sem fonte mudada e sem reserva vencida, a parcial vazia (marca, parcial, total_nucleo, candidatos e saiu vazios), sem montar nada. Mesma permissão.",
   },
   listar_eliminados_fila: {
     argumentos: [
