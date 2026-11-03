@@ -113,6 +113,14 @@ export function canImportApprovedList(profile: unknown): boolean {
   return hasLevel(profile, "edital_gestor");
 }
 
+/**
+ * Configura a convocação do edital (Regras do edital › Chamada para
+ * contratação): quem importa a lista de aprovados ou o administrador global.
+ */
+export function canConfigureCallList(profile: unknown): boolean {
+  return isAdminGlobal(profile) || canImportApprovedList(profile);
+}
+
 export function canReplaceApprovedList(profile: unknown): boolean {
   if (comoPerfil(profile)?.permissoes)
     return hasResource(profile, "importacao", 3);

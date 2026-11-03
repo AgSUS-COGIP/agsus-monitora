@@ -46,11 +46,8 @@
   regra-por-cargo.ts.
 */
 import {
-  BASES_DA_NOTA_DO_LOTE,
-  BASES_DO_LOTE,
   CRITERIOS_DA_DISTRIBUICAO,
   DESEMPATE_PADRAO_DA_PROVISORIA,
-  DESEMPATES_DA_PROVISORIA,
   DESTINO_DOS_NOVOS,
   EFEITOS,
   EFEITOS_DE_ENCAMINHAMENTO,
@@ -315,11 +312,6 @@ function conferirPergunta(
       `${rotulo}: texto ou lista de 1 a ${LIMITES.perguntas} textos de até ${LIMITES.texto} caracteres.`,
     );
 }
-
-const temPergunta = (valor: unknown): boolean =>
-  Array.isArray(valor)
-    ? (valor as unknown[]).some((t) => typeof t === "string" && t.trim())
-    : typeof valor === "string" && Boolean(valor.trim());
 
 function conferirListaDeTextos(
   erros: string[],
@@ -786,92 +778,22 @@ export function validarRegraAnalise(regra: unknown): string[] {
     });
   if (!nuloOuEntre(provisoria.divergencia_tolerancia, 0, 30))
     erros.push("Tolerância da divergência entre 0 e 30 pontos.");
-  const base = provisoria.base_da_nota;
-  if (base !== undefined && base !== null) {
-    if (!valores(BASES_DA_NOTA_DO_LOTE).has(base))
-      erros.push("Base da nota do lote: DECLARADA ou ART.");
-    else if (
-      base === "DECLARADA" &&
-      !(Array.isArray(declarada) && declarada.length)
-    )
-      erros.push(
-        "Base da nota do lote pela declarada: configure a nota declarada.",
-      );
-  }
-  const desempate = provisoria.desempate;
+  /*
+    O que é da Triagem (base da nota do lote, desempate da lista, pergunta da
+    experiência declarada e o lote) não trava o salvar da regra da análise:
+    a Triagem tem a regra própria (Regras do edital, etapa Triagem) e é ela
+    que o cálculo lê; aqui esses campos só seguem gravados como estavam. Fica
+    só o par que a nota declarada (editada aqui) pode quebrar e que o banco
+    recusa (FC_VALIDAR_REGRA_ANALISE): a base pela declarada sem nota
+    declarada. Valor que já está gravado passou no banco.
+  */
   if (
-    desempate !== undefined &&
-    (!Array.isArray(desempate) ||
-      desempate.length > DESEMPATES_DA_PROVISORIA.length ||
-      new Set(desempate).size !== desempate.length ||
-      desempate.some((d) => !valores(DESEMPATES_DA_PROVISORIA).has(d)))
+    provisoria.base_da_nota === "DECLARADA" &&
+    !(Array.isArray(declarada) && declarada.length)
   )
     erros.push(
-      "Desempate da Provisória: IDOSO, EXPERIENCIA_DECLARADA, MAIOR_IDADE, MAIS_VELHO ou CANDIDATURA, sem repetir.",
+      "Base da nota do lote pela declarada: configure a nota declarada.",
     );
-  conferirPergunta(
-    erros,
-    provisoria.pergunta_experiencia,
-    "Pergunta da experiência declarada",
-    false,
-  );
-  if (
-    Array.isArray(desempate) &&
-    desempate.includes("EXPERIENCIA_DECLARADA") &&
-    !temPergunta(provisoria.pergunta_experiencia)
-  )
-    erros.push(
-      "Desempate pela experiência declarada: informe a pergunta da experiência.",
-    );
-
-  // Lote.
-  const lote = regra.lote ?? {};
-  if (!ehObjeto(lote)) erros.push("Lote inválido.");
-  else {
-    if (!valores(BASES_DO_LOTE).has(lote.base))
-      erros.push("Lote: múltiplo das vagas, número fixo ou nota mínima.");
-    if (lote.base === "MULTIPLO_VAGAS" && !entre(lote.multiplo, 1, 100))
-      erros.push("Lote: múltiplo de 1 a 100.");
-    if (lote.base === "FIXO" && !entre(lote.fixo, 1, 100000))
-      erros.push("Lote: número fixo de 1 a 100.000.");
-    if (lote.base === "NOTA_MINIMA" && !entre(lote.nota_minima, 0, 1000))
-      erros.push("Lote: nota mínima de 0 a 1.000.");
-    if (
-      lote.item_edital !== undefined &&
-      lote.item_edital !== null &&
-      (typeof lote.item_edital !== "string" || lote.item_edital.length > 40)
-    )
-      erros.push("Lote: item do edital com até 40 caracteres.");
-    for (const chave of [
-      "inclui_cr",
-      "por_modalidade",
-      "inclui_empatados",
-      "linha_anda",
-      "publica_reposicao",
-    ])
-      if (lote[chave] !== undefined && typeof lote[chave] !== "boolean")
-        erros.push(`Lote: ${chave} deve ser sim ou não.`);
-    if (lote.por_vaga !== undefined && lote.por_vaga !== null) {
-      const porVaga = ehObjeto(lote.por_vaga)
-        ? Object.entries(lote.por_vaga)
-        : null;
-      if (
-        !porVaga ||
-        porVaga.length > 500 ||
-        porVaga.some(
-          ([vaga, n]) =>
-            !/^[0-9]{1,20}$/.test(vaga) ||
-            !Number.isInteger(n) ||
-            // Inteiro (conferido acima): um número.
-            (n as number) < 1 ||
-            (n as number) > 100000,
-        )
-      )
-        erros.push(
-          "Lote por vaga: código da vaga (só dígitos) e tamanho inteiro de 1 a 100.000.",
-        );
-    }
-  }
 
   // Distribuição e revisão.
   const distribuicao = regra.distribuicao ?? {};

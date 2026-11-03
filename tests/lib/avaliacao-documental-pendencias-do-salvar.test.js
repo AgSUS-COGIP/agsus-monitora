@@ -66,7 +66,7 @@ describe("pendências do salvar", () => {
           "Bloco 2 (ESCOLARIDADE): título obrigatório.",
           "Nota declarada 1: pontos de cada resposta (0 a 100, até 50 respostas).",
           "Classificação: Critério repetido: IDOSO_60.",
-          "Desempate da Provisória: IDOSO, EXPERIENCIA_DECLARADA, MAIOR_IDADE, MAIS_VELHO ou CANDIDATURA, sem repetir.",
+          "Base da nota do lote pela declarada: configure a nota declarada.",
         ],
       }),
     );
@@ -75,7 +75,7 @@ describe("pendências do salvar", () => {
       "cardapio",
       "perguntas",
       "nota",
-      "nota",
+      "perguntas",
     ]);
     expect(lista[0].texto).toBe("Nome da versão: de 3 a 80 caracteres");
     expect(lista[1].alvo).toBe('[data-cartao="bloco:ESCOLARIDADE"]');

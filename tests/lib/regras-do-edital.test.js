@@ -1,12 +1,14 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
-  desempateDaAvaliacao,
   ETAPAS_DAS_REGRAS,
   etapaDasRegras,
+} from "../../src/lib/regras-do-edital.ts";
+import {
+  desempateDaAvaliacao,
   resumoDaRegraDaAvaliacao,
   resumoDaRegraDaClassificacao,
-} from "../../src/lib/regras-do-edital.ts";
+} from "../../src/lib/regras-do-edital-resumos.ts";
 import { normalizarRegraAnalise } from "../../src/lib/avaliacao-documental/regra.ts";
 
 /*

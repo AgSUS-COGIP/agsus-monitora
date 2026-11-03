@@ -9,6 +9,7 @@ import type {
 } from "./tipos-do-estado.ts";
 import { useRef, useState } from "react";
 import {
+  canConfigureCallList,
   canImportApprovedList,
   canReplaceApprovedList,
 } from "../../lib/access-roles.ts";
@@ -17,14 +18,17 @@ import { PLANILHAS } from "../../lib/planilhas.ts";
 import type { PreviaDaSubstituicao } from "./tipos-do-estado.ts";
 import { origemDaLista } from "../../lib/publicacao-de-aprovados.ts";
 import { Abas, Aviso, BotaoDeAcao, classes, Modal } from "../../ui/index.ts";
-import { FormularioDeConvocacao } from "./formulario-de-convocacao.tsx";
+import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
+import { ResumoDaChamada } from "./chamada-para-contratacao.tsx";
 import { PreviaDaSubstituicaoDaLista } from "./previa-da-substituicao.tsx";
 
 /*
   O modal "Listas do edital", aberto pelo Núcleo (`openImportModal` do
   controlador) com a página de aprovados possivelmente escondida — por isso é
-  um portal. Duas abas: o XLSX da lista de aprovados e a configuração da lista
-  de convocação (`formulario-de-convocacao.tsx`).
+  um portal. Duas abas: o XLSX da lista de aprovados e o resumo da
+  configuração da lista de convocação, com "Editar nas Regras do edital"
+  (a configuração se edita em Editais › Regras do edital, etapa Chamada para
+  contratação: chamada-para-contratacao.tsx).
 
   A lista de aprovados vem do resultado final da Classificação quando o edital
   tem análise no sistema (migration 20261005160000): o modal diz a origem da
@@ -436,7 +440,7 @@ export function ModalListasDoEdital({
   rotulo,
 }: PropsDoModalListas) {
   const [aba, setAba] = useState("arquivo");
-  const { perfil, listas, candidatos, configs, modelos } = dados;
+  const { perfil, listas, configs, modelos } = dados;
   const publicacao =
     String(dados.publicacao?.editalId ?? "") === String(editalId)
       ? dados.publicacao
@@ -492,15 +496,37 @@ export function ModalListasDoEdital({
           lista={lista}
           publicacao={publicacao}
         />
-        <FormularioDeConvocacao
-          ativa={aba === "convocacao"}
-          estado={estado}
-          perfil={perfil}
-          editalId={editalId}
-          candidatos={candidatos}
-          configs={configs}
-          modelos={modelos}
-        />
+        <div
+          id="approvedImportPanelConvocacao"
+          className={classes(
+            "approved-tabpanel",
+            aba !== "convocacao" && "hidden",
+          )}
+          role="tabpanel"
+          aria-labelledby="approvedImportTabConvocacao"
+        >
+          <ResumoDaChamada
+            configs={configs}
+            modelos={modelos}
+            editalId={editalId}
+            acao={
+              canConfigureCallList(perfil) ? (
+                <button
+                  type="button"
+                  className="btn secondary small"
+                  data-acao="editar-nas-regras-do-edital"
+                  onClick={() => {
+                    fechar();
+                    abrirRegrasDoEdital(editalId, "chamada");
+                  }}
+                >
+                  <i className="fa-solid fa-pen" aria-hidden="true" /> Editar
+                  nas Regras do edital
+                </button>
+              ) : null
+            }
+          />
+        </div>
       </div>
     </Modal>
   );

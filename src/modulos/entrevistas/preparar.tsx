@@ -2,13 +2,11 @@ import type {
   FonteDaConvocacao as Fonte,
   GrupoDaConvocacao,
 } from "../../lib/tipos-da-convocacao-da-entrevista.ts";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   bancasDoEdital,
-  dadosDaConfiguracaoParaSalvar,
   errosDaConfiguracao,
   rascunhoDaConfiguracao,
-  rotuloDoLancamento,
 } from "../../lib/conducao-de-entrevista.ts";
 import {
   aConvocar,
@@ -30,13 +28,11 @@ import {
   type PassoDoPreparar,
 } from "../../lib/passos-do-preparar.ts";
 import {
-  frasesDaBanca,
   resumoDasRegrasDaEntrevista,
   type DestinoDoResumo,
   type EntradaDoResumo,
 } from "../../lib/resumo-da-entrevista.ts";
-import { textoDaPontuacao } from "../../lib/roteiro-de-entrevista.ts";
-import { Aviso, EstadoVazio, Selo } from "../../ui/index.ts";
+import { EstadoVazio, Selo } from "../../ui/index.ts";
 import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
 import {
   BotaoIrPara,
@@ -44,12 +40,10 @@ import {
   ListaDeConvocacao,
 } from "./conducao.tsx";
 import {
-  BarraDaConfiguracao,
-  CampoDoRoteiro,
-  CamposDaBanca,
-  type RascunhoDaConfiguracao,
-  type RoteiroDaLista,
-} from "./configuracao-do-edital.tsx";
+  AvisosDaBanca,
+  BancaGravada,
+  RoteiroEscolhido,
+} from "./editor-da-configuracao.tsx";
 import { ResumoDasRegras, TabelaDasVagas } from "./resumo-das-regras.tsx";
 import type { PedidoDeRoteiro } from "./tipos-do-editor-de-roteiro.ts";
 import { VisaoDeRoteiros } from "./roteiros.tsx";
@@ -57,7 +51,6 @@ import type {
   DadosDoEdital,
   EstadoDaConducao,
   EstadoDaConducaoComAcoes,
-  Resultado,
 } from "./tipos.ts";
 
 /*
@@ -75,10 +68,12 @@ import type {
 
   Cada passo tem o estado (feito / pendente) e a lista do que falta
   (src/lib/passos-do-preparar.ts); Preparar abre no primeiro pendente. O
-  resumo "Regras da entrevista" fica no topo. Os passos 1 e 2 editam o mesmo
-  rascunho da configuração (configuracao-do-edital.tsx) e o "Salvar
-  configuração" grava os dois de uma vez, com a lista do que falta ao lado.
-  Quem só lê vê tudo sem os botões.
+  resumo "Regras da entrevista" fica no topo. Os passos 1 e 2 mostram o
+  roteiro e a banca gravados (editor-da-configuracao.tsx) com "Editar nas
+  Regras do edital": a configuração se edita em Editais › Regras do edital,
+  etapa Entrevista, com o mesmo componente. Os roteiros da área (editar,
+  duplicar, novo) continuam aqui, no passo 1. Quem só lê vê tudo sem os
+  botões.
 */
 
 type Dados = DadosDoEdital & {
@@ -112,109 +107,7 @@ function entradaDoResumo(
 
 /* Conversores da configuração e da convocação com contratos TypeScript. */
 const errosDaConfiguracaoDo = errosDaConfiguracao;
-const paraSalvar = dadosDaConfiguracaoParaSalvar;
 const fonteDaConvocacaoDo = fonteDaConvocacao;
-
-const ordem = (a: { ordem?: number | null }, b: { ordem?: number | null }) =>
-  (a.ordem ?? 0) - (b.ordem ?? 0);
-
-/* ── Passo 1: roteiro ──────────────────────────────────────────────── */
-
-function RoteiroEscolhido({ dados }: { dados: Dados }) {
-  const roteiro = dados.configuracao?.roteiro;
-  if (!roteiro) return null;
-  const competencias = [...(roteiro.competencias || [])].sort(ordem);
-  const aspectos = [...(roteiro.aspectos || [])].sort(ordem);
-  return (
-    <div
-      className="entrevistas-roteiro-escolhido"
-      data-bloco="roteiro-do-edital"
-    >
-      <div className="entrevistas-roteiro-escolhido-topo">
-        <i className="fa-solid fa-clipboard-check" aria-hidden="true" />
-        <div>
-          <strong>{roteiro.nome}</strong>
-          <span>
-            {rotuloDaVersao({
-              versao: roteiro.versao,
-              nome: roteiro.nome_versao,
-            })}{" "}
-            · {textoDaPontuacao(roteiro)}
-          </span>
-        </div>
-      </div>
-      <dl className="entrevistas-roteiro-escolhido-itens">
-        <div>
-          <dt>Competências</dt>
-          <dd>
-            <ol>
-              {competencias.map((c) => (
-                <li key={c.id}>{c.nome}</li>
-              ))}
-            </ol>
-          </dd>
-        </div>
-        {aspectos.length ? (
-          <div>
-            <dt>Cada competência em</dt>
-            <dd>{aspectos.map((a) => a.nome).join(" · ")}</dd>
-          </div>
-        ) : null}
-      </dl>
-    </div>
-  );
-}
-
-/* ── Passo 2: banca ────────────────────────────────────────────────── */
-
-function BancaGravada({ dados }: { dados: Dados }) {
-  const roteiro = dados.configuracao?.roteiro || null;
-  const competencias = [...(roteiro?.competencias || [])].sort(ordem);
-  const ativos = (dados.avaliadores || []).filter((a) => a.ativo !== false);
-  if (!ativos.length) return null;
-  const bancas = bancasDoEdital(ativos);
-  const nomeDa = (id: string) =>
-    competencias.find((c) => c.id === id)?.nome || id;
-  return (
-    <div className="entrevistas-banca-gravada" data-bloco="banca-do-edital">
-      <p className="entrevistas-banca-lancamento">
-        <i className="fa-solid fa-keyboard" aria-hidden="true" />{" "}
-        {rotuloDoLancamento(dados.configuracao?.lancamento)}
-      </p>
-      <div className="entrevistas-bancas">
-        {bancas.map((b) => (
-          <article key={b} className="entrevistas-banca" data-banca={b}>
-            <h4>Banca {b}</h4>
-            <ul>
-              {ativos
-                .filter((a) => Number(a.banca) === Number(b))
-                .map((a) => {
-                  const membro = a as typeof a & {
-                    nome?: string;
-                    origem?: string;
-                  };
-                  const so = Array.isArray(a.competencias)
-                    ? a.competencias
-                    : null;
-                  return (
-                    <li key={a.id}>
-                      <strong>{membro.nome}</strong>
-                      {membro.origem ? <span> · {membro.origem}</span> : null}
-                      <small>
-                        {so && so.length < competencias.length
-                          ? `Avalia só ${so.map(nomeDa).join(", ")}`
-                          : "Avalia todas as competências"}
-                      </small>
-                    </li>
-                  );
-                })}
-            </ul>
-          </article>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /* ── Passo 4: agenda ───────────────────────────────────────────────── */
 
@@ -365,39 +258,6 @@ function PrepararDoEdital({
     [dados, fonte, grupos],
   );
 
-  /* O rascunho da configuração (passos 1 e 2). */
-  const [editando, setEditando] = useState(!configurado && podeEditar);
-  const [r, setR] = useState(() => rascunhoDaConfiguracao(dados));
-  const [tentou, setTentou] = useState(false);
-  const [erroDoBanco, setErroDoBanco] = useState("");
-  useEffect(() => {
-    if (!editando) setR(rascunhoDaConfiguracao(dados));
-  }, [dados, editando]);
-
-  const opcoes = useMemo(() => {
-    const lista = e.roteiros.lista.slice();
-    if (roteiro && !lista.some((x) => x.id === roteiro.id))
-      lista.unshift(roteiro);
-    return lista;
-  }, [e.roteiros.lista, roteiro]);
-  const escolhido = opcoes.find((x) => x.id === r.roteiro) || null;
-  const competencias = useMemo(
-    () =>
-      [...(escolhido?.competencias || [])]
-        .sort(ordem)
-        .map((c) => ({ id: c.id, nome: c.nome })),
-    [escolhido],
-  );
-  const erros = useMemo(
-    () => errosDaConfiguracaoDo(r, escolhido),
-    [r, escolhido],
-  );
-  const pendencias = useMemo(
-    () => pendenciasDaConfiguracao(erros, r.avaliadores),
-    [erros, r.avaliadores],
-  );
-  const errosVisiveis = tentou ? erros : {};
-
   /* Os passos com o que está gravado. */
   const errosGravados = useMemo(
     () =>
@@ -465,18 +325,17 @@ function PrepararDoEdital({
     if (i >= 0) setAtual(i);
     corpo.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }
+  const editalId = String(dados.edital?.id ?? "");
   function ir(destino: DestinoDoResumo) {
     // A convocação e o desempate são da regra da Classificação: Regras do edital.
     if (destino === "classificacao")
-      abrirRegrasDoEdital(String(dados.edital?.id ?? ""), "classificacao");
+      abrirRegrasDoEdital(editalId, "classificacao");
     else if (destino === "roteiro" && roteiro) {
       irAoPasso("roteiro");
       setPedido((p) => ({ roteiro, vez: (p?.vez ?? 0) + 1 }));
     } else if (destino === "convocacao") irAoPasso("convocacao");
-    else {
-      setEditando(true);
-      irAoPasso("banca");
-    }
+    // A banca (e a troca do roteiro) se edita nas Regras do edital.
+    else abrirRegrasDoEdital(editalId, "entrevista");
   }
   function podeIr(destino: DestinoDoResumo) {
     if (destino === "classificacao") return Boolean(dados.pode_gerar_lista);
@@ -485,48 +344,15 @@ function PrepararDoEdital({
     return podeEditar;
   }
 
-  async function salvar() {
-    setTentou(true);
-    if (pendencias.length) return;
-    setErroDoBanco("");
-    const resultado: Resultado = await conducao.configurar(
-      paraSalvar(r, escolhido),
-    );
-    if (resultado?.erro) setErroDoBanco(resultado.erro);
-    else if (resultado?.ok) {
-      setEditando(false);
-      setTentou(false);
-    }
-  }
-  const cancelar = configurado
-    ? () => {
-        setEditando(false);
-        setTentou(false);
-        setErroDoBanco("");
-        setR(rascunhoDaConfiguracao(dados));
-      }
-    : null;
-  const temNotas = dados.convocados.some((c) => c.avaliacoes?.length);
-  const barra =
-    editando && podeEditar ? (
-      <BarraDaConfiguracao
-        pendencias={pendencias}
-        mostrarPendencias={tentou}
-        erroDoBanco={erroDoBanco}
-        salvando={acao === "configurar"}
-        aoIrAoPasso={irAoPasso}
-        aoCancelar={cancelar}
-        aoSalvar={() => void salvar()}
-      />
-    ) : null;
+  /* "Editar nas Regras do edital": o roteiro e a banca se editam lá. */
   const botaoEditar = (rotulo: string) =>
-    podeEditar && !editando ? (
+    podeEditar ? (
       <button
         type="button"
         className="btn secondary small"
-        data-acao="editar-configuracao"
+        data-acao="editar-nas-regras-do-edital"
         data-tour="entrevistas-conduzir-editar-configuracao"
-        onClick={() => setEditando(true)}
+        onClick={() => abrirRegrasDoEdital(editalId, "entrevista")}
       >
         <i className="fa-solid fa-pen" aria-hidden="true" /> {rotulo}
       </button>
@@ -535,12 +361,6 @@ function PrepararDoEdital({
   const blocoDaConvocacao = useMemo(
     () =>
       resumoDasRegrasDaEntrevista(entrada).find((b) => b.id === "convocacao"),
-    [entrada],
-  );
-  const avisosDaBanca = useMemo(
-    () =>
-      frasesDaBanca(entrada.avaliadores, entrada.roteiro, entrada.lancamento)
-        .avisos,
     [entrada],
   );
 
@@ -569,11 +389,6 @@ function PrepararDoEdital({
           >
             {textoDoAndamento(passos)}
           </span>
-          {editando && configurado ? (
-            <span className="entrevistas-chip-alerta">
-              Editando a configuração
-            </span>
-          ) : null}
         </header>
 
         <NavegacaoDosPassos
@@ -597,8 +412,7 @@ function PrepararDoEdital({
               {passo.estado === "feito" ? "Pronto" : "Pendente"}
             </Selo>
           </div>
-          {passo.falta.length &&
-          !(barra && (passo.id === "roteiro" || passo.id === "banca")) ? (
+          {passo.falta.length ? (
             <div className="entrevistas-o-que-falta" role="status">
               <strong>O que falta</strong>
               <ul>
@@ -611,23 +425,14 @@ function PrepararDoEdital({
 
           {passo.id === "roteiro" ? (
             <>
-              {editando && podeEditar ? (
-                <CampoDoRoteiro
-                  r={r}
-                  opcoes={opcoes}
-                  temNotas={temNotas}
-                  erro={errosVisiveis.roteiro}
-                  aoTrocar={setR}
-                />
-              ) : (
-                <RoteiroEscolhido dados={dados} />
-              )}
+              <RoteiroEscolhido dados={dados} />
               <div className="entrevistas-acoes-esquerda">
                 {botaoEditar(
-                  roteiro ? "Trocar o roteiro" : "Escolher o roteiro",
+                  roteiro
+                    ? "Trocar o roteiro nas Regras do edital"
+                    : "Escolher o roteiro nas Regras do edital",
                 )}
               </div>
-              {barra}
               <VisaoDeRoteiros
                 conducao={conducao}
                 area={e.area}
@@ -639,30 +444,15 @@ function PrepararDoEdital({
 
           {passo.id === "banca" ? (
             <>
-              {editando && podeEditar ? (
-                <CamposDaBanca
-                  r={r}
-                  competencias={competencias}
-                  erros={errosVisiveis}
-                  meuPerfil={dados.meu_perfil}
-                  mudar={(m) => setR((atual) => ({ ...atual, ...m }))}
-                />
-              ) : (
-                <>
-                  <BancaGravada dados={dados} />
-                  {avisosDaBanca.map((a) => (
-                    <Aviso key={a} tom="warning">
-                      {a}
-                    </Aviso>
-                  ))}
-                </>
-              )}
+              <BancaGravada dados={dados} />
+              <AvisosDaBanca dados={dados} />
               <div className="entrevistas-acoes-esquerda">
                 {botaoEditar(
-                  ativos.length ? "Editar a banca" : "Montar a banca",
+                  ativos.length
+                    ? "Editar a banca nas Regras do edital"
+                    : "Montar a banca nas Regras do edital",
                 )}
               </div>
-              {barra}
             </>
           ) : null}
 

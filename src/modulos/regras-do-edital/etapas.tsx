@@ -1,11 +1,6 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { Regra as RegraDaAvaliacao } from "../avaliacao-documental/regra.tsx";
-import { Regra as RegraDaClassificacao } from "../classificacao/regra.tsx";
-import { ResumoDasRegras } from "../entrevistas/resumo-das-regras.tsx";
-import type { DadosDoEdital as DadosDaEntrevista } from "../entrevistas/tipos.ts";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { dataDeCorteDoCronograma } from "../../lib/classificacao/dados.ts";
-import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.ts";
-import { resumoDoModelo } from "../../lib/configuracao-de-convocacao.ts";
 import {
   criteriosDeDesempate,
   textoDoEmpateFinal,
@@ -14,22 +9,20 @@ import type {
   DestinoDoResumo,
   EntradaDoResumo,
 } from "../../lib/resumo-da-entrevista.ts";
-import { formatNumberBR } from "../../lib/formatters";
-import {
-  BlocosEsqueleto,
-  ErroAoCarregar,
-  EstadoVazio,
-  GradeDeKv,
-  Kv,
-} from "../../ui/index.ts";
+import { BlocosEsqueleto, ErroAoCarregar } from "../../ui/index.ts";
+import { EditorDaChamada } from "../aprovados/chamada-para-contratacao.tsx";
+import type { EstadoDosAprovados } from "../aprovados/tipos-do-estado.ts";
+import { Regra as RegraDaAvaliacao } from "../avaliacao-documental/regra.tsx";
+import { Regra as RegraDaClassificacao } from "../classificacao/regra.tsx";
+import { EditorDaConfiguracaoDaEntrevista } from "../entrevistas/editor-da-configuracao.tsx";
+import { ResumoDasRegras } from "../entrevistas/resumo-das-regras.tsx";
 import type { LojasDasRegras } from "./lojas.ts";
-import type { ClienteDasRegras } from "./regras-do-edital.tsx";
 
 /*
   As etapas das Regras do edital que não têm editor próprio na pasta da
-  Triagem: cada uma monta o editor (ou o resumo) que a tela da etapa já tinha,
-  com a mesma loja e as mesmas RPCs. Nada aqui calcula ou grava por conta
-  própria: salvar é o que o editor de cada etapa já fazia.
+  Triagem: cada uma monta o editor que a tela da etapa usava, com a mesma loja
+  e as mesmas RPCs. Nada aqui calcula ou grava por conta própria: salvar é o
+  que o editor de cada etapa já fazia.
 */
 
 const mensagem = (erro: unknown) =>
@@ -106,62 +99,34 @@ export function EtapaDaClassificacao({
   );
 }
 
-/* Lê uma RPC só para mostrar; erro vira mensagem e "Tentar novamente". */
-function usarLeitura<T>(ler: () => Promise<T>, chave: string) {
-  const [estado, setEstado] = useState<{
-    dados: T | null;
-    erro: string;
-    vez: number;
-  }>({ dados: null, erro: "", vez: 0 });
-  useEffect(() => {
-    let vivo = true;
-    setEstado((s) => ({ ...s, dados: null, erro: "" }));
-    ler()
-      .then((dados) => vivo && setEstado((s) => ({ ...s, dados })))
-      .catch(
-        (erro) => vivo && setEstado((s) => ({ ...s, erro: mensagem(erro) })),
-      );
-    return () => {
-      vivo = false;
-    };
-    // `ler` muda a cada render; a chave e a vez decidem quando reler.
-  }, [chave, estado.vez]);
-  return {
-    ...estado,
-    tentar: () => setEstado((s) => ({ ...s, vez: s.vez + 1 })),
-  };
-}
-
-async function rpc(
-  cliente: ClienteDasRegras,
-  nome: string,
-  argumentos?: object,
-) {
-  const { data, error } = await cliente.rpc(nome, argumentos as never);
-  if (error) throw error;
-  return data;
-}
-
-/* ── 3 Entrevista: o resumo de Conduzir entrevistas › Preparar ── */
+/*
+  ── 3 Entrevista: o resumo das regras da entrevista e o editor do roteiro e
+  da banca (editor-da-configuracao.tsx), sobre a loja de condução de
+  Conduzir entrevistas: os roteiros da área atual (listar_roteiros_entrevista)
+  e o edital (obter_entrevistas_do_edital); salvar é o configurar da loja
+  (configurar_entrevista_edital). Os roteiros da área (editar, duplicar,
+  novo) continuam em Conduzir entrevistas › Preparar.
+*/
 export function EtapaDaEntrevista({
-  cliente,
+  lojas,
   editalId,
   aoIrParaClassificacao,
   aoIrParaPreparar,
 }: {
-  cliente: ClienteDasRegras;
+  lojas: LojasDasRegras;
   editalId: string;
   aoIrParaClassificacao: () => void;
   aoIrParaPreparar: () => void;
 }) {
-  const leitura = usarLeitura(
-    async () =>
-      (await rpc(cliente, "obter_entrevistas_do_edital", {
-        p_edital: editalId,
-      })) as DadosDaEntrevista | null,
-    editalId,
-  );
-  const dados = leitura.dados;
+  const conducao = lojas.entrevista;
+  const e = useSyncExternalStore(conducao.assinar, conducao.obter);
+  const { area } = usarAreaAtual();
+  useEffect(() => {
+    // A área primeiro: trocar de área recomeça a loja (e o edital aberto).
+    if (area) void conducao.carregarRoteiros(area);
+    void conducao.abrirEdital(editalId);
+  }, [conducao, area, editalId]);
+  const dados = e.edital?.edital?.id === editalId ? e.edital : null;
   const entrada = useMemo<EntradaDoResumo | null>(() => {
     if (!dados) return null;
     const regra = dados.regra_classificacao || null;
@@ -178,18 +143,24 @@ export function EtapaDaEntrevista({
       convocados: null,
     };
   }, [dados]);
-  if (leitura.erro)
+  if (e.erroDoEdital && e.editalId === editalId)
     return (
       <ErroAoCarregar
         oQue="as regras da entrevista"
-        mensagem={leitura.erro}
-        aoTentar={leitura.tentar}
+        mensagem={e.erroDoEdital}
+        aoTentar={() => void conducao.abrirEdital(editalId)}
       />
     );
-  if (!entrada) return <BlocosEsqueleto quantos={2} />;
-  const podeConfigurar = Boolean(dados?.pode_editar);
-  const ir = (destino: DestinoDoResumo) =>
-    destino === "classificacao" ? aoIrParaClassificacao() : aoIrParaPreparar();
+  if (!dados || !entrada) return <BlocosEsqueleto quantos={2} />;
+  const podeConfigurar = Boolean(dados.pode_editar);
+  const ir = (destino: DestinoDoResumo) => {
+    if (destino === "classificacao") aoIrParaClassificacao();
+    else if (destino === "roteiro") aoIrParaPreparar();
+    else
+      document
+        .getElementById("entrevistaConfiguracaoTitulo")
+        ?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  };
   return (
     <div className="entrevistas-tela regras-do-edital__editor">
       <ResumoDasRegras
@@ -197,58 +168,69 @@ export function EtapaDaEntrevista({
         aoIr={ir}
         podeIr={(destino) =>
           destino === "classificacao" ||
-          (destino !== "convocacao" && podeConfigurar)
+          (destino === "roteiro" && podeConfigurar)
         }
       />
+      <EditorDaConfiguracaoDaEntrevista
+        key={editalId}
+        dados={dados}
+        roteiros={e.roteiros.lista}
+        salvando={e.acao?.tipo === "configurar"}
+        aoSalvar={conducao.configurar}
+      />
+      {podeConfigurar ? (
+        <p className="ui-texto-suave regras-do-edital__nota">
+          Os roteiros da área (editar, duplicar ou criar um novo) ficam em{" "}
+          <button
+            type="button"
+            className="btn ghost small"
+            data-acao="ir-para-preparar"
+            onClick={aoIrParaPreparar}
+          >
+            Conduzir entrevistas › Preparar
+          </button>
+        </p>
+      ) : null}
     </div>
   );
 }
 
-/* ── 5 Chamada para contratação: a configuração de convocação da Lista de aprovados ── */
+/*
+  ── 5 Chamada para contratação: o formulário da convocação do edital
+  (chamada-para-contratacao.tsx) sobre a loja da Lista de aprovados do app.
+  A loja chega por `aprovados()` (baixa e monta a Lista de aprovados na
+  primeira vez, como o botão "Lista de aprovados" de Editais).
+*/
 export function EtapaDaChamada({
-  cliente,
+  aprovados,
   editalId,
-  podeEditar,
-  aoEditar,
 }: {
-  cliente: ClienteDasRegras;
+  aprovados: () => Promise<EstadoDosAprovados | null | undefined>;
   editalId: string;
-  podeEditar: boolean;
-  aoEditar: () => void;
 }) {
-  const leitura = usarLeitura(async () => {
-    const [configuracoes, modelos] = await Promise.all([
-      rpc(cliente, "listar_configuracao_convocacao"),
-      rpc(cliente, "listar_modelos_convocacao"),
-    ]);
-    return {
-      convocacao: convocacaoDoEdital({ configuracoes, modelos }, editalId),
+  const [loja, setLoja] = useState<{
+    estado: EstadoDosAprovados | null;
+    erro: string;
+    vez: number;
+  }>({ estado: null, erro: "", vez: 0 });
+  useEffect(() => {
+    let vivo = true;
+    aprovados()
+      .then((estado) => {
+        if (!vivo) return;
+        setLoja((s) =>
+          estado
+            ? { ...s, estado, erro: "" }
+            : { ...s, erro: "A Lista de aprovados não está disponível." },
+        );
+      })
+      .catch((erro: unknown) => {
+        if (vivo) setLoja((s) => ({ ...s, erro: mensagem(erro) }));
+      });
+    return () => {
+      vivo = false;
     };
-  }, editalId);
-  if (leitura.erro)
-    return (
-      <ErroAoCarregar
-        oQue="a configuração da chamada"
-        mensagem={leitura.erro}
-        aoTentar={leitura.tentar}
-      />
-    );
-  if (!leitura.dados) return <BlocosEsqueleto quantos={1} />;
-  const convocacao = leitura.dados.convocacao;
-  const config = convocacao?.configs.get(convocacao.editalId) ?? null;
-  const vagas = config ? [...config.vagas.values()] : [];
-  const imediatas = vagas.reduce((soma, v) => soma + (v.imediatas || 0), 0);
-  const botao = podeEditar ? (
-    <button
-      type="button"
-      className="btn secondary small"
-      data-acao="editar-chamada"
-      onClick={aoEditar}
-    >
-      <i className="fa-solid fa-pen" aria-hidden="true" /> Editar na Lista de
-      aprovados
-    </button>
-  ) : null;
+  }, [aprovados, loja.vez]);
   return (
     <section
       className="ui-card regras-do-edital__chamada"
@@ -259,29 +241,17 @@ export function EtapaDaChamada({
         <h2 className="ui-titulo" id="regrasChamadaTitulo">
           Chamada para contratação
         </h2>
-        {botao}
       </header>
-      {config ? (
-        <GradeDeKv rotulo="Resumo da chamada para contratação">
-          <Kv rotulo="Modelo de convocação">
-            {convocacao?.modeloNome || "Sem modelo"}
-          </Kv>
-          <Kv rotulo="Reservas">{resumoDoModelo(convocacao?.modelo)}</Kv>
-          <Kv rotulo="Proporcionalidade">
-            {config.proporcionalidade ? "Sim" : "Não"}
-          </Kv>
-          <Kv rotulo="Vagas imediatas">
-            {vagas.length
-              ? `${formatNumberBR(imediatas)} em ${formatNumberBR(vagas.length)} ${vagas.length === 1 ? "vaga" : "vagas"}`
-              : config.padraoImediata
-                ? `${formatNumberBR(config.padraoImediata)} por vaga (padrão)`
-                : "—"}
-          </Kv>
-        </GradeDeKv>
+      {loja.erro ? (
+        <ErroAoCarregar
+          oQue="a configuração da chamada"
+          mensagem={loja.erro}
+          aoTentar={() => setLoja((s) => ({ ...s, erro: "", vez: s.vez + 1 }))}
+        />
+      ) : loja.estado ? (
+        <EditorDaChamada estado={loja.estado} editalId={editalId} />
       ) : (
-        <EstadoVazio>
-          O edital ainda não tem configuração de convocação.
-        </EstadoVazio>
+        <BlocosEsqueleto quantos={2} />
       )}
     </section>
   );

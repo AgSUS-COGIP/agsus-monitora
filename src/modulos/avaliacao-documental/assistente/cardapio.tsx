@@ -12,7 +12,6 @@ import {
   type Guardados,
 } from "../../../lib/avaliacao-documental/assistente-da-regra.ts";
 import {
-  BASES_DA_NOTA_DO_LOTE,
   NIVEIS,
   TITULOS_ACADEMICOS,
 } from "../../../lib/avaliacao-documental/catalogo.ts";
@@ -53,7 +52,6 @@ type Props = {
   regra: RegraAnalise;
   area: string;
   guardados: Guardados;
-  notaMinima: number | null;
   aoMudar: (regra: RegraAnalise) => void;
   aoAlternar: (cartao: Cartao, marcar: boolean) => void;
   /** As vagas do edital e os cargos do quadro (as diferenças por cargo). */
@@ -80,8 +78,6 @@ function resumoDoCartao(regra: RegraAnalise, cartao: Cartao): string {
     if (bloco.tipo === "COTA") return bloco.condicao?.split("=")[1] ?? "";
     return "";
   }
-  if (cartao.corte)
-    return `${String(regra.lote.nota_minima ?? "—").replace(".", ",")} pts`;
   return cartao.eliminacao ? "elimina" : "";
 }
 
@@ -797,90 +793,18 @@ function EditorEliminacao({
   );
 }
 
-function EditorCorte({
-  regra,
-  notaMinima,
-  aoMudar,
-}: {
-  regra: RegraAnalise;
-  notaMinima: number | null;
-  aoMudar: (r: RegraAnalise) => void;
-}) {
-  const lote = regra.lote;
-  const declarada = regra.provisoria.nota_declarada.length > 0;
-  return (
-    <>
-      <div className="avd-linha">
-        <CampoNumero
-          rotulo="Pontos mínimos"
-          valor={lote.nota_minima ?? null}
-          aoMudar={(v) =>
-            aoMudar({
-              ...regra,
-              lote: { ...lote, nota_minima: v as number | null },
-            })
-          }
-        />
-        <CampoTexto
-          rotulo="Item do edital"
-          maximo={40}
-          valor={lote.item_edital ?? ""}
-          aoMudar={(v) =>
-            aoMudar({ ...regra, lote: { ...lote, item_edital: v || null } })
-          }
-        />
-        {notaMinima !== null && notaMinima !== lote.nota_minima ? (
-          <button
-            type="button"
-            className="btn ghost small"
-            onClick={() =>
-              aoMudar({ ...regra, lote: { ...lote, nota_minima: notaMinima } })
-            }
-          >
-            Usar a nota mínima da classificação (
-            {String(notaMinima).replace(".", ",")})
-          </button>
-        ) : null}
-      </div>
-      <Segmentado
-        rotulo="Nota do corte e da ordem do lote"
-        opcoes={(
-          BASES_DA_NOTA_DO_LOTE as unknown as ReadonlyArray<
-            readonly ["DECLARADA" | "ART", string]
-          >
-        ).map(([valor, rotulo]) => ({
-          valor,
-          rotulo,
-        }))}
-        valor={regra.provisoria.base_da_nota}
-        aoMudar={(v) =>
-          aoMudar({
-            ...regra,
-            provisoria: { ...regra.provisoria, base_da_nota: v },
-          })
-        }
-      />
-      {regra.provisoria.base_da_nota === "DECLARADA" && !declarada ? (
-        <p className="avd-ast-alerta">Ligue a nota declarada no passo 3.</p>
-      ) : null}
-    </>
-  );
-}
-
 /* ---------- O cartão ---------- */
 
 function CartaoDoCardapio({
   cartao,
   regra,
   area,
-  notaMinima,
   aoMudar,
   aoAlternar,
 }: {
   cartao: Cartao;
   regra: RegraAnalise;
   area: string;
-  notaMinima: number | null;
   aoMudar: (r: RegraAnalise) => void;
   aoAlternar: (c: Cartao, marcar: boolean) => void;
 }) {
@@ -911,10 +835,6 @@ function CartaoDoCardapio({
         eliminacao={eliminacao}
         aoMudar={(e) => aoMudar(comEliminacao(regra, cartao, e))}
       />
-    );
-  else if (cartao.corte && cartao.marcado)
-    campos = (
-      <EditorCorte regra={regra} notaMinima={notaMinima} aoMudar={aoMudar} />
     );
   const idDoCorpo = `avd-ast-cartao-${cartao.id.replace(/[^a-zA-Z0-9]+/g, "-")}`;
   return (
@@ -964,7 +884,6 @@ export function PassoCardapio({
   regra,
   area,
   guardados,
-  notaMinima,
   aoMudar,
   aoAlternar,
   vagas,
@@ -991,7 +910,6 @@ export function PassoCardapio({
                   cartao={c}
                   regra={regra}
                   area={area}
-                  notaMinima={notaMinima}
                   aoMudar={aoMudar}
                   aoAlternar={aoAlternar}
                 />

@@ -44,7 +44,6 @@ import { Fila } from "./fila.tsx";
 import { OrigemDaAnalise } from "./origem-da-analise.tsx";
 import { PreClassificacao } from "./pre-classificacao.tsx";
 import { normalizarRegraAnalise } from "../../lib/avaliacao-documental/regra.ts";
-import { resumoDaRegraDaAvaliacao } from "../../lib/regras-do-edital.ts";
 import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
 import { ResumoDaRegraDaEtapa } from "../regras-do-edital/resumo-da-regra-da-etapa.tsx";
 import "./avaliacao-documental.css";
@@ -336,12 +335,14 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
                           ? e.dados.regra.situacao === "CONFERIDA"
                           : null
                       }
-                      linhas={resumoDaRegraDaAvaliacao(
-                        e.dados.regra
-                          ? normalizarRegraAnalise(e.dados.regra.configuracao)
-                          : null,
-                        e.dados.nota_minima?.nota_minima ?? null,
-                      )}
+                      linhas={(resumos) =>
+                        resumos.resumoDaRegraDaAvaliacao(
+                          e.dados?.regra
+                            ? normalizarRegraAnalise(e.dados.regra.configuracao)
+                            : null,
+                          e.dados?.nota_minima?.nota_minima ?? null,
+                        )
+                      }
                       semRegra="O edital ainda não tem regra da Avaliação documental."
                       aoEditar={() =>
                         abrirRegrasDoEdital(e.editalId, "avaliacao")

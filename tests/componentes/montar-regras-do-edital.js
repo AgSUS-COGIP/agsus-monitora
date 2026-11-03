@@ -7,16 +7,18 @@ import { esperar } from "./interacoes.js";
 /*
   Monta a página Regras do edital (Editais › Regras do edital) numa etapa,
   com o banco falso do teste: os editores da Avaliação documental e da
-  Classificação moram lá desde 03/11/2026. Devolve a seção, a raiz (para
-  desmontar) e as lojas (as mesmas que a página usa).
+  Classificação moram lá desde 03/11/2026; os da Entrevista e da Chamada
+  para contratação, desde a parte 2. `aprovados` devolve a loja da Lista
+  de aprovados (a Chamada). Devolve a seção, a raiz (para desmontar) e as
+  lojas (as mesmas que a página usa).
 */
 export async function montarRegrasDoEdital({
   supabase,
   editalId,
   etapa,
   toast,
-  perfil = { ativo: true, admin_global: true },
   titulo = "",
+  aprovados = async () => null,
 }) {
   const secao = document.createElement("section");
   secao.id = "page-nucleo";
@@ -31,14 +33,13 @@ export async function montarRegrasDoEdital({
         titulo,
         etapa: etapaAtual,
         supabase,
-        perfil,
         toast,
         aoMudarEtapa: (nova) => {
           etapaAtual = nova;
           desenhar();
         },
         aoVoltar: () => {},
-        aoEditarChamada: () => {},
+        aprovados,
       }),
     );
   await act(async () => desenhar());

@@ -508,9 +508,7 @@ export function PassoPerguntas({
   const contar = (s: SituacaoDaPergunta[]) =>
     situacoes.filter((x) => s.includes(x)).length;
   const blocos = regra.blocos;
-  const outras = ligacoes.filter(
-    (l) => l.grupo === "experiencia" || l.grupo === "eliminacao",
-  );
+  const outras = ligacoes.filter((l) => l.grupo === "eliminacao");
 
   return (
     <div className="avd-ast-passo" data-tour="avd-assistente-perguntas">

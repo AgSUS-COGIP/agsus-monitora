@@ -27,9 +27,12 @@ partes.tsx                 peças das duas abas: selo de status (com a data do C
                            a gaveta, ações de status, carta e anexos, paginação (Convocação), CampoEditavel
 modais.tsx                 status (Convocado pede a data), anexos, sub judice
 gaveta-do-candidato.tsx    a gaveta do candidato: dados, status e as cartas de convocação emitidas
-modal-listas-do-edital.tsx listas do edital: origem, importar XLSX, publicar da Classificação
+modal-listas-do-edital.tsx listas do edital: origem, importar XLSX, publicar da Classificação; a aba
+                           "Lista de convocação" só resume, com "Editar nas Regras do edital"
 previa-da-substituicao.tsx a prévia de "Substituir XLSX": o casamento do job Python (casados, entram,
                            sem par, status sem dono) e o motivo
+chamada-para-contratacao.tsx ResumoDaChamada (só leitura) e EditorDaChamada (o formulário sobre esta
+                           loja), usado nas Regras do edital, etapa Chamada para contratação
 formulario-de-convocacao.tsx, editor-de-modelo.tsx, previa-da-convocacao.tsx
                            configuração da convocação do edital (modelo de reserva de vagas)
 carta-de-convocacao/       a carta de convocação para contratação

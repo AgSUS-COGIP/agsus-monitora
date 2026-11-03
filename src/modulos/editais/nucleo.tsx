@@ -41,6 +41,7 @@ import { importarComRecarga } from "../../lib/importar-com-recarga.ts";
 import { BlocosEsqueleto } from "../../ui/index.ts";
 import type { EtapaDasRegras } from "../../lib/regras-do-edital.ts";
 import type { ClienteDasRegras } from "../regras-do-edital/regras-do-edital.tsx";
+import type { EstadoDosAprovados } from "../aprovados/tipos-do-estado.ts";
 
 /*
   Regras do edital: os editores de todas as etapas baixam só quando a página
@@ -54,8 +55,20 @@ declare global {
     /** O controlador da Lista de aprovados (`lista-aprovados.tsx`). */
     aprovadosController?: {
       openImportModal(id: unknown, rotulo: string): unknown;
+      /** Baixa e monta a Lista de aprovados (tela sob demanda). */
+      carregar?: () => Promise<{ estado?: unknown }>;
     };
   }
+}
+
+/*
+  A loja da Lista de aprovados do app, para a Chamada para contratação das
+  Regras do edital: a mesma da tela (`window.aprovadosController`), baixada e
+  montada na primeira vez, como no botão "Lista de aprovados" da linha.
+*/
+async function lojaDosAprovados(): Promise<EstadoDosAprovados | null> {
+  const controle = await window.aprovadosController?.carregar?.();
+  return (controle?.estado as EstadoDosAprovados | undefined) ?? null;
 }
 
 /** O estado da página (`criarEstadoDoNucleo`). */
@@ -389,15 +402,12 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
           titulo={titulo}
           etapa={etapa}
           supabase={estado.clienteDasRegras() as ClienteDasRegras | null}
-          perfil={nucleo.perfil}
           toast={estado.toast}
           aoMudarEtapa={(nova: EtapaDasRegras) =>
             estado.mudarEtapaDasRegras(nova)
           }
           aoVoltar={estado.fecharRegrasDoEdital}
-          aoEditarChamada={() =>
-            void window.aprovadosController?.openImportModal(id, titulo)
-          }
+          aprovados={lojaDosAprovados}
         />
       </Suspense>
     );

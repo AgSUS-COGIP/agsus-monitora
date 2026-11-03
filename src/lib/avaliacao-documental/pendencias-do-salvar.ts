@@ -33,16 +33,7 @@ export function lugarDoErro(erro: string): {
   const texto = String(erro);
   if (texto.startsWith("Classificação:"))
     return { passo: "nota", alvo: "[data-tour='avd-assistente-desempate']" };
-  if (/^Desempate da Provisória/.test(texto))
-    return {
-      passo: "nota",
-      alvo: "[data-tour='avd-assistente-desempate-provisoria']",
-    };
-  if (
-    /^(Nota declarada|Pergunta da experiência|Desempate pela experiência)/.test(
-      texto,
-    )
-  )
+  if (/^(Nota declarada|Base da nota do lote pela declarada)/.test(texto))
     return { passo: "perguntas" };
   const bloco = /^Bloco \d+ \(([A-Z0-9_]+)\)/.exec(texto);
   if (bloco) {
