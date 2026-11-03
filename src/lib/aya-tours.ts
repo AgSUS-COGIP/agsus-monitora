@@ -284,6 +284,11 @@ const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
         { exige: canManageEditais },
       ),
       passo(
+        t("editais-regras-do-edital"),
+        "Regras do edital",
+        "Todas as regras do edital numa página, por etapa: Triagem, Avaliação documental, Entrevista, Classificação e Chamada para contratação.",
+      ),
+      passo(
         t("editais-linha-do-tempo"),
         "Linha do tempo",
         "As etapas do edital de ponta a ponta e o histórico das mudanças.",
@@ -752,46 +757,12 @@ const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       passo(
         t("classificacao-regra"),
         "Regra do edital",
-        "O que vale na classificação deste edital, com versões.",
+        "O resumo da regra da Classificação: composição da nota, notas mínimas, desempate e cotas.",
       ),
       passo(
-        t("classificacao-regra-etapas"),
-        "Etapas e pesos",
-        "Quais notas entram (análise, entrevista, ART) e o peso de cada uma.",
-      ),
-      passo(
-        t("classificacao-regra-minimos"),
-        "Notas mínimas",
-        "Abaixo do mínimo, o candidato não classifica.",
-      ),
-      passo(
-        t("classificacao-regra-desempate"),
-        "Desempate",
-        "A ordem dos critérios de desempate, como 60 anos ou mais.",
-      ),
-      passo(
-        t("classificacao-regra-modalidades"),
-        "Modalidades",
-        "Ampla concorrência e reservas (PP, PI, PcD…) com os percentuais.",
-      ),
-      passo(
-        t("classificacao-regra-convocacao"),
-        "Convocação para entrevista",
-        "Quantos candidatos por vaga vão para a entrevista.",
-      ),
-      passo(
-        [
-          t("classificacao-regra-botao-salvar"),
-          t("classificacao-regra-salvar"),
-        ],
-        "Salvar a regra",
-        "Grava uma versão nova da regra, com motivo.",
-        { exige: canEditClassificacao },
-      ),
-      passo(
-        t("classificacao-regra-versoes"),
-        "Versões",
-        "Cada lista gerada guarda a versão da regra usada.",
+        "[data-tour='classificacao-regra'] [data-acao='editar-nas-regras-do-edital']",
+        "Editar nas Regras do edital",
+        "A regra se muda em Editais › Regras do edital, na etapa Classificação, com versão e motivo.",
       ),
       PASSO_DA_AYA,
     ]),
@@ -955,30 +926,18 @@ const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
     titulo: "Avaliação documental · Regra",
     passos: Object.freeze([
       passo(
-        t("avd-regra-modo"),
-        "Assistente ou modo avançado",
-        "O assistente monta a regra em cinco passos; o modo avançado mostra o formulário inteiro. Os dois mexem no mesmo rascunho.",
+        t("avd-regra-resumo"),
+        "Regra do edital",
+        "O resumo da regra: documentos exigidos, o que pontua, como a experiência conta e a nota mínima.",
         {
-          antes: `${t("avd-visoes")} [data-valor='regra']`,
+          antes: `${t("avd-visoes")} [data-valor='configuracoes']`,
           exige: coordenaAvaliacao,
         },
       ),
       passo(
-        t("avd-assistente-passos"),
-        "Os cinco passos",
-        "Ponto de partida, o que vale e o que elimina, perguntas da Empregare, nota mínima e desempate, testar e salvar.",
-        { exige: coordenaAvaliacao },
-      ),
-      passo(
-        t("avd-assistente-partida"),
-        "Ponto de partida",
-        "Continue da versão vigente, copie a regra conferida de outro edital da área, use um modelo ou comece do zero.",
-        { exige: coordenaAvaliacao },
-      ),
-      passo(
-        t("avd-regra-conferir"),
-        "Dupla conferência",
-        "Quem salvou a versão não a marca como conferida: outra pessoa da coordenação confere.",
+        "[data-tour='avd-regra-resumo'] [data-acao='editar-nas-regras-do-edital']",
+        "Editar nas Regras do edital",
+        "A regra (assistente ou modo avançado) se muda em Editais › Regras do edital, na etapa Avaliação documental.",
         { exige: coordenaAvaliacao },
       ),
       PASSO_DA_AYA,

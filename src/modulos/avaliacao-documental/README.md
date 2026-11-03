@@ -230,7 +230,7 @@ avaliacao-documental.tsx  tela e montarAvaliacaoDocumental() (na #page-avaliacao
 estado.ts                 store sem React: editais, regra, equipe e as gravações (RPCs)
 abas-e-entrada.ts         abas por papel, edital que abre sozinho, último edital lembrado
 entrada-da-avaliacao.tsx  cartões dos editais vigentes (sem edital escolhido)
-regra.tsx                 aba Regra: formulário, perguntas da carga, versões, aldeias
+regra.tsx                 editor da regra (Editais › Regras do edital, etapa 2; sem Provisória nem lote, que são da Triagem): formulário, perguntas da carga, versões, aldeias
 assistente/diferencas-por-cargo.tsx  "Diferenças por cargo" (assistente e modo avançado)
 blocos.tsx                os blocos da ficha na regra
 previa.tsx                "Testar com um candidato fictício" (entradas à esquerda, resultado preso

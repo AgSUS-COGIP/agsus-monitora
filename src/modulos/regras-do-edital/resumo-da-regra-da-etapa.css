@@ -1,0 +1,21 @@
+/* Resumo só-leitura no topo das telas de cada etapa (Avaliação documental, Classificação). */
+.resumo-da-regra-da-etapa__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.resumo-da-regra-da-etapa__topo .ui-titulo {
+  margin: 0;
+}
+
+.resumo-da-regra-da-etapa__versao {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.resumo-da-regra-da-etapa__editar {
+  margin-inline-start: auto;
+}

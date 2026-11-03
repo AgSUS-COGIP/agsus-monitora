@@ -5,7 +5,7 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
+import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
 import { DESEMPATES_DA_PROVISORIA } from "../../src/lib/avaliacao-documental/catalogo.ts";
 import { CATALOGO_DE_CRITERIOS } from "../../src/lib/classificacao/catalogo.ts";
 import {
@@ -147,18 +147,16 @@ function supabaseFalso({
 let secao;
 let painel;
 
+/* O editor da regra mora nas Regras do edital (Editais), etapa 2, desde 03/11/2026. */
 async function montar(supabase) {
-  secao = document.createElement("section");
-  secao.id = "page-avaliacao-documental";
-  document.body.append(secao);
-  await act(async () => {
-    painel = montarAvaliacaoDocumental({ supabase, toast: vi.fn() });
+  const montado = await montarRegrasDoEdital({
+    supabase,
+    editalId: "e93",
+    etapa: "avaliacao",
+    toast: vi.fn(),
   });
-  await act(async () => void painel.render());
-  await esperar();
-  await escolher(secao.querySelector(".avd-edital select"), "e93");
-  await esperar();
-  act(() => painel.estado.mudarVisao("regra"));
+  secao = montado.secao;
+  painel = montado;
   await esperar();
   await esperar();
 }
@@ -527,9 +525,10 @@ describe("assistente da regra", () => {
     expect(localStorage.getItem("avd-regra-modo")).toBe("avancado");
   });
 
-  it("quem não coordena não vê a regra (nem o assistente nem o resumo)", async () => {
+  it("quem não coordena só lê a regra: sem assistente e sem salvar", async () => {
     await montar(supabaseFalso({ regra: regraSalva(1), pode: false }));
-    expect(secao.querySelector(".avd-ast")).toBeNull();
-    expect(secao.querySelector(".avd-ast-resumo")).toBeNull();
+    expect(secao.querySelector(".avd-ast-passos")).toBeNull();
+    expect(secao.querySelector("[data-acao='salvar-regra']")).toBeNull();
+    expect(secao.querySelector(".avd-campos").disabled).toBe(true);
   });
 });

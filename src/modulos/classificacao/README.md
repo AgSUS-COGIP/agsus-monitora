@@ -72,7 +72,7 @@ agenda.tsx         visão "Agenda": regra da agenda das entrevistas (versões), 
 estado-da-agenda.ts  store da agenda (obter_agenda_entrevista, salvar_regra_agenda_entrevista,
                    salvar_agenda_entrevista); a agenda salva preenche DATA e HORA do
                    documento da convocação (agendaDoDocumento)
-regra.tsx          visão "Regra" em TypeScript: formulário (critérios ordenáveis do catálogo, empate final,
+regra.tsx          editor da regra (montado em Editais › Regras do edital, etapa 4; a visão "Regra" da tela mostra só o resumo): formulário (critérios ordenáveis do catálogo, empate final,
                    modalidades, convocação, rodapé) e versões; o rascunho é guardado a cada
                    mudança (src/app/rascunho-da-regra.ts, tipo CLASSIFICACAO) e volta ao abrir
 documento.tsx      "Como fica no SEI": quase tela cheia (ou tela cheia), folha A4 com zoom
