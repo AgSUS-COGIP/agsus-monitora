@@ -55,7 +55,7 @@ export function ConfirmacaoDeSaida() {
           aria-describedby="shellLogoutDescription"
         >
           <div className="shell-confirm-icon" aria-hidden="true">
-            <Icone nome="log-out" />
+            <Icone nome="log-out" tamanho={16} />
           </div>
           <h2 id="shellLogoutTitle">Deseja realmente sair?</h2>
           <p id="shellLogoutDescription">
