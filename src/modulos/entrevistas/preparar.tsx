@@ -37,7 +37,7 @@ import {
 } from "../../lib/resumo-da-entrevista.ts";
 import { textoDaPontuacao } from "../../lib/roteiro-de-entrevista.ts";
 import { Aviso, EstadoVazio, Selo } from "../../ui/index.ts";
-import { irParaTela } from "../../app/ir-para-tela.ts";
+import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
 import {
   BotaoIrPara,
   ConvocacaoDaClassificacao,
@@ -466,11 +466,9 @@ function PrepararDoEdital({
     corpo.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }
   function ir(destino: DestinoDoResumo) {
+    // A convocação e o desempate são da regra da Classificação: Regras do edital.
     if (destino === "classificacao")
-      irParaTela({
-        view: "classificacao",
-        edital: { id: dados.edital?.id, titulo: dados.edital?.edital || "" },
-      });
+      abrirRegrasDoEdital(String(dados.edital?.id ?? ""), "classificacao");
     else if (destino === "roteiro" && roteiro) {
       irAoPasso("roteiro");
       setPedido((p) => ({ roteiro, vez: (p?.vez ?? 0) + 1 }));

@@ -375,6 +375,47 @@ describe("tabela de editais", () => {
       "10/2026 · DSEI Manaus",
     );
   });
+
+  it("Regras do edital: abre no lugar da tabela, troca de etapa e volta", async () => {
+    // O pacote da página baixa sob demanda; aqui, já em cache.
+    await import("../../src/modulos/regras-do-edital/regras-do-edital.tsx");
+    await montar();
+    await clicar(linha("1").querySelector('[aria-label^="Regras do edital"]'));
+    const pagina = async () => {
+      for (let i = 0; i < 200; i += 1) {
+        const achada = document.querySelector("[data-tour='regras-do-edital']");
+        if (achada) return achada;
+        await act(async () => new Promise((r) => setTimeout(r, 25)));
+      }
+      return null;
+    };
+    const regras = await pagina();
+    expect(regras).not.toBeNull();
+    expect(regras.dataset.etapa).toBe("triagem");
+    expect(regras.textContent).toContain("Regras do edital 10/2026");
+    expect(
+      [...regras.querySelectorAll(".ui-segmentado button")].map((b) =>
+        b.textContent.trim(),
+      ),
+    ).toEqual([
+      "1 Triagem",
+      "2 Avaliação documental",
+      "3 Entrevista",
+      "4 Classificação",
+      "5 Chamada para contratação",
+    ]);
+    expect(document.getElementById("nucleoRows")).toBeNull();
+
+    // "Editar nas Regras do edital" de outra tela: abre já na etapa.
+    await act(async () =>
+      controlador.abrirRegrasDoEdital("1", "classificacao"),
+    );
+    expect((await pagina()).dataset.etapa).toBe("classificacao");
+
+    await clicar(document.querySelector("[data-acao='voltar-aos-editais']"));
+    expect(document.querySelector("[data-tour='regras-do-edital']")).toBeNull();
+    expect(document.getElementById("nucleoRows")).not.toBeNull();
+  });
 });
 
 describe("painel operacional", () => {

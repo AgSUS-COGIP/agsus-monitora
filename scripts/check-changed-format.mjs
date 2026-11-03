@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { extname } from "node:path";
+import { arquivosAlterados } from "./arquivos-alterados.mjs";
 
-const BASE_REF = process.env.QUALITY_BASE_REF || "origin/main";
 const SUPPORTED_EXTENSIONS = new Set([
   ".js",
   ".jsx",
@@ -13,53 +13,36 @@ const SUPPORTED_EXTENSIONS = new Set([
 ]);
 const EXCLUDED = new Set(["index.html"]);
 
-function git(...args) {
-  return execFileSync("git", args, { encoding: "utf8" }).trim();
-}
+let alvos;
+let descricao;
+const alteracao = arquivosAlterados();
 
-let changedFiles = [];
-try {
-  changedFiles = git(
-    "diff",
-    "--name-only",
-    "--diff-filter=ACMR",
-    BASE_REF,
-    "HEAD",
-  )
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean);
-} catch (error) {
-  console.error(`Não foi possível comparar a formatação com ${BASE_REF}.`);
-  console.error(error instanceof Error ? error.message : error);
-  process.exit(1);
-}
-
-const candidates = changedFiles.filter((path) => {
-  if (EXCLUDED.has(path)) return false;
-  if (
-    path.startsWith("dist/") ||
-    path.startsWith("coverage/") ||
-    path.startsWith("node_modules/")
-  ) {
-    return false;
+if (!alteracao) {
+  console.log(
+    "Sem base para comparar (corporativo/main, origin/main ou main).",
+  );
+  alvos = ["src"];
+  descricao = "em src/ inteiro";
+} else {
+  alvos = alteracao.arquivos.filter(
+    (caminho) =>
+      !EXCLUDED.has(caminho) && SUPPORTED_EXTENSIONS.has(extname(caminho)),
+  );
+  if (!alvos.length) {
+    console.log(
+      `Formatação validada: nenhum ficheiro elegível foi alterado em relação a ${alteracao.base}.`,
+    );
+    process.exit(0);
   }
-  return SUPPORTED_EXTENSIONS.has(extname(path));
-});
-
-if (!candidates.length) {
-  console.log("Formatação validada: nenhum ficheiro elegível foi alterado.");
-  process.exit(0);
+  descricao = `em ${alvos.length} ficheiro(s) alterado(s) em relação a ${alteracao.base}`;
 }
 
 try {
-  execFileSync("npx", ["prettier", "--check", ...candidates], {
+  execFileSync("npx", ["prettier", "--check", ...alvos], {
     stdio: "inherit",
     shell: process.platform === "win32",
   });
-  console.log(
-    `Formatação validada em ${candidates.length} ficheiro(s) alterado(s).`,
-  );
+  console.log(`Formatação validada ${descricao}.`);
 } catch {
   process.exit(1);
 }

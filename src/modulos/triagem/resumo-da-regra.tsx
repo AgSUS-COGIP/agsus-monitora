@@ -5,7 +5,8 @@ import type { RespostaDaRegraDaTriagem } from "../../lib/triagem/regra-da-triage
 /*
   Resumo só-leitura da regra da Triagem, no topo da tela da Triagem: versão,
   situação (conferida ou a conferir) e as regras em uma linha cada. Editar é
-  nas Regras do edital (Editais › Regras da Triagem): o botão leva até lá.
+  nas Regras do edital (Editais › Regras do edital, etapa Triagem): o botão
+  leva até lá.
 */
 export function ResumoDaRegraDaTriagem({
   resposta,

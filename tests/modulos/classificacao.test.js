@@ -18,6 +18,7 @@ import {
   escolher,
   esperar,
 } from "../componentes/interacoes.js";
+import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
 
 /*
   A tela de Classificação como módulo do app (src/modulos/classificacao/):
@@ -243,6 +244,21 @@ const botao = (texto, raiz = document) =>
   [...raiz.querySelectorAll("button")].find((b) =>
     b.textContent.trim().startsWith(texto),
   );
+/*
+  O editor da regra mora nas Regras do edital (Editais), etapa 4, desde
+  03/11/2026; a visão Regra da tela mostra só o resumo.
+*/
+async function montarRegra(supabase) {
+  const montado = await montarRegrasDoEdital({
+    supabase,
+    editalId: "e83",
+    etapa: "classificacao",
+    toast,
+  });
+  secao = montado.secao;
+  painel = montado;
+  await esperar();
+}
 const seletorDoEdital = () =>
   secao.querySelector(".classificacao-edital select");
 async function abrirEdital(id = "e83") {
@@ -892,11 +908,36 @@ describe("tela de Classificação", () => {
     );
   });
 
-  it("Regra: critérios reordenáveis, motivo obrigatório e salvar cria a versão 3", async () => {
-    const supabase = supabaseFalso();
-    await montar(supabase);
+  it("Regra na tela: o resumo (nota, desempate, cotas) e o Editar nas Regras do edital", async () => {
+    await montar(supabaseFalso());
     await abrirEdital();
     await clicar(secao.querySelector(".ui-topo [data-valor='regra']"));
+    const resumo = secao.querySelector("[data-tour='classificacao-regra']");
+    expect(resumo.textContent).toContain("Composição da nota");
+    expect(resumo.textContent).toContain(
+      "1º indígena comprovado (comprovado na Avaliação documental)",
+    );
+    expect(resumo.textContent).toContain("PP 25%");
+    expect(secao.querySelector("[data-acao='salvar-regra']")).toBeNull();
+    window.navigate = vi.fn();
+    window.nucleoController = { abrirRegrasDoEdital: vi.fn() };
+    try {
+      await clicar(
+        resumo.querySelector("[data-acao='editar-nas-regras-do-edital']"),
+      );
+      expect(window.nucleoController.abrirRegrasDoEdital).toHaveBeenCalledWith(
+        "e83",
+        "classificacao",
+      );
+    } finally {
+      delete window.navigate;
+      delete window.nucleoController;
+    }
+  });
+
+  it("Regra: critérios reordenáveis, motivo obrigatório e salvar cria a versão 3", async () => {
+    const supabase = supabaseFalso();
+    await montarRegra(supabase);
     expect(
       secao.querySelectorAll(".classificacao-lista-ordenavel li"),
     ).toHaveLength(1);
@@ -976,9 +1017,7 @@ describe("tela de Classificação", () => {
         return { descartado: true };
       },
     });
-    await montar(supabase);
-    await abrirEdital();
-    await clicar(secao.querySelector(".ui-topo [data-valor='regra']"));
+    await montarRegra(supabase);
     await esperar();
     expect(secao.querySelector(".ui-aviso-de-rascunho").textContent).toContain(
       "Você tem um rascunho não salvo de 13/10 14:05",
@@ -1009,9 +1048,7 @@ describe("tela de Classificação", () => {
 
   it("Regra: digitar tecla a tecla não come a vírgula nem o espaço (números e listas)", async () => {
     const supabase = supabaseFalso();
-    await montar(supabase);
-    await abrirEdital();
-    await clicar(secao.querySelector(".ui-topo [data-valor='regra']"));
+    await montarRegra(supabase);
     const campo = (rotulo) => {
       const label = [...secao.querySelectorAll("label")].find(
         (l) => l.textContent.trim() === rotulo,

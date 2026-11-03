@@ -1,4 +1,4 @@
-/* Regra da Triagem: resumo no topo da tela e o editor (Editais › Regras da Triagem). */
+/* Regra da Triagem: resumo no topo da tela e o editor (Editais › Regras do edital, etapa 1). */
 .triagem-regra__topo {
   display: flex;
   flex-wrap: wrap;
@@ -12,25 +12,29 @@
 }
 
 .triagem-regra__versao {
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
 }
 
 .triagem-regra__editar {
   margin-inline-start: auto;
 }
 
-.triagem-regra-card {
-  width: min(960px, 100%);
-}
+/* ── Editor ─────────────────────────────────────────────────────────── */
 
-.triagem-regra-form {
+.triagem-regra-editor,
+.triagem-regra-form,
+.triagem-regra-campos {
   display: grid;
   gap: var(--space-3);
+  min-width: 0;
 }
 
-.triagem-regra-form fieldset {
-  min-width: 0;
+.triagem-regra-editor > .triagem-regra__topo {
+  margin-bottom: 0;
+}
+
+.triagem-regra-campos {
   margin: 0;
   padding: 0;
   border: 0;
@@ -38,31 +42,247 @@
 
 .triagem-regra-secao {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
+  gap: var(--space-3);
 }
 
-.triagem-regra-secao > h4,
-.triagem-regra-secao > summary,
-.triagem-regra-secao > .btn,
-.triagem-regra-secao > .triagem-desempate {
-  grid-column: 1 / -1;
+.triagem-regra-secao > .ui-titulo {
+  margin: 0;
 }
 
-.triagem-eliminacao {
+/* Requisitos: uma ficha por requisito, numerada, com o Tirar no topo. */
+.triagem-requisitos {
   display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-2);
-  padding: var(--space-2);
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.triagem-requisito {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
+  background: var(--surface-page);
+}
+
+.triagem-requisito__topo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.triagem-requisito__topo strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.triagem-requisito__numero {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-full);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+
+.triagem-requisito__tirar {
+  margin-inline-start: auto;
+}
+
+/* Desempate: a lista na ordem, com o interruptor e as setas. */
+.triagem-desempate {
+  display: grid;
+  gap: var(--space-1-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.triagem-criterio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  min-height: 2.75rem;
+  padding: var(--space-1-5) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+}
+
+.triagem-criterio:not([data-ligado]) {
+  background: var(--surface-page);
+  color: var(--text-secondary);
+}
+
+.triagem-criterio__ordem {
+  flex: none;
+  min-width: 2rem;
+  color: var(--brand-primary);
+  font-weight: 700;
+  text-align: center;
+}
+
+.triagem-criterio:not([data-ligado]) .triagem-criterio__ordem {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.triagem-criterio__nome {
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  cursor: pointer;
+}
+
+.triagem-criterio__setas {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+/* Opções do lote: interruptores em grade (uma coluna no celular). */
+.triagem-opcoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-2) var(--space-4);
+}
+
+.triagem-opcao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+/* Interruptor (checkbox com role="switch"), com as cores dos tokens. */
+.triagem-interruptor {
+  position: relative;
+  flex: none;
+  width: 2.25rem;
+  height: 1.25rem;
+  margin: 0;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-full);
+  appearance: none;
+  background: var(--surface-hover);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.triagem-interruptor::after {
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: var(--radius-full);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-sm);
+  content: "";
+  transform: translateY(-50%);
+  transition: left 0.15s ease;
+}
+
+.triagem-interruptor:checked {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+}
+
+.triagem-interruptor:checked::after {
+  left: calc(100% - 0.875rem - 2px);
+}
+
+.triagem-interruptor:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.triagem-interruptor:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* Avançado e histórico: recolhidos, com o resumo em destaque. */
+.triagem-avancado > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.triagem-avancado[open] > summary {
+  margin-bottom: var(--space-1);
+}
+
+.triagem-avancado textarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--text-body-sm);
 }
 
 .triagem-historico {
   display: grid;
   gap: var(--space-1);
-  margin: var(--space-2) 0 0;
+  margin: 0;
   padding-inline-start: var(--space-4);
+}
+
+/* Salvar: preso ao pé, sempre à vista, com o motivo e o botão principal. */
+.triagem-regra-salvar {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--z-sticky, 100);
+  display: grid;
+  gap: var(--space-2);
+  box-shadow: var(--shadow-raised);
+}
+
+.triagem-regra-salvar > .ui-titulo {
+  margin: 0;
+}
+
+.triagem-regra-salvar__campos {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.triagem-regra-salvar__campos textarea {
+  min-height: 2.75rem;
+  resize: vertical;
+}
+
+.triagem-regra-salvar__acoes {
+  justify-content: flex-end;
+}
+
+@media (max-width: 720px) {
+  .triagem-regra-salvar {
+    padding: var(--space-3);
+  }
+
+  .triagem-regra-salvar > .ui-titulo {
+    display: none;
+  }
+
+  .triagem-regra-salvar__campos {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  .triagem-regra-salvar__acoes > .btn {
+    flex: 1 1 auto;
+  }
 }

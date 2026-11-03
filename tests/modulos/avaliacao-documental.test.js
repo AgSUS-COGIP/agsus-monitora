@@ -6,6 +6,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
+import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
 import { comecoDoEnunciado } from "../../src/lib/avaliacao-documental/nota-declarada.ts";
 import {
   clicar,
@@ -188,6 +189,24 @@ async function montar(supabase) {
   act(() => painel.estado.mudarVisao("regra"));
   await esperar();
 }
+/*
+  O editor da regra mora nas Regras do edital (Editais) desde 03/11/2026: os
+  casos do editor montam a página na etapa 2; a tela da Avaliação mostra só
+  o resumo, com "Editar nas Regras do edital".
+*/
+let lojas;
+async function montarRegra(supabase) {
+  const montado = await montarRegrasDoEdital({
+    supabase,
+    editalId: "e93",
+    etapa: "avaliacao",
+    toast,
+  });
+  secao = montado.secao;
+  painel = montado;
+  lojas = montado.lojas;
+  await esperar();
+}
 const botao = (texto, raiz = document) =>
   [...raiz.querySelectorAll("button")].find((b) =>
     b.textContent.trim().startsWith(texto),
@@ -212,7 +231,7 @@ describe("regra da avaliação (AM-2)", () => {
   afterEach(() => localStorage.removeItem("avd-regra-modo"));
   it("AM-2.1: edital sem regra cria a versão 1 a partir do modelo", async () => {
     const supabase = supabaseFalso({ comRegra: false });
-    await montar(supabase);
+    await montarRegra(supabase);
     expect(secao.textContent).toContain("Criar a regra do edital");
     await clicar(secao.querySelector("[data-acao='copiar-modelo']"));
     await esperar();
@@ -229,7 +248,7 @@ describe("regra da avaliação (AM-2)", () => {
 
   it("AM-2.2: mudar pede o motivo e salva como versão nova", async () => {
     const supabase = supabaseFalso();
-    await montar(supabase);
+    await montarRegra(supabase);
     const titulo = secao
       .querySelector("#avdGeral")
       .closest("section")
@@ -263,7 +282,7 @@ describe("regra da avaliação (AM-2)", () => {
 
   it("marca como conferida", async () => {
     const supabase = supabaseFalso();
-    await montar(supabase);
+    await montarRegra(supabase);
     await clicar(secao.querySelector("[data-acao='conferir-regra']"));
     await esperar();
     expect(supabase.rpc).toHaveBeenCalledWith("conferir_regra_analise", {
@@ -277,7 +296,7 @@ describe("regra da avaliação (AM-2)", () => {
 
   it("salvar com uma leitura no ar: o cabeçalho fica na versão nova, sem voltar à anterior", async () => {
     const supabase = supabaseFalso();
-    await montar(supabase);
+    await montarRegra(supabase);
     await clicar(secao.querySelector("[data-acao='conferir-regra']"));
     await esperar();
     const resumo = () =>
@@ -296,7 +315,8 @@ describe("regra da avaliação (AM-2)", () => {
       });
       return velha;
     });
-    await clicar(secao.querySelector("[data-acao='atualizar']"));
+    // A releitura do edital (a mesma do "Atualizar" da tela) fica no ar.
+    act(() => void lojas.avaliacao.escolherEdital("e93"));
     await esperar();
     expect(soltar).toBeTypeOf("function");
     supabase.rpc.mockImplementation(normal);
@@ -322,13 +342,10 @@ describe("regra da avaliação (AM-2)", () => {
     expect(
       secao.querySelector("[data-acao='salvar-regra']").textContent,
     ).toContain("versão 3");
-    expect(secao.querySelector("[data-status-da-carga]").textContent).toBe(
-      "Versão 2 · Conferir",
-    );
   }, 20000);
 
   it("AM-2.4: liga uma pergunta da carga a um bloco", async () => {
-    await montar(supabaseFalso());
+    await montarRegra(supabaseFalso());
     const perguntas = secao.querySelector("#avdPerguntas").closest("section");
     await escolher(perguntas.querySelector("select"), "COTA_PP");
     await clicar(botao("Ligar", perguntas));
@@ -352,55 +369,9 @@ describe("regra da avaliação (AM-2)", () => {
     expect(comecoDoEnunciado("SITUAÇÃO")).toBe("SITUAÇÃO");
   });
 
-  it("nota declarada com pontos por nível: uma coluna por nível, salva em pontos_por_nivel", async () => {
-    const supabase = supabaseFalso();
-    await montar(supabase);
-    const grupo = [...secao.querySelectorAll(".avd-subgrupo")].find((g) =>
-      g.querySelector("h3")?.textContent.startsWith("Nota recalculada"),
-    );
-    await clicar(botao("Pergunta pontuada", grupo));
-    const item = [...grupo.querySelectorAll(".avd-declarada")].at(-1);
-    const caixa = [...item.querySelectorAll("label")]
-      .find((l) => l.textContent.includes("Pontos por nível"))
-      .querySelector("input");
-    await clicar(caixa);
-    const rotulo = [...item.querySelectorAll("label")].find((l) =>
-      l.textContent.includes("Pergunta (começo"),
-    );
-    const pergunta = document.getElementById(rotulo.htmlFor);
-    await digitar(pergunta, "Experiência Profissional");
-    const resposta = item.querySelector(
-      "input[placeholder='Texto exato da resposta']",
-    );
-    await digitar(resposta, "1 ano");
-    await teclar(resposta, "Enter");
-    const linha = item.querySelector(".avd-recuo");
-    expect(linha.textContent).toContain("1 ano");
-    expect(linha.textContent).toContain("Superior");
-    expect(linha.textContent).toContain("Técnico");
-    expect(linha.textContent).toContain("Médio");
-    const [superior, tecnico] = linha.querySelectorAll("input");
-    await digitar(superior, "5");
-    await digitar(tecnico, "4");
-    const motivo = [...secao.querySelectorAll(".ui-barra-de-salvar input")][0];
-    await digitar(motivo, "Experiência por nível conforme o edital");
-    await clicar(secao.querySelector("[data-acao='salvar-regra']"));
-    await esperar();
-    const chamada = supabase.rpc.mock.calls.find(
-      ([nome]) => nome === "salvar_regra_analise",
-    );
-    const salvo = chamada[1].p_configuracao.provisoria.nota_declarada.at(-1);
-    expect(salvo.pontos).toBeUndefined();
-    expect(salvo.pontos_por_nivel).toEqual({
-      superior: { "1 ano": 5 },
-      tecnico: { "1 ano": 4 },
-      medio: { "1 ano": 0 },
-    });
-  }, 20000);
-
   it("AM-2.7: a prévia calcula a nota, a situação e o parecer sem gravar", async () => {
     const supabase = supabaseFalso();
-    await montar(supabase);
+    await montarRegra(supabase);
     const previa = secao.querySelector(".avd-previa");
     await clicar(botao("Abrir", previa));
     // O corpo da prévia carrega ao abrir (lazy).
@@ -427,6 +398,36 @@ describe("regra da avaliação (AM-2)", () => {
     expect(supabase.rpc.mock.calls.length).toBe(chamadas);
   });
 
+  it("a tela mostra a regra resumida e leva às Regras do edital", async () => {
+    await montar(supabaseFalso());
+    const resumo = secao.querySelector("[data-tour='avd-regra-resumo']");
+    expect(resumo.textContent).toContain("Regra da Avaliação documental");
+    expect(resumo.textContent).toContain("Nota mínima");
+    expect(secao.querySelector(".avd-campos")).toBeNull();
+    window.navigate = vi.fn();
+    window.nucleoController = { abrirRegrasDoEdital: vi.fn() };
+    try {
+      await clicar(
+        resumo.querySelector("[data-acao='editar-nas-regras-do-edital']"),
+      );
+      expect(window.navigate).toHaveBeenCalledWith("nucleo");
+      expect(window.nucleoController.abrirRegrasDoEdital).toHaveBeenCalledWith(
+        "e93",
+        "avaliacao",
+      );
+    } finally {
+      delete window.navigate;
+      delete window.nucleoController;
+    }
+  });
+
+  it("o editor não tem mais Provisória nem Lote (são da regra da Triagem)", async () => {
+    await montarRegra(supabaseFalso());
+    expect(secao.querySelector(".avd-campos")).not.toBeNull();
+    expect(secao.querySelector("#avdProvisoria")).toBeNull();
+    expect(secao.querySelector("#avdLote")).toBeNull();
+  });
+
   it("quem não coordena não vê a regra, sem salvar nem perguntas", async () => {
     const supabase = supabaseFalso({ pode: false });
     await montar(supabase);
@@ -444,7 +445,7 @@ describe("regra da avaliação (AM-2)", () => {
 
   it("as perguntas da carga vêm da RPC própria, uma vez por edital", async () => {
     const supabase = supabaseFalso();
-    await montar(supabase);
+    await montarRegra(supabase);
     expect(secao.querySelector("#avdPerguntas")).not.toBeNull();
     const pedidos = supabase.rpc.mock.calls.filter(
       ([nome]) => nome === "obter_perguntas_carga_analise",

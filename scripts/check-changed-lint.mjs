@@ -1,57 +1,56 @@
 import { execFileSync } from "node:child_process";
 import { extname } from "node:path";
+import { arquivosAlterados } from "./arquivos-alterados.mjs";
 
-const BASE_REF = process.env.QUALITY_BASE_REF || "origin/main";
 const SUPPORTED_EXTENSIONS = new Set([".js", ".jsx", ".mjs", ".ts", ".tsx"]);
-const EXCLUDED = new Set([]);
 
-function git(...args) {
-  return execFileSync("git", args, { encoding: "utf8" }).trim();
-}
+/*
+  Mudou a regra (configuração do ESLint ou versão dos pacotes), muda o
+  resultado de todos os arquivos: aí o lint passa por `src/` inteiro.
+*/
+const MUDA_A_REGRA = new Set([
+  "eslint.config.js",
+  "package.json",
+  "package-lock.json",
+  "tsconfig.frontend.json",
+]);
 
-let changedFiles = [];
-try {
-  changedFiles = git(
-    "diff",
-    "--name-only",
-    "--diff-filter=ACMR",
-    BASE_REF,
-    "HEAD",
-  )
-    .split("\n")
-    .map((item) => item.trim())
-    .filter(Boolean);
-} catch (error) {
-  console.error(`Não foi possível comparar o lint com ${BASE_REF}.`);
-  console.error(error instanceof Error ? error.message : error);
-  process.exit(1);
-}
+let alvos;
+let descricao;
+const alteracao = arquivosAlterados();
 
-const candidates = changedFiles.filter((path) => {
-  if (EXCLUDED.has(path)) return false;
-  if (
-    path.startsWith("dist/") ||
-    path.startsWith("coverage/") ||
-    path.startsWith("node_modules/")
-  ) {
-    return false;
-  }
-  return SUPPORTED_EXTENSIONS.has(extname(path));
-});
-
-if (!candidates.length) {
+if (!alteracao) {
   console.log(
-    "Lint validado: nenhum ficheiro JavaScript ou TypeScript elegível foi alterado.",
+    "Sem base para comparar (corporativo/main, origin/main ou main).",
   );
-  process.exit(0);
+  alvos = ["src"];
+  descricao = "em src/ inteiro";
+} else {
+  const elegiveis = alteracao.arquivos.filter((caminho) =>
+    SUPPORTED_EXTENSIONS.has(extname(caminho)),
+  );
+  if (alteracao.arquivos.some((caminho) => MUDA_A_REGRA.has(caminho))) {
+    console.log(`A configuração do lint mudou em relação a ${alteracao.base}.`);
+    const fora = elegiveis.filter((caminho) => !caminho.startsWith("src/"));
+    alvos = ["src", ...fora];
+    descricao = `em src/ inteiro e em ${fora.length} outro(s) ficheiro(s)`;
+  } else if (!elegiveis.length) {
+    console.log(
+      `Lint validado: nenhum ficheiro JavaScript ou TypeScript elegível foi alterado em relação a ${alteracao.base}.`,
+    );
+    process.exit(0);
+  } else {
+    alvos = elegiveis;
+    descricao = `em ${alvos.length} ficheiro(s) alterado(s) em relação a ${alteracao.base}`;
+  }
 }
 
 try {
-  execFileSync("npx", ["eslint", ...candidates], {
+  execFileSync("npx", ["eslint", ...alvos], {
     stdio: "inherit",
     shell: process.platform === "win32",
   });
-  console.log(`Lint validado em ${candidates.length} ficheiro(s) alterado(s).`);
+  console.log(`Lint validado ${descricao}.`);
 } catch {
   process.exit(1);
 }

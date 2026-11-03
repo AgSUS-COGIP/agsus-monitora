@@ -38,9 +38,18 @@ import type {
   ModalDoNucleo,
   OpcoesDoEstadoDoNucleo,
 } from "./estado.ts";
-import { ModalDaRegraDaTriagem } from "../triagem/modal-da-regra.tsx";
-import type { ClienteDaRegra } from "../../lib/triagem/regra-da-triagem.ts";
+import { importarComRecarga } from "../../lib/importar-com-recarga.ts";
+import { BlocosEsqueleto } from "../../ui/index.ts";
+import type { EtapaDasRegras } from "../../lib/regras-do-edital.ts";
+import type { ClienteDasRegras } from "../regras-do-edital/regras-do-edital.tsx";
 
+/*
+  Regras do edital: os editores de todas as etapas baixam só quando a página
+  abre (fora do pacote principal, onde Editais monta).
+*/
+const RegrasDoEdital = lazy(
+  importarComRecarga(() => import("../regras-do-edital/regras-do-edital.tsx")),
+);
 declare global {
   interface Window {
     /** O controlador da Lista de aprovados (`lista-aprovados.tsx`). */
@@ -231,10 +240,10 @@ function LinhaDoEdital({
             <button
               type="button"
               className="btn icon outline"
-              title="Regras da Triagem"
-              data-tour="editais-regras-da-triagem"
-              aria-label={`Regras da Triagem ${item.edital || ""}`}
-              onClick={() => estado.abrirRegrasDaTriagem(item.id)}
+              title="Regras do edital"
+              data-tour="editais-regras-do-edital"
+              aria-label={`Regras do edital ${item.edital || ""}`}
+              onClick={() => estado.abrirRegrasDoEdital(item.id)}
             >
               <i className="fa-solid fa-list-check" aria-hidden="true" />
             </button>
@@ -329,15 +338,6 @@ function ModalAberto({
         />
       </Suspense>
     );
-  if (modal?.tipo === "regras-triagem")
-    return (
-      <ModalDaRegraDaTriagem
-        key={modal.abertura}
-        edital={modal.id}
-        cliente={estado.clienteDaRegra() as ClienteDaRegra | null}
-        aoFechar={estado.fecharModal}
-      />
-    );
   if (modal?.tipo === "linha-do-tempo")
     return (
       <ModalLinhaDoTempo
@@ -375,6 +375,34 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
     [editais, indice, nucleo.filtro],
   );
   const podeEditar = canManageEditais(nucleo.perfil);
+
+  if (nucleo.regras) {
+    const { id, etapa } = nucleo.regras;
+    const linha = linhas.find((l) => String(l.id) === id);
+    const titulo =
+      nucleo.regras.titulo ||
+      [linha?.edital, linha?.unidade].filter(Boolean).join(" · ");
+    return (
+      <Suspense fallback={<BlocosEsqueleto quantos={3} />}>
+        <RegrasDoEdital
+          key={id}
+          editalId={id}
+          titulo={titulo}
+          etapa={etapa}
+          supabase={estado.clienteDasRegras() as ClienteDasRegras | null}
+          perfil={nucleo.perfil}
+          toast={estado.toast}
+          aoMudarEtapa={(nova: EtapaDasRegras) =>
+            estado.mudarEtapaDasRegras(nova)
+          }
+          aoVoltar={estado.fecharRegrasDoEdital}
+          aoEditarChamada={() =>
+            void window.aprovadosController?.openImportModal(id, titulo)
+          }
+        />
+      </Suspense>
+    );
+  }
 
   return (
     <div className="ui-tela editais-tela">
@@ -477,7 +505,7 @@ export function montarNucleo({
       return estado.carregarResumo().catch(() => {});
     },
     abrirEdital: estado.abrirEdital,
-    /* "Editar nas Regras do edital" da tela da Triagem. */
-    abrirRegrasDaTriagem: estado.abrirRegrasDaTriagem,
+    /* "Editar nas Regras do edital" das telas de cada etapa (regras-do-edital/abrir.ts). */
+    abrirRegrasDoEdital: estado.abrirRegrasDoEdital,
   };
 }

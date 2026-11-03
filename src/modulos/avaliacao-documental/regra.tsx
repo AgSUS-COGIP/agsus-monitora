@@ -1,17 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
-  BASES_DA_NOTA_DO_LOTE,
-  BASES_DO_LOTE,
   CRITERIOS_DA_DISTRIBUICAO,
-  DESEMPATES_DA_PROVISORIA,
   DESTINO_DOS_NOVOS,
   MODOS_DE_DISTRIBUICAO,
-  NIVEIS,
-  PARCIAIS,
   rotuloDe,
   SINAIS_DA_REVISAO,
   SITUACOES_DA_REGRA,
-  TIPOS_DA_NOTA_DECLARADA,
 } from "../../lib/avaliacao-documental/catalogo.ts";
 import {
   codigoLivre,
@@ -47,9 +41,6 @@ import {
 import { usarRascunhoDaRegra } from "../../app/usar-rascunho-da-regra.ts";
 import type { Conteudo, RascunhoDaRegra } from "../../app/rascunho-da-regra.ts";
 import type {
-  EliminacaoAutomatica as ItemDaEliminacao,
-  ItemDaNotaDeclarada,
-  Nivel,
   ObservacaoPronta,
   PerguntaDaCarga,
   RegraAnalise,
@@ -70,9 +61,7 @@ import {
   BotaoMais,
   BotaoTirar,
   Caixa,
-  CampoLista,
   CampoNumero,
-  CampoPergunta,
   CampoTexto,
   comValor,
   Escolha,
@@ -87,14 +76,17 @@ import type {
 } from "./tipos-do-estado.ts";
 
 /*
-  Aba "Regra" da Avaliação documental: a regra da avaliação do edital, que a
-  coordenação (gestor do edital ou coordenação na equipe) cria e muda em
+  A regra da Avaliação documental do edital (etapa 2 das Regras do edital,
+  em Editais; a tela da Avaliação mostra só o resumo), que a coordenação (gestor do edital ou coordenação na equipe) cria e muda em
   versões com motivo. Dois jeitos sobre o MESMO rascunho: o assistente
   (assistente/, o padrão) e o modo avançado (o formulário inteiro, abaixo).
   "Conferida" é dupla conferência: quem salvou a versão não a confere (o
   banco recusa; o administrador global pode). Quem só lê vê o formulário
   travado, o resumo e a comparação de versões. A prévia "Testar com um
-  candidato fictício" usa o rascunho e não grava.
+  candidato fictício" usa o rascunho e não grava. Requisitos da inscrição,
+  nota declarada, desempate da lista e lote não se editam aqui: são da regra
+  da Triagem (etapa 1); o que já estava gravado na regra da análise segue na
+  configuração, sem mudança.
 */
 
 /** O que a aba Regra usa do estado da avaliação (estado.ts). */
@@ -363,58 +355,6 @@ function Perguntas({
   );
 }
 
-/* Os níveis que um item por nível mostra: os do mapa, na ordem do catálogo. */
-const NIVEIS_DA_DECLARADA: ReadonlyArray<Nivel> = [
-  "superior",
-  "tecnico",
-  "medio",
-];
-
-/*
-  Um item da nota declarada como o formulário lê e devolve: os níveis pelas
-  chaves do catálogo e, nos mapas (resposta → pontos ou meses), o que foi
-  digitado (pode ser texto; validarRegraAnalise confere ao salvar).
-*/
-type MapaNoFormulario = Record<string, unknown>;
-type ItemNoFormulario = Omit<
-  ItemDaNotaDeclarada,
-  "pontos" | "meses" | "pontos_por_nivel"
-> & {
-  pontos?: MapaNoFormulario;
-  meses?: MapaNoFormulario;
-  pontos_por_nivel?: Partial<Record<string, MapaNoFormulario>>;
-};
-
-const niveisDoItem = (item: ItemNoFormulario) =>
-  NIVEIS.map(([n]) => n).filter((n) => item.pontos_por_nivel?.[n]);
-
-/* Liga ou desliga os pontos por nível (uma coluna por nível, as mesmas respostas). */
-function comPontosPorNivel(
-  item: ItemNoFormulario,
-  ligar: boolean,
-): ItemNoFormulario {
-  const novo = { ...item };
-  if (ligar) {
-    const base = item.pontos ?? {};
-    novo.pontos_por_nivel = Object.fromEntries(
-      NIVEIS_DA_DECLARADA.map((n) => [n, { ...base }]),
-    );
-    delete novo.pontos;
-  } else {
-    const primeiro = niveisDoItem(item)[0];
-    novo.pontos = { ...(item.pontos_por_nivel?.[primeiro as string] ?? {}) };
-    delete novo.pontos_por_nivel;
-  }
-  return novo;
-}
-
-/* As respostas de um item por nível: a união das respostas de todos os níveis. */
-const respostasPorNivel = (item: ItemNoFormulario) => [
-  ...new Set(
-    niveisDoItem(item).flatMap((n) => Object.keys(item.pontos_por_nivel![n]!)),
-  ),
-];
-
 /* As diferenças por cargo no modo avançado: as vagas e os cargos do quadro vêm do apoio do assistente. */
 function PorCargo({ e, estado, regra, aoMudar }: PropsDoEstado & PropsDaRegra) {
   useEffect(() => {
@@ -429,315 +369,6 @@ function PorCargo({ e, estado, regra, aoMudar }: PropsDoEstado & PropsDaRegra) {
         vagas={e.apoio?.perguntas_por_vaga ?? []}
         cargosDoQuadro={e.apoio?.cargos_do_quadro ?? []}
       />
-    </div>
-  );
-}
-
-interface RespostasPorNivelProps {
-  item: ItemNoFormulario;
-  aoMudar: (item: ItemNoFormulario) => void;
-}
-
-function RespostasPorNivel({ item, aoMudar }: RespostasPorNivelProps) {
-  const niveis = niveisDoItem(item);
-  const comMapa = (
-    transformar: (nivel: string, mapa: MapaNoFormulario) => MapaNoFormulario,
-  ) =>
-    aoMudar({
-      ...item,
-      pontos_por_nivel: Object.fromEntries(
-        niveis.map((n) => [n, transformar(n, item.pontos_por_nivel![n]!)]),
-      ),
-    });
-  return (
-    <>
-      {respostasPorNivel(item).map((resposta) => (
-        <div className="avd-linha avd-recuo" key={resposta}>
-          <span className="avd-resposta">{resposta}</span>
-          {niveis.map((n) => (
-            <CampoNumero
-              key={n}
-              rotulo={rotuloDe(NIVEIS, n)}
-              valor={item.pontos_por_nivel![n]![resposta]}
-              aoMudar={(v) =>
-                comMapa((nivel, mapa) =>
-                  nivel === n ? { ...mapa, [resposta]: v } : mapa,
-                )
-              }
-            />
-          ))}
-          <BotaoTirar
-            rotulo="Tirar a resposta"
-            aoClicar={() =>
-              comMapa((_, mapa) => {
-                const resto = { ...mapa };
-                delete resto[resposta];
-                return resto;
-              })
-            }
-          />
-        </div>
-      ))}
-      <label className="avd-inline avd-recuo">
-        Resposta{" "}
-        <input
-          placeholder="Texto exato da resposta"
-          onKeyDown={(ev) => {
-            if (ev.key !== "Enter") return;
-            ev.preventDefault();
-            const texto = ev.currentTarget.value.trim();
-            if (texto) comMapa((_, mapa) => ({ ...mapa, [texto]: 0 }));
-            ev.currentTarget.value = "";
-          }}
-        />
-      </label>
-    </>
-  );
-}
-
-function NotaDeclarada({ regra, aoMudar }: PropsDaRegra) {
-  const itens: ReadonlyArray<ItemNoFormulario> =
-    regra.provisoria.nota_declarada;
-  const mudar = (i: number, item: unknown) =>
-    aoMudar(comValor(regra, ["provisoria", "nota_declarada", i], item));
-  return (
-    <div className="avd-subgrupo">
-      <h3>Nota recalculada (confere a nota declarada, ART)</h3>
-      {itens.map((item, i) => {
-        const chave = item.tipo === "FAIXA_EM_MESES" ? "meses" : "pontos";
-        const mapa = item[chave] ?? {};
-        const porNivel =
-          item.tipo !== "FAIXA_EM_MESES" &&
-          item.pontos_por_nivel !== null &&
-          typeof item.pontos_por_nivel === "object";
-        return (
-          <div key={i} className="avd-declarada">
-            <div className="avd-linha">
-              <Escolha
-                rotulo="Parcial"
-                valor={item.parcial}
-                opcoes={PARCIAIS}
-                aoMudar={(v) => mudar(i, { ...item, parcial: v })}
-              />
-              <CampoPergunta
-                rotulo="Pergunta (começo do enunciado)"
-                valor={item.pergunta}
-                aoMudar={(v) => mudar(i, { ...item, pergunta: v })}
-              />
-              <Escolha
-                rotulo="Como pontua"
-                valor={item.tipo}
-                opcoes={TIPOS_DA_NOTA_DECLARADA}
-                aoMudar={(v) => {
-                  const novo = {
-                    ...(v === "FAIXA_EM_MESES" && porNivel
-                      ? comPontosPorNivel(item, false)
-                      : item),
-                    tipo: v,
-                  };
-                  if (v === "FAIXA_EM_MESES") {
-                    novo.meses = novo.meses ?? novo.pontos ?? {};
-                    delete novo.pontos;
-                    novo.pontos_por_mes = item.pontos_por_mes ?? 0;
-                  } else if (!porNivel) {
-                    novo.pontos = item.pontos ?? item.meses ?? {};
-                    delete novo.meses;
-                    delete novo.pontos_por_mes;
-                  }
-                  mudar(i, novo);
-                }}
-              />
-              {item.tipo === "FAIXA_EM_MESES" ? (
-                <CampoNumero
-                  rotulo="Pontos por mês"
-                  valor={item.pontos_por_mes}
-                  aoMudar={(v) => mudar(i, { ...item, pontos_por_mes: v })}
-                />
-              ) : null}
-              <CampoNumero
-                rotulo="Teto"
-                valor={item.teto}
-                aoMudar={(v) => mudar(i, { ...item, teto: v })}
-              />
-              {item.tipo !== "FAIXA_EM_MESES" ? (
-                <Caixa
-                  rotulo="Pontos por nível"
-                  marcado={porNivel}
-                  aoMudar={(v) => mudar(i, comPontosPorNivel(item, v))}
-                />
-              ) : null}
-              <BotaoTirar
-                rotulo="Tirar a pergunta"
-                aoClicar={() =>
-                  aoMudar(
-                    comValor(
-                      regra,
-                      ["provisoria", "nota_declarada"],
-                      itens.filter((_, j) => j !== i),
-                    ),
-                  )
-                }
-              />
-            </div>
-            {porNivel ? (
-              <RespostasPorNivel item={item} aoMudar={(v) => mudar(i, v)} />
-            ) : null}
-            {(porNivel ? [] : Object.entries(mapa)).map(([resposta, valor]) => (
-              <div className="avd-linha avd-recuo" key={resposta}>
-                <span className="avd-resposta">{resposta}</span>
-                <CampoNumero
-                  rotulo={chave === "meses" ? "Meses" : "Pontos"}
-                  valor={valor}
-                  aoMudar={(v) =>
-                    mudar(i, { ...item, [chave]: { ...mapa, [resposta]: v } })
-                  }
-                />
-                <BotaoTirar
-                  rotulo="Tirar a resposta"
-                  aoClicar={() => {
-                    const resto = { ...mapa };
-                    delete resto[resposta];
-                    mudar(i, { ...item, [chave]: resto });
-                  }}
-                />
-              </div>
-            ))}
-            {porNivel ? null : (
-              <label className="avd-inline avd-recuo">
-                Resposta{" "}
-                <input
-                  placeholder="Texto exato da resposta"
-                  onKeyDown={(ev) => {
-                    if (ev.key !== "Enter") return;
-                    ev.preventDefault();
-                    const texto = ev.currentTarget.value.trim();
-                    if (texto)
-                      mudar(i, { ...item, [chave]: { ...mapa, [texto]: 0 } });
-                    ev.currentTarget.value = "";
-                  }}
-                />
-              </label>
-            )}
-          </div>
-        );
-      })}
-      <BotaoMais
-        aoClicar={() =>
-          aoMudar(
-            comValor(
-              regra,
-              ["provisoria", "nota_declarada"],
-              [
-                ...itens,
-                {
-                  parcial: "FORMACAO",
-                  pergunta: "",
-                  tipo: "OPCAO",
-                  pontos: {},
-                  teto: null,
-                },
-              ],
-            ),
-          )
-        }
-      >
-        Pergunta pontuada
-      </BotaoMais>
-    </div>
-  );
-}
-
-function EliminacaoAutomatica({ regra, aoMudar }: PropsDaRegra) {
-  const itens = regra.provisoria.eliminacao_automatica;
-  const mudar = (i: number, item: unknown) =>
-    aoMudar(comValor(regra, ["provisoria", "eliminacao_automatica", i], item));
-  const fonteDe = (item: ItemDaEliminacao) =>
-    (["coluna", "coluna_prefixo", "pergunta"] as const).find(
-      (k) => item[k] !== undefined,
-    ) ?? "coluna";
-  return (
-    <div className="avd-subgrupo">
-      <h3>Eliminação automática</h3>
-      {itens.map((item, i) => {
-        const fonte = fonteDe(item);
-        return (
-          <div className="avd-linha" key={i}>
-            <CampoTexto
-              rotulo="Código"
-              valor={item.codigo}
-              maximo={30}
-              aoMudar={(v) => mudar(i, { ...item, codigo: v.toUpperCase() })}
-            />
-            <Escolha
-              rotulo="Onde olhar"
-              valor={fonte}
-              opcoes={[
-                ["coluna", "Coluna"],
-                ["coluna_prefixo", "Colunas que começam com"],
-                ["pergunta", "Pergunta"],
-              ]}
-              aoMudar={(v) => {
-                const novo = { ...item, [v!]: item[fonte] ?? "" };
-                if (v !== fonte) delete novo[fonte];
-                mudar(i, novo);
-              }}
-            />
-            <CampoTexto
-              rotulo="Nome"
-              valor={item[fonte]}
-              aoMudar={(v) => mudar(i, { ...item, [fonte]: v })}
-            />
-            <CampoLista
-              rotulo="Elimina quando"
-              valor={item.quando}
-              aoMudar={(v) => mudar(i, { ...item, quando: v })}
-            />
-            <CampoLista
-              rotulo="Passa só com"
-              valor={item.exceto}
-              aoMudar={(v) => mudar(i, { ...item, exceto: v })}
-            />
-            <CampoTexto
-              rotulo="Motivo"
-              valor={item.motivo}
-              aoMudar={(v) => mudar(i, { ...item, motivo: v })}
-            />
-            <BotaoTirar
-              rotulo="Tirar a eliminação"
-              aoClicar={() =>
-                aoMudar(
-                  comValor(
-                    regra,
-                    ["provisoria", "eliminacao_automatica"],
-                    itens.filter((_, j) => j !== i),
-                  ),
-                )
-              }
-            />
-          </div>
-        );
-      })}
-      <BotaoMais
-        aoClicar={() =>
-          aoMudar(
-            comValor(
-              regra,
-              ["provisoria", "eliminacao_automatica"],
-              [
-                ...itens,
-                {
-                  codigo: codigoLivre(itens, "ELIMINA"),
-                  coluna: "",
-                  quando: [],
-                  motivo: "",
-                },
-              ],
-            ),
-          )
-        }
-      >
-        Eliminação
-      </BotaoMais>
     </div>
   );
 }
@@ -1349,154 +980,6 @@ export function Regra({ e, estado, rascunhoGuardado }: RegraProps) {
             aoMudar={setRascunho}
           />
         )}
-
-        <section className="ui-card" aria-labelledby="avdProvisoria">
-          <h2 className="ui-titulo" id="avdProvisoria">
-            Provisória por ART
-          </h2>
-          <Aviso tom="info">
-            A Triagem usa a regra própria dela (Editais › Regras da Triagem,
-            desde 29/10/2026): mudar aqui não muda a lista, os eliminados nem o
-            lote da Triagem.
-          </Aviso>
-          <EliminacaoAutomatica regra={rascunho} aoMudar={setRascunho} />
-          <NotaDeclarada regra={rascunho} aoMudar={setRascunho} />
-          <div
-            className="ui-grade-de-campos"
-            data-tour="avd-regra-base-da-nota"
-          >
-            <Escolha
-              rotulo="Nota do corte e da ordem do lote"
-              valor={rascunho.provisoria.base_da_nota}
-              opcoes={BASES_DA_NOTA_DO_LOTE}
-              aoMudar={(v) => mudar(["provisoria", "base_da_nota"], v)}
-            />
-            <CampoNumero
-              rotulo="Tolerância da divergência (pontos)"
-              valor={rascunho.provisoria.divergencia_tolerancia}
-              aoMudar={(v) =>
-                mudar(["provisoria", "divergencia_tolerancia"], v)
-              }
-            />
-          </div>
-          <div className="ui-grade-de-campos" data-tour="avd-regra-desempate">
-            {DESEMPATES_DA_PROVISORIA.map((_d, i) => {
-              const desempate: ReadonlyArray<string> =
-                rascunho.provisoria.desempate ?? [];
-              return (
-                <Escolha
-                  key={i}
-                  rotulo={`${i + 1}º desempate`}
-                  valor={desempate[i] ?? null}
-                  vazio="—"
-                  opcoes={DESEMPATES_DA_PROVISORIA.filter(
-                    ([v]) => v === desempate[i] || !desempate.includes(v),
-                  )}
-                  aoMudar={(v) => {
-                    const novo = [...desempate];
-                    if (v) novo[i] = v;
-                    else novo.splice(i);
-                    mudar(["provisoria", "desempate"], novo.filter(Boolean));
-                  }}
-                />
-              );
-            })}
-            {(rascunho.provisoria.desempate ?? []).includes(
-              "EXPERIENCIA_DECLARADA",
-            ) ? (
-              <CampoPergunta
-                rotulo="Pergunta da experiência (início do enunciado)"
-                valor={rascunho.provisoria.pergunta_experiencia}
-                aoMudar={(v) =>
-                  mudar(["provisoria", "pergunta_experiencia"], v || null)
-                }
-              />
-            ) : null}
-          </div>
-        </section>
-
-        <section className="ui-card" aria-labelledby="avdLote">
-          <h2 className="ui-titulo" id="avdLote">
-            Lote e linha de corte
-          </h2>
-          <Aviso tom="info">
-            A Triagem usa a regra própria dela (Editais › Regras da Triagem,
-            desde 29/10/2026): mudar aqui não muda a lista, os eliminados nem o
-            lote da Triagem.
-          </Aviso>
-          <div className="ui-grade-de-campos">
-            <Escolha
-              rotulo="Tamanho do lote"
-              valor={rascunho.lote.base}
-              opcoes={BASES_DO_LOTE}
-              aoMudar={(v) => {
-                const minima = dados!.nota_minima?.nota_minima;
-                const comBase = comValor(rascunho, ["lote", "base"], v);
-                setRascunho(
-                  v === "NOTA_MINIMA" &&
-                    rascunho.lote.nota_minima == null &&
-                    typeof minima === "number"
-                    ? comValor(comBase, ["lote", "nota_minima"], minima)
-                    : comBase,
-                );
-              }}
-            />
-            {rascunho.lote.base === "FIXO" ? (
-              <CampoNumero
-                rotulo="Candidatos por vaga"
-                valor={rascunho.lote.fixo}
-                aoMudar={(v) => mudar(["lote", "fixo"], v)}
-              />
-            ) : rascunho.lote.base === "NOTA_MINIMA" ? (
-              <>
-                <CampoNumero
-                  rotulo="Nota mínima (nota declarada, ART)"
-                  valor={rascunho.lote.nota_minima}
-                  aoMudar={(v) => mudar(["lote", "nota_minima"], v)}
-                />
-                <CampoTexto
-                  rotulo="Item do edital"
-                  maximo={40}
-                  valor={rascunho.lote.item_edital}
-                  aoMudar={(v) => mudar(["lote", "item_edital"], v || null)}
-                />
-              </>
-            ) : (
-              <CampoNumero
-                rotulo="Vezes as vagas imediatas"
-                valor={rascunho.lote.multiplo}
-                aoMudar={(v) => mudar(["lote", "multiplo"], v)}
-              />
-            )}
-          </div>
-          <div className="avd-caixas">
-            <Caixa
-              rotulo="Soma o cadastro reserva"
-              marcado={rascunho.lote.inclui_cr}
-              aoMudar={(v) => mudar(["lote", "inclui_cr"], v)}
-            />
-            <Caixa
-              rotulo="Por modalidade"
-              marcado={rascunho.lote.por_modalidade}
-              aoMudar={(v) => mudar(["lote", "por_modalidade"], v)}
-            />
-            <Caixa
-              rotulo="Inclui os empatados na linha"
-              marcado={rascunho.lote.inclui_empatados}
-              aoMudar={(v) => mudar(["lote", "inclui_empatados"], v)}
-            />
-            <Caixa
-              rotulo="A linha anda (repõe o lote)"
-              marcado={rascunho.lote.linha_anda}
-              aoMudar={(v) => mudar(["lote", "linha_anda"], v)}
-            />
-            <Caixa
-              rotulo="Publica cada reposição"
-              marcado={rascunho.lote.publica_reposicao}
-              aoMudar={(v) => mudar(["lote", "publica_reposicao"], v)}
-            />
-          </div>
-        </section>
 
         <section className="ui-card" aria-labelledby="avdDistribuicao">
           <h2 className="ui-titulo" id="avdDistribuicao">
