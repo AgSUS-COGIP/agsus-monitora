@@ -1,29 +1,34 @@
 /* Polimento visual incremental.
-   Mantem a arquitetura atual e estabiliza o mapa Leaflet sem reescrever o app legado. */
+   Mantem a arquitetura atual e estabiliza o mapa Leaflet sem reescrever o app legado.
 
-.visual-polish-ready .card,
-.visual-polish-ready .table-card {
+   As regras dependiam de `body.visual-polish-ready`, classe que o antigo
+   `src/modules/visual-polish.js` punha sempre, na entrada. O `:root` tem a
+   mesma especificidade de uma classe e vale desde o primeiro quadro: o
+   resultado é o mesmo, sem JavaScript. */
+
+:root .card,
+:root .table-card {
   border-color: var(--border-subtle);
   box-shadow: var(--shadow-sm);
 }
 
 /* Os KPIs e a grade de baixo da Visão geral são de health-reference-kpis.css e app.css. */
 
-.visual-polish-ready .leaflet-container {
+:root .leaflet-container {
   background: #b7dce7;
 }
 
-.visual-polish-ready .leaflet-control-container .leaflet-top.leaflet-right {
+:root .leaflet-control-container .leaflet-top.leaflet-right {
   top: 10px;
   right: 10px;
 }
 
-.visual-polish-ready .leaflet-control-container .leaflet-bottom.leaflet-left {
+:root .leaflet-control-container .leaflet-bottom.leaflet-left {
   bottom: 10px;
   left: 10px;
 }
 
-.visual-polish-ready .leaflet-control-attribution {
+:root .leaflet-control-attribution {
   font-size: 10px;
   line-height: 1.2;
   max-width: 240px;
@@ -31,6 +36,6 @@
   text-align: right;
 }
 
-.visual-polish-ready .table-card {
+:root .table-card {
   overflow: clip;
 }

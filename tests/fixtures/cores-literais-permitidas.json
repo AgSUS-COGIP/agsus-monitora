@@ -18,7 +18,7 @@
     "src/lib/motor-de-efeitos.ts": "efeito de comemoração (canvas): corações e brilho",
     "src/lib/tema-do-painel.ts": "reserva dos gráficos quando o CSS não carregou (testes); a tela lê os tokens",
     "src/modules/comemoracao.ts": "efeito de comemoração (canvas, legado)",
-    "src/modules/indigenous-territories-layer.js": "mapa: cores de domínio das Terras Indígenas (tests/cor-da-terra-indigena.test.js)",
+    "src/lib/terras-indigenas/fases-e-estilos.ts": "mapa: cores de domínio das Terras Indígenas (tests/cor-da-terra-indigena.test.js)",
     "src/modulos/analises/paineis.tsx": "monta rgba() a partir de um token lido em tempo de execução (não é cor fixa)",
     "src/modulos/aya/mascote/contornos.ts": "marca: desenho da mascote AYA",
     "src/modulos/aya/mascote/desenho.tsx": "marca: desenho da mascote AYA",
@@ -166,7 +166,7 @@
       "rgba(255,255,255,0)": 1,
       "rgba(0,0,0,${alfadorastro(dt)": 1
     },
-    "src/modules/indigenous-territories-layer.js": {
+    "src/lib/terras-indigenas/fases-e-estilos.ts": {
       "#7a4a1f": 1,
       "#d6b07a": 1,
       "#c8520f": 1,

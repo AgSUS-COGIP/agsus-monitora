@@ -15,7 +15,7 @@ import {
   formatarNumero,
   plural,
 } from "../../lib/mapa-saude-indigena/chaves.ts";
-import { EVENTO_DAS_TERRAS } from "../../modules/indigenous-territories-layer.js";
+import { EVENTO_DAS_TERRAS } from "../../modules/indigenous-territories-layer.ts";
 import { classes } from "../../ui/index.ts";
 import { LegendaNacional } from "./legenda.tsx";
 import {

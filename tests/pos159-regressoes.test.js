@@ -10,7 +10,7 @@ import { LOGO_PADRAO_DA_BARRA } from "../src/lib/marca-da-barra-lateral.ts";
 
 const app = fonteDoApp();
 const governance = readFileSync("src/modulos/configuracoes/estado.ts", "utf8");
-const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
+const sidebar = readFileSync("src/componentes/barra-lateral/marca.ts", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.ts", "utf8");
 const lifecycle = readFileSync("src/lib/session-lifecycle.ts", "utf8");
 // A barra lateral é React: o <img id="sideLogo"> nasce no componente da marca.
@@ -92,23 +92,22 @@ describe("a logo da barra lateral é o <img> real", () => {
     expect(semComentarios(sidebar)).not.toContain("--sidebar-logo-image");
   });
 
-  it("sidebar-branding define o src diretamente", () => {
-    const fn = sidebar.slice(
-      sidebar.indexOf("function aplicarLogoNaBarraLateral"),
-      sidebar.indexOf("export function aplicarMarcaDaBarraLateral"),
-    );
-    expect(fn).toContain('document.getElementById("sideLogo")');
-    expect(fn).toContain('img.setAttribute("src", logo)');
+  /*
+    A logo é o `src` do <img> que o React desenha (barra-lateral.tsx), lido da
+    marca gravada (marca.ts). O comportamento está em
+    tests/componentes/barra-lateral.test.js; aqui, só que não volta a esconder.
+  */
+  it("a barra desenha a logo gravada no próprio <img>", () => {
+    expect(barraLateral).toContain("logoDaBarraLateral");
+    expect(barraLateral).toContain("usarLogo(logo ?? gravada)");
   });
 
-  it("o onerror devolve o padrão em vez de esconder", () => {
-    const fn = sidebar.slice(
-      sidebar.indexOf("function aplicarLogoNaBarraLateral"),
-      sidebar.indexOf("export function aplicarMarcaDaBarraLateral"),
+  it("a logo que não carrega devolve o padrão em vez de esconder", () => {
+    expect(barraLateral).toContain(
+      "src: falhou === logo ? LOGO_PADRAO_DA_BARRA : logo",
     );
-    expect(fn).toContain("img.onerror");
-    expect(fn).toContain('img.setAttribute("src", LOGO_PADRAO_DA_BARRA)');
-    expect(fn).not.toMatch(/display\s*=\s*["']none["']/);
+    expect(barraLateral).toContain("onError: () => definirFalhou(logo)");
+    expect(barraLateral).not.toMatch(/display\s*[:=]\s*["']none["']/);
   });
 
   /*
@@ -123,11 +122,9 @@ describe("a logo da barra lateral é o <img> real", () => {
       marca,
       barraLateral.indexOf(">", barraLateral.indexOf("/>", marca)),
     );
-    // O `src` vem de `usarLogoDaPrevia`: fora da prévia, a logo local padrão.
+    // O `src` vem de marca.ts, que nasce com a logo local padrão.
     expect(LOGO_PADRAO_DA_BARRA).toBe("/assets/agsus-logo.webp");
-    expect(barraLateral).toMatch(
-      /logo === undefined\) return \{ src: LOGO_PADRAO_DA_BARRA \}/,
-    );
+    expect(sidebar).toContain("let logoAtual = LOGO_PADRAO_DA_BARRA;");
     expect(barraLateral).not.toContain("postimg.cc");
     expect(tag).not.toMatch(/onerror/i);
   });

@@ -10,7 +10,7 @@ import { linhaDaTerra } from "../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
   testes anteriores não viam, porque só se vê com dados reais e navegador.
 */
 const camada = readFileSync(
-  "src/modules/indigenous-territories-layer.js",
+  "src/modules/indigenous-territories-layer.ts",
   "utf8",
 );
 const css = readFileSync("src/styles/indigenous-territories-layer.css", "utf8");
@@ -49,7 +49,7 @@ describe("o raster é só o recurso", () => {
     const entradas = camada.match(/rasterLayer\.addTo\(map\)/g) ?? [];
     expect(entradas).toHaveLength(1);
     const fallback = camada.slice(
-      camada.indexOf("const useRasterFallback = () =>"),
+      camada.indexOf("const recorrerAoRaster = () =>"),
       camada.indexOf("const clearVector = () =>"),
     );
     expect(fallback).toContain("rasterLayer.addTo(map)");
@@ -57,8 +57,8 @@ describe("o raster é só o recurso", () => {
 
   it("religar as terras não traz o raster de volta", () => {
     const fn = camada.slice(
-      camada.indexOf("const definirVisibilidade = (proxima) =>"),
-      camada.indexOf("const alternarFase = (fase) =>"),
+      camada.indexOf("const definirVisibilidade = ("),
+      camada.indexOf("const alternarFase = ("),
     );
     expect(fn).not.toContain("rasterLayer.addTo(");
   });

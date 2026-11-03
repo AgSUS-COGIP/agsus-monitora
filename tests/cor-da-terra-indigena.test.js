@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 /*
@@ -18,10 +18,14 @@ import { describe, expect, it } from "vitest";
   `hue-rotate` do CSS não roda a matiz de HSL. É uma aproximação linear em RGB,
   definida na especificação de filtros, e o resultado tem de ser calculado.
 */
-const modulo = readFileSync(
-  "src/modules/indigenous-territories-layer.js",
-  "utf8",
-);
+const modulo = [
+  "src/modules/indigenous-territories-layer.ts",
+  ...readdirSync("src/lib/terras-indigenas").map(
+    (nome) => `src/lib/terras-indigenas/${nome}`,
+  ),
+]
+  .map((caminho) => readFileSync(caminho, "utf8"))
+  .join("\n");
 const css = readFileSync("src/styles/indigenous-territories-layer.css", "utf8");
 // Os tokens --terra-* (tokens.css) e a legenda do mapa da Saúde Indígena.
 const cssLegenda = [

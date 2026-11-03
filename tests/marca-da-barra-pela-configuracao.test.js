@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { aplicarMarcaDaConfiguracao } from "../src/modules/sidebar-branding.js";
+import { aplicarMarcaDaConfiguracao } from "../src/componentes/barra-lateral/marca.ts";
 
 /*
   A logo e a cor da barra lateral vêm da leitura da configuração que o app já

@@ -8,7 +8,7 @@ const shell = readFileSync("src/styles/platform-shell.css", "utf8").replace(
   "\n",
 );
 const semComentarios = (css) => css.replace(/\/\*[\s\S]*?\*\//g, "");
-const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
+const sidebar = readFileSync("src/componentes/barra-lateral/marca.ts", "utf8");
 
 /*
   A logo da barra lateral sumia quando a cor escolhida era escura.
@@ -75,7 +75,7 @@ describe("a marca acompanha o contraste da barra lateral", () => {
   });
 
   it("quem decide o contraste continua sendo a luminância da cor", () => {
-    expect(sidebar).toContain("needsLightForeground(currentColor)");
+    expect(sidebar).toContain("needsLightForeground(corAtual)");
     expect(sidebar).toContain("sidebar-theme-dark");
   });
 

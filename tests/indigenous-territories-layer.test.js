@@ -16,7 +16,7 @@ import {
   terraPrecisaDeSimbolo,
   tooltipDaTerraIndigena,
   tooltipDoDsei,
-} from "../src/modules/indigenous-territories-layer.js";
+} from "../src/modules/indigenous-territories-layer.ts";
 
 /*
   Bordas reais das terras do DSEI Alagoas e Sergipe, medidas na camada

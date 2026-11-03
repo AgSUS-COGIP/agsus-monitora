@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   DISTANCIA_MINIMA_ENTRE_ROTULOS_PX,
@@ -8,7 +8,7 @@ import {
   pontoEmPoligonos,
   rotulosSemColisao,
   terraPertenceAoDsei,
-} from "../src/modules/indigenous-territories-layer.js";
+} from "../src/modules/indigenous-territories-layer.ts";
 
 /*
   Um quadrado de um grau em volta de um ponto, para não escrever polígonos à
@@ -39,10 +39,14 @@ const terraEm = (lat, lon, lado = 0.2) => ({
   verde. Estes casos impedem a segunda cor de voltar.
 */
 describe("uma cor só para a Terra Indígena", () => {
-  const modulo = readFileSync(
-    "src/modules/indigenous-territories-layer.js",
-    "utf8",
-  );
+  const modulo = [
+    "src/modules/indigenous-territories-layer.ts",
+    ...readdirSync("src/lib/terras-indigenas").map(
+      (nome) => `src/lib/terras-indigenas/${nome}`,
+    ),
+  ]
+    .map((caminho) => readFileSync(caminho, "utf8"))
+    .join("\n");
   const css = readFileSync(
     "src/styles/indigenous-territories-layer.css",
     "utf8",

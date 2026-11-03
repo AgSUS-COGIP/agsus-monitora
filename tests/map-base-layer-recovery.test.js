@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addResilientBaseLayer } from "../src/modules/map-base-layer-switcher.js";
+import { addResilientBaseLayer } from "../src/modules/map-base-layer-switcher.ts";
 
 function fixture() {
   const layers = new Set();

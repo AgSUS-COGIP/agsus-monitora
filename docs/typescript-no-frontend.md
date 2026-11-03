@@ -37,8 +37,9 @@ As regras nacionais e distritais de contagens, bolhas, CASAIs, unidades, víncul
 resumos e enquadramento estão em `src/lib/mapa-saude-indigena/chaves.ts`, `mapa-nacional.ts`
 e `mapa-do-dsei.ts`. A integração comum com o Leaflet também está em TypeScript (`leaflet.ts`), incluindo
 criação, fundo com recurso, tamanho, contornos, enquadramento, leque, ícones e balões.
-As guardas globais `map-guard.ts` e `map-zoom-range.ts` estão em TypeScript; a reconciliação e o
-seletor de Mapa/Satélite (`map-base-layer-switcher.js`) permanecem em JavaScript, com contratos JSDoc na integração. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
+As guardas globais `map-guard.ts`, `map-zoom-range.ts`, o seletor de Mapa/Satélite
+(`map-base-layer-switcher.ts`) e a camada de Terras Indígenas (`indigenous-territories-layer.ts`,
+com as partes puras em `src/lib/terras-indigenas/`) estão em TypeScript. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
 mapas já estão em TypeScript, com contratos em `tipos-do-painel.ts`; formas e cores
 em `src/lib/mapa-saude-indigena/formas.ts`. Outros módulos
 combinam JavaScript/JSX com migrações pontuais para TypeScript:

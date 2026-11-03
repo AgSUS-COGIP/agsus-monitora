@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   FASES_DAS_TERRAS,
@@ -10,7 +10,7 @@ import {
   lerFasesOcultas,
   raioDoSimbolo,
   terrasDasFasesVisiveis,
-} from "../src/modules/indigenous-territories-layer.js";
+} from "../src/modules/indigenous-territories-layer.ts";
 
 /*
   DOIS ACHADOS DA BANCADA (bench/, com o catálogo real)
@@ -217,10 +217,14 @@ describe("na visão do país as terras recuam", () => {
   });
 
   it("a camada passa o zoom do mapa para o estilo", () => {
-    const camada = readFileSync(
-      "src/modules/indigenous-territories-layer.js",
-      "utf8",
-    );
+    const camada = [
+      "src/modules/indigenous-territories-layer.ts",
+      ...readdirSync("src/lib/terras-indigenas").map(
+        (nome) => `src/lib/terras-indigenas/${nome}`,
+      ),
+    ]
+      .map((caminho) => readFileSync(caminho, "utf8"))
+      .join("\n");
     expect(camada).toContain("Number(map?.getZoom?.())");
   });
 });

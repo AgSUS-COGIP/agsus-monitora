@@ -6,7 +6,7 @@ import {
   logoDaBarraSegura,
 } from "../../lib/marca-da-barra-lateral.ts";
 import { camposDaSecao } from "../../lib/publicacao-de-configuracoes.ts";
-import { aplicarMarcaDaBarraLateral } from "../../modules/sidebar-branding.js";
+import { aplicarMarcaDaBarraLateral } from "../../componentes/barra-lateral/marca.ts";
 import { Aviso, Selo } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {

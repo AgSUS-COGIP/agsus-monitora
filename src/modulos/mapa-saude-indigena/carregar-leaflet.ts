@@ -9,8 +9,8 @@
        `window.L` já existe, o script não é baixado de novo);
     2. as guardas que envolvem o `L` (mesma ordem de antes, no arranque):
        `map-guard.ts` (limites do Brasil, zoom, teclado),
-       `map-base-layer-switcher.js` (Mapa/Satélite), `map-zoom-range.ts` e
-       `indigenous-territories-layer.js` (Terras Indígenas e abrangência dos
+       `map-base-layer-switcher.ts` (Mapa/Satélite), `map-zoom-range.ts` e
+       `indigenous-territories-layer.ts` (Terras Indígenas e abrangência dos
        DSEI), com o CSS delas.
 
   Falhou (rede, CDN fora): a promessa rejeita e a próxima chamada tenta de
@@ -41,9 +41,9 @@ export interface OpcoesDoLeaflet {
 const carregarGuardas = importarComRecarga(() =>
   Promise.all([
     import("../../modules/map-guard.ts"),
-    import("../../modules/map-base-layer-switcher.js"),
+    import("../../modules/map-base-layer-switcher.ts"),
     import("../../modules/map-zoom-range.ts"),
-    import("../../modules/indigenous-territories-layer.js"),
+    import("../../modules/indigenous-territories-layer.ts"),
     import("../../styles/map-base-layer-switcher.css"),
     import("../../styles/indigenous-territories-layer.css"),
   ]),

@@ -47,8 +47,6 @@ import { montarCasca } from "./app/casca/casca.tsx";
 // O sistema depois de entrar (navegação, carga, presença, moldura): src/app/sistema.ts.
 import { ligarSistema, recarregarPaineisExternos } from "./app/sistema.ts";
 import { instalarCarregamento } from "./app/carregamento.ts";
-import { initVisualPolish } from "./modules/visual-polish.js";
-import { initSidebarBranding } from "./modules/sidebar-branding.js";
 import {
   EVENTO_SECAO_ABERTA,
   organizarConfiguracoesEmSecoes,
@@ -57,7 +55,6 @@ import {
 import { importarComRecarga } from "./lib/importar-com-recarga";
 import { initPwaLifecycle } from "./modules/pwa-lifecycle.ts";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.ts";
-import { initNielsenShellUx } from "./modules/nielsen-shell-ux.js";
 import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.tsx";
 import { montarNucleo } from "./modulos/editais/nucleo.tsx";
 import { montarVisaoGeral } from "./modulos/visao-geral/visao-geral.tsx";
@@ -162,8 +159,9 @@ installBackgroundResourceLifecycle();
 installFrontendPerformanceMonitor();
 installCspReportMonitor();
 /*
-  A barra lateral é React e monta primeiro, de forma síncrona: o branding e o
-  legado a encontram no DOM quando rodam.
+  A barra lateral é React e monta primeiro, de forma síncrona, já com a marca
+  padrão (a gravada chega com a configuração): o legado a encontra no DOM
+  quando roda.
 */
 montarBarraLateral();
 /*
@@ -176,9 +174,6 @@ window.visaoGeralController = montarVisaoGeral({
   comemoracoesLigadas: () => situacaoDoSistema().comemoracoes === true,
 });
 instalarCarregamento();
-initVisualPolish();
-// A logo e a cor gravadas da barra lateral (a escolha é de Configurações › Aparência).
-initSidebarBranding();
 /*
   O esqueleto das seções de Configurações já; a moldura e as seções em React
   (portais, src/modulos/configuracoes/configuracoes.tsx) só para quem abre a
@@ -209,7 +204,6 @@ document.addEventListener(EVENTO_SECAO_ABERTA, () => {
 });
 initPwaLifecycle();
 initGoogleProfilePhoto();
-initNielsenShellUx();
 
 /*
   Núcleo, Lista de Aprovados e Calendário são React e montam nas próprias

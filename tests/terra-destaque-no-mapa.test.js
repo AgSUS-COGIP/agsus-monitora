@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
   O destaque passa a ser o traço da própria terra, ao passar o mouse.
 */
 const css = readFileSync("src/styles/indigenous-territories-layer.css", "utf8");
-const js = readFileSync("src/modules/indigenous-territories-layer.js", "utf8");
+const js = readFileSync("src/modules/indigenous-territories-layer.ts", "utf8");
 
 describe("destaque da terra indígena no mapa", () => {
   it("as formas do Leaflet não ganham o anel de foco retangular", () => {

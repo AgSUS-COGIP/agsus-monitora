@@ -30,7 +30,7 @@ describe("platform shell invariants", () => {
     `applyConfigToUi()` a empurrava também para `#sideLogo`, escolher uma logo
     para a barra lateral não sobrevivia ao carregamento das configurações — a do
     login voltava por cima. A barra lateral passou a ter chave própria
-    (`ui_sidebar_logo_url`) e um dono só, `sidebar-branding.js`.
+    (`ui_sidebar_logo_url`) e um dono só, `src/componentes/barra-lateral/marca.ts`.
 
     O que continua garantido: a marca do login segue normalizada onde ela
     pertence, e a barra lateral não volta a ser sequestrada por ela.

@@ -4,8 +4,8 @@
   Usado pelo mapa da Saúde Indígena e pelo de Projetos
   (src/modulos/mapa-de-projetos/). O Leaflet vem do CDN como `window.L`,
   baixado só quando um mapa monta (`carregar-leaflet.ts`) e envolvido por `map-guard.ts` (limites do Brasil, zoom, régua,
-  teclado), `map-base-layer-switcher.js` (Mapa/Satélite), `map-zoom-range.ts`
-  e `indigenous-territories-layer.js` (Terras Indígenas e abrangência dos
+  teclado), `map-base-layer-switcher.ts` (Mapa/Satélite), `map-zoom-range.ts`
+  e `indigenous-territories-layer.ts` (Terras Indígenas e abrangência dos
   DSEI). Os dois últimos só enfeitam mapas cujo contêiner tem id `map` ou
   `detailMap` (o Mapa/Satélite também `mapaDosProjetos`) — por isso os ids
   dos componentes (ver README).
@@ -44,7 +44,7 @@ import {
   ZOOM_NACIONAL,
 } from "../../lib/enquadramento-do-brasil.ts";
 import { calcularLeque } from "../../lib/leque-de-marcadores.ts";
-import { criarCamadaComRecuo } from "../../modules/map-base-layer-switcher.js";
+import { criarCamadaComRecuo } from "../../modules/map-base-layer-switcher.ts";
 import {
   CORES_DO_MAPA,
   DESENHO_DAS_FORMAS,

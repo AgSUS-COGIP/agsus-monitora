@@ -7,7 +7,7 @@ import {
   caixaDaFeature,
   catalogoParaOZoom,
   faseDaTerra,
-} from "../src/modules/indigenous-territories-layer.js";
+} from "../src/modules/indigenous-territories-layer.ts";
 
 /*
   O MAPA NACIONAL NÃO MOSTRAVA A FASE
@@ -151,7 +151,7 @@ describe("o catálogo largo", () => {
 describe("o raster passa a ser só o recurso", () => {
   // CRLF vira LF: no Windows o checkout pode trazer \r\n.
   const camada = readFileSync(
-    "src/modules/indigenous-territories-layer.js",
+    "src/modules/indigenous-territories-layer.ts",
     "utf8",
   ).replace(/\r\n/g, "\n");
 
@@ -161,7 +161,7 @@ describe("o raster passa a ser só o recurso", () => {
   });
 
   it("o recurso ao raster continua, para quando o catálogo falha", () => {
-    expect(camada).toContain("useRasterFallback()");
+    expect(camada).toContain("recorrerAoRaster()");
   });
 
   /*

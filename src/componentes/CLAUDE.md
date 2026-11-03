@@ -61,9 +61,9 @@ moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS 
 - **O DOM continua sendo contrato** enquanto houver consumidor legado: `#nav [data-view]`,
   `data-area`, `data-rotulo`, `data-icone`, `aria-current`, `#sideLogo`, `#sidebarLogoutBtn.side-logout`,
   `#globalSidebarToggle`. Não renomeie sem procurar quem lê.
-- **Folhas do legado:** o `src` de `#sideLogo` (de `sidebar-branding.js`) e o texto de
-  `#sidebarVersion` (de `applyConfigToUi`) são escritos pelo legado. O React só cria esses nós e não
-  passa prop que mude — senão desfaria o que o legado escreveu. Migre o dono junto quando for mexer.
+- **Folha do legado:** o texto de `#sidebarVersion` (de `applyConfigToUi`) é escrito pelo legado.
+  O React só cria o nó e não passa prop que mude — senão desfaria o que o legado escreveu. Migre o
+  dono junto quando for mexer. A logo (`#sideLogo`) é do React: lê `barra-lateral/marca.ts`.
 
 ## Regras
 
