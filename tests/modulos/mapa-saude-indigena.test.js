@@ -11,7 +11,7 @@ import {
 } from "vitest";
 import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.ts";
 import { CORES_DO_MAPA } from "../../src/lib/mapa-saude-indigena/formas.ts";
-import { EVENTO_DAS_TERRAS } from "../../src/modules/indigenous-territories-layer.js";
+import { EVENTO_DAS_TERRAS } from "../../src/modules/indigenous-territories-layer.ts";
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
 import { clicar, teclar } from "../componentes/interacoes.js";
 import { criarLeafletFalso } from "./leaflet-falso.js";

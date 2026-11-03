@@ -3,6 +3,11 @@ import { montarModulo } from "../../app/montar-modulo.tsx";
 import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.ts";
 import { AlcaDeRecolher, AlcaNoCabecalho } from "./alca-de-recolher.tsx";
 import { assinarBarraLateral, obterEstadoDaBarraLateral } from "./estado.ts";
+import {
+  aplicarMarcaDaBarraLateral,
+  assinarMarcaDaBarraLateral,
+  logoDaBarraLateral,
+} from "./marca.ts";
 import { Navegacao } from "./menu-de-areas.tsx";
 import { Rodape } from "./rodape.tsx";
 import type {
@@ -22,8 +27,10 @@ import { usarBarraRecolhida, usarGaveta } from "./usar-ambiente.ts";
   - o legado empurra a árvore e a página ativa para `estado.ts`;
   - a classe de `body` que recolhe a barra, o tema de `html` e a largura
     chegam por `usar-ambiente.ts`, avisados por evento;
-  - duas folhas continuam do legado, e o React só as cria: o `src` da logo
-    (`sidebar-branding.js`) e o texto da versão (`applyConfigToUi`).
+  - a logo e a cor gravadas chegam por `marca.ts` (Configurações › Aparência
+    e a leitura da configuração as aplicam);
+  - uma folha continua do legado, e o React só a cria: o texto da versão
+    (`applyConfigToUi`).
 
   As classes CSS e os ids são os de antes (`platform-shell.css`,
   `barra-lateral.css`), então o visual não depende de onde a barra é montada.
@@ -35,12 +42,12 @@ import { usarBarraRecolhida, usarGaveta } from "./usar-ambiente.ts";
 */
 
 /*
-  Na prévia, a logo é a do rascunho, com a volta para a padrão se o endereço
-  não carregar (o que `sidebar-branding.js` faz na barra de verdade).
+  A logo: a gravada (`marca.ts`) ou, na prévia, a do rascunho. Se o endereço
+  não carregar, volta para a padrão em vez de esconder a imagem — uma logo
+  tem de aparecer mesmo quando a leitura do banco falha.
 */
-function usarLogoDaPrevia(logo: string | undefined) {
+function usarLogo(logo: string) {
   const [falhou, definirFalhou] = useState("");
-  if (logo === undefined) return { src: LOGO_PADRAO_DA_BARRA };
   return {
     src: falhou === logo ? LOGO_PADRAO_DA_BARRA : logo,
     onError: () => definirFalhou(logo),
@@ -48,15 +55,14 @@ function usarLogoDaPrevia(logo: string | undefined) {
 }
 
 function Marca({ logo }: { logo?: string }) {
-  const imagem = usarLogoDaPrevia(logo);
+  const gravada = useSyncExternalStore(
+    assinarMarcaDaBarraLateral,
+    logoDaBarraLateral,
+  );
+  const imagem = usarLogo(logo ?? gravada);
   return (
     <div className="side-brand" data-tour="barra-marca">
       <span className="side-logo-wrap">
-        {/*
-          O `src` é de `sidebar-branding.js`, dono único da logo (com a volta
-          para a padrão no `onerror`). O React cria o <img> uma vez, com a logo
-          local, e não mexe mais no `src`: a prop nunca muda (só na prévia).
-        */}
         <img id="sideLogo" className="side-logo" alt="AgSUS" {...imagem} />
       </span>
       <span className="side-brand-copy">
@@ -157,13 +163,16 @@ export function BarraLateral() {
 }
 
 /*
-  Monta de forma síncrona (`flushSync`): quem roda logo depois — o branding,
-  o legado — encontra `#sideLogo`, `#sidebarVersion` e `#nav` no DOM.
+  Monta de forma síncrona (`flushSync`): quem roda logo depois — o legado —
+  encontra `#sideLogo`, `#sidebarVersion` e `#nav` no DOM. A cor padrão da
+  marca vale desde já (`--sidebar-custom-bg`, usada também pelo carregamento),
+  até a configuração chegar.
 */
 export function montarBarraLateral(
   aside: Element | null = document.querySelector("#appScreen .sidebar"),
 ) {
   if (!aside) return null;
+  aplicarMarcaDaBarraLateral();
   return montarModulo(aside, <BarraLateral />, {
     flushSync: true,
     nome: "a barra lateral",

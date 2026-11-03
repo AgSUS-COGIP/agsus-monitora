@@ -26,7 +26,7 @@ import { SECOES } from "./secoes.ts";
 
   - Logo e cor: as do rascunho (seção Aparência), antes de salvar, com a
     mesma normalização e o mesmo contraste da barra de verdade
-    (`sidebar-branding.js`: `--sidebar-custom-bg` e `sidebar-theme-dark`).
+    (`barra-lateral/marca.ts`: `--sidebar-custom-bg` e `sidebar-theme-dark`).
   - Menu, área e página aberta: os da pessoa (o estado da barra). Antes do
     primeiro menu (ou sem nenhum), um conjunto do catálogo de abas, com os
     selos BETA.

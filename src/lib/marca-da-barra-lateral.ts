@@ -2,7 +2,7 @@
   Logo e cor da barra lateral, sem DOM: o que vale como valor gravado
   (`ui_sidebar_logo_url`, `ui_sidebar_background_color`) e onde ficam as
   logos enviadas no armazenamento. Quem pinta a barra é
-  src/modules/sidebar-branding.js; quem escolhe é Configurações › Aparência
+  src/componentes/barra-lateral/marca.ts; quem escolhe é Configurações › Aparência
   (src/modulos/configuracoes/aparencia.tsx).
 */
 

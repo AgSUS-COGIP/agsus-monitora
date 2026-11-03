@@ -5,6 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.tsx";
 import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.ts";
 import {
+  logoDaBarraLateral,
+  redefinirMarcaDaBarraLateral,
+} from "../../src/componentes/barra-lateral/marca.ts";
+import {
   CHAVES_DAS_SECOES,
   linhasDasSecoes,
 } from "../../src/lib/publicacao-de-configuracoes.ts";
@@ -27,7 +31,7 @@ import {
   Configurações › Página inicial, Tela de acesso e Aparência em React (etapa
   3 da arquitetura). Antes eram campos `cfg*` do index.html: o estado lia o
   DOM para publicar, config-apresentacao.js montava grupos e prévias por
-  createElement, aviso-de-contraste.js desenhava com innerHTML e
+  createElement, aviso-de-contraste.js desenhava com innerHTML e o antigo
   sidebar-branding.js injetava o bloco da barra lateral. Agora os valores
   vêm do estado (o legado publica em loadConfig) e a publicação manda as
   mesmas chaves, com as mesmas descrições e a mesma normalização de antes.
@@ -105,7 +109,6 @@ function criarCliente() {
 
 async function montar({ secao = "inicio", config = PUBLICADO } = {}) {
   document.body.innerHTML = `
-    <img id="sideLogo" src="/assets/agsus-logo.webp" alt="" />
     <section id="page-config" class="page active">
       <div id="configuracoesApp" data-configuracoes></div>
       <div class="admin-grid"></div>
@@ -167,6 +170,7 @@ afterEach(async () => {
   await act(async () => controlador?.raiz?.unmount());
   controlador = null;
   document.body.innerHTML = "";
+  redefinirMarcaDaBarraLateral();
   document.documentElement.style.removeProperty("--sidebar-custom-bg");
 });
 
@@ -562,8 +566,8 @@ describe("Aparência", () => {
       "Logo selecionada. Clique em Salvar alterações para publicar.",
     );
     expect(sujo()).toBe(true);
-    // A barra lateral de verdade já mostra a escolha.
-    expect($("sideLogo").getAttribute("src")).toBe(
+    // A barra lateral de verdade (o <img> dela lê marca.ts) já mostra a escolha.
+    expect(logoDaBarraLateral()).toBe(
       "https://cdn.test/branding/sidebar/logo-a.png",
     );
     // A selecionada não pode ser apagada.

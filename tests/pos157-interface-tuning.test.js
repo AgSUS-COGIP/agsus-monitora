@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 const css = readFileSync("src/styles/post157-interface-tuning.css", "utf8");
 const main = readFileSync("src/main.ts", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.ts", "utf8");
-const sidebar = readFileSync("src/modules/sidebar-branding.js", "utf8");
+const sidebar = readFileSync("src/componentes/barra-lateral/marca.ts", "utf8");
 // A escolha da logo e da cor é de Configurações › Aparência (React).
 const marcaDaBarra = readFileSync("src/lib/marca-da-barra-lateral.ts", "utf8");
 const imagens = readFileSync("src/modulos/configuracoes/imagens.ts", "utf8");
@@ -95,7 +95,7 @@ describe("branding independente da sidebar", () => {
   });
 
   it("deriva contraste da cor escolhida", () => {
-    expect(sidebar).toContain("needsLightForeground(currentColor)");
+    expect(sidebar).toContain("needsLightForeground(corAtual)");
     expect(sidebar).toContain("sidebar-theme-dark");
   });
 
@@ -157,11 +157,12 @@ describe("branding independente da sidebar", () => {
     expect(configuracao).toContain("pintarBarra(valores)");
   });
 
-  it("é inicializado antes da moldura de Configurações", () => {
-    expect(main.indexOf("initSidebarBranding();")).toBeGreaterThan(-1);
-    // A moldura de Configurações monta sob demanda (carregarConfiguracoes).
+  it("a marca padrão vale antes da moldura de Configurações", () => {
+    // A barra (com a marca padrão, barra-lateral.tsx) monta antes; a moldura
+    // de Configurações monta sob demanda (carregarConfiguracoes).
+    expect(main.indexOf("montarBarraLateral();")).toBeGreaterThan(-1);
     expect(main.indexOf("function carregarConfiguracoes")).toBeGreaterThan(-1);
-    expect(main.indexOf("initSidebarBranding();")).toBeLessThan(
+    expect(main.indexOf("montarBarraLateral();")).toBeLessThan(
       main.indexOf("function carregarConfiguracoes"),
     );
   });

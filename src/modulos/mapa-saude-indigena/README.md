@@ -88,8 +88,8 @@ Saúde Indígena (`mapaDaVisaoGeral(area) === MAPA_DOS_DSEIS`). Lê o MESMO esta
 - **Ciclo de vida.** Trocar de área desmonta o componente e o `remove` do Leaflet (StrictMode limpo).
 
 **Ids.** Os contêineres dos mapas recebem `id="map"` (nacional) e `id="detailMap"` (DSEI)
-(`idDoMapaNacional`/`idDoMapaDoDsei`), porque `indigenous-territories-layer.js` e
-`map-base-layer-switcher.js` só enfeitam mapas com esses ids (Terras Indígenas, abrangência,
+(`idDoMapaNacional`/`idDoMapaDoDsei`), porque `indigenous-territories-layer.ts` e
+`map-base-layer-switcher.ts` só enfeitam mapas com esses ids (Terras Indígenas, abrangência,
 Mapa/Satélite). A marcação antiga saiu do `index.html`: nenhum outro `#map`/`#detailMap` na página.
 O mapa de Projetos usa `#mapaDosProjetos` (só o Mapa/Satélite o enfeita). O `map-guard.ts` e o `map-zoom-range.ts` valem
 para qualquer mapa. Ganchos da camada de terras usados (todos opcionais): `__agsusSetDseiCoverage`,

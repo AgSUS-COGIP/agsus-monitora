@@ -8,8 +8,13 @@ import {
   EVENTO_TEMA_ALTERADO,
 } from "../../src/lib/eventos-da-barra-lateral.ts";
 import { SECOES } from "../../src/modulos/configuracoes/secoes.ts";
-import { performExplicitLogout } from "../../src/modules/nielsen-shell-ux.js";
+import { sairDoSistema } from "../../src/app/casca/saida.ts";
 import { montarBarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
+import {
+  aplicarMarcaDaBarraLateral,
+  aplicarMarcaDaConfiguracao,
+  redefinirMarcaDaBarraLateral,
+} from "../../src/componentes/barra-lateral/marca.ts";
 import {
   atualizarMenuLateral,
   marcarItemAtivoNoMenu,
@@ -22,9 +27,9 @@ import {
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { htmlDaPagina } from "../pagina-montada.js";
 
-vi.mock("../../src/modules/nielsen-shell-ux.js", async (original) => ({
+vi.mock("../../src/app/casca/saida.ts", async (original) => ({
   ...(await original()),
-  performExplicitLogout: vi.fn(),
+  sairDoSistema: vi.fn(),
 }));
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -111,6 +116,7 @@ afterEach(async () => {
   await act(async () => raiz?.unmount());
   raiz = null;
   await act(async () => redefinirBarraLateral());
+  await act(async () => redefinirMarcaDaBarraLateral());
   await act(async () => redefinirDadosDoMonitoramento());
   await larguraDaJanela(LARGURA_ORIGINAL);
   delete window.navigate;
@@ -1144,19 +1150,19 @@ describe("rodapé", () => {
   it("o Sair abre a confirmação de saída", async () => {
     await montar();
     await clicar(document.getElementById("sidebarLogoutBtn"));
-    expect(performExplicitLogout).toHaveBeenCalledTimes(1);
+    expect(sairDoSistema).toHaveBeenCalledTimes(1);
   });
 
   /*
-    Duas folhas continuam do legado: o `src` da logo (sidebar-branding.js) e o
-    texto da versão (applyConfigToUi). O React cria os nós e não mexe mais
-    neles — uma nova renderização não pode desfazer o que o legado escreveu.
+    Uma folha continua do legado: o texto da versão (applyConfigToUi). O React
+    cria o nó e não mexe mais nele — uma nova renderização não pode desfazer o
+    que o legado escreveu. A logo é do React (marca.ts) e também sobrevive.
   */
-  it("logo e versão escritas pelo legado sobrevivem às renderizações", async () => {
+  it("logo gravada e versão escrita pelo legado sobrevivem às renderizações", async () => {
     await montar();
-    document
-      .getElementById("sideLogo")
-      .setAttribute("src", "/assets/outra.webp");
+    await act(async () =>
+      aplicarMarcaDaBarraLateral({ logo: "/assets/outra.webp" }),
+    );
     document.getElementById("sidebarVersion").textContent = "2.0.1";
 
     await act(async () => atualizarMenuLateral(arvoreCompleta([])));
@@ -1167,6 +1173,59 @@ describe("rodapé", () => {
       "/assets/outra.webp",
     );
     expect(document.getElementById("sidebarVersion").textContent).toBe("2.0.1");
+  });
+
+  /*
+    A marca era o legado sidebar-branding.js (src por setAttribute e onerror
+    imperativo). Agora o <img> é do React e lê marca.ts: a logo e a cor da
+    configuração chegam sem mexer no DOM da barra, e um endereço que não
+    carrega volta para a logo padrão em vez de esconder a imagem.
+  */
+  it("a logo e a cor da configuração pintam a barra", async () => {
+    await montar();
+    await act(async () =>
+      aplicarMarcaDaConfiguracao({
+        ui_sidebar_logo_url: "https://exemplo.test/logo.png",
+        ui_sidebar_background_color: "#0B3D2E",
+      }),
+    );
+    const logo = document.getElementById("sideLogo");
+    expect(logo.getAttribute("src")).toBe("https://exemplo.test/logo.png");
+    expect(logo.getAttribute("alt")).toBe("AgSUS");
+    expect(
+      document.documentElement.style.getPropertyValue("--sidebar-custom-bg"),
+    ).toBe("#0b3d2e");
+    expect(document.body.classList.contains("sidebar-theme-dark")).toBe(true);
+
+    await act(async () =>
+      aplicarMarcaDaBarraLateral({ logo: "javascript:alert(1)", cor: "red" }),
+    );
+    expect(logo.getAttribute("src")).toBe("/assets/agsus-logo.webp");
+    expect(
+      document.documentElement.style.getPropertyValue("--sidebar-custom-bg"),
+    ).toBe("#ffffff");
+    expect(document.body.classList.contains("sidebar-theme-dark")).toBe(false);
+  });
+
+  it("logo que não carrega volta para a padrão, sem esconder a imagem", async () => {
+    await montar();
+    await act(async () =>
+      aplicarMarcaDaBarraLateral({ logo: "/assets/quebrada.webp" }),
+    );
+    const logo = document.getElementById("sideLogo");
+    expect(logo.getAttribute("src")).toBe("/assets/quebrada.webp");
+    await act(async () => logo.dispatchEvent(new Event("error")));
+    expect(logo.getAttribute("src")).toBe("/assets/agsus-logo.webp");
+    expect(logo.style.display).not.toBe("none");
+    expect(logo.hidden).toBe(false);
+  });
+
+  it("monta já com a cor padrão da marca (antes de a configuração chegar)", async () => {
+    document.documentElement.style.removeProperty("--sidebar-custom-bg");
+    await montar();
+    expect(
+      document.documentElement.style.getPropertyValue("--sidebar-custom-bg"),
+    ).toBe("#ffffff");
   });
 });
 
@@ -1268,15 +1327,14 @@ describe("contrato de CSS e ligação no arranque", () => {
     );
   });
 
-  it("o main.ts monta a barra antes do branding e importa o CSS dela", () => {
+  it("o main.ts monta a barra (com a marca, sem branding do legado) e importa o CSS dela", () => {
     expect(main).toContain(
       'import { montarBarraLateral } from "./componentes/barra-lateral/barra-lateral.tsx"',
     );
     expect(main).toContain('import "./styles/barra-lateral.css"');
     expect(main.indexOf("montarBarraLateral();")).toBeGreaterThan(-1);
-    expect(main.indexOf("montarBarraLateral();")).toBeLessThan(
-      main.indexOf("initSidebarBranding();"),
-    );
+    expect(main).not.toContain("initSidebarBranding");
+    expect(main).not.toContain("sidebar-branding");
     expect(main).not.toContain("colapsar-a-sidebar");
     expect(main).not.toContain("menu-lateral.css");
   });

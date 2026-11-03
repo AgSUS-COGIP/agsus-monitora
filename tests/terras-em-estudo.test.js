@@ -3,7 +3,7 @@ import {
   AVISO_DE_ESTUDO,
   funaiEstudoUrl,
   tooltipDaTerraEmEstudo,
-} from "../src/modules/indigenous-territories-layer.js";
+} from "../src/modules/indigenous-territories-layer.ts";
 
 /*
   AS TERRAS QUE AINDA NÃO TÊM LIMITE

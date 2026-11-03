@@ -59,7 +59,7 @@ gera conflito com quem está trabalhando em paralelo.
 | Editais, Cronograma e Lista de aprovados                                                                         | `src/modulos/editais/`, `cronograma/`, `aprovados/`       | concluído  |
 | `src/modules/map-*`, `health-*`, `indigenous-*`, (o dashboard já saiu do legado)                                 | `src/modulos/visao-geral/`                                | 5          |
 | `src/main.ts`, `index.html`, `src/componentes/barra-lateral/`, `dados-do-monitoramento.ts`, `usar-area-atual.ts` | `src/app/` (entrada, layout, área atual)                  | 6          |
-| `auth-storage.ts`, `sidebar-branding.js` (o login e o `legacy-app.js` já estão em `src/app/`)                    | `src/lib/` e barra lateral                                | 6          |
+| `auth-storage.ts` (o login, o `legacy-app.js` e a marca da barra já saíram do legado)                            | `src/lib/`                                                | 6          |
 | `src/modules/aya-*` (IA, base e memória; o painel já é `src/modulos/aya/`)                                       | `src/app/` (Aya no layout)                                | 7          |
 | `src/lib/`                                                                                                       | fica                                                      | —          |
 | `src/styles/tokens.css`                                                                                          | fica; os outros CSS vão com o módulo ou saem com o legado | cada etapa |
@@ -210,18 +210,18 @@ os testes de ponta a ponta continuam valendo; o formulário do pedido usa `Campo
 Testes: `tests/app/sessao.test.js`, `tests/app/entrada.test.js`, `tests/solicitacao-de-acesso.test.js`,
 `tests/solicitacao-de-acesso-migration.test.js`.
 
-| Antes (legado)                                                                       | Agora                                                                        |
-| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| `boot()`, `onAuthStateChange`, `?code=`, `?auth=google`, recuperação de senha        | `sessaoDoApp.iniciar()`, `aoMudarAutenticacao`, `trocarCodigoDoOAuth`        |
-| `handleSignedInSession` (domínio, mesmo usuário, carga única)                        | `entrar()`                                                                   |
-| `loadProfile` (`obter_contexto_monitora`, `meu_usuario`)                             | `carregarPerfil()` na sessão                                                 |
-| `loginWithGoogle`, popup, `message`, `pageshow`, `mobile-google-oauth.js`            | `entrarComGoogle()`; `startMobileGoogleOAuth` em `src/lib/auth-flow.ts`      |
-| `logout`, `returnToLogin`, `clearLocalAuthState`, `aplicarSaida`                     | `sair()`, `limparSessao()`, `aplicarSaida()` na sessão                       |
-| `showAccessRequestState`, `submitAccessRequest`, `solicitacao-de-acesso.js` (legado) | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                          |
-| `access-branding-boot.js`, marca e rodapé de `applyConfigToUi`                       | `src/app/entrada/marca.ts` (`definirMarcaDaConfiguracao`)                    |
-| marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.ts`)             | `src/lib/acesso-liberado.ts` (a comemoração continua no legado)              |
-| `#loginMsg` escrito por `session-lifecycle.js`                                       | `installSessionLifecycle({ aoExpirar })` → `sessaoDoApp.mostrarMensagem`     |
-| `window.loginWithGoogle`, `logout`, `returnToLogin`, `submitAccessRequest`           | saíram; o Sair confirmado (`nielsen-shell-ux.js`) chama `sessaoDoApp.sair()` |
+| Antes (legado)                                                                       | Agora                                                                           |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `boot()`, `onAuthStateChange`, `?code=`, `?auth=google`, recuperação de senha        | `sessaoDoApp.iniciar()`, `aoMudarAutenticacao`, `trocarCodigoDoOAuth`           |
+| `handleSignedInSession` (domínio, mesmo usuário, carga única)                        | `entrar()`                                                                      |
+| `loadProfile` (`obter_contexto_monitora`, `meu_usuario`)                             | `carregarPerfil()` na sessão                                                    |
+| `loginWithGoogle`, popup, `message`, `pageshow`, `mobile-google-oauth.js`            | `entrarComGoogle()`; `startMobileGoogleOAuth` em `src/lib/auth-flow.ts`         |
+| `logout`, `returnToLogin`, `clearLocalAuthState`, `aplicarSaida`                     | `sair()`, `limparSessao()`, `aplicarSaida()` na sessão                          |
+| `showAccessRequestState`, `submitAccessRequest`, `solicitacao-de-acesso.js` (legado) | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                             |
+| `access-branding-boot.js`, marca e rodapé de `applyConfigToUi`                       | `src/app/entrada/marca.ts` (`definirMarcaDaConfiguracao`)                       |
+| marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.ts`)             | `src/lib/acesso-liberado.ts` (a comemoração continua no legado)                 |
+| `#loginMsg` escrito por `session-lifecycle.js`                                       | `installSessionLifecycle({ aoExpirar })` → `sessaoDoApp.mostrarMensagem`        |
+| `window.loginWithGoogle`, `logout`, `returnToLogin`, `submitAccessRequest`           | saíram; o Sair confirmado (`src/app/casca/saida.ts`) chama `sessaoDoApp.sair()` |
 
 Acesso só por convite: a sessão não chama mais `garantir_acesso_basico` (saiu do front e do
 contrato de RPC); quem não tem perfil ativo vê o pedido de acesso.
@@ -299,15 +299,12 @@ Ficou para depois (ainda em `src/modules/` ou no `index.html`):
    `src/componentes/barra-lateral/`, `dados-do-monitoramento.ts` e `usar-area-atual.ts` mudam
    para `src/app/` quando a barra virar filha da casca.
 2. **Rotas**: sem endereço por tela (hash/history); a tela guardada continua no localStorage.
-3. `nielsen-shell-ux.js` (diálogo de saída por `insertAdjacentHTML` e os estados do seletor de
-   tema), `visual-polish.js`,
-   `pwa-lifecycle.ts`, `situacao-dos-modulos.ts`,
+3. `pwa-lifecycle.ts`, `situacao-dos-modulos.ts`,
    `catalogo-de-abas.ts`, `copia-da-sessao-indexeddb.ts`, `cache-de-payload-indexeddb.ts`,
    `comemoracao-do-acesso.ts` → `src/app/` ou React.
 4. O CSS da tela de acesso espalhado (`app.css`, `platform-shell.css`,
    `post-152-regression-fixes.css`, `visual-polish.css`, `mobile-app.css`) consolidado num
-   CSS da entrada em `src/app/entrada/` (hoje só o `solicitacao-de-acesso.css`); `auth-storage.ts` → `src/lib/`, `sidebar-branding.js` → barra
-   lateral.
+   CSS da entrada em `src/app/entrada/` (hoje só o `solicitacao-de-acesso.css`); `auth-storage.ts` → `src/lib/`.
 
 ### Casca em React (em partes)
 
@@ -320,7 +317,7 @@ claro e escuro) e o DOM do `#appScreen` com posição e tamanho de cada elemento
 | A     | `#appScreen`: volta do painel externo, `<aside>` da barra, cabeçalho e menu da conta, pontos de montagem do topo, aviso global, seções das telas, quadro externo, Configurações         | feita    |
 | B     | Celular: sem menu no pé da tela; a gaveta (☰) e as tabelas em cartão viram `src/app/casca/` (`mobile-*.js` saíram)                                                                     | feita    |
 | C     | Carregamento e avisos: `#loader`, `#toastBox`, `#offlineBar`, `loading-experience.js`, `connectivity-status.js`, `notificacao.js`; o skeleton da entrada fica no HTML (primeiro quadro) | feita    |
-| D     | `nielsen-shell-ux.js` (diálogo de saída), `sidebar-branding.js`, `visual-polish.js`, `map-base-layer-switcher.js` (`indigenous-territories-layer.js` só vira TS)                        | a fazer  |
+| D     | `nielsen-shell-ux.js` (diálogo de saída), `sidebar-branding.js`, `visual-polish.js`, `map-base-layer-switcher.js` (`indigenous-territories-layer.js` só vira TS)                        | feita    |
 
 **Parte A** — `src/app/casca/`:
 
@@ -370,3 +367,26 @@ O estado fica em `src/app/avisos.ts` (sem React): `avisar(texto, tom)` e
 O `#offlineBar` (sempre escondido; só recebia o texto `offline_message`) saiu: o aviso de
 conexão é o `#connectivityStatusNotice`. Ids e classes são os de antes (CSS em `app.css`,
 `loading-experience.css` e `connectivity-status.css`). Testes: `tests/app/avisos.test.js`.
+
+**Parte D** — o último JavaScript escrito à mão de `src/modules/` (03/11/2026):
+
+```
+src/componentes/barra-lateral/marca.ts    a logo e a cor gravadas (era sidebar-branding.js): a cor
+                                          vai para --sidebar-custom-bg e body.sidebar-theme-dark;
+                                          o <img id="sideLogo"> é do React e lê a logo daqui
+src/componentes/barra-lateral/seletor-de-tema.ts  opções e regra do Claro/Escuro do rodapé
+src/app/casca/saida.ts                    o Sair confirmado (sairDoSistema), sem React
+src/app/casca/confirmacao-de-saida.tsx    "Deseja realmente sair?" e "Saindo do sistema…", nos
+                                          avisos (era HTML injetado por nielsen-shell-ux.js)
+src/styles/visual-polish.css              as regras valem em :root (a classe visual-polish-ready,
+                                          que o visual-polish.js punha sempre, saiu)
+src/modules/map-base-layer-switcher.ts    Mapa/Satélite, em TypeScript; continua L.control (o
+                                          canto de controles é do Leaflet, nos três mapas)
+src/modules/indigenous-territories-layer.ts  Terras Indígenas em TypeScript; as partes puras
+                                          (catálogo, textos, geometria, fases e estilos,
+                                          preferências) em src/lib/terras-indigenas/
+```
+
+`scripts/check-legado-so-encolhe.mjs` agora também recusa qualquer `.js` nas pastas do legado
+(só o gerado da Aya fica). Testes: `tests/componentes/confirmacao-de-saida.test.js` e
+`tests/componentes/barra-lateral.test.js` (marca).

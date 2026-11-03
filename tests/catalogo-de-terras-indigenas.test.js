@@ -8,7 +8,7 @@ import {
   caixasSeIntersectam,
   carregarCatalogo,
   terrasNoEnquadramento,
-} from "../src/modules/indigenous-territories-layer.js";
+} from "../src/modules/indigenous-territories-layer.ts";
 
 /*
   O MAPA ESPERAVA A FUNAI A CADA ARRASTO

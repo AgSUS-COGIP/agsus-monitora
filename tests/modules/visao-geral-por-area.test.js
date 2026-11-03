@@ -107,7 +107,7 @@ describe("o legado usa a área atual", () => {
 
   it("as terras saem sem apagar a preferência da pessoa", () => {
     const camada = readFileSync(
-      "src/modules/indigenous-territories-layer.js",
+      "src/modules/indigenous-territories-layer.ts",
       "utf8",
     );
     const inicio = camada.indexOf("map.__agsusSuspenderCamadasIndigenas =");

@@ -13,7 +13,7 @@ import {
 import { sessaoDoApp } from "./sessao.ts";
 import { definirMarcaDaConfiguracao } from "./entrada/marca.ts";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
-import { aplicarMarcaDaConfiguracao } from "../modules/sidebar-branding.js";
+import { aplicarMarcaDaConfiguracao } from "../componentes/barra-lateral/marca.ts";
 import { avisar as avisarPadrao } from "./avisos.ts";
 import {
   CHAVE_DAS_COMEMORACOES,
@@ -186,7 +186,7 @@ export function criarConfiguracao({
     atributo("externalBackBtn", "title", valor("external_back_text"));
     atributo("externalBackBtn", "aria-label", valor("external_back_text"));
     aplicarAvisoGlobal();
-    // `#sideLogo` não entra aqui: a logo da barra tem chave e dono próprios (sidebar-branding.js).
+    // `#sideLogo` não entra aqui: a logo da barra tem chave e dono próprios (src/componentes/barra-lateral/marca.ts).
   }
 
   const consulta = () =>

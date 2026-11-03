@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   povosDaFeature,
   resumoDasTerras,
-} from "../src/modules/indigenous-territories-layer.js";
+} from "../src/modules/indigenous-territories-layer.ts";
 
 /*
   O MAPA MOSTRAVA AS TERRAS E NÃO AS NOMEAVA EM LADO NENHUM
@@ -152,7 +152,7 @@ describe("o painel está ligado", () => {
     "utf8",
   );
   const camada = readFileSync(
-    "src/modules/indigenous-territories-layer.js",
+    "src/modules/indigenous-territories-layer.ts",
     "utf8",
   );
 

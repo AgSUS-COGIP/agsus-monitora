@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const source = readFileSync("src/modules/map-base-layer-switcher.js", "utf8");
+const source = readFileSync("src/modules/map-base-layer-switcher.ts", "utf8");
 // Os mapas instalam as guardas quando o Leaflet chega (sob demanda).
 const carga = readFileSync(
   "src/modulos/mapa-saude-indigena/carregar-leaflet.ts",
@@ -72,7 +72,7 @@ describe("seletor Mapa | Satélite", () => {
       'import("../../styles/map-base-layer-switcher.css")',
     );
     expect(carga).toContain(
-      'import("../../modules/map-base-layer-switcher.js")',
+      'import("../../modules/map-base-layer-switcher.ts")',
     );
   });
 

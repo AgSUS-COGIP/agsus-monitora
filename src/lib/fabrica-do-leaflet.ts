@@ -10,7 +10,7 @@
   (src/modulos/mapa-saude-indigena/carregar-leaflet.ts):
 
       map-guard.ts              noWrap, updateWhenIdle, keepBuffer
-      map-base-layer-switcher.js  etiqueta a camada com o tipo de base
+      map-base-layer-switcher.ts  etiqueta a camada com o tipo de base
       map-zoom-range.ts         impõe o maxZoom
 
   Nenhum copiava `.wms`. A camada de Terras Indígenas verifica

@@ -4,26 +4,25 @@ import { alternarTemaPelaJanela } from "./integracao.ts";
 import { Icone } from "../icone.tsx";
 import {
   deveAlternarTema,
+  estadoDoSeletorDeTema,
   OPCOES_DE_TEMA,
-  performExplicitLogout,
-  themeControlState,
-} from "../../modules/nielsen-shell-ux.js";
+} from "./seletor-de-tema.ts";
+import { sairDoSistema } from "../../app/casca/saida.ts";
 import { temaEscuro, usarTemaEscuro } from "../../app/tema.ts";
 
 /*
   Rodapé da barra, de cima para baixo: o seletor Claro/Escuro (único controle
   de tema do app), o botão de recolher (`alca`, de `alca-de-recolher.tsx`; na
-  gaveta do celular ele mora no cabeçalho e não vem), o Sair (único logout —
-  `nielsen-shell-ux.js` tira o do menu do perfil) e a versão. Recolhida, o CSS
-  troca os dois segmentos por um botão que alterna e deixa o recolher e o Sair
-  só com o ícone; o nome de cada um aparece na dica (`data-dica`) no ponteiro
-  e no foco.
+  gaveta do celular ele mora no cabeçalho e não vem), o Sair (único logout; o
+  menu do perfil não tem Sair) e a versão. Recolhida, o CSS troca os dois
+  segmentos por um botão que alterna e deixa o recolher e o Sair só com o
+  ícone; o nome de cada um aparece na dica (`data-dica`) no ponteiro e no foco.
 
   O tema vale em `html[data-theme]`, e quem o troca é `window.toggleDarkMode`
-  (legado, embrulhado por `nielsen-shell-ux.js`; `applyDarkMode` mantém o
-  espelho `body.dark-mode`). Ela inverte o tema, então o segmento já ativo não
-  a chama.
-  O Sair abre a confirmação de `nielsen-shell-ux.js` antes de encerrar.
+  (src/app/moldura.ts; `applyDarkMode` mantém o espelho `body.dark-mode`).
+  Ela inverte o tema, então o segmento já ativo não a chama.
+  O Sair abre a confirmação (`sairDoSistema`, src/app/casca/saida.ts) antes
+  de encerrar.
 
   Com `previa` (Configurações › Marca), o tema é o da prévia e a versão vem
   escrita pelo React, porque ali não há legado escrevendo nos ids.
@@ -37,7 +36,7 @@ export function Rodape({
 }) {
   const escuroDoApp = usarTemaEscuro();
   const escuro = previa ? previa.escuro : escuroDoApp;
-  const tema = themeControlState(escuro);
+  const tema = estadoDoSeletorDeTema(escuro);
   const pedirTema = (pedido: string) => {
     if (deveAlternarTema(pedido, temaEscuro())) alternarTemaPelaJanela();
   };
@@ -63,11 +62,11 @@ export function Rodape({
         <button
           type="button"
           className="side-tema__alternar"
-          aria-label={tema.label}
+          aria-label={tema.rotulo}
           data-dica={`Alternar para tema ${escuro ? "claro" : "escuro"}`}
           onClick={() => alternarTemaPelaJanela()}
         >
-          <Icone nome={tema.icon} />
+          <Icone nome={tema.icone} />
         </button>
       </div>
       {alca}
@@ -78,7 +77,7 @@ export function Rodape({
         data-tour="barra-sair"
         aria-label="Sair da sessão atual"
         data-dica="Sair"
-        onClick={() => void performExplicitLogout()}
+        onClick={() => void sairDoSistema()}
       >
         <Icone nome="log-out" />
         <span>Sair</span>

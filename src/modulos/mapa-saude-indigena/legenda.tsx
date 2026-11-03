@@ -5,7 +5,7 @@ import { Icone } from "../../componentes/icone.tsx";
 import {
   EVENTO_DAS_TERRAS,
   FASES_DAS_TERRAS,
-} from "../../modules/indigenous-territories-layer.js";
+} from "../../modules/indigenous-territories-layer.ts";
 import {
   CORES_DO_MAPA,
   DESENHO_DAS_FORMAS,
@@ -61,7 +61,7 @@ const faseVisivel = (mapa: MapaDasTerras | null, fase: string) =>
 
 /*
   As Terras Indígenas são três itens, um por fase, e cada um é interruptor da
-  camada (`indigenous-territories-layer.js`). O estado vem da camada: quando
+  camada (`indigenous-territories-layer.ts`). O estado vem da camada: quando
   ela avisa (`agsus:terras-mudaram`), a legenda se redesenha.
 */
 export function LegendaDasTerras({ mapa }: { mapa: MapaDasTerras | null }) {

@@ -1,10 +1,18 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   arquivosNovosNoLegado,
+  JAVASCRIPT_PERMITIDO_NO_LEGADO,
+  javascriptNoLegado,
   PASTAS_DO_LEGADO,
 } from "../scripts/check-legado-so-encolhe.mjs";
 
@@ -76,6 +84,60 @@ describe("arquivosNovosNoLegado", () => {
   });
 });
 
+/*
+  O legado não tem mais JavaScript escrito à mão (03/11/2026): nenhum .js pode
+  voltar a src/modules/ ou src/analises/, nem um que já existia na base. Só o
+  conhecimento gerado da Aya fica.
+*/
+describe("javascriptNoLegado", () => {
+  it("só o gerado da Aya é permitido", () => {
+    expect(JAVASCRIPT_PERMITIDO_NO_LEGADO).toEqual([
+      "src/modules/aya-conhecimento-gerado.js",
+    ]);
+  });
+
+  it("acusa .js, .jsx, .mjs e .cjs no legado, fora o gerado", () => {
+    expect(
+      javascriptNoLegado([
+        "src/modules/aya-conhecimento-gerado.js",
+        "src/modules/a.ts",
+        "src/modules/b.js",
+        "src/modules/c.jsx",
+        "src/analises/d.mjs",
+        "src/analises/e.cjs",
+        "src/modules/f.css",
+      ]),
+    ).toEqual([
+      "src/modules/b.js",
+      "src/modules/c.jsx",
+      "src/analises/d.mjs",
+      "src/analises/e.cjs",
+    ]);
+  });
+
+  it("JavaScript fora do legado não é com ele", () => {
+    expect(
+      javascriptNoLegado([
+        "src/lib/contornos.js",
+        "src/lib/rpc-contrato.js",
+        "src/modules-extra/a.js",
+      ]),
+    ).toEqual([]);
+  });
+
+  it("o legado de verdade não tem JavaScript escrito à mão", () => {
+    const arquivos = execFileSync(
+      "git",
+      ["ls-files", "--", "src/modules", "src/analises"],
+      { encoding: "utf8" },
+    )
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .filter((caminho) => existsSync(caminho));
+    expect(javascriptNoLegado(arquivos)).toEqual([]);
+  });
+});
+
 describe("check-legado-so-encolhe.mjs num repositório de verdade", () => {
   let pasta;
 
@@ -110,7 +172,7 @@ describe("check-legado-so-encolhe.mjs num repositório de verdade", () => {
   function repositorioComBase() {
     pasta = mkdtempSync(join(tmpdir(), "legado-"));
     git("init", "-q", "-b", "main");
-    escrever("src/modules/existente.js");
+    escrever("src/modules/existente.ts");
     escrever("src/analises/painel.css");
     git("add", ".");
     git("commit", "-q", "-m", "base");
@@ -119,21 +181,51 @@ describe("check-legado-so-encolhe.mjs num repositório de verdade", () => {
 
   it("falha com arquivo novo em src/modules", () => {
     repositorioComBase();
-    escrever("src/modules/novo-modulo.js");
+    escrever("src/modules/novo-modulo.ts");
     git("add", ".");
     git("commit", "-q", "-m", "novo");
     const r = rodar();
     expect(r.status).toBe(1);
-    expect(r.stderr).toContain("src/modules/novo-modulo.js");
+    expect(r.stderr).toContain("src/modules/novo-modulo.ts");
+  });
+
+  it("falha com JavaScript no legado, mesmo um que já existia na base", () => {
+    repositorioComBase();
+    git("checkout", "-q", "main");
+    escrever("src/modules/antigo.js");
+    git("add", ".");
+    git("commit", "-q", "-m", "base com js");
+    git("checkout", "-q", "-B", "feat");
+    escrever("src/modules/antigo.js", "editado\n");
+    git("add", ".");
+    git("commit", "-q", "-m", "edita o js");
+    const r = rodar();
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain("JavaScript no legado");
+    expect(r.stderr).toContain("src/modules/antigo.js");
+  });
+
+  it("o conhecimento gerado da Aya pode ficar em JavaScript", () => {
+    repositorioComBase();
+    git("checkout", "-q", "main");
+    escrever("src/modules/aya-conhecimento-gerado.js");
+    git("add", ".");
+    git("commit", "-q", "-m", "gerado");
+    git("checkout", "-q", "-B", "feat");
+    escrever("src/modules/aya-conhecimento-gerado.js", "regerado\n");
+    git("add", ".");
+    git("commit", "-q", "-m", "regera");
+    const r = rodar();
+    expect(r.status, r.stderr).toBe(0);
   });
 
   it("a base andou e apagou um arquivo do legado: o ramo que ainda o tem passa", () => {
     repositorioComBase();
     git("checkout", "-q", "main");
-    git("rm", "-q", "src/modules/existente.js");
+    git("rm", "-q", "src/modules/existente.ts");
     git("commit", "-q", "-m", "a base apaga");
     git("checkout", "-q", "feat");
-    escrever("src/modules/existente.js", "editado no ramo\n");
+    escrever("src/modules/existente.ts", "editado no ramo\n");
     git("add", ".");
     git("commit", "-q", "-m", "edita");
     const r = rodar();
@@ -142,7 +234,7 @@ describe("check-legado-so-encolhe.mjs num repositório de verdade", () => {
 
   it("passa editando e apagando no legado e criando em src/modulos", () => {
     repositorioComBase();
-    escrever("src/modules/existente.js", "mudou\n");
+    escrever("src/modules/existente.ts", "mudou\n");
     git("rm", "-q", "src/analises/painel.css");
     escrever("src/modulos/tela/tela.jsx");
     git("add", ".");

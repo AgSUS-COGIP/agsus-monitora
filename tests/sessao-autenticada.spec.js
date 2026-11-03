@@ -69,7 +69,7 @@ test.describe("sessão autenticada", () => {
   }) => {
     await abrirApp(page);
     await page.locator(".sidebar .side-logout").click();
-    // O Sair pede confirmação (nielsen-shell-ux.js) antes de encerrar.
+    // O Sair pede confirmação (src/app/casca/confirmacao-de-saida.tsx) antes de encerrar.
     await page.locator("[data-shell-logout-confirm]").click();
     await expect(page.locator("#loginScreen")).toBeVisible({ timeout: 30_000 });
     const guardado = await page.evaluate(

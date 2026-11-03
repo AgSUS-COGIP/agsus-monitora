@@ -5,7 +5,7 @@ import {
   podeRecuar,
   semAzulejoDeAviso,
 } from "../src/lib/recuo-de-azulejo.ts";
-import { criarCamadaComRecuo } from "../src/modules/map-base-layer-switcher.js";
+import { criarCamadaComRecuo } from "../src/modules/map-base-layer-switcher.ts";
 
 /*
   "QUANDO DOU MUITO ZOOM A IMAGEM QUEBRA"
