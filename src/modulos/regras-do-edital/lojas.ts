@@ -14,7 +14,9 @@ import type { Avisar } from "../avaliacao-documental/tipos-do-estado.ts";
   guardado de cada regra também é o mesmo (tipos ANALISE e CLASSIFICACAO).
 */
 
-type OpcoesDaAvaliacao = NonNullable<Parameters<typeof criarEstadoDaAvaliacao>[0]>;
+type OpcoesDaAvaliacao = NonNullable<
+  Parameters<typeof criarEstadoDaAvaliacao>[0]
+>;
 type OpcoesDaClassificacao = NonNullable<
   Parameters<typeof criarEstadoDaClassificacao>[0]
 >;
@@ -36,11 +38,15 @@ export function lojasDasRegras(
   if (ja) return ja;
   const rascunhoDaAvaliacao = criarRascunhoDaRegra({
     tipo: "ANALISE",
-    supabase: supabase as Parameters<typeof criarRascunhoDaRegra>[0]["supabase"],
+    supabase: supabase as Parameters<
+      typeof criarRascunhoDaRegra
+    >[0]["supabase"],
   });
   const rascunhoDaClassificacao = criarRascunhoDaRegra({
     tipo: "CLASSIFICACAO",
-    supabase: supabase as Parameters<typeof criarRascunhoDaRegra>[0]["supabase"],
+    supabase: supabase as Parameters<
+      typeof criarRascunhoDaRegra
+    >[0]["supabase"],
   });
   const lojas: LojasDasRegras = {
     avaliacao: criarEstadoDaAvaliacao({

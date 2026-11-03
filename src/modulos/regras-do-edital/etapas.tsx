@@ -56,7 +56,8 @@ export function EtapaDaAvaliacao({
         aoTentar={() => void estado.escolherEdital(editalId)}
       />
     );
-  if (e.editalId !== editalId || !e.dados) return <BlocosEsqueleto quantos={3} />;
+  if (e.editalId !== editalId || !e.dados)
+    return <BlocosEsqueleto quantos={3} />;
   return (
     <div className="avd-tela regras-do-edital__editor">
       <RegraDaAvaliacao
@@ -90,7 +91,8 @@ export function EtapaDaClassificacao({
         aoTentar={() => void estado.escolherEdital(editalId)}
       />
     );
-  if (e.editalId !== editalId || !e.dados) return <BlocosEsqueleto quantos={3} />;
+  if (e.editalId !== editalId || !e.dados)
+    return <BlocosEsqueleto quantos={3} />;
   return (
     <div className="classificacao-tela regras-do-edital__editor">
       <RegraDaClassificacao
@@ -116,7 +118,9 @@ function usarLeitura<T>(ler: () => Promise<T>, chave: string) {
     setEstado((s) => ({ ...s, dados: null, erro: "" }));
     ler()
       .then((dados) => vivo && setEstado((s) => ({ ...s, dados })))
-      .catch((erro) => vivo && setEstado((s) => ({ ...s, erro: mensagem(erro) })));
+      .catch(
+        (erro) => vivo && setEstado((s) => ({ ...s, erro: mensagem(erro) })),
+      );
     return () => {
       vivo = false;
     };
@@ -128,7 +132,11 @@ function usarLeitura<T>(ler: () => Promise<T>, chave: string) {
   };
 }
 
-async function rpc(cliente: ClienteDasRegras, nome: string, argumentos?: object) {
+async function rpc(
+  cliente: ClienteDasRegras,
+  nome: string,
+  argumentos?: object,
+) {
   const { data, error } = await cliente.rpc(nome, argumentos as never);
   if (error) throw error;
   return data;
@@ -161,7 +169,8 @@ export function EtapaDaEntrevista({
       temRegra: Boolean(regra),
       convocacao: (regra?.convocacao ?? null) as EntradaDoResumo["convocacao"],
       vagas: [],
-      roteiro: (dados.configuracao?.roteiro ?? null) as EntradaDoResumo["roteiro"],
+      roteiro: (dados.configuracao?.roteiro ??
+        null) as EntradaDoResumo["roteiro"],
       avaliadores: (dados.avaliadores || []) as EntradaDoResumo["avaliadores"],
       lancamento: dados.configuracao?.lancamento || null,
       desempate: criteriosDeDesempate(regra),
@@ -212,7 +221,9 @@ export function EtapaDaChamada({
       rpc(cliente, "listar_configuracao_convocacao"),
       rpc(cliente, "listar_modelos_convocacao"),
     ]);
-    return { convocacao: convocacaoDoEdital({ configuracoes, modelos }, editalId) };
+    return {
+      convocacao: convocacaoDoEdital({ configuracoes, modelos }, editalId),
+    };
   }, editalId);
   if (leitura.erro)
     return (
@@ -268,7 +279,9 @@ export function EtapaDaChamada({
           </Kv>
         </GradeDeKv>
       ) : (
-        <EstadoVazio>O edital ainda não tem configuração de convocação.</EstadoVazio>
+        <EstadoVazio>
+          O edital ainda não tem configuração de convocação.
+        </EstadoVazio>
       )}
     </section>
   );

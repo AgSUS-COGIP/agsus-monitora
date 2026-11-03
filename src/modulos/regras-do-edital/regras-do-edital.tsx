@@ -103,7 +103,11 @@ export default function RegrasDoEdital({
       </header>
 
       {!supabase || !lojas ? null : etapa === "triagem" ? (
-        <EditorDaRegraDaTriagem key={editalId} edital={editalId} cliente={supabase} />
+        <EditorDaRegraDaTriagem
+          key={editalId}
+          edital={editalId}
+          cliente={supabase}
+        />
       ) : etapa === "avaliacao" ? (
         <EtapaDaAvaliacao lojas={lojas} editalId={editalId} />
       ) : etapa === "entrevista" ? (
