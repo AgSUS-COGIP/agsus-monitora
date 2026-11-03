@@ -1,5 +1,4 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.ts";
 import { AlcaDeRecolher, AlcaNoCabecalho } from "./alca-de-recolher.tsx";
 import { assinarBarraLateral, obterEstadoDaBarraLateral } from "./estado.ts";
@@ -57,6 +56,7 @@ function usarLogo(logo: string) {
 function Marca({ logo }: { logo?: string }) {
   const gravada = useSyncExternalStore(
     assinarMarcaDaBarraLateral,
+    logoDaBarraLateral,
     logoDaBarraLateral,
   );
   const imagem = usarLogo(logo ?? gravada);
@@ -144,6 +144,7 @@ export function BarraLateral() {
   const { arvore, ativo, opcoes } = useSyncExternalStore(
     assinarBarraLateral,
     obterEstadoDaBarraLateral,
+    obterEstadoDaBarraLateral,
   );
   const recolhida = usarBarraRecolhida();
   const gaveta = usarGaveta();
@@ -160,21 +161,4 @@ export function BarraLateral() {
       gaveta={gaveta}
     />
   );
-}
-
-/*
-  Monta de forma síncrona (`flushSync`): quem roda logo depois — o legado —
-  encontra `#sideLogo`, `#sidebarVersion` e `#nav` no DOM. A cor padrão da
-  marca vale desde já (`--sidebar-custom-bg`, usada também pelo carregamento),
-  até a configuração chegar.
-*/
-export function montarBarraLateral(
-  aside: Element | null = document.querySelector("#appScreen .sidebar"),
-) {
-  if (!aside) return null;
-  aplicarMarcaDaBarraLateral();
-  return montarModulo(aside, <BarraLateral />, {
-    flushSync: true,
-    nome: "a barra lateral",
-  }).raiz;
 }

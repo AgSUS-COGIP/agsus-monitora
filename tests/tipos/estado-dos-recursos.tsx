@@ -4,7 +4,7 @@ import type {
   SnapshotDosRecursos,
 } from "../../src/modulos/recursos/tipos-do-estado.ts";
 import { criarEstadoDosRecursos } from "../../src/modulos/recursos/estado.ts";
-import { montarRecursos } from "../../src/modulos/recursos/recursos.tsx";
+import { criarRecursos } from "../../src/modulos/recursos/recursos.tsx";
 import { FormularioDoRecurso } from "../../src/modulos/recursos/formulario.tsx";
 declare const clienteReal: SupabaseClient;
 const cliente: ClienteDosRecursos = clienteReal;
@@ -18,7 +18,7 @@ const tela = (
     origens={[]}
   />
 );
-const controlador = montarRecursos({
+const controlador = criarRecursos({
   supabase: cliente,
   areaAtual: () => "SEDE",
 });

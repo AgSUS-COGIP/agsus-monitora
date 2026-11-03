@@ -51,7 +51,7 @@ gera conflito com quem está trabalhando em paralelo.
 
 | Hoje                                                                                                             | Alvo                                                      | Quando     |
 | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------- |
-| `src/app/` (`montar-modulo.tsx`, `ErrorBoundary.tsx`)                                                            | fica                                                      | —          |
+| `src/app/` (`raiz.tsx`, `telas.tsx`, `navegacao.ts`, `ErrorBoundary.tsx`)                                       | fica (`montar-modulo.tsx` sai no passo 3 da raiz única)   | —          |
 | `src/ui/` (design system)                                                                                        | fica                                                      | —          |
 | `src/componentes/icone.tsx`, `multi-select-busca.tsx`                                                            | `src/ui/`                                                 | ao tocar   |
 | Configurações (moldura, seções e `secoes.ts`), Acessos, Módulos e abas                                           | `src/modulos/configuracoes/`, `acessos/`, `modulos/`      | concluído  |
@@ -90,47 +90,55 @@ tests/<nome>.test.js          teste das regras de src/lib/
 
 ## Como montar
 
-```jsx
-import { montarModulo } from "../../app/montar-modulo.tsx";
+**Uma raiz só** (`src/app/raiz.tsx`, `montarRaiz()` no começo de `src/main.ts`): o React monta em
+`#raiz` e desenha, por portal, os avisos (`#avisosApp`), a tela de acesso (`#telaDeEntrada`) e a
+casca (`#appScreen`: barra lateral, cabeçalho e as telas). O contexto do app
+(`src/app/contexto-do-app.ts`) entrega a navegação e o aviso curto. Rotas, ordem dos passos e
+riscos: **`docs/arquitetura/raiz-react.md`**.
 
-export function montarTela({
-  elemento = document.getElementById("telaApp"),
-  supabase,
-} = {}) {
-  const estado = criarEstadoDaTela({ supabase });
-  const { raiz, desmontar } = montarModulo(elemento, <Tela estado={estado} />, {
-    nome: "a tela X", // aparece no console se o módulo quebrar
-    flushSync: false, // true quando o código seguinte precisa do DOM do módulo já desenhado
-  });
-  return { estado, raiz, desmontar, render: () => estado.carregar() };
+**Tela de página inteira = rota** (modelos: `src/modulos/recursos/`, `src/modulos/selecao/`,
+`src/modulos/entrevistas/`, `src/modulos/analises/`). O módulo exporta `criar<Nome>(opcoes)`, sem
+DOM:
+
+```tsx
+export function criarTela({ supabase = getSupabaseClient(), toast } = {}) {
+  const estado = criarEstadoDaTela({ supabase, toast });
+  return {
+    estado,
+    nome: "a tela X", // aparece no console se a tela quebrar
+    conteudo: <Tela estado={estado} />,
+    render: () => estado.carregar(), // a cada abertura
+    // abrirEdital(id) / abrirVisao(visao), se a tela abre por link
+  };
 }
 ```
 
-`montarModulo(elemento, <Componente/>, { flushSync, nome })` = `createRoot` + `StrictMode` +
-`ErrorBoundary`; devolve `{ raiz, desmontar }`. Todas as ilhas React de hoje (as de `src/main.ts`)
-montam por ele. Usa `flushSync` a barra lateral (o legado lê `#nav` logo depois).
+A tela entra em `src/app/telas.tsx` (`registrarTelasDoApp`: `criar` no pacote principal ou
+`carregar: () => import(…)` sob demanda) e em `src/lib/rotas.ts` (view, caminho no endereço,
+título). A rota desenha a `<section id="page-<view>">`, marca a `.active` pela navegação, põe a tela
+num `ErrorBoundary` e chama `render()` a cada abertura. A tela visitada continua montada. Quem
+precisa de outra tela usa o registro (`carregarTela(view)`, `src/app/registro-das-telas.ts`), nunca
+`window`. O título e a área ficam no cabeçalho (vêm da navegação); a tela não repete. A área vem de
+`usarAreaAtual()`/`obterDadosDoMonitoramento()`, o tema de `usarTemaEscuro()` (`src/app/tema.ts`).
 
-**Seção de Configurações** (modelos: `src/modulos/acessos/` e `src/modulos/modulos/`): monta no bloco do `index.html` (`#acessosApp`, `#modulosApp`) que `src/modulos/configuracoes/secoes.ts` move para a seção; o controlador em `window` (`acessosController`) tem `render()` e `confirmarSaida()` (a guarda de saída). As seções que publicam pela barra fixa (Marca… Operação) entram por portal no corpo da seção, pela moldura `src/modulos/configuracoes/configuracoes.tsx`.
-
-**Tela de página inteira** (modelos: `src/modulos/recursos/`, `src/modulos/selecao/`, `src/modulos/entrevistas/`, esta com visões num `Segmentado` no topo, e `src/modulos/analises/`): monta na `<section id="page-<view>">`
-vazia do `index.html`, sem pedir nada ao banco; `src/main.ts` guarda o controlador em `window`
-(`recursosController`) e a navegação (`src/app/navegacao.ts`) chama `render()` ao abrir (tabela `TELAS_REACT`).
-A área vem de `usarAreaAtual()`/`obterDadosDoMonitoramento()`, o tema de `usarTemaEscuro()`
-(`src/app/tema.ts`), o aviso de `window.monitoraToast` (passado na montagem). O título e a área
-ficam no cabeçalho do app (`navegacao.definirTitulo`); a tela não repete.
+**Seção de Configurações** (modelos: `src/modulos/acessos/` e `src/modulos/modulos/`; passo 3 do
+plano): ainda monta no bloco do `index.html` (`#acessosApp`, `#modulosApp`) que
+`src/modulos/configuracoes/secoes.ts` move para a seção, com `montarModulo` e o controlador em
+`window` (`acessosController`: `render()` e `confirmarSaida()`). As seções que publicam pela barra
+fixa (Marca… Operação) entram por portal no corpo da seção, pela moldura
+`src/modulos/configuracoes/configuracoes.tsx`.
 
 ## Telas sob demanda (fora do pacote principal)
 
-A Visão geral e o casco (menu, cabeçalho, sessão, Aya) ficam no pacote principal. As demais telas
-de página inteira (Avaliação documental, Classificação, Entrevistas, Recursos, Lista de aprovados,
-Cronograma, Análises, Seleção) e as seções Acessos, Módulos e abas e Status das atualizações
-baixam na primeira abertura: em `src/main.ts`, `window.<tela>Controller = telaSobDemanda({ secao,
-metodos, padroes, carregar: () => import("…").then((m) => m.montarX(…)) })`
-(`src/app/tela-sob-demanda.ts`). O controlador mantém o contrato (`render()`, `abrirVisao()`…;
-`estado` só depois da carga, `carregar()` para esperar), a seção mostra "Carregando…" enquanto
-baixa, o item do menu pré-carrega no mouse/foco (`src/lib/carga-de-telas.ts`) e o tour da Aya
-espera a carga. A base de verbetes da Aya baixa ao abrir o painel. Tela nova de página inteira
-entra assim, não com import estático em `main.ts`.
+A Visão geral, Editais e a casca (menu, cabeçalho, sessão) ficam no pacote principal. As demais
+telas de página inteira baixam na primeira abertura: `carregar: () => import("…")` em
+`src/app/telas.tsx`, com `React.lazy` sobre `carregarTela` (que usa `importarComRecarga`: versão nova
+publicada com a página aberta recarrega uma vez). Enquanto baixa, a seção mostra "Carregando…"; se
+falhar, o aviso com "Tentar de novo" refaz o `lazy`. O item do menu pré-carrega no mouse/foco
+(`src/lib/carga-de-telas.ts` → `preCarregarTelaRegistrada`) e o tour da Aya espera a carga
+(`haTelaCarregando`). As seções Acessos, Módulos e abas, Status das atualizações e Automação ainda
+usam `telaSobDemanda` (`src/app/tela-sob-demanda.ts`) até o passo 3. A base de verbetes da Aya baixa
+ao abrir o painel.
 
 ## Como usar `ui/`
 
@@ -195,14 +203,14 @@ iframe; só os painéis externos (`TB_PAINEL_EXTERNO`) continuam no quadro.
 
 ```
 src/app/sessao.ts                     estado da sessão (sem React): sessaoDoApp
-src/app/entrada/entrada.tsx           <TelaDeEntrada>, montarEntrada(), ligarEntradaAPagina()
+src/app/entrada/entrada.tsx           <TelaDeEntrada> (portal da raiz única) e ligarEntradaAPagina()
 src/app/entrada/marca.ts              marca da tela de acesso (cache → RPC pública → configuração)
 src/app/entrada/pedido-de-acesso.ts        estado do pedido de acesso (RPCs; editar, cancelar)
 src/app/entrada/solicitacao-de-acesso.tsx  página "Solicitação de acesso" (abas por área, Aya) / "Acesso desativado"
 ```
 
 `src/main.ts` importa `marca.ts` primeiro (pinta a marca guardada antes da rede), monta a entrada
-logo no início (`montarEntrada()` troca o cartão vazio do `#telaDeEntrada` pelo de verdade) e, no
+logo no início (a raiz única, `montarRaiz()`, troca o cartão vazio do `#telaDeEntrada` pelo de verdade) e, no
 fim, chama `sessaoDoApp.iniciar()`. O `index.html` mantém o `#loginScreen` e os scripts do `<head>`
 (marca antes do primeiro quadro, `sessao-guardada`, `vite-dev-carregando`). Ids e classes da tela
 são os de antes (`#googleLoginBtn`, `#loginMsg`, `#accessRequestCard`…): o CSS da tela de acesso e
@@ -279,11 +287,11 @@ src/app/carregamento.ts          skeleton da entrada e do painel externo, barra 
 src/lib/erro-amigavel.ts         a frase do erro (antigo friendlyError)
 ```
 
-Contratos mantidos em `window`: `navigate` (é `navegacao.irPara`), `refreshData`,
+Contratos mantidos em `window`: `navigate` (é `navegacao.irPara`; agora também escreve o endereço), `refreshData`,
 `getMonitoraProfile`, `monitoraToast`, `monitoraLoader`, `exitExternalPanel`,
 `reloadExternal`, `exportPDF`, `toggleBrowserFullscreen`, `toggleDarkMode`, `toggleSidebar`
-(saíram `window.$`, `toggleOnlinePresence` e `getMonitoraUser`, sem uso). Os controladores das telas
-(`window.recursosController`…) continuam sendo chamados pela navegação (`render()` ao abrir).
+(saíram `window.$`, `toggleOnlinePresence` e `getMonitoraUser`, sem uso). As telas não estão mais em
+`window`: são rotas (`src/app/telas.tsx`), e a rota chama `render()` a cada abertura.
 Quem acompanha a navegação assina `navegacao.assinar`: `{ tipo: "abertura", view, anterior }`
 (auditoria) e `{ tipo: "menu" }` (o lugar da pessoa na presença).
 
@@ -298,7 +306,8 @@ Ficou para depois (ainda em `src/modules/` ou no `index.html`):
    resto das partes. As telas continuam `<section class="page">` com `.active`.
    `src/componentes/barra-lateral/`, `dados-do-monitoramento.ts` e `usar-area-atual.ts` mudam
    para `src/app/` quando a barra virar filha da casca.
-2. **Rotas**: sem endereço por tela (hash/history); a tela guardada continua no localStorage.
+2. **Rotas**: feitas (`docs/arquitetura/raiz-react.md`): a área e a tela no endereço; a tela
+   guardada no localStorage só vale quando a página abre na raiz (`/`).
 3. `pwa-lifecycle.ts`, `situacao-dos-modulos.ts`,
    `catalogo-de-abas.ts`, `copia-da-sessao-indexeddb.ts`, `cache-de-payload-indexeddb.ts`,
    `comemoracao-do-acesso.ts` → `src/app/` ou React.
@@ -322,18 +331,19 @@ claro e escuro) e o DOM do `#appScreen` com posição e tamanho de cada elemento
 **Parte A** — `src/app/casca/`:
 
 ```
-casca.tsx            <Casca> (memo, sem props) e montarCasca(): desenha em #appScreen com flushSync
-topo.tsx             header.top: título, Pessoas online, menu da conta (o ☰ é da barra lateral)
-areas-das-telas.tsx  .content: as <section class="page"> (TELAS_DA_CASCA), quadro externo, Configurações
+casca.tsx            <Casca> (memo, sem props): barra lateral, cabeçalho e <Telas>; portal da raiz em #appScreen
+topo.tsx             header.top: título (da navegação), Pessoas online, menu da conta (o ☰ é da barra lateral)
+../telas.tsx         .content: as <section class="page"> (TELAS_DA_CASCA, rotas), quadro externo, Configurações
 acoes.ts             os botões chamam window.refreshData, exportPDF… na hora do clique (como os onclick)
 ```
 
-`src/main.ts` chama `montarCasca()` antes de `ligarSistema()`: tudo que procura um id da casca
-(sistema, ilhas, legado) já o encontra. O `#appScreen` continua no `index.html` (raiz e classe
-`hidden` desde o primeiro quadro). A casca desenha **uma vez** e o React não volta a mexer nela:
-título, perfil, textos configuráveis, `.active` e a faixa de manutenção continuam escritos de fora,
-e as ilhas (barra lateral, Pessoas online, Aya, aviso de versão, encerramento, selos) são raízes
-próprias nos elementos vazios dela. Testes que leem a marcação do app usam
+`src/main.ts` chama `montarRaiz()` (a raiz única, com a casca) antes de `ligarSistema()`: tudo que
+procura um id da casca (sistema, ilhas, legado) já o encontra. O `#appScreen` continua no
+`index.html` (classe `hidden` desde o primeiro quadro). A casca não tem props; quem se redesenha são
+as filhas que leem estado: a barra lateral, o título do cabeçalho e as telas (a `.active` vem da
+navegação). Perfil, textos configuráveis e a faixa de manutenção ainda são escritos de fora, e as
+ilhas que sobram (Pessoas online, Aya, aviso de versão, encerramento, selos) são raízes próprias
+nos elementos vazios dela (passo 2 de `docs/arquitetura/raiz-react.md`). Testes que leem a marcação do app usam
 `tests/pagina-montada.js` (`htmlDaPagina()`: o `index.html` com a casca desenhada).
 
 **Parte B** — o celular (até 900px), em `src/app/casca/`:
@@ -350,11 +360,11 @@ lateral) abre a mesma barra lateral como gaveta. O topo é uma linha só e o con
 toda (nenhuma barra soma recuo de menu inferior). O registro do service worker foi para
 `pwa-lifecycle.ts`. Testes: `tests/app/gaveta-do-celular.test.js` e `tests/layout-no-celular.test.js`.
 
-**Parte C** — carregamento e avisos, em `src/app/casca/`, numa raiz própria (`#avisosApp`, no começo
+**Parte C** — carregamento e avisos, em `src/app/casca/`, por portal da raiz única (`#avisosApp`, no começo
 do `<body>`), fora do `#appScreen` porque a tela de acesso também usa:
 
 ```
-avisos.tsx               <Avisos> e montarAvisos() (flushSync), chamado no começo de src/main.ts
+avisos.tsx               <Avisos>: portal da raiz única (src/app/raiz.tsx) em #avisosApp
 notificacoes.tsx         #toastBox e os cartões .toast (somem em 4,5s; parados sob o mouse, esperam)
 tela-de-carregamento.tsx #loader: etapa no lugar do texto genérico, "Etapa X de Y", demora e
                          "Tentar novamente" (getLoadingStage); o relógio só corre com ele à vista

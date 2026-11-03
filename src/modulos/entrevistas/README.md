@@ -3,14 +3,14 @@
 Duas entradas do menu, com o mesmo recurso de permissão (`entrevistas`), como o Painel das análises
 ao lado da Avaliação documental (acompanhar × fazer):
 
-- **Painel de entrevistas** (view `entrevistas`, `#page-entrevistas`, `montarEntrevistas()` →
-  `window.entrevistasController`): só leitura, para gestão e coordenação — filtros, KPIs, agenda dos próximos
+- **Painel de entrevistas** (view `entrevistas`, `#page-entrevistas`, rota
+  `/<área>/painel-de-entrevistas`, `criarEntrevistas()`): só leitura, para gestão e coordenação — filtros, KPIs, agenda dos próximos
   dias (com um edital), gráficos, pendências (inclusive sem comparecimento, sem nota e sem parecer),
   empatados na nota da entrevista com o aviso "o desempate é feito na Classificação", tabela,
   exportação e a gaveta do candidato. O edital de treinamento fica fora (o cache do painel,
   `private."FC_MONTAR_ENTREVISTAS_AREA"`, não o lê).
 - **Conduzir entrevistas** (view `conduzir-entrevistas`, `#page-conduzir-entrevistas`,
-  `montarConducaoDeEntrevistas()` → `window.conduzirEntrevistasController`): o fazer, para secretaria
+  rota `/<área>/entrevistas[/<edital>]`, `criarConducaoDeEntrevistas()`): o fazer, para secretaria
   e avaliadores. Visões no topo: **Fila** (abre em Hoje pela agenda salva na Classificação › Agenda;
   sem entrevista hoje, Próximos; sem agenda, Todos; cartões agrupados por vaga, em ordem de
   horário e nome, com a busca por nome ou código e as situações — aguardando, em andamento,

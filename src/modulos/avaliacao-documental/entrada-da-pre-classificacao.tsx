@@ -1,5 +1,4 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
@@ -143,8 +142,7 @@ function TelaDaPreClassificacao({
   );
 }
 
-export function montarPreClassificacao({
-  secao = document.getElementById("page-pre-classificacao"),
+export function criarPreClassificacao({
   supabase = getSupabaseClient(),
   toast,
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
@@ -152,7 +150,6 @@ export function montarPreClassificacao({
   cabecalho = () =>
     estadoDasConfiguracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
 }: {
-  secao?: HTMLElement | null;
   supabase?: ClienteDaAvaliacao | null;
   toast?: Avisar;
   areaAtual?: () => string | null | undefined;
@@ -173,21 +170,13 @@ export function montarPreClassificacao({
     if (e.editalId && e.dados?.pode_coordenar) await pre.carregar(e.editalId);
     return editais;
   };
-  const raiz = secao
-    ? montarModulo(
-        secao,
-        <TelaDaPreClassificacao
-          estado={estado}
-          pre={pre}
-          atualizar={atualizar}
-        />,
-        { nome: "a Triagem" },
-      ).raiz
-    : null;
   return {
     estado,
     pre,
-    raiz,
+    nome: "a Triagem",
+    conteudo: (
+      <TelaDaPreClassificacao estado={estado} pre={pre} atualizar={atualizar} />
+    ),
     atualizar,
     render: atualizar,
     async abrirEdital(editalId: string) {

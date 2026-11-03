@@ -93,7 +93,7 @@ describe("sem tela de carregamento na entrada", () => {
 
   it("a entrada liga o skeleton antes do perfil", () => {
     expect(funcao("function prepararEntrada()")).toContain(
-      "mostrarEsqueleto(navegacao.telaGuardada())",
+      "mostrarEsqueleto(navegacao.telaEsperada())",
     );
   });
 

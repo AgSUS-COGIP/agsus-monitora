@@ -1,42 +1,41 @@
 import { memo } from "react";
-import { montarModulo } from "../montar-modulo.tsx";
+import { BarraLateral } from "../../componentes/barra-lateral/barra-lateral.tsx";
+import { Telas } from "../telas.tsx";
 import { chamarAcaoDaCasca } from "./acoes.ts";
-import { AreasDasTelas } from "./areas-das-telas.tsx";
 import { GavetaDoCelular } from "./gaveta-do-celular.tsx";
 import { usarTabelasEmCartoes } from "./tabelas-em-cartoes.ts";
 import { Topo } from "./topo.tsx";
 
 /*
   A casca do app depois de entrar, dentro de `#appScreen`: a volta do painel
-  externo, o `<aside>` da barra lateral, o cabeçalho, os pontos de montagem do
-  topo (aviso de versão, Aya, encerramento do edital), a faixa de aviso global
-  e as áreas das telas. Antes era marcação fixa do index.html; os ids e as
-  classes são os mesmos (CSS, testes, tours da Aya e o resto do app os usam).
+  externo, o `<aside>` da barra lateral (com a barra), o cabeçalho, os pontos
+  de montagem do topo (aviso de versão, Aya, encerramento do edital), a faixa
+  de aviso global e as telas (src/app/telas.tsx). Os ids e as classes são os
+  de antes (CSS, testes, tours da Aya e o resto do app os usam).
 
-  Desenha UMA vez, síncrona, no começo de src/main.ts — antes de
-  `ligarSistema()` e de qualquer ilha que monte aqui dentro. Depois disso o
-  React não mexe mais nesta árvore: não há estado nem props que mudem (`memo`
-  sem props), e quem escreve nela continua escrevendo como antes (título,
-  perfil, textos configuráveis, `.active` das seções, a faixa de manutenção).
-  A exceção é o celular: o véu da gaveta (`gaveta-do-celular.tsx`) se
-  redesenha sozinho ao abrir e fechar, e as tabelas viram cartões
-  (`tabelas-em-cartoes.ts`).
-  As ilhas (barra lateral, Pessoas online, Aya…) são raízes React próprias que
-  montam nos elementos vazios daqui.
+  Entra por portal da raiz do app (src/app/raiz.tsx), desenhada na hora no
+  começo de src/main.ts — antes de `ligarSistema()` e de qualquer ilha que
+  monte aqui dentro. A casca em si não tem estado nem props (`memo`): quem
+  muda são as filhas que leem estado — a barra lateral, o título do
+  cabeçalho e as telas (pela navegação). O resto ainda é escrito de fora
+  (perfil, textos configuráveis, a faixa de manutenção). No celular, o véu
+  da gaveta (`gaveta-do-celular.tsx`) se redesenha ao abrir e fechar, e as
+  tabelas viram cartões (`tabelas-em-cartoes.ts`).
+  As ilhas que ainda montam sozinhas (Pessoas online, Aya…) usam os
+  elementos vazios daqui (docs/arquitetura/raiz-react.md, passo 2).
 
-  O `#appScreen` em si fica no index.html: é a raiz, e a classe `hidden` dele
-  é de `perfil.mostrarApp()`/`esconderApp()` desde o primeiro quadro.
+  O `#appScreen` em si fica no index.html: a classe `hidden` dele é de
+  `perfil.mostrarApp()`/`esconderApp()` desde o primeiro quadro.
 */
 export const Casca = memo(function Casca() {
   usarTabelasEmCartoes();
   return (
     <>
       <RetornoDoPainelExterno />
-      {/*
-        Barra lateral em React (src/componentes/barra-lateral/): o conteúdo
-        inteiro, e o botão de recolher, são montados por montarBarraLateral().
-      */}
-      <aside className="sidebar" aria-label="Navegação principal"></aside>
+      {/* Barra lateral (src/componentes/barra-lateral/): marca, menu e rodapé. */}
+      <aside className="sidebar" aria-label="Navegação principal">
+        <BarraLateral />
+      </aside>
       <GavetaDoCelular />
 
       <main className="main" id="conteudoPrincipal" tabIndex={-1}>
@@ -55,7 +54,7 @@ export const Casca = memo(function Casca() {
           hidden
         ></div>
 
-        <AreasDasTelas />
+        <Telas />
       </main>
     </>
   );
@@ -77,20 +76,4 @@ function RetornoDoPainelExterno() {
       </button>
     </div>
   );
-}
-
-/**
- * Desenha a casca em `#appScreen`, na hora (`flushSync`): o código seguinte
- * de src/main.ts procura os elementos dela pelo id.
- */
-export function montarCasca(
-  elemento: HTMLElement | null = globalThis.document?.getElementById(
-    "appScreen",
-  ),
-) {
-  if (!elemento) return null;
-  return montarModulo(elemento, <Casca />, {
-    flushSync: true,
-    nome: "a casca do app",
-  });
 }

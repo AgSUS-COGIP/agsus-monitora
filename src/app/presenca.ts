@@ -460,10 +460,11 @@ export function criarPresenca({
   function acompanhar() {
     /*
       Uma chamada por navegação: a abertura da tela e o lugar novo juntos.
-      Abrir uma tela avisa duas vezes no mesmo instante — `menu` (marcarMenu)
-      e depois `abertura` (src/app/navegacao.ts) — e o lugar só conta como
-      gravado quando a resposta volta; por isso os avisos do mesmo instante
-      são juntados num só (microtarefa) antes de chamar o banco.
+      O lugar só conta como gravado quando a resposta volta; por isso os
+      avisos do mesmo instante (o menu refeito e a abertura, numa entrada ou
+      no "Atualizar dados") são juntados num só (microtarefa) antes de chamar
+      o banco. `estado` é só o redesenho do React (título, edital do
+      endereço já aberto): não muda o lugar.
     */
     let pendente: { abertura: string | null } | null = null;
     const enviarPendente = () => {
@@ -477,6 +478,7 @@ export function criarPresenca({
       }).catch(() => {});
     };
     const pararNavegacao = navegacao.assinar((evento) => {
+      if (evento.tipo === "estado") return;
       const abertura =
         evento.tipo === "abertura" && evento.view !== evento.anterior
           ? (evento.view ?? null)

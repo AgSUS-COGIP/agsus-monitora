@@ -5,7 +5,7 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
+import { criarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
 import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
 import { comecoDoEnunciado } from "../../src/lib/avaliacao-documental/nota-declarada.ts";
 import {
@@ -15,6 +15,8 @@ import {
   esperar,
   teclar,
 } from "../componentes/interacoes.js";
+import { montarTela } from "../montar-tela.js";
+import { registrarTelas } from "../../src/app/registro-das-telas.ts";
 
 /*
   A tela Avaliação documental como módulo do app
@@ -180,7 +182,10 @@ async function montar(supabase) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarAvaliacaoDocumental({ supabase, toast });
+    painel = montarTela(criarAvaliacaoDocumental, "page-avaliacao-documental", {
+      supabase,
+      toast,
+    });
   });
   await act(async () => void painel.render());
   await esperar();
@@ -409,19 +414,26 @@ describe("regra da avaliação (AM-2)", () => {
     expect(resumo.textContent).toContain("Nota mínima");
     expect(secao.querySelector(".avd-campos")).toBeNull();
     window.navigate = vi.fn();
-    window.nucleoController = { abrirRegrasDoEdital: vi.fn() };
+    // Editais no registro das telas (src/app/telas.tsx), como no app.
+    const editais = {
+      nome: "Editais",
+      conteudo: null,
+      render() {},
+      abrirRegrasDoEdital: vi.fn(),
+    };
+    registrarTelas({ nucleo: { criar: () => editais } });
     try {
       await clicar(
         resumo.querySelector("[data-acao='editar-nas-regras-do-edital']"),
       );
       expect(window.navigate).toHaveBeenCalledWith("nucleo");
-      expect(window.nucleoController.abrirRegrasDoEdital).toHaveBeenCalledWith(
+      expect(editais.abrirRegrasDoEdital).toHaveBeenCalledWith(
         "e93",
         "avaliacao",
       );
     } finally {
       delete window.navigate;
-      delete window.nucleoController;
+      registrarTelas({});
     }
   });
 

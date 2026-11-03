@@ -1,3 +1,4 @@
+import { telaPronta } from "../../app/registro-das-telas.ts";
 import type { LinhaDaVisaoGeral } from "./tipos.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import {
@@ -41,7 +42,8 @@ export function GavetaDoProcesso({
     Math.min(100, Number(linha.cronograma_percentual || 0)),
   );
   const link = linkSeguro(linha.link_edital);
-  const linhaDoTempo = window.nucleoController?.estado?.abrirLinhaDoTempo;
+  // A linha do tempo é de Editais (a tela fica montada: src/app/telas.tsx).
+  const linhaDoTempo = telaPronta("nucleo")?.estado.abrirLinhaDoTempo;
   return (
     <Gaveta
       id="visaoGeralGaveta"

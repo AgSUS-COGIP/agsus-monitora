@@ -6,7 +6,7 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
+import { criarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
 import { criarEstadoDaPreClassificacao } from "../../src/modulos/avaliacao-documental/estado-da-pre-classificacao.ts";
 import {
   linhasDaPreInteira,
@@ -19,6 +19,7 @@ import {
   escolher,
   esperar,
 } from "../componentes/interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A aba Triagem da Avaliação documental (fase F2): lê o que o job
@@ -417,7 +418,7 @@ async function montar(supabase) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarAvaliacaoDocumental({
+    painel = montarTela(criarAvaliacaoDocumental, "page-avaliacao-documental", {
       supabase,
       toast,
       agendar,

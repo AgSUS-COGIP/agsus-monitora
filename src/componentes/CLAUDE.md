@@ -4,8 +4,8 @@ O front está migrando para **um único app React** (alvo, regras e ordem em
 `docs/arquitetura-react.md`). Todas as telas são módulos do app em `src/modulos/` (Editais,
 Cronograma, Aprovados, Recursos, Entrevistas, Análises, Seleção, Classificação, Configurações, Acessos,
 Módulos e abas…). Aqui fica só a moldura: barra lateral, busca global (Ctrl+K), Status das
-atualizações e os dados compartilhados do monitoramento. Toda tela monta por
-`montarModulo` (`src/app/`) e usa os componentes visuais de
+atualizações e os dados compartilhados do monitoramento. Toda tela é rota da raiz única
+(`src/app/telas.tsx`, `docs/arquitetura/raiz-react.md`) e usa os componentes visuais de
 `src/ui/`; as pastas daqui mudam para `src/modulos/<nome>/` módulo a módulo. Tudo aqui está em
 TypeScript (`.ts`/`.tsx`): Status das atualizações (`saude-das-cargas/`), barra lateral, Busca
 global, Pessoas online, ícone, seleção múltipla, selo de treinamento, dados compartilhados e hook de
@@ -28,7 +28,7 @@ dados-do-monitoramento.ts    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_
 usar-area-atual.ts           hook: a área atual, as linhas dela e os ids dos editais (Editais,
                              Cronograma e Lista de aprovados recortam por eles)
 barra-lateral/
-  barra-lateral.tsx          <BarraLateral> e montarBarraLateral() (chamada em src/main.ts)
+  barra-lateral.tsx          <BarraLateral> (filha da casca, src/app/casca/casca.tsx)
   estado.ts                  estado externo da barra (sem React): o legado empurra, a barra lê
   menu-de-areas.tsx          áreas (acordeão; recolhida, painel flutuante) e itens
   alca-de-recolher.tsx       o botão único de recolher: na marca (> 900px) ou no cabeçalho (portal)
@@ -72,8 +72,10 @@ moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS 
 
 - Handler de navegação chama `window.navigate` **na hora do clique** (não guarde a referência na
   montagem): é o `navigate` do legado, que pergunta às Configurações antes de sair.
-- Monte sempre por `montarModulo` (`src/app/montar-modulo.tsx`: StrictMode + ErrorBoundary); passe
-  `{ flushSync: true }` quando código legado precisar do DOM logo depois (ver `montarBarraLateral`).
+- Tela de página inteira é rota: `criar<Nome>()` devolve `{ conteudo, nome, render() }` e entra em
+  `src/app/telas.tsx` (a raiz única, `src/app/raiz.tsx`, desenha com StrictMode e um ErrorBoundary por
+  tela). Ilha que ainda monta sozinha usa `montarModulo` (`src/app/montar-modulo.tsx`) até o passo 2
+  de `docs/arquitetura/raiz-react.md`.
 - Visual novo vem de `src/ui/` (Topo, Filtros, Kpi, CardDeGrafico, TabelaInfinita, Gaveta, Modal,
   Aviso, Campo, Selo…), só com tokens; não recrie em cada tela. Sem textos genéricos (ver o CLAUDE.md raiz).
 - `StrictMode` ligado: efeito tem de limpar o que instala.

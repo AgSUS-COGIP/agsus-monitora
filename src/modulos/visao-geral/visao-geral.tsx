@@ -8,7 +8,6 @@ import type {
 } from "./tipos.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useMemo, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { apagarCopiaDaSessao } from "../../modules/copia-da-sessao-indexeddb.ts";
@@ -208,13 +207,11 @@ export function TelaDaVisaoGeral({
 }
 
 /**
- * Monta a tela na `<section id="page-dashboard">` e devolve o controlador do
- * legado (`window.visaoGeralController`): o estado e a raiz do React (os
- * testes desmontam por ela). Desenha na hora (`flushSync`), antes de o resto
- * do app iniciar.
+ * Cria a Visão geral (rota `dashboard`, src/app/telas.tsx, no pacote
+ * principal): o conteúdo React e o estado. Sem `render()` próprio: a página
+ * aberta (src/app/pagina-aberta.ts) diz ao estado quando ela está à vista.
  */
-export function montarVisaoGeral({
-  secao = document.getElementById("page-dashboard"),
+export function criarVisaoGeral({
   estado = estadoDaVisaoGeral,
   configuracoes = estadoDasConfiguracoes,
   toast,
@@ -230,20 +227,20 @@ export function montarVisaoGeral({
   estado.definirBuscaDoAcompanhamento(
     supabase ? buscarAcompanhamentoNoSupabase(supabase) : null,
   );
-  const raiz = secao
-    ? montarModulo(
-        secao,
-        <TelaDaVisaoGeral
-          estado={estado}
-          configuracoes={configuracoes}
-          carregadorDeMunicipios={carregadorDeMunicipios}
-          obterPerfil={obterPerfil}
-          supabase={supabase}
-          comemoracoesLigadas={comemoracoesLigadas}
-          agora={agora}
-        />,
-        { nome: "a Visão geral", flushSync: true },
-      ).raiz
-    : null;
-  return { estado, raiz };
+  return {
+    estado,
+    nome: "a Visão geral",
+    conteudo: (
+      <TelaDaVisaoGeral
+        estado={estado}
+        configuracoes={configuracoes}
+        carregadorDeMunicipios={carregadorDeMunicipios}
+        obterPerfil={obterPerfil}
+        supabase={supabase}
+        comemoracoesLigadas={comemoracoesLigadas}
+        agora={agora}
+      />
+    ),
+    render() {},
+  };
 }

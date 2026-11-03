@@ -1,6 +1,6 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
+import { criarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
 import { clicar, digitar, escolher, esperar } from "./interacoes.js";
 import { compactarPorArea } from "./candidatos-compactos-falsos.js";
 import {
@@ -8,6 +8,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   O status Convocado e a carta de convocação na Lista de aprovados, pelas
@@ -219,7 +220,7 @@ async function montar({
   const imprimir = vi.fn();
   const baixar = vi.fn();
   await act(async () => {
-    controlador = montarListaAprovados({
+    controlador = montarTela(criarListaAprovados, "page-approved", {
       secao: document.getElementById("page-approved"),
       supabase,
       toast,

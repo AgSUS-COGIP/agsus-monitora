@@ -220,7 +220,6 @@ export type OpcoesDaTelaDeEntrevistas = Pick<
   OpcoesDoEstadoDasEntrevistas,
   "supabase" | "toast" | "baixar" | "armazenamento"
 > & {
-  secao?: HTMLElement | null;
   areaAtual?: () => unknown;
   comemoracoesLigadas?: () => boolean;
 };

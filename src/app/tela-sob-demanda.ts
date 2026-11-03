@@ -2,13 +2,16 @@ import { comecarCargaDeTela } from "../lib/carga-de-telas";
 import { importarComRecarga } from "../lib/importar-com-recarga";
 
 /*
-  Tela carregada sob demanda: o código de uma tela (Avaliação documental,
-  Classificação, Entrevistas…) sai do pacote principal e só baixa quando a
-  tela abre (ou quando o mouse passa no item do menu: `carregar()`).
+  Seção de Configurações carregada sob demanda (Acessos, Módulos e abas,
+  Status das atualizações, Automação): o código sai do pacote principal e só
+  baixa quando a seção abre (ou quando o mouse passa no item do menu:
+  `carregar()`). As telas de página inteira não passam mais por aqui: são
+  rotas (src/app/telas.tsx); as seções viram rotas no passo 3 de
+  docs/arquitetura/raiz-react.md, e este arquivo sai.
 
   Devolve, já na abertura do app, um controlador com o mesmo contrato do
-  de verdade (`window.recursosController`…), para o legado e a navegação não
-  mudarem:
+  de verdade (`window.acessosController`…), para `secoes.ts` e a guarda de
+  saída não mudarem:
   - os `metodos` (render, abrirVisao…) chamados antes da carga baixam a tela,
     montam e então chamam o método de verdade (devolvem a promessa);
   - `padroes` responde, antes da carga, o que precisa ser síncrono

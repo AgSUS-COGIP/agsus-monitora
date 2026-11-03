@@ -12,7 +12,6 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
@@ -36,7 +35,7 @@ import "./classificacao.css";
   A tela de Classificação (view `classificacao`), módulo do app: monta direto
   na `<section id="page-classificacao">` do index.html, como Seleção e
   Entrevistas. A navegação é dona da classe `.active` da seção e chama `render()`
-  do controlador ao navegar (tabela `TELAS_REACT` de src/app/navegacao.ts).
+  do controlador ao navegar (a rota, src/app/telas.tsx).
 
   - Área: a área atual do app; trocar de área com a tela aberta recarrega.
   - Edital: escolhido no topo; a regra é DESTE edital (decidida pelo gestor).
@@ -281,11 +280,10 @@ export function TelaDeClassificacao({
 }
 
 /**
- * Monta a tela na `<section id="page-classificacao">` e devolve o
- * controlador do legado: `render()` a cada abertura (carrega a área atual).
+ * Cria a tela (rota `classificacao`, src/app/telas.tsx): o conteúdo React e o
+ * controlador: `render()` a cada abertura (carrega a área atual).
  */
-export function montarClassificacao({
-  secao = document.getElementById("page-classificacao"),
+export function criarClassificacao({
   supabase = getSupabaseClient(),
   toast,
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
@@ -312,25 +310,21 @@ export function montarClassificacao({
     ...(copiar ? { copiar } : {}),
     ...(carregarLogo ? { carregarLogo } : {}),
   });
-  const raiz = secao
-    ? montarModulo(
-        secao,
-        <TelaDeClassificacao
-          estado={estado}
-          agenda={agenda}
-          {...(confirmar ? { confirmar } : {})}
-        />,
-        {
-          nome: "a tela de classificação",
-        },
-      ).raiz
-    : null;
   return {
     estado,
     agenda,
-    raiz,
+    nome: "a tela de classificação",
+    conteudo: (
+      <TelaDeClassificacao
+        estado={estado}
+        agenda={agenda}
+        {...(confirmar ? { confirmar } : {})}
+      />
+    ),
     render() {
       return estado.carregar(String(areaAtual() ?? "").trim());
     },
+    /* O edital do endereço ("Ir para…" com edital), depois da carga. */
+    abrirEdital: (edital: string) => estado.escolherEdital(edital),
   };
 }

@@ -12,6 +12,7 @@ import {
   esperar,
   teclar,
 } from "../componentes/interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   O Painel de entrevistas como módulo do app (src/modulos/entrevistas/): monta
@@ -49,7 +50,7 @@ vi.mock("../../src/lib/chartjs-global.ts", () => {
   };
 });
 
-const { montarEntrevistas } =
+const { criarEntrevistas } =
   await import("../../src/modulos/entrevistas/entrevistas.tsx");
 
 const PAYLOAD = {
@@ -156,7 +157,7 @@ async function montar(supabase, { abrir = true, ...opcoes } = {}) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarEntrevistas({
+    painel = montarTela(criarEntrevistas, "page-entrevistas", {
       supabase,
       toast,
       baixar,
@@ -420,18 +421,14 @@ describe("agenda, empates e pendências", () => {
     );
     expect(aviso.textContent).toContain("o desempate é feito na Classificação");
     window.navigate = vi.fn();
-    window.classificacaoController = {
-      estado: { escolherEdital: vi.fn(async () => true) },
-    };
     try {
       await clicar(aviso.querySelector('[data-ir-para="classificacao"]'));
-      expect(window.navigate).toHaveBeenCalledWith("classificacao");
-      expect(
-        window.classificacaoController.estado.escolherEdital,
-      ).toHaveBeenCalledWith(EDITAL_ID);
+      // O edital vai junto no endereço; a rota abre a Classificação nele.
+      expect(window.navigate).toHaveBeenCalledWith("classificacao", {
+        edital: EDITAL_ID,
+      });
     } finally {
       delete window.navigate;
-      delete window.classificacaoController;
     }
   });
 

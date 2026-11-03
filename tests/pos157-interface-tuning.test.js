@@ -158,11 +158,14 @@ describe("branding independente da sidebar", () => {
   });
 
   it("a marca padrão vale antes da moldura de Configurações", () => {
-    // A barra (com a marca padrão, barra-lateral.tsx) monta antes; a moldura
-    // de Configurações monta sob demanda (carregarConfiguracoes).
-    expect(main.indexOf("montarBarraLateral();")).toBeGreaterThan(-1);
+    // A marca padrão vale antes da raiz (que desenha a barra); a moldura de
+    // Configurações monta sob demanda (carregarConfiguracoes).
+    expect(main.indexOf("aplicarMarcaDaBarraLateral();")).toBeGreaterThan(-1);
     expect(main.indexOf("function carregarConfiguracoes")).toBeGreaterThan(-1);
-    expect(main.indexOf("montarBarraLateral();")).toBeLessThan(
+    expect(main.indexOf("aplicarMarcaDaBarraLateral();")).toBeLessThan(
+      main.indexOf("montarRaiz({"),
+    );
+    expect(main.indexOf("montarRaiz({")).toBeLessThan(
       main.indexOf("function carregarConfiguracoes"),
     );
   });

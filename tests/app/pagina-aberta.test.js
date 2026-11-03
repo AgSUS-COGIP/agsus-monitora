@@ -46,6 +46,12 @@ function navegacaoFalsa(telaDeEntrada) {
       view = tela;
       avisarTodos({ tipo: "aviso", view: tela });
     },
+    abrirEntrada() {
+      return this.irPara(telaDeEntrada);
+    },
+    reabrir() {
+      return this.irPara(view);
+    },
   };
 }
 

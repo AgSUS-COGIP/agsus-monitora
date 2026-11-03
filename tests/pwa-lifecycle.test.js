@@ -137,5 +137,6 @@ describe("versão nova espera a troca de página", () => {
     navegacao.irPara("nucleo");
     expect(ordem).toEqual(["guarda", "guarda", "versao"]);
     expect(navegacao.obter().view).toBe("dashboard");
+    navegacao.desligar();
   });
 });

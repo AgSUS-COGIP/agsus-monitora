@@ -8,7 +8,7 @@ import {
   it,
   vi,
 } from "vitest";
-import { montarNucleo } from "../../src/modulos/editais/nucleo.tsx";
+import { criarNucleo } from "../../src/modulos/editais/nucleo.tsx";
 import {
   definirAreaAtual,
   publicarLinhasDoMonitoramento,
@@ -17,6 +17,8 @@ import {
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { UNIDADES_CORES } from "../../src/lib/responsavel-do-edital.ts";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
+import { montarTela } from "../montar-tela.js";
+import { registrarTelas } from "../../src/app/registro-das-telas.ts";
 
 /*
   A página "Editais" (Equipe Núcleo) em React: a tabela com as linhas que o
@@ -251,7 +253,7 @@ async function montar({
   document.body.innerHTML = `<section id="page-nucleo" class="page active"></section>`;
   perfilAtual = perfil;
   await act(async () => {
-    controlador = montarNucleo({
+    controlador = montarTela(criarNucleo, "page-nucleo", {
       secao: document.getElementById("page-nucleo"),
       supabase,
       toast,
@@ -283,7 +285,6 @@ afterEach(async () => {
   controlador = null;
   await act(async () => redefinirDadosDoMonitoramento());
   document.body.innerHTML = "";
-  delete window.aprovadosController;
   vi.restoreAllMocks();
 });
 
@@ -364,16 +365,28 @@ describe("tabela de editais", () => {
     expect(linha("1").querySelector(".approved-no-action")).not.toBeNull();
   });
 
-  it("o botão de listas abre o modal da Lista de Aprovados", async () => {
-    window.aprovadosController = { openImportModal: vi.fn() };
-    await montar();
-    await clicar(
-      linha("1").querySelector('[aria-label^="Lista de aprovados"]'),
-    );
-    expect(window.aprovadosController.openImportModal).toHaveBeenCalledWith(
-      "1",
-      "10/2026 · DSEI Manaus",
-    );
+  it("o botão de listas abre o modal da Lista de Aprovados (pelo registro das telas)", async () => {
+    const aprovados = {
+      nome: "Lista de aprovados",
+      conteudo: null,
+      render() {},
+      openImportModal: vi.fn(),
+    };
+    registrarTelas({ approved: { carregar: async () => aprovados } });
+    try {
+      await montar();
+      await clicar(
+        linha("1").querySelector('[aria-label^="Lista de aprovados"]'),
+      );
+      await vi.waitFor(() =>
+        expect(aprovados.openImportModal).toHaveBeenCalledWith(
+          "1",
+          "10/2026 · DSEI Manaus",
+        ),
+      );
+    } finally {
+      registrarTelas({});
+    }
   });
 
   it("Regras do edital: abre no lugar da tabela, troca de etapa e volta", async () => {

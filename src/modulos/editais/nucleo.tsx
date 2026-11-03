@@ -1,5 +1,5 @@
+import { carregarTela } from "../../app/registro-das-telas.ts";
 import { lazy, Suspense, useMemo, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { safeHttpUrl } from "../../lib/sanitize";
 import {
@@ -50,25 +50,26 @@ import type { EstadoDosAprovados } from "../aprovados/tipos-do-estado.ts";
 const RegrasDoEdital = lazy(
   importarComRecarga(() => import("../regras-do-edital/regras-do-edital.tsx")),
 );
-declare global {
-  interface Window {
-    /** O controlador da Lista de aprovados (`lista-aprovados.tsx`). */
-    aprovadosController?: {
-      openImportModal(id: unknown, rotulo: string): unknown;
-      /** Baixa e monta a Lista de aprovados (tela sob demanda). */
-      carregar?: () => Promise<{ estado?: unknown }>;
-    };
-  }
+/*
+  "Lista de aprovados" de um edital: o modal é da tela da Lista de aprovados
+  (src/modulos/aprovados/), que baixa na primeira vez e monta escondida.
+*/
+function abrirListasDoEdital(id: string, rotulo: string) {
+  void carregarTela("approved")
+    .then((aprovados) => aprovados.openImportModal(id, rotulo))
+    .catch((erro: unknown) =>
+      console.warn("Não foi possível abrir a Lista de aprovados:", erro),
+    );
 }
 
 /*
   A loja da Lista de aprovados do app, para a Chamada para contratação das
-  Regras do edital: a mesma da tela (`window.aprovadosController`), baixada e
-  montada na primeira vez, como no botão "Lista de aprovados" da linha.
+  Regras do edital: a mesma da tela (pelo registro das telas), baixada e
+  criada na primeira vez, como no botão "Lista de aprovados" da linha.
 */
 async function lojaDosAprovados(): Promise<EstadoDosAprovados | null> {
-  const controle = await window.aprovadosController?.carregar?.();
-  return (controle?.estado as EstadoDosAprovados | undefined) ?? null;
+  const aprovados = await carregarTela("approved").catch(() => null);
+  return aprovados?.estado ?? null;
 }
 
 /** O estado da página (`criarEstadoDoNucleo`). */
@@ -86,7 +87,6 @@ export interface PropriedadesDoNucleo {
 }
 
 export interface OpcoesDaPaginaDoNucleo extends OpcoesDoEstadoDoNucleo {
-  secao?: HTMLElement | null;
   agora?: () => Date;
 }
 
@@ -94,9 +94,8 @@ export interface OpcoesDaPaginaDoNucleo extends OpcoesDoEstadoDoNucleo {
   Editais (view `nucleo`), módulo do app — a página `#page-nucleo` e os seus
   modais: o formulário do edital com o cronograma e a linha do tempo.
 
-  O React é dono de tudo dentro da `<section>`; o legado só troca a classe
-  `.active` dela e chama `render()` do controlador
-  (`window.nucleoController`) ao abrir a página. As linhas são as mesmas do
+  O React é dono de tudo dentro da `<section>`; a rota (src/app/telas.tsx)
+  chama `render()` do controlador ao abrir a página. As linhas são as mesmas do
   mapa, carregadas pelo legado e publicadas em `dados-do-monitoramento.ts`.
 
   Padrão das telas de src/modulos/: topo com a data do resumo, Atualizar e
@@ -239,8 +238,8 @@ function LinhaDoEdital({
               title="Lista de aprovados"
               aria-label={`Lista de aprovados de ${nome}`}
               onClick={() =>
-                void window.aprovadosController?.openImportModal(
-                  linha.id,
+                abrirListasDoEdital(
+                  String(linha.id),
                   [linha.edital, linha.unidade].filter(Boolean).join(" · "),
                 )
               }
@@ -479,11 +478,10 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
 }
 
 /**
- * Monta a página em `#page-nucleo` e devolve o controlador que o legado chama
- * (`window.nucleoController`): `render()` ao abrir a página.
+ * Cria Editais (rota `nucleo`, src/app/telas.tsx, no pacote principal): o
+ * conteúdo React e o controlador — `render()` ao abrir a página.
  */
-export function montarNucleo({
-  secao = document.getElementById("page-nucleo"),
+export function criarNucleo({
   supabase = getSupabaseClient(),
   toast,
   loader,
@@ -500,14 +498,10 @@ export function montarNucleo({
     confirmar,
     aoSalvar,
   });
-  const raiz = secao
-    ? montarModulo(secao, <Nucleo estado={estado} agora={agora} />, {
-        nome: "a tela de editais",
-      }).raiz
-    : null;
   return {
     estado,
-    raiz,
+    nome: "a tela de editais",
+    conteudo: <Nucleo estado={estado} agora={agora} />,
     /* Ao abrir a página: relê o perfil e pede o resumo (com cache curto). */
     render() {
       estado.sincronizarPerfil();

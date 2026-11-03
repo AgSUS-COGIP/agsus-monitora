@@ -4,13 +4,14 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarClassificacao } from "../../src/modulos/classificacao/classificacao.tsx";
+import { criarClassificacao } from "../../src/modulos/classificacao/classificacao.tsx";
 import {
   clicar,
   digitar,
   escolher,
   esperar,
 } from "../componentes/interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A agenda das entrevistas na Classificação (visão "Agenda",
@@ -234,7 +235,7 @@ async function montar(supabase) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarClassificacao({
+    painel = montarTela(criarClassificacao, "page-classificacao", {
       supabase,
       toast,
       baixar,

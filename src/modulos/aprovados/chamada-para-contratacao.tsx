@@ -24,7 +24,7 @@ import type { EstadoDosAprovados } from "./tipos-do-estado.ts";
     "Listas do edital", com "Editar nas Regras do edital".
   - `EditorDaChamada`: o formulário (formulario-de-convocacao.tsx, com o
     rascunho próprio) ligado à loja da Lista de aprovados — a MESMA do app
-    (`window.aprovadosController.estado`): as mesmas RPCs
+    (`carregarTela("approved")`, src/app/registro-das-telas.ts): as mesmas RPCs
     (salvar_configuracao_convocacao, salvar/remover_modelo_convocacao) e,
     salvo, a Lista de aprovados já vê a convocação nova. Está nas Regras do
     edital, etapa Chamada para contratação.

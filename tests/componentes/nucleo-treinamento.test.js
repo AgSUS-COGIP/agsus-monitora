@@ -1,12 +1,13 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarNucleo } from "../../src/modulos/editais/nucleo.tsx";
+import { criarNucleo } from "../../src/modulos/editais/nucleo.tsx";
 import {
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { clicar, esperar } from "./interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   Editais com o edital de treinamento (migration 20261007230000): o selo
@@ -84,7 +85,7 @@ async function montar({ perfil, supabase = supabaseFalso() } = {}) {
   const aoSalvar = vi.fn(async () => {});
   const confirmar = vi.fn(() => true);
   await act(async () => {
-    controlador = montarNucleo({
+    controlador = montarTela(criarNucleo, "page-nucleo", {
       secao: document.getElementById("page-nucleo"),
       supabase,
       toast,

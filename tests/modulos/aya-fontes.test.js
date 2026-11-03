@@ -48,7 +48,10 @@ const ADMIN = {
 describe("fonte das análises", () => {
   it("junta os pacotes ativo e desativadas, marcando as desativadas", async () => {
     const supabase = supabaseFalso();
-    const fontes = criarFontesDaAya({ supabase, janela: {} });
+    const fontes = criarFontesDaAya({
+      supabase,
+      telaJaAberta: () => undefined,
+    });
     const { linhas } = await fontes.buscar("analises", {
       area: "saude-indigena",
     });
@@ -61,7 +64,10 @@ describe("fonte das análises", () => {
   });
 
   it("110/2026: 8 pendentes de 841, dizendo que estão desativadas", async () => {
-    const fontes = criarFontesDaAya({ supabase: supabaseFalso(), janela: {} });
+    const fontes = criarFontesDaAya({
+      supabase: supabaseFalso(),
+      telaJaAberta: () => undefined,
+    });
     const r = await responderComDados({
       pergunta: "quantas análises pendentes tem o 110/2026?",
       contexto: { view: "dashboard", area: "saude-indigena" },

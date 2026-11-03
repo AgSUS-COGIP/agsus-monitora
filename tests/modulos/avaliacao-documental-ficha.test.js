@@ -5,7 +5,7 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
+import { criarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
 import { criarEstadoDaFicha } from "../../src/modulos/avaliacao-documental/ficha/estado-da-ficha.ts";
 import {
   clicar,
@@ -14,6 +14,7 @@ import {
   esperar,
   teclar,
 } from "../componentes/interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A ficha no modo de análise da aba Fila: o cabeçalho enxuto, o stepper com o
@@ -296,7 +297,10 @@ async function abrirFicha(supabase) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarAvaliacaoDocumental({ supabase, toast });
+    painel = montarTela(criarAvaliacaoDocumental, "page-avaliacao-documental", {
+      supabase,
+      toast,
+    });
   });
   await act(async () => void painel.render());
   await esperar();

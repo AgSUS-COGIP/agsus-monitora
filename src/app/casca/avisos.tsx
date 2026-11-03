@@ -1,4 +1,3 @@
-import { montarModulo } from "../montar-modulo.tsx";
 import { AvisoDeConexao } from "./aviso-de-conexao.tsx";
 import { ConfirmacaoDeSaida } from "./confirmacao-de-saida.tsx";
 import { CaixaDeNotificacoes } from "./notificacoes.tsx";
@@ -17,8 +16,8 @@ import { TelaDeCarregamento } from "./tela-de-carregamento.tsx";
 
   Quem abre é src/app/avisos.ts (`avisar`, `mostrarCarregamento`), em
   `window.monitoraToast`/`window.monitoraLoader`; a conexão se vigia sozinha.
-  Monta fora do `#appScreen` (em `#avisosApp`, no começo do <body>) porque a
-  tela de acesso também usa.
+  Entra por portal da raiz do app (src/app/raiz.tsx) em `#avisosApp`, no
+  começo do <body>, fora do `#appScreen`, porque a tela de acesso também usa.
 */
 export function Avisos() {
   return (
@@ -29,17 +28,4 @@ export function Avisos() {
       <ConfirmacaoDeSaida />
     </>
   );
-}
-
-/** Desenha os avisos em `#avisosApp`, na hora (`flushSync`). */
-export function montarAvisos(
-  elemento: HTMLElement | null = globalThis.document?.getElementById(
-    "avisosApp",
-  ),
-) {
-  if (!elemento) return null;
-  return montarModulo(elemento, <Avisos />, {
-    flushSync: true,
-    nome: "os avisos do app",
-  });
 }

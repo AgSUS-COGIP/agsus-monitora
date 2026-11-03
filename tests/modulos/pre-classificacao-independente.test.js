@@ -4,8 +4,9 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarPreClassificacao } from "../../src/modulos/avaliacao-documental/entrada-da-pre-classificacao.tsx";
+import { criarPreClassificacao } from "../../src/modulos/avaliacao-documental/entrada-da-pre-classificacao.tsx";
 import { esperar } from "../componentes/interacoes.js";
+import { montarTela } from "../montar-tela.js";
 
 /* A página não acessa a RPC de triagem até o backend confirmar
    pode_coordenar para aquele edital; perfil que só lê Seleção não a libera. */
@@ -84,7 +85,7 @@ async function montar(supabase) {
   secao.id = "page-pre-classificacao";
   document.body.append(secao);
   await act(async () => {
-    controller = montarPreClassificacao({
+    controller = montarTela(criarPreClassificacao, "page-pre-classificacao", {
       secao,
       supabase,
       areaAtual: () => "projetos",

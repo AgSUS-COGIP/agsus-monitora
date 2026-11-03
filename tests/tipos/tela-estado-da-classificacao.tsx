@@ -1,6 +1,6 @@
 import {
   TelaDeClassificacao,
-  montarClassificacao,
+  criarClassificacao,
 } from "../../src/modulos/classificacao/classificacao.tsx";
 import { criarEstadoDaClassificacao } from "../../src/modulos/classificacao/estado.ts";
 import { criarRascunhoDaRegra } from "../../src/app/rascunho-da-regra.ts";
@@ -26,7 +26,7 @@ function conferir(agenda: EstadoDaAgenda, lista: ListaRegistrada) {
   const tela = <TelaDeClassificacao estado={estado} agenda={agenda} />;
   // @ts-expect-error O tipo do rascunho é ANALISE ou CLASSIFICACAO.
   void criarRascunhoDaRegra({ tipo: "OUTRA" });
-  void montarClassificacao({ secao: null, areaAtual: () => "sede" });
+  void criarClassificacao({ areaAtual: () => "sede" });
   void estado.publicarLista(lista, null);
   // @ts-expect-error Publicar confere a geração inteira: pede o registro, não só o id.
   void estado.publicarLista(lista.id, null);

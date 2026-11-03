@@ -245,7 +245,7 @@ export function criarPaineisExternos({
     documento.body.classList.remove("external-clean");
     documento.body.classList.add("external-panel-mode");
     atual = painel;
-    $("page-external")?.classList.add("active");
+    // A seção do quadro fica ativa pela navegação (src/app/telas.tsx).
     const titulo = $("externalTitle");
     if (titulo) titulo.textContent = painel.titulo;
     const abrir = $("externalOpen") as HTMLAnchorElement | null;

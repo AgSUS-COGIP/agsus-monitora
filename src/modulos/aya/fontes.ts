@@ -12,6 +12,7 @@
   indicador mostra. Senão, uma chamada e a resposta fica guardada por um
   minuto, para a pergunta seguinte não chamar de novo.
 */
+import { telaCriada, telaPronta } from "../../app/registro-das-telas.ts";
 import { linhasDoPayload } from "../../lib/analises-curriculares.ts";
 import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.ts";
 import { normalizarPayload as payloadDasEntrevistas } from "../../lib/entrevistas-do-painel.ts";
@@ -31,18 +32,18 @@ export interface OpcoesDaLeitura {
   cargaDe?: string;
 }
 
-/** O controlador que src/main.ts põe em window para cada tela. */
+/** O controlador de uma tela já aberta (src/app/registro-das-telas.ts). */
 type ControladorDaTela =
   | {
       estado?: {
-        obter?: () => Readonly<Record<string, unknown>> | null | undefined;
+        obter?: () => object | null | undefined;
       } | null;
     }
   | null
   | undefined;
 
-/** A janela, onde ficam os controladores das telas. */
-export type JanelaDasTelas = object | null | undefined;
+/** A tela já criada pela rota, pelo nome (view); `undefined` se não abriu. */
+export type TelaJaAberta = (view: "recursos" | "selecao") => ControladorDaTela;
 
 /** As fontes da Aya: `buscar` (com cópia de um minuto) e `esquecer`. */
 export interface FontesDaAya {
@@ -58,17 +59,14 @@ const primeiro = (data: unknown): unknown =>
 
 /* O estado já carregado da tela, quando é da mesma área. */
 function daTela(
-  janela: JanelaDasTelas,
-  controlador: string,
+  telaJaAberta: TelaJaAberta,
+  view: "recursos" | "selecao",
   area: string,
   campo: string,
 ): unknown {
   try {
-    const estado = (
-      (janela as Readonly<Record<string, unknown>> | null | undefined)?.[
-        controlador
-      ] as ControladorDaTela
-    )?.estado?.obter?.();
+    const estado = telaJaAberta(view)?.estado?.obter?.() as
+      Readonly<Record<string, unknown>> | null | undefined;
     if (!estado?.carregado || String(estado.area || "") !== area) return null;
     return estado[campo] ?? null;
   } catch {
@@ -78,11 +76,11 @@ function daTela(
 
 export function criarFontesDaAya({
   supabase = null,
-  janela = globalThis.window,
+  telaJaAberta = (view) => (telaCriada(view) ? telaPronta(view) : undefined),
   agora = () => Date.now(),
 }: {
   supabase?: SupabaseClient | null;
-  janela?: JanelaDasTelas;
+  telaJaAberta?: TelaJaAberta;
   agora?: () => number;
 } = {}): FontesDaAya {
   const guardado = new Map<string, { em: number; dados: unknown }>();
@@ -147,7 +145,7 @@ export function criarFontesDaAya({
       };
     },
     async recursos({ area }) {
-      const carregados = daTela(janela, "recursosController", area, "dados");
+      const carregados = daTela(telaJaAberta, "recursos", area, "dados");
       if (carregados)
         return { recursos: enriquecerRecursos(carregados as DadosDosRecursos) };
       const dados = await chamar("get_recursos_da_area", { p_area: area });
@@ -162,7 +160,7 @@ export function criarFontesDaAya({
       return payloadDasEntrevistas(primeiro(dados));
     },
     async selecao({ area }) {
-      const carregados = daTela(janela, "selecaoController", area, "dados");
+      const carregados = daTela(telaJaAberta, "selecao", area, "dados");
       if (Array.isArray((carregados as { vagas?: unknown } | null)?.vagas))
         return { vagas: (carregados as { vagas: unknown[] }).vagas };
       const dados = await chamar("get_selecao_da_area_se_mudou", {

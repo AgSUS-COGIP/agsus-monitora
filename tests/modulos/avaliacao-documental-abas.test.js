@@ -11,10 +11,11 @@ import {
   lerEditalLembrado,
   visaoNaTela,
 } from "../../src/modulos/avaliacao-documental/abas-e-entrada.ts";
-import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
+import { criarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
 import { editalVigente } from "../../src/lib/avaliacao-documental/editais.ts";
 import { clicar, esperar } from "../componentes/interacoes.js";
 import { carregarCatalogoDeAbas } from "../../src/modules/catalogo-de-abas.ts";
+import { montarTela } from "../montar-tela.js";
 
 /*
   Abas por papel e entrada da Avaliação documental (abas-e-entrada.ts):
@@ -120,7 +121,10 @@ async function montar(supabase) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarAvaliacaoDocumental({ supabase, toast: vi.fn() });
+    painel = montarTela(criarAvaliacaoDocumental, "page-avaliacao-documental", {
+      supabase,
+      toast: vi.fn(),
+    });
   });
   await act(async () => void painel.render());
   await esperar();

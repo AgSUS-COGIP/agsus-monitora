@@ -30,7 +30,10 @@ const ler = (fontes) =>
 describe("fontes da Aya: troca de conta", () => {
   it("outra conta na mesma aba não reaproveita o que a anterior leu", async () => {
     const supabase = supabaseComAuth();
-    const fontes = criarFontesDaAya({ supabase, janela: {} });
+    const fontes = criarFontesDaAya({
+      supabase,
+      telaJaAberta: () => undefined,
+    });
     supabase.entrar("pessoa-a");
     expect(await ler(fontes)).toEqual({ em: "leitura-1" });
     expect(await ler(fontes)).toEqual({ em: "leitura-1" });
@@ -46,7 +49,10 @@ describe("fontes da Aya: troca de conta", () => {
     supabase.rpc.mockImplementationOnce(
       () => new Promise((resolver) => (entregar = resolver)),
     );
-    const fontes = criarFontesDaAya({ supabase, janela: {} });
+    const fontes = criarFontesDaAya({
+      supabase,
+      telaJaAberta: () => undefined,
+    });
     supabase.entrar("pessoa-a");
     const daPessoaA = ler(fontes);
     await Promise.resolve();
@@ -59,7 +65,10 @@ describe("fontes da Aya: troca de conta", () => {
 
   it("o mesmo usuário (renovação do token) mantém o guardado", async () => {
     const supabase = supabaseComAuth();
-    const fontes = criarFontesDaAya({ supabase, janela: {} });
+    const fontes = criarFontesDaAya({
+      supabase,
+      telaJaAberta: () => undefined,
+    });
     supabase.entrar("pessoa-a");
     await ler(fontes);
     supabase.entrar("pessoa-a");

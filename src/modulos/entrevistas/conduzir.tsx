@@ -9,7 +9,6 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
@@ -44,7 +43,7 @@ import "./entrevistas.css";
   avaliadores), entrada própria no menu, ao lado do Painel de entrevistas
   (acompanhar) — como a Avaliação documental ao lado do Painel das análises.
   Monta na `<section id="page-conduzir-entrevistas">`; a navegação chama
-  `render()` ao abrir (TELAS_REACT de src/app/navegacao.ts). Recurso de
+  `render()` ao abrir (a rota, src/app/telas.tsx). Recurso de
   permissão: o mesmo `entrevistas` (quem acessava a antiga tela acessa as
   duas; escrever continua exigindo Editor, conferido pelo banco).
 
@@ -373,13 +372,12 @@ function TelaDeConducao({
 }
 
 /**
- * Monta a tela na `<section id="page-conduzir-entrevistas">` e devolve o
- * controlador: `render()` a cada abertura (a área atual, os editais e o
- * edital aberto), `abrirVisao` (links antigos: "conduzir", "roteiros"),
- * `abrirEdital` (links com o edital), o estado e a raiz do React.
+ * Cria a tela (rota `conduzir-entrevistas`, src/app/telas.tsx): o conteúdo
+ * React e o controlador — `render()` a cada abertura (a área atual, os
+ * editais e o edital aberto), `abrirVisao` (links antigos: "conduzir",
+ * "roteiros") e `abrirEdital` (o edital do endereço).
  */
-export function montarConducaoDeEntrevistas({
-  secao = document.getElementById("page-conduzir-entrevistas"),
+export function criarConducaoDeEntrevistas({
   supabase = getSupabaseClient(),
   toast,
   comemoracoesLigadas = () => false,
@@ -390,7 +388,6 @@ export function montarConducaoDeEntrevistas({
   hojeDe = () => hojeEmBrasilia(),
   armazenamento = () => globalThis.localStorage,
 }: {
-  secao?: HTMLElement | null;
   supabase?: ClienteDaConducao | null;
   toast?: (mensagem: string, tom?: string) => void;
   comemoracoesLigadas?: () => boolean;
@@ -407,20 +404,6 @@ export function montarConducaoDeEntrevistas({
     aoMudarResultados,
   });
   const visoes = criarVisao();
-  const raiz = secao
-    ? montarModulo(
-        secao,
-        <TelaDeConducao
-          conducao={conducao}
-          visoes={visoes}
-          comemoracoesLigadas={comemoracoesLigadas}
-          aoComemorar={aoComemorar}
-          doPainel={doPainel}
-          hojeDe={hojeDe}
-        />,
-        { nome: "a tela de conduzir entrevistas" },
-      ).raiz
-    : null;
 
   /* O último edital aberto na área fica no navegador (só conveniência). */
   const chaveDoEdital = (area: string) => `${CHAVE_DO_EDITAL}:${area}`;
@@ -457,7 +440,17 @@ export function montarConducaoDeEntrevistas({
 
   return {
     conducao,
-    raiz,
+    nome: "a tela de conduzir entrevistas",
+    conteudo: (
+      <TelaDeConducao
+        conducao={conducao}
+        visoes={visoes}
+        comemoracoesLigadas={comemoracoesLigadas}
+        aoComemorar={aoComemorar}
+        doPainel={doPainel}
+        hojeDe={hojeDe}
+      />
+    ),
     render,
     abrirVisao: (visao: string) =>
       visoes.definir(visao === "roteiros" ? "preparar" : visao),

@@ -12,6 +12,8 @@ import {
   teclar,
 } from "../componentes/interacoes.js";
 import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
+import { montarTela } from "../montar-tela.js";
+import { registrarTelas } from "../../src/app/registro-das-telas.ts";
 
 /*
   "Conduzir entrevistas" (view `conduzir-entrevistas`), o fazer, separado do
@@ -25,7 +27,7 @@ import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js"
 
 const { guardaDeAlteracoes } =
   await import("../../src/app/guarda-de-alteracoes.ts");
-const { montarConducaoDeEntrevistas } =
+const { criarConducaoDeEntrevistas } =
   await import("../../src/modulos/entrevistas/conduzir.tsx");
 // Preparar baixa sob demanda (lazy): já carregado aqui, o import da tela resolve na hora.
 await import("../../src/modulos/entrevistas/preparar.tsx");
@@ -78,7 +80,7 @@ async function montar(
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    tela = montarConducaoDeEntrevistas({
+    tela = montarTela(criarConducaoDeEntrevistas, "page-conduzir-entrevistas", {
       secao,
       supabase,
       toast,
@@ -887,7 +889,14 @@ describe("a tela de Conduzir entrevistas", () => {
       "Escolher o roteiro nas Regras do edital",
     );
     window.navigate = vi.fn();
-    window.nucleoController = { abrirRegrasDoEdital: vi.fn() };
+    // Editais no registro das telas (src/app/telas.tsx), como no app.
+    const editais = {
+      nome: "Editais",
+      conteudo: null,
+      render() {},
+      abrirRegrasDoEdital: vi.fn(),
+    };
+    registrarTelas({ nucleo: { criar: () => editais } });
     try {
       await clicar(
         corpoDoPasso().querySelector(
@@ -895,13 +904,13 @@ describe("a tela de Conduzir entrevistas", () => {
         ),
       );
       expect(window.navigate).toHaveBeenCalledWith("nucleo");
-      expect(window.nucleoController.abrirRegrasDoEdital).toHaveBeenCalledWith(
+      expect(editais.abrirRegrasDoEdital).toHaveBeenCalledWith(
         "m1",
         "entrevista",
       );
     } finally {
       delete window.navigate;
-      delete window.nucleoController;
+      registrarTelas({});
     }
   });
 });
@@ -1051,18 +1060,25 @@ describe("Preparar, roteiros e ficha", () => {
     // "Editar" de quem avalia leva às Regras do edital (etapa Entrevista); o
     // da nota abre o roteiro do edital aqui.
     window.navigate = vi.fn();
-    window.nucleoController = { abrirRegrasDoEdital: vi.fn() };
+    // Editais no registro das telas (src/app/telas.tsx), como no app.
+    const editais = {
+      nome: "Editais",
+      conteudo: null,
+      render() {},
+      abrirRegrasDoEdital: vi.fn(),
+    };
+    registrarTelas({ nucleo: { criar: () => editais } });
     try {
       await clicar(
         bloco("banca").querySelector('[data-ir-para="configuracao"]'),
       );
-      expect(window.nucleoController.abrirRegrasDoEdital).toHaveBeenCalledWith(
+      expect(editais.abrirRegrasDoEdital).toHaveBeenCalledWith(
         "m1",
         "entrevista",
       );
     } finally {
       delete window.navigate;
-      delete window.nucleoController;
+      registrarTelas({});
     }
     await clicar(bloco("nota").querySelector('[data-ir-para="roteiro"]'));
     expect(
@@ -1221,9 +1237,6 @@ describe("Preparar, roteiros e ficha", () => {
     });
     await montar(supabase);
     window.navigate = vi.fn();
-    window.classificacaoController = {
-      estado: { escolherEdital: vi.fn(async () => true) },
-    };
     try {
       await abrirEdital();
       expect(chamadas(supabase, "obter_classificacao_do_edital")[0][1]).toEqual(
@@ -1244,13 +1257,12 @@ describe("Preparar, roteiros e ficha", () => {
           (b) => b.textContent === "Gerar na Classificação",
         ),
       );
-      expect(window.navigate).toHaveBeenCalledWith("classificacao");
-      expect(
-        window.classificacaoController.estado.escolherEdital,
-      ).toHaveBeenCalledWith(UUID);
+      // O edital vai junto no endereço; a rota abre a Classificação nele.
+      expect(window.navigate).toHaveBeenCalledWith("classificacao", {
+        edital: UUID,
+      });
     } finally {
       delete window.navigate;
-      delete window.classificacaoController;
     }
   });
 

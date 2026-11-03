@@ -1,7 +1,8 @@
-import { act } from "react";
+import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.ts";
-import { montarAvisos } from "../../src/app/casca/avisos.tsx";
+import { Avisos } from "../../src/app/casca/avisos.tsx";
+import { desenharNoTeste } from "../montar-tela.js";
 import {
   obterSaida,
   redefinirSaida,
@@ -33,7 +34,12 @@ beforeEach(async () => {
   document.body.innerHTML =
     '<div id="avisosApp"></div><button id="quemAbriu" type="button">Sair</button><details id="topUserMenu" open></details>';
   await act(async () => {
-    montagem = montarAvisos();
+    // Como a raiz do app (src/app/raiz.tsx): os avisos, na hora, em #avisosApp.
+    montagem = desenharNoTeste(
+      document.getElementById("avisosApp"),
+      createElement(Avisos),
+      { sincrono: true },
+    );
   });
 });
 

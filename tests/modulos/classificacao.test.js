@@ -7,7 +7,7 @@ import {
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import {
   calcularClassificacao,
-  montarClassificacao,
+  criarClassificacao,
 } from "../../src/modulos/classificacao/classificacao.tsx";
 import { ordemDoSorteio } from "../../src/lib/classificacao/sorteio.ts";
 import { retratoDaClassificacao } from "../../src/lib/classificacao/dados-do-estado.ts";
@@ -19,6 +19,8 @@ import {
   esperar,
 } from "../componentes/interacoes.js";
 import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
+import { montarTela } from "../montar-tela.js";
+import { registrarTelas } from "../../src/app/registro-das-telas.ts";
 
 /*
   A tela de Classificação como módulo do app (src/modulos/classificacao/):
@@ -227,7 +229,7 @@ async function montar(supabase) {
   secao.className = "page active";
   document.body.append(secao);
   await act(async () => {
-    painel = montarClassificacao({
+    painel = montarTela(criarClassificacao, "page-classificacao", {
       supabase,
       toast,
       baixar,
@@ -967,18 +969,25 @@ describe("tela de Classificação", () => {
     expect(resumo.textContent).toContain("PP 25%");
     expect(secao.querySelector("[data-acao='salvar-regra']")).toBeNull();
     window.navigate = vi.fn();
-    window.nucleoController = { abrirRegrasDoEdital: vi.fn() };
+    // Editais no registro das telas (src/app/telas.tsx), como no app.
+    const editais = {
+      nome: "Editais",
+      conteudo: null,
+      render() {},
+      abrirRegrasDoEdital: vi.fn(),
+    };
+    registrarTelas({ nucleo: { criar: () => editais } });
     try {
       await clicar(
         resumo.querySelector("[data-acao='editar-nas-regras-do-edital']"),
       );
-      expect(window.nucleoController.abrirRegrasDoEdital).toHaveBeenCalledWith(
+      expect(editais.abrirRegrasDoEdital).toHaveBeenCalledWith(
         "e83",
         "classificacao",
       );
     } finally {
       delete window.navigate;
-      delete window.nucleoController;
+      registrarTelas({});
     }
   });
 

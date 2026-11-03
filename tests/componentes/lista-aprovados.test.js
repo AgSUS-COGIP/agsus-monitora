@@ -1,6 +1,6 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
+import { criarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
 import { PLANILHAS } from "../../src/lib/planilhas.ts";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 import {
@@ -13,6 +13,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.js";
+import { montarTela } from "../montar-tela.js";
 
 /*
   A tela só mostra os editais da área atual (a padrão é a Saúde Indígena); os
@@ -222,7 +223,7 @@ async function montar({
   document.body.innerHTML = `<section id="page-approved" class="page${secaoAtiva ? " active" : ""}"></section>`;
   perfilAtual = perfil;
   await act(async () => {
-    controlador = montarListaAprovados({
+    controlador = montarTela(criarListaAprovados, "page-approved", {
       secao: document.getElementById("page-approved"),
       supabase,
       toast,

@@ -7,7 +7,6 @@ import type {
 } from "./tipos-do-estado.ts";
 import type { FiltrosDaTabelaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
 import { useMemo, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import {
@@ -53,10 +52,9 @@ import "./carta-de-convocacao/carta.css";
   Lista de aprovados (view `approved`), módulo do app — a página
   `#page-approved` e os seus modais.
 
-  O React é dono de tudo dentro da `<section>`; o legado só troca a classe
-  `.active` dela e fala com o controlador (`window.aprovadosController`):
-  `render()` ao abrir a página e `openImportModal(id, rótulo)` pelo botão de
-  listas da tabela de Editais.
+  O React é dono de tudo dentro da `<section>`; a rota (src/app/telas.tsx)
+  chama `render()` ao abrir a página, e Editais chama `openImportModal(id,
+  rótulo)` pelo registro das telas (botão de listas da tabela).
 
   Padrão das telas de src/modulos/: topo com as duas visões (abas com o visual
   do controle segmentado), a data da carga e Atualizar; KPIs compactos;
@@ -499,11 +497,10 @@ export function ListaAprovados({
 }
 
 /**
- * Monta a página em `#page-approved` e devolve o controlador que o legado
- * chama (`window.aprovadosController`).
+ * Cria a Lista de aprovados (rota `approved`, src/app/telas.tsx): o conteúdo
+ * React e o controlador (`render()`, `openImportModal`…).
  */
-export function montarListaAprovados({
-  secao = document.getElementById("page-approved"),
+export function criarListaAprovados({
   supabase = getSupabaseClient(),
   toast,
   getProfile,
@@ -547,19 +544,11 @@ export function montarListaAprovados({
     ...(hoje ? { hoje } : {}),
     ...(esperar ? { esperar } : {}),
   });
-  const raiz = secao
-    ? montarModulo(
-        secao,
-        <ListaAprovados estado={estado} pendencias={pendencias} />,
-        {
-          nome: "a lista de aprovados",
-        },
-      ).raiz
-    : null;
   return {
     estado,
     pendencias,
-    raiz,
+    nome: "a lista de aprovados",
+    conteudo: <ListaAprovados estado={estado} pendencias={pendencias} />,
     render: () => estado.garantirCarregado(),
     openImportModal: (editalId: string, rotulo = "") =>
       estado.abrirListasDoEdital(editalId, rotulo),

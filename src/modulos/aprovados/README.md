@@ -1,8 +1,9 @@
 # `src/modulos/aprovados/` — Lista de aprovados
 
-A tela `#page-approved` (view `approved`): monta na própria `<section>` por
-`montarListaAprovados()` (`src/main.ts` → `window.aprovadosController`); o legado chama `render()` ao
-navegar e `openImportModal(id, rótulo)` pelo botão de listas de Editais. Área = a atual do app.
+A tela `#page-approved` (view `approved`, rota `/<área>/aprovados`): `criarListaAprovados()` devolve o
+conteúdo e o controlador; a rota (`src/app/telas.tsx`) desenha na própria `<section>` e chama
+`render()` a cada abertura, e Editais chama `openImportModal(id, rótulo)` pelo registro das telas
+(`carregarTela("approved")`). Área = a atual do app.
 
 Três visões no topo: **Aprovados** (indicadores, filtros, tabela de rolagem contínua),
 **Convocação** (a ordem de chamada de cada vaga, calculada pelo modelo de convocação e pelas vagas
@@ -11,7 +12,7 @@ As duas primeiras leem os mesmos candidatos: mudar um status redesenha ambas; de
 recarrega a lista.
 
 ```
-lista-aprovados.tsx        <ListaAprovados>, montarListaAprovados() e os modais abertos (ModalAberto)
+lista-aprovados.tsx        <ListaAprovados>, criarListaAprovados() e os modais abertos (ModalAberto)
 estado.ts                  store sem React: candidatos (pacote compacto por área, cópia no navegador),
                            listas, configuração de convocação, anexos, convocações (data da
                            convocação e cartas por candidato), ações que escrevem no banco e o estado

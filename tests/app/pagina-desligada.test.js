@@ -1,4 +1,6 @@
+import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { montarTelasNoTeste } from "./telas-no-teste.js";
 import { criarNavegacao } from "../../src/app/navegacao.ts";
 import {
   INTERVALO_DA_PRESENCA_MS,
@@ -351,14 +353,16 @@ describe("a página aberta que foi desligada vira o aviso", () => {
     areas: ["saude-indigena", "sede"],
   };
 
+  // As seções e o título são da rota (src/app/telas.tsx): montarTelasNoTeste.
+  let montado = null;
   function montarPaginas() {
-    document.body.innerHTML = `
-      <h1 id="pageTitle"></h1><p id="pageSubtitle"></p>
-      <main id="conteudoPrincipal"><div class="content">
-        <section id="page-dashboard" class="page"></section>
-        <section id="page-nucleo" class="page"></section>
-        <section id="page-calendario" class="page"></section>
-      </div></main>`;
+    document.body.innerHTML = '<main id="conteudoPrincipal"></main>';
+  }
+
+  /* A navegação com as telas falsas desenhadas; `janela` aponta para elas. */
+  function comTelas(opcoes, telas) {
+    montado = montarTelasNoTeste(criarNavegacao(opcoes), telas);
+    return montado.navegacao;
   }
 
   async function usarCatalogo(fora = []) {
@@ -373,20 +377,26 @@ describe("a página aberta que foi desligada vira o aviso", () => {
       calendarioEditaisController: { render: vi.fn() },
       location: { reload: vi.fn() },
     };
-    const navegacao = criarNavegacao({
-      janela,
-      obterPerfil: () => PERFIL,
-      paineis: {
-        podeAbrir: () => false,
-        primeiro: () => null,
-        doMenu: () => [],
-        mostrar: vi.fn(),
-        esquecerAtual: vi.fn(),
+    const navegacao = comTelas(
+      {
+        janela,
+        obterPerfil: () => PERFIL,
+        paineis: {
+          podeAbrir: () => false,
+          primeiro: () => null,
+          doMenu: () => [],
+          mostrar: vi.fn(),
+          esquecerAtual: vi.fn(),
+        },
+        confirmarSaida: () => true,
+        aplicarAtualizacao: () => false,
+        temTrabalhoNaoSalvo: trabalho,
       },
-      confirmarSaida: () => true,
-      aplicarAtualizacao: () => false,
-      temTrabalhoNaoSalvo: trabalho,
-    });
+      {
+        nucleo: janela.nucleoController,
+        calendario: janela.calendarioEditaisController,
+      },
+    );
     return { navegacao, janela };
   }
 
@@ -419,6 +429,8 @@ describe("a página aberta que foi desligada vira o aviso", () => {
     redefinirDadosDoMonitoramento();
     redefinirBarraLateral();
     redefinirPaginaDaAya();
+    montado?.desmontar();
+    montado = null;
     document.body.innerHTML = "";
   });
 
@@ -451,7 +463,7 @@ describe("a página aberta que foi desligada vira o aviso", () => {
     const botao = aviso().querySelector("button");
     expect(botao.hidden).toBe(false);
     expect(botao.textContent).toBe("Ir para a página inicial");
-    botao.click();
+    act(() => botao.click());
     expect(navegacao.obter().view).toBe("dashboard");
     expect(ativas()).toEqual(["page-dashboard"]);
   });
@@ -520,29 +532,26 @@ describe("a página aberta que foi desligada vira o aviso", () => {
     });
 
     function criarAvaliador(perfil = avaliador()) {
-      document
-        .querySelector(".content")
-        .insertAdjacentHTML(
-          "beforeend",
-          '<section id="page-avaliacao-documental" class="page"></section>',
-        );
       const janela = {
         avaliacaoDocumentalController: { render: vi.fn() },
         location: { reload: vi.fn() },
       };
-      const navegacao = criarNavegacao({
-        janela,
-        obterPerfil: () => perfil,
-        paineis: {
-          podeAbrir: () => false,
-          primeiro: () => null,
-          doMenu: () => [],
-          mostrar: vi.fn(),
-          esquecerAtual: vi.fn(),
+      const navegacao = comTelas(
+        {
+          janela,
+          obterPerfil: () => perfil,
+          paineis: {
+            podeAbrir: () => false,
+            primeiro: () => null,
+            doMenu: () => [],
+            mostrar: vi.fn(),
+            esquecerAtual: vi.fn(),
+          },
+          confirmarSaida: () => true,
+          aplicarAtualizacao: () => false,
         },
-        confirmarSaida: () => true,
-        aplicarAtualizacao: () => false,
-      });
+        { "avaliacao-documental": janela.avaliacaoDocumentalController },
+      );
       return { navegacao, janela };
     }
 

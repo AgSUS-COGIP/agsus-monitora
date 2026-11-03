@@ -2,7 +2,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { EditorDaChamada } from "../../src/modulos/aprovados/chamada-para-contratacao.tsx";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
+import { criarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
 import { modeloDeReferencia } from "../../src/lib/modelo-de-convocacao.ts";
 import { LEI_15142_ESPALHADA } from "../modelos-de-convocacao-antigos.js";
 import { clicar, digitar, escolher, esperar } from "./interacoes.js";
@@ -12,6 +12,8 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.js";
+import { montarTela } from "../montar-tela.js";
+import { registrarTelas } from "../../src/app/registro-das-telas.ts";
 
 /*
   A tela só mostra os editais da área atual (a padrão é a Saúde Indígena); os
@@ -157,7 +159,7 @@ async function montar({
   perfilAtual = perfil;
   const supabase = supabaseFalso({ candidatos, ...banco });
   await act(async () => {
-    controlador = montarListaAprovados({
+    controlador = montarTela(criarListaAprovados, "page-approved", {
       secao: document.getElementById("page-approved"),
       supabase,
       toast,
@@ -402,20 +404,24 @@ describe("aba Lista de convocação do modal de listas", () => {
     expect($("convocacaoSalvar")).toBeNull();
     expect(painel.querySelector("select, input")).toBeNull();
     window.navigate = vi.fn();
-    window.nucleoController = { abrirRegrasDoEdital: vi.fn() };
+    // Editais no registro das telas (src/app/telas.tsx), como no app.
+    const editais = {
+      nome: "Editais",
+      conteudo: null,
+      render() {},
+      abrirRegrasDoEdital: vi.fn(),
+    };
+    registrarTelas({ nucleo: { criar: () => editais } });
     try {
       await clicar(
         painel.querySelector("[data-acao='editar-nas-regras-do-edital']"),
       );
       expect(window.navigate).toHaveBeenCalledWith("nucleo");
-      expect(window.nucleoController.abrirRegrasDoEdital).toHaveBeenCalledWith(
-        "7",
-        "chamada",
-      );
+      expect(editais.abrirRegrasDoEdital).toHaveBeenCalledWith("7", "chamada");
       expect($("approvedImportModal")).toBeNull();
     } finally {
       delete window.navigate;
-      delete window.nucleoController;
+      registrarTelas({});
     }
   });
 

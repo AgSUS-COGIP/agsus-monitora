@@ -7,10 +7,16 @@ import type { ErrorInfo, ReactNode } from "react";
   novo" remonta os filhos do zero (a `key` muda), e o erro vai para o console.
 
   Não pega erro de evento nem de promessa — esses continuam com quem os trata
-  (toast, aviso do estado). Montado por `montarModulo` (montar-modulo.tsx).
+  (toast, aviso do estado). Cada tela do app tem o seu (src/app/telas.tsx); as
+  ilhas que ainda montam sozinhas, pelo `montarModulo` (montar-modulo.tsx).
+
+  `mensagem` troca o texto do aviso e `aoTentarDeNovo` roda antes de remontar
+  (a tela sob demanda que não baixou refaz o `lazy`: src/app/telas.tsx).
 */
 type PropsDoErrorBoundary = {
   nome?: string | undefined;
+  mensagem?: string | undefined;
+  aoTentarDeNovo?: (() => void) | undefined;
   children?: ReactNode;
 };
 
@@ -42,6 +48,7 @@ export class ErrorBoundary extends Component<
   }
 
   tentarDeNovo() {
+    this.props.aoTentarDeNovo?.();
     this.setState((atual) => ({ erro: null, tentativa: atual.tentativa + 1 }));
   }
 
@@ -49,7 +56,10 @@ export class ErrorBoundary extends Component<
     if (this.state.erro)
       return (
         <div className="ui-erro-do-modulo" role="alert">
-          <p>Não foi possível mostrar esta parte da tela.</p>
+          <p>
+            {this.props.mensagem ||
+              "Não foi possível mostrar esta parte da tela."}
+          </p>
           <button
             type="button"
             className="btn secondary"

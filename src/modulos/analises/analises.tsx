@@ -8,7 +8,6 @@ import type {
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { filtrosDasAnalises } from "../../lib/filtro-da-aya.ts";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { usarTemaEscuro } from "../../app/tema.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
@@ -56,7 +55,7 @@ import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
   A tela de Análises curriculares (view `analises`), um módulo do app: monta
   direto na `<section id="page-analises">` do index.html, como Recursos. O
   legado continua dono da classe `.active` da seção e chama `render()` do
-  controlador ao navegar (tabela `TELAS_REACT` do `navigate`).
+  controlador ao navegar (a rota, src/app/telas.tsx).
 
   - Área: a atual do app (menu lateral → dados-do-monitoramento.ts); trocar de
     área com a tela aberta recarrega, e filtros, busca e gaveta recomeçam.
@@ -472,21 +471,22 @@ export function TelaDeAnalises({
 }
 
 /**
- * Monta a tela na `<section id="page-analises">` e devolve o controlador do
- * legado: `render()` a cada abertura (a área atual do app), mais o estado e a
- * raiz do React (os testes desmontam por ela).
+ * Cria a tela (rota `analises`, src/app/telas.tsx): o conteúdo React, o estado
+ * e `render()` a cada abertura (a área atual do app). `visivel` diz se a
+ * página está à vista (a troca de área com ela escondida não relê).
  */
-export function montarAnalises({
-  secao = document.getElementById("page-analises"),
+export function criarAnalises({
   supabase = getSupabaseClient(),
   toast,
   comemoracoesLigadas = () => false,
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
   baixar,
   consultas,
+  visivel = () => true,
 }: DependenciasDasAnalises & {
-  secao?: HTMLElement | null;
   areaAtual?(): unknown;
+  /** A página está à vista (a navegação diz: src/app/telas.tsx). */
+  visivel?: () => boolean;
 } = {}) {
   const estado = criarEstadoDasAnalises({
     supabase,
@@ -495,21 +495,10 @@ export function montarAnalises({
     ...(consultas ? { consultas } : {}),
     comemoracoesLigadas,
   });
-  const raiz = secao
-    ? montarModulo(
-        secao,
-        <TelaDeAnalises
-          estado={estado}
-          visivel={() => secao.classList.contains("active")}
-        />,
-        {
-          nome: "a tela de análises curriculares",
-        },
-      ).raiz
-    : null;
   return {
     estado,
-    raiz,
+    nome: "a tela de análises curriculares",
+    conteudo: <TelaDeAnalises estado={estado} visivel={visivel} />,
     render: () => estado.abrir(String(areaAtual() ?? "").trim()),
   };
 }

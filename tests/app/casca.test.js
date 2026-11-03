@@ -1,8 +1,10 @@
 import { readFileSync } from "node:fs";
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { montarCasca } from "../../src/app/casca/casca.tsx";
-import { TELAS_DA_CASCA } from "../../src/app/casca/areas-das-telas.tsx";
+import { createElement } from "react";
+import { Casca } from "../../src/app/casca/casca.tsx";
+import { TELAS_DA_CASCA } from "../../src/app/telas.tsx";
+import { desenharNoTeste } from "../montar-tela.js";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -33,11 +35,13 @@ afterEach(() => {
 function montar() {
   document.body.innerHTML =
     '<section id="appScreen" class="app hidden"></section>';
-  casca = montarCasca();
-  return document.getElementById("appScreen");
+  const raiz = document.getElementById("appScreen");
+  // Como a raiz do app (src/app/raiz.tsx): na hora, com flushSync.
+  casca = desenharNoTeste(raiz, createElement(Casca), { sincrono: true });
+  return raiz;
 }
 
-describe("montarCasca", () => {
+describe("Casca", () => {
   it("desenha na hora (sem esperar o React), dentro do #appScreen, que continua escondido", () => {
     const raiz = montar();
     // Sem act: o código seguinte de src/main.ts procura os ids logo depois.
@@ -51,11 +55,6 @@ describe("montarCasca", () => {
       raiz.querySelector(":scope > main#conteudoPrincipal.main"),
     ).not.toBeNull();
     expect(raiz.classList).toContain("hidden");
-  });
-
-  it("sem #appScreen, não monta nada", () => {
-    document.body.innerHTML = "";
-    expect(montarCasca()).toBeNull();
   });
 
   it("tem os ids que o sistema, as ilhas e o legado procuram", () => {
@@ -110,16 +109,20 @@ describe("montarCasca", () => {
       ),
     ];
     expect(secoes.map((s) => s.id)).toEqual([
-      ...TELAS_DA_CASCA,
+      ...TELAS_DA_CASCA.map((view) => `page-${view}`),
       "page-external",
       "page-config",
+      "page-sem-acesso",
     ]);
     expect(
       secoes.filter((s) => s.classList.contains("active")).map((s) => s.id),
     ).toEqual(["page-dashboard"]);
-    // As telas montam nelas: chegam vazias.
-    for (const id of TELAS_DA_CASCA)
-      expect(document.getElementById(id).childNodes, id).toHaveLength(0);
+    // Sem telas registradas (a raiz registra), as seções chegam vazias.
+    for (const view of TELAS_DA_CASCA)
+      expect(
+        document.getElementById(`page-${view}`).childNodes,
+        view,
+      ).toHaveLength(0);
   });
 
   it("os botões chamam os contratos de window na hora do clique, fechando o menu da conta como antes", () => {
@@ -169,17 +172,18 @@ describe("arranque", () => {
   const main = readFileSync("src/main.ts", "utf8");
   const indice = readFileSync("index.html", "utf8");
 
-  it("src/main.ts desenha a casca antes de ligar o sistema e montar as ilhas", () => {
-    const casca = main.indexOf("montarCasca();");
-    expect(casca).toBeGreaterThan(-1);
+  it("src/main.ts desenha a raiz (com a casca) antes de ligar o sistema e montar as ilhas", () => {
+    const raiz = main.indexOf("montarRaiz({");
+    expect(raiz).toBeGreaterThan(-1);
     for (const depois of [
       "ligarSistema();",
-      "montarEntrada();",
-      "montarBarraLateral();",
-      "montarVisaoGeral(",
+      "ligarEntradaAPagina(",
+      "montarBuscaGlobal(",
       "montarAya();",
     ])
-      expect(main.indexOf(depois), depois).toBeGreaterThan(casca);
+      expect(main.indexOf(depois), depois).toBeGreaterThan(raiz);
+    // As telas são rotas da raiz, não ilhas de src/main.ts.
+    expect(main).not.toMatch(/montar(VisaoGeral|Nucleo|BarraLateral|Casca)\(/);
   });
 
   it("o index.html só tem a raiz do #appScreen, escondida", () => {

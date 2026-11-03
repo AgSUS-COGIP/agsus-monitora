@@ -7,6 +7,10 @@
 
   - páginas: `/`, `/index.html`, `/auth/callback`, `/auth/callback.html`,
     idênticas byte a byte ao build e sem cache;
+  - as rotas do app (`/saude-indigena/cronograma`, `/paineis/<código>`,
+    `/administracao/configuracoes/<seção>`, `/sem-acesso`: src/lib/rotas.ts)
+    entregam o `index.html`, como o `rewrites` do `vercel.json` — o link
+    direto e o F5 abrem a tela, em vez de 404;
   - `/up` responde 200 (saúde para Docker e CI);
   - estáticos só das pastas e arquivos listados abaixo; todo o resto é 404,
     inclusive `/.env`, pastas e arquivos que começam com ponto;
@@ -48,6 +52,22 @@ const PAGINAS: ReadonlyMap<string, string> = new Map([
   ["/auth/callback", "auth/callback.html"],
   ["/auth/callback.html", "auth/callback.html"],
 ]);
+
+/*
+  As rotas do app (src/lib/rotas.ts, que a imagem do servidor não leva): a
+  área (ou `paineis`/`administracao`) e de uma a duas partes depois, só com
+  letras, números, hífen e sublinhado. O resto continua 404.
+*/
+const ROTA_DO_APP =
+  /^\/(?:sem-acesso|(?:saude-indigena|sede|projetos|paineis|administracao)(?:\/[A-Za-z0-9_-]+){1,3})\/?$/;
+
+/** A página do caminho: as fixas e, nas rotas do app, o `index.html`. */
+export function paginaDoCaminho(pathname: string): string | undefined {
+  return (
+    PAGINAS.get(pathname) ??
+    (ROTA_DO_APP.test(pathname) ? "index.html" : undefined)
+  );
+}
 
 const SAUDE = "/up";
 const PASTAS_ESTATICAS = new Set(["assets", "icons", "data"]);
@@ -260,7 +280,7 @@ export function criarServidor({ dist, cabecalhos }: OpcoesDoServidor): Server {
     }
     aplicarSeguranca(req, res, cabecalhos, pathname);
 
-    const pagina = PAGINAS.get(pathname);
+    const pagina = paginaDoCaminho(pathname);
     const metodoAceito = req.method === "GET" || req.method === "HEAD";
     const estatico = pagina ? null : caminhoDoEstatico(dist, pathname);
     const rotaConhecida =

@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { act } from "react";
+import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   avisar,
@@ -7,7 +7,8 @@ import {
   normalizarTom,
   redefinirAvisos,
 } from "../../src/app/avisos.ts";
-import { montarAvisos } from "../../src/app/casca/avisos.tsx";
+import { Avisos } from "../../src/app/casca/avisos.tsx";
+import { desenharNoTeste } from "../montar-tela.js";
 import { VISIVEL_DEPOIS_DE_VOLTAR_MS } from "../../src/app/casca/aviso-de-conexao.tsx";
 import { DURACAO_MS } from "../../src/app/casca/notificacoes.tsx";
 
@@ -25,7 +26,10 @@ const $ = (id) => document.getElementById(id);
 
 function montar() {
   document.body.innerHTML = '<div id="avisosApp"></div>';
-  avisos = montarAvisos();
+  // Como a raiz do app (src/app/raiz.tsx): na hora, com flushSync.
+  avisos = desenharNoTeste($("avisosApp"), createElement(Avisos), {
+    sincrono: true,
+  });
 }
 
 function online(valor) {
@@ -52,8 +56,8 @@ afterEach(() => {
   delete window.navigator.onLine;
 });
 
-describe("montarAvisos", () => {
-  it("desenha na hora, com os ids de antes, e sem #avisosApp não monta", () => {
+describe("Avisos", () => {
+  it("desenha na hora, com os ids de antes", () => {
     montar();
     // Sem act: quem vem depois em src/main.ts já acha os elementos.
     expect($("toastBox").className).toBe("toast-box");
@@ -61,11 +65,6 @@ describe("montarAvisos", () => {
     expect($("toastBox").getAttribute("aria-live")).toBe("polite");
     expect($("loader").className).toBe("loader");
     expect($("connectivityStatusNotice")).toBeNull();
-
-    act(() => avisos.desmontar());
-    document.body.innerHTML = "";
-    avisos = null;
-    expect(montarAvisos()).toBeNull();
   });
 
   it("o index.html não traz mais a marcação, só a raiz vazia", () => {

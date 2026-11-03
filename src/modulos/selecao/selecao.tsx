@@ -8,7 +8,6 @@ import type {
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { filtrosDaSelecao } from "../../lib/filtro-da-aya.ts";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { usarTemaEscuro } from "../../app/tema.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
@@ -39,7 +38,7 @@ import { MENSAGEM_SEM_VAGAS, TabelaDeVagas } from "./tabela.tsx";
   A tela de Seleção (view `selecao`), um módulo do app: monta direto na
   `<section id="page-selecao">` do index.html, como Recursos e Entrevistas. A
   navegação é dona da classe `.active` da seção e chama `render()` do
-  controlador ao navegar (tabela `TELAS_REACT` de src/app/navegacao.ts).
+  controlador ao navegar (a rota, src/app/telas.tsx).
 
   A mesma tela do antigo painel externo "AgSUS Monitora Recrutamento e
   Seleção" (Apps Script sobre a planilha Auditoria), com os dados do banco
@@ -222,12 +221,10 @@ export function TelaDeSelecao({ estado }: { estado: EstadoDaSelecao }) {
 }
 
 /**
- * Monta a tela na `<section id="page-selecao">` e devolve o controlador do
- * legado: `render()` a cada abertura (carrega a área atual do app), mais o
- * estado e a raiz do React (os testes desmontam por ela).
+ * Cria a tela (rota `selecao`, src/app/telas.tsx): o conteúdo React, o estado
+ * e `render()` a cada abertura (carrega a área atual do app).
  */
-export function montarSelecao({
-  secao = document.getElementById("page-selecao"),
+export function criarSelecao({
   supabase = getSupabaseClient(),
   toast,
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
@@ -240,14 +237,10 @@ export function montarSelecao({
     baixar,
     ...(armazenamento ? { armazenamento } : {}),
   });
-  const raiz = secao
-    ? montarModulo(secao, <TelaDeSelecao estado={estado} />, {
-        nome: "a tela de seleção",
-      }).raiz
-    : null;
   return {
     estado,
-    raiz,
+    nome: "a tela de seleção",
+    conteudo: <TelaDeSelecao estado={estado} />,
     render() {
       return estado.carregar(String(areaAtual() ?? "").trim());
     },

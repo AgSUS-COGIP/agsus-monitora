@@ -180,6 +180,9 @@ function montar({
     telaPermitida: (tela) => tela !== "proibida",
     definir: (tela) => (view = tela),
   };
+  // A entrada abre a tela de entrada; reabrir é a tela de agora de novo.
+  navegacao.abrirEntrada = vi.fn(() => navegacao.irPara(telaDeEntrada));
+  navegacao.reabrir = vi.fn(() => navegacao.irPara(view));
   const copia = {
     ler: vi.fn(async () => copiaGuardada),
     guardar: vi.fn(async () => {}),
