@@ -7,20 +7,18 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
-import {
-  clicar,
-  digitar,
-  escolher,
-  esperar,
-} from "../componentes/interacoes.js";
+import { createElement } from "react";
+import { createRoot } from "react-dom/client";
+import { criarEstadoDaAvaliacao } from "../../src/modulos/avaliacao-documental/estado.ts";
+import { EtapaDaAvaliacao } from "../../src/modulos/regras-do-edital/etapas.tsx";
+import { clicar, digitar, esperar } from "../componentes/interacoes.js";
 
 /*
   Incidente de 13/10/2026 (114/2026): a regra editada no assistente se perdeu
   ao recarregar. Agora o rascunho da aba Regra é guardado a cada mudança
   (salvar_rascunho_regra) e volta ao abrir: "Continuar de onde parei" ou
   "Descartar"; a versão de onde ele partiu aparece se outra pessoa salvou no
-  meio; salvar a versão nova apaga o rascunho; o F5 e o "Atualizar" avisam.
+  meio; salvar a versão nova apaga o rascunho; o F5 avisa.
 */
 
 const PROJ = JSON.parse(
@@ -127,33 +125,38 @@ function supabaseFalso({ versao = 2, guardado = null } = {}) {
 let secao;
 let painel;
 let guarda;
-let confirmar;
 
+/*
+  O editor da regra mora nas Regras do edital (Editais › Regras do edital,
+  etapa 2) desde 03/11/2026: monta a etapa com a loja da Avaliação e um
+  rascunho com a guarda e o atraso do teste.
+*/
 async function montar(supabase) {
   secao = document.createElement("section");
-  secao.id = "page-avaliacao-documental";
+  secao.id = "page-nucleo";
   document.body.append(secao);
   guarda = criarGuardaDeAlteracoes({ janela: window });
-  confirmar = vi.fn(() => true);
-  await act(async () => {
-    painel = montarAvaliacaoDocumental({
+  const rascunho = criarRascunhoDaRegra({
+    tipo: "ANALISE",
+    supabase,
+    atrasoMs: 0,
+    guarda,
+    janela: null,
+  });
+  const lojas = {
+    avaliacao: criarEstadoDaAvaliacao({
       supabase,
       toast: vi.fn(),
-      confirmar,
-      rascunho: criarRascunhoDaRegra({
-        tipo: "ANALISE",
-        supabase,
-        atrasoMs: 0,
-        guarda,
-        janela: null,
-      }),
-    });
-  });
-  await act(async () => void painel.render());
+      aoGravarVersao: (editalId) => void rascunho.esquecer(editalId),
+    }),
+    rascunhoDaAvaliacao: rascunho,
+  };
+  const raiz = createRoot(secao);
+  painel = { raiz };
+  await act(async () =>
+    raiz.render(createElement(EtapaDaAvaliacao, { lojas, editalId: "e114" })),
+  );
   await esperar();
-  await escolher(secao.querySelector(".avd-edital select"), "e114");
-  await esperar();
-  act(() => painel.estado.mudarVisao("regra"));
   await esperar();
   await esperar();
 }
@@ -295,12 +298,6 @@ describe("rascunho guardado da regra", () => {
       p_versao_base: 2,
     });
     expect(sair()).toBe(true);
-    // "Atualizar" da tela avisa antes; recusado, nada é relido.
-    confirmar.mockReturnValue(false);
-    const antes = chamadas(supabase, "listar_editais_avaliacao").length;
-    await clicar(secao.querySelector("[data-acao='atualizar']"));
-    expect(confirmar).toHaveBeenCalled();
-    expect(chamadas(supabase, "listar_editais_avaliacao")).toHaveLength(antes);
     // Salvar a versão nova apaga o rascunho antes de a aba remontar.
     await clicar(secao.querySelector("[data-passo='conferir']"));
     await digitar(
