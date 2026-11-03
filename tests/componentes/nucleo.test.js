@@ -285,7 +285,6 @@ afterEach(async () => {
   controlador = null;
   await act(async () => redefinirDadosDoMonitoramento());
   document.body.innerHTML = "";
-  delete window.aprovadosController;
   vi.restoreAllMocks();
 });
 

@@ -73,7 +73,7 @@ import { VistaDaLista, VistaDaSemana } from "./vistas.tsx";
   Leitura, em calendário, dos cronogramas que se cadastram em Editais: esta
   tela não escreve nada. O React é dono de tudo dentro da `<section>`; o
   legado só troca a classe `.active` dela e chama `render()` do controlador
-  (`window.calendarioEditaisController`) ao abrir a página.
+  (a rota, src/app/telas.tsx) ao abrir a página.
 
   Padrão das telas de src/modulos/: topo com a data da carga e Atualizar;
   filtros recolhíveis (nascem recolhidos); o mês, as próximas etapas e a linha
@@ -588,9 +588,9 @@ export function CalendarioEditais({
 }
 
 /**
- * Monta o Cronograma em `#page-calendario` e devolve o controlador que o
- * legado chama (`window.calendarioEditaisController`): `render()` ao abrir a
- * página, `recarregar()` para ignorar o cache.
+ * Cria o Cronograma (rota `calendario`, src/app/telas.tsx): o conteúdo React
+ * e o controlador — `render()` ao abrir a página, `recarregar()` para
+ * ignorar o cache.
  */
 export function criarCalendarioEditais({
   supabase = getSupabaseClient(),

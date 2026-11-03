@@ -28,8 +28,8 @@ import {
   Estado da Lista de Aprovados, fora do React: os candidatos, as listas e a
   configuração de convocação que o banco devolve, qual modal está aberto, e as
   ações que escrevem no banco. Os componentes leem com `useSyncExternalStore`;
-  o legado chega aqui pelo controlador de `lista-aprovados.tsx`
-  (`window.aprovadosController`). Este arquivo não importa React.
+  a rota chega aqui pelo controlador de `lista-aprovados.tsx`
+  (`criarListaAprovados`, src/app/telas.tsx). Este arquivo não importa React.
 
   As duas abas da página — aprovados e convocação — leem os MESMOS candidatos.
   É o que as faz andarem juntas sem sincronização nenhuma: mudar o status de

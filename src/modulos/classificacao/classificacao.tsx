@@ -35,7 +35,7 @@ import "./classificacao.css";
   A tela de Classificação (view `classificacao`), módulo do app: monta direto
   na `<section id="page-classificacao">` do index.html, como Seleção e
   Entrevistas. A navegação é dona da classe `.active` da seção e chama `render()`
-  do controlador ao navegar (tabela `TELAS_REACT` de src/app/navegacao.ts).
+  do controlador ao navegar (a rota, src/app/telas.tsx).
 
   - Área: a área atual do app; trocar de área com a tela aberta recarrega.
   - Edital: escolhido no topo; a regra é DESTE edital (decidida pelo gestor).
@@ -280,8 +280,8 @@ export function TelaDeClassificacao({
 }
 
 /**
- * Monta a tela na `<section id="page-classificacao">` e devolve o
- * controlador do legado: `render()` a cada abertura (carrega a área atual).
+ * Cria a tela (rota `classificacao`, src/app/telas.tsx): o conteúdo React e o
+ * controlador: `render()` a cada abertura (carrega a área atual).
  */
 export function criarClassificacao({
   supabase = getSupabaseClient(),

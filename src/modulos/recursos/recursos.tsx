@@ -352,11 +352,10 @@ export function TelaDeRecursos({
 }
 
 /**
- * Monta a tela (o Painel de recursos na `<section id="page-recursos">`; com
- * `modo: "analise"`, Analisar recursos na `#page-analisar-recursos`) e devolve
- * o controlador do legado: `render()` a cada abertura (carrega a área atual do
- * app e relê as comemorações), mais o estado e a raiz do React (os testes
- * desmontam por ela).
+ * Cria a tela (rota `recursos`, o Painel de recursos; com `modo: "analise"`,
+ * a rota `analisar-recursos`, src/app/telas.tsx): o conteúdo React, o estado e
+ * `render()` a cada abertura (carrega a área atual do app e relê as
+ * comemorações).
  */
 export function criarRecursos({
   modo = "painel",

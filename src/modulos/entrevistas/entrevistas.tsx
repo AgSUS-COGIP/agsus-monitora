@@ -50,7 +50,7 @@ import "./entrevistas.css";
   coordenação), um módulo do app: monta direto na
   `<section id="page-entrevistas">` do index.html, como Recursos. A navegação
   é dona da classe `.active` da seção e chama `render()` do controlador ao
-  navegar (tabela `TELAS_REACT` de src/app/navegacao.ts).
+  navegar (a rota, src/app/telas.tsx).
 
   Fazer é em outra entrada do menu: "Conduzir entrevistas" (view
   `conduzir-entrevistas`, conduzir.tsx) — a fila do dia, a ficha de notas, o
@@ -316,9 +316,9 @@ export function TelaDeEntrevistas({
 }
 
 /**
- * Monta a tela na `<section id="page-entrevistas">` e devolve o controlador
- * do legado: `render()` a cada abertura (carrega a área atual do app e relê
- * as comemorações), o estado e a raiz do React (os testes desmontam por ela).
+ * Cria a tela (rota `entrevistas`, src/app/telas.tsx): o conteúdo React e o
+ * controlador: `render()` a cada abertura (carrega a área atual do app e relê
+ * as comemorações) e o estado.
  */
 export function criarEntrevistas({
   supabase = getSupabaseClient(),

@@ -478,8 +478,8 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
 }
 
 /**
- * Monta a página em `#page-nucleo` e devolve o controlador que o legado chama
- * (`window.nucleoController`): `render()` ao abrir a página.
+ * Cria Editais (rota `nucleo`, src/app/telas.tsx, no pacote principal): o
+ * conteúdo React e o controlador — `render()` ao abrir a página.
  */
 export function criarNucleo({
   supabase = getSupabaseClient(),

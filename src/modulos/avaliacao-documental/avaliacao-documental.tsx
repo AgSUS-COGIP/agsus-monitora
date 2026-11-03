@@ -52,7 +52,7 @@ import "./ficha/ficha.css";
   A tela Avaliação documental (view `avaliacao-documental`), módulo do app:
   monta direto na `<section id="page-avaliacao-documental">` do index.html. A
   navegação é dona da classe `.active` e chama `render()` ao navegar (tabela
-  `TELAS_REACT` de src/app/navegacao.ts).
+  a rota de src/app/telas.tsx).
 
   Fases F1 a F3 (docs/analises-no-monitora/plano-de-construcao.md): escolha
   do edital (só os vigentes, com "Mostrar todos os editais da área"), a regra
@@ -443,8 +443,8 @@ export function criarAtualizacao({
 }
 
 /**
- * Monta a tela na `<section id="page-avaliacao-documental">` e devolve o
- * controlador do legado: `render()` a cada abertura e no "Atualizar dados"
+ * Cria a tela (rota `avaliacao-documental`, src/app/telas.tsx): o conteúdo React e o
+ * controlador: `render()` a cada abertura e no "Atualizar dados"
  * do app (relê a área atual e a aba aberta).
  */
 export function criarAvaliacaoDocumental({

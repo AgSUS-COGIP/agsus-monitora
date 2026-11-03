@@ -38,7 +38,7 @@ import { MENSAGEM_SEM_VAGAS, TabelaDeVagas } from "./tabela.tsx";
   A tela de Seleção (view `selecao`), um módulo do app: monta direto na
   `<section id="page-selecao">` do index.html, como Recursos e Entrevistas. A
   navegação é dona da classe `.active` da seção e chama `render()` do
-  controlador ao navegar (tabela `TELAS_REACT` de src/app/navegacao.ts).
+  controlador ao navegar (a rota, src/app/telas.tsx).
 
   A mesma tela do antigo painel externo "AgSUS Monitora Recrutamento e
   Seleção" (Apps Script sobre a planilha Auditoria), com os dados do banco
@@ -221,9 +221,8 @@ export function TelaDeSelecao({ estado }: { estado: EstadoDaSelecao }) {
 }
 
 /**
- * Monta a tela na `<section id="page-selecao">` e devolve o controlador do
- * legado: `render()` a cada abertura (carrega a área atual do app), mais o
- * estado e a raiz do React (os testes desmontam por ela).
+ * Cria a tela (rota `selecao`, src/app/telas.tsx): o conteúdo React, o estado
+ * e `render()` a cada abertura (carrega a área atual do app).
  */
 export function criarSelecao({
   supabase = getSupabaseClient(),
