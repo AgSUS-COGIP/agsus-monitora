@@ -9,8 +9,10 @@ import type {
   estado do carregamento. O que é só da tela (mês à vista, filtros, dia aberto)
   fica no componente. Este arquivo não importa React.
 
-  Esta tela não escreve nada. Ela apenas reorganiza, por data, as etapas que já
-  existem nos cronogramas de Editais (src/modulos/editais/), quem edita.
+  As etapas não são escritas aqui: a tela reorganiza, por data, as que já
+  existem nos cronogramas de Editais (src/modulos/editais/), quem edita. As
+  demandas internas vêm no mesmo carregamento e são escritas pela tela
+  (demandas-internas.tsx), que devolve a demanda salva por guardarDemanda.
 
   CUSTO DE REDE — ler antes de mexer no carregamento.
   Há duas fontes possíveis:
@@ -30,6 +32,12 @@ import type {
 
 import { exigirSessao } from "../../lib/sessao";
 import {
+  comDemanda,
+  LISTA_DE_DEMANDAS_VAZIA,
+  lerDemandasInternas,
+} from "../../lib/demandas-internas.ts";
+import type { ListaDeDemandas } from "../../lib/demandas-internas.ts";
+import {
   comLimite,
   editaisComCronograma,
   montarEtapasDosEditais,
@@ -40,6 +48,8 @@ const RPC_RESUMO = "get_nucleo_cronograma_resumo";
 const RPC_CRONOGRAMA = "get_monitoramento_cronograma";
 /** Todas as etapas num pedido só (migration 20260924170000). */
 const RPC_TODAS_AS_ETAPAS = "listar_etapas_do_cronograma";
+/** Demandas internas (migration 20261104120000), no mesmo carregamento. */
+const RPC_DEMANDAS = "listar_demandas_internas";
 
 /*
   Pedidos simultâneos ao Supabase. Acima disto o navegador enfileira à toa.
@@ -57,6 +67,8 @@ const ESTADO_INICIAL: SnapshotDoCalendario = Object.freeze({
   /** Quando a última carga chegou (ISO), para a data discreta do topo. */
   carregadoEm: "",
   erro: "",
+  demandas: Object.freeze([]),
+  podeCriarEm: Object.freeze([]),
 });
 
 export function criarEstadoDoCalendario({
@@ -111,19 +123,35 @@ export function criarEstadoDoCalendario({
     });
   }
 
+  /*
+    As demandas internas são um extra: banco sem a RPC (PGRST202), sem
+    permissão ou qualquer falha deixam o calendário só com as etapas.
+  */
+  async function buscarDemandas(): Promise<ListaDeDemandas> {
+    try {
+      const resposta = await supabase!.rpc(RPC_DEMANDAS);
+      return resposta.error
+        ? LISTA_DE_DEMANDAS_VAZIA
+        : lerDemandasInternas(resposta.data);
+    } catch {
+      return LISTA_DE_DEMANDAS_VAZIA;
+    }
+  }
+
   async function buscar() {
     if (!supabase) throw new Error("Supabase indisponível.");
     await exigirSessao(supabase);
-    // O resumo e as etapas não dependem um do outro: saem juntos.
-    const [resumo, todas] = await Promise.all([
+    // O resumo, as etapas e as demandas não dependem um do outro: saem juntos.
+    const [resumo, todas, demandas] = await Promise.all([
       supabase.rpc(RPC_RESUMO),
       supabase.rpc(RPC_TODAS_AS_ETAPAS),
+      buscarDemandas(),
     ]);
     if (resumo.error) throw resumo.error;
 
     const editais = editaisComCronograma(resumo.data);
     const blocos = await buscarEtapasDosEditais(editais, todas);
-    return montarEtapasDosEditais(editais, blocos);
+    return { ...montarEtapasDosEditais(editais, blocos), ...demandas };
   }
 
   async function carregar(forcar = false) {
@@ -138,11 +166,14 @@ export function criarEstadoDoCalendario({
     publicar({ carregando: true, erro: "" });
     emVoo = (async () => {
       try {
-        const { etapas, editais, falhas } = await buscar();
+        const { etapas, editais, falhas, demandas, podeCriarEm } =
+          await buscar();
         carregadoEm = relogio();
         publicar({
           etapas,
           editais,
+          demandas,
+          podeCriarEm,
           carregando: false,
           carregado: true,
           carregadoEm: new Date(relogio()).toISOString(),
@@ -178,6 +209,14 @@ export function criarEstadoDoCalendario({
     /* O cronograma mudou noutra tela: o que está aqui ficou velho. */
     invalidar() {
       carregadoEm = 0;
+    },
+    guardarDemanda(demanda) {
+      publicar({ demandas: comDemanda(estado.demandas, demanda) });
+    },
+    tirarDemanda(id) {
+      publicar({
+        demandas: estado.demandas.filter((demanda) => demanda.id !== id),
+      });
     },
   };
 }

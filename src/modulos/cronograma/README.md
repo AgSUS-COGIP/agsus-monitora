@@ -12,6 +12,8 @@ ignorar o cache. A área vem do app e recorta os editais já carregados.
 | `estado.ts`              | Store externo, sessão, carga, cache e aviso de falhas parciais        |
 | `tipos.ts`               | Cliente de leitura, snapshot, filtros, etapas e células normalizadas  |
 | `cronograma.css`         | Estilos próprios do módulo                                            |
+| `demandas-internas.tsx`  | Card, detalhe, formulário e exclusão das demandas internas            |
+| `demandas-internas.css`  | Estilos das demandas internas (cor `--etapa-demanda`)                 |
 
 As regras puras estão em `src/lib/calendario-editais.ts`. Classificação de etapas e
 plausibilidade das datas continuam nos helpers compartilhados `etapas-de-edital.ts`
@@ -81,3 +83,19 @@ snapshots. `tests/componentes/calendario-editais.test.js` verifica navegação p
 intervalos, concorrência e falhas; `tests/calendario-editais-lista.test.js`, as regras
 da Lista, da Semana e dos marcos do Mês (pontas do dia, "Acontecendo agora", ordem no dia, bordas de mês e de fuso). As regras compartilhadas são verificadas também por
 `tests/etapas-de-edital.test.js` e `tests/datas-do-cronograma.test.js`.
+
+## Demandas internas
+
+Itens próprios da equipe (migration `20261104120000_cronograma_demandas_internas`):
+título, descrição, data única ou período, área, edital opcional, responsáveis e
+conclusão. Chegam no mesmo carregamento (`listar_demandas_internas`, junto com o
+resumo e as etapas; sem a RPC, o calendário segue só com as etapas) e entram nas
+vistas como etapas do tipo **Demanda interna** (`src/lib/demandas-internas.ts`),
+com cor própria e item na legenda/filtro de tipos. Em aberto com o último dia no
+passado = **Atrasada** (escrito no nome e no card); "Ocultar concluídas" esconde
+só as marcadas como concluídas. O card "Demandas internas" lista as da área; o
+detalhe mostra os responsáveis e, para quem pode (gestor da área ou administrador
+global, decidido pelo banco em `pode_editar`/`pode_criar_em`), Concluir/Reabrir,
+Editar e Excluir (lógica). "Nova demanda" aparece só onde a pessoa pode criar.
+Os responsáveis pelo edital ficam no formulário do edital
+(`src/modulos/editais/responsaveis-do-edital.tsx`).

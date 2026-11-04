@@ -56,6 +56,7 @@ import {
   proximaDataDaEtapa,
   proximasEtapas as etapasNaOrdemDaProximaData,
 } from "./datas-do-cronograma.ts";
+import { TIPO_DEMANDA_INTERNA } from "./demandas-internas.ts";
 
 export { editaisComDatasARevisar };
 
@@ -92,8 +93,15 @@ const DIAS_EXTENSO = Object.freeze([
   "Sábado",
 ]);
 
-/** A legenda e o filtro de tipo: os tipos conhecidos e, por último, "Outros". */
-export const TIPOS_DA_LEGENDA = Object.freeze([...TIPOS_DE_ETAPA, TIPO_OUTROS]);
+/**
+ * A legenda e o filtro de tipo: os tipos conhecidos, a demanda interna
+ * (src/lib/demandas-internas.ts) e, por último, "Outros".
+ */
+export const TIPOS_DA_LEGENDA = Object.freeze([
+  ...TIPOS_DE_ETAPA,
+  TIPO_DEMANDA_INTERNA,
+  TIPO_OUTROS,
+]);
 
 /** O bloco compacto de próximas etapas, embaixo do Mês. */
 export const PROXIMAS_NO_PAINEL = 5;
@@ -306,7 +314,15 @@ export function filtrarEtapas(
     if (ocultos.has(etapa.tipo.id)) return false;
     if (termos.length && !termos.every((termo) => etapa.busca.includes(termo)))
       return false;
-    if (opcoes.ocultarConcluidas && etapaConcluida(etapa, hoje)) return false;
+    /*
+      Concluída: a etapa de edital que já passou; a demanda interna, só a
+      marcada como concluída — uma atrasada nunca some.
+    */
+    if (
+      opcoes.ocultarConcluidas &&
+      (etapa.demandaId ? etapa.concluida : etapaConcluida(etapa, hoje))
+    )
+      return false;
     return true;
   });
 }
