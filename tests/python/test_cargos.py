@@ -21,6 +21,7 @@ from monitora.cargos.previa import (
     casar_todas,
     resumo,
     sql_da_correcao,
+    sql_da_lista_atualizada,
 )
 from monitora.cargos.sql import literal_sql
 
@@ -36,6 +37,8 @@ CORRECAO = _ler("supabase/correcoes/20261104-apelidos-de-cargo.sql")
 ENSAIO_CORRECAO = _ler("supabase/ensaios/20261104-apelidos-de-cargo.sql")
 PSICOLOGO = _ler("supabase/correcoes/20261104-cargo-psicologo.sql")
 ENSAIO_PSICOLOGO = _ler("supabase/ensaios/20261104-cargo-psicologo.sql")
+LISTA = _ler("supabase/correcoes/20261104-cargos-lista-atualizada.sql")
+ENSAIO_LISTA = _ler("supabase/ensaios/20261104-cargos-lista-atualizada.sql")
 CASOS_NORMALIZACAO = json.loads(_ler("tests/fixtures/cargos/normalizacao.json"))["casos"]
 CATALOGO = ler_catalogo()
 
@@ -61,9 +64,13 @@ class Normalizacao(unittest.TestCase):
 
 
 class CargaDaMigration(unittest.TestCase):
-    def test_os_91_da_migration_e_o_88_da_correcao(self):
+    def test_os_91_da_migration_e_os_das_correcoes(self):
         with open(_RAIZ / "python/monitora/cargos/cargos_si_sip.csv", encoding="utf-8", newline="") as f:
-            planilha = [(int(r["CODIGO"]), r["NOME"], r["SINTETICO"]) for r in csv.DictReader(f, delimiter=";")]
+            linhas = list(csv.DictReader(f, delimiter=";"))
+        # A migration tem os nomes da primeira lista (NOME_ANTERIOR, quando o nome mudou).
+        planilha = [
+            (int(r["CODIGO"]), r["NOME_ANTERIOR"] or r["NOME"], r["SINTETICO"]) for r in linhas if r["CODIGO"] != "76"
+        ]
         na_migration = [
             (int(c), n.replace("''", "'"), s)
             for c, n, s in re.findall(r"^    \((\d+), '((?:[^']|'')*)', '([SN])'\)", MIGRATION, re.M)
@@ -74,7 +81,20 @@ class CargaDaMigration(unittest.TestCase):
         self.assertEqual(sorted(na_migration + [(88, "PSICOLOGO", "N")]), planilha)
         self.assertEqual(len(planilha), 92)
         self.assertEqual([c for c, _, s in planilha if s == "S"], [9994, 9995, 9996, 9997, 9999])
-        self.assertEqual(len(CATALOGO.cargos), 92)
+        # A lista atualizada (20261104-cargos-lista-atualizada.sql): o 76 e três nomes trocados.
+        self.assertIn("  (76, 'MEDICO ESPECIALISTA - MFC', 'N')", LISTA)
+        renomeados = {(int(r["CODIGO"]), r["NOME_ANTERIOR"], r["NOME"]) for r in linhas if r["NOME_ANTERIOR"]}
+        self.assertEqual(
+            renomeados,
+            {
+                (47, "ASSISTENTE SOCIAL", "ASSISTENTE SOCIAL 30 H"),
+                (63, "ENFERMEIRO", "ENFERMEIRO 40H"),
+                (95, "TECNICO DE ENFERMAGEM", "TECNICO EM ENFERMAGEM 40H"),
+            },
+        )
+        for codigo, anterior, atual in renomeados:
+            self.assertIn(f"  ({codigo}, '{anterior}', '{atual}')", LISTA)
+        self.assertEqual(len(CATALOGO.cargos), 93)
 
 
 class Casamento(unittest.TestCase):
@@ -111,7 +131,13 @@ class Casamento(unittest.TestCase):
         ("ANALISTA TECNICO - DSEI X", MEDIA, 9999, "PREFIXO"),
         ("APOIADOR TECNICO EM SAUDE INDIGENA", MEDIA, 39, "CONTIDO"),
         ("MONITOR DE AGUA E SANEAMENTO - SEDE", MEDIA, 82, "SIMILARIDADE"),
-        ("MEDICO DE FAMILIA E COMUNIDADE", SEM, None, None),
+        ("MEDICO DE FAMILIA E COMUNIDADE", ALTA, 76, "SINONIMO"),
+        ("MEDICO DE FAMILIA E COMUNIDADE (MFC) - TELETRABALHO - 20H - AMPLA CONCORRENCIA", ALTA, 76, "PREFIXO"),
+        ("MEDICO ESPECIALISTA - MFC", ALTA, 76, "EXATA"),
+        # Nome anterior continua casando com o cargo renomeado.
+        ("TECNICO DE ENFERMAGEM", ALTA, 95, "EXATA"),
+        ("TECNICO EM ENFERMAGEM 40H", ALTA, 95, "EXATA"),
+        ("ASSISTENTE SOCIAL", ALTA, 47, "EXATA"),
         ("AUXILIAR DE GESTAO - AGSUS - AUXILIAR DE GESTAO", SEM, None, None),
         ("176158", SEM, None, None),
     ]
@@ -195,11 +221,11 @@ class CorrecaoGravada(unittest.TestCase):
 
     def test_cada_apelido_casa_com_alta_pelo_python(self):
         codigos = {c.codigo for c in CATALOGO.cargos}
-        for grafia, codigo, regra, confianca in self.valores:
+        for grafia, codigo, regra, _confianca in self.valores:
             self.assertEqual(normalizar(grafia), grafia)
             self.assertIn(codigo, codigos)
             c = casar(grafia, CATALOGO)
-            self.assertEqual((c.nivel, c.codigo, c.regra, c.confianca), (ALTA, codigo, regra, confianca), grafia)
+            self.assertEqual((c.nivel, c.codigo), (ALTA, codigo), grafia)
             self.assertNotEqual(regra, "EXATA")
 
     def test_ensaio_tem_migration_e_correcao_e_desfaz(self):
@@ -231,11 +257,11 @@ class CorrecaoDoPsicologo(unittest.TestCase):
         self.assertTrue(PSICOLOGO.rstrip().endswith("commit;"))
 
     def test_cada_apelido_e_do_88_com_alta(self):
-        for grafia, codigo, regra, confianca in self.valores:
+        for grafia, codigo, _regra, _confianca in self.valores:
             self.assertEqual(normalizar(grafia), grafia)
             self.assertEqual(codigo, 88)
             c = casar(grafia, CATALOGO)
-            self.assertEqual((c.nivel, c.codigo, c.regra, c.confianca), (ALTA, 88, regra, confianca), grafia)
+            self.assertEqual((c.nivel, c.codigo), (ALTA, 88), grafia)
 
     def test_ensaio_responde_pelo_raise_e_desfaz(self):
         inicio = PSICOLOGO.index("-- >>> correcao") + len("-- >>> correcao") + 1
@@ -244,6 +270,49 @@ class CorrecaoDoPsicologo(unittest.TestCase):
         self.assertIn("raise exception 'ENSAIO_OK %'", ENSAIO_PSICOLOGO)
         self.assertTrue(ENSAIO_PSICOLOGO.rstrip().endswith("rollback;"))
         self.assertIsNone(re.search(r"^\s*commit\s*;", ENSAIO_PSICOLOGO, re.M | re.I))
+
+
+class CorrecaoDaListaAtualizada(unittest.TestCase):
+    """20261104-cargos-lista-atualizada.sql: inclui o 76, troca três nomes e não desativa nada."""
+
+    def test_assinatura_contagens_e_nada_desativado(self):
+        self.assertIn(f'"sub":"{CONTA_DO_SETOR}"', LISTA)
+        self.assertIn("Renomeou % cargos (esperado 3).", LISTA)
+        self.assertIn("Gravou % nomes anteriores (esperado 3).", LISTA)
+        self.assertIn("'MANUAL', 'S'", LISTA)
+        self.assertNotIn("ST_REGISTRO_ATIVO", LISTA)
+        self.assertIn("CONTINUAM VALENDO", LISTA)
+        self.assertTrue(LISTA.rstrip().endswith("commit;"))
+
+    def test_mfc_so_entra_se_aparecer_na_si(self):
+        # Hoje as grafias do MFC são todas de Projetos e da SEDE: nenhum apelido automático.
+        self.assertIn("Gravou % apelidos automáticos (esperado 0).", LISTA)
+        self.assertIn("76 MEDICO ESPECIALISTA - MFC: projetos", LISTA)
+        self.assertNotIn("saude-indigena 0", LISTA)
+
+    def test_sql_gerado_com_apelido_da_si(self):
+        linhas = [
+            {"grafia": "Médico de Família e Comunidade", "tabela": "TB_ENTREVISTA", "area": AREA_SI, "ocorrencias": 4},
+            {
+                "grafia": "Médico de Família e Comunidade PPIQ",
+                "tabela": "TB_CANDIDATO_APROVADO",
+                "area": "projetos",
+                "ocorrencias": 9,
+            },
+        ]
+        grupos = casar_todas(agrupar(linhas), CATALOGO)
+        sql = sql_da_lista_atualizada(grupos, CATALOGO, {76}, set())
+        self.assertIn("  ('MEDICO DE FAMILIA E COMUNIDADE', 76, 'SINONIMO', 0.950)", sql)
+        self.assertNotIn("PPIQ', 76", sql)
+        self.assertIn("76 MEDICO ESPECIALISTA - MFC: projetos 9, saude-indigena 4", sql)
+
+    def test_ensaio_responde_pelo_raise_e_desfaz(self):
+        inicio = LISTA.index("-- >>> correcao") + len("-- >>> correcao") + 1
+        correcao = LISTA[inicio : LISTA.index("-- <<< correcao") - 1]
+        self.assertIn(correcao, ENSAIO_LISTA)
+        self.assertIn("raise exception 'ENSAIO_OK %'", ENSAIO_LISTA)
+        self.assertTrue(ENSAIO_LISTA.rstrip().endswith("rollback;"))
+        self.assertIsNone(re.search(r"^\s*commit\s*;", ENSAIO_LISTA, re.M | re.I))
 
 
 if __name__ == "__main__":

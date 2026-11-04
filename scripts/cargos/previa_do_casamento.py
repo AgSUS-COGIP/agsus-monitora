@@ -14,6 +14,9 @@ Como rodar:
      ou, para incluir um cargo que faltava na planilha (já posto em cargos_si_sip.csv):
        --incluir-cargo 88 --ja-gravados apelidos.json --correcao supabase/correcoes/20261104-cargo-psicologo.sql
        --ensaio-da-correcao supabase/ensaios/20261104-cargo-psicologo.sql
+     ou, para a lista atualizada da planilha (cargos novos e nomes trocados, NOME_ANTERIOR do CSV):
+       --lista-atualizada 76 --ja-gravados apelidos.json --correcao supabase/correcoes/20261104-cargos-lista-atualizada.sql
+       --ensaio-da-correcao supabase/ensaios/20261104-cargos-lista-atualizada.sql
      (apelidos.json: select "DS_GRAFIA_NORMALIZADA" g from public."TD_CARGO_APELIDO", só leitura)
 
 Saída na pasta: casadas.csv (alta), sugestoes.csv (média), sem-casamento.csv e resumo.txt, por
@@ -37,6 +40,7 @@ from monitora.cargos.previa import (  # noqa: E402
     escrever_csv,
     sql_da_correcao,
     sql_da_inclusao_de_cargo,
+    sql_da_lista_atualizada,
     texto_do_resumo,
 )
 
@@ -139,6 +143,52 @@ rollback;
 """
 
 
+def ensaio_da_lista_atualizada(sql_correcao):
+    """Ensaio da correção da lista atualizada: o corpo e as conferências; o resultado sai no
+    raise exception 'ENSAIO_OK …', que desfaz tudo (e o rollback do fim, por garantia)."""
+    corpo_correcao = sql_correcao.split("-- >>> correcao", 1)[1].split("-- <<< correcao", 1)[0].strip("\n")
+    return f"""-- ENSAIO de supabase/correcoes/20261104-cargos-lista-atualizada.sql: roda a correção e desfaz. O
+-- resultado vem no erro 'ENSAIO_OK {{json}}' (o raise desfaz tudo); qualquer outro erro reprova. Pede a
+-- migration 20261104150000 e as correções 20261104-apelidos-de-cargo e 20261104-cargo-psicologo aplicadas.
+begin;
+
+set local statement_timeout = '120s';
+
+-- ═══ CORPO DA CORREÇÃO (início) ═══
+{corpo_correcao}
+-- ═══ CORPO DA CORREÇÃO (fim) ═══
+
+do $$
+begin
+  raise exception 'ENSAIO_OK %', jsonb_build_object(
+    'cargos', (select count(*) from public."TD_CARGO"),
+    'cargos_ativos', (select count(*) from public."TD_CARGO" where "ST_REGISTRO_ATIVO" = 'S'),
+    'nomes', (select jsonb_object_agg("CO_CARGO", "NO_CARGO") from public."TD_CARGO" where "CO_CARGO" in (47, 63, 76, 95)),
+    'cargo_76', (select jsonb_build_object('sip', "CO_CARGO_SIP", 'area', "CO_AREA", 'sintetico', "ST_SINTETICO",
+                   'criado_pelo_setor', "CO_USUARIO_CRIACAO" = 'a01afddb-f64b-47d9-80e8-476a1ed14e43'::uuid)
+                   from public."TD_CARGO" where "CO_CARGO" = 76),
+    'renomeados_pelo_setor', (select bool_and("CO_USUARIO_ATUALIZACAO" = 'a01afddb-f64b-47d9-80e8-476a1ed14e43'::uuid)
+                                from public."TD_CARGO" where "CO_CARGO" in (47, 63, 95)),
+    'apelidos_total', (select count(*) from public."TD_CARGO_APELIDO"),
+    'apelidos_manuais', (select jsonb_object_agg("DS_GRAFIA_NORMALIZADA", "CO_CARGO") from public."TD_CARGO_APELIDO"
+                           where "TP_ORIGEM" = 'MANUAL'),
+    'apelidos_do_76', (select count(*) from public."TD_CARGO_APELIDO" where "CO_CARGO" = 76),
+    'exemplos', jsonb_build_object(
+      'Enfermeiro', private."FC_CARGO_DA_GRAFIA"('Enfermeiro'),
+      'Enfermeiro 40h', private."FC_CARGO_DA_GRAFIA"('Enfermeiro 40h'),
+      'Assistente Social', private."FC_CARGO_DA_GRAFIA"('Assistente Social'),
+      'Técnico de Enfermagem', private."FC_CARGO_DA_GRAFIA"('Técnico de Enfermagem'),
+      'Técnico (a) de Enfermagem', private."FC_CARGO_DA_GRAFIA"('Técnico (a) de Enfermagem'),
+      'Médico Especialista - MFC', private."FC_CARGO_DA_GRAFIA"('Médico Especialista - MFC'),
+      'Médico de Família e Comunidade (SI)', private."FC_CARGO_DA_GRAFIA"('Médico de Família e Comunidade'),
+      'Psicólogo', private."FC_CARGO_DA_GRAFIA"('Psicólogo')));
+end;
+$$;
+
+rollback;
+"""
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("--grafias", required=True)
@@ -146,6 +196,13 @@ def main(argv=None):
     p.add_argument("--correcao")
     p.add_argument("--ensaio-da-correcao")
     p.add_argument("--incluir-cargo", type=int, help="código SIP do cargo novo (correção de inclusão)")
+    p.add_argument(
+        "--lista-atualizada",
+        type=int,
+        nargs="+",
+        metavar="CODIGO",
+        help="correção da lista atualizada: os códigos dos cargos novos (os renomeados vêm do NOME_ANTERIOR)",
+    )
     p.add_argument("--ja-gravados", help="JSON com as grafias já em TD_CARGO_APELIDO ([{g: grafia}])")
     a = p.parse_args(argv)
 
@@ -158,7 +215,14 @@ def main(argv=None):
     resumo = texto_do_resumo(grupos)
     (saida / "resumo.txt").write_text(resumo + "\n", encoding="utf-8")
     print(resumo)
-    if a.correcao and a.incluir_cargo:
+    if a.correcao and a.lista_atualizada:
+        ja = {r["g"] for r in json.loads(pathlib.Path(a.ja_gravados).read_text(encoding="utf-8"))}
+        sql = sql_da_lista_atualizada(grupos, catalogo, set(a.lista_atualizada), ja)
+        pathlib.Path(a.correcao).write_text(sql, encoding="utf-8", newline="\n")
+        if a.ensaio_da_correcao:
+            ensaio = ensaio_da_lista_atualizada(sql)
+            pathlib.Path(a.ensaio_da_correcao).write_text(ensaio, encoding="utf-8", newline="\n")
+    elif a.correcao and a.incluir_cargo:
         cargo = next(c for c in catalogo.cargos if c.codigo == a.incluir_cargo)
         ja = {r["g"] for r in json.loads(pathlib.Path(a.ja_gravados).read_text(encoding="utf-8"))}
         sql = sql_da_inclusao_de_cargo(grupos, cargo, ja)
