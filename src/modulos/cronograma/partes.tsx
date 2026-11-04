@@ -2,18 +2,17 @@ import type {
   CelulaDoCalendario,
   EditalComDataARevisar,
   EtapaDoCalendario,
-  FaixaDaSemana,
+  TipoDaEtapa as TipoDaLegenda,
 } from "./tipos.ts";
-import type { MouseEvent } from "react";
-import type { MarcaNoDia } from "../../lib/calendario-editais.ts";
-import { Fragment, useMemo } from "react";
+import type { MarcaNoDia, MarcoDoDia } from "../../lib/calendario-editais.ts";
+import { Fragment } from "react";
 import { dataLocal, situacaoDaEtapa } from "../../lib/etapas-de-edital.ts";
 import {
+  CHIPS_POR_DIA,
   DIAS_SEMANA,
   dataExibidaNasProximas,
   detalheDaEtapa,
   etapasAtivasNoDia,
-  faixasDaSemana,
   formatarCurto,
   periodoDaEtapa,
   rotuloDoNumeroDoEdital,
@@ -59,41 +58,90 @@ export function Seletor({
   );
 }
 
-/** O nome inteiro da etapa, da unidade e do tipo, para o `title` da faixa. */
-const tituloDaFaixa = (etapa: EtapaDoCalendario) =>
-  `${etapa.atividade} — ${detalheDaEtapa(etapa)} (${etapa.tipo.rotulo})`;
+/*
+  A legenda dos tipos, que é também o filtro de tipo. Cada tipo é um botão de
+  ligar/desligar (`aria-pressed`), no mesmo desenho dos itens de "Fases" da
+  Visão geral: contorno quando marcado, fundo ao passar o mouse. Todos nascem
+  ligados; desligado, o tipo fica esmaecido e riscado (o estado não depende só
+  da cor). "Mostrar todos" religa tudo e só se ativa quando há algo desligado.
+*/
+export function LegendaDosTipos({
+  tipos,
+  ocultos,
+  aoAlternar,
+  aoMostrarTodos,
+}: {
+  tipos: readonly TipoDaLegenda[];
+  ocultos: readonly string[];
+  aoAlternar: (id: string) => void;
+  aoMostrarTodos: () => void;
+}) {
+  return (
+    <div
+      id="calLegenda"
+      className="cal-legenda"
+      role="group"
+      aria-label="Tipos de etapa: clique para mostrar ou esconder"
+      data-tour="cronograma-legenda"
+    >
+      {tipos.map((tipo) => {
+        const ligado = !ocultos.includes(tipo.id);
+        return (
+          <button
+            key={tipo.id}
+            type="button"
+            className="cal-legenda-item"
+            data-cor={tipo.cor}
+            data-tipo={tipo.id}
+            aria-pressed={ligado}
+            title={`${ligado ? "Esconder" : "Mostrar"} as etapas de ${tipo.rotulo}`}
+            onClick={() => aoAlternar(tipo.id)}
+          >
+            <i aria-hidden="true" />
+            {tipo.rotulo}
+          </button>
+        );
+      })}
+      <button
+        id="calLegendaTodos"
+        type="button"
+        className="btn secondary small cal-legenda-todos"
+        disabled={!ocultos.length}
+        onClick={aoMostrarTodos}
+      >
+        Mostrar todos
+      </button>
+    </div>
+  );
+}
+
+/** O nome inteiro da etapa, da unidade e do tipo, para o `title` do chip. */
+const tituloDoChip = ({ etapa, marca }: MarcoDoDia) =>
+  `${marca === "começa" ? "Início: " : marca === "último dia" ? "Fim: " : ""}${
+    etapa.atividade
+  } — ${detalheDaEtapa(etapa)} (${etapa.tipo.rotulo})`;
 
 /*
-  A grade do mês, como uma agenda: uma linha por semana; em cada uma, os sete
-  dias (botões que abrem o popup) e, por cima, as faixas das etapas, que
-  atravessam os dias do intervalo. Até três faixas por dia; o resto vira
-  "+N mais". As faixas são só para o mouse (o clique abre o dia em que se
-  clicou); para o teclado e o leitor de tela, o dia é o botão, e o rótulo dele
-  diz quantas etapas há — o popup lista todas, com o tipo escrito.
+  A grade do mês: sete colunas, seis semanas. Cada dia é um botão que abre o
+  popup e mostra, dentro dele, até três chips curtos — "Manaus – Entrevistas"
+  — só nos marcos das etapas: o dia de uma etapa de um dia, e o início e o fim
+  de uma etapa com período ("início"/"fim" escrito no chip). Os dias do meio
+  ficam sem chip: não há faixa contínua. O resto vira "+N mais". Os chips são
+  só visuais (o clique cai no botão do dia); para o teclado e o leitor de
+  tela, o rótulo do dia diz quantas etapas há e quantas estão em andamento, e
+  o popup lista todas, com o tipo escrito.
 
-  No celular as faixas não cabem: o dia mostra as bolinhas dos tipos e o total.
+  No celular os chips não cabem: o dia mostra as bolinhas dos tipos e o total.
 */
 export function GradeDoMes({
   celulas,
-  etapas,
   selecionado,
   aoEscolherDia,
 }: {
   celulas: readonly CelulaDoCalendario[];
-  etapas: readonly EtapaDoCalendario[];
   selecionado: string;
   aoEscolherDia: (chave: string) => void;
 }) {
-  const semanas = useMemo(() => {
-    const linhas: CelulaDoCalendario[][] = [];
-    for (let i = 0; i < celulas.length; i += 7)
-      linhas.push(celulas.slice(i, i + 7));
-    return linhas.map((dias) => {
-      const chaves = dias.map((celula) => celula.chave);
-      return { dias, chaves, ...faixasDaSemana(etapas, chaves) };
-    });
-  }, [celulas, etapas]);
-
   return (
     <>
       <div className="cal-semana">
@@ -102,38 +150,13 @@ export function GradeDoMes({
         ))}
       </div>
       <div className="cal-dias">
-        {semanas.map((semana) => (
-          <div key={semana.chaves[0]} className="cal-semana-linha">
-            {semana.dias.map((celula, coluna) => (
-              <CelulaDoMes
-                key={celula.chave}
-                celula={celula}
-                coluna={coluna}
-                aberto={celula.chave === selecionado}
-                aoEscolherDia={aoEscolherDia}
-              />
-            ))}
-            {semana.faixas.map((faixa) => (
-              <FaixaDaEtapa
-                key={`${faixa.etapa.editalId}:${faixa.etapa.ordem}:${faixa.etapa.data_inicio}`}
-                faixa={faixa}
-                chaves={semana.chaves}
-                aoEscolherDia={aoEscolherDia}
-              />
-            ))}
-            {semana.ocultas.map((ocultas, coluna) =>
-              ocultas ? (
-                <span
-                  key={semana.chaves[coluna]}
-                  className="cal-mais"
-                  style={{ gridColumn: coluna + 1 }}
-                  aria-hidden="true"
-                >
-                  +{ocultas} mais
-                </span>
-              ) : null,
-            )}
-          </div>
+        {celulas.map((celula) => (
+          <CelulaDoMes
+            key={celula.chave}
+            celula={celula}
+            aberto={celula.chave === selecionado}
+            aoEscolherDia={aoEscolherDia}
+          />
         ))}
       </div>
     </>
@@ -142,15 +165,15 @@ export function GradeDoMes({
 
 function CelulaDoMes({
   celula,
-  coluna,
   aberto,
   aoEscolherDia,
 }: {
   celula: CelulaDoCalendario;
-  coluna: number;
   aberto: boolean;
   aoEscolherDia: (chave: string) => void;
 }) {
+  const visiveis = celula.marcos.slice(0, CHIPS_POR_DIA);
+  const ocultos = celula.marcos.length - visiveis.length;
   return (
     <button
       type="button"
@@ -161,62 +184,55 @@ function CelulaDoMes({
         aberto && "selecionado",
         !celula.total && "vazio",
       )}
-      style={{ gridColumn: coluna + 1 }}
       data-dia={celula.chave}
       aria-label={celula.rotulo}
       aria-current={aberto ? "true" : undefined}
       onClick={() => aoEscolherDia(celula.chave)}
     >
       <span className="cal-numero">{celula.dia}</span>
-      {celula.total ? (
+      {visiveis.length ? (
+        <span className="cal-chips" aria-hidden="true">
+          {visiveis.map((marco, indice) => (
+            <ChipDaEtapa
+              key={chaveDaEtapa(marco.etapa, indice)}
+              marco={marco}
+            />
+          ))}
+          {ocultos ? <span className="cal-mais">+{ocultos} mais</span> : null}
+        </span>
+      ) : null}
+      {celula.marcos.length ? (
         <span className="cal-resumo" aria-hidden="true">
           <span className="cal-pontos">
             {celula.pontos.map(({ tipo }) => (
               <i key={tipo.id} className="cal-ponto" data-cor={tipo.cor} />
             ))}
           </span>
-          <span className="cal-resumo-total">{celula.total}</span>
+          <span className="cal-resumo-total">{celula.marcos.length}</span>
         </span>
       ) : null}
     </button>
   );
 }
 
-function FaixaDaEtapa({
-  faixa,
-  chaves,
-  aoEscolherDia,
-}: {
-  faixa: FaixaDaSemana;
-  chaves: readonly string[];
-  aoEscolherDia: (chave: string) => void;
-}) {
-  const { etapa, de, ate } = faixa;
-  // Abre o dia em que se clicou, pela posição do clique dentro da faixa.
-  function abrirDia(evento: MouseEvent<HTMLSpanElement>) {
-    const caixa = evento.currentTarget.getBoundingClientRect();
-    const dias = ate - de + 1;
-    const fracao = caixa.width
-      ? (evento.clientX - caixa.left) / caixa.width
-      : 0;
-    const coluna =
-      de + Math.min(dias - 1, Math.max(0, Math.floor(fracao * dias)));
-    aoEscolherDia(chaves[coluna] ?? chaves[de] ?? "");
-  }
+/* O chip de um marco: "início"/"fim" (quando há período) e "unidade – etapa". */
+function ChipDaEtapa({ marco }: { marco: MarcoDoDia }) {
+  const { etapa, marca } = marco;
+  const ponta =
+    marca === "começa" ? "início" : marca === "último dia" ? "fim" : "";
   return (
     <span
-      className="cal-faixa"
+      className="cal-chip"
       data-cor={etapa.tipo.cor}
-      data-inicio={chaves[de]}
-      data-fim={chaves[ate]}
-      data-continua-antes={faixa.continuaAntes || undefined}
-      data-continua-depois={faixa.continuaDepois || undefined}
-      style={{ gridColumn: `${de + 1} / ${ate + 2}`, gridRow: faixa.faixa + 2 }}
-      title={tituloDaFaixa(etapa)}
-      aria-hidden="true"
-      onClick={abrirDia}
+      data-marca={marca}
+      data-inicio={etapa.data_inicio}
+      data-fim={etapa.data_fim}
+      title={tituloDoChip(marco)}
     >
-      <b>{unidadeCurta(etapa.unidade)}</b> – {etapa.atividade}
+      {ponta ? <small className="cal-chip-ponta">{ponta}</small> : null}
+      <span className="cal-chip-texto">
+        <b>{unidadeCurta(etapa.unidade)}</b> – {etapa.atividade}
+      </span>
     </span>
   );
 }
@@ -391,7 +407,7 @@ export function LinhaDoTempo({
 /*
   Detalhe do dia em popup. Fica sobre o calendário em vez de empurrar a página
   para baixo: quem clica num dia quer ler aquelas etapas e voltar. Lista tudo o
-  que está ativo no dia — as mesmas etapas das faixas e do "+N mais" —:
+  que está ativo no dia — os chips, o "+N mais" e o que só atravessa o dia —:
   primeiro o que começa ou termina nele, depois o que só o atravessa. Escolher
   uma etapa foca o edital dela na linha do tempo e fecha o popup.
 */

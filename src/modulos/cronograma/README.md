@@ -29,12 +29,22 @@ mesmo popup do dia, que lista tudo o que está ativo naquele dia.
 própria, e o rótulo do tipo vai escrito ao lado ("● Entrevistas") — a cor
 nunca é o único sinal.
 
-- **Mês**: como uma agenda. Cada etapa é uma faixa "unidade – etapa" (sem o
-  "DSEI " da frente; o nome inteiro no `title`) que atravessa os dias do
-  intervalo, um pedaço por semana (`faixasDaSemana`). Até três faixas por dia;
-  o resto vira "+N mais", e o clique no dia abre o popup. A legenda só aparece
-  aqui. No celular as faixas não cabem: o dia mostra as bolinhas dos tipos e o
-  total. Embaixo, "Próximas etapas" (as 5 seguintes) com "Ver todas na Lista".
+**A legenda é o filtro de tipo**, nas três vistas: cada tipo é um botão de
+ligar/desligar (`aria-pressed`), no desenho dos itens de "Fases" da Visão
+geral. Todos nascem ligados; "Mostrar todos" religa tudo, e "Limpar tudo" dos
+filtros também. Os tipos desligados ficam neste navegador
+(`agsus:cronograma:tipos-ocultos`), como os filtros da Visão geral. O filtro
+entra em `filtrarEtapas`, então vale para as vistas, as contagens, "Próximas
+etapas" e o popup do dia.
+
+- **Mês**: chips curtos "unidade – etapa" (sem o "DSEI " da frente; o nome
+  inteiro no `title`), fundo neutro e borda esquerda na cor do tipo, só nos
+  marcos: o dia de uma etapa de um dia, e o início ("início") e o fim ("fim")
+  de uma etapa com período. Os dias do meio ficam sem chip — não há faixa
+  contínua (tirada em 04/11); o popup do dia mostra o que está "Em andamento
+  neste dia". Até três chips por dia (`CHIPS_POR_DIA`); o resto vira "+N
+  mais", e o clique no dia abre o popup. No celular os chips não cabem: o dia
+  mostra as bolinhas dos tipos e o total de marcos. Embaixo, "Próximas etapas" (as 5 seguintes) com "Ver todas na Lista".
 - **Lista**: um grupo por dia em que alguma etapa começa ou termina ("Ter, 3 de
   novembro"), com "início" e "último dia" em texto discreto à direita; dentro
   do dia, pela ordem da legenda e depois pela unidade. No mês de hoje ela
@@ -68,5 +78,5 @@ conferem o cliente Supabase instalado, RPCs de leitura, filtros, datas, callback
 snapshots. `tests/componentes/calendario-editais.test.js` verifica navegação por mês,
 área, cache, filtros, modal e foco. `tests/calendario-editais.test.js` cobre normalização,
 intervalos, concorrência e falhas; `tests/calendario-editais-lista.test.js`, as regras
-da Lista, da Semana e das faixas do Mês (pontas do dia, "Acontecendo agora", ordem no dia, bordas de mês e de fuso). As regras compartilhadas são verificadas também por
+da Lista, da Semana e dos marcos do Mês (pontas do dia, "Acontecendo agora", ordem no dia, bordas de mês e de fuso). As regras compartilhadas são verificadas também por
 `tests/etapas-de-edital.test.js` e `tests/datas-do-cronograma.test.js`.

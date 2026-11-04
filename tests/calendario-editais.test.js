@@ -79,8 +79,11 @@ describe("normalização das respostas do calendário", () => {
       hoje: true,
       total: 1,
     });
-    // O dia do meio do intervalo também conta: a faixa passa por ele.
-    expect(grade.find((c) => c.chave === "2026-09-16")?.total).toBe(1);
+    // O dia do meio conta como ativo (o popup lista), mas não tem chip.
+    expect(grade.find((c) => c.chave === "2026-09-16")).toMatchObject({
+      total: 1,
+      marcos: [],
+    });
     expect(etapasAtivasNoDia(etapas, "2026-09-15")[0].marca).toBe("começa");
     expect(etapasAtivasNoDia(etapas, "2026-09-16")[0].marca).toBe(
       "em andamento",
