@@ -186,15 +186,18 @@ export function VistaDaSemana({
   const ano = Number(hojeChave.slice(0, 4)) || new Date().getFullYear();
   const dias = useMemo(
     () =>
-      chaves.map((chave) => ({
-        chave,
-        itens: etapasAtivasNoDia(etapas, chave),
-      })),
+      chaves.map((chave) => {
+        // Como no Mês: a etapa com período aparece só no início e no fim; o
+        // dia do meio só a conta, e clicar no dia mostra quem está em andamento.
+        const ativas = etapasAtivasNoDia(etapas, chave);
+        const itens = ativas.filter(({ marca }) => marca !== "em andamento");
+        return { chave, itens, emAndamento: ativas.length - itens.length };
+      }),
     [etapas, chaves],
   );
   return (
-    <ol className="cal-semana-vista" aria-label="Etapas ativas na semana">
-      {dias.map(({ chave, itens }) => {
+    <ol className="cal-semana-vista" aria-label="Etapas da semana">
+      {dias.map(({ chave, itens, emAndamento }) => {
         const data = dataLocal(chave);
         const hoje = chave === hojeChave;
         const total = itens.length;
@@ -209,8 +212,8 @@ export function VistaDaSemana({
               type="button"
               className="cal-semana-cabeca"
               aria-label={`${cabecalhoDoDiaDaLista(chave, ano)}: ${total} ${
-                total === 1 ? "etapa ativa" : "etapas ativas"
-              }`}
+                total === 1 ? "etapa" : "etapas"
+              }${emAndamento ? `, ${emAndamento} em andamento` : ""}`}
               onClick={() => aoAbrirDia(chave)}
             >
               <span>{data ? DIAS_SEMANA[data.getDay()] : ""}</span>
@@ -250,9 +253,18 @@ export function VistaDaSemana({
                   );
                 })}
               </ul>
-            ) : (
+            ) : emAndamento ? null : (
               <p className="cal-semana-vazio">Sem etapas</p>
             )}
+            {emAndamento ? (
+              <button
+                type="button"
+                className="cal-semana-andamento"
+                onClick={() => aoAbrirDia(chave)}
+              >
+                {emAndamento} em andamento
+              </button>
+            ) : null}
           </li>
         );
       })}

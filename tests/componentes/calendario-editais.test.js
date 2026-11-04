@@ -841,7 +841,7 @@ describe("vistas Mês, Semana e Lista", () => {
     expect(document.querySelector(".cal-lista")).not.toBeNull();
   });
 
-  it("Semana mostra 7 dias com as etapas ativas e anda de semana em semana", async () => {
+  it("Semana mostra 7 dias só com início e fim dos períodos e anda de semana em semana", async () => {
     await montar();
     // Pelo teclado: → de Mês vai para Semana, com o foco junto.
     visao("mes").focus();
@@ -856,8 +856,14 @@ describe("vistas Mês, Semana e Lista", () => {
       '.cal-semana-dia[data-dia="2026-09-15"]',
     );
     expect(hoje.getAttribute("aria-current")).toBe("date");
-    // O recurso atravessa a semana inteira: está em cada dia dela.
-    expect(hoje.querySelector(".cal-mini").dataset.marca).toBe("em andamento");
+    // Como no Mês: o recurso aparece no dia em que começa; no meio, só a conta.
+    expect(hoje.querySelector(".cal-mini")).toBeNull();
+    expect(hoje.querySelector(".cal-semana-andamento").textContent).toBe(
+      "1 em andamento",
+    );
+    expect(
+      hoje.querySelector(".cal-semana-cabeca").getAttribute("aria-label"),
+    ).toMatch(/0 etapas, 1 em andamento$/);
     expect(
       document.querySelector('.cal-semana-dia[data-dia="2026-09-14"] .cal-mini')
         .dataset.marca,
@@ -870,14 +876,14 @@ describe("vistas Mês, Semana e Lista", () => {
     expect($("calMesTitulo").textContent).toBe("20 a 26 de setembro de 2026");
     expect(contador()).toBe("2 etapas na semana");
 
-    // Clicar numa etapa que só atravessa o dia abre o dia em que ela termina.
-    await clicar(
-      document.querySelector(
-        '.cal-semana-dia[data-dia="2026-09-21"] .cal-mini',
-      ),
+    // O dia do meio não repete a etapa; "em andamento" abre o próprio dia.
+    const dia21 = document.querySelector(
+      '.cal-semana-dia[data-dia="2026-09-21"]',
     );
+    expect(dia21.querySelector(".cal-mini")).toBeNull();
+    await clicar(dia21.querySelector(".cal-semana-andamento"));
     expect($("calDiaTitulo").textContent).toMatch(
-      /^Terça-feira, 22 de setembro/,
+      /^Segunda-feira, 21 de setembro/,
     );
   });
 });
