@@ -1,4 +1,5 @@
 import type { DemandaInterna } from "../../lib/demandas-internas.ts";
+import type { EstadoDoResumoDoDia } from "../resumo-do-dia/estado.ts";
 
 export type TipoDaEtapa = { id: string; rotulo: string; cor: string };
 export type EditalDoCalendario = {
@@ -60,6 +61,8 @@ export type SnapshotDoCalendario = Readonly<{
   demandas: readonly DemandaInterna[];
   /** Áreas onde a pessoa pode criar demanda. */
   podeCriarEm: readonly string[];
+  /** "meus": só os editais e demandas de que a pessoa é responsável (?visao=meus). */
+  recorte: "" | "meus";
 }>;
 type RespostaDaRpc = PromiseLike<{ data: unknown; error: unknown }>;
 export type ClienteDoCalendario = {
@@ -113,10 +116,14 @@ export type EstadoDoCalendario = {
   guardarDemanda: (demanda: DemandaInterna) => void;
   /** Uma demanda excluída sai da lista. */
   tirarDemanda: (id: string) => void;
+  /** O recorte "os meus" (do resumo do dia) liga ou desliga. */
+  definirRecorte: (recorte: "" | "meus") => void;
 };
 export type OpcoesDaTelaDoCalendario = Pick<
   OpcoesDoEstadoDoCalendario,
   "supabase" | "toast"
 > & {
   agora?: () => Date;
+  /** O resumo do dia (src/modulos/resumo-do-dia/): de onde vêm "os meus". */
+  resumo?: EstadoDoResumoDoDia;
 };

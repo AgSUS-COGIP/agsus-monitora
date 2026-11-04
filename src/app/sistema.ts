@@ -26,6 +26,7 @@ import { montarAvisoDeVersao } from "../componentes/aviso-de-versao/aviso-de-ver
 import { criarEstadoDoEncerramento } from "../modulos/encerramento-do-edital/estado.ts";
 import { montarEncerramentoDoEdital } from "../modulos/encerramento-do-edital/encerramento-do-edital.tsx";
 import { montarSelosDoEdital } from "../modulos/encerramento-do-edital/selos-do-edital.tsx";
+import { resumoDoDia } from "../modulos/resumo-do-dia/estado.ts";
 import { criarAvisoDeVersao } from "./aviso-de-versao.ts";
 import { avisar, mostrarCarregamento } from "./avisos.ts";
 import { criarCarga } from "./carga.ts";
@@ -197,6 +198,7 @@ function limparEstadoDeslogado() {
   inicioDaSessao.esquecer();
   carga.esquecer();
   encerramento.esquecer();
+  resumoDoDia.esquecer();
   presenca.pararTudo();
   vigiaDoCatalogo.esquecer();
   paineis.limpar();
@@ -259,6 +261,8 @@ async function abrirSistema({ origem }: { origem: OrigemDaEntrada }) {
   });
   carga.iniciarRealtime();
   void encerramento.verificar();
+  // Resumo do dia do responsável: uma chamada; abre sozinho só se a tela estiver livre.
+  void resumoDoDia.verificar({ aoEntrar: true });
   // DNS e TLS dos painéis em iframe que a pessoa vê, com o navegador ocioso.
   paineis.preconectarNoOcioso();
   return true;
@@ -272,6 +276,7 @@ function fecharSistema() {
   inicioDaSessao.esquecer();
   carga.esquecer();
   encerramento.esquecer();
+  resumoDoDia.esquecer();
   presenca.pararTudo();
   vigiaDoCatalogo.esquecer();
   encerrarEspera();

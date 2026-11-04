@@ -45,3 +45,10 @@ A tela Cronograma (view `calendario`), o calendário dos cronogramas dos editais
 **resposta:** No formulário de um edital já cadastrado, em Editais, o bloco "Responsáveis pelo edital" guarda as pessoas do sistema responsáveis por ele. O gestor da área ou o administrador global escolhe as pessoas e clica em "Salvar responsáveis" (grava na hora, sem o Salvar do edital); quem só vê o edital lê os nomes. Só aparecem pessoas que têm acesso ao edital. O campo antigo "Responsável" (USI ou CORES) continua como estava.
 **fonte:** src/modulos/editais/responsaveis-do-edital.tsx
 **abrir:** nucleo
+
+## Resumo do dia e sininho
+
+**perguntas:** resumo do dia | sininho | popup ao entrar | seus editais hoje | desligar resumo do dia | nao quero o popup | bom dia seus editais
+**resposta:** Quem é responsável por algum edital ou demanda interna vê, no primeiro acesso do dia, o resumo "seus editais hoje": o que começa ou termina hoje, nos próximos 7 dias e as demandas atrasadas. O sininho no topo mostra o número de pendências e reabre o resumo quando quiser. "Fechar" não deixa o resumo voltar sozinho no mesmo dia; "Ver no cronograma" abre o Cronograma só com os seus editais e demandas ("Ver todos" volta ao normal); "Concluir" fecha uma demanda atrasada, para quem pode. Para não abrir mais ao entrar, desmarque "Mostrar ao entrar" no próprio resumo: o sininho continua. Sem pendências, o resumo não abre.
+**fonte:** src/modulos/resumo-do-dia/resumo-do-dia.tsx; src/lib/resumo-do-dia.ts
+**abrir:** calendario
