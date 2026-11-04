@@ -15,24 +15,33 @@ em manutenção em **Configurações → Módulos e abas**, sem deploy.
 
 ## Módulos
 
-| Módulo                  | O que faz                                                                                                                                                         |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Visão geral e mapas     | editais, terras indígenas, DSEIs e mapa de Projetos                                                                                                               |
-| Editais e Cronograma    | cadastro do edital e do cronograma (importa cronograma e quadro de vagas do PDF de anexos); calendário das etapas                                                 |
-| Seleção                 | funil por vaga (inscritos, aptos, eliminados)                                                                                                                     |
-| Avaliação documental    | análise curricular no sistema: regra do edital, equipe, triagem e lote, fila de fichas, pendências, espelho de nota em PDF/ZIP, relatório de motivos e reabertura |
-| Painel das análises     | leitura das análises (fichas publicadas e planilhas legadas): filtros, indicadores, ritmo da análise, nota declarada × após a análise                             |
-| Classificação           | regras por edital, listas, desempate e sorteio, agenda das entrevistas, exportação (XLSX, SEI/DOCX) e publicação na Lista de aprovados                            |
-| Lista de aprovados      | aprovados, convocação, cartas de convocação e acompanhamento da contratação                                                                                       |
-| Entrevistas             | painel de resultados e condução (roteiro, convocação, banca, notas e parecer)                                                                                     |
-| Recursos                | recursos dos candidatos: fila, etapas, parecer, resposta com modelos, anexos e ajuste de pontuação                                                                |
-| Conferências            | avisos diários de inconsistência entre análises, entrevistas, classificação, aprovados e cargas                                                                   |
-| Aya                     | assistente lateral com base de conhecimento local (`docs/aya/`), sem IA externa; abre chamado ao suporte por e-mail                                               |
-| Acessos e Configurações | convites, solicitações de acesso, grupos, coordenações, contas desativadas; marca, painéis externos, status das atualizações e robôs                              |
+| Módulo                  | O que faz                                                                                                                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Visão geral e mapas     | editais, terras indígenas, DSEIs e mapa de Projetos                                                                                                                                        |
+| Cronograma              | calendário das etapas dos editais, nas vistas Mês, Semana e Lista, com a legenda como filtro de tipo                                                                                       |
+| Editais                 | cadastro do edital e do cronograma (importa cronograma e quadro de vagas do PDF de anexos) e **Regras do edital**: uma página por edital com as regras de cada etapa, na ordem do processo |
+| Seleção                 | funil por vaga (inscritos, aptos, eliminados)                                                                                                                                              |
+| Triagem                 | regras próprias por edital e abas Resumo, Por vaga, Eliminados e Listas oficiais                                                                                                           |
+| Avaliação documental    | análise curricular no sistema: equipe, lote, fila de fichas, documentos, pendências, espelho de nota em PDF/ZIP, relatório de motivos e reabertura                                         |
+| Painel das análises     | leitura das análises (fichas publicadas e planilhas legadas): filtros, indicadores, ritmo da análise, nota declarada × após a análise                                                      |
+| Recursos                | recursos dos candidatos: fila, etapas, parecer, resposta com modelos, anexos e ajuste de pontuação                                                                                         |
+| Entrevistas             | painel de resultados e condução (roteiro, convocação, banca, notas e parecer)                                                                                                              |
+| Classificação           | listas, desempate e sorteio, agenda das entrevistas, exportação (XLSX, SEI/DOCX) e publicação na Lista de aprovados                                                                        |
+| Lista de aprovados      | aprovados, convocação, cartas de convocação e acompanhamento da contratação                                                                                                                |
+| Conferências            | avisos diários de inconsistência entre análises, entrevistas, classificação, aprovados e cargas                                                                                            |
+| Aya                     | assistente lateral com base de conhecimento local (`docs/aya/`), sem IA externa; abre chamado ao suporte por e-mail                                                                        |
+| Acessos e Configurações | convites, solicitações de acesso, grupos, coordenações, contas desativadas; marca, painéis externos, módulos e abas, status das atualizações e robôs                                       |
 
 Os editais novos são analisados no próprio sistema (Avaliação documental → fichas publicadas no
 Painel das análises). As planilhas do Google com Apps Script (`apps-script/`) seguem só para
 editais antigos e áreas que ainda as usam.
+
+O menu é o mesmo em todas as áreas: **Acompanhar** (Visão geral, painéis e Cronograma),
+**Processo seletivo** na ordem do fluxo (Editais, Triagem, Avaliação documental, Recursos,
+Entrevistas, Classificação, Lista de aprovados) e **Administração** (Aparência, Pessoas e acessos,
+Sistema). A área e a tela ficam no endereço (`/saude-indigena/cronograma`,
+`/sede/classificacao/<edital>`, `/administracao/configuracoes/<seção>`), com voltar, avançar e F5
+funcionando e link que se compartilha.
 
 ## Arquitetura
 
@@ -51,13 +60,17 @@ Planilhas (legado): Apps Script → Supabase
 
 - **Front:** Vite 7 e React 19, hospedado na Vercel. Código novo só em TypeScript/TSX.
 - **Migração em curso:**
-  - **JavaScript → TypeScript:** cerca de 70% dos arquivos de `src/` já são `.ts`/`.tsx` (441 ×
-    190 `.js`/`.jsx` em 26/10/2026). O legado em `src/modules/` só encolhe (o CI barra
-    crescimento). Estado por módulo em
+  - **JavaScript → TypeScript:** praticamente concluída: 693 arquivos `.ts`/`.tsx` × 4 `.js` em
+    `src/` (04/11/2026), entre eles o contrato de RPC e um arquivo gerado. O legado em
+    `src/modules/` já não tem JavaScript escrito à mão e só encolhe (o CI barra crescimento).
+    Estado por módulo em
     [docs/typescript-no-frontend.md](docs/typescript-no-frontend.md).
-  - **Casca para React:** a página de entrada (`index.html`; a casca do app já é React em `src/app/casca/`)
-    está sendo substituída, tela por tela, por um único app React com rotas por área e visual
-    único em `src/ui/`. Alvo, regras e ordem em [docs/arquitetura-react.md](docs/arquitetura-react.md).
+  - **Raiz React única:** um `createRoot` só (`src/app/raiz.tsx`) para avisos, tela de acesso e
+    casca; as telas são rotas (`src/lib/rotas.ts`, `src/app/endereco.ts`, `src/app/telas.tsx`),
+    carregadas sob demanda, e a navegação (`src/app/navegacao.ts`) é um estado lido pelo React.
+    As ilhas que ainda montam à parte viram filhas da raiz no passo 2. Plano em
+    [docs/arquitetura/raiz-react.md](docs/arquitetura/raiz-react.md); regras dos módulos e do
+    visual único (`src/ui/`) em [docs/arquitetura-react.md](docs/arquitetura-react.md).
 - **Banco:** Supabase (PostgreSQL). RLS ligada em todas as tabelas; o navegador não lê tabela,
   só chama RPCs (`SECURITY DEFINER`, `search_path` fixado), conferidas pelo contrato em
   `src/lib/rpc-contrato.js`. Modelo em [docs/banco-de-dados.md](docs/banco-de-dados.md).
@@ -78,7 +91,7 @@ Planilhas (legado): Apps Script → Supabase
 
 ```text
 index.html            raiz da página: <head>, tela de acesso e skeleton (a casca é src/app/casca/)
-src/app/              base do app React: entrada, sessão, layout, montagem dos módulos
+src/app/              base do app React: raiz, casca, rotas, navegação, sessão e carga
 src/modulos/          telas em React/TypeScript, uma pasta por tela
 src/componentes/      componentes compartilhados entre telas
 src/ui/               design system (Topo, Filtros, Kpi, Tabela, Gaveta, Modal…)
@@ -134,7 +147,9 @@ Tudo que começa com `VITE_` vai para o navegador: **nunca** coloque ali a chave
 | `docker compose up --build -d` | http://127.0.0.1:8000 | container (lê o `.env` da raiz, não o `.env.local`)   |
 
 O login volta para `<endereço>/auth/callback.html`, que precisa estar nas **Redirect URLs** do
-Supabase. As rotas `/api/*` só existem na Vercel; localmente respondem 404.
+Supabase. As rotas das telas (`/saude-indigena/...`) entregam o `index.html` tanto na Vercel
+(`rewrites` do `vercel.json`) quanto no `server/servidor.ts`. As rotas `/api/*` só existem na
+Vercel; localmente respondem 404.
 
 ## Qualidade e CI
 
@@ -227,7 +242,7 @@ no diff; novidade registrada quando muda algo para quem usa.
 | Assunto                                | Onde                                                                                                                                                                                                                           |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Mapa do código e regras para mexer     | `CLAUDE.md` da raiz e de cada pasta                                                                                                                                                                                            |
-| Arquitetura do front (React)           | [docs/arquitetura-react.md](docs/arquitetura-react.md), [docs/arquitetura.md](docs/arquitetura.md)                                                                                                                             |
+| Arquitetura do front (React)           | [docs/arquitetura-react.md](docs/arquitetura-react.md), [docs/arquitetura/raiz-react.md](docs/arquitetura/raiz-react.md), [docs/arquitetura.md](docs/arquitetura.md)                                                           |
 | TypeScript no front                    | [docs/typescript-no-frontend.md](docs/typescript-no-frontend.md)                                                                                                                                                               |
 | Banco, RPCs e nomenclatura             | [docs/banco-de-dados.md](docs/banco-de-dados.md), `docs/padronizacao_nomenclatura_*.md`                                                                                                                                        |
 | Migrations                             | [supabase/migrations/README.md](supabase/migrations/README.md)                                                                                                                                                                 |
