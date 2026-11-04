@@ -20,6 +20,8 @@ import { expect, test } from "@playwright/test";
 */
 
 const SUPABASE = "https://teste.supabase.co";
+/* O endereço inteiro, entre aspas, como o Vite o grava no bundle. */
+const SUPABASE_NO_BUNDLE = /["'`]https:\/\/teste\.supabase\.co["'`]/;
 const CHAVE_DA_SESSAO = "agsus-monitora-auth";
 
 const base64url = (valor) =>
@@ -71,7 +73,7 @@ async function buildSimulado(request) {
   const cliente = (await texto(entrada[1])).match(/supabaseClient-[\w-]+\.js/);
   return (
     Boolean(cliente) &&
-    (await texto(`/assets/${cliente[0]}`)).includes(SUPABASE)
+    SUPABASE_NO_BUNDLE.test(await texto(`/assets/${cliente[0]}`))
   );
 }
 
