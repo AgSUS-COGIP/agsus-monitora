@@ -45,13 +45,14 @@ Quem usa hoje: o robô da Empregare (`scripts/robo-empregare/`), as conferência
 (`scripts/conferencias/`) e a triagem da Avaliação documental (`scripts/pre_classificacao/`,
 com a conta em `monitora.avaliacao_documental`).
 
-| Módulo de domínio                                 | O que faz                                                                                                                                |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `monitora.avaliacao_documental.nota_declarada`    | a ART lida da Empregare e a nota declarada pela regra (cópia fiel de `nota-declarada.js`)                                                |
-| `monitora.avaliacao_documental.pre_classificacao` | eliminação automática, Provisória por ART, tamanho do lote e "a linha anda" (cópia fiel de `pre-classificacao.js`)                       |
-| `monitora.avaliacao_documental.distribuicao`      | distribuição das fichas (menor carga, limites) e as fichas novas da distribuição inicial (cópia fiel de `distribuicao.js`)               |
-| `monitora.entrevistas.calculo`                    | nota por competência, total e parecer da entrevista, com ou sem aspectos (a regra de `FC_CALCULAR_ENTREVISTA` e de `calcularEntrevista`) |
-| `monitora.classificacao`                          | o motor da classificação (cópia fiel de `motor.ts`), o retrato da lista e o relatório de desempate de cada lista gerada (ver abaixo)     |
+| Módulo de domínio                                 | O que faz                                                                                                                                                                                                                      |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `monitora.avaliacao_documental.nota_declarada`    | a ART lida da Empregare e a nota declarada pela regra (cópia fiel de `nota-declarada.js`)                                                                                                                                      |
+| `monitora.avaliacao_documental.pre_classificacao` | eliminação automática, Provisória por ART, tamanho do lote e "a linha anda" (cópia fiel de `pre-classificacao.js`)                                                                                                             |
+| `monitora.avaliacao_documental.distribuicao`      | distribuição das fichas (menor carga, limites) e as fichas novas da distribuição inicial (cópia fiel de `distribuicao.js`)                                                                                                     |
+| `monitora.entrevistas.calculo`                    | nota por competência, total e parecer da entrevista, com ou sem aspectos (a regra de `FC_CALCULAR_ENTREVISTA` e de `calcularEntrevista`)                                                                                       |
+| `monitora.classificacao`                          | o motor da classificação (cópia fiel de `motor.ts`), o retrato da lista e o relatório de desempate de cada lista gerada (ver abaixo)                                                                                           |
+| `monitora.cargos`                                 | a grafia normalizada do cargo (cópia fiel de `FC_NORMALIZAR_GRAFIA_CARGO`) e o casamento grafia → cargo oficial da tabela de cargos (20261104150000), com regra e confiança; prévia em `scripts/cargos/previa_do_casamento.py` |
 
 ### Importar a base
 
@@ -250,6 +251,7 @@ com motivo obrigatório, autor, data e histórico (migration `20261026190000_pen
   `tests/fixtures/pendencias-do-edital/casos.json`), `supabase/tests/pendencias_do_edital.sql`
   (permissões, motivo, histórico), `tests/pendencias-do-edital-migration.test.js`,
   `tests/lib/pendencias-do-edital.test.js` e `tests/componentes/pendencias-do-edital.test.js`.
+
 ## Casamento da lista de aprovados (26/10/2026)
 
 Substituir a lista de aprovados de um edital — pela planilha (XLSX) ou pelo resultado final da
