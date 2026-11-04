@@ -1,0 +1,89 @@
+{
+  "_origem": "Sa\u00edda de private.\"FC_NORMALIZAR_GRAFIA_CARGO\" (20261104150000) no banco, em 04/11/2026, para estas entradas.",
+  "casos": [
+    {
+      "entrada": "T\u00e9cnico(a) de Enfermagem",
+      "banco": "TECNICO(A) DE ENFERMAGEM"
+    },
+    {
+      "entrada": "Enfermeiro\u200b",
+      "banco": "ENFERMEIRO"
+    },
+    {
+      "entrada": "  - AGENTE \u2013 DE   COMBATE \u00e0s endemias.;",
+      "banco": "AGENTE - DE COMBATE AS ENDEMIAS"
+    },
+    {
+      "entrada": "FARMAC\u00caUTICO (ART)",
+      "banco": "FARMACEUTICO (ART)"
+    },
+    {
+      "entrada": "",
+      "banco": null
+    },
+    {
+      "entrada": "   ",
+      "banco": null
+    },
+    {
+      "entrada": "Assistente\u00a0Social",
+      "banco": "ASSISTENTE SOCIAL"
+    },
+    {
+      "entrada": "CARGO 53: ASSISTENTE DE PROJETO \u2014 UGP",
+      "banco": "CARGO 53: ASSISTENTE DE PROJETO - UGP"
+    },
+    {
+      "entrada": "M\u00e9dico 40h\t- Ampla\nConcorr\u00eancia",
+      "banco": "MEDICO 40H - AMPLA CONCORRENCIA"
+    },
+    {
+      "entrada": "\u201cNutricionista\u201d",
+      "banco": "NUTRICIONISTA"
+    },
+    {
+      "entrada": "Cirurgi\u00e3o-Dentista 20H",
+      "banco": "CIRURGIAO-DENTISTA 20H"
+    },
+    {
+      "entrada": "int\u00e9rprete ind\u00edgena ",
+      "banco": "INTERPRETE INDIGENA"
+    },
+    {
+      "entrada": "Agente Ind\u00edgena de Sa\u00fade (AIS)",
+      "banco": "AGENTE INDIGENA DE SAUDE (AIS)"
+    },
+    {
+      "entrada": "T\u00e9cnico em Sa\u00fade Bucal\ufeff",
+      "banco": "TECNICO EM SAUDE BUCAL"
+    },
+    {
+      "entrada": "ENFERMEIRO/A",
+      "banco": "ENFERMEIRO/A"
+    },
+    {
+      "entrada": "Assessor de Regi\u00e3o/Distrito",
+      "banco": "ASSESSOR DE REGIAO/DISTRITO"
+    },
+    {
+      "entrada": "*Microscopista*",
+      "banco": "MICROSCOPISTA"
+    },
+    {
+      "entrada": "\u00e7 \u00f1 \u00fd \u00ff \u00ba \u00aa",
+      "banco": "C N Y Y O A"
+    },
+    {
+      "entrada": "Monitor de \u00c1gua, Saneamento e Higiene",
+      "banco": "MONITOR DE AGUA, SANEAMENTO E HIGIENE"
+    },
+    {
+      "entrada": "D'\u00c1GUA",
+      "banco": "D'AGUA"
+    },
+    {
+      "entrada": "a\u00adb",
+      "banco": "AB"
+    }
+  ]
+}
