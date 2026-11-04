@@ -2,7 +2,12 @@ import { getSupabaseClient } from "../lib/supabaseClient";
 import { permissaoLegada } from "../lib/access-roles.ts";
 import { enderecoDoPainel } from "../lib/endereco-do-painel";
 import { semOPainelAntigoDeAnalises } from "../lib/pagina-do-painel";
-import { acompanharCarregamentoDoPainel } from "./carregamento.ts";
+import {
+  origensParaPreconectar,
+  precisaDeCrossorigin,
+} from "../lib/carregamento-do-painel.ts";
+import { codigoDoPainel, ehPainelExterno } from "../lib/navegacao";
+import { acompanharCarregamentoDoPainel } from "../modulos/paineis-externos/carregamento-do-painel.tsx";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
 import { avisar as avisarPadrao } from "./avisos.ts";
 import type { PerfilDeAcesso } from "../lib/tipos-dos-acessos.ts";
@@ -15,7 +20,14 @@ import type { PerfilDeAcesso } from "../lib/tipos-dos-acessos.ts";
   O iframe nasce na primeira abertura e fica até a página fechar (ou até o
   "Atualizar dados", que descarta os abertos para recarregarem). Antes, a
   entrada criava de uma vez o iframe de cada painel ativo, escondido, e todos
-  carregavam a cada login.
+  carregavam a cada login. Na primeira abertura, uma cobertura diz o que está
+  carregando até o `load` do iframe (src/modulos/paineis-externos/).
+
+  Pré-conexão: o iframe não é carregado antes da hora, mas o DNS e o TLS das
+  origens do painel (e, no Looker Studio, das estáticas do Google) podem ser
+  abertos antes — ao apontar ou focar o item do menu (`preconectarAoApontar`)
+  e, depois da entrada, quando o navegador fica ocioso (`preconectarNoOcioso`),
+  só para os painéis em iframe que a pessoa vê.
 */
 
 /*
@@ -109,6 +121,9 @@ export function criarPaineisExternos({
   let lista: PainelExternoDoApp[] = [];
   let liberados = new Set<string>();
   let atual: PainelExternoDoApp | null = null;
+  /* O desmonte da cobertura de cada quadro ainda carregando. */
+  const coberturas = new Map<Element, () => void>();
+  const preconectadas = new Set<string>();
 
   const $ = (id: string) => documento.getElementById(id);
   const perfil = () => obterPerfil();
@@ -224,7 +239,76 @@ export function criarPaineisExternos({
     quadro.setAttribute("src", endereco);
     holder.replaceChildren(quadro);
     // Até o site de fora responder, o quadro ficaria em branco.
-    acompanharCarregamentoDoPainel(holder, { aoTentarDeNovo });
+    const desmontar = acompanharCarregamentoDoPainel(holder, {
+      endereco,
+      aoTentarDeNovo,
+    });
+    coberturas.set(holder, desmontar);
+  }
+
+  /* Tira o quadro da página, com a cobertura dele (se ainda estava carregando). */
+  function removerQuadro(holder: Element | null) {
+    if (!holder) return;
+    coberturas.get(holder)?.();
+    coberturas.delete(holder);
+    holder.remove();
+  }
+
+  // ── Pré-conexão ───────────────────────────────────────────────────────
+
+  /* O endereço do painel em iframe que a pessoa pode abrir e que ainda não está aberto. */
+  function enderecoParaPreconectar(painel: PainelExternoDoApp | undefined) {
+    if (!painel || !permitido(painel) || painel.em_manutencao) return "";
+    if (painel.tipo_abertura && painel.tipo_abertura !== "iframe") return "";
+    if ($("external-panel-" + painel.codigo)) return "";
+    return enderecoDoPainel(painel.url, origem());
+  }
+
+  /** Abre o DNS e o TLS das origens do painel, sem carregar o iframe. */
+  function preconectar(codigo: string) {
+    const endereco = enderecoParaPreconectar(
+      lista.find((p) => p.codigo === codigo),
+    );
+    for (const destino of origensParaPreconectar(endereco)) {
+      if (preconectadas.has(destino)) continue;
+      preconectadas.add(destino);
+      for (const rel of ["preconnect", "dns-prefetch"]) {
+        const link = documento.createElement("link");
+        link.rel = rel;
+        link.href = destino;
+        if (rel === "preconnect" && precisaDeCrossorigin(destino))
+          link.crossOrigin = "anonymous";
+        link.dataset.preconexaoDoPainel = "";
+        documento.head.append(link);
+      }
+    }
+  }
+
+  /**
+   * Apontar ou focar o item de um painel no menu (`[data-view="panel:…"]`)
+   * pré-conecta. Devolve o cancelamento.
+   */
+  function preconectarAoApontar() {
+    const aoChegar = (evento: Event) => {
+      const alvo = evento.target as Element | null;
+      const view = alvo?.closest?.("[data-view]")?.getAttribute("data-view");
+      if (ehPainelExterno(view)) preconectar(codigoDoPainel(view));
+    };
+    documento.addEventListener("pointerover", aoChegar, { passive: true });
+    documento.addEventListener("focusin", aoChegar);
+    return () => {
+      documento.removeEventListener("pointerover", aoChegar);
+      documento.removeEventListener("focusin", aoChegar);
+    };
+  }
+
+  /** Depois da entrada, com o navegador ocioso: os painéis em iframe que a pessoa vê. */
+  function preconectarNoOcioso() {
+    const janela = documento.defaultView;
+    const fazer = () => doMenu().forEach((p) => preconectar(p.codigo));
+    if (janela?.requestIdleCallback)
+      janela.requestIdleCallback(fazer, { timeout: 5_000 });
+    else janela?.setTimeout(fazer, 2_000);
   }
 
   /**
@@ -273,14 +357,14 @@ export function criarPaineisExternos({
 
   /** Tira o quadro do painel (o próximo `mostrar` cria de novo). */
   function descartar(codigo: string) {
-    $("external-panel-" + codigo)?.remove();
+    removerQuadro($("external-panel-" + codigo));
   }
 
   /** Os quadros abertos recarregam na próxima abertura ("Atualizar dados"). */
   function descartarAbertos() {
     documento
       .querySelectorAll(".external-panel")
-      .forEach((holder) => holder.remove());
+      .forEach((holder) => removerQuadro(holder));
   }
 
   /* A pessoa saiu: nenhum quadro dela fica na página. */
@@ -306,6 +390,9 @@ export function criarPaineisExternos({
     primeiro,
     doMenu,
     mostrar,
+    preconectar,
+    preconectarAoApontar,
+    preconectarNoOcioso,
     descartar,
     descartarAbertos,
     limpar,

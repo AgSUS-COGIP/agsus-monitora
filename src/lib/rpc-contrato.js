@@ -1609,10 +1609,12 @@ export const CONTRATO_RPC = {
       "p_origem",
       "p_presenca",
       "p_current_view",
+      "p_eventos",
+      "p_listar",
     ],
     critica: false,
     resumo:
-      "Uma chamada por navegação (20261029121700): o evento de auditoria (registrar_evento_acesso) e a presença (registrar_presenca_monitora, com a versão do catálogo de carona). Falha da presença volta em presenca_erro e não desfaz o evento. Sem ela (PGRST202), o front volta às duas chamadas.",
+      "A batida e a navegação numa chamada (20261029121700, 20261103230000): o evento de auditoria, até 10 eventos de carona (p_eventos, ex.: frontend_performance), a presença (registrar_presenca_monitora, com a versão do catálogo) e, com p_listar, a lista de Pessoas online em `pessoas` (mesma permissão de listar_presenca_online_monitora; sem ela, pessoas_erro). Falha da presença volta em presenca_erro e não desfaz os eventos. Banco sem p_eventos/p_listar (PGRST202): lista e eventos à parte; sem a função: as duas chamadas antigas.",
   },
   obter_inicio_da_sessao: {
     argumentos: [],
@@ -1624,12 +1626,13 @@ export const CONTRATO_RPC = {
     argumentos: ["p_current_view"],
     critica: false,
     resumo:
-      "Marca presença online do usuário (a cada 90 s com a aba visível) e devolve { status, versao_do_catalogo } (20261019160000): a versão do catálogo de abas e da situação do sistema, para a tela reler o menu e fechar a página desligada só quando ela muda (src/app/vigia-do-catalogo.ts). Sem a versão, nada é relido no meio da sessão.",
+      "Marca presença online do usuário e devolve { status, versao_do_catalogo } (20261019160000): a versão do catálogo de abas e da situação do sistema, para a tela reler o menu e fechar a página desligada só quando ela muda (src/app/vigia-do-catalogo.ts). Sem a versão, nada é relido no meio da sessão. A batida (a cada 150 s) a chama por registrar_navegacao_monitora; direto, só com o banco sem essa função.",
   },
   listar_presenca_online_monitora: {
     argumentos: [],
     critica: false,
-    resumo: "Lista quem está online agora.",
+    resumo:
+      "Lista quem está online agora (presença nos últimos 6 min, 20261103230000). A batida a traz de carona (registrar_navegacao_monitora, p_listar); direto, só com a presença parada ou o banco sem p_listar.",
   },
 };
 

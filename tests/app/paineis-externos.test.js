@@ -154,16 +154,15 @@ describe("quadro", () => {
     expect(document.getElementById("external-panel-obras").hidden).toBe(true);
   });
 
-  it("o skeleton cobre o iframe até o site responder", async () => {
+  it("a cobertura diz o que está carregando até o site responder", async () => {
     const { paineis } = montar();
     await carregar(paineis);
     paineis.completarLiberados();
     paineis.mostrar("bi");
     expect(
-      document.querySelector(
-        "#external-panel-bi .esqueleto-do-painel, #external-panel-bi [class*='esqueleto']",
-      ),
-    ).not.toBeNull();
+      document.querySelector("#external-panel-bi .carregamento-do-painel")
+        ?.textContent,
+    ).toContain("Carregando o painel");
   });
 
   it("em manutenção ou sem endereço válido: aviso, sem iframe", async () => {
@@ -207,5 +206,101 @@ describe("quadro", () => {
     expect(montagem.className).toBe("external-placeholder");
     expect(montagem.textContent).toBe("Escolha um painel");
     expect(paineis.liberados().size).toBe(0);
+  });
+});
+
+describe("pré-conexão dos painéis", () => {
+  const LOOKER = {
+    id: "7",
+    codigo: "recrutamento",
+    titulo: "Formas de Ingresso",
+    url: "https://datastudio.google.com/embed/reporting/x/page/y",
+    ordem: 3,
+    tipo_abertura: "iframe",
+  };
+  const links = () =>
+    [...document.head.querySelectorAll("link[data-preconexao-do-painel]")].map(
+      (l) =>
+        `${l.rel} ${l.href.replace(/\/$/, "")}${l.crossOrigin ? " cors" : ""}`,
+    );
+
+  beforeEach(() => {
+    document.head.innerHTML = "";
+  });
+
+  it("apontar ou focar o item do painel no menu pré-conecta, sem criar o iframe", async () => {
+    const { paineis } = montar();
+    await carregar(paineis, [...PAINEIS, LOOKER]);
+    paineis.completarLiberados();
+    const parar = paineis.preconectarAoApontar();
+    const item = document.createElement("button");
+    item.dataset.view = "panel:recrutamento";
+    item.innerHTML = "<span>Formas de Ingresso</span>";
+    document.body.append(item);
+    item.firstChild.dispatchEvent(new Event("pointerover", { bubbles: true }));
+    expect(links()).toEqual([
+      "preconnect https://datastudio.google.com",
+      "dns-prefetch https://datastudio.google.com",
+      "preconnect https://www.gstatic.com",
+      "dns-prefetch https://www.gstatic.com",
+      "preconnect https://fonts.googleapis.com",
+      "dns-prefetch https://fonts.googleapis.com",
+      "preconnect https://fonts.gstatic.com cors",
+      "dns-prefetch https://fonts.gstatic.com",
+    ]);
+    // Uma vez por origem.
+    item.dispatchEvent(new Event("focusin", { bubbles: true }));
+    expect(links()).toHaveLength(8);
+    expect(document.querySelector("iframe")).toBeNull();
+    parar();
+  });
+
+  it("não pré-conecta painel em manutenção, sem permissão ou de outro item do menu", async () => {
+    const { paineis } = montar(COM_MATRIZ);
+    await carregar(paineis, [...PAINEIS, LOOKER]);
+    paineis.definirLiberados(["4"]);
+    paineis.completarLiberados();
+    paineis.preconectar("recrutamento");
+    paineis.preconectar("manut");
+    const parar = paineis.preconectarAoApontar();
+    const item = document.createElement("button");
+    item.dataset.view = "dashboard";
+    document.body.append(item);
+    item.dispatchEvent(new Event("pointerover", { bubbles: true }));
+    expect(links()).toEqual([]);
+    parar();
+  });
+
+  it("no ócio depois da entrada: só os painéis em iframe que a pessoa vê", async () => {
+    vi.useFakeTimers();
+    const { paineis } = montar();
+    await carregar(paineis, [
+      ...PAINEIS,
+      LOOKER,
+      {
+        ...LOOKER,
+        id: "8",
+        codigo: "aba",
+        url: "https://aba.exemplo",
+        tipo_abertura: "aba_interna",
+      },
+    ]);
+    paineis.completarLiberados();
+    const ocioso = window.requestIdleCallback;
+    window.requestIdleCallback = undefined;
+    try {
+      paineis.preconectarNoOcioso();
+      expect(links()).toEqual([]);
+      vi.advanceTimersByTime(2_000);
+    } finally {
+      window.requestIdleCallback = ocioso;
+      vi.useRealTimers();
+    }
+    const origens = links().filter((l) => l.startsWith("preconnect"));
+    expect(origens).toContain("preconnect https://bi.exemplo");
+    expect(origens).toContain("preconnect https://obras.exemplo");
+    expect(origens).toContain("preconnect https://datastudio.google.com");
+    expect(origens.join()).not.toContain("aba.exemplo");
+    expect(origens.join()).not.toContain("https://y");
   });
 });

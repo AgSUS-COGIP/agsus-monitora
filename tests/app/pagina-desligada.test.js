@@ -194,7 +194,7 @@ function documentoFalso() {
 describe("checagem periódica: carona na presença", () => {
   afterEach(() => vi.useRealTimers());
 
-  it("a cada 90 s com a aba visível, nenhuma com ela oculta; a versão chega ao vigia", async () => {
+  it("a cada batida (150 s) com a aba visível, nenhuma com ela oculta; a versão chega ao vigia", async () => {
     vi.useFakeTimers();
     const documento = documentoFalso();
     const cliente = {
@@ -236,7 +236,7 @@ describe("checagem periódica: carona na presença", () => {
     // Só a presença: nenhuma chamada nova ao banco por causa do catálogo.
     expect(
       cliente.rpc.mock.calls.every(
-        ([nome]) => nome === "registrar_presenca_monitora",
+        ([nome]) => nome === "registrar_navegacao_monitora",
       ),
     ).toBe(true);
     presenca.pararTudo();

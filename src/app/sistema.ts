@@ -38,6 +38,7 @@ import { criarPresenca } from "./presenca.ts";
 import { criarVigiaDoCatalogo } from "./vigia-do-catalogo.ts";
 import { inicioDaSessao } from "./inicio-da-sessao.ts";
 import { getSupabaseClient } from "../lib/supabaseClient";
+import { definirEnvioDoRetrato } from "../lib/frontend-performance-monitor";
 import { instalarMarcosDosEditais } from "./marcos-personalizados.ts";
 import { acompanharPaginaAberta } from "./pagina-aberta.ts";
 import { sessaoDoApp } from "./sessao.ts";
@@ -258,6 +259,8 @@ async function abrirSistema({ origem }: { origem: OrigemDaEntrada }) {
   });
   carga.iniciarRealtime();
   void encerramento.verificar();
+  // DNS e TLS dos painéis em iframe que a pessoa vê, com o navegador ocioso.
+  paineis.preconectarNoOcioso();
   return true;
 }
 
@@ -337,9 +340,13 @@ export function ligarSistema() {
   });
   configuracao.acompanharFundoDoAcesso();
   navegacao.acompanharArea();
+  // Apontar ou focar um painel no menu já abre a conexão com o site dele.
+  paineis.preconectarAoApontar();
   // Linhas do monitoramento e acompanhamento da Visão geral, só para a página que os usa.
   acompanharPaginaAberta({ navegacao });
   presenca.acompanhar();
+  // O retrato de desempenho do front vai de carona na batida, sem chamada própria.
+  definirEnvioDoRetrato(presenca.enfileirarEvento);
   montarPessoasOnline({ presenca });
   montarAvisoDeVersao({ aviso: avisoDeVersao });
   montarEncerramentoDoEdital({ estado: encerramento });

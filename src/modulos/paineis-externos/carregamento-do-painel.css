@@ -1,0 +1,56 @@
+/*
+  Cobertura do painel externo enquanto o site de fora não responde
+  (carregamento-do-painel.tsx). `.external-panel` segura a cobertura
+  (`position: relative`). Só tokens.
+*/
+.external-panel {
+  position: relative;
+}
+.carregamento-do-painel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--surface-page);
+  transition: opacity var(--motion-fast) var(--ease-standard);
+}
+.carregamento-do-painel--saindo {
+  opacity: 0;
+  pointer-events: none;
+}
+.carregamento-do-painel__caixa {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  max-width: min(480px, 100%);
+  padding: var(--space-5) var(--space-6);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+.carregamento-do-painel__caixa p {
+  margin: 0;
+}
+.carregamento-do-painel__caixa .botao-girando {
+  width: 1.5em;
+  height: 1.5em;
+  color: var(--text-secondary);
+}
+.carregamento-do-painel__demora {
+  color: var(--text-secondary);
+}
+.carregamento-do-painel__erro {
+  font-size: 1.5em;
+  color: var(--color-status-danger-solid);
+}
+.carregamento-do-painel__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}

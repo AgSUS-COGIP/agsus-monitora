@@ -20,7 +20,7 @@ import {
 
   Nenhuma chamada nova: a versão do catálogo vem de carona no sinal de
   presença (`registrar_presenca_monitora`, migration 20261019160000), que a
-  tela já manda a cada 90 s com a aba visível, na troca de página e na volta
+  tela já manda a cada 150 s com a aba visível, na troca de página e na volta
   da aba (src/app/presenca.ts; com a aba oculta, nada). Só quando a versão
   muda o vigia relê o catálogo e a situação (duas leituras pequenas), remonta
   o menu e pede à navegação que reavalie a página aberta
