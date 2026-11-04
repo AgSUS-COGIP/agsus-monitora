@@ -215,6 +215,13 @@ describe("reutilização de servidor no Playwright", () => {
       /reuseExistingServer:\s*process\.env\.PLAYWRIGHT_REUSE_SERVER === "1"/,
     );
   });
+
+  /* Pelo mesmo motivo: servir um dist/ antigo só quando se pede (o CI, logo após o build). */
+  it("refaz o build por padrão", () => {
+    expect(config).toMatch(
+      /process\.env\.PLAYWRIGHT_DIST_PRONTO === "1"\s*\?\s*""\s*:\s*"npm run build && "/,
+    );
+  });
 });
 
 /*

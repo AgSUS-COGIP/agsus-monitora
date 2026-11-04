@@ -61,17 +61,44 @@ jobs:
       - name: Testes e cobertura
         run: npm run test:coverage
 
+      # O Supabase deste build é fictício: os testes de navegador respondem a ele
+      # por page.route (tests/sessao-simulada.spec.js). Não é segredo nem banco real.
       - name: Build
+        env:
+          VITE_SUPABASE_URL: https://teste.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: chave-publicavel-de-teste
         run: npm run build
 
+      - name: Ler versão do Playwright
+        id: playwright
+        run: echo "versao=$(npx playwright --version | cut -d' ' -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Guardar navegador do Playwright
+        id: navegador
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.versao }}
+
       - name: Instalar navegador do Playwright
+        if: steps.navegador.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
 
-      - name: Smoke tests
-        run: npm run test:smoke
+      - name: Instalar dependências do navegador
+        if: steps.navegador.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      # Todos os *.spec.js contra o dist/ do passo Build (sem compilar de novo);
+      # os que precisam de banco de desenvolvimento são pulados.
+      - name: Testes de navegador
+        env:
+          PLAYWRIGHT_DIST_PRONTO: "1"
+        run: npm run test:e2e
 
       - name: Smoke no servidor TypeScript
-        run: npm run test:smoke:servidor
+        env:
+          PLAYWRIGHT_DIST_PRONTO: "1"
+        run: npm run test:smoke:servidor -- tests/sessao-simulada.spec.js
 
       - name: Verificar imagem de implantação
         run: docker build -t monitora:ci .
@@ -94,6 +121,17 @@ jobs:
       - name: Encerrar container de teste
         if: always()
         run: docker rm -f monitora-ci || true
+
+      - name: Guardar relatório do Playwright
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: relatorio-do-playwright
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+          if-no-files-found: ignore
 
   python:
     name: Python (ruff e pytest)

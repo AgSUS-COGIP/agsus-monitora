@@ -48,7 +48,9 @@ O servidor usa só módulos nativos do Node, então a imagem Docker final não t
 
 `tests/servidor.test.js` sobe o servidor numa porta aleatória, sobre um `dist` de teste, e fixa o
 contrato acima. Herdou os casos do antigo `MonitoraRoutesTest.php`. `npm run test:smoke:servidor`
-roda o smoke do Playwright contra ele, e o CI faz o mesmo contra a imagem Docker.
+roda o smoke do Playwright contra ele (specs a mais vão depois de `--`; o CI passa
+`tests/sessao-simulada.spec.js`, que confere as rotas das telas e o F5), e o CI roda o smoke também
+contra a imagem Docker.
 
 ## Implantação
 

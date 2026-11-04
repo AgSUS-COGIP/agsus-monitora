@@ -3,6 +3,14 @@ import { defineConfig, devices } from "@playwright/test";
 // "servidor" roda a suíte contra o servidor TypeScript (server/servidor.ts), como em produção.
 const servidor = process.env.PLAYWRIGHT_TARGET === "servidor";
 const baseURL = servidor ? "http://127.0.0.1:8000" : "http://127.0.0.1:4173";
+/*
+  PLAYWRIGHT_DIST_PRONTO=1 serve o dist/ que já existe, sem refazer o build. O CI
+  liga no passo logo depois do `npm run build`, para não compilar três vezes o
+  mesmo código; localmente, sem a variável, o build continua sendo refeito (um
+  dist/ antigo daria o mesmo verde falso do servidor reaproveitado, abaixo).
+*/
+const build =
+  process.env.PLAYWRIGHT_DIST_PRONTO === "1" ? "" : "npm run build && ";
 
 export default defineConfig({
   testDir: "./tests",
@@ -34,8 +42,8 @@ export default defineConfig({
   ],
   webServer: {
     command: servidor
-      ? "npm run build && npm start"
-      : "npm run build && npm run preview -- --host 127.0.0.1",
+      ? `${build}npm start`
+      : `${build}npm run preview -- --host 127.0.0.1`,
     url: baseURL,
     /*
       Reutilizar servidor já em execução foi o que produziu um verde falso em

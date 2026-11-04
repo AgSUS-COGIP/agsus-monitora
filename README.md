@@ -158,7 +158,7 @@ npm run typecheck                        # tsc do front e do servidor
 npm run lint && npm run format:check     # ESLint e Prettier nos arquivos alterados
 npm run check:architecture               # regras de arquitetura (veja abaixo)
 npm test                                 # Vitest (rede bloqueada)
-npm run test:smoke                       # smoke no navegador (Playwright)
+npm run test:e2e                         # testes de navegador (Playwright; veja tests/CLAUDE.md)
 python -m pip install -r python/requirements-dev.txt -r scripts/robo-empregare/requirements.txt
 python -m pytest && python -m ruff check . && python -m ruff format --check .
 ```
@@ -168,7 +168,10 @@ Todo Pull Request para `main` roda `.github/workflows/build-and-smoke.yml`:
 - **Arquitetura, qualidade, build e smoke** (obrigatório): auth, contrato de RPC, sem
   `MutationObserver` novo, sem camadas de remendo, legado só encolhe; lint e formatação; Vitest
   com cobertura; `npm run build` (inclui `typecheck`, segurança do HTML e orçamento de bundles);
-  smoke no Playwright, no servidor TypeScript e na imagem Docker.
+  todos os testes do Playwright sobre o `dist/` desse build, inclusive o app com sessão e o
+  Supabase simulados (rotas, F5, voltar/avançar, áreas); o smoke e a sessão simulada de novo no
+  servidor TypeScript, e o smoke na imagem Docker. Na falha, o relatório e os traces ficam no
+  artefato `relatorio-do-playwright`.
 - **Python:** Ruff (lint e formatação) e pytest.
 - **Contrato de RPC contra o banco de desenvolvimento**, quando o segredo existe.
 
