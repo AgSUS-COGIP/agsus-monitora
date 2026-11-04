@@ -19,6 +19,7 @@ import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.ts";
 import { exigirSessao } from "../../lib/sessao";
 import { analisarCronograma } from "../../lib/cronograma-do-edital.ts";
 import { lerAnexoNoServidor } from "../../lib/anexos-do-edital.ts";
+import { lerRetificacaoNoServidor } from "../../lib/retificacao-do-cronograma.ts";
 import { carregarResumoDoNucleo, createNucleoSummaryStore } from "./resumo.ts";
 import { etapaDasRegras } from "../../lib/regras-do-edital.ts";
 import type { EtapaDasRegras } from "../../lib/regras-do-edital.ts";
@@ -377,6 +378,13 @@ export function criarEstadoDoNucleo({
     return resultados;
   }
 
+  /** Lê o PDF da retificação do cronograma na função Python. Não grava nada. */
+  async function lerRetificacao(arquivo: File) {
+    if (!supabase) throw new Error("Supabase indisponível.");
+    const sessao = await exigirSessao(supabase);
+    return lerRetificacaoNoServidor(arquivo, { token: sessao!.access_token });
+  }
+
   async function lerQuadroDeVagas(id: unknown): Promise<unknown> {
     if (!supabase) throw new Error("Supabase indisponível.");
     await exigirSessao(supabase);
@@ -695,6 +703,7 @@ export function criarEstadoDoNucleo({
     lerCronograma,
     lerUnidadesPorArea,
     lerAnexos,
+    lerRetificacao,
     lerQuadroDeVagas,
     salvarQuadroDeVagas,
     salvarEdital,

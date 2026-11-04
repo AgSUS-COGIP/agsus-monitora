@@ -6090,6 +6090,26 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-dos-editais.md",
+    titulo: "Lançar retificação do cronograma (PDF)",
+    perguntas: [
+      "retificação do cronograma",
+      "lançar retificação",
+      "errata do cronograma",
+      "leia-se",
+      "onde se lê",
+      "retificação do anexo i",
+      "aplicar retificação",
+      "pdf da retificação",
+    ],
+    resposta:
+      'No editor de cronograma de um edital já cadastrado, "Lançar retificação (PDF)" lê o PDF da retificação publicada (1ª, 2ª… Retificação do Cronograma ou do Anexo I) no servidor, sem gravar nada, e compara a tabela do "Leia-se" com o cronograma gravado, etapa a etapa: igual, data muda, etapa nova ou etapa que sumiu. A etapa casada guarda o nome gravado; só as datas mudam. Dá para corrigir as datas, dizer a que etapa gravada uma etapa nova corresponde, deixar uma etapa nova de fora ou manter uma que sumiu. Os avisos da leitura aparecem na linha: duas datas soltas ("24/09 e 07/10") viram o intervalo do menor ao maior, digitação estranha ("05/ a 16/10") é corrigida e etapa sem data precisa ser preenchida. PDF de outro edital é bloqueado. "Aplicar retificação" grava o cronograma com o nome da retificação como número da errata e o SEI e a data da assinatura no motivo, e o histórico registra a errata. Com alterações não salvas no formulário, salve ou descarte antes de aplicar.',
+    fato: "",
+    fonte:
+      "src/modulos/editais/lancar-retificacao.tsx; api/anexos-do-edital.py; src/lib/retificacao-do-cronograma.ts",
+    abrir: "nucleo",
+  },
+  {
+    arquivo: "regras-dos-editais.md",
     titulo: "Quadro de vagas do edital",
     perguntas: [
       "quadro de vagas",

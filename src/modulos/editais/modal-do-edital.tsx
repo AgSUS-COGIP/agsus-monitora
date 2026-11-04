@@ -55,6 +55,7 @@ import { Aviso, Campo, Modal } from "../../ui/index.ts";
 import { EditorDeCronograma } from "./editor-de-cronograma.tsx";
 import { ResponsaveisDoEdital } from "./responsaveis-do-edital.tsx";
 import type { EstadoDoEditorDeCronograma } from "./editor-de-cronograma.tsx";
+import type { RetificacaoParaAplicar } from "./lancar-retificacao.tsx";
 import { ImportarAnexos } from "./importar-anexos.tsx";
 import type { EstadoDosAnexos } from "./importar-anexos.tsx";
 
@@ -423,6 +424,40 @@ export function ModalDoEdital({
       de: nomeDaArea(areaDoEdital) || areaDoEdital,
       para: nomeDaArea(destino) || destino,
     });
+  }
+
+  /*
+    A retificação do PDF grava na hora, com o formulário como foi aberto: o
+    edital é o mesmo payload, com o cronograma (e o que sai dele — datas,
+    status e etapa) recalculado pelas etapas novas.
+  */
+  async function aplicarRetificacao({
+    etapas,
+    motivo,
+    errata,
+  }: RetificacaoParaAplicar) {
+    const retificado = { ...cronograma, etapas };
+    const previaRetificada = estadoDoCronograma(etapas, {
+      automatico: retificado.automatico,
+      statusExcepcional: retificado.statusExcepcional,
+      etapaExcepcional: retificado.etapaExcepcional,
+      hoje: agora(),
+    });
+    const salvou = await estado.salvarEdital({
+      edital: editalParaSalvar(
+        formulario,
+        unidade,
+        retificado,
+        previaRetificada,
+        areaDoEdital,
+      ),
+      etapas,
+      motivo,
+      errata,
+      quadro: null,
+    });
+    if (salvou) apagarRascunho(chaveDoRascunhoAtual);
+    return salvou;
   }
 
   async function salvar() {
@@ -833,6 +868,15 @@ export function ModalDoEdital({
             previa={previa}
             analise={analise}
             aoMudar={mudarCronograma}
+            numeroDoEdital={formulario.edital}
+            aoAplicarRetificacao={id ? aplicarRetificacao : undefined}
+            impedimentoDaRetificacao={
+              mexido
+                ? "Salve ou descarte as alterações do formulário antes de aplicar a retificação."
+                : salvando
+                  ? "Aguarde o salvamento em andamento."
+                  : ""
+            }
           />
 
           <div className="subsection">Observações</div>

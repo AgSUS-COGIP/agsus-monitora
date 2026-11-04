@@ -1412,3 +1412,181 @@ describe("cronograma e rascunho sem efeitos colaterais", () => {
     expect(gravacoesDoRascunho()).toBe(0);
   });
 });
+
+describe("retificação do cronograma por PDF", () => {
+  /* O "Leia-se" lido pela função Python para o edital 10/2026 (id 1). */
+  const RETIFICACAO = {
+    tipo: "retificacao",
+    numero: 1,
+    rotulo: "1ª Retificação do Cronograma",
+    edital: "10/2026",
+    sei: "0001234",
+    assinada_em: "2026-09-12",
+    leia_se: [
+      {
+        atividade: "Inscrições",
+        data_inicio: "2026-09-01",
+        data_fim: "2026-09-10",
+        negrito: false,
+        avisos: [],
+      },
+      {
+        atividade: "Análise curricular",
+        data_inicio: "2026-09-14",
+        data_fim: "2026-09-25",
+        negrito: true,
+        avisos: [],
+      },
+      {
+        atividade: "Resultado final do Processo Seletivo",
+        data_inicio: "2026-09-29",
+        data_fim: "2026-10-02",
+        texto_datas: "29/09 e 02/10",
+        negrito: true,
+        avisos: [
+          '"29/09 e 02/10" são duas datas soltas; lido como o intervalo de 29/09/2026 a 02/10/2026. Confira.',
+        ],
+      },
+    ],
+    avisos: [],
+  };
+
+  async function lerPdf(resposta = RETIFICACAO) {
+    const buscar = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => resposta,
+    }));
+    vi.stubGlobal("fetch", buscar);
+    await clicar($("cronogramaRetificacao"));
+    const entrada = $("retificacaoArquivo");
+    Object.defineProperty(entrada, "files", {
+      value: [
+        new File(["%PDF-1.4"], "retificacao.pdf", { type: "application/pdf" }),
+      ],
+    });
+    await act(async () => {
+      entrada.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await esperar();
+    return buscar;
+  }
+
+  const situacoes = () =>
+    [...document.querySelectorAll("#retificacaoComparacao tbody tr")].map(
+      (tr) => tr.dataset.situacao,
+    );
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("só aparece em edital cadastrado", async () => {
+    await montar();
+    await clicar($("newEditalBtn"));
+    expect($("cronogramaRetificacao")).toBeNull();
+  });
+
+  it("mostra a comparação etapa a etapa com os avisos, sem gravar nada", async () => {
+    const { supabase } = await montar();
+    await abrirEdital("1");
+    supabase.rpc.mockClear();
+    const buscar = await lerPdf();
+
+    expect(buscar.mock.calls[0][0]).toBe(
+      "/api/anexos-do-edital?tipo=retificacao",
+    );
+    expect($("retificacaoDocumento").textContent).toContain(
+      "1ª Retificação do Cronograma · Edital 10/2026 · SEI 0001234 · assinada em 12/09/2026",
+    );
+    expect(situacoes()).toEqual(["igual", "muda", "nova"]);
+    expect($("retificacaoComparacao").textContent).toContain(
+      "duas datas soltas",
+    );
+    expect($("retificacaoResumo").textContent).toBe(
+      "1 com data nova · 1 nova(s) · 0 sai(em) · 1 igual(is)",
+    );
+    expect($("retificacaoErrata").value).toBe("1ª Retificação do Cronograma");
+    expect($("retificacaoMotivo").value).toContain("SEI 0001234");
+    expect($("retificacaoAplicar").disabled).toBe(false);
+    expect(
+      supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "salvar_monitoramento_com_cronograma_v2",
+      ),
+    ).toHaveLength(0);
+  });
+
+  it("PDF de outro edital bloqueia com aviso e não mostra o Aplicar", async () => {
+    await montar();
+    await abrirEdital("1");
+    await lerPdf({ ...RETIFICACAO, edital: "105/2026" });
+    expect($("retificacaoBloqueio").textContent).toBe(
+      "O PDF é do edital 105/2026, e este é o 10/2026. Escolha a retificação deste edital.",
+    );
+    expect($("retificacaoComparacao")).toBeNull();
+    expect($("retificacaoAplicar")).toBeNull();
+  });
+
+  it("formulário mexido impede aplicar até salvar ou descartar", async () => {
+    await montar();
+    await abrirEdital("1");
+    await digitar($("mObs"), "Anotação");
+    await lerPdf();
+    expect($("retificacaoPendencias").textContent).toContain(
+      "Salve ou descarte as alterações do formulário",
+    );
+    expect($("retificacaoAplicar").disabled).toBe(true);
+  });
+
+  it("ajusta e aplica: grava o cronograma novo com a errata e o SEI no motivo", async () => {
+    const { supabase, aoSalvar, toast } = await montar();
+    await abrirEdital("1");
+    await lerPdf();
+    // A etapa nova fica um dia a menos, corrigida à mão antes de aplicar.
+    await digitar(
+      document.querySelector(
+        '[aria-label="Fim de Resultado final do Processo Seletivo"]',
+      ),
+      "2026-10-01",
+    );
+    supabase.rpc.mockClear();
+    await clicar($("retificacaoAplicar"));
+    await esperar();
+
+    const [, argumentos] = supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "salvar_monitoramento_com_cronograma_v2",
+    );
+    expect(argumentos.p_numero_errata).toBe("1ª Retificação do Cronograma");
+    expect(argumentos.p_motivo).toBe(
+      "Lançada pela 1ª Retificação do Cronograma (SEI 0001234, assinada em 12/09/2026): 1 etapa(s) com data nova, 1 incluída(s).",
+    );
+    expect(
+      argumentos.p_cronograma.map((e) => [
+        e.ordem,
+        e.atividade,
+        e.data_inicio,
+        e.data_fim,
+        e.origem,
+      ]),
+    ).toEqual([
+      [1, "Inscrições", "2026-09-01", "2026-09-10", "MANUAL"],
+      [2, "Análise curricular", "2026-09-14", "2026-09-25", "ERRATA"],
+      [
+        3,
+        "Resultado final do Processo Seletivo",
+        "2026-09-29",
+        "2026-10-01",
+        "ERRATA",
+      ],
+    ]);
+    expect(argumentos.p_payload).toMatchObject({
+      id: "1",
+      edital: "10/2026",
+      data_inicio: "2026-09-01",
+      data_fim: "2026-10-01",
+    });
+    expect($("editModal")).toBeNull();
+    expect(aoSalvar).toHaveBeenCalledTimes(1);
+    expect(toast).toHaveBeenLastCalledWith(
+      "10/2026 salvo. 3 etapa(s) registradas e histórico atualizado.",
+    );
+  });
+});
