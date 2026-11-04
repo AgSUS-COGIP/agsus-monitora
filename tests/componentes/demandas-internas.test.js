@@ -207,6 +207,22 @@ describe("demandas internas no Cronograma", () => {
     expect(itens[1].textContent).toContain("18/09/2026 · 10/2026");
   });
 
+  it("na Semana, a demanda com período segue o critério do Mês: só início e fim", async () => {
+    atual = await montar();
+    await clicar(document.querySelector('.cal-visoes [data-valor="semana"]'));
+    await clicar($("calMesAnterior")); // semana de 6 a 12/09; d1 vai de 8 a 10
+    const nomes = [
+      ...document.querySelectorAll(".cal-semana-vista .cal-mini-nome"),
+    ]
+      .map((item) => item.textContent)
+      .filter((texto) => texto.includes("Relatório mensal"));
+    expect(nomes).toHaveLength(2);
+    const andamento = [
+      ...document.querySelectorAll(".cal-semana-andamento"),
+    ].map((botao) => botao.textContent);
+    expect(andamento).toEqual(["1 em andamento"]);
+  });
+
   it("desligar o tipo na legenda esconde as demandas do calendário", async () => {
     atual = await montar();
     await clicar(
