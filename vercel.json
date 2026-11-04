@@ -3,7 +3,8 @@
   "cleanUrls": true,
   "functions": {
     "api/anexos-do-edital.py": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "excludeFiles": "{!(api)/**,.*/**,*,api/!(*.py)}"
     }
   },
   "git": {

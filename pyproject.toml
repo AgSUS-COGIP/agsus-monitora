@@ -1,0 +1,22 @@
+# Dependências das funções Python em api/ (Vercel). Só a leitura de PDF dos anexos do edital.
+# Substitui o antigo requirements.txt da raiz: a Vercel instala daqui (com uv) e tudo o que estiver
+# aqui entra em TODA função api/*.py, a cada deploy. Ferramentas de desenvolvimento ficam em
+# python/requirements-dev.txt; os jobs têm o próprio scripts/<job>/requirements.txt.
+[project]
+name = "monitora-funcoes-vercel"
+version = "0.0.0"
+requires-python = "==3.12.*"
+dependencies = ["pdfplumber==0.11.9"]
+
+[tool.uv]
+# Não é pacote instalável: só a lista de dependências das funções.
+package = false
+# O pdfplumber declara Pillow e pypdfium2, mas só os usa para desenhar a página
+# (Page.to_image, importado na hora). A leitura de texto, tabelas e negrito
+# (api/anexos-do-edital.py) não chama nada disso; sem os dois, cada deploy da
+# função cai ~27 MB (Function Storage do plano Hobby). Quem precisar de imagem
+# da página faz em job do GitHub Actions, não aqui.
+override-dependencies = [
+  "pillow; sys_platform == 'never'",
+  "pypdfium2; sys_platform == 'never'",
+]
