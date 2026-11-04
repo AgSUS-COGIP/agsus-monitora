@@ -9,6 +9,8 @@ const result = spawnSync(
     ),
     "test",
     "tests/smoke.spec.js",
+    // Specs a mais, depois de `--` (o CI passa tests/sessao-simulada.spec.js).
+    ...process.argv.slice(2),
   ],
   {
     stdio: "inherit",
