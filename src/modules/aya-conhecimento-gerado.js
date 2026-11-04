@@ -5250,6 +5250,23 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
+    titulo: "Mapa simples dos DSEIs",
+    perguntas: [
+      "mapa simples",
+      "numero do dsei no mapa",
+      "colorir por",
+      "dseis numerados",
+      "mapa sem fundo de ruas",
+      "sem dado no mapa",
+      "contorno dos dseis",
+    ],
+    resposta:
+      'No MONITORA, o botão "Mapa simples" (ao lado de Mapa e Satélite, no mapa nacional da Saúde Indígena) troca o fundo de ruas por um fundo liso e pinta as áreas dos 34 DSEIs, cada uma com o seu número. A numeração é a ordem alfabética oficial: 1 Alagoas e Sergipe até 34 Yanomami; a lista "Territórios por vagas" mostra o mesmo número. "Colorir por" escolhe a cor: % preenchidas (padrão, cinco faixas de 20 pontos), vagas ociosas (cinco faixas pelos valores do recorte) ou uma cor fixa por DSEI. DSEI fora do recorte ou sem vaga fica cinza, "sem dado". Passar o mouse num DSEI realça a linha da lista e vice-versa; clicar abre o DSEI. Nesse modo as sedes, as CASAIs e as Terras Indígenas começam desligadas ("Sedes e CASAIs" e o botão "Terras Indígenas" as ligam). As áreas são as da camada de abrangência dos DSEIs publicada pela Funai (cópia de 20/04/2022): cobrem as regiões com atendimento, não o país inteiro.',
+    fato: "",
+    fonte: "interface do MONITORA; Funai, camada areas_dsei",
+  },
+  {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Duas bolhas no mesmo lugar do mapa",
     perguntas: [
       "bolhas sobrepostas",

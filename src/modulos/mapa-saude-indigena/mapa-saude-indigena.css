@@ -1040,3 +1040,124 @@
     max-height: 120px;
   }
 }
+
+/*
+  "Mapa simples" (mapa-simples.tsx): sem azulejos, o contêiner do Leaflet
+  (`map-simple-mode`, posto pelo seletor do fundo) mostra o fundo liso; os
+  DSEIs são caminhos SVG com a cor no `style` (um token por DSEI ou faixa).
+*/
+.mapa-si-mapa.map-simple-mode {
+  background: var(--mapa-simples-fundo);
+}
+
+.mapa-si-mapa .mapa-simples__pais {
+  fill: var(--mapa-simples-pais);
+  fill-opacity: 1;
+  stroke: none;
+}
+
+.mapa-si-mapa .mapa-simples__dsei {
+  fill: var(--mapa-simples-sem-dado);
+  fill-opacity: 1;
+  stroke: var(--mapa-simples-borda);
+  stroke-width: 0.9px;
+  stroke-opacity: 1;
+  transition: stroke-width 0.12s ease;
+}
+
+.mapa-si-mapa .mapa-simples__dsei.is-realce {
+  stroke: var(--text-primary);
+  stroke-width: 2.5px;
+}
+
+.mapa-simples__rotulo-caixa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: none;
+  pointer-events: none;
+}
+
+.mapa-simples__rotulo {
+  color: var(--mapa-simples-rotulo);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  text-shadow:
+    0 0 2px var(--mapa-simples-rotulo-halo),
+    0 0 3px var(--mapa-simples-rotulo-halo),
+    0 0 4px var(--mapa-simples-rotulo-halo);
+}
+
+.mapa-simples--rotulos-pequenos .mapa-simples__rotulo {
+  font-size: 11px;
+}
+
+.mapa-simples__legenda {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.mapa-simples__colorir {
+  display: grid;
+  gap: var(--space-0-5);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.mapa-simples__colorir legend {
+  margin-bottom: var(--space-0-5);
+  padding: 0;
+}
+
+.mapa-simples__opcao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.mapa-simples__opcao input {
+  margin: 0;
+  accent-color: var(--brand-primary);
+}
+
+.mapa-simples__faixas {
+  display: grid;
+  gap: var(--space-0-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mapa-simples__amostra {
+  display: inline-block;
+  flex: none;
+  width: 16px;
+  height: 11px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  background: var(--mapa-simples-cor);
+}
+
+.mapa-si-territorio__numero {
+  display: inline-grid;
+  place-items: center;
+  min-width: var(--space-6);
+  height: var(--space-6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  background: var(--mapa-simples-cor, var(--surface-hover));
+  color: var(--mapa-simples-rotulo);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  text-shadow: 0 0 2px var(--mapa-simples-rotulo-halo);
+}
+
+.mapa-si-territorio.is-realce {
+  border-color: var(--text-primary);
+  background: var(--surface-hover);
+}

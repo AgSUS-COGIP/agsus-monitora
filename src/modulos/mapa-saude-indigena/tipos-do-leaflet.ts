@@ -65,6 +65,12 @@ export interface MetodosDoMapaIndigena {
     ufs?: string[],
   ): void;
   __agsusEnquadrarTerra?(nome: string, caixa: CaixaDaTerra): void;
+  __agsusDefinirTerrasVisiveis?(
+    visivel: boolean,
+    opcoes?: { guardar?: boolean },
+  ): void;
+  createPane?(nome: string): HTMLElement | undefined;
+  getPane?(nome: string): HTMLElement | undefined;
 }
 /** Apenas os métodos usados pelas telas; o namespace original não é alterado. */
 export interface LeafletDoMapa {

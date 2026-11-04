@@ -44,7 +44,10 @@ import {
   ZOOM_NACIONAL,
 } from "../../lib/enquadramento-do-brasil.ts";
 import { calcularLeque } from "../../lib/leque-de-marcadores.ts";
-import { criarCamadaComRecuo } from "../../modules/map-base-layer-switcher.ts";
+import {
+  adicionarCamadaDeFundo,
+  criarCamadaComRecuo,
+} from "../../modules/map-base-layer-switcher.ts";
 import {
   CORES_DO_MAPA,
   DESENHO_DAS_FORMAS,
@@ -154,7 +157,8 @@ export function adicionarFundo(
     });
     return camada;
   };
-  return montar().addTo(mapa);
+  // No "Mapa simples" o fundo fica guardado, sem entrar (nenhum azulejo baixado).
+  return adicionarCamadaDeFundo(mapa, montar());
 }
 
 /*

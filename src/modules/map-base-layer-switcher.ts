@@ -22,11 +22,18 @@ import type { CamadaDeFundo } from "../modulos/mapa-saude-indigena/tipos-do-leaf
   três mapas. A troca é só de camadas de azulejos: pontos, polígonos e
   rótulos ficam onde estão.
 
+  O mapa nacional da Saúde Indígena (`#map`) tem um terceiro botão, "Mapa
+  simples": tira todos os azulejos (nenhum é baixado), marca o contêiner com
+  `map-simple-mode` (o fundo liso vem do CSS) e avisa pelo mesmo evento
+  `agsus:map-base-layer-changed`; os 34 DSEIs chapados são desenhados pelo
+  componente (src/modulos/mapa-saude-indigena/mapa-simples.tsx). Os outros
+  mapas não oferecem o modo e leem a escolha guardada como "Mapa".
+
   O Leaflet vem do CDN como `window.L`, sem tipos instalados: este arquivo
   declara só o que usa dele.
 */
 
-type ModoDoFundo = "map" | "satellite";
+export type ModoDoFundo = "map" | "satellite" | "simple";
 
 interface EventoDoMapa {
   layer?: CamadaDoFundo;
@@ -138,7 +145,45 @@ type CaixaDoAzulejo = HTMLDivElement & { complete?: boolean };
 const STORAGE_KEY = "agsus_map_base_layer_v1";
 const MODE_MAP: ModoDoFundo = "map";
 const MODE_SATELLITE: ModoDoFundo = "satellite";
+export const MODO_SIMPLES: ModoDoFundo = "simple";
 const SATELLITE_ERROR_LIMIT = 4;
+
+/* O aviso de troca de fundo (sobe do contêiner do mapa): `detail.mode`. */
+export const EVENTO_DO_FUNDO = "agsus:map-base-layer-changed";
+const CLASSE_DO_MAPA_SIMPLES = "map-simple-mode";
+
+/* Só o mapa nacional da Saúde Indígena tem o "Mapa simples". */
+export function aceitaMapaSimples(map: Pick<MapaComSeletor, "getContainer">) {
+  return map.getContainer?.()?.id === "map";
+}
+
+/* O modo que o mapa vai mostrar (ou já mostra): o pedido ao seletor. */
+export function modoDesejadoDoFundo(mapa: object | null | undefined) {
+  const modo = mapa
+    ? (mapa as Partial<EstadoDoSeletor>).__agsusDesiredBaseMapMode
+    : undefined;
+  return modo ?? MODE_MAP;
+}
+
+/*
+  A camada de azulejos do fundo entra no mapa por aqui (`adicionarFundo`,
+  leaflet.ts): no "Mapa simples" ela fica guardada para quando a pessoa
+  voltar ao "Mapa", sem entrar — e sem baixar azulejo nenhum.
+*/
+export function adicionarCamadaDeFundo<T extends { addTo(mapa: never): T }>(
+  mapa: object,
+  camada: T,
+): T {
+  const map = mapa as MapaPronto;
+  if (
+    map.__agsusBaseLayerSwitcherReady &&
+    map.__agsusDesiredBaseMapMode === MODO_SIMPLES
+  ) {
+    rememberMapLayer(map, camada as unknown as CamadaDoFundo);
+    return camada;
+  }
+  return camada.addTo(mapa as never);
+}
 
 // Faixa pedida para o workspace cartográfico:
 // - zoom 4.5: limite de afastamento nacional, régua na faixa de 500 km;
@@ -316,7 +361,7 @@ function enhanceMap(L: LeafletDoSeletor, mapa: MapaComSeletor): MapaPronto {
   if (!map || map.__agsusBaseLayerSwitcherReady) return map;
   map.__agsusBaseLayerSwitcherReady = true;
   map.__agsusBaseMapMode = MODE_MAP;
-  map.__agsusDesiredBaseMapMode = readStoredMode();
+  map.__agsusDesiredBaseMapMode = readStoredMode(aceitaMapaSimples(map));
   map.__agsusStoredMapLayers = [];
   map.__agsusSatelliteLayer = null;
   map.__agsusSatelliteErrors = 0;
@@ -329,8 +374,9 @@ function enhanceMap(L: LeafletDoSeletor, mapa: MapaComSeletor): MapaPronto {
 
     if (layer.__agsusBaseMapKind === MODE_MAP) {
       rememberMapLayer(map, layer);
-      if (map.__agsusDesiredBaseMapMode === MODE_SATELLITE) {
-        queueMicrotask(() => setBaseMapMode(L, map, MODE_SATELLITE));
+      const desejado = map.__agsusDesiredBaseMapMode;
+      if (desejado === MODE_SATELLITE || desejado === MODO_SIMPLES) {
+        queueMicrotask(() => setBaseMapMode(L, map, desejado));
       }
     }
   });
@@ -342,8 +388,9 @@ function enhanceMap(L: LeafletDoSeletor, mapa: MapaComSeletor): MapaPronto {
       findLayers(map, MODE_MAP).forEach((layer) =>
         rememberMapLayer(map, layer),
       );
-      if (map.__agsusDesiredBaseMapMode === MODE_SATELLITE) {
-        setBaseMapMode(L, map, MODE_SATELLITE);
+      const desejado = map.__agsusDesiredBaseMapMode;
+      if (desejado === MODE_SATELLITE || desejado === MODO_SIMPLES) {
+        setBaseMapMode(L, map, desejado);
       } else {
         syncControl(map);
       }
@@ -364,21 +411,22 @@ function addSwitcherControl(L: LeafletDoSeletor, map: MapaPronto) {
     container.setAttribute("role", "group");
     container.setAttribute("aria-label", "Camada de fundo do mapa");
 
-    const mapButton = createButton(L, MODE_MAP, "Mapa");
-    const satelliteButton = createButton(L, MODE_SATELLITE, "Satélite");
-    container.append(mapButton, satelliteButton);
+    const botoes: [ModoDoFundo, string][] = [
+      [MODE_MAP, "Mapa"],
+      [MODE_SATELLITE, "Satélite"],
+    ];
+    if (aceitaMapaSimples(map)) botoes.push([MODO_SIMPLES, "Mapa simples"]);
+    for (const [modo, rotulo] of botoes) {
+      const botao = createButton(L, modo, rotulo);
+      botao.addEventListener("click", () => {
+        map.__agsusDesiredBaseMapMode = modo;
+        setBaseMapMode(L, map, modo, { persist: true });
+      });
+      container.append(botao);
+    }
 
     L.DomEvent.disableClickPropagation(container);
     L.DomEvent.disableScrollPropagation(container);
-
-    mapButton.addEventListener("click", () => {
-      map.__agsusDesiredBaseMapMode = MODE_MAP;
-      setBaseMapMode(L, map, MODE_MAP, { persist: true });
-    });
-    satelliteButton.addEventListener("click", () => {
-      map.__agsusDesiredBaseMapMode = MODE_SATELLITE;
-      setBaseMapMode(L, map, MODE_SATELLITE, { persist: true });
-    });
 
     map.__agsusBaseLayerControlElement = container;
     syncControl(map);
@@ -404,29 +452,38 @@ function setBaseMapMode(
   requestedMode: ModoDoFundo,
   { persist = false } = {},
 ) {
-  const mode = requestedMode === MODE_SATELLITE ? MODE_SATELLITE : MODE_MAP;
+  const mode =
+    requestedMode === MODE_SATELLITE
+      ? MODE_SATELLITE
+      : requestedMode === MODO_SIMPLES && aceitaMapaSimples(map)
+        ? MODO_SIMPLES
+        : MODE_MAP;
   if (!map || map.__agsusSwitchingBaseLayer) return false;
 
-  if (mode === MODE_SATELLITE) {
+  if (mode !== MODE_MAP) {
     const currentMapLayers = findLayers(map, MODE_MAP);
     currentMapLayers.forEach((layer) => rememberMapLayer(map, layer));
-    if (!map.__agsusStoredMapLayers.length) return false;
+    if (mode === MODE_SATELLITE && !map.__agsusStoredMapLayers.length)
+      return false;
   }
 
   map.__agsusSwitchingBaseLayer = true;
   try {
-    if (mode === MODE_SATELLITE) {
+    if (mode !== MODE_MAP) {
       findLayers(map, MODE_MAP).forEach((layer) => map.removeLayer(layer));
+    }
+    if (mode === MODE_SATELLITE) {
       const satelliteLayer = getSatelliteLayer(L, map);
       if (!map.hasLayer(satelliteLayer)) satelliteLayer.addTo(map);
       satelliteLayer.bringToBack?.();
-    } else {
-      if (
-        map.__agsusSatelliteLayer &&
-        map.hasLayer(map.__agsusSatelliteLayer)
-      ) {
-        map.removeLayer(map.__agsusSatelliteLayer);
-      }
+    } else if (
+      map.__agsusSatelliteLayer &&
+      map.hasLayer(map.__agsusSatelliteLayer)
+    ) {
+      map.removeLayer(map.__agsusSatelliteLayer);
+    }
+    // O "Mapa simples" não tem azulejo nenhum: o fundo liso é do CSS.
+    if (mode === MODE_MAP) {
       map.__agsusStoredMapLayers.forEach((layer) => {
         if (!map.hasLayer(layer)) layer.addTo(map);
         layer.bringToBack?.();
@@ -609,11 +666,11 @@ function syncControl(map: MapaPronto) {
 }
 
 function dispatchModeChange(map: MapaComSeletor, mode: ModoDoFundo) {
-  map
-    .getContainer?.()
-    .classList.toggle("map-satellite-mode", mode === MODE_SATELLITE);
-  map.getContainer?.().dispatchEvent(
-    new CustomEvent("agsus:map-base-layer-changed", {
+  const container = map.getContainer?.();
+  container?.classList.toggle("map-satellite-mode", mode === MODE_SATELLITE);
+  container?.classList.toggle(CLASSE_DO_MAPA_SIMPLES, mode === MODO_SIMPLES);
+  container?.dispatchEvent(
+    new CustomEvent(EVENTO_DO_FUNDO, {
       bubbles: true,
       detail: { mode },
     }),
@@ -629,11 +686,13 @@ function dispatchFallback(map: MapaComSeletor) {
   );
 }
 
-function readStoredMode(): ModoDoFundo {
+/* A escolha guardada; o "Mapa simples" vale só onde o mapa o oferece. */
+function readStoredMode(aceitaSimples = false): ModoDoFundo {
   try {
-    return localStorage.getItem(STORAGE_KEY) === MODE_SATELLITE
-      ? MODE_SATELLITE
-      : MODE_MAP;
+    const guardado = localStorage.getItem(STORAGE_KEY);
+    if (guardado === MODE_SATELLITE) return MODE_SATELLITE;
+    if (guardado === MODO_SIMPLES && aceitaSimples) return MODO_SIMPLES;
+    return MODE_MAP;
   } catch {
     return MODE_MAP;
   }

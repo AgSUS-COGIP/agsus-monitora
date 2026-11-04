@@ -245,7 +245,10 @@ export interface MapaDasTerrasIndigenas {
     caixa: CaixaDaTerra | null | undefined,
   ): boolean;
   __agsusSuspenderCamadasIndigenas?(suspender: boolean): void;
-  __agsusDefinirTerrasVisiveis?(visivel: boolean): void;
+  __agsusDefinirTerrasVisiveis?(
+    visivel: boolean,
+    opcoes?: { guardar?: boolean },
+  ): void;
   __agsusAlternarFaseDaTerra?(fase: string): boolean;
   __agsusFaseDaTerraVisivel?(fase: string): boolean;
 }
@@ -1049,7 +1052,15 @@ function enhanceMap(L: LeafletDasTerras, map: MapaDasTerrasIndigenas) {
     o mapa: sem isso o `refreshVector` achava "mesmo enquadramento, nada a
     fazer" e o botão acendia sobre um mapa vazio.
   */
-  const definirVisibilidade = (proxima: boolean) => {
+  /*
+    `guardar: false` muda só agora, sem tocar na preferência guardada: o
+    "Mapa simples" começa sem terras e, ao sair dele, a pessoa reencontra o
+    que tinha escolhido no Mapa/Satélite.
+  */
+  const definirVisibilidade = (
+    proxima: boolean,
+    { guardar = true }: { guardar?: boolean } = {},
+  ) => {
     const alvo = Boolean(proxima);
     map.__agsusIndigenousTerritoriesVisible = alvo;
     lastViewportKey = "";
@@ -1063,7 +1074,7 @@ function enhanceMap(L: LeafletDasTerras, map: MapaDasTerrasIndigenas) {
       scheduleRefresh();
       desenharEstudo();
     }
-    storeVisibility(alvo);
+    if (guardar) storeVisibility(alvo);
     avisar();
   };
 

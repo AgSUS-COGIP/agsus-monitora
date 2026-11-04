@@ -119,10 +119,17 @@ export function Amostra({ tipo, cor }: { tipo: string; cor?: string }) {
   A caixa da legenda sobre o canto do mapa, recolhível. Começa recolhida —
   só o botão "Legenda" — também no computador: aberta, ela tapava parte do
   Sul e do Sudeste no enquadramento do Brasil. Usada pelos mapas nacionais da
-  Saúde Indígena e de Projetos.
+  Saúde Indígena e de Projetos. A do Mapa simples começa aberta
+  (`abertaDeInicio`): ela tem o "Colorir por" e as faixas da cor.
 */
-export function LegendaFlutuante({ children }: { children: ReactNode }) {
-  const [aberta, definirAberta] = useState(false);
+export function LegendaFlutuante({
+  children,
+  abertaDeInicio = false,
+}: {
+  children: ReactNode;
+  abertaDeInicio?: boolean;
+}) {
+  const [aberta, definirAberta] = useState(abertaDeInicio);
   const idDoCorpo = useId();
   return (
     <div className="mapa-si-legenda mapa-si-legenda--flutuante">
