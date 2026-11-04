@@ -1079,9 +1079,12 @@
   transition: stroke-width 0.12s ease;
 }
 
-.mapa-si-mapa .mapa-simples__dsei.is-realce {
+/* O traço do DSEI realçado (lista ou mouse): pane próprio, por cima dos vizinhos. */
+.mapa-si-mapa .mapa-simples__realce {
+  fill: none;
   stroke: var(--text-primary);
   stroke-width: 2.5px;
+  stroke-opacity: 1;
 }
 
 .mapa-simples__rotulo-caixa {
@@ -1137,6 +1140,57 @@
 .mapa-simples__opcao input {
   margin: 0;
   accent-color: var(--brand-primary);
+}
+
+/* "Sedes e CASAIs": interruptor com o estado no trilho, texto sempre legível. */
+.mapa-simples__pontos {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  justify-self: start;
+  padding: var(--space-0-5) 0;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.mapa-simples__pontos:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.mapa-simples__interruptor {
+  position: relative;
+  flex: none;
+  width: 26px;
+  height: 14px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-pill);
+  background: var(--surface-hover);
+}
+
+.mapa-simples__interruptor::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--text-secondary);
+  transition: transform 0.12s ease;
+}
+
+.mapa-simples__pontos[aria-pressed="true"] .mapa-simples__interruptor {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+}
+
+.mapa-simples__pontos[aria-pressed="true"] .mapa-simples__interruptor::after {
+  background: var(--surface-card);
+  transform: translateX(12px);
 }
 
 .mapa-simples__faixas {

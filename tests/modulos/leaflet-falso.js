@@ -119,6 +119,14 @@ export function criarLeafletFalso({ aoCriarMapa } = {}) {
     // Centro fixo (o meio do Brasil): o editor põe ali o pin de um lugar sem coordenada.
     m.getCenter = () => [-15, -50];
     m.getContainer = () => elemento;
+    // Panes com nome (o Mapa simples cria os dele): um <div> por nome.
+    const panes = new Map();
+    m.getPane = (nome) => panes.get(nome);
+    m.createPane = (nome) => {
+      const pane = document.createElement("div");
+      panes.set(nome, pane);
+      return pane;
+    };
     m.addLayer = (c) => {
       m.camadas.add(c);
       c.mapa = m;

@@ -22,7 +22,6 @@ import {
   modoDesejadoDoFundo,
   type ModoDoFundo,
 } from "../../modules/map-base-layer-switcher.ts";
-import { readStoredVisibility } from "../../lib/terras-indigenas/preferencias.ts";
 import { carregarContornos, podeFlutuar } from "./leaflet.ts";
 import { usarUltimo } from "./usar-ultimo.ts";
 
@@ -46,6 +45,7 @@ import { usarUltimo } from "./usar-ultimo.ts";
 
 const PANE_DOS_DSEIS = "agsus-mapa-simples";
 const PANE_DOS_ROTULOS = "agsus-mapa-simples-rotulos";
+const PANE_DO_REALCE = "agsus-mapa-simples-realce";
 const CLASSE_DOS_ROTULOS_PEQUENOS = "mapa-simples--rotulos-pequenos";
 const CHAVE_DO_COLORIR = "agsus_mapa_simples_colorir_v1";
 
@@ -89,27 +89,6 @@ export function usarColorirPor(): [ColorirPor, (valor: ColorirPor) => void] {
   return [valor, definir];
 }
 
-/*
-  Terras Indígenas no Mapa simples: desligadas ao entrar, sem mudar a
-  preferência guardada; ao sair, volta o que a pessoa tinha. O botão "Terras
-  Indígenas" continua ligando e desligando enquanto isso.
-*/
-export function usarTerrasNoMapaSimples(
-  mapa: MapaDoPainel | null,
-  simples: boolean,
-) {
-  const estava = useRef(false);
-  useEffect(() => {
-    if (!mapa) return;
-    if (simples) mapa.__agsusDefinirTerrasVisiveis?.(false, { guardar: false });
-    else if (estava.current)
-      mapa.__agsusDefinirTerrasVisiveis?.(readStoredVisibility(), {
-        guardar: false,
-      });
-    estava.current = simples;
-  }, [mapa, simples]);
-}
-
 /* O que este módulo usa de uma camada do Leaflet (polígono, rótulo, grupo). */
 interface ElementoDaCamada {
   getElement?(): Element | null | undefined;
@@ -119,7 +98,7 @@ interface CamadaDoMapaSimples {
   on?(evento: string, ouvinte: () => void): unknown;
   bindTooltip?(conteudo: () => HTMLElement, opcoes?: object): unknown;
   eachLayer?(ouvinte: (camada: ElementoDaCamada) => void): unknown;
-  bringToFront?(): unknown;
+  closeTooltip?(): unknown;
 }
 interface GrupoDoMapaSimples {
   addTo(alvo: unknown): GrupoDoMapaSimples;
@@ -136,10 +115,16 @@ function caminhosDe(camada: CamadaDoMapaSimples): Element[] {
   return caminhos;
 }
 
-function criarPane(mapa: MapaDoPainel, nome: string, zIndex: string) {
+function criarPane(
+  mapa: MapaDoPainel,
+  nome: string,
+  zIndex: string,
+  { semPonteiro = false } = {},
+) {
   const pane = mapa.getPane?.(nome) || mapa.createPane?.(nome);
   if (!pane) return undefined;
   pane.style.zIndex = zIndex;
+  if (semPonteiro) pane.style.pointerEvents = "none";
   return nome;
 }
 
@@ -180,6 +165,8 @@ export function usarMapaSimples({
   carregar = carregarContornosDosDseis,
 }: OpcoesDoMapaSimples) {
   const poligonos = useRef(new Map<number, CamadaDoMapaSimples>());
+  // O contorno de cada número, para o traço do realce (desenhado por cima).
+  const formas = useRef(new Map<number, ContornoDoDsei>());
   const [desenhados, definirDesenhados] = useState(0);
   const atuais = usarUltimo({ indicadores, aoRealcar, aoEscolher });
 
@@ -187,6 +174,7 @@ export function usarMapaSimples({
     if (!L?.geoJSON || !mapa || !ativo) return undefined;
     let cancelado = false;
     const desenhadosAgora = poligonos.current;
+    const formasAgora = formas.current;
     const geoJSON = L.geoJSON.bind(L);
     const pane = criarPane(mapa, PANE_DOS_DSEIS, "245");
     const paneDosRotulos = criarPane(mapa, PANE_DOS_ROTULOS, "450");
@@ -234,6 +222,7 @@ export function usarMapaSimples({
           }
           grupo.addLayer(camada);
           desenhadosAgora.set(numero, camada);
+          formasAgora.set(numero, contorno);
 
           const numeroNoMapa = document.createElement("span");
           numeroNoMapa.className = "mapa-simples__rotulo";
@@ -273,6 +262,7 @@ export function usarMapaSimples({
       grupo.clearLayers();
       mapa.removeLayer(grupo as never);
       desenhadosAgora.clear();
+      formasAgora.clear();
     };
   }, [L, mapa, ativo, carregar, atuais]);
 
@@ -293,15 +283,34 @@ export function usarMapaSimples({
     }
   }, [pintura, desenhados]);
 
-  // O realce: o polígono do número, por cima dos vizinhos.
+  /*
+    O realce: o traço do DSEI vai num pane próprio, por cima dos vizinhos e
+    sem ponteiro. Antes o próprio polígono subia (`bringToFront`, que
+    reanexa o <path>) — no meio do `mouseover` dele. O navegador perdia o
+    `mouseout` desse caminho, a dica "sticky" não fechava e, passando o mouse
+    pelo mapa, as dicas se acumulavam (dez caixas abertas na produção). Agora
+    o polígono não sai do lugar, e só o DSEI realçado fica com a dica aberta.
+  */
   useEffect(() => {
     for (const [numero, camada] of poligonos.current) {
       const ativoAgora = numero === realce;
       for (const caminho of caminhosDe(camada))
         caminho.classList.toggle("is-realce", ativoAgora);
-      if (ativoAgora) camada.bringToFront?.();
+      if (!ativoAgora) camada.closeTooltip?.();
     }
-  }, [realce, desenhados]);
+    const forma = realce == null ? undefined : formas.current.get(realce);
+    if (!L?.geoJSON || !mapa || !forma) return undefined;
+    const pane = criarPane(mapa, PANE_DO_REALCE, "246", { semPonteiro: true });
+    const traco = L.geoJSON(forma, {
+      ...(pane ? { pane } : {}),
+      interactive: false,
+      className: "mapa-simples__realce",
+    }) as unknown as CamadaDoMapaSimples;
+    traco.addTo(mapa);
+    return () => {
+      mapa.removeLayer(traco as never);
+    };
+  }, [L, mapa, realce, desenhados]);
 
   return desenhados;
 }
@@ -368,18 +377,19 @@ export function LegendaDoMapaSimples({
         </ul>
       ) : null}
       {/*
-        Caixa de seleção nativa, como os rádios de "Colorir por". Era o chip
-        das fases das terras, que desligado sai riscado e esmaecido: os pontos,
-        desligados de início, pareciam um item indisponível.
+        Liga/desliga legível nos dois estados. Era o chip das fases das
+        terras (`.mapa-si-terra-fase`), que desligado sai riscado e esmaecido:
+        os pontos, desligados de início, pareciam um item indisponível.
       */}
-      <label className="mapa-simples__opcao mapa-simples__pontos">
-        <input
-          type="checkbox"
-          checked={mostrarPontos}
-          onChange={(evento) => aoMostrarPontos(evento.target.checked)}
-        />
+      <button
+        type="button"
+        className="mapa-simples__pontos"
+        aria-pressed={mostrarPontos}
+        onClick={() => aoMostrarPontos(!mostrarPontos)}
+      >
+        <span className="mapa-simples__interruptor" aria-hidden="true" />
         <span>Sedes e CASAIs</span>
-      </label>
+      </button>
     </div>
   );
 }
