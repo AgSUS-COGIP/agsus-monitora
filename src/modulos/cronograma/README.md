@@ -51,8 +51,9 @@ etapas" e o popup do dia.
   começa hoje (os dias anteriores ficam atrás de um botão) e o que já está em
   andamento aparece uma vez, em "Acontecendo agora · N etapas", recolhido
   quando são mais de três. Rola com a página, sem rolagem dentro do card.
-- **Semana**: sete dias com as etapas ativas em cada um, na mesma linha da
-  Lista; ‹ › andam de semana.
+- **Semana**: sete dias, com o mesmo critério do Mês: a etapa com período
+  aparece só no dia em que começa e no dia em que termina; nos dias do meio,
+  só "N em andamento", que abre o dia. ‹ › andam de semana.
 - Na Lista e na Semana, "Próximas etapas" sai (seria a mesma informação) e a
   linha do tempo ocupa a largura toda.
 
