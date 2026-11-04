@@ -42,6 +42,9 @@ const FOCAVEIS = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(",");
 
+/* Os modais abertos, na ordem em que abriram: o teclado é do último. */
+const ABERTOS: object[] = [];
+
 /* Um painel de aba escondido continua no DOM; o que está nele não recebe foco. */
 const focaveisDe = (cartao: HTMLElement) =>
   [...cartao.querySelectorAll<HTMLElement>(FOCAVEIS)].filter(
@@ -85,8 +88,13 @@ export function Modal({
       cartao.current?.querySelector<HTMLElement>("[data-foco-inicial]") ||
       focaveisDe(cartao.current!)[0];
     inicial?.focus();
+    const eu = {};
+    ABERTOS.push(eu);
 
     function aoTeclar(evento: KeyboardEvent) {
+      // Modal aberto por cima de outro (a montagem do parecer sobre a gaveta):
+      // Esc e Tab são só do de cima.
+      if (ABERTOS.at(-1) !== eu) return;
       if (evento.key === "Escape") {
         // Um controle de dentro (menu aberto) já tratou o Esc: só ele fecha.
         if (!evento.defaultPrevented) fechar.current?.();
@@ -116,6 +124,7 @@ export function Modal({
     document.addEventListener("keydown", aoTeclar);
     return () => {
       document.removeEventListener("keydown", aoTeclar);
+      ABERTOS.splice(ABERTOS.indexOf(eu), 1);
       if (anterior?.isConnected) anterior.focus?.();
     };
   }, []);

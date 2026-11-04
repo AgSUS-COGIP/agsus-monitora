@@ -29,6 +29,8 @@ resposta.tsx    resposta ao candidato: modelo, prévia, revisão, documento
 anexos.tsx      anexos com download registrado (URL assinada de 60 s)
 modelos.tsx     modelos de resposta (administração)
 partes.ts      dataHora e nota
+parecer-em-blocos/  PROTÓTIPO "Montar parecer" (desligado; docs/recursos/parecer-em-blocos.md):
+                o simulador de pareceres da Saúde Indígena em blocos por etapa, com prévia
 recursos.css    só o que é desta tela (tokens); o resto vem de src/ui/
 ```
 

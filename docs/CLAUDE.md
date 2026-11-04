@@ -17,6 +17,7 @@ Leia **só o documento do assunto**. Nada aqui é carregado pelo build, exceto `
 | `padronizacao_nomenclatura_*.md` | aplicação do padrão MAD no banco e no front |
 | `aya-sem-ia-local.md` | busca da Aya no navegador e chamados pelo Gmail |
 | `aya/` | **base de conhecimento da AYA** (fonte de `src/modules/aya-conhecimento-gerado.js`) |
+| `recursos/parecer-em-blocos.md` | protótipo "Montar parecer" dos recursos: fontes do pré-preenchimento, tabelas e RPCs propostas, itens do edital |
 | `propostas/` | SQL proposto, ainda não virou migration |
 
 ## `docs/aya/`

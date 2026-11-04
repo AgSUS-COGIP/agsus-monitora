@@ -22,6 +22,7 @@ import {
 import { SecaoDoAjuste } from "./ajuste.tsx";
 import { SecaoDeAnexos } from "./anexos.tsx";
 import { SecaoDoParecer } from "./parecer.tsx";
+import { SecaoMontarParecer } from "./parecer-em-blocos/secao-montar-parecer.tsx";
 import { dataHora, nota } from "./partes.ts";
 import { SecaoDaResposta } from "./resposta.tsx";
 import { detalheDoPrazo, MarcaForaDasAnalises } from "./tabela.tsx";
@@ -251,6 +252,10 @@ export function GavetaDoRecurso({
             podeDecidir={podeDecidir}
             acao={acao}
           />
+
+          {podeEditar || podeDecidir ? (
+            <SecaoMontarParecer recurso={r} />
+          ) : null}
 
           <SecaoDoAjuste
             estado={estado}
