@@ -155,7 +155,7 @@ describe("carregamento", () => {
     expect(supabase.rpc.mock.calls.length).toBeGreaterThan(chamadas);
     expect($("calMesTitulo").textContent).toBe(mes);
   });
-  it("custa 2 + N chamadas quando o banco ainda não tem a RPC em lote", async () => {
+  it("custa 3 + N chamadas quando o banco ainda não tem a RPC em lote", async () => {
     const { supabase } = await montar();
     const nomes = supabase.rpc.mock.calls.map(([nome, args]) =>
       args ? `${nome}:${args.p_monitoramento_id}` : nome,
@@ -163,12 +163,13 @@ describe("carregamento", () => {
     expect(nomes).toEqual([
       "get_nucleo_cronograma_resumo",
       "listar_etapas_do_cronograma",
+      "listar_demandas_internas",
       "get_monitoramento_cronograma:1",
       "get_monitoramento_cronograma:2",
     ]);
   });
 
-  it("com a RPC em lote, custa 2 chamadas — nenhuma por edital", async () => {
+  it("com a RPC em lote, custa 3 chamadas (com as demandas) — nenhuma por edital", async () => {
     const supabase = supabaseFalso();
     supabase.rpc.mockImplementation(async (nome) => {
       if (nome === "get_nucleo_cronograma_resumo")
@@ -183,19 +184,20 @@ describe("carregamento", () => {
       throw new Error(`RPC inesperada: ${nome}`);
     });
     await montar({ supabase });
-    expect(supabase.rpc).toHaveBeenCalledTimes(2);
+    // A terceira, listar_demandas_internas, falha aqui: o calendário segue sem demandas.
+    expect(supabase.rpc).toHaveBeenCalledTimes(3);
   });
 
   it("reabrir dentro do minuto não repete as chamadas; salvar cronograma invalida", async () => {
     const { supabase } = await montar();
     await esperar(() => controlador.render());
-    expect(supabase.rpc).toHaveBeenCalledTimes(4);
+    expect(supabase.rpc).toHaveBeenCalledTimes(5);
 
     await act(async () =>
       document.dispatchEvent(new CustomEvent("agsus:nucleo-cronograma-saved")),
     );
     await esperar(() => controlador.render());
-    expect(supabase.rpc).toHaveBeenCalledTimes(8);
+    expect(supabase.rpc).toHaveBeenCalledTimes(10);
   });
 
   it("antes da primeira carga, a grade, as listas e o contador são skeleton", async () => {

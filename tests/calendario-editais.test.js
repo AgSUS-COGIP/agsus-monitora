@@ -158,10 +158,12 @@ describe("fronteiras das RPCs do calendário", () => {
     });
     expect(estado.obter().etapas).toHaveLength(1);
     await estado.carregar();
-    expect(rpc).toHaveBeenCalledTimes(2);
+    // Resumo, etapas e demandas internas (que aqui vêm malformadas: lista vazia).
+    expect(rpc).toHaveBeenCalledTimes(3);
+    expect(estado.obter().demandas).toEqual([]);
   });
 
-  it("o resumo e as etapas saem juntos, sem um esperar o outro", async () => {
+  it("o resumo, as etapas e as demandas saem juntos, sem um esperar o outro", async () => {
     const soltar = new Map();
     const rpc = vi.fn(
       (nome) =>
@@ -176,11 +178,13 @@ describe("fronteiras das RPCs do calendário", () => {
     );
     const estado = criarEstadoDoCalendario({ supabase: { auth, rpc } });
     const carga = estado.carregar();
-    await vi.waitFor(() => expect(rpc).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(rpc).toHaveBeenCalledTimes(3));
     expect(rpc.mock.calls.map(([nome]) => nome).sort()).toEqual([
       "get_nucleo_cronograma_resumo",
+      "listar_demandas_internas",
       "listar_etapas_do_cronograma",
     ]);
+    soltar.get("listar_demandas_internas")();
     soltar.get("listar_etapas_do_cronograma")();
     soltar.get("get_nucleo_cronograma_resumo")();
     await carga;

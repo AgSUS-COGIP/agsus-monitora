@@ -390,6 +390,46 @@ export const CONTRATO_RPC = {
     critica: false,
     resumo: "Resumo dos cronogramas da Equipe Núcleo.",
   },
+  listar_demandas_internas: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Demandas internas que quem lê vê, com responsáveis e pode_editar, e as áreas onde pode criar (20261104120000). Sem ela (PGRST202), o Cronograma segue só com as etapas.",
+  },
+  salvar_demanda_interna: {
+    argumentos: ["p_demanda"],
+    critica: false,
+    resumo:
+      "Cria ou edita uma demanda interna (gestor da área ou administrador global; histórico em TH_DEMANDA_INTERNA).",
+  },
+  concluir_demanda_interna: {
+    argumentos: ["p_id", "p_concluida"],
+    critica: false,
+    resumo: "Conclui (true) ou reabre (false) uma demanda interna.",
+  },
+  excluir_demanda_interna: {
+    argumentos: ["p_id"],
+    critica: false,
+    resumo: "Exclusão lógica de uma demanda interna.",
+  },
+  listar_pessoas_da_area: {
+    argumentos: ["p_area", "p_edital"],
+    critica: false,
+    resumo:
+      "Pessoas que veem a área (e o edital, se informado): as opções de responsável. Só para quem edita na área.",
+  },
+  obter_responsaveis_do_edital: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Responsáveis pelo edital (RL_RESPONSAVEL_EDITAL) e se quem lê pode editá-los (20261104120000).",
+  },
+  salvar_responsaveis_do_edital: {
+    argumentos: ["p_edital", "p_responsaveis"],
+    critica: false,
+    resumo:
+      "Grava a lista inteira de responsáveis pelo edital (gestor da área ou administrador global; histórico em TH_RESPONSAVEL_EDITAL).",
+  },
 
   // ── Lista de Aprovados ─────────────────────────────────────────────────
   abrir_lista_aprovados: {

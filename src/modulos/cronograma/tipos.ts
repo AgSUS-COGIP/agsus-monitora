@@ -74,6 +74,23 @@ export type ClienteDoCalendario = {
       nome: "get_monitoramento_cronograma",
       argumentos: { p_monitoramento_id: string | number },
     ): RespostaDaRpc;
+    /* Demandas internas (20261104120000): as únicas escritas desta tela. */
+    (
+      nome: "salvar_demanda_interna",
+      argumentos: { p_demanda: Record<string, unknown> },
+    ): RespostaDaRpc;
+    (
+      nome: "concluir_demanda_interna",
+      argumentos: { p_id: string; p_concluida: boolean },
+    ): RespostaDaRpc;
+    (
+      nome: "excluir_demanda_interna",
+      argumentos: { p_id: string },
+    ): RespostaDaRpc;
+    (
+      nome: "listar_pessoas_da_area",
+      argumentos: { p_area: string; p_edital: string | null },
+    ): RespostaDaRpc;
   };
   auth: {
     getSession: () => PromiseLike<{

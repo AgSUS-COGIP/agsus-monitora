@@ -5085,7 +5085,7 @@ export const VERBETES_AYA = Object.freeze([
       "calendario de editais",
     ],
     resposta:
-      'O Cronograma mostra, num calendário, as etapas dos cronogramas cadastrados em Editais, só da área atual. A tela é só de leitura e se atualiza quando um cronograma é salvo. O Mês mostra cada etapa como um chip curto "unidade – etapa", com a borda na cor do tipo, só no dia em que ela acontece ou, se tem período, no dia em que começa ("início") e no dia em que termina ("fim"); os dias do meio ficam sem chip. Cada dia mostra até três chips e "+N mais", e clicar no dia abre todas as etapas dele, inclusive as que estão em andamento. A Lista mostra, dia a dia, o que começa ou termina, com "Acontecendo agora" no topo; a Semana segue o critério do Mês (só o início e o fim de cada período; nos dias do meio, "N em andamento"). Há filtros por unidade, edital e busca; a legenda dos tipos, acima do calendário, é o filtro de tipo: clicar num tipo esconde ou mostra as etapas dele no Mês, na Semana, na Lista e nas contagens, e "Mostrar todos" religa todos. Os tipos escondidos ficam lembrados neste navegador. O tipo é deduzido do texto da atividade: Impugnação, Recursos, Resultado final, Resultado, Convocação para entrevista, Entrevistas, Inscrições, Análise curricular ou Outros. Etapas com ano impossível ficam fora de "Próximas etapas" e aparecem listadas para correção.',
+      'O Cronograma mostra, num calendário, as etapas dos cronogramas cadastrados em Editais, só da área atual. As etapas não se editam aqui (só as demandas internas), e a tela se atualiza quando um cronograma é salvo. O Mês mostra cada etapa como um chip curto "unidade – etapa", com a borda na cor do tipo, só no dia em que ela acontece ou, se tem período, no dia em que começa ("início") e no dia em que termina ("fim"); os dias do meio ficam sem chip. Cada dia mostra até três chips e "+N mais", e clicar no dia abre todas as etapas dele, inclusive as que estão em andamento. A Lista mostra, dia a dia, o que começa ou termina, com "Acontecendo agora" no topo; a Semana segue o critério do Mês (só o início e o fim de cada período; nos dias do meio, "N em andamento"). Há filtros por unidade, edital e busca; a legenda dos tipos, acima do calendário, é o filtro de tipo: clicar num tipo esconde ou mostra as etapas dele no Mês, na Semana, na Lista e nas contagens, e "Mostrar todos" religa todos. Os tipos escondidos ficam lembrados neste navegador. O tipo é deduzido do texto da atividade: Impugnação, Recursos, Resultado final, Resultado, Convocação para entrevista, Entrevistas, Inscrições, Análise curricular ou Outros. Etapas com ano impossível ficam fora de "Próximas etapas" e aparecem listadas para correção.',
     fato: "",
     fonte:
       "src/modulos/cronograma/calendario-editais.tsx; src/lib/calendario-editais.ts; src/lib/etapas-de-edital.ts; src/lib/datas-do-cronograma.ts",
@@ -5140,6 +5140,40 @@ export const VERBETES_AYA = Object.freeze([
     fonte:
       "src/modulos/cronograma/calendario-editais.tsx; src/lib/calendario-editais.ts; src/lib/datas-do-cronograma.ts",
     abrir: "calendario",
+  },
+  {
+    arquivo: "regras-do-cronograma.md",
+    titulo: "Demandas internas no Cronograma",
+    perguntas: [
+      "demanda interna",
+      "nova demanda",
+      "criar demanda no cronograma",
+      "concluir demanda",
+      "demanda atrasada",
+      "quem pode criar demanda",
+      "excluir demanda",
+    ],
+    resposta:
+      'Além das etapas dos editais, o Cronograma mostra as demandas internas da área: itens da equipe com título, data (ou período), edital opcional e responsáveis. Elas aparecem no calendário com o tipo "Demanda interna", que também se liga e desliga na legenda, e no card "Demandas internas". Uma demanda em aberto cujo último dia já passou aparece como "Atrasada" e não some com "Ocultar concluídas". Quem é gestor da área (Editor em Cronograma ou Editais com acesso à área) ou administrador global cria pelo botão "Nova demanda" e, no detalhe da demanda, conclui, reabre, edita ou exclui; quem só tem acesso à área vê as demandas e os responsáveis. Cada mudança fica registrada com quem fez e quando.',
+    fato: "",
+    fonte:
+      "src/modulos/cronograma/demandas-internas.tsx; src/lib/demandas-internas.ts",
+    abrir: "calendario",
+  },
+  {
+    arquivo: "regras-do-cronograma.md",
+    titulo: "Responsáveis pelo edital",
+    perguntas: [
+      "responsavel pelo edital",
+      "responsaveis do edital",
+      "quem e responsavel pelo edital",
+      "definir responsavel do edital",
+    ],
+    resposta:
+      'No formulário de um edital já cadastrado, em Editais, o bloco "Responsáveis pelo edital" guarda as pessoas do sistema responsáveis por ele. O gestor da área ou o administrador global escolhe as pessoas e clica em "Salvar responsáveis" (grava na hora, sem o Salvar do edital); quem só vê o edital lê os nomes. Só aparecem pessoas que têm acesso ao edital. O campo antigo "Responsável" (USI ou CORES) continua como estava.',
+    fato: "",
+    fonte: "src/modulos/editais/responsaveis-do-edital.tsx",
+    abrir: "nucleo",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",

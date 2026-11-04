@@ -1,7 +1,4 @@
-import type {
-  EtapaDoCalendario,
-  FiltrosDoCalendario,
-} from "../modulos/cronograma/tipos.ts";
+import type { EtapaDoCalendario } from "../modulos/cronograma/tipos.ts";
 import type { TipoDeEtapa } from "./etapas-de-edital.ts";
 import { normalizarTexto } from "./etapas-de-edital.ts";
 
@@ -196,27 +193,6 @@ export function demandaComoEtapa(
 /** O id da demanda num `editalId` de etapa sem edital ("demanda:<id>"). */
 export const demandaDoEditalId = (editalId: string) =>
   editalId.startsWith(PREFIXO) ? editalId.slice(PREFIXO.length) : "";
-
-/*
-  Os filtros da tela valem para as demandas, menos "Ocultar concluídas": para
-  etapa de edital, concluída é a que já passou; para demanda, é a marcada
-  como concluída — uma atrasada nunca some.
-*/
-export function filtrarDemandas(
-  etapas: readonly EtapaDoCalendario[],
-  filtros: FiltrosDoCalendario,
-  ocultarConcluidas: boolean,
-) {
-  const termos = normalizarTexto(filtros.busca).split(/\s+/).filter(Boolean);
-  return etapas.filter((etapa) => {
-    if (filtros.unidade && etapa.unidade !== filtros.unidade) return false;
-    if (filtros.edital && etapa.editalId !== filtros.edital) return false;
-    if (filtros.tipo && etapa.tipo.id !== filtros.tipo) return false;
-    if (termos.length && !termos.every((termo) => etapa.busca.includes(termo)))
-      return false;
-    return !(ocultarConcluidas && etapa.concluida);
-  });
-}
 
 /** Etapas e demandas juntas, por data de início (como a carga entrega). */
 export const juntarPorInicio = (

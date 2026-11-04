@@ -1,4 +1,5 @@
 import type {
+  ClienteDoCalendario,
   EditalDoCalendario,
   EstadoDoCalendario,
   FiltrosDoCalendario,
@@ -59,6 +60,13 @@ import {
   TopoDoPainel,
 } from "../../ui/index.ts";
 import { criarEstadoDoCalendario } from "./estado.ts";
+import {
+  demandaComoEtapa,
+  demandaDoEditalId,
+  demandasDaArea,
+  juntarPorInicio,
+} from "../../lib/demandas-internas.ts";
+import { DemandasDoCronograma } from "./demandas-internas.tsx";
 import {
   AvisoDeDatasARevisar,
   DiaDoCalendario,
@@ -163,9 +171,12 @@ function textoDoStatus({
 
 export function CalendarioEditais({
   estado,
+  supabase = null,
   agora = () => new Date(),
 }: {
   estado: EstadoDoCalendario;
+  /** Para as escritas das demandas internas. */
+  supabase?: ClienteDoCalendario | null;
   agora?: () => Date;
 }) {
   const carga = useSyncExternalStore(estado.assinar, estado.obter);
@@ -175,8 +186,8 @@ export function CalendarioEditais({
     área escolhida no menu. O cache de `estado.ts` continua um só: trocar de
     área não repete os pedidos.
   */
-  const { ids } = usarAreaAtual();
-  const etapas = useMemo(
+  const { ids, area } = usarAreaAtual();
+  const etapasDosEditais = useMemo(
     () => soDosEditais(carga.etapas, ids, "editalId"),
     [carga.etapas, ids],
   );
@@ -190,6 +201,7 @@ export function CalendarioEditais({
     visaoInicial(visaoGuardada(), ehCelular()),
   );
   const [diaAberto, setDiaAberto] = useState("");
+  const [demandaAberta, setDemandaAberta] = useState("");
   const [editalEscolhido, setEditalEscolhido] = useState("");
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
   const [tiposOcultos, setTiposOcultos] = useState(tiposOcultosGuardados);
@@ -209,6 +221,30 @@ export function CalendarioEditais({
 
   const hoje = agora();
   const hojeChave = chaveDoDia(hoje);
+
+  /*
+    As demandas internas da área entram como etapas do tipo "Demanda interna"
+    (src/lib/demandas-internas.ts): as vistas, a legenda e os filtros valem
+    para elas sem saber que são demandas.
+  */
+  const demandas = useMemo(
+    () => demandasDaArea(carga.demandas, area),
+    [carga.demandas, area],
+  );
+  const etapas = useMemo(
+    () =>
+      juntarPorInicio(
+        etapasDosEditais,
+        demandas.map((demanda) => demandaComoEtapa(demanda, hojeChave)),
+      ),
+    [etapasDosEditais, demandas, hojeChave],
+  );
+  // Clicar numa demanda sem edital abre o detalhe dela; com edital, a linha do tempo.
+  const escolherEdital = (editalId: string) => {
+    const demanda = demandaDoEditalId(editalId);
+    if (demanda) setDemandaAberta(demanda);
+    else setEditalEscolhido(editalId);
+  };
 
   const filtradas = useMemo(
     () =>
@@ -499,6 +535,19 @@ export function CalendarioEditais({
         </div>
       </section>
 
+      {carregado ? (
+        <DemandasDoCronograma
+          estado={estado}
+          supabase={supabase}
+          demandas={demandas}
+          area={area}
+          podeCriar={carga.podeCriarEm.includes(area)}
+          hojeChave={hojeChave}
+          aberta={demandaAberta}
+          aoAbrir={setDemandaAberta}
+        />
+      ) : null}
+
       <div
         className={classes(
           "ui-linha-de-cards cal-inferior",
@@ -539,7 +588,7 @@ export function CalendarioEditais({
                   <ProximasEtapas
                     etapas={proximasEtapas(filtradas, hoje)}
                     hoje={hoje}
-                    aoEscolher={setEditalEscolhido}
+                    aoEscolher={escolherEdital}
                   />
                 </>
               )}
@@ -598,7 +647,10 @@ export function CalendarioEditais({
           chave={diaAberto}
           etapas={filtradas}
           aoFechar={() => setDiaAberto("")}
-          aoEscolherEdital={setEditalEscolhido}
+          aoEscolherEdital={(editalId) => {
+            if (demandaDoEditalId(editalId)) setDiaAberto("");
+            escolherEdital(editalId);
+          }}
         />
       ) : null}
     </div>
@@ -619,7 +671,9 @@ export function criarCalendarioEditais({
   return {
     estado,
     nome: "a tela de cronograma",
-    conteudo: <CalendarioEditais estado={estado} agora={agora} />,
+    conteudo: (
+      <CalendarioEditais estado={estado} supabase={supabase} agora={agora} />
+    ),
     /*
       Sem o carregamento de tela cheia: ele travava a navegação inteira. A
       grade e as listas são skeleton enquanto a primeira carga não chega; nas

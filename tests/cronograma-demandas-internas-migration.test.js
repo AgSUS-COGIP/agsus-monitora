@@ -125,7 +125,13 @@ describe("demandas internas e responsáveis pelo edital (migration)", () => {
   });
 
   it("histórico TH_ em cada escrita e exclusão só lógica", () => {
-    for (const acao of ["CRIACAO", "EDICAO", "CONCLUSAO", "REABERTURA", "EXCLUSAO"])
+    for (const acao of [
+      "CRIACAO",
+      "EDICAO",
+      "CONCLUSAO",
+      "REABERTURA",
+      "EXCLUSAO",
+    ])
       expect(MIGRATION).toContain(`'${acao}'`);
     expect(MIGRATION).toContain(`set "ST_ATIVO" = 'N'`);
     expect(MIGRATION).not.toMatch(/delete from public\."TB_DEMANDA_INTERNA"/);
@@ -138,9 +144,13 @@ describe("demandas internas e responsáveis pelo edital (migration)", () => {
   });
 
   it("não mexe na coluna legada nem no conjunto de leituras em cache", () => {
-    expect(MIGRATION).not.toMatch(/alter table public\."TB_MONITORAMENTO_INDIGENA"/);
+    expect(MIGRATION).not.toMatch(
+      /alter table public\."TB_MONITORAMENTO_INDIGENA"/,
+    );
     expect(MIGRATION).not.toMatch(/create or replace function/);
-    expect(MIGRATION).not.toContain("select private.\"FC_ATUALIZAR_FONTES_DAS_LEITURAS\"()");
+    expect(MIGRATION).not.toContain(
+      'select private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"()',
+    );
   });
 
   it("o contrato tem as RPCs com os argumentos na ordem", () => {

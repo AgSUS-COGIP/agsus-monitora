@@ -53,6 +53,7 @@ import {
 } from "../../componentes/dados-do-monitoramento.ts";
 import { Aviso, Campo, Modal } from "../../ui/index.ts";
 import { EditorDeCronograma } from "./editor-de-cronograma.tsx";
+import { ResponsaveisDoEdital } from "./responsaveis-do-edital.tsx";
 import type { EstadoDoEditorDeCronograma } from "./editor-de-cronograma.tsx";
 import { ImportarAnexos } from "./importar-anexos.tsx";
 import type { EstadoDosAnexos } from "./importar-anexos.tsx";
@@ -822,6 +823,8 @@ export function ModalDoEdital({
               )
             }
           />
+
+          {id ? <ResponsaveisDoEdital editalId={String(id)} /> : null}
 
           <EditorDeCronograma
             estado={estado}

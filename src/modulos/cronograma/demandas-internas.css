@@ -1,0 +1,97 @@
+/*
+  Demandas internas do Cronograma (demandas-internas.tsx). A cor do tipo vem
+  de --etapa-demanda (tokens.css) pelo data-cor="demanda", como as etapas.
+*/
+[data-cor="demanda"] {
+  --cal-cor: var(--etapa-demanda);
+}
+
+.demandas-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.demandas-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.demandas-lista > li:last-child .demandas-item {
+  border-bottom: 0;
+}
+.demandas-item:hover {
+  background: var(--surface-hover);
+}
+.demandas-item.concluida .demandas-titulo {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+.demandas-ponto {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--cal-cor);
+}
+.demandas-titulo {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-weight: 600;
+}
+.demandas-meta {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+/* Atrasada: texto discreto na cor de perigo, sem fundo. */
+.demandas-atrasada {
+  color: var(--color-status-danger-text);
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+}
+.demandas-vazio {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.demandas-ver-concluidas {
+  align-self: flex-start;
+}
+
+.demandas-detalhe {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+.demandas-detalhe dt {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.demandas-detalhe dd {
+  margin: 0;
+}
+.demandas-descricao {
+  white-space: pre-wrap;
+}
+.demandas-periodo {
+  align-self: end;
+}
+
+@media (max-width: 640px) {
+  .demandas-detalhe {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .demandas-detalhe dd {
+    margin-bottom: var(--space-2);
+  }
+}
