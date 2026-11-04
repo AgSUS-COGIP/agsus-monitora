@@ -288,3 +288,138 @@ $$;
 
 commit;
 """
+
+
+def apelidos_novos(grupos, ja_gravados):
+    """Os apelidos da correção (alta, SI, sem EXATA) cuja grafia ainda não está em TD_CARGO_APELIDO."""
+    return [g for g in apelidos_da_correcao(grupos) if g.grafia not in ja_gravados]
+
+
+def sql_da_inclusao_de_cargo(grupos, cargo, ja_gravados, data="04/11/2026"):
+    """Correção que inclui um cargo da folha SIP em TD_CARGO (Saúde Indígena) e grava os apelidos
+    novos de alta confiança dele. Recusa se houver apelido novo de outro cargo (casamento mudou)."""
+    novos = sorted(apelidos_novos(grupos, ja_gravados), key=lambda g: g.grafia)
+    outros = [g.grafia for g in novos if g.casamento.codigo != cargo.codigo]
+    if outros:
+        raise ValueError(f"Há apelido novo de outro cargo: {outros[:5]}")
+    regras = Counter(g.casamento.regra for g in novos)
+    valores = ",\n".join(
+        f"  ({literal_sql(g.grafia)}, {g.casamento.codigo}, '{g.casamento.regra}', {g.casamento.confianca:.3f})"
+        for g in novos
+    )
+    claims = '{"sub":"' + CONTA_DO_SETOR + '","role":"authenticated","email":"' + EMAIL_DO_SETOR + '"}'
+    ocorrencias = sum(g.areas[AREA_SI] for g in novos)
+    return f"""/*
+  CORREÇÃO DE DADOS — cargo {cargo.codigo} {cargo.nome} na tabela de cargos ({data})
+
+  Por quê: a planilha "CARGOS SI - SIP" exportada para a migration
+  20261104150000_tabela_de_cargos.sql não trazia {cargo.nome}, que o usuário
+  confirmou ser o código SIP {cargo.codigo}, cargo da Saúde Indígena. Era o maior
+  grupo sem casamento da prévia na Saúde Indígena. A lista dos cargos do
+  repositório (python/monitora/cargos/cargos_si_sip.csv) já o inclui; a
+  migration, já aplicada, não muda: a inclusão é esta correção.
+
+  Grava também os {len(novos)} apelidos NOVOS de alta confiança das grafias de
+  {cargo.nome} da Saúde Indígena ({ocorrencias} ocorrências; {", ".join(f"{r} {n}" for r, n in sorted(regras.items()))}),
+  pelo mesmo casamento do Python (python/monitora/cargos/casamento.py;
+  scripts/cargos/previa_do_casamento.py --incluir-cargo {cargo.codigo}), sem
+  repetir os já gravados por 20261104-apelidos-de-cargo.sql.
+
+  O que faz (uma transação):
+    1. confere a conta do setor (administrador global ativo, auth.uid), que a
+       tabela de cargos existe e que o cargo {cargo.codigo} ainda não está nela;
+    2. inclui o cargo {cargo.codigo} ({cargo.nome}, saude-indigena, não sintético),
+       criado pela conta do setor;
+    3. grava os apelidos (AUTOMATICO, regra e confiança do casamento,
+       confirmados e criados pela conta do setor);
+    4. reprova (raise exception → nada fica) se o número gravado não for o
+       esperado ou se FC_CARGO_DA_GRAFIA não devolver {cargo.codigo} para cada
+       grafia e para o próprio nome.
+
+  Assinada pela conta do setor Gestão da Informação de Pessoal
+  ({CONTA_DO_SETOR}). Rode SÓ COM A AUTORIZAÇÃO do
+  usuário. Não é idempotente de propósito: rodar de novo falha no passo 1.
+  Ensaio: supabase/ensaios/20261104-cargo-psicologo.sql.
+  Depois de aplicar, registre:
+    npm run db:estado -- --registrar=correcoes/20261104-cargo-psicologo.sql
+  Para desfazer: delete dos apelidos do cargo {cargo.codigo} criados pela conta
+  do setor e depois do cargo {cargo.codigo} em public."TD_CARGO".
+*/
+begin;
+
+-- >>> correcao
+set local lock_timeout = '3s';
+
+-- A autoria desta transação: auth.uid() = conta do setor.
+select set_config('request.jwt.claims',
+  '{claims}', true);
+
+do $$
+begin
+  if not exists (select 1 from public."TB_PERFIL_USUARIO" p
+                   join public."TB_GRUPO_ACESSO" a on a."CO_GRUPO_ACESSO" = p.perfil
+                  where p.user_id = '{CONTA_DO_SETOR}' and p.ativo is true and a."ST_ADMIN_GLOBAL") then
+    raise exception 'A conta do setor (a01afddb-…) não é administrador global ativo.';
+  end if;
+  if auth.uid() is distinct from '{CONTA_DO_SETOR}'::uuid then
+    raise exception 'auth.uid() desta transação não é a conta do setor.';
+  end if;
+  if to_regclass('public."TD_CARGO_APELIDO"') is null
+     or to_regprocedure('private."FC_CARGO_DA_GRAFIA"(text, text)') is null then
+    raise exception 'Aplique antes a migration 20261104150000_tabela_de_cargos.sql.';
+  end if;
+  if exists (select 1 from public."TD_CARGO" where "CO_CARGO" = {cargo.codigo} or "CO_CARGO_SIP" = {cargo.codigo}) then
+    raise exception 'O cargo {cargo.codigo} já está em TD_CARGO.';
+  end if;
+end;
+$$;
+
+insert into public."TD_CARGO" ("CO_CARGO", "CO_CARGO_SIP", "NO_CARGO", "CO_AREA", "ST_SINTETICO",
+  "CO_USUARIO_CRIACAO", "CO_USUARIO_ATUALIZACAO")
+values ({cargo.codigo}, {cargo.codigo}, {literal_sql(cargo.nome)}, '{AREA_SI}', '{"S" if cargo.sintetico else "N"}', auth.uid(), auth.uid());
+
+create temporary table tmp_apelido_de_cargo (grafia text not null, codigo integer not null,
+  regra text not null, confianca numeric(4, 3) not null) on commit drop;
+
+insert into tmp_apelido_de_cargo (grafia, codigo, regra, confianca) values
+{valores};
+
+do $$
+declare
+  v_esperado integer := {len(novos)};
+  v_n integer;
+begin
+  if (select count(*) from tmp_apelido_de_cargo) <> v_esperado then
+    raise exception 'A lista tem % apelidos (esperado %).', (select count(*) from tmp_apelido_de_cargo), v_esperado;
+  end if;
+  if exists (select 1 from tmp_apelido_de_cargo
+              where grafia is distinct from private."FC_NORMALIZAR_GRAFIA_CARGO"(grafia)) then
+    raise exception 'Há grafia que não está normalizada.';
+  end if;
+  if exists (select 1 from tmp_apelido_de_cargo t
+               join public."TD_CARGO_APELIDO" a on a."CO_AREA" = '{AREA_SI}' and a."DS_GRAFIA_NORMALIZADA" = t.grafia) then
+    raise exception 'Há grafia que já tem apelido.';
+  end if;
+
+  insert into public."TD_CARGO_APELIDO" ("CO_AREA", "DS_GRAFIA_NORMALIZADA", "CO_CARGO", "TP_ORIGEM",
+    "TP_REGRA", "VL_CONFIANCA", "ST_CONFIRMADO", "CO_USUARIO_CONFIRMACAO", "DT_CONFIRMACAO",
+    "CO_USUARIO_CRIACAO", "CO_USUARIO_ATUALIZACAO")
+  select '{AREA_SI}', t.grafia, t.codigo, 'AUTOMATICO', t.regra, t.confianca, 'S', auth.uid(), now(),
+         auth.uid(), auth.uid()
+    from tmp_apelido_de_cargo t;
+  get diagnostics v_n = row_count;
+  if v_n <> v_esperado then
+    raise exception 'Gravou % apelidos (esperado %).', v_n, v_esperado;
+  end if;
+
+  if private."FC_CARGO_DA_GRAFIA"({literal_sql(cargo.nome)}, '{AREA_SI}') is distinct from {cargo.codigo}
+     or exists (select 1 from tmp_apelido_de_cargo t
+                 where private."FC_CARGO_DA_GRAFIA"(t.grafia, '{AREA_SI}') is distinct from t.codigo) then
+    raise exception 'FC_CARGO_DA_GRAFIA não devolve {cargo.codigo} para alguma grafia.';
+  end if;
+end;
+$$;
+-- <<< correcao
+
+commit;
+"""

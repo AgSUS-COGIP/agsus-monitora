@@ -1,6 +1,6 @@
 """
 Tabela de cargos (20261104150000): a normalização em Python × banco, a carga da migration × a
-planilha, as regras do casamento e a correção dos apelidos.
+planilha, as regras do casamento, a correção dos apelidos e a inclusão do cargo 88 (PSICOLOGO).
 
     python -m pytest tests/python/test_cargos.py
 """
@@ -34,6 +34,8 @@ def _ler(caminho):
 MIGRATION = _ler("supabase/migrations/20261104150000_tabela_de_cargos.sql")
 CORRECAO = _ler("supabase/correcoes/20261104-apelidos-de-cargo.sql")
 ENSAIO_CORRECAO = _ler("supabase/ensaios/20261104-apelidos-de-cargo.sql")
+PSICOLOGO = _ler("supabase/correcoes/20261104-cargo-psicologo.sql")
+ENSAIO_PSICOLOGO = _ler("supabase/ensaios/20261104-cargo-psicologo.sql")
 CASOS_NORMALIZACAO = json.loads(_ler("tests/fixtures/cargos/normalizacao.json"))["casos"]
 CATALOGO = ler_catalogo()
 
@@ -59,17 +61,20 @@ class Normalizacao(unittest.TestCase):
 
 
 class CargaDaMigration(unittest.TestCase):
-    def test_os_91_da_planilha(self):
+    def test_os_91_da_migration_e_o_88_da_correcao(self):
         with open(_RAIZ / "python/monitora/cargos/cargos_si_sip.csv", encoding="utf-8", newline="") as f:
             planilha = [(int(r["CODIGO"]), r["NOME"], r["SINTETICO"]) for r in csv.DictReader(f, delimiter=";")]
         na_migration = [
             (int(c), n.replace("''", "'"), s)
             for c, n, s in re.findall(r"^    \((\d+), '((?:[^']|'')*)', '([SN])'\)", MIGRATION, re.M)
         ]
-        self.assertEqual(na_migration, planilha)
-        self.assertEqual(len(planilha), 91)
+        # A planilha exportada não trazia PSICOLOGO (SIP 88): a migration (já aplicada) tem 91, e
+        # a correção 20261104-cargo-psicologo.sql inclui o 88.
+        self.assertIn("values (88, 88, 'PSICOLOGO', 'saude-indigena', 'N', auth.uid(), auth.uid());", PSICOLOGO)
+        self.assertEqual(sorted(na_migration + [(88, "PSICOLOGO", "N")]), planilha)
+        self.assertEqual(len(planilha), 92)
         self.assertEqual([c for c, _, s in planilha if s == "S"], [9994, 9995, 9996, 9997, 9999])
-        self.assertEqual(len(CATALOGO.cargos), 91)
+        self.assertEqual(len(CATALOGO.cargos), 92)
 
 
 class Casamento(unittest.TestCase):
@@ -89,6 +94,9 @@ class Casamento(unittest.TestCase):
         ("CARGO 9: TECNICO DE LABORATORIO (NIVEL TECNICO)", ALTA, 96, "LIMPEZA"),
         ("ANALISTA TECNICO - DADOS - SEDE", ALTA, 33, "PREFIXO"),
         ("BIOQUIMICA", ALTA, 54, "LIMPEZA"),
+        ("PSICOLOGO", ALTA, 88, "EXATA"),
+        ("PSICOLOGA - DSEI XAVANTE - 3 VAGAS", ALTA, 88, "PREFIXO"),
+        ("MOTORISTA", SEM, None, None),
         # Médico e dentista distinguem 20H/40H.
         ("MEDICO 40H", ALTA, 74, "EXATA"),
         ("MEDICO (20H) - CADASTRO RESERVA", ALTA, 73, "LIMPEZA"),
@@ -103,7 +111,6 @@ class Casamento(unittest.TestCase):
         ("ANALISTA TECNICO - DSEI X", MEDIA, 9999, "PREFIXO"),
         ("APOIADOR TECNICO EM SAUDE INDIGENA", MEDIA, 39, "CONTIDO"),
         ("MONITOR DE AGUA E SANEAMENTO - SEDE", MEDIA, 82, "SIMILARIDADE"),
-        ("PSICOLOGO", SEM, None, None),
         ("MEDICO DE FAMILIA E COMUNIDADE", SEM, None, None),
         ("AUXILIAR DE GESTAO - AGSUS - AUXILIAR DE GESTAO", SEM, None, None),
         ("176158", SEM, None, None),
@@ -136,7 +143,7 @@ LINHAS = [
         "area": "projetos",
         "ocorrencias": 9,
     },
-    {"grafia": "Psicólogo", "tabela": "TB_CANDIDATO_APROVADO", "area": AREA_SI, "ocorrencias": 20},
+    {"grafia": "Motorista", "tabela": "TB_CANDIDATO_APROVADO", "area": AREA_SI, "ocorrencias": 20},
     {"grafia": "Analista Administrativo - DSEI X", "tabela": "TB_SELECAO_VAGA", "area": AREA_SI, "ocorrencias": 3},
     {"grafia": "", "tabela": "TB_SELECAO_VAGA", "area": AREA_SI, "ocorrencias": 7},
 ]
@@ -202,6 +209,41 @@ class CorrecaoGravada(unittest.TestCase):
         self.assertIn(correcao, ENSAIO_CORRECAO)
         self.assertTrue(ENSAIO_CORRECAO.rstrip().endswith("rollback;"))
         self.assertIsNone(re.search(r"^\s*commit\s*;", ENSAIO_CORRECAO, re.M | re.I))
+
+
+class CorrecaoDoPsicologo(unittest.TestCase):
+    """20261104-cargo-psicologo.sql: o cargo 88 e só apelidos novos dele, de alta confiança."""
+
+    def setUp(self):
+        self.valores = [
+            (g.replace("''", "'"), int(c), r, float(v))
+            for g, c, r, v in re.findall(r"^  \('((?:[^']|'')*)', (\d+), '([A-Z]+)', ([\d.]+)\)", PSICOLOGO, re.M)
+        ]
+        self.antigos = {g.replace("''", "'") for g in re.findall(r"^  \('((?:[^']|'')*)', \d+, ", CORRECAO, re.M)}
+
+    def test_contagem_assinatura_e_so_novos(self):
+        esperado = int(re.search(r"v_esperado integer := (\d+);", PSICOLOGO).group(1))
+        self.assertEqual(len(self.valores), esperado)
+        self.assertGreater(esperado, 100)
+        self.assertIn(f'"sub":"{CONTA_DO_SETOR}"', PSICOLOGO)
+        self.assertIn("O cargo 88 já está em TD_CARGO.", PSICOLOGO)
+        self.assertFalse(self.antigos & {g for g, *_ in self.valores})
+        self.assertTrue(PSICOLOGO.rstrip().endswith("commit;"))
+
+    def test_cada_apelido_e_do_88_com_alta(self):
+        for grafia, codigo, regra, confianca in self.valores:
+            self.assertEqual(normalizar(grafia), grafia)
+            self.assertEqual(codigo, 88)
+            c = casar(grafia, CATALOGO)
+            self.assertEqual((c.nivel, c.codigo, c.regra, c.confianca), (ALTA, 88, regra, confianca), grafia)
+
+    def test_ensaio_responde_pelo_raise_e_desfaz(self):
+        inicio = PSICOLOGO.index("-- >>> correcao") + len("-- >>> correcao") + 1
+        correcao = PSICOLOGO[inicio : PSICOLOGO.index("-- <<< correcao") - 1]
+        self.assertIn(correcao, ENSAIO_PSICOLOGO)
+        self.assertIn("raise exception 'ENSAIO_OK %'", ENSAIO_PSICOLOGO)
+        self.assertTrue(ENSAIO_PSICOLOGO.rstrip().endswith("rollback;"))
+        self.assertIsNone(re.search(r"^\s*commit\s*;", ENSAIO_PSICOLOGO, re.M | re.I))
 
 
 if __name__ == "__main__":
