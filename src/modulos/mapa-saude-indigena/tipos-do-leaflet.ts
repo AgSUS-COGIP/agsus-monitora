@@ -65,10 +65,7 @@ export interface MetodosDoMapaIndigena {
     ufs?: string[],
   ): void;
   __agsusEnquadrarTerra?(nome: string, caixa: CaixaDaTerra): void;
-  __agsusDefinirTerrasVisiveis?(
-    visivel: boolean,
-    opcoes?: { guardar?: boolean },
-  ): void;
+  __agsusDefinirTerrasVisiveis?(visivel: boolean): void;
   createPane?(nome: string): HTMLElement | undefined;
   getPane?(nome: string): HTMLElement | undefined;
 }

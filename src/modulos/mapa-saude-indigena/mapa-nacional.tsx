@@ -30,7 +30,6 @@ import {
   usarColorirPor,
   usarMapaSimples,
   usarModoDoFundo,
-  usarTerrasNoMapaSimples,
 } from "./mapa-simples.tsx";
 import {
   DURACAO_DA_VOLTA_AO_BRASIL,
@@ -252,7 +251,6 @@ export function MapaNacional({
       if (i.territorio) porChave.set(i.territorio.chave, i.numero);
     return porChave;
   }, [indicadores]);
-  usarTerrasNoMapaSimples(mapa, simples);
   usarMapaSimples({
     L,
     mapa,

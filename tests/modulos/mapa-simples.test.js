@@ -76,7 +76,6 @@ const CONTORNOS = {
 let raiz = null;
 let host = null;
 let leaflet = null;
-let terras = null;
 
 async function montar(props = {}) {
   host = document.createElement("div");
@@ -126,12 +125,10 @@ beforeEach(() => {
     addEventListener() {},
     removeEventListener() {},
   });
-  terras = vi.fn();
   leaflet = criarLeafletFalso({
     aoCriarMapa: (m) => {
       // O que o seletor do fundo faz ao nascer o mapa, com "Mapa simples" guardado.
       m.__agsusDesiredBaseMapMode = "simple";
-      m.__agsusDefinirTerrasVisiveis = terras;
     },
   });
   globalThis.L = leaflet.L;
@@ -150,7 +147,7 @@ afterEach(async () => {
 });
 
 describe("Mapa simples", () => {
-  it("desenha os DSEIs com número, sem bolhas nem CASAIs, e as Terras Indígenas desligadas sem guardar", async () => {
+  it("desenha os DSEIs com número, sem bolhas nem CASAIs", async () => {
     await montar();
     const mapa = mapaVivo();
     expect(fetch).toHaveBeenCalledWith(
@@ -163,7 +160,6 @@ describe("Mapa simples", () => {
       .filter(Boolean);
     expect(rotulos).toEqual(["1", "16", "34"]);
     expect(leaflet.desenhadas(mapa, "circleMarker")).toHaveLength(0);
-    expect(terras).toHaveBeenCalledWith(false, { guardar: false });
   });
 
   it("colore pelos números da lista e marca o DSEI sem dado", async () => {
@@ -224,10 +220,67 @@ describe("Mapa simples", () => {
     );
   });
 
-  it("'Sedes e CASAIs' devolve os pontos; voltar ao Mapa tira os polígonos e devolve as terras", async () => {
+  /*
+    O bug: o interruptor era o chip das fases das terras
+    (`.mapa-si-terra-fase`), que desligado (`aria-pressed="false"`) sai
+    riscado e esmaecido — e os pontos começam desligados.
+  */
+  it("'Sedes e CASAIs' é um liga/desliga com aria-pressed, não o chip riscado das fases", async () => {
+    await montar();
+    const legenda = host.querySelector(".mapa-simples__legenda");
+    const pontos = legenda.querySelector(".mapa-simples__pontos");
+    expect(pontos.tagName).toBe("BUTTON");
+    expect(pontos.textContent).toBe("Sedes e CASAIs");
+    expect(pontos.getAttribute("aria-pressed")).toBe("false");
+    expect(legenda.querySelector(".mapa-si-terra-fase")).toBeNull();
+  });
+
+  /*
+    As dicas se acumulavam: o realce subia o próprio polígono
+    (`bringToFront`, que reanexa o <path>) no meio do `mouseover`, o
+    navegador perdia o `mouseout` e a dica "sticky" não fechava — passando
+    o mouse pelo mapa, dez caixas abertas. Agora o polígono não sai do lugar,
+    o traço do realce vai num pane próprio e só o DSEI realçado fica com dica.
+  */
+  it("só o DSEI realçado fica com a dica; o realce não reanexa o polígono", async () => {
     await montar();
     const mapa = mapaVivo();
-    await clicar(host.querySelector(".mapa-simples__pontos"));
+    const subiu = vi.fn();
+    for (const p of poligonos()) {
+      p.bringToFront = subiu;
+      p.closeTooltip = vi.fn();
+    }
+    const tracos = () =>
+      [...mapa.camadas].filter(
+        (c) => c.opcoes?.className === "mapa-simples__realce",
+      );
+
+    // Do 34 para o 1 sem `mouseout` no meio (o que o navegador perdia).
+    await act(async () => poligono(34).fire("mouseover"));
+    for (const p of poligonos()) p.closeTooltip.mockClear();
+    await act(async () => poligono(1).fire("mouseover"));
+    expect(poligono(34).closeTooltip).toHaveBeenCalled();
+    expect(poligono(1).closeTooltip).not.toHaveBeenCalled();
+    expect(subiu).not.toHaveBeenCalled();
+    expect(tracos()).toHaveLength(1);
+    expect(tracos()[0].latlng.properties.numero).toBe(1);
+    expect(tracos()[0].opcoes).toMatchObject({
+      pane: "agsus-mapa-simples-realce",
+      interactive: false,
+    });
+
+    await act(async () => poligono(1).fire("mouseout"));
+    expect(poligono(1).closeTooltip).toHaveBeenCalled();
+    expect(tracos()).toHaveLength(0);
+  });
+
+  it("'Sedes e CASAIs' devolve os pontos; voltar ao Mapa tira os polígonos", async () => {
+    await montar();
+    const mapa = mapaVivo();
+    const pontos = host.querySelector(".mapa-simples__pontos");
+    expect(pontos.getAttribute("aria-pressed")).toBe("false");
+    await clicar(pontos);
+    expect(pontos.getAttribute("aria-pressed")).toBe("true");
     expect(leaflet.desenhadas(mapa, "circleMarker").length).toBeGreaterThan(0);
 
     await act(async () => {
@@ -241,6 +294,5 @@ describe("Mapa simples", () => {
     expect(poligonos()).toHaveLength(0);
     expect(host.querySelector(".mapa-simples__legenda")).toBeNull();
     expect(host.querySelector(".mapa-si-territorio__numero")).toBeNull();
-    expect(terras).toHaveBeenLastCalledWith(true, { guardar: false });
   });
 });

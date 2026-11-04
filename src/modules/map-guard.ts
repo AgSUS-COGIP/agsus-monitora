@@ -486,7 +486,17 @@ function hardenMapInstance(L: LeafletDaGuarda, map: MapaDaGuarda) {
 
   // Se o card muda de tamanho ainda em overview, recalcula com o tamanho final.
   // Se a pessoa já aproximou o mapa, o enquadramento manual é preservado.
+  /*
+    O zoom mínimo acompanha a moldura em TODO redimensionamento, também
+    quando o mapa não reenquadra (enquadramento próprio, ou a pessoa já mexeu
+    nele). Antes ele só era recalculado dentro de um enquadramento do país: o
+    card que encolhia (janela mais baixa, barra lateral, celular) guardava o
+    mínimo da medida antiga, o "−" ficava desabilitado e o norte e o sul do
+    Brasil saíam cortados sem como afastar.
+  */
   map.on("resize", () => {
+    if (map.__agsusRemovido) return;
+    liberarZoomParaCaber(viewBounds, folgaDoBrasil);
     stabilizeMap(map, maxBounds);
     if (enquadramentoProprio || !emOverview(map)) return;
     window.requestAnimationFrame(fitBrazilOverview);

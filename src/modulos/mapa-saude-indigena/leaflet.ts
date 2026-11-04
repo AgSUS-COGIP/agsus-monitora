@@ -309,6 +309,20 @@ export function voltarAoBrasil(
 const GESTOS = ["pointerdown", "touchstart", "wheel", "keydown"];
 
 /*
+  Os controles que moram no canto do Leaflet (Mapa | Satélite | Mapa simples,
+  Terras Indígenas, régua, créditos) não mexem na vista: clicar neles não é
+  pegar o mapa. Só o "+ −" é. Antes, trocar o fundo contava como gesto e, daí
+  em diante, o mapa deixava de reenquadrar o Brasil quando o card mudava de
+  tamanho.
+*/
+export function ehGestoNaVista(evento: Event): boolean {
+  const alvo = evento.target;
+  if (!(alvo instanceof Element)) return true;
+  const controle = alvo.closest(".leaflet-control");
+  return !controle || controle.classList.contains("leaflet-control-zoom");
+}
+
+/*
   O mapa nacional dos dois módulos: o mapa (`criarMapa`) enquadrado no
   Brasil, o fundo com recurso, os contornos e o observador de tamanho.
 
@@ -333,8 +347,11 @@ export function criarMapaDoBrasil(
   const aoMexer = () => {
     mexido = true;
   };
+  const aoGesto = (evento: Event) => {
+    if (ehGestoNaVista(evento)) aoMexer();
+  };
   for (const gesto of GESTOS)
-    elemento.addEventListener(gesto, aoMexer, { passive: true });
+    elemento.addEventListener(gesto, aoGesto, { passive: true });
   const pararDeObservar = observarTamanho(mapa, elemento, {
     aoAparecer: () => aoReenquadrar?.(),
     aoMudarDeTamanho: () => {
@@ -350,7 +367,7 @@ export function criarMapaDoBrasil(
     },
     parar: () => {
       pararDeObservar();
-      for (const gesto of GESTOS) elemento.removeEventListener(gesto, aoMexer);
+      for (const gesto of GESTOS) elemento.removeEventListener(gesto, aoGesto);
     },
   };
 }

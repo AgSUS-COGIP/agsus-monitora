@@ -69,6 +69,11 @@ import {
   storeFases,
   storeVisibility,
 } from "../lib/terras-indigenas/preferencias.ts";
+import {
+  EVENTO_DO_FUNDO,
+  MODO_SIMPLES,
+  modoDesejadoDoFundo,
+} from "./map-base-layer-switcher.ts";
 
 // Quem importava tudo desta camada continua a importar daqui.
 export * from "../lib/terras-indigenas/catalogo.ts";
@@ -245,10 +250,7 @@ export interface MapaDasTerrasIndigenas {
     caixa: CaixaDaTerra | null | undefined,
   ): boolean;
   __agsusSuspenderCamadasIndigenas?(suspender: boolean): void;
-  __agsusDefinirTerrasVisiveis?(
-    visivel: boolean,
-    opcoes?: { guardar?: boolean },
-  ): void;
+  __agsusDefinirTerrasVisiveis?(visivel: boolean): void;
   __agsusAlternarFaseDaTerra?(fase: string): boolean;
   __agsusFaseDaTerraVisivel?(fase: string): boolean;
 }
@@ -1025,7 +1027,26 @@ function enhanceMap(L: LeafletDasTerras, map: MapaDasTerrasIndigenas) {
       marca.setStyle?.(estiloDoEstudo());
     });
   });
-  map.getContainer?.().addEventListener("agsus:map-base-layer-changed", () => {
+  /*
+    AS TERRAS NO "MAPA SIMPLES" — a regra mora aqui, não no componente
+
+    No Mapa simples (map-base-layer-switcher.ts) as terras começam
+    desligadas, sem mudar a preferência guardada; o botão liga e desliga só
+    enquanto ele durar; ao sair, volta o que a pessoa tinha no Mapa/Satélite.
+    Antes quem desligava era um efeito do React, que só soube do modo depois
+    de o mapa nascer e de cada troca avisada: as terras e o botão podiam ficar
+    em desacordo com o fundo (terras por cima dos DSEIs chapados, botão
+    "desligado" com terras no Mapa). Agora a camada lê o modo pedido ao nascer
+    e segue o aviso de troca do seletor, no mesmo instante.
+  */
+  let noMapaSimples = modoDesejadoDoFundo(map) === MODO_SIMPLES;
+  map.getContainer?.().addEventListener(EVENTO_DO_FUNDO, (evento) => {
+    const simples =
+      (evento as CustomEvent<{ mode?: unknown }>).detail?.mode === MODO_SIMPLES;
+    if (simples !== noMapaSimples) {
+      noMapaSimples = simples;
+      aplicarVisibilidade(simples ? false : readStoredVisibility());
+    }
     vectorLayer.setStyle?.((feature) => estiloComDestaque(feature));
     simbolosLayer.eachLayer?.((simbolo) =>
       simbolo.setStyle?.(estiloDoSimbolo(map, simbolo.__agsusFase)),
@@ -1052,15 +1073,7 @@ function enhanceMap(L: LeafletDasTerras, map: MapaDasTerrasIndigenas) {
     o mapa: sem isso o `refreshVector` achava "mesmo enquadramento, nada a
     fazer" e o botão acendia sobre um mapa vazio.
   */
-  /*
-    `guardar: false` muda só agora, sem tocar na preferência guardada: o
-    "Mapa simples" começa sem terras e, ao sair dele, a pessoa reencontra o
-    que tinha escolhido no Mapa/Satélite.
-  */
-  const definirVisibilidade = (
-    proxima: boolean,
-    { guardar = true }: { guardar?: boolean } = {},
-  ) => {
+  const aplicarVisibilidade = (proxima: boolean) => {
     const alvo = Boolean(proxima);
     map.__agsusIndigenousTerritoriesVisible = alvo;
     lastViewportKey = "";
@@ -1074,8 +1087,13 @@ function enhanceMap(L: LeafletDasTerras, map: MapaDasTerrasIndigenas) {
       scheduleRefresh();
       desenharEstudo();
     }
-    if (guardar) storeVisibility(alvo);
     avisar();
+  };
+
+  /* O botão e a legenda: no Mapa simples a escolha vale só enquanto ele durar. */
+  const definirVisibilidade = (proxima: boolean) => {
+    aplicarVisibilidade(proxima);
+    if (!noMapaSimples) storeVisibility(Boolean(proxima));
   };
 
   /*
@@ -1149,7 +1167,7 @@ function enhanceMap(L: LeafletDasTerras, map: MapaDasTerrasIndigenas) {
     O raster passa a ser o que diz ser: o recurso de quando o catálogo e a Funai
     falham. Só `recorrerAoRaster` o põe no mapa.
   */
-  const desired = readStoredVisibility();
+  const desired = noMapaSimples ? false : readStoredVisibility();
   map.__agsusIndigenousTerritoriesVisible = desired;
   if (desired) map.whenReady?.(scheduleRefresh);
   addControl(L, map, desired, definirVisibilidade);

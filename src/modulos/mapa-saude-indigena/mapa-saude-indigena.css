@@ -771,13 +771,22 @@
   font-weight: var(--font-weight-medium);
 }
 
+/*
+  A legenda sobe do canto de baixo e não passa dos controles do canto de cima
+  (zoom e Mapa | Satélite | Mapa simples, ~115 px): aberta numa moldura baixa
+  (celular, janela baixa, a do Mapa simples, que já nasce aberta e é a mais
+  alta), ela tapava o "+ −" e o seletor do fundo. O corpo rola por dentro.
+*/
 .mapa-si-legenda--flutuante {
+  --mapa-si-cantos-de-cima: 140px;
   position: absolute;
   z-index: 800;
   bottom: var(--space-3);
   left: var(--space-3);
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   max-width: 240px;
+  max-height: calc(100% - var(--mapa-si-cantos-de-cima));
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
@@ -816,6 +825,11 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1);
+}
+
+.mapa-si-legenda--flutuante .mapa-si-legenda__corpo {
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .mapa-si-legenda--flutuante .mapa-si-legenda__terras {
@@ -1065,9 +1079,12 @@
   transition: stroke-width 0.12s ease;
 }
 
-.mapa-si-mapa .mapa-simples__dsei.is-realce {
+/* O traço do DSEI realçado (lista ou mouse): pane próprio, por cima dos vizinhos. */
+.mapa-si-mapa .mapa-simples__realce {
+  fill: none;
   stroke: var(--text-primary);
   stroke-width: 2.5px;
+  stroke-opacity: 1;
 }
 
 .mapa-simples__rotulo-caixa {
@@ -1123,6 +1140,57 @@
 .mapa-simples__opcao input {
   margin: 0;
   accent-color: var(--brand-primary);
+}
+
+/* "Sedes e CASAIs": interruptor com o estado no trilho, texto sempre legível. */
+.mapa-simples__pontos {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  justify-self: start;
+  padding: var(--space-0-5) 0;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.mapa-simples__pontos:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.mapa-simples__interruptor {
+  position: relative;
+  flex: none;
+  width: 26px;
+  height: 14px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-pill);
+  background: var(--surface-hover);
+}
+
+.mapa-simples__interruptor::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: var(--text-secondary);
+  transition: transform 0.12s ease;
+}
+
+.mapa-simples__pontos[aria-pressed="true"] .mapa-simples__interruptor {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+}
+
+.mapa-simples__pontos[aria-pressed="true"] .mapa-simples__interruptor::after {
+  background: var(--surface-card);
+  transform: translateX(12px);
 }
 
 .mapa-simples__faixas {

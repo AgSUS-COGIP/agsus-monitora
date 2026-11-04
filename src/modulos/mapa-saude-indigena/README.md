@@ -68,8 +68,8 @@ modo —, contêiner com `map-simple-mode` e o fundo liso do CSS. `mapa-simples.
 silhueta do Brasil e os 34 DSEIs (pane `agsus-mapa-simples`, abaixo das Terras Indígenas) com o
 número no meio, a legenda aberta com "Colorir por" (`% preenchidas`, `Vagas ociosas`, `Cor do
 DSEI`, lembrado em `agsus_mapa_simples_colorir_v1`) e o interruptor "Sedes e CASAIs" (desligados
-de início). As Terras Indígenas desligam ao entrar sem mudar a preferência guardada
-(`__agsusDefinirTerrasVisiveis(false, { guardar: false })`) e voltam ao sair. A lista mostra o
+de início). As Terras Indígenas desligam ao entrar sem mudar a preferência guardada e voltam ao sair; a
+regra mora na camada (`indigenous-territories-layer.ts`, que segue o aviso do seletor). A lista mostra o
 número do DSEI; foco/mouse na linha realça o polígono e vice-versa; o clique no polígono abre o
 DSEI como a bolha.
 
