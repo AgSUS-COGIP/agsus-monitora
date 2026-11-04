@@ -306,6 +306,8 @@ body:not(.access-request-mode) .login-screen,
   --etapa-violeta-claro: #8b5cf6;
   --etapa-verde: #22c55e;
   --etapa-azul-escuro: #2563eb;
+  /* Demanda interna do Cronograma (src/lib/demandas-internas.ts). */
+  --etapa-demanda: #0891b2;
 
   /* Cores que não mudam com o tema (de propósito): a folha de uma prévia de
      documento é papel, branca nos dois temas; e o texto sobre a barra lateral

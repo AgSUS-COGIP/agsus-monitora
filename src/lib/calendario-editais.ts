@@ -56,6 +56,7 @@ import {
   proximaDataDaEtapa,
   proximasEtapas as etapasNaOrdemDaProximaData,
 } from "./datas-do-cronograma.ts";
+import { TIPO_DEMANDA_INTERNA } from "./demandas-internas.ts";
 
 export { editaisComDatasARevisar };
 
@@ -92,8 +93,15 @@ const DIAS_EXTENSO = Object.freeze([
   "Sábado",
 ]);
 
-/** A legenda e o filtro de tipo: os tipos conhecidos e, por último, "Outros". */
-export const TIPOS_DA_LEGENDA = Object.freeze([...TIPOS_DE_ETAPA, TIPO_OUTROS]);
+/**
+ * A legenda e o filtro de tipo: os tipos conhecidos, a demanda interna
+ * (src/lib/demandas-internas.ts) e, por último, "Outros".
+ */
+export const TIPOS_DA_LEGENDA = Object.freeze([
+  ...TIPOS_DE_ETAPA,
+  TIPO_DEMANDA_INTERNA,
+  TIPO_OUTROS,
+]);
 
 /** O bloco compacto de próximas etapas, embaixo do Mês. */
 export const PROXIMAS_NO_PAINEL = 5;
