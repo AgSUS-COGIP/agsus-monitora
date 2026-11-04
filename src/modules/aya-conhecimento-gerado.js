@@ -5176,6 +5176,24 @@ export const VERBETES_AYA = Object.freeze([
     abrir: "nucleo",
   },
   {
+    arquivo: "regras-do-cronograma.md",
+    titulo: "Resumo do dia e sininho",
+    perguntas: [
+      "resumo do dia",
+      "sininho",
+      "popup ao entrar",
+      "desligar resumo do dia",
+      "nao quero o popup",
+      "bom dia seus editais",
+    ],
+    resposta:
+      'Quem é responsável por algum edital ou demanda interna vê, no primeiro acesso do dia, o resumo "seus editais hoje": o que começa ou termina hoje, nos próximos 7 dias e as demandas atrasadas. O sininho no topo mostra o número de pendências e reabre o resumo quando quiser. "Fechar" não deixa o resumo voltar sozinho no mesmo dia; "Ver no cronograma" abre o Cronograma só com os seus editais e demandas ("Ver todos" volta ao normal); "Concluir" fecha uma demanda atrasada, para quem pode. Para não abrir mais ao entrar, desmarque "Mostrar ao entrar" no próprio resumo: o sininho continua. Sem pendências, o resumo não abre.',
+    fato: "",
+    fonte:
+      "src/modulos/resumo-do-dia/resumo-do-dia.tsx; src/lib/resumo-do-dia.ts",
+    abrir: "calendario",
+  },
+  {
     arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Como usar o mapa da Saúde Indígena",
     perguntas: [

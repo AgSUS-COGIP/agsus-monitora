@@ -1,10 +1,11 @@
 import type { MouseEvent } from "react";
 import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
 import { usarEstadoDaNavegacao } from "../contexto-do-app.ts";
+import { SininhoDoResumo } from "../../modulos/resumo-do-dia/resumo-do-dia.tsx";
 
 /*
   O cabeçalho do app (`header.top`): o título da página e, à direita, Pessoas
-  online e o menu da conta. No celular, uma linha só, com o ☰ da gaveta antes
+  online, o sininho do resumo do dia e o menu da conta. No celular, uma linha só, com o ☰ da gaveta antes
   do título.
 
   O título da página vem da navegação (src/app/navegacao.ts), pelo contexto
@@ -26,6 +27,8 @@ export function Topo() {
       <div className="actions">
         {/* Pessoas online (React: src/componentes/pessoas-online/) */}
         <div id="pessoasOnlineApp" className="pessoas-online-app"></div>
+        {/* Resumo do dia do responsável (src/modulos/resumo-do-dia/) */}
+        <SininhoDoResumo />
         <MenuDaConta />
       </div>
     </header>

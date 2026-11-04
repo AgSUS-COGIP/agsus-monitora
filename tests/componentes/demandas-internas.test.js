@@ -8,6 +8,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { desenharNoTeste, montarTela } from "../montar-tela.js";
+import { criarEstadoDoResumoDoDia } from "../../src/modulos/resumo-do-dia/estado.ts";
 
 /*
   Demandas internas no Cronograma e responsáveis pelo edital (20261104120000).
@@ -174,6 +175,7 @@ async function montar(opcoes = {}) {
       supabase,
       toast: vi.fn(),
       agora: () => new Date(HOJE),
+      ...(opcoes.resumo ? { resumo: opcoes.resumo } : {}),
     });
   });
   await esperar(() => controlador.render());
@@ -321,6 +323,41 @@ describe("demandas internas no Cronograma", () => {
     expect($("demandaConcluir")).toBeNull();
     expect($("demandaEditar")).toBeNull();
     expect($("demandaExcluir")).toBeNull();
+  });
+});
+
+describe("Cronograma só com os da pessoa (?visao=meus, do resumo do dia)", () => {
+  it("abrirVisao('meus') recorta nos editais e demandas dela; 'Ver todos' volta", async () => {
+    const resumo = criarEstadoDoResumoDoDia({
+      cliente: () => ({
+        rpc: async () => ({
+          data: {
+            data: "2026-09-15",
+            perfil: "p1",
+            responsavel: true,
+            editais: [],
+            demandas: ["d1"],
+            hoje: [],
+            proximos: [],
+            atrasadas: [],
+          },
+          error: null,
+        }),
+      }),
+      armazenamento: () => null,
+      podeAbrirSozinho: () => false,
+    });
+    await esperar(() => resumo.verificar());
+    atual = await montar({ resumo });
+    await esperar(() => atual.controlador.abrirVisao("meus"));
+    expect($("calSoOsMeus")).not.toBeNull();
+    expect($("calGrade").textContent).toContain("Relatório mensal");
+    expect($("calGrade").textContent).not.toContain("Reunião de alinhamento");
+    expect($("calGrade").textContent).not.toContain("Inscrições");
+
+    await clicar($("calSoOsMeus").querySelector("button"));
+    expect($("calSoOsMeus")).toBeNull();
+    expect($("calGrade").textContent).toContain("Reunião de alinhamento");
   });
 });
 

@@ -424,6 +424,18 @@ export const CONTRATO_RPC = {
     resumo:
       "Responsáveis pelo edital (RL_RESPONSAVEL_EDITAL) e se quem lê pode editá-los (20261104120000).",
   },
+  obter_meu_resumo_do_dia: {
+    argumentos: ["p_data"],
+    critica: false,
+    resumo:
+      "Resumo do dia de quem chama (20261104130000): hoje, próximos 7 dias e atrasadas dos editais e demandas de que é responsável, e a preferência de abrir ao entrar. Uma chamada ao entrar e a cada clique no sininho. Sem ela (PGRST202), sem sininho.",
+  },
+  salvar_minha_preferencia_do_resumo: {
+    argumentos: ["p_mostrar"],
+    critica: false,
+    resumo:
+      "Liga ou desliga o resumo do dia ao entrar, para quem chama (o sininho continua).",
+  },
   salvar_responsaveis_do_edital: {
     argumentos: ["p_edital", "p_responsaveis"],
     critica: false,

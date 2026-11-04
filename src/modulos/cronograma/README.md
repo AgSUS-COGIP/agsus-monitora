@@ -99,3 +99,10 @@ global, decidido pelo banco em `pode_editar`/`pode_criar_em`), Concluir/Reabrir,
 Editar e Excluir (lógica). "Nova demanda" aparece só onde a pessoa pode criar.
 Os responsáveis pelo edital ficam no formulário do edital
 (`src/modulos/editais/responsaveis-do-edital.tsx`).
+
+## Só os meus (`?visao=meus`)
+
+O "Ver no cronograma" do resumo do dia (`src/modulos/resumo-do-dia/`) abre
+`/<área>/cronograma?visao=meus`: `abrirVisao("meus")` liga o recorte do estado
+(`definirRecorte`), e a tela mostra só os editais e as demandas de que a pessoa
+é responsável (listas do resumo), com "Ver todos" para voltar.
