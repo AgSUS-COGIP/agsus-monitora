@@ -11,6 +11,10 @@ Como rodar:
   2. python scripts/cargos/previa_do_casamento.py --grafias grafias.json --saida <pasta>
        [--correcao supabase/correcoes/20261104-apelidos-de-cargo.sql]
        [--ensaio-da-correcao supabase/ensaios/20261104-apelidos-de-cargo.sql]
+     ou, para incluir um cargo que faltava na planilha (já posto em cargos_si_sip.csv):
+       --incluir-cargo 88 --ja-gravados apelidos.json --correcao supabase/correcoes/20261104-cargo-psicologo.sql
+       --ensaio-da-correcao supabase/ensaios/20261104-cargo-psicologo.sql
+     (apelidos.json: select "DS_GRAFIA_NORMALIZADA" g from public."TD_CARGO_APELIDO", só leitura)
 
 Saída na pasta: casadas.csv (alta), sugestoes.csv (média), sem-casamento.csv e resumo.txt, por
 número de ocorrências. --correcao gera o SQL que grava os apelidos de alta confiança da Saúde
@@ -32,6 +36,7 @@ from monitora.cargos.previa import (  # noqa: E402
     casar_todas,
     escrever_csv,
     sql_da_correcao,
+    sql_da_inclusao_de_cargo,
     texto_do_resumo,
 )
 
@@ -94,12 +99,54 @@ rollback;
 """
 
 
+def ensaio_da_inclusao(sql_correcao, codigo):
+    """Ensaio da correção que inclui um cargo: o corpo e as conferências; o resultado sai no
+    raise exception 'ENSAIO_OK …', que desfaz tudo (e o rollback do fim, por garantia)."""
+    corpo_correcao = corpo(sql_correcao, "-- >>> correcao\n", "\n-- <<< correcao")
+    return f"""-- ENSAIO de supabase/correcoes/20261104-cargo-psicologo.sql: roda a correção e desfaz. O resultado
+-- vem no erro 'ENSAIO_OK {{json}}' (o raise desfaz tudo); qualquer outro erro reprova. Pede a migration
+-- 20261104150000_tabela_de_cargos.sql e a correção 20261104-apelidos-de-cargo.sql já aplicadas.
+begin;
+
+set local statement_timeout = '120s';
+
+-- ═══ CORPO DA CORREÇÃO (início) ═══
+{corpo_correcao}
+-- ═══ CORPO DA CORREÇÃO (fim) ═══
+
+do $$
+begin
+  raise exception 'ENSAIO_OK %', jsonb_build_object(
+    'cargos', (select count(*) from public."TD_CARGO"),
+    'cargo', (select jsonb_build_object('codigo', "CO_CARGO", 'sip', "CO_CARGO_SIP", 'nome', "NO_CARGO", 'area', "CO_AREA",
+                'sintetico', "ST_SINTETICO", 'criado_pelo_setor', "CO_USUARIO_CRIACAO" = 'a01afddb-f64b-47d9-80e8-476a1ed14e43'::uuid)
+                from public."TD_CARGO" where "CO_CARGO" = {codigo}),
+    'apelidos_total', (select count(*) from public."TD_CARGO_APELIDO"),
+    'apelidos_do_cargo', (select count(*) from public."TD_CARGO_APELIDO" where "CO_CARGO" = {codigo}),
+    'apelidos_por_regra', (select jsonb_object_agg("TP_REGRA", n) from (select "TP_REGRA", count(*) n
+                             from public."TD_CARGO_APELIDO" where "CO_CARGO" = {codigo} group by 1) r),
+    'todos_confirmados_pelo_setor', (select bool_and("ST_CONFIRMADO" = 'S'
+                                       and "CO_USUARIO_CONFIRMACAO" = 'a01afddb-f64b-47d9-80e8-476a1ed14e43'::uuid)
+                                       from public."TD_CARGO_APELIDO" where "CO_CARGO" = {codigo}),
+    'exemplos', jsonb_build_object(
+      'Psicólogo', private."FC_CARGO_DA_GRAFIA"('Psicólogo'),
+      'Psicólogo (a)', private."FC_CARGO_DA_GRAFIA"('Psicólogo (a)'),
+      'Enfermeiro (a)', private."FC_CARGO_DA_GRAFIA"('Enfermeiro (a)')));
+end;
+$$;
+
+rollback;
+"""
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("--grafias", required=True)
     p.add_argument("--saida", required=True)
     p.add_argument("--correcao")
     p.add_argument("--ensaio-da-correcao")
+    p.add_argument("--incluir-cargo", type=int, help="código SIP do cargo novo (correção de inclusão)")
+    p.add_argument("--ja-gravados", help="JSON com as grafias já em TD_CARGO_APELIDO ([{g: grafia}])")
     a = p.parse_args(argv)
 
     catalogo = ler_catalogo()
@@ -111,7 +158,15 @@ def main(argv=None):
     resumo = texto_do_resumo(grupos)
     (saida / "resumo.txt").write_text(resumo + "\n", encoding="utf-8")
     print(resumo)
-    if a.correcao:
+    if a.correcao and a.incluir_cargo:
+        cargo = next(c for c in catalogo.cargos if c.codigo == a.incluir_cargo)
+        ja = {r["g"] for r in json.loads(pathlib.Path(a.ja_gravados).read_text(encoding="utf-8"))}
+        sql = sql_da_inclusao_de_cargo(grupos, cargo, ja)
+        pathlib.Path(a.correcao).write_text(sql, encoding="utf-8", newline="\n")
+        if a.ensaio_da_correcao:
+            ensaio = ensaio_da_inclusao(sql, cargo.codigo)
+            pathlib.Path(a.ensaio_da_correcao).write_text(ensaio, encoding="utf-8", newline="\n")
+    elif a.correcao:
         sql = sql_da_correcao(grupos)
         pathlib.Path(a.correcao).write_text(sql, encoding="utf-8", newline="\n")
         if a.ensaio_da_correcao:
