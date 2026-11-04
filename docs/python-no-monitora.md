@@ -22,7 +22,7 @@ O Python faz o trabalho **pesado, em lote e de conferência**. Ele **não** subs
 | Quem dispara | o navegador, com o Bearer do Supabase de quem está logado                                                          | agenda do banco (pg_cron → `workflow_dispatch`, [agenda-dos-robos.md](agenda-dos-robos.md)), o **Rodar agora** ou o "Run workflow" |
 | Credencial   | a do usuário (o banco decide pela RLS/RPC); nunca a `service_role`                                                 | `SUPABASE_SERVICE_ROLE_KEY` dos secrets do repositório, só em RPCs concedidas ao `service_role`                                    |
 | Limites      | plano **Hobby**: tempo curto (hoje `maxDuration: 30` no `vercel.json`), corpo do pedido de ~4,5 MB, pacote pequeno | até o `timeout-minutes` do workflow (robô: 120 min; conferências: 20 min)                                                          |
-| Dependências | só `requirements.txt` da raiz (hoje: `pdfplumber`) — tudo ali entra em toda função Python                          | `requirements.txt` próprio do job (ex.: `scripts/robo-empregare/requirements.txt`) ou nenhum                                       |
+| Dependências | só `pyproject.toml` da raiz (hoje: `pdfplumber`, sem Pillow/pypdfium2) — tudo ali entra em toda função Python       | `requirements.txt` próprio do job (ex.: `scripts/robo-empregare/requirements.txt`) ou nenhum                                       |
 | Log          | o da Vercel (privado)                                                                                              | **público** (o repositório é público): só contagens, códigos e números de edital                                                   |
 
 Regra prática: se pode passar de alguns segundos, mexer em muitas linhas ou precisar de biblioteca
@@ -127,8 +127,11 @@ leem: o vitest (`tests/*.test.js`) e o pytest (`tests/python/test_*.py`). Exempl
 
 1. `api/<nome>.py` com `class handler(BaseHTTPRequestHandler)` (ver `api/anexos-do-edital.py`):
    confere o Bearer em `/auth/v1/user`, limita o tamanho do corpo, responde JSON.
-2. `vercel.json`: `maxDuration` curto e, se importar a base, `includeFiles: "python/monitora/**"`.
-3. Biblioteca nova só se indispensável, no `requirements.txt` da raiz (entra em todas as funções).
+2. `vercel.json`: `maxDuration` curto, o mesmo `excludeFiles` de `api/anexos-do-edital.py` (senão o
+   repositório inteiro entra na função, a cada deploy) e, se importar a base,
+   `includeFiles: "python/monitora/**"`.
+3. Biblioteca nova só se indispensável, em `dependencies` do `pyproject.toml` da raiz (entra em todas as
+   funções); veja o tamanho do que ela puxa e corte o que não for usado em `override-dependencies`.
 4. Testes das funções puras em `tests/python/` (importando o arquivo por `importlib`).
 
 ## Primeira entrega: conferências de consistência

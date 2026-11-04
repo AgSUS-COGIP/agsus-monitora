@@ -376,7 +376,7 @@ computador: rode-os pelo GitHub.
 - `.github/workflows/robo-empregare.yml`: disparo manual, botão e segredos.
 - `scripts/robo-empregare/robo_empregare.py` (entrada), `navegador_empregare.py` (Selenium),
   `anexos_empregare.py` (aba Questionários: `sondar` e captura dos anexos),
-  `planilha_empregare.py` (leitura do Excel e chave), `requirements.txt` (separado do da raiz,
+  `planilha_empregare.py` (leitura do Excel e chave), `requirements.txt` (separado do `pyproject.toml` da raiz,
   para não pesar as funções da Vercel). RPC e mascaramento vêm da base comum `python/monitora/`
   (`supabase_rpc.py`, `mascaramento.py`; guia em `docs/python-no-monitora.md`).
 - `src/lib/robos-de-carga.ts` e a RPC `disparar_robo` (`20261008140000_agenda_dos_robos_pelo_banco.sql`):

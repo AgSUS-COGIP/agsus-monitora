@@ -7,7 +7,7 @@ o endpoint de IA e o bridge local foram retirados.
 
 - `funai-geodata.js` — proxy do GeoServer OWS da FUNAI (polígonos de terras indígenas).
 - `funai-wms.js` — proxy do WMS da FUNAI (camada `Funai:tis_poligonais`).
-- `anexos-do-edital.py` — Python (pdfplumber, `requirements.txt` na raiz): lê o PDF de anexos do
+- `anexos-do-edital.py` — Python (pdfplumber, `pyproject.toml` na raiz): lê o PDF de anexos do
   edital e devolve cronograma (Anexo I) e quadro de vagas (Anexo II) em JSON. Só usuário logado
   (Bearer conferido em `/auth/v1/user`); não grava nada. Quem usa: `src/lib/anexos-do-edital.ts`.
   Com `?tipo=retificacao`, lê a retificação do cronograma (nº, edital, SEI, assinatura, "Onde se lê"
@@ -19,6 +19,12 @@ Regras:
   Não remover: sem isso o endpoint vira proxy aberto.
 - Não expor chave ou URL interna na resposta. Segredo vem de variável de ambiente da Vercel.
 - Código compartilhado com o front vem de `src/`; não duplicar lógica aqui.
+- Pacote enxuto (plano Hobby, limite de "Function Storage"): toda função `api/*.py` leva no
+  `vercel.json` o `excludeFiles` `{!(api)/**,.*/**,*,api/!(*.py)}` — sem ele a Vercel empacota o
+  repositório inteiro na função. Se importar `python/monitora`, use `includeFiles` (vale mais que o
+  `excludeFiles`). Dependências no `pyproject.toml`; Pillow e pypdfium2 ficam fora por
+  `override-dependencies` (o pdfplumber só os usa em `to_image`, que não chamamos aqui).
+  Guarda: `tests/funcoes-da-vercel-leves.test.js`.
 - O servidor `server/servidor.ts` não tem essas rotas: `/api/*` só existe na Vercel.
 
 Testes: `npx vitest run tests/funai-geodata-proxy.test.js`, `tests/aya-*.test.js`;
