@@ -67,6 +67,8 @@ import {
   juntarPorInicio,
 } from "../../lib/demandas-internas.ts";
 import { DemandasDoCronograma } from "./demandas-internas.tsx";
+import { resumoDoDia } from "../resumo-do-dia/estado.ts";
+import type { EstadoDoResumoDoDia } from "../resumo-do-dia/estado.ts";
 import {
   AvisoDeDatasARevisar,
   DiaDoCalendario,
@@ -172,11 +174,14 @@ function textoDoStatus({
 export function CalendarioEditais({
   estado,
   supabase = null,
+  resumo = resumoDoDia,
   agora = () => new Date(),
 }: {
   estado: EstadoDoCalendario;
   /** Para as escritas das demandas internas. */
   supabase?: ClienteDoCalendario | null;
+  /** O resumo do dia: os editais e demandas de que a pessoa é responsável. */
+  resumo?: EstadoDoResumoDoDia;
   agora?: () => Date;
 }) {
   const carga = useSyncExternalStore(estado.assinar, estado.obter);
@@ -231,14 +236,30 @@ export function CalendarioEditais({
     () => demandasDaArea(carga.demandas, area),
     [carga.demandas, area],
   );
-  const etapas = useMemo(
-    () =>
-      juntarPorInicio(
-        etapasDosEditais,
-        demandas.map((demanda) => demandaComoEtapa(demanda, hojeChave)),
-      ),
-    [etapasDosEditais, demandas, hojeChave],
+  /*
+    "Ver no cronograma" do resumo do dia (?visao=meus): só os editais e as
+    demandas de que a pessoa é responsável, até ela pedir "Ver todos".
+  */
+  const { resumo: doResumo } = useSyncExternalStore(
+    resumo.assinar,
+    resumo.obter,
+    resumo.obter,
   );
+  const soOsMeus = carga.recorte === "meus";
+  const etapas = useMemo(() => {
+    const todas = juntarPorInicio(
+      etapasDosEditais,
+      demandas.map((demanda) => demandaComoEtapa(demanda, hojeChave)),
+    );
+    if (!soOsMeus) return todas;
+    const editais = new Set(doResumo?.editais || []);
+    const minhas = new Set(doResumo?.demandas || []);
+    return todas.filter((etapa) =>
+      etapa.demandaId
+        ? minhas.has(etapa.demandaId)
+        : editais.has(etapa.editalId),
+    );
+  }, [etapasDosEditais, demandas, hojeChave, soOsMeus, doResumo]);
   // Clicar numa demanda sem edital abre o detalhe dela; com edital, a linha do tempo.
   const escolherEdital = (editalId: string) => {
     const demanda = demandaDoEditalId(editalId);
@@ -418,6 +439,19 @@ export function CalendarioEditais({
           </label>
         </div>
       </PainelDeFiltros>
+
+      {soOsMeus ? (
+        <div id="calSoOsMeus" className="cal-so-os-meus" role="status">
+          <span>Só os seus editais e demandas</span>
+          <button
+            type="button"
+            className="btn secondary small"
+            onClick={() => estado.definirRecorte("")}
+          >
+            Ver todos
+          </button>
+        </div>
+      ) : null}
 
       <section className="ui-card cal-card" aria-labelledby="calMesTitulo">
         <div className="cal-barra" data-tour="cronograma-barra-do-mes">
@@ -666,13 +700,19 @@ export function criarCalendarioEditais({
   supabase = getSupabaseClient(),
   toast,
   agora,
+  resumo = resumoDoDia,
 }: OpcoesDaTelaDoCalendario = {}) {
   const estado = criarEstadoDoCalendario({ supabase, toast });
   return {
     estado,
     nome: "a tela de cronograma",
     conteudo: (
-      <CalendarioEditais estado={estado} supabase={supabase} agora={agora} />
+      <CalendarioEditais
+        estado={estado}
+        supabase={supabase}
+        resumo={resumo}
+        agora={agora}
+      />
     ),
     /*
       Sem o carregamento de tela cheia: ele travava a navegação inteira. A
@@ -681,5 +721,8 @@ export function criarCalendarioEditais({
     */
     render: () => estado.carregar(),
     recarregar: () => estado.carregar(true),
+    /* ?visao=meus (o "Ver no cronograma" do resumo do dia): só os da pessoa. */
+    abrirVisao: (visao: string) =>
+      estado.definirRecorte(visao === "meus" ? "meus" : ""),
   };
 }

@@ -69,6 +69,7 @@ const ESTADO_INICIAL: SnapshotDoCalendario = Object.freeze({
   erro: "",
   demandas: Object.freeze([]),
   podeCriarEm: Object.freeze([]),
+  recorte: "",
 });
 
 export function criarEstadoDoCalendario({
@@ -212,6 +213,9 @@ export function criarEstadoDoCalendario({
     },
     guardarDemanda(demanda) {
       publicar({ demandas: comDemanda(estado.demandas, demanda) });
+    },
+    definirRecorte(recorte) {
+      if (estado.recorte !== recorte) publicar({ recorte });
     },
     tirarDemanda(id) {
       publicar({

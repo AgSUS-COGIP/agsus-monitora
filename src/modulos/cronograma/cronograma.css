@@ -748,6 +748,9 @@
 [data-cor="azul-escuro"] {
   --cal-cor: var(--etapa-azul-escuro);
 }
+[data-cor="demanda"] {
+  --cal-cor: var(--etapa-demanda);
+}
 [data-cor="neutro"] {
   --cal-cor: var(--text-secondary);
 }
