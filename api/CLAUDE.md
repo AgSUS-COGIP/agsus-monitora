@@ -10,6 +10,9 @@ o endpoint de IA e o bridge local foram retirados.
 - `anexos-do-edital.py` — Python (pdfplumber, `requirements.txt` na raiz): lê o PDF de anexos do
   edital e devolve cronograma (Anexo I) e quadro de vagas (Anexo II) em JSON. Só usuário logado
   (Bearer conferido em `/auth/v1/user`); não grava nada. Quem usa: `src/lib/anexos-do-edital.ts`.
+  Com `?tipo=retificacao`, lê a retificação do cronograma (nº, edital, SEI, assinatura, "Onde se lê"
+  e "Leia-se", com as linhas em negrito e os avisos das datas); quem usa:
+  `src/lib/retificacao-do-cronograma.ts` (tela `src/modulos/editais/lancar-retificacao.tsx`).
 
 Regras:
 - Os dois proxies validam a origem com `src/lib/origem-da-requisicao.js` (`origemDeTerceiro`).
@@ -19,4 +22,5 @@ Regras:
 - O servidor `server/servidor.ts` não tem essas rotas: `/api/*` só existe na Vercel.
 
 Testes: `npx vitest run tests/funai-geodata-proxy.test.js`, `tests/aya-*.test.js`;
-`python -m unittest discover -s tests/python` (anexos do edital).
+`python -m pytest tests/python/test_anexos_do_edital.py tests/python/test_retificacao_do_cronograma.py`
+(anexos e retificação do cronograma, com PDFs sintéticos).

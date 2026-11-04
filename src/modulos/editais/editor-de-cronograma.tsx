@@ -19,6 +19,11 @@ import type {
 } from "../../lib/cronograma-do-edital.ts";
 import { editaisComCronogramaParaCopiar } from "../../lib/editais-do-nucleo.ts";
 import { Aviso, Campo, LinhasEsqueleto, Selo } from "../../ui/index.ts";
+import { LancarRetificacao } from "./lancar-retificacao.tsx";
+import type {
+  EstadoDaRetificacao,
+  RetificacaoParaAplicar,
+} from "./lancar-retificacao.tsx";
 
 /* O resumo do Núcleo (a lista de "copiar cronograma") é do tipo de `editais-do-nucleo.ts`. */
 type ResumoParaCopiar = Parameters<typeof editaisComCronogramaParaCopiar>[0];
@@ -27,7 +32,7 @@ type EditalParaCopiar = ReturnType<
 >[number];
 
 /** O que o editor usa do estado da página (`estado.ts`). */
-export interface EstadoDoEditorDeCronograma {
+export interface EstadoDoEditorDeCronograma extends EstadoDaRetificacao {
   assinar(ouvinte: () => void): () => void;
   obter(): { geracao: number };
   confirmar(mensagem: string): boolean;
@@ -50,6 +55,12 @@ export interface PropriedadesDoEditorDeCronograma {
   previa: EstadoDoCronograma;
   analise: AnaliseDoCronograma;
   aoMudar: MudarCronograma;
+  /** O número do edital do formulário (a retificação confere com ele). */
+  numeroDoEdital?: string;
+  /** Grava a retificação lida do PDF. Sem ela (edital novo), o botão não aparece. */
+  aoAplicarRetificacao?: (dados: RetificacaoParaAplicar) => Promise<boolean>;
+  /** Por que a retificação não pode ser aplicada agora ("" se pode). */
+  impedimentoDaRetificacao?: string;
 }
 
 /*
@@ -60,7 +71,9 @@ export interface PropriedadesDoEditorDeCronograma {
   - o modelo padrão, que cria as doze atividades de um edital da AgSUS e abre
     o preenchimento em lote, onde se colam as datas uma por linha;
   - "copiar cronograma de outro edital", a partir do resumo do Núcleo (a mesma
-    carga dos indicadores da página).
+    carga dos indicadores da página);
+  - "Lançar retificação (PDF)", só em edital cadastrado: lê a retificação
+    publicada, compara com o gravado e aplica (`lancar-retificacao.tsx`).
 
   Classes de `editais.css` (só tokens: o tema escuro vem
   deles).
@@ -409,8 +422,12 @@ export function EditorDeCronograma({
   previa,
   analise,
   aoMudar,
+  numeroDoEdital = "",
+  aoAplicarRetificacao,
+  impedimentoDaRetificacao = "",
 }: PropriedadesDoEditorDeCronograma) {
   const [loteAberto, setLoteAberto] = useState(false);
+  const [retificacaoAberta, setRetificacaoAberta] = useState(false);
   const campoDoLote = useRef<HTMLTextAreaElement>(null);
   const tabela = useRef<HTMLDivElement>(null);
   const c = cronograma;
@@ -554,7 +571,32 @@ export function EditorDeCronograma({
           <i className="fa-solid fa-trash" aria-hidden="true" /> Limpar
           cronograma
         </button>
+        {aoAplicarRetificacao ? (
+          <button
+            id="cronogramaRetificacao"
+            data-tour="editais-cronograma-retificacao"
+            type="button"
+            className="btn secondary"
+            aria-expanded={retificacaoAberta}
+            disabled={c.carregando}
+            onClick={() => setRetificacaoAberta((aberta) => !aberta)}
+          >
+            <i className="fa-solid fa-file-pen" aria-hidden="true" /> Lançar
+            retificação (PDF)
+          </button>
+        ) : null}
       </div>
+
+      {aoAplicarRetificacao && retificacaoAberta ? (
+        <LancarRetificacao
+          estado={estado}
+          numeroDoEdital={numeroDoEdital}
+          etapas={c.etapas}
+          impedimento={impedimentoDaRetificacao}
+          aoAplicar={aoAplicarRetificacao}
+          aoFechar={() => setRetificacaoAberta(false)}
+        />
+      ) : null}
 
       <CopiaDeCronograma
         estado={estado}

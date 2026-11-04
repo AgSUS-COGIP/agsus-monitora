@@ -16,10 +16,17 @@ Os anexos da AgSUS têm sempre o mesmo desenho:
   - Projetos publica o quadro no Anexo I: "Vaga | Quantidade de vagas |
     Requisitos | Atribuições", sem modalidades.
 
+Com `?tipo=retificacao`, lê a retificação do cronograma ("1ª Retificação do
+Cronograma", "2ª Retificação do Anexo I"): número da retificação, edital, SEI,
+data da assinatura e as duas tabelas — "Onde se lê:" (a antiga) e "Leia-se:"
+(a que vale), com as linhas em negrito (as alteradas) marcadas. Quem compara
+com o cronograma gravado e aplica é a tela (src/modulos/editais/).
+
 Acesso: só usuário autenticado no Supabase do MONITORA (Bearer do front,
 conferido em /auth/v1/user). O PDF vem no corpo (application/pdf), até 4 MB.
 
-Testes: tests/python/test_anexos_do_edital.py (roda com o Python local).
+Testes: tests/python/test_anexos_do_edital.py e
+tests/python/test_retificacao_do_cronograma.py (PDFs sintéticos).
 """
 
 import io
@@ -27,6 +34,7 @@ import json
 import os
 import re
 import unicodedata
+import urllib.parse
 import urllib.request
 from datetime import date
 from http.server import BaseHTTPRequestHandler
@@ -288,6 +296,250 @@ def extrair(conteudo):
     }
 
 
+# ── Retificação do cronograma ──────────────────────────────────────────────
+
+_ORDINAIS = {"primeira": 1, "segunda": 2, "terceira": 3, "quarta": 4, "quinta": 5, "sexta": 6}
+
+
+def corrigir_digitacao(texto):
+    """
+    Conserta a digitação comum das datas da retificação: "05/ a 16/10" →
+    "05 a 16/10"; "17 a 19 /09" → "17 a 19/09"; quebra de linha vira espaço.
+    """
+    t = limpar(texto)
+    t = re.sub(r"(\d)\s+/\s*(\d)", r"\1/\2", t)
+    t = re.sub(r"(\d)/\s+(\d)", r"\1/\2", t)
+    t = re.sub(r"(\d)/(?!\d)", r"\1", t)
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def ler_datas_da_retificacao(texto):
+    """
+    O período de uma linha do "Leia-se", com o conector ("a", "e"…) e os
+    avisos de digitação. Devolve (periodo | None, conector, avisos).
+    """
+    # A hora ("23/06 a 02/07 às 14h") não entra no cronograma.
+    original = re.sub(r"\s*\b[àa]s\s*\d{1,2}\s*h(?:\s*\d{2})?(?:min)?\b", "", limpar(texto), flags=re.I)
+    corrigido = corrigir_digitacao(original)
+    avisos = []
+    periodo = ler_periodo(corrigido)
+    if periodo and corrigido != original:
+        avisos.append(f'Digitação estranha no PDF: "{original}" (lido como "{corrigido}").')
+    conector = re.search(r"\d\s*(a|e|até|-|–)\s*\d", corrigido, re.I)
+    return periodo, (conector.group(1).lower() if conector else ""), avisos
+
+
+def _curta(data):
+    return data.strftime("%d/%m/%Y")
+
+
+def etapas_da_retificacao(linhas, ano):
+    """
+    Linhas [(atividade, texto_datas, negrito)] → etapas com datas ISO e
+    avisos: duas datas soltas ("24/09 e 07/10") viram o intervalo do menor ao
+    maior, com aviso; etapa sem data reconhecível fica sem data, com aviso.
+    """
+    lidas = [ler_datas_da_retificacao(datas) for _, datas, _ in linhas]
+    periodos = datas_com_ano([periodo for periodo, _, _ in lidas], ano)
+    etapas = []
+    for (atividade, texto_datas, negrito), (_, conector, avisos_da_data), par in zip(
+        linhas, lidas, periodos, strict=True
+    ):
+        avisos = list(avisos_da_data)
+        datas = limpar(texto_datas)
+        inicio = fim = None
+        if par:
+            inicio, fim = par
+            if fim < inicio:
+                inicio, fim = fim, inicio
+                avisos.append(f'"{datas}" está com as datas fora de ordem; lido de {_curta(inicio)} a {_curta(fim)}.')
+            elif conector == "e" and (fim - inicio).days > 1:
+                avisos.append(
+                    f'"{datas}" são duas datas soltas; lido como o intervalo de {_curta(inicio)} a {_curta(fim)}. Confira.'
+                )
+        elif datas:
+            avisos.append(f'Data não reconhecida no PDF: "{datas}".')
+        else:
+            avisos.append("Etapa sem data no PDF.")
+        etapas.append(
+            {
+                "atividade": limpar(atividade),
+                "data_inicio": inicio.isoformat() if inicio else "",
+                "data_fim": fim.isoformat() if fim else "",
+                "texto_datas": datas,
+                "negrito": bool(negrito),
+                "avisos": avisos,
+            }
+        )
+    return etapas
+
+
+def _linha_em_negrito(pagina, bbox):
+    """A linha da tabela está toda em negrito (as alteradas, no "Leia-se")?"""
+    x0, topo, x1, base = bbox
+    px0, ptopo, px1, pbase = pagina.bbox
+    caixa = (max(x0, px0), max(topo, ptopo), min(x1, px1), min(base, pbase))
+    if caixa[0] >= caixa[2] or caixa[1] >= caixa[3]:
+        return False
+    letras = [c for c in pagina.crop(caixa).chars if c.get("text", "").strip()]
+    return bool(letras) and all("bold" in str(c.get("fontname", "")).lower() for c in letras)
+
+
+_MARCAS = (
+    ("onde", r"Onde\s+se\s+l[êe]"),
+    ("leia", r"Leia-se|Leia\s+se"),
+    ("fim", r"DISPOSI[ÇC][ÕO]ES\s+FINAIS|As\s+demais\s+cl[áa]usulas"),
+)
+
+
+def secoes_da_retificacao(paginas):
+    """
+    As linhas [(atividade, datas, negrito)] de "Onde se lê" e de "Leia-se", na
+    ordem do documento: cada tabela pertence à última marca acima dela, e a
+    tabela que continua na página seguinte (sem cabeçalho) segue na mesma seção.
+    """
+    eventos = []
+    for numero, pagina in enumerate(paginas):
+        for nome, padrao in _MARCAS:
+            for achado in pagina.search(padrao, regex=True, case=False):
+                eventos.append((numero, achado["top"], 0, nome, None))
+        for tabela in pagina.find_tables():
+            eventos.append((numero, tabela.bbox[1], 1, "tabela", (pagina, tabela)))
+    eventos.sort(key=lambda e: (e[0], e[1], e[2]))
+
+    secoes = {"onde": [], "leia": []}
+    atual = None
+    for _, _, _, nome, dados in eventos:
+        if nome != "tabela":
+            atual = None if nome == "fim" else nome
+            continue
+        if atual is None:
+            continue
+        pagina, tabela = dados
+        for linha, celulas in zip(tabela.rows, tabela.extract(), strict=False):
+            if len(celulas or []) < 2 or eh_cabecalho_cronograma(celulas):
+                continue
+            atividade = sem_rodape(celulas[0])
+            if not atividade:
+                continue
+            negrito = _linha_em_negrito(pagina, linha.bbox) if linha.bbox else False
+            secoes[atual].append((atividade, sem_rodape(celulas[-1]), negrito))
+    return secoes["onde"], secoes["leia"]
+
+
+# O rodapé do SEI ("Retificação 2ª Retificação … (0698514) SEI AGSUS.002213/2026-13 / pg. 1")
+# às vezes cai dentro da tabela que atravessa a página.
+_RODAPE = re.compile(
+    r"\s*(?:\S{0,6}\s+)?(?:\d+\s*ª\s*)?RETIFICA\S*\s.*?\(\d{6,8}\)|\s*\S?\s*AGSUS\.|\s*\(\d{6,8}\)",
+    re.I,
+)
+
+
+def sem_rodape(texto):
+    """A célula sem o pedaço do rodapé do SEI que caiu nela."""
+    t = limpar(texto)
+    corte = _RODAPE.search(t)
+    return t[: corte.start()].strip() if corte else t
+
+
+def identificar_retificacao(texto):
+    """
+    Do texto corrido do PDF: número e nome da retificação ("2ª Retificação do
+    Cronograma"), edital do título e os outros citados, unidade, SEI, processo
+    e data da assinatura.
+    """
+    t = limpar(texto)
+    numero = None
+    tipo = "do Cronograma"
+    m = re.search(r"\b(\d{1,2})\s*[ªaº°]?\s*RETIFICA[ÇC][ÃA]O\b(.{0,40})", t, re.I)
+    if not m:
+        m = re.search(r"\b(" + "|".join(_ORDINAIS) + r")\s+RETIFICA[ÇC][ÃA]O\b(.{0,40})", t, re.I)
+    if m:
+        bruto = m.group(1).lower()
+        numero = int(bruto) if bruto.isdigit() else _ORDINAIS[bruto]
+        if re.match(r"\s*D[OE]\s+ANEXO\s+I\b", m.group(2), re.I):
+            tipo = "do Anexo I"
+    rotulo = f"{numero}ª Retificação {tipo}" if numero else ""
+
+    editais = []
+    for d in re.finditer(r"EDITAL\s*N\S{0,3}\s*(\d{1,4})\s*/\s*(\d{4})", t, re.I):
+        valor = f"{int(d.group(1))}/{d.group(2)}"
+        if valor not in editais:
+            editais.append(valor)
+    edital = editais[0] if editais else ""
+
+    unidade = ""
+    u = re.search(
+        r"CRONOGRAMA DO PROCESSO SELETIVO\s*[-–]\s*EDITAL\s*N\S{0,3}\s*\d{1,4}\s*/\s*\d{4}\s*[-–]\s*(.{0,80})",
+        t,
+        re.I,
+    )
+    if u:
+        unidade = re.split(r"\s(?:Atividades|Retifica|Leia|Onde)", u.group(1), flags=re.I)[0].strip(" -–")
+
+    sei = re.search(r"SEI\s*n\S{0,2}\s*(\d{5,})", t, re.I) or re.search(r"\((\d{6,8})\)\s*SEI\b", t)
+    processo = re.search(r"Processo\s*n\S{0,2}\s*([A-Z]+\.\d[\d./-]*\d)", t, re.I)
+    assinada = re.search(r"assinado eletronicamente por .{0,250}? em (\d{2})/(\d{2})/(\d{4})", t, re.I)
+    assinada_em = ""
+    if assinada:
+        try:
+            assinada_em = date(int(assinada.group(3)), int(assinada.group(2)), int(assinada.group(1))).isoformat()
+        except ValueError:
+            assinada_em = ""
+    return {
+        "numero": numero,
+        "rotulo": rotulo,
+        "edital": edital,
+        "editais_citados": editais,
+        "unidade": unidade,
+        "sei": sei.group(1) if sei else "",
+        "processo": processo.group(1) if processo else "",
+        "assinada_em": assinada_em,
+    }
+
+
+def extrair_retificacao(conteudo):
+    """Lê o PDF da retificação (bytes) e devolve o dicionário da resposta."""
+    import pdfplumber
+
+    with pdfplumber.open(io.BytesIO(conteudo)) as pdf:
+        paginas = pdf.pages[:PAGINAS_LIDAS]
+        texto = "\n".join(p.extract_text() or "" for p in paginas)
+        onde, leia = secoes_da_retificacao(paginas)
+        total = len(pdf.pages)
+
+    dados = identificar_retificacao(texto)
+    # O ano das datas é o do edital; sem edital, o da assinatura.
+    if dados["edital"]:
+        ano = int(dados["edital"].split("/")[1])
+    elif dados["assinada_em"]:
+        ano = int(dados["assinada_em"][:4])
+    else:
+        ano = date.today().year
+    avisos = []
+    if not re.search(r"RETIFICA[ÇC][ÃA]O", texto, re.I):
+        avisos.append("Este PDF não parece uma retificação do cronograma.")
+    elif not dados["numero"]:
+        avisos.append("Não achei o número da retificação no título; informe antes de aplicar.")
+    if not dados["edital"]:
+        avisos.append("Não achei o número do edital no PDF.")
+    elif len(dados["editais_citados"]) > 1:
+        outros = ", ".join(dados["editais_citados"][1:])
+        avisos.append(f"O PDF cita também o edital {outros}; vale o do título ({dados['edital']}).")
+    if not leia:
+        avisos.append('Não achei a tabela do "Leia-se".')
+    if not dados["sei"]:
+        avisos.append("Não achei o número SEI do documento.")
+    return {
+        "tipo": "retificacao",
+        **dados,
+        "paginas": total,
+        "onde_se_le": etapas_da_retificacao(onde, ano),
+        "leia_se": etapas_da_retificacao(leia, ano),
+        "avisos": avisos,
+    }
+
+
 # ── HTTP (Vercel) ───────────────────────────────────────────────────────────
 
 
@@ -333,8 +585,10 @@ class handler(BaseHTTPRequestHandler):
         conteudo = self.rfile.read(tamanho)
         if not conteudo.startswith(b"%PDF"):
             return self._responder(400, {"erro": "O arquivo não é um PDF."})
+        consulta = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        ler = extrair_retificacao if consulta.get("tipo", [""])[0] == "retificacao" else extrair
         try:
-            return self._responder(200, extrair(conteudo))
+            return self._responder(200, ler(conteudo))
         except Exception:
             return self._responder(422, {"erro": "Não consegui ler este PDF."})
 

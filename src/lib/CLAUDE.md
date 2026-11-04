@@ -39,6 +39,9 @@ Arquivos que exigem cuidado:
   editais, USI × CORES), rascunho e payload do edital, índice do resumo e filtro dos indicadores.
 - `cronograma-do-edital.ts` — cronograma do edital: estado calculado pelas datas, validação antes de
   salvar (erros e avisos), modelo padrão, datas coladas em lote e situação na linha do tempo.
+- `retificacao-do-cronograma.ts` — retificação do cronograma em PDF (lida por `api/anexos-do-edital.py`):
+  casamento das etapas do "Leia-se" com as gravadas, comparação (igual, data muda, nova, sumiu), ajustes,
+  cronograma novo, número da errata e motivo com o SEI. A tela é `src/modulos/editais/lancar-retificacao.tsx`.
 - `anexos-do-candidato.ts` — anexos PDF do candidato aprovado (o PDF fica no banco, em bytea): base64 de ida e volta, limites (2 MB, 5 por
   candidato), validação antes do envio e agrupamento por candidato. O banco repete os limites.
 - `calendario-editais.ts` — o Calendário de Editais sem DOM: etapas por dia (conta no início e no
