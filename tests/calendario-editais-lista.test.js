@@ -1,19 +1,24 @@
 import { describe, expect, it } from "vitest";
 import {
+  FILTROS_VAZIOS,
+  alternarTipoOculto,
   cabecalhoDoDiaDaLista,
   chaveDoDia,
   chavesDaSemana,
   contarEtapasNoIntervalo,
+  contarEtapasNoMes,
   diasDaLista,
   emAndamentoNoDia,
   etapasAtivasNoDia,
-  faixasDaSemana,
+  filtrarEtapas,
   inicioDaSemana,
   intervaloDoMes,
   marcaNoDia,
   montarEtapasDosEditais,
+  montarGradeDoMes,
   rotuloDaSemana,
   rotuloDoNumeroDoEdital,
+  tiposOcultosValidos,
   unidadeCurta,
   visaoInicial,
 } from "../src/lib/calendario-editais.ts";
@@ -259,41 +264,62 @@ describe("dentro do dia: pela legenda, depois pela unidade", () => {
   });
 });
 
-describe("faixasDaSemana (o mês como agenda)", () => {
-  const semana = chavesDaSemana(inicioDaSemana(new Date(2026, 10, 1)));
+describe("marcos do mês (chips só no início e no fim)", () => {
+  const grade = montarGradeDoMes(new Date(2026, 10, 1), TODAS, {
+    hoje: new Date(2026, 10, 1),
+  });
+  const dia = (chave) => grade.find((celula) => celula.chave === chave);
+  const marcos = (chave) =>
+    dia(chave).marcos.map(({ etapa, marca }) => `${etapa.atividade}:${marca}`);
 
-  it("cada etapa vira uma faixa das colunas em que está ativa, sem repetir", () => {
-    const { faixas, ocultas } = faixasDaSemana(TODAS, semana);
-    const resumo = faixas.map(
-      ({ etapa, de, ate, faixa, continuaAntes, continuaDepois }) =>
-        `${etapa.atividade}:${de}-${ate}@${faixa}${continuaAntes ? "<" : ""}${continuaDepois ? ">" : ""}`,
+  it("a etapa com período aparece só no dia em que começa e no dia em que termina", () => {
+    expect(marcos("2026-11-01")).toEqual(["Inscrições:começa"]);
+    expect(marcos("2026-11-03")).toEqual(["Inscrições:último dia"]);
+    expect(marcos("2026-11-20")).toEqual(["Prazo de recurso:último dia"]);
+  });
+
+  it("o dia do meio fica sem chip, mas a etapa continua ativa nele", () => {
+    expect(marcos("2026-11-02")).toEqual([]);
+    expect(dia("2026-11-02").pontos).toEqual([]);
+    // O recurso e as inscrições atravessam o dia 2: o popup lista as duas.
+    expect(dia("2026-11-02").total).toBe(2);
+    expect(dia("2026-11-02").rotulo).toBe(
+      "2 de novembro: 2 etapas, 2 em andamento",
     );
-    // O recurso vem de outubro e segue para a semana seguinte; as inscrições
-    // vão de domingo a terça.
-    expect(resumo).toEqual(["Prazo de recurso:0-6@0<>", "Inscrições:0-2@1"]);
-    expect(ocultas).toEqual([0, 0, 0, 0, 0, 0, 0]);
   });
 
-  it("acima do limite, a faixa sai e conta no '+N mais' de cada dia dela", () => {
-    const { faixas, ocultas } = faixasDaSemana(TODAS, semana, 1);
-    expect(faixas.map(({ etapa }) => etapa.atividade)).toEqual([
-      "Prazo de recurso",
+  it("a etapa de um dia é um chip no próprio dia", () => {
+    expect(marcos("2026-11-10")).toEqual(["Resultado final:no dia"]);
+    expect(dia("2026-11-10").rotulo).toBe(
+      "10 de novembro: 2 etapas, 1 em andamento",
+    );
+  });
+});
+
+describe("filtro de tipo da legenda", () => {
+  it("os tipos desligados saem das etapas e da contagem do mês", () => {
+    const semResultado = filtrarEtapas(TODAS, FILTROS_VAZIOS, {
+      hoje: new Date(2026, 10, 1),
+      tiposOcultos: ["resultado"],
+    });
+    expect(semResultado.map(({ atividade }) => atividade)).not.toContain(
+      "Resultado final",
+    );
+    expect(contarEtapasNoMes(semResultado, new Date(2026, 10, 1))).toBe(
+      contarEtapasNoMes(TODAS, new Date(2026, 10, 1)) - 1,
+    );
+  });
+
+  it("alterna um tipo e só aceita, do que estava guardado, tipos da legenda", () => {
+    expect(alternarTipoOculto([], "recursos")).toEqual(["recursos"]);
+    expect(alternarTipoOculto(["recursos", "outros"], "recursos")).toEqual([
+      "outros",
     ]);
-    expect(ocultas).toEqual([1, 1, 1, 0, 0, 0, 0]);
-  });
-
-  it("reaproveita a altura que ficou livre e corta no fim do mês", () => {
-    const fimDoMes = chavesDaSemana(inicioDaSemana(new Date(2026, 10, 30)));
-    const { faixas } = faixasDaSemana(TODAS, fimDoMes);
-    expect(
-      faixas.map(({ etapa, de, ate, faixa, continuaDepois }) => [
-        etapa.atividade,
-        de,
-        ate,
-        faixa,
-        continuaDepois,
-      ]),
-    ).toEqual([["Entrevistas", 1, 3, 0, false]]);
+    expect(tiposOcultosValidos('["recursos","inventado","recursos"]')).toEqual([
+      "recursos",
+    ]);
+    expect(tiposOcultosValidos("{quebrado")).toEqual([]);
+    expect(tiposOcultosValidos(null)).toEqual([]);
   });
 });
 

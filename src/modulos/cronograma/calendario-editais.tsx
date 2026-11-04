@@ -16,8 +16,10 @@ import { getSupabaseClient } from "../../lib/supabaseClient";
 import type { VisaoDoCalendario } from "../../lib/calendario-editais.ts";
 import {
   CHAVE_DA_VISAO,
+  CHAVE_DOS_TIPOS_OCULTOS,
   FILTROS_VAZIOS,
   TIPOS_DA_LEGENDA,
+  alternarTipoOculto,
   chaveDoDia,
   chavesDaSemana,
   contarEtapasNoIntervalo,
@@ -39,6 +41,7 @@ import {
   rotuloDoMes,
   somarDias,
   somarMeses,
+  tiposOcultosValidos,
   unidadesDasEtapas,
   visaoInicial,
   visaoValida,
@@ -61,6 +64,7 @@ import {
   DiaDoCalendario,
   GradeDoMes,
   GradeEsqueleto,
+  LegendaDosTipos,
   LinhaDoTempo,
   ProximasEtapas,
   Seletor,
@@ -76,7 +80,8 @@ import { VistaDaLista, VistaDaSemana } from "./vistas.tsx";
   (a rota, src/app/telas.tsx) ao abrir a página.
 
   Padrão das telas de src/modulos/: topo com a data da carga e Atualizar;
-  filtros recolhíveis (nascem recolhidos); o mês, as próximas etapas e a linha
+  filtros recolhíveis (nascem recolhidos); a legenda dos tipos, que liga e
+  desliga cada tipo nas três vistas; o mês, as próximas etapas e a linha
   do tempo em cards. Antes da primeira carga, a grade e as listas são
   skeleton; se ela falha, o aviso com "Tentar novamente" fica no lugar da
   grade.
@@ -87,9 +92,6 @@ import { VistaDaLista, VistaDaSemana } from "./vistas.tsx";
 */
 
 const EVENTO_CRONOGRAMA_SALVO = "agsus:nucleo-cronograma-saved";
-
-const TIPOS_DO_FILTRO: readonly (readonly [string, string])[] =
-  TIPOS_DA_LEGENDA.map((tipo) => [tipo.id, tipo.rotulo]);
 
 const OPCOES_DE_VISAO = [
   { valor: "mes", rotulo: "Mês" },
@@ -113,6 +115,28 @@ function guardarVisao(visao: VisaoDoCalendario) {
     globalThis.localStorage?.setItem(CHAVE_DA_VISAO, visao);
   } catch {
     // Sem localStorage: a próxima visita abre na vista padrão.
+  }
+}
+/* Os tipos desligados na legenda: também por navegador, como a vista. */
+function tiposOcultosGuardados(): string[] {
+  try {
+    return tiposOcultosValidos(
+      globalThis.localStorage?.getItem(CHAVE_DOS_TIPOS_OCULTOS),
+    );
+  } catch {
+    return [];
+  }
+}
+function guardarTiposOcultos(ocultos: readonly string[]) {
+  try {
+    if (ocultos.length)
+      globalThis.localStorage?.setItem(
+        CHAVE_DOS_TIPOS_OCULTOS,
+        JSON.stringify(ocultos),
+      );
+    else globalThis.localStorage?.removeItem(CHAVE_DOS_TIPOS_OCULTOS);
+  } catch {
+    // Sem localStorage: vale só nesta visita.
   }
 }
 function ehCelular() {
@@ -168,6 +192,7 @@ export function CalendarioEditais({
   const [diaAberto, setDiaAberto] = useState("");
   const [editalEscolhido, setEditalEscolhido] = useState("");
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
+  const [tiposOcultos, setTiposOcultos] = useState(tiposOcultosGuardados);
   /*
     Concluídas escondidas à partida. São a maior fatia das ~800 etapas e o que
     já passou raramente é o que se vem ver. Continua a um clique de distância,
@@ -186,9 +211,10 @@ export function CalendarioEditais({
   const hojeChave = chaveDoDia(hoje);
 
   const filtradas = useMemo(
-    () => filtrarEtapas(etapas, filtros, { ocultarConcluidas, hoje }),
+    () =>
+      filtrarEtapas(etapas, filtros, { ocultarConcluidas, hoje, tiposOcultos }),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `hoje` entra pela chave do dia: o objeto Date muda a cada desenho.
-    [etapas, filtros, ocultarConcluidas, hojeChave],
+    [etapas, filtros, ocultarConcluidas, tiposOcultos, hojeChave],
   );
   const celulas = useMemo(
     () => montarGradeDoMes(mes, filtradas, { hoje }),
@@ -270,18 +296,26 @@ export function CalendarioEditais({
   const passoAnterior = naSemana ? "Semana anterior" : "Mês anterior";
   const passoSeguinte = naSemana ? "Próxima semana" : "Próximo mês";
 
+  function mudarTiposOcultos(ocultos: string[]) {
+    setTiposOcultos(ocultos);
+    guardarTiposOcultos(ocultos);
+  }
+
+  // "Limpar tudo" mostra tudo: também religa os tipos desligados na legenda.
   function limparFiltros() {
     setFiltros(FILTROS_VAZIOS);
     setOcultarConcluidas(false);
+    mudarTiposOcultos([]);
   }
 
   const opcoesDeEdital = (
     lista: readonly EditalDoCalendario[],
   ): [string, string][] =>
     lista.map((edital) => [edital.id, rotuloDoEdital(edital)]);
-  const quantos = Object.values(filtros).filter((valor) =>
-    String(valor ?? "").trim(),
-  ).length;
+  // O filtro de tipo (na legenda) conta como um, por mais tipos que desligue.
+  const quantos =
+    Object.values(filtros).filter((valor) => String(valor ?? "").trim())
+      .length + (tiposOcultos.length ? 1 : 0);
   const recarregar = () => void estado.carregar(true);
 
   return (
@@ -332,15 +366,6 @@ export function CalendarioEditais({
               opcoes={opcoesDeEdital(editais)}
               valor={filtros.edital}
               aoMudar={(valor) => mudarFiltro("edital", valor)}
-            />
-          </Campo>
-          <Campo rotulo="Tipo de etapa" idDoControle="calTipo">
-            <Seletor
-              id="calTipo"
-              vazio="Todos os tipos"
-              opcoes={TIPOS_DO_FILTRO}
-              valor={filtros.tipo}
-              aoMudar={(valor) => mudarFiltro("tipo", valor)}
             />
           </Campo>
           <label
@@ -425,21 +450,15 @@ export function CalendarioEditais({
           />
         </div>
 
-        {/* Na Lista e na Semana o tipo vem escrito em cada linha. */}
-        {visao === "mes" ? (
-          <div
-            id="calLegenda"
-            className="cal-legenda"
-            data-tour="cronograma-legenda"
-          >
-            {TIPOS_DA_LEGENDA.map((tipo) => (
-              <span key={tipo.id} className="cal-legenda-item">
-                <i data-cor={tipo.cor} aria-hidden="true" />
-                {tipo.rotulo}
-              </span>
-            ))}
-          </div>
-        ) : null}
+        {/* A legenda é o filtro de tipo: vale para as três vistas. */}
+        <LegendaDosTipos
+          tipos={TIPOS_DA_LEGENDA}
+          ocultos={tiposOcultos}
+          aoAlternar={(id) =>
+            mudarTiposOcultos(alternarTipoOculto(tiposOcultos, id))
+          }
+          aoMostrarTodos={() => mudarTiposOcultos([])}
+        />
         <div
           id="calGrade"
           data-tour="cronograma-grade"
@@ -473,7 +492,6 @@ export function CalendarioEditais({
           ) : (
             <GradeDoMes
               celulas={celulas}
-              etapas={filtradas}
               selecionado={diaAberto}
               aoEscolherDia={setDiaAberto}
             />

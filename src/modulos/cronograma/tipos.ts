@@ -23,7 +23,6 @@ export type EtapaDoCalendario = {
 export type FiltrosDoCalendario = Readonly<{
   unidade: string;
   edital: string;
-  tipo: string;
   busca: string;
 }>;
 export type CelulaDoCalendario = {
@@ -33,16 +32,12 @@ export type CelulaDoCalendario = {
   doMes: boolean;
   hoje: boolean;
   total: number;
+  /** Os chips do dia: etapas que começam, terminam ou são só deste dia. */
+  marcos: {
+    etapa: EtapaDoCalendario;
+    marca: "começa" | "último dia" | "no dia";
+  }[];
   pontos: { tipo: TipoDaEtapa; total: number }[];
-};
-/** Um pedaço de etapa numa linha (semana) da grade do mês: colunas 0 a 6. */
-export type FaixaDaSemana = {
-  etapa: EtapaDoCalendario;
-  de: number;
-  ate: number;
-  faixa: number;
-  continuaAntes: boolean;
-  continuaDepois: boolean;
 };
 export type EditalComDataARevisar = {
   edital: string;

@@ -304,16 +304,20 @@ const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
         "Mês",
         "Navegue entre os meses ou volte para hoje. As datas vêm dos cronogramas de Editais.",
       ),
-      passo(t("cronograma-legenda"), "Legenda", "A cor de cada tipo de etapa."),
+      passo(
+        t("cronograma-legenda"),
+        "Tipos de etapa",
+        "A cor de cada tipo. Clique num tipo para esconder ou mostrar as etapas dele.",
+      ),
       passo(
         [t("cronograma-filtros"), "#page-calendario .cal-filtros"],
         "Filtros",
-        "Recorte por unidade, edital ou tipo de etapa, e esconda as concluídas.",
+        "Recorte por unidade ou edital, pesquise e esconda as concluídas.",
       ),
       passo(
         [t("cronograma-grade"), "#calGrade"],
         "Calendário",
-        "Cada etapa é uma faixa com a unidade e o nome, na cor do tipo. Clique num dia para ver todas as etapas dele.",
+        "Cada etapa aparece no dia em que começa e no dia em que termina, com a unidade e o nome. Clique num dia para ver todas as etapas dele.",
       ),
       passo(
         [t("cronograma-proximas"), "#calProximas"],

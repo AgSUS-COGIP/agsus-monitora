@@ -127,13 +127,17 @@ afterEach(async () => {
 
 const $ = (id) => document.getElementById(id);
 const celula = (chave) => document.querySelector(`[data-dia="${chave}"]`);
-/* As faixas do mês que passam pelo dia: "Manaus – Prazo de recurso…". */
-const faixas = (chave) =>
-  [...document.querySelectorAll(".cal-faixa")]
-    .filter(
-      (faixa) => faixa.dataset.inicio <= chave && chave <= faixa.dataset.fim,
-    )
-    .map((faixa) => faixa.textContent);
+/* Os chips do mês desenhados no dia: "Manaus – Prazo de recurso…". */
+const chips = (chave) =>
+  [...document.querySelectorAll(`[data-dia="${chave}"] .cal-chip-texto`)].map(
+    (chip) => chip.textContent,
+  );
+const pontaDoChip = (chave) =>
+  [...document.querySelectorAll(`[data-dia="${chave}"] .cal-chip`)].map(
+    (chip) => chip.querySelector(".cal-chip-ponta")?.textContent ?? "",
+  );
+const tipoNaLegenda = (id) =>
+  document.querySelector(`#calLegenda [data-tipo="${id}"]`);
 const RECURSO = "Manaus – Prazo de recurso do resultado preliminar";
 const contador = () => $("calContador").textContent;
 const etapasDaLinhaDoTempo = () =>
@@ -271,8 +275,8 @@ describe("carregamento", () => {
       "1 edital(is) não puderam ser lidos. O calendário está incompleto.",
       "warn",
     );
-    expect(faixas("2026-09-14")).toEqual([RECURSO]);
-    expect(faixas("2026-09-22")).toEqual([RECURSO]);
+    expect(chips("2026-09-14")).toEqual([RECURSO]);
+    expect(chips("2026-09-22")).toEqual([RECURSO]);
   });
 });
 
@@ -291,39 +295,47 @@ describe("grade do mês", () => {
   });
 
   /*
-    Como numa agenda: a etapa longa é uma faixa legível ("unidade – etapa")
-    que atravessa os dias, um pedaço por semana — não um número em cada dia.
+    Sem faixas contínuas: a etapa com período é um chip no dia em que começa
+    ("início") e outro no dia em que termina ("fim"); os dias do meio ficam
+    sem chip, mas o dia continua a dizer (e o popup a listar) o que está em
+    andamento.
   */
-  it("mostra a etapa longa como faixa, do dia em que começa ao dia em que termina", () => {
-    expect(faixas("2026-09-14")).toEqual([RECURSO]);
-    expect(faixas("2026-09-18")).toEqual([RECURSO]);
+  it("mostra a etapa com período só no início e no fim, nada nos dias do meio", async () => {
+    expect(document.querySelector(".cal-faixa")).toBeNull();
+    expect(chips("2026-09-14")).toEqual([RECURSO]);
+    expect(pontaDoChip("2026-09-14")).toEqual(["início"]);
+    for (const meio of ["2026-09-15", "2026-09-18", "2026-09-21"])
+      expect(chips(meio)).toEqual([]);
     expect(celula("2026-09-18").getAttribute("aria-label")).toBe(
-      "18 de setembro: 1 etapa",
+      "18 de setembro: 1 etapa, 1 em andamento",
     );
-    // Um pedaço por semana: o primeiro segue para a semana seguinte.
-    const pedacos = [...document.querySelectorAll(".cal-faixa")].filter(
-      (faixa) => faixa.textContent === RECURSO,
+    expect(celula("2026-09-18").classList.contains("vazio")).toBe(false);
+    // O dia do meio abre com a etapa em andamento: nada some de fato.
+    await clicar(celula("2026-09-18"));
+    expect(document.querySelector("#calDiaLista").textContent).toContain(
+      "Em andamento neste dia",
     );
-    expect(pedacos.map((faixa) => faixa.dataset.inicio)).toEqual([
-      "2026-09-14",
-      "2026-09-20",
-    ]);
-    expect(pedacos[0].hasAttribute("data-continua-depois")).toBe(true);
-    expect(pedacos[1].hasAttribute("data-continua-antes")).toBe(true);
+    expect(
+      [...document.querySelectorAll("#calDiaLista .cal-item strong")].map(
+        (item) => item.textContent,
+      ),
+    ).toEqual(["Prazo de recurso do resultado preliminar"]);
     // O fim do recurso e as inscrições; a unidade sem o "DSEI " da frente.
-    expect(faixas("2026-09-22")).toEqual([
+    expect(chips("2026-09-22")).toEqual([
       RECURSO,
       "CASAI São Paulo – Inscrições",
     ]);
-    expect(faixas("2026-09-23")).toEqual([]);
+    // "fim" no recurso; a etapa de um dia vai sem marca.
+    expect(pontaDoChip("2026-09-22")).toEqual(["fim", ""]);
+    expect(chips("2026-09-23")).toEqual([]);
     expect(celula("2026-09-23").classList.contains("vazio")).toBe(true);
     // A data que veio como timestamp cai no dia certo.
-    expect(faixas("2026-09-29")).toEqual([
+    expect(chips("2026-09-29")).toEqual([
       "Manaus – Homologação do resultado final",
     ]);
     // O nome inteiro e o tipo ficam no title.
     expect(
-      document.querySelector('.cal-faixa[data-inicio="2026-09-29"]').title,
+      document.querySelector('[data-dia="2026-09-29"] .cal-chip').title,
     ).toContain("DSEI Manaus · Ed. 10/2026");
   });
 
@@ -337,7 +349,7 @@ describe("grade do mês", () => {
 });
 
 describe("dia cheio no mês", () => {
-  it("mostra três faixas e '+N mais'; o dia abre com todas", async () => {
+  it("mostra três chips e '+N mais'; o dia abre com todas", async () => {
     const supabase = supabaseFalso();
     const nomes = [
       "Entrevista A",
@@ -366,8 +378,8 @@ describe("dia cheio no mês", () => {
       };
     });
     await montar({ supabase });
-    expect(faixas("2026-09-24")).toHaveLength(3);
-    const mais = document.querySelector(".cal-mais");
+    expect(chips("2026-09-24")).toHaveLength(3);
+    const mais = celula("2026-09-24").querySelector(".cal-mais");
     expect(mais.textContent).toBe("+2 mais");
     // O "+N mais" deixa o clique passar para o dia, que é o botão.
     await clicar(celula("2026-09-24"));
@@ -386,13 +398,74 @@ describe("filtros", () => {
   it("busca cada palavra, em qualquer ordem, sem acento", async () => {
     await digitar($("calBusca"), "final homologacao");
     expect(contador()).toBe("1 etapa no mês");
-    expect(faixas("2026-09-29")).toHaveLength(1);
+    expect(chips("2026-09-29")).toHaveLength(1);
     expect(celula("2026-09-14").classList.contains("vazio")).toBe(true);
   });
 
-  it("filtra por tipo de etapa", async () => {
-    await escolher($("calTipo"), "recursos");
-    expect(contador()).toBe("1 etapa no mês");
+  /*
+    A legenda é o filtro de tipo: botões de ligar/desligar (aria-pressed),
+    todos ligados à partida, que valem para o Mês, a Semana, a Lista e a
+    contagem — e ficam guardados neste navegador, como as Fases da Visão geral.
+  */
+  describe("legenda como filtro de tipo", () => {
+    afterEach(() => localStorage.clear());
+
+    it("todos os tipos nascem ligados, e 'Mostrar todos' fica desativado", () => {
+      const botoes = [...document.querySelectorAll("#calLegenda [data-tipo]")];
+      expect(botoes.length).toBeGreaterThan(5);
+      expect(
+        botoes.every((botao) => botao.getAttribute("aria-pressed") === "true"),
+      ).toBe(true);
+      expect($("calLegendaTodos").disabled).toBe(true);
+      expect($("calTipo")).toBeNull();
+    });
+
+    it("desligar um tipo esconde as etapas dele e atualiza a contagem", async () => {
+      await clicar(tipoNaLegenda("recursos"));
+      expect(tipoNaLegenda("recursos").getAttribute("aria-pressed")).toBe(
+        "false",
+      );
+      expect(contador()).toBe("2 etapas no mês");
+      expect(chips("2026-09-14")).toEqual([]);
+      expect(chips("2026-09-22")).toEqual(["CASAI São Paulo – Inscrições"]);
+      // O dia do meio também deixa de ter o recurso em andamento.
+      expect(celula("2026-09-18").classList.contains("vazio")).toBe(true);
+      expect(localStorage.getItem("agsus:cronograma:tipos-ocultos")).toBe(
+        '["recursos"]',
+      );
+
+      // Vale também para a Lista e a Semana.
+      await clicar(document.querySelector('.cal-visoes [data-valor="lista"]'));
+      expect($("calGrade").textContent).not.toContain("Prazo de recurso");
+      await clicar(document.querySelector('.cal-visoes [data-valor="semana"]'));
+      expect($("calGrade").textContent).not.toContain("Prazo de recurso");
+      expect(contador()).toBe("0 etapas na semana");
+      await clicar(document.querySelector('.cal-visoes [data-valor="mes"]'));
+
+      // Ligar de novo traz de volta.
+      await clicar(tipoNaLegenda("recursos"));
+      expect(contador()).toBe("3 etapas no mês");
+      expect(chips("2026-09-14")).toEqual([RECURSO]);
+      expect(localStorage.getItem("agsus:cronograma:tipos-ocultos")).toBeNull();
+    });
+
+    it("'Mostrar todos' e 'Limpar tudo' religam os tipos desligados", async () => {
+      await clicar(tipoNaLegenda("recursos"));
+      await clicar(tipoNaLegenda("inscricoes"));
+      expect(contador()).toBe("1 etapa no mês");
+      expect($("calLegendaTodos").disabled).toBe(false);
+      await clicar($("calLegendaTodos"));
+      expect(contador()).toBe("3 etapas no mês");
+      expect($("calLegendaTodos").disabled).toBe(true);
+
+      await clicar(tipoNaLegenda("recursos"));
+      await clicar(
+        document.querySelector('.cal-filtros [data-acao="limpar-filtros"]'),
+      );
+      expect(tipoNaLegenda("recursos").getAttribute("aria-pressed")).toBe(
+        "true",
+      );
+    });
   });
 
   it("'Ocultar concluídas' começa ligada; 'Limpar' mostra tudo", async () => {
@@ -405,9 +478,7 @@ describe("filtros", () => {
     );
     expect($("calBusca").value).toBe("");
     expect($("calOcultarConcluidas").checked).toBe(false);
-    expect(faixas("2026-09-10")).toEqual([
-      "Manaus – Entrevista com candidatos",
-    ]);
+    expect(chips("2026-09-10")).toEqual(["Manaus – Entrevista com candidatos"]);
     expect(contador()).toBe("4 etapas no mês");
   });
 
@@ -583,7 +654,7 @@ describe("área atual", () => {
 
     await act(async () => definirAreaAtual("sede"));
     expect(contador()).toBe("1 etapa no mês");
-    expect(faixas("2026-09-14")).toEqual([]);
+    expect(chips("2026-09-14")).toEqual([]);
 
     await act(async () => definirAreaAtual("projetos"));
     expect(contador()).toBe("0 etapas no mês");
@@ -636,8 +707,8 @@ describe("vistas Mês, Semana e Lista", () => {
     await clicar(visao("lista"));
     expect($("calGrade").dataset.visao).toBe("lista");
     expect(document.querySelector(".cal-celula")).toBeNull();
-    // Na Lista o tipo vai escrito em cada linha: a legenda sai.
-    expect($("calLegenda")).toBeNull();
+    // A legenda fica: é o filtro de tipo, e vale também para a Lista.
+    expect($("calLegenda")).not.toBeNull();
     expect(titulosDaLista()).toEqual([
       "Ter, 22 de setembro",
       "Ter, 29 de setembro",

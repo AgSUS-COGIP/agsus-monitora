@@ -70,7 +70,6 @@ const dataNumerica: number = proximas[0]?.data_inicio;
 const grade = montarGradeDoMes(new Date(), etapas);
 <GradeDoMes
   celulas={grade}
-  etapas={etapas}
   selecionado=""
   aoEscolherDia={(chave) => {
     const dia: string = chave;

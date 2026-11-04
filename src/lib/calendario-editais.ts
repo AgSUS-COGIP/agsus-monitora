@@ -1,7 +1,6 @@
 import type {
   CelulaDoCalendario,
   EditalComCronograma,
-  FaixaDaSemana,
   EditalDoCalendario,
   EtapaDoCalendario,
   FiltrosDoCalendario,
@@ -22,17 +21,25 @@ export function registroDoCalendario(valor: unknown): Record<string, unknown> {
   fica neste arquivo é o que decide o que aparece: como as etapas viram dias,
   quais passam nos filtros e o que cada dia do mês mostra.
 
-  UMA COR SÓ: A DO TIPO DE ETAPA. É a cor da legenda, da faixa no mês, da borda
+  UMA COR SÓ: A DO TIPO DE ETAPA. É a cor da legenda, do chip no mês, da borda
   e da bolinha nas listas e do ponto na linha do tempo. A unidade é texto (sem
   cor própria): seis cores repetidas entre dezenas de DSEIs só competiam com a
   do tipo. O rótulo do tipo vai sempre escrito ao lado — a cor nunca é o único
   sinal.
 
-  O MÊS MOSTRA FAIXAS LEGÍVEIS, COMO UMA AGENDA. Cada etapa é uma faixa
-  "unidade – etapa" que atravessa os dias do intervalo, uma linha por semana
-  (`faixasDaSemana`). Cada dia mostra até três faixas e "+N mais"; o dia inteiro
-  abre o popup com tudo o que acontece nele. A versão anterior trocava os nomes
-  por bolinhas com contagens, e ninguém sabia o que era cada uma sem clicar.
+  O MÊS MOSTRA CHIPS NOS MARCOS, SEM FAIXAS. Cada etapa vira um chip curto
+  "unidade – etapa" só nos dias que marcam: o dia dela, se é de um dia; o
+  dia em que começa ("início") e o dia em que termina ("fim"), se tem período.
+  Os dias do meio ficam sem chip — as faixas coloridas que atravessavam a
+  semana foram tiradas a pedido (04/11): pesavam mais do que informavam. Nada
+  some: o popup do dia lista também o que só atravessa o dia ("Em andamento
+  neste dia"), e a Lista tem "Acontecendo agora". Cada dia mostra até três
+  chips e "+N mais"; o dia inteiro abre o popup.
+
+  A LEGENDA É O FILTRO DE TIPO. Cada tipo é um botão que liga e desliga
+  (todos ligados à partida); os desligados ficam guardados neste navegador,
+  como os filtros da Visão geral. Vale para o Mês, a Semana, a Lista e as
+  contagens, porque entra em `filtrarEtapas`.
 */
 
 import {
@@ -94,9 +101,40 @@ export const PROXIMAS_NO_PAINEL = 5;
 export const FILTROS_VAZIOS: FiltrosDoCalendario = Object.freeze({
   unidade: "",
   edital: "",
-  tipo: "",
   busca: "",
 });
+
+/*
+  Os tipos desligados na legenda, guardados neste navegador (localStorage) como
+  uma lista de ids. Guarda-se o que está DESLIGADO, e não o que está ligado:
+  um tipo novo, acrescentado depois, nasce visível.
+*/
+export const CHAVE_DOS_TIPOS_OCULTOS = "agsus:cronograma:tipos-ocultos";
+const IDS_DOS_TIPOS = new Set(TIPOS_DA_LEGENDA.map((tipo) => tipo.id));
+
+/** Os ids guardados que ainda são tipos da legenda, sem repetir (o resto é lixo). */
+export function tiposOcultosValidos(valor: unknown): string[] {
+  let lista: unknown = valor;
+  if (typeof valor === "string") {
+    try {
+      lista = JSON.parse(valor);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(lista)) return [];
+  const ids = lista.filter(
+    (id): id is string => typeof id === "string" && IDS_DOS_TIPOS.has(id),
+  );
+  return [...new Set(ids)];
+}
+
+/** Liga o tipo se estava desligado; desliga se estava ligado. */
+export function alternarTipoOculto(ocultos: readonly string[], id: string) {
+  return ocultos.includes(id)
+    ? ocultos.filter((oculto) => oculto !== id)
+    : [...ocultos, id];
+}
 
 const txt = (valor: unknown) =>
   typeof valor === "string" || typeof valor === "number"
@@ -244,24 +282,28 @@ export function montarEtapasDosEditais(
 // ── Filtros ──────────────────────────────────────────────────────────────
 
 /**
- * @param {Array} etapas
- * @param {{unidade?: string, edital?: string, tipo?: string, busca?: string}} filtros
- * @param {{ocultarConcluidas?: boolean, hoje?: Date}} [opcoes]
+ * Os filtros do painel (unidade, edital, busca), "Ocultar concluídas" e os
+ * tipos desligados na legenda (`tiposOcultos`).
  */
 export function filtrarEtapas(
   etapas: readonly EtapaDoCalendario[],
   filtros: Partial<FiltrosDoCalendario> = FILTROS_VAZIOS,
-  opcoes: { ocultarConcluidas?: boolean; hoje?: Date } = {},
+  opcoes: {
+    ocultarConcluidas?: boolean;
+    hoje?: Date;
+    tiposOcultos?: readonly string[];
+  } = {},
 ) {
-  const { unidade, edital, tipo, busca } = { ...FILTROS_VAZIOS, ...filtros };
+  const { unidade, edital, busca } = { ...FILTROS_VAZIOS, ...filtros };
   const hoje = opcoes.hoje || new Date();
+  const ocultos = new Set(opcoes.tiposOcultos || []);
   // Cada palavra tem de aparecer, em qualquer ordem: "entrevista manaus" acha
   // o que "manaus entrevista" acha.
   const termos = normalizarTexto(busca).split(/\s+/).filter(Boolean);
   return (etapas || []).filter((etapa) => {
     if (unidade && etapa.unidade !== unidade) return false;
     if (edital && etapa.editalId !== edital) return false;
-    if (tipo && etapa.tipo.id !== tipo) return false;
+    if (ocultos.has(etapa.tipo.id)) return false;
     if (termos.length && !termos.every((termo) => etapa.busca.includes(termo)))
       return false;
     if (opcoes.ocultarConcluidas && etapaConcluida(etapa, hoje)) return false;
@@ -351,7 +393,7 @@ export const pelaOrdemNoDia = (a: EtapaDoCalendario, b: EtapaDoCalendario) =>
   a.ordem - b.ordem;
 
 /**
- * O nome da unidade sem o "DSEI " da frente, para caber na faixa do mês
+ * O nome da unidade sem o "DSEI " da frente, para caber no chip do mês
  * ("DSEI Alto Rio Purus" → "Alto Rio Purus"). O nome inteiro fica no `title`.
  */
 export function unidadeCurta(unidade: string) {
@@ -378,9 +420,11 @@ export const detalheDaEtapa = (etapa: EtapaDoCalendario) =>
  * As 42 células da grade de `mes`. A grade começa no domingo da semana do dia 1
  * e tem sempre 6 linhas, para a altura não saltar quando se muda de mês.
  *
- * `total` conta as etapas ATIVAS no dia (começam, terminam ou atravessam), as
- * mesmas que o popup do dia lista. `pontos` traz os tipos presentes, na ordem
- * da legenda: é o resumo do celular, onde as faixas não cabem.
+ * `marcos` são os chips do dia: as etapas que começam, terminam ou são só
+ * daquele dia — nunca as que apenas o atravessam. `total` conta as etapas
+ * ATIVAS no dia (marcos e as em andamento), as mesmas que o popup lista; o
+ * rótulo do dia diz as duas coisas. `pontos` traz os tipos dos marcos, na
+ * ordem da legenda: é o resumo do celular, onde os chips não cabem.
  */
 export function montarGradeDoMes(
   mes: Date,
@@ -398,9 +442,13 @@ export function montarGradeDoMes(
     dia.setDate(inicio.getDate() + i);
     const chave = chaveDoDia(dia);
     const ativas = etapasAtivasNoDia(etapas, chave);
+    const marcos = ativas.filter(
+      (item): item is MarcoDoDia => item.marca !== "em andamento",
+    );
+    const emAndamento = ativas.length - marcos.length;
 
     const porTipo = new Map<string, { tipo: TipoDaEtapa; total: number }>();
-    for (const { etapa } of ativas) {
+    for (const { etapa } of marcos) {
       const atual = porTipo.get(etapa.tipo.id);
       if (atual) atual.total += 1;
       else porTipo.set(etapa.tipo.id, { tipo: etapa.tipo, total: 1 });
@@ -411,10 +459,13 @@ export function montarGradeDoMes(
       dia: dia.getDate(),
       rotulo: `${dia.getDate()} de ${MESES[dia.getMonth()]?.toLowerCase()}: ${
         ativas.length
-      } ${plural(ativas.length, "etapa", "etapas")}`,
+      } ${plural(ativas.length, "etapa", "etapas")}${
+        emAndamento ? `, ${emAndamento} em andamento` : ""
+      }`,
       doMes: dia.getMonth() === primeiro.getMonth(),
       hoje: chave === hojeChave,
       total: ativas.length,
+      marcos,
       pontos: [...porTipo.values()].sort(
         (a, b) => ordemDoTipo(a.tipo) - ordemDoTipo(b.tipo),
       ),
@@ -423,62 +474,8 @@ export function montarGradeDoMes(
   return celulas;
 }
 
-/** Faixas visíveis por dia no mês; o resto vira "+N mais". */
-export const FAIXAS_POR_DIA = 3;
-
-/**
- * As faixas de uma linha da grade (`chaves`: os 7 dias da semana). Cada etapa
- * ativa na semana vira uma faixa da coluna em que entra à coluna em que sai,
- * numa altura (`faixa`) fixa na semana inteira — como numa agenda. A ordem de
- * empilhar é a de uma agenda: quem começa antes, depois quem dura mais, depois
- * a legenda e a unidade. Só voltam as faixas abaixo de `limite`; `ocultas[i]`
- * diz quantas ficaram de fora no dia `i`, para o "+N mais".
- */
-export function faixasDaSemana(
-  etapas: readonly EtapaDoCalendario[],
-  chaves: readonly string[],
-  limite = FAIXAS_POR_DIA,
-) {
-  const primeira = chaves[0] ?? "";
-  const ultima = chaves[chaves.length - 1] ?? "";
-  const pedacos: Omit<FaixaDaSemana, "faixa">[] = [];
-  for (const etapa of etapas || []) {
-    if (!etapaComDatasValidas(etapa)) continue;
-    const inicio = etapa.data_inicio;
-    const fim = etapa.data_fim || inicio;
-    if (inicio > ultima || fim < primeira) continue;
-    const de = chaves.findIndex((chave) => chave >= inicio);
-    let ate = chaves.length - 1;
-    while (ate > 0 && (chaves[ate] ?? "") > fim) ate -= 1;
-    pedacos.push({
-      etapa,
-      de,
-      ate,
-      continuaAntes: inicio < primeira,
-      continuaDepois: fim > ultima,
-    });
-  }
-  pedacos.sort(
-    (a, b) =>
-      a.de - b.de ||
-      b.ate - b.de - (a.ate - a.de) ||
-      pelaOrdemNoDia(a.etapa, b.etapa),
-  );
-
-  const fimDaFaixa: number[] = [];
-  const ocultas = chaves.map(() => 0);
-  const faixas: FaixaDaSemana[] = [];
-  for (const pedaco of pedacos) {
-    let faixa = fimDaFaixa.findIndex((fim) => fim < pedaco.de);
-    if (faixa < 0) faixa = fimDaFaixa.length;
-    fimDaFaixa[faixa] = pedaco.ate;
-    if (faixa < limite) faixas.push({ ...pedaco, faixa });
-    else
-      for (let coluna = pedaco.de; coluna <= pedaco.ate; coluna += 1)
-        ocultas[coluna] = (ocultas[coluna] ?? 0) + 1;
-  }
-  return { faixas, ocultas };
-}
+/** Chips visíveis por dia no mês; o resto vira "+N mais". */
+export const CHIPS_POR_DIA = 3;
 
 /*
   Contagem do mês à vista, não do total filtrado: o número fica ao lado do nome
@@ -616,6 +613,11 @@ export function cabecalhoDoDiaDaLista(
 }
 
 export type ItemDoDia = { etapa: EtapaDoCalendario; marca: MarcaNoDia };
+/** Um chip do mês: a etapa no dia em que começa, termina ou acontece. */
+export type MarcoDoDia = {
+  etapa: EtapaDoCalendario;
+  marca: Exclude<MarcaNoDia, "em andamento">;
+};
 export type DiaDaLista = { chave: string; titulo: string; itens: ItemDoDia[] };
 
 /**
