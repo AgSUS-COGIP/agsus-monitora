@@ -5,7 +5,7 @@ cargos (public."TD_CARGO", carga da planilha "CARGOS SI - SIP").
 A grafia entra normalizada (monitora.cargos.normalizacao, a mesma regra do banco). As regras, na
 ordem em que são tentadas:
 
-    EXATA       a grafia é o nome oficial                                         alta (1,00)
+    EXATA       a grafia é o nome oficial (atual ou anterior: NOME_ANTERIOR do CSV)  alta (1,00)
     LIMPEZA     é o nome oficial depois de tirar o "CARGO 12:" do começo, o gênero
                 ("(A)", "/A", "ENFERMEIRA" → ENFERMEIRO), a carga horária (só onde o
                 cargo não distingue 20H/40H), a cota e o cadastro reserva do fim
@@ -86,6 +86,13 @@ SINONIMOS = {
     "ARQUITETO": "ARQUITETO E URBANISTA",
     "INTERPRETE": "INTERPRETE INDIGENA",
     "VETERINARIO": "MEDICO VETERINARIO",
+    "MEDICO DE FAMILIA E COMUNIDADE": "MEDICO ESPECIALISTA - MFC",
+    "MEDICO DA FAMILIA E COMUNIDADE": "MEDICO ESPECIALISTA - MFC",
+    "MEDICO DE FAMILIA": "MEDICO ESPECIALISTA - MFC",
+    "MEDICO DA FAMILIA": "MEDICO ESPECIALISTA - MFC",
+    "MEDICO ESPECIALISTA EM MEDICINA DE FAMILIA E COMUNIDADE": "MEDICO ESPECIALISTA - MFC",
+    "MEDICO ESPECIALISTA MFC": "MEDICO ESPECIALISTA - MFC",
+    "MFC": "MEDICO ESPECIALISTA - MFC",
 }
 
 CONECTIVOS = frozenset({"DE", "DA", "DO", "DAS", "DOS", "EM", "E", "A", "AS", "O", "OS", "NA", "NO", "PARA"})
@@ -106,6 +113,11 @@ class Cargo:
     codigo: int
     nome: str
     sintetico: bool
+    nomes_anteriores: tuple = ()
+
+    @property
+    def nomes(self):
+        return (self.nome, *self.nomes_anteriores)
 
 
 @dataclass
@@ -118,9 +130,10 @@ class Catalogo:
 
     def __post_init__(self):
         for c in self.cargos:
-            self.por_nome[c.nome] = c
-            self.por_esqueleto.setdefault(esqueleto(c.nome), []).append(c)
-        palavras = {p for c in self.cargos for p in re.split(r"[ ,\-]+", c.nome) if p}
+            for nome in c.nomes:
+                self.por_nome[nome] = c
+                self.por_esqueleto.setdefault(esqueleto(nome), []).append(c)
+        palavras = {p for c in self.cargos for nome in c.nomes for p in re.split(r"[ ,\-]+", nome) if p}
         for p in palavras:
             femininas = []
             if p.endswith("OR"):
@@ -148,7 +161,17 @@ class Casamento:
 def ler_catalogo(caminho=ARQUIVO_CARGOS):
     with open(caminho, encoding="utf-8", newline="") as f:
         linhas = list(csv.DictReader(f, delimiter=";"))
-    return Catalogo([Cargo(int(r["CODIGO"]), normalizar(r["NOME"]), r["SINTETICO"] == "S") for r in linhas])
+    return Catalogo(
+        [
+            Cargo(
+                int(r["CODIGO"]),
+                normalizar(r["NOME"]),
+                r["SINTETICO"] == "S",
+                tuple(normalizar(n) for n in (r.get("NOME_ANTERIOR") or "").split("|") if n.strip()),
+            )
+            for r in linhas
+        ]
+    )
 
 
 def esqueleto(texto):
@@ -264,7 +287,7 @@ def casar(grafia_normalizada, catalogo):
             observacao = observacao or regra
             continue
         if k == len(trechos):
-            if regra == "EXATA" and g != cargo.nome:
+            if regra == "EXATA" and g not in cargo.nomes:
                 regra = "LIMPEZA"
             return Casamento(ALTA, cargo.codigo, cargo.nome, regra, CONFIANCA[regra])
         if cargo.sintetico or cargo.nome in catalogo.com_variacoes:

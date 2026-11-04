@@ -423,3 +423,196 @@ $$;
 
 commit;
 """
+
+
+def sql_da_lista_atualizada(grupos, catalogo, novos_codigos, ja_gravados, data="04/11/2026"):
+    """Correção da segunda lista da planilha: inclui os cargos novos, troca o nome dos renomeados
+    (NOME_ANTERIOR do CSV) gravando o nome anterior como apelido MANUAL confirmado, e grava os
+    apelidos novos de alta confiança da Saúde Indígena dos cargos novos. Não desativa nada."""
+    novos = [c for c in catalogo.cargos if c.codigo in novos_codigos]
+    renomeados = [c for c in catalogo.cargos if c.nomes_anteriores]
+    candidatos = sorted(apelidos_novos(grupos, ja_gravados), key=lambda g: g.grafia)
+    outros = [g.grafia for g in candidatos if g.casamento.codigo not in novos_codigos]
+    if outros:
+        raise ValueError(f"Há apelido novo de cargo que não é novo: {outros[:5]}")
+    por_area = ocorrencias_por_area(grupos, novos_codigos)
+    linhas_area = "".join(
+        f"""
+         {c.codigo} {c.nome}: """
+        + (", ".join(f"{a} {n}" for (k, a), n in sorted(por_area.items()) if k == c.codigo) or "nenhuma")
+        for c in novos
+    )
+    claims = '{"sub":"' + CONTA_DO_SETOR + '","role":"authenticated","email":"' + EMAIL_DO_SETOR + '"}'
+    separador = """,
+"""
+    valores_cargos = separador.join(
+        f"  ({c.codigo}, {literal_sql(c.nome)}, '{'S' if c.sintetico else 'N'}')" for c in novos
+    )
+    valores_nomes = separador.join(
+        f"  ({c.codigo}, {literal_sql(ant)}, {literal_sql(c.nome)})" for c in renomeados for ant in c.nomes_anteriores
+    )
+    valores_apelidos = separador.join(
+        f"  ({literal_sql(g.grafia)}, {g.casamento.codigo}, '{g.casamento.regra}', {g.casamento.confianca:.3f})"
+        for g in candidatos
+    )
+    if candidatos:
+        insert_apelidos = f"""insert into tmp_apelido_de_cargo (grafia, codigo, regra, confianca) values
+{valores_apelidos};
+"""
+    else:
+        insert_apelidos = """-- Nenhum apelido automático novo: as grafias dos cargos novos não aparecem na Saúde Indígena.
+"""
+    n_manuais = sum(len(c.nomes_anteriores) for c in renomeados)
+    return f"""/*
+  CORREÇÃO DE DADOS — tabela de cargos pela lista atualizada da planilha ({data})
+
+  Por quê: a planilha "CARGOS SI - SIP" ganhou uma segunda lista (colunas D/E),
+  a atualizada. Em relação aos {len(catalogo.cargos) - len(novos)} cargos do banco:
+    - novo: {", ".join(f"{c.codigo} {c.nome}" for c in novos)} (o usuário confirmou);
+    - nome mudou: {"; ".join(f"{c.codigo} {c.nomes_anteriores[0]} → {c.nome}" for c in renomeados)};
+    - os que não aparecem na lista nova (18, 46, 50, 54 e os sintéticos 9994 a
+      9999) CONTINUAM VALENDO, confirmado pelo usuário: nada é desativado.
+
+  O que faz (uma transação):
+    1. confere a conta do setor (administrador global ativo, auth.uid), que a
+       tabela de cargos existe, que os cargos novos ainda não estão nela e que
+       os renomeados ainda têm o nome anterior;
+    2. inclui os cargos novos (saude-indigena), criados pela conta do setor;
+    3. troca o nome oficial dos renomeados e grava cada nome anterior como
+       apelido MANUAL confirmado ({n_manuais}), para "ENFERMEIRO", "ASSISTENTE SOCIAL"
+       e "TECNICO DE ENFERMAGEM" continuarem casando em FC_CARGO_DA_GRAFIA;
+    4. grava os apelidos automáticos novos de alta confiança dos cargos novos,
+       só de grafias que aparecem na Saúde Indígena: {len(candidatos)}. Ocorrências
+       das grafias que o casamento liga a cada cargo novo, por área:{linhas_area}
+       Só as da Saúde Indígena entram; as de SEDE e Projetos ("Agora Tem
+       Especialistas", PPIQ) ficam para a fase 3 (cargos dessas áreas);
+    5. reprova (raise exception → nada fica) se algum número não bater ou se
+       FC_CARGO_DA_GRAFIA não devolver o código esperado.
+
+  Assinada pela conta do setor Gestão da Informação de Pessoal
+  ({CONTA_DO_SETOR}). Rode SÓ COM A AUTORIZAÇÃO do
+  usuário. Não é idempotente de propósito: rodar de novo falha no passo 1.
+  Ensaio: supabase/ensaios/20261104-cargos-lista-atualizada.sql.
+  Depois de aplicar, registre:
+    npm run db:estado -- --registrar=correcoes/20261104-cargos-lista-atualizada.sql
+  Para desfazer: os nomes anteriores estão acima; os cargos e apelidos novos
+  são os criados pela conta do setor nesta data.
+*/
+begin;
+
+-- >>> correcao
+set local lock_timeout = '3s';
+
+-- A autoria desta transação: auth.uid() = conta do setor.
+select set_config('request.jwt.claims',
+  '{claims}', true);
+
+do $$
+begin
+  if not exists (select 1 from public."TB_PERFIL_USUARIO" p
+                   join public."TB_GRUPO_ACESSO" a on a."CO_GRUPO_ACESSO" = p.perfil
+                  where p.user_id = '{CONTA_DO_SETOR}' and p.ativo is true and a."ST_ADMIN_GLOBAL") then
+    raise exception 'A conta do setor (a01afddb-…) não é administrador global ativo.';
+  end if;
+  if auth.uid() is distinct from '{CONTA_DO_SETOR}'::uuid then
+    raise exception 'auth.uid() desta transação não é a conta do setor.';
+  end if;
+  if to_regclass('public."TD_CARGO_APELIDO"') is null
+     or to_regprocedure('private."FC_CARGO_DA_GRAFIA"(text, text)') is null then
+    raise exception 'Aplique antes a migration 20261104150000_tabela_de_cargos.sql.';
+  end if;
+end;
+$$;
+
+create temporary table tmp_cargo_novo (codigo integer not null, nome text not null, sintetico text not null) on commit drop;
+insert into tmp_cargo_novo (codigo, nome, sintetico) values
+{valores_cargos};
+
+create temporary table tmp_nome_anterior (codigo integer not null, anterior text not null, atual text not null) on commit drop;
+insert into tmp_nome_anterior (codigo, anterior, atual) values
+{valores_nomes};
+
+create temporary table tmp_apelido_de_cargo (grafia text not null, codigo integer not null,
+  regra text not null, confianca numeric(4, 3) not null) on commit drop;
+{insert_apelidos}
+do $$
+declare
+  v_n integer;
+  v_cargos integer := (select count(*) from public."TD_CARGO");
+begin
+  if exists (select 1 from public."TD_CARGO" c join tmp_cargo_novo t on t.codigo in (c."CO_CARGO", c."CO_CARGO_SIP")) then
+    raise exception 'Algum cargo novo já está em TD_CARGO.';
+  end if;
+  if (select count(*) from tmp_nome_anterior t join public."TD_CARGO" c
+       on c."CO_CARGO" = t.codigo and c."NO_CARGO" = t.anterior and c."CO_AREA" = '{AREA_SI}') <> {n_manuais} then
+    raise exception 'Algum cargo renomeado não tem mais o nome anterior.';
+  end if;
+  if exists (select 1 from public."TD_CARGO_APELIDO" a
+              where a."CO_AREA" = '{AREA_SI}'
+                and a."DS_GRAFIA_NORMALIZADA" in (select private."FC_NORMALIZAR_GRAFIA_CARGO"(anterior) from tmp_nome_anterior
+                                                  union select grafia from tmp_apelido_de_cargo)) then
+    raise exception 'Há grafia que já tem apelido.';
+  end if;
+  if exists (select 1 from tmp_apelido_de_cargo
+              where grafia is distinct from private."FC_NORMALIZAR_GRAFIA_CARGO"(grafia)) then
+    raise exception 'Há grafia que não está normalizada.';
+  end if;
+
+  insert into public."TD_CARGO" ("CO_CARGO", "CO_CARGO_SIP", "NO_CARGO", "CO_AREA", "ST_SINTETICO",
+    "CO_USUARIO_CRIACAO", "CO_USUARIO_ATUALIZACAO")
+  select t.codigo, t.codigo, t.nome, '{AREA_SI}', t.sintetico, auth.uid(), auth.uid() from tmp_cargo_novo t;
+  get diagnostics v_n = row_count;
+  if v_n <> {len(novos)} then raise exception 'Incluiu % cargos (esperado {len(novos)}).', v_n; end if;
+
+  update public."TD_CARGO" c
+     set "NO_CARGO" = t.atual, "CO_USUARIO_ATUALIZACAO" = auth.uid(), "DT_ATUALIZACAO" = now()
+    from tmp_nome_anterior t
+   where c."CO_CARGO" = t.codigo and c."NO_CARGO" = t.anterior;
+  get diagnostics v_n = row_count;
+  if v_n <> {n_manuais} then raise exception 'Renomeou % cargos (esperado {n_manuais}).', v_n; end if;
+
+  insert into public."TD_CARGO_APELIDO" ("CO_AREA", "DS_GRAFIA_NORMALIZADA", "CO_CARGO", "TP_ORIGEM",
+    "ST_CONFIRMADO", "CO_USUARIO_CONFIRMACAO", "DT_CONFIRMACAO", "CO_USUARIO_CRIACAO", "CO_USUARIO_ATUALIZACAO")
+  select '{AREA_SI}', private."FC_NORMALIZAR_GRAFIA_CARGO"(t.anterior), t.codigo, 'MANUAL', 'S', auth.uid(), now(),
+         auth.uid(), auth.uid()
+    from tmp_nome_anterior t;
+  get diagnostics v_n = row_count;
+  if v_n <> {n_manuais} then raise exception 'Gravou % nomes anteriores (esperado {n_manuais}).', v_n; end if;
+
+  insert into public."TD_CARGO_APELIDO" ("CO_AREA", "DS_GRAFIA_NORMALIZADA", "CO_CARGO", "TP_ORIGEM",
+    "TP_REGRA", "VL_CONFIANCA", "ST_CONFIRMADO", "CO_USUARIO_CONFIRMACAO", "DT_CONFIRMACAO",
+    "CO_USUARIO_CRIACAO", "CO_USUARIO_ATUALIZACAO")
+  select '{AREA_SI}', t.grafia, t.codigo, 'AUTOMATICO', t.regra, t.confianca, 'S', auth.uid(), now(),
+         auth.uid(), auth.uid()
+    from tmp_apelido_de_cargo t;
+  get diagnostics v_n = row_count;
+  if v_n <> {len(candidatos)} then raise exception 'Gravou % apelidos automáticos (esperado {len(candidatos)}).', v_n; end if;
+
+  if (select count(*) from public."TD_CARGO") <> v_cargos + {len(novos)} then
+    raise exception 'O número de cargos não bate.';
+  end if;
+  if exists (select 1 from tmp_cargo_novo t
+              where private."FC_CARGO_DA_GRAFIA"(t.nome, '{AREA_SI}') is distinct from t.codigo)
+     or exists (select 1 from tmp_nome_anterior t
+                 where private."FC_CARGO_DA_GRAFIA"(t.anterior, '{AREA_SI}') is distinct from t.codigo
+                    or private."FC_CARGO_DA_GRAFIA"(t.atual, '{AREA_SI}') is distinct from t.codigo)
+     or exists (select 1 from tmp_apelido_de_cargo t
+                 where private."FC_CARGO_DA_GRAFIA"(t.grafia, '{AREA_SI}') is distinct from t.codigo) then
+    raise exception 'FC_CARGO_DA_GRAFIA não devolve o código esperado para alguma grafia.';
+  end if;
+end;
+$$;
+-- <<< correcao
+
+commit;
+"""
+
+
+def ocorrencias_por_area(grupos, codigos):
+    """{(código, área): ocorrências} das grafias que casam com ALTA com estes códigos."""
+    saida = {}
+    for g in grupos:
+        if g.casamento.codigo in codigos and g.casamento.nivel == ALTA:
+            for a, n in g.areas.items():
+                saida[(g.casamento.codigo, a)] = saida.get((g.casamento.codigo, a), 0) + n
+    return saida
