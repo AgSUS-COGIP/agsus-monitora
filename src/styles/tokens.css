@@ -294,6 +294,57 @@ body:not(.access-request-mode) .login-screen,
   --terra-fundo: #d6b07a;
   --terra-em-processo: #c8520f;
 
+  /* "Mapa simples" dos DSEIs (src/modulos/mapa-saude-indigena/mapa-simples.tsx):
+     fundo liso, silhueta do Brasil, borda fina entre os distritos, a escala
+     sequencial de 5 classes (verde-azulado, mais escuro = mais) e o "sem dado".
+     A paleta categórica (uma cor terrosa por número, 1–34) é a mesma nos dois
+     temas; o rótulo tem halo, legível sobre qualquer uma. */
+  --mapa-simples-fundo: #f4f1ea;
+  --mapa-simples-pais: #e6dfcf;
+  --mapa-simples-borda: #fbfaf6;
+  --mapa-simples-rotulo: #2a2118;
+  --mapa-simples-rotulo-halo: #fbfaf6;
+  --mapa-simples-sem-dado: #d6d1c4;
+  --mapa-simples-seq-1: #d3ece5;
+  --mapa-simples-seq-2: #97cfc1;
+  --mapa-simples-seq-3: #57ab9c;
+  --mapa-simples-seq-4: #2b8073;
+  --mapa-simples-seq-5: #0e544c;
+  --mapa-simples-dsei-1: #c8553d;
+  --mapa-simples-dsei-2: #e0a458;
+  --mapa-simples-dsei-3: #8f6f3a;
+  --mapa-simples-dsei-4: #5b8e7d;
+  --mapa-simples-dsei-5: #b5838d;
+  --mapa-simples-dsei-6: #6d597a;
+  --mapa-simples-dsei-7: #d9a441;
+  --mapa-simples-dsei-8: #7f9c5a;
+  --mapa-simples-dsei-9: #a44a3f;
+  --mapa-simples-dsei-10: #c97c5d;
+  --mapa-simples-dsei-11: #4f7c82;
+  --mapa-simples-dsei-12: #b08968;
+  --mapa-simples-dsei-13: #9c6644;
+  --mapa-simples-dsei-14: #e07a5f;
+  --mapa-simples-dsei-15: #81b29a;
+  --mapa-simples-dsei-16: #3d6b5a;
+  --mapa-simples-dsei-17: #f2cc8f;
+  --mapa-simples-dsei-18: #8d5a97;
+  --mapa-simples-dsei-19: #c1666b;
+  --mapa-simples-dsei-20: #d4a373;
+  --mapa-simples-dsei-21: #588157;
+  --mapa-simples-dsei-22: #a3b18a;
+  --mapa-simples-dsei-23: #bc6c25;
+  --mapa-simples-dsei-24: #dda15e;
+  --mapa-simples-dsei-25: #606c38;
+  --mapa-simples-dsei-26: #9b2226;
+  --mapa-simples-dsei-27: #ae7c4f;
+  --mapa-simples-dsei-28: #457b9d;
+  --mapa-simples-dsei-29: #cb997e;
+  --mapa-simples-dsei-30: #6b705c;
+  --mapa-simples-dsei-31: #b7b7a4;
+  --mapa-simples-dsei-32: #e76f51;
+  --mapa-simples-dsei-33: #2a9d8f;
+  --mapa-simples-dsei-34: #8a5a44;
+
   /* Tipos de etapa do edital (domínio, não paleta): o campo `cor` de
      `src/lib/etapas-de-edital.ts` escolhe um deles pelo `data-cor`
      (src/modulos/cronograma/cronograma.css). São só preenchimento — bolinha
@@ -433,4 +484,18 @@ html[data-theme="dark"] {
   --series-4: #8e6cf2;
   --series-5: #d55181;
   --series-6: #a8861a;
+
+  /* "Mapa simples" no escuro: fundo da página, silhueta e borda escuras, a
+     escala invertida em luminância (mais claro = mais). */
+  --mapa-simples-fundo: var(--surface-page);
+  --mapa-simples-pais: #102131;
+  --mapa-simples-borda: #071421;
+  --mapa-simples-rotulo: #f3f6f9;
+  --mapa-simples-rotulo-halo: #071421;
+  --mapa-simples-sem-dado: #2e3d4c;
+  --mapa-simples-seq-1: #17403b;
+  --mapa-simples-seq-2: #1e6358;
+  --mapa-simples-seq-3: #2f8a7b;
+  --mapa-simples-seq-4: #5cb5a4;
+  --mapa-simples-seq-5: #a8e2d5;
 }

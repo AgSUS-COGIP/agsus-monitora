@@ -31,6 +31,12 @@ modo Calor saiu em 02/10/2026.
 **resposta:** No MONITORA, "Territórios por vagas" lista os mesmos DSEIs que o mapa desenha, do que tem mais vagas para o que tem menos (empate decidido pela população). A barra é o preenchimento: vagas menos ociosas, divididas pelas vagas. Acima de 80% preenchidas fica verde, de 41% a 80% amarela e até 40% vermelha. Clicar na linha abre o DSEI, como clicar na bolha.
 **fonte:** interface do MONITORA
 
+## Mapa simples dos DSEIs
+
+**perguntas:** mapa simples | numero do dsei no mapa | colorir por | dseis numerados | mapa sem fundo de ruas | sem dado no mapa | contorno dos dseis
+**resposta:** No MONITORA, o botão "Mapa simples" (ao lado de Mapa e Satélite, no mapa nacional da Saúde Indígena) troca o fundo de ruas por um fundo liso e pinta as áreas dos 34 DSEIs, cada uma com o seu número. A numeração é a ordem alfabética oficial: 1 Alagoas e Sergipe até 34 Yanomami; a lista "Territórios por vagas" mostra o mesmo número. "Colorir por" escolhe a cor: % preenchidas (padrão, cinco faixas de 20 pontos), vagas ociosas (cinco faixas pelos valores do recorte) ou uma cor fixa por DSEI. DSEI fora do recorte ou sem vaga fica cinza, "sem dado". Passar o mouse num DSEI realça a linha da lista e vice-versa; clicar abre o DSEI. Nesse modo as sedes, as CASAIs e as Terras Indígenas começam desligadas ("Sedes e CASAIs" e o botão "Terras Indígenas" as ligam). As áreas são as da camada de abrangência dos DSEIs publicada pela Funai (cópia de 20/04/2022): cobrem as regiões com atendimento, não o país inteiro.
+**fonte:** interface do MONITORA; Funai, camada areas_dsei
+
 ## Duas bolhas no mesmo lugar do mapa
 
 **perguntas:** bolhas sobrepostas | leque no mapa | traco ate o ponto | yanomami e leste de roraima no mapa

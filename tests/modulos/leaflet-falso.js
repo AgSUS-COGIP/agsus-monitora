@@ -148,7 +148,16 @@ export function criarLeafletFalso({ aoCriarMapa } = {}) {
     circleMarker: (latlng, opcoes) => camada("circleMarker", latlng, opcoes),
     marker: (latlng, opcoes) => camada("marker", latlng, opcoes),
     polyline: (pontos, opcoes) => camada("polyline", pontos, opcoes),
-    geoJSON: (dados, opcoes) => camada("geoJSON", dados, opcoes),
+    // Um caminho SVG por camada, como o renderizador do Leaflet (Mapa simples).
+    geoJSON: (dados, opcoes) => {
+      const c = camada("geoJSON", dados, opcoes);
+      c.elemento = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "path",
+      );
+      c.eachLayer = (fn) => fn({ getElement: () => c.elemento });
+      return c;
+    },
     tileLayer: (url, opcoes) => camada("tileLayer", url, opcoes),
     divIcon: (opcoes) => ({ ...opcoes }),
     point: ponto,

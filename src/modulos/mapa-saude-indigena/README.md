@@ -60,6 +60,33 @@ com fixture real das Lotações de `public/data`) e `tests/modulos/mapa-saude-in
 (componente, Leaflet falso em `tests/modulos/leaflet-falso.js`); a ligação com o estado em
 `tests/modulos/visao-geral.test.js`; dicas e popups em `tests/dica-dentro-do-mapa.test.js`.
 
+## Mapa simples
+
+Terceiro botão do seletor do fundo, só no `#map` (`map-base-layer-switcher.ts`: `MODO_SIMPLES`,
+`aceitaMapaSimples`, `adicionarCamadaDeFundo`): nenhum azulejo — nem ao abrir a página já nesse
+modo —, contêiner com `map-simple-mode` e o fundo liso do CSS. `mapa-simples.tsx` desenha a
+silhueta do Brasil e os 34 DSEIs (pane `agsus-mapa-simples`, abaixo das Terras Indígenas) com o
+número no meio, a legenda aberta com "Colorir por" (`% preenchidas`, `Vagas ociosas`, `Cor do
+DSEI`, lembrado em `agsus_mapa_simples_colorir_v1`) e o interruptor "Sedes e CASAIs" (desligados
+de início). As Terras Indígenas desligam ao entrar sem mudar a preferência guardada
+(`__agsusDefinirTerrasVisiveis(false, { guardar: false })`) e voltam ao sair. A lista mostra o
+número do DSEI; foco/mouse na linha realça o polígono e vice-versa; o clique no polígono abre o
+DSEI como a bolha.
+
+- Numeração: `src/lib/mapa-saude-indigena/dseis-oficiais.ts` (34 nomes oficiais em ordem
+  alfabética, como o mapa institucional da AgSUS; constante única).
+- Regras (faixas, sem dado, dica, tokens): `src/lib/mapa-saude-indigena/mapa-simples.ts`. Os
+  números são os da lista "Territórios por vagas" — nenhuma consulta nova.
+- Cores: tokens `--mapa-simples-*` (claro e escuro) em `src/styles/tokens.css`.
+- **Contornos**: `public/data/contornos-dos-dseis.json` (~324 KB, carregado só nesse modo, uma vez),
+  gerado por `scripts/compilar-contornos-dos-dseis.mjs` a partir do shapefile da camada
+  **Funai `areas_dsei`**, na cópia de **20/04/2022 do Internet Archive** (a Funai tirou a camada do
+  GeoServer; por isso `/api/funai-geodata?dataset=dsei` dá 502 e o mapa não tinha contorno de DSEI
+  nenhum). A camada é a abrangência com atendimento, não uma partição do país: parte do território
+  fica só com a silhueta do Brasil.
+- Testes: `tests/mapa-simples.test.js`, `tests/map-base-layer-simples.test.js`,
+  `tests/modulos/mapa-simples.test.js`.
+
 ## Ligação na Visão geral
 
 Ligado em `src/modulos/visao-geral/visao-geral.tsx` (`MapaDaSaudeIndigena`), só quando a área é a
