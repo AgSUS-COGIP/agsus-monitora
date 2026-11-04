@@ -224,10 +224,29 @@ describe("Mapa simples", () => {
     );
   });
 
+  /*
+    O bug: o interruptor era o chip das fases das terras
+    (`.mapa-si-terra-fase`), que desligado (`aria-pressed="false"`) sai
+    riscado e esmaecido — e os pontos começam desligados.
+  */
+  it("'Sedes e CASAIs' é uma caixa de seleção, não o chip riscado das fases", async () => {
+    await montar();
+    const legenda = host.querySelector(".mapa-simples__legenda");
+    const pontos = legenda.querySelector(".mapa-simples__pontos");
+    expect(pontos.tagName).toBe("LABEL");
+    expect(pontos.textContent).toBe("Sedes e CASAIs");
+    expect(pontos.querySelector('input[type="checkbox"]')).not.toBeNull();
+    expect(legenda.querySelector(".mapa-si-terra-fase")).toBeNull();
+    expect(legenda.querySelector("[aria-pressed]")).toBeNull();
+  });
+
   it("'Sedes e CASAIs' devolve os pontos; voltar ao Mapa tira os polígonos e devolve as terras", async () => {
     await montar();
     const mapa = mapaVivo();
-    await clicar(host.querySelector(".mapa-simples__pontos"));
+    const pontos = host.querySelector(".mapa-simples__pontos input");
+    expect(pontos.checked).toBe(false);
+    await clicar(pontos);
+    expect(pontos.checked).toBe(true);
     expect(leaflet.desenhadas(mapa, "circleMarker").length).toBeGreaterThan(0);
 
     await act(async () => {

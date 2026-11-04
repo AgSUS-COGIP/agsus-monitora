@@ -367,14 +367,19 @@ export function LegendaDoMapaSimples({
           ))}
         </ul>
       ) : null}
-      <button
-        type="button"
-        className="mapa-si-terra-fase mapa-simples__pontos"
-        aria-pressed={mostrarPontos}
-        onClick={() => aoMostrarPontos(!mostrarPontos)}
-      >
+      {/*
+        Caixa de seleção nativa, como os rádios de "Colorir por". Era o chip
+        das fases das terras, que desligado sai riscado e esmaecido: os pontos,
+        desligados de início, pareciam um item indisponível.
+      */}
+      <label className="mapa-simples__opcao mapa-simples__pontos">
+        <input
+          type="checkbox"
+          checked={mostrarPontos}
+          onChange={(evento) => aoMostrarPontos(evento.target.checked)}
+        />
         <span>Sedes e CASAIs</span>
-      </button>
+      </label>
     </div>
   );
 }
