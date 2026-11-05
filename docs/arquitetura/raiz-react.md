@@ -89,33 +89,34 @@ esperar a tela.
   lateral e as telas são filhas da casca. As ilhas que sobram (passo 2) viram filhas da raiz.
 - **Rotas** `/:area/:tela[/:edital]` (`src/lib/rotas.ts`, regra pura com teste):
 
-  | Tela (view)            | Endereço                                   |
-  | ---------------------- | ------------------------------------------ |
-  | `dashboard`            | `/saude-indigena/visao-geral`              |
-  | `nucleo`               | `/sede/editais`                            |
-  | `calendario`           | `/projetos/cronograma`                     |
-  | `approved`             | `/…/aprovados`                             |
-  | `recursos`             | `/…/painel-de-recursos`                    |
-  | `analisar-recursos`    | `/…/recursos`                              |
-  | `entrevistas`          | `/…/painel-de-entrevistas`                 |
-  | `conduzir-entrevistas` | `/…/entrevistas[/:edital]`                 |
-  | `classificacao`        | `/…/classificacao[/:edital]`               |
-  | `analises`             | `/…/analises`                              |
-  | `avaliacao-documental` | `/…/avaliacao-documental`                  |
-  | `pre-classificacao`    | `/…/triagem[/:edital]`                     |
-  | `selecao`              | `/…/selecao`                               |
-  | `config`               | `/administracao/configuracoes[/:secao]`    |
-  | `panel:<codigo>`       | `/paineis/<codigo>`                        |
-  | `sem-acesso`           | `/sem-acesso`                              |
+  | Tela (view)            | Endereço                                |
+  | ---------------------- | --------------------------------------- |
+  | `dashboard`            | `/saude-indigena/visao-geral`           |
+  | `nucleo`               | `/sede/editais`                         |
+  | `calendario`           | `/projetos/cronograma`                  |
+  | `approved`             | `/…/aprovados`                          |
+  | `recursos`             | `/…/painel-de-recursos`                 |
+  | `analisar-recursos`    | `/…/recursos`                           |
+  | `entrevistas`          | `/…/painel-de-entrevistas`              |
+  | `conduzir-entrevistas` | `/…/entrevistas[/:edital]`              |
+  | `classificacao`        | `/…/classificacao[/:edital]`            |
+  | `analises`             | `/…/analises`                           |
+  | `avaliacao-documental` | `/…/avaliacao-documental`               |
+  | `pre-classificacao`    | `/…/triagem[/:edital]`                  |
+  | `selecao`              | `/…/selecao`                            |
+  | `config`               | `/administracao/configuracoes[/:secao]` |
+  | `panel:<codigo>`       | `/paineis/<codigo>`                     |
+  | `sem-acesso`           | `/sem-acesso`                           |
 
   `?visao=` leva a visão (`abrirVisao`) dos links antigos (`entrevistas:conduzir`). `/` abre a
   tela de entrada (a guardada ou a inicial) com `replaceState`.
+
 - **Roteador próprio, sem dependência.** O React Router 7 (7.18.4, a mais nova com mais de duas
   semanas) somaria ~20 kB gzip à entrada, que já está em 304 de 320 kB; o app só precisa de
   `pushState`/`replaceState`/`popstate` e de um store lido com `useSyncExternalStore`.
   `src/app/endereco.ts` (~80 linhas) faz isso; a regra de caminho fica em `src/lib/rotas.ts`.
 - **A navegação é um store** (`criarNavegacao`, sem DOM): `obter()` devolve `{ view, area,
-  visao, edital, secao, aviso, titulo, subtitulo, abertura }`; `assinar()` avisa a casca, a barra,
+visao, edital, secao, aviso, titulo, subtitulo, abertura }`; `assinar()` avisa a casca, a barra,
   a presença e a página aberta. `irPara(view, { edital, visao })` confere saída, versão nova e
   permissão, empilha o endereço e publica. O `popstate` (voltar/avançar) passa pelas mesmas
   guardas: recusado, o endereço volta para o da tela atual; tela proibida ou inexistente
@@ -148,9 +149,12 @@ esperar a tela.
    numa raiz só), `criarX` no lugar de `montarX` nas 14 telas de página inteira, saem
    `TELAS_REACT`, os `window.<tela>Controller` das telas, o `telaSobDemanda` delas e o
    "Carregando…" escrito pelo DOM; `vercel.json`, servidor e testes.
-2. **Ilhas para dentro da raiz**: Pessoas online, aviso de versão, encerramento e selos, busca
-   global, Aya e mascote (lazy pela fase da sessão) viram filhas da raiz; sai `montarModulo` das
-   ilhas.
+2. **Ilhas para dentro da raiz** (feito): Pessoas online, aviso de versão, encerramento e selos
+   são filhas da casca (`src/app/casca/pecas.tsx`), com o estado do sistema pelo contexto da raiz
+   (`pecas`); a busca global é filha da raiz (sai o `#buscaGlobalApp`); a Aya baixa por
+   `React.lazy` quando a sessão abre o app. A arara dos fogos e a cobertura do painel externo,
+   que moram em DOM feito à mão, entram por **portais avulsos** da raiz
+   (`src/app/portais-avulsos.tsx`) até os fogos e o quadro dos painéis serem React.
 3. **Configurações como rota de verdade**: a moldura e as seções (Acessos, Módulos e abas,
    Status, Automação) viram rotas filhas (`/administracao/configuracoes/:secao`), sem
    `organizarConfiguracoesEmSecoes` mover blocos pelo DOM; sai `tela-sob-demanda.ts` e
@@ -162,15 +166,15 @@ esperar a tela.
 
 ## 4. Riscos
 
-| Risco                                                                           | Cuidado                                                                                                    |
-| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Deep link 404 na Vercel                                                         | `rewrites` com teste que lê o `vercel.json`; servidor com teste de rota                                    |
-| Voltar do navegador com alteração não salva                                     | o `popstate` passa por `confirmarSaida`; recusado, o endereço volta (`pushState` da tela atual)            |
-| Link compartilhado para tela que a pessoa não pode ver                          | mesma regra de hoje (`bloqueioDaTela`): aviso e tela de entrada, com `replaceState`                        |
-| Área do endereço que não é da pessoa                                            | ignorada; vale a área atual dela                                                                           |
-| Tela desmontada perde filtros                                                   | as telas visitadas continuam montadas, só a `.active` muda                                                 |
-| `render()` em dobro (StrictMode, reabertura)                                    | a rota guarda a última `abertura` atendida                                                                 |
-| Ordem de arranque (quem procura id logo depois)                                 | a raiz desenha com `flushSync` antes de `ligarSistema()`, como a casca                                     |
-| PRs em paralelo (Regras do edital parte 2, limpeza da presença, casca parte D)  | rebase frequente; `window.aprovadosController.carregar()` das Regras vira `carregarTela("approved")`      |
-| Orçamento de bundles                                                            | sem dependência nova; a entrada é medida antes e depois (`npm run check:bundle-size`)                      |
-| Marcas do histórico das Regras do edital (`pushState` sem mudar o endereço)     | `popstate` com o mesmo caminho não troca de tela                                                           |
+| Risco                                                                          | Cuidado                                                                                              |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| Deep link 404 na Vercel                                                        | `rewrites` com teste que lê o `vercel.json`; servidor com teste de rota                              |
+| Voltar do navegador com alteração não salva                                    | o `popstate` passa por `confirmarSaida`; recusado, o endereço volta (`pushState` da tela atual)      |
+| Link compartilhado para tela que a pessoa não pode ver                         | mesma regra de hoje (`bloqueioDaTela`): aviso e tela de entrada, com `replaceState`                  |
+| Área do endereço que não é da pessoa                                           | ignorada; vale a área atual dela                                                                     |
+| Tela desmontada perde filtros                                                  | as telas visitadas continuam montadas, só a `.active` muda                                           |
+| `render()` em dobro (StrictMode, reabertura)                                   | a rota guarda a última `abertura` atendida                                                           |
+| Ordem de arranque (quem procura id logo depois)                                | a raiz desenha com `flushSync` antes de `ligarSistema()`, como a casca                               |
+| PRs em paralelo (Regras do edital parte 2, limpeza da presença, casca parte D) | rebase frequente; `window.aprovadosController.carregar()` das Regras vira `carregarTela("approved")` |
+| Orçamento de bundles                                                           | sem dependência nova; a entrada é medida antes e depois (`npm run check:bundle-size`)                |
+| Marcas do histórico das Regras do edital (`pushState` sem mudar o endereço)    | `popstate` com o mesmo caminho não troca de tela                                                     |
