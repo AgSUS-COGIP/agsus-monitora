@@ -43,6 +43,9 @@ painel-do-mapa.tsx        peças do mapa nacional comuns a este e ao de Projetos
                           propsDoEditor
 tela-cheia.tsx            usarTelaCheia: estado, botão "Tela cheia"/"Sair da tela cheia" e Esc (os dois mapas);
                           travarRolagemDaPagina (contada: tela cheia e modo de edição)
+ordem-da-lista.tsx        "Ordenar" da lista de territórios (Vagas, A–Z, Nº do DSEI, % preenchidas,
+                          Ociosas): padrão por fundo, escolha guardada no navegador; regras em
+                          src/lib/mapa-saude-indigena/ordem-dos-territorios.ts
 volta-ao-brasil.ts        usarVoltaDoDsei (a saída do DSEI, venha de onde vier) e usarEscParaVoltar
 usar-ultimo.ts            ref com a última função do pai (ouvintes do Leaflet sem redesenhar)
 editor-de-coordenadas.tsx o editor comum (só admin global) com os pontos do lmap/rede_cnes e as RPCs
