@@ -7,7 +7,7 @@ import {
 import {
   carregarSituacaoDoSistema,
   consultaDaSituacaoDoSistema,
-} from "../modules/situacao-dos-modulos.ts";
+} from "./situacao-do-sistema.ts";
 
 /*
   O vigia do catálogo de abas: a página desligada fecha sem recarregar.

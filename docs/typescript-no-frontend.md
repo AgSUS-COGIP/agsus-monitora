@@ -99,8 +99,8 @@ direto no Node, que remove os tipos.
 
 Os módulos não visuais de `src/modules/` também estão em TypeScript: sessão e armazenamento
 (`auth-storage.ts`), cópias no IndexedDB (`copia-da-sessao-indexeddb.ts`,
-`cache-de-payload-indexeddb.ts`), catálogo de abas e situação dos módulos (`catalogo-de-abas.ts`,
-`situacao-dos-modulos.ts`), memória e fontes da Aya (`aya-memoria.ts`, `aya-knowledge.ts`), guardas do
+`cache-de-payload-indexeddb.ts`), catálogo de abas (`catalogo-de-abas.ts`; a situação dos módulos
+saiu para `src/app/situacao-do-sistema.ts`), memória e fontes da Aya (`aya-memoria.ts`, `aya-knowledge.ts`), guardas do
 mapa (`map-guard.ts`, `map-zoom-range.ts`), foto da conta Google, ciclo do service worker
 (`pwa-lifecycle.ts`), comemorações (`comemoracao.ts`, `comemoracao-do-acesso.ts`) e o registro de
 ícones (`icones.ts`). A migração foi só de tipos: a saída do esbuild (sem renomear identificadores) é

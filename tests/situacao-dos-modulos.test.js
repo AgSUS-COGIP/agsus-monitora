@@ -20,12 +20,12 @@ import {
 } from "../src/lib/menu-lateral.ts";
 import { secaoDeConfiguracaoPermitida } from "../src/lib/access-roles.ts";
 import {
-  aplicarManutencaoNaNavegacao,
   carregarSituacaoDoSistema,
   consultaDaSituacaoDoSistema,
   esquecerSituacaoDoSistema,
   situacaoDoSistema,
-} from "../src/modules/situacao-dos-modulos.ts";
+} from "../src/app/situacao-do-sistema.ts";
+import { avisoDaPagina } from "../src/lib/pagina-desligada.ts";
 
 /*
   Módulos e abas: o sistema, cada área, cada aba (em todas as áreas ou só
@@ -352,64 +352,57 @@ describe("tela de manutenção e faixa do administrador", () => {
   ]);
 
   beforeEach(async () => {
-    document.body.innerHTML =
-      '<main id="conteudoPrincipal"><div class="content"><section id="page-nucleo" class="page"></section></div></main>';
     await carregarSituacaoDoSistema({
       consulta: Promise.resolve({ data: RESPOSTA({ areas: [] }), error: null }),
     });
   });
   afterEach(() => {
-    esquecerSituacaoDoSistema(document);
-    document.body.innerHTML = "";
+    esquecerSituacaoDoSistema();
   });
-
-  it("quem não é admin vê a tela de manutenção com mensagem e previsão", () => {
-    const parou = aplicarManutencaoNaNavegacao({
-      view: "nucleo",
-      area: "sede",
+  // A decisão é pura (src/lib/pagina-desligada.ts); quem desenha é a rota (tests/app/pagina-desligada.test.js).
+  const decidir = (opcoes) =>
+    avisoDaPagina({
+      situacao: situacaoDoSistema(),
       abas,
-      adminGlobal: false,
+      area: "sede",
+      ...opcoes,
     });
-    expect(parou).toBe(true);
-    const pagina = document.getElementById("page-manutencao");
-    expect(pagina.classList.contains("active")).toBe(true);
-    expect(pagina.querySelector("h2").textContent).toBe("Em manutenção");
-    expect(pagina.textContent).toContain("Editais em ajuste");
-    expect(pagina.textContent).toContain("Previsão de volta: 05/10/2026");
-    expect(document.getElementById("faixaDeManutencao")).toBeNull();
+
+  it("quem não é admin vê o aviso de manutenção com mensagem e previsão", () => {
+    const { pagina, faixa } = decidir({ view: "nucleo", adminGlobal: false });
+    expect(pagina).toMatchObject({
+      origem: "aba",
+      icone: "wrench",
+      titulo: "Em manutenção",
+      mensagem: "Editais em ajuste",
+      previsao: "Previsão de volta: 05/10/2026",
+    });
+    expect(faixa).toBeNull();
   });
 
   it("o admin global vê a página, com a faixa âmbar", () => {
-    const parou = aplicarManutencaoNaNavegacao({
-      view: "nucleo",
-      area: "sede",
-      abas,
-      adminGlobal: true,
+    const { pagina, faixa } = decidir({ view: "nucleo", adminGlobal: true });
+    expect(pagina).toBeNull();
+    expect(faixa.texto).toContain("Em manutenção para os demais usuários");
+    // Outra página, sem manutenção: sem faixa.
+    expect(decidir({ view: "calendario", adminGlobal: true })).toEqual({
+      pagina: null,
+      faixa: null,
     });
-    expect(parou).toBe(false);
-    const faixa = document.getElementById("faixaDeManutencao");
-    expect(faixa.hidden).toBe(false);
-    expect(faixa.textContent).toContain(
-      "Em manutenção para os demais usuários",
-    );
-    // Outra página, sem manutenção: a faixa some.
-    aplicarManutencaoNaNavegacao({
-      view: "calendario",
-      area: "sede",
-      abas,
-      adminGlobal: true,
-    });
-    expect(faixa.hidden).toBe(true);
   });
 
-  it("sair da manutenção esconde a tela de manutenção", () => {
-    aplicarManutencaoNaNavegacao({ view: "nucleo", area: "sede", abas });
-    expect(
-      aplicarManutencaoNaNavegacao({ view: "calendario", area: "sede", abas }),
-    ).toBe(false);
-    expect(
-      document.getElementById("page-manutencao").classList.contains("active"),
-    ).toBe(false);
+  it("página desligada pela coordenação: o aviso, para todos", () => {
+    const { pagina } = decidir({
+      view: "calendario",
+      adminGlobal: true,
+      desligada: true,
+    });
+    expect(pagina).toMatchObject({
+      origem: "desligada",
+      icone: "circle-alert",
+      titulo: "Página desativada",
+      mensagem: "Esta página foi desativada pela coordenação.",
+    });
   });
 
   it("sistema em manutenção fecha até Configurações para quem não é admin", async () => {
@@ -426,8 +419,7 @@ describe("tela de manutenção e faixa do administrador", () => {
         error: null,
       }),
     });
-    expect(aplicarManutencaoNaNavegacao({ view: "config", abas })).toBe(true);
-    expect(document.getElementById("page-manutencao").textContent).toContain(
+    expect(decidir({ view: "config", area: "" }).pagina.mensagem).toBe(
       "Volta já",
     );
   });
@@ -447,9 +439,10 @@ describe("tela de manutenção e faixa do administrador", () => {
     expect(situacaoDoSistema()).toBe(SITUACAO_PADRAO);
     aviso.mockRestore();
     // Mesmo assim a manutenção da aba (do catálogo) continua valendo.
-    expect(
-      aplicarManutencaoNaNavegacao({ view: "calendario", area: "sede", abas }),
-    ).toBe(false);
+    expect(decidir({ view: "calendario" }).pagina).toBeNull();
+    expect(decidir({ view: "nucleo" }).pagina?.mensagem).toBe(
+      "Editais em ajuste",
+    );
   });
 
   it("a consulta nunca rejeita", async () => {

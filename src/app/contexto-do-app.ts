@@ -26,6 +26,7 @@ const NAVEGACAO_PARADA: LeituraDaNavegacao = Object.freeze({
   esquecerEditalEVisao: () => {},
   abrirRegrasDoEdital: () => false,
   fecharRegrasDoEdital: () => {},
+  irParaInicio: () => {},
 });
 
 /** Um valor assinável (o padrão dos estados do app, fora do React). */

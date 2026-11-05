@@ -8,7 +8,17 @@ import {
   ehAreaDoSistema,
   paginasDaArea,
 } from "./menu-lateral.ts";
-import { areaEstaAtiva } from "./situacao-dos-modulos.ts";
+import {
+  areaEstaAtiva,
+  situacaoEfetiva,
+  textoDaFaixaDoAdministrador,
+  textosDaManutencao,
+} from "./situacao-dos-modulos.ts";
+import type {
+  AbaDaSituacao,
+  SituacaoDoSistema,
+  SituacaoEfetiva,
+} from "./situacao-dos-modulos.ts";
 
 /*
   Página desligada pela coordenação — sem DOM.
@@ -106,4 +116,71 @@ export function textoDaFaixaDeSaida(origem: "desligada" | "manutencao") {
   return origem === "desligada"
     ? "Esta página foi desativada pela coordenação. Salve o que estiver fazendo: ela fecha depois disso."
     : "Esta página entrou em manutenção. Salve o que estiver fazendo: ela fecha depois disso.";
+}
+
+/** O aviso que toma o lugar da página: desativada, ou em manutenção. */
+export interface AvisoNoLugarDaPagina {
+  readonly origem: "desligada" | SituacaoEfetiva["origem"];
+  readonly icone: "circle-alert" | "wrench";
+  readonly titulo: string;
+  readonly mensagem: string;
+  /** "Previsão de volta: …", ou vazio. */
+  readonly previsao: string;
+}
+
+/** A faixa acima da página (o administrador vê a manutenção; ou "salve e sai"). */
+export interface FaixaDaPagina {
+  readonly texto: string;
+  readonly origem: string;
+}
+
+/**
+ * Se a página abre, e como. Desligada pela coordenação: o aviso, para todos.
+ * Em manutenção (sistema, área ou aba): quem não é administrador global vê o
+ * aviso no lugar da página; o administrador vê a página, com a faixa.
+ */
+export function avisoDaPagina({
+  situacao,
+  abas,
+  view,
+  area,
+  adminGlobal = false,
+  desligada = false,
+}: {
+  situacao: SituacaoDoSistema;
+  abas?: readonly AbaDaSituacao[] | null;
+  view: string;
+  area: string;
+  adminGlobal?: boolean;
+  desligada?: boolean;
+}): { pagina: AvisoNoLugarDaPagina | null; faixa: FaixaDaPagina | null } {
+  if (desligada)
+    return {
+      pagina: Object.freeze({
+        origem: "desligada",
+        icone: "circle-alert",
+        titulo: TEXTOS_DA_PAGINA_DESLIGADA.titulo,
+        mensagem: TEXTOS_DA_PAGINA_DESLIGADA.mensagem,
+        previsao: "",
+      }),
+      faixa: null,
+    };
+  const efetiva = situacaoEfetiva({ situacao, abas, view, area });
+  if (!efetiva) return { pagina: null, faixa: null };
+  if (adminGlobal || situacao.adminGlobal)
+    return {
+      pagina: null,
+      faixa: Object.freeze({
+        texto: textoDaFaixaDoAdministrador(efetiva),
+        origem: efetiva.origem,
+      }),
+    };
+  return {
+    pagina: Object.freeze({
+      origem: efetiva.origem,
+      icone: "wrench",
+      ...textosDaManutencao(efetiva),
+    }),
+    faixa: null,
+  };
 }

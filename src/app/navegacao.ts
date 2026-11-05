@@ -1,20 +1,17 @@
 import { aplicarAtualizacaoPendente } from "../modules/pwa-lifecycle.ts";
 import { guardaDeAlteracoes } from "./guarda-de-alteracoes.ts";
-import {
-  aplicarManutencaoNaNavegacao,
-  avisarNaFaixa,
-  avisoNoLugarDaPagina,
-  situacaoDoSistema,
-} from "../modules/situacao-dos-modulos.ts";
+import { situacaoDoSistema } from "./situacao-do-sistema.ts";
 import { abasDoMenu, catalogoDoBanco } from "../modules/catalogo-de-abas.ts";
+import { filtrarAreasAtivas } from "../lib/situacao-dos-modulos.ts";
 import {
-  filtrarAreasAtivas,
-  situacaoEfetiva,
-} from "../lib/situacao-dos-modulos.ts";
-import {
+  avisoDaPagina,
   paginaDesligada,
   primeiraPaginaLigada,
   textoDaFaixaDeSaida,
+} from "../lib/pagina-desligada.ts";
+import type {
+  AvisoNoLugarDaPagina,
+  FaixaDaPagina,
 } from "../lib/pagina-desligada.ts";
 import {
   areasDoUsuario,
@@ -127,6 +124,10 @@ export interface EstadoDaNavegacao {
   readonly aberturaDaSecao: number;
   /** As Regras do edital abertas em Editais (o edital e a etapa), ou `null`. */
   readonly regras: RegrasNoEndereco | null;
+  /** Com `aviso: "fechada"`: o aviso (desativada, manutenção) no lugar da página. */
+  readonly manutencao: AvisoNoLugarDaPagina | null;
+  /** A faixa acima da página (manutenção para o administrador, "salve e sai"). */
+  readonly faixa: FaixaDaPagina | null;
 }
 
 /** As Regras do edital no endereço (`/<área>/editais/<edital>/regras/<etapa>`). */
@@ -148,6 +149,8 @@ export interface LeituraDaNavegacao {
   abrirRegrasDoEdital(edital: string, etapa?: string): boolean;
   /** Fecha as Regras do edital (volta à tabela de Editais). */
   fecharRegrasDoEdital(): void;
+  /** O botão do aviso no lugar da página: a primeira página ligada do menu. */
+  irParaInicio(): void;
 }
 
 /* Sair com alteração não salva (Acessos, Módulos e abas ou campos de Configurações) pergunta antes. */
@@ -220,6 +223,8 @@ export const ESTADO_INICIAL_DA_NAVEGACAO: EstadoDaNavegacao = Object.freeze({
   abertura: 0,
   aberturaDaSecao: 0,
   regras: null,
+  manutencao: null,
+  faixa: null,
 });
 
 /* O que fazer com o endereço ao abrir: nova entrada, trocar a atual. */
@@ -715,6 +720,8 @@ export function criarNavegacao({
       secao: tela === "config" ? destino.secao || "" : "",
       aviso: "",
       regras,
+      manutencao: null,
+      faixa: null,
     });
     marcarMenu(tela);
 
@@ -729,27 +736,27 @@ export function criarNavegacao({
 
     // Página desligada pela coordenação: o aviso, para todos. Sistema, área ou
     // aba em manutenção: quem não é admin global vê a tela de manutenção.
-    const fechada = desligada(tela);
-    if (
-      aplicarManutencaoNaNavegacao({
-        documento,
-        view: tela,
-        area: areaAtual(),
-        abas: abasDoMenu(),
-        adminGlobal: isAdminGlobal(perfil()),
-        desligada: fechada,
-        aoIrParaInicio: irParaInicio,
-      })
-    ) {
-      publicar({ aviso: "fechada", abertura: estado.abertura + 1 });
-      definirTitulo(
-        fechada ? "Página desativada" : "Em manutenção",
-        subtituloDaArea(""),
-      );
+    // A rota (src/app/telas.tsx) desenha o aviso e a faixa a partir do estado.
+    const { pagina: aviso, faixa } = avisoDaPagina({
+      situacao: situacaoDoSistema(),
+      abas: abasDoMenu(),
+      view: tela,
+      area: areaAtual(),
+      adminGlobal: isAdminGlobal(perfil()),
+      desligada: desligada(tela),
+    });
+    if (aviso) {
+      publicar({
+        aviso: "fechada",
+        manutencao: aviso,
+        faixa: null,
+        abertura: estado.abertura + 1,
+      });
+      definirTitulo(aviso.titulo, subtituloDaArea(""));
       return concluir(modo, { tipo: "aviso", view: tela });
     }
 
-    publicar({ abertura: estado.abertura + 1 });
+    publicar({ faixa, abertura: estado.abertura + 1 });
     const daRota = telaDaRota(tela);
     if (tela === "dashboard") tituloDaVisaoGeral();
     else if (daRota)
@@ -836,41 +843,34 @@ export function criarNavegacao({
     Página religada não reabre sozinha: o menu já a mostra de novo.
   */
   function reavaliarTelaAtual() {
-    if (estado.aviso === "sem-acesso" || avisoNoLugarDaPagina(documento))
-      return;
-    const area = areaAtual();
-    const situacao = situacaoDoSistema();
-    const fechada = desligada(view(), area);
-    const manutencao =
-      !fechada &&
-      !isAdminGlobal(perfil()) &&
-      !situacao.adminGlobal &&
-      situacaoEfetiva({
-        situacao,
-        abas: abasDoMenu(),
-        view: view(),
-        area,
+    if (estado.aviso) return;
+    const fechada = desligada(view());
+    const { pagina: aviso, faixa } = avisoDaPagina({
+      situacao: situacaoDoSistema(),
+      abas: abasDoMenu(),
+      view: view(),
+      area: areaAtual(),
+      adminGlobal: isAdminGlobal(perfil()),
+      desligada: fechada,
+    });
+    // Continua aberta: só a faixa (a do administrador, ou nenhuma) se ajusta.
+    if (!aviso) return publicarFaixa(faixa);
+    if (temTrabalhoNaoSalvo())
+      return publicarFaixa({
+        texto: textoDaFaixaDeSaida(fechada ? "desligada" : "manutencao"),
+        origem: fechada ? "desligada" : "saida",
       });
-    if (!fechada && !manutencao) {
-      // Continua aberta: só a faixa (a do administrador, ou nenhuma) se ajusta.
-      aplicarManutencaoNaNavegacao({
-        documento,
-        view: view(),
-        area,
-        abas: abasDoMenu(),
-        adminGlobal: isAdminGlobal(perfil()),
-      });
-      return;
-    }
-    if (temTrabalhoNaoSalvo()) {
-      avisarNaFaixa(
-        documento,
-        textoDaFaixaDeSaida(fechada ? "desligada" : "manutencao"),
-        fechada ? "desligada" : "saida",
-      );
-      return;
-    }
     reabrir();
+  }
+
+  function publicarFaixa(faixa: FaixaDaPagina | null) {
+    if (
+      faixa?.texto === estado.faixa?.texto &&
+      faixa?.origem === estado.faixa?.origem
+    )
+      return;
+    publicar({ faixa });
+    avisarOuvintes({ tipo: "estado" });
   }
 
   /*
@@ -903,6 +903,7 @@ export function criarNavegacao({
     abrirSecao,
     abrirRegrasDoEdital,
     fecharRegrasDoEdital,
+    irParaInicio,
     fechar,
     /** Para de ouvir o voltar/avançar (testes; o app tem uma navegação só). */
     desligar: pararDeOuvirOEndereco,

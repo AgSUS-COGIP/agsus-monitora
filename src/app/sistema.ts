@@ -8,7 +8,7 @@ import { comemorarAcessoLiberado } from "../modules/comemoracao-do-acesso.ts";
 import {
   esquecerSituacaoDoSistema,
   situacaoDoSistema,
-} from "../modules/situacao-dos-modulos.ts";
+} from "./situacao-do-sistema.ts";
 import { esconderEsqueleto, mostrarEsqueleto } from "./carregamento.ts";
 import {
   esquecerVisaoGeral,
@@ -198,7 +198,7 @@ function limparEstadoDeslogado() {
   presenca.pararTudo();
   vigiaDoCatalogo.esquecer();
   paineis.limpar();
-  esquecerSituacaoDoSistema(document);
+  esquecerSituacaoDoSistema();
   esconderEsqueleto();
   navegacao.fechar();
   perfil.esconderApp();

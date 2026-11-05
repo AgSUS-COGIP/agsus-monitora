@@ -37,7 +37,9 @@ import type {
 import type { EstadoDaNavegacao, LeituraDaNavegacao } from "./navegacao.ts";
 import { erroAmigavel } from "../lib/erro-amigavel";
 import { ehPainelExterno } from "../lib/navegacao";
-import { situacaoDoSistema } from "../modules/situacao-dos-modulos.ts";
+import { situacaoDoSistema } from "./situacao-do-sistema.ts";
+import { TEXTOS_DA_PAGINA_DESLIGADA } from "../lib/pagina-desligada.ts";
+import { Icone } from "../componentes/icone.tsx";
 import { criarVisaoGeral } from "../modulos/visao-geral/visao-geral.tsx";
 import { criarNucleo } from "../modulos/editais/nucleo.tsx";
 import { SECOES } from "../modulos/configuracoes/secoes.ts";
@@ -468,24 +470,93 @@ export function Telas() {
   const montada = usarTelasMontadas(view, aviso);
   const aberta = (tela: string) => view === tela && !aviso;
   return (
-    <div className="content">
-      {TELAS_DA_CASCA.map((tela) => (
+    <>
+      <FaixaDeManutencao />
+      <div className="content">
+        {TELAS_DA_CASCA.map((tela) => (
+          <section
+            key={tela}
+            id={`page-${tela}`}
+            className={classeDaPagina(aberta(tela))}
+          >
+            {montada(tela) ? <ConteudoDaTela view={tela} /> : null}
+          </section>
+        ))}
+        <QuadroDoPainelExterno ativo={ehPainelExterno(view) && !aviso} />
+        <PaginaDeConfiguracoes ativa={aberta("config")} />
         <section
-          key={tela}
-          id={`page-${tela}`}
-          className={classeDaPagina(aberta(tela))}
+          id="page-sem-acesso"
+          className={classeDaPagina(aviso === "sem-acesso")}
         >
-          {montada(tela) ? <ConteudoDaTela view={tela} /> : null}
+          <div className="alert warn">{TEXTO_SEM_ACESSO}</div>
         </section>
-      ))}
-      <QuadroDoPainelExterno ativo={ehPainelExterno(view) && !aviso} />
-      <PaginaDeConfiguracoes ativa={aberta("config")} />
-      <section
-        id="page-sem-acesso"
-        className={classeDaPagina(aviso === "sem-acesso")}
-      >
-        <div className="alert warn">{TEXTO_SEM_ACESSO}</div>
-      </section>
+        <AvisoNoLugarDaPagina />
+      </div>
+    </>
+  );
+}
+
+/*
+  Página desligada pela coordenação, ou em manutenção para quem não é
+  administrador global: o aviso no lugar da página (a navegação decide, com
+  as regras de src/lib/pagina-desligada.ts), com o botão para a página
+  inicial. A tela de verdade fica montada e escondida.
+*/
+function AvisoNoLugarDaPagina() {
+  const { aviso, manutencao } = usarEstadoDaNavegacao();
+  const navegacao = usarNavegacao();
+  const ativo = aviso === "fechada" && Boolean(manutencao);
+  return (
+    <section
+      id="page-manutencao"
+      className={`${classeDaPagina(ativo)} pagina-de-manutencao`}
+      data-origem={manutencao?.origem}
+    >
+      {manutencao ? (
+        <div className="pagina-de-manutencao__cartao">
+          <span className="pagina-de-manutencao__icone">
+            <Icone nome={manutencao.icone} tamanho={28} />
+          </span>
+          <h2>{manutencao.titulo}</h2>
+          <p className="pagina-de-manutencao__mensagem">
+            {manutencao.mensagem}
+          </p>
+          <p
+            className="pagina-de-manutencao__previsao"
+            hidden={!manutencao.previsao}
+          >
+            {manutencao.previsao}
+          </p>
+          <button
+            type="button"
+            className="btn pagina-de-manutencao__botao"
+            onClick={() => navegacao.irParaInicio()}
+          >
+            {TEXTOS_DA_PAGINA_DESLIGADA.botao}
+          </button>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+/*
+  A faixa acima das páginas: o administrador global vê a página em
+  manutenção para os demais; quem tem trabalho não salvo numa página que
+  fechou vê o "salve e sai".
+*/
+function FaixaDeManutencao() {
+  const { faixa } = usarEstadoDaNavegacao();
+  return (
+    <div
+      id="faixaDeManutencao"
+      className="faixa-de-manutencao"
+      role="status"
+      hidden={!faixa}
+      data-origem={faixa?.origem}
+    >
+      <Icone nome="wrench" tamanho={16} />
+      <span>{faixa?.texto ?? ""}</span>
     </div>
   );
 }

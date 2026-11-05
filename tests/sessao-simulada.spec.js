@@ -81,7 +81,10 @@ async function buildSimulado(request) {
  * Semeia a sessão e responde ao Supabase. `contexto` é a resposta de
  * `obter_contexto_monitora` (null = sem perfil). Devolve os erros da página.
  */
-async function abrirComSessao(page, { contexto = contextoDoAdmin() } = {}) {
+async function abrirComSessao(
+  page,
+  { contexto = contextoDoAdmin(), situacao = null } = {},
+) {
   const erros = [];
   page.on("pageerror", (erro) => erros.push(erro.message));
   await page.addInitScript(
@@ -95,6 +98,8 @@ async function abrirComSessao(page, { contexto = contextoDoAdmin() } = {}) {
       return rota.fulfill({ json: contexto });
     if (pathname === "/rest/v1/rpc/meu_usuario")
       return rota.fulfill({ json: [] });
+    if (situacao && pathname === "/rest/v1/rpc/obter_situacao_do_sistema")
+      return rota.fulfill({ json: situacao });
     return rota.fulfill({
       status: 404,
       json: { code: "PGRST202", message: "Não simulada no teste." },
@@ -215,6 +220,61 @@ test.describe("sessão simulada", () => {
     await page.goBack();
     await expect(page).toHaveURL(/\/administracao\/configuracoes\/operacao$/);
     await expect(secao("operacao")).toBeVisible();
+    expect(erros).toEqual([]);
+  });
+
+  test("Regras do edital são rota: o endereço abre na etapa, ← Editais volta à tabela e o voltar reabre", async ({
+    page,
+  }) => {
+    const erros = await abrirComSessao(page);
+    const edital = "0b7c9a52-2d55-4c4e-9f7a-1c3d5e7f9a1b";
+    await page.goto(`/sede/editais/${edital}/regras/classificacao`, {
+      waitUntil: "domcontentloaded",
+    });
+    const regras = page.locator("[data-tour='regras-do-edital']");
+    await expect(regras).toBeVisible();
+    await expect(regras).toHaveAttribute("data-etapa", "classificacao");
+
+    await page.locator("[data-acao='voltar-aos-editais']").click();
+    await expect(page).toHaveURL(/\/sede\/editais$/);
+    await expect(regras).toHaveCount(0);
+
+    await page.goBack();
+    await expect(page).toHaveURL(
+      new RegExp(`/sede/editais/${edital}/regras/classificacao$`),
+    );
+    await expect(regras).toHaveAttribute("data-etapa", "classificacao");
+    expect(erros).toEqual([]);
+  });
+
+  test("Página em manutenção: o aviso no lugar da página, em React", async ({
+    page,
+  }) => {
+    const erros = await abrirComSessao(page, {
+      contexto: {
+        ...contextoDoAdmin(),
+        profile: {
+          ...contextoDoAdmin().profile,
+          admin_global: false,
+          role: "edital_gestor",
+        },
+      },
+      situacao: {
+        admin_global: false,
+        sistema: {
+          situacao: "MANUTENCAO",
+          mensagem: "Volta já",
+          previsao: null,
+        },
+        areas: [],
+      },
+    });
+    await page.goto("/sede/cronograma", { waitUntil: "domcontentloaded" });
+    const aviso = page.locator("#page-manutencao.active");
+    await expect(aviso).toBeVisible();
+    await expect(aviso).toContainText("Em manutenção");
+    await expect(aviso).toContainText("Volta já");
+    await expect(titulo(page)).toHaveText("Em manutenção");
     expect(erros).toEqual([]);
   });
 

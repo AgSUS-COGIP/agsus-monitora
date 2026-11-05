@@ -30,7 +30,7 @@ import { carregarCatalogoDeAbas } from "../../src/modules/catalogo-de-abas.ts";
 import {
   carregarSituacaoDoSistema,
   esquecerSituacaoDoSistema,
-} from "../../src/modules/situacao-dos-modulos.ts";
+} from "../../src/app/situacao-do-sistema.ts";
 import { redefinirPaginaDaAya } from "../../src/modulos/aya/estado.ts";
 
 /*
@@ -425,7 +425,7 @@ describe("a página aberta que foi desligada vira o aviso", () => {
     await carregarCatalogoDeAbas({
       consulta: Promise.resolve({ data: null, error: null }),
     });
-    esquecerSituacaoDoSistema(document);
+    esquecerSituacaoDoSistema();
     redefinirDadosDoMonitoramento();
     redefinirBarraLateral();
     redefinirPaginaDaAya();
