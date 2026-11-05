@@ -496,19 +496,19 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "GET /api/editais: os editais ativos (todas as áreas) com id, unidade, edital, status, etapa, vagas_total, contratados, vagas_ociosas, risco e link_edital. SECURITY DEFINER, só service_role; status e etapa por private.FC_ESTADO_DO_CRONOGRAMA (o cálculo de get_monitoramento_cronograma_estado sem a checagem de permissão), no dia de Brasília. Constante em src/lib/editais-da-api.js.",
+      "GET /api/editais: os editais ativos (todas as áreas) com id, unidade, area (NO_AREA; 20261105190000), edital, status, etapa, vagas_total, contratados, vagas_ociosas, risco e link_edital. SECURITY DEFINER, só service_role; status e etapa por private.FC_ESTADO_DO_CRONOGRAMA (o cálculo de get_monitoramento_cronograma_estado sem a checagem de permissão), no dia de Brasília. Constante em src/lib/editais-da-api.js.",
   },
   listar_aprovados_da_api: {
     argumentos: [],
     critica: false,
     resumo:
-      "GET /api/aprovados: a lista vigente de cada edital ativo (candidatos não removidos), com edital_id, edital, unidade, cargo, classificacao, nota, nome, modalidade, status, matricula, processo_sei, codigo_vaga e sub_judice. Dados pessoais: só service_role. Constante em src/lib/aprovados-e-cronograma-da-api.js.",
+      "GET /api/aprovados: a lista vigente de cada edital ativo (candidatos não removidos), com edital_id, edital, unidade, area (20261105190000), cargo, classificacao, nota, nome, modalidade, status, matricula, processo_sei, codigo_vaga e sub_judice. Dados pessoais: só service_role. Constante em src/lib/aprovados-e-cronograma-da-api.js.",
   },
   listar_cronograma_da_api: {
     argumentos: [],
     critica: false,
     resumo:
-      "GET /api/cronograma: as etapas de cada edital ativo, com edital_id, edital, unidade, ordem, atividade, data_inicio e data_fim. Só service_role. Constante em src/lib/aprovados-e-cronograma-da-api.js.",
+      "GET /api/cronograma: as etapas de cada edital ativo, com edital_id, edital, unidade, area (20261105190000), ordem, atividade, data_inicio e data_fim. Só service_role. Constante em src/lib/aprovados-e-cronograma-da-api.js.",
   },
   listar_monitoramento_operacional: {
     argumentos: ["p_versao"],

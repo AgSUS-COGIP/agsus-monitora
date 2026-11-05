@@ -21,6 +21,7 @@ const APROVADOS = [
     edital_id: "e1",
     edital: "001/2026",
     unidade: "DSEI Yanomami",
+    area: "Saúde Indígena",
     cargo: "Enfermeiro",
     classificacao: 1,
     nota: "87,5",
@@ -36,6 +37,7 @@ const APROVADOS = [
     edital_id: "e2",
     edital: "002/2026",
     unidade: "DSEI Alto Rio Negro",
+    area: "SEDE",
     cargo: "Médico",
     classificacao: null,
     nota: null,
@@ -54,6 +56,7 @@ const ETAPAS = [
     edital_id: "e1",
     edital: "001/2026",
     unidade: "DSEI Yanomami",
+    area: "Saúde Indígena",
     ordem: 1,
     atividade: "Publicação do edital",
     data_inicio: "2026-03-02",
@@ -63,6 +66,7 @@ const ETAPAS = [
     edital_id: "e2",
     edital: "002/2026",
     unidade: "DSEI Alto Rio Negro",
+    area: "SEDE",
     ordem: 2,
     atividade: "Análise curricular",
     data_inicio: null,
@@ -76,6 +80,7 @@ describe("formato dos aprovados", () => {
       edital_id: "e1",
       edital: "001/2026",
       unidade: "DSEI Yanomami",
+      area: "Saúde Indígena",
       cargo: "Enfermeiro",
       classificacao: 1,
       nota: 87.5,
@@ -119,6 +124,7 @@ describe("formato do cronograma", () => {
       edital_id: "e1",
       edital: "001/2026",
       unidade: "DSEI Yanomami",
+      area: "Saúde Indígena",
       ordem: 1,
       atividade: "Publicação do edital",
       data_inicio: "2026-03-02",
@@ -324,15 +330,14 @@ describe("migration 20261105150000 (leituras da API)", () => {
     },
   );
 
-  it("as leituras devolvem exatamente os campos que a API formata", () => {
+  it("as leituras devolvem os campos que a API formata (a área veio em 20261105190000)", () => {
     const campos = (nome) =>
       [...funcao(nome).matchAll(/^\s+'(\w+)', [mc]\./gm)].map((m) => m[1]);
+    const semArea = (objeto) => Object.keys(objeto).filter((k) => k !== "area");
     expect(campos("listar_aprovados_da_api")).toEqual(
-      Object.keys(aprovadoDaApi({})),
+      semArea(aprovadoDaApi({})),
     );
-    expect(campos("listar_cronograma_da_api")).toEqual(
-      Object.keys(etapaDaApi({})),
-    );
+    expect(campos("listar_cronograma_da_api")).toEqual(semArea(etapaDaApi({})));
   });
 
   it("só lista vigente, edital ativo e candidato não removido", () => {
@@ -347,5 +352,65 @@ describe("migration 20261105150000 (leituras da API)", () => {
     expect(ENSAIO).toContain(corpo(MIGRATION));
     expect(ENSAIO.trimEnd().endsWith("rollback;")).toBe(true);
     expect(ENSAIO).not.toMatch(/^commit;/m);
+  });
+});
+
+describe("migration 20261105190000 (área nas leituras da API)", () => {
+  const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
+  const NOME = "20261105190000_area_na_api.sql";
+  const MIGRATION = ler(`supabase/migrations/${NOME}`);
+  const ENSAIO = ler(`supabase/ensaios/${NOME}`);
+  const ROLLBACK = ler(`supabase/rollback/${NOME}`);
+  const funcao = (texto, nome) => {
+    const inicio = texto.indexOf(`function public.${nome}()`);
+    return texto.slice(inicio, texto.indexOf("$function$;", inicio));
+  };
+  const campos = (nome) =>
+    [...funcao(MIGRATION, nome).matchAll(/^\s+'(\w+)', /gm)].map((m) => m[1]);
+
+  it("as três leituras trazem a área, pelo NO_AREA do edital", () => {
+    for (const nome of [
+      "listar_editais_da_api",
+      "listar_aprovados_da_api",
+      "listar_cronograma_da_api",
+    ]) {
+      const corpo = funcao(MIGRATION, nome);
+      expect(corpo).toContain(`'area', a."NO_AREA"`);
+      expect(corpo).toContain(
+        'left join public."TB_AREA" a on a."CO_AREA" = m."CO_AREA"',
+      );
+      // O rollback devolve a versão sem área.
+      expect(funcao(ROLLBACK, nome)).not.toContain("'area'");
+    }
+    expect(campos("listar_aprovados_da_api")).toEqual(
+      Object.keys(aprovadoDaApi({})),
+    );
+    expect(campos("listar_cronograma_da_api")).toEqual(
+      Object.keys(etapaDaApi({})),
+    );
+    expect(campos("listar_editais_da_api")).toEqual([
+      "id",
+      "unidade",
+      "area",
+      "edital",
+      "status",
+      "etapa",
+      "vagas_total",
+      "contratados",
+      "vagas_ociosas",
+      "risco",
+      "link_edital",
+    ]);
+  });
+
+  it("não mexe nas permissões; o ensaio aplica o mesmo corpo e desfaz", () => {
+    expect(MIGRATION).not.toMatch(/\b(grant|revoke)\b/i);
+    expect(ENSAIO).toContain(
+      MIGRATION.slice(
+        MIGRATION.indexOf("\nbegin;\n") + 8,
+        MIGRATION.lastIndexOf("\ncommit;"),
+      ),
+    );
+    expect(ENSAIO.trimEnd().endsWith("rollback;")).toBe(true);
   });
 });

@@ -1,6 +1,7 @@
 /*
   GET /api/editais — os editais do monitoramento: unidade, edital, status,
-  etapa, vagas, contratados, ociosas, risco e o link do edital (formato em
+  etapa, vagas, contratados, ociosas, risco, link do edital e área — Saúde
+  Indígena, SEDE ou Projetos (formato em
   src/lib/editais-da-api.js).
 
   Acesso: sem login. Quem chama manda a chave fixa da API
@@ -18,8 +19,9 @@
                                 (gere uma longa e aleatória, ex.:
                                 `openssl rand -hex 32`)
 
-  Filtros opcionais na query: ?edital=&unidade= (contém) e ?status=&etapa=&risco=
-  (igual, sem caixa nem acento).
+  Filtros opcionais na query: ?edital=&unidade= (contém) e
+  ?status=&etapa=&risco=&area= (igual, sem caixa nem acento; ?area= aceita o
+  nome ou o código: saude-indigena, sede, projetos).
 
   COMO USAR EM OUTRA APLICAÇÃO
 
@@ -43,7 +45,8 @@
 
        {
          "editais": [
-           { "id": 1, "unidade": "DSEI Yanomami", "edital": "001/2026",
+           { "id": 1, "unidade": "DSEI Yanomami", "area": "Saúde Indígena",
+             "edital": "001/2026",
              "status": "Em andamento", "etapa": "Análise curricular",
              "vagas": 10, "contratados": 4, "ociosas": 6, "risco": "Alto",
              "link": "https://.../edital-001-2026.pdf" }
