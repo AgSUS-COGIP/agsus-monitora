@@ -107,12 +107,29 @@ export function criarRotaComChave({ rpc, montar }) {
         signal: AbortSignal.timeout(ESPERA_MS),
       });
       if (!resposta.ok) {
-        responder(res, 502, { erro: "falha_na_leitura" });
+        /*
+          O 502 diz o status HTTP do banco e o código do erro (ex.: 401 do
+          PostgREST = chave de servidor recusada; 42501 = sem permissão;
+          PGRST202 = função ausente). A mensagem inteira vai só para o log
+          da função na Vercel.
+        */
+        const erro = await resposta.json().catch(() => null);
+        console.error(`[api] ${rpc}: ${resposta.status}`, erro);
+        responder(res, 502, {
+          erro: "falha_na_leitura",
+          status_do_banco: resposta.status,
+          codigo: typeof erro?.code === "string" ? erro.code : null,
+        });
         return;
       }
       responder(res, 200, montar(await resposta.json(), req.query));
-    } catch {
-      responder(res, 502, { erro: "falha_na_leitura" });
+    } catch (falha) {
+      console.error(`[api] ${rpc}:`, falha);
+      responder(res, 502, {
+        erro: "falha_na_leitura",
+        status_do_banco: null,
+        codigo: falha?.name === "TimeoutError" ? "tempo_esgotado" : null,
+      });
     }
   };
 }
