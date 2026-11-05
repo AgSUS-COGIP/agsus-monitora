@@ -4,9 +4,19 @@
   ponto de entrada). Guia: docs/arquitetura-react.md, seção "Como usar ui/".
 */
 export { Abas } from "./abas.tsx";
+export { AcoesDaLinha } from "./acoes-da-linha.tsx";
+export type {
+  AcaoPrincipalDaLinha,
+  PropriedadesDasAcoesDaLinha,
+} from "./acoes-da-linha.tsx";
 export type { AbaDaLista, PropriedadesDasAbas } from "./abas.tsx";
 export { Aviso } from "./aviso.tsx";
 export type { PropriedadesDoAviso } from "./aviso.tsx";
+export { BarraDeFiltros } from "./barra-de-filtros.tsx";
+export type {
+  BuscaDaBarra,
+  PropriedadesDaBarraDeFiltros,
+} from "./barra-de-filtros.tsx";
 export { BotaoDeAcao } from "./botao-de-acao.tsx";
 export {
   CaixaDeMarcarTodos,
@@ -115,4 +125,9 @@ export type {
   TabelaNoServidor,
 } from "./tabela-infinita.tsx";
 export { TopoDoPainel } from "./topo-do-painel.tsx";
+export {
+  gravarNaSessao,
+  lerDaSessao,
+  usarEstadoDaSessao,
+} from "./usar-estado-da-sessao.ts";
 export type { PropriedadesDoTopoDoPainel } from "./topo-do-painel.tsx";

@@ -13,7 +13,13 @@
   min-width: 0;
 }
 
+/* Os números do andamento ficam acima das abas, em toda aba. */
+.avd-pre-kpis {
+  margin-bottom: var(--space-3);
+}
+
 .avd-pre-resumo,
+.avd-pre-pessoas,
 .avd-pre-vagas,
 .avd-pre-eliminados {
   display: grid;

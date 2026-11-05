@@ -479,6 +479,7 @@ afterEach(async () => {
   await act(async () => painel?.raiz?.unmount());
   secao?.remove();
   document.body.innerHTML = "";
+  sessionStorage.clear();
   redefinirDadosDoMonitoramento();
   toast.mockClear();
   agendados = [];
@@ -981,6 +982,155 @@ describe("inclusão no lote por decisão da coordenação", () => {
       p_motivo: "Critério CORES",
       p_vaga: "179698",
     });
+  });
+
+  it("Pessoas: o card Inscritos abre a aba; a busca vai ao banco no edital todo e o filtro volta ao reabrir", async () => {
+    const supabase = comRespostas(COM_DECISAO(), {});
+    await montar(supabase);
+    // Abrir a Triagem não lê pessoa nenhuma.
+    expect(chamadasDe(supabase.rpc, "listar_pre_classificacao")).toHaveLength(
+      0,
+    );
+    await clicar(secao.querySelector("[data-kpi='inscritos'] button"));
+    await esperar();
+    expect(
+      secao.querySelector(".avd-pre [aria-selected='true']").dataset.aba,
+    ).toBe("pessoas");
+    expect(
+      secao
+        .querySelector("[data-kpi='inscritos'] button")
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    // "Todas": classificados e eliminados do edital todo, 50 por vez.
+    for (const grupo of ["CLASSIFICADOS", "ELIMINADOS"])
+      expect(
+        chamadasDe(supabase.rpc, "listar_pre_classificacao"),
+      ).toContainEqual({
+        p_edital: "e93",
+        p_vaga: null,
+        p_grupo: grupo,
+        p_busca: null,
+        p_apos: null,
+        p_limite: 50,
+      });
+    expect(secao.querySelector(".ui-barra-resultado").textContent).toBe(
+      "5 pessoas",
+    );
+    await digitar(
+      secao.querySelector("[data-acao='buscar-pessoa']"),
+      "7000004",
+    );
+    // A busca vai ao banco 300 ms depois da última tecla.
+    await esperar(() => new Promise((ok) => setTimeout(ok, 350)));
+    await esperar();
+    for (const grupo of ["CLASSIFICADOS", "ELIMINADOS"])
+      expect(
+        chamadasDe(supabase.rpc, "listar_pre_classificacao"),
+      ).toContainEqual(
+        expect.objectContaining({
+          p_vaga: null,
+          p_grupo: grupo,
+          p_busca: "7000004",
+        }),
+      );
+    const linhas = [
+      ...secao.querySelectorAll(".avd-pessoas-lista tbody tr[data-candidato]"),
+    ].map((tr) => tr.dataset.candidato);
+    expect(linhas).toEqual(["7000004"]);
+    expect(secao.querySelector(".ui-barra-quantos").textContent).toBe(
+      "1 filtro",
+    );
+    expect(
+      JSON.parse(sessionStorage.getItem("monitora:triagem:pessoas:e93")),
+    ).toEqual({ busca: "7000004", vaga: "", situacao: "TODAS" });
+
+    // F5: a tela monta de novo e volta com o filtro (na aba Pessoas).
+    await act(async () => painel.raiz.unmount());
+    secao.remove();
+    await montar(supabase);
+    await abrirAba("pessoas");
+    expect(secao.querySelector("[data-acao='buscar-pessoa']").value).toBe(
+      "7000004",
+    );
+    await clicar(secao.querySelector("[data-acao='limpar-filtros']"));
+    expect(secao.querySelector("[data-acao='buscar-pessoa']").value).toBe("");
+    expect(sessionStorage.getItem("monitora:triagem:pessoas:e93")).toBeNull();
+  });
+
+  it('Pessoas: a ação da linha inclui no lote com a pessoa já marcada; o "⋯" revoga e mostra a vaga', async () => {
+    const incluir = vi.fn(() => ({
+      data: { incluidos: 1, fichas_criadas: 1 },
+      error: null,
+    }));
+    const supabase = comRespostas(COM_DECISAO(), {
+      incluir_no_lote_por_decisao: incluir,
+    });
+    await montar(supabase);
+    await abrirAba("pessoas");
+    const linha = (codigo) =>
+      secao.querySelector(`.avd-pessoas-lista [data-candidato='${codigo}']`);
+    // Fora do lote: o botão da linha é "Incluir no lote".
+    const principal = linha("7000004").querySelector(
+      "[data-acao='incluir-pessoa']",
+    );
+    expect(principal.textContent).toContain("Incluir no lote");
+    // No lote pela regra: nada a incluir.
+    expect(
+      linha("7000001").querySelector("[data-acao='incluir-pessoa']"),
+    ).toBeNull();
+    // Eliminado: o comunicado é a ação principal.
+    expect(
+      linha("7000009").querySelector("[data-acao='espelho-eliminado-pre']"),
+    ).not.toBeNull();
+    await clicar(principal);
+    expect(
+      document.querySelector("input[aria-label='Incluir 7000004']").checked,
+    ).toBe(true);
+    await clicar(
+      document.querySelector("[data-acao='confirmar-incluir-por-decisao']"),
+    );
+    await esperar();
+    expect(incluir).toHaveBeenCalledWith({
+      p_edital: "e93",
+      p_codigos: ["7000004"],
+      p_motivo: "Critério CORES",
+      p_vaga: "179698",
+    });
+
+    // Incluído por decisão: o "⋯" tem "Revogar decisão" (pede motivo na gaveta).
+    await clicar(linha("7000005").querySelector("[data-acao='abrir-menu']"));
+    const menu = linha("7000005").querySelector("[role='menu']");
+    expect(menu.getAttribute("aria-label")).toBe("Mais ações de 7000005");
+    expect(
+      [...menu.querySelectorAll("[role='menuitem']")].map((b) =>
+        b.textContent.trim(),
+      ),
+    ).toEqual(["Revogar decisão", "Ver na vaga", "Copiar código"]);
+    await clicar(menu.querySelector("[data-acao='pessoa-revogar']"));
+    const gaveta = document.querySelector("[data-revogar='7000005']");
+    expect(gaveta.querySelector("[data-acao='revogar-decisao']").disabled).toBe(
+      true,
+    );
+    await clicar(
+      [...document.querySelectorAll(".ui-gaveta button")].find(
+        (b) => b.textContent.trim() === "Cancelar",
+      ),
+    );
+    expect(document.querySelector("[data-revogar='7000005']")).toBeNull();
+
+    // "Ver na vaga": a aba Por vaga, com a vaga aberta.
+    await clicar(linha("7000005").querySelector("[data-acao='abrir-menu']"));
+    await clicar(
+      linha("7000005").querySelector("[data-acao='pessoa-ver-vaga']"),
+    );
+    await esperar();
+    expect(
+      secao.querySelector(".avd-pre [aria-selected='true']").dataset.aba,
+    ).toBe("vagas");
+    expect(secao.querySelector("[data-vaga-recolhida='179698']").open).toBe(
+      true,
+    );
+    expect(secao.querySelector("[data-vaga='179698']")).not.toBeNull();
   });
 
   it("revoga com motivo; a ficha concluída o banco recusa e a tela diz por quê", async () => {

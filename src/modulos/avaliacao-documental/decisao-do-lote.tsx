@@ -32,6 +32,8 @@ export interface IncluirPorDecisaoProps<C extends CandidatoForaDoLote> {
   ) => Promise<RespostaDaDecisao | null | undefined>;
   /** true quando incluiu (a gaveta fecha). */
   aoFechar: (incluiu: boolean) => void;
+  /** Já marcados ao abrir (a pessoa da linha, na aba Pessoas). */
+  marcadosDeInicio?: ReadonlyArray<CandidatoForaDoLote["id"]>;
 }
 
 export interface RevogarDecisaoProps {
@@ -100,9 +102,10 @@ export function IncluirPorDecisao<C extends CandidatoForaDoLote>({
   candidatos,
   aoIncluir,
   aoFechar,
+  marcadosDeInicio,
 }: IncluirPorDecisaoProps<C>) {
   const [marcados, setMarcados] = useState(
-    () => new Set<CandidatoForaDoLote["id"]>(),
+    () => new Set<CandidatoForaDoLote["id"]>(marcadosDeInicio ?? []),
   );
   const [motivo, setMotivo] = useState(MOTIVO_SUGERIDO_DA_DECISAO);
   const [busca, setBusca] = useState("");
@@ -247,6 +250,83 @@ export function IncluirPorDecisao<C extends CandidatoForaDoLote>({
               : marcados.size
                 ? `Incluir ${marcados.size} no lote`
                 : "Incluir no lote"}
+          </button>
+        </div>
+      </div>
+    </Gaveta>
+  );
+}
+
+export interface RevogarDecisaoNaGavetaProps extends RevogarDecisaoProps {
+  c: InscritoComDecisao & { nome?: string | null };
+  /** true quando revogou. */
+  aoFechar: (revogou: boolean) => void;
+}
+
+/**
+ * "Revogar decisão" pelo "⋯" de uma linha (aba Pessoas): a mesma confirmação
+ * com motivo, numa gaveta (a linha não tem espaço para o campo).
+ */
+export function RevogarDecisaoNaGaveta({
+  c,
+  aoRevogar,
+  aoFechar,
+}: RevogarDecisaoNaGavetaProps) {
+  const [motivo, setMotivo] = useState("");
+  const [erro, setErro] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const erroDoTexto = erroDoMotivo(motivo, MOTIVO_DA_REVOGACAO);
+  async function revogar() {
+    setErro("");
+    setEnviando(true);
+    const r = await aoRevogar(motivo.trim());
+    setEnviando(false);
+    if (r?.ok) aoFechar(true);
+    else setErro(r?.erro || "Não foi possível revogar.");
+  }
+  return (
+    <Gaveta
+      tituloId="avdRevogarTitulo"
+      titulo="Revogar decisão"
+      resumo={[c.codigo, c.nome].filter(Boolean).join(" · ")}
+      aoFechar={() => aoFechar(false)}
+      fecharAoClicarFora={false}
+    >
+      <div className="avd-gaveta-corpo" data-revogar={c.codigo}>
+        <SeloDaDecisao c={c} />
+        <Campo
+          rotulo="Motivo para revogar"
+          obrigatorio
+          erro={motivo && erroDoTexto ? erroDoTexto : undefined}
+        >
+          <textarea
+            rows={3}
+            maxLength={MOTIVO_DA_REVOGACAO.maximo}
+            value={motivo}
+            onChange={(ev) => setMotivo(ev.target.value)}
+          />
+        </Campo>
+        {erro ? (
+          <Aviso tom="danger" papel="alert">
+            {erro}
+          </Aviso>
+        ) : null}
+        <div className="ui-acoes">
+          <button
+            type="button"
+            className="btn secondary"
+            onClick={() => aoFechar(false)}
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="btn"
+            data-acao="revogar-decisao"
+            disabled={Boolean(erroDoTexto) || enviando}
+            onClick={() => void revogar()}
+          >
+            {enviando ? "Revogando…" : "Revogar decisão"}
           </button>
         </div>
       </div>

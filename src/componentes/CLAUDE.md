@@ -18,6 +18,8 @@ arquivo em kebab-case, componente em PascalCase.
 ```
 icone.tsx                    <Icone nome="…"> — Lucide, do mesmo registro de src/modules/icones.ts
 selo-de-treinamento.tsx      <SeloDeTreinamento>: selo "Treinamento" do edital de treinamento
+seletor-de-edital.tsx        <SeletorDeEdital>: a escolha do edital das telas da seleção (Triagem,
+                             Avaliação documental, Classificação), com selo e "Mostrar todos"
 pessoas-online/              "Pessoas online" no cabeçalho (filha da casca: src/app/casca/pecas.tsx); estado em src/app/presenca.ts
 aviso-de-versao/             faixa "Há uma versão nova" no topo (filha da casca); regra em src/app/aviso-de-versao.ts
 busca-global/                busca Ctrl+K (filha da raiz); a escolha vai ao legado por evento
