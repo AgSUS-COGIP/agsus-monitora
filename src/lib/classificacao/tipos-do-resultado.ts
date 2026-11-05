@@ -99,6 +99,8 @@ export interface RecorteDasListas {
   vaga: string;
   lista: string;
   busca: string;
+  /** "", "LISTA", a situação da linha, "ELIMINADOS" ou "AGUARDANDO". */
+  situacao?: string;
 }
 export type VagaRecortada = VagaDoResultado & {
   linhas: LinhaDaLista[];

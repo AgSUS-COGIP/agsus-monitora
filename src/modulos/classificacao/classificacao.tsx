@@ -5,23 +5,16 @@ import type {
   RegistroDaClassificacao,
   OpcoesDaTela,
 } from "./tipos-do-estado.ts";
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
-import { sufixoDeTreinamento } from "../../lib/edital-de-treinamento.ts";
+import { SeletorDeEdital } from "../../componentes/seletor-de-edital.tsx";
 import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.ts";
+import { Aviso, Segmentado, TopoDoPainel } from "../../ui/index.ts";
 import { Agenda } from "./agenda.tsx";
 import { criarEstadoDaClassificacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import { criarEstadoDaAgenda } from "./estado-da-agenda.ts";
@@ -91,7 +84,6 @@ function TelaDaArea({
   e,
 }: PropsDaTela & { e: SnapshotDaClassificacao }) {
   const [visao, setVisao] = useState("listas");
-  const idEdital = useId();
   const recarregar = () => {
     void estado.carregar(e.area);
   };
@@ -100,7 +92,6 @@ function TelaDaArea({
       calcularClassificacao(dados, tipo),
     [],
   );
-  const editalEscolhido = e.editais.find((ed) => ed.id === e.editalId);
 
   /* A agenda das entrevistas acompanha o edital escolhido (também preenche o documento). */
   useEffect(() => {
@@ -129,7 +120,6 @@ function TelaDaArea({
           !e.area || e.carregandoEditais || e.carregandoEdital
         }
       >
-        <SeloDeTreinamento edital={editalEscolhido} className="" />
         <SeloDeAvisos modulo="classificacao" />
       </TopoDoPainel>
 
@@ -153,42 +143,23 @@ function TelaDaArea({
 
       {e.semAcesso ? null : (
         <>
-          <section
-            className="ui-card classificacao-edital"
-            aria-label="Edital"
-            data-tour="classificacao-edital"
-          >
-            <Campo rotulo="Edital">
-              <select
-                id={idEdital}
-                data-tour="classificacao-seletor-edital"
-                value={e.editalId}
-                disabled={!e.carregado}
-                onChange={(ev) => void estado.escolherEdital(ev.target.value)}
-              >
-                <option value="">
-                  {e.carregado
-                    ? e.editais.length
-                      ? "Escolha o edital"
-                      : "Nenhum edital com análises nesta área"
-                    : "Carregando…"}
-                </option>
-                {e.editais.map((ed) => (
-                  <option key={ed.id} value={ed.id}>
-                    {[ed.edital, ed.unidade].filter(Boolean).join(" - ")}
-                    {ed.candidatos
-                      ? ` (${ed.candidatos.toLocaleString("pt-BR")})`
-                      : ""}
-                    {ed.versao_regra
-                      ? ` · ${rotuloDaVersao({ versao: ed.versao_regra, nome: ed.nome_regra })}`
-                      : ""}
-                    {sufixoDeTreinamento(ed)}
-                  </option>
-                ))}
-              </select>
-            </Campo>
-            <SeloDeTreinamento edital={editalEscolhido} className="" />
-          </section>
+          <SeletorDeEdital
+            className="classificacao-edital"
+            tour="classificacao-seletor-edital"
+            editais={e.editais}
+            escolhido={e.editalId}
+            carregado={e.carregado}
+            vazio="Nenhum edital com análises nesta área"
+            complemento={(ed) =>
+              (ed.candidatos
+                ? ` (${ed.candidatos.toLocaleString("pt-BR")})`
+                : "") +
+              (ed.versao_regra
+                ? ` · ${rotuloDaVersao({ versao: ed.versao_regra, nome: ed.nome_regra })}`
+                : "")
+            }
+            aoEscolher={(id) => void estado.escolherEdital(id)}
+          />
 
           {e.erroDoEdital ? (
             <Aviso tom="danger" papel="alert">

@@ -276,6 +276,7 @@ afterEach(async () => {
   await act(async () => painel?.raiz?.unmount());
   secao?.remove();
   document.body.innerHTML = "";
+  sessionStorage.clear();
   redefinirDadosDoMonitoramento();
   toast.mockClear();
   baixar.mockClear();
@@ -1890,5 +1891,132 @@ describe("Gerar com a lista calculada pelo Python", () => {
     ).toContain("O pedido ao GitHub não saiu (SEM_TOKEN).");
     expect(nomes(semDisparo)).not.toContain("obter_calculo_classificacao");
     expect(secao.querySelector("[data-acao='gerar']").disabled).toBe(false);
+  });
+});
+
+describe("família da seleção na Classificação: encontrar a pessoa, cards e ⋯", () => {
+  const nomesNaVaga = () =>
+    [
+      ...secao.querySelectorAll(".classificacao-vaga tbody tr[data-candidato]"),
+    ].map((tr) => tr.querySelector(".classificacao-nome").textContent);
+
+  it("a barra fica à vista: busca pelo código, situação e o filtro volta no F5", async () => {
+    const supabase = supabaseFalso();
+    await montar(supabase);
+    await abrirEdital();
+    const barra = secao.querySelector(
+      ".ui-barra-de-filtros.classificacao-filtros",
+    );
+    expect(barra.getAttribute("aria-label")).toBe("Encontrar a pessoa");
+    expect(barra.querySelector(".ui-barra-resultado").textContent).toBe(
+      "4 pessoas",
+    );
+    // O código da inscrição (103) acha a Caio, que a lista não mostra.
+    await digitar(barra.querySelector("[data-acao='buscar-candidato']"), "103");
+    expect(nomesNaVaga()).toEqual(["Caio Parda"]);
+    expect(barra.querySelector(".ui-barra-quantos").textContent).toBe(
+      "1 filtro",
+    );
+    expect(
+      JSON.parse(sessionStorage.getItem("monitora:classificacao:recorte:e83")),
+    ).toMatchObject({ busca: "103" });
+
+    // F5: a tela monta de novo e o recorte do edital volta.
+    await act(async () => painel.raiz.unmount());
+    secao.remove();
+    await montar(supabase);
+    await abrirEdital();
+    expect(secao.querySelector("[data-acao='buscar-candidato']").value).toBe(
+      "103",
+    );
+    await clicar(secao.querySelector("[data-acao='limpar-filtros']"));
+    expect(nomesNaVaga()).toHaveLength(3);
+    expect(
+      sessionStorage.getItem("monitora:classificacao:recorte:e83"),
+    ).toBeNull();
+  });
+
+  it("os cards filtram a situação: Eliminados abre a lista deles; de novo, volta a todas", async () => {
+    await montar(supabaseFalso());
+    await abrirEdital();
+    const card = () => secao.querySelector("[data-kpi='eliminados'] button");
+    expect(
+      secao.querySelector("[data-kpi='eliminados'] .ui-kpi-detalhe")
+        .textContent,
+    ).toBe("25%");
+    await clicar(card());
+    expect(card().getAttribute("aria-pressed")).toBe("true");
+    expect(nomesNaVaga()).toEqual([]);
+    const eliminados = secao.querySelector(".classificacao-eliminados");
+    expect(eliminados.open).toBe(true);
+    expect(eliminados.textContent).toContain("Davi <b>Reprovado</b>");
+    expect(secao.querySelector("[data-acao='filtro-situacao']").value).toBe(
+      "ELIMINADOS",
+    );
+    await clicar(card());
+    expect(nomesNaVaga()).toHaveLength(3);
+  });
+
+  it("Ver posição abre a explicação; o ⋯ registra o empate da pessoa e copia o código", async () => {
+    const copiado = vi.fn(async () => {});
+    Object.defineProperty(globalThis.navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: copiado },
+    });
+    await montar(supabaseFalso());
+    await abrirEdital();
+    const linha = secao.querySelector(
+      `.classificacao-vaga tr[data-candidato='${A(1)}']`,
+    );
+    await clicar(linha.querySelector("[data-acao='ver-posicao']"));
+    expect(
+      document.getElementById("classificacaoCandidato").textContent,
+    ).toContain("Ana Empatada");
+    await clicar(
+      document.querySelector("#classificacaoCandidato .ui-gaveta-fechar"),
+    );
+    await clicar(linha.querySelector("[data-acao='abrir-menu']"));
+    expect(
+      [...linha.querySelectorAll("[role='menuitem']")].map((b) =>
+        b.textContent.trim(),
+      ),
+    ).toEqual(["Registrar sorteio do empate", "Copiar código"]);
+    await clicar(linha.querySelector("[data-acao='linha-copiar-codigo']"));
+    await esperar();
+    expect(copiado).toHaveBeenCalledWith("101");
+    expect(secao.textContent).toContain("Código 101 copiado.");
+    await clicar(linha.querySelector("[data-acao='abrir-menu']"));
+    await clicar(linha.querySelector("[data-acao='linha-resolver-empate']"));
+    expect(document.body.textContent).toContain("Sorteio do empate");
+    delete globalThis.navigator.clipboard;
+  });
+
+  it("a tabela da vaga mostra 50 por vez", async () => {
+    const muitos = Array.from({ length: 60 }, (_, i) =>
+      candidato(
+        i + 1,
+        `Pessoa ${String(i + 1).padStart(2, "0")}`,
+        `${70 - i},0`,
+      ),
+    ).map((c, i) => ({ ...c, analise_id: `a-${i}`, codigo: `9${i}` }));
+    await montar(
+      supabaseFalso({
+        obter_classificacao_do_edital: () => ({
+          ...structuredClone(EDITAL),
+          candidatos: muitos,
+          entrevistas: [],
+          desempates: [],
+        }),
+      }),
+    );
+    await abrirEdital();
+    expect(nomesNaVaga()).toHaveLength(50);
+    await clicar(
+      secao.querySelector(".classificacao-vaga [data-acao='carregar-mais']"),
+    );
+    expect(nomesNaVaga()).toHaveLength(60);
+    expect(
+      secao.querySelector(".classificacao-vaga [data-acao='carregar-mais']"),
+    ).toBeNull();
   });
 });

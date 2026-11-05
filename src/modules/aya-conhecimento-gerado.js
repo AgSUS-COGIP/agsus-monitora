@@ -2400,6 +2400,26 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-classificacao.md",
+    titulo: "Achar uma pessoa na Classificação",
+    perguntas: [
+      "achar uma pessoa na classificacao",
+      "buscar candidato na classificacao",
+      "procurar pelo codigo na classificacao",
+      "filtrar por situacao na classificacao",
+      "cards da classificacao",
+      "ver posicao do candidato",
+      "tres pontinhos da classificacao",
+      "filtro da classificacao some ao recarregar",
+    ],
+    resposta:
+      'Nas Listas da Classificação, a barra "Encontrar a pessoa" fica sempre à vista: a busca pelo nome ou pelo código da inscrição (a tecla "/" leva até ela; Esc apaga), a vaga, a lista (geral ou de uma modalidade) e a situação (Nas listas, Na vaga, Cadastro reserva, Convocados, Aptos, Eliminados ou Aguardando análise). Embaixo, quantas pessoas o filtro mostra, quantos filtros estão em uso e "Limpar". O filtro fica guardado nesta aba do navegador para cada edital e volta depois de recarregar a página. Os cards do alto também filtram: Nas listas, Eliminados e Aguardando análise mostram só essas pessoas (de novo, voltam a todas); Candidatos tira o filtro de situação. Cada tabela da vaga mostra 50 pessoas por vez (mais 50 ao rolar ou em "Carregar mais"). Cada linha tem "Ver posição" (ou "Ver motivo", nos eliminados), que abre a explicação, e o "⋯" com "Copiar código" e, para quem edita, o registro do sorteio ou da decisão do empate daquela pessoa. A busca por CPF ainda não existe: a Classificação não traz o CPF.',
+    fato: "",
+    fonte:
+      "src/modulos/classificacao/listas.tsx; src/lib/classificacao/dados.ts",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
     titulo: "Quais editais aparecem na Classificação",
     perguntas: [
       "quais editais aparecem na classificacao",

@@ -216,15 +216,70 @@ export const RECORTE_VAZIO: Readonly<RecorteDasListas> = Object.freeze({
   vaga: "",
   lista: "geral",
   busca: "",
+  situacao: "",
 });
 
+/*
+  A situação do recorte: "" (todas), "LISTA" (só quem está nas listas), a
+  situação da linha (VAGA, CR, CONVOCADO, APTO), "ELIMINADOS" ou
+  "AGUARDANDO" (ficha não concluída). Os cards da tela levam a elas.
+*/
+export const SITUACOES_DO_RECORTE: ReadonlyArray<{
+  valor: string;
+  rotulo: string;
+}> = Object.freeze([
+  { valor: "", rotulo: "Todas" },
+  { valor: "LISTA", rotulo: "Nas listas" },
+  { valor: "VAGA", rotulo: "Na vaga" },
+  { valor: "CR", rotulo: "Cadastro reserva" },
+  { valor: "CONVOCADO", rotulo: "Convocados" },
+  { valor: "APTO", rotulo: "Aptos" },
+  { valor: "ELIMINADOS", rotulo: "Eliminados" },
+  { valor: "AGUARDANDO", rotulo: "Aguardando análise" },
+]);
+const SITUACOES_VALIDAS = new Set(SITUACOES_DO_RECORTE.map((s) => s.valor));
+const DA_LINHA = new Set(["VAGA", "CR", "CONVOCADO", "APTO"]);
+
+const textoDoRecorte = (valor: unknown) =>
+  typeof valor === "string" ? valor : valor == null ? "" : String(valor);
+
+/** O recorte guardado na sessão (ou vindo de fora), no formato de agora. */
+export function normalizarRecorte(valor: unknown): RecorteDasListas {
+  const v =
+    valor && typeof valor === "object"
+      ? (valor as Record<string, unknown>)
+      : {};
+  const situacao = textoDoRecorte(v.situacao);
+  return {
+    vaga: textoDoRecorte(v.vaga),
+    lista: textoDoRecorte(v.lista) || RECORTE_VAZIO.lista,
+    busca: textoDoRecorte(v.busca).slice(0, 120),
+    situacao: SITUACOES_VALIDAS.has(situacao) ? situacao : "",
+  };
+}
+
+/** A chave da sessão: o recorte de cada edital (volta no F5). */
+export const chaveDoRecorte = (editalId: string) =>
+  editalId ? `monitora:classificacao:recorte:${editalId}` : "";
+
+/**
+ * As vagas do recorte: a vaga, a lista (geral ou de uma modalidade), a busca
+ * pelo nome ou pelo código (`codigos`: análise → código da inscrição) e a
+ * situação. Com busca ou situação, a vaga que fica vazia sai.
+ */
 export function recortarResultado(
   resultado: ResultadoDoMotor | null | undefined,
   recorte: RecorteDasListas = RECORTE_VAZIO,
+  codigos: ReadonlyMap<string, string> = new Map(),
 ) {
   if (!resultado) return [];
   const busca = semAcento(recorte.busca).trim();
-  const casa = (nome: string) => !busca || semAcento(nome).includes(busca);
+  const situacao = recorte.situacao || "";
+  const casa = (nome: string, analiseId: string) =>
+    !busca ||
+    semAcento(nome).includes(busca) ||
+    semAcento(codigos.get(analiseId) ?? "").includes(busca);
+  const comLinhas = !situacao || situacao === "LISTA" || DA_LINHA.has(situacao);
   return resultado.vagas
     .filter((v) => !recorte.vaga || v.chave === recorte.vaga)
     .map((v) => {
@@ -234,26 +289,57 @@ export function recortarResultado(
           : v.porModalidade[recorte.lista] || [];
       return {
         ...v,
-        linhas: linhas.filter((l) => casa(l.nome)),
-        eliminadosFiltrados: v.eliminados.filter((e) => casa(e.nome)),
-        aguardandoFiltrados: (v.aguardando || []).filter((a) => casa(a.nome)),
+        linhas: comLinhas
+          ? linhas.filter(
+              (l) =>
+                casa(l.nome, l.analiseId) &&
+                (!DA_LINHA.has(situacao) || l.situacao === situacao),
+            )
+          : [],
+        eliminadosFiltrados:
+          !situacao || situacao === "ELIMINADOS"
+            ? v.eliminados.filter((e) => casa(e.nome, e.analiseId))
+            : [],
+        aguardandoFiltrados:
+          !situacao || situacao === "AGUARDANDO"
+            ? (v.aguardando || []).filter((a) => casa(a.nome, a.analiseId))
+            : [],
       };
     })
     .filter(
       (v) =>
-        !busca ||
+        (!busca && !situacao) ||
         v.linhas.length ||
         v.eliminadosFiltrados.length ||
         v.aguardandoFiltrados.length,
     );
 }
 
-/** Quantos filtros estão ativos (para o painel recolhível). */
+/** Quantas pessoas o recorte mostra (nas listas, eliminadas e aguardando). */
+export function pessoasDoRecorte(
+  vagas: ReadonlyArray<{
+    linhas: readonly unknown[];
+    eliminadosFiltrados: readonly unknown[];
+    aguardandoFiltrados: readonly unknown[];
+  }>,
+): number {
+  return vagas.reduce(
+    (s, v) =>
+      s +
+      v.linhas.length +
+      v.eliminadosFiltrados.length +
+      v.aguardandoFiltrados.length,
+    0,
+  );
+}
+
+/** Quantos filtros estão ativos (a busca conta; a lista geral não). */
 export function filtrosAtivosDoRecorte(recorte: RecorteDasListas) {
   return [
     recorte.vaga,
     recorte.lista !== "geral" ? recorte.lista : "",
     recorte.busca.trim(),
+    recorte.situacao || "",
   ].filter(Boolean).length;
 }
 
