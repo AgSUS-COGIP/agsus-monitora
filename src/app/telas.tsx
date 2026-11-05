@@ -12,6 +12,7 @@ import type { ComponentType, LazyExoticComponent } from "react";
 import { ErrorBoundary } from "./ErrorBoundary.tsx";
 import { avisar, mostrarCarregamento } from "./avisos.ts";
 import { chamarAcaoDaCasca } from "./casca/acoes.ts";
+import { CabecalhoDoRelatorio } from "./casca/pecas.tsx";
 import {
   usarAviso,
   usarEstadoDaNavegacao,
@@ -473,6 +474,8 @@ export function Telas() {
     <>
       <FaixaDeManutencao />
       <div className="content">
+        {/* O cabeçalho do relatório em PDF, só na impressão. */}
+        <CabecalhoDoRelatorio />
         {TELAS_DA_CASCA.map((tela) => (
           <section
             key={tela}

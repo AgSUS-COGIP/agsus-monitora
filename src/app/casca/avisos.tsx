@@ -16,8 +16,8 @@ import { TelaDeCarregamento } from "./tela-de-carregamento.tsx";
 
   Quem abre é src/app/avisos.ts (`avisar`, `mostrarCarregamento`), em
   `window.monitoraToast`/`window.monitoraLoader`; a conexão se vigia sozinha.
-  Entra por portal da raiz do app (src/app/raiz.tsx) em `#avisosApp`, no
-  começo do <body>, fora do `#appScreen`, porque a tela de acesso também usa.
+  Fica no próprio `#raiz` (src/app/raiz.tsx), em `#avisosApp`, fora do
+  `#appScreen`, porque a tela de acesso também usa.
 */
 export function Avisos() {
   return (

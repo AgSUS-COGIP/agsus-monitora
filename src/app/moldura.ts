@@ -10,16 +10,29 @@ import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 import { avisar as avisarPadrao } from "./avisos.ts";
 
 /*
-  A moldura do app, sem React: a barra lateral recolhida (e aberta por cima no
-  celular), o tema claro/escuro, a tela cheia e o relatório em PDF.
+  A moldura do app como store: a barra lateral recolhida (e aberta por cima
+  no celular), o tema claro/escuro, a tela cheia e o cabeçalho do relatório
+  em PDF. Sem DOM nas ações: elas só mudam o estado.
 
-  As chaves do localStorage são as que o script do <head> do index.html lê
-  antes do primeiro quadro (barra e tema da visita anterior).
+  Quem leva o estado para a página é a casca (src/app/casca/pecas.tsx,
+  `MolduraNaPagina`): `ligarNaPagina()` aplica as classes de `body`
+  (`sidebar-collapsed`, `sidebar-open`, `dark-mode`, `app-fullscreen-fallback`,
+  `system-fullscreen-mode`) e o `html[data-theme]` a cada mudança, avisa a
+  barra lateral pelos eventos de eventos-da-barra-lateral.ts e acompanha a
+  largura da janela, o tema trocado em outra aba e a tela cheia do navegador
+  — e desliga tudo ao desmontar. O ícone da tela cheia (menu da conta) e o
+  cabeçalho do relatório são React e leem daqui.
+
+  O primeiro quadro é do index.html: a classe `sidebar-collapsed` do `<body>`
+  e o script do `<head>` (tema escuro de quem tem sessão guardada). O estado
+  inicial é lido de lá, para o React não desfazer o que já está pintado.
+
+  As chaves do localStorage são as que o script do <head> lê antes do
+  primeiro quadro (barra e tema da visita anterior).
 
   Contratos: `window.toggleSidebar`, `toggleDarkMode`, `toggleBrowserFullscreen`
   e `exportPDF` (casca em src/app/casca/ e barra lateral React), publicados por
-  src/app/sistema.ts. A barra lateral (React) lê a classe de `body` e o tema
-  de `html[data-theme]`, avisada pelos eventos de eventos-da-barra-lateral.ts.
+  src/app/sistema.ts.
 */
 
 export const CHAVE_DA_BARRA_RECOLHIDA = "agsus_monitora_sidebar_collapsed_v1";
@@ -35,6 +48,29 @@ export interface RecorteDoRelatorio {
   filtradas: PedidoDoResumo["linhas"];
 }
 
+/** O cabeçalho do relatório impresso (só na impressão: `.print-only`). */
+export interface CabecalhoDoRelatorio {
+  readonly titulo: string;
+  readonly geradoEm: string;
+  readonly filtros: string;
+  readonly processos: number;
+  readonly vagas: number;
+  readonly contratados: number;
+  readonly ociosas: number;
+  readonly pctOciosas: number;
+}
+
+export interface EstadoDaMoldura {
+  readonly barraRecolhida: boolean;
+  /** No celular, a gaveta aberta por cima. */
+  readonly barraAberta: boolean;
+  readonly temaEscuro: boolean;
+  /** Sem a tela cheia do navegador: o app expandido dentro da janela. */
+  readonly telaCheiaDoApp: boolean;
+  readonly telaCheiaDoNavegador: boolean;
+  readonly relatorio: CabecalhoDoRelatorio | null;
+}
+
 export interface OpcoesDaMoldura {
   documento?: Document;
   janela?: Window;
@@ -43,6 +79,37 @@ export interface OpcoesDaMoldura {
   alvoDaTelaCheia?: () => Element | null | undefined;
   relatorio?: () => RecorteDoRelatorio;
   areaAtual?: () => string;
+}
+
+/** Leva o estado para a página: classes, tema e os avisos da barra lateral. */
+function aplicarNaPagina(
+  documento: Document,
+  estado: EstadoDaMoldura,
+  anterior: EstadoDaMoldura | null,
+) {
+  const corpo = documento.body;
+  const html = documento.documentElement;
+  if (corpo) {
+    corpo.classList.toggle("sidebar-collapsed", estado.barraRecolhida);
+    corpo.classList.toggle("sidebar-open", estado.barraAberta);
+    // O CSS antigo ainda lê `body.dark-mode`; o novo, `html[data-theme]`.
+    corpo.classList.toggle("dark-mode", estado.temaEscuro);
+    corpo.classList.toggle("app-fullscreen-fallback", estado.telaCheiaDoApp);
+    corpo.classList.toggle(
+      "system-fullscreen-mode",
+      estado.telaCheiaDoApp || estado.telaCheiaDoNavegador,
+    );
+  }
+  html.setAttribute("data-theme", estado.temaEscuro ? "dark" : "");
+  html.style.colorScheme = estado.temaEscuro ? "dark" : "light";
+  if (
+    !anterior ||
+    anterior.barraRecolhida !== estado.barraRecolhida ||
+    anterior.barraAberta !== estado.barraAberta
+  )
+    avisarEvento(EVENTO_BARRA_ALTERNADA, undefined, documento);
+  if (!anterior || anterior.temaEscuro !== estado.temaEscuro)
+    avisarEvento(EVENTO_TEMA_ALTERADO, undefined, documento);
 }
 
 export function criarMoldura({
@@ -54,8 +121,28 @@ export function criarMoldura({
   relatorio = () => estadoDaVisaoGeral.obter(),
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
 }: OpcoesDaMoldura = {}) {
-  const corpo = () => documento.body;
-  const $ = (id: string) => documento.getElementById(id);
+  // O que o primeiro quadro (index.html) já pintou.
+  let estado: EstadoDaMoldura = Object.freeze({
+    barraRecolhida:
+      documento?.body?.classList.contains("sidebar-collapsed") ?? true,
+    barraAberta: documento?.body?.classList.contains("sidebar-open") ?? false,
+    temaEscuro:
+      documento?.documentElement?.getAttribute("data-theme") === "dark",
+    telaCheiaDoApp: false,
+    telaCheiaDoNavegador: Boolean(documento?.fullscreenElement),
+    relatorio: null,
+  });
+  const ouvintes = new Set<() => void>();
+
+  function publicar(mudancas: Partial<EstadoDaMoldura>) {
+    const novo = { ...estado, ...mudancas };
+    const mudou = (Object.keys(mudancas) as (keyof EstadoDaMoldura)[]).some(
+      (chave) => estado[chave] !== novo[chave],
+    );
+    if (!mudou) return;
+    estado = Object.freeze(novo);
+    ouvintes.forEach((ouvinte) => ouvinte());
+  }
 
   function guardar(chave: string, valor: string) {
     try {
@@ -75,77 +162,43 @@ export function criarMoldura({
   // ── Barra lateral ─────────────────────────────────────────────────────
 
   const ehCelular = () =>
-    janela.matchMedia(`(max-width:${LARGURA_DO_CELULAR}px)`).matches;
-  const avisarBarra = () => avisarEvento(EVENTO_BARRA_ALTERNADA);
+    Boolean(
+      janela?.matchMedia?.(`(max-width:${LARGURA_DO_CELULAR}px)`)?.matches,
+    );
 
   /* No celular, a barra só fica aberta quando a pessoa abriu (`sidebar-open`). */
   function ajustarBarra() {
-    if (ehCelular() && !corpo().classList.contains("sidebar-open"))
-      corpo().classList.add("sidebar-collapsed");
-    avisarBarra();
+    if (ehCelular() && !estado.barraAberta) publicar({ barraRecolhida: true });
   }
 
   function aplicarBarraGuardada() {
     if (ehCelular()) return;
     const guardada = ler(CHAVE_DA_BARRA_RECOLHIDA);
-    if (guardada === "0") corpo().classList.remove("sidebar-collapsed");
-    if (guardada === "1") corpo().classList.add("sidebar-collapsed");
-    avisarBarra();
+    if (guardada === "0") publicar({ barraRecolhida: false });
+    if (guardada === "1") publicar({ barraRecolhida: true });
   }
 
   function alternarBarra() {
     if (ehCelular()) {
-      const abrindo =
-        corpo().classList.contains("sidebar-collapsed") &&
-        !corpo().classList.contains("sidebar-open");
-      corpo().classList.toggle("sidebar-open", abrindo);
-      corpo().classList.toggle("sidebar-collapsed", !abrindo);
-      avisarBarra();
-      janela.dispatchEvent(new Event("resize"));
+      const abrindo = estado.barraRecolhida && !estado.barraAberta;
+      publicar({ barraAberta: abrindo, barraRecolhida: !abrindo });
+      janela?.dispatchEvent(new Event("resize"));
       return;
     }
     ajustarBarra();
-    corpo().classList.toggle("sidebar-collapsed");
-    avisarBarra();
-    guardar(
-      CHAVE_DA_BARRA_RECOLHIDA,
-      corpo().classList.contains("sidebar-collapsed") ? "1" : "0",
-    );
-  }
-
-  /* Mudou a largura (ou a orientação): no celular, a barra volta a recolher. */
-  function acompanharLargura() {
-    let espera: ReturnType<typeof setTimeout> | null = null;
-    const aoMudar = (atraso: number) => () => {
-      clearTimeout(espera!);
-      espera = setTimeout(ajustarBarra, atraso);
-    };
-    const aoRedimensionar = aoMudar(220);
-    const aoGirar = aoMudar(300);
-    janela.addEventListener("resize", aoRedimensionar);
-    janela.addEventListener("orientationchange", aoGirar);
-    return () => {
-      clearTimeout(espera!);
-      janela.removeEventListener("resize", aoRedimensionar);
-      janela.removeEventListener("orientationchange", aoGirar);
-    };
+    const recolhida = !estado.barraRecolhida;
+    publicar({ barraRecolhida: recolhida });
+    guardar(CHAVE_DA_BARRA_RECOLHIDA, recolhida ? "1" : "0");
   }
 
   // ── Tema ──────────────────────────────────────────────────────────────
 
-  const temaEscuro = () =>
-    documento.documentElement.getAttribute("data-theme") === "dark";
-
   function aplicarTema(escuro: boolean) {
-    documento.documentElement.setAttribute("data-theme", escuro ? "dark" : "");
-    documento.documentElement.style.colorScheme = escuro ? "dark" : "light";
-    // O CSS antigo ainda lê `body.dark-mode`; o novo, `html[data-theme]`.
-    corpo()?.classList.toggle("dark-mode", escuro);
-    avisarEvento(EVENTO_TEMA_ALTERADO);
+    publicar({ temaEscuro: escuro });
   }
 
   function alternarTema() {
-    const escuro = !temaEscuro();
+    const escuro = !estado.temaEscuro;
     guardar(CHAVE_DO_TEMA, escuro ? "1" : "0");
     aplicarTema(escuro);
   }
@@ -155,50 +208,21 @@ export function criarMoldura({
     aplicarTema(ler(CHAVE_DO_TEMA) === "1");
   }
 
-  /* O tema trocado em outra aba chega pelo `storage`. Devolve o cancelamento. */
-  function acompanharTemaDeOutraAba() {
-    const aoGuardar = (evento: StorageEvent) => {
-      if (evento.key && evento.key !== CHAVE_DO_TEMA) return;
-      if (evento.newValue !== "1" && evento.newValue !== "0") return;
-      aplicarTema(evento.newValue === "1");
-    };
-    janela.addEventListener("storage", aoGuardar);
-    return () => janela.removeEventListener("storage", aoGuardar);
-  }
-
   // ── Tela cheia ────────────────────────────────────────────────────────
-
-  const emTelaCheia = () =>
-    !!documento.fullscreenElement ||
-    corpo().classList.contains("app-fullscreen-fallback");
-
-  /* O ícone do item "Tela cheia" no menu da conta. */
-  function marcarTelaCheia() {
-    const icone = $("fullscreenActionIcon");
-    if (icone)
-      icone.className = emTelaCheia()
-        ? "fa-solid fa-compress"
-        : "fa-solid fa-expand";
-  }
 
   /* Sem a tela cheia do navegador: o app se expande dentro da janela. */
   function telaCheiaDoApp(forcar?: unknown) {
-    const ativa =
-      typeof forcar === "boolean"
-        ? forcar
-        : !corpo().classList.contains("app-fullscreen-fallback");
-    corpo().classList.toggle("app-fullscreen-fallback", ativa);
-    corpo().classList.toggle(
-      "system-fullscreen-mode",
-      ativa || !!documento.fullscreenElement,
-    );
-    marcarTelaCheia();
+    const ativa = typeof forcar === "boolean" ? forcar : !estado.telaCheiaDoApp;
+    publicar({
+      telaCheiaDoApp: ativa,
+      telaCheiaDoNavegador: Boolean(documento?.fullscreenElement),
+    });
     avisar(ativa ? "Modo expandido ativado." : "Modo expandido desativado.");
   }
 
   function alternarTelaCheia() {
     try {
-      if (corpo().classList.contains("app-fullscreen-fallback")) {
+      if (estado.telaCheiaDoApp) {
         telaCheiaDoApp(false);
         return;
       }
@@ -226,34 +250,10 @@ export function criarMoldura({
     } catch {
       // O navegador já saiu da tela cheia.
     }
-    if (corpo().classList.contains("app-fullscreen-fallback"))
-      telaCheiaDoApp(false);
-  }
-
-  function acompanharTelaCheia() {
-    const aoMudar = () => {
-      corpo().classList.toggle("system-fullscreen-mode", emTelaCheia());
-      marcarTelaCheia();
-    };
-    documento.addEventListener("fullscreenchange", aoMudar);
-    return () => documento.removeEventListener("fullscreenchange", aoMudar);
+    if (estado.telaCheiaDoApp) telaCheiaDoApp(false);
   }
 
   // ── Relatório em PDF (pelo diálogo de impressão, funciona sem rede) ────
-
-  function elemento(tag: string, estilo?: string, texto?: string) {
-    const el = documento.createElement(tag);
-    if (estilo) el.setAttribute("style", estilo);
-    if (texto !== undefined) el.textContent = texto;
-    return el;
-  }
-
-  function numero(rotulo: string, valor: number, estilo = "") {
-    const span = elemento("span", estilo);
-    const b = elemento("b", "", Number(valor || 0).toLocaleString("pt-BR"));
-    span.append(b, ` ${rotulo}`);
-    return span;
-  }
 
   function exportarPdf() {
     const geradoEm = new Date().toLocaleString("pt-BR", {
@@ -266,57 +266,23 @@ export function criarMoldura({
     // O recorte da Visão geral: filtros aplicados e os números dele.
     const { filtros, busca, filtradas } = relatorio();
     const resumo = resumoDoRelatorio({ filtros, busca, linhas: filtradas });
-    $("printReportHeader")?.remove();
-    const cabecalho = elemento("div");
-    cabecalho.id = "printReportHeader";
-    cabecalho.className = "print-only";
-    const caixa = elemento(
-      "div",
-      "padding:0 0 12px;border-bottom:2px solid #003b70;margin-bottom:14px;",
-    );
-    const filtrosAplicados = elemento(
-      "div",
-      "font-size:11px;color:#555;margin-top:6px;",
-    );
-    filtrosAplicados.append(
-      elemento("b", "", "Filtros:"),
-      ` ${resumo.filtros}`,
-    );
-    const numeros = elemento(
-      "div",
-      "font-size:12px;color:#222;margin-top:8px;display:flex;gap:18px;flex-wrap:wrap;",
-    );
-    const ociosas = numero(
-      `ociosas (${resumo.pctOciosas}%)`,
-      resumo.ociosas,
-      "color:#a3322b;",
-    );
-    numeros.append(
-      numero("processos", resumo.processos),
-      numero("vagas previstas", resumo.vagas),
-      numero("contratações", resumo.contratados),
-      ociosas,
-    );
-    caixa.append(
-      elemento(
-        "div",
-        "font-size:20px;font-weight:700;color:#003b70;",
+    publicar({
+      relatorio: Object.freeze({
         // O recorte é o da área aberta (Saúde Indígena, SEDE ou Projetos).
-        ["AgSUS Monitora", nomeDaArea(areaAtual())].filter(Boolean).join(" — "),
-      ),
-      elemento(
-        "div",
-        "font-size:12px;color:#444;margin-top:2px;",
-        `Relatório de processos seletivos · gerado em ${geradoEm}`,
-      ),
-      filtrosAplicados,
-      numeros,
-    );
-    cabecalho.append(caixa);
-    const conteudo = documento.querySelector(".content") || corpo();
-    conteudo.insertBefore(cabecalho, conteudo.firstChild);
+        titulo: ["AgSUS Monitora", nomeDaArea(areaAtual())]
+          .filter(Boolean)
+          .join(" — "),
+        geradoEm,
+        filtros: resumo.filtros,
+        processos: resumo.processos,
+        vagas: resumo.vagas,
+        contratados: resumo.contratados,
+        ociosas: resumo.ociosas,
+        pctOciosas: resumo.pctOciosas,
+      }),
+    });
     const limpar = () => {
-      $("printReportHeader")?.remove();
+      publicar({ relatorio: null });
       janela.removeEventListener("afterprint", limpar);
     };
     janela.addEventListener("afterprint", limpar);
@@ -329,19 +295,68 @@ export function criarMoldura({
     );
   }
 
+  // ── A página ──────────────────────────────────────────────────────────
+
+  /**
+   * Liga o estado à página (a casca chama ao montar): aplica agora e a cada
+   * mudança, e acompanha a largura (no celular, a barra volta a recolher),
+   * o tema trocado em outra aba e a tela cheia do navegador. Devolve o
+   * desligamento.
+   */
+  function ligarNaPagina(): () => void {
+    let aplicado: EstadoDaMoldura | null = null;
+    const aplicar = () => {
+      aplicarNaPagina(documento, estado, aplicado);
+      aplicado = estado;
+    };
+    aplicar();
+    ouvintes.add(aplicar);
+
+    let espera: ReturnType<typeof setTimeout> | null = null;
+    const aoMudar = (atraso: number) => () => {
+      clearTimeout(espera!);
+      espera = setTimeout(ajustarBarra, atraso);
+    };
+    const aoRedimensionar = aoMudar(220);
+    const aoGirar = aoMudar(300);
+    const aoGuardar = (evento: StorageEvent) => {
+      if (evento.key && evento.key !== CHAVE_DO_TEMA) return;
+      if (evento.newValue !== "1" && evento.newValue !== "0") return;
+      aplicarTema(evento.newValue === "1");
+    };
+    const aoMudarTelaCheia = () =>
+      publicar({ telaCheiaDoNavegador: Boolean(documento.fullscreenElement) });
+    janela.addEventListener("resize", aoRedimensionar);
+    janela.addEventListener("orientationchange", aoGirar);
+    janela.addEventListener("storage", aoGuardar as EventListener);
+    documento.addEventListener("fullscreenchange", aoMudarTelaCheia);
+    return () => {
+      ouvintes.delete(aplicar);
+      clearTimeout(espera!);
+      janela.removeEventListener("resize", aoRedimensionar);
+      janela.removeEventListener("orientationchange", aoGirar);
+      janela.removeEventListener("storage", aoGuardar as EventListener);
+      documento.removeEventListener("fullscreenchange", aoMudarTelaCheia);
+    };
+  }
+
   return {
+    obter: (): EstadoDaMoldura => estado,
+    assinar(ouvinte: () => void): () => void {
+      ouvintes.add(ouvinte);
+      return () => {
+        ouvintes.delete(ouvinte);
+      };
+    },
+    ligarNaPagina,
     ajustarBarra,
     aplicarBarraGuardada,
     alternarBarra,
-    acompanharLargura,
     aplicarTema,
     alternarTema,
     aplicarTemaGuardado,
-    acompanharTemaDeOutraAba,
-    marcarTelaCheia,
     alternarTelaCheia,
     sairDaTelaCheia,
-    acompanharTelaCheia,
     exportarPdf,
   };
 }

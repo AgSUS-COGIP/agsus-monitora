@@ -20,21 +20,21 @@ import { registrarTelasDoApp } from "./telas.tsx";
 /*
   A raiz do app: o ÚNICO `createRoot` do sistema. Ela entrega o contexto do
   app (a navegação, o aviso curto e as peças do sistema: presença, versão,
-  encerramento do edital, sessão) e desenha, por portal, nos lugares de
-  sempre do index.html:
+  encerramento do edital, sessão, moldura) e desenha, por portal, nos dois
+  lugares que o index.html pinta no primeiro quadro, antes do JavaScript:
 
-    #avisosApp      notificações, carregamento e conexão (src/app/casca/avisos.tsx)
-    #telaDeEntrada  a tela de acesso (src/app/entrada/)
+    #telaDeEntrada  a tela de acesso (src/app/entrada/), no lugar do cartão
     #appScreen      a casca: barra lateral, cabeçalho e as telas (rotas)
 
-  A busca global (Ctrl+K) fica no próprio `#raiz` (o diálogo vai por portal
-  para o fim do body). Os portais avulsos (src/app/portais-avulsos.tsx) põem
+  No próprio `#raiz` ficam os avisos por cima de tudo (`#avisosApp`:
+  notificações, carregamento e conexão, src/app/casca/avisos.tsx) e a busca
+  global (Ctrl+K; o diálogo vai por portal para o fim do body). Os portais avulsos (src/app/portais-avulsos.tsx) põem
   pedaços de React no DOM que ainda é feito à mão (a arara dos fogos, a
   cobertura do painel externo carregando).
 
   Os ids e as classes continuam os mesmos (CSS, testes e tours). Os portais
   deixam cada parte onde o HTML a espera (a tela de acesso dentro do
-  `#loginScreen`, os avisos fora do `#appScreen`) com uma árvore React só.
+  `#loginScreen`) com uma árvore React só.
 */
 
 export interface PropsDaRaiz {
@@ -45,7 +45,6 @@ export interface PropsDaRaiz {
   /** O estado do sistema para as partes da casca (src/app/sistema.ts). */
   pecas?: PecasDoApp | null;
   lugares: {
-    avisos: Element | null;
     entrada: Element | null;
     casca: Element | null;
   };
@@ -65,14 +64,13 @@ export function Raiz({
 }: PropsDaRaiz) {
   return (
     <ContextoDoApp.Provider value={{ navegacao, avisar, pecas }}>
-      <BuscaGlobalDoApp />
-      <PortaisAvulsos />
-      {portal(
+      <div id="avisosApp">
         <ErrorBoundary nome="os avisos do app">
           <Avisos />
-        </ErrorBoundary>,
-        lugares.avisos,
-      )}
+        </ErrorBoundary>
+      </div>
+      <BuscaGlobalDoApp />
+      <PortaisAvulsos />
       {portal(
         <ErrorBoundary nome="a tela de acesso">
           <TelaDeEntrada sessao={sessao} marca={marca} pedido={pedido} />
@@ -123,7 +121,6 @@ export function montarRaiz({
           navegacao={navegacao}
           {...props}
           lugares={{
-            avisos: lugar("avisosApp"),
             entrada,
             casca: lugar("appScreen"),
           }}
