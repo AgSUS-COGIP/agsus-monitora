@@ -61,8 +61,16 @@ export interface MarcoDoCatalogo {
   onde: string;
   /** A forma no céu (no Testar; o marco de verdade passa a dele). */
   forma: FormaDoMarco;
+  /**
+   * O texto escrito no céu no grande final dos fogos (Normal e Festa), até
+   * 14 caracteres; null, nenhum (no Festa, LETREIRO_DA_FESTA).
+   */
+  letreiro: string | null;
   padrao: OpcoesDoMarco;
 }
+
+/* O letreiro do Festa quando o marco não tem um. */
+export const LETREIRO_DA_FESTA = "Parabéns!";
 
 export interface MarcoPersonalizado extends OpcoesDoMarco {
   id: string;
@@ -123,6 +131,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Análises",
     onde: "src/modulos/analises/marcos.ts",
     forma: "coracao",
+    letreiro: "100%!",
     padrao: opcoes("fogos", "normal"),
   },
   {
@@ -131,6 +140,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Análises",
     onde: "src/lib/encerramento-do-edital.ts",
     forma: "estrela",
+    letreiro: "Fechou!",
     padrao: opcoes("estrelas", "festa"),
   },
   {
@@ -139,6 +149,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Análises",
     onde: "src/modulos/analises/marcos.ts",
     forma: "estrela",
+    letreiro: "Fila zerada!",
     padrao: opcoes("fogos", "normal"),
   },
   {
@@ -147,6 +158,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Análises",
     onde: "src/modulos/analises/marcos.ts",
     forma: "estrela",
+    letreiro: "Meta batida!",
     padrao: opcoes("fogos", "normal"),
   },
   {
@@ -155,6 +167,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Entrevistas",
     onde: "src/modulos/entrevistas/marcos.ts",
     forma: null,
+    letreiro: "Vaga pronta!",
     padrao: opcoes("fogos", "suave"),
   },
   {
@@ -163,6 +176,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Visão geral",
     onde: "src/modulos/visao-geral/boas-vindas.tsx",
     forma: { tipo: "numero", texto: "1.000" },
+    letreiro: null,
     padrao: opcoes("fogos", "festa"),
   },
   {
@@ -171,6 +185,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Acesso",
     onde: "src/modules/comemoracao-do-acesso.ts",
     forma: "check",
+    letreiro: "Boas-vindas!",
     padrao: opcoes("fogos", "normal"),
   },
   {
@@ -179,6 +194,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Aya",
     onde: "src/modulos/aya/aya.tsx",
     forma: null,
+    letreiro: "Valeu!",
     padrao: opcoes("fogos", "normal"),
   },
   {
@@ -187,12 +203,32 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Aya",
     onde: "src/modulos/aya/aya.tsx",
     forma: "estrela",
+    letreiro: "Mandou bem!",
     padrao: opcoes("fogos", "festa"),
   },
 ]);
 
 const marcoDoCatalogo = (id: string) =>
   CATALOGO_DE_MARCOS.find((m) => m.id === id);
+
+/**
+ * O letreiro de uma comemoração: o pedido (se veio; vazio, nenhum), o do
+ * marco do catálogo ou, no Festa, LETREIRO_DA_FESTA. Sem nenhum, null.
+ */
+export function letreiroDaComemoracao({
+  marco = "",
+  letreiro,
+  intensidade,
+}: {
+  marco?: string;
+  letreiro?: string | null;
+  intensidade?: string | null;
+}): string | null {
+  if (typeof letreiro === "string") return letreiro.trim() || null;
+  const doMarco = marco ? marcoDoCatalogo(marco)?.letreiro : null;
+  if (doMarco) return doMarco;
+  return intensidade === "festa" ? LETREIRO_DA_FESTA : null;
+}
 
 // ── Normalização ────────────────────────────────────────────────────────────
 

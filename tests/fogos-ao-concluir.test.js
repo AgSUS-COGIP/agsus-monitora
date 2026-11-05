@@ -483,3 +483,131 @@ describe("o aviso da comemoração", () => {
     expect(aya).toContain('forma: concluido.trilha ? "estrela" : null');
   });
 });
+
+describe("fogos mais divertidos: a dança, o letreiro e o desempenho", () => {
+  const dancando = (doc) => doc.querySelectorAll(".comemoracao__aya--danca");
+
+  it("no fim, a Aya volta para dançar (outra arara), solta confete num canvas próprio e tudo sai", () => {
+    const { doc, janela, quadros } = janelaComCanvas();
+    soltarFogos(doc, janela, { aleatorio: criarAleatorio(5) });
+    const voo = doc.querySelector(".comemoracao__aya");
+    // No começo, só o canvas dos fogos (o do confete entra perto da hora).
+    expect(doc.querySelectorAll("canvas.comemoracao__fogos")).toHaveLength(1);
+    let agora = 0;
+    let viuADanca = false;
+    let viuOConfete = false;
+    const transformacoes = new Set();
+    while (quadros.length) {
+      quadros.shift()((agora += 16.7));
+      const danca = dancando(doc);
+      // Nunca as duas araras juntas, nem duas dançando.
+      expect(danca.length).toBeLessThanOrEqual(1);
+      if (danca.length) {
+        viuADanca = true;
+        expect(voo.isConnected).toBe(false);
+        expect(danca[0].getAttribute("aria-hidden")).toBe("true");
+        transformacoes.add(danca[0].style.transform);
+      }
+      if (doc.querySelector("canvas.comemoracao__motor")) viuOConfete = true;
+    }
+    expect(viuADanca).toBe(true);
+    expect(transformacoes.size).toBeGreaterThan(30);
+    expect(viuOConfete).toBe(true);
+    expect(sobras(doc)).toBe(0);
+    expect(agora).toBeLessThanOrEqual(5600);
+  });
+
+  it("no Suave, sem dança e sem o canvas do confete", () => {
+    const { doc, janela, quadros } = janelaComCanvas();
+    soltarFogos(doc, janela, {
+      intensidade: "suave",
+      aleatorio: criarAleatorio(5),
+    });
+    let agora = 0;
+    while (quadros.length) {
+      quadros.shift()((agora += 16.7));
+      expect(dancando(doc)).toHaveLength(0);
+      expect(doc.querySelector("canvas.comemoracao__motor")).toBeNull();
+    }
+    expect(sobras(doc)).toBe(0);
+  });
+
+  it("o texto no céu é escrito num canvas fora da tela: no Festa (e com letreiro pedido); no Normal sem letreiro, não", () => {
+    const festa = janelaComCanvas();
+    soltarFogos(festa.doc, festa.janela, {
+      intensidade: "festa",
+      aleatorio: criarAleatorio(2),
+    });
+    expect(festa.contagem.fillText).toBe(1);
+    expect(festa.contagem.getImageData).toBe(1);
+    expect(festa.atribuicoes.font.size).toBeGreaterThan(0);
+
+    const normal = janelaComCanvas();
+    soltarFogos(normal.doc, normal.janela, { aleatorio: criarAleatorio(2) });
+    expect(normal.contagem.getImageData).toBeUndefined();
+
+    const pedido = janelaComCanvas();
+    soltarFogos(pedido.doc, pedido.janela, {
+      letreiro: "Valeu!",
+      aleatorio: criarAleatorio(2),
+    });
+    expect(pedido.contagem.getImageData).toBe(1);
+    for (const j of [festa, normal, pedido]) j.rodar();
+  });
+
+  it("com a aba escondida, nada é desenhado (nem avança)", () => {
+    const { doc, janela, quadros, contagem } = janelaComCanvas();
+    soltarFogos(doc, janela, { aleatorio: criarAleatorio(8) });
+    let agora = 0;
+    for (let i = 0; i < 90; i += 1) quadros.shift()((agora += 16.7));
+    Object.defineProperty(doc, "hidden", { value: true, configurable: true });
+    const antes = { ...contagem };
+    for (let i = 0; i < 300; i += 1) quadros.shift()((agora += 16.7));
+    expect(contagem).toEqual(antes);
+    expect(quadros).toHaveLength(1);
+    Object.defineProperty(doc, "hidden", { value: false, configurable: true });
+    while (quadros.length) quadros.shift()((agora += 16.7));
+    expect(sobras(doc)).toBe(0);
+  });
+
+  it("quadros lentos baixam a qualidade sozinha: menos brilho por quadro e, no fim, densidade de pixels 1", () => {
+    const lento = janelaComCanvas({ dpr: 2 });
+    soltarFogos(lento.doc, lento.janela, {
+      intensidade: "festa",
+      aleatorio: criarAleatorio(7),
+    });
+    const canvas = lento.doc.querySelector("canvas.comemoracao__fogos");
+    expect(canvas.width).toBe(2000);
+    // ~25 fps: dois níveis abaixo em pouco mais de um segundo.
+    let agora = 0;
+    for (let i = 0; i < 60; i += 1) lento.quadros.shift()((agora += 40));
+    expect(canvas.width).toBe(1000);
+    expect(lento.chamadas).toContainEqual(["setTransform", 1, 0, 0, 1, 0, 0]);
+    let quadrosLentos = 60;
+    while (lento.quadros.length) {
+      lento.quadros.shift()((agora += 40));
+      quadrosLentos += 1;
+    }
+    expect(sobras(lento.doc)).toBe(0);
+
+    // O mesmo show a 60 fps: nítido até o fim e com mais halos.
+    const rapido = janelaComCanvas({ dpr: 2 });
+    soltarFogos(rapido.doc, rapido.janela, {
+      intensidade: "festa",
+      aleatorio: criarAleatorio(7),
+    });
+    const nitido = rapido.doc.querySelector("canvas.comemoracao__fogos");
+    let quadrosRapidos = 0;
+    let t = 0;
+    while (rapido.quadros.length) {
+      rapido.quadros.shift()((t += 16.7));
+      quadrosRapidos += 1;
+      if (nitido.isConnected) expect(nitido.width).toBe(2000);
+    }
+    expect(quadrosRapidos).toBeGreaterThan(300);
+    // Sem o núcleo quente das faíscas: bem menos pontos por quadro.
+    expect(rapido.contagem.arc / quadrosRapidos).toBeGreaterThan(
+      (lento.contagem.arc / quadrosLentos) * 1.5,
+    );
+  });
+});

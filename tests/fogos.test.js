@@ -3,6 +3,7 @@ import { DURACAO_DOS_FOGOS_MS } from "../src/lib/comemoracao.ts";
 import { trajetoDaAya, pontoDaSoltura } from "../src/lib/fogos-cena.ts";
 import {
   alfaDoRastro,
+  APOTEOSE,
   avancarShow,
   brasa,
   brilhoDaParticula,
@@ -14,11 +15,14 @@ import {
   estourar,
   fatorDeSaida,
   FORMATOS,
+  FORMATOS_DA_APOTEOSE,
+  FORMATOS_DA_RAJADA,
   FORMATOS_DO_FINAL,
   fumacaDoEstouro,
   INTENSIDADES,
   intensidadeDoShow,
   lancarFoguete,
+  LETREIRO,
   LIMITE_DE_PARTICULAS,
   MARCO,
   moverFoguete,
@@ -26,7 +30,9 @@ import {
   NOMES_DOS_FORMATOS,
   paletaDosFogos,
   planejarShow,
+  RAJADA,
   showAcabou,
+  TOKENS_DAS_AREAS,
 } from "../src/lib/fogos.ts";
 
 /*
@@ -480,8 +486,12 @@ describe("o show inteiro", () => {
       aleatorio: criarAleatorio(7),
     });
     const { maximo } = rodar(show);
-    const { explosoes, final, duracaoMs } = INTENSIDADES.festa;
-    expect(show.estouros).toBe(explosoes + final + 1);
+    const { explosoes, final, duracaoMs, rajadas, tiros, apoteose } =
+      INTENSIDADES.festa;
+    // Comuns, rajadas, o marco, o grande final e a apoteose: todos estouram.
+    expect(show.estouros).toBe(
+      explosoes + rajadas * tiros + 1 + final + apoteose,
+    );
     expect(maximo).toBeGreaterThan(300);
     expect(maximo).toBeLessThanOrEqual(LIMITE_DE_PARTICULAS);
     expect(show.t).toBeLessThanOrEqual(duracaoMs / 1000 + 1e-9);
@@ -496,11 +506,27 @@ describe("o show inteiro", () => {
       avancarShow(show, 1 / 60);
       eventos.push(...show.eventos.splice(0));
     }
-    expect(eventos.filter((e) => e.papel === "marco")).toHaveLength(1);
-    expect(eventos.filter((e) => e.papel === "final")).toHaveLength(
+    const estouros = eventos.filter((e) => e.tipo === "estouro");
+    expect(estouros.filter((e) => e.papel === "marco")).toHaveLength(1);
+    expect(estouros.filter((e) => e.papel === "final")).toHaveLength(
       INTENSIDADES.cheio.final,
     );
+    expect(estouros.filter((e) => e.papel === "apoteose")).toHaveLength(
+      INTENSIDADES.cheio.apoteose,
+    );
+    // Um por foguete, mais o segundo tempo de cada bomba dupla.
+    expect(estouros).toHaveLength(
+      show.estouros +
+        show.planos.filter((p) => p.formato === "bombaDupla").length,
+    );
     expect(eventos.every((e) => typeof e.formato === "string")).toBe(true);
+    // Os foguetes que assobiam avisam o lançamento (o som), com a subida;
+    // o marco sempre assobia.
+    const lancamentos = eventos.filter((e) => e.tipo === "lancamento");
+    expect(lancamentos.length).toBeGreaterThan(1);
+    expect(lancamentos.filter((e) => e.papel === "marco")).toHaveLength(1);
+    expect(lancamentos.every((e) => e.subida > 0)).toBe(true);
+    expect(lancamentos.length).toBeLessThan(estouros.length / 2);
   });
 
   it("o teto baixo corta faíscas, e passo enorme (aba voltando) é limitado", () => {
@@ -518,5 +544,316 @@ describe("o show inteiro", () => {
     expect(show.t - t).toBeCloseTo(1 / 20);
     avancarShow(show, 0);
     expect(show.t - t).toBeCloseTo(1 / 20);
+  });
+});
+
+describe("formatos novos: coração, estrela, cometa e crepitante", () => {
+  const faiscas = (lista) => lista.filter((p) => p.tipo === "faisca");
+  const forcas = (lista) => lista.map((p) => Math.hypot(p.vx, p.vy));
+
+  it("coração: as faíscas desenham o coração em pé (a ponta para baixo)", () => {
+    const lista = faiscas(
+      estourar(
+        { formato: "coracao", cor: "#f0a" },
+        { x: 0, y: 0, aleatorio: () => 0.5 },
+      ),
+    );
+    expect(lista).toHaveLength(FORMATOS.coracao.faiscas);
+    // Não é uma esfera: a força varia com o contorno.
+    expect(Math.min(...forcas(lista))).toBeLessThan(
+      Math.max(...forcas(lista)) * 0.5,
+    );
+    // A ponta (a faísca mais para baixo) fica no meio; os lóbulos, dos lados.
+    const ponta = lista.reduce((a, b) => (b.vy > a.vy ? b : a));
+    expect(Math.abs(ponta.vx)).toBeLessThan(ponta.vy * 0.25);
+    const esquerda = lista.filter((p) => p.vx < -1).length;
+    const direita = lista.filter((p) => p.vx > 1).length;
+    expect(Math.abs(esquerda - direita)).toBeLessThan(lista.length * 0.1);
+    // Pouco peso: a forma não desaba antes de apagar.
+    expect(FORMATOS.coracao.peso).toBeLessThan(0.5);
+  });
+
+  it("estrela: cinco pontas (a força alterna entre ponta e vale)", () => {
+    const lista = faiscas(
+      estourar(
+        { formato: "estrela", cor: "#fd0" },
+        { x: 0, y: 0, aleatorio: () => 0.5 },
+      ),
+    );
+    expect(lista).toHaveLength(FORMATOS.estrela.faiscas);
+    const f = forcas(lista);
+    const maior = Math.max(...f);
+    expect(Math.min(...f)).toBeLessThan(maior * 0.6);
+    // Picos de força no contorno: as cinco pontas.
+    const picos = f.filter(
+      (v, i) =>
+        v > f[(i - 1 + f.length) % f.length] &&
+        v >= f[(i + 1) % f.length] &&
+        v > maior * 0.9,
+    );
+    expect(picos).toHaveLength(5);
+  });
+
+  it("cometa: poucos riscos grossos que soltam brasas da própria cor", () => {
+    const lista = faiscas(
+      estourar(
+        { formato: "cometa", cor: "#4fdcff" },
+        { x: 0, y: 0, fator: 0.5, aleatorio: criarAleatorio(2) },
+      ),
+    );
+    // Como a palmeira, não encolhe em tela pequena.
+    expect(lista).toHaveLength(FORMATOS.cometa.faiscas);
+    expect(lista.every((p) => p.tamanho >= 3 && p.emite > 0)).toBe(true);
+    expect(lista.every((p) => p.brasa === "#4fdcff")).toBe(true);
+    const show = criarShow({ ...tela, aleatorio: criarAleatorio(1) });
+    show.planos = [];
+    show.particulas = lista.map((p) => ({ ...p, x: 600, y: 200 }));
+    for (let i = 0; i < 30; i += 1) avancarShow(show, 1 / 60);
+    const brasas = show.particulas.slice(lista.length);
+    expect(brasas.length).toBeGreaterThan(5);
+    expect(brasas.every((p) => p.cor === "#4fdcff")).toBe(true);
+  });
+
+  it("crepitante: o crisântemo cujas pontas cintilam e estalam", () => {
+    const lista = faiscas(
+      estourar(
+        { formato: "crepitante", cor: "#fff" },
+        { x: 0, y: 0, aleatorio: criarAleatorio(3) },
+      ),
+    );
+    expect(lista).toHaveLength(FORMATOS.crepitante.faiscas);
+    expect(lista.every((p) => p.estala && p.cintila)).toBe(true);
+  });
+
+  it("brilho: no fim da vida a faísca pisca como brasa; cheia de vida, não", () => {
+    const fim = { tipo: "faisca", vida: 0.1, vidaMax: 1 };
+    expect(brilhoDaParticula(fim, () => 0.1)).toBeLessThan(
+      brilhoDaParticula(fim, () => 0.9),
+    );
+    const nova = { tipo: "faisca", vida: 0.9, vidaMax: 1 };
+    expect(brilhoDaParticula(nova, () => 0.1)).toBe(
+      brilhoDaParticula(nova, () => 0.9),
+    );
+  });
+});
+
+describe("rajadas, letreiro e apoteose", () => {
+  const letreiroDeTeste = Array.from({ length: 60 }, (_, i) => ({
+    x: 300 + i * 11,
+    y: 470 + (i % 6) * 5,
+  }));
+
+  it("rajadas: tiros pequenos em leque, do mesmo ponto, um atrás do outro, antes do marco", () => {
+    for (const intensidade of Object.keys(INTENSIDADES)) {
+      const { rajadas, tiros } = INTENSIDADES[intensidade];
+      const planos = planejarShow({
+        ...tela,
+        intensidade,
+        aleatorio: criarAleatorio(3),
+      });
+      const daRajada = planos.filter((p) => p.papel === "rajada");
+      expect(daRajada).toHaveLength(rajadas * tiros);
+      const [marco] = planos.filter((p) => p.papel === "marco");
+      const porBase = new Map();
+      for (const p of daRajada)
+        porBase.set(p.xBase, [...(porBase.get(p.xBase) || []), p]);
+      expect(porBase.size).toBe(rajadas);
+      for (const grupo of porBase.values()) {
+        expect(grupo).toHaveLength(tiros);
+        const instantes = grupo.map((p) => p.estouro).sort((a, b) => a - b);
+        for (let k = 1; k < instantes.length; k += 1)
+          expect(instantes[k] - instantes[k - 1]).toBeCloseTo(
+            RAJADA.intervalo,
+            9,
+          );
+        // Em leque: cada tiro num lugar; o mesmo formato na rajada inteira.
+        expect(new Set(grupo.map((p) => p.xAlvo)).size).toBe(tiros);
+        expect(new Set(grupo.map((p) => p.formato)).size).toBe(1);
+        expect(FORMATOS_DA_RAJADA).toContain(grupo[0].formato);
+        expect(grupo.every((p) => p.porte === RAJADA.porte)).toBe(true);
+        expect(Math.max(...instantes)).toBeLessThan(marco.estouro);
+      }
+    }
+    // A rajada estoura menor.
+    const cheio = estourar(
+      { formato: "peonia", cor: "#fff" },
+      { x: 0, y: 0, aleatorio: criarAleatorio(1) },
+    );
+    const pequeno = estourar(
+      { formato: "peonia", cor: "#fff", porte: RAJADA.porte },
+      { x: 0, y: 0, aleatorio: criarAleatorio(1) },
+    );
+    expect(pequeno.length).toBeLessThan(cheio.length * 0.6);
+  });
+
+  it("apoteose: depois do grande final, estouros quase juntos no alto, de ponta a ponta", () => {
+    for (const intensidade of Object.keys(INTENSIDADES)) {
+      const duracao = INTENSIDADES[intensidade].duracaoMs / 1000;
+      const planos = planejarShow({
+        ...tela,
+        intensidade,
+        aleatorio: criarAleatorio(8),
+      });
+      const apoteose = planos.filter((p) => p.papel === "apoteose");
+      expect(apoteose).toHaveLength(INTENSIDADES[intensidade].apoteose);
+      if (!apoteose.length) continue;
+      const finais = planos.filter((p) => p.papel === "final");
+      const instantes = apoteose.map((p) => p.estouro);
+      expect(Math.min(...instantes)).toBeGreaterThan(
+        Math.max(...finais.map((p) => p.estouro)),
+      );
+      expect(Math.max(...instantes)).toBeLessThanOrEqual(
+        duracao - APOTEOSE.estouraAntes + APOTEOSE.janela,
+      );
+      expect(apoteose.every((p) => p.yAlvo <= tela.altura * 0.3)).toBe(true);
+      expect(
+        apoteose.every((p) => FORMATOS_DA_APOTEOSE.includes(p.formato)),
+      ).toBe(true);
+      const xs = apoteose.map((p) => p.xAlvo);
+      // De ponta a ponta: com três, ao menos 0,84 × 1,6 / 3 da largura.
+      expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(
+        tela.largura * 0.44,
+      );
+    }
+  });
+
+  it("letreiro: estoura pouco antes do marco, escreve o texto e fica legível até perto do fim", () => {
+    const duracao = INTENSIDADES.festa.duracaoMs / 1000;
+    const planos = planejarShow({
+      ...tela,
+      intensidade: "festa",
+      pontos: pontosDeTeste,
+      letreiro: letreiroDeTeste,
+      aleatorio: criarAleatorio(2),
+    });
+    const [marco] = planos.filter((p) => p.papel === "marco");
+    const letreiros = planos.filter((p) => p.papel === "letreiro");
+    expect(letreiros).toHaveLength(1);
+    const [letreiro] = letreiros;
+    expect(letreiro.formato).toBe("marco");
+    expect(letreiro.pontos).toBe(letreiroDeTeste);
+    expect(letreiro.assobia).toBe(true);
+    expect(letreiro.estouro).toBeCloseTo(duracao - LETREIRO.estouraAntes, 9);
+    // Chega antes da forma e fica junto com ela até o fim: mais de 1 s legível.
+    expect(letreiro.estouro).toBeLessThan(marco.estouro);
+    expect(letreiro.fimDaForma).toBeGreaterThan(marco.fimDaForma);
+    expect(
+      letreiro.fimDaForma - (letreiro.estouro + MARCO.convergencia),
+    ).toBeGreaterThan(1);
+    expect(letreiro.fimDaForma).toBeCloseTo(duracao - LETREIRO.desfazAntes, 9);
+    // O grande final estoura acima do texto.
+    for (const p of planos.filter((q) => q.papel === "final"))
+      expect(p.yAlvo).toBeLessThanOrEqual(tela.altura * 0.5);
+    // As faíscas do letreiro vão, cada uma, para um ponto do texto.
+    const alvos = estourar(letreiro, {
+      x: letreiro.xAlvo,
+      y: letreiro.yAlvo,
+      aleatorio: criarAleatorio(1),
+    }).filter((p) => p.tipo === "alvo");
+    expect(alvos.map((p) => [p.xa, p.ya])).toEqual(
+      letreiroDeTeste.map((p) => [p.x, p.y]),
+    );
+  });
+
+  it("o show escreve o letreiro (do canvas) no Normal e no Festa; no Suave, não", () => {
+    // Um "canvas" que devolve o texto como um bloco cheio de pixels.
+    const amostrarTexto = () => {
+      const width = 200;
+      const height = 60;
+      const data = new Uint8ClampedArray(width * height * 4);
+      for (let y = 10; y < 50; y += 1)
+        for (let x = 10; x < 190; x += 1) data[(y * width + x) * 4 + 3] = 255;
+      return { data, width, height };
+    };
+    for (const [intensidade, escreve] of [
+      ["pequeno", false],
+      ["cheio", true],
+      ["festa", true],
+    ]) {
+      const show = criarShow({
+        ...tela,
+        intensidade,
+        letreiro: "Parabéns!",
+        amostrarTexto,
+        aleatorio: criarAleatorio(4),
+      });
+      expect(show.letreiro.length > 30).toBe(escreve);
+      expect(show.planos.some((p) => p.papel === "letreiro")).toBe(escreve);
+      // O texto fica abaixo da forma do marco.
+      if (escreve)
+        expect(Math.min(...show.letreiro.map((p) => p.y))).toBeGreaterThan(
+          tela.altura * 0.55,
+        );
+    }
+    // Sem texto, ou sem canvas e com letras (a fonte de pontos só tem
+    // algarismos e sinais), nada no céu: o show segue sem letreiro.
+    expect(
+      criarShow({ ...tela, letreiro: "", amostrarTexto }).letreiro,
+    ).toHaveLength(0);
+    expect(criarShow({ ...tela, letreiro: "Oba" }).letreiro).toHaveLength(0);
+    expect(
+      criarShow({ ...tela, letreiro: "100%" }).letreiro.length,
+    ).toBeGreaterThan(30);
+  });
+});
+
+describe("a Aya dança no fim e solta confete", () => {
+  it("no Normal e no Festa (com a Aya), um evento de confete, uma vez, de onde ela dança", () => {
+    for (const intensidade of ["cheio", "festa"]) {
+      const show = criarShow({
+        ...tela,
+        intensidade,
+        comAya: true,
+        aleatorio: criarAleatorio(3),
+      });
+      expect(show.danca).not.toBeNull();
+      const confetes = [];
+      while (!showAcabou(show)) {
+        avancarShow(show, 1 / 60);
+        for (const e of show.eventos.splice(0))
+          if (e.tipo === "confete") confetes.push(e);
+      }
+      expect(confetes).toHaveLength(1);
+      expect(confetes[0].x).toBe(show.danca.x);
+      expect(confetes[0].y).toBeLessThan(show.danca.y);
+    }
+    // No Suave, e sem a Aya, sem dança.
+    expect(
+      criarShow({ ...tela, intensidade: "pequeno", comAya: true }).danca,
+    ).toBeNull();
+    expect(criarShow({ ...tela, intensidade: "festa" }).danca).toBeNull();
+  });
+});
+
+describe("paleta da área", () => {
+  it("a cor da área (token do tema) entra primeiro na paleta e fica à mão", () => {
+    const tokens = {
+      "--brand-primary": "#0f5db7",
+      "--state-info": "#2b7de9",
+      "--state-success": "#1f9d55",
+    };
+    const ler = (nome) => tokens[nome] || "";
+    const sede = paletaDosFogos(ler, { area: "sede" });
+    expect(TOKENS_DAS_AREAS.sede).toBe("--state-info");
+    expect(sede.area).toBe("#2b7de9");
+    expect(sede.cores[0]).toBe("#2b7de9");
+    expect(paletaDosFogos(ler, { area: "saude-indigena" }).area).toBe(
+      "#1f9d55",
+    );
+    // Área sem token ou desconhecida: a paleta de sempre.
+    expect(paletaDosFogos(ler, { area: "projetos" }).area).toBeNull();
+    expect(paletaDosFogos(ler, { area: "outra" }).area).toBeNull();
+    expect(paletaDosFogos(ler).cores).toEqual(
+      paletaDosFogos(ler, { area: "outra" }).cores,
+    );
+    // Coração e estrela saem na cor da área.
+    const planos = planejarShow({
+      ...tela,
+      intensidade: "festa",
+      paleta: sede,
+      aleatorio: criarAleatorio(9),
+    }).filter((p) => p.formato === "coracao" || p.formato === "estrela");
+    expect(planos.length).toBeGreaterThan(0);
+    expect(planos.every((p) => p.cor === "#2b7de9")).toBe(true);
   });
 });
