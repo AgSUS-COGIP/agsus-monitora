@@ -346,6 +346,46 @@
   }
 
   /*
+    Área com blocos (Administração e as áreas do sistema): o cartão é o
+    invólucro, com os títulos dos blocos dentro — e não um cartão por bloco
+    com o título solto por cima da página.
+  */
+  body.sidebar-collapsed .menu-area__blocos {
+    min-width: 200px;
+    max-width: 280px;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--space-1);
+    border: 1px solid var(--menu-flutuante-borda);
+    border-radius: var(--radius-lg);
+    background: var(--menu-flutuante-fundo);
+    box-shadow: var(--shadow-overlay);
+  }
+
+  body.sidebar-collapsed .menu-area__blocos .menu-area__itens {
+    min-width: 0;
+    max-width: none;
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  body.sidebar-collapsed .menu-area__blocos .menu-bloco__titulo {
+    margin-inline-start: 0;
+    padding: 0 var(--space-3);
+    color: color-mix(in srgb, var(--menu-flutuante-texto) 60%, transparent);
+  }
+
+  body.sidebar-collapsed .menu-area__blocos .menu-bloco + .menu-bloco {
+    margin-top: var(--space-1);
+    padding-top: var(--space-1);
+    border-top: 1px solid var(--menu-flutuante-borda);
+  }
+
+  /*
     As páginas da área atual (`.menu-area--direta`): cada uma é um ícone de
     36px no próprio trilho, sem painel flutuante — um clique navega. A página
     aberta fica em destaque (fundo e anel), e o nome vem na dica.
@@ -365,6 +405,22 @@
   body.sidebar-collapsed .menu-area--direta > .menu-area__painel::before,
   body.sidebar-collapsed .menu-area--direta .menu-area__pilula {
     display: none;
+  }
+
+  body.sidebar-collapsed .menu-area--direta .menu-area__blocos {
+    min-width: 0;
+    max-width: none;
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  body.sidebar-collapsed .menu-area--direta .menu-bloco + .menu-bloco {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
   }
 
   body.sidebar-collapsed .menu-area--direta .menu-area__itens {

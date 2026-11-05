@@ -442,8 +442,10 @@ function Area({
         <p className="menu-area__pilula" aria-hidden="true">
           {area.rotulo}
         </p>
-        {blocos
-          ? blocos.map((bloco) => {
+        {/* Os blocos num invólucro só: no flutuante, um cartão com os títulos dentro. */}
+        {blocos ? (
+          <div className="menu-area__blocos">
+            {blocos.map((bloco) => {
               const idDoTitulo = `menuBloco-${area.id}-${bloco.id}`;
               return (
                 <div
@@ -457,8 +459,11 @@ function Area({
                   {lista(bloco.itens, { "aria-labelledby": idDoTitulo })}
                 </div>
               );
-            })
-          : lista(area.itens, { "aria-label": area.rotulo })}
+            })}
+          </div>
+        ) : (
+          lista(area.itens, { "aria-label": area.rotulo })
+        )}
       </div>
     </section>
   );
