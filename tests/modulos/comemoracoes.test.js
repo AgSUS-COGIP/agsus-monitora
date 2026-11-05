@@ -209,6 +209,7 @@ describe("seção Comemorações", () => {
       duracaoMs: null,
       som: true,
       forma: "coracao",
+      letreiro: "100%!",
     });
     expect(estado.mudarCampo).not.toHaveBeenCalled();
   });

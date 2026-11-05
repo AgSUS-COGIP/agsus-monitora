@@ -88,7 +88,20 @@ describe("comemorações na casca", () => {
     quadros.shift()(0);
     expect(quadros).toHaveLength(1);
     let agora = 0;
-    while (quadros.length) quadros.shift()((agora += 16.7));
+    let dancou = false;
+    let confete = false;
+    while (quadros.length) {
+      quadros.shift()((agora += 16.7));
+      // Um laço só até o fim (a dança e o confete não abrem outro).
+      expect(quadros.length).toBeLessThanOrEqual(1);
+      const danca = doc.querySelectorAll(".comemoracao__aya--danca");
+      expect(danca.length).toBeLessThanOrEqual(1);
+      if (danca.length) dancou = true;
+      if (doc.querySelector("canvas.comemoracao__motor")) confete = true;
+    }
+    // A Aya dançou e soltou confete também no StrictMode.
+    expect(dancou).toBe(true);
+    expect(confete).toBe(true);
     expect(
       doc.querySelectorAll(
         ".comemoracao__fogos, .comemoracao__veu, .comemoracao__aya",

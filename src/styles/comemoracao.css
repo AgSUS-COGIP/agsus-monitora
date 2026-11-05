@@ -89,7 +89,13 @@ html[data-theme="dark"] .comemoracao__veu {
   pointer-events: none;
   transform-origin: 50% 50%;
   will-change: transform, opacity;
-  filter: drop-shadow(0 0 10px rgb(255 214 90 / 0.55));
+  --brilho-da-aya: rgb(255 214 90 / 0.55);
+  filter: drop-shadow(0 0 10px var(--brilho-da-aya));
+}
+/* A Aya dançando no fim: a mesma arara, com o brilho mais forte da festa. */
+.comemoracao__aya--danca {
+  filter: drop-shadow(0 0 16px var(--brilho-da-aya))
+    drop-shadow(0 0 4px var(--brilho-da-aya));
 }
 .comemoracao__acoes {
   display: flex;

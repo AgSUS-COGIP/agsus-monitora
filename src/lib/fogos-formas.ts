@@ -349,3 +349,70 @@ export function passoParaCaber(
   if (!finos || quantidade <= 0) return 2;
   return limitar(Math.ceil(2 * Math.sqrt(finos / quantidade)), 2, 16);
 }
+
+// ── Letreiro (o texto do marco escrito no céu no grande final) ──────────────
+
+/* O letreiro tem até 14 caracteres: cabe numa linha e ainda dá para ler. */
+export const TAMANHO_DO_LETREIRO = 14;
+
+/** O texto do letreiro, limpo e curto; vazio (ou só espaço), null. */
+export function normalizarLetreiro(texto: unknown): string | null {
+  const limpo = String(texto ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, TAMANHO_DO_LETREIRO)
+    .trim();
+  return limpo || null;
+}
+
+/*
+  A caixa do letreiro: uma faixa larga e baixa, abaixo da forma do marco
+  (caixaDaForma) para os dois caberem juntos no grande final.
+*/
+export function caixaDoLetreiro({
+  largura = 800,
+  altura = 600,
+}: { largura?: number; altura?: number } = {}): CaixaDaForma {
+  return {
+    cx: largura / 2,
+    cy: altura * 0.66,
+    larguraMax: Math.min(largura * 0.86, 760),
+    alturaMax: Math.min(altura * 0.14, 120),
+  };
+}
+
+/**
+ * Os pontos do letreiro na tela (px CSS), até `quantidade`. Precisa do
+ * canvas (`amostrarTexto`): sem ele, a fonte de pontos (só algarismos e
+ * alguns sinais). Sem texto, ou nada que desenhar, lista vazia.
+ */
+export function pontosDoLetreiro(
+  texto: unknown,
+  {
+    largura = 800,
+    altura = 600,
+    quantidade = 360,
+    amostrarTexto = null,
+  }: {
+    largura?: number;
+    altura?: number;
+    quantidade?: number;
+    amostrarTexto?: AmostrarTexto | null;
+  } = {},
+): PontoDaForma[] {
+  const letreiro = normalizarLetreiro(texto);
+  if (!letreiro || quantidade <= 0) return [];
+  let imagem: ImagemDoTexto | null = null;
+  try {
+    imagem = amostrarTexto?.(letreiro) || null;
+  } catch {
+    imagem = null;
+  }
+  const brutos = imagem
+    ? pontosDaImagem(imagem, { passo: passoParaCaber(imagem, quantidade) })
+    : pontosDoTextoNaFonte(letreiro);
+  return ajustarPontos(
+    reduzirPontos(brutos, quantidade),
+    caixaDoLetreiro({ largura, altura }),
+  );
+}

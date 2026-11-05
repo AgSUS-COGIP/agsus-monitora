@@ -5,6 +5,7 @@ import {
   fatorDeSaida,
   paletaDosFogos,
 } from "../../lib/fogos.ts";
+import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { desenharParticulasDoMotor } from "../../lib/motor-de-efeitos.ts";
 import type { PaletaDosFogos, ShowDeFogos } from "../../lib/fogos.ts";
 import type { CenaDeEfeitos } from "../../lib/motor-de-efeitos.ts";
@@ -27,12 +28,17 @@ export type JanelaDaComemoracao = Window & {
 /** O halo de uma cor (canvas pronto para `drawImage`), ou null sem gradiente. */
 export type Halo = (cor: string) => HTMLCanvasElement | null;
 
-/** O que cada quadro desenha: o tamanho da tela, o tempo do quadro e o halo. */
+/**
+ * O que cada quadro desenha: o tamanho da tela, o tempo do quadro, o halo e
+ * a qualidade (de src/modulos/comemoracao/desempenho.ts: 2, tudo; 1, menos
+ * halos; 0, sem halos de faísca, sem núcleo e sem fumaça). Sem qualidade, 2.
+ */
 export interface QuadroDoDesenho {
   largura: number;
   altura: number;
   dt: number;
   halo: Halo;
+  qualidade?: number;
 }
 
 /* Densidade de pixels no canvas: nítido em tela retina, sem passar de 2x. */
@@ -49,8 +55,24 @@ export function semMovimento(
   }
 }
 
-/* O tema do app (html[data-theme="dark"]) e as cores dele para os fogos. */
-export function paletaDoTema(doc: Document, janela: Window): PaletaDosFogos {
+/* A área em que a pessoa está (SI, SEDE, Projetos), para a cor dos fogos. */
+function areaAtual(): string | null {
+  try {
+    return obterDadosDoMonitoramento().areaAtual || null;
+  } catch {
+    return null;
+  }
+}
+
+/*
+  O tema do app (html[data-theme="dark"]) e as cores dele para os fogos,
+  com a cor da área atual (o token que o tema dá a ela).
+*/
+export function paletaDoTema(
+  doc: Document,
+  janela: Window,
+  area: string | null = areaAtual(),
+): PaletaDosFogos {
   const raiz = doc.documentElement;
   const escuro = raiz?.getAttribute?.("data-theme") === "dark";
   let estilo: CSSStyleDeclaration | null = null;
@@ -61,6 +83,7 @@ export function paletaDoTema(doc: Document, janela: Window): PaletaDosFogos {
   }
   return paletaDosFogos((nome) => estilo?.getPropertyValue?.(nome), {
     escuro,
+    area,
   });
 }
 
@@ -112,12 +135,14 @@ function ponto(
 
 /*
   Um quadro: apaga parte do anterior (rastro), desenha a fumaça por cima do
-  véu e acende, somando luz, foguetes, faíscas, halos e o marco.
+  véu e acende, somando luz, foguetes, faíscas, halos, o núcleo quente das
+  faíscas novas e o marco. Com qualidade menor, corta o que pesa (halos,
+  núcleo, fumaça) e mantém as faíscas.
 */
 export function desenhar(
   contexto: CanvasRenderingContext2D,
   show: ShowDeFogos,
-  { largura, altura, dt, halo }: QuadroDoDesenho,
+  { largura, altura, dt, halo, qualidade = 2 }: QuadroDoDesenho,
 ) {
   contexto.globalCompositeOperation = "destination-out";
   contexto.globalAlpha = 1;
@@ -127,7 +152,7 @@ export function desenhar(
 
   // Fumaça: nuvens macias (o mesmo halo, grande e tênue).
   contexto.globalCompositeOperation = "source-over";
-  for (const p of show.particulas) {
+  for (const p of qualidade > 0 ? show.particulas : []) {
     if (p.tipo !== "fumaca") continue;
     const nuvem = halo(p.cor);
     if (!nuvem) continue;
@@ -181,13 +206,27 @@ export function desenhar(
       contexto.lineTo(p.x, p.y);
       contexto.stroke();
     }
-    // Halo: em toda faísca do marco; nas outras, nas mais fortes (metade).
+    // Núcleo quente: a ponta da faísca nova (ou da que solta brasas) é quase
+    // branca, como metal em brasa.
+    const nova = p.vida / p.vidaMax > 0.55 || Boolean(p.emite);
+    if (qualidade > 0 && nova && brilho > 0.5 && p.tamanho >= 1.8) {
+      contexto.globalAlpha = brilho * 0.85;
+      contexto.fillStyle = show.paleta.centelha;
+      ponto(contexto, p.x, p.y, p.tamanho * (p.emite ? 0.7 : 0.45));
+    }
+    // Halo: em toda faísca do marco e do cometa; nas outras, nas mais fortes
+    // (metade; com qualidade 1, um quarto; com 0, nenhuma).
     const doMarco = p.tipo === "alvo";
-    if (!doMarco && (brilho < 0.35 || p.tamanho < 1.6 || i % 2)) return;
+    const sempre = doMarco || Boolean(p.emite);
+    if (!sempre) {
+      if (qualidade <= 0) return;
+      const salto = qualidade >= 2 ? 2 : 4;
+      if (brilho < 0.35 || p.tamanho < 1.6 || i % salto) return;
+    }
     const imagem = halo(cor);
     if (!imagem) return;
-    const raio = p.tamanho * (doMarco ? 3.5 : 4);
-    contexto.globalAlpha = brilho * (doMarco ? 0.4 : 0.3);
+    const raio = p.tamanho * (doMarco ? 3.5 : p.emite ? 5 : 4);
+    contexto.globalAlpha = brilho * (doMarco ? 0.4 : p.emite ? 0.45 : 0.3);
     contexto.drawImage(imagem, p.x - raio, p.y - raio, 2 * raio, 2 * raio);
   });
 }
@@ -199,11 +238,12 @@ export function desenhar(
 export function desenharPrevia(
   contexto: CanvasRenderingContext2D,
   cena: CenaDeEfeitos,
-  { largura, altura, dt, halo }: QuadroDoDesenho,
+  { largura, altura, dt, halo, qualidade }: QuadroDoDesenho,
 ): void {
   contexto.globalCompositeOperation = "source-over";
   contexto.clearRect?.(0, 0, largura, altura);
-  if (cena.show) desenhar(contexto, cena.show, { largura, altura, dt, halo });
+  if (cena.show)
+    desenhar(contexto, cena.show, { largura, altura, dt, halo, qualidade });
   contexto.globalCompositeOperation = "source-over";
   desenharParticulasDoMotor(contexto, cena);
 }
