@@ -44,6 +44,9 @@ export interface PropriedadesDoSeletorDeEdital<E extends EditalDoSeletor> {
   className?: string;
   tour?: string;
   tourDosTodos?: string;
+  /** "Mostrar todos" controlado pela tela (a entrada da Avaliação usa a mesma escolha). */
+  todos?: boolean;
+  aoMudarTodos?: (todos: boolean) => void;
   children?: ReactNode;
 }
 
@@ -61,9 +64,16 @@ export function SeletorDeEdital<E extends EditalDoSeletor>({
   className,
   tour,
   tourDosTodos,
+  todos: todosDaTela,
+  aoMudarTodos,
   children,
 }: PropriedadesDoSeletorDeEdital<E>) {
-  const [todos, setTodos] = useState(false);
+  const [todosProprio, setTodosProprio] = useState(false);
+  const todos = todosDaTela ?? todosProprio;
+  const setTodos = (sim: boolean) => {
+    if (todosDaTela === undefined) setTodosProprio(sim);
+    aoMudarTodos?.(sim);
+  };
   const { lista, ocultos } = soVigentes
     ? editaisDaEscolha(editais, { todos, escolhido })
     : { lista: editais, ocultos: 0 };

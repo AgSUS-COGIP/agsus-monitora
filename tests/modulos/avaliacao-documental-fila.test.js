@@ -1732,3 +1732,138 @@ describe("fila só com o que mudou (20261014231000)", () => {
     ]);
   });
 });
+
+describe("família da seleção na Fila: cards, barra de filtros e ⋯ da linha", () => {
+  const valor = (chave) =>
+    secao.querySelector(`[data-kpi='${chave}'] .ui-kpi-valor`)?.textContent;
+  const etapaAtiva = () =>
+    secao.querySelector("[data-tour='avd-fila-etapas'] [aria-selected='true']")
+      .dataset.valor;
+
+  it("os cards dão o andamento e filtram a etapa; Minhas fichas abertas filtra o responsável", async () => {
+    await montar(supabaseFalso());
+    expect([
+      valor("concluidas"),
+      valor("em_analise"),
+      valor("pendentes"),
+      valor("hoje"),
+    ]).toEqual(["0", "1", "2", "0"]);
+    expect(
+      secao.querySelector("[data-kpi='concluidas'] .ui-kpi-detalhe")
+        .textContent,
+    ).toBe("0%");
+    // Sem a meta (o ritmo não veio): só as concluídas de hoje.
+    expect(secao.querySelector("[data-kpi='hoje']").textContent).toContain(
+      "Concluídas hoje",
+    );
+    await clicar(secao.querySelector("[data-kpi='pendentes'] button"));
+    expect(etapaAtiva()).toBe("pendentes");
+    expect(
+      secao
+        .querySelector("[data-kpi='pendentes'] button")
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(linhas()).toEqual(["7002", "7003"]);
+    // Ana tem uma ficha aberta (7001, em análise).
+    expect(valor("minhas")).toBe("1");
+    await clicar(secao.querySelector("[data-kpi='em_analise'] button"));
+    await clicar(secao.querySelector("[data-kpi='minhas'] button"));
+    expect(linhas()).toEqual(["7001"]);
+    expect(secao.querySelector(".ui-barra-quantos").textContent).toBe(
+      "1 filtro",
+    );
+    await clicar(secao.querySelector("[data-acao='limpar-filtros']"));
+    expect(secao.querySelector(".ui-barra-quantos").textContent).toBe(
+      "Sem filtros",
+    );
+    // Limpar tira os filtros e fica na etapa escolhida.
+    expect(etapaAtiva()).toBe("em_analise");
+  });
+
+  it("com o ritmo do Painel das análises, o card Hoje mostra a meta do dia", async () => {
+    const hoje = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+    }).format(new Date());
+    const ritmo = {
+      editais: [
+        {
+          id: "e93",
+          edital: "93/2026",
+          situacoes: { pendente: 2, em_analise: 1, revisar: 0, concluida: 0 },
+          por_dia: [{ dia: hoje, qt: 0 }],
+          qt_equipe: 2,
+          cronograma: [
+            {
+              ordem: 1,
+              atividade: "Análise documental",
+              inicio: "2026-01-01",
+              fim: "2099-12-31",
+            },
+          ],
+        },
+      ],
+    };
+    const supabase = supabaseFalso(fila(), {
+      obter_ritmo_da_analise: () => ritmo,
+    });
+    await montar(supabase);
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith("obter_ritmo_da_analise", {
+      p_area: "projetos",
+    });
+    const card = secao.querySelector("[data-kpi='hoje']");
+    const util = ![0, 6].includes(new Date(`${hoje}T12:00:00Z`).getUTCDay());
+    if (util) {
+      expect(card.textContent).toContain("Hoje (meta do dia)");
+      expect(card.querySelector(".ui-kpi-detalhe").textContent).toMatch(
+        /^de \d+$/,
+      );
+    } else expect(card.textContent).toContain("Concluídas hoje");
+  });
+
+  it("o ⋯ da linha: Atribuir abre a mesma gaveta com uma ficha; o analista só copia", async () => {
+    const distribuir = vi.fn(({ p_atribuicoes }) => ({
+      alteradas: p_atribuicoes.length,
+    }));
+    await montar(supabaseFalso(fila(), { distribuir_fichas: distribuir }));
+    const linha = secao.querySelector("[data-candidato='7002']");
+    expect(
+      linha.querySelector("[data-acao='abrir-ficha']").textContent.trim(),
+    ).toBe("Abrir");
+    await clicar(linha.querySelector("[data-acao='abrir-menu']"));
+    expect(
+      [...linha.querySelectorAll("[role='menuitem']")].map((b) =>
+        b.textContent.trim(),
+      ),
+    ).toEqual(["Atribuir a…", "Mandar para revisão", "Copiar código"]);
+    await clicar(linha.querySelector("[data-acao='ficha-distribuir']"));
+    const gaveta = document.querySelector("[data-tour='avd-fila-confirmar']");
+    expect(gaveta.textContent).toContain("1 ficha(s)");
+    await escolher(gaveta.querySelector("select"), "u-beto");
+    await clicar(gaveta.querySelector("[data-acao='confirmar-distribuir']"));
+    await esperar();
+    expect(distribuir).toHaveBeenCalledWith(
+      expect.objectContaining({
+        p_atribuicoes: [{ ficha: "f2", versao: 3, usuario: "u-beto" }],
+      }),
+    );
+
+    // A reserva de outra pessoa: o ⋯ oferece liberar (com motivo, na gaveta).
+    const reservada = secao.querySelector("[data-candidato='7001']");
+    await clicar(reservada.querySelector("[data-acao='abrir-menu']"));
+    expect(
+      reservada.querySelector("[data-acao='ficha-liberar']"),
+    ).not.toBeNull();
+
+    await act(async () => painel.raiz.unmount());
+    secao.remove();
+    await montar(supabaseFalso(fila({ coordena: false })));
+    const doAnalista = secao.querySelector("[data-candidato='7002']");
+    await clicar(doAnalista.querySelector("[data-acao='abrir-menu']"));
+    expect(
+      [...doAnalista.querySelectorAll("[role='menuitem']")].map((b) =>
+        b.textContent.trim(),
+      ),
+    ).toEqual(["Copiar código"]);
+  });
+});

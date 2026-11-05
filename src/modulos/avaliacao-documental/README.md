@@ -241,7 +241,10 @@ pessoas-da-triagem.tsx    aba Pessoas da Triagem: busca por código ou nome no e
                           (BarraDeFiltros), vaga e situação, 50 por vez do banco, ações da
                           linha (AcoesDaLinha); regras em src/lib/avaliacao-documental/
                           pessoas-da-triagem.ts; o filtro fica na sessão (usarEstadoDaSessao)
-fila.tsx                  aba Fila (etapas, filtros, ações em lote, ficha aberta)
+fila.tsx                  aba Fila (cards do andamento, etapas, BarraDeFiltros, ações em lote,
+                          "Abrir" e "⋯" de cada linha, ficha aberta); os números dos cards
+                          em src/lib/avaliacao-documental/numeros-da-fila.ts (a meta do dia
+                          vem de obter_ritmo_da_analise, a conta do Painel das análises)
 estado-da-fila.ts         store da aba: obter_fila_avaliacao (só o lote e as contagens),
                           os de fora do lote sob demanda e em páginas (obter_fila_fora_do_lote,
                           lib fila-fora-do-lote.ts), Pegar próximo, reserva (renovação e

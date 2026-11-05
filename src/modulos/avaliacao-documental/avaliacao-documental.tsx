@@ -3,12 +3,9 @@ import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { abasDoMenu, catalogoDoBanco } from "../../modules/catalogo-de-abas.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
-import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
+import { SeletorDeEdital } from "../../componentes/seletor-de-edital.tsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import {
-  editalEscolhido,
-  sufixoDeTreinamento,
-} from "../../lib/edital-de-treinamento.ts";
+import { editalEscolhido } from "../../lib/edital-de-treinamento.ts";
 import {
   PAPEIS_DA_EQUIPE,
   rotuloDe,
@@ -16,7 +13,7 @@ import {
 } from "../../lib/avaliacao-documental/catalogo.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { Aviso, Campo, Segmentado, TopoDoPainel } from "../../ui/index.ts";
+import { Aviso, Segmentado, TopoDoPainel } from "../../ui/index.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import {
@@ -126,8 +123,9 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
   useEffect(() => {
     if (lerEquipe) void estado.carregarEquipe(e.editalId);
   }, [estado, lerEquipe, e.editalId]);
+  // A mesma escolha do seletor vale para os cartões da entrada.
   const [todos, setTodos] = useState(false);
-  const { lista: editais, ocultos } = editaisDaEscolha(e.editais, {
+  const { lista: editais } = editaisDaEscolha(e.editais, {
     todos,
     escolhido: e.editalId,
   });
@@ -196,42 +194,18 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
       {e.semAcesso ? null : (
         <>
           {emAnalise ? null : (
-            <section className="ui-card avd-edital" aria-label="Edital">
-              <Campo rotulo="Edital">
-                <select
-                  value={e.editalId}
-                  data-tour="avd-seletor-edital"
-                  disabled={!e.carregado}
-                  onChange={(ev) => void estado.escolherEdital(ev.target.value)}
-                >
-                  <option value="">
-                    {e.carregado
-                      ? editais.length
-                        ? "Escolha o edital"
-                        : e.editais.length
-                          ? "Nenhum edital vigente nesta área"
-                          : "Nenhum edital nesta área"
-                      : "Carregando…"}
-                  </option>
-                  {editais.map((ed) => (
-                    <option key={ed.id} value={ed.id}>
-                      {[ed.edital, ed.unidade].filter(Boolean).join(" - ")}
-                      {sufixoDeTreinamento(ed)}
-                    </option>
-                  ))}
-                </select>
-              </Campo>
-              <SeloDeTreinamento edital={escolhido} />
-              {ocultos || todos ? (
-                <label className="avd-caixa" data-tour="avd-todos-editais">
-                  <input
-                    type="checkbox"
-                    checked={todos}
-                    onChange={(ev) => setTodos(ev.target.checked)}
-                  />
-                  Mostrar todos os editais da área
-                </label>
-              ) : null}
+            <SeletorDeEdital
+              className="avd-edital"
+              tour="avd-seletor-edital"
+              tourDosTodos="avd-todos-editais"
+              editais={e.editais}
+              escolhido={e.editalId}
+              carregado={e.carregado}
+              soVigentes
+              todos={todos}
+              aoMudarTodos={setTodos}
+              aoEscolher={(id) => void estado.escolherEdital(id)}
+            >
               {/* Quem coordena vê a origem (e a troca) só em Configurações. */}
               {e.dados && !coordena ? (
                 <OrigemDaAnalise
@@ -240,7 +214,7 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
                   aoTrocar={estado.definirOrigem}
                 />
               ) : null}
-            </section>
+            </SeletorDeEdital>
           )}
 
           {e.erroDoEdital ? (
