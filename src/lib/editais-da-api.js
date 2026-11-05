@@ -2,10 +2,9 @@
   O formato da API de editais (`api/editais.js`): uma linha por unidade e
   edital, com unidade, edital, status, etapa, vagas, contratados, ociosas,
   risco e o link do edital (só o link; os anexos não vêm). Os dados são as
-  linhas do monitoramento que a tela de Editais lê
-  (`listar_monitoramento_operacional`, VW_MONITORAMENTO_INDIGENA_OPERACIONAL),
-  lidas pela função da Vercel com a chave de servidor: as ativas de todas as
-  áreas.
+  linhas ativas da VW_MONITORAMENTO_INDIGENA_OPERACIONAL (a mesma da tela de
+  Editais), de todas as áreas, lidas pela função da Vercel com a chave de
+  servidor por `listar_editais_da_api` (20261105170000).
 
   JS com JSDoc (e não TS) porque a função da Vercel importa daqui sem build.
 */
@@ -27,8 +26,8 @@
 
 /** @typedef {{ edital: string, unidade: string, status: string, etapa: string, risco: string }} FiltrosDaApi */
 
-/** A leitura (com a chave de servidor do Supabase, em api/editais.js). */
-export const RPC_DOS_EDITAIS = "listar_monitoramento_operacional";
+/** A leitura (só service_role; chamada por api/editais.js; 20261105170000). */
+export const RPC_DOS_EDITAIS = "listar_editais_da_api";
 
 /** Os filtros aceitos na query string. */
 export const FILTROS_DA_API = Object.freeze([

@@ -8,6 +8,7 @@ import {
   respostaDoCronograma,
   respostaDosAprovados,
 } from "../src/lib/aprovados-e-cronograma-da-api.js";
+import { RPC_DOS_EDITAIS } from "../src/lib/editais-da-api.js";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 
 /*
@@ -205,6 +206,92 @@ describe.each([
     const res = respostaFalsa();
     await rota(pedido(), res);
     expect(res.statusCode).toBe(502);
+  });
+});
+
+describe("migration 20261105170000 (leitura da API de editais)", () => {
+  const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
+  const NOME = "20261105170000_leitura_da_api_de_editais.sql";
+  const MIGRATION = ler(`supabase/migrations/${NOME}`);
+  const ENSAIO = ler(`supabase/ensaios/${NOME}`);
+  const ROLLBACK = ler(`supabase/rollback/${NOME}`);
+
+  const ANTERIOR = ler(
+    "supabase/migrations/20261022184000_cronograma_pelo_dia_de_brasilia.sql",
+  );
+  const trecho = (texto, inicio) => {
+    const i = texto.indexOf(inicio);
+    return texto.slice(i, texto.indexOf("$function$;", i) + 11);
+  };
+  const CHECAGEM = /^ {2}if not \(\(private\.pode_recurso\('dashboard'\).*\n/m;
+  const ESTADO_ANTES = trecho(
+    ANTERIOR,
+    "CREATE OR REPLACE FUNCTION public.get_monitoramento_cronograma_estado",
+  );
+
+  it("a interna é o corpo de antes sem a checagem; a pública checa e chama a interna", () => {
+    const interna = trecho(
+      MIGRATION,
+      'CREATE FUNCTION private."FC_ESTADO_DO_CRONOGRAMA"',
+    );
+    const corpo = (texto) => texto.slice(texto.indexOf("AS $function$"));
+    expect(corpo(interna)).toBe(corpo(ESTADO_ANTES).replace(CHECAGEM, ""));
+    expect(interna).not.toContain("pode_recurso");
+    expect(MIGRATION).toContain(
+      'revoke all on function private."FC_ESTADO_DO_CRONOGRAMA"(uuid, date) from public, anon, authenticated, service_role;',
+    );
+    const publica = trecho(
+      MIGRATION,
+      "CREATE OR REPLACE FUNCTION public.get_monitoramento_cronograma_estado",
+    );
+    expect(publica).toMatch(CHECAGEM);
+    expect(publica).toContain(
+      'return private."FC_ESTADO_DO_CRONOGRAMA"(p_monitoramento_id, p_data);',
+    );
+    // O rollback devolve o corpo de antes, inteiro.
+    expect(ROLLBACK).toContain(ESTADO_ANTES);
+    expect(ROLLBACK).toContain(
+      'drop function if exists private."FC_ESTADO_DO_CRONOGRAMA"(uuid, date);',
+    );
+  });
+
+  it("só service_role, security definer, só as linhas ativas e os campos que a API lê", () => {
+    const leitura = trecho(
+      MIGRATION,
+      "create function public.listar_editais_da_api()",
+    );
+    expect(leitura).toContain("security definer");
+    expect(leitura).toContain("set search_path to ''");
+    expect(leitura).toContain("where m.ativo is true");
+    expect(leitura).not.toContain("VW_MONITORAMENTO_INDIGENA_OPERACIONAL");
+    expect(MIGRATION).toContain(
+      "revoke all on function public.listar_editais_da_api() from public, anon, authenticated;\ngrant execute on function public.listar_editais_da_api() to service_role;",
+    );
+    const campos = [...leitura.matchAll(/^\s+'(\w+)', /gm)].map((m) => m[1]);
+    expect(campos).toEqual([
+      "id",
+      "unidade",
+      "edital",
+      "status",
+      "etapa",
+      "vagas_total",
+      "contratados",
+      "vagas_ociosas",
+      "risco",
+      "link_edital",
+    ]);
+    expect(CONTRATO_RPC.listar_editais_da_api.argumentos).toEqual([]);
+    expect(RPC_DOS_EDITAIS).toBe("listar_editais_da_api");
+    expect(ROLLBACK).toContain(
+      "drop function if exists public.listar_editais_da_api();",
+    );
+    expect(ENSAIO.trimEnd().endsWith("rollback;")).toBe(true);
+    expect(ENSAIO).toContain(
+      MIGRATION.slice(
+        MIGRATION.indexOf("\nbegin;\n") + 8,
+        MIGRATION.lastIndexOf("\ncommit;"),
+      ),
+    );
   });
 });
 
