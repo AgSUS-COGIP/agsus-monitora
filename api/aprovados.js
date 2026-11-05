@@ -25,16 +25,19 @@
          "https://agsus-monitora.vercel.app/api/aprovados?edital_id=<id>"
 
   2. Filtros opcionais:
-       ?edital_id=  ?status=  ?modalidade=        igual (sem caixa nem acento)
-       ?edital=  ?unidade=  ?cargo=  ?nome=       contém o trecho
+       ?edital_id=  ?status=  ?modalidade=  ?area=   igual (sem caixa nem acento)
+       ?edital=  ?unidade=  ?cargo=  ?nome=          contém o trecho
      `edital_id` é o "id" de /api/editais.
+     "area" é a área do edital: "Saúde Indígena", "SEDE" ou "Projetos".
+     ?area= aceita o nome ou o código (saude-indigena, sede, projetos).
 
   3. A resposta (200, JSON):
 
        {
          "aprovados": [
            { "edital_id": "6f1c…", "edital": "001/2026",
-             "unidade": "DSEI Yanomami", "cargo": "Enfermeiro",
+             "unidade": "DSEI Yanomami", "area": "Saúde Indígena",
+             "cargo": "Enfermeiro",
              "classificacao": 1, "nota": 87.5, "nome": "Maria da Silva",
              "modalidade": "Ampla concorrência", "status": "Contratado",
              "matricula": "12345", "processo_sei": "25000.000000/2026-00",

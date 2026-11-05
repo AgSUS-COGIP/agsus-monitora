@@ -19,10 +19,11 @@ o endpoint de IA e o bridge local foram retirados.
   função lê o banco com `SUPABASE_SERVICE_ROLE_KEY`; as duas só existem na Vercel, nunca no front.
   A parte comum (chave em tempo constante, chamada à RPC, erros) fica em `_rota-com-chave.js`.
   - `/api/editais`: `listar_editais_da_api` (migration `20261105170000`; unidade, edital, status, etapa, vagas,
-    contratados, ociosas, risco e link; sem anexos), formato em `src/lib/editais-da-api.js`.
+    contratados, ociosas, risco, link e área; sem anexos), formato em `src/lib/editais-da-api.js`.
   - `/api/aprovados` e `/api/cronograma`: `listar_aprovados_da_api` e `listar_cronograma_da_api`
     (só service_role; migration `20261105150000`), formato em
     `src/lib/aprovados-e-cronograma-da-api.js`. Aprovados tem dados pessoais (nome, matrícula).
+  As três trazem `area` (Saúde Indígena, SEDE, Projetos; migration `20261105190000`) e aceitam `?area=`.
   Como o outro sistema usa: comentário do topo de cada rota.
 
 Regras:
