@@ -236,7 +236,11 @@ blocos.tsx                os blocos da ficha na regra
 previa.tsx                "Testar com um candidato fictício" (entradas à esquerda, resultado preso
                           à direita; uma coluna em largura estreita)
 equipe.tsx                aba Equipe
-pre-classificacao.tsx     aba Triagem (contadores, vagas, listas oficiais)
+pre-classificacao.tsx     aba Triagem (cards do andamento no alto, abas, listas oficiais)
+pessoas-da-triagem.tsx    aba Pessoas da Triagem: busca por código ou nome no edital todo
+                          (BarraDeFiltros), vaga e situação, 50 por vez do banco, ações da
+                          linha (AcoesDaLinha); regras em src/lib/avaliacao-documental/
+                          pessoas-da-triagem.ts; o filtro fica na sessão (usarEstadoDaSessao)
 fila.tsx                  aba Fila (etapas, filtros, ações em lote, ficha aberta)
 estado-da-fila.ts         store da aba: obter_fila_avaliacao (só o lote e as contagens),
                           os de fora do lote sob demanda e em páginas (obter_fila_fora_do_lote,

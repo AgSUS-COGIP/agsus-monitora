@@ -1,15 +1,10 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
-import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
+import { SeletorDeEdital } from "../../componentes/seletor-de-edital.tsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.ts";
-import {
-  editalEscolhido,
-  sufixoDeTreinamento,
-} from "../../lib/edital-de-treinamento.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { Aviso, Campo, TopoDoPainel } from "../../ui/index.ts";
+import { Aviso, TopoDoPainel } from "../../ui/index.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { coordenaOEdital } from "./abas-e-entrada.ts";
 import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
@@ -43,18 +38,12 @@ function TelaDaPreClassificacao({
 }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
-  const [todos, setTodos] = useState(false);
 
   useEffect(() => {
     if (!areaDoApp || e.area === areaDoApp) return;
     void estado.carregar(areaDoApp);
   }, [estado, areaDoApp, e.area]);
 
-  const { lista: editais, ocultos } = editaisDaEscolha(e.editais, {
-    todos,
-    escolhido: e.editalId,
-  });
-  const escolhido = editalEscolhido(e.editais, e.editalId);
   // Não montar PreClassificacao sem a confirmação do papel do edital.
   const coordena = Boolean(
     e.editalId && e.dados && coordenaOEdital(e) === true,
@@ -68,9 +57,7 @@ function TelaDaPreClassificacao({
         atualizarDesativado={
           !e.area || e.carregandoEditais || e.carregandoEdital
         }
-      >
-        <SeloDeTreinamento edital={escolhido} />
-      </TopoDoPainel>
+      />
 
       {e.semAcesso ? (
         <Aviso tom="warning" papel="alert">
@@ -90,36 +77,16 @@ function TelaDaPreClassificacao({
         </Aviso>
       ) : null}
       {!e.semAcesso ? (
-        <section className="ui-card avd-edital" aria-label="Edital da triagem">
-          <Campo rotulo="Edital">
-            <select
-              value={e.editalId}
-              disabled={!e.carregado}
-              data-tour="pre-seletor-edital"
-              onChange={(ev) => void estado.escolherEdital(ev.target.value)}
-            >
-              <option value="">
-                {!e.carregado ? "Carregando…" : "Escolha o edital"}
-              </option>
-              {editais.map((ed) => (
-                <option key={ed.id} value={ed.id}>
-                  {[ed.edital, ed.unidade].filter(Boolean).join(" - ")}
-                  {sufixoDeTreinamento(ed)}
-                </option>
-              ))}
-            </select>
-          </Campo>
-          {ocultos || todos ? (
-            <label className="avd-caixa">
-              <input
-                type="checkbox"
-                checked={todos}
-                onChange={(ev) => setTodos(ev.target.checked)}
-              />
-              Mostrar todos os editais da área
-            </label>
-          ) : null}
-        </section>
+        <SeletorDeEdital
+          className="avd-edital"
+          rotulo="Edital da triagem"
+          tour="pre-seletor-edital"
+          editais={e.editais}
+          escolhido={e.editalId}
+          carregado={e.carregado}
+          soVigentes
+          aoEscolher={(id) => void estado.escolherEdital(id)}
+        />
       ) : null}
 
       {e.erroDoEdital && !e.semAcesso ? (

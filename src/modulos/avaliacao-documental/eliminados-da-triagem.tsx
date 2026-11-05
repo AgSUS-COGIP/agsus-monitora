@@ -1,5 +1,7 @@
 import { useDeferredValue, useMemo, useState } from "react";
+import { copiarTexto } from "../../lib/convite-de-acesso.ts";
 import { formatNumberBR } from "../../lib/formatters";
+import { acoesDaPessoa } from "../../lib/avaliacao-documental/pessoas-da-triagem.ts";
 import {
   chaveDaPessoa,
   comunicadosDosEliminados,
@@ -12,7 +14,9 @@ import type {
   RecorteDaPre,
 } from "../../lib/avaliacao-documental/paginas-da-pre-classificacao.ts";
 import {
+  AcoesDaLinha,
   Aviso,
+  BarraDeFiltros,
   CaixaDeMarcarTodos,
   Campo,
   estadoDaMarcacao,
@@ -25,6 +29,7 @@ import type {
   EstadoDaMarcacao,
 } from "../../ui/index.ts";
 import { baixarComunicadoDoEliminado } from "./comunicado-do-eliminado.ts";
+import { IncluirPorDecisao } from "./decisao-do-lote.tsx";
 import { AcoesEmLote, type MontarDocumentos } from "./documentos-em-lote.tsx";
 import type {
   EstadoDaPreClassificacao,
@@ -43,6 +48,11 @@ import type {
 
   A marcação é da tela da Triagem (`marcadas`): a mesma das listas de
   eliminados de cada vaga, na aba Por vaga.
+
+  A busca e os filtros ficam na BarraDeFiltros (a mesma da aba Pessoas e das
+  outras telas da seleção); cada linha tem o comunicado como ação principal
+  e o "⋯" com "Incluir no lote" (coordenação), "Ver na vaga" e "Copiar
+  código".
 */
 
 const TODAS = "";
@@ -60,6 +70,10 @@ export interface PropriedadesDosEliminados {
   marcadas: ReadonlyMap<string, PessoaDoDocumento>;
   aoMarcar: (pessoas: readonly PessoaDoDocumento[], sim: boolean) => void;
   aoLimpar: () => void;
+  /** A coordenação inclui no lote por decisão (o "⋯" da linha). */
+  podeCoordenar?: boolean;
+  /** "Ver na vaga": a aba Por vaga, com a vaga aberta. */
+  aoVerVaga?: (vaga: string) => void;
 }
 
 export function EliminadosDaTriagem({
@@ -72,6 +86,8 @@ export function EliminadosDaTriagem({
   marcadas,
   aoMarcar,
   aoLimpar,
+  podeCoordenar = false,
+  aoVerVaga,
 }: PropriedadesDosEliminados) {
   const [buscaDigitada, setBuscaDigitada] = useState("");
   const busca = useDeferredValue(buscaDigitada.trim());
@@ -81,6 +97,10 @@ export function EliminadosDaTriagem({
   const [marcandoTodos, setMarcandoTodos] = useState(false);
   const [emitindo, setEmitindo] = useState("");
   const [erro, setErro] = useState("");
+  const [copiado, setCopiado] = useState("");
+  const [incluindo, setIncluindo] = useState<InscritoDaPre | null>(null);
+  // Depois de incluir alguém no lote, a lista recomeça (ele deixou de estar eliminado).
+  const [versao, setVersao] = useState(0);
   const recorte: RecorteDaPre = useMemo(
     () => ({ vaga: vaga || null, grupo: "ELIMINADOS", busca, motivo }),
     [vaga, busca, motivo],
@@ -101,7 +121,7 @@ export function EliminadosDaTriagem({
   );
   const lista = usarListaNoServidor(
     buscar,
-    `${leitura}:eliminados:${vaga}:${motivo}:${busca}`,
+    `${leitura}:${versao}:eliminados:${vaga}:${motivo}:${busca}`,
   );
 
   const marcados = useMemo(() => new Set(marcadas.keys()), [marcadas]);
@@ -232,6 +252,36 @@ export function EliminadosDaTriagem({
     { rotulo: "Comunicado" },
   ];
 
+  async function copiar(c: InscritoDaPre) {
+    setErro("");
+    if (await copiarTexto(String(c.codigo)))
+      setCopiado(`Código ${c.codigo} copiado.`);
+    else setErro("Não foi possível copiar o código.");
+  }
+
+  const ROTULOS = {
+    incluir: { rotulo: "Incluir no lote", icone: "fa-user-plus" },
+    "ver-vaga": { rotulo: "Ver na vaga", icone: "fa-briefcase" },
+    copiar: { rotulo: "Copiar código", icone: "fa-copy" },
+  } as const;
+  type AcaoDoMenuDaLinha = keyof typeof ROTULOS;
+  const outrasAcoes = (c: InscritoDaPre) =>
+    acoesDaPessoa(c, { podeCoordenar })
+      .outras.filter(
+        (a): a is AcaoDoMenuDaLinha =>
+          a in ROTULOS && (a !== "ver-vaga" || Boolean(aoVerVaga)),
+      )
+      .map((a) => ({
+        id: a,
+        ...ROTULOS[a],
+        dados: { "data-acao": `pessoa-${a}` },
+        aoEscolher: () => {
+          if (a === "incluir") setIncluindo(c);
+          else if (a === "ver-vaga") aoVerVaga?.(String(c.vaga));
+          else void copiar(c);
+        },
+      }));
+
   const linha = (c: InscritoDaPre) => {
     const pessoa = pessoaEliminada(c);
     return (
@@ -250,15 +300,19 @@ export function EliminadosDaTriagem({
         <td>{c.nome}</td>
         <td>{c.motivo}</td>
         <td>
-          <button
-            type="button"
-            className="btn secondary small"
-            data-acao="espelho-eliminado-pre"
-            disabled={Boolean(emitindo) || !c.motivo}
-            onClick={() => void emitir(c)}
-          >
-            {emitindo === c.codigo ? "Gerando PDF…" : "PDF"}
-          </button>
+          <AcoesDaLinha
+            pessoa={c.codigo}
+            principal={{
+              rotulo: "PDF",
+              icone: "fa-file-pdf",
+              acao: "espelho-eliminado-pre",
+              titulo: "Baixar o comunicado de eliminação",
+              desabilitado: Boolean(emitindo) || !c.motivo,
+              ocupado: emitindo === c.codigo ? "Gerando PDF…" : false,
+              aoClicar: () => void emitir(c),
+            }}
+            outras={outrasAcoes(c)}
+          />
         </td>
       </tr>
     );
@@ -266,46 +320,57 @@ export function EliminadosDaTriagem({
 
   return (
     <div className="avd-pre-eliminados" data-aba-da-triagem="eliminados">
-      <section className="ui-card" aria-label="Filtros dos eliminados">
-        <div className="ui-grade-de-campos">
-          <Campo rotulo="Buscar">
-            <input
-              type="search"
-              value={buscaDigitada}
-              placeholder="Código ou nome"
-              data-acao="buscar-espelho-eliminado"
-              onChange={(ev) => setBuscaDigitada(ev.target.value)}
-            />
-          </Campo>
-          <Campo rotulo="Vaga">
-            <select
-              value={vaga}
-              data-acao="filtro-vaga-eliminados"
-              onChange={(ev) => setVaga(ev.target.value)}
-            >
-              <option value={TODAS}>Todas as vagas</option>
-              {vagas.map((v) => (
-                <option key={v.codigo} value={String(v.codigo)}>
-                  {[v.codigo, v.cargo].filter(Boolean).join(" · ")}
-                </option>
-              ))}
-            </select>
-          </Campo>
-          <Campo rotulo="Motivo">
-            <select
-              value={motivo}
-              data-acao="filtro-motivo-eliminados"
-              onChange={(ev) => setMotivo(ev.target.value)}
-            >
-              <option value={TODAS}>Todos os motivos</option>
-              {motivos.map((m) => (
-                <option key={m.codigo} value={m.codigo}>
-                  {m.motivo} ({formatNumberBR(m.total)})
-                </option>
-              ))}
-            </select>
-          </Campo>
-        </div>
+      <BarraDeFiltros
+        rotulo="Filtros dos eliminados"
+        busca={{
+          valor: buscaDigitada,
+          aoMudar: setBuscaDigitada,
+          placeholder: "Código ou nome",
+          rotulo: "Buscar eliminado pelo código ou nome",
+          acao: "buscar-espelho-eliminado",
+        }}
+        quantos={[busca, vaga, motivo].filter(Boolean).length}
+        aoLimpar={() => {
+          setBuscaDigitada("");
+          setVaga(TODAS);
+          setMotivo(TODAS);
+        }}
+        resultado={
+          lista.carregado
+            ? `${formatNumberBR(lista.total)} ${lista.total === 1 ? "eliminado" : "eliminados"}`
+            : "Procurando…"
+        }
+      >
+        <Campo rotulo="Vaga">
+          <select
+            value={vaga}
+            data-acao="filtro-vaga-eliminados"
+            onChange={(ev) => setVaga(ev.target.value)}
+          >
+            <option value={TODAS}>Todas as vagas</option>
+            {vagas.map((v) => (
+              <option key={v.codigo} value={String(v.codigo)}>
+                {[v.codigo, v.cargo].filter(Boolean).join(" · ")}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        <Campo rotulo="Motivo">
+          <select
+            value={motivo}
+            data-acao="filtro-motivo-eliminados"
+            onChange={(ev) => setMotivo(ev.target.value)}
+          >
+            <option value={TODAS}>Todos os motivos</option>
+            {motivos.map((m) => (
+              <option key={m.codigo} value={m.codigo}>
+                {m.motivo} ({formatNumberBR(m.total)})
+              </option>
+            ))}
+          </select>
+        </Campo>
+      </BarraDeFiltros>
+      <section className="ui-card" aria-label="Comunicados em lote">
         <div className="avd-docs-lote-resumo" data-acao="comunicados-lote">
           <span>
             <strong data-acao="comunicados-marcados">
@@ -353,6 +418,21 @@ export function EliminadosDaTriagem({
         <Aviso tom="danger" papel="alert">
           {erro}
         </Aviso>
+      ) : copiado ? (
+        <Aviso papel="status">{copiado}</Aviso>
+      ) : null}
+      {incluindo ? (
+        <IncluirPorDecisao
+          candidatos={[{ ...incluindo, nota: incluindo.nota ?? incluindo.art }]}
+          marcadosDeInicio={[incluindo.id]}
+          aoIncluir={(escolhidos, motivoDaDecisao) =>
+            pre.incluirPorDecisao(escolhidos, motivoDaDecisao)
+          }
+          aoFechar={(incluiu) => {
+            setIncluindo(null);
+            if (incluiu) setVersao((n) => n + 1);
+          }}
+        />
       ) : null}
       {lista.erro ? (
         <Aviso tom="danger" papel="alert">

@@ -12,7 +12,8 @@ import { classes } from "./classes.ts";
   `cor` é o nome de antes (k-cyan, k-green, k-yellow, k-orange, k-red,
   k-purple, k-slate) e vira o tom do tile (`data-tom`: info, sucesso, alerta,
   perigo, destaque, neutro); `icone` é a classe `fa-*` do tile. `idDoValor`
-  põe um id no número (contrato de teste/DOM de telas antigas).
+  põe um id no número (contrato de teste/DOM de telas antigas). `detalhe` é o
+  complemento ao lado do número, menor e em cinza ("45%", "meta 40").
 */
 
 const TOM_DA_COR: Partial<Record<string, string>> = {
@@ -38,6 +39,8 @@ export interface PropriedadesDoKpi {
   carregando?: boolean;
   idDoValor?: string;
   tour?: string;
+  /** O complemento do número, menor e em cinza: "62%", "de 1.200", "meta 40". */
+  detalhe?: ReactNode;
 }
 
 export function Kpi({
@@ -53,6 +56,7 @@ export function Kpi({
   carregando = false,
   idDoValor,
   tour,
+  detalhe,
 }: PropriedadesDoKpi) {
   const conteudo = (
     <>
@@ -74,9 +78,7 @@ export function Kpi({
           aria-hidden="true"
         />
       ) : (
-        <b id={idDoValor} className="ui-kpi-valor">
-          {valor}
-        </b>
+        <NumeroDoKpi id={idDoValor} valor={valor} detalhe={detalhe} />
       )}
     </>
   );
@@ -107,6 +109,34 @@ export function Kpi({
         conteudo
       )}
     </article>
+  );
+}
+
+/*
+  O número e, se houver, o complemento ao lado ("45%", "meta 40"), fora do
+  `.ui-kpi-valor` (o número continua sozinho nele).
+*/
+function NumeroDoKpi({
+  id,
+  valor,
+  detalhe,
+}: {
+  id: string | undefined;
+  valor: ReactNode;
+  detalhe: ReactNode;
+}) {
+  const numero = (
+    <b id={id} className="ui-kpi-valor">
+      {valor}
+    </b>
+  );
+  if (detalhe === undefined || detalhe === null || detalhe === "")
+    return numero;
+  return (
+    <span className="ui-kpi-linha">
+      {numero}
+      <span className="ui-kpi-detalhe">{detalhe}</span>
+    </span>
   );
 }
 
