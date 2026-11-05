@@ -496,7 +496,7 @@ export const CONTRATO_RPC = {
     argumentos: [],
     critica: false,
     resumo:
-      "GET /api/editais: as linhas ativas da VW_MONITORAMENTO_INDIGENA_OPERACIONAL (todas as áreas) com id, unidade, edital, status, etapa, vagas_total, contratados, vagas_ociosas, risco e link_edital. SECURITY DEFINER, só service_role (a listar_monitoramento_operacional é invoker e o service_role não lê a view). Constante em src/lib/editais-da-api.js.",
+      "GET /api/editais: os editais ativos (todas as áreas) com id, unidade, edital, status, etapa, vagas_total, contratados, vagas_ociosas, risco e link_edital. SECURITY DEFINER, só service_role; status e etapa por private.FC_ESTADO_DO_CRONOGRAMA (o cálculo de get_monitoramento_cronograma_estado sem a checagem de permissão), no dia de Brasília. Constante em src/lib/editais-da-api.js.",
   },
   listar_aprovados_da_api: {
     argumentos: [],
