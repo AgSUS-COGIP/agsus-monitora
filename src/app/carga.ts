@@ -39,7 +39,7 @@ import {
 import {
   carregarSituacaoDoSistema,
   consultaDaSituacaoDoSistema,
-} from "../modules/situacao-dos-modulos.ts";
+} from "./situacao-do-sistema.ts";
 import { esconderEsqueleto, marcarAtualizacao } from "./carregamento.ts";
 import {
   assinarPedidosDasLinhas,

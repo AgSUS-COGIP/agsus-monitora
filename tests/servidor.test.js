@@ -108,6 +108,7 @@ describe("servidor web do MONITORA", () => {
     "/projetos/classificacao/0b7c9a52-2d55-4c4e-9f7a-1c3d5e7f9a1b",
     "/paineis/bi-rh",
     "/administracao/configuracoes/acessos",
+    "/sede/editais/0b7c9a52/regras/classificacao",
     "/sem-acesso",
   ])("rota do app %s entrega o index.html (link direto e F5)", async (url) => {
     const res = await pedir(url);
@@ -169,7 +170,7 @@ describe("servidor web do MONITORA", () => {
     "/assets/..%5c.env",
     "/sede",
     "/sede/.env",
-    "/sede/editais/x/y/z",
+    "/sede/editais/x/regras/triagem/mais",
     "/outra-area/editais",
   ])("não entrega %s", async (caminho) => {
     expect((await pedir(caminho)).status).toBe(404);

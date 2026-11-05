@@ -19,6 +19,8 @@ import { UNIDADES_CORES } from "../../src/lib/responsavel-do-edital.ts";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
 import { montarTela } from "../montar-tela.js";
 import { registrarTelas } from "../../src/app/registro-das-telas.ts";
+import { criarNavegacao } from "../../src/app/navegacao.ts";
+import { montarTelasNoTeste } from "../app/telas-no-teste.js";
 
 /*
   A página "Editais" (Equipe Núcleo) em React: a tabela com as linhas que o
@@ -236,6 +238,7 @@ function supabaseFalso({ resumo = RESUMO, cronogramas = CRONOGRAMAS } = {}) {
   };
 }
 
+let navegacao = null;
 let controlador = null;
 let perfilAtual = null;
 
@@ -249,22 +252,58 @@ async function montar({
   publicar = true,
   abrir = true,
   relogio = true,
+  comNavegacao = false,
 } = {}) {
-  document.body.innerHTML = `<section id="page-nucleo" class="page active"></section>`;
   perfilAtual = perfil;
-  await act(async () => {
-    controlador = montarTela(criarNucleo, "page-nucleo", {
-      secao: document.getElementById("page-nucleo"),
+  if (comNavegacao) {
+    /*
+      Como no app: Editais é rota da raiz, e as Regras do edital ficam no
+      endereço (src/app/navegacao.ts).
+    */
+    document.body.innerHTML = "";
+    const criado = criarNucleo({
       supabase,
       toast,
       loader: () => {},
       getProfile: () => perfilAtual,
       confirmar,
       aoSalvar,
-      // relogio: false monta como em produção, sem relógio injetado.
       agora: relogio ? () => new Date(HOJE) : undefined,
     });
-  });
+    const montado = montarTelasNoTeste(
+      criarNavegacao({
+        janela: { location: { reload() {} } },
+        obterPerfil: () => ({
+          id: "g",
+          ativo: true,
+          perfil: "edital_gestor",
+          areas: ["saude-indigena", "sede", "projetos"],
+        }),
+        confirmarSaida: () => true,
+        aplicarAtualizacao: () => false,
+      }),
+      { nucleo: criado },
+    );
+    navegacao = montado.navegacao;
+    navegacao.irPara("nucleo");
+    controlador = { ...criado, raiz: { unmount: () => montado.desmontar() } };
+  } else {
+    document.body.innerHTML = `<section id="page-nucleo" class="page active"></section>`;
+  }
+  if (!comNavegacao)
+    await act(async () => {
+      controlador = montarTela(criarNucleo, "page-nucleo", {
+        secao: document.getElementById("page-nucleo"),
+        supabase,
+        toast,
+        loader: () => {},
+        getProfile: () => perfilAtual,
+        confirmar,
+        aoSalvar,
+        // relogio: false monta como em produção, sem relógio injetado.
+        agora: relogio ? () => new Date(HOJE) : undefined,
+      });
+    });
   if (publicar)
     await act(async () => {
       publicarUnidadesDoCatalogo(UNIDADES);
@@ -389,11 +428,10 @@ describe("tabela de editais", () => {
     }
   });
 
-  it("Regras do edital: abre no lugar da tabela, troca de etapa e volta", async () => {
+  it("Regras do edital: abre no lugar da tabela, com o edital e a etapa no endereço, troca de etapa e volta", async () => {
     // O pacote da página baixa sob demanda; aqui, já em cache.
     await import("../../src/modulos/regras-do-edital/regras-do-edital.tsx");
-    await montar();
-    await clicar(linha("1").querySelector('[aria-label^="Regras do edital"]'));
+    await montar({ comNavegacao: true });
     const pagina = async () => {
       for (let i = 0; i < 200; i += 1) {
         const achada = document.querySelector("[data-tour='regras-do-edital']");
@@ -402,10 +440,12 @@ describe("tabela de editais", () => {
       }
       return null;
     };
+    await clicar(linha("1").querySelector('[aria-label^="Regras do edital"]'));
     const regras = await pagina();
     expect(regras).not.toBeNull();
     expect(regras.dataset.etapa).toBe("triagem");
     expect(regras.textContent).toContain("Regras do edital 10/2026");
+    expect(location.pathname).toMatch(/\/editais\/1\/regras\/triagem$/);
     expect(
       [...regras.querySelectorAll(".ui-segmentado button")].map((b) =>
         b.textContent.trim(),
@@ -419,54 +459,54 @@ describe("tabela de editais", () => {
     ]);
     expect(document.getElementById("nucleoRows")).toBeNull();
 
-    // "Editar nas Regras do edital" de outra tela: abre já na etapa.
-    await act(async () =>
-      controlador.abrirRegrasDoEdital("1", "classificacao"),
+    // Outra etapa: troca o endereço sem empilhar.
+    const tamanho = history.length;
+    await clicar(
+      [...regras.querySelectorAll(".ui-segmentado button")].find((b) =>
+        b.textContent.includes("Classificação"),
+      ),
     );
     expect((await pagina()).dataset.etapa).toBe("classificacao");
+    expect(location.pathname).toMatch(/\/editais\/1\/regras\/classificacao$/);
+    expect(history.length).toBe(tamanho);
 
-    await clicar(document.querySelector("[data-acao='voltar-aos-editais']"));
-    expect(document.querySelector("[data-tour='regras-do-edital']")).toBeNull();
-    expect(document.getElementById("nucleoRows")).not.toBeNull();
-  });
-
-  it("Regras do edital no histórico: o voltar do navegador fecha a página; trocar de etapa não empilha", async () => {
-    await import("../../src/modulos/regras-do-edital/regras-do-edital.tsx");
-    await montar();
-    const antes = window.history.state;
-    await clicar(linha("1").querySelector('[aria-label^="Regras do edital"]'));
-    expect(antes?.monitoraRegrasDoEdital).toBeUndefined();
-    expect(window.history.state?.monitoraRegrasDoEdital).toMatchObject({
-      id: "1",
-      etapa: "triagem",
-    });
-    // Outra etapa (e o "Editar nas Regras" de outra tela): troca a entrada.
-    await act(async () =>
-      controlador.abrirRegrasDoEdital("1", "classificacao"),
-    );
-    expect(window.history.state.monitoraRegrasDoEdital.etapa).toBe(
-      "classificacao",
-    );
-    // Um voltar só (a troca de etapa não empilhou): popstate sem a marca fecha.
-    await act(async () => {
-      window.history.back();
-      await new Promise((r) =>
-        window.addEventListener("popstate", r, { once: true }),
-      );
-    });
-    expect(document.querySelector("[data-tour='regras-do-edital']")).toBeNull();
-    expect(document.getElementById("nucleoRows")).not.toBeNull();
-    // Reabrir e sair pelo "← Editais": volta pelo histórico (sem entrada órfã).
-    await clicar(linha("1").querySelector('[aria-label^="Regras do edital"]'));
+    // "← Editais": volta pelo histórico (sem entrada órfã) e a tabela volta.
     await act(async () => {
       const voltou = new Promise((r) =>
         window.addEventListener("popstate", r, { once: true }),
       );
-      document.querySelector("[data-acao='voltar-aos-editais']")?.click();
+      document.querySelector("[data-acao='voltar-aos-editais']").click();
       await voltou;
     });
-    expect(window.history.state?.monitoraRegrasDoEdital).toBeUndefined();
+    expect(document.querySelector("[data-tour='regras-do-edital']")).toBeNull();
     expect(document.getElementById("nucleoRows")).not.toBeNull();
+    expect(location.pathname).toMatch(/\/editais$/);
+    expect(navegacao.obter().regras).toBeNull();
+  });
+
+  it("Regras do edital no histórico: o voltar do navegador fecha a página, o avançar reabre", async () => {
+    await import("../../src/modulos/regras-do-edital/regras-do-edital.tsx");
+    await montar({ comNavegacao: true });
+    navegacao.abrirEntrada();
+    await clicar(linha("1").querySelector('[aria-label^="Regras do edital"]'));
+    expect(navegacao.obter().regras).toEqual({ edital: "1", etapa: "triagem" });
+    await act(async () => {
+      const mudou = new Promise((r) =>
+        window.addEventListener("popstate", r, { once: true }),
+      );
+      history.back();
+      await mudou;
+    });
+    expect(navegacao.obter().regras).toBeNull();
+    expect(document.querySelector("[data-tour='regras-do-edital']")).toBeNull();
+    await act(async () => {
+      const mudou = new Promise((r) =>
+        window.addEventListener("popstate", r, { once: true }),
+      );
+      history.forward();
+      await mudou;
+    });
+    expect(navegacao.obter().regras).toEqual({ edital: "1", etapa: "triagem" });
   });
 });
 

@@ -55,11 +55,12 @@ const PAGINAS: ReadonlyMap<string, string> = new Map([
 
 /*
   As rotas do app (src/lib/rotas.ts, que a imagem do servidor não leva): a
-  área (ou `paineis`/`administracao`) e de uma a duas partes depois, só com
+  área (ou `paineis`/`administracao`) e de uma a quatro partes depois (as
+  Regras do edital: `/<área>/editais/<edital>/regras/<etapa>`), só com
   letras, números, hífen e sublinhado. O resto continua 404.
 */
 const ROTA_DO_APP =
-  /^\/(?:sem-acesso|(?:saude-indigena|sede|projetos|paineis|administracao)(?:\/[A-Za-z0-9_-]+){1,3})\/?$/;
+  /^\/(?:sem-acesso|(?:saude-indigena|sede|projetos|paineis|administracao)(?:\/[A-Za-z0-9_-]+){1,4})\/?$/;
 
 /** A página do caminho: as fixas e, nas rotas do app, o `index.html`. */
 export function paginaDoCaminho(pathname: string): string | undefined {

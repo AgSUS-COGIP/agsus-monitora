@@ -113,6 +113,7 @@ describe("Casca", () => {
       "page-external",
       "page-config",
       "page-sem-acesso",
+      "page-manutencao",
     ]);
     expect(
       secoes.filter((s) => s.classList.contains("active")).map((s) => s.id),

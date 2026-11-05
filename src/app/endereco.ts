@@ -7,9 +7,11 @@
   - `ir(caminho)` empilha uma entrada (`pushState`); `{ substituir: true }`
     troca a atual (`replaceState`: a tela de entrada, o redirecionamento de
     tela proibida). O mesmo endereço não empilha de novo.
+  - `voltar()` volta uma entrada (`history.back`): fechar as Regras do
+    edital abertas por cima de Editais não deixa entrada órfã.
   - `assinar(ouvinte)` avisa o voltar/avançar do navegador (`popstate`).
-    Entrada do histórico com o mesmo endereço (as Regras do edital marcam o
-    `history.state` sem mudar o caminho) também avisa: quem assina compara.
+    Entrada do histórico com o mesmo endereço também avisa: quem assina
+    compara.
 
   Por que não o React Router: o app só precisa disto, e a entrada do app
   (o JavaScript antes da tela de acesso) já está perto do orçamento
@@ -24,7 +26,7 @@ export interface LocalDoEndereco {
 /** O que o endereço usa da janela (nos testes, uma falsa). */
 export interface JanelaDoEndereco {
   location: { pathname: string; search: string };
-  history: Pick<History, "pushState" | "replaceState" | "state">;
+  history: Pick<History, "pushState" | "replaceState" | "state" | "back">;
   addEventListener(tipo: "popstate", ouvinte: () => void): void;
   removeEventListener(tipo: "popstate", ouvinte: () => void): void;
 }
@@ -32,12 +34,14 @@ export interface JanelaDoEndereco {
 export interface Endereco {
   obter(): LocalDoEndereco;
   ir(caminho: string, opcoes?: { substituir?: boolean }): void;
+  voltar(): void;
   assinar(ouvinte: (local: LocalDoEndereco) => void): () => void;
 }
 
 const ENDERECO_PARADO: Endereco = Object.freeze({
   obter: () => ({ caminho: "/", busca: "" }),
   ir: () => {},
+  voltar: () => {},
   assinar: () => () => {},
 });
 
@@ -73,6 +77,13 @@ export function criarEndereco(
   return {
     obter,
     ir,
+    voltar() {
+      try {
+        janela.history.back();
+      } catch {
+        // Sem histórico: fica onde está.
+      }
+    },
     assinar(ouvinte) {
       if (!ouvintes.size) janela.addEventListener("popstate", aoVoltar);
       ouvintes.add(ouvinte);

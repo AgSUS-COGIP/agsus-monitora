@@ -414,23 +414,15 @@ describe("regra da avaliação (AM-2)", () => {
     expect(resumo.textContent).toContain("Nota mínima");
     expect(secao.querySelector(".avd-campos")).toBeNull();
     window.navigate = vi.fn();
-    // Editais no registro das telas (src/app/telas.tsx), como no app.
-    const editais = {
-      nome: "Editais",
-      conteudo: null,
-      render() {},
-      abrirRegrasDoEdital: vi.fn(),
-    };
-    registrarTelas({ nucleo: { criar: () => editais } });
+    // As Regras do edital são rota de Editais (src/app/navegacao.ts).
     try {
       await clicar(
         resumo.querySelector("[data-acao='editar-nas-regras-do-edital']"),
       );
-      expect(window.navigate).toHaveBeenCalledWith("nucleo");
-      expect(editais.abrirRegrasDoEdital).toHaveBeenCalledWith(
-        "e93",
-        "avaliacao",
-      );
+      expect(window.navigate).toHaveBeenCalledWith("nucleo", {
+        edital: "e93",
+        regras: "avaliacao",
+      });
     } finally {
       delete window.navigate;
       registrarTelas({});

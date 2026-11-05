@@ -163,10 +163,15 @@ visao, edital, secao, aviso, titulo, subtitulo, abertura }`; `assinar()` avisa a
    `aberturaDaSecao` (o `render()` da seção) e pergunta à seção antes de trocar. Saem
    `organizarConfiguracoesEmSecoes`, o evento `agsus:secao-de-configuracao-aberta`, os
    `window.<seção>Controller`, `tela-sob-demanda.ts` e `montar-modulo.tsx`.
-4. **Regras do edital no endereço** (`/:area/editais/:edital/regras/:etapa`), depois que a parte 2
-   das Regras do edital (que hoje marca o histórico com `pushState` sem mudar o endereço) entrar.
-5. **Avisos no lugar da página** (manutenção, desligada, sem acesso) em React, saindo de
-   `src/modules/situacao-dos-modulos.ts`.
+4. **Regras do edital no endereço** (feito): `/:area/editais/:edital/regras/:etapa`. A navegação
+   guarda `regras` (`{ edital, etapa }`); abrir por cima da tabela de Editais empilha uma entrada,
+   trocar de etapa substitui e o "← Editais" volta pelo histórico (`endereco.voltar()`). Editais lê
+   as regras da navegação; as outras telas abrem por `navigate("nucleo", { edital, regras })`.
+   Sai a marca `monitoraRegrasDoEdital` no `history.state`.
+5. **Avisos no lugar da página** (feito): a decisão é pura (`avisoDaPagina`,
+   `src/lib/pagina-desligada.ts`), a navegação publica `manutencao` e `faixa`, e a rota desenha
+   `#page-manutencao` e `#faixaDeManutencao` em React (`src/app/telas.tsx`). A situação do sistema
+   (sem DOM) foi para `src/app/situacao-do-sistema.ts`; sai `src/modules/situacao-dos-modulos.ts`.
 
 ## 4. Riscos
 

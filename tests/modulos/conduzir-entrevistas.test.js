@@ -889,25 +889,17 @@ describe("a tela de Conduzir entrevistas", () => {
       "Escolher o roteiro nas Regras do edital",
     );
     window.navigate = vi.fn();
-    // Editais no registro das telas (src/app/telas.tsx), como no app.
-    const editais = {
-      nome: "Editais",
-      conteudo: null,
-      render() {},
-      abrirRegrasDoEdital: vi.fn(),
-    };
-    registrarTelas({ nucleo: { criar: () => editais } });
+    // As Regras do edital são rota de Editais (src/app/navegacao.ts).
     try {
       await clicar(
         corpoDoPasso().querySelector(
           "[data-acao='editar-nas-regras-do-edital']",
         ),
       );
-      expect(window.navigate).toHaveBeenCalledWith("nucleo");
-      expect(editais.abrirRegrasDoEdital).toHaveBeenCalledWith(
-        "m1",
-        "entrevista",
-      );
+      expect(window.navigate).toHaveBeenCalledWith("nucleo", {
+        edital: "m1",
+        regras: "entrevista",
+      });
     } finally {
       delete window.navigate;
       registrarTelas({});
@@ -1060,22 +1052,15 @@ describe("Preparar, roteiros e ficha", () => {
     // "Editar" de quem avalia leva às Regras do edital (etapa Entrevista); o
     // da nota abre o roteiro do edital aqui.
     window.navigate = vi.fn();
-    // Editais no registro das telas (src/app/telas.tsx), como no app.
-    const editais = {
-      nome: "Editais",
-      conteudo: null,
-      render() {},
-      abrirRegrasDoEdital: vi.fn(),
-    };
-    registrarTelas({ nucleo: { criar: () => editais } });
+    // As Regras do edital são rota de Editais (src/app/navegacao.ts).
     try {
       await clicar(
         bloco("banca").querySelector('[data-ir-para="configuracao"]'),
       );
-      expect(editais.abrirRegrasDoEdital).toHaveBeenCalledWith(
-        "m1",
-        "entrevista",
-      );
+      expect(window.navigate).toHaveBeenCalledWith("nucleo", {
+        edital: "m1",
+        regras: "entrevista",
+      });
     } finally {
       delete window.navigate;
       registrarTelas({});

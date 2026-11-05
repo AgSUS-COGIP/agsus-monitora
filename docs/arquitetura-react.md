@@ -311,7 +311,7 @@ Ficou para depois (ainda em `src/modules/` ou no `index.html`):
    para `src/app/` quando a barra virar filha da casca.
 2. **Rotas**: feitas (`docs/arquitetura/raiz-react.md`): a área e a tela no endereço; a tela
    guardada no localStorage só vale quando a página abre na raiz (`/`).
-3. `pwa-lifecycle.ts`, `situacao-dos-modulos.ts`,
+3. `pwa-lifecycle.ts` (a situação dos módulos já foi: `src/app/situacao-do-sistema.ts`),
    `catalogo-de-abas.ts`, `copia-da-sessao-indexeddb.ts`, `cache-de-payload-indexeddb.ts`,
    `comemoracao-do-acesso.ts` → `src/app/` ou React.
 4. O CSS da tela de acesso espalhado (`app.css`, `platform-shell.css`,

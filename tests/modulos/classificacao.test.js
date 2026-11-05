@@ -969,22 +969,15 @@ describe("tela de Classificação", () => {
     expect(resumo.textContent).toContain("PP 25%");
     expect(secao.querySelector("[data-acao='salvar-regra']")).toBeNull();
     window.navigate = vi.fn();
-    // Editais no registro das telas (src/app/telas.tsx), como no app.
-    const editais = {
-      nome: "Editais",
-      conteudo: null,
-      render() {},
-      abrirRegrasDoEdital: vi.fn(),
-    };
-    registrarTelas({ nucleo: { criar: () => editais } });
+    // As Regras do edital são rota de Editais (src/app/navegacao.ts).
     try {
       await clicar(
         resumo.querySelector("[data-acao='editar-nas-regras-do-edital']"),
       );
-      expect(editais.abrirRegrasDoEdital).toHaveBeenCalledWith(
-        "e83",
-        "classificacao",
-      );
+      expect(window.navigate).toHaveBeenCalledWith("nucleo", {
+        edital: "e83",
+        regras: "classificacao",
+      });
     } finally {
       delete window.navigate;
       registrarTelas({});

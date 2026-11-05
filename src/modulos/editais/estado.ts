@@ -21,8 +21,6 @@ import { analisarCronograma } from "../../lib/cronograma-do-edital.ts";
 import { lerAnexoNoServidor } from "../../lib/anexos-do-edital.ts";
 import { lerRetificacaoNoServidor } from "../../lib/retificacao-do-cronograma.ts";
 import { carregarResumoDoNucleo, createNucleoSummaryStore } from "./resumo.ts";
-import { etapaDasRegras } from "../../lib/regras-do-edital.ts";
-import type { EtapaDasRegras } from "../../lib/regras-do-edital.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ClienteDoResumo } from "./resumo.ts";
 import type {
@@ -54,13 +52,6 @@ export interface ModalDoNucleo {
   abertura: number;
 }
 
-/** A página Regras do edital aberta no lugar da tabela: o edital e a etapa. */
-export interface RegrasAbertas {
-  id: string;
-  titulo: string;
-  etapa: EtapaDasRegras;
-}
-
 /** "idle" (nada pedido), "loading", "ready" ou "error". */
 export type StatusDoResumo = "idle" | "loading" | "ready" | "error";
 
@@ -73,7 +64,6 @@ export interface EstadoDoNucleo {
   carregadoEm: string;
   filtro: string;
   modal: ModalDoNucleo | null;
-  regras: RegrasAbertas | null;
   salvando: boolean;
   geracao: number;
 }
@@ -127,20 +117,8 @@ export type CarregadorDoNucleo = (
   progresso?: number,
 ) => void;
 
-/*
-  O histórico do navegador, no que a página usa: abrir as Regras do edital
-  empilha uma entrada e o "voltar" do navegador as fecha (popstate).
-*/
-export interface JanelaDoHistorico {
-  history?: Pick<History, "state" | "pushState" | "replaceState" | "back">;
-  addEventListener?: (tipo: "popstate", ouvinte: () => void) => void;
-  removeEventListener?: (tipo: "popstate", ouvinte: () => void) => void;
-}
-
 export interface OpcoesDoEstadoDoNucleo {
   supabase?: ClienteDoNucleo | null;
-  /** O histórico do navegador (nos testes, um falso). */
-  janela?: JanelaDoHistorico | null;
   toast?: AvisoDoNucleo;
   loader?: CarregadorDoNucleo;
   getProfile?: () => unknown;
@@ -170,8 +148,6 @@ const RPC_QUADRO = "obter_quadro_de_vagas";
 const RPC_SALVAR_QUADRO = "salvar_quadro_de_vagas";
 const RPC_REINICIAR_TREINAMENTO = "reiniciar_edital_treinamento";
 export const EVENTO_CRONOGRAMA_SALVO = "agsus:nucleo-cronograma-saved";
-/** A marca das Regras do edital no estado do histórico (history.state). */
-export const CHAVE_DAS_REGRAS = "monitoraRegrasDoEdital";
 
 const txt = (valor: unknown) => String(valor ?? "").trim();
 
@@ -191,8 +167,6 @@ const ESTADO_INICIAL: EstadoDoNucleo = Object.freeze({
       { tipo: "linha-do-tempo", id }
   */
   modal: null,
-  /* Regras do edital abertas (a página toma o lugar da tabela), ou `null`. */
-  regras: null,
   salvando: false,
   /** Muda quando a sessão troca de usuário: o que foi pedido antes não vale. */
   geracao: 0,
@@ -211,7 +185,6 @@ export function criarEstadoDoNucleo({
   getProfile = () => null,
   confirmar = (mensagem) => window.confirm(mensagem),
   aoSalvar = recarregarPeloLegado,
-  janela = globalThis.window ?? null,
 }: OpcoesDoEstadoDoNucleo = {}) {
   let estado = ESTADO_INICIAL;
   let aberturas = 0;
@@ -293,7 +266,6 @@ export function criarEstadoDoNucleo({
     unidadesPorArea = null;
     pedido = { fonte: null, pendente: null, token: pedido.token + 1 };
     publicar({
-      regras: null,
       resumo: [],
       statusDoResumo: "idle",
       atualizandoResumo: false,
@@ -312,39 +284,6 @@ export function criarEstadoDoNucleo({
       identidade = atual;
     },
   );
-
-  /*
-    Regras do edital no histórico do navegador. Abrir empilha uma entrada com
-    a marca CHAVE_DAS_REGRAS; o "voltar" do navegador sai dela (popstate sem a
-    marca) e fecha a página, de volta à tabela de Editais. Trocar de etapa
-    troca a entrada (não empilha: voltar não passeia pelas etapas). O
-    "← Editais" da página volta pelo histórico quando a entrada é nossa, para
-    não deixar uma entrada órfã. É a única navegação dentro de Editais que
-    entra no histórico: os modais não entram.
-  */
-  const historico = janela?.history ?? null;
-  const marcaDasRegras = (): unknown =>
-    (historico?.state as Record<string, unknown> | null | undefined)?.[
-      CHAVE_DAS_REGRAS
-    ];
-  function anotarRegras(regras: RegrasAbertas, empilhar: boolean) {
-    if (!historico) return;
-    const atual =
-      historico.state && typeof historico.state === "object"
-        ? (historico.state as Record<string, unknown>)
-        : {};
-    const marcado = { ...atual, [CHAVE_DAS_REGRAS]: regras };
-    try {
-      if (empilhar) historico.pushState(marcado, "");
-      else historico.replaceState(marcado, "");
-    } catch {
-      // Navegador que recusa o histórico: a página funciona sem o "voltar".
-    }
-  }
-  const aoVoltarNoNavegador = () => {
-    if (estado.regras && !marcaDasRegras()) publicar({ regras: null });
-  };
-  janela?.addEventListener?.("popstate", aoVoltarNoNavegador);
 
   // Um cronograma salvo (daqui ou de outra tela) deixa o resumo velho.
   const invalidarResumo = () => resumo.invalidate();
@@ -667,37 +606,10 @@ export function criarEstadoDoNucleo({
     abrirLinhaDoTempo: (id: unknown) =>
       abrir({ tipo: "linha-do-tempo", id: txt(id) }),
     /*
-      Regras do edital (todas as etapas). Quem lê e quem edita cada regra é o
-      banco, pelas RPCs de cada etapa. O título sai do resumo, se o edital
-      estiver nele.
+      O cliente das RPCs das Regras do edital (as etapas chamam direto). A
+      página abre pela navegação, com o edital e a etapa no endereço
+      (src/app/navegacao.ts, `abrirRegrasDoEdital`).
     */
-    abrirRegrasDoEdital: (id: unknown, etapa?: unknown) => {
-      const alvo = txt(id);
-      if (!alvo) return;
-      const item = estado.resumo.find((r) => txt(r.id) === alvo);
-      const regras: RegrasAbertas = {
-        id: alvo,
-        titulo: txt(item?.edital) || estado.regras?.titulo || "",
-        etapa: etapaDasRegras(etapa),
-      };
-      // Já aberta (outro edital ou outra etapa): troca a entrada, não empilha.
-      anotarRegras(regras, !(estado.regras && marcaDasRegras()));
-      publicar({ modal: null, perfil: perfil(), regras });
-    },
-    mudarEtapaDasRegras: (etapa: EtapaDasRegras) => {
-      if (!estado.regras) return;
-      const regras = { ...estado.regras, etapa: etapaDasRegras(etapa) };
-      if (marcaDasRegras()) anotarRegras(regras, false);
-      publicar({ regras });
-    },
-    fecharRegrasDoEdital: () => {
-      if (!estado.regras) return;
-      const nossa = Boolean(marcaDasRegras());
-      publicar({ regras: null });
-      // O popstate que vem do back() já encontra a página fechada.
-      if (nossa) historico?.back();
-    },
-    /* O cliente das RPCs das regras (as etapas chamam direto). */
     clienteDasRegras: () => supabase,
     fecharModal: () => estado.modal && publicar({ modal: null }),
     lerCronograma,
@@ -711,7 +623,6 @@ export function criarEstadoDoNucleo({
     reiniciarTreinamento,
     desligar() {
       assinaturaDoAuth?.data?.subscription?.unsubscribe?.();
-      janela?.removeEventListener?.("popstate", aoVoltarNoNavegador);
       document.removeEventListener(EVENTO_CRONOGRAMA_SALVO, invalidarResumo);
     },
   };

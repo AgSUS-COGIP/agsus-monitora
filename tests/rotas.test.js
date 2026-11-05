@@ -60,6 +60,44 @@ describe("caminho ↔ destino", () => {
     expect(destinoDoCaminho(`/sede/editais/${EDITAL}`)).toBeNull();
   });
 
+  it("Regras do edital: /<área>/editais/<edital>/regras/<etapa>", () => {
+    expect(
+      caminhoDoDestino({
+        view: "nucleo",
+        area: "sede",
+        edital: EDITAL,
+        regras: "classificacao",
+      }),
+    ).toBe(`/sede/editais/${EDITAL}/regras/classificacao`);
+    expect(
+      destinoDoCaminho(`/sede/editais/${EDITAL}/regras/classificacao`),
+    ).toEqual({
+      view: "nucleo",
+      area: "sede",
+      edital: EDITAL,
+      regras: "classificacao",
+    });
+    // Sem etapa, a primeira (Triagem).
+    expect(destinoDoCaminho(`/sede/editais/${EDITAL}/regras`)).toEqual({
+      view: "nucleo",
+      area: "sede",
+      edital: EDITAL,
+      regras: "triagem",
+    });
+    // Etapa que não existe, outra tela ou área reservada: não é rota.
+    for (const caminho of [
+      `/sede/editais/${EDITAL}/regras/outra`,
+      `/sede/editais/${EDITAL}/regras/triagem/mais`,
+      `/sede/cronograma/${EDITAL}/regras/triagem`,
+      `/administracao/editais/${EDITAL}/regras/triagem`,
+    ])
+      expect(destinoDoCaminho(caminho), caminho).toBeNull();
+    // Sem edital, as regras não vão para o endereço.
+    expect(
+      caminhoDoDestino({ view: "nucleo", area: "sede", regras: "triagem" }),
+    ).toBe("/sede/editais");
+  });
+
   it("Configurações, painel externo e sem acesso", () => {
     expect(caminhoDoDestino({ view: "config", secao: "acessos" })).toBe(
       "/administracao/configuracoes/acessos",
@@ -109,6 +147,12 @@ describe("hospedagem: toda rota entrega o app", () => {
       view: "conduzir-entrevistas",
       area: "sede",
       edital: EDITAL,
+    }),
+    caminhoDoDestino({
+      view: "nucleo",
+      area: "sede",
+      edital: EDITAL,
+      regras: "classificacao",
     }),
     caminhoDoDestino({ view: "config", secao: "acessos" }),
     caminhoDoDestino({ view: "panel:bi" }),
