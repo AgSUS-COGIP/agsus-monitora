@@ -61,8 +61,12 @@ classificacao.tsx  <TelaDeClassificacao>, montarClassificacao() e calcularClassi
 estado.ts          store sem React: editais da área, dados do edital, salvar regra, gerar,
                    publicar, desempate (sorteio/decisão), documento oficial (Copiar para o
                    SEI, DOCX timbrado, PDF) e XLSX; salvar os textos do documento
-listas.tsx         visão "Listas" em TypeScript: KPIs, avisos e pendências, gerar/exportar, filtros, uma
-                   tabela por vaga, eliminados, gaveta com a explicação, registro do empate
+listas.tsx         visão "Listas" em TypeScript: KPIs (clicáveis: Nas listas, Eliminados,
+                   Aguardando), avisos e pendências, gerar/exportar, a BarraDeFiltros (nome ou
+                   código, vaga, lista, situação; recorte na sessão por edital, regras em
+                   src/lib/classificacao/dados.ts), uma tabela por vaga com 50 por vez,
+                   "Ver posição" e "⋯" em cada linha, eliminados, gaveta com a explicação,
+                   registro do empate
 publicar-aprovados.tsx  "Publicar como lista de aprovados" (resultado final, editor): o que
                    muda em relação à lista de aprovados vigente (entram, saem, mudam de
                    posição, preservados, sub judice mantidos) e revisão de quem não casou

@@ -641,7 +641,7 @@ const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
     titulo: "Classificação · Listas",
     passos: Object.freeze([
       passo(
-        [t("classificacao-seletor-edital"), t("classificacao-edital")],
+        t("classificacao-seletor-edital"),
         "Edital",
         "A regra de classificação é de cada edital, decidida pelo gestor dele.",
       ),
@@ -659,7 +659,12 @@ const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       passo(
         t("classificacao-kpis"),
         "Indicadores",
-        "Os números da lista escolhida.",
+        "Os números da lista escolhida; Nas listas, Eliminados e Aguardando filtram as tabelas.",
+      ),
+      passo(
+        t("classificacao-filtros"),
+        "Encontrar a pessoa",
+        "Busca por nome ou código (a tecla / leva até ela), vaga, lista e situação. O filtro volta ao recarregar.",
       ),
       passo(
         "#page-classificacao .classificacao-avisos",
@@ -701,7 +706,7 @@ const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       passo(
         "#page-classificacao .classificacao-vaga",
         "Por vaga",
-        "Clique no nome para ver por que o candidato está naquela posição.",
+        "50 por vez. Ver posição explica o lugar do candidato; o ⋯ copia o código e registra o empate.",
       ),
       PASSO_DA_AYA,
     ]),

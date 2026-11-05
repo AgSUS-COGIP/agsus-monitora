@@ -18,19 +18,6 @@
   gap: var(--space-4);
 }
 
-.classificacao-edital select {
-  width: min(640px, 100%);
-}
-/* O selo de treinamento ao lado da escolha do edital. */
-.classificacao-edital {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-3);
-}
-.classificacao-edital > :first-child {
-  flex: 1 1 320px;
-}
 
 @media (min-width: 1100px) {
   .classificacao-kpis {
