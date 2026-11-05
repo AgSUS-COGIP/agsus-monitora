@@ -23,16 +23,18 @@
          "https://agsus-monitora.vercel.app/api/cronograma?edital_id=<id>"
 
   2. Filtros opcionais:
-       ?edital_id=                              igual
+       ?edital_id=  ?area=                      igual (sem caixa nem acento)
        ?edital=  ?unidade=  ?atividade=         contém o trecho
      `edital_id` é o "id" de /api/editais.
+     "area" é a área do edital: "Saúde Indígena", "SEDE" ou "Projetos".
+     ?area= aceita o nome ou o código (saude-indigena, sede, projetos).
 
   3. A resposta (200, JSON):
 
        {
          "etapas": [
            { "edital_id": "6f1c…", "edital": "001/2026",
-             "unidade": "DSEI Yanomami", "ordem": 1,
+             "unidade": "DSEI Yanomami", "area": "Saúde Indígena", "ordem": 1,
              "atividade": "Publicação do edital",
              "data_inicio": "2026-03-02", "data_fim": "2026-03-02" }
          ],
