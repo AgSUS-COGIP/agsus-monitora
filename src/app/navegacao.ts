@@ -57,6 +57,7 @@ import {
   marcarItemAtivoNoMenu,
 } from "../componentes/barra-lateral/estado.ts";
 import { SECOES } from "../modulos/configuracoes/secoes.ts";
+import { etapaDasRegras } from "../lib/regras-do-edital.ts";
 import {
   confirmarSaidaDaSecao,
   confirmarSaidaDasSecoes,
@@ -124,6 +125,14 @@ export interface EstadoDaNavegacao {
   readonly subtitulo: string;
   readonly abertura: number;
   readonly aberturaDaSecao: number;
+  /** As Regras do edital abertas em Editais (o edital e a etapa), ou `null`. */
+  readonly regras: RegrasNoEndereco | null;
+}
+
+/** As Regras do edital no endereço (`/<área>/editais/<edital>/regras/<etapa>`). */
+export interface RegrasNoEndereco {
+  readonly edital: string;
+  readonly etapa: string;
 }
 
 /** O que o React lê da navegação (src/app/contexto-do-app.ts). */
@@ -132,6 +141,13 @@ export interface LeituraDaNavegacao {
   assinar(ouvinte: OuvinteDaNavegacao): () => void;
   /** O edital e a visão do endereço já foram abertos pela tela. */
   esquecerEditalEVisao(): void;
+  /**
+   * Abre as Regras do edital (em Editais) na etapa; já abertas, troca a
+   * etapa (ou o edital) sem empilhar endereço.
+   */
+  abrirRegrasDoEdital(edital: string, etapa?: string): boolean;
+  /** Fecha as Regras do edital (volta à tabela de Editais). */
+  fecharRegrasDoEdital(): void;
 }
 
 /* Sair com alteração não salva (Acessos, Módulos e abas ou campos de Configurações) pergunta antes. */
@@ -156,6 +172,8 @@ export interface ExtrasDaNavegacao {
   edital?: string | null | undefined;
   visao?: string | null | undefined;
   secao?: string | null | undefined;
+  /** Com `edital`, em Editais: as Regras do edital, nesta etapa. */
+  regras?: string | null | undefined;
 }
 
 export interface OpcoesDaNavegacao {
@@ -201,6 +219,7 @@ export const ESTADO_INICIAL_DA_NAVEGACAO: EstadoDaNavegacao = Object.freeze({
   subtitulo: "",
   abertura: 0,
   aberturaDaSecao: 0,
+  regras: null,
 });
 
 /* O que fazer com o endereço ao abrir: nova entrada, trocar a atual. */
@@ -242,6 +261,11 @@ export function criarNavegacao({
   */
   let secoesPermitidas: readonly string[] = SECOES.map((secao) => secao.id);
   let ultimaSecao = "";
+  /*
+    As Regras do edital foram abertas por cima da tabela de Editais (uma
+    entrada a mais no histórico): fechar volta por ela.
+  */
+  let regrasEmpilhadas = false;
   const ouvintes = new Set<OuvinteDaNavegacao>();
 
   const perfil = () => obterPerfil();
@@ -511,11 +535,49 @@ export function criarNavegacao({
         : {
             view: estado.view,
             area: estado.area,
-            edital: estado.edital,
+            edital: estado.regras?.edital || estado.edital,
             visao: estado.visao,
             secao: estado.secao,
+            ...(estado.regras ? { regras: estado.regras.etapa } : {}),
           },
     );
+
+  // ── Regras do edital (Editais) ─────────────────────────────────────────
+
+  /*
+    As Regras do edital tomam o lugar da tabela de Editais e ficam no
+    endereço (`/<área>/editais/<edital>/regras/<etapa>`). Abrir por cima da
+    tabela empilha uma entrada (o voltar do navegador fecha); trocar de etapa
+    ou de edital com elas abertas troca a entrada (voltar não passeia pelas
+    etapas). De outra tela, abre Editais já nelas.
+  */
+  function abrirRegrasDoEdital(edital: string, etapa?: string): boolean {
+    const alvo = String(edital ?? "").trim();
+    if (!alvo) return false;
+    const pedida = etapaDasRegras(etapa);
+    if (estado.view !== "nucleo" || estado.aviso)
+      return irPara("nucleo", { edital: alvo, regras: pedida });
+    const jaAbertas = Boolean(estado.regras);
+    if (!jaAbertas) regrasEmpilhadas = true;
+    publicar({ regras: Object.freeze({ edital: alvo, etapa: pedida }) });
+    endereco.ir(caminhoAtual(), { substituir: jaAbertas });
+    avisarOuvintes({ tipo: "estado" });
+    return true;
+  }
+
+  /*
+    "← Editais": a tabela volta. Aberta por cima dela, volta pelo histórico
+    (sem entrada órfã); vinda de um link, troca o endereço pelo de Editais.
+  */
+  function fecharRegrasDoEdital() {
+    if (!estado.regras) return;
+    const voltar = regrasEmpilhadas;
+    regrasEmpilhadas = false;
+    publicar({ regras: null });
+    if (voltar) endereco.voltar();
+    else endereco.ir(caminhoAtual());
+    avisarOuvintes({ tipo: "estado" });
+  }
 
   // ── Troca de tela ─────────────────────────────────────────────────────
 
@@ -535,6 +597,7 @@ export function criarNavegacao({
           visao: extras.visao || destino.visao,
           edital: extras.edital || "",
           secao: extras.secao || "",
+          regras: extras.regras || "",
         },
         "empilhar",
       ) !== false
@@ -547,7 +610,16 @@ export function criarNavegacao({
   */
   function reabrir(): boolean {
     return (
-      abrir({ view: estado.view, secao: estado.secao }, "substituir") !== false
+      abrir(
+        {
+          view: estado.view,
+          secao: estado.secao,
+          ...(estado.regras
+            ? { edital: estado.regras.edital, regras: estado.regras.etapa }
+            : {}),
+        },
+        "substituir",
+      ) !== false
     );
   }
 
@@ -626,13 +698,23 @@ export function criarNavegacao({
     guardarTela(tela);
     if (!ehPainelExterno(tela)) paineis.esquecerAtual();
     ajustarBarra();
+    // Em Editais, o edital com etapa é o das Regras do edital (fica no endereço).
+    const regras =
+      tela === "nucleo" && destino.regras && destino.edital
+        ? Object.freeze({
+            edital: destino.edital,
+            etapa: etapaDasRegras(destino.regras),
+          })
+        : null;
+    regrasEmpilhadas = false;
     publicar({
       view: tela,
       area: areaAtual(),
-      edital: destino.edital || "",
+      edital: regras ? "" : destino.edital || "",
       visao: destino.visao || "",
       secao: tela === "config" ? destino.secao || "" : "",
       aviso: "",
+      regras,
     });
     marcarMenu(tela);
 
@@ -819,6 +901,8 @@ export function criarNavegacao({
     reabrir,
     abrirEntrada,
     abrirSecao,
+    abrirRegrasDoEdital,
+    fecharRegrasDoEdital,
     fechar,
     /** Para de ouvir o voltar/avançar (testes; o app tem uma navegação só). */
     desligar: pararDeOuvirOEndereco,

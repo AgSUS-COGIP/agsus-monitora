@@ -5,6 +5,7 @@
   mesmas permissões de sempre (src/lib/navegacao.ts).
 
     /<area>/<tela>[/<edital>][?visao=<visão>]   telas das áreas (Saúde Indígena, SEDE, Projetos)
+    /<area>/editais/<edital>/regras/<etapa>     Regras do edital (Editais), na etapa
     /administracao/configuracoes[/<seção>]      Configurações
     /paineis/<código>                           painel externo
     /sem-acesso                                 quem não tem módulo liberado
@@ -13,6 +14,7 @@
   A `view` é o nome interno de sempre (o do menu, das permissões e do
   catálogo de abas); o caminho é o nome que a pessoa lê no endereço.
 */
+import { etapaDasRegras } from "./regras-do-edital.ts";
 
 /** Para onde ir: a tela (view) e o que vai com ela. */
 export interface DestinoDaRota {
@@ -25,6 +27,8 @@ export interface DestinoDaRota {
   visao?: string;
   /** Seção de Configurações. */
   secao?: string;
+  /** Regras do edital abertas em Editais (com `edital`): a etapa. */
+  regras?: string;
 }
 
 /** Uma tela de área: o caminho no endereço, o título e se aceita edital. */
@@ -35,6 +39,8 @@ export interface TelaDaRota {
   /** Subtítulo depois da área; recebe o texto de TB_CONFIGURACAO. */
   subtitulo?: (configuracao: (chave: string) => string) => string;
   comEdital?: boolean;
+  /** A tela abre as Regras do edital de um edital (Editais). */
+  comRegras?: boolean;
 }
 
 /*
@@ -48,6 +54,7 @@ const TELAS: TelaDaRota[] = [
     caminho: "editais",
     titulo: "Editais",
     subtitulo: (configuracao) => configuracao("nucleo_page_subtitle"),
+    comRegras: true,
   },
   {
     view: "calendario",
@@ -118,7 +125,14 @@ export const AREA_DAS_CONFIGURACOES_NA_ROTA = "administracao";
 export const CAMINHO_DAS_CONFIGURACOES = "configuracoes";
 export const AREA_DOS_PAINEIS_NA_ROTA = "paineis";
 export const CAMINHO_SEM_ACESSO = "sem-acesso";
+export const CAMINHO_DAS_REGRAS = "regras";
 const PREFIXO_DO_PAINEL = "panel:";
+/* O primeiro pedaço que não é área (Configurações, painéis, sem acesso). */
+const AREAS_RESERVADAS: ReadonlySet<string> = new Set([
+  AREA_DAS_CONFIGURACOES_NA_ROTA,
+  AREA_DOS_PAINEIS_NA_ROTA,
+  CAMINHO_SEM_ACESSO,
+]);
 
 /* Um pedaço do caminho: letras, números, hífen e sublinhado (ids e códigos). */
 const PEDACO = /^[A-Za-z0-9_-]+$/;
@@ -155,6 +169,9 @@ export function caminhoDoDestino(destino: DestinoDaRota): string {
   const tela = POR_VIEW.get(view);
   const area = pedaco(destino.area);
   if (!tela || !area) return "/";
+  const daRegra = tela.comRegras ? pedaco(destino.edital) : "";
+  if (daRegra && destino.regras)
+    return `/${area}/${tela.caminho}/${daRegra}/${CAMINHO_DAS_REGRAS}/${etapaDasRegras(destino.regras)}`;
   const edital = tela.comEdital ? pedaco(destino.edital) : "";
   const visao = pedaco(destino.visao);
   return (
@@ -186,6 +203,10 @@ export function destinoDoCaminho(
     string | undefined,
     ...string[],
   ];
+  const regras = AREAS_RESERVADAS.has(primeira)
+    ? null
+    : regrasDoCaminho(segunda, terceira, resto);
+  if (regras) return { ...regras, area: primeira };
   if (resto.length) return null;
   if (primeira === CAMINHO_SEM_ACESSO)
     return segunda ? null : { view: CAMINHO_SEM_ACESSO };
@@ -206,6 +227,24 @@ export function destinoDoCaminho(
     ...(terceira ? { edital: terceira } : {}),
     ...(visao ? { visao } : {}),
   };
+}
+
+/*
+  `/<area>/editais/<edital>/regras[/<etapa>]`: as Regras do edital (sem
+  etapa, a primeira). Etapa que não existe não é rota.
+*/
+function regrasDoCaminho(
+  segunda: string | undefined,
+  edital: string | undefined,
+  resto: readonly string[],
+): { view: string; edital: string; regras: string } | null {
+  const tela = segunda ? POR_CAMINHO.get(segunda) : undefined;
+  if (!tela?.comRegras || !edital || resto[0] !== CAMINHO_DAS_REGRAS)
+    return null;
+  if (resto.length > 2) return null;
+  const pedida = resto[1];
+  if (pedida && etapaDasRegras(pedida) !== pedida) return null;
+  return { view: tela.view, edital, regras: etapaDasRegras(pedida) };
 }
 
 /** O caminho é a raiz do app (abre a tela de entrada)? */

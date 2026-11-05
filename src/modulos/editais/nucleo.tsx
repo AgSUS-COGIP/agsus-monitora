@@ -1,5 +1,16 @@
 import { carregarTela } from "../../app/registro-das-telas.ts";
-import { lazy, Suspense, useMemo, useState, useSyncExternalStore } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import {
+  usarEstadoDaNavegacao,
+  usarNavegacao,
+} from "../../app/contexto-do-app.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { safeHttpUrl } from "../../lib/sanitize";
 import {
@@ -39,6 +50,7 @@ import type {
 } from "./estado.ts";
 import { importarComRecarga } from "../../lib/importar-com-recarga.ts";
 import { BlocosEsqueleto } from "../../ui/index.ts";
+import { etapaDasRegras } from "../../lib/regras-do-edital.ts";
 import type { EtapaDasRegras } from "../../lib/regras-do-edital.ts";
 import type { ClienteDasRegras } from "../regras-do-edital/regras-do-edital.tsx";
 import type { EstadoDosAprovados } from "../aprovados/tipos-do-estado.ts";
@@ -163,6 +175,7 @@ function LinhaDoEdital({
   const podeEditar = canManageEditais(perfil);
   const podeListas = canImportApprovedList(perfil);
   const podeReiniciar = isAdminGlobal(perfil) && ehEditalDeTreinamento(linha);
+  const navegacao = usarNavegacao();
   const [confirmando, setConfirmando] = useState(false);
   const salvando = useSyncExternalStore(
     estado.assinar,
@@ -254,7 +267,7 @@ function LinhaDoEdital({
               title="Regras do edital"
               data-tour="editais-regras-do-edital"
               aria-label={`Regras do edital ${item.edital || ""}`}
-              onClick={() => estado.abrirRegrasDoEdital(item.id)}
+              onClick={() => navegacao.abrirRegrasDoEdital(String(item.id))}
             >
               <i className="fa-solid fa-list-check" aria-hidden="true" />
             </button>
@@ -387,11 +400,25 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
   );
   const podeEditar = canManageEditais(nucleo.perfil);
 
-  if (nucleo.regras) {
-    const { id, etapa } = nucleo.regras;
+  /*
+    Regras do edital: tomam o lugar da tabela, com o edital e a etapa no
+    endereço (`/<área>/editais/<edital>/regras/<etapa>`, src/app/navegacao.ts).
+    O título sai do resumo, se o edital estiver nele.
+  */
+  const navegacao = usarNavegacao();
+  const { regras } = usarEstadoDaNavegacao();
+  const fecharModal = estado.fecharModal;
+  useEffect(() => {
+    if (regras) fecharModal();
+  }, [regras, fecharModal]);
+
+  if (regras) {
+    const { edital: id } = regras;
+    const etapa = etapaDasRegras(regras.etapa);
     const linha = linhas.find((l) => String(l.id) === id);
+    const noResumo = doResumo.resumo.find((r) => String(r.id ?? "") === id);
     const titulo =
-      nucleo.regras.titulo ||
+      String(noResumo?.edital ?? "").trim() ||
       [linha?.edital, linha?.unidade].filter(Boolean).join(" · ");
     return (
       <Suspense fallback={<BlocosEsqueleto quantos={3} />}>
@@ -403,9 +430,9 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
           supabase={estado.clienteDasRegras() as ClienteDasRegras | null}
           toast={estado.toast}
           aoMudarEtapa={(nova: EtapaDasRegras) =>
-            estado.mudarEtapaDasRegras(nova)
+            navegacao.abrirRegrasDoEdital(id, nova)
           }
-          aoVoltar={estado.fecharRegrasDoEdital}
+          aoVoltar={navegacao.fecharRegrasDoEdital}
           aprovados={lojaDosAprovados}
         />
       </Suspense>
@@ -508,7 +535,5 @@ export function criarNucleo({
       return estado.carregarResumo().catch(() => {});
     },
     abrirEdital: estado.abrirEdital,
-    /* "Editar nas Regras do edital" das telas de cada etapa (regras-do-edital/abrir.ts). */
-    abrirRegrasDoEdital: estado.abrirRegrasDoEdital,
   };
 }
