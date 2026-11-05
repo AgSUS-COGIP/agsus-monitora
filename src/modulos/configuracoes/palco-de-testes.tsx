@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   DURACAO_MAXIMA_S,
   DURACAO_MINIMA_S,
+  LETREIRO_DA_FESTA,
   type Efeito,
   type FormaDoMarco,
   type Intensidade,
@@ -38,6 +39,8 @@ export interface PedidoDeTeste {
   duracaoMs: number | null;
   som: boolean;
   forma?: FormaDoMarco;
+  /** O texto escrito no céu no fim dos fogos (Normal e Festa). */
+  letreiro?: string;
 }
 
 export type Testar = (pedido: PedidoDeTeste) => void;
@@ -176,6 +179,8 @@ export function PalcoDeTestes({
       intensidade,
       duracaoMs: Math.round(duracaoS * 1000),
       som,
+      // No Normal e no Festa, o grande final escreve no céu.
+      letreiro: LETREIRO_DA_FESTA,
     });
   return (
     <section

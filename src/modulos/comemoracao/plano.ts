@@ -2,13 +2,14 @@ import {
   comemoracoesPessoaisLigadas,
   decidirComemoracao,
   duracaoMsDasOpcoes,
+  letreiroDaComemoracao,
 } from "../../lib/catalogo-de-comemoracoes.ts";
 import type { FormaDoMarco } from "../../lib/catalogo-de-comemoracoes.ts";
 import type { JanelaDaComemoracao } from "./desenho.ts";
 
 /*
-  O que uma comemoração mostra: o plano (efeito, intensidade, duração, som e
-  mensagem) a partir do marco do catálogo (Configurações › Comemorações) ou do
+  O que uma comemoração mostra: o plano (efeito, intensidade, duração, som,
+  mensagem e o letreiro — o texto escrito no céu no fim dos fogos) a partir do marco do catálogo (Configurações › Comemorações) ou do
   pedido direto, e as opções de `comemorar`. Sem DOM e sem React.
 */
 
@@ -23,6 +24,8 @@ export interface PedidoDoPlano {
   intensidade?: string | null;
   duracaoMs?: number | null;
   som?: boolean;
+  /** O texto no céu; sem ele, o do marco (ou, no Festa, "Parabéns!"). */
+  letreiro?: string | null;
   janela?: JanelaDaComemoracao;
 }
 
@@ -33,6 +36,8 @@ export interface PlanoDaComemoracao {
   duracaoMs: number | null;
   som: boolean;
   mensagem: string;
+  /** O texto escrito no céu no grande final dos fogos (Normal e Festa). */
+  letreiro: string | null;
 }
 
 /** As opções de `comemorar`. */
@@ -48,6 +53,7 @@ export interface OpcoesDaComemoracao {
   intensidade?: string | null;
   duracaoMs?: number | null;
   som?: boolean;
+  letreiro?: string | null;
   doc?: Document;
   janela?: JanelaDaComemoracao;
   aleatorio?: () => number;
@@ -75,8 +81,21 @@ export function planoDaComemoracao({
   intensidade = null,
   duracaoMs = null,
   som = false,
+  letreiro,
   janela = globalThis.window,
 }: PedidoDoPlano = {}): PlanoDaComemoracao | null {
+  const comLetreiro = (
+    plano: Omit<PlanoDaComemoracao, "letreiro">,
+  ): PlanoDaComemoracao => ({
+    ...plano,
+    letreiro: plano.efeito
+      ? letreiroDaComemoracao({
+          marco,
+          letreiro,
+          intensidade: plano.intensidade,
+        })
+      : null,
+  });
   if (marco) {
     const { mostrar, opcoes } = decidirComemoracao({
       marco,
@@ -85,38 +104,40 @@ export function planoDaComemoracao({
     });
     if (!mostrar) return null;
     if (opcoes && !(teste && efeito))
-      return {
+      return comLetreiro({
         efeito: opcoes.efeito,
         intensidade: opcoes.intensidade,
         duracaoMs: duracaoMsDasOpcoes(opcoes),
         som: opcoes.som,
         mensagem: opcoes.mensagem,
-      };
+      });
   } else if (!teste && !comemoracoesPessoaisLigadas(armazenamentoDa(janela)))
     return null;
   if (efeito)
-    return {
+    return comLetreiro({
       efeito,
       intensidade: intensidade || "normal",
       duracaoMs,
       som: som === true,
       mensagem: "",
-    };
-  return confete
-    ? {
-        efeito: "fogos",
-        intensidade: confete === true ? "cheio" : confete,
-        duracaoMs: null,
-        som: false,
-        mensagem: "",
-      }
-    : {
-        efeito: null,
-        intensidade: null,
-        duracaoMs: null,
-        som: false,
-        mensagem: "",
-      };
+    });
+  return comLetreiro(
+    confete
+      ? {
+          efeito: "fogos",
+          intensidade: confete === true ? "cheio" : confete,
+          duracaoMs: null,
+          som: false,
+          mensagem: "",
+        }
+      : {
+          efeito: null,
+          intensidade: null,
+          duracaoMs: null,
+          som: false,
+          mensagem: "",
+        },
+  );
 }
 
 /** Uma comemoração na tela (src/app/fila-de-comemoracoes.ts). */

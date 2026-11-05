@@ -115,6 +115,7 @@ function pedidoDoMarco(
   opcoes: OpcoesDoMarco,
   texto: string,
   forma: FormaDoMarco = null,
+  letreiro: string | null = null,
 ): PedidoDeTeste {
   return {
     texto: opcoes.mensagem || texto,
@@ -123,6 +124,8 @@ function pedidoDoMarco(
     duracaoMs: duracaoMsDasOpcoes(opcoes),
     som: opcoes.som,
     forma,
+    // O texto no céu do marco (o de verdade lê do catálogo pelo id).
+    ...(letreiro ? { letreiro } : {}),
   };
 }
 
@@ -619,7 +622,9 @@ export function SecaoComemoracoes({
                       aoAlternar={() => alternar(m.id)}
                       aoMudar={(mudancas) => mudarMarco(m.id, mudancas)}
                       aoTestar={() =>
-                        soltar(pedidoDoMarco(opcoes, m.rotulo, m.forma))
+                        soltar(
+                          pedidoDoMarco(opcoes, m.rotulo, m.forma, m.letreiro),
+                        )
                       }
                     />
                   );

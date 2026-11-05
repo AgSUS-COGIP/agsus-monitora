@@ -33,9 +33,16 @@ export interface PosicaoDaAya {
   opacidade: number;
 }
 
+/**
+ * O som de um evento do show: estouro grave (marco e letreiro), estalo (o
+ * comum), crepitar (estouro que estala no fim), assobio (foguete subindo) e
+ * pop (rajada pequena e o confete da Aya).
+ */
 export interface SomDoEstouro {
-  tipo: "grave" | "crepitar" | "estalo";
+  tipo: "grave" | "crepitar" | "estalo" | "assobio" | "pop";
   volume: number;
+  /** Assobio: quanto dura a subida (s). */
+  duracao?: number;
 }
 
 const limitar = (valor: number, min: number, max: number): number =>
@@ -170,16 +177,162 @@ export const podeTocarSom = ({
   interagiu?: unknown;
 }): boolean => ligado === true && interagiu === true;
 
+/* Os formatos cujas faíscas estalam ou piscam: o som crepita depois do estouro. */
+const FORMATOS_QUE_CREPITAM: readonly unknown[] = Object.freeze([
+  "glitter",
+  "estalinho",
+  "crepitante",
+]);
+
 /**
- * O som de um estouro (evento de avancarShow): "crepitar" para faíscas que
- * piscam e estalam, "grave" para o estouro do marco, "estalo" para o resto.
- * Volume baixo (0–1, relativo), menor nas salvas do grande final.
+ * O som de um evento do show (de avancarShow ou da cena): "assobio" para o
+ * foguete que assobia ao subir, "pop" para a rajada e o confete da Aya,
+ * "grave" para o marco e o letreiro, "crepitar" para faíscas que piscam e
+ * estalam, "estalo" para o resto. Volume baixo (0–1, relativo), menor nas
+ * salvas do grande final e da apoteose (muitos juntos).
  */
 export function somDoEstouro(
-  evento: { papel?: unknown; formato?: unknown } = {},
+  evento: {
+    tipo?: unknown;
+    papel?: unknown;
+    formato?: unknown;
+    subida?: unknown;
+  } = {},
 ): SomDoEstouro {
-  if (evento.papel === "marco") return { tipo: "grave", volume: 0.9 };
-  if (evento.formato === "glitter" || evento.formato === "estalinho")
+  if (evento.tipo === "lancamento")
+    return {
+      tipo: "assobio",
+      volume: 0.35,
+      duracao: limitar(Number(evento.subida) || 0.8, 0.3, 1.6),
+    };
+  if (evento.tipo === "confete" || evento.papel === "rajada")
+    return { tipo: "pop", volume: 0.4 };
+  if (evento.papel === "marco" || evento.papel === "letreiro")
+    return { tipo: "grave", volume: 0.9 };
+  if (FORMATOS_QUE_CREPITAM.includes(evento.formato))
     return { tipo: "crepitar", volume: 0.5 };
-  return { tipo: "estalo", volume: evento.papel === "final" ? 0.45 : 0.6 };
+  return {
+    tipo: "estalo",
+    volume:
+      evento.papel === "final"
+        ? 0.45
+        : evento.papel === "apoteose"
+          ? 0.35
+          : 0.6,
+  };
+}
+
+// ── A dança da Aya (no grande final) ────────────────────────────────────────
+
+/*
+  Depois do voo, a Aya volta no grande final: sobe pelo canto de baixo,
+  dança (pulinhos no ritmo, balançando o corpo), dá uma cambalhota, solta
+  confete e desce. Tudo por transform, quadro a quadro (pausa junto com o
+  show quando a aba some). Tempos em s, relativos ao início da dança.
+*/
+export const DANCA_DA_AYA = Object.freeze({
+  /* Sobe do pé da tela. */
+  entrada: 0.35,
+  /* Pulinhos por segundo. */
+  pulos: 2.4,
+  /* A cambalhota começa aqui e dura isto. */
+  cambalhota: 0.85,
+  giro: 0.6,
+  /* O confete sai este tanto antes do fim (e a Aya dá um pulo maior). */
+  confeteAntes: 1.25,
+  /* Desce e some. */
+  saida: 0.35,
+  /* Dança no máximo isto; show curto, o que couber depois do voo. */
+  maxima: 3.1,
+  minima: 1.9,
+});
+
+export interface DancaDaAya {
+  inicio: number;
+  duracao: number;
+  /** Centro da Aya parada (px CSS). */
+  x: number;
+  y: number;
+  tamanho: number;
+  /** Quando (s do show) e de onde sai o confete. */
+  confete: number;
+}
+
+/**
+ * A dança da Aya num show de `duracao` s, depois do voo (`trajeto`): no
+ * canto de baixo à esquerda, terminando um pouco antes do fim. Sem espaço
+ * (show curto demais), null.
+ */
+export function dancaDaAya(
+  trajeto: TrajetoDaAya | null | undefined,
+  {
+    largura = 800,
+    altura = 600,
+    duracao,
+  }: { largura?: number; altura?: number; duracao: number },
+): DancaDaAya | null {
+  if (!trajeto) return null;
+  const fim = duracao - 0.15;
+  const inicio = Math.max(
+    trajeto.inicio + trajeto.duracao + 0.15,
+    fim - DANCA_DA_AYA.maxima,
+  );
+  if (fim - inicio < DANCA_DA_AYA.minima) return null;
+  const tamanho = trajeto.tamanho;
+  return {
+    inicio,
+    duracao: fim - inicio,
+    x: Math.max(tamanho * 0.8, largura * 0.12),
+    y: altura - tamanho * 0.62,
+    tamanho,
+    confete: fim - DANCA_DA_AYA.confeteAntes,
+  };
+}
+
+const sobe = (u: number): number => 1 - (1 - limitar(u, 0, 1)) ** 3;
+
+/**
+ * Onde a Aya está na dança em `t` s do show (posição do centro, rotação,
+ * escala e opacidade, como no voo). Fora da dança, null.
+ */
+export function posicaoNaDanca(
+  danca: DancaDaAya | null | undefined,
+  t: number,
+): PosicaoDaAya | null {
+  if (!danca) return null;
+  const idade = t - danca.inicio;
+  if (idade < 0 || idade > danca.duracao) return null;
+  const { entrada, pulos, cambalhota, giro, saida } = DANCA_DA_AYA;
+  const tamanho = danca.tamanho;
+  // Entra subindo e sai descendo pelo pé da tela.
+  const fora =
+    (1 - sobe(idade / entrada)) * tamanho * 1.3 +
+    sobe((idade - (danca.duracao - saida)) / saida) * tamanho * 1.3;
+  // Pulinhos no ritmo (|sen|), com o corpo balançando de um lado para o outro.
+  const fase = 2 * Math.PI * pulos * idade;
+  let pulo = Math.abs(Math.sin(fase / 2)) * tamanho * 0.16;
+  let rotacao = 0.2 * Math.sin(fase / 2);
+  // A cambalhota: um pulo alto com uma volta inteira.
+  const u = (idade - cambalhota) / giro;
+  if (u >= 0 && u <= 1) {
+    pulo = 4 * u * (1 - u) * tamanho * 0.9;
+    rotacao = -2 * Math.PI * (0.5 - 0.5 * Math.cos(Math.PI * u));
+  }
+  // O pulo do confete: mais alto, de asas abertas.
+  const c = (t - danca.confete + 0.15) / 0.5;
+  if (c >= 0 && c <= 1) pulo = Math.max(pulo, 4 * c * (1 - c) * tamanho * 0.5);
+  // Agacha ao tocar o chão (achata) e estica no ar.
+  const noChao = 1 - limitar(pulo / (tamanho * 0.16), 0, 1);
+  return {
+    x: danca.x + Math.sin(fase / 4) * tamanho * 0.12,
+    y: danca.y - pulo + fora,
+    rotacao,
+    escalaX: 1 + 0.08 * noChao,
+    escalaY: 1 - 0.1 * noChao,
+    opacidade: limitar(
+      Math.min(idade / 0.12, (danca.duracao - idade) / 0.12),
+      0,
+      1,
+    ),
+  };
 }

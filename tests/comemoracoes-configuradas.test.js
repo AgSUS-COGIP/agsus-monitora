@@ -116,6 +116,8 @@ describe("comemorar com a configuração dos marcos", () => {
       duracaoMs: 3000,
       som: true,
       mensagem: "Vaga pronta, equipe!",
+      // O texto no céu do marco (só os fogos escrevem; aqui, confete).
+      letreiro: "Vaga pronta!",
     });
     const { doc, janela: outra } = janelaFalsa();
     comemorar({
@@ -134,6 +136,42 @@ describe("comemorar com a configuração dos marcos", () => {
     // Confete: um canvas, sem véu escuro.
     expect(canvases(doc)).toBe(1);
     expect(veus(doc)).toBe(0);
+  });
+
+  it("o letreiro (texto no céu): o do marco, o pedido ou, no Festa, Parabéns!", () => {
+    const { janela } = janelaFalsa();
+    expect(planoDaComemoracao({ marco: "fila-zerada", janela }).letreiro).toBe(
+      "Fila zerada!",
+    );
+    // O marco do número já escreve o número: sem letreiro próprio (no Festa,
+    // o padrão).
+    expect(planoDaComemoracao({ marco: "marco-do-ano", janela }).letreiro).toBe(
+      "Parabéns!",
+    );
+    const direto = (opcoes) =>
+      planoDaComemoracao({ teste: true, efeito: "fogos", janela, ...opcoes })
+        .letreiro;
+    expect(direto({ intensidade: "festa" })).toBe("Parabéns!");
+    expect(direto({ intensidade: "normal" })).toBeNull();
+    expect(direto({ intensidade: "normal", letreiro: "Valeu!" })).toBe(
+      "Valeu!",
+    );
+    // Letreiro vazio pedido: nenhum, nem no Festa.
+    expect(direto({ intensidade: "festa", letreiro: "" })).toBeNull();
+    // Sem efeito (só o aviso), sem letreiro.
+    expect(
+      planoDaComemoracao({ teste: true, confete: false, janela }).letreiro,
+    ).toBeNull();
+    // A configuração salva continua valendo do mesmo jeito (o letreiro não
+    // é gravado: vem do catálogo).
+    definirConfiguracaoDasComemoracoes(
+      JSON.stringify({ marcos: { "fila-zerada": { intensidade: "festa" } } }),
+    );
+    expect(planoDaComemoracao({ marco: "fila-zerada", janela })).toMatchObject({
+      efeito: "fogos",
+      intensidade: "festa",
+      letreiro: "Fila zerada!",
+    });
   });
 
   it("preferência pessoal desligada: nada, nem sem marco; o teste aparece", () => {

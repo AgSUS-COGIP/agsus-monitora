@@ -58,12 +58,17 @@ export {
 } from "./efeitos-das-comemoracoes.ts";
 export type { NomeDoEfeito, NomeDoNivel } from "./efeitos-das-comemoracoes.ts";
 
-/** Uma leva de partículas: quando, de que peça, quantas e de onde. */
+/**
+ * Uma leva de partículas: quando, de que peça, quantas e de onde. Origem
+ * "ponto": de (x, y) — o confete que a Aya solta dançando.
+ */
 export interface LoteDoMotor {
   t: number;
   peca: string;
   quantos: number;
   origem: string;
+  x?: number;
+  y?: number;
 }
 
 /** O que toda partícula do motor tem; o resto depende do tipo. */
@@ -145,13 +150,17 @@ type ParticulaNascendo<T = ParticulaDoMotor> = T extends unknown
   ? Omit<T, "vidaMax" | "idade">
   : never;
 
-/** Estouro ainda não tocado (som): dos fogos ou de um canhão do motor. */
+/**
+ * Evento ainda não tocado (som): estouro, lançamento que assobia e o confete
+ * da Aya (dos fogos), ou o tiro de um canhão do motor.
+ */
 export interface EventoDaCena {
-  tipo: "estouro";
+  tipo: "estouro" | "lancamento" | "confete";
   formato: string;
   papel: string;
   x?: number;
   y?: number;
+  subida?: number;
 }
 
 export interface CenaDeEfeitos {
@@ -172,6 +181,8 @@ export interface CenaDeEfeitos {
   paleta: PaletaDosFogos;
   comVeu: boolean;
   chamaAya: boolean;
+  /** Desenha partículas do motor: tem lotes ou a Aya dança (e solta confete). */
+  usaMotor: boolean;
   eventos: EventoDaCena[];
 }
 /** O que o nascimento das partículas lê da cena. */
@@ -195,6 +206,9 @@ export const nivelDaIntensidade = (intensidade: unknown): NomeDoNivel =>
     : (NIVEL_DOS_FOGOS as Readonly<Record<string, NomeDoNivel | undefined>>)[
         intensidade as string
       ] || "normal";
+
+/* Quantos confetes a Aya solta dançando (no Normal, tela grande). */
+export const CONFETE_DA_AYA = 70;
 
 /* Partículas vivas do motor ao mesmo tempo (os fogos têm o teto deles). */
 export const LIMITE_DO_MOTOR = 900;
@@ -362,6 +376,7 @@ const FORMAS_DO_CONFETE = ["retangulo", "retangulo", "tira", "circulo"];
 function confete(
   cena: CenaParaNascer,
   origem: string,
+  ponto?: PontoXY | null,
 ): ParticulaNascendo<ConfeteDoMotor> {
   const { largura, altura, escala, aleatorio, paleta } = cena;
   const base = {
@@ -389,6 +404,18 @@ function confete(
       vy: entre(aleatorio, 40, 120) * escala,
       atrito: entre(aleatorio, 2.2, 3),
     };
+  if (origem === "ponto" && ponto) {
+    // Do ponto (a Aya): um leque para cima, que abre e cai.
+    const angulo = entre(aleatorio, -0.75, 0.75);
+    const forca = entre(aleatorio, 0.35, 0.75) * altura;
+    return {
+      ...base,
+      x: ponto.x,
+      y: ponto.y,
+      vx: Math.sin(angulo) * forca,
+      vy: -Math.cos(angulo) * forca,
+    };
+  }
   const esquerda = origem === "canhao-esquerdo";
   // Canhão: dispara para cima e para dentro (ângulo a partir da vertical).
   const angulo = entre(aleatorio, 0.18, 0.62) * (esquerda ? 1 : -1);
@@ -541,14 +568,24 @@ export function nascerLote(
     NASCER as Readonly<
       Record<
         string,
-        | ((cena: CenaParaNascer, origem: string) => ParticulaNascendo)
+        | ((
+            cena: CenaParaNascer,
+            origem: string,
+            ponto?: PontoXY | null,
+          ) => ParticulaNascendo)
         | undefined
       >
     >
   )[lote.peca];
   if (!nascer) return [];
   return Array.from({ length: quantos }, () => {
-    const p = nascer(cena, lote.origem);
+    const p = nascer(
+      cena,
+      lote.origem,
+      lote.x !== undefined && lote.y !== undefined
+        ? { x: lote.x, y: lote.y }
+        : null,
+    );
     return { ...p, vidaMax: p.vida, idade: 0 } as ParticulaDoMotor;
   });
 }
@@ -627,7 +664,8 @@ export function brilhoDoMotor(p: ParticulaDoMotor): number {
 /**
  * A cena de um efeito para uma tela. `intensidade`: suave, normal ou festa;
  * `duracaoMs`: 2–15 s (fogos: 4–15 s; vazio, a padrão de cada um);
- * `forma`, `comAya` e `amostrarTexto` vão para os fogos (fogos.ts).
+ * `forma`, `letreiro`, `comAya` e `amostrarTexto` vão para os fogos
+ * (fogos.ts).
  */
 export function criarCena({
   efeito = "fogos",
@@ -638,6 +676,7 @@ export function criarCena({
   paleta = paletaDosFogos(),
   aleatorio = Math.random,
   forma = null,
+  letreiro = null,
   comAya = true,
   amostrarTexto = null,
   limite = LIMITE_DO_MOTOR,
@@ -650,6 +689,7 @@ export function criarCena({
   paleta?: PaletaDosFogos;
   aleatorio?: Aleatorio;
   forma?: unknown;
+  letreiro?: string | null;
   comAya?: boolean;
   amostrarTexto?: AmostrarTexto | null;
   limite?: number;
@@ -674,6 +714,7 @@ export function criarCena({
         aleatorio,
         comAya: comAya !== false,
         forma,
+        letreiro,
         amostrarTexto,
         duracaoMs: pedida,
       })
@@ -702,6 +743,7 @@ export function criarCena({
     paleta,
     comVeu: efeitoComVeu(nome),
     chamaAya: efeitoChamaAya(nome),
+    usaMotor: lotes.length > 0 || Boolean(show?.danca),
     /* Estouros ainda não tocados (som): o desenho esvazia a lista. */
     eventos: [],
   };
@@ -718,11 +760,33 @@ export function avancarCena(cena: CenaDeEfeitos, dt: unknown): CenaDeEfeitos {
     Math.min(PASSO_MAXIMO_S, Math.max(0, cena.duracao - cena.t)),
   );
   cena.t += passo;
+  const novas: ParticulaDoMotor[] = [];
   if (cena.show) {
     avancarShow(cena.show, passo);
-    cena.eventos.push(...cena.show.eventos.splice(0));
+    for (const evento of cena.show.eventos.splice(0)) {
+      cena.eventos.push(evento);
+      // O confete que a Aya solta dançando é do motor.
+      if (evento.tipo === "confete")
+        novas.push(
+          ...nascerLote(
+            cena,
+            {
+              t: cena.t,
+              peca: "confete",
+              quantos: Math.round(
+                CONFETE_DA_AYA *
+                  NIVEIS[cena.intensidade].quantidade *
+                  fatorDeFaiscas(cena.largura, cena.altura),
+              ),
+              origem: "ponto",
+              x: evento.x,
+              y: evento.y,
+            },
+            cena.limite - cena.particulas.length,
+          ),
+        );
+    }
   }
-  const novas: ParticulaDoMotor[] = [];
   while (
     cena.proximo < cena.lotes.length &&
     cena.lotes[cena.proximo]!.t <= cena.t
