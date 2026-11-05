@@ -145,7 +145,37 @@ describe("GET /api/editais (chave fixa, sem login)", () => {
     const res = respostaFalsa();
     await handler(comChave(), res);
     expect(res.statusCode).toBe(500);
+    expect(JSON.parse(res.corpo)).toEqual({
+      erro: "configuracao_ausente",
+      faltam: ["EDITAIS_API_CHAVE"],
+    });
     expect(fetchFalso).not.toHaveBeenCalled();
+  });
+
+  it("o 500 diz só os nomes que faltam, nunca os valores", async () => {
+    vi.stubEnv("VITE_SUPABASE_URL", "");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "   \n");
+    const res = respostaFalsa();
+    await handler(comChave(), res);
+    expect(JSON.parse(res.corpo).faltam).toEqual([
+      "VITE_SUPABASE_URL",
+      "SUPABASE_SERVICE_ROLE_KEY",
+    ]);
+    expect(res.corpo).not.toContain(CHAVE);
+  });
+
+  it("aceita SUPABASE_URL e apara espaço e quebra de linha colados", async () => {
+    vi.stubEnv("VITE_SUPABASE_URL", "");
+    vi.stubEnv("SUPABASE_URL", " https://outro.supabase.co/ ");
+    vi.stubEnv("EDITAIS_API_CHAVE", `${CHAVE}\n`);
+    const fetchFalso = vi.fn(async () => json({ linhas: [] }));
+    vi.stubGlobal("fetch", fetchFalso);
+    const res = respostaFalsa();
+    await handler(comChave(), res);
+    expect(res.statusCode).toBe(200);
+    expect(fetchFalso.mock.calls[0][0]).toBe(
+      "https://outro.supabase.co/rest/v1/rpc/listar_monitoramento_operacional",
+    );
   });
 
   it("sem chave ou com chave errada: 401, sem chamar o banco", async () => {

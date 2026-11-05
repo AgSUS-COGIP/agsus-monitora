@@ -21,11 +21,28 @@ import { createHash, timingSafeEqual } from "node:crypto";
 
 const ESPERA_MS = 15_000;
 
-function configuracao() {
-  const base = String(process.env.VITE_SUPABASE_URL || "").replace(/\/+$/, "");
-  const servidor = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "");
-  const chaveDaApi = String(process.env.EDITAIS_API_CHAVE || "");
-  return base && servidor && chaveDaApi ? { base, servidor, chaveDaApi } : null;
+const variavel = (...nomes) =>
+  nomes.map((nome) => String(process.env[nome] || "").trim()).find(Boolean) ||
+  "";
+
+/*
+  As três variáveis, aparadas (um espaço ou quebra de linha colada junto na
+  Vercel não conta). `faltam` lista só os NOMES das ausentes, para o 500 dizer
+  o que configurar; valor nenhum sai na resposta.
+*/
+export function configuracao() {
+  const base = variavel("VITE_SUPABASE_URL", "SUPABASE_URL").replace(
+    /\/+$/,
+    "",
+  );
+  const servidor = variavel("SUPABASE_SERVICE_ROLE_KEY");
+  const chaveDaApi = variavel("EDITAIS_API_CHAVE");
+  const faltam = [
+    ...(base ? [] : ["VITE_SUPABASE_URL"]),
+    ...(servidor ? [] : ["SUPABASE_SERVICE_ROLE_KEY"]),
+    ...(chaveDaApi ? [] : ["EDITAIS_API_CHAVE"]),
+  ];
+  return { base, servidor, chaveDaApi, faltam };
 }
 
 function tokenDoPedido(req) {
@@ -61,8 +78,11 @@ export function criarRotaComChave({ rpc, montar }) {
     }
 
     const config = configuracao();
-    if (!config) {
-      responder(res, 500, { erro: "configuracao_ausente" });
+    if (config.faltam.length) {
+      responder(res, 500, {
+        erro: "configuracao_ausente",
+        faltam: config.faltam,
+      });
       return;
     }
 
