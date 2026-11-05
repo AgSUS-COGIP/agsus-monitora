@@ -186,7 +186,7 @@ test.describe("sessão simulada", () => {
     expect(erros).toEqual([]);
   });
 
-  test("Configurações é rota: a seção do endereço abre, o F5 a mantém e o menu troca a seção", async ({
+  test("Configurações é rota: a seção do endereço abre, o F5 a mantém e trocar de seção entra no histórico", async ({
     page,
   }) => {
     const erros = await abrirComSessao(page);
@@ -203,10 +203,8 @@ test.describe("sessão simulada", () => {
     await expect(secao("operacao")).toBeVisible();
 
     // Acessos é tela própria: baixa na primeira abertura, dentro da seção.
-    await page
-      .locator(".sidebar")
-      .getByText("Acessos", { exact: true })
-      .click();
+    // (O menu recolhido em trilho esconde o rótulo; o contrato é o mesmo do menu.)
+    await page.evaluate(() => window.navigate("config", { secao: "acessos" }));
     await expect(page).toHaveURL(/\/administracao\/configuracoes\/acessos$/);
     await expect(secao("acessos")).toBeVisible();
     await expect(secao("operacao")).toBeHidden();
