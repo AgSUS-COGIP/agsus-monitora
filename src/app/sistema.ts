@@ -21,11 +21,7 @@ import {
   definirAreaAtual,
   obterDadosDoMonitoramento,
 } from "../componentes/dados-do-monitoramento.ts";
-import { montarPessoasOnline } from "../componentes/pessoas-online/pessoas-online.tsx";
-import { montarAvisoDeVersao } from "../componentes/aviso-de-versao/aviso-de-versao.tsx";
 import { criarEstadoDoEncerramento } from "../modulos/encerramento-do-edital/estado.ts";
-import { montarEncerramentoDoEdital } from "../modulos/encerramento-do-edital/encerramento-do-edital.tsx";
-import { montarSelosDoEdital } from "../modulos/encerramento-do-edital/selos-do-edital.tsx";
 import { resumoDoDia } from "../modulos/resumo-do-dia/estado.ts";
 import { criarAvisoDeVersao } from "./aviso-de-versao.ts";
 import { avisar, mostrarCarregamento } from "./avisos.ts";
@@ -352,10 +348,6 @@ export function ligarSistema() {
   presenca.acompanhar();
   // O retrato de desempenho do front vai de carona na batida, sem chamada própria.
   definirEnvioDoRetrato(presenca.enfileirarEvento);
-  montarPessoasOnline({ presenca });
-  montarAvisoDeVersao({ aviso: avisoDeVersao });
-  montarEncerramentoDoEdital({ estado: encerramento });
-  montarSelosDoEdital({ estado: encerramento });
   encerramento.acompanhar();
   avisoDeVersao.iniciar();
 

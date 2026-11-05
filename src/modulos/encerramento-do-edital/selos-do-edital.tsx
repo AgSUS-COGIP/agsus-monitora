@@ -1,5 +1,4 @@
 import { useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { Icone } from "../../componentes/icone.tsx";
 import {
   numeroCurto,
@@ -72,27 +71,4 @@ export function MarcaDeSeloNoAvatar({
       <Icone nome={fechou ? "star" : "award"} tamanho={11} traco={2.25} />
     </span>
   );
-}
-
-export function montarSelosDoEdital({
-  lista = globalThis.document?.getElementById("selosDoEditalApp"),
-  avatar = globalThis.document?.getElementById("seloNoAvatarApp"),
-  estado,
-}: {
-  lista?: HTMLElement | null;
-  avatar?: HTMLElement | null;
-  estado: EstadoDoEncerramentoControle;
-}) {
-  return [
-    lista
-      ? montarModulo(lista, <SelosDoEdital estado={estado} />, {
-          nome: "Selos do edital",
-        })
-      : null,
-    avatar
-      ? montarModulo(avatar, <MarcaDeSeloNoAvatar estado={estado} />, {
-          nome: "Selo no avatar",
-        })
-      : null,
-  ];
 }

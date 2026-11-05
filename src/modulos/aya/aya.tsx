@@ -49,7 +49,6 @@ import type {
   PointerEvent,
   RefObject,
 } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { Icone } from "../../componentes/icone.tsx";
@@ -1581,15 +1580,4 @@ export function Aya({
       ) : null}
     </div>
   );
-}
-
-export function montarAya({
-  elemento = globalThis.document?.getElementById("ayaApp"),
-  ...opcoes
-}: PropsDaAya & { elemento?: Element | null } = {}) {
-  if (!elemento) return { raiz: null, desmontar: () => {} };
-  const { raiz, desmontar } = montarModulo(elemento, <Aya {...opcoes} />, {
-    nome: "Aya",
-  });
-  return { raiz, desmontar };
 }

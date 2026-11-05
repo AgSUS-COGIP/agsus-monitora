@@ -23,7 +23,6 @@ import type { ResultadoDaBusca, OpcoesDaBusca } from "./tipos.ts";
 */
 
 import { useEffect, useId, useRef, useState } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import {
   buscarLinhas,
   ehAtalhoDaBusca,
@@ -208,22 +207,8 @@ export function BuscaGlobal({ estaConectado, aoEscolher }: OpcoesDaBusca) {
 }
 
 /* O legado é dono dos filtros e da navegação: recebe o id da linha por evento. */
-function avisarEscolha(linha: ResultadoDaBusca) {
+export function avisarEscolha(linha: ResultadoDaBusca) {
   document.dispatchEvent(
     new CustomEvent(EVENTO_ESCOLHA_DA_BUSCA, { detail: { id: linha?.id } }),
   );
-}
-
-export function montarBuscaGlobal({
-  raizDaTela = document.getElementById("buscaGlobalApp"),
-  estaConectado = () => false,
-  aoEscolher = avisarEscolha,
-}: Partial<OpcoesDaBusca> & { raizDaTela?: HTMLElement | null } = {}) {
-  if (!raizDaTela) return { raiz: null };
-  const { raiz } = montarModulo(
-    raizDaTela,
-    <BuscaGlobal estaConectado={estaConectado} aoEscolher={aoEscolher} />,
-    { nome: "Busca global" },
-  );
-  return { raiz };
 }

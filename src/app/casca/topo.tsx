@@ -2,6 +2,11 @@ import type { MouseEvent } from "react";
 import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
 import { usarEstadoDaNavegacao } from "../contexto-do-app.ts";
 import { SininhoDoResumo } from "../../modulos/resumo-do-dia/resumo-do-dia.tsx";
+import {
+  PessoasOnlineDoApp,
+  SeloNoAvatarDoApp,
+  SelosDoEditalDoApp,
+} from "./pecas.tsx";
 
 /*
   O cabeçalho do app (`header.top`): o título da página e, à direita, Pessoas
@@ -14,8 +19,8 @@ import { SininhoDoResumo } from "../../modulos/resumo-do-dia/resumo-do-dia.tsx";
   `src/app/configuracao.ts` e a foto por `google-profile-photo.ts`. Por isso
   só o título se redesenha; o resto o React desenha uma vez.
 
-  `#pessoasOnlineApp`, `#seloNoAvatarApp` e `#selosDoEditalApp` são pontos de
-  montagem de outras ilhas React; o ☰ (`#globalSidebarToggle`) é da barra
+  Pessoas online e os selos do edital (`pecas.tsx`) leem o estado do sistema
+  pelo contexto da raiz; o ☰ (`#globalSidebarToggle`) é da barra
   lateral e entra por portal no `.title-row` até 900px (`alca-de-recolher.tsx`).
 */
 export function Topo() {
@@ -26,7 +31,9 @@ export function Topo() {
       </div>
       <div className="actions">
         {/* Pessoas online (React: src/componentes/pessoas-online/) */}
-        <div id="pessoasOnlineApp" className="pessoas-online-app"></div>
+        <div id="pessoasOnlineApp" className="pessoas-online-app">
+          <PessoasOnlineDoApp />
+        </div>
         {/* Resumo do dia do responsável (src/modulos/resumo-do-dia/) */}
         <SininhoDoResumo />
         <MenuDaConta />
@@ -73,7 +80,9 @@ function MenuDaConta() {
           <i className="fa-solid fa-user"></i>
         </span>
         {/* Selo do edital no avatar (React: src/modulos/encerramento-do-edital/) */}
-        <span id="seloNoAvatarApp" className="selo-no-avatar"></span>
+        <span id="seloNoAvatarApp" className="selo-no-avatar">
+          <SeloNoAvatarDoApp />
+        </span>
         <span className="top-user-compact-copy">
           <strong id="userName">-</strong>{" "}
           <small id="userProfileBadge" className="user-profile-badge"></small>
@@ -87,7 +96,9 @@ function MenuDaConta() {
         <strong id="topUserPopoverName">-</strong>{" "}
         <small id="userEmail">-</small> <span id="topUserPopoverProfile"></span>
         {/* Selos de editais (React: src/modulos/encerramento-do-edital/) */}
-        <div id="selosDoEditalApp"></div>
+        <div id="selosDoEditalApp">
+          <SelosDoEditalDoApp />
+        </div>
         {/* Ações da conta. Tema e Sair ficam no rodapé da barra lateral. */}
         <div className="top-user-popover-actions">
           <button type="button" onClick={aoClicar("acao", "refreshData")}>
