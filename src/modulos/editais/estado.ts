@@ -285,7 +285,6 @@ export function criarEstadoDoNucleo({
     },
   );
 
-
   // Um cronograma salvo (daqui ou de outra tela) deixa o resumo velho.
   const invalidarResumo = () => resumo.invalidate();
   document.addEventListener(EVENTO_CRONOGRAMA_SALVO, invalidarResumo);
