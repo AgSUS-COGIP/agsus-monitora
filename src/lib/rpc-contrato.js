@@ -491,6 +491,19 @@ export const CONTRATO_RPC = {
     resumo:
       "O mapa da Saúde Indígena (`lmap` e `rede_cnes` de TB_CONFIG_MAPA_SAUDE_INDIG, ~150 kB; SECURITY INVOKER, a RLS de sempre) como `{ linhas: [{ chave, payload }], versao }`; p_versao igual à atual devolve só `inalterado` (20261015000100). Substitui o select direto na tabela na entrada.",
   },
+  // ── API para outro sistema (20261105150000; chamadas por api/*.js com a chave de servidor) ──
+  listar_aprovados_da_api: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "GET /api/aprovados: a lista vigente de cada edital ativo (candidatos não removidos), com edital_id, edital, unidade, cargo, classificacao, nota, nome, modalidade, status, matricula, processo_sei, codigo_vaga e sub_judice. Dados pessoais: só service_role. Constante em src/lib/aprovados-e-cronograma-da-api.js.",
+  },
+  listar_cronograma_da_api: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "GET /api/cronograma: as etapas de cada edital ativo, com edital_id, edital, unidade, ordem, atividade, data_inicio e data_fim. Só service_role. Constante em src/lib/aprovados-e-cronograma-da-api.js.",
+  },
   listar_monitoramento_operacional: {
     argumentos: ["p_versao"],
     critica: true,
