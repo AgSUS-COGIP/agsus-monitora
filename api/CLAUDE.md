@@ -1,6 +1,6 @@
 # `api/` — funções serverless (Vercel)
 
-Quatro arquivos, cada um é um endpoint `/api/<nome>`:
+Cada arquivo é um endpoint `/api/<nome>`; o que começa com `_` não é rota (a Vercel o ignora):
 
 A Aya responde no navegador pela base de conhecimento (`src/lib/busca-da-aya.ts`);
 o endpoint de IA e o bridge local foram retirados.
@@ -14,12 +14,16 @@ o endpoint de IA e o bridge local foram retirados.
   e "Leia-se", com as linhas em negrito e os avisos das datas); quem usa:
   `src/lib/retificacao-do-cronograma.ts` (tela `src/modulos/editais/lancar-retificacao.tsx`).
 
-- `editais.js` — `GET /api/editais`: os editais do monitoramento (unidade, edital, status, etapa,
-  vagas, contratados, ociosas, risco e o link do edital; sem anexos) e os totais. Sem login: o outro sistema manda
-  `Bearer <EDITAIS_API_CHAVE>` (chave fixa, variável da Vercel); a função lê
-  `listar_monitoramento_operacional` com `SUPABASE_SERVICE_ROLE_KEY` (as linhas ativas de todas as
-  áreas). As duas variáveis só existem na Vercel, nunca no front. Filtros: `?edital=&unidade=` (contém), `?status=&etapa=&risco=` (igual).
-  Formato em `src/lib/editais-da-api.js`.
+- `editais.js`, `aprovados.js`, `cronograma.js` — API para outro sistema, **sem login**: o outro
+  sistema manda `Bearer <EDITAIS_API_CHAVE>` (chave fixa, variável da Vercel, a mesma nas três) e a
+  função lê o banco com `SUPABASE_SERVICE_ROLE_KEY`; as duas só existem na Vercel, nunca no front.
+  A parte comum (chave em tempo constante, chamada à RPC, erros) fica em `_rota-com-chave.js`.
+  - `/api/editais`: `listar_monitoramento_operacional` (unidade, edital, status, etapa, vagas,
+    contratados, ociosas, risco e link; sem anexos), formato em `src/lib/editais-da-api.js`.
+  - `/api/aprovados` e `/api/cronograma`: `listar_aprovados_da_api` e `listar_cronograma_da_api`
+    (só service_role; migration `20261105150000`), formato em
+    `src/lib/aprovados-e-cronograma-da-api.js`. Aprovados tem dados pessoais (nome, matrícula).
+  Como o outro sistema usa: comentário do topo de cada rota.
 
 Regras:
 
@@ -29,6 +33,6 @@ Regras:
 - Código compartilhado com o front vem de `src/`; não duplicar lógica aqui.
 - O servidor `server/servidor.ts` não tem essas rotas: `/api/*` só existe na Vercel.
 
-Testes: `npx vitest run tests/funai-geodata-proxy.test.js`, `tests/editais-api.test.js`, `tests/aya-*.test.js`;
+Testes: `npx vitest run tests/funai-geodata-proxy.test.js`, `tests/editais-api.test.js`, `tests/aprovados-e-cronograma-api.test.js`, `tests/aya-*.test.js`;
 `python -m pytest tests/python/test_anexos_do_edital.py tests/python/test_retificacao_do_cronograma.py`
 (anexos e retificação do cronograma, com PDFs sintéticos).

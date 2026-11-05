@@ -8,7 +8,8 @@
   `listar_monitoramento_operacional` com a chave de servidor do Supabase
   (SUPABASE_SERVICE_ROLE_KEY), que nunca sai daqui, e devolve as linhas
   ativas de todas as áreas. Trocar a chave = mudar EDITAIS_API_CHAVE na Vercel
-  e fazer um novo deploy; a chave antiga para de valer.
+  e fazer um novo deploy; a chave antiga para de valer. A mesma chave vale
+  para /api/aprovados e /api/cronograma (api/_rota-com-chave.js).
 
   Variáveis na Vercel (Settings › Environment Variables):
     VITE_SUPABASE_URL           já existe (a do app)
@@ -64,88 +65,18 @@
   resposta não é guardada em cache (Cache-Control: private, no-store).
 */
 
-import { createHash, timingSafeEqual } from "node:crypto";
 import {
   RPC_DOS_EDITAIS,
   editaisDaApi,
   filtrosDaApi,
   totaisDaApi,
 } from "../src/lib/editais-da-api.js";
+import { criarRotaComChave } from "./_rota-com-chave.js";
 
-const ESPERA_MS = 15_000;
-
-function configuracao() {
-  const base = String(process.env.VITE_SUPABASE_URL || "").replace(/\/+$/, "");
-  const servidor = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "");
-  const chaveDaApi = String(process.env.EDITAIS_API_CHAVE || "");
-  return base && servidor && chaveDaApi ? { base, servidor, chaveDaApi } : null;
-}
-
-function tokenDoPedido(req) {
-  const cabecalho = String(req.headers?.authorization || "");
-  const achado = /^Bearer\s+(\S+)$/i.exec(cabecalho);
-  return achado ? achado[1] : "";
-}
-
-/* Compara pelo hash, em tempo constante (o tamanho da chave não vaza). */
-function mesmaChave(recebida, esperada) {
-  const a = createHash("sha256").update(recebida).digest();
-  const b = createHash("sha256").update(esperada).digest();
-  return timingSafeEqual(a, b);
-}
-
-function responder(res, status, corpo) {
-  res.status(status);
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "private, no-store");
-  res.end(JSON.stringify(corpo));
-}
-
-export default async function handler(req, res) {
-  if (req.method !== "GET") {
-    res.setHeader("Allow", "GET");
-    responder(res, 405, { erro: "metodo_nao_permitido" });
-    return;
-  }
-
-  const config = configuracao();
-  if (!config) {
-    responder(res, 500, { erro: "configuracao_ausente" });
-    return;
-  }
-
-  const token = tokenDoPedido(req);
-  if (!token || !mesmaChave(token, config.chaveDaApi)) {
-    responder(res, 401, { erro: "chave_invalida" });
-    return;
-  }
-
-  try {
-    const resposta = await fetch(
-      `${config.base}/rest/v1/rpc/${RPC_DOS_EDITAIS}`,
-      {
-        method: "POST",
-        headers: {
-          apikey: config.servidor,
-          // A chave antiga (JWT) também vai no Authorization; a nova (sb_secret_…) só no apikey.
-          ...(config.servidor.startsWith("eyJ")
-            ? { Authorization: `Bearer ${config.servidor}` }
-            : {}),
-          "Content-Type": "application/json",
-        },
-        body: "{}",
-        signal: AbortSignal.timeout(ESPERA_MS),
-      },
-    );
-    if (!resposta.ok) {
-      responder(res, 502, { erro: "falha_na_leitura" });
-      return;
-    }
-
-    const payload = await resposta.json();
-    const editais = editaisDaApi(payload, filtrosDaApi(req.query));
-    responder(res, 200, { editais, totais: totaisDaApi(editais) });
-  } catch {
-    responder(res, 502, { erro: "falha_na_leitura" });
-  }
-}
+export default criarRotaComChave({
+  rpc: RPC_DOS_EDITAIS,
+  montar(payload, query) {
+    const editais = editaisDaApi(payload, filtrosDaApi(query));
+    return { editais, totais: totaisDaApi(editais) };
+  },
+});

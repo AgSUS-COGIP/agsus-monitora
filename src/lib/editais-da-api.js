@@ -39,16 +39,38 @@ export const FILTROS_DA_API = Object.freeze([
   "risco",
 ]);
 
-const texto = (valor) => (valor == null ? "" : String(valor).trim());
+/** Texto aparado ("" para nulo). Também usado por aprovados-e-cronograma-da-api.js. */
+export const texto = (valor) => (valor == null ? "" : String(valor).trim());
 
-const numero = (valor) => {
+export const numero = (valor) => {
   const n = Number(valor);
   return Number.isFinite(n) ? n : 0;
 };
 
 /** Minúsculas e sem acento, para comparar "Médio" com "medio". */
-const chave = (valor) =>
+export const chave = (valor) =>
   texto(valor).normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
+/**
+ * O primeiro valor de um parâmetro da query (pode vir repetido), aparado e curto.
+ * @param {Record<string, unknown> | null | undefined} query
+ * @param {string} nome
+ */
+export function valorDaQuery(query, nome) {
+  const valor = query?.[nome];
+  return texto(Array.isArray(valor) ? valor[0] : valor).slice(0, 120);
+}
+
+/**
+ * As linhas da resposta da RPC: `{ linhas }` ou a lista crua.
+ * @param {unknown} payload
+ * @returns {Record<string, unknown>[]}
+ */
+export function linhasDoPayload(payload) {
+  if (Array.isArray(payload)) return payload;
+  const linhas = /** @type {any} */ (payload)?.linhas;
+  return Array.isArray(linhas) ? linhas : [];
+}
 
 /**
  * Lê os filtros da query (o primeiro valor, se vier repetido).
@@ -57,13 +79,7 @@ const chave = (valor) =>
  */
 export function filtrosDaApi(query) {
   const filtros = /** @type {FiltrosDaApi} */ ({});
-  for (const nome of FILTROS_DA_API) {
-    const valor = query?.[nome];
-    filtros[nome] = texto(Array.isArray(valor) ? valor[0] : valor).slice(
-      0,
-      120,
-    );
-  }
+  for (const nome of FILTROS_DA_API) filtros[nome] = valorDaQuery(query, nome);
   return filtros;
 }
 
@@ -114,13 +130,10 @@ function passaNosFiltros(item, filtros) {
  * @returns {EditalDaApi[]}
  */
 export function editaisDaApi(payload, filtros = {}) {
-  const linhas = Array.isArray(payload)
-    ? payload
-    : Array.isArray(/** @type {any} */ (payload)?.linhas)
-      ? /** @type {any} */ (payload).linhas
-      : [];
   const f = filtrosDaApi(filtros);
-  return linhas.map(editalDaApi).filter((item) => passaNosFiltros(item, f));
+  return linhasDoPayload(payload)
+    .map(editalDaApi)
+    .filter((item) => passaNosFiltros(item, f));
 }
 
 /**
