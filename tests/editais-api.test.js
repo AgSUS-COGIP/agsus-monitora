@@ -10,6 +10,7 @@ const LINHAS = [
   {
     id: 1,
     unidade: "DSEI Yanomami",
+    area: "Saúde Indígena",
     edital: "001/2026",
     status: "Em andamento",
     etapa: "Análise curricular",
@@ -23,6 +24,7 @@ const LINHAS = [
   {
     id: 2,
     unidade: "DSEI Alto Rio Negro",
+    area: "SEDE",
     edital: "002/2026",
     status: "Concluído",
     etapa: "Contratação",
@@ -39,6 +41,7 @@ describe("formato da API de editais", () => {
       {
         id: 1,
         unidade: "DSEI Yanomami",
+        area: "Saúde Indígena",
         edital: "001/2026",
         status: "Em andamento",
         etapa: "Análise curricular",
@@ -51,6 +54,7 @@ describe("formato da API de editais", () => {
       {
         id: 2,
         unidade: "DSEI Alto Rio Negro",
+        area: "SEDE",
         edital: "002/2026",
         status: "Concluído",
         etapa: "Contratação",
@@ -83,6 +87,15 @@ describe("formato da API de editais", () => {
     expect(editaisDaApi(LINHAS, { risco: "Baixo" })).toEqual([]);
   });
 
+  it("filtra pela área pelo nome ou pelo código", () => {
+    const ids = (area) => editaisDaApi(LINHAS, { area }).map((e) => e.id);
+    expect(ids("saude indigena")).toEqual([1]);
+    expect(ids("saude-indigena")).toEqual([1]);
+    expect(ids("Saúde Indígena")).toEqual([1]);
+    expect(ids("sede")).toEqual([2]);
+    expect(ids("projetos")).toEqual([]);
+  });
+
   it("lê o primeiro valor de filtro repetido e ignora os desconhecidos", () => {
     expect(filtrosDaApi({ risco: ["Alto", "Baixo"], outro: "x" })).toEqual({
       edital: "",
@@ -90,6 +103,7 @@ describe("formato da API de editais", () => {
       status: "",
       etapa: "",
       risco: "Alto",
+      area: "",
     });
   });
 

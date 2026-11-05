@@ -207,7 +207,16 @@ describe("quem muda o fecho das leituras novas recalcula as fontes", () => {
       ).test(sql),
     );
     if (mexe.length) {
-      expect(sql, `${arquivo} muda ${mexe.join(", ")}`).toContain(
+      // Na mesma migration, ou numa seguinte que diga "recalcula fontes de <arquivo>".
+      const seguinte = depois.find(
+        (f) =>
+          f > arquivo &&
+          ler(`supabase/migrations/${f}`).includes(
+            `recalcula fontes de ${arquivo}`,
+          ),
+      );
+      const onde = seguinte ? ler(`supabase/migrations/${seguinte}`) : sql;
+      expect(onde, `${arquivo} muda ${mexe.join(", ")}`).toContain(
         'private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"(',
       );
     }

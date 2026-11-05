@@ -2,8 +2,9 @@
   O formato da API de aprovados (`api/aprovados.js`) e de cronograma
   (`api/cronograma.js`), para outro sistema. Os dados vêm de
   `listar_aprovados_da_api` e `listar_cronograma_da_api` (migration
-  20261105150000), lidas pela função da Vercel com a chave de servidor:
-  editais ativos de todas as áreas. `edital_id` é o mesmo `id` de
+  20261105150000; área em 20261105190000), lidas pela função da Vercel com a
+  chave de servidor: editais ativos de todas as áreas. `area` é o nome da
+  área do edital (Saúde Indígena, SEDE, Projetos). `edital_id` é o mesmo `id` de
   /api/editais, para cruzar.
 
   JS com JSDoc (e não TS) porque a função da Vercel importa daqui sem build.
@@ -24,6 +25,7 @@ export const RPC_DO_CRONOGRAMA = "listar_cronograma_da_api";
  *   edital_id: string,
  *   edital: string,
  *   unidade: string,
+ *   area: string,
  *   cargo: string,
  *   classificacao: number | null,
  *   nota: number | null,
@@ -42,6 +44,7 @@ export const RPC_DO_CRONOGRAMA = "listar_cronograma_da_api";
  *   edital_id: string,
  *   edital: string,
  *   unidade: string,
+ *   area: string,
  *   ordem: number | null,
  *   atividade: string,
  *   data_inicio: string | null,
@@ -66,11 +69,11 @@ const dataOuNulo = (valor) => {
   "contém" acham o trecho.
 */
 const FILTROS_DOS_APROVADOS = Object.freeze({
-  igual: ["edital_id", "status", "modalidade"],
+  igual: ["edital_id", "status", "modalidade", "area"],
   contem: ["edital", "unidade", "cargo", "nome"],
 });
 const FILTROS_DO_CRONOGRAMA = Object.freeze({
-  igual: ["edital_id"],
+  igual: ["edital_id", "area"],
   contem: ["edital", "unidade", "atividade"],
 });
 
@@ -98,6 +101,7 @@ export function aprovadoDaApi(linha) {
     edital_id: texto(linha?.edital_id),
     edital: texto(linha?.edital),
     unidade: texto(linha?.unidade),
+    area: texto(linha?.area),
     cargo: texto(linha?.cargo),
     classificacao: numeroOuNulo(linha?.classificacao),
     nota: numeroOuNulo(linha?.nota),
@@ -121,6 +125,7 @@ export function etapaDaApi(linha) {
     edital_id: texto(linha?.edital_id),
     edital: texto(linha?.edital),
     unidade: texto(linha?.unidade),
+    area: texto(linha?.area),
     ordem: numeroOuNulo(linha?.ordem),
     atividade: texto(linha?.atividade),
     data_inicio: dataOuNulo(linha?.data_inicio),
@@ -130,7 +135,7 @@ export function etapaDaApi(linha) {
 
 /**
  * A resposta de /api/aprovados: os candidatos filtrados e o total.
- * Filtros: ?edital_id=&status=&modalidade= (igual) e ?edital=&unidade=&cargo=&nome= (contém).
+ * Filtros: ?edital_id=&status=&modalidade=&area= (igual) e ?edital=&unidade=&cargo=&nome= (contém).
  * @param {unknown} payload
  * @param {Record<string, unknown> | null | undefined} [query]
  */
@@ -145,7 +150,7 @@ export function respostaDosAprovados(payload, query) {
 
 /**
  * A resposta de /api/cronograma: as etapas filtradas e o total.
- * Filtros: ?edital_id= (igual) e ?edital=&unidade=&atividade= (contém).
+ * Filtros: ?edital_id=&area= (igual) e ?edital=&unidade=&atividade= (contém).
  * @param {unknown} payload
  * @param {Record<string, unknown> | null | undefined} [query]
  */
