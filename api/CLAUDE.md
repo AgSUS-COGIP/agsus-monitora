@@ -18,7 +18,7 @@ o endpoint de IA e o bridge local foram retirados.
   sistema manda `Bearer <EDITAIS_API_CHAVE>` (chave fixa, variável da Vercel, a mesma nas três) e a
   função lê o banco com `SUPABASE_SERVICE_ROLE_KEY`; as duas só existem na Vercel, nunca no front.
   A parte comum (chave em tempo constante, chamada à RPC, erros) fica em `_rota-com-chave.js`.
-  - `/api/editais`: `listar_monitoramento_operacional` (unidade, edital, status, etapa, vagas,
+  - `/api/editais`: `listar_editais_da_api` (migration `20261105170000`; unidade, edital, status, etapa, vagas,
     contratados, ociosas, risco e link; sem anexos), formato em `src/lib/editais-da-api.js`.
   - `/api/aprovados` e `/api/cronograma`: `listar_aprovados_da_api` e `listar_cronograma_da_api`
     (só service_role; migration `20261105150000`), formato em

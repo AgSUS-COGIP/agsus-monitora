@@ -174,7 +174,7 @@ describe("GET /api/editais (chave fixa, sem login)", () => {
     await handler(comChave(), res);
     expect(res.statusCode).toBe(200);
     expect(fetchFalso.mock.calls[0][0]).toBe(
-      "https://outro.supabase.co/rest/v1/rpc/listar_monitoramento_operacional",
+      "https://outro.supabase.co/rest/v1/rpc/listar_editais_da_api",
     );
   });
 
@@ -205,7 +205,7 @@ describe("GET /api/editais (chave fixa, sem login)", () => {
     expect(res.headers["cache-control"]).toBe("private, no-store");
     const [url, opcoes] = fetchFalso.mock.calls[0];
     expect(url).toBe(
-      "https://exemplo.supabase.co/rest/v1/rpc/listar_monitoramento_operacional",
+      "https://exemplo.supabase.co/rest/v1/rpc/listar_editais_da_api",
     );
     expect(opcoes.headers.apikey).toBe(SERVIDOR);
     // Chave nova (sb_secret_…) não vai no Authorization; a chave da API nunca vai ao banco.
@@ -232,14 +232,45 @@ describe("GET /api/editais (chave fixa, sem login)", () => {
     );
   });
 
-  it("falha da leitura vira 502 sem detalhe interno", async () => {
+  it("falha da leitura vira 502 com status e código, sem a mensagem", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => json({ message: "erro interno" }, false)),
+      vi.fn(async () => ({
+        ok: false,
+        status: 403,
+        json: async () => ({
+          code: "42501",
+          message: "permission denied for view X",
+        }),
+      })),
     );
     const res = respostaFalsa();
     await handler(comChave(), res);
     expect(res.statusCode).toBe(502);
-    expect(JSON.parse(res.corpo)).toEqual({ erro: "falha_na_leitura" });
+    expect(JSON.parse(res.corpo)).toEqual({
+      erro: "falha_na_leitura",
+      status_do_banco: 403,
+      codigo: "42501",
+    });
+    expect(res.corpo).not.toContain("permission denied");
+    expect(console.error).toHaveBeenCalled();
+  });
+
+  it("sem resposta do banco: 502 com status nulo", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new Error("rede");
+      }),
+    );
+    const res = respostaFalsa();
+    await handler(comChave(), res);
+    expect(JSON.parse(res.corpo)).toEqual({
+      erro: "falha_na_leitura",
+      status_do_banco: null,
+      codigo: null,
+    });
   });
 });
