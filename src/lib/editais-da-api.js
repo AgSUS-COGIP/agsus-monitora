@@ -13,6 +13,7 @@
  * @typedef {{
  *   id: string | number | null,
  *   unidade: string,
+ *   area: string,
  *   edital: string,
  *   status: string,
  *   etapa: string,
@@ -24,7 +25,7 @@
  * }} EditalDaApi
  */
 
-/** @typedef {{ edital: string, unidade: string, status: string, etapa: string, risco: string }} FiltrosDaApi */
+/** @typedef {{ edital: string, unidade: string, status: string, etapa: string, risco: string, area: string }} FiltrosDaApi */
 
 /** A leitura (só service_role; chamada por api/editais.js; 20261105170000). */
 export const RPC_DOS_EDITAIS = "listar_editais_da_api";
@@ -36,6 +37,7 @@ export const FILTROS_DA_API = Object.freeze([
   "status",
   "etapa",
   "risco",
+  "area",
 ]);
 
 /** Texto aparado ("" para nulo). Também usado por aprovados-e-cronograma-da-api.js. */
@@ -46,9 +48,16 @@ export const numero = (valor) => {
   return Number.isFinite(n) ? n : 0;
 };
 
-/** Minúsculas e sem acento, para comparar "Médio" com "medio". */
+/*
+  Minúsculas, sem acento e com hífen como espaço, para comparar "Médio" com
+  "medio" e "Saúde Indígena" com "saude-indigena" (o código da área).
+*/
 export const chave = (valor) =>
-  texto(valor).normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+  texto(valor)
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/-/g, " ")
+    .toLowerCase();
 
 /**
  * O primeiro valor de um parâmetro da query (pode vir repetido), aparado e curto.
@@ -92,6 +101,7 @@ export function editalDaApi(linha) {
   return {
     id: typeof id === "number" || typeof id === "string" ? id : null,
     unidade: texto(linha?.unidade),
+    area: texto(linha?.area),
     edital: texto(linha?.edital),
     status: texto(linha?.status),
     etapa: texto(linha?.etapa),
@@ -110,7 +120,7 @@ export function editalDaApi(linha) {
  * @param {FiltrosDaApi} filtros
  */
 function passaNosFiltros(item, filtros) {
-  for (const nome of ["status", "etapa", "risco"]) {
+  for (const nome of ["status", "etapa", "risco", "area"]) {
     if (filtros[nome] && chave(item[nome]) !== chave(filtros[nome]))
       return false;
   }
