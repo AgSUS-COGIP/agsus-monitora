@@ -31,7 +31,6 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { abrirPortalAvulso } from "../../../app/portais-avulsos.tsx";
 import {
   comemoracoesPessoaisDesligadas,
   deveAcenar,
@@ -482,19 +481,4 @@ export function Mascote({
       )}
     </svg>
   );
-}
-
-/**
- * Desenha uma arara num elemento de fora do React (os fogos, em
- * src/modules/comemoracao.ts), por um portal da raiz do app
- * (src/app/portais-avulsos.tsx: um erro no desenho não derruba a página).
- * Devolve `desmontar`.
- */
-export function montarMascoteAvulsa(
-  elemento: Element,
-  props: PropsDaMascote = {},
-) {
-  return abrirPortalAvulso(elemento, <Mascote {...props} />, {
-    nome: "a arara da comemoração",
-  });
 }

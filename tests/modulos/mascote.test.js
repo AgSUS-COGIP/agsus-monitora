@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import "../componentes/interacoes.js";
-import { montarPortaisNoTeste } from "../montar-tela.js";
+import { ErrorBoundary } from "../../src/app/ErrorBoundary.tsx";
 import {
   CHAVE_COMEMORACOES_PESSOAIS,
   definirEstadoDaAya,
@@ -17,12 +17,8 @@ import {
   enquadramento (rosto com a Aya fechada, corpo com o painel aberto e nos fogos).
 */
 
-const {
-  Mascote,
-  TAMANHO_DA_VERSAO_SIMPLES,
-  carregarDesenhoDaMascote,
-  montarMascoteAvulsa,
-} = await import("../../src/modulos/aya/mascote/mascote.tsx");
+const { Mascote, TAMANHO_DA_VERSAO_SIMPLES, carregarDesenhoDaMascote } =
+  await import("../../src/modulos/aya/mascote/mascote.tsx");
 // O desenho vem num pedaço próprio (import dinâmico): carregado antes dos testes.
 await carregarDesenhoDaMascote();
 const { reiniciarPedidoDaAya } =
@@ -33,7 +29,6 @@ const { CartaoDaMascote } =
 let raiz;
 let elemento;
 let animar;
-let desmontarPortais;
 const svg = () => elemento.querySelector("svg.mascote");
 const estado = () => svg()?.getAttribute("data-estado");
 
@@ -65,13 +60,10 @@ beforeEach(() => {
   elemento = document.createElement("div");
   document.body.append(elemento);
   raiz = createRoot(elemento);
-  // A arara avulsa (os fogos) é um portal da raiz do app.
-  desmontarPortais = montarPortaisNoTeste();
 });
 
 afterEach(async () => {
   await act(async () => raiz.unmount());
-  desmontarPortais();
   elemento.remove();
   delete Element.prototype.animate;
   delete window.matchMedia;
@@ -460,58 +452,52 @@ describe("enquadramento: rosto (fechada) e corpo (painel aberto, fogos)", () => 
     expect(estado()).toBe("atenta");
   });
 
-  it("os fogos (montarMascoteAvulsa sem poleiro) voam de corpo inteiro", async () => {
-    const alvo = document.createElement("span");
-    document.body.append(alvo);
-    let desmontar;
-    await act(async () => {
-      desmontar = montarMascoteAvulsa(alvo, {
-        estado: "comemorando",
-        poleiro: false,
-        tamanho: 120,
-        ouvirAya: false,
-        atencao: false,
-        dormir: false,
-      });
+  it("os fogos (a arara sem poleiro, src/modulos/comemoracao/) voam de corpo inteiro", async () => {
+    await montar({
+      estado: "comemorando",
+      poleiro: false,
+      tamanho: 120,
+      ouvirAya: false,
+      atencao: false,
+      dormir: false,
     });
-    const arara = alvo.querySelector("svg.mascote");
+    const arara = svg();
     expect(arara.getAttribute("data-enquadramento")).toBe("corpo");
     expect(arara.getAttribute("data-estado")).toBe("comemorando");
     expect(arara.querySelector(".mascote__poleiro")).toBeNull();
     expect(arara.querySelector(".mascote__asa-aberta")).not.toBeNull();
-    await act(async () => desmontar());
-    alvo.remove();
   });
 });
 
-describe("montarMascoteAvulsa: erro no desenho não derruba a página", () => {
-  it("o erro fica na arara (ErrorBoundary do portal avulso da raiz)", async () => {
-    const alvo = document.createElement("span");
-    document.body.append(alvo);
+describe("a arara dos fogos: erro no desenho não derruba a página", () => {
+  it("o erro fica na arara (ErrorBoundary da comemoração)", async () => {
     const erro = vi.spyOn(console, "error").mockImplementation(() => {});
-    let desmontar;
-    await act(async () => {
-      desmontar = montarMascoteAvulsa(alvo, {
-        // Um tamanho que estoura ao ser lido no desenho.
-        tamanho: {
-          valueOf() {
-            throw new Error("desenho quebrado");
-          },
-        },
-        ouvirAya: false,
-        atencao: false,
-        dormir: false,
-      });
-    });
-    expect(alvo.querySelector(".ui-erro-do-modulo")).not.toBeNull();
+    await act(async () =>
+      raiz.render(
+        createElement(
+          ErrorBoundary,
+          { nome: "a arara da comemoração" },
+          createElement(Mascote, {
+            // Um tamanho que estoura ao ser lido no desenho.
+            tamanho: {
+              valueOf() {
+                throw new Error("desenho quebrado");
+              },
+            },
+            ouvirAya: false,
+            atencao: false,
+            dormir: false,
+          }),
+        ),
+      ),
+    );
+    expect(elemento.querySelector(".ui-erro-do-modulo")).not.toBeNull();
     expect(
       erro.mock.calls.some(([texto]) =>
         String(texto).includes("a arara da comemoração"),
       ),
     ).toBe(true);
-    await act(async () => desmontar());
     erro.mockRestore();
-    alvo.remove();
   });
 });
 

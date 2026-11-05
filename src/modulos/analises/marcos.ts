@@ -5,7 +5,7 @@ import type { MarcoDasAnalises } from "./tipos.ts";
   "Ativo" chegam (do servidor ou da cópia do navegador) — Inativo e Todos
   misturam editais encerrados. Também os marcos personalizados "análises no
   dia" (src/app/marcos-personalizados.ts). A regra (linha de base, transições, frases) é
-  de src/lib/comemoracao.ts; o aviso e os fogos, de src/modules/comemoracao.ts.
+  de src/lib/comemoracao.ts; o aviso e os fogos, de src/modulos/comemoracao/.
   Edital concluído avisa a tela de encerramento (EVENTO_EDITAL_CONCLUIDO, em
   src/modulos/encerramento-do-edital/), que relê o banco e não repete os fogos.
   `ligadas` é o liga/desliga das comemorações que o app já leu (situação do
@@ -83,7 +83,7 @@ export function avaliarMarcosDasAnalises({
   por pessoa, guardado neste navegador. Com as comemorações desligadas no
   sistema, não grava nada (religar no mesmo dia ainda comemora); o marco
   "meta-do-dia" do catálogo decide o efeito e respeita a preferência pessoal;
-  com prefers-reduced-motion, só o aviso (src/modules/comemoracao.ts).
+  com prefers-reduced-motion, só o aviso (src/modulos/comemoracao/).
 */
 export function comemorarMetaDoDia({
   ritmos,

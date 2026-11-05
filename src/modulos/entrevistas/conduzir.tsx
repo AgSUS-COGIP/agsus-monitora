@@ -55,7 +55,7 @@ import "./entrevistas.css";
     O contador "7 de 12 hoje" fica no topo; clicar no cartão abre a ficha de
     notas em tela cheia (ficha.tsx), com "Salvar e abrir o próximo" na ordem
     da tela (vaga a vaga). Concluir o dia (todas as de hoje concluídas ou com
-    falta) solta os fogos (src/modules/comemoracao.ts, com o liga/desliga das
+    falta) solta os fogos (src/modulos/comemoracao/, com o liga/desliga das
     comemorações do app), uma vez, na passagem.
   - Preparar: o resumo das regras e os passos Roteiro, Banca, Convocação e
     Agenda (preparar.tsx) — a configuração do gestor, como Regra e Equipe

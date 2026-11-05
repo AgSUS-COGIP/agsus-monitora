@@ -19,7 +19,7 @@ import "./encerramento-do-edital.css";
   cima, os totais do edital e o agradecimento à equipe; embaixo, só a parte
   de quem está vendo. Sem ranking, sem números de outras pessoas.
 
-  Os fogos são os do catálogo (src/modules/comemoracao.ts): respeitam a
+  Os fogos são os do catálogo (src/modulos/comemoracao/): respeitam a
   configuração, a preferência pessoal e prefers-reduced-motion.
 */
 
