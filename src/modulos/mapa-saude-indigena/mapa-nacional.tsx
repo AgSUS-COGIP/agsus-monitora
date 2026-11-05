@@ -51,6 +51,11 @@ import {
   usarMapaDoBrasil,
 } from "./painel-do-mapa.tsx";
 import { usarUltimo } from "./usar-ultimo.ts";
+import { OrdemDaLista, usarOrdemDosTerritorios } from "./ordem-da-lista.tsx";
+import {
+  ordenarTerritorios,
+  tituloDaOrdem,
+} from "../../lib/mapa-saude-indigena/ordem-dos-territorios.ts";
 import { podeEditarCoordenadas } from "../../lib/access-roles.ts";
 import { EditorDeCoordenadas } from "./editor-de-coordenadas.tsx";
 import {
@@ -223,6 +228,12 @@ export function MapaNacional({
   */
   const simples = usarModoDoFundo(mapa) === MODO_SIMPLES;
   const [colorirPor, definirColorirPor] = usarColorirPor();
+  // A ordem da lista: padrão por fundo até a pessoa escolher (ordem-da-lista.tsx).
+  const [ordem, definirOrdem] = usarOrdemDosTerritorios(simples);
+  const territoriosNaOrdem = useMemo(
+    () => ordenarTerritorios(territorios, ordem),
+    [territorios, ordem],
+  );
   const [mostrarPontos, definirMostrarPontos] = useState(false);
   const [realce, definirRealce] = useState<{
     numero: number;
@@ -481,14 +492,19 @@ export function MapaNacional({
             refDaLista={refDaLista}
             id={idDoPainel}
             idDoTitulo={`${idDoMapa}-lista`}
-            titulo="Territórios por vagas"
+            titulo={tituloDaOrdem(ordem)}
             total={territorios.length}
             carregando={carregando}
             vazio="Nenhum território no recorte."
+            antes={
+              territorios.length ? (
+                <OrdemDaLista ordem={ordem} aoOrdenar={definirOrdem} />
+              ) : null
+            }
           >
             {territorios.length ? (
               <ol className="mapa-si-lista__itens">
-                {territorios.map((t) => (
+                {territoriosNaOrdem.map((t) => (
                   <LinhaDoTerritorio
                     key={t.chave}
                     territorio={t}
