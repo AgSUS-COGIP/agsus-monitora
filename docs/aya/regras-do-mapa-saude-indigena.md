@@ -27,8 +27,8 @@ modo Calor saiu em 02/10/2026.
 
 ## Territórios por vagas
 
-**perguntas:** territorios por vagas | lista ao lado do mapa | ranking dos dseis | barra de preenchidas | porcentagem preenchidas
-**resposta:** No MONITORA, "Territórios por vagas" lista os mesmos DSEIs que o mapa desenha, do que tem mais vagas para o que tem menos (empate decidido pela população). A barra é o preenchimento: vagas menos ociosas, divididas pelas vagas. Acima de 80% preenchidas fica verde, de 41% a 80% amarela e até 40% vermelha. Clicar na linha abre o DSEI, como clicar na bolha.
+**perguntas:** territorios por vagas | lista ao lado do mapa | ranking dos dseis | barra de preenchidas | porcentagem preenchidas | ordenar territorios | ordem alfabetica dos dseis | ordenar por numero do dsei
+**resposta:** No MONITORA, "Territórios por vagas" lista os mesmos DSEIs que o mapa desenha, do que tem mais vagas para o que tem menos (empate decidido pela população). "Ordenar", no topo da lista, troca a ordem: Vagas, A–Z, Nº do DSEI (a numeração 1–34 do Mapa simples), % preenchidas ou Ociosas; empates vão pelo nome, e o título da lista acompanha a ordem. Sem escolha, a lista fica por vagas no Mapa e no Satélite e pelo nº do DSEI no Mapa simples; a escolha fica guardada neste navegador e vale para todos os fundos. A barra é o preenchimento: vagas menos ociosas, divididas pelas vagas. Acima de 80% preenchidas fica verde, de 41% a 80% amarela e até 40% vermelha. Clicar na linha abre o DSEI, como clicar na bolha.
 **fonte:** interface do MONITORA
 
 ## Mapa simples dos DSEIs
