@@ -5,8 +5,7 @@ import { ErrorBoundary } from "./ErrorBoundary.tsx";
 
 /*
   Portais avulsos da raiz do app: um pedaço de React desenhado num elemento
-  que o código de fora do React cria e apaga — a arara que voa nos fogos
-  (src/modules/comemoracao.ts, um canvas) e a cobertura do painel externo
+  que o código de fora do React cria e apaga — a cobertura do painel externo
   enquanto o iframe carrega (src/app/paineis-externos.ts).
 
   Antes, cada um era uma ilha com `createRoot` próprio.
@@ -15,8 +14,8 @@ import { ErrorBoundary } from "./ErrorBoundary.tsx";
   mesmo contexto e um ErrorBoundary por portal (um erro no desenho não
   derruba a página).
 
-  Fica enquanto quem chama ainda é DOM à mão: quando os fogos e o quadro dos
-  painéis forem React, eles desenham a arara e a cobertura direto.
+  Fica enquanto quem chama ainda é DOM à mão: quando o quadro dos painéis
+  for React, ele desenha a cobertura direto.
 */
 
 interface PortalAvulso {

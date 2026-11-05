@@ -1,52 +1,93 @@
-import { afterEach, expect } from "vitest";
-import { soltarFogos as soltarFogosDoModulo } from "../src/modules/comemoracao.ts";
+import { act, createElement } from "react";
+import { createRoot } from "react-dom/client";
+import { afterEach, beforeEach, expect } from "vitest";
+import {
+  Comemoracoes,
+  comemorar as comemorarDoModulo,
+} from "../src/modulos/comemoracao/comemoracoes.tsx";
+import { filaDeComemoracoes } from "../src/app/fila-de-comemoracoes.ts";
+
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 /*
-  Nenhum show de comemoração sobrevive ao teste.
-
-  A Aya que voa nos fogos é uma raiz React (montarMascoteAvulsa, em
-  src/modulos/aya/mascote/mascote.tsx): o render inicial fica na fila do
-  scheduler do React (setImmediate) e o desmontar sai num setTimeout(0)
-  (tirarAya, em src/modules/comemoracao.ts). Teste que olha só o começo do
-  show e não o encerra deixava essas tarefas na fila; quando o Vitest
-  desmontava o jsdom antes de a fila andar, cada uma estourava
-  "ReferenceError: window is not defined" fora de qualquer teste (26
-  "unhandled errors" no CI do PR #495, conforme a ordem das tarefas na
-  máquina). No navegador o show sempre acaba sozinho; o vazamento era só dos
-  testes.
+  As comemorações são React (src/modulos/comemoracao/comemoracoes.tsx), filhas
+  da casca. Nos testes, `<Comemoracoes />` fica montado numa raiz própria (como
+  a casca faz), e cada comemoração desenha por portal no `doc` que ela recebe
+  (um documento falso, com canvas falso, ou o da página).
 
   Chame no topo do arquivo, antes dos outros afterEach (os hooks "after"
-  rodam do último para o primeiro: assim este roda depois de um
-  vi.useRealTimers do arquivo). Use o soltarFogos devolvido e
-  passe a `acompanhar` cada documento falso: ao fim de cada teste, todo show
-  é parado, todo aviso é fechado no × (que encerra o show do comemorar) e o
-  desmontar da Aya roda ainda com o jsdom de pé.
+  rodam do último para o primeiro). Use o `comemorar` devolvido (roda em
+  `act`) e passe a `acompanhar` cada documento falso: ao fim de cada teste,
+  a fila esvazia, a raiz desmonta e nenhum aviso, canvas, véu ou arara sobra.
 */
-const SOBRAS = ".comemoracao__fogos, .comemoracao__veu, .comemoracao__aya";
+const SOBRAS =
+  ".comemoracao, .comemoracao__fogos, .comemoracao__veu, .comemoracao__aya";
 
 export function encerrarShowsAoFimDeCadaTeste() {
-  const shows = [];
   const documentos = [];
-  const guardar = (show) => {
-    if (show) shows.push(show);
-    return show;
-  };
-  afterEach(async () => {
-    for (const show of shows.splice(0)) show.parar();
-    const docs = documentos.splice(0);
-    for (const doc of docs)
-      for (const fechar of doc.querySelectorAll(".comemoracao__fechar"))
-        fechar.click();
-    // tirarAya desmonta a arara num setTimeout(0): deixa rodar agora.
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    for (const doc of docs)
+  let raiz = null;
+  let lugar = null;
+  beforeEach(() => {
+    lugar = document.createElement("div");
+    document.body.append(lugar);
+    raiz = createRoot(lugar);
+    act(() => raiz.render(createElement(Comemoracoes)));
+  });
+  afterEach(() => {
+    act(() => filaDeComemoracoes.esvaziar());
+    act(() => raiz?.unmount());
+    lugar?.remove();
+    raiz = null;
+    for (const doc of documentos.splice(0))
       expect(doc.querySelectorAll(SOBRAS)).toHaveLength(0);
   });
   return {
-    soltarFogos: (...args) => guardar(soltarFogosDoModulo(...args)),
+    /** `comemorar` de verdade, dentro de `act` (o React desenha na hora). */
+    comemorar: (...args) => {
+      let aberta = null;
+      act(() => {
+        aberta = comemorarDoModulo(...args);
+      });
+      return aberta;
+    },
+    /** Um clique dentro de `act`. */
+    clicar: (elemento) => act(() => elemento.click()),
     acompanhar: (doc) => {
       documentos.push(doc);
       return doc;
     },
   };
+}
+
+/** O requestAnimationFrame falso: cada quadro roda dentro de `act`. */
+export function filaDeQuadros() {
+  const quadros = [];
+  return {
+    quadros,
+    requestAnimationFrame: (fn) =>
+      quadros.push((agora) => act(() => fn(agora))),
+  };
+}
+
+/**
+ * `<Comemoracoes />` montado na página (como a casca), para quem comemora
+ * pelo app (src/app/comemoracao-sob-demanda.ts). Chame dentro do `describe`,
+ * DEPOIS do `afterEach` que limpa o body: este roda antes dele e tira as
+ * comemorações pelo React, sem deixar nó órfão.
+ */
+export function comemoracoesNaPagina() {
+  let raiz = null;
+  let lugar = null;
+  beforeEach(() => {
+    lugar = document.createElement("div");
+    document.body.append(lugar);
+    raiz = createRoot(lugar);
+    act(() => raiz.render(createElement(Comemoracoes)));
+  });
+  afterEach(() => {
+    act(() => filaDeComemoracoes.esvaziar());
+    act(() => raiz?.unmount());
+    lugar?.remove();
+    raiz = null;
+  });
 }

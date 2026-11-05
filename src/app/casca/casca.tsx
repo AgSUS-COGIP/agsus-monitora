@@ -6,6 +6,7 @@ import { GavetaDoCelular } from "./gaveta-do-celular.tsx";
 import {
   AvisoDeVersaoDoApp,
   AyaDoApp,
+  ComemoracoesDoApp,
   EncerramentoDoEditalDoApp,
   MolduraNaPagina,
 } from "./pecas.tsx";
@@ -70,6 +71,8 @@ export const Casca = memo(function Casca() {
         ></div>
 
         <Telas />
+        {/* Comemorações: aviso e efeito, por portal no fim do body. */}
+        <ComemoracoesDoApp />
       </main>
     </>
   );

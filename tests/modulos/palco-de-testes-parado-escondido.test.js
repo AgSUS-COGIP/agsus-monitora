@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
   o laço só anda com o canvas à vista (IntersectionObserver).
 */
 
-vi.mock("../../src/modules/comemoracao.ts", async (original) => ({
+vi.mock("../../src/modulos/comemoracao/desenho.ts", async (original) => ({
   ...(await original()),
   desenharPrevia: () => {},
   semMovimento: () => false,

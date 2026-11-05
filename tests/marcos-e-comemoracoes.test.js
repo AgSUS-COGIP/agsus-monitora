@@ -24,10 +24,9 @@ import {
 import { decididoNoPrazo } from "../src/lib/prazo-do-recurso.ts";
 import { enriquecerRecurso } from "../src/lib/recursos-dos-candidatos.ts";
 import { normalizarSituacaoDoSistema } from "../src/lib/situacao-dos-modulos.ts";
-import {
-  comemoracoesLigadasNoPainel,
-  esquecerComemoracoesDoPainel,
-} from "../src/modules/comemoracao.ts";
+import { act } from "react";
+import { filaDeComemoracoes } from "../src/app/fila-de-comemoracoes.ts";
+import { comemoracoesNaPagina } from "./shows-de-comemoracao.js";
 // O desenho chega por import(): o aviso aparece depois da promessa.
 import { avaliarMarco } from "../src/app/comemoracao-sob-demanda.ts";
 
@@ -373,8 +372,8 @@ describe("recurso decidido no prazo", () => {
 describe("avaliar um marco na tela", () => {
   afterEach(() => {
     document.body.innerHTML = "";
-    esquecerComemoracoesDoPainel();
   });
+  comemoracoesNaPagina();
 
   const janelaSemMovimento = {
     matchMedia: () => ({ matches: true }),
@@ -406,7 +405,7 @@ describe("avaliar um marco na tela", () => {
     expect(document.querySelector(".comemoracao__fogos")).toBeNull();
     expect(janelaSemMovimento.requestAnimationFrame).not.toHaveBeenCalled();
     // Recarregou: o estado já é 0, nada de novo.
-    document.body.innerHTML = "";
+    act(() => filaDeComemoracoes.esvaziar());
     expect(avaliar(0)).toBeNull();
   });
 
@@ -448,30 +447,7 @@ describe("avaliar um marco na tela", () => {
     await vi.waitFor(() =>
       expect(document.querySelector(".comemoracao__fechar")).not.toBeNull(),
     );
-    document.querySelector(".comemoracao__fechar").click();
+    act(() => document.querySelector(".comemoracao__fechar").click());
     expect(document.querySelector(".comemoracao")).toBeNull();
-  });
-
-  it("painel: lê o flag uma vez; falha vira desligado", async () => {
-    const rpc = vi.fn(async () => ({
-      data: { sistema: { comemoracoes: true } },
-      error: null,
-    }));
-    expect(await comemoracoesLigadasNoPainel({ rpc })).toBe(true);
-    expect(await comemoracoesLigadasNoPainel({ rpc })).toBe(true);
-    expect(rpc).toHaveBeenCalledTimes(1);
-    expect(rpc).toHaveBeenCalledWith("obter_situacao_do_sistema");
-
-    esquecerComemoracoesDoPainel();
-    const falha = vi.fn(async () => {
-      throw new Error("rede");
-    });
-    expect(await comemoracoesLigadasNoPainel({ rpc: falha })).toBe(false);
-    esquecerComemoracoesDoPainel();
-    expect(
-      await comemoracoesLigadasNoPainel({
-        rpc: async () => ({ data: null, error: { code: "42501" } }),
-      }),
-    ).toBe(false);
   });
 });

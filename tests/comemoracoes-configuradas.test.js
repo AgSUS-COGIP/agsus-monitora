@@ -1,3 +1,4 @@
+import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   avaliarMarcosPersonalizados,
@@ -9,12 +10,12 @@ import {
   normalizarConfiguracao,
 } from "../src/lib/catalogo-de-comemoracoes.ts";
 import { criarAleatorio } from "../src/lib/fogos.ts";
+import { EVENTO_DA_AYA } from "../src/modulos/comemoracao/comemoracoes.tsx";
+import { planoDaComemoracao } from "../src/modulos/comemoracao/plano.ts";
 import {
-  comemorar,
-  EVENTO_DA_AYA,
-  planoDaComemoracao,
-} from "../src/modules/comemoracao.ts";
-import { encerrarShowsAoFimDeCadaTeste } from "./shows-de-comemoracao.js";
+  encerrarShowsAoFimDeCadaTeste,
+  filaDeQuadros,
+} from "./shows-de-comemoracao.js";
 
 /*
   As comemorações com a configuração de Configurações › Comemorações:
@@ -24,10 +25,15 @@ import { encerrarShowsAoFimDeCadaTeste } from "./shows-de-comemoracao.js";
 */
 
 const shows = encerrarShowsAoFimDeCadaTeste();
-const { soltarFogos } = shows;
+const { comemorar, clicar } = shows;
+
+/* O efeito pedido direto (o Palco de testes), sem passar pela configuração. */
+const soltarFogos = (doc, janela, opcoes = {}) =>
+  comemorar({ texto: "Efeito", teste: true, doc, janela, ...opcoes });
+const avisoDe = (doc) => doc.querySelector(".comemoracao");
 
 function janelaFalsa({ movimento = true } = {}) {
-  const quadros = [];
+  const { quadros, requestAnimationFrame } = filaDeQuadros();
   const eventos = [];
   const contexto = new Proxy({}, { get: () => () => {}, set: () => true });
   const doc = shows.acompanhar(document.implementation.createHTMLDocument("t"));
@@ -43,7 +49,7 @@ function janelaFalsa({ movimento = true } = {}) {
     innerWidth: 1000,
     innerHeight: 700,
     devicePixelRatio: 1,
-    requestAnimationFrame: (fn) => quadros.push(fn),
+    requestAnimationFrame,
     matchMedia: () => ({ matches: !movimento }),
     getComputedStyle: () => ({ getPropertyValue: () => "" }),
     localStorage: {
@@ -112,13 +118,14 @@ describe("comemorar com a configuração dos marcos", () => {
       mensagem: "Vaga pronta, equipe!",
     });
     const { doc, janela: outra } = janelaFalsa();
-    const aviso = comemorar({
+    comemorar({
       texto: "Vaga X pronta.",
       marco: "vaga-pronta",
       doc,
       janela: outra,
       aleatorio: criarAleatorio(1),
     });
+    const aviso = avisoDe(doc);
     expect(aviso.textContent).toContain("Vaga pronta, equipe!");
     // Som configurado: o botão já nasce ligado (toca depois da interação).
     expect(
@@ -167,14 +174,16 @@ describe("comemorar com a configuração dos marcos", () => {
 
   it("com menos movimento, só o aviso", () => {
     const { doc, janela } = janelaFalsa({ movimento: false });
-    const aviso = comemorar({
-      texto: "Prévia",
-      teste: true,
-      efeito: "combinado",
-      doc,
-      janela,
-    });
-    expect(aviso).not.toBeNull();
+    expect(
+      comemorar({
+        texto: "Prévia",
+        teste: true,
+        efeito: "combinado",
+        doc,
+        janela,
+      }),
+    ).not.toBeNull();
+    const aviso = avisoDe(doc);
     expect(canvases(doc)).toBe(0);
     expect(aviso.querySelector(".comemoracao__pular")).toBeNull();
   });
@@ -183,12 +192,10 @@ describe("comemorar com a configuração dos marcos", () => {
 describe("os efeitos no canvas", () => {
   it("combinado: dois canvases (fogos com rastro e o motor), véu e a Aya avisada", () => {
     const { doc, janela, eventos, rodar } = janelaFalsa();
-    const fim = vi.fn();
     expect(
       soltarFogos(doc, janela, {
         efeito: "combinado",
         duracaoMs: 4000,
-        aoTerminar: fim,
         aleatorio: criarAleatorio(4),
       }),
     ).toBeTruthy();
@@ -203,7 +210,8 @@ describe("os efeitos no canvas", () => {
     });
     rodar();
     expect(canvases(doc) + veus(doc)).toBe(0);
-    expect(fim).toHaveBeenCalledTimes(1);
+    // Acabou: o "Pular" sai e o aviso fica o tempo de leitura.
+    expect(doc.querySelector(".comemoracao__pular")).toBeNull();
     expect(eventos.at(-1).detail).toEqual({
       estado: "parada",
       duracaoMs: null,
@@ -240,19 +248,19 @@ describe("os efeitos no canvas", () => {
   it("só a Aya: nada a desenhar, o evento e o fim pelo relógio", () => {
     vi.useFakeTimers();
     const { doc, janela, eventos } = janelaFalsa();
-    const fim = vi.fn();
-    const efeito = soltarFogos(doc, janela, {
-      efeito: "aya",
-      duracaoMs: 3000,
-      aoTerminar: fim,
-    });
+    soltarFogos(doc, janela, { efeito: "aya", duracaoMs: 3000 });
     expect(canvases(doc)).toBe(0);
     expect(eventos.map((e) => e.detail)).toEqual([
       { estado: "comemorando", duracaoMs: 3000 },
     ]);
-    vi.advanceTimersByTime(3000);
-    expect(fim).toHaveBeenCalledTimes(1);
-    efeito.parar();
+    expect(doc.querySelector(".comemoracao__pular")).not.toBeNull();
+    act(() => vi.advanceTimersByTime(3000));
+    expect(doc.querySelector(".comemoracao__pular")).toBeNull();
+    expect(eventos.map((e) => e.detail.estado)).toEqual([
+      "comemorando",
+      "parada",
+    ]);
+    clicar(doc.querySelector(".comemoracao__fechar"));
     expect(eventos).toHaveLength(2);
   });
 

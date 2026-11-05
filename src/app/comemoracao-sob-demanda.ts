@@ -1,15 +1,15 @@
 import { trocarEstadoGuardado } from "../lib/comemoracao.ts";
 import type { ArmazenamentoSimples } from "../lib/comemoracao.ts";
-import type {
-  JanelaDaComemoracao,
-  OpcoesDaComemoracao,
-} from "../modules/comemoracao.ts";
+import type { JanelaDaComemoracao } from "../modulos/comemoracao/desenho.ts";
+import type { OpcoesDaComemoracao } from "../modulos/comemoracao/plano.ts";
+import type { ComemoracaoAberta } from "../modulos/comemoracao/comemoracoes.tsx";
 
 /*
-  As comemorações sob demanda. O desenho delas (src/modules/comemoracao.ts:
-  o aviso, o canvas, o motor de efeitos e os fogos, a Aya avulsa e o CSS,
-  ~120 kB) sai do pacote principal e só baixa quando uma comemoração vai
-  aparecer. Quem comemora importa daqui: `comemorar` devolve a promessa do
+  As comemorações sob demanda. O desenho delas
+  (src/modulos/comemoracao/comemoracoes.tsx: o aviso, o canvas, o motor de
+  efeitos e os fogos e o CSS, ~120 kB) sai do pacote principal e só baixa
+  quando uma comemoração vai aparecer; a casca o desenha enquanto houver
+  alguma na fila (src/app/fila-de-comemoracoes.ts). Quem comemora importa daqui: `comemorar` devolve a promessa do
   aviso (ou null), e a regra do marco (`avaliarMarco`) continua síncrona — só
   o desenho espera o download.
 
@@ -17,23 +17,25 @@ import type {
   e nada mais muda — sem recarregar a página no meio do trabalho.
 */
 
-type Comemoracao = typeof import("../modules/comemoracao.ts");
+type Comemoracao = typeof import("../modulos/comemoracao/comemoracoes.tsx");
 
 let pedido: Promise<Comemoracao> | null = null;
 
 /** Baixa o desenho das comemorações (uma vez); serve também para pedir antes. */
 export function carregarComemoracao(): Promise<Comemoracao> {
-  pedido ??= import("../modules/comemoracao.ts").catch((erro: unknown) => {
-    pedido = null;
-    throw erro;
-  });
+  pedido ??= import("../modulos/comemoracao/comemoracoes.tsx").catch(
+    (erro: unknown) => {
+      pedido = null;
+      throw erro;
+    },
+  );
   return pedido;
 }
 
-/** Aviso + efeito (ver `comemorar` em src/modules/comemoracao.ts). */
+/** Aviso + efeito (ver `comemorar` em src/modulos/comemoracao/comemoracoes.tsx). */
 export function comemorar(
   opcoes: OpcoesDaComemoracao = {},
-): Promise<HTMLDivElement | null> {
+): Promise<ComemoracaoAberta | null> {
   return carregarComemoracao().then(
     (modulo) => modulo.comemorar(opcoes),
     (erro: unknown) => {

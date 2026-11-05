@@ -2,7 +2,7 @@
   A preferência pessoal de não ver comemorações, neste navegador. A mesma
   chave e o mesmo formato que a mascote (Aya) lê: "1" = desligadas; ausente
   = ligadas. Quem grava é o "Para mim" de Configurações › Comemorações; quem
-  respeita é toda comemoração (src/modules/comemoracao.ts) e a mascote.
+  respeita é toda comemoração (src/modulos/comemoracao/) e a mascote.
   Armazenamento sempre em try/catch (janela privada, bloqueado): sem ele,
   ligadas.
 */

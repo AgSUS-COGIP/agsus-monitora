@@ -19,7 +19,7 @@ import {
   desenharPrevia,
   paletaDoTema,
   semMovimento,
-} from "../../modules/comemoracao.ts";
+} from "../comemoracao/desenho.ts";
 import { Segmentado } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 
