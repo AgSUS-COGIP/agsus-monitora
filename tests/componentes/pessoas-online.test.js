@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
-import { act } from "react";
+import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarPessoasOnline } from "../../src/componentes/pessoas-online/pessoas-online.tsx";
+import { PessoasOnline } from "../../src/componentes/pessoas-online/pessoas-online.tsx";
+import { desenharNoTeste } from "../montar-tela.js";
 import { situacaoDaPresenca } from "../../src/lib/online-presence";
 import { normalizeOnlinePresenceList } from "../../src/lib/online-presence";
 
@@ -58,7 +59,10 @@ let montado = null;
 async function montar(presenca) {
   document.body.innerHTML = `<div class="actions"><div id="pessoasOnlineApp"></div></div>`;
   await act(async () => {
-    montado = montarPessoasOnline({ presenca });
+    montado = desenharNoTeste(
+      document.getElementById("pessoasOnlineApp"),
+      createElement(PessoasOnline, { presenca }),
+    );
   });
   return presenca;
 }

@@ -12,6 +12,7 @@ import {
   servicoDoPainel,
 } from "../../src/lib/carregamento-do-painel.ts";
 import { acompanharCarregamentoDoPainel } from "../../src/modulos/paineis-externos/carregamento-do-painel.tsx";
+import { montarPortaisNoTeste } from "../montar-tela.js";
 
 /*
   A cobertura do painel externo (src/modulos/paineis-externos/): o que está
@@ -65,6 +66,7 @@ describe("cobertura do painel externo", () => {
   let holder;
   let quadro;
   let desmontar;
+  let desmontarPortais;
   const cobertura = () => holder.querySelector(".carregamento-do-painel");
   const texto = () => cobertura()?.textContent ?? "";
   const avancar = async (ms) => {
@@ -95,10 +97,13 @@ describe("cobertura do painel externo", () => {
     quadro = document.createElement("iframe");
     holder.append(quadro);
     document.body.replaceChildren(holder);
+    // A cobertura é um portal da raiz do app (src/app/portais-avulsos.tsx).
+    desmontarPortais = montarPortaisNoTeste();
   });
 
   afterEach(() => {
     act(() => desmontar?.());
+    desmontarPortais();
     vi.useRealTimers();
   });
 

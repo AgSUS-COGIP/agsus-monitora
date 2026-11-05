@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
+import { abrirPortalAvulso } from "../../app/portais-avulsos.tsx";
 import {
   AVISO_DO_PAINEL_CARREGANDO,
   AVISO_DO_PAINEL_ERRO,
@@ -214,10 +214,10 @@ export function acompanharCarregamentoDoPainel(
   const desmontar = () => {
     if (!montado) return;
     montado = false;
-    modulo.desmontar();
+    fechar();
     raiz.remove();
   };
-  const modulo = montarModulo(
+  const fechar = abrirPortalAvulso(
     raiz,
     <CarregamentoDoPainel
       quadro={quadro}
@@ -225,7 +225,7 @@ export function acompanharCarregamentoDoPainel(
       aoTentarDeNovo={aoTentarDeNovo}
       aoTerminar={() => queueMicrotask(desmontar)}
     />,
-    { flushSync: true, nome: "Carregamento do painel" },
+    { nome: "Carregamento do painel" },
   );
   return desmontar;
 }

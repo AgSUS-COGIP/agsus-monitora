@@ -6,23 +6,31 @@ import { ErrorBoundary } from "./ErrorBoundary.tsx";
 import { avisar } from "./avisos.ts";
 import { Avisos } from "./casca/avisos.tsx";
 import { Casca } from "./casca/casca.tsx";
+import { BuscaGlobalDoApp } from "./casca/pecas.tsx";
 import { ContextoDoApp } from "./contexto-do-app.ts";
+import type { PecasDoApp } from "./contexto-do-app.ts";
 import { TelaDeEntrada } from "./entrada/entrada.tsx";
 import type { SessaoDaEntrada } from "./entrada/entrada.tsx";
 import type { EstadoDaMarcaDaEntrada } from "./entrada/marca.ts";
 import type { PedidoDeAcesso } from "./entrada/pedido-de-acesso.ts";
 import type { LeituraDaNavegacao } from "./navegacao.ts";
+import { PortaisAvulsos } from "./portais-avulsos.tsx";
 import { registrarTelasDoApp } from "./telas.tsx";
 
 /*
-  A raiz do app: o ÚNICO `createRoot` do sistema depois desta etapa (as ilhas
-  que ainda montam sozinhas estão listadas em docs/arquitetura/raiz-react.md,
-  passo 2). Ela entrega o contexto do app (a navegação) e desenha, por portal,
-  nos lugares de sempre do index.html:
+  A raiz do app: o ÚNICO `createRoot` do sistema. Ela entrega o contexto do
+  app (a navegação, o aviso curto e as peças do sistema: presença, versão,
+  encerramento do edital, sessão) e desenha, por portal, nos lugares de
+  sempre do index.html:
 
     #avisosApp      notificações, carregamento e conexão (src/app/casca/avisos.tsx)
     #telaDeEntrada  a tela de acesso (src/app/entrada/)
     #appScreen      a casca: barra lateral, cabeçalho e as telas (rotas)
+
+  A busca global (Ctrl+K) fica no próprio `#raiz` (o diálogo vai por portal
+  para o fim do body). Os portais avulsos (src/app/portais-avulsos.tsx) põem
+  pedaços de React no DOM que ainda é feito à mão (a arara dos fogos, a
+  cobertura do painel externo carregando).
 
   Os ids e as classes continuam os mesmos (CSS, testes e tours). Os portais
   deixam cada parte onde o HTML a espera (a tela de acesso dentro do
@@ -34,6 +42,8 @@ export interface PropsDaRaiz {
   sessao: SessaoDaEntrada;
   marca: EstadoDaMarcaDaEntrada;
   pedido: PedidoDeAcesso;
+  /** O estado do sistema para as partes da casca (src/app/sistema.ts). */
+  pecas?: PecasDoApp | null;
   lugares: {
     avisos: Element | null;
     entrada: Element | null;
@@ -50,10 +60,13 @@ export function Raiz({
   sessao,
   marca,
   pedido,
+  pecas = null,
   lugares,
 }: PropsDaRaiz) {
   return (
-    <ContextoDoApp.Provider value={{ navegacao, avisar }}>
+    <ContextoDoApp.Provider value={{ navegacao, avisar, pecas }}>
+      <BuscaGlobalDoApp />
+      <PortaisAvulsos />
       {portal(
         <ErrorBoundary nome="os avisos do app">
           <Avisos />

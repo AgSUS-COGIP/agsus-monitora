@@ -1,5 +1,4 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { comemorar as comemorarPadrao } from "../../app/comemoracao-sob-demanda.ts";
 import { GradeDeKpis, Kpi, Modal } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
@@ -145,17 +144,4 @@ export function EncerramentoDoEdital({
       aoFechar={() => void estado.fechar()}
     />
   );
-}
-
-export function montarEncerramentoDoEdital({
-  elemento = globalThis.document?.getElementById("encerramentoDoEditalApp"),
-  estado,
-}: {
-  elemento?: HTMLElement | null;
-  estado: EstadoDoEncerramentoControle;
-}) {
-  if (!elemento) return null;
-  return montarModulo(elemento, <EncerramentoDoEdital estado={estado} />, {
-    nome: "Encerramento do edital",
-  });
 }

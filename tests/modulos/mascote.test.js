@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import "../componentes/interacoes.js";
+import { montarPortaisNoTeste } from "../montar-tela.js";
 import {
   CHAVE_COMEMORACOES_PESSOAIS,
   definirEstadoDaAya,
@@ -32,6 +33,7 @@ const { CartaoDaMascote } =
 let raiz;
 let elemento;
 let animar;
+let desmontarPortais;
 const svg = () => elemento.querySelector("svg.mascote");
 const estado = () => svg()?.getAttribute("data-estado");
 
@@ -63,10 +65,13 @@ beforeEach(() => {
   elemento = document.createElement("div");
   document.body.append(elemento);
   raiz = createRoot(elemento);
+  // A arara avulsa (os fogos) é um portal da raiz do app.
+  desmontarPortais = montarPortaisNoTeste();
 });
 
 afterEach(async () => {
   await act(async () => raiz.unmount());
+  desmontarPortais();
   elemento.remove();
   delete Element.prototype.animate;
   delete window.matchMedia;
@@ -480,7 +485,7 @@ describe("enquadramento: rosto (fechada) e corpo (painel aberto, fogos)", () => 
 });
 
 describe("montarMascoteAvulsa: erro no desenho não derruba a página", () => {
-  it("o erro fica na ilha da arara (ErrorBoundary de montarModulo)", async () => {
+  it("o erro fica na arara (ErrorBoundary do portal avulso da raiz)", async () => {
     const alvo = document.createElement("span");
     document.body.append(alvo);
     const erro = vi.spyOn(console, "error").mockImplementation(() => {});

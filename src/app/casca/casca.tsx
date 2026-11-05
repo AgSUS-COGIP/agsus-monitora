@@ -3,6 +3,11 @@ import { BarraLateral } from "../../componentes/barra-lateral/barra-lateral.tsx"
 import { Telas } from "../telas.tsx";
 import { chamarAcaoDaCasca } from "./acoes.ts";
 import { GavetaDoCelular } from "./gaveta-do-celular.tsx";
+import {
+  AvisoDeVersaoDoApp,
+  AyaDoApp,
+  EncerramentoDoEditalDoApp,
+} from "./pecas.tsx";
 import { usarTabelasEmCartoes } from "./tabelas-em-cartoes.ts";
 import { Topo } from "./topo.tsx";
 
@@ -11,7 +16,9 @@ import { Topo } from "./topo.tsx";
   externo, o `<aside>` da barra lateral (com a barra), o cabeçalho, os pontos
   de montagem do topo (aviso de versão, Aya, encerramento do edital), a faixa
   de aviso global e as telas (src/app/telas.tsx). Os ids e as classes são os
-  de antes (CSS, testes, tours da Aya e o resto do app os usam).
+  de antes (CSS, testes, tours da Aya e o resto do app os usam). O aviso de
+  versão, a Aya e o encerramento do edital são filhas daqui (`pecas.tsx`),
+  com o estado do sistema pelo contexto da raiz.
 
   Entra por portal da raiz do app (src/app/raiz.tsx), desenhada na hora no
   começo de src/main.ts — antes de `ligarSistema()` e de qualquer ilha que
@@ -21,8 +28,6 @@ import { Topo } from "./topo.tsx";
   (perfil, textos configuráveis, a faixa de manutenção). No celular, o véu
   da gaveta (`gaveta-do-celular.tsx`) se redesenha ao abrir e fechar, e as
   tabelas viram cartões (`tabelas-em-cartoes.ts`).
-  As ilhas que ainda montam sozinhas (Pessoas online, Aya…) usam os
-  elementos vazios daqui (docs/arquitetura/raiz-react.md, passo 2).
 
   O `#appScreen` em si fica no index.html: a classe `hidden` dele é de
   `perfil.mostrarApp()`/`esconderApp()` desde o primeiro quadro.
@@ -41,10 +46,17 @@ export const Casca = memo(function Casca() {
       <main className="main" id="conteudoPrincipal" tabIndex={-1}>
         <Topo />
         {/* Aviso de versão nova (React: src/componentes/aviso-de-versao/) */}
-        <div id="avisoDeVersaoApp"></div>
-        <div id="ayaApp"></div>
+        <div id="avisoDeVersaoApp">
+          <AvisoDeVersaoDoApp />
+        </div>
+        {/* A Aya (src/modulos/aya/), baixada quando o app abre. */}
+        <div id="ayaApp">
+          <AyaDoApp />
+        </div>
         {/* Tela de encerramento do edital (React: src/modulos/encerramento-do-edital/) */}
-        <div id="encerramentoDoEditalApp"></div>
+        <div id="encerramentoDoEditalApp">
+          <EncerramentoDoEditalDoApp />
+        </div>
 
         {/* Aviso global de Configurações (src/app/configuracao.ts). */}
         <div

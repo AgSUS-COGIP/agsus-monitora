@@ -1,10 +1,11 @@
-import { act } from "react";
+import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   definirAreaAtual,
   definirAreasDoUsuario,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
+import { desenharNoTeste } from "../montar-tela.js";
 import { clicar, digitar } from "../componentes/interacoes.js";
 
 /*
@@ -25,7 +26,7 @@ vi.mock("../../src/modulos/aya/contexto.ts", async (original) => {
   };
 });
 
-const { montarAya } = await import("../../src/modulos/aya/aya.tsx");
+const { Aya } = await import("../../src/modulos/aya/aya.tsx");
 const { definirPaginaDaAya, redefinirPaginaDaAya } =
   await import("../../src/modulos/aya/estado.ts");
 
@@ -51,14 +52,16 @@ describe("Aya: suporte sem varrer a página a cada tecla", () => {
     raiz = document.createElement("div");
     document.body.append(raiz);
     await act(async () => {
-      controlador = montarAya({
-        elemento: raiz,
-        perguntar: vi.fn(),
-        navegar: vi.fn(),
-        abrirSecao: vi.fn(),
-        configuracao: (chave) =>
-          chave === "support_email" ? "suporte@agenciasus.org.br" : "",
-      });
+      controlador = desenharNoTeste(
+        raiz,
+        createElement(Aya, {
+          perguntar: vi.fn(),
+          navegar: vi.fn(),
+          abrirSecao: vi.fn(),
+          configuracao: (chave) =>
+            chave === "support_email" ? "suporte@agenciasus.org.br" : "",
+        }),
+      );
     });
     await clicar(raiz.querySelector(".aya-arara"));
     const campo = raiz.querySelector("textarea");

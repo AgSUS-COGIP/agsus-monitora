@@ -1,5 +1,4 @@
 import { useEffect, useReducer, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { situacaoDaPresenca } from "../../lib/online-presence";
 
 /*
@@ -178,20 +177,4 @@ export function PessoasOnline({
       </div>
     </div>
   );
-}
-
-export interface OpcoesDePessoasOnline {
-  elemento?: HTMLElement | null;
-  presenca?: PresencaDoCabecalho | null;
-}
-
-/** Monta "Pessoas online" no cabeçalho (`#pessoasOnlineApp`). */
-export function montarPessoasOnline({
-  elemento = document.getElementById("pessoasOnlineApp"),
-  presenca,
-}: OpcoesDePessoasOnline = {}) {
-  if (!elemento || !presenca) return null;
-  return montarModulo(elemento, <PessoasOnline presenca={presenca} />, {
-    nome: "Pessoas online",
-  });
 }
