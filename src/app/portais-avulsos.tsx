@@ -9,7 +9,7 @@ import { ErrorBoundary } from "./ErrorBoundary.tsx";
   (src/modules/comemoracao.ts, um canvas) e a cobertura do painel externo
   enquanto o iframe carrega (src/app/paineis-externos.ts).
 
-  Antes, cada um era uma ilha com `createRoot` próprio (montar-modulo.tsx).
+  Antes, cada um era uma ilha com `createRoot` próprio.
   Agora a raiz (src/app/raiz.tsx) desenha `<PortaisAvulsos />`, e cada
   pedido vira um `createPortal` na mesma árvore: um `createRoot` só, o
   mesmo contexto e um ErrorBoundary por portal (um erro no desenho não

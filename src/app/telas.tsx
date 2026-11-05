@@ -3,6 +3,7 @@ import {
   lazy,
   memo,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -18,6 +19,7 @@ import {
 } from "./contexto-do-app.ts";
 import {
   assinarTelas,
+  ehSecaoComTela,
   ehTelaRegistrada,
   registrarTelas,
   telaCriada,
@@ -25,14 +27,21 @@ import {
   telaPronta,
   carregarTela,
   versaoDasTelas,
+  viewDaSecao,
 } from "./registro-das-telas.ts";
-import type { ControladorDeTela, ViewDeTela } from "./registro-das-telas.ts";
+import type {
+  ControladorDeTela,
+  SecaoComTela,
+  ViewDeTela,
+} from "./registro-das-telas.ts";
 import type { EstadoDaNavegacao, LeituraDaNavegacao } from "./navegacao.ts";
 import { erroAmigavel } from "../lib/erro-amigavel";
 import { ehPainelExterno } from "../lib/navegacao";
 import { situacaoDoSistema } from "../modules/situacao-dos-modulos.ts";
 import { criarVisaoGeral } from "../modulos/visao-geral/visao-geral.tsx";
 import { criarNucleo } from "../modulos/editais/nucleo.tsx";
+import { SECOES } from "../modulos/configuracoes/secoes.ts";
+import { ContextoDaPaginaDeConfiguracoes } from "../modulos/configuracoes/pagina.ts";
 
 /*
   As telas do app como rotas: a navegação (src/app/navegacao.ts) diz qual
@@ -89,16 +98,24 @@ const perfilDoApp = () => window.getMonitoraProfile?.() ?? null;
 
 /**
  * Registra as telas (src/app/raiz.tsx, uma vez). `navegacao` responde se a
- * tela está aberta (Análises só relê a área com a página à vista).
+ * tela está aberta (Análises só relê a área com a página à vista; Status das
+ * atualizações, com a seção à vista). `aoSalvarModulos`: Módulos e abas
+ * salvou (os painéis externos do menu releem).
  */
 export function registrarTelasDoApp({
   navegacao,
+  aoSalvarModulos,
 }: {
   navegacao: Pick<LeituraDaNavegacao, "obter">;
+  aoSalvarModulos?: (() => unknown) | undefined;
 }) {
   const aberta = (view: string) => () => {
     const { view: atual, aviso } = navegacao.obter();
     return atual === view && !aviso;
+  };
+  const secaoAberta = (secao: string) => () => {
+    const { view: atual, aviso, secao: aberta } = navegacao.obter();
+    return atual === "config" && !aviso && aberta === secao;
   };
   registrarTelas({
     dashboard: {
@@ -209,6 +226,55 @@ export function registrarTelasDoApp({
           (m) => m.criarPreClassificacao({ toast: avisar }),
         ),
     },
+    /*
+      Configurações (/administracao/configuracoes/<seção>): a moldura baixa
+      na primeira abertura (só quem administra abre); as quatro seções com
+      tela própria, na primeira abertura de cada uma (ou com o mouse no item
+      do menu).
+    */
+    config: {
+      carregar: () =>
+        import("../modulos/configuracoes/configuracoes.tsx").then((m) =>
+          m.criarConfiguracoes(),
+        ),
+    },
+    "secao:acessos": {
+      carregar: () =>
+        import("../modulos/acessos/acessos.tsx").then((m) =>
+          m.criarAcessos({
+            toast: avisar,
+            getProfile: perfilDoApp,
+            secoesDeConfiguracao: SECOES,
+          }),
+        ),
+    },
+    "secao:modulos": {
+      carregar: () =>
+        import("../modulos/modulos/modulos.tsx").then((m) =>
+          m.criarModulos({
+            toast: avisar,
+            getProfile: perfilDoApp,
+            ...(aoSalvarModulos ? { aoSalvar: aoSalvarModulos } : {}),
+          }),
+        ),
+    },
+    // Relê a cada abertura da seção, e sozinho só com ela à vista.
+    "secao:cargas": {
+      carregar: () =>
+        import("../componentes/saude-das-cargas/saude-das-cargas.tsx").then(
+          (m) =>
+            m.criarSaudeDasCargas({
+              getProfile: perfilDoApp,
+              naTela: secaoAberta("cargas"),
+            }),
+        ),
+    },
+    "secao:automacao": {
+      carregar: () =>
+        import("../modulos/automacao/automacao.tsx").then((m) =>
+          m.criarAutomacao({ toast: avisar, getProfile: perfilDoApp }),
+        ),
+    },
   });
 }
 
@@ -246,29 +312,53 @@ function abrirNaTela(
   if (visao || edital) navegacao.esquecerEditalEVisao();
 }
 
-function usarAberturaDaTela(view: string, controlador: ControladorDeTela) {
+/*
+  Uma tela abre com a `abertura` da navegação estando à vista; uma seção de
+  Configurações (`secao`), com a `aberturaDaSecao` estando ela aberta.
+*/
+function aberturaAtendivel(
+  estado: EstadoDaNavegacao,
+  view: string,
+  secao: string | undefined,
+): number {
+  if (estado.aviso) return 0;
+  if (secao)
+    return estado.view === "config" && estado.secao === secao
+      ? estado.aberturaDaSecao
+      : 0;
+  return estado.view === view ? estado.abertura : 0;
+}
+
+function usarAberturaDaTela(
+  view: string,
+  controlador: ControladorDeTela,
+  secao?: string,
+) {
   const navegacao = usarNavegacao();
   const avisarFalha = usarAviso();
   const estado = usarEstadoDaNavegacao();
   // A última abertura atendida: o StrictMode e as releituras não repetem o render().
   const atendida = useRef(0);
   useEffect(() => {
-    if (estado.view !== view || estado.aviso || !estado.abertura) return;
-    if (estado.abertura === atendida.current) return;
-    atendida.current = estado.abertura;
+    const abertura = aberturaAtendivel(estado, view, secao);
+    if (!abertura || abertura === atendida.current) return;
+    atendida.current = abertura;
     abrirNaTela(controlador, estado, navegacao, avisarFalha);
-  }, [estado, view, controlador, navegacao, avisarFalha]);
+  }, [estado, view, secao, controlador, navegacao, avisarFalha]);
 }
 
 /** A tela pronta: abre a cada abertura e desenha no próprio ErrorBoundary. */
 function TelaAberta({
   view,
   controlador,
+  secao,
 }: {
   view: string;
   controlador: ControladorDeTela;
+  /** A seção de Configurações que esta tela é (abre com a seção). */
+  secao?: string | undefined;
 }) {
-  usarAberturaDaTela(view, controlador);
+  usarAberturaDaTela(view, controlador, secao);
   return (
     <ErrorBoundary nome={controlador.nome}>
       {controlador.conteudo}
@@ -281,13 +371,15 @@ function TelaAberta({
 const preguicosas = new Map<string, LazyExoticComponent<ComponentType>>();
 
 /* O `lazy` da tela: um por tentativa (o React guarda a falha do anterior). */
-function telaPreguicosa(view: ViewDeTela) {
+function telaPreguicosa(view: ViewDeTela, secao?: string) {
   let tela = preguicosas.get(view);
   if (!tela) {
     tela = lazy(() =>
       carregarTela(view).then((controlador: ControladorDeTela) => ({
         default: function TelaCarregada() {
-          return <TelaAberta view={view} controlador={controlador} />;
+          return (
+            <TelaAberta view={view} controlador={controlador} secao={secao} />
+          );
         },
       })),
     );
@@ -304,9 +396,15 @@ function Carregando() {
   );
 }
 
-function TelaSobDemanda({ view }: { view: ViewDeTela }) {
+function TelaSobDemanda({
+  view,
+  secao,
+}: {
+  view: ViewDeTela;
+  secao?: string | undefined;
+}) {
   const [tentativa, definirTentativa] = useState(0);
-  const Tela = telaPreguicosa(view);
+  const Tela = telaPreguicosa(view, secao);
   return (
     <ErrorBoundary
       key={tentativa}
@@ -324,14 +422,21 @@ function TelaSobDemanda({ view }: { view: ViewDeTela }) {
   );
 }
 
-function ConteudoDaTela({ view }: { view: ViewDeTela }) {
+function ConteudoDaTela({
+  view,
+  secao,
+}: {
+  view: ViewDeTela;
+  /** A seção de Configurações que esta tela é (abre com a seção). */
+  secao?: string | undefined;
+}) {
   if (telaNaHora(view)) {
     const controlador = telaPronta(view);
     return controlador ? (
-      <TelaAberta view={view} controlador={controlador} />
+      <TelaAberta view={view} controlador={controlador} secao={secao} />
     ) : null;
   }
-  return <TelaSobDemanda view={view} />;
+  return <TelaSobDemanda view={view} secao={secao} />;
 }
 
 // ── As áreas das telas ────────────────────────────────────────────────────
@@ -427,33 +532,105 @@ const ConteudoDoQuadro = memo(function ConteudoDoQuadro() {
 });
 
 /*
-  Configurações: a moldura React (`#configuracoesApp`, src/modulos/configuracoes/)
-  e os blocos das seções que montam sob demanda — `secoes.ts` os move para a
-  seção certa (Acessos, Módulos e abas, Status das atualizações, Automação).
+  Configurações (/administracao/configuracoes/<seção>): um
+  `<article class="config-secao">` por seção, só o da seção aberta à vista
+  (a navegação diz qual). A moldura (`#configuracoesApp`: cabeçalho, barra de
+  salvar, diálogos e as seções que publicam pela barra, por portal no corpo
+  de cada uma) baixa na primeira abertura da página; Acessos, Módulos e abas,
+  Status das atualizações e Automação são telas próprias, cada uma no seu
+  bloco (`#acessosApp`…), baixadas na primeira abertura da seção. As
+  visitadas continuam montadas (o rascunho de Acessos fica).
 */
+const BLOCO_DA_SECAO: Readonly<Record<SecaoComTela, [string, string]>> =
+  Object.freeze({
+    acessos: ["acessosApp", "data-acessos"],
+    modulos: ["modulosApp", "data-modulos"],
+    cargas: ["saudeDasCargasApp", "data-saude-das-cargas"],
+    automacao: ["automacaoApp", "data-automacao"],
+  });
+
 function PaginaDeConfiguracoes({ ativa }: { ativa: boolean }) {
+  const { secao } = usarEstadoDaNavegacao();
+  const aberta = secao || SECOES[0]!.id;
+  const [pagina, definirPagina] = useState<HTMLElement | null>(null);
+  const [corpos, definirCorpos] = useState<
+    Partial<Record<string, Element | null>>
+  >({});
+  // Um callback de ref estável por seção: guarda o corpo (alvo dos portais da moldura).
+  const guardarCorpo = useMemo(
+    () =>
+      Object.fromEntries(
+        SECOES.map(({ id }) => [
+          id,
+          (corpo: HTMLDivElement | null) =>
+            definirCorpos((atuais) =>
+              atuais[id] === corpo ? atuais : { ...atuais, [id]: corpo },
+            ),
+        ]),
+      ),
+    [],
+  );
+  const [visitadas, definirVisitadas] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  if (ativa && !visitadas.has(aberta))
+    definirVisitadas(new Set(visitadas).add(aberta));
+  const contexto = useMemo(() => ({ pagina, corpos }), [pagina, corpos]);
+
   return (
-    <section id="page-config" className={classeDaPagina(ativa)}>
-      <BlocosDeConfiguracoes />
+    <section
+      id="page-config"
+      ref={definirPagina}
+      className={classeDaPagina(ativa)}
+      data-subgrupo={aberta}
+    >
+      <div id="configuracoesApp" data-configuracoes="">
+        {visitadas.size ? (
+          <ContextoDaPaginaDeConfiguracoes.Provider value={contexto}>
+            <ConteudoDaTela view="config" />
+          </ContextoDaPaginaDeConfiguracoes.Provider>
+        ) : null}
+      </div>
+      <div className="config-layout">
+        <div className="config-painel">
+          {SECOES.map(({ id, rotulo }) => (
+            <article
+              key={id}
+              className="config-secao"
+              data-secao={id}
+              aria-label={rotulo}
+              hidden={id !== aberta}
+            >
+              <div
+                className="config-secao__corpo form-grid"
+                ref={guardarCorpo[id]}
+              >
+                {ehSecaoComTela(id) ? (
+                  <BlocoDaSecao secao={id} visitada={visitadas.has(id)} />
+                ) : null}
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
 
-/* Sem props: `secoes.ts` muda os blocos de lugar, e o React não mexe mais neles. */
-const BlocosDeConfiguracoes = memo(function BlocosDeConfiguracoes() {
+/* O bloco de uma seção com tela própria; a tela baixa na primeira abertura. */
+function BlocoDaSecao({
+  secao,
+  visitada,
+}: {
+  secao: SecaoComTela;
+  visitada: boolean;
+}) {
+  const [id, atributo] = BLOCO_DA_SECAO[secao];
   return (
-    <>
-      <div id="configuracoesApp" data-configuracoes=""></div>
-      <div className="admin-grid">
-        <div id="acessosApp" className="full" data-acessos=""></div>
-        <div id="modulosApp" className="full" data-modulos=""></div>
-        <div
-          id="saudeDasCargasApp"
-          className="full"
-          data-saude-das-cargas=""
-        ></div>
-        <div id="automacaoApp" className="full" data-automacao=""></div>
-      </div>
-    </>
+    <div id={id} className="full" {...{ [atributo]: "" }}>
+      {visitada ? (
+        <ConteudoDaTela view={viewDaSecao(secao)} secao={secao} />
+      ) : null}
+    </div>
   );
-});
+}

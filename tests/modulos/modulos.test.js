@@ -1,6 +1,7 @@
 import { act } from "react";
+import { montarTela } from "../montar-tela.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { montarModulos } from "../../src/modulos/modulos/modulos.tsx";
+import { criarModulos } from "../../src/modulos/modulos/modulos.tsx";
 import { clicar, digitar, esperar } from "../componentes/interacoes.js";
 
 /*
@@ -106,8 +107,8 @@ async function montar({
   const supabase = supabaseFalso({ recusa });
   const toast = vi.fn();
   await act(async () => {
-    controlador = montarModulos({
-      raizDaTela: document.getElementById("modulosApp"),
+    controlador = montarTela(criarModulos, "", {
+      secao: document.getElementById("modulosApp"),
       supabase,
       toast,
       getProfile: () => perfil,

@@ -41,6 +41,8 @@ export interface PecasDoApp {
   appAberto: Assinavel<boolean>;
   /** Há usuário conectado (a busca global só abre assim). */
   estaConectado: () => boolean;
+  /** Relê os painéis externos do menu (Módulos e abas salvou). */
+  recarregarPaineisExternos?: () => unknown;
 }
 
 export interface ContextoDoApp {

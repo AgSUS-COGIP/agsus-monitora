@@ -1,6 +1,7 @@
 import { act } from "react";
+import { montarTela } from "../montar-tela.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { montarAutomacao } from "../../src/modulos/automacao/automacao.tsx";
+import { criarAutomacao } from "../../src/modulos/automacao/automacao.tsx";
 import { clicar, digitar, esperar } from "../componentes/interacoes.js";
 
 /*
@@ -91,8 +92,8 @@ async function montar({ perfil = ADMIN, rpc } = {}) {
   };
   const toast = vi.fn();
   await act(async () => {
-    controlador = montarAutomacao({
-      raizDaTela: raiz,
+    controlador = montarTela(criarAutomacao, "", {
+      secao: raiz,
       supabase,
       getProfile: () => perfil,
       toast,

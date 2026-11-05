@@ -7,10 +7,7 @@ import {
 import type { PessoaOnline } from "../lib/online-presence";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.ts";
-import {
-  SECOES,
-  secaoAtualDeConfiguracao,
-} from "../modulos/configuracoes/secoes.ts";
+import { SECOES } from "../modulos/configuracoes/secoes.ts";
 
 /*
   Presença e acesso, sem React. Uma chamada por batida, sempre a mesma:
@@ -78,8 +75,7 @@ const HEARTBEAT_PADRAO_MINUTOS = 5;
 type NivelDoBanco = "batida" | "navegacao" | "antiga";
 
 /* Onde a pessoa está agora, em texto para quem lê (página · área, ou a seção de Configurações). */
-function localPadrao(view: string, documento: Document) {
-  const secao = secaoAtualDeConfiguracao(documento);
+function localPadrao(view: string, secao: string | undefined) {
   return (
     ondeEstaNoMonitora({
       view,
@@ -168,7 +164,7 @@ export type DependenciasDaPresenca = {
     versao(): string;
   };
   navegacao?: {
-    obter(): { view: string };
+    obter(): { view: string; secao?: string };
     assinar(
       ouvinte: (evento: EventoDaNavegacaoNaPresenca) => void,
     ): () => unknown;
@@ -191,7 +187,7 @@ export function criarPresenca({
     versao: () => "",
   },
   navegacao = { obter: () => ({ view: "" }), assinar: () => () => {} },
-  local = (view: string) => localPadrao(view, documento),
+  local = (view: string) => localPadrao(view, navegacao.obter().secao),
   agora = () => Date.now(),
   aoRegistrar = () => {},
 }: DependenciasDaPresenca = {}) {

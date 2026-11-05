@@ -4,7 +4,6 @@ import {
   useSyncExternalStore,
   type FormEvent,
 } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { isAdminGlobal } from "../../lib/access-roles.ts";
 import {
   MOTIVO_MAXIMO,
@@ -310,28 +309,23 @@ export function Automacao({ estado }: { estado: EstadoDaAutomacao }) {
 }
 
 /**
- * Monta a seção no `#automacaoApp` e devolve o controlador que
- * src/modulos/configuracoes/secoes.ts chama ao abrir a seção.
+ * A seção Automação de Configurações (rota
+ * `/administracao/configuracoes/automacao`): o estado e o conteúdo.
  */
-export function montarAutomacao({
-  raizDaTela = document.getElementById("automacaoApp"),
+export function criarAutomacao({
   supabase = getSupabaseClient() as ClienteDaAutomacao | null,
   getProfile,
   toast,
-}: DependenciasDaAutomacao & { raizDaTela?: HTMLElement | null } = {}) {
+}: DependenciasDaAutomacao = {}) {
   const estado = criarEstadoDaAutomacao({
     supabase,
     ...(getProfile ? { getProfile } : {}),
     ...(toast ? { toast } : {}),
   });
-  const raiz = raizDaTela
-    ? montarModulo(raizDaTela, <Automacao estado={estado} />, {
-        nome: "Automação",
-      }).raiz
-    : null;
   return {
     estado,
-    raiz,
+    nome: "Automação",
+    conteudo: <Automacao estado={estado} />,
     /* Ao abrir a seção: relê (a última execução muda a cada poucos minutos). */
     render: () => estado.carregar(),
     temAlteracoesPendentes: () => false,

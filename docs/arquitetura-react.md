@@ -24,8 +24,9 @@ src/
    React, com `obter()` e `assinar(ouvinte)`, lido com `useSyncExternalStore`), RPC pelo cliente
    Supabase único (`getSupabaseClient()`, contrato em `src/lib/rpc-contrato.js`), regras em
    `src/lib/`. Sem biblioteca nova de estado ou de dados.
-3. **Isolamento.** Cada módulo monta dentro de um `ErrorBoundary` (via `montarModulo`): erro numa
-   tela mostra um aviso curto com "Tentar de novo" e não derruba o resto.
+3. **Isolamento.** Cada tela, seção e parte da casca fica dentro de um `ErrorBoundary` (a rota em
+   `src/app/telas.tsx`, as peças em `src/app/casca/pecas.tsx`): erro numa tela mostra um aviso curto
+   com "Tentar de novo" e não derruba o resto. Há um `createRoot` só (`src/app/raiz.tsx`).
 4. **Texto.** Sem texto genérico ou explicativo na interface (quem explica é a Aya); sem selo
    "Somente consulta" (quem só lê não vê os controles de edição); a data da última carga
    aparece discreta e uma vez só (`.status-discreto`, no `TopoDoPainel`).
@@ -51,7 +52,7 @@ gera conflito com quem está trabalhando em paralelo.
 
 | Hoje                                                                                                             | Alvo                                                      | Quando     |
 | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------- |
-| `src/app/` (`raiz.tsx`, `telas.tsx`, `navegacao.ts`, `ErrorBoundary.tsx`)                                       | fica (`montar-modulo.tsx` sai no passo 3 da raiz única)   | —          |
+| `src/app/` (`raiz.tsx`, `telas.tsx`, `navegacao.ts`, `ErrorBoundary.tsx`)                                        | fica (`montar-modulo.tsx` sai no passo 3 da raiz única)   | —          |
 | `src/ui/` (design system)                                                                                        | fica                                                      | —          |
 | `src/componentes/icone.tsx`, `multi-select-busca.tsx`                                                            | `src/ui/`                                                 | ao tocar   |
 | Configurações (moldura, seções e `secoes.ts`), Acessos, Módulos e abas                                           | `src/modulos/configuracoes/`, `acessos/`, `modulos/`      | concluído  |
@@ -72,7 +73,7 @@ só recebe código antigo numa mudança em bloco combinada antes (ver `src/legad
 
 ```
 src/modulos/<nome>/
-  <nome>.jsx      componente da tela + montar<Nome>(), que chama montarModulo
+  <nome>.tsx      componente da tela + criar<Nome>() ({ conteudo, nome, render() }), rota em src/app/telas.tsx
   estado.js       store sem React: obter(), assinar(ouvinte) e as ações (RPC)
   consultas.js    (opcional) as RPCs do módulo, se o estado.js ficar grande
   <nome>.css      (opcional) só o que é desta tela; o resto vem de src/ui/
@@ -121,12 +122,14 @@ precisa de outra tela usa o registro (`carregarTela(view)`, `src/app/registro-da
 `window`. O título e a área ficam no cabeçalho (vêm da navegação); a tela não repete. A área vem de
 `usarAreaAtual()`/`obterDadosDoMonitoramento()`, o tema de `usarTemaEscuro()` (`src/app/tema.ts`).
 
-**Seção de Configurações** (modelos: `src/modulos/acessos/` e `src/modulos/modulos/`; passo 3 do
-plano): ainda monta no bloco do `index.html` (`#acessosApp`, `#modulosApp`) que
-`src/modulos/configuracoes/secoes.ts` move para a seção, com `montarModulo` e o controlador em
-`window` (`acessosController`: `render()` e `confirmarSaida()`). As seções que publicam pela barra
-fixa (Marca… Operação) entram por portal no corpo da seção, pela moldura
-`src/modulos/configuracoes/configuracoes.tsx`.
+**Seção de Configurações** (modelos: `src/modulos/acessos/` e `src/modulos/modulos/`): é rota
+(`/administracao/configuracoes/<seção>`). A de tela própria tem `criar<Nome>()` (`{ conteudo, nome,
+render(), confirmarSaida() }`), registrada como `secao:<id>` em `src/app/telas.tsx`; a página de
+Configurações a desenha no bloco dela (`#acessosApp`…) dentro do `<article>` da seção e chama
+`render()` a cada abertura da seção (`aberturaDaSecao` da navegação). Sair com rascunho pergunta
+(`confirmarSaida`, pelo registro). As seções que publicam pela barra fixa (Marca… Operação) entram
+por portal no corpo da seção, pela moldura `src/modulos/configuracoes/configuracoes.tsx` (rota
+`config`).
 
 ## Telas sob demanda (fora do pacote principal)
 
@@ -136,9 +139,9 @@ telas de página inteira baixam na primeira abertura: `carregar: () => import("�
 publicada com a página aberta recarrega uma vez). Enquanto baixa, a seção mostra "Carregando…"; se
 falhar, o aviso com "Tentar de novo" refaz o `lazy`. O item do menu pré-carrega no mouse/foco
 (`src/lib/carga-de-telas.ts` → `preCarregarTelaRegistrada`) e o tour da Aya espera a carga
-(`haTelaCarregando`). As seções Acessos, Módulos e abas, Status das atualizações e Automação ainda
-usam `telaSobDemanda` (`src/app/tela-sob-demanda.ts`) até o passo 3. A base de verbetes da Aya baixa
-ao abrir o painel.
+(`haTelaCarregando`). A moldura de Configurações e as seções Acessos, Módulos e abas, Status das
+atualizações e Automação baixam do mesmo jeito (`config` e `secao:<id>` no registro). A base de
+verbetes da Aya baixa ao abrir o painel.
 
 ## Como usar `ui/`
 

@@ -1,5 +1,5 @@
 /*
-  Quantas telas carregadas sob demanda (src/app/tela-sob-demanda.ts) ainda
+  Quantas telas carregadas sob demanda (src/app/registro-das-telas.ts) ainda
   estão baixando. O tour da Aya consulta para esperar a tela pedida aparecer
   antes de desistir do passo. Sem DOM e sem React.
 */

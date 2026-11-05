@@ -322,21 +322,3 @@ export interface SecaoDeConfiguracao {
   grupo: "aparencia" | "pessoas" | "sistema";
   descricao: string;
 }
-
-/** `detail` do evento EVENTO_SECAO_ABERTA. */
-export interface DetalheDaSecaoAberta {
-  secao: string;
-}
-
-/** O controlador de uma ilha React com bloco próprio (Acessos, Módulos...). */
-export interface ControladorDeSecao {
-  confirmarSaida(): boolean;
-  render(): unknown;
-}
-
-/** O nome, em `window`, do controlador de cada ilha. */
-export type NomeDoControladorDeSecao =
-  | "acessosController"
-  | "modulosController"
-  | "saudeDasCargasController"
-  | "automacaoController";

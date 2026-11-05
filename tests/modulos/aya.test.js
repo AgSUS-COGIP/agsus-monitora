@@ -223,11 +223,10 @@ describe("conversa", () => {
   });
 
   it("em Configurações manda a seção aberta", async () => {
-    document.body.insertAdjacentHTML(
-      "beforeend",
-      '<section id="page-config" data-subgrupo="modulos"></section>',
+    // A navegação diz a seção aberta (src/app/navegacao.ts → definirPaginaDaAya).
+    await act(async () =>
+      definirPaginaDaAya("config", "Configurações", "modulos"),
     );
-    await act(async () => definirPaginaDaAya("config", "Configurações"));
     await montar();
     await abrirPainel();
     expect(textoDe(".aya-painel__pagina")).toBe(
@@ -238,7 +237,6 @@ describe("conversa", () => {
       section: "config",
       secao: "modulos",
     });
-    document.getElementById("page-config").remove();
   });
 
   it("pensando: o campo fica só leitura, com o foco, e não envia de novo", async () => {

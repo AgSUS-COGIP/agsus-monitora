@@ -155,10 +155,14 @@ visao, edital, secao, aviso, titulo, subtitulo, abertura }`; `assinar()` avisa a
    `React.lazy` quando a sessão abre o app. A arara dos fogos e a cobertura do painel externo,
    que moram em DOM feito à mão, entram por **portais avulsos** da raiz
    (`src/app/portais-avulsos.tsx`) até os fogos e o quadro dos painéis serem React.
-3. **Configurações como rota de verdade**: a moldura e as seções (Acessos, Módulos e abas,
-   Status, Automação) viram rotas filhas (`/administracao/configuracoes/:secao`), sem
-   `organizarConfiguracoesEmSecoes` mover blocos pelo DOM; sai `tela-sob-demanda.ts` e
-   `montarModulo`.
+3. **Configurações como rota de verdade** (feito): a página (`src/app/telas.tsx`) desenha um
+   `<article class="config-secao">` por seção, à vista só o da seção do endereço
+   (`/administracao/configuracoes/:secao`); a moldura (`config`) e as seções com tela própria
+   (`secao:acessos`, `secao:modulos`, `secao:cargas`, `secao:automacao`) são telas do registro, com
+   `React.lazy`. A navegação guarda as seções permitidas e a última aberta, conta
+   `aberturaDaSecao` (o `render()` da seção) e pergunta à seção antes de trocar. Saem
+   `organizarConfiguracoesEmSecoes`, o evento `agsus:secao-de-configuracao-aberta`, os
+   `window.<seção>Controller`, `tela-sob-demanda.ts` e `montar-modulo.tsx`.
 4. **Regras do edital no endereço** (`/:area/editais/:edital/regras/:etapa`), depois que a parte 2
    das Regras do edital (que hoje marca o histórico com `pushState` sem mudar o endereço) entrar.
 5. **Avisos no lugar da página** (manutenção, desligada, sem acesso) em React, saindo de

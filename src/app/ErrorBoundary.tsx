@@ -2,13 +2,14 @@ import { Component, Fragment } from "react";
 import type { ErrorInfo, ReactNode } from "react";
 
 /*
-  Isola um módulo (uma tela, uma ilha React): erro de render num filho mostra
+  Isola um módulo (uma tela, uma parte da casca): erro de render num filho mostra
   um aviso curto no lugar dele, sem derrubar o resto da página. "Tentar de
   novo" remonta os filhos do zero (a `key` muda), e o erro vai para o console.
 
   Não pega erro de evento nem de promessa — esses continuam com quem os trata
-  (toast, aviso do estado). Cada tela do app tem o seu (src/app/telas.tsx); as
-  ilhas que ainda montam sozinhas, pelo `montarModulo` (montar-modulo.tsx).
+  (toast, aviso do estado). Cada tela do app tem o seu (src/app/telas.tsx), e
+  cada parte da casca e cada portal avulso também (src/app/casca/pecas.tsx,
+  src/app/portais-avulsos.tsx).
 
   `mensagem` troca o texto do aviso e `aoTentarDeNovo` roda antes de remontar
   (a tela sob demanda que não baixou refaz o `lazy`: src/app/telas.tsx).

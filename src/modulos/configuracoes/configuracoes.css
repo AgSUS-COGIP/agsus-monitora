@@ -2,7 +2,7 @@
   Configurações (src/modulos/configuracoes/), só com tokens de
   src/styles/tokens.css — o tema escuro vem dos próprios tokens.
 
-    Moldura        seções de secoes.ts, cabeçalho da seção aberta, barra fixa
+    Moldura        as seções (uma por rota), cabeçalho da seção aberta, barra fixa
     Seções         grupos, prévias, imagens e galerias, contraste, painéis
     Publicação     diálogos de revisar e restaurar, histórico (Operação)
 
@@ -11,15 +11,7 @@
   avisos são os de src/ui/ (Campo, Aviso, Selo, ErroAoCarregar).
 */
 
-/* ── Moldura: a grade antiga e as seções ─────────────────────────────── */
-
-/* Só até secoes.ts distribuir os blocos; depois a grade fica escondida. */
-.admin-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--space-4);
-  align-items: start;
-}
+/* ── Moldura: as seções ──────────────────────────────────────────────── */
 
 /* Espaço no pé da página para a barra fixa de salvar não cobrir o fim. */
 .config-layout {
@@ -1184,7 +1176,6 @@ body:not(.sidebar-collapsed) .config-barra {
 /* ── Telas menores ────────────────────────────────────────────────────── */
 
 @media (max-width: 1220px) {
-  .admin-grid,
   .config-secao-react--com-previa {
     grid-template-columns: minmax(0, 1fr);
   }

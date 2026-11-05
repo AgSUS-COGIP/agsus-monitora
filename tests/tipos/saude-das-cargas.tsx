@@ -1,6 +1,6 @@
 import {
   SaudeDasCargas,
-  montarSaudeDasCargas,
+  criarSaudeDasCargas,
 } from "../../src/componentes/saude-das-cargas/saude-das-cargas.tsx";
 import { criarEstadoDaSaude } from "../../src/componentes/saude-das-cargas/estado.ts";
 import {
@@ -37,7 +37,7 @@ void estado.buscarVagas({ editais: ["ed1"], vagas: ["123"] });
 visaoSimples(normalizarSaude({})).linhas.map((linha) => linha.situacao);
 normalizarPainel({}).editais.map((edital) => edital.numero);
 normalizarVagas([]).map((vaga) => vaga.ultimaCarga?.getTime());
-void montarSaudeDasCargas({ raizDaTela: null, supabase: null });
+void criarSaudeDasCargas({ supabase: null }).conteudo;
 
 // @ts-expect-error A busca recebe listas de identificadores textuais.
 void estado.buscarVagas({ editais: [1] });

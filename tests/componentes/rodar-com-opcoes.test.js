@@ -1,4 +1,5 @@
 import { act } from "react";
+import { montarTela } from "../montar-tela.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { clicar, digitar, esperar } from "./interacoes.js";
 
@@ -10,7 +11,7 @@ import { clicar, digitar, esperar } from "./interacoes.js";
   "Detalhes". Supabase falso; nada roda de verdade.
 */
 
-const { montarSaudeDasCargas } =
+const { criarSaudeDasCargas } =
   await import("../../src/componentes/saude-das-cargas/saude-das-cargas.tsx");
 
 const AGORA = new Date("2026-10-07T12:00:00Z");
@@ -174,8 +175,8 @@ async function montar() {
   const supabase = supabaseFalso();
   const agendar = vi.fn();
   await act(async () => {
-    controlador = montarSaudeDasCargas({
-      raizDaTela: raiz,
+    controlador = montarTela(criarSaudeDasCargas, "", {
+      secao: raiz,
       supabase,
       getProfile: () => ({ id: "u", ativo: true, admin_global: true }),
       agora: () => AGORA,
@@ -457,8 +458,8 @@ describe("Rodar com opções", () => {
       ),
     };
     await act(async () => {
-      controlador = montarSaudeDasCargas({
-        raizDaTela: raiz,
+      controlador = montarTela(criarSaudeDasCargas, "", {
+        secao: raiz,
         supabase,
         getProfile: () => ({ id: "u", ativo: true, admin_global: true }),
         agora: () => AGORA,

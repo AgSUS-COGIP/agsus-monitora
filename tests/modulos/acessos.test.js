@@ -1,6 +1,7 @@
 import { act } from "react";
+import { montarTela } from "../montar-tela.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { montarAcessos } from "../../src/modulos/acessos/acessos.tsx";
+import { criarAcessos } from "../../src/modulos/acessos/acessos.tsx";
 import {
   clicar,
   digitar,
@@ -188,8 +189,8 @@ async function montar({ perfil, teto, confirmar = () => true, extra = {} }) {
   document.body.innerHTML = '<div id="acessosApp" data-acessos></div>';
   const supabase = supabaseFalso(teto, extra);
   await act(async () => {
-    controlador = montarAcessos({
-      raizDaTela: document.getElementById("acessosApp"),
+    controlador = montarTela(criarAcessos, "", {
+      secao: document.getElementById("acessosApp"),
       supabase,
       toast: vi.fn(),
       getProfile: () => perfil,
@@ -478,8 +479,8 @@ describe("Configurações › Acessos", () => {
       ),
     );
     await act(async () => {
-      controlador = montarAcessos({
-        raizDaTela: document.getElementById("acessosApp"),
+      controlador = montarTela(criarAcessos, "", {
+        secao: document.getElementById("acessosApp"),
         supabase,
         toast: vi.fn(),
         getProfile: () => ADMIN,

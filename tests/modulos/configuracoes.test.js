@@ -1,12 +1,11 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.tsx";
+import {
+  abrirSecaoNoTeste,
+  montarConfiguracoesNoTeste,
+} from "./configuracoes-no-teste.js";
 import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.ts";
 import { normalizarValoresCarregados } from "../../src/lib/publicacao-de-configuracoes.ts";
-import {
-  abrirSecaoDeConfiguracao,
-  organizarConfiguracoesEmSecoes,
-} from "../../src/modulos/configuracoes/secoes.ts";
 import { clicar, digitar, esperar, teclar } from "../componentes/interacoes.js";
 
 /*
@@ -54,20 +53,10 @@ let alertar;
 let recarregar;
 
 async function montar({ secao = "marca", confirmar = () => true } = {}) {
+  /* Campos de fora das seções da moldura (outra tela, o legado): não marcam a página. */
   document.body.innerHTML = `
-    <section id="page-config" class="page active">
-      <div id="configuracoesApp" data-configuracoes></div>
-      <div class="admin-grid">
-        <div id="acessosApp" class="full" data-acessos>
-          <input id="buscaDeAcessos" type="search" />
-        </div>
-        <div class="admin-card card config-main-card"><div class="form-grid">
-          <div class="form-row"><label>Outro</label><input id="campoSolto" /></div>
-        </div></div>
-      </div>
-    </section>`;
-  organizarConfiguracoesEmSecoes(document);
-  abrirSecaoDeConfiguracao(document, secao);
+    <input id="buscaDeAcessos" type="search" />
+    <div class="form-row"><label>Outro</label><input id="campoSolto" /></div>`;
   alertar = vi.fn();
   recarregar = vi.fn();
   const estado = criarEstadoDasConfiguracoes({
@@ -77,7 +66,7 @@ async function montar({ secao = "marca", confirmar = () => true } = {}) {
     recarregar,
   });
   await act(async () => {
-    controlador = montarConfiguracoes({ estado });
+    controlador = montarConfiguracoesNoTeste({ estado, secao });
   });
   await act(async () => estado.definirValoresCarregados(PUBLICADO));
   await esperar();
@@ -134,7 +123,7 @@ describe("cabeçalho da seção", () => {
 
   it("acompanha a troca de seção", async () => {
     await montar();
-    await act(async () => abrirSecaoDeConfiguracao(document, "operacao"));
+    await act(async () => abrirSecaoNoTeste("operacao"));
     expect(document.querySelector(".config-cabecalho h2").textContent).toBe(
       "Operação",
     );
@@ -364,10 +353,9 @@ describe("falha de rede", () => {
 });
 
 describe("histórico de configurações", () => {
-  it("fica na seção Operação, fora da grade antiga escondida", async () => {
+  it("fica na seção Operação", async () => {
     await montar({ secao: "operacao" });
     const cartao = $("configHistoryCard");
     expect(cartao.closest('.config-secao[data-secao="operacao"]')).toBeTruthy();
-    expect(cartao.closest(".admin-grid")).toBeNull();
   });
 });
