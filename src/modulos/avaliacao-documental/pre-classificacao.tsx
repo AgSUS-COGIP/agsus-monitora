@@ -1188,19 +1188,14 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
           tom="sucesso"
           icone="fa-user-check"
           rotulo="Lote (aptos para análise)"
-          valor={
-            cont.noLotePorDecisao
-              ? textoDoLote(
-                  cont.noLotePelaRegra,
-                  cont.noLotePorDecisao,
-                  cont.tamanho,
-                ).replace(/^Lote: /, "")
-              : cont.tamanho === null
-                ? formatNumberBR(cont.noLote)
-                : `${formatNumberBR(cont.noLote)} de ${formatNumberBR(cont.tamanho)}`
-          }
+          // O número grande é o lote inteiro; a composição vai na linha de baixo.
+          valor={formatNumberBR(cont.noLote)}
           detalhe={
-            cont.noLotePorDecisao ? "" : parte(cont.noLote, cont.tamanho)
+            cont.noLotePorDecisao
+              ? `${formatNumberBR(cont.noLotePelaRegra)} pela regra · ${formatNumberBR(cont.noLotePorDecisao)} por decisão`
+              : cont.tamanho === null
+                ? ""
+                : `de ${formatNumberBR(cont.tamanho)} · ${parte(cont.noLote, cont.tamanho)}`
           }
           titulo="Ver o lote de cada vaga"
           ativo={aba === "vagas"}

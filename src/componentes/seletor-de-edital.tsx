@@ -43,7 +43,8 @@ export interface PropriedadesDoSeletorDeEdital<E extends EditalDoSeletor> {
   rotulo?: string;
   className?: string;
   tour?: string;
-  tourDosTodos?: string;
+  /** Atributos data-* da caixa "Mostrar todos" (data-tour dos roteiros da Aya). */
+  dadosDosTodos?: Record<string, string>;
   /** "Mostrar todos" controlado pela tela (a entrada da Avaliação usa a mesma escolha). */
   todos?: boolean;
   aoMudarTodos?: (todos: boolean) => void;
@@ -63,7 +64,7 @@ export function SeletorDeEdital<E extends EditalDoSeletor>({
   rotulo = "Edital",
   className,
   tour,
-  tourDosTodos,
+  dadosDosTodos,
   todos: todosDaTela,
   aoMudarTodos,
   children,
@@ -110,7 +111,7 @@ export function SeletorDeEdital<E extends EditalDoSeletor>({
       </Campo>
       <SeloDeTreinamento edital={editalEscolhido(editais, escolhido)} />
       {soVigentes && (ocultos || todos) ? (
-        <label className="ui-seletor-todos" data-tour={tourDosTodos}>
+        <label className="ui-seletor-todos" {...dadosDosTodos}>
           <input
             type="checkbox"
             checked={todos}

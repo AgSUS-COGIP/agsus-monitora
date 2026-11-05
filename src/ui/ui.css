@@ -1425,21 +1425,28 @@ th[aria-sort="descending"] .ui-ordenar i {
   font-size: var(--text-body-sm);
 }
 
-/* KPI: o complemento do número (%, "de N", meta), menor e em cinza, ao lado dele. */
+/*
+  KPI: o complemento do número (%, "de N", meta), numa linha pequena e cinza
+  embaixo dele: o número fica sozinho e grande, como nos outros cards, e o
+  card não quebra em três linhas no celular.
+*/
 .ui-kpi-linha {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 var(--space-1-5);
+  display: grid;
+  gap: 0;
+  min-width: 0;
   margin-top: auto;
 }
 .ui-kpi-linha > .ui-kpi-valor {
   margin-top: 0;
 }
 .ui-kpi-detalhe {
+  overflow: hidden;
   color: var(--text-secondary);
-  font-size: var(--text-body-sm);
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
+  line-height: var(--leading-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* BarraDeFiltros: a busca em destaque, os filtros em linha e o rodapé com o resultado. */

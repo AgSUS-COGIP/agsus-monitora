@@ -197,7 +197,7 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
             <SeletorDeEdital
               className="avd-edital"
               tour="avd-seletor-edital"
-              tourDosTodos="avd-todos-editais"
+              dadosDosTodos={{ "data-tour": "avd-todos-editais" }}
               editais={e.editais}
               escolhido={e.editalId}
               carregado={e.carregado}

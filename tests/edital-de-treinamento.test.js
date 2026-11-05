@@ -150,12 +150,19 @@ describe("telas operacionais: aparece, com a marca", () => {
   });
 
   it("as três telas mostram o selo no seletor e no topo", () => {
+    // O seletor compartilhado das telas da seleção (Triagem, Avaliação
+    // documental, Classificação) leva o selo e o sufixo de cada opção.
+    const seletor = "src/componentes/seletor-de-edital.tsx";
+    expect(ler(seletor), seletor).toContain("<SeloDeTreinamento");
+    expect(ler(seletor), seletor).toContain("sufixoDeTreinamento(");
     for (const arquivo of [
       "src/modulos/entrevistas/seletor-do-edital.tsx",
       "src/modulos/avaliacao-documental/avaliacao-documental.tsx",
+      "src/modulos/avaliacao-documental/entrada-da-pre-classificacao.tsx",
       "src/modulos/classificacao/classificacao.tsx",
     ]) {
       const fonte = ler(arquivo);
+      if (fonte.includes("<SeletorDeEdital")) continue;
       expect(fonte, arquivo).toContain("<SeloDeTreinamento");
       expect(fonte, arquivo).toContain("sufixoDeTreinamento(");
     }

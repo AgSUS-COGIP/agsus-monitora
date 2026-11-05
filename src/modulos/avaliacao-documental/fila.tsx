@@ -685,7 +685,7 @@ const ROTULOS_DA_LINHA: Record<
   AcaoDaLinhaDaFila,
   { rotulo: string; icone: string }
 > = {
-  distribuir: { rotulo: "Atribuir a…", icone: "fa-user-tag" },
+  distribuir: { rotulo: "Atribuir a…", icone: "fa-users" },
   liberar: { rotulo: "Liberar reserva", icone: "fa-lock-open" },
   revisao: { rotulo: "Mandar para revisão", icone: "fa-rotate-left" },
   copiar: { rotulo: "Copiar código", icone: "fa-copy" },
@@ -1548,7 +1548,7 @@ export function Fila({ e, fila }: FilaProps) {
           <Kpi
             chave="hoje"
             tom="neutro"
-            icone="fa-calendar-day"
+            icone="fa-calendar-days"
             rotulo={meta ? "Hoje (meta do dia)" : "Concluídas hoje"}
             valor={formatNumberBR(meta ? meta.feito : hoje)}
             detalhe={meta ? `de ${formatNumberBR(meta.meta)}` : ""}

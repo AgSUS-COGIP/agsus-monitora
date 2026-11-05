@@ -519,7 +519,12 @@ describe("Triagem (AM-4)", () => {
     const kpis = secao.querySelector(".ui-kpis").textContent;
     expect(kpis).toContain("Inscritos5");
     expect(kpis).toContain("Eliminados1");
-    expect(kpis).toContain("2 de 2");
+    // O lote: o número grande e a composição na linha de baixo.
+    const lote = secao.querySelector("[data-kpi='lote']");
+    expect(lote.querySelector(".ui-kpi-valor").textContent).toBe("2");
+    expect(lote.querySelector(".ui-kpi-detalhe").textContent).toBe(
+      "de 2 · 100%",
+    );
     // ART × recalculada vira indicador na faixa, com o atalho para os casos.
     expect(
       secao.querySelector("[data-acao='ver-divergencias']").textContent,
@@ -896,8 +901,11 @@ describe("inclusão no lote por decisão da coordenação", () => {
       incluir_no_lote_por_decisao: incluir,
     });
     await montar(supabase);
-    expect(secao.querySelector(".ui-kpis").textContent).toContain(
-      "2 de 2 pela regra + 1 por decisão",
+    // Card compacto: o lote inteiro no número, a composição embaixo.
+    const lote = secao.querySelector("[data-kpi='lote']");
+    expect(lote.querySelector(".ui-kpi-valor").textContent).toBe("3");
+    expect(lote.querySelector(".ui-kpi-detalhe").textContent).toBe(
+      "2 pela regra · 1 por decisão",
     );
     const vaga = await abrirVaga("179698");
     expect(vaga.querySelector("[data-lote-da-vaga]").textContent).toContain(
