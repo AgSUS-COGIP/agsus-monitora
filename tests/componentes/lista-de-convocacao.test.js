@@ -404,20 +404,15 @@ describe("aba Lista de convocação do modal de listas", () => {
     expect($("convocacaoSalvar")).toBeNull();
     expect(painel.querySelector("select, input")).toBeNull();
     window.navigate = vi.fn();
-    // Editais no registro das telas (src/app/telas.tsx), como no app.
-    const editais = {
-      nome: "Editais",
-      conteudo: null,
-      render() {},
-      abrirRegrasDoEdital: vi.fn(),
-    };
-    registrarTelas({ nucleo: { criar: () => editais } });
+    // As Regras do edital são rota de Editais (src/app/navegacao.ts).
     try {
       await clicar(
         painel.querySelector("[data-acao='editar-nas-regras-do-edital']"),
       );
-      expect(window.navigate).toHaveBeenCalledWith("nucleo");
-      expect(editais.abrirRegrasDoEdital).toHaveBeenCalledWith("7", "chamada");
+      expect(window.navigate).toHaveBeenCalledWith("nucleo", {
+        edital: "7",
+        regras: "chamada",
+      });
       expect($("approvedImportModal")).toBeNull();
     } finally {
       delete window.navigate;
