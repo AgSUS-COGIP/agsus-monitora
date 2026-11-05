@@ -10,7 +10,6 @@ import type {
   PropsDoRobo,
 } from "./tipos.ts";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { isAdminGlobal } from "../../lib/access-roles.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import {
@@ -474,49 +473,36 @@ export function SaudeDasCargas({
 /*
   A releitura do acompanhamento só sai com a aba visível e a seção aberta
   (Configurações › Status das atualizações, na página ativa): fora dela, a
-  próxima abertura relê de qualquer jeito (`render`).
+  próxima abertura relê de qualquer jeito (`render`). Quem diz se a seção
+  está aberta é a navegação (`naTela`, ligado em src/app/telas.tsx); a aba
+  oculta vale sempre.
 */
-function secaoNaTela(raiz: HTMLElement | null | undefined) {
-  if (globalThis.document?.visibilityState === "hidden") return false;
-  if (!raiz) return true;
-  if (raiz.closest("[hidden]")) return false;
-  const pagina = raiz.closest(".page");
-  return !pagina || pagina.classList.contains("active");
-}
+const abaVisivel = () => globalThis.document?.visibilityState !== "hidden";
 
 /**
- * Monta a seção no `#saudeDasCargasApp` e devolve o controlador que
- * src/modulos/configuracoes/secoes.ts chama ao abrir a seção.
+ * A seção Status das atualizações de Configurações (rota
+ * `/administracao/configuracoes/cargas`): o estado e o conteúdo.
  */
-export function montarSaudeDasCargas({
-  raizDaTela = document.getElementById("saudeDasCargasApp"),
+export function criarSaudeDasCargas({
   supabase = getSupabaseClient(),
   getProfile,
   agora,
   agendar,
-  naTela = () => secaoNaTela(raizDaTela),
+  naTela = () => true,
   aoVoltar,
-}: Partial<DependenciasDaSaude> & { raizDaTela?: HTMLElement | null } = {}) {
+}: Partial<DependenciasDaSaude> = {}) {
   const estado = criarEstadoDaSaude({
     supabase,
     getProfile,
-    naTela,
+    naTela: () => abaVisivel() && naTela(),
     ...(agora ? { agora } : {}),
     ...(agendar ? { agendar } : {}),
     ...(aoVoltar ? { aoVoltar } : {}),
   });
-  const raiz = raizDaTela
-    ? montarModulo(
-        raizDaTela,
-        <SaudeDasCargas estado={estado} supabase={supabase} />,
-        {
-          nome: "Status das atualizações",
-        },
-      ).raiz
-    : null;
   return {
     estado,
-    raiz,
+    nome: "Status das atualizações",
+    conteudo: <SaudeDasCargas estado={estado} supabase={supabase} />,
     /* Ao abrir a seção: relê (o estado das cargas muda a cada poucos minutos). */
     render: () => estado.carregar(),
     temAlteracoesPendentes: () => false,

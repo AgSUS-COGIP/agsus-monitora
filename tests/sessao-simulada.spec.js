@@ -186,6 +186,38 @@ test.describe("sessão simulada", () => {
     expect(erros).toEqual([]);
   });
 
+  test("Configurações é rota: a seção do endereço abre, o F5 a mantém e trocar de seção entra no histórico", async ({
+    page,
+  }) => {
+    const erros = await abrirComSessao(page);
+    await page.goto("/administracao/configuracoes/operacao", {
+      waitUntil: "domcontentloaded",
+    });
+    const secao = (id) => page.locator(`.config-secao[data-secao="${id}"]`);
+    await expect(secao("operacao")).toBeVisible();
+    await expect(secao("marca")).toBeHidden();
+    await expect(page.locator(".config-cabecalho h2")).toHaveText("Operação");
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(/\/administracao\/configuracoes\/operacao$/);
+    await expect(secao("operacao")).toBeVisible();
+
+    // Acessos é tela própria: baixa na primeira abertura, dentro da seção.
+    // (O menu recolhido em trilho esconde o rótulo; o contrato é o mesmo do menu.)
+    await page.evaluate(() => window.navigate("config", { secao: "acessos" }));
+    await expect(page).toHaveURL(/\/administracao\/configuracoes\/acessos$/);
+    await expect(secao("acessos")).toBeVisible();
+    await expect(secao("operacao")).toBeHidden();
+    await expect(secao("acessos").locator("#acessosApp > *")).not.toHaveCount(
+      0,
+    );
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/administracao\/configuracoes\/operacao$/);
+    await expect(secao("operacao")).toBeVisible();
+    expect(erros).toEqual([]);
+  });
+
   test("rota de uma área que o perfil não tem cai na área dele", async ({
     page,
   }) => {

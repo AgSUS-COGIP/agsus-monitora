@@ -1,4 +1,5 @@
 import { act } from "react";
+import { montarTela } from "../montar-tela.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { clicar, esperar } from "./interacoes.js";
 
@@ -9,7 +10,7 @@ import { clicar, esperar } from "./interacoes.js";
   "Rodar agora" (Empregare, Seleção, Entrevistas) pela RPC disparar_robo falsa.
 */
 
-const { montarSaudeDasCargas } =
+const { criarSaudeDasCargas } =
   await import("../../src/componentes/saude-das-cargas/saude-das-cargas.tsx");
 
 const AGORA = new Date("2026-10-01T12:00:00Z");
@@ -61,8 +62,8 @@ async function montar({
   document.body.append(raiz);
   const supabase = supabaseFalso(resposta, rpcs);
   await act(async () => {
-    controlador = montarSaudeDasCargas({
-      raizDaTela: raiz,
+    controlador = montarTela(criarSaudeDasCargas, "", {
+      secao: raiz,
       supabase,
       getProfile: () => perfil,
       agora: () => AGORA,

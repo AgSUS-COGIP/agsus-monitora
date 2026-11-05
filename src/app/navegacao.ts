@@ -56,12 +56,11 @@ import {
   atualizarMenuLateral,
   marcarItemAtivoNoMenu,
 } from "../componentes/barra-lateral/estado.ts";
+import { SECOES } from "../modulos/configuracoes/secoes.ts";
 import {
-  abrirSecaoDeConfiguracao,
-  definirSecoesPermitidas,
-  SECOES,
-  secaoAtualDeConfiguracao,
-} from "../modulos/configuracoes/secoes.ts";
+  confirmarSaidaDaSecao,
+  confirmarSaidaDasSecoes,
+} from "./registro-das-telas.ts";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
 import { definirPaginaDaAya } from "../modulos/aya/estado.ts";
 import { criarEndereco } from "./endereco.ts";
@@ -110,7 +109,9 @@ export type OuvinteDaNavegacao = (evento: EventoDaNavegacao) => void;
 
 /**
  * A tela aberta. `abertura` conta as aberturas (cada uma chama `render()`
- * da tela, como antes); `aviso` diz o que está no lugar da página.
+ * da tela, como antes); `aberturaDaSecao`, as da seção de Configurações
+ * (cada uma chama o `render()` dela); `aviso` diz o que está no lugar da
+ * página.
  */
 export interface EstadoDaNavegacao {
   readonly view: string;
@@ -122,6 +123,7 @@ export interface EstadoDaNavegacao {
   readonly titulo: string;
   readonly subtitulo: string;
   readonly abertura: number;
+  readonly aberturaDaSecao: number;
 }
 
 /** O que o React lê da navegação (src/app/contexto-do-app.ts). */
@@ -132,29 +134,9 @@ export interface LeituraDaNavegacao {
   esquecerEditalEVisao(): void;
 }
 
-/** O que pergunta antes de sair (Acessos, Módulos e abas). */
-interface ControleComSaida {
-  confirmarSaida?(): unknown;
-}
-/** As telas de `window` que guardam alteração não salva. */
-export type JanelaComSaida = {
-  acessosController?: ControleComSaida;
-  modulosController?: ControleComSaida;
-};
-
 /* Sair com alteração não salva (Acessos, Módulos e abas ou campos de Configurações) pergunta antes. */
-export function confirmarSaidaPadrao(
-  janela: object | null | undefined,
-): boolean {
-  return (
-    (
-      janela as JanelaComSaida | null | undefined
-    )?.acessosController?.confirmarSaida?.() !== false &&
-    (
-      janela as JanelaComSaida | null | undefined
-    )?.modulosController?.confirmarSaida?.() !== false &&
-    estadoDasConfiguracoes.confirmarSaida()
-  );
+export function confirmarSaidaPadrao(): boolean {
+  return confirmarSaidaDasSecoes() && estadoDasConfiguracoes.confirmarSaida();
 }
 
 /** Os painéis externos, como a navegação os usa (src/app/paineis-externos.ts). */
@@ -164,8 +146,8 @@ export interface PaineisDoApp extends PaineisDaNavegacao {
   esquecerAtual(): void;
 }
 
-/** A janela: a guarda de saída e a recarga. */
-export type JanelaDaNavegacao = JanelaComSaida & {
+/** A janela: a recarga. */
+export type JanelaDaNavegacao = {
   location: { reload(): void };
 };
 
@@ -218,6 +200,7 @@ export const ESTADO_INICIAL_DA_NAVEGACAO: EstadoDaNavegacao = Object.freeze({
   titulo: "",
   subtitulo: "",
   abertura: 0,
+  aberturaDaSecao: 0,
 });
 
 /* O que fazer com o endereço ao abrir: nova entrada, trocar a atual. */
@@ -241,7 +224,7 @@ export function criarNavegacao({
   configuracao = () => "",
   avisar = () => {},
   ajustarBarra = () => {},
-  confirmarSaida = () => confirmarSaidaPadrao(janela),
+  confirmarSaida = confirmarSaidaPadrao,
   aplicarAtualizacao = aplicarAtualizacaoPendente,
   podeRecarregar = guardaDeAlteracoes.podeRecarregar,
   recarregar = () => janela.location.reload(),
@@ -253,6 +236,12 @@ export function criarNavegacao({
   let arvore: ArvoreDoMenu = [];
   /* Fora do sistema (tela de acesso), o voltar do navegador não troca de tela. */
   let sistemaAberto = false;
+  /*
+    As seções de Configurações que o perfil abre (montarMenu, pelas regras de
+    access-roles.ts) e a última aberta (Configurações volta nela).
+  */
+  let secoesPermitidas: readonly string[] = SECOES.map((secao) => secao.id);
+  let ultimaSecao = "";
   const ouvintes = new Set<OuvinteDaNavegacao>();
 
   const perfil = () => obterPerfil();
@@ -412,7 +401,7 @@ export function criarNavegacao({
     // O nome da aba tem um dono só; aqui entra apenas a metade da página.
     definirPaginaDaAba(titulo);
     // A Aya (src/modulos/aya/) acompanha a página: saudação, sugestões e contexto.
-    definirPaginaDaAya(view(), titulo);
+    definirPaginaDaAya(view(), titulo, estado.secao);
   }
 
   /* As telas das áreas mostram só a área atual; o subtítulo diz qual. */
@@ -433,7 +422,17 @@ export function criarNavegacao({
   }
 
   function marcarMenu(tela: string = view()) {
-    marcarItemAtivoNoMenu(tela, secaoAtualDeConfiguracao(documento));
+    marcarItemAtivoNoMenu(tela, estado.secao || ultimaSecao || SECOES[0]!.id);
+  }
+
+  /*
+    A seção de Configurações que abre: a pedida, se o perfil a abre; senão a
+    primeira permitida (o coordenador só vê Acessos; quem edita configurações
+    sem gerenciar acessos, as demais).
+  */
+  function escolherSecao(pedida: string | null | undefined): string {
+    if (pedida && secoesPermitidas.includes(pedida)) return pedida;
+    return secoesPermitidas[0] || "";
   }
 
   /*
@@ -448,10 +447,16 @@ export function criarNavegacao({
     const secoes = SECOES.filter((secao) =>
       secaoDeConfiguracaoPermitida(atual, secao.id),
     );
-    definirSecoesPermitidas(
-      documento,
-      secoes.map((secao) => secao.id),
-    );
+    secoesPermitidas = secoes.map((secao) => secao.id);
+    // A seção aberta deixou de valer (perfil novo): abre a primeira permitida.
+    if (estado.view === "config" && estado.secao) {
+      const secao = escolherSecao(estado.secao);
+      if (secao !== estado.secao) {
+        ultimaSecao = secao;
+        publicar({ secao, aberturaDaSecao: estado.aberturaDaSecao + 1 });
+        endereco.ir(caminhoAtual(), { substituir: true });
+      }
+    }
     // Um grupo por área do usuário; a área atual passa a ser uma delas.
     // Área desativada (Configurações › Módulos e abas) sai do menu.
     const situacao = situacaoDoSistema();
@@ -476,12 +481,21 @@ export function criarNavegacao({
   }
 
   /*
-    Seção de Configurações (o menu, com a página já aberta): a seção vai para
-    o endereço. A seção pode recusar (saída de Acessos com alteração não salva).
+    Seção de Configurações (o menu, a Aya): a seção vai para o endereço e a
+    página desenha a dela (src/app/telas.tsx), que relê a cada abertura. Com
+    a página fechada, abre Configurações já na seção. A seção pode recusar
+    (saída de Acessos com alteração não salva), e a que o perfil não abre
+    não abre.
   */
   function abrirSecao(secao: string): boolean {
-    if (!abrirSecaoDeConfiguracao(documento, secao)) return false;
-    publicar({ secao: secaoAtualDeConfiguracao(documento) });
+    if (estado.view !== "config" || estado.aviso)
+      return irPara("config", { secao });
+    if (!secoesPermitidas.includes(secao)) return false;
+    if (secao !== estado.secao && !confirmarSaidaDaSecao(estado.secao))
+      return false;
+    ultimaSecao = secao;
+    publicar({ secao, aberturaDaSecao: estado.aberturaDaSecao + 1 });
+    definirPaginaDaAya(view(), estado.titulo, secao);
     endereco.ir(caminhoAtual());
     marcarMenu();
     avisarOuvintes({ tipo: "menu" });
@@ -576,6 +590,15 @@ export function criarNavegacao({
     const anterior = estado.view;
     const tela = destino.view;
     if (tela !== anterior && !confirmarSaida()) return false;
+    // Outra seção de Configurações (voltar do navegador, link): a aberta pode recusar.
+    if (
+      tela === "config" &&
+      anterior === "config" &&
+      !estado.aviso &&
+      escolherSecao(destino.secao || estado.secao) !== estado.secao &&
+      !confirmarSaidaDaSecao(estado.secao)
+    )
+      return false;
     // Versão nova do sistema esperando: entra agora, já no endereço da tela
     // pedida (e ela fica guardada; a tela de entrada confere a permissão).
     // Com rascunho ainda não guardado (ex.: a regra,
@@ -653,16 +676,14 @@ export function criarNavegacao({
         subtituloDaArea(daRota.subtitulo?.(configuracao) ?? ""),
       );
     else if (tela === "config") {
+      // A seção do endereço, ou a última aberta (ou a primeira permitida); a página a desenha e relê.
+      const secao = escolherSecao(destino.secao || ultimaSecao);
+      ultimaSecao = secao;
+      publicar({ secao, aberturaDaSecao: estado.aberturaDaSecao + 1 });
       definirTitulo(
         configuracao("config_nav_title"),
         configuracao("config_page_subtitle"),
       );
-      // A seção do endereço, ou a guardada (ou a primeira permitida); em Acessos, carrega a tela React.
-      abrirSecaoDeConfiguracao(
-        documento,
-        destino.secao || secaoAtualDeConfiguracao(documento),
-      );
-      publicar({ secao: secaoAtualDeConfiguracao(documento) });
       marcarMenu(tela);
     } else if (ehPainelExterno(tela)) {
       const painel = paineis.mostrar(codigoDoPainel(tela));

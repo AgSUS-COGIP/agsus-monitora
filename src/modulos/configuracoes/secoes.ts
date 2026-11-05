@@ -1,24 +1,17 @@
 /*
-  Configurações organizada em seções, como no SIGAV: o esqueleto das seções
-  (um <article class="config-secao"> por seção, com o corpo vazio), a seção
-  aberta e as permissões de cada perfil.
+  As seções de Configurações, como no SIGAV: a ordem, o ícone e o grupo de
+  cada uma no menu. Cada seção é uma rota (`/administracao/configuracoes/<id>`):
+  a navegação (src/app/navegacao.ts) escolhe a aberta pelas permissões do
+  perfil (`secaoDeConfiguracaoPermitida`), e a página (src/app/telas.tsx)
+  desenha o `<article class="config-secao">` de cada uma.
 
-  O conteúdo é todo React: as seções que publicam pela barra fixa (Marca,
-  Página inicial, Tela de acesso, Aparência, Painéis externos, Operação e
-  Comemorações) entram por portal no corpo da
-  própria seção (src/modulos/configuracoes/configuracoes.tsx); Acessos, Módulos e abas,
-  Status das atualizações e Automação são ilhas próprias, cujos blocos da casca (src/app/casca/)
-  este módulo move para a seção certa (SECAO_POR_BLOCO).
+  As seções que publicam pela barra fixa (Marca, Página inicial, Tela de
+  acesso, Aparência, Painéis externos, Operação e Comemorações) são da
+  moldura (configuracoes.tsx); Acessos, Módulos e abas, Status das
+  atualizações e Automação são telas próprias, baixadas na primeira abertura.
 */
 
-import type {
-  ControladorDeSecao,
-  NomeDoControladorDeSecao,
-  SecaoDeConfiguracao,
-} from "./tipos.ts";
-
-/* Disparado a cada troca de seção, com { detail: { secao } }. */
-export const EVENTO_SECAO_ABERTA = "agsus:secao-de-configuracao-aberta";
+import type { SecaoDeConfiguracao } from "./tipos.ts";
 
 /*
   Na ordem do menu, em três grupos (`grupo`, desenhados por
@@ -119,168 +112,3 @@ export const SECOES: readonly SecaoDeConfiguracao[] = Object.freeze([
       "Ligar e desligar o que roda sozinho em cada aba, com motivo e histórico.",
   },
 ]);
-
-/*
-  Seções que salvam pela própria tela React, com motivo (Acessos e Módulos e
-  abas): o "Salvar alterações" fixo das Configurações não vale nelas, e sair
-  delas com alteração pendente pergunta antes (`confirmarSaida` do controlador).
-*/
-const CONTROLADOR_DA_SECAO: Readonly<
-  Partial<Record<string, NomeDoControladorDeSecao>>
-> = Object.freeze({
-  acessos: "acessosController",
-  modulos: "modulosController",
-  cargas: "saudeDasCargasController",
-  automacao: "automacaoController",
-});
-type JanelaComControladores = Window &
-  Partial<Record<NomeDoControladorDeSecao, ControladorDeSecao>>;
-const controladorDaSecao = (
-  documento: Document,
-  secao: string,
-): ControladorDeSecao | null | undefined =>
-  CONTROLADOR_DA_SECAO[secao]
-    ? (documento.defaultView as JanelaComControladores | null)?.[
-        CONTROLADOR_DA_SECAO[secao]!
-      ]
-    : null;
-
-/* As ilhas React com bloco próprio na casca (src/app/casca/), e a seção que as recebe. */
-export const SECAO_POR_BLOCO: Readonly<Record<string, string>> = Object.freeze({
-  acessosApp: "acessos",
-  modulosApp: "modulos",
-  saudeDasCargasApp: "cargas",
-  automacaoApp: "automacao",
-});
-
-/*
-  O cabeçalho da seção (ícone, nome e descrição) é da moldura React
-  (src/modulos/configuracoes/configuracoes.tsx), um só para a página.
-*/
-function criarCartaoDaSecao(
-  documento: Document,
-  secao: SecaoDeConfiguracao,
-): HTMLElement {
-  const artigo = documento.createElement("article");
-  artigo.className = "config-secao";
-  artigo.dataset.secao = secao.id;
-  artigo.setAttribute("aria-label", secao.rotulo);
-  const corpo = documento.createElement("div");
-  corpo.className = "config-secao__corpo form-grid";
-  artigo.appendChild(corpo);
-  return artigo;
-}
-
-/* Move os blocos das ilhas React para dentro das seções. */
-function distribuir(documento: Document, corpos: Map<string, Element | null>) {
-  for (const [id, secao] of Object.entries(SECAO_POR_BLOCO)) {
-    const bloco = documento.getElementById(id);
-    const destino = corpos.get(secao);
-    if (!bloco || !destino) continue;
-    destino.appendChild(bloco.closest(".card") || bloco);
-  }
-}
-
-function selecionarSubgrupo(documento: Document, secao: string) {
-  const pagina = documento.getElementById("page-config");
-  if (!pagina) return;
-  pagina.dataset.subgrupo = secao;
-  for (const artigo of pagina.querySelectorAll<HTMLElement>(".config-secao")) {
-    artigo.hidden = artigo.dataset.secao !== secao;
-  }
-  // A moldura React (cabeçalho e barra de salvar) e as prévias acompanham a seção aberta.
-  const Evento = documento.defaultView?.CustomEvent || globalThis.CustomEvent;
-  documento.dispatchEvent(
-    new Evento(EVENTO_SECAO_ABERTA, { detail: { secao } }),
-  );
-}
-
-const secoesPermitidas = (pagina: HTMLElement | null | undefined): string[] =>
-  pagina?.dataset.secoesPermitidas
-    ? pagina.dataset.secoesPermitidas.split(",")
-    : SECOES.map((s) => s.id);
-
-/*
-  Seções que o perfil abre (buildNav, pelas regras de access-roles.ts): o
-  coordenador só vê Acessos; quem edita configurações sem gerenciar acessos,
-  as demais. Se a seção aberta deixou de valer, abre a primeira permitida.
-*/
-export function definirSecoesPermitidas(documento: Document, ids: string[]) {
-  const pagina = documento?.getElementById?.("page-config");
-  if (!pagina) return;
-  pagina.dataset.secoesPermitidas = ids.join(",");
-  if (ids.length && !ids.includes(pagina.dataset.subgrupo || SECOES[0]!.id))
-    selecionarSubgrupo(documento, ids[0]!);
-}
-
-/*
-  As seções são as páginas da área Administração do menu lateral
-  (`src/lib/menu-lateral.ts`). O menu navega até Configurações e chama esta
-  função com a seção escolhida; quem marca o item ativo é o próprio menu.
-*/
-export function secaoAtualDeConfiguracao(
-  documento: Document = globalThis.document,
-): string {
-  return (
-    documento?.getElementById?.("page-config")?.dataset.subgrupo ||
-    SECOES[0]!.id
-  );
-}
-
-export function abrirSecaoDeConfiguracao(
-  documento: Document,
-  secao: string,
-): boolean {
-  if (!SECOES.some((s) => s.id === secao)) return false;
-  const pagina = documento?.getElementById?.("page-config");
-  if (!secoesPermitidas(pagina).includes(secao)) return false;
-  const atual = secaoAtualDeConfiguracao(documento);
-  // Sair de Acessos (ou de Módulos e abas) com alteração não salva pergunta antes (o rascunho é da tela React).
-  if (
-    atual !== secao &&
-    controladorDaSecao(documento, atual)?.confirmarSaida() === false
-  )
-    return false;
-  selecionarSubgrupo(documento, secao);
-  void controladorDaSecao(documento, secao)?.render();
-  return true;
-}
-
-export function organizarConfiguracoesEmSecoes(
-  documento: Document = globalThis.document,
-): boolean {
-  const pagina = documento?.getElementById?.("page-config");
-  if (!pagina || pagina.dataset.secoesAplicadas === "1") return false;
-
-  const grade = pagina.querySelector<HTMLElement>(".admin-grid");
-  if (!grade) return false;
-  pagina.dataset.secoesAplicadas = "1";
-
-  const layout = documento.createElement("div");
-  layout.className = "config-layout";
-
-  const painel = documento.createElement("div");
-  painel.className = "config-painel";
-  layout.appendChild(painel);
-
-  const corpos = new Map<string, Element | null>();
-  for (const secao of SECOES) {
-    const artigo = criarCartaoDaSecao(documento, secao);
-    painel.appendChild(artigo);
-    corpos.set(secao.id, artigo.querySelector(".config-secao__corpo"));
-  }
-
-  grade.insertAdjacentElement("beforebegin", layout);
-  distribuir(documento, corpos);
-
-  /*
-    A grade antiga fica vazia depois de os blocos saírem. Ela só sai da tela
-    se de facto não restar conteúdo — nunca às cegas.
-  */
-  if (!grade.querySelector("input, select, textarea, button")) {
-    grade.hidden = true;
-  }
-
-  selecionarSubgrupo(documento, pagina.dataset.subgrupo || "marca");
-  return true;
-}

@@ -1,11 +1,10 @@
 import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { montarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.tsx";
-import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.ts";
 import {
-  abrirSecaoDeConfiguracao,
-  organizarConfiguracoesEmSecoes,
-} from "../../src/modulos/configuracoes/secoes.ts";
+  abrirSecaoNoTeste,
+  montarConfiguracoesNoTeste,
+} from "./configuracoes-no-teste.js";
+import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.ts";
 
 /*
   Configurações sem "alterações não salvas" falsas (relato de 03/11/2026: só
@@ -55,19 +54,14 @@ afterEach(() => {
 
 describe("Configurações sem alteração falsa", () => {
   it("abrir Comemorações e Acessos, abrir os detalhes e passar o foco não marca alteração", async () => {
-    document.body.innerHTML = `
-      <section id="page-config" class="page active">
-        <div id="configuracoesApp" data-configuracoes></div>
-        <div class="admin-grid"><div id="acessosApp" class="full" data-acessos></div></div>
-      </section>`;
-    organizarConfiguracoesEmSecoes(document);
     const estado = criarEstadoDasConfiguracoes({ supabase: () => null });
+    let controlador;
     await act(async () => {
-      montarConfiguracoes({ estado });
+      controlador = montarConfiguracoesNoTeste({ estado });
     });
     await act(async () => estado.definirValoresCarregados(PUBLICADO));
     for (const secao of ["comemoracoes", "acessos"]) {
-      await act(async () => abrirSecaoDeConfiguracao(document, secao));
+      await act(async () => abrirSecaoNoTeste(secao));
       for (const botao of document.querySelectorAll(".comemoracoes-detalhes")) {
         await act(async () => botao.click());
         for (const campo of document.querySelectorAll(
@@ -85,5 +79,6 @@ describe("Configurações sem alteração falsa", () => {
     );
     expect(estado.temAlteracoes()).toBe(false);
     expect(estado.confirmarSaida(() => false)).toBe(true);
+    controlador.raiz.unmount();
   }, 60_000);
 });

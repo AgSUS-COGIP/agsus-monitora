@@ -107,7 +107,10 @@ export function montarRaiz({
   ...props
 }: OpcoesDaRaiz) {
   if (!elemento) return null;
-  registrarTelasDoApp({ navegacao });
+  registrarTelasDoApp({
+    navegacao,
+    aoSalvarModulos: props.pecas?.recarregarPaineisExternos,
+  });
   const lugar = (id: string) => documento.getElementById(id);
   const entrada = lugar("telaDeEntrada");
   // O cartão do primeiro quadro sai junto com o desenho do de verdade.

@@ -1,12 +1,11 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.tsx";
+import {
+  abrirSecaoNoTeste,
+  montarConfiguracoesNoTeste,
+} from "./configuracoes-no-teste.js";
 import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.ts";
 import { normalizarValoresCarregados } from "../../src/lib/publicacao-de-configuracoes.ts";
-import {
-  abrirSecaoDeConfiguracao,
-  organizarConfiguracoesEmSecoes,
-} from "../../src/modulos/configuracoes/secoes.ts";
 import {
   clicar,
   digitar,
@@ -91,14 +90,6 @@ let controlador;
 let recarregar;
 
 async function montar({ secao = "recursos", config = PUBLICADO } = {}) {
-  document.body.innerHTML = `
-    <section id="page-config" class="page active">
-      <div id="configuracoesApp" data-configuracoes></div>
-      <div class="admin-grid">
-      </div>
-    </section>`;
-  organizarConfiguracoesEmSecoes(document);
-  abrirSecaoDeConfiguracao(document, secao);
   recarregar = vi.fn();
   const estado = criarEstadoDasConfiguracoes({
     supabase: () => cliente,
@@ -107,7 +98,7 @@ async function montar({ secao = "recursos", config = PUBLICADO } = {}) {
     recarregar,
   });
   await act(async () => {
-    controlador = montarConfiguracoes({ estado });
+    controlador = montarConfiguracoesNoTeste({ estado, secao });
   });
   await act(async () => {
     estado.definirValoresCarregados(config);

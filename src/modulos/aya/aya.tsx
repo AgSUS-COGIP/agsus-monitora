@@ -71,7 +71,6 @@ import {
 } from "../../lib/aya-tours.ts";
 import { montarChamado, pedeSuporte } from "../../lib/chamado-da-aya.ts";
 import { nomeDaArea } from "../../lib/menu-lateral.ts";
-import { abrirSecaoDeConfiguracao } from "../configuracoes/secoes.ts";
 import { collectAyaPageContext, estadoDaTela } from "./contexto.ts";
 import { responderComDados } from "../../lib/dados-da-aya.ts";
 import { isAdminGlobal } from "../../lib/access-roles.ts";
@@ -131,7 +130,9 @@ import type { MotivoDoFimDoTour } from "./tour/tour.tsx";
 export type JanelaDaAya = Window & typeof globalThis;
 
 /** A navegação do legado (src/app), posta em window. */
-type JanelaDoLegado = Window & { navigate?: (view: string) => unknown };
+type JanelaDoLegado = Window & {
+  navigate?: (view: string, extras?: { secao?: string }) => unknown;
+};
 
 /** Uma mensagem da conversa no painel. */
 export interface MensagemDaAya {
@@ -808,8 +809,11 @@ function prenderFoco(
 
 const navegarPelaJanela = (view: string) =>
   (globalThis.window as JanelaDoLegado | undefined)?.navigate?.(view);
+// A seção de Configurações é rota: `navigate("config", { secao })` abre a página nela.
 const abrirSecaoPadrao = (secao: string) =>
-  abrirSecaoDeConfiguracao(globalThis.document, secao);
+  (globalThis.window as JanelaDoLegado | undefined)?.navigate?.("config", {
+    secao,
+  });
 const configuracaoPublicada = (chave: string) =>
   estadoDasConfiguracoes.obter().valores?.get?.(chave) ?? "";
 

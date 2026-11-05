@@ -13,6 +13,11 @@ import type { criarEntrevistas } from "../modulos/entrevistas/entrevistas.tsx";
 import type { criarRecursos } from "../modulos/recursos/recursos.tsx";
 import type { criarSelecao } from "../modulos/selecao/selecao.tsx";
 import type { criarVisaoGeral } from "../modulos/visao-geral/visao-geral.tsx";
+import type { criarConfiguracoes } from "../modulos/configuracoes/configuracoes.tsx";
+import type { criarAcessos } from "../modulos/acessos/acessos.tsx";
+import type { criarModulos } from "../modulos/modulos/modulos.tsx";
+import type { criarSaudeDasCargas } from "../componentes/saude-das-cargas/saude-das-cargas.tsx";
+import type { criarAutomacao } from "../modulos/automacao/automacao.tsx";
 
 /*
   O registro das telas do app: quem precisa de outra tela (o "Ir para…" com
@@ -23,6 +28,11 @@ import type { criarVisaoGeral } from "../modulos/visao-geral/visao-geral.tsx";
   O controlador é o que `criarX` devolve (estado, conteúdo React, `render()`
   a cada abertura, `abrirVisao`/`abrirEdital` quando a tela tem). Cada tela é
   criada uma vez por página aberta: as visitadas continuam montadas.
+
+  Configurações também está aqui: a moldura (`config`) e as seções que são
+  telas próprias (`secao:<id>`: Acessos, Módulos e abas, Status das
+  atualizações e Automação), cada uma no seu pacote. A navegação pergunta a
+  elas antes de sair (`confirmarSaidaDasSecoes`).
 
   Tela sob demanda baixa na primeira vez que alguém pede (a rota, a
   pré-carga do menu ou outra tela). A falha não fica guardada: o próximo
@@ -56,9 +66,30 @@ export interface ControladoresDasTelas {
   "avaliacao-documental": ReturnType<typeof criarAvaliacaoDocumental>;
   "pre-classificacao": ReturnType<typeof criarPreClassificacao>;
   selecao: ReturnType<typeof criarSelecao>;
+  config: ReturnType<typeof criarConfiguracoes>;
+  "secao:acessos": ReturnType<typeof criarAcessos>;
+  "secao:modulos": ReturnType<typeof criarModulos>;
+  "secao:cargas": ReturnType<typeof criarSaudeDasCargas>;
+  "secao:automacao": ReturnType<typeof criarAutomacao>;
 }
 
 export type ViewDeTela = keyof ControladoresDasTelas;
+
+/** As seções de Configurações que são telas próprias. */
+export const SECOES_COM_TELA = Object.freeze([
+  "acessos",
+  "modulos",
+  "cargas",
+  "automacao",
+] as const);
+export type SecaoComTela = (typeof SECOES_COM_TELA)[number];
+
+export const ehSecaoComTela = (secao: string): secao is SecaoComTela =>
+  (SECOES_COM_TELA as readonly string[]).includes(secao);
+
+/** A view da seção no registro (`secao:acessos`…). */
+export const viewDaSecao = (secao: SecaoComTela) =>
+  `secao:${secao}` as const satisfies ViewDeTela;
 
 /**
  * Como a tela nasce: `criar` (no pacote principal, na hora) ou `carregar`
@@ -162,4 +193,18 @@ export function carregarTela<V extends ViewDeTela>(
 export function preCarregarTelaRegistrada(view: string): void {
   if (!ehTelaRegistrada(view) || telaNaHora(view)) return;
   void carregarTela(view).catch(() => {});
+}
+
+/**
+ * A seção deixa sair? Só pergunta à que já baixou (antes da carga, nada
+ * aberto, nada a perder): Acessos e Módulos e abas guardam rascunho.
+ */
+export function confirmarSaidaDaSecao(secao: string): boolean {
+  if (!ehSecaoComTela(secao)) return true;
+  return telaPronta(viewDaSecao(secao))?.confirmarSaida() !== false;
+}
+
+/** Sair de Configurações: Acessos e Módulos e abas, com rascunho, perguntam. */
+export function confirmarSaidaDasSecoes(): boolean {
+  return confirmarSaidaDaSecao("acessos") && confirmarSaidaDaSecao("modulos");
 }

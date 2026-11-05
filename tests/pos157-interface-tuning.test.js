@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const css = readFileSync("src/styles/post157-interface-tuning.css", "utf8");
 const main = readFileSync("src/main.ts", "utf8");
+const telas = readFileSync("src/app/telas.tsx", "utf8");
 const mapGuard = readFileSync("src/modules/map-guard.ts", "utf8");
 const sidebar = readFileSync("src/componentes/barra-lateral/marca.ts", "utf8");
 // A escolha da logo e da cor é de Configurações › Aparência (React).
@@ -159,14 +160,13 @@ describe("branding independente da sidebar", () => {
 
   it("a marca padrão vale antes da moldura de Configurações", () => {
     // A marca padrão vale antes da raiz (que desenha a barra); a moldura de
-    // Configurações monta sob demanda (carregarConfiguracoes).
+    // Configurações é rota e baixa sob demanda (src/app/telas.tsx).
     expect(main.indexOf("aplicarMarcaDaBarraLateral();")).toBeGreaterThan(-1);
-    expect(main.indexOf("function carregarConfiguracoes")).toBeGreaterThan(-1);
     expect(main.indexOf("aplicarMarcaDaBarraLateral();")).toBeLessThan(
       main.indexOf("montarRaiz({"),
     );
-    expect(main.indexOf("montarRaiz({")).toBeLessThan(
-      main.indexOf("function carregarConfiguracoes"),
+    expect(telas).toMatch(
+      /config: \{\s*carregar: \(\) =>\s*import\("..\/modulos\/configuracoes\/configuracoes\.tsx"\)/,
     );
   });
 });

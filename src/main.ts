@@ -53,48 +53,31 @@ import {
   recarregarPaineisExternos,
 } from "./app/sistema.ts";
 import { instalarCarregamento } from "./app/carregamento.ts";
-import {
-  EVENTO_SECAO_ABERTA,
-  organizarConfiguracoesEmSecoes,
-  SECOES,
-} from "./modulos/configuracoes/secoes.ts";
-import { importarComRecarga } from "./lib/importar-com-recarga";
 import { initPwaLifecycle } from "./modules/pwa-lifecycle.ts";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.ts";
 import { aplicarMarcaDaBarraLateral } from "./componentes/barra-lateral/marca.ts";
 import { ligarEntradaAPagina } from "./app/entrada/entrada.tsx";
 import { marcaDaEntrada } from "./app/entrada/marca.ts";
 import { criarPedidoDeAcesso } from "./app/entrada/pedido-de-acesso.ts";
-import { telaSobDemanda } from "./app/tela-sob-demanda.ts";
-import { preCarregarTelaRegistrada } from "./app/registro-das-telas.ts";
+import {
+  ehSecaoComTela,
+  preCarregarTelaRegistrada,
+  viewDaSecao,
+} from "./app/registro-das-telas.ts";
 import { registrarPreCarga } from "./lib/carga-de-telas";
 import { FASES, sessaoDoApp } from "./app/sessao.ts";
 
 import type { avisar, mostrarCarregamento } from "./app/avisos.ts";
-import type { TelaSobDemanda } from "./app/tela-sob-demanda.ts";
-import type { montarAcessos } from "./modulos/acessos/acessos.tsx";
-import type { montarModulos } from "./modulos/modulos/modulos.tsx";
-import type { montarSaudeDasCargas } from "./componentes/saude-das-cargas/saude-das-cargas.tsx";
-import type { montarAutomacao } from "./modulos/automacao/automacao.tsx";
-
-/** O controlador de uma seção sob demanda, a partir da função que a monta. */
-type SobDemanda<F extends (...argumentos: never[]) => unknown> = TelaSobDemanda<
-  NonNullable<ReturnType<F>>
->;
 
 /*
-  Os controladores das seções de Configurações (passo 3 de
-  docs/arquitetura/raiz-react.md: viram rotas filhas). As telas de página
-  inteira não estão mais em window: são rotas (src/app/telas.tsx).
+  O aviso curto e o carregamento em window (quem ainda chama por eles). As
+  telas e as seções de Configurações não estão em window: são rotas
+  (src/app/telas.tsx).
 */
 declare global {
   interface Window {
     monitoraToast?: typeof avisar;
     monitoraLoader?: typeof mostrarCarregamento;
-    acessosController?: SobDemanda<typeof montarAcessos>;
-    modulosController?: SobDemanda<typeof montarModulos>;
-    saudeDasCargasController?: SobDemanda<typeof montarSaudeDasCargas>;
-    automacaoController?: SobDemanda<typeof montarAutomacao>;
   }
 }
 
@@ -132,6 +115,7 @@ montarRaiz({
     },
     // Busca global (Ctrl+K / Cmd+K): só abre com usuário conectado.
     estaConectado: () => Boolean(sessaoDoApp.obter().usuario),
+    recarregarPaineisExternos,
   },
 });
 
@@ -156,99 +140,18 @@ installBackgroundResourceLifecycle();
 installFrontendPerformanceMonitor();
 installCspReportMonitor();
 instalarCarregamento();
-/*
-  O esqueleto das seções de Configurações já; a moldura e as seções em React
-  (portais, src/modulos/configuracoes/configuracoes.tsx) só para quem abre a
-  página (quem administra): baixam na primeira seção aberta com a página
-  ativa, ou antes, com o mouse em Configurações no menu.
-*/
-organizarConfiguracoesEmSecoes();
-const baixarConfiguracoes = importarComRecarga(
-  () => import("./modulos/configuracoes/configuracoes.tsx"),
-);
-let configuracoesPedidas: Promise<unknown> | null = null;
-function carregarConfiguracoes() {
-  configuracoesPedidas ??= baixarConfiguracoes()
-    .then(({ montarConfiguracoes }) => montarConfiguracoes())
-    .catch((erro: unknown) => {
-      configuracoesPedidas = null;
-      console.error("Falha ao abrir Configurações:", erro);
-      window.monitoraToast?.(
-        "Não foi possível abrir Configurações. Tente de novo.",
-        "error",
-      );
-    });
-  return configuracoesPedidas;
-}
-document.addEventListener(EVENTO_SECAO_ABERTA, () => {
-  if (navegacao.obter().view === "config") void carregarConfiguracoes();
-});
 initPwaLifecycle();
 initGoogleProfilePhoto();
 
-// Configurações › Acessos: abre pela seção (configuracoes/secoes.ts → render()).
-window.acessosController = telaSobDemanda({
-  secao: "acessosApp",
-  padroes: { confirmarSaida: () => true },
-  carregar: () =>
-    import("./modulos/acessos/acessos.tsx").then((m) =>
-      m.montarAcessos({
-        toast: window.monitoraToast,
-        getProfile: window.getMonitoraProfile,
-        secoesDeConfiguracao: SECOES,
-      }),
-    ),
-});
-
-// Configurações › Módulos e abas (só admin global): abre pela seção (configuracoes/secoes.ts → render()).
-window.modulosController = telaSobDemanda({
-  secao: "modulosApp",
-  padroes: { confirmarSaida: () => true },
-  carregar: () =>
-    import("./modulos/modulos/modulos.tsx").then((m) =>
-      m.montarModulos({
-        toast: window.monitoraToast,
-        getProfile: window.getMonitoraProfile,
-        aoSalvar: recarregarPaineisExternos,
-      }),
-    ),
-});
-
-// Configurações › Status das atualizações (só admin global): relê a cada abertura da seção.
-window.saudeDasCargasController = telaSobDemanda({
-  secao: "saudeDasCargasApp",
-  padroes: { confirmarSaida: () => true },
-  carregar: () =>
-    import("./componentes/saude-das-cargas/saude-das-cargas.tsx").then((m) =>
-      m.montarSaudeDasCargas({ getProfile: window.getMonitoraProfile }),
-    ),
-});
-
-// Configurações › Automação (só admin global): relê a cada abertura da seção.
-window.automacaoController = telaSobDemanda({
-  secao: "automacaoApp",
-  padroes: { confirmarSaida: () => true },
-  carregar: () =>
-    import("./modulos/automacao/automacao.tsx").then((m) =>
-      m.montarAutomacao({
-        toast: window.monitoraToast,
-        getProfile: window.getMonitoraProfile,
-      }),
-    ),
-});
-
-// Mouse ou foco no item do menu: a tela começa a baixar antes do clique.
+/*
+  Mouse ou foco no item do menu: a tela começa a baixar antes do clique (o
+  registro das rotas, src/app/registro-das-telas.ts). Em Configurações, a
+  moldura e a seção com tela própria (Acessos, Módulos e abas…).
+*/
 registrarPreCarga((view, secao) => {
-  if (view === "config") void carregarConfiguracoes();
-  const daSecao = {
-    acessos: window.acessosController,
-    modulos: window.modulosController,
-    cargas: window.saudeDasCargasController,
-    automacao: window.automacaoController,
-  }[secao ?? ""];
-  if (daSecao) void Promise.resolve(daSecao.carregar()).catch(() => {});
-  // As telas de página inteira: o registro das rotas (src/app/registro-das-telas.ts).
-  else preCarregarTelaRegistrada(view);
+  preCarregarTelaRegistrada(view);
+  if (view === "config" && secao && ehSecaoComTela(secao))
+    preCarregarTelaRegistrada(viewDaSecao(secao));
 });
 
 // A entrada: sessão guardada, retorno do Google ou a tela de acesso.

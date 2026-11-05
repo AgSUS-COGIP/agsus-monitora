@@ -120,7 +120,7 @@ export const presenca = criarPresenca({
 
 /* Versão nova publicada (/versao.json, sem banco): aviso no topo; a pessoa decide. */
 export const avisoDeVersao = criarAvisoDeVersao({
-  confirmarSaida: () => confirmarSaidaPadrao(window),
+  confirmarSaida: confirmarSaidaPadrao,
 });
 
 const viewAtual = () => navegacao.obter().view;

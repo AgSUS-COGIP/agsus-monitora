@@ -2,7 +2,10 @@ import { readFileSync } from "node:fs";
 import { fonteDoApp } from "../fonte-do-app.js";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.tsx";
+import {
+  abrirSecaoNoTeste,
+  montarConfiguracoesNoTeste,
+} from "./configuracoes-no-teste.js";
 import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.ts";
 import {
   logoDaBarraLateral,
@@ -16,10 +19,6 @@ import {
   criarImagensDaAparencia,
   EVENTO_FUNDO_DO_ACESSO,
 } from "../../src/modulos/configuracoes/imagens.ts";
-import {
-  abrirSecaoDeConfiguracao,
-  organizarConfiguracoesEmSecoes,
-} from "../../src/modulos/configuracoes/secoes.ts";
 import {
   clicar,
   digitar,
@@ -108,13 +107,6 @@ function criarCliente() {
 }
 
 async function montar({ secao = "inicio", config = PUBLICADO } = {}) {
-  document.body.innerHTML = `
-    <section id="page-config" class="page active">
-      <div id="configuracoesApp" data-configuracoes></div>
-      <div class="admin-grid"></div>
-    </section>`;
-  organizarConfiguracoesEmSecoes(document);
-  abrirSecaoDeConfiguracao(document, secao);
   const estado = criarEstadoDasConfiguracoes({
     supabase: () => cliente,
     confirmar: (mensagem) => confirmar(mensagem),
@@ -128,7 +120,7 @@ async function montar({ secao = "inicio", config = PUBLICADO } = {}) {
     confirmar: (mensagem) => confirmar(mensagem),
   });
   await act(async () => {
-    controlador = montarConfiguracoes({ estado, imagens });
+    controlador = montarConfiguracoesNoTeste({ estado, imagens, secao });
   });
   await act(async () => estado.definirValoresCarregados(config));
   await esperar();

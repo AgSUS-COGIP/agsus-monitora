@@ -1,8 +1,10 @@
 # Configurações
 
-A moldura (`configuracoes.tsx`), as seções (`secoes.ts`) e o estado com a
-publicação versionada (`estado.ts`) estão descritos no topo de cada arquivo e
-em `docs/arquitetura-react.md`. Aqui fica o que é próprio da seção
+A moldura (`configuracoes.tsx`, rota `config`), a lista das seções
+(`secoes.ts`; cada uma é rota `/administracao/configuracoes/<seção>`, desenhada
+pela página em `src/app/telas.tsx`) e o estado com a publicação versionada
+(`estado.ts`) estão descritos no topo de cada arquivo e em
+`docs/arquitetura-react.md`. Aqui fica o que é próprio da seção
 **Comemorações**.
 
 ## Comemorações

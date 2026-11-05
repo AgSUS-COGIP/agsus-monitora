@@ -1,4 +1,5 @@
 import { act } from "react";
+import { montarTela } from "../montar-tela.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { clicar, esperar } from "./interacoes.js";
 
@@ -10,7 +11,7 @@ import { clicar, esperar } from "./interacoes.js";
   banco, a tela segue como antes.
 */
 
-const { montarSaudeDasCargas } =
+const { criarSaudeDasCargas } =
   await import("../../src/componentes/saude-das-cargas/saude-das-cargas.tsx");
 
 const AGORA = new Date("2026-10-22T14:00:00Z");
@@ -56,8 +57,8 @@ async function montar(rpcs) {
     ),
   };
   await act(async () => {
-    controlador = montarSaudeDasCargas({
-      raizDaTela: raiz,
+    controlador = montarTela(criarSaudeDasCargas, "", {
+      secao: raiz,
       supabase,
       getProfile: () => ADMIN,
       agora: () => AGORA,

@@ -12,7 +12,6 @@ type ValorDoCampo = (alvo: AlvoDosModulos, campo: CampoDosModulos) => string;
 type SituacaoDoAlvo = (alvo: AlvoDosModulos) => EstadoDoModulo;
 type OpcaoDeEstado = { valor: EstadoDoModulo; rotulo: string };
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { isAdminGlobal } from "../../lib/access-roles.ts";
 import {
@@ -584,14 +583,17 @@ export function ModulosEAbas({ estado }: { estado: EstadoDosModulos }) {
   );
 }
 
-export function montarModulos({
-  raizDaTela = document.getElementById("modulosApp"),
+/**
+ * A seção Módulos e abas de Configurações (rota
+ * `/administracao/configuracoes/modulos`): o estado e o conteúdo.
+ */
+export function criarModulos({
   supabase = getSupabaseClient(),
   toast,
   getProfile,
   confirmar,
   aoSalvar,
-}: DependenciasDosModulos & { raizDaTela?: HTMLElement | null } = {}) {
+}: DependenciasDosModulos = {}) {
   const estado = criarEstadoDosModulos({
     supabase,
     toast,
@@ -599,14 +601,10 @@ export function montarModulos({
     confirmar,
     aoSalvar,
   });
-  const raiz = raizDaTela
-    ? montarModulo(raizDaTela, <ModulosEAbas estado={estado} />, {
-        nome: "Módulos e abas",
-      }).raiz
-    : null;
   return {
     estado,
-    raiz,
+    nome: "Módulos e abas",
+    conteudo: <ModulosEAbas estado={estado} />,
     /* Ao abrir a seção: relê o perfil e carrega o que ainda não veio. */
     render: () => estado.garantirCarregado(),
     temAlteracoesPendentes: estado.temAlteracoesPendentes,

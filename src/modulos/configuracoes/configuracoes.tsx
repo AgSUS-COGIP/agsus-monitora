@@ -1,4 +1,5 @@
 import {
+  useContext,
   useEffect,
   useState,
   useSyncExternalStore,
@@ -6,17 +7,14 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { montarModulo } from "../../app/montar-modulo.tsx";
+import { usarEstadoDaNavegacao } from "../../app/contexto-do-app.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import {
   resumoDaVersao,
   valorParaExibir,
 } from "../../lib/publicacao-de-configuracoes.ts";
-import {
-  EVENTO_SECAO_ABERTA,
-  SECOES,
-  secaoAtualDeConfiguracao,
-} from "./secoes.ts";
+import { SECOES } from "./secoes.ts";
+import { ContextoDaPaginaDeConfiguracoes } from "./pagina.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {
   Aviso,
@@ -37,7 +35,6 @@ import { SecaoPaineisExternos } from "./paineis-externos.tsx";
 import { SecaoTelaDeAcesso } from "./tela-de-acesso.tsx";
 import type {
   AlteracaoParaRevisar,
-  DetalheDaSecaoAberta,
   EstadoDasConfiguracoes,
   HistoricoDasConfiguracoes,
   IdDaSecaoDeConfiguracao,
@@ -69,8 +66,10 @@ interface ComEstado {
 
   As seções (Marca, Página inicial, Tela de acesso, Aparência, Painéis
   externos, Operação e Comemorações) entram por portal no corpo da própria seção
-  (`.config-secao__corpo`, criado por secoes.ts). O estado é de
-  `estado.ts`; as imagens da Aparência, de `imagens.ts`.
+  (`.config-secao__corpo`, desenhado pela página de Configurações em
+  src/app/telas.tsx e entregue por `pagina.ts`). A seção aberta vem da
+  navegação (o endereço). O estado é de `estado.ts`; as imagens da
+  Aparência, de `imagens.ts`.
 */
 
 const plural = (n: number, um: string, varios: string): string =>
@@ -710,52 +709,47 @@ function Configuracoes({
   );
 }
 
-const corpoDaSecao = (pagina: Element, secao: string): Element | null =>
-  pagina.querySelector(
-    `.config-secao[data-secao="${secao}"] .config-secao__corpo`,
-  );
-
 /*
-  Chamada em src/main.ts depois de `organizarConfiguracoesEmSecoes`, que cria
-  o corpo de cada seção (os alvos dos portais).
+  A moldura na página: a seção aberta (da navegação) vai para o estado, e o
+  Ctrl+S e o aviso de sair da página com alteração ficam ligados enquanto a
+  página existe.
 */
-export function montarConfiguracoes({
-  documento = document,
+function ConfiguracoesNaPagina({ estado, imagens }: PropsDaSecaoNoPortal) {
+  const { pagina, corpos } = useContext(ContextoDaPaginaDeConfiguracoes);
+  const { secao } = usarEstadoDaNavegacao();
+  useEffect(() => {
+    if (secao) estado.definirSecao(secao);
+  }, [estado, secao]);
+  useEffect(
+    () => (pagina ? estado.instalar(pagina) : undefined),
+    [estado, pagina],
+  );
+  return <Configuracoes estado={estado} imagens={imagens} alvos={corpos} />;
+}
+
+/**
+ * Configurações (rota `/administracao/configuracoes/<seção>`): a moldura e
+ * as seções que publicam pela barra fixa. Baixa na primeira abertura da
+ * página (src/app/telas.tsx); Acessos, Módulos e abas, Status das
+ * atualizações e Automação são rotas filhas, com o próprio pacote.
+ */
+export function criarConfiguracoes({
   estado = estadoDasConfiguracoes,
   imagens = criarImagensDaAparencia({
     supabase: getSupabaseClient,
     configuracoes: estado,
-    documento,
+    documento: globalThis.document,
   }),
 }: {
-  documento?: Document;
   estado?: EstadoDasConfiguracoes;
   imagens?: ImagensDaAparencia;
 } = {}) {
-  const pagina = documento.getElementById("page-config");
-  const raizDaTela = documento.getElementById("configuracoesApp");
-  if (!pagina || !raizDaTela) return null;
-
-  estado.instalar(pagina);
-  estado.definirSecao(secaoAtualDeConfiguracao(documento));
-  documento.addEventListener(EVENTO_SECAO_ABERTA, (evento) =>
-    estado.definirSecao(
-      (evento as CustomEvent<DetalheDaSecaoAberta>).detail?.secao,
-    ),
-  );
-
-  const { raiz } = montarModulo(
-    raizDaTela,
-    <Configuracoes
-      estado={estado}
-      imagens={imagens}
-      alvos={Object.fromEntries(
-        [...SECOES_NO_PORTAL.map(([secao]) => secao), "operacao"].map(
-          (secao) => [secao, corpoDaSecao(pagina, secao)],
-        ),
-      )}
-    />,
-    { nome: "Configurações" },
-  );
-  return { estado, imagens, raiz };
+  return {
+    estado,
+    imagens,
+    nome: "Configurações",
+    conteudo: <ConfiguracoesNaPagina estado={estado} imagens={imagens} />,
+    // Os valores chegam com a entrada (src/app/configuracao.ts): nada a reler.
+    render: () => undefined,
+  };
 }

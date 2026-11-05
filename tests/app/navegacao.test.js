@@ -6,7 +6,10 @@ import {
   criarNavegacao,
 } from "../../src/app/navegacao.ts";
 import { criarPresenca } from "../../src/app/presenca.ts";
-import { registrarTelas } from "../../src/app/registro-das-telas.ts";
+import {
+  carregarTela,
+  registrarTelas,
+} from "../../src/app/registro-das-telas.ts";
 import { CHAVE_DA_TELA_GUARDADA } from "../../src/lib/navegacao";
 import { TELAS_DAS_AREAS } from "../../src/lib/rotas.ts";
 import {
@@ -231,23 +234,41 @@ describe("guarda de saída e versão nova", () => {
     expect(confirmarSaida).not.toHaveBeenCalled();
   });
 
-  it("a guarda padrão consulta Acessos e Módulos (antes da carga, deixam sair)", () => {
-    const janela = {
-      acessosController: { confirmarSaida: vi.fn(() => false) },
-      modulosController: {},
-      location: { reload: vi.fn() },
-    };
+  it("a guarda padrão consulta Acessos e Módulos já baixados (antes da carga, deixam sair)", async () => {
+    const confirmarSaida = vi.fn(() => false);
+    registrarTelas({
+      "secao:acessos": {
+        carregar: async () => ({
+          conteudo: null,
+          nome: "Acessos",
+          render() {},
+          confirmarSaida,
+        }),
+      },
+      "secao:modulos": {
+        carregar: async () => ({
+          conteudo: null,
+          nome: "Módulos",
+          render() {},
+          confirmarSaida: () => true,
+        }),
+      },
+    });
     const navegacao = comAct(
       criarNavegacao({
-        janela,
+        janela: { location: { reload: vi.fn() } },
         obterPerfil: () => GESTOR,
         aplicarAtualizacao: () => false,
       }),
     );
-    navegacao.irPara("nucleo");
-    expect(janela.acessosController.confirmarSaida).toHaveBeenCalled();
-    expect(navegacao.obter().view).toBe("dashboard");
+    // Antes da carga, nada aberto, nada a perder.
+    expect(navegacao.irPara("nucleo")).toBe(true);
+    await carregarTela("secao:acessos");
+    expect(navegacao.irPara("dashboard")).toBe(false);
+    expect(confirmarSaida).toHaveBeenCalled();
+    expect(navegacao.obter().view).toBe("nucleo");
     navegacao.desligar();
+    registrarTelas({});
   });
 
   it("versão nova esperando: guarda a tela pedida, vai ao endereço dela e recarrega", () => {

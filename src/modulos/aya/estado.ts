@@ -14,10 +14,6 @@ import {
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.ts";
 import { esquecerConversa } from "../../modules/aya-memoria.ts";
-import {
-  EVENTO_SECAO_ABERTA,
-  secaoAtualDeConfiguracao,
-} from "../configuracoes/secoes.ts";
 
 /** Onde a pessoa está: view, título, seção, área e a conversa da vez. */
 export interface PaginaAbertaDaAya {
@@ -61,31 +57,25 @@ export function assinarPaginaDaAya(ouvinte: () => void): () => boolean {
   return () => ouvintes.delete(ouvinte);
 }
 
-/** O legado navegou: a view (`dashboard`, `recursos`, `config`…) e o título do cabeçalho. */
+/**
+ * A navegação abriu uma página: a view (`dashboard`, `recursos`, `config`…),
+ * o título do cabeçalho e, em Configurações, a seção aberta.
+ */
 export function definirPaginaDaAya(
   view: unknown,
   titulo: unknown = "",
-  documento: Document = globalThis.document,
+  secao: unknown = "",
 ): void {
   const chave = String(view || "").trim();
   publicar({
     view: chave,
     titulo: String(titulo || "").trim(),
-    secao: chave === "config" ? secaoAtualDeConfiguracao(documento) : "",
+    secao: chave === "config" ? String(secao || "").trim() : "",
     area: areaAtual(),
   });
 }
 
 assinarDadosDoMonitoramento(() => publicar({ area: areaAtual() }));
-
-globalThis.document?.addEventListener(EVENTO_SECAO_ABERTA, (evento) => {
-  if (estado.view !== "config") return;
-  publicar({
-    secao: String(
-      (evento as CustomEvent<{ secao?: unknown } | null>).detail?.secao || "",
-    ),
-  });
-});
 
 /*
   A pessoa saiu (ou ficou sem acesso): a conversa guardada na aba sai, e o

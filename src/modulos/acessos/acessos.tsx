@@ -4,7 +4,6 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { abasDeAcessos } from "../../lib/teto-de-acessos.ts";
 import { criarEstadoDosAcessos } from "./estado.ts";
@@ -141,15 +140,18 @@ export function Acessos({
   );
 }
 
-export function montarAcessos({
-  raizDaTela = document.getElementById("acessosApp"),
+/**
+ * A seção Acessos de Configurações (rota `/administracao/configuracoes/acessos`):
+ * o estado e o conteúdo, desenhado pela página de Configurações
+ * (src/app/telas.tsx). `render()` roda a cada abertura da seção.
+ */
+export function criarAcessos({
   supabase = getSupabaseClient(),
   toast,
   getProfile,
   confirmar,
   secoesDeConfiguracao = [],
 }: OpcoesDoEstadoDosAcessos & {
-  raizDaTela?: HTMLElement | null;
   secoesDeConfiguracao?: readonly SecaoDeConfiguracaoDoMenu[];
 } = {}) {
   const estado = criarEstadoDosAcessos({
@@ -158,16 +160,12 @@ export function montarAcessos({
     getProfile,
     confirmar,
   });
-  const raiz = raizDaTela
-    ? montarModulo(
-        raizDaTela,
-        <Acessos estado={estado} secoesDeConfiguracao={secoesDeConfiguracao} />,
-        { nome: "Acessos" },
-      ).raiz
-    : null;
   return {
     estado,
-    raiz,
+    nome: "Acessos",
+    conteudo: (
+      <Acessos estado={estado} secoesDeConfiguracao={secoesDeConfiguracao} />
+    ),
     /* Ao abrir a seção: relê o perfil e carrega o que ainda não veio. */
     render: () => estado.garantirCarregado(),
     temAlteracoesPendentes: estado.temAlteracoesPendentes,
