@@ -18,9 +18,9 @@ arquivo em kebab-case, componente em PascalCase.
 ```
 icone.tsx                    <Icone nome="…"> — Lucide, do mesmo registro de src/modules/icones.ts
 selo-de-treinamento.tsx      <SeloDeTreinamento>: selo "Treinamento" do edital de treinamento
-pessoas-online/              "Pessoas online" no cabeçalho (montarPessoasOnline); estado em src/app/presenca.ts
-aviso-de-versao/             faixa "Há uma versão nova" no topo (montarAvisoDeVersao); regra em src/app/aviso-de-versao.ts
-busca-global/                busca Ctrl+K (montarBuscaGlobal); a escolha vai ao legado por evento
+pessoas-online/              "Pessoas online" no cabeçalho (filha da casca: src/app/casca/pecas.tsx); estado em src/app/presenca.ts
+aviso-de-versao/             faixa "Há uma versão nova" no topo (filha da casca); regra em src/app/aviso-de-versao.ts
+busca-global/                busca Ctrl+K (filha da raiz); a escolha vai ao legado por evento
 multi-select-busca.tsx       <MultiSelectBusca>: seleção múltipla com busca, controlada (o único do app)
 dados-do-monitoramento.ts    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_UNIDADE que o legado
                              carrega e publica aqui (loadData / loadUnidades), e a área atual
@@ -74,8 +74,9 @@ moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS 
   montagem): é o `navigate` do legado, que pergunta às Configurações antes de sair.
 - Tela de página inteira é rota: `criar<Nome>()` devolve `{ conteudo, nome, render() }` e entra em
   `src/app/telas.tsx` (a raiz única, `src/app/raiz.tsx`, desenha com StrictMode e um ErrorBoundary por
-  tela). Ilha que ainda monta sozinha usa `montarModulo` (`src/app/montar-modulo.tsx`) até o passo 2
-  de `docs/arquitetura/raiz-react.md`.
+  tela). Parte fixa do app (cabeçalho, topo, overlay) é filha da casca (`src/app/casca/`); pedaço
+  React dentro de DOM feito à mão entra por `abrirPortalAvulso` (`src/app/portais-avulsos.tsx`).
+  Nada de `createRoot` novo: a raiz é uma só.
 - Visual novo vem de `src/ui/` (Topo, Filtros, Kpi, CardDeGrafico, TabelaInfinita, Gaveta, Modal,
   Aviso, Campo, Selo…), só com tokens; não recrie em cada tela. Sem textos genéricos (ver o CLAUDE.md raiz).
 - `StrictMode` ligado: efeito tem de limpar o que instala.

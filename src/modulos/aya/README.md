@@ -1,11 +1,11 @@
 # `src/modulos/aya/` — Aya, a assistente
 
 A arara flutuante e o painel de conversa (cartão no canto inferior direito; tela cheia até 600px),
-montados por `montarAya()` em `#ayaApp` (`src/main.ts`). Substitui os antigos `arara-guide.js`,
+desenhados pela casca em `#ayaApp` (`src/app/casca/pecas.tsx`, `React.lazy` quando o app abre). Substitui os antigos `arara-guide.js`,
 `arara-speaking-effects.js` e `nina-panel-drag.js`.
 
 ```
-aya.tsx     <Aya> e montarAya(): arara arrastável (fechada, só o rosto; solta numa
+aya.tsx     <Aya>: arara arrastável (fechada, só o rosto; solta numa
             borda, se esconde espiando; setas como alternativa ao arraste), painel
             (a arara inteira, 88px), sugestões, conversa, "Isso ajudou?", cartão
             "Abrir chamado", foco preso e Esc
@@ -27,7 +27,7 @@ mascote/
   mascote.tsx   <Mascote>: enquadramento "corpo" ou "rosto" (com entrada pelo outro); estados parada, atenta, falando, pensando, comemorando,
                 dormindo e acenando; piscar e arrepio sorteados (Web Animations),
                 olho que segue o ponteiro (variáveis CSS), sono por inatividade,
-                pausa com a aba oculta; montarMascoteAvulsa() para os fogos
+                pausa com a aba oculta; montarMascoteAvulsa() para os fogos (portal avulso da raiz)
   estado.ts     o pedido global (evento `aya:estado`) fora do React, com expiração
   mascote.css   só transform/opacity por data-estado e data-enquadramento (o quadro
                 aproxima a cabeça); movimento reduzido: só pisca, troca sem transição

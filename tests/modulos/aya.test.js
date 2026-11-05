@@ -1,10 +1,11 @@
-import { act } from "react";
+import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   definirAreaAtual,
   definirAreasDoUsuario,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
+import { desenharNoTeste } from "../montar-tela.js";
 import { clicar, digitar, teclar } from "../componentes/interacoes.js";
 
 /*
@@ -15,7 +16,7 @@ import { clicar, digitar, teclar } from "../componentes/interacoes.js";
   conversa fica na aba; a resposta pode trazer o botão da tela citada.
 */
 
-const { montarAya, CHAVE_OCULTA, CHAVE_AVALIACOES, CHAVE_POSICAO_DA_ARARA } =
+const { Aya, CHAVE_OCULTA, CHAVE_AVALIACOES, CHAVE_POSICAO_DA_ARARA } =
   await import("../../src/modulos/aya/aya.tsx");
 const { definirPaginaDaAya, esquecerConversaDaAya, redefinirPaginaDaAya } =
   await import("../../src/modulos/aya/estado.ts");
@@ -44,17 +45,19 @@ async function montar() {
   raiz = document.createElement("div");
   document.body.append(raiz);
   await act(async () => {
-    controlador = montarAya({
-      elemento: raiz,
-      perguntar,
-      navegar,
-      abrirSecao,
-      configuracao: (chave) =>
-        ({
-          support_email: "suporte@agenciasus.org.br",
-          app_version_current: "V1",
-        })[chave] || "",
-    });
+    controlador = desenharNoTeste(
+      raiz,
+      createElement(Aya, {
+        perguntar,
+        navegar,
+        abrirSecao,
+        configuracao: (chave) =>
+          ({
+            support_email: "suporte@agenciasus.org.br",
+            app_version_current: "V1",
+          })[chave] || "",
+      }),
+    );
   });
 }
 

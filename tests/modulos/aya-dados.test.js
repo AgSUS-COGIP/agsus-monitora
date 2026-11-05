@@ -1,10 +1,11 @@
-import { act } from "react";
+import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   definirAreaAtual,
   definirAreasDoUsuario,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
+import { desenharNoTeste } from "../montar-tela.js";
 import { clicar, digitar, teclar } from "../componentes/interacoes.js";
 import { consumirPedidoDeFiltro } from "../../src/app/pedido-de-filtro.ts";
 
@@ -16,7 +17,7 @@ import { consumirPedidoDeFiltro } from "../../src/app/pedido-de-filtro.ts";
   junto da pergunta.
 */
 
-const { montarAya, CHAVE_SEM_RESPOSTA } =
+const { Aya, CHAVE_SEM_RESPOSTA } =
   await import("../../src/modulos/aya/aya.tsx");
 const { definirPaginaDaAya, redefinirPaginaDaAya } =
   await import("../../src/modulos/aya/estado.ts");
@@ -40,14 +41,16 @@ async function montar() {
   raiz = document.createElement("div");
   document.body.append(raiz);
   await act(async () => {
-    controlador = montarAya({
-      elemento: raiz,
-      perguntar,
-      navegar,
-      abrirSecao: vi.fn(),
-      obterPerfil: () => perfil,
-      configuracao: () => "",
-    });
+    controlador = desenharNoTeste(
+      raiz,
+      createElement(Aya, {
+        perguntar,
+        navegar,
+        abrirSecao: vi.fn(),
+        obterPerfil: () => perfil,
+        configuracao: () => "",
+      }),
+    );
   });
 }
 

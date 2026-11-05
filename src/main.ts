@@ -45,8 +45,11 @@ import "./modulos/mapa-de-projetos/mapa-de-projetos.css";
 import { montarRaiz } from "./app/raiz.tsx";
 // O sistema depois de entrar (navegação, carga, presença, moldura): src/app/sistema.ts.
 import {
+  avisoDeVersao,
+  encerramento,
   ligarSistema,
   navegacao,
+  presenca,
   recarregarPaineisExternos,
 } from "./app/sistema.ts";
 import { instalarCarregamento } from "./app/carregamento.ts";
@@ -59,7 +62,6 @@ import { importarComRecarga } from "./lib/importar-com-recarga";
 import { initPwaLifecycle } from "./modules/pwa-lifecycle.ts";
 import { initGoogleProfilePhoto } from "./modules/google-profile-photo.ts";
 import { aplicarMarcaDaBarraLateral } from "./componentes/barra-lateral/marca.ts";
-import { montarBuscaGlobal } from "./componentes/busca-global/busca-global.tsx";
 import { ligarEntradaAPagina } from "./app/entrada/entrada.tsx";
 import { marcaDaEntrada } from "./app/entrada/marca.ts";
 import { criarPedidoDeAcesso } from "./app/entrada/pedido-de-acesso.ts";
@@ -101,10 +103,17 @@ document.documentElement.classList.remove("vite-dev-carregando");
 
 /*
   A raiz do app (src/app/raiz.tsx), o único `createRoot` das telas: os avisos
-  por cima de tudo, a tela de acesso e a casca (barra lateral, cabeçalho e as
-  telas, que são rotas). Desenha na hora: o sistema, as ilhas e o legado
-  abaixo a encontram no DOM pelos ids de sempre.
+  por cima de tudo, a tela de acesso, a casca (barra lateral, cabeçalho e as
+  telas, que são rotas) e a busca global. Desenha na hora: o sistema e o
+  legado abaixo a encontram no DOM pelos ids de sempre.
+
+  A Aya (src/modulos/aya/, com os tours ~110 kB) é filha da casca e só baixa
+  quando a sessão abre o app (`appAberto`): a tela de acesso não a carrega.
 */
+const FASES_COM_O_APP: ReadonlySet<string> = new Set([
+  FASES.ABRINDO,
+  FASES.CONECTADO,
+]);
 const pedidoDeAcesso = criarPedidoDeAcesso();
 // A cor padrão da marca da barra vale desde já (a gravada chega com a configuração).
 aplicarMarcaDaBarraLateral();
@@ -113,6 +122,17 @@ montarRaiz({
   sessao: sessaoDoApp,
   marca: marcaDaEntrada,
   pedido: pedidoDeAcesso,
+  pecas: {
+    presenca,
+    avisoDeVersao,
+    encerramento,
+    appAberto: {
+      obter: () => FASES_COM_O_APP.has(sessaoDoApp.obter().fase),
+      assinar: sessaoDoApp.assinar,
+    },
+    // Busca global (Ctrl+K / Cmd+K): só abre com usuário conectado.
+    estaConectado: () => Boolean(sessaoDoApp.obter().usuario),
+  },
 });
 
 /*
@@ -231,41 +251,8 @@ registrarPreCarga((view, secao) => {
   else preCarregarTelaRegistrada(view);
 });
 
-/*
-  Busca global (Ctrl+K / Cmd+K): só abre com usuário conectado. A escolha vai
-  ao legado por evento (filtros e navegação continuam lá).
-*/
-montarBuscaGlobal({
-  estaConectado: () => Boolean(sessaoDoApp.obter().usuario),
-});
-
 // A entrada: sessão guardada, retorno do Google ou a tela de acesso.
 void sessaoDoApp.iniciar();
-
-/*
-  A Aya (src/modulos/aya/): a arara flutuante e o painel de conversa. Sabe a
-  página pelo estado que o legado atualiza a cada navegação (setPageTitle →
-  definirPaginaDaAya) e a área pelo estado do monitoramento. Fora do pacote
-  principal (com os tours, ~110 kB): ela só existe dentro do app (#ayaApp, no
-  #appScreen), então chega por `import()` quando a sessão abre — a tela de
-  acesso não a carrega. O estado dela (src/modulos/aya/estado.ts) é do pacote
-  principal e já guarda a página.
-*/
-const FASES_COM_O_APP: ReadonlySet<string> = new Set([
-  FASES.ABRINDO,
-  FASES.CONECTADO,
-]);
-let ayaPedida = false;
-const pararDeEsperarAAya = sessaoDoApp.assinar(montarAyaAoEntrar);
-function montarAyaAoEntrar() {
-  if (ayaPedida || !FASES_COM_O_APP.has(sessaoDoApp.obter().fase)) return;
-  ayaPedida = true;
-  pararDeEsperarAAya();
-  void import("./modulos/aya/aya.tsx").then(({ montarAya }) => {
-    montarAya();
-  });
-}
-montarAyaAoEntrar();
 
 if (!hasSupabaseEnv()) {
   console.warn(

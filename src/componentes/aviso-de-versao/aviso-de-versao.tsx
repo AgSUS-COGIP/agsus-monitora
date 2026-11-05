@@ -1,5 +1,4 @@
 import { useSyncExternalStore } from "react";
-import { montarModulo } from "../../app/montar-modulo.tsx";
 import { Icone } from "../icone.tsx";
 import { Aviso } from "../../ui/aviso.tsx";
 import {
@@ -73,17 +72,4 @@ export function AvisoDeVersao({ aviso }: { aviso: Controle }) {
       </div>
     </Aviso>
   );
-}
-
-export function montarAvisoDeVersao({
-  elemento = globalThis.document?.getElementById("avisoDeVersaoApp"),
-  aviso,
-}: {
-  elemento?: HTMLElement | null;
-  aviso: Controle;
-}) {
-  if (!elemento) return null;
-  return montarModulo(elemento, <AvisoDeVersao aviso={aviso} />, {
-    nome: "Aviso de versão nova",
-  });
 }

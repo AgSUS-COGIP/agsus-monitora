@@ -15,7 +15,6 @@ describe("ligarSistema", () => {
   it("publica os contratos em window e liga os ganchos da sessão", async () => {
     document.body.innerHTML = `
       <section id="appScreen" class="app hidden"></section>
-      <div id="pessoasOnlineApp"></div>
       <i id="fullscreenActionIcon"></i>`;
     const { sessaoDoApp } = await import("../../src/app/sessao.ts");
     const ligar = vi.spyOn(sessaoDoApp, "ligarSistema");
@@ -56,10 +55,8 @@ describe("ligarSistema", () => {
       ].sort(),
     );
 
-    // Pessoas online montou no cabeçalho, escondido até a primeira batida.
-    expect(document.getElementById("onlinePresence").classList).toContain(
-      "hidden",
-    );
+    // Pessoas online (filha da casca, src/app/casca/pecas.tsx) fica escondido até a primeira batida.
+    expect(sistema.presenca.obter().visivel).toBe(false);
 
     // Sair esconde o app e limpa o que era da pessoa (os avisos de conferência lidos também).
     const { memoriaDosAvisos } =

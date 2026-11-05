@@ -1,7 +1,8 @@
-import { StrictMode, createElement } from "react";
+import { StrictMode, act, createElement } from "react";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { ErrorBoundary } from "../src/app/ErrorBoundary.tsx";
+import { PortaisAvulsos } from "../src/app/portais-avulsos.tsx";
 
 /*
   Os testes desenham as telas e as peças do app como a raiz faz
@@ -35,4 +36,20 @@ export function desenharNoTeste(elemento, componente, { nome, sincrono } = {}) {
   if (sincrono) flushSync(() => raiz.render(arvore));
   else raiz.render(arvore);
   return { raiz, desmontar: () => raiz.unmount() };
+}
+
+/**
+ * Os portais avulsos da raiz (src/app/portais-avulsos.tsx: a arara dos fogos,
+ * a cobertura do painel externo), desenhados como a raiz faz. Devolve o
+ * desmonte.
+ */
+export function montarPortaisNoTeste() {
+  const elemento = document.createElement("div");
+  document.body.append(elemento);
+  const raiz = createRoot(elemento);
+  act(() => raiz.render(createElement(PortaisAvulsos)));
+  return () => {
+    act(() => raiz.unmount());
+    elemento.remove();
+  };
 }

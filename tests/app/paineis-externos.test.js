@@ -1,4 +1,6 @@
+import { act } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { montarPortaisNoTeste } from "../montar-tela.js";
 import { criarPaineisExternos } from "../../src/app/paineis-externos.ts";
 
 /*
@@ -155,14 +157,19 @@ describe("quadro", () => {
   });
 
   it("a cobertura diz o que está carregando até o site responder", async () => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
     const { paineis } = montar();
+    // A cobertura é um portal da raiz do app (src/app/portais-avulsos.tsx).
+    const desmontarPortais = montarPortaisNoTeste();
     await carregar(paineis);
     paineis.completarLiberados();
-    paineis.mostrar("bi");
+    act(() => void paineis.mostrar("bi"));
     expect(
       document.querySelector("#external-panel-bi .carregamento-do-painel")
         ?.textContent,
     ).toContain("Carregando o painel");
+    act(() => paineis.descartarAbertos());
+    desmontarPortais();
   });
 
   it("em manutenção ou sem endereço válido: aviso, sem iframe", async () => {

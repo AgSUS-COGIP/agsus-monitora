@@ -31,7 +31,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { montarModulo } from "../../../app/montar-modulo.tsx";
+import { abrirPortalAvulso } from "../../../app/portais-avulsos.tsx";
 import {
   comemoracoesPessoaisDesligadas,
   deveAcenar,
@@ -485,15 +485,16 @@ export function Mascote({
 }
 
 /**
- * Monta uma arara fora de uma árvore React (os fogos, em
- * src/modules/comemoracao.ts), pelo jeito único (montarModulo: um erro no
- * desenho não derruba a página). Devolve `desmontar`.
+ * Desenha uma arara num elemento de fora do React (os fogos, em
+ * src/modules/comemoracao.ts), por um portal da raiz do app
+ * (src/app/portais-avulsos.tsx: um erro no desenho não derruba a página).
+ * Devolve `desmontar`.
  */
 export function montarMascoteAvulsa(
   elemento: Element,
   props: PropsDaMascote = {},
 ) {
-  return montarModulo(elemento, <Mascote {...props} />, {
+  return abrirPortalAvulso(elemento, <Mascote {...props} />, {
     nome: "a arara da comemoração",
-  }).desmontar;
+  });
 }

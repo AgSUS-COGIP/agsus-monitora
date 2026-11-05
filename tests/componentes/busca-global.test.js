@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { act } from "react";
+import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { clicar, digitar, teclar } from "./interacoes.js";
 import {
@@ -14,8 +14,9 @@ import { EVENTO_ESCOLHA_DA_BUSCA } from "../../src/lib/busca-global.ts";
   escolhem, e a escolha vai ao legado pelo evento com o id da linha.
 */
 
-const { montarBuscaGlobal } =
+const { BuscaGlobal, avisarEscolha } =
   await import("../../src/componentes/busca-global/busca-global.tsx");
+const { desenharNoTeste } = await import("../montar-tela.js");
 
 const LINHAS = [
   {
@@ -54,10 +55,13 @@ async function montar() {
   raiz = document.createElement("div");
   document.body.append(raiz);
   await act(async () => {
-    controlador = montarBuscaGlobal({
-      raizDaTela: raiz,
-      estaConectado: () => conectado,
-    });
+    controlador = desenharNoTeste(
+      raiz,
+      createElement(BuscaGlobal, {
+        estaConectado: () => conectado,
+        aoEscolher: avisarEscolha,
+      }),
+    );
   });
 }
 
@@ -252,7 +256,8 @@ describe("o legado recebe a escolha", () => {
   it("a busca antiga saiu", () => {
     const html = readFileSync("index.html", "utf8");
     expect(html).not.toContain("searchModal");
-    expect(html).toContain('id="buscaGlobalApp"');
+    // A busca é filha da raiz do app (src/app/casca/pecas.tsx), sem ponto próprio no HTML.
+    expect(html).not.toContain('id="buscaGlobalApp"');
     for (const nome of [
       "openSearchModal",
       "closeSearchModal",

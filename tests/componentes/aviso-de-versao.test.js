@@ -1,4 +1,4 @@
-import { act } from "react";
+import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AVISO_DE_PENDENCIA,
@@ -6,7 +6,8 @@ import {
   INTERVALO_DA_CONFERENCIA_MS,
   criarAvisoDeVersao,
 } from "../../src/app/aviso-de-versao.ts";
-import { montarAvisoDeVersao } from "../../src/componentes/aviso-de-versao/aviso-de-versao.tsx";
+import { AvisoDeVersao } from "../../src/componentes/aviso-de-versao/aviso-de-versao.tsx";
+import { desenharNoTeste } from "../montar-tela.js";
 import { EVENTO_TELA_ANTIGA } from "../../src/lib/versao-do-sistema.ts";
 import { clicar } from "./interacoes.js";
 
@@ -163,7 +164,10 @@ describe("faixa de versão nova", () => {
 
   async function montar(aviso) {
     await act(async () => {
-      montado = montarAvisoDeVersao({ elemento, aviso });
+      montado = desenharNoTeste(
+        elemento,
+        createElement(AvisoDeVersao, { aviso }),
+      );
     });
   }
   const faixa = () => elemento.querySelector(".aviso-de-versao");
@@ -269,7 +273,10 @@ describe("aviso forte: a versão aberta quebrou", () => {
   it("PGRST202 com versão nova publicada vira 'Atualize para continuar', sem fechar", async () => {
     const c = montarCenario();
     await act(async () => {
-      montado = montarAvisoDeVersao({ elemento, aviso: c.aviso });
+      montado = desenharNoTeste(
+        elemento,
+        createElement(AvisoDeVersao, { aviso: c.aviso }),
+      );
     });
     c.aviso.iniciar();
     await act(async () => {
@@ -299,7 +306,10 @@ describe("aviso forte: a versão aberta quebrou", () => {
     expect(c.aviso.obter().fechado).toBe(true);
     await c.aviso.aoSinalDeTelaAntiga();
     await act(async () => {
-      montado = montarAvisoDeVersao({ elemento, aviso: c.aviso });
+      montado = desenharNoTeste(
+        elemento,
+        createElement(AvisoDeVersao, { aviso: c.aviso }),
+      );
     });
     expect(elemento.textContent).toContain("Atualize para continuar");
   });

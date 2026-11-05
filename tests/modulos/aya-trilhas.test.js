@@ -1,10 +1,11 @@
-import { act } from "react";
+import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   definirAreaAtual,
   definirAreasDoUsuario,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
+import { desenharNoTeste } from "../montar-tela.js";
 import { clicar, teclar } from "../componentes/interacoes.js";
 
 /*
@@ -14,7 +15,7 @@ import { clicar, teclar } from "../componentes/interacoes.js";
   marca concluída, e a oferta de "Primeiros passos" só na primeira entrada.
 */
 
-const { montarAya } = await import("../../src/modulos/aya/aya.tsx");
+const { Aya } = await import("../../src/modulos/aya/aya.tsx");
 const { definirPaginaDaAya, redefinirPaginaDaAya } =
   await import("../../src/modulos/aya/estado.ts");
 const { CHAVE_PROGRESSO_DAS_TRILHAS, CHAVE_OFERTA_DE_PRIMEIROS_PASSOS } =
@@ -93,14 +94,16 @@ async function montar() {
   raiz = document.createElement("div");
   document.body.append(raiz);
   await act(async () => {
-    controlador = montarAya({
-      elemento: raiz,
-      perguntar: vi.fn(async () => ({ answer: "ok" })),
-      navegar,
-      abrirSecao: vi.fn(),
-      obterPerfil: () => perfil,
-      configuracao: () => "",
-    });
+    controlador = desenharNoTeste(
+      raiz,
+      createElement(Aya, {
+        perguntar: vi.fn(async () => ({ answer: "ok" })),
+        navegar,
+        abrirSecao: vi.fn(),
+        obterPerfil: () => perfil,
+        configuracao: () => "",
+      }),
+    );
   });
 }
 

@@ -164,6 +164,28 @@ test.describe("sessão simulada", () => {
     expect(erros).toEqual([]);
   });
 
+  test("a Aya, a busca global e Pessoas online são da raiz: aparecem depois de entrar", async ({
+    page,
+  }) => {
+    const erros = await abrirComSessao(page);
+    await page.goto("/saude-indigena/visao-geral", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.locator(".sidebar")).toBeVisible();
+    // A arara baixa quando o app abre (React.lazy na casca).
+    await expect(page.locator("#ayaApp .aya-arara")).toBeVisible();
+    await expect(page.locator("#pessoasOnlineApp #onlinePresence")).toHaveCount(
+      1,
+    );
+    // Ctrl+K abre a busca global com a pessoa conectada; Esc fecha.
+    await page.keyboard.press("Control+k");
+    const busca = page.locator('[role="dialog"].search-modal');
+    await expect(busca).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(busca).toBeHidden();
+    expect(erros).toEqual([]);
+  });
+
   test("rota de uma área que o perfil não tem cai na área dele", async ({
     page,
   }) => {

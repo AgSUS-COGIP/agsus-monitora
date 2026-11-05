@@ -172,16 +172,13 @@ describe("arranque", () => {
   const main = readFileSync("src/main.ts", "utf8");
   const indice = readFileSync("index.html", "utf8");
 
-  it("src/main.ts desenha a raiz (com a casca) antes de ligar o sistema e montar as ilhas", () => {
+  it("src/main.ts desenha a raiz (com a casca) antes de ligar o sistema", () => {
     const raiz = main.indexOf("montarRaiz({");
     expect(raiz).toBeGreaterThan(-1);
-    for (const depois of [
-      "ligarSistema();",
-      "ligarEntradaAPagina(",
-      "montarBuscaGlobal(",
-      "montarAya();",
-    ])
+    for (const depois of ["ligarSistema();", "ligarEntradaAPagina("])
       expect(main.indexOf(depois), depois).toBeGreaterThan(raiz);
+    // Busca global, Aya, Pessoas online… são filhas da raiz, não ilhas.
+    expect(main).not.toMatch(/montar(BuscaGlobal|Aya|PessoasOnline)\(/);
     // As telas são rotas da raiz, não ilhas de src/main.ts.
     expect(main).not.toMatch(/montar(VisaoGeral|Nucleo|BarraLateral|Casca)\(/);
   });
