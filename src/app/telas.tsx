@@ -12,7 +12,7 @@ import type { ComponentType, LazyExoticComponent } from "react";
 import { ErrorBoundary } from "./ErrorBoundary.tsx";
 import { avisar, mostrarCarregamento } from "./avisos.ts";
 import { chamarAcaoDaCasca } from "./casca/acoes.ts";
-import { CabecalhoDoRelatorio } from "./casca/pecas.tsx";
+import { CabecalhoDoRelatorio } from "./casca/cabecalho-do-relatorio.tsx";
 import {
   usarAviso,
   usarEstadoDaNavegacao,
