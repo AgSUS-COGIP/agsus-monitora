@@ -25,6 +25,7 @@ const LARGURA_ORIGINAL = window.innerWidth;
 const MATCH_MEDIA_ORIGINAL = window.matchMedia;
 
 let casca = null;
+let desligarMoldura = null;
 
 async function largura(px) {
   Object.defineProperty(window, "innerWidth", {
@@ -43,6 +44,8 @@ async function montar(px = 390) {
   document.body.innerHTML = '<section id="appScreen" class="app"></section>';
   const moldura = criarMoldura({ armazenamento: () => null });
   window.toggleSidebar = moldura.alternarBarra;
+  // A casca liga a moldura à página (MolduraNaPagina); aqui, sem as peças, à mão.
+  desligarMoldura = moldura.ligarNaPagina();
   // A casca já traz a barra lateral (src/app/casca/casca.tsx).
   await act(async () => {
     casca = desenharNoTeste(
@@ -85,6 +88,8 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  desligarMoldura?.();
+  desligarMoldura = null;
   await act(async () => casca?.desmontar());
   casca = null;
   await act(async () => redefinirBarraLateral());

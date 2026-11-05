@@ -8,6 +8,7 @@ import {
   AyaDoApp,
   ComemoracoesDoApp,
   EncerramentoDoEditalDoApp,
+  MolduraNaPagina,
 } from "./pecas.tsx";
 import { usarTabelasEmCartoes } from "./tabelas-em-cartoes.ts";
 import { Topo } from "./topo.tsx";
@@ -37,6 +38,8 @@ export const Casca = memo(function Casca() {
   usarTabelasEmCartoes();
   return (
     <>
+      {/* A moldura (barra, tema, tela cheia) aplicada na página. */}
+      <MolduraNaPagina />
       <RetornoDoPainelExterno />
       {/* Barra lateral (src/componentes/barra-lateral/): marca, menu e rodapé. */}
       <aside className="sidebar" aria-label="Navegação principal">

@@ -3,6 +3,7 @@ import { avisar } from "./avisos.ts";
 import { ESTADO_INICIAL_DA_NAVEGACAO } from "./navegacao.ts";
 import type { EstadoDaNavegacao, LeituraDaNavegacao } from "./navegacao.ts";
 import type { AvisoDeVersao } from "./aviso-de-versao.ts";
+import type { Moldura } from "./moldura.ts";
 import type { PresencaDoCabecalho } from "../componentes/pessoas-online/pessoas-online.tsx";
 import type { EstadoDoEncerramentoControle } from "../modulos/encerramento-do-edital/estado.ts";
 
@@ -46,6 +47,8 @@ export interface PecasDoApp {
   estaConectado: () => boolean;
   /** Relê os painéis externos do menu (Módulos e abas salvou). */
   recarregarPaineisExternos?: () => unknown;
+  /** Barra, tema, tela cheia e relatório (src/app/moldura.ts); a casca aplica na página. */
+  moldura?: Moldura;
 }
 
 export interface ContextoDoApp {

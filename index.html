@@ -198,11 +198,6 @@
 
   <body class="sidebar-collapsed config-loading">
     <a id="skipLink" href="#conteudoPrincipal" class="skip-link"></a>
-    <!--
-      Avisos por cima de tudo (notificações, carregamento dos salvamentos e
-      conexão): React, src/app/casca/avisos.tsx.
-    -->
-    <div id="avisosApp"></div>
 
     <!--
       Skeleton da entrada: o formato do sistema enquanto a sessão e os dados
@@ -486,9 +481,9 @@
     <section id="appScreen" class="app hidden"></section>
 
     <!--
-      A raiz do app (src/app/raiz.tsx): o React monta aqui (a busca global,
-      Ctrl+K) e desenha, por portal, nos lugares acima (#avisosApp,
-      #telaDeEntrada e #appScreen).
+      A raiz do app (src/app/raiz.tsx): o React monta aqui (os avisos por cima
+      de tudo e a busca global, Ctrl+K) e desenha, por portal, nos lugares
+      acima (#telaDeEntrada e #appScreen).
     -->
     <div id="raiz"></div>
 

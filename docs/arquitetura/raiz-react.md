@@ -172,6 +172,13 @@ visao, edital, secao, aviso, titulo, subtitulo, abertura }`; `assinar()` avisa a
    `src/lib/pagina-desligada.ts`), a navegação publica `manutencao` e `faixa`, e a rota desenha
    `#page-manutencao` e `#faixaDeManutencao` em React (`src/app/telas.tsx`). A situação do sistema
    (sem DOM) foi para `src/app/situacao-do-sistema.ts`; sai `src/modules/situacao-dos-modulos.ts`.
+6. **Moldura como store** (feito): `src/app/moldura.ts` só muda estado (barra recolhida/aberta,
+   tema, tela cheia, cabeçalho do PDF); a casca liga à página (`MolduraNaPagina`,
+   `src/app/casca/pecas.tsx`: classes de `body`/`html`, eventos da barra, largura, tema de outra
+   aba e tela cheia, desligados ao desmontar). O ícone da tela cheia e o cabeçalho do relatório são
+   React. Os avisos (`#avisosApp`) vivem no `#raiz`. O index.html fica com o primeiro quadro: os
+   scripts do `<head>` (marca da tela de acesso, sessão guardada → skeleton, barra e tema escuro), o
+   skeleton, o cartão de entrada, `#appScreen` (escondido até a sessão abrir) e `#raiz`.
 
 ## 4. Riscos
 

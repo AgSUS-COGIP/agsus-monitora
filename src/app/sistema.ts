@@ -56,7 +56,7 @@ import type { OrigemDaEntrada } from "./sessao.ts";
     encerramento-do-edital/  tela de fim de edital e selos no perfil (src/modulos/)
     presenca.ts          auditoria, heartbeat e Pessoas online
     vigia-do-catalogo.ts página desligada pela coordenação fecha sem recarregar
-    moldura.ts           barra recolhida, tema, tela cheia, PDF
+    moldura.ts           barra recolhida, tema, tela cheia, PDF (store; a casca aplica)
 
   Os ganchos de `sessaoDoApp.ligarSistema` são o contrato com a sessão
   (docs/arquitetura-react.md, "Sessão ↔ sistema"). As funções em `window` são
@@ -310,13 +310,10 @@ async function antesDeSair() {
 
 /** Liga tudo (uma vez, importado por src/main.ts antes de montar as telas). */
 export function ligarSistema() {
+  // A moldura é um store; a casca a leva para a página (src/app/casca/pecas.tsx).
   moldura.aplicarTemaGuardado();
   moldura.ajustarBarra();
   moldura.aplicarBarraGuardada();
-  moldura.marcarTelaCheia();
-  moldura.acompanharLargura();
-  moldura.acompanharTemaDeOutraAba();
-  moldura.acompanharTelaCheia();
 
   Object.assign(window, {
     getMonitoraProfile: perfil.obterPerfil,

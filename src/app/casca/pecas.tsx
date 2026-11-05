@@ -1,4 +1,11 @@
-import { Suspense, lazy, useState, useSyncExternalStore } from "react";
+import {
+  Suspense,
+  lazy,
+  useLayoutEffect,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import type { Moldura } from "../moldura.ts";
 import { ErrorBoundary } from "../ErrorBoundary.tsx";
 import { carregarComemoracao } from "../comemoracao-sob-demanda.ts";
 import { filaDeComemoracoes } from "../fila-de-comemoracoes.ts";
@@ -132,6 +139,52 @@ export function BuscaGlobalDoApp() {
         aoEscolher={avisarEscolha}
       />
     </ErrorBoundary>
+  );
+}
+
+/*
+  A moldura (src/app/moldura.ts) na página: enquanto a casca existe, o estado
+  da barra, do tema e da tela cheia vira as classes de `body`/`html`, e a
+  largura, o tema de outra aba e a tela cheia do navegador são
+  acompanhados. Desmontou (ou o StrictMode remontou): desliga e liga de novo.
+*/
+export function MolduraNaPagina() {
+  const moldura = usarPecasDoApp()?.moldura;
+  useLayoutEffect(() => moldura?.ligarNaPagina(), [moldura]);
+  return null;
+}
+
+type EstadoDaMolduraNaCasca = Pick<
+  ReturnType<Moldura["obter"]>,
+  "telaCheiaDoApp" | "telaCheiaDoNavegador" | "relatorio"
+>;
+const ESTADO_SEM_MOLDURA: EstadoDaMolduraNaCasca = Object.freeze({
+  telaCheiaDoApp: false,
+  telaCheiaDoNavegador: false,
+  relatorio: null,
+});
+const assinarNada = () => () => {};
+const semMoldura = (): EstadoDaMolduraNaCasca => ESTADO_SEM_MOLDURA;
+
+export function usarMoldura(): EstadoDaMolduraNaCasca {
+  const moldura = usarPecasDoApp()?.moldura;
+  return useSyncExternalStore<EstadoDaMolduraNaCasca>(
+    moldura?.assinar ?? assinarNada,
+    moldura?.obter ?? semMoldura,
+    moldura?.obter ?? semMoldura,
+  );
+}
+
+/** O ícone do item "Tela cheia" no menu da conta. */
+export function IconeDaTelaCheia() {
+  const { telaCheiaDoApp, telaCheiaDoNavegador } = usarMoldura();
+  const cheia = telaCheiaDoApp || telaCheiaDoNavegador;
+  return (
+    <i
+      id="fullscreenActionIcon"
+      className={cheia ? "fa-solid fa-compress" : "fa-solid fa-expand"}
+      aria-hidden="true"
+    ></i>
   );
 }
 

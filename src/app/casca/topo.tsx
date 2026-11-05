@@ -3,6 +3,7 @@ import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
 import { usarEstadoDaNavegacao } from "../contexto-do-app.ts";
 import { SininhoDoResumo } from "../../modulos/resumo-do-dia/resumo-do-dia.tsx";
 import {
+  IconeDaTelaCheia,
   PessoasOnlineDoApp,
   SeloNoAvatarDoApp,
   SelosDoEditalDoApp,
@@ -109,11 +110,7 @@ function MenuDaConta() {
             type="button"
             onClick={aoClicar("fechar", "toggleBrowserFullscreen")}
           >
-            <i
-              id="fullscreenActionIcon"
-              className="fa-solid fa-expand"
-              aria-hidden="true"
-            ></i>{" "}
+            <IconeDaTelaCheia />{" "}
             <span id="fullscreenActionText">Tela cheia</span>
           </button>
           <button type="button" onClick={aoClicar("fechar", "exportPDF")}>

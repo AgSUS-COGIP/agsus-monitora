@@ -67,9 +67,12 @@ describe("Avisos", () => {
     expect($("connectivityStatusNotice")).toBeNull();
   });
 
-  it("o index.html não traz mais a marcação, só a raiz vazia", () => {
+  it("o index.html não traz a marcação: os avisos são da raiz (#raiz)", () => {
     const indice = readFileSync("index.html", "utf8");
-    expect(indice).toContain('<div id="avisosApp"></div>');
+    expect(indice).not.toContain('id="avisosApp"');
+    expect(readFileSync("src/app/raiz.tsx", "utf8")).toContain(
+      '<div id="avisosApp">',
+    );
     for (const id of ["loader", "toastBox", "offlineBar"])
       expect(indice).not.toContain(`id="${id}"`);
   });

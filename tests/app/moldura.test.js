@@ -13,7 +13,13 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 
-/* A moldura do app (src/app/moldura.ts): barra, tema, tela cheia e PDF. */
+/*
+  A moldura do app (src/app/moldura.ts): um store (barra, tema, tela cheia e
+  o cabeçalho do PDF) que a casca liga à página (`ligarNaPagina`: classes de
+  body/html, eventos da barra, largura, outra aba e tela cheia).
+*/
+
+let desligar = null;
 
 function janelaFalsa({ celular = false } = {}) {
   const ouvintes = {};
@@ -43,6 +49,9 @@ function montar(opcoes = {}) {
     }),
     ...opcoes.extras,
   });
+  // Como a casca faz ao montar (src/app/casca/pecas.tsx, MolduraNaPagina).
+  desligar?.();
+  desligar = moldura.ligarNaPagina();
   return { moldura, janela, avisar };
 }
 
@@ -53,6 +62,8 @@ beforeEach(() => {
   document.body.innerHTML = `<i id="fullscreenActionIcon"></i><div class="content"><p>conteúdo</p></div>`;
 });
 afterEach(() => {
+  desligar?.();
+  desligar = null;
   vi.useRealTimers();
   redefinirDadosDoMonitoramento();
 });
@@ -90,7 +101,6 @@ describe("barra lateral", () => {
     expect(document.body.classList).not.toContain("sidebar-collapsed");
     expect(localStorage.getItem(CHAVE_DA_BARRA_RECOLHIDA)).toBeNull();
     moldura.alternarBarra();
-    moldura.acompanharLargura();
     janela.emitir("resize");
     vi.advanceTimersByTime(220);
     expect(document.body.classList).toContain("sidebar-collapsed");
@@ -117,7 +127,6 @@ describe("tema", () => {
     const { moldura, janela } = montar();
     moldura.aplicarTemaGuardado();
     expect(document.documentElement.getAttribute("data-theme")).toBe("");
-    moldura.acompanharTemaDeOutraAba();
     janela.emitir("storage", { key: CHAVE_DO_TEMA, newValue: "1" });
     expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
     janela.emitir("storage", { key: "outra", newValue: "0" });
@@ -126,13 +135,12 @@ describe("tema", () => {
 });
 
 describe("tela cheia", () => {
-  it("sem a do navegador, expande o app e troca o ícone", () => {
+  it("sem a do navegador, expande o app (o ícone lê o estado)", () => {
     const { moldura, avisar } = montar();
     moldura.alternarTelaCheia();
     expect(document.body.classList).toContain("app-fullscreen-fallback");
-    expect(document.getElementById("fullscreenActionIcon").className).toBe(
-      "fa-solid fa-compress",
-    );
+    expect(document.body.classList).toContain("system-fullscreen-mode");
+    expect(moldura.obter().telaCheiaDoApp).toBe(true);
     expect(avisar).toHaveBeenCalledWith("Modo expandido ativado.");
     moldura.sairDaTelaCheia();
     expect(document.body.classList).not.toContain("app-fullscreen-fallback");
@@ -152,19 +160,18 @@ describe("tela cheia", () => {
 });
 
 describe("relatório em PDF", () => {
-  it("põe o cabeçalho do relatório como texto, imprime e limpa", () => {
+  it("publica o cabeçalho do relatório, imprime e limpa", () => {
     vi.useFakeTimers();
     const { moldura, janela, avisar } = montar();
     moldura.exportarPdf();
-    const cabecalho = document.getElementById("printReportHeader");
-    expect(cabecalho.className).toBe("print-only");
-    expect(cabecalho.textContent).toContain("Relatório de processos seletivos");
-    expect(cabecalho.textContent).toContain("10 vagas previstas");
-    expect(document.querySelector(".content").firstChild).toBe(cabecalho);
+    const { relatorio } = moldura.obter();
+    expect(relatorio.vagas).toBe(10);
+    expect(relatorio.contratados).toBe(4);
+    expect(relatorio.filtros).toContain("Nenhum filtro aplicado");
     vi.advanceTimersByTime(120);
     expect(janela.print).toHaveBeenCalled();
     vi.advanceTimersByTime(1500);
-    expect(document.getElementById("printReportHeader")).toBeNull();
+    expect(moldura.obter().relatorio).toBeNull();
     expect(avisar).toHaveBeenCalled();
   });
 
@@ -174,8 +181,31 @@ describe("relatório em PDF", () => {
     ["projetos", "AgSUS Monitora — Projetos"],
   ])("o título do relatório é o da área aberta (%s)", (area, titulo) => {
     definirAreaAtual(area);
-    montar().moldura.exportarPdf();
-    const cabecalho = document.getElementById("printReportHeader");
-    expect(cabecalho.firstChild.firstChild.textContent).toBe(titulo);
+    const { moldura } = montar();
+    moldura.exportarPdf();
+    expect(moldura.obter().relatorio.titulo).toBe(titulo);
+  });
+});
+
+describe("a página", () => {
+  it("desligada (a casca desmontou), as mudanças não mexem mais na página", () => {
+    const { moldura, janela } = montar();
+    desligar();
+    desligar = null;
+    moldura.alternarTema();
+    expect(document.documentElement.getAttribute("data-theme")).toBe("");
+    janela.emitir("storage", { key: CHAVE_DO_TEMA, newValue: "1" });
+    expect(moldura.obter().temaEscuro).toBe(true);
+    expect(document.documentElement.getAttribute("data-theme")).toBe("");
+  });
+
+  it("o estado começa no que o primeiro quadro pintou (body e html)", () => {
+    document.body.className = "sidebar-collapsed";
+    document.documentElement.setAttribute("data-theme", "dark");
+    const moldura = criarMoldura({ janela: janelaFalsa() });
+    expect(moldura.obter()).toMatchObject({
+      barraRecolhida: true,
+      temaEscuro: true,
+    });
   });
 });

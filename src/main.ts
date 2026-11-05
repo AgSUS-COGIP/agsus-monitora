@@ -48,6 +48,7 @@ import {
   avisoDeVersao,
   encerramento,
   ligarSistema,
+  moldura,
   navegacao,
   presenca,
   recarregarPaineisExternos,
@@ -116,6 +117,7 @@ montarRaiz({
     // Busca global (Ctrl+K / Cmd+K): só abre com usuário conectado.
     estaConectado: () => Boolean(sessaoDoApp.obter().usuario),
     recarregarPaineisExternos,
+    moldura,
   },
 });
 
