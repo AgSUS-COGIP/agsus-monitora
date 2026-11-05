@@ -519,6 +519,19 @@ export function textoDaReserva(
   return `Em uso por ${reserva.nome || "outra pessoa"} desde ${hora(reserva.desde)}`;
 }
 
+/*
+  O que cada ação da coordenação pode pegar: as mesmas regras para a
+  seleção (ações em lote) e para o "⋯" de uma linha.
+*/
+export const podeDistribuirFicha = (c: InscritoComFicha): boolean =>
+  !(["CONCLUIDA", "FORA_LOTE"] as unknown[]).includes(c.ficha.situacao);
+export const podeLiberarReserva = (
+  c: InscritoComFicha,
+  agora: Date = new Date(),
+): boolean => reservaVigente(c.ficha.reserva, agora);
+export const podeMandarParaRevisao = (c: InscritoComFicha): boolean =>
+  (["PENDENTE", "EM_ANALISE"] as unknown[]).includes(c.ficha.situacao);
+
 /** O que cada ação em lote da coordenação pode pegar da seleção (inscritos com ficha). */
 export function acoesDaSelecao<T extends InscritoNaFila>(
   selecionados: readonly (T | null | undefined)[] | null | undefined,
@@ -528,15 +541,39 @@ export function acoesDaSelecao<T extends InscritoNaFila>(
     (c) => c?.ficha?.id,
   ) as (T & InscritoComFicha)[];
   return {
-    distribuir: fichas.filter(
-      (c) =>
-        !(["CONCLUIDA", "FORA_LOTE"] as unknown[]).includes(c.ficha.situacao),
-    ),
-    liberar: fichas.filter((c) => reservaVigente(c.ficha.reserva, agora)),
-    revisao: fichas.filter((c) =>
-      (["PENDENTE", "EM_ANALISE"] as unknown[]).includes(c.ficha.situacao),
-    ),
+    distribuir: fichas.filter(podeDistribuirFicha),
+    liberar: fichas.filter((c) => podeLiberarReserva(c, agora)),
+    revisao: fichas.filter(podeMandarParaRevisao),
   };
+}
+
+export type AcaoDaFicha = "distribuir" | "liberar" | "revisao";
+
+/**
+ * As ações da coordenação no "⋯" de uma linha (a mesma regra das ações em
+ * lote), na ordem do menu. Sem ficha, nenhuma.
+ */
+export function acoesDaFicha(
+  c: InscritoNaFila,
+  agora: Date = new Date(),
+): AcaoDaFicha[] {
+  if (!c.ficha?.id) return [];
+  const f = c as InscritoComFicha;
+  const acoes: AcaoDaFicha[] = [];
+  if (podeDistribuirFicha(f)) acoes.push("distribuir");
+  if (podeLiberarReserva(f, agora)) acoes.push("liberar");
+  if (podeMandarParaRevisao(f)) acoes.push("revisao");
+  return acoes;
+}
+
+/** Quantos filtros da Fila estão em uso, fora a etapa (a busca conta). */
+export function filtrosDaFilaEmUso(f: FiltroDaFila): number {
+  return [
+    f.vaga,
+    f.responsavel,
+    f.modalidade,
+    String(f.busca ?? "").trim(),
+  ].filter(Boolean).length;
 }
 
 const ordemDaProvisoria = (a: InscritoComFicha, b: InscritoComFicha): number =>

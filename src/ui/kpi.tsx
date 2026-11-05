@@ -13,7 +13,7 @@ import { classes } from "./classes.ts";
   k-purple, k-slate) e vira o tom do tile (`data-tom`: info, sucesso, alerta,
   perigo, destaque, neutro); `icone` é a classe `fa-*` do tile. `idDoValor`
   põe um id no número (contrato de teste/DOM de telas antigas). `detalhe` é o
-  complemento ao lado do número, menor e em cinza ("45%", "meta 40").
+  complemento numa linha pequena embaixo do número ("45%", "meta 40").
 */
 
 const TOM_DA_COR: Partial<Record<string, string>> = {
@@ -113,7 +113,7 @@ export function Kpi({
 }
 
 /*
-  O número e, se houver, o complemento ao lado ("45%", "meta 40"), fora do
+  O número e, se houver, o complemento embaixo ("45%", "meta 40"), fora do
   `.ui-kpi-valor` (o número continua sozinho nele).
 */
 function NumeroDoKpi({
@@ -135,7 +135,12 @@ function NumeroDoKpi({
   return (
     <span className="ui-kpi-linha">
       {numero}
-      <span className="ui-kpi-detalhe">{detalhe}</span>
+      <span
+        className="ui-kpi-detalhe"
+        title={typeof detalhe === "string" ? detalhe : undefined}
+      >
+        {detalhe}
+      </span>
     </span>
   );
 }

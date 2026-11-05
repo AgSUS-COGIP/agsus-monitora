@@ -8,11 +8,21 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
+import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.ts";
 import { ordinal } from "../../lib/classificacao/numeros.ts";
+import { copiarTexto } from "../../lib/convite-de-acesso.ts";
 import { formatNumberBR } from "../../lib/formatters";
+import {
+  concluidasHoje,
+  metaDoDia,
+  minhasAbertas,
+  percentualDe,
+} from "../../lib/avaliacao-documental/numeros-da-fila.ts";
 import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
 import type { VersaoComNome } from "../../lib/nome-da-versao.ts";
 import {
+  acoesDaFicha,
   acoesDaSelecao,
   agruparPorVaga,
   andamentoDaFila,
@@ -21,6 +31,7 @@ import {
   ETAPAS_DA_FILA,
   fichaPeloCodigo,
   filtrarFila,
+  filtrosDaFilaEmUso,
   filtroEhInicial,
   FILTRO_INICIAL,
   loteDaFila,
@@ -35,6 +46,7 @@ import {
   textoDaSituacaoNaFila,
 } from "../../lib/avaliacao-documental/fila.ts";
 import type {
+  AcaoDaFicha,
   ChaveDaColuna,
   EtapaDaFila,
   FiltroDaFila,
@@ -58,9 +70,13 @@ import {
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import {
   Abas,
+  AcoesDaLinha,
   Aviso,
+  BarraDeFiltros,
   Campo,
   Gaveta,
+  GradeDeKpis,
+  Kpi,
   MenuDeAcoes,
   Selo,
   TabelaInfinita,
@@ -94,6 +110,14 @@ import type { AberturaDoRelatorio } from "./relatorio-de-motivos.tsx";
   ficha, com "Revogar decisão": decisao-do-lote.tsx) e a ficha aberta
   com a reserva; o conteúdo da análise (F4) é ficha/ficha.tsx. Explicações:
   docs/aya/regras-da-avaliacao-documental.md.
+
+  A família das telas da seleção: os números do andamento em cards no alto
+  (lote, concluídas com %, em análise, pendentes, o feito hoje com a meta do
+  dia quando o cronograma a dá, e as fichas abertas de quem está na tela),
+  clicáveis como filtro; a busca e os filtros na BarraDeFiltros (tecla "/");
+  em cada linha, "Abrir" e o "⋯" (atribuir, liberar a reserva, mandar para
+  revisão — a mesma gaveta de confirmação das ações em lote — e copiar o
+  código).
 
   Desempenho (lista de até ~7.700 inscritos): os derivados da lista ficam em
   useMemo, as funções passadas à tabela em useCallback, a tabela e cada linha
@@ -655,6 +679,61 @@ function ModoDeAnalise({
   );
 }
 
+/* O "⋯" de uma linha: as ações da coordenação (gaveta de confirmação) e copiar. */
+type AcaoDaLinhaDaFila = AcaoDaFicha | "copiar";
+const ROTULOS_DA_LINHA: Record<
+  AcaoDaLinhaDaFila,
+  { rotulo: string; icone: string }
+> = {
+  distribuir: { rotulo: "Atribuir a…", icone: "fa-users" },
+  liberar: { rotulo: "Liberar reserva", icone: "fa-lock-open" },
+  revisao: { rotulo: "Mandar para revisão", icone: "fa-rotate-left" },
+  copiar: { rotulo: "Copiar código", icone: "fa-copy" },
+};
+
+/*
+  A meta do dia do edital (a conta do card "Ritmo da análise" do Painel das
+  análises), de obter_ritmo_da_analise: uma leitura por área a cada 5
+  minutos. Quem não pode ler o Painel das análises fica sem ela (o card
+  mostra só as concluídas de hoje).
+*/
+const RPC_RITMO = "obter_ritmo_da_analise";
+const VALIDADE_DO_RITMO_MS = 5 * 60 * 1000;
+const ritmosLidos = new WeakMap<
+  object,
+  Map<string, { em: number; resposta: Promise<unknown> }>
+>();
+function usarMetaDoDia(fila: Fila, editalId: string) {
+  const { area } = usarAreaAtual();
+  const [resposta, setResposta] = useState<unknown>(null);
+  useEffect(() => {
+    if (!area || !editalId) return undefined;
+    let vivo = true;
+    const daFila = ritmosLidos.get(fila) ?? new Map();
+    ritmosLidos.set(fila, daFila);
+    let lido = daFila.get(area);
+    if (!lido || Date.now() - lido.em > VALIDADE_DO_RITMO_MS) {
+      lido = {
+        em: Date.now(),
+        resposta: Promise.resolve()
+          .then(() => fila.rpc(RPC_RITMO, parametroDeAreaDaRpc(area)))
+          .catch(() => null),
+      };
+      daFila.set(area, lido);
+    }
+    void lido.resposta.then((r: unknown) => {
+      if (vivo) setResposta(r);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [fila, area, editalId]);
+  return useMemo(
+    () => (resposta ? metaDoDia(resposta, editalId) : null),
+    [resposta, editalId],
+  );
+}
+
 /* A busca já vem aplicada por filtrarFila (o filtro "busca" é salvo com os outros). */
 const jaFiltrado = <T,>(itens: readonly T[]): readonly T[] => itens;
 
@@ -683,25 +762,33 @@ interface LinhaDaFilaProps {
   c: Inscrito;
   chaves: readonly ChaveDaColuna[];
   comCaixa: boolean;
-  comAbrir: boolean;
+  comAcoes: boolean;
   marcada: boolean;
   marcar: (id: string, sim: boolean) => void;
   abrindo: boolean;
   eu: string | undefined;
   fila: Fila;
+  coordena: boolean;
+  aoAcao: (acao: AcaoDaLinhaDaFila, c: Inscrito) => void;
 }
 
 const LinhaDaFila = memo(function LinhaDaFila({
   c,
   chaves,
   comCaixa,
-  comAbrir,
+  comAcoes,
   marcada,
   marcar,
   abrindo,
   eu,
   fila,
+  coordena,
+  aoAcao,
 }: LinhaDaFilaProps) {
+  const outras: AcaoDaLinhaDaFila[] = [
+    ...(coordena ? acoesDaFicha(c) : []),
+    "copiar",
+  ];
   return (
     <tr data-candidato={c.codigo}>
       {comCaixa ? (
@@ -725,18 +812,28 @@ const LinhaDaFila = memo(function LinhaDaFila({
           <Celula c={c} chave={chave} eu={eu} />
         </td>
       ))}
-      {comAbrir ? (
-        <td>
-          {c.ficha ? (
-            <button
-              type="button"
-              className="btn secondary small"
-              disabled={abrindo}
-              onClick={() => void fila.abrir(c.ficha!.id!)}
-            >
-              Abrir
-            </button>
-          ) : null}
+      {comAcoes ? (
+        <td className="avd-fila-acoes-da-linha">
+          <AcoesDaLinha
+            pessoa={String(c.codigo ?? "")}
+            principal={
+              c.ficha?.id
+                ? {
+                    rotulo: "Abrir",
+                    icone: "fa-folder-open",
+                    acao: "abrir-ficha",
+                    desabilitado: abrindo,
+                    aoClicar: () => void fila.abrir(c.ficha!.id!),
+                  }
+                : null
+            }
+            outras={outras.map((acao) => ({
+              id: acao,
+              ...ROTULOS_DA_LINHA[acao],
+              dados: { "data-acao": `ficha-${acao}` },
+              aoEscolher: () => aoAcao(acao, c),
+            }))}
+          />
         </td>
       ) : null}
     </tr>
@@ -782,6 +879,7 @@ interface TabelaDaFilaProps {
   marcar: (id: string, sim: boolean) => void;
   limparSelecao: () => void;
   grupo: GrupoDaTabela | null;
+  aoAcao: (acao: AcaoDaLinhaDaFila, c: Inscrito) => void;
   /** Aba Eliminados no banco: as páginas, o CSV do recorte e o "Tentar novamente". */
   servidor?: TabelaNoServidor | null;
   aoExportar?: (() => void) | null;
@@ -807,6 +905,7 @@ const TabelaDaFila = memo(function TabelaDaFila({
   marcar,
   limparSelecao,
   grupo,
+  aoAcao,
   servidor = null,
   aoExportar = null,
   aoTentarDeNovo = null,
@@ -814,7 +913,7 @@ const TabelaDaFila = memo(function TabelaDaFila({
   const chaves = colunasDaEtapa(etapa);
   const comFicha = useMemo(() => linhas.filter((c) => c.ficha), [linhas]);
   const comCaixa = coordena && comFicha.length > 0;
-  const comAbrir = comFicha.length > 0;
+  const comAcoes = comFicha.length > 0;
   const todasMarcadas =
     comFicha.length > 0 && comFicha.every((c) => selecao.has(c.id));
   const rotuloDaEtapa =
@@ -850,19 +949,20 @@ const TabelaDaFila = memo(function TabelaDaFila({
         ordem: ordem.chave === chave ? ordem.sentido : "",
         aoOrdenar: () => setOrdem((atual) => proximaOrdem(atual, chave)),
       })),
-      ...(comAbrir
+      // Sem ficha na lista (Eliminados), não há o que fazer na linha.
+      ...(comAcoes
         ? [
             {
-              chave: "abrir",
-              rotulo: "Ficha",
-              cabecalho: <span className="sr-only">Ficha</span>,
+              chave: "acoes",
+              rotulo: "Ações",
+              cabecalho: <span className="sr-only">Ações</span>,
             },
           ]
         : []),
     ],
     [
       comCaixa,
-      comAbrir,
+      comAcoes,
       todasMarcadas,
       comFicha,
       marcar,
@@ -887,15 +987,28 @@ const TabelaDaFila = memo(function TabelaDaFila({
         c={c}
         chaves={chaves}
         comCaixa={comCaixa}
-        comAbrir={comAbrir}
+        comAcoes={comAcoes}
         marcada={selecao.has(c.id)}
         marcar={marcar}
         abrindo={abrindo}
         eu={eu}
         fila={fila}
+        coordena={coordena}
+        aoAcao={aoAcao}
       />
     ),
-    [chaves, comCaixa, comAbrir, selecao, marcar, abrindo, eu, fila],
+    [
+      chaves,
+      comCaixa,
+      comAcoes,
+      selecao,
+      marcar,
+      abrindo,
+      eu,
+      fila,
+      coordena,
+      aoAcao,
+    ],
   );
 
   if (erroDeFora)
@@ -1187,6 +1300,27 @@ export function Fila({ e, fila }: FilaProps) {
     [],
   );
   const limparSelecao = useCallback(() => setSelecao(new Set()), []);
+  // O "⋯" de uma linha: a mesma gaveta das ações em lote, com uma ficha; ou copiar.
+  const aoAcaoDaLinha = useCallback(
+    (tipo: AcaoDaLinhaDaFila, c: Inscrito) => {
+      if (tipo !== "copiar") {
+        setAcao({ tipo, fichas: [c as InscritoComFicha] });
+        return;
+      }
+      void copiarTexto(String(c.codigo ?? "")).then((ok) =>
+        ok
+          ? fila.toast(`Código ${c.codigo} copiado.`, "success")
+          : fila.toast("Não foi possível copiar o código.", "error"),
+      );
+    },
+    [fila],
+  );
+  const hoje = useMemo(() => concluidasHoje(candidatos), [candidatos]);
+  const minhasAbertasAgora = useMemo(
+    () => minhasAbertas(candidatos, dados?.eu),
+    [candidatos, dados?.eu],
+  );
+  const meta = usarMetaDoDia(fila, e.editalId);
   const vagas = dados?.vagas;
   const cargoDaVaga = useMemo(
     () =>
@@ -1357,6 +1491,92 @@ export function Fila({ e, fila }: FilaProps) {
         }}
       />
       {andamento.vagas.length ? (
+        <GradeDeKpis
+          rotulo="Andamento da avaliação"
+          tour="avd-fila-kpis"
+          className="avd-fila-kpis"
+        >
+          <Kpi
+            chave="lote"
+            tom="info"
+            icone="fa-users"
+            rotulo="Fichas no lote"
+            valor={formatNumberBR(contadores.lote ?? 0)}
+            titulo="Ver as fichas do lote"
+            ativo={etapa === "lote"}
+            aoClicar={() => fila.mudarFiltro({ etapa: "lote" })}
+          />
+          <Kpi
+            chave="concluidas"
+            tom="sucesso"
+            icone="fa-circle-check"
+            rotulo="Concluídas"
+            valor={formatNumberBR(contadores.concluidas ?? 0)}
+            detalhe={percentualDe(
+              contadores.concluidas ?? 0,
+              contadores.lote ?? 0,
+            )}
+            titulo="Ver as concluídas"
+            ativo={etapa === "concluidas"}
+            aoClicar={() => fila.mudarFiltro({ etapa: "concluidas" })}
+          />
+          <Kpi
+            chave="em_analise"
+            tom="destaque"
+            icone="fa-pen-to-square"
+            rotulo="Em análise"
+            valor={formatNumberBR(contadores.em_analise ?? 0)}
+            detalhe={
+              (contadores.revisao ?? 0)
+                ? `+ ${formatNumberBR(contadores.revisao ?? 0)} em revisão`
+                : ""
+            }
+            titulo="Ver as fichas em análise"
+            ativo={etapa === "em_analise"}
+            aoClicar={() => fila.mudarFiltro({ etapa: "em_analise" })}
+          />
+          <Kpi
+            chave="pendentes"
+            tom="alerta"
+            icone="fa-hourglass-half"
+            rotulo="Pendentes"
+            valor={formatNumberBR(contadores.pendentes ?? 0)}
+            titulo="Ver as pendentes"
+            ativo={etapa === "pendentes"}
+            aoClicar={() => fila.mudarFiltro({ etapa: "pendentes" })}
+          />
+          <Kpi
+            chave="hoje"
+            tom="neutro"
+            icone="fa-calendar-days"
+            rotulo={meta ? "Hoje (meta do dia)" : "Concluídas hoje"}
+            valor={formatNumberBR(meta ? meta.feito : hoje)}
+            detalhe={meta ? `de ${formatNumberBR(meta.meta)}` : ""}
+            titulo={
+              meta
+                ? "Concluídas hoje e a meta do dia (prazo do cronograma)"
+                : "Fichas concluídas hoje"
+            }
+          />
+          {dados.eu && minhasAbertasAgora ? (
+            <Kpi
+              chave="minhas"
+              tom="info"
+              icone="fa-user-check"
+              rotulo="Minhas fichas abertas"
+              valor={formatNumberBR(minhasAbertasAgora)}
+              titulo="Mostrar só as minhas fichas"
+              ativo={st.filtro.responsavel === "eu"}
+              aoClicar={() =>
+                fila.mudarFiltro({
+                  responsavel: st.filtro.responsavel === "eu" ? "" : "eu",
+                })
+              }
+            />
+          ) : null}
+        </GradeDeKpis>
+      ) : null}
+      {andamento.vagas.length ? (
         <ResumoDoAndamento
           andamento={andamento}
           lote={lote}
@@ -1381,115 +1601,137 @@ export function Fila({ e, fila }: FilaProps) {
         }
       />
 
-      <section className="ui-card avd-fila-barra" aria-label="Filtros da fila">
-        <div className="avd-fila-filtros" data-tour="avd-fila-filtros">
-          <Campo rotulo="Vaga">
-            <select
-              value={st.filtro.vaga}
-              onChange={(ev) => fila.mudarFiltro({ vaga: ev.target.value })}
-            >
-              <option value="">Todas</option>
-              {(dados.vagas || []).map((v) => (
-                <option key={v.codigo} value={v.codigo}>
-                  {[v.codigo, v.cargo].filter(Boolean).join(" · ")}
-                </option>
-              ))}
-            </select>
-          </Campo>
-          <Campo rotulo="Responsável">
-            <select
-              value={st.filtro.responsavel}
-              onChange={(ev) =>
-                fila.mudarFiltro({ responsavel: ev.target.value })
-              }
-            >
-              <option value="">Todos</option>
-              <option value="eu">Minhas fichas</option>
-              <option value="ninguem">Sem responsável</option>
-              {(dados.analistas || []).map((a) => (
-                <option key={a.usuario} value={a.usuario}>
-                  {a.nome}
-                </option>
-              ))}
-            </select>
-          </Campo>
-          <Campo rotulo="Modalidade">
-            <select
-              value={st.filtro.modalidade}
-              onChange={(ev) =>
-                fila.mudarFiltro({ modalidade: ev.target.value })
-              }
-            >
-              <option value="">Todas</option>
-              {modalidades.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </Campo>
-          <Campo rotulo="Código ou nome">
-            <input
-              type="search"
-              value={busca}
-              placeholder="Código ou nome"
-              data-tour="avd-fila-busca"
-              onChange={(ev) => {
-                setBusca(ev.target.value);
-                fila.mudarFiltro({ busca: ev.target.value });
-              }}
-              onKeyDown={(ev) => {
-                if (ev.key !== "Enter") return;
-                const achado = fichaPeloCodigo(todos, busca);
-                if (achado) void fila.abrir(achado.ficha.id);
-              }}
-            />
-          </Campo>
-          <FiltrosSalvos
-            fila={fila}
-            f={st.filtro}
-            filtros={dados.filtros || []}
-          />
-        </div>
-        <div className="avd-fila-acoes">
-          {dados.eu ? (
-            <button
-              type="button"
-              className="btn secondary"
-              aria-pressed={minhas}
-              data-tour="avd-fila-minhas"
-              onClick={() =>
-                fila.mudarFiltro({ responsavel: minhas ? "" : "eu" })
-              }
-            >
-              <i className="fa-solid fa-user-check" aria-hidden="true" /> Minhas
-              fichas
-            </button>
-          ) : null}
-          {dados.pode_pegar ? (
-            <button
-              type="button"
-              className="btn"
-              data-tour="avd-fila-pegar"
-              data-acao="pegar-proximo"
-              disabled={st.abrindo}
-              onClick={() => void fila.pegarProxima(st.filtro.vaga)}
-            >
-              <i className="fa-solid fa-arrow-right" aria-hidden="true" /> Pegar
-              próximo
-            </button>
-          ) : null}
-          {coordena ? (
-            <MenuDeAcoes
-              rotulo="Ações da coordenação"
-              icone="fa-sliders"
-              tour="avd-fila-acoes-coordenacao"
-              contagem={selecionados.length}
-              acoes={acoesDaCoordenacao}
-            />
-          ) : null}
-        </div>
-      </section>
+      <BarraDeFiltros
+        rotulo="Filtros da fila"
+        className="avd-fila-barra avd-fila-filtros"
+        tour="avd-fila-filtros"
+        busca={{
+          valor: busca,
+          aoMudar: (valor) => {
+            setBusca(valor);
+            fila.mudarFiltro({ busca: valor });
+          },
+          placeholder: "Código ou nome",
+          rotulo:
+            "Buscar pelo código ou nome (Enter com o código abre a ficha)",
+          tour: "avd-fila-busca",
+          aoTeclar: (ev) => {
+            if (ev.key !== "Enter") return;
+            const achado = fichaPeloCodigo(todos, busca);
+            if (achado) void fila.abrir(achado.ficha.id);
+          },
+        }}
+        quantos={filtrosDaFilaEmUso(st.filtro)}
+        aoLimpar={() => {
+          setBusca("");
+          fila.mudarFiltro({
+            vaga: "",
+            responsavel: "",
+            modalidade: "",
+            busca: "",
+          });
+        }}
+        resultado={
+          noBanco && !doBanco.carregado
+            ? "Procurando…"
+            : `${formatNumberBR(noBanco ? doBanco.total : linhas.length)} ${
+                (noBanco ? doBanco.total : linhas.length) === 1
+                  ? "pessoa"
+                  : "pessoas"
+              } em ${(
+                ETAPAS_DA_FILA.find((et) => et.valor === etapa)?.rotulo ?? ""
+              ).toLowerCase()}`
+        }
+        acoes={
+          <>
+            {dados.eu ? (
+              <button
+                type="button"
+                className="btn secondary"
+                aria-pressed={minhas}
+                data-tour="avd-fila-minhas"
+                onClick={() =>
+                  fila.mudarFiltro({ responsavel: minhas ? "" : "eu" })
+                }
+              >
+                <i className="fa-solid fa-user-check" aria-hidden="true" />{" "}
+                Minhas fichas
+              </button>
+            ) : null}
+            {dados.pode_pegar ? (
+              <button
+                type="button"
+                className="btn"
+                data-tour="avd-fila-pegar"
+                data-acao="pegar-proximo"
+                disabled={st.abrindo}
+                onClick={() => void fila.pegarProxima(st.filtro.vaga)}
+              >
+                <i className="fa-solid fa-arrow-right" aria-hidden="true" />{" "}
+                Pegar próximo
+              </button>
+            ) : null}
+            {coordena ? (
+              <MenuDeAcoes
+                rotulo="Ações da coordenação"
+                icone="fa-sliders"
+                tour="avd-fila-acoes-coordenacao"
+                contagem={selecionados.length}
+                acoes={acoesDaCoordenacao}
+              />
+            ) : null}
+          </>
+        }
+      >
+        <Campo rotulo="Vaga">
+          <select
+            value={st.filtro.vaga}
+            onChange={(ev) => fila.mudarFiltro({ vaga: ev.target.value })}
+          >
+            <option value="">Todas</option>
+            {(dados.vagas || []).map((v) => (
+              <option key={v.codigo} value={v.codigo}>
+                {[v.codigo, v.cargo].filter(Boolean).join(" · ")}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        <Campo rotulo="Responsável">
+          <select
+            value={st.filtro.responsavel}
+            onChange={(ev) =>
+              fila.mudarFiltro({ responsavel: ev.target.value })
+            }
+          >
+            <option value="">Todos</option>
+            <option value="eu">Minhas fichas</option>
+            <option value="ninguem">Sem responsável</option>
+            {(dados.analistas || []).map((a) => (
+              <option key={a.usuario} value={a.usuario}>
+                {a.nome}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        <Campo rotulo="Modalidade">
+          <select
+            value={st.filtro.modalidade}
+            onChange={(ev) => fila.mudarFiltro({ modalidade: ev.target.value })}
+          >
+            <option value="">Todas</option>
+            {modalidades.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        <FiltrosSalvos
+          fila={fila}
+          f={st.filtro}
+          filtros={dados.filtros || []}
+        />
+      </BarraDeFiltros>
 
       <TabelaDaFila
         etapa={st.filtro.etapa}
@@ -1514,6 +1756,7 @@ export function Fila({ e, fila }: FilaProps) {
         limparSelecao={limparSelecao}
         // A tabela trata null como sem grupo (o padrão dela).
         grupo={grupo as GrupoDaTabela}
+        aoAcao={aoAcaoDaLinha}
       />
 
       <RelatorioDeMotivosDaFila

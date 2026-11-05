@@ -55,11 +55,9 @@ test.describe("AgSUS Monitora smoke", () => {
   test("o seletor da Triagem respeita a largura de celulares", async ({
     page,
   }) => {
+    // O seletor das telas da seleção (SeletorDeEdital) mora no ui.css.
     const css = readFileSync(
-      new URL(
-        "../src/modulos/avaliacao-documental/avaliacao-documental.css",
-        import.meta.url,
-      ),
+      new URL("../src/ui/ui.css", import.meta.url),
       "utf8",
     );
     // Sem login nem dados reais: renderiza a estrutura do seletor com as
@@ -69,14 +67,14 @@ test.describe("AgSUS Monitora smoke", () => {
       await page.setContent(`
         <style>${css}</style>
         <main style="box-sizing:border-box;width:100%;padding:12px">
-          <section class="avd-edital" aria-label="Edital da triagem">
-            <div>
+          <section class="ui-card ui-seletor-de-edital avd-edital" aria-label="Edital da triagem">
+            <div class="ui-campo">
               <label for="edital">Edital</label>
               <select id="edital">
                 <option>114/2026 - Rio Doce - Modalidade por pergunta - Versão conferida</option>
               </select>
             </div>
-            <label><input type="checkbox"> Mostrar todos os editais da área</label>
+            <label class="ui-seletor-todos"><input type="checkbox"> Mostrar todos os editais da área</label>
           </section>
         </main>
       `);

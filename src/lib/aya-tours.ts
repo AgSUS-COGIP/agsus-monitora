@@ -951,10 +951,15 @@ const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
     titulo: "Avaliação documental · Fila",
     passos: Object.freeze([
       passo(
+        t("avd-fila-kpis"),
+        "Os números do edital",
+        "Lote, concluídas (%), em análise, pendentes, o feito hoje (com a meta do dia, se há prazo) e as suas fichas abertas. Clique num card para filtrar.",
+        { antes: `${t("avd-visoes")} [data-valor='fila']` },
+      ),
+      passo(
         t("avd-fila-andamento"),
         "Andamento",
-        "Concluídas, em análise e pendentes do edital; em “Por vaga”, a lista de cada vaga (ordenável). Clique numa vaga para filtrar.",
-        { antes: `${t("avd-visoes")} [data-valor='fila']` },
+        "A barra do edital e, em “Por vaga”, a lista de cada vaga (ordenável). Clique numa vaga para filtrar.",
       ),
       passo(
         t("avd-fila-etapas"),
@@ -963,8 +968,8 @@ const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       ),
       passo(
         t("avd-fila-filtros"),
-        "Filtros",
-        "Vaga, responsável, modalidade e código ou nome, numa linha (Enter com o código abre a ficha).",
+        "Busca e filtros",
+        "Busca por código ou nome (a tecla / leva até ela; Enter com o código abre a ficha), vaga, responsável e modalidade. Limpar tira os filtros.",
       ),
       passo(
         t("avd-fila-filtros-salvos"),
@@ -985,13 +990,13 @@ const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       passo(
         t("avd-fila-acoes-coordenacao"),
         "Ações da coordenação",
-        "Distribuir, liberar reservas, mandar para revisão, abrir fichas do lote e incluir por decisão, num menu só.",
+        "Distribuir, liberar reservas, mandar para revisão, abrir fichas do lote e o relatório de motivos, num menu só.",
         { exige: coordenaAvaliacao },
       ),
       passo(
         t("avd-fila-tabela"),
         "As fichas",
-        "Agrupadas por vaga (com o lote e a linha de corte) quando a vaga é Todas; o cabeçalho ordena e Exportar CSV baixa a etapa. Abrir mostra a ficha em tela cheia.",
+        "Agrupadas por vaga quando a vaga é Todas; o cabeçalho ordena e Exportar CSV baixa a etapa. Abrir mostra a ficha; o ⋯ da linha tem o resto.",
       ),
       passo(
         t("avd-ficha-topo"),

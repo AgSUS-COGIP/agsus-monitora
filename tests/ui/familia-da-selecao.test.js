@@ -351,3 +351,18 @@ describe("SeletorDeEdital", () => {
     );
   });
 });
+
+describe("Kpi com número grande", () => {
+  it("o número é formatado pela tela; o detalhe longo leva o texto inteiro no title", async () => {
+    await montar(
+      h(Kpi, {
+        chave: "lote",
+        rotulo: "Lote",
+        valor: (1512).toLocaleString("pt-BR"),
+        detalhe: "1.511 pela regra · 1 por decisão",
+      }),
+    );
+    expect($(".ui-kpi-valor").textContent).toBe("1.512");
+    expect($(".ui-kpi-detalhe").title).toBe("1.511 pela regra · 1 por decisão");
+  });
+});
