@@ -509,7 +509,7 @@ const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       passo(
         [t("entrevistas-conduzir-seletor-edital"), "#entrevistasEdital"],
         "Edital",
-        "Editais na janela da entrevista ou liberados; o último aberto volta sozinho. O selo Treinamento aparece ao lado.",
+        "Editais na janela da entrevista ou liberados; o último aberto volta sozinho. Edital de treinamento, quando houver, tem o selo Treinamento ao lado.",
       ),
       passo(
         t("conduzir-contador"),

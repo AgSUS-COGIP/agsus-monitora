@@ -969,9 +969,32 @@ Migration `20261001120000_saude_das_cargas.sql` (rollback em `supabase/rollback/
 Migration `20261007230000_edital_de_treinamento.sql` (ensaio e rollback com o mesmo nome em
 `supabase/ensaios/` e `supabase/rollback/`).
 
+**Estado em 04/11/2026: não existe edital de treinamento no banco.** Os três que havia foram
+apagados fisicamente, com tudo ligado a eles, pelas correções
+`20261104-apagar-editais-de-treinamento` ("Treinamento – Saúde Indígena (991/2099)" e
+"Treinamento – Projetos (992/2099)", 812 linhas fictícias) e `20261104-apagar-edital-teste-sede`
+(o edital "Teste" da SEDE, que a correção `20261026-edital-teste-da-sede-como-treinamento` tinha
+marcado com `ST_TREINAMENTO = S`). Ficaram, de propósito: o mecanismo inteiro descrito abaixo
+(coluna, predicados, funções, selo e botão) e os roteiros de exemplo em `TB_ROTEIRO_ENTREVISTA`
+("Treinamento — Entrevista individual (exemplo)" e "Treinamento — Entrevista Projetos (exemplo)",
+este também usado pelo edital 114/2026). Sem edital marcado, o selo e o botão "Reiniciar
+treinamento" não aparecem, os filtros de treinamento não tiram nada e
+`reiniciar_edital_treinamento` responde "Edital não encontrado".
+
 - **Marca:** `TB_MONITORAMENTO_INDIGENA."ST_TREINAMENTO"` (S/N, padrão N,
-  `CK_MONITINDIG_STTREINAMENTO`). A tela não muda a marca; só
-  `private."FC_PREPARAR_EDITAL_TREINAMENTO"(p_area)` cria edital com S, um por área:
+  `CK_MONITINDIG_STTREINAMENTO`). A tela não muda a marca nem cria edital de treinamento.
+- **Criar um novo (se for preciso):** numa correção de dados (`supabase/correcoes/`, com ensaio em
+  `supabase/ensaios/` que confira o resultado e termine em `rollback`), chamar
+  `private."FC_PREPARAR_EDITAL_TREINAMENTO"(p_area)` — só `service_role`/dono, idempotente (cria ou
+  completa; um por área) e só para `'saude-indigena'` ou `'projetos'`; outra área é recusada
+  (22023). Ele recria o pacote abaixo com os mesmos números (991/2099 ou 992/2099), os mesmos
+  códigos de vaga fictícios e a agenda a partir do dia. Antes, rode o ensaio no banco atual: as
+  funções são de 07–09/10/2026 e a correção tem de provar que elas ainda montam o pacote inteiro
+  com as regras e telas de hoje (Triagem, roteiros, cronograma). Outra opção, sem dados
+  fictícios, é marcar um edital existente com `ST_TREINAMENTO = S` por correção (como a de
+  26/10/2026): ele só sai dos números; o reinício recusa edital fora da Saúde Indígena e de
+  Projetos e, nessas duas áreas, apagaria os dados do edital — não use o reinício nesse caso.
+- **O pacote que o preparar monta** (o dos editais apagados):
   - Saúde Indígena: "Treinamento – Saúde Indígena (991/2099)", unidade "DSEI Treinamento"
     (`private."FC_PREPARAR_TREINAMENTO_SI"`): entrevistas (os 15 primeiros, roteiro com aspectos),
     classificação e a regra da avaliação documental do Edital 111/2026 (modelo SI26-PARINTINS, com
@@ -1012,7 +1035,7 @@ Migration `20261007230000_edital_de_treinamento.sql` (ensaio e rollback com o me
   `listar_editais_classificacao`, `FC_DADOS_CLASSIFICACAO_EDITAL`, `obter_pre_classificacao`,
   `pre_classificacao_ler_editais`, `get_painel_dos_robos`. O documento oficial gerado sai com
   "TREINAMENTO — SEM VALOR OFICIAL" no título (`documento-sei.js`).
-- **A triagem pronta dos treinamentos:** o resultado do cálculo Python (o
+- **A triagem pronta do pacote:** o resultado do cálculo Python (o
   mesmo `processar_edital` do job, gerado por `scripts/pre_classificacao/gerar_treinamento.py`
   com `--area projetos` ou `--area saude-indigena` a partir de
   `tests/fixtures/avaliacao-documental/treinamento-<área>.json`, conferido por
