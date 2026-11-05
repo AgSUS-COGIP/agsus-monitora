@@ -270,6 +270,11 @@ describe("contra os ficheiros deste repositório", () => {
       "20261013140000_menos_chamadas_e_log.sql",
       "20261013140000_quadro_da_vaga_pelo_titulo.sql",
     ],
+    // As duas foram aplicadas e registradas em 05/11 (#663 e #665, mesclados em paralelo).
+    20261105190000: [
+      "20261105190000_area_na_api.sql",
+      "20261105190000_fontes_apos_leitura_da_api_de_editais.sql",
+    ],
   };
 
   it("nenhum timestamp de migration repetido além dos já aplicados", () => {
