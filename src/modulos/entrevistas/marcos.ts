@@ -11,7 +11,7 @@ type ContextoDosMarcos = Parameters<
   que o app leu na entrada; o controlador relê a cada abertura da tela). A
   regra (linha de base, transição, frase) é de src/lib/comemoracao.ts; o
   aviso e o efeito (o do marco "vaga-pronta" em Configurações ›
-  Comemorações; padrão: fogos suaves), de src/modules/comemoracao.ts. Este arquivo não
+  Comemorações; padrão: fogos suaves), de src/modulos/comemoracao/. Este arquivo não
   importa React.
 */
 import {

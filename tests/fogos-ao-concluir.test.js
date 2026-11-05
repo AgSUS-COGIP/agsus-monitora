@@ -1,18 +1,35 @@
 import { readFileSync } from "node:fs";
+import { act } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { CHAVE_DO_SOM } from "../src/lib/fogos-cena.ts";
 import { criarAleatorio } from "../src/lib/fogos.ts";
-import { TEMPO_DO_AVISO_MS, comemorar } from "../src/modules/comemoracao.ts";
-import { encerrarShowsAoFimDeCadaTeste } from "./shows-de-comemoracao.js";
+import { TEMPO_DO_AVISO_MS } from "../src/modulos/comemoracao/plano.ts";
+import {
+  encerrarShowsAoFimDeCadaTeste,
+  filaDeQuadros,
+} from "./shows-de-comemoracao.js";
 
 /*
-  O desenho dos fogos, com canvas e áudio falsos. Sorteio sempre fixo
-  (`aleatorio: criarAleatorio(n)`): já houve teste instável por depender de
-  Math.random sem semente.
+  O desenho dos fogos (src/modulos/comemoracao/comemoracoes.tsx, React), com
+  canvas e áudio falsos. Sorteio sempre fixo (`aleatorio: criarAleatorio(n)`):
+  já houve teste instável por depender de Math.random sem semente.
 */
 
 const shows = encerrarShowsAoFimDeCadaTeste();
-const { soltarFogos } = shows;
+const { comemorar, clicar } = shows;
+
+/* Os fogos pedidos direto (o Palco de testes): sem passar pela configuração. */
+const soltarFogos = (doc, janela, opcoes = {}) =>
+  comemorar({
+    texto: "Fogos",
+    teste: true,
+    efeito: "fogos",
+    intensidade: "normal",
+    doc,
+    janela,
+    ...opcoes,
+  });
+const pular = (doc) => clicar(doc.querySelector(".comemoracao__pular"));
 
 /* Um objeto que aceita qualquer chamada e atribuição (nó de áudio falso). */
 const qualquer = () =>
@@ -29,7 +46,7 @@ function janelaComCanvas({
   interagiu = false,
   movimento = true,
 } = {}) {
-  const quadros = [];
+  const { quadros, requestAnimationFrame } = filaDeQuadros();
   const chamadas = [];
   const contagem = {};
   const atribuicoes = {};
@@ -64,7 +81,7 @@ function janelaComCanvas({
     innerWidth: 1000,
     innerHeight: 700,
     devicePixelRatio: dpr,
-    requestAnimationFrame: (fn) => quadros.push(fn),
+    requestAnimationFrame,
     matchMedia: () => ({ matches: !movimento }),
     getComputedStyle: () => ({
       getPropertyValue: (nome) => (nome === "--brand-primary" ? "#0f5db7" : ""),
@@ -134,18 +151,30 @@ const sobras = (doc) =>
   ).length;
 
 describe("fogos de artifício no canvas", () => {
-  it("sem canvas 2D ou sem requestAnimationFrame não faz nada", () => {
-    const doc = document.implementation.createHTMLDocument("t");
-    expect(soltarFogos(doc, { requestAnimationFrame: () => {} })).toBe(false);
+  it("sem canvas 2D ou sem requestAnimationFrame: só o aviso, sem efeito", () => {
+    const doc = shows.acompanhar(
+      document.implementation.createHTMLDocument("t"),
+    );
+    // Sem canvas 2D (o jsdom não desenha).
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    soltarFogos(doc, {
+      requestAnimationFrame: () => {},
+      matchMedia: () => ({ matches: false }),
+    });
     const { doc: comCanvas } = janelaComCanvas();
-    expect(soltarFogos(comCanvas, { innerWidth: 10 })).toBe(false);
-    expect(comCanvas.querySelector("canvas")).toBeNull();
-    expect(sobras(comCanvas)).toBe(0);
+    // Sem requestAnimationFrame.
+    soltarFogos(comCanvas, { innerWidth: 10 });
+    for (const d of [doc, comCanvas]) {
+      expect(d.querySelector(".comemoracao")).not.toBeNull();
+      expect(d.querySelector("canvas")).toBeNull();
+      expect(d.querySelector(".comemoracao__pular")).toBeNull();
+      expect(sobras(d)).toBe(0);
+    }
   });
 
   it("canvas, véu e Aya sem clique, escondidos do leitor de tela; canvas nítido no devicePixelRatio", () => {
     const { doc, janela, chamadas } = janelaComCanvas({ dpr: 3 });
-    expect(soltarFogos(doc, janela)).toEqual({ parar: expect.any(Function) });
+    soltarFogos(doc, janela, { aleatorio: criarAleatorio(1) });
     const canvas = doc.querySelector("canvas.comemoracao__fogos");
     expect(canvas.getAttribute("aria-hidden")).toBe("true");
     expect(
@@ -221,24 +250,24 @@ describe("fogos de artifício no canvas", () => {
     for (let i = 0; i < 120; i += 1) quadros.shift()((agora += 16.7));
     expect(aya.isConnected).toBe(false);
     expect(doc.querySelector(".comemoracao__fogos")).not.toBeNull();
-    // Sem a Aya, nenhuma imagem.
+    // Sem fogos (confete), nenhuma arara voando.
     const outra = janelaComCanvas();
     soltarFogos(outra.doc, outra.janela, {
-      comAya: false,
+      efeito: "confete",
       aleatorio: criarAleatorio(5),
     });
+    expect(outra.doc.querySelector(".comemoracao__fogos")).not.toBeNull();
     expect(outra.doc.querySelector(".comemoracao__aya")).toBeNull();
   });
 
   it("número do marco sem canvas de verdade: a fonte de pontos dá conta", () => {
     const { doc, janela, rodar } = janelaComCanvas();
-    expect(
-      soltarFogos(doc, janela, {
-        intensidade: "festa",
-        forma: { tipo: "numero", texto: "1.000" },
-        aleatorio: criarAleatorio(6),
-      }),
-    ).toBeTruthy();
+    soltarFogos(doc, janela, {
+      intensidade: "festa",
+      forma: { tipo: "numero", texto: "1.000" },
+      aleatorio: criarAleatorio(6),
+    });
+    expect(doc.querySelector(".comemoracao__fogos")).not.toBeNull();
     rodar();
     expect(sobras(doc)).toBe(0);
   });
@@ -255,18 +284,13 @@ describe("fogos de artifício no canvas", () => {
     expect(doc.querySelector("canvas")).toBeNull();
   });
 
-  it("parar remove tudo na hora, uma vez só, e avisa", () => {
+  it("Pular remove tudo na hora, uma vez só", () => {
     const { doc, janela, quadros } = janelaComCanvas();
-    let avisos = 0;
-    const fogos = soltarFogos(doc, janela, {
-      aleatorio: criarAleatorio(9),
-      aoTerminar: () => (avisos += 1),
-    });
+    soltarFogos(doc, janela, { aleatorio: criarAleatorio(9) });
     quadros.shift()(0);
-    fogos.parar();
-    fogos.parar();
+    pular(doc);
     expect(sobras(doc)).toBe(0);
-    expect(avisos).toBe(1);
+    expect(doc.querySelector(".comemoracao__pular")).toBeNull();
     // O quadro que estava na fila não volta a desenhar.
     while (quadros.length) quadros.shift()(16.7);
     expect(quadros).toHaveLength(0);
@@ -303,7 +327,7 @@ describe("o aviso da comemoração", () => {
       aleatorio: criarAleatorio(2),
     });
     quadros.shift()(0);
-    aviso(doc).querySelector(".comemoracao__pular").click();
+    clicar(aviso(doc).querySelector(".comemoracao__pular"));
     expect(sobras(doc)).toBe(0);
     expect(aviso(doc)).not.toBeNull();
     expect(doc.querySelector(".comemoracao__pular")).toBeNull();
@@ -318,10 +342,11 @@ describe("o aviso da comemoração", () => {
 
     comemorar({ texto: "De novo", doc, janela, aleatorio: criarAleatorio(4) });
     quadros.shift()(0);
-    [...doc.querySelectorAll(".comemoracao")]
-      .at(-1)
-      .querySelector(".comemoracao__fechar")
-      .click();
+    clicar(
+      [...doc.querySelectorAll(".comemoracao")]
+        .at(-1)
+        .querySelector(".comemoracao__fechar"),
+    );
     expect(doc.body.textContent).not.toContain("De novo");
     expect(sobras(doc)).toBe(0);
   });
@@ -340,12 +365,12 @@ describe("o aviso da comemoração", () => {
         aleatorio: criarAleatorio(5),
       });
       quadros.shift()(0);
-      vi.advanceTimersByTime(TEMPO_DO_AVISO_MS + 1);
+      act(() => vi.advanceTimersByTime(TEMPO_DO_AVISO_MS + 1));
       // Antes, o aviso fechava aos 12 s e levava o efeito junto.
       expect(aviso(doc)).not.toBeNull();
       expect(doc.querySelector(".comemoracao__pular")).not.toBeNull();
       rodar(5000);
-      vi.advanceTimersByTime(0);
+      act(() => vi.advanceTimersByTime(0));
       expect(aviso(doc)).toBeNull();
     } finally {
       vi.useRealTimers();
@@ -359,7 +384,7 @@ describe("o aviso da comemoração", () => {
       comemorar({ texto: "Curto", doc, janela, aleatorio: criarAleatorio(6) });
       rodar();
       expect(aviso(doc)).not.toBeNull();
-      vi.advanceTimersByTime(TEMPO_DO_AVISO_MS);
+      act(() => vi.advanceTimersByTime(TEMPO_DO_AVISO_MS));
       expect(aviso(doc)).toBeNull();
     } finally {
       vi.useRealTimers();
@@ -380,18 +405,15 @@ describe("o aviso da comemoração", () => {
     const { doc, janela, rodar, audios, guardado } = janelaComCanvas();
     comemorar({ texto: "Oi", doc, janela, aleatorio: criarAleatorio(6) });
     const botao = doc.querySelector(".comemoracao__som");
-    botao.click();
+    clicar(botao);
     expect(botao.getAttribute("aria-pressed")).toBe("true");
     expect(botao.getAttribute("aria-label")).toBe("Desligar som");
     expect(guardado.get(CHAVE_DO_SOM)).toBe("1");
     rodar();
     expect(audios).toHaveLength(1);
     // Fechar o aviso fecha o áudio.
-    doc.querySelector(".comemoracao__fechar").click();
+    clicar(doc.querySelector(".comemoracao__fechar"));
     expect(audios[0].fechado).toBe(true);
-    // Desligar de novo também fica guardado.
-    botao.click();
-    expect(guardado.get(CHAVE_DO_SOM)).toBe("0");
   });
 
   it("som ligado de antes só toca depois de a pessoa interagir com a página", () => {
@@ -450,7 +472,6 @@ describe("o aviso da comemoração", () => {
     expect(doc.querySelector(".comemoracao__som")).toBeNull();
     expect(quadros).toHaveLength(0);
     expect(audios).toHaveLength(0);
-    expect(soltarFogos(doc, janela)).toBe(false);
   });
 
   it("o fim do tour (Concluir) celebra: fogos no tour, festa e estrela na trilha", () => {

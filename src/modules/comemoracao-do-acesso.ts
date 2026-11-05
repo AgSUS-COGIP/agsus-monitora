@@ -11,7 +11,7 @@ import {
   lerArmazenamento as ler,
 } from "../lib/comemoracao.ts";
 import { comemorar } from "../app/comemoracao-sob-demanda.ts";
-import type { JanelaDaComemoracao } from "./comemoracao.ts";
+import type { JanelaDaComemoracao } from "../modulos/comemoracao/desenho.ts";
 import type {
   InstanteRecebido,
   PerfilDeAcesso,
@@ -44,7 +44,7 @@ export interface OpcoesDoAcessoLiberado {
   "Parabéns, Ana! Seu acesso ao MONITORA foi liberado." (ou "Bem-vindo(a) de
   volta…" na reativação), com o que a pessoa pode usar agora. Regra em
   src/lib/acesso-liberado.ts; os fogos (com um visto desenhado no céu) e o
-  aviso são os de todas as comemorações (src/modules/comemoracao.ts), que
+  aviso são os de todas as comemorações (src/modulos/comemoracao/), que
   respeitam prefers-reduced-motion. Armazenamento sempre em try/catch (janela privada,
   bloqueado): sem ele, as marcas não ficam e a regra da primeira entrada ainda
   limita a um dia.

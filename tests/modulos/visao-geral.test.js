@@ -17,6 +17,7 @@ import { criarLeafletFalso } from "./leaflet-falso.js";
 import { htmlDaPagina } from "../pagina-montada.js";
 import { montarTela } from "../montar-tela.js";
 import { registrarTelas } from "../../src/app/registro-das-telas.ts";
+import { comemoracoesNaPagina } from "../shows-de-comemoracao.js";
 
 /*
   A Visão geral como módulo do app (src/modulos/visao-geral/): monta na
@@ -794,6 +795,8 @@ describe("tabela de processos", () => {
 });
 
 describe("boas-vindas e marcos do ano", () => {
+  // As comemorações são da casca; aqui, montadas como ela faz.
+  comemoracoesNaPagina();
   it("saúda quando o perfil e os editais chegaram, sem botão de fechar", async () => {
     await montar({ comPerfil: true });
     const card = secao.querySelector(".boas-vindas");
@@ -833,7 +836,9 @@ describe("boas-vindas e marcos do ano", () => {
     expect(document.querySelector(".comemoracao").textContent).toContain(
       "7.500 análises concluídas em 2026. Obrigado, equipe da Saúde Indígena!",
     );
-    document.querySelector(".comemoracao__fechar").click();
+    await act(async () =>
+      document.querySelector(".comemoracao__fechar").click(),
+    );
     await clicar(marco.querySelector("button"));
     expect(secao.querySelector(".marcos-do-ano")).toBeNull();
   });

@@ -27,7 +27,7 @@ mascote/
   mascote.tsx   <Mascote>: enquadramento "corpo" ou "rosto" (com entrada pelo outro); estados parada, atenta, falando, pensando, comemorando,
                 dormindo e acenando; piscar e arrepio sorteados (Web Animations),
                 olho que segue o ponteiro (variáveis CSS), sono por inatividade,
-                pausa com a aba oculta; montarMascoteAvulsa() para os fogos (portal avulso da raiz)
+                pausa com a aba oculta; os fogos a desenham direto (src/modulos/comemoracao/)
   estado.ts     o pedido global (evento `aya:estado`) fora do React, com expiração
   mascote.css   só transform/opacity por data-estado e data-enquadramento (o quadro
                 aproxima a cabeça); movimento reduzido: só pisca, troca sem transição
@@ -73,7 +73,7 @@ A borda: qual borda vale ao soltar, as setas e a posição guardada ficam em
 A mascote: a regra dos estados (prioridade, movimento reduzido, comemorações desligadas,
 tempos sorteados) fica em `src/lib/estado-da-aya.ts`. Qualquer tela pede um estado com
 `definirEstadoDaAya("comemorando", 3000)` ou com o evento `aya:estado`
-(`{ detail: { estado, duracaoMs } }`); os fogos (`src/modules/comemoracao.ts`) já pedem
+(`{ detail: { estado, duracaoMs } }`); os fogos (`src/modulos/comemoracao/`) já pedem
 "comemorando". A prévia de cada estado fica em Configurações › Marca › Mascote
 (`src/modulos/configuracoes/cartao-da-mascote.tsx`).
 

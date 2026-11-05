@@ -15,7 +15,7 @@ pela página em `src/app/telas.tsx`) e o estado com a publicação versionada
 | `palco-de-testes.tsx`                 | efeito, intensidade, duração e som escolhidos na hora, sem gravar                                         |
 | `src/lib/catalogo-de-comemoracoes.ts` | catálogo, normalização e JSON publicado, decisão de mostrar, personalizados, revisão campo a campo        |
 | `src/lib/motor-de-efeitos.ts`         | cena, física e desenho de confete, serpentina, estrelas, corações e balões; embute os fogos de `fogos.ts` |
-| `src/modules/comemoracao.ts`          | canvas, `requestAnimationFrame`, aviso, som e o evento da Aya                                             |
+| `src/modulos/comemoracao/`            | canvas, `requestAnimationFrame`, aviso, som e o evento da Aya                                             |
 | `src/app/marcos-personalizados.ts`    | avaliação dos personalizados com as linhas que o front já tem                                             |
 
 **Persistência.** Chave `comemoracoes_marcos` de `TB_CONFIGURACAO`, publicada
@@ -61,6 +61,6 @@ window.addEventListener("aya:estado", (evento) => {
 });
 ```
 
-O nome do evento é `EVENTO_DA_AYA` em `src/modules/comemoracao.ts`. Sem
+O nome do evento é `EVENTO_DA_AYA` em `src/modulos/comemoracao/comemoracoes.tsx`. Sem
 mascote ouvindo, nada acontece. Com "Aya comemorando" no efeito, a arara que
 voa nos fogos fica de fora, para não haver duas.

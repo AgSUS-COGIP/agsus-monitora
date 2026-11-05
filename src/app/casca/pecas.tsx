@@ -1,5 +1,7 @@
 import { Suspense, lazy, useState, useSyncExternalStore } from "react";
 import { ErrorBoundary } from "../ErrorBoundary.tsx";
+import { carregarComemoracao } from "../comemoracao-sob-demanda.ts";
+import { filaDeComemoracoes } from "../fila-de-comemoracoes.ts";
 import { usarPecasDoApp } from "../contexto-do-app.ts";
 import { PessoasOnline } from "../../componentes/pessoas-online/pessoas-online.tsx";
 import { AvisoDeVersao } from "../../componentes/aviso-de-versao/aviso-de-versao.tsx";
@@ -129,6 +131,32 @@ export function BuscaGlobalDoApp() {
         estaConectado={pecas.estaConectado}
         aoEscolher={avisarEscolha}
       />
+    </ErrorBoundary>
+  );
+}
+
+/*
+  As comemorações (aviso e efeito, src/modulos/comemoracao/): o desenho só
+  baixa quando a primeira entra na fila (src/app/fila-de-comemoracoes.ts) e
+  fica montado enquanto houver alguma. Não depende das peças do sistema: a
+  liberação de acesso comemora na entrada.
+*/
+const ComemoracoesPreguicosas = lazy(() =>
+  carregarComemoracao().then((m) => ({ default: m.Comemoracoes })),
+);
+
+export function ComemoracoesDoApp() {
+  const fila = useSyncExternalStore(
+    filaDeComemoracoes.assinar,
+    filaDeComemoracoes.obter,
+    filaDeComemoracoes.obter,
+  );
+  if (!fila.length) return null;
+  return (
+    <ErrorBoundary nome="as comemorações">
+      <Suspense fallback={null}>
+        <ComemoracoesPreguicosas />
+      </Suspense>
     </ErrorBoundary>
   );
 }

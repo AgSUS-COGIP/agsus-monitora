@@ -5,6 +5,7 @@ import {
 } from "../src/modulos/analises/marcos.ts";
 import { calcularRitmo } from "../src/lib/ritmo-da-analise.ts";
 import { carregarComemoracao } from "../src/app/comemoracao-sob-demanda.ts";
+import { comemoracoesNaPagina } from "./shows-de-comemoracao.js";
 
 /* O desenho da comemoração chega por import(): espera ele e o aviso. */
 async function depoisDoDesenho() {
@@ -27,6 +28,7 @@ describe("marcos de Análises curriculares", () => {
     document.body.innerHTML = "";
     delete window.matchMedia;
   });
+  comemoracoesNaPagina();
 
   const linhas = (status) => [
     { edital: "05/2026", unidade: "SEDE", status_consolidado: "Aprovado" },
@@ -105,6 +107,7 @@ describe("meta de hoje batida pela equipe (Ritmo da análise)", () => {
     document.body.innerHTML = "";
     delete window.matchMedia;
   });
+  comemoracoesNaPagina();
 
   it("comemora uma vez por dia por pessoa (guardado no navegador)", () => {
     const soltar = vi.fn();
