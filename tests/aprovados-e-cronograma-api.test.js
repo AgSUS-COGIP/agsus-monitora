@@ -8,6 +8,7 @@ import {
   respostaDoCronograma,
   respostaDosAprovados,
 } from "../src/lib/aprovados-e-cronograma-da-api.js";
+import { RPC_DOS_EDITAIS } from "../src/lib/editais-da-api.js";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
 
 /*
@@ -205,6 +206,50 @@ describe.each([
     const res = respostaFalsa();
     await rota(pedido(), res);
     expect(res.statusCode).toBe(502);
+  });
+});
+
+describe("migration 20261105170000 (leitura da API de editais)", () => {
+  const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
+  const NOME = "20261105170000_leitura_da_api_de_editais.sql";
+  const MIGRATION = ler(`supabase/migrations/${NOME}`);
+  const ENSAIO = ler(`supabase/ensaios/${NOME}`);
+  const ROLLBACK = ler(`supabase/rollback/${NOME}`);
+
+  it("só service_role, security definer, só as linhas ativas e os campos que a API lê", () => {
+    expect(MIGRATION).toContain("security definer");
+    expect(MIGRATION).toContain("set search_path to ''");
+    expect(MIGRATION).toContain("where v.ativo is true");
+    expect(MIGRATION).toContain(
+      "revoke all on function public.listar_editais_da_api() from public, anon, authenticated;\ngrant execute on function public.listar_editais_da_api() to service_role;",
+    );
+    const campos = [...MIGRATION.matchAll(/^\s+'(\w+)', v\./gm)].map(
+      (m) => m[1],
+    );
+    expect(campos).toEqual([
+      "id",
+      "unidade",
+      "edital",
+      "status",
+      "etapa",
+      "vagas_total",
+      "contratados",
+      "vagas_ociosas",
+      "risco",
+      "link_edital",
+    ]);
+    expect(CONTRATO_RPC.listar_editais_da_api.argumentos).toEqual([]);
+    expect(RPC_DOS_EDITAIS).toBe("listar_editais_da_api");
+    expect(ROLLBACK).toContain(
+      "drop function if exists public.listar_editais_da_api();",
+    );
+    expect(ENSAIO.trimEnd().endsWith("rollback;")).toBe(true);
+    expect(ENSAIO).toContain(
+      MIGRATION.slice(
+        MIGRATION.indexOf("\nbegin;\n") + 8,
+        MIGRATION.lastIndexOf("\ncommit;"),
+      ),
+    );
   });
 });
 

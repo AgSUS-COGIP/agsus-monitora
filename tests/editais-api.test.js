@@ -174,7 +174,7 @@ describe("GET /api/editais (chave fixa, sem login)", () => {
     await handler(comChave(), res);
     expect(res.statusCode).toBe(200);
     expect(fetchFalso.mock.calls[0][0]).toBe(
-      "https://outro.supabase.co/rest/v1/rpc/listar_monitoramento_operacional",
+      "https://outro.supabase.co/rest/v1/rpc/listar_editais_da_api",
     );
   });
 
@@ -205,7 +205,7 @@ describe("GET /api/editais (chave fixa, sem login)", () => {
     expect(res.headers["cache-control"]).toBe("private, no-store");
     const [url, opcoes] = fetchFalso.mock.calls[0];
     expect(url).toBe(
-      "https://exemplo.supabase.co/rest/v1/rpc/listar_monitoramento_operacional",
+      "https://exemplo.supabase.co/rest/v1/rpc/listar_editais_da_api",
     );
     expect(opcoes.headers.apikey).toBe(SERVIDOR);
     // Chave nova (sb_secret_…) não vai no Authorization; a chave da API nunca vai ao banco.

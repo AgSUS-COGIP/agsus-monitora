@@ -5,7 +5,7 @@
 
   Acesso: sem login. Quem chama manda a chave fixa da API
   (`Authorization: Bearer <EDITAIS_API_CHAVE>`). A função lê
-  `listar_monitoramento_operacional` com a chave de servidor do Supabase
+  `listar_editais_da_api` (migration 20261105170000) com a chave de servidor do Supabase
   (SUPABASE_SERVICE_ROLE_KEY), que nunca sai daqui, e devolve as linhas
   ativas de todas as áreas. Trocar a chave = mudar EDITAIS_API_CHAVE na Vercel
   e fazer um novo deploy; a chave antiga para de valer. A mesma chave vale
