@@ -239,6 +239,57 @@ const numeroOuZero = (v: unknown) =>
 const noLote = (c: InscritoDaPre | undefined) =>
   c?.situacao === "NO_LOTE" || c?.situacao === "ANALISADO";
 
+/*
+  "Incluir por decisão da coordenação": quem pode entrar (fora do lote e
+  eliminados, menos quem saiu da Empregare: grupo PODE_INCLUIR), lido ao
+  abrir, de uma vaga ou do edital todo (vaga null). A mesma inclusão serve
+  ao botão de cada vaga (Por vaga) e ao menu "Ações" da Triagem, que fica à
+  vista em qualquer aba (a vaga só mostra o botão aberta).
+*/
+function usarInclusaoPorDecisao(
+  pre: EstadoDaPreClassificacao,
+  vaga: string | null,
+) {
+  const [candidatos, setCandidatos] = useState<InscritoDaPre[] | null>(null);
+  const [lendo, setLendo] = useState(false);
+  const [erro, setErro] = useState("");
+  async function abrir() {
+    setErro("");
+    setLendo(true);
+    try {
+      const linhas = await pre.listarTudo({ vaga, grupo: "PODE_INCLUIR" });
+      setCandidatos(linhas.map((c) => ({ ...c, nota: c.nota ?? c.art })));
+    } catch (falha) {
+      setErro(
+        falha instanceof Error
+          ? falha.message
+          : "Não foi possível ler a lista.",
+      );
+    } finally {
+      setLendo(false);
+    }
+  }
+  const conteudo = (
+    <>
+      {erro ? (
+        <Aviso tom="danger" papel="alert">
+          {erro}
+        </Aviso>
+      ) : null}
+      {candidatos ? (
+        <IncluirPorDecisao
+          candidatos={candidatos}
+          aoIncluir={(escolhidos, motivo) =>
+            pre.incluirPorDecisao(escolhidos, motivo)
+          }
+          aoFechar={() => setCandidatos(null)}
+        />
+      ) : null}
+    </>
+  );
+  return { abrir, lendo, conteudo };
+}
+
 const COLUNAS_DOS_CLASSIFICADOS: ColunaDaTabela[] = [
   { rotulo: "Classificação" },
   { rotulo: "Código" },
@@ -308,10 +359,7 @@ function VagaDaPre({
   aoMarcar,
   aoMarcarVarias,
 }: VagaDaPreProps) {
-  const [incluindo, setIncluindo] = useState(false);
-  const [foraDoLote, setForaDoLote] = useState<InscritoDaPre[]>([]);
-  const [lendoForaDoLote, setLendoForaDoLote] = useState(false);
-  const [erroDoForaDoLote, setErroDoForaDoLote] = useState("");
+  const inclusao = usarInclusaoPorDecisao(pre, v.codigo);
   const [emitindo, setEmitindo] = useState("");
   const [erroDoEspelho, setErroDoEspelho] = useState("");
   const [eliminadosAbertos, setEliminadosAbertos] = useState(false);
@@ -465,26 +513,6 @@ function VagaDaPre({
     }
   }
 
-  /* "Incluir por decisão": quem pode entrar (fora do lote e eliminados da vaga), lido ao abrir. */
-  async function abrirInclusao() {
-    setErroDoForaDoLote("");
-    setLendoForaDoLote(true);
-    try {
-      const linhas = await pre.listarTudo({
-        vaga: v.codigo,
-        grupo: "PODE_INCLUIR",
-      });
-      setForaDoLote(linhas.map((c) => ({ ...c, nota: c.nota ?? c.art })));
-      setIncluindo(true);
-    } catch (erro) {
-      setErroDoForaDoLote(
-        erro instanceof Error ? erro.message : "Não foi possível ler a lista.",
-      );
-    } finally {
-      setLendoForaDoLote(false);
-    }
-  }
-
   const linhaDoClassificado = (c: InscritoDaPre) => (
     <Fragment key={c.id}>
       {depoisDoCorte.has(String(c.id)) ? (
@@ -575,31 +603,18 @@ function VagaDaPre({
             className="btn secondary small"
             data-acao="incluir-por-decisao"
             disabled={
-              lendoForaDoLote ||
+              inclusao.lendo ||
               (v.fora_do_lote !== undefined && !(foraDaVaga + eliminadosDaVaga))
             }
-            onClick={() => void abrirInclusao()}
+            onClick={() => void inclusao.abrir()}
           >
-            {lendoForaDoLote
+            {inclusao.lendo
               ? "Lendo a lista…"
               : "Incluir por decisão da coordenação"}
           </button>
         ) : null}
       </div>
-      {erroDoForaDoLote ? (
-        <Aviso tom="danger" papel="alert">
-          {erroDoForaDoLote}
-        </Aviso>
-      ) : null}
-      {incluindo ? (
-        <IncluirPorDecisao
-          candidatos={foraDoLote}
-          aoIncluir={(escolhidos, motivo) =>
-            pre.incluirPorDecisao(escolhidos, motivo)
-          }
-          aoFechar={() => setIncluindo(false)}
-        />
-      ) : null}
+      {inclusao.conteudo}
       {(v.avisos || []).length ? (
         <ul className="avd-lista-simples" aria-label="Avisos da vaga">
           {v.avisos!.map((a) => (
@@ -949,6 +964,8 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
   const [motivoDescongelar, setMotivoDescongelar] = useState("");
   const [descongelando, setDescongelando] = useState(false);
   const [pedidoDaTrava, setPedidoDaTrava] = useState(0);
+  // A inclusão por decisão do edital todo, no menu "Ações" (à vista em toda aba).
+  const inclusaoDoEdital = usarInclusaoPorDecisao(pre, null);
   const versaoDaRegra = e.dados?.regra?.versao ?? 0;
   useEffect(() => {
     // A tela abre só com o resumo; cada aba pede a sua parte ao abrir.
@@ -1063,6 +1080,22 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
           },
         ]
       : []),
+    ...(d.pode_coordenar
+      ? [
+          {
+            id: "incluir-por-decisao",
+            rotulo: inclusaoDoEdital.lendo
+              ? "Lendo a lista…"
+              : "Incluir por decisão da coordenação",
+            icone: "fa-user-plus",
+            // Sem triagem calculada não há quem incluir.
+            desabilitado:
+              inclusaoDoEdital.lendo || d.em_andamento || !cont.inscritos,
+            dados: { "data-acao": "incluir-por-decisao-edital" },
+            aoEscolher: () => void inclusaoDoEdital.abrir(),
+          },
+        ]
+      : []),
     ...(trava?.podeAlterar
       ? [
           {
@@ -1115,6 +1148,8 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
           <MenuDeAcoes rotulo="Ações" acoes={acoes} tour="triagem-acoes" />
         ) : null}
       </div>
+
+      {inclusaoDoEdital.conteudo}
 
       {p.aviso ? (
         <Aviso

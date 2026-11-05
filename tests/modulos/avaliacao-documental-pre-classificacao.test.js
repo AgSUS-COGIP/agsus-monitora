@@ -938,6 +938,51 @@ describe("inclusão no lote por decisão da coordenação", () => {
     );
   });
 
+  it('o menu "Ações" tem "Incluir por decisão" em qualquer aba, sem abrir vaga (coordenação e administrador global)', async () => {
+    // O banco diz COORDENADOR também ao administrador global (FC_PAPEL_AVALIACAO).
+    const incluir = vi.fn(() => ({
+      data: { incluidos: 1, fichas_criadas: 1 },
+      error: null,
+    }));
+    const supabase = comRespostas(COM_DECISAO(), {
+      incluir_no_lote_por_decisao: incluir,
+    });
+    await montar(supabase);
+    for (const aba of ["resumo", "eliminados", "vagas"]) {
+      await abrirAba(aba);
+      const item = await itemDoMenu("incluir-por-decisao-edital");
+      expect(item, `aba ${aba}`).not.toBeNull();
+      expect(item.disabled, `aba ${aba}`).toBe(false);
+      // Fecha o menu sem escolher.
+      await clicar(secao.querySelector(".avd-pre [data-acao='abrir-menu']"));
+    }
+    // Nenhuma vaga aberta: a ação não depende do cartão da vaga.
+    expect(secao.querySelector("[data-acao='incluir-por-decisao']")).toBeNull();
+
+    await clicar(await itemDoMenu("incluir-por-decisao-edital"));
+    await esperar();
+    expect(chamadasDe(supabase.rpc, "listar_pre_classificacao")).toContainEqual(
+      expect.objectContaining({ p_vaga: null, p_grupo: "PODE_INCLUIR" }),
+    );
+    const opcoes = [
+      ...document.querySelectorAll(
+        "table[aria-label='Candidatos fora do lote pela regra'] tbody tr",
+      ),
+    ].map((tr) => tr.dataset.candidato);
+    expect(opcoes).toEqual(expect.arrayContaining(["7000004", "7000009"]));
+    await clicar(document.querySelector("input[aria-label='Incluir 7000004']"));
+    await clicar(
+      document.querySelector("[data-acao='confirmar-incluir-por-decisao']"),
+    );
+    await esperar();
+    expect(incluir).toHaveBeenCalledWith({
+      p_edital: "e93",
+      p_codigos: ["7000004"],
+      p_motivo: "Critério CORES",
+      p_vaga: "179698",
+    });
+  });
+
   it("revoga com motivo; a ficha concluída o banco recusa e a tela diz por quê", async () => {
     const revogar = vi.fn(() => ({
       data: null,
@@ -975,6 +1020,9 @@ describe("inclusão no lote por decisão da coordenação", () => {
     expect(abaDaPre()).toBeUndefined();
     expect(secao.querySelector("[data-vaga='179698']")).toBeNull();
     expect(secao.querySelector("[data-acao='incluir-por-decisao']")).toBeNull();
+    expect(
+      secao.querySelector("[data-acao='incluir-por-decisao-edital']"),
+    ).toBeNull();
     expect(
       secao.querySelector("[data-acao='abrir-revogar-decisao']"),
     ).toBeNull();

@@ -80,6 +80,12 @@ export function SeloDaDecisao({ c }: SeloDaDecisaoProps) {
   );
 }
 
+/*
+  O edital todo (menu "Ações" da Triagem) pode ter milhares fora do lote
+  (114/2026: ~6 mil): a gaveta desenha só as primeiras linhas e pede a busca.
+*/
+export const LINHAS_NA_GAVETA = 200;
+
 const textoDaSituacao = (c: CandidatoForaDoLote) =>
   c.situacao === "ELIMINADO"
     ? `Eliminado${c.motivo ? `: ${c.motivo}` : ""}`
@@ -171,7 +177,7 @@ export function IncluirPorDecisao<C extends CandidatoForaDoLote>({
                 </tr>
               </thead>
               <tbody>
-                {visiveis.map((c) => (
+                {visiveis.slice(0, LINHAS_NA_GAVETA).map((c) => (
                   <tr key={c.id} data-candidato={c.codigo}>
                     <td>
                       <input
@@ -194,6 +200,12 @@ export function IncluirPorDecisao<C extends CandidatoForaDoLote>({
         ) : (
           <p className="ui-texto-secundario">Nenhum candidato fora do lote.</p>
         )}
+        {visiveis.length > LINHAS_NA_GAVETA ? (
+          <p className="ui-texto-secundario" data-gaveta-cortada>
+            Mostrando {LINHAS_NA_GAVETA} de {visiveis.length}: busque pelo
+            código ou nome para achar a pessoa.
+          </p>
+        ) : null}
         <Campo
           rotulo="Motivo da decisão"
           obrigatorio
