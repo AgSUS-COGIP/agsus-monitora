@@ -46,10 +46,11 @@
 /* Com efeito na tela, o aviso ganha destaque: texto maior, borda dourada
    que acende uma vez e o selo que pula junto com a entrada. */
 .comemoracao--festa {
-  border-left-color: #f5b301;
+  --destaque-do-aviso: var(--state-warning);
+  border-left-color: var(--destaque-do-aviso);
   box-shadow:
-    0 0 0 1px rgb(245 179 1 / 0.25),
-    0 22px 48px -18px rgba(0, 0, 0, 0.5);
+    0 0 0 1px color-mix(in srgb, var(--destaque-do-aviso) 30%, transparent),
+    0 18px 40px -18px rgba(0, 0, 0, 0.45);
   animation:
     comemoracao-entra 0.5s cubic-bezier(0.2, 1.3, 0.35, 1),
     comemoracao-acende 1.6s ease-out 0.2s;
@@ -59,25 +60,17 @@
   font-weight: 700;
 }
 .comemoracao--festa .comemoracao__selo {
-  background: rgb(245 179 1 / 0.18);
-  color: #b07800;
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
   animation: comemoracao-selo 0.9s cubic-bezier(0.2, 1.4, 0.35, 1) 0.15s both;
-}
-html[data-theme="dark"] .comemoracao--festa .comemoracao__selo {
-  color: #ffd166;
 }
 @keyframes comemoracao-acende {
   0% {
-    box-shadow:
-      0 0 0 1px rgb(245 179 1 / 0.25),
-      0 0 0 0 rgb(245 179 1 / 0.45),
-      0 22px 48px -18px rgba(0, 0, 0, 0.5);
+    outline: 0 solid
+      color-mix(in srgb, var(--destaque-do-aviso) 45%, transparent);
   }
   100% {
-    box-shadow:
-      0 0 0 1px rgb(245 179 1 / 0.25),
-      0 0 0 14px rgb(245 179 1 / 0),
-      0 22px 48px -18px rgba(0, 0, 0, 0.5);
+    outline: 14px solid transparent;
   }
 }
 @keyframes comemoracao-selo {

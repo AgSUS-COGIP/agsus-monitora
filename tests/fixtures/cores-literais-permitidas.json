@@ -1,9 +1,9 @@
 {
   "leia": "Lista de exceções de cor literal: tests/cores-so-por-token.test.js. Só encolhe; cada arquivo tem o motivo.",
   "motivos": {
+    "src/app/casca/cabecalho-do-relatorio.tsx": "impressão: cabeçalho do relatório impresso, sempre em papel branco",
     "src/app/entrada/icones-da-entrada.tsx": "marca: as quatro cores do G do Google",
     "src/app/entrada/solicitacao-de-acesso.css": "marca da solicitação de acesso: texto sobre a cor configurada do painel, igual nos dois temas",
-    "src/app/casca/cabecalho-do-relatorio.tsx": "impressão: cabeçalho do relatório impresso, sempre em papel branco",
     "src/lib/access-branding.ts": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
     "src/lib/avaliacao-documental/anexo-na-empregare.ts": "falso positivo: entidade HTML (&#160;), não é cor",
     "src/lib/avaliacao-documental/espelho-de-nota.ts": "documento para impressão (espelho de nota do candidato): papel branco, texto escuro, azul e bordas do timbrado",
@@ -15,14 +15,16 @@
     "src/lib/fogos.ts": "efeito de comemoração (canvas): cores do fogo de artifício",
     "src/lib/mapa-saude-indigena/formas.ts": "mapa: cores de domínio das camadas e marcadores (iguais nos dois temas)",
     "src/lib/marca-da-barra-lateral.ts": "valor padrão gravado da cor da barra lateral (configuração, não tema)",
-    "src/lib/motor-de-efeitos.ts": "efeito de comemoração (canvas): corações e brilho",
+    "src/lib/particulas-do-motor.ts": "efeito de comemoração (canvas): corações, sombra e brilho das partículas",
     "src/lib/tema-do-painel.ts": "reserva dos gráficos quando o CSS não carregou (testes); a tela lê os tokens",
-    "src/modulos/comemoracao/desenho.ts": "efeito de comemoração (canvas)",
     "src/lib/terras-indigenas/fases-e-estilos.ts": "mapa: cores de domínio das Terras Indígenas (tests/cor-da-terra-indigena.test.js)",
     "src/modulos/analises/paineis.tsx": "monta rgba() a partir de um token lido em tempo de execução (não é cor fixa)",
     "src/modulos/aya/mascote/contornos.ts": "marca: desenho da mascote AYA",
     "src/modulos/aya/mascote/desenho.tsx": "marca: desenho da mascote AYA",
     "src/modulos/classificacao/documento-no-navegador.ts": "documento: fundo branco do papel ao rasterizar a prévia",
+    "src/modulos/comemoracao/desenho.ts": "efeito de comemoração (canvas)",
+    "src/modulos/comemoracao/letreiro.ts": "letreiro da comemoração: placa escura fixa nos dois temas (contraste testado)",
+    "src/modulos/comemoracao/letreiro.tsx": "letreiro da comemoração: placa escura fixa nos dois temas (contraste testado)",
     "src/modulos/configuracoes/partes.tsx": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
     "src/modulos/mapa-saude-indigena/leaflet.ts": "mapa: contorno branco dos marcadores sobre a base do mapa",
     "src/modulos/mapa-saude-indigena/legenda.tsx": "mapa: legenda com o mesmo contorno dos marcadores",
@@ -42,18 +44,18 @@
     "src/ui/grafico.tsx": "reserva de cor do gráfico quando o token não é lido (a tela lê os tokens)"
   },
   "cores": {
-    "src/app/entrada/icones-da-entrada.tsx": {
-      "#ea4335": 1,
-      "#4285f4": 1,
-      "#fbbc05": 1,
-      "#34a853": 1
-    },
     "src/app/casca/cabecalho-do-relatorio.tsx": {
       "#003b70": 2,
       "#555": 1,
       "#222": 1,
       "#a3322b": 1,
       "#444": 1
+    },
+    "src/app/entrada/icones-da-entrada.tsx": {
+      "#ea4335": 1,
+      "#4285f4": 1,
+      "#fbbc05": 1,
+      "#34a853": 1
     },
     "src/lib/access-branding.ts": {
       "#c296eb": 1
@@ -139,12 +141,13 @@
     "src/lib/marca-da-barra-lateral.ts": {
       "#ffffff": 1
     },
-    "src/lib/motor-de-efeitos.ts": {
+    "src/lib/particulas-do-motor.ts": {
       "#ff4d6d": 1,
       "#ff758f": 1,
       "#ff8fab": 1,
       "#e5383b": 1,
-      "#ffffff": 1
+      "#000000": 2,
+      "#ffffff": 4
     },
     "src/lib/tema-do-painel.ts": {
       "#dbe8f5": 1,
@@ -158,13 +161,6 @@
       "#fff": 1,
       "rgba(255,255,255,.08)": 1,
       "rgba(7,59,121,.09)": 1
-    },
-    "src/modulos/comemoracao/desenho.ts": {
-      "#fff": 1,
-      "rgba(255,255,255,1)": 1,
-      "rgba(255,255,255,0.55)": 1,
-      "rgba(255,255,255,0)": 1,
-      "rgba(0,0,0,${alfadorastro(dt)": 1
     },
     "src/lib/terras-indigenas/fases-e-estilos.ts": {
       "#7a4a1f": 1,
@@ -226,6 +222,22 @@
     },
     "src/modulos/classificacao/documento-no-navegador.ts": {
       "#ffffff": 1
+    },
+    "src/modulos/comemoracao/desenho.ts": {
+      "#fff": 1,
+      "rgba(255,255,255,1)": 1,
+      "rgba(255,255,255,0.55)": 1,
+      "rgba(255,255,255,0)": 1,
+      "rgba(0,0,0,${alfadorastro(dt)": 1
+    },
+    "src/modulos/comemoracao/letreiro.ts": {
+      "#0b1530": 2,
+      "#ffffff": 2,
+      "#ffe08a": 1,
+      "#000000": 1
+    },
+    "src/modulos/comemoracao/letreiro.tsx": {
+      "rgb(${rgb(cores_do_letreiro.placa)": 1
     },
     "src/modulos/configuracoes/partes.tsx": {
       "#c296eb": 1
@@ -320,12 +332,18 @@
       "#422006": 1
     },
     "src/styles/comemoracao.css": {
-      "rgba(0,0,0,0.45)": 1,
+      "rgba(0,0,0,0.45)": 2,
       "rgb(113161/0.55)": 1,
       "rgb(51430/0.72)": 1,
       "rgb(000/0.38)": 1,
       "rgb(000/0.58)": 1,
-      "rgb(25521490/0.55)": 1
+      "rgb(25521490/0.55)": 1,
+      "rgb(51228/0.22)": 1,
+      "rgb(51228/0)": 1,
+      "rgb(255224138/0.4)": 1,
+      "rgb(000/0.65)": 1,
+      "rgb(255255255/0.16)": 1,
+      "rgb(255209102/0.35)": 1
     },
     "src/styles/google-profile-photo.css": {
       "rgba(255,255,255,0.08)": 1,
