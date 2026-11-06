@@ -247,7 +247,10 @@ async function montar(supabase) {
   });
   await act(async () => void painel.render());
   await esperar();
-  await escolher(secao.querySelector(".classificacao-edital select"), "e83");
+  // Sem edital escolhido, a Classificação mostra os cards dos editais.
+  await clicar(
+    secao.querySelector(".classificacao-editais [data-edital='e83']"),
+  );
   await esperar();
 }
 const botao = (texto, raiz = document) =>

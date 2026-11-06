@@ -9,19 +9,16 @@ import { Campo } from "../ui/index.ts";
 import { SeloDeTreinamento } from "./selo-de-treinamento.tsx";
 
 /*
-  A escolha do edital das telas da seleção (Triagem, Avaliação documental e
-  Classificação), no mesmo card (`.ui-card.ui-seletor-de-edital`): o campo
-  "Edital" (número e unidade, mais o `complemento` de cada tela), o selo
+  A escolha do edital das telas da seleção (Triagem e Avaliação
+  documental), em linha no cabeçalho da tela (`.ui-seletor-de-edital`,
+  CabecalhoDaTela): o campo "Edital" (pequeno, acima), o selo
   "Treinamento" do escolhido e, com `soVigentes`, só os editais vigentes, com
   "Mostrar todos os editais da área" quando há algum de fora (a regra é
   src/lib/avaliacao-documental/editais.ts). `children` entra ao lado (a
   origem da avaliação, na Avaliação documental).
 
-  `naLinha`: no cabeçalho da tela (CabecalhoDaTela), sem card, com "Edital"
-  pequeno acima do campo.
-
-  `className` guarda a classe de cada tela (`avd-edital`,
-  `classificacao-edital`: contrato de teste e tour); `tour` é o `data-tour`
+  `className` guarda a classe de cada tela (`avd-edital`: contrato de
+  teste e tour); `tour` é o `data-tour`
   do campo.
 */
 
@@ -40,8 +37,6 @@ export interface PropriedadesDoSeletorDeEdital<E extends EditalDoSeletor> {
   soVigentes?: boolean;
   /** A primeira opção sem nenhum edital na área. */
   vazio?: string;
-  /** Texto depois de "número - unidade" na opção (contagem, versão da regra). */
-  complemento?: (edital: E) => string;
   /** O nome acessível do card. */
   rotulo?: string;
   className?: string;
@@ -51,7 +46,6 @@ export interface PropriedadesDoSeletorDeEdital<E extends EditalDoSeletor> {
   /** "Mostrar todos" controlado pela tela (a entrada da Avaliação usa a mesma escolha). */
   todos?: boolean;
   aoMudarTodos?: (todos: boolean) => void;
-  naLinha?: boolean;
   children?: ReactNode;
 }
 
@@ -64,14 +58,12 @@ export function SeletorDeEdital<E extends EditalDoSeletor>({
   carregado,
   soVigentes = false,
   vazio = TEXTO_SEM_EDITAL,
-  complemento,
   rotulo = "Edital",
   className,
   tour,
   dadosDosTodos,
   todos: todosDaTela,
   aoMudarTodos,
-  naLinha = false,
   children,
 }: PropriedadesDoSeletorDeEdital<E>) {
   const [todosProprio, setTodosProprio] = useState(false);
@@ -92,14 +84,7 @@ export function SeletorDeEdital<E extends EditalDoSeletor>({
         : vazio;
   return (
     <section
-      className={[
-        naLinha
-          ? "ui-seletor-de-edital na-linha"
-          : "ui-card ui-seletor-de-edital",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className={["ui-seletor-de-edital", className].filter(Boolean).join(" ")}
       aria-label={rotulo}
     >
       <Campo rotulo="Edital">
@@ -113,7 +98,6 @@ export function SeletorDeEdital<E extends EditalDoSeletor>({
           {lista.map((ed) => (
             <option key={ed.id} value={ed.id}>
               {[ed.edital, ed.unidade].filter(Boolean).join(" - ")}
-              {complemento?.(ed) ?? ""}
               {sufixoDeTreinamento(ed)}
             </option>
           ))}

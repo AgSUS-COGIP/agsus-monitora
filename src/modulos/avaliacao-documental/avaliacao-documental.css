@@ -356,7 +356,7 @@
   Modalidade, Código ou nome, Filtros salvos) e, à direita, Minhas fichas,
   Pegar próximo e o menu "Ações da coordenação".
 */
-/* Os filtros salvos, dentro da BarraDeFiltros (campo e links lado a lado). */
+/* Os filtros salvos, em "Filtros" da barra da lista (campo e links lado a lado). */
 .avd-fila-filtros-salvos > .ui-campo {
   flex: 1 1 130px;
   max-width: 230px;

@@ -5,18 +5,9 @@ import { classes } from "./classes.ts";
 import { Popover } from "./popover.tsx";
 
 /*
-  A barra de "encontrar a pessoa" das listas (`.ui-card.ui-barra-de-filtros`):
-  a busca em destaque, à esquerda, com a lupa; os filtros em linha (os
-  campos vêm como filhos, cada um num <Campo>); embaixo, o resultado ("120
-  de 3.400"), quantos filtros estão em uso e "Limpar". `acoes` fica à
-  direita (botões da tela: Pegar próximo, menus).
-
-  Sempre à vista (não recolhe): é a ferramenta principal da lista. A tecla
-  "/" leva o foco à busca de qualquer lugar da página (menos de dentro de um
-  campo); Esc na busca apaga o que foi digitado.
-
-  `quantos` conta os filtros em uso (a busca também); sem nenhum, "Limpar"
-  fica desligado. `resultado` é o texto do resultado (pode ser ReactNode).
+  A busca das listas das telas da seleção: o campo com a lupa, o atalho "/"
+  (de qualquer lugar da página, menos de dentro de um campo) e Esc, que
+  apaga o que foi digitado. `BuscaDaBarra` é o contrato do campo.
 */
 
 export interface BuscaDaBarra {
@@ -30,21 +21,6 @@ export interface BuscaDaBarra {
   /** `data-acao` do campo (contrato de teste). */
   acao?: string;
   tour?: string;
-}
-
-export interface PropriedadesDaBarraDeFiltros {
-  /** O nome acessível da barra ("Encontrar a pessoa"). */
-  rotulo: string;
-  busca: BuscaDaBarra;
-  quantos: number;
-  aoLimpar: () => void;
-  resultado?: ReactNode;
-  acoes?: ReactNode;
-  className?: string;
-  tour?: string;
-  /** Liga a tecla "/" (só uma barra por tela). Padrão: sim. */
-  atalho?: boolean;
-  children?: ReactNode;
 }
 
 /** A tecla "/" vale fora de campos de texto (onde ela é só um caractere). */
@@ -116,62 +92,6 @@ function CampoDeBusca({
         </kbd>
       ) : null}
     </label>
-  );
-}
-
-export function BarraDeFiltros({
-  rotulo,
-  busca,
-  quantos,
-  aoLimpar,
-  resultado,
-  acoes,
-  className,
-  tour,
-  atalho = true,
-  children,
-}: PropriedadesDaBarraDeFiltros) {
-  const campo = useRef<HTMLInputElement>(null);
-
-  usarAtalhoDaBusca(campo, atalho);
-
-  return (
-    <section
-      className={classes("ui-card ui-barra-de-filtros", className)}
-      aria-label={rotulo}
-      data-tour={tour}
-    >
-      <div className="ui-barra-de-filtros-linha">
-        <CampoDeBusca campo={campo} busca={busca} atalho={atalho} />
-        {children ? (
-          <div className="ui-barra-de-filtros-campos">{children}</div>
-        ) : null}
-        {acoes ? (
-          <div className="ui-barra-de-filtros-acoes">{acoes}</div>
-        ) : null}
-      </div>
-      <div className="ui-barra-de-filtros-rodape">
-        <span className="ui-barra-resultado" aria-live="polite">
-          {resultado}
-        </span>
-        <span
-          className={classes("ui-barra-quantos", quantos > 0 && "tem-filtros")}
-        >
-          {quantos
-            ? `${formatNumberBR(quantos)} ${quantos === 1 ? "filtro" : "filtros"}`
-            : "Sem filtros"}
-        </span>
-        <button
-          type="button"
-          className="btn ghost small"
-          data-acao="limpar-filtros"
-          disabled={!quantos}
-          onClick={aoLimpar}
-        >
-          <i className="fa-solid fa-xmark" aria-hidden="true" /> Limpar
-        </button>
-      </div>
-    </section>
   );
 }
 

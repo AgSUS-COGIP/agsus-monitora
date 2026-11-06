@@ -2,8 +2,9 @@
 
 A tela `#page-classificacao` (view `classificacao`, rota `/<área>/classificacao[/<edital>]`):
 `criarClassificacao()` devolve o conteúdo e o controlador; a rota (`src/app/telas.tsx`) chama
-`render()` a cada abertura e `abrirEdital()` com o edital do endereço. Área = a atual do app; o edital é escolhido no topo.
-O seletor traz só os editais da área com análise curricular ativa (qualquer origem) ou com
+`render()` a cada abertura e `abrirEdital()` com o edital do endereço. Área = a atual do app; sem edital, a entrada mostra a busca e os cards dos editais
+(`entrada-da-classificacao.tsx`); escolhido, o nome fica no cabeçalho com "Trocar".
+Os cards trazem só os editais da área com análise curricular ativa (qualquer origem) ou com
 lista gerada, ativos e em andamento primeiro (`listar_editais_classificacao`,
 `supabase/migrations/20261023120000_classificacao_so_editais_analisados.sql`).
 
@@ -61,10 +62,12 @@ classificacao.tsx  <TelaDeClassificacao>, montarClassificacao() e calcularClassi
 estado.ts          store sem React: editais da área, dados do edital, salvar regra, gerar,
                    publicar, desempate (sorteio/decisão), documento oficial (Copiar para o
                    SEI, DOCX timbrado, PDF) e XLSX; salvar os textos do documento
-listas.tsx         visão "Listas" em TypeScript: KPIs (clicáveis: Nas listas, Eliminados,
-                   Aguardando), avisos e pendências, gerar/exportar, a BarraDeFiltros (nome ou
-                   código, vaga, lista, situação; recorte na sessão por edital, regras em
-                   src/lib/classificacao/dados.ts), uma tabela por vaga com 50 por vez,
+listas.tsx         visão "Lista" em TypeScript: a faixa de situação (cada número é o total
+                   da lista que abre; a escolha das quatro listas embaixo), avisos e
+                   pendências, gerar/exportar, a BarraDaLista (nome ou código, vaga; em
+                   Filtros, lista e situação; recorte na URL e na sessão por edital, regras
+                   em src/lib/classificacao/dados.ts), uma TabelaDaLista agrupada por vaga
+                   (50 e mais 50 ao rolar, posição como etiqueta),
                    "Ver posição" e "⋯" em cada linha, eliminados, gaveta com a explicação,
                    registro do empate
 publicar-aprovados.tsx  "Publicar como lista de aprovados" (resultado final, editor): o que

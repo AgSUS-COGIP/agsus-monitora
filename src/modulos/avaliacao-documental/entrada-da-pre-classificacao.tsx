@@ -64,7 +64,6 @@ function TelaDaPreClassificacao({
     trilha: [nomeDaArea, "Seleção"].filter(Boolean).join(" / "),
     edital: e.semAcesso ? null : (
       <SeletorDeEdital
-        naLinha
         className="avd-edital"
         rotulo="Edital da triagem"
         tour="pre-seletor-edital"

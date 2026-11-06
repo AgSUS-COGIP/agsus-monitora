@@ -16,11 +16,11 @@ import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import { SeletorDeEdital } from "../../componentes/seletor-de-edital.tsx";
+import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
-import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { Aviso, Segmentado, TopoDoPainel } from "../../ui/index.ts";
+import { Aviso, CabecalhoDaTela, Segmentado } from "../../ui/index.ts";
+import { EntradaDaClassificacao } from "./entrada-da-classificacao.tsx";
 import { Agenda } from "./agenda.tsx";
 import { criarEstadoDaClassificacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
 import { criarEstadoDaAgenda } from "./estado-da-agenda.ts";
@@ -37,7 +37,9 @@ import "./classificacao.css";
   do controlador ao navegar (a rota, src/app/telas.tsx).
 
   - Área: a área atual do app; trocar de área com a tela aberta recarrega.
-  - Edital: escolhido no topo; a regra é DESTE edital (decidida pelo gestor).
+  - Edital: sem edital escolhido, a entrada (a busca e os cards dos editais:
+    entrada-da-classificacao.tsx); escolhido, o cabeçalho mostra o nome e
+    "Trocar" volta aos cards. A regra é DESTE edital (decidida pelo gestor).
   - Visões: "Listas" (preliminar, convocação, resultado final), "Agenda"
     (regra e agenda das entrevistas dos convocados; agenda.tsx) e "Regra"
     (resumo; editar é nas Regras do edital, em Editais).
@@ -46,13 +48,16 @@ import "./classificacao.css";
     a agenda do dia em Entrevistas › Conduzir entrevistas.
   - A conta é do motor puro (src/lib/classificacao/motor.ts), com a data de
     corte do cronograma quando a regra não traz a sua.
-  Sem tela de carregamento: KPIs e listas em skeleton até a primeira carga.
+  O layout das telas da seleção: o cabeçalho (trilha, título, edital, as
+  visões em controle segmentado, os avisos e o Atualizar só com o ícone).
+  Sem tela de carregamento: a faixa e as listas em skeleton até a primeira
+  carga.
 */
 
 const VISOES = [
-  { valor: "listas", rotulo: "Listas", icone: "fa-list-ol" },
-  { valor: "agenda", rotulo: "Agenda", icone: "fa-calendar-days" },
-  { valor: "regra", rotulo: "Regra", icone: "fa-sliders" },
+  { valor: "listas", rotulo: "Lista" },
+  { valor: "agenda", rotulo: "Agenda" },
+  { valor: "regra", rotulo: "Regra" },
 ];
 
 /* A visão na URL (?aba=agenda); trocar é entrada nova no histórico. */
@@ -65,15 +70,6 @@ const FILTROS_DA_CLASSIFICACAO: EsquemaDosFiltros<"aba"> = Object.freeze({
 });
 /* Na troca de visão, só o edital fica na URL (o recorte das listas sai). */
 const FICA_NA_TROCA_DE_ABA = Object.freeze(["edital"]);
-
-function textoDoStatus(e: SnapshotDaClassificacao) {
-  if (e.semAcesso) return "Sem acesso";
-  if (!e.carregado && e.carregandoEditais) return "Carregando editais...";
-  if (e.carregandoEdital) return "Carregando o edital...";
-  const regra = e.dados?.regra;
-  if (regra) return `Regra: ${rotuloDaVersao(regra)}`;
-  return e.dados ? "Sem regra" : "";
-}
 
 /*
   A classificação de um edital numa lista: o motor, com a data de corte do
@@ -122,24 +118,62 @@ function TelaDaArea({
     [],
   );
 
+  const { nome: nomeDaArea } = usarAreaAtual();
+  const escolhido = e.editais.find((ed) => ed.id === e.editalId) ?? null;
+
   /* A agenda das entrevistas acompanha o edital escolhido (também preenche o documento). */
   useEffect(() => {
     void agenda.carregar(e.editalId);
   }, [agenda, e.editalId]);
 
   return (
-    <div className="ui-tela classificacao-tela" data-tour="classificacao-tela">
-      <TopoDoPainel
-        visoes={
-          <Segmentado
-            tour="classificacao-abas"
-            rotulo="Visão"
-            opcoes={VISOES}
-            valor={visao}
-            aoMudar={setVisao}
-          />
+    <div
+      className="ui-tela classificacao-tela ui-tela-da-selecao"
+      data-tour="classificacao-tela"
+    >
+      <CabecalhoDaTela
+        trilha={[nomeDaArea, "Seleção"].filter(Boolean).join(" / ")}
+        titulo="Classificação"
+        tour="classificacao-cabecalho"
+        edital={
+          e.editalId && !e.semAcesso ? (
+            <div
+              className="classificacao-edital"
+              data-tour="classificacao-seletor-edital"
+            >
+              <span className="ui-texto-secundario">Edital</span>
+              <span className="classificacao-edital-nome">
+                <strong>
+                  {escolhido
+                    ? [escolhido.edital, escolhido.unidade]
+                        .filter(Boolean)
+                        .join(" · ")
+                    : e.editalId}
+                </strong>
+                <SeloDeTreinamento edital={escolhido} />
+                <button
+                  type="button"
+                  className="btn ghost small"
+                  data-acao="trocar-edital"
+                  onClick={() => escolherEdital("")}
+                >
+                  Trocar
+                </button>
+              </span>
+            </div>
+          ) : null
         }
-        status={textoDoStatus(e)}
+        secoes={
+          e.editalId && !e.semAcesso ? (
+            <Segmentado
+              tour="classificacao-abas"
+              rotulo="Seções"
+              opcoes={VISOES}
+              valor={visao}
+              aoMudar={setVisao}
+            />
+          ) : null
+        }
         aoAtualizar={() => {
           // Os editais e o escolhido (uma leitura só) e a configuração de convocação.
           void estado.carregar(e.area, { releitura: true });
@@ -150,7 +184,7 @@ function TelaDaArea({
         }
       >
         <SeloDeAvisos modulo="classificacao" />
-      </TopoDoPainel>
+      </CabecalhoDaTela>
 
       {e.semAcesso ? (
         <Aviso tom="warning" papel="alert">
@@ -172,24 +206,6 @@ function TelaDaArea({
 
       {e.semAcesso ? null : (
         <>
-          <SeletorDeEdital
-            className="classificacao-edital"
-            tour="classificacao-seletor-edital"
-            editais={e.editais}
-            escolhido={e.editalId}
-            carregado={e.carregado}
-            vazio="Nenhum edital com análises nesta área"
-            complemento={(ed) =>
-              (ed.candidatos
-                ? ` (${ed.candidatos.toLocaleString("pt-BR")})`
-                : "") +
-              (ed.versao_regra
-                ? ` · ${rotuloDaVersao({ versao: ed.versao_regra, nome: ed.nome_regra })}`
-                : "")
-            }
-            aoEscolher={escolherEdital}
-          />
-
           {e.erroDoEdital ? (
             <Aviso tom="danger" papel="alert">
               Não foi possível abrir o edital: {e.erroDoEdital}{" "}
@@ -244,7 +260,13 @@ function TelaDaArea({
                 <div className="ui-esqueleto-linha" />
               </div>
             ) : null
-          ) : null}
+          ) : e.erroAoCarregar ? null : (
+            <EntradaDaClassificacao
+              editais={e.editais}
+              carregado={e.carregado}
+              aoAbrir={escolherEdital}
+            />
+          )}
         </>
       )}
     </div>

@@ -480,12 +480,12 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       passo(
         t("classificacao-seletor-edital"),
         "Edital",
-        "A regra de classificação é de cada edital, decidida pelo gestor dele.",
+        "A regra de classificação é de cada edital, decidida pelo gestor dele. Trocar volta aos cards dos editais.",
       ),
       passo(
         t("classificacao-abas"),
-        "Listas, Agenda e Regra",
-        "Listas mostra a classificação; Agenda, os horários da entrevista; Regra, o que vale no edital.",
+        "Lista, Agenda e Regra",
+        "Lista mostra a classificação; Agenda, os horários da entrevista; Regra, o que vale no edital.",
       ),
       passo(
         t("classificacao-listas"),
@@ -495,13 +495,13 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       ),
       passo(
         t("classificacao-kpis"),
-        "Indicadores",
-        "Os números da lista escolhida; Nas listas, Eliminados e Aguardando filtram as tabelas.",
+        "Situação da lista",
+        "Cada número filtra a lista e é o total dela. Embaixo, qual das quatro listas e a data de corte.",
       ),
       passo(
         t("classificacao-filtros"),
         "Encontrar a pessoa",
-        "Busca por nome ou código (a tecla / leva até ela), vaga, lista e situação. O filtro volta ao recarregar.",
+        "Nome ou código (tecla /) e a vaga; em Filtros, a lista e a situação. O filtro volta ao recarregar.",
       ),
       passo(
         "#page-classificacao .classificacao-avisos",
@@ -541,9 +541,9 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
         { exige: canEditClassificacao },
       ),
       passo(
-        "#page-classificacao .classificacao-vaga",
-        "Por vaga",
-        "50 por vez. Ver posição explica o lugar do candidato; o ⋯ copia o código e registra o empate.",
+        t("classificacao-lista"),
+        "As pessoas",
+        "Agrupadas por vaga, 50 e mais 50 ao rolar. Ver posição explica o lugar; o ⋯ copia o código e registra o empate.",
       ),
       PASSO_DA_AYA,
     ]),
