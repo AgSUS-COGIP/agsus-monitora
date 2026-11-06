@@ -46,10 +46,10 @@ export default [
       `npx eslint api/aya.js` passava sem rodar regra nenhuma — nenhuma
       configuração casava com o arquivo. Foi assim que uma substituição em massa
       renomeou o parâmetro de uma função sem renomear o uso dentro dela: o
-      `no-undef` teria apontado na hora, mas não estava ligado ali.
+      `no-undef` teria apontado na hora, mas não estava ligado ali. Hoje
+      `api/` é TypeScript e entra no bloco de TypeScript abaixo.
     */
     files: [
-      "api/**/*.js",
       "src/lib/**/*.js",
       "src/modules/**/*.js",
       "src/app/**/*.{js,jsx}",
@@ -80,7 +80,12 @@ export default [
     },
   },
   {
-    files: ["src/**/*.{ts,tsx}", "server/**/*.ts", "tests/tipos/**/*.tsx"],
+    files: [
+      "src/**/*.{ts,tsx}",
+      "server/**/*.ts",
+      "api/**/*.ts",
+      "tests/tipos/**/*.tsx",
+    ],
     languageOptions: {
       parser: tsParser,
       ecmaVersion: "latest",

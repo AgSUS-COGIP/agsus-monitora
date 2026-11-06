@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
+import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 
 /*
   Migration 20261009200000 (a ficha da Avaliação documental alimenta

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CAMPOS_DO_MODELO } from "../src/lib/avaliacao-documental/modelo-do-espelho.ts";
-import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
+import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 
 /*
   Invariantes da migration 20261019120000 (modelo do espelho de nota): as

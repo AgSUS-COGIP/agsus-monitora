@@ -8,7 +8,7 @@ import type {
 } from "./tipos.ts";
 /*
   As consultas da tela de Análises curriculares, todas por RPC (contrato em
-  src/lib/rpc-contrato.js). Este arquivo não importa React.
+  src/lib/rpc-contrato.ts). Este arquivo não importa React.
 
   - `podeLer()`: o porteiro (`usuario_pode_ler_analises`).
   - `carregarEscopo()`: a lista enxuta da área (get_analises_dashboard_payload_v2)

@@ -5,7 +5,7 @@ Regra do diretório: **sem DOM e sem estado global**. Entrada → saída, com te
 
 Arquivos que exigem cuidado:
 
-- `rpc-contrato.js` — contrato das RPCs. Mudou no banco, muda aqui (`npm run check:rpc-contract`).
+- `rpc-contrato.ts` — contrato das RPCs. Mudou no banco, muda aqui (`npm run check:rpc-contract`).
 - `sessao.ts`, `session-lifecycle.ts`, `supabaseClient.ts`, `auth-flow.ts` — único caminho de auth.
 - `novas-tentativas.ts` — **regra única de nova tentativa automática** de chamada ao Supabase (leitura passageira, token
   vencido), com espera crescente sorteada, teto, limite e orçamento comum; o cliente único a aplica no `fetch`. Nada de

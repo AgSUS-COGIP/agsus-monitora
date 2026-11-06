@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
+import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 
 /*
   Migration 20261007220100: sai get_monitoramento_dashboard_payload, que a tela
@@ -23,7 +23,7 @@ describe("sai o payload do monitoramento (20261007220100)", () => {
 
   it("o front não a chama e o contrato não a lista", () => {
     expect(Object.keys(CONTRATO_RPC)).not.toContain(RPC);
-    for (const arquivo of ["src/app/carga.ts", "src/lib/rpc-contrato.js"])
+    for (const arquivo of ["src/app/carga.ts", "src/lib/rpc-contrato.ts"])
       expect(ler(arquivo)).not.toContain(RPC);
   });
 

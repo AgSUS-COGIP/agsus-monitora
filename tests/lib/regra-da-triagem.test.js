@@ -9,7 +9,7 @@ import {
   salvarRegraDaTriagem,
   textoDoLote,
 } from "../../src/lib/triagem/regra-da-triagem.ts";
-import { CONTRATO_RPC } from "../../src/lib/rpc-contrato.js";
+import { CONTRATO_RPC } from "../../src/lib/rpc-contrato.ts";
 import { EditorDaRegraDaTriagem } from "../../src/modulos/triagem/editor-da-regra.tsx";
 import { abrirRegrasDoEdital } from "../../src/modulos/regras-do-edital/abrir.ts";
 

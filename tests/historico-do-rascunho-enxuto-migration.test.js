@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
+import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 
 /*
   Histórico do rascunho enxuto (20261023220000; aplicar só depois de

@@ -5,7 +5,7 @@
   avançado), CLASSIFICACAO no editor da regra de classificação.
 
   RPCs (supabase/migrations/20261013120000_rascunho_das_regras.sql; contrato em
-  src/lib/rpc-contrato.js):
+  src/lib/rpc-contrato.ts):
     obter_rascunho_regra(p_tipo, p_edital)
     salvar_rascunho_regra(p_tipo, p_edital, p_conteudo, p_versao_base)
     descartar_rascunho_regra(p_tipo, p_edital)

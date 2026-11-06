@@ -18,10 +18,21 @@
 */
 
 import { createHash, timingSafeEqual } from "node:crypto";
+import type {
+  PedidoDaVercel,
+  QueryDaVercel,
+  RespostaDaVercel,
+} from "./_tipos-da-vercel.js";
 
 const ESPERA_MS = 15_000;
 
-const variavel = (...nomes) =>
+/** Uma rota: a RPC que ela lê e como a resposta é montada a partir dela. */
+export type RotaComChave = {
+  rpc: string;
+  montar: (payload: unknown, query: QueryDaVercel | undefined) => unknown;
+};
+
+const variavel = (...nomes: string[]): string =>
   nomes.map((nome) => String(process.env[nome] || "").trim()).find(Boolean) ||
   "";
 
@@ -30,7 +41,12 @@ const variavel = (...nomes) =>
   Vercel não conta). `faltam` lista só os NOMES das ausentes, para o 500 dizer
   o que configurar; valor nenhum sai na resposta.
 */
-export function configuracao() {
+export function configuracao(): {
+  base: string;
+  servidor: string;
+  chaveDaApi: string;
+  faltam: string[];
+} {
   const base = variavel("VITE_SUPABASE_URL", "SUPABASE_URL").replace(
     /\/+$/,
     "",
@@ -45,31 +61,58 @@ export function configuracao() {
   return { base, servidor, chaveDaApi, faltam };
 }
 
-function tokenDoPedido(req) {
+function tokenDoPedido(req: PedidoDaVercel): string {
   const cabecalho = String(req.headers?.authorization || "");
   const achado = /^Bearer\s+(\S+)$/i.exec(cabecalho);
-  return achado ? achado[1] : "";
+  return achado ? (achado[1] ?? "") : "";
 }
 
 /* Compara pelo hash, em tempo constante (o tamanho da chave não vaza). */
-function mesmaChave(recebida, esperada) {
+function mesmaChave(recebida: string, esperada: string): boolean {
   const a = createHash("sha256").update(recebida).digest();
   const b = createHash("sha256").update(esperada).digest();
   return timingSafeEqual(a, b);
 }
 
-function responder(res, status, corpo) {
+function responder(
+  res: RespostaDaVercel,
+  status: number,
+  corpo: unknown,
+): void {
   res.status(status);
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "private, no-store");
   res.end(JSON.stringify(corpo));
 }
 
-/**
- * A função da Vercel de uma rota: lê `rpc` e responde `montar(payload, query)`.
- * @param {{ rpc: string, montar: (payload: unknown, query: Record<string, unknown> | undefined) => unknown }} rota
- */
-export function criarRotaComChave({ rpc, montar }) {
+/* O `code` do erro do PostgREST, quando vier como texto. */
+function codigoDoErro(erro: unknown): string | null {
+  return typeof erro === "object" &&
+    erro !== null &&
+    "code" in erro &&
+    typeof erro.code === "string"
+    ? erro.code
+    : null;
+}
+
+/* A falha do `AbortSignal.timeout` chega com o nome "TimeoutError". */
+function esgotouOTempo(falha: unknown): boolean {
+  return (
+    typeof falha === "object" &&
+    falha !== null &&
+    "name" in falha &&
+    falha.name === "TimeoutError"
+  );
+}
+
+/** A função da Vercel de uma rota: lê `rpc` e responde `montar(payload, query)`. */
+export function criarRotaComChave({
+  rpc,
+  montar,
+}: RotaComChave): (
+  req: PedidoDaVercel,
+  res: RespostaDaVercel,
+) => Promise<void> {
   return async function handler(req, res) {
     if (req.method !== "GET") {
       res.setHeader("Allow", "GET");
@@ -113,22 +156,23 @@ export function criarRotaComChave({ rpc, montar }) {
           PGRST202 = função ausente). A mensagem inteira vai só para o log
           da função na Vercel.
         */
-        const erro = await resposta.json().catch(() => null);
+        const erro: unknown = await resposta.json().catch(() => null);
         console.error(`[api] ${rpc}: ${resposta.status}`, erro);
         responder(res, 502, {
           erro: "falha_na_leitura",
           status_do_banco: resposta.status,
-          codigo: typeof erro?.code === "string" ? erro.code : null,
+          codigo: codigoDoErro(erro),
         });
         return;
       }
-      responder(res, 200, montar(await resposta.json(), req.query));
+      const payload: unknown = await resposta.json();
+      responder(res, 200, montar(payload, req.query));
     } catch (falha) {
       console.error(`[api] ${rpc}:`, falha);
       responder(res, 502, {
         erro: "falha_na_leitura",
         status_do_banco: null,
-        codigo: falha?.name === "TimeoutError" ? "tempo_esgotado" : null,
+        codigo: esgotouOTempo(falha) ? "tempo_esgotado" : null,
       });
     }
   };

@@ -1,11 +1,11 @@
 /*
   GET /api/aprovados — a Lista de aprovados: os candidatos da lista VIGENTE de
   cada edital ativo (todas as áreas), sem os removidos (formato em
-  src/lib/aprovados-e-cronograma-da-api.js; leitura `listar_aprovados_da_api`,
+  src/lib/aprovados-e-cronograma-da-api.ts; leitura `listar_aprovados_da_api`,
   migration 20261105150000).
 
   Acesso: sem login, pela mesma chave fixa de /api/editais
-  (`Authorization: Bearer <EDITAIS_API_CHAVE>`; ver api/_rota-com-chave.js).
+  (`Authorization: Bearer <EDITAIS_API_CHAVE>`; ver api/_rota-com-chave.ts).
   A resposta tem DADOS PESSOAIS (nome, matrícula): guarde a chave só no
   servidor da outra aplicação e trate os dados conforme a LGPD.
 

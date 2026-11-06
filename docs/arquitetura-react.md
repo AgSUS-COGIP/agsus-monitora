@@ -22,7 +22,7 @@ src/
    é card compacto (`Kpi` em `GradeDeKpis`, ~78px de altura), não faixa sem card.
 2. **Um padrão de dados só**, o que as telas React já usam: `estado.js` por módulo (store fora do
    React, com `obter()` e `assinar(ouvinte)`, lido com `useSyncExternalStore`), RPC pelo cliente
-   Supabase único (`getSupabaseClient()`, contrato em `src/lib/rpc-contrato.js`), regras em
+   Supabase único (`getSupabaseClient()`, contrato em `src/lib/rpc-contrato.ts`), regras em
    `src/lib/`. Sem biblioteca nova de estado ou de dados.
 3. **Isolamento.** Cada tela, seção e parte da casca fica dentro de um `ErrorBoundary` (a rota em
    `src/app/telas.tsx`, as peças em `src/app/casca/pecas.tsx`): erro numa tela mostra um aviso curto
@@ -85,7 +85,7 @@ tests/<nome>.test.js          teste das regras de src/lib/
 - `estado.js` não importa React (o legado também pode importá-lo). Componente lê com
   `useSyncExternalStore(estado.assinar, estado.obter)`; o que é só da tela (filtro, aba, página)
   é estado do componente.
-- RPC nova ou mudada → `src/lib/rpc-contrato.js` (`npm run check:rpc-contract` quebra o build).
+- RPC nova ou mudada → `src/lib/rpc-contrato.ts` (`npm run check:rpc-contract` quebra o build).
 - Sem `innerHTML`/`dangerouslySetInnerHTML`; texto vai como filho.
 - `StrictMode` está ligado: efeito tem de limpar o que instala.
 

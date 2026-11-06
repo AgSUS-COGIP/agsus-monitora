@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
+import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 
 /*
   Invariantes da migration 20261013130000 (diferenças por cargo na regra da
