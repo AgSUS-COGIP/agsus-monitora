@@ -148,6 +148,7 @@ export function imprimirPagina(html: string) {
     },
     { once: true },
   );
+  // eslint-disable-next-line no-restricted-syntax -- iframe com sandbox sem allow-scripts: o HTML não executa script nem navega a página.
   quadro.srcdoc = html;
   document.body.append(quadro);
 }

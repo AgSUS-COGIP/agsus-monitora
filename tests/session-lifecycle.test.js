@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   SESSION_IDLE_LIMIT_MS,
@@ -58,5 +58,33 @@ describe("session lifecycle", () => {
     expect(notice.hidden).toBe(true);
 
     notice.remove();
+  });
+
+  it("monta o contador pelo DOM, sem innerHTML", async () => {
+    vi.resetModules();
+    vi.doMock("../src/lib/supabaseClient", () => ({
+      getSupabaseClient: () => null,
+    }));
+    const definir = vi.spyOn(Element.prototype, "innerHTML", "set");
+    try {
+      const { installSessionLifecycle } = await import(
+        "../src/lib/session-lifecycle"
+      );
+      installSessionLifecycle();
+
+      const timer = document.getElementById("agsusSessionTimer");
+      expect(timer).not.toBeNull();
+      expect(timer.getAttribute("role")).toBe("timer");
+      const [icone, texto] = timer.children;
+      expect(timer.children).toHaveLength(2);
+      expect(icone.getAttribute("aria-hidden")).toBe("true");
+      expect(icone.textContent).toBe("⏱");
+      expect(texto.id).toBe("agsusSessionTimerText");
+      expect(texto.textContent).toBe("");
+      expect(definir).not.toHaveBeenCalled();
+    } finally {
+      definir.mockRestore();
+      vi.doUnmock("../src/lib/supabaseClient");
+    }
   });
 });
