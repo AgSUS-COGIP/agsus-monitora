@@ -823,7 +823,7 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       passo(
         t("avd-fila-tabela"),
         "As fichas",
-        "50 por vez, agrupadas por vaga; o cabeçalho ordena e Exportar CSV baixa a etapa. Analisar ou Abrir mostra a ficha; o ⋯ tem o resto.",
+        "50 e mais 50 ao rolar, agrupadas por vaga; o cabeçalho ordena e Exportar CSV baixa a etapa. Analisar ou Abrir mostra a ficha; o ⋯ tem o resto.",
       ),
       passo(
         t("avd-ficha-topo"),

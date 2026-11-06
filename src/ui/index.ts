@@ -124,11 +124,15 @@ export type {
 export { Selo } from "./selo.tsx";
 export type { PropriedadesDoSelo } from "./selo.tsx";
 export { CabecalhosDaTabela, TabelaInfinita } from "./tabela-infinita.tsx";
-export { CardDaLista, POR_PAGINA, TabelaPaginada } from "./tabela-paginada.tsx";
+export {
+  CardDaLista,
+  POR_VEZ_NA_LISTA,
+  TabelaDaLista,
+} from "./tabela-da-lista.tsx";
 export type {
-  PropriedadesDaTabelaPaginada,
+  PropriedadesDaTabelaDaLista,
   PropriedadesDoCardDaLista,
-} from "./tabela-paginada.tsx";
+} from "./tabela-da-lista.tsx";
 export { LINHAS_POR_PAGINA, usarListaNoServidor } from "./lista-no-servidor.ts";
 export type {
   BuscarPagina,
