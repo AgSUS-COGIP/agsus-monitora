@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { RefObject } from "react";
 import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { copiarTexto } from "../../lib/convite-de-acesso.ts";
@@ -33,7 +34,7 @@ import {
   CardDaLista,
   CelulaDaPessoa,
   Selo,
-  TabelaPaginada,
+  TabelaDaLista,
   usarListaNoServidor,
 } from "../../ui/index.ts";
 import type {
@@ -128,6 +129,34 @@ type Pedido =
   | { tipo: "revogar"; pessoa: InscritoDaPre }
   | null;
 
+/*
+  A lista de baixo (Eliminados, em "Todas") só pede ao banco quando chega
+  perto da tela: abrir Pessoas lê as 50 linhas da lista à vista, não as das
+  duas. Sem IntersectionObserver (testes antigos, navegador velho), lê já.
+*/
+function usarPertoDaTela(
+  ref: RefObject<HTMLElement | null>,
+  preguicoso: boolean,
+): boolean {
+  const [perto, setPerto] = useState(
+    () => !preguicoso || typeof IntersectionObserver === "undefined",
+  );
+  useEffect(() => {
+    const alvo = ref.current;
+    if (perto || !alvo || typeof IntersectionObserver === "undefined")
+      return undefined;
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        if (entradas.some((e) => e.isIntersecting)) setPerto(true);
+      },
+      { rootMargin: "200px 0px" },
+    );
+    observador.observe(alvo);
+    return () => observador.disconnect();
+  }, [ref, perto]);
+  return perto;
+}
+
 /* Uma lista (um grupo) da aba: 50 por vez do banco, com as ações de cada linha. */
 function ListaDoGrupo({
   grupo,
@@ -137,8 +166,10 @@ function ListaDoGrupo({
   chaveDaLeitura,
   acoesDaLinha,
   titulo = "",
+  preguicoso = false,
 }: {
   titulo?: string;
+  preguicoso?: boolean;
   grupo: GrupoDaPre;
   pre: EstadoDaPreClassificacao;
   filtro: FiltroDasPessoas;
@@ -161,7 +192,9 @@ function ListaDoGrupo({
     [pre, recorte],
   );
   const chave = `${chaveDaLeitura}:${grupo}:${recorte.vaga ?? ""}:${recorte.busca ?? ""}`;
-  const lista = usarListaNoServidor(buscar, chave);
+  const caixa = useRef<HTMLDivElement>(null);
+  const perto = usarPertoDaTela(caixa, preguicoso);
+  const lista = usarListaNoServidor(buscar, chave, { ativo: perto });
   const eliminados = grupo === "ELIMINADOS";
 
   const linha = (c: InscritoDaPre) => {
@@ -224,9 +257,13 @@ function ListaDoGrupo({
       </Aviso>
     );
   return (
-    <div className="avd-pessoas-lista" data-grupo-das-pessoas={grupo}>
+    <div
+      className="avd-pessoas-lista"
+      data-grupo-das-pessoas={grupo}
+      ref={caixa}
+    >
       {titulo ? <h3 className="ui-lista-subtitulo">{titulo}</h3> : null}
-      <TabelaPaginada
+      <TabelaDaLista
         rotulo={TITULO_DO_GRUPO[grupo]}
         classeDaTabela="avd-tabela"
         colunas={
@@ -449,11 +486,12 @@ export function PessoasDaTriagem({
             ))}
           </select>
         </BarraDaLista>
-        {grupos.map((grupo) => (
+        {grupos.map((grupo, indice) => (
           <ListaDoGrupo
             key={grupo}
             grupo={grupo}
             titulo={grupos.length > 1 ? TITULO_DO_GRUPO[grupo] : ""}
+            preguicoso={indice > 0}
             pre={pre}
             filtro={filtro}
             busca={busca}

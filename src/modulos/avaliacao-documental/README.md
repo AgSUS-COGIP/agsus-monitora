@@ -236,7 +236,7 @@ blocos.tsx                os blocos da ficha na regra
 previa.tsx                "Testar com um candidato fictício" (entradas à esquerda, resultado preso
                           à direita; uma coluna em largura estreita)
 equipe.tsx                aba Equipe
-pre-classificacao.tsx     aba Triagem (cards do andamento no alto, abas, listas oficiais)
+pre-classificacao.tsx     Triagem (cabeçalho com Pessoas, Por vaga e Regra, faixa de situação, listas oficiais na Regra)
 pessoas-da-triagem.tsx    aba Pessoas da Triagem: busca por código ou nome no edital todo
                           (BarraDeFiltros), vaga e situação, 50 por vez do banco, ações da
                           linha (AcoesDaLinha); regras em src/lib/avaliacao-documental/

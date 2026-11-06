@@ -23,7 +23,7 @@ import {
   CardDaLista,
   CelulaDaPessoa,
   estadoDaMarcacao,
-  TabelaPaginada,
+  TabelaDaLista,
   usarListaNoServidor,
 } from "../../ui/index.ts";
 import type {
@@ -445,7 +445,7 @@ export function EliminadosDaTriagem({
             </button>
           </Aviso>
         ) : (
-          <TabelaPaginada
+          <TabelaDaLista
             rotulo="Eliminados"
             classeDaTabela="avd-tabela"
             colunas={colunas}

@@ -525,7 +525,29 @@ describe("Triagem (AM-4)", () => {
       supabase.rpc,
       "listar_pre_classificacao",
     ).length;
-    expect(linhasDePessoas).toBe(2);
+    // As duas listas de "Todas" (50 linhas) e a conta de "Podem entrar" (uma linha).
+    expect(
+      chamadasDe(supabase.rpc, "listar_pre_classificacao").map(
+        (a) => `${a.p_grupo}:${a.p_limite}`,
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "CLASSIFICADOS:50",
+        "ELIMINADOS:50",
+        "PODE_INCLUIR:1",
+      ]),
+    );
+    expect(linhasDePessoas).toBe(3);
+    // "Por decisão" é número informativo: não é botão nem filtro.
+    const decisao = faixaDaTriagem().querySelector("[data-valor='decisao']");
+    expect(decisao.tagName).toBe("DIV");
+    expect(decisao.hasAttribute("aria-pressed")).toBe(false);
+    // "Podem entrar": o total da própria lista que o número abre.
+    expect(
+      faixaDaTriagem().querySelector(
+        "[data-valor='pode-entrar'] .ui-faixa-numero",
+      ).textContent,
+    ).not.toBe("");
     expect(chamadasDe(supabase.rpc, "obter_pre_classificacao")).toHaveLength(0);
     expect(
       chamadasDe(supabase.rpc, "obter_pre_classificacao_se_mudou"),
@@ -1087,6 +1109,19 @@ describe("inclusão no lote por decisão da coordenação", () => {
     await clicar(secao.querySelector("[data-acao='limpar-filtros']"));
     expect(secao.querySelector("[data-acao='buscar-pessoa']").value).toBe("");
     expect(sessionStorage.getItem("monitora:triagem:pessoas:e93")).toBeNull();
+  });
+
+  it("Podem entrar: o número da faixa é o total da lista que ele abre", async () => {
+    const supabase = comRespostas(COM_DECISAO(), {});
+    await montar(supabase);
+    const chip = faixaDaTriagem().querySelector("[data-valor='pode-entrar']");
+    const numero = chip.querySelector(".ui-faixa-numero").textContent;
+    await clicar(chip);
+    await esperar();
+    expect(chip.getAttribute("aria-pressed")).toBe("true");
+    expect(
+      secao.querySelector(".avd-pessoas .ui-lista-contagem").textContent,
+    ).toBe(`Mostrando ${numero} de ${numero}`);
   });
 
   it('Pessoas: a ação da linha inclui no lote com a pessoa já marcada; o "⋯" revoga e mostra a vaga', async () => {

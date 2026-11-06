@@ -1075,6 +1075,26 @@ export function PreClassificacao({
     void pre.garantirCarregado(e.editalId, String(versaoDaRegra));
   }, [pre, e.editalId, versaoDaRegra]);
   const resumoLido = p.editalId === e.editalId && Boolean(p.dados);
+  /*
+    "Podem entrar" na faixa: o total da lista que o número abre (o grupo
+    PODE_INCLUIR do edital todo), pedido ao banco com uma linha só, junto
+    com as vagas; muda a cada releitura do resumo.
+  */
+  const [podemEntrar, setPodemEntrar] = useState<number | null>(null);
+  const leituraDoResumo = resumoLido ? String(p.dados?.gerado_em ?? "") : "";
+  useEffect(() => {
+    if (!resumoLido) return undefined;
+    let vivo = true;
+    void pre
+      .listar({ vaga: null, grupo: "PODE_INCLUIR", busca: "" }, null, 1)
+      .then((r) => {
+        if (vivo) setPodemEntrar(r.total);
+      })
+      .catch(() => undefined);
+    return () => {
+      vivo = false;
+    };
+  }, [pre, resumoLido, leituraDoResumo, e.editalId]);
   useEffect(() => {
     // As vagas valem para a faixa (fora do lote) e os filtros; a Regra lê as listas oficiais.
     if (!resumoLido) return;
@@ -1277,11 +1297,12 @@ export function PreClassificacao({
       titulo: "No lote por decisão da coordenação",
     },
     {
-      chave: "fora",
-      rotulo: "Fora do lote",
-      valor: fora,
+      chave: "pode-entrar",
+      rotulo: "Podem entrar",
+      // O total da própria lista "Podem entrar por decisão" (o mesmo recorte).
+      valor: podemEntrar,
       tom: "alerta",
-      contexto: pct(fora),
+      contexto: "fora do lote ou eliminados incluíveis",
       ativo: aba === "pessoas" && situacao === "PODE_INCLUIR",
       titulo: "Ver quem pode entrar por decisão da coordenação",
       aoClicar: () => verPessoas("PODE_INCLUIR"),
