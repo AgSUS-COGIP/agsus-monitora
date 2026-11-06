@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SECOES } from "../src/modulos/configuracoes/secoes.ts";
 import { criarNavegacao } from "../src/app/navegacao.ts";
-import { montarTelasNoTeste } from "./app/telas-no-teste.js";
+import { montarTelasNoTeste } from "./app/telas-no-teste.ts";
 import { htmlDaPagina } from "./pagina-montada.ts";
 
 const html = htmlDaPagina();

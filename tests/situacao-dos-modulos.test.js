@@ -359,7 +359,7 @@ describe("tela de manutenção e faixa do administrador", () => {
   afterEach(() => {
     esquecerSituacaoDoSistema();
   });
-  // A decisão é pura (src/lib/pagina-desligada.ts); quem desenha é a rota (tests/app/pagina-desligada.test.js).
+  // A decisão é pura (src/lib/pagina-desligada.ts); quem desenha é a rota (tests/app/pagina-desligada.test.ts).
   const decidir = (opcoes) =>
     avisoDaPagina({
       situacao: situacaoDoSistema(),

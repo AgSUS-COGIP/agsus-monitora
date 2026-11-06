@@ -1,3 +1,4 @@
+import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   FASES,
@@ -6,11 +7,14 @@ import {
   criarSessao,
   nomeDoUsuario,
 } from "../../src/app/sessao.ts";
+import type { GanchosDoSistema } from "../../src/app/sessao.ts";
 import {
   SAIDA_EXPIRADA,
   declararSaida,
   reiniciarEstadoDeSaidaParaTestes,
 } from "../../src/lib/estado-de-saida";
+import { definido } from "../definido.ts";
+import { sessaoFalsa } from "../supabase-falso.ts";
 
 /*
   A sessão do app (src/app/sessao.ts): entrar, sair, sessão expirada, troca de
@@ -18,15 +22,39 @@ import {
   Supabase e a janela são falsos; o legado é o adaptador `sistema`.
 */
 
-const sessaoDe = (id, email = `${id}@agenciasus.org.br`) => ({
-  access_token: `token-${id}`,
-  user: { id, email, user_metadata: { full_name: `Pessoa ${id}` } },
-});
+/* A sessão do Supabase com o token, o id, o e-mail e o nome do teste. */
+const sessaoDe = (id: string, email = `${id}@agenciasus.org.br`): Session => {
+  const base = sessaoFalsa(`token-${id}`);
+  return {
+    ...base,
+    user: {
+      ...base.user,
+      id,
+      email,
+      user_metadata: { full_name: `Pessoa ${id}` },
+    },
+  };
+};
 
 const CONTEXTO = {
   profile: { id: "perfil-1", nome: "Ana", ativo: true, permissoes: {} },
   panel_ids: ["painel-1"],
 };
+
+type RespostaDaRpc = { data: unknown; error: unknown };
+type RpcFalsa = (
+  nome: string,
+  argumentos?: Record<string, unknown>,
+) => Promise<RespostaDaRpc>;
+type OuvinteDaAutenticacao = (evento: string, sessao: Session | null) => void;
+
+interface OpcoesDoCliente {
+  guardada?: Session | null;
+  contexto?: unknown;
+  erroNoContexto?: { message: string } | null;
+  meuUsuario?: unknown;
+  troca?: Session | Error | null;
+}
 
 function clienteFalso({
   guardada = null,
@@ -34,14 +62,15 @@ function clienteFalso({
   erroNoContexto = null,
   meuUsuario = null,
   troca = null,
-} = {}) {
+}: OpcoesDoCliente = {}) {
   let atual = guardada;
-  let ouvinte = null;
+  let ouvinte: OuvinteDaAutenticacao | null = null;
   const cliente = {
-    emitir: (evento, sessao) => ouvinte?.(evento, sessao),
-    definirSessao: (sessao) => (atual = sessao),
+    emitir: (evento: string, sessao: Session | null) =>
+      ouvinte?.(evento, sessao),
+    definirSessao: (sessao: Session | null) => (atual = sessao),
     auth: {
-      onAuthStateChange: vi.fn((funcao) => {
+      onAuthStateChange: vi.fn((funcao: OuvinteDaAutenticacao) => {
         ouvinte = funcao;
         return { data: { subscription: { unsubscribe() {} } } };
       }),
@@ -49,22 +78,24 @@ function clienteFalso({
         data: { session: atual },
         error: null,
       })),
-      signOut: vi.fn(async () => {
+      signOut: vi.fn(async (_opcoes?: { scope?: string }) => {
         atual = null;
         ouvinte?.("SIGNED_OUT", null);
         return { error: null };
       }),
-      signInWithOAuth: vi.fn(async () => ({
+      signInWithOAuth: vi.fn<
+        (pedido?: unknown) => Promise<{ data?: unknown; error: unknown }>
+      >(async () => ({
         data: { url: "https://accounts.google.com/o/oauth2" },
         error: null,
       })),
-      exchangeCodeForSession: vi.fn(async () =>
+      exchangeCodeForSession: vi.fn(async (_codigo: string) =>
         troca instanceof Error
           ? { data: null, error: troca }
           : { data: { session: troca }, error: null },
       ),
     },
-    rpc: vi.fn(async (nome) => {
+    rpc: vi.fn<RpcFalsa>(async (nome) => {
       if (nome === "obter_contexto_monitora")
         return erroNoContexto
           ? { data: null, error: erroNoContexto }
@@ -75,9 +106,35 @@ function clienteFalso({
   };
   return cliente;
 }
+type ClienteFalso = ReturnType<typeof clienteFalso>;
 
-function janelaFalsa({ search = "", largura = 1280, popup = null } = {}) {
-  const ouvintes = {};
+/*
+  O cliente e a janela de mentira só têm o que a sessão usa; os tipos do
+  Supabase e de Window descrevem muito mais. A guarda confere a forma
+  mínima e devolve o próprio objeto do teste (sem cópia: o teste troca
+  `rpc` e `signInWithOAuth` depois de montar).
+*/
+function comoSupabase(cliente: ClienteFalso): SupabaseClient {
+  if (!ehClienteSupabase(cliente)) throw new TypeError("cliente sem auth/rpc");
+  return cliente;
+}
+function ehClienteSupabase(cliente: object): cliente is SupabaseClient {
+  return "auth" in cliente && "rpc" in cliente;
+}
+
+type PopupFalso = {
+  closed: boolean;
+  location: { replace: (endereco: string) => void };
+  close: () => void;
+};
+type OuvinteDaJanela = (evento: Record<string, unknown>) => unknown;
+
+function janelaFalsa({
+  search = "",
+  largura = 1280,
+  popup = null,
+}: { search?: string; largura?: number; popup?: PopupFalso | null } = {}) {
+  const ouvintes: Record<string, OuvinteDaJanela> = {};
   return {
     location: {
       search,
@@ -94,15 +151,26 @@ function janelaFalsa({ search = "", largura = 1280, popup = null } = {}) {
     outerWidth: largura,
     outerHeight: 900,
     open: vi.fn(() => popup),
-    setInterval: vi.fn(() => 1),
+    setInterval: vi.fn((_vigia: () => unknown, _ms?: number) => 1),
     clearInterval: vi.fn(),
     sessionStorage: window.sessionStorage,
-    addEventListener: vi.fn((tipo, funcao) => (ouvintes[tipo] = funcao)),
+    addEventListener: vi.fn(
+      (tipo: string, funcao: OuvinteDaJanela) => (ouvintes[tipo] = funcao),
+    ),
     ouvintes,
   };
 }
+type JanelaFalsa = ReturnType<typeof janelaFalsa>;
 
-function sistemaFalso(sobre = {}) {
+function comoJanela(janela: JanelaFalsa): Window {
+  if (!ehJanela(janela)) throw new TypeError("janela sem location");
+  return janela;
+}
+function ehJanela(janela: object): janela is Window {
+  return "location" in janela && "addEventListener" in janela;
+}
+
+function sistemaFalso(sobre: GanchosDoSistema = {}) {
   return {
     carregarConfiguracao: vi.fn(async () => {}),
     mostrarEsqueleto: vi.fn(),
@@ -119,17 +187,25 @@ function sistemaFalso(sobre = {}) {
   };
 }
 
+interface OpcoesDaMontagem {
+  cliente?: ClienteFalso;
+  janela?: JanelaFalsa;
+  sistema?: ReturnType<typeof sistemaFalso>;
+  celular?: boolean;
+  temAmbiente?: boolean;
+}
+
 function montar({
   cliente = clienteFalso(),
   janela = janelaFalsa(),
   sistema = sistemaFalso(),
   celular = false,
   temAmbiente = true,
-} = {}) {
+}: OpcoesDaMontagem = {}) {
   const sessao = criarSessao({
-    cliente: () => cliente,
+    cliente: () => comoSupabase(cliente),
     armazenamento: () => ({ clearAuthState: vi.fn() }),
-    janela,
+    janela: comoJanela(janela),
     temAmbiente: () => temAmbiente,
     celular: () => celular,
     esperar: async () => {},
@@ -138,7 +214,8 @@ function montar({
   return { sessao, cliente, janela, sistema };
 }
 
-const proximoCiclo = () => new Promise((resolve) => setTimeout(resolve, 0));
+const proximoCiclo = () =>
+  new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 beforeEach(() => {
   reiniciarEstadoDeSaidaParaTestes();
@@ -166,15 +243,15 @@ describe("entrar", () => {
     );
     const estado = sessao.obter();
     expect(estado.fase).toBe(FASES.CONECTADO);
-    expect(estado.usuario.id).toBe("u1");
+    expect(estado.usuario?.id).toBe("u1");
     expect(sistema.encerrarEspera).toHaveBeenCalled();
   });
 
   it("o skeleton e a cópia (aoVerificar) começam antes da consulta do perfil", async () => {
-    const ordem = [];
+    const ordem: unknown[] = [];
     const cliente = clienteFalso({ guardada: sessaoDe("u1") });
     const rpcOriginal = cliente.rpc;
-    cliente.rpc = vi.fn((...args) => {
+    cliente.rpc = vi.fn<RpcFalsa>((...args) => {
       ordem.push(args[0]);
       return rpcOriginal(...args);
     });
@@ -318,7 +395,7 @@ describe("sem acesso → pedido", () => {
     expect(sistema.aoFalharNaEntrada).toHaveBeenCalled();
     expect(sistema.aoFicarSemAcesso).not.toHaveBeenCalled();
     expect(sistema.abrir).not.toHaveBeenCalled();
-    console.warn.mockRestore();
+    vi.mocked(console.warn).mockRestore();
   });
 
   it("Tentar de novo relê o perfil com a mesma sessão e abre o sistema", async () => {
@@ -337,7 +414,7 @@ describe("sem acesso → pedido", () => {
     await sessao.tentarDeNovo();
     expect(sessao.obter().fase).toBe(FASES.CONECTADO);
     expect(sistema.abrir).toHaveBeenCalledTimes(1);
-    console.warn.mockRestore();
+    vi.mocked(console.warn).mockRestore();
   });
 
   it("perfil ilegível com o sistema aberto: fica o perfil que estava", async () => {
@@ -353,7 +430,7 @@ describe("sem acesso → pedido", () => {
     expect(sessao.obter().fase).toBe(FASES.CONECTADO);
     expect(sessao.obter().perfil).toEqual(CONTEXTO.profile);
     expect(sistema.aoFicarSemAcesso).not.toHaveBeenCalled();
-    console.warn.mockRestore();
+    vi.mocked(console.warn).mockRestore();
   });
 
   it("a carga do login quebrou: falha na entrada, não o pedido de acesso", async () => {
@@ -370,7 +447,7 @@ describe("sem acesso → pedido", () => {
     const estado = sessao.obter();
     expect(estado.fase).toBe(FASES.FALHA_NA_ENTRADA);
     expect(estado.mensagem.texto).toBe(MENSAGENS.falhaAoAbrir);
-    console.error.mockRestore();
+    vi.mocked(console.error).mockRestore();
   });
 
   it("o nome do Google preenche o pedido", () => {
@@ -432,7 +509,7 @@ describe("domínio permitido", () => {
 });
 
 describe("sair e sessão expirada", () => {
-  async function conectado(sobre = {}) {
+  async function conectado(sobre: OpcoesDaMontagem = {}) {
     const montado = montar({
       cliente: clienteFalso({ guardada: sessaoDe("u1") }),
       ...sobre,
@@ -471,7 +548,7 @@ describe("sair e sessão expirada", () => {
     });
     await sessao.sair();
     expect(sessao.obter().fase).toBe(FASES.DESLOGADO);
-    console.warn.mockRestore();
+    vi.mocked(console.warn).mockRestore();
   });
 
   it("sessão expirada (com prova): a mensagem de expiração", async () => {
@@ -509,7 +586,7 @@ describe("sair e sessão expirada", () => {
     const renovada = sessaoDe("u1");
     renovada.user.email = "u1.novo@agenciasus.org.br";
     cliente.emitir("TOKEN_REFRESHED", renovada);
-    expect(sessao.obter().usuario.email).toBe("u1.novo@agenciasus.org.br");
+    expect(sessao.obter().usuario?.email).toBe("u1.novo@agenciasus.org.br");
     expect(sistema.abrir).toHaveBeenCalledTimes(1);
   });
 
@@ -547,20 +624,22 @@ describe("troca de usuário na mesma aba", () => {
         usuario: expect.objectContaining({ id: "u2" }),
       }),
     );
-    expect(sessao.obter().usuario.id).toBe("u2");
+    expect(sessao.obter().usuario?.id).toBe("u2");
   });
 
   it("duas chegadas da mesma sessão ao mesmo tempo carregam uma vez só", async () => {
-    let liberar;
+    let liberar: ((aberto: boolean) => void) | undefined;
     const sistema = sistemaFalso({
-      abrir: vi.fn(() => new Promise((resolve) => (liberar = resolve))),
+      abrir: vi.fn(
+        () => new Promise<boolean>((resolve) => (liberar = resolve)),
+      ),
     });
     const { sessao } = montar({ sistema });
     await sessao.iniciar();
     const primeira = sessao.entrar(sessaoDe("u1"), "oauth_popup");
     const segunda = sessao.entrar(sessaoDe("u1"), "oauth_popup");
     await proximoCiclo();
-    liberar(true);
+    definido(liberar)(true);
     await Promise.all([primeira, segunda]);
     expect(sistema.abrir).toHaveBeenCalledTimes(1);
   });
@@ -568,7 +647,7 @@ describe("troca de usuário na mesma aba", () => {
 
 describe("login Google", () => {
   it("no computador: popup no clique, sessão local limpa, escolha de conta", async () => {
-    const popup = {
+    const popup: PopupFalso = {
       closed: false,
       location: { replace: vi.fn() },
       close: vi.fn(),
@@ -604,7 +683,7 @@ describe("login Google", () => {
     const { sessao, sistema } = montar({ janela, cliente });
     await sessao.iniciar();
     cliente.definirSessao(sessaoDe("u5"));
-    await janela.ouvintes.message({
+    await definido(janela.ouvintes.message)({
       origin: "https://monitora.test",
       data: { type: "agsus-monitora:login-concluido", result: "success" },
     });
@@ -614,7 +693,7 @@ describe("login Google", () => {
   });
 
   it("o popup avisa que falhou: mensagem certa na hora e o vigia da janela sai", async () => {
-    const popup = {
+    const popup: PopupFalso = {
       closed: false,
       location: { replace: vi.fn() },
       close: vi.fn(),
@@ -624,10 +703,10 @@ describe("login Google", () => {
     const { sessao, cliente } = montar({ janela });
     await sessao.iniciar();
     await sessao.entrarComGoogle();
-    const vigia = janela.setInterval.mock.calls[0][0];
+    const vigia = definido(janela.setInterval.mock.calls[0])[0];
     const consultas = cliente.auth.getSession.mock.calls.length;
 
-    await janela.ouvintes.message({
+    await definido(janela.ouvintes.message)({
       origin: "https://monitora.test",
       data: {
         type: "agsus-monitora:login-concluido",
@@ -650,7 +729,7 @@ describe("login Google", () => {
   });
 
   it("janela fechada e a sessão não pôde ser lida: o botão volta", async () => {
-    const popup = {
+    const popup: PopupFalso = {
       closed: false,
       location: { replace: vi.fn() },
       close: vi.fn(),
@@ -659,7 +738,7 @@ describe("login Google", () => {
     const { sessao, cliente } = montar({ janela });
     await sessao.iniciar();
     await sessao.entrarComGoogle();
-    const vigia = janela.setInterval.mock.calls[0][0];
+    const vigia = definido(janela.setInterval.mock.calls[0])[0];
     const erro = vi.spyOn(console, "error").mockImplementation(() => {});
     cliente.auth.getSession.mockRejectedValue(new Error("armazenamento"));
     popup.closed = true;
@@ -677,7 +756,7 @@ describe("login Google", () => {
     const janela = janelaFalsa();
     const { sessao, cliente } = montar({ janela });
     await sessao.iniciar();
-    await janela.ouvintes.message({
+    await definido(janela.ouvintes.message)({
       origin: "https://outro.site",
       data: { type: "agsus-monitora:login-concluido" },
     });
@@ -741,7 +820,7 @@ describe("login Google", () => {
     await sessao.iniciar();
     await sessao.entrarComGoogle();
     expect(sessao.obter().entrando).toBe(true);
-    janela.ouvintes.pageshow({ persisted: true });
+    definido(janela.ouvintes.pageshow)({ persisted: true });
     await proximoCiclo();
     expect(sessao.obter().entrando).toBe(false);
   });

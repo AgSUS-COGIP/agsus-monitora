@@ -152,7 +152,7 @@ parser são dependências de desenvolvimento e não entram no bundle de produç�
   amplie a união declarada pelo store.
 
 `tests/tipos/ui.tsx` confere usos válidos e rejeições esperadas pelo compilador. Os testes
-existentes de `tests/ui/ui.test.js` continuam conferindo a renderização, os rótulos, os
+existentes de `tests/ui/ui.test.ts` continuam conferindo a renderização, os rótulos, os
 atributos acessíveis e o bloqueio do botão durante ações.
 
 ## Próximas migrações

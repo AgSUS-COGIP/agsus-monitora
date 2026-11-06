@@ -1,7 +1,13 @@
 import { act } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarTelasNoTeste } from "./telas-no-teste.js";
+import { montarTelasNoTeste } from "./telas-no-teste.ts";
+import type { TelaFalsa } from "./telas-no-teste.ts";
 import { criarNavegacao } from "../../src/app/navegacao.ts";
+import type { OpcoesDaNavegacao } from "../../src/app/navegacao.ts";
+import type { PerfilDeAcesso } from "../../src/lib/tipos-dos-acessos.ts";
+import type { ArvoreDoMenu } from "../../src/componentes/barra-lateral/tipos.ts";
+import { definido } from "../definido.ts";
 import {
   INTERVALO_DA_PRESENCA_MS,
   criarPresenca,
@@ -33,6 +39,30 @@ import {
 } from "../../src/app/situacao-do-sistema.ts";
 import { redefinirPaginaDaAya } from "../../src/modulos/aya/estado.ts";
 
+type Navegacao = ReturnType<typeof criarNavegacao>;
+type Montado = ReturnType<typeof montarTelasNoTeste<Navegacao>>;
+
+/*
+  O cliente e o documento de mentira só têm o que a presença usa; os tipos
+  do Supabase e de Document descrevem muito mais. A guarda confere a forma
+  mínima e devolve o próprio objeto do teste.
+*/
+function ehClienteSupabase(cliente: object): cliente is SupabaseClient {
+  return "rpc" in cliente;
+}
+function comoSupabase(cliente: object): SupabaseClient {
+  if (!ehClienteSupabase(cliente)) throw new TypeError("cliente sem rpc");
+  return cliente;
+}
+function ehDocumento(documento: object): documento is Document {
+  return "visibilityState" in documento && "addEventListener" in documento;
+}
+function comoDocumento(documento: object): Document {
+  if (!ehDocumento(documento))
+    throw new TypeError("documento sem visibilityState");
+  return documento;
+}
+
 /*
   Página desligada pela coordenação fecha sem recarregar (19/10/2026: o banco
   saturou e quem já estava numa aba desligada continuava nela, consultando,
@@ -49,7 +79,7 @@ import { redefinirPaginaDaAya } from "../../src/modulos/aya/estado.ts";
 */
 
 /* O catálogo no formato de `listar_abas_do_menu`, sem as ligações `fora` ("aba@area"). */
-function catalogo(fora = []) {
+function catalogo(fora: string[] = []) {
   return ABAS_DO_MENU.map((aba) => ({
     co_aba: aba.id,
     no_aba: aba.rotulo,
@@ -64,7 +94,7 @@ function catalogo(fora = []) {
   })).filter((linha) => !fora.includes(linha.co_aba));
 }
 
-const situacaoCom = (areas) =>
+const situacaoCom = (areas: [string, boolean][]) =>
   normalizarSituacaoDoSistema({
     sistema: { situacao: "ATIVA" },
     areas: areas.map(([co_area, ativo]) => ({
@@ -75,7 +105,7 @@ const situacaoCom = (areas) =>
   });
 
 describe("a regra da página desligada", () => {
-  const semEditaisNaSede = abasDoCatalogo(catalogo(["editais@sede"]));
+  const semEditaisNaSede = definido(abasDoCatalogo(catalogo(["editais@sede"])));
 
   it("aba tirada da área está desligada nela, e só nela", () => {
     const base = { abas: semEditaisNaSede, doBanco: true, view: "nucleo" };
@@ -84,7 +114,7 @@ describe("a regra da página desligada", () => {
   });
 
   it("aba desligada em todas as áreas (fora do catálogo do banco)", () => {
-    const abas = abasDoCatalogo(catalogo(["selecao"]));
+    const abas = definido(abasDoCatalogo(catalogo(["selecao"])));
     expect(
       paginaDesligada({ abas, doBanco: true, view: "selecao", area: "sede" }),
     ).toBe(true);
@@ -105,8 +135,13 @@ describe("a regra da página desligada", () => {
         area: "projetos",
       }),
     ).toBe(false);
-    const catalogoAtivado = abasDoCatalogo(
-      catalogo(["pre-classificacao@sede", "pre-classificacao@saude-indigena"]),
+    const catalogoAtivado = definido(
+      abasDoCatalogo(
+        catalogo([
+          "pre-classificacao@sede",
+          "pre-classificacao@saude-indigena",
+        ]),
+      ),
     );
     expect(
       paginaDesligada({
@@ -127,7 +162,7 @@ describe("a regra da página desligada", () => {
   });
 
   it("área desligada fecha as páginas dela", () => {
-    const abas = abasDoCatalogo(catalogo());
+    const abas = definido(abasDoCatalogo(catalogo()));
     const situacao = situacaoCom([
       ["sede", false],
       ["projetos", true],
@@ -158,12 +193,22 @@ describe("a regra da página desligada", () => {
   });
 
   it("o botão vai à primeira página da área atual; sem ela, à de outro grupo", () => {
-    const arvore = [
+    // Rótulos e ícones vazios: a regra só lê a view e a área.
+    const arvore: ArvoreDoMenu = [
       {
         id: "saude-indigena",
-        itens: [{ view: "dashboard", area: "saude-indigena" }],
+        rotulo: "",
+        icone: "",
+        itens: [
+          { view: "dashboard", area: "saude-indigena", rotulo: "", icone: "" },
+        ],
       },
-      { id: "sede", itens: [{ view: "nucleo", area: "sede" }] },
+      {
+        id: "sede",
+        rotulo: "",
+        icone: "",
+        itens: [{ view: "nucleo", area: "sede", rotulo: "", icone: "" }],
+      },
     ];
     expect(primeiraPaginaLigada(arvore, "sede", "approved")?.view).toBe(
       "nucleo",
@@ -177,13 +222,15 @@ describe("a regra da página desligada", () => {
 
 /* Documento falso da presença: a visibilidade da aba muda pelo teste. */
 function documentoFalso() {
-  const ouvintes = new Set();
+  const ouvintes = new Set<() => void>();
   const documento = {
     visibilityState: "visible",
     title: "MONITORA",
-    addEventListener: (_nome, ouvinte) => ouvintes.add(ouvinte),
-    removeEventListener: (_nome, ouvinte) => ouvintes.delete(ouvinte),
-    mudar(estado) {
+    addEventListener: (_nome: string, ouvinte: () => void) =>
+      ouvintes.add(ouvinte),
+    removeEventListener: (_nome: string, ouvinte: () => void) =>
+      ouvintes.delete(ouvinte),
+    mudar(estado: string) {
       documento.visibilityState = estado;
       ouvintes.forEach((ouvinte) => ouvinte());
     },
@@ -198,15 +245,15 @@ describe("checagem periódica: carona na presença", () => {
     vi.useFakeTimers();
     const documento = documentoFalso();
     const cliente = {
-      rpc: vi.fn(async () => ({
+      rpc: vi.fn(async (_nome: string, _args?: Record<string, unknown>) => ({
         data: { status: "OK", versao_do_catalogo: "v1" },
         error: null,
       })),
     };
     const aoRegistrar = vi.fn();
     const presenca = criarPresenca({
-      cliente: () => cliente,
-      documento,
+      cliente: () => comoSupabase(cliente),
+      documento: comoDocumento(documento),
       obterUsuario: () => ({ id: "u1" }),
       obterPerfil: () => ({ id: "c", ativo: true, perfil: "usuario" }),
       navegacao: { obter: () => ({ view: "nucleo" }), assinar: () => () => {} },
@@ -245,8 +292,9 @@ describe("checagem periódica: carona na presença", () => {
   it("quem ouve a resposta não derruba a presença", async () => {
     const aviso = vi.spyOn(console, "warn").mockImplementation(() => {});
     const presenca = criarPresenca({
-      cliente: () => ({ rpc: async () => ({ data: {}, error: null }) }),
-      documento: documentoFalso(),
+      cliente: () =>
+        comoSupabase({ rpc: async () => ({ data: {}, error: null }) }),
+      documento: comoDocumento(documentoFalso()),
       obterUsuario: () => ({ id: "u1" }),
       obterPerfil: () => ({ id: "c", ativo: true, perfil: "usuario" }),
       local: () => "x",
@@ -261,13 +309,18 @@ describe("checagem periódica: carona na presença", () => {
 });
 
 describe("o vigia relê o catálogo só quando a versão muda", () => {
-  function montar({ falhar = false } = {}) {
+  /* A resposta das consultas falsas (o erro, como o do Supabase). */
+  type RespostaFalsa = {
+    data: unknown;
+    error: { code?: string; message?: string } | null;
+  };
+  function montar({ falhar = false }: { falhar?: boolean } = {}) {
     const navegacao = {
       montarMenu: vi.fn(),
       reavaliarTelaAtual: vi.fn(),
     };
-    const resposta = (data) =>
-      Promise.resolve(
+    const resposta = (data: unknown) =>
+      Promise.resolve<RespostaFalsa>(
         falhar
           ? { data: null, error: { message: "Failed to fetch" } }
           : { data, error: null },
@@ -281,7 +334,8 @@ describe("o vigia relê o catálogo só quando a versão muda", () => {
       carregar: vi.fn(async () => ({})),
     };
     const vigia = criarVigiaDoCatalogo({
-      cliente: () => ({}),
+      // As consultas falsas não usam o cliente.
+      cliente: () => null,
       abas,
       situacao,
       navegacao,
@@ -346,7 +400,7 @@ describe("o vigia relê o catálogo só quando a versão muda", () => {
 });
 
 describe("a página aberta que foi desligada vira o aviso", () => {
-  const PERFIL = {
+  const PERFIL: PerfilDeAcesso & { areas: string[] } = {
     id: "g",
     ativo: true,
     perfil: "edital_gestor",
@@ -354,24 +408,30 @@ describe("a página aberta que foi desligada vira o aviso", () => {
   };
 
   // As seções e o título são da rota (src/app/telas.tsx): montarTelasNoTeste.
-  let montado = null;
+  let montado: Montado | null = null;
   function montarPaginas() {
     document.body.innerHTML = '<main id="conteudoPrincipal"></main>';
   }
 
   /* A navegação com as telas falsas desenhadas; `janela` aponta para elas. */
-  function comTelas(opcoes, telas) {
-    montado = montarTelasNoTeste(criarNavegacao(opcoes), telas);
-    return montado.navegacao;
+  function comTelas(
+    opcoes: OpcoesDaNavegacao,
+    telas: Readonly<Record<string, TelaFalsa>>,
+  ) {
+    const novo = montarTelasNoTeste(criarNavegacao(opcoes), telas);
+    montado = novo;
+    return novo.navegacao;
   }
 
-  async function usarCatalogo(fora = []) {
+  async function usarCatalogo(fora: string[] = []) {
     await carregarCatalogoDeAbas({
       consulta: Promise.resolve({ data: catalogo(fora), error: null }),
     });
   }
 
-  function criar({ trabalho = () => false } = {}) {
+  function criar({
+    trabalho = () => false,
+  }: { trabalho?: () => boolean } = {}) {
     const janela = {
       nucleoController: { render: vi.fn() },
       calendarioEditaisController: { render: vi.fn() },
@@ -403,7 +463,7 @@ describe("a página aberta que foi desligada vira o aviso", () => {
   const aviso = () => document.getElementById("page-manutencao");
   const ativas = () =>
     [...document.querySelectorAll(".page.active")].map((pagina) => pagina.id);
-  const viewsDoMenu = (area) =>
+  const viewsDoMenu = (area: string) =>
     obterEstadoDaBarraLateral()
       .arvore.find((grupo) => grupo.id === area)
       ?.itens.map((item) => item.view) ?? [];
@@ -448,10 +508,10 @@ describe("a página aberta que foi desligada vira o aviso", () => {
 
     expect(viewsDoMenu("sede")).not.toContain("nucleo");
     expect(ativas()).toEqual(["page-manutencao"]);
-    expect(aviso().textContent).toContain(
+    expect(aviso()?.textContent).toContain(
       "Esta página foi desativada pela coordenação.",
     );
-    expect(document.getElementById("pageTitle").textContent).toBe(
+    expect(document.getElementById("pageTitle")?.textContent).toBe(
       "Página desativada",
     );
     expect(janela.nucleoController.render).toHaveBeenCalledTimes(1);
@@ -460,7 +520,7 @@ describe("a página aberta que foi desligada vira o aviso", () => {
     expect(janela.nucleoController.render).toHaveBeenCalledTimes(1);
 
     // O botão leva à primeira página ligada da área.
-    const botao = aviso().querySelector("button");
+    const botao = definido(aviso()?.querySelector("button"));
     expect(botao.hidden).toBe(false);
     expect(botao.textContent).toBe("Ir para a página inicial");
     act(() => botao.click());
@@ -497,7 +557,7 @@ describe("a página aberta que foi desligada vira o aviso", () => {
     navegacao.reavaliarTelaAtual();
 
     expect(ativas()).toEqual(["page-nucleo"]);
-    const faixa = document.getElementById("faixaDeManutencao");
+    const faixa = definido(document.getElementById("faixaDeManutencao"));
     expect(faixa.hidden).toBe(false);
     expect(faixa.textContent).toContain(
       "Esta página foi desativada pela coordenação. Salve",
@@ -524,7 +584,7 @@ describe("a página aberta que foi desligada vira o aviso", () => {
     as linhas do monitoramento.
   */
   describe("tela inicial com a Visão geral desligada", () => {
-    const avaliador = (areas = ["saude-indigena"]) => ({
+    const avaliador = (areas = ["saude-indigena"]): PerfilDeAcesso => ({
       id: "a",
       ativo: true,
       permissoes: { dashboard: "leitor", avaliacao_documental: "editor" },
@@ -633,7 +693,7 @@ describe("a página aberta que foi desligada vira o aviso", () => {
     navegacao.montarMenu();
     navegacao.reavaliarTelaAtual();
     expect(ativas()).toEqual(["page-manutencao"]);
-    expect(aviso().textContent).toContain("Volta já");
-    expect(aviso().querySelector("button").hidden).toBe(false);
+    expect(aviso()?.textContent).toContain("Volta já");
+    expect(aviso()?.querySelector("button")?.hidden).toBe(false);
   });
 });

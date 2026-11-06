@@ -1,5 +1,7 @@
 import { act, createElement as h, useState } from "react";
+import type { ReactElement } from "react";
 import { createRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AcoesDaLinha,
@@ -10,6 +12,7 @@ import {
   MenuDeAcoes,
   usarEstadoDaSessao,
 } from "../../src/ui/index.ts";
+import { definido } from "../definido.ts";
 import { SeletorDeEdital } from "../../src/componentes/seletor-de-edital.tsx";
 import {
   clicar,
@@ -25,12 +28,13 @@ import {
   e o seletor de edital.
 */
 
-let raiz = null;
-async function montar(elemento) {
+let raiz: Root | null = null;
+async function montar(elemento: ReactElement) {
   document.body.innerHTML = `<div id="raiz"></div>`;
   await act(async () => {
-    raiz = createRoot(document.getElementById("raiz"));
-    raiz.render(elemento);
+    const novaRaiz = createRoot(definido(document.getElementById("raiz")));
+    raiz = novaRaiz;
+    novaRaiz.render(elemento);
   });
 }
 afterEach(async () => {
@@ -39,7 +43,8 @@ afterEach(async () => {
   document.body.innerHTML = "";
   sessionStorage.clear();
 });
-const $ = (seletor) => document.querySelector(seletor);
+const $ = <E extends Element = HTMLElement>(seletor: string) =>
+  document.querySelector<E>(seletor);
 
 describe("AcoesDaLinha", () => {
   it("o principal com rótulo direto e o ⋯ com o nome da pessoa; ocupado troca o texto", async () => {
@@ -62,16 +67,18 @@ describe("AcoesDaLinha", () => {
     );
     await clicar($("[data-acao='abrir']"));
     expect(abrir).toHaveBeenCalledTimes(1);
-    const mais = $(".ui-menu-compacto [data-acao='abrir-menu']");
+    const mais = definido(
+      $<HTMLElement>(".ui-menu-compacto [data-acao='abrir-menu']"),
+    );
     expect(mais.className).toBe("ui-menu-reticencias");
     expect(mais.getAttribute("aria-label")).toBe("Mais ações de 7000123");
     expect(mais.textContent).toBe("");
     await clicar(mais);
-    const lista = $("[role='menu']");
+    const lista = definido($<HTMLElement>("[role='menu']"));
     // Presa à janela: a rolagem da tabela não corta a lista.
     expect(lista.style.position).toBe("fixed");
-    expect($("[data-acao='copiar'] kbd.ui-menu-atalho").textContent).toBe("C");
-    expect($("[data-acao='copiar']").getAttribute("aria-keyshortcuts")).toBe(
+    expect($("[data-acao='copiar'] kbd.ui-menu-atalho")?.textContent).toBe("C");
+    expect($("[data-acao='copiar']")?.getAttribute("aria-keyshortcuts")).toBe(
       "C",
     );
     await clicar($("[data-acao='copiar']"));
@@ -94,7 +101,9 @@ describe("AcoesDaLinha", () => {
     });
     expect($("[role='menu']")).toBeNull();
 
-    await act(async () => raiz.render(h(AcoesDaLinha, { pessoa: "1" })));
+    await act(async () =>
+      definido(raiz).render(h(AcoesDaLinha, { pessoa: "1" })),
+    );
     expect($(".ui-acoes-da-linha")).toBeNull();
   });
 
@@ -110,8 +119,8 @@ describe("AcoesDaLinha", () => {
         },
       }),
     );
-    const botao = $(".ui-acoes-da-linha button");
-    expect(botao.textContent.trim()).toBe("Gerando PDF…");
+    const botao = definido($<HTMLButtonElement>(".ui-acoes-da-linha button"));
+    expect(botao.textContent?.trim()).toBe("Gerando PDF…");
     expect(botao.disabled).toBe(true);
     expect($(".ui-menu")).toBeNull();
   });
@@ -133,8 +142,8 @@ describe("Kpi com detalhe", () => {
       ),
     );
     // O número continua sozinho no .ui-kpi-valor (contrato das telas).
-    expect($("[data-kpi='a'] .ui-kpi-valor").textContent).toBe("120");
-    expect($("[data-kpi='a'] .ui-kpi-linha .ui-kpi-detalhe").textContent).toBe(
+    expect($("[data-kpi='a'] .ui-kpi-valor")?.textContent).toBe("120");
+    expect($("[data-kpi='a'] .ui-kpi-linha .ui-kpi-detalhe")?.textContent).toBe(
       "45%",
     );
     expect($("[data-kpi='b'] .ui-kpi-linha")).toBeNull();
@@ -143,7 +152,12 @@ describe("Kpi com detalhe", () => {
 });
 
 describe("estado guardado na sessão", () => {
-  const normalizar = (v) => ({ busca: String(v?.busca ?? "") });
+  // O guardado pode ser qualquer coisa: só o `busca` de um objeto conta.
+  const normalizar = (v: unknown) => ({
+    busca: String(
+      v && typeof v === "object" ? (Reflect.get(v, "busca") ?? "") : "",
+    ),
+  });
   it("lê e grava por chave; o inicial apaga; sem chave, não guarda", () => {
     expect(lerDaSessao("k", { busca: "" }, normalizar)).toEqual({ busca: "" });
     gravarNaSessao("k", { busca: "ana" }, { busca: "" });
@@ -163,20 +177,20 @@ describe("estado guardado na sessão", () => {
 
   it("o hook volta com o guardado e troca junto com a chave", async () => {
     sessionStorage.setItem("tela:e1", '{"busca":"guardada"}');
-    let mudar;
-    function Tela({ chave }) {
+    let mudar: ((novo: { busca: string }) => void) | undefined;
+    function Tela({ chave }: { chave: string }) {
       const [f, setF] = usarEstadoDaSessao(chave, { busca: "" }, normalizar);
       mudar = setF;
       return h("output", null, f.busca);
     }
     await montar(h(Tela, { chave: "tela:e1" }));
-    expect($("output").textContent).toBe("guardada");
-    await act(async () => raiz.render(h(Tela, { chave: "tela:e2" })));
-    expect($("output").textContent).toBe("");
-    await act(async () => mudar({ busca: "nova" }));
+    expect($("output")?.textContent).toBe("guardada");
+    await act(async () => definido(raiz).render(h(Tela, { chave: "tela:e2" })));
+    expect($("output")?.textContent).toBe("");
+    await act(async () => definido(mudar)({ busca: "nova" }));
     expect(sessionStorage.getItem("tela:e2")).toBe('{"busca":"nova"}');
-    await act(async () => raiz.render(h(Tela, { chave: "tela:e1" })));
-    expect($("output").textContent).toBe("guardada");
+    await act(async () => definido(raiz).render(h(Tela, { chave: "tela:e1" })));
+    expect($("output")?.textContent).toBe("guardada");
   });
 });
 
@@ -204,7 +218,9 @@ describe("SeletorDeEdital", () => {
         aoEscolher: escolheu,
       }),
     );
-    const card = $("section.ui-seletor-de-edital.avd-edital");
+    const card = definido(
+      $<HTMLElement>("section.ui-seletor-de-edital.avd-edital"),
+    );
     expect(card.classList.contains("ui-card")).toBe(false);
     expect(card.getAttribute("aria-label")).toBe("Edital");
     const opcoes = [...card.querySelectorAll("option")].map(
@@ -239,7 +255,7 @@ describe("SeletorDeEdital", () => {
     expect(valores()).toContain("e2");
 
     await act(async () =>
-      raiz.render(
+      definido(raiz).render(
         h(SeletorDeEdital, {
           editais: [],
           escolhido: "",
@@ -248,10 +264,10 @@ describe("SeletorDeEdital", () => {
         }),
       ),
     );
-    expect($("option").textContent).toBe("Carregando…");
-    expect($("select").disabled).toBe(true);
+    expect($("option")?.textContent).toBe("Carregando…");
+    expect($<HTMLSelectElement>("select")?.disabled).toBe(true);
     await act(async () =>
-      raiz.render(
+      definido(raiz).render(
         h(SeletorDeEdital, {
           editais: [],
           escolhido: "",
@@ -261,7 +277,7 @@ describe("SeletorDeEdital", () => {
         }),
       ),
     );
-    expect($("option").textContent).toBe(
+    expect($("option")?.textContent).toBe(
       "Nenhum edital com análises nesta área",
     );
   });
@@ -277,7 +293,9 @@ describe("Kpi com número grande", () => {
         detalhe: "1.511 pela regra · 1 por decisão",
       }),
     );
-    expect($(".ui-kpi-valor").textContent).toBe("1.512");
-    expect($(".ui-kpi-detalhe").title).toBe("1.511 pela regra · 1 por decisão");
+    expect($(".ui-kpi-valor")?.textContent).toBe("1.512");
+    expect($(".ui-kpi-detalhe")?.title).toBe(
+      "1.511 pela regra · 1 por decisão",
+    );
   });
 });

@@ -1,6 +1,6 @@
 import { criarNavegacao } from "../../src/app/navegacao.ts";
 import { criarConfiguracoes } from "../../src/modulos/configuracoes/configuracoes.tsx";
-import { montarTelasNoTeste } from "../app/telas-no-teste.js";
+import { montarTelasNoTeste } from "../app/telas-no-teste.ts";
 
 /*
   Configurações como no app: a página (src/app/telas.tsx) com a moldura

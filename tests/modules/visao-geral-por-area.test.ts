@@ -86,7 +86,7 @@ describe("o legado usa a área atual", () => {
   });
 
   it("trocar de área refaz o cabeçalho (o mapa é do estado da Visão geral)", () => {
-    // A navegação (src/app/navegacao.ts; comportamento em tests/app/navegacao.test.js).
+    // A navegação (src/app/navegacao.ts; comportamento em tests/app/navegacao.test.ts).
     const navegacao = readFileSync("src/app/navegacao.ts", "utf8");
     const troca = navegacao.slice(navegacao.indexOf("function acompanharArea"));
     expect(troca).toContain("assinarDadosDoMonitoramento(");

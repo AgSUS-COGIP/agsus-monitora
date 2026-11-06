@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 
 /*
   A carga da entrada: o comportamento da carga (consultas em paralelo, cópia da
-  sessão, "Atualizar dados", Realtime) está em tests/app/carga.test.js e o dos
-  painéis externos em tests/app/paineis-externos.test.js. Aqui fica o contrato
+  sessão, "Atualizar dados", Realtime) está em tests/app/carga.test.ts e o dos
+  painéis externos em tests/app/paineis-externos.test.ts. Aqui fica o contrato
   com a sessão (src/app/sessao.ts): a ordem dos ganchos e quem apaga a cópia.
 */
 

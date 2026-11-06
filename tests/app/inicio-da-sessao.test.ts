@@ -1,8 +1,28 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   criarInicioDaSessao,
   parteDoInicio,
 } from "../../src/app/inicio-da-sessao.ts";
+import { definido } from "../definido.ts";
+
+type ClienteDoInicio = Pick<SupabaseClient, "rpc">;
+
+/*
+  O cliente só com `rpc`: o início chama `rpc(nome)` e lê `{ data, error }`
+  da promessa, sem os filtros do PostgREST que o tipo do Supabase descreve.
+*/
+function clienteSoComRpc(
+  rpc: (nome: string) => Promise<{ data: unknown; error: unknown }>,
+): ClienteDoInicio {
+  const cliente = { rpc };
+  if (!temRpc(cliente)) throw new TypeError("cliente sem rpc");
+  return cliente;
+}
+
+function temRpc(cliente: object): cliente is ClienteDoInicio {
+  return "rpc" in cliente && typeof cliente.rpc === "function";
+}
 
 /*
   O início da sessão numa chamada (src/app/inicio-da-sessao.ts):
@@ -19,7 +39,7 @@ const INICIO = {
 };
 
 function avulsasFalsas() {
-  const avulsa = (nome) =>
+  const avulsa = (nome: string) =>
     vi.fn(async () => ({ data: `avulsa:${nome}`, error: null }));
   return {
     config: avulsa("config"),
@@ -37,7 +57,7 @@ describe("parteDoInicio", () => {
       data: INICIO.configuracao,
       error: null,
     });
-    expect(parteDoInicio(resposta, "situacao").data).toBe(INICIO.situacao);
+    expect(parteDoInicio(resposta, "situacao")?.data).toBe(INICIO.situacao);
     expect(
       parteDoInicio({ data: { paineis: [] }, error: null }, "abas"),
     ).toBeNull();
@@ -51,7 +71,7 @@ describe("parteDoInicio", () => {
 describe("criarInicioDaSessao", () => {
   it("uma chamada para as cinco partes; o pedido feito cedo é reaproveitado", async () => {
     const rpc = vi.fn(async () => ({ data: INICIO, error: null }));
-    const inicio = criarInicioDaSessao({ cliente: () => ({ rpc }) });
+    const inicio = criarInicioDaSessao({ cliente: () => clienteSoComRpc(rpc) });
     void inicio.pedir();
     const config = await inicio.parte("config", vi.fn());
     const avulsas = avulsasFalsas();
@@ -71,7 +91,7 @@ describe("criarInicioDaSessao", () => {
       data: null,
       error: { code: "PGRST202" },
     }));
-    const inicio = criarInicioDaSessao({ cliente: () => ({ rpc }) });
+    const inicio = criarInicioDaSessao({ cliente: () => clienteSoComRpc(rpc) });
     const avulsas = avulsasFalsas();
     await inicio.parte("config", avulsas.config);
     const partes = inicio.partes(avulsas);
@@ -84,9 +104,10 @@ describe("criarInicioDaSessao", () => {
 
   it("rede caída no início e na avulsa: a parte responde com o erro, sem rejeitar", async () => {
     const inicio = criarInicioDaSessao({
-      cliente: () => ({
-        rpc: async () => Promise.reject(new TypeError("Failed to fetch")),
-      }),
+      cliente: () =>
+        clienteSoComRpc(async () =>
+          Promise.reject(new TypeError("Failed to fetch")),
+        ),
     });
     const resposta = await inicio.parte("paineis", async () => {
       throw new TypeError("Failed to fetch");
@@ -97,7 +118,7 @@ describe("criarInicioDaSessao", () => {
 
   it("esquecer: o próximo pedido vai ao banco de novo", async () => {
     const rpc = vi.fn(async () => ({ data: INICIO, error: null }));
-    const inicio = criarInicioDaSessao({ cliente: () => ({ rpc }) });
+    const inicio = criarInicioDaSessao({ cliente: () => clienteSoComRpc(rpc) });
     await inicio.parte("config", vi.fn());
     inicio.esquecer();
     await inicio.parte("config", vi.fn());
@@ -118,10 +139,10 @@ describe("registro de navegação sem prender a página", () => {
   });
 
   it("registrar_navegacao_monitora e registrar_evento_acesso saem com keepalive; o resto, não", async () => {
-    const pedidos = [];
+    const pedidos: { url: string; keepalive: boolean }[] = [];
     vi.stubGlobal(
       "fetch",
-      vi.fn(async (url, opcoes) => {
+      vi.fn(async (url: RequestInfo | URL, opcoes?: RequestInit) => {
         pedidos.push({
           url: String(url),
           keepalive: opcoes?.keepalive === true,
@@ -133,7 +154,7 @@ describe("registro de navegação sem prender a página", () => {
       }),
     );
     const { getSupabaseClient } = await import("../../src/lib/supabaseClient");
-    const cliente = getSupabaseClient();
+    const cliente = definido(getSupabaseClient());
     await cliente.rpc("registrar_navegacao_monitora", { p_presenca: true });
     await cliente.rpc("registrar_evento_acesso", { p_evento: "logout" });
     await cliente.rpc("obter_inicio_da_sessao");

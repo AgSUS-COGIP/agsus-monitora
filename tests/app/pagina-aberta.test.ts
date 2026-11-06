@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { criarCarga } from "../../src/app/carga.ts";
+import type {
+  ConsultaDaCarga,
+  DependenciasDaCarga,
+} from "../../src/app/carga.ts";
+import type { OpcoesDaCargaDaConfiguracao } from "../../src/app/configuracao.ts";
+import { definido } from "../definido.ts";
 import { acompanharPaginaAberta } from "../../src/app/pagina-aberta.ts";
 import {
   linhasPedidas,
@@ -23,26 +29,29 @@ import {
   entravam direto na Avaliação documental e, mesmo assim, liam tudo isso.
 */
 
-function navegacaoFalsa(telaDeEntrada) {
-  const ouvintes = new Set();
+/* O aviso da navegação (src/app/navegacao.ts) que a página aberta escuta. */
+type EventoDaNavegacao = { tipo: string; view?: string; anterior?: string };
+
+function navegacaoFalsa(telaDeEntrada: string) {
+  const ouvintes = new Set<(evento: EventoDaNavegacao) => void>();
   let view = "";
-  const avisarTodos = (evento) =>
+  const avisarTodos = (evento: EventoDaNavegacao) =>
     ouvintes.forEach((ouvinte) => ouvinte(evento));
   return {
     obter: () => ({ view }),
-    assinar(ouvinte) {
+    assinar(ouvinte: (evento: EventoDaNavegacao) => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
     montarMenu: vi.fn(),
     telaDeEntrada: () => telaDeEntrada,
     telaPermitida: () => true,
-    irPara: vi.fn((tela) => {
+    irPara: vi.fn((tela: string) => {
       const anterior = view;
       view = tela;
       avisarTodos({ tipo: "abertura", view: tela, anterior });
     }),
-    mostrarAviso(tela) {
+    mostrarAviso(tela: string) {
       view = tela;
       avisarTodos({ tipo: "aviso", view: tela });
     },
@@ -146,18 +155,37 @@ describe("acompanharPaginaAberta", () => {
   DEPOIS: as 6 primeiras e nenhum canal. Fora da carga, as da própria
   Avaliação documental e a presença, iguais nos dois casos.
 */
+/* A resposta do banco, como o Supabase devolve. */
+type Resposta = { data: unknown; error: unknown };
+
+/*
+  As dependências falsas têm só o que a carga usa (o cliente do Supabase, a
+  navegação e a configuração reais descrevem muito mais). A guarda confere as
+  três obrigatórias e devolve o objeto.
+*/
+function ehDependencias(deps: object): deps is DependenciasDaCarga {
+  return "configuracao" in deps && "paineis" in deps && "navegacao" in deps;
+}
+function comoDependencias(deps: object): DependenciasDaCarga {
+  if (!ehDependencias(deps)) throw new TypeError("dependências incompletas");
+  return deps;
+}
+
 describe("entrada: chamadas ao banco", () => {
   const LINHAS = [{ id: 1, unidade: "DSEI Xingu", CO_AREA: "saude-indigena" }];
-  let carga;
-  let parar;
+  let carga: ReturnType<typeof criarCarga> | undefined;
+  let parar: (() => void) | undefined;
 
-  function montar(telaDeEntrada) {
-    const chamadas = [];
-    const consulta = (nome, data) => {
+  function montar(telaDeEntrada: string) {
+    const chamadas: string[] = [];
+    const consulta = (nome: string, data: unknown) => {
       const pedido = {
-        then(resolver, rejeitar) {
+        then<R1 = Resposta, R2 = never>(
+          resolver?: ((valor: Resposta) => R1 | PromiseLike<R1>) | null,
+          rejeitar?: ((motivo: unknown) => R2 | PromiseLike<R2>) | null,
+        ): PromiseLike<R1 | R2> {
           chamadas.push(nome);
-          return Promise.resolve({ data, error: null }).then(
+          return Promise.resolve<Resposta>({ data, error: null }).then(
             resolver,
             rejeitar,
           );
@@ -172,8 +200,8 @@ describe("entrada: chamadas ao banco", () => {
       return pedido;
     };
     const cliente = {
-      from: (tabela) => consulta(tabela, []),
-      rpc: vi.fn(async (nome) => {
+      from: (tabela: string) => consulta(tabela, []),
+      rpc: vi.fn(async (nome: string, _argumentos?: object) => {
         chamadas.push(nome);
         if (nome === "listar_monitoramento_operacional")
           return { data: { versao: "v", linhas: LINHAS }, error: null };
@@ -207,48 +235,53 @@ describe("entrada: chamadas ao banco", () => {
       buscarAcompanhamentoNoSupabase(cliente),
     );
     parar = acompanharPaginaAberta({ navegacao, visaoGeral });
-    carga = criarCarga({
-      cliente: () => cliente,
-      configuracao: {
-        consulta: () => cliente.from("TB_CONFIGURACAO"),
-        carregar: async ({ consulta: c }) => (await c).data,
-        booleano: () => true,
-      },
-      paineis: {
-        consulta: () => cliente.from("TB_PAINEL_EXTERNO"),
-        carregar: async ({ consulta: c }) => c,
-        completarLiberados: () => {},
-        liberados: () => new Set(),
-      },
-      navegacao,
-      obterPerfil: () => ({
-        id: "a",
-        ativo: true,
-        permissoes: { dashboard: "leitor", avaliacao_documental: "editor" },
+    carga = criarCarga(
+      comoDependencias({
+        cliente: () => cliente,
+        configuracao: {
+          consulta: () => cliente.from("TB_CONFIGURACAO"),
+          carregar: async ({ consulta: c }: OpcoesDaCargaDaConfiguracao) =>
+            definido(await c).data,
+          booleano: () => true,
+        },
+        paineis: {
+          consulta: () => cliente.from("TB_PAINEL_EXTERNO"),
+          carregar: async ({ consulta: c }: { consulta?: ConsultaDaCarga }) =>
+            c,
+          completarLiberados: () => {},
+          liberados: () => new Set(),
+        },
+        navegacao,
+        obterPerfil: () => ({
+          id: "a",
+          ativo: true,
+          permissoes: { dashboard: "leitor", avaliacao_documental: "editor" },
+        }),
+        obterUsuario: () => ({ id: "u-avaliador" }),
+        avisar: () => {},
+        copia: {
+          ler: async () => null,
+          guardar: async () => {},
+          apagar: async () => {},
+          versao: "v1",
+        },
+        abas: {
+          consulta: (sb: typeof cliente) => sb.rpc("listar_abas_do_menu"),
+          carregar: async () => {},
+        },
+        situacao: {
+          consulta: (sb: typeof cliente) => sb.rpc("obter_situacao_do_sistema"),
+          carregar: async () => {},
+        },
+        esqueleto: { esconder: () => {}, marcarAtualizacao: () => {} },
+        visaoGeral,
       }),
-      obterUsuario: () => ({ id: "u-avaliador" }),
-      avisar: () => {},
-      copia: {
-        ler: async () => null,
-        guardar: async () => {},
-        apagar: async () => {},
-        versao: "v1",
-      },
-      abas: {
-        consulta: (sb) => sb.rpc("listar_abas_do_menu"),
-        carregar: async () => {},
-      },
-      situacao: {
-        consulta: (sb) => sb.rpc("obter_situacao_do_sistema"),
-        carregar: async () => {},
-      },
-      esqueleto: { esconder: () => {}, marcarAtualizacao: () => {} },
-      visaoGeral,
-    });
+    );
     return { chamadas, cliente, navegacao };
   }
 
-  const esperar = () => new Promise((resolver) => setTimeout(resolver, 0));
+  const esperar = () =>
+    new Promise<void>((resolver) => setTimeout(resolver, 0));
 
   beforeEach(() => redefinirDadosDoMonitoramento());
   afterEach(() => {
@@ -259,8 +292,8 @@ describe("entrada: chamadas ao banco", () => {
 
   it("avaliador direto na Avaliação documental: 2 chamadas, sem linhas, acompanhamento nem Realtime", async () => {
     const { chamadas, cliente } = montar("avaliacao-documental");
-    await carga.carregarEntrada();
-    carga.iniciarRealtime();
+    await definido(carga).carregarEntrada();
+    definido(carga).iniciarRealtime();
     await esperar();
     expect([...chamadas].sort()).toEqual(
       // Configuração, painéis, abas, situação e unidades: obter_inicio_da_sessao.
@@ -272,8 +305,8 @@ describe("entrada: chamadas ao banco", () => {
 
   it("quem entra na Visão geral continua com as linhas e o acompanhamento na entrada", async () => {
     const { chamadas, cliente } = montar("dashboard");
-    await carga.carregarEntrada();
-    carga.iniciarRealtime();
+    await definido(carga).carregarEntrada();
+    definido(carga).iniciarRealtime();
     await esperar();
     expect(chamadas).toContain("listar_monitoramento_operacional");
     expect(chamadas).toContain("listar_acompanhamento_da_visao_geral_se_mudou");
@@ -286,7 +319,7 @@ describe("entrada: chamadas ao banco", () => {
 
   it("o avaliador que abre Editais depois lê as linhas uma vez; a Visão geral escondida não pede nada", async () => {
     const { chamadas, navegacao } = montar("avaliacao-documental");
-    await carga.carregarEntrada();
+    await definido(carga).carregarEntrada();
     navegacao.irPara("nucleo");
     await esperar();
     expect(

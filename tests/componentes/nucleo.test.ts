@@ -31,7 +31,7 @@ import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.ts";
 import { montarTela } from "../montar-tela.ts";
 import { registrarTelas } from "../../src/app/registro-das-telas.ts";
 import { criarNavegacao } from "../../src/app/navegacao.ts";
-import { montarTelasNoTeste } from "../app/telas-no-teste.js";
+import { montarTelasNoTeste } from "../app/telas-no-teste.ts";
 
 /*
   A página "Editais" (Equipe Núcleo) em React: a tabela com as linhas que o

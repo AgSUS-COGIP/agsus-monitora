@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { criarGuardaDeAlteracoes } from "../../src/app/guarda-de-alteracoes.ts";
 import { criarRascunhoDaRegra } from "../../src/app/rascunho-da-regra.ts";
 import { chaveDoRascunhoLocal } from "../../src/lib/rascunho-da-regra.ts";
+import { definido } from "../definido.ts";
 
 /*
   O rascunho da regra guardado a cada mudança (src/app/rascunho-da-regra.ts):
@@ -15,24 +16,24 @@ const USUARIO = "u1";
 const CHAVE = chaveDoRascunhoLocal("ANALISE", EDITAL, USUARIO);
 
 function memoria() {
-  const dados = new Map();
+  const dados = new Map<string, string>();
   return {
-    getItem: (k) => (dados.has(k) ? dados.get(k) : null),
-    setItem: (k, v) => dados.set(k, String(v)),
-    removeItem: (k) => dados.delete(k),
+    getItem: (k: string) => dados.get(k) ?? null,
+    setItem: (k: string, v: unknown) => dados.set(k, String(v)),
+    removeItem: (k: string) => dados.delete(k),
     dados,
   };
 }
 
 function relogio() {
-  let fila = [];
+  let fila: { id: symbol; fn: () => void }[] = [];
   return {
-    agendar: (fn) => {
+    agendar: (fn: () => void) => {
       const id = Symbol("t");
       fila.push({ id, fn });
       return id;
     },
-    cancelar: (id) => {
+    cancelar: (id: unknown) => {
       fila = fila.filter((t) => t.id !== id);
     },
     /** Dispara o que estiver agendado (o "1 segundo depois"). */
@@ -47,10 +48,36 @@ function relogio() {
   };
 }
 
-function criar({ banco = null, rpcFalha = null } = {}) {
-  let guardado = banco;
-  const chamadas = [];
-  const rpc = vi.fn(async (nome, args) => {
+/* O rascunho no banco de mentira (a linha de obter_rascunho_regra). */
+type Guardado = {
+  conteudo: unknown;
+  versao_base: unknown;
+  atualizado_em: string;
+};
+type Ouvinte = EventListenerOrEventListenerObject;
+
+/* Chama o ouvinte que o código registrou na janela de mentira, como antes. */
+function chamarOuvinte(
+  ouvintes: Record<string, Ouvinte | undefined>,
+  tipo: string,
+  ...argumentos: unknown[]
+) {
+  const ouvinte = definido(ouvintes[tipo], tipo);
+  if (typeof ouvinte !== "function")
+    throw new TypeError(`ouvinte de ${tipo} não é função`);
+  return Reflect.apply(ouvinte, ouvintes, argumentos);
+}
+
+function criar({
+  banco = null,
+  rpcFalha = null,
+}: {
+  banco?: Guardado | null;
+  rpcFalha?: ((nome: string) => unknown) | null;
+} = {}) {
+  let guardado: Guardado | null = banco;
+  const chamadas: [string, Record<string, unknown>][] = [];
+  const rpc = vi.fn(async (nome: string, args: Record<string, unknown>) => {
     chamadas.push([nome, args]);
     const falha = rpcFalha?.(nome);
     if (falha) throw falha;
@@ -72,9 +99,9 @@ function criar({ banco = null, rpcFalha = null } = {}) {
   });
   const armazenamento = memoria();
   const r = relogio();
-  const ouvintes = {};
+  const ouvintes: Record<string, Ouvinte | undefined> = {};
   const janela = {
-    addEventListener: (tipo, fn) => (ouvintes[tipo] = fn),
+    addEventListener: (tipo: string, fn: Ouvinte) => (ouvintes[tipo] = fn),
     removeEventListener: () => {},
   };
   const guarda = criarGuardaDeAlteracoes({ janela });
@@ -102,7 +129,7 @@ function criar({ banco = null, rpcFalha = null } = {}) {
 }
 
 const esperar = () => new Promise((resolve) => setTimeout(resolve, 0));
-const nomes = (chamadas) => chamadas.map(([n]) => n);
+const nomes = (chamadas: [string, unknown][]) => chamadas.map(([n]) => n);
 
 describe("abrir e gravar", () => {
   it("sem rascunho: edita; cada mudança grava 1 s depois (só a última)", async () => {
@@ -160,14 +187,14 @@ describe("abrir e gravar", () => {
     r.passar();
     await esperar();
     expect(loja.obter().gravacao).toBe("local");
-    expect(JSON.parse(armazenamento.getItem(CHAVE))).toMatchObject({
+    expect(JSON.parse(String(armazenamento.getItem(CHAVE)))).toMatchObject({
       conteudo: { regra: { x: 1 } },
       versao_base: 2,
       local: true,
     });
     expect(loja.naoGuardado()).toBe(false);
     fora = false;
-    ouvintes.online();
+    chamarOuvinte(ouvintes, "online");
     await esperar();
     expect(banco()).toMatchObject({ conteudo: { regra: { x: 1 } } });
     expect(armazenamento.getItem(CHAVE)).toBeNull();
@@ -209,7 +236,7 @@ describe("recuperar", () => {
     expect(loja.comAlteracoes()).toBe(true);
     r.passar();
     await esperar();
-    expect(banco().versao_base).toBe(3);
+    expect(banco()?.versao_base).toBe(3);
   });
 
   it("descartar apaga no banco e neste computador", async () => {
@@ -306,13 +333,13 @@ describe("guarda do app", () => {
     const { loja, guarda, ouvintes, armazenamento } = criar();
     await loja.abrir(EDITAL, 2);
     const evento = { preventDefault: vi.fn(), returnValue: undefined };
-    ouvintes.beforeunload(evento);
+    chamarOuvinte(ouvintes, "beforeunload", evento);
     expect(evento.preventDefault).not.toHaveBeenCalled();
     loja.mudar({ regra: { x: 1 } }, true);
     expect(guarda.podeRecarregar()).toBe(false);
-    ouvintes.beforeunload(evento);
+    chamarOuvinte(ouvintes, "beforeunload", evento);
     expect(evento.preventDefault).toHaveBeenCalled();
-    expect(JSON.parse(armazenamento.getItem(CHAVE)).conteudo).toEqual({
+    expect(JSON.parse(String(armazenamento.getItem(CHAVE))).conteudo).toEqual({
       regra: { x: 1 },
     });
   });

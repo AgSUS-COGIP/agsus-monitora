@@ -1,6 +1,10 @@
 import { act, createElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { createRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { MockInstance } from "vitest";
+import { definido } from "../definido.ts";
 import { ErrorBoundary } from "../../src/app/ErrorBoundary.tsx";
 import { clicar } from "../componentes/interacoes.ts";
 
@@ -9,8 +13,8 @@ import { clicar } from "../componentes/interacoes.ts";
   (com "Tentar de novo"), o erro vai para o console, e o resto da página fica.
 */
 
-let raiz = null;
-let espiaoDoConsole;
+let raiz: Root | null = null;
+let espiaoDoConsole: MockInstance<typeof console.error>;
 
 beforeEach(() => {
   // O React também reclama no console de erro capturado; o teste só confere o nosso.
@@ -25,10 +29,11 @@ afterEach(async () => {
   document.body.innerHTML = "";
 });
 
-async function montar(elemento) {
+async function montar(elemento: ReactElement) {
   await act(async () => {
-    raiz = createRoot(document.getElementById("raiz"));
-    raiz.render(elemento);
+    const novaRaiz = createRoot(definido(document.getElementById("raiz")));
+    raiz = novaRaiz;
+    novaRaiz.render(elemento);
   });
 }
 
@@ -37,12 +42,12 @@ describe("ErrorBoundary", () => {
     await montar(
       createElement(ErrorBoundary, null, createElement("p", null, "conteúdo")),
     );
-    expect(document.getElementById("raiz").textContent).toBe("conteúdo");
+    expect(document.getElementById("raiz")?.textContent).toBe("conteúdo");
     expect(document.querySelector("[role=alert]")).toBeNull();
   });
 
   it("captura o erro do filho, mostra o aviso e registra no console", async () => {
-    function Quebra() {
+    function Quebra(): ReactNode {
       throw new Error("falhou o render");
     }
     await montar(
@@ -50,10 +55,10 @@ describe("ErrorBoundary", () => {
     );
     const aviso = document.querySelector(".ui-erro-do-modulo[role=alert]");
     expect(aviso).not.toBeNull();
-    expect(aviso.textContent).toContain("Não foi possível mostrar");
-    expect(aviso.querySelector("button").textContent).toBe("Tentar de novo");
+    expect(aviso?.textContent).toContain("Não foi possível mostrar");
+    expect(aviso?.querySelector("button")?.textContent).toBe("Tentar de novo");
     // O resto da página continua lá.
-    expect(document.getElementById("fora").textContent).toBe("fora");
+    expect(document.getElementById("fora")?.textContent).toBe("fora");
     const nosso = espiaoDoConsole.mock.calls.find((chamada) =>
       String(chamada[0]).includes("[MONITORA] Erro ao desenhar o teste"),
     );
@@ -74,7 +79,7 @@ describe("ErrorBoundary", () => {
     falhar = false;
     await clicar(document.querySelector(".ui-erro-do-modulo button"));
     expect(document.querySelector(".ui-erro-do-modulo")).toBeNull();
-    expect(document.getElementById("raiz").textContent).toBe("voltou");
+    expect(document.getElementById("raiz")?.textContent).toBe("voltou");
     expect(montagens).toBeGreaterThan(0);
   });
 });
