@@ -338,7 +338,7 @@ adicionais dos candidatos e distinguem o valor recebido do valor convertido pelo
 campo. Texto em edição e atualizações externas continuam preservados. A paginação
 corrige tamanhos positivos fracionários para ao menos uma linha. Contratos em
 `tests/tipos/aba-e-regras-de-aprovados.tsx` e testes de edição em
-`tests/componentes/campos-dos-aprovados.test.js`.
+`tests/componentes/campos-dos-aprovados.test.ts`.
 
 A entrada principal e o estado de Aprovados também estão em TypeScript/TSX:
 carga por área, cópia por versão, ações de status/anexos/sub judice, importação

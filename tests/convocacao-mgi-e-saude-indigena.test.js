@@ -13,7 +13,7 @@ import {
   previaDaConvocacao,
   resumoDasRegrasDaCategoria,
 } from "../src/lib/configuracao-de-convocacao.ts";
-import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.js";
+import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.ts";
 
 /*
   A ordem do simulador de reserva de vagas do MGI e o modelo da Saúde Indígena

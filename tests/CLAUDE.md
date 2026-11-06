@@ -9,7 +9,7 @@
   nomeada pelo comportamento (`terras-do-dsei.test.js`, `sobreposicao-na-tela.test.js`).
 - **React** — o teste fica sem JSX (`.test.ts`): monte com a função de montagem do componente e
   envolva cada mudança em `act` (de `react`), com `globalThis.IS_REACT_ACT_ENVIRONMENT = true`.
-  Modelo: `tests/componentes/barra-lateral.test.js`. Campo controlado não aceita `campo.value = …`
+  Modelo: `tests/componentes/barra-lateral.test.ts`. Campo controlado não aceita `campo.value = …`
   seguido de evento: use `digitar`, `escolher`, `clicar` e `teclar` de `tests/componentes/interacoes.ts`.
 - **Playwright** (`*.spec.js`) — o CI roda todos (`npm run test:e2e`). Sobe o servidor sozinho
   (`playwright.config.js`), refazendo o build; `PLAYWRIGHT_DIST_PRONTO=1` serve o `dist/` que já existe.

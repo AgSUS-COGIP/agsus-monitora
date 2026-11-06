@@ -78,7 +78,7 @@ plausibilidade. Etapas sem início interpretável ficam fora do calendário.
 
 `npm run typecheck:frontend` inclui `tests/tipos/cronograma.tsx`. Os contratos compilados
 conferem o cliente Supabase instalado, RPCs de leitura, filtros, datas, callbacks e
-snapshots. `tests/componentes/calendario-editais.test.js` verifica navegação por mês,
+snapshots. `tests/componentes/calendario-editais.test.ts` verifica navegação por mês,
 área, cache, filtros, modal e foco. `tests/calendario-editais.test.js` cobre normalização,
 intervalos, concorrência e falhas; `tests/calendario-editais-lista.test.js`, as regras
 da Lista, da Semana e dos marcos do Mês (pontas do dia, "Acontecendo agora", ordem no dia, bordas de mês e de fuso). As regras compartilhadas são verificadas também por

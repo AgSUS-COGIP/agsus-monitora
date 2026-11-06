@@ -5,7 +5,7 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
+import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.ts";
 import { CATALOGO_DE_CRITERIOS } from "../../src/lib/classificacao/catalogo.ts";
 import {
   clicar,

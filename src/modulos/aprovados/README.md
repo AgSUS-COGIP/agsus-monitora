@@ -141,8 +141,8 @@ o pacote traz no dicionário `contratacao` (`contratacao_situacao`, `contratacao
 (`SeloDeStatus`), os indicadores e o filtro usam `statusEfetivo`, e a Convocação, `statusNaFila`.
 
 Histórias de usuário: `docs/historias-de-usuario/lista-de-aprovados.md`. Explicações para a Aya:
-`docs/aya/regras-da-lista-de-aprovados.md`. Testes: `tests/componentes/lista-aprovados.test.js`,
-`tests/componentes/lista-de-convocacao.test.js`, `tests/componentes/convocado-e-carta.test.js`,
+`docs/aya/regras-da-lista-de-aprovados.md`. Testes: `tests/componentes/lista-aprovados.test.ts`,
+`tests/componentes/lista-de-convocacao.test.ts`, `tests/componentes/convocado-e-carta.test.ts`,
 `tests/lib/carta-de-convocacao.test.js`, `tests/lista-convocacao-rules.test.js`,
 `tests/lista-aprovados-filtros-multiplos.test.js` e
 `tests/convocado-e-carta-de-convocacao-migration.test.js`.

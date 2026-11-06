@@ -13,7 +13,7 @@ import {
 import {
   FGV_MINIMOS_POR_CARGO,
   LEI_15142_ESPALHADA,
-} from "./modelos-de-convocacao-antigos.js";
+} from "./modelos-de-convocacao-antigos.ts";
 
 /*
   AS CLÁUSULAS DOS EDITAIS, UMA A UMA.

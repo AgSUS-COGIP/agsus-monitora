@@ -2,7 +2,7 @@
 
 Tela `Editais` (`src/modulos/editais/`), regras em `src/lib/editais-do-nucleo.ts`. Cada critério
 de aceite tem um teste com o mesmo código (`ED-n.m`) em `tests/editais-do-nucleo.test.js` (regra)
-ou `tests/componentes/nucleo.test.js` (tela).
+ou `tests/componentes/nucleo.test.ts` (tela).
 
 ## ED-1 — Editais ativos e inativos nos indicadores
 

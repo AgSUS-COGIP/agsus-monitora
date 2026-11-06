@@ -7,7 +7,7 @@ usuário: _"pode usar mais o Python, incluir em análises, entrevistas, lista de
 Arquitetura: [../python-no-monitora.md](../python-no-monitora.md).
 
 Cada critério tem o mesmo código (`CF-n.m`) num teste: `tests/python/test_conferencias.py` (regras
-e fluxo do job), `tests/avisos-de-conferencia.test.js` e `tests/componentes/avisos-de-conferencia.test.js`
+e fluxo do job), `tests/avisos-de-conferencia.test.js` e `tests/componentes/avisos-de-conferencia.test.ts`
 (tela), `tests/conferencias-migration.test.js` (invariantes da migration) ou o ensaio
 `supabase/ensaios/20261005210000_conferencias_de_consistencia.sql` (banco).
 

@@ -7,7 +7,7 @@ import {
   normalizarModelo,
   normalizarTexto,
 } from "../src/lib/modelo-de-convocacao.ts";
-import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.js";
+import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.ts";
 
 const padrao = normalizarModelo(LEI_15142_ESPALHADA);
 const comTrans = normalizarModelo(modeloDeReferencia("portaria-5801-trans"));

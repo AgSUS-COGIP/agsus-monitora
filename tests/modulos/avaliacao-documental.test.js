@@ -6,7 +6,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { criarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
-import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
+import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.ts";
 import { comecoDoEnunciado } from "../../src/lib/avaliacao-documental/nota-declarada.ts";
 import {
   clicar,

@@ -29,7 +29,7 @@ a equipe saiba quem já foi chamado para a contratação e aguarda apresentaçã
 - **Dado** o status "Fim de Fila", **então** ele não aparece em nenhuma opção, filtro ou indicador
   e o banco o recusa (a migration para se ainda houver alguém nele).
 
-Testes: `tests/componentes/convocado-e-carta.test.js` (H1/H2), ensaio E3/E4,
+Testes: `tests/componentes/convocado-e-carta.test.ts` (H1/H2), ensaio E3/E4,
 `tests/convocado-e-carta-de-convocacao-migration.test.js`.
 
 ### H2. Seguir o fluxo a partir do Convocado
@@ -46,7 +46,7 @@ sem depender do admin, para registrar o resultado da convocação no mesmo dia.
 - **Dado** um candidato Contratado (ou com outro status definido), **então** o editor continua vendo
   o cadeado.
 
-Testes: `tests/componentes/convocado-e-carta.test.js`, ensaio E3 ("editor tirou o status de um
+Testes: `tests/componentes/convocado-e-carta.test.ts`, ensaio E3 ("editor tirou o status de um
 convocado").
 
 ### H3. Ver os convocados nos indicadores, filtros, ordem de chamada e CSV
@@ -68,7 +68,7 @@ não chamar a mesma pessoa duas vezes.
 
 Testes: `tests/lista-convocacao-rules.test.js` ("status Convocado", "CSV da ordem de convocação",
 "csvDaConvocacao"), `tests/lista-aprovados-filtros-multiplos.test.js`,
-`tests/componentes/convocado-e-carta.test.js` (H3), teste da migration ("contratados continuam só
+`tests/componentes/convocado-e-carta.test.ts` (H3), teste da migration ("contratados continuam só
 Contratado e Migração").
 
 ### H3a. A lista publicada leva a convocação
@@ -127,7 +127,7 @@ edital), com campos que se preenchem sozinhos, para emitir cartas padronizadas s
 - **Dado** um leitor, **então** ele vê os modelos e as versões, sem os botões de alterar.
 
 Testes: `tests/lib/carta-de-convocacao.test.js` ("validar o modelo"),
-`tests/componentes/convocado-e-carta.test.js` (H4), ensaio E3.
+`tests/componentes/convocado-e-carta.test.ts` (H4), ensaio E3.
 
 ### H5. Emitir a carta para um ou vários candidatos
 
@@ -152,7 +152,7 @@ para formalizar a convocação sem copiar dados à mão.
 - **Dado** um leitor, **então** ele não vê a escolha de candidatos nem o botão da carta.
 
 Testes: `tests/lib/carta-de-convocacao.test.js` ("preencher a carta", "validar a emissão",
-"o documento"), `tests/componentes/convocado-e-carta.test.js` (H5/H6), ensaio E3/E4.
+"o documento"), `tests/componentes/convocado-e-carta.test.ts` (H5/H6), ensaio E3/E4.
 
 ### H6. Marcar como Convocado depois de emitir
 
@@ -164,7 +164,7 @@ escolhida, para não ter de abrir o status de um por um.
 - **Dado** que confirmo, **então** eles ficam Convocado com a data, o histórico do status aponta a
   carta e quem já tinha outro status fica de fora, com o motivo.
 
-Testes: `tests/componentes/convocado-e-carta.test.js`, ensaio E3 ("marcar convocados") e E4.
+Testes: `tests/componentes/convocado-e-carta.test.ts`, ensaio E3 ("marcar convocados") e E4.
 
 ### H7. Ver as cartas emitidas na gaveta do candidato
 
@@ -178,4 +178,4 @@ recebeu, para responder a dúvidas sem procurar no SEI.
 - **Dado** que a lista foi republicada, **então** as cartas da lista anterior continuam aparecendo.
 - **Dado** um editor, **então** a gaveta oferece "Alterar status" e "Carta de convocação".
 
-Testes: `tests/componentes/convocado-e-carta.test.js` (H7), ensaio E3.
+Testes: `tests/componentes/convocado-e-carta.test.ts` (H7), ensaio E3.

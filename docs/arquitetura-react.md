@@ -306,7 +306,7 @@ Quem acompanha a navegação assina `navegacao.assinar`: `{ tipo: "abertura", vi
 
 Testes: `tests/app/navegacao.test.js`, `carga.test.js`, `configuracao.test.js`,
 `paineis-externos.test.js`, `presenca.test.js`, `perfil.test.js`, `moldura.test.js`,
-`sistema.test.js`, `tests/navegacao.test.js` e `tests/componentes/pessoas-online.test.js`. Os testes
+`sistema.test.js`, `tests/navegacao.test.js` e `tests/componentes/pessoas-online.test.ts`. Os testes
 que conferem que algo antigo não voltou leem `src/app/` inteiro (`tests/fonte-do-app.ts`).
 
 Ficou para depois (ainda em `src/modules/` ou no `index.html`):
@@ -407,5 +407,5 @@ src/modules/indigenous-territories-layer.ts  Terras Indígenas em TypeScript; as
 ```
 
 `scripts/check-legado-so-encolhe.mjs` agora também recusa qualquer `.js` nas pastas do legado
-(só o gerado da Aya fica). Testes: `tests/componentes/confirmacao-de-saida.test.js` e
-`tests/componentes/barra-lateral.test.js` (marca).
+(só o gerado da Aya fica). Testes: `tests/componentes/confirmacao-de-saida.test.ts` e
+`tests/componentes/barra-lateral.test.ts` (marca).

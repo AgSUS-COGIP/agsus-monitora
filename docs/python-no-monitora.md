@@ -253,7 +253,7 @@ com motivo obrigatório, autor, data e histórico (migration `20261026190000_pen
 - Testes: `tests/python/test_pendencias_do_edital.py` (casos dourados em
   `tests/fixtures/pendencias-do-edital/casos.json`), `supabase/tests/pendencias_do_edital.sql`
   (permissões, motivo, histórico), `tests/pendencias-do-edital-migration.test.js`,
-  `tests/lib/pendencias-do-edital.test.js` e `tests/componentes/pendencias-do-edital.test.js`.
+  `tests/lib/pendencias-do-edital.test.js` e `tests/componentes/pendencias-do-edital.test.ts`.
 
 ## Casamento da lista de aprovados (26/10/2026)
 
