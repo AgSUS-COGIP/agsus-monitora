@@ -1028,9 +1028,9 @@ function enhanceMap(L: LeafletDasTerras, map: MapaDasTerrasIndigenas) {
     });
   });
   /*
-    AS TERRAS NO "MAPA SIMPLES" — a regra mora aqui, não no componente
+    AS TERRAS NO "MAPA DSEIs" — a regra mora aqui, não no componente
 
-    No Mapa simples (map-base-layer-switcher.ts) as terras começam
+    No Mapa DSEIs (map-base-layer-switcher.ts) as terras começam
     desligadas, sem mudar a preferência guardada; o botão liga e desliga só
     enquanto ele durar; ao sair, volta o que a pessoa tinha no Mapa/Satélite.
     Antes quem desligava era um efeito do React, que só soube do modo depois
@@ -1090,7 +1090,7 @@ function enhanceMap(L: LeafletDasTerras, map: MapaDasTerrasIndigenas) {
     avisar();
   };
 
-  /* O botão e a legenda: no Mapa simples a escolha vale só enquanto ele durar. */
+  /* O botão e a legenda: no Mapa DSEIs a escolha vale só enquanto ele durar. */
   const definirVisibilidade = (proxima: boolean) => {
     aplicarVisibilidade(proxima);
     if (!noMapaSimples) storeVisibility(Boolean(proxima));

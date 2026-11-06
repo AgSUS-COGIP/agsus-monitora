@@ -3,7 +3,7 @@
 
   A numeração é a do mapa institucional da AgSUS (Organização da Saúde
   Indígena): os 34 nomes oficiais da SESAI em ordem alfabética, de 1 (Alagoas
-  e Sergipe) a 34 (Yanomami). É a única lista: o "Mapa simples", a lista
+  e Sergipe) a 34 (Yanomami). É a única lista: o "Mapa DSEIs", a lista
   "Territórios por vagas" e o script que compila os contornos
   (`scripts/compilar-contornos-dos-dseis.mjs`) leem daqui o número de cada
   distrito. `tests/dseis-oficiais.test.js` confere a ordem e as 34 posições.

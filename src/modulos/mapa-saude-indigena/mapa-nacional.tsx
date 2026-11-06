@@ -5,7 +5,15 @@ import type {
 } from "../../lib/mapa-saude-indigena/tipos.ts";
 import type { MapaDoPainel } from "./tipos-do-painel.ts";
 import type { LequeDoMapa } from "./tipos-do-leaflet.ts";
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import {
   dicaDaBolha,
   dicaDaCasaiNacional,
@@ -82,8 +90,17 @@ export function usarAvisosDasTerras(mapa: MapaDoPainel | null) {
   return vez;
 }
 
-/* O que a linha recebe no Mapa simples. */
-interface LinhaNoMapaSimples {
+/*
+  Quanto o mouse precisa ficar num DSEI do mapa para a linha dele acender na
+  lista. Atravessar polígonos a caminho de outro lugar não mexe na lista.
+*/
+export const ESPERA_DO_REALCE_NA_LISTA = 150;
+
+/* O que a linha recebe no Mapa DSEIs (só valores e funções estáveis). */
+interface PropsDaLinha {
+  territorio: TerritorioDoMapa;
+  aoEscolher(dsei: DseiDoMapa): void;
+  simples: boolean;
   numero: number | null;
   token?: string;
   realcado: boolean;
@@ -91,22 +108,22 @@ interface LinhaNoMapaSimples {
 }
 
 /*
-  No Mapa simples a linha mostra o número do DSEI (o mesmo do polígono, na
+  No Mapa DSEIs a linha mostra o número do DSEI (o mesmo do polígono, na
   cor dele) em vez da posição, e passar o mouse ou focar realça o polígono.
+  Memorizada: trocar o realce redesenha só as duas linhas que mudaram.
 */
-function LinhaDoTerritorio({
+const LinhaDoTerritorio = memo(function LinhaDoTerritorio({
   territorio,
   aoEscolher,
-  simples = null,
-}: {
-  territorio: TerritorioDoMapa;
-  aoEscolher(dsei: DseiDoMapa): void;
-  simples?: LinhaNoMapaSimples | null;
-}) {
+  simples,
+  numero,
+  token,
+  realcado,
+  aoRealcar,
+}: PropsDaLinha) {
   const { dsei, vagas, preenchidas, situacao, posicao, detalhe } = territorio;
-  const numero = simples?.numero ?? null;
   const realcar = (ativo: boolean) => {
-    if (numero) simples?.aoRealcar(ativo ? numero : null);
+    if (numero) aoRealcar(ativo ? numero : null);
   };
   return (
     <li>
@@ -115,7 +132,7 @@ function LinhaDoTerritorio({
         className={classes(
           "mapa-si-territorio",
           !vagas && "mapa-si-territorio--sem-vagas",
-          simples?.realcado && "is-realce",
+          realcado && "is-realce",
         )}
         data-dsei={dsei.k}
         data-numero={numero ?? undefined}
@@ -127,7 +144,7 @@ function LinhaDoTerritorio({
         onBlur={simples ? () => realcar(false) : undefined}
       >
         {simples && numero ? (
-          <NumeroDoDsei numero={numero} token={simples.token} />
+          <NumeroDoDsei numero={numero} token={token} />
         ) : (
           <span className="mapa-si-territorio__posicao" aria-hidden="true">
             {posicao}
@@ -154,7 +171,7 @@ function LinhaDoTerritorio({
       </button>
     </li>
   );
-}
+});
 
 /*
   A visão nacional: o mapa na proporção que o Brasil preenche e, ao lado, os
@@ -223,7 +240,7 @@ export function MapaNacional({
   const avisosDasTerras = usarAvisosDasTerras(mapa);
 
   /*
-    O "Mapa simples" (terceiro botão do seletor do fundo): os 34 DSEIs
+    O "Mapa DSEIs" (terceiro botão do seletor do fundo): os 34 DSEIs
     chapados e numerados, coloridos pelos números desta mesma lista.
   */
   const simples = usarModoDoFundo(mapa) === MODO_SIMPLES;
@@ -235,10 +252,36 @@ export function MapaNacional({
     [territorios, ordem],
   );
   const [mostrarPontos, definirMostrarPontos] = useState(false);
-  const [realce, definirRealce] = useState<{
-    numero: number;
-    doMapa: boolean;
-  } | null>(null);
+  /*
+    O realce tem duas pontas. O polígono acende na hora; a linha da lista,
+    quando o realce vem do mapa, só depois de o mouse parar no DSEI
+    (`ESPERA_DO_REALCE_NA_LISTA`): atravessar polígonos não pisca a lista, e
+    ela nunca rola nem se reordena por causa do mouse. Vindo da lista, os
+    dois acendem juntos.
+  */
+  const [realce, definirRealce] = useState<number | null>(null);
+  const [realceNaLista, definirRealceNaLista] = useState<number | null>(null);
+  const esperaDaLista = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  const realcarDoMapa = useCallback((numero: number | null) => {
+    definirRealce(numero);
+    clearTimeout(esperaDaLista.current);
+    esperaDaLista.current = setTimeout(
+      () => definirRealceNaLista(numero),
+      ESPERA_DO_REALCE_NA_LISTA,
+    );
+  }, []);
+  const realcarDaLista = useCallback((numero: number | null) => {
+    clearTimeout(esperaDaLista.current);
+    definirRealce(numero);
+    definirRealceNaLista(numero);
+  }, []);
+  useEffect(() => () => clearTimeout(esperaDaLista.current), []);
+  const escolherNaLista = useCallback(
+    (dsei: DseiDoMapa) => chamadas.current.aoEscolherDsei?.(dsei),
+    [chamadas],
+  );
   const indicadores = useMemo(
     () => indicadoresDosDseis(territorios),
     [territorios],
@@ -268,26 +311,15 @@ export function MapaNacional({
     ativo: simples,
     indicadores,
     pintura,
-    realce: simples ? (realce?.numero ?? null) : null,
-    aoRealcar: (numero) =>
-      definirRealce(numero ? { numero, doMapa: true } : null),
+    realce: simples ? realce : null,
+    aoRealcar: realcarDoMapa,
     aoEscolher: (numero) => {
       const dsei = dseisPorNumero.get(numero);
       if (dsei) chamadas.current.aoEscolherDsei?.(dsei);
     },
   });
-  const linhaNoMapaSimples = (chave: string): LinhaNoMapaSimples | null => {
-    if (!simples) return null;
-    const numero = numerosPorChave.get(chave) ?? null;
-    return {
-      numero,
-      token: numero ? pintura.tokens.get(numero) : undefined,
-      realcado: Boolean(numero) && realce?.numero === numero,
-      aoRealcar: (n) => definirRealce(n ? { numero: n, doMapa: false } : null),
-    };
-  };
 
-  // Pontos (bolhas e CASAIs nacionais): no Mapa simples, só se pedidos.
+  // Pontos (bolhas e CASAIs nacionais): no Mapa DSEIs, só se pedidos.
   useEffect(() => {
     if (!mapa || !camadas.current) return;
     const { dsei, casai, leque } = camadas.current;
@@ -298,16 +330,6 @@ export function MapaNacional({
     }
     if (mostrar) leque.aplicar();
   }, [mapa, camadas, simples, mostrarPontos]);
-
-  // O realce que veio do mapa leva a linha à vista na lista.
-  useEffect(() => {
-    if (!realce?.doMapa) return;
-    refDaLista.current
-      ?.querySelector<HTMLElement>(
-        `.mapa-si-territorio[data-numero="${realce.numero}"]`,
-      )
-      ?.scrollIntoView?.({ block: "nearest" });
-  }, [realce]);
 
   // Bolhas dos DSEIs e CASAIs nacionais.
   useEffect(() => {
@@ -504,14 +526,25 @@ export function MapaNacional({
           >
             {territorios.length ? (
               <ol className="mapa-si-lista__itens">
-                {territoriosNaOrdem.map((t) => (
-                  <LinhaDoTerritorio
-                    key={t.chave}
-                    territorio={t}
-                    aoEscolher={(d) => chamadas.current.aoEscolherDsei?.(d)}
-                    simples={linhaNoMapaSimples(t.chave)}
-                  />
-                ))}
+                {territoriosNaOrdem.map((t) => {
+                  const numero = simples
+                    ? (numerosPorChave.get(t.chave) ?? null)
+                    : null;
+                  return (
+                    <LinhaDoTerritorio
+                      key={t.chave}
+                      territorio={t}
+                      aoEscolher={escolherNaLista}
+                      simples={simples}
+                      numero={numero}
+                      token={numero ? pintura.tokens.get(numero) : undefined}
+                      realcado={
+                        simples && numero !== null && realceNaLista === numero
+                      }
+                      aoRealcar={realcarDaLista}
+                    />
+                  );
+                })}
               </ol>
             ) : null}
           </ListaDoMapa>

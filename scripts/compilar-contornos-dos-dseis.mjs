@@ -8,14 +8,14 @@ import {
 } from "../src/lib/mapa-saude-indigena/dseis-oficiais.ts";
 
 /*
-  COMPILA OS CONTORNOS DOS 34 DSEIs PARA O "MAPA SIMPLES"
+  COMPILA OS CONTORNOS DOS 34 DSEIs PARA O "MAPA DSEIs"
 
   POR QUE
 
   A abrangência dos DSEIs vinha da Funai, camada `Funai:areas_dsei`, pelo
   proxy `/api/funai-geodata?dataset=dsei`. A Funai tirou a camada do
   GeoServer (o proxy responde 502), e o mapa ficou sem contorno de DSEI
-  nenhum. O Mapa simples precisa dos 34 polígonos sem depender de rede de
+  nenhum. O Mapa DSEIs precisa dos 34 polígonos sem depender de rede de
   terceiros: este script os grava em `public/data/contornos-dos-dseis.json`,
   um arquivo estático que o mapa baixa uma vez.
 

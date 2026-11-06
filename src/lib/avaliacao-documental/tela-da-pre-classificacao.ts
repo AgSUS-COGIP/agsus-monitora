@@ -423,3 +423,25 @@ export function nota(valor: unknown): string {
   const n = Number(valor);
   return Number.isFinite(n) ? n.toLocaleString("pt-BR") : "—";
 }
+
+/**
+ * Quantos estão fora do lote (situação "Fora do lote") no edital: a soma
+ * de `fora_do_lote` das vagas já triadas (obter_vagas_pre_classificacao).
+ * Sem esse número em alguma vaga (banco antigo), o que sobra dos inscritos
+ * tirando eliminados e lote. `null` enquanto as vagas não chegaram.
+ */
+export function foraDoLoteDaTriagem(
+  vagas: ReadonlyArray<{
+    inscritos?: number | null;
+    fora_do_lote?: number | null;
+  }> | null,
+  cont: { inscritos: number; eliminados: number; noLote: number },
+): number | null {
+  if (!vagas) return null;
+  const triadas = vagas.filter(
+    (v) => v.inscritos !== null && v.inscritos !== undefined,
+  );
+  if (triadas.length && triadas.every((v) => Number.isFinite(v.fora_do_lote)))
+    return triadas.reduce((s, v) => s + numero(v.fora_do_lote), 0);
+  return Math.max(0, cont.inscritos - cont.eliminados - cont.noLote);
+}

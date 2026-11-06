@@ -6,7 +6,7 @@ import {
 } from "../src/modules/map-base-layer-switcher.ts";
 
 /*
-  O terceiro botão do seletor do fundo, "Mapa simples": só no mapa nacional
+  O terceiro botão do seletor do fundo, "Mapa DSEIs": só no mapa nacional
   da Saúde Indígena (#map), sem azulejo nenhum, lembrado no navegador.
 */
 
@@ -74,7 +74,7 @@ afterEach(() => {
   localStorage.clear();
 });
 
-describe("Mapa simples no seletor do fundo", () => {
+describe("Mapa DSEIs no seletor do fundo", () => {
   it("o mapa nacional da Saúde Indígena ganha o terceiro botão; os outros, não", () => {
     const nacional = fixture("map");
     addResilientBaseLayer(nacional.L, nacional.map);
@@ -82,7 +82,7 @@ describe("Mapa simples no seletor do fundo", () => {
       [...nacional.element.querySelectorAll("[data-map-mode]")].map(
         (b) => b.textContent,
       ),
-    ).toEqual(["Mapa", "Satélite", "Mapa simples"]);
+    ).toEqual(["Mapa", "Satélite", "Mapa DSEIs"]);
 
     const projetos = fixture("mapaDosProjetos");
     addResilientBaseLayer(projetos.L, projetos.map);
@@ -118,7 +118,7 @@ describe("Mapa simples no seletor do fundo", () => {
     expect(element.classList.contains("map-simple-mode")).toBe(false);
   });
 
-  it("falha de azulejo no Mapa simples não troca o fundo", () => {
+  it("falha de azulejo no Mapa DSEIs não troca o fundo", () => {
     const { L, map, element, azulejos, botao } = fixture();
     const base = addResilientBaseLayer(L, map);
     botao("simple").click();
@@ -127,7 +127,7 @@ describe("Mapa simples no seletor do fundo", () => {
     expect(element.classList.contains("map-simple-mode")).toBe(true);
   });
 
-  it("com o Mapa simples guardado, a camada do fundo nem entra (nenhum azulejo baixado)", () => {
+  it("com o Mapa DSEIs guardado, a camada do fundo nem entra (nenhum azulejo baixado)", () => {
     localStorage.setItem("agsus_map_base_layer_v1", "simple");
     const { L, map, azulejos, botao, tileLayer } = fixture();
     addResilientBaseLayer(L, map);
@@ -142,7 +142,7 @@ describe("Mapa simples no seletor do fundo", () => {
     expect(azulejos()).toContain(osm);
   });
 
-  it("noutro mapa, o Mapa simples guardado vale como Mapa", () => {
+  it("noutro mapa, o Mapa DSEIs guardado vale como Mapa", () => {
     localStorage.setItem("agsus_map_base_layer_v1", "simple");
     const { L, map, azulejos, tileLayer } = fixture("detailMap");
     addResilientBaseLayer(L, map);

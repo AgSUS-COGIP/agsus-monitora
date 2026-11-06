@@ -119,7 +119,7 @@ export function Amostra({ tipo, cor }: { tipo: string; cor?: string }) {
   A caixa da legenda sobre o canto do mapa, recolhível. Começa recolhida —
   só o botão "Legenda" — também no computador: aberta, ela tapava parte do
   Sul e do Sudeste no enquadramento do Brasil. Usada pelos mapas nacionais da
-  Saúde Indígena e de Projetos. A do Mapa simples começa aberta
+  Saúde Indígena e de Projetos. A do Mapa DSEIs começa aberta
   (`abertaDeInicio`): ela tem o "Colorir por" e as faixas da cor.
 */
 export function LegendaFlutuante({
