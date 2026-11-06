@@ -120,5 +120,11 @@ topo da minha tela quantos avisos há, **para** corrigir sem procurar.
 | `APROVADOS_PENDENCIA_DA_PUBLICACAO`        | Aprovados     | Atenção     | pendência da publicação vinda da Classificação ainda sem desfecho        |
 | `CARGA_VARIACAO_BRUSCA`                    | Cargas        | Atenção     | candidatos de uma vaga da Empregare variaram 50% ou mais na última carga |
 
+"Edital ativo" nas duas linhas acima (`ANALISE_EM_DOIS_EDITAIS` e `CLASSIFICACAO_VAGA_SEM_QUADRO`)
+quer dizer ativo **e** sem situação de fim: edital Concluído, Cancelado ou Encerrado fica fora
+(`regras.edital_conferido`, pelo `status` de `conferencia_ler_contexto`); Suspenso continua
+conferido. O aviso que existia some na execução seguinte: `finalizar_conferencia` resolve todo
+aviso aberto de conferência que rodou inteira e não foi gravado de novo.
+
 - **CF-6.1** — **Dado** o catálogo, **quando** os testes rodam, **então** o do job e o da tela são
   iguais ao caso dourado `tests/fixtures/conferencias/catalogo.json`.

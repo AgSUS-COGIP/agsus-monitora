@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { criarConfiguracao, PADROES } from "../../src/app/configuracao.ts";
+import { definido } from "../definido.ts";
 
 /*
   A configuração do sistema (src/app/configuracao.ts): carrega
@@ -7,7 +9,24 @@ import { criarConfiguracao, PADROES } from "../../src/app/configuracao.ts";
   sessão, à marca da tela de acesso e às seções de Configurações.
 */
 
-function montar({ linhas = [], erro = null } = {}) {
+/* O cliente falso só tem `from` (a leitura de TB_CONFIGURACAO). */
+function ehClienteSupabase(cliente: object): cliente is SupabaseClient {
+  return "from" in cliente;
+}
+function comoSupabase(cliente: object): SupabaseClient {
+  if (!ehClienteSupabase(cliente)) throw new TypeError("cliente sem from");
+  return cliente;
+}
+
+type LinhaDaConfiguracao = { chave: string; valor: string };
+
+function montar({
+  linhas = [],
+  erro = null,
+}: {
+  linhas?: LinhaDaConfiguracao[];
+  erro?: { message: string } | null;
+} = {}) {
   document.body.className = "config-loading";
   document.body.innerHTML = `
     <span id="sidebarVersion"></span>
@@ -28,7 +47,7 @@ function montar({ linhas = [], erro = null } = {}) {
   const avisar = vi.fn();
   const pintarBarra = vi.fn();
   const configuracao = criarConfiguracao({
-    cliente: () => cliente,
+    cliente: () => comoSupabase(cliente),
     avisar,
     sessao,
     definirMarca,
@@ -46,7 +65,7 @@ function montar({ linhas = [], erro = null } = {}) {
   };
 }
 
-const $ = (id) => document.getElementById(id);
+const $ = (id: string) => document.getElementById(id);
 
 beforeEach(() => {
   document.title = "MONITORA";
@@ -101,13 +120,13 @@ describe("carregar", () => {
       ],
     });
     await expect(configuracao.carregar()).resolves.toBe(true);
-    expect($("sidebarVersion").textContent).toBe("V3");
+    expect($("sidebarVersion")?.textContent).toBe("V3");
     expect(configuracao.versao()).toBe("V3");
     // O título da página é da navegação, não da configuração.
-    expect($("pageTitle").textContent).toBe("");
-    expect($("externalMount").textContent).toBe("Escolha um painel");
-    expect($("externalBackText").textContent).toBe("Voltar ao sistema");
-    expect($("externalBackBtn").getAttribute("aria-label")).toBe(
+    expect($("pageTitle")?.textContent).toBe("");
+    expect($("externalMount")?.textContent).toBe("Escolha um painel");
+    expect($("externalBackText")?.textContent).toBe("Voltar ao sistema");
+    expect($("externalBackBtn")?.getAttribute("aria-label")).toBe(
       "Voltar ao sistema",
     );
     expect(sessao.definirConfiguracao).toHaveBeenCalledWith(
@@ -162,7 +181,7 @@ describe("aviso global", () => {
       ],
     });
     await configuracao.carregar();
-    const barra = $("broadcastBar");
+    const barra = definido($("broadcastBar"));
     expect(barra.hidden).toBe(false);
     expect(barra.textContent).toBe("<b>Manutenção</b> às 18h");
     expect(barra.querySelector("b")).toBeNull();
@@ -171,7 +190,7 @@ describe("aviso global", () => {
   it("sem mensagem, fica escondido", async () => {
     const { configuracao } = montar();
     await configuracao.carregar();
-    expect($("broadcastBar").hidden).toBe(true);
+    expect($("broadcastBar")?.hidden).toBe(true);
   });
 });
 

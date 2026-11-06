@@ -4,6 +4,8 @@ import {
   CHAVE_DO_TEMA,
   criarMoldura,
 } from "../../src/app/moldura.ts";
+import type { OpcoesDaMoldura } from "../../src/app/moldura.ts";
+import { filtrosVazios } from "../../src/lib/visao-geral.ts";
 import {
   EVENTO_BARRA_ALTERNADA,
   EVENTO_TEMA_ALTERADO,
@@ -12,6 +14,9 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
+import { definido } from "../definido.ts";
+import { janelaCom } from "./janela-falsa.ts";
+import type { OuvinteDaJanela, OuvintesDaJanela } from "./janela-falsa.ts";
 
 /*
   A moldura do app (src/app/moldura.ts): um store (barra, tema, tela cheia e
@@ -19,31 +24,34 @@ import {
   body/html, eventos da barra, largura, outra aba e tela cheia).
 */
 
-let desligar = null;
+let desligar: (() => void) | null = null;
 
-function janelaFalsa({ celular = false } = {}) {
-  const ouvintes = {};
-  return {
+function janelaFalsa({ celular = false }: { celular?: boolean } = {}) {
+  const ouvintes: OuvintesDaJanela = {};
+  return janelaCom({
     matchMedia: () => ({ matches: celular }),
-    addEventListener: (nome, funcao) => {
+    addEventListener: (nome: string, funcao: OuvinteDaJanela) => {
       (ouvintes[nome] ||= new Set()).add(funcao);
     },
-    removeEventListener: (nome, funcao) => ouvintes[nome]?.delete(funcao),
+    removeEventListener: (nome: string, funcao: OuvinteDaJanela) =>
+      ouvintes[nome]?.delete(funcao),
     dispatchEvent: vi.fn(),
     print: vi.fn(),
-    emitir: (nome, evento = {}) =>
+    emitir: (nome: string, evento: unknown = {}) =>
       ouvintes[nome]?.forEach((funcao) => funcao(evento)),
-  };
+  });
 }
 
-function montar(opcoes = {}) {
+function montar(
+  opcoes: { celular?: boolean; extras?: Partial<OpcoesDaMoldura> } = {},
+) {
   const janela = janelaFalsa(opcoes);
   const avisar = vi.fn();
   const moldura = criarMoldura({
     janela,
     avisar,
     relatorio: () => ({
-      filtros: {},
+      filtros: filtrosVazios(),
       busca: "",
       filtradas: [{ vagas_total: 10, contratados: 4, vagas_ociosas: 2 }],
     }),
@@ -147,7 +155,9 @@ describe("tela cheia", () => {
   });
 
   it("pede a tela cheia do alvo (o painel externo aberto)", () => {
-    const alvo = { requestFullscreen: vi.fn(() => Promise.resolve()) };
+    const alvo = Object.assign(document.createElement("div"), {
+      requestFullscreen: vi.fn(() => Promise.resolve()),
+    });
     Object.defineProperty(document, "fullscreenEnabled", {
       configurable: true,
       value: true,
@@ -155,7 +165,7 @@ describe("tela cheia", () => {
     const { moldura } = montar({ extras: { alvoDaTelaCheia: () => alvo } });
     moldura.alternarTelaCheia();
     expect(alvo.requestFullscreen).toHaveBeenCalled();
-    delete document.fullscreenEnabled;
+    Reflect.deleteProperty(document, "fullscreenEnabled");
   });
 });
 
@@ -165,9 +175,9 @@ describe("relatório em PDF", () => {
     const { moldura, janela, avisar } = montar();
     moldura.exportarPdf();
     const { relatorio } = moldura.obter();
-    expect(relatorio.vagas).toBe(10);
-    expect(relatorio.contratados).toBe(4);
-    expect(relatorio.filtros).toContain("Nenhum filtro aplicado");
+    expect(relatorio?.vagas).toBe(10);
+    expect(relatorio?.contratados).toBe(4);
+    expect(relatorio?.filtros).toContain("Nenhum filtro aplicado");
     vi.advanceTimersByTime(120);
     expect(janela.print).toHaveBeenCalled();
     vi.advanceTimersByTime(1500);
@@ -183,14 +193,14 @@ describe("relatório em PDF", () => {
     definirAreaAtual(area);
     const { moldura } = montar();
     moldura.exportarPdf();
-    expect(moldura.obter().relatorio.titulo).toBe(titulo);
+    expect(moldura.obter().relatorio?.titulo).toBe(titulo);
   });
 });
 
 describe("a página", () => {
   it("desligada (a casca desmontou), as mudanças não mexem mais na página", () => {
     const { moldura, janela } = montar();
-    desligar();
+    definido(desligar)();
     desligar = null;
     moldura.alternarTema();
     expect(document.documentElement.getAttribute("data-theme")).toBe("");

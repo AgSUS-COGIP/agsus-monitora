@@ -1,5 +1,7 @@
 import { act, createElement as h, useSyncExternalStore } from "react";
+import type { ReactElement } from "react";
 import { createRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buscaComFiltros,
@@ -10,6 +12,12 @@ import {
   mudouOQueEmpilha,
   normalizarFiltros,
 } from "../../src/app/filtros-no-endereco.ts";
+import type {
+  EsquemaDosFiltros,
+  ValoresDosFiltros,
+} from "../../src/app/filtros-no-endereco.ts";
+import type { MudarFiltros } from "../../src/app/usar-filtros-na-url.ts";
+import { definido } from "../definido.ts";
 import {
   TelaNaUrl,
   usarEditalNaUrl,
@@ -26,10 +34,11 @@ import "../componentes/interacoes.ts";
 */
 
 const TRIAGEM = "/projetos/triagem";
-const ESQUEMA = Object.freeze({
+type CampoDaTriagem = "aba" | "situacao" | "busca";
+const ESQUEMA: EsquemaDosFiltros<CampoDaTriagem> = Object.freeze({
   aba: {
     padrao: "resumo",
-    aceita: (v) => ["resumo", "pessoas", "vagas"].includes(v),
+    aceita: (v: string) => ["resumo", "pessoas", "vagas"].includes(v),
     empilha: true,
   },
   situacao: { padrao: "TODAS" },
@@ -37,20 +46,21 @@ const ESQUEMA = Object.freeze({
 });
 
 const url = () => location.pathname + location.search;
-const voltarPara = async (endereco) => {
+const voltarPara = async (endereco: string) => {
   await act(async () => {
     history.replaceState(null, "", endereco);
     dispatchEvent(new PopStateEvent("popstate"));
   });
 };
 
-let raiz = null;
-async function montar(elemento, tela = "pre-classificacao") {
+let raiz: Root | null = null;
+async function montar(elemento: ReactElement, tela = "pre-classificacao") {
   const caixa = document.createElement("div");
   document.body.append(caixa);
-  raiz = createRoot(caixa);
+  const novaRaiz = createRoot(caixa);
+  raiz = novaRaiz;
   await act(async () =>
-    raiz.render(h(TelaNaUrl.Provider, { value: tela }, elemento)),
+    novaRaiz.render(h(TelaNaUrl.Provider, { value: tela }, elemento)),
   );
 }
 
@@ -60,7 +70,8 @@ beforeEach(() => {
   history.replaceState(null, "", TRIAGEM);
 });
 afterEach(async () => {
-  if (raiz) await act(async () => raiz.unmount());
+  const montada = raiz;
+  if (montada) await act(async () => montada.unmount());
   raiz = null;
   document.body.innerHTML = "";
 });
@@ -126,9 +137,9 @@ describe("regras dos filtros no endereço", () => {
 });
 
 describe("usarFiltrosNaUrl", () => {
-  let filtros;
-  let mudar;
-  function Tela({ sessao = "" }) {
+  let filtros: ValoresDosFiltros<CampoDaTriagem>;
+  let mudar: MudarFiltros<CampoDaTriagem>;
+  function Tela({ sessao = "" }: { sessao?: string }) {
     [filtros, mudar] = usarFiltrosNaUrl(ESQUEMA, {
       sessao,
       manter: ["edital"],
@@ -159,7 +170,7 @@ describe("usarFiltrosNaUrl", () => {
     await act(async () => mudar({ busca: "Maria 123.456.789-00" }));
     expect(location.search).toBe("");
     expect(filtros.busca).toBe("Maria 123.456.789-00");
-    expect(JSON.parse(sessionStorage.getItem("k")).busca).toBe(
+    expect(JSON.parse(String(sessionStorage.getItem("k"))).busca).toBe(
       "Maria 123.456.789-00",
     );
   });
@@ -180,7 +191,7 @@ describe("usarFiltrosNaUrl", () => {
     expect(filtros.situacao).toBe("S1");
     expect(location.search).toBe("?situacao=S1");
     await act(async () =>
-      raiz.render(
+      definido(raiz).render(
         h(
           TelaNaUrl.Provider,
           { value: "pre-classificacao" },
@@ -214,21 +225,27 @@ describe("usarFiltrosNaUrl", () => {
 describe("usarLojaNaUrl e usarEditalNaUrl", () => {
   const EDITAIS = [{ id: "e1" }, { id: "e2" }];
 
-  function criarLoja(inicial) {
+  function criarLoja(inicial: string) {
     let valor = inicial;
-    const ouvintes = new Set();
+    const ouvintes = new Set<() => void>();
     return {
       obter: () => valor,
-      assinar: (f) => (ouvintes.add(f), () => ouvintes.delete(f)),
-      escolher: vi.fn((id) => {
+      assinar: (f: () => void) => (ouvintes.add(f), () => ouvintes.delete(f)),
+      escolher: vi.fn((id: string) => {
         valor = id;
         ouvintes.forEach((f) => f());
       }),
     };
   }
 
-  let escolher;
-  function Tela({ loja, carregado }) {
+  let escolher: (id: string) => void;
+  function Tela({
+    loja,
+    carregado,
+  }: {
+    loja: ReturnType<typeof criarLoja>;
+    carregado: boolean;
+  }) {
     const editalId = useSyncExternalStore(loja.assinar, loja.obter);
     escolher = usarEditalNaUrl({
       editalId,
@@ -245,7 +262,7 @@ describe("usarLojaNaUrl e usarEditalNaUrl", () => {
     await montar(h(Tela, { loja, carregado: false }));
     expect(loja.escolher).not.toHaveBeenCalled();
     await act(async () =>
-      raiz.render(
+      definido(raiz).render(
         h(
           TelaNaUrl.Provider,
           { value: "pre-classificacao" },
@@ -283,10 +300,12 @@ describe("usarLojaNaUrl e usarEditalNaUrl", () => {
   });
 
   it("a loja muda sozinha (sem link): a URL acompanha, trocando a entrada", async () => {
-    const esquema = { etapa: { padrao: "lote", empilha: true } };
+    const esquema: EsquemaDosFiltros<"etapa"> = {
+      etapa: { padrao: "lote", empilha: true },
+    };
     let valores = { etapa: "lote" };
     const aplicar = vi.fn();
-    function Fila({ etapa }) {
+    function Fila({ etapa }: { etapa: string }) {
       usarLojaNaUrl(esquema, { etapa }, aplicar);
       return null;
     }
@@ -294,7 +313,7 @@ describe("usarLojaNaUrl e usarEditalNaUrl", () => {
     const tamanho = history.length;
     valores = { etapa: "concluidas" };
     await act(async () =>
-      raiz.render(
+      definido(raiz).render(
         h(TelaNaUrl.Provider, { value: "pre-classificacao" }, h(Fila, valores)),
       ),
     );

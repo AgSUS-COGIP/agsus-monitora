@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { Casca } from "../../src/app/casca/casca.tsx";
 import { TELAS_DA_CASCA } from "../../src/app/telas.tsx";
+import { definido } from "../definido.ts";
 import { desenharNoTeste } from "../montar-tela.ts";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -23,19 +24,19 @@ const ACOES = [
   "reloadExternal",
 ];
 
-let casca = null;
+let casca: { desmontar: () => void } | null = null;
 
 afterEach(() => {
   act(() => casca?.desmontar());
   casca = null;
-  for (const nome of ACOES) delete window[nome];
+  for (const nome of ACOES) Reflect.deleteProperty(window, nome);
   document.body.innerHTML = "";
 });
 
 function montar() {
   document.body.innerHTML =
     '<section id="appScreen" class="app hidden"></section>';
-  const raiz = document.getElementById("appScreen");
+  const raiz = definido(document.getElementById("appScreen"));
   // Como a raiz do app (src/app/raiz.tsx): na hora, com flushSync.
   casca = desenharNoTeste(raiz, createElement(Casca), { sincrono: true });
   return raiz;
@@ -97,8 +98,8 @@ describe("Casca", () => {
     expect(
       document.querySelector("#conteudoPrincipal > header.top > .title-row"),
     ).not.toBeNull();
-    expect(document.getElementById("broadcastBar").hidden).toBe(true);
-    expect(document.getElementById("conteudoPrincipal").tabIndex).toBe(-1);
+    expect(document.getElementById("broadcastBar")?.hidden).toBe(true);
+    expect(document.getElementById("conteudoPrincipal")?.tabIndex).toBe(-1);
   });
 
   it("as seções das telas, na ordem de antes, com a Visão geral ativa", () => {
@@ -121,26 +122,27 @@ describe("Casca", () => {
     // Sem telas registradas (a raiz registra), as seções chegam vazias.
     for (const view of TELAS_DA_CASCA)
       expect(
-        document.getElementById(`page-${view}`).childNodes,
+        document.getElementById(`page-${view}`)?.childNodes,
         view,
       ).toHaveLength(0);
   });
 
   it("os botões chamam os contratos de window na hora do clique, fechando o menu da conta como antes", () => {
     montar();
-    const menu = document.getElementById("topUserMenu");
-    const chamadas = [];
+    const menu = definido(document.getElementById("topUserMenu"));
+    const chamadas: string[] = [];
     for (const nome of ACOES)
-      window[nome] = () =>
+      Reflect.set(window, nome, () =>
         chamadas.push(
           `${nome}:${menu.hasAttribute("open") ? "aberto" : "fechado"}`,
-        );
-    const clicar = (botao) => {
+        ),
+      );
+    const clicar = (botao: HTMLElement | null) => {
       menu.setAttribute("open", "");
-      act(() => botao.click());
+      act(() => definido(botao).click());
     };
     clicar(document.getElementById("externalBackBtn"));
-    for (const botao of document.querySelectorAll(
+    for (const botao of document.querySelectorAll<HTMLElement>(
       ".top-user-popover-actions button",
     ))
       clicar(botao);
@@ -159,7 +161,7 @@ describe("Casca", () => {
   it("sem o contrato em window (antes de ligarSistema), o clique não quebra", () => {
     montar();
     expect(() =>
-      act(() => document.getElementById("externalBackBtn").click()),
+      act(() => definido(document.getElementById("externalBackBtn")).click()),
     ).not.toThrow();
   });
 

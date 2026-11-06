@@ -1,5 +1,7 @@
 import { act, createElement as h } from "react";
+import type { ReactElement } from "react";
 import { createRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   Aviso,
@@ -30,6 +32,15 @@ import {
   textoDoRecorte,
   TopoDoPainel,
 } from "../../src/ui/index.ts";
+import type { AcaoEmCurso } from "../../src/ui/botao-de-acao.tsx";
+import type {
+  GrupoDaTabela,
+  PropriedadesDaTabelaInfinita,
+} from "../../src/ui/index.ts";
+import { definido } from "../definido.ts";
+
+/* Uma linha das tabelas de teste. */
+type Linha = { nome: string; total?: number; vaga?: string };
 import { clicar, digitar, teclar } from "../componentes/interacoes.ts";
 
 /*
@@ -38,18 +49,19 @@ import { clicar, digitar, teclar } from "../componentes/interacoes.ts";
   id fixo (o modo "no quadro", da transição da Etapa 2, saiu com a Seleção).
 */
 
-let raiz = null;
+let raiz: Root | null = null;
 
-async function montarNoApp(elemento) {
+async function montarNoApp(elemento: ReactElement) {
   document.body.innerHTML = `<div id="raiz"></div>`;
   await act(async () => {
-    raiz = createRoot(document.getElementById("raiz"));
-    raiz.render(elemento);
+    const novaRaiz = createRoot(definido(document.getElementById("raiz")));
+    raiz = novaRaiz;
+    novaRaiz.render(elemento);
   });
 }
 
-async function redesenhar(elemento) {
-  await act(async () => raiz.render(elemento));
+async function redesenhar(elemento: ReactElement) {
+  await act(async () => definido(raiz).render(elemento));
 }
 
 afterEach(async () => {
@@ -58,7 +70,8 @@ afterEach(async () => {
   document.body.innerHTML = "";
 });
 
-const $ = (seletor) => document.querySelector(seletor);
+const $ = <E extends Element = HTMLElement>(seletor: string) =>
+  document.querySelector<E>(seletor);
 
 describe("TopoDoPainel", () => {
   it("sem aoExportar, não mostra Exportar; desativa Atualizar quando pedido", async () => {
@@ -70,7 +83,9 @@ describe("TopoDoPainel", () => {
       }),
     );
     expect($('[data-acao="exportar"]')).toBeNull();
-    expect($('[data-acao="atualizar"]').disabled).toBe(true);
+    expect($<HTMLButtonElement>('[data-acao="atualizar"]')?.disabled).toBe(
+      true,
+    );
   });
 
   it("as visões entram antes do status e das ações", async () => {
@@ -81,8 +96,8 @@ describe("TopoDoPainel", () => {
         visoes: h("div", { className: "visoes" }, "abas"),
       }),
     );
-    expect($(".ui-topo-titulo .visoes").textContent).toBe("abas");
-    expect($(".ui-topo-titulo").nextElementSibling.className).toBe(
+    expect($(".ui-topo-titulo .visoes")?.textContent).toBe("abas");
+    expect($(".ui-topo-titulo")?.nextElementSibling?.className).toBe(
       "ui-topo-acoes",
     );
   });
@@ -98,17 +113,17 @@ describe("PainelDeFiltros e chips", () => {
         h("div", { className: "campos" }, "campos"),
       ),
     );
-    expect($("section.ui-filtros").getAttribute("aria-labelledby")).toBe("t");
-    expect($(".ui-filtros-resumo").textContent).toContain(
+    expect($("section.ui-filtros")?.getAttribute("aria-labelledby")).toBe("t");
+    expect($(".ui-filtros-resumo")?.textContent).toContain(
       "2 filtros adicionais",
     );
-    expect($(".ui-filtros-corpo .campos").textContent).toBe("campos");
+    expect($(".ui-filtros-corpo .campos")?.textContent).toBe("campos");
     // Nasce recolhido: os campos ficam no corpo, escondido até abrir.
-    const recolher = $('[data-acao="recolher-filtros"]');
+    const recolher = definido($<HTMLElement>('[data-acao="recolher-filtros"]'));
     expect(recolher.getAttribute("aria-expanded")).toBe("false");
-    expect($(".ui-filtros-corpo").hidden).toBe(true);
+    expect($(".ui-filtros-corpo")?.hidden).toBe(true);
     await clicar(recolher);
-    expect($(".ui-filtros-corpo").hidden).toBe(false);
+    expect($(".ui-filtros-corpo")?.hidden).toBe(false);
     expect(aoRecolher).toHaveBeenLastCalledWith(false);
     await clicar(recolher);
     expect(recolher.getAttribute("aria-expanded")).toBe("false");
@@ -117,8 +132,10 @@ describe("PainelDeFiltros e chips", () => {
 
   it("sem filtro ativo, Limpar tudo fica desativado", async () => {
     await montarNoApp(h(PainelDeFiltros, { idDoTitulo: "t", quantos: 0 }));
-    expect($('[data-acao="limpar-filtros"]').disabled).toBe(true);
-    expect($(".ui-filtros-resumo").textContent).toContain(
+    expect($<HTMLButtonElement>('[data-acao="limpar-filtros"]')?.disabled).toBe(
+      true,
+    );
+    expect($(".ui-filtros-resumo")?.textContent).toContain(
       "nenhum filtro adicional",
     );
   });
@@ -131,7 +148,7 @@ describe("PainelDeFiltros e chips", () => {
         h("p", { id: "filho" }, "x"),
       ),
     );
-    expect($("section").className).toBe("ui-card ui-filtros extra");
+    expect($("section")?.className).toBe("ui-card ui-filtros extra");
     expect($('[data-acao="recolher-filtros"]')).toBeNull();
     expect($(".ui-filtros-corpo")).toBeNull();
     expect($("section > #filho")).not.toBeNull();
@@ -145,8 +162,8 @@ describe("PainelDeFiltros e chips", () => {
         h(ChipDeFiltro, { rotulo: "Edital", aoTirar: () => {} }, "03/2025"),
       ),
     );
-    const chip = $(".ui-chips .ui-chip");
-    expect(chip.querySelector("b").textContent).toBe("Edital");
+    const chip = definido($<HTMLElement>(".ui-chips .ui-chip"));
+    expect(chip.querySelector("b")?.textContent).toBe("Edital");
     expect(chip.textContent).toContain("03/2025");
     expect(chip.title).toBe("Tirar o filtro Edital");
   });
@@ -167,9 +184,9 @@ describe("Kpi e GradeDeKpis", () => {
         }),
       ),
     );
-    expect($("#grade").className).toBe("ui-kpis x");
-    expect($("#grade").getAttribute("aria-label")).toBe("Indicadores");
-    const total = $('[data-kpi="total"]');
+    expect($("#grade")?.className).toBe("ui-kpis x");
+    expect($("#grade")?.getAttribute("aria-label")).toBe("Indicadores");
+    const total = definido($<HTMLElement>('[data-kpi="total"]'));
     expect(total.className).toBe("ui-kpi");
     expect(total.title).toBe("Soma");
     expect(total.querySelector("button")).toBeNull();
@@ -190,10 +207,14 @@ describe("Kpi e GradeDeKpis", () => {
       ]),
     );
     for (const chave of ["a", "b"]) {
-      const texto = $(`[data-kpi="${chave}"] .ui-kpi-rotulo .ui-kpi-texto`);
+      const texto = definido(
+        $<HTMLElement>(`[data-kpi="${chave}"] .ui-kpi-rotulo .ui-kpi-texto`),
+      );
       expect(texto.textContent).toBe(longo);
       expect(texto.title).toBe(longo);
-      expect(texto.parentElement.querySelector(".ui-kpi-icone")).not.toBeNull();
+      expect(
+        texto.parentElement?.querySelector(".ui-kpi-icone"),
+      ).not.toBeNull();
     }
   });
 
@@ -207,7 +228,7 @@ describe("Kpi e GradeDeKpis", () => {
         aoClicar: () => {},
       }),
     );
-    const botao = $("button");
+    const botao = definido($<HTMLElement>("button"));
     expect(botao.hasAttribute("aria-pressed")).toBe(false);
     expect(botao.title).toBe("Ver a lista");
   });
@@ -227,10 +248,10 @@ describe("CardDeGrafico", () => {
         h(CardDeGrafico, { titulo: "T", elemento: "section" }),
       ),
     );
-    const card = $("article");
+    const card = definido($<HTMLElement>("article"));
     expect(card.className).toBe("ui-card ui-card-de-grafico extra");
     expect(card.querySelector(".ui-grafico > #c")).not.toBeNull();
-    expect(card.querySelector(".ui-grafico").hasAttribute("data-altura")).toBe(
+    expect(card.querySelector(".ui-grafico")?.hasAttribute("data-altura")).toBe(
       false,
     );
     expect(card.querySelector(".hint, .eyebrow")).toBeNull();
@@ -243,9 +264,11 @@ describe("TabelaInfinita", () => {
     { rotulo: "Nome", largura: "70%" },
     { rotulo: "Total", largura: "30%", numero: true },
   ];
-  const pelaBusca = (itens, busca) =>
+  const pelaBusca = (itens: readonly Linha[], busca: string) =>
     itens.filter((item) => item.nome.includes(busca));
-  const props = (extra = {}) => ({
+  const props = (
+    extra: Partial<PropriedadesDaTabelaInfinita<Linha>> = {},
+  ): PropriedadesDaTabelaInfinita<Linha> => ({
     idDoTitulo: "tabelaTitulo",
     titulo: "Fila",
     busca: { placeholder: "Buscar", rotulo: "Buscar na fila" },
@@ -253,14 +276,15 @@ describe("TabelaInfinita", () => {
     itens: [],
     filtrarPelaBusca: pelaBusca,
     colunas,
-    linha: (item) =>
+    linha: (item: Linha) =>
       h(
         "tr",
         { key: item.nome },
         h("td", null, item.nome),
         h("td", null, item.total),
       ),
-    informacao: (quantos) => (quantos === null ? "Carregando…" : `${quantos}`),
+    informacao: (quantos: number | null) =>
+      quantos === null ? "Carregando…" : `${quantos}`,
     total: 0,
     vazio: "Nada carregado.",
     ...extra,
@@ -273,20 +297,20 @@ describe("TabelaInfinita", () => {
       total: i,
     }));
     await montarNoApp(
-      h(TabelaInfinita, props({ itens: muitos, total: muitos.length })),
+      h(TabelaInfinita<Linha>, props({ itens: muitos, total: muitos.length })),
     );
     await clicar($('[data-acao="carregar-mais"]'));
     await clicar($('[data-acao="carregar-mais"]'));
     expect(linhas()).toHaveLength(150);
-    const desenhadas = [];
+    const desenhadas: string[] = [];
     const invertidos = [...muitos].reverse();
     await redesenhar(
       h(
-        TabelaInfinita,
+        TabelaInfinita<Linha>,
         props({
           itens: invertidos,
           total: invertidos.length,
-          linha: (item) => {
+          linha: (item: Linha) => {
             desenhadas.push(item.nome);
             return h("tr", { key: item.nome }, h("td", null, item.nome));
           },
@@ -299,33 +323,33 @@ describe("TabelaInfinita", () => {
   });
 
   it("carregando: esqueleto, busca desligada e a informação de carga", async () => {
-    await montarNoApp(h(TabelaInfinita, props({ carregado: false })));
-    expect($(".ui-tabela-busca").disabled).toBe(true);
-    expect($("[data-tabela-mostrando]").textContent).toBe(
+    await montarNoApp(h(TabelaInfinita<Linha>, props({ carregado: false })));
+    expect($<HTMLInputElement>(".ui-tabela-busca")?.disabled).toBe(true);
+    expect($("[data-tabela-mostrando]")?.textContent).toBe(
       "Mostrando 0 de 0 registros",
     );
-    expect($("[data-tabela-contagem]").textContent).toBe("Carregando…");
+    expect($("[data-tabela-contagem]")?.textContent).toBe("Carregando…");
     expect(
       document.querySelectorAll('tbody tr[aria-hidden="true"] .ui-esqueleto')
         .length,
     ).toBe(16);
-    expect($("th.num").textContent).toBe("Total");
+    expect($("th.num")?.textContent).toBe("Total");
     expect($(".ui-tabela-status")).toBeNull();
   });
 
   it("vazio: a mensagem de nada carregado, ou 'Nenhum registro' quando a busca esvazia", async () => {
-    await montarNoApp(h(TabelaInfinita, props()));
-    expect($("tbody td.ui-vazio").textContent).toBe("Nada carregado.");
-    expect($("tbody td.ui-vazio").colSpan).toBe(2);
+    await montarNoApp(h(TabelaInfinita<Linha>, props()));
+    expect($("tbody td.ui-vazio")?.textContent).toBe("Nada carregado.");
+    expect($<HTMLTableCellElement>("tbody td.ui-vazio")?.colSpan).toBe(2);
 
     await redesenhar(
       h(
-        TabelaInfinita,
+        TabelaInfinita<Linha>,
         props({ itens: [{ nome: "Ana", total: 1 }], total: 1 }),
       ),
     );
     await digitar($(".ui-tabela-busca"), "Zé");
-    expect($("tbody td.ui-vazio").textContent).toBe(
+    expect($("tbody td.ui-vazio")?.textContent).toBe(
       "Nenhum registro encontrado.",
     );
   });
@@ -335,15 +359,15 @@ describe("TabelaInfinita", () => {
       nome: `Pessoa ${i}`,
       total: i,
     }));
-    await montarNoApp(h(TabelaInfinita, props({ itens, total: 120 })));
+    await montarNoApp(h(TabelaInfinita<Linha>, props({ itens, total: 120 })));
     expect(linhas().length).toBe(50);
-    expect($("[data-tabela-mostrando]").textContent).toBe(
+    expect($("[data-tabela-mostrando]")?.textContent).toBe(
       "Mostrando 50 de 120 registros",
     );
-    expect($("[data-tabela-contagem]").textContent).toBe("120");
-    expect($(".ui-tabela-status").textContent).toBe("50 de 120 registros");
+    expect($("[data-tabela-contagem]")?.textContent).toBe("120");
+    expect($(".ui-tabela-status")?.textContent).toBe("50 de 120 registros");
 
-    const caixa = $(".ui-tabela-rolagem");
+    const caixa = definido($<HTMLElement>(".ui-tabela-rolagem"));
     Object.defineProperty(caixa, "scrollHeight", { value: 1000 });
     Object.defineProperty(caixa, "clientHeight", { value: 400 });
     caixa.scrollTop = 500;
@@ -360,15 +384,15 @@ describe("TabelaInfinita", () => {
       { nome: "Caio", total: 3, vaga: "B" },
     ];
     const aoAlternar = vi.fn();
-    const grupo = (recolhidos = new Set()) => ({
-      chave: (item) => item.vaga,
+    const grupo = (recolhidos = new Set<string>()): GrupoDaTabela<Linha> => ({
+      chave: (item) => definido(item.vaga),
       cabecalho: (chave, quantos) => `Vaga ${chave} (${quantos})`,
       recolhidos,
       aoAlternar,
     });
     await montarNoApp(
       h(
-        TabelaInfinita,
+        TabelaInfinita<Linha>,
         props({ itens, total: 3, busca: null, grupo: grupo() }),
       ),
     );
@@ -379,18 +403,18 @@ describe("TabelaInfinita", () => {
       );
     expect(cabecalhos()).toEqual(["Vaga A (2)", "Vaga B (1)"]);
     expect(linhas()).toHaveLength(5);
-    expect($("tr.ui-tabela-grupo th").colSpan).toBe(2);
+    expect($<HTMLTableCellElement>("tr.ui-tabela-grupo th")?.colSpan).toBe(2);
     await clicar($("tr[data-grupo='A'] button"));
     expect(aoAlternar).toHaveBeenCalledWith("A");
     await redesenhar(
       h(
-        TabelaInfinita,
+        TabelaInfinita<Linha>,
         props({ itens, total: 3, busca: null, grupo: grupo(new Set(["A"])) }),
       ),
     );
     expect(cabecalhos()).toEqual(["Vaga A (2)", "Vaga B (1)"]);
     expect(linhas()).toHaveLength(3);
-    expect($("tr[data-grupo='A'] button").getAttribute("aria-expanded")).toBe(
+    expect($("tr[data-grupo='A'] button")?.getAttribute("aria-expanded")).toBe(
       "false",
     );
   });
@@ -419,24 +443,25 @@ describe("MenuDeAcoes", () => {
         ],
       }),
     );
-    const botao = $("[data-acao='abrir-menu']");
+    const botao = definido($<HTMLElement>("[data-acao='abrir-menu']"));
     expect(botao.textContent).toContain("Ações da coordenação");
-    expect($(".ui-contagem").textContent).toBe("2");
+    expect($(".ui-contagem")?.textContent).toBe("2");
     expect($("[role='menu']")).toBeNull();
     await clicar(botao);
     expect(botao.getAttribute("aria-expanded")).toBe("true");
-    const itens = document.querySelectorAll("[role='menuitem']");
+    const itens =
+      document.querySelectorAll<HTMLButtonElement>("[role='menuitem']");
     expect([...itens].map((b) => b.textContent)).toEqual([
       "Distribuir",
       "Liberar",
     ]);
-    expect(itens[1].disabled).toBe(true);
+    expect(itens[1]?.disabled).toBe(true);
     expect(document.activeElement).toBe(itens[0]);
     await clicar($("[data-acao='distribuir']"));
     expect(distribuir).toHaveBeenCalledTimes(1);
     expect($("[role='menu']")).toBeNull();
     await clicar(botao);
-    await teclar($("[role='menu']"), "Escape");
+    await teclar(definido($("[role='menu']")), "Escape");
     expect($("[role='menu']")).toBeNull();
   });
 });
@@ -458,13 +483,13 @@ describe("Gaveta", () => {
         h("p", { id: "corpo" }, "corpo"),
       ),
     );
-    const fundo = document.getElementById("g");
+    const fundo = definido(document.getElementById("g"));
     expect(fundo.className).toBe("modal ui-gaveta-fundo extra show");
     expect(fundo.getAttribute("aria-labelledby")).toBe("gt");
-    expect(fundo.querySelector(".modal-card").className).toBe(
+    expect(fundo.querySelector(".modal-card")?.className).toBe(
       "modal-card ui-gaveta larga",
     );
-    expect($("#gt").textContent).toBe("Modelos");
+    expect($("#gt")?.textContent).toBe("Modelos");
     expect($("#corpo")).not.toBeNull();
     expect($(".ui-gaveta-sobretitulo")).toBeNull();
     expect($(".ui-gaveta-resumo")).toBeNull();
@@ -481,13 +506,13 @@ describe("Aviso, Campo, Selo e estados", () => {
         h(Aviso, { como: "p", className: "recursos-aviso" }, "Info"),
       ),
     );
-    const [erro, info] = document.querySelectorAll(".ui-aviso");
-    expect(erro.tagName).toBe("DIV");
-    expect(erro.dataset.tone).toBe("danger");
-    expect(erro.getAttribute("role")).toBe("alert");
-    expect(info.tagName).toBe("P");
-    expect(info.className).toBe("ui-aviso recursos-aviso");
-    expect(info.hasAttribute("data-tone")).toBe(false);
+    const [erro, info] = document.querySelectorAll<HTMLElement>(".ui-aviso");
+    expect(erro?.tagName).toBe("DIV");
+    expect(erro?.dataset.tone).toBe("danger");
+    expect(erro?.getAttribute("role")).toBe("alert");
+    expect(info?.tagName).toBe("P");
+    expect(info?.className).toBe("ui-aviso recursos-aviso");
+    expect(info?.hasAttribute("data-tone")).toBe(false);
   });
 
   it("Campo: liga o rótulo ao controle, marca o erro e mostra a dica", async () => {
@@ -504,15 +529,15 @@ describe("Aviso, Campo, Selo e estados", () => {
         h("textarea", { defaultValue: "" }),
       ),
     );
-    const campo = $(".ui-campo");
+    const campo = definido($<HTMLElement>(".ui-campo"));
     expect(campo.classList.contains("ui-campo-largo")).toBe(true);
-    const rotulo = campo.querySelector("label");
-    const controle = campo.querySelector("textarea");
+    const rotulo = definido(campo.querySelector("label"));
+    const controle = definido(campo.querySelector("textarea"));
     expect(rotulo.htmlFor).toBe(controle.id);
     expect(rotulo.textContent).toBe("Motivo *");
     expect(controle.getAttribute("aria-invalid")).toBe("true");
-    expect($(".ui-campo-dica").textContent).toBe("3 a 500 caracteres");
-    expect($(".ui-campo-erro[role=alert]").textContent).toContain(
+    expect($(".ui-campo-dica")?.textContent).toBe("3 a 500 caracteres");
+    expect($(".ui-campo-erro[role=alert]")?.textContent).toContain(
       "Obrigatório",
     );
   });
@@ -521,8 +546,8 @@ describe("Aviso, Campo, Selo e estados", () => {
     await montarNoApp(
       h(Campo, { rotulo: "Busca" }, h("input", { id: "filtro-busca" })),
     );
-    expect($("label").htmlFor).toBe("filtro-busca");
-    expect($("input").hasAttribute("aria-invalid")).toBe(false);
+    expect($<HTMLLabelElement>("label")?.htmlFor).toBe("filtro-busca");
+    expect($("input")?.hasAttribute("aria-invalid")).toBe(false);
   });
 
   it("Selo: neutro por padrão, título e classe extra", async () => {
@@ -538,15 +563,16 @@ describe("Aviso, Campo, Selo e estados", () => {
         ),
       ),
     );
-    const [neutro, aprovado] = document.querySelectorAll(".ui-selo");
-    expect(neutro.dataset.tom).toBe("neutro");
-    expect(aprovado.className).toBe("ui-selo extra");
-    expect(aprovado.title).toBe("No prazo");
+    const [neutro, aprovado] =
+      document.querySelectorAll<HTMLElement>(".ui-selo");
+    expect(neutro?.dataset.tom).toBe("neutro");
+    expect(aprovado?.className).toBe("ui-selo extra");
+    expect(aprovado?.title).toBe("No prazo");
   });
 
   it("EstadoVazio e Carregando: a classe pedida no lugar de .ui-vazio", async () => {
     await montarNoApp(h(Carregando, { className: "ui-secao-vazio" }));
-    expect($("#raiz > div").className).toBe("ui-secao-vazio");
+    expect($("#raiz > div")?.className).toBe("ui-secao-vazio");
   });
 });
 
@@ -581,16 +607,16 @@ describe("Classes .ui-* e nenhum id fixo", () => {
         h("button", { id: "extra" }, "Extra"),
       ),
     );
-    const topo = $("header.ui-topo");
+    const topo = definido($<HTMLElement>("header.ui-topo"));
     expect(topo).not.toBeNull();
     expect(topo.querySelector("h1, h2")).toBeNull();
-    expect($(".ui-topo .status-discreto").textContent).toBe(
+    expect($(".ui-topo .status-discreto")?.textContent).toBe(
       "Atualizado em 01/10/2026",
     );
     expect($('[aria-label="Usar tema escuro"]')).toBeNull();
     expect($('[aria-label="Alternar tela cheia"]')).toBeNull();
-    const exportar = $('[data-acao="exportar"]');
-    expect(exportar.nextElementSibling.id).toBe("extra");
+    const exportar = definido($<HTMLElement>('[data-acao="exportar"]'));
+    expect(exportar.nextElementSibling?.id).toBe("extra");
     await clicar($('[data-acao="atualizar"]'));
     await clicar(exportar);
     expect(aoAtualizar).toHaveBeenCalledTimes(1);
@@ -612,22 +638,22 @@ describe("Classes .ui-* e nenhum id fixo", () => {
         ),
       ),
     );
-    const painel = $("section.ui-card.ui-filtros");
-    expect(painel.querySelector("h2.ui-titulo").textContent).toBe(
+    const painel = definido($<HTMLElement>("section.ui-card.ui-filtros"));
+    expect(painel.querySelector("h2.ui-titulo")?.textContent).toBe(
       "Refinar resultados",
     );
-    expect($(".ui-filtros-resumo.tem-filtros").textContent).toContain(
+    expect($(".ui-filtros-resumo.tem-filtros")?.textContent).toContain(
       "1 filtro adicional",
     );
     // Nasce recolhido; abre para mexer nos filtros e recolhe de novo.
     expect(painel.classList.contains("is-recolhido")).toBe(true);
     await clicar($('[data-acao="recolher-filtros"]'));
-    expect($(".ui-filtros-corpo").hidden).toBe(false);
+    expect($(".ui-filtros-corpo")?.hidden).toBe(false);
     await clicar($(".ui-chips .ui-chip"));
     expect(aoTirar).toHaveBeenCalledTimes(1);
     await clicar($('[data-acao="recolher-filtros"]'));
     expect(painel.classList.contains("is-recolhido")).toBe(true);
-    expect($(".ui-filtros-corpo").hidden).toBe(true);
+    expect($(".ui-filtros-corpo")?.hidden).toBe(true);
     await clicar($('[data-acao="limpar-filtros"]'));
     expect(aoLimpar).toHaveBeenCalledTimes(1);
     expect(idsDoPainelDeAnalises()).toEqual([]);
@@ -653,19 +679,19 @@ describe("Classes .ui-* e nenhum id fixo", () => {
       ),
     );
     expect($("section.ui-kpis")).not.toBeNull();
-    const a = $('[data-kpi="a"]');
+    const a = definido($<HTMLElement>('[data-kpi="a"]'));
     expect(a.className).toBe("ui-kpi ui-kpi-clicavel is-ativo");
     expect(a.dataset.tom).toBe("perigo");
-    expect(a.querySelector(".ui-kpi-icone i").className).toContain("fa-clock");
-    expect(a.querySelector(".ui-kpi-valor").textContent).toBe("4");
-    const botao = a.querySelector("button.ui-kpi-alvo");
+    expect(a.querySelector(".ui-kpi-icone i")?.className).toContain("fa-clock");
+    expect(a.querySelector(".ui-kpi-valor")?.textContent).toBe("4");
+    const botao = definido(a.querySelector("button.ui-kpi-alvo"));
     expect(botao.getAttribute("aria-pressed")).toBe("true");
     await clicar(botao);
     expect(aoClicar).toHaveBeenCalledTimes(1);
-    const b = $('[data-kpi="b"]');
+    const b = definido($<HTMLElement>('[data-kpi="b"]'));
     expect(b.dataset.tom).toBe("info");
     expect(b.getAttribute("aria-busy")).toBe("true");
-    expect(b.querySelector(".ui-kpi-valor.ui-esqueleto").textContent).toBe("");
+    expect(b.querySelector(".ui-kpi-valor.ui-esqueleto")?.textContent).toBe("");
     expect($(".kpi, .kpis")).toBeNull();
   });
 
@@ -686,12 +712,12 @@ describe("Classes .ui-* e nenhum id fixo", () => {
       ),
     );
     expect(
-      $("article.ui-card.ui-card-de-grafico h2.ui-titulo").textContent,
+      $("article.ui-card.ui-card-de-grafico h2.ui-titulo")?.textContent,
     ).toBe("G");
-    expect($(".ui-grafico.is-carregando").dataset.altura).toBe("short");
-    expect($(".ui-selo").dataset.tom).toBe("sucesso");
-    expect($(".ui-secao .ui-secao-topo").textContent).toBe("Etapas");
-    expect($(".ui-kv[data-empty] .ui-kv-valor").textContent).toBe("—");
+    expect($(".ui-grafico.is-carregando")?.dataset.altura).toBe("short");
+    expect($(".ui-selo")?.dataset.tom).toBe("sucesso");
+    expect($(".ui-secao .ui-secao-topo")?.textContent).toBe("Etapas");
+    expect($(".ui-kv[data-empty] .ui-kv-valor")?.textContent).toBe("—");
     expect(
       [...document.querySelectorAll(".ui-vazio")].map((e) => e.textContent),
     ).toEqual(["Nada.", "Carregando…"]);
@@ -704,34 +730,35 @@ describe("Classes .ui-* e nenhum id fixo", () => {
     const avisos = vi.fn();
     document.addEventListener("agsus:content-updated", avisos);
     await montarNoApp(
-      h(TabelaInfinita, {
+      h(TabelaInfinita<Linha>, {
         idDoTitulo: "tt",
         titulo: "Fila",
         busca: { placeholder: "Buscar", rotulo: "Buscar na fila" },
         carregado: true,
         itens: [{ nome: "Ana" }, { nome: "Bia" }],
-        filtrarPelaBusca: (itens, busca) =>
+        filtrarPelaBusca: (itens: readonly Linha[], busca: string) =>
           itens.filter((i) => i.nome.includes(busca)),
         colunas: [{ rotulo: "Nome" }],
-        linha: (item) => h("tr", { key: item.nome }, h("td", null, item.nome)),
-        informacao: (quantos) => `${quantos}`,
+        linha: (item: Linha) =>
+          h("tr", { key: item.nome }, h("td", null, item.nome)),
+        informacao: (quantos: number | null) => `${quantos}`,
         total: 2,
         vazio: "Nada.",
       }),
     );
-    expect($("section.ui-card.ui-tabela h2.ui-titulo").textContent).toBe(
+    expect($("section.ui-card.ui-tabela h2.ui-titulo")?.textContent).toBe(
       "Fila",
     );
     expect(
       document.querySelectorAll(".ui-tabela-rolagem tbody tr"),
     ).toHaveLength(2);
-    expect($("[data-tabela-mostrando]").textContent).toBe(
+    expect($("[data-tabela-mostrando]")?.textContent).toBe(
       "Mostrando 2 de 2 registros",
     );
     expect(avisos).toHaveBeenCalled();
     await digitar($(".ui-tabela-busca"), "Bi");
-    expect($("[data-tabela-contagem]").textContent).toBe("1");
-    expect($(".ui-tabela-status").textContent).toBe(
+    expect($("[data-tabela-contagem]")?.textContent).toBe("1");
+    expect($(".ui-tabela-status")?.textContent).toBe(
       "Todos os 1 registros do recorte foram carregados",
     );
     expect(idsDoPainelDeAnalises()).toEqual([]);
@@ -751,14 +778,14 @@ describe("Classes .ui-* e nenhum id fixo", () => {
         rotuloDoFechar: "Fechar detalhe",
       }),
     );
-    expect(document.getElementById("g").className).toBe(
+    expect(document.getElementById("g")?.className).toBe(
       "modal ui-gaveta-fundo show",
     );
     expect(
       $(".modal-card.ui-gaveta .ui-gaveta-topo .ui-gaveta-sobretitulo")
-        .textContent,
+        ?.textContent,
     ).toBe("Recurso nº 1");
-    expect($(".ui-gaveta-resumo").textContent).toBe("Em análise");
+    expect($(".ui-gaveta-resumo")?.textContent).toBe("Em análise");
     await clicar($('.ui-gaveta-fechar[aria-label="Fechar detalhe"]'));
     await teclar(document, "Escape");
     expect(aoFechar).toHaveBeenCalledTimes(2);
@@ -767,7 +794,9 @@ describe("Classes .ui-* e nenhum id fixo", () => {
 
   it("Campo: .ui-campo no lugar de .field", async () => {
     await montarNoApp(h(Campo, { rotulo: "Busca" }, h("input", null)));
-    expect($(".ui-campo label").htmlFor).toBe($("input").id);
+    expect($<HTMLLabelElement>(".ui-campo label")?.htmlFor).toBe(
+      $("input")?.id,
+    );
     expect($(".field")).toBeNull();
   });
 });
@@ -786,15 +815,19 @@ describe("peças de Análises curriculares e Recursos", () => {
         }),
       ),
     );
-    expect($("[data-recorte]").textContent).toBe(
+    expect($("[data-recorte]")?.textContent).toBe(
       "Recorte ativo: Situação do processo: Ativo",
     );
     expect(
-      [...document.querySelectorAll(".ui-recorte-marcas .ui-marca")].map(
-        (m) => m.dataset.tom,
-      ),
+      [
+        ...document.querySelectorAll<HTMLElement>(
+          ".ui-recorte-marcas .ui-marca",
+        ),
+      ].map((m) => m.dataset.tom),
     ).toEqual(["neutro", "alerta"]);
-    await act(async () => raiz.render(h(MarcasDoRecorte, { marcas: [] })));
+    await act(async () =>
+      definido(raiz).render(h(MarcasDoRecorte, { marcas: [] })),
+    );
     expect($(".ui-recorte-marcas")).toBeNull();
   });
 
@@ -813,12 +846,12 @@ describe("peças de Análises curriculares e Recursos", () => {
         h("span", null, "campo"),
       ),
     );
-    const botao = $('[data-acao="mais-opcoes"]');
+    const botao = definido($<HTMLElement>('[data-acao="mais-opcoes"]'));
     expect(botao.getAttribute("aria-controls")).toBe("extra");
     expect(botao.getAttribute("aria-expanded")).toBe("false");
     expect(botao.textContent).toContain("Mais opções");
-    expect($(".ui-contagem").textContent).toBe("2");
-    expect(document.getElementById("extra").hidden).toBe(true);
+    expect($(".ui-contagem")?.textContent).toBe("2");
+    expect(document.getElementById("extra")?.hidden).toBe(true);
     await clicar(botao);
     expect(aoAlternar).toHaveBeenCalled();
   });
@@ -833,32 +866,35 @@ describe("peças de Análises curriculares e Recursos", () => {
         aoLimpar: vi.fn(),
       }),
     );
-    expect($(".ui-filtros-resumo").textContent).toContain(
+    expect($(".ui-filtros-resumo")?.textContent).toContain(
       "Inativo · nenhum filtro adicional",
     );
-    expect($('[data-acao="limpar-filtros"]').disabled).toBe(false);
+    expect($<HTMLButtonElement>('[data-acao="limpar-filtros"]')?.disabled).toBe(
+      false,
+    );
   });
 
   it("TabelaInfinita: busca controlada pela tela e Carregar mais", async () => {
     const aoMudar = vi.fn();
     const itens = Array.from({ length: 70 }, (_, i) => ({ nome: `P${i}` }));
-    const props = (valor) => ({
+    const props = (valor: string): PropriedadesDaTabelaInfinita<Linha> => ({
       idDoTitulo: "t",
       titulo: "Fila",
       busca: { placeholder: "Buscar", rotulo: "Buscar", valor, aoMudar },
       carregado: true,
       itens,
-      filtrarPelaBusca: (lista, busca) =>
+      filtrarPelaBusca: (lista: readonly Linha[], busca: string) =>
         lista.filter((i) => i.nome.includes(busca)),
       colunas: [{ rotulo: "Nome" }],
-      linha: (item) => h("tr", { key: item.nome }, h("td", null, item.nome)),
+      linha: (item: Linha) =>
+        h("tr", { key: item.nome }, h("td", null, item.nome)),
       informacao: () => "",
       total: 70,
       vazio: "Nada.",
     });
-    await montarNoApp(h(TabelaInfinita, props("")));
+    await montarNoApp(h(TabelaInfinita<Linha>, props("")));
     expect(document.querySelectorAll("tbody tr")).toHaveLength(50);
-    expect($('[data-acao="carregar-mais"]').textContent).toContain(
+    expect($('[data-acao="carregar-mais"]')?.textContent).toContain(
       "Carregar mais 20",
     );
     await clicar($('[data-acao="carregar-mais"]'));
@@ -867,9 +903,11 @@ describe("peças de Análises curriculares e Recursos", () => {
 
     await digitar($(".ui-tabela-busca"), "P6");
     expect(aoMudar).toHaveBeenCalledWith("P6");
-    await act(async () => raiz.render(h(TabelaInfinita, props("P69"))));
+    await act(async () =>
+      definido(raiz).render(h(TabelaInfinita<Linha>, props("P69"))),
+    );
     expect(document.querySelectorAll("tbody tr")).toHaveLength(1);
-    expect($(".ui-tabela-busca").value).toBe("P69");
+    expect($<HTMLInputElement>(".ui-tabela-busca")?.value).toBe("P69");
   });
 
   it("Campo: `idDoControle` liga o rótulo a um controle que não é input/select", async () => {
@@ -880,7 +918,7 @@ describe("peças de Análises curriculares e Recursos", () => {
         h("button", { id: "x-unidade", type: "button" }, "Todas"),
       ),
     );
-    expect($(".ui-campo label").htmlFor).toBe("x-unidade");
+    expect($<HTMLLabelElement>(".ui-campo label")?.htmlFor).toBe("x-unidade");
   });
 });
 
@@ -902,17 +940,21 @@ describe("Segmentado, LinhaDoRecorte e ListaDePendencias (só dentro do app)", (
         className: "extra",
       }),
     );
-    const grupo = $(".ui-segmentado.extra[role=radiogroup]");
+    const grupo = definido(
+      $<HTMLElement>(".ui-segmentado.extra[role=radiogroup]"),
+    );
     expect(grupo.getAttribute("aria-label")).toBe("Visão");
-    const botoes = [...grupo.querySelectorAll("button[role=radio]")];
+    const botoes = [
+      ...grupo.querySelectorAll<HTMLButtonElement>("button[role=radio]"),
+    ];
     expect(botoes.map((b) => b.tabIndex)).toEqual([0, -1, -1]);
-    expect(botoes[0].getAttribute("aria-checked")).toBe("true");
-    expect(botoes[0].classList.contains("is-ativo")).toBe(true);
-    expect(botoes[0].querySelector("i.fa-chart-column")).not.toBeNull();
-    await teclar(botoes[0], "ArrowLeft");
+    expect(botoes[0]?.getAttribute("aria-checked")).toBe("true");
+    expect(botoes[0]?.classList.contains("is-ativo")).toBe(true);
+    expect(botoes[0]?.querySelector("i.fa-chart-column")).not.toBeNull();
+    await teclar(definido(botoes[0]), "ArrowLeft");
     expect(aoMudar).toHaveBeenLastCalledWith("c");
     expect(document.activeElement).toBe(botoes[2]);
-    await teclar(botoes[2], "ArrowRight");
+    await teclar(definido(botoes[2]), "ArrowRight");
     expect(aoMudar).toHaveBeenLastCalledWith("a");
     await clicar(grupo.querySelector('[data-valor="b"]'));
     expect(aoMudar).toHaveBeenLastCalledWith("b");
@@ -924,15 +966,18 @@ describe("Segmentado, LinhaDoRecorte e ListaDePendencias (só dentro do app)", (
       h(Segmentado, {
         rotulo: "Comparecimento",
         opcoes: OPCOES,
+        // @ts-expect-error -- sem escolha (null), de propósito: a primeira entra no Tab.
         valor: null,
         aoMudar,
         desabilitado: true,
       }),
     );
-    const botoes = [...document.querySelectorAll(".ui-segmentado button")];
+    const botoes = [
+      ...document.querySelectorAll<HTMLButtonElement>(".ui-segmentado button"),
+    ];
     expect(botoes.map((b) => b.tabIndex)).toEqual([0, -1, -1]);
     expect(botoes.every((b) => b.disabled)).toBe(true);
-    await teclar(botoes[0], "ArrowRight");
+    await teclar(definido(botoes[0]), "ArrowRight");
     expect(aoMudar).not.toHaveBeenCalled();
   });
 
@@ -949,10 +994,10 @@ describe("Segmentado, LinhaDoRecorte e ListaDePendencias (só dentro do app)", (
         h("span", { className: "marca" }, "3 vencidos"),
       ),
     );
-    expect($(".ui-card.ui-recorte [data-recorte]").textContent).toBe(
+    expect($(".ui-card.ui-recorte [data-recorte]")?.textContent).toBe(
       "Recorte ativo: Edital: 01/2026 · Busca: ana",
     );
-    expect($(".ui-recorte .marca").textContent).toBe("3 vencidos");
+    expect($(".ui-recorte .marca")?.textContent).toBe("3 vencidos");
     expect(textoDoRecorte([])).toBe("Sem filtros");
   });
 
@@ -971,42 +1016,43 @@ describe("Segmentado, LinhaDoRecorte e ListaDePendencias (só dentro do app)", (
       { chave: "y", titulo: "Sem entrevista", detalhe: "1", aoClicar: abrir },
     ];
     await montarNoApp(h(ListaDePendencias, { itens, vazio: "Nada" }));
-    const [primeiro, segundo] = document.querySelectorAll(".ui-pendencia");
-    expect(primeiro.dataset.tom).toBe("perigo");
-    expect(primeiro.getAttribute("aria-pressed")).toBe("true");
-    expect(primeiro.classList.contains("is-ativo")).toBe(true);
-    expect(primeiro.textContent).toBe("Sem edital2 entrevistas");
-    expect(segundo.dataset.tom).toBe("alerta");
-    expect(segundo.hasAttribute("aria-pressed")).toBe(false);
+    const [primeiro, segundo] =
+      document.querySelectorAll<HTMLElement>(".ui-pendencia");
+    expect(primeiro?.dataset.tom).toBe("perigo");
+    expect(primeiro?.getAttribute("aria-pressed")).toBe("true");
+    expect(primeiro?.classList.contains("is-ativo")).toBe(true);
+    expect(primeiro?.textContent).toBe("Sem edital2 entrevistas");
+    expect(segundo?.dataset.tom).toBe("alerta");
+    expect(segundo?.hasAttribute("aria-pressed")).toBe(false);
     await clicar(primeiro);
     await clicar(segundo);
     expect(filtrar).toHaveBeenCalledTimes(1);
     expect(abrir).toHaveBeenCalledTimes(1);
 
     await act(async () =>
-      raiz.render(h(ListaDePendencias, { itens, carregando: true })),
+      definido(raiz).render(h(ListaDePendencias, { itens, carregando: true })),
     );
     expect(
       document.querySelectorAll(".ui-pendencias .ui-esqueleto"),
     ).toHaveLength(4);
     await act(async () =>
-      raiz.render(h(ListaDePendencias, { itens: [], vazio: "Nada" })),
+      definido(raiz).render(h(ListaDePendencias, { itens: [], vazio: "Nada" })),
     );
-    expect($(".ui-pendencias .ui-vazio").textContent).toBe("Nada");
+    expect($(".ui-pendencias .ui-vazio")?.textContent).toBe("Nada");
   });
 });
 
 describe("BotaoDeAcao, esqueletos e ErroAoCarregar", () => {
-  function criarEstado(acao = null) {
+  function criarEstado(acao: AcaoEmCurso | null = null) {
     let atual = { acao };
-    const ouvintes = new Set();
+    const ouvintes = new Set<() => void>();
     return {
       obter: () => atual,
-      assinar: (ouvinte) => {
+      assinar: (ouvinte: () => void) => {
         ouvintes.add(ouvinte);
         return () => ouvintes.delete(ouvinte);
       },
-      definir(nova) {
+      definir(nova: AcaoEmCurso) {
         atual = { acao: nova };
         ouvintes.forEach((ouvinte) => ouvinte());
       },
@@ -1023,20 +1069,20 @@ describe("BotaoDeAcao, esqueletos e ErroAoCarregar", () => {
         h(BotaoDeAcao, { estado, acao: "apagar", id: "b", soIcone: true }, "X"),
       ),
     );
-    expect($("#a").disabled).toBe(false);
-    expect($("#a").type).toBe("button");
+    expect($<HTMLButtonElement>("#a")?.disabled).toBe(false);
+    expect($<HTMLButtonElement>("#a")?.type).toBe("button");
     await act(async () =>
       estado.definir({ tipo: "salvar", rotulo: "Salvando…" }),
     );
-    expect($("#a").textContent.trim()).toBe("Salvando…");
-    expect($("#a").getAttribute("aria-busy")).toBe("true");
+    expect($("#a")?.textContent.trim()).toBe("Salvando…");
+    expect($("#a")?.getAttribute("aria-busy")).toBe("true");
     expect($("#a .botao-girando")).not.toBeNull();
-    expect($("#b").disabled).toBe(true);
-    expect($("#b").textContent).toBe("X");
+    expect($<HTMLButtonElement>("#b")?.disabled).toBe(true);
+    expect($("#b")?.textContent).toBe("X");
     await act(async () =>
       estado.definir({ tipo: "apagar", rotulo: "Apagando…" }),
     );
-    expect($("#b .sr-only").textContent).toBe("Apagando…");
+    expect($("#b .sr-only")?.textContent).toBe("Apagando…");
   });
 
   it("LinhasEsqueleto e BlocosEsqueleto: o formato do conteúdo, escondido do leitor de tela", async () => {
@@ -1059,14 +1105,14 @@ describe("BotaoDeAcao, esqueletos e ErroAoCarregar", () => {
     );
     const linhas = document.querySelectorAll("tr.ui-esqueleto-tr");
     expect(linhas).toHaveLength(2);
-    expect(linhas[0].getAttribute("aria-hidden")).toBe("true");
-    expect(linhas[0].querySelectorAll("td .ui-esqueleto-linha")).toHaveLength(
+    expect(linhas[0]?.getAttribute("aria-hidden")).toBe("true");
+    expect(linhas[0]?.querySelectorAll("td .ui-esqueleto-linha")).toHaveLength(
       3,
     );
     const itens = document.querySelectorAll('ul li[aria-hidden="true"]');
     expect(itens).toHaveLength(4);
     expect(
-      itens[0].querySelector(".ui-esqueleto.ui-esqueleto-bloco.extra"),
+      itens[0]?.querySelector(".ui-esqueleto.ui-esqueleto-bloco.extra"),
     ).not.toBeNull();
     expect(
       document.querySelectorAll("#soltos > .ui-esqueleto-bloco"),
@@ -1084,20 +1130,20 @@ describe("BotaoDeAcao, esqueletos e ErroAoCarregar", () => {
         aoTentar,
       }),
     );
-    const aviso = $(".ui-aviso");
+    const aviso = definido($<HTMLElement>(".ui-aviso"));
     expect(aviso.dataset.tone).toBe("danger");
     expect(aviso.getAttribute("role")).toBe("alert");
-    expect($("#erro").textContent).toContain(
+    expect($("#erro")?.textContent).toContain(
       "Não foi possível carregar os dados: sem rede",
     );
-    expect($("#tentar").textContent.trim()).toBe("Tentar novamente");
+    expect($("#tentar")?.textContent.trim()).toBe("Tentar novamente");
     await clicar($("#tentar"));
     expect(aoTentar).toHaveBeenCalledTimes(1);
   });
 
   it("ErroAoCarregar: sem aoTentar, só a frase com ponto final", async () => {
     await montarNoApp(h(ErroAoCarregar, { oQue: "a lista" }));
-    expect($(".ui-erro-ao-carregar").textContent).toBe(
+    expect($(".ui-erro-ao-carregar")?.textContent).toBe(
       "Não foi possível carregar a lista.",
     );
     expect($("button")).toBeNull();
@@ -1114,7 +1160,7 @@ describe("BotaoDeAcao, esqueletos e ErroAoCarregar", () => {
           valor: "3",
           idDoValor: "valorTotal",
         }),
-        h(TabelaInfinita, {
+        h(TabelaInfinita<Linha>, {
           idDoTitulo: "t",
           titulo: "T",
           className: "minha-tabela",
@@ -1131,9 +1177,9 @@ describe("BotaoDeAcao, esqueletos e ErroAoCarregar", () => {
         }),
       ),
     );
-    expect($("#valorTotal").textContent).toBe("3");
+    expect($("#valorTotal")?.textContent).toBe("3");
     expect($("section.ui-tabela.minha-tabela")).not.toBeNull();
-    expect($("tbody#corpo").getAttribute("aria-busy")).toBe("true");
+    expect($("tbody#corpo")?.getAttribute("aria-busy")).toBe("true");
     expect($("#corpo tr.ui-esqueleto-tr")).not.toBeNull();
     expect($("input#busca.ui-tabela-busca")).not.toBeNull();
   });

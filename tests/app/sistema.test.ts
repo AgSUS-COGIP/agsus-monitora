@@ -1,9 +1,11 @@
 import { act } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { definido } from "../definido.ts";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 // O jsdom não tem matchMedia (a moldura pergunta a largura).
-window.matchMedia ||= () => ({ matches: false });
+// Só `matches` é lido: o resto do MediaQueryList fica de fora, como antes.
+window.matchMedia ||= () => ({ matches: false }) as MediaQueryList;
 
 /*
   A ligação do sistema (src/app/sistema.ts): os contratos em window que o
@@ -34,11 +36,11 @@ describe("ligarSistema", () => {
       "toggleDarkMode",
       "toggleSidebar",
     ])
-      expect(typeof window[nome], nome).toBe("function");
+      expect(typeof Reflect.get(window, nome), nome).toBe("function");
     expect(window.navigate).toBe(sistema.navegacao.irPara);
-    expect(window.getMonitoraProfile()).toBeNull();
+    expect(window.getMonitoraProfile?.()).toBeNull();
 
-    const ganchos = ligar.mock.calls[0][0];
+    const ganchos = definido(definido(ligar.mock.calls[0])[0]);
     expect(Object.keys(ganchos).sort()).toEqual(
       [
         "abrir",
@@ -62,15 +64,18 @@ describe("ligarSistema", () => {
     const { memoriaDosAvisos } =
       await import("../../src/modulos/conferencias/memoria-dos-avisos.ts");
     memoriaDosAvisos.set("|", { lista: null, versao: "v1" });
-    document.getElementById("appScreen").classList.remove("hidden");
-    await act(async () => ganchos.aoSair());
-    expect(document.getElementById("appScreen").classList).toContain("hidden");
+    definido(document.getElementById("appScreen")).classList.remove("hidden");
+    await act(async () => ganchos.aoSair?.());
+    expect(document.getElementById("appScreen")?.classList).toContain("hidden");
     expect(memoriaDosAvisos.size).toBe(0);
 
     // Sem acesso: a memória sai e a presença para inteira (heartbeat e a batida de Pessoas online).
     const esquecer = vi.spyOn(sistema.carga, "esquecer");
     const pararTudo = vi.spyOn(sistema.presenca, "pararTudo");
-    await act(async () => ganchos.aoFicarSemAcesso());
+    // Chamado sem os dados, como no teste em JavaScript.
+    await act(async () =>
+      Reflect.apply(definido(ganchos.aoFicarSemAcesso), ganchos, []),
+    );
     expect(esquecer).toHaveBeenCalled();
     expect(pararTudo).toHaveBeenCalled();
   });

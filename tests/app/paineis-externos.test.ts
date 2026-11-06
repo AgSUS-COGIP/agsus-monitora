@@ -2,13 +2,16 @@ import { act } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { montarPortaisNoTeste } from "../montar-tela.ts";
 import { criarPaineisExternos } from "../../src/app/paineis-externos.ts";
+import type { PainelExternoDoApp } from "../../src/app/paineis-externos.ts";
+import type { PerfilDeAcesso } from "../../src/lib/tipos-dos-acessos.ts";
+import { definido } from "../definido.ts";
 
 /*
   Os painéis externos (src/app/paineis-externos.ts): a lista, os liberados
   para o perfil e o quadro de cada painel (iframe na primeira abertura).
 */
 
-const PAINEIS = [
+const PAINEIS: PainelExternoDoApp[] = [
   {
     id: "1",
     codigo: "bi",
@@ -41,29 +44,40 @@ const PAINEIS = [
   { id: "6", codigo: "analises", titulo: "Analises", url: "/analises.html" },
 ];
 
-const COM_MATRIZ = { id: "m", ativo: true, permissoes: { paineis: "leitor" } };
-const GESTOR = { id: "g", ativo: true, perfil: "edital_gestor" };
+const COM_MATRIZ: PerfilDeAcesso = {
+  id: "m",
+  ativo: true,
+  permissoes: { paineis: "leitor" },
+};
+const GESTOR: PerfilDeAcesso = {
+  id: "g",
+  ativo: true,
+  perfil: "edital_gestor",
+};
 
-function montar(perfil = GESTOR) {
+const TEXTOS_DA_CONFIGURACAO: Record<string, string> = {
+  maintenance_title: "Em manutenção",
+  maintenance_message: "Volte mais tarde",
+  external_placeholder: "Escolha um painel",
+};
+
+function montar(perfil: PerfilDeAcesso = GESTOR) {
   document.body.className = "";
   document.body.innerHTML = `
     <section id="page-external" class="page">
       <h3 id="externalTitle"></h3><a id="externalOpen"></a>
       <div id="externalMount" class="external-placeholder">Escolha</div>
     </section>`;
-  const estado = { definirPaineisCarregados: vi.fn() };
+  const estado = {
+    definirPaineisCarregados: vi.fn<(lista: PainelExternoDoApp[]) => void>(),
+  };
   const avisar = vi.fn();
   const aoTentarDeNovo = vi.fn();
   const paineis = criarPaineisExternos({
     cliente: () => null,
     origem: () => "https://monitora.exemplo",
     obterPerfil: () => perfil,
-    configuracao: (chave) =>
-      ({
-        maintenance_title: "Em manutenção",
-        maintenance_message: "Volte mais tarde",
-        external_placeholder: "Escolha um painel",
-      })[chave] || "",
+    configuracao: (chave: string) => TEXTOS_DA_CONFIGURACAO[chave] || "",
     avisar,
     aoTentarDeNovo,
     estado,
@@ -71,7 +85,10 @@ function montar(perfil = GESTOR) {
   return { paineis, estado, avisar };
 }
 
-const carregar = (paineis, dados = PAINEIS) =>
+const carregar = (
+  paineis: ReturnType<typeof criarPaineisExternos>,
+  dados: PainelExternoDoApp[] = PAINEIS,
+) =>
   paineis.carregar({ consulta: Promise.resolve({ data: dados, error: null }) });
 
 beforeEach(() => vi.restoreAllMocks());
@@ -80,7 +97,9 @@ describe("lista e permissões", () => {
   it("tira o painel antigo de análises e publica para as Configurações", async () => {
     const { paineis, estado } = montar();
     await carregar(paineis);
-    const publicados = estado.definirPaineisCarregados.mock.calls[0][0];
+    const publicados = definido(
+      estado.definirPaineisCarregados.mock.calls[0],
+    )[0];
     expect(publicados.map((p) => p.codigo)).not.toContain("analises");
   });
 
@@ -97,7 +116,7 @@ describe("lista e permissões", () => {
       "obras",
       "bi",
     ]);
-    expect(paineis.primeiro().codigo).toBe("bi");
+    expect(paineis.primeiro()?.codigo).toBe("bi");
   });
 
   it("com matriz: só os ids liberados pela sessão", async () => {
@@ -123,13 +142,15 @@ describe("quadro", () => {
     const { paineis } = montar();
     await carregar(paineis);
     paineis.completarLiberados();
-    expect(paineis.mostrar("bi").titulo).toBe("BI RH");
-    const quadro = document.querySelector("#external-panel-bi iframe");
+    expect(paineis.mostrar("bi")?.titulo).toBe("BI RH");
+    const quadro = definido(
+      document.querySelector("#external-panel-bi iframe"),
+    );
     expect(quadro.getAttribute("src")).toBe("https://bi.exemplo/rh");
     expect(quadro.className).toBe("external-frame");
     expect(quadro.getAttribute("allow")).toBe("fullscreen; clipboard-write");
     // Apps Script e Looker Studio precisam destes; nada de navegar o topo sem clique.
-    const sandbox = quadro.getAttribute("sandbox").split(" ");
+    const sandbox = definido(quadro.getAttribute("sandbox")).split(" ");
     expect(sandbox).toEqual(
       expect.arrayContaining([
         "allow-scripts",
@@ -142,18 +163,18 @@ describe("quadro", () => {
       ]),
     );
     expect(sandbox).not.toContain("allow-top-navigation");
-    expect(document.getElementById("externalTitle").textContent).toBe("BI RH");
-    expect(document.getElementById("externalOpen").href).toBe(
-      "https://bi.exemplo/rh",
-    );
+    expect(document.getElementById("externalTitle")?.textContent).toBe("BI RH");
+    expect(
+      document.querySelector<HTMLAnchorElement>("#externalOpen")?.href,
+    ).toBe("https://bi.exemplo/rh");
     expect(document.body.classList).toContain("external-panel-mode");
     paineis.mostrar("obras");
-    expect(document.getElementById("external-panel-bi").hidden).toBe(true);
+    expect(document.getElementById("external-panel-bi")?.hidden).toBe(true);
     paineis.mostrar("bi");
     expect(document.querySelectorAll("#external-panel-bi iframe")).toHaveLength(
       1,
     );
-    expect(document.getElementById("external-panel-obras").hidden).toBe(true);
+    expect(document.getElementById("external-panel-obras")?.hidden).toBe(true);
   });
 
   it("a cobertura diz o que está carregando até o site responder", async () => {
@@ -177,11 +198,11 @@ describe("quadro", () => {
     await carregar(paineis);
     paineis.completarLiberados();
     paineis.mostrar("manut");
-    const manut = document.getElementById("external-panel-manut");
+    const manut = definido(document.getElementById("external-panel-manut"));
     expect(manut.querySelector("iframe")).toBeNull();
     expect(manut.textContent).toContain("Volte mais tarde");
     paineis.mostrar("semurl");
-    const sem = document.getElementById("external-panel-semurl");
+    const sem = definido(document.getElementById("external-panel-semurl"));
     expect(sem.querySelector("iframe")).toBeNull();
     expect(sem.textContent).toContain("Cadastre uma URL");
   });
@@ -209,7 +230,7 @@ describe("quadro", () => {
     paineis.mostrar("bi");
     paineis.limpar();
     expect(paineis.atual()).toBeNull();
-    const montagem = document.getElementById("externalMount");
+    const montagem = definido(document.getElementById("externalMount"));
     expect(montagem.className).toBe("external-placeholder");
     expect(montagem.textContent).toBe("Escolha um painel");
     expect(paineis.liberados().size).toBe(0);
@@ -226,7 +247,11 @@ describe("pré-conexão dos painéis", () => {
     tipo_abertura: "iframe",
   };
   const links = () =>
-    [...document.head.querySelectorAll("link[data-preconexao-do-painel]")].map(
+    [
+      ...document.head.querySelectorAll<HTMLLinkElement>(
+        "link[data-preconexao-do-painel]",
+      ),
+    ].map(
       (l) =>
         `${l.rel} ${l.href.replace(/\/$/, "")}${l.crossOrigin ? " cors" : ""}`,
     );
@@ -244,7 +269,9 @@ describe("pré-conexão dos painéis", () => {
     item.dataset.view = "panel:recrutamento";
     item.innerHTML = "<span>Formas de Ingresso</span>";
     document.body.append(item);
-    item.firstChild.dispatchEvent(new Event("pointerover", { bubbles: true }));
+    definido(item.firstChild).dispatchEvent(
+      new Event("pointerover", { bubbles: true }),
+    );
     expect(links()).toEqual([
       "preconnect https://datastudio.google.com",
       "dns-prefetch https://datastudio.google.com",
@@ -294,7 +321,7 @@ describe("pré-conexão dos painéis", () => {
     ]);
     paineis.completarLiberados();
     const ocioso = window.requestIdleCallback;
-    window.requestIdleCallback = undefined;
+    Reflect.set(window, "requestIdleCallback", undefined);
     try {
       paineis.preconectarNoOcioso();
       expect(links()).toEqual([]);
