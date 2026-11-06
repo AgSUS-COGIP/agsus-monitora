@@ -6,6 +6,12 @@ import type {
   OpcoesDaTela,
 } from "./tipos-do-estado.ts";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import {
+  TelaNaUrl,
+  usarEditalNaUrl,
+  usarFiltrosNaUrl,
+} from "../../app/usar-filtros-na-url.ts";
+import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
@@ -49,6 +55,17 @@ const VISOES = [
   { valor: "regra", rotulo: "Regra", icone: "fa-sliders" },
 ];
 
+/* A visão na URL (?aba=agenda); trocar é entrada nova no histórico. */
+const FILTROS_DA_CLASSIFICACAO: EsquemaDosFiltros<"aba"> = Object.freeze({
+  aba: {
+    padrao: "listas",
+    aceita: (aba: string) => VISOES.some((v) => v.valor === aba),
+    empilha: true,
+  },
+});
+/* Na troca de visão, só o edital fica na URL (o recorte das listas sai). */
+const FICA_NA_TROCA_DE_ABA = Object.freeze(["edital"]);
+
 function textoDoStatus(e: SnapshotDaClassificacao) {
   if (e.semAcesso) return "Sem acesso";
   if (!e.carregado && e.carregandoEditais) return "Carregando editais...";
@@ -83,7 +100,19 @@ function TelaDaArea({
   confirmar,
   e,
 }: PropsDaTela & { e: SnapshotDaClassificacao }) {
-  const [visao, setVisao] = useState("listas");
+  const [filtrosDaTela, mudarFiltrosDaTela] = usarFiltrosNaUrl(
+    FILTROS_DA_CLASSIFICACAO,
+    { manter: FICA_NA_TROCA_DE_ABA },
+  );
+  const visao = filtrosDaTela.aba;
+  const setVisao = (aba: string) => mudarFiltrosDaTela({ aba });
+  // O edital na URL (?edital=): o link copiado abre a Classificação nele.
+  const escolherEdital = usarEditalNaUrl({
+    editalId: e.editalId,
+    editais: e.editais,
+    carregado: e.carregado,
+    escolher: (id) => void estado.escolherEdital(id),
+  });
   const recarregar = () => {
     void estado.carregar(e.area);
   };
@@ -158,7 +187,7 @@ function TelaDaArea({
                 ? ` · ${rotuloDaVersao({ versao: ed.versao_regra, nome: ed.nome_regra })}`
                 : "")
             }
-            aoEscolher={(id) => void estado.escolherEdital(id)}
+            aoEscolher={escolherEdital}
           />
 
           {e.erroDoEdital ? (
@@ -240,13 +269,15 @@ export function TelaDeClassificacao({
   }, [estado, areaDoApp]);
 
   return (
-    <TelaDaArea
-      key={e.area || "sem-area"}
-      estado={estado}
-      agenda={agenda}
-      confirmar={confirmar}
-      e={e}
-    />
+    <TelaNaUrl.Provider value="classificacao">
+      <TelaDaArea
+        key={e.area || "sem-area"}
+        estado={estado}
+        agenda={agenda}
+        confirmar={confirmar}
+        e={e}
+      />
+    </TelaNaUrl.Provider>
   );
 }
 

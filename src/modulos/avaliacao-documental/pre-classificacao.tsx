@@ -8,6 +8,8 @@ import {
   useSyncExternalStore,
 } from "react";
 import type { ReactNode, RefObject } from "react";
+import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
+import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import type { RecorteDaPre } from "../../lib/avaliacao-documental/paginas-da-pre-classificacao.ts";
 import { ordinal } from "../../lib/classificacao/numeros.ts";
@@ -900,6 +902,23 @@ const PARTE_DA_ABA: Partial<Record<AbaDaTriagem, "vagas" | "listas">> = {
   eliminados: "vagas",
   listas: "listas",
 };
+const ABAS_DA_TRIAGEM: ReadonlySet<string> = new Set([
+  "resumo",
+  "pessoas",
+  "vagas",
+  "eliminados",
+  "listas",
+]);
+/* A aba na URL (?aba=pessoas); trocar de aba é entrada nova no histórico. */
+const FILTROS_DA_TRIAGEM: EsquemaDosFiltros<"aba"> = Object.freeze({
+  aba: {
+    padrao: "resumo",
+    aceita: (aba: string) => ABAS_DA_TRIAGEM.has(aba),
+    empilha: true,
+  },
+});
+/* Na troca de aba, só o edital fica na URL (os filtros da aba anterior saem). */
+const FICA_NA_TROCA_DE_ABA = Object.freeze(["edital"]);
 /* A ação do menu "Ações" que espera confirmação. */
 type AcaoAConfirmar = "recalcular" | "descongelar" | null;
 
@@ -957,7 +976,15 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
   const regraDaTriagem = triagem.resposta;
   const aoSalvarRegraDaTriagem = triagem.salvar;
   const p = useSyncExternalStore(pre.assinar, pre.obter);
-  const [aba, setAba] = useState<AbaDaTriagem>("resumo");
+  const [filtrosDaTela, mudarFiltrosDaTela] = usarFiltrosNaUrl(
+    FILTROS_DA_TRIAGEM,
+    { manter: FICA_NA_TROCA_DE_ABA },
+  );
+  const aba = filtrosDaTela.aba as AbaDaTriagem;
+  const setAba = useCallback(
+    (nova: AbaDaTriagem) => mudarFiltrosDaTela({ aba: nova }),
+    [mudarFiltrosDaTela],
+  );
   const [tamanhos, setTamanhos] = useState<Record<string, string>>({});
   // Os eliminados marcados para comunicado em lote (chave vaga|código → pessoa).
   const [marcadas, setMarcadas] = useState<
@@ -988,10 +1015,13 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
   const [pedidoDaTrava, setPedidoDaTrava] = useState(0);
   // "Ver na vaga" (Pessoas, Eliminados): a vaga que a aba Por vaga abre.
   const [vagaPedida, setVagaPedida] = useState({ codigo: "", vez: 0 });
-  const verVaga = useCallback((codigo: string) => {
-    setAba("vagas");
-    setVagaPedida((atual) => ({ codigo, vez: atual.vez + 1 }));
-  }, []);
+  const verVaga = useCallback(
+    (codigo: string) => {
+      setAba("vagas");
+      setVagaPedida((atual) => ({ codigo, vez: atual.vez + 1 }));
+    },
+    [setAba],
+  );
   // A inclusão por decisão do edital todo, no menu "Ações" (à vista em toda aba).
   const inclusaoDoEdital = usarInclusaoPorDecisao(pre, null);
   const versaoDaRegra = e.dados?.regra?.versao ?? 0;

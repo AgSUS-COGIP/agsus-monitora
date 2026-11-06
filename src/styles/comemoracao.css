@@ -32,6 +32,58 @@
   font-size: 15px;
   line-height: 1.4;
 }
+/* O selo do aviso: o ícone de festa num círculo da cor da marca. */
+.comemoracao__selo {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand-primary) 14%, transparent);
+  color: var(--brand-primary);
+}
+/* Com efeito na tela, o aviso ganha destaque: texto maior, borda dourada
+   que acende uma vez e o selo que pula junto com a entrada. */
+.comemoracao--festa {
+  --destaque-do-aviso: var(--state-warning);
+  border-left-color: var(--destaque-do-aviso);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--destaque-do-aviso) 30%, transparent),
+    0 18px 40px -18px rgba(0, 0, 0, 0.45);
+  animation:
+    comemoracao-entra 0.5s cubic-bezier(0.2, 1.3, 0.35, 1),
+    comemoracao-acende 1.6s ease-out 0.2s;
+}
+.comemoracao--festa strong {
+  font-size: 16px;
+  font-weight: 700;
+}
+.comemoracao--festa .comemoracao__selo {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+  animation: comemoracao-selo 0.9s cubic-bezier(0.2, 1.4, 0.35, 1) 0.15s both;
+}
+@keyframes comemoracao-acende {
+  0% {
+    outline: 0 solid
+      color-mix(in srgb, var(--destaque-do-aviso) 45%, transparent);
+  }
+  100% {
+    outline: 14px solid transparent;
+  }
+}
+@keyframes comemoracao-selo {
+  0% {
+    transform: scale(0.3) rotate(-25deg);
+  }
+  60% {
+    transform: scale(1.18) rotate(8deg);
+  }
+  100% {
+    transform: none;
+  }
+}
 .comemoracao__fechar {
   flex: 0 0 auto;
   width: 32px;
@@ -145,8 +197,164 @@ html[data-theme="dark"] .comemoracao__veu {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .comemoracao {
+  .comemoracao,
+  .comemoracao--festa,
+  .comemoracao--festa .comemoracao__selo {
     animation: none;
+  }
+}
+
+/*
+  O letreiro: a frase do marco em texto de verdade (letreiro.tsx). Branca,
+  peso 800, numa placa escura translúcida (contraste >= 4.5:1 sobre
+  qualquer fundo; conta em letreiro.ts), por cima das partículas e abaixo
+  do aviso. Um véu suave em volta só enquanto ela está na tela. As cores e
+  o tamanho (clamp) vêm de letreiro.ts pelas variáveis --letreiro-*.
+*/
+.comemoracao__letreiro {
+  position: fixed;
+  inset: 0;
+  z-index: 10044;
+  display: grid;
+  place-items: center;
+  padding: 26vh 16px 0;
+  background: radial-gradient(
+    ellipse 56% 26% at 50% 63%,
+    rgb(5 12 28 / 0.22),
+    rgb(5 12 28 / 0) 72%
+  );
+  pointer-events: none;
+  animation: letreiro-veu 0.5s ease-out both;
+}
+.comemoracao__letreiro-placa {
+  position: relative;
+  max-width: calc(100vw - 32px);
+  padding: 0.22em 0.6em 0.3em;
+  overflow: hidden;
+  border-radius: 0.32em;
+  background: var(--letreiro-placa);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 224 138 / 0.4),
+    0 24px 60px -18px rgb(0 0 0 / 0.65);
+  backdrop-filter: blur(6px);
+  font-size: var(--letreiro-fonte);
+  animation: letreiro-placa 0.55s cubic-bezier(0.2, 1.25, 0.35, 1) both;
+}
+/* Um brilho que atravessa a placa uma vez, depois que a frase entrou. */
+.comemoracao__letreiro-placa::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgb(255 255 255 / 0.16) 50%,
+    transparent 65%
+  );
+  transform: translateX(-120%);
+  animation: letreiro-brilho 1.1s ease-in-out 0.9s both;
+}
+.comemoracao__letreiro-texto {
+  position: relative;
+  z-index: 1;
+  display: block;
+  color: var(--letreiro-texto);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
+  font-size: 1em;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  text-shadow:
+    0 0.04em 0 var(--letreiro-contorno),
+    0 0 0.35em rgb(255 209 102 / 0.35);
+}
+/* Um traço dourado embaixo da frase, que se abre do centro. */
+.comemoracao__letreiro-texto::after {
+  content: "";
+  display: block;
+  height: 0.06em;
+  margin: 0.08em auto 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--letreiro-destaque),
+    transparent
+  );
+  animation: letreiro-traco 0.7s cubic-bezier(0.2, 1, 0.3, 1) 0.45s both;
+}
+.comemoracao__letreiro-letra {
+  display: inline-block;
+  animation: letreiro-letra 0.7s cubic-bezier(0.2, 1.35, 0.35, 1) both;
+}
+.comemoracao__letreiro[data-fase="saindo"] {
+  animation: letreiro-sai 0.6s ease-in both;
+}
+@keyframes letreiro-veu {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes letreiro-placa {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+}
+@keyframes letreiro-letra {
+  0% {
+    opacity: 0;
+    transform: translateY(0.45em) scale(0.4) rotate(-8deg);
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes letreiro-traco {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes letreiro-brilho {
+  to {
+    transform: translateX(120%);
+  }
+}
+@keyframes letreiro-sai {
+  to {
+    opacity: 0;
+    transform: translateY(-14px) scale(1.04);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .comemoracao__letreiro,
+  .comemoracao__letreiro-placa,
+  .comemoracao__letreiro-letra,
+  .comemoracao__letreiro-texto::after {
+    animation: letreiro-veu 0.3s ease-out both;
+  }
+  .comemoracao__letreiro-placa::after {
+    display: none;
+  }
+  .comemoracao__letreiro[data-fase="saindo"] {
+    animation: letreiro-some 0.3s ease-in both;
+  }
+}
+@keyframes letreiro-some {
+  to {
+    opacity: 0;
   }
 }
 .comemoracao__corpo {

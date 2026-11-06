@@ -36,7 +36,7 @@ export interface PlanoDaComemoracao {
   duracaoMs: number | null;
   som: boolean;
   mensagem: string;
-  /** O texto escrito no céu no grande final dos fogos (Normal e Festa). */
+  /** A frase em destaque (o letreiro, letreiro.tsx), no Normal e no Festa. */
   letreiro: string | null;
 }
 

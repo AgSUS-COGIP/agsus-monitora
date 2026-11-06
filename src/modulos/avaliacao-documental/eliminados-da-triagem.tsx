@@ -1,4 +1,6 @@
 import { useDeferredValue, useMemo, useState } from "react";
+import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
+import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { copiarTexto } from "../../lib/convite-de-acesso.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import { acoesDaPessoa } from "../../lib/avaliacao-documental/pessoas-da-triagem.ts";
@@ -56,6 +58,9 @@ import type {
 */
 
 const TODAS = "";
+/* Vaga e motivo na URL (?vaga=&motivo=); a busca (nome, código) fica fora dela. */
+const FILTROS_DOS_ELIMINADOS: EsquemaDosFiltros<"vaga" | "motivo"> =
+  Object.freeze({ vaga: { padrao: TODAS }, motivo: { padrao: TODAS } });
 
 const semFiltro = <T,>(itens: readonly T[]) => itens;
 
@@ -91,8 +96,10 @@ export function EliminadosDaTriagem({
 }: PropriedadesDosEliminados) {
   const [buscaDigitada, setBuscaDigitada] = useState("");
   const busca = useDeferredValue(buscaDigitada.trim());
-  const [vaga, setVaga] = useState(TODAS);
-  const [motivo, setMotivo] = useState(TODAS);
+  const [filtros, mudarFiltros] = usarFiltrosNaUrl(FILTROS_DOS_ELIMINADOS);
+  const { vaga, motivo } = filtros;
+  const setVaga = (nova: string) => mudarFiltros({ vaga: nova });
+  const setMotivo = (novo: string) => mudarFiltros({ motivo: novo });
   const [motivos, setMotivos] = useState<readonly MotivoDaPre[]>([]);
   const [marcandoTodos, setMarcandoTodos] = useState(false);
   const [emitindo, setEmitindo] = useState("");
@@ -332,8 +339,7 @@ export function EliminadosDaTriagem({
         quantos={[busca, vaga, motivo].filter(Boolean).length}
         aoLimpar={() => {
           setBuscaDigitada("");
-          setVaga(TODAS);
-          setMotivo(TODAS);
+          mudarFiltros({ vaga: TODAS, motivo: TODAS });
         }}
         resultado={
           lista.carregado

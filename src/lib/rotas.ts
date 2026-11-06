@@ -4,7 +4,7 @@
   quem decide se a tela abre é a navegação (src/app/navegacao.ts), com as
   mesmas permissões de sempre (src/lib/navegacao.ts).
 
-    /<area>/<tela>[/<edital>][?visao=<visão>]   telas das áreas (Saúde Indígena, SEDE, Projetos)
+    /<area>/<tela>[/<edital>][?visao=<visão>][&<filtros>]  telas das áreas (Saúde Indígena, SEDE, Projetos)
     /<area>/editais/<edital>/regras/<etapa>     Regras do edital (Editais), na etapa
     /administracao/configuracoes[/<seção>]      Configurações
     /paineis/<código>                           painel externo
@@ -29,6 +29,11 @@ export interface DestinoDaRota {
   secao?: string;
   /** Regras do edital abertas em Editais (com `edital`): a etapa. */
   regras?: string;
+  /**
+   * Os filtros da tela na busca (`edital=…&aba=…`, sem `visao`): regras em
+   * src/app/filtros-no-endereco.ts.
+   */
+  filtros?: string;
 }
 
 /** Uma tela de área: o caminho no endereço, o título e se aceita edital. */
@@ -181,10 +186,14 @@ export function caminhoDoDestino(destino: DestinoDaRota): string {
     return `/${area}/${tela.caminho}/${daRegra}/${CAMINHO_DAS_REGRAS}/${etapaDasRegras(destino.regras)}`;
   const edital = tela.comEdital ? pedaco(destino.edital) : "";
   const visao = pedaco(destino.visao);
+  const parametros = new URLSearchParams(destino.filtros || "");
+  parametros.delete("visao");
+  const filtros = parametros.toString();
   return (
     `/${area}/${tela.caminho}` +
     (edital ? `/${edital}` : "") +
-    (visao ? `?visao=${visao}` : "")
+    (visao ? `?visao=${visao}` : "") +
+    (filtros ? `${visao ? "&" : "?"}${filtros}` : "")
   );
 }
 
@@ -227,12 +236,16 @@ export function destinoDoCaminho(
       : null;
   const tela = segunda ? POR_CAMINHO.get(segunda) : undefined;
   if (!tela || (terceira && !tela.comEdital)) return null;
-  const visao = pedaco(new URLSearchParams(busca || "").get("visao"));
+  const parametros = new URLSearchParams(busca || "");
+  const visao = pedaco(parametros.get("visao"));
+  parametros.delete("visao");
+  const filtros = parametros.toString();
   return {
     view: tela.view,
     area: primeira,
     ...(terceira ? { edital: terceira } : {}),
     ...(visao ? { visao } : {}),
+    ...(filtros ? { filtros } : {}),
   };
 }
 

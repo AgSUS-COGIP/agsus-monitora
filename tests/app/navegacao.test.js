@@ -5,6 +5,7 @@ import {
   TEXTO_ROTA_DESCONHECIDA,
   criarNavegacao,
 } from "../../src/app/navegacao.ts";
+import { filtrosGuardadosDaTela } from "../../src/app/filtros-no-endereco.ts";
 import { criarPresenca } from "../../src/app/presenca.ts";
 import {
   carregarTela,
@@ -446,6 +447,32 @@ describe("o endereço (rotas)", () => {
     await noHistorico(-1);
     expect(ativas()).toEqual(["page-recursos"]);
     expect(endereco()).toBe("/saude-indigena/painel-de-recursos");
+  });
+
+  it("link com filtros: a tela abre com eles na URL e volta com eles pelo menu", () => {
+    history.replaceState(null, "", "/sede/cronograma?edital=e1&aba=x");
+    const { navegacao } = criar();
+    entrar(navegacao);
+    expect(endereco()).toBe("/sede/cronograma?edital=e1&aba=x");
+    navegacao.irPara("nucleo");
+    expect(endereco()).toBe("/sede/editais");
+    navegacao.irPara("calendario");
+    expect(endereco()).toBe("/sede/cronograma?edital=e1&aba=x");
+  });
+
+  it("voltar/avançar só nos filtros da mesma tela não a reabre", async () => {
+    const { navegacao, telas } = criar();
+    entrar(navegacao);
+    navegacao.irPara("calendario");
+    const aberturas = telas.calendario.render.mock.calls.length;
+    history.pushState(null, "", "/saude-indigena/cronograma?aba=x");
+    await noHistorico(-1);
+    await noHistorico(1);
+    expect(telas.calendario.render).toHaveBeenCalledTimes(aberturas);
+    expect(filtrosGuardadosDaTela("calendario")).toBe("aba=x");
+    navegacao.irPara("nucleo");
+    navegacao.irPara("calendario");
+    expect(endereco()).toBe("/saude-indigena/cronograma?aba=x");
   });
 
   it("entrada do histórico com o mesmo endereço (marca das Regras do edital) não reabre", async () => {

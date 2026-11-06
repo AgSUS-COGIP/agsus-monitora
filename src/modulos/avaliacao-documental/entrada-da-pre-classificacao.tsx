@@ -2,6 +2,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { SeletorDeEdital } from "../../componentes/seletor-de-edital.tsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
+import { TelaNaUrl, usarEditalNaUrl } from "../../app/usar-filtros-na-url.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { Aviso, TopoDoPainel } from "../../ui/index.ts";
@@ -45,6 +46,14 @@ function TelaDaPreClassificacao({
   }, [estado, areaDoApp, e.area]);
 
   // Não montar PreClassificacao sem a confirmação do papel do edital.
+  // O edital na URL (?edital=): o link copiado abre a Triagem nele.
+  const escolherEdital = usarEditalNaUrl({
+    editalId: e.editalId,
+    editais: e.editais,
+    carregado: e.carregado,
+    escolher: (id) => void estado.escolherEdital(id),
+  });
+
   const coordena = Boolean(
     e.editalId && e.dados && coordenaOEdital(e) === true,
   );
@@ -85,7 +94,7 @@ function TelaDaPreClassificacao({
           escolhido={e.editalId}
           carregado={e.carregado}
           soVigentes
-          aoEscolher={(id) => void estado.escolherEdital(id)}
+          aoEscolher={escolherEdital}
         />
       ) : null}
 
@@ -142,7 +151,13 @@ export function criarPreClassificacao({
     pre,
     nome: "a Triagem",
     conteudo: (
-      <TelaDaPreClassificacao estado={estado} pre={pre} atualizar={atualizar} />
+      <TelaNaUrl.Provider value="pre-classificacao">
+        <TelaDaPreClassificacao
+          estado={estado}
+          pre={pre}
+          atualizar={atualizar}
+        />
+      </TelaNaUrl.Provider>
     ),
     atualizar,
     render: atualizar,

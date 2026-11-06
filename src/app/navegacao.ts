@@ -62,6 +62,11 @@ import {
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
 import { definirPaginaDaAya } from "../modulos/aya/estado.ts";
 import { criarEndereco } from "./endereco.ts";
+import {
+  esquecerFiltrosDasTelas,
+  filtrosGuardadosDaTela,
+  guardarFiltrosDaTela,
+} from "./filtros-no-endereco.ts";
 import type { Endereco } from "./endereco.ts";
 import type { PerfilDeAcesso } from "../lib/tipos-dos-acessos.ts";
 import type { PaineisDaNavegacao } from "../lib/navegacao";
@@ -349,7 +354,11 @@ export function criarNavegacao({
     if (!pedido) return { destino: null, desconhecido: false };
     const [so = "", ...resto] = pedido.split("?");
     const destino = destinoDoCaminho(so, resto.join("?"));
-    return { destino, desconhecido: !destino && !ehRaizDoApp(so) };
+    return {
+      // Os filtros do endereço valem (sem nenhum, a tela abre sem filtro).
+      destino: destino ? { ...destino, filtros: destino.filtros ?? "" } : null,
+      desconhecido: !destino && !ehRaizDoApp(so),
+    };
   }
 
   // ── Permissões e páginas desligadas ────────────────────────────────────
@@ -533,7 +542,11 @@ export function criarNavegacao({
 
   // ── Endereço ───────────────────────────────────────────────────────────
 
-  const caminhoAtual = () =>
+  /*
+    O endereço da tela aberta, com os filtros que ela deixou na URL
+    (src/app/filtros-no-endereco.ts): voltar a ela pelo menu volta filtrada.
+  */
+  const caminhoAtual = ({ comFiltros = true } = {}) =>
     caminhoDoDestino(
       estado.aviso === "sem-acesso"
         ? { view: TELA_SEM_ACESSO }
@@ -544,6 +557,9 @@ export function criarNavegacao({
             visao: estado.visao,
             secao: estado.secao,
             ...(estado.regras ? { regras: estado.regras.etapa } : {}),
+            ...(comFiltros && !estado.regras
+              ? { filtros: filtrosGuardadosDaTela(estado.view) }
+              : {}),
           },
     );
 
@@ -658,6 +674,7 @@ export function criarNavegacao({
   /* Saiu (ou ficou sem acesso): o voltar do navegador não abre mais tela. */
   function fechar() {
     sistemaAberto = false;
+    esquecerFiltrosDasTelas();
   }
 
   function abrir(
@@ -701,6 +718,9 @@ export function criarNavegacao({
     documento.body.classList.remove("external-clean");
     documento.body.classList.remove("external-panel-mode");
     guardarTela(tela);
+    // Vindo do endereço (link, F5, voltar): os filtros dele são os da tela.
+    if (destino.filtros !== undefined)
+      guardarFiltrosDaTela(tela, destino.filtros);
     if (!ehPainelExterno(tela)) paineis.esquecerAtual();
     ajustarBarra();
     // Em Editais, o edital com etapa é o das Regras do edital (fica no endereço).
@@ -813,6 +833,16 @@ export function criarNavegacao({
     const { caminho, busca } = endereco.obter();
     if (caminho + busca === caminhoAtual()) return;
     const destino = destinoDoCaminho(caminho, busca);
+    // A mesma tela com outros filtros: quem os lê é ela (usar-filtros-na-url.ts).
+    if (
+      destino &&
+      !estado.aviso &&
+      caminhoDoDestino({ ...destino, filtros: "" }) ===
+        caminhoAtual({ comFiltros: false })
+    ) {
+      guardarFiltrosDaTela(destino.view, destino.filtros ?? "");
+      return;
+    }
     if (!destino) {
       if (!ehRaizDoApp(caminho)) avisar(TEXTO_ROTA_DESCONHECIDA, "warn");
       abrir(
@@ -827,7 +857,10 @@ export function criarNavegacao({
     }
     const areaAnterior = areaAtual();
     usarAreaDoEndereco(destino.area);
-    if (abrir(destino, "substituir") === false) {
+    if (
+      abrir({ ...destino, filtros: destino.filtros ?? "" }, "substituir") ===
+      false
+    ) {
       definirAreaAtual(areaAnterior);
       endereco.ir(caminhoAtual());
     }

@@ -8,6 +8,11 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { usarLojaNaUrl } from "../../app/usar-filtros-na-url.ts";
+import type {
+  EsquemaDosFiltros,
+  ValoresDosFiltros,
+} from "../../app/filtros-no-endereco.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.ts";
 import { ordinal } from "../../lib/classificacao/numeros.ts";
@@ -1281,8 +1286,71 @@ function FaixaDaFila({
   );
 }
 
+/*
+  O filtro da Fila na URL: a etapa (aba e cards; trocar é entrada nova no
+  histórico), a vaga, a modalidade e o card "Minhas" (?minhas=sim). A busca
+  e o responsável escolhido na lista (outra pessoa) ficam fora dela.
+*/
+type CampoDaFilaNaUrl = "etapa" | "vaga" | "modalidade" | "minhas";
+const FILTROS_DA_FILA: EsquemaDosFiltros<CampoDaFilaNaUrl> = Object.freeze({
+  etapa: {
+    padrao: FILTRO_INICIAL.etapa,
+    aceita: (etapa: string) => ETAPAS_DA_FILA.some((e) => e.valor === etapa),
+    empilha: true,
+  },
+  vaga: { padrao: "" },
+  modalidade: { padrao: "" },
+  minhas: { padrao: "", aceita: (valor: string) => valor === "sim" },
+});
+
+/* Na troca de etapa, o edital e a aba da tela ficam na URL. */
+const FICA_NA_TROCA_DE_ETAPA = Object.freeze(["edital", "aba"]);
+
+function filaNaUrl(f: FiltroDaFila): ValoresDosFiltros<CampoDaFilaNaUrl> {
+  return {
+    etapa: f.etapa,
+    vaga: f.vaga,
+    modalidade: f.modalidade,
+    minhas: f.responsavel === "eu" ? "sim" : "",
+  };
+}
+
+/** O que veio da URL, no filtro da Fila (sem "Minhas", o responsável escolhido fica). */
+function filtroDaUrl(
+  parte: Partial<ValoresDosFiltros<CampoDaFilaNaUrl>>,
+  atual: FiltroDaFila,
+): Partial<FiltroDaFila> {
+  const { minhas, etapa, ...resto } = parte;
+  return {
+    ...resto,
+    ...(etapa === undefined ? {} : { etapa: etapa as EtapaDaFila }),
+    ...(minhas === undefined
+      ? {}
+      : {
+          responsavel: minhas
+            ? "eu"
+            : atual.responsavel === "eu"
+              ? ""
+              : atual.responsavel,
+        }),
+  };
+}
+
 export function Fila({ e, fila }: FilaProps) {
   const st = useSyncExternalStore(fila.assinar, fila.obter);
+  const mudarNaUrl = usarLojaNaUrl(
+    FILTROS_DA_FILA,
+    filaNaUrl(st.filtro),
+    (parte) => fila.mudarFiltro(filtroDaUrl(parte, fila.obter().filtro)),
+    { manter: FICA_NA_TROCA_DE_ETAPA },
+  );
+  // Outra etapa passa pela URL (entrada nova); o resto, a URL acompanha.
+  const mudarFiltro = (mudancas: Partial<FiltroDaFila>) => {
+    const { etapa: outra, ...resto } = mudancas;
+    if (outra !== undefined && outra !== fila.obter().filtro.etapa)
+      mudarNaUrl({ etapa: outra });
+    if (Object.keys(resto).length) fila.mudarFiltro(resto);
+  };
   const [selecao, setSelecao] = useState(() => new Set<string>());
   const [acao, setAcao] = useState<AcaoPedida | null>(null);
   const [reiniciando, setReiniciando] = useState(false);
@@ -1632,14 +1700,14 @@ export function Fila({ e, fila }: FilaProps) {
         aptas={aptas}
         hoje={hoje}
         ritmo={ritmo}
-        aoEscolher={(etapa) => fila.mudarFiltro({ etapa })}
+        aoEscolher={(etapa) => mudarFiltro({ etapa })}
         rodape={
           andamento.vagas.length ? (
             <AndamentoPorVaga
               andamento={andamento}
               vaga={st.filtro.vaga}
               usuario={dados?.eu}
-              aoEscolherVaga={(vaga) => fila.mudarFiltro({ vaga })}
+              aoEscolherVaga={(vaga) => mudarFiltro({ vaga })}
             />
           ) : null
         }
@@ -1658,7 +1726,7 @@ export function Fila({ e, fila }: FilaProps) {
             valor: busca,
             aoMudar: (valor) => {
               setBusca(valor);
-              fila.mudarFiltro({ busca: valor });
+              mudarFiltro({ busca: valor });
             },
             placeholder: "Buscar por código ou nome",
             rotulo:
@@ -1673,7 +1741,7 @@ export function Fila({ e, fila }: FilaProps) {
           quantos={filtrosDaFilaEmUso(st.filtro)}
           aoLimpar={() => {
             setBusca("");
-            fila.mudarFiltro({
+            mudarFiltro({
               vaga: "",
               responsavel: "",
               modalidade: "",
@@ -1687,7 +1755,7 @@ export function Fila({ e, fila }: FilaProps) {
                 <select
                   value={st.filtro.modalidade}
                   onChange={(ev) =>
-                    fila.mudarFiltro({ modalidade: ev.target.value })
+                    mudarFiltro({ modalidade: ev.target.value })
                   }
                 >
                   <option value="">Todas as modalidades</option>
@@ -1734,7 +1802,7 @@ export function Fila({ e, fila }: FilaProps) {
           <select
             aria-label="Vaga"
             value={st.filtro.vaga}
-            onChange={(ev) => fila.mudarFiltro({ vaga: ev.target.value })}
+            onChange={(ev) => mudarFiltro({ vaga: ev.target.value })}
           >
             <option value="">Todas as vagas</option>
             {(dados.vagas || []).map((v) => (
@@ -1746,9 +1814,7 @@ export function Fila({ e, fila }: FilaProps) {
           <select
             aria-label="Responsável"
             value={st.filtro.responsavel}
-            onChange={(ev) =>
-              fila.mudarFiltro({ responsavel: ev.target.value })
-            }
+            onChange={(ev) => mudarFiltro({ responsavel: ev.target.value })}
           >
             <option value="">Qualquer responsável</option>
             {dados.eu ? <option value="eu">Minhas fichas</option> : null}
