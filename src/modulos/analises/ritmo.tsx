@@ -16,9 +16,9 @@ import {
   textoDoMomento,
   textoDoPrazo,
   textoRecolhido,
+  TOM_DO_SELO_DO_RITMO,
   type EditalDoRitmo,
   type RitmoDoEdital,
-  type SituacaoDoDia,
 } from "../../lib/ritmo-da-analise.ts";
 import { GradeDeKpis, Kpi, Selo } from "../../ui/index.ts";
 import { comemorarMetaDoDia } from "./marcos.ts";
@@ -41,15 +41,6 @@ import { comemorarMetaDoDia } from "./marcos.ts";
   a mesma) e quem tem o selo Precisão (🎯); zera todo dia. Bateu a meta do
   dia, a comemoração da equipe sai uma vez por dia por pessoa (marcos.ts).
 */
-
-const TOM_DO_SELO: Record<SituacaoDoDia | "concluido", string> = {
-  concluido: "aprovado",
-  batida: "aprovado",
-  "no-ritmo": "aprovado",
-  abaixo: "pendente",
-  "nao-util": "neutro",
-  "sem-meta": "neutro",
-};
 
 const RECALCULO_MS = 5 * 60 * 1000;
 const DESLIGADAS = () => false;
@@ -161,9 +152,9 @@ function CardDoEdital({
         </div>
         <div className="ui-filtros-acoes">
           {selo.rotulo ? (
-            <Selo tom={TOM_DO_SELO[selo.situacao]}>{selo.rotulo}</Selo>
+            <Selo tom={TOM_DO_SELO_DO_RITMO[selo.situacao]}>{selo.rotulo}</Selo>
           ) : null}
-          {recolhido ? (
+          {recolhido && textoRecolhido(r) ? (
             <span className="ui-filtros-resumo" title={momento} data-resumo>
               <i className="fa-solid fa-gauge-high" aria-hidden="true" />
               <span>{textoRecolhido(r)}</span>

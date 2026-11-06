@@ -12,11 +12,14 @@ export type {
 export type { AbaDaLista, PropriedadesDasAbas } from "./abas.tsx";
 export { Aviso } from "./aviso.tsx";
 export type { PropriedadesDoAviso } from "./aviso.tsx";
-export { BarraDeFiltros } from "./barra-de-filtros.tsx";
+export { BarraDaLista, BarraDeFiltros } from "./barra-de-filtros.tsx";
 export type {
   BuscaDaBarra,
+  PropriedadesDaBarraDaLista,
   PropriedadesDaBarraDeFiltros,
 } from "./barra-de-filtros.tsx";
+export { CabecalhoDaTela } from "./cabecalho-da-tela.tsx";
+export type { PropriedadesDoCabecalhoDaTela } from "./cabecalho-da-tela.tsx";
 export { BotaoDeAcao } from "./botao-de-acao.tsx";
 export {
   CaixaDeMarcarTodos,
@@ -40,6 +43,16 @@ export type {
   PropriedadesDasLinhasEsqueleto,
   PropriedadesDosBlocosEsqueleto,
 } from "./esqueleto.tsx";
+export {
+  FaixaDeSituacao,
+  porcentagemDe,
+  textoDaDistribuicao,
+} from "./faixa-de-situacao.tsx";
+export type {
+  ItemDaFaixa,
+  ParteDaDistribuicao,
+  PropriedadesDaFaixaDeSituacao,
+} from "./faixa-de-situacao.tsx";
 export { Gaveta, TopoDaGaveta, usarClassesDaGaveta } from "./gaveta.tsx";
 export type {
   PropriedadesDaGaveta,
@@ -110,7 +123,12 @@ export type {
 } from "./segmentado.tsx";
 export { Selo } from "./selo.tsx";
 export type { PropriedadesDoSelo } from "./selo.tsx";
-export { TabelaInfinita } from "./tabela-infinita.tsx";
+export { CabecalhosDaTabela, TabelaInfinita } from "./tabela-infinita.tsx";
+export { CardDaLista, POR_PAGINA, TabelaPaginada } from "./tabela-paginada.tsx";
+export type {
+  PropriedadesDaTabelaPaginada,
+  PropriedadesDoCardDaLista,
+} from "./tabela-paginada.tsx";
 export { LINHAS_POR_PAGINA, usarListaNoServidor } from "./lista-no-servidor.ts";
 export type {
   BuscarPagina,

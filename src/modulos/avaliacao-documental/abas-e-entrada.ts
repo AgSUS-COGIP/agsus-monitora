@@ -25,11 +25,10 @@ export type Visao =
 export const VISOES: ReadonlyArray<{
   valor: Visao;
   rotulo: string;
-  icone: string;
 }> = Object.freeze([
-  { valor: "fila", rotulo: "Fila de análise", icone: "fa-list-check" },
-  { valor: "espelhos", rotulo: "Documentos", icone: "fa-file-pdf" },
-  { valor: "configuracoes", rotulo: "Configurações", icone: "fa-sliders" },
+  { valor: "fila", rotulo: "Fila" },
+  { valor: "espelhos", rotulo: "Documentos" },
+  { valor: "configuracoes", rotulo: "Configurações" },
 ]);
 
 /** A aba de quem não coordena (e o destino de uma visão proibida). */

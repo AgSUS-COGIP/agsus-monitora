@@ -4,7 +4,9 @@ import { classes } from "./classes.ts";
 /*
   Selo de situação: `tom` é a variante — "aprovado", "reprovado",
   "pendente", "revisar", "neutro". `className` acrescenta a classe de quem
-  usa. Marcação: `.ui-selo[data-tom]` (fundo e texto do estado).
+  usa. Marcação: `.ui-selo[data-tom]` (fundo e texto do estado). `ponto`
+  põe a bolinha na cor do texto antes do rótulo (as situações das listas da
+  seleção).
 */
 
 const TOM_DO_SELO: Partial<Record<string, string>> = {
@@ -19,6 +21,7 @@ export interface PropriedadesDoSelo {
   tom?: string;
   titulo?: string;
   className?: string;
+  ponto?: boolean;
   children?: ReactNode;
 }
 
@@ -26,6 +29,7 @@ export function Selo({
   tom = "neutro",
   titulo,
   className,
+  ponto = false,
   children,
 }: PropriedadesDoSelo) {
   return (
@@ -34,6 +38,7 @@ export function Selo({
       data-tom={TOM_DO_SELO[tom] || "neutro"}
       title={titulo}
     >
+      {ponto ? <span className="ui-ponto" aria-hidden="true" /> : null}
       {children}
     </span>
   );

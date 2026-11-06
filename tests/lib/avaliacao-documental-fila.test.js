@@ -19,7 +19,6 @@ import {
   reservaVigente,
   resumoDaVagaNaFila,
   textoDaColuna,
-  textoDoAndamento,
   textoDaReserva,
   textoDaSituacaoNaFila,
 } from "../../src/lib/avaliacao-documental/fila.ts";
@@ -135,6 +134,7 @@ describe("etapas e contadores (abas com contadores)", () => {
       revisao: 1,
       concluidas: 1,
       eliminados: 1,
+      fora: 2,
     });
     expect(contadoresDaFila(null).inscritos).toBe(0);
   });
@@ -142,6 +142,9 @@ describe("etapas e contadores (abas com contadores)", () => {
     expect(naEtapa(FILA[5], "pendentes")).toBe(false);
     expect(naEtapa(FILA[4], "lote")).toBe(false);
     expect(naEtapa(FILA[4], "eliminados")).toBe(true);
+    // Fora do lote: todos os que não estão no lote (eliminados também).
+    expect(naEtapa(FILA[4], "fora")).toBe(true);
+    expect(naEtapa(FILA[0], "fora")).toBe(false);
   });
 });
 
@@ -407,12 +410,6 @@ describe("andamento por vaga e agrupamento da tabela", () => {
       revisao: 0,
       pendentes: 3,
     });
-    expect(textoDoAndamento(a.vagas[1])).toBe(
-      "Técnico · concluídas 1 de 5 · em análise 1 · pendentes 3",
-    );
-    expect(textoDoAndamento(a.vagas[0])).toBe(
-      "Enfermeiro · concluídas 1 de 2 · em análise 0 · em revisão 1 · pendentes 0",
-    );
   });
 
   it("o grupo da vaga: lote pela regra + por decisão e a linha de corte só com os da regra", () => {

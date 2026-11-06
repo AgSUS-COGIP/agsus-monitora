@@ -4,7 +4,8 @@ import type { AcaoDoMenu } from "./menu-de-acoes.tsx";
 /*
   As ações de uma linha de tabela (`.ui-acoes-da-linha`): o botão principal
   (a ação mais comum daquela pessoa, com rótulo direto: "Abrir", "PDF",
-  "Ver posição") e o "⋯" com o resto (MenuDeAcoes compacto, que abre preso
+  "Ver posição"; com `destaque`, azul, só quando há algo a fazer) e o "⋯"
+  com o resto (MenuDeAcoes compacto, que abre preso
   à janela e não é cortado pela rolagem da tabela). Sem principal, só o "⋯";
   sem nada no menu, só o principal. `pessoa` entra no nome acessível do
   "⋯" ("Mais ações de 7000123"), para o leitor de tela saber de quem é.
@@ -24,6 +25,8 @@ export interface AcaoPrincipalDaLinha {
   acao?: string;
   /** Título (dica) do botão. */
   titulo?: string;
+  /** A ação que há a fazer na linha (Analisar, Incluir no lote): botão azul. */
+  destaque?: boolean;
 }
 
 export interface PropriedadesDasAcoesDaLinha {
@@ -43,7 +46,7 @@ export function AcoesDaLinha({
       {principal ? (
         <button
           type="button"
-          className="btn secondary small"
+          className={principal.destaque ? "btn small" : "btn contorno small"}
           data-acao={principal.acao}
           title={principal.titulo}
           disabled={principal.desabilitado || Boolean(principal.ocupado)}

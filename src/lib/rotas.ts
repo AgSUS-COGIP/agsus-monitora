@@ -46,6 +46,12 @@ export interface TelaDaRota {
   comEdital?: boolean;
   /** A tela abre as Regras do edital de um edital (Editais). */
   comRegras?: boolean;
+  /**
+   * A tela mostra o próprio título, grande, no cabeçalho dela (as telas da
+   * seleção: src/ui/cabecalho-da-tela.tsx); o do app fica só para o leitor
+   * de tela.
+   */
+  tituloNaTela?: boolean;
 }
 
 /*
@@ -101,6 +107,7 @@ const TELAS: TelaDaRota[] = [
     view: "avaliacao-documental",
     caminho: "avaliacao-documental",
     titulo: "Avaliação documental",
+    tituloNaTela: true,
   },
   {
     view: "pre-classificacao",

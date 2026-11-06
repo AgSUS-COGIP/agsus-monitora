@@ -41,7 +41,7 @@ export interface PaginaForaDoLote {
 }
 
 /** As abas que mostram os de fora do lote (as outras são só do núcleo). */
-const ETAPAS_COM_FORA_DO_LOTE = new Set(["inscritos", "eliminados"]);
+const ETAPAS_COM_FORA_DO_LOTE = new Set(["inscritos", "eliminados", "fora"]);
 
 /** A aba precisa das linhas de fora do lote? */
 export const precisaDoForaDoLote = (
@@ -76,7 +76,7 @@ export function resumoForaDoLote(dados: unknown): ResumoForaDoLote {
 
 /**
  * Os contadores das abas: os do núcleo (contadoresDaFila) mais os de fora do
- * lote em Inscritos e Eliminados (as outras abas são só do núcleo: fora do
+ * lote em Inscritos, Eliminados e Fora do lote (as outras abas são só do núcleo: fora do
  * lote ninguém tem ficha viva).
  */
 export function contadoresComForaDoLote(
@@ -88,6 +88,7 @@ export function contadoresComForaDoLote(
     ...base,
     inscritos: (base.inscritos ?? 0) + fora.total,
     eliminados: (base.eliminados ?? 0) + fora.eliminados,
+    fora: (base.fora ?? 0) + fora.total,
   };
 }
 

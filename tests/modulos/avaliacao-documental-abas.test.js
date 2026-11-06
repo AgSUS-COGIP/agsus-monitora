@@ -197,7 +197,8 @@ describe("abas por papel", () => {
       coordena: false,
     });
     await montar(supabase);
-    expect(abas()).toEqual(["fila"]);
+    // Uma seção só (a Fila): o cabeçalho não mostra o seletor de seções.
+    expect(abas()).toEqual([]);
     expect(painel.estado.obter().visao).toBe("fila");
     expect(secao.querySelector("[data-candidato='7001']")).not.toBeNull();
     // Nenhum atalho para as abas da coordenação, e a equipe nem é lida.
@@ -251,7 +252,8 @@ describe("abas por papel", () => {
     expect(botoes()).not.toContain("Regra");
     await act(async () => soltar());
     await esperar();
-    expect(abas()).toEqual(["fila"]);
+    expect(abas()).toEqual([]);
+    expect(secao.querySelector("[data-tour='avd-fila']")).not.toBeNull();
   });
 });
 
@@ -334,8 +336,7 @@ describe("entrada da tela", () => {
     const supabase = supabaseFalso({ editais: VARIOS, coordena: false });
     await montar(supabase);
     expect(painel.estado.obter().editalId).toBe("");
-    expect(secao.querySelector(".ui-topo [data-tour='avd-visoes']")).toBeNull();
-    expect(secao.querySelector("[data-aba-unica]")).toBeNull();
+    expect(secao.querySelector("[data-tour='avd-visoes']")).toBeNull();
     const cartoes = [...secao.querySelectorAll(".avd-entrada-cartao")];
     expect(cartoes.map((c) => c.getAttribute("data-edital"))).toEqual([
       "e93",

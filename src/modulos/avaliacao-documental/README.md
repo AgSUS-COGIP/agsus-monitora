@@ -46,11 +46,11 @@ pessoa e área) ou o único vigente; senão, mostra os cartões dos editais vige
 
 ## Fase F3
 
-- **Fila**: abas de etapa com contadores (Inscritos, No lote, Pendentes, Em análise, Em revisão,
-  Concluídas, Eliminados), clicáveis como filtro; filtros (vaga, responsável, modalidade, código ou
-  nome — Enter com o código abre a ficha) e **filtros salvos** por pessoa
+- **Fila**: a faixa de situação (No lote, Pendentes, Em análise, Em revisão e Concluídas, cada
+  número um filtro da etapa; "N fora do lote" na linha de baixo); filtros (vaga, responsável,
+  modalidade, código ou nome — Enter com o código abre a ficha) e **filtros salvos** por pessoa
   (`TB_FILTRO_FILA_ANALISE`; o último filtro também fica no navegador, só por conveniência);
-- **Pegar próximo** e **Minhas fichas** para o analista;
+- **Pegar próxima ficha** e o responsável "Minhas fichas" para o analista;
 - **ações em lote** da coordenação, com prévia, confirmação e motivo: distribuir (entre a equipe,
   para uma pessoa ou de volta à fila), liberar reservas, mandar para revisão; "Distribuir as
   livres" e "Abrir fichas do lote";
@@ -241,10 +241,12 @@ pessoas-da-triagem.tsx    aba Pessoas da Triagem: busca por código ou nome no e
                           (BarraDeFiltros), vaga e situação, 50 por vez do banco, ações da
                           linha (AcoesDaLinha); regras em src/lib/avaliacao-documental/
                           pessoas-da-triagem.ts; o filtro fica na sessão (usarEstadoDaSessao)
-fila.tsx                  aba Fila (cards do andamento, etapas, BarraDeFiltros, ações em lote,
-                          "Abrir" e "⋯" de cada linha, ficha aberta); os números dos cards
-                          em src/lib/avaliacao-documental/numeros-da-fila.ts (a meta do dia
-                          vem de obter_ritmo_da_analise, a conta do Painel das análises)
+fila.tsx                  aba Fila (FaixaDeSituacao, BarraDaLista, barra da seleção em lote,
+                          TabelaPaginada; "Analisar"/"Abrir" e "⋯" de cada linha, ficha
+                          aberta); os números da faixa em src/lib/avaliacao-documental/
+                          numeros-da-fila.ts (o selo e a meta do dia vêm de
+                          obter_ritmo_da_analise, a conta do Painel das análises)
+resumo-do-andamento.tsx   "Por vaga (N)" recolhível, embaixo da faixa da Fila
 estado-da-fila.ts         store da aba: obter_fila_avaliacao (só o lote e as contagens),
                           os de fora do lote sob demanda e em páginas (obter_fila_fora_do_lote,
                           lib fila-fora-do-lote.ts), Pegar próximo, reserva (renovação e

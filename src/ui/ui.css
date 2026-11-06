@@ -1622,3 +1622,465 @@ th[aria-sort="descending"] .ui-ordenar i {
     height: 40px;
   }
 }
+
+/*
+  ── Layout das telas da seleção (cabeçalho, faixa de situação e lista) ──
+  Triagem, Avaliação documental e Classificação: fundo cinza-claro na
+  página, superfícies com borda leve, raio maior e sombra suave; controles
+  com 40px. Só tokens: o tema escuro vem deles (no escuro, o fundo é o da
+  página e os cards ficam na cor do card, sem sombra).
+*/
+.ui-tela-da-selecao {
+  --selecao-raio: var(--radius-xl);
+  --selecao-borda: var(--color-border-subtle);
+  --selecao-sombra: var(--shadow-md);
+  gap: var(--space-4);
+}
+.main:has(.ui-tela-da-selecao) {
+  background: var(--color-bg-subtle);
+}
+html[data-theme="dark"] .main:has(.ui-tela-da-selecao) {
+  background: var(--surface-page);
+}
+html[data-theme="dark"] .ui-tela-da-selecao {
+  --selecao-sombra: none;
+}
+.ui-tela-da-selecao :is(.ui-faixa, .ui-lista, .ui-card-de-edital) {
+  border-color: var(--selecao-borda);
+  border-radius: var(--selecao-raio);
+  box-shadow: var(--selecao-sombra);
+}
+.ui-tela-da-selecao .btn {
+  min-height: 40px;
+  border-radius: var(--radius-lg);
+}
+.ui-tela-da-selecao .btn.small {
+  min-height: 32px;
+}
+/* Neutro com contorno (Abrir, Anterior, Filtros): superfície, borda e texto principal. */
+:is(.ui-tela, .ui-gaveta) .btn.contorno {
+  border: 1px solid var(--color-border-default);
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+:is(.ui-tela, .ui-gaveta) .btn.contorno:hover:not(:disabled) {
+  border-color: var(--border-control);
+  background: var(--surface-hover);
+}
+:is(.ui-tela, .ui-gaveta) .btn.contorno:disabled {
+  background: var(--surface-card);
+}
+.ui-botao-icone {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  min-width: 40px;
+  padding: 0;
+}
+.ui-tela-da-selecao :is(.btn, select, input, button):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* A bolinha de cor da situação: no selo, a cor do texto; na faixa, a do tom. */
+.ui-ponto {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: currentColor;
+}
+.ui-selo .ui-ponto {
+  margin-right: var(--space-1-5);
+}
+:is(.ui-faixa-item, .ui-faixa-barra > span)[data-tom="info"] {
+  --tom-solido: var(--color-status-info-solid);
+}
+:is(.ui-faixa-item, .ui-faixa-barra > span)[data-tom="alerta"] {
+  --tom-solido: var(--color-status-warning-solid);
+}
+:is(.ui-faixa-item, .ui-faixa-barra > span)[data-tom="sucesso"] {
+  --tom-solido: var(--color-status-success-solid);
+}
+:is(.ui-faixa-item, .ui-faixa-barra > span)[data-tom="perigo"] {
+  --tom-solido: var(--color-status-danger-solid);
+}
+:is(.ui-faixa-item, .ui-faixa-barra > span)[data-tom="neutro"] {
+  --tom-solido: var(--color-status-neutral-solid);
+}
+:is(.ui-faixa-item, .ui-faixa-barra > span)[data-tom="destaque"] {
+  --tom-solido: var(--etapa-violeta);
+}
+html[data-theme="dark"]
+  :is(.ui-faixa-item, .ui-faixa-barra > span)[data-tom="destaque"] {
+  --tom-solido: var(--etapa-violeta-claro);
+}
+
+/* Cabeçalho da tela: trilha e título, o edital e, à direita, seções e Atualizar. */
+.ui-cabecalho-da-tela {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-6);
+}
+.ui-cabecalho-nome {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.ui-cabecalho-trilha {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.ui-cabecalho-titulo {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-h1);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-h1);
+  letter-spacing: -0.02em;
+}
+.ui-cabecalho-edital {
+  flex: 0 1 380px;
+  min-width: min(100%, 240px);
+}
+.ui-cabecalho-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+.ui-cabecalho-acoes .ui-segmentado {
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-muted);
+}
+.ui-cabecalho-acoes .ui-segmentado-opcao {
+  min-height: 34px;
+  font-weight: var(--font-weight-semibold);
+}
+.ui-cabecalho-acoes .ui-segmentado-opcao.is-ativo {
+  color: var(--text-primary);
+}
+/* O seletor de edital em linha (`naLinha`): sem card, "Edital" pequeno acima. */
+.ui-seletor-de-edital.na-linha {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.ui-seletor-de-edital.na-linha > .ui-campo {
+  flex-basis: 100%;
+}
+.ui-seletor-de-edital.na-linha > .ui-campo > label {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+}
+.ui-seletor-de-edital.na-linha select {
+  width: 100%;
+  min-height: 40px;
+  font-weight: var(--font-weight-semibold);
+}
+.ui-seletor-de-edital.na-linha .ui-seletor-todos {
+  min-height: 0;
+}
+
+/* Faixa de situação: os números-filtro e, embaixo, a barra e o andamento. */
+.ui-faixa {
+  display: grid;
+  gap: 0;
+  padding: var(--space-1-5) var(--space-1-5) 0;
+}
+.ui-faixa-itens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-0-5);
+}
+.ui-faixa-item {
+  position: relative;
+  display: flex;
+  flex: 1 1 150px;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  text-align: left;
+}
+button.ui-faixa-item {
+  cursor: pointer;
+}
+button.ui-faixa-item:hover {
+  background: var(--surface-hover);
+}
+.ui-faixa-item[aria-pressed="true"] {
+  background: var(--color-bg-selected);
+}
+.ui-faixa-item::after {
+  position: absolute;
+  right: var(--space-4);
+  bottom: 0;
+  left: var(--space-4);
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: transparent;
+  content: "";
+}
+.ui-faixa-item[aria-pressed="true"]::after {
+  background: var(--tom-solido);
+}
+.ui-faixa-item:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+.ui-faixa-rotulo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+}
+.ui-faixa-rotulo .ui-ponto {
+  background: var(--tom-solido);
+}
+.ui-faixa-numero {
+  color: var(--text-primary);
+  font-size: var(--text-metric);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-metric);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.ui-faixa-numero.ui-esqueleto {
+  width: 72px;
+  height: var(--leading-metric);
+}
+.ui-faixa-contexto {
+  min-height: var(--leading-caption);
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ui-faixa-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-5);
+  margin-top: var(--space-1-5);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.ui-faixa-linha strong {
+  color: var(--text-primary);
+}
+.ui-faixa-barra {
+  display: flex;
+  flex: 1 1 320px;
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-muted);
+}
+.ui-faixa-barra > span {
+  display: block;
+  height: 100%;
+  background: var(--tom-solido);
+}
+.ui-faixa-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-link);
+  font: inherit;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.ui-faixa-link:hover {
+  color: var(--color-text-link-hover);
+  text-decoration: underline;
+}
+.ui-faixa-link[aria-pressed="true"] {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+.ui-faixa-rodape {
+  padding: 0 var(--space-4) var(--space-3);
+}
+
+/* A lista: barra, seleção em lote, tabela e rodapé, no mesmo card. */
+.ui-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.ui-barra-da-lista {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+.ui-barra-da-lista > .ui-barra-busca {
+  flex: 1 1 300px;
+}
+.ui-barra-da-lista > select {
+  width: auto;
+  max-width: 260px;
+  min-height: 40px;
+}
+.ui-barra-da-lista-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+.ui-barra-da-lista-acoes .ui-menu-reticencias {
+  width: 40px;
+  height: 40px;
+}
+.ui-barra-mais-filtros .ui-popover-painel {
+  min-width: 280px;
+}
+.ui-barra-mais-filtros .ui-popover-painel select {
+  width: 100%;
+}
+.ui-lista-selecao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--color-bg-selected);
+}
+.ui-lista-selecao .btn {
+  min-height: 34px;
+}
+.ui-lista-selecao > .btn.ghost {
+  margin-left: auto;
+}
+.ui-lista .ui-lista-rolagem {
+  max-height: min(70vh, 600px);
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
+}
+.ui-lista .ui-lista-rolagem table {
+  width: 100%;
+  min-width: 860px;
+  font-variant-numeric: tabular-nums;
+}
+.ui-lista .ui-lista-rolagem :is(th, td) {
+  padding: var(--space-2) var(--space-3);
+  vertical-align: middle;
+}
+.ui-lista .ui-lista-rolagem th {
+  white-space: nowrap;
+}
+.ui-lista :is(th, td).num {
+  text-align: right;
+}
+.ui-lista tbody tr[data-marcada="sim"] td {
+  background: var(--color-bg-selected);
+}
+.ui-lista-vazia {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-12) var(--space-6);
+  color: var(--text-secondary);
+  text-align: center;
+}
+.ui-lista-vazia strong {
+  color: var(--text-primary);
+}
+.ui-lista-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.ui-lista-contagem {
+  margin-right: auto;
+  font-variant-numeric: tabular-nums;
+}
+.ui-lista-paginas {
+  display: inline-flex;
+  gap: var(--space-2);
+}
+/* A pessoa: nome em destaque e, embaixo, "código · modalidade" em cinza. */
+.ui-pessoa {
+  display: grid;
+  min-width: 0;
+}
+.ui-pessoa > strong {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+.ui-pessoa > span {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+/* Posição como etiqueta (Classificação); o 1º lugar em destaque. */
+.ui-posicao {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.5em;
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--state-neutral-soft);
+  color: var(--state-neutral);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.ui-posicao[data-primeiro] {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+
+@media (max-width: 900px) {
+  .ui-cabecalho-acoes {
+    margin-left: 0;
+  }
+  .ui-cabecalho-edital {
+    flex-basis: 100%;
+  }
+  .ui-barra-da-lista > .ui-barra-busca {
+    flex-basis: 100%;
+  }
+  .ui-barra-da-lista > select {
+    flex: 1 1 140px;
+    max-width: none;
+  }
+  .ui-barra-da-lista-acoes {
+    margin-left: 0;
+  }
+  .ui-faixa-item {
+    flex-basis: 130px;
+    padding: var(--space-2) var(--space-3) var(--space-3);
+  }
+  .ui-faixa-numero {
+    font-size: var(--text-h2);
+    line-height: var(--leading-h2);
+  }
+}

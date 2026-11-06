@@ -657,6 +657,18 @@ export const ROTULO_DO_DIA: Record<SituacaoDoDia, string> = {
   abaixo: "Abaixo do ritmo hoje",
 };
 
+/** O tom do selo (Selo de src/ui/) para a situação do card. */
+export const TOM_DO_SELO_DO_RITMO: Readonly<
+  Record<SituacaoDoDia | "concluido", string>
+> = Object.freeze({
+  concluido: "aprovado",
+  batida: "aprovado",
+  "no-ritmo": "aprovado",
+  abaixo: "pendente",
+  "nao-util": "neutro",
+  "sem-meta": "neutro",
+});
+
 /** O selo principal do card: o do dia (com o edital todo concluído, "Concluído"). */
 export function seloDoCard(r: RitmoDoEdital): {
   rotulo: string;
@@ -802,7 +814,8 @@ export function textoDoMomento(
 
 /** A linha do card recolhido: "hoje 120 de 269" (sem meta do dia: "faltam 1.098"). */
 export function textoRecolhido(r: RitmoDoEdital): string {
-  if (!r.faltam) return "concluído";
+  // Tudo concluído: o selo "Concluído" já diz (o texto não o repete).
+  if (!r.faltam) return "";
   if (r.dia.situacao === "nao-util" || r.dia.situacao === "sem-meta")
     return `faltam ${numero(r.faltam)}`;
   return `hoje ${numero(r.dia.feito)} de ${numero(r.dia.meta)}`;

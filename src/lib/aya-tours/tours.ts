@@ -762,8 +762,8 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       ),
       passo(
         t("avd-visoes"),
-        "Regra, Equipe, Triagem e Fila",
-        "Só quem coordena o edital vê as quatro abas (preparar, ordenar o lote e distribuir as fichas). Quem analisa vê só a Fila.",
+        "Fila, Documentos e Configurações",
+        "Só quem coordena o edital vê Documentos e Configurações. Quem analisa vê só a Fila.",
       ),
       PASSO_DA_AYA,
     ]),
@@ -793,52 +793,37 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
     titulo: "Avaliação documental · Fila",
     passos: Object.freeze([
       passo(
-        t("avd-fila-kpis"),
-        "Os números do edital",
-        "Lote, concluídas (%), em análise, pendentes, o feito hoje (com a meta do dia, se há prazo) e as suas fichas abertas. Clique num card para filtrar.",
+        t("avd-fila-etapas"),
+        "Situação do lote",
+        "Clique num número para filtrar a etapa. Embaixo, a barra do lote, o ritmo e a meta de hoje e quem está fora do lote.",
         { antes: `${t("avd-visoes")} [data-valor='fila']` },
       ),
       passo(
         t("avd-fila-andamento"),
-        "Andamento",
-        "A barra do edital e, em “Por vaga”, a lista de cada vaga (ordenável). Clique numa vaga para filtrar.",
-      ),
-      passo(
-        t("avd-fila-etapas"),
-        "Etapas com contadores",
-        "Inscritos, no lote, pendentes, em análise, em revisão, concluídas e eliminados; clique numa etapa para filtrar.",
+        "Por vaga",
+        "A lista de cada vaga (ordenável). Clique numa vaga para filtrar.",
       ),
       passo(
         t("avd-fila-filtros"),
         "Busca e filtros",
-        "Busca por código ou nome (a tecla / leva até ela; Enter com o código abre a ficha), vaga, responsável e modalidade. Limpar tira os filtros.",
-      ),
-      passo(
-        t("avd-fila-filtros-salvos"),
-        "Filtros salvos",
-        "Guarde uma combinação com um nome; os filtros salvos são só seus.",
-      ),
-      passo(
-        t("avd-fila-minhas"),
-        "Minhas fichas",
-        "Mostra só as fichas que estão com você.",
+        "Código ou nome (tecla /; Enter com o código abre a ficha), vaga e responsável. Em Filtros, a modalidade e os filtros salvos.",
       ),
       passo(
         t("avd-fila-pegar"),
-        "Pegar próximo",
+        "Pegar próxima ficha",
         "Dá a próxima ficha na ordem da Provisória e a reserva para você por 15 minutos.",
         { exige: analisaDocumentos },
       ),
       passo(
         t("avd-fila-acoes-coordenacao"),
         "Ações da coordenação",
-        "Distribuir, liberar reservas, mandar para revisão, abrir fichas do lote e o relatório de motivos, num menu só.",
+        "No ⋯: distribuir as livres, abrir fichas e o relatório de motivos. Marque fichas para atribuir, liberar ou mandar para revisão.",
         { exige: coordenaAvaliacao },
       ),
       passo(
         t("avd-fila-tabela"),
         "As fichas",
-        "Agrupadas por vaga quando a vaga é Todas; o cabeçalho ordena e Exportar CSV baixa a etapa. Abrir mostra a ficha; o ⋯ da linha tem o resto.",
+        "50 por vez, agrupadas por vaga; o cabeçalho ordena e Exportar CSV baixa a etapa. Analisar ou Abrir mostra a ficha; o ⋯ tem o resto.",
       ),
       passo(
         t("avd-ficha-topo"),
