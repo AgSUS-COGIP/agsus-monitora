@@ -48,6 +48,8 @@ import {
   registrarQuadro,
 } from "./desempenho.ts";
 import { planoDaComemoracao, TEMPO_DO_AVISO_MS } from "./plano.ts";
+import { mostrarLetreiro } from "./letreiro.ts";
+import { Letreiro } from "./letreiro.tsx";
 import "../../styles/comemoracao.css";
 import type { PosicaoDaAya } from "../../lib/fogos-cena.ts";
 import type { EstadoDaMascote } from "../../lib/estado-da-aya.ts";
@@ -63,7 +65,10 @@ import type { ComemoracaoNaTela, OpcoesDaComemoracao } from "./plano.ts";
   num <canvas>, com um véu escuro suave quando há fogos ou estrelas e a Aya
   (a mascote de verdade, src/modulos/aya/mascote/) atravessando a tela nos
   fogos e, no Normal e no Festa, voltando no fim para dançar, dar uma
-  cambalhota e soltar confete. Com prefers-reduced-motion, só o aviso.
+  cambalhota e soltar confete. A frase do marco (o letreiro, fora do Suave)
+  é texto de verdade numa placa escura por cima de tudo (letreiro.tsx), para
+  ser lida em qualquer tema. Com prefers-reduced-motion, só o aviso e a
+  frase, sem partículas.
 
   Tudo vai por portal para o fim do body (como antes: o aviso e o canvas
   ficam por cima de tudo). O laço de quadros (requestAnimationFrame) é de
@@ -193,6 +198,12 @@ function ShowDaComemoracao({
   );
   const [somLigado, definirSomLigado] = useState(() => som?.ligado ?? false);
   const terminar = useCallback(() => definirRodando(false), []);
+  const [pulado, definirPulado] = useState(false);
+  const pular = useCallback(() => {
+    definirPulado(true);
+    definirRodando(false);
+  }, []);
+  const [comLetreiro] = useState(() => mostrarLetreiro(c.plano));
 
   // Sem efeito, o aviso fecha no tempo de leitura; com efeito, quando ele
   // acaba — mas nunca antes do tempo de leitura (um efeito curto não o corta).
@@ -211,7 +222,14 @@ function ShowDaComemoracao({
   const rotuloDoSom = somLigado ? "Desligar som" : "Ligar som";
   return createPortal(
     <>
-      <div className="comemoracao" role="status" aria-live="polite">
+      <div
+        className={comEfeito ? "comemoracao comemoracao--festa" : "comemoracao"}
+        role="status"
+        aria-live="polite"
+      >
+        <span className="comemoracao__selo" aria-hidden="true">
+          <Icone nome="party-popper" tamanho={18} />
+        </span>
         <div className="comemoracao__corpo">
           <strong>{c.texto}</strong>
           {c.itens.length ? (
@@ -241,7 +259,7 @@ function ShowDaComemoracao({
               <button
                 type="button"
                 className="comemoracao__pular"
-                onClick={terminar}
+                onClick={pular}
               >
                 Pular
               </button>
@@ -263,6 +281,9 @@ function ShowDaComemoracao({
         ) : (
           <Fogos comemoracao={c} som={som} aoTerminar={terminar} />
         )
+      ) : null}
+      {comLetreiro ? (
+        <Letreiro plano={c.plano} reduzido={!comEfeito} pulado={pulado} />
       ) : null}
     </>,
     c.doc.body,
@@ -376,7 +397,8 @@ function Fogos({
       // Com a mascote comemorando, a arara voando dos fogos fica de fora.
       comAya: !efeitoChamaAya(c.plano.efeito!),
       forma: c.forma,
-      letreiro: c.plano.letreiro,
+      // A frase é o Letreiro (texto de verdade), não faíscas em pontinhos.
+      letreiro: null,
       aleatorio: c.aleatorio ?? Math.random,
       amostrarTexto: (texto) => amostrarTexto(doc, janela!, texto),
     });
@@ -496,7 +518,7 @@ function Fogos({
         desenhar(fogos, show, { largura, altura, dt, halo, qualidade });
       if (motor) {
         motor.clearRect?.(0, 0, largura, altura);
-        desenharParticulasDoMotor(motor, cena);
+        desenharParticulasDoMotor(motor, cena, qualidade);
       }
       if (veuRef.current)
         veuRef.current.style.opacity = String(
