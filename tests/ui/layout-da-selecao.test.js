@@ -1,6 +1,6 @@
 import { act, createElement as h, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   BarraDaLista,
   CabecalhoDaTela,
@@ -8,7 +8,7 @@ import {
   FaixaDeSituacao,
   porcentagemDe,
   Selo,
-  TabelaPaginada,
+  TabelaDaLista,
   textoDaDistribuicao,
 } from "../../src/ui/index.ts";
 import { clicar, digitar } from "../componentes/interacoes.js";
@@ -17,7 +17,7 @@ import { clicar, digitar } from "../componentes/interacoes.js";
   O layout das telas da seleção (Triagem, Avaliação documental e
   Classificação): o cabeçalho da tela, a faixa de situação com os
   números-filtro e a barra da distribuição, a barra da lista com "Filtros" e
-  a tabela 50 por vez com "1–50 de N" e Anterior / Próxima.
+  a tabela com 50 e mais 50 ao chegar no fim da rolagem ("Mostrando N de M").
 */
 
 let raiz = null;
@@ -213,7 +213,7 @@ describe("BarraDaLista", () => {
   });
 });
 
-describe("TabelaPaginada", () => {
+describe("TabelaDaLista (rolagem de 50 em 50)", () => {
   const pessoas = (n) =>
     Array.from({ length: n }, (_, i) => ({ id: String(i + 1) }));
   const colunas = [{ rotulo: "Código", chave: "codigo" }];
@@ -223,7 +223,7 @@ describe("TabelaPaginada", () => {
     return h(
       CardDaLista,
       { rotulo: "Pessoas" },
-      h(TabelaPaginada, {
+      h(TabelaDaLista, {
         rotulo: "Pessoas",
         colunas,
         itens,
@@ -237,26 +237,65 @@ describe("TabelaPaginada", () => {
   }
   const ids = () => $$("tbody tr[data-id]").map((tr) => tr.dataset.id);
 
-  it("50 por vez: 1–50 de N, Anterior e Próxima; o recorte novo volta ao começo", async () => {
+  /*
+    IntersectionObserver falso: guarda os observadores vivos; `chegarAoFim`
+    avisa que o fim da caixa entrou à vista (o que a rolagem faria).
+  */
+  let observadores = [];
+  const original = globalThis.IntersectionObserver;
+  beforeEach(() => {
+    observadores = [];
+    globalThis.IntersectionObserver = class {
+      constructor(aviso, opcoes) {
+        this.aviso = aviso;
+        this.opcoes = opcoes;
+        this.alvos = [];
+        observadores.push(this);
+      }
+      observe(alvo) {
+        this.alvos.push(alvo);
+      }
+      disconnect() {
+        observadores = observadores.filter((o) => o !== this);
+      }
+    };
+  });
+  afterEach(() => {
+    globalThis.IntersectionObserver = original;
+  });
+  const chegarAoFim = () =>
+    act(async () => {
+      for (const o of [...observadores])
+        o.aviso(o.alvos.map((target) => ({ target, isIntersecting: true })));
+    });
+
+  it("mostra 50 e mais 50 ao chegar no fim da rolagem; o recorte novo volta ao começo", async () => {
     const itens = pessoas(120);
     await montar(h(Lista, { itens }));
-    expect($(".ui-lista-contagem").textContent).toBe("1–50 de 120");
+    expect($(".ui-lista-contagem").textContent).toBe("Mostrando 50 de 120");
     expect(ids()).toHaveLength(50);
-    expect($("[data-acao='pagina-anterior']").disabled).toBe(true);
-    await clicar($("[data-acao='pagina-proxima']"));
-    expect($(".ui-lista-contagem").textContent).toBe("51–100 de 120");
-    expect(ids()[0]).toBe("51");
-    await clicar($("[data-acao='pagina-proxima']"));
-    expect($(".ui-lista-contagem").textContent).toBe("101–120 de 120");
-    expect($("[data-acao='pagina-proxima']").disabled).toBe(true);
-    // Releitura (a mesma lista, o mesmo recorte): fica na página.
+    // Sem botões de página: só a rolagem.
+    expect($("[data-acao='pagina-proxima']")).toBeNull();
+    // O sentinela fica no fim da caixa que rola, que é a raiz do observador.
+    const [observador] = observadores;
+    expect(observador.alvos[0].className).toBe("ui-lista-fim");
+    expect(observador.opcoes.root).toBe($(".ui-lista-rolagem"));
+    await chegarAoFim();
+    expect($(".ui-lista-contagem").textContent).toBe("Mostrando 100 de 120");
+    expect(ids()).toHaveLength(100);
+    expect(ids()[0]).toBe("1");
+    await chegarAoFim();
+    expect($(".ui-lista-contagem").textContent).toBe("Mostrando 120 de 120");
+    // Tudo à vista: ninguém mais observa o fim.
+    expect(observadores).toHaveLength(0);
+    // Releitura (a mesma lista, o mesmo recorte): continua com o que estava à vista.
     await act(async () => raiz.render(h(Lista, { itens: [...itens] })));
-    expect($(".ui-lista-contagem").textContent).toBe("101–120 de 120");
-    // Filtro novo: volta à primeira página.
+    expect($(".ui-lista-contagem").textContent).toBe("Mostrando 120 de 120");
+    // Filtro novo: volta às primeiras 50.
     await act(async () =>
       raiz.render(h(Lista, { itens: pessoas(60), recorte: "b" })),
     );
-    expect($(".ui-lista-contagem").textContent).toBe("1–50 de 60");
+    expect($(".ui-lista-contagem").textContent).toBe("Mostrando 50 de 60");
     // A tabela rola de lado no celular (não vira cartões).
     expect($("table").dataset.mobileTable).toBe("scroll");
   });
@@ -267,11 +306,11 @@ describe("TabelaPaginada", () => {
     expect($(".ui-lista-vazia").textContent).toBe(
       "Ninguém por aquiNenhuma pessoa com esses filtros.",
     );
-    expect($(".ui-lista-contagem").textContent).toBe("0 de 0");
+    expect($(".ui-lista-contagem").textContent).toBe("Mostrando 0 de 0");
     expect($("[data-acao='exportar-csv']").disabled).toBe(true);
   });
 
-  it("no banco: Próxima pede a página seguinte quando ela ainda não chegou", async () => {
+  it("no banco: chegar ao fim pede a página seguinte, uma vez enquanto ela vem", async () => {
     const carregarMais = vi.fn();
     const servidor = {
       total: 75,
@@ -280,11 +319,23 @@ describe("TabelaPaginada", () => {
       carregarMais,
     };
     await montar(h(Lista, { itens: pessoas(50), servidor }));
-    expect($(".ui-lista-contagem").textContent).toBe("1–50 de 75");
-    await clicar($("[data-acao='pagina-proxima']"));
+    expect($(".ui-lista-contagem").textContent).toBe("Mostrando 50 de 75");
+    await chegarAoFim();
     expect(carregarMais).toHaveBeenCalledTimes(1);
-    // Enquanto a página não chega, as linhas são o esqueleto.
-    expect(ids()).toEqual([]);
+    // Carregando: o rodapé diz e o fim não pede de novo.
+    await act(async () =>
+      raiz.render(
+        h(Lista, {
+          itens: pessoas(50),
+          servidor: { ...servidor, carregando: true },
+        }),
+      ),
+    );
+    expect($(".ui-lista-contagem").textContent).toBe(
+      "Carregando mais… 50 de 75",
+    );
+    await chegarAoFim();
+    expect(carregarMais).toHaveBeenCalledTimes(1);
     await act(async () =>
       raiz.render(
         h(Lista, {
@@ -293,11 +344,11 @@ describe("TabelaPaginada", () => {
         }),
       ),
     );
-    expect($(".ui-lista-contagem").textContent).toBe("51–75 de 75");
-    expect(ids()[0]).toBe("51");
+    expect($(".ui-lista-contagem").textContent).toBe("Mostrando 75 de 75");
+    expect(ids()).toHaveLength(75);
   });
 
-  it("agrupada: o cabeçalho do grupo na página; o recolhido só pelo cabeçalho", async () => {
+  it("agrupada: o cabeçalho de cada grupo; o recolhido só pelo cabeçalho", async () => {
     const itens = [
       ...pessoas(3).map((p) => ({ ...p, grupo: "A" })),
       ...pessoas(2).map((p) => ({ id: `b${p.id}`, grupo: "B" })),
@@ -314,7 +365,7 @@ describe("TabelaPaginada", () => {
       "B (2)",
     ]);
     expect(ids()).toEqual(["b1", "b2"]);
-    expect($(".ui-lista-contagem").textContent).toBe("1–2 de 2");
+    expect($(".ui-lista-contagem").textContent).toBe("Mostrando 2 de 2");
     await clicar($("tr.ui-tabela-grupo button"));
     expect(grupo.aoAlternar).toHaveBeenCalledWith("A");
   });
