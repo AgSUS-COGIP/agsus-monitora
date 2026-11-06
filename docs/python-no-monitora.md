@@ -81,7 +81,7 @@ com a conta em `monitora.avaliacao_documental`).
   `SECURITY DEFINER`, `search_path ''`, `revoke … from public, anon, authenticated` e
   `grant execute … to service_role` (ver `20261005170000_robo_empregare.sql` e
   `20261005210000_conferencias_de_consistencia.sql`). RPC de job **não** entra em
-  `src/lib/rpc-contrato.js` (o contrato é do front); a que a tela chama, entra.
+  `src/lib/rpc-contrato.ts` (o contrato é do front); a que a tela chama, entra.
 - **Nada de dado pessoal no log nem no resultado.** Leitura para o job devolve id, código, número
   de edital, contagem; quando precisa achar a mesma pessoa em duas listas, vai um hash. O que o job
   grava para a tela também (os avisos de conferência recusam espaço, `@` e 11 dígitos nos

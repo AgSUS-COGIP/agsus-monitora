@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { ROBOS_DE_CARGA } from "../src/lib/robos-de-carga.ts";
-import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
+import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 
 /*
   O chat saiu (14/10/2026, "vamos tirar o chat, ele pesa"): o front inteiro e,

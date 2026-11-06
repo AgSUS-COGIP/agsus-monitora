@@ -1,15 +1,15 @@
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import rotaDosAprovados from "../api/aprovados.js";
-import rotaDoCronograma from "../api/cronograma.js";
+import rotaDosAprovados from "../api/aprovados.ts";
+import rotaDoCronograma from "../api/cronograma.ts";
 import {
   aprovadoDaApi,
   etapaDaApi,
   respostaDoCronograma,
   respostaDosAprovados,
-} from "../src/lib/aprovados-e-cronograma-da-api.js";
-import { RPC_DOS_EDITAIS } from "../src/lib/editais-da-api.js";
-import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
+} from "../src/lib/aprovados-e-cronograma-da-api.ts";
+import { RPC_DOS_EDITAIS } from "../src/lib/editais-da-api.ts";
+import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 
 /*
   GET /api/aprovados e GET /api/cronograma (para outro sistema, sem login, pela

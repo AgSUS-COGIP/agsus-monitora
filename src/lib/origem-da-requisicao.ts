@@ -32,7 +32,15 @@
   ninguém precisar manter domínio em código.
 */
 
-function hostDe(valor) {
+/** O que a regra lê da requisição: só os cabeçalhos (nomes em minúsculas, como no Node). */
+export type RequisicaoComCabecalhos =
+  | {
+      headers?: Readonly<Record<string, string | string[] | undefined>>;
+    }
+  | null
+  | undefined;
+
+function hostDe(valor: unknown): string {
   const texto = String(valor || "").trim();
   if (!texto) return "";
   try {
@@ -42,7 +50,7 @@ function hostDe(valor) {
   }
 }
 
-export function origemDeTerceiro(req) {
+export function origemDeTerceiro(req: RequisicaoComCabecalhos): boolean {
   const proprio = String(req?.headers?.host || "")
     .trim()
     .toLowerCase();

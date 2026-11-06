@@ -122,7 +122,7 @@ export const DECISOES: Readonly<Record<string, string>> = Object.freeze({
   SANEADA: "Resolvida na própria lista",
 });
 
-/* As RPCs da decisão (src/lib/rpc-contrato.js): uma por tipo de decisão. */
+/* As RPCs da decisão (src/lib/rpc-contrato.ts): uma por tipo de decisão. */
 const RPC_ESCOLHER_VINCULO = "escolher_vinculo_do_contratado";
 const RPC_ESCOLHER_LISTA = "escolher_lista_da_contratacao";
 const RPC_MANTER_LINHA = "manter_linha_da_pessoa_repetida";

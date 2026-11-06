@@ -72,7 +72,7 @@ import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
 
 const TEMPO_LIMITE_MS = 30000;
 
-/* As RPCs (src/lib/rpc-contrato.js); chamadas por `rpc()`, com tempo limite. */
+/* As RPCs (src/lib/rpc-contrato.ts); chamadas por `rpc()`, com tempo limite. */
 const RPC_LISTAR_ROTEIROS = "listar_roteiros_entrevista";
 const RPC_SALVAR_ROTEIRO = "salvar_roteiro_entrevista";
 const RPC_RENOMEAR_ROTEIRO = "renomear_versao_roteiro_entrevista";

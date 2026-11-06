@@ -133,7 +133,7 @@ candidato e no histórico do status, gatilho que leva a data na publicação da 
 `RL_CARTA_CANDIDATO` e as RPCs `alterar_status_candidato_aprovado` (com `p_data_convocacao`),
 `marcar_candidatos_convocados`, `listar_modelos_carta_convocacao`, `salvar_modelo_carta_convocacao`,
 `definir_modelo_carta_ativo`, `registrar_carta_convocacao`, `listar_cartas_do_candidato` e
-`listar_convocacoes_aprovados` (contrato em `src/lib/rpc-contrato.js`).
+`listar_convocacoes_aprovados` (contrato em `src/lib/rpc-contrato.ts`).
 
 "Contratado em outra lista" (`supabase/migrations/20261024120000_contratado_em_outra_lista.sql`):
 o status explícito e a situação que o job Python (`scripts/aprovados/contratacao.py`) decide e

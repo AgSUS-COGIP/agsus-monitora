@@ -3,7 +3,7 @@ import { join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
 
 /*
-  Verificação ESTÁTICA do contrato de RPC (ver `src/lib/rpc-contrato.js`).
+  Verificação ESTÁTICA do contrato de RPC (ver `src/lib/rpc-contrato.ts`).
 
   Roda em todo build, sem rede e sem credencial: toda chamada `.rpc("nome")` do
   frontend precisa estar declarada no contrato, e todo nome declarado precisa ser
@@ -19,7 +19,7 @@ import { pathToFileURL } from "node:url";
 
 const RAIZ_FONTE = "src";
 const { CONTRATO_RPC } = await import(
-  pathToFileURL(join(process.cwd(), "src/lib/rpc-contrato.js")).href
+  pathToFileURL(join(process.cwd(), "src/lib/rpc-contrato.ts")).href
 );
 
 function percorrer(dir) {
@@ -35,7 +35,7 @@ for (const ficheiro of percorrer(RAIZ_FONTE).filter((p) =>
   /\.(?:js|jsx|ts|tsx)$/.test(p),
 )) {
   const caminho = relative(".", ficheiro).replaceAll("\\", "/");
-  if (caminho === "src/lib/rpc-contrato.js") continue;
+  if (caminho === "src/lib/rpc-contrato.ts") continue;
   const fonte = readFileSync(ficheiro, "utf8");
 
   const constantes = new Map();

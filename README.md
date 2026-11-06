@@ -73,7 +73,7 @@ Planilhas (legado): Apps Script → Supabase
     visual único (`src/ui/`) em [docs/arquitetura-react.md](docs/arquitetura-react.md).
 - **Banco:** Supabase (PostgreSQL). RLS ligada em todas as tabelas; o navegador não lê tabela,
   só chama RPCs (`SECURITY DEFINER`, `search_path` fixado), conferidas pelo contrato em
-  `src/lib/rpc-contrato.js`. Modelo em [docs/banco-de-dados.md](docs/banco-de-dados.md).
+  `src/lib/rpc-contrato.ts`. Modelo em [docs/banco-de-dados.md](docs/banco-de-dados.md).
 - **Cálculo pesado em Python** (`python/monitora/`), rodando no GitHub Actions: triagem,
   classificação, leitura dos arquivos dos candidatos, conferências e contratação dos aprovados. O
   banco guarda o resultado e valida; os robôs são disparados pelo `pg_cron` ou pela tela
@@ -196,7 +196,7 @@ ficam só como registro.
 
 - Nomes no Padrão Institucional de Nomenclatura da AgSUS (MAD/PDTIC 2026–2027: `TB_`, `TA_`,
   `TH_`, `RL_`, `TL_`, colunas com prefixo tipológico, `COMMENT ON` em tudo).
-- Mudou uma RPC → atualize `src/lib/rpc-contrato.js` (o build confere).
+- Mudou uma RPC → atualize `src/lib/rpc-contrato.ts` (o build confere).
 
 Processo completo em [supabase/migrations/README.md](supabase/migrations/README.md).
 

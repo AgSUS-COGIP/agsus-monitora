@@ -1,11 +1,11 @@
 /*
   GET /api/cronograma — o Cronograma: as etapas de cada edital ativo (todas as
   áreas), na ordem do edital (formato em
-  src/lib/aprovados-e-cronograma-da-api.js; leitura `listar_cronograma_da_api`,
+  src/lib/aprovados-e-cronograma-da-api.ts; leitura `listar_cronograma_da_api`,
   migration 20261105150000).
 
   Acesso: sem login, pela mesma chave fixa de /api/editais
-  (`Authorization: Bearer <EDITAIS_API_CHAVE>`; ver api/_rota-com-chave.js).
+  (`Authorization: Bearer <EDITAIS_API_CHAVE>`; ver api/_rota-com-chave.ts).
 
   COMO USAR EM OUTRA APLICAÇÃO
 
