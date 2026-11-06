@@ -5,8 +5,8 @@ Cada arquivo é um endpoint `/api/<nome>`; o que começa com `_` não é rota (a
 A Aya responde no navegador pela base de conhecimento (`src/lib/busca-da-aya.ts`);
 o endpoint de IA e o bridge local foram retirados.
 
-- `funai-geodata.js` — proxy do GeoServer OWS da FUNAI (polígonos de terras indígenas).
-- `funai-wms.js` — proxy do WMS da FUNAI (camada `Funai:tis_poligonais`).
+- `funai-geodata.ts` — proxy do GeoServer OWS da FUNAI (polígonos de terras indígenas).
+- `funai-wms.ts` — proxy do WMS da FUNAI (camada `Funai:tis_poligonais`).
 - `anexos-do-edital.py` — Python (pdfplumber, `pyproject.toml` na raiz): lê o PDF de anexos do
   edital e devolve cronograma (Anexo I) e quadro de vagas (Anexo II) em JSON. Só usuário logado
   (Bearer conferido em `/auth/v1/user`); não grava nada. Quem usa: `src/lib/anexos-do-edital.ts`.
@@ -14,21 +14,21 @@ o endpoint de IA e o bridge local foram retirados.
   e "Leia-se", com as linhas em negrito e os avisos das datas); quem usa:
   `src/lib/retificacao-do-cronograma.ts` (tela `src/modulos/editais/lancar-retificacao.tsx`).
 
-- `editais.js`, `aprovados.js`, `cronograma.js` — API para outro sistema, **sem login**: o outro
+- `editais.ts`, `aprovados.ts`, `cronograma.ts` — API para outro sistema, **sem login**: o outro
   sistema manda `Bearer <EDITAIS_API_CHAVE>` (chave fixa, variável da Vercel, a mesma nas três) e a
   função lê o banco com `SUPABASE_SERVICE_ROLE_KEY`; as duas só existem na Vercel, nunca no front.
-  A parte comum (chave em tempo constante, chamada à RPC, erros) fica em `_rota-com-chave.js`.
+  A parte comum (chave em tempo constante, chamada à RPC, erros) fica em `_rota-com-chave.ts`.
   - `/api/editais`: `listar_editais_da_api` (migration `20261105170000`; unidade, edital, status, etapa, vagas,
-    contratados, ociosas, risco, link e área; sem anexos), formato em `src/lib/editais-da-api.js`.
+    contratados, ociosas, risco, link e área; sem anexos), formato em `src/lib/editais-da-api.ts`.
   - `/api/aprovados` e `/api/cronograma`: `listar_aprovados_da_api` e `listar_cronograma_da_api`
     (só service_role; migration `20261105150000`), formato em
-    `src/lib/aprovados-e-cronograma-da-api.js`. Aprovados tem dados pessoais (nome, matrícula).
+    `src/lib/aprovados-e-cronograma-da-api.ts`. Aprovados tem dados pessoais (nome, matrícula).
   As três trazem `area` (Saúde Indígena, SEDE, Projetos; migration `20261105190000`) e aceitam `?area=`.
   Como o outro sistema usa: comentário do topo de cada rota.
 
 Regras:
 
-- Os dois proxies validam a origem com `src/lib/origem-da-requisicao.js` (`origemDeTerceiro`).
+- Os dois proxies validam a origem com `src/lib/origem-da-requisicao.ts` (`origemDeTerceiro`).
   Não remover: sem isso o endpoint vira proxy aberto.
 - Não expor chave ou URL interna na resposta. Segredo vem de variável de ambiente da Vercel.
 - Código compartilhado com o front vem de `src/`; não duplicar lógica aqui.

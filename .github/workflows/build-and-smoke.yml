@@ -40,6 +40,11 @@ jobs:
       - name: Baixar base das verificações incrementais
         run: git fetch --no-tags --depth=1 origin main:refs/remotes/origin/main
 
+      # Migration nova com timestamp que a main já usa só quebrava a main depois
+      # do merge (05/11: 20261105190000). Compara com a ponta da main baixada acima.
+      - name: Verificar timestamps das migrations
+        run: npm run check:migrations
+
       - name: Verificar arquitetura DOM
         run: node scripts/check-no-new-mutation-observer.mjs
 

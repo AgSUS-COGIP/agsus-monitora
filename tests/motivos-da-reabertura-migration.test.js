@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { MOTIVOS_DA_REABERTURA } from "../src/lib/avaliacao-documental/motivos-da-reabertura.ts";
 import { VOGAIS } from "../src/lib/avaliacao-documental/qualidade-do-motivo.ts";
-import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
+import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 
 /*
   Migration 20261021110000 (ainda não aplicada; ensaio begin…rollback em

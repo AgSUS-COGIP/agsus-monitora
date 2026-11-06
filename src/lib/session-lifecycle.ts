@@ -183,8 +183,12 @@ function ensureSessionUi() {
     timer.hidden = true;
     timer.setAttribute("role", "timer");
     timer.setAttribute("aria-live", "off");
-    timer.innerHTML =
-      '<span aria-hidden="true">⏱</span><span id="agsusSessionTimerText"></span>';
+    const icone = document.createElement("span");
+    icone.setAttribute("aria-hidden", "true");
+    icone.textContent = "⏱";
+    const texto = document.createElement("span");
+    texto.id = "agsusSessionTimerText";
+    timer.append(icone, texto);
     document.body.appendChild(timer);
   }
 

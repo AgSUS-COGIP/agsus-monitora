@@ -23,7 +23,7 @@ O robô liga cada vaga ao edital pela Seleção (`TB_EMPREGARE_VAGA.CO_MONITORAM
 
 - Migrations no padrão MAD, com `ensaios/` e `rollback/`, a partir do timestamp `20261006…`, e
   revisadas pela skill `mad-ddl-review`.
-- Toda RPC nova vai para `src/lib/rpc-contrato.js`.
+- Toda RPC nova vai para `src/lib/rpc-contrato.ts`.
 - As telas são React em `src/modulos/avaliacao-documental/`, com o visual de `src/ui/` e a lógica
   pura em `src/lib/avaliacao-documental/` (com testes Vitest).
 - Nada novo em `src/modules/`. Sem textos genéricos: as explicações vão para `docs/aya/`.

@@ -1,18 +1,26 @@
 import { origemDeTerceiro } from "../src/lib/origem-da-requisicao.js";
+import type { PedidoDaVercel, RespostaDaVercel } from "./_tipos-da-vercel.js";
 
 const FUNAI_WMS = "https://geoserver.funai.gov.br/geoserver/Funai/wms";
 const TERRITORY_LAYER = "Funai:tis_poligonais";
 
-function first(value) {
+function first(value: unknown): unknown {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function numberInRange(value, min, max) {
+function numberInRange(
+  value: unknown,
+  min: number,
+  max: number,
+): number | null {
   const n = Number(first(value));
   return Number.isFinite(n) && n >= min && n <= max ? n : null;
 }
 
-export default async function handler(req, res) {
+export default async function handler(
+  req: PedidoDaVercel,
+  res: RespostaDaVercel,
+): Promise<void> {
   if (req.method !== "GET") {
     res.status(405).setHeader("Allow", "GET").end();
     return;

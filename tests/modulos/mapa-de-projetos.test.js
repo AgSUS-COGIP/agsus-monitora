@@ -9,6 +9,7 @@ import {
   criarCarregadorDeMunicipios,
 } from "../../src/modulos/mapa-de-projetos/carregador.ts";
 import { MapaDeProjetos } from "../../src/modulos/mapa-de-projetos/mapa-de-projetos.tsx";
+import { carregarContornos } from "../../src/modulos/mapa-saude-indigena/leaflet.ts";
 import {
   clicar,
   escolher,
@@ -271,7 +272,11 @@ describe("o mapa", () => {
     expect(host.querySelectorAll("#mapaDosProjetos")).toHaveLength(1);
     expect(host.querySelector("#map, #detailMap")).toBeNull();
     expect(mapa.chamadas[0][0]).toBe("fitBounds");
-    // Fundo, contorno do Brasil e divisas das UFs.
+    // Fundo, contorno do Brasil e divisas das UFs. Os contornos chegam por
+    // import() sob demanda (src/modulos/mapa-saude-indigena/leaflet.ts): no
+    // primeiro teste o módulo ainda é transformado, e o `act` da montagem não
+    // espera por ele. Espera a mesma promessa que o mapa espera, não o relógio.
+    await esperar(() => carregarContornos());
     expect([...mapa.camadas].some((c) => c.tipo === "tileLayer")).toBe(true);
     expect(leaflet.desenhadas(mapa, "geoJSON")).toHaveLength(2);
     // Dicas e popups ficam dentro do mapa (src/lib/dica-dentro-do-mapa.ts).

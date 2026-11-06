@@ -1,65 +1,71 @@
 /*
-  O formato da API de aprovados (`api/aprovados.js`) e de cronograma
-  (`api/cronograma.js`), para outro sistema. Os dados vêm de
+  O formato da API de aprovados (`api/aprovados.ts`) e de cronograma
+  (`api/cronograma.ts`), para outro sistema. Os dados vêm de
   `listar_aprovados_da_api` e `listar_cronograma_da_api` (migration
   20261105150000; área em 20261105190000), lidas pela função da Vercel com a
   chave de servidor: editais ativos de todas as áreas. `area` é o nome da
   área do edital (Saúde Indígena, SEDE, Projetos). `edital_id` é o mesmo `id` de
   /api/editais, para cruzar.
 
-  JS com JSDoc (e não TS) porque a função da Vercel importa daqui sem build.
+  A importação usa `.js` (e não `.ts`) porque as funções da Vercel importam
+  daqui: a Vercel compila cada `.ts` para `.js` e acha o `.ts` pelo nome
+  `.js`; com `.ts` no caminho, a função publicada não acharia o arquivo.
 */
 import {
   chave,
   linhasDoPayload,
   texto,
   valorDaQuery,
+  type LinhaDaRpc,
+  type QueryDaApi,
 } from "./editais-da-api.js";
 
 /** As leituras (só service_role; chamadas pelas funções da Vercel). */
 export const RPC_DOS_APROVADOS = "listar_aprovados_da_api";
 export const RPC_DO_CRONOGRAMA = "listar_cronograma_da_api";
 
-/**
- * @typedef {{
- *   edital_id: string,
- *   edital: string,
- *   unidade: string,
- *   area: string,
- *   cargo: string,
- *   classificacao: number | null,
- *   nota: number | null,
- *   nome: string,
- *   modalidade: string,
- *   status: string,
- *   matricula: string,
- *   processo_sei: string,
- *   codigo_vaga: string,
- *   sub_judice: boolean,
- * }} AprovadoDaApi
- */
+export type AprovadoDaApi = {
+  edital_id: string;
+  edital: string;
+  unidade: string;
+  area: string;
+  cargo: string;
+  classificacao: number | null;
+  nota: number | null;
+  nome: string;
+  modalidade: string;
+  status: string;
+  matricula: string;
+  processo_sei: string;
+  codigo_vaga: string;
+  sub_judice: boolean;
+};
 
-/**
- * @typedef {{
- *   edital_id: string,
- *   edital: string,
- *   unidade: string,
- *   area: string,
- *   ordem: number | null,
- *   atividade: string,
- *   data_inicio: string | null,
- *   data_fim: string | null,
- * }} EtapaDaApi
- */
+export type EtapaDaApi = {
+  edital_id: string;
+  edital: string;
+  unidade: string;
+  area: string;
+  ordem: number | null;
+  atividade: string;
+  data_inicio: string | null;
+  data_fim: string | null;
+};
 
-const numeroOuNulo = (valor) => {
+/** Os campos filtrados por igualdade e os filtrados por trecho. */
+type FiltrosDe<T> = {
+  readonly igual: readonly (keyof T & string)[];
+  readonly contem: readonly (keyof T & string)[];
+};
+
+const numeroOuNulo = (valor: unknown): number | null => {
   if (valor == null || valor === "") return null;
   const n = Number(String(valor).replace(",", "."));
   return Number.isFinite(n) ? n : null;
 };
 
 /** Data `AAAA-MM-DD` (o começo do texto do banco) ou nulo. */
-const dataOuNulo = (valor) => {
+const dataOuNulo = (valor: unknown): string | null => {
   const achado = /^\d{4}-\d{2}-\d{2}/.exec(texto(valor));
   return achado ? achado[0] : null;
 };
@@ -68,18 +74,22 @@ const dataOuNulo = (valor) => {
   Filtros: `edital_id` e os de "igual" comparam sem caixa nem acento; os de
   "contém" acham o trecho.
 */
-const FILTROS_DOS_APROVADOS = Object.freeze({
+const FILTROS_DOS_APROVADOS: FiltrosDe<AprovadoDaApi> = Object.freeze({
   igual: ["edital_id", "status", "modalidade", "area"],
   contem: ["edital", "unidade", "cargo", "nome"],
 });
-const FILTROS_DO_CRONOGRAMA = Object.freeze({
+const FILTROS_DO_CRONOGRAMA: FiltrosDe<EtapaDaApi> = Object.freeze({
   igual: ["edital_id", "area"],
   contem: ["edital", "unidade", "atividade"],
 });
 
-function filtrar(itens, query, { igual, contem }) {
+function filtrar<T extends Record<string, unknown>>(
+  itens: T[],
+  query: QueryDaApi,
+  { igual, contem }: FiltrosDe<T>,
+): T[] {
   const pedidos = [...igual, ...contem]
-    .map((nome) => [nome, chave(valorDaQuery(query, nome))])
+    .map((nome) => [nome, chave(valorDaQuery(query, nome))] as const)
     .filter(([, valor]) => valor);
   if (!pedidos.length) return itens;
   return itens.filter((item) =>
@@ -91,12 +101,8 @@ function filtrar(itens, query, { igual, contem }) {
   );
 }
 
-/**
- * Um candidato no formato da API.
- * @param {Record<string, unknown>} linha
- * @returns {AprovadoDaApi}
- */
-export function aprovadoDaApi(linha) {
+/** Um candidato no formato da API. */
+export function aprovadoDaApi(linha: LinhaDaRpc): AprovadoDaApi {
   return {
     edital_id: texto(linha?.edital_id),
     edital: texto(linha?.edital),
@@ -115,12 +121,8 @@ export function aprovadoDaApi(linha) {
   };
 }
 
-/**
- * Uma etapa do cronograma no formato da API.
- * @param {Record<string, unknown>} linha
- * @returns {EtapaDaApi}
- */
-export function etapaDaApi(linha) {
+/** Uma etapa do cronograma no formato da API. */
+export function etapaDaApi(linha: LinhaDaRpc): EtapaDaApi {
   return {
     edital_id: texto(linha?.edital_id),
     edital: texto(linha?.edital),
@@ -136,10 +138,11 @@ export function etapaDaApi(linha) {
 /**
  * A resposta de /api/aprovados: os candidatos filtrados e o total.
  * Filtros: ?edital_id=&status=&modalidade=&area= (igual) e ?edital=&unidade=&cargo=&nome= (contém).
- * @param {unknown} payload
- * @param {Record<string, unknown> | null | undefined} [query]
  */
-export function respostaDosAprovados(payload, query) {
+export function respostaDosAprovados(
+  payload: unknown,
+  query?: QueryDaApi,
+): { aprovados: AprovadoDaApi[]; totais: { linhas: number } } {
   const aprovados = filtrar(
     linhasDoPayload(payload).map(aprovadoDaApi),
     query,
@@ -151,10 +154,11 @@ export function respostaDosAprovados(payload, query) {
 /**
  * A resposta de /api/cronograma: as etapas filtradas e o total.
  * Filtros: ?edital_id=&area= (igual) e ?edital=&unidade=&atividade= (contém).
- * @param {unknown} payload
- * @param {Record<string, unknown> | null | undefined} [query]
  */
-export function respostaDoCronograma(payload, query) {
+export function respostaDoCronograma(
+  payload: unknown,
+  query?: QueryDaApi,
+): { etapas: EtapaDaApi[]; totais: { linhas: number } } {
   const etapas = filtrar(
     linhasDoPayload(payload).map(etapaDaApi),
     query,

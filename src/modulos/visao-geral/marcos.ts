@@ -2,7 +2,7 @@ import type { ClienteDosMarcos, MarcoDoAno } from "./tipos.ts";
 import { registroDaVisaoGeral } from "../../lib/visao-geral.ts";
 /*
   Os marcos do ano da equipe na Visão geral: a leitura do banco
-  (`obter_marcos_da_area`, contrato em src/lib/rpc-contrato.js). Números só da
+  (`obter_marcos_da_area`, contrato em src/lib/rpc-contrato.ts). Números só da
   equipe da área, nunca de uma pessoa. O card fica em boas-vindas.tsx; a regra
   de quando comemorar, em src/lib/comemoracao.ts.
 */

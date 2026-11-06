@@ -46,10 +46,10 @@ export default [
       `npx eslint api/aya.js` passava sem rodar regra nenhuma — nenhuma
       configuração casava com o arquivo. Foi assim que uma substituição em massa
       renomeou o parâmetro de uma função sem renomear o uso dentro dela: o
-      `no-undef` teria apontado na hora, mas não estava ligado ali.
+      `no-undef` teria apontado na hora, mas não estava ligado ali. Hoje
+      `api/` é TypeScript e entra no bloco de TypeScript abaixo.
     */
     files: [
-      "api/**/*.js",
       "src/lib/**/*.js",
       "src/modules/**/*.js",
       "src/app/**/*.{js,jsx}",
@@ -80,7 +80,12 @@ export default [
     },
   },
   {
-    files: ["src/**/*.{ts,tsx}", "server/**/*.ts", "tests/tipos/**/*.tsx"],
+    files: [
+      "src/**/*.{ts,tsx}",
+      "server/**/*.ts",
+      "api/**/*.ts",
+      "tests/tipos/**/*.tsx",
+    ],
     languageOptions: {
       parser: tsParser,
       ecmaVersion: "latest",
@@ -110,6 +115,51 @@ export default [
     rules: {
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
+    },
+  },
+  {
+    /*
+      HTML montado a partir de texto é a porta de XSS: um nome, uma
+      observação ou uma resposta da API com `<img onerror=...>` vira código.
+      No front, texto entra como filho no JSX ou por `textContent`, e
+      elementos por `createElement`. Exceção só com
+      `// eslint-disable-next-line no-restricted-syntax -- <por que é seguro>`
+      na linha anterior. Exceção hoje: o `srcdoc` da impressão em
+      `src/modulos/classificacao/documento-no-navegador.ts` (iframe sem
+      `allow-scripts`).
+    */
+    files: ["src/**/*.{js,jsx,ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "AssignmentExpression[left.type='MemberExpression'][left.property.name=/^(innerHTML|outerHTML|srcdoc)$/]",
+          message:
+            "Sem innerHTML/outerHTML/srcdoc: use JSX, textContent ou createElement.",
+        },
+        {
+          selector:
+            "CallExpression[callee.property.name=/^(insertAdjacentHTML|createContextualFragment|setHTMLUnsafe)$/]",
+          message:
+            "Sem inserir HTML a partir de texto: use JSX, textContent ou createElement.",
+        },
+        {
+          selector:
+            "CallExpression[callee.object.name='document'][callee.property.name=/^(write|writeln)$/]",
+          message: "Sem document.write: monte os elementos pelo DOM.",
+        },
+        {
+          selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+          message:
+            "Sem dangerouslySetInnerHTML: o texto vai como filho no JSX.",
+        },
+        {
+          selector: "Property[key.name='dangerouslySetInnerHTML']",
+          message:
+            "Sem dangerouslySetInnerHTML: o texto vai como filho no JSX.",
+        },
+      ],
     },
   },
   {

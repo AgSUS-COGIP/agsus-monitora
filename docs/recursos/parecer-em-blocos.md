@@ -119,7 +119,7 @@ dela existirem.
   o cadastro e avisa.
 - `referencias_do_parecer` na validação da regra da análise (`FC_VALIDAR_REGRA_ANALISE`).
 
-**RPCs** (com `src/lib/rpc-contrato.js`):
+**RPCs** (com `src/lib/rpc-contrato.ts`):
 
 - `obter_dados_parecer_recurso(p_recurso)`: num pedido só, o recurso, o período de interposição, a
   ficha concluída do candidato no edital (`TB_FICHA_ANALISE` pela inscrição — `CO_MONITORAMENTO` +

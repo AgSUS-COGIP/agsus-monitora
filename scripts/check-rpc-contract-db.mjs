@@ -47,7 +47,7 @@ if (!CONEXAO) {
 }
 
 const { CONTRATO_RPC } = await import(
-  pathToFileURL(join(process.cwd(), "src/lib/rpc-contrato.js")).href
+  pathToFileURL(join(process.cwd(), "src/lib/rpc-contrato.ts")).href
 );
 
 const cliente = new pg.Client({
