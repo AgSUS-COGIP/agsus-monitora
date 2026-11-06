@@ -263,6 +263,21 @@ const linhas = () =>
       "[data-tour='avd-fila-tabela'] tbody tr[data-candidato]",
     ),
   ].map((tr) => tr.dataset.candidato);
+/* A faixa de situação (os números-filtro e os links da linha de baixo). */
+const faixa = () => secao.querySelector("[data-tour='avd-fila-etapas']");
+const numeroDaFaixa = (valor) =>
+  faixa().querySelector(`[data-valor='${valor}'] .ui-faixa-numero`)
+    ?.textContent;
+/* Etapas fora da faixa (Inscritos, Eliminados: filtro salvo ou endereço). */
+const irParaEtapa = async (etapa) => {
+  await act(async () => painel.fila.mudarFiltro({ etapa }));
+  await esperar();
+};
+const filtro = (rotulo) =>
+  secao.querySelector(`.avd-fila-filtros select[aria-label='${rotulo}']`);
+const contagemDaLista = () =>
+  secao.querySelector("[data-tour='avd-fila-tabela'] .ui-lista-contagem")
+    .textContent;
 
 beforeEach(() => {
   redefinirDadosDoMonitoramento();
@@ -311,24 +326,35 @@ describe("Fila (AM-6)", () => {
     expect(supabase.rpc).toHaveBeenCalledWith("obter_fila_avaliacao", {
       p_edital: "e93",
     });
-    const etapas = secao.querySelector("[data-tour='avd-fila-etapas']");
-    expect(etapas.textContent).toContain("Inscritos5");
-    expect(etapas.textContent).toContain("No lote4");
-    expect(etapas.textContent).toContain("Pendentes2");
-    expect(etapas.textContent).toContain("Em análise1");
-    expect(etapas.textContent).toContain("Eliminados1");
+    expect(
+      ["lote", "pendentes", "em_analise", "revisao", "concluidas"].map(
+        numeroDaFaixa,
+      ),
+    ).toEqual(["4", "2", "1", "0", "0"]);
+    expect(
+      faixa().querySelector("[data-valor='lote']").getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(faixa().querySelector("[data-valor='fora']").textContent).toBe(
+      "1 fora do lote",
+    );
+    // A barra da distribuição diz a proporção no nome acessível.
+    expect(
+      faixa().querySelector("[role='img']").getAttribute("aria-label"),
+    ).toBe("Distribuição do lote: 25% em análise, 50% pendentes");
     expect(linhas()).toEqual(["7001", "7002", "7003", "7004"]);
-    await clicar(etapas.querySelector("[data-valor='eliminados']"));
+    await clicar(faixa().querySelector("[data-valor='fora']"));
     expect(linhas()).toEqual(["7009"]);
-    await clicar(etapas.querySelector("[data-valor='pendentes']"));
+    await clicar(faixa().querySelector("[data-valor='pendentes']"));
     expect(linhas()).toEqual(["7002", "7003"]);
   });
 
   it("Minhas fichas, filtro salvo e salvar um filtro novo", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
-    await clicar(secao.querySelector("[data-tour='avd-fila-minhas']"));
+    await escolher(filtro("Responsável"), "eu");
     expect(linhas()).toEqual(["7001"]);
+    // Os filtros salvos ficam em "Filtros" (os secundários).
+    await clicar(secao.querySelector("[data-acao='mais-filtros']"));
     await clicar(botao("Salvar filtro", secao));
     await digitar(
       secao.querySelector("[data-tour='avd-fila-filtros-salvos'] form input"),
@@ -438,8 +464,7 @@ describe("Fila (AM-6)", () => {
     const supabase = supabaseFalso(fila(), { distribuir_fichas: () => erro });
     await montar(supabase);
     await clicar(secao.querySelector("[aria-label='Selecionar 7001']"));
-    await abrirMenu();
-    await clicar(botao("Distribuir as selecionadas (1)", secao));
+    await clicar(secao.querySelector("[data-acao='distribuir-selecionadas']"));
     const gaveta = document.querySelector("[data-tour='avd-fila-confirmar']");
     await escolher(gaveta.querySelector("select"), "u-beto");
     const confirmar = gaveta.querySelector(
@@ -463,7 +488,9 @@ describe("Fila (AM-6)", () => {
       secao.querySelector("[data-tour='avd-fila-acoes-coordenacao']"),
     ).toBeNull();
     expect(secao.querySelector("[data-tour='avd-fila-pegar']")).not.toBeNull();
-    expect(secao.querySelector("[data-tour='avd-fila-minhas']")).not.toBeNull();
+    expect(
+      [...filtro("Responsável").options].map((o) => o.textContent),
+    ).toContain("Minhas fichas");
   });
 });
 
@@ -475,14 +502,9 @@ describe("listas da fila: colunas por aba, ordem, N de M e CSV", () => {
 
   it("Eliminados mostra o motivo e a ART, sem posição, responsável nem reserva", async () => {
     await montar(supabaseFalso());
-    await clicar(
-      secao.querySelector(
-        "[data-tour='avd-fila-etapas'] [data-valor='eliminados']",
-      ),
-    );
+    await irParaEtapa("eliminados");
     expect(cabecalhos()).toEqual([
-      "Código",
-      "Nome",
+      "Pessoa",
       "Vaga",
       "Motivo da eliminação",
       "Nota declarada",
@@ -514,20 +536,22 @@ describe("listas da fila: colunas por aba, ordem, N de M e CSV", () => {
       [
         ...secao.querySelectorAll("[data-tour='avd-fila-tabela'] th button"),
       ].find((b) => b.textContent.trim() === nome);
-    await clicar(ordenar("Código"));
-    await clicar(ordenar("Código"));
+    expect(contagemDaLista()).toBe("1–4 de 4");
+    // A pessoa ordena pelo nome.
+    await clicar(ordenar("Pessoa"));
+    await clicar(ordenar("Pessoa"));
     expect(linhas()).toEqual(["7004", "7003", "7002", "7001"]);
     expect(
       secao.querySelector(
         "[data-tour='avd-fila-tabela'] th[aria-sort='descending']",
       ).textContent,
-    ).toContain("Código");
-    await digitar(secao.querySelector("[data-tour='avd-fila-busca']"), "7002");
+    ).toContain("Pessoa");
+    // A pessoa: o nome e, embaixo, "código · modalidade".
     expect(
-      secao.querySelector(
-        "[data-tour='avd-fila-tabela'] [data-tabela-contagem]",
-      ).textContent,
-    ).toBe("1 de 4");
+      secao.querySelector("[data-candidato='7004'] .ui-pessoa").textContent,
+    ).toBe("Pessoa 70047004 · AC");
+    await digitar(secao.querySelector("[data-tour='avd-fila-busca']"), "7002");
+    expect(contagemDaLista()).toBe("1–1 de 1");
     await digitar(secao.querySelector("[data-tour='avd-fila-busca']"), "");
     const blobs = [];
     const original = {
@@ -586,7 +610,9 @@ describe("modo de análise: a ficha ocupa a tela", () => {
   };
   const abrirPelaLista = async (codigo) => {
     await clicar(
-      botao("Abrir", secao.querySelector(`[data-candidato='${codigo}']`)),
+      secao.querySelector(
+        `[data-candidato='${codigo}'] [data-acao='abrir-ficha']`,
+      ),
     );
     await esperar();
   };
@@ -647,7 +673,7 @@ describe("modo de análise: a ficha ocupa a tela", () => {
     await montar(supabase);
     const ordenar = [
       ...secao.querySelectorAll("[data-tour='avd-fila-tabela'] th button"),
-    ].find((b) => b.textContent.trim() === "Código");
+    ].find((b) => b.textContent.trim() === "Pessoa");
     await clicar(ordenar);
     await clicar(ordenar);
     await abrirPelaLista("7003");
@@ -965,7 +991,7 @@ describe("fila: inclusão no lote por decisão da coordenação", () => {
     });
     await montar(supabase);
     expect(secao.querySelector("[data-lote-da-fila]").textContent).toBe(
-      "Lote: 3 pela regra + 1 por decisão",
+      "3 pela regra + 1 por decisão",
     );
     const linha = secao.querySelector("[data-candidato='7003']");
     expect(linha.querySelector(".avd-selo-decisao").textContent).toBe(
@@ -975,7 +1001,8 @@ describe("fila: inclusão no lote por decisão da coordenação", () => {
       secao.querySelector("[data-candidato='7002'] .avd-selo-decisao"),
     ).toBeNull();
 
-    await clicar(botao("Abrir", linha));
+    // Pendente: o botão da linha é "Analisar" (azul).
+    await clicar(botao("Analisar", linha));
     await esperar();
     const topo = secao.querySelector(".avd-analise-topo");
     expect(topo.querySelector(".avd-selo-decisao").textContent).toBe(
@@ -1035,12 +1062,18 @@ describe("fila: andamento, menu da coordenação e tabela agrupada por vaga", ()
     return d;
   };
 
-  it("resumo do andamento: o edital e o bloco Por vaga recolhido; clicar na vaga filtra", async () => {
+  it("andamento: a barra do lote e o bloco Por vaga recolhido na faixa; clicar na vaga filtra", async () => {
     await montar(supabaseFalso(duasVagas()));
-    const resumo = secao.querySelector("[data-tour='avd-fila-andamento']");
-    expect(resumo.querySelector(".avd-andamento-total").textContent).toContain(
-      "concluídas 1 de 6 · em análise 1 · pendentes 4",
+    expect(
+      faixa().querySelector("[role='img']").getAttribute("aria-label"),
+    ).toBe(
+      "Distribuição do lote: 16,6% concluídas, 16,6% em análise, 50% pendentes",
     );
+    expect(
+      faixa().querySelector("[data-valor='concluidas'] .ui-faixa-contexto")
+        .textContent,
+    ).toBe("16,6% · 1 apta");
+    const resumo = faixa().querySelector("[data-tour='avd-fila-andamento']");
     const porVaga = resumo.querySelector("details[data-por-vaga]");
     // Fechado por padrão: a grade de cartões por vaga não polui o topo.
     expect(porVaga.open).toBe(false);
@@ -1067,14 +1100,12 @@ describe("fila: andamento, menu da coordenação e tabela agrupada por vaga", ()
     expect(
       resumo.querySelector("[data-vaga='180001']").getAttribute("aria-pressed"),
     ).toBe("true");
-    // O filtro ativo aparece na linha do edital, com o botão para tirar.
-    const tirar = resumo.querySelector("[data-acao='todas-as-vagas']");
-    expect(tirar.textContent).toContain("Vaga 180001 · Enfermeiro");
+    // O filtro de vaga é o mesmo da barra da lista.
+    expect(filtro("Vaga").value).toBe("180001");
     // Filtrada por vaga, a tabela não agrupa.
     expect(secao.querySelector("tr.ui-tabela-grupo")).toBeNull();
-    await clicar(tirar);
+    await escolher(filtro("Vaga"), "");
     expect(linhas()).toHaveLength(6);
-    expect(resumo.querySelector("[data-acao='todas-as-vagas']")).toBeNull();
   });
 
   it("Por vaga: aberto ou fechado fica lembrado por usuário", async () => {
@@ -1113,32 +1144,38 @@ describe("fila: andamento, menu da coordenação e tabela agrupada por vaga", ()
     expect(linhas()).toHaveLength(6);
   });
 
-  it("as ações da coordenação ficam num menu; com seleção, o menu mostra a contagem", async () => {
+  it("as ações da coordenação ficam no ⋯; com seleção, a barra da seleção em lote", async () => {
     await montar(supabaseFalso());
     const menu = secao.querySelector(
       "[data-tour='avd-fila-acoes-coordenacao']",
     );
-    expect(menu.textContent).toContain("Ações da coordenação");
-    expect(secao.querySelector("[data-acao='incluir-por-decisao']")).toBeNull();
-    await clicar(secao.querySelector("[aria-label='Selecionar 7002']"));
-    expect(menu.querySelector(".ui-contagem").textContent).toBe("1");
     expect(
-      secao.querySelector("[data-tour='avd-fila-acoes-lote']").textContent,
-    ).toContain("1 selecionada(s)");
+      menu.querySelector("[data-acao='abrir-menu']").getAttribute("aria-label"),
+    ).toBe("Ações da coordenação");
+    expect(secao.querySelector("[data-acao='incluir-por-decisao']")).toBeNull();
+    expect(secao.querySelector("[data-tour='avd-fila-acoes-lote']")).toBeNull();
+    await clicar(secao.querySelector("[aria-label='Selecionar 7002']"));
+    const lote = secao.querySelector("[data-tour='avd-fila-acoes-lote']");
+    expect(lote.textContent).toContain("1 selecionada");
+    expect(secao.querySelector("[data-candidato='7002']").dataset.marcada).toBe(
+      "sim",
+    );
+    expect(lote.querySelector("[data-acao='liberar-reservas']").disabled).toBe(
+      true,
+    );
+    expect(
+      lote.querySelector("[data-acao='mandar-para-revisao']").disabled,
+    ).toBe(false);
     await abrirMenu();
     expect(
       [...menu.querySelectorAll("[role='menuitem']")].map((b) => b.textContent),
     ).toEqual([
       "Distribuir as livres (2)",
-      "Distribuir as selecionadas (1)",
-      "Liberar reservas (0)",
-      "Mandar para revisão (1)",
       "Relatório de motivos",
       "Abrir fichas do lote (1)",
     ]);
-    expect(menu.querySelector("[data-acao='liberar-reservas']").disabled).toBe(
-      true,
-    );
+    await clicar(lote.querySelector("[data-acao='limpar-selecao']"));
+    expect(secao.querySelector("[data-tour='avd-fila-acoes-lote']")).toBeNull();
   });
 });
 
@@ -1512,9 +1549,7 @@ describe("fila leve: o lote em toda leitura, os de fora do lote sob demanda", ()
       },
     });
     await montar(supabase);
-    const etapas = secao.querySelector("[data-tour='avd-fila-etapas']");
-    await clicar(etapas.querySelector("[data-valor='eliminados']"));
-    await esperar();
+    await irParaEtapa("eliminados");
     expect(linhas()).toEqual(["7009"]);
     expect(chamadasDeFora(supabase)).toHaveLength(0);
     expect(pedidos.at(-1)).toEqual({
@@ -1527,12 +1562,10 @@ describe("fila leve: o lote em toda leitura, os de fora do lote sob demanda", ()
       p_apos: null,
       p_limite: 50,
     });
-    expect(secao.querySelector("[data-tabela-mostrando]").textContent).toBe(
-      "Mostrando 1 de 1 registros",
-    );
-    // Ordenar pela coluna pede de novo ao banco, na ordem da coluna.
+    expect(contagemDaLista()).toBe("1–1 de 1");
+    // Ordenar pela coluna pede de novo ao banco, na ordem da coluna (a pessoa: o nome).
     const nome = [...secao.querySelectorAll("button.ui-ordenar")].find((b) =>
-      b.textContent.startsWith("Nome"),
+      b.textContent.startsWith("Pessoa"),
     );
     await clicar(nome);
     await esperar();
@@ -1555,12 +1588,12 @@ describe("fila leve: o lote em toda leitura, os de fora do lote sob demanda", ()
       }),
     });
     await montar(supabase);
-    const etapas = secao.querySelector("[data-tour='avd-fila-etapas']");
-    expect(etapas.textContent).toContain("Inscritos5");
-    expect(etapas.textContent).toContain("Eliminados1");
+    expect(faixa().querySelector("[data-valor='fora']").textContent).toBe(
+      "1 fora do lote",
+    );
     expect(chamadasDeFora(supabase)).toHaveLength(0);
 
-    await clicar(etapas.querySelector("[data-valor='eliminados']"));
+    await clicar(faixa().querySelector("[data-valor='fora']"));
     await esperar();
     expect(chamadasDeFora(supabase)).toEqual([
       [
@@ -1570,9 +1603,14 @@ describe("fila leve: o lote em toda leitura, os de fora do lote sob demanda", ()
     ]);
     expect(linhas()).toEqual(["7009"]);
 
-    await clicar(etapas.querySelector("[data-valor='inscritos']"));
-    await esperar();
+    await irParaEtapa("inscritos");
     expect(linhas()).toEqual(["7001", "7002", "7003", "7004", "7009"]);
+    // Etapa fora da faixa: aparece como link marcado na linha de baixo.
+    expect(
+      faixa()
+        .querySelector("[data-valor='inscritos']")
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
     expect(chamadasDeFora(supabase)).toHaveLength(1);
   });
 
@@ -1733,54 +1771,52 @@ describe("fila só com o que mudou (20261014231000)", () => {
   });
 });
 
-describe("família da seleção na Fila: cards, barra de filtros e ⋯ da linha", () => {
-  const valor = (chave) =>
-    secao.querySelector(`[data-kpi='${chave}'] .ui-kpi-valor`)?.textContent;
-  const etapaAtiva = () =>
-    secao.querySelector("[data-tour='avd-fila-etapas'] [aria-selected='true']")
-      .dataset.valor;
+describe("layout da seleção na Fila: faixa de situação, barra da lista e ⋯ da linha", () => {
+  const ativa = () =>
+    faixa().querySelector("[aria-pressed='true']")?.dataset.valor;
 
-  it("os cards dão o andamento e filtram a etapa; Minhas fichas abertas filtra o responsável", async () => {
+  it("a faixa dá o andamento e filtra a etapa; o responsável e Limpar ficam na barra", async () => {
     await montar(supabaseFalso());
-    expect([
-      valor("concluidas"),
-      valor("em_analise"),
-      valor("pendentes"),
-      valor("hoje"),
-    ]).toEqual(["0", "1", "2", "0"]);
     expect(
-      secao.querySelector("[data-kpi='concluidas'] .ui-kpi-detalhe")
+      ["concluidas", "em_analise", "pendentes"].map(numeroDaFaixa),
+    ).toEqual(["0", "1", "2"]);
+    expect(
+      faixa().querySelector("[data-valor='concluidas'] .ui-faixa-contexto")
         .textContent,
     ).toBe("0%");
-    // Sem a meta (o ritmo não veio): só as concluídas de hoje.
-    expect(secao.querySelector("[data-kpi='hoje']").textContent).toContain(
-      "Concluídas hoje",
-    );
-    await clicar(secao.querySelector("[data-kpi='pendentes'] button"));
-    expect(etapaAtiva()).toBe("pendentes");
     expect(
-      secao
-        .querySelector("[data-kpi='pendentes'] button")
-        .getAttribute("aria-pressed"),
-    ).toBe("true");
+      faixa().querySelector("[data-valor='pendentes'] .ui-faixa-contexto")
+        .textContent,
+    ).toBe("50%");
+    // Sem o ritmo (não veio): só as concluídas de hoje, sem selo.
+    expect(secao.querySelector("[data-hoje-da-fila]").textContent).toBe(
+      "Hoje 0",
+    );
+    expect(faixa().querySelector(".ui-selo")).toBeNull();
+    await clicar(faixa().querySelector("[data-valor='pendentes']"));
+    expect(ativa()).toBe("pendentes");
     expect(linhas()).toEqual(["7002", "7003"]);
-    // Ana tem uma ficha aberta (7001, em análise).
-    expect(valor("minhas")).toBe("1");
-    await clicar(secao.querySelector("[data-kpi='em_analise'] button"));
-    await clicar(secao.querySelector("[data-kpi='minhas'] button"));
+    await clicar(faixa().querySelector("[data-valor='em_analise']"));
+    expect(secao.querySelector("[data-acao='limpar-filtros']")).toBeNull();
+    await escolher(filtro("Responsável"), "eu");
     expect(linhas()).toEqual(["7001"]);
-    expect(secao.querySelector(".ui-barra-quantos").textContent).toBe(
-      "1 filtro",
-    );
     await clicar(secao.querySelector("[data-acao='limpar-filtros']"));
-    expect(secao.querySelector(".ui-barra-quantos").textContent).toBe(
-      "Sem filtros",
-    );
+    expect(secao.querySelector("[data-acao='limpar-filtros']")).toBeNull();
     // Limpar tira os filtros e fica na etapa escolhida.
-    expect(etapaAtiva()).toBe("em_analise");
+    expect(ativa()).toBe("em_analise");
   });
 
-  it("com o ritmo do Painel das análises, o card Hoje mostra a meta do dia", async () => {
+  it("vazia: Ninguém por aqui", async () => {
+    await montar(supabaseFalso());
+    await clicar(faixa().querySelector("[data-valor='revisao']"));
+    expect(linhas()).toEqual([]);
+    expect(
+      secao.querySelector("[data-tour='avd-fila-tabela'] .ui-lista-vazia")
+        .textContent,
+    ).toBe("Ninguém por aquiNenhuma ficha nesta situação com esses filtros.");
+  });
+
+  it("com o ritmo do Painel das análises, a faixa mostra o selo e a meta do dia", async () => {
     const hoje = new Intl.DateTimeFormat("en-CA", {
       timeZone: "America/Sao_Paulo",
     }).format(new Date());
@@ -1811,14 +1847,12 @@ describe("família da seleção na Fila: cards, barra de filtros e ⋯ da linha"
     expect(supabase.rpc).toHaveBeenCalledWith("obter_ritmo_da_analise", {
       p_area: "projetos",
     });
-    const card = secao.querySelector("[data-kpi='hoje']");
+    const hojeDaFila = secao.querySelector("[data-hoje-da-fila]").textContent;
     const util = ![0, 6].includes(new Date(`${hoje}T12:00:00Z`).getUTCDay());
-    if (util) {
-      expect(card.textContent).toContain("Hoje (meta do dia)");
-      expect(card.querySelector(".ui-kpi-detalhe").textContent).toMatch(
-        /^de \d+$/,
-      );
-    } else expect(card.textContent).toContain("Concluídas hoje");
+    // O selo do ritmo aparece uma vez só.
+    expect(faixa().querySelectorAll(".ui-selo")).toHaveLength(1);
+    if (util) expect(hojeDaFila).toMatch(/^Hoje 0 de \d+$/);
+    else expect(hojeDaFila).toBe("Hoje 0");
   });
 
   it("o ⋯ da linha: Atribuir abre a mesma gaveta com uma ficha; o analista só copia", async () => {
@@ -1827,9 +1861,15 @@ describe("família da seleção na Fila: cards, barra de filtros e ⋯ da linha"
     }));
     await montar(supabaseFalso(fila(), { distribuir_fichas: distribuir }));
     const linha = secao.querySelector("[data-candidato='7002']");
-    expect(
-      linha.querySelector("[data-acao='abrir-ficha']").textContent.trim(),
-    ).toBe("Abrir");
+    // Pendente: "Analisar", azul; em análise: "Abrir", neutro.
+    const principal = linha.querySelector("[data-acao='abrir-ficha']");
+    expect(principal.textContent.trim()).toBe("Analisar");
+    expect(principal.className).toBe("btn small");
+    const emAnalise = secao.querySelector(
+      "[data-candidato='7001'] [data-acao='abrir-ficha']",
+    );
+    expect(emAnalise.textContent.trim()).toBe("Abrir");
+    expect(emAnalise.className).toBe("btn contorno small");
     await clicar(linha.querySelector("[data-acao='abrir-menu']"));
     expect(
       [...linha.querySelectorAll("[role='menuitem']")].map((b) =>

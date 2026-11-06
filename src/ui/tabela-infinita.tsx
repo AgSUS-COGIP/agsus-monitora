@@ -179,6 +179,64 @@ const ICONE_DA_ORDEM: Partial<Record<string, string>> = {
   desc: "fa-arrow-down",
 };
 
+/** O `<thead>` das tabelas de src/ui/: cada coluna, com o botão de ordenar quando há `aoOrdenar`. */
+export function CabecalhosDaTabela({
+  colunas,
+}: {
+  colunas: ReadonlyArray<ColunaDaTabela>;
+}) {
+  return (
+    <thead>
+      <tr>
+        {colunas.map(
+          ({
+            rotulo: nome,
+            chave,
+            cabecalho,
+            largura,
+            numero,
+            ordem,
+            aoOrdenar,
+            dica,
+          }) => (
+            <th
+              key={chave ?? nome}
+              scope="col"
+              title={dica}
+              style={{ width: largura }}
+              className={numero ? "num" : undefined}
+              aria-sort={
+                aoOrdenar ? ARIA_SORT[ordem ?? ""] || "none" : undefined
+              }
+            >
+              {aoOrdenar ? (
+                <button
+                  type="button"
+                  className="ui-ordenar"
+                  title={
+                    dica
+                      ? `Ordenar por ${nome}. ${dica}`
+                      : `Ordenar por ${nome}`
+                  }
+                  onClick={aoOrdenar}
+                >
+                  {nome}
+                  <i
+                    className={`fa-solid ${ICONE_DA_ORDEM[ordem ?? ""] || "fa-sort"}`}
+                    aria-hidden="true"
+                  />
+                </button>
+              ) : (
+                (cabecalho ?? nome)
+              )}
+            </th>
+          ),
+        )}
+      </tr>
+    </thead>
+  );
+}
+
 export function TabelaInfinita<T>({
   idDoTitulo,
   titulo,
@@ -313,54 +371,7 @@ export function TabelaInfinita<T>({
       </div>
       <div className="ui-tabela-rolagem" onScroll={aoRolar}>
         <table className={classeDaTabela}>
-          <thead>
-            <tr>
-              {colunas.map(
-                ({
-                  rotulo: nome,
-                  chave,
-                  cabecalho,
-                  largura,
-                  numero,
-                  ordem,
-                  aoOrdenar,
-                  dica,
-                }) => (
-                  <th
-                    key={chave ?? nome}
-                    scope="col"
-                    title={dica}
-                    style={{ width: largura }}
-                    className={numero ? "num" : undefined}
-                    aria-sort={
-                      aoOrdenar ? ARIA_SORT[ordem ?? ""] || "none" : undefined
-                    }
-                  >
-                    {aoOrdenar ? (
-                      <button
-                        type="button"
-                        className="ui-ordenar"
-                        title={
-                          dica
-                            ? `Ordenar por ${nome}. ${dica}`
-                            : `Ordenar por ${nome}`
-                        }
-                        onClick={aoOrdenar}
-                      >
-                        {nome}
-                        <i
-                          className={`fa-solid ${ICONE_DA_ORDEM[ordem ?? ""] || "fa-sort"}`}
-                          aria-hidden="true"
-                        />
-                      </button>
-                    ) : (
-                      (cabecalho ?? nome)
-                    )}
-                  </th>
-                ),
-              )}
-            </tr>
-          </thead>
+          <CabecalhosDaTabela colunas={colunas} />
           <tbody id={idDoCorpo} aria-busy={carregado ? undefined : true}>
             {!carregado ? (
               <LinhasEsqueleto colunas={colunas.length} />

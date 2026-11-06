@@ -9,18 +9,15 @@ import { editalEscolhido } from "../../lib/edital-de-treinamento.ts";
 import {
   PAPEIS_DA_EQUIPE,
   rotuloDe,
-  SITUACOES_DA_REGRA,
 } from "../../lib/avaliacao-documental/catalogo.ts";
-import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { Aviso, Segmentado, TopoDoPainel } from "../../ui/index.ts";
+import { Aviso, CabecalhoDaTela, Segmentado } from "../../ui/index.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import {
   coordenaOEdital,
   visaoNaTela,
   visoesDaPessoa,
-  VISOES,
 } from "./abas-e-entrada.ts";
 import { EntradaDaAvaliacao } from "./entrada-da-avaliacao.tsx";
 import { Equipe } from "./equipe.tsx";
@@ -61,11 +58,11 @@ import "./ficha/ficha.css";
 */
 
 /*
-  Abas por papel (abas-e-entrada.ts): quem coordena o edital vê Regra,
-  Equipe, Triagem e Fila; os demais, só a Fila, sem o seletor. Sem
-  edital escolhido não há abas: a entrada mostra os cartões dos editais.
+  Seções por papel (abas-e-entrada.ts): quem coordena o edital vê Fila,
+  Documentos e Configurações no cabeçalho; os demais, só a Fila, sem o
+  seletor. Sem edital escolhido não há seções: a entrada mostra os cartões
+  dos editais.
 */
-const FILA = VISOES.find((v) => v.valor === "fila")!;
 const ABAS_CONFIGURACOES = [
   { valor: "regra", rotulo: "Regras e critérios" },
   { valor: "equipe", rotulo: "Equipe e permissões" },
@@ -88,16 +85,6 @@ interface PropsDaTela {
 
 interface PropsDaTelaDaArea extends PropsDaTela {
   e: EstadoDaAvaliacao;
-}
-
-function textoDoStatus(e: EstadoDaAvaliacao) {
-  if (e.semAcesso) return "Sem acesso";
-  if (!e.carregado && e.carregandoEditais) return "Carregando editais...";
-  if (e.carregandoEdital) return "Carregando o edital...";
-  const regra = e.dados?.regra;
-  if (regra)
-    return `${rotuloDaVersao(regra)} · ${rotuloDe(SITUACOES_DA_REGRA, regra.situacao)}`;
-  return e.dados ? "Sem regra" : "";
 }
 
 function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
@@ -142,30 +129,56 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
   // Modo de análise: a ficha aberta ocupa a tela; só a Fila (que a desenha) fica montada.
   const sf = useSyncExternalStore(fila.assinar, fila.obter);
   const emAnalise = visao === "fila" && Boolean(sf.aberta?.ficha || sf.abrindo);
+  const { nome: nomeDaArea } = usarAreaAtual();
   return (
     <div
-      className="ui-tela avd-tela"
+      className="ui-tela avd-tela ui-tela-da-selecao"
       data-modo={emAnalise ? "analise" : undefined}
     >
       {emAnalise ? null : (
-        <TopoDoPainel
-          visoes={
-            !e.editalId || e.semAcesso ? null : visoes.length ? (
+        <CabecalhoDaTela
+          trilha={[nomeDaArea, "Seleção"].filter(Boolean).join(" / ")}
+          titulo="Avaliação documental"
+          tour="avd-cabecalho"
+          edital={
+            e.semAcesso ? null : (
+              <SeletorDeEdital
+                naLinha
+                className="avd-edital"
+                tour="avd-seletor-edital"
+                dadosDosTodos={{ "data-tour": "avd-todos-editais" }}
+                editais={e.editais}
+                escolhido={e.editalId}
+                carregado={e.carregado}
+                soVigentes
+                todos={todos}
+                aoMudarTodos={setTodos}
+                aoEscolher={(id) => void estado.escolherEdital(id)}
+              >
+                {/* Quem coordena vê a origem (e a troca) só em Configurações. */}
+                {e.dados && !coordena ? (
+                  <OrigemDaAnalise
+                    origem={e.dados.origem}
+                    rotuloDoPapel={
+                      papel ? rotuloDe(PAPEIS_DA_EQUIPE, papel) : ""
+                    }
+                    aoTrocar={estado.definirOrigem}
+                  />
+                ) : null}
+              </SeletorDeEdital>
+            )
+          }
+          secoes={
+            e.editalId && !e.semAcesso && visoes.length > 1 ? (
               <Segmentado
-                rotulo="Visão"
+                rotulo="Seções"
                 opcoes={visoes}
                 valor={visao}
                 aoMudar={estado.mudarVisao}
                 tour="avd-visoes"
               />
-            ) : coordenaOEdital(e) === false ? (
-              <h2 className="avd-visao-unica" data-aba-unica="fila">
-                <i className={`fa-solid ${FILA.icone}`} aria-hidden="true" />{" "}
-                {FILA.rotulo}
-              </h2>
             ) : null
           }
-          status={textoDoStatus(e)}
           aoAtualizar={() => void atualizar()}
           atualizarDesativado={
             !e.area || e.carregandoEditais || e.carregandoEdital
@@ -193,30 +206,6 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
 
       {e.semAcesso ? null : (
         <>
-          {emAnalise ? null : (
-            <SeletorDeEdital
-              className="avd-edital"
-              tour="avd-seletor-edital"
-              dadosDosTodos={{ "data-tour": "avd-todos-editais" }}
-              editais={e.editais}
-              escolhido={e.editalId}
-              carregado={e.carregado}
-              soVigentes
-              todos={todos}
-              aoMudarTodos={setTodos}
-              aoEscolher={(id) => void estado.escolherEdital(id)}
-            >
-              {/* Quem coordena vê a origem (e a troca) só em Configurações. */}
-              {e.dados && !coordena ? (
-                <OrigemDaAnalise
-                  origem={e.dados.origem}
-                  rotuloDoPapel={papel ? rotuloDe(PAPEIS_DA_EQUIPE, papel) : ""}
-                  aoTrocar={estado.definirOrigem}
-                />
-              ) : null}
-            </SeletorDeEdital>
-          )}
-
           {e.erroDoEdital ? (
             <Aviso tom="danger" papel="alert">
               Não foi possível abrir o edital: {e.erroDoEdital}{" "}

@@ -8,13 +8,11 @@ import {
   type AndamentoDaVaga,
   type OrdemPorVaga,
 } from "../../lib/avaliacao-documental/andamento-por-vaga.ts";
-import { textoDoAndamento } from "../../lib/avaliacao-documental/fila.ts";
-import { textoDoLote } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 
 /*
-  O resumo do andamento no alto da Fila: a barra do edital (concluídas, em
-  análise, pendentes) e, embaixo, o bloco recolhível "Por vaga (N)", fechado
-  por padrão e lembrado por usuário (andamento-por-vaga.ts). Aberto, uma
+  O andamento por vaga, embaixo da faixa de situação da Fila (no mesmo
+  card): o bloco recolhível "Por vaga (N)", fechado por padrão e lembrado
+  por usuário (andamento-por-vaga.ts). Aberto, uma
   tabela enxuta: código, cargo curto e lotação, barra, concluídas de N, em
   análise e pendentes (destacadas quando há). Os títulos das colunas
   ordenam; clicar numa vaga filtra a fila (de novo, tira o filtro), o mesmo
@@ -79,166 +77,127 @@ function Coluna({
 
 type Andamento = { total: Contas; vagas: AndamentoDaVaga[] };
 
-export function ResumoDoAndamento({
+export function AndamentoPorVaga({
   andamento,
-  lote,
   vaga,
   usuario,
   aoEscolherVaga,
 }: {
   andamento: Andamento;
-  lote: { pelaRegra: number; porDecisao: number };
   vaga: string;
   usuario?: string | null;
   aoEscolherVaga: (vaga: string) => void;
 }) {
   const [aberto, setAberto] = useState(() => lerPorVagaAberto(usuario));
   const [ordem, setOrdem] = useState<OrdemPorVaga>("banco");
-  const t = andamento.total;
   const vagas = ordenarPorVaga(andamento.vagas, ordem);
-  const escolhida = andamento.vagas.find((v) => v.codigo === vaga);
   const mostrarVagas = andamento.vagas.length > 1 || Boolean(vaga);
+  if (!mostrarVagas) return null;
   return (
-    <section
-      className="ui-card avd-andamento"
-      aria-label="Andamento da avaliação"
+    <div
+      className="ui-faixa-rodape avd-andamento"
       data-tour="avd-fila-andamento"
     >
-      <div className="avd-andamento-total">
-        <strong>Edital</strong>
-        <span>
-          {textoDoAndamento({ ...t, cargo: "" })}
-          {lote.pelaRegra || lote.porDecisao ? (
-            <span className="ui-texto-secundario">
-              {" · "}
-              <span data-lote-da-fila>
-                {textoDoLote(lote.pelaRegra, lote.porDecisao)}
-              </span>
-            </span>
-          ) : null}
-        </span>
-        <BarraDoAndamento a={t} />
-        {vaga ? (
-          <button
-            type="button"
-            className="avd-porvaga-filtro"
-            data-acao="todas-as-vagas"
-            title="Mostrar todas as vagas"
-            onClick={() => aoEscolherVaga("")}
-          >
-            Vaga {vaga}
-            {escolhida?.cargo ? ` · ${cargoCurto(escolhida.cargo)}` : ""}
-            <span aria-hidden="true"> ×</span>
-          </button>
-        ) : null}
-      </div>
-      {mostrarVagas ? (
-        <details
-          className="avd-porvaga"
-          data-por-vaga
-          open={aberto}
-          onToggle={(ev) => {
-            const agora = (ev.currentTarget as HTMLDetailsElement).open;
-            if (agora === aberto) return;
-            setAberto(agora);
-            gravarPorVagaAberto(usuario, agora);
-          }}
-        >
-          <summary>
-            <strong>Por vaga ({andamento.vagas.length})</strong>
-            <span className="ui-texto-secundario" data-resumo-por-vaga>
-              {resumoPorVaga(andamento.vagas)}
-            </span>
-          </summary>
-          <div className="ui-tabela-rolagem">
-            <table
-              className="avd-porvaga-tabela"
-              aria-label="Andamento por vaga"
-            >
-              <thead>
-                <tr>
-                  <Coluna
-                    chave="vaga"
-                    ordem={ordem}
-                    aoOrdenar={setOrdem}
-                    titulo="Ordenar pelo código da vaga"
+      <details
+        className="avd-porvaga"
+        data-por-vaga
+        open={aberto}
+        onToggle={(ev) => {
+          const agora = (ev.currentTarget as HTMLDetailsElement).open;
+          if (agora === aberto) return;
+          setAberto(agora);
+          gravarPorVagaAberto(usuario, agora);
+        }}
+      >
+        <summary>
+          <strong>Por vaga ({andamento.vagas.length})</strong>
+          <span className="ui-texto-secundario" data-resumo-por-vaga>
+            {resumoPorVaga(andamento.vagas)}
+          </span>
+        </summary>
+        <div className="ui-tabela-rolagem">
+          <table className="avd-porvaga-tabela" aria-label="Andamento por vaga">
+            <thead>
+              <tr>
+                <Coluna
+                  chave="vaga"
+                  ordem={ordem}
+                  aoOrdenar={setOrdem}
+                  titulo="Ordenar pelo código da vaga"
+                >
+                  Vaga
+                </Coluna>
+                <Coluna
+                  chave="progresso"
+                  ordem={ordem}
+                  aoOrdenar={setOrdem}
+                  titulo="Menos concluídas primeiro"
+                >
+                  Concluídas
+                </Coluna>
+                <th scope="col">Em análise</th>
+                <Coluna
+                  chave="pendentes"
+                  ordem={ordem}
+                  aoOrdenar={setOrdem}
+                  titulo="Mais pendentes primeiro"
+                >
+                  Pendentes
+                </Coluna>
+              </tr>
+            </thead>
+            <tbody>
+              {vagas.map((v) => {
+                const marcada = vaga === v.codigo;
+                const curto = cargoCurto(v.cargo);
+                return (
+                  <tr
+                    key={v.codigo}
+                    data-linha-vaga={v.codigo}
+                    data-pendente={v.pendentes > 0 ? "sim" : undefined}
+                    data-marcada={marcada ? "sim" : undefined}
                   >
-                    Vaga
-                  </Coluna>
-                  <Coluna
-                    chave="progresso"
-                    ordem={ordem}
-                    aoOrdenar={setOrdem}
-                    titulo="Menos concluídas primeiro"
-                  >
-                    Concluídas
-                  </Coluna>
-                  <th scope="col">Em análise</th>
-                  <Coluna
-                    chave="pendentes"
-                    ordem={ordem}
-                    aoOrdenar={setOrdem}
-                    titulo="Mais pendentes primeiro"
-                  >
-                    Pendentes
-                  </Coluna>
-                </tr>
-              </thead>
-              <tbody>
-                {vagas.map((v) => {
-                  const marcada = vaga === v.codigo;
-                  const curto = cargoCurto(v.cargo);
-                  return (
-                    <tr
-                      key={v.codigo}
-                      data-linha-vaga={v.codigo}
-                      data-pendente={v.pendentes > 0 ? "sim" : undefined}
-                      data-marcada={marcada ? "sim" : undefined}
-                    >
-                      <td className="avd-porvaga-vaga">
-                        <button
-                          type="button"
-                          data-vaga={v.codigo}
-                          aria-pressed={marcada}
-                          title={
-                            marcada
-                              ? "Mostrar todas as vagas"
-                              : `Mostrar só a vaga ${v.codigo}${v.cargo ? ` · ${v.cargo}` : ""}`
-                          }
-                          onClick={() =>
-                            aoEscolherVaga(marcada ? "" : v.codigo)
-                          }
-                        >
-                          <strong>{v.codigo}</strong>
-                          <span className="avd-porvaga-cargo">
-                            {[curto, v.lotacao].filter(Boolean).join(" · ")}
-                          </span>
-                        </button>
-                      </td>
-                      <td className="avd-porvaga-progresso">
-                        <BarraDoAndamento a={v} />
-                        <span>
-                          {v.concluidas} de {v.lote}
+                    <td className="avd-porvaga-vaga">
+                      <button
+                        type="button"
+                        data-vaga={v.codigo}
+                        aria-pressed={marcada}
+                        title={
+                          marcada
+                            ? "Mostrar todas as vagas"
+                            : `Mostrar só a vaga ${v.codigo}${v.cargo ? ` · ${v.cargo}` : ""}`
+                        }
+                        onClick={() => aoEscolherVaga(marcada ? "" : v.codigo)}
+                      >
+                        <strong>{v.codigo}</strong>
+                        <span className="avd-porvaga-cargo">
+                          {[curto, v.lotacao].filter(Boolean).join(" · ")}
                         </span>
-                      </td>
-                      <td>
-                        {v.em_analise}
-                        {v.revisao ? (
-                          <span className="ui-texto-secundario">
-                            {" "}
-                            + {v.revisao} rev.
-                          </span>
-                        ) : null}
-                      </td>
-                      <td className="avd-porvaga-pendentes">{v.pendentes}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </details>
-      ) : null}
-    </section>
+                      </button>
+                    </td>
+                    <td className="avd-porvaga-progresso">
+                      <BarraDoAndamento a={v} />
+                      <span>
+                        {v.concluidas} de {v.lote}
+                      </span>
+                    </td>
+                    <td>
+                      {v.em_analise}
+                      {v.revisao ? (
+                        <span className="ui-texto-secundario">
+                          {" "}
+                          + {v.revisao} rev.
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="avd-porvaga-pendentes">{v.pendentes}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </div>
   );
 }

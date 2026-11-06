@@ -17,6 +17,9 @@ import { SeloDeTreinamento } from "./selo-de-treinamento.tsx";
   src/lib/avaliacao-documental/editais.ts). `children` entra ao lado (a
   origem da avaliação, na Avaliação documental).
 
+  `naLinha`: no cabeçalho da tela (CabecalhoDaTela), sem card, com "Edital"
+  pequeno acima do campo.
+
   `className` guarda a classe de cada tela (`avd-edital`,
   `classificacao-edital`: contrato de teste e tour); `tour` é o `data-tour`
   do campo.
@@ -48,6 +51,7 @@ export interface PropriedadesDoSeletorDeEdital<E extends EditalDoSeletor> {
   /** "Mostrar todos" controlado pela tela (a entrada da Avaliação usa a mesma escolha). */
   todos?: boolean;
   aoMudarTodos?: (todos: boolean) => void;
+  naLinha?: boolean;
   children?: ReactNode;
 }
 
@@ -67,6 +71,7 @@ export function SeletorDeEdital<E extends EditalDoSeletor>({
   dadosDosTodos,
   todos: todosDaTela,
   aoMudarTodos,
+  naLinha = false,
   children,
 }: PropriedadesDoSeletorDeEdital<E>) {
   const [todosProprio, setTodosProprio] = useState(false);
@@ -87,7 +92,12 @@ export function SeletorDeEdital<E extends EditalDoSeletor>({
         : vazio;
   return (
     <section
-      className={["ui-card ui-seletor-de-edital", className]
+      className={[
+        naLinha
+          ? "ui-seletor-de-edital na-linha"
+          : "ui-card ui-seletor-de-edital",
+        className,
+      ]
         .filter(Boolean)
         .join(" ")}
       aria-label={rotulo}

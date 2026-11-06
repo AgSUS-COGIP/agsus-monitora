@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  aptasDaFila,
   concluidasHoje,
-  metaDoDia,
-  minhasAbertas,
-  percentualDe,
+  ritmoDaFila,
 } from "../../src/lib/avaliacao-documental/numeros-da-fila.ts";
+import { porcentagemDe } from "../../src/ui/faixa-de-situacao.tsx";
 import {
   acoesDaFicha,
   acoesDaSelecao,
@@ -13,8 +13,8 @@ import {
 } from "../../src/lib/avaliacao-documental/fila.ts";
 
 /*
-  Os números dos cards da Fila (numeros-da-fila.ts) e as ações do "⋯" de
-  cada linha (a mesma regra das ações em lote, em fila.ts).
+  Os números da faixa de situação da Fila (numeros-da-fila.ts) e as ações
+  do "⋯" de cada linha (a mesma regra das ações em lote, em fila.ts).
 */
 
 const ficha = (situacao, extra = {}) => ({
@@ -36,23 +36,23 @@ describe("números dos cards da Fila", () => {
     expect(concluidasHoje(null, agora)).toBe(0);
   });
 
-  it("as minhas abertas: pendente, em análise e em revisão", () => {
+  it("as aptas: só as concluídas com resultado Apto", () => {
     const lista = [
-      ficha("PENDENTE", { responsavel: "eu" }),
-      ficha("EM_ANALISE", { responsavel: "eu" }),
-      ficha("REVISAR", { responsavel: "eu" }),
-      ficha("CONCLUIDA", { responsavel: "eu" }),
-      ficha("PENDENTE", { responsavel: "outro" }),
+      ficha("CONCLUIDA", { resultado: "APTO" }),
+      ficha("CONCLUIDA", { resultado: "INAPTO_NOTA" }),
+      ficha("EM_ANALISE", { resultado: "APTO" }),
+      { ficha: null },
     ];
-    expect(minhasAbertas(lista, "eu")).toBe(3);
-    expect(minhasAbertas(lista, "")).toBe(0);
+    expect(aptasDaFila(lista)).toBe(1);
+    expect(aptasDaFila(null)).toBe(0);
   });
 
-  it("percentual para baixo; 100% só com tudo feito; sem total, vazio", () => {
-    expect(percentualDe(1, 3)).toBe("33%");
-    expect(percentualDe(199, 200)).toBe("99%");
-    expect(percentualDe(200, 200)).toBe("100%");
-    expect(percentualDe(0, 0)).toBe("");
+  it("percentual com uma casa, para baixo; 100% só com tudo feito; sem total, vazio", () => {
+    expect(porcentagemDe(1, 3)).toBe("33,3%");
+    expect(porcentagemDe(1999, 2000)).toBe("99,9%");
+    expect(porcentagemDe(1, 4)).toBe("25%");
+    expect(porcentagemDe(200, 200)).toBe("100%");
+    expect(porcentagemDe(0, 0)).toBe("");
   });
 
   const retrato = (cronograma) => ({
@@ -79,26 +79,30 @@ describe("números dos cards da Fila", () => {
   it("a meta do dia é a do Painel das análises: o que falta pelos dias úteis até o prazo", () => {
     // Quarta, 04/11: quarta, quinta e sexta até o prazo → (20 + 4) / 3.
     expect(
-      metaDoDia(retrato(ANALISE), "e93", {
+      ritmoDaFila(retrato(ANALISE), "e93", {
         hoje: "2026-11-04",
         hora: 10,
         minuto: 0,
       }),
-    ).toEqual({ meta: 8, feito: 4 });
+    ).toEqual({
+      meta: 8,
+      feito: 4,
+      selo: { rotulo: "No ritmo hoje", tom: "aprovado" },
+    });
   });
 
-  it("sem o edital, sem prazo no cronograma ou fora de dia útil: sem meta", () => {
+  it("sem o edital: nada; sem prazo no cronograma ou fora de dia útil: sem meta", () => {
     const quarta = { hoje: "2026-11-04", hora: 10, minuto: 0 };
-    expect(metaDoDia(retrato(ANALISE), "outro", quarta)).toBeNull();
-    expect(metaDoDia(retrato([]), "e93", quarta)).toBeNull();
-    expect(
-      metaDoDia(retrato(ANALISE), "e93", {
-        hoje: "2026-11-07",
-        hora: 10,
-        minuto: 0,
-      }),
-    ).toBeNull();
-    expect(metaDoDia(null, "e93", quarta)).toBeNull();
+    expect(ritmoDaFila(retrato(ANALISE), "outro", quarta)).toBeNull();
+    expect(ritmoDaFila(null, "e93", quarta)).toBeNull();
+    expect(ritmoDaFila(retrato([]), "e93", quarta)?.meta).toBeNull();
+    const sabado = ritmoDaFila(retrato(ANALISE), "e93", {
+      hoje: "2026-11-07",
+      hora: 10,
+      minuto: 0,
+    });
+    expect(sabado?.meta).toBeNull();
+    expect(sabado?.selo.rotulo).toBe("Hoje não é dia útil");
   });
 });
 

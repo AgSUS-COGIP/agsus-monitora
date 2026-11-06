@@ -398,36 +398,10 @@
   opacity: 0.6;
 }
 
-/* Resumo do andamento: o edital e o bloco "Por vaga" (resumo-do-andamento.tsx). */
+/* "Por vaga" embaixo da faixa da Fila (resumo-do-andamento.tsx). */
 .avd-andamento {
   display: grid;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-}
-.avd-andamento-total {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1) var(--space-3);
-  font-size: var(--text-body-sm);
-}
-.avd-andamento-total > .avd-andamento-barra {
-  flex: 1 1 160px;
-  max-width: 320px;
-}
-/* O botão "Vaga X ×" do filtro ativo, na linha do edital. */
-.avd-porvaga-filtro {
-  padding: 2px var(--space-2);
-  border: 1px solid var(--state-info);
-  border-radius: var(--radius-pill);
-  background: var(--surface-card);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: var(--text-caption);
-  cursor: pointer;
-}
-.avd-porvaga-filtro:hover {
-  background: var(--surface-hover);
 }
 /* "Por vaga (N)": recolhido por padrão; aberto, uma tabela enxuta. */
 .avd-porvaga {
@@ -1778,19 +1752,7 @@
   background: var(--cor-da-folha);
 }
 
-/*
-  Uma aba só (quem não coordena o edital vê só a Fila): o título no lugar do
-  seletor. Entrada sem edital escolhido: cartões compactos dos editais.
-*/
-.avd-visao-unica {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--text-body);
-  font-weight: var(--font-weight-semibold, 600);
-}
+/* Entrada sem edital escolhido: cartões compactos dos editais. */
 .avd-entrada {
   display: grid;
   gap: var(--space-3);

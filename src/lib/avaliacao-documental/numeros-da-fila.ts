@@ -1,32 +1,28 @@
 /*
-  Os números do alto da Fila da Avaliação documental (cards): concluídas
-  hoje, as fichas abertas de quem está na tela e a meta do dia (a mesma
-  conta do card "Ritmo da análise" do Painel das análises,
+  Os números da faixa de situação da Fila da Avaliação documental:
+  concluídas hoje, as aptas entre as concluídas e o ritmo do dia (o selo e a
+  meta: a mesma conta do card "Ritmo da análise" do Painel das análises,
   src/lib/ritmo-da-analise.ts, lida de obter_ritmo_da_analise). Sem DOM; a
   lista é a que a Fila já carregou (obter_fila_avaliacao), sem consulta nova
-  — só a meta pede o ritmo, uma vez por área, e some se a pessoa não pode
-  ler o Painel das análises.
+  — só o ritmo pede obter_ritmo_da_analise, uma vez por área, e some se a
+  pessoa não pode ler o Painel das análises.
 */
 import {
   agoraEmBrasilia,
   calcularRitmo,
   lerRitmoDaAnalise,
+  seloDoCard,
+  TOM_DO_SELO_DO_RITMO,
 } from "../ritmo-da-analise.ts";
 import type { Agora } from "../ritmo-da-analise.ts";
 
 interface FichaDosNumeros {
   ficha?: {
     situacao?: unknown;
-    responsavel?: unknown;
+    resultado?: unknown;
     concluida_em?: unknown;
   } | null;
 }
-
-const ABERTAS: ReadonlySet<unknown> = new Set([
-  "PENDENTE",
-  "EM_ANALISE",
-  "REVISAR",
-]);
 
 /** O dia (AAAA-MM-DD) de uma data em Brasília; "" se não for data. */
 function diaEmBrasilia(valor: unknown): string {
@@ -51,44 +47,45 @@ export function concluidasHoje(
   return n;
 }
 
-/** As fichas ainda abertas (pendente, em análise, em revisão) com a pessoa. */
-export function minhasAbertas(
+/** As concluídas com resultado "Apto". */
+export function aptasDaFila(
   candidatos: readonly FichaDosNumeros[] | null | undefined,
-  eu: string | null | undefined,
 ): number {
-  if (!eu) return 0;
   let n = 0;
   for (const c of candidatos ?? [])
-    if (c.ficha?.responsavel === eu && ABERTAS.has(c.ficha.situacao)) n += 1;
+    if (c.ficha?.situacao === "CONCLUIDA" && c.ficha.resultado === "APTO")
+      n += 1;
   return n;
 }
 
-/** "45%" (parte do total, para baixo; 100% só com tudo feito); "" sem total. */
-export function percentualDe(parte: number, total: number): string {
-  if (!total) return "";
-  if (parte >= total) return "100%";
-  return `${Math.min(99, Math.floor((parte / total) * 100))}%`;
-}
-
-export interface MetaDoDia {
-  meta: number;
+export interface RitmoDaFila {
+  /** A meta de hoje; null sem prazo no cronograma ou fora de dia útil. */
+  meta: number | null;
   feito: number;
+  /** O selo do card "Ritmo da análise" ("No ritmo hoje", "Concluído"); "" sem selo. */
+  selo: { rotulo: string; tom: string };
 }
 
 /**
- * A meta de hoje do edital, do retrato de obter_ritmo_da_analise (a conta
- * do Painel das análises). null sem o edital no retrato, sem prazo no
- * cronograma ou fora de dia útil.
+ * O ritmo de hoje do edital, do retrato de obter_ritmo_da_analise (a conta
+ * do Painel das análises): o selo e a meta do dia. null sem o edital no
+ * retrato.
  */
-export function metaDoDia(
+export function ritmoDaFila(
   resposta: unknown,
   editalId: string,
   agora: Agora = agoraEmBrasilia(),
-): MetaDoDia | null {
+): RitmoDaFila | null {
   const edital = lerRitmoDaAnalise(resposta).find((e) => e.id === editalId);
   if (!edital) return null;
-  const { dia } = calcularRitmo(edital, agora);
-  if (dia.situacao === "sem-meta" || dia.situacao === "nao-util" || !dia.meta)
-    return null;
-  return { meta: dia.meta, feito: dia.feito };
+  const r = calcularRitmo(edital, agora);
+  const { dia } = r;
+  const semMeta =
+    dia.situacao === "sem-meta" || dia.situacao === "nao-util" || !dia.meta;
+  const selo = seloDoCard(r);
+  return {
+    meta: semMeta ? null : dia.meta,
+    feito: dia.feito,
+    selo: { rotulo: selo.rotulo, tom: TOM_DO_SELO_DO_RITMO[selo.situacao] },
+  };
 }

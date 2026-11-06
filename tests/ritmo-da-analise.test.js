@@ -444,6 +444,21 @@ describe("o dia: meta, feito e o selo que oscila", () => {
     const sabado = calcularRitmo(edital(), { hoje: "2026-10-17", hora: 10 });
     expect(seloDoCard(sabado).rotulo).toBe("Hoje não é dia útil");
     expect(textoRecolhido(sabado)).toBe("faltam 1.098");
+    // Tudo concluído: o selo "Concluído" já diz; o texto não o repete.
+    const pronto = calcularRitmo(
+      edital({
+        situacoes: {
+          pendente: 0,
+          em_analise: 0,
+          revisar: 0,
+          concluida: 1500,
+          fora_lote: 0,
+        },
+      }),
+      { hoje: "2026-10-19", hora: 13 },
+    );
+    expect(seloDoCard(pronto).rotulo).toBe("Concluído");
+    expect(textoRecolhido(pronto)).toBe("");
   });
 });
 

@@ -1,6 +1,7 @@
 import type { MouseEvent } from "react";
 import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
 import { usarEstadoDaNavegacao } from "../contexto-do-app.ts";
+import { telaDaRota } from "../../lib/rotas.ts";
 import { SininhoDoResumo } from "../../modulos/resumo-do-dia/resumo-do-dia.tsx";
 import {
   IconeDaTelaCheia,
@@ -43,10 +44,13 @@ export function Topo() {
   );
 }
 
+/* Nas telas com título próprio (`tituloNaTela`), o daqui fica só para o leitor de tela. */
 function TituloDaPagina() {
-  const { titulo, subtitulo } = usarEstadoDaNavegacao();
+  const { titulo, subtitulo, view, aviso } = usarEstadoDaNavegacao();
+  // Com um aviso no lugar da página, a tela não está lá: o título fica à vista.
+  const naTela = !aviso && Boolean(telaDaRota(view)?.tituloNaTela);
   return (
-    <div className="page-title">
+    <div className={naTela ? "page-title sr-only" : "page-title"}>
       <h1 id="pageTitle">{titulo}</h1>
       <p id="pageSubtitle">{subtitulo}</p>
     </div>

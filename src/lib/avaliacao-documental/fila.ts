@@ -30,7 +30,8 @@ export type EtapaDaFila =
   | "em_analise"
   | "revisao"
   | "concluidas"
-  | "eliminados";
+  | "eliminados"
+  | "fora";
 
 /** A situação da ficha (TB_FICHA_ANALISE). */
 export type SituacaoDaFicha =
@@ -207,6 +208,7 @@ export const ETAPAS_DA_FILA: ReadonlyArray<{
   { valor: "revisao", rotulo: "Em revisão" },
   { valor: "concluidas", rotulo: "Concluídas" },
   { valor: "eliminados", rotulo: "Eliminados" },
+  { valor: "fora", rotulo: "Fora do lote" },
 ]);
 
 export const SITUACOES_DA_FICHA: Readonly<
@@ -236,6 +238,7 @@ export function naEtapa(
   if (etapa === "inscritos" || !etapa) return true;
   if (etapa === "lote") return NO_LOTE.has(c.situacao_pre);
   if (etapa === "eliminados") return c.situacao_pre === "ELIMINADO";
+  if (etapa === "fora") return !NO_LOTE.has(c.situacao_pre);
   const situacao = SITUACAO_DA_ETAPA[etapa];
   return Boolean(situacao) && c.ficha?.situacao === situacao;
 }
@@ -337,21 +340,6 @@ export function andamentoDaFila(
       }))
       .filter((v) => v.lote > 0),
   };
-}
-
-/** "Enfermeiro · concluídas 3 de 12 · em análise 2 · pendentes 7" (a revisão, quando houver). */
-export function textoDoAndamento(
-  a: ContagemDoAndamento & { cargo?: string | null },
-): string {
-  return [
-    a.cargo,
-    `concluídas ${a.concluidas} de ${a.lote}`,
-    `em análise ${a.em_analise}`,
-    a.revisao ? `em revisão ${a.revisao}` : "",
-    `pendentes ${a.pendentes}`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
 }
 
 /**
@@ -830,6 +818,7 @@ const COLUNAS_DA_ETAPA: Readonly<
     "concluida_em",
   ],
   eliminados: ["codigo", "nome", "vaga", "motivo", "art"],
+  fora: ["vaga", "posicao", "codigo", "nome", "art", "situacao"],
 });
 
 /** As chaves das colunas da aba (Eliminados: código, nome, vaga, motivo e ART; …). */
