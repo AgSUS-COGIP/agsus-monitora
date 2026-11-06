@@ -24,6 +24,8 @@
   gravar_pre_classificacao_vaga, obter_acompanhamento_inscricoes,
   obter_quadro_de_vagas, pre_classificacao_ler_candidatos). Nenhum índice,
   coluna gerada ou view materializada usa a função (conferido em 06/11/2026).
+  Como está no fecho das leituras por versão (20261029170000), a migration
+  termina com private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"().
 
   Cópia em Python (o robô das conferências confere a vaga sem quadro lá):
   python/monitora/classificacao/quadro_da_vaga.py — muda junto, com os casos
@@ -59,5 +61,8 @@ as $function$
    where t <> '' and t not in ('a', 'as', 'o', 'os', 'e', 'de', 'do', 'da', 'dos', 'das', 'em', 'no', 'na', 'para');
 $function$;
 comment on function private."FC_TOKENS_VAGA"(text) is 'Palavras de um nome de cargo/lotação para comparar a vaga da análise com o quadro do edital: UF colada na cidade separada ("OtoniMG" → otoni mg), minúsculas, sem acento, sem "em Excel (questionário…", sem parêntese que não fecha, sem o que está entre parênteses e sem artigos/preposições. Cópia em python/monitora/classificacao/quadro_da_vaga.py.';
+
+-- FC_TOKENS_VAGA está no fecho das leituras por versão (20261029170000): recalcula as fontes delas.
+select private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"();
 
 commit;

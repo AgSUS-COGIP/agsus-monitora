@@ -19,4 +19,5 @@ as $function$
    where t <> '' and t not in ('a', 'as', 'o', 'os', 'e', 'de', 'do', 'da', 'dos', 'das', 'em', 'no', 'na', 'para');
 $function$;
 comment on function private."FC_TOKENS_VAGA"(text) is 'Palavras de um nome de cargo/lotação para comparar a vaga da análise com o quadro do edital: minúsculas, sem acento, sem "em Excel (questionário…", sem o que está entre parênteses e sem artigos/preposições.';
+select private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"();
 commit;
