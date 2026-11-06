@@ -3,6 +3,11 @@
   `listar_candidatos_aprovados_compacto()` devolvia no formato 1 (listas uma vez
   + linhas), o de antes da migration 20260929210000.
 */
+import { definido } from "../definido.ts";
+
+/** Um candidato no formato de sempre (as colunas que o teste preencher). */
+export type CandidatoDoTeste = Readonly<Record<string, unknown>>;
+
 const COLUNAS_DA_LISTA = [
   "edital_id",
   "edital",
@@ -36,15 +41,15 @@ const COLUNAS_DA_ALTERACAO = [
   "classificacao_original",
 ];
 const TODAS_AS_COLUNAS = [...COLUNAS, ...COLUNAS_DA_ALTERACAO];
-const daAlteracao = (candidato) =>
+const daAlteracao = (candidato: CandidatoDoTeste) =>
   candidato.alterado_judicialmente
     ? COLUNAS_DA_ALTERACAO.map((coluna) => candidato[coluna] ?? null)
     : [];
 
-export function compactarCandidatos(candidatos) {
-  const listas = {};
+export function compactarCandidatos(candidatos: readonly CandidatoDoTeste[]) {
+  const listas: Record<string, unknown[]> = {};
   const linhas = candidatos.map((candidato, i) => {
-    const lista = candidato.lista_id ?? `lista-${i}`;
+    const lista = String(candidato.lista_id ?? `lista-${i}`);
     listas[lista] = COLUNAS_DA_LISTA.map((coluna) => candidato[coluna] ?? null);
     return [
       ...COLUNAS.map((coluna) =>
@@ -71,11 +76,14 @@ const DICIONARIZADAS = ["cargo", "modalidade", "status", "codigo_vaga"];
   valores em ordem), como a migration 20260929210000 monta.
 */
 export function compactarPorArea(
-  candidatos,
-  { area = "saude-indigena", versao = "v1" } = {},
+  candidatos: readonly CandidatoDoTeste[],
+  {
+    area = "saude-indigena",
+    versao = "v1",
+  }: { area?: string; versao?: string } = {},
 ) {
-  const ids = [];
-  const listas = [];
+  const ids: unknown[] = [];
+  const listas: unknown[][] = [];
   candidatos.forEach((candidato, i) => {
     const lista = candidato.lista_id ?? `lista-${i}`;
     if (ids.includes(lista)) return;
@@ -85,7 +93,7 @@ export function compactarPorArea(
       ...COLUNAS_DA_LISTA.map((coluna) => candidato[coluna] ?? null),
     ]);
   });
-  const dicionarios = Object.fromEntries(
+  const valores: Record<string, unknown[]> = Object.fromEntries(
     DICIONARIZADAS.map((coluna) => [
       coluna,
       [
@@ -98,21 +106,22 @@ export function compactarPorArea(
     ]),
   );
   // "Contratado em outra lista" (20261024120000): id → [situação, motivo] das linhas decididas.
-  dicionarios.contratacao = Object.fromEntries(
+  const contratacao = Object.fromEntries(
     candidatos
       .filter((candidato) => candidato.contratacao_situacao)
       .map((candidato) => [
-        candidato.candidato_id,
+        String(candidato.candidato_id),
         [candidato.contratacao_situacao, candidato.contratacao_motivo ?? ""],
       ]),
   );
+  const dicionarios = { ...valores, contratacao };
   const linhas = candidatos.map((candidato, i) => [
     ...COLUNAS.map((coluna) => {
       if (coluna === "lista_id")
         return ids.indexOf(candidato.lista_id ?? `lista-${i}`);
       const valor = candidato[coluna] ?? null;
       if (!DICIONARIZADAS.includes(coluna) || valor === null) return valor;
-      return dicionarios[coluna].indexOf(valor);
+      return definido(valores[coluna]).indexOf(valor);
     }),
     ...daAlteracao(candidato),
   ]);

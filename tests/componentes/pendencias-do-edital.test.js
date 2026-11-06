@@ -3,12 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { criarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
 import { pedirFiltro } from "../../src/app/pedido-de-filtro.js";
 import { clicar, digitar, escolher, esperar } from "./interacoes.ts";
-import { compactarPorArea } from "./candidatos-compactos-falsos.js";
+import { compactarPorArea } from "./candidatos-compactos-falsos.ts";
 import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.js";
+import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.ts";
 import { montarTela } from "../montar-tela.ts";
 
 /*

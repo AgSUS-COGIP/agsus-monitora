@@ -8,7 +8,7 @@ import { criarCacheDePayload } from "../src/lib/cache-de-payload";
 import {
   compactarCandidatos,
   compactarPorArea,
-} from "./componentes/candidatos-compactos-falsos.js";
+} from "./componentes/candidatos-compactos-falsos.ts";
 
 /* Candidatos no formato de sempre, com repetição e nulos nos campos de dicionário. */
 const CANDIDATOS = [

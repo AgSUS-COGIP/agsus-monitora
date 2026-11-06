@@ -20,6 +20,11 @@ import {
   trocarNaAgenda,
   validarRegraDaAgenda,
 } from "../../src/lib/agenda-das-entrevistas.ts";
+import type {
+  ConvocadoDaAgenda,
+  ItemDaAgenda,
+} from "../../src/lib/tipos-da-agenda.ts";
+import { definido } from "../definido.ts";
 
 /*
   O motor da agenda das entrevistas (src/lib/agenda-das-entrevistas.ts):
@@ -42,7 +47,10 @@ const regra = (campos = {}) => ({
   ...campos,
 });
 
-const c = (n, campos = {}) => ({
+const c = (
+  n: number,
+  campos: Partial<ConvocadoDaAgenda> = {},
+): ConvocadoDaAgenda => ({
   analiseId: `a${n}`,
   nome: `Candidato ${n}`,
   vaga: "V1",
@@ -236,7 +244,7 @@ describe("ordem dos candidatos e agrupar por cargo", () => {
     }),
     c(2, { analiseId: "b2", nome: "Ícaro", vaga: "V1", cargo: "Enfermeiro" }),
   ];
-  const ordem = (o, extra = {}) =>
+  const ordem = (o: string, extra: Record<string, unknown> = {}) =>
     ordenarConvocados(lista, { ordem: o, ...extra }).map((x) => x.nome);
 
   it("classificação: posição em todas as vagas, empate pela ordem da lista", () => {
@@ -315,7 +323,7 @@ describe("convocados da lista de convocação", () => {
         },
       ],
     };
-    expect(convocadosDaLista(resultado)[0].analiseId).toBe("y1");
+    expect(convocadosDaLista(resultado)[0]?.analiseId).toBe("y1");
   });
 });
 
@@ -330,7 +338,7 @@ describe("ajuste manual e conflitos", () => {
       inicio: "08:30",
       banca: 2,
     });
-    const movido = moverNaAgenda(base(), "a1", livre);
+    const movido = moverNaAgenda(base(), "a1", definido(livre));
     expect(movido[0]).toMatchObject({
       inicio: "08:30",
       banca: 2,
@@ -363,26 +371,26 @@ describe("ajuste manual e conflitos", () => {
       fim: "08:45",
       banca: 1,
     });
-    const conflitos = conflitosDaAgenda([...itens, { ...itens[1] }], {
+    const conflitos = conflitosDaAgenda([...itens, { ...definido(itens[1]) }], {
       nomes_das_bancas: ["Sala A"],
     });
     expect(conflitos.map((x) => x.tipo).sort()).toEqual([
       "HORARIO",
       "REPETIDO",
     ]);
-    expect(conflitos.find((x) => x.tipo === "HORARIO").texto).toBe(
+    expect(conflitos.find((x) => x.tipo === "HORARIO")?.texto).toBe(
       "Candidato 1 e Candidato 3: Sala A, 09/10/2026, 08:00.",
     );
   });
 
   it("acusa a entrevista longa que cobre outras além da vizinha", () => {
-    const item = (n, inicio, fim) => ({
-      analiseId: `a${n}`,
-      nome: `Candidato ${n}`,
+    const item = (n: number, inicio: string, fim: string): ItemDaAgenda => ({
+      ...c(n),
       data: "2026-10-09",
       inicio,
       fim,
       banca: 1,
+      origem: "GERADA",
     });
     const conflitos = conflitosDaAgenda([
       item(1, "08:00", "10:00"),
@@ -406,9 +414,9 @@ describe("ajuste manual e conflitos", () => {
   });
 
   it("a agenda salva se junta à lista atual; quem saiu da lista fica marcado", () => {
-    const salvos = [
+    const salvos: ItemDaAgenda[] = [
       {
-        analiseId: "a1",
+        ...c(1),
         data: "2026-10-09",
         inicio: "08:00",
         fim: "08:30",
@@ -416,6 +424,7 @@ describe("ajuste manual e conflitos", () => {
         origem: "MANUAL",
       },
       {
+        ...c(9),
         analiseId: "zz",
         nome: "Fora",
         data: "2026-10-09",
@@ -433,7 +442,7 @@ describe("ajuste manual e conflitos", () => {
       ["a2", null, false],
       ["zz", "09:00", true],
     ]);
-    expect(itens[0].origem).toBe("MANUAL");
+    expect(itens[0]?.origem).toBe("MANUAL");
   });
 });
 
@@ -445,7 +454,7 @@ describe("exportação", () => {
       null,
     );
     const linhas = linhasDaAgenda(itens, { nomes_das_bancas: ["", "Sala B"] });
-    expect(linhas[0][2]).toBe("Início (Brasília)");
+    expect(linhas[0]?.[2]).toBe("Início (Brasília)");
     expect(linhas[1]).toEqual([
       "09/10/2026",
       "sex",
@@ -458,7 +467,7 @@ describe("exportação", () => {
       "AC",
       "Gerada",
     ]);
-    expect(linhas[2][0]).toBe("Sem horário");
+    expect(linhas[2]?.[0]).toBe("Sem horário");
     const bytes = gerarXlsxDaAgenda(itens);
     expect(bytes[0]).toBe(0x50);
     expect(bytes[1]).toBe(0x4b);

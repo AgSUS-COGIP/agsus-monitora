@@ -5,12 +5,38 @@
   `vi.fn` — o teste vê a chamada única. Pacote sem a função por área
   (PGRST202) é banco antigo: a abertura também não existe.
 */
+/** A resposta de uma RPC no teste (o `{ data, error }` do Supabase). */
+export interface RespostaDoTeste {
+  data: unknown;
+  error: { code?: string; message?: string } | null;
+}
+
+/** Responde cada RPC antiga pelo nome. */
+export type ResponderNoTeste = (
+  nome: string,
+  argumentos?: Record<string, unknown>,
+) => RespostaDoTeste | undefined | PromiseLike<RespostaDoTeste | undefined>;
+
+interface ArgumentosDaAbertura {
+  p_area?: unknown;
+  p_versao?: unknown;
+  p_com_candidatos?: unknown;
+}
+
 export async function aberturaPelasChamadasDeAntes(
-  responder,
-  { p_area: area, p_versao: versao = null, p_com_candidatos = true } = {},
+  responder: ResponderNoTeste,
+  {
+    p_area: area,
+    p_versao: versao = null,
+    p_com_candidatos = true,
+  }: ArgumentosDaAbertura = {},
 ) {
-  const erros = {};
-  const parte = async (chave, nome, argumentos) => {
+  const erros: Record<string, unknown> = {};
+  const parte = async (
+    chave: string,
+    nome: string,
+    argumentos?: Record<string, unknown>,
+  ) => {
     const resposta = await responder(nome, argumentos);
     if (resposta?.error) {
       erros[chave] ??= resposta.error;
@@ -18,7 +44,7 @@ export async function aberturaPelasChamadasDeAntes(
     }
     return resposta?.data ?? null;
   };
-  let pacote = null;
+  let pacote: unknown = null;
   if (p_com_candidatos) {
     const resposta = await responder("listar_candidatos_aprovados_compacto", {
       p_area: area,

@@ -6,6 +6,11 @@ import {
   pedidoLido,
   textoDoCasamentoParado,
 } from "../../src/lib/casamento-da-lista.ts";
+import type { CasamentoDaLista } from "../../src/lib/casamento-da-lista.ts";
+import { definido } from "../definido.ts";
+
+/* O que `acompanharCasamento` devolve: o casamento ou o erro. */
+type Acompanhamento = { casamento?: CasamentoDaLista; erro?: string };
 
 /*
   A prévia do casamento da lista de aprovados (migration 20261030090000): a
@@ -63,10 +68,10 @@ describe("respostas do banco", () => {
       situacao: "PENDENTE",
     });
     const c = casamentoLido(calculado());
-    expect(c.plano.vinculos).toEqual([
+    expect(definido(c.plano).vinculos).toEqual([
       { candidato_id: C1, chave: "1", forma: "NOME" },
     ]);
-    expect(c.plano.pendencias[0]).toMatchObject({
+    expect(definido(c.plano).pendencias[0]).toMatchObject({
       nome: "Paulo",
       status: "Desistente",
       matricula: "",
@@ -135,13 +140,13 @@ describe("acompanharCasamento", () => {
       .mockResolvedValueOnce(pendente())
       .mockResolvedValueOnce(calculado());
     const esperar = vi.fn(async () => {});
-    const r = await acompanharCasamento({
+    const r: Acompanhamento = await acompanharCasamento({
       pedidoId: P,
       obter,
       esperar,
       intervaloMs: 10,
     });
-    expect(r.casamento.situacao).toBe("CALCULADO");
+    expect(definido(r.casamento).situacao).toBe("CALCULADO");
     expect(obter).toHaveBeenCalledTimes(3);
     expect(esperar).toHaveBeenCalledWith(10);
   });
@@ -150,7 +155,7 @@ describe("acompanharCasamento", () => {
     const obter = vi
       .fn()
       .mockResolvedValue({ ...pendente(), disparo: "SEM_TOKEN" });
-    const r = await acompanharCasamento({
+    const r: Acompanhamento = await acompanharCasamento({
       pedidoId: P,
       obter,
       esperar: async () => {},
@@ -161,7 +166,7 @@ describe("acompanharCasamento", () => {
 
   it("o prazo passou", async () => {
     let t = 0;
-    const r = await acompanharCasamento({
+    const r: Acompanhamento = await acompanharCasamento({
       pedidoId: P,
       obter: async () => pendente(),
       esperar: async (ms) => {
@@ -177,7 +182,7 @@ describe("acompanharCasamento", () => {
   });
 
   it("o job deu erro", async () => {
-    const r = await acompanharCasamento({
+    const r: Acompanhamento = await acompanharCasamento({
       pedidoId: P,
       obter: async () => ({
         ...pendente(),
@@ -190,7 +195,7 @@ describe("acompanharCasamento", () => {
   });
 
   it("a tela mudou: para sem aviso", async () => {
-    const r = await acompanharCasamento({
+    const r: Acompanhamento = await acompanharCasamento({
       pedidoId: P,
       obter: async () => pendente(),
       esperar: async () => {},

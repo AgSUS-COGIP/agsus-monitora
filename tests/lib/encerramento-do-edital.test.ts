@@ -10,6 +10,7 @@ import {
   selosDoPerfil,
   tituloDeQuemFechou,
 } from "../../src/lib/encerramento-do-edital.ts";
+import { definido } from "../definido.ts";
 
 /*
   Encerramento do edital: a leitura da RPC, a tela a mostrar (uma por vez, a
@@ -76,9 +77,9 @@ describe("leitura da RPC", () => {
     const [e] = lerEncerramentos({
       editais: [bruto({ fichas: 3, minha: { fichas: 9, percentual: null } })],
     });
-    expect(e.minha.fichas).toBe(3);
-    expect(e.minha.percentual).toBe(100);
-    expect(e.minha.melhorDia).toBeNull();
+    expect(e?.minha.fichas).toBe(3);
+    expect(e?.minha.percentual).toBe(100);
+    expect(e?.minha.melhorDia).toBeNull();
   });
 
   it("ordena pelo encerramento; mostra o mais antigo não visto", () => {
@@ -90,7 +91,7 @@ describe("leitura da RPC", () => {
       ],
     });
     expect(lista.map((e) => e.id)).toEqual(["a", "c", "b"]);
-    expect(encerramentoAMostrar(lista).id).toBe("c");
+    expect(encerramentoAMostrar(lista)?.id).toBe("c");
     expect(
       encerramentoAMostrar(lista.map((e) => ({ ...e, visto: true }))),
     ).toBeNull();
@@ -136,7 +137,7 @@ describe("fogos da tela", () => {
   });
 
   it("quem entra depois ganha os fogos do marco edital-concluido", () => {
-    expect(fogosDoEncerramento(comum, new Set())).toEqual({
+    expect(fogosDoEncerramento(definido(comum), new Set())).toEqual({
       marco: "edital-concluido",
       forma: "coracao",
       texto: "Edital 114/2026 concluído! Obrigado, equipe.",
@@ -144,7 +145,9 @@ describe("fogos da tela", () => {
   });
 
   it("quem viu o edital zerar na tela não ganha os fogos de novo", () => {
-    expect(fogosDoEncerramento(comum, new Set(["114/2026"]))).toBeNull();
+    expect(
+      fogosDoEncerramento(definido(comum), new Set(["114/2026"])),
+    ).toBeNull();
     expect(
       editaisDoEvento({ editais: ["114/2026", "Edital 114/2026", ""] }),
     ).toEqual(["114/2026"]);
@@ -152,7 +155,9 @@ describe("fogos da tela", () => {
   });
 
   it("quem fechou ganha a animação própria, mesmo depois dos fogos do marco", () => {
-    expect(fogosDoEncerramento(fechou, new Set(["114/2026"]))).toEqual({
+    expect(
+      fogosDoEncerramento(definido(fechou), new Set(["114/2026"])),
+    ).toEqual({
       marco: "edital-fechado",
       forma: "estrela",
       texto: "Você fechou o 114! A última ficha do edital foi sua.",

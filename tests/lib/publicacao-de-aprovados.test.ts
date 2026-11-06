@@ -108,12 +108,12 @@ describe("candidatosDaListaFinal", () => {
       situacao: "VAGA",
       cargo: "Enfermeiro",
     });
-    expect(linhas[2].situacao).toBe("CR");
+    expect(linhas[2]?.situacao).toBe("CR");
   });
 
   it("vaga sem código e sem análise conhecida usa a chave da vaga", () => {
     const [, , , , tecnico] = candidatosDaListaFinal(retrato);
-    expect(tecnico.codigo_vaga).toBe("quadro:9");
+    expect(tecnico?.codigo_vaga).toBe("quadro:9");
   });
 
   it("retrato vazio não quebra", () => {
@@ -140,10 +140,10 @@ describe("origem da lista", () => {
       tipo: "CLASSIFICACAO",
       texto: "Publicada da Classificação em 05/10",
     });
-    expect(origemDaLista({ origem: "XLSX" }).texto).toBe(
+    expect(origemDaLista({ origem: "XLSX" })?.texto).toBe(
       "Lista manual (planilha)",
     );
-    expect(origemDaLista({}).tipo).toBe("XLSX");
+    expect(origemDaLista({})?.tipo).toBe("XLSX");
     expect(origemDaLista(null)).toBeNull();
   });
 

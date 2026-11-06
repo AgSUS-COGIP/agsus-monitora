@@ -6,12 +6,12 @@ import { criarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados
 import { modeloDeReferencia } from "../../src/lib/modelo-de-convocacao.ts";
 import { LEI_15142_ESPALHADA } from "../modelos-de-convocacao-antigos.js";
 import { clicar, digitar, escolher, esperar } from "./interacoes.ts";
-import { compactarCandidatos } from "./candidatos-compactos-falsos.js";
+import { compactarCandidatos } from "./candidatos-compactos-falsos.ts";
 import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.js";
+import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.ts";
 import { montarTela } from "../montar-tela.ts";
 import { registrarTelas } from "../../src/app/registro-das-telas.ts";
 

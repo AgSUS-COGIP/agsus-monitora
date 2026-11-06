@@ -7,10 +7,12 @@ import {
   resultadoDaMarcacao,
 } from "../../src/lib/dados-do-estado-de-aprovados.ts";
 import { criarEstadoDaListaDeAprovados } from "../../src/modulos/aprovados/estado.ts";
-import { compactarPorArea } from "../componentes/candidatos-compactos-falsos.js";
-import { aberturaPelasChamadasDeAntes } from "../componentes/abertura-dos-aprovados.js";
+import { compactarPorArea } from "../componentes/candidatos-compactos-falsos.ts";
+import { aberturaPelasChamadasDeAntes } from "../componentes/abertura-dos-aprovados.ts";
+import type { RespostaDoTeste } from "../componentes/abertura-dos-aprovados.ts";
+import { clienteDosAprovados } from "../clientes-falsos.ts";
 
-const candidato = (id) => ({
+const candidato = (id: string) => ({
   candidato_id: id,
   nome: id,
   edital_id: "10",
@@ -20,10 +22,13 @@ const candidato = (id) => ({
   lista_ativa: true,
   status: null,
 });
-function preparar(confirmacao) {
-  let pacote = compactarPorArea([candidato("ana"), candidato("bia")]);
+function preparar(confirmacao: unknown) {
+  let pacote: unknown = compactarPorArea([candidato("ana"), candidato("bia")]);
   const toast = vi.fn();
-  const responder = async (nome) => {
+  const responder = async (
+    nome: string,
+    _argumentos?: Record<string, unknown>,
+  ): Promise<RespostaDoTeste> => {
     if (nome === "listar_candidatos_aprovados_compacto")
       return { data: pacote, error: null };
     if (nome === "listar_listas_aprovados")
@@ -36,13 +41,13 @@ function preparar(confirmacao) {
     return { data: [], error: null };
   };
   // A abertura da página numa chamada, montada com as respostas acima.
-  const rpc = vi.fn((nome, argumentos) =>
+  const rpc = vi.fn((nome: string, argumentos?: Record<string, unknown>) =>
     nome === "abrir_lista_aprovados"
       ? aberturaPelasChamadasDeAntes(responder, argumentos)
       : responder(nome, argumentos),
   );
   const estado = criarEstadoDaListaDeAprovados({
-    supabase: { rpc },
+    supabase: clienteDosAprovados(rpc),
     getProfile: () => ({ perfil: "admin" }),
     areaAtual: () => "saude-indigena",
     hoje: () => "2026-10-15",
@@ -52,7 +57,7 @@ function preparar(confirmacao) {
     estado,
     rpc,
     toast,
-    trocarPacote: (novo) => {
+    trocarPacote: (novo: unknown) => {
       pacote = novo;
     },
   };

@@ -4,6 +4,8 @@ import {
   lerConfiguracoesDoBanco,
 } from "../../src/lib/configuracao-de-convocacao.ts";
 import { criarEstadoDaListaDeAprovados } from "../../src/modulos/aprovados/estado.ts";
+import { clienteDosAprovados } from "../clientes-falsos.ts";
+import { definido } from "../definido.ts";
 describe("dados da configuração de convocação", () => {
   it.each([
     {},
@@ -40,23 +42,30 @@ describe("dados da configuração de convocação", () => {
     expect(lerModelosDoBanco(null).size).toBe(0);
     expect(lerConfiguracoesDoBanco(undefined).size).toBe(0);
     expect(
-      lerModelosDoBanco([{ modelo_id: "m1", categorias: [] }]).get("m1")
-        .categorias,
+      definido(
+        lerModelosDoBanco([{ modelo_id: "m1", categorias: [] }]).get("m1"),
+      ).categorias,
     ).toHaveLength(1);
     expect(
-      lerConfiguracoesDoBanco([{ edital_id: "e1", vagas: [] }]).get("e1").vagas
-        .size,
+      definido(
+        lerConfiguracoesDoBanco([{ edital_id: "e1", vagas: [] }]).get("e1"),
+      ).vagas.size,
     ).toBe(0);
   });
   it("uma atualização malformada preserva a configuração anterior e a nova tentativa pode atualizá-la", async () => {
-    let modelos = [{ modelo_id: "m1", nome: "Original" }],
-      configs = [{ edital_id: "e1", modelo_id: "m1", padrao_imediata: 2 }];
+    let modelos: unknown[] = [{ modelo_id: "m1", nome: "Original" }],
+      configs: unknown[] = [
+        { edital_id: "e1", modelo_id: "m1", padrao_imediata: 2 },
+      ];
     const toast = vi.fn();
-    const rpc = vi.fn(async (nome) => ({
+    const rpc = vi.fn(async (nome: string) => ({
       data: nome === "listar_modelos_convocacao" ? modelos : configs,
       error: null,
     }));
-    const estado = criarEstadoDaListaDeAprovados({ supabase: { rpc }, toast });
+    const estado = criarEstadoDaListaDeAprovados({
+      supabase: clienteDosAprovados(rpc),
+      toast,
+    });
     await estado.carregarConfiguracoes();
     const anterior = estado.obter();
     modelos = [{ modelo_id: "m2", nome: "Novo" }];
@@ -71,6 +80,6 @@ describe("dados da configuração de convocação", () => {
     configs = [{ edital_id: "e1", modelo_id: "m2", padrao_imediata: 3 }];
     await estado.carregarConfiguracoes();
     expect(estado.obter().modelos.has("m2")).toBe(true);
-    expect(estado.obter().configs.get("e1").padraoImediata).toBe(3);
+    expect(estado.obter().configs.get("e1")?.padraoImediata).toBe(3);
   });
 });
