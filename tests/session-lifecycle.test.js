@@ -67,9 +67,8 @@ describe("session lifecycle", () => {
     }));
     const definir = vi.spyOn(Element.prototype, "innerHTML", "set");
     try {
-      const { installSessionLifecycle } = await import(
-        "../src/lib/session-lifecycle"
-      );
+      const { installSessionLifecycle } =
+        await import("../src/lib/session-lifecycle");
       installSessionLifecycle();
 
       const timer = document.getElementById("agsusSessionTimer");

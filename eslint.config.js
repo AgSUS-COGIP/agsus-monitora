@@ -146,11 +146,13 @@ export default [
         },
         {
           selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
-          message: "Sem dangerouslySetInnerHTML: o texto vai como filho no JSX.",
+          message:
+            "Sem dangerouslySetInnerHTML: o texto vai como filho no JSX.",
         },
         {
           selector: "Property[key.name='dangerouslySetInnerHTML']",
-          message: "Sem dangerouslySetInnerHTML: o texto vai como filho no JSX.",
+          message:
+            "Sem dangerouslySetInnerHTML: o texto vai como filho no JSX.",
         },
       ],
     },
