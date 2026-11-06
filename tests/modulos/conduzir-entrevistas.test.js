@@ -88,6 +88,7 @@ async function montar(
       aoComemorar,
       comemoracoesLigadas,
       hojeDe: () => HOJE,
+      horaDe: () => "08:30",
       armazenamento: () => guardado,
       ...opcoes,
     });
@@ -106,6 +107,7 @@ beforeEach(() => {
   definirAreaAtual("saude-indigena");
   guardado = memoria();
   localStorage.clear();
+  sessionStorage.clear();
 });
 
 afterEach(async () => {
@@ -346,8 +348,16 @@ function supabaseDaConducao({ edital = EDITAL, respostas = {} } = {}) {
 
 const visao = (valor) =>
   document.querySelector(
-    `.ui-topo .entrevistas-visoes button[data-valor="${valor}"]`,
+    `.ui-cabecalho-da-tela .entrevistas-visoes button[data-valor="${valor}"]`,
   );
+/* Abre a ficha pela linha da fila: o botão dela (Iniciar, Continuar, Ver…) ou "Ver ficha" no ⋯. */
+async function abrirLinha(id) {
+  const linha = document.querySelector(`tr[data-convocado="${id}"]`);
+  const botao = linha?.querySelector("[data-acao='abrir-ficha']");
+  if (botao) return clicar(botao);
+  await clicar(linha?.querySelector("[data-acao='abrir-menu']"));
+  return clicar(linha?.querySelector("[data-acao='linha-ver-ficha']"));
+}
 const chamadas = (supabase, nome) =>
   supabase.rpc.mock.calls.filter(([n]) => n === nome);
 
@@ -389,7 +399,7 @@ const editarConfiguracao = () =>
 async function abrirAFicha(id = "e1") {
   await clicar(visao("fila"));
   await esperar();
-  await clicar(document.querySelector(`[data-convocado="${id}"]`));
+  await abrirLinha(id);
   return document.getElementById("entrevistasFichaDoCandidato");
 }
 
@@ -454,7 +464,7 @@ const AGENDA_DO_DIA = {
   ],
 };
 const cartoes = () =>
-  [...document.querySelectorAll(".entrevistas-fila-cartao")].map((c) => [
+  [...document.querySelectorAll("tr.entrevistas-fila-linha")].map((c) => [
     c.dataset.convocado,
     c.dataset.situacao,
   ]);
@@ -487,8 +497,11 @@ describe("a tela de Conduzir entrevistas", () => {
       secao.querySelector(".entrevistas-fila-recortes [aria-checked=true]")
         .textContent,
     ).toBe("Todos (1)");
-    // As iniciais ignoram números: "Candidato 1" → "CA".
-    expect(secao.querySelector(".entrevistas-avatar").textContent).toBe("CA");
+    // A pessoa: nome e "código · modalidade", sem círculo de iniciais.
+    expect(
+      secao.querySelector('tr[data-convocado="e1"] .ui-pessoa').textContent,
+    ).toBe("Candidato 1K1 · Ampla");
+    expect(secao.querySelector(".entrevistas-avatar")).toBeNull();
     expect(
       guardado.mapa.get("agsus:conduzir-entrevistas:edital:saude-indigena"),
     ).toBe("m1");
@@ -544,23 +557,27 @@ describe("a tela de Conduzir entrevistas", () => {
       ].map((b) => b.textContent),
     ).toEqual(["Hoje (4)", "Próximos (1)", "Todos (5)"]);
     await clicar(
-      secao.querySelector(".entrevistas-fila-resumo [data-situacao='faltou']"),
+      secao.querySelector(
+        "[data-tour='conduzir-situacoes'] [data-valor='faltou']",
+      ),
     );
     expect(cartoes()).toEqual([["e3", "faltou"]]);
     await clicar(
-      secao.querySelector(".entrevistas-fila-resumo [data-situacao='faltou']"),
+      secao.querySelector(
+        "[data-tour='conduzir-situacoes'] [data-valor='faltou']",
+      ),
     );
     await clicar(
       secao.querySelector(".entrevistas-fila-recortes [data-valor='proximos']"),
     );
     expect(cartoes()).toEqual([["e5", "aguardando"]]);
-    // Fora de Hoje, o dia fica no cartão; o cabeçalho é o da vaga.
+    // Fora de Hoje, o dia fica embaixo do horário; a vaga é coluna (código e cargo).
     expect(secao.querySelector(".entrevistas-fila-hora").textContent).toContain(
       "Amanhã",
     );
-    expect(secao.querySelector(".entrevistas-fila-vaga").textContent).toBe(
-      "V1 · Enfermeiro1",
-    );
+    expect(
+      secao.querySelector('tr[data-convocado="e5"]').textContent,
+    ).toContain("V1Enfermeiro");
   });
 
   it("a ficha abre do cartão; Salvar e abrir o próximo segue a fila; concluir o dia comemora uma vez", async () => {
@@ -597,10 +614,10 @@ describe("a tela de Conduzir entrevistas", () => {
     await montar(supabase);
     expect(contador()).toBe("3 de 4 hoje");
     expect(aoComemorar).not.toHaveBeenCalled();
-    await clicar(document.querySelector('[data-convocado="e2"]'));
+    await abrirLinha("e2");
     const ficha = document.getElementById("entrevistasFichaDoCandidato");
     expect(ficha).not.toBeNull();
-    expect(document.querySelector(".ui-topo")).toBeNull();
+    expect(document.querySelector(".ui-cabecalho-da-tela")).toBeNull();
     await clicar(
       ficha.querySelector('.entrevistas-comparecimento button[data-valor="N"]'),
     );
@@ -664,11 +681,11 @@ describe("a tela de Conduzir entrevistas", () => {
     await montar(supabase);
     await clicar(
       document.querySelector(
-        '.entrevistas-fila-resumo [data-situacao="aguardando"]',
+        '[data-tour="conduzir-situacoes"] [data-valor="aguardando"]',
       ),
     );
     expect(cartoes().map(([id]) => id)).toEqual(["e3", "e1"]);
-    await clicar(document.querySelector('[data-convocado="e3"]'));
+    await abrirLinha("e3");
     const ficha = document.getElementById("entrevistasFichaDoCandidato");
     await clicar(
       ficha.querySelector('.entrevistas-comparecimento button[data-valor="N"]'),
@@ -716,7 +733,7 @@ describe("a tela de Conduzir entrevistas", () => {
       },
     });
     await montar(supabase, { comemoracoesLigadas: () => false });
-    await clicar(document.querySelector('[data-convocado="e2"]'));
+    await abrirLinha("e2");
     await clicar(
       document
         .getElementById("entrevistasFichaDoCandidato")
@@ -1511,7 +1528,7 @@ describe("Preparar, roteiros e ficha", () => {
     const celulas = ficha.querySelectorAll("input.entrevistas-nota");
     await digitar(celulas[0], "4");
     // Modo de análise: a ficha ocupa a tela; o topo e a fila somem.
-    expect(document.querySelector(".ui-topo")).toBeNull();
+    expect(document.querySelector(".ui-cabecalho-da-tela")).toBeNull();
     expect(document.getElementById("entrevistasConvocar")).toBeNull();
     await clicar(ficha.querySelector('button[type="submit"]'));
     expect([...celulas].every((c) => c.disabled)).toBe(true);
@@ -1825,10 +1842,10 @@ describe("aspectos da entrevista (roteiro com Conceitua · Propriedade · Profun
     const ficha = await abrirFicha(
       supabaseDaConducao({ edital: editalComAspectos() }),
     );
-    expect(document.querySelector(".ui-topo")).toBeNull();
+    expect(document.querySelector(".ui-cabecalho-da-tela")).toBeNull();
     await clicar(ficha.querySelector('[data-acao="voltar-a-lista"]'));
     expect(document.getElementById("entrevistasFichaDoCandidato")).toBeNull();
-    expect(document.querySelector(".ui-topo")).not.toBeNull();
+    expect(document.querySelector(".ui-cabecalho-da-tela")).not.toBeNull();
     expect(document.querySelector(".entrevistas-fila")).not.toBeNull();
   });
 
@@ -1892,34 +1909,101 @@ describe("entrevistas mais claras: fila, Preparar em passos e parecer pronto", (
         },
       }),
     );
-    expect(
-      [...secao.querySelectorAll(".entrevistas-fila-vaga")].map(
-        (h) => h.textContent,
-      ),
-    ).toEqual(["V1 · Enfermeiro4", "V2 · Técnico de enfermagem1"]);
-    // O cartão: iniciais do nome, código, horário e banca; sem "—" nem "0/2" sem nota.
-    const cartao = secao.querySelector('[data-convocado="e6"]');
-    expect(cartao.querySelector(".entrevistas-avatar").textContent).toBe("MD");
-    expect(cartao.textContent).toContain("Cód. 43015");
+    // Uma tabela só, em ordem de horário; a vaga é coluna.
+    expect(cartoes().map(([id]) => id)).toEqual(["e6", "e1", "e2", "e3", "e4"]);
+    // A linha: horário em destaque, pessoa (nome e "código · modalidade"),
+    // vaga com o cargo, banca e situação; sem "0/2" sem nota.
+    const cartao = secao.querySelector('tr[data-convocado="e6"]');
     expect(cartao.querySelector(".entrevistas-fila-hora").textContent).toBe(
-      "07:30Banca 2",
+      "07:30",
     );
-    expect(cartao.textContent).not.toContain("—");
+    expect(cartao.querySelector(".ui-pessoa").textContent).toBe(
+      "Maria das Dores43015 · Ampla",
+    );
+    expect(cartao.textContent).toContain("V2Técnico de enfermagem");
+    expect(cartao.textContent).toContain("Banca 2");
     expect(cartao.querySelector(".entrevistas-fila-notas")).toBeNull();
-    const busca = secao.querySelector('[data-campo="fila-busca"]');
+    // Concluída e faltou: o horário fica acinzentado (encerrada).
+    expect(
+      secao.querySelector('tr[data-convocado="e4"]').dataset.encerrada,
+    ).toBe("");
+    // A linha "Agora" (08:30 no teste) separa o que passou do que vem.
+    const linhas = [...secao.querySelectorAll(".ui-lista tbody tr")];
+    const agora = linhas.findIndex((tr) => tr.dataset.agora !== undefined);
+    expect(linhas[agora].textContent).toBe("Agora · 08:30");
+    expect(linhas[agora + 1].dataset.convocado).toBe("e2");
+    // Em andamento: o botão é azul ("Continuar"); aguardando: neutro ("Iniciar").
+    const botao = (id) =>
+      secao.querySelector(
+        `tr[data-convocado="${id}"] [data-acao="abrir-ficha"]`,
+      );
+    expect(botao("e2").textContent).toBe("Continuar");
+    expect(botao("e2").className).toBe("btn small");
+    expect(botao("e1").textContent).toBe("Iniciar");
+    expect(botao("e1").className).toBe("btn contorno small");
+    // Faltou: "Remarcar" (a agenda é da Classificação) e a ficha no ⋯.
+    expect(
+      secao.querySelector('tr[data-convocado="e3"] [data-acao="remarcar"]'),
+    ).not.toBeNull();
+    // A próxima do dia (a partir de agora, aguardando), com "Iniciar".
+    expect(secao.querySelector(".entrevistas-proxima").textContent).toContain(
+      "Próxima",
+    );
+    const busca = secao.querySelector('[data-acao="fila-busca"]');
     await digitar(busca, "dores");
     expect(cartoes()).toEqual([["e6", "aguardando"]]);
     await digitar(busca, "43015");
     expect(cartoes()).toEqual([["e6", "aguardando"]]);
     await digitar(busca, "ninguém assim");
     expect(cartoes()).toEqual([]);
-    expect(naTela("Ninguém encontrado para “ninguém assim”.")).toBe(true);
-    await clicar(
-      [...secao.querySelectorAll("button")].find(
-        (b) => b.textContent === "Limpar busca",
-      ),
-    );
+    expect(naTela("Ninguém por aqui")).toBe(true);
+    await clicar(secao.querySelector('[data-acao="limpar-filtros"]'));
     expect(cartoes()).toHaveLength(5);
+  });
+
+  it("faixa: cada número é o total da lista que abre; Sem nota é de qualquer dia, com Lançar nota", async () => {
+    const agenda = {
+      ...AGENDA_DO_DIA,
+      // e5 era ontem e ninguém lançou a nota.
+      itens: AGENDA_DO_DIA.itens.map((i) =>
+        i.analise_id === "an5" ? { ...i, data: "2026-10-06" } : i,
+      ),
+    };
+    await montar(
+      supabaseDaConducao({
+        edital: EDITAL_DO_DIA,
+        respostas: {
+          obter_agenda_entrevista: () => ({ data: agenda, error: null }),
+        },
+      }),
+    );
+    const faixa = secao.querySelector("[data-tour='conduzir-situacoes']");
+    const numero = (v) =>
+      faixa.querySelector(`[data-valor='${v}'] .ui-faixa-numero`).textContent;
+    expect(
+      [
+        "todas",
+        "aguardando",
+        "em_andamento",
+        "concluida",
+        "faltou",
+        "sem_nota",
+      ].map(numero),
+    ).toEqual(["4", "1", "1", "1", "1", "1"]);
+    for (const v of ["aguardando", "faltou", "sem_nota"]) {
+      await clicar(faixa.querySelector(`[data-valor='${v}']`));
+      expect(String(cartoes().length)).toBe(numero(v));
+    }
+    // Sem nota (de ontem): o botão azul "Lançar nota".
+    expect(cartoes()).toEqual([["e5", "sem_nota"]]);
+    const lancar = secao.querySelector(
+      'tr[data-convocado="e5"] [data-acao="abrir-ficha"]',
+    );
+    expect(lancar.textContent).toBe("Lançar nota");
+    expect(lancar.className).toBe("btn small");
+    // O contador do dia e a barra da distribuição ficam embaixo da faixa.
+    expect(contador()).toBe("2 de 4 hoje");
+    expect(faixa.querySelector("[role='img']")).not.toBeNull();
   });
 
   it("Preparar: quatro passos com o estado e o que falta; abre no primeiro pendente", async () => {
@@ -1939,7 +2023,15 @@ describe("entrevistas mais claras: fila, Preparar em passos e parecer pronto", (
     ]);
     expect(
       document.querySelector(".entrevistas-preparar-andamento").textContent,
-    ).toBe("2 de 4 prontos");
+    ).toBe("2 de 4 passos prontos");
+    // A barra dos quatro passos diz cada um no nome acessível.
+    expect(
+      document
+        .querySelector(".entrevistas-preparar-barra")
+        .getAttribute("aria-label"),
+    ).toBe(
+      "Passos: Roteiro pronto, Banca pronto, Convocação pendente, Agenda pendente",
+    );
     expect(
       corpoDoPasso().querySelector(".entrevistas-o-que-falta").textContent,
     ).toContain("1 candidato da lista ainda não foi convocado.");
@@ -2186,7 +2278,7 @@ describe("conduzir sem perder trabalho", () => {
       render = tela.render();
     });
     await esperar();
-    expect(document.body.textContent).toContain("Carregando o edital…");
+    expect(document.body.textContent).toContain("Abrindo o edital…");
     expect(document.querySelector(".entrevistas-passos")).toBe(passos);
     await act(async () => {
       soltar();

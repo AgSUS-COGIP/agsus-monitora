@@ -95,6 +95,7 @@ const TELAS: TelaDaRota[] = [
     caminho: "entrevistas",
     titulo: "Entrevistas",
     comEdital: true,
+    tituloNaTela: true,
   },
   {
     view: "classificacao",

@@ -1716,189 +1716,47 @@ table.entrevistas-tabela {
   margin-left: var(--space-1);
 }
 
-/* ── Conduzir entrevistas: contador, fila em cartões (conduzir.tsx) ──── */
+/* ── Conduzir entrevistas: a Fila (fila-do-dia.tsx) ───────────────── */
 
+.entrevistas-fila-tela {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
 .entrevistas-contador-do-dia {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-pill);
   color: var(--text-secondary);
-  font-size: var(--text-body-sm);
   white-space: nowrap;
 }
 .entrevistas-contador-do-dia strong {
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
-.entrevistas-contador-barra {
+.entrevistas-contador-do-dia[data-completo="sim"] strong {
+  color: var(--state-success);
+}
+/* A próxima entrevista do dia, em destaque, com "Iniciar". */
+.entrevistas-proxima {
   display: inline-flex;
-  width: 72px;
-  height: 6px;
-  overflow: hidden;
-  border-radius: var(--radius-pill);
-  background: var(--border-subtle);
-}
-.entrevistas-contador-barra > span {
-  background: var(--state-info);
-  transition: width 0.4s ease;
-}
-.entrevistas-contador-do-dia[data-completo="sim"] {
-  border-color: var(--state-success);
-  background: var(--state-success-soft);
-}
-.entrevistas-contador-do-dia[data-completo="sim"]
-  .entrevistas-contador-barra
-  > span {
-  background: var(--state-success);
-}
-.entrevistas-fila {
-  display: grid;
-  gap: var(--space-3);
-}
-.entrevistas-fila-controles {
-  display: flex;
   flex-wrap: wrap;
-  align-items: end;
-  justify-content: space-between;
-  gap: var(--space-2) var(--space-3);
-}
-.entrevistas-fila-resumo {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1-5);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.entrevistas-fila-resumo button {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-pill);
-  background: var(--surface-card);
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: var(--text-caption);
-  cursor: pointer;
-}
-.entrevistas-fila-resumo button::before {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background: var(--cor-da-situacao, var(--state-neutral));
-  content: "";
-}
-.entrevistas-fila-resumo button strong {
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-.entrevistas-fila-resumo button:disabled {
-  cursor: default;
-  opacity: 0.55;
-}
-.entrevistas-fila-resumo button[aria-pressed="true"] {
-  border-color: var(--state-info);
-  box-shadow: 0 0 0 1px var(--state-info);
-}
-/* A cor de cada situação (cartão, avatar, ponto do resumo, barra das notas). */
-.entrevistas-fila [data-situacao="em_andamento"] {
-  --cor-da-situacao: var(--state-info);
-  --fundo-da-situacao: var(--state-info-soft);
-}
-.entrevistas-fila [data-situacao="concluida"] {
-  --cor-da-situacao: var(--state-success);
-  --fundo-da-situacao: var(--state-success-soft);
-}
-.entrevistas-fila [data-situacao="faltou"] {
-  --cor-da-situacao: var(--state-warning);
-  --fundo-da-situacao: var(--state-warning-soft);
-}
-.entrevistas-fila-grupo {
-  display: grid;
-  gap: var(--space-2);
-}
-.entrevistas-fila-lista {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.entrevistas-fila-cartao {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-areas:
-    "avatar corpo hora"
-    "avatar situacao situacao";
   align-items: center;
   gap: var(--space-1) var(--space-3);
-  width: 100%;
-  min-height: 88px;
-  padding: var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-left: 4px solid var(--cor-da-situacao, var(--state-neutral));
+  padding: var(--space-1-5) var(--space-2) var(--space-1-5) var(--space-3);
   border-radius: var(--radius-lg);
-  background: var(--surface-card);
-  color: var(--text-primary);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    border-color 0.3s ease,
-    box-shadow 0.15s ease,
-    transform 0.15s ease;
+  background: var(--color-bg-selected);
 }
-.entrevistas-fila-cartao:hover {
-  box-shadow: var(--shadow-raised);
-  transform: translateY(-1px);
-}
-.entrevistas-fila-cartao:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-.entrevistas-avatar {
-  display: inline-grid;
-  grid-area: avatar;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-full);
-  background: var(--fundo-da-situacao, var(--state-neutral-soft));
-  color: var(--text-primary);
-  font-size: var(--text-body-sm);
+.entrevistas-proxima-rotulo {
+  color: var(--state-info);
   font-weight: var(--font-weight-semibold);
-  letter-spacing: 0.02em;
 }
-.entrevistas-fila-corpo {
-  display: grid;
-  grid-area: corpo;
-  min-width: 0;
+.entrevistas-proxima .btn {
+  min-height: 32px;
 }
-.entrevistas-fila-corpo strong {
-  overflow: hidden;
-  font-size: var(--text-body);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.entrevistas-fila-corpo span {
-  overflow: hidden;
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+/* O horário em destaque; o encerrado (concluída, faltou), acinzentado. */
 .entrevistas-fila-hora {
   display: grid;
-  grid-area: hora;
-  justify-items: end;
 }
 .entrevistas-fila-hora time {
+  color: var(--text-primary);
   font-size: var(--text-h4);
   font-weight: var(--font-weight-semibold);
   font-variant-numeric: tabular-nums;
@@ -1907,32 +1765,42 @@ table.entrevistas-tabela {
   color: var(--text-secondary);
   font-size: var(--text-caption);
 }
-.entrevistas-fila-situacao {
+.entrevistas-fila-linha[data-encerrada] .entrevistas-fila-hora time {
+  color: var(--color-text-tertiary);
+}
+.entrevistas-fila-linha[data-situacao="em_andamento"] td {
+  background: var(--color-bg-selected);
+}
+/* A linha "Agora · HH:MM" entre o que passou e o que vem (Hoje). */
+.ui-lista .entrevistas-agora td {
+  padding: 0 var(--space-3);
+  border-bottom: 0;
+  background: transparent;
+}
+.entrevistas-agora span {
   display: flex;
-  grid-area: situacao;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-2);
+  padding: var(--space-1) 0;
+  color: var(--state-danger);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+}
+.entrevistas-agora span::after {
+  flex: 1;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--state-danger-soft);
+  content: "";
+}
+.entrevistas-fila-barra .ui-segmentado {
+  flex: none;
 }
 .entrevistas-fila-notas {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1-5);
+  margin-left: var(--space-1);
   color: var(--text-secondary);
   font-size: var(--text-caption);
   font-variant-numeric: tabular-nums;
-}
-.entrevistas-fila-notas-barra {
-  display: inline-flex;
-  width: 56px;
-  height: 4px;
-  overflow: hidden;
-  border-radius: var(--radius-pill);
-  background: var(--border-subtle);
-}
-.entrevistas-fila-notas-barra > span {
-  background: var(--cor-da-situacao, var(--state-info));
 }
 
 /* Desempate da Classificação (só leitura): Preparar e editor do roteiro. */
@@ -1968,24 +1836,8 @@ table.entrevistas-tabela {
 }
 
 @media (max-width: 640px) {
-  .entrevistas-fila-controles {
-    align-items: stretch;
-  }
-  .entrevistas-fila-controles > * {
-    width: 100%;
-  }
   .entrevistas-agenda-dias {
     grid-auto-columns: minmax(200px, 82%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .entrevistas-fila-cartao,
-  .entrevistas-contador-barra > span {
-    transition: none;
-  }
-  .entrevistas-fila-cartao:hover {
-    transform: none;
   }
 }
 
@@ -2097,33 +1949,32 @@ table.entrevistas-tabela {
   }
 }
 
-/* ── Conduzir: o edital, compacto (seletor-do-edital.tsx) ───────────── */
+/* ── Conduzir: o edital no cabeçalho (seletor-do-edital.tsx) ─────────── */
 .entrevistas-seletor-do-edital {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2) var(--space-3);
-  padding: var(--space-2) var(--space-3);
+  align-items: flex-end;
+  gap: var(--space-1) var(--space-3);
 }
 /* Vence o `label` de app.css (caixa alta, 900). */
 label.entrevistas-seletor-campo {
-  display: flex;
-  flex: 0 1 640px;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: min(100%, 280px);
+  display: grid;
+  flex: 1 1 100%;
+  gap: var(--space-1);
+  min-width: 0;
   margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-body-sm);
-  font-weight: var(--font-weight-medium);
   letter-spacing: 0;
   text-transform: none;
 }
+.entrevistas-seletor-rotulo {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+}
 .entrevistas-seletor-campo select {
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: 640px;
-  min-height: 36px;
+  width: 100%;
+  min-height: 40px;
+  font-weight: var(--font-weight-semibold);
 }
 .entrevistas-seletor-marca,
 .entrevistas-seletor-carregando {
@@ -2131,73 +1982,19 @@ label.entrevistas-seletor-campo {
   font-size: var(--text-caption);
 }
 
-/* ── Fila: busca, vaga e nota ──────────────────────────────────────── */
-label.entrevistas-fila-busca {
-  position: relative;
-  display: flex;
-  flex: 0 1 300px;
-  align-items: center;
-  margin: 0;
-  letter-spacing: 0;
-  text-transform: none;
-}
-.entrevistas-fila-busca i {
-  position: absolute;
-  left: var(--space-3);
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-  pointer-events: none;
-}
-.entrevistas-fila-busca input {
-  width: 100%;
-  min-height: 38px;
-  padding-left: calc(var(--space-3) * 2 + 8px);
-}
-.entrevistas-fila-controles {
-  align-items: center;
-}
-.entrevistas-fila-vaga {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin: var(--space-2) 0 0;
-  padding-bottom: var(--space-1);
-  border-bottom: 1px solid var(--border-subtle);
-  color: var(--text-primary);
-  font-size: var(--text-body-sm);
-  font-weight: var(--font-weight-semibold);
-}
-.entrevistas-fila-vaga-codigo {
-  font-variant-numeric: tabular-nums;
-}
-.entrevistas-fila-vaga-contagem {
-  min-width: 24px;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-pill);
-  background: var(--surface-raised);
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-  font-weight: var(--font-weight-medium);
-  text-align: center;
-}
 .entrevistas-fila-nota {
   color: var(--text-primary);
   font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
   font-variant-numeric: tabular-nums;
 }
-.entrevistas-fila-cartao:not(:has(.entrevistas-fila-hora)) {
-  grid-template-areas:
-    "avatar corpo corpo"
-    "avatar situacao situacao";
-}
+
 .entrevistas-carregando {
   display: grid;
   gap: var(--space-2);
 }
 
-/* ── Preparar em passos (preparar.tsx), no desenho do assistente da regra ── */
+/* ── Preparar em passos (preparar.tsx): o topo, a trilha e o passo ────── */
 .entrevistas-preparar {
   display: grid;
   gap: var(--space-4);
@@ -2206,79 +2003,110 @@ label.entrevistas-fila-busca {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2) var(--space-3);
+  gap: var(--space-3) var(--space-6);
 }
-.entrevistas-preparar-andamento,
+.entrevistas-preparar-andamento-bloco {
+  display: grid;
+  gap: var(--space-0-5);
+}
+.entrevistas-preparar-andamento {
+  color: var(--text-primary);
+  font-size: var(--text-h3);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+.entrevistas-preparar-andamento[data-completo="sim"] {
+  color: var(--state-success);
+}
+.entrevistas-preparar-barra {
+  display: flex;
+  flex: 1 1 260px;
+  gap: var(--space-1-5);
+}
+.entrevistas-preparar-barra > span {
+  flex: 1;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-status-warning-solid);
+}
+.entrevistas-preparar-barra > span[data-estado="feito"] {
+  background: var(--color-status-success-solid);
+}
+.entrevistas-preparar-periodo {
+  color: var(--text-secondary);
+}
+.entrevistas-preparar-regras {
+  flex: 1 1 100%;
+}
+.entrevistas-preparar-regras > summary {
+  width: fit-content;
+  color: var(--color-text-link);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.entrevistas-preparar-regras[open] > summary {
+  margin-bottom: var(--space-3);
+}
 .entrevistas-chip-alerta {
   display: inline-flex;
   align-items: center;
   padding: var(--space-0-5) var(--space-2);
   border-radius: var(--radius-pill);
-  background: var(--state-info-soft);
-  color: var(--state-info);
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
   font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
   white-space: nowrap;
 }
-.entrevistas-preparar-andamento[data-completo="sim"] {
-  background: var(--state-success-soft);
-  color: var(--state-success);
+.entrevistas-preparar-colunas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-4);
 }
-.entrevistas-chip-alerta {
-  background: var(--state-warning-soft);
-  color: var(--state-warning);
+/* A trilha dos passos, à esquerda. */
+.entrevistas-passos {
+  flex: 1 1 300px;
+  max-width: 420px;
+  padding: var(--space-2);
 }
 .entrevistas-passos ol {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2);
+  gap: var(--space-0-5);
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.entrevistas-passos li {
-  position: relative;
-}
-.entrevistas-passos li + li::before {
-  position: absolute;
-  top: 18px;
-  right: calc(50% + 22px);
-  left: calc(-50% + 22px);
-  height: 2px;
-  border-radius: var(--radius-pill);
-  background: var(--border-subtle);
-  content: "";
-}
 .entrevistas-passos button {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
+  align-items: flex-start;
+  gap: var(--space-3);
   width: 100%;
-  padding: var(--space-1);
+  padding: var(--space-3);
   border: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: transparent;
   color: var(--text-secondary);
   font: inherit;
-  font-size: var(--text-caption);
-  text-align: center;
+  text-align: left;
   cursor: pointer;
 }
 .entrevistas-passos button:hover {
   background: var(--surface-hover);
 }
+.entrevistas-passos button[aria-current="step"] {
+  background: var(--color-bg-selected);
+}
 .entrevistas-passos button:focus-visible {
   outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 .entrevistas-passo-numero {
-  position: relative;
-  z-index: 1;
   display: grid;
+  flex: none;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border: 2px solid var(--state-warning);
   border-radius: var(--radius-full);
   background: var(--surface-card);
@@ -2294,28 +2122,34 @@ label.entrevistas-fila-busca {
 .entrevistas-passos [data-estado="atual"] .entrevistas-passo-numero {
   border-color: var(--brand-primary);
   color: var(--brand-primary);
-  box-shadow: 0 0 0 4px var(--state-info-soft);
+}
+.entrevistas-passo-texto {
+  display: grid;
+  flex: 1;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.entrevistas-passo-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
 }
 .entrevistas-passo-rotulo {
   color: var(--text-primary);
-  font-size: var(--text-body-sm);
+  font-size: var(--text-body);
   font-weight: var(--font-weight-semibold);
 }
 .entrevistas-passo-resumo {
-  overflow: hidden;
-  max-width: 100%;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: var(--text-body-sm);
 }
-.entrevistas-passos [data-estado="pendente"] .entrevistas-passo-resumo {
-  color: var(--state-warning);
-}
+/* O passo escolhido, à direita. */
 .entrevistas-preparar-corpo {
   display: grid;
+  flex: 999 1 480px;
   gap: var(--space-3);
   min-width: 0;
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--border-subtle);
   animation: entrevistas-passo-entra 0.2s ease;
   scroll-margin-top: var(--space-6);
 }
@@ -2413,11 +2247,7 @@ label.entrevistas-fila-busca {
 .entrevistas-acoes-esquerda:empty {
   display: none;
 }
-.entrevistas-preparar-navegacao {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-2);
-}
+
 .entrevistas-roteiro-escolhido,
 .entrevistas-banca {
   display: grid;
@@ -2514,23 +2344,7 @@ label.entrevistas-fila-busca {
 
 @media (max-width: 720px) {
   .entrevistas-passos {
-    padding-bottom: var(--space-1);
-  }
-  .entrevistas-passos ol {
-    gap: var(--space-1);
-  }
-  .entrevistas-passo-resumo {
-    display: none;
-  }
-  .entrevistas-passo-rotulo {
-    font-size: var(--text-caption);
-  }
-  label.entrevistas-fila-busca {
-    flex: 1 1 100%;
-  }
-  .entrevistas-preparar-navegacao .btn {
-    flex: 1 1 0;
-    justify-content: center;
+    max-width: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {

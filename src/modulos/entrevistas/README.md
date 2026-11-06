@@ -11,16 +11,19 @@ ao lado da Avaliação documental (acompanhar × fazer):
   `private."FC_MONTAR_ENTREVISTAS_AREA"`, não o lê).
 - **Conduzir entrevistas** (view `conduzir-entrevistas`, `#page-conduzir-entrevistas`,
   rota `/<área>/entrevistas[/<edital>]`, `criarConducaoDeEntrevistas()`): o fazer, para secretaria
-  e avaliadores. Visões no topo: **Fila** (abre em Hoje pela agenda salva na Classificação › Agenda;
-  sem entrevista hoje, Próximos; sem agenda, Todos; cartões agrupados por vaga, em ordem de
-  horário e nome, com a busca por nome ou código e as situações — aguardando, em andamento,
-  concluída, faltou —; o contador "X de Y hoje" no topo; o cartão abre a ficha em tela cheia, com
-  "Salvar e abrir o próximo" na ordem da tela; concluir o dia comemora uma vez) e **Preparar**
-  (o resumo das regras e os passos Roteiro, Banca, Convocação e Agenda, cada um com o estado e o
-  que falta; os **roteiros** da área ficam no passo 1 — a configuração do gestor, como Regra e
-  Equipe ficam na própria tela da Avaliação documental). O edital fica num seletor compacto
-  abaixo do topo (com "mostrar também os concluídos" dentro dele, para o administrador global); o
-  último aberto na área fica no navegador (só conveniência); com um só na lista, ele abre sozinho.
+  e avaliadores, no layout das telas da seleção (cabeçalho com o edital e as seções). Seções:
+  **Fila** (abre em Hoje pela agenda salva na Classificação › Agenda; sem entrevista hoje,
+  Próximos; sem agenda, Todos; a faixa de situação — o período, aguardando, em andamento,
+  concluídas, faltaram e sem nota —, com o contador "X de Y hoje" e a próxima entrevista
+  embaixo; a barra com o período, a busca, vaga e banca; a tabela em ordem de horário, 50 e mais
+  50 ao rolar, com a linha "Agora"; a ação da linha abre a ficha em tela cheia, com "Salvar e
+  abrir o próximo" na ordem da lista; concluir o dia comemora uma vez) e **Preparar** (o topo
+  com "N de 4 passos prontos", o período e as regras; a trilha dos passos Roteiro, Banca,
+  Convocação e Agenda e o passo escolhido, com o que falta; os **roteiros** da área ficam no
+  passo 1 — a configuração do gestor, como Regra e Equipe ficam na própria tela da Avaliação
+  documental). O edital fica no cabeçalho (com "mostrar também os concluídos" dentro dele, para o
+  administrador global); o último aberto na área fica no navegador (só conveniência); com um só
+  na lista, ele abre sozinho. Na URL: a seção, o período, a situação, a vaga, a banca e o passo.
 
 Links antigos (`entrevistas:conduzir`, `entrevistas:roteiros`) vão para Conduzir entrevistas
 (`destinoDaTela`, `src/lib/navegacao.ts`; o controlador tem `abrirVisao` e `abrirEdital`).
@@ -57,10 +60,10 @@ tabela.tsx              tabela de resultados (TabelaInfinita), selo do parecer e
 gaveta.tsx              detalhe da entrevista (caminho do candidato, critérios) e aprovados sem entrevista
 conduzir.tsx            Conduzir entrevistas: <TelaDeConducao>, visões Fila/Preparar, contador do dia,
                         comemoração, montarConducaoDeEntrevistas() (render, abrirVisao, abrirEdital)
-seletor-do-edital.tsx   o edital compacto abaixo do topo, selo Treinamento, "mostrar também os concluídos"
+seletor-do-edital.tsx   o edital no cabeçalho (usarSeletorDoEdital), selo Treinamento, "mostrar também os concluídos"
                         (administrador global) dentro do seletor, liberação e erros com "Tentar novamente"
-fila-do-dia.tsx         a fila em cartões por vaga (iniciais, código, horário e banca, situação, notas só
-                        quando há), recortes, busca e situações, estados vazios
+fila-do-dia.tsx         a Fila: faixa de situação (com o contador e a próxima), barra da lista e a tabela
+                        em ordem de horário (TabelaDaLista), com a linha "Agora" e a ação de cada linha
 tipos-do-editor-de-roteiro.ts  contratos da visão, cartões, abertura e ações do editor
 tipos-da-ficha.ts       contratos do estado local da ficha, do cálculo e das notas para salvar
 tipos.ts                contratos da tela nova com o estado da condução (TS)

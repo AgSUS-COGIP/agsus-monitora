@@ -351,7 +351,7 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       passo(
         t("conduzir-contador"),
         "Hoje",
-        "Quantas das entrevistas de hoje já estão concluídas ou com falta.",
+        "Quantas de hoje já estão concluídas ou com falta; ao lado, a próxima, com Iniciar.",
       ),
       passo(
         t("conduzir-recortes"),
@@ -367,14 +367,14 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       ),
       passo(
         t("conduzir-situacoes"),
-        "Situações",
-        "Aguardando, em andamento, concluída e faltou; clicar filtra a fila.",
+        "Situação",
+        "Cada número filtra a fila e é o total dela. Sem nota: quem passou do dia sem nota.",
         { antes: ABA.fila },
       ),
       passo(
         t("conduzir-fila"),
         "Abrir a ficha",
-        "Os cartões ficam agrupados por vaga, em ordem de horário. Clique para lançar comparecimento e notas; Salvar e abrir o próximo segue a ordem da tela.",
+        "Em ordem de horário, 50 e mais 50 ao rolar. Iniciar, Continuar ou Lançar nota abre a ficha; Salvar e abrir o próximo segue a lista.",
         { antes: ABA.fila },
       ),
       // Com a ficha de notas aberta (sem ela, os passos abaixo são pulados).
