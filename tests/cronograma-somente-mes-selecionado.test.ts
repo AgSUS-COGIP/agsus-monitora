@@ -107,9 +107,7 @@ describe("a vista Mês mostra apenas o mês selecionado", () => {
         botoes.slice(1).every((botao) => botao.style.gridColumnStart === ""),
       ).toBe(true);
       expect(document.querySelector(".fora-do-mes")).toBeNull();
-      expect(document.querySelectorAll(".cal-dias button")).toHaveLength(
-        total,
-      );
+      expect(document.querySelectorAll(".cal-dias button")).toHaveLength(total);
     },
   );
 
