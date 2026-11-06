@@ -179,7 +179,7 @@ export function PalcoDeTestes({
       intensidade,
       duracaoMs: Math.round(duracaoS * 1000),
       som,
-      // No Normal e no Festa, o grande final escreve no céu.
+      // No Normal e no Festa, a frase aparece em destaque (o letreiro).
       letreiro: LETREIRO_DA_FESTA,
     });
   return (

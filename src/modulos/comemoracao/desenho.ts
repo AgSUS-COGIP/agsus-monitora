@@ -200,6 +200,18 @@ export function desenhar(
       // Um traço do ponto até onde estava há pouco: o rastro de cada faísca.
       const recuo = 0.016 + 0.03 * p.rastro;
       contexto.strokeStyle = cor;
+      if (qualidade >= 2 && brilho > 0.3) {
+        // Brilho do rastro: o mesmo traço, mais largo, mais longo e tênue
+        // (luz que se espalha no ar, sem o custo de um halo por faísca).
+        const longo = recuo * 1.8;
+        contexto.globalAlpha = brilho * 0.22;
+        contexto.lineWidth = p.tamanho * 2.6;
+        contexto.beginPath();
+        contexto.moveTo(p.x - p.vx * longo, p.y - p.vy * longo);
+        contexto.lineTo(p.x, p.y);
+        contexto.stroke();
+        contexto.globalAlpha = brilho;
+      }
       contexto.lineWidth = p.tamanho;
       contexto.beginPath();
       contexto.moveTo(p.x - p.vx * recuo, p.y - p.vy * recuo);
@@ -245,7 +257,7 @@ export function desenharPrevia(
   if (cena.show)
     desenhar(contexto, cena.show, { largura, altura, dt, halo, qualidade });
   contexto.globalCompositeOperation = "source-over";
-  desenharParticulasDoMotor(contexto, cena);
+  desenharParticulasDoMotor(contexto, cena, qualidade);
 }
 
 /*
