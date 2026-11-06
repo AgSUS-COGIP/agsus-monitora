@@ -6,7 +6,7 @@ import {
 
 /*
   O clique no celular (redirecionamento, sem popup) é decidido pela sessão do
-  app: tests/app/sessao.test.js cobre o botão e a mensagem de erro.
+  app: tests/app/sessao.test.ts cobre o botão e a mensagem de erro.
 */
 
 describe("mobile Google OAuth", () => {
