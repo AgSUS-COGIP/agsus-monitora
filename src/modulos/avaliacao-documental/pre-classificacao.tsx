@@ -19,6 +19,7 @@ import {
   DICA_DA_ART,
   DICA_DA_NOTA_DO_LOTE,
   DICA_DA_RECALCULADA,
+  foraDoLoteDaTriagem,
   loteDaVaga,
   lotesAPublicar,
   nota,
@@ -39,20 +40,21 @@ import { usarRegraDaTriagem } from "../triagem/usar-regra-da-triagem.ts";
 import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
 import { ESPERA_DO_PEDIDO_MIN } from "../../lib/robos-de-carga.ts";
 import {
-  Abas,
   Aviso,
+  CabecalhoDaTela,
   CaixaDeMarcarTodos,
   estadoDaMarcacao,
-  GradeDeKpis,
-  Kpi,
+  FaixaDeSituacao,
   MenuDeAcoes,
+  porcentagemDe,
+  Segmentado,
   Selo,
   TabelaInfinita,
   usarListaNoServidor,
 } from "../../ui/index.ts";
 import type {
-  AbaDaLista,
   AcaoDoMenu,
+  ItemDaFaixa,
   BuscarPagina,
   ColunaDaTabela,
   EstadoDaMarcacao,
@@ -60,6 +62,7 @@ import type {
 import { lerTrava } from "../../lib/avaliacao-documental/trava-das-inscricoes.ts";
 import { EliminadosDaTriagem } from "./eliminados-da-triagem.tsx";
 import { PessoasDaTriagem } from "./pessoas-da-triagem.tsx";
+import type { SituacaoDasPessoas } from "../../lib/avaliacao-documental/pessoas-da-triagem.ts";
 import "./triagem-em-abas.css";
 import {
   IncluirPorDecisao,
@@ -99,10 +102,15 @@ import type {
   mostra "N pela regra + M por decisão". Explicações:
   docs/aya/regras-da-avaliacao-documental.md.
 
-  A família das telas da seleção (Triagem, Avaliação documental e
-  Classificação): os números do andamento em cards no alto (clicar leva à
-  aba do número), as abas com o menu "Ações" ao lado e, na aba Pessoas, a
-  busca pelo código ou nome no edital todo (pessoas-da-triagem.tsx).
+  O layout das telas da seleção (Triagem, Avaliação documental e
+  Classificação): o cabeçalho com as seções Pessoas, Por vaga e Regra e o
+  "⋯" das ações da coordenação; a faixa de situação (Inscritos, No lote, Por
+  decisão, Fora do lote e Eliminados, cada número um filtro, com a barra da
+  distribuição e a linha do lote); em Pessoas, a busca pelo código ou nome
+  no edital todo (pessoas-da-triagem.tsx) e, no número Eliminados, a lista
+  dos eliminados com os comunicados (eliminados-da-triagem.tsx); em Regra,
+  a situação do cálculo, a regra, a trava, as inscrições e as listas
+  oficiais.
 
   Desempenho (114/2026: 7.726 inscritos, 29 vagas): a aba abre só com o
   resumo (obter_resumo_pre_classificacao); as vagas e as listas oficiais são
@@ -887,33 +895,51 @@ function ListasOficiais({ d, p, pre }: ListasOficiaisProps) {
   );
 }
 
+/** O cabeçalho da tela (a página Triagem): a trilha, o edital e o Atualizar. */
+export interface CabecalhoDaTriagem {
+  trilha: string;
+  edital: ReactNode;
+  aoAtualizar: () => void;
+  atualizarDesativado?: boolean;
+}
+
 export interface PreClassificacaoProps {
   e: EstadoDaAvaliacao;
   estado: LojaDaAvaliacao;
   pre: EstadoDaPreClassificacao;
+  /** Na página Triagem, o cabeçalho com as seções; sem ele, as seções no alto. */
+  cabecalho?: CabecalhoDaTriagem | null;
 }
 
-/* As abas da tela; cada uma lê a sua parte só ao abrir. */
-type AbaDaTriagem = "resumo" | "pessoas" | "vagas" | "eliminados" | "listas";
-const PARTE_DA_ABA: Partial<Record<AbaDaTriagem, "vagas" | "listas">> = {
-  // Pessoas lê as vagas só para o filtro de vaga (as linhas vêm 50 por vez).
-  pessoas: "vagas",
+/*
+  As partes da tela na URL (?aba=): as seções Pessoas, Por vaga e Regra; os
+  Eliminados (o número da faixa) ficam em Pessoas. "resumo" e "listas" são
+  os endereços de antes: abrem a Regra.
+*/
+type AbaDaTriagem =
+  "pessoas" | "vagas" | "eliminados" | "regra" | "resumo" | "listas";
+type SecaoDaTriagem = "pessoas" | "vagas" | "regra";
+const SECAO_DA_ABA: Record<AbaDaTriagem, SecaoDaTriagem> = {
+  pessoas: "pessoas",
+  eliminados: "pessoas",
   vagas: "vagas",
-  eliminados: "vagas",
-  listas: "listas",
+  regra: "regra",
+  resumo: "regra",
+  listas: "regra",
 };
-const ABAS_DA_TRIAGEM: ReadonlySet<string> = new Set([
-  "resumo",
-  "pessoas",
-  "vagas",
-  "eliminados",
-  "listas",
+const SECOES_DA_TRIAGEM: ReadonlyArray<{
+  valor: SecaoDaTriagem;
+  rotulo: string;
+}> = Object.freeze([
+  { valor: "pessoas", rotulo: "Pessoas" },
+  { valor: "vagas", rotulo: "Por vaga" },
+  { valor: "regra", rotulo: "Regra" },
 ]);
 /* A aba na URL (?aba=pessoas); trocar de aba é entrada nova no histórico. */
 const FILTROS_DA_TRIAGEM: EsquemaDosFiltros<"aba"> = Object.freeze({
   aba: {
-    padrao: "resumo",
-    aceita: (aba: string) => ABAS_DA_TRIAGEM.has(aba),
+    padrao: "pessoas",
+    aceita: (aba: string) => aba in SECAO_DA_ABA,
     empilha: true,
   },
 });
@@ -970,7 +996,12 @@ function VagaRecolhida({
   );
 }
 
-export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
+export function PreClassificacao({
+  e,
+  estado,
+  pre,
+  cabecalho = null,
+}: PreClassificacaoProps) {
   // A regra própria da Triagem (20261029160000): resumo, conferência e lote por vaga.
   const triagem = usarRegraDaTriagem(pre.rpc, e.editalId);
   const regraDaTriagem = triagem.resposta;
@@ -981,9 +1012,23 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
     { manter: FICA_NA_TROCA_DE_ABA },
   );
   const aba = filtrosDaTela.aba as AbaDaTriagem;
+  const secao = SECAO_DA_ABA[aba] ?? "pessoas";
   const setAba = useCallback(
     (nova: AbaDaTriagem) => mudarFiltrosDaTela({ aba: nova }),
     [mudarFiltrosDaTela],
+  );
+  // A situação da lista Pessoas (a faixa marca o número dela e a escolhe).
+  const [situacao, setSituacao] = useState<SituacaoDasPessoas>("TODAS");
+  const [situacaoPedida, setSituacaoPedida] = useState<{
+    situacao: SituacaoDasPessoas;
+    vez: number;
+  }>({ situacao: "TODAS", vez: 0 });
+  const verPessoas = useCallback(
+    (nova: SituacaoDasPessoas) => {
+      setAba("pessoas");
+      setSituacaoPedida((atual) => ({ situacao: nova, vez: atual.vez + 1 }));
+    },
+    [setAba],
   );
   const [tamanhos, setTamanhos] = useState<Record<string, string>>({});
   // Os eliminados marcados para comunicado em lote (chave vaga|código → pessoa).
@@ -1031,30 +1076,57 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
   }, [pre, e.editalId, versaoDaRegra]);
   const resumoLido = p.editalId === e.editalId && Boolean(p.dados);
   useEffect(() => {
-    const parte = PARTE_DA_ABA[aba];
-    if (resumoLido && parte) void pre.garantirParte(parte);
-  }, [pre, aba, resumoLido, e.editalId]);
+    // As vagas valem para a faixa (fora do lote) e os filtros; a Regra lê as listas oficiais.
+    if (!resumoLido) return;
+    void pre.garantirParte("vagas");
+    if (secao === "regra") void pre.garantirParte("listas");
+  }, [pre, secao, resumoLido, e.editalId]);
 
+  const topo = (secoes: ReactNode, acoesDoTopo: ReactNode) =>
+    cabecalho ? (
+      <CabecalhoDaTela
+        trilha={cabecalho.trilha}
+        titulo="Triagem"
+        tour="triagem-cabecalho"
+        edital={cabecalho.edital}
+        secoes={secoes}
+        aoAtualizar={cabecalho.aoAtualizar}
+        atualizarDesativado={cabecalho.atualizarDesativado}
+      >
+        {acoesDoTopo}
+      </CabecalhoDaTela>
+    ) : secoes || acoesDoTopo ? (
+      <div className="avd-pre-topo">
+        {secoes}
+        {acoesDoTopo}
+      </div>
+    ) : null;
   if (p.erro)
     return (
-      <Aviso tom="danger" papel="alert">
-        Não foi possível ler a triagem: {p.erro}{" "}
-        <button
-          type="button"
-          className="btn secondary small"
-          onClick={() => void pre.carregar()}
-        >
-          Tentar novamente
-        </button>
-      </Aviso>
+      <>
+        {topo(null, null)}
+        <Aviso tom="danger" papel="alert">
+          Não foi possível ler a triagem: {p.erro}{" "}
+          <button
+            type="button"
+            className="btn secondary small"
+            onClick={() => void pre.carregar()}
+          >
+            Tentar novamente
+          </button>
+        </Aviso>
+      </>
     );
   const d = p.editalId === e.editalId ? p.dados : null;
   if (!d)
     return (
-      <div className="ui-card" aria-busy="true">
-        <div className="ui-esqueleto-linha" />
-        <div className="ui-esqueleto-linha" />
-      </div>
+      <>
+        {topo(null, null)}
+        <div className="ui-card" aria-busy="true">
+          <div className="ui-esqueleto-linha" />
+          <div className="ui-esqueleto-linha" />
+        </div>
+      </>
     );
 
   const cont = contadoresDaPreClassificacao(d);
@@ -1117,7 +1189,7 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
             desabilitado: !conferida || d.em_andamento || pedidoRecente,
             dados: { "data-acao": "recalcular" },
             aoEscolher: () => {
-              setAba("resumo");
+              setAba("regra");
               setConfirmando("recalcular");
             },
           },
@@ -1132,7 +1204,7 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
             desabilitado: !conferida || d.em_andamento,
             dados: { "data-acao": "abrir-descongelar" },
             aoEscolher: () => {
-              setAba("resumo");
+              setAba("regra");
               setConfirmando("descongelar");
             },
           },
@@ -1166,7 +1238,7 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
               "data-acao": trava.congelado ? "abrir-liberar" : "abrir-congelar",
             },
             aoEscolher: () => {
-              setAba("resumo");
+              setAba("regra");
               setPedidoDaTrava((n) => n + 1);
             },
           },
@@ -1174,106 +1246,133 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
       : []),
   ];
 
-  const abas: AbaDaLista[] = [
-    { id: "resumo", rotulo: "Resumo" },
-    { id: "pessoas", rotulo: "Pessoas", icone: "fa-magnifying-glass" },
+  const fora = foraDoLoteDaTriagem(vagasProntas ? vagas : null, cont);
+  const pct = (n: number | null) =>
+    n === null ? "" : porcentagemDe(n, cont.inscritos);
+  const itens: ItemDaFaixa[] = [
     {
-      id: "vagas",
-      rotulo: "Por vaga",
-      contagem: vagas.length || undefined,
+      chave: "inscritos",
+      rotulo: "Inscritos",
+      valor: cont.inscritos,
+      tom: "neutro",
+      ativo: aba === "pessoas" && situacao === "TODAS",
+      titulo: "Ver todas as pessoas",
+      aoClicar: () => verPessoas("TODAS"),
     },
     {
-      id: "eliminados",
+      chave: "lote",
+      rotulo: "No lote",
+      valor: cont.noLote,
+      tom: "info",
+      contexto: pct(cont.noLote),
+      ativo: aba === "vagas",
+      titulo: "Ver o lote de cada vaga",
+      aoClicar: () => setAba("vagas"),
+    },
+    {
+      chave: "decisao",
+      rotulo: "Por decisão",
+      valor: cont.noLotePorDecisao,
+      tom: "destaque",
+      titulo: "No lote por decisão da coordenação",
+    },
+    {
+      chave: "fora",
+      rotulo: "Fora do lote",
+      valor: fora,
+      tom: "alerta",
+      contexto: pct(fora),
+      ativo: aba === "pessoas" && situacao === "PODE_INCLUIR",
+      titulo: "Ver quem pode entrar por decisão da coordenação",
+      aoClicar: () => verPessoas("PODE_INCLUIR"),
+    },
+    {
+      chave: "eliminados",
       rotulo: "Eliminados",
-      contagem: cont.eliminados || undefined,
-    },
-    {
-      id: "listas",
-      rotulo: "Listas oficiais",
+      valor: cont.eliminados,
+      tom: "perigo",
+      contexto: pct(cont.eliminados),
+      ativo: aba === "eliminados",
+      titulo: "Ver os eliminados",
+      aoClicar: () => setAba("eliminados"),
     },
   ];
-
-  const parte = (n: number, de: number | null) =>
-    de ? `${Math.round((n / de) * 100)}%` : "";
+  const secoes = (
+    <Segmentado
+      rotulo="Seções"
+      opcoes={SECOES_DA_TRIAGEM}
+      valor={secao}
+      aoMudar={(nova) => setAba(nova)}
+      tour="triagem-abas"
+    />
+  );
+  const acoesDoTopo = acoes.length ? (
+    <MenuDeAcoes
+      compacto
+      rotulo="Ações da coordenação"
+      acoes={acoes}
+      tour="triagem-acoes"
+    />
+  ) : null;
 
   return (
     <div className="avd-pre" data-aba-aberta={aba}>
-      <GradeDeKpis
-        rotulo="Andamento da triagem"
+      {topo(secoes, acoesDoTopo)}
+      <FaixaDeSituacao
+        rotulo="Situação da triagem"
         tour="triagem-kpis"
-        className="avd-pre-kpis"
+        className="avd-pre-faixa"
+        itens={itens}
+        rotuloDaDistribuicao="Distribuição dos inscritos"
+        totalDaDistribuicao={cont.inscritos}
+        distribuicao={[
+          { chave: "lote", rotulo: "No lote", valor: cont.noLote, tom: "info" },
+          {
+            chave: "fora",
+            rotulo: "Fora do lote",
+            valor: fora ?? 0,
+            tom: "alerta",
+          },
+          {
+            chave: "eliminados",
+            rotulo: "Eliminados",
+            valor: cont.eliminados,
+            tom: "perigo",
+          },
+        ]}
       >
-        <Kpi
-          chave="inscritos"
-          tom="info"
-          icone="fa-users"
-          rotulo="Inscritos"
-          valor={formatNumberBR(cont.inscritos)}
-          titulo="Encontrar uma pessoa"
-          ativo={aba === "pessoas"}
-          aoClicar={() => setAba("pessoas")}
-        />
-        <Kpi
-          chave="lote"
-          tom="sucesso"
-          icone="fa-user-check"
-          rotulo="Lote (aptos para análise)"
-          // O número grande é o lote inteiro; a composição vai na linha de baixo.
-          valor={formatNumberBR(cont.noLote)}
-          detalhe={
-            cont.noLotePorDecisao
-              ? `${formatNumberBR(cont.noLotePelaRegra)} pela regra · ${formatNumberBR(cont.noLotePorDecisao)} por decisão`
-              : cont.tamanho === null
-                ? ""
-                : `de ${formatNumberBR(cont.tamanho)} · ${parte(cont.noLote, cont.tamanho)}`
-          }
-          titulo="Ver o lote de cada vaga"
-          ativo={aba === "vagas"}
-          aoClicar={() => setAba("vagas")}
-        />
-        <Kpi
-          chave="ranqueados"
-          tom="neutro"
-          icone="fa-list-ol"
-          rotulo="Ranqueados"
-          valor={formatNumberBR(cont.ranqueados)}
-        />
-        <Kpi
-          chave="eliminados"
-          tom="perigo"
-          icone="fa-user-xmark"
-          rotulo="Eliminados"
-          valor={formatNumberBR(cont.eliminados)}
-          detalhe={parte(cont.eliminados, cont.inscritos)}
-          titulo="Ver os eliminados"
-          ativo={aba === "eliminados"}
-          aoClicar={() => setAba("eliminados")}
-        />
+        <strong data-lote-da-triagem>
+          {textoDoLote(
+            cont.noLotePelaRegra,
+            cont.noLotePorDecisao,
+            cont.tamanho,
+          )}
+        </strong>
+        {vagasProntas ? (
+          <span>
+            {formatNumberBR(vagas.length)}{" "}
+            {vagas.length === 1 ? "vaga" : "vagas"}
+          </span>
+        ) : null}
         {cont.vagasSemPreClassificacao ? (
-          <Kpi
-            chave="sem-triagem"
-            tom="alerta"
-            icone="fa-hourglass-half"
-            rotulo="Vagas sem triagem"
-            valor={formatNumberBR(cont.vagasSemPreClassificacao)}
-            titulo="Ver as vagas"
-            aoClicar={() => setAba("vagas")}
-          />
+          <button
+            type="button"
+            className="ui-faixa-link"
+            data-acao="vagas-sem-triagem"
+            onClick={() => setAba("vagas")}
+          >
+            {formatNumberBR(cont.vagasSemPreClassificacao)} sem triagem
+          </button>
         ) : null}
-      </GradeDeKpis>
-
-      <div className="avd-pre-topo">
-        <Abas
-          rotulo="Partes da Triagem"
-          abas={abas}
-          ativa={aba}
-          aoEscolher={(id) => setAba(id as AbaDaTriagem)}
-          tour="triagem-abas"
-        />
-        {acoes.length ? (
-          <MenuDeAcoes rotulo="Ações" acoes={acoes} tour="triagem-acoes" />
-        ) : null}
-      </div>
+        <button
+          type="button"
+          className="ui-faixa-link"
+          data-acao="ver-a-regra"
+          onClick={() => setAba("regra")}
+        >
+          Ver a regra
+        </button>
+      </FaixaDeSituacao>
 
       {inclusaoDoEdital.conteudo}
 
@@ -1286,8 +1385,8 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
         </Aviso>
       ) : null}
 
-      {aba === "resumo" ? (
-        <div className="avd-pre-resumo" data-aba-da-triagem="resumo">
+      {secao === "regra" ? (
+        <div className="avd-pre-resumo" data-aba-da-triagem="regra">
           {confirmando === "recalcular" ? (
             <section
               className="ui-card avd-confirmar"
@@ -1435,6 +1534,7 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
             aberturaPedida={pedidoDaTrava}
           />
           <InscricoesDoEdital dados={p.inscricoes} />
+          <ListasOficiais d={d} p={p} pre={pre} />
         </div>
       ) : null}
 
@@ -1528,6 +1628,8 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
           unidade={unidade}
           podeCoordenar={d.pode_coordenar}
           aoVerVaga={verVaga}
+          situacaoPedida={situacaoPedida}
+          aoMudarSituacao={setSituacao}
         />
       ) : null}
 
@@ -1545,12 +1647,6 @@ export function PreClassificacao({ e, estado, pre }: PreClassificacaoProps) {
           podeCoordenar={d.pode_coordenar}
           aoVerVaga={verVaga}
         />
-      ) : null}
-
-      {aba === "listas" ? (
-        <div data-aba-da-triagem="listas">
-          <ListasOficiais d={d} p={p} pre={pre} />
-        </div>
       ) : null}
     </div>
   );

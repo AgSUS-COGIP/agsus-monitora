@@ -18,11 +18,12 @@ import type {
 import {
   AcoesDaLinha,
   Aviso,
-  BarraDeFiltros,
+  BarraDaLista,
   CaixaDeMarcarTodos,
-  Campo,
+  CardDaLista,
+  CelulaDaPessoa,
   estadoDaMarcacao,
-  TabelaInfinita,
+  TabelaPaginada,
   usarListaNoServidor,
 } from "../../ui/index.ts";
 import type {
@@ -51,18 +52,18 @@ import type {
   A marcação é da tela da Triagem (`marcadas`): a mesma das listas de
   eliminados de cada vaga, na aba Por vaga.
 
-  A busca e os filtros ficam na BarraDeFiltros (a mesma da aba Pessoas e das
-  outras telas da seleção); cada linha tem o comunicado como ação principal
-  e o "⋯" com "Incluir no lote" (coordenação), "Ver na vaga" e "Copiar
-  código".
+  O layout da seleção: num card só, a barra (busca com "/", Vaga e Motivo),
+  a barra dos marcados (quantos, marcar todos do filtro, limpar e os
+  comunicados em PDF, ZIP ou para imprimir) e a lista 50 por vez, com a
+  pessoa numa coluna (nome e "código · modalidade"); cada linha tem o
+  comunicado como ação principal e o "⋯" com "Incluir no lote"
+  (coordenação), "Ver na vaga" e "Copiar código".
 */
 
 const TODAS = "";
 /* Vaga e motivo na URL (?vaga=&motivo=); a busca (nome, código) fica fora dela. */
 const FILTROS_DOS_ELIMINADOS: EsquemaDosFiltros<"vaga" | "motivo"> =
   Object.freeze({ vaga: { padrao: TODAS }, motivo: { padrao: TODAS } });
-
-const semFiltro = <T,>(itens: readonly T[]) => itens;
 
 export interface PropriedadesDosEliminados {
   pre: EstadoDaPreClassificacao;
@@ -126,10 +127,8 @@ export function EliminadosDaTriagem({
     },
     [pre, recorte],
   );
-  const lista = usarListaNoServidor(
-    buscar,
-    `${leitura}:${versao}:eliminados:${vaga}:${motivo}:${busca}`,
-  );
+  const chaveDaLista = `${leitura}:${versao}:eliminados:${vaga}:${motivo}:${busca}`;
+  const lista = usarListaNoServidor(buscar, chaveDaLista);
 
   const marcados = useMemo(() => new Set(marcadas.keys()), [marcadas]);
   const escolhidos = ordenarPessoas(marcadas.values());
@@ -252,11 +251,15 @@ export function EliminadosDaTriagem({
         />
       ),
     },
+    { rotulo: "Pessoa" },
     { rotulo: "Vaga" },
-    { rotulo: "Código" },
-    { rotulo: "Nome" },
     { rotulo: "Motivo" },
-    { rotulo: "Comunicado" },
+    {
+      rotulo: "Comunicado",
+      chave: "acoes",
+      numero: true,
+      cabecalho: <span className="sr-only">Comunicado</span>,
+    },
   ];
 
   async function copiar(c: InscritoDaPre) {
@@ -291,22 +294,33 @@ export function EliminadosDaTriagem({
 
   const linha = (c: InscritoDaPre) => {
     const pessoa = pessoaEliminada(c);
+    const marcada = marcados.has(chaveDaPessoa(c.vaga, c.codigo));
     return (
-      <tr key={c.id} data-candidato={c.codigo} data-situacao="ELIMINADO">
+      <tr
+        key={c.id}
+        data-candidato={c.codigo}
+        data-situacao="ELIMINADO"
+        data-marcada={marcada ? "sim" : undefined}
+      >
         <td>
           <input
             type="checkbox"
             aria-label={`Marcar ${c.codigo}`}
             data-acao="marcar-comunicado"
-            checked={marcados.has(chaveDaPessoa(c.vaga, c.codigo))}
+            checked={marcada}
             onChange={(ev) => aoMarcar([pessoa], ev.target.checked)}
           />
         </td>
-        <td>{c.vaga}</td>
-        <td>{c.codigo}</td>
-        <td>{c.nome}</td>
-        <td>{c.motivo}</td>
         <td>
+          <CelulaDaPessoa
+            nome={c.nome}
+            codigo={c.codigo}
+            modalidade={c.modalidade}
+          />
+        </td>
+        <td>{c.vaga}</td>
+        <td>{c.motivo}</td>
+        <td className="num">
           <AcoesDaLinha
             pessoa={c.codigo}
             principal={{
@@ -327,28 +341,28 @@ export function EliminadosDaTriagem({
 
   return (
     <div className="avd-pre-eliminados" data-aba-da-triagem="eliminados">
-      <BarraDeFiltros
-        rotulo="Filtros dos eliminados"
-        busca={{
-          valor: buscaDigitada,
-          aoMudar: setBuscaDigitada,
-          placeholder: "Código ou nome",
-          rotulo: "Buscar eliminado pelo código ou nome",
-          acao: "buscar-espelho-eliminado",
-        }}
-        quantos={[busca, vaga, motivo].filter(Boolean).length}
-        aoLimpar={() => {
-          setBuscaDigitada("");
-          mudarFiltros({ vaga: TODAS, motivo: TODAS });
-        }}
-        resultado={
-          lista.carregado
-            ? `${formatNumberBR(lista.total)} ${lista.total === 1 ? "eliminado" : "eliminados"}`
-            : "Procurando…"
-        }
+      <CardDaLista
+        rotulo="Eliminados da triagem"
+        tour="triagem-eliminados"
+        className="avd-pre-eliminados-lista"
       >
-        <Campo rotulo="Vaga">
+        <BarraDaLista
+          rotulo="Filtros dos eliminados"
+          busca={{
+            valor: buscaDigitada,
+            aoMudar: setBuscaDigitada,
+            placeholder: "Buscar por código ou nome",
+            rotulo: "Buscar eliminado pelo código ou nome",
+            acao: "buscar-espelho-eliminado",
+          }}
+          quantos={[busca, vaga, motivo].filter(Boolean).length}
+          aoLimpar={() => {
+            setBuscaDigitada("");
+            mudarFiltros({ vaga: TODAS, motivo: TODAS });
+          }}
+        >
           <select
+            aria-label="Vaga"
             value={vaga}
             data-acao="filtro-vaga-eliminados"
             onChange={(ev) => setVaga(ev.target.value)}
@@ -360,9 +374,8 @@ export function EliminadosDaTriagem({
               </option>
             ))}
           </select>
-        </Campo>
-        <Campo rotulo="Motivo">
           <select
+            aria-label="Motivo"
             value={motivo}
             data-acao="filtro-motivo-eliminados"
             onChange={(ev) => setMotivo(ev.target.value)}
@@ -374,31 +387,41 @@ export function EliminadosDaTriagem({
               </option>
             ))}
           </select>
-        </Campo>
-      </BarraDeFiltros>
-      <section className="ui-card" aria-label="Comunicados em lote">
-        <div className="avd-docs-lote-resumo" data-acao="comunicados-lote">
-          <span>
-            <strong data-acao="comunicados-marcados">
-              {escolhidos.length.toLocaleString("pt-BR")} marcado(s)
-            </strong>{" "}
-            de {formatNumberBR(totalDeEliminados)} eliminado(s)
-          </span>
-          <span className="ui-acoes">
-            <button
-              type="button"
-              className="btn ghost small"
-              data-acao="comunicados-marcar-busca"
-              disabled={!lista.total || marcandoTodos}
-              onClick={() => void marcarTodosDoFiltro(true)}
-            >
-              {marcandoTodos
-                ? "Marcando…"
-                : filtrando
-                  ? `Marcar todos do filtro (${formatNumberBR(lista.total)})`
-                  : `Marcar todos os eliminados (${formatNumberBR(lista.total)})`}
-            </button>
-            {marcadas.size ? (
+        </BarraDaLista>
+        <div
+          className="ui-lista-selecao avd-docs-lote-resumo"
+          role="toolbar"
+          aria-label="Comunicados em lote"
+          data-acao="comunicados-lote"
+        >
+          <strong data-acao="comunicados-marcados">
+            {formatNumberBR(escolhidos.length)} marcado(s)
+          </strong>
+          <span>de {formatNumberBR(totalDeEliminados)} eliminado(s)</span>
+          <button
+            type="button"
+            className="btn contorno small"
+            data-acao="comunicados-marcar-busca"
+            disabled={!lista.total || marcandoTodos}
+            onClick={() => void marcarTodosDoFiltro(true)}
+          >
+            {marcandoTodos
+              ? "Marcando…"
+              : filtrando
+                ? `Marcar todos do filtro (${formatNumberBR(lista.total)})`
+                : `Marcar todos (${formatNumberBR(lista.total)})`}
+          </button>
+          {marcadas.size ? (
+            <>
+              <AcoesEmLote
+                id="comunicados"
+                escolhidas={escolhidos}
+                rotuloDoDocumento="comunicado"
+                tituloDaImpressao="Comunicados de eliminação"
+                prefixoDoZip="comunicados"
+                edital={rotuloEdital}
+                montar={montarComunicados}
+              />
               <button
                 type="button"
                 className="btn ghost small"
@@ -407,19 +430,38 @@ export function EliminadosDaTriagem({
               >
                 Limpar marcação
               </button>
-            ) : null}
-          </span>
+            </>
+          ) : null}
         </div>
-        <AcoesEmLote
-          id="comunicados"
-          escolhidas={escolhidos}
-          rotuloDoDocumento="comunicado"
-          tituloDaImpressao="Comunicados de eliminação"
-          prefixoDoZip="comunicados"
-          edital={rotuloEdital}
-          montar={montarComunicados}
-        />
-      </section>
+        {lista.erro ? (
+          <Aviso tom="danger" papel="alert">
+            Não foi possível ler os eliminados: {lista.erro}{" "}
+            <button
+              type="button"
+              className="btn secondary small"
+              onClick={lista.recarregar}
+            >
+              Tentar novamente
+            </button>
+          </Aviso>
+        ) : (
+          <TabelaPaginada
+            rotulo="Eliminados"
+            classeDaTabela="avd-tabela"
+            colunas={colunas}
+            carregado={lista.carregado}
+            itens={lista.itens}
+            linha={linha}
+            chaveDoRecorte={chaveDaLista}
+            vazio={
+              filtrando
+                ? "Nenhum eliminado com esses filtros."
+                : "Nenhum eliminado no edital."
+            }
+            servidor={lista}
+          />
+        )}
+      </CardDaLista>
       {erro ? (
         <Aviso tom="danger" papel="alert">
           {erro}
@@ -440,40 +482,6 @@ export function EliminadosDaTriagem({
           }}
         />
       ) : null}
-      {lista.erro ? (
-        <Aviso tom="danger" papel="alert">
-          Não foi possível ler os eliminados: {lista.erro}{" "}
-          <button
-            type="button"
-            className="btn secondary small"
-            onClick={lista.recarregar}
-          >
-            Tentar novamente
-          </button>
-        </Aviso>
-      ) : (
-        <TabelaInfinita
-          idDoTitulo="avdTriagemEliminados"
-          titulo="Eliminados"
-          className="avd-pre-lista"
-          classeDaTabela="avd-tabela"
-          colunas={colunas}
-          carregado={lista.carregado}
-          itens={lista.itens}
-          filtrarPelaBusca={semFiltro}
-          linha={linha}
-          total={lista.total}
-          informacao={(quantos) =>
-            quantos === null
-              ? ""
-              : `${formatNumberBR(quantos)} ${quantos === 1 ? "eliminado" : "eliminados"}`
-          }
-          vazio={
-            filtrando ? "Nenhum eliminado no filtro." : "Nenhum eliminado."
-          }
-          servidor={lista}
-        />
-      )}
     </div>
   );
 }

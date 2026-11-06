@@ -19,6 +19,7 @@ export type {
   PropriedadesDaBarraDeFiltros,
 } from "./barra-de-filtros.tsx";
 export { CabecalhoDaTela } from "./cabecalho-da-tela.tsx";
+export { CelulaDaPessoa } from "./celula-da-pessoa.tsx";
 export type { PropriedadesDoCabecalhoDaTela } from "./cabecalho-da-tela.tsx";
 export { BotaoDeAcao } from "./botao-de-acao.tsx";
 export {

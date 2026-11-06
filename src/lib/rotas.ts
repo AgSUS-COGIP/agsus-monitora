@@ -114,6 +114,7 @@ const TELAS: TelaDaRota[] = [
     caminho: "triagem",
     titulo: "Triagem",
     comEdital: true,
+    tituloNaTela: true,
   },
   { view: "selecao", caminho: "selecao", titulo: "Painel da Seleção" },
 ];
