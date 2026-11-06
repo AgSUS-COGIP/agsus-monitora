@@ -12,7 +12,7 @@ import { criarLeafletFalso } from "./leaflet-falso.js";
 /*
   "Ordenar" da lista de territórios ao lado do mapa nacional da Saúde
   Indígena: cada ordem, o título que acompanha, o padrão por fundo (Vagas no
-  Mapa, Nº do DSEI no Mapa simples) e a escolha guardada no navegador, que
+  Mapa, Nº do DSEI no Mapa DSEIs) e a escolha guardada no navegador, que
   passa a valer para os dois.
 */
 
@@ -203,7 +203,7 @@ describe("Ordenar a lista de territórios", () => {
       await escolher(seletor(), ordem);
       expect(titulo()).toBe(esperado);
       expect(nomes()).toEqual(linhas);
-      // Fora do Mapa simples, o número da linha é a posição na nova ordem.
+      // Fora do Mapa DSEIs, o número da linha é a posição na nova ordem.
       expect(
         [...host.querySelectorAll(".mapa-si-territorio__posicao")].map(
           (p) => p.textContent,
@@ -212,7 +212,7 @@ describe("Ordenar a lista de territórios", () => {
     },
   );
 
-  it("no Mapa simples, o padrão é pelo nº do DSEI; ao voltar ao Mapa, por vagas", async () => {
+  it("no Mapa DSEIs, o padrão é pelo nº do DSEI; ao voltar ao Mapa, por vagas", async () => {
     preparar({ simples: true });
     await montar();
     await vi.waitFor(() =>

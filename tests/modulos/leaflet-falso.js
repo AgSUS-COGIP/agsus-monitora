@@ -119,7 +119,7 @@ export function criarLeafletFalso({ aoCriarMapa } = {}) {
     // Centro fixo (o meio do Brasil): o editor põe ali o pin de um lugar sem coordenada.
     m.getCenter = () => [-15, -50];
     m.getContainer = () => elemento;
-    // Panes com nome (o Mapa simples cria os dele): um <div> por nome.
+    // Panes com nome (o Mapa DSEIs cria os dele): um <div> por nome.
     const panes = new Map();
     m.getPane = (nome) => panes.get(nome);
     m.createPane = (nome) => {
@@ -156,7 +156,7 @@ export function criarLeafletFalso({ aoCriarMapa } = {}) {
     circleMarker: (latlng, opcoes) => camada("circleMarker", latlng, opcoes),
     marker: (latlng, opcoes) => camada("marker", latlng, opcoes),
     polyline: (pontos, opcoes) => camada("polyline", pontos, opcoes),
-    // Um caminho SVG por camada, como o renderizador do Leaflet (Mapa simples).
+    // Um caminho SVG por camada, como o renderizador do Leaflet (Mapa DSEIs).
     geoJSON: (dados, opcoes) => {
       const c = camada("geoJSON", dados, opcoes);
       c.elemento = document.createElementNS(

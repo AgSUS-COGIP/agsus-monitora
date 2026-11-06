@@ -294,7 +294,7 @@ body:not(.access-request-mode) .login-screen,
   --terra-fundo: #d6b07a;
   --terra-em-processo: #c8520f;
 
-  /* "Mapa simples" dos DSEIs (src/modulos/mapa-saude-indigena/mapa-simples.tsx):
+  /* "Mapa DSEIs" dos DSEIs (src/modulos/mapa-saude-indigena/mapa-simples.tsx):
      fundo liso, silhueta do Brasil, borda fina entre os distritos, a escala
      sequencial de 5 classes (verde-azulado, mais escuro = mais) e o "sem dado".
      A paleta categórica (uma cor terrosa por número, 1–34) é a mesma nos dois
@@ -487,7 +487,7 @@ html[data-theme="dark"] {
   --series-5: #d55181;
   --series-6: #a8861a;
 
-  /* "Mapa simples" no escuro: fundo da página, silhueta e borda escuras, a
+  /* "Mapa DSEIs" no escuro: fundo da página, silhueta e borda escuras, a
      escala invertida em luminância (mais claro = mais). */
   --mapa-simples-fundo: var(--surface-page);
   --mapa-simples-pais: #102131;

@@ -10,7 +10,7 @@ import { criarLeafletFalso } from "./leaflet-falso.js";
 
   O mapa nacional reenquadra o Brasil quando o card muda de tamanho, até a
   pessoa mexer nele (arrastar, zoom, teclado). Todo `pointerdown` dentro do
-  contêiner contava — inclusive o clique em "Mapa simples", "Satélite" ou
+  contêiner contava — inclusive o clique em "Mapa DSEIs", "Satélite" ou
   "Terras Indígenas", que moram no canto do Leaflet e não mexem na vista. Daí
   em diante o mapa deixava de reenquadrar e o Brasil saía cortado no card
   mais baixo. O "+ −" continua contando: ele mexe na vista.
