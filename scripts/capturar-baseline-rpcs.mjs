@@ -41,7 +41,7 @@ if (!CONEXAO) {
 const todas = process.argv.includes("--todas");
 
 const { CONTRATO_RPC } = await import(
-  pathToFileURL(join(process.cwd(), "src/lib/rpc-contrato.js")).href
+  pathToFileURL(join(process.cwd(), "src/lib/rpc-contrato.ts")).href
 );
 
 const { readdirSync, readFileSync } = await import("node:fs");

@@ -72,7 +72,7 @@ A infraestrutura de `src/lib/` também está em TypeScript: sessão e autentica�
 `session-lifecycle.ts`, `auth-flow.ts`, `supabaseClient.ts`, `estado-de-saida.ts`), `env.ts`,
 segurança (`sanitize.ts`, `html-security.ts`, `csv-security.ts`, `config-validation.ts`), cópias no
 navegador (`copia-da-sessao.ts`, `cache-de-payload.ts`), navegação, presença, carregamento e
-monitores de desempenho e CSP. Esses módulos são importados sem extensão. `origem-da-requisicao.js`
+monitores de desempenho e CSP. Esses módulos são importados sem extensão. `origem-da-requisicao.ts`
 continua em JavaScript porque as funções da Vercel em `api/` o importam direto, no Node.
 
 O app (`src/app/`, sem JS/JSX), a entrada (`src/main.ts`) e o retorno do OAuth

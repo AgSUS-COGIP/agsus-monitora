@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   chooseDseiFeatureType,
   featureTypesFromCapabilities,
-} from "../api/funai-geodata.js";
+} from "../api/funai-geodata.ts";
 
 describe("catálogo geoespacial da Funai", () => {
   it("seleciona a camada poligonal de DSEI mesmo quando o nome técnico muda", () => {
@@ -72,7 +72,7 @@ describe("cache das respostas do proxy da Funai", () => {
   }
 
   it("erro não vai para o cache compartilhado", async () => {
-    const { default: handler } = await import("../api/funai-geodata.js");
+    const { default: handler } = await import("../api/funai-geodata.ts");
     const res = respostaFalsa();
     await handler({ method: "GET", headers: {}, query: { dataset: "x" } }, res);
     expect(res.cabecalhos["Cache-Control"]).toBe("no-store");

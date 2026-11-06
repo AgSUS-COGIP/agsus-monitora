@@ -1,11 +1,24 @@
 import { origemDeTerceiro } from "../src/lib/origem-da-requisicao.js";
+import type { PedidoDaVercel, RespostaDaVercel } from "./_tipos-da-vercel.js";
+
+/** Onde e com que nome de camada o GeoServer serve um conjunto. */
+type FonteGeo = { endpoint: string; typeName: string };
+
+type FeatureType = { name: string; title: string };
+
+const DATASETS = ["territories", "dsei", "estudo"] as const;
+type Dataset = (typeof DATASETS)[number];
+
+function ehDataset(valor: string): valor is Dataset {
+  return (DATASETS as readonly string[]).includes(valor);
+}
 
 const FUNAI_OWS_ENDPOINTS = [
   "https://geoserver.funai.gov.br/geoserver/Funai/ows",
   "https://geoserver.funai.gov.br/geoserver/ows",
-];
+] as const;
 
-const STATIC_DATASETS = {
+const STATIC_DATASETS: Record<Exclude<Dataset, "dsei">, FonteGeo> = {
   territories: {
     endpoint: FUNAI_OWS_ENDPOINTS[0],
     typeName: "Funai:tis_poligonais",
@@ -38,20 +51,20 @@ const STATIC_DATASETS = {
 */
 const DSEI_KNOWN_TYPE_NAMES = ["Funai:areas_dsei"];
 
-let resolvedDseiSource = null;
+let resolvedDseiSource: FonteGeo | null = null;
 /*
   Sem esta trava, várias requisições simultâneas em instância fria refaziam a
   descoberta inteira cada uma — até seis chamadas ao GeoServer por requisição.
   Sob carga isso martela a Funai, que é justamente quem não podemos irritar.
   Guardar a promessa em andamento faz as concorrentes esperarem a primeira.
 */
-let descobertaEmCurso = null;
+let descobertaEmCurso: Promise<FonteGeo> | null = null;
 
-function first(value) {
+function first(value: unknown): unknown {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function normalizeLabel(value) {
+function normalizeLabel(value: unknown): string {
   return String(value || "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -62,14 +75,14 @@ function normalizeLabel(value) {
     .trim();
 }
 
-export function featureTypesFromCapabilities(xml) {
+export function featureTypesFromCapabilities(xml: unknown): FeatureType[] {
   const source = String(xml || "");
   const blocks =
     source.match(
       /<(?:[A-Za-z0-9_-]+:)?FeatureType\b[\s\S]*?<\/(?:[A-Za-z0-9_-]+:)?FeatureType>/gi,
     ) || [];
 
-  const tagValue = (block, tag) =>
+  const tagValue = (block: string, tag: string): string =>
     block
       .match(
         new RegExp(
@@ -87,7 +100,9 @@ export function featureTypesFromCapabilities(xml) {
     .filter((item) => item.name);
 }
 
-export function chooseDseiFeatureType(featureTypes = []) {
+export function chooseDseiFeatureType(
+  featureTypes: readonly (Partial<FeatureType> | null | undefined)[] = [],
+): string {
   const scored = featureTypes
     .map((item) => {
       const text = normalizeLabel(`${item?.name || ""} ${item?.title || ""}`);
@@ -107,23 +122,24 @@ export function chooseDseiFeatureType(featureTypes = []) {
         text.includes("POLIGONO");
 
       return {
-        name: String(item.name || "").trim(),
+        name: String(item?.name || "").trim(),
         score: (looksLikeArea ? 10 : 0) - (looksLikeSeat ? 20 : 0),
       };
     })
-    .filter(Boolean)
+    .filter((item): item is { name: string; score: number } => Boolean(item))
     .sort((a, b) => b.score - a.score);
 
   const best = scored[0];
   return best && best.score >= 0 ? best.name : "";
 }
 
-function safeBbox(value) {
+function safeBbox(value: unknown): string {
   const raw = String(first(value) || "").trim();
   if (!raw) return "";
   const parts = raw.split(",").map(Number);
   if (parts.length !== 4 || !parts.every(Number.isFinite)) return "";
-  const [west, south, east, north] = parts;
+  // Os padrões nunca valem: o tamanho 4 já foi conferido acima.
+  const [west = NaN, south = NaN, east = NaN, north = NaN] = parts;
   if (
     west < -180 ||
     east > 180 ||
@@ -137,7 +153,7 @@ function safeBbox(value) {
   return parts.join(",");
 }
 
-function json(res, status, payload) {
+function json(res: RespostaDaVercel, status: number, payload: unknown): void {
   res.status(status);
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   // Só resposta boa vai para o cache compartilhado: um 403 de origem de
@@ -151,29 +167,49 @@ function json(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
-function parseGeoJson(body) {
+function parseGeoJson(body: unknown): { features: unknown[] } | null {
   const source = String(body || "").trim();
   if (!source.startsWith("{")) return null;
   try {
-    const parsed = JSON.parse(source);
-    return parsed?.type === "FeatureCollection" &&
+    const parsed: unknown = JSON.parse(source);
+    return typeof parsed === "object" &&
+      parsed !== null &&
+      "type" in parsed &&
+      parsed.type === "FeatureCollection" &&
+      "features" in parsed &&
       Array.isArray(parsed.features)
-      ? parsed
+      ? { features: parsed.features }
       : null;
   } catch {
     return null;
   }
 }
 
-function isPolygonGeoJsonBody(body) {
+/* `feature?.geometry?.type`, lido de um JSON sem formato garantido. */
+function geometryType(feature: unknown): string {
+  const geometry =
+    typeof feature === "object" && feature !== null && "geometry" in feature
+      ? feature.geometry
+      : undefined;
+  const type =
+    typeof geometry === "object" && geometry !== null && "type" in geometry
+      ? geometry.type
+      : undefined;
+  return String(type || "");
+}
+
+function isPolygonGeoJsonBody(body: unknown): boolean {
   const parsed = parseGeoJson(body);
   if (!parsed || !parsed.features.length) return false;
   return parsed.features.some((feature) =>
-    ["Polygon", "MultiPolygon"].includes(String(feature?.geometry?.type || "")),
+    ["Polygon", "MultiPolygon"].includes(geometryType(feature)),
   );
 }
 
-function featureParams(typeName, extra = {}) {
+function featureParams(
+  typeName: string,
+  extra: Record<string, string> = {},
+): URLSearchParams {
   return new URLSearchParams({
     service: "WFS",
     version: "1.0.0",
@@ -185,7 +221,11 @@ function featureParams(typeName, extra = {}) {
   });
 }
 
-async function requestFeatureCollection(endpoint, typeName, extra = {}) {
+async function requestFeatureCollection(
+  endpoint: string,
+  typeName: string,
+  extra: Record<string, string> = {},
+): Promise<string | null> {
   const params = featureParams(typeName, extra);
   const response = await fetch(`${endpoint}?${params.toString()}`, {
     headers: { Accept: "application/geo+json,application/json" },
@@ -196,7 +236,7 @@ async function requestFeatureCollection(endpoint, typeName, extra = {}) {
   return parseGeoJson(body) ? body : null;
 }
 
-async function resolveDseiSource() {
+async function resolveDseiSource(): Promise<FonteGeo> {
   if (resolvedDseiSource) return resolvedDseiSource;
   if (descobertaEmCurso) return descobertaEmCurso;
   descobertaEmCurso = descobrirFonteDsei().finally(() => {
@@ -205,7 +245,7 @@ async function resolveDseiSource() {
   return descobertaEmCurso;
 }
 
-async function descobrirFonteDsei() {
+async function descobrirFonteDsei(): Promise<FonteGeo> {
   for (const endpoint of FUNAI_OWS_ENDPOINTS) {
     for (const typeName of DSEI_KNOWN_TYPE_NAMES) {
       const body = await requestFeatureCollection(endpoint, typeName, {
@@ -248,7 +288,10 @@ async function descobrirFonteDsei() {
   );
 }
 
-export default async function handler(req, res) {
+export default async function handler(
+  req: PedidoDaVercel,
+  res: RespostaDaVercel,
+): Promise<void> {
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
     return json(res, 405, { error: "method_not_allowed" });
@@ -259,7 +302,7 @@ export default async function handler(req, res) {
   }
 
   const dataset = String(first(req.query?.dataset) || "");
-  if (!["territories", "dsei", "estudo"].includes(dataset)) {
+  if (!ehDataset(dataset)) {
     return json(res, 400, { error: "invalid_dataset" });
   }
 
@@ -267,7 +310,7 @@ export default async function handler(req, res) {
     const source =
       dataset === "dsei" ? await resolveDseiSource() : STATIC_DATASETS[dataset];
 
-    const extra = {};
+    const extra: Record<string, string> = {};
     if (dataset === "territories") {
       const bbox = safeBbox(req.query?.bbox);
       if (!bbox) return json(res, 400, { error: "invalid_bbox" });

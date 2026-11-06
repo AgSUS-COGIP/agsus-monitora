@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import handler from "../api/editais.js";
+import handler from "../api/editais.ts";
 import {
   editaisDaApi,
   filtrosDaApi,
   totaisDaApi,
-} from "../src/lib/editais-da-api.js";
+} from "../src/lib/editais-da-api.ts";
 
 const LINHAS = [
   {

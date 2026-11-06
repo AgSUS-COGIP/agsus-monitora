@@ -5,7 +5,7 @@ import {
   CONTRATO_RPC,
   RPCS_CRITICAS,
   contratoDe,
-} from "../src/lib/rpc-contrato.js";
+} from "../src/lib/rpc-contrato.ts";
 
 const app = fonteDoApp();
 const acessos = readFileSync("src/modulos/acessos/estado.ts", "utf8");

@@ -24,7 +24,7 @@ function verificar(script, extensao, fonte, contrato = {}) {
   mkdirSync(join(pasta, "src/lib"), { recursive: true });
   writeFileSync(join(pasta, "package.json"), '{"type":"module"}');
   writeFileSync(
-    join(pasta, "src/lib/rpc-contrato.js"),
+    join(pasta, "src/lib/rpc-contrato.ts"),
     `export const CONTRATO_RPC = ${JSON.stringify(contrato)};`,
   );
   writeFileSync(join(pasta, `src/tela.${extensao}`), fonte);

@@ -2,7 +2,7 @@
   GET /api/editais — os editais do monitoramento: unidade, edital, status,
   etapa, vagas, contratados, ociosas, risco, link do edital e área — Saúde
   Indígena, SEDE ou Projetos (formato em
-  src/lib/editais-da-api.js).
+  src/lib/editais-da-api.ts).
 
   Acesso: sem login. Quem chama manda a chave fixa da API
   (`Authorization: Bearer <EDITAIS_API_CHAVE>`). A função lê
@@ -10,7 +10,7 @@
   (SUPABASE_SERVICE_ROLE_KEY), que nunca sai daqui, e devolve as linhas
   ativas de todas as áreas. Trocar a chave = mudar EDITAIS_API_CHAVE na Vercel
   e fazer um novo deploy; a chave antiga para de valer. A mesma chave vale
-  para /api/aprovados e /api/cronograma (api/_rota-com-chave.js).
+  para /api/aprovados e /api/cronograma (api/_rota-com-chave.ts).
 
   Variáveis na Vercel (Settings › Environment Variables):
     VITE_SUPABASE_URL           já existe (a do app)

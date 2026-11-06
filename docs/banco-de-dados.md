@@ -109,7 +109,7 @@ desativar e revogar já passavam por RPC.
 
 ### 2.2 RPCs
 
-O mapa único está em [`src/lib/rpc-contrato.js`](../src/lib/rpc-contrato.js), com
+O mapa único está em [`src/lib/rpc-contrato.ts`](../src/lib/rpc-contrato.ts), com
 argumentos esperados, resumo e criticidade. `npm run check:rpc-contract` valida:
 
 `npm run check:rpc-contract` — **estático, em todo build**: nenhuma chamada usa
@@ -267,7 +267,7 @@ consome o quê no banco, quebraria consumidores invisíveis a partir do reposit�
 ### 4.4 Verificação automatizada do contrato
 
 `npm run check:rpc-contract:db` consulta `pg_proc` por conexão direta e compara
-com [`src/lib/rpc-contrato.js`](../src/lib/rpc-contrato.js): quais funções
+com [`src/lib/rpc-contrato.ts`](../src/lib/rpc-contrato.ts): quais funções
 existem, se aceitam os parâmetros declarados, e quais roles têm `EXECUTE`.
 
 Precisa de `SUPABASE_DB_URL` — **segredo de CI ou de servidor**. Nunca uma

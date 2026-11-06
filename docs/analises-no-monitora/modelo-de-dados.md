@@ -871,7 +871,7 @@ como "Justificativa" dos inaptos.
 Depois de publicar, a função marca o cache do Painel das análises como vencido, para o painel
 mostrar a mudança na hora.
 
-## 14. RPCs (todas `public`, `SECURITY DEFINER`, `set search_path to ''`, em `rpc-contrato.js`)
+## 14. RPCs (todas `public`, `SECURITY DEFINER`, `set search_path to ''`, em `rpc-contrato.ts`)
 
 | RPC                                                                                                      | Quem                                    | O que faz                                                                                                                                                                                                                         |
 | -------------------------------------------------------------------------------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

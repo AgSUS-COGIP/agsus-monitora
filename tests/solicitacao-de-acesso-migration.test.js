@@ -4,7 +4,7 @@ import {
   CARGOS_DA_SOLICITACAO,
   MOTIVOS_DE_RECUSA,
 } from "../src/lib/solicitacao-de-acesso.ts";
-import { CONTRATO_RPC } from "../src/lib/rpc-contrato.js";
+import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 
 /*
   Migration 20261021140000 (ainda não aplicada; ensaio begin…rollback em
