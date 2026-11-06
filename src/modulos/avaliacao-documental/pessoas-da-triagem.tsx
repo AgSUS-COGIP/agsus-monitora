@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
+import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { copiarTexto } from "../../lib/convite-de-acesso.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import { ordinal } from "../../lib/classificacao/numeros.ts";
@@ -31,7 +33,6 @@ import {
   Campo,
   Selo,
   TabelaInfinita,
-  usarEstadoDaSessao,
   usarListaNoServidor,
 } from "../../ui/index.ts";
 import type {
@@ -58,8 +59,9 @@ import type {
   pelo nome, sem abrir vaga por vaga. A busca e os filtros (vaga e situação)
   vão ao banco (listar_pre_classificacao, 50 por vez, na ordem dele: vaga,
   no lote antes de fora, posição); "Todas" mostra os classificados e os
-  eliminados em duas listas. O filtro fica na sessão da aba do navegador,
-  por edital (volta no F5). Regras puras em
+  eliminados em duas listas. A vaga e a situação vão na URL (?vaga=&situacao=,
+  src/app/usar-filtros-na-url.ts); a busca, não (nome e código). Sem filtro
+  na URL, vale o guardado na sessão da aba, por edital. Regras puras em
   src/lib/avaliacao-documental/pessoas-da-triagem.ts.
 
   Cada linha tem a ação principal (o comunicado do eliminado, ou "Incluir
@@ -244,6 +246,18 @@ function ListaDoGrupo({
   );
 }
 
+/* Vaga e situação na URL; a busca (nome, código) fica fora dela. */
+const FILTROS_DAS_PESSOAS: EsquemaDosFiltros<keyof FiltroDasPessoas> =
+  Object.freeze({
+    situacao: {
+      padrao: FILTRO_DAS_PESSOAS_INICIAL.situacao,
+      aceita: (valor: string) =>
+        SITUACOES_DAS_PESSOAS.some((s) => s.valor === valor),
+    },
+    vaga: { padrao: "" },
+    busca: { padrao: "", naUrl: false },
+  });
+
 export function PessoasDaTriagem({
   pre,
   editalId,
@@ -254,11 +268,10 @@ export function PessoasDaTriagem({
   podeCoordenar,
   aoVerVaga,
 }: PropriedadesDasPessoas) {
-  const [filtro, setFiltro] = usarEstadoDaSessao(
-    chaveDasPessoas(editalId),
-    FILTRO_DAS_PESSOAS_INICIAL as FiltroDasPessoas,
-    normalizarFiltroDasPessoas,
-  );
+  const [valores, setFiltro] = usarFiltrosNaUrl(FILTROS_DAS_PESSOAS, {
+    sessao: chaveDasPessoas(editalId),
+  });
+  const filtro = useMemo(() => normalizarFiltroDasPessoas(valores), [valores]);
   // A busca vai ao banco 300 ms depois da última tecla (não a cada tecla).
   const [busca, setBusca] = useState(() => filtro.busca.trim());
   useEffect(() => {

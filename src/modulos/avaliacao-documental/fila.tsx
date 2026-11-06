@@ -8,6 +8,11 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { usarLojaNaUrl } from "../../app/usar-filtros-na-url.ts";
+import type {
+  EsquemaDosFiltros,
+  ValoresDosFiltros,
+} from "../../app/filtros-no-endereco.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.ts";
 import { ordinal } from "../../lib/classificacao/numeros.ts";
@@ -1121,8 +1126,71 @@ interface FilaProps {
   fila: Fila;
 }
 
+/*
+  O filtro da Fila na URL: a etapa (aba e cards; trocar é entrada nova no
+  histórico), a vaga, a modalidade e o card "Minhas" (?minhas=sim). A busca
+  e o responsável escolhido na lista (outra pessoa) ficam fora dela.
+*/
+type CampoDaFilaNaUrl = "etapa" | "vaga" | "modalidade" | "minhas";
+const FILTROS_DA_FILA: EsquemaDosFiltros<CampoDaFilaNaUrl> = Object.freeze({
+  etapa: {
+    padrao: FILTRO_INICIAL.etapa,
+    aceita: (etapa: string) => ETAPAS_DA_FILA.some((e) => e.valor === etapa),
+    empilha: true,
+  },
+  vaga: { padrao: "" },
+  modalidade: { padrao: "" },
+  minhas: { padrao: "", aceita: (valor: string) => valor === "sim" },
+});
+
+/* Na troca de etapa, o edital e a aba da tela ficam na URL. */
+const FICA_NA_TROCA_DE_ETAPA = Object.freeze(["edital", "aba"]);
+
+function filaNaUrl(f: FiltroDaFila): ValoresDosFiltros<CampoDaFilaNaUrl> {
+  return {
+    etapa: f.etapa,
+    vaga: f.vaga,
+    modalidade: f.modalidade,
+    minhas: f.responsavel === "eu" ? "sim" : "",
+  };
+}
+
+/** O que veio da URL, no filtro da Fila (sem "Minhas", o responsável escolhido fica). */
+function filtroDaUrl(
+  parte: Partial<ValoresDosFiltros<CampoDaFilaNaUrl>>,
+  atual: FiltroDaFila,
+): Partial<FiltroDaFila> {
+  const { minhas, etapa, ...resto } = parte;
+  return {
+    ...resto,
+    ...(etapa === undefined ? {} : { etapa: etapa as EtapaDaFila }),
+    ...(minhas === undefined
+      ? {}
+      : {
+          responsavel: minhas
+            ? "eu"
+            : atual.responsavel === "eu"
+              ? ""
+              : atual.responsavel,
+        }),
+  };
+}
+
 export function Fila({ e, fila }: FilaProps) {
   const st = useSyncExternalStore(fila.assinar, fila.obter);
+  const mudarNaUrl = usarLojaNaUrl(
+    FILTROS_DA_FILA,
+    filaNaUrl(st.filtro),
+    (parte) => fila.mudarFiltro(filtroDaUrl(parte, fila.obter().filtro)),
+    { manter: FICA_NA_TROCA_DE_ETAPA },
+  );
+  // Outra etapa passa pela URL (entrada nova); o resto, a URL acompanha.
+  const mudarFiltro = (mudancas: Partial<FiltroDaFila>) => {
+    const { etapa: outra, ...resto } = mudancas;
+    if (outra !== undefined && outra !== fila.obter().filtro.etapa)
+      mudarNaUrl({ etapa: outra });
+    if (Object.keys(resto).length) fila.mudarFiltro(resto);
+  };
   const [selecao, setSelecao] = useState(() => new Set<string>());
   const [acao, setAcao] = useState<AcaoPedida | null>(null);
   const [reiniciando, setReiniciando] = useState(false);
@@ -1504,7 +1572,7 @@ export function Fila({ e, fila }: FilaProps) {
             valor={formatNumberBR(contadores.lote ?? 0)}
             titulo="Ver as fichas do lote"
             ativo={etapa === "lote"}
-            aoClicar={() => fila.mudarFiltro({ etapa: "lote" })}
+            aoClicar={() => mudarFiltro({ etapa: "lote" })}
           />
           <Kpi
             chave="concluidas"
@@ -1518,7 +1586,7 @@ export function Fila({ e, fila }: FilaProps) {
             )}
             titulo="Ver as concluídas"
             ativo={etapa === "concluidas"}
-            aoClicar={() => fila.mudarFiltro({ etapa: "concluidas" })}
+            aoClicar={() => mudarFiltro({ etapa: "concluidas" })}
           />
           <Kpi
             chave="em_analise"
@@ -1533,7 +1601,7 @@ export function Fila({ e, fila }: FilaProps) {
             }
             titulo="Ver as fichas em análise"
             ativo={etapa === "em_analise"}
-            aoClicar={() => fila.mudarFiltro({ etapa: "em_analise" })}
+            aoClicar={() => mudarFiltro({ etapa: "em_analise" })}
           />
           <Kpi
             chave="pendentes"
@@ -1543,7 +1611,7 @@ export function Fila({ e, fila }: FilaProps) {
             valor={formatNumberBR(contadores.pendentes ?? 0)}
             titulo="Ver as pendentes"
             ativo={etapa === "pendentes"}
-            aoClicar={() => fila.mudarFiltro({ etapa: "pendentes" })}
+            aoClicar={() => mudarFiltro({ etapa: "pendentes" })}
           />
           <Kpi
             chave="hoje"
@@ -1568,7 +1636,7 @@ export function Fila({ e, fila }: FilaProps) {
               titulo="Mostrar só as minhas fichas"
               ativo={st.filtro.responsavel === "eu"}
               aoClicar={() =>
-                fila.mudarFiltro({
+                mudarFiltro({
                   responsavel: st.filtro.responsavel === "eu" ? "" : "eu",
                 })
               }
@@ -1582,7 +1650,7 @@ export function Fila({ e, fila }: FilaProps) {
           lote={lote}
           vaga={st.filtro.vaga}
           usuario={dados?.eu}
-          aoEscolherVaga={(vaga) => fila.mudarFiltro({ vaga })}
+          aoEscolherVaga={(vaga) => mudarFiltro({ vaga })}
         />
       ) : null}
 
@@ -1597,7 +1665,7 @@ export function Fila({ e, fila }: FilaProps) {
         }))}
         ativa={st.filtro.etapa}
         aoEscolher={(etapa: string) =>
-          fila.mudarFiltro({ etapa: etapa as EtapaDaFila })
+          mudarFiltro({ etapa: etapa as EtapaDaFila })
         }
       />
 
@@ -1609,7 +1677,7 @@ export function Fila({ e, fila }: FilaProps) {
           valor: busca,
           aoMudar: (valor) => {
             setBusca(valor);
-            fila.mudarFiltro({ busca: valor });
+            mudarFiltro({ busca: valor });
           },
           placeholder: "Código ou nome",
           rotulo:
@@ -1624,7 +1692,7 @@ export function Fila({ e, fila }: FilaProps) {
         quantos={filtrosDaFilaEmUso(st.filtro)}
         aoLimpar={() => {
           setBusca("");
-          fila.mudarFiltro({
+          mudarFiltro({
             vaga: "",
             responsavel: "",
             modalidade: "",
@@ -1650,9 +1718,7 @@ export function Fila({ e, fila }: FilaProps) {
                 className="btn secondary"
                 aria-pressed={minhas}
                 data-tour="avd-fila-minhas"
-                onClick={() =>
-                  fila.mudarFiltro({ responsavel: minhas ? "" : "eu" })
-                }
+                onClick={() => mudarFiltro({ responsavel: minhas ? "" : "eu" })}
               >
                 <i className="fa-solid fa-user-check" aria-hidden="true" />{" "}
                 Minhas fichas
@@ -1686,7 +1752,7 @@ export function Fila({ e, fila }: FilaProps) {
         <Campo rotulo="Vaga">
           <select
             value={st.filtro.vaga}
-            onChange={(ev) => fila.mudarFiltro({ vaga: ev.target.value })}
+            onChange={(ev) => mudarFiltro({ vaga: ev.target.value })}
           >
             <option value="">Todas</option>
             {(dados.vagas || []).map((v) => (
@@ -1699,9 +1765,7 @@ export function Fila({ e, fila }: FilaProps) {
         <Campo rotulo="Responsável">
           <select
             value={st.filtro.responsavel}
-            onChange={(ev) =>
-              fila.mudarFiltro({ responsavel: ev.target.value })
-            }
+            onChange={(ev) => mudarFiltro({ responsavel: ev.target.value })}
           >
             <option value="">Todos</option>
             <option value="eu">Minhas fichas</option>
@@ -1716,7 +1780,7 @@ export function Fila({ e, fila }: FilaProps) {
         <Campo rotulo="Modalidade">
           <select
             value={st.filtro.modalidade}
-            onChange={(ev) => fila.mudarFiltro({ modalidade: ev.target.value })}
+            onChange={(ev) => mudarFiltro({ modalidade: ev.target.value })}
           >
             <option value="">Todas</option>
             {modalidades.map((m) => (

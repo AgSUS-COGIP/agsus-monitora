@@ -24,6 +24,8 @@ import {
 } from "../../lib/classificacao/relatorio-de-desempate.ts";
 import { PRAZO_DO_CALCULO_MS } from "../../lib/classificacao/calculo-em-python.ts";
 import { useEffect, useId, useMemo, useState } from "react";
+import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
+import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import type { UIEvent } from "react";
 import { copiarTexto } from "../../lib/convite-de-acesso.ts";
 import { formatNumberBR } from "../../lib/formatters";
@@ -69,7 +71,6 @@ import {
   Secao,
   Segmentado,
   Selo,
-  usarEstadoDaSessao,
 } from "../../ui/index.ts";
 import type { AcaoDoMenu } from "../../ui/index.ts";
 
@@ -1437,6 +1438,24 @@ Usar esta geração assim mesmo?`,
   );
 }
 
+/* O tipo de lista e o recorte na URL; a busca pelo nome fica fora dela. */
+const FILTROS_DAS_LISTAS: EsquemaDosFiltros<
+  "tipo" | "vaga" | "lista" | "situacao" | "busca"
+> = Object.freeze({
+  tipo: {
+    padrao: "",
+    aceita: (tipo: string) => TIPOS_DE_LISTA.some(([valor]) => valor === tipo),
+  },
+  vaga: { padrao: RECORTE_VAZIO.vaga },
+  lista: { padrao: RECORTE_VAZIO.lista },
+  situacao: {
+    padrao: "",
+    aceita: (situacao: string) =>
+      SITUACOES_DO_RECORTE.some((s) => s.valor === situacao),
+  },
+  busca: { padrao: "", naUrl: false },
+});
+
 export function Listas({
   estado,
   e,
@@ -1453,14 +1472,26 @@ export function Listas({
   aoAbrirAgenda?: () => void;
   confirmar?: (mensagem: string) => boolean;
 }) {
-  // Até a pessoa escolher, a lista acompanha a fase do edital.
-  const [escolhido, setEscolhido] = useState<TipoDeLista | null>(null);
-  // O recorte fica na sessão da aba, por edital (volta no F5).
-  const [recorte, setRecorte] = usarEstadoDaSessao<RecorteDasListas>(
-    chaveDoRecorte(e.editalId),
-    RECORTE_VAZIO as RecorteDasListas,
-    normalizarRecorte,
-  );
+  /*
+    O tipo de lista e o recorte (vaga, lista, situação) vão na URL; a busca
+    pelo nome, não. Sem filtro na URL, vale o guardado na sessão da aba, por
+    edital (volta no F5). Até a pessoa escolher, a lista acompanha a fase do
+    edital.
+  */
+  const [filtros, mudarFiltros] = usarFiltrosNaUrl(FILTROS_DAS_LISTAS, {
+    sessao: chaveDoRecorte(e.editalId),
+  });
+  const escolhido = (filtros.tipo || null) as TipoDeLista | null;
+  const setEscolhido = (tipo: TipoDeLista) => mudarFiltros({ tipo });
+  const recorte = useMemo(() => normalizarRecorte(filtros), [filtros]);
+  const setRecorte = (
+    novo: RecorteDasListas | ((atual: RecorteDasListas) => RecorteDasListas),
+  ) =>
+    mudarFiltros((atual) => {
+      const r =
+        typeof novo === "function" ? novo(normalizarRecorte(atual)) : novo;
+      return { ...r, situacao: r.situacao ?? "" };
+    });
   const [copiado, setCopiado] = useState("");
   const [aberto, setAberto] = useState("");
   const [pendencia, setPendencia] = useState<PendenciaDeEmpate | null>(null);
