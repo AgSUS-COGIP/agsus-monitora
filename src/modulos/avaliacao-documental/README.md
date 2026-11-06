@@ -242,7 +242,7 @@ pessoas-da-triagem.tsx    aba Pessoas da Triagem: busca por código ou nome no e
                           linha (AcoesDaLinha); regras em src/lib/avaliacao-documental/
                           pessoas-da-triagem.ts; o filtro fica na sessão (usarEstadoDaSessao)
 fila.tsx                  aba Fila (FaixaDeSituacao, BarraDaLista, barra da seleção em lote,
-                          TabelaPaginada; "Analisar"/"Abrir" e "⋯" de cada linha, ficha
+                          TabelaDaLista; "Analisar"/"Abrir" e "⋯" de cada linha, ficha
                           aberta); os números da faixa em src/lib/avaliacao-documental/
                           numeros-da-fila.ts (o selo e a meta do dia vêm de
                           obter_ritmo_da_analise, a conta do Painel das análises)

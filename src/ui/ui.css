@@ -2023,9 +2023,9 @@ button.ui-faixa-item:hover {
   margin-right: auto;
   font-variant-numeric: tabular-nums;
 }
-.ui-lista-paginas {
-  display: inline-flex;
-  gap: var(--space-2);
+/* O fim da caixa que rola: chegar perto dele mostra mais 50 (IntersectionObserver). */
+.ui-lista-fim {
+  height: 1px;
 }
 /* Duas listas no mesmo card (Pessoas da Triagem em "Todas"): o título de cada uma. */
 .ui-lista-subtitulo {

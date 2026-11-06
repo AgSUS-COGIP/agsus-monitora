@@ -177,7 +177,7 @@ export function BarraDeFiltros({
 
 /*
   A barra da lista das telas da seleção (`.ui-barra-da-lista`), no alto do
-  card da lista (TabelaPaginada `topo`), numa linha que quebra no celular:
+  card da lista (CardDaLista), numa linha que quebra no celular:
   a busca com a lupa e o atalho "/", os filtros principais (`children`:
   selects com nome acessível e a primeira opção "Todas as vagas"), o botão
   "Filtros" que abre os secundários (`secundarios`, com quantos estão em

@@ -85,7 +85,7 @@ import {
   MenuDeAcoes,
   porcentagemDe,
   Selo,
-  TabelaPaginada,
+  TabelaDaLista,
   usarListaNoServidor,
 } from "../../ui/index.ts";
 import type {
@@ -126,7 +126,7 @@ import type { AberturaDoRelatorio } from "./relatorio-de-motivos.tsx";
   recolhível); embaixo, num card só, a barra da lista (busca com "/", Vaga,
   Responsável, "Filtros" com a modalidade e os filtros salvos, o "⋯" da
   coordenação e "Pegar próxima ficha"), a barra da seleção em lote (Atribuir
-  a…, Liberar, Mandar para revisão, Limpar seleção) e a tabela, 50 por vez,
+  a…, Liberar, Mandar para revisão, Limpar seleção) e a tabela (50 e mais 50 ao rolar),
   com a pessoa (nome e "código · modalidade") e, em cada linha, "Analisar"
   (pendente) ou "Abrir" e o "⋯" (atribuir, liberar a reserva, mandar para
   revisão — a mesma gaveta de confirmação das ações em lote — e copiar o
@@ -887,11 +887,11 @@ const LinhaDaFila = memo(function LinhaDaFila({
 });
 
 /*
-  A tabela da aba (TabelaPaginada, src/ui/), dentro do card da lista: as
+  A tabela da aba (TabelaDaLista, src/ui/), dentro do card da lista: as
   colunas que fazem sentido na etapa (Eliminados: motivo e ART; Concluídas:
   nota, resultado, responsável e data; Pendentes e Em análise: posição, ART,
   responsável e reserva), a pessoa numa coluna só, ordem por coluna, 50 por
-  vez com "1–50 de N", Anterior / Próxima, o grupo por vaga (código, cargo,
+  vez ao rolar ("Mostrando N de M"), o grupo por vaga (código, cargo,
   lote e linha de corte; recolhível) e "Exportar CSV" da aba, na ordem da
   coluna e sem agrupar. A busca por código ou nome fica na barra da lista.
 
@@ -899,7 +899,7 @@ const LinhaDaFila = memo(function LinhaDaFila({
   funções memorizadas, a etapa e "abrindo" em vez do estado inteiro), então
   abrir um menu, uma gaveta ou uma mensagem do estado não a redesenham.
 */
-/* O grupo da tabela (por vaga), como a TabelaPaginada o recebe. */
+/* O grupo da tabela (por vaga), como a TabelaDaLista o recebe. */
 interface GrupoDaTabela {
   chave: (c: Inscrito) => string;
   cabecalho: (vaga: string, quantos: number) => ReactNode;
@@ -925,7 +925,7 @@ interface TabelaDaFilaProps {
   marcar: (id: string, sim: boolean) => void;
   grupo: GrupoDaTabela | null;
   aoAcao: (acao: AcaoDaLinhaDaFila, c: Inscrito) => void;
-  /** O recorte da lista (filtros e ordem): mudou, volta à primeira página. */
+  /** O recorte da lista (filtros e ordem): mudou, volta às primeiras 50. */
   recorte: string;
   /** Aba Eliminados no banco: as páginas, o CSV do recorte e o "Tentar novamente". */
   servidor?: TabelaNoServidor | null;
@@ -1067,7 +1067,7 @@ const TabelaDaFila = memo(function TabelaDaFila({
     );
 
   return (
-    <TabelaPaginada
+    <TabelaDaLista
       rotulo={rotuloDaEtapa}
       carregado={carregado}
       itens={exibidas}

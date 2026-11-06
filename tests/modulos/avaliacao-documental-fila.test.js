@@ -536,7 +536,7 @@ describe("listas da fila: colunas por aba, ordem, N de M e CSV", () => {
       [
         ...secao.querySelectorAll("[data-tour='avd-fila-tabela'] th button"),
       ].find((b) => b.textContent.trim() === nome);
-    expect(contagemDaLista()).toBe("1–4 de 4");
+    expect(contagemDaLista()).toBe("Mostrando 4 de 4");
     // A pessoa ordena pelo nome.
     await clicar(ordenar("Pessoa"));
     await clicar(ordenar("Pessoa"));
@@ -551,7 +551,7 @@ describe("listas da fila: colunas por aba, ordem, N de M e CSV", () => {
       secao.querySelector("[data-candidato='7004'] .ui-pessoa").textContent,
     ).toBe("Pessoa 70047004 · AC");
     await digitar(secao.querySelector("[data-tour='avd-fila-busca']"), "7002");
-    expect(contagemDaLista()).toBe("1–1 de 1");
+    expect(contagemDaLista()).toBe("Mostrando 1 de 1");
     await digitar(secao.querySelector("[data-tour='avd-fila-busca']"), "");
     const blobs = [];
     const original = {
@@ -1562,7 +1562,7 @@ describe("fila leve: o lote em toda leitura, os de fora do lote sob demanda", ()
       p_apos: null,
       p_limite: 50,
     });
-    expect(contagemDaLista()).toBe("1–1 de 1");
+    expect(contagemDaLista()).toBe("Mostrando 1 de 1");
     // Ordenar pela coluna pede de novo ao banco, na ordem da coluna (a pessoa: o nome).
     const nome = [...secao.querySelectorAll("button.ui-ordenar")].find((b) =>
       b.textContent.startsWith("Pessoa"),
