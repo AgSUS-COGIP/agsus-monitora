@@ -539,7 +539,7 @@ describe("fogos mais divertidos: a dança, o letreiro e o desempenho", () => {
       const frase = (doc) =>
         doc
           .querySelector(".comemoracao__letreiro")
-          ?.textContent.replace(/ /g, " ") ?? null;
+          ?.textContent.replace(/\u00a0/g, " ") ?? null;
       const festa = janelaComCanvas();
       janelas.push(festa);
       soltarFogos(festa.doc, festa.janela, {
@@ -621,7 +621,7 @@ describe("fogos mais divertidos: a dança, o letreiro e o desempenho", () => {
       expect(
         calmo.doc
           .querySelector(".comemoracao__letreiro")
-          ?.textContent.replace(/ /g, " "),
+          ?.textContent.replace(/\u00a0/g, " "),
       ).toBe("Meta batida!");
     } finally {
       vi.useRealTimers();
