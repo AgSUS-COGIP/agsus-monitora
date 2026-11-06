@@ -79,6 +79,7 @@ import {
   BarraDaLista,
   Campo,
   CardDaLista,
+  CelulaDaPessoa,
   FaixaDeSituacao,
   Gaveta,
   MenuDeAcoes,
@@ -773,24 +774,6 @@ const colunaDaTela = (chave: ChaveDaTela) =>
         numero: COLUNAS_DA_FILA[chave].numero,
         dica: COLUNAS_DA_FILA[chave].dica,
       };
-
-/** O nome e, embaixo, "código · modalidade" (a mesma célula nas três telas). */
-export function CelulaDaPessoa({
-  nome,
-  codigo,
-  modalidade,
-}: {
-  nome?: string | null;
-  codigo?: string | number | null;
-  modalidade?: string | null;
-}) {
-  return (
-    <span className="ui-pessoa">
-      <strong>{nome || "—"}</strong>
-      <span>{[codigo, modalidade].filter(Boolean).join(" · ")}</span>
-    </span>
-  );
-}
 
 interface CelulaProps {
   c: Inscrito;

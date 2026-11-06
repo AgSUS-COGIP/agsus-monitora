@@ -5,7 +5,7 @@ import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { TelaNaUrl, usarEditalNaUrl } from "../../app/usar-filtros-na-url.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { Aviso, TopoDoPainel } from "../../ui/index.ts";
+import { Aviso, CabecalhoDaTela } from "../../ui/index.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { coordenaOEdital } from "./abas-e-entrada.ts";
 import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
@@ -38,7 +38,7 @@ function TelaDaPreClassificacao({
   atualizar: () => Promise<unknown>;
 }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
-  const { area: areaDoApp } = usarAreaAtual();
+  const { area: areaDoApp, nome: nomeDaArea } = usarAreaAtual();
 
   useEffect(() => {
     if (!areaDoApp || e.area === areaDoApp) return;
@@ -58,15 +58,39 @@ function TelaDaPreClassificacao({
     e.editalId && e.dados && coordenaOEdital(e) === true,
   );
 
-  return (
-    <div className="ui-tela avd-tela">
-      <TopoDoPainel
-        status={e.carregandoEdital ? "Carregando o edital…" : ""}
-        aoAtualizar={() => void atualizar()}
-        atualizarDesativado={
-          !e.area || e.carregandoEditais || e.carregandoEdital
-        }
+  const comTriagem = Boolean(e.editalId && e.dados && !e.semAcesso && coordena);
+  // O cabeçalho da tela: com a Triagem aberta, ela o desenha com as seções e as ações.
+  const cabecalho = {
+    trilha: [nomeDaArea, "Seleção"].filter(Boolean).join(" / "),
+    edital: e.semAcesso ? null : (
+      <SeletorDeEdital
+        naLinha
+        className="avd-edital"
+        rotulo="Edital da triagem"
+        tour="pre-seletor-edital"
+        editais={e.editais}
+        escolhido={e.editalId}
+        carregado={e.carregado}
+        soVigentes
+        aoEscolher={escolherEdital}
       />
+    ),
+    aoAtualizar: () => void atualizar(),
+    atualizarDesativado: !e.area || e.carregandoEditais || e.carregandoEdital,
+  };
+
+  return (
+    <div className="ui-tela avd-tela ui-tela-da-selecao">
+      {comTriagem ? null : (
+        <CabecalhoDaTela
+          trilha={cabecalho.trilha}
+          titulo="Triagem"
+          tour="triagem-cabecalho"
+          edital={cabecalho.edital}
+          aoAtualizar={cabecalho.aoAtualizar}
+          atualizarDesativado={cabecalho.atualizarDesativado}
+        />
+      )}
 
       {e.semAcesso ? (
         <Aviso tom="warning" papel="alert">
@@ -85,18 +109,6 @@ function TelaDaPreClassificacao({
           </button>
         </Aviso>
       ) : null}
-      {!e.semAcesso ? (
-        <SeletorDeEdital
-          className="avd-edital"
-          rotulo="Edital da triagem"
-          tour="pre-seletor-edital"
-          editais={e.editais}
-          escolhido={e.editalId}
-          carregado={e.carregado}
-          soVigentes
-          aoEscolher={escolherEdital}
-        />
-      ) : null}
 
       {e.erroDoEdital && !e.semAcesso ? (
         <Aviso tom="danger" papel="alert">
@@ -105,7 +117,13 @@ function TelaDaPreClassificacao({
       ) : null}
       {e.editalId && e.dados && !e.semAcesso ? (
         coordena ? (
-          <PreClassificacao key={e.editalId} e={e} estado={estado} pre={pre} />
+          <PreClassificacao
+            key={e.editalId}
+            e={e}
+            estado={estado}
+            pre={pre}
+            cabecalho={cabecalho}
+          />
         ) : (
           <Aviso tom="warning" papel="alert">
             A Triagem é restrita à coordenação do edital e ao administrador

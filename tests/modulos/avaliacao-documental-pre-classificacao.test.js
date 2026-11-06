@@ -443,11 +443,28 @@ const botao = (texto) =>
   [...secao.querySelectorAll("button")].find((b) =>
     b.textContent.trim().startsWith(texto),
   );
-/* A tela da Triagem em abas: Resumo, Por vaga, Eliminados, Listas oficiais. */
+/*
+  As partes da Triagem: as seções Pessoas, Por vaga e Regra (o Resumo e as
+  Listas oficiais de antes ficam na Regra) e os Eliminados, pelo número da
+  faixa de situação.
+*/
+const SECAO = { resumo: "regra", listas: "regra" };
 async function abrirAba(id) {
-  await clicar(secao.querySelector(`.avd-pre [data-aba='${id}']`));
+  await clicar(
+    id === "eliminados"
+      ? secao.querySelector(
+          "[data-tour='triagem-kpis'] [data-valor='eliminados']",
+        )
+      : secao.querySelector(
+          `.avd-pre [role='radio'][data-valor='${SECAO[id] ?? id}']`,
+        ),
+  );
   await esperar();
 }
+const faixaDaTriagem = () => secao.querySelector("[data-tour='triagem-kpis']");
+const secaoAberta = () =>
+  secao.querySelector(".avd-pre [role='radio'][aria-checked='true']")?.dataset
+    .valor;
 /* Na aba Por vaga, abre a vaga (as listas dela só carregam aberta). */
 async function abrirVaga(codigo) {
   if (!secao.querySelector(".avd-pre-vagas")) await abrirAba("vagas");
@@ -489,25 +506,48 @@ describe("Triagem (AM-4)", () => {
   it("AM-4.4: contadores, linha de corte, divergência e eliminados à parte", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
-    // A tela abre só com o Resumo: nem vagas, nem listas, nem linhas.
+    // A tela abre em Pessoas: o resumo, as vagas (a faixa e o filtro) e 50
+    // linhas de cada lista; as listas oficiais, não.
     expect(supabase.rpc).toHaveBeenCalledWith(
       "obter_resumo_pre_classificacao",
       {
         p_edital: "e93",
       },
     );
-    expect(
-      secao.querySelector(".avd-pre [aria-selected='true']").dataset.aba,
-    ).toBe("resumo");
+    expect(secaoAberta()).toBe("pessoas");
     expect(
       chamadasDe(supabase.rpc, "obter_vagas_pre_classificacao"),
-    ).toHaveLength(0);
+    ).toHaveLength(1);
     expect(
       chamadasDe(supabase.rpc, "obter_listas_pre_classificacao"),
     ).toHaveLength(0);
-    expect(chamadasDe(supabase.rpc, "listar_pre_classificacao")).toHaveLength(
-      0,
+    const linhasDePessoas = chamadasDe(
+      supabase.rpc,
+      "listar_pre_classificacao",
+    ).length;
+    // As duas listas de "Todas" (50 linhas) e a conta de "Podem entrar" (uma linha).
+    expect(
+      chamadasDe(supabase.rpc, "listar_pre_classificacao").map(
+        (a) => `${a.p_grupo}:${a.p_limite}`,
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "CLASSIFICADOS:50",
+        "ELIMINADOS:50",
+        "PODE_INCLUIR:1",
+      ]),
     );
+    expect(linhasDePessoas).toBe(3);
+    // "Por decisão" é número informativo: não é botão nem filtro.
+    const decisao = faixaDaTriagem().querySelector("[data-valor='decisao']");
+    expect(decisao.tagName).toBe("DIV");
+    expect(decisao.hasAttribute("aria-pressed")).toBe(false);
+    // "Podem entrar": o total da própria lista que o número abre.
+    expect(
+      faixaDaTriagem().querySelector(
+        "[data-valor='pode-entrar'] .ui-faixa-numero",
+      ).textContent,
+    ).not.toBe("");
     expect(chamadasDe(supabase.rpc, "obter_pre_classificacao")).toHaveLength(0);
     expect(
       chamadasDe(supabase.rpc, "obter_pre_classificacao_se_mudou"),
@@ -516,16 +556,18 @@ describe("Triagem (AM-4)", () => {
     expect(
       chamadasDe(supabase.rpc, "obter_congelamento_inscricoes"),
     ).toHaveLength(0);
-    const kpis = secao.querySelector(".ui-kpis").textContent;
+    const kpis = faixaDaTriagem().textContent;
     expect(kpis).toContain("Inscritos5");
     expect(kpis).toContain("Eliminados1");
-    // O lote: o número grande e a composição na linha de baixo.
-    const lote = secao.querySelector("[data-kpi='lote']");
-    expect(lote.querySelector(".ui-kpi-valor").textContent).toBe("2");
-    expect(lote.querySelector(".ui-kpi-detalhe").textContent).toBe(
-      "de 2 · 100%",
-    );
-    // ART × recalculada vira indicador na faixa, com o atalho para os casos.
+    // O lote: o número grande, a % dos inscritos e, embaixo, o lote da regra.
+    const lote = faixaDaTriagem().querySelector("[data-valor='lote']");
+    expect(lote.querySelector(".ui-faixa-numero").textContent).toBe("2");
+    expect(lote.querySelector(".ui-faixa-contexto").textContent).toBe("40%");
+    expect(
+      faixaDaTriagem().querySelector("[data-lote-da-triagem]").textContent,
+    ).toBe("Lote: 2 de 2");
+    // ART × recalculada: na Regra, com o atalho para os casos.
+    await abrirAba("resumo");
     expect(
       secao.querySelector("[data-acao='ver-divergencias']").textContent,
     ).toContain("1 com ART × recalculada");
@@ -538,7 +580,7 @@ describe("Triagem (AM-4)", () => {
       secao.querySelector("[data-vaga-recolhida='179698'] summary").textContent,
     ).toContain("5 inscritos · 1 eliminados");
     expect(chamadasDe(supabase.rpc, "listar_pre_classificacao")).toHaveLength(
-      0,
+      linhasDePessoas,
     );
     const vaga = await abrirVaga("179698");
     // As linhas de cada vaga vêm 50 por vez, só com a vaga aberta.
@@ -569,10 +611,10 @@ describe("Triagem (AM-4)", () => {
     expect(
       vaga.querySelector("[data-candidato='7000003']").textContent,
     ).toContain("diverge");
-    // Os eliminados só são lidos quando o grupo abre.
+    // Os eliminados da vaga só são lidos quando o grupo abre.
     expect(
       chamadasDe(supabase.rpc, "listar_pre_classificacao").some(
-        (a) => a.p_grupo === "ELIMINADOS",
+        (a) => a.p_grupo === "ELIMINADOS" && a.p_vaga === "179698",
       ),
     ).toBe(false);
     const grupo = vaga.querySelector(".avd-eliminados");
@@ -593,7 +635,7 @@ describe("Triagem (AM-4)", () => {
     expect(
       secao.querySelector("[data-vaga-recolhida='180231']").textContent,
     ).toContain("ainda sem triagem");
-    // Listas oficiais: a parte só ao abrir a aba.
+    // Listas oficiais: a parte só ao abrir a Regra.
     await abrirAba("listas");
     expect(
       chamadasDe(supabase.rpc, "obter_listas_pre_classificacao"),
@@ -637,7 +679,7 @@ describe("Triagem (AM-4)", () => {
   it("Atualizar e a reabertura da tela relêem a triagem da aba aberta", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
-    const kpis = () => secao.querySelector(".ui-kpis").textContent;
+    const kpis = () => faixaDaTriagem().textContent;
     expect(kpis()).toContain("Inscritos5");
     const normal = supabase.rpc.getMockImplementation();
     const comInscritos = (n) => {
@@ -659,6 +701,8 @@ describe("Triagem (AM-4)", () => {
   it("Recalcular que falha diz por quê e o botão volta", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
+    // Na Regra (o aviso do recálculo fica lá); as listas oficiais já lidas.
+    await abrirAba("resumo");
     supabase.rpc.mockImplementationOnce(async () => ({
       data: null,
       error: {
@@ -750,7 +794,7 @@ describe("Triagem (AM-4)", () => {
     responder(nova);
     await rodarAgendado();
     expect(agendados).toHaveLength(0);
-    expect(secao.querySelector(".ui-kpis").textContent).toContain("Inscritos9");
+    expect(faixaDaTriagem().textContent).toContain("Inscritos9");
     expect(secao.querySelector("[role='status']").textContent).toMatch(
       /^Triagem recalculada às \d\d:\d\d\.$/,
     );
@@ -764,6 +808,7 @@ describe("Triagem (AM-4)", () => {
   it("regra não conferida trava o Recalcular e diz o que fazer", async () => {
     await montar(supabaseFalso({ situacao: "CONFERIR" }));
     expect((await itemDoMenu("recalcular")).disabled).toBe(true);
+    await abrirAba("resumo");
     expect(secao.textContent).toContain(
       "Confira a regra da Triagem (Editais › Regras do edital) para recalcular.",
     );
@@ -784,6 +829,7 @@ describe("Triagem (AM-4)", () => {
       ...supabase,
       rpc: vi.fn(comPre(pre, (nome, args) => supabase.rpc(nome, args))),
     });
+    await abrirAba("resumo");
     expect(secao.textContent).toContain("Edital sem regra conferida");
   });
 });
@@ -901,12 +947,15 @@ describe("inclusão no lote por decisão da coordenação", () => {
       incluir_no_lote_por_decisao: incluir,
     });
     await montar(supabase);
-    // Card compacto: o lote inteiro no número, a composição embaixo.
-    const lote = secao.querySelector("[data-kpi='lote']");
-    expect(lote.querySelector(".ui-kpi-valor").textContent).toBe("3");
-    expect(lote.querySelector(".ui-kpi-detalhe").textContent).toBe(
-      "2 pela regra · 1 por decisão",
-    );
+    // A faixa: o lote inteiro, os por decisão e, embaixo, a composição.
+    const numero = (v) =>
+      faixaDaTriagem().querySelector(`[data-valor='${v}'] .ui-faixa-numero`)
+        .textContent;
+    expect(numero("lote")).toBe("3");
+    expect(numero("decisao")).toBe("1");
+    expect(
+      faixaDaTriagem().querySelector("[data-lote-da-triagem]").textContent,
+    ).toBe("Lote: 2 de 2 pela regra + 1 por decisão");
     const vaga = await abrirVaga("179698");
     expect(vaga.querySelector("[data-lote-da-vaga]").textContent).toContain(
       "Lote: 2 de 2 pela regra + 1 por decisão",
@@ -995,18 +1044,13 @@ describe("inclusão no lote por decisão da coordenação", () => {
   it("Pessoas: o card Inscritos abre a aba; a busca vai ao banco no edital todo e o filtro volta ao reabrir", async () => {
     const supabase = comRespostas(COM_DECISAO(), {});
     await montar(supabase);
-    // Abrir a Triagem não lê pessoa nenhuma.
-    expect(chamadasDe(supabase.rpc, "listar_pre_classificacao")).toHaveLength(
-      0,
-    );
-    await clicar(secao.querySelector("[data-kpi='inscritos'] button"));
+    // A Triagem abre em Pessoas, com o número Inscritos marcado.
+    await clicar(faixaDaTriagem().querySelector("[data-valor='inscritos']"));
     await esperar();
+    expect(secaoAberta()).toBe("pessoas");
     expect(
-      secao.querySelector(".avd-pre [aria-selected='true']").dataset.aba,
-    ).toBe("pessoas");
-    expect(
-      secao
-        .querySelector("[data-kpi='inscritos'] button")
+      faixaDaTriagem()
+        .querySelector("[data-valor='inscritos']")
         .getAttribute("aria-pressed"),
     ).toBe("true");
     // "Todas": classificados e eliminados do edital todo, 50 por vez.
@@ -1021,9 +1065,12 @@ describe("inclusão no lote por decisão da coordenação", () => {
         p_apos: null,
         p_limite: 50,
       });
-    expect(secao.querySelector(".ui-barra-resultado").textContent).toBe(
-      "5 pessoas",
-    );
+    // "Todas": as duas listas no mesmo card, cada uma com o título.
+    expect(
+      [...secao.querySelectorAll(".avd-pessoas .ui-lista-subtitulo")].map(
+        (h) => h.textContent,
+      ),
+    ).toEqual(["Classificados", "Eliminados"]);
     await digitar(
       secao.querySelector("[data-acao='buscar-pessoa']"),
       "7000004",
@@ -1045,9 +1092,8 @@ describe("inclusão no lote por decisão da coordenação", () => {
       ...secao.querySelectorAll(".avd-pessoas-lista tbody tr[data-candidato]"),
     ].map((tr) => tr.dataset.candidato);
     expect(linhas).toEqual(["7000004"]);
-    expect(secao.querySelector(".ui-barra-quantos").textContent).toBe(
-      "1 filtro",
-    );
+    // Com filtro, a barra mostra "Limpar".
+    expect(secao.querySelector("[data-acao='limpar-filtros']")).not.toBeNull();
     expect(
       JSON.parse(sessionStorage.getItem("monitora:triagem:pessoas:e93")),
     ).toEqual({ busca: "7000004", vaga: "", situacao: "TODAS" });
@@ -1063,6 +1109,19 @@ describe("inclusão no lote por decisão da coordenação", () => {
     await clicar(secao.querySelector("[data-acao='limpar-filtros']"));
     expect(secao.querySelector("[data-acao='buscar-pessoa']").value).toBe("");
     expect(sessionStorage.getItem("monitora:triagem:pessoas:e93")).toBeNull();
+  });
+
+  it("Podem entrar: o número da faixa é o total da lista que ele abre", async () => {
+    const supabase = comRespostas(COM_DECISAO(), {});
+    await montar(supabase);
+    const chip = faixaDaTriagem().querySelector("[data-valor='pode-entrar']");
+    const numero = chip.querySelector(".ui-faixa-numero").textContent;
+    await clicar(chip);
+    await esperar();
+    expect(chip.getAttribute("aria-pressed")).toBe("true");
+    expect(
+      secao.querySelector(".avd-pessoas .ui-lista-contagem").textContent,
+    ).toBe(`Mostrando ${numero} de ${numero}`);
   });
 
   it('Pessoas: a ação da linha inclui no lote com a pessoa já marcada; o "⋯" revoga e mostra a vaga', async () => {
@@ -1113,7 +1172,11 @@ describe("inclusão no lote por decisão da coordenação", () => {
       [...menu.querySelectorAll("[role='menuitem']")].map((b) =>
         b.textContent.trim(),
       ),
-    ).toEqual(["Revogar decisão", "Ver na vaga", "Copiar código"]);
+    ).toEqual(["Revogar decisão", "Copiar código"]);
+    // Sem o que fazer na linha, o botão dela é "Ver na vaga" (neutro).
+    expect(
+      linha("7000005").querySelector("[data-acao='pessoa-ver-vaga']").className,
+    ).toBe("btn contorno small");
     await clicar(menu.querySelector("[data-acao='pessoa-revogar']"));
     const gaveta = document.querySelector("[data-revogar='7000005']");
     expect(gaveta.querySelector("[data-acao='revogar-decisao']").disabled).toBe(
@@ -1132,9 +1195,7 @@ describe("inclusão no lote por decisão da coordenação", () => {
       linha("7000005").querySelector("[data-acao='pessoa-ver-vaga']"),
     );
     await esperar();
-    expect(
-      secao.querySelector(".avd-pre [aria-selected='true']").dataset.aba,
-    ).toBe("vagas");
+    expect(secaoAberta()).toBe("vagas");
     expect(secao.querySelector("[data-vaga-recolhida='179698']").open).toBe(
       true,
     );
@@ -1358,9 +1419,8 @@ describe("aba Eliminados da Triagem", () => {
       ),
     ].map((o) => o.textContent);
     expect(motivos).toEqual(["Todos os motivos", "Cancelou a inscrição (1)"]);
-    expect(secao.querySelector("[data-acao='comunicados-zip']").disabled).toBe(
-      true,
-    );
+    // Os comunicados em lote aparecem com alguém marcado.
+    expect(secao.querySelector("[data-acao='comunicados-zip']")).toBeNull();
     await escolher(
       secao.querySelector("[data-acao='filtro-motivo-eliminados']"),
       secao.querySelector(

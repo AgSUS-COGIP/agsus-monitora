@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { RefObject } from "react";
 import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { copiarTexto } from "../../lib/convite-de-acesso.ts";
-import { formatNumberBR } from "../../lib/formatters";
 import { ordinal } from "../../lib/classificacao/numeros.ts";
 import type { GrupoDaPre } from "../../lib/avaliacao-documental/paginas-da-pre-classificacao.ts";
 import {
@@ -29,10 +29,12 @@ import {
 import {
   AcoesDaLinha,
   Aviso,
-  BarraDeFiltros,
+  BarraDaLista,
   Campo,
+  CardDaLista,
+  CelulaDaPessoa,
   Selo,
-  TabelaInfinita,
+  TabelaDaLista,
   usarListaNoServidor,
 } from "../../ui/index.ts";
 import type {
@@ -64,9 +66,12 @@ import type {
   na URL, vale o guardado na sessão da aba, por edital. Regras puras em
   src/lib/avaliacao-documental/pessoas-da-triagem.ts.
 
-  Cada linha tem a ação principal (o comunicado do eliminado, ou "Incluir
-  no lote" de quem está fora) e o "⋯" (revogar a decisão, ver na vaga,
-  copiar o código). Incluir e revogar pedem motivo na gaveta (as mesmas de
+  O layout da seleção: num card só, a barra (busca com "/", Vaga e, em
+  "Filtros", a Situação, que a faixa de situação da Triagem também escolhe)
+  e a lista 50 por vez ("1–50 de N", Anterior / Próxima), com a pessoa numa
+  coluna (nome e "código · modalidade"). Cada linha tem a ação principal (o
+  comunicado do eliminado; "Incluir no lote", azul, de quem está fora; senão
+  "Ver na vaga") e o "⋯" (revogar a decisão, ver na vaga, copiar o código). Incluir e revogar pedem motivo na gaveta (as mesmas de
   decisao-do-lote.tsx). Explicações: docs/aya/regras-da-avaliacao-documental.md.
 */
 
@@ -76,36 +81,30 @@ const TOM_DA_SITUACAO: Record<SituacaoDoInscrito, string> = {
   RANQUEADO: "neutro",
   ELIMINADO: "reprovado",
 };
-const semFiltro = <T,>(itens: readonly T[]) => itens;
 const TITULO_DO_GRUPO: Record<GrupoDaPre, string> = {
   CLASSIFICADOS: "Classificados",
   ELIMINADOS: "Eliminados",
   PODE_INCLUIR: "Podem entrar por decisão",
 };
-const UNIDADE_DO_GRUPO: Record<GrupoDaPre, [string, string]> = {
-  CLASSIFICADOS: ["classificado", "classificados"],
-  ELIMINADOS: ["eliminado", "eliminados"],
-  PODE_INCLUIR: ["pessoa", "pessoas"],
+const ACOES: ColunaDaTabela = {
+  rotulo: "Ações",
+  chave: "acoes",
+  numero: true,
+  cabecalho: <span className="sr-only">Ações</span>,
 };
-const contar = (n: number, [um, varios]: [string, string]) =>
-  `${formatNumberBR(n)} ${n === 1 ? um : varios}`;
-
 const COLUNAS_DOS_CLASSIFICADOS: ColunaDaTabela[] = [
+  { rotulo: "Pessoa" },
   { rotulo: "Vaga" },
-  { rotulo: "Classificação" },
-  { rotulo: "Código" },
-  { rotulo: "Nome" },
-  { rotulo: "Modalidade" },
-  { rotulo: ROTULO_DA_ART, dica: DICA_DA_ART },
-  { rotulo: "Situação" },
-  { rotulo: "Ações", chave: "acoes" },
+  { rotulo: ROTULO_DA_ART, dica: DICA_DA_ART, numero: true },
+  { rotulo: "Posição", numero: true },
+  { rotulo: "Triagem" },
+  ACOES,
 ];
 const COLUNAS_DOS_ELIMINADOS: ColunaDaTabela[] = [
+  { rotulo: "Pessoa" },
   { rotulo: "Vaga" },
-  { rotulo: "Código" },
-  { rotulo: "Nome" },
   { rotulo: "Motivo" },
-  { rotulo: "Ações", chave: "acoes" },
+  ACOES,
 ];
 
 export interface PropriedadesDasPessoas {
@@ -119,12 +118,44 @@ export interface PropriedadesDasPessoas {
   podeCoordenar: boolean;
   /** "Ver na vaga": a aba Por vaga, com a vaga aberta. */
   aoVerVaga: (vaga: string) => void;
+  /** A situação escolhida na faixa da Triagem (cada `vez` nova aplica). */
+  situacaoPedida?: { situacao: SituacaoDasPessoas; vez: number };
+  /** A situação em uso (a faixa marca o número dela). */
+  aoMudarSituacao?: (situacao: SituacaoDasPessoas) => void;
 }
 
 type Pedido =
   | { tipo: "incluir"; pessoa: InscritoDaPre }
   | { tipo: "revogar"; pessoa: InscritoDaPre }
   | null;
+
+/*
+  A lista de baixo (Eliminados, em "Todas") só pede ao banco quando chega
+  perto da tela: abrir Pessoas lê as 50 linhas da lista à vista, não as das
+  duas. Sem IntersectionObserver (testes antigos, navegador velho), lê já.
+*/
+function usarPertoDaTela(
+  ref: RefObject<HTMLElement | null>,
+  preguicoso: boolean,
+): boolean {
+  const [perto, setPerto] = useState(
+    () => !preguicoso || typeof IntersectionObserver === "undefined",
+  );
+  useEffect(() => {
+    const alvo = ref.current;
+    if (perto || !alvo || typeof IntersectionObserver === "undefined")
+      return undefined;
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        if (entradas.some((e) => e.isIntersecting)) setPerto(true);
+      },
+      { rootMargin: "200px 0px" },
+    );
+    observador.observe(alvo);
+    return () => observador.disconnect();
+  }, [ref, perto]);
+  return perto;
+}
 
 /* Uma lista (um grupo) da aba: 50 por vez do banco, com as ações de cada linha. */
 function ListaDoGrupo({
@@ -134,8 +165,11 @@ function ListaDoGrupo({
   busca,
   chaveDaLeitura,
   acoesDaLinha,
-  aoContar,
+  titulo = "",
+  preguicoso = false,
 }: {
+  titulo?: string;
+  preguicoso?: boolean;
   grupo: GrupoDaPre;
   pre: EstadoDaPreClassificacao;
   filtro: FiltroDasPessoas;
@@ -145,7 +179,6 @@ function ListaDoGrupo({
     principal: AcaoPrincipalDaLinha | null;
     outras: AcaoDoMenu[];
   };
-  aoContar: (grupo: GrupoDaPre, total: number | null) => void;
 }) {
   const recorte = useMemo(
     () => recorteDasPessoas(filtro, grupo, busca),
@@ -158,13 +191,10 @@ function ListaDoGrupo({
     },
     [pre, recorte],
   );
-  const lista = usarListaNoServidor(
-    buscar,
-    `${chaveDaLeitura}:${grupo}:${recorte.vaga ?? ""}:${recorte.busca ?? ""}`,
-  );
-  // O total do recorte vai para o resultado da barra (null enquanto procura).
-  const total = lista.carregado && !lista.erro ? lista.total : null;
-  useEffect(() => aoContar(grupo, total), [aoContar, grupo, total]);
+  const chave = `${chaveDaLeitura}:${grupo}:${recorte.vaga ?? ""}:${recorte.busca ?? ""}`;
+  const caixa = useRef<HTMLDivElement>(null);
+  const perto = usarPertoDaTela(caixa, preguicoso);
+  const lista = usarListaNoServidor(buscar, chave, { ativo: perto });
   const eliminados = grupo === "ELIMINADOS";
 
   const linha = (c: InscritoDaPre) => {
@@ -175,18 +205,23 @@ function ListaDoGrupo({
         data-candidato={c.codigo}
         data-situacao={c.situacao}
       >
+        <td>
+          <CelulaDaPessoa
+            nome={c.nome}
+            codigo={c.codigo}
+            modalidade={c.modalidade}
+          />
+        </td>
         <td>{c.vaga}</td>
-        {eliminados ? null : <td>{c.posicao ? ordinal(c.posicao) : "—"}</td>}
-        <td>{c.codigo}</td>
-        <td>{c.nome}</td>
         {eliminados ? (
           <td>{c.motivo || "—"}</td>
         ) : (
           <>
-            <td>{c.modalidade || "—"}</td>
             <td className="num">{nota(c.art)}</td>
+            <td className="num">{c.posicao ? ordinal(c.posicao) : "—"}</td>
             <td>
               <Selo
+                ponto
                 tom={TOM_DA_SITUACAO[c.situacao]}
                 titulo={c.motivo_entrada || c.motivo || undefined}
               >
@@ -197,7 +232,7 @@ function ListaDoGrupo({
             </td>
           </>
         )}
-        <td>
+        <td className="num">
           <AcoesDaLinha
             pessoa={c.codigo}
             principal={principal}
@@ -222,27 +257,30 @@ function ListaDoGrupo({
       </Aviso>
     );
   return (
-    <TabelaInfinita
-      idDoTitulo={`avdPessoas${grupo}`}
-      titulo={TITULO_DO_GRUPO[grupo]}
-      className="avd-pre-lista avd-pessoas-lista"
-      classeDaTabela="avd-tabela"
-      colunas={eliminados ? COLUNAS_DOS_ELIMINADOS : COLUNAS_DOS_CLASSIFICADOS}
-      carregado={lista.carregado}
-      itens={lista.itens}
-      filtrarPelaBusca={semFiltro}
-      linha={linha}
-      total={lista.total}
-      informacao={(quantos) =>
-        quantos === null ? "" : contar(quantos, UNIDADE_DO_GRUPO[grupo])
-      }
-      vazio={
-        busca || filtro.vaga
-          ? "Ninguém com este filtro."
-          : `Nenhuma pessoa em ${TITULO_DO_GRUPO[grupo].toLowerCase()}.`
-      }
-      servidor={lista}
-    />
+    <div
+      className="avd-pessoas-lista"
+      data-grupo-das-pessoas={grupo}
+      ref={caixa}
+    >
+      {titulo ? <h3 className="ui-lista-subtitulo">{titulo}</h3> : null}
+      <TabelaDaLista
+        rotulo={TITULO_DO_GRUPO[grupo]}
+        classeDaTabela="avd-tabela"
+        colunas={
+          eliminados ? COLUNAS_DOS_ELIMINADOS : COLUNAS_DOS_CLASSIFICADOS
+        }
+        carregado={lista.carregado}
+        itens={lista.itens}
+        linha={linha}
+        chaveDoRecorte={chave}
+        vazio={
+          busca || filtro.vaga
+            ? "Ninguém com esses filtros."
+            : `Nenhuma pessoa em ${TITULO_DO_GRUPO[grupo].toLowerCase()}.`
+        }
+        servidor={lista}
+      />
+    </div>
   );
 }
 
@@ -267,6 +305,8 @@ export function PessoasDaTriagem({
   unidade,
   podeCoordenar,
   aoVerVaga,
+  situacaoPedida,
+  aoMudarSituacao,
 }: PropriedadesDasPessoas) {
   const [valores, setFiltro] = usarFiltrosNaUrl(FILTROS_DAS_PESSOAS, {
     sessao: chaveDasPessoas(editalId),
@@ -278,9 +318,6 @@ export function PessoasDaTriagem({
     const espera = setTimeout(() => setBusca(filtro.busca.trim()), 300);
     return () => clearTimeout(espera);
   }, [filtro.busca]);
-  const [totais, setTotais] = useState<
-    Partial<Record<GrupoDaPre, number | null>>
-  >({});
   // Depois de incluir ou revogar, as listas recomeçam (a situação mudou).
   const [versao, setVersao] = useState(0);
   const [pedido, setPedido] = useState<Pedido>(null);
@@ -294,13 +331,21 @@ export function PessoasDaTriagem({
     () => new Map(vagas.map((v) => [String(v.codigo), v.cargo ?? null])),
     [vagas],
   );
-  const aoContar = useCallback(
-    (grupo: GrupoDaPre, total: number | null) =>
-      setTotais((t) => (t[grupo] === total ? t : { ...t, [grupo]: total })),
-    [],
+  const mudar = useCallback(
+    (parte: Partial<FiltroDasPessoas>) =>
+      setFiltro((atual) => ({ ...atual, ...parte })),
+    [setFiltro],
   );
-  const mudar = (parte: Partial<FiltroDasPessoas>) =>
-    setFiltro((atual) => ({ ...atual, ...parte }));
+  // A faixa da Triagem escolhe a situação (Inscritos, Fora do lote).
+  const vezDoPedido = situacaoPedida?.vez ?? 0;
+  const situacaoDoPedido = situacaoPedida?.situacao;
+  useEffect(() => {
+    if (vezDoPedido && situacaoDoPedido) mudar({ situacao: situacaoDoPedido });
+  }, [vezDoPedido, situacaoDoPedido, mudar]);
+  useEffect(
+    () => aoMudarSituacao?.(filtro.situacao),
+    [aoMudarSituacao, filtro.situacao],
+  );
 
   async function emitir(c: InscritoDaPre) {
     if (emitindo) return;
@@ -351,15 +396,23 @@ export function PessoasDaTriagem({
   const acoesDaLinha = (
     c: InscritoDaPre,
   ): { principal: AcaoPrincipalDaLinha | null; outras: AcaoDoMenu[] } => {
-    const { principal, outras } = acoesDaPessoa(c, { podeCoordenar });
+    const acoes = acoesDaPessoa(c, { podeCoordenar });
+    // Sem o que fazer (comunicado ou incluir), o botão da linha é "Ver na vaga".
+    const principal: AcaoDaPessoa =
+      acoes.principal ??
+      (acoes.outras.includes("ver-vaga") ? "ver-vaga" : "copiar");
+    const outras = acoes.outras.filter((a) => a !== principal);
     return {
       principal: principal
         ? {
             ...ROTULOS[principal],
+            destaque: principal === "incluir",
             acao:
               principal === "comunicado"
                 ? "espelho-eliminado-pre"
-                : "incluir-pessoa",
+                : principal === "incluir"
+                  ? "incluir-pessoa"
+                  : `pessoa-${principal}`,
             ocupado:
               principal === "comunicado" && emitindo === c.codigo
                 ? "Gerando PDF…"
@@ -377,33 +430,50 @@ export function PessoasDaTriagem({
     };
   };
 
-  const somados = grupos.map((g) => totais[g]);
-  const resultado = somados.every((n) => n !== undefined && n !== null)
-    ? contar(
-        somados.reduce<number>((s, n) => s + (n ?? 0), 0),
-        ["pessoa", "pessoas"],
-      )
-    : "Procurando…";
   const chaveDaLeitura = `${leitura}:${versao}`;
 
   return (
     <div className="avd-pre-pessoas" data-aba-da-triagem="pessoas">
-      <BarraDeFiltros
-        rotulo="Encontrar a pessoa"
-        tour="triagem-pessoas-busca"
-        busca={{
-          valor: filtro.busca,
-          aoMudar: (valor) => mudar({ busca: valor }),
-          placeholder: "Código ou nome",
-          rotulo: "Buscar pessoa pelo código ou nome",
-          acao: "buscar-pessoa",
-        }}
-        quantos={filtrosDasPessoasEmUso(filtro)}
-        aoLimpar={() => setFiltro({ ...FILTRO_DAS_PESSOAS_INICIAL })}
-        resultado={resultado}
+      <CardDaLista
+        rotulo="Pessoas da triagem"
+        tour="triagem-pessoas"
+        className="avd-pessoas"
       >
-        <Campo rotulo="Vaga">
+        <BarraDaLista
+          rotulo="Encontrar a pessoa"
+          tour="triagem-pessoas-busca"
+          busca={{
+            valor: filtro.busca,
+            aoMudar: (valor) => mudar({ busca: valor }),
+            placeholder: "Buscar por código ou nome",
+            rotulo: "Buscar pessoa pelo código ou nome",
+            acao: "buscar-pessoa",
+          }}
+          quantos={filtrosDasPessoasEmUso(filtro)}
+          aoLimpar={() => setFiltro({ ...FILTRO_DAS_PESSOAS_INICIAL })}
+          quantosSecundarios={
+            filtro.situacao !== FILTRO_DAS_PESSOAS_INICIAL.situacao ? 1 : 0
+          }
+          secundarios={
+            <Campo rotulo="Situação">
+              <select
+                value={filtro.situacao}
+                data-acao="filtro-situacao-pessoas"
+                onChange={(ev) =>
+                  mudar({ situacao: ev.target.value as SituacaoDasPessoas })
+                }
+              >
+                {SITUACOES_DAS_PESSOAS.map((s) => (
+                  <option key={s.valor} value={s.valor}>
+                    {s.rotulo}
+                  </option>
+                ))}
+              </select>
+            </Campo>
+          }
+        >
           <select
+            aria-label="Vaga"
             value={filtro.vaga}
             data-acao="filtro-vaga-pessoas"
             onChange={(ev) => mudar({ vaga: ev.target.value })}
@@ -415,23 +485,21 @@ export function PessoasDaTriagem({
               </option>
             ))}
           </select>
-        </Campo>
-        <Campo rotulo="Situação">
-          <select
-            value={filtro.situacao}
-            data-acao="filtro-situacao-pessoas"
-            onChange={(ev) =>
-              mudar({ situacao: ev.target.value as SituacaoDasPessoas })
-            }
-          >
-            {SITUACOES_DAS_PESSOAS.map((s) => (
-              <option key={s.valor} value={s.valor}>
-                {s.rotulo}
-              </option>
-            ))}
-          </select>
-        </Campo>
-      </BarraDeFiltros>
+        </BarraDaLista>
+        {grupos.map((grupo, indice) => (
+          <ListaDoGrupo
+            key={grupo}
+            grupo={grupo}
+            titulo={grupos.length > 1 ? TITULO_DO_GRUPO[grupo] : ""}
+            preguicoso={indice > 0}
+            pre={pre}
+            filtro={filtro}
+            busca={busca}
+            chaveDaLeitura={chaveDaLeitura}
+            acoesDaLinha={acoesDaLinha}
+          />
+        ))}
+      </CardDaLista>
       {mensagem ? (
         <Aviso
           tom={mensagem.tom === "danger" ? "danger" : undefined}
@@ -440,18 +508,6 @@ export function PessoasDaTriagem({
           {mensagem.texto}
         </Aviso>
       ) : null}
-      {grupos.map((grupo) => (
-        <ListaDoGrupo
-          key={grupo}
-          grupo={grupo}
-          pre={pre}
-          filtro={filtro}
-          busca={busca}
-          chaveDaLeitura={chaveDaLeitura}
-          acoesDaLinha={acoesDaLinha}
-          aoContar={aoContar}
-        />
-      ))}
       {pedido?.tipo === "incluir" ? (
         <IncluirPorDecisao
           candidatos={[

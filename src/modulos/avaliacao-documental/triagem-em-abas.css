@@ -1,21 +1,14 @@
-/* Tela da Triagem em abas (pre-classificacao.tsx): topo, faixa de situação e vagas recolhidas. */
+/*
+  Tela da Triagem (pre-classificacao.tsx): as seções no alto (sem o
+  cabeçalho da página, quando a Triagem abre dentro da Avaliação), a faixa,
+  as listas e as vagas recolhidas, uma embaixo da outra.
+*/
 .avd-pre-topo {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  margin-bottom: var(--space-3);
-}
-
-.avd-pre-topo > .ui-abas {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-/* Os números do andamento ficam acima das abas, em toda aba. */
-.avd-pre-kpis {
-  margin-bottom: var(--space-3);
 }
 
 .avd-pre-resumo,

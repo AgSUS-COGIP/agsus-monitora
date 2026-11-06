@@ -136,6 +136,20 @@ describe("entrada independente de Triagem", () => {
     expect(
       secao.querySelector("[data-tour='pre-seletor-edital']"),
     ).not.toBeNull();
+    // Um cabeçalho só (o da Triagem, com o edital), também enquanto ela lê.
+    const cabecalhos = secao.querySelectorAll(".ui-cabecalho-da-tela");
+    expect(cabecalhos).toHaveLength(1);
+    expect(
+      cabecalhos[0].querySelector(".ui-cabecalho-titulo").textContent,
+    ).toBe("Triagem");
+    expect(
+      cabecalhos[0].querySelector(".ui-cabecalho-trilha").textContent,
+    ).toBe("Projetos / Seleção");
+    expect(
+      cabecalhos[0]
+        .querySelector("[data-acao='atualizar']")
+        .getAttribute("aria-label"),
+    ).toBe("Atualizar");
   });
 
   it("a entrada não concede acesso ao recurso Seleção", async () => {
