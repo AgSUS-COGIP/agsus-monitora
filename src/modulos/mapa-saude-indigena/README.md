@@ -63,7 +63,7 @@ com fixture real das Lotações de `public/data`) e `tests/modulos/mapa-saude-in
 (componente, Leaflet falso em `tests/modulos/leaflet-falso.js`); a ligação com o estado em
 `tests/modulos/visao-geral.test.js`; dicas e popups em `tests/dica-dentro-do-mapa.test.js`.
 
-## Mapa simples
+## Mapa DSEIs
 
 Terceiro botão do seletor do fundo, só no `#map` (`map-base-layer-switcher.ts`: `MODO_SIMPLES`,
 `aceitaMapaSimples`, `adicionarCamadaDeFundo`): nenhum azulejo — nem ao abrir a página já nesse
@@ -73,8 +73,9 @@ número no meio, a legenda aberta com "Colorir por" (`% preenchidas`, `Vagas oci
 DSEI`, lembrado em `agsus_mapa_simples_colorir_v1`) e o interruptor "Sedes e CASAIs" (desligados
 de início). As Terras Indígenas desligam ao entrar sem mudar a preferência guardada e voltam ao sair; a
 regra mora na camada (`indigenous-territories-layer.ts`, que segue o aviso do seletor). A lista mostra o
-número do DSEI; foco/mouse na linha realça o polígono e vice-versa; o clique no polígono abre o
-DSEI como a bolha.
+número do DSEI; foco/mouse na linha realça o polígono na hora. O mouse no polígono acende a linha só
+depois de parar nele (`ESPERA_DO_REALCE_NA_LISTA`, 150 ms) e nunca rola, reordena nem remonta a lista
+(linhas memorizadas, só a classe `is-realce` muda); o clique no polígono abre o DSEI como a bolha.
 
 - Numeração: `src/lib/mapa-saude-indigena/dseis-oficiais.ts` (34 nomes oficiais em ordem
   alfabética, como o mapa institucional da AgSUS; constante única).
