@@ -1,6 +1,12 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
+import {
+  TelaNaUrl,
+  usarEditalNaUrl,
+  usarLojaNaUrl,
+} from "../../app/usar-filtros-na-url.ts";
+import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { abasDoMenu, catalogoDoBanco } from "../../modules/catalogo-de-abas.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { SeletorDeEdital } from "../../componentes/seletor-de-edital.tsx";
@@ -25,7 +31,11 @@ import {
 import { EntradaDaAvaliacao } from "./entrada-da-avaliacao.tsx";
 import { Equipe } from "./equipe.tsx";
 import { EspelhosDaAvaliacao } from "./espelhos.tsx";
-import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
+import {
+  criarEstadoDaAvaliacao,
+  MENSAGEM_SEM_ACESSO,
+  VISOES_DA_AVALIACAO,
+} from "./estado.ts";
 import type { LojaDaAvaliacao } from "./estado.ts";
 import { criarEstadoDaFila, lerFichaLembrada } from "./estado-da-fila.ts";
 import type { LojaDaFila } from "./estado-da-fila.ts";
@@ -71,6 +81,18 @@ const ABAS_CONFIGURACOES = [
   { valor: "equipe", rotulo: "Equipe e permissões" },
 ] as const;
 
+/* A aba (visão) na URL (?aba=pre); trocar de aba é entrada nova no histórico. */
+const FILTROS_DA_AVALIACAO: EsquemaDosFiltros<"aba"> = Object.freeze({
+  aba: {
+    padrao: "fila",
+    aceita: (aba: string) =>
+      (VISOES_DA_AVALIACAO as ReadonlyArray<string>).includes(aba),
+    empilha: true,
+  },
+});
+/* Na troca de aba, só o edital fica na URL (os filtros da Fila saem). */
+const FICA_NA_TROCA_DE_ABA = Object.freeze(["edital"]);
+
 type LojaDaPreClassificacao = ReturnType<typeof criarEstadoDaPreClassificacao>;
 type OpcoesDaPreClassificacao = NonNullable<
   Parameters<typeof criarEstadoDaPreClassificacao>[0]
@@ -103,6 +125,26 @@ function textoDoStatus(e: EstadoDaAvaliacao) {
 function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
   const visao = visaoNaTela(e);
   const visoes = visoesDaPessoa(e);
+  // O edital e a aba na URL: o link copiado abre a tela neles.
+  const escolherEdital = usarEditalNaUrl({
+    editalId: e.editalId,
+    editais: e.editais,
+    carregado: e.carregado,
+    escolher: (id) => void estado.escolherEdital(id),
+  });
+  const mudarAba = usarLojaNaUrl(
+    FILTROS_DA_AVALIACAO,
+    { aba: e.visao || "fila" },
+    ({ aba }) => {
+      if (aba) estado.mudarVisao(aba);
+    },
+    {
+      // A aba pedida espera o papel no edital (quem não coordena só vê a Fila).
+      pronta: e.carregado && (!e.editalId || Boolean(e.dados)),
+      manter: FICA_NA_TROCA_DE_ABA,
+    },
+  );
+  const escolherAba = (aba: string) => mudarAba({ aba });
   const coordena = coordenaOEdital(e) === true;
   /*
     A Triagem começa a ler assim que o edital é escolhido (a lista
@@ -155,7 +197,7 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
                 rotulo="Visão"
                 opcoes={visoes}
                 valor={visao}
-                aoMudar={estado.mudarVisao}
+                aoMudar={escolherAba}
                 tour="avd-visoes"
               />
             ) : coordenaOEdital(e) === false ? (
@@ -204,7 +246,7 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
               soVigentes
               todos={todos}
               aoMudarTodos={setTodos}
-              aoEscolher={(id) => void estado.escolherEdital(id)}
+              aoEscolher={escolherEdital}
             >
               {/* Quem coordena vê a origem (e a troca) só em Configurações. */}
               {e.dados && !coordena ? (
@@ -287,7 +329,7 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
                     rotulo="Configurações"
                     opcoes={ABAS_CONFIGURACOES}
                     valor={e.visao === "equipe" ? "equipe" : "regra"}
-                    aoMudar={estado.mudarVisao}
+                    aoMudar={escolherAba}
                     tour="avd-configuracoes"
                   />
                   {e.visao === "equipe" ? (
@@ -324,12 +366,15 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
                   )}
                 </section>
               ) : (
-                <PreClassificacao
-                  key={`${e.editalId}:${e.dados.regra?.versao ?? 0}`}
-                  e={e}
-                  estado={estado}
-                  pre={pre}
-                />
+                // A Triagem antiga, dentro da Avaliação: a aba dela fica fora da URL.
+                <TelaNaUrl.Provider value="">
+                  <PreClassificacao
+                    key={`${e.editalId}:${e.dados.regra?.versao ?? 0}`}
+                    e={e}
+                    estado={estado}
+                    pre={pre}
+                  />
+                </TelaNaUrl.Provider>
               )
             ) : (
               <div className="ui-card" aria-busy="true">
@@ -338,10 +383,7 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
               </div>
             )
           ) : e.carregado && !e.erroAoCarregar ? (
-            <EntradaDaAvaliacao
-              editais={editais}
-              aoAbrir={(id) => void estado.escolherEdital(id)}
-            />
+            <EntradaDaAvaliacao editais={editais} aoAbrir={escolherEdital} />
           ) : null}
         </>
       )}
@@ -370,14 +412,16 @@ export function TelaDaAvaliacaoDocumental({
     };
   }, [estado, fila, areaDoApp]);
   return (
-    <TelaDaArea
-      key={e.area || "sem-area"}
-      estado={estado}
-      pre={pre}
-      fila={fila}
-      atualizar={atualizar}
-      e={e}
-    />
+    <TelaNaUrl.Provider value="avaliacao-documental">
+      <TelaDaArea
+        key={e.area || "sem-area"}
+        estado={estado}
+        pre={pre}
+        fila={fila}
+        atualizar={atualizar}
+        e={e}
+      />
+    </TelaNaUrl.Provider>
   );
 }
 

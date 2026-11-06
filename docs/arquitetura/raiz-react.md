@@ -111,6 +111,14 @@ esperar a tela.
   `?visao=` leva a visão (`abrirVisao`) dos links antigos (`entrevistas:conduzir`). `/` abre a
   tela de entrada (a guardada ou a inicial) com `replaceState`.
 
+  Os demais parâmetros da busca são os filtros da tela (`usarFiltrosNaUrl`/`usarLojaNaUrl`,
+  `src/app/usar-filtros-na-url.ts`; regras em `src/app/filtros-no-endereco.ts`): Triagem
+  (`edital`, `aba`, `situacao`, `vaga`, `motivo`), Avaliação documental (`edital`, `aba`,
+  `etapa`, `vaga`, `modalidade`, `minhas`) e Classificação (`edital`, `aba`, `tipo`, `vaga`,
+  `lista`, `situacao`). Edital, aba e etapa empilham; os outros trocam a entrada. O padrão não
+  aparece, e a busca por nome ou CPF nunca vai à URL. A navegação guarda os filtros da tela e os
+  devolve ao voltar a ela pelo menu; voltar/avançar dentro da mesma tela só troca os filtros.
+
 - **Roteador próprio, sem dependência.** O React Router 7 (7.18.4, a mais nova com mais de duas
   semanas) somaria ~20 kB gzip à entrada, que já está em 304 de 320 kB; o app só precisa de
   `pushState`/`replaceState`/`popstate` e de um store lido com `useSyncExternalStore`.
