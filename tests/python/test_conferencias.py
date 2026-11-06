@@ -188,6 +188,38 @@ class Analises(unittest.TestCase):
         self.assertEqual((dois["gravidade"], dois["exemplos"]), ("INFORMATIVO", ["C1"]))
 
 
+class EditalConferido(unittest.TestCase):
+    def test_ativo_e_sem_situacao_de_fim(self):
+        self.assertTrue(regras.edital_conferido({"ativo": True, "status": "Em andamento"}))
+        self.assertTrue(regras.edital_conferido({"ativo": True, "status": "Suspenso"}))
+        self.assertFalse(regras.edital_conferido({"ativo": True, "status": "Concluído"}))
+        self.assertFalse(regras.edital_conferido({"ativo": True, "status": " concluido "}))
+        self.assertFalse(regras.edital_conferido({"ativo": True, "status": "CANCELADO"}))
+        self.assertFalse(regras.edital_conferido({"ativo": True, "status": "Encerrado"}))
+        self.assertFalse(regras.edital_conferido({"ativo": False, "status": "Em andamento"}))
+        self.assertFalse(regras.edital_conferido(None))
+
+    def test_contexto_sem_status_vale_o_ativo(self):
+        self.assertTrue(regras.edital_conferido({"ativo": True}))
+        self.assertTrue(regras.edital_conferido({"ativo": True, "status": None}))
+
+    def test_analise_em_dois_editais_ignora_o_concluido(self):
+        contexto = {
+            "hoje": "2026-10-05",
+            "editais": [
+                {"id": E1, "numero": "101/2026", "area": "saude-indigena", "ativo": True, "status": "Em andamento"},
+                {"id": E2, "numero": "80/2026", "area": "saude-indigena", "ativo": True, "status": "Concluído"},
+            ],
+        }
+        linhas = [
+            {"id": A1, "edital": E1, "area": "saude-indigena", "codigo": "C1"},
+            {"id": A2, "edital": E2, "area": "saude-indigena", "codigo": "C1"},
+        ]
+        ac = regras.Acumulador({e["id"]: e for e in contexto["editais"]})
+        regras.conferir_analises([linhas], contexto, ac)
+        self.assertNotIn("ANALISE_EM_DOIS_EDITAIS", {c for c, _ in _avisos(ac)})
+
+
 class FichasDaAvaliacao(unittest.TestCase):
     """A conta gravada das fichas concluídas, refeita com pontuacao.py (casos dourados do 114/2026)."""
 
@@ -394,6 +426,23 @@ class Classificacao(unittest.TestCase):
         self.assertEqual(
             regras.vagas_sem_quadro(analises, [], editais), [{"edital": E1, "area": "si", "vaga": "sem-codigo"}]
         )
+
+    def test_vaga_sem_quadro_fora_de_edital_concluido_ou_cancelado(self):
+        e3, e4 = "00000000-0000-4000-a000-0000000000e3", "00000000-0000-4000-a000-0000000000e4"
+        analises = regras.AnalisesDaClassificacao()
+        list(analises.paginas([[
+            {"edital": E1, "area": "projetos", "vaga": "1", "nome_vaga": "Analista"},
+            {"edital": E2, "area": "si", "vaga": "2", "nome_vaga": "Psicólogo"},
+            {"edital": e3, "area": "si", "vaga": "3", "nome_vaga": "Enfermeiro"},
+            {"edital": e4, "area": "si", "vaga": "4", "nome_vaga": "Médico"},
+        ]]))  # fmt: skip
+        editais = {
+            E1: {"ativo": True, "status": "Concluído"},
+            E2: {"ativo": True, "status": "Cancelado"},
+            e3: {"ativo": True, "status": "Suspenso"},
+            e4: {"ativo": True, "status": "Em andamento"},
+        }
+        self.assertEqual([v["vaga"] for v in regras.vagas_sem_quadro(analises, [], editais)], ["3", "4"])
 
     def test_sem_todas_as_paginas_a_classificacao_nao_confere(self):
         analises = regras.AnalisesDaClassificacao()
