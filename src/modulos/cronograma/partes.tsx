@@ -122,14 +122,16 @@ const tituloDoChip = ({ etapa, marca }: MarcoDoDia) =>
   } — ${detalheDaEtapa(etapa)} (${etapa.tipo.rotulo})`;
 
 /*
-  A grade do mês: sete colunas, seis semanas. Cada dia é um botão que abre o
-  popup e mostra, dentro dele, até três chips curtos — "Manaus – Entrevistas"
-  — só nos marcos das etapas: o dia de uma etapa de um dia, e o início e o fim
-  de uma etapa com período ("início"/"fim" escrito no chip). Os dias do meio
-  ficam sem chip: não há faixa contínua. O resto vira "+N mais". Os chips são
-  só visuais (o clique cai no botão do dia); para o teclado e o leitor de
-  tela, o rótulo do dia diz quantas etapas há e quantas estão em andamento, e
-  o popup lista todas, com o tipo escrito.
+  A grade do mês: sete colunas, somente os dias do mês selecionado. O dia 1
+  ocupa a coluna do seu dia da semana; o CSS distribui os demais em quatro,
+  cinco ou seis linhas, sem datas, etapas ou botões dos meses vizinhos.
+  Cada dia é um botão que abre o popup e mostra até três chips curtos —
+  "Manaus – Entrevistas" — só nos marcos das etapas: o dia de uma etapa de um
+  dia, e o início e o fim de uma etapa com período ("início"/"fim" no chip).
+  Os dias do meio ficam sem chip: não há faixa contínua. O resto vira "+N
+  mais". Os chips são só visuais (o clique cai no botão do dia); para o teclado
+  e o leitor de tela, o rótulo do dia diz quantas etapas há e quantas estão em
+  andamento, e o popup lista todas, com o tipo escrito.
 
   No celular os chips não cabem: o dia mostra as bolinhas dos tipos e o total.
 */
@@ -150,14 +152,16 @@ export function GradeDoMes({
         ))}
       </div>
       <div className="cal-dias">
-        {celulas.map((celula) => (
-          <CelulaDoMes
-            key={celula.chave}
-            celula={celula}
-            aberto={celula.chave === selecionado}
-            aoEscolherDia={aoEscolherDia}
-          />
-        ))}
+        {celulas
+          .filter((celula) => celula.doMes)
+          .map((celula) => (
+            <CelulaDoMes
+              key={celula.chave}
+              celula={celula}
+              aberto={celula.chave === selecionado}
+              aoEscolherDia={aoEscolherDia}
+            />
+          ))}
       </div>
     </>
   );
@@ -179,11 +183,17 @@ function CelulaDoMes({
       type="button"
       className={classes(
         "cal-celula",
-        !celula.doMes && "fora-do-mes",
         celula.hoje && "hoje",
         aberto && "selecionado",
         !celula.total && "vazio",
       )}
+      style={
+        celula.dia === 1
+          ? {
+              gridColumnStart: (dataLocal(celula.chave)?.getDay() ?? 0) + 1,
+            }
+          : undefined
+      }
       data-dia={celula.chave}
       aria-label={celula.rotulo}
       aria-current={aberto ? "true" : undefined}

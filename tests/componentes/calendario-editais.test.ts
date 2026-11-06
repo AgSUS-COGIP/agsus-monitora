@@ -373,10 +373,12 @@ describe("grade do mês", () => {
     // A entrevista de 10/09 já passou e está escondida.
     expect(contador()).toBe("3 etapas no mês");
     expect(celula("2026-09-15")?.classList.contains("hoje")).toBe(true);
-    // Seis semanas sempre: a altura não salta de um mês para o outro.
+    // Somente os 30 dias de setembro, sem datas dos meses vizinhos.
     expect(document.querySelectorAll<HTMLElement>(".cal-celula")).toHaveLength(
-      42,
+      30,
     );
+    expect(celula("2026-08-31")).toBeNull();
+    expect(celula("2026-10-05")).toBeNull();
   });
 
   /*
@@ -431,8 +433,17 @@ describe("grade do mês", () => {
     await clicar($("calMesSeguinte"));
     expect($("calMesTitulo")?.textContent).toBe("Outubro 2026");
     expect(contador()).toBe("1 etapa no mês");
+    expect(document.querySelectorAll<HTMLElement>(".cal-celula")).toHaveLength(
+      31,
+    );
+    expect(celula("2026-09-30")).toBeNull();
+    expect(chips("2026-10-05")).toEqual(["CASAI São Paulo – Entrevista"]);
     await clicar($("calHoje"));
     expect($("calMesTitulo")?.textContent).toBe("Setembro 2026");
+    expect(document.querySelectorAll<HTMLElement>(".cal-celula")).toHaveLength(
+      30,
+    );
+    expect(celula("2026-10-05")).toBeNull();
   });
 });
 
@@ -818,7 +829,7 @@ describe("vistas Mês, Semana e Lista", () => {
     ).toEqual(["Mês", "Semana", "Lista"]);
     expect(visao("mes")?.getAttribute("aria-checked")).toBe("true");
     expect(document.querySelectorAll<HTMLElement>(".cal-celula")).toHaveLength(
-      42,
+      30,
     );
   });
 
