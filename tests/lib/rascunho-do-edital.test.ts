@@ -8,15 +8,16 @@ import {
   lerRascunho,
   usuarioDoPerfil,
 } from "../../src/lib/rascunho-do-edital.ts";
+import { novaEtapa } from "../../src/lib/cronograma-do-edital.ts";
 
 /* Rascunho do formulário do edital no navegador: chave, validade e falhas do armazenamento. */
 
 function armazenamentoFalso() {
-  const dados = new Map();
+  const dados = new Map<string, string>();
   return {
-    getItem: (chave) => (dados.has(chave) ? dados.get(chave) : null),
-    setItem: (chave, valor) => dados.set(chave, String(valor)),
-    removeItem: (chave) => dados.delete(chave),
+    getItem: (chave: string) => dados.get(chave) ?? null,
+    setItem: (chave: string, valor: unknown) => dados.set(chave, String(valor)),
+    removeItem: (chave: string) => dados.delete(chave),
     dados,
   };
 }
@@ -42,15 +43,15 @@ describe("rascunho do edital", () => {
       "k",
       {
         formulario: { edital: "20/2026" },
-        cronograma: { automatico: true, etapas: [], historico: [1, 2, 3] },
+        cronograma: { automatico: true, etapas: [], historico: [{}, {}, {}] },
       },
       HOJE,
       armazenamento,
     );
     const lido = lerRascunho("k", armazenamento, HOJE);
-    expect(lido.formulario).toEqual({ edital: "20/2026" });
-    expect(lido.cronograma.automatico).toBe(true);
-    expect(lido.cronograma).not.toHaveProperty("historico");
+    expect(lido?.formulario).toEqual({ edital: "20/2026" });
+    expect(lido?.cronograma.automatico).toBe(true);
+    expect(lido?.cronograma).not.toHaveProperty("historico");
     apagarRascunho("k", armazenamento);
     expect(lerRascunho("k", armazenamento, HOJE)).toBeNull();
   });
@@ -91,10 +92,10 @@ describe("rascunho do edital", () => {
   it("enquanto o cronograma carrega, só o formulário conta como mudança", () => {
     const carregando = { carregando: true, etapas: [] };
     expect(estadoComparavel({ a: 1 }, carregando)).toBe(
-      estadoComparavel({ a: 1 }, { carregando: true, etapas: [{ x: 1 }] }),
+      estadoComparavel({ a: 1 }, { carregando: true, etapas: [novaEtapa()] }),
     );
     expect(estadoComparavel({ a: 1 }, { etapas: [] })).not.toBe(
-      estadoComparavel({ a: 1 }, { etapas: [{ x: 1 }] }),
+      estadoComparavel({ a: 1 }, { etapas: [novaEtapa()] }),
     );
   });
 

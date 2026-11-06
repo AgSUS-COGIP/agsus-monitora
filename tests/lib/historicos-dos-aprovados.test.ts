@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 import { cartasDoHistorico } from "../../src/lib/dados-da-carta.ts";
 import { publicacaoDoEdital } from "../../src/lib/dados-do-historico-de-publicacoes.ts";
 import { criarEstadoDaCarta } from "../../src/modulos/aprovados/carta-de-convocacao/estado.ts";
+import { definido } from "../definido.ts";
+
+type RespostaDaRpc = { data: unknown; error: unknown };
 
 describe("Históricos de Aprovados", () => {
   it("preserva ordem, nomes e campos adicionais das cartas e publicações", () => {
@@ -13,24 +16,26 @@ describe("Históricos de Aprovados", () => {
       expect.objectContaining(cartas[0]),
       expect.objectContaining(cartas[1]),
     ]);
-    const dados = publicacaoDoEdital({
-      resultado_final: { gerada_em: "2026-10-15", extra: true },
-      tem_analises: true,
-      publicacoes: [
-        {
-          id: "b",
-          candidatos: 2,
-          pendencias: [{ nome: "Ana", motivo: "Saiu" }],
-        },
-        { id: "a", pendencias: [] },
-      ],
-    });
+    const dados = definido(
+      publicacaoDoEdital({
+        resultado_final: { gerada_em: "2026-10-15", extra: true },
+        tem_analises: true,
+        publicacoes: [
+          {
+            id: "b",
+            candidatos: 2,
+            pendencias: [{ nome: "Ana", motivo: "Saiu" }],
+          },
+          { id: "a", pendencias: [] },
+        ],
+      }),
+    );
     expect(dados.publicacoes.map((p) => p.id)).toEqual(["b", "a"]);
-    expect(dados.publicacoes[0].pendencias[0]).toEqual({
+    expect(dados.publicacoes[0]?.pendencias[0]).toEqual({
       nome: "Ana",
       motivo: "Saiu",
     });
-    expect(dados.resultado_final.extra).toBe(true);
+    expect(dados.resultado_final?.extra).toBe(true);
   });
   it.each([
     {},
@@ -86,13 +91,13 @@ describe("Históricos de Aprovados", () => {
     });
   });
   it("cargas concorrentes mantêm os históricos de ambas as pessoas", async () => {
-    let responderAna;
-    const rpc = vi.fn((_nome, argumentos) =>
-      argumentos.p_candidato === "ana"
-        ? new Promise((resolve) => {
+    let responderAna: ((resposta: RespostaDaRpc) => void) | undefined;
+    const rpc = vi.fn((_nome: string, argumentos?: Record<string, unknown>) =>
+      definido(argumentos).p_candidato === "ana"
+        ? new Promise<RespostaDaRpc>((resolve) => {
             responderAna = resolve;
           })
-        : Promise.resolve({
+        : Promise.resolve<RespostaDaRpc>({
             data: { cartas: [{ carta_id: "bia" }] },
             error: null,
           }),
@@ -100,9 +105,16 @@ describe("Históricos de Aprovados", () => {
     const estado = criarEstadoDaCarta({ supabase: { rpc } });
     const ana = estado.carregarHistorico("ana");
     await estado.carregarHistorico("bia");
-    responderAna({ data: { cartas: [{ carta_id: "ana" }] }, error: null });
+    definido(responderAna)({
+      data: { cartas: [{ carta_id: "ana" }] },
+      error: null,
+    });
     await ana;
-    expect(estado.obter().historicos.get("ana").cartas[0].carta_id).toBe("ana");
-    expect(estado.obter().historicos.get("bia").cartas[0].carta_id).toBe("bia");
+    expect(estado.obter().historicos.get("ana")?.cartas[0]?.carta_id).toBe(
+      "ana",
+    );
+    expect(estado.obter().historicos.get("bia")?.cartas[0]?.carta_id).toBe(
+      "bia",
+    );
   });
 });

@@ -33,7 +33,7 @@ describe("publicação só do que mudou", () => {
     ]);
     const linhas = linhasDasSecoes(valores, ["page_title", "nao_existe"]);
     expect(linhas.map((l) => l.chave)).toEqual(["page_title"]);
-    expect(linhas[0].valor).toBe("Novo");
+    expect(linhas[0]?.valor).toBe("Novo");
   });
 
   it("painel alterado parte do banco: o campo não mexido fica como outra pessoa deixou", () => {

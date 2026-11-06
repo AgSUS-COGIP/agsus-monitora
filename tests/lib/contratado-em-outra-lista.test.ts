@@ -14,13 +14,16 @@ import {
   jaFoiChamado,
   statusNaFila,
 } from "../../src/lib/lista-convocacao-rules.ts";
+import type { CandidatoDasRegrasDeAprovados } from "../../src/lib/tipos-das-regras-de-aprovados.ts";
 
 /*
   "Contratado em outra lista" (migration 20261024120000): o status explícito
   (fixado pela equipe) e a situação que o job Python decide e o pacote da
   Lista de aprovados traz no dicionário `contratacao`. Dados fictícios.
 */
-const linha = (extra) => ({
+const linha = (
+  extra: Partial<CandidatoDasRegrasDeAprovados>,
+): CandidatoDasRegrasDeAprovados => ({
   candidato_id: "c",
   edital_id: "e1",
   status: "Contratado",

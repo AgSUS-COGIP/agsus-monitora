@@ -9,6 +9,7 @@ import {
   validateApprovedRows,
 } from "../../src/lib/aprovados-import.ts";
 import { zipSemCompressao } from "../../src/lib/documento-da-resposta.ts";
+import type { ArquivoDoZip } from "../../src/lib/documento-da-resposta.ts";
 
 const cabecalhos = [
   "Código Vaga",
@@ -26,14 +27,16 @@ const valores = [
   "Ana & José",
   "Ampla concorrência",
 ];
-const escapar = (v) =>
+type Linha = readonly unknown[];
+
+const escapar = (v: unknown) =>
   String(v)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll('"', "&quot;");
-const linhaXml = (valores, numero) =>
+const linhaXml = (valores: Linha, numero: number) =>
   `<row r="${numero}">${valores.map((v, i) => `<c r="${String.fromCharCode(65 + i)}${numero}" t="inlineStr"><is><t>${escapar(v)}</t></is></c>`).join("")}</row>`;
-const folha = (linhas) =>
+const folha = (linhas: readonly Linha[]) =>
   `<worksheet><sheetData>${linhas.map((v, i) => linhaXml(v, i + 1)).join("")}</sheetData></worksheet>`;
 const esperado = {
   codigo_vaga: "VG-01",
@@ -43,13 +46,13 @@ const esperado = {
   nome: "Ana & José",
   modalidade: "Ampla concorrência",
 };
-const arquivo = (arquivos) =>
+const arquivo = (arquivos: readonly ArquivoDoZip[]) =>
   new File([zipSemCompressao(arquivos)], "aprovados.xlsx");
-const planilha = (linhas) =>
+const planilha = (linhas: readonly Linha[]) =>
   arquivo([{ nome: "xl/worksheets/sheet1.xml", conteudo: folha(linhas) }]);
 
 // Um ZIP de uma entrada com deflate, independente do descompactador do app.
-function planilhaComDeflate(xml) {
+function planilhaComDeflate(xml: string) {
   const nome = "xl/worksheets/sheet1.xml";
   const original = zipSemCompressao([{ nome, conteudo: xml }]);
   const tamanhoNome = Buffer.byteLength(nome);
@@ -184,7 +187,7 @@ describe("Importação real de XLSX de Aprovados", () => {
         [...valores.slice(0, 5), '"Ampla concorrência", "Pretos e pardos"'],
       ]),
     );
-    expect(lida[0].modalidade).toBe("Ampla concorrência; Pretos e pardos");
+    expect(lida[0]?.modalidade).toBe("Ampla concorrência; Pretos e pardos");
     const soAspas = validateApprovedRows([{ ...esperado, modalidade: '""' }]);
     expect(soAspas.rows).toEqual([]);
     expect(soAspas.errors[0]).toMatch(/campos obrigatórios vazios: modalidade/);

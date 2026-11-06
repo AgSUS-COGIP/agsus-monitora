@@ -28,6 +28,7 @@ import {
   soACarta,
   textoParaSei,
 } from "../../src/lib/carta-de-convocacao-documento.ts";
+import { definido } from "../definido.ts";
 
 /*
   A carta de convocação sem DOM. Os testes seguem as histórias de
@@ -127,10 +128,10 @@ describe("preencher a carta (história: Emitir a carta de convocação)", () => 
       tipo: "paragrafo",
       texto: "Prezado(a) **Ana Ribeiro**,",
     });
-    expect(carta.blocos[1].texto).toBe(
+    expect(carta.blocos[1]?.texto).toBe(
       "Convocamos para o cargo de Enfermeiro (vaga VG-1, DSEI Manaus), Edital 03/2025, 2ª posição, Pessoa negra.",
     );
-    expect(carta.blocos[2].texto).toBe(
+    expect(carta.blocos[2]?.texto).toBe(
       "Apresente-se até 12/10/2026 em Sede do DSEI Manaus, com:",
     );
     expect(carta.blocos.slice(3, 6)).toEqual([
@@ -152,14 +153,14 @@ describe("preencher a carta (história: Emitir a carta de convocação)", () => 
       ANA,
       {},
     );
-    expect(carta.blocos[0].texto).toBe(`CPF ${ESPACO_EM_BRANCO}; {MATRICULA}`);
+    expect(carta.blocos[0]?.texto).toBe(`CPF ${ESPACO_EM_BRANCO}; {MATRICULA}`);
     expect(carta.faltando).toEqual(["CPF"]);
     expect(
       preencherCarta(
         { titulo: "C", texto: "CPF {CPF}" },
         { ...ANA, cpf: "12345678901" },
         {},
-      ).blocos[0].texto,
+      ).blocos[0]?.texto,
     ).toBe("CPF ***.456.789-**");
   });
 });
@@ -302,7 +303,7 @@ describe("modelos do banco", () => {
       vigente: { prazoDias: "5" },
       versoes: [{ versao: 2, motivo: "m" }],
     });
-    expect(modelos[3].ativo).toBe(false);
+    expect(modelos[3]?.ativo).toBe(false);
   });
 
   it("para emitir: ativos, os do edital (de todos os candidatos) primeiro", () => {
@@ -366,7 +367,7 @@ describe("o documento (SEI, PDF, DOCX)", () => {
     expect(doc.nome).toBe("Carta de convocação - 2 candidatos");
     expect(doc.localData).toBe("Brasília, na data da assinatura digital.");
     expect(doc.localDataPorExtenso).toBe("Brasília, 5 de outubro de 2026.");
-    expect(soACarta(doc, 1).nome).toBe("Carta de convocação - Bruno Lima");
+    expect(soACarta(doc, 1)?.nome).toBe("Carta de convocação - Bruno Lima");
   });
 
   it("HTML para o SEI com as classes do SEI, negrito e quebra de página entre as cartas", () => {
@@ -382,7 +383,7 @@ describe("o documento (SEI, PDF, DOCX)", () => {
     expect(
       htmlParaSei({
         ...doc,
-        cartas: [{ ...doc.cartas[0], titulo: "<script>x</script>" }],
+        cartas: [{ ...definido(doc.cartas[0]), titulo: "<script>x</script>" }],
       }),
     ).not.toContain("<script>");
   });

@@ -22,7 +22,7 @@ const vigente = {
 describe("Dados para a publicação de aprovados", () => {
   it("preserva os campos usados na revisão e aceita posição numérica da planilha", () => {
     expect(
-      situacaoDaPublicacao({ vigente }).vigente.candidatos[0],
+      situacaoDaPublicacao({ vigente }).vigente?.candidatos[0],
     ).toMatchObject({
       candidato_id: "c1",
       classificacao: 2,

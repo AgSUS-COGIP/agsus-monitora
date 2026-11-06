@@ -9,10 +9,11 @@ import {
   textoDaAlteracao,
   textoDoDetalhe,
 } from "../../src/lib/pendencias-do-edital.ts";
+import { definido } from "../definido.ts";
 
 /* As regras puras da aba Pendências (src/lib/pendencias-do-edital.ts), com dados fictícios. */
 
-const linha = (id, extra = {}) => ({
+const linha = (id: string, extra: Record<string, unknown> = {}) => ({
   id,
   nome: `Pessoa ${id}`,
   vaga: "100",
@@ -22,20 +23,29 @@ const linha = (id, extra = {}) => ({
   lista_ativa: true,
   ...extra,
 });
-const pendencia = (tipo, extra = {}) =>
-  normalizarPendencia({
-    id: `p-${tipo}`,
-    tipo,
-    situacao: "ABERTA",
-    edital_id: "e1",
-    edital: "01/2026",
-    unidade: "DSEI",
-    detalhe: {},
-    pode_decidir: true,
-    linhas: [linha("a"), linha("b")],
-    ...extra,
-  });
+const pendencia = (tipo: string, extra: Record<string, unknown> = {}) =>
+  definido(
+    normalizarPendencia({
+      id: `p-${tipo}`,
+      tipo,
+      situacao: "ABERTA",
+      edital_id: "e1",
+      edital: "01/2026",
+      unidade: "DSEI",
+      detalhe: {},
+      pode_decidir: true,
+      linhas: [linha("a"), linha("b")],
+      ...extra,
+    }),
+  );
 const HOJE = "2026-10-26";
+
+/* A alteração do histórico; o texto não usa o candidato. */
+type Alteracao = Parameters<typeof textoDaAlteracao>[0];
+const semCandidato = (a: Omit<Alteracao, "candidato">): Alteracao => ({
+  candidato: "",
+  ...a,
+});
 
 describe("normalização", () => {
   it("formato desconhecido é erro; tipo desconhecido sai", () => {
@@ -52,8 +62,8 @@ describe("normalização", () => {
 
   it("limpa as aspas da modalidade e lê os tipos", () => {
     const p = pendencia("POSICAO_REPETIDA");
-    expect(p.linhas[0].modalidade).toBe("Ampla Concorrência");
-    expect(p.linhas[0].listaAtiva).toBe(true);
+    expect(p.linhas[0]?.modalidade).toBe("Ampla Concorrência");
+    expect(p.linhas[0]?.listaAtiva).toBe(true);
     expect(p.podeDecidir).toBe(true);
   });
 });
@@ -111,13 +121,17 @@ describe("textos, contagens e filtros", () => {
 
   it("a alteração do histórico em texto", () => {
     expect(
-      textoDaAlteracao({ campo: "status", antes: "Contratado", depois: null }),
+      textoDaAlteracao(
+        semCandidato({ campo: "status", antes: "Contratado", depois: null }),
+      ),
     ).toBe("Contratado → sem status");
-    expect(textoDaAlteracao({ campo: "posicao", antes: 7, depois: 8 })).toBe(
-      "posição 7 → 8",
-    );
     expect(
-      textoDaAlteracao({ campo: "removido", antes: false, depois: true }),
+      textoDaAlteracao(semCandidato({ campo: "posicao", antes: 7, depois: 8 })),
+    ).toBe("posição 7 → 8");
+    expect(
+      textoDaAlteracao(
+        semCandidato({ campo: "removido", antes: false, depois: true }),
+      ),
     ).toBe("saiu da lista");
   });
 });
@@ -161,7 +175,7 @@ describe("a decisão vira a chamada certa", () => {
     });
     expect(
       chamadaDaDecisao(p, { motivo: "ok!", linha: "a" }, HOJE).chamada
-        .argumentos.p_status_das_outras,
+        ?.argumentos.p_status_das_outras,
     ).toBe("Contratado em outra lista");
   });
 
@@ -173,7 +187,7 @@ describe("a decisão vira a chamada certa", () => {
       chamadaDaDecisao(p, { motivo: "ok!", linha: "b" }, HOJE).erro,
     ).toBeTruthy();
     expect(
-      chamadaDaDecisao(p, { motivo: "ok!", linha: "a" }, HOJE).chamada.rpc,
+      chamadaDaDecisao(p, { motivo: "ok!", linha: "a" }, HOJE).chamada?.rpc,
     ).toBe("escolher_lista_da_contratacao");
   });
 
@@ -188,7 +202,7 @@ describe("a decisão vira a chamada certa", () => {
     });
     expect(
       chamadaDaDecisao(p, { motivo: "ok!", linha: "b" }, HOJE).chamada
-        .argumentos.p_candidato,
+        ?.argumentos.p_candidato,
     ).toBe("b");
   });
 
@@ -196,7 +210,7 @@ describe("a decisão vira a chamada certa", () => {
     const p = pendencia("POSICAO_REPETIDA");
     expect(chamadaDaDecisao(p, { motivo: "ok!" }, HOJE).erro).toMatch(/empate/);
     expect(
-      chamadaDaDecisao(p, { motivo: "ok!", acao: "empate" }, HOJE).chamada.rpc,
+      chamadaDaDecisao(p, { motivo: "ok!", acao: "empate" }, HOJE).chamada?.rpc,
     ).toBe("confirmar_empate_da_posicao");
     expect(
       chamadaDaDecisao(
@@ -255,7 +269,7 @@ describe("a decisão vira a chamada certa", () => {
         p,
         { motivo: "ok!", status: "Desistente", data: "2026-10-01" },
         HOJE,
-      ).chamada.argumentos,
+      ).chamada?.argumentos,
     ).toEqual({
       p_pendencia: p.id,
       p_motivo: "ok!",

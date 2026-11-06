@@ -6,13 +6,13 @@ import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.ts";
 import {
   compactarCandidatos,
   compactarPorArea,
-} from "./candidatos-compactos-falsos.js";
+} from "./candidatos-compactos-falsos.ts";
 import {
   definirAreaAtual,
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.js";
+import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.ts";
 import { montarTela } from "../montar-tela.ts";
 
 /*

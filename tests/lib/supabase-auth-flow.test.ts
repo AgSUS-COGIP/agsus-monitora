@@ -8,8 +8,19 @@ import {
 } from "../../src/lib/auth-flow";
 import { htmlDaPagina } from "../pagina-montada.ts";
 
-function source(path) {
+function source(path: string) {
   return readFileSync(path, "utf8");
+}
+
+/*
+  A janela de mentira: os campos que o teste dá e, fora deles, a do jsdom.
+  O fluxo só lê `open`, as medidas e a posição, todas dadas pelo teste.
+*/
+function janelaCom(campos: Record<string, unknown>): Window {
+  return new Proxy(window, {
+    get: (alvo, chave) =>
+      chave in campos ? Reflect.get(campos, chave) : Reflect.get(alvo, chave),
+  });
 }
 
 describe("fluxo de autenticação Supabase", () => {
@@ -45,18 +56,18 @@ describe("fluxo de autenticação Supabase", () => {
   });
 
   it("abre o Google em uma janela centralizada no desktop, como o SIGAV", () => {
-    let opened = null;
-    const windowRef = {
+    let opened = null as unknown[] | null;
+    const windowRef = janelaCom({
       innerWidth: 1440,
       outerWidth: 1440,
       outerHeight: 900,
       screenX: 40,
       screenY: 20,
-      open: (...args) => {
+      open: (...args: unknown[]) => {
         opened = args;
         return { closed: false };
       },
-    };
+    });
 
     expect(supportsLoginPopup(windowRef)).toBe(true);
     expect(openLoginPopup(windowRef)).toEqual({ closed: false });
@@ -67,8 +78,12 @@ describe("fluxo de autenticação Supabase", () => {
   });
 
   it("preserva o redirecionamento tradicional em telas pequenas", () => {
-    expect(supportsLoginPopup({ innerWidth: 600, open() {} })).toBe(false);
-    expect(openLoginPopup({ innerWidth: 600, open() {} })).toBeNull();
+    expect(supportsLoginPopup(janelaCom({ innerWidth: 600, open() {} }))).toBe(
+      false,
+    );
+    expect(
+      openLoginPopup(janelaCom({ innerWidth: 600, open() {} })),
+    ).toBeNull();
   });
 
   it("mantém o cabeçalho sem horário e a barra sem identificação repetida", () => {

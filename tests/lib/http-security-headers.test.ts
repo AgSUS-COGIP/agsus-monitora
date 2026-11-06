@@ -2,19 +2,28 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-function loadConfig() {
+interface HeaderRule {
+  source: string;
+  headers?: { key: string; value: string }[];
+}
+
+interface VercelConfig {
+  headers?: HeaderRule[];
+}
+
+function loadConfig(): VercelConfig {
   const configPath = resolve(process.cwd(), "vercel.json");
   return JSON.parse(readFileSync(configPath, "utf8"));
 }
 
-function headersForSource(config, source) {
+function headersForSource(config: VercelConfig, source: string) {
   const rule = config.headers?.find((item) => item.source === source);
   return new Map(
     (rule?.headers || []).map((header) => [header.key, header.value]),
   );
 }
 
-function effectiveHeaders(config, pathname) {
+function effectiveHeaders(config: VercelConfig, pathname: string) {
   return new Map([
     ...headersForSource(config, "/(.*)"),
     ...headersForSource(config, pathname),

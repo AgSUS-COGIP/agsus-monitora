@@ -61,6 +61,8 @@ describe("html security", () => {
 
     expect(plugin.name).toBe("agsus-html-security");
     expect(plugin.enforce).toBe("pre");
-    expect(plugin.transformIndexHtml(html)).not.toContain("supabase-js");
+    // O gancho não usa o `this` do Vite (o contexto do plugin).
+    const transformar: (html: string) => string = plugin.transformIndexHtml;
+    expect(transformar(html)).not.toContain("supabase-js");
   });
 });
