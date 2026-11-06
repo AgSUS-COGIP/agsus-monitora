@@ -35,6 +35,19 @@ class Quadro(unittest.TestCase):
             with self.subTest(nome=nome):
                 self.assertEqual(quadro_da_vaga(quadros[EDITAL], nome), esperado)
 
+    def test_uf_colada_na_cidade_acha_a_lotacao(self):
+        # 20261106170100: "Cidade AlfaMG" (Empregare) casa com a lotação "Cidade Alfa/MG" do quadro.
+        quadros = preparar_quadros([
+            {"id": "q1", "edital": EDITAL, "cargo": "Enfermeiro", "lotacao": "Cidade Alfa/MG"},
+            {"id": "q2", "edital": EDITAL, "cargo": "Enfermeiro", "lotacao": "Cidade Beta/ES"},
+            {"id": "q3", "edital": EDITAL, "cargo": "Enfermeiro", "lotacao": "Cidade Alfa/MG Escola Sul"},
+        ])[EDITAL]  # fmt: skip
+        self.assertEqual(quadro_da_vaga(quadros, "Enfermeiro - Cidade AlfaMG"), "q1")
+        self.assertEqual(quadro_da_vaga(quadros, "Enfermeiro - Cidade BetaES em Excel (questionário NÍVEL"), "q2")
+        self.assertEqual(quadro_da_vaga(quadros, "Enfermeiro - Cidade BetaES (questionário NÍVEL SUPERIOR"), "q2")
+        # Sem a lotação no nome continua sem linha (várias do mesmo cargo).
+        self.assertIsNone(quadro_da_vaga(quadros, "Enfermeiro"))
+
     def test_edital_sem_quadro(self):
         self.assertIsNone(quadro_da_vaga(None, "Enfermeiro"))
         self.assertIsNone(quadro_da_vaga([], "Enfermeiro"))

@@ -1,5 +1,5 @@
 {
-  "_leia": "Saídas de private.\"FC_TOKENS_VAGA\" e private.\"FC_QUADRO_DA_VAGA\" no banco (03/11/2026; o quadro foi montado num begin … rollback). Textos fictícios. tests/python/test_quadro_da_vaga.py confere a cópia em Python contra eles.",
+  "_leia": "Saídas de private.\"FC_TOKENS_VAGA\" e private.\"FC_QUADRO_DA_VAGA\" no banco (03/11/2026 e, com a UF colada de 20261106170100, 06/11/2026; o quadro foi montado num begin … rollback). Textos fictícios. tests/python/test_quadro_da_vaga.py confere a cópia em Python contra eles.",
   "tokens": {
     "Ab Cd": [
       "ab",
@@ -60,6 +60,66 @@
     "Psicólogo(a) Ñ ü ö": [
       "psicologo",
       "u"
+    ],
+    "Enfermeiro - Cidade AlfaMG": [
+      "alfa",
+      "cidade",
+      "enfermeiro",
+      "mg"
+    ],
+    "Técnico Eletrotécnico -São João das MissõesMG..": [
+      "eletrotecnico",
+      "joao",
+      "mg",
+      "missoes",
+      "sao",
+      "tecnico"
+    ],
+    "Médico - Cidade BetaES - Pau Brasil": [
+      "beta",
+      "brasil",
+      "cidade",
+      "es",
+      "medico",
+      "pau"
+    ],
+    "ENFERMEIRO MG": [
+      "enfermeiro",
+      "mg"
+    ],
+    "CASAI DSEI TI": [
+      "casai",
+      "dsei",
+      "ti"
+    ],
+    "iPhoneSE": [
+      "iphone",
+      "se"
+    ],
+    "AbcSPx": [
+      "abcspx"
+    ],
+    "ÁguaMG": [
+      "agua",
+      "mg"
+    ],
+    "sãoTO.": [
+      "sao",
+      "to"
+    ],
+    "AçúcarÇE": [
+      "acucarce"
+    ],
+    "Médico (40h - X": [
+      "medico"
+    ],
+    "A (b) C (d": [
+      "c"
+    ],
+    "Psicólogo - Polo Sul (questionário NÍVEL SUPERIOR": [
+      "polo",
+      "psicologo",
+      "sul"
     ]
   },
   "quadros": [
