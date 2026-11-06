@@ -1,6 +1,16 @@
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { PropsDaRaiz } from "../../src/app/raiz.tsx";
+import type { PecasDoApp } from "../../src/app/contexto-do-app.ts";
+import type { EstadoDoAviso } from "../../src/app/aviso-de-versao.ts";
+import type { EstadoDaPresenca } from "../../src/componentes/pessoas-online/pessoas-online.tsx";
+import type { EstadoDoEncerramento } from "../../src/modulos/encerramento-do-edital/estado.ts";
+import { ESTADO_INICIAL_DA_NAVEGACAO } from "../../src/app/navegacao.ts";
+import type { LeituraDaNavegacao } from "../../src/app/navegacao.ts";
+import { achar } from "../dom.ts";
+import { definido } from "../definido.ts";
 import { teclar } from "../componentes/interacoes.ts";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -20,16 +30,16 @@ vi.mock("../../src/modulos/aya/aya.tsx", () => {
 
 const { Raiz } = await import("../../src/app/raiz.tsx");
 
-function assinavel(inicial) {
-  let valor = Object.freeze(inicial);
-  const ouvintes = new Set();
+function assinavel<T>(inicial: T) {
+  let valor: T = Object.freeze(inicial);
+  const ouvintes = new Set<() => void>();
   return {
     obter: () => valor,
-    assinar: vi.fn((ouvinte) => {
+    assinar: vi.fn((ouvinte: () => void) => {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     }),
-    mudar(novo) {
+    mudar(novo: T) {
       valor = novo;
       ouvintes.forEach((ouvinte) => ouvinte());
     },
@@ -38,7 +48,7 @@ function assinavel(inicial) {
 
 function criarPecas({ aberto = false, conectado = true } = {}) {
   const presenca = {
-    ...assinavel({
+    ...assinavel<EstadoDaPresenca>({
       visivel: true,
       aberto: false,
       sincronizado: true,
@@ -49,7 +59,7 @@ function criarPecas({ aberto = false, conectado = true } = {}) {
     fechar: vi.fn(),
   };
   const avisoDeVersao = {
-    ...assinavel({
+    ...assinavel<EstadoDoAviso>({
       versaoNova: "v2",
       novidade: null,
       telaAntiga: false,
@@ -58,10 +68,25 @@ function criarPecas({ aberto = false, conectado = true } = {}) {
     }),
     fechar: vi.fn(),
     atualizar: vi.fn(),
+    // O resto do aviso, parado: nada confere, liga ou recarrega.
+    conferir: async () => false,
+    aoSinalDeTelaAntiga: async () => {},
+    iniciar() {},
+    parar() {},
+    atualizarAgora: () => false,
   };
   const encerramento = {
-    ...assinavel({ aberto: null, encerramentos: [], fogosJaSoltos: [] }),
+    ...assinavel<EstadoDoEncerramento>({
+      aberto: null,
+      encerramentos: [],
+      fogosJaSoltos: new Set<string>(),
+    }),
     fechar: vi.fn(),
+    // O resto do encerramento, parado.
+    verificar: async () => [],
+    editalConcluidoNaTela() {},
+    acompanhar: () => () => {},
+    esquecer() {},
   };
   return {
     presenca,
@@ -69,50 +94,54 @@ function criarPecas({ aberto = false, conectado = true } = {}) {
     encerramento,
     appAberto: assinavel(aberto),
     estaConectado: () => conectado,
-  };
+  } satisfies PecasDoApp;
 }
 
-const ESTADO_DA_NAVEGACAO = Object.freeze({
-  view: "dashboard",
-  area: "",
-  visao: "",
-  edital: "",
-  secao: "",
-  aviso: "",
-  titulo: "",
-  subtitulo: "",
-  abertura: 0,
-});
-const NAVEGACAO = {
+// A navegação parada no início (o dashboard, sem área nem edital).
+const ESTADO_DA_NAVEGACAO = ESTADO_INICIAL_DA_NAVEGACAO;
+const NAVEGACAO: LeituraDaNavegacao = {
   obter: () => ESTADO_DA_NAVEGACAO,
   assinar: () => () => {},
   esquecerEditalEVisao: () => {},
+  abrirRegrasDoEdital: () => false,
+  fecharRegrasDoEdital: () => {},
+  irParaInicio: () => {},
 };
 
-let raiz = null;
+/* Sem a tela de acesso (`lugares.entrada` nulo), a raiz não lê sessão, marca nem pedido. */
+const SEM_ENTRADA: Pick<PropsDaRaiz, "sessao" | "marca" | "pedido"> = {
+  // @ts-expect-error -- nula de propósito: sem a tela de acesso, não é lida.
+  sessao: null,
+  // @ts-expect-error -- nula de propósito: sem a tela de acesso, não é lida.
+  marca: null,
+  // @ts-expect-error -- nulo de propósito: sem a tela de acesso, não é lido.
+  pedido: null,
+};
+
+let raiz: Root | null = null;
 afterEach(async () => {
   await act(async () => raiz?.unmount());
   raiz = null;
   document.body.innerHTML = "";
 });
 
-async function montar(pecas) {
+async function montar(pecas: PecasDoApp | null) {
   document.body.innerHTML =
     '<section id="appScreen" class="app hidden"></section><div id="raiz"></div>';
-  raiz = createRoot(document.getElementById("raiz"));
+  const novaRaiz = createRoot(achar("#raiz"));
+  raiz = novaRaiz;
+  const lugares: PropsDaRaiz["lugares"] & { avisos: null } = {
+    avisos: null,
+    entrada: null,
+    casca: document.getElementById("appScreen"),
+  };
   await act(async () =>
-    raiz.render(
+    novaRaiz.render(
       createElement(Raiz, {
         navegacao: NAVEGACAO,
-        sessao: null,
-        marca: null,
-        pedido: null,
+        ...SEM_ENTRADA,
         pecas,
-        lugares: {
-          avisos: null,
-          entrada: null,
-          casca: document.getElementById("appScreen"),
-        },
+        lugares,
       }),
     ),
   );
@@ -152,7 +181,7 @@ describe("peças da casca (antes, ilhas)", () => {
     await montar(criarPecas({ conectado: false }));
     await teclar(document, "k", { ctrlKey: true });
     expect(document.querySelector('[role="dialog"].search-modal')).toBeNull();
-    await act(async () => raiz.unmount());
+    await act(async () => definido(raiz).unmount());
 
     await montar(criarPecas({ conectado: true }));
     await teclar(document, "k", { ctrlKey: true });

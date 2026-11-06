@@ -11,6 +11,13 @@ import {
   TelaDeEntrada,
   ligarEntradaAPagina,
 } from "../../src/app/entrada/entrada.tsx";
+import type {
+  EstadoDaSessaoNaEntrada,
+  PropsDaTelaDeEntrada,
+} from "../../src/app/entrada/entrada.tsx";
+import type { PedidoDeAcesso } from "../../src/app/entrada/pedido-de-acesso.ts";
+import type { EstadoDaMarcaDaEntrada } from "../../src/app/entrada/marca.ts";
+import { definido } from "../definido.ts";
 import { desenharNoTeste } from "../montar-tela.ts";
 import { criarMarcaDaEntrada } from "../../src/app/entrada/marca.ts";
 import {
@@ -27,8 +34,8 @@ import { clicar } from "../componentes/interacoes.ts";
   botão; a fase da sessão mostra e esconde o #loginScreen e o pedido.
 */
 
-function sessaoFalsa(inicial = {}) {
-  let estado = {
+function sessaoFalsa(inicial: Partial<EstadoDaSessaoNaEntrada> = {}) {
+  let estado: EstadoDaSessaoNaEntrada = {
     fase: FASES.DESLOGADO,
     usuario: null,
     mensagem: { texto: "", tom: "" },
@@ -38,14 +45,14 @@ function sessaoFalsa(inicial = {}) {
     configuracao: configuracaoDaEntrada(),
     ...inicial,
   };
-  const ouvintes = new Set();
+  const ouvintes = new Set<() => void>();
   return {
     obter: () => estado,
-    assinar: (ouvinte) => {
+    assinar: (ouvinte: () => void) => {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
-    definir(parcial) {
+    definir(parcial: Partial<EstadoDaSessaoNaEntrada>) {
       estado = { ...estado, ...parcial };
       ouvintes.forEach((ouvinte) => ouvinte());
     },
@@ -55,7 +62,14 @@ function sessaoFalsa(inicial = {}) {
   };
 }
 
-function pedidoFalso() {
+type SessaoFalsa = ReturnType<typeof sessaoFalsa>;
+
+/*
+  O pedido de acesso de mentira: o estado de antes (a tela só precisa
+  montar) e `carregar`/`limpar` espiados. A guarda confere a forma mínima
+  e devolve o próprio objeto como o pedido do app.
+*/
+function pedidoFalso(): PedidoDeAcesso {
   const estado = {
     usuarioId: "",
     email: "u1@agenciasus.org.br",
@@ -67,23 +81,28 @@ function pedidoFalso() {
     coordenacoes: [],
     focoNaJustificativa: 0,
   };
-  return {
+  const pedido = {
     obter: () => estado,
     assinar: () => () => {},
     carregar: vi.fn(async () => null),
     limpar: vi.fn(),
   };
+  if (!ehPedido(pedido)) throw new TypeError("pedido sem obter/carregar");
+  return pedido;
+}
+function ehPedido(pedido: object): pedido is PedidoDeAcesso {
+  return "obter" in pedido && "carregar" in pedido;
 }
 
-let tela = null;
+let tela: { desmontar(): void } | null = null;
 
 /*
   Como a raiz do app (src/app/raiz.tsx) faz: o cartão do primeiro quadro sai,
   a tela de acesso desenha na hora no #telaDeEntrada e a página acompanha a
   fase da sessão (src/main.ts: ligarEntradaAPagina).
 */
-function montarEntrada({ sessao, marca, pedido }) {
-  const elemento = document.getElementById("telaDeEntrada");
+function montarEntrada({ sessao, marca, pedido }: PropsDaTelaDeEntrada) {
+  const elemento = definido(document.getElementById("telaDeEntrada"));
   elemento.replaceChildren();
   const desligar = ligarEntradaAPagina({ sessao, pedido });
   const desenho = desenharNoTeste(
@@ -103,6 +122,10 @@ async function montar({
   sessao = sessaoFalsa(),
   marca = criarMarcaDaEntrada(),
   pedido = pedidoFalso(),
+}: {
+  sessao?: SessaoFalsa;
+  marca?: EstadoDaMarcaDaEntrada;
+  pedido?: PedidoDeAcesso;
 } = {}) {
   await act(async () => {
     tela = montarEntrada({ sessao, marca, pedido });
@@ -110,7 +133,7 @@ async function montar({
   return { sessao, marca, pedido };
 }
 
-const $ = (id) => document.getElementById(id);
+const $ = (id: string) => document.getElementById(id);
 
 beforeEach(() => {
   document.body.className = "config-loading";
@@ -163,7 +186,7 @@ describe("cartão provisório do index.html", () => {
     const css =
       readFileSync("src/styles/app.css", "utf8") +
       readFileSync("src/styles/platform-shell.css", "utf8");
-    const regra = (seletor) => {
+    const regra = (seletor: string) => {
       const inicio = css.lastIndexOf(`${seletor} {`);
       expect(inicio, seletor).toBeGreaterThan(-1);
       return css.slice(inicio, css.indexOf("}", inicio));
@@ -192,7 +215,13 @@ describe("cartão provisório do index.html", () => {
     ou a menos de um lado é o cartão mudando de altura ao recarregar.
   */
   it("tem a mesma árvore e as mesmas medidas do cartão do React", async () => {
-    const assinatura = (elemento) => ({
+    type Assinatura = {
+      tag: string;
+      classes: string;
+      medidas: string;
+      filhos: Assinatura[];
+    };
+    const assinatura = (elemento: Element): Assinatura => ({
       tag: elemento.tagName.toLowerCase(),
       classes: elemento.getAttribute("class") || "",
       medidas: ["width", "height", "viewBox", "data-texto"]
@@ -201,10 +230,10 @@ describe("cartão provisório do index.html", () => {
       filhos: [...elemento.children].map(assinatura),
     });
     const pagina = new DOMParser().parseFromString(provisorio, "text/html");
-    const doIndice = assinatura(pagina.querySelector(".login-outer"));
+    const doIndice = assinatura(definido(pagina.querySelector(".login-outer")));
     await montar();
     const doReact = assinatura(
-      document.querySelector("#telaDeEntrada .login-outer"),
+      definido(document.querySelector("#telaDeEntrada .login-outer")),
     );
     expect(doReact).toEqual(doIndice);
   });
@@ -214,11 +243,11 @@ describe("tela de acesso", () => {
   it("troca o cartão vazio do index.html pelo de verdade, com o slogan", async () => {
     await montar();
     expect(document.querySelectorAll(".login-card")).toHaveLength(1);
-    expect($("loginSubtitle").textContent).toBe(SLOGAN);
+    expect($("loginSubtitle")?.textContent).toBe(SLOGAN);
     expect(SLOGAN).toBe("Monitoramento de Processos Seletivos");
-    expect($("loginGreeting").textContent).toBe("Boas-vindas!");
-    expect($("googleLoginText").textContent).toBe(TEXTO_DO_BOTAO);
-    expect($("loginMsg").classList.contains("hidden")).toBe(true);
+    expect($("loginGreeting")?.textContent).toBe("Boas-vindas!");
+    expect($("googleLoginText")?.textContent).toBe(TEXTO_DO_BOTAO);
+    expect($("loginMsg")?.classList.contains("hidden")).toBe(true);
   });
 
   it("desenha a marca configurada: logo, saudação, texto do botão e rodapé", async () => {
@@ -238,16 +267,16 @@ describe("tela de acesso", () => {
         },
       }),
     );
-    expect($("loginLogo").getAttribute("src")).toBe(
+    expect($("loginLogo")?.getAttribute("src")).toBe(
       "https://exemplo.org/logo.png",
     );
-    expect($("loginGreeting").textContent).toBe("Bem-vindo ao Agosto Lilás");
-    expect($("googleLoginText").textContent).toBe(
+    expect($("loginGreeting")?.textContent).toBe("Bem-vindo ao Agosto Lilás");
+    expect($("googleLoginText")?.textContent).toBe(
       "Entrar com a conta da AgSUS",
     );
-    expect($("loginCogipName").textContent).toBe("COGIP");
-    expect($("loginCogipRole").textContent).toBe("Dados · v3");
-    expect($("loginFoot").textContent).toBe("AgSUS");
+    expect($("loginCogipName")?.textContent).toBe("COGIP");
+    expect($("loginCogipRole")?.textContent).toBe("Dados · v3");
+    expect($("loginFoot")?.textContent).toBe("AgSUS");
   });
 
   it("o texto do botão da configuração vence o da marca guardada", async () => {
@@ -259,7 +288,7 @@ describe("tela de acesso", () => {
       }),
     });
     await montar({ sessao, marca });
-    expect($("googleLoginText").textContent).toBe("Da configuração");
+    expect($("googleLoginText")?.textContent).toBe("Da configuração");
   });
 
   it("sem rodapé configurado, o bloco institucional não aparece", async () => {
@@ -269,11 +298,11 @@ describe("tela de acesso", () => {
 
   it("logo que não carrega some sem sair do lugar (tamanho reservado)", async () => {
     await montar();
-    expect($("loginLogo").getAttribute("width")).toBe("52");
-    expect($("loginLogo").getAttribute("height")).toBe("52");
-    await act(async () => $("loginLogo").dispatchEvent(new Event("error")));
-    expect($("loginLogo").hidden).toBe(false);
-    expect($("loginLogo").hasAttribute("data-falhou")).toBe(true);
+    expect($("loginLogo")?.getAttribute("width")).toBe("52");
+    expect($("loginLogo")?.getAttribute("height")).toBe("52");
+    await act(async () => $("loginLogo")?.dispatchEvent(new Event("error")));
+    expect($("loginLogo")?.hidden).toBe(false);
+    expect($("loginLogo")?.hasAttribute("data-falhou")).toBe(true);
   });
 
   it("Google desligado nas configurações: sem botão, mas o lugar fica", async () => {
@@ -287,19 +316,19 @@ describe("tela de acesso", () => {
     );
     expect($("googleLoginBtn")).toBeNull();
     const reservado = document.querySelector(".google-login-btn--reservado");
-    expect(reservado.classList.contains("google-login-btn")).toBe(true);
-    expect(reservado.getAttribute("aria-hidden")).toBe("true");
+    expect(reservado?.classList.contains("google-login-btn")).toBe(true);
+    expect(reservado?.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("o texto do botão só aparece quando a marca é conhecida", async () => {
     const marca = criarMarcaDaEntrada();
     await montar({ marca });
-    expect($("googleLoginBtn").dataset.texto).toBe("pendente");
+    expect($("googleLoginBtn")?.dataset.texto).toBe("pendente");
     await act(async () =>
       marca.definir({ textoDoBotao: "Entrar com a AgSUS", resolvida: true }),
     );
-    expect($("googleLoginBtn").dataset.texto).toBe("pronto");
-    expect($("googleLoginText").textContent).toBe("Entrar com a AgSUS");
+    expect($("googleLoginBtn")?.dataset.texto).toBe("pronto");
+    expect($("googleLoginText")?.textContent).toBe("Entrar com a AgSUS");
   });
 
   it("o texto da configuração já basta para mostrar o botão", async () => {
@@ -310,17 +339,17 @@ describe("tela de acesso", () => {
         }),
       }),
     });
-    expect($("googleLoginBtn").dataset.texto).toBe("pronto");
+    expect($("googleLoginBtn")?.dataset.texto).toBe("pronto");
   });
 
   it("a linha de apoio e o rodapé institucional com o escudo", async () => {
     await montar();
-    expect($("loginApoio").textContent).toBe(ACCESS_INSTRUCTION);
-    expect($("loginInstituicao").textContent).toBe(INSTITUICAO);
+    expect($("loginApoio")?.textContent).toBe(ACCESS_INSTRUCTION);
+    expect($("loginInstituicao")?.textContent).toBe(INSTITUICAO);
     expect(
-      $("loginInstituicao").querySelector("svg.login-instituicao-icone"),
+      $("loginInstituicao")?.querySelector("svg.login-instituicao-icone"),
     ).not.toBeNull();
-    expect($("googleLoginBtn").querySelector("svg.gmark")).not.toBeNull();
+    expect($("googleLoginBtn")?.querySelector("svg.gmark")).not.toBeNull();
   });
 
   it("o botão chama a sessão e fica ocupado enquanto entra", async () => {
@@ -333,11 +362,13 @@ describe("tela de acesso", () => {
         mensagem: { texto: "Escolha sua conta.", tom: "warn" },
       }),
     );
-    expect($("googleLoginBtn").disabled).toBe(true);
-    expect($("googleLoginBtn").getAttribute("aria-busy")).toBe("true");
-    expect($("googleLoginText").textContent).toBe(TEXTO_DO_BOTAO_OCUPADO);
-    expect($("loginMsg").className).toBe("alert warn");
-    expect($("loginMsg").textContent).toBe("Escolha sua conta.");
+    expect(
+      document.querySelector<HTMLButtonElement>("#googleLoginBtn")?.disabled,
+    ).toBe(true);
+    expect($("googleLoginBtn")?.getAttribute("aria-busy")).toBe("true");
+    expect($("googleLoginText")?.textContent).toBe(TEXTO_DO_BOTAO_OCUPADO);
+    expect($("loginMsg")?.className).toBe("alert warn");
+    expect($("loginMsg")?.textContent).toBe("Escolha sua conta.");
   });
 
   it("perfil ilegível: o erro e Tentar de novo, não o pedido de acesso", async () => {
@@ -347,7 +378,7 @@ describe("tela de acesso", () => {
         mensagem: { texto: "Não deu.", tom: "error" },
       }),
     });
-    expect($("loginMsg").textContent).toBe("Não deu.");
+    expect($("loginMsg")?.textContent).toBe("Não deu.");
     expect(document.querySelector(".solicitacao-marca")).toBeNull();
     await clicar($("tentarDeNovoBtn"));
     expect(sessao.tentarDeNovo).toHaveBeenCalled();
@@ -359,8 +390,8 @@ describe("tela de acesso", () => {
     await montar({
       sessao: sessaoFalsa({ erroDeConfiguracao: "Configure o Supabase." }),
     });
-    expect($("configMsg").textContent).toBe("Configure o Supabase.");
-    expect($("configMsg").getAttribute("role")).toBe("alert");
+    expect($("configMsg")?.textContent).toBe("Configure o Supabase.");
+    expect($("configMsg")?.getAttribute("role")).toBe("alert");
   });
 
   it("não usa innerHTML: texto do banco entra como texto", async () => {
@@ -369,19 +400,21 @@ describe("tela de acesso", () => {
     await act(async () =>
       marca.definir({ saudacao: "<img src=x onerror=alert(1)>" }),
     );
-    expect($("loginGreeting").textContent).toBe("<img src=x onerror=alert(1)>");
-    expect($("loginGreeting").querySelector("img")).toBeNull();
+    expect($("loginGreeting")?.textContent).toBe(
+      "<img src=x onerror=alert(1)>",
+    );
+    expect($("loginGreeting")?.querySelector("img")).toBeNull();
   });
 });
 
 describe("a fase da sessão na página", () => {
   it("conectado: a tela de acesso some; deslogado: volta", async () => {
     const { sessao } = await montar();
-    expect($("loginScreen").classList.contains("hidden")).toBe(false);
+    expect($("loginScreen")?.classList.contains("hidden")).toBe(false);
     await act(async () => sessao.definir({ fase: FASES.CONECTADO }));
-    expect($("loginScreen").classList.contains("hidden")).toBe(true);
+    expect($("loginScreen")?.classList.contains("hidden")).toBe(true);
     await act(async () => sessao.definir({ fase: FASES.DESLOGADO }));
-    expect($("loginScreen").classList.contains("hidden")).toBe(false);
+    expect($("loginScreen")?.classList.contains("hidden")).toBe(false);
   });
 
   it("sem acesso: modo do pedido, cartão e carga do pedido (uma vez por pessoa)", async () => {
@@ -435,6 +468,6 @@ describe("a fase da sessão na página", () => {
     const desligar = ligarEntradaAPagina({ sessao, pedido: pedidoFalso() });
     desligar();
     sessao.definir({ fase: FASES.CONECTADO });
-    expect($("loginScreen").classList.contains("hidden")).toBe(false);
+    expect($("loginScreen")?.classList.contains("hidden")).toBe(false);
   });
 });

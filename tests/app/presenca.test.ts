@@ -8,6 +8,9 @@ import {
   criarPresenca,
   idDaAba,
 } from "../../src/app/presenca.ts";
+import type { EventoDaNavegacaoNaPresenca } from "../../src/app/presenca.ts";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { definido } from "../definido.ts";
 
 /*
   Presença e acesso (src/app/presenca.ts): uma chamada por batida
@@ -24,20 +27,58 @@ const LISTA = "listar_presenca_online_monitora";
 const PRESENCA = "registrar_presenca_monitora";
 const EVENTO = "registrar_evento_acesso";
 
+type Argumentos = Record<string, unknown>;
+type RpcDaPresenca = (
+  nome: string,
+  args?: Argumentos,
+) => Promise<{ data: unknown; error: unknown }>;
+
 /* Documento falso: a visibilidade da aba muda pelo teste. */
 function criarDocumento() {
-  const ouvintes = new Set();
+  const ouvintes = new Set<() => void>();
   const documento = {
     visibilityState: "visible",
     title: "MONITORA",
-    addEventListener: (_nome, ouvinte) => ouvintes.add(ouvinte),
-    removeEventListener: (_nome, ouvinte) => ouvintes.delete(ouvinte),
-    mudar(estado) {
+    addEventListener: (_nome: string, ouvinte: () => void) =>
+      ouvintes.add(ouvinte),
+    removeEventListener: (_nome: string, ouvinte: () => void) =>
+      ouvintes.delete(ouvinte),
+    mudar(estado: string) {
       documento.visibilityState = estado;
       ouvintes.forEach((ouvinte) => ouvinte());
     },
   };
   return documento;
+}
+
+/*
+  O cliente e o documento de mentira só têm o que a presença usa; os tipos
+  do Supabase e de Document descrevem muito mais. A guarda confere a forma
+  mínima e devolve o próprio objeto do teste.
+*/
+function comoSupabase(cliente: object): SupabaseClient {
+  if (!ehClienteSupabase(cliente)) throw new TypeError("cliente sem rpc");
+  return cliente;
+}
+function ehClienteSupabase(cliente: object): cliente is SupabaseClient {
+  return "rpc" in cliente;
+}
+function comoDocumento(documento: object): Document {
+  if (!ehDocumento(documento))
+    throw new TypeError("documento sem visibilityState");
+  return documento;
+}
+function ehDocumento(documento: object): documento is Document {
+  return "visibilityState" in documento && "addEventListener" in documento;
+}
+
+interface OpcoesDaMontagem {
+  perfil?: unknown;
+  lista?: unknown[];
+  erroNaLista?: { message: string } | null;
+  banco?: string;
+  respostaDaNavegacao?: Argumentos;
+  usuario?: { id: string } | null;
 }
 
 /*
@@ -52,14 +93,16 @@ function montar({
   banco = "batida",
   respostaDaNavegacao = { status: "OK", versao_do_catalogo: "c1" },
   usuario = USUARIO,
-} = {}) {
-  const ouvintesDaNavegacao = new Set();
+}: OpcoesDaMontagem = {}) {
+  const ouvintesDaNavegacao = new Set<
+    (evento: EventoDaNavegacaoNaPresenca) => void
+  >();
   const documento = criarDocumento();
   let view = "recursos";
   let lugar = "Recursos · Saúde Indígena";
   const quem = { atual: usuario };
   const cliente = {
-    rpc: vi.fn(async (nome, args = {}) => {
+    rpc: vi.fn<RpcDaPresenca>(async (nome, args = {}) => {
       if (nome === LISTA)
         return erroNaLista
           ? { data: null, error: erroNaLista }
@@ -83,14 +126,14 @@ function montar({
   };
   const navegacao = {
     obter: () => ({ view }),
-    assinar: (ouvinte) => {
+    assinar: (ouvinte: (evento: EventoDaNavegacaoNaPresenca) => void) => {
       ouvintesDaNavegacao.add(ouvinte);
       return () => ouvintesDaNavegacao.delete(ouvinte);
     },
   };
   const presenca = criarPresenca({
-    cliente: () => cliente,
-    documento,
+    cliente: () => comoSupabase(cliente),
+    documento: comoDocumento(documento),
     agente: () => "teste",
     obterUsuario: () => quem.atual,
     obterPerfil: () => perfil,
@@ -103,19 +146,20 @@ function montar({
     cliente,
     documento,
     quem,
-    avisarNavegacao: (evento) =>
+    avisarNavegacao: (evento: EventoDaNavegacaoNaPresenca) =>
       ouvintesDaNavegacao.forEach((ouvinte) => ouvinte(evento)),
-    mudar: (novaView, novoLugar) => {
+    mudar: (novaView: string, novoLugar: string) => {
       view = novaView;
       lugar = novoLugar;
     },
   };
 }
 
-const chamadas = (cliente, nome) =>
+type ClienteFalso = ReturnType<typeof montar>["cliente"];
+const chamadas = (cliente: ClienteFalso, nome: string) =>
   cliente.rpc.mock.calls.filter(([rpc]) => rpc === nome);
-const batidas = (cliente) =>
-  chamadas(cliente, BATIDA).filter(([, args]) => args.p_presenca);
+const batidas = (cliente: ClienteFalso) =>
+  chamadas(cliente, BATIDA).filter(([, args]) => definido(args).p_presenca);
 
 afterEach(() => vi.useRealTimers());
 
@@ -150,12 +194,12 @@ describe("intervalos e limite de online", () => {
     expect(cliente.rpc).toHaveBeenCalledTimes(25);
     expect(chamadas(cliente, BATIDA)).toHaveLength(25);
     const heartbeats = chamadas(cliente, BATIDA).filter(
-      ([, args]) => args.p_evento === "heartbeat",
+      ([, args]) => definido(args).p_evento === "heartbeat",
     );
     // Heartbeat de 5 min: a cada duas batidas.
     expect(heartbeats).toHaveLength(12);
     const comLista = chamadas(cliente, BATIDA).filter(
-      ([, args]) => args.p_listar,
+      ([, args]) => definido(args).p_listar,
     );
     // Lista fechada: a da entrada e uma a cada 10 min.
     expect(comLista).toHaveLength(7);
@@ -189,12 +233,12 @@ describe("auditoria", () => {
     presenca.iniciar();
     const heartbeats = () =>
       chamadas(cliente, BATIDA).filter(
-        ([, args]) => args.p_evento === "heartbeat",
+        ([, args]) => definido(args).p_evento === "heartbeat",
       );
     // Batidas aos 150 e 300 s; o heartbeat (5 min) vai na de 300 s.
     await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS * 2);
     expect(heartbeats()).toHaveLength(1);
-    expect(heartbeats()[0][1]).toMatchObject({
+    expect(heartbeats()[0]?.[1]).toMatchObject({
       p_tela: "recursos",
       p_detalhes: { current_view: "recursos", page_title: "MONITORA" },
       p_presenca: true,
@@ -220,7 +264,7 @@ describe("auditoria", () => {
     await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS * 2);
     const eventos = chamadas(cliente, EVENTO);
     expect(eventos).toHaveLength(1);
-    expect(eventos[0][1]).toMatchObject({
+    expect(eventos[0]?.[1]).toMatchObject({
       p_evento: "heartbeat",
       p_detalhes: { current_view: "recursos", page_title: "MONITORA" },
     });
@@ -252,7 +296,7 @@ describe("auditoria", () => {
     await Promise.resolve();
     const eventos = chamadas(cliente, BATIDA);
     expect(eventos).toHaveLength(1);
-    expect(eventos[0][1]).toMatchObject({
+    expect(eventos[0]?.[1]).toMatchObject({
       p_evento: "abertura_tela",
       p_tela: "nucleo",
       p_origem: "index",
@@ -279,7 +323,7 @@ describe("auditoria", () => {
     await vi.advanceTimersByTimeAsync(0);
     const depois = cliente.rpc.mock.calls.slice(antes);
     expect(depois.map(([nome]) => nome)).toEqual([BATIDA]);
-    expect(depois[0][1]).toMatchObject({
+    expect(depois[0]?.[1]).toMatchObject({
       p_evento: "abertura_tela",
       p_tela: "nucleo",
       p_presenca: true,
@@ -294,7 +338,7 @@ describe("auditoria", () => {
     presenca.iniciar();
     await vi.advanceTimersByTimeAsync(0);
     // O que navegacao.ts faz ao abrir: marcarMenu (menu) e depois abriu (abertura).
-    const abrir = async (view, lugar, anterior) => {
+    const abrir = async (view: string, lugar: string, anterior: string) => {
       const antes = cliente.rpc.mock.calls.length;
       mudar(view, lugar);
       avisarNavegacao({ tipo: "menu" });
@@ -308,7 +352,7 @@ describe("auditoria", () => {
       "recursos",
     );
     expect(primeira.map(([nome]) => nome)).toEqual([BATIDA]);
-    expect(primeira[0][1]).toMatchObject({
+    expect(primeira[0]?.[1]).toMatchObject({
       p_evento: "abertura_tela",
       p_tela: "aprovados",
       p_presenca: true,
@@ -316,7 +360,7 @@ describe("auditoria", () => {
     });
     const segunda = await abrir("nucleo", "Editais · SEDE", "aprovados");
     expect(segunda.map(([nome]) => nome)).toEqual([BATIDA]);
-    expect(segunda[0][1]).toMatchObject({ p_tela: "nucleo" });
+    expect(segunda[0]?.[1]).toMatchObject({ p_tela: "nucleo" });
     presenca.parar();
   });
 
@@ -328,7 +372,7 @@ describe("auditoria", () => {
     presenca.iniciar({ nome: "sessao_restaurada", tela: "boot" });
     await vi.advanceTimersByTimeAsync(0);
     expect(cliente.rpc).toHaveBeenCalledTimes(1);
-    expect(chamadas(cliente, BATIDA)[0][1]).toMatchObject({
+    expect(chamadas(cliente, BATIDA)[0]?.[1]).toMatchObject({
       p_evento: "sessao_restaurada",
       p_tela: "boot",
       p_presenca: true,
@@ -354,11 +398,11 @@ describe("auditoria", () => {
     mudar("nucleo", "Editais · SEDE");
     avisarNavegacao({ tipo: "abertura", view: "nucleo", anterior: "recursos" });
     await vi.advanceTimersByTimeAsync(0);
-    expect(chamadas(cliente, EVENTO)[0][1]).toMatchObject({
+    expect(chamadas(cliente, EVENTO)[0]?.[1]).toMatchObject({
       p_evento: "abertura_tela",
       p_tela: "nucleo",
     });
-    expect(chamadas(cliente, PRESENCA).at(-1)[1]).toEqual({
+    expect(chamadas(cliente, PRESENCA).at(-1)?.[1]).toEqual({
       p_current_view: "Editais · SEDE",
     });
     // A lista, à parte.
@@ -383,10 +427,10 @@ describe("auditoria", () => {
     presenca.iniciar({ nome: "login_google", tela: "login" });
     await vi.advanceTimersByTimeAsync(0);
     const aceitas = chamadas(cliente, BATIDA).filter(
-      ([, args]) => !("p_listar" in args),
+      ([, args]) => !("p_listar" in definido(args)),
     );
     expect(aceitas).toHaveLength(1);
-    expect(aceitas[0][1]).toMatchObject({
+    expect(aceitas[0]?.[1]).toMatchObject({
       p_evento: "login_google",
       p_presenca: true,
     });
@@ -396,7 +440,7 @@ describe("auditoria", () => {
     await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS);
     const novas = chamadas(cliente, BATIDA).slice(antes);
     expect(novas).toHaveLength(1);
-    expect("p_listar" in novas[0][1]).toBe(false);
+    expect("p_listar" in definido(definido(novas[0])[1])).toBe(false);
     presenca.parar();
   });
 
@@ -447,13 +491,13 @@ describe("eventos de carona", () => {
     expect(cliente.rpc).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS);
     expect(cliente.rpc).toHaveBeenCalledTimes(2);
-    expect(chamadas(cliente, BATIDA)[1][1]).toMatchObject({
+    expect(chamadas(cliente, BATIDA)[1]?.[1]).toMatchObject({
       p_presenca: true,
       p_eventos: [RETRATO],
     });
     // Foi uma vez só.
     await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS);
-    expect(chamadas(cliente, BATIDA)[2][1].p_eventos).toEqual([]);
+    expect(chamadas(cliente, BATIDA)[2]?.[1]?.p_eventos).toEqual([]);
     expect(chamadas(cliente, EVENTO)).toHaveLength(0);
     presenca.parar();
   });
@@ -468,7 +512,7 @@ describe("eventos de carona", () => {
     mudar("nucleo", "Editais · SEDE");
     avisarNavegacao({ tipo: "abertura", view: "nucleo", anterior: "recursos" });
     await vi.advanceTimersByTimeAsync(0);
-    expect(chamadas(cliente, BATIDA).at(-1)[1]).toMatchObject({
+    expect(chamadas(cliente, BATIDA).at(-1)?.[1]).toMatchObject({
       p_evento: "abertura_tela",
       p_eventos: [RETRATO],
     });
@@ -484,7 +528,7 @@ describe("eventos de carona", () => {
     presenca.enfileirarEvento(RETRATO);
     documento.mudar("hidden");
     await vi.advanceTimersByTimeAsync(0);
-    expect(chamadas(cliente, BATIDA).at(-1)[1]).toMatchObject({
+    expect(chamadas(cliente, BATIDA).at(-1)?.[1]).toMatchObject({
       p_evento: null,
       p_presenca: false,
       p_eventos: [RETRATO],
@@ -501,10 +545,12 @@ describe("eventos de carona", () => {
     quem.atual = USUARIO;
     presenca.iniciar({ nome: "login_google", tela: "login" });
     await vi.advanceTimersByTimeAsync(0);
-    const primeira = chamadas(cliente, BATIDA)[0][1];
+    const primeira = definido(definido(chamadas(cliente, BATIDA)[0])[1]);
+    // Os eventos de carona que a batida levou (o teste confere a forma).
+    const eventos = primeira.p_eventos as { detalhes?: unknown }[];
     expect(primeira.p_evento).toBe("login_google");
-    expect(primeira.p_eventos).toHaveLength(CARONA_MAXIMA);
-    expect(primeira.p_eventos[0].detalhes).toEqual({ i: 2 });
+    expect(eventos).toHaveLength(CARONA_MAXIMA);
+    expect(eventos[0]?.detalhes).toEqual({ i: 2 });
     presenca.parar();
   });
 
@@ -516,7 +562,7 @@ describe("eventos de carona", () => {
     presenca.enfileirarEvento(RETRATO);
     await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS);
     expect(chamadas(cliente, EVENTO)).toHaveLength(1);
-    expect(chamadas(cliente, EVENTO)[0][1]).toEqual({
+    expect(chamadas(cliente, EVENTO)[0]?.[1]).toEqual({
       p_evento: "frontend_performance",
       p_tela: "monitora",
       p_origem: "frontend",
@@ -536,7 +582,7 @@ describe("eventos de carona", () => {
     presenca.enfileirarEvento(RETRATO);
     await presenca.registrarEvento("logout");
     expect(chamadas(cliente, EVENTO)).toHaveLength(0);
-    expect(chamadas(cliente, BATIDA).at(-1)[1]).toMatchObject({
+    expect(chamadas(cliente, BATIDA).at(-1)?.[1]).toMatchObject({
       p_evento: "logout",
       p_presenca: false,
       p_eventos: [RETRATO],
@@ -552,7 +598,7 @@ describe("presença", () => {
     });
     await presenca.sincronizar();
     expect(cliente.rpc).toHaveBeenCalledTimes(1);
-    expect(chamadas(cliente, BATIDA)[0][1]).toMatchObject({
+    expect(chamadas(cliente, BATIDA)[0]?.[1]).toMatchObject({
       p_presenca: true,
       p_current_view: "Recursos · Saúde Indígena",
       p_listar: true,
@@ -571,7 +617,7 @@ describe("presença", () => {
     const { presenca, cliente } = montar({ perfil: USUARIO_COMUM });
     await presenca.sincronizar();
     expect(batidas(cliente)).toHaveLength(1);
-    expect(batidas(cliente)[0][1].p_listar).toBe(false);
+    expect(batidas(cliente)[0]?.[1]?.p_listar).toBe(false);
     expect(chamadas(cliente, LISTA)).toHaveLength(0);
     expect(presenca.obter().visivel).toBe(false);
   });
@@ -604,7 +650,7 @@ describe("presença", () => {
     });
     await presenca.sincronizar();
     expect(chamadas(cliente, LISTA)).toHaveLength(0);
-    expect(batidas(cliente)[0][1].p_listar).toBe(false);
+    expect(batidas(cliente)[0]?.[1]?.p_listar).toBe(false);
     expect(presenca.obter().visivel).toBe(false);
   });
 
@@ -622,7 +668,7 @@ describe("presença", () => {
     avisarNavegacao({ tipo: "menu" });
     await vi.advanceTimersByTimeAsync(0);
     expect(batidas(cliente)).toHaveLength(2);
-    expect(batidas(cliente)[1][1]).toMatchObject({
+    expect(batidas(cliente)[1]?.[1]).toMatchObject({
       p_evento: null,
       p_presenca: true,
       p_current_view: "Editais · SEDE",
@@ -657,7 +703,7 @@ describe("presença", () => {
     presenca.alternar();
     await vi.advanceTimersByTimeAsync(0);
     expect(batidas(cliente)).toHaveLength(2);
-    expect(batidas(cliente)[1][1].p_listar).toBe(true);
+    expect(batidas(cliente)[1]?.[1]?.p_listar).toBe(true);
     expect(chamadas(cliente, LISTA)).toHaveLength(0);
     // A próxima, 150 s depois da abertura (não aos 150 s da entrada).
     await vi.advanceTimersByTimeAsync(INTERVALO_DA_PRESENCA_MS - 1);
@@ -665,7 +711,7 @@ describe("presença", () => {
     await vi.advanceTimersByTimeAsync(1);
     expect(batidas(cliente)).toHaveLength(3);
     // Aberta: cada batida traz a lista.
-    expect(batidas(cliente)[2][1].p_listar).toBe(true);
+    expect(batidas(cliente)[2]?.[1]?.p_listar).toBe(true);
     presenca.parar();
   });
 
@@ -721,7 +767,7 @@ describe("presença", () => {
     vi.useFakeTimers();
     const { presenca, cliente } = montar();
     const listas = () =>
-      batidas(cliente).filter(([, args]) => args.p_listar).length;
+      batidas(cliente).filter(([, args]) => definido(args).p_listar).length;
     presenca.iniciar();
     await vi.advanceTimersByTimeAsync(0);
     expect(listas()).toBe(1);

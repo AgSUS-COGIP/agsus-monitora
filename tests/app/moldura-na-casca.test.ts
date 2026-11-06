@@ -1,8 +1,22 @@
 import { StrictMode, act, createElement } from "react";
 import { createRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Raiz } from "../../src/app/raiz.tsx";
+import type { PropsDaRaiz } from "../../src/app/raiz.tsx";
 import { criarMoldura } from "../../src/app/moldura.ts";
+import type { Moldura } from "../../src/app/moldura.ts";
+import type { PecasDoApp } from "../../src/app/contexto-do-app.ts";
+import type { EstadoDoAviso } from "../../src/app/aviso-de-versao.ts";
+import type { EstadoDaPresenca } from "../../src/componentes/pessoas-online/pessoas-online.tsx";
+import type { EstadoDoEncerramento } from "../../src/modulos/encerramento-do-edital/estado.ts";
+import { ESTADO_INICIAL_DA_NAVEGACAO } from "../../src/app/navegacao.ts";
+import type { LeituraDaNavegacao } from "../../src/app/navegacao.ts";
+import { filtrosVazios } from "../../src/lib/visao-geral.ts";
+import { achar } from "../dom.ts";
+import { definido } from "../definido.ts";
+import { janelaCom } from "./janela-falsa.ts";
+import type { OuvinteDaJanela, OuvintesDaJanela } from "./janela-falsa.ts";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -13,45 +27,50 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   página. No StrictMode, liga uma vez só no fim.
 */
 
-const ESTADO_DA_NAVEGACAO = Object.freeze({
-  view: "dashboard",
-  area: "",
-  visao: "",
-  edital: "",
-  secao: "",
-  aviso: "",
-  titulo: "",
-  subtitulo: "",
-  abertura: 0,
-});
-const NAVEGACAO = {
+// A navegação parada no início (o dashboard, sem área nem edital).
+const ESTADO_DA_NAVEGACAO = ESTADO_INICIAL_DA_NAVEGACAO;
+const NAVEGACAO: LeituraDaNavegacao = {
   obter: () => ESTADO_DA_NAVEGACAO,
   assinar: () => () => {},
   esquecerEditalEVisao: () => {},
+  abrirRegrasDoEdital: () => false,
+  fecharRegrasDoEdital: () => {},
+  irParaInicio: () => {},
+};
+
+/* Sem a tela de acesso (`lugares.entrada` nulo), a raiz não lê sessão, marca nem pedido. */
+const SEM_ENTRADA: Pick<PropsDaRaiz, "sessao" | "marca" | "pedido"> = {
+  // @ts-expect-error -- nula de propósito: sem a tela de acesso, não é lida.
+  sessao: null,
+  // @ts-expect-error -- nula de propósito: sem a tela de acesso, não é lida.
+  marca: null,
+  // @ts-expect-error -- nulo de propósito: sem a tela de acesso, não é lido.
+  pedido: null,
 };
 
 function janelaFalsa() {
-  const ouvintes = {};
-  return {
+  const ouvintes: OuvintesDaJanela = {};
+  return janelaCom({
     matchMedia: () => ({ matches: false }),
-    addEventListener: (nome, funcao) =>
+    addEventListener: (nome: string, funcao: OuvinteDaJanela) =>
       (ouvintes[nome] ||= new Set()).add(funcao),
-    removeEventListener: (nome, funcao) => ouvintes[nome]?.delete(funcao),
+    removeEventListener: (nome: string, funcao: OuvinteDaJanela) =>
+      ouvintes[nome]?.delete(funcao),
     dispatchEvent: vi.fn(),
     print: vi.fn(),
-    contar: (nome) => ouvintes[nome]?.size ?? 0,
-  };
+    contar: (nome: string) => ouvintes[nome]?.size ?? 0,
+  });
 }
 
 /* As outras peças do sistema, paradas (só a moldura importa aqui). */
-function pecasParadas() {
-  const parado = (valor) => ({
+function pecasParadas(): PecasDoApp {
+  const parado = <T>(valor: T) => ({
     obter: () => valor,
     assinar: () => () => {},
   });
   return {
     presenca: {
-      ...parado(
+      ...parado<EstadoDaPresenca>(
         Object.freeze({
           visivel: false,
           aberto: false,
@@ -63,27 +82,46 @@ function pecasParadas() {
       alternar() {},
       fechar() {},
     },
-    avisoDeVersao: parado(
-      Object.freeze({
-        versaoNova: null,
-        novidade: null,
-        telaAntiga: false,
-        fechado: false,
-        pendencia: false,
-      }),
-    ),
-    encerramento: {
-      ...parado(
-        Object.freeze({ aberto: null, encerramentos: [], fogosJaSoltos: [] }),
+    avisoDeVersao: {
+      ...parado<EstadoDoAviso>(
+        Object.freeze({
+          versaoNova: null,
+          novidade: null,
+          telaAntiga: false,
+          fechado: false,
+          pendencia: false,
+        }),
       ),
+      // Parado: nada confere, liga ou recarrega.
+      conferir: async () => false,
+      aoSinalDeTelaAntiga: async () => {},
+      iniciar() {},
+      parar() {},
       fechar() {},
+      atualizarAgora: () => false,
+    },
+    encerramento: {
+      ...parado<EstadoDoEncerramento>(
+        Object.freeze({
+          aberto: null,
+          encerramentos: [],
+          fogosJaSoltos: new Set<string>(),
+        }),
+      ),
+      // Parado: nada lê, acompanha nem esquece (o desassinar diz se saiu).
+      assinar: () => () => false,
+      verificar: async () => [],
+      fechar: async () => {},
+      editalConcluidoNaTela() {},
+      acompanhar: () => () => {},
+      esquecer() {},
     },
     appAberto: parado(false),
     estaConectado: () => false,
   };
 }
 
-let raiz = null;
+let raiz: Root | null = null;
 // O primeiro quadro (index.html): a barra recolhida.
 beforeEach(() => {
   document.body.className = "sidebar-collapsed";
@@ -96,21 +134,20 @@ afterEach(() => {
   document.documentElement.setAttribute("data-theme", "");
 });
 
-function montar(moldura) {
+function montar(moldura: Moldura) {
   document.body.className = "sidebar-collapsed";
   document.body.innerHTML =
     '<section id="appScreen" class="app hidden"></section><div id="raiz"></div>';
-  raiz = createRoot(document.getElementById("raiz"));
+  const novaRaiz = createRoot(achar("#raiz"));
+  raiz = novaRaiz;
   act(() =>
-    raiz.render(
+    novaRaiz.render(
       createElement(
         StrictMode,
         null,
         createElement(Raiz, {
           navegacao: NAVEGACAO,
-          sessao: null,
-          marca: null,
-          pedido: null,
+          ...SEM_ENTRADA,
           pecas: { ...pecasParadas(), moldura },
           lugares: {
             entrada: null,
@@ -136,7 +173,7 @@ describe("a moldura na casca", () => {
     act(() => moldura.alternarBarra());
     expect(document.body.classList).not.toContain("sidebar-collapsed");
 
-    act(() => raiz.unmount());
+    act(() => definido(raiz).unmount());
     raiz = null;
     expect(janela.contar("resize")).toBe(0);
     moldura.alternarTema();
@@ -152,7 +189,7 @@ describe("a moldura na casca", () => {
         armazenamento: () => null,
         avisar,
         relatorio: () => ({
-          filtros: {},
+          filtros: filtrosVazios(),
           busca: "",
           filtradas: [{ vagas_total: 10, contratados: 4, vagas_ociosas: 2 }],
         }),
@@ -160,19 +197,19 @@ describe("a moldura na casca", () => {
       });
       montar(moldura);
       const icone = () => document.getElementById("fullscreenActionIcon");
-      expect(icone().className).toBe("fa-solid fa-expand");
+      expect(icone()?.className).toBe("fa-solid fa-expand");
       act(() => moldura.alternarTelaCheia());
-      expect(icone().className).toBe("fa-solid fa-compress");
+      expect(icone()?.className).toBe("fa-solid fa-compress");
 
       act(() => moldura.exportarPdf());
-      const cabecalho = document.getElementById("printReportHeader");
+      const cabecalho = achar("#printReportHeader");
       expect(cabecalho.className).toBe("print-only");
       expect(cabecalho.textContent).toContain("AgSUS Monitora — SEDE");
       expect(cabecalho.textContent).toContain(
         "Relatório de processos seletivos",
       );
       expect(cabecalho.textContent).toContain("10 vagas previstas");
-      expect(document.querySelector(".content").firstChild).toBe(cabecalho);
+      expect(document.querySelector(".content")?.firstChild).toBe(cabecalho);
       act(() => vi.advanceTimersByTime(1620));
       expect(document.getElementById("printReportHeader")).toBeNull();
     } finally {

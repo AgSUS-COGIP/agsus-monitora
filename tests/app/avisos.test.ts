@@ -8,6 +8,8 @@ import {
   redefinirAvisos,
 } from "../../src/app/avisos.ts";
 import { Avisos } from "../../src/app/casca/avisos.tsx";
+import { definido } from "../definido.ts";
+import { achar } from "../dom.ts";
 import { desenharNoTeste } from "../montar-tela.ts";
 import { VISIVEL_DEPOIS_DE_VOLTAR_MS } from "../../src/app/casca/aviso-de-conexao.tsx";
 import { DURACAO_MS } from "../../src/app/casca/notificacoes.tsx";
@@ -21,8 +23,10 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   (ids, classes, papéis) é o de antes.
 */
 
-let avisos = null;
-const $ = (id) => document.getElementById(id);
+let avisos: { desmontar: () => void } | null = null;
+/* O elemento pelo id; quebra se faltar, como a leitura de `null.x` quebrava. */
+const $ = (id: string) => definido(document.getElementById(id), `#${id}`);
+const talvez = (id: string) => document.getElementById(id);
 
 function montar() {
   document.body.innerHTML = '<div id="avisosApp"></div>';
@@ -32,7 +36,7 @@ function montar() {
   });
 }
 
-function online(valor) {
+function online(valor: boolean) {
   Object.defineProperty(window.navigator, "onLine", {
     configurable: true,
     get: () => valor,
@@ -53,7 +57,7 @@ afterEach(() => {
   document.body.className = "";
   document.body.innerHTML = "";
   vi.useRealTimers();
-  delete window.navigator.onLine;
+  Reflect.deleteProperty(window.navigator, "onLine");
 });
 
 describe("Avisos", () => {
@@ -64,7 +68,7 @@ describe("Avisos", () => {
     expect($("toastBox").getAttribute("role")).toBe("status");
     expect($("toastBox").getAttribute("aria-live")).toBe("polite");
     expect($("loader").className).toBe("loader");
-    expect($("connectivityStatusNotice")).toBeNull();
+    expect(talvez("connectivityStatusNotice")).toBeNull();
   });
 
   it("o index.html não traz a marcação: os avisos são da raiz (#raiz)", () => {
@@ -82,17 +86,19 @@ describe("notificação (window.monitoraToast)", () => {
   it("mostra o ícone do tipo, o texto como texto e o fechar com rótulo", () => {
     montar();
     act(() => avisar("<b>oi</b>", "warn"));
-    const el = $("toastBox").querySelector(".toast");
+    const el = achar(".toast", $("toastBox"));
     expect(el.className).toBe("toast warn");
     expect(el.querySelector(".fa-triangle-exclamation.toast-icone")).not.toBe(
       null,
     );
-    expect(el.querySelector(".toast-texto").innerHTML).toBe(
+    expect(el.querySelector<HTMLElement>(".toast-texto")?.innerHTML).toBe(
       "&lt;b&gt;oi&lt;/b&gt;",
     );
-    expect(el.querySelector(".toast-fechar").getAttribute("aria-label")).toBe(
-      "Fechar notificação",
-    );
+    expect(
+      el
+        .querySelector<HTMLElement>(".toast-fechar")
+        ?.getAttribute("aria-label"),
+    ).toBe("Fechar notificação");
   });
 
   it("só o erro interrompe o leitor de tela; tipo desconhecido vira sucesso", () => {
@@ -103,9 +109,9 @@ describe("notificação (window.monitoraToast)", () => {
       avisar("z", "qualquer");
     });
     const [erro, ok, outro] = $("toastBox").children;
-    expect(erro.getAttribute("role")).toBe("alert");
-    expect(ok.hasAttribute("role")).toBe(false);
-    expect(outro.className).toBe("toast ok");
+    expect(erro?.getAttribute("role")).toBe("alert");
+    expect(ok?.hasAttribute("role")).toBe(false);
+    expect(outro?.className).toBe("toast ok");
     expect(normalizarTom("success")).toBe("ok");
   });
 
@@ -113,14 +119,14 @@ describe("notificação (window.monitoraToast)", () => {
     montar();
     act(() => avisar("a"));
     act(() => vi.advanceTimersByTime(DURACAO_MS));
-    expect($("toastBox").querySelector(".toast").className).toBe(
+    expect($("toastBox").querySelector<HTMLElement>(".toast")?.className).toBe(
       "toast ok is-saindo",
     );
     act(() => vi.advanceTimersByTime(200));
     expect($("toastBox").children).toHaveLength(0);
 
     act(() => avisar("b"));
-    act(() => $("toastBox").querySelector(".toast-fechar").click());
+    act(() => achar(".toast-fechar", $("toastBox")).click());
     act(() => vi.advanceTimersByTime(200));
     expect($("toastBox").children).toHaveLength(0);
   });
@@ -128,7 +134,7 @@ describe("notificação (window.monitoraToast)", () => {
   it("parada sob o mouse não some; ao sair, conta o que faltava", () => {
     montar();
     act(() => avisar("c"));
-    const el = $("toastBox").querySelector(".toast");
+    const el = achar(".toast", $("toastBox"));
     act(() => vi.advanceTimersByTime(1000));
     act(() => el.dispatchEvent(new Event("mouseenter")));
     act(() => vi.advanceTimersByTime(DURACAO_MS * 2));
@@ -145,7 +151,8 @@ describe("notificação (window.monitoraToast)", () => {
     avisar("cedo", "info");
     montar();
     expect(
-      $("toastBox").querySelector(".toast.info .toast-texto").textContent,
+      $("toastBox").querySelector<HTMLElement>(".toast.info .toast-texto")
+        ?.textContent,
     ).toBe("cedo");
   });
 });
@@ -160,7 +167,7 @@ describe("tela de carregamento (window.monitoraLoader)", () => {
     expect(loader.getAttribute("role")).toBe("status");
     expect(loader.getAttribute("aria-hidden")).toBe("true");
     expect(document.body.getAttribute("aria-busy")).toBe("false");
-    expect($("loaderMeta")).toBeNull();
+    expect(talvez("loaderMeta")).toBeNull();
   });
 
   it("troca o texto genérico pela etapa, mostra o percentual e, na demora, Tentar novamente", () => {
@@ -220,18 +227,21 @@ describe("aviso de conexão", () => {
     expect(aviso.className).toBe("connectivity-status");
     expect(aviso.dataset.state).toBe("offline");
     expect(aviso.getAttribute("role")).toBe("status");
-    expect(aviso.querySelector(".connectivity-status__title").textContent).toBe(
-      "Sem conexão com a internet",
-    );
     expect(
-      aviso.querySelector(".connectivity-status__action").textContent,
+      aviso.querySelector<HTMLElement>(".connectivity-status__title")
+        ?.textContent,
+    ).toBe("Sem conexão com a internet");
+    expect(
+      aviso.querySelector<HTMLElement>(".connectivity-status__action")
+        ?.textContent,
     ).toBe("Tentar novamente");
 
     act(() => window.dispatchEvent(new Event("online")));
     expect(aviso.dataset.state).toBe("online");
-    expect(aviso.querySelector(".connectivity-status__title").textContent).toBe(
-      "Conexão restabelecida",
-    );
+    expect(
+      aviso.querySelector<HTMLElement>(".connectivity-status__title")
+        ?.textContent,
+    ).toBe("Conexão restabelecida");
     expect(aviso.querySelector(".connectivity-status__action")).toBeNull();
 
     act(() => vi.advanceTimersByTime(VISIVEL_DEPOIS_DE_VOLTAR_MS));
@@ -253,8 +263,8 @@ describe("aviso de conexão", () => {
   it("'online' sem queda antes não mostra nada; página aberta sem rede já avisa", () => {
     montar();
     act(() => window.dispatchEvent(new Event("online")));
-    expect($("connectivityStatusNotice")).toBeNull();
-    act(() => avisos.desmontar());
+    expect(talvez("connectivityStatusNotice")).toBeNull();
+    act(() => definido(avisos).desmontar());
 
     online(false);
     montar();

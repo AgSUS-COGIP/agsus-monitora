@@ -1,9 +1,15 @@
 import { act } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CHAVE_DA_ROTA_PEDIDA,
   TEXTO_ROTA_DESCONHECIDA,
   criarNavegacao,
+} from "../../src/app/navegacao.ts";
+import type {
+  EventoDaNavegacao,
+  OpcoesDaNavegacao,
+  PaineisDoApp,
 } from "../../src/app/navegacao.ts";
 import { filtrosGuardadosDaTela } from "../../src/app/filtros-no-endereco.ts";
 import { criarPresenca } from "../../src/app/presenca.ts";
@@ -26,7 +32,25 @@ import {
   obterPaginaDaAya,
   redefinirPaginaDaAya,
 } from "../../src/modulos/aya/estado.ts";
-import { comAct, montarTelasNoTeste } from "./telas-no-teste.js";
+import type { PerfilDeAcesso } from "../../src/lib/tipos-dos-acessos.ts";
+import { definido } from "../definido.ts";
+import { comAct, fontesFalsas, montarTelasNoTeste } from "./telas-no-teste.ts";
+import type { TelaFalsa } from "./telas-no-teste.ts";
+
+type Navegacao = ReturnType<typeof criarNavegacao>;
+type Montado = ReturnType<typeof montarTelasNoTeste<Navegacao>>;
+
+/*
+  O cliente de mentira só tem o `rpc` que a presença usa; o tipo do Supabase
+  descreve muito mais. A guarda confere a forma mínima e devolve o objeto.
+*/
+function ehClienteSupabase(cliente: object): cliente is SupabaseClient {
+  return "rpc" in cliente;
+}
+function comoSupabase(cliente: object): SupabaseClient {
+  if (!ehClienteSupabase(cliente)) throw new TypeError("cliente sem rpc");
+  return cliente;
+}
 
 /*
   A navegação do app (src/app/navegacao.ts) com as telas como rotas
@@ -37,15 +61,19 @@ import { comAct, montarTelasNoTeste } from "./telas-no-teste.js";
 */
 
 const EDITAL = "0b7c9a52-2d55-4c4e-9f7a-1c3d5e7f9a1b";
-const GESTOR = {
+const GESTOR: PerfilDeAcesso = {
   id: "g",
   ativo: true,
   perfil: "edital_gestor",
   areas: ["saude-indigena", "sede"],
 };
-const SO_EDITAIS = { id: "e", ativo: true, permissoes: { nucleo: "leitor" } };
+const SO_EDITAIS: PerfilDeAcesso = {
+  id: "e",
+  ativo: true,
+  permissoes: { nucleo: "leitor" },
+};
 
-let montado = null;
+let montado: Montado | null = null;
 
 function telasFalsas() {
   return {
@@ -62,45 +90,52 @@ function telasFalsas() {
   };
 }
 
-function criar(opcoes = {}, { telas = telasFalsas(), menu = true } = {}) {
+function criar(
+  opcoes: OpcoesDaNavegacao = {},
+  {
+    telas = telasFalsas(),
+    menu = true,
+  }: { telas?: ReturnType<typeof telasFalsas>; menu?: boolean } = {},
+) {
   const janela = { location: { reload: vi.fn() } };
   const paineis = {
-    podeAbrir: (codigo) => codigo === "bi",
+    podeAbrir: (codigo: string) => codigo === "bi",
     primeiro: () => ({ codigo: "bi" }),
     doMenu: () => [],
     mostrar: vi.fn(() => ({ titulo: "BI RH" })),
     esquecerAtual: vi.fn(),
-  };
+  } satisfies PaineisDoApp;
   const avisar = vi.fn();
   const crua = criarNavegacao({
     janela,
     obterPerfil: () => GESTOR,
     paineis,
     avisar,
-    configuracao: (chave) =>
+    configuracao: (chave: string) =>
       ({ nucleo_page_subtitle: "Editais da área" })[chave] || "",
     confirmarSaida: () => true,
     aplicarAtualizacao: () => false,
     ...opcoes,
   });
-  montado = montarTelasNoTeste(crua, telas, { avisar });
-  const { navegacao } = montado;
+  const novo = montarTelasNoTeste(crua, telas, { avisar });
+  montado = novo;
+  const { navegacao } = novo;
   if (menu) navegacao.montarMenu();
   return { navegacao, janela, paineis, avisar, telas };
 }
 
 /* O sistema aberto (a entrada já passou): o endereço passa a trocar a tela. */
-function entrar(navegacao) {
+function entrar(navegacao: Pick<Navegacao, "abrirEntrada">) {
   navegacao.abrirEntrada();
 }
 
 const ativas = () =>
   [...document.querySelectorAll(".page.active")].map((pagina) => pagina.id);
 const endereco = () => location.pathname + location.search;
-const $ = (id) => document.getElementById(id);
+const $ = (id: string) => document.getElementById(id);
 
 /* Voltar/avançar do navegador: o jsdom avisa o popstate depois. */
-async function noHistorico(passo) {
+async function noHistorico(passo: number) {
   await act(async () => {
     const mudou = new Promise((resolver) =>
       addEventListener("popstate", resolver, { once: true }),
@@ -131,8 +166,8 @@ describe("troca de tela", () => {
     entrar(navegacao);
     navegacao.irPara("recursos");
     expect(ativas()).toEqual(["page-recursos"]);
-    expect($("pageTitle").textContent).toBe("Painel de recursos");
-    expect($("pageSubtitle").textContent).toBe("Saúde Indígena");
+    expect($("pageTitle")?.textContent).toBe("Painel de recursos");
+    expect($("pageSubtitle")?.textContent).toBe("Saúde Indígena");
     expect(telas.recursos.render).toHaveBeenCalledTimes(1);
     expect(navegacao.obter().view).toBe("recursos");
     expect(obterEstadoDaBarraLateral().ativo.view).toBe("recursos");
@@ -170,7 +205,7 @@ describe("troca de tela", () => {
   it("o subtítulo das telas das áreas vem depois da área", () => {
     const { navegacao } = criar();
     navegacao.irPara("nucleo");
-    expect($("pageSubtitle").textContent).toBe(
+    expect($("pageSubtitle")?.textContent).toBe(
       "Saúde Indígena · Editais da área",
     );
   });
@@ -208,10 +243,10 @@ describe("troca de tela", () => {
     const { navegacao } = criar();
     navegacao.irPara("sem-acesso");
     expect(ativas()).toEqual(["page-sem-acesso"]);
-    expect($("page-sem-acesso").textContent).toContain(
+    expect($("page-sem-acesso")?.textContent).toContain(
       "não tem módulos liberados",
     );
-    expect($("pageTitle").textContent).toBe("Acesso aos módulos");
+    expect($("pageTitle")?.textContent).toBe("Acesso aos módulos");
     expect(endereco()).toBe("/sem-acesso");
   });
 });
@@ -237,24 +272,26 @@ describe("guarda de saída e versão nova", () => {
 
   it("a guarda padrão consulta Acessos e Módulos já baixados (antes da carga, deixam sair)", async () => {
     const confirmarSaida = vi.fn(() => false);
-    registrarTelas({
-      "secao:acessos": {
-        carregar: async () => ({
-          conteudo: null,
-          nome: "Acessos",
-          render() {},
-          confirmarSaida,
-        }),
-      },
-      "secao:modulos": {
-        carregar: async () => ({
-          conteudo: null,
-          nome: "Módulos",
-          render() {},
-          confirmarSaida: () => true,
-        }),
-      },
-    });
+    registrarTelas(
+      fontesFalsas({
+        "secao:acessos": {
+          carregar: async () => ({
+            conteudo: null,
+            nome: "Acessos",
+            render() {},
+            confirmarSaida,
+          }),
+        },
+        "secao:modulos": {
+          carregar: async () => ({
+            conteudo: null,
+            nome: "Módulos",
+            render() {},
+            confirmarSaida: () => true,
+          }),
+        },
+      }),
+    );
     const navegacao = comAct(
       criarNavegacao({
         janela: { location: { reload: vi.fn() } },
@@ -274,7 +311,7 @@ describe("guarda de saída e versão nova", () => {
 
   it("versão nova esperando: guarda a tela pedida, vai ao endereço dela e recarrega", () => {
     const { navegacao, janela } = criar({
-      aplicarAtualizacao: (recarregar) => {
+      aplicarAtualizacao: (recarregar: () => void) => {
         recarregar();
         return true;
       },
@@ -328,7 +365,7 @@ describe("o endereço (rotas)", () => {
     entrar(navegacao);
     expect(ativas()).toEqual(["page-calendario"]);
     expect(obterDadosDoMonitoramento().areaAtual).toBe("sede");
-    expect($("pageSubtitle").textContent).toContain("SEDE");
+    expect($("pageSubtitle")?.textContent).toContain("SEDE");
     expect(telas.calendario.render).toHaveBeenCalledTimes(1);
     expect(endereco()).toBe("/sede/cronograma");
   });
@@ -434,7 +471,7 @@ describe("o endereço (rotas)", () => {
     expect(endereco()).toBe("/sede/editais");
     await noHistorico(-1);
     expect(obterDadosDoMonitoramento().areaAtual).toBe("saude-indigena");
-    expect($("pageSubtitle").textContent).toContain("Saúde Indígena");
+    expect($("pageSubtitle")?.textContent).toContain("Saúde Indígena");
   });
 
   it("voltar com alteração não salva recusada: fica na tela e o endereço volta", async () => {
@@ -500,7 +537,7 @@ describe("o endereço (rotas)", () => {
 describe("quem acompanha a navegação", () => {
   it("recebe uma abertura por tela (com a anterior)", () => {
     const { navegacao } = criar();
-    const eventos = [];
+    const eventos: EventoDaNavegacao[] = [];
     navegacao.assinar((evento) => eventos.push(evento));
     navegacao.irPara("nucleo");
     navegacao.irPara("recursos");
@@ -516,25 +553,28 @@ describe("quem acompanha a navegação", () => {
     const { navegacao } = criar();
     const parar = navegacao.acompanharArea();
     navegacao.irPara("dashboard");
-    const antes = $("pageTitle").textContent;
+    const antes = definido($("pageTitle")).textContent;
     act(() => definirAreaAtual("sede"));
-    expect($("pageTitle").textContent).not.toBe(antes);
+    expect($("pageTitle")?.textContent).not.toBe(antes);
     parar();
   });
 
   it("a presença registra a navegação uma vez por troca de tela", async () => {
     const { navegacao } = criar();
     const cliente = {
-      rpc: vi.fn(async () => ({ data: { status: "OK" }, error: null })),
+      rpc: vi.fn(async (_nome: string, _args?: Record<string, unknown>) => ({
+        data: { status: "OK" },
+        error: null,
+      })),
     };
     const presenca = criarPresenca({
-      cliente: () => cliente,
+      cliente: () => comoSupabase(cliente),
       agente: () => "teste",
       obterUsuario: () => ({ id: "u1" }),
       obterPerfil: () => GESTOR,
       configuracao: { inteiro: () => 2, versao: () => "V9" },
       navegacao,
-      local: (view) => `lugar ${view}`,
+      local: (view: string) => `lugar ${view}`,
     });
     const parar = presenca.acompanhar();
     presenca.iniciar();
@@ -543,7 +583,7 @@ describe("quem acompanha a navegação", () => {
       cliente.rpc.mock.calls.filter(
         ([nome, args]) =>
           nome === "registrar_navegacao_monitora" &&
-          args.p_evento === "abertura_tela",
+          args?.p_evento === "abertura_tela",
       );
     // Toda chamada de registrar_navegacao_monitora (evento ou só presença).
     const registros = () =>
@@ -558,7 +598,7 @@ describe("quem acompanha a navegação", () => {
     navegacao.irPara("recursos");
     await act(async () => {});
     expect(daNavegacao()).toHaveLength(2);
-    expect(daNavegacao()[1][1]).toMatchObject({ p_tela: "recursos" });
+    expect(daNavegacao()[1]?.[1]).toMatchObject({ p_tela: "recursos" });
     expect(registros() - antes).toBe(2);
     parar();
     presenca.pararTudo();
@@ -575,37 +615,40 @@ describe("telas sob demanda", () => {
       confirmarSaida: () => true,
       aplicarAtualizacao: () => false,
     });
-    montado = montarTelasNoTeste(crua, {});
+    const novo = montarTelasNoTeste(crua, {});
+    montado = novo;
     act(() =>
-      registrarTelas({
-        recursos: {
-          carregar: () => {
-            tentativas += 1;
-            if (tentativas === 1)
-              return new Promise((_, rejeitar) => {
-                falhar = () => rejeitar(new Error("rede caída"));
+      registrarTelas(
+        fontesFalsas({
+          recursos: {
+            carregar: () => {
+              tentativas += 1;
+              if (tentativas === 1)
+                return new Promise<TelaFalsa>((_, rejeitar) => {
+                  falhar = () => rejeitar(new Error("rede caída"));
+                });
+              return Promise.resolve({
+                nome: "o painel de recursos",
+                conteudo: "Painel carregado",
+                render,
               });
-            return Promise.resolve({
-              nome: "o painel de recursos",
-              conteudo: "Painel carregado",
-              render,
-            });
+            },
           },
-        },
-      }),
+        }),
+      ),
     );
     const erro = vi.spyOn(console, "error").mockImplementation(() => {});
-    montado.navegacao.irPara("recursos");
-    expect($("page-recursos").textContent).toBe("Carregando…");
+    novo.navegacao.irPara("recursos");
+    expect($("page-recursos")?.textContent).toBe("Carregando…");
     await act(async () => falhar());
-    expect($("page-recursos").textContent).toContain(
+    expect($("page-recursos")?.textContent).toContain(
       "Não foi possível carregar esta tela.",
     );
-    const botao = $("page-recursos").querySelector("button");
+    const botao = definido($("page-recursos")?.querySelector("button"));
     expect(botao.textContent).toBe("Tentar de novo");
     await act(async () => botao.click());
     await vi.waitFor(() =>
-      expect($("page-recursos").textContent).toBe("Painel carregado"),
+      expect($("page-recursos")?.textContent).toBe("Painel carregado"),
     );
     expect(tentativas).toBe(2);
     expect(render).toHaveBeenCalledTimes(1);

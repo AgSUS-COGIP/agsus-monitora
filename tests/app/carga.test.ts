@@ -5,6 +5,15 @@ import {
   INTERVALO_DO_REALTIME_MS,
   criarCarga,
 } from "../../src/app/carga.ts";
+import type {
+  ConsultaDaCarga,
+  DependenciasDaCarga,
+  OpcoesDaConsulta,
+} from "../../src/app/carga.ts";
+import type { OpcoesDaCargaDaConfiguracao } from "../../src/app/configuracao.ts";
+import type { CopiaDaSessao } from "../../src/lib/copia-da-sessao";
+import type { PerfilDeAcesso } from "../../src/lib/tipos-dos-acessos.ts";
+import { definido } from "../definido.ts";
 import { assinaturaDoAcesso, montarCopia } from "../../src/lib/copia-da-sessao";
 import {
   obterDadosDoMonitoramento,
@@ -18,18 +27,31 @@ import {
 */
 
 const USUARIO = { id: "u1", email: "ana@agenciasus.org.br" };
-const PERFIL = { id: "p1", ativo: true, perfil: "edital_gestor" };
+const PERFIL: PerfilDeAcesso = {
+  id: "p1",
+  ativo: true,
+  perfil: "edital_gestor",
+};
 const LINHAS = [{ id: 1, unidade: "DSEI Xingu", CO_AREA: "saude-indigena" }];
 const VERSAO_DAS_LINHAS = "md5-das-linhas";
 const MAPA = [{ chave: "lmap", payload: { dsei: [] } }];
 const VERSAO_DO_MAPA = "md5-do-mapa";
 
 /* Consulta preguiçosa como a do Supabase: só "sai" quando alguém chama then. */
-function consultaPreguicosa(nome, resposta, registro) {
+type Resposta = { data: unknown; error: unknown };
+
+function consultaPreguicosa(
+  nome: string,
+  resposta: () => Resposta,
+  registro: string[],
+) {
   const consulta = {
     nome,
     saiu: false,
-    then(resolver, rejeitar) {
+    then<R1 = Resposta, R2 = never>(
+      resolver?: ((valor: Resposta) => R1 | PromiseLike<R1>) | null,
+      rejeitar?: ((motivo: unknown) => R2 | PromiseLike<R2>) | null,
+    ): PromiseLike<R1 | R2> {
       if (!consulta.saiu) registro.push(nome);
       consulta.saiu = true;
       return Promise.resolve(resposta()).then(resolver, rejeitar);
@@ -50,12 +72,12 @@ function consultaPreguicosa(nome, resposta, registro) {
   `pedir()` é a página aberta que as usa; devolve a devolução.
 */
 function pedidosFalsos() {
-  const ouvintes = new Set();
+  const ouvintes = new Set<() => void>();
   let quantos = 0;
   const avisarTodos = () => ouvintes.forEach((ouvinte) => ouvinte());
   return {
     ha: () => quantos > 0,
-    assinar(ouvinte) {
+    assinar(ouvinte: () => void) {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
@@ -73,6 +95,38 @@ function pedidosFalsos() {
   };
 }
 
+/*
+  As dependências falsas têm só o que a carga usa (o cliente do Supabase, a
+  navegação e a configuração reais descrevem muito mais). A guarda confere as
+  três obrigatórias e devolve o objeto.
+*/
+function ehDependencias(deps: object): deps is DependenciasDaCarga {
+  return "configuracao" in deps && "paineis" in deps && "navegacao" in deps;
+}
+function comoDependencias(deps: object): DependenciasDaCarga {
+  if (!ehDependencias(deps)) throw new TypeError("dependências incompletas");
+  return deps;
+}
+
+type OpcoesDaMontagem = {
+  copiaGuardada?: CopiaDaSessao | null;
+  erroNasLinhas?: { message: string } | null;
+  perfil?: PerfilDeAcesso | null;
+  pedindo?: boolean;
+  telaDeEntrada?: string;
+  semInicio?: boolean;
+  agora?: () => number;
+};
+
+/* Um canal do Realtime falso: `ao` é o aviso de mudança que a carga registrou. */
+type CanalFalso = {
+  ao: (() => unknown) | null;
+  on(tipo: unknown, filtro: unknown, funcao: () => unknown): CanalFalso;
+  subscribe: () => CanalFalso;
+};
+
+type ArgumentosDoRpc = { p_versao?: unknown };
+
 function montar({
   copiaGuardada = null,
   erroNasLinhas = null,
@@ -84,17 +138,17 @@ function montar({
   semInicio = false,
   // O relógio da cópia da sessão; o Realtime usa o falso do vitest (`Date.now`).
   agora = () => 1_000,
-} = {}) {
-  const saidas = [];
-  const ordem = [];
-  const respostas = {
+}: OpcoesDaMontagem = {}) {
+  const saidas: string[] = [];
+  const ordem: unknown[][] = [];
+  const respostas: Record<string, unknown[]> = {
     TB_CONFIGURACAO: [{ chave: "app_title", valor: "MONITORA" }],
     TB_PAINEL_EXTERNO: [{ id: "1", codigo: "bi" }],
     TD_UNIDADE: [{ nome_oficial: "DSEI Xingu" }],
   };
-  const canais = [];
+  const canais: CanalFalso[] = [];
   const cliente = {
-    from: vi.fn((tabela) =>
+    from: vi.fn((tabela: string) =>
       consultaPreguicosa(
         tabela,
         () => ({ data: respostas[tabela], error: null }),
@@ -102,39 +156,44 @@ function montar({
       ),
     ),
     // O monitoramento vem por RPC com versão (migration 20261013160000).
-    rpc: vi.fn(async (nome, { p_versao } = {}) => {
-      saidas.push(nome);
-      // O mapa também (migration 20261015000100).
-      if (nome === "listar_mapa_da_saude_indigena")
-        return p_versao === VERSAO_DO_MAPA
-          ? { data: { inalterado: true, versao: p_versao }, error: null }
-          : { data: { versao: VERSAO_DO_MAPA, linhas: MAPA }, error: null };
-      // Configuração, painéis, abas, situação e unidades numa chamada (20261029121700).
-      if (nome === "obter_inicio_da_sessao")
-        return semInicio
-          ? { data: null, error: { code: "PGRST202" } }
-          : {
-              data: {
-                configuracao: respostas.TB_CONFIGURACAO,
-                paineis: respostas.TB_PAINEL_EXTERNO,
-                unidades: respostas.TD_UNIDADE,
-                abas: null,
-                situacao: null,
-              },
-              error: null,
-            };
-      if (nome !== "listar_monitoramento_operacional")
-        return { data: { resumo: true }, error: null };
-      if (erroNasLinhas) return { data: null, error: erroNasLinhas };
-      if (p_versao === VERSAO_DAS_LINHAS)
-        return { data: { inalterado: true, versao: p_versao }, error: null };
-      return {
-        data: { versao: VERSAO_DAS_LINHAS, linhas: LINHAS },
-        error: null,
-      };
-    }),
+    rpc: vi.fn(
+      async (
+        nome: string,
+        { p_versao }: ArgumentosDoRpc = {},
+      ): Promise<Resposta> => {
+        saidas.push(nome);
+        // O mapa também (migration 20261015000100).
+        if (nome === "listar_mapa_da_saude_indigena")
+          return p_versao === VERSAO_DO_MAPA
+            ? { data: { inalterado: true, versao: p_versao }, error: null }
+            : { data: { versao: VERSAO_DO_MAPA, linhas: MAPA }, error: null };
+        // Configuração, painéis, abas, situação e unidades numa chamada (20261029121700).
+        if (nome === "obter_inicio_da_sessao")
+          return semInicio
+            ? { data: null, error: { code: "PGRST202" } }
+            : {
+                data: {
+                  configuracao: respostas.TB_CONFIGURACAO,
+                  paineis: respostas.TB_PAINEL_EXTERNO,
+                  unidades: respostas.TD_UNIDADE,
+                  abas: null,
+                  situacao: null,
+                },
+                error: null,
+              };
+        if (nome !== "listar_monitoramento_operacional")
+          return { data: { resumo: true }, error: null };
+        if (erroNasLinhas) return { data: null, error: erroNasLinhas };
+        if (p_versao === VERSAO_DAS_LINHAS)
+          return { data: { inalterado: true, versao: p_versao }, error: null };
+        return {
+          data: { versao: VERSAO_DAS_LINHAS, linhas: LINHAS },
+          error: null,
+        };
+      },
+    ),
     channel: vi.fn(() => {
-      const canal = {
+      const canal: CanalFalso = {
         ao: null,
         on(_tipo, _filtro, funcao) {
           canal.ao = funcao;
@@ -149,49 +208,50 @@ function montar({
   };
   const configuracao = {
     consulta: () => cliente.from("TB_CONFIGURACAO"),
-    carregar: vi.fn(async ({ consulta }) => {
+    carregar: vi.fn(async ({ consulta }: OpcoesDaCargaDaConfiguracao) => {
       ordem.push(["config", saidas.length]);
-      return (await consulta).data;
+      return definido(await consulta).data;
     }),
     booleano: vi.fn(() => true),
   };
-  let liberados = new Set(["1"]);
+  let liberados = new Set<unknown>(["1"]);
   const paineis = {
     consulta: () => cliente.from("TB_PAINEL_EXTERNO"),
-    carregar: vi.fn(async ({ consulta }) => {
+    carregar: vi.fn(async ({ consulta }: { consulta?: ConsultaDaCarga }) => {
       ordem.push(["paineis"]);
       await consulta;
     }),
     completarLiberados: vi.fn(),
     liberados: () => liberados,
     descartarAbertos: vi.fn(),
-    podeAbrir: (codigo) => codigo === "bi",
+    podeAbrir: (codigo: string) => codigo === "bi",
     esquecerAtual: vi.fn(),
   };
   let view = "dashboard";
+  const irPara = vi.fn((tela: string) => {
+    view = tela;
+    ordem.push(["irPara", tela]);
+  });
   const navegacao = {
     obter: () => ({ view }),
     montarMenu: vi.fn(),
-    irPara: vi.fn((tela) => {
-      view = tela;
-      ordem.push(["irPara", tela]);
-    }),
+    irPara,
     telaDeEntrada: () => telaDeEntrada,
-    telaPermitida: (tela) => tela !== "proibida",
-    definir: (tela) => (view = tela),
+    telaPermitida: (tela: string) => tela !== "proibida",
+    definir: (tela: string) => (view = tela),
+    // A entrada abre a tela de entrada; reabrir é a tela de agora de novo.
+    abrirEntrada: vi.fn(() => irPara(telaDeEntrada)),
+    reabrir: vi.fn(() => irPara(view)),
   };
-  // A entrada abre a tela de entrada; reabrir é a tela de agora de novo.
-  navegacao.abrirEntrada = vi.fn(() => navegacao.irPara(telaDeEntrada));
-  navegacao.reabrir = vi.fn(() => navegacao.irPara(view));
   const copia = {
     ler: vi.fn(async () => copiaGuardada),
-    guardar: vi.fn(async () => {}),
+    guardar: vi.fn(async (_copia: CopiaDaSessao) => {}),
     apagar: vi.fn(async () => {}),
     versao: "v1",
   };
   const abas = {
     consulta: () => Promise.resolve({ data: null, error: null }),
-    carregar: vi.fn(async () => {}),
+    carregar: vi.fn(async (_opcoes: OpcoesDaConsulta) => {}),
   };
   const situacao = {
     consulta: () => Promise.resolve({ data: null, error: null }),
@@ -207,24 +267,26 @@ function montar({
   if (pedindo) pedidos.pedir();
   const mostrarApp = vi.fn(() => ordem.push(["mostrarApp"]));
   const comemorar = vi.fn(() => ordem.push(["comemorar"]));
-  const carga = criarCarga({
-    cliente: () => cliente,
-    configuracao,
-    paineis,
-    navegacao,
-    obterPerfil: () => perfil,
-    obterUsuario: () => USUARIO,
-    avisar,
-    mostrarApp,
-    comemorar,
-    copia,
-    abas,
-    situacao,
-    esqueleto,
-    visaoGeral,
-    pedidos,
-    agora,
-  });
+  const carga = criarCarga(
+    comoDependencias({
+      cliente: () => cliente,
+      configuracao,
+      paineis,
+      navegacao,
+      obterPerfil: () => perfil,
+      obterUsuario: () => USUARIO,
+      avisar,
+      mostrarApp,
+      comemorar,
+      copia,
+      abas,
+      situacao,
+      esqueleto,
+      visaoGeral,
+      pedidos,
+      agora,
+    }),
+  );
   return {
     carga,
     cliente,
@@ -240,7 +302,7 @@ function montar({
     ordem,
     canais,
     pedidos,
-    definirLiberados: (ids) => (liberados = new Set(ids)),
+    definirLiberados: (ids: unknown[]) => (liberados = new Set(ids)),
   };
 }
 
@@ -257,7 +319,7 @@ describe("entrada", () => {
     // chamada para configuração, painéis, abas, situação e unidades) já tinha
     // saído; mapa e monitoramento saem assim que a cópia local é lida.
     expect(
-      ordem.find(([etapa]) => etapa === "config")[1],
+      ordem.find(([etapa]) => etapa === "config")?.[1],
     ).toBeGreaterThanOrEqual(1);
     expect(saidas).toContain("obter_inicio_da_sessao");
     expect(saidas).toContain("listar_monitoramento_operacional");
@@ -336,7 +398,7 @@ describe("entrada", () => {
     await carga.carregarEntrada();
     await esperarTudo();
     expect(copia.guardar).toHaveBeenCalledTimes(1);
-    const guardada = copia.guardar.mock.calls[0][0];
+    const guardada = definido(copia.guardar.mock.calls[0])[0];
     expect(guardada).toMatchObject({ usuarioId: "u1", versao: "v1" });
     expect(guardada.dados.monitoramento).toEqual({
       linhas: LINHAS,
@@ -365,7 +427,7 @@ describe("entrada", () => {
     const pedidos = cliente.rpc.mock.calls.filter(
       ([nome]) => nome === "listar_monitoramento_operacional",
     );
-    expect(pedidos.map(([, argumentos]) => argumentos.p_versao)).toEqual([
+    expect(pedidos.map(([, argumentos]) => argumentos?.p_versao)).toEqual([
       null,
       VERSAO_DAS_LINHAS,
     ]);
@@ -380,7 +442,7 @@ describe("entrada", () => {
     const pedidos = cliente.rpc.mock.calls.filter(
       ([nome]) => nome === "listar_mapa_da_saude_indigena",
     );
-    expect(pedidos.map(([, argumentos]) => argumentos.p_versao)).toEqual([
+    expect(pedidos.map(([, argumentos]) => argumentos?.p_versao)).toEqual([
       null,
       VERSAO_DO_MAPA,
     ]);
@@ -390,7 +452,7 @@ describe("entrada", () => {
     const primeira = montar();
     await primeira.carga.carregarEntrada();
     await esperarTudo();
-    const guardada = primeira.copia.guardar.mock.calls[0][0];
+    const guardada = definido(primeira.copia.guardar.mock.calls[0])[0];
     expect(guardada.dados.mapa).toEqual(MAPA);
     expect(guardada.dados.versaoDoMapa).toBe(VERSAO_DO_MAPA);
     const { carga, cliente } = montar({ copiaGuardada: guardada });
@@ -399,7 +461,7 @@ describe("entrada", () => {
     const pedido = cliente.rpc.mock.calls.find(
       ([nome]) => nome === "listar_mapa_da_saude_indigena",
     );
-    expect(pedido[1]).toEqual({ p_versao: VERSAO_DO_MAPA });
+    expect(pedido?.[1]).toEqual({ p_versao: VERSAO_DO_MAPA });
   });
 
   it("a cópia da sessão leva a versão das linhas: a entrada não baixa de novo", async () => {
@@ -424,7 +486,7 @@ describe("entrada", () => {
     const pedido = cliente.rpc.mock.calls.find(
       ([nome]) => nome === "listar_monitoramento_operacional",
     );
-    expect(pedido[1]).toEqual({ p_versao: VERSAO_DAS_LINHAS });
+    expect(pedido?.[1]).toEqual({ p_versao: VERSAO_DAS_LINHAS });
     expect(carga.linhas()).toEqual(LINHAS);
   });
 
@@ -435,7 +497,7 @@ describe("entrada", () => {
       mapa: [],
       unidades: [],
       abas: null,
-      monitoramento: { linhas: LINHAS },
+      monitoramento: { linhas: LINHAS, versao: undefined },
     };
     const copiaGuardada = montarCopia({
       usuarioId: "u1",
@@ -446,7 +508,9 @@ describe("entrada", () => {
     });
     const { carga, configuracao } = montar({ copiaGuardada });
     await carga.carregarEntrada();
-    expect(await configuracao.carregar.mock.calls[0][0].consulta).toEqual({
+    expect(
+      await definido(configuracao.carregar.mock.calls[0])[0].consulta,
+    ).toEqual({
       data: dados.config,
       error: null,
     });
@@ -454,7 +518,13 @@ describe("entrada", () => {
 
   it("apaga a cópia de outra pessoa", async () => {
     const { carga, copia } = montar({
-      copiaGuardada: { usuarioId: "outra", dados: {} },
+      copiaGuardada: {
+        usuarioId: "outra",
+        acesso: undefined,
+        versao: undefined,
+        guardadaEm: undefined,
+        dados: {},
+      },
     });
     await carga.carregarEntrada();
     expect(copia.apagar).toHaveBeenCalled();
@@ -512,8 +582,8 @@ describe("Realtime do monitoramento", () => {
     carga.iniciarRealtime();
     carga.iniciarRealtime();
     expect(cliente.channel).toHaveBeenCalledTimes(1);
-    canais[0].ao();
-    canais[0].ao();
+    definido(definido(canais[0]).ao)();
+    definido(definido(canais[0]).ao)();
     await vi.advanceTimersByTimeAsync(800);
     expect(avisar).toHaveBeenCalledWith(
       "Dashboard atualizado automaticamente.",
@@ -534,7 +604,7 @@ describe("Realtime do monitoramento", () => {
       erroNasLinhas: { message: "falhou" },
     });
     carga.iniciarRealtime();
-    canais[0].ao();
+    definido(definido(canais[0]).ao)();
     await vi.advanceTimersByTimeAsync(800);
     expect(avisar).toHaveBeenCalledWith(
       "Erro ao carregar dados: falhou",
@@ -553,7 +623,7 @@ describe("Realtime do monitoramento", () => {
     cliente.rpc.mockImplementation(() => {
       throw new Error("sem rede");
     });
-    canais[0].ao();
+    definido(definido(canais[0]).ao)();
     await vi.advanceTimersByTimeAsync(800);
     expect(avisar).toHaveBeenCalledWith(
       "Erro ao carregar dados: sem rede",
@@ -592,12 +662,12 @@ describe("Realtime do monitoramento", () => {
         ([nome]) => nome === "listar_monitoramento_operacional",
       ).length;
     carga.iniciarRealtime();
-    canais[0].ao();
+    definido(definido(canais[0]).ao)();
     await vi.advanceTimersByTimeAsync(800);
     expect(leituras()).toBe(1);
     // Escritas seguidas por 20 s: nenhuma releitura antes do intervalo.
     for (let i = 0; i < 20; i += 1) {
-      canais[0].ao();
+      definido(definido(canais[0]).ao)();
       await vi.advanceTimersByTimeAsync(1_000);
     }
     expect(leituras()).toBe(1);
@@ -615,13 +685,13 @@ describe("Realtime do monitoramento", () => {
     });
     await carga.carregarEntrada();
     carga.iniciarRealtime();
-    canais[0].ao();
+    definido(definido(canais[0]).ao)();
     await vi.advanceTimersByTimeAsync(INTERVALO_DO_REALTIME_MS);
     const leituras = cliente.rpc.mock.calls.filter(
       ([nome]) => nome === "listar_monitoramento_operacional",
     );
     expect(leituras).toHaveLength(2);
-    expect(leituras[1][1]).toEqual({ p_versao: VERSAO_DAS_LINHAS });
+    expect(leituras[1]?.[1]).toEqual({ p_versao: VERSAO_DAS_LINHAS });
     expect(avisar).not.toHaveBeenCalledWith(
       "Dashboard atualizado automaticamente.",
       "ok",
@@ -644,7 +714,7 @@ describe("Realtime do monitoramento", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(cliente.channel).toHaveBeenCalledTimes(2);
     expect(leituras()).toHaveLength(2);
-    expect(leituras()[1][1]).toEqual({ p_versao: VERSAO_DAS_LINHAS });
+    expect(leituras()[1]?.[1]).toEqual({ p_versao: VERSAO_DAS_LINHAS });
   });
 
   it("a volta do fundo sem linhas lidas não lê nada", async () => {
@@ -679,7 +749,7 @@ describe("Realtime do monitoramento", () => {
 */
 describe("linhas do monitoramento sob demanda", () => {
   const RPC = "listar_monitoramento_operacional";
-  const pedidosDasLinhas = (cliente) =>
+  const pedidosDasLinhas = (cliente: ReturnType<typeof montar>["cliente"]) =>
     cliente.rpc.mock.calls.filter(([nome]) => nome === RPC);
   const COPIA_COM_LINHAS = () =>
     montarCopia({
@@ -710,7 +780,9 @@ describe("linhas do monitoramento sob demanda", () => {
     expect(obterDadosDoMonitoramento().carregado).toBe(false);
     // A cópia da sessão vai sem linhas (ninguém as leu), e sem quebrar.
     expect(copia.guardar).toHaveBeenCalledTimes(1);
-    expect(copia.guardar.mock.calls[0][0].dados.monitoramento).toBeNull();
+    expect(
+      definido(copia.guardar.mock.calls[0])[0].dados.monitoramento,
+    ).toBeNull();
   });
 
   it("a página que usa as linhas, aberta depois, lê uma vez", async () => {
@@ -754,17 +826,19 @@ describe("linhas do monitoramento sob demanda", () => {
     await esperarTudo();
     expect(pedidosDasLinhas(cliente)).toHaveLength(0);
     // A cópia nova não perde as linhas (nem a versão) da anterior.
-    expect(copia.guardar.mock.calls[0][0].dados.monitoramento).toEqual({
+    expect(
+      definido(copia.guardar.mock.calls[0])[0].dados.monitoramento,
+    ).toEqual({
       linhas: LINHAS,
       versao: VERSAO_DAS_LINHAS,
     });
-    let responder;
+    let responder: (() => void) | undefined;
     cliente.rpc.mockImplementationOnce(
-      (nome, argumentos) =>
-        new Promise((resolver) => {
+      (_nome, argumentos) =>
+        new Promise<Resposta>((resolver) => {
           responder = () =>
             resolver({
-              data: { inalterado: true, versao: argumentos.p_versao },
+              data: { inalterado: true, versao: definido(argumentos).p_versao },
               error: null,
             });
         }),
@@ -776,10 +850,10 @@ describe("linhas do monitoramento sob demanda", () => {
       linhas: LINHAS,
       carregado: true,
     });
-    expect(pedidosDasLinhas(cliente)[0][1]).toEqual({
+    expect(pedidosDasLinhas(cliente)[0]?.[1]).toEqual({
       p_versao: VERSAO_DAS_LINHAS,
     });
-    responder();
+    definido(responder)();
     await esperarTudo();
     expect(carga.linhas()).toEqual(LINHAS);
   });
@@ -822,8 +896,8 @@ describe("linhas do monitoramento sob demanda", () => {
     devolver();
     // O canal fica (as linhas foram lidas), mas a rajada não relê ninguém.
     expect(cliente.removeChannel).not.toHaveBeenCalled();
-    canais[0].ao();
-    canais[0].ao();
+    definido(definido(canais[0]).ao)();
+    definido(definido(canais[0]).ao)();
     await vi.advanceTimersByTimeAsync(INTERVALO_DO_REALTIME_MS);
     expect(pedidosDasLinhas(cliente)).toHaveLength(1);
     expect(avisar).not.toHaveBeenCalledWith(
@@ -834,7 +908,7 @@ describe("linhas do monitoramento sob demanda", () => {
     pedidos.pedir();
     await vi.advanceTimersByTimeAsync(0);
     expect(pedidosDasLinhas(cliente)).toHaveLength(2);
-    expect(pedidosDasLinhas(cliente)[1][1]).toEqual({
+    expect(pedidosDasLinhas(cliente)[1]?.[1]).toEqual({
       p_versao: VERSAO_DAS_LINHAS,
     });
   });

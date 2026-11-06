@@ -3,6 +3,8 @@ import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Casca } from "../../src/app/casca/casca.tsx";
 import { desenharNoTeste } from "../montar-tela.ts";
+import { achar } from "../dom.ts";
+import { definido } from "../definido.ts";
 import { criarMoldura } from "../../src/app/moldura.ts";
 import {
   atualizarMenuLateral,
@@ -24,10 +26,13 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 const LARGURA_ORIGINAL = window.innerWidth;
 const MATCH_MEDIA_ORIGINAL = window.matchMedia;
 
-let casca = null;
-let desligarMoldura = null;
+/* O contrato que o app publica em window (src/app/sistema.ts). */
+const janela: Window & { toggleSidebar?: () => void } = window;
 
-async function largura(px) {
+let casca: ReturnType<typeof desenharNoTeste> | null = null;
+let desligarMoldura: (() => void) | null = null;
+
+async function largura(px: number) {
   Object.defineProperty(window, "innerWidth", {
     configurable: true,
     value: px,
@@ -43,7 +48,7 @@ async function montar(px = 390) {
   document.body.className = "sidebar-collapsed";
   document.body.innerHTML = '<section id="appScreen" class="app"></section>';
   const moldura = criarMoldura({ armazenamento: () => null });
-  window.toggleSidebar = moldura.alternarBarra;
+  janela.toggleSidebar = moldura.alternarBarra;
   // A casca liga a moldura à página (MolduraNaPagina); aqui, sem as peças, à mão.
   desligarMoldura = moldura.ligarNaPagina();
   // A casca já traz a barra lateral (src/app/casca/casca.tsx).
@@ -60,18 +65,26 @@ async function montar(px = 390) {
         permitidas: { dashboard: true, nucleo: true, calendario: true },
         areas: ["saude-indigena"],
       }),
-      { navegar: (view) => marcarItemAtivoNoMenu(view) },
+      { navegar: (view: string) => marcarItemAtivoNoMenu(view) },
     ),
   );
   await act(async () => marcarItemAtivoNoMenu("nucleo"));
 }
 
-const aside = () => document.querySelector("#appScreen .sidebar");
-const conteudo = () => document.getElementById("conteudoPrincipal");
-const veu = () => document.getElementById("sidebarOverlay");
-const botao = () => document.getElementById("globalSidebarToggle");
+const aside = () => achar("#appScreen .sidebar");
+const conteudo = () => achar("#conteudoPrincipal");
+const veu = () => achar("#sidebarOverlay");
+const botao = () => achar("#globalSidebarToggle");
 const aberta = () => !document.body.classList.contains("sidebar-collapsed");
-const clicar = (elemento) => act(async () => elemento.click());
+const clicar = (elemento: HTMLElement | null) =>
+  act(async () => definido(elemento).click());
+/* O elemento com o foco (HTML, com `dataset`). */
+const ativo = () => {
+  const elemento = document.activeElement;
+  if (!(elemento instanceof HTMLElement))
+    throw new TypeError("Sem elemento HTML com o foco");
+  return elemento;
+};
 
 async function abrir() {
   await clicar(botao());
@@ -79,11 +92,12 @@ async function abrir() {
 }
 
 beforeEach(() => {
-  window.matchMedia = (consulta) => ({
+  // Só `matches`, que é o que a casca lê (sem o resto do MediaQueryList).
+  Reflect.set(window, "matchMedia", (consulta: string) => ({
     matches:
       window.innerWidth <=
       Number(/max-width:\s*(\d+)px/.exec(consulta)?.[1] ?? 0),
-  });
+  }));
   localStorage.clear();
 });
 
@@ -94,7 +108,7 @@ afterEach(async () => {
   casca = null;
   await act(async () => redefinirBarraLateral());
   await act(async () => redefinirDadosDoMonitoramento());
-  delete window.toggleSidebar;
+  delete janela.toggleSidebar;
   window.matchMedia = MATCH_MEDIA_ORIGINAL;
   Object.defineProperty(window, "innerWidth", {
     configurable: true,
@@ -136,7 +150,7 @@ describe("navegação no celular", () => {
     expect(document.activeElement).toBe(
       document.querySelector('#nav [aria-current="page"]'),
     );
-    expect(document.activeElement.dataset.view).toBe("nucleo");
+    expect(ativo().dataset.view).toBe("nucleo");
   });
 
   it("Esc fecha e o foco volta para o ☰", async () => {
@@ -163,15 +177,18 @@ describe("navegação no celular", () => {
     await montar();
     await abrir();
     await clicar(
-      document.querySelector(
+      document.querySelector<HTMLElement>(
         '.menu-area[data-area="saude-indigena"] .menu-area__cabecalho',
       ),
     );
     expect(aberta()).toBe(true);
-    await clicar(document.querySelector('.menu-item[data-view="calendario"]'));
+    await clicar(
+      document.querySelector<HTMLElement>('.menu-item[data-view="calendario"]'),
+    );
     expect(aberta()).toBe(false);
     expect(
-      document.querySelector('#nav [aria-current="page"]').dataset.view,
+      document.querySelector<HTMLElement>('#nav [aria-current="page"]')?.dataset
+        .view,
     ).toBe("calendario");
   });
 
@@ -198,7 +215,7 @@ describe("navegação no celular", () => {
 });
 
 describe("o que saiu com o menu do pé da tela", () => {
-  const ler = (caminho) => readFileSync(caminho, "utf8");
+  const ler = (caminho: string) => readFileSync(caminho, "utf8");
 
   it("nenhum módulo, estilo ou recuo do menu inferior sobra no código", () => {
     const main = ler("src/main.ts");

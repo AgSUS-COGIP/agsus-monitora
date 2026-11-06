@@ -1,7 +1,11 @@
 import { act, createElement as h, useState } from "react";
+import type { ReactElement } from "react";
 import { createRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TabelaInfinita, usarListaNoServidor } from "../../src/ui/index.ts";
+import type { BuscarPagina, PaginaDoServidor } from "../../src/ui/index.ts";
+import { definido } from "../definido.ts";
 import { clicar } from "../componentes/interacoes.ts";
 
 /*
@@ -10,43 +14,56 @@ import { clicar } from "../componentes/interacoes.ts";
   "Carregar mais"), recomeço quando a chave (filtro) muda e resposta velha
   descartada.
 */
-let raiz = null;
+let raiz: Root | null = null;
 afterEach(async () => {
   await act(async () => raiz?.unmount());
   raiz = null;
   document.body.innerHTML = "";
 });
-const $ = (seletor) => document.querySelector(seletor);
+const $ = (seletor: string) => document.querySelector<HTMLElement>(seletor);
 const linhas = () => document.querySelectorAll(".ui-tabela-rolagem tbody tr");
 const esperar = () => act(async () => new Promise((r) => setTimeout(r, 0)));
 
 /* Um "banco" de 120 linhas, filtrável, com cursor = último número. */
+type Linha = { n: number };
+
 function criarBanco(total = 120) {
   const todos = Array.from({ length: total }, (_, i) => ({ n: i + 1 }));
-  const pedidos = [];
-  const buscar = (filtro) => async (apos, limite) => {
-    pedidos.push({ filtro, apos, limite });
-    const recorte = filtro ? todos.filter((x) => x.n % 2 === 0) : todos;
-    const inicio = apos === null ? 0 : recorte.findIndex((x) => x.n > apos);
-    const pagina = recorte.slice(inicio, inicio + limite);
-    return {
-      linhas: pagina,
-      proximo:
-        inicio + limite < recorte.length ? pagina[pagina.length - 1].n : null,
-      total: recorte.length,
+  const pedidos: { filtro: string; apos: unknown; limite: number }[] = [];
+  const buscar =
+    (filtro: string): BuscarPagina<Linha> =>
+    async (apos, limite) => {
+      pedidos.push({ filtro, apos, limite });
+      const recorte = filtro ? todos.filter((x) => x.n % 2 === 0) : todos;
+      const inicio =
+        apos === null ? 0 : recorte.findIndex((x) => x.n > Number(apos));
+      const pagina = recorte.slice(inicio, inicio + limite);
+      return {
+        linhas: pagina,
+        proximo:
+          inicio + limite < recorte.length
+            ? definido(pagina[pagina.length - 1]).n
+            : null,
+        total: recorte.length,
+      };
     };
-  };
   return { buscar, pedidos };
 }
 
-function Tela({ banco, filtroInicial = "" }) {
+function Tela({
+  banco,
+  filtroInicial = "",
+}: {
+  banco: ReturnType<typeof criarBanco>;
+  filtroInicial?: string;
+}) {
   const [filtro, setFiltro] = useState(filtroInicial);
   const lista = usarListaNoServidor(banco.buscar(filtro), `f:${filtro}`);
   return h(
     "div",
     null,
     h("button", { id: "pares", onClick: () => setFiltro("pares") }, "pares"),
-    h(TabelaInfinita, {
+    h(TabelaInfinita<Linha>, {
       idDoTitulo: "t",
       titulo: "Eliminados",
       colunas: [{ rotulo: "N" }],
@@ -63,11 +80,12 @@ function Tela({ banco, filtroInicial = "" }) {
   );
 }
 
-async function montar(elemento) {
+async function montar(elemento: ReactElement) {
   document.body.innerHTML = `<div id="raiz"></div>`;
   await act(async () => {
-    raiz = createRoot(document.getElementById("raiz"));
-    raiz.render(elemento);
+    const novaRaiz = createRoot(definido(document.getElementById("raiz")));
+    raiz = novaRaiz;
+    novaRaiz.render(elemento);
   });
   await esperar();
 }
@@ -77,17 +95,17 @@ describe("TabelaInfinita com o banco em páginas", () => {
     const banco = criarBanco();
     await montar(h(Tela, { banco }));
     expect(linhas()).toHaveLength(50);
-    expect($("[data-tabela-mostrando]").textContent).toBe(
+    expect($("[data-tabela-mostrando]")?.textContent).toBe(
       "Mostrando 50 de 120 registros",
     );
-    expect($("[data-tabela-contagem]").textContent).toBe("120 no recorte");
+    expect($("[data-tabela-contagem]")?.textContent).toBe("120 no recorte");
     expect(banco.pedidos).toEqual([{ filtro: "", apos: null, limite: 50 }]);
   });
 
   it("pede a próxima página ao rolar até o fim e para quando acaba", async () => {
     const banco = criarBanco();
     await montar(h(Tela, { banco }));
-    const rolagem = $(".ui-tabela-rolagem");
+    const rolagem = definido($(".ui-tabela-rolagem"));
     Object.defineProperty(rolagem, "scrollHeight", {
       value: 1000,
       configurable: true,
@@ -107,7 +125,7 @@ describe("TabelaInfinita com o banco em páginas", () => {
     await esperar();
     expect(linhas()).toHaveLength(120);
     expect($('[data-acao="carregar-mais"]')).toBeNull();
-    expect($(".ui-tabela-status").textContent).toBe(
+    expect($(".ui-tabela-status")?.textContent).toBe(
       "Todos os 120 registros do recorte foram carregados",
     );
     expect(banco.pedidos).toHaveLength(3);
@@ -121,7 +139,7 @@ describe("TabelaInfinita com o banco em páginas", () => {
     await clicar($("#pares"));
     await esperar();
     expect(linhas()).toHaveLength(50);
-    expect($("[data-tabela-mostrando]").textContent).toBe(
+    expect($("[data-tabela-mostrando]")?.textContent).toBe(
       "Mostrando 50 de 60 registros",
     );
     expect(banco.pedidos.at(-1)).toEqual({
@@ -132,10 +150,10 @@ describe("TabelaInfinita com o banco em páginas", () => {
   });
 
   it("descarta a resposta de um filtro que já mudou", async () => {
-    let soltarPrimeira;
+    let soltarPrimeira: (() => void) | undefined;
     const lenta = vi.fn(
-      (apos, limite) =>
-        new Promise((r) => {
+      (_apos: unknown, _limite: number) =>
+        new Promise<PaginaDoServidor<Linha>>((r) => {
           soltarPrimeira = () =>
             r({ linhas: [{ n: 999 }], proximo: null, total: 1 });
         }),
@@ -157,8 +175,8 @@ describe("TabelaInfinita com o banco em páginas", () => {
     await montar(h(Troca));
     await clicar($("#trocar"));
     await esperar();
-    await act(async () => soltarPrimeira());
+    await act(async () => definido(soltarPrimeira)());
     await esperar();
-    expect($("#itens").textContent).toBe("1,2,3");
+    expect($("#itens")?.textContent).toBe("1,2,3");
   });
 });

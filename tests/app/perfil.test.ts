@@ -1,18 +1,27 @@
 import { describe, expect, it, vi } from "vitest";
+import type { User } from "@supabase/supabase-js";
 import { criarPerfil } from "../../src/app/perfil.ts";
+import type {
+  EstadoDaSessaoDoPerfil,
+  OuvinteDoPerfil,
+} from "../../src/app/perfil.ts";
 
 /* Quem entrou (src/app/perfil.ts): cópia da sessão e o que o app mostra dele. */
 
 function sessaoFalsa() {
-  let estado = { usuario: null, perfil: null, painelIds: [] };
-  const ouvintes = new Set();
+  let estado: EstadoDaSessaoDoPerfil = {
+    usuario: null,
+    perfil: null,
+    painelIds: [],
+  };
+  const ouvintes = new Set<() => void>();
   return {
     obter: () => estado,
-    assinar: (ouvinte) => {
+    assinar: (ouvinte: () => void) => {
       ouvintes.add(ouvinte);
       return () => ouvintes.delete(ouvinte);
     },
-    definir(parcial) {
+    definir(parcial: Partial<EstadoDaSessaoDoPerfil>) {
       estado = { ...estado, ...parcial };
       ouvintes.forEach((ouvinte) => ouvinte());
     },
@@ -28,7 +37,15 @@ function montarPagina() {
     <span id="topUserPopoverProfile"></span>`;
 }
 
-const ANA = { id: "u1", email: "ana@agenciasus.org.br" };
+/* O usuário do Supabase Auth: o id e o e-mail do teste, o resto neutro. */
+const ANA: User = {
+  id: "u1",
+  email: "ana@agenciasus.org.br",
+  app_metadata: {},
+  user_metadata: {},
+  aud: "",
+  created_at: "",
+};
 const GESTOR = {
   id: "p1",
   ativo: true,
@@ -41,14 +58,14 @@ describe("perfil", () => {
   it("segue a sessão e avisa só quando o perfil muda", () => {
     const sessao = sessaoFalsa();
     const perfil = criarPerfil({ sessao });
-    const ouvinte = vi.fn();
+    const ouvinte = vi.fn<OuvinteDoPerfil>();
     perfil.aoMudarPerfil(ouvinte);
     perfil.acompanharSessao();
     sessao.definir({ usuario: ANA, perfil: GESTOR, painelIds: ["7"] });
     expect(perfil.obterUsuario()).toBe(ANA);
     expect(perfil.obterPerfil()).toBe(GESTOR);
     expect(ouvinte).toHaveBeenCalledTimes(1);
-    expect(ouvinte.mock.calls[0][0].painelIds).toEqual(["7"]);
+    expect(ouvinte.mock.calls[0]?.[0].painelIds).toEqual(["7"]);
     sessao.definir({ usuario: { ...ANA } });
     expect(ouvinte).toHaveBeenCalledTimes(1);
     expect(perfil.pode("ind")).toBe(true);
@@ -62,25 +79,25 @@ describe("perfil", () => {
     perfil.acompanharSessao();
     sessao.definir({ usuario: ANA, perfil: GESTOR });
     perfil.mostrarNaBarra();
-    expect(document.getElementById("userEmail").textContent).toBe(ANA.email);
-    expect(document.getElementById("userProfileBadge").textContent).toBe(
+    expect(document.getElementById("userEmail")?.textContent).toBe(ANA.email);
+    expect(document.getElementById("userProfileBadge")?.textContent).toBe(
       "Gestor",
     );
-    expect(document.getElementById("topUserPopoverProfile").textContent).toBe(
+    expect(document.getElementById("topUserPopoverProfile")?.textContent).toBe(
       "Gestor",
     );
-    expect(document.getElementById("userName").textContent).not.toBe("");
+    expect(document.getElementById("userName")?.textContent).not.toBe("");
   });
 
   it("abre e esconde o app", () => {
     montarPagina();
     const perfil = criarPerfil({ sessao: sessaoFalsa() });
     perfil.mostrarApp();
-    expect(document.getElementById("appScreen").classList).not.toContain(
+    expect(document.getElementById("appScreen")?.classList).not.toContain(
       "hidden",
     );
     expect(document.body.classList).not.toContain("access-request-mode");
     perfil.esconderApp();
-    expect(document.getElementById("appScreen").classList).toContain("hidden");
+    expect(document.getElementById("appScreen")?.classList).toContain("hidden");
   });
 });
