@@ -1,7 +1,7 @@
 import { act } from "react";
-import { montarTela } from "../montar-tela.js";
+import { montarTela } from "../montar-tela.ts";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clicar, esperar } from "./interacoes.js";
+import { clicar, esperar } from "./interacoes.ts";
 
 /*
   Configurações › Status das atualizações (React): carrega ao abrir a seção, mostra o

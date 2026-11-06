@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.frontend.json",
+  "compilerOptions": {
+    "types": ["react", "react-dom", "node", "vitest/jsdom"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts", "tests/**/*.tsx"],
+  "exclude": ["tests/tipos/**", "tests/fixtures/**"]
+}

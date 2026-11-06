@@ -1,7 +1,7 @@
 import { act, createElement, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clicar, digitar } from "./interacoes.js";
+import { clicar, digitar } from "./interacoes.ts";
 
 /*
   O que o robô leu dos arquivos, na ficha (leitura-dos-arquivos.tsx): o

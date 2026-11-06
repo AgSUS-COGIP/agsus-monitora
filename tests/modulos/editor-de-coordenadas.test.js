@@ -11,7 +11,7 @@ import {
 } from "vitest";
 import { EditorDeCoordenadas } from "../../src/modulos/mapa-saude-indigena/editor-de-coordenadas.tsx";
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
-import { clicar, digitar } from "../componentes/interacoes.js";
+import { clicar, digitar } from "../componentes/interacoes.ts";
 import { criarLeafletFalso } from "./leaflet-falso.js";
 import { carregarEditorDeCoordenadas } from "../../src/modulos/editor-de-coordenadas/editor-sob-demanda.ts";
 

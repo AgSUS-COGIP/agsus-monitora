@@ -41,7 +41,7 @@ supabase/               migrations/ e correcoes/ (SQL de dados)               �
 apps-script/            código das planilhas de análises (colado no Google)   → apps-script/LEIA-ME.md
 public/                 copiado para o site: assets/ e data/ (JSON GERADO por scripts/)
 scripts/                checagens, pipeline geográfico, AYA, banco            → scripts/CLAUDE.md
-tests/                  Vitest (*.test.js) e Playwright (*.spec.js)           → tests/CLAUDE.md
+tests/                  Vitest (*.test.ts, ainda *.test.js) e Playwright      → tests/CLAUDE.md
 server/servidor.ts      servidor web (TypeScript, Node 24, sem dependências)  → server/CLAUDE.md
 docs/                   decisões, auditorias e base de conhecimento da AYA    → docs/CLAUDE.md
 ```

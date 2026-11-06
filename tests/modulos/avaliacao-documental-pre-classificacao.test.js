@@ -18,8 +18,8 @@ import {
   digitar,
   escolher,
   esperar,
-} from "../componentes/interacoes.js";
-import { montarTela } from "../montar-tela.js";
+} from "../componentes/interacoes.ts";
+import { montarTela } from "../montar-tela.ts";
 
 /*
   A aba Triagem da Avaliação documental (fase F2): lê o que o job

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { readFileSync } from "node:fs";
-import { fonteDoApp } from "./fonte-do-app.js";
+import { fonteDoApp } from "./fonte-do-app.ts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SUPABASE_AUTH_STORAGE_KEY } from "../src/lib/env";
 import {

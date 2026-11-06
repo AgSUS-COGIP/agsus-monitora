@@ -6,7 +6,7 @@ import {
   limparMarcaGuardada,
 } from "../src/lib/access-branding-cache.ts";
 import { needsLightForeground } from "../src/lib/access-branding.ts";
-import { semTrechos } from "./fonte-do-app.js";
+import { semTrechos } from "./fonte-do-app.ts";
 
 const html = readFileSync("index.html", "utf8");
 const cache = readFileSync("src/lib/access-branding-cache.ts", "utf8");

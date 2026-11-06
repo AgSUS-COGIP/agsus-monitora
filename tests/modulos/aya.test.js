@@ -5,8 +5,8 @@ import {
   definirAreasDoUsuario,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { desenharNoTeste } from "../montar-tela.js";
-import { clicar, digitar, teclar } from "../componentes/interacoes.js";
+import { desenharNoTeste } from "../montar-tela.ts";
+import { clicar, digitar, teclar } from "../componentes/interacoes.ts";
 
 /*
   O painel da Aya (src/modulos/aya/): abre com a saudação e a mensagem da

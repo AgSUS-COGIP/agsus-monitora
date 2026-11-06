@@ -1,5 +1,5 @@
 import { act } from "react";
-import { montarTela } from "../montar-tela.js";
+import { montarTela } from "../montar-tela.ts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { criarAcessos } from "../../src/modulos/acessos/acessos.tsx";
 import {
@@ -7,7 +7,7 @@ import {
   digitar,
   escolher,
   esperar,
-} from "../componentes/interacoes.js";
+} from "../componentes/interacoes.ts";
 
 /*
   Configurações › Acessos em React: grupo (tag) + um select por módulo em

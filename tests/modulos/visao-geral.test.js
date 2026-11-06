@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { fonteDoApp } from "../fonte-do-app.js";
+import { fonteDoApp } from "../fonte-do-app.ts";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -12,10 +12,10 @@ import {
   digitar,
   escolher,
   esperar,
-} from "../componentes/interacoes.js";
+} from "../componentes/interacoes.ts";
 import { criarLeafletFalso } from "./leaflet-falso.js";
-import { htmlDaPagina } from "../pagina-montada.js";
-import { montarTela } from "../montar-tela.js";
+import { htmlDaPagina } from "../pagina-montada.ts";
+import { montarTela } from "../montar-tela.ts";
 import { registrarTelas } from "../../src/app/registro-das-telas.ts";
 import { comemoracoesNaPagina } from "../shows-de-comemoracao.js";
 

@@ -5,7 +5,7 @@ import { esquecerContornosDosDseis } from "../../src/lib/mapa-saude-indigena/con
 import { EVENTO_DO_FUNDO } from "../../src/modules/map-base-layer-switcher.ts";
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
 import { ESPERA_DO_REALCE_NA_LISTA } from "../../src/modulos/mapa-saude-indigena/mapa-nacional.tsx";
-import { clicar, esperar } from "../componentes/interacoes.js";
+import { clicar, esperar } from "../componentes/interacoes.ts";
 import { criarLeafletFalso } from "./leaflet-falso.js";
 
 /*

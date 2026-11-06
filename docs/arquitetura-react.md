@@ -308,7 +308,7 @@ Quem acompanha a navegação assina `navegacao.assinar`: `{ tipo: "abertura", vi
 Testes: `tests/app/navegacao.test.js`, `carga.test.js`, `configuracao.test.js`,
 `paineis-externos.test.js`, `presenca.test.js`, `perfil.test.js`, `moldura.test.js`,
 `sistema.test.js`, `tests/navegacao.test.js` e `tests/componentes/pessoas-online.test.js`. Os testes
-que conferem que algo antigo não voltou leem `src/app/` inteiro (`tests/fonte-do-app.js`).
+que conferem que algo antigo não voltou leem `src/app/` inteiro (`tests/fonte-do-app.ts`).
 
 Ficou para depois (ainda em `src/modules/` ou no `index.html`):
 
@@ -354,7 +354,7 @@ as filhas que leem estado: a barra lateral, o título do cabeçalho e as telas (
 navegação). Perfil, textos configuráveis e a faixa de manutenção ainda são escritos de fora, e as
 ilhas que sobram (Pessoas online, Aya, aviso de versão, encerramento, selos) são raízes próprias
 nos elementos vazios dela (passo 2 de `docs/arquitetura/raiz-react.md`). Testes que leem a marcação do app usam
-`tests/pagina-montada.js` (`htmlDaPagina()`: o `index.html` com a casca desenhada).
+`tests/pagina-montada.ts` (`htmlDaPagina()`: o `index.html` com a casca desenhada).
 
 **Parte B** — o celular (até 900px), em `src/app/casca/`:
 

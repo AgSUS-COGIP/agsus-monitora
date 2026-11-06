@@ -8,7 +8,7 @@ import {
   redefinirAvisos,
 } from "../../src/app/avisos.ts";
 import { Avisos } from "../../src/app/casca/avisos.tsx";
-import { desenharNoTeste } from "../montar-tela.js";
+import { desenharNoTeste } from "../montar-tela.ts";
 import { VISIVEL_DEPOIS_DE_VOLTAR_MS } from "../../src/app/casca/aviso-de-conexao.tsx";
 import { DURACAO_MS } from "../../src/app/casca/notificacoes.tsx";
 

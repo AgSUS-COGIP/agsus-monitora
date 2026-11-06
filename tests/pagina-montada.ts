@@ -11,7 +11,7 @@ import { Casca } from "../src/app/casca/casca.tsx";
 */
 const RAIZ = '<section id="appScreen" class="app hidden"></section>';
 
-export function htmlDaPagina() {
+export function htmlDaPagina(): string {
   const indice = readFileSync("index.html", "utf8");
   if (!indice.includes(RAIZ))
     throw new Error("index.html sem a raiz vazia do #appScreen");

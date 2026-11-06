@@ -8,7 +8,7 @@ import {
   mostrarTrava,
   textoDoEvento,
 } from "../../src/lib/avaliacao-documental/trava-das-inscricoes.ts";
-import { clicar, digitar, esperar } from "./interacoes.js";
+import { clicar, digitar, esperar } from "./interacoes.ts";
 
 /*
   Cartão "Inscrições congeladas" da aba Triagem (migration

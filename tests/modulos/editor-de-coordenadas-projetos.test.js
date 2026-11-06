@@ -14,7 +14,7 @@ import {
   criarCarregadorDeMunicipios,
 } from "../../src/modulos/mapa-de-projetos/carregador.ts";
 import { MapaDeProjetos } from "../../src/modulos/mapa-de-projetos/mapa-de-projetos.tsx";
-import { clicar, digitar, esperar } from "../componentes/interacoes.js";
+import { clicar, digitar, esperar } from "../componentes/interacoes.ts";
 import { criarLeafletFalso } from "./leaflet-falso.js";
 import { carregarEditorDeCoordenadas } from "../../src/modulos/editor-de-coordenadas/editor-sob-demanda.ts";
 

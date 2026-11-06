@@ -12,7 +12,7 @@ import {
   SecaoComemoracoes,
 } from "../../src/modulos/configuracoes/comemoracoes.tsx";
 import { SECOES } from "../../src/modulos/configuracoes/secoes.ts";
-import { clicar, digitar, escolher } from "../componentes/interacoes.js";
+import { clicar, digitar, escolher } from "../componentes/interacoes.ts";
 
 /*
   Configurações › Comemorações: quem edita configurações vê a seção; mudar

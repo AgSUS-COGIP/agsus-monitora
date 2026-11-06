@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SECOES } from "../src/modulos/configuracoes/secoes.ts";
 import { criarNavegacao } from "../src/app/navegacao.ts";
 import { montarTelasNoTeste } from "./app/telas-no-teste.js";
-import { htmlDaPagina } from "./pagina-montada.js";
+import { htmlDaPagina } from "./pagina-montada.ts";
 
 const html = htmlDaPagina();
 const main = readFileSync("src/main.ts", "utf8");

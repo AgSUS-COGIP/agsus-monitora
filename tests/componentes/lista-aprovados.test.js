@@ -2,7 +2,7 @@ import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { criarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
 import { PLANILHAS } from "../../src/lib/planilhas.ts";
-import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.js";
+import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.ts";
 import {
   compactarCandidatos,
   compactarPorArea,
@@ -13,7 +13,7 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.js";
-import { montarTela } from "../montar-tela.js";
+import { montarTela } from "../montar-tela.ts";
 
 /*
   A tela só mostra os editais da área atual (a padrão é a Saúde Indígena); os

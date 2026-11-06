@@ -84,7 +84,7 @@ export default [
       "src/**/*.{ts,tsx}",
       "server/**/*.ts",
       "api/**/*.ts",
-      "tests/tipos/**/*.tsx",
+      "tests/**/*.{ts,tsx}",
     ],
     languageOptions: {
       parser: tsParser,
@@ -99,6 +99,28 @@ export default [
       "no-redeclare": "off",
       "no-unused-vars": "off",
       "no-constant-condition": ["error", { checkLoops: false }],
+    },
+  },
+  {
+    /*
+      Testes em TypeScript: tipados de verdade. Mock parcial se tipa com
+      `Partial<>`/`Pick<>`, `vi.mocked` ou um ajudante tipado, não com `any`
+      nem silenciando o compilador (`@ts-ignore`, `@ts-nocheck`).
+    */
+    files: ["tests/**/*.{ts,tsx}"],
+    plugins: { "@typescript-eslint": tsPlugin },
+    rules: {
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/ban-ts-comment": "error",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "TSAsExpression[expression.type='TSAsExpression'][expression.typeAnnotation.type='TSUnknownKeyword']",
+          message:
+            "Sem `as unknown as`: tipe o mock (Partial<>, Pick<>, vi.mocked ou um ajudante tipado).",
+        },
+      ],
     },
   },
   {

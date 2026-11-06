@@ -13,7 +13,7 @@ import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.ts"
 import { CORES_DO_MAPA } from "../../src/lib/mapa-saude-indigena/formas.ts";
 import { EVENTO_DAS_TERRAS } from "../../src/modules/indigenous-territories-layer.ts";
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
-import { clicar, teclar } from "../componentes/interacoes.js";
+import { clicar, teclar } from "../componentes/interacoes.ts";
 import { criarLeafletFalso } from "./leaflet-falso.js";
 import { carregarEditorDeCoordenadas } from "../../src/modulos/editor-de-coordenadas/editor-sob-demanda.ts";
 

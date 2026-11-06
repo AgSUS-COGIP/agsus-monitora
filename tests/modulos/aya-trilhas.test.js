@@ -5,8 +5,8 @@ import {
   definirAreasDoUsuario,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { desenharNoTeste } from "../montar-tela.js";
-import { clicar, teclar } from "../componentes/interacoes.js";
+import { desenharNoTeste } from "../montar-tela.ts";
+import { clicar, teclar } from "../componentes/interacoes.ts";
 
 /*
   Tours e trilhas no painel da Aya (src/modulos/aya/): o botão "Me mostra

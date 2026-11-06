@@ -6,7 +6,7 @@ import {
 } from "./configuracoes-no-teste.js";
 import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.ts";
 import { normalizarValoresCarregados } from "../../src/lib/publicacao-de-configuracoes.ts";
-import { clicar, digitar, esperar, teclar } from "../componentes/interacoes.js";
+import { clicar, digitar, esperar, teclar } from "../componentes/interacoes.ts";
 
 /*
   Moldura React de Configurações (src/modulos/configuracoes/): o

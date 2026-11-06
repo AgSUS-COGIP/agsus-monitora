@@ -14,7 +14,7 @@ import {
   linhasDeTexto,
   rascunhoInicial,
 } from "../../src/lib/parecer-em-blocos.ts";
-import { clicar, digitar, esperar, teclar } from "../componentes/interacoes.js";
+import { clicar, digitar, esperar, teclar } from "../componentes/interacoes.ts";
 
 /*
   "Montar parecer" na gaveta do recurso (protótipo): desligado por padrão; com

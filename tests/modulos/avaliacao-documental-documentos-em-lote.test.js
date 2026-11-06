@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { concluidosDaFila } from "../../src/lib/avaliacao-documental/documentos-em-lote.ts";
 import { DocumentosEmLote } from "../../src/modulos/avaliacao-documental/documentos-em-lote.tsx";
-import { clicar, digitar, esperar } from "../componentes/interacoes.js";
+import { clicar, digitar, esperar } from "../componentes/interacoes.ts";
 
 /*
   A lista dos Espelhos das avaliações concluídas (aba Documentos): busca por

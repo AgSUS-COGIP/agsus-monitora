@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { avisoGlobal } from "../src/lib/aviso-global";
-import { htmlDaPagina } from "./pagina-montada.js";
+import { htmlDaPagina } from "./pagina-montada.ts";
 
 describe("aviso global", () => {
   it("fica oculto quando não há mensagem configurada", () => {

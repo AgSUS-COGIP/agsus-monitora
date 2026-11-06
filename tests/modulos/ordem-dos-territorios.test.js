@@ -6,7 +6,7 @@ import { ordenarTerritorios } from "../../src/lib/mapa-saude-indigena/ordem-dos-
 import { EVENTO_DO_FUNDO } from "../../src/modules/map-base-layer-switcher.ts";
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
 import { CHAVE_DA_ORDEM } from "../../src/modulos/mapa-saude-indigena/ordem-da-lista.tsx";
-import { escolher, esperar } from "../componentes/interacoes.js";
+import { escolher, esperar } from "../componentes/interacoes.ts";
 import { criarLeafletFalso } from "./leaflet-falso.js";
 
 /*

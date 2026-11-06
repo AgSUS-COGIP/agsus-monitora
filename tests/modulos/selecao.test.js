@@ -5,8 +5,8 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.ts";
-import { clicar, digitar, esperar, teclar } from "../componentes/interacoes.js";
-import { montarTela } from "../montar-tela.js";
+import { clicar, digitar, esperar, teclar } from "../componentes/interacoes.ts";
+import { montarTela } from "../montar-tela.ts";
 
 /*
   A tela de Seleção como módulo do app (src/modulos/selecao/): monta na

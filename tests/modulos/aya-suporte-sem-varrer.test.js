@@ -5,8 +5,8 @@ import {
   definirAreasDoUsuario,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { desenharNoTeste } from "../montar-tela.js";
-import { clicar, digitar } from "../componentes/interacoes.js";
+import { desenharNoTeste } from "../montar-tela.ts";
+import { clicar, digitar } from "../componentes/interacoes.ts";
 
 /*
   22/10: o link "Feedback e suporte" do topo da Aya varria o DOM da página

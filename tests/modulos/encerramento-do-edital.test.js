@@ -8,7 +8,7 @@ import {
   MarcaDeSeloNoAvatar,
   SelosDoEdital,
 } from "../../src/modulos/encerramento-do-edital/selos-do-edital.tsx";
-import { clicar } from "../componentes/interacoes.js";
+import { clicar } from "../componentes/interacoes.ts";
 
 /*
   Tela de encerramento do edital: abre uma vez (o visto vai ao banco), com os

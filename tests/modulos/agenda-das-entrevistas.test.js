@@ -10,8 +10,8 @@ import {
   digitar,
   escolher,
   esperar,
-} from "../componentes/interacoes.js";
-import { montarTela } from "../montar-tela.js";
+} from "../componentes/interacoes.ts";
+import { montarTela } from "../montar-tela.ts";
 
 /*
   A agenda das entrevistas na Classificação (visão "Agenda",
