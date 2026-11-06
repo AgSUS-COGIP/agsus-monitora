@@ -90,4 +90,4 @@ moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS 
 - Tabela nova avisa `agsus:content-updated` depois de desenhar: é o que põe os rótulos do modo
   cartão (`src/app/casca/tabelas-em-cartoes.ts`, ≤ 900px).
 - Teste em `tests/componentes/` (`.test.js`, sem JSX, com `act`) — modelo em
-  `tests/componentes/barra-lateral.test.js`; interações em `tests/componentes/interacoes.ts`.
+  `tests/componentes/barra-lateral.test.ts`; interações em `tests/componentes/interacoes.ts`.

@@ -30,6 +30,6 @@ cache antigo sem essa coluna. Sair limpa linhas e o estado de carga, mantendo a 
 da aba. A área é corrigida quando chegam as permissões do próximo perfil.
 
 Testes de comportamento em `tests/busca-global.test.js`,
-`tests/componentes/busca-global.test.js`, `tests/componentes/area-atual.test.js` e
-`tests/componentes/dados-do-monitoramento.test.js`; contratos positivos e rejeições
+`tests/componentes/busca-global.test.ts`, `tests/componentes/area-atual.test.ts` e
+`tests/componentes/dados-do-monitoramento.test.ts`; contratos positivos e rejeições
 esperadas em `tests/tipos/busca-global.tsx`, conferidos pelo typecheck do frontend.

@@ -95,7 +95,7 @@ describe("a logo da barra lateral é o <img> real", () => {
   /*
     A logo é o `src` do <img> que o React desenha (barra-lateral.tsx), lido da
     marca gravada (marca.ts). O comportamento está em
-    tests/componentes/barra-lateral.test.js; aqui, só que não volta a esconder.
+    tests/componentes/barra-lateral.test.ts; aqui, só que não volta a esconder.
   */
   it("a barra desenha a logo gravada no próprio <img>", () => {
     expect(barraLateral).toContain("logoDaBarraLateral");

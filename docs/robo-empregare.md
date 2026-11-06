@@ -391,4 +391,4 @@ computador: rode-os pelo GitHub.
   `tests/agenda-dos-robos-migration.test.js`,
   `tests/robo-empregare-migration.test.js`, `tests/robo-empregare-vagas-do-quadro.test.js`,
   `tests/saude-das-cargas.test.js`,
-  `tests/componentes/saude-das-cargas.test.js`.
+  `tests/componentes/saude-das-cargas.test.ts`.
