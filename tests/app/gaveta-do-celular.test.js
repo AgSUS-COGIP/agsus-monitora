@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Casca } from "../../src/app/casca/casca.tsx";
@@ -208,6 +208,12 @@ describe("o que saiu com o menu do pé da tela", () => {
     expect(ler("src/styles/tokens.css")).not.toContain(
       "--recuo-da-navegacao-inferior",
     );
-    expect(ler("src/lib/aya-tours.ts")).not.toContain("mobileBottomNav");
+    for (const nome of ["aya-tours.ts", ...readdirSync("src/lib/aya-tours")]) {
+      const caminho =
+        nome === "aya-tours.ts"
+          ? "src/lib/aya-tours.ts"
+          : `src/lib/aya-tours/${nome}`;
+      expect(ler(caminho)).not.toContain("mobileBottomNav");
+    }
   });
 });
