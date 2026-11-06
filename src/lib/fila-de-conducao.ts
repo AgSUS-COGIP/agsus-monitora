@@ -12,7 +12,9 @@
                    lançadas (verde);
     - em_andamento compareceu ou já tem alguma nota (azul);
     - aguardando   nada lançado ainda (cinza).
-  Concluída e faltou contam como "feitas" no contador do dia.
+  Concluída e faltou contam como "feitas" no contador do dia. Na tela, quem
+  ainda aguarda ou está em andamento depois do dia marcado aparece como
+  "Sem nota" (`situacaoNaTela`).
 
   O dia é o de Brasília (o mesmo da agenda). Quem não tem horário na agenda
   só aparece em Todos.
@@ -118,34 +120,6 @@ export function hojeEmBrasilia(agora: Date = new Date()): string {
     month: "2-digit",
     day: "2-digit",
   }).format(agora);
-}
-
-const PARTICULAS = /^(da|de|do|das|dos|di|du|del|e|y)$/i;
-
-/**
- * As iniciais do avatar: a primeira letra do primeiro e do último NOME,
- * sem números, códigos nem partículas ("Ana Lúcia Terena" → "AT";
- * "Candidato Teste 03" → "CT"; "Maria das Dores" → "MD"; "Bruno" → "BR").
- * Sem nenhuma palavra com letra, as duas primeiras letras ou dígitos do
- * texto; vazio → "?".
- */
-export function iniciais(nome: unknown): string {
-  const bruto = texto(nome);
-  const partes = bruto
-    .split(/[\s\-–—_.,;/()]+/)
-    // Palavra com número (código, "03", "2º") não é nome.
-    .filter((p) => !/\p{N}/u.test(p))
-    .map((p) => p.replace(/[^\p{L}'’]/gu, ""))
-    .filter((p) => /\p{L}/u.test(p) && !PARTICULAS.test(p));
-  if (!partes.length) {
-    const resto = bruto.replace(/[^\p{L}\p{N}]/gu, "");
-    return resto ? resto.slice(0, 2).toUpperCase() : "?";
-  }
-  const primeira = partes[0] ?? "";
-  if (partes.length === 1)
-    return [...primeira].slice(0, 2).join("").toUpperCase();
-  const ultima = partes[partes.length - 1] ?? "";
-  return `${[...primeira][0] ?? ""}${[...ultima][0] ?? ""}`.toUpperCase();
 }
 
 /**
@@ -298,40 +272,6 @@ export function buscarNaFila(itens: ItemDaFila[], busca: string): ItemDaFila[] {
   });
 }
 
-export type GrupoDaVaga = {
-  vaga: string;
-  cargo: string;
-  itens: ItemDaFila[];
-};
-
-/**
- * Os cartões por vaga (cabeçalho "código · cargo" com a contagem), as vagas
- * em ordem de código; dentro de cada uma, a ordem da fila (horário, nome).
- * Sem código de vaga, o grupo "Sem vaga" fica no fim.
- */
-export function agruparPorVaga(itens: ItemDaFila[]): GrupoDaVaga[] {
-  const grupos = new Map<string, GrupoDaVaga>();
-  for (const item of itens) {
-    const chave = item.vaga || "";
-    let grupo = grupos.get(chave);
-    if (!grupo) {
-      grupo = { vaga: chave, cargo: texto(item.convocado.cargo), itens: [] };
-      grupos.set(chave, grupo);
-    }
-    grupo.itens.push(item);
-  }
-  return [...grupos.values()].sort(
-    (a, b) =>
-      (a.vaga ? 0 : 1) - (b.vaga ? 0 : 1) ||
-      a.vaga.localeCompare(b.vaga, "pt-BR", { numeric: true }),
-  );
-}
-
-/** A ordem do "Salvar e abrir o próximo": a da tela (vaga a vaga). */
-export function ordemDaTela(itens: ItemDaFila[]): ItemDaFila[] {
-  return agruparPorVaga(itens).flatMap((g) => g.itens);
-}
-
 export function recortarFila(
   fila: ItemDaFila[],
   {
@@ -369,18 +309,75 @@ export function contadorDoDia(
   };
 }
 
-/** Quantos em cada situação, num recorte. */
+/** A situação na tela: com o dia marcado já passado e nada concluído, "Sem nota". */
+export type SituacaoNaTela = Situacao | "sem_nota";
+
+export const SITUACOES_NA_TELA: Readonly<
+  Record<SituacaoNaTela, { rotulo: string; tom: string }>
+> = Object.freeze({
+  ...SITUACOES,
+  sem_nota: { rotulo: "Sem nota", tom: "pendente" },
+});
+
+export function situacaoNaTela(item: ItemDaFila, hoje: string): SituacaoNaTela {
+  if (
+    (item.situacao === "aguardando" || item.situacao === "em_andamento") &&
+    item.data !== null &&
+    item.data < hoje
+  )
+    return "sem_nota";
+  return item.situacao;
+}
+
+/** Quantos em cada situação da tela, numa lista. */
 export function resumoDasSituacoes(
   itens: ItemDaFila[],
-): Record<Situacao, number> {
-  const resumo: Record<Situacao, number> = {
+  hoje: string,
+): Record<SituacaoNaTela, number> {
+  const resumo: Record<SituacaoNaTela, number> = {
     aguardando: 0,
     em_andamento: 0,
     concluida: 0,
     faltou: 0,
+    sem_nota: 0,
   };
-  for (const item of itens) resumo[item.situacao] += 1;
+  for (const item of itens) resumo[situacaoNaTela(item, hoje)] += 1;
   return resumo;
+}
+
+/** "08:15": a hora de agora em Brasília (a da agenda). */
+export function horaEmBrasilia(agora: Date = new Date()): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(agora);
+}
+
+/**
+ * A próxima entrevista de hoje: a primeira que ainda aguarda a partir de
+ * agora; sem nenhuma depois de agora, a primeira que aguarda hoje. Sem
+ * nenhuma aguardando hoje, nada.
+ */
+export function proximaDoDia(
+  fila: ItemDaFila[],
+  hoje: string,
+  agora: string,
+): ItemDaFila | null {
+  const aguardando = fila.filter(
+    (i) => i.data === hoje && i.situacao === "aguardando",
+  );
+  return (
+    aguardando.find((i) => (i.inicio ?? "") >= agora) ?? aguardando[0] ?? null
+  );
+}
+
+/** As bancas da fila, em ordem. */
+export function bancasDaFila(fila: ItemDaFila[]): number[] {
+  return [
+    ...new Set(fila.map((i) => i.banca).filter((b): b is number => b !== null)),
+  ].sort((a, b) => a - b);
 }
 
 /** "Hoje", "Amanhã" ou "qua., 09/10". */

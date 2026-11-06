@@ -8,7 +8,9 @@ import {
 import {
   contadorDoDia,
   contagemDosRecortes,
-  iniciais,
+  horaEmBrasilia,
+  proximaDoDia,
+  situacaoNaTela,
   montarFila,
   progressoDoConvocado,
   recortarFila,
@@ -237,19 +239,37 @@ describe("fila de Conduzir entrevistas", () => {
       completo: true,
     });
     expect(contadorDoDia(fila, "2026-10-01").completo).toBe(false);
-    expect(resumoDasSituacoes(fila)).toEqual({
+    expect(resumoDasSituacoes(fila, HOJE)).toEqual({
       aguardando: 3,
       em_andamento: 1,
       concluida: 1,
       faltou: 1,
+      sem_nota: 0,
     });
+    // Sem nota: aguardando ou em andamento depois do dia marcado.
+    const depois = "2026-10-20";
+    expect(fila.map((i) => situacaoNaTela(i, depois))).toEqual(
+      fila.map((i) =>
+        i.data && (i.situacao === "aguardando" || i.situacao === "em_andamento")
+          ? "sem_nota"
+          : i.situacao,
+      ),
+    );
+    expect(resumoDasSituacoes(fila, depois).sem_nota).toBeGreaterThan(0);
   });
 
-  it("iniciais do avatar e o rótulo do dia", () => {
-    expect(iniciais("Ana Lúcia Terena")).toBe("AT");
-    expect(iniciais("Carla da Silva")).toBe("CS");
-    expect(iniciais("Bruno")).toBe("BR");
-    expect(iniciais("  ")).toBe("?");
+  it("a próxima do dia: a primeira que aguarda a partir de agora", () => {
+    const deHoje = fila.filter(
+      (i) => i.data === HOJE && i.situacao === "aguardando",
+    );
+    expect(proximaDoDia(fila, HOJE, "00:00")).toBe(deHoje[0]);
+    // Depois da última: a primeira que ainda aguarda hoje.
+    expect(proximaDoDia(fila, HOJE, "23:59")).toBe(deHoje[0] ?? null);
+    expect(proximaDoDia(fila, "2000-01-01", "08:00")).toBeNull();
+    expect(horaEmBrasilia(new Date("2026-10-07T13:05:00Z"))).toBe("10:05");
+  });
+
+  it("o rótulo do dia", () => {
     expect(rotuloDoDia(HOJE, HOJE)).toBe("Hoje");
     expect(rotuloDoDia("2026-10-08", HOJE)).toBe("Amanhã");
     expect(rotuloDoDia("2026-10-09", HOJE)).toBe("sex., 09/10");

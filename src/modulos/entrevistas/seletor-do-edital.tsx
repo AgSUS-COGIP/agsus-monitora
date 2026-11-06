@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { marcaDoEdital } from "../../lib/conducao-de-entrevista.ts";
 import {
@@ -10,19 +11,22 @@ import { LiberacaoDoEdital } from "./conducao.tsx";
 import type { EstadoDaConducao, EstadoDaConducaoComAcoes } from "./tipos.ts";
 
 /*
-  O edital de "Conduzir entrevistas", compacto, numa linha logo abaixo do
-  topo (como na Avaliação documental): o seletor e, ao lado, o selo
-  Treinamento. O administrador global tem, dentro do próprio seletor, a
+  O edital de "Conduzir entrevistas" no cabeçalho da tela (como nas telas
+  da seleção): o campo "Edital" e, ao lado, o selo Treinamento. O administrador global tem, dentro do próprio seletor, a
   opção de mostrar também os editais fora da janela (concluídos ou ainda sem
   janela) — e a liberação de um edital fora da janela. Recarregar é o
   "Atualizar" do topo. Os erros vêm logo abaixo, com "Tentar novamente" (os dos roteiros
   ficam em Preparar, onde eles aparecem).
+
+  `usarSeletorDoEdital` devolve as duas partes: o `campo` (vai no cabeçalho)
+  e os `avisos` (a classificação da etapa, a liberação e os erros, logo
+  abaixo dele).
 */
 
 const MOSTRAR_TODOS = "__mostrar-todos__";
 const SO_NA_JANELA = "__so-na-janela__";
 
-export function SeletorDoEdital({
+export function usarSeletorDoEdital({
   conducao,
   e,
   doPainel = [],
@@ -30,7 +34,7 @@ export function SeletorDoEdital({
   conducao: EstadoDaConducaoComAcoes;
   e: EstadoDaConducao;
   doPainel?: unknown[];
-}) {
+}): { campo: ReactNode; avisos: ReactNode } {
   const { editais } = e;
   const [editar, setEditar] = useState(false);
   const [situacao, setSituacao] = useState<
@@ -47,99 +51,102 @@ export function SeletorDoEdital({
   const recarregarEditais = (todos = editais.todos) =>
     void conducao.carregarEditais(e.area, doPainel, { todos });
 
-  return (
-    <>
-      <section
-        className="ui-card entrevistas-seletor-do-edital"
-        aria-label="Edital"
-        data-tour="entrevistas-conduzir-edital"
-      >
-        <label className="entrevistas-seletor-campo">
-          <span className="entrevistas-seletor-rotulo">Edital</span>
-          <select
-            id="entrevistasEdital"
-            data-tour="entrevistas-conduzir-seletor-edital"
-            value={e.editalId}
-            disabled={editais.carregando}
-            onChange={(ev) => {
-              const valor = ev.target.value;
-              if (valor === MOSTRAR_TODOS || valor === SO_NA_JANELA) {
-                recarregarEditais(valor === MOSTRAR_TODOS);
-                return;
-              }
-              conducao.abrirFicha(null);
-              void conducao.abrirEdital(valor);
-            }}
-          >
-            <option value="">
-              {editais.carregando
-                ? "Carregando editais…"
-                : vazio
-                  ? "Nenhum edital na janela da entrevista"
-                  : "Escolha o edital…"}
+  const campo = (
+    <div
+      className="entrevistas-seletor-do-edital"
+      role="group"
+      aria-label="Edital"
+      data-tour="entrevistas-conduzir-edital"
+    >
+      <label className="entrevistas-seletor-campo">
+        <span className="entrevistas-seletor-rotulo">Edital</span>
+        <select
+          id="entrevistasEdital"
+          data-tour="entrevistas-conduzir-seletor-edital"
+          value={e.editalId}
+          disabled={editais.carregando}
+          onChange={(ev) => {
+            const valor = ev.target.value;
+            if (valor === MOSTRAR_TODOS || valor === SO_NA_JANELA) {
+              recarregarEditais(valor === MOSTRAR_TODOS);
+              return;
+            }
+            conducao.abrirFicha(null);
+            void conducao.abrirEdital(valor);
+          }}
+        >
+          <option value="">
+            {editais.carregando
+              ? "Carregando editais…"
+              : vazio
+                ? "Nenhum edital na janela da entrevista"
+                : "Escolha o edital…"}
+          </option>
+          {editais.lista.map((m) => (
+            <option key={m.id} value={m.id}>
+              {[m.edital, m.unidade].filter(Boolean).join(" · ")}
+              {m.comEntrevistas ? " · com entrevistas" : ""}
+              {marcaDoEdital(m) ? ` · ${marcaDoEdital(m)}` : ""}
+              {sufixoDeTreinamento(m)}
             </option>
-            {editais.lista.map((m) => (
-              <option key={m.id} value={m.id}>
-                {[m.edital, m.unidade].filter(Boolean).join(" · ")}
-                {m.comEntrevistas ? " · com entrevistas" : ""}
-                {marcaDoEdital(m) ? ` · ${marcaDoEdital(m)}` : ""}
-                {sufixoDeTreinamento(m)}
-              </option>
-            ))}
-            {editais.admin ? (
-              <optgroup label="Mais editais">
-                {editais.todos ? (
-                  <option value={SO_NA_JANELA}>
-                    Mostrar só os editais na janela da entrevista
-                  </option>
-                ) : (
-                  <option value={MOSTRAR_TODOS}>
-                    Mostrar também os concluídos e fora da janela
-                  </option>
-                )}
-              </optgroup>
-            ) : null}
-          </select>
-        </label>
-        <SeloDeTreinamento edital={escolhido} className={undefined} />
-        {e.editalId && e.previsao && !e.carregandoEdital ? (
-          <span
-            className="entrevistas-seletor-marca"
-            role="status"
-            title={e.previsao.motivo || "Etapa ainda não confirmada"}
-          >
-            {e.previsao.situacao === "NAO_PREVISTA"
-              ? "Entrevistas não previstas"
-              : e.previsao.situacao === "PREVISTA"
-                ? "Entrevistas previstas"
-                : "Entrevistas: não informado"}
-          </span>
-        ) : null}
-        {e.editalId && e.previsao?.pode_alterar && !e.carregandoEdital ? (
-          <button
-            type="button"
-            className="btn secondary small"
-            onClick={() => {
-              setSituacao(e.previsao?.situacao || "NAO_INFORMADA");
-              setMotivo("");
-              setEditar(!editar);
-            }}
-          >
-            Classificar etapa
-          </button>
-        ) : null}
-        {editais.admin && editais.todos ? (
-          <span className="entrevistas-seletor-marca">
-            Todos os editais da área
-          </span>
-        ) : null}
-        {e.carregandoEdital ? (
-          <span className="entrevistas-seletor-carregando" role="status">
-            <i className="fa-solid fa-spinner fa-spin" aria-hidden="true" />{" "}
-            Abrindo o edital…
-          </span>
-        ) : null}
-      </section>
+          ))}
+          {editais.admin ? (
+            <optgroup label="Mais editais">
+              {editais.todos ? (
+                <option value={SO_NA_JANELA}>
+                  Mostrar só os editais na janela da entrevista
+                </option>
+              ) : (
+                <option value={MOSTRAR_TODOS}>
+                  Mostrar também os concluídos e fora da janela
+                </option>
+              )}
+            </optgroup>
+          ) : null}
+        </select>
+      </label>
+      <SeloDeTreinamento edital={escolhido} className={undefined} />
+      {e.editalId && e.previsao && !e.carregandoEdital ? (
+        <span
+          className="entrevistas-seletor-marca"
+          role="status"
+          title={e.previsao.motivo || "Etapa ainda não confirmada"}
+        >
+          {e.previsao.situacao === "NAO_PREVISTA"
+            ? "Entrevistas não previstas"
+            : e.previsao.situacao === "PREVISTA"
+              ? "Entrevistas previstas"
+              : "Entrevistas: não informado"}
+        </span>
+      ) : null}
+      {e.editalId && e.previsao?.pode_alterar && !e.carregandoEdital ? (
+        <button
+          type="button"
+          className="btn secondary small"
+          onClick={() => {
+            setSituacao(e.previsao?.situacao || "NAO_INFORMADA");
+            setMotivo("");
+            setEditar(!editar);
+          }}
+        >
+          Classificar etapa
+        </button>
+      ) : null}
+      {editais.admin && editais.todos ? (
+        <span className="entrevistas-seletor-marca">
+          Todos os editais da área
+        </span>
+      ) : null}
+      {e.carregandoEdital ? (
+        <span className="entrevistas-seletor-carregando" role="status">
+          <i className="fa-solid fa-spinner fa-spin" aria-hidden="true" />{" "}
+          Abrindo o edital…
+        </span>
+      ) : null}
+    </div>
+  );
+  const avisos = (
+    <>
       {editar && e.previsao?.pode_alterar && e.editalId ? (
         <form
           className="ui-card"
@@ -228,4 +235,5 @@ export function SeletorDoEdital({
       ) : null}
     </>
   );
+  return { campo, avisos };
 }

@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  agruparPorVaga,
-  buscarNaFila,
-  iniciais,
-  montarFila,
-  ordemDaTela,
-} from "../src/lib/fila-de-conducao.ts";
+import { buscarNaFila, montarFila } from "../src/lib/fila-de-conducao.ts";
 import {
   parecerPronto,
   textoDoParecerDaEntrevista,
@@ -26,32 +20,12 @@ import { frasesDaEliminacao } from "../src/lib/resumo-da-entrevista.ts";
 import { errosDoRoteiro } from "../src/lib/roteiro-de-entrevista.ts";
 
 /*
-  Entrevistas mais claras: as iniciais do avatar, a busca e o agrupamento da
-  fila por vaga, os passos de Preparar (com o que falta), a lista do que
+  Entrevistas mais claras: a busca e a ordem da fila, os passos de Preparar (com o que falta), a lista do que
   falta no editor do roteiro, as frases da eliminação e o parecer em texto
   pronto da ficha.
 */
 
 const HOJE = "2026-10-07";
-
-describe("iniciais do avatar", () => {
-  it("primeiro e último nome, sem números, códigos nem partículas", () => {
-    expect(iniciais("Candidato Teste 03")).toBe("CT");
-    expect(iniciais("Candidato Teste 13")).toBe("CT");
-    expect(iniciais("Maria das Dores da Silva")).toBe("MS");
-    expect(iniciais("José de Souza Terena")).toBe("JT");
-    expect(iniciais("Ana Lúcia Terena")).toBe("AT");
-    expect(iniciais("Érica d'Ávila")).toBe("ÉD");
-    expect(iniciais("Bruno")).toBe("BR");
-    expect(iniciais("Candidato 1")).toBe("CA");
-    expect(iniciais("João Pedro - 2º")).toBe("JP");
-  });
-  it("sem palavra com letra: os primeiros caracteres; vazio: ?", () => {
-    expect(iniciais("12345")).toBe("12");
-    expect(iniciais("  ")).toBe("?");
-    expect(iniciais(null)).toBe("?");
-  });
-});
 
 const convocado = (n, extra = {}) => ({
   id: `e${n}`,
@@ -92,22 +66,6 @@ describe("fila: busca, vaga e ordem", () => {
     ]);
   });
 
-  it("agrupa por vaga, com o cargo; sem vaga fica no fim", () => {
-    const grupos = agruparPorVaga(fila);
-    expect(grupos.map((g) => [g.vaga, g.cargo, g.itens.length])).toEqual([
-      ["V1", "Enfermeiro", 2],
-      ["V2", "Técnico", 1],
-      ["", "Enfermeiro", 1],
-    ]);
-    // A ordem do "Salvar e abrir o próximo" é a da tela, vaga a vaga.
-    expect(ordemDaTela(fila).map((i) => i.id)).toEqual([
-      "e2",
-      "e3",
-      "e1",
-      "e4",
-    ]);
-  });
-
   it("busca por nome (sem acento) ou código, palavra por palavra", () => {
     expect(buscarNaFila(fila, "ana iris").map((i) => i.id)).toEqual(["e2"]);
     expect(buscarNaFila(fila, "43015").map((i) => i.id)).toEqual(["e3"]);
@@ -135,7 +93,7 @@ describe("passos de Preparar", () => {
       ["convocacao", "feito", "2 convocados"],
       ["agenda", "feito", "2 horários"],
     ]);
-    expect(textoDoAndamento(passos)).toBe("4 de 4 prontos");
+    expect(textoDoAndamento(passos)).toBe("4 de 4 passos prontos");
     expect(passoInicial(passos)).toBe(0);
   });
 
@@ -155,7 +113,7 @@ describe("passos de Preparar", () => {
       ["Gere a lista de convocação na Classificação."],
       ["Convoque os candidatos antes de montar a agenda."],
     ]);
-    expect(textoDoAndamento(passos)).toBe("0 de 4 prontos");
+    expect(textoDoAndamento(passos)).toBe("0 de 4 passos prontos");
     expect(passoInicial(passos)).toBe(0);
   });
 

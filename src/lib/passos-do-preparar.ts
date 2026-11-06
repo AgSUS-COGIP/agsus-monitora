@@ -141,10 +141,10 @@ export function passoInicial(passos: PassoDoPreparar[]): number {
   return i < 0 ? 0 : i;
 }
 
-/** "3 de 4 prontos". */
+/** "3 de 4 passos prontos". */
 export function textoDoAndamento(passos: PassoDoPreparar[]): string {
   const feitos = passos.filter((p) => p.estado === "feito").length;
-  return `${feitos} de ${passos.length} ${feitos === 1 ? "pronto" : "prontos"}`;
+  return `${feitos} de ${passos.length} passos ${feitos === 1 ? "pronto" : "prontos"}`;
 }
 
 /* ── Agenda (só leitura) ───────────────────────────────────────────── */

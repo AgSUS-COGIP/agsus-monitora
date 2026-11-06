@@ -17,6 +17,7 @@ import {
   textoDoEmpateFinal,
 } from "../../lib/convocacao-da-entrevista.ts";
 import { hojeEmBrasilia } from "../../lib/fila-de-conducao.ts";
+import { dataBR } from "../../lib/classificacao/numeros.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import {
   agendaPorDia,
@@ -33,6 +34,8 @@ import {
   type EntradaDoResumo,
 } from "../../lib/resumo-da-entrevista.ts";
 import { EstadoVazio, Selo } from "../../ui/index.ts";
+import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
+import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
 import {
   BotaoIrPara,
@@ -67,8 +70,13 @@ import type {
                   Classificação › Agenda; aqui só se lê).
 
   Cada passo tem o estado (feito / pendente) e a lista do que falta
-  (src/lib/passos-do-preparar.ts); Preparar abre no primeiro pendente. O
-  resumo "Regras da entrevista" fica no topo. Os passos 1 e 2 mostram o
+  (src/lib/passos-do-preparar.ts); Preparar abre no primeiro pendente (ou
+  no passo da URL, ?passo=). O layout das telas da seleção: no topo, num
+  card, "N de 4 passos prontos" com a barra dos quatro, o período das
+  entrevistas (da agenda) e as "Regras da entrevista" (o resumo, recolhível);
+  embaixo, a trilha dos passos à esquerda (número, nome, Pronto ou Pendente
+  e o resumo) e, à direita, o passo escolhido: o que falta em destaque e o
+  conteúdo dele. Os passos 1 e 2 mostram o
   roteiro e a banca gravados (editor-da-configuracao.tsx) com "Editar nas
   Regras do edital": a configuração se edita em Editais › Regras do edital,
   etapa Entrevista, com o mesmo componente. Os roteiros da área (editar,
@@ -180,6 +188,20 @@ function AgendaDoEdital({ e, dados }: { e: EstadoDaConducao; dados: Dados }) {
 
 /* ── Os passos ─────────────────────────────────────────────────────── */
 
+/* O passo escolhido na URL (?passo=banca); trocar não enche o histórico. */
+const ESQUEMA_DO_PASSO: EsquemaDosFiltros<"passo"> = Object.freeze({
+  passo: {
+    padrao: "",
+    aceita: (passo: string) =>
+      ["roteiro", "banca", "convocacao", "agenda"].includes(passo),
+  },
+});
+
+/*
+  A trilha dos passos (à esquerda): o número (ou o check, pronto), o nome,
+  o selo Pronto / Pendente e uma linha — o resumo do que está pronto ou o
+  primeiro que falta. O escolhido fica marcado (`aria-current="step"`).
+*/
 function NavegacaoDosPassos({
   passos,
   atual,
@@ -191,7 +213,7 @@ function NavegacaoDosPassos({
 }) {
   return (
     <nav
-      className="entrevistas-passos"
+      className="ui-card entrevistas-passos"
       aria-label="Passos da preparação"
       data-tour="entrevistas-preparar-passos"
     >
@@ -216,9 +238,19 @@ function NavegacaoDosPassos({
                   i + 1
                 )}
               </span>
-              <span className="entrevistas-passo-rotulo">{p.rotulo}</span>
-              <span className="entrevistas-passo-resumo">
-                {p.estado === "feito" ? p.resumo : "Pendente"}
+              <span className="entrevistas-passo-texto">
+                <span className="entrevistas-passo-topo">
+                  <span className="entrevistas-passo-rotulo">{p.rotulo}</span>
+                  <Selo
+                    tom={p.estado === "feito" ? "aprovado" : "pendente"}
+                    ponto
+                  >
+                    {p.estado === "feito" ? "Pronto" : "Pendente"}
+                  </Selo>
+                </span>
+                <span className="entrevistas-passo-resumo">
+                  {p.estado === "feito" ? p.resumo : (p.falta[0] ?? "")}
+                </span>
               </span>
             </button>
           </li>
@@ -314,8 +346,24 @@ function PrepararDoEdital({
       e.agenda,
     ],
   );
-  const [atual, setAtual] = useState(() => passoInicial(passos));
+  // O passo na URL (?passo=convocacao); sem ele, o primeiro pendente.
+  const [naUrl, mudarNaUrl] = usarFiltrosNaUrl(ESQUEMA_DO_PASSO);
+  const doUrl = passos.findIndex((p) => p.id === naUrl.passo);
+  const atual = doUrl >= 0 ? doUrl : passoInicial(passos);
+  const setAtual = (i: number) => {
+    const id = passos[i]?.id;
+    if (id) mudarNaUrl({ passo: id });
+  };
   const passo = passos[atual] ?? passos[0]!;
+  const periodo = useMemo(() => {
+    const dias = agendaPorDia(e.agenda, dados.convocados, "").dias;
+    const primeiro = dias[0]?.data;
+    const ultimo = dias[dias.length - 1]?.data;
+    if (!primeiro || !ultimo) return "";
+    return primeiro === ultimo
+      ? `Entrevistas em ${dataBR(primeiro)}`
+      : `Entrevistas de ${dataBR(primeiro)} a ${dataBR(ultimo)}`;
+  }, [e.agenda, dados.convocados]);
 
   /* O pedido de abrir um roteiro no editor (o "Editar" de "Como a nota é calculada"). */
   const [pedido, setPedido] = useState<PedidoDeRoteiro | null>(null);
@@ -364,51 +412,74 @@ function PrepararDoEdital({
     [entrada],
   );
 
+  const prontos = passos.filter((p) => p.estado === "feito").length;
   return (
-    <>
-      <ResumoDasRegras
-        entrada={entrada}
-        aoIr={ir}
-        podeIr={podeIr}
-        detalhes={<ConvocacaoDaClassificacao dados={dados} grupos={grupos} />}
-      />
+    <div className="entrevistas-preparar" data-tour="entrevistas-preparar">
       <section
-        className="ui-card entrevistas-preparar"
-        aria-labelledby="entrevistasPrepararTitulo"
-        data-tour="entrevistas-preparar"
+        className="ui-card entrevistas-preparar-topo"
+        aria-label="Andamento da preparação"
       >
-        <header className="entrevistas-preparar-topo">
-          <h2 className="ui-titulo" id="entrevistasPrepararTitulo">
-            Preparar a entrevista
-          </h2>
-          <span
+        <div className="entrevistas-preparar-andamento-bloco">
+          <span className="ui-texto-secundario">Preparação</span>
+          <strong
             className="entrevistas-preparar-andamento"
-            data-completo={
-              passos.every((p) => p.estado === "feito") ? "sim" : undefined
-            }
+            data-completo={prontos === passos.length ? "sim" : undefined}
           >
             {textoDoAndamento(passos)}
-          </span>
-        </header>
+          </strong>
+        </div>
+        <span
+          className="entrevistas-preparar-barra"
+          role="img"
+          aria-label={`Passos: ${passos
+            .map(
+              (p) =>
+                `${p.rotulo} ${p.estado === "feito" ? "pronto" : "pendente"}`,
+            )
+            .join(", ")}`}
+        >
+          {passos.map((p) => (
+            <span key={p.id} data-estado={p.estado} />
+          ))}
+        </span>
+        {periodo ? (
+          <span className="entrevistas-preparar-periodo">{periodo}</span>
+        ) : null}
+        <details className="entrevistas-preparar-regras">
+          <summary>Regras da entrevista</summary>
+          <ResumoDasRegras
+            entrada={entrada}
+            aoIr={ir}
+            podeIr={podeIr}
+            detalhes={
+              <ConvocacaoDaClassificacao dados={dados} grupos={grupos} />
+            }
+          />
+        </details>
+      </section>
 
+      <div className="entrevistas-preparar-colunas">
         <NavegacaoDosPassos
           passos={passos}
           atual={atual}
           aoEscolher={setAtual}
         />
 
-        <div
-          className="entrevistas-preparar-corpo"
+        <section
+          className="ui-card entrevistas-preparar-corpo"
           ref={corpo}
+          aria-labelledby="entrevistasPrepararTitulo"
           data-passo-atual={passo.id}
           key={passo.id}
         >
           <div className="entrevistas-preparar-titulo">
-            <h3>
-              <i className={`fa-solid ${passo.icone}`} aria-hidden="true" />{" "}
+            <h2 className="ui-titulo" id="entrevistasPrepararTitulo">
               {atual + 1}. {passo.rotulo}
-            </h3>
-            <Selo tom={passo.estado === "feito" ? "aprovado" : "pendente"}>
+            </h2>
+            <Selo
+              tom={passo.estado === "feito" ? "aprovado" : "pendente"}
+              ponto
+            >
               {passo.estado === "feito" ? "Pronto" : "Pendente"}
             </Selo>
           </div>
@@ -485,31 +556,9 @@ function PrepararDoEdital({
           {passo.id === "agenda" ? (
             <AgendaDoEdital e={e} dados={dados} />
           ) : null}
-        </div>
-
-        <div className="entrevistas-preparar-navegacao">
-          <button
-            type="button"
-            className="btn secondary"
-            disabled={atual === 0}
-            onClick={() => setAtual(atual - 1)}
-          >
-            <i className="fa-solid fa-arrow-left" aria-hidden="true" /> Voltar
-          </button>
-          {atual < passos.length - 1 ? (
-            <button
-              type="button"
-              className="btn secondary"
-              data-acao="proximo-passo"
-              onClick={() => setAtual(atual + 1)}
-            >
-              {passos[atual + 1]?.rotulo}{" "}
-              <i className="fa-solid fa-arrow-right" aria-hidden="true" />
-            </button>
-          ) : null}
-        </div>
-      </section>
-    </>
+        </section>
+      </div>
+    </div>
   );
 }
 
