@@ -18,7 +18,7 @@ import {
 import { contornosValidos } from "../src/lib/mapa-saude-indigena/contornos-dos-dseis.ts";
 
 /*
-  O "Mapa simples" sem Leaflet (src/lib/mapa-saude-indigena/): a numeração
+  O "Mapa DSEIs" sem Leaflet (src/lib/mapa-saude-indigena/): a numeração
   oficial dos 34 DSEIs, as faixas da cor, o "sem dado", a dica e os contornos
   aceitos do arquivo local.
 */

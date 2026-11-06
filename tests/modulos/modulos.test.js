@@ -1,8 +1,8 @@
 import { act } from "react";
-import { montarTela } from "../montar-tela.js";
+import { montarTela } from "../montar-tela.ts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { criarModulos } from "../../src/modulos/modulos/modulos.tsx";
-import { clicar, digitar, esperar } from "../componentes/interacoes.js";
+import { clicar, digitar, esperar } from "../componentes/interacoes.ts";
 
 /*
   Configurações › Módulos e abas: só o admin global vê; as mudanças se

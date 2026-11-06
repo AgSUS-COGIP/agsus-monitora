@@ -5,8 +5,8 @@ import {
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { criarPreClassificacao } from "../../src/modulos/avaliacao-documental/entrada-da-pre-classificacao.tsx";
-import { esperar } from "../componentes/interacoes.js";
-import { montarTela } from "../montar-tela.js";
+import { esperar } from "../componentes/interacoes.ts";
+import { montarTela } from "../montar-tela.ts";
 
 /* A página não acessa a RPC de triagem até o backend confirmar
    pode_coordenar para aquele edital; perfil que só lê Seleção não a libera. */

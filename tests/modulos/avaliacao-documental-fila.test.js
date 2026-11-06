@@ -1,4 +1,4 @@
-import { renders } from "../componentes/contar-renders.js";
+import { renders } from "../componentes/contar-renders.ts";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -17,8 +17,8 @@ import {
   escolher,
   esperar,
   teclar,
-} from "../componentes/interacoes.js";
-import { montarTela } from "../montar-tela.js";
+} from "../componentes/interacoes.ts";
+import { montarTela } from "../montar-tela.ts";
 
 /*
   A aba Fila da Avaliação documental (fase F3): etapas com contadores,

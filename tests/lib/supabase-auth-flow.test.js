@@ -6,7 +6,7 @@ import {
   openLoginPopup,
   supportsLoginPopup,
 } from "../../src/lib/auth-flow";
-import { htmlDaPagina } from "../pagina-montada.js";
+import { htmlDaPagina } from "../pagina-montada.ts";
 
 function source(path) {
   return readFileSync(path, "utf8");

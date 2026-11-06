@@ -4,7 +4,7 @@ import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { CampoEditavel } from "../../src/modulos/aprovados/partes.tsx";
 import { lerInteiro } from "../../src/lib/configuracao-de-convocacao.ts";
 import { lerTermos } from "../../src/lib/modelo-de-convocacao.ts";
-import { digitar } from "./interacoes.js";
+import { digitar } from "./interacoes.ts";
 let raiz;
 beforeEach(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;

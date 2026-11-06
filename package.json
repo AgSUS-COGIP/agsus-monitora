@@ -33,9 +33,10 @@
     "aya:conhecimento": "node scripts/compilar-conhecimento-aya.mjs",
     "icones": "node scripts/gerar-icones-lucide.mjs",
     "start": "node server/servidor.ts",
-    "typecheck": "npm run typecheck:servidor && npm run typecheck:frontend",
+    "typecheck": "npm run typecheck:servidor && npm run typecheck:frontend && npm run typecheck:testes",
     "typecheck:servidor": "tsc -p tsconfig.json",
     "typecheck:frontend": "tsc -p tsconfig.frontend.json",
+    "typecheck:testes": "tsc -p tsconfig.tests.json",
     "test:smoke:servidor": "node scripts/test-servidor-smoke.mjs"
   },
   "dependencies": {

@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { fonteDoApp } from "./fonte-do-app.js";
+import { fonteDoApp } from "./fonte-do-app.ts";
 import { describe, expect, it } from "vitest";
 
 const html = readFileSync("index.html", "utf8");

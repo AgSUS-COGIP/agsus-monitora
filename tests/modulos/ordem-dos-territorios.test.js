@@ -6,13 +6,13 @@ import { ordenarTerritorios } from "../../src/lib/mapa-saude-indigena/ordem-dos-
 import { EVENTO_DO_FUNDO } from "../../src/modules/map-base-layer-switcher.ts";
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
 import { CHAVE_DA_ORDEM } from "../../src/modulos/mapa-saude-indigena/ordem-da-lista.tsx";
-import { escolher, esperar } from "../componentes/interacoes.js";
+import { escolher, esperar } from "../componentes/interacoes.ts";
 import { criarLeafletFalso } from "./leaflet-falso.js";
 
 /*
   "Ordenar" da lista de territórios ao lado do mapa nacional da Saúde
   Indígena: cada ordem, o título que acompanha, o padrão por fundo (Vagas no
-  Mapa, Nº do DSEI no Mapa simples) e a escolha guardada no navegador, que
+  Mapa, Nº do DSEI no Mapa DSEIs) e a escolha guardada no navegador, que
   passa a valer para os dois.
 */
 
@@ -203,7 +203,7 @@ describe("Ordenar a lista de territórios", () => {
       await escolher(seletor(), ordem);
       expect(titulo()).toBe(esperado);
       expect(nomes()).toEqual(linhas);
-      // Fora do Mapa simples, o número da linha é a posição na nova ordem.
+      // Fora do Mapa DSEIs, o número da linha é a posição na nova ordem.
       expect(
         [...host.querySelectorAll(".mapa-si-territorio__posicao")].map(
           (p) => p.textContent,
@@ -212,7 +212,7 @@ describe("Ordenar a lista de territórios", () => {
     },
   );
 
-  it("no Mapa simples, o padrão é pelo nº do DSEI; ao voltar ao Mapa, por vagas", async () => {
+  it("no Mapa DSEIs, o padrão é pelo nº do DSEI; ao voltar ao Mapa, por vagas", async () => {
     preparar({ simples: true });
     await montar();
     await vi.waitFor(() =>

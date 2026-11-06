@@ -1,7 +1,7 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
-import { clicar, esperar } from "../componentes/interacoes.js";
+import { clicar, esperar } from "../componentes/interacoes.ts";
 import { aberturaPelasChamadasDeAntes } from "../componentes/abertura-dos-aprovados.js";
 import { compactarCandidatos } from "../componentes/candidatos-compactos-falsos.js";
 import { criarEstadoDaListaDeAprovados } from "../../src/modulos/aprovados/estado.ts";

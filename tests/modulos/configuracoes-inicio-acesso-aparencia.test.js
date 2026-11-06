@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { fonteDoApp } from "../fonte-do-app.js";
+import { fonteDoApp } from "../fonte-do-app.ts";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -24,7 +24,7 @@ import {
   digitar,
   escolher,
   esperar,
-} from "../componentes/interacoes.js";
+} from "../componentes/interacoes.ts";
 
 /*
   Configurações › Página inicial, Tela de acesso e Aparência em React (etapa

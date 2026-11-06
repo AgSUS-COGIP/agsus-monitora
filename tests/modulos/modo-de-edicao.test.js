@@ -15,7 +15,7 @@ import {
 } from "../../src/modulos/mapa-de-projetos/carregador.ts";
 import { MapaDeProjetos } from "../../src/modulos/mapa-de-projetos/mapa-de-projetos.tsx";
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
-import { clicar, esperar, teclar } from "../componentes/interacoes.js";
+import { clicar, esperar, teclar } from "../componentes/interacoes.ts";
 import { criarLeafletFalso } from "./leaflet-falso.js";
 import { carregarEditorDeCoordenadas } from "../../src/modulos/editor-de-coordenadas/editor-sob-demanda.ts";
 

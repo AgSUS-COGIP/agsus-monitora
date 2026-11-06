@@ -26,9 +26,9 @@ import { carregarContornos, podeFlutuar } from "./leaflet.ts";
 import { usarUltimo } from "./usar-ultimo.ts";
 
 /*
-  O "MAPA SIMPLES" NO LEAFLET
+  O "MAPA DSEIs" NO LEAFLET
 
-  Quando a pessoa escolhe "Mapa simples" no seletor do fundo
+  Quando a pessoa escolhe "Mapa DSEIs" no seletor do fundo
   (`map-base-layer-switcher.ts`), o mapa fica sem azulejos e este módulo
   desenha, num pane próprio abaixo das Terras Indígenas: a silhueta do Brasil,
   os 34 DSEIs chapados (contornos locais, `contornos-dos-dseis.ts`) e o número
@@ -150,7 +150,7 @@ export interface OpcoesDoMapaSimples {
 }
 
 /*
-  Desenha o Mapa simples enquanto `ativo`; ao sair dele (ou ao desmontar),
+  Desenha o Mapa DSEIs enquanto `ativo`; ao sair dele (ou ao desmontar),
   tira tudo do mapa. Os contornos chegam uma vez (`carregarContornosDosDseis`).
 */
 export function usarMapaSimples({
@@ -326,7 +326,7 @@ function AmostraDoToken({ token }: { token: string }) {
 }
 
 /*
-  A legenda do Mapa simples: "Colorir por" (rádios nativos: setas e Tab de
+  A legenda do Mapa DSEIs: "Colorir por" (rádios nativos: setas e Tab de
   graça), as faixas da cor com o texto de cada uma, e o interruptor dos pontos
   (sedes dos DSEIs e CASAIs nacionais), desligados de início.
 */

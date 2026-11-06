@@ -1,4 +1,4 @@
-import { renders } from "../componentes/contar-renders.js";
+import { renders } from "../componentes/contar-renders.ts";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -6,7 +6,7 @@ import { criarEstadoDaFila } from "../../src/modulos/avaliacao-documental/estado
 import { Fila } from "../../src/modulos/avaliacao-documental/fila.tsx";
 import * as telaDaPre from "../../src/lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import * as libDaFila from "../../src/lib/avaliacao-documental/fila.ts";
-import { clicar, escolher, esperar } from "../componentes/interacoes.js";
+import { clicar, escolher, esperar } from "../componentes/interacoes.ts";
 
 /*
   Quanto a Fila redesenha e reconta numa lista do tamanho do 114/2026 (7.726

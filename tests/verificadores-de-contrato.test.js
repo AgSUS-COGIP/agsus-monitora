@@ -231,11 +231,11 @@ describe("reutilização de servidor no Playwright", () => {
 */
 describe("segurança dos testes", () => {
   const configVitest = readFileSync("vitest.config.js", "utf8");
-  const guarda = readFileSync("tests/setup/rede-bloqueada.js", "utf8");
+  const guarda = readFileSync("tests/setup/rede-bloqueada.ts", "utf8");
 
   it("a rede é bloqueada por omissão em toda a suíte", () => {
     expect(configVitest).toContain("setupFiles");
-    expect(configVitest).toContain("tests/setup/rede-bloqueada.js");
+    expect(configVitest).toContain("tests/setup/rede-bloqueada.ts");
   });
 
   it("o bloqueio nomeia a URL em vez de falhar em silêncio", () => {

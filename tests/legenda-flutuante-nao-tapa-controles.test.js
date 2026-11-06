@@ -2,10 +2,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 /*
-  A legenda flutuante sobe do canto de baixo do mapa. A do Mapa simples nasce
+  A legenda flutuante sobe do canto de baixo do mapa. A do Mapa DSEIs nasce
   aberta e é a mais alta ("Colorir por", seis faixas, "Sedes e CASAIs"): numa
   moldura baixa (celular, janela baixa) ela subia por cima do "+ −" e do
-  seletor Mapa | Satélite | Mapa simples. A altura passa a ter teto — a
+  seletor Mapa | Satélite | Mapa DSEIs. A altura passa a ter teto — a
   moldura menos os controles do canto de cima — e o corpo rola por dentro.
 */
 const css = readFileSync(

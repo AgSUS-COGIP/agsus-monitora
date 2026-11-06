@@ -2,7 +2,7 @@ import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.ts";
 import { Avisos } from "../../src/app/casca/avisos.tsx";
-import { desenharNoTeste } from "../montar-tela.js";
+import { desenharNoTeste } from "../montar-tela.ts";
 import {
   obterSaida,
   redefinirSaida,
@@ -14,7 +14,7 @@ import {
   estadoDoSeletorDeTema,
   OPCOES_DE_TEMA,
 } from "../../src/componentes/barra-lateral/seletor-de-tema.ts";
-import { clicar, teclar } from "./interacoes.js";
+import { clicar, teclar } from "./interacoes.ts";
 
 /*
   O Sair confirmado e o seletor de tema do rodapé. Eram o legado

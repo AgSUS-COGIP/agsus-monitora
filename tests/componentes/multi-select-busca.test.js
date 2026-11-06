@@ -2,7 +2,7 @@ import { act, createElement, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MultiSelectBusca } from "../../src/componentes/multi-select-busca.tsx";
-import { clicar, digitar, teclar } from "./interacoes.js";
+import { clicar, digitar, teclar } from "./interacoes.ts";
 
 /*
   O select com busca e escolha múltipla, em React. Controlado: o teste faz de

@@ -1,7 +1,7 @@
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clicar, digitar, esperar } from "../componentes/interacoes.js";
+import { clicar, digitar, esperar } from "../componentes/interacoes.ts";
 import { criarEstadoDaClassificacao } from "../../src/modulos/classificacao/estado.ts";
 
 /*

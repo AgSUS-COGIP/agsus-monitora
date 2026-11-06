@@ -5305,14 +5305,15 @@ export const VERBETES_AYA = Object.freeze([
       "ordenar por numero do dsei",
     ],
     resposta:
-      'No MONITORA, "Territórios por vagas" lista os mesmos DSEIs que o mapa desenha, do que tem mais vagas para o que tem menos (empate decidido pela população). "Ordenar", no topo da lista, troca a ordem: Vagas, A–Z, Nº do DSEI (a numeração 1–34 do Mapa simples), % preenchidas ou Ociosas; empates vão pelo nome, e o título da lista acompanha a ordem. Sem escolha, a lista fica por vagas no Mapa e no Satélite e pelo nº do DSEI no Mapa simples; a escolha fica guardada neste navegador e vale para todos os fundos. A barra é o preenchimento: vagas menos ociosas, divididas pelas vagas. Acima de 80% preenchidas fica verde, de 41% a 80% amarela e até 40% vermelha. Clicar na linha abre o DSEI, como clicar na bolha.',
+      'No MONITORA, "Territórios por vagas" lista os mesmos DSEIs que o mapa desenha, do que tem mais vagas para o que tem menos (empate decidido pela população). "Ordenar", no topo da lista, troca a ordem: Vagas, A–Z, Nº do DSEI (a numeração 1–34 do Mapa DSEIs), % preenchidas ou Ociosas; empates vão pelo nome, e o título da lista acompanha a ordem. Sem escolha, a lista fica por vagas no Mapa e no Satélite e pelo nº do DSEI no Mapa DSEIs; a escolha fica guardada neste navegador e vale para todos os fundos. A barra é o preenchimento: vagas menos ociosas, divididas pelas vagas. Acima de 80% preenchidas fica verde, de 41% a 80% amarela e até 40% vermelha. Clicar na linha abre o DSEI, como clicar na bolha.',
     fato: "",
     fonte: "interface do MONITORA",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
-    titulo: "Mapa simples dos DSEIs",
+    titulo: "Mapa DSEIs",
     perguntas: [
+      "botao mapa dseis",
       "mapa simples",
       "numero do dsei no mapa",
       "colorir por",
@@ -5322,7 +5323,7 @@ export const VERBETES_AYA = Object.freeze([
       "contorno dos dseis",
     ],
     resposta:
-      'No MONITORA, o botão "Mapa simples" (ao lado de Mapa e Satélite, no mapa nacional da Saúde Indígena) troca o fundo de ruas por um fundo liso e pinta as áreas dos 34 DSEIs, cada uma com o seu número. A numeração é a ordem alfabética oficial: 1 Alagoas e Sergipe até 34 Yanomami; a lista "Territórios por vagas" mostra o mesmo número. "Colorir por" escolhe a cor: % preenchidas (padrão, cinco faixas de 20 pontos), vagas ociosas (cinco faixas pelos valores do recorte) ou uma cor fixa por DSEI. DSEI fora do recorte ou sem vaga fica cinza, "sem dado". Passar o mouse num DSEI realça a linha da lista e vice-versa; clicar abre o DSEI. Nesse modo as sedes, as CASAIs e as Terras Indígenas começam desligadas ("Sedes e CASAIs" e o botão "Terras Indígenas" as ligam). As áreas são as da camada de abrangência dos DSEIs publicada pela Funai (cópia de 20/04/2022): cobrem as regiões com atendimento, não o país inteiro.',
+      'No MONITORA, o botão "Mapa DSEIs" (ao lado de Mapa e Satélite, no mapa nacional da Saúde Indígena) troca o fundo de ruas por um fundo liso e pinta as áreas dos 34 DSEIs, cada uma com o seu número. A numeração é a ordem alfabética oficial: 1 Alagoas e Sergipe até 34 Yanomami; a lista "Territórios por vagas" mostra o mesmo número. "Colorir por" escolhe a cor: % preenchidas (padrão, cinco faixas de 20 pontos), vagas ociosas (cinco faixas pelos valores do recorte) ou uma cor fixa por DSEI. DSEI fora do recorte ou sem vaga fica cinza, "sem dado". Passar o mouse num DSEI realça a linha da lista e vice-versa; clicar abre o DSEI. Nesse modo as sedes, as CASAIs e as Terras Indígenas começam desligadas ("Sedes e CASAIs" e o botão "Terras Indígenas" as ligam). As áreas são as da camada de abrangência dos DSEIs publicada pela Funai (cópia de 20/04/2022): cobrem as regiões com atendimento, não o país inteiro.',
     fato: "",
     fonte: "interface do MONITORA; Funai, camada areas_dsei",
   },

@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
-import { fonteDoApp } from "../fonte-do-app.js";
+import { fonteDoApp } from "../fonte-do-app.ts";
 import { describe, expect, it } from "vitest";
-import { htmlDaPagina } from "../pagina-montada.js";
+import { htmlDaPagina } from "../pagina-montada.ts";
 
 /*
   Saúde Indígena, SEDE e Projetos abrem a mesma Visão geral (#page-dashboard,

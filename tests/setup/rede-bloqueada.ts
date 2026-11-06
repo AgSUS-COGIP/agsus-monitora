@@ -23,7 +23,7 @@ import { afterEach, beforeEach } from "vitest";
 
 const fetchOriginal = globalThis.fetch;
 
-function urlDe(entrada) {
+function urlDe(entrada: RequestInfo | URL | undefined): string {
   if (typeof entrada === "string") return entrada;
   if (entrada instanceof URL) return entrada.href;
   return entrada?.url || "(desconhecida)";

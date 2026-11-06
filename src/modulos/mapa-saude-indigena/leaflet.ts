@@ -157,7 +157,7 @@ export function adicionarFundo(
     });
     return camada;
   };
-  // No "Mapa simples" o fundo fica guardado, sem entrar (nenhum azulejo baixado).
+  // No "Mapa DSEIs" o fundo fica guardado, sem entrar (nenhum azulejo baixado).
   return adicionarCamadaDeFundo(mapa, montar());
 }
 
@@ -309,7 +309,7 @@ export function voltarAoBrasil(
 const GESTOS = ["pointerdown", "touchstart", "wheel", "keydown"];
 
 /*
-  Os controles que moram no canto do Leaflet (Mapa | Satélite | Mapa simples,
+  Os controles que moram no canto do Leaflet (Mapa | Satélite | Mapa DSEIs,
   Terras Indígenas, régua, créditos) não mexem na vista: clicar neles não é
   pegar o mapa. Só o "+ −" é. Antes, trocar o fundo contava como gesto e, daí
   em diante, o mapa deixava de reenquadrar o Brasil quando o card mudava de

@@ -2,12 +2,12 @@ import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { criarCalendarioEditais } from "../../src/modulos/cronograma/calendario-editais.tsx";
 import { ResponsaveisDoEdital } from "../../src/modulos/editais/responsaveis-do-edital.tsx";
-import { clicar, digitar, esperar } from "./interacoes.js";
+import { clicar, digitar, esperar } from "./interacoes.ts";
 import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { desenharNoTeste, montarTela } from "../montar-tela.js";
+import { desenharNoTeste, montarTela } from "../montar-tela.ts";
 import { criarEstadoDoResumoDoDia } from "../../src/modulos/resumo-do-dia/estado.ts";
 
 /*

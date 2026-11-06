@@ -2,7 +2,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import RegrasDoEdital from "../../src/modulos/regras-do-edital/regras-do-edital.tsx";
 import { lojasDasRegras } from "../../src/modulos/regras-do-edital/lojas.ts";
-import { esperar } from "./interacoes.js";
+import { esperar } from "./interacoes.ts";
 
 /*
   Monta a página Regras do edital (Editais › Regras do edital) numa etapa,

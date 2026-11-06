@@ -12,7 +12,7 @@ import {
   servicoDoPainel,
 } from "../../src/lib/carregamento-do-painel.ts";
 import { acompanharCarregamentoDoPainel } from "../../src/modulos/paineis-externos/carregamento-do-painel.tsx";
-import { montarPortaisNoTeste } from "../montar-tela.js";
+import { montarPortaisNoTeste } from "../montar-tela.ts";
 
 /*
   A cobertura do painel externo (src/modulos/paineis-externos/): o que está

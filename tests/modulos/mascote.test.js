@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import "../componentes/interacoes.js";
+import "../componentes/interacoes.ts";
 import { ErrorBoundary } from "../../src/app/ErrorBoundary.tsx";
 import {
   CHAVE_COMEMORACOES_PESSOAIS,

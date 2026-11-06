@@ -17,7 +17,7 @@ import {
   usarLojaNaUrl,
 } from "../../src/app/usar-filtros-na-url.ts";
 import { caminhoDoDestino, destinoDoCaminho } from "../../src/lib/rotas.ts";
-import "../componentes/interacoes.js";
+import "../componentes/interacoes.ts";
 
 /*
   Os filtros das telas da seleção na URL (Triagem, Avaliação documental,

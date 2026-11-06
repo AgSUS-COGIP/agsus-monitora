@@ -6,7 +6,7 @@ import { join } from "node:path";
   conferem que algo NÃO voltou (função antiga, chave abandonada, escrita
   direta numa tabela). O antigo src/modules/legacy-app.js virou src/app/.
 */
-function arquivos(pasta) {
+function arquivos(pasta: string): string[] {
   return readdirSync(pasta, { withFileTypes: true }).flatMap((item) => {
     const caminho = join(pasta, item.name);
     if (item.isDirectory()) return arquivos(caminho);
@@ -14,7 +14,7 @@ function arquivos(pasta) {
   });
 }
 
-export function fonteDoApp() {
+export function fonteDoApp(): string {
   return arquivos("src/app")
     .map((arquivo) => readFileSync(arquivo, "utf8"))
     .join("\n");
@@ -26,7 +26,7 @@ export function fonteDoApp() {
  * aconteceria com um replace de expressão regular (CodeQL
  * js/incomplete-multi-character-sanitization).
  */
-export function semTrechos(texto, abre, fecha) {
+export function semTrechos(texto: string, abre: string, fecha: string): string {
   let saida = "";
   let posicao = 0;
   for (;;) {

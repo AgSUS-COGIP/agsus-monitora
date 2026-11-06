@@ -11,7 +11,7 @@ import {
   src/lib/mapa-saude-indigena/ordem-dos-territorios.ts).
 
   Enquanto a pessoa não escolhe, a ordem segue o fundo: "Vagas" no Mapa e no
-  Satélite, "Nº do DSEI" no Mapa simples. Escolhida, fica guardada neste
+  Satélite, "Nº do DSEI" no Mapa DSEIs. Escolhida, fica guardada neste
   navegador e vale para os três fundos (sem armazenamento, vale até
   recarregar).
 */

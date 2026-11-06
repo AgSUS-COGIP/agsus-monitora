@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { DiferencasPorCargo } from "../../src/modulos/avaliacao-documental/assistente/diferencas-por-cargo.tsx";
 import { validarRegraAnalise } from "../../src/lib/avaliacao-documental/regra.ts";
-import { clicar, digitar } from "../componentes/interacoes.js";
+import { clicar, digitar } from "../componentes/interacoes.ts";
 
 /*
   "Diferenças por cargo" no assistente e no modo avançado: acrescentar uma

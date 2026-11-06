@@ -5,9 +5,9 @@ import {
   digitar,
   escolher,
   esperar,
-} from "../componentes/interacoes.js";
+} from "../componentes/interacoes.ts";
 import { proximoEstado } from "../../src/lib/resposta-do-recurso.ts";
-import { montarTela } from "../montar-tela.js";
+import { montarTela } from "../montar-tela.ts";
 
 /*
   A resposta ao candidato e os anexos, na gaveta do painel de recursos: modelo

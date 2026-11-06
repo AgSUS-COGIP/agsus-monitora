@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { Casca } from "../../src/app/casca/casca.tsx";
 import { TELAS_DA_CASCA } from "../../src/app/telas.tsx";
-import { desenharNoTeste } from "../montar-tela.js";
+import { desenharNoTeste } from "../montar-tela.ts";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
