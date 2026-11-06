@@ -18,7 +18,7 @@ import {
   escolher,
   esperar,
 } from "../componentes/interacoes.ts";
-import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
+import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.ts";
 import { montarTela } from "../montar-tela.ts";
 import { registrarTelas } from "../../src/app/registro-das-telas.ts";
 

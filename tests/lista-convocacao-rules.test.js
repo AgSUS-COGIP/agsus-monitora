@@ -15,7 +15,7 @@ import {
   sequenciaDeConvocacao,
   situacaoNaChamada,
 } from "../src/lib/lista-convocacao-rules.ts";
-import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.js";
+import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.ts";
 
 /*
   A MECÂNICA do cálculo: ordenação, sequência, preenchimento e agrupamento. As

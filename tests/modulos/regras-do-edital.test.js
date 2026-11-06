@@ -1,6 +1,6 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.js";
+import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.ts";
 import { clicar, esperar } from "../componentes/interacoes.ts";
 import { aberturaPelasChamadasDeAntes } from "../componentes/abertura-dos-aprovados.ts";
 import { compactarCandidatos } from "../componentes/candidatos-compactos-falsos.ts";

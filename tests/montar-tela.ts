@@ -28,10 +28,10 @@ interface SecaoDaTela {
  * (`secao`, ou o elemento com o `id` padrão). Devolve o controlador com a
  * `raiz`.
  */
-export function montarTela<O extends object, C extends ControladorMontavel>(
+export function montarTela<O, C extends ControladorMontavel>(
   criar: (opcoes: O) => C,
   id: string,
-  { secao, ...opcoes }: O & SecaoDaTela,
+  { secao, ...opcoes }: NonNullable<O> & SecaoDaTela,
 ): C & { raiz: Root | null } {
   const controlador = criar(opcoes as O);
   const elemento = secao === undefined ? document.getElementById(id) : secao;
