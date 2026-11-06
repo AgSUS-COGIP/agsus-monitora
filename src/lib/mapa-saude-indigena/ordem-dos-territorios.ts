@@ -6,12 +6,12 @@
   - "Vagas": a ordem de chegada, sem mexer;
   - "A–Z": pelo nome, com `Intl.Collator("pt-BR")` (acentos no lugar certo);
   - "Nº do DSEI": a numeração 1–34 do mapa (dseis-oficiais.ts), que é a do
-    "Mapa simples"; sem número, no fim;
+    "Mapa DSEIs"; sem número, no fim;
   - "% preenchidas": da mais preenchida à menos; quem não tem vaga, no fim;
   - "Ociosas": das mais vagas ociosas às menos.
   Empate em qualquer ordem: desempate pelo nome.
 
-  Padrão: "Vagas" no Mapa e no Satélite; "Nº do DSEI" no Mapa simples. Depois
+  Padrão: "Vagas" no Mapa e no Satélite; "Nº do DSEI" no Mapa DSEIs. Depois
   que a pessoa escolhe, a escolha vale para os dois (o gancho guarda no
   navegador, mapa-nacional.tsx).
 */

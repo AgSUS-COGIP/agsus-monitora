@@ -1,18 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /*
-  AS TERRAS INDÍGENAS NO "MAPA SIMPLES"
+  AS TERRAS INDÍGENAS NO "MAPA DSEIs"
 
-  O print da produção: no Mapa simples, as terras (manchas e pontinhos cor
+  O print da produção: no Mapa DSEIs, as terras (manchas e pontinhos cor
   de terra) por cima dos DSEIs chapados; no Mapa, o botão "Terras Indígenas"
   com `aria-pressed="false"` e as terras desenhadas. Quem desligava as terras
-  ao entrar no Mapa simples era um efeito do React, que só soube do modo
+  ao entrar no Mapa DSEIs era um efeito do React, que só soube do modo
   depois de o mapa nascer e de cada troca avisada — duas fontes de verdade
   para o mesmo estado.
 
   A regra agora mora na camada (indigenous-territories-layer.ts): ela lê o
   modo pedido ao seletor quando o mapa nasce e segue o aviso de troca
-  (`agsus:map-base-layer-changed`) no mesmo instante. No Mapa simples as
+  (`agsus:map-base-layer-changed`) no mesmo instante. No Mapa DSEIs as
   terras começam desligadas e o botão liga e desliga só enquanto ele durar;
   ao sair, volta a preferência guardada do Mapa/Satélite.
 */
@@ -147,15 +147,15 @@ afterEach(() => {
   localStorage.clear();
 });
 
-describe("Terras Indígenas no Mapa simples", () => {
-  it("abrir a página já no Mapa simples: terras e botão desligados, preferência intacta", async () => {
+describe("Terras Indígenas no Mapa DSEIs", () => {
+  it("abrir a página já no Mapa DSEIs: terras e botão desligados, preferência intacta", async () => {
     await montar("simple");
     expect(mapa.__agsusIndigenousTerritoriesVisible).toBe(false);
     expect(ligado()).toBe("false");
     expect(localStorage.getItem(CHAVE)).toBeNull();
   });
 
-  it("entrar no Mapa simples desliga; sair devolve o que estava guardado", async () => {
+  it("entrar no Mapa DSEIs desliga; sair devolve o que estava guardado", async () => {
     await montar("map");
     expect(ligado()).toBe("true");
 
@@ -169,13 +169,13 @@ describe("Terras Indígenas no Mapa simples", () => {
     expect(localStorage.getItem(CHAVE)).toBeNull();
   });
 
-  it("o botão no Mapa simples vale só enquanto ele durar", async () => {
+  it("o botão no Mapa DSEIs vale só enquanto ele durar", async () => {
     await montar("map");
     botao().click(); // desliga no Mapa: isto se guarda
     expect(localStorage.getItem(CHAVE)).toBe("0");
 
     trocarFundo("simple");
-    botao().click(); // liga no Mapa simples: não se guarda
+    botao().click(); // liga no Mapa DSEIs: não se guarda
     expect(ligado()).toBe("true");
     expect(localStorage.getItem(CHAVE)).toBe("0");
 
@@ -183,7 +183,7 @@ describe("Terras Indígenas no Mapa simples", () => {
     expect(mapa.__agsusIndigenousTerritoriesVisible).toBe(false);
     expect(ligado()).toBe("false");
 
-    // Voltar ao Mapa simples recomeça sem terras.
+    // Voltar ao Mapa DSEIs recomeça sem terras.
     botao().click();
     trocarFundo("simple");
     expect(ligado()).toBe("false");

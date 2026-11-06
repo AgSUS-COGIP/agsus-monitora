@@ -7,7 +7,7 @@ import {
 /*
   O ZOOM MÍNIMO ACOMPANHA A MOLDURA
 
-  O bug (Visão geral da Saúde Indígena, depois do "Mapa simples"): o mínimo
+  O bug (Visão geral da Saúde Indígena, depois do "Mapa DSEIs"): o mínimo
   só era recalculado dentro de um enquadramento do Brasil. Os mapas da Visão
   geral enquadram sozinhos (`enquadramentoProprio`) e, depois de a pessoa
   mexer no mapa, não reenquadram ao mudar de tamanho. Com o card mais baixo,

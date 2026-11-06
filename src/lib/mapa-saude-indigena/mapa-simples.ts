@@ -1,5 +1,5 @@
 /*
-  O "MAPA SIMPLES" DOS DSEIs, SEM LEAFLET
+  O "MAPA DSEIs" DOS DSEIs, SEM LEAFLET
 
   O terceiro fundo do mapa nacional (ao lado de Mapa e Satélite): sem
   azulejos, só os 34 DSEIs chapados e numerados sobre um fundo liso, como o

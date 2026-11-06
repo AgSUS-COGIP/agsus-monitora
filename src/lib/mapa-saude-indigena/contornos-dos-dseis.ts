@@ -7,14 +7,14 @@
   de publicá-la — o proxy responde 502 e a camada fica vazia (ver
   `src/lib/terras-indigenas/geometria.ts`).
 
-  O "Mapa simples" usa um arquivo estático, `public/data/contornos-dos-dseis.json`,
+  O "Mapa DSEIs" usa um arquivo estático, `public/data/contornos-dos-dseis.json`,
   gerado por `scripts/compilar-contornos-dos-dseis.mjs` a partir da última
   publicação da camada `Funai:areas_dsei` (shapefile da própria Funai),
   simplificado para a escala nacional. Cada feição traz o número (1–34, de
   `dseis-oficiais.ts`), o nome oficial e o ponto do rótulo, já calculado
   dentro do polígono.
 
-  Chega sob demanda — só quando o Mapa simples é escolhido — e uma vez por
+  Chega sob demanda — só quando o Mapa DSEIs é escolhido — e uma vez por
   página. Arquivo inválido ou ausente: o mapa fica sem os polígonos, e o
   resto continua.
 */

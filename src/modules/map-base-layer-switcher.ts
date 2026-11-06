@@ -152,7 +152,7 @@ const SATELLITE_ERROR_LIMIT = 4;
 export const EVENTO_DO_FUNDO = "agsus:map-base-layer-changed";
 const CLASSE_DO_MAPA_SIMPLES = "map-simple-mode";
 
-/* Só o mapa nacional da Saúde Indígena tem o "Mapa simples". */
+/* Só o mapa nacional da Saúde Indígena tem o "Mapa DSEIs". */
 export function aceitaMapaSimples(map: Pick<MapaComSeletor, "getContainer">) {
   return map.getContainer?.()?.id === "map";
 }
@@ -167,7 +167,7 @@ export function modoDesejadoDoFundo(mapa: object | null | undefined) {
 
 /*
   A camada de azulejos do fundo entra no mapa por aqui (`adicionarFundo`,
-  leaflet.ts): no "Mapa simples" ela fica guardada para quando a pessoa
+  leaflet.ts): no "Mapa DSEIs" ela fica guardada para quando a pessoa
   voltar ao "Mapa", sem entrar — e sem baixar azulejo nenhum.
 */
 export function adicionarCamadaDeFundo<T extends { addTo(mapa: never): T }>(
@@ -415,7 +415,7 @@ function addSwitcherControl(L: LeafletDoSeletor, map: MapaPronto) {
       [MODE_MAP, "Mapa"],
       [MODE_SATELLITE, "Satélite"],
     ];
-    if (aceitaMapaSimples(map)) botoes.push([MODO_SIMPLES, "Mapa simples"]);
+    if (aceitaMapaSimples(map)) botoes.push([MODO_SIMPLES, "Mapa DSEIs"]);
     for (const [modo, rotulo] of botoes) {
       const botao = createButton(L, modo, rotulo);
       botao.addEventListener("click", () => {
@@ -482,7 +482,7 @@ function setBaseMapMode(
     ) {
       map.removeLayer(map.__agsusSatelliteLayer);
     }
-    // O "Mapa simples" não tem azulejo nenhum: o fundo liso é do CSS.
+    // O "Mapa DSEIs" não tem azulejo nenhum: o fundo liso é do CSS.
     if (mode === MODE_MAP) {
       map.__agsusStoredMapLayers.forEach((layer) => {
         if (!map.hasLayer(layer)) layer.addTo(map);
@@ -686,7 +686,7 @@ function dispatchFallback(map: MapaComSeletor) {
   );
 }
 
-/* A escolha guardada; o "Mapa simples" vale só onde o mapa o oferece. */
+/* A escolha guardada; o "Mapa DSEIs" vale só onde o mapa o oferece. */
 function readStoredMode(aceitaSimples = false): ModoDoFundo {
   try {
     const guardado = localStorage.getItem(STORAGE_KEY);

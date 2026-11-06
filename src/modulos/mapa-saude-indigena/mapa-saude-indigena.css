@@ -800,8 +800,8 @@
 
 /*
   A legenda sobe do canto de baixo e não passa dos controles do canto de cima
-  (zoom e Mapa | Satélite | Mapa simples, ~115 px): aberta numa moldura baixa
-  (celular, janela baixa, a do Mapa simples, que já nasce aberta e é a mais
+  (zoom e Mapa | Satélite | Mapa DSEIs, ~115 px): aberta numa moldura baixa
+  (celular, janela baixa, a do Mapa DSEIs, que já nasce aberta e é a mais
   alta), ela tapava o "+ −" e o seletor do fundo. O corpo rola por dentro.
 */
 .mapa-si-legenda--flutuante {
@@ -1083,7 +1083,7 @@
 }
 
 /*
-  "Mapa simples" (mapa-simples.tsx): sem azulejos, o contêiner do Leaflet
+  "Mapa DSEIs" (mapa-simples.tsx): sem azulejos, o contêiner do Leaflet
   (`map-simple-mode`, posto pelo seletor do fundo) mostra o fundo liso; os
   DSEIs são caminhos SVG com a cor no `style` (um token por DSEI ou faixa).
 */
