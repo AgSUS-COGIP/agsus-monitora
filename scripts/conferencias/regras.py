@@ -16,6 +16,7 @@ Testes: tests/python/test_conferencias.py.
 
 import math
 import re
+import unicodedata
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 
@@ -39,9 +40,24 @@ _VALOR_DO_DETALHE = re.compile(r"^[A-Za-z0-9._:/-]{0,40}$")
 TIPOS_DE_REFERENCIA = frozenset(
     {"candidato_aprovado", "entrevista", "lista_classificacao", "ajuste_recurso", "vaga", "vaga_empregare"}
 )
+# Situações do edital (TB_MONITORAMENTO_INDIGENA.status, já com a situação manual aplicada) que
+# tiram o edital das conferências por edital: o processo acabou e não há o que acertar. "Suspenso"
+# continua conferido (o processo volta). Sem minúscula/acento: "Concluído" e "concluido" valem.
+SITUACOES_FORA_DA_CONFERENCIA = frozenset({"concluido", "cancelado", "encerrado"})
 
 
 # ── Utilidades ──────────────────────────────────────────────────────────────
+
+
+def edital_conferido(edital):
+    """Se o edital (do contexto: {ativo, status, ...}) entra nas conferências por edital: ativo e
+    sem situação de fim (SITUACOES_FORA_DA_CONFERENCIA). Sem "status" (contexto antigo, antes de
+    20261106170000), vale só o "ativo"."""
+    edital = edital or {}
+    if not edital.get("ativo"):
+        return False
+    situacao = unicodedata.normalize("NFKD", str(edital.get("status") or "")).encode("ascii", "ignore").decode()
+    return situacao.strip().lower() not in SITUACOES_FORA_DA_CONFERENCIA
 
 
 def numero(valor):
@@ -354,7 +370,7 @@ def conferir_analises(paginas, contexto, acumulador):
                 )
 
             codigo = a.get("codigo")
-            if codigo and edital and (editais.get(edital) or {}).get("ativo"):
+            if codigo and edital and edital_conferido(editais.get(edital)):
                 editais_por_codigo[codigo].add(edital)
                 if area:
                     areas_por_codigo[codigo].add(area)
@@ -590,12 +606,12 @@ class AnalisesDaClassificacao:
 
 
 def vagas_sem_quadro(analises, quadros, editais):
-    """As vagas das análises de edital ativo sem uma linha do quadro de vagas pelo nome (a regra de
+    """As vagas das análises de edital conferido (edital_conferido) sem uma linha do quadro de vagas pelo nome (a regra de
     private."FC_QUADRO_DA_VAGA", em monitora.classificacao.quadro_da_vaga), em ordem estável."""
     por_edital = preparar_quadros(quadros)
     saida = []
     for edital, area, codigo, nome in sorted(analises.vagas, key=lambda v: tuple(str(x) for x in v)):
-        if not (editais.get(edital) or {}).get("ativo"):
+        if not edital_conferido(editais.get(edital)):
             continue
         if quadro_da_vaga(por_edital.get(edital), nome) is None:
             saida.append({"edital": edital, "area": area, "vaga": codigo or "sem-codigo"})
@@ -606,7 +622,7 @@ def conferir_classificacao(dados, acumulador, analises, editais):
     """
     dados: conferencia_ler_listas_e_quadros (listas, ajustes e as linhas ativas do quadro de vagas).
     analises: AnalisesDaClassificacao das páginas de conferencia_ler_analises (já lidas).
-    editais: os editais do contexto (id -> {ativo, ...}).
+    editais: os editais do contexto (id -> {ativo, status, ...}).
     """
     if not analises.completa:
         raise RuntimeError("as análises não foram lidas inteiras: a classificação não confere")
