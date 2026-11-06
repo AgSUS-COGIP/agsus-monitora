@@ -159,13 +159,19 @@ describe("telas operacionais: aparece, com a marca", () => {
       "src/modulos/entrevistas/seletor-do-edital.tsx",
       "src/modulos/avaliacao-documental/avaliacao-documental.tsx",
       "src/modulos/avaliacao-documental/entrada-da-pre-classificacao.tsx",
-      "src/modulos/classificacao/classificacao.tsx",
     ]) {
       const fonte = ler(arquivo);
       if (fonte.includes("<SeletorDeEdital")) continue;
       expect(fonte, arquivo).toContain("<SeloDeTreinamento");
       expect(fonte, arquivo).toContain("sufixoDeTreinamento(");
     }
+    // A Classificação não tem lista de opções: o selo vai no card do edital
+    // (sem edital escolhido) e ao lado do nome, no cabeçalho.
+    for (const arquivo of [
+      "src/modulos/classificacao/classificacao.tsx",
+      "src/modulos/classificacao/entrada-da-classificacao.tsx",
+    ])
+      expect(ler(arquivo), arquivo).toContain("<SeloDeTreinamento");
   });
 });
 

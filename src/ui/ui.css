@@ -1401,7 +1401,7 @@ th[aria-sort="descending"] .ui-ordenar i {
 
 /* ── Família das telas da seleção (Triagem, Avaliação documental, Classificação) ── */
 
-/* SeletorDeEdital (src/componentes/seletor-de-edital.tsx): campo, selo e "Mostrar todos". */
+/* SeletorDeEdital (src/componentes/seletor-de-edital.tsx): campo, selo e "Mostrar todos", no cabeçalho. */
 .ui-seletor-de-edital {
   display: flex;
   flex-wrap: wrap;
@@ -1409,12 +1409,18 @@ th[aria-sort="descending"] .ui-ordenar i {
   gap: var(--space-2) var(--space-3);
 }
 .ui-seletor-de-edital > .ui-campo {
-  flex: 1 1 320px;
+  flex: 1 1 100%;
   min-width: 0;
 }
+.ui-seletor-de-edital > .ui-campo > label {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
+}
 .ui-seletor-de-edital select {
-  width: min(640px, 100%);
-  max-width: 100%;
+  width: 100%;
+  min-height: 40px;
+  font-weight: var(--font-weight-semibold);
 }
 .ui-seletor-todos {
   display: inline-flex;
@@ -1449,18 +1455,7 @@ th[aria-sort="descending"] .ui-ordenar i {
   white-space: nowrap;
 }
 
-/* BarraDeFiltros: a busca em destaque, os filtros em linha e o rodapé com o resultado. */
-.ui-barra-de-filtros {
-  display: grid;
-  gap: var(--space-2);
-  padding-block: var(--space-3);
-}
-.ui-barra-de-filtros-linha {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-2) var(--space-3);
-}
+/* A busca das listas (BarraDaLista): a lupa, o campo e o atalho "/". */
 .ui-barra-busca {
   position: relative;
   display: flex;
@@ -1515,54 +1510,6 @@ th[aria-sort="descending"] .ui-ordenar i {
 .ui-barra-busca > input:not(:placeholder-shown) ~ .ui-barra-atalho {
   display: none;
 }
-.ui-barra-de-filtros-campos {
-  display: flex;
-  flex: 3 1 420px;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-2);
-  min-width: 0;
-}
-.ui-barra-de-filtros-campos > .ui-campo {
-  flex: 1 1 150px;
-  max-width: 260px;
-  gap: var(--space-0-5);
-}
-.ui-barra-de-filtros-campos > .ui-campo > label {
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-}
-.ui-barra-de-filtros-campos select,
-.ui-barra-de-filtros-campos
-  input:not(:where([type="checkbox"], [type="radio"])) {
-  min-height: 40px;
-}
-.ui-barra-de-filtros-acoes {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin-left: auto;
-}
-.ui-barra-de-filtros-rodape {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1) var(--space-3);
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-}
-.ui-barra-resultado {
-  color: var(--text-primary);
-  font-weight: var(--font-weight-medium);
-}
-.ui-barra-quantos.tem-filtros {
-  color: var(--state-info);
-}
-.ui-barra-de-filtros-rodape > .btn {
-  margin-left: auto;
-}
-
 /* AcoesDaLinha: o botão principal e o "⋯" (MenuDeAcoes compacto) na linha. */
 .ui-acoes-da-linha {
   display: inline-flex;
@@ -1603,15 +1550,8 @@ th[aria-sort="descending"] .ui-ordenar i {
 }
 
 @media (max-width: 900px) {
-  .ui-barra-busca,
-  .ui-barra-de-filtros-campos {
+  .ui-barra-busca {
     flex-basis: 100%;
-  }
-  .ui-barra-de-filtros-campos > .ui-campo {
-    max-width: none;
-  }
-  .ui-barra-de-filtros-acoes {
-    margin-left: 0;
   }
   /* No celular a busca é por toque: o "/" não ajuda. */
   .ui-barra-atalho {
@@ -1764,27 +1704,7 @@ html[data-theme="dark"]
 .ui-cabecalho-acoes .ui-segmentado-opcao.is-ativo {
   color: var(--text-primary);
 }
-/* O seletor de edital em linha (`naLinha`): sem card, "Edital" pequeno acima. */
-.ui-seletor-de-edital.na-linha {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-.ui-seletor-de-edital.na-linha > .ui-campo {
-  flex-basis: 100%;
-}
-.ui-seletor-de-edital.na-linha > .ui-campo > label {
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-  font-weight: var(--font-weight-semibold);
-}
-.ui-seletor-de-edital.na-linha select {
-  width: 100%;
-  min-height: 40px;
-  font-weight: var(--font-weight-semibold);
-}
-.ui-seletor-de-edital.na-linha .ui-seletor-todos {
+.ui-seletor-de-edital .ui-seletor-todos {
   min-height: 0;
 }
 

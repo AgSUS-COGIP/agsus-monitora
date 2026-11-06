@@ -1,6 +1,9 @@
 import type { FormEvent } from "react";
 import type {
+  AguardandoAnalise,
+  EliminadoDaLista,
   ExplicacaoDoCandidato,
+  LinhaDaLista,
   PendenciaDeEmpate,
   RecorteDasListas,
   ResultadoDoMotor,
@@ -26,7 +29,6 @@ import { PRAZO_DO_CALCULO_MS } from "../../lib/classificacao/calculo-em-python.t
 import { useEffect, useId, useMemo, useState } from "react";
 import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
-import type { UIEvent } from "react";
 import { copiarTexto } from "../../lib/convite-de-acesso.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import {
@@ -60,19 +62,23 @@ import { ModalDePublicacaoDeAprovados } from "./publicar-aprovados.tsx";
 import {
   AcoesDaLinha,
   Aviso,
-  BarraDeFiltros,
+  BarraDaLista,
   Campo,
+  CardDaLista,
   ErroAoCarregar,
-  EstadoVazio,
+  FaixaDeSituacao,
   Gaveta,
-  GradeDeKpis,
-  Kpi,
   Modal,
   Secao,
   Segmentado,
   Selo,
+  TabelaDaLista,
 } from "../../ui/index.ts";
-import type { AcaoDoMenu } from "../../ui/index.ts";
+import type {
+  AcaoDoMenu,
+  ColunaDaTabela,
+  ItemDaFaixa,
+} from "../../ui/index.ts";
 
 /*
   A aba "Listas" da Classificação: preliminar (documental), convocação para
@@ -87,11 +93,16 @@ import type { AcaoDoMenu } from "../../ui/index.ts";
   e a frase na explicação; lista gerada antes de um ajuste aprovado (ou do
   cancelamento de um aprovado): aviso para gerar de novo.
 
-  A família das telas da seleção: os cards filtram a situação (Nas listas,
-  Eliminados, Aguardando análise); a busca (nome ou código), a vaga, a lista
-  e a situação ficam na BarraDeFiltros, guardados na sessão por edital; cada
-  tabela da vaga mostra 50 por vez (mais 50 ao rolar ou em "Carregar mais");
-  cada linha tem "Ver posição" e o "⋯" (registrar o empate da pessoa,
+  O layout das telas da seleção: a faixa de situação (Candidatos, Na vaga,
+  Cadastro reserva, Convocados e Aptos quando há, Eliminados e Aguardando
+  análise quando há; cada número é o total da lista que ele abre, contado
+  com o mesmo recorte), com a lista (preliminar, convocação, entrevista,
+  final) e a data de corte na linha de baixo; num card só, a barra (busca
+  por nome ou código com "/", Vaga e, em "Filtros", a lista da modalidade e
+  a situação, guardados na URL e na sessão por edital) e uma tabela só,
+  agrupada por vaga, 50 e mais 50 ao rolar: posição como etiqueta (o 1º em
+  destaque), a pessoa (nome e "código · modalidade"), a nota, a situação e
+  "Ver posição" (ou "Ver motivo") com o "⋯" (registrar o empate da pessoa,
   copiar o código).
 */
 
@@ -116,7 +127,6 @@ const SITUACOES: Record<string, [string, string]> = {
   CONVOCADO: ["revisar", "Convocado"],
   APTO: ["aprovado", "Apto"],
 };
-const VAGAS_POR_VEZ = 30;
 const motivosDaEliminacao: Readonly<Record<string, string>> =
   MOTIVOS_DE_ELIMINACAO;
 
@@ -130,100 +140,6 @@ function dataHora(valor: unknown) {
         dateStyle: "short",
         timeStyle: "short",
       });
-}
-
-export function Indicadores({
-  resultado,
-  carregando,
-  situacao,
-  aoFiltrar,
-}: {
-  resultado: ResultadoDoMotor | null;
-  carregando: boolean;
-  /** A situação do recorte (os cards clicáveis a marcam). */
-  situacao?: string;
-  /** Clicar no card filtra a situação ("" volta a todas). */
-  aoFiltrar?: (situacao: string) => void;
-}) {
-  const t: Partial<ResultadoDoMotor["totais"]> = resultado?.totais || {};
-  const n = (v: number | undefined) =>
-    v !== undefined && Number.isFinite(v) ? v.toLocaleString("pt-BR") : "0";
-  const parte = (v: number | undefined) =>
-    t.candidatos && v !== undefined
-      ? `${Math.round((v / t.candidatos) * 100)}%`
-      : "";
-  const filtro = (valor: string, titulo: string) =>
-    aoFiltrar
-      ? {
-          ativo: (situacao ?? "") === valor,
-          titulo,
-          aoClicar: () => aoFiltrar((situacao ?? "") === valor ? "" : valor),
-        }
-      : {};
-  return (
-    <GradeDeKpis
-      tour="classificacao-kpis"
-      rotulo="Indicadores da lista"
-      className="classificacao-kpis"
-    >
-      <Kpi
-        chave="candidatos"
-        icone="fa-users"
-        rotulo="Candidatos"
-        valor={n(t.candidatos)}
-        carregando={carregando}
-        {...filtro("", "Mostrar todos")}
-      />
-      <Kpi
-        chave="elegiveis"
-        tom="sucesso"
-        icone="fa-list-ol"
-        rotulo="Nas listas"
-        valor={n(t.elegiveis)}
-        detalhe={carregando ? "" : parte(t.elegiveis)}
-        carregando={carregando}
-        {...filtro("LISTA", "Mostrar só quem está nas listas")}
-      />
-      <Kpi
-        chave="eliminados"
-        tom="perigo"
-        icone="fa-user-xmark"
-        rotulo="Eliminados"
-        valor={n(t.eliminados)}
-        detalhe={carregando ? "" : parte(t.eliminados)}
-        carregando={carregando}
-        {...filtro("ELIMINADOS", "Mostrar só os eliminados")}
-      />
-      {t.aguardando ? (
-        <Kpi
-          chave="aguardando"
-          tom="alerta"
-          icone="fa-hourglass-half"
-          rotulo="Aguardando análise"
-          valor={n(t.aguardando)}
-          detalhe={carregando ? "" : parte(t.aguardando)}
-          carregando={carregando}
-          {...filtro("AGUARDANDO", "Mostrar só quem aguarda análise")}
-        />
-      ) : null}
-      <Kpi
-        chave="vagas"
-        tom="neutro"
-        icone="fa-briefcase"
-        rotulo="Vagas"
-        valor={n(t.vagas)}
-        carregando={carregando}
-      />
-      <Kpi
-        chave="avisos"
-        tom={t.pendencias ? "perigo" : "alerta"}
-        icone="fa-triangle-exclamation"
-        rotulo="Avisos"
-        valor={n(t.avisos)}
-        carregando={carregando}
-      />
-    </GradeDeKpis>
-  );
 }
 
 function Avisos({
@@ -284,117 +200,6 @@ function Avisos({
       ))}
     </Aviso>
   );
-}
-
-function Filtros({
-  resultado,
-  regra,
-  recorte,
-  aoMudar,
-  pessoas,
-}: {
-  resultado: ResultadoDoMotor;
-  regra: Record<string, unknown> | null;
-  recorte: RecorteDasListas;
-  aoMudar: (r: RecorteDasListas) => void;
-  /** Quantas pessoas o recorte mostra. */
-  pessoas: number;
-}) {
-  const ids = { vaga: useId(), lista: useId(), situacao: useId() };
-  const modalidades = normalizarRegra(regra).modalidades.filter(
-    (m) => m.lista_propria,
-  );
-  return (
-    <BarraDeFiltros
-      rotulo="Encontrar a pessoa"
-      tour="classificacao-filtros"
-      className="classificacao-filtros"
-      busca={{
-        valor: recorte.busca,
-        aoMudar: (busca) => aoMudar({ ...recorte, busca }),
-        placeholder: "Nome ou código",
-        rotulo: "Buscar candidato pelo nome ou código",
-        acao: "buscar-candidato",
-      }}
-      quantos={filtrosAtivosDoRecorte(recorte)}
-      aoLimpar={() => aoMudar({ ...RECORTE_VAZIO })}
-      resultado={`${formatNumberBR(pessoas)} ${pessoas === 1 ? "pessoa" : "pessoas"}`}
-    >
-      <Campo rotulo="Vaga">
-        <select
-          id={ids.vaga}
-          value={recorte.vaga}
-          onChange={(e) => aoMudar({ ...recorte, vaga: e.target.value })}
-        >
-          <option value="">Todas as vagas</option>
-          {resultado.vagas.map((v) => (
-            <option key={v.chave} value={v.chave}>
-              {[v.codigo, v.cargo, v.lotacao].filter(Boolean).join(" - ")}
-            </option>
-          ))}
-        </select>
-      </Campo>
-      <Campo rotulo="Lista">
-        <select
-          id={ids.lista}
-          value={recorte.lista}
-          onChange={(e) => aoMudar({ ...recorte, lista: e.target.value })}
-        >
-          <option value="geral">Classificação geral</option>
-          {modalidades.map((m) => (
-            <option key={m.codigo} value={m.codigo}>
-              {m.nome}
-            </option>
-          ))}
-        </select>
-      </Campo>
-      <Campo rotulo="Situação">
-        <select
-          id={ids.situacao}
-          data-acao="filtro-situacao"
-          value={recorte.situacao ?? ""}
-          onChange={(e) => aoMudar({ ...recorte, situacao: e.target.value })}
-        >
-          {SITUACOES_DO_RECORTE.map((s) => (
-            <option key={s.valor} value={s.valor}>
-              {s.rotulo}
-            </option>
-          ))}
-        </select>
-      </Campo>
-    </BarraDeFiltros>
-  );
-}
-
-/*
-  As linhas de uma tabela 50 por vez (o padrão das telas): mais 50 ao rolar
-  perto do fim da tabela ou no "Carregar mais".
-*/
-const POR_VEZ = 50;
-function usarPorVez<T>(itens: readonly T[]) {
-  const [limite, setLimite] = useState(POR_VEZ);
-  const faltam = Math.max(0, itens.length - limite);
-  const mais = () => setLimite((n) => n + POR_VEZ);
-  const aoRolar = (ev: UIEvent<HTMLDivElement>) => {
-    const caixa = ev.currentTarget;
-    if (
-      faltam > 0 &&
-      caixa.scrollTop + caixa.clientHeight >= caixa.scrollHeight - 160
-    )
-      mais();
-  };
-  const botao = faltam ? (
-    <button
-      type="button"
-      className="btn secondary small ui-tabela-mais"
-      data-acao="carregar-mais"
-      onClick={mais}
-    >
-      <i className="fa-solid fa-plus" aria-hidden="true" /> Carregar mais{" "}
-      {formatNumberBR(Math.min(POR_VEZ, faltam))}
-    </button>
-  ) : null;
-  return { visiveis: itens.slice(0, limite), aoRolar, botao };
 }
 
 /* As ações de cada pessoa na tabela da vaga. */
@@ -468,209 +273,209 @@ const ORIGEM_DAS_VAGAS: Readonly<Record<string, string>> = Object.freeze({
   REGRA: "Vagas por modalidade: percentuais da regra de classificação.",
 });
 
-function TabelaDaVaga({
-  vaga,
+/*
+  As situações da faixa: Candidatos (todas), as da linha (Na vaga, Cadastro
+  reserva, Convocados, Aptos), Eliminados e Aguardando análise. Convocados,
+  Aptos e Aguardando só aparecem com alguém (dependem da lista e da fase).
+*/
+const SITUACOES_DA_FAIXA: ReadonlyArray<{
+  valor: string;
+  rotulo: string;
+  tom: string;
+  sempre?: boolean;
+}> = [
+  { valor: "", rotulo: "Candidatos", tom: "neutro", sempre: true },
+  { valor: "VAGA", rotulo: "Na vaga", tom: "sucesso", sempre: true },
+  { valor: "CR", rotulo: "Cadastro reserva", tom: "info", sempre: true },
+  { valor: "CONVOCADO", rotulo: "Convocados", tom: "destaque" },
+  { valor: "APTO", rotulo: "Aptos", tom: "sucesso" },
+  { valor: "ELIMINADOS", rotulo: "Eliminados", tom: "perigo", sempre: true },
+  { valor: "AGUARDANDO", rotulo: "Aguardando análise", tom: "alerta" },
+];
+
+/* Uma linha da tabela única: a pessoa na lista, eliminada ou aguardando, com a vaga. */
+type LinhaDaTabela =
+  | { tipo: "lista"; vaga: string; codigoDaVaga: string; l: LinhaDaLista }
+  | {
+      tipo: "eliminado";
+      vaga: string;
+      codigoDaVaga: string;
+      l: EliminadoDaLista;
+    }
+  | {
+      tipo: "aguardando";
+      vaga: string;
+      codigoDaVaga: string;
+      l: AguardandoAnalise;
+    };
+
+/* As vagas recortadas numa lista só, na ordem: as linhas, os eliminados e quem aguarda. */
+function linhasDasVagas(vagas: readonly VagaRecortada[]): LinhaDaTabela[] {
+  const saida: LinhaDaTabela[] = [];
+  for (const v of vagas) {
+    const base = { vaga: v.chave, codigoDaVaga: v.codigo };
+    for (const l of v.linhas) saida.push({ tipo: "lista", ...base, l });
+    for (const l of v.eliminadosFiltrados)
+      saida.push({ tipo: "eliminado", ...base, l });
+    for (const l of v.aguardandoFiltrados)
+      saida.push({ tipo: "aguardando", ...base, l });
+  }
+  return saida;
+}
+const vagaDaLinha = (linha: LinhaDaTabela) => linha.vaga;
+
+const COLUNAS_DA_TABELA: ColunaDaTabela[] = [
+  { rotulo: "Posição", largura: "6rem" },
+  { rotulo: "Pessoa" },
+  { rotulo: "Vaga" },
+  { rotulo: "Nota", numero: true },
+  { rotulo: "Situação" },
+  {
+    rotulo: "Ações",
+    chave: "acoes",
+    numero: true,
+    cabecalho: <span className="sr-only">Ações</span>,
+  },
+];
+
+/* A posição como etiqueta; o 1º lugar em destaque; "=" no empate. */
+function EtiquetaDaPosicao({ l }: { l: LinhaDaLista }) {
+  return (
+    <span
+      className="ui-posicao"
+      data-primeiro={l.posicao === 1 ? "" : undefined}
+      title={l.empatados > 1 ? "Empatados na mesma posição" : undefined}
+    >
+      {ordinal(l.posicao)}
+      {l.empatados > 1 ? (
+        <span className="classificacao-empate"> =</span>
+      ) : null}
+    </span>
+  );
+}
+
+function LinhaDaClassificacao({
+  linha,
   casas,
   rotulosDasModalidades,
   aoAbrir,
   acoes,
-  situacao = "",
 }: {
-  vaga: VagaRecortada;
+  linha: LinhaDaTabela;
   casas: number;
   rotulosDasModalidades: Record<string, string>;
   aoAbrir: (id: string) => void;
   acoes: AcoesDaPessoa;
-  /** Com o filtro Eliminados ou Aguardando, a lista dele já abre. */
-  situacao?: string;
 }) {
-  const linhas = usarPorVez(vaga.linhas);
-  const eliminados = usarPorVez(vaga.eliminadosFiltrados);
-  const aguardando = usarPorVez(vaga.aguardandoFiltrados);
+  const { l } = linha;
+  const codigo = acoes.codigos.get(l.analiseId) ?? "";
+  const modalidades =
+    linha.tipo === "lista"
+      ? linha.l.modalidades
+          .map((m) => rotulosDasModalidades[m] || m)
+          .join(" / ")
+      : "";
+  const atributos =
+    linha.tipo === "lista"
+      ? { "data-candidato": l.analiseId }
+      : linha.tipo === "eliminado"
+        ? { "data-eliminado": l.analiseId }
+        : { "data-aguardando": l.analiseId };
   return (
-    <article className="ui-card classificacao-vaga" data-vaga={vaga.chave}>
-      <h3 className="ui-titulo">{vaga.cabecalho}</h3>
-      {vaga.limiteConvocacao ? (
-        <p className="ui-texto-secundario">
-          Limite da convocação: {vaga.limiteConvocacao.origem}
-        </p>
-      ) : null}
+    <tr {...atributos}>
+      <td>
+        {linha.tipo === "lista" ? <EtiquetaDaPosicao l={linha.l} /> : "—"}
+      </td>
+      <td>
+        <span className="ui-pessoa">
+          <span>
+            <button
+              type="button"
+              className="classificacao-nome"
+              onClick={() => aoAbrir(l.analiseId)}
+            >
+              {l.nome}
+            </button>{" "}
+            {"recursos" in l ? <MarcaDoRecurso recursos={l.recursos} /> : null}
+          </span>
+          <span>{[codigo, modalidades].filter(Boolean).join(" · ")}</span>
+        </span>
+      </td>
+      <td>{linha.codigoDaVaga}</td>
+      <td className="num">
+        {linha.tipo === "lista" ? formatarNota(linha.l.nota, casas) : "—"}
+      </td>
+      <td>
+        {linha.tipo === "lista" ? (
+          linha.l.situacao && SITUACOES[linha.l.situacao] ? (
+            <Selo tom={SITUACOES[linha.l.situacao]?.[0]} ponto>
+              {SITUACOES[linha.l.situacao]?.[1]}
+              {linha.l.situacao === "VAGA" &&
+              linha.l.vagaPor &&
+              linha.l.vagaPor !== "AC"
+                ? ` (${rotulosDasModalidades[linha.l.vagaPor] || linha.l.vagaPor})`
+                : ""}
+            </Selo>
+          ) : (
+            "—"
+          )
+        ) : linha.tipo === "eliminado" ? (
+          <Selo tom="reprovado" ponto titulo={linha.l.detalhe || undefined}>
+            {motivosDaEliminacao[linha.l.motivo] || linha.l.motivo}
+          </Selo>
+        ) : (
+          <Selo tom="pendente" ponto>
+            Aguardando análise
+            {linha.l.situacao ? ` · ${linha.l.situacao}` : ""}
+          </Selo>
+        )}
+      </td>
+      <td className="num">
+        {linha.tipo === "aguardando" ? null : (
+          <AcoesDaPessoaNaLista
+            analiseId={l.analiseId}
+            nome={l.nome}
+            rotulo={linha.tipo === "lista" ? "Ver posição" : "Ver motivo"}
+            aoAbrir={aoAbrir}
+            acoes={acoes}
+          />
+        )}
+      </td>
+    </tr>
+  );
+}
+
+/* O cabeçalho do grupo da vaga: o cabeçalho dela, o limite da convocação e de onde vêm as vagas. */
+function CabecalhoDaVaga({
+  vaga,
+  quantos,
+}: {
+  vaga: VagaRecortada | undefined;
+  quantos: number;
+}) {
+  if (!vaga) return null;
+  return (
+    <>
+      <strong>{vaga.cabecalho}</strong>
+      <span className="ui-texto-secundario">
+        {[
+          `${formatNumberBR(quantos)} ${quantos === 1 ? "pessoa" : "pessoas"}`,
+          vaga.limiteConvocacao
+            ? `Limite da convocação: ${vaga.limiteConvocacao.origem}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </span>
       {vaga.origemDasVagas && vaga.origemDasVagas !== "QUADRO" ? (
-        <p
+        <span
           className="ui-texto-secundario"
           data-origem-vagas={vaga.origemDasVagas}
         >
           {ORIGEM_DAS_VAGAS[vaga.origemDasVagas]}
-        </p>
+        </span>
       ) : null}
-      {vaga.linhas.length ? (
-        <>
-          <div className="ui-tabela-rolagem" onScroll={linhas.aoRolar}>
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">Classificação</th>
-                  <th scope="col">Nome</th>
-                  <th scope="col">Nota</th>
-                  <th scope="col">Modalidade</th>
-                  <th scope="col">Situação</th>
-                  <th scope="col">
-                    <span className="sr-only">Ações</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {linhas.visiveis.map((l) => (
-                  <tr key={l.analiseId} data-candidato={l.analiseId}>
-                    <td>
-                      {ordinal(l.posicao)}
-                      {l.empatados > 1 ? (
-                        <span
-                          className="classificacao-empate"
-                          title="Empatados na mesma posição"
-                        >
-                          {" "}
-                          =
-                        </span>
-                      ) : null}
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="classificacao-nome"
-                        onClick={() => aoAbrir(l.analiseId)}
-                      >
-                        {l.nome}
-                      </button>{" "}
-                      <MarcaDoRecurso recursos={l.recursos} />
-                    </td>
-                    <td>{formatarNota(l.nota, casas)}</td>
-                    <td>
-                      {l.modalidades
-                        .map((m) => rotulosDasModalidades[m] || m)
-                        .join(" / ")}
-                    </td>
-                    <td>
-                      {l.situacao && SITUACOES[l.situacao] ? (
-                        <Selo tom={SITUACOES[l.situacao]?.[0]}>
-                          {SITUACOES[l.situacao]?.[1]}
-                          {l.situacao === "VAGA" &&
-                          l.vagaPor &&
-                          l.vagaPor !== "AC"
-                            ? ` (${rotulosDasModalidades[l.vagaPor] || l.vagaPor})`
-                            : ""}
-                        </Selo>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
-                    <td>
-                      <AcoesDaPessoaNaLista
-                        analiseId={l.analiseId}
-                        nome={l.nome}
-                        rotulo="Ver posição"
-                        aoAbrir={aoAbrir}
-                        acoes={acoes}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {linhas.botao}
-        </>
-      ) : situacao === "ELIMINADOS" || situacao === "AGUARDANDO" ? null : (
-        <EstadoVazio>Não houve candidatos aptos.</EstadoVazio>
-      )}
-      {vaga.eliminadosFiltrados.length ? (
-        <details
-          className="classificacao-eliminados"
-          open={situacao === "ELIMINADOS" || undefined}
-        >
-          <summary>Eliminados ({vaga.eliminadosFiltrados.length})</summary>
-          <div className="ui-tabela-rolagem" onScroll={eliminados.aoRolar}>
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">Nome</th>
-                  <th scope="col">Motivo</th>
-                  <th scope="col">Detalhe</th>
-                  <th scope="col">
-                    <span className="sr-only">Ações</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {eliminados.visiveis.map((e) => (
-                  <tr key={e.analiseId} data-eliminado={e.analiseId}>
-                    <td>
-                      <button
-                        type="button"
-                        className="classificacao-nome"
-                        onClick={() => aoAbrir(e.analiseId)}
-                      >
-                        {e.nome}
-                      </button>{" "}
-                      <MarcaDoRecurso recursos={e.recursos} />
-                    </td>
-                    <td>{motivosDaEliminacao[e.motivo] || e.motivo}</td>
-                    <td>{e.detalhe || "—"}</td>
-                    <td>
-                      <AcoesDaPessoaNaLista
-                        analiseId={e.analiseId}
-                        nome={e.nome}
-                        rotulo="Ver motivo"
-                        aoAbrir={aoAbrir}
-                        acoes={acoes}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {eliminados.botao}
-        </details>
-      ) : null}
-      {vaga.aguardandoFiltrados.length ? (
-        <details
-          className="classificacao-eliminados classificacao-aguardando"
-          open={situacao === "AGUARDANDO" || undefined}
-        >
-          <summary>
-            Aguardando análise ({vaga.aguardandoFiltrados.length})
-          </summary>
-          <div className="ui-tabela-rolagem" onScroll={aguardando.aoRolar}>
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">Nome</th>
-                  <th scope="col">Situação na análise</th>
-                </tr>
-              </thead>
-              <tbody>
-                {aguardando.visiveis.map((a) => (
-                  <tr key={a.analiseId} data-aguardando={a.analiseId}>
-                    <td>
-                      <button
-                        type="button"
-                        className="classificacao-nome"
-                        onClick={() => aoAbrir(a.analiseId)}
-                      >
-                        {a.nome}
-                      </button>
-                    </td>
-                    <td>{a.situacao || "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {aguardando.botao}
-        </details>
-      ) : null}
-    </article>
+    </>
   );
 }
 
@@ -1498,7 +1303,6 @@ export function Listas({
   const [registros, setRegistros] = useState<
     Partial<Record<TipoDeLista, ListaRegistrada>>
   >({});
-  const [quantasVagas, setQuantasVagas] = useState(VAGAS_POR_VEZ);
   const dados = e.dados;
   const regra = dados?.regra?.configuracao || null;
   const tipo = escolhido || listaDaFase(dados);
@@ -1567,29 +1371,83 @@ export function Listas({
       return;
     setEscolhido(novo);
     setAberto("");
-    setQuantasVagas(VAGAS_POR_VEZ);
   };
+  // Os números da faixa: cada um, o total da lista que ele abre (o mesmo recorte).
+  const contagens = useMemo(
+    () =>
+      Object.fromEntries(
+        SITUACOES_DA_FAIXA.map(({ valor }) => [
+          valor,
+          resultado
+            ? pessoasDoRecorte(
+                recortarResultado(
+                  resultado,
+                  { ...recorte, situacao: valor },
+                  codigos,
+                ),
+              )
+            : null,
+        ]),
+      ) as Record<string, number | null>,
+    [resultado, recorte, codigos],
+  );
+  const linhasDaTabela = useMemo(() => linhasDasVagas(vagas), [vagas]);
+  const [recolhidas, setRecolhidas] = useState(() => new Set<string>());
+  const cabecalhosDasVagas = useMemo(
+    () => new Map(vagas.map((v) => [v.chave, v])),
+    [vagas],
+  );
 
   return (
     <div className="classificacao-listas" data-tour="classificacao-listas">
-      <Segmentado
-        rotulo="Lista"
-        className="classificacao-tipos"
-        opcoes={TIPOS_DE_LISTA.flatMap(([valor, rotulo]) =>
-          valor && rotulo ? [{ valor, rotulo }] : [],
-        )}
-        valor={tipo}
-        aoMudar={trocarTipo}
-      />
-      <Indicadores
-        resultado={resultado}
-        carregando={e.carregandoEdital || !dados}
-        situacao={recorte.situacao ?? ""}
-        aoFiltrar={(situacao) => {
-          setRecorte((atual) => ({ ...atual, situacao }));
-          setQuantasVagas(VAGAS_POR_VEZ);
-        }}
-      />
+      <FaixaDeSituacao
+        rotulo="Situação da lista"
+        tour="classificacao-kpis"
+        className="classificacao-faixa"
+        itens={SITUACOES_DA_FAIXA.filter(
+          (s) =>
+            s.sempre ||
+            (contagens[s.valor] ?? 0) > 0 ||
+            (recorte.situacao ?? "") === s.valor,
+        ).map((s): ItemDaFaixa => ({
+          chave: s.valor || "todos",
+          rotulo: s.rotulo,
+          valor:
+            e.carregandoEdital || !dados ? null : (contagens[s.valor] ?? 0),
+          tom: s.tom,
+          ativo: (recorte.situacao ?? "") === s.valor,
+          titulo: s.valor
+            ? `Mostrar ${s.rotulo.toLowerCase()}`
+            : "Mostrar todos",
+          aoClicar: () =>
+            setRecorte((atual) => ({
+              ...atual,
+              situacao:
+                (atual.situacao ?? "") === s.valor || !s.valor ? "" : s.valor,
+            })),
+        }))}
+      >
+        <Segmentado
+          rotulo="Lista"
+          className="classificacao-tipos"
+          opcoes={TIPOS_DE_LISTA.flatMap(([valor, rotulo]) =>
+            valor && rotulo ? [{ valor, rotulo }] : [],
+          )}
+          valor={tipo}
+          aoMudar={trocarTipo}
+        />
+        {resultado ? (
+          <span>
+            {formatNumberBR(resultado.totais.vagas)}{" "}
+            {resultado.totais.vagas === 1 ? "vaga" : "vagas"}
+          </span>
+        ) : null}
+        {resultado?.dataCorte ? (
+          <span className="status-discreto">
+            Data de corte da idade: {dataBR(resultado.dataCorte)}
+          </span>
+        ) : null}
+      </FaixaDeSituacao>
       {dados && !regra ? (
         <Aviso tom="warning" papel="status">
           Este edital ainda não tem regra de classificação.
@@ -1602,11 +1460,6 @@ export function Listas({
             podeEditar={e.podeEditar}
             aoResolver={setPendencia}
           />
-          {resultado.dataCorte ? (
-            <p className="status-discreto">
-              Data de corte da idade: {dataBR(resultado.dataCorte)}
-            </p>
-          ) : null}
           <Acoes
             key={tipo}
             tipo={tipo}
@@ -1621,42 +1474,123 @@ export function Listas({
             aoAbrirAgenda={aoAbrirAgenda}
             confirmar={confirmar}
           />
-          <Filtros
-            resultado={resultado}
-            regra={regra}
-            recorte={recorte}
-            aoMudar={(novo) => {
-              setRecorte(novo);
-              setQuantasVagas(VAGAS_POR_VEZ);
-            }}
-            pessoas={pessoasDoRecorte(vagas)}
-          />
-          {copiado ? <Aviso papel="status">{copiado}</Aviso> : null}
-          {vagas.length ? (
-            vagas.slice(0, quantasVagas).map((v) => (
-              <TabelaDaVaga
-                // Recorte novo: a tabela volta às 50 primeiras.
-                key={`${v.chave}:${JSON.stringify(recorte)}`}
-                vaga={v}
-                casas={resultado.casas}
-                rotulosDasModalidades={rotulosDasModalidades}
-                aoAbrir={setAberto}
-                acoes={acoesDasPessoas}
-                situacao={recorte.situacao ?? ""}
-              />
-            ))
-          ) : (
-            <EstadoVazio>Nenhuma vaga no recorte.</EstadoVazio>
-          )}
-          {vagas.length > quantasVagas ? (
-            <button
-              type="button"
-              className="btn secondary ui-tabela-mais"
-              onClick={() => setQuantasVagas((n) => n + VAGAS_POR_VEZ)}
+          <CardDaLista
+            rotulo="Pessoas da lista"
+            tour="classificacao-lista"
+            className="classificacao-lista"
+          >
+            <BarraDaLista
+              rotulo="Encontrar a pessoa"
+              tour="classificacao-filtros"
+              className="classificacao-filtros"
+              busca={{
+                valor: recorte.busca,
+                aoMudar: (busca) => setRecorte({ ...recorte, busca }),
+                placeholder: "Buscar por nome ou código",
+                rotulo: "Buscar candidato pelo nome ou código",
+                acao: "buscar-candidato",
+              }}
+              quantos={filtrosAtivosDoRecorte(recorte)}
+              aoLimpar={() => setRecorte({ ...RECORTE_VAZIO })}
+              quantosSecundarios={
+                (recorte.lista !== "geral" ? 1 : 0) + (recorte.situacao ? 1 : 0)
+              }
+              secundarios={
+                <>
+                  <Campo rotulo="Lista">
+                    <select
+                      value={recorte.lista}
+                      data-acao="filtro-lista"
+                      onChange={(ev) =>
+                        setRecorte({ ...recorte, lista: ev.target.value })
+                      }
+                    >
+                      <option value="geral">Classificação geral</option>
+                      {normalizarRegra(regra)
+                        .modalidades.filter((m) => m.lista_propria)
+                        .map((m) => (
+                          <option key={m.codigo} value={m.codigo}>
+                            {m.nome}
+                          </option>
+                        ))}
+                    </select>
+                  </Campo>
+                  <Campo rotulo="Situação">
+                    <select
+                      data-acao="filtro-situacao"
+                      value={recorte.situacao ?? ""}
+                      onChange={(ev) =>
+                        setRecorte({ ...recorte, situacao: ev.target.value })
+                      }
+                    >
+                      {SITUACOES_DO_RECORTE.map((s) => (
+                        <option key={s.valor} value={s.valor}>
+                          {s.rotulo}
+                        </option>
+                      ))}
+                    </select>
+                  </Campo>
+                </>
+              }
             >
-              Mostrar mais vagas ({vagas.length - quantasVagas})
-            </button>
-          ) : null}
+              <select
+                aria-label="Vaga"
+                data-acao="filtro-vaga"
+                value={recorte.vaga}
+                onChange={(ev) =>
+                  setRecorte({ ...recorte, vaga: ev.target.value })
+                }
+              >
+                <option value="">Todas as vagas</option>
+                {resultado.vagas.map((v) => (
+                  <option key={v.chave} value={v.chave}>
+                    {[v.codigo, v.cargo, v.lotacao].filter(Boolean).join(" - ")}
+                  </option>
+                ))}
+              </select>
+            </BarraDaLista>
+            <TabelaDaLista
+              rotulo="Classificação"
+              classeDaTabela="classificacao-tabela"
+              colunas={COLUNAS_DA_TABELA}
+              carregado
+              itens={linhasDaTabela}
+              chaveDoRecorte={`${tipo}:${JSON.stringify(recorte)}`}
+              vazio={
+                filtrosAtivosDoRecorte(recorte)
+                  ? "Nenhuma pessoa com esses filtros."
+                  : "Ninguém nesta lista ainda."
+              }
+              grupo={{
+                chave: vagaDaLinha,
+                cabecalho: (chave, quantos) => (
+                  <CabecalhoDaVaga
+                    vaga={cabecalhosDasVagas.get(chave)}
+                    quantos={quantos}
+                  />
+                ),
+                recolhidos: recolhidas,
+                aoAlternar: (chave) =>
+                  setRecolhidas((atual) => {
+                    const nova = new Set(atual);
+                    if (nova.has(chave)) nova.delete(chave);
+                    else nova.add(chave);
+                    return nova;
+                  }),
+              }}
+              linha={(linha) => (
+                <LinhaDaClassificacao
+                  key={`${linha.tipo}:${linha.vaga}:${linha.l.analiseId}`}
+                  linha={linha}
+                  casas={resultado.casas}
+                  rotulosDasModalidades={rotulosDasModalidades}
+                  aoAbrir={setAberto}
+                  acoes={acoesDasPessoas}
+                />
+              )}
+            />
+          </CardDaLista>
+          {copiado ? <Aviso papel="status">{copiado}</Aviso> : null}
         </>
       ) : e.carregandoEdital ? (
         <div className="ui-card" aria-busy="true">

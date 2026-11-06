@@ -1,5 +1,4 @@
 import {
-  Indicadores,
   Listas,
   MarcaDoRecurso,
 } from "../../src/modulos/classificacao/listas.tsx";
@@ -26,7 +25,6 @@ export function conferirListas(estado: EstadoDaClassificacao) {
         calcular={calcularClassificacao}
         aoAbrirAgenda={() => {}}
       />
-      <Indicadores resultado={resultado} carregando={false} />
       <MarcaDoRecurso recursos={linha?.recursos} />
     </>
   );

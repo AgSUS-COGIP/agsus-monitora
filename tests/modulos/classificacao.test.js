@@ -261,12 +261,33 @@ async function montarRegra(supabase) {
   painel = montado;
   await esperar();
 }
-const seletorDoEdital = () =>
-  secao.querySelector(".classificacao-edital select");
+/* Sem edital escolhido: os cards dos editais da área; clicar abre. */
+const cardsDosEditais = () => [
+  ...secao.querySelectorAll(".classificacao-editais [data-edital]"),
+];
 async function abrirEdital(id = "e83") {
-  await escolher(seletorDoEdital(), id);
+  // Com um edital aberto, "Trocar" volta aos cards.
+  const trocar = secao.querySelector("[data-acao='trocar-edital']");
+  if (trocar) {
+    await clicar(trocar);
+    await esperar();
+  }
+  await clicar(
+    secao.querySelector(`.classificacao-editais [data-edital='${id}']`),
+  );
   await esperar();
 }
+/* A tabela única da lista (agrupada por vaga) e o cabeçalho de uma vaga. */
+const tabelaDaLista = () =>
+  secao.querySelector("[data-tour='classificacao-lista']");
+const grupoDaVaga = (texto) =>
+  [...tabelaDaLista().querySelectorAll("tr.ui-tabela-grupo")].find((tr) =>
+    tr.textContent.includes(texto),
+  );
+const numeroDaFaixa = (valor) =>
+  secao.querySelector(
+    `[data-tour='classificacao-kpis'] [data-valor='${valor}'] .ui-faixa-numero`,
+  )?.textContent;
 
 beforeEach(() => {
   redefinirDadosDoMonitoramento();
@@ -291,13 +312,18 @@ describe("tela de Classificação", () => {
     expect(supabase.rpc).toHaveBeenCalledWith("listar_editais_classificacao", {
       p_area: "saude-indigena",
     });
-    const opcoes = [...seletorDoEdital().options].map((o) => o.textContent);
-    expect(opcoes).toEqual([
-      "Escolha o edital",
-      "83/2026 - DSEI Xingu (4) · Versão 2",
-      "100/2026 - CASAI",
+    // Sem edital: a busca grande e um card por edital (o título só no cabeçalho da tela).
+    expect(secao.querySelector(".ui-cabecalho-titulo").textContent).toBe(
+      "Classificação",
+    );
+    expect(cardsDosEditais().map((c) => c.textContent)).toEqual([
+      "83/2026 · DSEI XinguVersão 24 candidatos",
+      "100/2026 · CASAISem regra0 candidatos",
     ]);
-    expect(secao.querySelector(".classificacao-vaga")).toBeNull();
+    expect(tabelaDaLista()).toBeNull();
+    // A busca recorta os cards pelo número ou pela unidade.
+    await digitar(secao.querySelector("[data-acao='buscar-edital']"), "casai");
+    expect(cardsDosEditais().map((c) => c.dataset.edital)).toEqual(["e100"]);
   });
 
   it("área sem edital analisado: o seletor diz isso (o banco só manda os editais com análises)", async () => {
@@ -309,9 +335,9 @@ describe("tela de Classificação", () => {
       }),
     });
     await montar(supabase);
-    expect([...seletorDoEdital().options].map((o) => o.textContent)).toEqual([
-      "Nenhum edital com análises nesta área",
-    ]);
+    expect(secao.querySelector(".classificacao-entrada").textContent).toContain(
+      "Nenhum edital com análises nesta área.",
+    );
   });
 
   it("edital que não abriu: erro com Tentar novamente, sem esqueleto carregando para sempre", async () => {
@@ -344,28 +370,37 @@ describe("tela de Classificação", () => {
     expect(supabase.rpc).toHaveBeenCalledWith("obter_classificacao_do_edital", {
       p_edital: "e83",
     });
-    const kpi = (c) =>
-      secao.querySelector(`[data-kpi="${c}"] .ui-kpi-valor`)?.textContent;
-    expect([kpi("candidatos"), kpi("elegiveis"), kpi("eliminados")]).toEqual([
-      "4",
-      "3",
-      "1",
-    ]);
-    const vaga = secao.querySelector(".classificacao-vaga");
-    expect(vaga.querySelector("h3").textContent).toBe(
+    // O cabeçalho mostra o edital escolhido com "Trocar".
+    expect(
+      secao.querySelector(".classificacao-edital-nome strong").textContent,
+    ).toBe("83/2026 · DSEI Xingu");
+    // A faixa: cada número é o total da lista que ele abre.
+    expect(numeroDaFaixa("todos")).toBe("4");
+    expect(numeroDaFaixa("ELIMINADOS")).toBe("1");
+    expect(grupoDaVaga("VAGA 169681")).toBeTruthy();
+    expect(grupoDaVaga("VAGA 169681").textContent).toContain(
       "VAGA 169681 - Cirurgião Dentista - Polo Leonardo - DSEI Xingu - 1 vaga (1 AC + CR)",
     );
-    const linhas = [...vaga.querySelectorAll("tbody tr[data-candidato]")].map(
-      (tr) => tr.textContent,
-    );
+    const linhas = [
+      ...tabelaDaLista().querySelectorAll("tbody tr[data-candidato]"),
+    ].map((tr) => tr.textContent);
     expect(linhas[0]).toContain("Ana Empatada");
     expect(linhas[0]).toContain("20,00");
     expect(linhas[2]).toContain("Caio Parda");
-    // Nome vindo do banco é texto, nunca HTML.
-    expect(vaga.querySelector("b")).toBeNull();
+    // A posição é etiqueta; o 1º lugar em destaque.
     expect(
-      vaga.querySelector(".classificacao-eliminados").textContent,
+      tabelaDaLista().querySelector("tbody tr[data-candidato] .ui-posicao")
+        .dataset.primeiro,
+    ).toBe("");
+    // Nome vindo do banco é texto, nunca HTML.
+    expect(tabelaDaLista().querySelector("tbody b")).toBeNull();
+    expect(
+      tabelaDaLista().querySelector("tbody tr[data-eliminado]").textContent,
     ).toContain("Davi <b>Reprovado</b>");
+    // "Trocar" volta aos cards.
+    await clicar(secao.querySelector("[data-acao='trocar-edital']"));
+    await esperar();
+    expect(cardsDosEditais()).toHaveLength(2);
   });
 
   it("não confirma sorteio com ordem incompleta recebida do banco", async () => {
@@ -421,7 +456,7 @@ describe("tela de Classificação", () => {
     expect(secao.querySelector(".classificacao-pendencias")).toBeNull();
     const posicoes = [
       ...secao.querySelectorAll(
-        ".classificacao-vaga tbody tr[data-candidato] td:first-child",
+        "[data-tour='classificacao-lista'] tbody tr[data-candidato] td:first-child",
       ),
     ].map((td) => td.textContent);
     expect(posicoes).toEqual(["1º", "2º", "3º"]);
@@ -931,7 +966,7 @@ describe("tela de Classificação", () => {
     expect(secao.textContent).toContain(
       "Este edital ainda não tem regra de classificação.",
     );
-    expect(secao.querySelector(".classificacao-vaga")).toBeNull();
+    expect(tabelaDaLista()).toBeNull();
   });
 
   it("a lista preliminar e a de convocação vêm do mesmo edital", async () => {
@@ -942,14 +977,14 @@ describe("tela de Classificação", () => {
     );
     const notas = [
       ...secao.querySelectorAll(
-        ".classificacao-vaga tbody tr[data-candidato] td:nth-child(3)",
+        "[data-tour='classificacao-lista'] tbody tr[data-candidato] td:nth-child(4)",
       ),
     ].map((td) => td.textContent);
     expect(notas).toEqual(["10,00", "10,00", "9,00"]);
     await clicar(
       secao.querySelector(".classificacao-tipos [data-valor='CONVOCACAO']"),
     );
-    expect(secao.querySelector(".classificacao-vaga").textContent).toContain(
+    expect(tabelaDaLista().textContent).toContain(
       "Limite da convocação: sem limite na regra",
     );
   });
@@ -957,7 +992,9 @@ describe("tela de Classificação", () => {
   it("Regra na tela: o resumo (nota, desempate, cotas) e o Editar nas Regras do edital", async () => {
     await montar(supabaseFalso());
     await abrirEdital();
-    await clicar(secao.querySelector(".ui-topo [data-valor='regra']"));
+    await clicar(
+      secao.querySelector(".ui-cabecalho-da-tela [data-valor='regra']"),
+    );
     // O resumo baixa as regras por import() (fora do pacote de entrada).
     await act(async () => {
       await import("../../src/lib/regras-do-edital-resumos.ts");
@@ -1167,7 +1204,7 @@ describe("tela de Classificação", () => {
     };
     await montar(supabase);
     expect(secao.textContent).toContain("Sem acesso à Classificação");
-    expect(seletorDoEdital()).toBeNull();
+    expect(cardsDosEditais()).toHaveLength(0);
   });
 });
 
@@ -1195,14 +1232,14 @@ describe("Classificação com ajuste da pontuação aprovado em recurso", () => 
     await montar(comAjuste());
     await abrirEdital();
     const linha = secao.querySelector(
-      `.classificacao-vaga tr[data-candidato="${A(3)}"]`,
+      `[data-tour='classificacao-lista'] tr[data-candidato="${A(3)}"]`,
     );
     const marca = linha.querySelector(".classificacao-marca-recurso");
     expect(marca.textContent).toBe("Recurso nº 7");
     expect(marca.getAttribute("title")).toBe("Nota alterada pelo recurso nº 7");
     expect(
       secao.querySelectorAll(
-        ".classificacao-vaga .classificacao-marca-recurso",
+        "[data-tour='classificacao-lista'] .classificacao-marca-recurso",
       ),
     ).toHaveLength(1);
     await clicar(botao("Caio Parda", secao));
@@ -1503,15 +1540,17 @@ describe("Classificação: aguardando análise e geração guardada desatualizad
   it("quem não foi analisado não é eliminado: KPI e lista à parte", async () => {
     await montar(comPendente());
     await abrirEdital();
-    expect([kpi("eliminados"), kpi("aguardando")]).toEqual(["1", "1"]);
-    const aguardando = secao.querySelector(".classificacao-aguardando");
-    expect(aguardando.querySelector("summary").textContent).toBe(
-      "Aguardando análise (1)",
-    );
+    expect([numeroDaFaixa("ELIMINADOS"), numeroDaFaixa("AGUARDANDO")]).toEqual([
+      "1",
+      "1",
+    ]);
+    // Quem aguarda fica na mesma tabela, com a etiqueta dele (não é eliminado).
+    const aguardando = tabelaDaLista().querySelector("tr[data-aguardando]");
     expect(aguardando.textContent).toContain("Eva Pendente");
-    expect(
-      secao.querySelector(".classificacao-eliminados summary").textContent,
-    ).toBe("Eliminados (1)");
+    expect(aguardando.textContent).toContain("Aguardando análise");
+    expect(tabelaDaLista().querySelectorAll("tr[data-eliminado]")).toHaveLength(
+      1,
+    );
   });
 
   it("geração de 13/10 com outros números: avisa e bloqueia 'Marcar como publicada'", async () => {
@@ -1897,7 +1936,9 @@ describe("Gerar com a lista calculada pelo Python", () => {
 describe("família da seleção na Classificação: encontrar a pessoa, cards e ⋯", () => {
   const nomesNaVaga = () =>
     [
-      ...secao.querySelectorAll(".classificacao-vaga tbody tr[data-candidato]"),
+      ...secao.querySelectorAll(
+        "[data-tour='classificacao-lista'] tbody tr[data-candidato]",
+      ),
     ].map((tr) => tr.querySelector(".classificacao-nome").textContent);
 
   it("a barra fica à vista: busca pelo código, situação e o filtro volta no F5", async () => {
@@ -1905,18 +1946,16 @@ describe("família da seleção na Classificação: encontrar a pessoa, cards e 
     await montar(supabase);
     await abrirEdital();
     const barra = secao.querySelector(
-      ".ui-barra-de-filtros.classificacao-filtros",
+      ".ui-barra-da-lista.classificacao-filtros",
     );
     expect(barra.getAttribute("aria-label")).toBe("Encontrar a pessoa");
-    expect(barra.querySelector(".ui-barra-resultado").textContent).toBe(
-      "4 pessoas",
-    );
+    expect(
+      tabelaDaLista().querySelector(".ui-lista-contagem").textContent,
+    ).toBe("Mostrando 4 de 4");
     // O código da inscrição (103) acha a Caio, que a lista não mostra.
     await digitar(barra.querySelector("[data-acao='buscar-candidato']"), "103");
     expect(nomesNaVaga()).toEqual(["Caio Parda"]);
-    expect(barra.querySelector(".ui-barra-quantos").textContent).toBe(
-      "1 filtro",
-    );
+    expect(barra.querySelector("[data-acao='limpar-filtros']")).not.toBeNull();
     expect(
       JSON.parse(sessionStorage.getItem("monitora:classificacao:recorte:e83")),
     ).toMatchObject({ busca: "103" });
@@ -1939,17 +1978,21 @@ describe("família da seleção na Classificação: encontrar a pessoa, cards e 
   it("os cards filtram a situação: Eliminados abre a lista deles; de novo, volta a todas", async () => {
     await montar(supabaseFalso());
     await abrirEdital();
-    const card = () => secao.querySelector("[data-kpi='eliminados'] button");
-    expect(
-      secao.querySelector("[data-kpi='eliminados'] .ui-kpi-detalhe")
-        .textContent,
-    ).toBe("25%");
+    const card = () =>
+      secao.querySelector(
+        "[data-tour='classificacao-kpis'] [data-valor='ELIMINADOS']",
+      );
     await clicar(card());
     expect(card().getAttribute("aria-pressed")).toBe("true");
     expect(nomesNaVaga()).toEqual([]);
-    const eliminados = secao.querySelector(".classificacao-eliminados");
-    expect(eliminados.open).toBe(true);
-    expect(eliminados.textContent).toContain("Davi <b>Reprovado</b>");
+    // O número é o total da lista que ele abre.
+    const eliminados = [
+      ...tabelaDaLista().querySelectorAll("tbody tr[data-eliminado]"),
+    ];
+    expect(String(eliminados.length)).toBe(numeroDaFaixa("ELIMINADOS"));
+    expect(eliminados[0].textContent).toContain("Davi <b>Reprovado</b>");
+    // A situação também está em "Filtros" (os secundários).
+    await clicar(secao.querySelector("[data-acao='mais-filtros']"));
     expect(secao.querySelector("[data-acao='filtro-situacao']").value).toBe(
       "ELIMINADOS",
     );
@@ -1966,7 +2009,7 @@ describe("família da seleção na Classificação: encontrar a pessoa, cards e 
     await montar(supabaseFalso());
     await abrirEdital();
     const linha = secao.querySelector(
-      `.classificacao-vaga tr[data-candidato='${A(1)}']`,
+      `[data-tour='classificacao-lista'] tr[data-candidato='${A(1)}']`,
     );
     await clicar(linha.querySelector("[data-acao='ver-posicao']"));
     expect(
@@ -1991,7 +2034,24 @@ describe("família da seleção na Classificação: encontrar a pessoa, cards e 
     delete globalThis.navigator.clipboard;
   });
 
-  it("a tabela da vaga mostra 50 por vez", async () => {
+  it("a tabela mostra 50 e mais 50 ao chegar no fim da rolagem", async () => {
+    // IntersectionObserver falso: `chegarAoFim` faz o que a rolagem faria.
+    const observadores = [];
+    const original = globalThis.IntersectionObserver;
+    globalThis.IntersectionObserver = class {
+      constructor(aviso) {
+        this.aviso = aviso;
+        observadores.push(this);
+      }
+      observe() {}
+      disconnect() {
+        observadores.splice(observadores.indexOf(this), 1);
+      }
+    };
+    const chegarAoFim = () =>
+      act(async () => {
+        for (const o of [...observadores]) o.aviso([{ isIntersecting: true }]);
+      });
     const muitos = Array.from({ length: 60 }, (_, i) =>
       candidato(
         i + 1,
@@ -2010,13 +2070,15 @@ describe("família da seleção na Classificação: encontrar a pessoa, cards e 
       }),
     );
     await abrirEdital();
-    expect(nomesNaVaga()).toHaveLength(50);
-    await clicar(
-      secao.querySelector(".classificacao-vaga [data-acao='carregar-mais']"),
-    );
-    expect(nomesNaVaga()).toHaveLength(60);
-    expect(
-      secao.querySelector(".classificacao-vaga [data-acao='carregar-mais']"),
-    ).toBeNull();
+    try {
+      expect(nomesNaVaga()).toHaveLength(50);
+      await chegarAoFim();
+      expect(nomesNaVaga()).toHaveLength(60);
+      expect(
+        tabelaDaLista().querySelector(".ui-lista-contagem").textContent,
+      ).toBe("Mostrando 60 de 60");
+    } finally {
+      globalThis.IntersectionObserver = original;
+    }
   });
 });

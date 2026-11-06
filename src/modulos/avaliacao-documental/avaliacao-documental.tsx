@@ -185,7 +185,6 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
           edital={
             e.semAcesso ? null : (
               <SeletorDeEdital
-                naLinha
                 className="avd-edital"
                 tour="avd-seletor-edital"
                 dadosDosTodos={{ "data-tour": "avd-todos-editais" }}

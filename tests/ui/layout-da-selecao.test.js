@@ -11,7 +11,7 @@ import {
   TabelaDaLista,
   textoDaDistribuicao,
 } from "../../src/ui/index.ts";
-import { clicar, digitar } from "../componentes/interacoes.ts";
+import { clicar, digitar, teclar } from "../componentes/interacoes.ts";
 
 /*
   O layout das telas da seleção (Triagem, Avaliação documental e
@@ -211,6 +211,49 @@ describe("BarraDaLista", () => {
     expect($("[data-acao='limpar-filtros']")).toBeNull();
     expect($(".ui-barra-da-lista-acoes [data-principal]")).not.toBeNull();
   });
+});
+
+it('BarraDaLista: "/" leva à busca de fora de um campo; dentro de um campo, é só um caractere; Esc apaga', async () => {
+  function Barra() {
+    const [busca, setBusca] = useState("");
+    return h(
+      BarraDaLista,
+      {
+        rotulo: "Encontrar a pessoa",
+        busca: {
+          valor: busca,
+          aoMudar: setBusca,
+          placeholder: "Buscar",
+          rotulo: "Buscar pessoa",
+          acao: "buscar",
+        },
+        quantos: busca ? 1 : 0,
+        aoLimpar: () => setBusca(""),
+      },
+      h(
+        "select",
+        { "aria-label": "Vaga" },
+        h("option", { value: "" }, "Todas"),
+      ),
+    );
+  }
+  await montar(h(Barra));
+  const busca = $("[data-acao='buscar']");
+  expect(busca.getAttribute("aria-keyshortcuts")).toBe("/");
+  // O jsdom não calcula layout: a barra "está à vista" pelo offsetParent.
+  Object.defineProperty(busca, "offsetParent", {
+    configurable: true,
+    get: () => document.body,
+  });
+  await teclar(document.body, "/");
+  expect(document.activeElement).toBe(busca);
+  const select = $(".ui-barra-da-lista select");
+  select.focus();
+  await teclar(select, "/");
+  expect(document.activeElement).toBe(select);
+  await digitar(busca, "maria");
+  await teclar(busca, "Escape");
+  expect(busca.value).toBe("");
 });
 
 describe("TabelaDaLista (rolagem de 50 em 50)", () => {

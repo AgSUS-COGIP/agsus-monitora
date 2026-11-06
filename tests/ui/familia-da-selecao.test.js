@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AcoesDaLinha,
-  BarraDeFiltros,
   Campo,
   gravarNaSessao,
   Kpi,
@@ -41,90 +40,6 @@ afterEach(async () => {
   sessionStorage.clear();
 });
 const $ = (seletor) => document.querySelector(seletor);
-
-describe("BarraDeFiltros", () => {
-  function Barra({ aoLimpar = () => {} }) {
-    const [busca, setBusca] = useState("");
-    const [vaga, setVaga] = useState("");
-    return h(
-      BarraDeFiltros,
-      {
-        rotulo: "Encontrar a pessoa",
-        busca: {
-          valor: busca,
-          aoMudar: setBusca,
-          placeholder: "Código ou nome",
-          rotulo: "Buscar pessoa",
-          acao: "buscar",
-        },
-        quantos: [busca, vaga].filter(Boolean).length,
-        aoLimpar: () => {
-          setBusca("");
-          setVaga("");
-          aoLimpar();
-        },
-        resultado: "12 pessoas",
-        acoes: h("button", { type: "button", "data-acao": "minha" }, "Minha"),
-      },
-      h(
-        Campo,
-        { rotulo: "Vaga" },
-        h(
-          "select",
-          { value: vaga, onChange: (ev) => setVaga(ev.target.value) },
-          h("option", { value: "" }, "Todas"),
-          h("option", { value: "1" }, "Vaga 1"),
-        ),
-      ),
-    );
-  }
-
-  it("a busca vem primeiro, os filtros em linha, o resultado e Limpar só com filtro", async () => {
-    const limpou = vi.fn();
-    await montar(h(Barra, { aoLimpar: limpou }));
-    const barra = $("section.ui-card.ui-barra-de-filtros");
-    expect(barra.getAttribute("aria-label")).toBe("Encontrar a pessoa");
-    const busca = $("[data-acao='buscar']");
-    expect(busca.type).toBe("search");
-    expect(busca.getAttribute("aria-keyshortcuts")).toBe("/");
-    expect(barra.querySelector(".ui-barra-busca .sr-only").textContent).toBe(
-      "Buscar pessoa",
-    );
-    expect($(".ui-barra-de-filtros-campos select")).not.toBeNull();
-    expect($(".ui-barra-de-filtros-acoes [data-acao='minha']")).not.toBeNull();
-    expect($(".ui-barra-resultado").textContent).toBe("12 pessoas");
-    expect($(".ui-barra-quantos").textContent).toBe("Sem filtros");
-    expect($("[data-acao='limpar-filtros']").disabled).toBe(true);
-
-    await digitar(busca, "ana");
-    await escolher($(".ui-barra-de-filtros-campos select"), "1");
-    expect($(".ui-barra-quantos").textContent).toBe("2 filtros");
-    expect($(".ui-barra-quantos").classList.contains("tem-filtros")).toBe(true);
-    await clicar($("[data-acao='limpar-filtros']"));
-    expect(limpou).toHaveBeenCalledTimes(1);
-    expect(busca.value).toBe("");
-    expect($(".ui-barra-quantos").textContent).toBe("Sem filtros");
-  });
-
-  it('"/" leva à busca de fora de um campo; dentro de um campo, é só um caractere; Esc apaga', async () => {
-    await montar(h(Barra));
-    const busca = $("[data-acao='buscar']");
-    // O jsdom não calcula layout: a barra "está à vista" pelo offsetParent.
-    Object.defineProperty(busca, "offsetParent", {
-      configurable: true,
-      get: () => document.body,
-    });
-    await teclar(document.body, "/");
-    expect(document.activeElement).toBe(busca);
-    const select = $(".ui-barra-de-filtros-campos select");
-    select.focus();
-    await teclar(select, "/");
-    expect(document.activeElement).toBe(select);
-    await digitar(busca, "maria");
-    await teclar(busca, "Escape");
-    expect(busca.value).toBe("");
-  });
-});
 
 describe("AcoesDaLinha", () => {
   it("o principal com rótulo direto e o ⋯ com o nome da pessoa; ocupado troca o texto", async () => {
@@ -277,27 +192,27 @@ describe("SeletorDeEdital", () => {
     { id: "e3", edital: "Treino", treinamento: true, ativo: true },
   ];
 
-  it("o card de sempre: campo Edital, selo de treinamento e a classe da tela", async () => {
+  it("em linha no cabeçalho: campo Edital, selo de treinamento e a classe da tela", async () => {
     const escolheu = vi.fn();
     await montar(
       h(SeletorDeEdital, {
-        className: "classificacao-edital",
+        className: "avd-edital",
         tour: "seletor",
         editais: EDITAIS,
         escolhido: "e3",
         carregado: true,
-        complemento: (ed) => (ed.id === "e1" ? " (120)" : ""),
         aoEscolher: escolheu,
       }),
     );
-    const card = $("section.ui-card.ui-seletor-de-edital.classificacao-edital");
+    const card = $("section.ui-seletor-de-edital.avd-edital");
+    expect(card.classList.contains("ui-card")).toBe(false);
     expect(card.getAttribute("aria-label")).toBe("Edital");
     const opcoes = [...card.querySelectorAll("option")].map(
       (o) => o.textContent,
     );
     expect(opcoes).toEqual([
       "Escolha o edital",
-      "93/2026 - Boa Vista (120)",
+      "93/2026 - Boa Vista",
       "50/2025 - Manaus",
       "Treino · Treinamento",
     ]);

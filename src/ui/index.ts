@@ -12,11 +12,10 @@ export type {
 export type { AbaDaLista, PropriedadesDasAbas } from "./abas.tsx";
 export { Aviso } from "./aviso.tsx";
 export type { PropriedadesDoAviso } from "./aviso.tsx";
-export { BarraDaLista, BarraDeFiltros } from "./barra-de-filtros.tsx";
+export { BarraDaLista } from "./barra-de-filtros.tsx";
 export type {
   BuscaDaBarra,
   PropriedadesDaBarraDaLista,
-  PropriedadesDaBarraDeFiltros,
 } from "./barra-de-filtros.tsx";
 export { CabecalhoDaTela } from "./cabecalho-da-tela.tsx";
 export { CelulaDaPessoa } from "./celula-da-pessoa.tsx";
