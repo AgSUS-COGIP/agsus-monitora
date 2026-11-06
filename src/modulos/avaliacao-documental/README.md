@@ -238,7 +238,7 @@ previa.tsx                "Testar com um candidato fictício" (entradas à esque
 equipe.tsx                aba Equipe
 pre-classificacao.tsx     Triagem (cabeçalho com Pessoas, Por vaga e Regra, faixa de situação, listas oficiais na Regra)
 pessoas-da-triagem.tsx    aba Pessoas da Triagem: busca por código ou nome no edital todo
-                          (BarraDeFiltros), vaga e situação, 50 por vez do banco, ações da
+                          (BarraDaLista, TabelaDaLista), vaga e situação, 50 por vez do banco, ações da
                           linha (AcoesDaLinha); regras em src/lib/avaliacao-documental/
                           pessoas-da-triagem.ts; o filtro fica na sessão (usarEstadoDaSessao)
 fila.tsx                  aba Fila (FaixaDeSituacao, BarraDaLista, barra da seleção em lote,
