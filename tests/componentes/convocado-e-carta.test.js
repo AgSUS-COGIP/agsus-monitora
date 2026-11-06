@@ -1,14 +1,14 @@
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { criarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
-import { clicar, digitar, escolher, esperar } from "./interacoes.js";
+import { clicar, digitar, escolher, esperar } from "./interacoes.ts";
 import { compactarPorArea } from "./candidatos-compactos-falsos.js";
 import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
 import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.js";
-import { montarTela } from "../montar-tela.js";
+import { montarTela } from "../montar-tela.ts";
 
 /*
   O status Convocado e a carta de convocação na Lista de aprovados, pelas

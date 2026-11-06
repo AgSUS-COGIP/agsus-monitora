@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MultiSelectBusca } from "../../src/componentes/multi-select-busca.tsx";
 import { Modal } from "../../src/ui/modal.tsx";
-import { clicar, teclar } from "./interacoes.js";
+import { clicar, teclar } from "./interacoes.ts";
 
 /*
   Esc com o menu de escolha múltipla aberto dentro de um modal (ex.: "Áreas

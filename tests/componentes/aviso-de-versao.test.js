@@ -7,9 +7,9 @@ import {
   criarAvisoDeVersao,
 } from "../../src/app/aviso-de-versao.ts";
 import { AvisoDeVersao } from "../../src/componentes/aviso-de-versao/aviso-de-versao.tsx";
-import { desenharNoTeste } from "../montar-tela.js";
+import { desenharNoTeste } from "../montar-tela.ts";
 import { EVENTO_TELA_ANTIGA } from "../../src/lib/versao-do-sistema.ts";
-import { clicar } from "./interacoes.js";
+import { clicar } from "./interacoes.ts";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 

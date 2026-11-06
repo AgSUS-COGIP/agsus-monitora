@@ -17,7 +17,7 @@ import {
   digitar,
   escolher,
   teclar,
-} from "../componentes/interacoes.js";
+} from "../componentes/interacoes.ts";
 
 /*
   As peças compartilhadas das telas da seleção (Triagem, Avaliação

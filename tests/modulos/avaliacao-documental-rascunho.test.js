@@ -11,7 +11,7 @@ import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { criarEstadoDaAvaliacao } from "../../src/modulos/avaliacao-documental/estado.ts";
 import { EtapaDaAvaliacao } from "../../src/modulos/regras-do-edital/etapas.tsx";
-import { clicar, digitar, esperar } from "../componentes/interacoes.js";
+import { clicar, digitar, esperar } from "../componentes/interacoes.ts";
 
 /*
   Incidente de 13/10/2026 (114/2026): a regra editada no assistente se perdeu

@@ -2,7 +2,7 @@ import { act, createElement as h, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TabelaInfinita, usarListaNoServidor } from "../../src/ui/index.ts";
-import { clicar } from "../componentes/interacoes.js";
+import { clicar } from "../componentes/interacoes.ts";
 
 /*
   TabelaInfinita com o banco (usarListaNoServidor): 50 linhas por vez, "N de

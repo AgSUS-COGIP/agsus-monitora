@@ -2,7 +2,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ErrorBoundary } from "../../src/app/ErrorBoundary.tsx";
-import { clicar } from "../componentes/interacoes.js";
+import { clicar } from "../componentes/interacoes.ts";
 
 /*
   O ErrorBoundary de src/app/: erro de render num filho vira um aviso curto

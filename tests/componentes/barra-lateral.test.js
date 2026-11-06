@@ -10,7 +10,7 @@ import {
 import { SECOES } from "../../src/modulos/configuracoes/secoes.ts";
 import { sairDoSistema } from "../../src/app/casca/saida.ts";
 import { BarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
-import { desenharNoTeste } from "../montar-tela.js";
+import { desenharNoTeste } from "../montar-tela.ts";
 import {
   aplicarMarcaDaBarraLateral,
   aplicarMarcaDaConfiguracao,
@@ -26,7 +26,7 @@ import {
   obterDadosDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { htmlDaPagina } from "../pagina-montada.js";
+import { htmlDaPagina } from "../pagina-montada.ts";
 
 vi.mock("../../src/app/casca/saida.ts", async (original) => ({
   ...(await original()),

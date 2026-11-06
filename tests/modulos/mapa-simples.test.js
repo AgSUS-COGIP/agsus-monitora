@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { esquecerContornosDosDseis } from "../../src/lib/mapa-saude-indigena/contornos-dos-dseis.ts";
 import { EVENTO_DO_FUNDO } from "../../src/modules/map-base-layer-switcher.ts";
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
-import { clicar, esperar } from "../componentes/interacoes.js";
+import { clicar, esperar } from "../componentes/interacoes.ts";
 import { criarLeafletFalso } from "./leaflet-falso.js";
 
 /*

@@ -14,8 +14,8 @@ import {
   escolher,
   esperar,
   teclar,
-} from "../componentes/interacoes.js";
-import { montarTela } from "../montar-tela.js";
+} from "../componentes/interacoes.ts";
+import { montarTela } from "../montar-tela.ts";
 
 /*
   Análises curriculares como módulo do app (src/modulos/analises/): monta na

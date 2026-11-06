@@ -1,7 +1,7 @@
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { clicar, teclar } from "../componentes/interacoes.js";
+import { clicar, teclar } from "../componentes/interacoes.ts";
 
 /*
   O tour guiado da Aya (src/modulos/aya/tour/tour.tsx): mostra um passo por

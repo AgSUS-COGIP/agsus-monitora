@@ -15,7 +15,7 @@ import {
   escolher,
   esperar,
   teclar,
-} from "../componentes/interacoes.js";
+} from "../componentes/interacoes.ts";
 import { criarLeafletFalso } from "./leaflet-falso.js";
 
 /*

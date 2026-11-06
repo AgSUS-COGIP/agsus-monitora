@@ -18,7 +18,7 @@ import {
   (o mapa depende dele) e cabeçalhos iguais aos da Vercel.
 
   Usa `node:http` e não `fetch`: o `fetch` global está bloqueado nos testes
-  (tests/setup/rede-bloqueada.js), e aqui a conversa é só com 127.0.0.1.
+  (tests/setup/rede-bloqueada.ts), e aqui a conversa é só com 127.0.0.1.
 */
 
 const PAGINAS = {

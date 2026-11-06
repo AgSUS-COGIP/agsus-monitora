@@ -1,7 +1,7 @@
 import { act } from "react";
-import { montarTela } from "../montar-tela.js";
+import { montarTela } from "../montar-tela.ts";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clicar, digitar, esperar } from "./interacoes.js";
+import { clicar, digitar, esperar } from "./interacoes.ts";
 
 /*
   Status das atualizações › "Opções" dos robôs (React): a gaveta "Rodar com

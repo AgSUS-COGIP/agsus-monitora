@@ -1,8 +1,8 @@
 import { act } from "react";
-import { montarTela } from "../montar-tela.js";
+import { montarTela } from "../montar-tela.ts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { criarAutomacao } from "../../src/modulos/automacao/automacao.tsx";
-import { clicar, digitar, esperar } from "../componentes/interacoes.js";
+import { clicar, digitar, esperar } from "../componentes/interacoes.ts";
 
 /*
   Configurações › Automação (20261022190000): só o administrador global vê;

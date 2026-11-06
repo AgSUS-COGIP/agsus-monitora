@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { clicar, digitar, teclar } from "./interacoes.js";
+import { clicar, digitar, teclar } from "./interacoes.ts";
 import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
@@ -16,7 +16,7 @@ import { EVENTO_ESCOLHA_DA_BUSCA } from "../../src/lib/busca-global.ts";
 
 const { BuscaGlobal, avisarEscolha } =
   await import("../../src/componentes/busca-global/busca-global.tsx");
-const { desenharNoTeste } = await import("../montar-tela.js");
+const { desenharNoTeste } = await import("../montar-tela.ts");
 
 const LINHAS = [
   {

@@ -1,6 +1,6 @@
 import { act } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { montarPortaisNoTeste } from "../montar-tela.js";
+import { montarPortaisNoTeste } from "../montar-tela.ts";
 import { criarPaineisExternos } from "../../src/app/paineis-externos.ts";
 
 /*

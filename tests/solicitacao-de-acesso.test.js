@@ -31,7 +31,7 @@ import {
 } from "../src/app/entrada/pedido-de-acesso.ts";
 import { PaginaDaSolicitacao } from "../src/app/entrada/solicitacao-de-acesso.tsx";
 import { lembrarContaDesativada } from "../src/lib/acesso-liberado.ts";
-import { clicar, digitar, escolher } from "./componentes/interacoes.js";
+import { clicar, digitar, escolher } from "./componentes/interacoes.ts";
 
 /*
   Solicitação de acesso por área (20261021140000): abas Projetos · Saúde

@@ -12,7 +12,7 @@ import {
   digitar,
   escolher,
   esperar,
-} from "../componentes/interacoes.js";
+} from "../componentes/interacoes.ts";
 
 /*
   O assistente da regra na aba Regra (src/modulos/avaliacao-documental/

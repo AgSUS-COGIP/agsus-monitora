@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.ts";
 import { SECOES } from "../../src/modulos/configuracoes/secoes.ts";
 import { BarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
-import { desenharNoTeste } from "../montar-tela.js";
+import { desenharNoTeste } from "../montar-tela.ts";
 /* A barra como a casca a desenha (src/app/casca/casca.tsx): na hora, no <aside>. */
 function montarBarraLateral(aside) {
   return desenharNoTeste(aside, createElement(BarraLateral), {

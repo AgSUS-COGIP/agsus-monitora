@@ -11,7 +11,7 @@ import {
   TelaDeEntrada,
   ligarEntradaAPagina,
 } from "../../src/app/entrada/entrada.tsx";
-import { desenharNoTeste } from "../montar-tela.js";
+import { desenharNoTeste } from "../montar-tela.ts";
 import { criarMarcaDaEntrada } from "../../src/app/entrada/marca.ts";
 import {
   FASES,
@@ -19,7 +19,7 @@ import {
   TEXTO_DO_BOTAO_OCUPADO,
   configuracaoDaEntrada,
 } from "../../src/app/sessao.ts";
-import { clicar } from "../componentes/interacoes.js";
+import { clicar } from "../componentes/interacoes.ts";
 
 /*
   A tela de acesso (src/app/entrada/): desenha a marca e a configuração que

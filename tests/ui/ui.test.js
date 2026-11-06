@@ -30,7 +30,7 @@ import {
   textoDoRecorte,
   TopoDoPainel,
 } from "../../src/ui/index.ts";
-import { clicar, digitar, teclar } from "../componentes/interacoes.js";
+import { clicar, digitar, teclar } from "../componentes/interacoes.ts";
 
 /*
   Os componentes de src/ui/ (o design system): render básico e a interação

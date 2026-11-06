@@ -4,8 +4,8 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { clicar, digitar, esperar } from "../componentes/interacoes.js";
-import { montarTela } from "../montar-tela.js";
+import { clicar, digitar, esperar } from "../componentes/interacoes.ts";
+import { montarTela } from "../montar-tela.ts";
 
 /*
   A tela de Recursos com o parecer jurídico: os 4 KPIs, quem vê os botões de

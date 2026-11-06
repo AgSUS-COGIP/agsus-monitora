@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { criarEstadoDaFicha } from "../../src/modulos/avaliacao-documental/ficha/estado-da-ficha.ts";
 import { ItemDaFicha } from "../../src/modulos/avaliacao-documental/ficha/item-da-ficha.tsx";
-import { clicar } from "../componentes/interacoes.js";
+import { clicar } from "../componentes/interacoes.ts";
 
 /*
   A ficha com as diferenças por cargo (regra do 114/2026 dos casos dourados):

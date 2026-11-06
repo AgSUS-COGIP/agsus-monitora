@@ -2,8 +2,8 @@ import { act, createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SininhoDoResumo } from "../../src/modulos/resumo-do-dia/resumo-do-dia.tsx";
 import { criarEstadoDoResumoDoDia } from "../../src/modulos/resumo-do-dia/estado.ts";
-import { clicar, esperar } from "./interacoes.js";
-import { desenharNoTeste } from "../montar-tela.js";
+import { clicar, esperar } from "./interacoes.ts";
+import { desenharNoTeste } from "../montar-tela.ts";
 
 /*
   O sininho do topo e o popup do resumo do dia (20261104130000). "Agora" é

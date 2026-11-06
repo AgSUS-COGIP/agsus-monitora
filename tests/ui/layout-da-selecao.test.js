@@ -11,7 +11,7 @@ import {
   TabelaDaLista,
   textoDaDistribuicao,
 } from "../../src/ui/index.ts";
-import { clicar, digitar } from "../componentes/interacoes.js";
+import { clicar, digitar } from "../componentes/interacoes.ts";
 
 /*
   O layout das telas da seleção (Triagem, Avaliação documental e

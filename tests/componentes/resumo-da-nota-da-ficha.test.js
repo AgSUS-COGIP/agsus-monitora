@@ -1,7 +1,7 @@
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clicar } from "./interacoes.js";
+import { clicar } from "./interacoes.ts";
 
 /*
   A nota na lateral da ficha (resumo-da-nota.tsx): o item sem decisão mostra a

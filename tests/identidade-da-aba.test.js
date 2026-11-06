@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { fonteDoApp, semTrechos } from "./fonte-do-app.js";
+import { fonteDoApp, semTrechos } from "./fonte-do-app.ts";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   FAVICON_PADRAO,

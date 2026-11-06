@@ -13,9 +13,9 @@ import {
 } from "../../src/modulos/avaliacao-documental/abas-e-entrada.ts";
 import { criarAvaliacaoDocumental } from "../../src/modulos/avaliacao-documental/avaliacao-documental.tsx";
 import { editalVigente } from "../../src/lib/avaliacao-documental/editais.ts";
-import { clicar, esperar } from "../componentes/interacoes.js";
+import { clicar, esperar } from "../componentes/interacoes.ts";
 import { carregarCatalogoDeAbas } from "../../src/modules/catalogo-de-abas.ts";
-import { montarTela } from "../montar-tela.js";
+import { montarTela } from "../montar-tela.ts";
 
 /*
   Abas por papel e entrada da Avaliação documental (abas-e-entrada.ts):

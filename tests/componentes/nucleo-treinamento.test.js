@@ -6,8 +6,8 @@ import {
   publicarUnidadesDoCatalogo,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { clicar, esperar } from "./interacoes.js";
-import { montarTela } from "../montar-tela.js";
+import { clicar, esperar } from "./interacoes.ts";
+import { montarTela } from "../montar-tela.ts";
 
 /*
   Editais com o edital de treinamento (migration 20261007230000): o selo

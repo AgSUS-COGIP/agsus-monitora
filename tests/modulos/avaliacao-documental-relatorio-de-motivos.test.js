@@ -1,5 +1,5 @@
 // Antes do react-dom: conta os desenhos de cada componente.
-import { renders } from "../componentes/contar-renders.js";
+import { renders } from "../componentes/contar-renders.ts";
 import { readFileSync } from "node:fs";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
@@ -10,7 +10,7 @@ import {
   digitar,
   escolher,
   esperar,
-} from "../componentes/interacoes.js";
+} from "../componentes/interacoes.ts";
 
 /*
   Relatório de motivos (gaveta da coordenação): o atalho "Outro motivo por

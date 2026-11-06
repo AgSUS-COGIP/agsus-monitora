@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { fonteDoApp } from "./fonte-do-app.js";
+import { fonteDoApp } from "./fonte-do-app.ts";
 import { describe, expect, it } from "vitest";
 import { semOPainelAntigoDeAnalises } from "../src/lib/pagina-do-painel";
 import { RESOURCES } from "../src/lib/permissoes-recursos.ts";
@@ -9,7 +9,7 @@ import {
   linhasDosPaineis,
   normalizarPaineis,
 } from "../src/lib/paineis-externos-das-configuracoes.ts";
-import { htmlDaPagina } from "./pagina-montada.js";
+import { htmlDaPagina } from "./pagina-montada.ts";
 
 /*
   Análises curriculares deixou de ser o painel externo `analises` e virou a

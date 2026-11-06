@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { Casca } from "../../src/app/casca/casca.tsx";
-import { desenharNoTeste } from "../montar-tela.js";
+import { desenharNoTeste } from "../montar-tela.ts";
 import { criarMoldura } from "../../src/app/moldura.ts";
 import {
   atualizarMenuLateral,

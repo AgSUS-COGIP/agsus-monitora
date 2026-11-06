@@ -13,8 +13,8 @@ import {
   escolher,
   esperar,
   teclar,
-} from "../componentes/interacoes.js";
-import { montarTela } from "../montar-tela.js";
+} from "../componentes/interacoes.ts";
+import { montarTela } from "../montar-tela.ts";
 
 /*
   A ficha no modo de análise da aba Fila: o cabeçalho enxuto, o stepper com o

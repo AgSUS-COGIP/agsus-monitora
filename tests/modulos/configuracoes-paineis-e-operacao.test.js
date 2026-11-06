@@ -11,7 +11,7 @@ import {
   digitar,
   escolher,
   esperar,
-} from "../componentes/interacoes.js";
+} from "../componentes/interacoes.ts";
 
 /*
   Configurações › Painéis externos e Operação em React (01/10). Antes, a

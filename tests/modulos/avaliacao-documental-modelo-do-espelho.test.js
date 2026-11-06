@@ -7,7 +7,7 @@ import {
   mensagemDoErroDoModelo,
   textosParaOEspelho,
 } from "../../src/modulos/avaliacao-documental/modelo-do-espelho-no-banco.ts";
-import { clicar, digitar, esperar } from "../componentes/interacoes.js";
+import { clicar, digitar, esperar } from "../componentes/interacoes.ts";
 
 /*
   O editor "Modelo do espelho de nota": abre o modelo do edital, mostra a

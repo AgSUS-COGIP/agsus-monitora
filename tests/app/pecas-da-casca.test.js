@@ -1,7 +1,7 @@
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { teclar } from "../componentes/interacoes.js";
+import { teclar } from "../componentes/interacoes.ts";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 

@@ -18,7 +18,7 @@ import {
   nomeDoCampo,
   RenomearVersao,
 } from "../src/ui/index.ts";
-import { clicar, digitar } from "./componentes/interacoes.js";
+import { clicar, digitar } from "./componentes/interacoes.ts";
 
 /*
   O nome das versões das regras (avaliação documental, classificação e
