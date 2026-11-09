@@ -90,9 +90,10 @@ def _ano(valor, padrao):
 
 def datas_com_ano(periodos, ano):
     """
-    Dá ano às datas, na ordem do cronograma: começa no ano do edital e, quando
-    uma data cai muito antes da anterior (dezembro → janeiro), passa ao ano
-    seguinte. Data impossível (31/02) vira None.
+    Dá ano às datas, na ordem do cronograma. Um ano explícito passa a ser a
+    referência das datas seguintes; datas sem ano mantêm a regra de virada
+    quando recuam mais de 60 dias no calendário. Um período inválido não
+    altera a referência usada pelas próximas etapas.
     """
     saida = []
     atual = ano
@@ -102,22 +103,27 @@ def datas_com_ano(periodos, ano):
             saida.append(None)
             continue
         par = []
+        ano_do_periodo = atual
+        anterior_do_periodo = anterior
         for d, m, a in periodo:
-            ano_da_data = _ano(a, atual)
+            ano_da_data = _ano(a, ano_do_periodo)
             try:
+                # Compara num ano bissexto antes de validar o ano real: 29/02
+                # pode ser válido depois da virada, mesmo se não o era antes.
+                if not a and anterior_do_periodo:
+                    recuo = (anterior_do_periodo.replace(year=2000) - date(2000, m, d)).days
+                    if recuo > 60:
+                        ano_da_data += 1
                 data = date(ano_da_data, m, d)
             except ValueError:
                 par = None
                 break
-            if not a and anterior and (anterior - data).days > 60:
-                atual += 1
-                try:
-                    data = date(atual, m, d)
-                except ValueError:  # 29/02 num ano que não é bissexto
-                    par = None
-                    break
             par.append(data)
-            anterior = data
+            ano_do_periodo = data.year
+            anterior_do_periodo = data
+        if par:
+            atual = ano_do_periodo
+            anterior = anterior_do_periodo
         saida.append(tuple(par) if par else None)
     return saida
 
@@ -128,24 +134,44 @@ def eh_cabecalho_cronograma(linha):
 
 
 def extrair_cronograma(tabelas, ano):
-    """Etapas do Anexo I: [{atividade, data_inicio, data_fim, texto_datas}]."""
+    """Etapas do Anexo I, incluindo tabelas de continuação entre páginas."""
     linhas = []
     dentro = False
+    largura = 0
     for tabela in tabelas:
+        confirmada = False
         for linha in tabela:
             if not linha:
                 continue
             if eh_cabecalho_cronograma(linha):
                 dentro = True
+                confirmada = True
+                largura = len(linha)
                 continue
+            # O quadro de vagas encerra a seção, mesmo na mesma tabela.
+            if colunas_do_quadro(linha):
+                dentro = False
+                break
             if not dentro:
                 continue
             celulas = [limpar(c) for c in linha if limpar(c)]
             if len(celulas) < 2:
                 continue
-            linhas.append((celulas[0], celulas[-1]))
-        if dentro and linhas:
-            break
+            if len(linha) != largura:
+                dentro = False
+                break
+            atividade, datas = celulas[0], celulas[-1]
+            # Sem cabeçalho repetido, só continua uma tabela com formato de
+            # data ou indicação explícita de prazo ainda não definido.
+            if not confirmada and not (
+                ler_periodo(datas)
+                or re.search(r"\d{1,2}\s*/\s*\d{1,2}", datas)
+                or sem_acento(datas) in {"a definir", "a divulgar", "a ser definido", "a ser divulgada"}
+            ):
+                dentro = False
+                break
+            linhas.append((atividade, datas))
+            confirmada = True
     periodos = datas_com_ano([ler_periodo(d) for _, d in linhas], ano)
     etapas = []
     for (atividade, texto_datas), par in zip(linhas, periodos, strict=False):
