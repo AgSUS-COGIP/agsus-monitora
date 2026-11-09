@@ -1,5 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { dataDeAnaliseNoFuturo } from "../src/lib/data-de-analise.ts";
+import {
+  dataDaPlanilha,
+  dataDeAnaliseNoFuturo,
+} from "../src/lib/data-de-analise.ts";
+
+describe("data da planilha", () => {
+  it("lê dd/mm/aaaa e aaaa-mm-dd", () => {
+    expect(dataDaPlanilha("28/09/2026")).toEqual(new Date(2026, 8, 28));
+    expect(dataDaPlanilha("2026-09-28")).toEqual(new Date(2026, 8, 28));
+    expect(dataDaPlanilha("29/02/2028")).toEqual(new Date(2028, 1, 29));
+  });
+
+  it("data impossível fica sem data, em vez de virar outro dia", () => {
+    expect(dataDaPlanilha("31/02/2026")).toBeNull();
+    expect(dataDaPlanilha("29/02/2026")).toBeNull();
+    expect(dataDaPlanilha("2026-13-01")).toBeNull();
+    expect(dataDaPlanilha("00/05/2026")).toBeNull();
+  });
+});
 
 describe("data de análise no futuro", () => {
   const agora = new Date(2026, 8, 28, 23, 50); // 28/09/2026, 23:50
