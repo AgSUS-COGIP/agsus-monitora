@@ -35,3 +35,15 @@ describe("funções da Vercel enxutas", () => {
     expect(pyproject).toContain(`"pypdfium2; sys_platform == 'never'"`);
   });
 });
+
+/*
+  O GeoServer da Funai não responde às funções em iad1 (EUA): todo pedido a
+  /api/funai-geodata e /api/funai-wms voltava 502, e a camada de Terras
+  Indígenas e DSEIs sumia do mapa. Do Brasil ele responde. A conta Hobby só
+  aceita uma região, por isso ela vale para o projeto inteiro.
+*/
+describe("região das funções", () => {
+  it("as funções rodam em São Paulo (gru1), perto da Funai", () => {
+    expect(vercel.regions).toEqual(["gru1"]);
+  });
+});
