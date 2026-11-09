@@ -19,7 +19,8 @@ def test_preserva_continuacao_em_outra_tabela(cabecalho_repetido):
     if cabecalho_repetido:
         segunda.insert(0, cabecalho)
     etapas = ax.extrair_cronograma(
-        [[cabecalho, ["Inscricoes", "01/11 a 05/11"]], segunda], 2026
+        [[cabecalho, ["Inscricoes", "01/11 a 05/11"]], segunda],
+        2026,
     )
     assert [e["atividade"] for e in etapas] == ["Inscricoes", "Resultado"]
     assert etapas[1]["data_inicio"] == "2026-11-10"
@@ -118,7 +119,8 @@ def test_valida_bissexto_depois_da_virada():
 
 def test_nao_bissexto_continua_invalido():
     datas = ax.datas_com_ano(
-        [ax.ler_periodo("20/12/2028"), ax.ler_periodo("29/02"), ax.ler_periodo("10/03")], 2026
+        [ax.ler_periodo("20/12/2028"), ax.ler_periodo("29/02"), ax.ler_periodo("10/03")],
+        2026,
     )
     assert datas[1] is None
     assert datas[2] == (date(2029, 3, 10), date(2029, 3, 10))
@@ -126,7 +128,8 @@ def test_nao_bissexto_continua_invalido():
 
 def test_periodo_invalido_nao_contamina_o_ano_seguinte():
     datas = ax.datas_com_ano(
-        [ax.ler_periodo("01/11/2027 a 31/02/2028"), ax.ler_periodo("05/01")], 2026
+        [ax.ler_periodo("01/11/2027 a 31/02/2028"), ax.ler_periodo("05/01")],
+        2026,
     )
     assert datas == [None, (date(2026, 1, 5), date(2026, 1, 5))]
 
@@ -138,7 +141,8 @@ def test_ano_explicito_nunca_e_substituido_pela_inferencia():
 
 def test_retificacao_reutiliza_o_ano_corrigido():
     etapas = ax.etapas_da_retificacao(
-        [("Inscricoes", "20/12/2027", False), ("Resultado", "05/01", True)], 2026
+        [("Inscricoes", "20/12/2027", False), ("Resultado", "05/01", True)],
+        2026,
     )
     assert etapas[1]["data_inicio"] == "2028-01-05"
     assert etapas[1]["negrito"] is True
