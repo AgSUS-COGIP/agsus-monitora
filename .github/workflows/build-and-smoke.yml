@@ -20,6 +20,13 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      - name: Informar o escopo da validacao do banco
+        if: github.event_name != 'workflow_dispatch' || github.ref != 'refs/heads/main'
+        run: |
+          echo '### Banco de desenvolvimento' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Contrato RPC real: NAO EXECUTADO nesta rodada. Os testes de navegador usam dados simulados.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'A verificacao real exige execucao manual na main e SUPABASE_DB_URL_DEV configurada.' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Baixar código
         uses: actions/checkout@v7
         with:
@@ -175,10 +182,23 @@ jobs:
 
   contrato-rpc-banco:
     name: Contrato de RPC contra o banco de desenvolvimento
+    # Credenciais do banco nunca sao entregues ao codigo de um PR.
+    # Fora da main manual este job fica SKIPPED, nao aprovado sem consultar.
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
+      - name: Exigir a conexao de desenvolvimento
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL_DEV }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo '::error::SUPABASE_DB_URL_DEV ausente; o contrato RPC real nao foi validado.'
+            echo 'Contrato RPC real: NAO EXECUTADO por configuracao ausente.' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
       - name: Baixar código
         uses: actions/checkout@v7
         with:
@@ -194,15 +214,9 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Verificar contrato contra o catálogo
-        # SUPABASE_DB_URL_DEV aponta para o Supabase de DESENVOLVIMENTO, nunca para
-        # produção, e nunca é variável VITE_*: essas entram no bundle do navegador.
-        # Sem o segredo configurado o passo é ignorado, não falha: a verificação
-        # estática do contrato já corre no build, no job anterior.
+        # Apenas banco de DESENVOLVIMENTO. Nunca usar uma credencial VITE_*.
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL_DEV }}
         run: |
-          if [ -z "$SUPABASE_DB_URL" ]; then
-            echo "Segredo SUPABASE_DB_URL_DEV não configurado; verificação viva ignorada."
-            exit 0
-          fi
           npm run check:rpc-contract:db
+          echo 'Contrato RPC real: EXECUTADO COM SUCESSO no banco de desenvolvimento.' >> "$GITHUB_STEP_SUMMARY"
