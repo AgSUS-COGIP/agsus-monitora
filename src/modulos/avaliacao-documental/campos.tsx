@@ -70,12 +70,21 @@ export function CampoNumero({
   dica,
   largo,
 }: CampoNumeroProps) {
+  /*
+    Enquanto o campo está em foco, mostra o texto como foi digitado. Sem isto,
+    "0," virava 0 e voltava à tela como "0": a vírgula sumia e "0,25" saía 25.
+  */
+  const [digitado, setDigitado] = useState<string | null>(null);
   return (
     <Campo rotulo={rotulo} dica={dica} largo={largo}>
       <input
         inputMode="decimal"
-        value={textoDoNumero(valor)}
-        onChange={(ev) => aoMudar(numeroOuTexto(ev.target.value))}
+        value={digitado ?? textoDoNumero(valor)}
+        onChange={(ev) => {
+          setDigitado(ev.target.value);
+          aoMudar(numeroOuTexto(ev.target.value));
+        }}
+        onBlur={() => setDigitado(null)}
       />
     </Campo>
   );

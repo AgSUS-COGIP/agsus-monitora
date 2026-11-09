@@ -898,6 +898,97 @@ describe("anexos do candidato", () => {
     expect(await pdfAberto?.text()).toBe("%PDF-1.4");
   });
 
+  it("pop-up bloqueado ao abrir o anexo: avisa em vez de falhar em silêncio", async () => {
+    const aba = { mostrar: vi.fn(() => false), fechar: vi.fn() };
+    URL.createObjectURL = vi.fn(() => "blob:pdf");
+    URL.revokeObjectURL = vi.fn();
+    const supabase = supabaseFalso({ anexos: ANEXOS() });
+    const { toast } = await montar({
+      supabase,
+      novaAba: () => aba,
+      perfil: ADMIN,
+    });
+    await clicar(botaoDeAnexos("Bruno Lima"));
+    await clicar(
+      achar('[data-approved-action="abrir-anexo"]', $("approvedAnexosModal")),
+    );
+    expect(aba.mostrar).toHaveBeenCalledWith("blob:pdf");
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:pdf");
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining("bloqueou a aba do anexo"),
+      "error",
+    );
+  });
+
+  it("anexo com arquivo inválido: fecha a aba em branco e avisa", async () => {
+    const aba = { mostrar: vi.fn(), fechar: vi.fn() };
+    URL.createObjectURL = vi.fn(() => "blob:pdf");
+    URL.revokeObjectURL = vi.fn();
+    const supabase = supabaseFalso({ anexos: ANEXOS() });
+    const responder = supabase.rpc.getMockImplementation();
+    supabase.rpc.mockImplementation(
+      async (nome: string, args?: Record<string, unknown>) =>
+        nome === "baixar_anexo_candidato_aprovado"
+          ? {
+              data: {
+                arquivo_nome: "termo.pdf",
+                arquivo_base64: "@@não é base64@@",
+              },
+              error: null,
+            }
+          : responder!(nome, args),
+    );
+    const { toast } = await montar({
+      supabase,
+      novaAba: () => aba,
+      perfil: ADMIN,
+    });
+    await clicar(botaoDeAnexos("Bruno Lima"));
+    await clicar(
+      achar('[data-approved-action="abrir-anexo"]', $("approvedAnexosModal")),
+    );
+    expect(aba.mostrar).not.toHaveBeenCalled();
+    expect(aba.fechar).toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining("Erro ao abrir o anexo"),
+      "error",
+    );
+  });
+
+  it("duplo clique no anexo abre uma aba só", async () => {
+    const abas: {
+      mostrar: Mock<(url: string) => void>;
+      fechar: Mock<() => void>;
+    }[] = [];
+    URL.createObjectURL = vi.fn(() => "blob:pdf");
+    URL.revokeObjectURL = vi.fn();
+    const supabase = supabaseFalso({ anexos: ANEXOS() });
+    await montar({
+      supabase,
+      novaAba: () => {
+        const aba = { mostrar: vi.fn(), fechar: vi.fn() };
+        abas.push(aba);
+        return aba;
+      },
+      perfil: ADMIN,
+    });
+    await clicar(botaoDeAnexos("Bruno Lima"));
+    const abrir = achar(
+      '[data-approved-action="abrir-anexo"]',
+      $("approvedAnexosModal"),
+    );
+    await act(async () => {
+      (abrir as HTMLElement).click();
+      (abrir as HTMLElement).click();
+    });
+    expect(abas).toHaveLength(1);
+    expect(
+      supabase.rpc.mock.calls.filter(
+        ([n]) => n === "baixar_anexo_candidato_aprovado",
+      ),
+    ).toHaveLength(1);
+  });
+
   it("remove o anexo pela RPC, com o arquivo junto", async () => {
     const supabase = supabaseFalso({ anexos: ANEXOS() });
     await montar({ supabase, perfil: ADMIN });

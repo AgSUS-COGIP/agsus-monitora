@@ -534,6 +534,10 @@ function ModoDeAnalise({
   }, [f?.id]);
 
   const [liberando, setLiberando] = useState(false);
+  // O pedido de liberar já saiu: o segundo clique não libera de novo. A trava
+  // é síncrona (ref); o estado só desativa o botão na tela.
+  const liberandoAgora = useRef(false);
+  const [enviandoLiberar, setEnviandoLiberar] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [erro, setErro] = useState("");
 
@@ -661,11 +665,21 @@ function ModoDeAnalise({
               <button
                 type="button"
                 className="btn small"
-                disabled={Boolean(erroDoMotivoDaFila(motivo))}
+                disabled={
+                  enviandoLiberar || Boolean(erroDoMotivoDaFila(motivo))
+                }
                 onClick={async () => {
-                  const r = await fila.liberarReservas([f.id], motivo.trim());
-                  if (r.ok) await fila.abrir(f.id);
-                  else setErro(r.erro);
+                  if (liberandoAgora.current) return;
+                  liberandoAgora.current = true;
+                  setEnviandoLiberar(true);
+                  try {
+                    const r = await fila.liberarReservas([f.id], motivo.trim());
+                    if (r.ok) await fila.abrir(f.id);
+                    else setErro(r.erro);
+                  } finally {
+                    liberandoAgora.current = false;
+                    setEnviandoLiberar(false);
+                  }
                 }}
               >
                 Liberar

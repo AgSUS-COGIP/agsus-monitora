@@ -134,6 +134,15 @@ export function alocarVagas(
 
 /* ── Convocação ─────────────────────────────────────────────────────── */
 
+/** As casas que o múltiplo precisa no texto (1,5 → 1; 3 → 0): o documento não arredonda a regra. */
+function casasDoMultiplo(multiplo: number): number {
+  for (let casas = 0; casas < 4; casas++) {
+    const escalado = multiplo * 10 ** casas;
+    if (Math.abs(escalado - Math.round(escalado)) < 1e-9) return casas;
+  }
+  return 4;
+}
+
 export function limiteDaConvocacao(
   vaga: Pick<VagaMontada, "cargo" | "total">,
   regra: RegraDoMotor,
@@ -148,8 +157,9 @@ export function limiteDaConvocacao(
   const total = vaga.total;
   if (total !== null && total > 0 && multiplo !== null)
     return {
-      limite: Math.ceil(multiplo * total),
-      origem: `${formatarNota(multiplo, 0)} × ${total} vaga(s)${excecao ? " (exceção do cargo)" : ""}`,
+      // O desconto absorve o erro do float: 2,2 × 25 dá 55,000…01 e subiria a 56.
+      limite: Math.ceil(multiplo * total - 1e-9),
+      origem: `${formatarNota(multiplo, casasDoMultiplo(multiplo))} × ${total} vaga(s)${excecao ? " (exceção do cargo)" : ""}`,
     };
   if (posicaoCr !== null)
     return {

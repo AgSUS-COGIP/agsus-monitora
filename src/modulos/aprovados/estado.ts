@@ -226,13 +226,14 @@ function baixarNoNavegador(arquivo: Blob, nome: string) {
 function abrirEmNovaAba() {
   const janela = window.open("", "_blank");
   return {
-    mostrar(url: string) {
-      if (!janela) {
-        window.open(url, "_blank", "noopener");
-        return;
-      }
-      janela.opener = null;
-      janela.location.href = url;
+    /** false = o navegador bloqueou a aba (quem chamou avisa a pessoa). */
+    mostrar(url: string): boolean {
+      // Sem `noopener` aqui: com ele o retorno é sempre null e o bloqueio não aparece.
+      const destino = janela ?? window.open(url, "_blank");
+      if (!destino) return false;
+      destino.opener = null;
+      if (janela) janela.location.href = url;
+      return true;
     },
     fechar: () => janela?.close(),
   };
@@ -1185,27 +1186,50 @@ export function criarEstadoDaListaDeAprovados({
     O PDF vem do banco em base64 e abre numa aba nova por um endereço `blob:`,
     que é liberado um minuto depois (a aba já o carregou).
   */
+  /* O mesmo anexo já está abrindo: o segundo clique não abre outra aba. */
+  const anexosAbrindo = new Set<string>();
   async function abrirAnexo(anexo: AnexoDoAprovado) {
     if (!supabase) return false;
     if (!anexo?.anexo_id) return;
+    const id = String(anexo.anexo_id);
+    if (anexosAbrindo.has(id)) return;
+    anexosAbrindo.add(id);
     const aba = novaAba();
-    const { data, error } = await supabase.rpc(
-      "baixar_anexo_candidato_aprovado",
-      { p_anexo_id: anexo.anexo_id },
-    );
-    if (error || !registroDosAprovados(data).arquivo_base64) {
+    try {
+      const { data, error } = await supabase.rpc(
+        "baixar_anexo_candidato_aprovado",
+        { p_anexo_id: anexo.anexo_id },
+      );
+      if (error || !registroDosAprovados(data).arquivo_base64) {
+        aba.fechar();
+        toast(
+          `Erro ao abrir o anexo: ${mensagemDe(error) || "arquivo vazio"}`,
+          "error",
+        );
+        return;
+      }
+      const url = URL.createObjectURL(
+        pdfDoBase64(registroDosAprovados(data).arquivo_base64),
+      );
+      if (aba.mostrar(url) === false) {
+        URL.revokeObjectURL(url);
+        toast(
+          "O navegador bloqueou a aba do anexo. Permita pop-ups para este site e tente de novo.",
+          "error",
+        );
+        return;
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (erro) {
+      // Base64 inválido ou rede: sem aba em branco aberta e com aviso.
       aba.fechar();
       toast(
-        `Erro ao abrir o anexo: ${mensagemDe(error) || "arquivo vazio"}`,
+        `Erro ao abrir o anexo: ${mensagemDe(erro) || "arquivo inválido"}`,
         "error",
       );
-      return;
+    } finally {
+      anexosAbrindo.delete(id);
     }
-    const url = URL.createObjectURL(
-      pdfDoBase64(registroDosAprovados(data).arquivo_base64),
-    );
-    aba.mostrar(url);
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   }
 
   async function removerAnexo(anexo: AnexoDoAprovado) {

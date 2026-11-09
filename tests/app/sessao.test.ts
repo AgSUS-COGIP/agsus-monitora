@@ -78,11 +78,15 @@ function clienteFalso({
         data: { session: atual },
         error: null,
       })),
-      signOut: vi.fn(async (_opcoes?: { scope?: string }) => {
-        atual = null;
-        ouvinte?.("SIGNED_OUT", null);
-        return { error: null };
-      }),
+      signOut: vi.fn(
+        async (_opcoes?: {
+          scope?: string;
+        }): Promise<{ error: Error | null }> => {
+          atual = null;
+          ouvinte?.("SIGNED_OUT", null);
+          return { error: null };
+        },
+      ),
       signInWithOAuth: vi.fn<
         (pedido?: unknown) => Promise<{ data?: unknown; error: unknown }>
       >(async () => ({
@@ -193,6 +197,7 @@ interface OpcoesDaMontagem {
   sistema?: ReturnType<typeof sistemaFalso>;
   celular?: boolean;
   temAmbiente?: boolean;
+  armazenamento?: { clearAuthState: () => void };
 }
 
 function montar({
@@ -201,10 +206,11 @@ function montar({
   sistema = sistemaFalso(),
   celular = false,
   temAmbiente = true,
+  armazenamento = { clearAuthState: vi.fn() },
 }: OpcoesDaMontagem = {}) {
   const sessao = criarSessao({
     cliente: () => comoSupabase(cliente),
-    armazenamento: () => ({ clearAuthState: vi.fn() }),
+    armazenamento: () => armazenamento,
     janela: comoJanela(janela),
     temAmbiente: () => temAmbiente,
     celular: () => celular,
@@ -549,6 +555,43 @@ describe("sair e sessão expirada", () => {
     await sessao.sair();
     expect(sessao.obter().fase).toBe(FASES.DESLOGADO);
     vi.mocked(console.warn).mockRestore();
+  });
+
+  it("sair com signOut devolvendo erro (rede fora, token vencido) apaga o token local", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const armazenamento = { clearAuthState: vi.fn() };
+    const { sessao, cliente } = await conectado({ armazenamento });
+    armazenamento.clearAuthState.mockClear();
+    // A auth-js devolve o erro sem apagar a sessão nem emitir SIGNED_OUT.
+    cliente.auth.signOut.mockImplementationOnce(async () => ({
+      error: new Error("Failed to fetch"),
+    }));
+    await sessao.sair();
+    expect(armazenamento.clearAuthState).toHaveBeenCalled();
+    expect(sessao.obter().fase).toBe(FASES.DESLOGADO);
+    vi.mocked(console.warn).mockRestore();
+  });
+
+  it("sair com signOut lançando exceção também apaga o token local", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const armazenamento = { clearAuthState: vi.fn() };
+    const { sessao, cliente } = await conectado({ armazenamento });
+    armazenamento.clearAuthState.mockClear();
+    cliente.auth.signOut.mockImplementationOnce(async () => {
+      throw new Error("rede");
+    });
+    await sessao.sair();
+    expect(armazenamento.clearAuthState).toHaveBeenCalled();
+    expect(sessao.obter().fase).toBe(FASES.DESLOGADO);
+    vi.mocked(console.warn).mockRestore();
+  });
+
+  it("sair com signOut bem-sucedido não precisa apagar à mão", async () => {
+    const armazenamento = { clearAuthState: vi.fn() };
+    const { sessao } = await conectado({ armazenamento });
+    armazenamento.clearAuthState.mockClear();
+    await sessao.sair();
+    expect(armazenamento.clearAuthState).not.toHaveBeenCalled();
   });
 
   it("sessão expirada (com prova): a mensagem de expiração", async () => {

@@ -89,7 +89,11 @@ export interface OpcoesDoEstadoDosAprovados extends Pick<
   getProfile?: () => unknown;
   confirmar?: (mensagem: string) => boolean;
   lerPlanilha?: (arquivo: File) => Promise<readonly Record<string, unknown>[]>;
-  novaAba?: () => { mostrar: (url: string) => void; fechar: () => void };
+  novaAba?: () => {
+    /** false = o navegador bloqueou a aba. */
+    mostrar: (url: string) => boolean | void;
+    fechar: () => void;
+  };
   armazenamento?: {
     ler: (chave: string) => Promise<unknown>;
     guardar: (chave: string, valor: unknown) => Promise<unknown>;

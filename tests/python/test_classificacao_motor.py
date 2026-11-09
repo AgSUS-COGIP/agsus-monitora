@@ -126,3 +126,31 @@ class SemanticaDoJs(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LimiteDaConvocacao(unittest.TestCase):
+    """Múltiplo fracionário: o mesmo resultado do motor da tela (tests/lib/classificacao-motor.test.js)."""
+
+    @staticmethod
+    def _regra(multiplo):
+        return {"convocacao": {"multiplo_vagas": multiplo, "posicao_max_cr": None, "excecoes": []}}
+
+    def test_erro_do_float_nao_convoca_um_a_mais(self):
+        # 2,2 × 25 = 55,000…01 no float: antes o limite subia para 56.
+        self.assertEqual(
+            motor.limite_da_convocacao({"cargo": "Analista", "total": 25}, self._regra(2.2)),
+            {"limite": 55, "origem": "2,2 × 25 vaga(s)"},
+        )
+        self.assertEqual(
+            motor.limite_da_convocacao({"cargo": "Analista", "total": 25}, self._regra(1.12))["limite"], 28
+        )
+
+    def test_texto_nao_arredonda_o_multiplo(self):
+        self.assertEqual(
+            motor.limite_da_convocacao({"cargo": "Analista", "total": 3}, self._regra(1.5)),
+            {"limite": 5, "origem": "1,5 × 3 vaga(s)"},
+        )
+        self.assertEqual(
+            motor.limite_da_convocacao({"cargo": "Analista", "total": 4}, self._regra(3)),
+            {"limite": 12, "origem": "3 × 4 vaga(s)"},
+        )

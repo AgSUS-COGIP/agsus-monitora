@@ -5,7 +5,13 @@ import type {
   RegistroDaClassificacao,
   OpcoesDaTela,
 } from "./tipos-do-estado.ts";
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   TelaNaUrl,
   usarEditalNaUrl,
@@ -101,14 +107,34 @@ function TelaDaArea({
     { manter: FICA_NA_TROCA_DE_ABA },
   );
   const visao = filtrosDaTela.aba;
-  const setVisao = (aba: string) => mudarFiltrosDaTela({ aba });
+  /*
+    A agenda gerada ou ajustada e ainda não salva só existe na tela da Agenda:
+    trocar de aba ou de edital a desmonta. Antes, pergunta.
+  */
+  const agendaPendente = useRef(false);
+  const aoMudarPendencia = useCallback((pendente: boolean) => {
+    agendaPendente.current = pendente;
+  }, []);
+  const podeSairDaAgenda = () =>
+    !agendaPendente.current ||
+    confirmar(
+      "A agenda das entrevistas tem alterações que ainda não foram salvas. Sair mesmo assim?",
+    );
+  const setVisao = (aba: string) => {
+    if (aba !== visao && !podeSairDaAgenda()) return;
+    mudarFiltrosDaTela({ aba });
+  };
   // O edital na URL (?edital=): o link copiado abre a Classificação nele.
-  const escolherEdital = usarEditalNaUrl({
+  const escolherEditalNaUrl = usarEditalNaUrl({
     editalId: e.editalId,
     editais: e.editais,
     carregado: e.carregado,
     escolher: (id) => void estado.escolherEdital(id),
   });
+  const escolherEdital = (id: string) => {
+    if (id !== e.editalId && !podeSairDaAgenda()) return;
+    escolherEditalNaUrl(id);
+  };
   const recarregar = () => {
     void estado.carregar(e.area);
   };
@@ -236,6 +262,7 @@ function TelaDaArea({
                 agenda={agenda}
                 e={e}
                 calcular={calcular}
+                aoMudarPendencia={aoMudarPendencia}
               />
             ) : visao === "regra" && e.dados ? (
               <ResumoDaRegraDaEtapa

@@ -877,6 +877,31 @@ describe("convocação para entrevista", () => {
     ).toBe(18);
   });
 
+  it("múltiplo fracionário: o erro do float não convoca um a mais e o texto não arredonda a regra", () => {
+    const comMultiplo = (multiplo_vagas) => {
+      const n = normalizarRegra(REGRA_100);
+      return {
+        ...n,
+        convocacao: { ...n.convocacao, multiplo_vagas, excecoes: [] },
+      };
+    };
+    // 2,2 × 25 = 55,000…01 no float: antes o limite subia para 56.
+    expect(
+      limiteDaConvocacao({ cargo: "Analista", total: 25 }, comMultiplo(2.2)),
+    ).toEqual({ limite: 55, origem: "2,2 × 25 vaga(s)" });
+    // 1,5 × 3 = 4,5 → 5; antes o texto dizia "2 × 3".
+    expect(
+      limiteDaConvocacao({ cargo: "Analista", total: 3 }, comMultiplo(1.5)),
+    ).toEqual({ limite: 5, origem: "1,5 × 3 vaga(s)" });
+    expect(
+      limiteDaConvocacao({ cargo: "Analista", total: 25 }, comMultiplo(1.12))
+        .limite,
+    ).toBe(28);
+    expect(
+      limiteDaConvocacao({ cargo: "Analista", total: 4 }, comMultiplo(3)),
+    ).toEqual({ limite: 12, origem: "3 × 4 vaga(s)" });
+  });
+
   it("no resultado final, convocado sem entrevista lançada vira aviso", () => {
     const r = classificar({
       tipo: "FINAL",
