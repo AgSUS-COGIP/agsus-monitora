@@ -888,6 +888,15 @@ def _alocar_vagas(vaga, geral, por_modalidade, regra, ctx: Contexto) -> dict:
 # ── Convocação ──────────────────────────────────────────────────────────
 
 
+def _casas_do_multiplo(multiplo) -> int:
+    """As casas que o múltiplo precisa no texto (1,5 → 1; 3 → 0): o documento não arredonda a regra."""
+    for casas in range(4):
+        escalado = multiplo * 10**casas
+        if abs(escalado - round(escalado)) < 1e-9:
+            return casas
+    return 4
+
+
 def limite_da_convocacao(vaga, regra) -> dict:
     """O limite da convocação para entrevista: N × vagas imediatas ou até a k-ésima posição."""
     conv = regra["convocacao"]
@@ -903,8 +912,9 @@ def limite_da_convocacao(vaga, regra) -> dict:
     total = vaga.get("total")
     if total is not None and total > 0 and multiplo is not None:
         return {
-            "limite": math.ceil(multiplo * total),
-            "origem": f"{formatar_nota(multiplo, 0)} × {numero_em_texto(total)} vaga(s){do_cargo}",
+            # O desconto absorve o erro do float: 2,2 × 25 dá 55,000…01 e subiria a 56.
+            "limite": math.ceil(multiplo * total - 1e-9),
+            "origem": f"{formatar_nota(multiplo, _casas_do_multiplo(multiplo))} × {numero_em_texto(total)} vaga(s){do_cargo}",
         }
     if posicao_cr is not None:
         return {"limite": math_trunc(posicao_cr), "origem": f"até a {math_trunc(posicao_cr)}ª posição{do_cargo}"}

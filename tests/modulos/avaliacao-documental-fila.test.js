@@ -405,13 +405,21 @@ describe("Fila (AM-6)", () => {
     // A coordenação libera a reserva presa, com motivo.
     await clicar(botao("Liberar a reserva"));
     await digitar(gaveta.querySelector("input"), "Reserva presa desde ontem");
-    await clicar(botao("Liberar", gaveta));
+    // Duplo clique: um pedido só (antes saíam dois, com auditoria em dobro).
+    const liberar = botao("Liberar", gaveta);
+    await act(async () => {
+      liberar.click();
+      liberar.click();
+    });
     await esperar();
     expect(supabase.rpc).toHaveBeenCalledWith("liberar_reserva", {
       p_edital: "e93",
       p_fichas: ["f1"],
       p_motivo: "Reserva presa desde ontem",
     });
+    expect(
+      supabase.rpc.mock.calls.filter(([nome]) => nome === "liberar_reserva"),
+    ).toHaveLength(1);
   });
 
   it("AM-6.1: Pegar próximo sem ficha livre avisa", async () => {

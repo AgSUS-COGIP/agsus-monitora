@@ -19,6 +19,8 @@ type Props = {
   agenda: EstadoDaAgenda;
   e: SnapshotDaClassificacao;
   calcular: (dados: DadosDaClassificacao, tipo: string) => ResultadoDoMotor;
+  /** Avisa a tela se há agenda gerada ou ajustada que ainda não foi salva. */
+  aoMudarPendencia?: (pendente: boolean) => void;
 };
 type RegraEmEdicao = Omit<
   RegraDaAgenda,
@@ -38,9 +40,11 @@ import {
   useEffect,
   useId,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
+import { guardaDeAlteracoes } from "../../app/guarda-de-alteracoes.ts";
 import {
   conflitosDaAgenda,
   convocadosDaLista,
@@ -755,6 +759,7 @@ function AgendaDosConvocados({
   e,
   calcular,
   podeEditar,
+  aoMudarPendencia,
 }: Props & { a: SnapshotDaAgenda; podeEditar: boolean }) {
   const dados = e.dados;
   const listaRegistrada =
@@ -763,6 +768,25 @@ function AgendaDosConvocados({
   const [registrada, setRegistrada] = useState<FonteDaAgenda | null>(null);
   const [erroDaRegistrada, setErroDaRegistrada] = useState("");
   const [rascunho, setRascunho] = useState<Rascunho | null>(null);
+  /*
+    A agenda gerada ou ajustada só existe nesta tela até o Salvar. O F5, o
+    fechar e a troca de área pedem confirmação (guarda-de-alteracoes.ts); a
+    troca de aba e de edital, a tela da Classificação (aoMudarPendencia).
+  */
+  const pendente = useRef(false);
+  pendente.current = rascunho !== null;
+  useEffect(
+    () =>
+      guardaDeAlteracoes.registrar({
+        comAlteracoes: () => pendente.current,
+        naoGuardado: () => pendente.current,
+      }),
+    [],
+  );
+  useEffect(() => {
+    aoMudarPendencia?.(rascunho !== null);
+    return () => aoMudarPendencia?.(false);
+  }, [aoMudarPendencia, rascunho]);
   const [confirmar, setConfirmar] = useState(false);
   // A lista registrada não veio (rede, banco): sem cair para o cálculo atual.
   const [falhaDaLista, setFalhaDaLista] = useState(false);
@@ -1157,7 +1181,13 @@ function AgendaDosConvocados({
   );
 }
 
-export function Agenda({ estado, agenda, e, calcular }: Props) {
+export function Agenda({
+  estado,
+  agenda,
+  e,
+  calcular,
+  aoMudarPendencia,
+}: Props) {
   const a = useSyncExternalStore(agenda.assinar, agenda.obter);
   if (a.indisponivel)
     return (
@@ -1198,6 +1228,7 @@ export function Agenda({ estado, agenda, e, calcular }: Props) {
         e={e}
         calcular={calcular}
         podeEditar={podeEditar}
+        {...(aoMudarPendencia ? { aoMudarPendencia } : {})}
       />
     </div>
   );

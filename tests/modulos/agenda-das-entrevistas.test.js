@@ -12,6 +12,7 @@ import {
   esperar,
 } from "../componentes/interacoes.ts";
 import { montarTela } from "../montar-tela.ts";
+import { guardaDeAlteracoes } from "../../src/app/guarda-de-alteracoes.ts";
 
 /*
   A agenda das entrevistas na Classificação (visão "Agenda",
@@ -509,6 +510,58 @@ describe("agenda das entrevistas na Classificação", () => {
     await clicar(secao.querySelector("[data-acao='gerar-agenda']"));
     await clicar(document.querySelector("[data-acao='confirmar-gerar']"));
     expect(linhas()[0]).toEqual(["08:00–08:30", "Sala A", "Ana Primeira"]);
+  });
+
+  it("agenda gerada e não salva: trocar de aba ou de edital pergunta; cancelar mantém, salvar libera", async () => {
+    const supabase = supabaseFalso(agendaDoBanco({ regra: regraSalva() }));
+    await montar(supabase);
+    await abrirAgenda();
+    const confirmar = vi.spyOn(window, "confirm").mockReturnValue(false);
+    try {
+      // Sem nada gerado, a troca de aba não pergunta.
+      expect(guardaDeAlteracoes.comAlteracoes()).toBe(false);
+      await clicar(secao.querySelector("[data-acao='gerar-agenda']"));
+      expect(linhas()).toHaveLength(3);
+      // O F5, o fechar e a troca de área passam a pedir confirmação.
+      expect(guardaDeAlteracoes.comAlteracoes()).toBe(true);
+      expect(guardaDeAlteracoes.podeRecarregar()).toBe(false);
+
+      await clicar(secao.querySelector("[data-valor='listas']"));
+      expect(confirmar).toHaveBeenCalledTimes(1);
+      expect(confirmar.mock.calls[0][0]).toContain("não foram salvas");
+      expect(linhas()).toHaveLength(3);
+
+      await clicar(secao.querySelector("[data-acao='trocar-edital']"));
+      expect(confirmar).toHaveBeenCalledTimes(2);
+      expect(linhas()).toHaveLength(3);
+
+      await clicar(secao.querySelector("[data-acao='salvar-agenda']"));
+      await esperar();
+      expect(guardaDeAlteracoes.comAlteracoes()).toBe(false);
+      await clicar(secao.querySelector("[data-valor='listas']"));
+      await esperar();
+      expect(confirmar).toHaveBeenCalledTimes(2);
+      expect(secao.querySelector(".agenda-tabela")).toBeNull();
+    } finally {
+      confirmar.mockRestore();
+    }
+  });
+
+  it("agenda gerada e não salva: confirmar a troca de aba descarta e libera a guarda", async () => {
+    const supabase = supabaseFalso(agendaDoBanco({ regra: regraSalva() }));
+    await montar(supabase);
+    await abrirAgenda();
+    const confirmar = vi.spyOn(window, "confirm").mockReturnValue(true);
+    try {
+      await clicar(secao.querySelector("[data-acao='gerar-agenda']"));
+      await clicar(secao.querySelector("[data-valor='listas']"));
+      await esperar();
+      expect(confirmar).toHaveBeenCalledTimes(1);
+      expect(secao.querySelector(".agenda-tabela")).toBeNull();
+      expect(guardaDeAlteracoes.comAlteracoes()).toBe(false);
+    } finally {
+      confirmar.mockRestore();
+    }
   });
 
   it("sem convocação registrada, usa o cálculo atual e avisa", async () => {

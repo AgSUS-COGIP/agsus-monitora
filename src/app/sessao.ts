@@ -999,9 +999,34 @@ export function criarSessao({
       console.warn("Falha antes de sair:", erro);
     }
     declararSaida(SAIDA_MANUAL);
-    const client = obterCliente();
-    if (client) await client.auth.signOut();
+    await encerrarNoSupabase();
     aplicarSaida();
+  }
+
+  /*
+    Pede o signOut e garante que o token sai do navegador mesmo se ele falhar.
+    Com o token vencido e a rede fora, a auth-js devolve `{ error }` sem apagar
+    a sessão guardada: a tela diria "deslogado", e quem abrisse o MONITORA
+    depois, com rede, entraria como a pessoa anterior.
+  */
+  async function encerrarNoSupabase() {
+    const client = obterCliente();
+    if (!client) return;
+    let falhou = false;
+    try {
+      const { error } = await client.auth.signOut();
+      falhou = Boolean(error);
+      if (error) console.warn("Falha ao encerrar a sessão no Supabase:", error);
+    } catch (erro) {
+      falhou = true;
+      console.warn("Falha ao encerrar a sessão no Supabase:", erro);
+    }
+    if (!falhou) return;
+    try {
+      armazenamento()?.clearAuthState?.();
+    } catch {
+      /* Armazenamento bloqueado. */
+    }
   }
 
   /** "Tentar de novo" depois de uma falha na entrada: relê a sessão guardada e entra. */
@@ -1026,8 +1051,7 @@ export function criarSessao({
     await limparAutenticacaoLocal();
     await chamar("aoLimparSessao");
     declararSaida(SAIDA_MANUAL);
-    const client = obterCliente();
-    if (client) await client.auth.signOut();
+    await encerrarNoSupabase();
     aplicarSaida({ mensagem: "" });
     mostrarMensagem(MENSAGENS.sessaoLimpa, "ok");
   }
