@@ -1494,10 +1494,23 @@ body.system-fullscreen-mode.external-clean .external-panel {
     gap: 6px;
   }
 }
-@media (max-width: 540px) {
+@media (max-width: 640px) {
+  /*
+    O título inteiro no celular: 18px e até duas linhas antes das reticências
+    ("Painel de entrevistas" pede 181px; ao lado do ☰, de Pessoas online e da
+    conta, sobram uns 170px em 375px).
+  */
   .page-title h1 {
-    font-size: 20px;
+    display: -webkit-box;
+    font-size: var(--text-xl);
+    line-height: 1.2;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
   }
+}
+@media (max-width: 540px) {
   .table-head {
     align-items: stretch;
     flex-direction: column;

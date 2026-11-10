@@ -153,9 +153,18 @@ export function PessoasOnline({
           }
         />
         <i className="fa-solid fa-user-group" aria-hidden="true" />
-        <span id="onlinePresenceLabel" aria-live="polite">
+        <span
+          id="onlinePresenceLabel"
+          className="online-presence-rotulo"
+          aria-live="polite"
+        >
           {situacao.rotulo}
         </span>
+        {situacao.curto ? (
+          <span className="online-presence-curto" aria-hidden="true">
+            {situacao.curto}
+          </span>
+        ) : null}
       </button>
       <div
         id="onlinePresencePopover"

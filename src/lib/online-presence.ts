@@ -16,6 +16,12 @@ export interface PessoaOnline {
 export interface SituacaoDaPresenca {
   estado: "offline" | "ready" | "error" | "loading";
   rotulo: string;
+  /**
+   * O que cabe no celular, ao lado do ícone: só o número de pessoas, e vazio
+   * nos outros estados (a cor do botão e o `detalhe` dizem o resto). Sem isso
+   * o "1 online" tomava a largura do título do cabeçalho em 375px.
+   */
+  curto: string;
   detalhe: string;
 }
 
@@ -136,23 +142,27 @@ export function situacaoDaPresenca({
     return {
       estado: "offline",
       rotulo: "Offline",
+      curto: "",
       detalhe: "Sem conexão com a internet.",
     };
   if (sincronizado)
     return {
       estado: "ready",
       rotulo: `${quantos} online`,
+      curto: String(quantos),
       detalhe: `${quantos} ${quantos === 1 ? "pessoa online" : "pessoas online"}.`,
     };
   if (esperaMs >= limiteMs)
     return {
       estado: "error",
       rotulo: "Presença indisponível",
+      curto: "",
       detalhe: "Não foi possível atualizar a presença agora.",
     };
   return {
     estado: "loading",
     rotulo: "Sincronizando",
+    curto: "",
     detalhe: "Sincronizando presença.",
   };
 }
