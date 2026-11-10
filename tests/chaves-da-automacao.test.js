@@ -7,11 +7,12 @@ import {
   motivoValido,
   normalizarChaves,
   proximaDaChave,
-  proximaExecucao,
   semProxima,
   tarefasForaDaChave,
   ultimaExecucao,
 } from "../src/lib/chaves-da-automacao.ts";
+import { proximaExecucao } from "../src/lib/agenda-do-cron.ts";
+import { CATALOGO_DOS_ROBOS } from "./fixtures/catalogo-dos-robos.ts";
 import { normalizarSaude, visaoSimples } from "../src/lib/saude-das-cargas.ts";
 
 /*
@@ -301,6 +302,7 @@ describe("motivo e recusas", () => {
 describe("Status das atualizações com as chaves", () => {
   const SAUDE = {
     gerado_em: AGORA.toISOString(),
+    catalogo_dos_robos: CATALOGO_DOS_ROBOS,
     analises: [],
     entrevistas: [
       // Última de 16/10: sem chave seria "Atrasada".
@@ -335,11 +337,24 @@ describe("Status das atualizações com as chaves", () => {
     ],
   };
 
-  it("sem as chaves, segue como antes", () => {
-    const { linhas } = visaoSimples(normalizarSaude(SAUDE, AGORA));
+  it("sem as chaves, o prazo vem da tarefa ativa no pg_cron", () => {
+    const comTarefa = {
+      ...SAUDE,
+      tarefas: [
+        ...SAUDE.tarefas,
+        {
+          nome: "agsus_robo_sincronizar_entrevistas",
+          agenda: "5 0-10,15,21-23 * * *",
+          ativa: true,
+          execucoes: [],
+        },
+      ],
+    };
+    const { linhas } = visaoSimples(normalizarSaude(comTarefa, AGORA));
     const porId = Object.fromEntries(linhas.map((l) => [l.id, l]));
     expect(porId.entrevistas.situacao).toBe("atrasada");
-    expect(porId.agenda_dos_robos.situacao).toBe("atrasada");
+    // Último pedido aceito há 5 h: dentro do prazo das Entrevistas (8 h).
+    expect(porId.agenda_dos_robos.situacao).toBe("em_dia");
   });
 
   it("chave desligada: 'Desligada pelo administrador', sem atraso nem erro", () => {

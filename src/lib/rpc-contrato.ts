@@ -840,6 +840,12 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     resumo:
       "As chaves da automação de cada aba (ligada, motivo, quando e quem mudou), as tarefas do pg_cron de cada uma (agenda, ativa, última execução), o último pedido da agenda, as tarefas sem chave e os 50 últimos eventos. Também lida pelo Status das atualizações. Só administrador global.",
   },
+  obter_catalogo_dos_robos: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Catálogo dos robôs (20261109180000): nome de cada workflow do GitHub que o banco conhece e rótulo, chave da automação e workflow de cada tarefa do pg_cron. Lido pelo Status das atualizações para nomear pedidos e tarefas e achar a agenda de cada carga. Só administrador global.",
+  },
   alterar_chave_da_automacao: {
     argumentos: ["p_chave", "p_ligar", "p_motivo"],
     critica: false,

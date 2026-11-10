@@ -11,6 +11,14 @@ import {
   type ChaveDaAutomacao,
   type ChavesDaAutomacao,
 } from "./chaves-da-automacao.ts";
+import { descreverAgenda, maiorIntervaloMin } from "./agenda-do-cron.ts";
+import {
+  type CatalogoDosRobos,
+  nomeDoWorkflow,
+  normalizarCatalogo,
+  tarefaDoCatalogo,
+} from "./catalogo-dos-robos.ts";
+import { roboDeCarga } from "./robos-de-carga.ts";
 /*
   Status das atualizações (Configurações › Status das atualizações, só administrador global),
   sem React e sem banco: o que chega de `get_saude_das_cargas`
@@ -29,12 +37,23 @@ import {
   quando alguém pede) só
   fica "em dia" ou "falhou".
 
-  OS PRAZOS (folga sobre o esperado, decisão de 01/10/2026)
-    Análises, incremental   esperado a cada 20 min · atrasada depois de 1 h
-    Entrevistas             esperado de hora em hora, o dia todo (decisão de 06/10/2026) ·
-                            atrasada depois de 4 h
-    Seleção                 às 8h10, 13h10 e 18h10 de Brasília (decisão de 07/10/2026) ·
-                            atrasada depois de 15 h (a noite inteira sem carga é esperada)
+  OS PRAZOS SAEM DA AGENDA DO BANCO (cron.job), não de constantes da tela
+    Prazo de uma agenda (prazoDaAgenda): o maior intervalo entre duas execuções
+    seguidas (src/lib/agenda-do-cron.ts) mais uma folga —
+      intervalo até 2 h     o dobro do intervalo, no mínimo 15 min
+                            (a cada 5 min → 15 min; de hora em hora → 2 h)
+      até 7 dias            mais 2 h (diária → 26 h; 8h10, 13h10 e 18h10 → 16 h,
+                            pela noite de 14 h)
+      mais que isso         mais 1 dia (mensal → 32 dias)
+    Entrevistas, Seleção e Conferências usam a agenda da tarefa do pg_cron que
+    pede o workflow de cada uma (o catálogo dos robôs diz qual tarefa pede qual
+    workflow; ROBOS_DE_CARGA, qual workflow cada carga roda). Tarefa inativa,
+    fora do cron ou sem catálogo: sem prazo, "só pelo Rodar agora" (Entrevistas
+    e Seleção desde 16/10/2026). Mudou o horário no banco, o prazo e o texto
+    acompanham sozinhos.
+
+    Análises, incremental   esperado a cada 20 min · atrasada depois de 1 h (o
+                            gatilho fica no Apps Script, fora do banco)
     Robô da Empregare       sem prazo: só roda pelo "Rodar agora" (decisão de 05/10/2026)
     Classificação em Python sem prazo: roda quando uma lista é gerada (o relatório de
                             desempate) e quando alguém clica em Gerar com a chave "Gerar
@@ -43,13 +62,17 @@ import {
                             quando a mais recente terminada falhou, não conferiu ou não chegou
                             ao GitHub, ou quando o pedido espera o job há mais que o limite
                             (relatório 30 min, cálculo 15 min)
-    Conferências            todo dia às 6h (Brasília) · atrasada depois de 26 h
     Agenda dos robôs        o banco pede cada execução ao GitHub (pg_cron + pg_net,
                             20261008140000): falhou se o último pedido foi recusado ou se
-                            não há chave no Vault; atrasada sem pedido aceito há 2 h
-    Tarefas a cada poucos min  atrasada depois de 15 min (ex.: o pacote do Painel de
-                            análises, a cada 5 min desde 20261024100000)
-    Tarefas diárias         atrasada depois de 26 h; mensais, depois de 32 dias
+                            não há chave no Vault; atrasada sem pedido aceito há mais que
+                            o menor prazo das tarefas ativas que pedem um workflow em todo
+                            horário (catálogo; só as Conferências hoje: 26 h); sem
+                            nenhuma ativa, não atrasa
+    Tarefas do banco        o prazo pela própria agenda, como acima
+
+  OS NOMES (dos pedidos ao GitHub e das tarefas do banco) vêm do catálogo dos
+  robôs (obter_catalogo_dos_robos, 20261109180000), que chega junto do payload em
+  `catalogo_dos_robos`. Sem ele, aparece o nome do banco (arquivo .yml, jobname).
 */
 
 const MINUTO = 60 * 1000;
@@ -57,9 +80,6 @@ export const PRAZO_ANALISES_MIN = 60;
 export const PRAZO_DIARIO_MIN = 26 * 60;
 export const PRAZO_FREQUENTE_MIN = 15;
 export const PRAZO_MENSAL_MIN = 32 * 24 * 60;
-export const PRAZO_DE_HORA_EM_HORA_MIN = 4 * 60;
-export const PRAZO_SELECAO_MIN = 15 * 60;
-export const PRAZO_AGENDA_DOS_ROBOS_MIN = 2 * 60;
 /* Classificação em Python: depois disto, o pedido que ainda espera o job conta como falha. */
 export const ESPERA_DO_RELATORIO_MIN = 30;
 export const ESPERA_DO_CALCULO_MIN = 15;
@@ -87,41 +107,7 @@ const NOMES_DAS_AREAS: Readonly<Record<string, string>> = Object.freeze({
   projetos: "Projetos",
 });
 
-/* As tarefas agendadas do banco (pg_cron), com nome de gente. */
-const TAREFAS: Readonly<Record<string, string>> = Object.freeze({
-  agsus_analises_cache_do_painel: "Painel de análises (pacote pronto)",
-  agsus_aprovados_cache_por_area: "Lista de aprovados (pacote por área)",
-  agsus_entrevistas_cache_do_painel: "Painel de entrevistas (pacote pronto)",
-  agsus_analises_analyze_diario: "Estatísticas das tabelas de análises",
-  agsus_eventos_acesso_limpeza_mensal: "Limpeza do registro de acessos",
-  agsus_analises_encerrar_inativas: "Encerrar cargas de análises paradas",
-  agsus_robo_sincronizar_entrevistas: "Agenda: pedir a carga das Entrevistas",
-  agsus_robo_sincronizar_selecao: "Agenda: pedir a carga da Seleção",
-  agsus_robo_conferencias: "Agenda: pedir as conferências",
-  agsus_robo_conferir_disparos: "Agenda: conferir as respostas do GitHub",
-  agsus_kpis_do_edital_pela_selecao: "KPIs do edital pela Seleção",
-  agsus_fila_estatisticas: "Estatísticas da fila da Avaliação documental",
-  agsus_analises_limpar_manifesto:
-    "Limpeza do manifesto das cargas de análises",
-});
-
-/* Os workflows que o banco pede ao GitHub (lista fixa de FC_DISPARAR_ROBO). */
-const NOMES_DOS_WORKFLOWS: Readonly<Record<string, string>> = Object.freeze({
-  "sincronizar-entrevistas.yml": "Entrevistas",
-  "sincronizar-selecao.yml": "Seleção",
-  "conferencias.yml": "Conferências",
-  "robo-empregare.yml": "Robô da Empregare",
-  "pre-classificacao.yml": "Triagem",
-  // Só pelo Run workflow do GitHub (registrar_disparo_externo, 20261022170000).
-  "leitura-de-arquivos.yml": "Leitura dos arquivos",
-  "classificacao.yml": "Classificação em Python",
-  // Pedido pelo banco depois de mudanças em Contratado e chamado pelas conferências (20261024120000).
-  "contratacao-dos-aprovados.yml": "Contratado em outra lista",
-  // Pedido pela rodada do pg_cron dos pacotes prontos dos painéis (20261029180000).
-  "pacotes-dos-paineis.yml": "Pacotes dos painéis",
-  // Pedido pelo banco a cada prévia de substituição da lista de aprovados (20261030090000).
-  "casamento-da-lista.yml": "Casamento da lista de aprovados",
-});
+const SO_PELO_RODAR_AGORA = "só pelo Rodar agora";
 
 /* O estado de cada tipo de execução, em ok / falha / andamento. */
 const ESTADOS = Object.freeze({
@@ -207,16 +193,34 @@ function normalizarExecucao(
   };
 }
 
-/** O prazo (min) de uma tarefa do pg_cron pela agenda dela; `null` sem regra. */
-export function prazoDaAgenda(agenda: unknown) {
-  const partes = texto(agenda).split(/\s+/);
-  if (partes.length !== 5) return null;
-  const [minuto = "", hora = "", dia = ""] = partes;
-  if (hora === "*" && dia === "*" && /^(\*|\d+-\d+)\/\d+$|^\*$/.test(minuto))
-    return PRAZO_FREQUENTE_MIN;
-  if (dia === "*" && /^\d+$/.test(hora)) return PRAZO_DIARIO_MIN;
-  if (/^\d+$/.test(dia)) return PRAZO_MENSAL_MIN;
-  return null;
+/**
+ * O prazo (min) de uma agenda do pg_cron: o maior intervalo entre execuções
+ * seguidas mais a folga (ver o topo do arquivo); `null` sem regra.
+ */
+export function prazoDaAgenda(agenda: unknown, agora = new Date()) {
+  const intervalo = maiorIntervaloMin(agenda, agora);
+  if (intervalo === null) return null;
+  if (intervalo <= 2 * 60) return Math.max(PRAZO_FREQUENTE_MIN, 2 * intervalo);
+  if (intervalo <= 7 * 24 * 60) return intervalo + 2 * 60;
+  return intervalo + 24 * 60;
+}
+
+interface TarefaDaAgenda {
+  nome: string;
+  agenda: string;
+  ativa: boolean;
+}
+
+/* O prazo e o "esperado" de uma carga pedida por uma tarefa do pg_cron. */
+function agendaDaCarga(
+  tarefa: TarefaDaAgenda | undefined,
+  agora: Date,
+): { prazoMin: number | null; esperado: string } {
+  if (!tarefa?.ativa) return { prazoMin: null, esperado: SO_PELO_RODAR_AGORA };
+  return {
+    prazoMin: prazoDaAgenda(tarefa.agenda, agora),
+    esperado: descreverAgenda(tarefa.agenda),
+  };
 }
 
 /** O selo de uma carga pelas execuções (mais recente primeiro) e o prazo. */
@@ -339,12 +343,15 @@ function itemDaClassificacao(entrada: unknown, limiteMin: number, agora: Date) {
   };
 }
 
-/* Pedido da agenda ao GitHub: o robô e o código HTTP entram na mensagem. */
-function execucaoDoDisparo(entrada: unknown) {
+/* Pedido da agenda ao GitHub: o robô (pelo catálogo) e o código HTTP entram na mensagem. */
+function execucaoDoDisparo(
+  entrada: unknown,
+  catalogo: CatalogoDosRobos | null,
+) {
   const bruta = registro(entrada);
   const workflow = texto(bruta?.workflow);
   const http = inteiro(bruta?.http);
-  const partes = [rotulo(NOMES_DOS_WORKFLOWS, workflow) || workflow || "Robô"];
+  const partes = [(workflow && nomeDoWorkflow(catalogo, workflow)) || "Robô"];
   // A origem (20261020170000): AGENDA sem rótulo; GITHUB com quem iniciou.
   const origem = texto(bruta?.origem);
   const ator = texto(bruta?.ator);
@@ -361,20 +368,27 @@ function execucaoDoDisparo(entrada: unknown) {
 /*
   A agenda dos robôs (get_saude_das_cargas.agenda_dos_robos, 20261008140000):
   sem chave no Vault, falhou; senão, o selo pelos pedidos — o último fechado
-  recusado é falha e, sem pedido aceito há mais de 2 h, atrasada (a conta usa
+  recusado é falha e, sem pedido aceito há mais que o prazo, atrasada (a conta usa
   o último aceito do banco, que pode ser anterior aos 20 pedidos da lista).
 */
-function montarAgenda(entrada: unknown, agora: Date): Carga {
+function montarAgenda(
+  entrada: unknown,
+  { prazoMin, esperado }: { prazoMin: number | null; esperado: string },
+  catalogo: CatalogoDosRobos | null,
+  agora: Date,
+): Carga {
   const bruta = registro(entrada);
   const carga = montarCarga(
     {
       id: "agenda_dos_robos",
       nome: "Agenda dos robôs",
       onde: "Banco (pg_cron + pg_net) → GitHub Actions",
-      esperado: "Entrevistas de hora em hora; Seleção às 8h10, 13h10 e 18h10",
-      prazoMin: PRAZO_AGENDA_DOS_ROBOS_MIN,
+      esperado,
+      prazoMin,
       tipo: "disparo",
-      execucoes: registros(bruta.disparos).map(execucaoDoDisparo),
+      execucoes: registros(bruta.disparos).map((d) =>
+        execucaoDoDisparo(d, catalogo),
+      ),
     },
     agora,
   );
@@ -395,7 +409,7 @@ function montarAgenda(entrada: unknown, agora: Date): Carga {
     situacao = "falhou";
   else if (ultimoAceito)
     situacao =
-      idadeMin !== null && idadeMin > PRAZO_AGENDA_DOS_ROBOS_MIN
+      prazoMin !== null && idadeMin !== null && idadeMin > prazoMin
         ? "atrasada"
         : "em_dia";
   return {
@@ -463,6 +477,32 @@ export function normalizarSaude(
   agora = new Date(),
 ): SaudeNormalizada {
   const dados = registro(entrada);
+  const catalogo = normalizarCatalogo(dados.catalogo_dos_robos);
+  const tarefasDisponiveis = Array.isArray(dados?.tarefas);
+  const tarefasDoCron = new Map<string, TarefaDaAgenda>(
+    registros(dados.tarefas)
+      .map((t) => ({
+        nome: texto(t?.nome),
+        agenda: texto(t?.agenda),
+        ativa: t?.ativa !== false,
+      }))
+      .filter((t) => t.nome)
+      .map((t) => [t.nome, t]),
+  );
+  /* O workflow que cada tarefa pede em todo horário (catálogo); nulo = só SQL ou às vezes. */
+  const workflowDaTarefa = (nome: string) =>
+    tarefaDoCatalogo(catalogo, nome)?.workflow ?? null;
+  /* A tarefa que agenda a carga: a que pede o workflow dela (a ativa primeiro). */
+  const agendaDe = (carga: string) => {
+    const workflow = roboDeCarga(carga)?.workflow;
+    const candidatas = [...tarefasDoCron.values()].filter(
+      (t) => workflow && workflowDaTarefa(t.nome) === workflow,
+    );
+    return agendaDaCarga(
+      candidatas.find((t) => t.ativa) ?? candidatas[0],
+      agora,
+    );
+  };
   const analises = registros(dados.analises).map((o) => {
     const incremental = texto(o?.tipo).toUpperCase() === "INCREMENTAL";
     const area =
@@ -490,8 +530,7 @@ export function normalizarSaude(
         id: "entrevistas",
         nome: "Entrevistas",
         onde: "GitHub Actions · Sincronizar entrevistas",
-        esperado: "de hora em hora, o dia todo",
-        prazoMin: PRAZO_DE_HORA_EM_HORA_MIN,
+        ...agendaDe("entrevistas"),
         tipo: "planilha",
         execucoes: dados?.entrevistas,
       },
@@ -502,8 +541,7 @@ export function normalizarSaude(
         id: "selecao",
         nome: "Seleção (planilha Auditoria)",
         onde: "GitHub Actions · Sincronizar seleção",
-        esperado: "às 8h10, 13h10 e 18h10",
-        prazoMin: PRAZO_SELECAO_MIN,
+        ...agendaDe("selecao"),
         tipo: "planilha",
         execucoes: dados?.selecao,
       },
@@ -537,8 +575,7 @@ export function normalizarSaude(
           id: "conferencias",
           nome: "Conferências de consistência",
           onde: "GitHub Actions · Conferências de consistência",
-          esperado: "todo dia às 6h",
-          prazoMin: PRAZO_DIARIO_MIN,
+          ...agendaDe("conferencias"),
           tipo: "conferencia",
           execucoes: registros(dados.conferencias).map(execucaoDaConferencia),
         },
@@ -599,15 +636,36 @@ export function normalizarSaude(
       ),
     );
 
+  /*
+    A Agenda dos robôs atrasa pelo menor prazo das tarefas ativas que pedem um
+    workflow em todo horário (a mais frequente já devia ter pedido algo); sem
+    nenhuma ativa, não atrasa.
+  */
+  const tarefasDosRobos = [...tarefasDoCron.values()].filter(
+    (t) => t.ativa && workflowDaTarefa(t.nome) !== null,
+  );
+  const prazosDosRobos = tarefasDosRobos
+    .map((t) => prazoDaAgenda(t.agenda, agora))
+    .filter((p): p is number => p !== null);
+  const agendaDosRobos = {
+    prazoMin: prazosDosRobos.length ? Math.min(...prazosDosRobos) : null,
+    esperado: tarefasDosRobos.length
+      ? tarefasDosRobos
+          .map(
+            (t) =>
+              `${nomeDoWorkflow(catalogo, workflowDaTarefa(t.nome) ?? "")}: ${descreverAgenda(t.agenda)}`,
+          )
+          .join("; ")
+      : `nenhuma carga agendada; ${SO_PELO_RODAR_AGORA}`,
+  };
+
   // A agenda só aparece depois da migration 20261008140000 (a chave vem no payload).
   const agenda =
     dados?.agenda_dos_robos &&
     typeof dados.agenda_dos_robos === "object" &&
     !Array.isArray(dados.agenda_dos_robos)
-      ? [montarAgenda(dados.agenda_dos_robos, agora)]
+      ? [montarAgenda(dados.agenda_dos_robos, agendaDosRobos, catalogo, agora)]
       : [];
-
-  const tarefasDisponiveis = Array.isArray(dados?.tarefas);
   const tarefas = registros(dados.tarefas).map((t) => {
     const nome = texto(t?.nome);
     const ativa = t?.ativa !== false;
@@ -615,10 +673,10 @@ export function normalizarSaude(
       ...montarCarga(
         {
           id: `tarefa:${nome}`,
-          nome: rotulo(TAREFAS, nome) || nome,
+          nome: tarefaDoCatalogo(catalogo, nome)?.rotulo || nome,
           onde: `Banco (pg_cron) · ${nome}`,
-          esperado: texto(t?.agenda),
-          prazoMin: ativa ? prazoDaAgenda(t?.agenda) : null,
+          esperado: descreverAgenda(t?.agenda),
+          prazoMin: ativa ? prazoDaAgenda(t?.agenda, agora) : null,
           tipo: "tarefa",
           execucoes: t?.execucoes,
         },
@@ -640,14 +698,14 @@ export function normalizarSaude(
       id: "planilhas",
       titulo: "Planilhas pelo GitHub Actions",
       descricao:
-        "Entrevistas de hora em hora; Seleção às 8h10, 13h10 e 18h10. Rodar agora: o botão de cada uma (ou GitHub → Actions → Run workflow).",
+        "Entrevistas e Seleção, no horário da agenda do banco ou pelo Rodar agora de cada uma (ou GitHub → Actions → Run workflow).",
       cargas: planilhas,
     },
     {
       id: "robos",
       titulo: "Robô da Empregare e conferências",
       descricao:
-        "Candidatos de cada vaga, do Excel exportado da Empregare, quando um administrador pede (Rodar agora); conferências de consistência todo dia às 6h.",
+        "Candidatos de cada vaga, do Excel exportado da Empregare, quando um administrador pede (Rodar agora); conferências de consistência no horário da agenda do banco.",
       cargas: robos,
     },
     {
@@ -837,8 +895,8 @@ export function visaoSimples(
           titulo: carga.id === "selecao" ? "Seleção" : "Entrevistas",
           explicacao:
             carga.id === "selecao"
-              ? "Atualiza a aba Seleção a partir da planilha Auditoria, às 8h10, 13h10 e 18h10."
-              : "Atualiza a aba Entrevistas a partir da planilha de entrevistados, de hora em hora o dia todo.",
+              ? `Atualiza a aba Seleção a partir da planilha Auditoria: ${carga.esperado}.`
+              : `Atualiza a aba Entrevistas a partir da planilha de entrevistados: ${carga.esperado}.`,
           partes: [carga],
           situacoesQueContam: [carga.situacao],
         }),
@@ -847,14 +905,16 @@ export function visaoSimples(
     );
   }
 
-  const TEXTOS_DOS_ROBOS: Record<string, readonly [string, string]> = {
+  const textosDosRobos = (
+    carga: Carga,
+  ): Record<string, readonly [string, string]> => ({
     empregare: [
       "Robô da Empregare",
       "Traz os candidatos de cada vaga dos editais em curso a partir da Empregare, quando um administrador clica em Rodar agora.",
     ],
     conferencias: [
       "Conferências de consistência",
-      "Confere análises, entrevistas, classificação, aprovados e cargas e lista os avisos abaixo, todo dia às 6h.",
+      `Confere análises, entrevistas, classificação, aprovados e cargas e lista os avisos abaixo: ${carga.esperado}.`,
     ],
     pre_classificacao: [
       "Triagem (Avaliação documental)",
@@ -868,10 +928,12 @@ export function visaoSimples(
       "Cálculo das listas pelo Python",
       "Calcula a lista pedida pelo Gerar da Classificação; a tela confere com o cálculo dela antes de registrar.",
     ],
-  };
+  });
   for (const carga of porId.robos?.cargas || []) {
-    const [titulo, explicacao] = TEXTOS_DOS_ROBOS[carga.id] ||
-      TEXTOS_DOS_ROBOS.empregare || [carga.nome, ""];
+    const textos = textosDosRobos(carga);
+    const [titulo, explicacao] = Object.hasOwn(textos, carga.id)
+      ? (textos[carga.id] as readonly [string, string])
+      : [carga.nome, ""];
     linhas.push(
       desligar(
         juntar({
@@ -896,15 +958,8 @@ export function visaoSimples(
       partes: [carga],
       situacoesQueContam: [carga.situacao],
     });
-    // Entrevistas desligada: a agenda só pede as diárias (prazo de 26 h, não de 2 h).
-    const soDiarias =
-      linha.situacao === "atrasada" &&
-      chaveDaLinha(chaves, "entrevistas")?.ligada === false &&
-      carga.idadeMin !== null &&
-      carga.idadeMin <= PRAZO_DIARIO_MIN;
     linhas.push({
       ...linha,
-      situacao: soDiarias ? "em_dia" : linha.situacao,
       ultimaAtualizacao: carga.agenda.ultimoAceito || linha.ultimaAtualizacao,
       idadeMin: carga.idadeMin,
       agenda: carga.agenda,
@@ -936,7 +991,7 @@ export function visaoSimples(
           id: "tarefas",
           titulo: "Atualização automática do banco",
           explicacao:
-            "Prepara os painéis para abrirem rápido (a cada 2 minutos), além de estatísticas e limpeza.",
+            "Prepara os painéis para abrirem rápido, além de estatísticas e limpeza.",
           partes: partesDasTarefas,
           situacoesQueContam: partesDasTarefas
             .filter((c) => c.ativa !== false && c.situacao !== "desligada")

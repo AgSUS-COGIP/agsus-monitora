@@ -3,6 +3,7 @@ import { montarTela } from "../montar-tela.ts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { clicar, esperar } from "./interacoes.ts";
 import { definido } from "../definido.ts";
+import { CATALOGO_DOS_ROBOS } from "../fixtures/catalogo-dos-robos.ts";
 
 type Resposta = {
   data: unknown;
@@ -38,7 +39,15 @@ const SAUDE = {
     },
   ],
   selecao: [],
-  tarefas: null,
+  // A tarefa que pede as Entrevistas, ativa no pg_cron: dela sai o prazo.
+  tarefas: [
+    {
+      nome: "agsus_robo_sincronizar_entrevistas",
+      agenda: "5 0-10,15,21-23 * * *",
+      ativa: true,
+      execucoes: [],
+    },
+  ],
 };
 const CHAVES = {
   chaves: [
@@ -69,7 +78,11 @@ async function montar(rpcs: RespostasDasRpcs) {
   const supabase = {
     rpc: vi.fn(
       async (nome: string, argumentos?: unknown): Promise<Resposta> => {
-        const responder = rpcs[nome];
+        const responder =
+          rpcs[nome] ??
+          (nome === "obter_catalogo_dos_robos"
+            ? () => ({ data: CATALOGO_DOS_ROBOS, error: null })
+            : undefined);
         return responder ? responder(argumentos) : { data: SAUDE, error: null };
       },
     ),
