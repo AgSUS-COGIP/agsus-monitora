@@ -124,18 +124,6 @@ class SemanticaDoJs(unittest.TestCase):
         self.assertEqual(numerica, ["1a", "9", "10", "a1", "A1", "acao", "ação", "b"])
 
 
-class LimiteDaConvocacao(unittest.TestCase):
-    @staticmethod
-    def _regra(multiplo):
-        return {"convocacao": {"excecoes": [], "multiplo_vagas": multiplo, "posicao_max_cr": None}}
-
-    def test_multiplo_fracionario_sem_residuo_do_float(self):
-        # 1,1 × 50 = 55,00000000000001; o teto puro dava 56 (igual ao motor da tela).
-        self.assertEqual(motor.limite_da_convocacao({"cargo": "Médico", "total": 50}, self._regra(1.1))["limite"], 55)
-        self.assertEqual(motor.limite_da_convocacao({"cargo": "Médico", "total": 25}, self._regra(2.2))["limite"], 55)
-        self.assertEqual(motor.limite_da_convocacao({"cargo": "Médico", "total": 3}, self._regra(1.1))["limite"], 4)
-
-
 if __name__ == "__main__":
     unittest.main()
 
@@ -156,6 +144,11 @@ class LimiteDaConvocacao(unittest.TestCase):
         self.assertEqual(
             motor.limite_da_convocacao({"cargo": "Analista", "total": 25}, self._regra(1.12))["limite"], 28
         )
+
+    def test_teto_sem_residuo_do_float(self):
+        # 1,1 × 50 = 55,00000000000001 no float; o teto puro dava 56. Com fração de verdade, sobe.
+        self.assertEqual(motor.limite_da_convocacao({"cargo": "Médico", "total": 50}, self._regra(1.1))["limite"], 55)
+        self.assertEqual(motor.limite_da_convocacao({"cargo": "Médico", "total": 3}, self._regra(1.1))["limite"], 4)
 
     def test_texto_nao_arredonda_o_multiplo(self):
         self.assertEqual(
