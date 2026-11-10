@@ -16,7 +16,8 @@ respondem 404. A Aya responde no navegador; o endpoint de IA e o bridge local fo
 - `funai-wms.ts` — proxy do WMS da FUNAI (camada `Funai:tis_poligonais`). Ver [[terras-indigenas]].
 - `anexos-do-edital.py` — Python (pdfplumber): lê o PDF de anexos do edital e devolve cronograma
   (Anexo I) e quadro de vagas (Anexo II) em JSON. Só usuário logado (Bearer conferido em
-  `/auth/v1/user`); não grava nada. Quem usa: `src/lib/anexos-do-edital.ts`. Com
+  `/auth/v1/user`: sem token ou token recusado → 401; Auth fora do ar, lento ou variável faltando →
+  503, para quem está logado não ler "entre no MONITORA"); não grava nada. Quem usa: `src/lib/anexos-do-edital.ts`. Com
   `?tipo=retificacao`, lê a retificação do cronograma (nº, edital, SEI, assinatura, "Onde se lê" e
   "Leia-se", com as linhas em negrito e os avisos das datas); quem usa:
   `src/lib/retificacao-do-cronograma.ts` (tela `src/modulos/editais/lancar-retificacao.tsx`).

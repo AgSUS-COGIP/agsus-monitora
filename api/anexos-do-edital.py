@@ -35,6 +35,7 @@ import json
 import os
 import re
 import unicodedata
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import date
@@ -572,11 +573,19 @@ def extrair_retificacao(conteudo):
 
 
 def usuario_autenticado(autorizacao):
-    """Confere o Bearer no Supabase. Devolve o id do usuário ou None."""
+    """Confere o Bearer no Supabase.
+
+    Devolve o id do usuário; False quando não há sessão (sem token, token
+    recusado pelo Auth ou resposta sem id); None quando não deu para conferir
+    (ambiente incompleto, Auth fora do ar ou lento). Quem está logado não pode
+    ler "entre no MONITORA" porque o Auth caiu.
+    """
     token = autorizacao[7:].strip() if autorizacao.lower().startswith("bearer ") else ""
+    if not token:
+        return False
     base = os.environ.get("VITE_SUPABASE_URL", "").rstrip("/")
     chave = os.environ.get("VITE_SUPABASE_PUBLISHABLE_KEY") or os.environ.get("VITE_SUPABASE_ANON_KEY", "")
-    if not token or not base or not chave:
+    if not base or not chave:
         return None
     pedido = urllib.request.Request(
         f"{base}/auth/v1/user",
@@ -584,9 +593,13 @@ def usuario_autenticado(autorizacao):
     )
     try:
         with urllib.request.urlopen(pedido, timeout=10) as resposta:
-            return json.loads(resposta.read()).get("id")
+            dados = json.loads(resposta.read())
+    except urllib.error.HTTPError as erro:
+        return False if erro.code in (401, 403) else None
     except Exception:
         return None
+    usuario_id = dados.get("id") if isinstance(dados, dict) else None
+    return usuario_id if isinstance(usuario_id, str) and usuario_id else False
 
 
 def usuario_pode_importar(autorizacao, usuario_id):
@@ -639,6 +652,8 @@ class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         autorizacao = self.headers.get("Authorization", "")
         usuario_id = usuario_autenticado(autorizacao)
+        if usuario_id is None:
+            return self._responder(503, {"erro": "Não foi possível confirmar sua sessão. Tente novamente."})
         if not usuario_id:
             return self._responder(401, {"erro": "Entre no MONITORA para importar anexos."})
         permitido = usuario_pode_importar(autorizacao, usuario_id)
