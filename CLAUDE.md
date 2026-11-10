@@ -91,7 +91,8 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
   [[modulo-encerramento-do-edital]]
 - Administração: [[modulo-configuracoes]] · [[modulo-acessos]] · [[modulo-modulos-e-abas]] ·
   [[modulo-automacao]] · [[modulo-status-das-atualizacoes]]
-- Moldura: [[modulo-barra-lateral]] · [[modulo-busca-global]] · [[modulo-aya]]
+- Moldura: [[modulo-barra-lateral]] · [[modulo-busca-global]] · [[modulo-aya]] ·
+  [[modulo-comemoracao]]
 
 ## Documentos longos de referência (`docs/`)
 

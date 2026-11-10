@@ -12,7 +12,7 @@ fontes oficiais.
 | CNES, API de dados abertos do MS (`apidadosabertos.saude.gov.br/cnes/estabelecimentos`) | coordenada, município e situação dos 1.089 códigos; todos os 1.584 estabelecimentos tipo 72 (para casar polos sem código) |
 | IBGE, malhas municipais em qualidade máxima                                             | ponto dentro do município declarado                                                                                       |
 | Funai, `aldeias_pontos` (4.731 aldeias, WFS paginado) e `tis_poligonais`                | aldeia homônima mais próxima; ponto dentro de terra indígena                                                              |
-| `docs/sedes-dos-dsei.md`                                                                | sedes dos DSEI                                                                                                            |
+| `docs/coordenadas/sedes-dos-dsei.md`                                                                | sedes dos DSEI                                                                                                            |
 
 ## Resultado
 
@@ -93,7 +93,7 @@ confirmadas como estavam; 156 seguem para revisão. Backup em
 No mesmo dia o front passou a desenhar **só** a coordenada do banco: saíram os
 vereditos de 22/09 (que sobrepunham 16 polos corrigidos) e a planilha de
 Lotações (102 pontos que só existiam nela, listados em
-`docs/pontos-so-na-planilha-de-lotacoes.md`).
+`docs/coordenadas/pontos-so-na-planilha-de-lotacoes.md`).
 
 ## Conferência do banco (02/10/2026)
 

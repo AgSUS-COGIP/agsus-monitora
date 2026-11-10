@@ -67,8 +67,9 @@ gera conflito com quem está trabalhando em paralelo.
 | `src/styles/tokens.css`                                                                                          | fica; os outros CSS vão com o módulo ou saem com o legado | cada etapa |
 
 `src/modules/` **é** o legado de hoje (`src/analises/` ficou só com o `CLAUDE.md`: o painel de
-Análises e o CSS do quadro saíram). `src/legado/` fica vazio por enquanto:
-só recebe código antigo numa mudança em bloco combinada antes (ver `src/legado/README.md`).
+Análises e o CSS do quadro saíram). O legado não muda de pasta
+aos poucos: uma pasta própria para ele só nasce numa mudança em bloco combinada antes
+(`docs/biblioteca/codigo-legado.md`).
 
 ## Como criar um módulo novo
 

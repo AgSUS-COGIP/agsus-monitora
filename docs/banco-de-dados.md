@@ -31,7 +31,7 @@ que seriam perigosas se reaplicadas (tabela `perfis_usuarios`, `search_path` nã
 anteriores à padronização MAD). O que foi decidido para nunca aplicar está em
 `supabase/descartadas/`. `supabase/migrations/` só tem o que se aplica, com timestamp de 14
 dígitos (`tests/migrations-pasta-limpa.test.js`). O processo completo — aplicação manual,
-registro, sem `supabase db push` — está em `supabase/migrations/README.md`.
+registro, sem `supabase db push` — está em `docs/biblioteca/banco-e-migrations.md`.
 
 ### 1.1 O registro do que já foi aplicado
 

@@ -16,13 +16,43 @@ bridge, túnel, sessão adicional ou endpoint `/api/aya`). O painel é a nota [[
   e os `regras-*.md` de cada tela) são compilados por `npm run aya:conhecimento`
   (`scripts/compilar-conhecimento-aya.mjs`) para `src/modules/aya-conhecimento-gerado.js`, que vai
   no bundle (e roda no `npm run build`). **Editou, recompile**; o gerado não se edita à mão.
-- O formato do verbete está em `docs/aya/README.md`. Resposta precisa de **fonte**; o compilador
-  acusa verbete sem `perguntas` e frase repetida entre verbetes, e põe o nome do documento nos
-  verbetes para priorizar a página.
+- O formato do verbete está abaixo. Resposta precisa de **fonte**; o compilador acusa verbete sem
+  `perguntas` e frase repetida entre verbetes, e põe o nome do documento nos verbetes para
+  priorizar a página. O CI reprova se o módulo gerado estiver fora de sincronia com os `.md`.
 - **Todo número que a Aya precisa dizer tem de estar escrito lá.** É também onde mora a explicação
   das telas, que não entra como texto na interface ([[textos-da-interface]]).
 - A pasta não se reorganiza nem se renomeia: os testes leem os arquivos e
   `src/lib/busca-da-aya.ts` liga cada `regras-*.md` à sua página.
+
+## O verbete
+
+Um verbete por assunto; a ordem dos campos não importa e o que falta é omitido.
+
+```markdown
+## Vaga ociosa
+
+**perguntas:** vaga ociosa | vagas ociosas | ociosidade
+**resposta:** No MONITORA, vaga ociosa é a parcela das vagas previstas que permanece sem contratação.
+**fato:** No MONITORA, Ociosas é a parcela das vagas que permanece sem contratação.
+**fonte:** interface do MONITORA
+```
+
+| Campo       | Para que serve                                                                                                          |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `perguntas` | obrigatório: termos que disparam o verbete, separados por `\|` (o compilador acusa verbete sem perguntas)               |
+| `resposta`  | texto devolvido pela busca da Aya, sem gerar conteúdo                                                                   |
+| `fato`      | referência complementar; a busca responde apenas com o campo `resposta`                                                 |
+| `fonte`     | de onde veio; obrigatório quando não for a própria interface                                                            |
+| `abrir`     | opcional: botão que leva à tela citada (`recursos`, `config:acessos`… — ver `ACOES_DA_AYA` em `src/lib/aya-paginas.ts`) |
+
+Duas frases que a busca lê igual ("lista de aprovados" e "as listas dos aprovados") não podem estar
+em verbetes diferentes: pergunta igual a uma das `perguntas` recebe a resposta daquele verbete.
+
+### Quando o verbete precisa de fonte
+
+Se o conteúdo é sobre a interface do MONITORA, basta `fonte: interface do
+MONITORA` — a tela é a fonte. Para qualquer afirmação institucional, legal ou
+numérica, use um endereço oficial. As respostas são previamente conferidas; mantenha a fonte junto de cada verbete.
 
 ## A busca (`src/lib/busca-da-aya.ts`)
 

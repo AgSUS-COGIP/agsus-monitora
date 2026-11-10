@@ -335,10 +335,10 @@ um polo que o casamento por nome move 453 km deixa de ser `oficial_cnes`.
 
 Sair do payload JSON e passar a uma tabela com coluna por campo, onde cada
 ponto declara de onde veio. O esquema proposto está em
-[`docs/propostas/20260914120000_confianca_de_coordenada.sql`](propostas/20260914120000_confianca_de_coordenada.sql)
+[`docs/propostas/20260914120000_confianca_de_coordenada.sql`](../propostas/20260914120000_confianca_de_coordenada.sql)
 — **não executado, e deliberadamente fora de `supabase/migrations/`**: aquela pasta
 é a fila do que se aplica (à mão, com registro em `public.migracoes_aplicadas`; o
-projeto não usa `supabase db push` — ver `supabase/migrations/README.md`), e uma
+projeto não usa `supabase db push` — ver `docs/biblioteca/banco-e-migrations.md`), e uma
 proposta por discutir não pode parecer pendente nem correr por acidente. Move-se
 para lá, com timestamp novo, quando for aprovada.
 
@@ -372,7 +372,7 @@ avisar ninguém.
 ## 8. Como fechar as Tarefas 2 e 3
 
 O auditor está pronto e testado:
-[`scripts/arquivo/auditar-coordenadas.mjs`](../scripts/arquivo/auditar-coordenadas.mjs).
+[`scripts/arquivo/auditar-coordenadas.mjs`](../../scripts/arquivo/auditar-coordenadas.mjs).
 
 ```bash
 node scripts/arquivo/auditar-coordenadas.mjs --arquivo export.json --csv relatorio.csv
@@ -410,7 +410,7 @@ Duas cautelas registadas para quem continuar:
 - **Não usar geometria para decidir UF.** Já medido neste projeto em
   09/09/2026: o ray casting no `UF_GEO` diverge do CNES em 20 unidades e aponta
   12 como fora do DSEI, das quais 9 são falso positivo perto de fronteira. Quem
-  decide UF administrativa é o CNES — ver [`src/lib/uf-ibge.ts`](../src/lib/uf-ibge.ts).
+  decide UF administrativa é o CNES — ver [`src/lib/uf-ibge.ts`](../../src/lib/uf-ibge.ts).
 - **Coordenada igual à sede do município continua a não ser afirmável sem a
   base de sedes do IBGE.** O auditor passou a ter um indício bem mais forte do
   que as casas decimais — várias unidades no mesmo ponto, todas do mesmo
@@ -443,7 +443,7 @@ nada.
 
 ### O que a reconciliação junta, e o que recusa
 
-O módulo é [`src/lib/reconciliacao-unidades.ts`](../src/lib/reconciliacao-unidades.ts).
+O módulo é [`src/lib/reconciliacao-unidades.ts`](../../src/lib/reconciliacao-unidades.ts).
 Junta quando há, ao mesmo tempo: **mesmo DSEI**, **nome canónico igual por
 inteiro** e **tipo compatível**. Recusa-se a:
 

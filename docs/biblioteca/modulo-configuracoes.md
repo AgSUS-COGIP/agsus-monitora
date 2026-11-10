@@ -26,6 +26,9 @@ atualizações). Pasta `src/modulos/configuracoes/`; rota `config`, cada seção
 
 ## Comemorações
 
+O desenho (aviso, fogos, letreiro, som) e as regras de quando comemorar estão em
+[[modulo-comemoracao]]; aqui, a seção que configura.
+
 | Peça                                  | O quê                                                                                   |
 | ------------------------------------- | --------------------------------------------------------------------------------------- |
 | `comemoracoes.tsx`                    | a seção: catálogo de marcos, personalizados, palco de testes e preferência pessoal      |

@@ -3,7 +3,7 @@
 Até 02/10/2026 o front mesclava a planilha "Lotações, Meios de Acesso/Polo Base"
 (`public/data/lotacoes-geograficas-0*.json`) sobre o `lmap` e o `rede_cnes`
 de `TB_CONFIG_MAPA_SAUDE_INDIG`. A planilha tem erros, não existe versão corrigida,
-e a auditoria de 01–02/10 (`docs/auditoria-oficial-das-coordenadas-2026-10-01.md`)
+e a auditoria de 01–02/10 (`docs/coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md`)
 corrigiu as coordenadas **no banco**. Desde esta data o mapa desenha só o banco.
 
 ## O que a planilha fornecia e a decisão

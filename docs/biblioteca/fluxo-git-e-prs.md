@@ -15,7 +15,7 @@ atualizado: 2026-11-10
 - **Português** em nomes de branch, commits e descrição do PR, como no código.
 - Um assunto por PR. Trabalho em paralelo é comum: **não mova arquivos ou pastas em massa** sem
   combinar (gera conflito com quem trabalha ao lado; por isso a migração para `src/modulos/` é
-  módulo a módulo e `src/legado/` só recebe código numa mudança em bloco combinada).
+  módulo a módulo e o legado não muda de pasta aos poucos).
 - Duas PRs em paralelo já escolheram o mesmo horário de migration: confira o timestamp antes de
   abrir a PR (`npm run check:migrations`; [[banco-e-migrations]]).
 - No mesmo PR da mudança: o contrato de RPC ([[rpc-e-contrato]]), o retrato

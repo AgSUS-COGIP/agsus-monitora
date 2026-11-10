@@ -16,7 +16,7 @@ carrega **a sede de cada DSEI, a população, as UFs e a lista de polos base com
 as suas latitudes e longitudes**.
 
 Duas consequências, ambas já documentadas em
-[`docs/auditoria-geografica.md`](auditoria-geografica.md):
+[`docs/coordenadas/auditoria-geografica.md`](../coordenadas/auditoria-geografica.md):
 
 - Não é possível, a partir deste repositório, dizer de onde veio a coordenada de
   um polo, quem a pôs lá, quando, nem com que fonte.
