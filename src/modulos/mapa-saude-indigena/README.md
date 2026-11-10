@@ -85,9 +85,11 @@ depois de parar nele (`ESPERA_DO_REALCE_NA_LISTA`, 150 ms) e nunca rola, reorden
 - **Contornos**: `public/data/contornos-dos-dseis.json` (~324 KB, carregado só nesse modo, uma vez),
   gerado por `scripts/compilar-contornos-dos-dseis.mjs` a partir do shapefile da camada
   **Funai `areas_dsei`**, na cópia de **20/04/2022 do Internet Archive** (a Funai tirou a camada do
-  GeoServer; por isso `/api/funai-geodata?dataset=dsei` dá 502 e o mapa não tinha contorno de DSEI
-  nenhum). A camada é a abrangência com atendimento, não uma partição do país: parte do território
-  fica só com a silhueta do Brasil.
+  GeoServer; o proxy deixou de oferecer `dataset=dsei` em 10/11/2026). A camada é a abrangência com
+  atendimento, não uma partição do país: parte do território fica só com a silhueta do Brasil. O
+  mesmo arquivo dá a abrangência da camada de Terras Indígenas (`src/modules/indigenous-territories-layer.ts`):
+  traço leve no mapa nacional (item "abrangência oficial do DSEI" da legenda) e, no mapa do DSEI, o
+  contorno e o enquadramento do distrito aberto.
 - Testes: `tests/mapa-simples.test.js`, `tests/map-base-layer-simples.test.js`,
   `tests/modulos/mapa-simples.test.js`.
 

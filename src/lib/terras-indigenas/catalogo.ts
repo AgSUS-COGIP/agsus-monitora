@@ -150,10 +150,6 @@ export function funaiViewportUrl(
   return `${FUNAI_PROXY_GEOJSON}?${params.toString()}`;
 }
 
-export function funaiDseiUrl(): string {
-  return `${FUNAI_PROXY_GEOJSON}?dataset=dsei`;
-}
-
 export function funaiEstudoUrl(): string {
   return `${FUNAI_PROXY_GEOJSON}?dataset=estudo`;
 }

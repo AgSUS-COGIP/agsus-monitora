@@ -4,23 +4,23 @@ import type { PedidoDaVercel, RespostaDaVercel } from "./_tipos-da-vercel.js";
 /** Onde e com que nome de camada o GeoServer serve um conjunto. */
 type FonteGeo = { endpoint: string; typeName: string };
 
-type FeatureType = { name: string; title: string };
-
-const DATASETS = ["territories", "dsei", "estudo"] as const;
+/*
+  `dsei` saiu em 10/11/2026: a Funai deixou de publicar `Funai:areas_dsei` e o
+  pedido dava 502 a cada página. O contorno dos DSEIs vem do arquivo local
+  public/data/contornos-dos-dseis.json (scripts/compilar-contornos-dos-dseis.mjs).
+*/
+const DATASETS = ["territories", "estudo"] as const;
 type Dataset = (typeof DATASETS)[number];
 
 function ehDataset(valor: string): valor is Dataset {
   return (DATASETS as readonly string[]).includes(valor);
 }
 
-const FUNAI_OWS_ENDPOINTS = [
-  "https://geoserver.funai.gov.br/geoserver/Funai/ows",
-  "https://geoserver.funai.gov.br/geoserver/ows",
-] as const;
+const FUNAI_OWS = "https://geoserver.funai.gov.br/geoserver/Funai/ows";
 
-const STATIC_DATASETS: Record<Exclude<Dataset, "dsei">, FonteGeo> = {
+const DATASET_SOURCES: Record<Dataset, FonteGeo> = {
   territories: {
-    endpoint: FUNAI_OWS_ENDPOINTS[0],
+    endpoint: FUNAI_OWS,
     typeName: "Funai:tis_poligonais",
   },
   /*
@@ -38,99 +38,13 @@ const STATIC_DATASETS: Record<Exclude<Dataset, "dsei">, FonteGeo> = {
     não tem limite publicado.
   */
   estudo: {
-    endpoint: FUNAI_OWS_ENDPOINTS[0],
+    endpoint: FUNAI_OWS,
     typeName: "Funai:tis_pontos",
   },
 };
 
-/*
-  A camada Funai:areas_dsei é a identificação histórica publicada para a área
-  dos DSEIs. O catálogo atual pode omitir a camada no workspace específico,
-  então ela é testada primeiro e o GetCapabilities fica como descoberta de
-  contingência. Nenhum nome é aceito sem devolver GeoJSON poligonal válido.
-*/
-const DSEI_KNOWN_TYPE_NAMES = ["Funai:areas_dsei"];
-
-let resolvedDseiSource: FonteGeo | null = null;
-/*
-  Sem esta trava, várias requisições simultâneas em instância fria refaziam a
-  descoberta inteira cada uma — até seis chamadas ao GeoServer por requisição.
-  Sob carga isso martela a Funai, que é justamente quem não podemos irritar.
-  Guardar a promessa em andamento faz as concorrentes esperarem a primeira.
-*/
-let descobertaEmCurso: Promise<FonteGeo> | null = null;
-
 function first(value: unknown): unknown {
   return Array.isArray(value) ? value[0] : value;
-}
-
-function normalizeLabel(value: unknown): string {
-  return String(value || "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/&[a-z]+;/gi, " ")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-export function featureTypesFromCapabilities(xml: unknown): FeatureType[] {
-  const source = String(xml || "");
-  const blocks =
-    source.match(
-      /<(?:[A-Za-z0-9_-]+:)?FeatureType\b[\s\S]*?<\/(?:[A-Za-z0-9_-]+:)?FeatureType>/gi,
-    ) || [];
-
-  const tagValue = (block: string, tag: string): string =>
-    block
-      .match(
-        new RegExp(
-          `<(?:[A-Za-z0-9_-]+:)?${tag}\\b[^>]*>([\\s\\S]*?)<\\/(?:[A-Za-z0-9_-]+:)?${tag}>`,
-          "i",
-        ),
-      )?.[1]
-      ?.trim() || "";
-
-  return blocks
-    .map((block) => ({
-      name: tagValue(block, "Name"),
-      title: tagValue(block, "Title"),
-    }))
-    .filter((item) => item.name);
-}
-
-export function chooseDseiFeatureType(
-  featureTypes: readonly (Partial<FeatureType> | null | undefined)[] = [],
-): string {
-  const scored = featureTypes
-    .map((item) => {
-      const text = normalizeLabel(`${item?.name || ""} ${item?.title || ""}`);
-      const hasDsei =
-        /\bDSEI\b/.test(text) ||
-        text.includes("DISTRITO SANITARIO ESPECIAL INDIGENA");
-      if (!hasDsei) return null;
-
-      const looksLikeSeat =
-        text.includes("SEDE") ||
-        text.includes("LOCALIZACAO") ||
-        text.includes("PONTO");
-      const looksLikeArea =
-        text.includes("AREA") ||
-        text.includes("ATUACAO") ||
-        text.includes("ABRANGENCIA") ||
-        text.includes("POLIGONO");
-
-      return {
-        name: String(item?.name || "").trim(),
-        score: (looksLikeArea ? 10 : 0) - (looksLikeSeat ? 20 : 0),
-      };
-    })
-    .filter((item): item is { name: string; score: number } => Boolean(item))
-    .sort((a, b) => b.score - a.score);
-
-  const best = scored[0];
-  return best && best.score >= 0 ? best.name : "";
 }
 
 function safeBbox(value: unknown): string {
@@ -185,27 +99,6 @@ function parseGeoJson(body: unknown): { features: unknown[] } | null {
   }
 }
 
-/* `feature?.geometry?.type`, lido de um JSON sem formato garantido. */
-function geometryType(feature: unknown): string {
-  const geometry =
-    typeof feature === "object" && feature !== null && "geometry" in feature
-      ? feature.geometry
-      : undefined;
-  const type =
-    typeof geometry === "object" && geometry !== null && "type" in geometry
-      ? geometry.type
-      : undefined;
-  return String(type || "");
-}
-
-function isPolygonGeoJsonBody(body: unknown): boolean {
-  const parsed = parseGeoJson(body);
-  if (!parsed || !parsed.features.length) return false;
-  return parsed.features.some((feature) =>
-    ["Polygon", "MultiPolygon"].includes(geometryType(feature)),
-  );
-}
-
 function featureParams(
   typeName: string,
   extra: Record<string, string> = {},
@@ -236,58 +129,6 @@ async function requestFeatureCollection(
   return parseGeoJson(body) ? body : null;
 }
 
-async function resolveDseiSource(): Promise<FonteGeo> {
-  if (resolvedDseiSource) return resolvedDseiSource;
-  if (descobertaEmCurso) return descobertaEmCurso;
-  descobertaEmCurso = descobrirFonteDsei().finally(() => {
-    descobertaEmCurso = null;
-  });
-  return descobertaEmCurso;
-}
-
-async function descobrirFonteDsei(): Promise<FonteGeo> {
-  for (const endpoint of FUNAI_OWS_ENDPOINTS) {
-    for (const typeName of DSEI_KNOWN_TYPE_NAMES) {
-      const body = await requestFeatureCollection(endpoint, typeName, {
-        maxFeatures: "100",
-      }).catch(() => null);
-      if (isPolygonGeoJsonBody(body)) {
-        resolvedDseiSource = { endpoint, typeName };
-        return resolvedDseiSource;
-      }
-    }
-  }
-
-  for (const endpoint of FUNAI_OWS_ENDPOINTS) {
-    const params = new URLSearchParams({
-      service: "WFS",
-      version: "1.0.0",
-      request: "GetCapabilities",
-    });
-    const response = await fetch(`${endpoint}?${params.toString()}`, {
-      headers: { Accept: "application/xml,text/xml,*/*" },
-      signal: AbortSignal.timeout(12000),
-    }).catch(() => null);
-    if (!response?.ok) continue;
-
-    const xml = await response.text();
-    const typeName = chooseDseiFeatureType(featureTypesFromCapabilities(xml));
-    if (!typeName) continue;
-
-    const body = await requestFeatureCollection(endpoint, typeName, {
-      maxFeatures: "100",
-    }).catch(() => null);
-    if (!isPolygonGeoJsonBody(body)) continue;
-
-    resolvedDseiSource = { endpoint, typeName };
-    return resolvedDseiSource;
-  }
-
-  throw new Error(
-    "Camada poligonal de DSEI não encontrada ou indisponível na Funai",
-  );
-}
-
 export default async function handler(
   req: PedidoDaVercel,
   res: RespostaDaVercel,
@@ -307,8 +148,7 @@ export default async function handler(
   }
 
   try {
-    const source =
-      dataset === "dsei" ? await resolveDseiSource() : STATIC_DATASETS[dataset];
+    const source = DATASET_SOURCES[dataset];
 
     const extra: Record<string, string> = {};
     if (dataset === "territories") {
@@ -320,14 +160,12 @@ export default async function handler(
         : 250;
       extra.maxFeatures = String(maxFeatures);
       extra.bbox = `${bbox},EPSG:4326`;
-    } else if (dataset === "estudo") {
+    } else {
       /*
-        São 163 pontos no país inteiro, sem geometria de área — cabem num
-        pedido só, e não vale a pena recortar por enquadramento.
+        estudo: são 163 pontos no país inteiro, sem geometria de área — cabem
+        num pedido só, e não vale a pena recortar por enquadramento.
       */
       extra.maxFeatures = "500";
-    } else {
-      extra.maxFeatures = "100";
     }
 
     const body = await requestFeatureCollection(
@@ -335,13 +173,7 @@ export default async function handler(
       source.typeName,
       extra,
     );
-    const valid =
-      dataset === "dsei"
-        ? isPolygonGeoJsonBody(body)
-        : Boolean(parseGeoJson(body));
-
-    if (!valid) {
-      if (dataset === "dsei") resolvedDseiSource = null;
+    if (!parseGeoJson(body)) {
       return json(res, 502, {
         error: "funai_invalid_geojson",
         dataset,
@@ -352,9 +184,7 @@ export default async function handler(
     res.setHeader("Content-Type", "application/geo+json; charset=utf-8");
     res.setHeader(
       "Cache-Control",
-      dataset === "dsei"
-        ? "public, s-maxage=86400, stale-while-revalidate=604800"
-        : "public, s-maxage=1800, stale-while-revalidate=86400",
+      "public, s-maxage=1800, stale-while-revalidate=86400",
     );
     res.end(body);
   } catch (error) {
