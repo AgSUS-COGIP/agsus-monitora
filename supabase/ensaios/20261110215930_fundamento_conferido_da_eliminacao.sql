@@ -106,7 +106,7 @@ create table public."TH_FUNDAMENTO_ELIMINACAO" (
   constraint "CK_THFUNDELIM_TPPAPEL" check ("TP_PAPEL" in ('EDITAL_GESTOR', 'COORDENADOR', 'ADMIN_GLOBAL'))
 );
 
-create index "IX_THFUNDELIM_EDITAL_MOTIVO"
+create index "IN_THFUNDELIM_EDITAL_MOTIVO"
   on public."TH_FUNDAMENTO_ELIMINACAO" ("CO_MONITORAMENTO", "CO_MOTIVO_ELIMINACAO", "CO_HISTORICO" desc);
 
 alter table public."TH_FUNDAMENTO_ELIMINACAO" enable row level security;
