@@ -305,7 +305,13 @@ def casar(grafia_normalizada, catalogo):
     ):
         if cargo is None or (regra == "SIMILARIDADE" and confianca < LIMIAR_SIMILARIDADE):
             continue
-        if cargo.nome.rsplit(" ", 1)[0] in CARGA_HORARIA and len(horas) != 1:
-            return Casamento(SEM, observacao="FALTA_CARGA_HORARIA")
+        base = cargo.nome.rsplit(" ", 1)[0]
+        if base in CARGA_HORARIA:
+            if len(horas) != 1:
+                return Casamento(SEM, observacao="FALTA_CARGA_HORARIA")
+            # As variantes empatam na letra (as horas saem antes): vale a da grafia.
+            cargo, obs = _pelo_nome(base, horas, catalogo)
+            if cargo is None:
+                return Casamento(SEM, observacao=obs)
         return Casamento(MEDIA, cargo.codigo, cargo.nome, regra, round(confianca, 3))
     return Casamento(SEM)
