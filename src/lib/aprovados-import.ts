@@ -316,10 +316,17 @@ function cellValue(
 
 function parseWorksheet(xml: string, sharedStrings: readonly string[]) {
   const rows: string[][] = [];
-  for (const rowMatch of xml.matchAll(/<row\b[^>]*>([\s\S]*?)<\/row>/gi)) {
+  /*
+    Linha e célula vazias com formatação vêm sem fechamento (`<row r="2"/>`,
+    `<c r="A2" s="1"/>`): sem a alternativa `/>`, a expressão engoliria a
+    célula (ou a linha) seguinte.
+  */
+  for (const rowMatch of xml.matchAll(
+    /<row\b[^>]*?(?:\/>|>([\s\S]*?)<\/row>)/gi,
+  )) {
     const cells: string[] = [];
     for (const cellMatch of (rowMatch[1] ?? "").matchAll(
-      /<c\b([^>]*)>([\s\S]*?)<\/c>/gi,
+      /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/gi,
     )) {
       const attrs = cellMatch[1] ?? "";
       const ref = attrs.match(/\br=["']([^"']+)["']/i)?.[1] || "A1";
