@@ -24,13 +24,7 @@ export function CentralDeConvocacoes({
       className="central-convocacoes ui-card"
       aria-label="Central de convocações"
     >
-      <div>
-        <h3 className="central-convocacoes-titulo">Convocações</h3>
-        <p className="central-convocacoes-ajuda">
-          Convocações para entrevista e para contratação são etapas distintas:
-          cada uma conserva sua lista, regra e histórico.
-        </p>
-      </div>
+      <h3 className="central-convocacoes-titulo">Convocações</h3>
       {podeEntrevistas ? (
         <div
           className="central-convocacoes-escolha"
@@ -56,37 +50,25 @@ export function CentralDeConvocacoes({
         </div>
       ) : null}
       {visao === "entrevista" ? (
-        <div className="central-convocacoes-destino">
-          <p>
-            A convocação para entrevista parte da lista registrada na
-            Classificação. A operação de convocar e desconvocar permanece em
-            Conduzir entrevistas, com as permissões e o histórico originais.
-          </p>
-          <div className="central-convocacoes-acoes">
-            {podeClassificacao ? (
-              <button
-                type="button"
-                className="btn secondary"
-                onClick={() => irParaTela({ view: "classificacao" })}
-              >
-                Abrir listas da Classificação
-              </button>
-            ) : null}
+        <div className="central-convocacoes-acoes">
+          {podeClassificacao ? (
             <button
               type="button"
-              className="btn green"
-              onClick={() => irParaTela({ view: "conduzir-entrevistas" })}
+              className="btn secondary"
+              onClick={() => irParaTela({ view: "classificacao" })}
             >
-              Abrir Convocação para entrevistas
+              Abrir listas da Classificação
             </button>
-          </div>
+          ) : null}
+          <button
+            type="button"
+            className="btn green"
+            onClick={() => irParaTela({ view: "conduzir-entrevistas" })}
+          >
+            Abrir Convocação para entrevistas
+          </button>
         </div>
-      ) : (
-        <p className="central-convocacoes-ajuda">
-          Abaixo estão a ordem de chamada, as cartas e os status para
-          contratação, calculados pela lista vigente de aprovados.
-        </p>
-      )}
+      ) : null}
     </section>
   );
 }
