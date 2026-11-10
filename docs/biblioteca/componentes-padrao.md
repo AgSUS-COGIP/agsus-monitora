@@ -25,19 +25,19 @@ linha por componente) está em [docs/arquitetura-react.md](../arquitetura-react.
 
 ## O que existe
 
-| Grupo            | Componentes                                                                                    |
-| ---------------- | ---------------------------------------------------------------------------------------------- |
-| Topo e filtros   | `TopoDoPainel`, `PainelDeFiltros`, `ChipsDeFiltro`/`ChipDeFiltro`, `MaisOpcoes`, `LinhaDoRecorte`/`MarcasDoRecorte` |
-| Indicadores      | `Kpi` (card de 78px; com `aoClicar` vira filtro), `GradeDeKpis`, `FaixaDeSituacao`, `ListaDePendencias` |
-| Gráficos         | `CardDeGrafico`, `Grafico` (Chart.js criado uma vez), `paletaDosGraficos` (cores dos tokens)    |
-| Listas e tabelas | `TabelaInfinita` (50 por vez, avisa `agsus:content-updated`), `CardDaLista` + `TabelaDaLista`, `BarraDaLista` |
-| Camadas          | `Gaveta`, `TopoDaGaveta`, `Modal` (portal, Esc, foco preso), `Popover`, `MenuDeAcoes`           |
-| Detalhe          | `Secao`, `Kv`, `GradeDeKv`                                                                     |
-| Formulário       | `Campo` (liga o rótulo ao controle), `Segmentado` (radiogroup), `Abas` (tablist)                |
-| Estados          | `EstadoVazio`, `Carregando`, `ErroAoCarregar`, `LinhasEsqueleto`, `BlocosEsqueleto`, `Aviso`, `Selo` |
-| Ações            | `BotaoDeAcao` (ação que escreve no banco), `AcoesDaLinha`                                       |
-| Telas da seleção | `CabecalhoDaTela`, `BarraDaLista`, `FaixaDeSituacao`, `CardDaLista`                             |
-| Utilitários      | `usarEstadoDaSessao` (filtros voltam no F5), `classes(...)`                                    |
+| Grupo            | Componentes                                                                                                                |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Topo e filtros   | `TopoDoPainel`, `PainelDeFiltros`, `ChipsDeFiltro`/`ChipDeFiltro`, `MaisOpcoes`, `LinhaDoRecorte`/`MarcasDoRecorte`        |
+| Indicadores      | `Kpi` (card de 78px; com `aoClicar` vira filtro), `GradeDeKpis`, `FaixaDeSituacao`, `ListaDePendencias`                    |
+| Gráficos         | `CardDeGrafico`, `Grafico` (Chart.js criado uma vez), `paletaDosGraficos` (cores dos tokens)                               |
+| Listas e tabelas | `TabelaInfinita` (50 por vez, avisa `agsus:content-updated`), `CardDaLista` + `TabelaDaLista`, `BarraDaLista`              |
+| Camadas          | `Gaveta`, `TopoDaGaveta`, `Modal` (portal, Esc, foco preso), `Popover`, `MenuDeAcoes`                                      |
+| Detalhe          | `Secao`, `Kv`, `GradeDeKv`                                                                                                 |
+| Formulário       | `Campo` (liga o rótulo ao controle), `Segmentado` (radiogroup), `Abas` (tablist)                                           |
+| Estados          | `EstadoVazio`, `Carregando`, `CarregandoConteudo`, `ErroAoCarregar`, `LinhasEsqueleto`, `BlocosEsqueleto`, `Aviso`, `Selo` |
+| Ações            | `BotaoDeAcao` (ação que escreve no banco), `AcoesDaLinha`                                                                  |
+| Telas da seleção | `CabecalhoDaTela`, `BarraDaLista`, `FaixaDeSituacao`, `CardDaLista`                                                        |
+| Utilitários      | `usarEstadoDaSessao` (filtros voltam no F5), `classes(...)`                                                                |
 
 Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de-cards`,
 `.ui-pilha`, `.ui-grade-de-campos`, `.ui-acoes`, `.ui-barra-de-salvar`, `.ui-gaveta-*`,
@@ -64,3 +64,11 @@ Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de
 - [[nova-tela-react]] — como a tela usa os componentes
 - [[textos-da-interface]] — estados vazios e de erro curtos
 - [[testes]] — teste de componente em `tests/ui/`
+
+## Carregando não é cartão em branco
+
+Bloco que espera uma leitura (o edital escolhido, a fila, a regra…) usa
+`CarregandoConteudo` com o que está carregando por escrito ("Carregando o edital 93/2026…"):
+indicador girando, linhas de esqueleto e `role="status"`; `semMoldura` dentro de um cartão.
+Nunca um `.ui-card` com `.ui-esqueleto-linha` soltas: até 10/11/2026 elas não tinham a classe
+base e a tela ficava segundos num cartão vazio (#732). Guarda: `tests/ui/carregando-conteudo.test.ts`.

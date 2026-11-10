@@ -185,8 +185,12 @@ describe("situacaoDaPresenca", () => {
     expect(situacaoDaPresenca({ sincronizado: true, quantos: 1 })).toEqual({
       estado: "ready",
       rotulo: "1 online",
+      curto: "1",
       detalhe: "1 pessoa online.",
     });
+    expect(situacaoDaPresenca({ esperaMs: 2_000 }).curto).toBe("");
+    expect(situacaoDaPresenca({ esperaMs: 15_000 }).curto).toBe("");
+    expect(situacaoDaPresenca({ online: false }).curto).toBe("");
     expect(situacaoDaPresenca({ esperaMs: 2_000 }).estado).toBe("loading");
     expect(situacaoDaPresenca({ esperaMs: 15_000 }).rotulo).toBe(
       "Presença indisponível",

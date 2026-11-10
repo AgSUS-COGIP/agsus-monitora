@@ -41,10 +41,14 @@ import type {
   2. Ser chamado pela ampla não gasta a vaga da reserva — "não serão computados
      para efeito de preenchimento das vagas reservadas", na redação que os oito
      editais repetem com numeração diferente (5.2.3.1.3 no 96/2025, 97/2025 e
-     Cebraspe; 5.7.15 no 30/2026; 5.8.4 no 93/2026; 7.4.2 no da FGV). Cai de
-     graça do desenho: a vaga é uma POSIÇÃO na sequência, e ocupar uma posição
-     de ampla deixa as posições de reserva intactas, para o próximo daquela
-     fila.
+     Cebraspe; 5.7.15 no 30/2026; 5.8.4 no 93/2026; 7.4.2 no da FGV). Nas
+     vagas imediatas, os vencedores da ampla (os primeiros da classificação,
+     tantos quantas as posições de ampla) são separados ANTES das reservas,
+     como no motor da Classificação: mesmo que a posição de reserva venha
+     antes na sequência, a cotista que está dentro das vagas da ampla entra
+     por ela, e a reserva vai para o próximo daquela fila. A sequência só
+     decide a ordem de chamada. No cadastro de reserva, a chamada segue a
+     sequência posição a posição.
   3. Reserva sem candidato não fica vazia — desce a cascata e, no fim, reverte
      para a ampla.
 
@@ -622,6 +626,31 @@ export function montarConvocacaoDaVaga<T extends CandidatoDaConvocacao>({
   const ocupado: boolean[] = Array.from({ length: fila.length }, () => false);
   const ponteiros = new Map<string, number>();
 
+  /*
+    A AMPLA ANTES DA COTA NAS VAGAS IMEDIATAS (regra 2). Quem está dentro das
+    vagas da ampla entra por ela, mesmo que a posição de reserva venha antes na
+    sequência: sem isto, uma cotista bem classificada ocupava a reserva e a
+    vaga da cota se perdia (MGI com 4 vagas, AC, PP, AC, AC: chamava B, A(PP),
+    C, E, quando o certo é B, A e C pela ampla e D pela PP). Como o motor da
+    Classificação (`alocarVagas`), separam-se primeiro os vencedores da ampla —
+    os N primeiros da classificação, N = posições de ampla no bloco imediato —
+    e as reservas e cascatas do bloco os pulam. A sequência só decide a ordem
+    de chamada. No cadastro de reserva (depois das imediatas) a chamada segue a
+    sequência posição a posição, como antes.
+  */
+  const posicoesDeAmpla = ciclo
+    .slice(0, totalImediatas)
+    .filter((categoriaId) => categoriaId === ampla.id).length;
+  // A fila já está em ordem de classificação e todos disputam a ampla.
+  const vencedoresDaAmpla = Array.from(
+    { length: Math.min(posicoesDeAmpla, fila.length) },
+    (_, indice) => indice,
+  );
+  const guardado: boolean[] = Array.from(
+    { length: fila.length },
+    (_, indice) => indice < posicoesDeAmpla,
+  );
+
   const disputa = (item: ItemDaFilaDaConvocacao<T>, categoriaId: string) =>
     categoriaId === ampla.id || item.efetivas.includes(categoriaId);
 
@@ -629,7 +658,9 @@ export function montarConvocacaoDaVaga<T extends CandidatoDaConvocacao>({
     let indice = ponteiros.get(categoriaId) ?? 0;
     while (
       indice < fila.length &&
-      (ocupado[indice] || !disputa(exigirItem(fila[indice]), categoriaId))
+      (ocupado[indice] ||
+        guardado[indice] ||
+        !disputa(exigirItem(fila[indice]), categoriaId))
     )
       indice += 1;
     ponteiros.set(categoriaId, indice);
@@ -641,11 +672,35 @@ export function montarConvocacaoDaVaga<T extends CandidatoDaConvocacao>({
     a ampla — que nunca fica vazia enquanto sobrar gente na fila, e é o que
     garante o fim do laço.
   */
-  const preencher = (categoriaId: string) => {
+  /*
+    No bloco imediato, a ampla sai da fila dos vencedores, em ordem de
+    classificação. Uma reserva sem cotista que reverte para a ampla vira uma
+    vaga de ampla a mais: chama o próximo vencedor e o seguinte da
+    classificação entra no fim da fila dos vencedores — a ordem de chamada
+    continua a da nota (B, C, E, F, não B, F, C, E).
+  */
+  const daAmpla = (reforco: boolean) => {
+    const indice = vencedoresDaAmpla.shift();
+    if (indice === undefined) return proximoDa(ampla.id);
+    if (reforco) {
+      const seguinte = proximoDa(ampla.id);
+      if (seguinte >= 0) {
+        guardado[seguinte] = true;
+        vencedoresDaAmpla.push(seguinte);
+      }
+    }
+    guardado[indice] = false;
+    return indice;
+  };
+
+  const preencher = (categoriaId: string, noBloco: boolean) => {
     const categoria = modelo.categorias.find((item) => item.id === categoriaId);
     const tentativas = [categoriaId, ...(categoria?.cascata || []), ampla.id];
     for (const alvo of tentativas) {
-      const indice = proximoDa(alvo);
+      const indice =
+        noBloco && alvo === ampla.id
+          ? daAmpla(categoriaId !== ampla.id)
+          : proximoDa(alvo);
       if (indice >= 0) return { indice, categoria: alvo };
     }
     return null;
@@ -659,7 +714,10 @@ export function montarConvocacaoDaVaga<T extends CandidatoDaConvocacao>({
         ? ciclo[volta]
         : (sequenciaDaFila?.[volta] ??
           cicloEfetivo[volta % cicloEfetivo.length]);
-    const escolha = preencher(exigirItem(categoriaDaVaga));
+    const escolha = preencher(
+      exigirItem(categoriaDaVaga),
+      volta < totalImediatas,
+    );
     if (!escolha) break;
 
     ocupado[escolha.indice] = true;

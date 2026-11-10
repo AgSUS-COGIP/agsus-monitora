@@ -163,6 +163,59 @@ describe("fronteiras das RPCs do calendário", () => {
     expect(estado.obter().demandas).toEqual([]);
   });
 
+  /*
+    Salvar um cronograma (EVENTO_CRONOGRAMA_SALVO → invalidar) enquanto a
+    carga corre: a carga terminava, gravava "carregado agora" e apagava a
+    invalidação; reabrir a tela em menos de 1 min mostrava a etapa antiga.
+  */
+  it("invalidar durante a carga faz a próxima abertura reler", async () => {
+    const soltar = [];
+    const rpc = vi.fn(
+      (nome) =>
+        new Promise((resolver) =>
+          soltar.push(() =>
+            resolver({
+              data: nome === "get_nucleo_cronograma_resumo" ? RESUMO : [ETAPA],
+              error: null,
+            }),
+          ),
+        ),
+    );
+    let agora = Date.parse("2026-11-10T12:00:00Z");
+    const estado = criarEstadoDoCalendario({
+      supabase: { auth, rpc },
+      relogio: () => agora,
+    });
+    const carga = estado.carregar();
+    await vi.waitFor(() => expect(rpc).toHaveBeenCalledTimes(3));
+    estado.invalidar();
+    for (const soltarUm of soltar.splice(0)) soltarUm();
+    await carga;
+    expect(estado.obter().etapas).toHaveLength(1);
+
+    agora += 1_000;
+    const reaberta = estado.carregar();
+    await vi.waitFor(() => expect(rpc).toHaveBeenCalledTimes(6));
+    for (const soltarUm of soltar.splice(0)) soltarUm();
+    await reaberta;
+  });
+
+  it("sem invalidar, reabrir logo depois usa o que já está na tela", async () => {
+    const rpc = vi.fn(async (nome) => ({
+      data: nome === "get_nucleo_cronograma_resumo" ? RESUMO : [ETAPA],
+      error: null,
+    }));
+    let agora = Date.parse("2026-11-10T12:00:00Z");
+    const estado = criarEstadoDoCalendario({
+      supabase: { auth, rpc },
+      relogio: () => agora,
+    });
+    await estado.carregar();
+    agora += 1_000;
+    await estado.carregar();
+    expect(rpc).toHaveBeenCalledTimes(3);
+  });
+
   it("o resumo, as etapas e as demandas saem juntos, sem um esperar o outro", async () => {
     const soltar = new Map();
     const rpc = vi.fn(

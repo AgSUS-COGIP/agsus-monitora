@@ -108,6 +108,59 @@ def test_permissao_nao_e_guardada_entre_pedidos(monkeypatch):
     assert abrir.call_count == 2
 
 
+def test_autenticacao_devolve_o_id_do_usuario(monkeypatch):
+    abrir = Mock(return_value=resposta({"id": USUARIO}))
+    monkeypatch.setattr(ax.urllib.request, "urlopen", abrir)
+    assert ax.usuario_autenticado(f"Bearer {TOKEN}") == USUARIO
+    pedido = abrir.call_args.args[0]
+    assert pedido.full_url == "https://teste.supabase.co/auth/v1/user"
+    assert pedido.get_header("Authorization") == f"Bearer {TOKEN}"
+
+
+@pytest.mark.parametrize("autorizacao", ["", "Basic abc", "Bearer ", "Bearer    "])
+def test_sem_token_e_nao_autenticado_sem_consultar(monkeypatch, autorizacao):
+    abrir = Mock()
+    monkeypatch.setattr(ax.urllib.request, "urlopen", abrir)
+    assert ax.usuario_autenticado(autorizacao) is False
+    abrir.assert_not_called()
+
+
+@pytest.mark.parametrize("status", [401, 403])
+def test_token_recusado_e_nao_autenticado(monkeypatch, status):
+    erro = HTTPError("https://teste", status, "recusado", None, None)
+    monkeypatch.setattr(ax.urllib.request, "urlopen", Mock(side_effect=erro))
+    assert ax.usuario_autenticado(f"Bearer {TOKEN}") is False
+
+
+def test_resposta_sem_id_e_nao_autenticado(monkeypatch):
+    monkeypatch.setattr(ax.urllib.request, "urlopen", Mock(return_value=resposta({})))
+    assert ax.usuario_autenticado(f"Bearer {TOKEN}") is False
+
+
+@pytest.mark.parametrize(
+    "erro",
+    [TimeoutError(), OSError("sem rede"), HTTPError("https://teste", 500, "erro", None, None)],
+)
+def test_falha_do_auth_nao_vira_sessao_expirada(monkeypatch, erro):
+    # Auth fora do ar não é "entre de novo": quem está logado veria o aviso errado.
+    monkeypatch.setattr(ax.urllib.request, "urlopen", Mock(side_effect=erro))
+    assert ax.usuario_autenticado(f"Bearer {TOKEN}") is None
+
+
+def test_json_invalido_do_auth_nao_vira_sessao_expirada(monkeypatch):
+    monkeypatch.setattr(ax.urllib.request, "urlopen", Mock(return_value=io.BytesIO(b"not-json")))
+    assert ax.usuario_autenticado(f"Bearer {TOKEN}") is None
+
+
+@pytest.mark.parametrize("variavel", ["VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY"])
+def test_ambiente_incompleto_nao_vira_sessao_expirada(monkeypatch, variavel):
+    monkeypatch.delenv(variavel)
+    abrir = Mock()
+    monkeypatch.setattr(ax.urllib.request, "urlopen", abrir)
+    assert ax.usuario_autenticado(f"Bearer {TOKEN}") is None
+    abrir.assert_not_called()
+
+
 def montar_handler():
     h = object.__new__(ax.handler)
     h.headers = {"Authorization": f"Bearer {TOKEN}", "Content-Length": "9"}
@@ -118,7 +171,10 @@ def montar_handler():
     return h
 
 
-@pytest.mark.parametrize("usuario,permissao,status", [(None, True, 401), (USUARIO, False, 403), (USUARIO, None, 503)])
+@pytest.mark.parametrize(
+    "usuario,permissao,status",
+    [(False, True, 401), (None, True, 503), (USUARIO, False, 403), (USUARIO, None, 503)],
+)
 def test_nega_antes_de_ler_o_corpo(monkeypatch, usuario, permissao, status):
     monkeypatch.setattr(ax, "usuario_autenticado", Mock(return_value=usuario))
     autorizar = Mock(return_value=permissao)

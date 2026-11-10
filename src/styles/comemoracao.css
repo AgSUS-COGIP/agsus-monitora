@@ -264,7 +264,7 @@ html[data-theme="dark"] .comemoracao__veu {
   /* A fonte do app (a mesma dos títulos), não a do sistema. */
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 1em;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.01em;
   white-space: nowrap;

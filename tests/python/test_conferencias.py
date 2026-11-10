@@ -81,6 +81,24 @@ class Casos(unittest.TestCase):
         )
         self.assertEqual(limpo, {"referencia": "x", "detalhe": {"ok": True}})
 
+    def test_numero_do_detalhe_passa_na_mesma_trava_do_banco(self):
+        # O banco (gravar_avisos_conferencia) recusa o lote inteiro se o texto de qualquer
+        # valor do detalhe tiver 11 dígitos seguidos, número também.
+        detalhe = regras.detalhe_seguro(
+            {
+                "nota": 59.333333333333336,  # dízima do numeric sem escala: arredonda e fica
+                "corte": 60,
+                "cpf": 191,
+                "documento": 12345678901,  # cara de CPF guardado como número: sai
+                "grande": 1e20,  # o banco escreve 100000000000000000000: sai
+                "infinito": float("inf"),  # não é JSON
+                "nan": float("nan"),
+            }
+        )
+        self.assertEqual(detalhe, {"nota": 59.3333, "corte": 60, "cpf": 191})
+        for valor in detalhe.values():
+            self.assertNotRegex(json.dumps(valor), r"[0-9]{11}")
+
     def test_tipo_da_referencia_so_conhecido_e_com_referencia(self):
         self.assertEqual(
             regras.caso_seguro({"referencia": "c1", "tipo": "candidato_aprovado"}),

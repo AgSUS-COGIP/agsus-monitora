@@ -540,6 +540,9 @@ describe("carga", () => {
       "get_recursos_da_area",
       expect.anything(),
     );
+    // Só o aviso: sem KPIs a zero nem tabela vazia, que diziam "nenhum recurso".
+    expect(secao.querySelector(".recursos-kpis")).toBeNull();
+    expect(secao.querySelector("table")).toBeNull();
   });
 });
 

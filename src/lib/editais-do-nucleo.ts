@@ -139,6 +139,9 @@ export interface IndicadorDoResumo {
 
 const txt = (valor: unknown) => String(valor ?? "").trim();
 const low = (valor: unknown) => txt(valor).toLowerCase();
+/* Para a busca: sem diferenciar maiúsculas nem acentos ("solimoes" acha "Solimões"). */
+const paraBusca = (valor: unknown) =>
+  low(valor).normalize("NFD").replace(/[̀-ͯ]/g, "");
 const num = (valor: unknown) => {
   const numero = Number(valor || 0);
   return Number.isFinite(numero) ? numero : 0;
@@ -177,7 +180,7 @@ export function filtrarEditais<T extends LinhaDeEditalDoNucleo>(
   linhas: readonly T[] | null | undefined,
   busca: unknown,
 ): T[] {
-  const termo = low(busca);
+  const termo = paraBusca(busca);
   return (linhas || [])
     .filter(
       (linha) =>
@@ -190,7 +193,7 @@ export function filtrarEditais<T extends LinhaDeEditalDoNucleo>(
           linha.risco,
           linha.processo,
         ]
-          .map(low)
+          .map(paraBusca)
           .join(" | ")
           .includes(termo),
     )

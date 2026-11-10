@@ -13,17 +13,27 @@ import { describe, expect, it } from "vitest";
   Saúde Indígena e no modal institucional — além do título dos grupos da
   barra lateral, que o Design System pede em sentence case.
 
-  Vale para o CSS de `src/modulos/` e `src/ui/` e para o CSS dos componentes
-  React que ainda mora em `src/styles/`. O legado (`app.css`,
-  `platform-shell.css`…) se resolve ao migrar cada tela (DESIGN.md seção 12).
+  Vale para o CSS de `src/modulos/` e `src/ui/`, para o CSS dos componentes
+  React que ainda mora em `src/styles/` e para o CSS da casca, que pinta todas
+  as telas: cabeçalho, entrada, carregamento, rótulos, chips e cabeçalhos de
+  tabela (`app.css`, `platform-shell.css`, `loading-experience.css`,
+  `nielsen-shell-ux.css`, `comemoracao.css`). Na segunda passada do pente fino
+  (10/11/2026) esses arquivos ainda tinham pesos de 700 a 1000, textos de 8 a
+  11px e caixa alta no perfil do cabeçalho, nos rótulos e nas tabelas; e o
+  negrito (`<b>`/`<strong>`) herdava `bolder`, que sobe 600 para 900.
 */
 
 const RAIZ = path.resolve(import.meta.dirname, "..");
 const PASTAS = ["src/modulos", "src/ui"];
 const ARQUIVOS_DE_COMPONENTES = [
+  "src/styles/app.css",
   "src/styles/barra-lateral.css",
+  "src/styles/comemoracao.css",
+  "src/styles/loading-experience.css",
   "src/styles/mobile-table-cards.css",
   "src/styles/multi-select-busca.css",
+  "src/styles/nielsen-shell-ux.css",
+  "src/styles/platform-shell.css",
   "src/styles/saude-das-cargas.css",
 ];
 
@@ -40,6 +50,8 @@ const EXCECOES = new Set([
   "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css .mapa-simples--rotulos-pequenos .mapa-simples__rotulo",
   // Seta do botão do seletor múltiplo (ícone).
   "src/styles/multi-select-busca.css .multi-select-trigger .fa-chevron-down",
+  // Seta do menu da conta, no cabeçalho (ícone).
+  "src/styles/platform-shell.css .top-user-chevron",
 ]);
 
 function cssDe(pasta: string): string[] {
@@ -86,6 +98,13 @@ function ondeAparece(teste: (corpo: string) => boolean): string[] {
 }
 
 describe("tipografia das telas", () => {
+  it("dá ao negrito um peso fixo, sem o `bolder` do navegador", () => {
+    const base = regras("src/styles/app.css").find((r) =>
+      /^b, ?strong$/.test(r.seletor),
+    );
+    expect(base?.corpo).toMatch(/font-weight:\s*600/);
+  });
+
   it("não usa peso acima de 600", () => {
     expect(
       ondeAparece((c) => /font-weight:\s*(bold|bolder|[7-9]\d\d)\b/.test(c)),

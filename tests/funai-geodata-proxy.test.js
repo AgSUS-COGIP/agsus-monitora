@@ -61,3 +61,82 @@ describe("o proxy não pede mais o DSEI à Funai", () => {
     }
   });
 });
+
+/*
+  Parâmetro vazio não vale como zero: `Number("")` é 0. Um `bbox` com a última
+  coordenada vazia passava como recorte até a linha do Equador, e
+  `maxFeatures=` pedia uma terra só — e essa resposta ia para o cache
+  compartilhado.
+*/
+describe("parâmetros vazios do recorte de terras", () => {
+  async function pedir(query) {
+    const { default: handler } = await import("../api/funai-geodata.ts");
+    const pedidos = [];
+    const original = globalThis.fetch;
+    globalThis.fetch = async (url) => {
+      pedidos.push(new URL(String(url)));
+      return new Response(
+        JSON.stringify({ type: "FeatureCollection", features: [] }),
+      );
+    };
+    let status = 0;
+    let corpo = "";
+    const res = {
+      status(s) {
+        status = s;
+        return this;
+      },
+      setHeader() {},
+      end(texto) {
+        corpo = texto;
+      },
+    };
+    try {
+      await handler(
+        {
+          method: "GET",
+          headers: {},
+          query: { dataset: "territories", ...query },
+        },
+        res,
+      );
+    } finally {
+      globalThis.fetch = original;
+    }
+    return { status, corpo, pedido: pedidos[0] };
+  }
+
+  it.each(["-60,-10,-50,", ",-10,-50,0", "-60,,-50,0", "-60,-10, ,0"])(
+    "bbox com coordenada vazia (%s) é recusado sem chamar a Funai",
+    async (bbox) => {
+      const { status, corpo, pedido } = await pedir({ bbox });
+      expect(status).toBe(400);
+      expect(JSON.parse(corpo)).toEqual({ error: "invalid_bbox" });
+      expect(pedido).toBeUndefined();
+    },
+  );
+
+  it("bbox completo segue para a Funai", async () => {
+    const { status, pedido } = await pedir({ bbox: "-60,-10,-50,0" });
+    expect(status).toBe(200);
+    expect(pedido.searchParams.get("bbox")).toBe("-60,-10,-50,0,EPSG:4326");
+  });
+
+  it.each([undefined, "", " "])(
+    "maxFeatures ausente ou vazio (%j) usa o padrão de 250",
+    async (maxFeatures) => {
+      const { pedido } = await pedir({ bbox: "-60,-10,-50,0", maxFeatures });
+      expect(pedido.searchParams.get("maxFeatures")).toBe("250");
+    },
+  );
+
+  it.each([
+    ["120", "120"],
+    ["9999", "500"],
+    ["0", "1"],
+    ["abc", "250"],
+  ])("maxFeatures=%s vira %s", async (maxFeatures, esperado) => {
+    const { pedido } = await pedir({ bbox: "-60,-10,-50,0", maxFeatures });
+    expect(pedido.searchParams.get("maxFeatures")).toBe(esperado);
+  });
+});

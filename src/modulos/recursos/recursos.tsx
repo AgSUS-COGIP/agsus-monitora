@@ -251,43 +251,56 @@ function TelaDaArea({
         </Aviso>
       ) : null}
 
-      <Filtros
-        filtros={filtros}
-        opcoes={opcoes}
-        carregado={carregado}
-        aoMudar={trocarFiltro}
-        aoLimpar={() => setFiltros(FILTROS_VAZIOS)}
-        analise={analise}
-      />
-      {analise ? null : (
+      {/*
+        Sem sessão, só o aviso: filtros, KPIs a zero, gráficos e tabela vazios
+        diziam "nenhum recurso" quando o que falta é entrar de novo (como na
+        Seleção e nas Entrevistas).
+      */}
+      {e.semSessao ? null : (
         <>
-          <Indicadores
-            indicadores={indicadores}
-            carregado={carregado}
+          <Filtros
             filtros={filtros}
-            aoFiltrar={alternarFiltro}
+            opcoes={opcoes}
+            carregado={carregado}
+            aoMudar={trocarFiltro}
+            aoLimpar={() => setFiltros(FILTROS_VAZIOS)}
+            analise={analise}
           />
-          <Recorte ativos={ativos} recursos={filtrados} carregado={carregado} />
-          <Graficos
+          {analise ? null : (
+            <>
+              <Indicadores
+                indicadores={indicadores}
+                carregado={carregado}
+                filtros={filtros}
+                aoFiltrar={alternarFiltro}
+              />
+              <Recorte
+                ativos={ativos}
+                recursos={filtrados}
+                carregado={carregado}
+              />
+              <Graficos
+                recursos={filtrados}
+                pendencias={pendencias}
+                carregado={carregado}
+                filtros={filtros}
+                aoFiltrar={alternarFiltro}
+                escuro={escuro}
+              />
+            </>
+          )}
+          <TabelaDeRecursos
             recursos={filtrados}
-            pendencias={pendencias}
+            total={recursos.length}
+            origens={origens}
             carregado={carregado}
-            filtros={filtros}
-            aoFiltrar={alternarFiltro}
-            escuro={escuro}
+            aoAbrir={estado.abrirGaveta}
+            aoNovo={analise && podeEditar ? estado.abrirNovo : undefined}
+            comemoracoes={e.comemoracoes}
+            analise={analise}
           />
         </>
       )}
-      <TabelaDeRecursos
-        recursos={filtrados}
-        total={recursos.length}
-        origens={origens}
-        carregado={carregado}
-        aoAbrir={estado.abrirGaveta}
-        aoNovo={analise && podeEditar ? estado.abrirNovo : undefined}
-        comemoracoes={e.comemoracoes}
-        analise={analise}
-      />
 
       {/* Com o formulário aberto, a gaveta sai de cena e volta quando ele fecha. */}
       {aberto && !e.formulario && !e.modelosAbertos ? (

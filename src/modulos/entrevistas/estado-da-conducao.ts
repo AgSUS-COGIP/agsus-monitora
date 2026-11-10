@@ -474,6 +474,11 @@ export function criarEstadoDaConducao({
         p_situacao: situacao,
         p_motivo: motivo,
       });
+      // Trocou de edital enquanto gravava: a gravação valeu, a tela fica onde está.
+      if (edital !== estado.editalId) {
+        toast("Etapa de entrevista atualizada.", "ok");
+        return { ok: true };
+      }
       const atualizado = await abrirEdital(edital);
       if (!atualizado)
         throw new Error("Etapa salva, mas não foi possível atualizar a tela.");
@@ -555,8 +560,9 @@ export function criarEstadoDaConducao({
           p_lista: lista,
           p_analises: analises,
         }).catch((erro) => {
-          // A Classificação gerou outra lista: a tela relê a vigente.
-          if (ehConflitoDeVersao(erro)) void abrirEdital(editalId);
+          // A Classificação gerou outra lista: a tela relê a vigente (se ainda é este edital).
+          if (ehConflitoDeVersao(erro) && editalId === estado.editalId)
+            void abrirEdital(editalId);
           throw erro;
         }),
       );

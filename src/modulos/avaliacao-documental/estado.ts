@@ -315,7 +315,14 @@ export function criarEstadoDaAvaliacao({
       lembrarEdital(usuario, estado.area, editalId),
     );
     if (!editalId) {
-      publicar({ editalId: "", dados: null, equipe: null, erroDoEdital: "" });
+      // A leitura em voo (se houver) foi descartada acima: nada mais solta o carregando.
+      publicar({
+        editalId: "",
+        dados: null,
+        equipe: null,
+        carregandoEdital: false,
+        erroDoEdital: "",
+      });
       return false;
     }
     publicar({

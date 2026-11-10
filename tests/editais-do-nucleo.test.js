@@ -4,6 +4,7 @@ import {
   compararEditais,
   contarAtivosEInativos,
   editalParaSalvar,
+  filtrarEditais,
   formularioDoEdital,
   indexarResumo,
   indicadoresDoResumo,
@@ -359,5 +360,40 @@ describe("datas do edital pelo cronograma", () => {
       previa,
     );
     expect(manual.data_inicio).toBe("0202-11-12");
+  });
+});
+
+/*
+  A busca da tabela de Editais diferenciava acentos: "solimoes" não achava
+  "Solimões". Como na busca global, "saude" acha "Saúde" (e o contrário).
+*/
+describe("busca da tabela de Editais", () => {
+  const linhas = [
+    {
+      edital: "12/2026",
+      unidade: "DSEI Alto Rio Solimões",
+      status: "Em elaboração",
+      risco: "Médio",
+    },
+    { edital: "13/2026", unidade: "DSEI Manaus", status: "Concluído" },
+  ];
+
+  it.each(["solimoes", "Solimões", "SOLIMOES", "elaboracao", "medio", "Médio"])(
+    "%s acha a linha com acento",
+    (termo) => {
+      expect(filtrarEditais(linhas, termo).map((l) => l.edital)).toEqual([
+        "12/2026",
+      ]);
+    },
+  );
+
+  it("termo com acento acha texto sem acento", () => {
+    expect(
+      filtrarEditais([{ edital: "1/2026", unidade: "Saude" }], "saúde"),
+    ).toHaveLength(1);
+  });
+
+  it("sem termo, devolve todas na ordem da fila", () => {
+    expect(filtrarEditais(linhas, "  ")).toHaveLength(2);
   });
 });

@@ -19,6 +19,7 @@ import re
 import unicodedata
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 
 from catalogo import CATALOGO
 
@@ -109,6 +110,26 @@ def exemplo_seguro(valor):
     return texto
 
 
+def _texto_do_numero(valor):
+    """O número escrito como o banco o lê no jsonb (sem expoente: 1e20 tem 21 dígitos)."""
+    return format(Decimal(repr(valor)), "f") if isinstance(valor, float) else str(valor)
+
+
+def numero_seguro(valor):
+    """
+    O número do detalhe, ou None. O banco confere 11 dígitos seguidos em todo valor
+    do detalhe, número também, e recusa o lote inteiro: a dízima de um numeric sem
+    escala (59.333333333333336) vai com 4 casas; o que segue com cara de CPF (ou
+    NaN/infinito, que não são JSON) sai.
+    """
+    if isinstance(valor, float):
+        if not math.isfinite(valor):
+            return None
+        if _ONZE_DIGITOS.search(_texto_do_numero(valor)):
+            valor = round(valor, 4)
+    return None if _ONZE_DIGITOS.search(_texto_do_numero(valor)) else valor
+
+
 def detalhe_seguro(detalhe):
     """Só chaves simples e valores número, booleano ou texto de identificador (datas, códigos)."""
     saida = {}
@@ -118,8 +139,9 @@ def detalhe_seguro(detalhe):
         if isinstance(valor, bool):
             saida[chave] = valor
         elif isinstance(valor, (int, float)):
-            if not (isinstance(valor, float) and math.isnan(valor)):
-                saida[chave] = valor
+            numero_ok = numero_seguro(valor)
+            if numero_ok is not None:
+                saida[chave] = numero_ok
         else:
             texto = valor.isoformat() if isinstance(valor, (date, datetime)) else str(valor).strip()
             if _VALOR_DO_DETALHE.match(texto) and not _ONZE_DIGITOS.search(texto):
