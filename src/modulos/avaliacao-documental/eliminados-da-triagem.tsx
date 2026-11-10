@@ -33,6 +33,7 @@ import type {
 } from "../../ui/index.ts";
 import { baixarComunicadoDoEliminado } from "./comunicado-do-eliminado.ts";
 import { IncluirPorDecisao } from "./decisao-do-lote.tsx";
+import { FundamentosDaEliminacao } from "./fundamentos-da-eliminacao.tsx";
 import { AcoesEmLote, type MontarDocumentos } from "./documentos-em-lote.tsx";
 import type {
   EstadoDaPreClassificacao,
@@ -67,6 +68,8 @@ const FILTROS_DOS_ELIMINADOS: EsquemaDosFiltros<"vaga" | "motivo"> =
 
 export interface PropriedadesDosEliminados {
   pre: EstadoDaPreClassificacao;
+  /** O edital aberto (o quadro do fundamento das eliminações). */
+  editalId?: string | null;
   vagas: readonly VagaDaPre[];
   /** Muda a cada releitura do resumo: a lista recomeça. */
   leitura: string;
@@ -84,6 +87,7 @@ export interface PropriedadesDosEliminados {
 
 export function EliminadosDaTriagem({
   pre,
+  editalId,
   vagas,
   leitura,
   rotuloEdital,
@@ -341,6 +345,13 @@ export function EliminadosDaTriagem({
 
   return (
     <div className="avd-pre-eliminados" data-aba-da-triagem="eliminados">
+      {podeCoordenar && editalId ? (
+        <FundamentosDaEliminacao
+          pre={pre}
+          editalId={editalId}
+          leitura={leitura}
+        />
+      ) : null}
       <CardDaLista
         rotulo="Eliminados da triagem"
         tour="triagem-eliminados"

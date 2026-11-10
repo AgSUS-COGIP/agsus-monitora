@@ -1281,7 +1281,27 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     argumentos: ["p_edital", "p_chaves"],
     critica: false,
     resumo:
-      "Comunicados de eliminação (um ou em lote): a situação de agora só dos marcados (p_chaves = vaga|código, até 10.000) e o cargo das vagas deles, em vez de reler a triagem inteira antes de emitir. Mesma permissão.",
+      "Comunicados de eliminação (um ou em lote): a situação de agora só dos marcados (p_chaves = vaga|código, até 10.000) e o cargo das vagas deles, em vez de reler a triagem inteira antes de emitir. Cada candidato traz fundamento (item_edital, versao_regra, fonte) só quando o motivo tem fundamento CONFERIDO (20261110215930, #593); senão nulo. Mesma permissão.",
+  },
+  // ── Fundamento conferido da eliminação (20261110215930_fundamento_conferido_da_eliminacao.sql, #593)
+  obter_fundamentos_da_eliminacao: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "O quadro do fundamento das eliminações da Triagem: regra vigente (versão, situação, item da nota mínima do lote), cada motivo com quantos eliminados e o fundamento (CONFERIDO, RECONFERIR ou nulo), motivos fora da regra, quantos ficaram fora do lote pela nota, o histórico e pode_conferir. Coordenação da avaliação do edital.",
+  },
+  conferir_fundamento_da_eliminacao: {
+    argumentos: [
+      "p_edital",
+      "p_motivo",
+      "p_versao_regra",
+      "p_item_edital",
+      "p_fonte",
+      "p_justificativa",
+    ],
+    critica: false,
+    resumo:
+      "Confere o item oficial do edital (e a fonte) de um motivo de eliminação na versão vigente e conferida da regra da Triagem. Só gestor ou coordenador do edital (FC_GESTOR_DO_EDITAL) ou administrador global; os demais = 42501. Grava linha nova e imutável em TH_FUNDAMENTO_ELIMINACAO (papel, quem, quando, versão e retrato do motivo). Justificativa para retificar ou usar o item da nota mínima do lote; versão diferente = 40001.",
   },
   listar_pre_classificacao: {
     argumentos: [

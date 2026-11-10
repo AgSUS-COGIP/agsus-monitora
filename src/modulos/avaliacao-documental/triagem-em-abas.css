@@ -73,3 +73,33 @@
 .avd-vaga-recolhida > .avd-vaga > .ui-titulo {
   display: none;
 }
+
+/* Fundamento das eliminações (aba Eliminados; fundamentos-da-eliminacao.tsx, #593). */
+.avd-fundamentos {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.avd-fundamentos-titulo {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.avd-fundamentos-tipo,
+.avd-fundamentos-nota {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.avd-fundamentos-nota {
+  margin: 0;
+}
+
+.avd-fundamentos-historico ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding-inline-start: var(--space-4);
+  font-size: 0.875rem;
+}

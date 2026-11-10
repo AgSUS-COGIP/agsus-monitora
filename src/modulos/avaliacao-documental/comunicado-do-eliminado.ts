@@ -49,6 +49,7 @@ export async function baixarComunicadoDoEliminado(
     declarada: confirmado.declarada,
     nota: confirmado.nota,
     origem_nota: confirmado.origem_nota,
+    fundamento: confirmado.fundamento,
   });
   await baixarEspelhoProntoEmPdf(espelho);
 }

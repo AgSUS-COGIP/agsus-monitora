@@ -1654,6 +1654,7 @@ export function PreClassificacao({
       {aba === "eliminados" ? (
         <EliminadosDaTriagem
           pre={pre}
+          editalId={e.editalId}
           vagas={vagas}
           leitura={leitura}
           rotuloEdital={rotuloEdital}

@@ -5,6 +5,10 @@
 */
 import type { Espelho, LinhaDoEspelho } from "./espelho-de-nota.ts";
 import {
+  ehEliminacaoAdministrativa,
+  linhaDoFundamento,
+} from "./fundamento-da-eliminacao.ts";
+import {
   TEXTOS_PADRAO_DO_ESPELHO,
   type TextosDoEspelho,
 } from "./modelo-do-espelho.ts";
@@ -20,8 +24,12 @@ export interface InscritoEliminadoDaPre {
   situacao: string;
   motivo: string | null;
   motivo_codigo?: string | null;
-  /** Item expressamente cadastrado na regra do edital, nunca presumido. */
-  item_edital?: string | null;
+  /**
+   * O fundamento normativo como veio do banco (conferir_eliminados_pre_classificacao):
+   * só o CONFERIDO pelo gestor/coordenador do edital ou administrador global vira
+   * linha do comunicado; ausente, nada é presumido (issue #593).
+   */
+  fundamento?: unknown;
   art?: number | null;
   declarada?: number | null;
   /** Nota da ordenação provisória, nunca é nota apurada pela comissão. */
@@ -75,12 +83,9 @@ export function espelhoDaEliminacaoPreAnalise(
     { rotulo: "Etapa", valor: "Triagem da inscrição" },
     { rotulo: "Situação", valor: "Eliminado(a) antes da análise documental" },
   ];
-  const notasAdministrativas = new Set([
-    "QUESTIONARIO",
-    "CANCELADO",
-    "REPROVADO_EMPREGARE",
-  ]);
-  const exibirNotas = !notasAdministrativas.has(texto(candidato.motivo_codigo));
+  // Eliminação administrativa não decorre de nota: as notas da inscrição não aparecem.
+  const exibirNotas = !ehEliminacaoAdministrativa(candidato.motivo_codigo);
+  const fundamento = linhaDoFundamento(candidato.fundamento);
   const notas: LinhaDoEspelho[] = [
     ...(exibirNotas && candidato.art != null
       ? [
@@ -112,11 +117,7 @@ export function espelhoDaEliminacaoPreAnalise(
     criterios: [],
     justificativas: [
       texto(candidato.motivo),
-      ...(texto(candidato.item_edital)
-        ? [
-            `Fundamento cadastrado na regra do edital: item ${texto(candidato.item_edital)}`,
-          ]
-        : []),
+      ...(fundamento ? [fundamento] : []),
     ],
     nomeDoArquivo: `Comunicado de eliminação ${texto(candidato.codigo)}`,
     codigoDoCandidato: texto(candidato.codigo),
