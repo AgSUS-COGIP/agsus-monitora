@@ -56,3 +56,4 @@ continuam `unknown` e não recebem validação de formato.
 - [[robos-e-agenda]] — quem dispara a carga
 - [[modulo-automacao]] — a chave "Seleção"
 - [[componentes-padrao]] — TabelaInfinita, Kpi, filtros
+- [regras-da-selecao](../aya/regras-da-selecao.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

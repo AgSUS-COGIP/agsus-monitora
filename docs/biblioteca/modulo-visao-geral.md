@@ -70,3 +70,4 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
 - [[areas-do-sistema]] — o recorte por área
 - [[carga-da-entrada]] — de onde vêm as linhas do monitoramento
 - [[arquitetura-do-front]] — rotas e telas do app único
+- [regras-da-visao-geral](../aya/regras-da-visao-geral.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

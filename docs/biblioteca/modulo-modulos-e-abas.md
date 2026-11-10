@@ -47,3 +47,4 @@ compilador estrito.
 - [[modulo-barra-lateral]] — manutenção e beta aparecem no menu
 - [[permissoes-e-perfis]] — só admin global
 - [[modulo-automacao]] — outra seção de administração do sistema
+- [regras-dos-modulos-e-abas](../aya/regras-dos-modulos-e-abas.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

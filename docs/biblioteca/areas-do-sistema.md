@@ -45,3 +45,4 @@ Distrital e Regional são Projetos", "Lista de aprovados por área").
 - [[permissoes-e-perfis]] — quem vê qual área
 - [[modulo-barra-lateral]] — o menu por área
 - [[modulo-visao-geral]] — a primeira tela de cada área
+- [regras-das-areas](../aya/regras-das-areas.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

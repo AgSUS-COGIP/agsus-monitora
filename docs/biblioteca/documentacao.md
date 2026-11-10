@@ -49,10 +49,38 @@ A documentação do MONITORA é um vault do Obsidian com a raiz do repositório 
 ## Abrir no Obsidian
 
 1. Obsidian → "Open folder as vault" → a pasta do repositório.
-2. `.obsidian/app.json` (versionado) esconde `src/`, `tests/`, `node_modules/`, `public/` e as
-   outras pastas de código: o vault mostra só a documentação. O estado local (`workspace*.json`,
-   `cache`) fica fora do Git.
-3. Comece pelo `CLAUDE.md` e pela visão `docs/biblioteca.base`; o grafo mostra o índice no centro.
+2. `.obsidian/app.json` (versionado) tira do gráfico e da busca `src/`, `tests/`,
+   `node_modules/`, `public/` e as outras pastas de código; a lista de arquivos ainda as mostra.
+   O resto de `.obsidian/` é estado de cada pessoa e fica fora do Git.
+3. Comece pelo `CLAUDE.md` e pela visão `docs/biblioteca.base`; o gráfico (Ctrl+G) mostra o
+   índice no centro.
+
+### As cores do gráfico
+
+`.obsidian/graph.json` (versionado) traz os grupos, os modelos escondidos (`-path:docs/_templates`)
+e os nomes visíveis de mais longe. Ao mexer no gráfico (zoom, forças), o Obsidian regrava o
+arquivo: não commite essa mudança, só a de grupos e filtros.
+
+| Cor     | O que é                                              |
+| ------- | ---------------------------------------------------- |
+| roxo    | `CLAUDE.md` (o índice da raiz e os das pastas)       |
+| azul    | notas de tela (`modulo-*`)                           |
+| verde   | as outras notas da biblioteca                        |
+| laranja | a base da Aya (`docs/aya/`)                          |
+| ciano   | documentos longos de `docs/` (banco, desenho, robôs) |
+| cinza   | o que saiu de uso (`docs/_arquivo/`)                 |
+
+Nenhum documento fica solto: cada `regras-*.md` da Aya é ligado pela nota da tela (e todos por
+[[aya-base-de-conhecimento]]), e o arquivo pela lista abaixo.
+
+## O que saiu de uso (`docs/_arquivo/`)
+
+Guardado como histórico; não descreve o sistema de hoje.
+
+- [arquitetura](../_arquivo/arquitetura.md) e [arquitetura-evolucao](../_arquivo/arquitetura-evolucao.md) — propostas de arquitetura anteriores ao app React único
+- [auditoria-sedes-dsei-2026-09-16](../_arquivo/auditoria-sedes-dsei-2026-09-16.md) — a auditoria das sedes dos DSEIs (a atual está em [[coordenadas]])
+- [handoff-codex-mapas](../_arquivo/handoff-codex-mapas.md) — passagem de trabalho dos mapas
+- [padronizacao_nomenclatura_mapa](../_arquivo/padronizacao_nomenclatura_mapa.md) e [padronizacao_nomenclatura_ajustes_frontend](../_arquivo/padronizacao_nomenclatura_ajustes_frontend.md) — a troca de nomes para o padrão MAD, já aplicada ([[nomenclatura-mad]])
 
 ## Relacionadas
 

@@ -94,3 +94,4 @@ Testes: `tests/visao-geral-da-area.test.js`, `tests/enquadramento-do-brasil.test
 
 - [[modulo-mapa-saude-indigena]] · [[modulo-editor-de-coordenadas]] · [[modulo-visao-geral]]
 - [[mapas-e-leaflet]] — fábrica e guardas · [[coordenadas]] — origem dos pontos
+- [regras-dos-mapas](../aya/regras-dos-mapas.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)
