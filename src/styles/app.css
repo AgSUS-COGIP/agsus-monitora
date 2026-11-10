@@ -87,6 +87,14 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-text-size-adjust: 100%;
 }
+/*
+  Negrito com peso fixo: o `bolder` do navegador sobe de 600 para 900 (e de
+  400 para 700), acima do teto de 600 do Design System (4.1).
+*/
+b,
+strong {
+  font-weight: 600;
+}
 .hidden {
   display: none !important;
 }
@@ -233,19 +241,19 @@ body.config-loading #loginScreen {
   font-size: 28px;
   margin: 0 0 3px;
   color: var(--color-blue-800);
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 .login-card .login-subtitle {
   color: #526780;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 13px;
   margin: 0 0 2px;
 }
 .login-card p {
   margin: 0 0 16px;
   color: #65758d;
-  font-weight: 700;
+  font-weight: 500;
 }
 .login-form {
   text-align: left;
@@ -319,20 +327,18 @@ body.config-loading #loginScreen {
 }
 .login-cogip-name {
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 600;
   color: var(--color-blue-800);
 }
 .login-cogip-role {
-  font-size: 11px;
+  font-size: var(--text-caption);
   color: #60758f;
-  font-weight: 700;
+  font-weight: 500;
 }
 .login-cogip-dept {
-  font-size: 10px;
+  font-size: var(--text-caption);
   color: #9fb3c8;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-weight: 500;
   margin-top: 1px;
 }
 
@@ -504,8 +510,8 @@ textarea:focus-visible,
   justify-content: center;
   border-radius: 999px;
   padding: 5px 11px;
-  font-size: 11px;
-  font-weight: 900;
+  font-size: var(--text-caption);
+  font-weight: 600;
   border: 1px solid transparent;
   letter-spacing: 0;
 }
@@ -680,12 +686,12 @@ textarea:focus-visible,
 }
 .loader-title {
   font-size: 18px;
-  font-weight: 900;
+  font-weight: 600;
   margin-bottom: 4px;
 }
 .loader-sub {
   color: var(--text-secondary);
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1.35;
 }
 .loader-pct {
@@ -694,7 +700,7 @@ textarea:focus-visible,
   border-radius: 999px;
   text-align: center;
   padding: 8px;
-  font-weight: 900;
+  font-weight: 600;
 }
 .loader-bar {
   grid-column: 1/-1;
@@ -717,7 +723,7 @@ textarea:focus-visible,
   border-radius: 12px;
   background: #fff;
   color: var(--color-text-primary);
-  font-weight: 900;
+  font-weight: 600;
   font-size: 14px;
   cursor: pointer;
   display: flex;
@@ -732,7 +738,7 @@ textarea:focus-visible,
 }
 .google-login-btn .gmark {
   color: #4285f4;
-  font-weight: 1000;
+  font-weight: 600;
   font-size: 18px;
   line-height: 1;
 }
@@ -856,7 +862,7 @@ body.external-clean #externalReturnBar {
   border: 1px solid var(--border-control);
   background: var(--surface-card);
   color: var(--color-text-link);
-  font-weight: 800;
+  font-weight: 600;
   font-size: 13px;
   line-height: 1;
   padding: 8px 14px;
@@ -902,7 +908,7 @@ body.external-clean #externalReturnBar {
   font-size: var(--text-2xl);
   line-height: 1.15;
   color: var(--text-primary);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 .page-title p {
@@ -993,7 +999,7 @@ body.external-clean #externalReturnBar {
 }
 .search-modal-fechar kbd {
   display: block;
-  font-size: 11px;
+  font-size: var(--text-caption);
   background: var(--surface-raised);
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
@@ -1042,7 +1048,7 @@ body.external-clean #externalReturnBar {
 .search-result-title {
   display: block;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1050,9 +1056,9 @@ body.external-clean #externalReturnBar {
 }
 .search-result-sub {
   display: block;
-  font-size: 11px;
+  font-size: var(--text-caption);
   color: var(--text-secondary);
-  font-weight: 700;
+  font-weight: 500;
   margin-top: 2px;
 }
 .search-result-realce {
@@ -1061,8 +1067,8 @@ body.external-clean #externalReturnBar {
   border-radius: 3px;
 }
 .search-result-chip {
-  font-size: 10px;
-  font-weight: 900;
+  font-size: var(--text-caption);
+  font-weight: 600;
   padding: 2px 8px;
   border-radius: 999px;
   flex-shrink: 0;
@@ -1086,7 +1092,7 @@ body.external-clean #externalReturnBar {
   text-align: center;
   color: var(--text-secondary);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 /* ── Dark mode ── */
@@ -1195,7 +1201,7 @@ body.external-clean #externalReturnBar {
   }
   table {
     min-width: 0 !important;
-    font-size: 11px !important;
+    font-size: 12px !important;
   }
   .print-only {
     display: block !important;
@@ -1271,16 +1277,14 @@ th {
   text-align: left;
   border-bottom: 1px solid var(--line);
   padding: 10px 9px;
-  text-transform: uppercase;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  font-weight: 800;
+  font-size: var(--text-caption);
+  font-weight: 600;
 }
 td {
   border-bottom: 1px solid var(--line);
   padding: 10px 9px;
   vertical-align: top;
-  font-weight: 650;
+  font-weight: 500;
   color: var(--color-text-primary);
 }
 tr:hover td {
@@ -1291,7 +1295,7 @@ tr:hover td {
 }
 .link {
   color: var(--color-text-link);
-  font-weight: 900;
+  font-weight: 600;
   text-decoration: none;
   text-underline-offset: 3px;
 }
@@ -1354,7 +1358,7 @@ tr:hover td {
   place-items: center;
   text-align: center;
   color: var(--color-text-secondary);
-  font-weight: 800;
+  font-weight: 600;
   background: var(--card);
   border-radius: var(--radius);
 }

@@ -135,7 +135,7 @@
 .login-organization-mark strong {
   color: var(--color-blue-800);
   font-size: 18px;
-  font-weight: 900;
+  font-weight: 600;
   line-height: 1;
 }
 .login-brand-divider {
@@ -158,7 +158,7 @@
 }
 .login-product-mark strong {
   font-size: 25px;
-  font-weight: 900;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: 0.015em;
 }
@@ -184,7 +184,7 @@
   overflow: hidden;
   color: #102a43;
   font-size: clamp(11.5px, 3.6vw, 13px);
-  font-weight: 800;
+  font-weight: 600;
   line-height: 20px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -441,7 +441,7 @@ html[data-theme="dark"] .sidebar {
   overflow: hidden;
   color: var(--menu-realce);
   font-size: var(--text-base);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.01em;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -522,7 +522,7 @@ html[data-theme="dark"] .sidebar {
   color: var(--text-secondary);
   font: inherit;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 .online-presence-button:hover {
@@ -570,7 +570,7 @@ html[data-theme="dark"] .sidebar {
 .online-presence-heading small {
   margin-top: 2px;
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: var(--text-caption);
 }
 .online-presence-list {
   max-height: 320px;
@@ -627,7 +627,7 @@ html[data-theme="dark"] .sidebar {
 .online-presence-person small {
   margin-top: 2px;
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: var(--text-caption);
 }
 .online-presence-avatar {
   position: relative;
@@ -639,8 +639,8 @@ html[data-theme="dark"] .sidebar {
   border-radius: 12px;
   background: var(--state-info-soft);
   color: var(--color-text-brand);
-  font-size: 11px;
-  font-weight: 900;
+  font-size: var(--text-caption);
+  font-weight: 600;
 }
 .online-presence-avatar img {
   width: 100%;
@@ -759,14 +759,13 @@ html[data-theme="dark"] .sidebar {
 .top-user-popover > small {
   margin-top: 3px;
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: var(--text-caption);
 }
 .top-user-popover > span {
   margin-top: 8px;
   color: var(--state-success);
-  font-size: 10px;
-  font-weight: 900;
-  text-transform: uppercase;
+  font-size: var(--text-caption);
+  font-weight: 600;
 }
 .top-user-popover-actions {
   display: grid;

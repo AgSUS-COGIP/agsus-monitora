@@ -82,7 +82,7 @@
   border-radius: 10px;
   background: var(--state-warning-soft);
   color: var(--state-warning) !important;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .shell-confirm-actions {
@@ -98,7 +98,7 @@
   border-radius: 10px;
   font: inherit;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
 }
 
