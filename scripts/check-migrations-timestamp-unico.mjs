@@ -16,8 +16,8 @@ import { resolverBase } from "./arquivos-alterados.mjs";
 
   - FALHA quando uma migration nova usa um timestamp que a main já tem, ou
     que outra migration nova do mesmo PR também usa;
-  - FALHA quando uma migration que está na main sumiu ou mudou de nome no PR
-    (migration aplicada nunca é renumerada);
+  - AVISA quando uma migration que está na main saiu no PR (desde 10/11/2026 as
+    aplicadas saem do repositório; renumerar com o mesmo timestamp falha pela regra acima);
   - AVISA quando a migration nova tem timestamp menor que a última da main:
     ela roda fora de ordem num banco novo; o melhor é pôr um horário depois.
 
@@ -86,9 +86,14 @@ export function compararMigrations(naBase, agora, noInicio = naBase) {
   const apagadas = inicio
     .filter((nome) => existeNaBase.has(nome) && !existeAgora.has(nome))
     .sort();
-  for (const nome of apagadas)
-    erros.push(
-      `${nome}: está na main e sumiu (ou mudou de nome) neste PR. Migration já mesclada pode estar aplicada: não renumere nem apague; corrija com uma migration nova.`,
+  /*
+    Desde 10/11/2026 a migration aplicada SAI do repositório (o banco e o registro
+    public.migracoes_aplicadas ficam): apagar é permitido e só avisa. Renomear mantendo o
+    timestamp continua barrado acima (o timestamp já existe na main).
+  */
+  if (apagadas.length)
+    avisos.push(
+      `${apagadas.length} migration(s) da main saíram neste PR (${apagadas.slice(0, 3).join(", ")}${apagadas.length > 3 ? ", …" : ""}). Só pode sair a que já está aplicada e registrada; ela continua no banco e no histórico do Git.`,
     );
 
   return { novas, erros, avisos };
