@@ -89,14 +89,19 @@ function rowIsEmpty(row: Record<string, unknown>) {
   return REQUIRED_APPROVED_COLUMNS.every((key) => !cleanText(row?.[key]));
 }
 
+/**
+ * `numerosDasLinhas`: o número de cada linha na planilha (o XLSX não grava
+ * linha vazia); sem ele, a primeira é a 2 (logo abaixo do cabeçalho).
+ */
 export function validateApprovedRows(
   inputRows: readonly unknown[] | null | undefined,
+  numerosDasLinhas: readonly number[] = [],
 ) {
   const rows: CandidatoDaPlanilhaDeAprovados[] = [];
   const errors: string[] = [];
 
   (inputRows || []).forEach((source, index) => {
-    const line = index + 2;
+    const line = numerosDasLinhas[index] ?? index + 2;
     const origem = registroDaLinha(source);
     const row: Record<string, unknown> = Object.fromEntries(
       REQUIRED_APPROVED_COLUMNS.map((key) => [key, origem[key] ?? ""]),
@@ -314,8 +319,11 @@ function cellValue(
   return decodeXml(raw);
 }
 
+/* Uma linha da folha com o número dela na planilha (`<row r="7">`). */
+type LinhaDaFolha = { numero: number; celulas: string[] };
+
 function parseWorksheet(xml: string, sharedStrings: readonly string[]) {
-  const rows: string[][] = [];
+  const rows: LinhaDaFolha[] = [];
   /*
     Linha e célula vazias com formatação vêm sem fechamento (`<row r="2"/>`,
     `<c r="A2" s="1"/>`): sem a alternativa `/>`, a expressão engoliria a
@@ -337,7 +345,16 @@ function parseWorksheet(xml: string, sharedStrings: readonly string[]) {
         sharedStrings,
       );
     }
-    rows.push(cells.map((value) => value ?? ""));
+    /*
+      O Excel não grava linha vazia: o número vem do `r` da linha (sem ele, a
+      seguinte à anterior). Contar pela posição apontava a linha errada no erro.
+    */
+    const anterior = rows.at(-1)?.numero ?? 0;
+    const r = Number(rowMatch[0].match(/^<row\b[^>]*?\br=["'](\d+)["']/i)?.[1]);
+    rows.push({
+      numero: Number.isSafeInteger(r) && r > anterior ? r : anterior + 1,
+      celulas: cells.map((value) => value ?? ""),
+    });
   }
   return rows;
 }
@@ -364,7 +381,7 @@ export async function readApprovedWorkbook(
   const matrix = parseWorksheet(worksheet, sharedStrings);
   if (!matrix.length) throw new Error("A planilha está vazia.");
 
-  const headers = normalizeApprovedHeaders(matrix[0]);
+  const headers = normalizeApprovedHeaders(matrix[0]!.celulas);
   const missingColumns = REQUIRED_APPROVED_COLUMNS.filter(
     (column) => !headers.includes(column),
   );
@@ -374,14 +391,18 @@ export async function readApprovedWorkbook(
     );
   }
 
-  const dataRows = matrix.slice(1).map((values) => {
+  const linhasDeDados = matrix.slice(1);
+  const dataRows = linhasDeDados.map(({ celulas }) => {
     const row: Record<string, unknown> = {};
     headers.forEach((header, index) => {
-      if (header) row[header] = values[index] ?? "";
+      if (header) row[header] = celulas[index] ?? "";
     });
     return row;
   });
-  const validated = validateApprovedRows(dataRows);
+  const validated = validateApprovedRows(
+    dataRows,
+    linhasDeDados.map((linha) => linha.numero),
+  );
   if (validated.errors.length) {
     const preview = validated.errors.slice(0, 12).join("\n");
     const suffix =
