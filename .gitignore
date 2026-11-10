@@ -9,11 +9,14 @@ dist/
 test-results/
 playwright-report/
 
-# Obsidian: o vault é a raiz. Versionados só app.json (pastas escondidas) e
-# graph.json (cores e filtros do gráfico); o resto é estado de cada pessoa.
+# Obsidian: o vault é a raiz. Versionados app.json (pastas fora do gráfico),
+# graph.json (cores e filtros), appearance.json + snippets/ (a lista de arquivos
+# só com a documentação); o resto é estado de cada pessoa.
 .obsidian/*
 !.obsidian/app.json
 !.obsidian/graph.json
+!.obsidian/appearance.json
+!.obsidian/snippets/
 
 # Estado local da CLI do Supabase (contem string de conexao)
 supabase/.temp/

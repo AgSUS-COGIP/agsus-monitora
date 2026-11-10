@@ -50,8 +50,9 @@ A documentação do MONITORA é um vault do Obsidian com a raiz do repositório 
 
 1. Obsidian → "Open folder as vault" → a pasta do repositório.
 2. `.obsidian/app.json` (versionado) tira do gráfico e da busca `src/`, `tests/`,
-   `node_modules/`, `public/` e as outras pastas de código; a lista de arquivos ainda as mostra.
-   O resto de `.obsidian/` é estado de cada pessoa e fica fora do Git.
+   `node_modules/`, `public/` e as outras pastas de código; o trecho de CSS
+   `.obsidian/snippets/so-documentacao.css` (ligado em `appearance.json`) as tira da lista de
+   arquivos. O resto de `.obsidian/` é estado de cada pessoa e fica fora do Git.
 3. Comece pelo `CLAUDE.md` e pela visão `docs/biblioteca.base`; o gráfico (Ctrl+G) mostra o
    índice no centro.
 
@@ -68,7 +69,7 @@ Obsidian, feche-o antes: aberto, ele grava a configuração da memória por cima
 | azul    | notas de tela (`modulo-*`)                           |
 | verde   | as outras notas da biblioteca                        |
 | laranja | a base da Aya (`docs/aya/`)                          |
-| ciano   | documentos longos de `docs/` (banco, desenho, robôs) |
+| ciano   | documentos longos (`docs/`, `DESIGN`, `README`, `LEIA-ME`) |
 | cinza   | o que saiu de uso (`docs/_arquivo/`)                 |
 
 Nenhum documento fica solto: cada `regras-*.md` da Aya é ligado pela nota da tela (e todos por
