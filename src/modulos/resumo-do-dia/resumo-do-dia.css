@@ -10,7 +10,7 @@
   width: 42px;
   height: 42px;
   border: 1px solid var(--platform-border, var(--border-subtle));
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: var(--surface-card);
   color: var(--text-primary);
   cursor: pointer;
@@ -25,7 +25,7 @@
   min-width: 18px;
   height: 18px;
   padding: 0 var(--space-1);
-  border-radius: 9px;
+  border-radius: var(--radius-pill);
   background: var(--color-status-danger-solid);
   color: var(--cor-do-texto-sobre-escuro);
   font-size: 11px;
