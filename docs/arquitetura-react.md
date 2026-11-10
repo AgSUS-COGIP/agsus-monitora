@@ -1,7 +1,8 @@
 # Arquitetura React do MONITORA
 
 Status: **aprovada em 01/10/2026**. Etapa 1 (Fundação) feita; as demais, abaixo, em ordem.
-Complementa `docs/arquitetura.md` (banco, áreas e permissões).
+Complementa a proposta de 25/09/2026 (banco, áreas e permissões), arquivada em
+`docs/_arquivo/arquitetura.md`; as decisões que valem estão em `docs/biblioteca/areas-do-sistema.md`.
 
 ## Para onde o sistema vai
 

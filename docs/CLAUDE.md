@@ -1,31 +1,30 @@
 # `docs/`
 
-Leia **só o documento do assunto**. Nada aqui é carregado pelo build, exceto `aya/`.
+Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Como a documentação se organiza: [[documentacao]].
+Leia **só a nota ou o documento do assunto**. Nada aqui é carregado pelo build, exceto `aya/`.
 
-| Arquivo | Assunto |
-|---|---|
-| `../DESIGN.md` | guia de interface (fica na raiz, não aqui) |
-| `arquitetura-evolucao.md` | plano técnico de evolução |
-| `banco-de-dados.md` | modelo de dados e RPCs |
-| `servidor.md` | servidor web em TypeScript: contrato, rodar, implantar |
-| `nucleo-e-mapas.md` | guia de uso do Núcleo e dos mapas |
-| `sincronizacao-das-planilhas.md` | operar as cargas diárias das planilhas (Entrevistas e Seleção, GitHub Actions): rodar, falhas, trocar credenciais |
-| `painel-externo-avisa-que-carregou.md` | mensagens que um painel externo (Apps Script) manda para o skeleton esperar os dados |
-| `auditoria-geografica.md` (26 KB) | método de validação de coordenadas — leia por seção |
-| `auditoria-sedes-dsei-2026-09-16.md` | auditoria pontual das sedes de DSEI |
-| `handoff-codex-mapas.md` | contexto de transição do trabalho de mapas |
-| `padronizacao_nomenclatura_*.md` | aplicação do padrão MAD no banco e no front |
-| `aya-sem-ia-local.md` | busca da Aya no navegador e chamados pelo Gmail |
-| `aya/` | **base de conhecimento da AYA** (fonte de `src/modules/aya-conhecimento-gerado.js`) |
-| `recursos/parecer-em-blocos.md` | protótipo "Montar parecer" dos recursos: fontes do pré-preenchimento, tabelas e RPCs propostas, itens do edital |
-| `propostas/` | SQL proposto, ainda não virou migration |
+| Pasta ou arquivo                                         | O que é                                                                  |
+| -------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `biblioteca/`                                            | notas curtas, uma por assunto; índice no `CLAUDE.md` da raiz             |
+| `_templates/`                                            | modelos de nota (`nota.md`, `modulo.md`, `decisao.md`)                   |
+| `_arquivo/`                                              | o que saiu de uso (auditorias datadas, passagens, propostas superadas)  |
+| `aya/`                                                   | **base de conhecimento da Aya**, compilada para o app ([[aya-base-de-conhecimento]]) |
+| `arquitetura-react.md`, `arquitetura/raiz-react.md`      | alvo do front ([[arquitetura-do-front]])                                 |
+| `typescript-no-frontend.md`                              | estado da migração para TypeScript ([[typescript-no-front]])            |
+| `banco-de-dados.md`                                      | modelo de dados e história do banco, por seção ([[banco-e-migrations]]) |
+| `design-system-agsus.md`                                 | norma visual institucional ([[design-e-tokens]])                         |
+| `python-no-monitora.md`, `agenda-dos-robos.md`, `robo-empregare.md`, `leitura-dos-arquivos.md` | robôs e jobs ([[python-e-jobs]], [[robos-e-agenda]]) |
+| `sincronizacao-das-planilhas.md`, `painel-externo-avisa-que-carregou.md` | cargas e painéis externos ([[cargas-de-planilha]])   |
+| `nucleo-e-mapas.md`                                      | guia de uso do Núcleo e dos mapas                                        |
+| `auditoria-geografica.md`, `auditoria-oficial-das-coordenadas-2026-10-01.md`, `pontos-so-na-planilha-de-lotacoes.md`, `sedes-dos-dsei.md` | coordenadas do mapa ([[coordenadas]]) |
+| `analises-no-monitora/`, `historias-de-usuario/`, `recursos/parecer-em-blocos.md` | desenho e histórias das telas da seleção     |
+| `propostas/`                                             | SQL proposto, ainda não virou migration                                  |
 
-## `docs/aya/`
+Regras:
 
-Os `.md` numerados (`01-saude-indigena.md` … `05-politica-e-controle-social.md`) são compilados por
-`npm run aya:conhecimento`. Editou aqui, recompile: o gerado vai no bundle. O formato do verbete está
-em `docs/aya/README.md`. A Aya só responde com o que está no material (não há IA gerando texto):
-todo número que a AYA precisa dizer tem de estar escrito aqui.
-
-Documento novo: nome em português, kebab-case, data no nome quando for registro pontual
-(`auditoria-…-AAAA-MM-DD.md`). Documento descreve o código; quando divergirem, corrija o documento.
+- **`aya/` não se reorganiza** (os testes leem os arquivos); editou, rode `npm run aya:conhecimento`.
+- Assunto novo vira nota em `biblioteca/` a partir de `_templates/`, ligada por outra nota ou pelo
+  índice; `npm run check:docs` confere links e órfãs.
+- Documento longo que código, teste ou a Aya citam pelo caminho fica onde está.
+- Registro pontual leva a data no nome (`auditoria-…-AAAA-MM-DD.md`) e vai para `_arquivo/` quando
+  deixar de valer. Documento descreve o código; quando divergirem, corrija o documento.

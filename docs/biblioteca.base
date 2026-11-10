@@ -1,0 +1,17 @@
+filters:
+  and:
+    - file.inFolder("docs/biblioteca")
+    - file.ext == "md"
+views:
+  - type: table
+    name: Biblioteca
+    order:
+      - file.name
+      - tipo
+      - area
+      - atualizado
+    sort:
+      - property: area
+        direction: ASC
+      - property: file.name
+        direction: ASC

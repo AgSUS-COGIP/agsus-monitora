@@ -1,93 +1,23 @@
-# `src/componentes/` — componentes React
+# `src/componentes/` — a moldura React
 
-O front está migrando para **um único app React** (alvo, regras e ordem em
-`docs/arquitetura-react.md`). Todas as telas são módulos do app em `src/modulos/` (Editais,
-Cronograma, Aprovados, Recursos, Entrevistas, Análises, Seleção, Classificação, Configurações, Acessos,
-Módulos e abas…). Aqui fica só a moldura: barra lateral, busca global (Ctrl+K), Status das
-atualizações e os dados compartilhados do monitoramento. Toda tela é rota da raiz única
-(`src/app/telas.tsx`, `docs/arquitetura/raiz-react.md`) e usa os componentes visuais de
-`src/ui/`; as pastas daqui mudam para `src/modulos/<nome>/` módulo a módulo. Tudo aqui está em
-TypeScript (`.ts`/`.tsx`): Status das atualizações (`saude-das-cargas/`), barra lateral, Busca
-global, Pessoas online, ícone, seleção múltipla, selo de treinamento, dados compartilhados e hook de
-área atual; código novo também. Contratos e
-limites estão nos READMEs das pastas e em seus `tipos.ts`. Nomes em português,
-arquivo em kebab-case, componente em PascalCase.
+Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Este arquivo fica porque o `DESIGN.md` o cita como
+a regra de como o legado fala com os componentes; a regra mora em [[legado-fala-com-react]].
 
-## Mapa
+Aqui fica só a moldura: barra lateral ([[modulo-barra-lateral]]), busca global
+([[modulo-busca-global]]), Status das atualizações (`saude-das-cargas/`,
+[[modulo-status-das-atualizacoes]]), Pessoas online, aviso de versão, ícone, seleção múltipla,
+seletor de edital, selo de treinamento e os dados compartilhados do monitoramento
+(`dados-do-monitoramento.ts`, `usar-area-atual.ts`). As telas são de `src/modulos/`; as pastas
+daqui mudam para lá módulo a módulo ([[arquitetura-do-front]], [[componentes-padrao]]).
 
-```
-icone.tsx                    <Icone nome="…"> — Lucide, do mesmo registro de src/modules/icones.ts
-selo-de-treinamento.tsx      <SeloDeTreinamento>: selo "Treinamento" do edital de treinamento
-seletor-de-edital.tsx        <SeletorDeEdital>: a escolha do edital das telas da seleção (Triagem,
-                             Avaliação documental, Classificação), com selo e "Mostrar todos"
-pessoas-online/              "Pessoas online" no cabeçalho (filha da casca: src/app/casca/pecas.tsx); estado em src/app/presenca.ts
-aviso-de-versao/             faixa "Há uma versão nova" no topo (filha da casca); regra em src/app/aviso-de-versao.ts
-busca-global/                busca Ctrl+K (filha da raiz); a escolha vai ao legado por evento
-multi-select-busca.tsx       <MultiSelectBusca>: seleção múltipla com busca, controlada (o único do app)
-dados-do-monitoramento.ts    linhas de TB_MONITORAMENTO_INDIGENA e catálogo TD_UNIDADE que o legado
-                             carrega e publica aqui (loadData / loadUnidades), e a área atual
-                             (definida pelo menu; linhasDaArea, soDosEditais); sem React
-usar-area-atual.ts           hook: a área atual, as linhas dela e os ids dos editais (Editais,
-                             Cronograma e Lista de aprovados recortam por eles)
-barra-lateral/
-  barra-lateral.tsx          <BarraLateral> (filha da casca, src/app/casca/casca.tsx)
-  estado.ts                  estado externo da barra (sem React): o legado empurra, a barra lê
-  menu-de-areas.tsx          áreas (acordeão; recolhida, painel flutuante) e itens
-  alca-de-recolher.tsx       o botão único de recolher: na marca (> 900px) ou no cabeçalho (portal)
-  rodape.tsx                 seletor Claro/Escuro, Sair e versão
-  usar-ambiente.ts           hooks do que o legado controla: classe de body e largura (o tema é src/app/tema.ts)
-```
+Regras daqui:
 
-Lógica pura fica em `src/lib/`: `menu-lateral.ts` (barra), `busca-global.ts` (busca) e
-`linhas-do-monitoramento.ts` (validação dos dados compartilhados). CSS: `src/styles/barra-lateral.css`,
-`platform-shell.css` (barra) e `multi-select-busca.css`. Editais, Cronograma e Lista de aprovados
-moram em `src/modulos/editais/`, `cronograma/` e `aprovados/` (componentes, CSS e testes lá).
-
-## Como o legado fala com um componente
-
-- **Página inteira** (Núcleo, calendário, aprovados): o componente monta dentro da `<section class="page">`
-  de sempre, que a casca (`src/app/casca/`) desenha vazia. O legado continua dono da classe `.active` e chama o
-  controlador que `montar…()` devolve (`render()` ao navegar; `openImportModal(id, rótulo)` pelo
-  botão da tabela do Núcleo). Os dados e as ações moram no `estado.js` da pasta, sem React; o que
-  é só da tela (filtros, página, aba, rascunho) é estado do componente e sobrevive a trocar de página.
-- **O perfil é relido a cada `render()`**: as permissões mudam sem aviso do legado.
-- **Dado que o legado carrega e o React lê** (linhas do monitoramento, unidades) passa por
-  `dados-do-monitoramento.ts`: o legado publica, o componente assina. O Núcleo não relê a view.
-
-- **Nunca pelo DOM do componente.** O legado empurra dados para o estado externo
-  (`barra-lateral/estado.ts`: `atualizarMenuLateral`, `marcarItemAtivoNoMenu`) e o componente lê com
-  `useSyncExternalStore`. O arquivo de estado não importa React, então o legado pode importá-lo.
-- **O que o componente não percebe sozinho chega por evento** em `document`
-  (`src/lib/eventos-da-barra-lateral.ts`): barra recolhida/expandida, tema trocado. Nada de
-  `MutationObserver`.
-- **O DOM continua sendo contrato** enquanto houver consumidor legado: `#nav [data-view]`,
-  `data-area`, `data-rotulo`, `data-icone`, `aria-current`, `#sideLogo`, `#sidebarLogoutBtn.side-logout`,
-  `#globalSidebarToggle`. Não renomeie sem procurar quem lê.
-- **Folha do legado:** o texto de `#sidebarVersion` (de `applyConfigToUi`) é escrito pelo legado.
-  O React só cria o nó e não passa prop que mude — senão desfaria o que o legado escreveu. Migre o
-  dono junto quando for mexer. A logo (`#sideLogo`) é do React: lê `barra-lateral/marca.ts`.
-
-## Regras
-
-- Página migrada e confirmada pelo usuário: o código antigo sai inteiro (módulo,
-  marcação do `index.html`, testes antigos). Ver "Código legado" em `../../CLAUDE.md`.
-
-- Handler de navegação chama `window.navigate` **na hora do clique** (não guarde a referência na
-  montagem): é o `navigate` do legado, que pergunta às Configurações antes de sair.
-- Tela de página inteira é rota: `criar<Nome>()` devolve `{ conteudo, nome, render() }` e entra em
-  `src/app/telas.tsx` (a raiz única, `src/app/raiz.tsx`, desenha com StrictMode e um ErrorBoundary por
-  tela). Parte fixa do app (cabeçalho, topo, overlay) é filha da casca (`src/app/casca/`); pedaço
-  React dentro de DOM feito à mão entra por `abrirPortalAvulso` (`src/app/portais-avulsos.tsx`).
-  Nada de `createRoot` novo: a raiz é uma só.
-- Visual novo vem de `src/ui/` (Topo, Filtros, Kpi, CardDeGrafico, TabelaInfinita, Gaveta, Modal,
-  Aviso, Campo, Selo…), só com tokens; não recrie em cada tela. Sem textos genéricos (ver o CLAUDE.md raiz).
-- `StrictMode` ligado: efeito tem de limpar o que instala.
-- Sem `innerHTML` e sem `dangerouslySetInnerHTML`: texto vai como filho.
-- Modal em React é sempre `<Modal>` (portal): um modal dentro da `<section>` sumiria com a página
-  escondida — o de listas do edital abre a partir do Núcleo.
-- Campo cujo texto não é o valor (número, lista separada por `;`) usa `CampoEditavel`
-  (`src/modulos/aprovados/partes.tsx`): amarrar o `value` ao valor lido apaga o que a pessoa digita.
-- Tabela nova avisa `agsus:content-updated` depois de desenhar: é o que põe os rótulos do modo
-  cartão (`src/app/casca/tabelas-em-cartoes.ts`, ≤ 900px).
-- Teste em `tests/componentes/` (`.test.js`, sem JSX, com `act`) — modelo em
-  `tests/componentes/barra-lateral.test.ts`; interações em `tests/componentes/interacoes.ts`.
+- O legado fala com o componente por estado externo (`useSyncExternalStore`) e eventos em
+  `document`, **nunca pelo DOM do componente**; os ids e atributos que o legado ainda lê são
+  contrato (lista na nota).
+- Handler de navegação chama `window.navigate` **na hora do clique**.
+- Nada de `createRoot` novo; parte fixa é filha da casca (`src/app/casca/`).
+- Sem `innerHTML`/`dangerouslySetInnerHTML`; `StrictMode` ligado; modal é sempre `<Modal>`.
+- Tudo em TypeScript; nomes em português, arquivo em kebab-case, componente em PascalCase.
+- Teste em `tests/componentes/` (sem JSX, com `act`), modelo `tests/componentes/barra-lateral.test.ts`
+  ([[testes]]).
