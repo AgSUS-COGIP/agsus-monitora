@@ -85,16 +85,53 @@
 }
 
 /* Skeleton: bloco que pulsa no tamanho do conteúdo (carregando não é zero). */
-.ui-esqueleto {
+/*
+  `.ui-esqueleto-linha` sozinha também desenha: 35 usos antigos esqueciam a
+  classe base e o esqueleto saía invisível (só o cartão em branco). A cor é a
+  borda padrão, não a sutil (1,3:1 sobre o cartão quase não se via).
+*/
+.ui-esqueleto,
+.ui-esqueleto-linha {
   display: block;
   min-height: 1em;
   border-radius: var(--radius-sm);
-  background: var(--border-subtle);
+  background: var(--color-border-default);
   animation: ui-esqueleto-pulso 1.4s var(--ease-standard) infinite;
 }
 .ui-esqueleto-linha {
   width: 80%;
   height: var(--space-3);
+}
+.ui-esqueleto-linha + .ui-esqueleto-linha {
+  margin-top: var(--space-2);
+  width: 60%;
+}
+/* O bloco que espera a leitura (`CarregandoConteudo`): o texto e o indicador. */
+.ui-carregando {
+  display: grid;
+  gap: var(--space-2);
+}
+.ui-carregando-texto {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.ui-carregando-indicador {
+  flex: none;
+  width: var(--space-4);
+  height: var(--space-4);
+  border: 2px solid var(--color-border-default);
+  border-top-color: var(--color-action-primary);
+  border-radius: 50%;
+  animation: ui-carregando-giro 0.8s linear infinite;
+}
+@keyframes ui-carregando-giro {
+  to {
+    transform: rotate(360deg);
+  }
 }
 /* Bloco de uma lista, cartão ou dia (`BlocosEsqueleto`); quem usa dá a altura. */
 .ui-esqueleto-bloco {
@@ -1224,6 +1261,8 @@ th[aria-sort="descending"] .ui-ordenar i {
 }
 @media (prefers-reduced-motion: reduce) {
   .ui-esqueleto,
+  .ui-esqueleto-linha,
+  .ui-carregando-indicador,
   .ui-grafico.is-carregando::after {
     animation: none;
   }

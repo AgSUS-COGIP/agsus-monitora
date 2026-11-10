@@ -7,6 +7,7 @@ import {
 } from "../../lib/painel-de-entrevistas.ts";
 import { rotuloDoDia } from "../../lib/fila-de-conducao.ts";
 import { Aviso } from "../../ui/index.ts";
+import { CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   Dois blocos do Painel de entrevistas, entre os KPIs e a tabela:
@@ -85,7 +86,11 @@ export function AgendaDosProximosDias({
           ) : null}
         </Aviso>
       ) : itens === null ? (
-        <div className="ui-esqueleto-linha" />
+        <CarregandoConteudo
+          rotulo="Carregando a agenda…"
+          semMoldura
+          linhas={1}
+        />
       ) : dias.length ? (
         <ol className="entrevistas-agenda-dias">
           {dias.map((d) => (

@@ -15,6 +15,7 @@ import type {
   LinhaDaEquipeSalva,
   PessoaDaEquipe,
 } from "./tipos-do-estado.ts";
+import { CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   Aba "Equipe": quem analisa, quem revisa e quem coordena o edital (ou uma
@@ -55,13 +56,7 @@ export function Equipe({ e, estado }: PropsDaEquipe) {
   const [erro, setErro] = useState("");
   const [tentou, setTentou] = useState(false);
   // A equipe é lida quando a aba abre (estado.carregarEquipe).
-  if (!equipe)
-    return (
-      <div className="ui-card" aria-busy="true">
-        <div className="ui-esqueleto-linha" />
-        <div className="ui-esqueleto-linha" />
-      </div>
-    );
+  if (!equipe) return <CarregandoConteudo rotulo="Carregando a equipe…" />;
   const coordena = Boolean(equipe.pode_coordenar);
   const gestores = equipe.gestores ?? [];
   const pessoas = new Map<string, PessoaNoSeletor>();

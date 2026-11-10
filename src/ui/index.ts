@@ -38,10 +38,15 @@ export { Carregando, EstadoVazio } from "./estados.tsx";
 export type { PropriedadesDoEstado } from "./estados.tsx";
 export { ErroAoCarregar } from "./erro-ao-carregar.tsx";
 export type { PropriedadesDoErroAoCarregar } from "./erro-ao-carregar.tsx";
-export { BlocosEsqueleto, LinhasEsqueleto } from "./esqueleto.tsx";
+export {
+  BlocosEsqueleto,
+  CarregandoConteudo,
+  LinhasEsqueleto,
+} from "./esqueleto.tsx";
 export type {
   PropriedadesDasLinhasEsqueleto,
   PropriedadesDosBlocosEsqueleto,
+  PropriedadesDoCarregandoConteudo,
 } from "./esqueleto.tsx";
 export {
   FaixaDeSituacao,

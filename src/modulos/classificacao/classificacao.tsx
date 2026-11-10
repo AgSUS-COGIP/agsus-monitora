@@ -35,6 +35,7 @@ import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
 import { ResumoDaRegraDaEtapa } from "../regras-do-edital/resumo-da-regra-da-etapa.tsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 import "./classificacao.css";
+import { CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   A tela de Classificação (view `classificacao`), módulo do app: monta direto
@@ -282,10 +283,7 @@ function TelaDaArea({
                 }
               />
             ) : e.carregandoEdital ? (
-              <div className="ui-card" aria-busy="true">
-                <div className="ui-esqueleto-linha" />
-                <div className="ui-esqueleto-linha" />
-              </div>
+              <CarregandoConteudo rotulo="Carregando o edital…" />
             ) : null
           ) : e.erroAoCarregar ? null : (
             <EntradaDaClassificacao

@@ -74,6 +74,7 @@ import type {
   ResultadoDaRegra,
   ResultadoDasAldeias,
 } from "./tipos-do-estado.ts";
+import { CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   A regra da Avaliação documental do edital (etapa 2 das Regras do edital,
@@ -754,10 +755,7 @@ export function Regra({ e, estado, rascunhoGuardado }: RegraProps) {
             aoDescartar={guardado.descartar}
           />
         ) : (
-          <div className="ui-card" aria-busy="true">
-            <div className="ui-esqueleto-linha" />
-            <div className="ui-esqueleto-linha" />
-          </div>
+          <CarregandoConteudo rotulo="Carregando a regra…" />
         )}
       </div>
     );

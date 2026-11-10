@@ -51,6 +51,7 @@ import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
 import { ResumoDaRegraDaEtapa } from "../regras-do-edital/resumo-da-regra-da-etapa.tsx";
 import "./avaliacao-documental.css";
 import "./ficha/ficha.css";
+import { CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   A tela Avaliação documental (view `avaliacao-documental`), módulo do app:
@@ -365,10 +366,13 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
                 </TelaNaUrl.Provider>
               )
             ) : (
-              <div className="ui-card" aria-busy="true">
-                <div className="ui-esqueleto-linha" />
-                <div className="ui-esqueleto-linha" />
-              </div>
+              <CarregandoConteudo
+                rotulo={
+                  escolhido?.edital
+                    ? `Carregando o edital ${escolhido.edital}…`
+                    : "Carregando o edital…"
+                }
+              />
             )
           ) : e.carregado && !e.erroAoCarregar ? (
             <EntradaDaAvaliacao editais={editais} aoAbrir={escolherEdital} />

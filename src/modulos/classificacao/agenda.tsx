@@ -80,6 +80,7 @@ import {
   Segmentado,
   Selo,
 } from "../../ui/index.ts";
+import { CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   A visão "Agenda" da Classificação: a regra da agenda das entrevistas do
@@ -1204,12 +1205,7 @@ export function Agenda({
   ) : null;
   if (erro && !a.dados) return erro;
   if (!a.dados || a.editalId !== e.editalId)
-    return (
-      <div className="ui-card" aria-busy="true">
-        <div className="ui-esqueleto-linha" />
-        <div className="ui-esqueleto-linha" />
-      </div>
-    );
+    return <CarregandoConteudo rotulo="Carregando a agenda…" />;
   const podeEditar = Boolean(a.dados.pode_editar);
   return (
     <div className="classificacao-agenda">

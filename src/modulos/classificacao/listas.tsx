@@ -79,6 +79,7 @@ import type {
   ColunaDaTabela,
   ItemDaFaixa,
 } from "../../ui/index.ts";
+import { CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   A aba "Listas" da Classificação: preliminar (documental), convocação para
@@ -1593,11 +1594,7 @@ export function Listas({
           {copiado ? <Aviso papel="status">{copiado}</Aviso> : null}
         </>
       ) : e.carregandoEdital ? (
-        <div className="ui-card" aria-busy="true">
-          <div className="ui-esqueleto-linha" />
-          <div className="ui-esqueleto-linha" />
-          <div className="ui-esqueleto-linha" />
-        </div>
+        <CarregandoConteudo rotulo="Carregando as listas…" linhas={3} />
       ) : null}
       {explicacao && resultado ? (
         <GavetaDoCandidato

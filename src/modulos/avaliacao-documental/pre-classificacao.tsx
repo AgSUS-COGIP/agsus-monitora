@@ -90,6 +90,7 @@ import type {
   VagaDaPre as VagaDoResumo,
   InscritoDaPre,
 } from "./tipos-da-pre-classificacao.ts";
+import { CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   Aba Triagem (fase F2): a Lista Geral de Classificação Provisória
@@ -1142,10 +1143,7 @@ export function PreClassificacao({
     return (
       <>
         {topo(null, null)}
-        <div className="ui-card" aria-busy="true">
-          <div className="ui-esqueleto-linha" />
-          <div className="ui-esqueleto-linha" />
-        </div>
+        <CarregandoConteudo rotulo="Carregando a triagem…" />
       </>
     );
 
@@ -1562,9 +1560,7 @@ export function PreClassificacao({
       {aba === "vagas" ? (
         <div className="avd-pre-vagas" data-aba-da-triagem="vagas">
           {!vagasProntas ? (
-            <div className="ui-card" aria-busy="true">
-              <div className="ui-esqueleto-linha" />
-            </div>
+            <CarregandoConteudo rotulo="Carregando as vagas…" linhas={1} />
           ) : vagas.length ? (
             vagas.map((v) => (
               <VagaRecolhida
