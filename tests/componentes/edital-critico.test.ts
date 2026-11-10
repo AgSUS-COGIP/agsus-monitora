@@ -140,16 +140,25 @@ describe("a Visão geral lê a marcação junto com o acompanhamento", () => {
 
   it("sem mudança, o mesmo objeto; marcação nova, objeto novo", async () => {
     let marcados: unknown[] = [];
-    const rpc = vi.fn(async (nome: string, _parametros?: object) =>
-      nome === RPC_ACOMPANHAMENTO
-        ? { data: { inalterado: true, versao: "v1" }, error: null }
-        : { data: marcados, error: null },
+    // O primeiro acompanhamento vem inteiro; os seguintes, inalterados.
+    let primeiraLeitura = true;
+    const rpc = vi.fn(
+      async (
+        nome: string,
+        _parametros?: object,
+      ): Promise<{ data: unknown; error: unknown }> => {
+        if (nome !== RPC_ACOMPANHAMENTO) return { data: marcados, error: null };
+        if (primeiraLeitura) {
+          primeiraLeitura = false;
+          return {
+            data: { versao: "v1", etapas: [], listas: [] },
+            error: null,
+          };
+        }
+        return { data: { inalterado: true, versao: "v1" }, error: null };
+      },
     );
     const supabase: ClienteDoAcompanhamento = { rpc };
-    const respostas = [
-      { data: { versao: "v1", etapas: [], listas: [] }, error: null },
-    ];
-    rpc.mockImplementationOnce(async () => respostas[0]!);
     const buscar = buscarAcompanhamentoNoSupabase(supabase);
     const primeiro = await buscar("area-da-marcacao");
     expect(await buscar("area-da-marcacao")).toBe(primeiro);
