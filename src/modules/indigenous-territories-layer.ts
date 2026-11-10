@@ -31,6 +31,7 @@ import {
   obterCatalogo,
 } from "../lib/terras-indigenas/catalogo.ts";
 import { ARQUIVO_DOS_CONTORNOS_DOS_DSEIS } from "../lib/mapa-saude-indigena/contornos-dos-dseis.ts";
+import { PANE_DA_ABRANGENCIA_DOS_DSEIS } from "../lib/terras-indigenas/catalogo.ts";
 import {
   AVISO_DO_SIMBOLO,
   dseiFeatureMatches,
@@ -400,7 +401,7 @@ function enhanceMap(L: LeafletDasTerras, map: MapaDasTerrasIndigenas) {
     rasterPane.style.filter = FILTRO_DO_RASTER;
   }
 
-  const dseiPaneName = "agsus-dsei-coverage";
+  const dseiPaneName = PANE_DA_ABRANGENCIA_DOS_DSEIS;
   const dseiPane =
     map.getPane?.(dseiPaneName) || map.createPane?.(dseiPaneName);
   if (dseiPane?.style) {
@@ -1039,12 +1040,22 @@ function enhanceMap(L: LeafletDasTerras, map: MapaDasTerrasIndigenas) {
     e segue o aviso de troca do seletor, no mesmo instante.
   */
   let noMapaSimples = modoDesejadoDoFundo(map) === MODO_SIMPLES;
+  /*
+    O Mapa DSEIs pinta os mesmos contornos dos DSEIs por conta própria
+    (mapa-simples.tsx): enquanto ele dura, o traço leve da abrangência sai,
+    para não sair em dobro. A mesma regra das terras, no mesmo lugar.
+  */
+  const mostrarAbrangencia = () => {
+    if (dseiPane?.style) dseiPane.style.display = noMapaSimples ? "none" : "";
+  };
+  mostrarAbrangencia();
   map.getContainer?.().addEventListener(EVENTO_DO_FUNDO, (evento) => {
     const simples =
       (evento as CustomEvent<{ mode?: unknown }>).detail?.mode === MODO_SIMPLES;
     if (simples !== noMapaSimples) {
       noMapaSimples = simples;
       aplicarVisibilidade(simples ? false : readStoredVisibility());
+      mostrarAbrangencia();
     }
     vectorLayer.setStyle?.((feature) => estiloComDestaque(feature));
     simbolosLayer.eachLayer?.((simbolo) =>
