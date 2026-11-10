@@ -210,6 +210,48 @@ describe("Importação real de XLSX de Aprovados", () => {
     expect(soAspas.rows).toEqual([]);
     expect(soAspas.errors[0]).toMatch(/campos obrigatórios vazios: modalidade/);
   });
+  /*
+    O Excel não grava linha vazia: `<row r="7">` logo depois de `<row r="3">`.
+    O erro contava as linhas pela posição no XML e mandava a pessoa corrigir
+    a linha 4 quando o problema estava na 7.
+  */
+  const folhaNumerada = (linhas: readonly (readonly [number, Linha])[]) =>
+    arquivo([
+      {
+        nome: "xl/worksheets/sheet1.xml",
+        conteudo: `<worksheet><sheetData>${linhas.map(([n, v]) => linhaXml(v, n)).join("")}</sheetData></worksheet>`,
+      },
+    ]);
+
+  it("o erro aponta a linha da planilha, mesmo com linhas vazias omitidas", async () => {
+    await expect(
+      readApprovedWorkbook(
+        folhaNumerada([
+          [1, cabecalhos],
+          [2, valores],
+          [3, [...valores.slice(0, 2), "2", ...valores.slice(3)]],
+          [7, [...valores.slice(0, 2), "3", "abc", ...valores.slice(4)]],
+        ]),
+      ),
+    ).rejects.toThrow(/^Linha 7: nota deve ser numérica/);
+  });
+
+  it("cabeçalho fora da linha 1: lê a lista e numera pela planilha", async () => {
+    const xlsx = (nota: string) =>
+      folhaNumerada([
+        [3, cabecalhos],
+        [4, valores],
+        [6, [...valores.slice(0, 2), "2", nota, ...valores.slice(4)]],
+      ]);
+    expect(await readApprovedWorkbook(xlsx("70"))).toEqual([
+      esperado,
+      { ...esperado, classificacao: 2, nota: 70 },
+    ]);
+    await expect(readApprovedWorkbook(xlsx("abc"))).rejects.toThrow(
+      /^Linha 6: nota deve ser numérica/,
+    );
+  });
+
   it("recusa extensão errada e ZIP inválido", async () => {
     await expect(
       readApprovedWorkbook(new File(["x"], "lista.csv")),
