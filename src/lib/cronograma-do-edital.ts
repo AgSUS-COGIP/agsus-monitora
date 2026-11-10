@@ -378,13 +378,18 @@ export function analisarCronograma(
 
 const DATA = /\b\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}\b/g;
 
+/* "26" → 2026, "98" → 1998, "2026" → 2026. */
+function anoCompleto(ano: string | undefined) {
+  const y = Number(ano);
+  return y < 100 ? y + (y >= 70 ? 1900 : 2000) : y;
+}
+
 function paraIso(
   dia: string | undefined,
   mes: string | undefined,
   ano: string | undefined,
 ) {
-  let y = Number(ano);
-  if (y < 100) y += y >= 70 ? 1900 : 2000;
+  const y = anoCompleto(ano);
   const data = new Date(y, Number(mes) - 1, Number(dia), 12);
   if (
     data.getFullYear() !== y ||
@@ -403,7 +408,8 @@ function lerData(trecho: string) {
 }
 
 /**
- * Uma linha colada: "17/06/2026", "18/06/2026 a 20/06/2026" ou "18 a 20/06/2026".
+ * Uma linha colada: "17/06/2026", "18/06/2026 a 20/06/2026", "18/06 a
+ * 20/06/2026" ou "18 a 20/06/2026".
  * @returns {{inicio: string, fim: string} | null}
  */
 export function lerLinhaDeDatas(linha: unknown): IntervaloDeDatas | null {
@@ -415,12 +421,26 @@ export function lerLinhaDeDatas(linha: unknown): IntervaloDeDatas | null {
     .filter(Boolean);
   if (datas.length >= 2) return { inicio: datas[0]!, fim: datas[1]! };
   /*
-    O intervalo curto ("18 a 20/06/2026") vem antes da data única: ele também
-    contém uma data completa, "20/06/2026", e lido como data única perdia o
-    dia 18.
+    Os intervalos sem o ano no início vêm antes da data única: eles também
+    contêm uma data completa, "20/06/2026", e lidos como data única perdiam o
+    primeiro dia. O início não pode vir logo depois de "/", "." ou "-": em
+    "18/06 a 20/06/2026" o "06" é o mês, não o dia.
   */
+  const semAno = limpa.match(
+    /(?<![\d/.-])(\d{1,2})[/.-](\d{1,2})\s*(?:a|até|ate|-)\s*(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b/i,
+  );
+  if (semAno) {
+    const [, diaInicio, mesInicio, diaFim, mesFim, ano] = semAno;
+    // "29/12 a 05/01/2027": o início é do ano anterior.
+    const anoDoInicio =
+      Number(mesInicio) > Number(mesFim) ? String(anoCompleto(ano) - 1) : ano;
+    return {
+      inicio: paraIso(diaInicio, mesInicio, anoDoInicio),
+      fim: paraIso(diaFim, mesFim, ano),
+    };
+  }
   const curto = limpa.match(
-    /\b(\d{1,2})\s*(?:a|até|ate|-)\s*(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b/i,
+    /(?<![\d/.-])(\d{1,2})\s*(?:a|até|ate|-)\s*(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b/i,
   );
   if (curto)
     return {

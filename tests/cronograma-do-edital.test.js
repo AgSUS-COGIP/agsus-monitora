@@ -41,6 +41,20 @@ describe("datas coladas em lote", () => {
     });
   });
 
+  /*
+    Com dia e mês no início ("18/06 a 20/06/2026"), o intervalo curto casava a
+    partir do mês ("06 a 20/06/2026") e gravava o dia 6 como início — calado.
+  */
+  it.each([
+    ["18/06 a 20/06/2026", "2026-06-18", "2026-06-20"],
+    ["De 18/06 até 20/06/2026", "2026-06-18", "2026-06-20"],
+    ["30/06 a 02/07/2026", "2026-06-30", "2026-07-02"],
+    ["18/06 - 20/06/26", "2026-06-18", "2026-06-20"],
+    ["29/12 a 05/01/2027", "2026-12-29", "2027-01-05"],
+  ])("dia e mês no início: lê %s", (linha, inicio, fim) => {
+    expect(lerLinhaDeDatas(linha)).toEqual({ inicio, fim });
+  });
+
   it("recusa data que não existe", () => {
     expect(lerLinhaDeDatas("31/02/2026")).toBeNull();
     expect(lerLinhaDeDatas("amanhã")).toBeNull();
