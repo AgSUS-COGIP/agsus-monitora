@@ -85,14 +85,15 @@ docs/                   decisões, auditorias e base de conhecimento da AYA    �
 
 ## Não ler por inteiro (grep -n → sed -n 'A,Bp')
 
-| Arquivo                                       | Tamanho    | Observação            |
-| --------------------------------------------- | ---------- | --------------------- |
-| `public/data/*.json`                          | até 2,3 MB | gerados               |
-| `src/styles/app.css`                          | 110 KB     | CSS base              |
-| `index.html`                                  | 24 KB      | `<head>` e entrada    |
-| `src/modules/indigenous-territories-layer.ts` | 41 KB      |                       |
-| `src/modules/aya-conhecimento-gerado.js`      | 27 KB      | gerado de `docs/aya/` |
-| `package-lock.json`, `dist/`, `node_modules/` |            | nunca                 |
+| Arquivo                                       | Tamanho    | Observação                                             |
+| --------------------------------------------- | ---------- | ------------------------------------------------------ |
+| `public/data/*.json`                          | até 2,3 MB | gerados                                                |
+| `supabase/esquema-atual.sql`                  | 3,6 MB     | retrato do schema: `grep -n 'FUNCTION private."FC_X"'` |
+| `src/styles/app.css`                          | 110 KB     | CSS base                                               |
+| `index.html`                                  | 24 KB      | `<head>` e entrada                                     |
+| `src/modules/indigenous-territories-layer.ts` | 41 KB      |                                                        |
+| `src/modules/aya-conhecimento-gerado.js`      | 27 KB      | gerado de `docs/aya/`                                  |
+| `package-lock.json`, `dist/`, `node_modules/` |            | nunca                                                  |
 
 ## Comandos (rode o mais barato que responda a pergunta)
 
