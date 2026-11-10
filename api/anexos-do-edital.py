@@ -455,9 +455,10 @@ def secoes_da_retificacao(paginas):
 
 
 # O rodapé do SEI ("Retificação 2ª Retificação … (0698514) SEI AGSUS.002213/2026-13 / pg. 1")
-# às vezes cai dentro da tabela que atravessa a página.
+# às vezes cai dentro da tabela que atravessa a página. "AGSUS." só com o número do
+# processo depois: o nome da AgSUS (ou o e-mail @agsus.org.br) no texto da célula fica.
 _RODAPE = re.compile(
-    r"\s*(?:\S{0,6}\s+)?(?:\d+\s*ª\s*)?RETIFICA\S*\s.*?\(\d{6,8}\)|\s*\S?\s*AGSUS\.|\s*\(\d{6,8}\)",
+    r"\s*(?:\S{0,6}\s+)?(?:\d+\s*ª\s*)?RETIFICA\S*\s.*?\(\d{6,8}\)|\s*\S?\s*AGSUS\.\d|\s*\(\d{6,8}\)",
     re.I,
 )
 
