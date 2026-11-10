@@ -494,14 +494,20 @@ export function opcoesDosFiltros(
   recursos: readonly RecursoDoPainel[],
   origens: readonly OrigemDoRecurso[] = ORIGENS_PADRAO,
 ) {
-  const editais = new Map<string, string>();
+  // A ordem é pelo número do edital ("30/2026"), não pelo rótulo com a unidade.
+  const editais = new Map<string, { numero: string; rotulo: string }>();
   for (const r of recursos) {
-    editais.set(String(r.edital_id), `${r.edital} · ${r.unidade || ""}`.trim());
+    const numero = texto(r.edital);
+    const unidade = texto(r.unidade);
+    editais.set(String(r.edital_id), {
+      numero,
+      rotulo: unidade ? `${numero} · ${unidade}` : numero,
+    });
   }
   return {
     editais: [...editais]
-      .sort((a, b) => compararEditais(a[1], b[1]))
-      .map(([valor, rotulo]) => ({ valor, rotulo })),
+      .sort(([, a], [, b]) => compararEditais(a.numero, b.numero))
+      .map(([valor, { rotulo }]) => ({ valor, rotulo })),
     origens: origens
       .filter((o) => o.ativo || recursos.some((r) => r.origem === o.id))
       .map((o) => ({ valor: o.id, rotulo: o.rotulo })),
