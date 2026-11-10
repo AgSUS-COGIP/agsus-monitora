@@ -307,6 +307,8 @@ def _ocr_falso_das_paginas(conteudo):
 
 
 def test_declaracoes_escaneadas_com_ocr_ruidoso():
+    # A "foto" da página usa numpy (vem com o opencv do robô); sem ele, pula como os outros.
+    pytest.importorskip("numpy")
     original, gabarito = s.declaracoes_de_vinculo()
     escaneado, _ = s.declaracoes_como_foto()
     r = ler_documento(escaneado, "VINCULOS", NOME, hoje=HOJE, ocr=_ocr_falso_das_paginas(original))
