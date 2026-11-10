@@ -203,8 +203,12 @@
 /*
   Painel escuro (`login-panel-dark`, aplicada no próprio `#loginScreen` pelo
   script do index.html e por src/app/entrada/marca.ts): texto claro onde a
-  própria configuração diz que a superfície é escura. A página de solicitação
-  de acesso tem as próprias cores (src/app/entrada/solicitacao-de-acesso.css).
+  própria configuração diz que a superfície é escura. Branco puro e o mesmo
+  para todo o texto do cartão, porque é a cor que o aviso de Configurações mede
+  (`TEXTO_CLARO`, src/lib/contraste.ts): no azul #3879ab, o branco a 82% do
+  texto de apoio ficava em 3,59:1 e o #f7fbff em 4,497 (reprova); o branco dá
+  4,68. A página de solicitação de acesso tem as próprias cores
+  (src/app/entrada/solicitacao-de-acesso.css).
 */
 #loginScreen.login-panel-dark .login-card,
 #loginScreen.login-panel-dark .login-card h1,
@@ -214,10 +218,7 @@
 #loginScreen.login-panel-dark .login-subtitle,
 #loginScreen.login-panel-dark .login-organization-mark,
 #loginScreen.login-panel-dark .login-product-mark {
-  color: #f7fbff;
-}
-#loginScreen.login-panel-dark .login-card p:not(.login-subtitle) {
-  color: rgba(247, 251, 255, 0.82);
+  color: var(--cor-do-texto-sobre-escuro);
 }
 #loginScreen.login-panel-dark .login-brand-divider {
   background: rgba(255, 255, 255, 0.35);

@@ -18,7 +18,7 @@
 import { needsLightForeground } from "./access-branding.ts";
 
 /** As cores que a tela realmente usa, definidas na seção Login de platform-shell.css. */
-export const TEXTO_CLARO = "#f7fbff";
+export const TEXTO_CLARO = "#ffffff";
 export const TEXTO_ESCURO = "#102a43";
 
 /** WCAG 2.1 AA para texto normal. */
@@ -105,16 +105,29 @@ export function avaliarCor(
 
   const normalizada = cor.trim().toLowerCase();
   const corDoTexto = corDoTextoPara(normalizada, modo);
-  const razao = razaoDeContraste(corDoTexto, normalizada);
-  const passa = razao >= MINIMO_AA;
+  const exata = razaoDeContraste(corDoTexto, normalizada);
+  const passa = exata >= MINIMO_AA;
+  /*
+    Duas casas, cortadas e não arredondadas: arredondar mostrava "4,50 — abaixo
+    do mínimo de 4,5" para uma cor que mede 4,497 (o azul #3879ab).
+  */
+  const razao = Math.floor(exata * 100) / 100;
 
   return {
     cor: normalizada,
     corDoTexto,
-    razao: Math.round(razao * 100) / 100,
+    razao,
     passa,
     mensagem: passa
-      ? `Contraste do texto sobre esta cor: ${razao.toFixed(2)}. Acima do mínimo de ${MINIMO_AA} da WCAG AA.`
-      : `Contraste do texto sobre esta cor: ${razao.toFixed(2)}. Abaixo do mínimo de ${MINIMO_AA} da WCAG AA — quem tem baixa visão pode não conseguir ler. Uma cor mais escura ou mais clara resolve sem mudar o tom.`,
+      ? `Contraste do texto sobre esta cor: ${numero(razao, 2)}. Acima do mínimo de ${numero(MINIMO_AA, 1)} da WCAG AA.`
+      : `Contraste do texto sobre esta cor: ${numero(razao, 2)}. Abaixo do mínimo de ${numero(MINIMO_AA, 1)} da WCAG AA — quem tem baixa visão pode não conseguir ler. Uma cor mais escura ou mais clara resolve sem mudar o tom.`,
   };
+}
+
+/** Número no formato brasileiro, com as casas fixas (4,49; 4,5). */
+function numero(valor: number, casas: number): string {
+  return valor.toLocaleString("pt-BR", {
+    minimumFractionDigits: casas,
+    maximumFractionDigits: casas,
+  });
 }
