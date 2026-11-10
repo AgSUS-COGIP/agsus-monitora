@@ -8,7 +8,11 @@ import {
 } from "../../lib/edital-de-treinamento.ts";
 import { Aviso } from "../../ui/index.ts";
 import { LiberacaoDoEdital } from "./conducao.tsx";
-import type { EstadoDaConducao, EstadoDaConducaoComAcoes } from "./tipos.ts";
+import type {
+  EditalDaLista,
+  EstadoDaConducao,
+  EstadoDaConducaoComAcoes,
+} from "./tipos.ts";
 
 /*
   O edital de "Conduzir entrevistas" no cabeçalho da tela (como nas telas
@@ -22,6 +26,17 @@ import type { EstadoDaConducao, EstadoDaConducaoComAcoes } from "./tipos.ts";
   e os `avisos` (a classificação da etapa, a liberação e os erros, logo
   abaixo dele).
 */
+
+/* O texto da opção do edital (aqui e na Central de convocações). */
+export function rotuloDoEditalParaConduzir(m: EditalDaLista): string {
+  const marca = marcaDoEdital(m);
+  return (
+    [m.edital, m.unidade].filter(Boolean).join(" · ") +
+    (m.comEntrevistas ? " · com entrevistas" : "") +
+    (marca ? ` · ${marca}` : "") +
+    sufixoDeTreinamento(m)
+  );
+}
 
 const MOSTRAR_TODOS = "__mostrar-todos__";
 const SO_NA_JANELA = "__so-na-janela__";
@@ -84,10 +99,7 @@ export function usarSeletorDoEdital({
           </option>
           {editais.lista.map((m) => (
             <option key={m.id} value={m.id}>
-              {[m.edital, m.unidade].filter(Boolean).join(" · ")}
-              {m.comEntrevistas ? " · com entrevistas" : ""}
-              {marcaDoEdital(m) ? ` · ${marcaDoEdital(m)}` : ""}
-              {sufixoDeTreinamento(m)}
+              {rotuloDoEditalParaConduzir(m)}
             </option>
           ))}
           {editais.admin ? (

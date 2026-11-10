@@ -48,7 +48,9 @@ import { numeroBR } from "./partes.tsx";
     por vaga, na ordem dela; "Convocar selecionados" registra os da lista
     para a ficha e "Desconvocar" (com motivo, só sem notas). Uma convocação
     só — nada de ranking, regra ou vagas próprios
-    (src/lib/convocacao-da-entrevista.ts).
+    (src/lib/convocacao-da-entrevista.ts). Sem `aoConvocar`, só leitura
+    (a Central de convocações, na Lista de aprovados): sem a coluna de
+    marcar, sem "Desconvocar" e sem os botões.
   - LiberacaoDoEdital: liberar fora da janela (administrador global).
 
   Quem não edita as entrevistas (`pode_editar` falso) vê tudo sem os botões
@@ -318,15 +320,17 @@ export function ListaDeConvocacao({
   calculo?: EstadoDaConducao["calculo"];
   salvando: boolean;
   ocupado: boolean;
-  aoConvocar: (analises: string[]) => Promise<Resultado>;
-  aoDesconvocar: (entrevista: string, motivo: string) => Promise<Resultado>;
+  aoConvocar?: ((analises: string[]) => Promise<Resultado>) | undefined;
+  aoDesconvocar?:
+    ((entrevista: string, motivo: string) => Promise<Resultado>) | undefined;
 }) {
+  const somenteLeitura = !aoConvocar || !aoDesconvocar;
   const pendentes = useMemo(() => aConvocar(grupos), [grupos]);
   const [selecao, setSelecao] = useState(() => new Set(pendentes));
   const [desconvocando, setDesconvocando] = useState<Convocado | null>(null);
   const configurado = Boolean(dados.configuracao);
   const daLista = fonte.tipo === "LISTA";
-  const podeEditar = dados.pode_editar && configurado;
+  const podeEditar = !somenteLeitura && dados.pode_editar && configurado;
   const podeConvocar = podeEditar && daLista;
   const avisos = avisosDaConvocacao(dados, fonte, grupos);
   const resumo = resumoDaConvocacao(grupos);
@@ -386,7 +390,7 @@ export function ListaDeConvocacao({
       {calculo?.erro && fonte.tipo === "NENHUMA" ? (
         <Aviso tom="info">{calculo.erro}</Aviso>
       ) : null}
-      {daLista && !configurado ? (
+      {daLista && !configurado && !somenteLeitura ? (
         <Aviso tom="warning">
           Escolha o roteiro e a banca (passos 1 e 2) antes de convocar.
         </Aviso>
@@ -409,9 +413,11 @@ export function ListaDeConvocacao({
                 <table className="entrevistas-tabela">
                   <thead>
                     <tr>
-                      <th scope="col" className="entrevistas-col-marca">
-                        <span className="sr-only">Convocar</span>
-                      </th>
+                      {somenteLeitura ? null : (
+                        <th scope="col" className="entrevistas-col-marca">
+                          <span className="sr-only">Convocar</span>
+                        </th>
+                      )}
                       <th scope="col">Posição</th>
                       <th scope="col">Candidato</th>
                       <th scope="col">Modalidade</th>
@@ -429,17 +435,19 @@ export function ListaDeConvocacao({
                             convocado && "entrevistas-convocado",
                           )}
                         >
-                          <td className="entrevistas-col-marca">
-                            <input
-                              type="checkbox"
-                              checked={
-                                convocado ? true : selecao.has(c.analiseId)
-                              }
-                              disabled={!podeConvocar || Boolean(convocado)}
-                              aria-label={`Convocar ${c.nome}`}
-                              onChange={() => alternar(c.analiseId)}
-                            />
-                          </td>
+                          {somenteLeitura ? null : (
+                            <td className="entrevistas-col-marca">
+                              <input
+                                type="checkbox"
+                                checked={
+                                  convocado ? true : selecao.has(c.analiseId)
+                                }
+                                disabled={!podeConvocar || Boolean(convocado)}
+                                aria-label={`Convocar ${c.nome}`}
+                                onChange={() => alternar(c.analiseId)}
+                              />
+                            </td>
+                          )}
                           <td>{c.posicao ? `${c.posicao}ª` : "—"}</td>
                           <td>
                             <div className="ui-texto-principal">{c.nome}</div>
@@ -470,14 +478,16 @@ export function ListaDeConvocacao({
                     })}
                     {g.fora.map((c) => (
                       <tr key={c.id} className="entrevistas-convocado">
-                        <td className="entrevistas-col-marca">
-                          <input
-                            type="checkbox"
-                            checked
-                            disabled
-                            aria-label={`${c.candidato} já convocado`}
-                          />
-                        </td>
+                        {somenteLeitura ? null : (
+                          <td className="entrevistas-col-marca">
+                            <input
+                              type="checkbox"
+                              checked
+                              disabled
+                              aria-label={`${c.candidato} já convocado`}
+                            />
+                          </td>
+                        )}
                         <td>—</td>
                         <td>
                           <div className="ui-texto-principal">
@@ -528,7 +538,7 @@ export function ListaDeConvocacao({
             id="entrevistasConvocar"
             data-tour="entrevistas-conduzir-convocar"
             disabled={!selecao.size || ocupado}
-            onClick={() => void aoConvocar([...selecao])}
+            onClick={() => void aoConvocar?.([...selecao])}
           >
             <i className="fa-solid fa-bullhorn" aria-hidden="true" />{" "}
             {salvando
@@ -537,7 +547,7 @@ export function ListaDeConvocacao({
           </button>
         </div>
       ) : null}
-      {desconvocando ? (
+      {desconvocando && aoDesconvocar ? (
         <ModalDeDesconvocar
           convocado={desconvocando}
           salvando={salvando}
