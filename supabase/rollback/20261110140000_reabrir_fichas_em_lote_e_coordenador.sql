@@ -32,5 +32,8 @@ comment on function private."FC_GESTOR_DO_EDITAL"(uuid, uuid) is
   'O usuário é gestor do edital na avaliação documental: grupo edital_gestor, Administrador em avaliacao_documental e vê o edital (área e coordenação). Coordena sem linha em RL_ANALISTA_EDITAL.';
 revoke all on function private."FC_GESTOR_DO_EDITAL"(uuid, uuid) from public, anon, authenticated;
 
+-- FC_GESTOR_DO_EDITAL está no fecho das leituras (20261029170000): recalcula as fontes delas.
+select private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"();
+
 notify pgrst, 'reload schema';
 commit;

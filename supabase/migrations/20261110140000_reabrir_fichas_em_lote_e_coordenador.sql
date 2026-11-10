@@ -89,6 +89,9 @@ comment on function public.reabrir_fichas(uuid, jsonb, text, text) is
 revoke all on function public.reabrir_fichas(uuid, jsonb, text, text) from public, anon;
 grant execute on function public.reabrir_fichas(uuid, jsonb, text, text) to authenticated;
 
+-- FC_GESTOR_DO_EDITAL está no fecho das leituras (20261029170000): recalcula as fontes delas.
+select private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"();
+
 notify pgrst, 'reload schema';
 
 commit;

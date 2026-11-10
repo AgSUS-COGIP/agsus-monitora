@@ -21,12 +21,15 @@ const ORIGINAL = ler("supabase/migrations/20261006100000_regra_da_analise.sql");
 
 /** Um `create (or replace) function <nome>` até o `$function$;` que o fecha. */
 const funcao = (sql: string, nome: string) => {
-  const inicio = sql.search(
-    new RegExp(
-      `create (or replace )?function ${nome.replace(/[."()]/g, "\\$&")}`,
-    ),
-  );
-  if (inicio < 0) return "";
+  // Busca por texto (sem montar regex com o nome).
+  const inicio = [
+    `create or replace function ${nome}`,
+    `create function ${nome}`,
+  ]
+    .map((cabeca) => sql.indexOf(cabeca))
+    .filter((i) => i >= 0)
+    .sort((a, b) => a - b)[0];
+  if (inicio === undefined) return "";
   return sql.slice(inicio, sql.indexOf("$function$;", inicio) + 11);
 };
 const GESTOR = 'private."FC_GESTOR_DO_EDITAL"';
