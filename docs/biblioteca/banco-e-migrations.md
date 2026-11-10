@@ -7,9 +7,10 @@ atualizado: 2026-11-10
 # Banco e migrations
 
 O banco é Supabase (PostgreSQL) com RLS ligada em todas as tabelas; o navegador não lê tabela, só
-chama RPCs. Toda mudança de schema é uma migration **aplicada à mão** e registrada. O processo
-completo está em [supabase/migrations/README.md](../../supabase/migrations/README.md); o modelo de
-dados, as convenções e a história de cada assunto em [docs/banco-de-dados.md](../banco-de-dados.md)
+chama RPCs. Toda mudança de schema é uma migration **aplicada à mão** (SQL Editor do Supabase ou
+`psql`), por quem opera o banco, depois de ensaiada, e **registrada** em `public.migracoes_aplicadas`
+pelo caminho e pelo sha256 do arquivo. Esta nota é o processo completo; o modelo de dados, as
+convenções e a história de cada assunto estão em [docs/banco-de-dados.md](../banco-de-dados.md)
 (leia a seção do assunto).
 
 ## As migrations aplicadas saíram do repositório (10/11/2026, #712)
@@ -23,8 +24,12 @@ dados, as convenções e a história de cada assunto em [docs/banco-de-dados.md]
   tabela, policy e grant (e as tarefas do pg_cron, no fim). Regerado por `npm run db:esquema`
   (pg_dump; precisa de `SUPABASE_DB_URL`) depois de cada migration aplicada e commitado junto: o
   diff mostra o que a migration mudou. Pode estar atrasado; para a guarda md5, confira no banco.
-- Para trocar uma função, copie o corpo vigente com `pg_get_functiondef` no SQL Editor e guarde a
-  migration pelo md5 do `prosrc` (modelo: `20261109180000`).
+- Para trocar uma função, copie o corpo vigente com `pg_get_functiondef` no SQL Editor
+  (`select pg_get_functiondef('private."FC_X"(text)'::regprocedure);`) e guarde a migration pelo
+  md5 do `prosrc` (modelo: `20261109180000`), para não sobrescrever uma mudança que você não viu.
+- **O rollback copia o corpo de antes** desse mesmo `pg_get_functiondef`, não de uma migration.
+- Os testes que precisavam do "antes" guardam só o trecho que usam, em fixture
+  (`tests/fixtures/banco-antes-do-catalogo-dos-robos.sql`, `tests/fixtures/sql-de-dados/`).
 - O histórico está no Git (`git log --all -- supabase/migrations/<arquivo>`); nome de migration
   citado em doc, nota ou comentário é esse histórico (e a linha do registro), não um arquivo daqui.
 - Não recriar `migrations-historicas/`, `descartadas/` nem `correcoes/`
@@ -48,9 +53,28 @@ dados, as convenções e a história de cada assunto em [docs/banco-de-dados.md]
    `hashDoConteudo` em `scripts/estado-das-migrations-nucleo.mjs`: sha256 sem `\r`).
 7. `npm run db:esquema` e commit do retrato.
 
-**Nunca `supabase db push`** (nem `migration up`/`db reset` contra o banco do projeto): o registro é
-`public.migracoes_aplicadas`, não o da CLI, e ela tentaria rodar tudo de novo. **Nunca editar
-migration já aplicada**: o hash deixa de bater; mudou o efeito → migration nova.
+**Nunca editar migration já aplicada**: o hash deixa de bater (estado "divergente"); mudou o
+efeito → migration nova.
+
+### Por que nunca `supabase db push`
+
+Nem `supabase migration up`/`db reset` contra o banco do projeto:
+
+- o registro do projeto é `public.migracoes_aplicadas` (caminho + sha256 sem `\r`), não
+  `supabase_migrations.schema_migrations`; a CLI não conhece o que já foi aplicado e tentaria rodar
+  tudo de novo;
+- as migrations aplicadas saíram do repositório: a CLI veria um banco que não bate com a pasta;
+- várias mudanças dependem de dados e de ordem que só o ensaio confere, e a escrita no banco é
+  decisão da equipe, não da ferramenta.
+
+## Onde fica cada coisa
+
+| Pasta                  | O que é                                                         | Aplica?                      |
+| ---------------------- | --------------------------------------------------------------- | ---------------------------- |
+| `supabase/migrations/` | schema, em ordem de timestamp                                   | sim, uma a uma, e registra   |
+| `supabase/rollback/`   | como desfazer cada migration (mesmo nome)                       | só para desfazer             |
+| `supabase/ensaios/`    | ensaio de cada migration/correção, sempre termina em `rollback` | antes de aplicar (não grava) |
+| `supabase/tests/`      | testes SQL de RPCs específicas                                  | não grava                    |
 
 ## Regras do banco
 

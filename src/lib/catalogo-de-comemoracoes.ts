@@ -99,7 +99,7 @@ export const PUBLICOS: readonly (readonly [Publico, string])[] = Object.freeze([
 /*
   "Toda a área online" precisa de um canal em tempo real por área, que o
   MONITORA ainda não tem (a presença é por batida de 45 s): fica só "quem
-  fez" até lá (README de src/modulos/configuracoes/).
+  fez" até lá (docs/biblioteca/modulo-configuracoes.md).
 */
 export const PUBLICOS_DISPONIVEIS: readonly Publico[] = Object.freeze([
   "quem-fez",

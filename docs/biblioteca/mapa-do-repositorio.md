@@ -23,7 +23,6 @@ src/modulos/            as telas em React, uma pasta por tela
 src/componentes/        moldura React: barra lateral, busca global, Status das atualizações, dados compartilhados
 src/lib/                lógica pura e testável (regras, contratos, formatos)
 src/modules/            LEGADO: só encolhe, nada novo
-src/legado/             vazia: só recebe código antigo numa mudança em bloco combinada (README da pasta)
 src/styles/             CSS do app principal (ordem de import em main.ts)
 src/main.ts             bootstrap: importa CSS e instala módulos, em ordem
 python/monitora/        cálculo em lote (Python) executado no GitHub Actions

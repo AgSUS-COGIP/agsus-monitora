@@ -7,16 +7,17 @@ import { describe, expect, it } from "vitest";
   `supabase/migrations/` é a fila de schema: tudo ali é aplicável, em ordem de
   timestamp. As migrations já aplicadas saíram do repositório em 10/11/2026 (seguem
   no banco e no registro `public.migracoes_aplicadas`); a pasta guarda só as que
-  ainda importam. Processo em `supabase/migrations/README.md`.
+  ainda importam. Processo em `docs/biblioteca/banco-e-migrations.md`.
 */
 const MIGRATIONS = "supabase/migrations";
-const nomes = readdirSync(MIGRATIONS);
+// Sem migration pendente, a pasta some do Git (pasta vazia não é versionada).
+const nomes = existsSync(MIGRATIONS) ? readdirSync(MIGRATIONS) : [];
 const sql = nomes.filter((n) => n.toLowerCase().endsWith(".sql"));
 
 describe("supabase/migrations", () => {
-  it("só tem .sql com timestamp de 14 dígitos (e o README)", () => {
+  it("só tem .sql com timestamp de 14 dígitos", () => {
     const foraDoPadrao = nomes.filter(
-      (n) => n !== "README.md" && !/^\d{14}_[a-z0-9_]+\.sql$/.test(n),
+      (n) => !/^\d{14}_[a-z0-9_]+\.sql$/.test(n),
     );
     expect(foraDoPadrao).toEqual([]);
   });

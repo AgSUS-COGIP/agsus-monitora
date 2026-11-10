@@ -14,8 +14,8 @@ import type {
 
     lmap (polos)        a posição do polo é a do `lmap`, exatamente como está
                         gravada (auditada em 01–02/10/2026 contra fontes
-                        oficiais — ver docs/auditoria-oficial-das-coordenadas-
-                        2026-10-01.md);
+                        oficiais — ver docs/coordenadas/auditoria-
+                        oficial-das-coordenadas-2026-10-01.md);
     rede_cnes (u, c)    estabelecimentos do CNES (UBSI, CASAI, polos
                         cadastrados), na coordenada gravada no `rede_cnes`;
     reconciliação       polo do lmap + registro do CNES que são a mesma

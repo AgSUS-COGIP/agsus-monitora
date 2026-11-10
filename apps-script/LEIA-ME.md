@@ -359,7 +359,7 @@ Testes: `tests/apps-script-analises-full.test.js` (e o do incremental).
 **Ordem para aplicar:**
 
 1. Banco: aplicar `20261022140000_full_nao_processa_sync_incremental.sql` (o ensaio
-   está em `supabase/ensaios/`) e registrar, como em `supabase/migrations/README.md`.
+   está em `supabase/ensaios/`) e registrar, como em `docs/biblioteca/banco-e-migrations.md`.
    Os scripts atuais continuam funcionando com ela (o incremental passa pelo próprio
    caminho; só o FULL com sync incremental é recusado).
 2. Em cada planilha, conferir em **Configurações do projeto > Propriedades do script**

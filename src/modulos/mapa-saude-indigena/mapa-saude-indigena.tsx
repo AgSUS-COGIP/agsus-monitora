@@ -38,7 +38,8 @@ import { usarEscParaVoltar, usarVoltaDoDsei } from "./volta-ao-brasil.ts";
   que recorta a página pelo DSEI, devolve em `dseiSelecionado`.
 
   Não busca dados: recebe o `lmap` e o `rede_cnes` (TB_CONFIG_MAPA_SAUDE_INDIG,
-  já com as Lotações) e os editais do recorte. Contrato em README.md.
+  já com as Lotações) e os editais do recorte. Contrato em
+  docs/biblioteca/modulo-mapa-saude-indigena.md.
 */
 export function MapaSaudeIndigena({
   lmap,
