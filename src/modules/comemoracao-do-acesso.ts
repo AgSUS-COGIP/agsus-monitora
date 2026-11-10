@@ -41,8 +41,8 @@ export interface OpcoesDoAcessoLiberado {
 }
 
 /*
-  "Parabéns, Ana! Seu acesso ao MONITORA foi liberado." (ou "Bem-vindo(a) de
-  volta…" na reativação), com o que a pessoa pode usar agora. Regra em
+  "Boas-vindas, Ana! Seu acesso ao MONITORA foi liberado." (ou "Que bom ter
+  você de volta…" na reativação), com o que a pessoa pode usar agora. Regra em
   src/lib/acesso-liberado.ts; os fogos (com um visto desenhado no céu) e o
   aviso são os de todas as comemorações (src/modulos/comemoracao/), que
   respeitam prefers-reduced-motion. Armazenamento sempre em try/catch (janela privada,

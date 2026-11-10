@@ -38,7 +38,7 @@
   O QUE ESTE MÓDULO NÃO RESOLVE
 
   Estabelecimentos genuinamente diferentes que partilham a mesma coordenada — o
-  caso dos 57 no mesmo ponto, descrito em `docs/auditoria-geografica.md`. Isso
+  caso dos 57 no mesmo ponto, descrito em `docs/coordenadas/auditoria-geografica.md`. Isso
   não é duplicação de entidade e não se resolve fundindo: resolve-se no desenho,
   com agrupamento. Ver `agruparPorPontoDeRender` no fim deste ficheiro.
 */

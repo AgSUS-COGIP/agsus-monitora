@@ -35,7 +35,7 @@ src/
   ui/         componentes visuais padrão (o design system)
   modulos/    um por tela: componentes + estado + consultas (RPC)
   lib/        regras puras, testadas
-  legado/     o que ainda não migrou (encolhe até sumir)
+  modules/    LEGADO: o que ainda não migrou (encolhe até sumir)
 ```
 
 ## Regras (de `docs/arquitetura-react.md`)

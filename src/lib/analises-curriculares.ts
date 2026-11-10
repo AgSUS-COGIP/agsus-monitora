@@ -597,7 +597,13 @@ export function calcularKpis(linhas: readonly RegistroDaAnalise[]) {
     revisar,
     aprovado,
     reprovado,
-    taxa: total ? Math.round(((aprovado + reprovado) / total) * 100) : 0,
+    // 100% só com todas concluídas (995 de 1.000 não arredonda para 100%).
+    taxa: total
+      ? Math.min(
+          aprovado + reprovado < total ? 99 : 100,
+          Math.round(((aprovado + reprovado) * 100) / total),
+        )
+      : 0,
   };
 }
 

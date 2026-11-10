@@ -479,7 +479,7 @@ html[data-theme="dark"] .sidebar {
   border-radius: 999px;
   background: var(--state-success-soft);
   color: var(--state-success);
-  font-size: 12px;
+  font-size: var(--text-caption);
   font-weight: 600;
 }
 
@@ -566,7 +566,7 @@ html[data-theme="dark"] .sidebar {
 .online-presence-heading small {
   margin-top: 2px;
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .online-presence-list {
   max-height: 320px;
@@ -623,7 +623,7 @@ html[data-theme="dark"] .sidebar {
 .online-presence-person small {
   margin-top: 2px;
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .online-presence-avatar {
   position: relative;
@@ -635,7 +635,7 @@ html[data-theme="dark"] .sidebar {
   border-radius: 12px;
   background: var(--state-info-soft);
   color: var(--color-text-brand);
-  font-size: 12px;
+  font-size: var(--text-caption);
   font-weight: 600;
 }
 .online-presence-avatar img {
@@ -705,16 +705,20 @@ html[data-theme="dark"] .sidebar {
   max-width: 130px;
   overflow: hidden;
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: var(--text-caption);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .top-user-compact-copy .user-profile-badge {
+  max-width: 150px;
   margin: 1px 0 0;
   padding: 0;
+  overflow: hidden;
   background: transparent;
   color: var(--state-success);
-  font-size: 12px;
+  font-size: var(--text-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .top-user-chevron {
   color: var(--text-secondary);
@@ -751,12 +755,12 @@ html[data-theme="dark"] .sidebar {
 .top-user-popover > small {
   margin-top: 3px;
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 .top-user-popover > span {
   margin-top: 8px;
   color: var(--state-success);
-  font-size: 12px;
+  font-size: var(--text-caption);
   font-weight: 600;
 }
 .top-user-popover-actions {

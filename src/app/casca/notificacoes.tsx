@@ -10,6 +10,8 @@ import type { Notificacao, TomDaNotificacao } from "../avisos.ts";
 */
 
 export const DURACAO_MS = 4500;
+/* Erro fica mais tempo: dá para ler e decidir o que fazer (WCAG 2.2.1). */
+export const DURACAO_DO_ERRO_MS = 10000;
 /** A animação de saída (`.toast.is-saindo`) antes de tirar da caixa. */
 const SAIDA_MS = 180;
 /** Ao tirar o mouse, ainda fica pelo menos isto. */
@@ -43,7 +45,7 @@ export function CaixaDeNotificacoes() {
 function CartaoDeNotificacao({ id, texto, tom }: Notificacao) {
   const [saindo, definirSaindo] = useState(false);
   const [sobOMouse, definirSobOMouse] = useState(false);
-  const restante = useRef(DURACAO_MS);
+  const restante = useRef(tom === "error" ? DURACAO_DO_ERRO_MS : DURACAO_MS);
   const cartao = useRef<HTMLDivElement>(null);
 
   /*
@@ -56,11 +58,16 @@ function CartaoDeNotificacao({ id, texto, tom }: Notificacao) {
     if (!elemento) return;
     const entrar = () => definirSobOMouse(true);
     const sair = () => definirSobOMouse(false);
+    // O foco do teclado (no ×) também segura a notificação, como o mouse.
     elemento.addEventListener("mouseenter", entrar);
     elemento.addEventListener("mouseleave", sair);
+    elemento.addEventListener("focusin", entrar);
+    elemento.addEventListener("focusout", sair);
     return () => {
       elemento.removeEventListener("mouseenter", entrar);
       elemento.removeEventListener("mouseleave", sair);
+      elemento.removeEventListener("focusin", entrar);
+      elemento.removeEventListener("focusout", sair);
     };
   }, []);
 

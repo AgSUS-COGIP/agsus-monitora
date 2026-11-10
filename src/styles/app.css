@@ -331,21 +331,22 @@ body.config-loading #loginScreen {
   color: var(--color-blue-800);
 }
 .login-cogip-role {
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: #60758f;
   font-weight: 500;
 }
 .login-cogip-dept {
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: #9fb3c8;
   font-weight: 500;
   margin-top: 1px;
 }
 
-/* Rótulo de campo, em sentence case (Design System 4.3). O rótulo de caixa
-   de marcar/opção (filtros, "Agrupar por projeto") é texto comum: fica de fora. */
+/* Rótulo de campo: sentence case, peso 600 (DESIGN.md seção 0). O rótulo de
+   caixa de marcar/opção (filtros, "Agrupar por projeto") é texto comum: fica
+   de fora. */
 label:where(:not(:has(input[type="checkbox"], input[type="radio"]))) {
-  font-size: 12px;
+  font-size: var(--text-label);
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -509,7 +510,7 @@ textarea:focus-visible,
   justify-content: center;
   border-radius: 999px;
   padding: 5px 11px;
-  font-size: 12px;
+  font-size: var(--text-caption);
   font-weight: 600;
   border: 1px solid transparent;
   letter-spacing: 0;
@@ -998,7 +999,7 @@ body.external-clean #externalReturnBar {
 }
 .search-modal-fechar kbd {
   display: block;
-  font-size: 12px;
+  font-size: var(--text-caption);
   background: var(--surface-raised);
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
@@ -1055,7 +1056,7 @@ body.external-clean #externalReturnBar {
 }
 .search-result-sub {
   display: block;
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: var(--text-secondary);
   font-weight: 500;
   margin-top: 2px;
@@ -1066,7 +1067,7 @@ body.external-clean #externalReturnBar {
   border-radius: 3px;
 }
 .search-result-chip {
-  font-size: 12px;
+  font-size: var(--text-caption);
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 999px;
@@ -1276,7 +1277,7 @@ th {
   text-align: left;
   border-bottom: 1px solid var(--line);
   padding: 10px 9px;
-  font-size: 12px;
+  font-size: var(--text-caption);
   font-weight: 600;
 }
 td {

@@ -203,7 +203,7 @@ describe("seção Comemorações", () => {
       marco("edital-concluido").querySelector(".comemoracoes-testar"),
     );
     expect(testar).toHaveBeenCalledWith({
-      texto: "Edital 100% analisado",
+      texto: "Edital 12/2026 · DSEI Xingu: todas as análises concluídas!",
       efeito: "coracoes",
       intensidade: "normal",
       duracaoMs: null,

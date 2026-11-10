@@ -313,7 +313,7 @@ function CriteriosDeDesempate({
                     <button
                       type="button"
                       className="btn secondary small"
-                      aria-label={`Subir ${c?.nome}`}
+                      aria-label={`Subir ${c?.nome || d.criterio}`}
                       disabled={i === 0}
                       onClick={() => mover(i, i - 1)}
                     >
@@ -322,7 +322,7 @@ function CriteriosDeDesempate({
                     <button
                       type="button"
                       className="btn secondary small"
-                      aria-label={`Descer ${c?.nome}`}
+                      aria-label={`Descer ${c?.nome || d.criterio}`}
                       disabled={i === desempate.length - 1}
                       onClick={() => mover(i, i + 1)}
                     >
@@ -334,7 +334,7 @@ function CriteriosDeDesempate({
                     <button
                       type="button"
                       className="btn danger small"
-                      aria-label={`Tirar ${c?.nome}`}
+                      aria-label={`Tirar ${c?.nome || d.criterio}`}
                       onClick={() =>
                         aoMudar(desempate.filter((_, j) => j !== i))
                       }

@@ -24,13 +24,15 @@
   border-radius: var(--radius-lg, 12px);
   background: var(--surface-card);
   color: var(--text-primary);
-  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow-overlay);
   transform: translateX(-50%);
   animation: comemoracao-entra 0.35s ease-out;
 }
 .comemoracao strong {
-  font-size: 15px;
+  font-size: var(--text-h4);
+  font-weight: 600;
   line-height: 1.4;
+  text-wrap: pretty;
 }
 /* O selo do aviso: o ícone de festa num círculo da cor da marca. */
 .comemoracao__selo {
@@ -39,7 +41,7 @@
   place-items: center;
   width: 36px;
   height: 36px;
-  border-radius: 999px;
+  border-radius: var(--radius-full, 999px);
   background: color-mix(in srgb, var(--brand-primary) 14%, transparent);
   color: var(--brand-primary);
 }
@@ -50,14 +52,13 @@
   border-left-color: var(--destaque-do-aviso);
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--destaque-do-aviso) 30%, transparent),
-    0 18px 40px -18px rgba(0, 0, 0, 0.45);
+    var(--shadow-overlay);
   animation:
     comemoracao-entra 0.5s cubic-bezier(0.2, 1.3, 0.35, 1),
     comemoracao-acende 1.6s ease-out 0.2s;
 }
 .comemoracao--festa strong {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--text-h3);
 }
 .comemoracao--festa .comemoracao__selo {
   background: var(--state-warning-soft);
@@ -92,7 +93,8 @@
   border-radius: var(--radius-md, 8px);
   background: transparent;
   color: var(--text-secondary);
-  font-size: 20px;
+  font-size: var(--text-h2);
+  line-height: 1;
   cursor: pointer;
 }
 .comemoracao__fechar:hover {
@@ -163,7 +165,7 @@ html[data-theme="dark"] .comemoracao__veu {
   background: transparent;
   color: var(--text-primary);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--text-label);
   font-weight: 600;
   cursor: pointer;
 }
@@ -206,7 +208,7 @@ html[data-theme="dark"] .comemoracao__veu {
 
 /*
   O letreiro: a frase do marco em texto de verdade (letreiro.tsx). Branca,
-  peso 800, numa placa escura translúcida (contraste >= 4.5:1 sobre
+  peso 700, na fonte do app, numa placa escura translúcida (contraste >= 4.5:1 sobre
   qualquer fundo; conta em letreiro.ts), por cima das partículas e abaixo
   do aviso. Um véu suave em volta só enquanto ela está na tela. As cores e
   o tamanho (clamp) vêm de letreiro.ts pelas variáveis --letreiro-*.
@@ -229,9 +231,9 @@ html[data-theme="dark"] .comemoracao__veu {
 .comemoracao__letreiro-placa {
   position: relative;
   max-width: calc(100vw - 32px);
-  padding: 0.22em 0.6em 0.3em;
+  padding: 0.24em 0.7em 0.3em;
   overflow: hidden;
-  border-radius: 0.32em;
+  border-radius: 0.5em;
   background: var(--letreiro-placa);
   box-shadow:
     inset 0 0 0 1px rgb(255 224 138 / 0.4),
@@ -259,14 +261,8 @@ html[data-theme="dark"] .comemoracao__veu {
   z-index: 1;
   display: block;
   color: var(--letreiro-texto);
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    "Helvetica Neue",
-    Arial,
-    sans-serif;
+  /* A fonte do app (a mesma dos títulos), não a do sistema. */
+  font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 1em;
   font-weight: 600;
   line-height: 1.1;
@@ -365,13 +361,13 @@ html[data-theme="dark"] .comemoracao__veu {
 }
 .comemoracao__corpo span {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--text-label);
 }
 .comemoracao__corpo ul {
   display: grid;
-  gap: 4px;
+  gap: var(--space-1, 4px);
   margin: 0;
-  padding-left: 18px;
-  font-size: 13px;
+  padding-left: var(--space-5, 20px);
+  font-size: var(--text-label);
   line-height: 1.4;
 }

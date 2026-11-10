@@ -273,7 +273,7 @@ export function mensagemDoEditalConcluido({
   unidade?: unknown;
 }): string {
   const nome = [texto(edital), texto(unidade)].filter(Boolean).join(" · ");
-  return `Edital ${nome} concluído! 🎉 Todas as análises foram feitas.`;
+  return `Edital ${nome}: todas as análises concluídas!`;
 }
 
 /*
@@ -287,7 +287,7 @@ export function equipeDaArea(nomeDaArea: unknown): string {
 }
 
 export function mensagemDaFilaZerada(nomeDaArea: unknown): string {
-  return `Fila de análises zerada! Obrigado, ${equipeDaArea(nomeDaArea)}. 🎉`;
+  return `Fila zerada, nenhuma análise pendente. Obrigado, ${equipeDaArea(nomeDaArea)}!`;
 }
 
 /**
@@ -408,7 +408,7 @@ export function mensagemDaVagaPronta({
   cargo?: unknown;
 }): string {
   const nome = [texto(vaga), texto(cargo)].filter(Boolean).join(" · ");
-  return `Vaga ${nome} pronta para o resultado final.`;
+  return `Vaga ${nome} pronta para o resultado final: toda entrevista tem parecer.`;
 }
 
 export function comemoracaoDasEntrevistas({
@@ -496,7 +496,7 @@ export function mensagemDoMarcoDoAno({
   marco: unknown;
   ano: unknown;
 }): string {
-  return `🎉 A ${equipeDaArea(nomeDaArea)} passou de ${formatarMarco(marco)} análises concluídas em ${ano}!`;
+  return `A ${equipeDaArea(nomeDaArea)} passou de ${formatarMarco(marco)} análises concluídas em ${ano}!`;
 }
 
 /** O agradecimento dos fogos do marco do ano: "1.000 análises concluídas em 2026. Obrigado, equipe de Projetos!" */
@@ -510,6 +510,29 @@ export function agradecimentoDoMarco({
   ano: unknown;
 }): string {
   return `${formatarMarco(marco)} análises concluídas em ${ano}. Obrigado, ${equipeDaArea(nomeDaArea)}!`;
+}
+
+/**
+ * O letreiro do marco do ano: "1.000 análises" (cabe nos 14 caracteres do
+ * letreiro); a partir de 10.000, só o número com exclamação ("10.000!").
+ */
+export function letreiroDoMarcoDoAno(marco: unknown): string {
+  const numero = formatarMarco(marco);
+  const comPalavra = `${numero} análises`;
+  return comPalavra.length <= 14 ? comPalavra : `${numero}!`;
+}
+
+/** A frase do fim de um tour (uma tela) ou de uma trilha da Aya. */
+export function mensagemDoFimDoTour({
+  trilha,
+  nome,
+}: {
+  trilha: boolean;
+  nome: string;
+}): string {
+  return trilha
+    ? `Parabéns! Você concluiu a trilha "${nome}".`
+    : `Parabéns! Você conheceu a tela ${nome}.`;
 }
 
 /** A forma do marco do ano no céu: o número ("1.000", "2.500"). */

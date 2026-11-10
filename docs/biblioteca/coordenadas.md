@@ -15,10 +15,10 @@ Base" tinha erros, não existe versão corrigida, e deixou de ser mesclada no fr
 
 | Documento                                                                                              | O que é                                                                                                |
 | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| [auditoria-oficial-das-coordenadas-2026-10-01.md](../auditoria-oficial-das-coordenadas-2026-10-01.md) | os 1.500 pontos conferidos contra CNES, IBGE e Funai (01–02/10/2026) e o que foi corrigido no banco    |
-| [pontos-so-na-planilha-de-lotacoes.md](../pontos-so-na-planilha-de-lotacoes.md)                        | o que a planilha fornecia e a decisão para cada atributo                                               |
-| [sedes-dos-dsei.md](../sedes-dos-dsei.md)                                                              | de onde vem cada sede de DSEI (CNES geocodificado, validado pela malha do IBGE)                        |
-| [auditoria-geografica.md](../auditoria-geografica.md)                                                  | o método: como a fonte é produzida, o casamento Polo Base × CNES, desempilhar e o modelo de confiança (leia por seção) |
+| [auditoria-oficial-das-coordenadas-2026-10-01.md](../coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md) | os 1.500 pontos conferidos contra CNES, IBGE e Funai (01–02/10/2026) e o que foi corrigido no banco    |
+| [pontos-so-na-planilha-de-lotacoes.md](../coordenadas/pontos-so-na-planilha-de-lotacoes.md)                        | o que a planilha fornecia e a decisão para cada atributo                                               |
+| [sedes-dos-dsei.md](../coordenadas/sedes-dos-dsei.md)                                                              | de onde vem cada sede de DSEI (CNES geocodificado, validado pela malha do IBGE)                        |
+| [auditoria-geografica.md](../coordenadas/auditoria-geografica.md)                                                  | o método: como a fonte é produzida, o casamento Polo Base × CNES, desempilhar e o modelo de confiança (leia por seção) |
 | `docs/_arquivo/auditoria-sedes-dsei-2026-09-16.md`, `docs/_arquivo/handoff-codex-mapas.md`             | registros anteriores (auditoria das 34 sedes e a passagem do trabalho dos mapas)                       |
 
 Os quatro primeiros ficam em `docs/` porque o código, os testes ou a base da Aya os citam pelo

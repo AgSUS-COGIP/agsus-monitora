@@ -48,10 +48,10 @@ describe("marcos de Análises curriculares", () => {
     expect(await avaliar("Pendente")).toBeNull();
     const comemoracao = await avaliar("Reprovado");
     expect(comemoracao.texto).toBe(
-      "Edital 05/2026 · SEDE concluído! 🎉 Todas as análises foram feitas.",
+      "Edital 05/2026 · SEDE: todas as análises concluídas!",
     );
     expect(comemoracao.itens).toEqual([
-      "Fila de análises zerada! Obrigado, equipe da SEDE. 🎉",
+      "Fila zerada, nenhuma análise pendente. Obrigado, equipe da SEDE!",
     ]);
     await depoisDoDesenho();
     expect(document.querySelector(".comemoracao")).not.toBeNull();
@@ -123,7 +123,7 @@ describe("meta de hoje batida pela equipe (Ritmo da análise)", () => {
     expect(chamar()).toBe(false);
     expect(soltar).toHaveBeenCalledTimes(1);
     expect(soltar.mock.calls[0][0]).toMatchObject({
-      texto: "Meta de hoje batida pela equipe! 🎉",
+      texto: "Meta de hoje batida! Obrigado, equipe.",
       marco: "meta-do-dia",
     });
     expect(chamar(HOJE, "u2")).toBe(true); // outra pessoa
@@ -183,7 +183,7 @@ describe("meta de hoje batida pela equipe (Ritmo da análise)", () => {
     });
     await depoisDoDesenho();
     const aviso = document.querySelector(".comemoracao");
-    expect(aviso?.textContent).toContain("Meta de hoje batida pela equipe!");
+    expect(aviso?.textContent).toContain("Meta de hoje batida!");
     expect(document.querySelector("canvas")).toBeNull();
     expect(document.querySelector(".comemoracao__pular")).toBeNull();
   });

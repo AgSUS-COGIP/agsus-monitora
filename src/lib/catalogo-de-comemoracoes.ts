@@ -99,7 +99,7 @@ export const PUBLICOS: readonly (readonly [Publico, string])[] = Object.freeze([
 /*
   "Toda a área online" precisa de um canal em tempo real por área, que o
   MONITORA ainda não tem (a presença é por batida de 45 s): fica só "quem
-  fez" até lá (README de src/modulos/configuracoes/).
+  fez" até lá (docs/biblioteca/modulo-configuracoes.md).
 */
 export const PUBLICOS_DISPONIVEIS: readonly Publico[] = Object.freeze([
   "quem-fez",
@@ -614,8 +614,8 @@ export function mensagemDoPersonalizado(p: MarcoPersonalizado): string {
   if (p.mensagem) return p.mensagem;
   const meta = p.meta.toLocaleString("pt-BR");
   return p.tipo === "edital-contratados"
-    ? `Edital ${p.edital} chegou a ${meta} contratados! 🎉`
-    : `A equipe passou de ${meta} análises concluídas hoje! 🎉`;
+    ? `Edital ${p.edital} chegou a ${meta} contratados!`
+    : `A equipe passou de ${meta} análises concluídas hoje!`;
 }
 
 // ── Revisão da publicação ───────────────────────────────────────────────────
