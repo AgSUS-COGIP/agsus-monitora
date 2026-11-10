@@ -19,9 +19,7 @@ import {
 
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
 const NOME = "20261002-regras-de-classificacao-todos-os-editais.sql";
-const SEED = ler(`supabase/correcoes/${NOME}`);
-const ENSAIO = ler(`supabase/ensaios/${NOME}`);
-const ROLLBACK = ler(`supabase/rollback/${NOME}`);
+const SEED = ler(`tests/fixtures/sql-de-dados/${NOME}`);
 const MOTIVO = "Regra lida do edital (PDF oficial) — conferir";
 
 const LINHA =
@@ -80,25 +78,6 @@ describe("seed das regras de todos os editais", () => {
     expect(SEED).toMatch(
       /\nbegin;\n[\s\S]+\nselect pg_temp\.aplicar_regras_dos_editais\(\);\n\ncommit;\n$/,
     );
-  });
-
-  it("ensaio: o mesmo corpo, roda duas vezes (idempotência) e termina em rollback", () => {
-    expect(corpo(ENSAIO)).toBe(corpo(SEED));
-    expect(
-      ENSAIO.match(/select pg_temp\.aplicar_regras_dos_editais\(\);/g),
-    ).toHaveLength(2);
-    for (const marca of ["ok E1", "ok E2", "ok E3", "ok E4", "ENSAIO OK"])
-      expect(ENSAIO).toContain(marca);
-    expect(ENSAIO.trim().endsWith("rollback;")).toBe(true);
-    expect(ENSAIO).not.toMatch(/\ncommit;/);
-  });
-
-  it("rollback: só as v1 do seed, sem versão 2, sem lista e sem desempate", () => {
-    expect(ROLLBACK).toContain(`h."DS_MOTIVO" = '${MOTIVO}'`);
-    expect(ROLLBACK).toContain('r."NU_VERSAO_VIGENTE" = 1');
-    expect(ROLLBACK).toContain('public."TB_LISTA_CLASSIFICACAO" l');
-    expect(ROLLBACK).toContain('public."TB_DESEMPATE_CLASSIFICACAO" d');
-    expect(ROLLBACK).toContain('h2."NU_VERSAO" > 1');
   });
 
   it("os 13 modelos estão no seed", () => {

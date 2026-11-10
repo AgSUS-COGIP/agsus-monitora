@@ -40,7 +40,7 @@ const CASOS = JSON.parse(
 );
 const REGRA = CASOS.regras["E114-POR-CARGO"];
 const CORRECAO = readFileSync(
-  "supabase/correcoes/20261013-edital-114-regra-por-cargo.sql",
+  "tests/fixtures/sql-de-dados/20261013-edital-114-regra-por-cargo.sql",
   "utf8",
 ).replace(/\r\n/g, "\n");
 const DOCUMENTAL = { nota_minima: 10, nota_minima_por_nivel: {} };

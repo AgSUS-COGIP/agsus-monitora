@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { ROBOS_DE_CARGA } from "../src/lib/robos-de-carga.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 import {
+  BANCO_DE_ANTES,
   COMENTARIOS_DE_HOJE,
   definicaoVigente,
   ENSAIO,
@@ -19,8 +20,9 @@ import { CATALOGO_DOS_ROBOS } from "./fixtures/catalogo-dos-robos.ts";
   Migration 20261109180000 (catálogo dos robôs e chave única): invariantes
   estáticas. O comportamento no banco está em tests/catalogo-dos-robos-no-banco.test.ts.
 
-  - O catálogo é a soma exata das listas fixas de antes, lidas das migrations
-    de origem (não de uma cópia neste teste).
+  - O catálogo é a soma exata das listas fixas de antes, lidas da fixture
+    tests/fixtures/banco-antes-do-catalogo-dos-robos.sql (cópia literal das
+    migrations de origem, que saíram do repositório).
   - Tudo o que pede ou registra workflow (disparar_robo, as tarefas do pg_cron,
     ROBOS_DE_CARGA da tela, os .yml do repositório) cabe no catálogo.
   - FC_DISPARAR_ROBO, registrar_disparo_externo e alterar_chave_da_automacao
@@ -31,19 +33,11 @@ import { CATALOGO_DOS_ROBOS } from "./fixtures/catalogo-dos-robos.ts";
   - Padrão MAD nas tabelas novas.
 */
 
-const DE_HOJE = {
-  disparar: lerMigration(
-    "20261030090000_lista_de_aprovados_substituir_preserva_o_estado.sql",
-  ),
-  doWorkflow: lerMigration("20261029180000_pacotes_dos_paineis_em_python.sql"),
-  chaves: lerMigration("20261022190000_chaves_da_automacao.sql"),
-  etapa2b: lerMigration("20261023200000_classificacao_em_python_etapa_2b.sql"),
-  auditoria: lerMigration("20261103213000_limpeza_da_auditoria.sql"),
-};
+/* As migrations de origem saíram do repositório; os trechos estão na fixture do banco de antes. */
+const DE_HOJE = { disparar: BANCO_DE_ANTES, etapa2b: BANCO_DE_ANTES };
 const antiga = (nome: string) => {
-  const origem = FUNCOES_DE_HOJE.find(([, n]) => n === nome);
-  if (!origem) throw new Error(nome);
-  return definicaoVigente(origem[0], nome);
+  if (!FUNCOES_DE_HOJE.includes(nome)) throw new Error(nome);
+  return definicaoVigente(nome);
 };
 const nova = (texto: string, cabeca: string) => {
   const inicio = texto.toLowerCase().indexOf(cabeca.toLowerCase());
@@ -245,7 +239,8 @@ describe("tudo o que pede ou registra workflow cabe no catálogo", () => {
       );
   });
 
-  it("todo FC_DISPARAR_ROBO('x.yml' das migrations (tarefas do pg_cron e funções) está no catálogo", () => {
+  // As migrations antigas saíram do repositório: isto vale para as que vierem depois desta.
+  it("todo FC_DISPARAR_ROBO('x.yml' das migrations do repositório (tarefas do pg_cron e funções) está no catálogo", () => {
     const pedidos = new Set<string>();
     for (const arquivo of readdirSync("supabase/migrations").filter((f) =>
       f.endsWith(".sql"),
@@ -254,7 +249,6 @@ describe("tudo o que pede ou registra workflow cabe no catálogo", () => {
         /"FC_DISPARAR_ROBO"\('{1,2}([a-z0-9-]+\.yml)'/g,
       ))
         pedidos.add(w);
-    expect(pedidos.size).toBeGreaterThanOrEqual(5);
     for (const w of pedidos) expect(porWorkflow.has(w), w).toBe(true);
   });
 
@@ -475,7 +469,7 @@ describe("o rollback", () => {
     expect(ROLLBACK.trimEnd().endsWith("commit;")).toBe(true);
     // Fora dos corpos restaurados, não mexe no estado das tarefas nem apaga histórico.
     let semCorpos = ROLLBACK;
-    for (const nome of FUNCOES_DE_HOJE.map(([, n]) => n))
+    for (const nome of FUNCOES_DE_HOJE)
       if (ROLLBACK.includes(antiga(nome)))
         semCorpos = semCorpos.replace(antiga(nome), "");
     expect(semCorpos).not.toMatch(

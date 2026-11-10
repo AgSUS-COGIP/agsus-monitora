@@ -44,9 +44,10 @@ const { CONTRATO_RPC } = await import(
   pathToFileURL(join(process.cwd(), "src/lib/rpc-contrato.ts")).href
 );
 
-const { readdirSync, readFileSync } = await import("node:fs");
-// As históricas também definem funções (ex.: a padronização MAD de 18/09).
-const sqlExistente = ["supabase/migrations", "supabase/migrations-historicas"]
+const { existsSync, readdirSync, readFileSync } = await import("node:fs");
+// As migrations já aplicadas saíram do repositório (10/11/2026): conta só o que ainda está nele.
+const sqlExistente = ["supabase/migrations"]
+  .filter((dir) => existsSync(dir))
   .flatMap((dir) =>
     readdirSync(dir).map((f) => readFileSync(join(dir, f), "utf8")),
   )

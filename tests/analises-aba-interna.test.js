@@ -98,29 +98,3 @@ describe("o legado trata Análises como página", () => {
     );
   });
 });
-
-describe("a migration preserva quem via", () => {
-  const migration = ler(
-    "supabase/migrations/20260929100000_analises_aba_interna.sql",
-  );
-  const rollback = ler(
-    "supabase/rollback/20260929100000_analises_aba_interna.sql",
-  );
-
-  it("arquiva o painel com marca, sem apagar", () => {
-    expect(migration).toContain(
-      "set ativo = false, tipo_abertura = 'aba_interna'",
-    );
-    expect(migration).not.toMatch(/\bdelete\b/i);
-    expect(migration).toContain(
-      "c_manter_quem_nao_via constant boolean := true;",
-    );
-    expect(migration).toContain("'Análises curriculares viram aba interna'");
-  });
-
-  it("o rollback só desfaz o que a migration fez", () => {
-    expect(rollback).toContain("h.motivo = c_motivo");
-    expect(rollback).toContain("r.revisao = 1");
-    expect(rollback).toContain("paineis_antes");
-  });
-});
