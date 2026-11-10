@@ -806,18 +806,21 @@ function juntar({
   explicacao,
   partes,
   situacoesQueContam,
+  partesQueContam = partes,
 }: {
   id: string;
   titulo: string;
   explicacao: string;
   partes: Carga[];
   situacoesQueContam: SituacaoDaCarga[];
+  /* De onde vem o erro da linha: a parte que não conta (pausada) não o pinta. */
+  partesQueContam?: Carga[];
 }): LinhaDaSaude {
   const situacao = partes.length ? pior(situacoesQueContam) : "nunca";
   const maisRecente = [...partes].sort(
     (a, b) => refDaCarga(b) - refDaCarga(a),
   )[0];
-  const falha = partes.find((p) => p.situacao === "falhou");
+  const falha = partesQueContam.find((p) => p.situacao === "falhou");
   const erro = falha?.historico.find((e) => e.situacao === "falha") || null;
   return {
     id,
@@ -973,6 +976,10 @@ export function visaoSimples(
       ? { ...c, situacao: "desligada" as const }
       : c,
   );
+  // A tarefa pausada (ativa = false) ou desligada não conta na situação nem no erro.
+  const tarefasQueContam = partesDasTarefas.filter(
+    (c) => c.ativa !== false && c.situacao !== "desligada",
+  );
   linhas.push(
     tarefas?.indisponivel
       ? {
@@ -993,9 +1000,8 @@ export function visaoSimples(
           explicacao:
             "Prepara os painéis para abrirem rápido, além de estatísticas e limpeza.",
           partes: partesDasTarefas,
-          situacoesQueContam: partesDasTarefas
-            .filter((c) => c.ativa !== false && c.situacao !== "desligada")
-            .map((c) => c.situacao),
+          situacoesQueContam: tarefasQueContam.map((c) => c.situacao),
+          partesQueContam: tarefasQueContam,
         }),
   );
 
