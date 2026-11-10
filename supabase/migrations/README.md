@@ -27,8 +27,9 @@ importam, cada uma com rollback e ensaio.
 
 O que isso muda no dia a dia:
 
-- **A fonte do código do banco é o banco.** Para trocar uma função, copie o corpo vigente no SQL
-  Editor (`select pg_get_functiondef('private."FC_X"(text)'::regprocedure);`) e ponha na migration
+- **A fonte do código do banco é o banco; `supabase/esquema-atual.sql` é o retrato dele** (só
+  leitura, regerado por `npm run db:esquema`). Para ler e pesquisar, use o retrato. Para trocar
+  uma função, copie o corpo vigente no SQL Editor (`select pg_get_functiondef('private."FC_X"(text)'::regprocedure);`) e ponha na migration
   uma guarda pelo md5 do `prosrc` (modelo: a guarda de `20261109180000`), para não sobrescrever
   uma mudança que você não viu.
 - **O rollback copia o corpo de antes** desse mesmo `pg_get_functiondef`, não de uma migration.
@@ -58,6 +59,9 @@ O que isso muda no dia a dia:
 
    (`SUPABASE_DB_URL` no ambiente, ex.: `node --env-file=.env.local scripts/estado-das-migrations.mjs`.)
    Marcar sem ter aplicado é a única forma de o registro mentir.
+
+7. **Atualizar o retrato**: `npm run db:esquema` regrava `supabase/esquema-atual.sql` a partir do
+   banco (pg_dump, só leitura). Commite o diff: ele é o registro legível do que a migration mudou.
 
 **Nunca editar uma migration já aplicada**: o hash deixa de bater (estado "divergente"). Mudou o
 efeito → migration nova.

@@ -9,6 +9,11 @@
   `pg_get_functiondef` no SQL Editor e guarde a migration pelo md5 do `prosrc` (modelo:
   `20261109180000`). O histórico está no Git (`git log --all -- supabase/migrations/<arquivo>`); nome de migration
   citado em doc ou comentário é esse histórico (e a linha do registro), não um arquivo daqui.
+- `esquema-atual.sql` — **retrato do schema de produção, só leitura, NÃO aplicar.** É onde se lê e
+  pesquisa o código vigente de função, tabela, policy e grant (e as tarefas do pg_cron, no fim).
+  Regerado por `npm run db:esquema` (pg_dump; precisa de `SUPABASE_DB_URL`) depois de cada migration
+  aplicada, e commitado junto: o diff mostra o que a migration mudou. Pode estar atrasado em
+  relação ao banco; para a guarda md5 de uma migration, confira no banco.
 - `rollback/` e `ensaios/` — desfazer e ensaiar (`begin; … rollback;`) cada migration, mesmo nome.
   Regras do rollback em "Rollback" abaixo.
 - `tests/` — testes SQL de RPCs específicas (não gravam).

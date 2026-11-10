@@ -192,7 +192,8 @@ A aplicação é **manual** (SQL Editor ou `psql`), feita por quem opera o banco
 do PR, e fica registrada em `public.migracoes_aplicadas` (caminho + sha256; `npm run db:estado`
 mostra o que falta). **Não se usa `supabase db push`.** Migration aplicada não se edita: cria-se
 outra. As migrations já aplicadas saíram do repositório em 10/11/2026 (o banco não mudou; o
-histórico fica no Git): o código vigente de uma função se lê no banco (`pg_get_functiondef`).
+histórico fica no Git): o código vigente se lê em `supabase/esquema-atual.sql`, retrato do schema só para leitura
+(`npm run db:esquema`), ou no banco (`pg_get_functiondef`).
 
 - Nomes no Padrão Institucional de Nomenclatura da AgSUS (MAD/PDTIC 2026–2027: `TB_`, `TA_`,
   `TH_`, `RL_`, `TL_`, colunas com prefixo tipológico, `COMMENT ON` em tudo).
