@@ -91,6 +91,11 @@ export type ListaDoAcompanhamento = {
 export type Acompanhamento = {
   etapasPorEdital: Map<string, EtapaDoAcompanhamento[]>;
   listasPorEdital: Map<string, ListaDoAcompanhamento>;
+  /** A marcação manual de crítico por edital (`criticos_manuais`); ausente = não carregada. */
+  criticosPorEdital?: Map<
+    string,
+    { motivo: string; quem?: string | null; quando?: string | null }
+  >;
 };
 export type Indicadores = {
   processos: number;
@@ -135,10 +140,16 @@ export type BuscaDoAcompanhamento = (
   area: string,
 ) => unknown | PromiseLike<unknown>;
 export type ClienteDoAcompanhamento = {
-  rpc: (
-    nome: "listar_acompanhamento_da_visao_geral_se_mudou",
-    parametros: { p_area: string; p_versao: string | null },
-  ) => PromiseLike<{ data: unknown; error: unknown }>;
+  rpc: {
+    (
+      nome: "listar_acompanhamento_da_visao_geral_se_mudou",
+      parametros: { p_area: string; p_versao: string | null },
+    ): PromiseLike<{ data: unknown; error: unknown }>;
+    (
+      nome: "listar_editais_criticos_manuais",
+      parametros: { p_area: string },
+    ): PromiseLike<{ data: unknown; error: unknown }>;
+  };
 };
 export type ClienteDosMarcos = {
   rpc: (

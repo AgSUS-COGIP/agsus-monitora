@@ -140,19 +140,28 @@ describe("fronteiras externas da Visão geral", () => {
       listas: [{ edital_id: "e1" }],
       versao: "v1",
     };
-    const rpc = vi
-      .fn()
-      .mockResolvedValueOnce({ data: primeiro, error: null })
-      .mockResolvedValueOnce({
-        data: { inalterado: true, versao: "v1" },
-        error: null,
-      });
-    const buscar = buscarAcompanhamentoNoSupabase({ rpc });
-    expect(await buscar("area-da-versao")).toBe(primeiro);
-    expect(await buscar("area-da-versao")).toBe(primeiro);
-    expect(rpc.mock.calls.map(([, argumentos]) => argumentos.p_versao)).toEqual(
-      [null, "v1"],
+    const respostas = [
+      { data: primeiro, error: null },
+      { data: { inalterado: true, versao: "v1" }, error: null },
+    ];
+    // A marcação manual de crítico vem de outra RPC, lida junto (20261110150000).
+    const rpc = vi.fn(async (nome) =>
+      nome === "listar_editais_criticos_manuais"
+        ? { data: [], error: null }
+        : respostas.shift(),
     );
+    const buscar = buscarAcompanhamentoNoSupabase({ rpc });
+    const entregue = await buscar("area-da-versao");
+    expect(entregue).toEqual({ ...primeiro, criticos_manuais: [] });
+    // Nada mudou (acompanhamento inalterado, mesma marcação): o MESMO objeto.
+    expect(await buscar("area-da-versao")).toBe(entregue);
+    expect(
+      rpc.mock.calls
+        .filter(
+          ([nome]) => nome === "listar_acompanhamento_da_visao_geral_se_mudou",
+        )
+        .map(([, argumentos]) => argumentos.p_versao),
+    ).toEqual([null, "v1"]);
   });
 
   it("repassa o erro da RPC e não aceita números de marcos malformados", async () => {

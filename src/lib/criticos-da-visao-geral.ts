@@ -17,6 +17,11 @@
     zero: não acende.
   Edital concluído:
   - contratação baixa — vagas imediatas contratadas abaixo de 50% das vagas.
+  Em qualquer edital não cancelado:
+  - marcado — gestor, coordenador ou administrador global marcou o edital
+    como crítico, com motivo (TB_EDITAL_CRITICO, migration 20261110150000;
+    `listar_editais_criticos_manuais`). É o mais grave: foi uma pessoa que
+    decidiu. Os motivos automáticos continuam valendo junto.
   Cancelado nunca é crítico. Etapa chegando (próxima em até 3 dias) é agenda,
   não problema: não faz o edital crítico (pedido de 02/10) — fica nas
   boas-vindas e na cor da próxima etapa da tabela.
@@ -25,6 +30,10 @@
 */
 
 import { hojeEmBrasilia } from "./cronograma-do-edital.ts";
+import {
+  motivoPareceTexto,
+  textoLimpo,
+} from "./avaliacao-documental/qualidade-do-motivo.ts";
 import { faseDoEdital } from "./fases-do-processo.ts";
 import {
   contratadasImediatas,
@@ -46,7 +55,14 @@ export interface LimitesDoCritico {
 
 /** Os códigos dos motivos de atenção (chaves de `MOTIVOS_DO_CRITICO`). */
 export type CodigoDoMotivo =
-  "atrasada" | "parado" | "sem_inscritos" | "contratacao_baixa";
+  "marcado" | "atrasada" | "parado" | "sem_inscritos" | "contratacao_baixa";
+
+/** A marcação manual de crítico de um edital (`listar_editais_criticos_manuais`). */
+export interface MarcacaoDeCritico {
+  motivo: string;
+  quem?: string | null;
+  quando?: string | null;
+}
 
 /** Uma etapa do cronograma: só as datas importam aqui. */
 type EtapaDoCritico =
@@ -63,6 +79,7 @@ export const LIMITES_DO_CRITICO = Object.freeze({
 
 /* Do mais grave ao menos grave: a ordem da tabela e dos selos. */
 export const MOTIVOS_DO_CRITICO = Object.freeze({
+  marcado: Object.freeze({ peso: 0, tom: "perigo" }),
   atrasada: Object.freeze({ peso: 1, tom: "perigo" }),
   parado: Object.freeze({ peso: 2, tom: "alerta" }),
   sem_inscritos: Object.freeze({ peso: 3, tom: "alerta" }),
@@ -146,10 +163,12 @@ export function motivosDeAtencao(
     hoje,
     etapas = null,
     limites = LIMITES_DO_CRITICO,
+    marcacao = null,
   }: {
     hoje?: string;
     etapas?: readonly EtapaDoAcompanhamento[] | null;
     limites?: LimitesDoCritico;
+    marcacao?: MarcacaoDeCritico | null;
   } = {},
 ): Motivo[] {
   if (!linha || ehCancelado(linha)) return [];
@@ -163,6 +182,17 @@ export function motivosDeAtencao(
   const diaDeHoje =
     diaDoCalendario(hoje) === null ? hojeEmBrasilia() : (hoje as string);
   const dia = diaDoCalendario(diaDeHoje)!;
+
+  const motivoDaMarcacao = txt(marcacao?.motivo);
+  if (motivoDaMarcacao) {
+    const quem = txt(marcacao?.quem);
+    motivos.push(
+      motivo(
+        "marcado",
+        `Marcado como crítico${quem ? ` por ${quem}` : ""}: ${motivoDaMarcacao}`,
+      ),
+    );
+  }
 
   if (ehConcluido(linha)) {
     const vagas = num(linha.vagas_total);
@@ -239,4 +269,23 @@ export function gravidade(
       ),
     99,
   );
+}
+
+/** Tamanho do motivo da marcação manual (o do banco, marcar_edital_critico). */
+export const MOTIVO_DO_CRITICO = Object.freeze({ minimo: 10, maximo: 500 });
+
+/**
+ * O que falta no motivo de marcar ou desmarcar o edital como crítico ("" =
+ * pode gravar). A mesma regra do banco: 10 a 500 caracteres e 2 palavras.
+ */
+export function erroDoMotivoDoCritico(texto: unknown): string {
+  const limpo = textoLimpo(texto);
+  if (
+    limpo.length < MOTIVO_DO_CRITICO.minimo ||
+    limpo.length > MOTIVO_DO_CRITICO.maximo
+  )
+    return `Escreva o motivo (${MOTIVO_DO_CRITICO.minimo} a ${MOTIVO_DO_CRITICO.maximo} caracteres).`;
+  if (!motivoPareceTexto(limpo, 2))
+    return "O motivo precisa de pelo menos 2 palavras.";
+  return "";
 }

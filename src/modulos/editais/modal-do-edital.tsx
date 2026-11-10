@@ -54,6 +54,7 @@ import {
 import { Aviso, Campo, Modal } from "../../ui/index.ts";
 import { EditorDeCronograma } from "./editor-de-cronograma.tsx";
 import { ResponsaveisDoEdital } from "./responsaveis-do-edital.tsx";
+import { CriticoDoEdital } from "./critico-do-edital.tsx";
 import type { EstadoDoEditorDeCronograma } from "./editor-de-cronograma.tsx";
 import type { RetificacaoParaAplicar } from "./lancar-retificacao.tsx";
 import { ImportarAnexos } from "./importar-anexos.tsx";
@@ -860,6 +861,8 @@ export function ModalDoEdital({
           />
 
           {id ? <ResponsaveisDoEdital editalId={String(id)} /> : null}
+
+          {id ? <CriticoDoEdital editalId={String(id)} /> : null}
 
           <EditorDeCronograma
             estado={estado}
