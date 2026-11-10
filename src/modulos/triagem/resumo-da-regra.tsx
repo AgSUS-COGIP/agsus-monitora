@@ -1,6 +1,7 @@
 import { Aviso, GradeDeKv, Kv, Selo } from "../../ui/index.ts";
 import { resumoDaRegraDaTriagem } from "../../lib/triagem/regra-da-triagem.ts";
 import type { RespostaDaRegraDaTriagem } from "../../lib/triagem/regra-da-triagem.ts";
+import { CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   Resumo só-leitura da regra da Triagem, no topo da tela da Triagem: versão,
@@ -25,9 +26,11 @@ export function ResumoDaRegraDaTriagem({
     );
   if (!resposta)
     return (
-      <section className="ui-card triagem-regra" aria-busy="true">
-        <div className="ui-esqueleto-linha" />
-      </section>
+      <CarregandoConteudo
+        rotulo="Carregando a regra da triagem…"
+        className="triagem-regra"
+        linhas={1}
+      />
     );
   const regra = resposta.regra;
   return (

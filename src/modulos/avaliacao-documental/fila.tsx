@@ -109,6 +109,7 @@ import { ReinicioDasFichas } from "./reinicio-das-fichas.tsx";
 import type { LojaDaFila, SnapshotDaFila } from "./estado-da-fila.ts";
 import type { FiltroSalvo } from "./tipos-do-estado.ts";
 import type { AberturaDoRelatorio } from "./relatorio-de-motivos.tsx";
+import { CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   Aba Fila (fase F3): o resumo do andamento (o edital e o bloco recolhível
@@ -597,10 +598,7 @@ function ModoDeAnalise({
   if (!f)
     return (
       <div className="avd-analise" aria-busy={abrindo ? "true" : undefined}>
-        <div className="ui-card">
-          <div className="ui-esqueleto-linha" />
-          <div className="ui-esqueleto-linha" />
-        </div>
+        <CarregandoConteudo rotulo="Abrindo a ficha…" />
       </div>
     );
 
@@ -1660,13 +1658,7 @@ export function Fila({ e, fila }: FilaProps) {
         </button>
       </Aviso>
     );
-  if (!dados)
-    return (
-      <div className="ui-card" aria-busy="true">
-        <div className="ui-esqueleto-linha" />
-        <div className="ui-esqueleto-linha" />
-      </div>
-    );
+  if (!dados) return <CarregandoConteudo rotulo="Carregando a fila…" />;
 
   // As ações da coordenação num menu só (quem não coordena não vê o menu).
   const acoesDaCoordenacao: AcaoDoMenu[] = [

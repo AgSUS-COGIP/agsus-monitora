@@ -92,6 +92,7 @@ import type {
   Mudar,
   Passo,
 } from "./tipos.ts";
+import { CarregandoConteudo } from "../../../ui/index.ts";
 
 /*
   O conteúdo da ficha no modo de análise da aba Fila, calmo e guiado:
@@ -384,10 +385,7 @@ export function ConteudoDaFicha({
       <>
         {topo ? <CabecalhoDaFicha {...topo} /> : null}
         {children}
-        <div className="ui-card" aria-busy="true">
-          <div className="ui-esqueleto-linha" />
-          <div className="ui-esqueleto-linha" />
-        </div>
+        <CarregandoConteudo rotulo="Carregando a ficha…" />
       </>
     );
 

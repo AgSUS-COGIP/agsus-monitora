@@ -3,6 +3,7 @@ import { importarComRecarga } from "../../lib/importar-com-recarga";
 import type { LinhaDoResumo } from "../../lib/regras-do-edital.ts";
 import { GradeDeKv, Kv, Selo } from "../../ui/index.ts";
 import "./resumo-da-regra-da-etapa.css";
+import { CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   A regra de uma etapa, só para ler, no topo da tela da etapa (Avaliação
@@ -115,10 +116,10 @@ export function ResumoDaRegraDaEtapa({
         ) : null}
       </header>
       {temRegra && !resumos ? (
-        <div aria-busy="true" aria-label={`Carregando o resumo: ${titulo}`}>
-          <div className="ui-esqueleto-linha" />
-          <div className="ui-esqueleto-linha" />
-        </div>
+        <CarregandoConteudo
+          rotulo={`Carregando o resumo: ${titulo}…`}
+          semMoldura
+        />
       ) : temRegra && lidas.length ? (
         <GradeDeKv rotulo={`Resumo: ${titulo}`}>
           {lidas.map((linha) => (

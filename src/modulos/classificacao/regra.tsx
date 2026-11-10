@@ -64,6 +64,7 @@ import {
   dataEHoraCurtas,
   textoDaGravacao,
 } from "../../lib/rascunho-da-regra.ts";
+import { CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   A aba "Regra" da Classificação: o formulário da regra do edital, decidida
@@ -738,10 +739,7 @@ export function Regra({
             aoDescartar={guardado.descartar}
           />
         ) : (
-          <div className="ui-card" aria-busy="true">
-            <div className="ui-esqueleto-linha" />
-            <div className="ui-esqueleto-linha" />
-          </div>
+          <CarregandoConteudo rotulo="Carregando a regra…" />
         )}
       </div>
     );

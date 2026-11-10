@@ -53,6 +53,7 @@ import { FilaDoDia, MINHA_BANCA } from "./fila-do-dia.tsx";
 import type { FiltrosDaFila } from "./fila-do-dia.tsx";
 import { usarSeletorDoEdital } from "./seletor-do-edital.tsx";
 import "./entrevistas.css";
+import { CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   CONDUZIR ENTREVISTAS (view `conduzir-entrevistas`, "fazer"; secretaria e
@@ -425,11 +426,11 @@ function TelaDeConducao({
         </Aviso>
       ) : null}
       {e.carregandoEdital && !dados ? (
-        <div className="ui-card entrevistas-carregando" aria-busy="true">
-          <div className="ui-esqueleto-linha" />
-          <div className="ui-esqueleto-linha" />
-          <div className="ui-esqueleto-linha" />
-        </div>
+        <CarregandoConteudo
+          rotulo="Carregando o edital…"
+          className="entrevistas-carregando"
+          linhas={3}
+        />
       ) : null}
       {visao === "fila" ? (
         !e.editalId && e.editais.lista.length ? (
@@ -472,10 +473,10 @@ function TelaDeConducao({
       ) : (
         <Suspense
           fallback={
-            <div className="ui-card entrevistas-carregando" aria-busy="true">
-              <div className="ui-esqueleto-linha" />
-              <div className="ui-esqueleto-linha" />
-            </div>
+            <CarregandoConteudo
+              rotulo="Carregando…"
+              className="entrevistas-carregando"
+            />
           }
         >
           <PrepararEdital conducao={conducao} e={e} />
