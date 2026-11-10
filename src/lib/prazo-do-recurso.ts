@@ -81,7 +81,13 @@ export function papelDaAtividade(texto: unknown) {
   return "abertura";
 }
 
+/*
+  Etapa sem ordem vai para o fim. `Number(null)` e `Number("")` dão 0, e a
+  etapa sem ordem passava à frente de todas, roubando a origem herdada.
+*/
 const numero = (valor: unknown) => {
+  if (valor === null || valor === undefined || String(valor).trim() === "")
+    return Number.POSITIVE_INFINITY;
   const n = Number(valor);
   return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
 };

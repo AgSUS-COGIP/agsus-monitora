@@ -241,6 +241,32 @@ describe("contexto: recurso sem etapa herda a da atividade anterior", () => {
       "2025-10-17",
     );
   });
+
+  it("etapa sem ordem vai para o fim, não para o começo", () => {
+    // Antes, Number(null) = 0 punha a resposta sem ordem antes da entrevista,
+    // e ela herdava a origem errada (ou nenhuma).
+    for (const vazio of [null, undefined, "", "  "]) {
+      const etapas = [
+        { ordem: 1, atividade: "Resultado preliminar da entrevista" },
+        {
+          ordem: vazio,
+          atividade: "Análise e resposta ao recurso",
+          fim: "2025-11-20",
+        },
+        { ordem: 2, atividade: "Resultado final" },
+      ];
+      const classificadas = classificarCronograma(etapas);
+      expect(classificadas.map((e) => e.atividade)).toEqual([
+        "Resultado preliminar da entrevista",
+        "Resultado final",
+        "Análise e resposta ao recurso",
+      ]);
+      expect(classificadas.at(-1)).toMatchObject({
+        origem: "resultado-final",
+        papel: "resposta",
+      });
+    }
+  });
 });
 
 describe("prazo por origem", () => {
