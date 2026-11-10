@@ -84,8 +84,8 @@ describe("avaliação da cor escolhida", () => {
     const medio = avaliarCor("#8a7fb0");
     expect(medio.passa).toBe(false);
     expect(medio.razao).toBeLessThan(MINIMO_AA);
-    expect(medio.mensagem).toContain("Abaixo do mínimo de 4.5");
-    expect(medio.mensagem).toContain(String(medio.razao.toFixed(2)));
+    expect(medio.mensagem).toContain("Abaixo do mínimo de 4,5");
+    expect(medio.mensagem).toContain(medio.razao.toFixed(2).replace(".", ","));
   });
 
   /*
@@ -93,6 +93,20 @@ describe("avaliação da cor escolhida", () => {
     o texto claro passar, clarear faz o escuro passar. A frase não pode mandar
     só escurecer.
   */
+  /*
+    O verde-petróleo #2a8478 mede 4,4966 com o texto claro: reprova. Arredondado,
+    o aviso dizia "4,50 — abaixo do mínimo de 4,5", que se contradiz.
+  */
+  it("não arredonda para cima uma cor que reprova por pouco", () => {
+    const quase = avaliarCor("#2a8478");
+    expect(quase.corDoTexto).toBe(TEXTO_CLARO);
+    expect(quase.passa).toBe(false);
+    expect(quase.razao).toBe(4.49);
+    expect(quase.mensagem).toContain(
+      "Contraste do texto sobre esta cor: 4,49.",
+    );
+  });
+
   it("a mensagem de falha não manda só escurecer", () => {
     const medio = avaliarCor("#8a7fb0");
     expect(medio.mensagem).toContain("mais escura ou mais clara");
@@ -100,8 +114,8 @@ describe("avaliação da cor escolhida", () => {
 
   it("a mensagem de sucesso também traz o número", () => {
     const ok = avaliarCor("#c090eb");
-    expect(ok.mensagem).toContain("Acima do mínimo de 4.5");
-    expect(ok.mensagem).toContain("5.88");
+    expect(ok.mensagem).toContain("Acima do mínimo de 4,5");
+    expect(ok.mensagem).toContain("5,87");
   });
 
   it("recusa o que não é cor hexadecimal", () => {
@@ -158,7 +172,7 @@ describe("o aviso no formulário", () => {
       ".config-contraste__aviso",
     );
     expect(aviso.dataset.tone).toBe("info");
-    expect(aviso.textContent).toContain("5.88");
+    expect(aviso.textContent).toContain("5,87");
   });
 
   it("some quando a cor é inválida", () => {
@@ -177,7 +191,7 @@ describe("os dois campos de cor recebem o aviso", () => {
 
   it("o aviso não depende só de cor para se distinguir", () => {
     // O número vai escrito na mensagem, não só no realce.
-    expect(avaliarCor("#8a7fb0").mensagem).toMatch(/\d\.\d{2}/);
+    expect(avaliarCor("#8a7fb0").mensagem).toMatch(/\d,\d{2}/);
   });
 });
 
@@ -221,7 +235,7 @@ describe("modo do texto sobre o painel", () => {
     expect(forcado.corDoTexto).toBe(TEXTO_CLARO);
     expect(forcado.passa).toBe(false);
     expect(forcado.razao).toBeLessThan(MINIMO_AA);
-    expect(forcado.mensagem).toContain("Abaixo do mínimo de 4.5");
+    expect(forcado.mensagem).toContain("Abaixo do mínimo de 4,5");
 
     const automatico = avaliarCor("#c090eb");
     expect(automatico.passa).toBe(true);

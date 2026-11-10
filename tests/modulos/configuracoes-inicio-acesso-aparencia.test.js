@@ -382,10 +382,10 @@ describe("Aparência", () => {
     await montar({ secao: "aparencia" });
     const contraste = () =>
       secao("aparencia").querySelector(".config-contraste").textContent;
-    expect(contraste()).toContain("Acima do mínimo de 4.5");
-    expect(contraste()).toContain("5.88");
+    expect(contraste()).toContain("Acima do mínimo de 4,5");
+    expect(contraste()).toContain("5,87");
     await escolher($("configAparencia-authAccessTextoModo"), "claro");
-    expect(contraste()).toContain("Abaixo do mínimo de 4.5");
+    expect(contraste()).toContain("Abaixo do mínimo de 4,5");
     // A prévia da tela de acesso usa a cor e o texto escolhidos.
     const cartao = previa("aparencia").querySelector(".previa-acesso__cartao");
     expect(cartao.style.background).not.toBe("");
