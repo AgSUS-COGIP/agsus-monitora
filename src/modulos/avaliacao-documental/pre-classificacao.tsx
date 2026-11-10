@@ -1413,8 +1413,9 @@ export function PreClassificacao({
               aria-label="Confirmar o recálculo"
             >
               <p>
-                Recalcular a triagem de <strong>{rotuloEdital}</strong>? O job
-                relê os inscritos da Empregare, aplica a regra da Triagem
+                Recalcular a triagem de <strong>{rotuloEdital}</strong>? O
+                cálculo relê os inscritos da Empregare, aplica a regra da
+                Triagem
                 {regraDaTela ? ` (versão ${regraDaTela.versao})` : ""} e
                 atualiza a lista e o lote; quem já foi analisado não sai.
               </p>

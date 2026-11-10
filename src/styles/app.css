@@ -336,13 +336,12 @@ body.config-loading #loginScreen {
   margin-top: 1px;
 }
 
-/* Rótulo de campo em caixa alta. O rótulo de caixa de marcar/opção (filtros,
-   "Agrupar por projeto") é texto comum: fica de fora. */
+/* Rótulo de campo: sentence case, peso 600 (DESIGN.md seção 0). O rótulo de
+   caixa de marcar/opção (filtros, "Agrupar por projeto") é texto comum: fica
+   de fora. */
 label:where(:not(:has(input[type="checkbox"], input[type="radio"]))) {
-  font-size: 12px;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
+  font-size: var(--text-label);
+  font-weight: 600;
   color: var(--text-primary);
 }
 /* Caixa de marcar e de opção ficam no tamanho natural do navegador. */

@@ -70,7 +70,7 @@ export function SininhoDoResumo({
           erro={erro}
           agora={agora}
           aoFechar={() => estado.fechar()}
-          aoConcluir={(item) => void estado.concluir(item)}
+          aoConcluir={(item) => estado.concluir(item)}
           aoMudarPreferencia={(mostrar) =>
             void estado.mudarPreferencia(mostrar)
           }
@@ -97,7 +97,7 @@ function ModalDoResumo({
   erro: string;
   agora: () => Date;
   aoFechar: () => void;
-  aoConcluir: (item: ItemDoResumo) => void;
+  aoConcluir: (item: ItemDoResumo) => Promise<void> | void;
   aoMudarPreferencia: (mostrar: boolean) => void;
   aoVerNoCronograma: () => void;
 }) {
@@ -123,7 +123,10 @@ function ModalDoResumo({
             concluindo={concluindo}
             aoConcluir={(item) => {
               setConcluindo(item.id);
-              aoConcluir(item);
+              // Falhou: o botão volta (o erro aparece embaixo) para tentar de novo.
+              void Promise.resolve(aoConcluir(item)).finally(() =>
+                setConcluindo((atual) => (atual === item.id ? "" : atual)),
+              );
             }}
           />
         ))

@@ -34,6 +34,7 @@ import {
 import { EFEITOS, ROTULOS_DOS_EFEITOS } from "../../lib/motor-de-efeitos.ts";
 import { semMovimento } from "../comemoracao/desenho.ts";
 import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
+import { exemploDoMarco } from "../../lib/exemplos-das-comemoracoes.ts";
 import { Aviso, Campo, Segmentado } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {
@@ -617,13 +618,19 @@ export function SecaoComemoracoes({
                       nome={m.rotulo}
                       modulo=""
                       opcoes={opcoes}
-                      mensagemPadrao="A frase do marco"
+                      mensagemPadrao={exemploDoMarco(m.id, m.rotulo).texto}
                       aberto={aberto === m.id}
                       aoAlternar={() => alternar(m.id)}
                       aoMudar={(mudancas) => mudarMarco(m.id, mudancas)}
                       aoTestar={() =>
                         soltar(
-                          pedidoDoMarco(opcoes, m.rotulo, m.forma, m.letreiro),
+                          pedidoDoMarco(
+                            opcoes,
+                            exemploDoMarco(m.id, m.rotulo).texto,
+                            m.forma,
+                            exemploDoMarco(m.id, m.rotulo).letreiro ??
+                              m.letreiro,
+                          ),
                         )
                       }
                     />

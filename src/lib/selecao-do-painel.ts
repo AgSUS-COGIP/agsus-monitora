@@ -274,7 +274,9 @@ export function formatarQuantidade(valor: unknown) {
 /** "12,5%"; "0%" sem aprovados. */
 export function formatarTaxa(taxa: number | null | undefined) {
   if (taxa === null || taxa === undefined) return "0%";
-  const pct = Math.round(taxa * 1000) / 10;
+  // O EPSILON corrige o meio que a vírgula flutuante deixa abaixo de .5
+  // (201/400 = 0,5025 dava 50,2%; o certo é 50,3%).
+  const pct = Math.round((taxa + Number.EPSILON) * 1000) / 10;
   return `${formatNumberBR(pct, { maximumFractionDigits: 1 })}%`;
 }
 
@@ -301,7 +303,12 @@ export function eliminadosAntesDaAnalise(vagas: readonly VagaDaSelecao[]) {
   ];
 }
 
-/* "Aptos na análise e eliminados": aptos para análise × total de eliminados. */
+/*
+  "Aptos na análise e eliminados": aptos para análise × eliminados antes da
+  análise (cancelados + questionário + nota, a regra da Aya). Não usa a
+  coluna `total_eliminados` da planilha, que em parte das vagas já soma os
+  reprovados na análise e não fechava com o gráfico ao lado.
+*/
 export function aptosEEliminados(vagas: readonly VagaDaSelecao[]) {
   return [
     {
@@ -312,7 +319,7 @@ export function aptosEEliminados(vagas: readonly VagaDaSelecao[]) {
     {
       id: "eliminados",
       rotulo: "Eliminados",
-      valor: somar(vagas, "totalEliminados") ?? 0,
+      valor: eliminadosAntesDaAnalise(vagas).reduce((s, e) => s + e.valor, 0),
     },
   ];
 }

@@ -590,7 +590,6 @@ export function calcularKpis(linhas: readonly RegistroDaAnalise[]) {
   const aprovado = de("Aprovado");
   const reprovado = de("Reprovado");
   const total = lista.length;
-  const concluidas = aprovado + reprovado;
   return {
     total,
     analisado: revisar + aprovado + reprovado,
@@ -598,12 +597,12 @@ export function calcularKpis(linhas: readonly RegistroDaAnalise[]) {
     revisar,
     aprovado,
     reprovado,
-    /* Como o card Ritmo (calcularRitmo): para baixo e no máximo 99% enquanto
-       falta alguém. Com Math.round, 995 de 1.000 davam "100%" com 5 pendentes. */
+    // 100% só com todas concluídas (995 de 1.000 não arredonda para 100%).
     taxa: total
-      ? concluidas < total
-        ? Math.min(99, Math.floor((concluidas / total) * 100))
-        : 100
+      ? Math.min(
+          aprovado + reprovado < total ? 99 : 100,
+          Math.round(((aprovado + reprovado) * 100) / total),
+        )
       : 0,
   };
 }

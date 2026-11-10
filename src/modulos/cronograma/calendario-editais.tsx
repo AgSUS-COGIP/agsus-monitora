@@ -529,13 +529,20 @@ export function CalendarioEditais({
           }
           aoMostrarTodos={() => mudarTiposOcultos([])}
         />
+        {/* Recarga que falhou: avisa e mantém as etapas que já estavam na tela. */}
+        {erro && carregado ? (
+          <ErroAoCarregar
+            oQue="a atualização dos cronogramas"
+            aoTentar={recarregar}
+          />
+        ) : null}
         <div
           id="calGrade"
           data-tour="cronograma-grade"
           data-visao={visao}
           aria-busy={primeiraCarga || undefined}
         >
-          {erro ? (
+          {erro && !carregado ? (
             <ErroAoCarregar
               oQue="os cronogramas"
               mensagem={erro}

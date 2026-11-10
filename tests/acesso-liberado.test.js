@@ -89,13 +89,13 @@ describe("que comemoração mostrar", () => {
 
   it("frases com o primeiro nome", () => {
     expect(mensagemDaComemoracao("liberado", "ANA LUÍSA costa")).toBe(
-      "Parabéns, Ana! Seu acesso ao MONITORA foi liberado.",
+      "Boas-vindas, Ana! Seu acesso ao MONITORA foi liberado.",
     );
     expect(
       mensagemDaComemoracao("reativado", "", "joao.silva@agenciasus.org.br"),
-    ).toBe("Bem-vindo(a) de volta, Joao! Seu acesso foi reativado.");
+    ).toBe("Que bom ter você de volta, Joao! Seu acesso foi reativado.");
     expect(mensagemDaComemoracao("liberado", "", "")).toBe(
-      "Parabéns! Seu acesso ao MONITORA foi liberado.",
+      "Boas-vindas! Seu acesso ao MONITORA foi liberado.",
     );
   });
 });

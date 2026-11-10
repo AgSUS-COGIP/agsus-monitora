@@ -149,9 +149,6 @@ export function EspelhosDaAvaliacao({
           </button>
         </div>
       </div>
-      <p className="ui-texto-secundario">
-        Busque por código ou nome e marque uma ou várias pessoas.
-      </p>
       <DocumentosEmLote
         key={editalId}
         id="espelhos-concluidos"

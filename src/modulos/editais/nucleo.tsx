@@ -1,3 +1,4 @@
+import { avisar } from "../../app/avisos.ts";
 import { carregarTela } from "../../app/registro-das-telas.ts";
 import {
   lazy,
@@ -69,9 +70,13 @@ const RegrasDoEdital = lazy(
 function abrirListasDoEdital(id: string, rotulo: string) {
   void carregarTela("approved")
     .then((aprovados) => aprovados.openImportModal(id, rotulo))
-    .catch((erro: unknown) =>
-      console.warn("Não foi possível abrir a Lista de aprovados:", erro),
-    );
+    .catch((erro: unknown) => {
+      console.warn("Não foi possível abrir a Lista de aprovados:", erro);
+      avisar(
+        "Não foi possível abrir a Lista de aprovados. Tente de novo.",
+        "error",
+      );
+    });
 }
 
 /*

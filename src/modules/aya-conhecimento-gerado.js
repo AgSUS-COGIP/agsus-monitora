@@ -3316,7 +3316,7 @@ export const VERBETES_AYA = Object.freeze([
       "ordem de chamada convocado",
     ],
     resposta:
-      'Na aba Convocação, "A convocar" são as vagas imediatas cujo candidato ainda não foi chamado (sem status). Convocado, Contratado e Migração continuam na posição que a ordem lhes deu e não são chamados de novo; Desistente, Documentação Rejeitada e Contratado em outra lista saem da fila e o próximo toma a vaga. "Escolher os a convocar" marca de uma vez esses candidatos para a carta. "Exportar CSV" baixa a ordem com a situação na chamada, o status e a data da convocação.',
+      'Na aba Convocação, "A convocar" são as vagas imediatas cujo candidato ainda não foi chamado (sem status). Convocado, Contratado e Migração continuam na posição que a ordem lhes deu e não são chamados de novo; Desistente, Documentação Rejeitada e Contratado em outra lista saem da fila e o próximo toma a vaga. "Marcar quem falta convocar" marca de uma vez esses candidatos para a carta. "Exportar CSV" baixa a ordem com a situação na chamada, o status e a data da convocação.',
     fato: "",
     fonte:
       "src/lib/lista-convocacao-rules.ts; src/modulos/aprovados/aba-convocacao.tsx",
@@ -3786,7 +3786,7 @@ export const VERBETES_AYA = Object.freeze([
       "painel de analises curriculares",
     ],
     resposta:
-      'O Painel das análises (antes chamado Análises curriculares) é a tela de leitura da avaliação documental: mostra a análise curricular dos candidatos da área atual, vinda das planilhas de análise: indicadores (Total de aptos p/ análise, Análises realizadas, Pendentes, Em revisão, Aprovados e Reprovados), pendências prioritárias, carga por responsável, evolução diária e a lista. Os filtros são Unidade, Município/UF (só em SEDE e Projetos), Edital, Código da vaga, Status e Responsável, e em "Mais opções" Categoria, Modalidade e Validação da janela; as opções de cada filtro seguem os outros. A taxa de conclusão é aprovados mais reprovados sobre o total, arredondada para baixo: só mostra 100% quando ninguém falta (como o card Ritmo).',
+      'O Painel das análises (antes chamado Análises curriculares) é a tela de leitura da avaliação documental: mostra a análise curricular dos candidatos da área atual, vinda das planilhas de análise: indicadores (Total de aptos p/ análise, Análises realizadas, Pendentes, Em revisão, Aprovados e Reprovados), pendências prioritárias, carga por responsável, evolução diária e a lista. Os filtros são Unidade, Município/UF (só em SEDE e Projetos), Edital, Código da vaga, Status e Responsável, e em "Mais opções" Categoria, Modalidade e Validação da janela; as opções de cada filtro seguem os outros. A taxa de conclusão é aprovados mais reprovados sobre o total, arredondada ao inteiro mais próximo; enquanto houver pendente, para em 99%: só mostra 100% com tudo concluído.',
     fato: "",
     fonte: "src/lib/analises-curriculares.ts; src/modulos/analises/",
     abrir: "analises",

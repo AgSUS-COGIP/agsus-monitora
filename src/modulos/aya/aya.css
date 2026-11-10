@@ -190,14 +190,11 @@
 .aya-painel__cabecalho {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 16px 12px 14px 16px;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-3) var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--border-subtle);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--brand-accent) 12%, var(--surface-card)),
-    var(--surface-card)
-  );
+  /* Tom chapado da marca (o DESIGN.md não usa gradiente). */
+  background: color-mix(in srgb, var(--brand-accent) 6%, var(--surface-card));
 }
 
 .aya-apresentacao {
@@ -475,7 +472,11 @@
 }
 
 .aya-sugestao {
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding: var(--space-1) var(--space-3);
   border: 1px solid var(--border-control);
   border-radius: var(--radius-full);
   background: var(--surface-card);

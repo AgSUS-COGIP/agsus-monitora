@@ -356,7 +356,7 @@ describe("marcos personalizados no app", () => {
     expect(avaliar(9)).toEqual([]);
     expect(avaliar(10).map((p) => p.id)).toEqual(["pessoal-1"]);
     expect(comemorarFalso).toHaveBeenCalledWith({
-      texto: "Edital 012/2026 chegou a 10 contratados! 🎉",
+      texto: "Edital 012/2026 chegou a 10 contratados!",
       itens: [],
       marco: "pessoal-1",
     });

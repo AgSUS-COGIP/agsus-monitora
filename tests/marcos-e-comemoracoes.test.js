@@ -184,19 +184,19 @@ describe("edital concluído e fila zerada", () => {
       nomeDaArea: "SEDE",
     });
     expect(comemoracao.texto).toBe(
-      "Edital 01/2026 · DSEI Xingu concluído! 🎉 Todas as análises foram feitas.",
+      "Edital 01/2026 · DSEI Xingu: todas as análises concluídas!",
     );
     expect(comemoracao.itens).toEqual([
-      "Fila de análises zerada! Obrigado, equipe da SEDE. 🎉",
+      "Fila zerada, nenhuma análise pendente. Obrigado, equipe da SEDE!",
     ]);
     // Edital concluído desenha um coração no céu.
     expect(comemoracao.forma).toBe("coracao");
     expect(comemoracao.editais).toEqual(["01/2026"]);
     expect(mensagemDaFilaZerada("")).toBe(
-      "Fila de análises zerada! Obrigado, equipe. 🎉",
+      "Fila zerada, nenhuma análise pendente. Obrigado, equipe!",
     );
     expect(mensagemDaFilaZerada("Projetos")).toBe(
-      "Fila de análises zerada! Obrigado, equipe de Projetos. 🎉",
+      "Fila zerada, nenhuma análise pendente. Obrigado, equipe de Projetos!",
     );
   });
 
@@ -211,7 +211,8 @@ describe("edital concluído e fila zerada", () => {
         nomeDaArea: "Saúde Indígena",
       }),
     ).toEqual({
-      texto: "Fila de análises zerada! Obrigado, equipe da Saúde Indígena. 🎉",
+      texto:
+        "Fila zerada, nenhuma análise pendente. Obrigado, equipe da Saúde Indígena!",
       itens: [],
       forma: "estrela",
       marco: "fila-zerada",
@@ -247,7 +248,7 @@ describe("vaga pronta", () => {
       situacao: situacaoDasVagas(dados("APTO")),
     });
     expect(comemoracao.texto).toBe(
-      "Vaga V10 · Enfermeiro pronta para o resultado final.",
+      "Vaga V10 · Enfermeiro pronta para o resultado final: toda entrevista tem parecer.",
     );
     expect(
       comemoracaoDasEntrevistas({
@@ -300,13 +301,11 @@ describe("marcos do ano", () => {
         ano: 2026,
       }),
     ).toBe(
-      "🎉 A equipe da Saúde Indígena passou de 7.500 análises concluídas em 2026!",
+      "A equipe da Saúde Indígena passou de 7.500 análises concluídas em 2026!",
     );
     expect(
       mensagemDoMarcoDoAno({ nomeDaArea: "Projetos", marco: 1000, ano: 2026 }),
-    ).toBe(
-      "🎉 A equipe de Projetos passou de 1.000 análises concluídas em 2026!",
-    );
+    ).toBe("A equipe de Projetos passou de 1.000 análises concluídas em 2026!");
   });
 
   it("o agradecimento dos fogos é à equipe da área, com o número no céu", () => {

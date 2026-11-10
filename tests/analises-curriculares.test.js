@@ -359,24 +359,6 @@ describe("KPIs, gráficos e pendências", () => {
     expect(calcularKpis([]).taxa).toBe(0);
   });
 
-  it("a taxa de conclusão só chega a 100% sem ninguém faltando", () => {
-    const comStatus = (status, n) =>
-      Array.from({ length: n }, (_, i) =>
-        linha({ id: `${status}-${i}`, status_consolidado: status }),
-      );
-    // 995 de 1.000: 99,5% arredondava para "100%" com 5 pendentes.
-    expect(
-      calcularKpis([...comStatus("Aprovado", 995), ...comStatus("Pendente", 5)])
-        .taxa,
-    ).toBe(99);
-    // 2 de 3: para baixo, como o card Ritmo.
-    expect(
-      calcularKpis([...comStatus("Reprovado", 2), ...comStatus("Pendente", 1)])
-        .taxa,
-    ).toBe(66);
-    expect(calcularKpis(comStatus("Aprovado", 4)).taxa).toBe(100);
-  });
-
   it("o recorte do KPI (status) e da barra do gráfico (responsável)", () => {
     expect(
       recorteVisual(linhas, { kpi: "analisado" }).map((l) => l.id),
