@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  acoesDaFicha,
   acoesDaSelecao,
   agruparPorVaga,
   andamentoDaFila,
@@ -207,6 +208,15 @@ describe("ações em lote e o plano da distribuição", () => {
     expect(a.distribuir.map((c) => c.id)).toEqual(["c1", "c2", "c3", "c7"]);
     expect(a.liberar.map((c) => c.id)).toEqual(["c1"]);
     expect(a.revisao.map((c) => c.id)).toEqual(["c1", "c2", "c3"]);
+    // Concluída (c4) e em revisão (c7): só reabrir; concluída não é atribuída (AM-6.3).
+    expect(a.reabrir.map((c) => c.id)).toEqual(["c4", "c7"]);
+    expect(a.distribuir.map((c) => c.id)).not.toContain("c4");
+  });
+  it("o ⋯ da linha concluída oferece Reabrir, não Atribuir", () => {
+    const c4 = FILA.find((c) => c.id === "c4");
+    expect(acoesDaFicha(c4, AGORA)).toEqual(["reabrir"]);
+    const c7 = FILA.find((c) => c.id === "c7");
+    expect(acoesDaFicha(c7, AGORA)).toEqual(["distribuir", "reabrir"]);
   });
   it("AM-6.2: a prévia distribui na ordem da Provisória, tirando da carga o que é redistribuído", () => {
     const p = planoDeDistribuicao([FILA[2], FILA[1]], EQUIPE, {

@@ -98,6 +98,11 @@ import type {
 import { RevogarDecisao, SeloDaDecisao } from "./decisao-do-lote.tsx";
 import { RelatorioDeMotivosDaFila } from "./relatorio-de-motivos.tsx";
 import { erroDoMotivoDaFila } from "../../lib/avaliacao-documental/qualidade-do-motivo.ts";
+import {
+  MOTIVO_OUTRO,
+  MOTIVOS_DA_REABERTURA,
+  validarReabertura,
+} from "../../lib/avaliacao-documental/motivos-da-reabertura.ts";
 import { ConteudoDaFicha } from "./ficha/ficha.tsx";
 import { AndamentoPorVaga } from "./resumo-do-andamento.tsx";
 import { ReinicioDasFichas } from "./reinicio-das-fichas.tsx";
@@ -266,7 +271,7 @@ function FiltrosSalvos({ fila, f, filtros }: FiltrosSalvosProps) {
   );
 }
 
-type TipoDaAcao = "distribuir" | "liberar" | "revisao";
+type TipoDaAcao = "distribuir" | "liberar" | "revisao" | "reabrir";
 
 /* A ação em lote pedida no menu da coordenação: o tipo e as fichas. */
 interface AcaoPedida {
@@ -278,6 +283,7 @@ const TITULOS_DA_ACAO: Record<TipoDaAcao, string> = {
   distribuir: "Distribuir fichas",
   liberar: "Liberar reservas",
   revisao: "Mandar para revisão",
+  reabrir: "Reabrir fichas",
 };
 
 interface AcaoEmLoteProps {
@@ -290,8 +296,17 @@ interface AcaoEmLoteProps {
 function AcaoEmLote({ fila, acao, dados, aoFechar }: AcaoEmLoteProps) {
   const [para, setPara] = useState("");
   const [motivo, setMotivo] = useState("");
+  const [codigo, setCodigo] = useState("");
+  const [complemento, setComplemento] = useState("");
   const [erro, setErro] = useState("");
   const st = useSyncExternalStore(fila.assinar, fila.obter);
+  // Reabrir: o motivo da lista e o complemento, a mesma regra do "Reabrir" da ficha.
+  const reabertura =
+    acao.tipo === "reabrir" ? validarReabertura(codigo, complemento) : null;
+  const erroDaReabertura =
+    reabertura && !reabertura.ok && (codigo || complemento.trim())
+      ? reabertura.erro
+      : "";
   const analistas = useMemo(() => dados.analistas || [], [dados.analistas]);
   const plano = useMemo(
     () =>
@@ -308,7 +323,7 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }: AcaoEmLoteProps) {
     deOutros ||
     (acao.tipo === "distribuir" && (plano!.redistribui || para === "fila"));
   const erroDoMotivo = exigeMotivo ? erroDoMotivoDaFila(motivo) : "";
-  const motivoOk = !erroDoMotivo;
+  const motivoOk = reabertura ? reabertura.ok : !erroDoMotivo;
   const vazio =
     acao.tipo === "distribuir"
       ? !plano!.atribuicoes.length
@@ -331,7 +346,14 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }: AcaoEmLoteProps) {
         acao.fichas.map((c) => c.ficha.id),
         motivo.trim(),
       );
-    else
+    else if (acao.tipo === "reabrir") {
+      if (!reabertura?.ok) return;
+      r = await fila.reabrirFichas(
+        acao.fichas.map((c) => ({ ficha: c.ficha.id, versao: c.ficha.versao })),
+        reabertura.argumentos.p_motivo,
+        reabertura.argumentos.p_complemento,
+      );
+    } else
       r = await fila.mandarParaRevisao(
         acao.fichas.map((c) => ({ ficha: c.ficha.id, versao: c.ficha.versao })),
         motivo.trim(),
@@ -395,6 +417,37 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }: AcaoEmLoteProps) {
                 (vaga ou limite): continuam na fila.
               </Aviso>
             ) : null}
+          </>
+        ) : null}
+        {acao.tipo === "reabrir" ? (
+          <>
+            <Campo rotulo="Motivo da reabertura" obrigatorio>
+              <select
+                value={codigo}
+                data-campo="motivo-da-reabertura"
+                onChange={(ev) => setCodigo(ev.target.value)}
+              >
+                <option value="">Escolha…</option>
+                {MOTIVOS_DA_REABERTURA.map((m) => (
+                  <option key={m.codigo} value={m.codigo}>
+                    {m.rotulo}
+                  </option>
+                ))}
+              </select>
+            </Campo>
+            <Campo
+              rotulo={codigo === MOTIVO_OUTRO ? "Descrição" : "Complemento"}
+              obrigatorio={codigo === MOTIVO_OUTRO}
+              erro={erroDaReabertura || undefined}
+            >
+              <textarea
+                rows={3}
+                maxLength={500}
+                value={complemento}
+                data-campo="complemento-da-reabertura"
+                onChange={(ev) => setComplemento(ev.target.value)}
+              />
+            </Campo>
           </>
         ) : null}
         {exigeMotivo ? (
@@ -715,6 +768,7 @@ const ROTULOS_DA_LINHA: Record<
   distribuir: { rotulo: "Atribuir a…", icone: "fa-users" },
   liberar: { rotulo: "Liberar reserva", icone: "fa-lock-open" },
   revisao: { rotulo: "Mandar para revisão", icone: "fa-rotate-left" },
+  reabrir: { rotulo: "Reabrir", icone: "fa-lock-open" },
   copiar: { rotulo: "Copiar código", icone: "fa-copy" },
 };
 
@@ -1867,6 +1921,17 @@ export function Fila({ e, fila }: FilaProps) {
               }
             >
               Mandar para revisão
+            </button>
+            <button
+              type="button"
+              className="btn contorno small"
+              data-acao="reabrir-selecionadas"
+              disabled={!acoes.reabrir.length}
+              onClick={() =>
+                setAcao({ tipo: "reabrir", fichas: acoes.reabrir })
+              }
+            >
+              Reabrir
             </button>
             <button
               type="button"

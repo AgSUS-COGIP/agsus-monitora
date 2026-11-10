@@ -1499,6 +1499,12 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
       "Conclui a ficha: confere reserva, versões (ficha e regra vigente conferida), estrutura e o que falta pela regra da vaga (situação, motivos, requisitos e extras do cargo, itens, justificativa de nota diferente da declarada); grava resultado, notas, parecer e a versão da regra; libera a reserva.",
   },
   // ── Motivos da reabertura (20261021110000_motivos_da_reabertura.sql)
+  reabrir_fichas: {
+    argumentos: ["p_edital", "p_fichas", "p_motivo", "p_complemento"],
+    critica: false,
+    resumo:
+      "A coordenação reabre várias fichas concluídas ou em revisão pela Fila ([{ficha, versao}], 1 a 5.000, controle otimista PT409); cada uma passa por reabrir_ficha (motivo da lista, complemento, histórico REABRIR) e uma que falhe desfaz o lote (20261110140000).",
+  },
   reabrir_ficha: {
     argumentos: ["p_ficha", "p_versao", "p_motivo", "p_complemento"],
     critica: false,
