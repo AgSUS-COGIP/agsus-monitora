@@ -247,6 +247,29 @@ describe("aba Pendências", () => {
     ]);
   });
 
+  it("carregando: blocos no lugar dos cartões, sem linha de tabela solta", async () => {
+    document.body.innerHTML = `<section id="page-approved" class="page active"></section>`;
+    await act(async () => {
+      controlador = montarTela<OpcoesDaTelaDosAprovados, TelaDosAprovados>(
+        criarListaAprovados,
+        "page-approved",
+        {
+          secao: document.getElementById("page-approved"),
+          supabase: supabaseFalso(),
+          toast: vi.fn(),
+          getProfile: () => ({ perfil: "edital_gestor" }),
+          hoje: () => "2026-10-26",
+        },
+      );
+    });
+    const painel = $("approvedPanelPendencias");
+    // <tr> fora de <table> é HTML inválido (o React avisa e o navegador o descarta).
+    expect(painel.querySelectorAll("tr")).toHaveLength(0);
+    expect(
+      painel.querySelectorAll(".pendencias-lista .ui-esqueleto-bloco"),
+    ).toHaveLength(4);
+  });
+
   it("é a terceira aba, com o selo das abertas", async () => {
     await montar();
     const aba = $("approvedTabPendencias");

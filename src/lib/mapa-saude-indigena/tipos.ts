@@ -47,6 +47,8 @@ export interface RedeCnesDoMapa {
 export interface ContagemDoDsei {
   editais: number;
   vagas: number;
+  /** Vagas imediatas contratadas (contratadasImediatas), sem os cancelados. */
+  contratadas: number;
   ociosas: number;
 }
 export interface BolhaDoDsei extends ContagemDoDsei {

@@ -661,10 +661,6 @@
 .avd-ast-passos button:hover:not(:disabled) {
   background: var(--surface-hover);
 }
-.avd-ast-passos button:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
 .avd-ast-passos button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -761,9 +757,7 @@
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-caption);
-  font-weight: var(--font-weight-semibold, 600);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  font-weight: var(--font-weight-semibold);
 }
 .avd-ast-rotulo-da-linha {
   flex-basis: 100%;
@@ -1131,9 +1125,7 @@
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--text-caption);
-  font-weight: var(--font-weight-semibold, 600);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-weight: var(--font-weight-semibold);
 }
 .avd-ast-catalogo-grupo ul {
   display: grid;
@@ -1789,10 +1781,6 @@
 }
 .avd-entrada-cartao:hover {
   border-color: var(--border-control);
-}
-.avd-entrada-cartao:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
 }
 .avd-entrada-topo,
 .avd-entrada-regra {

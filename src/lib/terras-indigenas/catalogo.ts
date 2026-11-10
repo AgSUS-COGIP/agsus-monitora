@@ -6,6 +6,12 @@ export const FUNAI_PROXY_WMS = "/api/funai-wms";
 export const FUNAI_PROXY_GEOJSON = "/api/funai-geodata";
 
 /*
+  O pane dos contornos dos DSEIs da camada de Terras Indígenas. No Mapa DSEIs,
+  que pinta os mesmos contornos por conta própria, a camada o esconde.
+*/
+export const PANE_DA_ABRANGENCIA_DOS_DSEIS = "agsus-dsei-coverage";
+
+/*
   O CATÁLOGO LOCAL, E POR QUE ELE EXISTE
 
   O mapa pedia a geometria à Funai a cada movimento. O enquadramento vira um
@@ -148,10 +154,6 @@ export function funaiViewportUrl(
     bbox: [west, south, east, north].join(","),
   });
   return `${FUNAI_PROXY_GEOJSON}?${params.toString()}`;
-}
-
-export function funaiDseiUrl(): string {
-  return `${FUNAI_PROXY_GEOJSON}?dataset=dsei`;
 }
 
 export function funaiEstudoUrl(): string {

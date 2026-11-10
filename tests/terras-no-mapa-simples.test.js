@@ -189,6 +189,23 @@ describe("Terras Indígenas no Mapa DSEIs", () => {
     expect(ligado()).toBe("false");
   });
 
+  it("o contorno leve dos DSEIs sai no Mapa DSEIs (que pinta os mesmos) e volta ao sair", async () => {
+    const pane = () => mapa.getPane("agsus-dsei-coverage");
+    await montar("map");
+    expect(pane().style.display).toBe("");
+
+    trocarFundo("simple");
+    expect(pane().style.display).toBe("none");
+
+    trocarFundo("satellite");
+    expect(pane().style.display).toBe("");
+  });
+
+  it("abrir a página já no Mapa DSEIs: o contorno leve começa escondido", async () => {
+    await montar("simple");
+    expect(mapa.getPane("agsus-dsei-coverage").style.display).toBe("none");
+  });
+
   it("o mesmo aviso repetido não mexe no estado", async () => {
     await montar("simple");
     botao().click();

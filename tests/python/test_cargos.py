@@ -85,6 +85,9 @@ class Casamento(unittest.TestCase):
         ("ANALISTA TECNICO - DSEI X", MEDIA, 9999, "PREFIXO"),
         ("APOIADOR TECNICO EM SAUDE INDIGENA", MEDIA, 39, "CONTIDO"),
         ("MONITOR DE AGUA E SANEAMENTO - SEDE", MEDIA, 82, "SIMILARIDADE"),
+        # Erro de digitação: a sugestão segue a carga horária escrita, não a 1ª do catálogo.
+        ("CIRURGIAO DENTSTA 40H", MEDIA, 58, "SIMILARIDADE"),
+        ("CIRURGIAO DENTSTA 20H", MEDIA, 57, "SIMILARIDADE"),
         ("MEDICO DE FAMILIA E COMUNIDADE", ALTA, 76, "SINONIMO"),
         ("MEDICO DE FAMILIA E COMUNIDADE (MFC) - TELETRABALHO - 20H - AMPLA CONCORRENCIA", ALTA, 76, "PREFIXO"),
         ("MEDICO ESPECIALISTA - MFC", ALTA, 76, "EXATA"),

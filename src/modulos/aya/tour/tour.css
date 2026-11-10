@@ -77,7 +77,7 @@
   margin: 0 0 6px;
   color: var(--brand-primary);
   font-size: var(--text-base);
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.3;
 }
 

@@ -67,8 +67,9 @@ export function terraPrecisaDeSimbolo(tamanhoEmPixels: unknown): boolean {
   O natural seria cruzar com a abrangência oficial do DSEI. A Funai deixou de
   publicá-la: o GetCapabilities do GeoServer lista hoje `tis_poligonais`,
   `tis_pontos`, `tis_cr`, `aldeias_pontos` e mais três — nenhuma de DSEI. O
-  pedido a `Funai:areas_dsei` responde "Feature type unknown", e é por isso que
-  `/api/funai-geodata?dataset=dsei` devolve 502 em produção.
+  pedido a `Funai:areas_dsei` responde "Feature type unknown"; o proxy deixou de
+  oferecer `dataset=dsei` (10/11/2026), e o contorno do DSEI vem do arquivo
+  local `contornos-dos-dseis.json`, sem limite de terra.
 
   O QUE SE USA EM VEZ DISSO, E QUANTO ISSO VALE
 

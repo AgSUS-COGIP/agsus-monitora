@@ -191,12 +191,6 @@
   accent-color: var(--brand-primary);
 }
 
-.mapa-projetos__seletor:focus-visible,
-.mapa-projetos__agrupar input:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
 /* "Agrupar por projeto": um bloco por projeto. */
 .mapa-projetos__grupo {
   display: grid;

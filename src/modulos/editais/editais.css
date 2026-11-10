@@ -874,3 +874,18 @@
   color: var(--text-secondary);
   font-size: var(--text-body-sm);
 }
+
+/* Edital crítico marcado à mão (critico-do-edital.tsx). */
+.edital-critico {
+  display: grid;
+  gap: var(--space-2);
+}
+.edital-critico-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2) var(--space-3);
+}
+.edital-critico-linha .ui-campo {
+  flex: 1 1 18rem;
+}

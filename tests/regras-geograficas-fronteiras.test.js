@@ -38,8 +38,8 @@ describe("fronteiras das regras geográficas", () => {
       { k: "MENOR", n: "Menor", lat: 3, lon: 4, pop: 100 },
     ]);
     const contagens = new Map([
-      ["MAIOR", { editais: 1, vagas: 2, ociosas: 0 }],
-      ["MENOR", { editais: 1, vagas: 10, ociosas: 10 }],
+      ["MAIOR", { editais: 1, vagas: 2, contratadas: 2, ociosas: 0 }],
+      ["MENOR", { editais: 1, vagas: 10, contratadas: 0, ociosas: 10 }],
     ]);
     const bolhas = Object.freeze(bolhasDosDsei({ dseis, contagens }));
     expect(territoriosPorVagas(bolhas).map((b) => b.chave)).toEqual([

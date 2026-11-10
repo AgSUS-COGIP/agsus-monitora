@@ -69,7 +69,9 @@ const usados: Set<string | number> = reconciliarDsei({
 
 bolhasDosDsei({
   // @ts-expect-error Uma contagem de vagas precisa ser numérica.
-  contagens: new Map([["CEARA", { editais: 1, vagas: "10", ociosas: 0 }]]),
+  contagens: new Map([
+    ["CEARA", { editais: 1, vagas: "10", contratadas: 0, ociosas: 0 }],
+  ]),
 });
 // @ts-expect-error O conjunto guarda chaves dos tipos, não números.
 visiveis(registros, new Set([1]));

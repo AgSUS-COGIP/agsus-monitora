@@ -39,8 +39,18 @@ const LMAP = {
   Leste de Roraima sem vaga. Números do mapa: 1, 16 e 34.
 */
 const LINHAS = [
-  { unidade: "DSEI Alagoas e Sergipe", vagas_total: 10, vagas_ociosas: 1 },
-  { unidade: "DSEI Yanomami", vagas_total: 40, vagas_ociosas: 30 },
+  {
+    unidade: "DSEI Alagoas e Sergipe",
+    vagas_total: 10,
+    contratados: 9,
+    status: "Concluído",
+  },
+  {
+    unidade: "DSEI Yanomami",
+    vagas_total: 40,
+    contratados: 10,
+    status: "Concluído",
+  },
 ];
 
 const CONTORNOS = {

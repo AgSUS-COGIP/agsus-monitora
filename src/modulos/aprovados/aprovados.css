@@ -65,7 +65,7 @@
   grid-column: 1 / -1;
   margin: 0;
   color: var(--text-secondary);
-  font-weight: 800;
+  font-weight: var(--font-weight-medium);
   font-size: var(--text-body-sm);
 }
 .approved-modal-subtitle {
@@ -521,7 +521,7 @@ table.mobile-card-table td.approved-actions {
 }
 .approved-import-summary-title {
   color: var(--text-primary);
-  font-size: 15px;
+  font-size: var(--text-h4);
   font-weight: var(--font-weight-semibold);
 }
 .approved-import-summary-details {
@@ -560,10 +560,10 @@ table.mobile-card-table td.approved-actions {
   gap: var(--space-2);
   margin-top: var(--space-3);
   padding: 10px var(--space-3);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--state-warning-soft);
   color: var(--state-warning);
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
 .approved-import-replace-warning i {

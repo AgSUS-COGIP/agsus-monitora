@@ -299,6 +299,36 @@ describe("visão simples: uma linha por aba do sistema", () => {
     expect(linha("tarefas").partes).toHaveLength(5);
   });
 
+  it("tarefa pausada que falhou não pinta erro na linha que ficou em dia", () => {
+    const tarefas = visaoSimples(
+      normalizarSaude(
+        {
+          analises: [],
+          entrevistas: [],
+          selecao: [],
+          tarefas: [
+            {
+              nome: "a",
+              agenda: "*/2 * * * *",
+              ativa: true,
+              execucoes: [execucao("succeeded", 1)],
+            },
+            {
+              nome: "b",
+              agenda: "0 9 * * *",
+              ativa: false,
+              execucoes: [
+                execucao("failed", 10 * 60, { mensagem: "deadlock" }),
+              ],
+            },
+          ],
+        },
+        AGORA,
+      ),
+    ).linhas.find((l) => l.id === "tarefas");
+    expect(tarefas).toMatchObject({ situacao: "em_dia", erro: null });
+  });
+
   it("o aviso do topo lista só falha e atraso", () => {
     expect(atencao.map((l) => l.id)).toEqual([
       "analises:sede",

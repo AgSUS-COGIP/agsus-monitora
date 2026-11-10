@@ -132,6 +132,24 @@ describe("Importação real de XLSX de Aprovados", () => {
       { ...esperado, classificacao: 2, nota: 0, nome: "Bia" },
     ]);
   });
+  it("célula e linha vazias com formatação (`<c …/>`, `<row …/>`) não engolem as vizinhas", async () => {
+    // O Excel grava a célula vazia formatada sem fechamento: <c r="A2" s="1"/>.
+    const celulas = (numero: number, linha: Linha) =>
+      linha
+        .map(
+          (v, i) =>
+            `<c r="${String.fromCharCode(66 + i)}${numero}" t="inlineStr"><is><t>${escapar(v)}</t></is></c>`,
+        )
+        .join("");
+    const xml =
+      `<worksheet><sheetData>` +
+      `<row r="1"><c r="A1" t="inlineStr"><is><t>Observação</t></is></c>${celulas(1, cabecalhos)}</row>` +
+      `<row r="2" spans="1:7" s="1" customFormat="1"/>` +
+      `<row r="3"><c r="A3" s="1"/>${celulas(3, valores)}</row>` +
+      `</sheetData></worksheet>`;
+    const f = arquivo([{ nome: "xl/worksheets/sheet1.xml", conteudo: xml }]);
+    expect(await readApprovedWorkbook(f)).toEqual([esperado]);
+  });
   it("não entrega lista parcial quando uma linha é inválida", async () => {
     const invalida = [...valores];
     invalida[2] = "0";

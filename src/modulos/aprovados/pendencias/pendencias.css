@@ -20,6 +20,11 @@
   gap: var(--space-3);
 }
 
+/* Esqueleto da lista (`BlocosEsqueleto`), na altura de um cartão. */
+.pendencia-esqueleto {
+  min-height: var(--space-20);
+}
+
 .pendencia-cartao {
   display: grid;
   gap: var(--space-2);

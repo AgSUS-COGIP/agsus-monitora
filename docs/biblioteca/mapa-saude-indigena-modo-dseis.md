@@ -34,9 +34,13 @@ Terceiro botão do seletor do fundo, só no `#map` do [[modulo-mapa-saude-indige
 - **Contornos**: `public/data/contornos-dos-dseis.json` (~324 KB, carregado só nesse modo, uma
   vez), gerado por `scripts/compilar-contornos-dos-dseis.mjs` a partir do shapefile da camada
   **Funai `areas_dsei`**, na cópia de **20/04/2022 do Internet Archive**. A Funai tirou a camada do
-  GeoServer; por isso `/api/funai-geodata?dataset=dsei` dá 502 e o mapa não tinha contorno de DSEI
-  nenhum. A camada é a abrangência com atendimento, não uma partição do país: parte do território
-  fica só com a silhueta do Brasil.
+  GeoServer, e o proxy deixou de oferecer `dataset=dsei` em 10/11/2026 (#715). A camada é a
+  abrangência com atendimento, não uma partição do país: parte do território fica só com a silhueta
+  do Brasil.
+- **O mesmo arquivo na camada de Terras Indígenas** (`src/modules/indigenous-territories-layer.ts`):
+  traço leve no mapa nacional (item "abrangência oficial do DSEI" da legenda) e, no mapa do DSEI, o
+  contorno e o enquadramento do distrito aberto. No Mapa DSEIs, que pinta os mesmos contornos, a
+  camada esconde esse traço (pane `PANE_DA_ABRANGENCIA_DOS_DSEIS`) para não sair em dobro.
 
 ## Testes
 

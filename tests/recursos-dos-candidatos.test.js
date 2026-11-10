@@ -286,6 +286,24 @@ describe("filtros", () => {
       "07/2025",
     ]);
   });
+
+  it("opções de edital: ordem pelo número do edital, não pelo rótulo com a unidade", () => {
+    const recurso = (edital_id, edital, unidade) => ({
+      edital_id,
+      edital,
+      unidade,
+    });
+    const opcoes = opcoesDosFiltros([
+      recurso("e1", "5/2026", "DSEI A"),
+      recurso("e2", "30/2025", "DSEI B"),
+      recurso("e3", "7/2026", ""),
+    ]);
+    expect(opcoes.editais).toEqual([
+      { valor: "e3", rotulo: "7/2026" },
+      { valor: "e1", rotulo: "5/2026 · DSEI A" },
+      { valor: "e2", rotulo: "30/2025 · DSEI B" },
+    ]);
+  });
 });
 
 describe("gráficos", () => {

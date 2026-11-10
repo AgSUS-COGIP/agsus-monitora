@@ -24,7 +24,7 @@
 .conf-cartao__topo h3 {
   margin: 0;
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold);
 }
 .conf-filtro {
   flex-wrap: wrap;
@@ -65,7 +65,7 @@
 }
 .conf-aviso__topo strong {
   font-size: var(--text-body-sm);
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold);
 }
 .conf-aviso__onde {
   color: var(--text-secondary);

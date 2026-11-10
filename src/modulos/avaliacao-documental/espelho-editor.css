@@ -6,9 +6,7 @@
 .avd-espelho-editor-sobretitulo {
   color: var(--text-secondary);
   font-size: var(--text-caption);
-  font-weight: 600;
-  letter-spacing: 0.035em;
-  text-transform: uppercase;
+  font-weight: var(--font-weight-semibold);
 }
 .avd-espelho-editor-resumo {
   color: var(--text-secondary);

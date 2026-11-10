@@ -55,7 +55,7 @@
   color: var(--color-text-brand);
   font: inherit;
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
 }
 

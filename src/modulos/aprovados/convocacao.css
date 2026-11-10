@@ -29,7 +29,7 @@
   gap: 10px;
   padding: 13px 14px;
   border: 1px solid var(--border-subtle);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: var(--surface-card);
   cursor: pointer;
 }
@@ -80,7 +80,7 @@
   display: block;
   margin-top: var(--space-0-5);
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--text-caption);
 }
 .convocacao-bloco-head .btn {
   padding: var(--space-1-5) var(--space-3);
@@ -115,8 +115,8 @@
 .convocacao-vagas-table input {
   width: 62px;
   padding: var(--space-1-5) var(--space-2);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--text-primary);
   font-size: var(--text-caption);
@@ -189,7 +189,7 @@
   display: block;
   margin-top: 3px;
   color: var(--state-warning);
-  font-size: 10px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
 .convocacao-linha-imediata td {
@@ -223,7 +223,7 @@
   align-items: center;
   gap: var(--space-1);
   color: var(--state-warning);
-  font-size: 10px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
 /* ── Percentuais, total por vaga e quadro derivado ──────────────────────── */
@@ -244,8 +244,8 @@
 .convocacao-padrao-campo input {
   width: 68px;
   padding: var(--space-1-5) var(--space-2);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--text-primary);
   font-size: var(--text-caption);
@@ -292,7 +292,7 @@
 }
 .convocacao-multipla {
   color: var(--state-info);
-  font-size: 10px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
 @media (max-width: 700px) {
@@ -304,8 +304,8 @@
 .convocacao-modelo-select {
   min-width: 260px;
   padding: 7px 10px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--text-primary);
   font-size: var(--text-body-sm);
@@ -314,7 +314,7 @@
 .convocacao-modelo-resumo {
   margin: 0 0 14px;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
 .convocacao-modelo-resumo.compartilhado {
@@ -324,7 +324,7 @@
   margin: 0 0 18px;
   padding: var(--space-4);
   border: 1px solid var(--border-subtle);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: var(--surface-raised);
 }
 .convocacao-editor.hidden {
@@ -341,10 +341,10 @@
   gap: var(--space-2);
   margin: 0;
   padding: 9px 11px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--state-warning-soft);
   color: var(--state-warning);
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
   line-height: 1.4;
 }
@@ -369,23 +369,23 @@
   display: block;
   margin-top: var(--space-0-5);
   color: var(--text-secondary);
-  font-size: 9px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
   letter-spacing: 0;
   text-transform: none;
 }
 .convocacao-editor-campo code {
   padding: 0 3px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   background: var(--surface-raised);
-  font-size: 9px;
+  font-size: var(--text-caption);
 }
 .convocacao-editor-campo input,
 .convocacao-editor-campo select {
   width: 100%;
   padding: 7px 9px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 9px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
   background: var(--surface-card);
   color: var(--text-primary);
   font-size: var(--text-caption);
@@ -428,16 +428,16 @@
   flex: 1 1 180px;
   min-width: 0;
   padding: 7px 9px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 9px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
   font-size: var(--text-body-sm);
   font-weight: var(--font-weight-medium);
 }
 .convocacao-categoria-sigla {
   width: 64px;
   padding: 7px 9px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 9px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
   font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
   text-align: center;
@@ -452,8 +452,8 @@
 .convocacao-categoria-taxa input {
   width: 74px;
   padding: 7px 9px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 9px;
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
   font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
   text-align: right;
@@ -466,10 +466,10 @@
 }
 .convocacao-categoria-tag {
   padding: var(--space-1) 9px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--state-info-soft);
   color: var(--state-info);
-  font-size: 10px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
 .convocacao-categoria-avancado {
@@ -492,7 +492,7 @@
   align-items: center;
   gap: var(--space-1);
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
 }
@@ -526,7 +526,7 @@
 .convocacao-editor-ajuda {
   margin-top: var(--space-0-5);
   color: var(--text-secondary);
-  font-size: 10px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
   line-height: 1.45;
   letter-spacing: 0;
@@ -543,10 +543,10 @@
   justify-content: center;
   min-width: 18px;
   padding: 1px var(--space-1);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--state-info-soft);
   color: var(--state-info);
-  font-size: 9px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
 /*
@@ -801,22 +801,17 @@
 /* Etapa 1: uma entrada visual, sem montar outro estado ou duplicar tabelas. */
 .central-convocacoes {
   display: grid;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 .central-convocacoes-titulo {
   margin: 0;
-}
-.central-convocacoes-ajuda,
-.central-convocacoes-destino p {
-  margin: 0;
-  color: var(--text-secondary);
 }
 .central-convocacoes-escolha,
 .central-convocacoes-acoes {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .central-convocacoes-modo-entrevista > :not(.central-convocacoes) {
   display: none;

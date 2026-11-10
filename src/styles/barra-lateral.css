@@ -188,10 +188,9 @@
   border-radius: var(--radius-pill);
   background: var(--menu-fundo-ativo);
   color: var(--menu-realce);
-  font-size: 9px;
-  font-weight: 700;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
   line-height: 1.2;
-  letter-spacing: 0.06em;
   opacity: 0.85;
 }
 
@@ -203,9 +202,9 @@
 
 /*
   Blocos da área (Acompanhar e Processo seletivo) e os três grupos de
-  Administração (Aparência, Pessoas e acessos, Sistema): título pequeno em
-  caixa alta, na cor suave, alinhado ao ícone das páginas. Cada bloco tem a
-  sua linha-guia.
+  Administração (Aparência, Pessoas e acessos, Sistema): título em caption
+  500, sentence case (Design System AgSUS, "Grupos": sem caixa alta), na cor
+  suave, alinhado ao ícone das páginas. Cada bloco tem a sua linha-guia.
 */
 .menu-bloco__titulo {
   margin: var(--space-2) 0 2px;
@@ -213,12 +212,10 @@
   padding: 0 calc(var(--space-2) * 2 + 1px);
   overflow: hidden;
   color: var(--menu-texto-suave);
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.4;
-  letter-spacing: 0.06em;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--leading-caption);
   text-overflow: ellipsis;
-  text-transform: uppercase;
   white-space: nowrap;
 }
 

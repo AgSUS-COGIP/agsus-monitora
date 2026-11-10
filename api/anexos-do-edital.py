@@ -22,8 +22,9 @@ data da assinatura e as duas tabelas — "Onde se lê:" (a antiga) e "Leia-se:"
 (a que vale), com as linhas em negrito (as alteradas) marcadas. Quem compara
 com o cronograma gravado e aplica é a tela (src/modulos/editais/).
 
-Acesso: só usuário autenticado no Supabase do MONITORA (Bearer do front,
-conferido em /auth/v1/user). O PDF vem no corpo (application/pdf), até 4 MB.
+Acesso: identidade conferida em /auth/v1/user e perfil ativo com permissao
+atual de edicao no Nucleo ou Cronograma, consultada no banco pelo mesmo Bearer.
+O PDF vem no corpo (application/pdf), ate 4 MB, lido somente apos a autorizacao.
 
 Testes: tests/python/test_anexos_do_edital.py e
 tests/python/test_retificacao_do_cronograma.py (PDFs sintéticos).
@@ -454,9 +455,10 @@ def secoes_da_retificacao(paginas):
 
 
 # O rodapé do SEI ("Retificação 2ª Retificação … (0698514) SEI AGSUS.002213/2026-13 / pg. 1")
-# às vezes cai dentro da tabela que atravessa a página.
+# às vezes cai dentro da tabela que atravessa a página. "AGSUS." só com o número do
+# processo depois: o nome da AgSUS (ou o e-mail @agsus.org.br) no texto da célula fica.
 _RODAPE = re.compile(
-    r"\s*(?:\S{0,6}\s+)?(?:\d+\s*ª\s*)?RETIFICA\S*\s.*?\(\d{6,8}\)|\s*\S?\s*AGSUS\.|\s*\(\d{6,8}\)",
+    r"\s*(?:\S{0,6}\s+)?(?:\d+\s*ª\s*)?RETIFICA\S*\s.*?\(\d{6,8}\)|\s*\S?\s*AGSUS\.\d|\s*\(\d{6,8}\)",
     re.I,
 )
 
@@ -587,6 +589,43 @@ def usuario_autenticado(autorizacao):
         return None
 
 
+def usuario_pode_importar(autorizacao, usuario_id):
+    """Confere o perfil atual no banco; None indica falha na consulta."""
+    if not usuario_id:
+        return False
+    token = autorizacao[7:].strip() if autorizacao.lower().startswith("bearer ") else ""
+    base = os.environ.get("VITE_SUPABASE_URL", "").rstrip("/")
+    chave = os.environ.get("VITE_SUPABASE_PUBLISHABLE_KEY") or os.environ.get("VITE_SUPABASE_ANON_KEY", "")
+    if not token or not base or not chave:
+        return None
+    pedido = urllib.request.Request(
+        f"{base}/rest/v1/rpc/obter_contexto_monitora",
+        data=b"{}",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "apikey": chave,
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(pedido, timeout=8) as resposta:
+            contexto = json.loads(resposta.read())
+    except Exception:
+        return None
+    perfil = contexto.get("profile") if isinstance(contexto, dict) else None
+    if not isinstance(perfil, dict) or perfil.get("ativo") is not True or perfil.get("user_id") != usuario_id:
+        return False
+    areas = perfil.get("areas")
+    permissoes = perfil.get("permissoes")
+    return (
+        isinstance(areas, list)
+        and any(isinstance(area, str) and area.strip() for area in areas)
+        and isinstance(permissoes, dict)
+        and any(permissoes.get(recurso) in ("editor", "admin") for recurso in ("nucleo", "calendario"))
+    )
+
+
 class handler(BaseHTTPRequestHandler):
     def _responder(self, status, corpo):
         dados = json.dumps(corpo, ensure_ascii=False).encode("utf-8")
@@ -598,8 +637,15 @@ class handler(BaseHTTPRequestHandler):
         self.wfile.write(dados)
 
     def do_POST(self):
-        if not usuario_autenticado(self.headers.get("Authorization", "")):
+        autorizacao = self.headers.get("Authorization", "")
+        usuario_id = usuario_autenticado(autorizacao)
+        if not usuario_id:
             return self._responder(401, {"erro": "Entre no MONITORA para importar anexos."})
+        permitido = usuario_pode_importar(autorizacao, usuario_id)
+        if permitido is None:
+            return self._responder(503, {"erro": "Não foi possível confirmar suas permissões. Tente novamente."})
+        if not permitido:
+            return self._responder(403, {"erro": "Seu perfil não tem permissão para importar anexos de editais."})
         try:
             tamanho = int(self.headers.get("Content-Length") or 0)
         except ValueError:
