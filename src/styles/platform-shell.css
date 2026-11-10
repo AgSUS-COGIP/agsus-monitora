@@ -541,6 +541,10 @@ html[data-theme="dark"] .sidebar {
   background: var(--color-status-success-solid);
   box-shadow: 0 0 0 3px var(--state-success-soft);
 }
+/* Só o número de pessoas: aparece no celular, no lugar do rótulo (abaixo). */
+.online-presence-curto {
+  display: none;
+}
 .online-presence-popover {
   position: absolute;
   top: calc(100% + 8px);
@@ -891,6 +895,22 @@ html[data-theme="dark"] .sidebar {
   }
   .top-user-button {
     padding-right: 5px;
+  }
+  /*
+    Pessoas online compacto: o ponto (o estado), o ícone e só o número ("1"),
+    sem o rótulo ("1 online", "Presença indisponível"), que tomava a largura
+    do título — em 375px sobravam 107px e "Lista de Aprovados" virava
+    "Lista de A…". O rótulo completo segue no `aria-label` e no `title`.
+  */
+  .online-presence-button {
+    gap: 6px;
+    padding: 0 10px;
+  }
+  .online-presence-rotulo {
+    display: none;
+  }
+  .online-presence-curto {
+    display: inline;
   }
   .top-user-popover {
     width: min(280px, calc(100vw - 24px));
