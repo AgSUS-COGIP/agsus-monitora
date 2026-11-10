@@ -17,6 +17,7 @@
 */
 import type { jsPDF as TipoJsPdf } from "jspdf";
 import type { CellInput, RowInput, UserOptions } from "jspdf-autotable";
+import { erroDeVersaoNova } from "../importar-com-recarga.ts";
 import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.ts";
 import { COLUNAS_DOS_CRITERIOS, type Espelho } from "./espelho-de-nota.ts";
 import { comOCandidato, trechosDaSaudacao } from "./modelo-do-espelho.ts";
@@ -50,11 +51,22 @@ export function carregarBibliotecasDoPdf(): Promise<BibliotecasDoPdf> {
     import("jspdf"),
     import("jspdf-autotable"),
     import("fflate"),
-  ]).then(([pdf, tabela, zip]) => ({
-    jsPDF: pdf.jsPDF,
-    autoTable: tabela.autoTable as DesenharTabela,
-    zipSync: zip.zipSync as Zipar,
-  }));
+  ]).then(
+    ([pdf, tabela, zip]) => ({
+      jsPDF: pdf.jsPDF,
+      autoTable: tabela.autoTable as DesenharTabela,
+      zipSync: zip.zipSync as Zipar,
+    }),
+    /*
+      Publicação nova com a página aberta: o arquivo antigo do jsPDF não existe
+      mais ("Failed to fetch dynamically imported module"). Diz o que fazer em
+      vez da mensagem técnica; não recarrega sozinho (a ficha pode ter algo
+      não salvo).
+    */
+    (erro: unknown) => {
+      throw erroDeVersaoNova(erro);
+    },
+  );
   bibliotecas.catch(() => {
     bibliotecas = null;
   });
