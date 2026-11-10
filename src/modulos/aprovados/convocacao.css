@@ -29,7 +29,7 @@
   gap: 10px;
   padding: 13px 14px;
   border: 1px solid var(--border-subtle);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: var(--surface-card);
   cursor: pointer;
 }
@@ -324,7 +324,7 @@
   margin: 0 0 18px;
   padding: var(--space-4);
   border: 1px solid var(--border-subtle);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: var(--surface-raised);
 }
 .convocacao-editor.hidden {
@@ -341,7 +341,7 @@
   gap: var(--space-2);
   margin: 0;
   padding: 9px 11px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--state-warning-soft);
   color: var(--state-warning);
   font-size: var(--text-caption);
@@ -376,7 +376,7 @@
 }
 .convocacao-editor-campo code {
   padding: 0 3px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   background: var(--surface-raised);
   font-size: var(--text-caption);
 }
@@ -466,7 +466,7 @@
 }
 .convocacao-categoria-tag {
   padding: var(--space-1) 9px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--state-info-soft);
   color: var(--state-info);
   font-size: var(--text-caption);
@@ -543,7 +543,7 @@
   justify-content: center;
   min-width: 18px;
   padding: 1px var(--space-1);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--state-info-soft);
   color: var(--state-info);
   font-size: var(--text-caption);
