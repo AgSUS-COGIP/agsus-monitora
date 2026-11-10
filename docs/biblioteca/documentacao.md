@@ -59,7 +59,8 @@ A documentação do MONITORA é um vault do Obsidian com a raiz do repositório 
 
 `.obsidian/graph.json` (versionado) traz os grupos, os modelos escondidos (`-path:docs/_templates`)
 e os nomes visíveis de mais longe. Ao mexer no gráfico (zoom, forças), o Obsidian regrava o
-arquivo: não commite essa mudança, só a de grupos e filtros.
+arquivo: não commite essa mudança, só a de grupos e filtros. Para editar o `graph.json` fora do
+Obsidian, feche-o antes: aberto, ele grava a configuração da memória por cima.
 
 | Cor     | O que é                                              |
 | ------- | ---------------------------------------------------- |
