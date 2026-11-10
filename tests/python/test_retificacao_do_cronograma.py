@@ -197,6 +197,11 @@ class TestDatas:
         assert ax.sem_rodape("Publicação do Edital ão 1ª RETIFICAÇÃO DO ANEXO I (0604884)") == "Publicação do Edital"
         assert ax.sem_rodape("cação 2ª Retificação do Anexo I - Cronograma (0698514) SEI A") == ""
 
+    def test_agsus_no_texto_da_celula_nao_e_rodape(self):
+        # Só o processo do SEI ("AGSUS.002213/…") é rodapé; o nome no texto fica.
+        assert ax.sem_rodape("Divulgação do resultado no site da AgSUS.") == "Divulgação do resultado no site da AgSUS."
+        assert ax.sem_rodape("Recurso pelo e-mail recurso@agsus.org.br") == "Recurso pelo e-mail recurso@agsus.org.br"
+
 
 # ── PDF inteiro ─────────────────────────────────────────────────────────────
 
