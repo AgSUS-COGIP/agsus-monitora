@@ -1281,9 +1281,9 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     argumentos: ["p_edital", "p_chaves"],
     critica: false,
     resumo:
-      "Comunicados de eliminação (um ou em lote): a situação de agora só dos marcados (p_chaves = vaga|código, até 10.000) e o cargo das vagas deles, em vez de reler a triagem inteira antes de emitir. Cada candidato traz fundamento (item_edital, versao_regra, fonte) só quando o motivo tem fundamento CONFERIDO (20261110215930, #593); senão nulo. Mesma permissão.",
+      "Comunicados de eliminação (um ou em lote): a situação de agora só dos marcados (p_chaves = vaga|código, até 10.000) e o cargo das vagas deles, em vez de reler a triagem inteira antes de emitir. Cada candidato traz fundamento (item_edital, versao_regra, fonte) só quando o motivo tem fundamento CONFERIDO (20261110215930, issue 593); senão nulo. Mesma permissão.",
   },
-  // ── Fundamento conferido da eliminação (20261110215930_fundamento_conferido_da_eliminacao.sql, #593)
+  // ── Fundamento conferido da eliminação (20261110215930_fundamento_conferido_da_eliminacao.sql, issue 593)
   obter_fundamentos_da_eliminacao: {
     argumentos: ["p_edital"],
     critica: false,
