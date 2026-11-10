@@ -79,6 +79,8 @@ export function criarEstadoDoCalendario({
 }: OpcoesDoEstadoDoCalendario = {}): EstadoDoCalendario {
   let estado = ESTADO_INICIAL;
   let carregadoEm = 0;
+  /* Sobe a cada invalidar(): a carga que começou antes não marca os dados como frescos. */
+  let versao = 0;
   let emVoo: Promise<void> | null = null;
   const ouvintes = new Set<() => void>();
 
@@ -165,11 +167,13 @@ export function criarEstadoDoCalendario({
     }
 
     publicar({ carregando: true, erro: "" });
+    const versaoDaCarga = versao;
     emVoo = (async () => {
       try {
         const { etapas, editais, falhas, demandas, podeCriarEm } =
           await buscar();
-        carregadoEm = relogio();
+        // Invalidado no meio: mostra o que chegou, mas a próxima abertura relê.
+        carregadoEm = versaoDaCarga === versao ? relogio() : 0;
         publicar({
           etapas,
           editais,
@@ -209,6 +213,7 @@ export function criarEstadoDoCalendario({
     carregar,
     /* O cronograma mudou noutra tela: o que está aqui ficou velho. */
     invalidar() {
+      versao += 1;
       carregadoEm = 0;
     },
     guardarDemanda(demanda) {
