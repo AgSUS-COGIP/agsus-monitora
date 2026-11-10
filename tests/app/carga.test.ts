@@ -939,24 +939,6 @@ describe("contratos da carga", () => {
       expect(colunas).toContain(coluna);
   });
 
-  it("a RPC do monitoramento devolve exatamente COLUNAS_DO_MONITORAMENTO", () => {
-    const sql = readFileSync(
-      "supabase/migrations/20261022200000_funil_do_edital_de_uma_fonte_so.sql",
-      "utf8",
-    );
-    const corpo = sql.slice(
-      sql.indexOf("function public.listar_monitoramento_operacional"),
-    );
-    const lista = corpo.slice(
-      corpo.indexOf("select v."),
-      corpo.indexOf('from public."VW_MONITORAMENTO_INDIGENA_OPERACIONAL"'),
-    );
-    const colunas = [...lista.matchAll(/v\.("?)([A-Za-z_]+)\1/g)].map(
-      (m) => m[2],
-    );
-    expect(colunas).toEqual(COLUNAS_DO_MONITORAMENTO.split(","));
-  });
-
   it("sem tela de carregamento (o skeleton e a barra do cabeçalho bastam)", () => {
     const fonte = readFileSync("src/app/carga.ts", "utf8");
     expect(fonte).not.toContain("mostrarCarregamento");

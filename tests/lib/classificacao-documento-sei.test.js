@@ -35,7 +35,7 @@ import {
 */
 
 const SEED = readFileSync(
-  "supabase/correcoes/20261002-regras-de-classificacao-83-e-100.sql",
+  "tests/fixtures/sql-de-dados/20261002-regras-de-classificacao-83-e-100.sql",
   "utf8",
 );
 const regraDoSeed = (marca) => {

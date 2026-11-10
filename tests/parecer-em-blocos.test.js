@@ -3,12 +3,12 @@ import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 import {
   blocoDo,
-  calcularMesesCompletos,
   comporParecer,
-  dataUtc,
+  DIAS_POR_MES,
   linhasDeTexto,
   mesesDaExperiencia,
   periodoDeInterposicao,
+  pontosDoParecer,
   preencher,
   rascunhoInicial,
   rascunhoVazio,
@@ -23,6 +23,7 @@ import {
   preencherOSimulador,
 } from "../src/modulos/recursos/parecer-em-blocos/simulador.ts";
 import { dadosFicticios } from "../src/modulos/recursos/parecer-em-blocos/dados-ficticios.ts";
+import { diasDosIntervalos } from "../src/lib/avaliacao-documental/pontuacao.ts";
 import { CASOS, casoCompleto } from "./casos-do-parecer.js";
 import { TEXTOS_ESPERADOS } from "./parecer-em-blocos-esperado.js";
 
@@ -35,9 +36,12 @@ import { TEXTOS_ESPERADOS } from "./parecer-em-blocos-esperado.js";
   2. Paridade com o simulador (só com SIMULADOR_DE_PARECERES apontando para o
      HTML da equipe, que NÃO fica no repositório; no CI, pulado): abre o
      simulador no jsdom com o script dele, preenche os campos com o mesmo caso
-     (como o clique faria) e compara o texto visível da prévia dele. A única
-     diferença aceita é CORRECOES_DO_SIMULADOR (palavras em inglês).
-  3. Meses: a função do simulador, copiada aqui sem mudança, contra a porta.
+     (como o clique faria) e compara o texto visível da prévia dele. As
+     diferenças aceitas são CORRECOES_DO_SIMULADOR (palavras em inglês) e os
+     números do total de meses da experiência (ver o item 3).
+  3. Meses: desde 10/11/2026, a regra da ficha (dias corridos com o primeiro
+     e o último, unidos, ÷ 30), e não mais a do simulador (meses de
+     calendário sem o dia final), que dava um mês a menos que a ficha.
 */
 
 const textoDoMonitora = (rascunho) =>
@@ -59,7 +63,7 @@ describe("o texto de cada caso é o esperado", () => {
 
   it("o cômputo sem sobreposição do caso completo", () => {
     expect(textoDoMonitora(casoCompleto()).join("\n")).toContain(
-      "consolida-se o tempo efetivo de 28 mês(es) completo(s), o que perfaz a pontuação total de 5,6 ponto(s)",
+      "consolida-se o tempo efetivo de 29 mês(es) completo(s), o que perfaz a pontuação total de 5,8 ponto(s)",
     );
   });
 });
@@ -97,118 +101,89 @@ describe.skipIf(!SIMULADOR_DE_PARECERES || !existsSync(SIMULADOR_DE_PARECERES))(
       );
     }
 
+    // O total de meses segue a ficha, não o simulador: os números saem da comparação.
+    const semOsMeses = (linhas) =>
+      linhas.map((l) =>
+        l.replace(
+          /tempo efetivo de \d+ mês\(es\) completo\(s\), o que perfaz a pontuação total de [\d,]+ ponto\(s\)/,
+          "tempo efetivo de # mês(es) completo(s), o que perfaz a pontuação total de # ponto(s)",
+        ),
+      );
+
     for (const [nome, caso] of CASOS)
       it(nome, async () => {
         const rascunho = await caso();
-        expect(textoDoMonitora(rascunho)).toEqual(
-          await textoDoSimulador(rascunho),
+        expect(semOsMeses(textoDoMonitora(rascunho))).toEqual(
+          semOsMeses(await textoDoSimulador(rascunho)),
         );
       });
   },
 );
 
-/*
-  parseUTCDate e calcularMesesCompletos do simulador, copiadas sem mudança
-  (só a sintaxe de módulo), para comparar com a porta em src/lib.
-*/
-function parseUTCDate(dateStr) {
-  if (!dateStr) return null;
-  const parts = dateStr.split("-");
-  if (parts.length !== 3) return null;
-  return new Date(
-    Date.UTC(
-      parseInt(parts[0], 10),
-      parseInt(parts[1], 10) - 1,
-      parseInt(parts[2], 10),
-    ),
-  );
-}
+describe("meses da experiência: a regra da ficha", () => {
+  const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
 
-function calcularMesesDoSimulador(d1, d2) {
-  if (!d1 || !d2 || d2 < d1) return 0;
-
-  let meses =
-    (d2.getUTCFullYear() - d1.getUTCFullYear()) * 12 +
-    (d2.getUTCMonth() - d1.getUTCMonth());
-  let diaOriginal = d1.getUTCDate();
-
-  let tempDate = new Date(
-    Date.UTC(d1.getUTCFullYear(), d1.getUTCMonth() + meses, diaOriginal),
-  );
-  if (
-    tempDate.getUTCMonth() !==
-    (((d1.getUTCMonth() + meses) % 12) + 12) % 12
-  ) {
-    tempDate = new Date(
-      Date.UTC(d1.getUTCFullYear(), d1.getUTCMonth() + meses + 1, 0),
-    );
-  }
-
-  if (d2 < tempDate) {
-    meses--;
-  }
-
-  return meses < 0 ? 0 : meses;
-}
-
-const doSimulador = {
-  parseUTCDate,
-  calcularMesesCompletos: calcularMesesDoSimulador,
-};
-
-describe("meses completos: a conta do simulador, portada sem mudança", () => {
-  const iso = (d) => d.toISOString().slice(0, 10);
-
-  it("dá o mesmo resultado que a função do simulador numa grade de datas", () => {
+  it("dá o mesmo que a ficha (dias ÷ 30) numa grade de datas", () => {
     const inicio = Date.UTC(2019, 0, 1);
     let comparados = 0;
     for (let a = 0; a < 800; a += 3) {
-      const d1 = new Date(inicio + a * 86_400_000);
+      const d1 = inicio + a * 86_400_000;
       for (const dias of [
         0, 1, 27, 28, 29, 30, 31, 58, 59, 60, 61, 89, 90, 365, 366, 400, 731,
       ]) {
-        const d2 = new Date(d1.getTime() + dias * 86_400_000);
-        const esperado = doSimulador.calcularMesesCompletos(
-          doSimulador.parseUTCDate(iso(d1)),
-          doSimulador.parseUTCDate(iso(d2)),
-        );
-        expect(calcularMesesCompletos(dataUtc(iso(d1)), dataUtc(iso(d2)))).toBe(
-          esperado,
+        const d2 = d1 + dias * 86_400_000;
+        const esperado = Math.floor(
+          diasDosIntervalos([{ inicio: iso(d1), fim: iso(d2) }]) / DIAS_POR_MES,
         );
         expect(mesesDaExperiencia(iso(d1), iso(d2))).toBe(esperado);
+        expect(
+          totalSemSobreposicao([
+            { atende: true, inicio: iso(d1), fim: iso(d2) },
+          ]).meses,
+        ).toBe(esperado);
         comparados++;
       }
     }
     expect(comparados).toBeGreaterThan(4000);
   });
 
-  it("casos que a equipe deve conhecer (fim de mês e o dia final)", () => {
-    expect(mesesDaExperiencia("2026-01-01", "2026-01-31")).toBe(0);
-    expect(mesesDaExperiencia("2026-01-01", "2026-02-01")).toBe(1);
-    expect(mesesDaExperiencia("2026-01-31", "2026-02-28")).toBe(1);
-    expect(mesesDaExperiencia("2024-01-31", "2024-02-28")).toBe(0);
-    expect(mesesDaExperiencia("2024-01-31", "2024-02-29")).toBe(1);
+  it("casos que a equipe deve conhecer (o dia final conta)", () => {
+    // 30 dias com o primeiro e o último fecham um mês.
+    expect(mesesDaExperiencia("2026-01-01", "2026-01-30")).toBe(1);
+    expect(mesesDaExperiencia("2026-01-01", "2026-01-29")).toBe(0);
+    // Antes (simulador): 01/01 a 31/01 dava 0 mês.
+    expect(mesesDaExperiencia("2026-01-01", "2026-01-31")).toBe(1);
+    expect(mesesDaExperiencia("2026-01-01", "2026-12-31")).toBe(12);
     expect(mesesDaExperiencia("2026-03-10", "2026-03-01")).toBe(0);
     expect(mesesDaExperiencia("", "2026-03-01")).toBe(0);
   });
 
-  it("une sobreposições, mas não emenda o dia seguinte (como o simulador)", () => {
-    const itens = [
-      { atende: true, inicio: "2020-01-01", fim: "2020-06-30" },
-      { atende: true, inicio: "2020-07-01", fim: "2020-12-31" },
-    ];
-    // 5 + 5: cada intervalo perde o mês do dia final.
-    expect(totalSemSobreposicao(itens)).toEqual({
-      meses: 10,
-      pontos: 10 * 0.2,
-    });
+  it("une sobreposições e emenda o dia seguinte (como a ficha)", () => {
+    // 182 + 184 dias seguidos = 366 dias = 12 meses (o simulador dava 5 + 5).
+    expect(
+      totalSemSobreposicao([
+        { atende: true, inicio: "2020-01-01", fim: "2020-06-30" },
+        { atende: true, inicio: "2020-07-01", fim: "2020-12-31" },
+      ]),
+    ).toEqual({ meses: 12, pontos: 12 * 0.2 });
     expect(
       totalSemSobreposicao([
         { atende: true, inicio: "2020-01-01", fim: "2020-12-31" },
         { atende: true, inicio: "2020-03-01", fim: "2020-05-31" },
         { atende: false, inicio: "2010-01-01", fim: "2020-01-01" },
       ]).meses,
-    ).toBe(11);
+    ).toBe(12);
+  });
+});
+
+describe("pontos no parecer", () => {
+  it("um decimal, meio para cima sem o erro do float", () => {
+    expect(pontosDoParecer(1.45)).toBe("1,5");
+    expect(pontosDoParecer(0.05)).toBe("0,1");
+    expect(pontosDoParecer(2.25)).toBe("2,3");
+    expect(pontosDoParecer(1.44)).toBe("1,4");
+    expect(pontosDoParecer(5.8)).toBe("5,8");
+    expect(pontosDoParecer(0)).toBe("0,0");
   });
 });
 
@@ -295,8 +270,19 @@ describe("pré-preenchimento com o que o MONITORA sabe", () => {
       "bloco.experiencia": "ficha",
       "conclusao.notas": "ajuste",
     });
-    // A ficha conta dias ÷ 30; o simulador, meses de calendário: o aviso mostra a diferença.
-    expect(avisos.some((a) => a.includes("dias ÷ 30"))).toBe(true);
+    // Parecer e ficha contam igual (dias ÷ 30): sem aviso de diferença.
+    expect(avisos.some((a) => a.includes("A ficha apurou"))).toBe(false);
+  });
+
+  it("avisa quando a ficha apurou outro total (estágio ou data limite)", async () => {
+    const dados = await dadosFicticios.carregar("ficticio-1");
+    const ficha = { ...dados.ficha, meses_apurados: 999 };
+    const { avisos } = rascunhoInicial({ ...dados, ficha });
+    expect(
+      avisos.some((a) =>
+        a.startsWith("A ficha apurou 999 meses; o parecer conta"),
+      ),
+    ).toBe(true);
   });
 
   it("envio depois do prazo vira intempestivo e indeferimento", async () => {

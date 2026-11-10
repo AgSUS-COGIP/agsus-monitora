@@ -19,352 +19,28 @@ import {
   Etapa 1 do "tudo vira aba": as abas de cada área saem do código para o banco
   (TB_ABA × RL_ABA_AREA, lidas por `listar_abas_do_menu`), e nada muda na tela.
 
-  A prova tem três pontas:
-  - o seed da migration é o catálogo do código (`ABAS_DO_MENU`);
-  - a resposta real da função, capturada no ensaio da migration
-    (`fixtures/listar-abas-do-menu.json`), é o que o seed produz;
+  A prova tem duas pontas (as migrations saíram do repositório; vale a resposta real):
+  - a resposta real da função, capturada no ensaio do menu
+    (`fixtures/listar-abas-do-menu-triagem.json`), é o catálogo do código (`ABAS_DO_MENU`);
   - a árvore do menu, com o catálogo do banco ou com o do código, é a de antes
     desta mudança (`fixtures/menu-lateral-antes-do-catalogo.json`, gerada com o
     código antigo) em toda combinação de permissão e área.
 */
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
-const MIGRATION = ler(
-  "supabase/migrations/20260929110000_catalogo_de_abas.sql",
-);
-/*
-  Abas que entraram depois, cada uma na migration dela (o mesmo formato de
-  insert): o seed do catálogo é a soma de todas.
-*/
-const MIGRATIONS_DO_SEED = [
-  MIGRATION,
-  ler("supabase/migrations/20260929120000_recursos.sql"),
-];
-/*
-  Entrevistas (20260929235000_entrevistas.sql): a aba entra em TB_ABA
-  desligada — 20260930090000_liga_aba_entrevistas.sql só a liga (ST_ATIVO) —,
-  em todas as áreas (insert ... select de TB_AREA) e Recursos passa à ordem 7
-  (update). O seed modela o estado depois das duas.
-*/
-const MIGRATION_DAS_ENTREVISTAS = ler(
-  "supabase/migrations/20260929235000_entrevistas.sql",
-);
-const MIGRATION_QUE_LIGA_AS_ENTREVISTAS = ler(
-  "supabase/migrations/20260930090000_liga_aba_entrevistas.sql",
-);
-/*
-  Seleção (20261001090000_selecao.sql): o mesmo formato das Entrevistas — entra
-  desligada, em todas as áreas, e 20261001090500_liga_aba_selecao.sql a liga.
-*/
-const MIGRATION_DA_SELECAO = ler(
-  "supabase/migrations/20261001090000_selecao.sql",
-);
-const MIGRATION_QUE_LIGA_A_SELECAO = ler(
-  "supabase/migrations/20261001090500_liga_aba_selecao.sql",
-);
-/*
-  Classificação (20261002150000_classificacao.sql): o mesmo formato — entra
-  desligada, em todas as áreas, empurra Aprovados (8) e Seleção (9), e
-  20261002150500_liga_aba_classificacao.sql a liga.
-*/
-const MIGRATION_DA_CLASSIFICACAO = ler(
-  "supabase/migrations/20261002150000_classificacao.sql",
-);
-const MIGRATION_QUE_LIGA_A_CLASSIFICACAO = ler(
-  "supabase/migrations/20261002150500_liga_aba_classificacao.sql",
-);
-/*
-  Avaliação documental (20261006090000_avaliacao_documental_permissao_e_menu.sql):
-  o mesmo formato — entra desligada, em todas as áreas, na ordem 5, empurra
-  Recursos, Entrevistas, Classificação, Aprovados e Seleção, e troca o rótulo
-  de Análises para "Painel das análises" (update de "NO_ABA");
-  20261006090500_liga_aba_avaliacao_documental.sql a liga.
-*/
-const MIGRATION_DA_AVALIACAO = ler(
-  "supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql",
-);
-const MIGRATION_QUE_LIGA_A_AVALIACAO = ler(
-  "supabase/migrations/20261006090500_liga_aba_avaliacao_documental.sql",
-);
-/*
-  Conduzir entrevistas (20261008130000_conduzir_entrevistas_no_menu.sql): o
-  mesmo formato — entra desligada, em todas as áreas, na ordem 8, empurra
-  Classificação, Aprovados e Seleção, e troca o rótulo de Entrevistas para
-  "Painel de entrevistas"; 20261008130500_liga_aba_conduzir_entrevistas.sql a
-  liga.
-*/
-const MIGRATION_DE_CONDUZIR = ler(
-  "supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql",
-);
-const MIGRATION_QUE_LIGA_CONDUZIR = ler(
-  "supabase/migrations/20261008130500_liga_aba_conduzir_entrevistas.sql",
-);
-/*
-  Analisar recursos (20261009230000_analisar_recursos_no_menu.sql): entra
-  desligada, na ordem 7, nas áreas do painel de recursos (que estão nas três),
-  empurra Painel de entrevistas, Conduzir entrevistas, Classificação,
-  Aprovados e Seleção, e troca o rótulo de Recursos para "Painel de
-  recursos"; 20261009230500_liga_aba_analisar_recursos.sql a liga.
-*/
-const MIGRATION_DE_ANALISAR = ler(
-  "supabase/migrations/20261009230000_analisar_recursos_no_menu.sql",
-);
-const MIGRATION_QUE_LIGA_ANALISAR = ler(
-  "supabase/migrations/20261009230500_liga_aba_analisar_recursos.sql",
-);
-/* A ordem por etapa do processo: só updates de "NU_ORDEM", aplicados por último. */
-const MIGRATION_DA_ORDEM = ler(
-  "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql",
-);
-const MIGRATION_DA_PRE = ler(
-  "supabase/migrations/20261028100644_entrada_propria_pre_classificacao.sql",
-);
-const ROLLBACK_DA_PRE = ler(
-  "supabase/rollback/20261028100644_entrada_propria_pre_classificacao.sql",
-);
-const ENSAIO_DA_PRE = ler(
-  "supabase/ensaios/20261028100644_entrada_propria_pre_classificacao.sql",
-);
-/*
-  Menu reorganizado e Pré-classificação vira Triagem
-  (20261029150000_menu_reorganizado_e_triagem.sql): só troca rótulo, ícone e
-  ordem das abas (`(codigo, rotulo_antigo, icone_antigo, ordem_antiga,
-  rotulo_novo, icone_novo, ordem_nova)`), aplicado por último no seed e na
-  resposta do ensaio anterior. A resposta real da função no ensaio desta
-  migration fica em `fixtures/listar-abas-do-menu-triagem.json`.
-*/
-const MIGRATION_DO_MENU = ler(
-  "supabase/migrations/20261029150000_menu_reorganizado_e_triagem.sql",
-);
-const MENU_NOVO = new Map(
-  [
-    ...MIGRATION_DO_MENU.matchAll(
-      /\('([^']+)', '([^']+)', '([^']+)', (\d+), '([^']+)', '([^']+)', (\d+)\)/g,
-    ),
-  ].map(
-    ([
-      ,
-      codigo,
-      rotuloAntigo,
-      iconeAntigo,
-      ordemAntiga,
-      rotulo,
-      icone,
-      ordem,
-    ]) => [
-      codigo,
-      {
-        antes: [rotuloAntigo, iconeAntigo, Number(ordemAntiga)],
-        depois: { rotulo, icone, ordem: Number(ordem) },
-      },
-    ],
-  ),
-);
-function comMenuNovo(resposta) {
-  return resposta
-    .map((aba) => {
-      const troca = MENU_NOVO.get(aba.co_aba);
-      if (!troca) return aba;
-      const { rotulo, icone, ordem } = troca.depois;
-      return {
-        ...aba,
-        no_aba: rotulo,
-        ds_icone: icone,
-        nu_ordem: ordem,
-        areas: aba.areas.map((area) => ({
-          ...area,
-          nu_ordem: ordem,
-          ds_icone: icone,
-        })),
-      };
-    })
-    .sort((a, b) => a.nu_ordem - b.nu_ordem);
-}
-const RESPOSTA_DO_ENSAIO = comMenuNovo(
-  JSON.parse(ler("tests/fixtures/listar-abas-do-menu-pre-classificacao.json")),
-);
 const RESPOSTA_DO_ENSAIO_DO_MENU = JSON.parse(
   ler("tests/fixtures/listar-abas-do-menu-triagem.json"),
+);
+/*
+  A resposta de `listar_abas_do_menu` com todas as áreas: a do ensaio da Pré-classificação com
+  as trocas do menu reorganizado (20261029150000) já aplicadas, gravada quando as migrations
+  saíram do repositório.
+*/
+const RESPOSTA_DO_ENSAIO = JSON.parse(
+  ler("tests/fixtures/listar-abas-do-menu-completo.json"),
 );
 const ARVORES_DE_ANTES = JSON.parse(
   ler("tests/fixtures/menu-lateral-antes-do-catalogo.json"),
 );
-
-/* As linhas dos `insert into public."<tabela>" (...) values (...), (...);` do seed. */
-function linhasDoInsert(tabela) {
-  const linhas = MIGRATIONS_DO_SEED.flatMap((sql) =>
-    sql.includes(`insert into public."${tabela}"`)
-      ? linhasDoInsertEm(sql, tabela)
-      : [],
-  );
-  expect(linhas.length, tabela).toBeGreaterThan(0);
-  return linhas;
-}
-
-function linhasDoInsertEm(sql, tabela) {
-  const inicio = sql.indexOf(`insert into public."${tabela}"`);
-  const insert = sql
-    .slice(inicio, sql.indexOf(";", inicio))
-    .split(/\bon conflict\b/i)[0];
-  const [cabecalho, valores] = insert.split(/\)\s*values\s*/);
-  const colunas = [...cabecalho.matchAll(/"([A-Z_]+)"/g)]
-    .map((m) => m[1])
-    .filter((nome) => nome !== tabela);
-  const valor = (bruto) => {
-    const v = bruto.trim();
-    if (v === "null") return null;
-    if (/^'.*'$/.test(v)) return v.slice(1, -1).replace(/''/g, "'");
-    return Number(v);
-  };
-  return [...valores.matchAll(/\(([^()]*)\)/g)].map((m) =>
-    Object.fromEntries(
-      m[1]
-        .match(/'(?:[^']|'')*'|[^,]+/g)
-        .map((bruto, i) => [colunas[i], valor(bruto)]),
-    ),
-  );
-}
-
-function abasDoSeed() {
-  const abas = [
-    ...linhasDoInsert("TB_ABA"),
-    ...linhasDoInsertEm(MIGRATION_DAS_ENTREVISTAS, "TB_ABA"),
-    ...linhasDoInsertEm(MIGRATION_DA_SELECAO, "TB_ABA"),
-    ...linhasDoInsertEm(MIGRATION_DA_CLASSIFICACAO, "TB_ABA"),
-    ...linhasDoInsertEm(MIGRATION_DA_AVALIACAO, "TB_ABA"),
-    ...linhasDoInsertEm(MIGRATION_DE_CONDUZIR, "TB_ABA"),
-    ...linhasDoInsertEm(MIGRATION_DE_ANALISAR, "TB_ABA"),
-    ...linhasDoInsertEm(MIGRATION_DA_PRE, "TB_ABA"),
-  ];
-  for (const sql of [
-    MIGRATION_DAS_ENTREVISTAS,
-    MIGRATION_DA_ORDEM,
-    MIGRATION_DA_CLASSIFICACAO,
-    MIGRATION_DA_AVALIACAO,
-    MIGRATION_DE_CONDUZIR,
-    MIGRATION_DE_ANALISAR,
-  ])
-    for (const [, ordem, aba] of sql.matchAll(
-      /update public\."TB_ABA" set "NU_ORDEM" = (\d+)[^;]*where "CO_ABA" = '([^']+)'/g,
-    ))
-      abas.find((linha) => linha.CO_ABA === aba).NU_ORDEM = Number(ordem);
-  for (const sql of [
-    MIGRATION_DA_AVALIACAO,
-    MIGRATION_DE_CONDUZIR,
-    MIGRATION_DE_ANALISAR,
-  ])
-    for (const [, rotulo, aba] of sql.matchAll(
-      /update public."TB_ABA" set "NO_ABA" = '([^']+)'[^;]*where "CO_ABA" = '([^']+)'/g,
-    ))
-      abas.find((linha) => linha.CO_ABA === aba).NO_ABA = rotulo;
-  for (const [, codigo, antiga, nova] of MIGRATION_DA_PRE.matchAll(
-    /\('([^']+)', (\d+), (\d+)\)/g,
-  )) {
-    const aba = abas.find((linha) => linha.CO_ABA === codigo);
-    if (aba && aba.NU_ORDEM === Number(antiga)) aba.NU_ORDEM = Number(nova);
-  }
-  const selecao = abas.find((linha) => linha.CO_ABA === "selecao");
-  if (selecao?.NO_ABA === "Seleção") selecao.NO_ABA = "Painel da Seleção";
-  for (const aba of abas) {
-    const troca = MENU_NOVO.get(aba.CO_ABA);
-    if (!troca) continue;
-    expect([aba.NO_ABA, aba.DS_ICONE, aba.NU_ORDEM], aba.CO_ABA).toEqual(
-      troca.antes,
-    );
-    aba.NO_ABA = troca.depois.rotulo;
-    aba.DS_ICONE = troca.depois.icone;
-    aba.NU_ORDEM = troca.depois.ordem;
-  }
-  return abas;
-}
-
-function ligacoesDoSeed() {
-  expect(MIGRATION_DAS_ENTREVISTAS).toContain(
-    `select 'entrevistas', a."CO_AREA", 'S' from public."TB_AREA" a`,
-  );
-  expect(MIGRATION_QUE_LIGA_AS_ENTREVISTAS).toContain(
-    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'entrevistas'`,
-  );
-  expect(MIGRATION_DA_SELECAO).toContain(
-    `select 'selecao', a."CO_AREA", 'S' from public."TB_AREA" a`,
-  );
-  expect(MIGRATION_QUE_LIGA_A_SELECAO).toContain(
-    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'selecao'`,
-  );
-  expect(MIGRATION_DA_CLASSIFICACAO).toContain(
-    `select 'classificacao', a."CO_AREA", 'S' from public."TB_AREA" a`,
-  );
-  expect(MIGRATION_QUE_LIGA_A_CLASSIFICACAO).toContain(
-    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'classificacao'`,
-  );
-  expect(MIGRATION_DA_AVALIACAO).toContain(
-    `select 'avaliacao-documental', a."CO_AREA", 'S' from public."TB_AREA" a`,
-  );
-  expect(MIGRATION_QUE_LIGA_A_AVALIACAO).toContain(
-    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'avaliacao-documental'`,
-  );
-  expect(MIGRATION_DE_CONDUZIR).toContain(
-    `select 'conduzir-entrevistas', a."CO_AREA", 'S' from public."TB_AREA" a`,
-  );
-  expect(MIGRATION_QUE_LIGA_CONDUZIR).toContain(
-    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'conduzir-entrevistas'`,
-  );
-  expect(MIGRATION_DE_ANALISAR).toContain(
-    `select 'analisar-recursos', r."CO_AREA", r."ST_ATIVO" from public."RL_ABA_AREA" r where r."CO_ABA" = 'recursos'`,
-  );
-  expect(MIGRATION_QUE_LIGA_ANALISAR).toContain(
-    `set "ST_ATIVO" = 'S', "DT_ATUALIZACAO" = now() where "CO_ABA" = 'analisar-recursos'`,
-  );
-  expect(MIGRATION_DA_PRE).toContain(
-    `select 'pre-classificacao', a."CO_AREA", 'S'`,
-  );
-  expect(MIGRATION_DA_PRE).toContain("'avaliacao_documental'");
-  expect(MIGRATION_DA_PRE).toContain(
-    "'pre-classificacao', 'Pré-classificação', 'list-ordered', 6",
-  );
-  return [
-    ...linhasDoInsert("RL_ABA_AREA"),
-    ...[
-      "entrevistas",
-      "selecao",
-      "classificacao",
-      "avaliacao-documental",
-      "conduzir-entrevistas",
-      // As áreas do painel de recursos (as três no seed).
-      "analisar-recursos",
-      "pre-classificacao",
-    ].flatMap((aba) =>
-      AREAS_DO_SISTEMA.map((area) => ({ CO_ABA: aba, CO_AREA: area.id })),
-    ),
-  ];
-}
-
-/* O que `listar_abas_do_menu` devolve para o seed (a mesma regra do SQL). */
-function respostaDoSeed() {
-  const abas = abasDoSeed();
-  const ligacoes = ligacoesDoSeed();
-  const ordemDaArea = (co) =>
-    AREAS_DO_SISTEMA.findIndex((area) => area.id === co);
-  return abas
-    .sort((a, b) => a.NU_ORDEM - b.NU_ORDEM)
-    .map((aba) => ({
-      co_aba: aba.CO_ABA,
-      no_aba: aba.NO_ABA,
-      ds_icone: aba.DS_ICONE,
-      nu_ordem: aba.NU_ORDEM,
-      co_view: aba.CO_VIEW,
-      co_recurso: aba.CO_RECURSO,
-      tp_aba: aba.TP_ABA,
-      areas: ligacoes
-        .filter((r) => r.CO_ABA === aba.CO_ABA)
-        .sort((a, b) => ordemDaArea(a.CO_AREA) - ordemDaArea(b.CO_AREA))
-        .map((r) => ({
-          co_area: r.CO_AREA,
-          nu_ordem: r.NU_ORDEM ?? aba.NU_ORDEM,
-          co_view: r.CO_VIEW ?? aba.CO_VIEW,
-          ds_icone: r.DS_ICONE ?? aba.DS_ICONE,
-        })),
-    }));
-}
 
 const camposDaAba = ({ id, rotulo, icone, ordem, view, recurso, tipo }) => ({
   id,
@@ -380,43 +56,8 @@ const paginasPorArea = (abas) =>
     AREAS_DO_SISTEMA.map((area) => [area.id, paginasDaArea(abas, area.id)]),
   );
 
-describe("proteções da migração da Pré-classificação", () => {
-  it("fecha corretamente os blocos PL/pgSQL no deploy e no rollback", () => {
-    for (const sql of [MIGRATION_DA_PRE, ROLLBACK_DA_PRE]) {
-      const inicio = "do " + "$" + "$";
-      const fim = "\n" + "$" + "$" + ";\n";
-      expect(sql.split(inicio)).toHaveLength(2);
-      expect(sql.split(fim)).toHaveLength(2);
-      expect(sql).not.toContain("\n" + "$" + ";\n");
-    }
-  });
-
-  it("ensaia exatamente o corpo do SQL sem persistir alterações", () => {
-    const inicio = MIGRATION_DA_PRE.indexOf("\nbegin;\n") + 1;
-    const fim = MIGRATION_DA_PRE.lastIndexOf("\ncommit;");
-    const corpo = MIGRATION_DA_PRE.slice(inicio, fim);
-    expect(ENSAIO_DA_PRE).toContain(corpo);
-    for (const etapa of ["E1", "E2", "E3", "E4"])
-      expect(ENSAIO_DA_PRE).toContain("FALHOU " + etapa);
-    expect(ENSAIO_DA_PRE.trimEnd().endsWith("rollback;")).toBe(true);
-  });
-
-  it("recusa colisão, ordem personalizada e rollback com a entrada ativa", () => {
-    expect(MIGRATION_DA_PRE).toContain(
-      "A aba pre-classificacao já existe: conferir antes de aplicar.",
-    );
-    expect(MIGRATION_DA_PRE).toContain(
-      "Ordem do catálogo personalizada ou incompleta",
-    );
-    expect(ROLLBACK_DA_PRE).toContain(
-      "Desative a Pré-classificação e confira a entrada antes do rollback.",
-    );
-    expect(ROLLBACK_DA_PRE).toContain("Ordem alterada desde a migration");
-  });
-});
-
-describe("o seed da migration é o catálogo do código", () => {
-  const doBanco = abasDoCatalogo(respostaDoSeed());
+describe("o catálogo do banco é o do código", () => {
+  const doBanco = abasDoCatalogo(RESPOSTA_DO_ENSAIO);
 
   it("as mesmas abas, com os mesmos campos", () => {
     // A Triagem (código técnico pre-classificacao) já está ligada no banco
@@ -442,10 +83,6 @@ describe("o seed da migration é o catálogo do código", () => {
     expect(abasDoCatalogo(RESPOSTA_DO_ENSAIO_DO_MENU).map(camposDaAba)).toEqual(
       ABAS_DO_MENU.map(camposDaAba),
     );
-  });
-
-  it("a resposta real da função, no ensaio, é a que o seed produz", () => {
-    expect(RESPOSTA_DO_ENSAIO).toEqual(respostaDoSeed());
   });
 
   it("o recurso de cada aba é um recurso de permissão que existe", () => {
@@ -697,36 +334,6 @@ describe("contrato e acesso da função", () => {
       argumentos: [],
       critica: false,
     });
-  });
-
-  it("autenticado lê; anônimo não lê nem executa; ninguém escreve", () => {
-    expect(MIGRATION).toContain(
-      "create function public.listar_abas_do_menu()\nreturns json",
-    );
-    expect(MIGRATION).toContain(
-      "revoke all on function public.listar_abas_do_menu() from public, anon;",
-    );
-    expect(MIGRATION).toContain(
-      "grant execute on function public.listar_abas_do_menu() to authenticated, service_role;",
-    );
-    expect(MIGRATION).toContain(
-      'revoke all on public."TB_ABA", public."RL_ABA_AREA" from public, anon, authenticated;',
-    );
-    expect(MIGRATION).toContain(
-      'grant select on public."TB_ABA", public."RL_ABA_AREA" to authenticated;',
-    );
-    expect(MIGRATION).not.toMatch(/grant (insert|update|delete|all)/i);
-  });
-
-  it("o rollback desfaz tudo o que a migration cria", () => {
-    const rollback = ler(
-      "supabase/rollback/20260929110000_catalogo_de_abas.sql",
-    );
-    expect(rollback).toContain(
-      "drop function if exists public.listar_abas_do_menu();",
-    );
-    expect(rollback).toContain('drop table if exists public."RL_ABA_AREA";');
-    expect(rollback).toContain('drop table if exists public."TB_ABA";');
   });
 });
 

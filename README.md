@@ -102,10 +102,9 @@ api/                  funções serverless da Vercel
 server/               servidor web em TypeScript (container)
 python/monitora/      cálculo em lote (Python) executado no GitHub Actions
 scripts/              checagens do CI, robôs em Node, geradores e utilitários de banco
-supabase/migrations/  mudanças de schema (código do banco)
+supabase/migrations/  mudanças de schema ainda relevantes (as aplicadas saíram em 10/11/2026)
 supabase/ensaios/     ensaio de cada migration (begin; … rollback;)
 supabase/rollback/    reversão de cada migration
-supabase/correcoes/   SQL de dados de uso único
 apps-script/          código das planilhas do Google
 tests/                Vitest, Playwright e pytest
 public/               ícones e dados geográficos estáticos (gerados por scripts/)
@@ -175,8 +174,9 @@ Todo Pull Request para `main` roda `.github/workflows/build-and-smoke.yml`:
 - **Python:** Ruff (lint e formatação) e pytest.
 - **Contrato de RPC contra o banco de desenvolvimento**, quando o segredo existe.
 
-**Limitações conhecidas:** os testes de banco são **estáticos** (leem o texto das migrations,
-rollbacks e ensaios); o CI não sobe um PostgreSQL nem executa as migrations. O comportamento no
+**Limitações conhecidas:** os testes de banco são, na maioria, **estáticos** (leem o texto das
+migrations, rollbacks e ensaios); o CI não sobe o banco do projeto. A exceção é o Postgres em
+WebAssembly (PGlite) de `tests/apoio/`, que roda funções reais num banco de teste. O comportamento no
 banco é conferido pelo ensaio antes de aplicar. A cobertura mínima configurada é baixa e não
 comprova cobertura dos fluxos críticos.
 
@@ -191,8 +191,9 @@ Toda mudança de schema é composta por três arquivos com o mesmo nome:
 A aplicação é **manual** (SQL Editor ou `psql`), feita por quem opera o banco depois da aprovação
 do PR, e fica registrada em `public.migracoes_aplicadas` (caminho + sha256; `npm run db:estado`
 mostra o que falta). **Não se usa `supabase db push`.** Migration aplicada não se edita: cria-se
-outra. `supabase/migrations-historicas/` (já aplicadas) e `supabase/descartadas/` (nunca aplicar)
-ficam só como registro.
+outra. As migrations já aplicadas saíram do repositório em 10/11/2026 (o banco não mudou; o
+histórico fica no Git): o código vigente se lê em `supabase/esquema-atual.sql`, retrato do schema só para leitura
+(`npm run db:esquema`), ou no banco (`pg_get_functiondef`).
 
 - Nomes no Padrão Institucional de Nomenclatura da AgSUS (MAD/PDTIC 2026–2027: `TB_`, `TA_`,
   `TH_`, `RL_`, `TL_`, colunas com prefixo tipológico, `COMMENT ON` em tudo).

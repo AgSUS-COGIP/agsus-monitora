@@ -200,10 +200,6 @@ describe("modo do texto sobre o painel", () => {
   const boot = readFileSync("src/app/entrada/marca.ts", "utf8");
   const cache = readFileSync("src/lib/access-branding-cache.ts", "utf8");
   const publico = readFileSync("src/lib/access-branding-publico.ts", "utf8");
-  const migracao = readFileSync(
-    "supabase/migrations/20260910120000_modo_do_texto_da_tela_de_acesso.sql",
-    "utf8",
-  );
 
   it("auto é o padrão e preserva o comportamento anterior", () => {
     expect(normalizarModo(undefined)).toBe(MODO_AUTO);
@@ -255,27 +251,6 @@ describe("modo do texto sobre o painel", () => {
   it("o modo viaja pelo cache e pelo mapa da RPC pública", () => {
     expect(cache).toContain('"textoModo"');
     expect(publico).toContain('auth_access_texto_modo: "textoModo"');
-  });
-
-  /*
-    Sem esta chave na lista da função, a escolha não alcança quem ainda não fez
-    login — que é justamente a tela onde ela aparece.
-  */
-  it("a migration acrescenta a chave à RPC pública, sem remover nenhuma", () => {
-    const chaves = [...migracao.matchAll(/'(auth_[a-z_]+)'/g)].map((m) => m[1]);
-    expect(chaves).toContain("auth_access_texto_modo");
-    for (const antiga of [
-      "auth_access_background_url",
-      "auth_access_logo_url",
-      "auth_access_panel_color",
-      "auth_access_greeting",
-      "auth_access_instruction",
-      "auth_google_button_text",
-    ]) {
-      expect(chaves, `${antiga} sumiu da lista`).toContain(antiga);
-    }
-    expect(migracao).toContain("create or replace function");
-    expect(migracao).not.toMatch(/drop\s+(function|table|column|policy)/i);
   });
 
   it("o pré-paint respeita o modo guardado", () => {

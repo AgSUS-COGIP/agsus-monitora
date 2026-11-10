@@ -21,7 +21,6 @@ sys.path.insert(0, str(_RAIZ / "scripts" / "pre_classificacao"))
 import gerar_treinamento as gerador  # noqa: E402
 
 FIXTURE = json.loads(gerador.FIXTURE.read_text(encoding="utf-8"))
-MIGRATION = gerador.MIGRATION.read_text(encoding="utf-8")
 
 
 def linhas():
@@ -32,14 +31,6 @@ class TestPreClassificacaoDoTreinamento(unittest.TestCase):
     def test_o_python_da_o_resultado_guardado(self):
         # A lista das cotas (20261015150000) é posterior ao resultado guardado: sem ela, o mesmo.
         self.assertEqual(gerador.sem_a_lista_padrao(gerador.calcular(FIXTURE["entrada"])), FIXTURE["resultado"])
-
-    def test_a_migration_grava_o_mesmo_resultado(self):
-        self.assertEqual(gerador.bloco_da_migration(MIGRATION), FIXTURE["resultado"])
-
-    def test_a_regra_da_entrada_e_a_copiada_na_migration(self):
-        trecho = MIGRATION.split("$regra93$")[1]
-        self.assertEqual(json.loads(trecho), FIXTURE["entrada"]["edital"]["regra"]["configuracao"])
-        self.assertEqual(FIXTURE["entrada"]["edital"]["regra"]["situacao"], "CONFERIDA")
 
     def test_contagens(self):
         r = FIXTURE["resultado"]["edital"]
@@ -78,7 +69,7 @@ class TestPreClassificacaoDoTreinamento(unittest.TestCase):
         for c in (c for v in FIXTURE["entrada"]["candidatos"].values() for c in v["candidatos"]):
             self.assertRegex(c["codigo"], r"^TREINO-P[0-9]{2}$")
         # Nenhum CPF (só o 000.000.000-00 da pergunta) e nenhum e-mail fora de @exemplo.invalid.
-        cpfs = set(re.findall(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b", texto + MIGRATION))
+        cpfs = set(re.findall(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b", texto))
         self.assertLessEqual(cpfs, {"000.000.000-00"})
         emails = set(re.findall(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+", texto))
         self.assertTrue(all(e.endswith("@exemplo.invalid") for e in emails), emails)

@@ -75,13 +75,13 @@ jobs:
 
     steps:
       - name: Baixar código
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 1
           show-progress: false
 
       - name: Configurar Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
         with:
           python-version: "3.12"
           cache: pip
@@ -107,7 +107,7 @@ jobs:
       # Tesseract (OCR) em português, com os pacotes .deb guardados no cache do Actions:
       # com o cache, instala sem baixar; sem ele, baixa uma vez e guarda.
       - name: Cache do Tesseract
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/.cache/apt-tesseract
           key: tesseract-por-${{ runner.os }}-${{ runner.arch }}-v1

@@ -15,10 +15,6 @@ import {
   transição — o espelho das regras de transicionar_resposta_recurso (o ensaio
   em produção, begin…rollback, conferiu o banco caso a caso).
 */
-const MIGRATION = readFileSync(
-  "supabase/migrations/20260929230000_recursos_modelos_anexos_respostas.sql",
-  "utf8",
-).replace(/\r\n/g, "\n");
 
 const AUTORA = "u-autora";
 const REVISOR = "u-revisor";
@@ -52,19 +48,6 @@ it("ignora nomes herdados de objeto como transições da resposta", () => {
 });
 
 describe("estados e transições", () => {
-  it("os estados e as ações são os do banco", () => {
-    const estados = MIGRATION.match(
-      /"CK_RESPOSTARECURSO_TPESTADO" check \("TP_ESTADO" in \(([^)]*)\)\)/,
-    )[1];
-    expect(
-      [...estados.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]).sort(),
-    ).toEqual(ESTADOS_DA_RESPOSTA.map((e) => e.id).sort());
-    const acoes = MIGRATION.match(/p_acao not in \(([^)]*)\)/)[1];
-    expect([...acoes.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]).sort()).toEqual(
-      Object.keys(ACOES_DA_RESPOSTA).sort(),
-    );
-  });
-
   it.each([
     ["rascunho", "enviar_revisao", "em_revisao"],
     ["devolvida", "enviar_revisao", "em_revisao"],

@@ -66,32 +66,6 @@ describe("cálculo da entrevista: casos dourados JS × Python × banco", () => {
     ).toBeGreaterThanOrEqual(3);
   });
 
-  it("o ensaio do banco roda os mesmos casos com aspectos", () => {
-    const ensaio = readFileSync(
-      "supabase/ensaios/20261008100000_aspectos_da_entrevista.sql",
-      "utf8",
-    );
-    const inicio = ensaio.indexOf("$casos$") + "$casos$".length;
-    const casos = JSON.parse(
-      ensaio.slice(inicio, ensaio.indexOf("$casos$", inicio)),
-    );
-    expect(casos).toEqual(
-      DADOS.casos.filter((c) => c.aspectos && !c.atribuicoes),
-    );
-  });
-
-  it("o ensaio do avaliador por competência roda os casos com atribuições", () => {
-    const ensaio = readFileSync(
-      "supabase/ensaios/20261008170000_avaliador_por_competencia.sql",
-      "utf8",
-    );
-    const inicio = ensaio.indexOf("$casos$") + "$casos$".length;
-    const casos = JSON.parse(
-      ensaio.slice(inicio, ensaio.indexOf("$casos$", inicio)),
-    );
-    expect(casos).toEqual(DADOS.casos.filter((c) => c.atribuicoes));
-  });
-
   for (const caso of DADOS.casos) {
     it(caso.nome, () => {
       const r = calcularEntrevista(entrada(caso));

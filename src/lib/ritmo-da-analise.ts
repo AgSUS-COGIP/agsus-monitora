@@ -20,7 +20,8 @@
 
   DIAS ÚTEIS
     Segunda a sexta, menos os feriados nacionais de data fixa (1/1, 21/4, 1/5,
-    7/9, 12/10, 2/11, 15/11, 20/11, 25/12). Hoje conta se é dia útil e ainda é
+    7/9, 12/10, 2/11, 15/11, 20/11, 25/12) e a Sexta-feira Santa (Páscoa − 2).
+    Carnaval e Corpus Christi (ponto facultativo) contam como dia útil. Hoje conta se é dia útil e ainda é
     horário de trabalho (antes das 18h de Brasília). O prazo conta inteiro.
 
   RITMO ATUAL
@@ -216,9 +217,51 @@ const deMs = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 export const somarDias = (dia: string, n: number) =>
   deMs(emMs(dia) + n * DIA_MS);
 
+/**
+ * Domingo de Páscoa do ano (calendário gregoriano, algoritmo de Meeus/Jones/
+ * Butcher), em "AAAA-MM-DD".
+ */
+export function domingoDePascoa(ano: number): string {
+  const a = ano % 19;
+  const b = Math.floor(ano / 100);
+  const c = ano % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const mes = Math.floor((h + l - 7 * m + 114) / 31);
+  const dia = ((h + l - 7 * m + 114) % 31) + 1;
+  return `${ano}-${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+}
+
+/*
+  Feriado nacional de data móvel: só a Sexta-feira Santa (Páscoa − 2). Carnaval
+  e Corpus Christi são ponto facultativo no serviço federal, não feriado: ficam
+  como dia útil até a equipe decidir o contrário.
+*/
+const sextasSantas = new Map<number, string>();
+function sextaFeiraSanta(ano: number): string {
+  let dia = sextasSantas.get(ano);
+  if (!dia) {
+    dia = somarDias(domingoDePascoa(ano), -2);
+    sextasSantas.set(ano, dia);
+  }
+  return dia;
+}
+
 export function ehDiaUtil(dia: string): boolean {
   const semana = new Date(emMs(dia)).getUTCDay();
-  return semana !== 0 && semana !== 6 && !FERIADOS_FIXOS.has(dia.slice(5));
+  return (
+    semana !== 0 &&
+    semana !== 6 &&
+    !FERIADOS_FIXOS.has(dia.slice(5)) &&
+    dia !== sextaFeiraSanta(Number(dia.slice(0, 4)))
+  );
 }
 
 /** Hoje ainda conta como dia de trabalho? */

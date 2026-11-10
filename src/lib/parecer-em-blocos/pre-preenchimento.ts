@@ -312,7 +312,7 @@ export function rascunhoInicial(dados: DadosParaOParecer): {
       ficha.meses_apurados !== meses
     )
       avisos.push(
-        `A ficha apurou ${ficha.meses_apurados} ${ficha.meses_apurados === 1 ? "mês" : "meses"} (dias ÷ 30); o parecer conta ${meses} ${meses === 1 ? "mês completo" : "meses completos"}, como o simulador.`,
+        `A ficha apurou ${ficha.meses_apurados} ${ficha.meses_apurados === 1 ? "mês" : "meses"}; o parecer conta ${meses} com os vínculos acima (estágio e data limite da ficha não entram aqui).`,
       );
   }
 

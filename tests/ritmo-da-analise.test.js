@@ -7,6 +7,7 @@ import {
   MINIMO_DO_SELO,
   diasUteisAtePrazo,
   diaUtilDepois,
+  domingoDePascoa,
   ehDiaUtil,
   etapaDaAnalise,
   lerRitmoDaAnalise,
@@ -96,6 +97,27 @@ describe("dias úteis", () => {
     expect(ehDiaUtil("2026-10-18")).toBe(false); // domingo
     expect(ehDiaUtil("2026-10-12")).toBe(false); // feriado (segunda)
     expect(ehDiaUtil("2026-11-02")).toBe(false); // Finados
+  });
+
+  it("Páscoa pelo calendário gregoriano", () => {
+    expect(domingoDePascoa(2024)).toBe("2024-03-31");
+    expect(domingoDePascoa(2025)).toBe("2025-04-20");
+    expect(domingoDePascoa(2026)).toBe("2026-04-05");
+    expect(domingoDePascoa(2027)).toBe("2027-03-28");
+    expect(domingoDePascoa(2038)).toBe("2038-04-25"); // a mais tardia possível
+    expect(domingoDePascoa(2285)).toBe("2285-03-22"); // a mais cedo possível
+  });
+
+  it("Sexta-feira Santa não é dia útil; carnaval e Corpus Christi são", () => {
+    expect(ehDiaUtil("2026-04-03")).toBe(false); // Sexta-feira Santa
+    expect(ehDiaUtil("2027-03-26")).toBe(false);
+    expect(ehDiaUtil("2026-04-02")).toBe(true); // quinta antes
+    expect(ehDiaUtil("2026-02-16")).toBe(true); // segunda de carnaval
+    expect(ehDiaUtil("2026-06-04")).toBe(true); // Corpus Christi
+    // A semana da Páscoa de 2026 tem 4 dias úteis (30/03 a 03/04).
+    expect(
+      diasUteisAtePrazo({ hoje: "2026-03-30", hora: 9 }, "2026-04-03"),
+    ).toBe(4);
   });
 
   it("hoje conta até o fim do expediente (18h)", () => {
