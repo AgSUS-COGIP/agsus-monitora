@@ -1,7 +1,7 @@
 # `supabase/` — banco
 
-Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Processo completo: [[banco-e-migrations]] e
-`migrations/README.md`; rollback: [[rollback-de-migration]].
+Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Processo completo: [[banco-e-migrations]];
+rollback: [[rollback-de-migration]].
 
 - `migrations/` — só as migrations que ainda importam: `AAAAMMDDHHMMSS_descricao_em_portugues.sql`
   (14 dígitos, timestamp único). **Nunca editar migration já aplicada**: crie outra. Aplicação

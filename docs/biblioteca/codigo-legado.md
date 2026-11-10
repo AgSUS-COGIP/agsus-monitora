@@ -25,8 +25,9 @@ das dúvidas".
   `MutationObserver` novo; dados só por RPC; marcação nova segue os componentes do `DESIGN.md`
   (seção 4: `.btn`, `.card`, `.table-card`, `.modal`) em vez de inventar classe; teste em `tests/`
   ou `tests/modules/`.
-- `src/legado/` fica vazia: só recebe código antigo numa mudança em bloco, combinada antes, porque
-  mover arquivo aos poucos gera conflito com quem trabalha em paralelo (`src/legado/README.md`).
+- O legado fica onde está (`src/modules/`): não se move para outra pasta aos poucos, porque mover
+  arquivo gera conflito com quem trabalha em paralelo. Uma pasta própria para ele só nasce numa
+  mudança em bloco, combinada antes.
 
 ## Sai quando a mudança é confirmada
 

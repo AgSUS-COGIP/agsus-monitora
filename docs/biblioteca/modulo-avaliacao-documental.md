@@ -11,7 +11,7 @@ recurso `avaliacao_documental`), em `src/modulos/avaliacao-documental/`, montada
 `montarAvaliacaoDocumental()` na `#page-avaliacao-documental`. O Painel das análises
 ([[modulo-analises]], view `analises`) continua sendo a leitura.
 
-Desenho e fases: [README do desenho](../analises-no-monitora/README.md),
+Desenho e fases: [desenho](../analises-no-monitora/desenho.md),
 [modelo de dados](../analises-no-monitora/modelo-de-dados.md),
 [plano de construção](../analises-no-monitora/plano-de-construcao.md),
 [regras dos editais recentes](../analises-no-monitora/regras-dos-editais-recentes.md); histórias

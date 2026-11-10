@@ -16,7 +16,7 @@ Leia **só a nota ou o documento do assunto**. Nada aqui é carregado pelo build
 | `python-no-monitora.md`, `agenda-dos-robos.md`, `robo-empregare.md`, `leitura-dos-arquivos.md` | robôs e jobs ([[python-e-jobs]], [[robos-e-agenda]]) |
 | `sincronizacao-das-planilhas.md`, `painel-externo-avisa-que-carregou.md` | cargas e painéis externos ([[cargas-de-planilha]])   |
 | `nucleo-e-mapas.md`                                      | guia de uso do Núcleo e dos mapas                                        |
-| `auditoria-geografica.md`, `auditoria-oficial-das-coordenadas-2026-10-01.md`, `pontos-so-na-planilha-de-lotacoes.md`, `sedes-dos-dsei.md` | coordenadas do mapa ([[coordenadas]]) |
+| `coordenadas/`                                           | auditorias e origem das coordenadas do mapa ([[coordenadas]])            |
 | `analises-no-monitora/`, `historias-de-usuario/`, `recursos/parecer-em-blocos.md` | desenho e histórias das telas da seleção     |
 | `propostas/`                                             | SQL proposto, ainda não virou migration                                  |
 

@@ -41,8 +41,8 @@ A documentação do MONITORA é um vault do Obsidian com a raiz do repositório 
 - Documento novo: nome em português, kebab-case; registro pontual leva a data no nome
   (`auditoria-…-AAAA-MM-DD.md`) e vai para `docs/_arquivo/` quando deixar de valer.
 - Módulo novo ganha nota `modulo-<nome>` (modelo `docs/_templates/modulo.md`), não README na pasta.
-  Os poucos README que restam em `src/` são avisos que apontam para a nota, porque código ou a
-  Aya os citam.
+  Não há README fora da raiz do repositório (o da raiz é a capa do GitHub): código, testes e a Aya
+  citam a nota.
 - `docs/aya/` não se reorganiza: é compilada por `npm run aya:conhecimento` e os testes leem os
   arquivos.
 

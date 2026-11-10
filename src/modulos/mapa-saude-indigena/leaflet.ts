@@ -8,7 +8,7 @@
   e `indigenous-territories-layer.ts` (Terras Indígenas e abrangência dos
   DSEI). Os dois últimos só enfeitam mapas cujo contêiner tem id `map` ou
   `detailMap` (o Mapa/Satélite também `mapaDosProjetos`) — por isso os ids
-  dos componentes (ver README).
+  dos componentes (docs/biblioteca/modulo-mapa-saude-indigena.md).
 
   Tudo o que entra no mapa é montado com a API do DOM (`textContent`,
   `createElementNS`): popups, dicas e ícones, sem `innerHTML`.

@@ -1,7 +1,7 @@
 # Avaliação documental — proposta de modelo de dados
 
 **Proposta, com a fase F1 já em migration** (`20261006090000` e `20261006100000`, ainda por aplicar): recurso, regra, modelos, equipe, aldeias e dono da avaliação. O formato implementado da regra (`DS_CONFIGURACAO`) está em `src/lib/avaliacao-documental/regra.ts` — ele acrescenta ao exemplo da seção 2.1 o tipo de bloco `CURSOS`, os valores por nível (`por_nivel`) e a experiência por período (`pontuacao`, `periodo_meses`, `desconta_minimo`). O resto continua proposta. O desenho funcional está no
-[README](README.md). Esta proposta segue o padrão MAD (PDTIC 2026–2027; resumo em
+[desenho](desenho.md). Esta proposta segue o padrão MAD (PDTIC 2026–2027; resumo em
 `docs/biblioteca/nomenclatura-mad.md`). Antes de virar migration, passa pela skill
 `mad-ddl-review`.
 
@@ -61,7 +61,7 @@ Separado de `analises`, que continua sendo o do **Painel das análises**.
   (`src/lib/menu-lateral.ts`: id e view `avaliacao-documental`, rótulo "Avaliação documental",
   nas três áreas) e nas restrições `CK_` das tabelas de permissão por recurso e por grupo, com
   migration.
-- Os níveis são Leitor, Editor e Administrador (o que cada um libera está no README, seção 4.1).
+- Os níveis são Leitor, Editor e Administrador (o que cada um libera está no desenho, seção 4.1).
 - O item "Análises curriculares" do menu passa a se chamar **"Painel das análises"**, sem mudar a
   view nem o recurso.
 
@@ -889,7 +889,7 @@ mostrar a mudança na hora.
 | `revelar_dado_ficha(p_ficha, p_campo)` / `registrar_acesso_ficha(p_ficha, p_tipo, p_alvo)`               | papel na ficha                          | LGPD                                                                                                                                                                                                                              |
 | `salvar_ficha(p_ficha, p_versao, p_dados)`                                                               | quem tem a reserva                      | rascunho (blocos, títulos, vínculos, aldeia, estágio, observações); recalcula efeitos, nota, desempates, resultado e parecer; grava os eventos                                                                                    |
 | `concluir_ficha(p_ficha, p_versao)`                                                                      | responsável                             | confere os motivos obrigatórios, conclui, sorteia a revisão, publica e faz a linha andar                                                                                                                                          |
-| `pedir_revisao_ficha`, `validar_ficha`, `devolver_ficha`, `reabrir_ficha`                                | como no README                          | transições com motivo                                                                                                                                                                                                             |
+| `pedir_revisao_ficha`, `validar_ficha`, `devolver_ficha`, `reabrir_ficha`                                | como no desenho                         | transições com motivo                                                                                                                                                                                                             |
 | `obter_regra_analise` / `salvar_regra_analise` / `simular_regra_analise` / `copiar_modelo_regra_analise` | Leitor / coordenação                    | regra versionada; lista as perguntas e as respostas encontradas na carga                                                                                                                                                          |
 | `salvar_aldeias_dsei(p_unidade, p_aldeias, p_fonte)`                                                     | administrador global                    | lista de aldeias                                                                                                                                                                                                                  |
 | `salvar_equipe_edital(p_edital, p_equipe, p_motivo)`                                                     | gestor ou coordenador                   | equipe                                                                                                                                                                                                                            |

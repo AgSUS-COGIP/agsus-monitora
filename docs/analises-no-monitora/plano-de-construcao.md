@@ -1,6 +1,6 @@
 # Avaliação documental — plano de construção
 
-Este é o plano para construir o que o [README](README.md) desenha, em fases pequenas. **Cada fase
+Este é o plano para construir o que o [desenho](desenho.md) descreve, em fases pequenas. **Cada fase
 vira um PR testável**, que pode ser mesclado sozinho. O piloto é o **edital 93/2026** (SESMT, área
 Projetos), decidido em 05/10/2026. O modelo de dados está em [modelo-de-dados.md](modelo-de-dados.md)
 e as histórias (códigos AM-n) em
@@ -426,4 +426,4 @@ Depois do piloto, vêm:
 - o segundo piloto, da Saúde Indígena (critério étnico, aldeias, cotas);
 - todo edital novo nascendo em `MONITORA`;
 - os editais em andamento, um a um;
-- o desligamento das planilhas, do simulador e do web app (fase 5 do README).
+- o desligamento das planilhas, do simulador e do web app (fase 5 do desenho).
