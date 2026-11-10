@@ -614,8 +614,8 @@ export function mensagemDoPersonalizado(p: MarcoPersonalizado): string {
   if (p.mensagem) return p.mensagem;
   const meta = p.meta.toLocaleString("pt-BR");
   return p.tipo === "edital-contratados"
-    ? `Edital ${p.edital} chegou a ${meta} contratados! 🎉`
-    : `A equipe passou de ${meta} análises concluídas hoje! 🎉`;
+    ? `Edital ${p.edital} chegou a ${meta} contratados!`
+    : `A equipe passou de ${meta} análises concluídas hoje!`;
 }
 
 // ── Revisão da publicação ───────────────────────────────────────────────────

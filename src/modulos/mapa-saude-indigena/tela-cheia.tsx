@@ -54,7 +54,7 @@ export function usarTelaCheia(): [boolean, ReactElement] {
   const botao = (
     <button
       type="button"
-      className="btn small mapa-si-tela-cheia"
+      className="btn secondary small mapa-si-tela-cheia"
       data-tour="visao-geral-mapa-tela-cheia"
       aria-pressed={telaCheia}
       title={telaCheia ? "Sair da tela cheia (Esc)" : "Ampliar o mapa"}

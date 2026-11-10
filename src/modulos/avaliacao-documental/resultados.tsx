@@ -96,10 +96,6 @@ export function ResultadosDaAvaliacao({
       aria-label="Resultados da avaliação documental"
     >
       <h3 className="ui-titulo">Avaliações concluídas</h3>
-      <p className="ui-texto-secundario">
-        Consulta dos resultados e justificativas gravados nas fichas. Os valores
-        são apresentados como registrados, sem recalcular a avaliação.
-      </p>
       <div className="avd-resultados-filtros">
         <Campo rotulo="Código ou nome">
           <input

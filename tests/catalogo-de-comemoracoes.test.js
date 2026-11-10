@@ -171,7 +171,7 @@ describe("configuração publicada", () => {
     ]);
     expect(
       mensagemDoPersonalizado({ ...um, edital: "012/2026", meta: 30 }),
-    ).toBe("Edital 012/2026 chegou a 30 contratados! 🎉");
+    ).toBe("Edital 012/2026 chegou a 30 contratados!");
     expect(
       mensagemDoPersonalizado({ ...dois, meta: 50, mensagem: "Uau" }),
     ).toBe("Uau");

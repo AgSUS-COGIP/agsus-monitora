@@ -466,7 +466,7 @@ export function AbaConvocacao({
       }
     : null;
 
-  /* "Escolher os a convocar": as vagas imediatas ainda sem chamada, no recorte. */
+  /* "Marcar quem falta convocar": as vagas imediatas ainda sem chamada, no recorte. */
   function escolherAConvocar() {
     const ids = grupos.flatMap((grupo) =>
       grupo.linhas
@@ -680,8 +680,8 @@ export function AbaConvocacao({
               disabled={!carregado || !resumo.aConvocar}
               onClick={escolherAConvocar}
             >
-              <i className="fa-solid fa-list-check" aria-hidden="true" />{" "}
-              Escolher os a convocar
+              <i className="fa-solid fa-list-check" aria-hidden="true" /> Marcar
+              quem falta convocar
             </button>
             {escolhidosValidos.length ? (
               <button

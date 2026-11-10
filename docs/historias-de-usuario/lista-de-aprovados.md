@@ -134,7 +134,7 @@ Testes: `tests/lib/carta-de-convocacao.test.js` ("validar o modelo"),
 Como **editor**, quero gerar a carta de convocação para os candidatos escolhidos, no formato do SEI,
 para formalizar a convocação sem copiar dados à mão.
 
-- **Dado** a aba Convocação, **quando** marco candidatos (ou uso "Escolher os a convocar") e clico em
+- **Dado** a aba Convocação, **quando** marco candidatos (ou uso "Marcar quem falta convocar") e clico em
   "Carta de convocação", **então** abre a emissão com eles; pela linha ou pela gaveta, abre com um só.
 - **Dado** a emissão, **então** escolho o modelo (os do edital de todos os candidatos primeiro), e os
   campos da emissão que o modelo usa vêm da versão vigente — a data limite pelo prazo padrão.

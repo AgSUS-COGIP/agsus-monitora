@@ -479,10 +479,8 @@ html[data-theme="dark"] .sidebar {
   border-radius: 999px;
   background: var(--state-success-soft);
   color: var(--state-success);
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-size: var(--text-caption);
+  font-weight: 600;
 }
 
 @media (max-width: 1360px) and (min-width: 901px) {
@@ -707,16 +705,20 @@ html[data-theme="dark"] .sidebar {
   max-width: 130px;
   overflow: hidden;
   color: var(--text-primary);
-  font-size: 11px;
+  font-size: var(--text-caption);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .top-user-compact-copy .user-profile-badge {
+  max-width: 150px;
   margin: 1px 0 0;
   padding: 0;
+  overflow: hidden;
   background: transparent;
   color: var(--state-success);
-  font-size: 8px;
+  font-size: var(--text-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .top-user-chevron {
   color: var(--text-secondary);

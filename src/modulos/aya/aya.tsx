@@ -50,6 +50,7 @@ import type {
   RefObject,
 } from "react";
 import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
+import { mensagemDoFimDoTour } from "../../lib/comemoracao.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {
@@ -963,9 +964,7 @@ export function Aya({
     if (!concluido) return;
     const nome = String(concluido.rotulo || "").replace(/^(Tour|Trilha): /, "");
     void comemorar({
-      texto: concluido.trilha
-        ? `Parabéns! Você concluiu a trilha "${nome}".`
-        : `Parabéns! Você conheceu a tela ${nome}.`,
+      texto: mensagemDoFimDoTour({ trilha: Boolean(concluido.trilha), nome }),
       // Efeito e intensidade: Configurações › Comemorações (padrão: fogos;
       // festa na trilha).
       marco: concluido.trilha ? "fim-da-trilha" : "fim-do-tour",
