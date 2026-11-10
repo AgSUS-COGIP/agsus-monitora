@@ -179,6 +179,8 @@ export function ModalDePublicacaoDeAprovados({
   const pedidos = useRef(new Map<string, Promise<Preparo | null>>());
   const ultimo = useRef({ registro, calculado });
   ultimo.current = { registro, calculado };
+  // "Tentar de novo" na falha: refaz o pedido (o que falhou sai da memória).
+  const [tentativa, setTentativa] = useState(0);
   useEffect(() => {
     let vivo = true;
     const chave = `${registro.id}|${JSON.stringify(pedidoDeManuais)}`;
@@ -193,12 +195,13 @@ export function ModalDePublicacaoDeAprovados({
       );
     setPreparo(null);
     void pedidos.current.get(chave)?.then((p) => {
+      if (!p || "erro" in p) pedidos.current.delete(chave);
       if (vivo) setPreparo(p || { erro: "Lista não encontrada." });
     });
     return () => {
       vivo = false;
     };
-  }, [estado, registro.id, pedidoDeManuais]);
+  }, [estado, registro.id, pedidoDeManuais, tentativa]);
 
   const situacao = preparo && "situacao" in preparo ? preparo.situacao : null;
   const casamento =
@@ -271,7 +274,14 @@ export function ModalDePublicacaoDeAprovados({
           </div>
         ) : "erro" in preparo ? (
           <Aviso tom="danger" papel="alert">
-            {preparo.erro}
+            {preparo.erro}{" "}
+            <button
+              type="button"
+              className="btn secondary small"
+              onClick={() => setTentativa((n) => n + 1)}
+            >
+              Tentar de novo
+            </button>
           </Aviso>
         ) : publicado ? (
           <>

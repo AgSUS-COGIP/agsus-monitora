@@ -8,8 +8,9 @@ import { assinarSaida, obterSaida, responderASaida } from "./saida.ts";
   legado `nielsen-shell-ux.js`; os ids, as classes (nielsen-shell-ux.css) e os
   `data-shell-logout-*` são os mesmos.
 
-  Aberto, o foco vai para "Continuar no sistema" (a opção segura), Esc e o
-  fundo cancelam, e ao fechar o foco volta para quem abriu.
+  Aberto, o foco vai para "Continuar no sistema" (a opção segura), o Tab
+  fica entre os dois botões, Esc e o fundo cancelam, e ao fechar o foco volta
+  para quem abriu.
 */
 export function ConfirmacaoDeSaida() {
   const { perguntando, comRascunho, saindo } = useSyncExternalStore(
@@ -17,12 +18,28 @@ export function ConfirmacaoDeSaida() {
     obterSaida,
   );
   const continuar = useRef<HTMLButtonElement | null>(null);
+  const sair = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!perguntando) return undefined;
     const anterior = document.activeElement;
     continuar.current?.focus({ preventScroll: true });
     const aoTeclar = (evento: KeyboardEvent) => {
+      // O Tab fica entre os dois botões: o diálogo é modal.
+      if (evento.key === "Tab") {
+        const primeiro = continuar.current;
+        const ultimo = sair.current;
+        if (!primeiro || !ultimo) return;
+        const ativo = document.activeElement;
+        if (evento.shiftKey && ativo !== ultimo) {
+          evento.preventDefault();
+          ultimo.focus();
+        } else if (!evento.shiftKey && ativo !== primeiro) {
+          evento.preventDefault();
+          primeiro.focus();
+        }
+        return;
+      }
       if (evento.key !== "Escape") return;
       evento.preventDefault();
       responderASaida(false);
@@ -81,6 +98,7 @@ export function ConfirmacaoDeSaida() {
               Continuar no sistema
             </button>
             <button
+              ref={sair}
               type="button"
               className="shell-confirm-submit"
               data-shell-logout-confirm=""

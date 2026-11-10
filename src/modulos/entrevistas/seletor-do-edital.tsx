@@ -162,11 +162,10 @@ export function usarSeletorDoEdital({
           <label>
             Etapa de entrevista
             <select
-              aria-label="Etapa de entrevista"
               value={situacao}
               onChange={(ev) => setSituacao(ev.target.value as typeof situacao)}
             >
-              <option value="NAO_INFORMADA">Não informado</option>
+              <option value="NAO_INFORMADA">Não informada</option>
               <option value="PREVISTA">Prevista no edital</option>
               <option value="NAO_PREVISTA">Não prevista no edital</option>
             </select>
@@ -174,7 +173,6 @@ export function usarSeletorDoEdital({
           <label>
             Justificativa (conferir o edital oficial)
             <textarea
-              aria-label="Justificativa da classificação"
               value={motivo}
               onChange={(ev) => setMotivo(ev.target.value)}
               minLength={5}
