@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/historia
+  - area/analises-curriculares
+---
+
 # Histórias de usuário — Análises curriculares
 
 Tela `Análises curriculares` (`src/modulos/analises/`), regras em

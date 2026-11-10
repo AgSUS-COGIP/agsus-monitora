@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/registro
+  - area/mapas
+---
+
 # Sedes dos DSEI — de onde vem cada ponto
 
 Gerado por `scripts/arquivo/localizar-sedes-dos-dsei.mjs`. Correção correspondente:

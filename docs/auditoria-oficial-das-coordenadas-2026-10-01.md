@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/auditoria
+  - area/mapas
+---
+
 # Auditoria das coordenadas contra fontes oficiais (01/10/2026)
 
 A planilha "Lotações, Meios de Acesso_Polo Base" que alimentou o mapa tem erros e não

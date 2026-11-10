@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/referencia
+  - area/servidor
+---
+
 # Servidor web do MONITORA
 
 `server/servidor.ts` entrega o build do Vite. Substituiu o servidor Laravel/PHP em 22/09/2026,

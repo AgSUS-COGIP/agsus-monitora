@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/historia
+  - area/editais
+---
+
 # Histórias de usuário — Editais
 
 Tela `Editais` (`src/modulos/editais/`), regras em `src/lib/editais-do-nucleo.ts`. Cada critério

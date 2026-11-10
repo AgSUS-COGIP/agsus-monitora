@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/arquitetura
+  - area/front
+---
+
 # Raiz React única e rotas no endereço
 
 Status: **em andamento** (passo 1 neste PR). Complementa `docs/arquitetura-react.md` (regras dos

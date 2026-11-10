@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/auditoria
+  - area/mapas
+---
+
 # Auditoria das sedes dos 34 DSEIs — 2026-09-16
 
 ## Escopo

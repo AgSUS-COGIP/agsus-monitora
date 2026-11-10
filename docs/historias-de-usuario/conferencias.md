@@ -1,3 +1,10 @@
+---
+tags:
+  - tipo/historia
+  - area/conferencias
+  - area/robos
+---
+
 # Histórias de usuário — Conferências de consistência
 
 Job Python diário (`scripts/conferencias/`, workflow `.github/workflows/conferencias.yml`) que lê o

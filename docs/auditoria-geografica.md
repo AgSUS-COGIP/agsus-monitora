@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/auditoria
+  - area/mapas
+---
+
 # Auditoria geográfica — origem das coordenadas do mapa
 
 Auditoria da procedência das coordenadas de Polo Base, CASAI, UBSI e demais

@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/arquitetura
+  - area/aya
+---
+
 # Aya pela base de conhecimento
 
 A Aya responde no navegador usando os verbetes de `docs/aya/` e os dados já visíveis

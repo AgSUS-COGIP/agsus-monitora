@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/guia
+  - area/robos
+---
+
 # Robô da Empregare
 
 Guia para quem opera a carga dos candidatos da Empregare, inclusive na ausência de quem a montou.

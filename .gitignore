@@ -12,3 +12,11 @@ playwright-report/
 # Estado local da CLI do Supabase (contem string de conexao)
 supabase/.temp/
 .cache/
+
+# Obsidian (vault em docs/): versiona só as configurações combinadas
+/.obsidian/
+docs/.obsidian/*
+!docs/.obsidian/app.json
+!docs/.obsidian/templates.json
+# Anotações pessoais no vault (não vão para o Git)
+docs/_rascunhos/

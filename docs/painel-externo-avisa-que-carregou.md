@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/referencia
+  - area/front
+---
+
 # Painel externo que avisa quando carregou
 
 Ao abrir um painel externo, o MONITORA cobre o quadro com "Carregando o painel…" e um giro

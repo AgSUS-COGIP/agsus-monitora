@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/referencia
+  - area/design
+---
+
 # design.md — Design System AgSUS
 
 Guia oficial de UI/UX dos softwares corporativos da **Agência Brasileira de Apoio à Gestão do SUS (AgSUS)**.

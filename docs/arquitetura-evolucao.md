@@ -1,3 +1,8 @@
+---
+tags:
+  - tipo/arquitetura
+---
+
 # Arquitetura de evolução - AgSUS Monitora
 
 ## Objetivo

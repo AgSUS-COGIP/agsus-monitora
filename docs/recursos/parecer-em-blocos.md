@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/desenho
+  - area/recursos
+---
+
 # Parecer de recurso em blocos ("Montar parecer") — protótipo
 
 Situação: **protótipo** (03/11/2026). Nada lê nem grava no banco; nenhuma migration. Serve para

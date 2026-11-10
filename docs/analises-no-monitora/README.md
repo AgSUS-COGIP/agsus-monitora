@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/desenho
+  - area/avaliacao-documental
+---
+
 # Avaliação documental dentro do MONITORA — desenho
 
 Situação: **desenho para aprovação** (rodada 3, 05/10/2026). Nada aqui está implementado: não há

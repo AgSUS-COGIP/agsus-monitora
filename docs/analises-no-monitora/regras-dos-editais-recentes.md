@@ -1,3 +1,10 @@
+---
+tags:
+  - tipo/referencia
+  - area/avaliacao-documental
+  - area/editais
+---
+
 # Regras da avaliação documental nos editais recentes
 
 Situação: levantamento de 06/10/2026, feito nos PDFs oficiais (públicos) de seis editais. Este

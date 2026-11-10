@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/arquitetura
+  - area/front
+---
+
 # Arquitetura React do MONITORA
 
 Status: **aprovada em 01/10/2026**. Etapa 1 (Fundação) feita; as demais, abaixo, em ordem.

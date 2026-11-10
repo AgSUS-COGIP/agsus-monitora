@@ -1,0 +1,9 @@
+{
+  "useMarkdownLinks": true,
+  "newLinkFormat": "relative",
+  "alwaysUpdateLinks": true,
+  "attachmentFolderPath": "anexos",
+  "userIgnoreFilters": [
+    "_modelos/"
+  ]
+}

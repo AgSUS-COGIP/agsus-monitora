@@ -2,23 +2,11 @@
 
 Leia **só o documento do assunto**. Nada aqui é carregado pelo build, exceto `aya/`.
 
-| Arquivo | Assunto |
-|---|---|
-| `../DESIGN.md` | guia de interface (fica na raiz, não aqui) |
-| `arquitetura-evolucao.md` | plano técnico de evolução |
-| `banco-de-dados.md` | modelo de dados e RPCs |
-| `servidor.md` | servidor web em TypeScript: contrato, rodar, implantar |
-| `nucleo-e-mapas.md` | guia de uso do Núcleo e dos mapas |
-| `sincronizacao-das-planilhas.md` | operar as cargas diárias das planilhas (Entrevistas e Seleção, GitHub Actions): rodar, falhas, trocar credenciais |
-| `painel-externo-avisa-que-carregou.md` | mensagens que um painel externo (Apps Script) manda para o skeleton esperar os dados |
-| `auditoria-geografica.md` (26 KB) | método de validação de coordenadas — leia por seção |
-| `auditoria-sedes-dsei-2026-09-16.md` | auditoria pontual das sedes de DSEI |
-| `handoff-codex-mapas.md` | contexto de transição do trabalho de mapas |
-| `padronizacao_nomenclatura_*.md` | aplicação do padrão MAD no banco e no front |
-| `aya-sem-ia-local.md` | busca da Aya no navegador e chamados pelo Gmail |
-| `aya/` | **base de conhecimento da AYA** (fonte de `src/modules/aya-conhecimento-gerado.js`) |
-| `recursos/parecer-em-blocos.md` | protótipo "Montar parecer" dos recursos: fontes do pré-preenchimento, tabelas e RPCs propostas, itens do edital |
-| `propostas/` | SQL proposto, ainda não virou migration |
+O índice de todos os documentos, por assunto, é o [`README.md`](README.md) (também a página inicial
+do vault do Obsidian): procure lá o documento do assunto. Não repita o índice aqui. Outras pastas:
+`_modelos/` (modelos de documento novo), `aya/` (**base de conhecimento da AYA**, fonte de
+`src/modules/aya-conhecimento-gerado.js`), `propostas/` (SQL proposto, ainda não virou migration).
+O guia de interface é `../DESIGN.md`, na raiz. `auditoria-geografica.md` tem 26 KB: leia por seção.
 
 ## `docs/aya/`
 
@@ -28,4 +16,11 @@ em `docs/aya/README.md`. A Aya só responde com o que está no material (não h�
 todo número que a AYA precisa dizer tem de estar escrito aqui.
 
 Documento novo: nome em português, kebab-case, data no nome quando for registro pontual
-(`auditoria-…-AAAA-MM-DD.md`). Documento descreve o código; quando divergirem, corrija o documento.
+(`auditoria-…-AAAA-MM-DD.md`). Comece por um modelo de `_modelos/`, mantenha as `tags` do topo
+(um `tipo/…` e ao menos uma `area/…`, da lista em `README.md`) e acrescente o link no `README.md`.
+Nada disso vale para `aya/`: lá todo `.md` é compilado e não leva `tags`. Documento descreve o
+código; quando divergirem, corrija o documento.
+
+A pasta é um vault do Obsidian (`.obsidian/` versiona só `app.json` e `templates.json`; `_rascunhos/`
+é ignorada pelo Git). Renomear um documento exige buscar o caminho no repositório inteiro: workflows,
+scripts e testes citam `docs/…`.

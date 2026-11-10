@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/registro
+  - area/banco
+---
+
 # Padronizacao de nomenclatura - ajustes de codigo (APLICADOS)
 
 Status: **aplicado em 2026-09-18** no projeto `agsusmonitora-dais`

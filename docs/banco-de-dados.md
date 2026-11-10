@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/referencia
+  - area/banco
+---
+
 # Banco de dados — estado, convenções e o que falta reconciliar
 
 Levantamento de 08/09/2026. Escrito durante o saneamento arquitetural, seguindo

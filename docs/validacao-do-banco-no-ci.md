@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/referencia
+  - area/banco
+---
+
 # Validacao do banco no CI
 
 O Quality Gate distingue as verificacoes estaticas, os testes com dados simulados e o contrato RPC contra o catalogo real.

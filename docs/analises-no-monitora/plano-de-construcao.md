@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/desenho
+  - area/avaliacao-documental
+---
+
 # Avaliação documental — plano de construção
 
 Este é o plano para construir o que o [README](README.md) desenha, em fases pequenas. **Cada fase

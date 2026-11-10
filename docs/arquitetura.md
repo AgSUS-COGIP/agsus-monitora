@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/arquitetura
+  - area/banco
+---
+
 # Arquitetura do MONITORA — proposta
 
 Status: **proposta para revisão** (25/09/2026). Nada aqui está implementado ainda,

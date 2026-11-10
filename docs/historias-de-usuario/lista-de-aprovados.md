@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/historia
+  - area/aprovados
+---
+
 # Histórias de usuário — Lista de aprovados
 
 Pedidos de 05/10/2026: "Em lista de aprovados: acrescentar status de convocado e tirar o status de

@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/guia
+  - area/mapas
+---
+
 # Equipe Núcleo e mapas
 
 Guia de uso das duas áreas. Linguagem operacional: o que cada coisa mostra, o

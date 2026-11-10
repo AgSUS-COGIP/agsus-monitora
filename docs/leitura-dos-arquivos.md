@@ -1,3 +1,10 @@
+---
+tags:
+  - tipo/guia
+  - area/robos
+  - area/avaliacao-documental
+---
+
 # Leitura automática dos arquivos (Avaliação documental)
 
 Um robô em Python lê os anexos do questionário dos candidatos na Empregare e a ficha mostra o que

@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/arquitetura
+  - area/front
+---
+
 # TypeScript no frontend
 
 Início da migração gradual: 07/10/2026.

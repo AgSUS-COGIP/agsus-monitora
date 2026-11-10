@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/registro
+  - area/mapas
+---
+
 # Passagem para o Codex — o que ficou por fazer nos mapas
 
 Escrito em 15/09/2026, a partir de medições feitas na aplicação com sessão.

@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/guia
+  - area/robos
+---
+
 # Agenda dos robôs (o banco pede ao GitHub)
 
 O `schedule` do GitHub Actions, no plano gratuito, atrasa e pula execuções (em 06–07/10/2026 as

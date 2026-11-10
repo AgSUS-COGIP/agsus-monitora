@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/registro
+  - area/mapas
+---
+
 # Pontos que só existiam na planilha de Lotações (02/10/2026)
 
 Até 02/10/2026 o front mesclava a planilha "Lotações, Meios de Acesso/Polo Base"

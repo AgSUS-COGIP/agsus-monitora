@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/arquitetura
+  - area/robos
+---
+
 # Python no MONITORA
 
 Decisão do usuário (05/10/2026): _"pode usar mais o Python, incluir em análises, entrevistas, lista

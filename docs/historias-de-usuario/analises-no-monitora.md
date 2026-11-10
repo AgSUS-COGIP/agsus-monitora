@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/historia
+  - area/avaliacao-documental
+---
+
 # Histórias de usuário — Avaliação documental no MONITORA
 
 Pedido de 05/10/2026: "pode começar a desenhar a Análise dentro do MONITORA". O trabalho de

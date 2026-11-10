@@ -135,7 +135,7 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
 - Link, caminho ou bucket de planilha só em `src/lib/planilhas.ts`; o consumidor importa de lá
   (`tests/planilhas.test.js` falha se aparecer em outro arquivo).
 - CSS segue `DESIGN.md`: token em vez de hex, sem `!important`/`#id` novos, sem arquivo `*-fix.css` novo.
-- Nomenclatura de banco: padrão MAD (PDTIC 2026–2027; o PDF fica fora do repositório, resumo em `docs/padronizacao_nomenclatura_*.md`); skill `mad-ddl-review`.
+- Nomenclatura de banco: padrão MAD (PDTIC 2026–2027; o PDF fica fora do repositório, resumo em `docs/padronizacao-nomenclatura-*.md`); skill `mad-ddl-review`.
 
 ## Código legado: sai quando a mudança é confirmada
 

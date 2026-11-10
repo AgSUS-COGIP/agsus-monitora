@@ -1,3 +1,9 @@
+---
+tags:
+  - tipo/guia
+  - area/robos
+---
+
 # Sincronização das planilhas (Entrevistas e Seleção)
 
 Guia para quem opera as cargas das planilhas no dia a dia, inclusive na ausência de quem as montou.
