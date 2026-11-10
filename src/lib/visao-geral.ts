@@ -76,8 +76,10 @@ const num = (valor: unknown) => {
   );
   return Number.isFinite(numero) ? numero : 0;
 };
+/* Multiplica antes de dividir: 29/200 é 14,5 exato e vira 15 (dividir
+   primeiro dava 14,499… e arredondava para 14). */
 const pct = (parte: number, total: number) =>
-  total ? Math.round((parte / total) * 100) : 0;
+  total ? Math.round((parte * 100) / total) : 0;
 
 // ── Filtros ──────────────────────────────────────────────────────────────
 
@@ -865,7 +867,7 @@ export function seloDoCronograma(
 export function taxaDeOciosidade(linha: LinhaDoMonitoramento) {
   const vagas = num(linha?.vagas_total);
   const taxa =
-    vagas > 0 ? Math.round((vagasSemContratacao(linha) / vagas) * 100) : 0;
+    vagas > 0 ? Math.round((vagasSemContratacao(linha) * 100) / vagas) : 0;
   const nivel =
     taxa >= 60
       ? "critical"

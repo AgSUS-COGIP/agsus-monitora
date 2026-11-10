@@ -370,8 +370,12 @@ export function Recorte({
 }) {
   const vencidos = recursos.filter((r) => r.atrasado).length;
   const decididos = recursos.filter((r) => r.decidido).length;
+  // 100% só com todos decididos (995 de 1.000 não arredonda para 100%).
   const taxa = recursos.length
-    ? Math.round((decididos / recursos.length) * 100)
+    ? Math.min(
+        decididos < recursos.length ? 99 : 100,
+        Math.round((decididos * 100) / recursos.length),
+      )
     : 0;
   const semPrazo = recursos.filter((r) => !r.prazo.data).length;
   const pelaAbertura = recursos.filter(
