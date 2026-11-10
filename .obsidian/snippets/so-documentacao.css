@@ -6,21 +6,21 @@
   apps-script/ (o LEIA-ME) e os .md da raiz.
 */
 .nav-folder:has(
-    > .nav-folder-title:is(
-        [data-path="auth"],
-        [data-path="dist"],
-        [data-path="icons"],
-        [data-path="node_modules"],
-        [data-path="prototipos"],
-        [data-path="public"],
-        [data-path="python"],
-        [data-path="scripts"],
-        [data-path="server"],
-        [data-path="src"],
-        [data-path="supabase"],
-        [data-path="tests"],
-        [data-path="coverage"]
-      )
-  ) {
+  > .nav-folder-title:is(
+      [data-path="auth"],
+      [data-path="dist"],
+      [data-path="icons"],
+      [data-path="node_modules"],
+      [data-path="prototipos"],
+      [data-path="public"],
+      [data-path="python"],
+      [data-path="scripts"],
+      [data-path="server"],
+      [data-path="src"],
+      [data-path="supabase"],
+      [data-path="tests"],
+      [data-path="coverage"]
+    )
+) {
   display: none;
 }
