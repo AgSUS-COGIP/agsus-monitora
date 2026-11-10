@@ -26,6 +26,20 @@ const texto = (valor: unknown) =>
 const doisDigitos = (numero: number) => String(numero).padStart(2, "0");
 
 /*
+  O `new Date` "rola" o que não existe (31/02 vira 03/03, mês 13 vira janeiro
+  do ano seguinte). Data impossível fica sem data, para aparecer como dado a
+  corrigir em vez de virar outro dia válido.
+*/
+function diaDoCalendario(ano: number, mes: number, dia: number) {
+  const data = new Date(ano, mes - 1, dia);
+  return data.getFullYear() === ano &&
+    data.getMonth() === mes - 1 &&
+    data.getDate() === dia
+    ? data
+    : null;
+}
+
+/*
   dd/mm/aaaa, aaaa-mm-dd ou data e hora ISO. Outro formato fica sem data (não
   adivinha mês/dia trocados).
 */
@@ -34,16 +48,16 @@ export function dataDaPlanilha(valor: unknown) {
   if (!bruto) return null;
   let partes = bruto.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (partes)
-    return new Date(
+    return diaDoCalendario(
       Number(partes[3]),
-      Number(partes[2]) - 1,
+      Number(partes[2]),
       Number(partes[1]),
     );
   partes = bruto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (partes)
-    return new Date(
+    return diaDoCalendario(
       Number(partes[1]),
-      Number(partes[2]) - 1,
+      Number(partes[2]),
       Number(partes[3]),
     );
   if (/^\d{4}-\d{2}-\d{2}[T ]/.test(bruto)) {

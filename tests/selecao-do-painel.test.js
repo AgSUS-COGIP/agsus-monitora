@@ -232,6 +232,17 @@ describe("os 7 KPIs", () => {
     expect(taxaDeContratacao(0, 0)).toBeNull();
   });
 
+  it("a taxa só conta as vagas com aprovados (não passa de 100%)", () => {
+    const base = vagas[0];
+    const recorte = [
+      { ...base, aprovados: 4, contratados: 2 },
+      { ...base, aprovados: null, contratados: 5 },
+    ];
+    const kpis = calcularIndicadores(recorte);
+    expect(kpis.contratados).toBe(7);
+    expect(kpis.taxa).toBe(0.5);
+  });
+
   it("formata como o painel antigo (zero sem número, taxa em %)", () => {
     expect(formatarQuantidade(null)).toBe("0");
     expect(formatarQuantidade(1234)).toBe("1.234");
