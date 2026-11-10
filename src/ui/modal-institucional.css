@@ -41,9 +41,7 @@
 }
 .ui-modal-institucional-contexto {
   font-size: var(--text-caption);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--text-secondary);
 }
 .ui-modal-institucional-identidade h2 {

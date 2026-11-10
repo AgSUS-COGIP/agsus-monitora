@@ -127,7 +127,7 @@
   flex: none;
   min-width: 2rem;
   color: var(--brand-primary);
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold);
   text-align: center;
 }
 

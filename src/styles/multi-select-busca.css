@@ -71,8 +71,8 @@
   border-radius: 999px;
   background: var(--state-info-soft);
   color: var(--state-info);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
   padding: 0 7px;
   flex: 0 0 auto;
 }
@@ -140,8 +140,8 @@
   border: 0;
   background: transparent;
   color: var(--state-info);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
   padding: 4px 2px;
   border-radius: 6px;
   cursor: pointer;
