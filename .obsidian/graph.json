@@ -1,22 +1,65 @@
 {
-  "collapse-filter": true,
-  "search": "",
+  "collapse-filter": false,
+  "search": "-path:docs/_templates",
   "showTags": false,
   "showAttachments": false,
-  "hideUnresolved": false,
+  "hideUnresolved": true,
   "showOrphans": true,
-  "collapse-color-groups": true,
-  "colorGroups": [],
+  "collapse-color-groups": false,
+  "colorGroups": [
+    {
+      "query": "file:CLAUDE",
+      "color": {
+        "a": 1,
+        "rgb": 9133302
+      }
+    },
+    {
+      "query": "path:docs/biblioteca file:modulo-",
+      "color": {
+        "a": 1,
+        "rgb": 3900150
+      }
+    },
+    {
+      "query": "path:docs/biblioteca",
+      "color": {
+        "a": 1,
+        "rgb": 1096065
+      }
+    },
+    {
+      "query": "path:docs/aya",
+      "color": {
+        "a": 1,
+        "rgb": 16096779
+      }
+    },
+    {
+      "query": "path:docs/_arquivo",
+      "color": {
+        "a": 1,
+        "rgb": 7041664
+      }
+    },
+    {
+      "query": "path:docs",
+      "color": {
+        "a": 1,
+        "rgb": 440020
+      }
+    }
+  ],
   "collapse-display": true,
   "showArrow": false,
-  "textFadeMultiplier": 0,
-  "nodeSizeMultiplier": 1,
-  "lineSizeMultiplier": 1,
+  "textFadeMultiplier": -1.2,
+  "nodeSizeMultiplier": 1.15,
+  "lineSizeMultiplier": 0.8,
   "collapse-forces": true,
-  "centerStrength": 0.518713248970312,
-  "repelStrength": 10,
+  "centerStrength": 0.45,
+  "repelStrength": 12,
   "linkStrength": 1,
-  "linkDistance": 250,
-  "scale": 0.2588386562181624,
+  "linkDistance": 160,
+  "scale": 0.6,
   "close": false
 }
