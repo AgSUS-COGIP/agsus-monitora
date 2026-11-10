@@ -177,8 +177,16 @@ export function criarFontesDaAya({
       );
       return { em: em ?? null };
     },
+    /* O Status com o catálogo dos robôs (nomes e agenda de cada carga, 20261109180000). */
     async cargas() {
-      return primeiro(await chamar("get_saude_das_cargas"));
+      const [saude, catalogo] = await Promise.all([
+        chamar("get_saude_das_cargas"),
+        chamar("obter_catalogo_dos_robos").catch(() => null),
+      ]);
+      const dados = primeiro(saude);
+      return dados && typeof dados === "object" && !Array.isArray(dados)
+        ? { ...dados, catalogo_dos_robos: primeiro(catalogo) }
+        : dados;
     },
   };
 

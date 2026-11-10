@@ -20,6 +20,10 @@
     **Teste novo de tela com sessão vai aqui**, simulando as RPCs que ela chama.
   - Com banco de desenvolvimento (`E2E_SUPABASE_SESSION_JSON`; sem ela, pulados): `sessao-autenticada`,
     `analises-authenticated`, `mapa-workspace-autenticado`.
+- **Postgres de verdade (PGlite)** — `tests/apoio/banco-dos-robos.ts` monta o banco dos robôs e das chaves
+  com as funções reais (lidas das migrations) e imitações de pg_cron, Vault, pg_net e sessão; roda dentro
+  do processo, sem rede. Arquivo com `// @vitest-environment node`. Modelo de migration testada
+  antes × depois × rollback: `tests/catalogo-dos-robos-no-banco.test.ts`.
 - `setup/rede-bloqueada.ts` — **bloqueia a rede em todo teste unitário.** Existe porque um teste
   já chamou o Supabase de produção via `.env.local`. Não desligue; teste que precisa de rede está errado,
   use mock.

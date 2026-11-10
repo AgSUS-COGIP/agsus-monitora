@@ -3,6 +3,7 @@ import { montarTela } from "../montar-tela.ts";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { clicar, esperar } from "./interacoes.ts";
 import { definido } from "../definido.ts";
+import { CATALOGO_DOS_ROBOS } from "../fixtures/catalogo-dos-robos.ts";
 
 type Resposta = {
   data: unknown;
@@ -56,7 +57,12 @@ const PAYLOAD: Record<string, unknown> = {
 const ADMIN = { id: "u", ativo: true, admin_global: true };
 const supabaseFalso = (resposta: Resposta, rpcs: RespostasDasRpcs = {}) => ({
   rpc: vi.fn(async (nome: string, argumentos?: unknown): Promise<Resposta> => {
-    const responder = rpcs[nome];
+    // O catálogo dos robôs (20261109180000) responde como o banco, salvo quando o teste troca.
+    const responder =
+      rpcs[nome] ??
+      (nome === "obter_catalogo_dos_robos"
+        ? () => ({ data: CATALOGO_DOS_ROBOS, error: null })
+        : undefined);
     return responder ? responder(argumentos) : resposta;
   }),
 });

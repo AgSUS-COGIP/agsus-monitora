@@ -44,8 +44,9 @@ duas tarefas continuam no `cron.job` com a agenda acima, para religar sem reescr
 cargas só rodam pelo **Rodar agora** (ou Run workflow). O Status das atualizações mostra as duas
 como "desligada desde 16/10/2026: só pelo Rodar agora", sem prazo (não ficam "Atrasada"), e a
 linha **Agenda dos robôs** passa a esperar só o pedido diário das Conferências (atrasada depois
-de 26 h). Não religue sem combinar com a coordenação; ao religar, devolva também o "esperado" e o
-prazo em `src/lib/saude-das-cargas.ts` (e o teste).
+de 26 h). Não religue sem combinar com a coordenação. Ao religar, o Status das atualizações acompanha
+sozinho: o prazo e o "esperado" de cada carga saem da agenda da tarefa no `cron.job`
+(`src/lib/agenda-do-cron.ts`; regra do prazo em `src/lib/saude-das-cargas.ts`).
 
 O **Contratado em outra lista** (`contratacao-dos-aprovados.yml`, 20261024120000) não tem tarefa
 própria: roda todo dia chamado pelo `conferencias.yml` (antes das conferências) e é pedido pelo
@@ -69,7 +70,10 @@ Ligar e desligar o que roda sozinho é pela tela **Configurações › Automaç�
 global), com motivo e histórico — não mais com `cron.alter_job(..., active := ...)` à mão. Uma
 chave por aba; desligada:
 
-- as tarefas do pg_cron da chave ficam com `active = false` (a tela desliga e religa junto);
+- as tarefas do pg_cron da chave ficam com `active = false` (a tela desliga e religa junto) e,
+  desde 20261109180000, **a chave manda**: a tarefa `agsus_alinhar_chaves_da_automacao` põe toda
+  tarefa com chave no estado da chave a cada 5 min — quem religar ou desligar uma tarefa direto no
+  `cron.job` a vê voltar (o acerto fica no histórico da chave, sem usuário). Mude pela tela;
 - `FC_DISPARAR_ROBO` não pede nada ao GitHub com origem `AGENDA` (vale mesmo se alguém religar a
   tarefa direto no banco; a tela avisa a tarefa fora do estado da chave);
 - o **Rodar agora** do Status das atualizações continua, com confirmação; a linha mostra
@@ -83,21 +87,22 @@ chave por aba; desligada:
   (20261024110000: o pedido sai pelo mesmo `classificacao.yml`); com ela desligada, o "Gerar" é o
   da tela e Configurações › Automação avisa que a chave está sem efeito.
 
-| Chave                        | Tarefas do pg_cron                                                                                                                    | Workflow (agenda)                                                             |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Entrevistas                  | `agsus_robo_sincronizar_entrevistas`                                                                                                  | `sincronizar-entrevistas.yml`                                                 |
-| Seleção                      | `agsus_robo_sincronizar_selecao`                                                                                                      | `sincronizar-selecao.yml`                                                     |
-| KPIs do edital               | `agsus_kpis_do_edital_pela_selecao`                                                                                                   | —                                                                             |
-| Robô de inscrições           | `agsus_robo_inscricoes_*`                                                                                                             | `robo-empregare.yml`                                                          |
-| Triagem automática | —                                                                                                                                     | `pre-classificacao.yml` chamado no fim do `robo-empregare.yml` (apos_robo)    |
-| Conferências                 | `agsus_robo_conferencias`                                                                                                             | `conferencias.yml` (chama `contratacao-dos-aprovados.yml` antes)              |
-| Pacotes dos painéis          | `agsus_analises_cache_do_painel`, `agsus_aprovados_cache_por_area`, `agsus_entrevistas_cache_do_painel`                               | `pacotes-dos-paineis.yml` (pedido pela rodada)                                |
-| Manutenção do banco          | `agsus_analises_analyze_diario`, `agsus_fila_estatisticas`, `agsus_analises_encerrar_inativas`, `agsus_eventos_acesso_limpeza_mensal` | —                                                                             |
-| Classificação em Python      | —                                                                                                                                     | `classificacao.yml` pedido ao gerar uma lista (20261023170000)                |
-| Gerar listas pelo Python     | —                                                                                                                                     | `classificacao.yml` (modo calculo) pedido ao clicar em Gerar (20261023200000) |
+| Chave                    | Tarefas do pg_cron                                                                                                                    | Workflow (agenda)                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Entrevistas              | `agsus_robo_sincronizar_entrevistas`                                                                                                  | `sincronizar-entrevistas.yml`                                                 |
+| Seleção                  | `agsus_robo_sincronizar_selecao`                                                                                                      | `sincronizar-selecao.yml`                                                     |
+| KPIs do edital           | `agsus_kpis_do_edital_pela_selecao`                                                                                                   | —                                                                             |
+| Robô de inscrições       | `agsus_robo_inscricoes_*`                                                                                                             | `robo-empregare.yml`                                                          |
+| Triagem automática       | —                                                                                                                                     | `pre-classificacao.yml` chamado no fim do `robo-empregare.yml` (apos_robo)    |
+| Conferências             | `agsus_robo_conferencias`                                                                                                             | `conferencias.yml` (chama `contratacao-dos-aprovados.yml` antes)              |
+| Pacotes dos painéis      | `agsus_analises_cache_do_painel`, `agsus_aprovados_cache_por_area`, `agsus_entrevistas_cache_do_painel`                               | `pacotes-dos-paineis.yml` (pedido pela rodada)                                |
+| Manutenção do banco      | `agsus_analises_analyze_diario`, `agsus_fila_estatisticas`, `agsus_analises_encerrar_inativas`, `agsus_eventos_acesso_limpeza_mensal` | —                                                                             |
+| Classificação em Python  | —                                                                                                                                     | `classificacao.yml` pedido ao gerar uma lista (20261023170000)                |
+| Gerar listas pelo Python | —                                                                                                                                     | `classificacao.yml` (modo calculo) pedido ao clicar em Gerar (20261023200000) |
 
-Sem chave (sempre ligadas): `agsus_robo_conferir_disparos` (fecha os pedidos do Rodar agora) e
-`agsus_inativar_listas_vencidas`. Fora do banco: os gatilhos do Apps Script das planilhas de
+Sem chave (sempre ligadas): `agsus_robo_conferir_disparos` (fecha os pedidos do Rodar agora),
+`agsus_inativar_listas_vencidas`, `agsus_analises_limpar_manifesto`, `agsus_cron_limpar_historico` e
+`agsus_alinhar_chaves_da_automacao` (o alinhador, 20261109180000). Fora do banco: os gatilhos do Apps Script das planilhas de
 análises (incremental a cada 20 min) ficam no Google; a Leitura de arquivos só roda pelo Run
 workflow. Os workflows dos robôs só têm `workflow_dispatch` (`tests/workflows-dos-robos.test.js`
 impede `push` e `schedule`).
@@ -134,9 +139,11 @@ select cron.schedule('agsus_robo_inscricoes_120_2026', '0 10,16 * * *',
   $$select private."FC_AGENDA_DAS_INSCRICOES"('agsus_robo_inscricoes_120_2026', '120/2026', date '2026-11-30');$$);
 ```
 
-O nome tem de começar por `agsus_robo_inscricoes_` (a função recusa outro). Para parar antes:
-`select cron.unschedule('agsus_robo_inscricoes_120_2026');`. Mudou o horário? Atualize esta tabela
-e o "esperado" em `src/lib/saude-das-cargas.ts`.
+O nome tem de começar por `agsus_robo_inscricoes_` (a função recusa outro). **A chave "Robô de
+inscrições" precisa estar ligada**: com ela desligada, o alinhador desliga a tarefa nova em até 5 min
+(e a agenda não pediria nada mesmo assim). Para parar antes:
+`select cron.unschedule('agsus_robo_inscricoes_120_2026');`. Mudou o horário? Atualize esta tabela;
+o Status das atualizações lê o horário novo do banco.
 
 **Mudar um horário** (SQL Editor do Supabase):
 
@@ -146,8 +153,8 @@ select cron.alter_job(
   schedule => '10 11,16,21 * * *');
 ```
 
-Depois, atualize esta tabela, a lista comentada na migration (para o próximo ambiente) e o
-"esperado" em `src/lib/saude-das-cargas.ts`.
+Depois, atualize esta tabela e a lista comentada na migration (para o próximo ambiente). O
+prazo e o texto do Status das atualizações saem da agenda do banco, sem mudar o código.
 
 ## A chave (token do GitHub)
 
@@ -208,6 +215,33 @@ pelo SQL (papel postgres), quase todos em par "triagem + robô do 114/2026 com
 O das 00h00 de 15/10 tem horário redondo (pode ter sido uma tarefa avulsa criada e apagada); o
 histórico do pg_cron daquele dia ficou no banco antigo e não pôde ser conferido. Daqui em diante,
 esses pedidos aparecem como `MANUAL`.
+
+## Catálogo dos robôs (20261109180000)
+
+O que o banco pode pedir ao GitHub e qual chave manda em cada tarefa ficam em duas tabelas, no lugar
+das listas fixas que tinham de mudar juntas a cada workflow novo (`c_aceitos` de `FC_DISPARAR_ROBO`, o
+CHECK `CK_DISPROBO_NOWORKFLOW`, `FC_CHAVE_DO_WORKFLOW`, `FC_CHAVE_DA_TAREFA` e a lista de
+`registrar_disparo_externo`):
+
+| Tabela               | Uma linha por                                  | Colunas que mandam                                                                                     |
+| -------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `TB_ROBO_WORKFLOW`   | workflow (`.github/workflows/*.yml`)           | `ST_DISPARAVEL` (o banco pode pedir), `DS_INPUT_ACEITO`, `CO_CHAVE`, `ST_REGISTRO_EXTERNO` (GITHUB)    |
+| `TB_TAREFA_AGENDADA` | tarefa do pg_cron (nome exato ou `ST_PREFIXO`) | `CO_CHAVE` (quem liga e desliga), `NO_WORKFLOW` (o que ela pede em todo horário), `DS_ROTULO` (a tela) |
+
+`TL_DISPARO_ROBO.NO_WORKFLOW` é chave estrangeira para `TB_ROBO_WORKFLOW`. A tela lê o catálogo por
+`obter_catalogo_dos_robos` (nomes dos pedidos e das tarefas e qual tarefa agenda cada carga). Não há
+RPC de escrita: o catálogo muda só por migration.
+
+**Workflow novo** (numa migration): um `insert into public."TB_ROBO_WORKFLOW"` com os inputs que ele
+aceita e a chave; se uma tarefa do pg_cron o pedir, um `insert into public."TB_TAREFA_AGENDADA"` com a
+chave e o workflow. `FC_DISPARAR_ROBO` não muda. Se o robô também tiver "Rodar agora", ele entra em
+`disparar_robo` (opções da tela) e em `ROBOS_DE_CARGA` — `tests/catalogo-dos-robos-migration.test.ts`
+reprova robô da tela ou do `disparar_robo` fora do catálogo.
+
+Os testes desta parte rodam num Postgres de verdade (PGlite, `tests/catalogo-dos-robos-no-banco.test.ts`):
+o banco de hoje, o banco com a migration e o banco com a migration e o rollback respondem igual a cada
+workflow × origem × entrada. O ensaio faz a mesma comparação no banco de produção, sem pedir nada ao
+GitHub.
 
 ## Desligar
 

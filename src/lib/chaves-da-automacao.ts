@@ -9,11 +9,11 @@
   (FC_DISPARAR_ROBO não pede com a chave desligada). O "Rodar agora" do
   Status das atualizações continua, com confirmação.
 
-  A PRÓXIMA EXECUÇÃO sai da agenda do pg_cron (cinco campos, em UTC, como o
-  pg_cron do Supabase): `*`, número, faixa `a-b`, passo `*\/n` ou `a-b/n` e
-  listas. Dia do mês e dia da semana restritos ao mesmo tempo valem "um ou
-  outro", como no cron. Agenda fora disso (ex.: "30 seconds") não tem próxima.
+  A PRÓXIMA EXECUÇÃO sai da agenda do pg_cron (src/lib/agenda-do-cron.ts, o
+  mesmo leitor que dá o prazo de atraso no Status das atualizações).
 */
+
+import { proximaExecucao } from "./agenda-do-cron.ts";
 
 export interface ExecucaoDaTarefa {
   inicio: Date | null;
@@ -195,78 +195,6 @@ export function motivoValido(motivo: unknown) {
   const letras = palavras.map((p) => p.replace(/\P{L}/gu, ""));
   if (letras.filter(palavraDeVerdade).length < 2) return false;
   return new Set(letras.join("")).size >= 5;
-}
-
-/* ── Agenda do pg_cron ─────────────────────────────────────────────────── */
-
-function valoresDoCampo(campo: string, min: number, max: number) {
-  const valores = new Set<number>();
-  for (const parte of campo.split(",")) {
-    const m = /^(\*|\d+(?:-\d+)?)(?:\/(\d+))?$/.exec(parte);
-    if (!m) return null;
-    const [, faixa = "", passoBruto] = m;
-    const passo = passoBruto ? Number(passoBruto) : 1;
-    if (!passo) return null;
-    let inicio = min;
-    let fim = max;
-    if (faixa !== "*") {
-      const [a = "", b] = faixa.split("-");
-      inicio = Number(a);
-      fim = b === undefined ? (passoBruto ? max : inicio) : Number(b);
-    }
-    if (inicio < min || fim > max || inicio > fim) return null;
-    for (let v = inicio; v <= fim; v += passo) valores.add(v);
-  }
-  return valores;
-}
-
-/** A próxima execução de uma agenda do pg_cron (UTC) depois de `agora`; `null` sem regra. */
-export function proximaExecucao(agenda: unknown, agora = new Date()) {
-  const campos = texto(agenda).split(/\s+/);
-  if (campos.length !== 5) return null;
-  const [cm = "", ch = "", cd = "", cmes = "", cs = ""] = campos;
-  const minutos = valoresDoCampo(cm, 0, 59);
-  const horas = valoresDoCampo(ch, 0, 23);
-  const dias = valoresDoCampo(cd, 1, 31);
-  const meses = valoresDoCampo(cmes, 1, 12);
-  const semana = valoresDoCampo(cs, 0, 7);
-  if (!minutos || !horas || !dias || !meses || !semana) return null;
-  if (semana.has(7)) semana.add(0);
-  const diaRestrito = cd !== "*";
-  const semanaRestrita = cs !== "*";
-  const listaDeHoras = [...horas].sort((a, b) => a - b);
-  const listaDeMinutos = [...minutos].sort((a, b) => a - b);
-  const inicio = Math.floor(agora.getTime() / 60000) * 60000 + 60000;
-  const base = new Date(inicio);
-  for (let d = 0; d <= 400; d += 1) {
-    const dia = new Date(
-      Date.UTC(
-        base.getUTCFullYear(),
-        base.getUTCMonth(),
-        base.getUTCDate() + d,
-      ),
-    );
-    if (!meses.has(dia.getUTCMonth() + 1)) continue;
-    const peloDia = dias.has(dia.getUTCDate());
-    const pelaSemana = semana.has(dia.getUTCDay());
-    const vale =
-      diaRestrito && semanaRestrita
-        ? peloDia || pelaSemana
-        : peloDia && pelaSemana;
-    if (!vale) continue;
-    for (const h of listaDeHoras)
-      for (const m of listaDeMinutos) {
-        const quando = Date.UTC(
-          dia.getUTCFullYear(),
-          dia.getUTCMonth(),
-          dia.getUTCDate(),
-          h,
-          m,
-        );
-        if (quando >= inicio) return new Date(quando);
-      }
-  }
-  return null;
 }
 
 /* ── Visão de cada chave na tela ───────────────────────────────────────── */

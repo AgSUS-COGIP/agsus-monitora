@@ -51,6 +51,7 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.12",
     "@eslint/js": "^9",
     "@playwright/test": "^1",
     "@types/node": "^24.13.6",

@@ -24,6 +24,10 @@ import type {
   são ~75 kB: get_saude_das_cargas e get_painel_dos_robos). A releitura que
   cai com a aba oculta fica para quando ela voltar.
 
+  O catálogo dos robôs (obter_catalogo_dos_robos, 20261109180000) dá os nomes
+  dos pedidos e das tarefas e qual tarefa agenda cada carga: é lido uma vez
+  (relido só se falhou) e vai junto do payload em `catalogo_dos_robos`. Sem ele,
+  a tela mostra os nomes do banco e as cargas ficam sem agenda conhecida.
   As chaves da automação (obter_chaves_da_automacao, 20261022190000) vêm junto
   em `chaves`: a carga de chave desligada aparece como "Desligada pelo
   administrador". Sem a função no banco (ou com erro), `chaves` fica nulo e a
@@ -53,6 +57,7 @@ const ESPERA_DA_RESPOSTA_MS = 3000;
 const RPC_PAINEL_DOS_ROBOS = "get_painel_dos_robos";
 const RPC_VAGAS_DOS_ROBOS = "listar_vagas_dos_robos";
 const RPC_CHAVES_DA_AUTOMACAO = "obter_chaves_da_automacao";
+const RPC_CATALOGO_DOS_ROBOS = "obter_catalogo_dos_robos";
 
 export function criarEstadoDaSaude({
   supabase,
@@ -79,6 +84,8 @@ export function criarEstadoDaSaude({
     chaves: null,
   };
   let pedido = 0;
+  /* O catálogo dos robôs já lido (muda só por migration). */
+  let catalogo: unknown = null;
   let releituraAgendada = false;
   /* Uma releitura caiu com a seção fora da tela ou a aba oculta. */
   let releituraAdiada = false;
@@ -112,10 +119,10 @@ export function criarEstadoDaSaude({
     }
     let resposta;
     try {
-      resposta = await comTempoLimite(
-        supabase.rpc("get_saude_das_cargas"),
-        30000,
-      );
+      [resposta] = await Promise.all([
+        comTempoLimite(supabase.rpc("get_saude_das_cargas"), 30000),
+        carregarCatalogo(),
+      ]);
     } catch (falha) {
       if (meu !== pedido) return;
       publicar({
@@ -138,13 +145,31 @@ export function criarEstadoDaSaude({
     publicar({
       status: "ready",
       bruto: data,
-      dados: normalizarSaude(data, agora()),
+      dados: normalizarSaude(comCatalogo(data), agora()),
       erro: "",
       erroCodigo: "",
     });
     await extras;
     if (meu === pedido) acompanhar();
   }
+
+  /* obter_catalogo_dos_robos, uma vez: sem a função ou com erro, segue sem (e tenta na próxima). */
+  async function carregarCatalogo() {
+    if (catalogo || !supabase) return;
+    try {
+      const { data, error } = await comTempoLimite(
+        supabase.rpc(RPC_CATALOGO_DOS_ROBOS),
+        30000,
+      );
+      if (!error) catalogo = data;
+    } catch {
+      // Segue sem o catálogo.
+    }
+  }
+  const comCatalogo = (data: unknown) =>
+    catalogo && data && typeof data === "object" && !Array.isArray(data)
+      ? { ...data, catalogo_dos_robos: catalogo }
+      : data;
 
   /* obter_chaves_da_automacao: sem a função ou com erro, segue sem as chaves. */
   async function carregarChaves() {

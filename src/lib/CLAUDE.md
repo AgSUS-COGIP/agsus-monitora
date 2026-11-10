@@ -61,6 +61,12 @@ Arquivos que exigem cuidado:
   do encerramento (quem fechou o edital). O banco decide quando o edital está encerrado.
 - `avaliacao-documental/datas-do-vinculo.ts` — datas do vínculo da ficha (nada antes de 1960 nem fim depois de hoje) e o
   fim do vínculo atual (a data limite do bloco, o fim das inscrições); o banco e o robô repetem a regra.
+- `agenda-do-cron.ts` — **leitura única da agenda do pg_cron** (próxima execução, maior intervalo, texto em
+  horário de Brasília), usada pelo Status das atualizações (prazo de atraso) e pela Automação. Nada de prazo ou
+  horário de tarefa escrito à mão na tela: o horário vem do `cron.job`.
+- `catalogo-dos-robos.ts` — leitura de `obter_catalogo_dos_robos` (nomes dos workflows, rótulo, chave e workflow de
+  cada tarefa do pg_cron). **Nome de robô ou de tarefa não se escreve à mão na tela**: vem do catálogo do banco
+  (`TB_ROBO_WORKFLOW`, `TB_TAREFA_AGENDADA`).
 - `env.ts` — leitura de variáveis; nunca hardcode de chave.
 
 Arquivo novo: nome em português, kebab-case, com teste junto.

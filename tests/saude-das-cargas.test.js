@@ -3,15 +3,13 @@ import {
   normalizarSaude,
   prazoDaAgenda,
   PRAZO_DIARIO_MIN,
-  PRAZO_AGENDA_DOS_ROBOS_MIN,
-  PRAZO_DE_HORA_EM_HORA_MIN,
-  PRAZO_SELECAO_MIN,
   PRAZO_FREQUENTE_MIN,
   PRAZO_MENSAL_MIN,
   textoDaIdade,
   visaoSimples,
 } from "../src/lib/saude-das-cargas.ts";
 import { normalizarChaves } from "../src/lib/chaves-da-automacao.ts";
+import { CATALOGO_DOS_ROBOS } from "./fixtures/catalogo-dos-robos.ts";
 
 /* "Agora" fixo: 01/10/2026 12:00 UTC. */
 const AGORA = new Date("2026-10-01T12:00:00Z");
@@ -27,6 +25,8 @@ const execucao = (situacao, minAtras, extra = {}) => ({
 const PAYLOAD = {
   schema_version: 1,
   gerado_em: AGORA.toISOString(),
+  // obter_catalogo_dos_robos, que a tela junta ao payload (20261109180000).
+  catalogo_dos_robos: CATALOGO_DOS_ROBOS,
   analises: [
     {
       origem: "apps_script_analises_incremental_v1",
@@ -90,6 +90,25 @@ const PAYLOAD = {
       execucoes: [
         { inicio: ha(3), fim: ha(3), situacao: "failed", mensagem: "deadlock" },
       ],
+    },
+    // As tarefas que pedem as cargas ao GitHub, como no banco desde 16/10/2026.
+    {
+      nome: "agsus_robo_sincronizar_entrevistas",
+      agenda: "5 0-10,15,21-23 * * *",
+      ativa: false,
+      execucoes: [],
+    },
+    {
+      nome: "agsus_robo_sincronizar_selecao",
+      agenda: "10 11,16,21 * * *",
+      ativa: true,
+      execucoes: [{ inicio: ha(50), fim: ha(50), situacao: "succeeded" }],
+    },
+    {
+      nome: "agsus_robo_conferencias",
+      agenda: "0 9 * * *",
+      ativa: true,
+      execucoes: [{ inicio: ha(180), fim: ha(180), situacao: "succeeded" }],
     },
   ],
 };
@@ -167,7 +186,7 @@ describe("selo de cada carga", () => {
     );
   });
 
-  it("entrevistas e seleção: atrasada pelo prazo de hora em hora; rodando agora aparece", () => {
+  it("entrevistas sem agenda ativa não atrasa; seleção atrasa pelo prazo da agenda; rodando agora aparece", () => {
     expect(carga("entrevistas")).toMatchObject({
       situacao: "em_dia",
       idadeMin: 180,
@@ -191,14 +210,14 @@ describe("selo de cada carga", () => {
 
   it("resumo conta cada situação", () => {
     expect(saude.resumo).toEqual({
-      em_dia: 4,
+      em_dia: 6,
       atrasada: 2,
       falhou: 2,
       em_andamento: 0,
-      nunca: 1,
+      nunca: 2,
       desligada: 0,
     });
-    expect(saude.total).toBe(9);
+    expect(saude.total).toBe(12);
   });
 
   it("sem acesso ao pg_cron, o grupo das tarefas fica indisponível", () => {
@@ -218,12 +237,24 @@ describe("selo de cada carga", () => {
 });
 
 describe("prazos e textos", () => {
-  it("prazo pela agenda do pg_cron", () => {
-    expect(prazoDaAgenda("*/2 * * * *")).toBe(PRAZO_FREQUENTE_MIN);
-    expect(prazoDaAgenda("1-59/2 * * * *")).toBe(PRAZO_FREQUENTE_MIN);
-    expect(prazoDaAgenda("20 6 * * *")).toBe(PRAZO_DIARIO_MIN);
-    expect(prazoDaAgenda("0 6 1 * *")).toBe(PRAZO_MENSAL_MIN);
-    expect(prazoDaAgenda("qualquer")).toBeNull();
+  it("prazo pela agenda do pg_cron: maior intervalo + folga", () => {
+    const prazo = (agenda) => prazoDaAgenda(agenda, AGORA);
+    expect(prazo("*/2 * * * *")).toBe(PRAZO_FREQUENTE_MIN);
+    expect(prazo("1-59/2 * * * *")).toBe(PRAZO_FREQUENTE_MIN);
+    expect(prazo("*/5 * * * *")).toBe(PRAZO_FREQUENTE_MIN);
+    expect(prazo("*/10 * * * *")).toBe(20);
+    expect(prazo("20 6 * * *")).toBe(PRAZO_DIARIO_MIN);
+    expect(prazo("0 6 1 * *")).toBe(PRAZO_MENSAL_MIN);
+    expect(prazo("qualquer")).toBeNull();
+  });
+
+  it("de hora em hora e listas também têm prazo (antes ficavam sem)", () => {
+    const prazo = (agenda) => prazoDaAgenda(agenda, AGORA);
+    expect(prazo("25 * * * *")).toBe(2 * 60);
+    expect(prazo("20,50 * * * *")).toBe(60);
+    // Seleção: a noite de 14 h + 2 h; Entrevistas: a tarde de 6 h + 2 h.
+    expect(prazo("10 11,16,21 * * *")).toBe(16 * 60);
+    expect(prazo("5 0-10,15,21-23 * * *")).toBe(8 * 60);
   });
 
   it("idade em texto", () => {
@@ -265,7 +296,7 @@ describe("visão simples: uma linha por aba do sistema", () => {
 
   it("as tarefas do banco viram uma linha só, com a pior situação", () => {
     expect(linha("tarefas")).toMatchObject({ situacao: "falhou" });
-    expect(linha("tarefas").partes).toHaveLength(2);
+    expect(linha("tarefas").partes).toHaveLength(5);
   });
 
   it("o aviso do topo lista só falha e atraso", () => {
@@ -351,16 +382,38 @@ describe("robô da Empregare (20261005170000)", () => {
     expect(robo).toMatchObject({ situacao: "em_dia", emAndamento: true });
   });
 
-  it("entrevistas rodam o dia todo (4 h também à noite); seleção 3 vezes ao dia (15 h)", () => {
-    // 23h de Brasília = 02h UTC do dia seguinte.
-    const noite = normalizarSaude(PAYLOAD, new Date("2026-10-02T02:00:00Z"));
-    const planilhas = noite.grupos.find((g) => g.id === "planilhas").cargas;
-    const prazo = (id) => planilhas.find((c) => c.id === id).prazoMin;
-    expect(prazo("selecao")).toBe(PRAZO_SELECAO_MIN);
-    expect(planilhas.find((c) => c.id === "selecao").esperado).toBe(
-      "às 8h10, 13h10 e 18h10",
-    );
-    expect(prazo("entrevistas")).toBe(PRAZO_DE_HORA_EM_HORA_MIN);
+  it("prazo e esperado vêm da tarefa do pg_cron que pede a carga", () => {
+    const planilhas = (payload) =>
+      normalizarSaude(payload, AGORA).grupos.find((g) => g.id === "planilhas")
+        .cargas;
+    const de = (lista, id) => lista.find((c) => c.id === id);
+    const hoje = planilhas(PAYLOAD);
+    expect(de(hoje, "selecao")).toMatchObject({
+      prazoMin: 16 * 60,
+      esperado: "às 8h10, 13h10 e 18h10",
+    });
+    // Tarefa inativa (pausa de 16/10/2026): sem prazo, só pelo Rodar agora.
+    expect(de(hoje, "entrevistas")).toMatchObject({
+      prazoMin: null,
+      esperado: "só pelo Rodar agora",
+    });
+    // Religada no banco: prazo e texto acompanham, sem mexer na tela.
+    const religada = planilhas({
+      ...PAYLOAD,
+      tarefas: PAYLOAD.tarefas.map((t) =>
+        t.nome === "agsus_robo_sincronizar_entrevistas"
+          ? { ...t, ativa: true }
+          : t,
+      ),
+    });
+    expect(de(religada, "entrevistas")).toMatchObject({
+      prazoMin: 8 * 60,
+      esperado: "de hora em hora das 18h05 às 7h05 e às 12h05",
+    });
+    // Sem a tarefa (pg_cron ilegível): também sem prazo.
+    expect(
+      de(planilhas({ ...PAYLOAD, tarefas: null }), "selecao").prazoMin,
+    ).toBeNull();
   });
 
   it("robô da Empregare sem prazo: só roda quando alguém pede, nunca fica atrasado", () => {
@@ -426,6 +479,13 @@ describe("conferências de consistência (20261005210000)", () => {
     );
     expect(linha.situacao).toBe("falhou");
     expect(linha.erro.mensagem).toContain("1 conferências falharam");
+  });
+
+  it("a explicação diz o horário da agenda do banco", () => {
+    const s = comConferencias([execucao("CONCLUIDA", 60)]);
+    expect(
+      visaoSimples(s).linhas.find((l) => l.id === "conferencias").explicacao,
+    ).toMatch(/: todo dia às 6h\.$/);
   });
 });
 
@@ -586,15 +646,44 @@ describe("agenda dos robôs pelo banco (20261008140000)", () => {
     );
   });
 
-  it("sem pedido aceito há mais de 2 h fica atrasada; pedido aberto não conta como falha", () => {
-    const linha = agenda({
-      chave_cadastrada: true,
-      ultimo_aceito: ha(PRAZO_AGENDA_DOS_ROBOS_MIN + 30),
-      falhas_24h: 0,
-      sem_chave_24h: 0,
-      disparos: [disparo("PEDIDO", 1)],
-    });
-    expect(linha.situacao).toBe("atrasada");
+  it("atrasa pelo menor prazo das tarefas dos robôs ativas; pedido aberto não conta como falha", () => {
+    // Seleção (16 h) e Conferências (26 h) ativas: vale o menor, 16 h.
+    const comAceito = (min) =>
+      agenda({
+        chave_cadastrada: true,
+        ultimo_aceito: ha(min),
+        falhas_24h: 0,
+        sem_chave_24h: 0,
+        disparos: [disparo("PEDIDO", 1)],
+      });
+    expect(comAceito(15 * 60).situacao).toBe("em_dia");
+    expect(comAceito(17 * 60).situacao).toBe("atrasada");
+    expect(comAceito(17 * 60).partes[0].esperado).toBe(
+      "Seleção: às 8h10, 13h10 e 18h10; Conferências: todo dia às 6h",
+    );
+  });
+
+  it("sem nenhuma tarefa de robô ativa, a agenda não atrasa (só falha)", () => {
+    const linha = visaoSimples(
+      normalizarSaude(
+        {
+          ...BASE,
+          tarefas: PAYLOAD.tarefas.map((t) => ({ ...t, ativa: false })),
+          agenda_dos_robos: {
+            chave_cadastrada: true,
+            ultimo_aceito: ha(10 * 24 * 60),
+            falhas_24h: 0,
+            sem_chave_24h: 0,
+            disparos: [],
+          },
+        },
+        AGORA,
+      ),
+    ).linhas.find((l) => l.id === "agenda_dos_robos");
+    expect(linha.situacao).toBe("em_dia");
+    expect(linha.partes[0].esperado).toBe(
+      "nenhuma carga agendada; só pelo Rodar agora",
+    );
   });
 });
 

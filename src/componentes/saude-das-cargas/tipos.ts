@@ -225,7 +225,8 @@ export type ClienteDaSaude = ClienteDosAvisos & {
     nome:
       | "get_saude_das_cargas"
       | "get_painel_dos_robos"
-      | "obter_chaves_da_automacao",
+      | "obter_chaves_da_automacao"
+      | "obter_catalogo_dos_robos",
   ): PromiseLike<RespostaDaCarga>;
   rpc(
     nome: "listar_vagas_dos_robos",
