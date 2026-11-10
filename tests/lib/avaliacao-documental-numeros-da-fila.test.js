@@ -125,7 +125,8 @@ describe("ações do ⋯ de uma linha da Fila", () => {
     expect(linhas.map((c) => acoesDaFicha(c, agora))).toEqual([
       ["distribuir", "revisao"],
       ["distribuir", "liberar", "revisao"],
-      [],
+      // Concluída: só reabrir (AM-6.3: reaberta, aí aceita Atribuir a…).
+      ["reabrir"],
       [],
       [],
     ]);
@@ -133,7 +134,9 @@ describe("ações do ⋯ de uma linha da Fila", () => {
     for (const c of linhas) {
       const lote = acoesDaSelecao([c], agora);
       expect(
-        ["distribuir", "liberar", "revisao"].filter((a) => lote[a].includes(c)),
+        ["distribuir", "liberar", "revisao", "reabrir"].filter((a) =>
+          lote[a].includes(c),
+        ),
       ).toEqual(acoesDaFicha(c, agora));
     }
   });

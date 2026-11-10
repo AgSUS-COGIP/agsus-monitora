@@ -113,6 +113,7 @@ const RPC_RENOVAR = "renovar_reserva";
 const RPC_LIBERAR = "liberar_reserva";
 const RPC_DISTRIBUIR = "distribuir_fichas";
 const RPC_REVISAO = "mandar_fichas_revisao";
+const RPC_REABRIR = "reabrir_fichas";
 const RPC_ABRIR_FICHAS = "abrir_fichas_do_edital";
 const RPC_REINICIAR_FICHAS = "reiniciar_fichas_do_edital";
 const RPC_SALVAR_FILTRO = "salvar_filtro_fila";
@@ -727,6 +728,24 @@ export function criarEstadoDaFila({
       (r) => `${r?.alteradas ?? 0} ficha(s) mandada(s) para revisão.`,
     );
 
+  /* Reabre em lote (reabrir_fichas): motivo da lista e complemento, como na ficha. */
+  const reabrirFichas = (
+    fichas: ReadonlyArray<{ ficha: string; versao: number | null | undefined }>,
+    motivo: string,
+    complemento: string | null,
+  ) =>
+    executar(
+      "reabrir",
+      () =>
+        rpc(RPC_REABRIR, {
+          p_edital: estado.editalId,
+          p_fichas: fichas,
+          p_motivo: motivo,
+          p_complemento: complemento,
+        }) as Promise<ContagemDaAcao | null>,
+      (r) => `${r?.reabertas ?? 0} ficha(s) reaberta(s).`,
+    );
+
   const abrirFichasDoLote = () =>
     executar(
       "abrir-fichas",
@@ -835,6 +854,7 @@ export function criarEstadoDaFila({
     distribuir,
     liberarReservas,
     mandarParaRevisao,
+    reabrirFichas,
     abrirFichasDoLote,
     reiniciarFichas,
     ehAdminGlobal: () => isAdminGlobal(getProfile()),
