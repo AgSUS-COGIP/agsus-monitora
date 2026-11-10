@@ -1099,6 +1099,22 @@ describe("fila: inclusão no lote por decisão da coordenação", () => {
     });
   });
 
+  it('com o filtro de vaga, "N pela regra + M por decisão" continua sendo do edital, como o No lote', async () => {
+    const d = comDecisao();
+    d.vagas = [...d.vagas, { codigo: "180001", cargo: "Enfermeiro" }];
+    d.candidatos = [
+      ...d.candidatos,
+      inscrito("8001", { vaga: "180001", ficha: ficha("f9", "PENDENTE") }),
+    ];
+    await montar(supabaseFalso(d));
+    const lote = () => secao.querySelector("[data-lote-da-fila]")?.textContent;
+    expect(numeroDaFaixa("lote")).toBe("5");
+    expect(lote()).toBe("4 pela regra + 1 por decisão");
+    await escolher(filtro("Vaga"), "180001");
+    expect(numeroDaFaixa("lote")).toBe("5");
+    expect(lote()).toBe("4 pela regra + 1 por decisão");
+  });
+
   it("a inclusão por decisão não fica na Fila (só na Triagem); o selo continua", async () => {
     await montar(supabaseFalso(comDecisao()));
     await abrirMenu();
