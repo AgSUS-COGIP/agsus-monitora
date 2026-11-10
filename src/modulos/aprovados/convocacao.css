@@ -804,10 +804,17 @@
   gap: var(--space-3);
   margin-bottom: var(--space-4);
 }
+/* Título e escolha (o `.ui-segmentado`) na mesma linha; quebra no celular. */
+.central-convocacoes-topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
 .central-convocacoes-titulo {
   margin: 0;
+  font-size: var(--text-h4);
 }
-.central-convocacoes-escolha,
 .central-convocacoes-acoes {
   display: flex;
   flex-wrap: wrap;

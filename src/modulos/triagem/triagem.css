@@ -227,7 +227,7 @@
 }
 
 .triagem-avancado textarea {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: var(--text-body-sm);
 }
 

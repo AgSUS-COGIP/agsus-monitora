@@ -124,7 +124,7 @@ export function TopoDoMapa({
         {podeEditar ? (
           <button
             type="button"
-            className="btn small"
+            className="btn secondary small"
             aria-pressed={modo.editando}
             aria-expanded={modo.editando}
             aria-controls={idDoPainel}
@@ -136,7 +136,7 @@ export function TopoDoMapa({
         ) : null}
         <button
           type="button"
-          className="btn small"
+          className="btn secondary small"
           onClick={() => {
             voltarAoBrasil(L, mapa);
             camadas.current?.soltar();

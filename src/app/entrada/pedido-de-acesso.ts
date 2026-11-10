@@ -282,7 +282,7 @@ export function criarPedidoDeAcesso({
   /*
     Desenha a situação. O formulário (sem pedido, recusado, cancelado) vem
     com o que a pessoa pediu da última vez; conta desativada deixa a marca
-    por usuário (na volta, "Bem-vindo(a) de volta").
+    por usuário (na volta, "Que bom ter você de volta").
   */
   function desenhar(
     tela: TelaDaSolicitacao,

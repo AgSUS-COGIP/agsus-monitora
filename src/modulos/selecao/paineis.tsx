@@ -242,8 +242,9 @@ export function Indicadores({
 
 /* ── Recorte ativo ──────────────────────────────────────────────────── */
 
+/* Sem filtro, nada: o painel de filtros já diz "nenhum filtro adicional". */
 export function Recorte({ ativos }: { ativos: AtivoDoRecorte[] }) {
-  return <LinhaDoRecorte ativos={ativos} />;
+  return ativos.length ? <LinhaDoRecorte ativos={ativos} /> : null;
 }
 
 /* ── Gráficos ───────────────────────────────────────────────────────── */
@@ -271,8 +272,9 @@ const rotuloDeValor: Plugin<"bar"> = {
         const { x, y } = barra.tooltipPosition(false);
         if (x === null || y === null) return;
         ctx.save();
-        ctx.fillStyle = cor || "#20324a";
-        ctx.font = "600 11px Geist, system-ui, sans-serif";
+        ctx.fillStyle = cor || corDoToken("--text-primary", "#20324a");
+        // Nada abaixo de 12px (DESIGN.md, tipografia).
+        ctx.font = "600 12px Geist, system-ui, sans-serif";
         ctx.textAlign = deitado ? "left" : "center";
         ctx.textBaseline = deitado ? "middle" : "bottom";
         ctx.fillText(
@@ -299,10 +301,12 @@ const textoNoCentro: Plugin<"doughnut"> = {
     ctx.save();
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = cfg.cor || "#20324a";
-    ctx.font = "800 28px Geist, system-ui, sans-serif";
+    ctx.fillStyle = cfg.cor || corDoToken("--text-primary", "#20324a");
+    // Peso até 600 (DESIGN.md, tipografia); o tamanho já destaca o número.
+    ctx.font = "600 28px Geist, system-ui, sans-serif";
     ctx.fillText(cfg.principal || "", x, y - 8);
-    ctx.fillStyle = cfg.corSecundaria || "#526780";
+    ctx.fillStyle =
+      cfg.corSecundaria || corDoToken("--text-secondary", "#526780");
     ctx.font = "400 12px Geist, system-ui, sans-serif";
     ctx.fillText(cfg.secundario || "", x, y + 24);
     ctx.restore();
@@ -362,11 +366,16 @@ function opcoesDeRosca(
     responsive: true,
     maintainAspectRatio: false,
     animation: { duration: 380 },
-    cutout: "62%",
+    cutout: "68%",
     plugins: {
       legend: {
         position: "bottom",
-        labels: { color: p.text, boxWidth: 14, usePointStyle: true },
+        labels: {
+          color: p.text,
+          boxWidth: 10,
+          padding: 16,
+          usePointStyle: true,
+        },
       },
     },
     ...extra,
@@ -429,7 +438,7 @@ export function Graficos({
                     {
                       label: "Candidatos",
                       data: eliminados.map((e) => e.valor),
-                      backgroundColor: [p.warn, p.review, p.bad],
+                      backgroundColor: p.blue,
                       borderRadius: 6,
                     },
                   ],
@@ -496,7 +505,11 @@ export function Graficos({
                     {
                       data:
                         contratados || resto ? [contratados, resto] : [0, 1],
-                      backgroundColor: [p.blue, p.neutro],
+                      // O que falta é o trilho claro do medidor, não uma fatia que pese.
+                      backgroundColor: [
+                        p.blue,
+                        corDoToken("--color-border-default", p.grid),
+                      ],
                       borderColor: p.surface,
                       borderWidth: 2,
                     },
@@ -550,7 +563,7 @@ export function Graficos({
                     {
                       label: "Candidatos",
                       data: analise.map((a) => a.valor),
-                      backgroundColor: [p.review, p.bad],
+                      backgroundColor: [p.blue, p.bad],
                       borderRadius: 6,
                     },
                   ],
@@ -583,7 +596,7 @@ export function Graficos({
                   {
                     label: "Inscritos",
                     data: unidades.map((u) => u.valor),
-                    backgroundColor: p.review,
+                    backgroundColor: p.blue,
                     borderRadius: 6,
                   },
                 ],

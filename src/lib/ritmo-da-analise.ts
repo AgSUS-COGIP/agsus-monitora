@@ -932,4 +932,4 @@ export function metaDaEquipeBatida(
   );
 }
 
-export const TEXTO_DA_META_BATIDA = "Meta de hoje batida pela equipe! 🎉";
+export const TEXTO_DA_META_BATIDA = "Meta de hoje batida! Obrigado, equipe.";

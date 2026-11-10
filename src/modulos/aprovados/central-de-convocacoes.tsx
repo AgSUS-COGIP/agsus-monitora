@@ -1,6 +1,16 @@
 import { irParaTela } from "../../app/ir-para-tela.ts";
+import { Segmentado } from "../../ui/index.ts";
 
 export type TipoDaCentralDeConvocacoes = "entrevista" | "contratacao";
+
+/* As duas convocações, no controle segmentado do design system (DESIGN.md). */
+const TIPOS_DE_CONVOCACAO = [
+  { valor: "contratacao", rotulo: "Para contratação" },
+  { valor: "entrevista", rotulo: "Para entrevistas" },
+] as const satisfies ReadonlyArray<{
+  valor: TipoDaCentralDeConvocacoes;
+  rotulo: string;
+}>;
 
 /**
  * Uma entrada para dois fluxos com fontes e permissões distintas.
@@ -18,37 +28,26 @@ export function CentralDeConvocacoes({
   podeEntrevistas: boolean;
   podeClassificacao: boolean;
 }) {
-  const visao = podeEntrevistas && tipo === "entrevista" ? tipo : "contratacao";
+  /*
+    Sem acesso às entrevistas só existe a convocação para contratação: nada a
+    escolher, e um cartão só com o título seria espaço vazio.
+  */
+  if (!podeEntrevistas) return null;
+  const visao = tipo === "entrevista" ? tipo : "contratacao";
   return (
     <section
       className="central-convocacoes ui-card"
       aria-label="Central de convocações"
     >
-      <h3 className="central-convocacoes-titulo">Convocações</h3>
-      {podeEntrevistas ? (
-        <div
-          className="central-convocacoes-escolha"
-          role="group"
-          aria-label="Tipo de convocação"
-        >
-          <button
-            type="button"
-            className={visao === "contratacao" ? "btn green" : "btn secondary"}
-            aria-pressed={visao === "contratacao"}
-            onClick={() => aoMudar("contratacao")}
-          >
-            Para contratação
-          </button>
-          <button
-            type="button"
-            className={visao === "entrevista" ? "btn green" : "btn secondary"}
-            aria-pressed={visao === "entrevista"}
-            onClick={() => aoMudar("entrevista")}
-          >
-            Para entrevistas
-          </button>
-        </div>
-      ) : null}
+      <div className="central-convocacoes-topo">
+        <h3 className="central-convocacoes-titulo">Convocações</h3>
+        <Segmentado
+          rotulo="Tipo de convocação"
+          opcoes={TIPOS_DE_CONVOCACAO}
+          valor={visao}
+          aoMudar={aoMudar}
+        />
+      </div>
       {visao === "entrevista" ? (
         <div className="central-convocacoes-acoes">
           {podeClassificacao ? (
@@ -62,7 +61,7 @@ export function CentralDeConvocacoes({
           ) : null}
           <button
             type="button"
-            className="btn green"
+            className="btn"
             onClick={() => irParaTela({ view: "conduzir-entrevistas" })}
           >
             Abrir Convocação para entrevistas

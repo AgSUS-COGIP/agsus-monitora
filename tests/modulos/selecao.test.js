@@ -150,7 +150,9 @@ const kpi = (chave) =>
 const linhas = () =>
   secao.querySelectorAll(".ui-tabela tbody tr.selecao-linha");
 const status = () => secao.querySelector(".ui-topo .status-discreto");
-const recorte = () => secao.querySelector("[data-recorte]").textContent;
+/* Sem filtro a linha do recorte some (o "Sem filtros" repetia o painel de filtros). */
+const recorte = () =>
+  secao.querySelector("[data-recorte]")?.textContent ?? "Sem filtros";
 const naTela = (texto) => document.body.textContent.includes(texto);
 const botao = (texto) =>
   [...document.querySelectorAll("button")].find((b) =>
@@ -305,9 +307,9 @@ describe("KPIs, recorte, observações e tabela", () => {
     }
   });
 
-  it("sem filtros, o recorte diz só 'Sem filtros'", async () => {
+  it("sem filtros, a linha do recorte não aparece", async () => {
     await montar(supabaseFalso({ data: PAYLOAD, error: null }));
-    expect(recorte()).toBe("Sem filtros");
+    expect(secao.querySelector("[data-recorte]")).toBeNull();
   });
 
   it("mostra os alertas da coluna Observação como texto", async () => {
