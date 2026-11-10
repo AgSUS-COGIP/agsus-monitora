@@ -36,7 +36,7 @@
 }
 .saude-resumo__texto strong {
   font-size: var(--text-body);
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold);
 }
 .saude-resumo__texto span {
   color: var(--text-primary);

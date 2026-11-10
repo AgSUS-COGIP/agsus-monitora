@@ -80,7 +80,7 @@
   display: block;
   margin-top: var(--space-0-5);
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--text-caption);
 }
 .convocacao-bloco-head .btn {
   padding: var(--space-1-5) var(--space-3);
@@ -189,7 +189,7 @@
   display: block;
   margin-top: 3px;
   color: var(--state-warning);
-  font-size: 10px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
 .convocacao-linha-imediata td {
@@ -223,7 +223,7 @@
   align-items: center;
   gap: var(--space-1);
   color: var(--state-warning);
-  font-size: 10px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
 /* ── Percentuais, total por vaga e quadro derivado ──────────────────────── */
@@ -292,7 +292,7 @@
 }
 .convocacao-multipla {
   color: var(--state-info);
-  font-size: 10px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
 @media (max-width: 700px) {
@@ -314,7 +314,7 @@
 .convocacao-modelo-resumo {
   margin: 0 0 14px;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
 .convocacao-modelo-resumo.compartilhado {
@@ -344,7 +344,7 @@
   border-radius: 10px;
   background: var(--state-warning-soft);
   color: var(--state-warning);
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
   line-height: 1.4;
 }
@@ -369,7 +369,7 @@
   display: block;
   margin-top: var(--space-0-5);
   color: var(--text-secondary);
-  font-size: 9px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
   letter-spacing: 0;
   text-transform: none;
@@ -378,7 +378,7 @@
   padding: 0 3px;
   border-radius: 3px;
   background: var(--surface-raised);
-  font-size: 9px;
+  font-size: var(--text-caption);
 }
 .convocacao-editor-campo input,
 .convocacao-editor-campo select {
@@ -469,7 +469,7 @@
   border-radius: 999px;
   background: var(--state-info-soft);
   color: var(--state-info);
-  font-size: 10px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
 .convocacao-categoria-avancado {
@@ -492,7 +492,7 @@
   align-items: center;
   gap: var(--space-1);
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
 }
@@ -526,7 +526,7 @@
 .convocacao-editor-ajuda {
   margin-top: var(--space-0-5);
   color: var(--text-secondary);
-  font-size: 10px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
   line-height: 1.45;
   letter-spacing: 0;
@@ -546,7 +546,7 @@
   border-radius: 999px;
   background: var(--state-info-soft);
   color: var(--state-info);
-  font-size: 9px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
 /*
