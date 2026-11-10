@@ -1,4 +1,6 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { ARQUIVO_DOS_CONTORNOS_DOS_DSEIS } from "../src/lib/mapa-saude-indigena/contornos-dos-dseis.ts";
 import {
   AVISO_DO_SIMBOLO,
   FUNAI_PROXY_GEOJSON,
@@ -6,7 +8,6 @@ import {
   FUNAI_TERRITORIES_LAYER,
   dseiFeatureMatches,
   dseiFeatureName,
-  funaiDseiUrl,
   funaiFeatureName,
   funaiViewportUrl,
   isHealthMapElementId,
@@ -55,8 +56,32 @@ describe("camada de Terras Indígenas", () => {
     expect(url).toContain("bbox=-40%2C-12%2C-35%2C-8");
   });
 
-  it("busca a área oficial dos DSEIs pelo proxy do catálogo atual da Funai", () => {
-    expect(funaiDseiUrl()).toBe("/api/funai-geodata?dataset=dsei");
+  it("a abrangência dos DSEIs vem do arquivo local, não da Funai", () => {
+    const camada = readFileSync(
+      "src/modules/indigenous-territories-layer.ts",
+      "utf8",
+    );
+    const carga = camada.slice(
+      camada.indexOf("async function loadDseiFeatures()"),
+      camada.indexOf("export function installIndigenousTerritoriesLayer"),
+    );
+    expect(carga).toContain("fetch(ARQUIVO_DOS_CONTORNOS_DOS_DSEIS");
+    expect(camada).not.toContain("dataset=dsei");
+    expect(ARQUIVO_DOS_CONTORNOS_DOS_DSEIS).toBe(
+      "/data/contornos-dos-dseis.json",
+    );
+  });
+
+  it("o arquivo local tem os 34 DSEIs com nome que a camada reconhece", () => {
+    const contornos = JSON.parse(
+      readFileSync("public/data/contornos-dos-dseis.json", "utf8"),
+    );
+    expect(contornos.type).toBe("FeatureCollection");
+    expect(contornos.features).toHaveLength(34);
+    const yanomami = contornos.features.find((f) =>
+      dseiFeatureMatches(f, "DSEI Yanomami"),
+    );
+    expect(dseiFeatureName(yanomami?.properties)).toMatch(/Yanomami/);
   });
 
   it("reconhece o nome do DSEI sem depender de um único atributo", () => {

@@ -26,11 +26,12 @@ import {
   FUNAI_TERRITORIES_LAYER,
   carregarCatalogo,
   catalogoParaOZoom,
-  funaiDseiUrl,
   funaiEstudoUrl,
   funaiViewportUrl,
   obterCatalogo,
 } from "../lib/terras-indigenas/catalogo.ts";
+import { ARQUIVO_DOS_CONTORNOS_DOS_DSEIS } from "../lib/mapa-saude-indigena/contornos-dos-dseis.ts";
+import { PANE_DA_ABRANGENCIA_DOS_DSEIS } from "../lib/terras-indigenas/catalogo.ts";
 import {
   AVISO_DO_SIMBOLO,
   dseiFeatureMatches,
@@ -311,31 +312,30 @@ function ehColecao(corpo: unknown): corpo is ColecaoDeTerras {
 }
 
 /*
-  A FALHA TAMBÉM SE GUARDA
+  A ABRANGÊNCIA DOS DSEIs VEM DO ARQUIVO LOCAL
 
-  A Funai deixou de publicar `areas_dsei`, e o proxy responde 502. Em caso de
-  falha a promessa voltava a `null`, e cada DSEI aberto pedia outra vez: no
-  painel, um 502 a cada clique, cada um uma chamada à função da Vercel.
-
-  Agora a resposta — boa ou má — vale para a página inteira. Não se desliga o
-  pedido de vez: se a Funai voltar a publicar a camada, o próximo carregamento
-  desenha-a sem mudar uma linha.
+  A Funai deixou de publicar `areas_dsei` e o GeoServer dela passou a recusar
+  os pedidos de dados (403): o proxy respondia 502 a cada página, e o erro
+  enchia o log da Vercel (auditoria de 09/11/2026, OPE-01). Os contornos são
+  os do arquivo estático `contornos-dos-dseis.json`, compilado da última
+  publicação da própria Funai (scripts/compilar-contornos-dos-dseis.mjs) — o
+  mesmo do "Mapa DSEIs". A resposta, boa ou má, vale para a página inteira.
 */
 async function loadDseiFeatures(): Promise<ColecaoDeTerras | null> {
   if (dseiFeaturesPromise) return dseiFeaturesPromise;
-  dseiFeaturesPromise = fetch(funaiDseiUrl(), {
-    cache: "force-cache",
+  dseiFeaturesPromise = fetch(ARQUIVO_DOS_CONTORNOS_DOS_DSEIS, {
     headers: { Accept: "application/geo+json,application/json" },
   })
     .then(async (response) => {
-      if (!response.ok) throw new Error(`FUNAI DSEI HTTP ${response.status}`);
+      if (!response.ok)
+        throw new Error(`Contornos dos DSEIs HTTP ${response.status}`);
       const geojson: unknown = await response.json();
-      if (!ehColecao(geojson)) throw new Error("GeoJSON de DSEI inválido");
+      if (!ehColecao(geojson)) throw new Error("GeoJSON dos DSEIs inválido");
       return geojson;
     })
     .catch((error: unknown) => {
       console.warn(
-        "Abrangência oficial dos DSEIs indisponível na Funai; não se tenta de novo até recarregar.",
+        "Contornos dos DSEIs indisponíveis; não se tenta de novo até recarregar.",
         error,
       );
       return null;
@@ -401,7 +401,7 @@ function enhanceMap(L: LeafletDasTerras, map: MapaDasTerrasIndigenas) {
     rasterPane.style.filter = FILTRO_DO_RASTER;
   }
 
-  const dseiPaneName = "agsus-dsei-coverage";
+  const dseiPaneName = PANE_DA_ABRANGENCIA_DOS_DSEIS;
   const dseiPane =
     map.getPane?.(dseiPaneName) || map.createPane?.(dseiPaneName);
   if (dseiPane?.style) {
@@ -1040,12 +1040,22 @@ function enhanceMap(L: LeafletDasTerras, map: MapaDasTerrasIndigenas) {
     e segue o aviso de troca do seletor, no mesmo instante.
   */
   let noMapaSimples = modoDesejadoDoFundo(map) === MODO_SIMPLES;
+  /*
+    O Mapa DSEIs pinta os mesmos contornos dos DSEIs por conta própria
+    (mapa-simples.tsx): enquanto ele dura, o traço leve da abrangência sai,
+    para não sair em dobro. A mesma regra das terras, no mesmo lugar.
+  */
+  const mostrarAbrangencia = () => {
+    if (dseiPane?.style) dseiPane.style.display = noMapaSimples ? "none" : "";
+  };
+  mostrarAbrangencia();
   map.getContainer?.().addEventListener(EVENTO_DO_FUNDO, (evento) => {
     const simples =
       (evento as CustomEvent<{ mode?: unknown }>).detail?.mode === MODO_SIMPLES;
     if (simples !== noMapaSimples) {
       noMapaSimples = simples;
       aplicarVisibilidade(simples ? false : readStoredVisibility());
+      mostrarAbrangencia();
     }
     vectorLayer.setStyle?.((feature) => estiloComDestaque(feature));
     simbolosLayer.eachLayer?.((simbolo) =>
