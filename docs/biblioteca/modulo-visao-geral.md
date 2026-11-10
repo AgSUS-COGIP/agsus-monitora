@@ -31,6 +31,11 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
   adicionais são preservados para os mapas.
 - Indicadores, tabela, mapas e CSV usam o mesmo recorte; as regras de críticos e provimento
   continuam nos helpers existentes (`src/lib/criticos-da-visao-geral.ts`).
+- **Crítico marcado à mão** (#721, migration `20261110150000`): gestor, coordenador ou
+  administrador global marca o edital como crítico, com motivo, no formulário de Editais
+  ([[modulo-editais]]). A Visão geral lê `listar_editais_criticos_manuais(p_area)` junto com o
+  acompanhamento (falha não derruba a tela; sem mudança, o mesmo objeto) e soma a marcação aos
+  motivos automáticos como o mais grave (`marcado`).
 - `listar_acompanhamento_da_visao_geral({ p_area })` lê etapas e resumos das listas. O estado
   evita repetir pedidos da mesma carga/área e descarta respostas de cargas ou áreas anteriores.
   Se houver erro, a tela continua com as linhas disponíveis.

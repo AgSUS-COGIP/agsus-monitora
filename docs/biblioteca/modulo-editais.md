@@ -21,6 +21,11 @@ Rota `/<área>/editais` (`src/app/telas.tsx`); pasta `src/modulos/editais/`. Del
   motivo para mexer no cronograma). A coluna antiga "responsavel" (USI/CORES) segue intocada.
   Quem pode editar vem do banco (`pode_editar`: gestor da área ou administrador global); banco sem
   as RPCs: o bloco não aparece.
+- **Edital crítico** (`critico-do-edital.tsx`, #721, migration `20261110150000`): gestor,
+  coordenador ou administrador global marca, altera o motivo ou desmarca, sempre com motivo
+  (10 a 500 caracteres) e histórico em `TH_EDITAL_CRITICO`. Grava à parte do "Salvar"; a
+  permissão vem do banco (`obter_critico_do_edital` → `pode_marcar`). Conta nos críticos da
+  [[modulo-visao-geral]].
 - Abre o modal de listas da Lista de aprovados por `carregarTela("approved")`
   (`openImportModal(id, rótulo)`; ver [[modulo-aprovados]]).
 
