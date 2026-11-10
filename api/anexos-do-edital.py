@@ -22,8 +22,11 @@ data da assinatura e as duas tabelas — "Onde se lê:" (a antiga) e "Leia-se:"
 (a que vale), com as linhas em negrito (as alteradas) marcadas. Quem compara
 com o cronograma gravado e aplica é a tela (src/modulos/editais/).
 
-Acesso: só usuário autenticado no Supabase do MONITORA (Bearer do front,
-conferido em /auth/v1/user). O PDF vem no corpo (application/pdf), até 4 MB.
+Acesso: usuário autenticado no Supabase do MONITORA (Bearer do front,
+conferido em /auth/v1/user) e com perfil que pode importar — a RPC
+pode_importar_anexos_do_edital, chamada com o mesmo Bearer (editar Núcleo ou
+Calendário, perfil ativo). Sem conferir a permissão, responde 503 e não lê o
+PDF. O PDF vem no corpo (application/pdf), até 4 MB.
 
 Testes: tests/python/test_anexos_do_edital.py e
 tests/python/test_retificacao_do_cronograma.py (PDFs sintéticos).
@@ -569,11 +572,20 @@ def extrair_retificacao(conteudo):
 # ── HTTP (Vercel) ───────────────────────────────────────────────────────────
 
 
-def usuario_autenticado(autorizacao):
-    """Confere o Bearer no Supabase. Devolve o id do usuário ou None."""
-    token = autorizacao[7:].strip() if autorizacao.lower().startswith("bearer ") else ""
+def _supabase():
     base = os.environ.get("VITE_SUPABASE_URL", "").rstrip("/")
     chave = os.environ.get("VITE_SUPABASE_PUBLISHABLE_KEY") or os.environ.get("VITE_SUPABASE_ANON_KEY", "")
+    return base, chave
+
+
+def _token(autorizacao):
+    return autorizacao[7:].strip() if autorizacao.lower().startswith("bearer ") else ""
+
+
+def usuario_autenticado(autorizacao):
+    """Confere o Bearer no Supabase. Devolve o id do usuário ou None."""
+    token = _token(autorizacao)
+    base, chave = _supabase()
     if not token or not base or not chave:
         return None
     pedido = urllib.request.Request(
@@ -587,6 +599,35 @@ def usuario_autenticado(autorizacao):
         return None
 
 
+def pode_importar(autorizacao):
+    """
+    Pergunta ao banco, com o Bearer de quem chamou, se o perfil pode importar
+    (pode_importar_anexos_do_edital: editar Núcleo ou Calendário, perfil
+    ativo). True ou False; None quando não deu para conferir (função ausente,
+    rede, resposta estranha) — aí o endpoint não processa (falha fechado).
+    """
+    token = _token(autorizacao)
+    base, chave = _supabase()
+    if not token or not base or not chave:
+        return None
+    pedido = urllib.request.Request(
+        f"{base}/rest/v1/rpc/pode_importar_anexos_do_edital",
+        data=b"{}",
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "apikey": chave,
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urllib.request.urlopen(pedido, timeout=10) as resposta:
+            valor = json.loads(resposta.read())
+    except Exception:
+        return None
+    return valor if isinstance(valor, bool) else None
+
+
 class handler(BaseHTTPRequestHandler):
     def _responder(self, status, corpo):
         dados = json.dumps(corpo, ensure_ascii=False).encode("utf-8")
@@ -598,8 +639,15 @@ class handler(BaseHTTPRequestHandler):
         self.wfile.write(dados)
 
     def do_POST(self):
-        if not usuario_autenticado(self.headers.get("Authorization", "")):
+        autorizacao = self.headers.get("Authorization", "")
+        if not usuario_autenticado(autorizacao):
             return self._responder(401, {"erro": "Entre no MONITORA para importar anexos."})
+        # Sessão válida não é permissão: confere o perfil antes de ler o corpo.
+        permitido = pode_importar(autorizacao)
+        if permitido is None:
+            return self._responder(503, {"erro": "Não consegui conferir sua permissão. Tente de novo."})
+        if not permitido:
+            return self._responder(403, {"erro": "Seu perfil não pode importar anexos de edital."})
         try:
             tamanho = int(self.headers.get("Content-Length") or 0)
         except ValueError:
