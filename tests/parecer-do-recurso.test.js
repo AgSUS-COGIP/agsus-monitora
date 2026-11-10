@@ -14,10 +14,6 @@ import { SITUACOES } from "../src/lib/recursos-dos-candidatos.ts";
   O fluxo do parecer jurídico sem DOM — espelho de
   transicionar_recurso_candidato (20261001170000_recursos_parecer_juridico.sql).
 */
-const MIGRATION = readFileSync(
-  "supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
-  "utf8",
-).replace(/\r\n/g, "\n");
 
 it("rejeita nomes herdados de objeto como ações desconhecidas", () => {
   for (const acao of ["toString", "constructor", "__proto__"]) {
@@ -35,22 +31,6 @@ it("rejeita nomes herdados de objeto como ações desconhecidas", () => {
 });
 
 describe("estados e transições", () => {
-  it("as situações e as ações são as do banco", () => {
-    const situacoes = MIGRATION.match(
-      /add constraint "CK_RECURSOCANDIDATO_TPSITUACAO" check \(\s*"TP_SITUACAO" in \(([^)]*)\)/,
-    )[1];
-    expect(
-      [...situacoes.matchAll(/'([A-Z_]+)'/g)].map((m) => m[1]).sort(),
-    ).toEqual(SITUACOES.map((s) => s.id).sort());
-    const inicio = MIGRATION.indexOf(
-      "create function public.transicionar_recurso_candidato(",
-    );
-    const acoes = MIGRATION.slice(inicio).match(/p_acao not in \(([^)]*)\)/)[1];
-    expect([...acoes.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]).sort()).toEqual(
-      Object.keys(ACOES_DO_PARECER).sort(),
-    );
-  });
-
   it.each([
     ["REGISTRADO", "enviar_parecer", "EM_ANALISE_JURIDICA"],
     ["EM_ANALISE_JURIDICA", "devolver", "REGISTRADO"],

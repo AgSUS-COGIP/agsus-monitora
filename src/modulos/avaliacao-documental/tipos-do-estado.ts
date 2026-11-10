@@ -315,6 +315,7 @@ export interface ContagemDaAcao {
   liberadas?: number | null;
   criadas?: number | null;
   reiniciadas?: number | null;
+  reabertas?: number | null;
 }
 
 /** Resultado das ações da fila: { ok, resultado } ou { ok: false, erro }. */

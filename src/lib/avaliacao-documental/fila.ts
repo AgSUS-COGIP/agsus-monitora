@@ -129,6 +129,7 @@ export interface AcoesDaSelecao<T extends InscritoNaFila = InscritoNaFila> {
   distribuir: (T & InscritoComFicha)[];
   liberar: (T & InscritoComFicha)[];
   revisao: (T & InscritoComFicha)[];
+  reabrir: (T & InscritoComFicha)[];
 }
 
 /** Um analista da equipe do edital (dados.analistas). */
@@ -519,6 +520,12 @@ export const podeLiberarReserva = (
 ): boolean => reservaVigente(c.ficha.reserva, agora);
 export const podeMandarParaRevisao = (c: InscritoComFicha): boolean =>
   (["PENDENTE", "EM_ANALISE"] as unknown[]).includes(c.ficha.situacao);
+/*
+  Reabrir: concluída ou em revisão (a regra de reabrir_ficha). Concluída não é
+  redistribuída (AM-6.3): reaberta, volta a Em análise e aí aceita "Atribuir a…".
+*/
+export const podeReabrirFicha = (c: InscritoComFicha): boolean =>
+  (["CONCLUIDA", "REVISAR"] as unknown[]).includes(c.ficha.situacao);
 
 /** O que cada ação em lote da coordenação pode pegar da seleção (inscritos com ficha). */
 export function acoesDaSelecao<T extends InscritoNaFila>(
@@ -532,10 +539,11 @@ export function acoesDaSelecao<T extends InscritoNaFila>(
     distribuir: fichas.filter(podeDistribuirFicha),
     liberar: fichas.filter((c) => podeLiberarReserva(c, agora)),
     revisao: fichas.filter(podeMandarParaRevisao),
+    reabrir: fichas.filter(podeReabrirFicha),
   };
 }
 
-export type AcaoDaFicha = "distribuir" | "liberar" | "revisao";
+export type AcaoDaFicha = "distribuir" | "liberar" | "revisao" | "reabrir";
 
 /**
  * As ações da coordenação no "⋯" de uma linha (a mesma regra das ações em
@@ -551,6 +559,7 @@ export function acoesDaFicha(
   if (podeDistribuirFicha(f)) acoes.push("distribuir");
   if (podeLiberarReserva(f, agora)) acoes.push("liberar");
   if (podeMandarParaRevisao(f)) acoes.push("revisao");
+  if (podeReabrirFicha(f)) acoes.push("reabrir");
   return acoes;
 }
 

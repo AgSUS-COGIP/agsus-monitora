@@ -45,17 +45,4 @@ describe("contexto institucional da plataforma", () => {
       ),
     ).toBe("Ana Souza");
   });
-
-  it("mantém o RPC invoker, restrito a autenticados e com política SELECT de avatar", () => {
-    const migration = readFileSync(
-      "supabase/migrations/20260828143954_unify_platform_access_context.sql",
-      "utf8",
-    );
-    expect(migration).toContain("security invoker");
-    expect(migration).toContain(
-      "grant execute on function public.obter_contexto_monitora() to authenticated",
-    );
-    expect(migration).toContain('create policy "monitora_avatar_select_own"');
-    expect(migration).toContain("(select auth.uid())");
-  });
 });

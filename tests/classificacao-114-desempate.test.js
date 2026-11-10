@@ -9,7 +9,7 @@ import { validarRegra } from "../src/lib/classificacao/regra.ts";
   de experiência profissional comprovado, c) maior idade, com a hora da
   certidão, 6.11.3/6.11.4) também na lista preliminar (8.2.10.10, 9.1, 9.2).
   A regra é a do seed (v1, 02/10/2026) com o $patch$ da correção
-  supabase/correcoes/20261015-edital-114-classificacao-v2-desempate.sql.
+  tests/fixtures/sql-de-dados/20261015-edital-114-classificacao-v2-desempate.sql.
   A data de corte da regra continua nula: vale o fim das inscrições do
   cronograma (14/10/2026), que a tela passa ao motor como `dataCorte`.
   Códigos e nomes fictícios, sem dado pessoal.
@@ -17,10 +17,10 @@ import { validarRegra } from "../src/lib/classificacao/regra.ts";
 
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
 const SEED = ler(
-  "supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql",
+  "tests/fixtures/sql-de-dados/20261002-regras-de-classificacao-todos-os-editais.sql",
 );
 const CORRECAO = ler(
-  "supabase/correcoes/20261015-edital-114-classificacao-v2-desempate.sql",
+  "tests/fixtures/sql-de-dados/20261015-edital-114-classificacao-v2-desempate.sql",
 );
 
 const REGRA_V1 = JSON.parse(

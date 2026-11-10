@@ -148,21 +148,16 @@ describe("as históricas", () => {
 
   it("o disco as lê com o caminho do registro", () => {
     const noDisco = ficheirosNoDisco("supabase");
-    const add = noDisco.find((f) =>
-      f.arquivo.endsWith("add_update_user_access_rpc.sql"),
-    );
-    expect(add).toMatchObject({
-      caminho: "migrations/add_update_user_access_rpc.sql",
-      arquivo: "migrations-historicas/add_update_user_access_rpc.sql",
-      historica: true,
-    });
-    // As descartadas não entram na conta.
-    expect(noDisco.some((f) => f.arquivo.startsWith("descartadas/"))).toBe(
-      false,
-    );
     expect(
-      noDisco.some((f) => f.caminho.includes("acesso_basico_institucional")),
-    ).toBe(false);
+      noDisco.find((f) =>
+        f.arquivo.endsWith("_catalogo_dos_robos_e_chave_unica.sql"),
+      ),
+    ).toMatchObject({
+      caminho: "migrations/20261109180000_catalogo_dos_robos_e_chave_unica.sql",
+      historica: false,
+    });
+    // Só migrations/ (as pastas de legado saíram); ensaios e rollbacks não entram na conta.
+    expect(noDisco.every((f) => f.diretorio === "migrations")).toBe(true);
   });
 });
 
@@ -226,10 +221,8 @@ describe("o literal que vai para o SQL", () => {
 describe("contra os ficheiros deste repositório", () => {
   const noDisco = ficheirosNoDisco("supabase");
 
-  it("encontra as migrations e as correções", () => {
-    expect(noDisco.length).toBeGreaterThan(25);
+  it("encontra as migrations", () => {
     expect(noDisco.some((f) => f.diretorio === "migrations")).toBe(true);
-    expect(noDisco.some((f) => f.diretorio === "correcoes")).toBe(true);
   });
 
   it("cada ficheiro tem caminho único", () => {
@@ -238,44 +231,10 @@ describe("contra os ficheiros deste repositório", () => {
   });
 
   /*
-    Já aplicadas e registradas pelo caminho: renomear agora quebraria o
-    registro. Ficam como estão; nenhum par novo.
+    Os pares repetidos de antes (já aplicados e registrados pelo caminho) saíram com as
+    migrations antigas em 10/11/2026: nenhum par novo.
   */
-  const REPETIDOS_CONHECIDOS = {
-    20260928180000: [
-      "20260928180000_analises_do_painel_por_area.sql",
-      "20260928180000_autoria_e_trava_da_lista_de_aprovados.sql",
-    ],
-    20260928190000: [
-      "20260928190000_anexos_do_candidato_aprovado.sql",
-      "20260928190000_remove_rpcs_do_painel_react.sql",
-    ],
-    20260928200000: [
-      "20260928200000_analises_painel_mais_leve.sql",
-      "20260928200000_anexos_do_candidato_em_bytea.sql",
-    ],
-    20261001150000: [
-      "20261001150000_ausentes_com_permissao_do_sync.sql",
-      "20261001150000_sub_judice_alteracao.sql",
-    ],
-    20261002090000: [
-      "20261002090000_convocacao_serie_mgi.sql",
-      "20261002090000_kpis_depois_da_carga_da_selecao.sql",
-    ],
-    20261013120000: [
-      "20261013120000_esvaziar_logs.sql",
-      "20261013120000_rascunho_das_regras.sql",
-    ],
-    20261013140000: [
-      "20261013140000_menos_chamadas_e_log.sql",
-      "20261013140000_quadro_da_vaga_pelo_titulo.sql",
-    ],
-    // As duas foram aplicadas e registradas em 05/11 (#663 e #665, mesclados em paralelo).
-    20261105190000: [
-      "20261105190000_area_na_api.sql",
-      "20261105190000_fontes_apos_leitura_da_api_de_editais.sql",
-    ],
-  };
+  const REPETIDOS_CONHECIDOS = {};
 
   it("nenhum timestamp de migration repetido além dos já aplicados", () => {
     const nomes = noDisco
@@ -307,18 +266,6 @@ describe("contra os ficheiros deste repositório", () => {
     expect(() => ficheirosNoDisco("não-existe")).not.toThrow();
     expect(ficheirosNoDisco("não-existe")).toEqual([]);
   });
-
-  /*
-    A migration que cria a tabela tem de estar entre os ficheiros, senão o
-    script não teria onde consultar.
-  */
-  it("a migration do próprio registro está lá", () => {
-    expect(
-      noDisco.some((f) =>
-        f.caminho.includes("criar_registro_de_migracoes_aplicadas"),
-      ),
-    ).toBe(true);
-  });
 });
 
 /*
@@ -326,25 +273,6 @@ describe("contra os ficheiros deste repositório", () => {
   não a alcança, e nada no frontend deve passar a alcançá-la.
 */
 describe("a tabela não é exposta ao navegador", () => {
-  const migration = readdirSync("supabase/migrations").find((n) =>
-    n.includes("criar_registro_de_migracoes_aplicadas"),
-  );
-  const sql = readFileSync(`supabase/migrations/${migration}`, "utf8");
-
-  it("tem RLS ligada e nenhuma policy", () => {
-    expect(sql).toContain("enable row level security");
-    expect(sql.toLowerCase()).not.toContain("create policy");
-  });
-
-  it("revoga de anon e de authenticated", () => {
-    expect(sql).toContain(
-      "revoke all on table public.migracoes_aplicadas from anon",
-    );
-    expect(sql).toContain(
-      "revoke all on table public.migracoes_aplicadas from authenticated",
-    );
-  });
-
   it("nenhum módulo do frontend a menciona", () => {
     const procurar = (dir) =>
       readdirSync(dir, { withFileTypes: true }).flatMap((e) =>

@@ -3,8 +3,8 @@
   (PGlite: o PostgreSQL compilado para WebAssembly, com plpgsql).
 
   O que é de verdade: as funções do MONITORA que a migration 20261109180000
-  toca ou das quais depende, copiadas das migrations onde vivem hoje
-  (definicaoVigente), e as tabelas TB_CHAVE_AUTOMACAO, TH_CHAVE_AUTOMACAO e
+  toca ou das quais depende, copiadas das migrations antigas para a fixture
+  tests/fixtures/banco-antes-do-catalogo-dos-robos.sql (definicaoVigente), e as tabelas TB_CHAVE_AUTOMACAO, TH_CHAVE_AUTOMACAO e
   TL_DISPARO_ROBO com as constraints de hoje.
 
   O que é imitação (o Supabase tem, o PGlite não): o pg_cron (cron.job,
@@ -15,7 +15,7 @@
 
   Nada aqui fala com rede: o PGlite roda dentro do processo do teste.
 */
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 
 export const NOME_DA_MIGRATION =
@@ -31,9 +31,17 @@ export const ENSAIO = ler(`supabase/ensaios/${NOME_DA_MIGRATION}`);
 
 const escapar = (s: string) => s.replace(/[.*+?^${}()|[\]\\"]/g, "\\$&");
 
-/** A última definição de uma função num arquivo, do "create" até "$function$;". */
-export function definicaoVigente(arquivo: string, nome: string): string {
-  const texto = lerMigration(arquivo);
+/*
+  O banco antes de 20261109180000: as migrations antigas saíram do repositório (seguem aplicadas
+  no banco), e os trechos que estes testes usam ficaram copiados nesta fixture.
+*/
+export const BANCO_DE_ANTES = ler(
+  "tests/fixtures/banco-antes-do-catalogo-dos-robos.sql",
+);
+
+/** A definição de uma função antes do catálogo, do "create" até "$function$;". */
+export function definicaoVigente(nome: string): string {
+  const texto = BANCO_DE_ANTES;
   const achados = [
     ...texto.matchAll(
       new RegExp(`^create (or replace )?function ${escapar(nome)}\\(`, "gim"),
@@ -41,63 +49,36 @@ export function definicaoVigente(arquivo: string, nome: string): string {
   ];
   const ultimo = achados[achados.length - 1];
   if (!ultimo || ultimo.index === undefined)
-    throw new Error(`Sem ${nome} em ${arquivo}`);
+    throw new Error(`Sem ${nome} na fixture do banco de antes`);
   const fim = texto.indexOf("$function$;", ultimo.index);
   return texto
     .slice(ultimo.index, fim + "$function$;".length)
     .replace(/^create function/i, "create or replace function");
 }
 
-/* Onde vive hoje cada função real usada pelo banco de teste. */
-export const FUNCOES_DE_HOJE: readonly (readonly [string, string])[] = [
-  [
-    "20261103213000_limpeza_da_auditoria.sql",
-    'private."FC_MOTIVO_COM_SENTIDO"',
-  ],
-  ["20261022190000_chaves_da_automacao.sql", 'private."FC_AUTOMACAO_LIGADA"'],
-  ["20261022190000_chaves_da_automacao.sql", 'private."FC_CHAVE_DA_TAREFA"'],
-  [
-    "20261029180000_pacotes_dos_paineis_em_python.sql",
-    'private."FC_CHAVE_DO_WORKFLOW"',
-  ],
-  [
-    "20261030090000_lista_de_aprovados_substituir_preserva_o_estado.sql",
-    'private."FC_DISPARAR_ROBO"',
-  ],
-  [
-    "20261023200000_classificacao_em_python_etapa_2b.sql",
-    "public.registrar_disparo_externo",
-  ],
-  [
-    "20261103213000_limpeza_da_auditoria.sql",
-    "public.alterar_chave_da_automacao",
-  ],
-  [
-    "20261022190000_chaves_da_automacao.sql",
-    "public.obter_chaves_da_automacao",
-  ],
-  ["20261022190000_chaves_da_automacao.sql", "public.automacao_ligada"],
-  [
-    "20261023200000_classificacao_em_python_etapa_2b.sql",
-    "public.disparar_robo",
-  ],
+/* As funções reais usadas pelo banco de teste (todas na fixture). */
+export const FUNCOES_DE_HOJE: readonly string[] = [
+  'private."FC_MOTIVO_COM_SENTIDO"',
+  'private."FC_AUTOMACAO_LIGADA"',
+  'private."FC_CHAVE_DA_TAREFA"',
+  'private."FC_CHAVE_DO_WORKFLOW"',
+  'private."FC_DISPARAR_ROBO"',
+  "public.registrar_disparo_externo",
+  "public.alterar_chave_da_automacao",
+  "public.obter_chaves_da_automacao",
+  "public.automacao_ligada",
+  "public.disparar_robo",
 ];
 
 /*
-  O último "comment on" de cada objeto, entre as migrations anteriores a esta:
-  o banco de teste fica com os comentários de hoje, e o teste do rollback
-  confere que eles voltam.
+  O "comment on" de cada objeto antes desta migration: o banco de teste fica com os
+  comentários de hoje, e o teste do rollback confere que eles voltam.
 */
-const ANTERIORES = readdirSync("supabase/migrations")
-  .filter((f) => /^\d{14}_.*\.sql$/.test(f) && f < NOME_DA_MIGRATION)
-  .sort()
-  .map(lerMigration);
 const LITERAL = String.raw`'(?:[^']|'')*'`;
 function comentarioVigente(objeto: string): string {
   const re = new RegExp(`comment on ${escapar(objeto)} is\\s+${LITERAL};`, "g");
   let achado = "";
-  for (const texto of ANTERIORES)
-    for (const m of texto.matchAll(re)) achado = m[0];
+  for (const m of BANCO_DE_ANTES.matchAll(re)) achado = m[0];
   if (!achado) throw new Error(`Sem comentário de ${objeto}`);
   return achado;
 }
@@ -346,8 +327,7 @@ export interface OpcoesDoBanco {
 export async function bancoDeHoje(opcoes: OpcoesDoBanco = {}): Promise<Banco> {
   const db = await PGlite.create();
   await db.exec(INFRAESTRUTURA);
-  for (const [arquivo, nome] of FUNCOES_DE_HOJE)
-    await db.exec(definicaoVigente(arquivo, nome));
+  for (const nome of FUNCOES_DE_HOJE) await db.exec(definicaoVigente(nome));
   for (const comentario of COMENTARIOS_DE_HOJE) await db.exec(comentario);
   await db.query(`insert into auth.users (id) values ($1), ($2)`, [
     USUARIO_MASTER,

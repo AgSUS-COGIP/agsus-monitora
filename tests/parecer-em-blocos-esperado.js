@@ -2,7 +2,9 @@
   O texto esperado de cada caso de casos-do-parecer.js (nomes fictícios), uma
   linha por título, parágrafo, item de lista ou linha de assinatura. Conferido
   contra o simulador da equipe (teste de paridade com SIMULADOR_DE_PARECERES)
-  em 03/11/2026. Mudou o modelo de propósito? Mude aqui junto.
+  em 03/11/2026. Desde 10/11/2026 o total de meses da experiência segue a
+  regra da ficha (dias ÷ 30), e não mais a do simulador. Mudou o modelo de
+  propósito? Mude aqui junto.
 */
 export const TEXTOS_ESPERADOS = {
   "em branco": [
@@ -67,7 +69,7 @@ export const TEXTOS_ESPERADOS = {
     "Conforme o quadro (1 - Nível Técnico, do item 8.8) do edital, a experiência apresentada na(o) Clínica Exemplo, no cargo de recepcionista não é compatível com o nível de escolaridade/complexidade exigido para a vaga, que é de Nível Superior.",
     "Conforme o item 8.15.1. do edital, não foram consideradas as experiências profissionais [2015 a 2016], exercidas anteriormente à conclusão da escolaridade exigida para a vaga.",
     "Nos termos do item 8.15.2.1. do edital, a documentação de atividades de extensão do candidato comprovadamente indígena não estava acompanhada de histórico escolar.",
-    "Quanto ao cômputo geral de experiência profissional/estágio validada nesta análise, referente às experiências nas [Hospital Fictício, UBS Fictícia, [empresa]], desconsiderando eventuais sobreposições temporais, consolida-se o tempo efetivo de 28 mês(es) completo(s), o que perfaz a pontuação total de 5,6 ponto(s) neste requisito.",
+    "Quanto ao cômputo geral de experiência profissional/estágio validada nesta análise, referente às experiências nas [Hospital Fictício, UBS Fictícia, [empresa]], desconsiderando eventuais sobreposições temporais, consolida-se o tempo efetivo de 29 mês(es) completo(s), o que perfaz a pontuação total de 5,8 ponto(s) neste requisito.",
     "Experiências somadas sem sobreposição.",
     "Quanto à Avaliação Biopsicossocial Documental, constatou-se que o candidato(a) apresentou documentação em desacordo com as regras de inscrição para a opção de concorrer às vagas reservadas para Pessoas com Deficiência (PcD), não apresentando o laudo médico conforme estabelecido no Anexo VIII do Edital.",
     "Laudo sem CID.",
@@ -219,7 +221,7 @@ export const TEXTOS_ESPERADOS = {
     "O(a) candidato(a) ATENDEU a todos os requisitos eliminatórios previstos no Edital.",
     "Após reanálise minuciosa da documentação e das informações submetidas pelo(a) candidato(a) no ato da inscrição, constatou-se o que se segue:",
     "Quanto a formação acadêmica complementar, constatou-se que o(a) candidato(a) não apresentou documentação comprobatória válida, conforme item 8.12 e suas subdivisões, passando a fazer jus da pontuação de 0,0 ponto em razão de: não ter apresentado documentos nato-digitais ou eletrônicos, obrigatoriamente, anexados com as páginas que contenham os elementos de autenticação, tais como código de verificação, QR Code ou outros mecanismos que possibilitem a validação de sua autenticidade (8.12.2.1.).",
-    "Quanto ao cômputo geral de experiência profissional/estágio validada nesta análise, referente às experiências nas [Empresa A, Empresa B], desconsiderando eventuais sobreposições temporais, consolida-se o tempo efetivo de 3 mês(es) completo(s), o que perfaz a pontuação total de 0,6 ponto(s) neste requisito.",
+    "Quanto ao cômputo geral de experiência profissional/estágio validada nesta análise, referente às experiências nas [Empresa A, Empresa B], desconsiderando eventuais sobreposições temporais, consolida-se o tempo efetivo de 4 mês(es) completo(s), o que perfaz a pontuação total de 0,8 ponto(s) neste requisito.",
     "Experiências somadas sem sobreposição.",
     "Quanto ao pertencimento étnico, conforme o item 6.4, alínea “h”, do Edital (Se Indígena), constatou-se que o(a) candidato(a) não comprovou o pertencimento por meio de documentação válida, sendo remanejado(a) para a lista de ampla concorrência.",
     'Quanto ao pertencimento étnico, excepcionalmente, conforme previsto no item 6.5.1 do Edital, permitiu-se à candidatura indígena a entrega de documentos pendentes ou incompletos na fase de recurso (item 6.4, alínea "h"). Assim, diante da documentação apresentada nesta fase recursal, não foi acatada a documentação apresentada pelo(a) candidato(a), que passa a fazer jus à pontuação de 0 ponto(s), sendo remanejado(a) para a lista de ampla concorrência.',
@@ -270,7 +272,7 @@ export const TEXTOS_ESPERADOS = {
     "Conforme o quadro (1 - Nível Técnico, do item 8.8) do edital, a experiência apresentada na(o) Clínica Exemplo, no cargo de recepcionista não é compatível com o nível de escolaridade/complexidade exigido para a vaga, que é de Nível Superior.",
     "Conforme o item 8.15.1. do edital, não foram consideradas as experiências profissionais [2015 a 2016], exercidas anteriormente à conclusão da escolaridade exigida para a vaga.",
     "Nos termos do item 8.15.2.1. do edital, a documentação de atividades de extensão do candidato comprovadamente indígena não estava acompanhada de histórico escolar.",
-    "Quanto ao cômputo geral de experiência profissional/estágio validada nesta análise, referente às experiências nas [Hospital Fictício, UBS Fictícia, [empresa]], desconsiderando eventuais sobreposições temporais, consolida-se o tempo efetivo de 28 mês(es) completo(s), o que perfaz a pontuação total de 5,6 ponto(s) neste requisito.",
+    "Quanto ao cômputo geral de experiência profissional/estágio validada nesta análise, referente às experiências nas [Hospital Fictício, UBS Fictícia, [empresa]], desconsiderando eventuais sobreposições temporais, consolida-se o tempo efetivo de 29 mês(es) completo(s), o que perfaz a pontuação total de 5,8 ponto(s) neste requisito.",
     "Experiências somadas sem sobreposição.",
     "Quanto à Avaliação Biopsicossocial Documental, constatou-se que o candidato(a) apresentou documentação em desacordo com as regras de inscrição para a opção de concorrer às vagas reservadas para Pessoas com Deficiência (PcD), não apresentando o laudo médico conforme estabelecido no Anexo VIII do Edital.",
     "Laudo sem CID.",
@@ -324,7 +326,7 @@ export const TEXTOS_ESPERADOS = {
     "Conforme o quadro (1 - Nível Técnico, do item 8.8) do edital, a experiência apresentada na(o) Clínica Exemplo, no cargo de recepcionista não é compatível com o nível de escolaridade/complexidade exigido para a vaga, que é de Nível Superior.",
     "Conforme o item 8.15.1. do edital, não foram consideradas as experiências profissionais [2015 a 2016], exercidas anteriormente à conclusão da escolaridade exigida para a vaga.",
     "Nos termos do item 8.15.2.1. do edital, a documentação de atividades de extensão do candidato comprovadamente indígena não estava acompanhada de histórico escolar.",
-    "Quanto ao cômputo geral de experiência profissional/estágio validada nesta análise, referente às experiências nas [Hospital Fictício, UBS Fictícia, [empresa]], desconsiderando eventuais sobreposições temporais, consolida-se o tempo efetivo de 28 mês(es) completo(s), o que perfaz a pontuação total de 5,6 ponto(s) neste requisito.",
+    "Quanto ao cômputo geral de experiência profissional/estágio validada nesta análise, referente às experiências nas [Hospital Fictício, UBS Fictícia, [empresa]], desconsiderando eventuais sobreposições temporais, consolida-se o tempo efetivo de 29 mês(es) completo(s), o que perfaz a pontuação total de 5,8 ponto(s) neste requisito.",
     "Experiências somadas sem sobreposição.",
     "Quanto à Avaliação Biopsicossocial Documental, constatou-se que o candidato(a) apresentou documentação em desacordo com as regras de inscrição para a opção de concorrer às vagas reservadas para Pessoas com Deficiência (PcD), não apresentando o laudo médico conforme estabelecido no Anexo VIII do Edital.",
     "Laudo sem CID.",
@@ -382,7 +384,7 @@ export const TEXTOS_ESPERADOS = {
     "Conforme o quadro (1 - Nível Técnico, do item 8.8) do edital, a experiência apresentada na(o) Clínica Exemplo, no cargo de recepcionista não é compatível com o nível de escolaridade/complexidade exigido para a vaga, que é de Nível Superior.",
     "Conforme o item 8.15.1. do edital, não foram consideradas as experiências profissionais [2015 a 2016], exercidas anteriormente à conclusão da escolaridade exigida para a vaga.",
     "Nos termos do item 8.15.2.1. do edital, a documentação de atividades de extensão do candidato comprovadamente indígena não estava acompanhada de histórico escolar.",
-    "Quanto ao cômputo geral de experiência profissional/estágio validada nesta análise, referente às experiências nas [Hospital Fictício, UBS Fictícia, [empresa]], desconsiderando eventuais sobreposições temporais, consolida-se o tempo efetivo de 28 mês(es) completo(s), o que perfaz a pontuação total de 5,6 ponto(s) neste requisito.",
+    "Quanto ao cômputo geral de experiência profissional/estágio validada nesta análise, referente às experiências nas [Hospital Fictício, UBS Fictícia, [empresa]], desconsiderando eventuais sobreposições temporais, consolida-se o tempo efetivo de 29 mês(es) completo(s), o que perfaz a pontuação total de 5,8 ponto(s) neste requisito.",
     "Experiências somadas sem sobreposição.",
     "Quanto à Avaliação Biopsicossocial Documental, constatou-se que o candidato(a) apresentou documentação em desacordo com as regras de inscrição para a opção de concorrer às vagas reservadas para Pessoas com Deficiência (PcD), não apresentando o laudo médico conforme estabelecido no Anexo VIII do Edital.",
     "Laudo sem CID.",
@@ -440,7 +442,7 @@ export const TEXTOS_ESPERADOS = {
     "Conforme o quadro (1 - Nível Técnico, do item 8.8) do edital, a experiência apresentada na(o) Clínica Exemplo, no cargo de recepcionista não é compatível com o nível de escolaridade/complexidade exigido para a vaga, que é de Nível Superior.",
     "Conforme o item 8.15.1. do edital, não foram consideradas as experiências profissionais [2015 a 2016], exercidas anteriormente à conclusão da escolaridade exigida para a vaga.",
     "Nos termos do item 8.15.2.1. do edital, a documentação de atividades de extensão do candidato comprovadamente indígena não estava acompanhada de histórico escolar.",
-    "Quanto ao cômputo geral de experiência profissional/estágio validada nesta análise, referente às experiências nas [Hospital Fictício, UBS Fictícia, [empresa]], desconsiderando eventuais sobreposições temporais, consolida-se o tempo efetivo de 28 mês(es) completo(s), o que perfaz a pontuação total de 5,6 ponto(s) neste requisito.",
+    "Quanto ao cômputo geral de experiência profissional/estágio validada nesta análise, referente às experiências nas [Hospital Fictício, UBS Fictícia, [empresa]], desconsiderando eventuais sobreposições temporais, consolida-se o tempo efetivo de 29 mês(es) completo(s), o que perfaz a pontuação total de 5,8 ponto(s) neste requisito.",
     "Experiências somadas sem sobreposição.",
     "Quanto à Avaliação Biopsicossocial Documental, constatou-se que o candidato(a) apresentou documentação em desacordo com as regras de inscrição para a opção de concorrer às vagas reservadas para Pessoas com Deficiência (PcD), não apresentando o laudo médico conforme estabelecido no Anexo VIII do Edital.",
     "Laudo sem CID.",
@@ -540,7 +542,7 @@ export const TEXTOS_ESPERADOS = {
     "Após reanálise minuciosa da documentação e das informações submetidas pelo(a) candidato(a) no ato da inscrição, constatou-se o que se segue:",
     "Quanto à formação acadêmica complementar, conforme item 8.12. do edital, constatou-se que o(a) candidato(a) apresentou documentação comprobatória válida para o(s) seguinte(s) item(ns): Especialização na área à qual concorre (1,0 pt), perfazendo o total de 1,0 ponto(s) neste requisito.",
     "Quanto ao pedido relativo à experiência profissional na Clínica Modelo Ltda., constatou-se que a documentação anexada pelo(a) candidato(a) não atende às exigências do item 8.15 do Edital, visto que:",
-    "Quanto ao cômputo geral de experiência profissional/estágio validada nesta análise, referente às experiências nas [Hospital Regional Fictício, UBS Aldeia Exemplo], desconsiderando eventuais sobreposições temporais, consolida-se o tempo efetivo de 38 mês(es) completo(s), o que perfaz a pontuação total de 7,6 ponto(s) neste requisito.",
+    "Quanto ao cômputo geral de experiência profissional/estágio validada nesta análise, referente às experiências nas [Hospital Regional Fictício, UBS Aldeia Exemplo], desconsiderando eventuais sobreposições temporais, consolida-se o tempo efetivo de 39 mês(es) completo(s), o que perfaz a pontuação total de 7,8 ponto(s) neste requisito.",
     "Quanto à Avaliação Biopsicossocial Documental, constatou-se que o candidato(a) apresentou documentação em desacordo com as regras de inscrição para a opção de concorrer às vagas reservadas para Pessoas com Deficiência (PcD), não apresentando o laudo médico conforme estabelecido no Anexo VIII do Edital.",
     "Quanto ao pertencimento étnico, conforme o item 6.4, alínea “i”, do Edital (Se Indígena Residente em Aldeia), o(a) candidato(a) não apresentou Declaração de Residência em Aldeia, sendo remanejado(a) para a lista de ampla concorrência.",
     "5. CONCLUSÃO",

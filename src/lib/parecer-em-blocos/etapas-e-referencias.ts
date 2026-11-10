@@ -23,8 +23,8 @@ import { texto } from "./meses-e-formatacao.ts";
 
   Sem DOM e sem estado: rascunho (JSON que o banco guardaria por versão) →
   documento (seções, parágrafos e listas, com trechos em negrito) → texto.
-  A conta dos meses é a do simulador (calcularMesesCompletos), portada sem
-  mudança: meses de calendário completos, sem somar o dia final.
+  A conta dos meses é a da ficha (diasDosIntervalos): dias corridos com o
+  primeiro e o último, unidos, divididos por 30, só os inteiros.
 */
 
 // ── Etapas ───────────────────────────────────────────────────────────────

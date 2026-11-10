@@ -17,10 +17,6 @@ import {
   puro, uma passada, sem valor vira "[não informado: …]"), a escolha dos
   modelos do recurso e a lista de marcadores, que tem de ser a do banco.
 */
-const MIGRATION = readFileSync(
-  "supabase/migrations/20260929230000_recursos_modelos_anexos_respostas.sql",
-  "utf8",
-).replace(/\r\n/g, "\n");
 
 const RECURSO = {
   id: "r1",
@@ -41,59 +37,10 @@ const RECURSO = {
 };
 
 describe("marcadores", () => {
-  it("a lista do front é a de FC_MARCADORES_MODELO_RESPOSTA", () => {
-    const trecho = MIGRATION.match(
-      /FC_MARCADORES_MODELO_RESPOSTA"\(\)\nreturns text\[\][\s\S]*?select array\[([\s\S]*?)\]::text\[\]/,
-    );
-    expect(trecho).not.toBeNull();
-    const doBanco = [...trecho[1].matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
-    expect(doBanco).toEqual([...CHAVES_DOS_MARCADORES]);
-    // A pedida do chamado.
-    expect(CHAVES_DOS_MARCADORES).toEqual([
-      "nome_candidato",
-      "codigo_candidato",
-      "edital",
-      "unidade",
-      "cargo",
-      "vaga",
-      "origem",
-      "nota_anterior",
-      "nota_atual",
-      "resultado_anterior",
-      "resultado_atual",
-      "data_hoje",
-      "analista",
-      "fundamentacao",
-    ]);
-  });
-
   it("acha os marcadores do texto, sem repetir, e os desconhecidos", () => {
     const corpo = "{nome_candidato} {foo} {nome_candidato} {Maiusculo} {x_y}";
     expect(marcadoresDoTexto(corpo)).toEqual(["nome_candidato", "foo", "x_y"]);
     expect(marcadoresDesconhecidos(corpo)).toEqual(["foo", "x_y"]);
-  });
-
-  it("os 6 modelos iniciais só usam marcadores aceitos e cobrem situação × origem", () => {
-    const semente = MIGRATION.slice(
-      MIGRATION.indexOf("-- 12. Modelos iniciais"),
-    );
-    const corpos = [...semente.matchAll(/\$modelo\$([\s\S]*?)\$modelo\$/g)].map(
-      (m) => m[1],
-    );
-    expect(corpos).toHaveLength(6);
-    for (const corpo of corpos) {
-      expect(marcadoresDesconhecidos(corpo)).toEqual([]);
-      expect(corpo).toContain("{fundamentacao}");
-      expect(corpo).toContain("{nome_candidato}");
-      expect(corpo.length).toBeGreaterThan(20);
-      expect(corpo.length).toBeLessThanOrEqual(20000);
-    }
-    const combinacoes = [
-      ...semente.matchAll(
-        /null, '(analise-curricular|entrevista)', '(DEFERIDO|INDEFERIDO|PARCIALMENTE_INDEFERIDO)'/g,
-      ),
-    ].map((m) => `${m[1]}:${m[2]}`);
-    expect(new Set(combinacoes).size).toBe(6);
   });
 });
 

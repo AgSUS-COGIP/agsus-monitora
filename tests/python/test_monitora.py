@@ -6,6 +6,7 @@ e dados da execução. Nada fala com o Supabase.
     python -m pytest tests/python
 """
 
+import ast
 import base64
 import io
 import json
@@ -209,6 +210,20 @@ class Execucao(unittest.TestCase):
         self.assertNotIn("pessoa@exemplo.invalid", texto)
 
 
+def importa_base_monitora(codigo):
+    """Reconhece imports da base, sem confundir comentarios, URLs ou nomes de RPC."""
+
+    def eh_base(nome):
+        return any(nome == base or nome.startswith(base + ".") for base in ("monitora", "python.monitora"))
+
+    for no in ast.walk(ast.parse(codigo)):
+        if isinstance(no, ast.Import) and any(eh_base(item.name) for item in no.names):
+            return True
+        if isinstance(no, ast.ImportFrom) and no.level == 0 and eh_base(no.module or ""):
+            return True
+    return False
+
+
 class FuncaoDaVercelImportaABase(unittest.TestCase):
     """Uma função api/*.py enxerga python/monitora pelo mesmo caminho relativo."""
 
@@ -218,8 +233,38 @@ class FuncaoDaVercelImportaABase(unittest.TestCase):
         self.assertTrue((raiz / "python" / "monitora" / "__init__.py").is_file())
         vercel = json.loads((raiz / "vercel.json").read_text(encoding="utf-8"))
         for nome, opcoes in vercel.get("functions", {}).items():
-            if nome.endswith(".py") and "monitora" in (raiz / nome).read_text(encoding="utf-8"):
+            if nome.endswith(".py") and importa_base_monitora((raiz / nome).read_text(encoding="utf-8")):
                 self.assertIn("python/monitora/**", opcoes.get("includeFiles", ""), nome)
+
+    def test_imports_da_base_exigem_empacotamento(self):
+        for fonte in (
+            "import monitora",
+            "import monitora.config as config",
+            "import json, monitora",
+            "from monitora import config",
+            "from monitora.config import ler",
+            "import python.monitora.config",
+            "from python.monitora import config",
+            "def carregar():\n    from monitora import config\n",
+        ):
+            with self.subTest(fonte=fonte):
+                self.assertTrue(importa_base_monitora(fonte))
+
+    def test_textos_e_modulos_parecidos_nao_sao_imports(self):
+        for fonte in (
+            'rpc = "obter_contexto_monitora"',
+            'url = "https://teste/rest/v1/rpc/obter_contexto_monitora"',
+            "# from monitora import config\nimport json",
+            'documentacao = "import monitora"',
+            "import monitora_falsa",
+            "from outro.monitora import config",
+        ):
+            with self.subTest(fonte=fonte):
+                self.assertFalse(importa_base_monitora(fonte))
+
+    def test_sintaxe_invalida_nao_e_ignorada(self):
+        with self.assertRaises(SyntaxError):
+            importa_base_monitora("import (")
 
 
 if __name__ == "__main__":

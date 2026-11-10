@@ -145,6 +145,11 @@ class LimiteDaConvocacao(unittest.TestCase):
             motor.limite_da_convocacao({"cargo": "Analista", "total": 25}, self._regra(1.12))["limite"], 28
         )
 
+    def test_teto_sem_residuo_do_float(self):
+        # 1,1 × 50 = 55,00000000000001 no float; o teto puro dava 56. Com fração de verdade, sobe.
+        self.assertEqual(motor.limite_da_convocacao({"cargo": "Médico", "total": 50}, self._regra(1.1))["limite"], 55)
+        self.assertEqual(motor.limite_da_convocacao({"cargo": "Médico", "total": 3}, self._regra(1.1))["limite"], 4)
+
     def test_texto_nao_arredonda_o_multiplo(self):
         self.assertEqual(
             motor.limite_da_convocacao({"cargo": "Analista", "total": 3}, self._regra(1.5)),

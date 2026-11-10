@@ -22,7 +22,7 @@ O Python faz o trabalho **pesado, em lote e de conferência**. Ele **não** subs
 | Quem dispara | o navegador, com o Bearer do Supabase de quem está logado                                                          | agenda do banco (pg_cron → `workflow_dispatch`, [agenda-dos-robos.md](agenda-dos-robos.md)), o **Rodar agora** ou o "Run workflow" |
 | Credencial   | a do usuário (o banco decide pela RLS/RPC); nunca a `service_role`                                                 | `SUPABASE_SERVICE_ROLE_KEY` dos secrets do repositório, só em RPCs concedidas ao `service_role`                                    |
 | Limites      | plano **Hobby**: tempo curto (hoje `maxDuration: 30` no `vercel.json`), corpo do pedido de ~4,5 MB, pacote pequeno | até o `timeout-minutes` do workflow (robô: 120 min; conferências: 20 min)                                                          |
-| Dependências | só `pyproject.toml` da raiz (hoje: `pdfplumber`, sem Pillow/pypdfium2) — tudo ali entra em toda função Python       | `requirements.txt` próprio do job (ex.: `scripts/robo-empregare/requirements.txt`) ou nenhum                                       |
+| Dependências | só `pyproject.toml` da raiz (hoje: `pdfplumber`, sem Pillow/pypdfium2) — tudo ali entra em toda função Python      | `requirements.txt` próprio do job (ex.: `scripts/robo-empregare/requirements.txt`) ou nenhum                                       |
 | Log          | o da Vercel (privado)                                                                                              | **público** (o repositório é público): só contagens, códigos e números de edital                                                   |
 
 Regra prática: se pode passar de alguns segundos, mexer em muitas linhas ou precisar de biblioteca
@@ -153,9 +153,8 @@ A única escrita além dos avisos: a ficha concluída da Avaliação documental 
 pendência pela regra vigente vai para Em revisão (`scripts/conferencias/revisao_das_fichas.py`, com
 `python/monitora/avaliacao_documental/pendencias_da_ficha.py`; grava pela RPC
 `revisar_ficha_concluida_com_pendencia`, que confere de novo no banco), sem mudar nota nem resultado e só
-com a chave "Conferências" ligada. Correções de dados em lote ficam em `scripts/correcoes/` (modo
-`--seco` primeiro); depois de usadas, vão para `scripts/arquivo/` (ex.:
-`experiencia_ate_o_fim_das_inscricoes.py`, de 23/10/2026).
+com a chave "Conferências" ligada. Correção de dados em lote é um script com modo
+`--seco` primeiro; depois de usado, sai do repositório (o histórico fica no Git).
 
 Limites conhecidos (a acertar com os dados reais, depois do ensaio):
 

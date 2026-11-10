@@ -243,6 +243,12 @@ export function calcularIndicadores(
 ): IndicadoresDaSelecao {
   const aprovados = somar(vagas, "aprovados");
   const contratados = somar(vagas, "contratados");
+  /*
+    A taxa só conta as vagas que têm aprovados: contratados de uma vaga sem o
+    número de aprovados entravam no numerador e não no denominador, e a taxa
+    passava de 100%.
+  */
+  const comAprovados = vagas.filter((v) => v.aprovados !== null);
   return {
     vagas: vagas.length,
     inscritos: somar(vagas, "inscritos"),
@@ -251,7 +257,10 @@ export function calcularIndicadores(
     convocados: somar(vagas, "convocados"),
     aprovados,
     contratados,
-    taxa: taxaDeContratacao(aprovados, contratados),
+    taxa: taxaDeContratacao(
+      somar(comAprovados, "aprovados"),
+      somar(comAprovados, "contratados"),
+    ),
   };
 }
 

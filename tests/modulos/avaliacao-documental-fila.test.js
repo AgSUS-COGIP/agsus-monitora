@@ -486,6 +486,74 @@ describe("Fila (AM-6)", () => {
     expect(gaveta.textContent).toContain("mudaram desde que você abriu a fila");
   });
 
+  it("ficha concluída: Reabrir na seleção com o motivo da lista; Atribuir e Revisão ficam fora (AM-6.3)", async () => {
+    const dados = fila();
+    dados.candidatos.push(
+      inscrito("7005", {
+        posicao: 5,
+        ficha: ficha("f5", "CONCLUIDA", {
+          responsavel: "u-beto",
+          responsavel_nome: "Beto",
+          resultado: "INAPTO",
+        }),
+      }),
+    );
+    const supabase = supabaseFalso(dados, {
+      reabrir_fichas: ({ p_fichas }) => ({ reabertas: p_fichas.length }),
+    });
+    await montar(supabase);
+    await clicar(secao.querySelector("[aria-label='Selecionar 7005']"));
+    const lote = secao.querySelector("[data-tour='avd-fila-acoes-lote']");
+    expect(
+      lote.querySelector("[data-acao='distribuir-selecionadas']").disabled,
+    ).toBe(true);
+    expect(
+      lote.querySelector("[data-acao='mandar-para-revisao']").disabled,
+    ).toBe(true);
+    const reabrir = lote.querySelector("[data-acao='reabrir-selecionadas']");
+    expect(reabrir.disabled).toBe(false);
+    await clicar(reabrir);
+    const gaveta = document.querySelector("[data-tour='avd-fila-confirmar']");
+    expect(gaveta.textContent).toContain("Reabrir fichas");
+    const confirmar = gaveta.querySelector("[data-acao='confirmar-reabrir']");
+    expect(confirmar.disabled).toBe(true);
+    await escolher(
+      gaveta.querySelector("[data-campo='motivo-da-reabertura']"),
+      "COORDENACAO",
+    );
+    expect(confirmar.disabled).toBe(false);
+    await clicar(confirmar);
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith("reabrir_fichas", {
+      p_edital: "e93",
+      p_fichas: [{ ficha: "f5", versao: 3 }],
+      p_motivo: "COORDENACAO",
+      p_complemento: null,
+    });
+  });
+
+  it("Reabrir com “Outro” exige a descrição", async () => {
+    const dados = fila();
+    dados.candidatos.push(
+      inscrito("7005", { posicao: 5, ficha: ficha("f5", "CONCLUIDA") }),
+    );
+    await montar(supabaseFalso(dados));
+    await clicar(secao.querySelector("[aria-label='Selecionar 7005']"));
+    await clicar(secao.querySelector("[data-acao='reabrir-selecionadas']"));
+    const gaveta = document.querySelector("[data-tour='avd-fila-confirmar']");
+    const confirmar = gaveta.querySelector("[data-acao='confirmar-reabrir']");
+    await escolher(
+      gaveta.querySelector("[data-campo='motivo-da-reabertura']"),
+      "OUTRO",
+    );
+    expect(confirmar.disabled).toBe(true);
+    await digitar(
+      gaveta.querySelector("[data-campo='complemento-da-reabertura']"),
+      "Pedido da banca para conferir a vaga",
+    );
+    expect(confirmar.disabled).toBe(false);
+  });
+
   it("analista não vê as ações da coordenação", async () => {
     await montar(supabaseFalso(fila({ coordena: false })));
     expect(secao.querySelector("[aria-label='Selecionar 7001']")).toBeNull();

@@ -28,7 +28,6 @@ from monitora.avaliacao_documental.regra_da_triagem import (  # noqa: E402
 )
 
 ENSAIO = json.loads((RAIZ / "tests/fixtures/avaliacao-documental/regras-da-triagem-no-ensaio.json").read_text("utf-8"))
-MIGRATION = (RAIZ / "supabase/migrations/20261029160000_regras_proprias_da_triagem.sql").read_text("utf-8")
 
 VAGA = {"codigo": "1", "vagas_imediatas": 1, "cadastro_reserva": True, "modalidades": None, "nivel": None}
 
@@ -62,12 +61,6 @@ class SqlIgualAoPython(unittest.TestCase):
                 self.assertEqual(normalizar_regra(regra), normalizar_regra(e["regra_analise"]))
                 for chave in ("niveis_por_cargo", "nivel_padrao", "cotas"):
                     self.assertEqual(documental.get(chave), e["documental"].get(chave), chave)
-
-    def test_a_migration_nao_mexe_em_candidato_nem_dispara_calculo(self):
-        corpo = MIGRATION.split("-- 4. Migração das regras de hoje")[1]
-        for proibido in ('TB_PRE_CLASSIFICACAO" set', "disparar_robo", "TB_FICHA_ANALISE", "delete from"):
-            self.assertNotIn(proibido, corpo)
-        self.assertIn("a01afddb-f64b-47d9-80e8-476a1ed14e43", MIGRATION)
 
 
 class MesmoResultado(unittest.TestCase):
