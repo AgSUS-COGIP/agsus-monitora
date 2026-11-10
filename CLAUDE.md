@@ -1,159 +1,103 @@
 # MONITORA (`agsus-monitora/`)
 
-App de monitoramento: mapas da saúde indígena, editais, análises e lista de aprovados.
-Vite + React + Supabase (RPC) + servidor web em TypeScript (`server/`). O front está migrando,
-tela por tela, para **um único app React** (rotas por área, visual único em `src/ui/`); o alvo, as
-regras e a ordem estão em **`docs/arquitetura-react.md`** — leia antes de criar ou migrar tela.
-Front com migração gradual para TypeScript/TSX: Seleção, Cronograma, Visão geral, Conferências, Status das atualizações, Análises curriculares, Módulos e abas, barra lateral, Busca global, dados compartilhados do monitoramento e componentes de `src/ui/`;
-O Mapa de Projetos também está em TypeScript, incluindo sua carga, lista, balões e integração do editor;
-o editor compartilhado pelos dois mapas também está em TypeScript (fila, sugestões, histórico, modo de edição e regras comuns);
-a base compartilhada dos mapas (painel, legenda, tela cheia, retorno ao Brasil e hooks) também está em TypeScript;
-as telas principal, nacional e por DSEI da Saúde Indígena também estão em TSX, com dados de entrada validados;
-as regras nacionais e distritais estão em TypeScript, com contratos JSDoc na fronteira da reconciliação compartilhada;
-a integração comum com o Leaflet também está em TypeScript, com contratos em `tipos-do-leaflet.ts`;
-o Painel de entrevistas também está em TypeScript (entrada, estado, normalização e apresentação), com contratos em `tipos-do-painel.ts`;
-a Avaliação documental (módulo e lib) também está em TypeScript, com contratos em `tipos-do-estado.ts` e `tipos-da-ficha.ts`;
-o app (`src/app/`, incluindo a entrada), `src/main.ts` e o retorno do OAuth (`src/auth/callback.ts`) também estão em TypeScript;
-os módulos não visuais de `src/modules/` (sessão, IndexedDB, catálogo e situação, Aya, guardas do mapa, PWA, comemorações e ícones) também;
-guia em `docs/typescript-no-frontend.md`. O servidor também é TypeScript. **Português** em nomes
-de arquivo, funções e commits.
+Sistema da AgSUS para acompanhar os processos seletivos, do edital à contratação (triagem,
+avaliação documental, recursos, entrevistas, classificação, lista de aprovados), com mapas da Saúde
+Indígena e painéis por área (Saúde Indígena, SEDE, Projetos). Vite + React 19 + TypeScript na
+Vercel; Supabase (PostgreSQL, só por RPC, sob RLS); cálculo pesado em Python no GitHub Actions;
+servidor web opcional em TypeScript (`server/`). O front migra, tela por tela, para **um único app
+React** (rotas por área, visual único em `src/ui/`). **Português** em arquivos, funções e commits.
 
-Cada diretório relevante tem o próprio `CLAUDE.md`. Leia o do diretório onde vai
-trabalhar; **não rode `find`/`ls`/`tree` para descobrir a estrutura** — ela está aqui.
+**Esta é a nota central da documentação.** Cada `[[nome]]` abaixo é `docs/biblioteca/<nome>.md`
+(vault do Obsidian na raiz do repositório; como funciona em [[documentacao]]). Leia a nota do
+assunto antes de mexer; **não rode `find`/`ls`/`tree` para descobrir a estrutura**: ela está em
+[[mapa-do-repositorio]]. Cada pasta com regra local tem um `CLAUDE.md` curto.
 
-## Mapa
+## Regras que não podem faltar
 
-```
-index.html              entrada principal: <head>, tela de acesso, skeleton (a casca do app é src/app/casca/)
-analises.html           entrada do painel de análises
-auth/callback.html      callback OAuth (JS em src/auth/callback.ts)
-DESIGN.md               guia de interface: tokens, componentes, contraste, plano de migração
-api/                    funções serverless Vercel (proxy FUNAI, AYA)          → api/CLAUDE.md
-src/lib/                lógica pura e testável                                → src/lib/CLAUDE.md
-src/app/                raiz React única (raiz.tsx), rotas (telas.tsx), navegação → docs/arquitetura/raiz-react.md
-src/ui/                 design system: Topo, Filtros, Kpi, Gráfico, Tabela, Gaveta, Modal… (ui.css)
-src/componentes/        telas React (alvo: src/modulos/<nome>/, módulo a módulo) → src/componentes/CLAUDE.md
-src/modulos/            as telas em React, uma pasta por tela (ver README e docs/arquitetura-react.md)
-src/modules/            LEGADO: só encolhe, nada novo (check-legado-so-encolhe) → src/modules/CLAUDE.md
-src/styles/             CSS do app principal (ordem de import em main.ts)     → src/styles/CLAUDE.md
-src/main.ts             bootstrap: importa CSS e instala módulos, em ordem
-supabase/               migrations/ (só as que ainda importam), rollback/, ensaios/ → supabase/CLAUDE.md
-apps-script/            código das planilhas de análises (colado no Google)   → apps-script/LEIA-ME.md
-public/                 copiado para o site: assets/ e data/ (JSON GERADO por scripts/)
-scripts/                checagens, pipeline geográfico, AYA, banco            → scripts/CLAUDE.md
-tests/                  Vitest (*.test.ts, ainda *.test.js) e Playwright      → tests/CLAUDE.md
-server/servidor.ts      servidor web (TypeScript, Node 24, sem dependências)  → server/CLAUDE.md
-docs/                   decisões, auditorias e base de conhecimento da AYA    → docs/CLAUDE.md
-```
+- Dados só por **RPC do Supabase**; mudou assinatura de RPC → `src/lib/rpc-contrato.ts`
+  (`check:rpc-contract` quebra o build). Auth só pelos módulos de sessão (nada de `createClient`
+  avulso).
+- Tela ou feature nova = **React** em `src/modulos/<nome>/`, rota em `src/app/telas.tsx`, visual de
+  `src/ui/` com tokens, lógica pura em `src/lib/` com teste. **Nada novo em `src/modules/`** (o
+  legado só encolhe; `check-legado-so-encolhe` quebra o build e o CI).
+- O legado fala com o React por estado externo e eventos, nunca pelo DOM dele. Ao migrar: levante
+  tudo o que a tela antiga faz, cumpra com testes, confira no navegador e só então apague o legado.
+- **Código legado sai quando a mudança é confirmada** pelo usuário: módulos, marcação, funções em
+  `window`, CSS e testes antigos e as referências nos docs. Sem camada de compatibilidade; confirme
+  com `grep` antes e rode testes e `npm run build` depois.
+- Nenhum `MutationObserver` novo; nenhum remendo novo (`*-fix`, `*-refinement`, `post-N…`,
+  `window.navigate = …` por outro módulo): mude a fonte.
+- HTML dinâmico só por `src/lib/sanitize.ts` / `html-security.ts`; nunca `innerHTML` cru.
+- CSS segue o `DESIGN.md` (seção 0 primeiro): token em vez de hex, sem `!important`/`#id` novos.
+- Interface sem textos genéricos: explicação é com a Aya (`docs/aya/`); data de atualização
+  discreta e uma vez só.
+- Arquivo gerado se edita na fonte e se regenera com o script. Endereço de planilha só em
+  `src/lib/planilhas.ts`. Banco no padrão MAD (skill `mad-ddl-review`).
+- Migration: aplicada à mão e registrada, **nunca `supabase db push`**, nunca editar a aplicada; as
+  aplicadas saíram do repositório (o código vigente está em `supabase/esquema-atual.sql`).
 
-## Índice por assunto (vá direto ao arquivo)
+**Não fazer:** commitar `.env`/`.env.local`; editar `dist/`; adicionar dependência sem necessidade
+(`check:bundle-size`); converter o front para TypeScript sem pedido explícito; pôr em `public/` o
+que não deva ser publicado (tudo ali vai para o site); rodar script de banco contra produção sem
+pedido explícito.
 
-| Assunto                                                                                                                                           | Arquivos                                                                                                                                                                                                                                                                                                                                                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sessão / auth                                                                                                                                     | `src/lib/sessao.ts`, `session-lifecycle.ts`, `auth-flow.ts`, `supabaseClient.ts`, `src/modules/auth-storage.ts`                                                                                                                                                                                                                                                         |
-| Carga da entrada (consultas em paralelo, cópia da sessão no navegador)                                                                            | `src/app/carga.ts` (`loadInitialData`/`atualizarCopiaDaSessao`), `src/lib/copia-da-sessao.ts` (regras), `src/modules/copia-da-sessao-indexeddb.ts` (IndexedDB); `src/app/inicio-da-sessao.ts` (configuração, painéis, abas, situação e unidades numa chamada, `obter_inicio_da_sessao`)                                                                                 |
-| Carregamento sem tela de carregamento (skeleton da entrada, barra do "Atualizar dados")                                                           | `src/app/carregamento.ts`, `src/lib/esqueleto-da-entrada.ts` (formato), `src/styles/carregamento.css`, marcação `.esqueleto-da-entrada` e script `marcarSessaoGuardada` no `index.html`                                                                                                                                                                                 |
-| Permissões e perfis                                                                                                                               | `src/lib/access-roles.ts` (o que cada perfil pode, páginas e seções liberadas), `permissoes-recursos.ts` (módulos e níveis)                                                                                                                                                                                                                                             |
-| **Acessos** (React: grupos de permissões + permissões individuais, coordenações, teto do coordenador, "como a pessoa vê", pedidos de acesso)      | `src/modulos/acessos/`, `src/lib/matriz-de-acessos.ts`, `teto-de-acessos.ts`, `grupos-e-coordenacoes.ts`, `ver-como.ts`, `solicitacao-de-acesso.ts` (ver `src/app/entrada/`); banco em `supabase/migrations/20260929121000`–`121300`, `190000`–`190200`, `20261021140000` e `20261022140100` (só as RPCs gravam o pedido); o legado abre por `window.acessosController` |
-| Contrato de RPC                                                                                                                                   | `src/lib/rpc-contrato.ts` + `scripts/check-rpc-contract.mjs`                                                                                                                                                                                                                                                                                                            |
-| Mapa (Leaflet)                                                                                                                                    | `src/lib/fabrica-do-leaflet.ts`, `mapa-render.ts`, `brasil-bounds.ts`, `src/modules/map-guard.ts`, `map-zoom-range.ts`, `map-base-layer-switcher.ts`                                                                                                                                                                                                                    |
-| Filtros do mapa/tabela                                                                                                                            | `src/lib/filtros-do-mapa.ts` (lógica pura) · estado na Visão geral (`src/modulos/visao-geral/`) · evento `agsus:filtros-alterados`                                                                                                                                                                                                                                      |
-| Terras indígenas                                                                                                                                  | `src/modules/indigenous-territories-layer.ts`, `src/lib/terras-indigenas/`, `api/funai-*.js`, `scripts/compilar-terras-indigenas.mjs`                                                                                                                                                                                                                                   |
-| Coordenadas / lotação                                                                                                                             | `reconciliacao-unidades.ts`, `docs/auditoria-geografica.md`, `docs/auditoria-oficial-das-coordenadas-2026-10-01.md`                                                                                                                                                                                                                                                     |
-| **Editais / Núcleo** (React: tabela, alertas, formulário com cronograma, linha do tempo)                                                          | `src/componentes/nucleo/`, `src/lib/editais-do-nucleo.ts`, `cronograma-do-edital.ts`, `retificacao-do-cronograma.ts` (retificação em PDF), `responsavel-do-edital.ts`, `etapas-de-edital.ts`, `editais-das-linhas.ts`; rota `/<área>/editais` (`src/app/telas.tsx`)                                                                                                     |
-| **Seleção** (módulo do app, sem iframe: montarSelecao na `#page-selecao`; funil por vaga da planilha Auditoria; carga diária pelo GitHub Actions) | `src/modulos/selecao/`, `src/lib/selecao-do-painel.ts`, `selecao-da-planilha.ts`, `scripts/sincronizar-selecao.mjs`, `docs/sincronizacao-das-planilhas.md`                                                                                                                                                                                                              |
-| Status das atualizações (Configurações, só admin global: última execução e atraso de cada carga)                                                  | `src/componentes/saude-das-cargas/`, `src/lib/saude-das-cargas.ts` (prazo pela agenda: `agenda-do-cron.ts`; nomes: `catalogo-dos-robos.ts`)                                                                                                                                                                                                                             |
-| Automação (Configurações, só admin global: chaves para ligar e desligar o que roda sozinho em cada aba, com motivo e histórico)                   | `src/modulos/automacao/`, `src/lib/chaves-da-automacao.ts`, catálogo dos robôs e alinhador da chave em `supabase/migrations/20261109180000_catalogo_dos_robos_e_chave_unica.sql`, `docs/agenda-dos-robos.md`                                                                                                                                                            |
-| Calendário de editais (React)                                                                                                                     | `src/modulos/cronograma/`, `src/lib/calendario-editais.ts`                                                                                                                                                                                                                                                                                                              |
-| Linhas do monitoramento e unidades para o React                                                                                                   | `src/componentes/dados-do-monitoramento.ts`; **sob demanda**: só as páginas de `src/lib/telas-com-linhas.ts` (via `src/app/pagina-aberta.ts`) ou `usarLinhasDoMonitoramento` fazem a carga lê-las                                                                                                                                                                       |
-| **Lista de aprovados** (React: aprovados, convocação, modais)                                                                                     | `src/modulos/aprovados/`, `src/lib/lista-aprovados-rules.ts`, `aprovados-import.ts`, `lista-convocacao-rules.ts`, `configuracao-de-convocacao.ts`, `modelo-de-convocacao.ts`, `anexos-do-candidato.ts` (PDFs do candidato); rota `/<área>/aprovados`; Editais abre o modal por `carregarTela("approved")`                                                               |
-| Assistente AYA                                                                                                                                    | `src/modulos/aya/` (painel e contexto), `src/lib/busca-da-aya.ts` (base sem rede), `src/modules/aya-memoria.ts`, `docs/aya/`, `scripts/compilar-conhecimento-aya.mjs`; sem IA local ou túnel                                                                                                                                                                            |
-| Branding / acesso                                                                                                                                 | `src/lib/access-branding*.js`, `src/componentes/barra-lateral/marca.ts`, `access-request-ui.js`                                                                                                                                                                                                                                                                         |
-| **Barra lateral** (React: áreas, trilho, rodapé)                                                                                                  | `src/componentes/barra-lateral/`, `src/lib/menu-lateral.ts` (catálogo e estado do flutuante), `src/lib/eventos-da-barra-lateral.ts`, `src/styles/barra-lateral.css`; o legado alimenta por `buildNav`/`setActiveNav`                                                                                                                                                    |
-| Ícones (Lucide)                                                                                                                                   | `src/modules/icones.ts` (registro único) e `src/componentes/icone.tsx`; o resto do app ainda usa Font Awesome                                                                                                                                                                                                                                                           |
-| **Arquitetura React** (alvo, regras, ordem, como criar módulo)                                                                                    | `docs/arquitetura-react.md`, `src/app/montar-modulo.tsx`, `src/app/ErrorBoundary.tsx`                                                                                                                                                                                                                                                                                   |
-| **Design system** (componentes visuais padrão)                                                                                                    | `src/ui/index.ts`, `src/ui/ui.css` (só tokens); `Modal` em `src/ui/modal.tsx`                                                                                                                                                                                                                                                                                           |
-| Seleção múltipla (React)                                                                                                                          | `src/componentes/multi-select-busca.tsx`                                                                                                                                                                                                                                                                                                                                |
-| Busca global (Ctrl+K, React)                                                                                                                      | `src/componentes/busca-global/`, `src/lib/busca-global.ts`; a escolha vai ao legado pelo evento `agsus:busca-global-escolhida`                                                                                                                                                                                                                                          |
-| Configurações (todas as seções em React: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação)                            | `src/modulos/configuracoes/` (seções em `secoes.ts`), `src/lib/publicacao-de-configuracoes.ts`, `src/lib/apresentacao-das-configuracoes.ts`, `src/lib/marca-da-barra-lateral.ts`, `src/lib/paineis-externos-das-configuracoes.ts`                                                                                                                                       |
-| **Recursos** (módulo do app, sem iframe: rota `/<área>/painel-de-recursos` e `/<área>/recursos`)                                                  | `src/modulos/recursos/`, `src/lib/recursos-dos-candidatos.ts`; `criarRecursos` em `src/app/telas.tsx`                                                                                                                                                                                                                                                                   |
-| **Entrevistas** (módulo do app, sem iframe: rota `/<área>/painel-de-entrevistas` e `/<área>/entrevistas`)                                         | `src/modulos/entrevistas/`; `criarEntrevistas` em `src/app/telas.tsx`                                                                                                                                                                                                                                                                                                   |
-| **Planilhas** (links, modelo, bucket)                                                                                                             | **`src/lib/planilhas.ts`** — único lugar com endereço de planilha                                                                                                                                                                                                                                                                                                       |
-| Visual / CSS                                                                                                                                      | **`DESIGN.md` (seção 0 primeiro)**, `src/styles/tokens.css`, `src/styles/CLAUDE.md`                                                                                                                                                                                                                                                                                     |
-| **Análises curriculares** (módulo do app, sem iframe: montarAnalises na `#page-analises`)                                                         | `src/modulos/analises/`, `src/lib/analises-curriculares.ts`                                                                                                                                                                                                                                                                                                             |
-| **Encerramento do edital** (tela de fim de edital uma vez por pessoa, selos no menu da conta, quem fechou)                                        | `src/modulos/encerramento-do-edital/`, `src/lib/encerramento-do-edital.ts`; ligado em `src/app/sistema.ts` e avisado por `src/modulos/analises/marcos.ts`                                                                                                                                                                                                               |
-
-## Não ler por inteiro (grep -n → sed -n 'A,Bp')
-
-| Arquivo                                       | Tamanho    | Observação                                             |
-| --------------------------------------------- | ---------- | ------------------------------------------------------ |
-| `public/data/*.json`                          | até 2,3 MB | gerados                                                |
-| `supabase/esquema-atual.sql`                  | 3,6 MB     | retrato do schema: `grep -n 'FUNCTION private."FC_X"'` |
-| `src/styles/app.css`                          | 110 KB     | CSS base                                               |
-| `index.html`                                  | 24 KB      | `<head>` e entrada                                     |
-| `src/modules/indigenous-territories-layer.ts` | 41 KB      |                                                        |
-| `src/modules/aya-conhecimento-gerado.js`      | 27 KB      | gerado de `docs/aya/`                                  |
-| `package-lock.json`, `dist/`, `node_modules/` |            | nunca                                                  |
-
-## Comandos (rode o mais barato que responda a pergunta)
+## Rode o mínimo
 
 ```bash
-npx vitest run tests/<arquivo>.test.js   # 1 teste — padrão ao editar
-npm run lint                             # só arquivos alterados
-npm run check:architecture               # auth + rpc + MutationObserver + remendos + legado só encolhe
+npx vitest run tests/<arquivo>.test.ts   # 1 teste — padrão ao editar
+npm run lint && npm run format:check     # só arquivos alterados
+npm run check:architecture               # auth + rpc + MutationObserver + remendos + legado + docs
+npm run check:docs                       # links e notas órfãs da biblioteca
 npm test                                 # Vitest completo (lento)
-npm run typecheck                        # tipos do servidor (server/*.ts)
+npm run typecheck                        # tipos do front, do servidor e dos testes
 npm run dev                              # vite build --watch + servidor em 127.0.0.1:8000
 npm run build                            # checagens + vite build (lento, só antes de entregar)
 npm run test:e2e                         # Playwright (muito lento, só se pedido)
 ```
 
-## Regras do código
+## Biblioteca
 
-- ES Modules, nomes em português (kebab-case em arquivo).
-- Dados só por **RPC do Supabase**. Mudou assinatura de RPC → `src/lib/rpc-contrato.ts`
-  (`check:rpc-contract` quebra o build).
-- Auth só pelos módulos de sessão (`check:auth-architecture` bloqueia `createClient` avulso).
-- Nenhum `MutationObserver` novo (`check-no-new-mutation-observer.mjs`).
-- Nenhum remendo novo (`check-no-new-patch-layers.mjs`): nada de arquivo `*-fix`, `*-refinement`, `*-enhancements`, `post-N…` nem `window.navigate = …`/`window.saveAdminSettings = …` por outro módulo. Mude a fonte onde o comportamento é definido; ao passar por um remendo existente, prefira absorvê-lo na fonte e apagá-lo.
-- HTML dinâmico passa por `src/lib/sanitize.ts` / `html-security.ts`. Nunca `innerHTML` cru.
-- Tela ou feature nova = **React**: módulo em `src/componentes/<nome>/` (destino final
-  `src/modulos/<nome>/`), tela de página inteira como rota (`criar<Nome>` registrado em
-  `src/app/telas.tsx`; ver `docs/arquitetura/raiz-react.md`), visual com os componentes de
-  `src/ui/` e tokens, lógica pura em `src/lib/` + teste. **Nada novo em `src/modules/` nem em
-  `src/analises/`** (`scripts/check-legado-so-encolhe.mjs` quebra o build e o CI); a ligação do
-  app fica em `src/app/` (`sistema.ts`, `navegacao.ts`, `carga.ts`, `presenca.ts`, `moldura.ts`,
-  `configuracao.ts`) — ver "Código legado" abaixo.
-- O legado fala com o React por estado externo e eventos, nunca pelo DOM dele (ver
-  `src/componentes/CLAUDE.md`). Ao migrar uma tela: levante tudo o que a antiga faz (checklist),
-  cumpra com testes, confira no navegador e só então apague o legado.
-- Interface sem textos genéricos: nada de parágrafo de ajuda, subtítulo que descreve o óbvio, dica
-  longa nem selo "Somente consulta" (quem só lê não vê os controles). Explicação é com a assistente
-  AYA (`docs/aya/`). Ficam rótulos, erros, confirmações, estados vazios curtos e avisos que pedem ação.
-  Data de atualização: discreta e uma vez só.
-- Arquivo gerado se edita **na fonte** e se regenera com o script (ver `scripts/CLAUDE.md`).
-- Link, caminho ou bucket de planilha só em `src/lib/planilhas.ts`; o consumidor importa de lá
-  (`tests/planilhas.test.js` falha se aparecer em outro arquivo).
-- CSS segue `DESIGN.md`: token em vez de hex, sem `!important`/`#id` novos, sem arquivo `*-fix.css` novo.
-- Nomenclatura de banco: padrão MAD (PDTIC 2026–2027; o PDF fica fora do repositório, resumo em `docs/padronizacao_nomenclatura_*.md`); skill `mad-ddl-review`.
+**Arquitetura e front**
+- [[arquitetura-do-front]] · [[nova-tela-react]] · [[legado-fala-com-react]] · [[codigo-legado]]
+- [[regras-do-codigo]] · [[typescript-no-front]] · [[logica-em-src-lib]] · [[mapa-do-repositorio]]
+- [[carga-da-entrada]] · [[areas-do-sistema]] · [[aya-base-de-conhecimento]]
+- Visual: [[design-e-tokens]] · [[componentes-padrao]] · [[css]] · [[textos-da-interface]] ·
+  [[acessibilidade]] · [[mobile]] · [[icones]] (guia normativo: `DESIGN.md`, na raiz)
+- Mapas: [[mapas-e-leaflet]] · [[terras-indigenas]] · [[coordenadas]]
 
-## Código legado: sai quando a mudança é confirmada
+**Banco**
+- [[banco-e-migrations]] · [[rollback-de-migration]] · [[rpc-e-contrato]] · [[nomenclatura-mad]] ·
+  [[python-e-jobs]]
 
-O sistema **ainda está em desenvolvimento**. Quando o usuário confirmar que uma mudança está ok
-(por exemplo, uma página migrada para React), **remova todo o código legado que ela substituiu**:
+**Segurança**
+- [[seguranca]] · [[sessao-e-auth]] · [[permissoes-e-perfis]] · [[dados-pessoais]]
 
-- módulos de `src/modules/`, marcação do `index.html` e funções expostas
-  em `window` que só o código antigo usava;
-- CSS sem seletor vivo, testes do comportamento antigo e arquivos ou pastas sem uso (build antigo,
-  workflow temporário, protótipo abandonado);
-- as referências nos docs e nos `CLAUDE.md`.
+**Testes e qualidade**
+- [[testes]] · [[testes-de-navegador]] · [[ci-e-qualidade]] · [[scripts-e-checagens]]
 
-Não deixe camada de compatibilidade "por via das dúvidas". Antes de apagar, confirme com `grep` que
-nada mais usa; depois, rode os testes afetados e o `npm run build`. O histórico do git guarda o que
-saiu.
+**Operação**
+- [[comandos-e-ambiente]] · [[fluxo-git-e-prs]] · [[deploy-e-vercel]] · [[funcoes-da-vercel]] ·
+  [[servidor-web]]
+- [[robos-e-agenda]] · [[cargas-de-planilha]] · [[planilhas]] · [[documentacao]]
 
-## Não fazer
+**Módulos e telas**
+- Acompanhar: [[modulo-visao-geral]] · [[modulo-mapa-saude-indigena]] ·
+  [[modulo-mapa-de-projetos]] · [[modulo-editor-de-coordenadas]] · [[modulo-cronograma]] ·
+  [[modulo-analises]] · [[modulo-resumo-do-dia]] · [[modulo-conferencias]] ·
+  [[modulo-paineis-externos]]
+- Processo seletivo: [[modulo-editais]] · [[modulo-regras-do-edital]] · [[modulo-selecao]] ·
+  [[modulo-triagem]] · [[modulo-avaliacao-documental]] · [[modulo-recursos]] ·
+  [[modulo-entrevistas]] · [[modulo-classificacao]] · [[modulo-aprovados]] ·
+  [[modulo-encerramento-do-edital]]
+- Administração: [[modulo-configuracoes]] · [[modulo-acessos]] · [[modulo-modulos-e-abas]] ·
+  [[modulo-automacao]] · [[modulo-status-das-atualizacoes]]
+- Moldura: [[modulo-barra-lateral]] · [[modulo-busca-global]] · [[modulo-aya]]
 
-Não commitar `.env`/`.env.local`. Não editar `dist/`. Não adicionar dependência sem
-necessidade (`check:bundle-size`). Não converter o front para TypeScript sem pedido explícito.
-**Nada em `public/` que não deva ser publicado**: tudo ali vai para o site (e para a Vercel).
+## Documentos longos de referência (`docs/`)
+
+Leia só a seção do assunto: `docs/arquitetura-react.md` e `docs/arquitetura/raiz-react.md` (alvo
+do front), `docs/banco-de-dados.md` (modelo e história do banco), `docs/design-system-agsus.md`
+(norma visual), `docs/python-no-monitora.md`, `docs/agenda-dos-robos.md`,
+`docs/robo-empregare.md`, `docs/leitura-dos-arquivos.md`, `docs/sincronizacao-das-planilhas.md`,
+`docs/typescript-no-frontend.md`, `docs/analises-no-monitora/` e `docs/historias-de-usuario/`.
+Lista completa em `docs/CLAUDE.md`; o que saiu de uso fica em `docs/_arquivo/`.

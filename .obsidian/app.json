@@ -1,0 +1,16 @@
+{
+  "userIgnoreFilters": [
+    "node_modules/",
+    "dist/",
+    "public/",
+    "src/",
+    "tests/",
+    "api/",
+    "server/",
+    "python/",
+    "scripts/",
+    "supabase/",
+    ".claude/",
+    "coverage/"
+  ]
+}

@@ -1,73 +1,22 @@
 # `src/lib/` — lógica pura e testável
 
-Regra do diretório: **sem DOM e sem estado global**. Entrada → saída, com teste em
-`tests/<nome>.test.js` (ou `tests/lib/`). UI pertence a `src/modules/`.
+Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. O que cada arquivo sensível faz: [[logica-em-src-lib]].
 
-Arquivos que exigem cuidado:
+Regras do diretório:
 
-- `rpc-contrato.ts` — contrato das RPCs. Mudou no banco, muda aqui (`npm run check:rpc-contract`).
-- `sessao.ts`, `session-lifecycle.ts`, `supabaseClient.ts`, `auth-flow.ts` — único caminho de auth.
-- `novas-tentativas.ts` — **regra única de nova tentativa automática** de chamada ao Supabase (leitura passageira, token
-  vencido), com espera crescente sorteada, teto, limite e orçamento comum; o cliente único a aplica no `fetch`. Nada de
-  laço próprio de repetição em tela: espera crescente usa `esperaAntesDaTentativa`.
-- `access-roles.ts`, `permissoes-recursos.ts` — matriz de permissão; costuma exigir migration junto.
-  `access-roles.ts` também é a regra única de páginas e seções liberadas (`paginasPermitidas`,
-  `secaoDeConfiguracaoPermitida`), usada pela barra e pelo "Ver como".
-- `matriz-de-acessos.ts` (rascunho; grupo × individual), `teto-de-acessos.ts` (teto do coordenador),
-  `grupos-e-coordenacoes.ts`, `ver-como.ts`, `solicitacao-de-acesso.ts` (pedido de acesso por área: listas, situação, validação, recusa) — Configurações › Acessos.
-- `apresentacao-das-configuracoes.ts` — tom da faixa de aviso global e endereço de imagem aceito nas
-  prévias de Configurações (telas em `src/modulos/configuracoes/`).
-- `marca-da-barra-lateral.ts` — logo e cor da barra lateral publicadas e em rascunho, sem DOM.
-- `publicacao-de-configuracoes.ts` — publicação de Configurações sem DOM: chaves de cada seção (legado e
-  React), comparação com o retrato do banco, validação de URL e domínio.
-- `sanitize.ts`, `html-security.ts`, `csv-security.ts` — fronteira de segurança. Não afrouxar.
-- `reconciliacao-unidades.ts`, `uf-ibge.ts`, `brasil-bounds.ts` — referência geográfica usada pelos
-  scripts de auditoria (as coordenadas do mapa vêm só do banco).
-- `fabrica-do-leaflet.ts` — único lugar que cria mapa Leaflet (as guardas preservam o namespace `L`).
-- `filtros-do-mapa.ts` — regra dos filtros da página do mapa: comparação sem acento, opções sem
-  duplicata, poda até estabilizar. A Visão geral guarda o estado e delega para cá.
-- `planilhas.ts` — **catálogo de todas as planilhas** (modelo de aprovados, bucket da lista importada,
-  link da origem das análises, planilha de Lotações). Planilha nova entra aqui, com `usadaEm`.
-- `contraste.ts` — cálculo de contraste usado pelo aviso de branding; reutilize em vez de reescrever.
-- `menu-lateral.ts` — **catálogo dos grupos do menu lateral** (as áreas do usuário — Saúde
-  Indígena, SEDE, Projetos —, Painéis e Administração), blocos da área (Acompanhamento e Processo seletivo,
-  `BLOCOS_DA_AREA`/`blocoDaAba`), árvore por permissão e por área, página ativa
-  (considera a área atual), áreas abertas por padrão e estado do painel flutuante. Área ou página nova entra aqui; o desenho é de `src/componentes/barra-lateral/`.
-- `eventos-da-barra-lateral.ts` — nomes dos eventos entre o legado e a barra lateral (React).
-- `editais-do-nucleo.ts` — a página Editais sem DOM: ordem da fila (risco, vagas ociosas), tons de
-  status e risco (também usados pelo mapa), unidades do formulário (catálogo + as que só existem nos
-  editais, USI × CORES), rascunho e payload do edital, índice do resumo e filtro dos indicadores.
-- `cronograma-do-edital.ts` — cronograma do edital: estado calculado pelas datas, validação antes de
-  salvar (erros e avisos), modelo padrão, datas coladas em lote e situação na linha do tempo.
-- `retificacao-do-cronograma.ts` — retificação do cronograma em PDF (lida por `api/anexos-do-edital.py`):
-  casamento das etapas do "Leia-se" com as gravadas, comparação (igual, data muda, nova, sumiu), ajustes,
-  cronograma novo, número da errata e motivo com o SEI. A tela é `src/modulos/editais/lancar-retificacao.tsx`.
-- `anexos-do-candidato.ts` — anexos PDF do candidato aprovado (o PDF fica no banco, em bytea): base64 de ida e volta, limites (2 MB, 5 por
-  candidato), validação antes do envio e agrupamento por candidato. O banco repete os limites.
-- `calendario-editais.ts` — o Calendário de Editais sem DOM: etapas por dia (conta no início e no
-  fim, não no meio), filtros, grade de 42 células, próximas etapas. O desenho é de
-  `src/modulos/cronograma/`.
-- `configuracao-de-convocacao.ts` — leitura do modelo e das vagas que o banco guarda, precedência do
-  quadro (manual > total da vaga > padrão), rascunho do formulário e edição imutável do modelo. O
-  cálculo da ordem é de `lista-convocacao-rules.ts`; o desenho, de `src/modulos/aprovados/`.
-- `copia-da-sessao.ts` — quando a cópia da sessão guardada no navegador pode abrir a tela (mesmo
-  usuário, mesmo acesso, mesma versão publicada, dentro da validade) e o que mudou desde ela.
-  Afrouxar uma regra daqui expõe dado a quem perdeu acesso.
-- `novidades.ts` — **novidades do aviso de versão nova** (o "Novo: …"); entrada nova no topo, `visivel: true` só
-  quando importa para quem usa (README, "Aviso de versão nova e novidades"). `versao-do-sistema.ts` — leitura do
-  `versao.json`, novidade a mostrar e o sinal de "tela antiga" (PGRST202 / "recarregue a página") no fetch do cliente.
-- `status-da-analise.ts` — status sem decisão (Pendente, Em análise), comum ao KPI "Pendentes" e aos marcos.
-- `encerramento-do-edital.ts` — leitura de obter_encerramentos_do_edital, tela a mostrar, selos do perfil e fogos
-  do encerramento (quem fechou o edital). O banco decide quando o edital está encerrado.
-- `avaliacao-documental/datas-do-vinculo.ts` — datas do vínculo da ficha (nada antes de 1960 nem fim depois de hoje) e o
-  fim do vínculo atual (a data limite do bloco, o fim das inscrições); o banco e o robô repetem a regra.
-- `agenda-do-cron.ts` — **leitura única da agenda do pg_cron** (próxima execução, maior intervalo, texto em
-  horário de Brasília), usada pelo Status das atualizações (prazo de atraso) e pela Automação. Nada de prazo ou
-  horário de tarefa escrito à mão na tela: o horário vem do `cron.job`.
-- `catalogo-dos-robos.ts` — leitura de `obter_catalogo_dos_robos` (nomes dos workflows, rótulo, chave e workflow de
-  cada tarefa do pg_cron). **Nome de robô ou de tarefa não se escreve à mão na tela**: vem do catálogo do banco
-  (`TB_ROBO_WORKFLOW`, `TB_TAREFA_AGENDADA`).
-- `env.ts` — leitura de variáveis; nunca hardcode de chave.
+- **Sem DOM e sem estado global.** Entrada → saída, com teste em `tests/<nome>.test.ts` (ou
+  `tests/lib/`). A UI pertence a `src/modulos/`.
+- Arquivo novo: nome em português, kebab-case, em TypeScript, com teste junto.
+- Fronteiras que não se afrouxam:
+  - `rpc-contrato.ts` — mudou no banco, muda aqui ([[rpc-e-contrato]]);
+  - `sessao.ts`, `session-lifecycle.ts`, `supabaseClient.ts`, `auth-flow.ts`, `novas-tentativas.ts`
+    — único caminho de auth e de nova tentativa ([[sessao-e-auth]]);
+  - `sanitize.ts`, `html-security.ts`, `csv-security.ts` e `copia-da-sessao.ts` ([[seguranca]]);
+  - `access-roles.ts`, `permissoes-recursos.ts` — costumam exigir migration junto
+    ([[permissoes-e-perfis]]).
+- Catálogos únicos: `planilhas.ts` ([[planilhas]]), `menu-lateral.ts` ([[modulo-barra-lateral]]),
+  `agenda-do-cron.ts` e `catalogo-dos-robos.ts` ([[robos-e-agenda]]), `novidades.ts`
+  ([[deploy-e-vercel]]). Reutilize `contraste.ts` em vez de reescrever.
+- `env.ts` lê as variáveis; nunca chave escrita no código.
 
-Arquivo novo: nome em português, kebab-case, com teste junto.
-Teste: `npx vitest run tests/<nome>.test.js`.
+Teste: `npx vitest run tests/<nome>.test.ts`.

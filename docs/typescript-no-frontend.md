@@ -66,7 +66,7 @@ também estão em TypeScript, com fonte discriminada, lista, seleção, desconvo
 liberação, vagas e desempate. A entrada normaliza os campos usados dos retratos e
 calcula grupos sem recalcular a ordem da Classificação. O módulo não tem arquivos
 JS/JSX; `marcos.ts` também tipa a integração do painel com as comemorações compartilhadas.
-Os limites de validação estão no README de Entrevistas.
+Os limites de validação estão na nota [biblioteca/modulo-entrevistas.md](biblioteca/modulo-entrevistas.md).
 
 A infraestrutura de `src/lib/` também está em TypeScript: sessão e autenticação (`sessao.ts`,
 `session-lifecycle.ts`, `auth-flow.ts`, `supabaseClient.ts`, `estado-de-saida.ts`), `env.ts`,
@@ -136,7 +136,7 @@ O build já chama `typecheck`, então erros nos arquivos migrados bloqueiam o bu
 `allowJs` permite importar o código existente; `checkJs` está desligado. Portanto, o compilador
 não verifica todos os consumidores JavaScript nem valida JSON em tempo de execução.
 Os módulos migrados verificam objetos e listas nas fronteiras de leitura; limites dessa
-verificação estão nos READMEs dos módulos.
+verificação estão nas notas `modulo-<nome>` de `docs/biblioteca/`.
 
 Lint e formatação incrementais incluem `.ts` e `.tsx`. O ESLint usa o parser TypeScript;
 nomes e redeclarações nesses arquivos são verificados pelo compilador. Tipos do React e o
@@ -159,52 +159,52 @@ atributos acessíveis e o bloqueio do botão durante ações.
 
 Seleção está migrada em `src/modulos/selecao/`, com contratos em `tipos.ts`.
 O escopo e as limitações estão em
-[../src/modulos/selecao/README.md](../src/modulos/selecao/README.md).
+[biblioteca/modulo-selecao.md](biblioteca/modulo-selecao.md).
 Cronograma também está migrado; carga, contratos e limites estão em
-[../src/modulos/cronograma/README.md](../src/modulos/cronograma/README.md).
+[biblioteca/modulo-cronograma.md](biblioteca/modulo-cronograma.md).
 
 Visão geral também está migrada; contratos e integração com os mapas estão em
-[../src/modulos/visao-geral/README.md](../src/modulos/visao-geral/README.md).
+[biblioteca/modulo-visao-geral.md](biblioteca/modulo-visao-geral.md).
 
 Conferências também está migrado; contratos, normalização, paginação e limites estão em
-[../src/modulos/conferencias/README.md](../src/modulos/conferencias/README.md).
+[biblioteca/modulo-conferencias.md](biblioteca/modulo-conferencias.md).
 
 Status das atualizações também está migrado; contratos e limites estão em
-[../src/componentes/saude-das-cargas/README.md](../src/componentes/saude-das-cargas/README.md).
+[biblioteca/modulo-status-das-atualizacoes.md](biblioteca/modulo-status-das-atualizacoes.md).
 
 Análises curriculares também está migrado: estado, consultas, marcos, filtros,
 indicadores, gráficos, tabela, gaveta e regras em `src/lib/analises-curriculares.ts`.
 Contratos e limites estão em
-[../src/modulos/analises/README.md](../src/modulos/analises/README.md).
+[biblioteca/modulo-analises.md](biblioteca/modulo-analises.md).
 
 Módulos e abas também está migrado: tela de Configurações, estado, revisão, histórico e
 regras do rascunho em `src/lib/modulos-e-abas.ts`. Contratos, validação da resposta e limites
-estão em [../src/modulos/modulos/README.md](../src/modulos/modulos/README.md).
+estão em [biblioteca/modulo-modulos-e-abas.md](biblioteca/modulo-modulos-e-abas.md).
 
 A barra lateral também está migrada: estado, menu por área, seletor, painéis flutuantes,
 rodapé, recolhimento e hooks, com as regras em `src/lib/menu-lateral.ts`. Contratos e limites
-estão em [../src/componentes/barra-lateral/README.md](../src/componentes/barra-lateral/README.md).
+estão em [biblioteca/modulo-barra-lateral.md](biblioteca/modulo-barra-lateral.md).
 
 A Busca global também está migrada: painel, atalhos, realce, seleção, montagem e regras
 em `src/lib/busca-global.ts`. Inclui o snapshot compartilhado do monitoramento, validação
 das linhas e unidades e o hook de área atual. Contratos e limites estão em
-[../src/componentes/busca-global/README.md](../src/componentes/busca-global/README.md).
+[biblioteca/modulo-busca-global.md](biblioteca/modulo-busca-global.md).
 
 O Mapa de Projetos também está migrado; contratos, normalização dos municípios e limites
 da integração com as peças comuns estão em
-[../src/modulos/mapa-de-projetos/README.md](../src/modulos/mapa-de-projetos/README.md).
+[biblioteca/modulo-mapa-de-projetos.md](biblioteca/modulo-mapa-de-projetos.md).
 
 A Avaliação documental também está migrada por inteiro (módulo e `src/lib/avaliacao-documental/`,
 sem JS/JSX): stores, abas Regra, Equipe, Triagem e Fila, a ficha e as regras de pontuação,
 triagem, distribuição e fila. Contratos e limites estão em
-[../src/modulos/avaliacao-documental/README.md](../src/modulos/avaliacao-documental/README.md).
+[biblioteca/modulo-avaliacao-documental.md](biblioteca/modulo-avaliacao-documental.md).
 
 A Aya também está migrada (módulo, tour e as regras de `src/lib/` — páginas, tours, busca, termos,
 conversa, contexto, chamado, intenções, dados, filtros, permissões e perguntas sem resposta), sem JS/JSX
-fora da base gerada. Contratos e limites estão em [../src/modulos/aya/README.md](../src/modulos/aya/README.md).
+fora da base gerada. Contratos e limites estão em [biblioteca/modulo-aya.md](biblioteca/modulo-aya.md).
 
 O editor de coordenadas também está migrado; contratos e limites estão em
-[../src/modulos/editor-de-coordenadas/README.md](../src/modulos/editor-de-coordenadas/README.md).
+[biblioteca/modulo-editor-de-coordenadas.md](biblioteca/modulo-editor-de-coordenadas.md).
 
 Escolher um módulo por entrega, levantar os consumidores e manter o comportamento coberto
 pelos testes. Declarar contratos de dados e ações sem `any` ou supressões de erros. Atualizar
@@ -233,7 +233,7 @@ componente de ajuste também está em TSX: itens, proposta, validação e prévi
 TypeScript, com contratos em `tests/tipos/ajuste-dos-recursos.tsx`. A pasta Recursos já tem
 todos os componentes e o estado tipados; o motor compartilhado de Classificação também
 está em TypeScript, com contratos na entrada e na saída. Contratos e limites em
-[../src/modulos/recursos/README.md](../src/modulos/recursos/README.md).
+[biblioteca/modulo-recursos.md](biblioteca/modulo-recursos.md).
 
 A entrada e o estado de Classificação também estão migrados: seletor de edital, carga,
 versões de regra, registros e publicação de listas, desempate, hora de nascimento e
@@ -241,7 +241,7 @@ exportação. Dados usados pelo estado são validados; respostas antigas não at
 dados, avisos ou flags após troca de edital, área ou usuário. Os contratos estão em
 `tests/tipos/tela-estado-da-classificacao.tsx`; utilitários de impressão e área de transferência no navegador
 também estão em TypeScript. Contratos e limites em
-[../src/modulos/classificacao/README.md](../src/modulos/classificacao/README.md).
+[biblioteca/modulo-classificacao.md](biblioteca/modulo-classificacao.md).
 
 A publicação do resultado final como lista de aprovados também está em TypeScript/TSX:
 modal de confirmação, extração dos candidatos do retrato, casamento por análise, nome ou
@@ -364,7 +364,7 @@ e conversão binária sem perda de bytes. Contratos em
 
 Resumo que ficava no README (movido para cá em 21/10/2026). Em 21/10/2026, `src/` tinha 362
 arquivos `.ts`/`.tsx` e 252 `.js`/`.jsx` (cerca de 59% em TypeScript). A migração continua por
-módulo; o detalhe de cada um está nas seções acima e no README do módulo.
+módulo; o detalhe de cada um está nas seções acima e na nota do módulo em `docs/biblioteca/`.
 
 - **Seleção, Cronograma, Visão geral, Conferências, Status das atualizações, Análises
   curriculares, Módulos e abas, barra lateral e Busca global**: estado, componentes e regras das

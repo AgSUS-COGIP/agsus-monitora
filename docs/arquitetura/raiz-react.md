@@ -1,7 +1,8 @@
 # Raiz React única e rotas no endereço
 
 Status: **em andamento** (passo 1 neste PR). Complementa `docs/arquitetura-react.md` (regras dos
-módulos, `src/ui/`, casca) e `docs/arquitetura.md` (banco, áreas e permissões).
+módulos, `src/ui/`, casca) e `docs/_arquivo/arquitetura.md` (banco, áreas e permissões; decisões em
+`docs/biblioteca/areas-do-sistema.md`).
 
 Objetivo: o MONITORA vira **um** app React — um `createRoot` só, a área e a tela no endereço
 (`/saude-indigena/cronograma`), voltar/avançar do navegador e recarregar funcionando, link que se
