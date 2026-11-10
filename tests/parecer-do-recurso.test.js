@@ -31,7 +31,6 @@ it("rejeita nomes herdados de objeto como ações desconhecidas", () => {
 });
 
 describe("estados e transições", () => {
-
   it.each([
     ["REGISTRADO", "enviar_parecer", "EM_ANALISE_JURIDICA"],
     ["EM_ANALISE_JURIDICA", "devolver", "REGISTRADO"],

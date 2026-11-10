@@ -37,13 +37,11 @@ const RECURSO = {
 };
 
 describe("marcadores", () => {
-
   it("acha os marcadores do texto, sem repetir, e os desconhecidos", () => {
     const corpo = "{nome_candidato} {foo} {nome_candidato} {Maiusculo} {x_y}";
     expect(marcadoresDoTexto(corpo)).toEqual(["nome_candidato", "foo", "x_y"]);
     expect(marcadoresDesconhecidos(corpo)).toEqual(["foo", "x_y"]);
   });
-
 });
 
 describe("preenchimento", () => {

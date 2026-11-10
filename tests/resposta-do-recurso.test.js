@@ -48,7 +48,6 @@ it("ignora nomes herdados de objeto como transições da resposta", () => {
 });
 
 describe("estados e transições", () => {
-
   it.each([
     ["rascunho", "enviar_revisao", "em_revisao"],
     ["devolvida", "enviar_revisao", "em_revisao"],

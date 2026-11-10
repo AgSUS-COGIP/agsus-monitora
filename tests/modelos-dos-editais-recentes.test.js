@@ -36,9 +36,9 @@ const modelosDaCorrecao = (arquivo) =>
 // 20261007-perguntas-pelo-texto.sql: o que muda na provisória de cada modelo.
 const PERGUNTAS_PELO_TEXTO = Object.fromEntries(
   [
-    ...ler("tests/fixtures/sql-de-dados/20261007-perguntas-pelo-texto.sql").matchAll(
-      /\('([A-Z0-9-]+)', \$provisoria\$(.*?)\$provisoria\$::jsonb\)/g,
-    ),
+    ...ler(
+      "tests/fixtures/sql-de-dados/20261007-perguntas-pelo-texto.sql",
+    ).matchAll(/\('([A-Z0-9-]+)', \$provisoria\$(.*?)\$provisoria\$::jsonb\)/g),
   ].map((m) => [m[1], JSON.parse(m[2])]),
 );
 const comAsPerguntasPeloTexto = (codigo, m) =>
@@ -121,7 +121,9 @@ describe("correções dos modelos dos editais recentes", () => {
     ]);
     for (const [codigo, provisoria] of Object.entries(PERGUNTAS_PELO_TEXTO))
       expect(modelo(codigo).provisoria).toMatchObject(provisoria);
-    const sql = ler("tests/fixtures/sql-de-dados/20261007-perguntas-pelo-texto.sql");
+    const sql = ler(
+      "tests/fixtures/sql-de-dados/20261007-perguntas-pelo-texto.sql",
+    );
     expect(sql).toContain("is distinct from");
     expect(sql).toContain(
       'perform private."FC_VALIDAR_REGRA_ANALISE"(v_modelo."DS_CONFIGURACAO");',

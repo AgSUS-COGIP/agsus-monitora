@@ -45,5 +45,4 @@ describe("contexto institucional da plataforma", () => {
       ),
     ).toBe("Ana Souza");
   });
-
 });
