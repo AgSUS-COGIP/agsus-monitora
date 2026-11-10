@@ -28,13 +28,13 @@ import {
 } from "../../../lib/pendencias-do-edital.ts";
 import { formatarDataHora } from "../../../lib/cronograma-do-edital.ts";
 import {
+  BlocosEsqueleto,
   Campo,
   classes,
   EstadoVazio,
   ErroAoCarregar,
   GradeDeKpis,
   Kpi,
-  LinhasEsqueleto,
   Modal,
   Segmentado,
   Selo,
@@ -586,7 +586,9 @@ export function AbaPendencias({
           aoTentar={() => void estado.carregar(area)}
         />
       ) : carregando ? (
-        <LinhasEsqueleto colunas={5} linhas={4} />
+        <div className="pendencias-lista" aria-busy="true">
+          <BlocosEsqueleto quantos={4} className="pendencia-esqueleto" />
+        </div>
       ) : visiveis.length ? (
         <div className="pendencias-lista">
           {visiveis.map((p) => (
