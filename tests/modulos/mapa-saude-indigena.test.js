@@ -89,8 +89,18 @@ const REDE = {
 };
 
 const LINHAS = [
-  { unidade: "DSEI Alagoas e Sergipe", vagas_total: 10, vagas_ociosas: 1 },
-  { unidade: "DSEI Yanomami", vagas_total: 40, vagas_ociosas: 30 },
+  {
+    unidade: "DSEI Alagoas e Sergipe",
+    vagas_total: 10,
+    contratados: 9,
+    status: "Concluído",
+  },
+  {
+    unidade: "DSEI Yanomami",
+    vagas_total: 40,
+    contratados: 10,
+    status: "Concluído",
+  },
 ];
 
 let raiz = null;
@@ -222,7 +232,14 @@ describe("visão nacional", () => {
   it("com filtro ativo, só os DSEIs do recorte e o mapa enquadra neles", async () => {
     await montar({
       filtroAtivo: true,
-      linhas: [{ unidade: "DSEI Yanomami", vagas_total: 4, vagas_ociosas: 0 }],
+      linhas: [
+        {
+          unidade: "DSEI Yanomami",
+          vagas_total: 4,
+          contratados: 4,
+          status: "Concluído",
+        },
+      ],
     });
     const mapa = mapaVivo("map");
     expect(bolhas(mapa)).toHaveLength(1);
