@@ -514,6 +514,24 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     resumo:
       "GET /api/cronograma: as etapas de cada edital ativo, com edital_id, edital, unidade, area (20261105190000), ordem, atividade, data_inicio e data_fim. Só service_role. Constante em src/lib/aprovados-e-cronograma-da-api.ts.",
   },
+  listar_editais_criticos_manuais: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Visão geral: os editais da área marcados à mão como críticos ([{monitoramento_id, motivo, quem, quando}]), só os que o usuário vê; exige dashboard e a área (20261110150000). Lida junto com o acompanhamento; se falhar, a tela segue só com os motivos automáticos.",
+  },
+  obter_critico_do_edital: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Formulário do edital: a marcação manual de crítico ({marcado, motivo, quem, quando}) e se quem está logado pode mudá-la (pode_marcar: administrador global, ou gestor/coordenador que vê o edital) (20261110150000).",
+  },
+  marcar_edital_critico: {
+    argumentos: ["p_edital", "p_critico", "p_motivo"],
+    critica: false,
+    resumo:
+      "Marca, altera o motivo ou desmarca o edital como crítico; motivo de 10 a 500 caracteres com 2 palavras, também para desmarcar; histórico em TH_EDITAL_CRITICO; só administrador global, gestor ou coordenador que vê o edital (42501) (20261110150000).",
+  },
   listar_monitoramento_operacional: {
     argumentos: ["p_versao"],
     critica: true,

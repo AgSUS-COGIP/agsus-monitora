@@ -41,6 +41,7 @@ import {
   LIMITES_DO_CRITICO,
   motivosDeAtencao,
 } from "./criticos-da-visao-geral.ts";
+import type { MarcacaoDeCritico } from "./criticos-da-visao-geral.ts";
 import { sanitizeCsvCell } from "./csv-security";
 import { tomDoStatusDoEdital } from "./editais-do-nucleo.ts";
 import {
@@ -264,7 +265,22 @@ export function acompanhamentoDaResposta(
         desistentes: numeroOpcional(lista.desistentes),
       });
   }
-  return { etapasPorEdital, listasPorEdital };
+  // A marcação manual de crítico (listar_editais_criticos_manuais, 20261110150000).
+  const criticosPorEdital = new Map<string, MarcacaoDeCritico>();
+  for (const bruto of Array.isArray(origem.criticos_manuais)
+    ? origem.criticos_manuais
+    : []) {
+    const marcacao = registroDaVisaoGeral(bruto);
+    const id = idDoRegistro(marcacao.monitoramento_id);
+    const motivo = textoOpcional(marcacao.motivo);
+    if (id !== null && motivo)
+      criticosPorEdital.set(String(id), {
+        motivo,
+        quem: textoOpcional(marcacao.quem) ?? null,
+        quando: textoOpcional(marcacao.quando) ?? null,
+      });
+  }
+  return { etapasPorEdital, listasPorEdital, criticosPorEdital };
 }
 
 /* As pendências pós-resultado de uma linha (códigos de PENDENCIAS_POS_RESULTADO). */
@@ -317,9 +333,10 @@ export function enriquecerLinhas(
     const comFase = { ...linha, fase };
     const etapas = acompanhamento?.etapasPorEdital?.get(id) || null;
     const lista = acompanhamento?.listasPorEdital?.get(id) || null;
+    const marcacao = acompanhamento?.criticosPorEdital?.get(id) || null;
     return {
       ...comFase,
-      atencao: motivosDeAtencao(comFase, { hoje, etapas, limites }),
+      atencao: motivosDeAtencao(comFase, { hoje, etapas, limites, marcacao }),
       pos_resultado: pendenciasDaLinha(comFase, lista, temListas, limites),
       desistentes: lista ? num(lista.desistentes) : 0,
     };

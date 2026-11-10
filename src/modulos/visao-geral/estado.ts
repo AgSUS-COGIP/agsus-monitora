@@ -76,6 +76,8 @@ export const CHAVE_DAS_COLUNAS = "agsus_visible_cols_v1";
 /** Etapas do cronograma e resumo das listas de aprovados da área. */
 export const RPC_ACOMPANHAMENTO =
   "listar_acompanhamento_da_visao_geral_se_mudou";
+/** Os editais marcados à mão como críticos (gestor, coordenador, admin global). */
+export const RPC_CRITICOS_MANUAIS = "listar_editais_criticos_manuais";
 
 const txt = (valor: unknown) => String(valor ?? "").trim();
 
@@ -85,6 +87,15 @@ const txt = (valor: unknown) => String(valor ?? "").trim();
   o banco responde `{ inalterado: true }` (migration 20261013160000).
 */
 const acompanhamentosConhecidos = new Map<string, unknown>();
+/*
+  O último pacote entregue por área, já com a marcação manual. Sem mudança no
+  acompanhamento nem na marcação, volta o MESMO objeto: a tela não recalcula
+  nem redesenha (o que o `inalterado` do banco já garantia antes).
+*/
+const entreguesPorArea = new Map<
+  string,
+  { pacote: unknown; marcacao: string; entregue: unknown }
+>();
 
 /*
   A pessoa saiu (ou ficou sem acesso): nada da Visão geral dela passa para
@@ -95,6 +106,7 @@ export function esquecerVisaoGeral(
   estado: EstadoDaVisaoGeral = estadoDaVisaoGeral,
 ) {
   acompanhamentosConhecidos.clear();
+  entreguesPorArea.clear();
   estado.esquecer();
 }
 
@@ -104,14 +116,33 @@ export function buscarAcompanhamentoNoSupabase(
 ) {
   return async (area: string) => {
     const conhecido = acompanhamentosConhecidos.get(area) ?? null;
-    const { data, error } = await supabase.rpc(RPC_ACOMPANHAMENTO, {
-      p_area: area,
-      p_versao: versaoDoPacote(conhecido),
-    });
+    const [{ data, error }, criticos] = await Promise.all([
+      supabase.rpc(RPC_ACOMPANHAMENTO, {
+        p_area: area,
+        p_versao: versaoDoPacote(conhecido),
+      }),
+      supabase.rpc(RPC_CRITICOS_MANUAIS, { p_area: area }),
+    ]);
     if (error) throw error;
-    if (conhecido && respostaInalterada(data)) return conhecido;
-    acompanhamentosConhecidos.set(area, data);
-    return data;
+    let pacote = data;
+    if (conhecido && respostaInalterada(data)) pacote = conhecido;
+    else acompanhamentosConhecidos.set(area, data);
+    /*
+      A marcação manual vem de outra leitura, sem versão (é pequena e muda na
+      hora em que alguém marca). Se falhar, a Visão geral segue com os motivos
+      automáticos — nunca fica sem o acompanhamento por causa dela.
+    */
+    const marcados =
+      !criticos?.error && Array.isArray(criticos?.data) ? criticos.data : [];
+    if (!pacote || typeof pacote !== "object" || Array.isArray(pacote))
+      return pacote;
+    const marcacao = JSON.stringify(marcados);
+    const anterior = entreguesPorArea.get(area);
+    if (anterior?.pacote === pacote && anterior.marcacao === marcacao)
+      return anterior.entregue;
+    const entregue = { ...pacote, criticos_manuais: marcados };
+    entreguesPorArea.set(area, { pacote, marcacao, entregue });
+    return entregue;
   };
 }
 
