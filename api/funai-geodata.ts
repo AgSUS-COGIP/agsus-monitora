@@ -50,8 +50,11 @@ function first(value: unknown): unknown {
 function safeBbox(value: unknown): string {
   const raw = String(first(value) || "").trim();
   if (!raw) return "";
-  const parts = raw.split(",").map(Number);
-  if (parts.length !== 4 || !parts.every(Number.isFinite)) return "";
+  const textos = raw.split(",");
+  // Coordenada vazia não é zero (`Number("")` daria 0 e passaria).
+  if (textos.length !== 4 || textos.some((t) => !t.trim())) return "";
+  const parts = textos.map(Number);
+  if (!parts.every(Number.isFinite)) return "";
   // Os padrões nunca valem: o tamanho 4 já foi conferido acima.
   const [west = NaN, south = NaN, east = NaN, north = NaN] = parts;
   if (
@@ -154,7 +157,9 @@ export default async function handler(
     if (dataset === "territories") {
       const bbox = safeBbox(req.query?.bbox);
       if (!bbox) return json(res, 400, { error: "invalid_bbox" });
-      const requested = Number(first(req.query?.maxFeatures));
+      // Vazio vale como ausente (o padrão), não como 0 (que viraria 1).
+      const pedido = String(first(req.query?.maxFeatures) ?? "").trim();
+      const requested = pedido ? Number(pedido) : NaN;
       const maxFeatures = Number.isFinite(requested)
         ? Math.max(1, Math.min(500, Math.round(requested)))
         : 250;
