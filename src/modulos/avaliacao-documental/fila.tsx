@@ -1560,11 +1560,10 @@ export function Fila({ e, fila }: FilaProps) {
       ),
     [candidatos],
   );
-  const vagaDoFiltro = st.filtro.vaga;
-  const lote = useMemo(
-    () => loteDaFila(candidatos, vagaDoFiltro),
-    [candidatos, vagaDoFiltro],
-  );
+  /* O lote do edital inteiro, como os contadores da faixa: com o filtro de
+     vaga, "30 pela regra + 2 por decisão" (da vaga) não somava o "No lote 500"
+     (do edital) logo acima. */
+  const lote = useMemo(() => loteDaFila(candidatos), [candidatos]);
 
   const marcar = useCallback(
     (id: string, sim: boolean) =>
