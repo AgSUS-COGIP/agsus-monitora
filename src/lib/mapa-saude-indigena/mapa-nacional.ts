@@ -34,8 +34,28 @@ import {
   texto,
 } from "./chaves.ts";
 import { CORES_DO_MAPA } from "./formas.ts";
+import {
+  contratadasImediatas,
+  ehCancelado,
+  temResultado,
+  vagasSemContratacao,
+} from "../indicadores-do-monitoramento.ts";
 
-/* Editais, vagas e ociosas por DSEI (chave de `chaveDoDsei`). */
+const VAZIO: Readonly<ContagemDoDsei> = Object.freeze({
+  editais: 0,
+  vagas: 0,
+  contratadas: 0,
+  ociosas: 0,
+});
+
+/*
+  Editais, vagas, contratadas e ociosas por DSEI (chave de `chaveDoDsei`),
+  pela regra dos indicadores da Visão geral (indicadores-do-monitoramento.ts):
+  o edital cancelado conta como processo, mas as vagas dele não entram; ociosa
+  é a vaga sem contratação de edital com resultado — a de edital ainda em
+  seleção não é ociosa. Antes a bolha somava `vagas_ociosas` de todo edital
+  (cancelado e em seleção também) e o mapa dizia mais ociosas que o KPI.
+*/
 
 export function contarPorDsei(
   linhas: readonly LinhaDoMonitoramento[],
@@ -47,16 +67,17 @@ export function contarPorDsei(
   for (const linha of lista) {
     const chave = chaveDoDsei(linha?.unidade);
     if (!chave) continue;
-    const atual = contagens.get(chave) || { editais: 0, vagas: 0, ociosas: 0 };
+    const atual = contagens.get(chave) || { ...VAZIO };
     atual.editais += 1;
-    atual.vagas += numero(linha.vagas_total);
-    atual.ociosas += numero(linha.vagas_ociosas);
+    if (!ehCancelado(linha)) {
+      atual.vagas += numero(linha.vagas_total);
+      atual.contratadas += contratadasImediatas(linha);
+      if (temResultado(linha)) atual.ociosas += vagasSemContratacao(linha);
+    }
     contagens.set(chave, atual);
   }
   return contagens;
 }
-
-const VAZIO = Object.freeze({ editais: 0, vagas: 0, ociosas: 0 });
 
 /*
   Uma bolha por DSEI com coordenada. Ordem: da maior para a menor, para que a
@@ -80,7 +101,8 @@ export function bolhasDosDsei({
     .filter((d) => d && temCoordenada(d.lat, d.lon))
     .map((d) => {
       const chave = chaveDoDsei(d.k);
-      const { editais, vagas, ociosas } = contagens.get(chave) || VAZIO;
+      const { editais, vagas, contratadas, ociosas } =
+        contagens.get(chave) || VAZIO;
       const comEdital = editais > 0;
       const raio = raioDaBolha(d.pop, populacaoMaxima);
       const cores = comEdital
@@ -94,6 +116,7 @@ export function bolhasDosDsei({
         raio,
         editais,
         vagas,
+        contratadas,
         ociosas,
         comEdital,
         estilo: {
@@ -111,8 +134,9 @@ export function bolhasDosDsei({
 
 /*
   "Territórios por vagas": os mesmos DSEIs que o mapa desenhou, por vagas
-  (desempate pela população). A barra é o preenchimento, (vagas − ociosas) ÷
-  vagas: acima de 80% ok, acima de 40% atenção, o resto crítico.
+  (desempate pela população). A barra é o preenchimento, contratadas ÷ vagas
+  (as vagas em seleção ainda não estão preenchidas, nem são ociosas): acima de
+  80% ok, acima de 40% atenção, o resto crítico.
 */
 
 export function territoriosPorVagas(
@@ -125,7 +149,7 @@ export function territoriosPorVagas(
     )
     .map((b, indice) => {
       const preenchidas = b.vagas
-        ? Math.round((Math.max(0, b.vagas - b.ociosas) / b.vagas) * 100)
+        ? Math.round((Math.min(b.contratadas, b.vagas) / b.vagas) * 100)
         : 0;
       return {
         ...b,

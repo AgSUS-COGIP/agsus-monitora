@@ -50,10 +50,11 @@ import {
   vagas", pontos do DSEI, vínculos, resumo da dica) como entrada → saída.
 */
 
-const edital = (unidade, vagas_total, vagas_ociosas) => ({
+const edital = (unidade, vagas_total, contratados, status = "Concluído") => ({
   unidade,
   vagas_total,
-  vagas_ociosas,
+  contratados,
+  status,
 });
 
 describe("chaves", () => {
@@ -81,8 +82,8 @@ describe("contagens e bolhas do mapa nacional", () => {
     { k: "SEM COORDENADA", n: "Sem", lat: null, lon: null, pop: 10 },
   ];
   const linhas = [
-    edital("DSEI Ceará", 10, 2),
-    edital("DSEI CEARÁ", 5, 5),
+    edital("DSEI Ceará", 10, 8),
+    edital("DSEI CEARÁ", 5, 0),
     edital("DSEI Yanomami", 0, 0),
   ];
 
@@ -91,9 +92,37 @@ describe("contagens e bolhas do mapa nacional", () => {
     expect(contagens.get("CEARA")).toEqual({
       editais: 2,
       vagas: 15,
+      contratadas: 8,
       ociosas: 7,
     });
     expect(contagens.get("YANOMAMI").editais).toBe(1);
+  });
+
+  it("conta como os KPIs: cancelado sem vagas, em seleção sem ociosas", () => {
+    // DSEI Xavante, 10/11/2026: o 88/2026 cancelado (43 vagas) somava 43
+    // ociosas na bolha, e as vagas dos editais em seleção também viravam
+    // ociosas — o mapa dizia 1.118 ociosas na área e o KPI, 771.
+    const contagens = contarPorDsei([
+      edital("DSEI Xavante", 43, 0, "Cancelado"),
+      edital("DSEI Xavante", 20, 5, "Em andamento"),
+      edital("DSEI Xavante", 10, 12, "Concluído"),
+      edital("DSEI Xavante", 8, 3, "Concluído"),
+    ]);
+    expect(contagens.get("XAVANTE")).toEqual({
+      editais: 4,
+      vagas: 38,
+      contratadas: 18,
+      ociosas: 5,
+    });
+    const [xavante] = territoriosPorVagas(
+      bolhasDosDsei({
+        dseis: [{ k: "XAVANTE", n: "Xavante", lat: -13, lon: -52, pop: 1 }],
+        contagens,
+      }),
+    );
+    // 18 de 38 vagas contratadas; as 15 em seleção não são ociosas.
+    expect(xavante.preenchidas).toBe(47);
+    expect(xavante.detalhe).toBe("5 ociosas · 4 processos · 1 hab.");
   });
 
   it("desenha os DSEIs com coordenada, do maior para o menor", () => {

@@ -48,8 +48,18 @@ const LMAP = {
 };
 
 const LINHAS = [
-  { unidade: "DSEI Alagoas e Sergipe", vagas_total: 10, vagas_ociosas: 1 },
-  { unidade: "DSEI Yanomami", vagas_total: 40, vagas_ociosas: 30 },
+  {
+    unidade: "DSEI Alagoas e Sergipe",
+    vagas_total: 10,
+    contratados: 9,
+    status: "Concluído",
+  },
+  {
+    unidade: "DSEI Yanomami",
+    vagas_total: 40,
+    contratados: 10,
+    status: "Concluído",
+  },
 ];
 
 const quadrado = (x, y) => [
