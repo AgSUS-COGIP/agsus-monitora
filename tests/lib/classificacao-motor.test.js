@@ -14,11 +14,11 @@ import {
   O motor da classificação com casos montados a partir das listas publicadas
   dos editais 83/2026 e 100/2026 (levantamento em
   scratchpad/classificacao/listas-publicadas.md e verificacao-desempate.md) e
-  com as regras de exemplo dos seeds (supabase/correcoes/20261002-…).
+  com as regras de exemplo dos seeds (tests/fixtures/sql-de-dados/20261002-…).
 */
 
 const SEED = readFileSync(
-  "supabase/correcoes/20261002-regras-de-classificacao-83-e-100.sql",
+  "tests/fixtures/sql-de-dados/20261002-regras-de-classificacao-83-e-100.sql",
   "utf8",
 );
 const regraDoSeed = (marca) => {

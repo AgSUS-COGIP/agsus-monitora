@@ -12,11 +12,31 @@ Por que não `db push`:
 - o registro do projeto é `public.migracoes_aplicadas` (caminho + sha256 sem `\r`), não
   `supabase_migrations.schema_migrations`; a CLI não conhece o que já foi aplicado e tentaria
   rodar tudo de novo;
-- há versões (timestamps) repetidas, já aplicadas e registradas pelo caminho (lista abaixo), que
-  a CLI recusa;
-- várias mudanças dependem de dados e de ordem que só o ensaio confere (correções em
-  `supabase/correcoes/`, cargas dos robôs), e a escrita no banco é decisão da equipe, não da
-  ferramenta.
+- as migrations já aplicadas saíram do repositório (abaixo): a CLI veria um banco que não
+  bate com a pasta;
+- várias mudanças dependem de dados e de ordem que só o ensaio confere, e a escrita no banco é
+  decisão da equipe, não da ferramenta.
+
+## As migrations aplicadas saíram do repositório (10/11/2026)
+
+Até 10/11/2026 o repositório guardava as ~300 migrations já aplicadas, com rollbacks, ensaios,
+`migrations-historicas/`, `descartadas/` e `correcoes/` (cerca de 286 mil linhas). Saíram todas:
+**o banco não mudou** e o registro `public.migracoes_aplicadas` continua com as linhas delas (o
+`db:estado` as lista como órfãs, o que é esperado). A pasta guarda só as migrations que ainda
+importam, cada uma com rollback e ensaio.
+
+O que isso muda no dia a dia:
+
+- **A fonte do código do banco é o banco; `supabase/esquema-atual.sql` é o retrato dele** (só
+  leitura, regerado por `npm run db:esquema`). Para ler e pesquisar, use o retrato. Para trocar
+  uma função, copie o corpo vigente no SQL Editor (`select pg_get_functiondef('private."FC_X"(text)'::regprocedure);`) e ponha na migration
+  uma guarda pelo md5 do `prosrc` (modelo: a guarda de `20261109180000`), para não sobrescrever
+  uma mudança que você não viu.
+- **O rollback copia o corpo de antes** desse mesmo `pg_get_functiondef`, não de uma migration.
+- Os testes que precisavam do "antes" guardam só o trecho que usam, em fixture
+  (`tests/fixtures/banco-antes-do-catalogo-dos-robos.sql`, `tests/fixtures/sql-de-dados/`).
+- O histórico continua no Git: `git log --all -- supabase/migrations/<arquivo>` e
+  `git show <commit>:supabase/migrations/<arquivo>`.
 
 ## Passo a passo de uma migration nova
 
@@ -40,49 +60,22 @@ Por que não `db push`:
    (`SUPABASE_DB_URL` no ambiente, ex.: `node --env-file=.env.local scripts/estado-das-migrations.mjs`.)
    Marcar sem ter aplicado é a única forma de o registro mentir.
 
+7. **Atualizar o retrato**: `npm run db:esquema` regrava `supabase/esquema-atual.sql` a partir do
+   banco (pg_dump, só leitura). Commite o diff: ele é o registro legível do que a migration mudou.
+
 **Nunca editar uma migration já aplicada**: o hash deixa de bater (estado "divergente"). Mudou o
 efeito → migration nova.
 
 ## Onde fica cada coisa
 
-| Pasta                             | O que é                                                                                       | Aplica?                      |
-| --------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------- |
-| `supabase/migrations/`            | schema, em ordem de timestamp                                                                 | sim, uma a uma, e registra   |
-| `supabase/rollback/`              | como desfazer cada migration (mesmo nome)                                                     | só para desfazer             |
-| `supabase/ensaios/`               | ensaio de cada migration/correção, sempre termina em `rollback`                               | antes de aplicar (não grava) |
-| `supabase/tests/`                 | testes SQL de RPCs específicas                                                                | não grava                    |
-| `supabase/correcoes/`             | correções de dados (`AAAAMMDD-descricao.sql`), uma vez, à mão; registradas como `correcoes/…` | uma vez, e registra          |
-| `supabase/migrations-historicas/` | já aplicadas, mantidas só para histórico; perigosas se reaplicadas (ver o README de lá)       | **nunca**                    |
-| `supabase/descartadas/`           | decididas para nunca aplicar (acesso automático @agenciasus, bridge da IA local da Aya…)      | **nunca**                    |
+| Pasta                  | O que é                                                         | Aplica?                      |
+| ---------------------- | --------------------------------------------------------------- | ---------------------------- |
+| `supabase/migrations/` | schema, em ordem de timestamp                                   | sim, uma a uma, e registra   |
+| `supabase/rollback/`   | como desfazer cada migration (mesmo nome)                       | só para desfazer             |
+| `supabase/ensaios/`    | ensaio de cada migration/correção, sempre termina em `rollback` | antes de aplicar (não grava) |
+| `supabase/tests/`      | testes SQL de RPCs específicas                                  | não grava                    |
 
 `tests/migrations-pasta-limpa.test.js` garante que esta pasta só tem `.sql` com timestamp de 14
-dígitos e que nada de `descartadas/` volta para cá.
-
-## Timestamps repetidos (já aplicados; não renomear)
-
-O registro guarda o **caminho**: renomear um destes arquivos faria a migration aparecer como
-órfã e como pendente. Ficam como estão, e `tests/estado-das-migrations.test.js` impede um par
-novo.
-
-| Timestamp        | Arquivos                                                               |
-| ---------------- | ---------------------------------------------------------------------- |
-| `20260928180000` | `analises_do_painel_por_area`, `autoria_e_trava_da_lista_de_aprovados` |
-| `20260928190000` | `anexos_do_candidato_aprovado`, `remove_rpcs_do_painel_react`          |
-| `20260928200000` | `analises_painel_mais_leve`, `anexos_do_candidato_em_bytea`            |
-| `20261001150000` | `ausentes_com_permissao_do_sync`, `sub_judice_alteracao`               |
-| `20261002090000` | `convocacao_serie_mgi`, `kpis_depois_da_carga_da_selecao`              |
-| `20261013120000` | `esvaziar_logs`, `rascunho_das_regras`                                 |
-| `20261013140000` | `menos_chamadas_e_log`, `quadro_da_vaga_pelo_titulo`                   |
-
-## Pendentes antigas que a equipe ainda confirma
-
-A auditoria do registro (13/10/2026, `supabase/correcoes/20261013-registro-das-migrations.sql`)
-deixou sem registro, por não haver objeto para conferir, seis migrations de setembro que mexem
-só em dados, grants ou configuração. Continuam aqui (nenhuma depende de objeto removido) e
-aparecem como pendentes em `npm run db:estado` até alguém confirmar no banco e registrar:
-
-`20260909114500_platform_assets_6mb`,
-`20260921130000_corrige_acentos_das_funcoes_restantes`, `20260922120000_editais_existentes_como_usi`,
-`20260923153000_corrigir_concluido_saude_indigena`,
-`20260924112623_permitir_contexto_permissoes_autenticado`,
-`20260929180000_cce_e_escritorio_em_projetos`.
+dígitos, que cada migration tem rollback e ensaio com o mesmo nome e que as pastas de legado não
+voltam. Correção de dados de uso único vai junto da migration ou do script que a pede (com ensaio),
+não numa pasta própria.

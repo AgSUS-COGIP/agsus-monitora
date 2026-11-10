@@ -106,9 +106,9 @@ cada tabela, geral ou de cota, com empate de nota resolvido; sem migration); o c
 catálogo), `20261009130000_hora_de_nascimento_na_classificacao.sql` (hora da certidão para a maior
 idade: `TB_HORA_NASCIMENTO_CANDIDATO`, `salvar_hora_nascimento_candidato`; ensaio e rollback com o
 mesmo nome). Auditoria do 93/2026 (desempate do 10.1 na preliminar, quadro do 4.1):
-`supabase/correcoes/20261009-classificacao-93-desempate-e-quadro.sql` e
-`tests/classificacao-93-desempate.test.js`. Regras dos editais: `supabase/correcoes/20261002-regras-de-classificacao-83-e-100.sql` e
-`supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql` (131 editais lidos dos PDFs
+`tests/fixtures/sql-de-dados/20261009-classificacao-93-desempate-e-quadro.sql` e
+`tests/classificacao-93-desempate.test.js`. Regras dos editais: `tests/fixtures/sql-de-dados/20261002-regras-de-classificacao-83-e-100.sql` e
+`tests/fixtures/sql-de-dados/20261002-regras-de-classificacao-todos-os-editais.sql` (131 editais lidos dos PDFs
 oficiais, 13 modelos; aplicar depois da migration 20261002170000, rodando antes o ensaio
 `supabase/ensaios/20261002-regras-de-classificacao-todos-os-editais.sql`).
 Lista de aprovados: o resultado FINAL é a fonte da Lista de aprovados. "Publicar como lista de

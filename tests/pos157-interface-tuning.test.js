@@ -18,10 +18,6 @@ const publicacao = readFileSync(
   "utf8",
 );
 const governance = readFileSync("src/modulos/configuracoes/estado.ts", "utf8");
-const migration = readFileSync(
-  "supabase/migrations/20260909114500_platform_assets_6mb.sql",
-  "utf8",
-);
 
 describe("primeiro paint da tela de login", () => {
   it("não usa mais os fallbacks roxos do legado", () => {
@@ -196,12 +192,5 @@ describe("o reenquadramento não descarta o zoom da pessoa", () => {
     expect(handler).toContain(
       "if (enquadramentoProprio || !emOverview(map)) return;",
     );
-  });
-});
-
-describe("limite real do Storage", () => {
-  it("versiona o bucket platform-assets em 6 MB", () => {
-    expect(migration).toContain("file_size_limit = 6 * 1024 * 1024");
-    expect(migration).toContain("id = 'platform-assets'");
   });
 });

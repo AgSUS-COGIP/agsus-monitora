@@ -174,16 +174,6 @@ describe("intervalos e limite de online", () => {
     expect(LISTA_FECHADA_MS).toBe(10 * 60_000);
   });
 
-  it("o limite do banco (migration) é o mesmo da tela", () => {
-    const sql = readFileSync(
-      "supabase/migrations/20261103230000_presenca_enxuta.sql",
-      "utf8",
-    );
-    expect(sql).toContain(
-      `po.seen_at > timezone('utc', now()) - interval '${ONLINE_NO_BANCO_MS / 60_000} minutes'`,
-    );
-  });
-
   it("chamadas por hora de uma pessoa com a aba visível: 24 batidas, nada a mais", async () => {
     vi.useFakeTimers();
     const { presenca, cliente } = montar();

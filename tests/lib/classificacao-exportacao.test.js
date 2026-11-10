@@ -19,7 +19,7 @@ import { classificar } from "../../src/lib/classificacao/motor.ts";
   rodapé configurável; DOCX, XLSX e a página de impressão (PDF).
 */
 const SEED = readFileSync(
-  "supabase/correcoes/20261002-regras-de-classificacao-83-e-100.sql",
+  "tests/fixtures/sql-de-dados/20261002-regras-de-classificacao-83-e-100.sql",
   "utf8",
 );
 const inicio = SEED.indexOf("$regra100$") + 10;

@@ -28,7 +28,7 @@ const CASOS = JSON.parse(
 const modelosDaCorrecao = (arquivo) =>
   Object.fromEntries(
     [
-      ...ler(`supabase/correcoes/${arquivo}`).matchAll(
+      ...ler(`tests/fixtures/sql-de-dados/${arquivo}`).matchAll(
         /\('([A-Z0-9-]+)', '(?:[^']|'')*', \$modelo\$(.*?)\$modelo\$::jsonb\)/g,
       ),
     ].map((m) => [m[1], JSON.parse(m[2])]),
@@ -36,9 +36,9 @@ const modelosDaCorrecao = (arquivo) =>
 // 20261007-perguntas-pelo-texto.sql: o que muda na provisória de cada modelo.
 const PERGUNTAS_PELO_TEXTO = Object.fromEntries(
   [
-    ...ler("supabase/correcoes/20261007-perguntas-pelo-texto.sql").matchAll(
-      /\('([A-Z0-9-]+)', \$provisoria\$(.*?)\$provisoria\$::jsonb\)/g,
-    ),
+    ...ler(
+      "tests/fixtures/sql-de-dados/20261007-perguntas-pelo-texto.sql",
+    ).matchAll(/\('([A-Z0-9-]+)', \$provisoria\$(.*?)\$provisoria\$::jsonb\)/g),
   ].map((m) => [m[1], JSON.parse(m[2])]),
 );
 const comAsPerguntasPeloTexto = (codigo, m) =>
@@ -52,7 +52,7 @@ const comAsPerguntasPeloTexto = (codigo, m) =>
 const EXPERIENCIA_DECLARADA = Object.fromEntries(
   [
     ...ler(
-      "supabase/correcoes/20261007-declarada-experiencia-por-nivel.sql",
+      "tests/fixtures/sql-de-dados/20261007-declarada-experiencia-por-nivel.sql",
     ).matchAll(/\('([A-Z0-9-]+)', \$item\$(.*?)\$item\$::jsonb\)/g),
   ].map((m) => [m[1], JSON.parse(m[2])]),
 );
@@ -74,7 +74,7 @@ const comAExperienciaDeclarada = (codigo, m) =>
 // 20261007-perguntas-da-ficha-proj26.sql: a nota declarada de titulação e cursos do 93/2026.
 const DECLARADA_DA_FICHA = JSON.parse(
   /\$n\$(.*?)\$n\$/s.exec(
-    ler("supabase/correcoes/20261007-perguntas-da-ficha-proj26.sql"),
+    ler("tests/fixtures/sql-de-dados/20261007-perguntas-da-ficha-proj26.sql"),
   )[1],
 );
 const SI = modelosDaCorrecao("20261006-modelos-dos-editais-recentes.sql");
@@ -109,7 +109,7 @@ describe("correções dos modelos dos editais recentes", () => {
       ),
     ).toEqual(modelo("PROJ26-RIO-DOCE"));
     expect(
-      ler("supabase/correcoes/20261006-modelo-proj26-rio-doce.sql"),
+      ler("tests/fixtures/sql-de-dados/20261006-modelo-proj26-rio-doce.sql"),
     ).toMatch(/^\/\*\s+APLICAR DEPOIS DA F3\./);
   });
 
@@ -121,7 +121,9 @@ describe("correções dos modelos dos editais recentes", () => {
     ]);
     for (const [codigo, provisoria] of Object.entries(PERGUNTAS_PELO_TEXTO))
       expect(modelo(codigo).provisoria).toMatchObject(provisoria);
-    const sql = ler("supabase/correcoes/20261007-perguntas-pelo-texto.sql");
+    const sql = ler(
+      "tests/fixtures/sql-de-dados/20261007-perguntas-pelo-texto.sql",
+    );
     expect(sql).toContain("is distinct from");
     expect(sql).toContain(
       'perform private."FC_VALIDAR_REGRA_ANALISE"(v_modelo."DS_CONFIGURACAO");',
@@ -171,7 +173,7 @@ describe("correções dos modelos dos editais recentes", () => {
         modelo(codigo),
       );
     const sql = ler(
-      "supabase/correcoes/20261007-declarada-experiencia-por-nivel.sql",
+      "tests/fixtures/sql-de-dados/20261007-declarada-experiencia-por-nivel.sql",
     );
     expect(sql).toContain(
       'perform private."FC_VALIDAR_REGRA_ANALISE"(v_modelo."DS_CONFIGURACAO");',
@@ -185,7 +187,7 @@ describe("correções dos modelos dos editais recentes", () => {
     "20261006-modelos-dos-editais-recentes.sql",
     "20261006-modelo-proj26-rio-doce.sql",
   ])("%s é idempotente, valida no banco e fecha a transação", (arquivo) => {
-    const sql = ler(`supabase/correcoes/${arquivo}`);
+    const sql = ler(`tests/fixtures/sql-de-dados/${arquivo}`);
     expect(sql).toContain('on conflict ("CO_MODELO") do update');
     expect(sql).toContain(
       'perform private."FC_VALIDAR_REGRA_ANALISE"(v_modelo."DS_CONFIGURACAO");',

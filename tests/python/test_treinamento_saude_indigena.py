@@ -25,7 +25,6 @@ import gerar_treinamento as gerador  # noqa: E402
 AREA = "saude-indigena"
 CFG = gerador.AREAS[AREA]
 FIXTURE = json.loads(CFG["fixture"].read_text(encoding="utf-8"))
-MIGRATION = CFG["migration"].read_text(encoding="utf-8")
 
 
 def linhas():
@@ -37,26 +36,15 @@ class TestPreClassificacaoDoTreinamentoSI(unittest.TestCase):
         # A lista das cotas (20261015150000) é posterior ao resultado guardado: sem ela, o mesmo.
         self.assertEqual(gerador.sem_a_lista_padrao(gerador.calcular(FIXTURE["entrada"])), FIXTURE["resultado"])
 
-    def test_a_migration_grava_o_mesmo_resultado(self):
-        self.assertEqual(gerador.bloco_da_migration(MIGRATION, AREA), FIXTURE["resultado"])
-
-    def test_os_blocos_das_duas_areas_nao_se_confundem(self):
-        self.assertNotIn("-- pre-classificacao-do-treinamento:inicio", MIGRATION)
-        with self.assertRaises(ValueError):
-            gerador.bloco_da_migration(MIGRATION, "projetos")
-
     def test_a_regra_e_a_do_111_conferida(self):
         regra = FIXTURE["entrada"]["edital"]["regra"]
         self.assertEqual(regra["situacao"], "CONFERIDA")
         self.assertEqual(regra["configuracao"]["modelo"], "SI26-PARINTINS")
         self.assertEqual(regra["configuracao"]["edital_rotulo"], "Edital 991/2099 (TREINAMENTO)")
         self.assertEqual(regra["configuracao"]["lote"]["base"], "MULTIPLO_VAGAS")
-        # As perguntas ligadas aos blocos casam com os enunciados do questionário da migration.
         blocos = {b["codigo"]: b for b in regra["configuracao"]["blocos"]}
         for codigo in ("IDENTIDADE", "ESCOLARIDADE", "ETNICO", "FORMACAO", "EXPERIENCIA", "COTA_PP", "COTA_PCD"):
             self.assertTrue(blocos[codigo]["perguntas"], codigo)
-            for pergunta in blocos[codigo]["perguntas"]:
-                self.assertIn(pergunta, MIGRATION, pergunta)
 
     def test_contagens(self):
         r = FIXTURE["resultado"]["edital"]
@@ -106,7 +94,7 @@ class TestPreClassificacaoDoTreinamentoSI(unittest.TestCase):
         texto = json.dumps(FIXTURE, ensure_ascii=False)
         for c in (c for v in FIXTURE["entrada"]["candidatos"].values() for c in v["candidatos"]):
             self.assertRegex(c["codigo"], r"^TREINO-[0-9]{2}$")
-        cpfs = set(re.findall(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b", texto + MIGRATION))
+        cpfs = set(re.findall(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b", texto))
         self.assertLessEqual(cpfs, {"000.000.000-00"})
         emails = set(re.findall(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+", texto))
         self.assertTrue(all(e.endswith("@exemplo.invalid") for e in emails), emails)

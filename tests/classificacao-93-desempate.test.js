@@ -16,15 +16,15 @@ import { validarRegra } from "../src/lib/classificacao/regra.ts";
   c) maior idade com a hora da certidão, 6.11.5/6.11.6; 4.1 vagas por
   modalidade). Casos montados a partir dos padrões reais do 93 (códigos e
   nomes fictícios, sem dado pessoal). A regra é a do seed (02/10/2026) com o
-  $patch$ da correção supabase/correcoes/20261009-classificacao-93-desempate-e-quadro.sql.
+  $patch$ da correção tests/fixtures/sql-de-dados/20261009-classificacao-93-desempate-e-quadro.sql.
 */
 
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
 const SEED = ler(
-  "supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql",
+  "tests/fixtures/sql-de-dados/20261002-regras-de-classificacao-todos-os-editais.sql",
 );
 const CORRECAO = ler(
-  "supabase/correcoes/20261009-classificacao-93-desempate-e-quadro.sql",
+  "tests/fixtures/sql-de-dados/20261009-classificacao-93-desempate-e-quadro.sql",
 );
 
 const REGRA_SEED = JSON.parse(

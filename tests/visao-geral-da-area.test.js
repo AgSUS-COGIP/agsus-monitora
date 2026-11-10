@@ -187,7 +187,7 @@ describe("municípios do mapa", () => {
   projetos e editais dele.
 */
 const SQL_DOS_LOCAIS = readFileSync(
-  "supabase/correcoes/20261001-locais-das-vagas-dos-projetos.sql",
+  "tests/fixtures/sql-de-dados/20261001-locais-das-vagas-dos-projetos.sql",
   "utf8",
 );
 

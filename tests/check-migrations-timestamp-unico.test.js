@@ -69,13 +69,27 @@ describe("timestamp das migrations do PR contra a main", () => {
     ]);
   });
 
-  it("migration da main renomeada ou apagada no PR falha", () => {
+  it("migration da main apagada no PR só avisa (as aplicadas saem do repositório)", () => {
+    const { erros, avisos } = compararMigrations(MAIN, [
+      "20261105170000_leitura_da_api_de_editais.sql",
+    ]);
+    expect(erros).toEqual([]);
+    expect(avisos).toEqual([
+      expect.stringContaining(
+        "1 migration(s) da main saíram neste PR (20261105190000_area_na_api.sql)",
+      ),
+    ]);
+  });
+
+  it("renomear mantendo o timestamp continua falhando", () => {
     const { erros } = compararMigrations(MAIN, [
       "20261105170000_leitura_da_api_de_editais.sql",
-      "20261106100000_area_na_api.sql",
+      "20261105190000_area_na_api_renomeada.sql",
     ]);
     expect(erros).toEqual([
-      expect.stringContaining("20261105190000_area_na_api.sql: está na main"),
+      expect.stringContaining(
+        "20261105190000_area_na_api_renomeada.sql: o timestamp 20261105190000 já existe na main",
+      ),
     ]);
   });
 

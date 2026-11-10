@@ -1,13 +1,13 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 /*
-  A PASTA DE MIGRATIONS SÓ TEM O QUE SE APLICA (20/10/2026)
+  A PASTA DE MIGRATIONS SÓ TEM O QUE SE APLICA
 
   `supabase/migrations/` é a fila de schema: tudo ali é aplicável, em ordem de
-  timestamp. O que nunca deve correr foi para `supabase/descartadas/` (decisão)
-  e o que já correu e seria perigoso reaplicar foi para
-  `supabase/migrations-historicas/`. Processo em `supabase/migrations/README.md`.
+  timestamp. As migrations já aplicadas saíram do repositório em 10/11/2026 (seguem
+  no banco e no registro `public.migracoes_aplicadas`); a pasta guarda só as que
+  ainda importam. Processo em `supabase/migrations/README.md`.
 */
 const MIGRATIONS = "supabase/migrations";
 const nomes = readdirSync(MIGRATIONS);
@@ -19,25 +19,20 @@ describe("supabase/migrations", () => {
       (n) => n !== "README.md" && !/^\d{14}_[a-z0-9_]+\.sql$/.test(n),
     );
     expect(foraDoPadrao).toEqual([]);
-    expect(sql.length).toBeGreaterThan(100);
   });
 
-  it("nenhuma descartada voltou para a pasta", () => {
-    const descartadas = readdirSync("supabase/descartadas").filter((n) =>
-      n.endsWith(".sql"),
-    );
-    expect(descartadas).toEqual(
-      expect.arrayContaining([
-        "20260929190000_acesso_basico_institucional.sql",
-        "20260918120000_registro_do_bridge_da_aya.sql",
-      ]),
-    );
-    expect(sql.filter((n) => descartadas.includes(n))).toEqual([]);
+  it("toda migration tem rollback e ensaio com o mesmo nome", () => {
+    for (const n of sql) {
+      expect(existsSync(`supabase/rollback/${n}`), `rollback de ${n}`).toBe(
+        true,
+      );
+      expect(existsSync(`supabase/ensaios/${n}`), `ensaio de ${n}`).toBe(true);
+    }
   });
 
   /*
-    Mesmo com outro nome: o acesso automático por domínio e o bridge da IA local
-    foram decisões de nunca aplicar.
+    O acesso automático por domínio e o bridge da IA local foram decisões de
+    nunca aplicar: nada os recria, nem com outro nome.
   */
   it("nada recria o acesso automático nem o bridge da Aya", () => {
     expect(
@@ -45,29 +40,12 @@ describe("supabase/migrations", () => {
     ).toEqual([]);
   });
 
-  it("nenhuma histórica foi duplicada na pasta", () => {
-    const historicas = readdirSync("supabase/migrations-historicas").filter(
-      (n) => n.endsWith(".sql"),
-    );
-    expect(historicas).toEqual(
-      expect.arrayContaining([
-        "add_update_user_access_rpc.sql",
-        "restrict_access_management_to_master.sql",
-        "20260624_access_requests_and_panel_permissions.sql",
-      ]),
-    );
-    expect(sql.filter((n) => historicas.includes(n))).toEqual([]);
-  });
-
-  it("descartadas e históricas explicam cada arquivo no README", () => {
+  it("as pastas de legado não voltaram", () => {
     for (const pasta of [
-      "supabase/descartadas",
       "supabase/migrations-historicas",
-    ]) {
-      const leia = readFileSync(`${pasta}/README.md`, "utf8");
-      for (const n of readdirSync(pasta).filter((x) => x.endsWith(".sql"))) {
-        expect(leia, `${pasta}/README.md não cita ${n}`).toContain(n);
-      }
-    }
+      "supabase/descartadas",
+      "supabase/correcoes",
+    ])
+      expect(existsSync(pasta), pasta).toBe(false);
   });
 });
