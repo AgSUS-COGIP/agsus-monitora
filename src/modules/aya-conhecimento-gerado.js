@@ -3290,6 +3290,23 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Convocação para entrevista e para contratação",
+    perguntas: [
+      "convocacao para entrevista ou contratacao",
+      "diferenca entre convocar para entrevista e para contratacao",
+      "para contratacao para entrevistas",
+      "onde convocar para entrevista",
+      "central de convocacoes",
+    ],
+    resposta:
+      'Na aba Convocação, o bloco Convocações separa as duas etapas, cada uma com a sua lista, regra e histórico. "Para contratação" mostra logo abaixo a ordem de chamada, as cartas e os status, calculados pela lista vigente de aprovados. "Para entrevistas" (só para quem tem acesso às Entrevistas) leva aonde a convocação para entrevista acontece: ela parte da lista registrada na Classificação ("Abrir listas da Classificação") e convocar ou desconvocar continua em Conduzir entrevistas ("Abrir Convocação para entrevistas"), com as permissões e o histórico de lá.',
+    fato: "",
+    fonte:
+      "src/modulos/aprovados/central-de-convocacoes.tsx; src/modulos/aprovados/aba-convocacao.tsx",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "A convocar na ordem de chamada",
     perguntas: [
       "a convocar",

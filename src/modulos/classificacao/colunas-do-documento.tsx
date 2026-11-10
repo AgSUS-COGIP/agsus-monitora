@@ -63,11 +63,6 @@ export function ColunasDoDocumento({
 
   return (
     <div className="classificacao-colunas">
-      <p className="ui-texto-secundario classificacao-colunas-ajuda">
-        Escolha o que aparece na tabela de cada vaga. Use as setas ou arraste
-        para mudar a ordem.
-      </p>
-
       <h3 className="classificacao-colunas-titulo">
         No documento <span>({noDocumento.length})</span>
       </h3>
