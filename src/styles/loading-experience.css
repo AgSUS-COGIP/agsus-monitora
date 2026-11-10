@@ -75,14 +75,14 @@ body.config-loading .loader {
 .loader-brand strong {
   color: var(--agsus-azul);
   font-size: 17px;
-  font-weight: 950;
+  font-weight: 600;
   letter-spacing: 0.035em;
 }
 
 .loader-brand small {
   color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 750;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .loader-status {
@@ -119,7 +119,7 @@ body.config-loading .loader {
   background: var(--surface-raised);
   color: var(--agsus-azul);
   font-size: 13px;
-  font-weight: 900;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   text-align: center;
 }
@@ -158,8 +158,8 @@ body.config-loading .loader {
   gap: 7px;
   margin-top: 16px;
   color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 750;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .loader-safe i {
@@ -171,7 +171,7 @@ body.config-loading .loader {
   margin-top: 12px;
   color: var(--text-secondary);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 500;
   line-height: 1.45;
   text-align: center;
 }
@@ -194,7 +194,7 @@ body.config-loading .loader {
   background: var(--surface-card);
   color: var(--agsus-azul);
   font: inherit;
-  font-weight: 850;
+  font-weight: 600;
   cursor: pointer;
   box-shadow: var(--shadow-sm);
 }

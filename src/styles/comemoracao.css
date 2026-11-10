@@ -57,7 +57,7 @@
 }
 .comemoracao--festa strong {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
 }
 .comemoracao--festa .comemoracao__selo {
   background: var(--state-warning-soft);
@@ -268,7 +268,7 @@ html[data-theme="dark"] .comemoracao__veu {
     Arial,
     sans-serif;
   font-size: 1em;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.1;
   letter-spacing: -0.01em;
   white-space: nowrap;
