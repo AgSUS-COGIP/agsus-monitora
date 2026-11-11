@@ -39,6 +39,8 @@ const estado: EstadoDaAbaDeAprovados = {
   abrirCarta: () => {},
   abrirAlteracaoJudicial: () => {},
   removerSubJudice: async () => true,
+  alterarStatusEmLote: async () => null,
+  carta: { hoje: () => "2026-11-11" },
 };
 const props: PropsDaAbaDeAprovados = {
   ativa: true,
