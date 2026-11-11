@@ -147,6 +147,8 @@ function supabaseFalso({
         data: { arquivo_nome: "termo.pdf", arquivo_base64: btoa("%PDF-1.4") },
         error: null,
       };
+    if (nome === "alterar_status_candidatos_aprovados")
+      return { data: { marcados: 2, ignorados: [] }, error: null };
     if (nome === "listar_modelos_convocacao") return { data: [], error: null };
     if (nome === "listar_configuracao_convocacao")
       return { data: [], error: null };
@@ -2525,5 +2527,81 @@ describe("Exportar a lista de aprovados (issue #583)", () => {
     );
     await clicar($("approvedTabConvocacao"));
     expect($("approvedHeadActions").classList.contains("hidden")).toBe(true);
+  });
+});
+
+/*
+  Status em lote (11/11/2026): quem muda status marca as linhas (ou todas as da
+  tabela) e muda de uma vez; a janela mostra quem fica de fora e por quê.
+*/
+describe("status em lote", () => {
+  it("seleciona todos, mostra quem fica de fora e grava só os que mudam", async () => {
+    const { supabase, toast } = await montar();
+    expect(
+      acharTodos("[data-selecao-do-candidato]").length,
+    ).toBeGreaterThanOrEqual(3);
+    await clicar(achar("[data-status-em-lote] input"));
+    expect(achar("[data-status-em-lote]").textContent).toContain(
+      "selecionados",
+    );
+    await clicar(achar("[data-abrir-status-em-lote]"));
+    const opcoes = [
+      ...$<HTMLSelectElement>("approvedStatusEmLoteSelect").options,
+    ].map((o) => o.value);
+    expect(opcoes).toEqual([
+      "Convocado",
+      "Desistente",
+      "Documentação Rejeitada",
+    ]);
+    await escolher($("approvedStatusEmLoteSelect"), "Desistente");
+    // Ana já é Contratado: quem edita não muda status definido.
+    expect(achar("[data-fora-do-lote]").textContent).toContain(
+      "Status já definido (Contratado): só o admin muda",
+    );
+    const confirmar = achar<HTMLButtonElement>("[data-confirmar-lote]");
+    expect(confirmar.textContent).toBe("Mudar 2 candidatos para Desistente");
+
+    supabase.rpc.mockClear();
+    await clicar(confirmar);
+    const chamada = supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "alterar_status_candidatos_aprovados",
+    );
+    expect(chamada?.[1]).toEqual({
+      p_candidatos: expect.arrayContaining(["bruno", "carla"]),
+      p_status: "Desistente",
+    });
+    expect(
+      (chamada?.[1] as { p_candidatos: string[] }).p_candidatos,
+    ).toHaveLength(2);
+    expect(talvez("approvedStatusEmLoteModal")).toBeNull();
+    expect(toast).toHaveBeenCalledWith(
+      "2 candidato(s) agora como Desistente.",
+      "success",
+    );
+    expect(document.querySelector("[data-abrir-status-em-lote]")).toBeNull();
+  });
+
+  it("Convocado leva a data; marcar uma linha só muda aquela", async () => {
+    const { supabase } = await montar();
+    await clicar(achar("[data-selecao-do-candidato]", linhaDe("Bruno Lima")));
+    await clicar(achar("[data-abrir-status-em-lote]"));
+    const data = $<HTMLInputElement>("approvedStatusEmLoteData");
+    expect(data.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    supabase.rpc.mockClear();
+    await clicar(achar("[data-confirmar-lote]"));
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "alterar_status_candidatos_aprovados",
+      {
+        p_candidatos: ["bruno"],
+        p_status: "Convocado",
+        p_data_convocacao: data.value,
+      },
+    );
+  });
+
+  it("quem só lê não vê seleção", async () => {
+    await montar({ perfil: { permissoes: { aprovados: "leitor" } } });
+    expect(document.querySelector("[data-selecao-do-candidato]")).toBeNull();
+    expect(document.querySelector("[data-status-em-lote]")).toBeNull();
   });
 });

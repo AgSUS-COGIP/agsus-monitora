@@ -731,3 +731,50 @@ table.mobile-card-table td.approved-actions {
   font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
 }
+
+/* Status em lote (aba-aprovados.tsx, status-em-lote.tsx): a faixa da seleção e o resumo da janela. */
+.approved-lote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.approved-lote__todos {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.approved-lote__quantos {
+  margin-inline-start: auto;
+}
+
+.approved-selecao {
+  margin-inline-end: var(--space-2);
+  vertical-align: middle;
+}
+
+.approved-lote-resumo {
+  display: grid;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+  font-size: var(--text-body-sm);
+}
+
+.approved-lote-resumo p,
+.approved-lote-resumo ul {
+  margin: 0;
+}
+
+.approved-lote-aviso {
+  color: var(--state-danger);
+}

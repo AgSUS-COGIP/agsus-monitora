@@ -1236,6 +1236,90 @@ export function criarEstadoDaListaDeAprovados({
   }
 
   /*
+    Status em lote (aba Aprovados, 11/11/2026): Convocado (uma data para todos),
+    Desistente, Documentação Rejeitada ou sem status (admin), até 500. O banco
+    repete as regras de um candidato, um a um, e devolve os que recusou em
+    "ignorados", como na marcação de convocados.
+  */
+  async function alterarStatusEmLote(
+    candidatoIds: readonly (string | number | undefined)[],
+    status: string,
+    data = "",
+  ) {
+    const ids = (candidatoIds || []).map(String).filter(Boolean);
+    if (!ids.length || !supabase) return null;
+    if (!canChangeCandidateStatus(perfil())) {
+      toast("Sem permissão para alterar o status.", "warn");
+      return null;
+    }
+    const novo = text(status);
+    const dia = statusEhConvocado(novo) ? text(data) || hoje() : "";
+    if (dia > hoje()) {
+      toast("A data da convocação não pode ser futura.", "warn");
+      return null;
+    }
+    const resultado = await executar(
+      "status-em-lote",
+      "Salvando…",
+      async () => {
+        const { data: resposta, error } = await supabase.rpc(
+          "alterar_status_candidatos_aprovados",
+          {
+            p_candidatos: ids,
+            p_status: novo || null,
+            ...(dia ? { p_data_convocacao: dia } : {}),
+          },
+        );
+        if (error) {
+          toast(`Erro ao alterar status: ${mensagemDe(error)}`, "error");
+          return null;
+        }
+        const confirmado = resultadoDaMarcacao(resposta, ids);
+        if (!confirmado) {
+          toast(
+            "Não foi possível confirmar quais candidatos mudaram. Atualize a lista antes de tentar novamente.",
+            "error",
+          );
+          return null;
+        }
+        const { marcados, ignorados } = confirmado;
+        const fora = new Set(ignorados.map((i) => String(i.candidato_id)));
+        const mudaram = new Set(ids.filter((id) => !fora.has(id)));
+        // Como o banco gravou: a data só no Convocado (sem status, some; nos
+        // outros, fica a de antes); a matrícula sai em todos.
+        let convocacoes = estado.convocacoes;
+        for (const id of mudaram)
+          convocacoes = comConvocacao(
+            convocacoes,
+            id,
+            dia || (novo ? estado.convocacoes.get(id)?.data : ""),
+          );
+        aplicarLocal({
+          candidatos: estado.candidatos.map((row) =>
+            mudaram.has(String(row.candidato_id))
+              ? { ...row, status: novo || null, matricula: null }
+              : row,
+          ),
+          convocacoes,
+        });
+        const destino = novo || "sem status";
+        toast(
+          ignorados.length
+            ? `${marcados} candidato(s) agora ${novo ? "como " : ""}${destino}. Ficaram de fora ${ignorados.length}: ${ignorados
+                .slice(0, 5)
+                .map((i) => `${i.nome || "candidato"} (${i.motivo})`)
+                .join("; ")}${ignorados.length > 5 ? "…" : "."}`
+            : `${marcados} candidato(s) agora ${novo ? "como " : ""}${destino}.`,
+          ignorados.length ? "warn" : "success",
+        );
+        return { marcados, ignorados };
+      },
+    );
+    if (resultado) void carregar({ emSegundoPlano: true });
+    return resultado || null;
+  }
+
+  /*
     O PDF vem do banco em base64 e abre numa aba nova por um endereço `blob:`,
     que é liberado um minuto depois (a aba já o carregou).
   */
@@ -1843,6 +1927,7 @@ export function criarEstadoDaListaDeAprovados({
     abrirCarta,
     abrirModelosDaCarta,
     marcarConvocados,
+    alterarStatusEmLote,
     carta,
     /* Baixa um arquivo gerado na tela (o CSV da ordem de convocação). */
     baixarArquivo: (arquivo: Blob, nome: string) => baixar(arquivo, nome),

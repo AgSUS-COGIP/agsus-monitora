@@ -3438,6 +3438,25 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Mudar o status de vários candidatos",
+    perguntas: [
+      "mudar status de varios",
+      "mudar status em lote",
+      "selecionar varios candidatos",
+      "selecionar todos os candidatos",
+      "status em massa",
+      "marcar varios como desistente",
+      "convocar varios de uma vez",
+    ],
+    resposta:
+      'Na aba Aprovados, quem tem Editor em Aprovados marca a caixa ao lado do nome de cada candidato, ou "Selecionar os N da tabela" para pegar todos os filtrados e buscados (não só as linhas desenhadas), e clica em "Mudar status". Em lote dá para escolher Convocado (com uma data para todos), Desistente ou Documentação Rejeitada; "Sem status" é só do Administrador em Aprovados. Contratado e Migração pedem a matrícula de cada um e continuam pelo botão de status da linha. Antes de gravar, a janela mostra quantos mudam, como estão hoje e quem fica de fora e por quê (já no status, lista inativa ou status definido que só o Administrador muda). São até 500 por vez, e cada mudança fica no histórico do candidato. Mudar um filtro ou a busca limpa a seleção.',
+    fato: "",
+    fonte:
+      "src/modulos/aprovados/status-em-lote.tsx; src/lib/status-em-lote-dos-aprovados.ts; supabase/migrations/20261111180000_status_em_lote_dos_aprovados.sql",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Cadeado no status do candidato",
     perguntas: [
       "cadeado no status",

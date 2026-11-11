@@ -648,6 +648,12 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     resumo:
       "Altera o status de um candidato (Convocado, Contratado, Contratado em outra lista, Desistente, Migração, Documentação Rejeitada ou nulo), com processo SEI, matrícula e a data da convocação (Convocado). Status já definido só o admin altera, exceto do Convocado para outro status.",
   },
+  alterar_status_candidatos_aprovados: {
+    argumentos: ["p_candidatos", "p_status", "p_data_convocacao"],
+    critica: false,
+    resumo:
+      "Status em lote na aba Aprovados (20261111180000): Convocado (com a data), Desistente, Documentação Rejeitada ou sem status (só admin), até 500; as regras de um candidato, um a um, e os que não passam voltam em ignorados com o motivo. Aprovados editor.",
+  },
   marcar_candidatos_convocados: {
     argumentos: ["p_candidatos", "p_data_convocacao", "p_carta"],
     critica: false,
