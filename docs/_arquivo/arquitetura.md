@@ -138,7 +138,7 @@ Migrations de 29/09 (`20260929121000` a `121300`, já aplicadas; `190000` a `190
 
 ## Front
 
-> **Substituído em 01/10/2026 por [`docs/arquitetura-react.md`](arquitetura-react.md)** (app
+> **Substituído em 01/10/2026 por [`docs/arquitetura-react.md`](../arquitetura-react.md)** (app
 > React único com `src/app/`, `src/ui/`, `src/modulos/`; JavaScript, sem biblioteca nova de
 > estado/dados; ordem das etapas). O texto abaixo fica como histórico da proposta.
 

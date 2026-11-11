@@ -3,7 +3,7 @@ import type { KeyboardEvent } from "react";
 import { classes } from "./classes.ts";
 
 /*
-  Controle segmentado (DESIGN.md, "Controle segmentado"; `.ui-segmentado`):
+  Controle segmentado (`.ui-segmentado`):
   poucas opções lado a lado, uma escolhida. É um `radiogroup`: só a escolhida
   entra no Tab, e as setas ← → movem a escolha (e o foco), dando a volta.
   Sem escolha válida, a primeira opção recebe o Tab.

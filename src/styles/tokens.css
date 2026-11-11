@@ -9,14 +9,14 @@
   `--state-*`, `--series-*`…) continuam existindo e agora apontam para os
   oficiais: quem já usava token muda de cor sem mudar de código. As variáveis
   antigas de `app.css` (`--card`, `--line`, `--muted`, `--navy`…) fazem o
-  mesmo, lá. Divergências que ainda restam: DESIGN.md, seção "Design System AgSUS".
+  mesmo, lá. Exceções aceitas: docs/biblioteca/design-e-tokens.md.
 
   Importado antes de qualquer outro CSS em `src/main.ts` e nos painéis do
   quadro (`src/entrevistas|selecao/main.jsx`). As camadas (`--z-*`) continuam em `app.css`.
 */
 /*
   A tela de acesso tem paleta própria, clara nos dois temas (o painel é a cor
-  configurada; DESIGN.md seção 5): o primeiro seletor devolve a ela os valores
+  configurada; docs/biblioteca/design-e-tokens.md, "Tema escuro"): o primeiro seletor devolve a ela os valores
   claros quando a página está no escuro (sem isto, o aviso de erro do login
   saía rosa-claro sobre rosa-claro, 1,91:1). A página de solicitação de acesso
   (body.access-request-mode) segue o tema do app: o formulário é uma
@@ -287,7 +287,7 @@ body:not(.access-request-mode) .login-screen,
   --state-neutral-soft: var(--color-status-neutral-bg);
 
   /* Até 5 categorias (seção 13.4); a 6ª é a escala sequencial clara. */
-  /* Séries de gráfico e mapa: DESIGN.md seção 6 (azul, laranja, ciano,
+  /* Séries de gráfico e mapa: docs/biblioteca/design-e-tokens.md (azul, laranja, ciano,
      violeta, magenta, oliva). Antes eram três azuis e um cinza. */
   --series-1: #0f5db7;
   --series-2: #eb6834;
@@ -296,7 +296,7 @@ body:not(.access-request-mode) .login-screen,
   --series-5: #d55181;
   --series-6: #8a6d00;
 
-  /* Terras Indígenas (domínio, não paleta: DESIGN.md 3.1): as mesmas
+  /* Terras Indígenas (domínio, não paleta): as mesmas
      constantes de `indigenous-territories-layer.js` — o botão da camada e a
      legenda do mapa da Saúde Indígena leem daqui
      (`tests/cor-da-terra-indigena.test.js` confere). */
@@ -382,7 +382,7 @@ body:not(.access-request-mode) .login-screen,
   Tema escuro: os tokens semânticos oficiais ganham o valor escuro aqui, e os
   nomes do MONITORA (que no claro apontam para eles) os acompanham. Assim, quem
   usa token — oficial ou do MONITORA — muda de cor sem regra própria
-  (DESIGN.md, seção 5). Antes só os nomes do MONITORA tinham valor escuro: um
+  (docs/biblioteca/design-e-tokens.md, "Tema escuro"). Antes só os nomes do MONITORA tinham valor escuro: um
   componente com `--color-bg-selected` ou `--color-text-brand` ficava claro no
   escuro (fundo quase branco com texto claro). Os primitivos (`--color-blue-*`,
   `--color-neutral-*`…) não mudam: são cor fixa, não papel.

@@ -41,7 +41,7 @@ Lógica pura em `src/lib/`:
   última ficha do edital, que ganha a própria comemoração ([[modulo-encerramento-do-edital]]).
 - **Uma vez por pessoa e navegador.** A primeira leitura é linha de base, em silêncio; comemora a
   transição vista depois (`avaliarMarco` em `src/app/comemoracao-sob-demanda.ts`).
-- **Frases sem emoji.** O aviso já tem o ícone de festa (DESIGN.md: nenhum emoji no lugar de
+- **Frases sem emoji.** O aviso já tem o ícone de festa (Design System, seção 14: nenhum emoji no lugar de
   ícone). A frase diz o que aconteceu e agradece à equipe da área (`equipeDaArea`).
 - **Letreiro**: até 14 caracteres (`TAMANHO_MAXIMO_DO_LETREIRO`); o do marco no catálogo, o pedido
   pela comemoração ou, no Festa, "Parabéns!". Contraste conferido em `letreiro.ts`

@@ -7,9 +7,9 @@ atualizado: 2026-11-10
 # Mapas e Leaflet
 
 O MONITORA tem dois mapas, os dois em Leaflet e em TypeScript: o da Saúde Indígena (nacional e por
-DSEI) e o de Projetos, ligados na Visão geral da área. O guia de uso para quem opera (Mapa e
-Satélite, marcadores, zoom, quedas de camada, lista de unidades) está em
-[docs/nucleo-e-mapas.md](../nucleo-e-mapas.md), seção "Mapas".
+DSEI) e o de Projetos, ligados na Visão geral da área. O que a pessoa vê (Mapa e Satélite,
+marcadores, lista de unidades) é explicado pela Aya, em `docs/aya/regras-dos-mapas.md` e
+`docs/aya/regras-do-mapa-saude-indigena.md`.
 
 ## Onde fica
 
@@ -31,16 +31,20 @@ Satélite, marcadores, zoom, quedas de camada, lista de unidades) está em
 
 ## Regras de comportamento
 
-- **A forma é a informação, a cor é reforço:** círculo = polo base (laranja), casa = CASAI
-  (vermelho), cruz = UBSI (roxo), losango = unidade de saúde (azul-petróleo). A legenda desenha as
-  mesmas formas.
+- **A forma é a informação, a cor é reforço:** estrela = sede do DSEI, círculo = polo base, casa =
+  CASAI, cruz = UBSI, losango = outra unidade de saúde (formas e cores em
+  `src/lib/mapa-saude-indigena/formas.ts`). A legenda desenha as mesmas formas.
 - Enquadramento inicial pelo contorno real do Brasil; arrastar não sai para o oceano aberto nem
-  cria cópias laterais do mundo. Zoom máximo: 18 no OpenStreetMap, 19 no CARTO e no satélite.
-- Escolha Mapa/Satélite guardada no navegador, uma para o app inteiro, aplicada quando cada mapa é
-  criado.
-- Quedas automáticas: quatro ladrilhos seguidos falhando no OSM → CARTO; quatro falhando no
-  satélite → volta ao mapa e grava a preferência (o seletor pisca uma vez). Um ladrilho que carrega
-  zera a contagem. Mapa cinza nas duas camadas = rede ou acesso aos fornecedores, não dados.
+  cria cópias laterais do mundo. Zoom de 4.5 a 19 (`MAP_MIN_ZOOM`/`MAP_MAX_ZOOM`).
+- Escolha Mapa/Satélite guardada no navegador (`agsus_map_base_layer_v1`), uma para o app inteiro,
+  aplicada quando cada mapa é criado.
+- Fundo com recurso (`adicionarFundo`, `leaflet.ts`): OpenStreetMap e, com quatro azulejos
+  seguidos falhando, o satélite da Esri. A CARTO saiu: sem chave, devolve 200 com o azulejo "API
+  KEY REQUIRED" e nunca falha. O seletor também troca sozinho de modo com quatro falhas seguidas
+  (`SATELLITE_ERROR_LIMIT`); um azulejo que carrega zera a contagem. Mapa cinza nas duas camadas =
+  rede ou acesso aos fornecedores, não dados.
+- Em aberto: se os termos do ArcGIS World Imagery permitem o uso como base, se vale ter chave da
+  CARTO e se o OpenStreetMap continua primário (a política dele desaconselha tráfego de aplicação).
 - **As coordenadas vêm só do banco** ([[coordenadas]]).
 - Cores de série dos projetos: `--series-*` ([[design-e-tokens]]).
 

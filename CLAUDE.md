@@ -28,7 +28,7 @@ assunto antes de mexer; **não rode `find`/`ls`/`tree` para descobrir a estrutur
 - Nenhum `MutationObserver` novo; nenhum remendo novo (`*-fix`, `*-refinement`, `post-N…`,
   `window.navigate = …` por outro módulo): mude a fonte.
 - HTML dinâmico só por `src/lib/sanitize.ts` / `html-security.ts`; nunca `innerHTML` cru.
-- CSS segue o `DESIGN.md` (seção 0 primeiro): token em vez de hex, sem `!important`/`#id` novos.
+- CSS segue as regras de ouro de [[design-e-tokens]]: token em vez de hex, sem `!important`/`#id` novos.
 - Interface sem textos genéricos: explicação é com a Aya (`docs/aya/`); data de atualização
   discreta e uma vez só.
 - Arquivo gerado se edita na fonte e se regenera com o script. Endereço de planilha só em
@@ -62,7 +62,7 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
 - [[regras-do-codigo]] · [[typescript-no-front]] · [[logica-em-src-lib]] · [[mapa-do-repositorio]]
 - [[carga-da-entrada]] · [[areas-do-sistema]] · [[aya-base-de-conhecimento]]
 - Visual: [[design-e-tokens]] · [[componentes-padrao]] · [[css]] · [[textos-da-interface]] ·
-  [[acessibilidade]] · [[mobile]] · [[icones]] (guia normativo: `DESIGN.md`, na raiz)
+  [[acessibilidade]] · [[mobile]] · [[icones]] (norma: `docs/design-system-agsus.md`)
 - Mapas: [[mapas-e-leaflet]] · [[terras-indigenas]] · [[coordenadas]]
 
 **Banco**
@@ -96,9 +96,9 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
 
 ## Documentos longos de referência (`docs/`)
 
-Leia só a seção do assunto: `docs/arquitetura-react.md` e `docs/arquitetura/raiz-react.md` (alvo
-do front), `docs/banco-de-dados.md` (modelo e história do banco), `docs/design-system-agsus.md`
+Leia só a seção do assunto: `docs/arquitetura-react.md` (alvo
+do front, raiz única e rotas), `docs/banco-de-dados.md` (modelo e história do banco), `docs/design-system-agsus.md`
 (norma visual), `docs/python-no-monitora.md`, `docs/agenda-dos-robos.md`,
 `docs/robo-empregare.md`, `docs/leitura-dos-arquivos.md`, `docs/sincronizacao-das-planilhas.md`,
-`docs/typescript-no-frontend.md`, `docs/analises-no-monitora/` e `docs/historias-de-usuario/`.
+`docs/typescript-no-frontend.md`, `docs/analises-no-monitora/regras-dos-editais-recentes.md` e `docs/historias-de-usuario/`.
 Lista completa em `docs/CLAUDE.md`; o que saiu de uso fica em `docs/_arquivo/`.

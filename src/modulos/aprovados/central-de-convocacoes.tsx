@@ -10,7 +10,7 @@ import { Aviso, Carregando, Segmentado } from "../../ui/index.ts";
 
 export type TipoDaCentralDeConvocacoes = "entrevista" | "contratacao";
 
-/* As duas convocações, no controle segmentado do design system (DESIGN.md). */
+/* As duas convocações, no controle segmentado do design system (`Segmentado`, src/ui/). */
 const TIPOS_DE_CONVOCACAO = [
   { valor: "contratacao", rotulo: "Para contratação" },
   { valor: "entrevista", rotulo: "Para entrevistas" },

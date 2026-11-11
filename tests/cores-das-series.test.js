@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
 const tokens = ler("src/styles/tokens.css");
-const design = ler("DESIGN.md");
 
 /* Os --series-N de um bloco do tokens.css (do seletor até a chave que fecha). */
 function seriesDoBloco(seletor) {
@@ -16,38 +15,42 @@ function seriesDoBloco(seletor) {
   );
 }
 
-/* A tabela "Série | Claro | Escuro" da seção 6 do DESIGN.md. */
-function seriesDoDesign() {
-  const linhas = [
-    ...design.matchAll(
-      /^\| (\d) [^|]+\| `(#[0-9a-f]{6})` \| `(#[0-9a-f]{6})` \|$/gim,
-    ),
-  ];
-  return {
-    claro: Object.fromEntries(
-      linhas.map(([, n, c]) => [Number(n), c.toLowerCase()]),
-    ),
-    escuro: Object.fromEntries(
-      linhas.map(([, n, , e]) => [Number(n), e.toLowerCase()]),
-    ),
-  };
-}
+/*
+  A paleta validada com a skill `dataviz` (luminosidade, croma, daltonismo e
+  contraste ≥ 3:1 sobre #ffffff e #0e1e2e): azul, laranja, ciano, violeta,
+  magenta e oliva, em ordem fixa. Trocar uma cor pede validar de novo.
+*/
+const VALIDADA = {
+  claro: {
+    1: "#0f5db7",
+    2: "#eb6834",
+    3: "#0090bc",
+    4: "#6d5efc",
+    5: "#d55181",
+    6: "#8a6d00",
+  },
+  escuro: {
+    1: "#4f8ff0",
+    2: "#d95f2b",
+    3: "#1a9fc8",
+    4: "#8e6cf2",
+    5: "#d55181",
+    6: "#a8861a",
+  },
+};
 
 describe("cores das séries (gráficos e mapas)", () => {
   // Em 01/10/2026 o tema claro tinha três azuis e um cinza: os projetos do
   // mapa de Projetos ficavam com cores quase iguais.
-  const { claro, escuro } = seriesDoDesign();
+  const claro = seriesDoBloco(":root");
+  const escuro = seriesDoBloco('html[data-theme="dark"]');
 
-  it("o DESIGN.md define as seis", () => {
-    expect(Object.keys(claro)).toHaveLength(6);
+  it("tema claro = paleta validada", () => {
+    expect(claro).toEqual(VALIDADA.claro);
   });
 
-  it("tema claro = DESIGN.md", () => {
-    expect(seriesDoBloco(":root")).toEqual(claro);
-  });
-
-  it("tema escuro = DESIGN.md (inclusive a 5)", () => {
-    expect(seriesDoBloco('html[data-theme="dark"]')).toEqual(escuro);
+  it("tema escuro = paleta validada (inclusive a 5)", () => {
+    expect(escuro).toEqual(VALIDADA.escuro);
   });
 
   it("seis cores diferentes em cada tema", () => {

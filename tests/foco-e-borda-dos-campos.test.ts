@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 /*
-  Foco visível e borda de campo com contraste (DESIGN.md seção 0, regra 6;
+  Foco visível e borda de campo com contraste (regras de ouro 6, docs/biblioteca/design-e-tokens.md;
   seção 4, "Formulário").
 
   1. `--focus-ring` é uma COR (tokens.css), não uma sombra:

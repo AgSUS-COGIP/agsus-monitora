@@ -580,8 +580,7 @@ ensaio e conferência no navegador.
 
 ### 1. Triagem e lote de convocação depois do robô da Empregare (feita: ver acima)
 
-Insumo da futura **Avaliação documental** (`docs/analises-no-monitora/` no branch
-`docs/analises-no-monitora`, fases F2/F7/F8): depois que o robô grava os candidatos, um job lê as
+Insumo da **Avaliação documental** (`docs/biblioteca/avaliacao-documental-pendencias.md`, fases F2/F7/F8): depois que o robô grava os candidatos, um job lê as
 respostas do questionário (nota declarada), calcula a triagem e o lote de convocação de
 cada vaga e grava por RPC; compara com a planilha enquanto ela existir.
 

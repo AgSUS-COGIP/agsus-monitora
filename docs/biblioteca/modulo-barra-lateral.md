@@ -45,6 +45,22 @@ tipos.ts              contratos da árvore, do catálogo, das opções de navega
 - Hooks limpam eventos, observador de tamanho e temporizadores ao desmontar. Áreas fechadas são lidas
   como `unknown` (só lista de ids textuais); erro de armazenamento deixa o menu aberto por padrão.
 
+## Desenho
+
+- **Expandida:** acordeão com todas as áreas abertas por padrão; só a seta gira, a altura não anima.
+  Guarda-se só a lista das áreas fechadas, então área nova nasce aberta; abrir uma página reabre a
+  área dela. O item escolhido define a área atual; só o item da área atual fica ativo.
+- **Recolhida:** trilho de ícones; o painel da área vira um flutuante ao lado, com a pílula do nome.
+  Abre por clique, Enter/Espaço ou ponteiro (só com hover) e fecha por `Esc`, clique fora, foco
+  saindo ou item escolhido, um por vez. O estado mora no JS (`menu-de-areas.tsx`), não em `:hover`.
+- **Rodapé:** seletor Claro/Escuro (o único controle de tema do app), Sair e versão; recolhida, o
+  tema vira um botão que alterna e o Sair vira ícone.
+- **Medidas e cores:** larguras em `--sidebar-width`/`--sidebar-width-collapsed`; cores nos tokens
+  `--menu-*` de `platform-shell.css`, trocados pelo tema escuro e pela cor configurada (exceção
+  aceita, [[design-e-tokens]]). Hover e ativo são o próprio texto em baixa opacidade (`color-mix` com
+  `currentColor`); o flutuante (`--menu-flutuante-*`) fica fora da cor configurada. A coluna não anima
+  a largura.
+
 ## Testes
 
 `tests/componentes/barra-lateral.test.ts` (modelo de teste React do projeto), testes da navegação,

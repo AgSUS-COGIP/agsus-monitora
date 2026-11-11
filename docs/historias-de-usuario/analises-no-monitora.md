@@ -4,8 +4,7 @@ Pedido de 05/10/2026: "pode começar a desenhar a Análise dentro do MONITORA". 
 avaliação vai para um módulo novo, **Avaliação documental**. A tela de hoje vira o **Painel das
 análises**, só de leitura.
 
-- Desenho: [`docs/analises-no-monitora/desenho.md`](../analises-no-monitora/desenho.md).
-- Dados: [`modelo-de-dados.md`](../analises-no-monitora/modelo-de-dados.md).
+- Módulo: [`modulo-avaliacao-documental`](../biblioteca/modulo-avaliacao-documental.md); o que falta e as decisões: [`avaliacao-documental-pendencias`](../biblioteca/avaliacao-documental-pendencias.md).
 
 **Implementadas (fase F1, 06/10/2026):** AM-1.1, AM-1.2, AM-2.1, AM-2.2, AM-2.4 a AM-2.7, AM-3.1 e
 AM-3.2 (`src/modulos/avaliacao-documental/`, `supabase/migrations/20261006090000…` e `…100000…`).

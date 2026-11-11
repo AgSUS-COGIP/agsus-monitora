@@ -14,6 +14,6 @@ Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Regra completa: [[codigo-legado]
   `indigenous-*` (terras indígenas) · `icones.ts` (registro único de ícones, [[icones]]) ·
   `auth-storage.ts` ([[sessao-e-auth]]) · IndexedDB e PWA.
 - Quem ainda mexe aqui: sem `innerHTML` cru (`src/lib/sanitize.ts`), nenhum `MutationObserver`
-  novo, dados só por RPC, marcação com os componentes do `DESIGN.md` (seção 4: `.btn`, `.card`,
+  novo, dados só por RPC, marcação com os componentes do Design System (seção 11: `.btn`, `.card`,
   `.table-card`, `.modal`); teste em `tests/` ou `tests/modules/`.
 - O legado fala com o React por estado externo e eventos ([[legado-fala-com-react]]).

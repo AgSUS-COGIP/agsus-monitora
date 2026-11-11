@@ -5,7 +5,7 @@
   mapa-saude-indigena.css); card, título e vazio, de src/ui/. Aqui só o que é
   de Projetos: a cor de cada projeto, o filtro e os grupos da lista.
 
-  Cada projeto tem uma série do design system, em ordem fixa (DESIGN.md §6;
+  Cada projeto tem uma série do design system, em ordem fixa (docs/biblioteca/design-e-tokens.md, "Séries";
   a ordem está em PROJETOS_DO_MAPA, src/lib/visao-geral-da-area.ts). Os
   pontos do Leaflet são SVG: a classe pinta por cima do atributo. O nome do
   projeto vai sempre ao lado da cor (legenda, lista, balão), porque magenta e

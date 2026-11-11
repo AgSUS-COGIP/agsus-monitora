@@ -1,5 +1,5 @@
 """
-Avaliação documental em Python (docs/analises-no-monitora/, fase F2).
+Avaliação documental em Python (docs/biblioteca/modulo-avaliacao-documental.md, fase F2).
 
     monitora.avaliacao_documental.nota_declarada     a ART lida da Empregare e a nota
                                                      declarada recalculada pela regra

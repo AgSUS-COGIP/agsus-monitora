@@ -8,7 +8,7 @@
   `--radius-lg`), para a troca pelo sistema não tirar nada do lugar. Os
   espaçamentos são os tokens mais próximos dos do shell, a 2px deles.
 
-  Pulsa só com `opacity` (DESIGN.md §0, regra 8), e só enquanto está ligado:
+  Pulsa só com `opacity` (regras de ouro, docs/biblioteca/design-e-tokens.md), e só enquanto está ligado:
   escondido, a animação fica pausada. O `prefers-reduced-motion` global de
   app.css desliga o pulso.
 */

@@ -59,7 +59,7 @@ import { CarregandoConteudo } from "../../ui/index.ts";
   navegação é dona da classe `.active` e chama `render()` ao navegar (tabela
   a rota de src/app/telas.tsx).
 
-  Fases F1 a F3 (docs/analises-no-monitora/plano-de-construcao.md): escolha
+  Fases F1 a F3 (docs/biblioteca/modulo-avaliacao-documental.md): escolha
   do edital (só os vigentes, com "Mostrar todos os editais da área"), a regra
   da avaliação resumida (editar é nas Regras do edital, em Editais, desde
   03/11/2026), a equipe, a triagem (Provisória por ART e

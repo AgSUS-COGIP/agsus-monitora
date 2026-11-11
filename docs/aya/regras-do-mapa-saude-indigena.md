@@ -9,7 +9,7 @@ modo Calor saiu em 02/10/2026.
 
 ## Como usar o mapa da Saúde Indígena
 
-**perguntas:** como usar o mapa | como abrir um dsei no mapa | ver polos e unidades | abrir o territorio | mapa detalhado do dsei
+**perguntas:** como usar o mapa | como abrir um dsei no mapa | ver polos e unidades | abrir o territorio | mapa detalhado do dsei | como uso o mapa dos dseis | mapa dos dseis | mapa da saude indigena
 **resposta:** No Yeendé, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e recorta a página inteira (indicadores e tabela) por ele. "← Voltar ao Brasil", no topo do mapa do DSEI, volta à visão nacional sem apagar os outros filtros.
 **fonte:** interface do Yeendé
 

@@ -11,9 +11,7 @@ recurso `avaliacao_documental`), em `src/modulos/avaliacao-documental/`, montada
 `montarAvaliacaoDocumental()` na `#page-avaliacao-documental`. O Painel das análises
 ([[modulo-analises]], view `analises`) continua sendo a leitura.
 
-Desenho e fases: [desenho](../analises-no-monitora/desenho.md),
-[modelo de dados](../analises-no-monitora/modelo-de-dados.md),
-[plano de construção](../analises-no-monitora/plano-de-construcao.md),
+O que falta (F5–F8), decisões, riscos e perguntas em aberto: [[avaliacao-documental-pendencias]];
 [regras dos editais recentes](../analises-no-monitora/regras-dos-editais-recentes.md); histórias
 AM-n em [historias-de-usuario/analises-no-monitora.md](../historias-de-usuario/analises-no-monitora.md).
 

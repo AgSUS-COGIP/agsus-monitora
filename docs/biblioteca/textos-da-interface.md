@@ -22,7 +22,7 @@ A tela mostra o que a pessoa precisa para agir, e mais nada. Explicação é com
 - **Data de atualização: discreta e uma vez só** (`.status-discreto`, no `TopoDoPainel`).
 - Título e área ficam no cabeçalho do app (vêm da navegação); a tela não repete.
 
-## Linguagem (DESIGN.md, seção 11)
+## Linguagem (Design System, seção 15)
 
 - Português do Brasil, com acentos. Sentence case: sem `text-transform: uppercase` em rótulos,
   títulos e botões.

@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { classes } from "./classes.ts";
 
 /*
-  Modal do DESIGN.md (seção 4): `.modal` > `.modal-card`, no fim do `body`
+  Modal (Design System 11.11): `.modal` > `.modal-card`, no fim do `body`
   (portal), para escapar de qualquer `transform` ou `overflow` da página que o
   abriu — o de listas do edital, por exemplo, abre a partir do Núcleo, com a
   página de aprovados escondida.
