@@ -44,6 +44,8 @@ carta-de-convocacao/        estado.ts (modelos, versão, inativar, emitir SEI/DO
                             uma vez por carta), modal-da-carta.tsx, modelos-da-carta.tsx, carta.css
 pendencias/                 aba Pendências (migration 20261026190000; detecção em
                             scripts/aprovados/pendencias.py; regras em src/lib/pendencias-do-edital.ts)
+exportacao/                 "Exportar" da aba Aprovados: modal-da-exportacao.tsx, exportar.ts
+                            (registro no banco → arquivo → download) e pdf-no-worker.ts
 aprovados.css, convocacao.css
 ```
 
@@ -58,6 +60,27 @@ Migração. Regras: `src/lib/lista-aprovados-rules.ts` (status, trava, resumo) e
 "Contratado em outra lista" (migration `20261024120000`): situação decidida pelo job Python
 `scripts/aprovados/contratacao.py`, no dicionário `contratacao` do pacote; selo, indicadores e
 filtro usam `statusEfetivo`, a Convocação usa `statusNaFila`.
+
+## Exportar a lista (issue #583)
+
+"Exportar", no topo da aba Aprovados, baixa a lista filtrada pela tela (edital, cargo, modalidade,
+situação e o recorte do aviso; a busca da tabela não entra) em XLSX, CSV ou PDF, com área, editais,
+filtros, registros, data dos dados, data de emissão e o número do registro. Não confundir com o
+"Exportar CSV" da Convocação (ordem de chamada).
+
+- **Primeiro, o banco:** `registrar_exportacao_aprovados` (migration `20261110190000`, para revisão)
+  confere sessão, Aprovados leitor e área; aceita só editais da área com lista vigente, fora de
+  treinamento e visíveis à coordenação (nenhum id de candidato); recalcula o total da lista vigente
+  nos editais, cargos e modalidades e recusa (40001) se a tela tem outro número; grava
+  `TL_EXPORTACAO_APROVADO` (sem dado de candidato) e devolve o id e a data de emissão.
+- **Depois, o arquivo, no navegador:** conteúdo em `src/lib/exportacao-da-lista-de-aprovados.ts`
+  (linhas sem repetir, CSV por `csv-security.ts`, XLSX pelo `arquivosDoXlsx` da Classificação zipado
+  com o fflate) e o PDF em `exportacao-da-lista-de-aprovados-em-pdf.ts`, desenhado por lotes
+  (cede a vez Ã  tela a cada 300 linhas e mostra o progresso no botÃ£o; um Web Worker duplicaria o
+  jsPDF no build). Nada vai a Storage, artifact ou log. Medido com 13 mil linhas: CSV e XLSX em
+  ~0,6 s; PDF em alguns segundos.
+- **Job Python (fica para depois):** se a lista passar do que o navegador gera bem, o pedido vira
+  job no GitHub Actions com Storage privado e link temporário, a partir da mesma RPC.
 
 ## Carta de convocação
 
@@ -103,6 +126,7 @@ convocação, anexos, convocações e pendências; erro por parte em `erros.<par
 `tests/componentes/lista-aprovados.test.ts`, `lista-de-convocacao.test.ts`,
 `convocado-e-carta.test.ts`, `tests/lib/carta-de-convocacao.test.ts`,
 `tests/lib/historicos-dos-aprovados.test.ts`, `tests/lib/importacao-xlsx-de-aprovados.test.ts`,
+`tests/lib/exportacao-da-lista-de-aprovados.test.ts`, `tests/exportacao-de-aprovados-no-banco.test.ts`,
 `tests/lista-convocacao-rules.test.js`, `tests/lista-aprovados-filtros-multiplos.test.js`,
 `tests/tipos/modais-dos-aprovados.tsx`.
 [Histórias de usuário](../historias-de-usuario/lista-de-aprovados.md); para a Aya,

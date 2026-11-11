@@ -254,7 +254,12 @@ let perfilAtual: unknown = null;
 
 interface OpcoesDaMontagem extends Pick<
   OpcoesDaTelaDosAprovados,
-  "confirmar" | "lerPlanilha" | "novaAba" | "armazenamento" | "esperar"
+  | "confirmar"
+  | "lerPlanilha"
+  | "novaAba"
+  | "armazenamento"
+  | "esperar"
+  | "baixar"
 > {
   perfil?: unknown;
   supabase?: BancoFalso;
@@ -274,6 +279,7 @@ async function montar({
   carregar = true,
   armazenamento,
   esperar: esperarOJob = async () => {},
+  baixar,
 }: OpcoesDaMontagem = {}) {
   document.body.innerHTML = `<section id="page-approved" class="page${secaoAtiva ? " active" : ""}"></section>`;
   perfilAtual = perfil;
@@ -291,6 +297,7 @@ async function montar({
         novaAba,
         armazenamento,
         esperar: esperarOJob,
+        ...(baixar ? { baixar } : {}),
       },
     );
   });
@@ -2384,5 +2391,129 @@ describe("Contratado em outra lista (20261024120000)", () => {
       ["x1", "Contratado em outra lista"],
     ]);
     expect(definido(chamadas[1])[1]?.p_matricula).toBe("00123");
+  });
+});
+
+describe("Exportar a lista de aprovados (issue #583)", () => {
+  const REGISTRO = {
+    exportacao_id: "0f0e0d0c-0b0a-4000-8000-000000000001",
+    emitida_em: "2026-11-10T17:30:00Z",
+  };
+  const comRegistro = (
+    supabase: BancoFalso,
+    resposta: RespostaDoTeste = { data: REGISTRO, error: null },
+  ) => {
+    const original = definido(supabase.rpc.getMockImplementation());
+    supabase.rpc.mockImplementation((nome, argumentos) =>
+      nome === "registrar_exportacao_aprovados"
+        ? Promise.resolve(resposta)
+        : original(nome, argumentos),
+    );
+  };
+  const chamadasDoRegistro = (supabase: BancoFalso) =>
+    supabase.rpc.mock.calls.filter(
+      ([nome]) => nome === "registrar_exportacao_aprovados",
+    );
+
+  it("registra no banco com os filtros da tela e baixa o CSV com a identificação", async () => {
+    const supabase = supabaseFalso();
+    comRegistro(supabase);
+    const baixar = vi.fn<(arquivo: Blob, nome: string) => void>();
+    const { toast } = await montar({ supabase, baixar });
+
+    await clicar($("approvedExportBtn"));
+    expect($("approvedExportResumo").textContent).toContain("4 registros");
+    await clicar(
+      acharTodos("#approvedExportModal [role=radio]").find(
+        (b) => b.textContent === "CSV",
+      ),
+    );
+    await clicar($("approvedExportConfirmar"));
+    await esperar(() => new Promise((pronto) => setTimeout(pronto, 0)));
+
+    expect(chamadasDoRegistro(supabase).map(([, a]) => a)).toEqual([
+      {
+        p_area: "saude-indigena",
+        p_formato: "CSV",
+        p_editais: ["10", "20"],
+        p_cargos: [],
+        p_modalidades: [],
+        p_situacoes: [],
+        p_recorte_do_aviso: false,
+        p_total_na_tela: 4,
+        p_registros: 4,
+      },
+    ]);
+    expect(baixar).toHaveBeenCalledTimes(1);
+    const [arquivo, nome] = definido(baixar.mock.calls[0]);
+    expect(nome).toBe("lista-de-aprovados-saude-indigena-2026-11-10-1430.csv");
+    expect(arquivo.type).toContain("text/csv");
+    const csv = await arquivo.text();
+    expect(csv).toContain("Ana Ribeiro");
+    expect(csv).toContain(REGISTRO.exportacao_id);
+    expect(csv).toContain("Emitida em;10/11/2026, 14:30");
+    expect(talvez("approvedExportModal")).toBeNull();
+    expect(toast).toHaveBeenCalledWith(
+      "Lista exportada em CSV: 4 registros.",
+      "success",
+    );
+  });
+
+  it("com situação escolhida, manda o total do recorte e só os registros filtrados", async () => {
+    const supabase = supabaseFalso();
+    comRegistro(supabase);
+    const baixar = vi.fn<(arquivo: Blob, nome: string) => void>();
+    await montar({ supabase, baixar });
+    await clicar(opcaoDoFiltro("approvedFilterStatus", "Contratado"));
+
+    await clicar($("approvedExportBtn"));
+    expect($("approvedExportResumo").textContent).toContain(
+      "1 registro de 4 na lista vigente",
+    );
+    await clicar($("approvedExportConfirmar"));
+    await esperar(() => new Promise((pronto) => setTimeout(pronto, 0)));
+
+    expect(chamadasDoRegistro(supabase)[0]?.[1]).toMatchObject({
+      p_formato: "XLSX",
+      p_situacoes: ["Contratado"],
+      p_total_na_tela: 4,
+      p_registros: 1,
+    });
+    const [arquivo, nome] = definido(baixar.mock.calls[0]);
+    expect(nome.endsWith(".xlsx")).toBe(true);
+    expect(arquivo.size).toBeGreaterThan(0);
+  });
+
+  it("recusa do banco (lista mudou): avisa, não baixa nada e o modal fica aberto", async () => {
+    const supabase = supabaseFalso();
+    comRegistro(supabase, {
+      data: null,
+      error: {
+        code: "40001",
+        message:
+          "A lista mudou desde que a tela foi carregada (4 na tela, 5 no banco). Clique em Atualizar e exporte de novo.",
+      },
+    });
+    const baixar = vi.fn<(arquivo: Blob, nome: string) => void>();
+    const { toast } = await montar({ supabase, baixar });
+    await clicar($("approvedExportBtn"));
+    await clicar($("approvedExportConfirmar"));
+    await esperar(() => new Promise((pronto) => setTimeout(pronto, 0)));
+
+    expect(baixar).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(
+      expect.stringContaining("Clique em Atualizar"),
+      "error",
+    );
+    expect(talvez("approvedExportModal")).not.toBeNull();
+  });
+
+  it("o botão é da aba Aprovados: some na Convocação", async () => {
+    await montar();
+    expect($("approvedHeadActions").contains($("approvedExportBtn"))).toBe(
+      true,
+    );
+    await clicar($("approvedTabConvocacao"));
+    expect($("approvedHeadActions").classList.contains("hidden")).toBe(true);
   });
 });
