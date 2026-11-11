@@ -696,10 +696,11 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
       "p_recorte_do_aviso",
       "p_total_na_tela",
       "p_registros",
+      "p_conteudo",
     ],
     critica: false,
     resumo:
-      "Registra a exportação da Lista de aprovados (XLSX/CSV/PDF gerado no navegador): confere área, editais da lista vigente e o total do recorte; devolve exportacao_id e emitida_em. Aprovados leitor.",
+      "Registra a exportação da Lista de aprovados (XLSX/CSV/PDF gerado no navegador): confere área, editais da lista vigente e o total do recorte; p_conteudo LISTA (padrão) ou RESUMO (Resumo por cargo e status, migration 20261111210000); devolve exportacao_id e emitida_em. Aprovados leitor.",
   },
   registrar_carta_convocacao: {
     argumentos: [

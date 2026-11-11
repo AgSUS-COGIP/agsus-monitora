@@ -357,7 +357,7 @@ const opcoesDoFiltro = (filtro: string) =>
   ).map((opcao) => opcao.textContent);
 
 describe("topo e visões", () => {
-  it("as duas visões são abas (tablist) com o visual do controle segmentado, no topo", async () => {
+  it("as visões são abas (tablist) com o visual do controle segmentado, no topo", async () => {
     await montar();
     const visoes = achar(
       "#page-approved .ui-topo .ui-segmentado[role='tablist']",
@@ -365,7 +365,7 @@ describe("topo e visões", () => {
     expect(visoes).not.toBeNull();
     const abas = acharTodos("[role='tab']", visoes);
     const aprovados = definido(abas[0]);
-    const convocacao = definido(abas[1]);
+    const convocacao = $("approvedTabConvocacao");
     expect(aprovados.id).toBe("approvedTabAprovados");
     expect(aprovados.getAttribute("aria-selected")).toBe("true");
     expect(aprovados.classList.contains("is-ativo")).toBe(true);
@@ -2603,5 +2603,63 @@ describe("status em lote", () => {
     await montar({ perfil: { permissoes: { aprovados: "leitor" } } });
     expect(document.querySelector("[data-selecao-do-candidato]")).toBeNull();
     expect(document.querySelector("[data-status-em-lote]")).toBeNull();
+  });
+});
+
+describe("Resumo por cargo (pedido da CORES)", () => {
+  it("conta a lista vigente ativa por vaga e modalidade, com reserva pela fila e total geral", async () => {
+    await montar();
+    await clicar($("approvedTabResumo"));
+    expect($("approvedPanelResumo").classList.contains("hidden")).toBe(false);
+    expect($("approvedHeadActions").classList.contains("hidden")).toBe(true);
+    const total = definido(achar("#approvedPanelResumo tfoot tr"));
+    const celulas = acharTodos("td", total).map((td) => td.textContent?.trim());
+    // Aprovados, Contratados, Voluntária, Tácita, Sem subtipo, Reserva, Outras.
+    expect(celulas).toEqual(["3", "1", "—", "—", "0", "2", "0"]);
+    const avisos = definido(
+      achar("#approvedPanelResumo .approved-resumo-avisos"),
+    ).textContent;
+    expect(avisos).toMatch(/lista inativa ficou fora/);
+    expect(avisos).toMatch(/Não informado no cargo/);
+    expect($("approvedPanelResumo").textContent).not.toMatch(/Diego Alves/);
+  });
+
+  it("o número abre os vínculos daquele recorte numa gaveta que fecha com Esc", async () => {
+    await montar();
+    await clicar($("approvedTabResumo"));
+    const reserva = definido(
+      achar<HTMLButtonElement>(
+        "#approvedPanelResumo tfoot button[aria-label^='Ver os 2 de Cadastro de reserva']",
+      ),
+    );
+    await clicar(reserva);
+    const gaveta = $("approvedResumoDetalhe");
+    expect(gaveta.textContent).toMatch(/Bruno Lima/);
+    expect(gaveta.textContent).toMatch(/Carla Souza/);
+    expect(gaveta.textContent).not.toMatch(/Ana Ribeiro/);
+    await teclar(document, "Escape");
+    expect(document.getElementById("approvedResumoDetalhe")).toBeNull();
+  });
+
+  it("o filtro Situação restringe a base e diz isso", async () => {
+    await montar();
+    await clicar($("approvedTabResumo"));
+    await clicar(opcaoDoFiltro("approvedResumoFiltroStatus", "Contratado"));
+    const total = definido(achar("#approvedPanelResumo tfoot tr"));
+    expect(acharTodos("td", total)[0]?.textContent?.trim()).toBe("1");
+    expect(
+      definido(achar("#approvedPanelResumo .approved-resumo-avisos"))
+        .textContent,
+    ).toMatch(/Situação restringe a base/);
+  });
+
+  it("sem a lista carregada, diz que o resumo depende dela (não é vazio)", async () => {
+    await montar({
+      supabase: supabaseFalso({
+        erros: { listar_listas_aprovados: "sem rede" },
+      }),
+    });
+    await clicar($("approvedTabResumo"));
+    expect($("approvedPanelResumo").textContent).toMatch(/não carregou/);
   });
 });

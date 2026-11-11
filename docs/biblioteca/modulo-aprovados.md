@@ -10,7 +10,8 @@ Tela `#page-approved` (view `approved`, rota `/<área>/aprovados`), em `src/modu
 `criarListaAprovados()` devolve conteúdo e controlador; a rota chama `render()` a cada abertura, e
 Editais chama `openImportModal(id, rótulo)` por `carregarTela("approved")`. Área = a atual do app.
 
-Três visões: **Aprovados** (indicadores, filtros, tabela de rolagem contínua), **Convocação** (ordem
+Quatro visões: **Aprovados** (indicadores, filtros, tabela de rolagem contínua), **Resumo por
+cargo** (contagem por cargo, regime, jornada, vaga e modalidade; pedido da CORES), **Convocação** (ordem
 de chamada de cada vaga, pelo modelo de convocação e pelas vagas imediatas) e **Pendências**
 (decisões do gestor com motivo e histórico, selo de abertas). As duas primeiras leem os mesmos
 candidatos: mudar um status redesenha ambas; decidir uma pendência recarrega a lista.
@@ -46,7 +47,10 @@ carta-de-convocacao/        estado.ts (modelos, versão, inativar, emitir SEI/DO
 pendencias/                 aba Pendências (migration 20261026190000; detecção em
                             scripts/aprovados/pendencias.py; regras em src/lib/pendencias-do-edital.ts)
 exportacao/                 "Exportar" da aba Aprovados: modal-da-exportacao.tsx, exportar.ts
-                            (registro no banco → arquivo → download) e pdf-no-worker.ts
+                            (registro no banco → arquivo → download); exportar-resumo.ts, o
+                            mesmo caminho para o Resumo por cargo
+aba-resumo.tsx              Resumo por cargo e status: filtros da lista, tabela agrupada com
+                            subtotal e total, número que abre os vínculos numa gaveta, Exportar
 aprovados.css, convocacao.css
 ```
 
@@ -85,11 +89,31 @@ filtros, registros, data dos dados, data de emissão e o número do registro. N�
 - **Depois, o arquivo, no navegador:** conteúdo em `src/lib/exportacao-da-lista-de-aprovados.ts`
   (linhas sem repetir, CSV por `csv-security.ts`, XLSX pelo `arquivosDoXlsx` da Classificação zipado
   com o fflate) e o PDF em `exportacao-da-lista-de-aprovados-em-pdf.ts`, desenhado por lotes
-  (cede a vez Ã  tela a cada 300 linhas e mostra o progresso no botÃ£o; um Web Worker duplicaria o
+  (cede a vez à tela a cada 300 linhas e mostra o progresso no botão; um Web Worker duplicaria o
   jsPDF no build). Nada vai a Storage, artifact ou log. Medido com 13 mil linhas: CSV e XLSX em
   ~0,6 s; PDF em alguns segundos.
 - **Job Python (fica para depois):** se a lista passar do que o navegador gera bem, o pedido vira
   job no GitHub Actions com Storage privado e link temporário, a partir da mesma RPC.
+
+## Resumo por cargo e status (pedido da CORES)
+
+Aba **Resumo por cargo**, ao lado de Aprovados: a mesma lista vigente, os mesmos filtros e a mesma
+permissão, contados. Conta em `src/lib/resumo-por-cargo-e-status.ts` (uma estrutura para a tabela,
+o detalhe e o arquivo); arquivo em `src/lib/exportacao-do-resumo-por-cargo.ts`.
+
+- **Grupos:** edital → cargo + regime + jornada → uma linha por vaga (código) e modalidade, subtotal
+  do grupo, do edital (com mais de um) e total geral. Regime e jornada saem do texto do cargo por
+  regra explícita (`lerRegimeEJornada`: trecho entre " - " que é só o regime ou só a jornada); o que
+  faltar aparece como "não informado" e é contado num aviso.
+- **Unidade:** o vínculo (linha da lista: edital, vaga, modalidade); nada se junta por nome.
+- **Colunas exclusivas, que fecham Aprovados:** Contratados (Contratado e Migração), Desistência
+  voluntária e tácita (só com subtipo registrado; o banco ainda não guarda, então aparecem "—"),
+  Desistência sem subtipo, Cadastro de reserva (pela fila de convocação: na fila, fora das vagas
+  imediatas, não chamado) e Outras situações (Convocado, A convocar, Documentação Rejeitada,
+  Contratado em outra lista, Não classificado).
+- **Lista inativa** fica fora e é contada à parte. O filtro Situação restringe a base (aviso na aba).
+- **Exportar** (XLSX, CSV, PDF): o mesmo registro no banco, com `p_conteudo = 'RESUMO'` (migration
+  `20261111210000`, para revisão). Sem dado de candidato no arquivo.
 
 ## Carta de convocação
 
@@ -137,6 +161,8 @@ convocação, anexos, convocações e pendências; erro por parte em `erros.<par
 `convocado-e-carta.test.ts`, `tests/lib/carta-de-convocacao.test.ts`,
 `tests/lib/historicos-dos-aprovados.test.ts`, `tests/lib/importacao-xlsx-de-aprovados.test.ts`,
 `tests/lib/exportacao-da-lista-de-aprovados.test.ts`, `tests/exportacao-de-aprovados-no-banco.test.ts`,
+`tests/lib/resumo-por-cargo-e-status.test.ts`, `tests/lib/exportacao-do-resumo-por-cargo.test.ts`,
+`tests/exportacao-do-resumo-migration.test.ts`,
 `tests/lista-convocacao-rules.test.js`, `tests/lista-aprovados-filtros-multiplos.test.js`,
 `tests/tipos/modais-dos-aprovados.tsx`.
 [Histórias de usuário](../historias-de-usuario/lista-de-aprovados.md); para a Aya,

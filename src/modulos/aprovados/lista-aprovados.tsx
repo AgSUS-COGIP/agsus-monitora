@@ -30,6 +30,8 @@ import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { classes, ErroAoCarregar, TopoDoPainel } from "../../ui/index.ts";
 import { AbaAprovados } from "./aba-aprovados.tsx";
 import { AbaConvocacao } from "./aba-convocacao.tsx";
+import { AbaResumo } from "./aba-resumo.tsx";
+import type { ResumoPorCargoEStatus } from "../../lib/resumo-por-cargo-e-status.ts";
 import { criarEstadoDaListaDeAprovados } from "./estado.js";
 import { ModalDeAnexos, ModalDeStatus, ModalSubJudice } from "./modais.tsx";
 import { ModalListasDoEdital } from "./modal-listas-do-edital.tsx";
@@ -76,7 +78,7 @@ const FILTROS_INICIAIS: FiltrosDaTabelaDeAprovados = Object.freeze({
   status: [],
 });
 
-type AbaDosAprovados = "aprovados" | "convocacao" | "pendencias";
+type AbaDosAprovados = "aprovados" | "resumo" | "convocacao" | "pendencias";
 const ABAS: {
   nome: AbaDosAprovados;
   id: string;
@@ -90,6 +92,13 @@ const ABAS: {
     painel: "approvedPanelAprovados",
     icone: "fa-user-check",
     rotulo: "Aprovados",
+  },
+  {
+    nome: "resumo",
+    id: "approvedTabResumo",
+    painel: "approvedPanelResumo",
+    icone: "fa-table-list",
+    rotulo: "Resumo por cargo",
   },
   {
     nome: "convocacao",
@@ -300,6 +309,9 @@ export function ListaAprovados({
   const { ids, area, nome } = usarAreaAtual();
   // O modal do "Exportar" da aba Aprovados (o pedido sai dos filtros da tela).
   const [exportar, setExportar] = useState(false);
+  // O resumo a exportar (aba Resumo por cargo): o mesmo objeto que a tabela desenha.
+  const [resumoParaExportar, setResumoParaExportar] =
+    useState<ResumoPorCargoEStatus | null>(null);
   const listas = useMemo(
     () => soDosEditais(dados.listas, ids),
     [dados.listas, ids],
@@ -482,6 +494,21 @@ export function ListaAprovados({
         busca={busca}
         aoBuscar={setBusca}
       />
+      <AbaResumo
+        ativa={aba === "resumo"}
+        candidatos={candidatos}
+        filtrados={filtrados}
+        configs={dados.configs}
+        modelos={dados.modelos}
+        carregado={carregado}
+        erroAoCarregar={erroAoCarregar}
+        opcoes={opcoes}
+        filtros={efetivos}
+        aoMudarFiltro={mudarFiltro}
+        aoLimparFiltros={limparFiltros}
+        aoExportar={setResumoParaExportar}
+        exportarDesativado={!carregado || Boolean(dados.acao)}
+      />
       <AbaConvocacao
         ativa={aba === "convocacao"}
         estado={estado}
@@ -520,6 +547,25 @@ export function ListaAprovados({
             dadosDe: dados.carregadoEm,
           })}
           aoFechar={() => setExportar(false)}
+        />
+      ) : null}
+      {resumoParaExportar ? (
+        <ModalDaExportacao
+          estado={estado}
+          titulo="Exportar o resumo por cargo e status"
+          aoExportar={(pedido, formato, seguir) =>
+            estado.exportarResumo(pedido, resumoParaExportar, formato, seguir)
+          }
+          pedido={montarPedidoDaExportacao({
+            area: String(area || ""),
+            rotuloDaArea: nome || String(area || ""),
+            candidatosDaArea: candidatos,
+            filtrados,
+            filtros: efetivos,
+            opcoesDeEdital: opcoesEditais,
+            dadosDe: dados.carregadoEm,
+          })}
+          aoFechar={() => setResumoParaExportar(null)}
         />
       ) : null}
     </div>

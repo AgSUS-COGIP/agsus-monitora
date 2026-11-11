@@ -778,3 +778,104 @@ table.mobile-card-table td.approved-actions {
 .approved-lote-aviso {
   color: var(--state-danger);
 }
+
+/* ── Resumo por cargo e status (aba-resumo.tsx) ─────────────────────── */
+.approved-resumo-card {
+  display: grid;
+  gap: var(--space-3);
+}
+.approved-resumo-avisos {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-4);
+}
+.approved-resumo-tabela {
+  width: 100%;
+}
+/* A tabela tem 8 colunas: no celular rola dentro do cartão, não a página. */
+.approved-resumo-rolagem table {
+  min-width: 840px;
+}
+.approved-resumo-tabela .approved-resumo-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.approved-resumo-tabela thead th.approved-resumo-num {
+  white-space: normal;
+}
+.approved-resumo-vaga {
+  display: grid;
+  gap: 2px;
+  font-weight: var(--font-weight-regular);
+  text-align: left;
+}
+.approved-resumo-meta {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.approved-resumo-tabela .approved-resumo-edital th,
+.approved-resumo-tabela .approved-resumo-grupo th {
+  position: static;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+}
+.approved-resumo-tabela .approved-resumo-subtotal th,
+.approved-resumo-tabela .approved-resumo-subtotal td,
+.approved-resumo-tabela .approved-resumo-total th,
+.approved-resumo-tabela .approved-resumo-total td {
+  background: var(--surface-raised);
+  font-weight: var(--font-weight-semibold);
+  text-align: right;
+}
+.approved-resumo-tabela .approved-resumo-subtotal th,
+.approved-resumo-tabela .approved-resumo-total th {
+  text-align: left;
+}
+.approved-resumo-tabela tfoot th,
+.approved-resumo-tabela tfoot td {
+  position: sticky;
+  bottom: 0;
+  border-top: 2px solid var(--border-subtle);
+}
+.approved-resumo-numero {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 var(--space-1);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-link);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.approved-resumo-numero:hover {
+  background: var(--surface-hover);
+}
+.approved-resumo-numero:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media print {
+  .approved-resumo .ui-filtros,
+  .approved-resumo #approvedResumoExportar {
+    display: none;
+  }
+  .approved-resumo-rolagem {
+    max-height: none;
+    overflow: visible;
+  }
+  .approved-resumo-rolagem table {
+    min-width: 0;
+  }
+  .approved-resumo-numero {
+    text-decoration: none;
+  }
+}

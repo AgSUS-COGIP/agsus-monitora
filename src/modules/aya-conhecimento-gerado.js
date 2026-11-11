@@ -3346,6 +3346,24 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Resumo por cargo e status",
+    perguntas: [
+      "resumo por cargo",
+      "contagem por cargo e status",
+      "quantos contratados por cargo",
+      "cadastro de reserva por vaga",
+      "desistencia voluntaria tacita",
+      "resumo da lista de aprovados",
+    ],
+    resposta:
+      'A aba "Resumo por cargo" conta a lista vigente com os mesmos filtros da aba Aprovados: por edital, cargo, regime e jornada, uma linha por vaga e modalidade, com subtotal e total geral. Cada vínculo (a linha da lista: vaga e modalidade) cai numa coluna só, e as colunas fecham o total de Aprovados: Contratados (Contratado e Migração), Desistência voluntária e tácita (só quando o subtipo está registrado; hoje o sistema não registra, por isso aparecem "—"), Desistência sem subtipo, Cadastro de reserva (quem está na fila de convocação depois das vagas imediatas e ainda não foi chamado) e Outras situações (Convocado, A convocar, Documentação Rejeitada, Contratado em outra lista, Não classificado). Quem concorre à cota e à ampla tem duas linhas e conta nas duas em Aprovados; contratado por uma delas, a outra vai a Outras situações, sem contar dois contratados. Listas inativas ficam fora. O filtro Situação restringe a base. Clicar num número mostra quem está nele. "Exportar" baixa o resumo em XLSX, CSV ou PDF, sem nomes, com o registro da exportação. Regime e jornada vêm do nome do cargo (ex.: "… - Teletrabalho - 20h"); quando o nome não traz, a tela avisa.',
+    fato: "",
+    fonte:
+      "src/lib/resumo-por-cargo-e-status.ts; src/modulos/aprovados/aba-resumo.tsx; src/lib/exportacao-do-resumo-por-cargo.ts",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "A convocar na ordem de chamada",
     perguntas: [
       "a convocar",
