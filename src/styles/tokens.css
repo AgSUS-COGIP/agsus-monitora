@@ -24,18 +24,22 @@
 */
 body:not(.access-request-mode) .login-screen,
 :root {
-  /* ---------- Primitivos: azul institucional ---------- */
-  --color-blue-50: #f2f6fc;
-  --color-blue-100: #e3ecf8;
-  --color-blue-200: #c5d7f0;
-  --color-blue-300: #97b8e3;
-  --color-blue-400: #5e8fd1;
-  --color-blue-500: #2f6dc0;
-  --color-blue-600: #1f5aa8;
-  --color-blue-700: #1a4a8b;
-  --color-blue-800: #153b6f;
-  --color-blue-900: #102d55;
-  --color-blue-950: #0b1f3d;
+  /* ---------- Primitivos: azul institucional ----------
+     Escala do Manual de Identidade Visual da AgSUS (11/11/2026): o 600 é o azul
+     escuro do manual (0 85 161, 7,46:1 sobre branco); 50–200 são tintas dele;
+     300–500 puxam para o azul claro do manual (15 142 237); 700–950 escurecem o
+     600. Contraste de cada par conferido (docs/design-system-agsus.md, 3.1). */
+  --color-blue-50: #f2f7fa;
+  --color-blue-100: #e3ecf5;
+  --color-blue-200: #c2d6e8;
+  --color-blue-300: #7bc1f5;
+  --color-blue-400: #0d85e2;
+  --color-blue-500: #066cbf;
+  --color-blue-600: #0055a1; /* azul do manual da AgSUS (0 85 161) */
+  --color-blue-700: #004787;
+  --color-blue-800: #003c71;
+  --color-blue-900: #002f59;
+  --color-blue-950: #00203d;
 
   /* ---------- Primitivos: neutros ---------- */
   --color-neutral-0: #ffffff;
@@ -390,7 +394,7 @@ body:not(.access-request-mode) .login-screen,
   Contraste medido sobre --color-bg-canvas escuro (#0e1e2e), entre parênteses.
   `--color-text-inverse` é o texto sobre preenchimento forte (primário,
   sucesso, perigo, neutro sólido): no escuro esses preenchimentos clareiam, e o
-  texto escurece (#071421 sobre #70cfff: 10,66).
+  texto escurece (#071421 sobre #63b6f3: 8,41).
 */
 html[data-theme="dark"] {
   --color-sidebar-scroll-thumb: rgb(219 234 254 / 0.28);
@@ -399,7 +403,7 @@ html[data-theme="dark"] {
   --color-bg-canvas: #0e1e2e;
   --color-bg-subtle: #14283a;
   --color-bg-muted: #1a3146;
-  --color-bg-selected: #16344d;
+  --color-bg-selected: #083762;
   --color-bg-raised: #14283a;
   --color-bg-inverse: #edf4fa;
   --color-bg-overlay: rgb(0 0 0 / 0.55);
@@ -410,29 +414,29 @@ html[data-theme="dark"] {
   --color-text-tertiary: #8ea1b4; /* 6,36 */
   --color-text-disabled: #6a829a; /* 4,24 */
   --color-text-inverse: #071421;
-  --color-text-brand: #b5e5ff; /* 12,56 */
-  --color-text-link: #70cfff; /* 9,69 */
-  --color-text-link-hover: #b5e5ff;
+  --color-text-brand: #add9f9; /* 11,31 */
+  --color-text-link: #63b6f3; /* 7,65 */
+  --color-text-link-hover: #add9f9;
 
   /* ---------- Borda ---------- */
   --color-border-subtle: #294158;
   --color-border-default: #3a5672;
   --color-border-input: #6a829a; /* 4,24 */
-  --color-border-focus: #7dd3fc;
+  --color-border-focus: #7bc1f5;
   --color-border-danger: #ff6b76;
 
   /* ---------- Ação ---------- */
-  --color-action-primary: #70cfff;
-  --color-action-primary-hover: #b5e5ff;
-  --color-action-primary-pressed: #d6f0ff;
-  --color-action-secondary: #16344d;
+  --color-action-primary: #63b6f3;
+  --color-action-primary-hover: #a4d4f8;
+  --color-action-primary-pressed: #cae6fb;
+  --color-action-secondary: #083762;
   --color-action-secondary-hover: #1d415f;
-  --color-action-secondary-text: #b5e5ff; /* 9,57 sobre o secundário */
+  --color-action-secondary-text: #add9f9; /* 8,12 sobre o secundário */
   --color-action-ghost-hover: #1a3146;
   --color-action-ghost-text: #c8d6e5; /* 11,42 */
   --color-action-danger: #ff6b76; /* texto inverso: 6,73 */
   --color-action-danger-hover: #ff8f97;
-  --color-focus-ring: #7dd3fc;
+  --color-focus-ring: #7bc1f5;
 
   /* ---------- Status ---------- */
   --color-status-success-bg: rgba(41, 179, 106, 0.16);
@@ -445,8 +449,8 @@ html[data-theme="dark"] {
   --color-status-danger-text: #ff8a93; /* 4,55 no suave sobre hover */
   --color-status-danger-solid: #ff6b76;
   --color-status-info-bg: rgba(112, 207, 255, 0.16);
-  --color-status-info-text: #70cfff;
-  --color-status-info-solid: #70cfff;
+  --color-status-info-text: #63b6f3;
+  --color-status-info-solid: #63b6f3;
   --color-status-neutral-bg: rgba(168, 184, 200, 0.14);
   --color-status-neutral-text: #a8b8c8;
   --color-status-neutral-solid: #a8b8c8;
@@ -454,7 +458,7 @@ html[data-theme="dark"] {
   /* ---------- Gráficos ---------- */
   --color-chart-1: #4f8ff0;
   --color-chart-2: #1a9fc8;
-  --color-chart-3: #b5e5ff;
+  --color-chart-3: #add9f9;
   --color-chart-4: #2bb3b9;
   --color-chart-5: #8ea1b4;
   --color-chart-context: #6a829a;
@@ -470,7 +474,7 @@ html[data-theme="dark"] {
   /* ---------- Nomes do MONITORA ---------- */
   --brand-primary: var(--color-action-primary);
   --brand-primary-strong: var(--color-action-primary-hover);
-  --brand-accent: #4fdcff;
+  --brand-accent: #63b6f3;
   --surface-page: #071421;
   --surface-card: var(--color-bg-canvas);
   --surface-raised: var(--color-bg-subtle);
