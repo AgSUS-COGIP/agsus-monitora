@@ -131,19 +131,21 @@ Os valores de contraste abaixo foram calculados contra branco (`#FFFFFF`), confo
 
 ### 3.1 Primitivos — azul institucional
 
+Escala do Manual de Identidade Visual da AgSUS (11/11/2026): `blue-600` é o azul escuro do manual (RGB 0 85 161); `blue-300` a `blue-500` puxam para o azul claro do manual (RGB 15 142 237); as demais são tintas e sombras do `blue-600`. As outras cores do manual (amarelo 255 207 0, verde 0 207 0, vermelho 255 0 0, azul vivo 24 62 255) não passam no contraste de texto e ficam só para marca e ícone (`--marca-agsus-*`).
+
 | Token | Hex | Contraste | Uso típico |
 |---|---|---|---|
-| `blue-50` | `#F2F6FC` | 1,08 | Fundo de item selecionado, botão secundário |
-| `blue-100` | `#E3ECF8` | 1,19 | Hover do botão secundário |
-| `blue-200` | `#C5D7F0` | 1,46 | Escala sequencial de gráficos |
-| `blue-300` | `#97B8E3` | 2,04 | Indicador de item ativo na sidebar |
-| `blue-400` | `#5E8FD1` | 3,32 | Série de gráfico |
-| `blue-500` | `#2F6DC0` | 5,16 | Escala sequencial de gráficos |
-| `blue-600` | `#1F5AA8` | 6,80 | **Cor primária:** botão primário, foco, progresso, aba ativa |
-| `blue-700` | `#1A4A8B` | 8,76 | Hover do primário, links, texto sobre `blue-50` |
-| `blue-800` | `#153B6F` | 11,13 | Primário pressionado, item ativo na sidebar |
-| `blue-900` | `#102D55` | 13,74 | Títulos institucionais, série de gráfico |
-| `blue-950` | `#0B1F3D` | 16,44 | Fundo da sidebar |
+| `blue-50` | `#F2F7FA` | 1,08 | Fundo de item selecionado, botão secundário |
+| `blue-100` | `#E3ECF5` | 1,19 | Hover do botão secundário |
+| `blue-200` | `#C2D6E8` | 1,49 | Escala sequencial de gráficos |
+| `blue-300` | `#7BC1F5` | 1,95 | Indicador de item ativo na sidebar |
+| `blue-400` | `#0D85E2` | 3,84 | Série de gráfico |
+| `blue-500` | `#066CBF` | 5,38 | Escala sequencial de gráficos |
+| `blue-600` | `#0055A1` | 7,46 | **Cor primária:** botão primário, foco, progresso, aba ativa |
+| `blue-700` | `#004787` | 9,33 | Hover do primário, links, texto sobre `blue-50` |
+| `blue-800` | `#003C71` | 11,14 | Primário pressionado, item ativo na sidebar |
+| `blue-900` | `#002F59` | 13,54 | Títulos institucionais, série de gráfico |
+| `blue-950` | `#00203D` | 16,48 | Fundo da sidebar |
 
 ### 3.2 Primitivos — neutros (cinzas azulados)
 
@@ -257,7 +259,7 @@ A borda de campos é mais forte que as demais de propósito. Quando é ela que i
 
 | Token | Valor | Contraste |
 |---|---|---|
-| `--color-chart-1` | `blue-600` | 6,80 |
+| `--color-chart-1` | `blue-600` | 7,46 |
 | `--color-chart-2` | `blue-400` | 3,32 |
 | `--color-chart-3` | `blue-900` | 13,74 |
 | `--color-chart-4` | `#1B7F84` (azul-petróleo) | 4,76 |
@@ -491,16 +493,16 @@ Estes tokens são a referência de implementação. Se o projeto usar Tailwind, 
 :root {
   /* ---------- Primitivos: azul institucional ---------- */
   --color-blue-50:  #F2F6FC;
-  --color-blue-100: #E3ECF8;
-  --color-blue-200: #C5D7F0;
-  --color-blue-300: #97B8E3;
-  --color-blue-400: #5E8FD1;
-  --color-blue-500: #2F6DC0;
-  --color-blue-600: #1F5AA8;
-  --color-blue-700: #1A4A8B;
-  --color-blue-800: #153B6F;
-  --color-blue-900: #102D55;
-  --color-blue-950: #0B1F3D;
+  --color-blue-100: #E3ECF5;
+  --color-blue-200: #C2D6E8;
+  --color-blue-300: #7BC1F5;
+  --color-blue-400: #0D85E2;
+  --color-blue-500: #066CBF;
+  --color-blue-600: #0055A1;
+  --color-blue-700: #004787;
+  --color-blue-800: #003C71;
+  --color-blue-900: #002F59;
+  --color-blue-950: #00203D;
 
   /* ---------- Primitivos: neutros ---------- */
   --color-neutral-0:   #FFFFFF;
