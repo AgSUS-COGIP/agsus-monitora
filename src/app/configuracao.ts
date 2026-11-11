@@ -155,7 +155,7 @@ export function criarConfiguracao({
       ?.querySelector('meta[name="description"]')
       ?.setAttribute(
         "content",
-        "Yeendé - Monitoramento de Processos Seletivos",
+        "Yeendé - Gestão dos processos seletivos",
       );
     escrever("skipLink", valor("skip_link_text"));
     /*

@@ -269,8 +269,8 @@ export const VERBETES_AYA = Object.freeze([
       "monitora e sigla",
     ],
     resposta:
-      'Yeendé é o nome do sistema de acompanhamento dos processos seletivos da AgSUS, que antes se chamava MONITORA. A palavra vem da língua dos povos Kariri (Dzubukuá e Kipeá), do povo Kariri-Xocó, e quer dizer "pássaro": como um pássaro que vê do alto, o sistema acompanha, por território, as vagas previstas, as contratações e as vagas que permanecem ociosas. Yeendé Parú é o beija-flor. A marca é o pássaro com as asas amarela e verde, o corpo azul e o sol vermelho, nas cores da AgSUS. Não é uma sigla.',
-    fato: 'Yeendé é o nome do sistema de acompanhamento dos processos seletivos da AgSUS (antes MONITORA). A palavra é Kariri (Dzubukuá e Kipeá), do povo Kariri-Xocó, e significa "pássaro". Não é sigla e não deve ser expandida em palavras.',
+      'Yeendé é o nome do sistema de gestão dos processos seletivos da AgSUS, do edital à contratação. Antes se chamava MONITORA; o nome mudou porque o sistema deixou de só monitorar: hoje ele cuida do processo inteiro, da triagem à convocação. A palavra vem da língua dos povos Kariri (Dzubukuá e Kipeá), do povo Kariri-Xocó, e quer dizer "pássaro": como um pássaro que vê do alto, o sistema acompanha, por território, as vagas previstas, as contratações e as vagas que permanecem ociosas. Yeendé Parú é o beija-flor. A marca é o pássaro com as asas amarela e verde, o corpo azul e o sol vermelho, nas cores da AgSUS. Não é uma sigla.',
+    fato: 'Yeendé é o nome do sistema de gestão dos processos seletivos da AgSUS, do edital à contratação (antes MONITORA). A palavra é Kariri (Dzubukuá e Kipeá), do povo Kariri-Xocó, e significa "pássaro". Não é sigla e não deve ser expandida em palavras.',
     fonte: "interface do Yeendé",
   },
   {
@@ -4368,7 +4368,7 @@ export const VERBETES_AYA = Object.freeze([
       "slogan do login",
     ],
     resposta:
-      'Em Configurações, a seção Tela de acesso define a saudação (o título grande do cartão de entrada) e o botão do Google: se ele aparece, o texto dele (vazio, fica "Entrar com Google") e o domínio sugerido. Também define quais domínios de e-mail podem entrar. São fixos o slogan "Monitoramento de Processos Seletivos", a linha "Acesse com sua conta institucional." acima do botão e o rodapé com o nome da Agência. A arte de fundo, o logo e a cor do cartão ficam na seção Aparência. A prévia ao lado mostra a tela como ela vai ficar.',
+      'Em Configurações, a seção Tela de acesso define a saudação (o título grande do cartão de entrada) e o botão do Google: se ele aparece, o texto dele (vazio, fica "Entrar com Google") e o domínio sugerido. Também define quais domínios de e-mail podem entrar. São fixos o slogan "Gestão dos processos seletivos", a linha "Acesse com sua conta institucional." acima do botão e o rodapé com o nome da Agência. A arte de fundo, o logo e a cor do cartão ficam na seção Aparência. A prévia ao lado mostra a tela como ela vai ficar.',
     fato: "",
     fonte: "interface do Yeendé",
   },

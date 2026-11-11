@@ -37,7 +37,7 @@ import { PaginaDaSolicitacao } from "./solicitacao-de-acesso.tsx";
   do botão só aparece, com fade, quando já se sabe o texto.
 */
 
-export const SLOGAN = "Monitoramento de Processos Seletivos";
+export const SLOGAN = "Gestão dos processos seletivos";
 export const INSTITUICAO = "Agência Brasileira de Apoio à Gestão do SUS";
 
 /** O valor de `FASES` (sessao.ts). */

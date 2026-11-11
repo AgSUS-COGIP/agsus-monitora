@@ -1,7 +1,7 @@
 {
   "name": "Yeendé",
   "short_name": "Yeendé",
-  "description": "Yeendé: acompanhamento dos processos seletivos da AgSUS.",
+  "description": "Yeendé: gestão dos processos seletivos da AgSUS, do edital à contratação.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

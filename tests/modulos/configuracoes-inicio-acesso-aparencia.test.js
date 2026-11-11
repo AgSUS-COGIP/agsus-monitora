@@ -311,7 +311,7 @@ describe("Tela de acesso", () => {
     await montar({ secao: "acesso" });
     const texto = () => previa("acesso").textContent;
     expect(texto()).toContain("Olá!");
-    expect(texto()).toContain("Monitoramento de Processos Seletivos");
+    expect(texto()).toContain("Gestão dos processos seletivos");
     expect(texto()).toContain("Entrar com a conta AgSUS");
     await digitar($("configAcesso-authAccessGreeting"), "Bem-vindo");
     expect(texto()).toContain("Bem-vindo");

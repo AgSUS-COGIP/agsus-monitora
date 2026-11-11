@@ -280,7 +280,7 @@ export function PreviaDoAcesso({ estado }: { estado: EstadoDasConfiguracoes }) {
             <span aria-hidden="true">|</span>
             <strong>Yeendé</strong>
           </span>
-          <small>Monitoramento de Processos Seletivos</small>
+          <small>Gestão dos processos seletivos</small>
           <strong className="previa-acesso__saudacao">
             {txt(estado.valor("auth_access_greeting")) ||
               DEFAULT_ACCESS_BRANDING.greeting}

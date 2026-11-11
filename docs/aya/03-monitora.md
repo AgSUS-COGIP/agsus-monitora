@@ -5,8 +5,8 @@ Termos da própria interface e das instituições que a Aya representa.
 ## Yeendé
 
 **perguntas:** yeende | o que e o yeende | o que significa yeende | de onde vem o nome yeende | como se fala yeende | monitora | o que e o monitora | cade o monitora | mudou o nome do monitora | monitora e sigla
-**resposta:** Yeendé é o nome do sistema de acompanhamento dos processos seletivos da AgSUS, que antes se chamava MONITORA. A palavra vem da língua dos povos Kariri (Dzubukuá e Kipeá), do povo Kariri-Xocó, e quer dizer "pássaro": como um pássaro que vê do alto, o sistema acompanha, por território, as vagas previstas, as contratações e as vagas que permanecem ociosas. Yeendé Parú é o beija-flor. A marca é o pássaro com as asas amarela e verde, o corpo azul e o sol vermelho, nas cores da AgSUS. Não é uma sigla.
-**fato:** Yeendé é o nome do sistema de acompanhamento dos processos seletivos da AgSUS (antes MONITORA). A palavra é Kariri (Dzubukuá e Kipeá), do povo Kariri-Xocó, e significa "pássaro". Não é sigla e não deve ser expandida em palavras.
+**resposta:** Yeendé é o nome do sistema de gestão dos processos seletivos da AgSUS, do edital à contratação. Antes se chamava MONITORA; o nome mudou porque o sistema deixou de só monitorar: hoje ele cuida do processo inteiro, da triagem à convocação. A palavra vem da língua dos povos Kariri (Dzubukuá e Kipeá), do povo Kariri-Xocó, e quer dizer "pássaro": como um pássaro que vê do alto, o sistema acompanha, por território, as vagas previstas, as contratações e as vagas que permanecem ociosas. Yeendé Parú é o beija-flor. A marca é o pássaro com as asas amarela e verde, o corpo azul e o sol vermelho, nas cores da AgSUS. Não é uma sigla.
+**fato:** Yeendé é o nome do sistema de gestão dos processos seletivos da AgSUS, do edital à contratação (antes MONITORA). A palavra é Kariri (Dzubukuá e Kipeá), do povo Kariri-Xocó, e significa "pássaro". Não é sigla e não deve ser expandida em palavras.
 **fonte:** interface do Yeendé
 
 ## AgSUS
