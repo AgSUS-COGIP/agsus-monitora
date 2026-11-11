@@ -106,6 +106,14 @@ describe("prazoDaValidade (o que o formulário mostra)", () => {
     ).toMatchObject({ tipo: "vigente", vencimento: "2026-11-10" });
   });
 
+  it("valor inválido pede correção em vez do prazo", () => {
+    const hoje = new Date("2026-11-11T15:00:00Z");
+    expect(prazoDaValidade(validade("0", "12"), "2026-11-11", hoje)).toEqual({
+      tipo: "incompleto",
+      texto: "Corrija a validade para calcular o prazo.",
+    });
+  });
+
   it("textos: válida até, sem prazo, sem data e incompleto", () => {
     const hoje = new Date("2026-11-11T15:00:00Z");
     expect(prazoDaValidade(validade("2", "0"), "2026-11-11", hoje).texto).toBe(

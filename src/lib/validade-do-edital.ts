@@ -207,6 +207,11 @@ export function prazoDaValidade(
 ): PrazoDaValidade {
   const anos = inteiroNoIntervalo(validade.anos, ANOS_MAXIMOS);
   const meses = inteiroNoIntervalo(validade.meses, MESES_MAXIMOS);
+  if (!validadeValida({ ...validade, lida: false }))
+    return {
+      tipo: "incompleto",
+      texto: "Corrija a validade para calcular o prazo.",
+    };
   if (anos === null || meses === null || !validade.prorrogado)
     return {
       tipo: "incompleto",
