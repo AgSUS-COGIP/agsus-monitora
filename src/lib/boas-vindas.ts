@@ -39,7 +39,8 @@ export function chaveDoDia(data: Date = new Date()): string {
 }
 
 /**
- * Editais cuja próxima etapa cai de hoje até daqui a `dias` dias, com o dia
+ * Editais cuja próxima etapa cai nos `dias` dias contando hoje (7: de hoje a
+ * hoje + 6, decisão de 11/11/2026; antes contava 8), com o dia
  * de Brasília (como a tabela e o cronograma, não o relógio do computador) e
  * sem os editais cancelados (a etapa deles não vai acontecer).
  */
@@ -49,7 +50,7 @@ export function editaisComEtapaNaSemana(
   dias = 7,
 ): number {
   const inicio = hojeEmBrasilia(hoje);
-  const fim = somarDias(inicio, dias);
+  const fim = somarDias(inicio, dias - 1);
   return (
     (Array.isArray(linhas) ? linhas : []) as ({
       cronograma_proxima_data?: unknown;
