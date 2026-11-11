@@ -503,7 +503,7 @@ hash das funções, permissões, comentários e colunas iguais aos de antes).
   experiência profissional, e o CSV sai igual ao de antes.
 - **Três escopos guardados** por área em `TA_PAINEL_ANALISE`, que dividem as
   análises sem sobra nem repetição: `ativo` (análise ativa de edital ativo),
-  `inativo` (edital inativo) e `desativadas` (análise desativada pelo sync, de
+  `inativo` (edital inativo: NÃO na planilha ou, desde 20261111150000, `data_fim_analise` antes de hoje em Brasília, pelo gatilho `TG_EDITALANALISE_PERIODO` e pela tarefa diária `agsus_analises_inativar_editais_encerrados`) e `desativadas` (análise desativada pelo sync, de
   edital ativo — só aparece em "Todos"). "Todos" não tem pacote: o front junta
   os três na ordem do banco (unidade, edital, vaga, candidato e, no desempate,
   o id). `private."FC_MONTAR_PAINEL_ANALISE"(área, escopos[], só_visíveis)`

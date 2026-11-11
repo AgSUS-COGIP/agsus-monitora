@@ -101,7 +101,7 @@ chave por aba; desligada:
 | Gerar listas pelo Python | —                                                                                                                                     | `classificacao.yml` (modo calculo) pedido ao clicar em Gerar (20261023200000) |
 
 Sem chave (sempre ligadas): `agsus_robo_conferir_disparos` (fecha os pedidos do Rodar agora),
-`agsus_inativar_listas_vencidas`, `agsus_analises_limpar_manifesto`, `agsus_cron_limpar_historico` e
+`agsus_inativar_listas_vencidas`, `agsus_analises_inativar_editais_encerrados` (00:10 de Brasília: edital de análise com o período encerrado fica inativo, 20261111150000), `agsus_analises_limpar_manifesto`, `agsus_cron_limpar_historico` e
 `agsus_alinhar_chaves_da_automacao` (o alinhador, 20261109180000). Fora do banco: os gatilhos do Apps Script das planilhas de
 análises (incremental a cada 20 min) ficam no Google; a Leitura de arquivos só roda pelo Run
 workflow. Os workflows dos robôs só têm `workflow_dispatch` (`tests/workflows-dos-robos.test.js`

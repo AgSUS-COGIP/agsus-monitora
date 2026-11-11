@@ -4,7 +4,7 @@ A tela Painel das análises (view `analises`, antes chamada Análises curricular
 `src/modulos/analises/`, `src/lib/analises-curriculares.ts`, `src/lib/data-de-analise.ts`,
 `apps-script/LEIA-ME.md` e as migrations `20260929150000_analises_lista_enxuta.sql`,
 `20260930100000_analises_sem_registro_fantasma.sql`, `20261001140000_incremental_remove_ausentes.sql`
-e `20260930234000_cache_sem_atropelo.sql`.
+e `20260930234000_cache_sem_atropelo.sql` e `20261111150000_editais_de_analise_fora_do_periodo_ficam_inativos.sql`.
 
 ## Painel das análises
 
@@ -23,7 +23,7 @@ e `20260930234000_cache_sem_atropelo.sql`.
 ## Escopo Ativo, Inativo e Todos
 
 **perguntas:** o que e o escopo ativo, inativo e todos | escopo ativo | escopo inativo | situacao do processo | ativo inativo todos
-**resposta:** Nas Análises curriculares, o campo Situação do processo começa em Ativo. Ativo são as análises ativas de editais ativos; Inativo são as análises de editais encerrados (inativos); Todos junta os dois e as análises desativadas de editais ainda ativos. Só o Ativo fica pronto num cache do banco, remontado a cada 2 minutos; Inativo e Todos são montados na hora do pedido.
+**resposta:** Nas Análises curriculares, o campo Situação do processo começa em Ativo. Ativo são as análises ativas de editais ativos; Inativo são as análises de editais encerrados (inativos): o edital fica inativo quando a planilha marca NÃO ou, sozinho, à meia-noite depois do último dia de análise (a data de fim na planilha), mesmo com SIM; para reabrir, estenda a data de fim na planilha; Todos junta os dois e as análises desativadas de editais ainda ativos. Só o Ativo fica pronto num cache do banco, remontado a cada 2 minutos; Inativo e Todos são montados na hora do pedido.
 **fonte:** src/lib/analises-curriculares.ts; supabase/migrations/20260929150000_analises_lista_enxuta.sql; supabase/migrations/20260930234000_cache_sem_atropelo.sql
 
 ## Pendências das análises

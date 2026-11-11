@@ -3862,7 +3862,7 @@ export const VERBETES_AYA = Object.freeze([
       "ativo inativo todos",
     ],
     resposta:
-      "Nas Análises curriculares, o campo Situação do processo começa em Ativo. Ativo são as análises ativas de editais ativos; Inativo são as análises de editais encerrados (inativos); Todos junta os dois e as análises desativadas de editais ainda ativos. Só o Ativo fica pronto num cache do banco, remontado a cada 2 minutos; Inativo e Todos são montados na hora do pedido.",
+      "Nas Análises curriculares, o campo Situação do processo começa em Ativo. Ativo são as análises ativas de editais ativos; Inativo são as análises de editais encerrados (inativos): o edital fica inativo quando a planilha marca NÃO ou, sozinho, à meia-noite depois do último dia de análise (a data de fim na planilha), mesmo com SIM; para reabrir, estenda a data de fim na planilha; Todos junta os dois e as análises desativadas de editais ainda ativos. Só o Ativo fica pronto num cache do banco, remontado a cada 2 minutos; Inativo e Todos são montados na hora do pedido.",
     fato: "",
     fonte:
       "src/lib/analises-curriculares.ts; supabase/migrations/20260929150000_analises_lista_enxuta.sql; supabase/migrations/20260930234000_cache_sem_atropelo.sql",
