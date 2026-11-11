@@ -103,6 +103,14 @@ import {
   statusTravado,
 } from "../../lib/lista-aprovados-rules.ts";
 import { hojeEmBrasilia } from "../../lib/carta-de-convocacao.ts";
+import type {
+  FormatoDaExportacao,
+  PedidoDaExportacao,
+} from "../../lib/exportacao-da-lista-de-aprovados.ts";
+import {
+  exportarListaDeAprovados,
+  type GerarPdf,
+} from "./exportacao/exportar.ts";
 import {
   argumentosDaConfiguracao,
   fixarIdsNovos,
@@ -260,7 +268,8 @@ export function criarEstadoDaListaDeAprovados({
   cabecalho = () => "",
   hoje = () => hojeEmBrasilia(),
   pendencias = () => null,
-}: OpcoesDoEstadoDosAprovados = {}) {
+  gerarPdf,
+}: OpcoesDoEstadoDosAprovados & { gerarPdf?: GerarPdf } = {}) {
   let estado: SnapshotDosAprovados = ESTADO_INICIAL;
   let aberturas = 0;
   let mudancasLocais = 0;
@@ -306,6 +315,50 @@ export function criarEstadoDaListaDeAprovados({
     } finally {
       publicar({ acao: null });
     }
+  }
+
+  /*
+    Exportar a lista filtrada (botão "Exportar" da aba Aprovados): registra no
+    banco e gera o arquivo (exportacao/exportar.ts). Devolve true quando baixou.
+  */
+  async function exportarLista(
+    pedido: PedidoDaExportacao,
+    formato: FormatoDaExportacao,
+    seguir: () => boolean = () => true,
+  ): Promise<boolean> {
+    const feito = await executar(
+      "exportar",
+      `Gerando o ${formato}…`,
+      async (rotular) => {
+        let ultimo = -1;
+        try {
+          const resultado = await exportarListaDeAprovados(pedido, formato, {
+            supabase,
+            baixar,
+            carregarLogo,
+            cabecalho,
+            seguir,
+            aoProgresso: (fracao) => {
+              const pct = Math.floor(fracao * 100);
+              if (pct === ultimo) return;
+              ultimo = pct;
+              rotular(`Gerando o ${formato}… ${pct}%`);
+            },
+            ...(gerarPdf ? { gerarPdf } : {}),
+          });
+          if (!resultado) return false;
+          toast(
+            `Lista exportada em ${formato}: ${resultado.registros} ${resultado.registros === 1 ? "registro" : "registros"}.`,
+            "success",
+          );
+          return true;
+        } catch (erro) {
+          toast(mensagemDe(erro), "error");
+          return false;
+        }
+      },
+    );
+    return feito === true;
   }
 
   const carta = criarEstadoDaCarta({
@@ -1793,5 +1846,6 @@ export function criarEstadoDaListaDeAprovados({
     carta,
     /* Baixa um arquivo gerado na tela (o CSV da ordem de convocação). */
     baixarArquivo: (arquivo: Blob, nome: string) => baixar(arquivo, nome),
+    exportarLista,
   };
 }

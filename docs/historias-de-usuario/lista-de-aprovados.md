@@ -179,3 +179,26 @@ recebeu, para responder a dúvidas sem procurar no SEI.
 - **Dado** um editor, **então** a gaveta oferece "Alterar status" e "Carta de convocação".
 
 Testes: `tests/componentes/convocado-e-carta.test.ts` (H7), ensaio E3.
+
+### H8. Exportar a lista de aprovados com os filtros (issue #583)
+
+Como **quem acompanha a lista**, quero baixar os aprovados que estou vendo em XLSX, CSV ou PDF, com a
+identificação do edital e a data de emissão, para mandar à área ou anexar ao processo.
+
+- **Dado** a aba Aprovados com filtros de edital, cargo, modalidade ou situação, **quando** clico em
+  "Exportar", escolho o formato e confirmo, **então** baixa um arquivo só com esses candidatos, sem
+  repetir, na ordem edital → cargo → classificação → nome, com a modalidade e a classificação da lista
+  (e o que a decisão judicial mudou, quando houve).
+- **Dado** o arquivo, **então** ele traz a área, os editais, os filtros, quantos registros (e de
+  quantos da lista vigente), a data dos dados, a data de emissão e o número do registro da exportação.
+- **Dado** que a lista mudou no banco desde que a tela carregou, **então** a exportação é recusada,
+  nada é baixado e a tela pede Atualizar.
+- **Dado** um edital de outra área, de treinamento ou fora da minha coordenação, **então** o banco
+  recusa; sem acesso a Aprovados, também.
+- **Dado** o CSV, **então** usa `;`, BOM e células protegidas contra fórmula; não confundir com o
+  "Exportar CSV" da Convocação.
+- **Dado** 13 mil registros, **então** CSV e XLSX saem em menos de um segundo e o PDF é gerado fora da
+  thread da tela.
+
+Testes: `tests/componentes/lista-aprovados.test.ts` ("Exportar a lista de aprovados"),
+`tests/lib/exportacao-da-lista-de-aprovados.test.ts`, `tests/exportacao-de-aprovados-no-banco.test.ts`.

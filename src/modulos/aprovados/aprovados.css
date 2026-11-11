@@ -73,6 +73,20 @@
   color: var(--text-secondary);
   font-size: var(--text-body-sm);
 }
+/* Modal "Exportar" da aba Aprovados: os filtros que vão no arquivo. */
+.approved-export-filtros {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.approved-export-filtros strong {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+}
 .approved-table td {
   vertical-align: middle;
 }

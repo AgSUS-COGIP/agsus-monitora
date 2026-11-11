@@ -47,16 +47,24 @@ describe("espelho da eliminação antes da análise", () => {
     }
   });
 
-  it("referência normativa só aparece quando explicitamente cadastrada", () => {
+  it("referência normativa só aparece quando conferida (issue #593)", () => {
     const semItem = espelhoDaEliminacaoPreAnalise(exemplo);
     expect(semItem.justificativas).toEqual([exemplo.motivo]);
-    const comItem = espelhoDaEliminacaoPreAnalise({
-      ...exemplo,
+    const fundamento = {
+      situacao: "CONFERIDO",
       item_edital: "6.11.2",
-    });
+      versao_regra: 3,
+      fonte: "Edital de exemplo publicado",
+    };
+    const comItem = espelhoDaEliminacaoPreAnalise({ ...exemplo, fundamento });
     expect(comItem.justificativas).toContain(
-      "Fundamento cadastrado na regra do edital: item 6.11.2",
+      "Fundamento normativo: item 6.11.2 do edital (conferido pela gestão do edital na regra da triagem, versão 3).",
     );
+    const aReconferir = espelhoDaEliminacaoPreAnalise({
+      ...exemplo,
+      fundamento: { ...fundamento, situacao: "RECONFERIR" },
+    });
+    expect(aReconferir.justificativas).toEqual([exemplo.motivo]);
   });
 
   it("nota ausente não vira zero e as notas da inscrição são informativas", () => {
