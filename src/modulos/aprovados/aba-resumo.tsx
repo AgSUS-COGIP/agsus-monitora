@@ -104,12 +104,17 @@ function Numero({
     (coluna === "desistenciaVoluntaria" || coluna === "desistenciaTacita")
   )
     return (
-      <span title="Subtipo não registrado" aria-label="não registrado">
+      <span
+        className="approved-resumo-valor"
+        title="Subtipo não registrado"
+        aria-label="não registrado"
+      >
         —
       </span>
     );
   const valor = contagem[coluna];
-  if (!valor) return <>{formatNumberBR(0)}</>;
+  if (!valor)
+    return <span className="approved-resumo-valor">{formatNumberBR(0)}</span>;
   const titulo = `${ROTULO_DA_COLUNA[coluna]} · ${onde}`;
   const motivos =
     coluna === "outras"
