@@ -75,3 +75,4 @@ Explicações para quem usa: `docs/aya/regras-das-entrevistas.md`.
 - [[cargas-de-planilha]] — a carga diária da aba Entrevistados
 - [[modulo-recursos]] — o mesmo padrão acompanhar × fazer
 - [[modulo-avaliacao-documental]] — a ficha em modo de análise, no mesmo molde
+- [regras-das-entrevistas](../aya/regras-das-entrevistas.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

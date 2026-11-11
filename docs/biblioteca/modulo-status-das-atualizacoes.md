@@ -50,3 +50,4 @@ bloqueada.
 - [[modulo-automacao]] — chaves que ligam e desligam
 - [[modulo-conferencias]] — avisos diários mostrados no cartão
 - [[cargas-de-planilha]] — as cargas acompanhadas aqui
+- [regras-do-status-das-atualizacoes](../aya/regras-do-status-das-atualizacoes.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

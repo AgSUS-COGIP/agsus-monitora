@@ -83,3 +83,4 @@ acontece. Com "Aya comemorando", a arara que voa nos fogos fica de fora, para n�
 - [[modulo-aya]] — a mascote que ouve `aya:estado`
 - [[modulo-barra-lateral]] — logo e cor publicadas aqui
 - [[acessibilidade]] — `prefers-reduced-motion`
+- [regras-das-configuracoes](../aya/regras-das-configuracoes.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

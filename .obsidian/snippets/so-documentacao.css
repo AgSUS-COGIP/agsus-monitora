@@ -1,0 +1,26 @@
+/*
+  Só a documentação na lista de arquivos do Obsidian: esconde as pastas de
+  código (o gráfico e a busca já as ignoram por `.obsidian/app.json`).
+  Ligado em Configurações › Aparência › Trechos de CSS ("so-documentacao").
+  Fica visível o que é documentação: docs/, api/ (o CLAUDE.md da API),
+  apps-script/ (o LEIA-ME) e os .md da raiz.
+*/
+.nav-folder:has(
+  > .nav-folder-title:is(
+      [data-path="auth"],
+      [data-path="dist"],
+      [data-path="icons"],
+      [data-path="node_modules"],
+      [data-path="prototipos"],
+      [data-path="public"],
+      [data-path="python"],
+      [data-path="scripts"],
+      [data-path="server"],
+      [data-path="src"],
+      [data-path="supabase"],
+      [data-path="tests"],
+      [data-path="coverage"]
+    )
+) {
+  display: none;
+}

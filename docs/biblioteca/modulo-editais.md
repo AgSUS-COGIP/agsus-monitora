@@ -85,3 +85,4 @@ datas). Ver [[funcoes-da-vercel]].
 - [[funcoes-da-vercel]] — `anexos-do-edital.py` e a API `/api/editais`
 - [[areas-do-sistema]] — o edital pertence a uma área
 - [[nova-tela-react]] — como a tela é montada como rota
+- [regras-dos-editais](../aya/regras-dos-editais.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

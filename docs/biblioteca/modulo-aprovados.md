@@ -109,3 +109,4 @@ convocação, anexos, convocações e pendências; erro por parte em `erros.<par
 - [[python-e-jobs]] — contratação, casamento da lista e pendências
 - [[dados-pessoais]] — CPF mascarado, anexos do candidato
 - [[modulo-editais]] — abre o modal de listas
+- [regras-da-lista-de-aprovados](../aya/regras-da-lista-de-aprovados.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

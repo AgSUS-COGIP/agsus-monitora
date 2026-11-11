@@ -72,3 +72,4 @@ Contratos TypeScript, validações e o comportamento na troca de área: [[recurs
 - [[modulo-acessos]] — onde se concede o parecer jurídico
 - [[dados-pessoais]] — anexos com download registrado
 - [[modulo-entrevistas]] — o mesmo padrão acompanhar × fazer
+- [regras-dos-recursos](../aya/regras-dos-recursos.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

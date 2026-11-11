@@ -71,3 +71,4 @@ Para a Aya: `docs/aya/regras-da-classificacao.md`, `docs/aya/regras-da-lista-de-
 - [[modulo-recursos]] — ajustes da pontuação aprovados em recurso
 - [[modulo-regras-do-edital]] — etapa 4
 - [[python-e-jobs]] — a cópia do motor em Python
+- [regras-da-classificacao](../aya/regras-da-classificacao.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

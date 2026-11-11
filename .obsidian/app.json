@@ -11,6 +11,9 @@
     "scripts/",
     "supabase/",
     ".claude/",
-    "coverage/"
+    "coverage/",
+    "auth/",
+    "icons/",
+    "prototipos/"
   ]
 }

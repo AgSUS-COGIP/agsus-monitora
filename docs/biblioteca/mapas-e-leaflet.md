@@ -50,3 +50,4 @@ Satélite, marcadores, zoom, quedas de camada, lista de unidades) está em
 - [[terras-indigenas]] — a camada da Funai
 - [[modulo-visao-geral]] — onde os mapas aparecem
 - [[acessibilidade]] — formas, não só cores
+- [regras-dos-mapas](../aya/regras-dos-mapas.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)
