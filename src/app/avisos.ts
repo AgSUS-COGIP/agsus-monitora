@@ -53,7 +53,7 @@ function criarLoja<T>(inicial: T) {
 const ESCONDIDO: Carregamento = {
   visivel: false,
   titulo: "Carregando",
-  subtitulo: "Aguarde...",
+  subtitulo: "Aguarde…",
   percentual: 0,
   desde: 0,
 };
@@ -91,7 +91,7 @@ export function avisar(texto: string, tom: string = "ok"): void {
 export function mostrarCarregamento(
   mostrar: boolean,
   titulo: string = "Carregando",
-  subtitulo: string = "Aguarde...",
+  subtitulo: string = "Aguarde…",
   percentual: number = 0,
 ): void {
   const documento = globalThis.document;

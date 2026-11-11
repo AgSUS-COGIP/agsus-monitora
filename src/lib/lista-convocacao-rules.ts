@@ -862,7 +862,10 @@ export function resumirConvocacao(
       if (estaAConvocar(linha)) resumo.aConvocar += 1;
       if (texto(linha.candidato?.status) === "Convocado")
         resumo.convocados += 1;
-      if (!linha.imediata) resumo.reserva += 1;
+      // Como a coluna "Situação" (situacaoNaChamada): quem já foi chamado da
+      // reserva sai do cadastro (auditoria dos cálculos, 10/11/2026).
+      if (situacaoNaChamada(linha) === "Cadastro de reserva")
+        resumo.reserva += 1;
       if (linha.categoriaReservada) resumo.vagasRevertidas += 1;
     });
     resumo.foraDaFila += grupo.foraDaFila.length;

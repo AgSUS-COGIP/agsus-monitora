@@ -177,7 +177,7 @@ export function ResponsaveisDoEdital({
             disabled={!mudou || salvando}
             onClick={() => void salvar()}
           >
-            {salvando ? "Salvando..." : "Salvar responsáveis"}
+            {salvando ? "Salvando…" : "Salvar responsáveis"}
           </button>
           {salvo && !mudou ? (
             <span className="edital-responsaveis-salvo" role="status">

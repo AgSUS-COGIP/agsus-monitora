@@ -270,7 +270,7 @@ export function ImportarAnexos({
           {lendo ? (
             <>
               <i className="fa-solid fa-spinner fa-spin" aria-hidden="true" />{" "}
-              Lendo o PDF...
+              Lendo o PDF…
             </>
           ) : (
             <>
@@ -330,7 +330,7 @@ export function ImportarAnexos({
                 onClick={() => void gravarQuadro()}
               >
                 {gravandoQuadro
-                  ? "Salvando..."
+                  ? "Salvando…"
                   : gravacao?.tom === "success"
                     ? "Quadro salvo"
                     : "Salvar quadro de vagas"}

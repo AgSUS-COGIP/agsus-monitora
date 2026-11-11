@@ -1,3 +1,4 @@
+import { formatNumberBR } from "../../../lib/formatters";
 import {
   itemCompleto,
   titulosDoNivel,
@@ -50,7 +51,9 @@ export function CamposDoItem({
           {titulos.map((t) => (
             <option key={t.codigo} value={t.codigo}>
               {t.rotulo}
-              {t.pontos ? ` (${t.pontos})` : ""}
+              {t.pontos
+                ? ` (${formatNumberBR(Number(t.pontos), { maximumFractionDigits: 2 })})`
+                : ""}
             </option>
           ))}
         </select>

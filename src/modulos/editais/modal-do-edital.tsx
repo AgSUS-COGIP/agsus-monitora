@@ -919,7 +919,7 @@ export function ModalDoEdital({
             {salvando ? (
               <>
                 <i className="fa-solid fa-spinner fa-spin" aria-hidden="true" />{" "}
-                Salvando cronograma...
+                Salvando cronograma…
               </>
             ) : (
               "Salvar"

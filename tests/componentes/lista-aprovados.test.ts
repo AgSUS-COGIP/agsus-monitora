@@ -407,7 +407,7 @@ describe("carregamento", () => {
     );
     expect($("approvedCount").textContent).toBe("Carregando…");
     expect(achar("#page-approved [data-status-da-carga]").textContent).toBe(
-      "Carregando dados...",
+      "Carregando dados…",
     );
     expect(
       document.querySelectorAll("#approvedRows tr.ui-esqueleto-tr"),

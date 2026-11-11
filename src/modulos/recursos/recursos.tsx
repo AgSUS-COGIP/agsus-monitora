@@ -113,8 +113,8 @@ function textoDoStatus(
 ) {
   if (e.semSessao) return "Sessão não localizada";
   if (e.erroAoCarregar && !e.carregado) return "Sem dados";
-  if (!e.carregado) return "Carregando dados...";
-  if (e.atualizando) return "Atualizando...";
+  if (!e.carregado) return "Carregando dados…";
+  if (e.atualizando) return "Atualizando…";
   const ultima = recursos
     .map((r) =>
       typeof r.atualizado_em === "string" ? r.atualizado_em : r.criado_em,

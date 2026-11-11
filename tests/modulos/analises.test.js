@@ -1255,7 +1255,7 @@ describe("exportar, atualizar e a cópia do navegador", () => {
     });
     await montar(supabase, { armazenamento });
     expect(linhasDaFila()).toHaveLength(4);
-    expect(status().textContent).toBe("Atualizando...");
+    expect(status().textContent).toBe("Atualizando…");
     await act(async () => soltar());
     await esperar();
     expect(linhasDaFila()).toHaveLength(2);
@@ -1569,7 +1569,7 @@ describe("área, usuário, reabertura e comemorações", () => {
     expect(linhasDaFila()).toHaveLength(4);
     await act(async () => supabase.trocarUsuario("u2"));
     expect(linhasDaFila()).toHaveLength(0);
-    expect(status().textContent).toBe("Carregando dados...");
+    expect(status().textContent).toBe("Carregando dados…");
   });
 
   it("comemorações: o estado do Ativo é guardado a cada carga (marcos)", async () => {

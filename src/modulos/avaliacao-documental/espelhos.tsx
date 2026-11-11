@@ -1,3 +1,4 @@
+import { erroParaATela } from "../../lib/erro-na-tela.ts";
 import {
   useCallback,
   useEffect,
@@ -106,7 +107,7 @@ export function EspelhosDaAvaliacao({
   if (st.erro && !dados)
     return (
       <Aviso tom="danger" papel="alert">
-        Não foi possível carregar as fichas: {st.erro}
+        Não foi possível carregar as fichas: {erroParaATela(st.erro)}
         <button
           type="button"
           className="btn secondary small"

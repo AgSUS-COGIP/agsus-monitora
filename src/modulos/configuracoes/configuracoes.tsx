@@ -201,7 +201,7 @@ function BarraDeSalvar({ estado }: ComEstado) {
           ) : (
             <Icone nome="save" tamanho={16} />
           )}
-          <span>{atual.salvando ? "Publicando..." : "Salvar alterações"}</span>
+          <span>{atual.salvando ? "Publicando…" : "Salvar alterações"}</span>
         </button>
       </div>
     </div>
@@ -387,7 +387,7 @@ function DialogoDeRevisao({
               <Icone nome="cloud-upload" tamanho={16} />
             )}
             {modal.enviando
-              ? " Publicando..."
+              ? " Publicando…"
               : modal.erro
                 ? " Tentar novamente"
                 : ` Publicar ${total} alteração(ões)`}
@@ -457,7 +457,7 @@ function DialogoDeRestauracao({
               <Icone nome="rotate-ccw" tamanho={16} />
             )}
             {modal.enviando
-              ? " Restaurando..."
+              ? " Restaurando…"
               : modal.erro
                 ? " Tentar novamente"
                 : " Restaurar versão"}

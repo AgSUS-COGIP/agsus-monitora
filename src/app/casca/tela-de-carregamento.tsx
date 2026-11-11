@@ -5,7 +5,7 @@ import { getLoadingStage, isGenericLoadingCopy } from "../../lib/loading-copy";
 /*
   A tela de carregamento dos salvamentos (`#loader`), aberta por
   `window.monitoraLoader` (src/app/avisos.ts). Título e subtítulo genéricos
-  ("Carregando", "Aguarde...") dão lugar à etapa do percentual; o pé mostra
+  ("Carregando", "Aguarde…") dão lugar à etapa do percentual; o pé mostra
   "Etapa X de Y", o aviso de demora aos 12s e "Tentar novamente" aos 25s
   (`getLoadingStage`). O relógio só corre com a tela à vista.
 */

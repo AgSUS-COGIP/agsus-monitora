@@ -1,3 +1,4 @@
+import { erroParaATela } from "../../lib/erro-na-tela.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
   FILTRO_INICIAL,
@@ -73,7 +74,7 @@ export function ResultadosDaAvaliacao({
   if (st.erro && !dados)
     return (
       <Aviso tom="danger" papel="alert">
-        Não foi possível carregar os resultados: {st.erro}
+        Não foi possível carregar os resultados: {erroParaATela(st.erro)}
         <button
           type="button"
           className="btn secondary small"

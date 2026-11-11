@@ -114,8 +114,8 @@ function textoDoStatus({
   acao,
 }: SnapshotDosAprovados) {
   if (erroAoCarregar && !carregado) return "Sem dados";
-  if (!carregado) return "Carregando dados...";
-  if (acao) return "Atualizando...";
+  if (!carregado) return "Carregando dados…";
+  if (acao) return "Atualizando…";
   return carregadoEm
     ? `Atualizado em ${formatarDataHora(carregadoEm)}`
     : "Base carregada";

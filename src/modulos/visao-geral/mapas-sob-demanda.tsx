@@ -1,3 +1,4 @@
+import { erroParaATela } from "../../lib/erro-na-tela.ts";
 import type { ComponentProps, ComponentType } from "react";
 import { useEffect, useSyncExternalStore } from "react";
 import { importarComRecarga } from "../../lib/importar-com-recarga.ts";
@@ -91,7 +92,7 @@ function MapaSobDemanda<P extends object>({
     return (
       <ErroAoCarregar
         oQue="o mapa"
-        mensagem={erro instanceof Error ? erro.message : ""}
+        mensagem={erroParaATela(erro)}
         aoTentar={tentar}
       />
     );

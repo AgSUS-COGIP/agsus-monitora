@@ -572,7 +572,7 @@ function FormularioDeDemanda({
           disabled={salvando}
           onClick={() => void salvar()}
         >
-          {salvando ? "Salvando..." : "Salvar"}
+          {salvando ? "Salvando…" : "Salvar"}
         </button>
       </div>
     </Modal>
