@@ -93,3 +93,5 @@ Testes: `tests/mapa-saude-indigena.test.js` (fixture real das Lotações),
 ## Relacionadas
 
 - [[modulo-visao-geral]] · [[mapas-e-leaflet]] · [[terras-indigenas]] · [[coordenadas]]
+- [regras-do-mapa-saude-indigena](../aya/regras-do-mapa-saude-indigena.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)
+- [regras-dos-mapas](../aya/regras-dos-mapas.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

@@ -23,6 +23,12 @@ estado.ts                   store sem React: candidatos (pacote compacto por ár
                             navegador), listas, convocação, anexos, convocações, ações e estado.carta
 aba-aprovados.tsx           KPIs (Convocados no lugar de Fim de fila), filtros, TabelaInfinita (50 por
                             vez), ações por linha (anexos, status, carta, decisão judicial, sub judice)
+central-de-convocacoes.tsx  bloco Convocações no topo da aba Convocação (#581): "Para contratação"
+                            (a aba de sempre) e "Para entrevistas" (só com acesso às Entrevistas e
+                            com Conduzir entrevistas ligada na área, `usarConducaoLigada`):
+                            a convocação da entrevista, só leitura, que o controlador de Conduzir
+                            entrevistas entrega (`convocacaoParaLeitura`, a loja de lá, sem estado
+                            próprio); a tela baixa só ao escolher essa visão
 aba-convocacao.tsx          KPIs (A convocar, Convocados…), escolha para a carta, "Escolher os a
                             convocar", Exportar CSV, uma tabela por vaga
 partes.tsx                  selo de status, nome que abre a gaveta, ações, paginação, CampoEditavel
@@ -109,3 +115,4 @@ convocação, anexos, convocações e pendências; erro por parte em `erros.<par
 - [[python-e-jobs]] — contratação, casamento da lista e pendências
 - [[dados-pessoais]] — CPF mascarado, anexos do candidato
 - [[modulo-editais]] — abre o modal de listas
+- [regras-da-lista-de-aprovados](../aya/regras-da-lista-de-aprovados.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

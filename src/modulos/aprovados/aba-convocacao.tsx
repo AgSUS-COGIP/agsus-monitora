@@ -33,6 +33,7 @@ import {
 } from "../../lib/access-roles.ts";
 import {
   CentralDeConvocacoes,
+  usarConducaoLigada,
   type TipoDaCentralDeConvocacoes,
 } from "./central-de-convocacoes.tsx";
 import {
@@ -394,7 +395,8 @@ export function AbaConvocacao({
 }: PropsDaAbaDaConvocacao) {
   const [tipoConvocacao, setTipoConvocacao] =
     useState<TipoDaCentralDeConvocacoes>("contratacao");
-  const podeEntrevistas = canViewEntrevistas(perfil);
+  const conducaoLigada = usarConducaoLigada();
+  const podeEntrevistas = canViewEntrevistas(perfil) && conducaoLigada;
   const visaoDaCentral = podeEntrevistas ? tipoConvocacao : "contratacao";
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
   /*

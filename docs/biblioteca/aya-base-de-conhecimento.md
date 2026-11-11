@@ -91,6 +91,40 @@ na Vercel. As migrations do bridge ficam no histórico; **nunca aplicar o bridge
 
 `tests/aya-*.test.js`, `tests/busca-da-aya.test.js` e `tests/aya-conhecimento-md.test.js`.
 
+## Os arquivos da base
+
+Conteúdo do domínio (Saúde Indígena, DSEIs, política e a própria Aya):
+
+- [01-saude-indigena](../aya/01-saude-indigena.md)
+- [02-dsei-e-rede](../aya/02-dsei-e-rede.md)
+- [03-monitora](../aya/03-monitora.md)
+- [04-dseis](../aya/04-dseis.md)
+- [05-politica-e-controle-social](../aya/05-politica-e-controle-social.md)
+- [assistente-aya](../aya/assistente-aya.md)
+
+Regras de cada tela (cada uma ligada também à nota `modulo-*` da tela):
+
+- [regras-da-automacao](../aya/regras-da-automacao.md)
+- [regras-da-avaliacao-documental](../aya/regras-da-avaliacao-documental.md)
+- [regras-da-classificacao](../aya/regras-da-classificacao.md)
+- [regras-da-lista-de-aprovados](../aya/regras-da-lista-de-aprovados.md)
+- [regras-da-selecao](../aya/regras-da-selecao.md)
+- [regras-da-visao-geral](../aya/regras-da-visao-geral.md)
+- [regras-das-analises](../aya/regras-das-analises.md)
+- [regras-das-areas](../aya/regras-das-areas.md)
+- [regras-das-conferencias](../aya/regras-das-conferencias.md)
+- [regras-das-configuracoes](../aya/regras-das-configuracoes.md)
+- [regras-das-entrevistas](../aya/regras-das-entrevistas.md)
+- [regras-do-cronograma](../aya/regras-do-cronograma.md)
+- [regras-do-mapa-saude-indigena](../aya/regras-do-mapa-saude-indigena.md)
+- [regras-do-sistema](../aya/regras-do-sistema.md)
+- [regras-do-status-das-atualizacoes](../aya/regras-do-status-das-atualizacoes.md)
+- [regras-dos-acessos](../aya/regras-dos-acessos.md)
+- [regras-dos-editais](../aya/regras-dos-editais.md)
+- [regras-dos-mapas](../aya/regras-dos-mapas.md)
+- [regras-dos-modulos-e-abas](../aya/regras-dos-modulos-e-abas.md)
+- [regras-dos-recursos](../aya/regras-dos-recursos.md)
+
 ## Relacionadas
 
 - [[modulo-aya]] — o painel, a mascote e o tour

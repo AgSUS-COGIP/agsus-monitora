@@ -64,3 +64,4 @@ o pedido.
 - [[sessao-e-auth]] — login e domínio institucional
 - [[areas-do-sistema]] — áreas e coordenações
 - [[modulo-configuracoes]] — a moldura das seções
+- [regras-dos-acessos](../aya/regras-dos-acessos.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

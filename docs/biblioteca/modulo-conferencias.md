@@ -53,3 +53,4 @@ ver [[python-e-jobs]] e [[robos-e-agenda]]). As histórias de usuário (CF-1 a C
 - [[robos-e-agenda]] — quando as conferências rodam
 - [[dados-pessoais]] — um aviso por problema, sem dado pessoal
 - [[testes]] — rede bloqueada e RPC simulada
+- [regras-das-conferencias](../aya/regras-das-conferencias.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

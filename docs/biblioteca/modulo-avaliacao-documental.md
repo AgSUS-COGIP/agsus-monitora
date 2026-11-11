@@ -110,3 +110,4 @@ ficha ou esconder a aba. Sem as migrations, a tela usa as RPCs de sempre.
 - [[python-e-jobs]] — contas oficiais em lote
 - [[dados-pessoais]] — LGPD da ficha e dos anexos
 - [[textos-da-interface]] — explicação é com a Aya
+- [regras-da-avaliacao-documental](../aya/regras-da-avaliacao-documental.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

@@ -3299,10 +3299,10 @@ export const VERBETES_AYA = Object.freeze([
       "central de convocacoes",
     ],
     resposta:
-      'Na aba Convocação, o bloco Convocações separa as duas etapas, cada uma com a sua lista, regra e histórico. "Para contratação" mostra logo abaixo a ordem de chamada, as cartas e os status, calculados pela lista vigente de aprovados. "Para entrevistas" (só para quem tem acesso às Entrevistas) leva aonde a convocação para entrevista acontece: ela parte da lista registrada na Classificação ("Abrir listas da Classificação") e convocar ou desconvocar continua em Conduzir entrevistas ("Abrir Convocação para entrevistas"), com as permissões e o histórico de lá.',
+      'Na aba Convocação, o bloco Convocações separa as duas etapas, cada uma com a sua lista, regra e histórico. "Para contratação" mostra logo abaixo a ordem de chamada, as cartas e os status, calculados pela lista vigente de aprovados. "Para entrevistas" (só para quem tem acesso às Entrevistas, e só nas áreas em que Conduzir entrevistas está ligada) mostra, para consulta, a lista de convocação registrada na Classificação do edital escolhido: posição, nota, modalidade e quem já foi convocado ou ainda falta convocar. O edital é o mesmo aberto em Conduzir entrevistas (trocar aqui troca lá). Convocar ou desconvocar continua em Conduzir entrevistas › Preparar ("Convocar em Conduzir entrevistas"), com as permissões e o histórico de lá; quem tem acesso à Classificação também vê "Abrir listas da Classificação".',
     fato: "",
     fonte:
-      "src/modulos/aprovados/central-de-convocacoes.tsx; src/modulos/aprovados/aba-convocacao.tsx",
+      "src/modulos/aprovados/central-de-convocacoes.tsx; src/modulos/entrevistas/convocacao-para-leitura.tsx; src/modulos/aprovados/aba-convocacao.tsx",
     abrir: "approved",
   },
   {
@@ -3505,10 +3505,10 @@ export const VERBETES_AYA = Object.freeze([
       "nao contratados",
     ],
     resposta:
-      "Na Seleção, os aprovados vêm da lista de aprovados vigente de cada edital. Os contratados são os candidatos dessa lista com a situação Contratado ou Migração, e os não contratados são aprovados menos contratados. Sem lista de aprovados, a vaga não soma aprovados nem contratados. Nas vagas de outras bancas (sem código da vaga), a ligação com a lista é pelo nome do cargo, sem diferenciar acento, maiúsculas ou pontuação.",
+      'Na Seleção, os aprovados vêm da lista de aprovados vigente de cada edital. Os contratados são os candidatos dessa lista com a situação Contratado ou Migração, e os não contratados são aprovados menos contratados. Quem foi contratado pela outra linha do mesmo edital (ampla concorrência e cota) é a mesma pessoa e conta uma vez só: a linha "Contratado em outra lista" não entra nem nos aprovados nem nos contratados. Sem lista de aprovados, a vaga não soma aprovados nem contratados. Nas vagas de outras bancas (sem código da vaga), a ligação com a lista é pelo nome do cargo, sem diferenciar acento, maiúsculas ou pontuação.',
     fato: "",
     fonte:
-      "supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql",
+      "supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql; supabase/migrations/20261110203000_selecao_conta_uma_vez_quem_esta_em_outra_lista.sql",
   },
   {
     arquivo: "regras-da-selecao.md",

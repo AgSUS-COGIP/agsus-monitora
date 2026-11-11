@@ -33,3 +33,4 @@ histórico. Pasta `src/modulos/automacao/`. Explicações: `docs/aya/regras-da-a
 - [[robos-e-agenda]] — o banco pede ao GitHub
 - [[modulo-status-das-atualizacoes]] — execução imediata e saúde das cargas
 - [[modulo-configuracoes]] — a moldura das seções
+- [regras-da-automacao](../aya/regras-da-automacao.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

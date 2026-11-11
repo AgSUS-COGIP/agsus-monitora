@@ -74,3 +74,4 @@ Explicações para quem usa: `docs/aya/regras-das-analises.md`.
 - [[cargas-de-planilha]] — as planilhas legadas que também alimentam o painel
 - [[carga-da-entrada]] — cópia no navegador (IndexedDB)
 - [[componentes-padrao]] — TabelaInfinita, Kpi, gráficos
+- [regras-das-analises](../aya/regras-das-analises.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

@@ -85,3 +85,4 @@ bordas de mês e fuso), `tests/etapas-de-edital.test.js`, `tests/datas-do-cronog
 - [[modulo-resumo-do-dia]] — "Ver no cronograma"
 - [[acessibilidade]] — cor nunca é o único sinal
 - [[areas-do-sistema]] — recorte por área
+- [regras-do-cronograma](../aya/regras-do-cronograma.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

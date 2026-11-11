@@ -50,6 +50,9 @@ seleção (cabeçalho com o edital e as seções).
   `convocar_para_entrevista(p_edital, p_lista, p_analises)` registra para a ficha só quem está nela
   (`20261005150000_convocacao_unica_da_entrevista.sql`). Sem lista gerada, o cálculo atual do motor
   (`obter_classificacao_do_edital`, só para ver) e o atalho para gerar na Classificação.
+  `ListaDeConvocacao` (`conducao.tsx`) sem `aoConvocar` é só leitura: é como a Central de convocações
+  (Lista de aprovados › Convocação › Para entrevistas) a mostra, por `convocacaoParaLeitura` do
+  controlador (`convocacao-para-leitura.tsx`), com a mesma loja e o mesmo edital aberto.
 - Vagas imediatas e regra de convocação não se configuram aqui: o resumo "Regras da entrevista" (topo
   de Preparar) mostra as da Classificação em linguagem simples, com a tabelinha por vaga e, em "Ver
   detalhes", de onde vêm as vagas e o botão para onde se mudam (Editais, Lista de aprovados,
@@ -75,3 +78,4 @@ Explicações para quem usa: `docs/aya/regras-das-entrevistas.md`.
 - [[cargas-de-planilha]] — a carga diária da aba Entrevistados
 - [[modulo-recursos]] — o mesmo padrão acompanhar × fazer
 - [[modulo-avaliacao-documental]] — a ficha em modo de análise, no mesmo molde
+- [regras-das-entrevistas](../aya/regras-das-entrevistas.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)
