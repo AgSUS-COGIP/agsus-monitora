@@ -679,6 +679,22 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     resumo:
       "Inativa ou reativa um modelo da carta de convocação, com motivo. Aprovados editor.",
   },
+  registrar_exportacao_aprovados: {
+    argumentos: [
+      "p_area",
+      "p_formato",
+      "p_editais",
+      "p_cargos",
+      "p_modalidades",
+      "p_situacoes",
+      "p_recorte_do_aviso",
+      "p_total_na_tela",
+      "p_registros",
+    ],
+    critica: false,
+    resumo:
+      "Registra a exportação da Lista de aprovados (XLSX/CSV/PDF gerado no navegador): confere área, editais da lista vigente e o total do recorte; devolve exportacao_id e emitida_em. Aprovados leitor.",
+  },
   registrar_carta_convocacao: {
     argumentos: [
       "p_modelo",

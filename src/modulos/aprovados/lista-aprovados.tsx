@@ -45,6 +45,8 @@ import {
 } from "./pendencias/estado-das-pendencias.ts";
 import { contarAbertas } from "../../lib/pendencias-do-edital.ts";
 import { hojeEmBrasilia } from "../../lib/carta-de-convocacao.ts";
+import { montarPedidoDaExportacao } from "../../lib/exportacao-da-lista-de-aprovados.ts";
+import { ModalDaExportacao } from "./exportacao/modal-da-exportacao.tsx";
 import "./convocacao.css";
 import "./carta-de-convocacao/carta.css";
 
@@ -295,7 +297,9 @@ export function ListaAprovados({
     Núcleo é de um edital certo e vê tudo o que foi carregado — a área atual,
     a mesma do Núcleo.
   */
-  const { ids, area } = usarAreaAtual();
+  const { ids, area, nome } = usarAreaAtual();
+  // O modal do "Exportar" da aba Aprovados (o pedido sai dos filtros da tela).
+  const [exportar, setExportar] = useState(false);
   const listas = useMemo(
     () => soDosEditais(dados.listas, ids),
     [dados.listas, ids],
@@ -421,6 +425,16 @@ export function ListaAprovados({
                 ? "Sem dados"
                 : "Carregando…"}
           </span>
+          <button
+            id="approvedExportBtn"
+            data-tour="aprovados-exportar"
+            className="btn secondary"
+            type="button"
+            disabled={!carregado || Boolean(dados.acao)}
+            onClick={() => setExportar(true)}
+          >
+            <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
+          </button>
           {podeSubJudice ? (
             <button
               id="approvedAddSubJudiceBtn"
@@ -492,6 +506,22 @@ export function ListaAprovados({
         dados={dados}
         daArea={{ listas, candidatos }}
       />
+      {exportar ? (
+        <ModalDaExportacao
+          estado={estado}
+          pedido={montarPedidoDaExportacao({
+            area: String(area || ""),
+            rotuloDaArea: nome || String(area || ""),
+            candidatosDaArea: candidatos,
+            filtrados,
+            filtros: efetivos,
+            opcoesDeEdital: opcoesEditais,
+            convocacoes: dados.convocacoes,
+            dadosDe: dados.carregadoEm,
+          })}
+          aoFechar={() => setExportar(false)}
+        />
+      ) : null}
     </div>
   );
 }

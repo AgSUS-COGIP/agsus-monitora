@@ -3307,6 +3307,23 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Exportar a lista de aprovados",
+    perguntas: [
+      "exportar lista de aprovados",
+      "baixar lista de aprovados",
+      "lista de aprovados em excel",
+      "lista de aprovados em pdf",
+      "exportar aprovados xlsx csv pdf",
+    ],
+    resposta:
+      'Na aba Aprovados, "Exportar" baixa a lista com os filtros da tela (edital, cargo, modalidade e situação; a busca da tabela não entra), em XLSX, CSV ou PDF. O arquivo traz a área, os editais, os filtros, quantos registros saíram, a data dos dados, a data de emissão e o número do registro da exportação. Antes de gerar, o banco confere a permissão e o total da lista vigente: se a lista mudou desde que a tela carregou, ele pede Atualizar e exportar de novo. O arquivo é gerado no navegador e cada exportação fica registrada (quem, quando, formato e filtros). Não é o "Exportar CSV" da aba Convocação, que baixa a ordem de chamada.',
+    fato: "",
+    fonte:
+      "src/modulos/aprovados/exportacao/; src/lib/exportacao-da-lista-de-aprovados.ts",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "A convocar na ordem de chamada",
     perguntas: [
       "a convocar",

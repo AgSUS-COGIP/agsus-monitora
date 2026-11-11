@@ -357,8 +357,16 @@ export function gerarXlsx(
   planilhas: readonly PlanilhaDaClassificacao[],
   quando = new Date(),
 ) {
+  return zipSemCompressao(arquivosDoXlsx(planilhas), quando);
+}
+
+/**
+ * As partes do .xlsx de `gerarXlsx`, antes do ZIP: quem precisa de arquivo
+ * menor (a Lista de aprovados, com milhares de linhas) zipa com compressão.
+ */
+export function arquivosDoXlsx(planilhas: readonly PlanilhaDaClassificacao[]) {
   const folhas = planilhas.map((p, i) => ({ ...p, n: i + 1 }));
-  const arquivos = [
+  return [
     {
       nome: "[Content_Types].xml",
       conteudo:
@@ -422,7 +430,6 @@ export function gerarXlsx(
       conteudo: planilhaXml(f.linhas, f.larguras, f.filtro === true),
     })),
   ];
-  return zipSemCompressao(arquivos, quando);
 }
 
 const motivos: Readonly<Record<string, string | undefined>> =
