@@ -153,10 +153,7 @@ export function criarConfiguracao({
     );
     documento
       ?.querySelector('meta[name="description"]')
-      ?.setAttribute(
-        "content",
-        "Yeendé - Gestão dos processos seletivos",
-      );
+      ?.setAttribute("content", "Yeendé - Gestão dos processos seletivos");
     escrever("skipLink", valor("skip_link_text"));
     /*
       A tela de acesso (src/app/entrada/) é React: a marca dela (arte, cor,
