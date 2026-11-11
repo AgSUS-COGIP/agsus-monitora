@@ -200,9 +200,9 @@ export const SITUACOES = Object.freeze({
 });
 export type Situacao = (typeof SITUACOES)[keyof typeof SITUACOES];
 
-export const TITULO_DESATIVADA = "Seu acesso ao MONITORA foi desativado.";
+export const TITULO_DESATIVADA = "Seu acesso ao Yeendé foi desativado.";
 export const TEXTO_DESATIVADA =
-  "Se acha que é um engano, fale com a equipe responsável pelo MONITORA.";
+  "Se acha que é um engano, fale com a equipe responsável pelo Yeendé.";
 export const PERGUNTA_DA_REATIVACAO = "Precisa do acesso de novo?";
 
 /** O pedido como obter_minha_solicitacao_acesso devolve. */
@@ -331,7 +331,7 @@ export function telaDaSolicitacao(
     return tela(situacao, {
       tom: "success",
       titulo: "Acesso liberado",
-      texto: "Seu acesso ao MONITORA está liberado.",
+      texto: "Seu acesso ao Yeendé está liberado.",
       conteudo: "oculto",
       entrar: true,
     });
@@ -433,7 +433,7 @@ export function erroDaJustificativa(texto: unknown): string {
   if (limpo.length > JUSTIFICATIVA_MAXIMA)
     return `Use no máximo ${JUSTIFICATIVA_MAXIMA.toLocaleString("pt-BR")} caracteres.`;
   if (!motivoPareceTexto(limpo, PALAVRAS_DA_JUSTIFICATIVA))
-    return `Escreva com pelo menos ${PALAVRAS_DA_JUSTIFICATIVA} palavras: para que você vai usar o MONITORA?`;
+    return `Escreva com pelo menos ${PALAVRAS_DA_JUSTIFICATIVA} palavras: para que você vai usar o Yeendé?`;
   return "";
 }
 
@@ -543,7 +543,7 @@ export const MOTIVO_DE_RECUSA_OUTRO = "OUTRO";
 
 export const MOTIVOS_DE_RECUSA: readonly MotivoDeRecusa[] = Object.freeze(
   [
-    ["FORA_DO_PUBLICO", "Não faz parte do público do MONITORA"],
+    ["FORA_DO_PUBLICO", "Não faz parte do público do Yeendé"],
     ["VINCULO_NAO_CONFIRMADO", "Vínculo com a área não confirmado"],
     ["AREA_OU_LOTACAO", "Área ou lotação não confere"],
     ["JA_TEM_ACESSO", "Já tem acesso por outra conta"],

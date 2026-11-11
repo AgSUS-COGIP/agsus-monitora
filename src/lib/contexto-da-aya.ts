@@ -50,7 +50,7 @@ export function contextualAyaAnswer(
     /\bquem voce e\b/.test(normalized);
 
   if (asksIdentity) {
-    return "Eu sou a Aya, assistente do MONITORA da AgSUS.";
+    return "Eu sou a Aya, assistente do Yeendé da AgSUS.";
   }
 
   const asksDseiCount =
@@ -66,7 +66,7 @@ export function contextualAyaAnswer(
       const filterNote = context.activeFilters?.length
         ? " no recorte dos filtros ativos"
         : " na visão atual do mapa";
-      return `O MONITORA está mostrando ${count} DSEI${count === 1 ? "" : "s"}${filterNote}.`;
+      return `O Yeendé está mostrando ${count} DSEI${count === 1 ? "" : "s"}${filterNote}.`;
     }
   }
 

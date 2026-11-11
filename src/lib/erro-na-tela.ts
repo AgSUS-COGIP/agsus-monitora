@@ -23,7 +23,7 @@ const VERSAO_ANTERIOR =
   /dynamically imported module|Importing a module script failed|error loading dynamically|ChunkLoadError/i;
 
 export const SESSAO_VENCIDA =
-  "Sua sessão expirou. Saia e entre de novo no MONITORA.";
+  "Sua sessão expirou. Saia e entre de novo no Yeendé.";
 export const TEMPO_ESGOTADO_NO_BANCO =
   "O servidor demorou demais para responder. Tente de novo em instantes.";
 export const SEM_PERMISSAO = "Você não tem permissão para ver isto.";

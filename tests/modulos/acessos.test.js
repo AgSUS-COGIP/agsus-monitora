@@ -537,13 +537,13 @@ describe("Configurações › Acessos", () => {
     expect(document.activeElement?.textContent.trim()).toBe("Concluir");
     const mensagem = modal.querySelector(".acessos-convite-mensagem");
     expect(mensagem.textContent).toBe(
-      `Olá, Nova Pessoa! Você foi convidado(a) para o MONITORA (AgSUS). Acesse ${window.location.origin} e entre com sua conta Google nova.pessoa@agenciasus.org.br.`,
+      `Olá, Nova Pessoa! Você foi convidado(a) para o Yeendé (AgSUS). Acesse ${window.location.origin} e entre com sua conta Google nova.pessoa@agenciasus.org.br.`,
     );
     const email = [...modal.querySelectorAll("a")].find(
       (a) => a.textContent.trim() === "Abrir no e-mail",
     );
     expect(email.getAttribute("href")).toMatch(
-      /^mailto:nova\.pessoa@agenciasus\.org\.br\?subject=Convite%20para%20o%20MONITORA&body=Ol%C3%A1%2C%20Nova%20Pessoa!/,
+      /^mailto:nova\.pessoa@agenciasus\.org\.br\?subject=Convite%20para%20o%20Yeend%C3%A9&body=Ol%C3%A1%2C%20Nova%20Pessoa!/,
     );
     const writeText = vi.fn(async () => {});
     Object.defineProperty(navigator, "clipboard", {
@@ -1018,7 +1018,7 @@ describe("Acessos: visão simples, trava de área e convite", () => {
     expect(secao.querySelector("summary").textContent).toBe("Reenviar convite");
     expect(
       secao.querySelector(".acessos-convite-mensagem").textContent,
-    ).toContain("Olá, Coord! Você foi convidado(a) para o MONITORA (AgSUS).");
+    ).toContain("Olá, Coord! Você foi convidado(a) para o Yeendé (AgSUS).");
     expect(
       [...secao.querySelectorAll("a")]
         .find((a) => a.textContent.trim() === "Abrir no e-mail")

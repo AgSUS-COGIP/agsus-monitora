@@ -54,7 +54,7 @@ export const FILTROS_VAZIOS: FiltrosDaSelecao = Object.freeze({
 });
 
 export const ORIGENS_DOS_CONVOCADOS = Object.freeze([
-  Object.freeze({ id: "entrevistas", rotulo: "Entrevistas do MONITORA" }),
+  Object.freeze({ id: "entrevistas", rotulo: "Entrevistas do Yeendé" }),
   Object.freeze({ id: "planilha", rotulo: "Planilha Auditoria (dado antigo)" }),
 ]);
 

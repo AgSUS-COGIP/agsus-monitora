@@ -22,7 +22,7 @@ describe("exemplos das comemorações", () => {
       "Fila zerada, nenhuma análise pendente. Obrigado, equipe da Saúde Indígena!",
     );
     expect(exemploDoMarco("acesso-liberado", "").texto).toBe(
-      "Boas-vindas, Ana! Seu acesso ao MONITORA foi liberado.",
+      "Boas-vindas, Ana! Seu acesso ao Yeendé foi liberado.",
     );
     expect(exemploDoMarco("marco-do-ano", "").letreiro).toBe("1.000 análises");
   });

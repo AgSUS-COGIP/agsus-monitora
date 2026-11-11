@@ -420,7 +420,7 @@ function sugestaoDoVerbete(verbete: VerbeteDaAya): SugestaoDaAya {
 }
 
 const TEXTO_FORA_DO_ESCOPO =
-  "Sou a Aya, do MONITORA. Ajudo com editais, cronogramas, análises, recursos, entrevistas, aprovados, seleção, mapas e acessos. Essa pergunta foge do que eu sei, mas posso ajudar com estas sugestões:";
+  "Sou a Aya, do Yeendé. Ajudo com editais, cronogramas, análises, recursos, entrevistas, aprovados, seleção, mapas e acessos. Essa pergunta foge do que eu sei, mas posso ajudar com estas sugestões:";
 
 // Assuntos que a Aya não trata, mesmo que uma palavra coincida com a base.
 const FORA_DO_SISTEMA =

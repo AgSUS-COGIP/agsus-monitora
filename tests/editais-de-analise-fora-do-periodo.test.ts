@@ -35,7 +35,7 @@ describe("migration 20261111150000 (editais de análise fora do período)", () =
     expect(migration.trimEnd().endsWith("commit;")).toBe(true);
   });
 
-  it("encerrado é o fim antes de hoje em Brasília, fora o edital avaliado no MONITORA", () => {
+  it("encerrado é o fim antes de hoje em Brasília, fora o edital avaliado no Yeendé", () => {
     const bloco = objetos(migration);
     expect(bloco).toContain(
       "p_fim < (now() at time zone 'America/Sao_Paulo')::date",

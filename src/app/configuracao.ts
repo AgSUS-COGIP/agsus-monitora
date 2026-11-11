@@ -147,16 +147,13 @@ export function criarConfiguracao({
       O nome da aba: aqui entra só a metade que a configuração conhece (o nome
       do sistema). A metade da página fica com a navegação.
     */
-    definirSistemaDaAba(valor("app_title") || "AgSUS Monitora");
+    definirSistemaDaAba(valor("app_title") || "Yeendé");
     void aplicarFaviconDaMarca(
       normalizeAccessLogoUrl(valor("auth_access_logo_url")),
     );
     documento
       ?.querySelector('meta[name="description"]')
-      ?.setAttribute(
-        "content",
-        "AgSUS Monitora - Monitoramento de Processos Seletivos",
-      );
+      ?.setAttribute("content", "Yeendé - Gestão dos processos seletivos");
     escrever("skipLink", valor("skip_link_text"));
     /*
       A tela de acesso (src/app/entrada/) é React: a marca dela (arte, cor,

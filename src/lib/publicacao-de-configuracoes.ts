@@ -390,13 +390,13 @@ export const CAMPOS_DAS_SECOES: Readonly<
     ),
     texto(
       "ui_sidebar_logo_url",
-      "Logo independente da barra lateral do AgSUS Monitora",
+      "Logo independente da barra lateral do Yeendé",
       "Logo da barra lateral",
       { tipo: "gerenciado", normalizar: logoDaBarraSegura },
     ),
     texto(
       "ui_sidebar_background_color",
-      "Cor de fundo da barra lateral do AgSUS Monitora",
+      "Cor de fundo da barra lateral do Yeendé",
       "Cor da barra lateral",
       { tipo: "cor", normalizar: corDaBarraSegura },
     ),
@@ -413,7 +413,7 @@ export const CAMPOS_DAS_SECOES: Readonly<
       chave: "app_version_current",
       descricao: "Versão corrente publicada",
       rotulo: "Versão publicada",
-      placeholder: "Ex: MONITORA Web V2.9.35",
+      placeholder: "Ex: Yeendé Web V2.9.35",
     },
     {
       chave: "feature_realtime_monitoramento",

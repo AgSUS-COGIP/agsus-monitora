@@ -529,7 +529,7 @@ describe("equipe do edital (AM-3)", () => {
 });
 
 describe("dono da avaliação do edital (20261009200000)", () => {
-  it("a coordenação passa o edital para o MONITORA com confirmação e motivo", async () => {
+  it("a coordenação passa o edital para o Yeendé com confirmação e motivo", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
     const rotulo = secao.querySelector("[data-origem]");
@@ -555,7 +555,7 @@ describe("dono da avaliação do edital (20261009200000)", () => {
       p_motivo: "Edital analisado pelas fichas",
     });
     expect(secao.querySelector("[data-origem]").textContent).toContain(
-      "Avaliação: MONITORA",
+      "Avaliação: Yeendé",
     );
     expect(botao("Voltar para a planilha", secao)).toBeTruthy();
     expect(document.querySelector(".modal")).toBeNull();

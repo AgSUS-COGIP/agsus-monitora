@@ -17,7 +17,7 @@ describe("origem da requisição aos proxies da Funai", () => {
     ).toBe(false);
   });
 
-  it("recusa site de terceiro usando o MONITORA como relé", () => {
+  it("recusa site de terceiro usando o Yeendé como relé", () => {
     expect(
       origemDeTerceiro(
         req({

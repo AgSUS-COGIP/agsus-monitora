@@ -26,7 +26,7 @@ import {
 } from "../../lib/solicitacao-de-acesso.ts";
 import {
   IconeDeEscudo,
-  IconeDoMonitora,
+  IconeDoYeende,
   MarcaDoGoogle,
 } from "./icones-da-entrada.tsx";
 import {
@@ -89,7 +89,7 @@ export function falaDaAya(
   if (situacao === SITUACOES.DESATIVADA && !estado.modoReativacao)
     return {
       texto:
-        "Se você ainda precisa do MONITORA, peça a reativação e conte o motivo.",
+        "Se você ainda precisa do Yeendé, peça a reativação e conte o motivo.",
       humor: null,
     };
   if (visao.reativacao)
@@ -139,15 +139,15 @@ function Marca({
 }) {
   return (
     <aside className="solicitacao-marca">
-      <div className="solicitacao-lockup" aria-label="AgSUS · MONITORA">
+      <div className="solicitacao-lockup" aria-label="AgSUS · Yeendé">
         <span className="solicitacao-organizacao">
           <Logo url={logoUrl} />
           <strong>AgSUS</strong>
         </span>
         <span className="solicitacao-divisor" aria-hidden="true" />
         <span className="solicitacao-produto">
-          <IconeDoMonitora />
-          <strong>MONITORA</strong>
+          <IconeDoYeende />
+          <strong>Yeendé</strong>
         </span>
       </div>
       <p className="solicitacao-slogan">{slogan}</p>
@@ -157,7 +157,7 @@ function Marca({
           estado={fala.humor}
           ouvirAya={false}
           dormir={false}
-          rotulo="Aya, a assistente do MONITORA"
+          rotulo="Aya, a assistente do Yeendé"
           className="solicitacao-aya-arara"
         />
         <p className="solicitacao-aya-fala" aria-live="polite">
@@ -514,7 +514,7 @@ function Formulario({
             id="accessReqJustificativa"
             rows={4}
             maxLength={JUSTIFICATIVA_MAXIMA}
-            placeholder="Para que você vai usar o MONITORA?"
+            placeholder="Para que você vai usar o Yeendé?"
             value={campos.justificativa}
             onChange={(e) =>
               pedido.atualizarCampo("justificativa", e.target.value)

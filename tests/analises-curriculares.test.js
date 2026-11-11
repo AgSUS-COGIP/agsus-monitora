@@ -509,7 +509,7 @@ describe("fila, status e atualização", () => {
     expect(tomDoStatus("x")).toBe("neutro");
   });
 
-  it("Em análise (ficha aberta no MONITORA) conta como pendente", () => {
+  it("Em análise (ficha aberta no Yeendé) conta como pendente", () => {
     const linhas = prontas([
       linha({ id: "1", status_consolidado: "Em análise" }),
       linha({ id: "2", status_consolidado: "Pendente" }),

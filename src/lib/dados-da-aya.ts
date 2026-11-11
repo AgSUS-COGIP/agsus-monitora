@@ -272,7 +272,7 @@ export async function responderComDados({
       ...base,
       provider: "base-monitora",
       answer:
-        "As conferências de consistência ainda estão chegando ao MONITORA: quando entrarem, os avisos aparecem no Status das atualizações e num selo em cada módulo. Por enquanto, não há aviso de conferência para mostrar.",
+        "As conferências de consistência ainda estão chegando ao Yeendé: quando entrarem, os avisos aparecem no Status das atualizações e num selo em cada módulo. Por enquanto, não há aviso de conferência para mostrar.",
     };
 
   if (!perfil || !podeVer(perfil, intencao)) {

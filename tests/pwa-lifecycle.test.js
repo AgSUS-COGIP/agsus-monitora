@@ -13,7 +13,7 @@ describe("ciclo web sem oferta de instalação", () => {
   it("não registra prompt nem orientação de instalação", () => {
     expect(lifecycleSource).not.toContain("beforeinstallprompt");
     expect(lifecycleSource).not.toContain("appinstalled");
-    expect(lifecycleSource).not.toContain("Instalar AgSUS Monitora");
+    expect(lifecycleSource).not.toContain("Instalar Yeendé");
     expect(lifecycleSource).not.toContain("Instalar no iPhone ou iPad");
     expect(lifecycleSource).not.toContain("Adicionar à Tela de Início");
   });

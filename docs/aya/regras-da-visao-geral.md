@@ -7,8 +7,8 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 ## Visão geral
 
 **perguntas:** visao geral | pagina inicial | dashboard | painel inicial | para que serve visao geral | para que serve a visao geral | tela da visao geral
-**resposta:** A Visão geral do MONITORA é a mesma página nas três áreas (Saúde Indígena, SEDE e Projetos) e mostra só os editais da área escolhida no menu: os indicadores, os filtros, os próximos 7 dias, os processos críticos (Atenção), o mapa, as fases, o pós-resultado e a tabela de processos. Em Projetos há também "Processos por projeto". Na Saúde Indígena o mapa mostra os DSEIs e as CASAIs; em Projetos, os municípios das vagas; a SEDE não tem mapa.
-**fonte:** interface do MONITORA
+**resposta:** A Visão geral do Yeendé é a mesma página nas três áreas (Saúde Indígena, SEDE e Projetos) e mostra só os editais da área escolhida no menu: os indicadores, os filtros, os próximos 7 dias, os processos críticos (Atenção), o mapa, as fases, o pós-resultado e a tabela de processos. Em Projetos há também "Processos por projeto". Na Saúde Indígena o mapa mostra os DSEIs e as CASAIs; em Projetos, os municípios das vagas; a SEDE não tem mapa.
+**fonte:** interface do Yeendé
 
 ## Indicadores da Visão geral
 
@@ -28,19 +28,19 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 
 **perguntas:** filtros da visao geral | como funcionam os filtros da visao geral | filtro por ano | filtrar editais de 2026 | busca da tabela da visao geral | limpar filtros da visao geral | filtro de fase
 **resposta:** Na Visão geral, os filtros Unidade, Edital e Status ficam à vista e Fase e UF em "Mais opções". Cada filtro aceita vários valores e as opções de um seguem os outros já escolhidos. O campo Ano escolhe de uma vez todos os editais daquele ano (pelo número, como 11/2026); outra escolha de editais aparece como "Seleção própria". A busca da tabela vale para a página toda: indicadores, mapa, blocos e tabela. Os filtros ficam guardados no navegador. Críticos e as pendências do Pós-resultado aparecem como "Recorte" entre os filtros aplicados. "Limpar tudo" apaga filtros, busca, recorte e o DSEI aberto e volta o mapa ao Brasil.
-**fonte:** interface do MONITORA
+**fonte:** interface do Yeendé
 
 ## Mapa e filtros da Visão geral
 
 **perguntas:** dsei aberto no mapa | filtro dsei da pagina | casai no mapa filtra
 **resposta:** Na Visão geral da Saúde Indígena, escolher um DSEI no mapa recorta a página inteira por ele (aparece o filtro "DSEI" entre os filtros aplicados). Tirar esse filtro, ou voltar ao Brasil pelo mapa, sai do território e mantém os outros filtros. Clicar numa CASAI no mapa busca por ela na página.
-**fonte:** interface do MONITORA
+**fonte:** interface do Yeendé
 
 ## Blocos da Visão geral
 
 **perguntas:** proximos 7 dias | agenda da visao geral | fases | fases dos processos | pos-resultado | pos resultado | processos por projeto | blocos da visao geral
 **resposta:** Na Visão geral, as boas-vindas dizem quantos editais têm etapa nos próximos 7 dias, contando hoje (pelo dia de Brasília, sem os cancelados), com o atalho para o Cronograma; o indicador "Processos Críticos" filtra a tabela pelos críticos, e o motivo aparece nos detalhes de cada processo. "Fases" conta os editais em cada fase fixa — Edital, Inscrições, Análise curricular, Recursos, Entrevistas, Resultado, Contratação e Concluído, mais Cancelado, Sem cronograma e Outra quando houver —, lida do status e da atividade do cronograma; o clique filtra a fase. "Pós-resultado" mostra, nos editais com resultado, os concluídos sem lista de aprovados vigente, as listas sem nenhum status, a contratação abaixo de 50% e as desistências; o clique filtra a página por aquela pendência. Em Projetos, "Processos por projeto" mostra cada projeto com processos, abertos, vagas e contratadas; o clique filtra o projeto.
-**fonte:** interface do MONITORA
+**fonte:** interface do Yeendé
 
 ## Fases dos processos
 
@@ -52,7 +52,7 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 
 **perguntas:** tabela de processos da visao geral | como leio a tabela de processos | tabela de processos | prazo do edital | proxima etapa do cronograma | colunas da tabela | taxa de vagas sem contratacao
 **resposta:** Na tabela de processos da Visão geral, a coluna Contratados mostra as contratações dentro das vagas, como o indicador "Contratadas"; as do cadastro reserva aparecem ao lado, como "+N CR". A célula do edital mostra o prazo do edital (encerra em até 7 dias em vermelho, em até 30 dias em amarelo; concluído ou cancelado em cinza) e a situação do cronograma de Editais (atrasada ou próxima etapa em até 3 dias em vermelho, em até 7 dias em amarelo; "Sem cronograma" quando o edital ainda não tem cronograma em Editais). A borda esquerda da linha segue a mesma cor. "Sem contratação" é vagas menos contratados, com a porcentagem das vagas (a partir de 20% em amarelo, de 40% em vermelho). As colunas Fase e Atenção mostram a fase calculada e os motivos de crítico. Sem coluna escolhida, os críticos vêm primeiro (do motivo mais grave: marcado como crítico, atrasada, parado, sem inscritos, contratação baixa) e depois quem tem mais vagas sem contratação. Clicar no cabeçalho ordena a coluna (crescente, decrescente e de volta à ordem padrão). "Colunas" escolhe as colunas visíveis, guardadas no navegador. Clicar na linha (ou Enter) abre os detalhes do processo, com o andamento do cronograma, a linha do tempo de Editais e o link do edital. Exportar baixa o CSV do recorte.
-**fonte:** interface do MONITORA
+**fonte:** interface do Yeendé
 
 ## De onde vêm os KPIs da Visão geral
 

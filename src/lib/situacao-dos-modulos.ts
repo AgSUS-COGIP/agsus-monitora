@@ -97,7 +97,7 @@ export interface SituacaoEfetiva {
 export const MANUTENCAO = "MANUTENCAO";
 
 export const MENSAGEM_PADRAO_DE_MANUTENCAO =
-  "Esta parte do MONITORA está passando por manutenção. Tente de novo mais tarde.";
+  "Esta parte do Yeendé está passando por manutenção. Tente de novo mais tarde.";
 
 const texto = (valor: unknown) => String(valor ?? "").trim();
 const DATA_ISO = /^(\d{4})-(\d{2})-(\d{2})/;

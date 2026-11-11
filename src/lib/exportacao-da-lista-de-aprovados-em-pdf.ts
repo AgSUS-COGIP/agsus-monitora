@@ -128,7 +128,7 @@ export async function pdfDaExportacao(
   doc.setProperties({
     title: "Lista de aprovados",
     subject: textoParaOPdf(`Lista de aprovados - ${pedido.rotuloDaArea}`),
-    creator: "MONITORA",
+    creator: "Yeendé",
   });
   doc.setLanguage?.("pt-BR");
   const largura = doc.internal.pageSize.getWidth();

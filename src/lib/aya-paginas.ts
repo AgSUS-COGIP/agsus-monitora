@@ -390,9 +390,9 @@ export const SECOES_DA_AYA: Readonly<Record<string, SecaoDaAya>> =
   });
 
 const GENERICA: SecaoDaAya = Object.freeze({
-  nome: "MONITORA",
+  nome: "Yeendé",
   intro:
-    "Posso explicar as telas do MONITORA, as regras de cada etapa do processo seletivo e o que estiver carregado aqui.",
+    "Posso explicar as telas do Yeendé, as regras de cada etapa do processo seletivo e o que estiver carregado aqui.",
   sugestoes: [
     sug("O que a Aya faz", "O que você consegue fazer?"),
     sug("Áreas", "O que muda entre as áreas do sistema?"),

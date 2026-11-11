@@ -1,6 +1,6 @@
 # Regras das conferências de consistência
 
-Avisos de conferência: o que o MONITORA confere todo dia entre os módulos, onde os avisos aparecem e
+Avisos de conferência: o que o Yeendé confere todo dia entre os módulos, onde os avisos aparecem e
 quem pode ignorar. Fontes: `scripts/conferencias/`, `src/modulos/conferencias/`,
 `src/lib/avisos-de-conferencia.ts` e as migrations `20261005210000_conferencias_de_consistencia.sql`,
 `20261007120000_casos_dos_avisos_de_conferencia.sql` e `20261007240000_casos_dos_avisos_resolvidos.sql`.

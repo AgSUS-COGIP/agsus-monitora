@@ -604,7 +604,7 @@ describe("carga", () => {
     });
     await montar(supabase);
     expect(secao.querySelector(".ui-aviso[role=alert]").textContent).toBe(
-      "Sessão não localizada. Entre de novo no MONITORA.",
+      "Sessão não localizada. Entre de novo no Yeendé.",
     );
     expect(supabase.rpc).not.toHaveBeenCalledWith(
       "get_recursos_da_area",

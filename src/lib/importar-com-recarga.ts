@@ -33,7 +33,7 @@ export const ehFalhaDeCarregamento = (erro: unknown) =>
   ali não se recarrega sozinho, porque a pessoa pode ter algo não salvo.
 */
 export const MENSAGEM_DE_VERSAO_NOVA =
-  "O MONITORA foi atualizado enquanto esta página estava aberta. Recarregue a página (F5) e tente de novo.";
+  "O Yeendé foi atualizado enquanto esta página estava aberta. Recarregue a página (F5) e tente de novo.";
 
 /**
  * O erro de uma ação que baixa arquivo sob demanda: a falha de carregamento

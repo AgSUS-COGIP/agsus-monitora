@@ -249,7 +249,7 @@ describe("modelo e marcadores", () => {
   });
 });
 
-describe("pré-preenchimento com o que o MONITORA sabe", () => {
+describe("pré-preenchimento com o que o Yeendé sabe", () => {
   it("cabeçalho, prazo, envio, ficha, cotas e ajuste, com a fonte de cada campo", async () => {
     const {
       rascunho: r,

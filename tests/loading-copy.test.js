@@ -27,7 +27,7 @@ describe("loading copy", () => {
     const data = getLoadingStage({ progress: 55 });
     const finish = getLoadingStage({ progress: 95 });
 
-    expect(initial.title).toBe("Preparando o AgSUS Monitora");
+    expect(initial.title).toBe("Preparando o Yeendé");
     expect(data.title).toBe("Buscando dados atualizados");
     expect(finish.title).toBe("Finalizando o painel");
   });

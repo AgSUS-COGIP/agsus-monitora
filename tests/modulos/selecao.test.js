@@ -218,7 +218,7 @@ describe("a tela dentro do app", () => {
     expect(document.querySelectorAll(".status-discreto")).toHaveLength(1);
     expect(document.body.textContent.match(/Conferido em \d/g)).toHaveLength(1);
     for (const texto of [
-      "AgSUS Monitora Recrutamento e Seleção",
+      "Yeendé Recrutamento e Seleção",
       "Painel de seleção",
       "Somente consulta",
       "Visualizando toda a base carregada",
@@ -551,7 +551,7 @@ describe("Exportar", () => {
     expect(nome).toMatch(/^selecao-saude-indigena-\d{4}-\d{2}-\d{2}\.csv$/);
     expect(conteudo).toContain("DSEI Xingu");
     expect(conteudo).not.toContain("Caminhoneiros");
-    expect(conteudo).toContain("Entrevistas do MONITORA");
+    expect(conteudo).toContain("Entrevistas do Yeendé");
   });
 
   it("sem vagas no recorte, Exportar fica desativado", async () => {
@@ -631,7 +631,7 @@ describe("sessão", () => {
     );
     await montar(supabase);
     expect(secao.querySelector(".ui-aviso[role=alert]").textContent).toBe(
-      "Sessão não localizada. Entre de novo no MONITORA.",
+      "Sessão não localizada. Entre de novo no Yeendé.",
     );
     expect(status().textContent).toBe("Sessão não localizada");
     expect(supabase.rpc).not.toHaveBeenCalled();

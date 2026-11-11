@@ -196,7 +196,7 @@ describe("faixa de versão nova", () => {
     await montar(c.aviso);
     await act(() => c.aviso.conferir());
 
-    expect(faixa()?.textContent).toContain("Há uma versão nova do MONITORA.");
+    expect(faixa()?.textContent).toContain("Há uma versão nova do Yeendé.");
     expect(faixa()?.getAttribute("data-tone")).toBe("info");
     expect(faixa()?.textContent).not.toContain("Novo:");
 

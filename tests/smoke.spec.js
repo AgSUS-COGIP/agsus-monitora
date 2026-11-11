@@ -16,7 +16,7 @@ async function expectNoSupabaseCdn(request, path) {
   expect(html).not.toContain("cdn.jsdelivr.net/npm/@supabase/supabase-js");
 }
 
-test.describe("AgSUS Monitora smoke", () => {
+test.describe("Yeendé smoke", () => {
   test("abre a aplicação principal sem erro crítico de JavaScript", async ({
     page,
     request,
@@ -26,7 +26,7 @@ test.describe("AgSUS Monitora smoke", () => {
     await expectNoSupabaseCdn(request, "/");
     await page.goto("/", { waitUntil: "domcontentloaded" });
 
-    await expect(page).toHaveTitle("MONITORA");
+    await expect(page).toHaveTitle("Yeendé");
     await expect(page.locator("#loginScreen")).toBeVisible();
     await expect(page.locator("#googleLoginBtn")).toBeVisible();
     await expect(page.locator("#appScreen")).toBeAttached();

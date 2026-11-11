@@ -20,7 +20,7 @@ export const TRILHAS: readonly TrilhaDaAya[] = Object.freeze([
     passos: Object.freeze([
       passo(
         null,
-        "Boas-vindas ao MONITORA",
+        "Boas-vindas ao Yeendé",
         "Eu mostro item por item onde fica cada coisa. Use as setas do teclado ou os botões; Esc sai quando quiser.",
         { pagina: "dashboard" },
       ),

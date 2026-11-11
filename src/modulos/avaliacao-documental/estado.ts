@@ -669,7 +669,7 @@ export function criarEstadoDaAvaliacao({
         });
         toast(
           nova === "MONITORA"
-            ? "A avaliação deste edital passa a ser feita no MONITORA."
+            ? "A avaliação deste edital passa a ser feita no Yeendé."
             : "A avaliação deste edital voltou para a planilha.",
           "success",
         );

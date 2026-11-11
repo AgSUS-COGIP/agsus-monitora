@@ -44,7 +44,7 @@ import type {
 } from "./tipos.ts";
 
 export const MENSAGEM_SEM_SESSAO =
-  "Sessão não localizada. Entre de novo no MONITORA.";
+  "Sessão não localizada. Entre de novo no Yeendé.";
 export const MENSAGEM_SEM_ACESSO = "Sem acesso à Seleção";
 
 /* A cópia vale só para a mesma publicação do front (o endereço do módulo muda a cada build). */

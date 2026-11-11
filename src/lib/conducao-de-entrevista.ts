@@ -429,7 +429,7 @@ export function errosDaConfiguracao(
     )
       erros[`${p}.banca`] = "Banca: número inteiro de 1 a 20.";
     if (texto(a.perfil) && !UUID.test(texto(a.perfil)))
-      erros[`${p}.perfil`] = "Perfil do MONITORA: identificador inválido.";
+      erros[`${p}.perfil`] = "Perfil do Yeendé: identificador inválido.";
     if (Array.isArray(a.competencias) && !a.competencias.length)
       erros[`${p}.competencias`] = "Marque ao menos uma competência.";
   }

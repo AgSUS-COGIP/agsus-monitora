@@ -471,7 +471,7 @@ async function desenhar(
         pedido,
         sessao: sessaoFalsa,
         logoUrl: "/assets/agsus-logo.webp",
-        slogan: "Monitoramento de Processos Seletivos",
+        slogan: "Gestão dos processos seletivos",
         instituicao: "Agência Brasileira de Apoio à Gestão do SUS",
       }),
     );

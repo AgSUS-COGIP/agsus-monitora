@@ -65,7 +65,7 @@ describe("mensagem do convite", () => {
         origem: `${ORIGEM}/`,
       }),
     ).toBe(
-      `Olá, Maria Silva! Você foi convidado(a) para o MONITORA (AgSUS). Acesse ${ORIGEM} e entre com sua conta Google maria@agenciasus.org.br.`,
+      `Olá, Maria Silva! Você foi convidado(a) para o Yeendé (AgSUS). Acesse ${ORIGEM} e entre com sua conta Google maria@agenciasus.org.br.`,
     );
     expect(mensagemDoConvite({ email: "x@y.z", origem: ORIGEM })).toMatch(
       /^Olá! /,

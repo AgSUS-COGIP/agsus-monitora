@@ -51,8 +51,8 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 ## Origem da lista de aprovados
 
 **perguntas:** origem da lista de aprovados | de onde vem a lista de aprovados | lista manual planilha | publicada da classificacao | lista publicada da classificacao | o que e lista manual
-**resposta:** No MONITORA, a lista de aprovados de cada edital tem uma de duas origens, mostrada na tela e no modal "Listas do edital": "Publicada da Classificação em DD/MM" — o resultado final da aba Classificação, com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) calculados pela regra do edital, sem digitação — ou "Lista manual (planilha)", importada por XLSX com posição e nota digitadas. Edital com análise no sistema publica da Classificação; a planilha fica para editais sem análise no sistema. Cada troca de lista fica no histórico das publicações do edital.
-**fato:** No MONITORA, a lista de aprovados vem do resultado final da Classificação; a planilha XLSX fica para editais sem análise no sistema.
+**resposta:** No Yeendé, a lista de aprovados de cada edital tem uma de duas origens, mostrada na tela e no modal "Listas do edital": "Publicada da Classificação em DD/MM" — o resultado final da aba Classificação, com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) calculados pela regra do edital, sem digitação — ou "Lista manual (planilha)", importada por XLSX com posição e nota digitadas. Edital com análise no sistema publica da Classificação; a planilha fica para editais sem análise no sistema. Cada troca de lista fica no histórico das publicações do edital.
+**fato:** No Yeendé, a lista de aprovados vem do resultado final da Classificação; a planilha XLSX fica para editais sem análise no sistema.
 **fonte:** src/lib/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.tsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql
 **abrir:** approved
 

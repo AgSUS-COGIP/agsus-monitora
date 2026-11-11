@@ -16,7 +16,7 @@ const GENERIC_LOADING_COPY = new Set<string>([
 const APP_STAGES: EtapaDoCarregamento[] = [
   {
     maxProgress: 10,
-    title: "Preparando o AgSUS Monitora",
+    title: "Preparando o Yeendé",
     detail: "Validando o ambiente e preparando sua sessão segura.",
   },
   {

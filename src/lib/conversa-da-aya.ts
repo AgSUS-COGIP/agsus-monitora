@@ -190,7 +190,7 @@ export function textoDaConversa({
     intro ? `${texto} ${intro}` : texto;
   if (intencao === "ajuda")
     return comIntro(
-      `Sou a Aya, assistente do MONITORA. Explico as telas e as regras de ${O_QUE_A_AYA_FAZ}, olhando a página em que você está; também mostro a tela com um tour e, quando eu não resolver, abro um chamado ao suporte.`,
+      `Sou a Aya, assistente do Yeendé. Explico as telas e as regras de ${O_QUE_A_AYA_FAZ}, olhando a página em que você está; também mostro a tela com um tour e, quando eu não resolver, abro um chamado ao suporte.`,
     );
   if (intencao === "agradecimento")
     return "De nada! Se surgir outra dúvida, é só perguntar. Talvez isto ajude:";
@@ -198,7 +198,7 @@ export function textoDaConversa({
     return "Até mais! Quando precisar, estou aqui no canto da tela.";
   return comIntro(
     saudacao
-      ? `${saudacao} Sou a Aya, assistente do MONITORA.`
-      : "Olá, sou a Aya, assistente do MONITORA.",
+      ? `${saudacao} Sou a Aya, assistente do Yeendé.`
+      : "Olá, sou a Aya, assistente do Yeendé.",
   );
 }

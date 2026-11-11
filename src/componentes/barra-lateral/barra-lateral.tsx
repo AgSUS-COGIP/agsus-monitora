@@ -66,7 +66,7 @@ function Marca({ logo }: { logo?: string }) {
         <img id="sideLogo" className="side-logo" alt="AgSUS" {...imagem} />
       </span>
       <span className="side-brand-copy">
-        <strong>MONITORA</strong>
+        <strong>Yeendé</strong>
       </span>
     </div>
   );

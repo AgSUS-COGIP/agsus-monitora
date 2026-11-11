@@ -89,7 +89,7 @@ export function aplicarFaviconDaMarca(
 }
 
 // A aba identifica o produto; o título de cada seção continua no conteúdo da tela.
-export const TITULO_MONITORA = "MONITORA";
+export const TITULO_MONITORA = "Yeendé";
 
 export function definirPaginaDaAba(
   _pagina: unknown,

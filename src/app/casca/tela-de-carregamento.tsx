@@ -58,7 +58,7 @@ export function TelaDeCarregamento() {
           <img src="/assets/agsus-logo.webp" alt="" />
           <span></span>
           <div>
-            <strong>MONITORA</strong>
+            <strong>Yeendé</strong>
             <small>Ambiente institucional AgSUS</small>
           </div>
         </div>

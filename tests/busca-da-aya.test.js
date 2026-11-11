@@ -160,7 +160,7 @@ describe("decisão pelos limiares", () => {
   ])("%s está fora do escopo", (pergunta) => {
     const resultado = responder(pergunta);
     expect(resultado.answer).toContain(FORA);
-    expect(resultado.answer).toMatch(/^Sou a Aya, do MONITORA/);
+    expect(resultado.answer).toMatch(/^Sou a Aya, do Yeendé/);
     expect(resultado.sugestoes).toHaveLength(3);
     expect(resultado.oferecerChamado).toBeFalsy();
   });
@@ -218,7 +218,7 @@ describe("conversa", () => {
 
   it("a saudação também abre o fora do escopo, que continua amigável", () => {
     expect(responder("boa tarde, me conta uma piada").answer).toMatch(
-      /^Boa tarde! Sou a Aya, do MONITORA\..*Essa pergunta foge/,
+      /^Boa tarde! Sou a Aya, do Yeendé..*Essa pergunta foge/,
     );
   });
 });

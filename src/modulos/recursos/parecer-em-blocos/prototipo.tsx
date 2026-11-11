@@ -67,7 +67,7 @@ function Comparacao({ rascunho }: { rascunho: RascunhoDoParecer }) {
     for (let i = 0; i < Math.max(deles.length, nossas.length); i++)
       if (deles[i] !== nossas[i])
         diferencas.push(
-          `Linha ${i + 1}: simulador “${deles[i] ?? "—"}” × MONITORA “${nossas[i] ?? "—"}”`,
+          `Linha ${i + 1}: simulador “${deles[i] ?? "—"}” × Yeendé “${nossas[i] ?? "—"}”`,
         );
     setResultado({
       iguais: diferencas.length === 0,
@@ -114,9 +114,9 @@ function Comparacao({ rascunho }: { rascunho: RascunhoDoParecer }) {
             onLoad={() => setTimeout(conferir, 50)}
           />
         </section>
-        <section aria-label="Parecer do MONITORA">
+        <section aria-label="Parecer do Yeendé">
           <h2>
-            MONITORA <Selo tom="pendente">Protótipo</Selo>
+            Yeendé <Selo tom="pendente">Protótipo</Selo>
           </h2>
           <div className="prototipo-folha">
             <DocumentoDoParecerVisto ref={nosso} documento={documento} />
@@ -145,7 +145,7 @@ function PaginaDoPrototipo() {
   return (
     <div className="prototipo-pagina" data-aba={aba}>
       <header className="prototipo-topo">
-        <strong>MONITORA · Recursos</strong>
+        <strong>Yeendé · Recursos</strong>
         <Segmentado<Aba>
           rotulo="Visão"
           opcoes={[

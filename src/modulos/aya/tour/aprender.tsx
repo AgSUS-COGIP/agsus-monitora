@@ -98,7 +98,7 @@ export function OfertaDePrimeirosPassos({
   aoAceitar,
   aoRecusar,
   rotulo = "Primeiros passos",
-  destaque = "Primeira vez no MONITORA?",
+  destaque = "Primeira vez no Yeendé?",
   texto = "Posso te mostrar o básico em poucos passos.",
 }: PropsDaOfertaDePrimeirosPassos) {
   return (

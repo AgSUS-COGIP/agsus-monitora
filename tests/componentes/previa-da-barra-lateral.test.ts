@@ -165,7 +165,7 @@ describe("a prévia é a barra lateral de verdade", () => {
     expect(estrutura(previa)).toEqual(estrutura(real));
     // O que a pessoa vê na barra está na prévia.
     expect(previa.querySelector(".side-brand-copy")?.textContent).toBe(
-      "MONITORA",
+      "Yeendé",
     );
     expect(
       previa.querySelector(".menu-seletor__rotulo strong")?.textContent,

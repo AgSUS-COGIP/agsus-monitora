@@ -4,7 +4,7 @@ import { ACCESS_INSTRUCTION } from "../../lib/access-branding.ts";
 import { FASES, TEXTO_DO_BOTAO, TEXTO_DO_BOTAO_OCUPADO } from "../sessao.ts";
 import {
   IconeDeEscudo,
-  IconeDoMonitora,
+  IconeDoYeende,
   MarcaDoGoogle,
 } from "./icones-da-entrada.tsx";
 import {
@@ -37,7 +37,7 @@ import { PaginaDaSolicitacao } from "./solicitacao-de-acesso.tsx";
   do botão só aparece, com fade, quando já se sabe o texto.
 */
 
-export const SLOGAN = "Monitoramento de Processos Seletivos";
+export const SLOGAN = "Gestão dos processos seletivos";
 export const INSTITUICAO = "Agência Brasileira de Apoio à Gestão do SUS";
 
 /** O valor de `FASES` (sessao.ts). */
@@ -162,15 +162,15 @@ export function TelaDeEntrada({ sessao, marca, pedido }: PropsDaTelaDeEntrada) {
   return (
     <div className="login-outer">
       <div className="login-card">
-        <div className="login-brand-lockup" aria-label="MONITORA">
+        <div className="login-brand-lockup" aria-label="Yeendé">
           <div className="login-organization-mark">
             <LogoDaInstituicao url={identidade.logoUrl} />
             <strong>AgSUS</strong>
           </div>
           <span className="login-brand-divider" aria-hidden="true" />
           <div className="login-product-mark">
-            <IconeDoMonitora />
-            <strong id="loginTitle">MONITORA</strong>
+            <IconeDoYeende />
+            <strong id="loginTitle">Yeendé</strong>
           </div>
         </div>
         <p className="login-subtitle" id="loginSubtitle">
