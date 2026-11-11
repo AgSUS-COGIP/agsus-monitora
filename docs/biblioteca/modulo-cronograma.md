@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-11
 ---
 
 # Módulo: Cronograma (Calendário de editais)
@@ -13,15 +13,15 @@ ignorar o cache. A área vem do app e recorta os editais já carregados.
 
 ## Arquivos
 
-| Arquivo                  | Responsabilidade                                                      |
-| ------------------------ | --------------------------------------------------------------------- |
-| `calendario-editais.tsx` | tela, mês aberto, filtros, dia selecionado e edital da linha do tempo |
-| `partes.tsx`             | grade, seletor, próximas etapas, linha do tempo e modal do dia        |
-| `vistas.tsx`             | vistas Lista e Semana do card do calendário                           |
-| `estado.ts`              | store externo, sessão, carga, cache e aviso de falhas parciais        |
-| `tipos.ts`               | cliente de leitura, snapshot, filtros, etapas e células normalizadas  |
-| `demandas-internas.tsx`  | card, detalhe, formulário e exclusão das demandas internas            |
-| `cronograma.css`, `demandas-internas.css` | estilos (demanda: cor `--etapa-demanda`)         |
+| Arquivo                                   | Responsabilidade                                                      |
+| ----------------------------------------- | --------------------------------------------------------------------- |
+| `calendario-editais.tsx`                  | tela, mês aberto, filtros, dia selecionado e edital da linha do tempo |
+| `partes.tsx`                              | grade, seletor, próximas etapas, linha do tempo e modal do dia        |
+| `vistas.tsx`                              | vistas Lista e Semana do card do calendário                           |
+| `estado.ts`                               | store externo, sessão, carga, cache e aviso de falhas parciais        |
+| `tipos.ts`                                | cliente de leitura, snapshot, filtros, etapas e células normalizadas  |
+| `demandas-internas.tsx`                   | card, detalhe, formulário e exclusão das demandas internas            |
+| `cronograma.css`, `demandas-internas.css` | estilos (demanda: cor `--etapa-demanda`)                              |
 
 `calendario-editais.ts`: etapas por dia (conta no início e no fim, não no meio), filtros, grade de
 42 células, próximas etapas. Classificação de etapas e plausibilidade das datas ficam em
@@ -56,6 +56,15 @@ outros e avisa carga incompleta. Cache de um minuto e deduplicação de pedidos 
 Editais invalida o cache; trocar de área só recorta. Respostas entram como `unknown`; edital
 precisa de ID textual ou numérico finito; etapas sem início interpretável ficam fora.
 
+**Edital suspenso fica fora** (cartão #59, `editalSuspenso` em `calendario-editais.ts`): o banco
+devolve todo edital com `ativo = true`, e o suspenso continua ativo. O resumo traz o status efetivo
+(`status`, com o excepcional `status_override` por cima das datas, como
+`private."FC_ESTADO_DO_CRONOGRAMA"`) e `status_override`; se um deles contém "suspens" (sem acento
+nem caixa), o edital sai de `editaisComCronograma`. Como as etapas só entram para os editais dessa
+lista, ele some do Mês, da Semana, da Lista, de "Próximas etapas", da linha do tempo, do caminho
+por edital (`PGRST202`) e do cache. `listar_etapas_do_cronograma` ainda devolve as etapas dele
+(filtra só `ativo`); a tela as descarta. Paralisado e Cancelado seguem aparecendo.
+
 ## Demandas internas
 
 Itens da equipe (migration `20261104120000_cronograma_demandas_internas`): título, descrição, data
@@ -77,7 +86,7 @@ pessoa é responsável, com "Ver todos" para voltar.
 `tests/tipos/cronograma.tsx` (no `typecheck:frontend`), `tests/componentes/calendario-editais.test.ts`
 (mês, área, cache, filtros, modal, foco), `tests/calendario-editais.test.js` (normalização,
 intervalos, concorrência, falhas), `tests/calendario-editais-lista.test.js` (Lista, Semana, marcos,
-bordas de mês e fuso), `tests/etapas-de-edital.test.js`, `tests/datas-do-cronograma.test.js`.
+bordas de mês e fuso), `tests/cronograma-sem-suspensos.test.ts` (edital suspenso fora de todas as vias), `tests/etapas-de-edital.test.js`, `tests/datas-do-cronograma.test.js`.
 
 ## Relacionadas
 

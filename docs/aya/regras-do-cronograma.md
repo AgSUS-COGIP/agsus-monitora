@@ -27,8 +27,8 @@ A tela Cronograma (view `calendario`), o calendário dos cronogramas dos editais
 
 ## Etapa ou edital que não aparece no Cronograma
 
-**perguntas:** por que o edital nao aparece no cronograma | etapa nao aparece no cronograma | sumiu a etapa do cronograma | cronograma vazio
-**resposta:** O Cronograma só mostra etapas já salvas no cronograma de cada edital, em Editais, e só da área atual: edital sem cronograma não aparece. "Ocultar concluídas" começa ligada, então as etapas que já terminaram ficam escondidas até você desligá-la ou clicar em "Limpar tudo". Etapa com ano impossível sai de "Próximas etapas" e aparece na lista para correção. Confira também a busca, os filtros de unidade e edital e se o tipo está desligado na legenda (riscado).
+**perguntas:** por que o edital nao aparece no cronograma | etapa nao aparece no cronograma | sumiu a etapa do cronograma | cronograma vazio | edital suspenso no cronograma | edital suspenso sumiu do cronograma
+**resposta:** O Cronograma só mostra etapas já salvas no cronograma de cada edital, em Editais, e só da área atual: edital sem cronograma não aparece, nem o edital suspenso (status excepcional "Suspenso" no formulário do edital), porque as datas dele não valem enquanto durar a suspensão; ao tirar o status excepcional, as etapas voltam. "Ocultar concluídas" começa ligada, então as etapas que já terminaram ficam escondidas até você desligá-la ou clicar em "Limpar tudo". Etapa com ano impossível sai de "Próximas etapas" e aparece na lista para correção. Confira também a busca, os filtros de unidade e edital e se o tipo está desligado na legenda (riscado).
 **fonte:** src/modulos/cronograma/calendario-editais.tsx; src/lib/calendario-editais.ts; src/lib/datas-do-cronograma.ts
 **abrir:** calendario
 
