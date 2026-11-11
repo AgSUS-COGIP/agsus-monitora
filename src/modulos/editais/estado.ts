@@ -109,7 +109,7 @@ export interface DadosParaMoverEdital {
 /** O aviso da tela (toast do app). */
 export type AvisoDoNucleo = (mensagem: string, tom?: string) => void;
 
-/** O carregador do app (o overlay de "Salvando..."). */
+/** O carregador do app (o overlay de "Salvando…"). */
 export type CarregadorDoNucleo = (
   ativo: boolean,
   titulo?: string,
@@ -405,7 +405,7 @@ export function criarEstadoDoNucleo({
       return false;
 
     publicar({ salvando: true });
-    loader(true, "Editais", "Salvando edital e cronograma...", 70);
+    loader(true, "Editais", "Salvando edital e cronograma…", 70);
     try {
       await exigirSessao(supabase);
       const cronograma = etapas.map((etapa, indice) => ({
@@ -497,7 +497,7 @@ export function criarEstadoDoNucleo({
       return false;
 
     publicar({ salvando: true });
-    loader(true, "Editais", "Movendo edital de área...", 70);
+    loader(true, "Editais", "Movendo edital de área…", 70);
     try {
       await exigirSessao(supabase);
       const { data, error } = await supabase!.rpc(RPC_MOVER_DE_AREA, {
@@ -545,7 +545,7 @@ export function criarEstadoDoNucleo({
       return false;
     }
     publicar({ salvando: true });
-    loader(true, "Editais", "Reiniciando o treinamento...", 70);
+    loader(true, "Editais", "Reiniciando o treinamento…", 70);
     try {
       await exigirSessao(supabase);
       const { error } = await supabase!.rpc(RPC_REINICIAR_TREINAMENTO, {

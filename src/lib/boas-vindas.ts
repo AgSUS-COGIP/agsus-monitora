@@ -5,7 +5,16 @@
   Funções puras; o componente fica em `src/modulos/visao-geral/boas-vindas.tsx`.
 */
 
+import { hojeEmBrasilia } from "./cronograma-do-edital.ts";
+
 const texto = (valor: unknown): string => String(valor ?? "").trim();
+
+/* "AAAA-MM-DD" + n dias, sem fuso (meio-dia UTC não vira o dia ao somar). */
+function somarDias(iso: string, dias: number): string {
+  const data = new Date(`${iso}T12:00:00Z`);
+  data.setUTCDate(data.getUTCDate() + dias);
+  return data.toISOString().slice(0, 10);
+}
 
 export function saudacao(hora: number): string {
   if (hora < 12) return "Bom dia";
@@ -29,21 +38,25 @@ export function chaveDoDia(data: Date = new Date()): string {
   return `${ano}-${mes}-${dia}`;
 }
 
-/** Editais cuja próxima etapa cai de hoje até daqui a `dias` dias. */
+/**
+ * Editais cuja próxima etapa cai de hoje até daqui a `dias` dias, com o dia
+ * de Brasília (como a tabela e o cronograma, não o relógio do computador) e
+ * sem os editais cancelados (a etapa deles não vai acontecer).
+ */
 export function editaisComEtapaNaSemana(
   linhas: unknown,
   hoje: Date = new Date(),
   dias = 7,
 ): number {
-  const inicio = chaveDoDia(hoje);
-  const limite = new Date(hoje);
-  limite.setDate(limite.getDate() + dias);
-  const fim = chaveDoDia(limite);
+  const inicio = hojeEmBrasilia(hoje);
+  const fim = somarDias(inicio, dias);
   return (
     (Array.isArray(linhas) ? linhas : []) as ({
       cronograma_proxima_data?: unknown;
+      status?: unknown;
     } | null)[]
   ).filter((linha) => {
+    if (/^cancelad/i.test(texto(linha?.status))) return false;
     const data = texto(linha?.cronograma_proxima_data).slice(0, 10);
     return data && data >= inicio && data <= fim;
   }).length;

@@ -23,7 +23,8 @@ describe("textos das boas-vindas", () => {
   });
 
   it("conta editais com etapa de hoje até daqui a 7 dias", () => {
-    const hoje = new Date(2026, 8, 28);
+    // 12h de Brasília: o mesmo dia em qualquer fuso do computador.
+    const hoje = new Date("2026-09-28T15:00:00Z");
     const linhas = [
       { cronograma_proxima_data: "2026-09-28" },
       { cronograma_proxima_data: "2026-10-05" },
@@ -32,7 +33,22 @@ describe("textos das boas-vindas", () => {
       { cronograma_proxima_data: null },
     ];
     expect(editaisComEtapaNaSemana(linhas, hoje)).toBe(2);
-    expect(chaveDoDia(hoje)).toBe("2026-09-28");
+  });
+
+  it("usa o dia de Brasília e não conta edital cancelado (auditoria de 10/11/2026)", () => {
+    // 23h30 de 27/09 em Brasília = 02h30 de 28/09 em UTC: o dia é 27/09.
+    const noiteEmBrasilia = new Date("2026-09-28T02:30:00Z");
+    const linhas = [
+      { cronograma_proxima_data: "2026-09-27" },
+      { cronograma_proxima_data: "2026-10-04" },
+      { cronograma_proxima_data: "2026-10-05" },
+      { cronograma_proxima_data: "2026-09-30", status: "Cancelado" },
+    ];
+    expect(editaisComEtapaNaSemana(linhas, noiteEmBrasilia)).toBe(2);
+  });
+
+  it("chaveDoDia segue o dia local do Date", () => {
+    expect(chaveDoDia(new Date(2026, 8, 28))).toBe("2026-09-28");
   });
 
   it("resume o dia com informação real", () => {

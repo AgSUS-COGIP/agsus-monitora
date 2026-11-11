@@ -18,6 +18,8 @@ Gate"). A `main` é protegida: só entra com o check **"Arquitetura, qualidade, 
   todos os testes do Playwright sobre o `dist/` desse build, inclusive o app com sessão e o Supabase
   simulados; o smoke e a sessão simulada de novo no servidor TypeScript, e o smoke na imagem Docker.
   Na falha, o relatório e os traces ficam no artefato `relatorio-do-playwright`.
+  O Chromium entra com as dependências do sistema (apt); se o espelho do Ubuntu cair (11/11/2026),
+  entra sem elas, com um aviso no job, e o smoke diz se faltou alguma.
 - **Python:** Ruff (lint e formatação) e pytest.
 - **Contrato de RPC contra o banco de desenvolvimento** (ver abaixo).
 

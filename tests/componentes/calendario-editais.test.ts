@@ -295,7 +295,7 @@ describe("carregamento", () => {
       document.querySelector<HTMLElement>(
         "#page-calendario [data-status-da-carga]",
       )?.textContent,
-    ).toBe("Carregando dados...");
+    ).toBe("Carregando dados…");
 
     await esperar(async () => {
       definido(entregar)();

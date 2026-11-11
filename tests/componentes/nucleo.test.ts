@@ -450,7 +450,7 @@ describe("tabela de editais", () => {
     expect(
       document.querySelector<HTMLElement>("#page-nucleo [data-status-da-carga]")
         ?.textContent,
-    ).toBe("Carregando dados...");
+    ).toBe("Carregando dados…");
   });
 
   it("ordena pelo risco e, depois, por quem tem mais vagas ociosas", async () => {

@@ -9,6 +9,10 @@ import type {
 import { useEffect, useRef, useState } from "react";
 import { formatNumberBR } from "../../lib/formatters";
 import {
+  contratacoesDoCadastroReserva,
+  contratadasImediatas,
+} from "../../lib/indicadores-do-monitoramento.ts";
+import {
   COLUNAS_DA_TABELA,
   dataCurta,
   linkSeguro,
@@ -198,12 +202,27 @@ function celula(
           {fmt(linha.vagas_total)}
         </td>
       );
-    case "contratados":
+    case "contratados": {
+      /*
+        Como o indicador "Contratadas" e a gaveta: as contratações dentro das
+        vagas; as do cadastro reserva vêm à parte (antes a coluna somava as
+        duas e não fechava com o indicador).
+      */
+      const reserva = contratacoesDoCadastroReserva(linha);
       return (
         <td key={campo} className="num visao-geral-contratados">
-          {fmt(linha.contratados)}
+          {fmt(contratadasImediatas(linha))}
+          {reserva > 0 ? (
+            <span
+              className="visao-geral-taxa"
+              title={`${fmt(reserva)} contratado(s) do cadastro reserva, além das vagas`}
+            >
+              +{fmt(reserva)} CR
+            </span>
+          ) : null}
         </td>
       );
+    }
     case "vagas_ociosas": {
       const taxa = taxaDeOciosidade(linha);
       return (

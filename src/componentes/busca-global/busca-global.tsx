@@ -109,7 +109,7 @@ function PainelDaBusca({
           aria-expanded={resultados.length > 0}
           aria-controls={idDaLista}
           aria-activedescendant={indice >= 0 ? idDoItem(indice) : undefined}
-          placeholder="Buscar edital, unidade, etapa, UF..."
+          placeholder="Buscar edital, unidade, etapa, UF…"
           autoComplete="off"
           data-foco-inicial
           value={termo}

@@ -1689,13 +1689,18 @@ export function criarEstadoDaListaDeAprovados({
     );
   }
 
-  async function removerLista(editalId: string) {
+  async function removerLista(editalId: string, rotulo = "") {
     if (!supabase) return false;
     const lista = listaDoEdital(editalId);
     if (!lista || !canReplaceApprovedList(perfil())) return false;
+    // A confirmação cita o objeto (DESIGN.md, seção 11): o edital e o arquivo.
+    const doEdital = rotulo.trim()
+      ? `do edital ${rotulo.trim()}`
+      : "deste edital";
+    const arquivo = lista.arquivo_nome ? ` (${lista.arquivo_nome})` : "";
     if (
       !confirmar(
-        "Remover a lista vigente deste edital? Os dados ficam no histórico e os contratados do edital voltam a zero.",
+        `Remover a lista vigente ${doEdital}${arquivo}? Os dados ficam no histórico e os contratados do edital voltam a zero.`,
       )
     )
       return false;

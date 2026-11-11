@@ -189,7 +189,7 @@ export function CriticoDoEdital({
               onClick={() => void gravar(true)}
             >
               {salvando
-                ? "Gravando..."
+                ? "Gravando…"
                 : leitura.marcado
                   ? "Alterar motivo"
                   : "Marcar como crítico"}

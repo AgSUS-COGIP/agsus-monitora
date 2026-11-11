@@ -338,6 +338,22 @@ describe("resumirConvocacao", () => {
       foraDaFila: 1,
     });
   });
+
+  it("quem já foi chamado da reserva sai do cadastro (como a coluna Situação)", () => {
+    const grupos = montarListaDeConvocacao(
+      [
+        candidato("A", "Ampla", { status: "Contratado" }),
+        candidato("B", "Ampla", { status: "Contratado" }),
+        candidato("C", "Ampla"),
+      ],
+      () => ({ quadro: { ampla: 1 }, modelo: MODELO, proporcionalidade: true }),
+    );
+    // B está além da vaga imediata mas já foi contratado: "Já chamado".
+    expect(resumirConvocacao(grupos)).toMatchObject({
+      imediatas: 1,
+      reserva: 1,
+    });
+  });
 });
 
 /*

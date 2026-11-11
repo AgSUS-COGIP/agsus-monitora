@@ -417,9 +417,24 @@ export function criarEstadoDasConfiguracoes({
   async function confirmarRestauracao(motivo: string) {
     const modal = estado.modal;
     if (modal?.tipo !== "restaurar" || modal.enviando || !txt(motivo)) return;
+    // A confirmação cita o objeto (DESIGN.md, seção 11): a data e o motivo da versão.
+    const quando = modal.versao.created_at
+      ? new Date(modal.versao.created_at).toLocaleString("pt-BR", {
+          dateStyle: "short",
+          timeStyle: "short",
+          timeZone: "America/Sao_Paulo",
+        })
+      : "";
+    const motivoDaVersao = txt(modal.versao.motivo);
+    const qual = [
+      quando ? `de ${quando}` : "",
+      motivoDaVersao ? `("${motivoDaVersao}")` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
     if (
       !confirmar(
-        "Confirmar restauração desta versão? Os valores atuais serão substituídos.",
+        `Restaurar a versão${qual ? ` ${qual}` : " escolhida"}? Os valores atuais serão substituídos.`,
       )
     )
       return;

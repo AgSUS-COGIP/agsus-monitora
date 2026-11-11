@@ -472,7 +472,7 @@ describe("carga", () => {
     expect(
       secao.querySelectorAll('.ui-tabela tbody tr[aria-hidden="true"]'),
     ).toHaveLength(8);
-    expect(status().textContent).toBe("Carregando dados...");
+    expect(status().textContent).toBe("Carregando dados…");
 
     await esperar(() => responder({ data: payload(), error: null }));
     expect(contagem()).toBe("1 recurso");
