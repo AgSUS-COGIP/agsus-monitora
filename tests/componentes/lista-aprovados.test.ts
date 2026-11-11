@@ -2445,6 +2445,11 @@ describe("Exportar a lista de aprovados (issue #583)", () => {
       },
     ]);
     expect(baixar).toHaveBeenCalledTimes(1);
+    // O arquivo é gerado sem bloquear a tela: espera o download de fato (no CI,
+    // com cobertura, um ciclo só não basta).
+    await vi.waitFor(() => expect(baixar).toHaveBeenCalled(), {
+      timeout: 5000,
+    });
     const [arquivo, nome] = definido(baixar.mock.calls[0]);
     expect(nome).toBe("lista-de-aprovados-saude-indigena-2026-11-10-1430.csv");
     expect(arquivo.type).toContain("text/csv");
@@ -2478,6 +2483,11 @@ describe("Exportar a lista de aprovados (issue #583)", () => {
       p_situacoes: ["Contratado"],
       p_total_na_tela: 4,
       p_registros: 1,
+    });
+    // O arquivo é gerado sem bloquear a tela: espera o download de fato (no CI,
+    // com cobertura, um ciclo só não basta).
+    await vi.waitFor(() => expect(baixar).toHaveBeenCalled(), {
+      timeout: 5000,
     });
     const [arquivo, nome] = definido(baixar.mock.calls[0]);
     expect(nome.endsWith(".xlsx")).toBe(true);
