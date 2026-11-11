@@ -3299,10 +3299,10 @@ export const VERBETES_AYA = Object.freeze([
       "central de convocacoes",
     ],
     resposta:
-      'Na aba Convocação, o bloco Convocações separa as duas etapas, cada uma com a sua lista, regra e histórico. "Para contratação" mostra logo abaixo a ordem de chamada, as cartas e os status, calculados pela lista vigente de aprovados. "Para entrevistas" (só para quem tem acesso às Entrevistas) leva aonde a convocação para entrevista acontece: ela parte da lista registrada na Classificação ("Abrir listas da Classificação") e convocar ou desconvocar continua em Conduzir entrevistas ("Abrir Convocação para entrevistas"), com as permissões e o histórico de lá.',
+      'Na aba Convocação, o bloco Convocações separa as duas etapas, cada uma com a sua lista, regra e histórico. "Para contratação" mostra logo abaixo a ordem de chamada, as cartas e os status, calculados pela lista vigente de aprovados. "Para entrevistas" (só para quem tem acesso às Entrevistas, e só nas áreas em que Conduzir entrevistas está ligada) mostra, para consulta, a lista de convocação registrada na Classificação do edital escolhido: posição, nota, modalidade e quem já foi convocado ou ainda falta convocar. O edital é o mesmo aberto em Conduzir entrevistas (trocar aqui troca lá). Convocar ou desconvocar continua em Conduzir entrevistas › Preparar ("Convocar em Conduzir entrevistas"), com as permissões e o histórico de lá; quem tem acesso à Classificação também vê "Abrir listas da Classificação".',
     fato: "",
     fonte:
-      "src/modulos/aprovados/central-de-convocacoes.tsx; src/modulos/aprovados/aba-convocacao.tsx",
+      "src/modulos/aprovados/central-de-convocacoes.tsx; src/modulos/entrevistas/convocacao-para-leitura.tsx; src/modulos/aprovados/aba-convocacao.tsx",
     abrir: "approved",
   },
   {

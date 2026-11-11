@@ -9,6 +9,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import type { ReactNode } from "react";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
@@ -18,6 +19,8 @@ import {
 } from "../../app/usar-filtros-na-url.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
+import type { JanelaDoApp } from "../../app/ir-para-tela.ts";
+import { ConvocacaoParaLeitura } from "./convocacao-para-leitura.tsx";
 import { copiarTexto } from "../../lib/convite-de-acesso.ts";
 import {
   bancasDaFila,
@@ -573,6 +576,24 @@ export function criarConducaoDeEntrevistas({
       </TelaNaUrl.Provider>
     ),
     render,
+    /*
+      A convocação para entrevista, só leitura, com ESTA loja: a Central de
+      convocações (Lista de aprovados) a desenha. "Convocar em Conduzir
+      entrevistas" abre Preparar no edital que já está aberto (sem `edital`
+      na navegação, que voltaria à fila).
+    */
+    convocacaoParaLeitura: (acoes?: ReactNode) => (
+      <ConvocacaoParaLeitura
+        conducao={conducao}
+        acoes={acoes}
+        aoAbrirNaConducao={() =>
+          (globalThis.window as JanelaDoApp | undefined)?.navigate?.(
+            "conduzir-entrevistas",
+            { visao: "preparar" },
+          )
+        }
+      />
+    ),
     abrirVisao: (visao: string) =>
       visoes.definir(visao === "roteiros" ? "preparar" : visao),
     async abrirEdital(id: string) {
