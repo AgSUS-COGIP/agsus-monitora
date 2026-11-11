@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-11
 ---
 
 # Módulo: Recursos dos candidatos
@@ -12,7 +12,9 @@ chama `render()` a cada abertura. Área = a atual do app; sessão, tema, aviso e
 
 - **Painel de recursos** (`#page-recursos`, view `recursos`, rota `/<área>/painel-de-recursos`,
   `criarRecursos()`): acompanhar, só leitura — status, exportação, filtros, KPIs, recorte,
-  gráficos, pendências e a fila; o detalhe abre sem ações (`somenteLeitura`).
+  gráficos, pendências e a fila; o detalhe abre sem ações (`somenteLeitura`). Com a base carregada
+  e nenhum recurso na área, uma linha compacta (`.recursos-sem-recursos`) fica no lugar dos gráficos
+  e das pendências; carregando, os skeletons; com falha na carga, só o aviso de erro.
 - **Analisar recursos** (`#page-analisar-recursos`, view `analisar-recursos`, rota
   `/<área>/recursos`, `criarAnaliseDeRecursos()`, selo BETA): fazer — Novo recurso, Modelos de
   resposta, filtros e a fila; a gaveta com todas as ações.
