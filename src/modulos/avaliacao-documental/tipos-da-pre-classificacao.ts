@@ -76,6 +76,8 @@ export interface InscritoDaPre extends RegistroDaPre, InscritoComDecisao {
   posicao: number | null;
   lote: number | null;
   motivo_entrada: string | null;
+  /** Só em conferir_eliminados_pre_classificacao: o fundamento conferido do motivo (#593). */
+  fundamento?: unknown;
 }
 
 /** Os campos de uma vaga do resultado gravado (sem inscritos = ainda sem triagem). */

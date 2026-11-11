@@ -63,6 +63,27 @@ Regras puras em `src/lib/triagem/regra-da-triagem.ts` (`obterRegraDaTriagem`,
 - Inclusão no lote por decisão da coordenação e os comunicados de eliminação em lote também ficam
   aqui (ver [[modulo-avaliacao-documental]]).
 
+## Fundamento das eliminações (issue #593)
+
+- O comunicado de eliminação cita o **item oficial do edital** só quando ele foi **conferido** por
+  quem tem a autoridade: gestor ou coordenador do edital (`private."FC_GESTOR_DO_EDITAL"`) ou
+  administrador global (`private.is_master()`). O banco decide (`conferir_fundamento_da_eliminacao`,
+  42501 para os demais, inclusive coordenador só da equipe e analista). Nada é presumido nem
+  preenchido sozinho: o item que a regra da Triagem traz aparece só como referência.
+- Cada conferência é uma linha imutável de `TH_FUNDAMENTO_ELIMINACAO` (papel, quem, quando, versão
+  e hash da regra da Triagem, retrato do motivo nela e a fonte). Retificar é conferir de novo, com
+  justificativa; a anterior fica no histórico. Usar o item da nota mínima do lote (8.2.6 no
+  114/2026) numa eliminação da Triagem também pede justificativa: ela não decorre da nota.
+- O fundamento vale enquanto a regra vigente estiver conferida e o motivo nela for o mesmo da
+  conferência; senão fica "Reconferir" e o comunicado sai sem item.
+- Eliminações administrativas (QUESTIONARIO, CANCELADO, REPROVADO_EMPREGARE) não mostram notas no
+  comunicado. Quem ficou fora do lote pela nota (RANQUEADO) não é eliminado e não recebe comunicado.
+- Nada disso muda motivo, nota, decisão ou resultado gravados.
+- Tela: quadro "Fundamento das eliminações" na aba Eliminados (`fundamentos-da-eliminacao.tsx`, só
+  para a coordenação); lógica em `src/lib/avaliacao-documental/fundamento-da-eliminacao.ts`; o PDF
+  lê o campo `fundamento` de `conferir_eliminados_pre_classificacao`. Migration
+  `20261110215930_fundamento_conferido_da_eliminacao` (com ensaio e rollback).
+
 ## Quem calcula
 
 A conta é do job Python; `src/lib/avaliacao-documental/pre-classificacao.ts` só faz a prévia
@@ -72,6 +93,9 @@ lê o que o job gravou (`src/lib/avaliacao-documental/tela-da-pre-classificacao.
 quem usa: `docs/aya/regras-da-avaliacao-documental.md` (Abas, Regras e Provisória da Triagem).
 
 Testes: `tests/modulos/avaliacao-documental-pre-classificacao.test.js`,
+`tests/fundamento-da-eliminacao-no-banco.test.ts` (PGlite: quem confere, auditoria, comunicado,
+ensaio e rollback), `tests/lib/fundamento-da-eliminacao.test.ts`,
+`tests/modulos/avaliacao-documental-fundamentos-da-eliminacao.test.ts`,
 `tests/python/test_pre_classificacao.py`,
 `tests/python/test_pre_classificacao_job.py`.
 

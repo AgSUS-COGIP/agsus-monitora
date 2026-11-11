@@ -143,6 +143,8 @@ type EliminadoParaComunicado = {
   declarada?: number | null;
   nota?: number | null;
   origem_nota?: string | null;
+  /** O fundamento conferido (só CONFERIDO vira linha; issue #593). */
+  fundamento?: unknown;
 };
 
 /**
@@ -192,6 +194,7 @@ export function comunicadosDosEliminados(
         declarada: c.declarada ?? null,
         nota: c.nota ?? null,
         origem_nota: c.origem_nota ?? null,
+        fundamento: c.fundamento ?? null,
       }),
     );
   }

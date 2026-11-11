@@ -516,6 +516,13 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 **fonte:** src/modulos/avaliacao-documental/documentos-em-lote.tsx; src/lib/avaliacao-documental/documentos-em-lote.ts; src/modulos/avaliacao-documental/espelhos.tsx; src/modulos/avaliacao-documental/pre-classificacao.tsx
 **abrir:** avaliacao-documental
 
+## Fundamento das eliminações no comunicado
+
+**perguntas:** fundamento da eliminacao | item do edital no comunicado | comunicado sem item do edital | conferir fundamento | quem confere o fundamento | retificar fundamento | reconferir fundamento | 8.2.6 no comunicado | eliminacao administrativa | questionario cancelado reprovado empregare
+**resposta:** O comunicado de eliminação na Triagem só cita o item do edital quando ele foi conferido. Quem confere é o gestor ou o coordenador do edital, ou o administrador global, no quadro "Fundamento das eliminações" da aba Eliminados: para cada motivo, digita o item como no texto oficial e a fonte (o edital publicado ou a retificação). Nada vem preenchido: o item que a regra da Triagem cita aparece só como referência. Sem conferência, o comunicado sai só com o motivo. Mudar o item ou a fonte é retificar e pede justificativa; a conferência anterior fica no histórico, com quem, quando e a versão da regra. O item da nota mínima do lote (no 114/2026, o 8.2.6) também pede justificativa, porque a eliminação na triagem não decorre da nota. Se a regra da Triagem mudar o motivo, o fundamento fica "Reconferir" e sai do comunicado até ser conferido de novo. Nas eliminações administrativas (não finalizou o questionário, cancelou a inscrição, reprovado na Empregare) o comunicado não mostra notas. Quem ficou fora do lote pela nota não é eliminado e não recebe este comunicado. Nenhum motivo, nota ou resultado muda.
+**fonte:** src/modulos/avaliacao-documental/fundamentos-da-eliminacao.tsx; src/lib/avaliacao-documental/fundamento-da-eliminacao.ts; supabase/migrations/20261110215930_fundamento_conferido_da_eliminacao.sql
+**abrir:** avaliacao-documental
+
 ## Relatório de motivos
 
 **perguntas:** relatorio de motivos | relatorio de reprovados | reprovados por criterio | eliminados por criterio | quem usou outro motivo | outro motivo na identidade | textos do outro motivo | motivos mais usados | relatorio sem pedir a ti | exportar motivos | csv dos motivos | pontuacao ajustada | nota ajustada cursos experiencia | relatorio por avaliador | transformar texto em motivo
