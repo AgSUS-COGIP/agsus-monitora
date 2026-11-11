@@ -126,9 +126,7 @@ describe("edital suspenso fora do cronograma", () => {
   });
 
   it("Semana e Lista: nenhuma etapa do suspenso", () => {
-    expect(contarEtapasNoIntervalo(etapas, "2099-03-08", "2099-03-14")).toBe(
-      1,
-    );
+    expect(contarEtapasNoIntervalo(etapas, "2099-03-08", "2099-03-14")).toBe(1);
     const dias = diasDaLista(etapas, "2099-03-01", "2099-03-31", 2099);
     const ids = dias.flatMap((d) => d.itens.map((i) => i.etapa.editalId));
     expect(ids.length).toBeGreaterThan(0);

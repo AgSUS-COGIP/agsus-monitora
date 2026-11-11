@@ -13,15 +13,15 @@ ignorar o cache. A área vem do app e recorta os editais já carregados.
 
 ## Arquivos
 
-| Arquivo                  | Responsabilidade                                                      |
-| ------------------------ | --------------------------------------------------------------------- |
-| `calendario-editais.tsx` | tela, mês aberto, filtros, dia selecionado e edital da linha do tempo |
-| `partes.tsx`             | grade, seletor, próximas etapas, linha do tempo e modal do dia        |
-| `vistas.tsx`             | vistas Lista e Semana do card do calendário                           |
-| `estado.ts`              | store externo, sessão, carga, cache e aviso de falhas parciais        |
-| `tipos.ts`               | cliente de leitura, snapshot, filtros, etapas e células normalizadas  |
-| `demandas-internas.tsx`  | card, detalhe, formulário e exclusão das demandas internas            |
-| `cronograma.css`, `demandas-internas.css` | estilos (demanda: cor `--etapa-demanda`)         |
+| Arquivo                                   | Responsabilidade                                                      |
+| ----------------------------------------- | --------------------------------------------------------------------- |
+| `calendario-editais.tsx`                  | tela, mês aberto, filtros, dia selecionado e edital da linha do tempo |
+| `partes.tsx`                              | grade, seletor, próximas etapas, linha do tempo e modal do dia        |
+| `vistas.tsx`                              | vistas Lista e Semana do card do calendário                           |
+| `estado.ts`                               | store externo, sessão, carga, cache e aviso de falhas parciais        |
+| `tipos.ts`                                | cliente de leitura, snapshot, filtros, etapas e células normalizadas  |
+| `demandas-internas.tsx`                   | card, detalhe, formulário e exclusão das demandas internas            |
+| `cronograma.css`, `demandas-internas.css` | estilos (demanda: cor `--etapa-demanda`)                              |
 
 `calendario-editais.ts`: etapas por dia (conta no início e no fim, não no meio), filtros, grade de
 42 células, próximas etapas. Classificação de etapas e plausibilidade das datas ficam em
