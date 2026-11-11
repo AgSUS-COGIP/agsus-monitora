@@ -38,7 +38,7 @@ const PAYLOAD = {
       origem: "apps_script_analises_sede_incremental_v1",
       area: "sede",
       tipo: "INCREMENTAL",
-      execucoes: [execucao("processado", 90)],
+      execucoes: [execucao("processado", 8 * 60)],
     },
     {
       origem: "apps_script_analises_projetos_incremental_v1",
@@ -118,7 +118,30 @@ const carga = (id) =>
   saude.grupos.flatMap((g) => g.cargas).find((c) => c.id === id);
 
 describe("selo de cada carga", () => {
-  it("incremental das análises: em dia até 1 h, atrasada depois", () => {
+  it("incremental das análises: planilha parada há 3 h segue em dia (o Apps Script só reenvia em 6 h)", () => {
+    const parada = normalizarSaude(
+      {
+        ...PAYLOAD,
+        analises: [
+          {
+            origem: "apps_script_analises_projetos_incremental_v1",
+            area: "projetos",
+            tipo: "INCREMENTAL",
+            execucoes: [execucao("processado", 3 * 60)],
+          },
+        ],
+      },
+      AGORA,
+    );
+    const linha = parada.grupos
+      .flatMap((g) => g.cargas)
+      .find(
+        (c) => c.id === "analises:apps_script_analises_projetos_incremental_v1",
+      );
+    expect(linha?.situacao).toBe("em_dia");
+  });
+
+  it("incremental das análises: em dia até 7 h, atrasada depois", () => {
     expect(carga("analises:apps_script_analises_incremental_v1")).toMatchObject(
       {
         nome: "Saúde Indígena · incremental",
