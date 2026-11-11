@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-11
 ---
 
 # Módulo: Lista de aprovados
@@ -33,6 +33,7 @@ aba-convocacao.tsx          KPIs (A convocar, Convocados…), escolha para a car
                             convocar", Exportar CSV, uma tabela por vaga
 partes.tsx                  selo de status, nome que abre a gaveta, ações, paginação, CampoEditavel
 modais.tsx                  status (Convocado pede a data), anexos, sub judice
+status-em-lote.tsx          "Mudar status" da seleção da aba Aprovados (status em lote)
 gaveta-do-candidato.tsx     dados, status e cartas emitidas
 modal-listas-do-edital.tsx  origem, importar XLSX, publicar da Classificação; "Lista de convocação"
                             só resume, com "Editar nas Regras do edital"
@@ -56,6 +57,14 @@ Convocado (com a data), Contratado, Desistente, Migração e Documentação Reje
 o seguinte (quem edita faz); deixar sem status é do admin. Contratados (Seleção e KPIs) = Contratado e
 Migração. Regras: `src/lib/lista-aprovados-rules.ts` (status, trava, resumo) e
 `src/lib/lista-convocacao-rules.ts` (ordem, "a convocar", CSV).
+
+**Status em lote** (11/11/2026): na aba Aprovados, quem muda status marca linhas (ou "Selecionar os N
+da tabela": os filtrados e buscados) e usa "Mudar status". Só Convocado (uma data para todos),
+Desistente, Documentação Rejeitada e, para o admin, sem status; Contratado e Migração pedem a
+matrícula de cada um e ficam na linha. A janela mostra quem muda, como está hoje e quem fica de fora
+e por quê (`src/lib/status-em-lote-dos-aprovados.ts`); o banco repete as regras, um a um
+(`alterar_status_candidatos_aprovados`, migration `20261111180000`, até 500, histórico em
+`TH_CANDIDATO_APROVADO`). Mudar filtro ou busca limpa a seleção.
 
 "Contratado em outra lista" (migration `20261024120000`): situação decidida pelo job Python
 `scripts/aprovados/contratacao.py`, no dicionário `contratacao` do pacote; selo, indicadores e
@@ -116,7 +125,8 @@ Abertura numa chamada: `abrir_lista_aprovados` (migration `20261029133000`): pac
 convocação, anexos, convocações e pendências; erro por parte em `erros.<parte>`; sem a função
 (PGRST202), as chamadas de antes. Migration `20261005180000_convocado_e_carta_de_convocacao`:
 `DT_CONVOCACAO`, gatilho na publicação, `TB_MODELO_CARTA_CONVOCACAO`, `TH_MODELO_CARTA_CONVOCACAO`,
-`TH_CARTA_CONVOCACAO`, `RL_CARTA_CANDIDATO` e RPCs `alterar_status_candidato_aprovado`,
+`TH_CARTA_CONVOCACAO`, `RL_CARTA_CANDIDATO` e RPCs `alterar_status_candidato_aprovado` (em lote:
+`alterar_status_candidatos_aprovados`, 20261111180000),
 `marcar_candidatos_convocados`, `listar_modelos_carta_convocacao`, `salvar_modelo_carta_convocacao`,
 `definir_modelo_carta_ativo`, `registrar_carta_convocacao`, `listar_cartas_do_candidato`,
 `listar_convocacoes_aprovados`. Históricos validados; falha libera nova tentativa.

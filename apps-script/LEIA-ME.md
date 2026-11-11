@@ -7,11 +7,11 @@ mistura** os dados de outra. O desenho está em `docs/banco-de-dados.md`
 (seção 6) e a migration em
 `supabase/migrations/20260928140000_sync_de_analises_por_planilha.sql`.
 
-| Planilha | ID do arquivo | `grupo` aceito | Origens (constante `ORIGEM`) |
-|---|---|---|---|
-| Saúde Indígena | `15jEbApj-tdxKAm2DQZdojrgvU_SbO00G8031vmAg7cw` | Saúde Indígena | `apps_script_analises_curriculares_v2_pdf` (FULL), `apps_script_analises_incremental_v1` (incremental) |
-| Projetos ("Central AgSus Monitora Sede e Projetos") | `1BJbi9SJRc-UaEEYR5PMPReyvyUYt9kGoeGqdepXhkJQ` | Projetos | `apps_script_analises_projetos_full_v1`, `apps_script_analises_projetos_incremental_v1` |
-| SEDE (ainda não existe) | — | SEDE | `apps_script_analises_sede_full_v1`, `apps_script_analises_sede_incremental_v1` |
+| Planilha                                            | ID do arquivo                                  | `grupo` aceito | Origens (constante `ORIGEM`)                                                                           |
+| --------------------------------------------------- | ---------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------ |
+| Saúde Indígena                                      | `15jEbApj-tdxKAm2DQZdojrgvU_SbO00G8031vmAg7cw` | Saúde Indígena | `apps_script_analises_curriculares_v2_pdf` (FULL), `apps_script_analises_incremental_v1` (incremental) |
+| Projetos ("Central AgSus Monitora Sede e Projetos") | `1BJbi9SJRc-UaEEYR5PMPReyvyUYt9kGoeGqdepXhkJQ` | Projetos       | `apps_script_analises_projetos_full_v1`, `apps_script_analises_projetos_incremental_v1`                |
+| SEDE (ainda não existe)                             | —                                              | SEDE           | `apps_script_analises_sede_full_v1`, `apps_script_analises_sede_incremental_v1`                        |
 
 **Regras que o banco aplica (o "porteiro"):**
 
@@ -19,7 +19,7 @@ mistura** os dados de outra. O desenho está em `docs/banco-de-dados.md`
   exatamente o grupo da planilha (maiúsculas, acentos e espaços extras são
   tolerados). Uma linha errada recusa o envio **inteiro**; nada é gravado. A
   mensagem aparece no log do Apps Script: `recusado pelo porteiro: N linha(s) do
-  envio com grupo diferente de "Projetos"...`.
+envio com grupo diferente de "Projetos"...`.
 - Origem que não está na tabela acima é recusada.
 - Cada planilha tem a própria fila: a Saúde Indígena e Projetos podem enviar ao
   mesmo tempo, mas cada planilha só tem um envio pendente por vez.
@@ -104,7 +104,7 @@ apps-script/
    - `SUPABASE_URL` = `https://SEU-PROJETO.supabase.co` (**obrigatória**: o código
      não tem URL fixa; sem a propriedade, o envio para com "Configure a propriedade do
      script SUPABASE_URL…").
-   **Nunca cole a chave no código** (`SERVICE_ROLE_KEY_FIXA` fica vazio).
+     **Nunca cole a chave no código** (`SERVICE_ROLE_KEY_FIXA` fica vazio).
 6. Rode `verificarConfiguracaoSupabaseAnalisesCurriculares` e confira no log
    "SUPABASE_SERVICE_ROLE_KEY: CONFIGURADA".
 7. Confira a coluna `grupo` de `DIM_EDITAIS` e `FATO_ANALISES`: tem de ser
@@ -146,7 +146,7 @@ dados novos sozinho (isso é de propósito: nada errado entra). Para destravar:
      preferir);
    - FULL: não é preciso; com o envio encerrado como `erro`, o script descarta
      o estado local sozinho na próxima execução (linha `FULL: estado local do
-     sync … descartado` no log). Para forçar, apague `ANALISES_SYNC_LOTES_CLIENT_V1`
+sync … descartado` no log). Para forçar, apague `ANALISES_SYNC_LOTES_CLIENT_V1`
      em **Configurações do projeto > Propriedades do script**.
 4. Rode o envio manual de novo (ou espere o próximo ciclo do orquestrador).
 
@@ -368,5 +368,32 @@ Testes: `tests/apps-script-analises-full.test.js` (e o do incremental).
    - Saúde Indígena: `saude-indigena/2-`, `3-` e `4-`;
    - Projetos: `projetos/1-atualizar-base.gs`, `2-`, `3-` e `4-`;
    - SEDE (quando existir): `sede/2-`, `3-` e `4-`.
-   Não é preciso reinstalar o gatilho do orquestrador.
+     Não é preciso reinstalar o gatilho do orquestrador.
 4. Acompanhar em **Execuções** o próximo `orquestrarFatoESupabaseAgendado`.
+
+## Gatilho de outra conta sem permissão (11/11/2026)
+
+**O que aconteceu:** o gatilho do orquestrador da Saúde Indígena era de outra conta ("Outro
+usuário" em Acionadores), que perdeu a autorização do script (a tela "Permitir" que a conta
+aceita; não é o compartilhamento da planilha). Cada execução marcava o início do ciclo e só
+então falhava ao abrir a planilha ("Você não tem permissão para chamar
+SpreadsheetApp.getActiveSpreadsheet"): a janela de 20 minutos recomeçava e nada foi ao banco
+de 29/10 a 11/11. As execuções manuais, de quem tinha autorização, funcionavam.
+
+**O que mudou** (`4-orquestrador-fato-supabase.gs`, as três planilhas, `[sem-permissao]`): o
+handler confere o acesso à planilha antes de tudo. Sem acesso, registra no log o que fazer e
+sai sem tocar no estado nem na janela do ciclo; o gatilho de quem tem acesso segue normal.
+Teste: `tests/apps-script-orquestrador-sem-permissao.test.js`.
+
+**Quando acontecer:**
+
+- **Dono do gatilho volta a autorizar:** ele abre Extensões > Apps Script e roda
+  `statusGatilhoFatoESupabase` (só lê), aceitando as permissões.
+- **Ou o gatilho troca de dono:** o dono apaga os gatilhos dele em Acionadores (ninguém mais
+  consegue) e quem acompanha o sistema roda `instalarGatilhoFatoESupabase`.
+- Nunca dois gatilhos do orquestrador ao mesmo tempo: eles disputam a mesma janela.
+- `executarFatoESupabaseAgora` recomeça a janela; as execuções agendadas dos 20 minutos
+  seguintes só esperam (terminam em segundos, sem log).
+
+**Para aplicar:** colar o `4-orquestrador-fato-supabase.gs` de cada planilha (apagar tudo e
+colar) e salvar. Não é preciso reinstalar o gatilho.

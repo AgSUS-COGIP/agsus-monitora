@@ -22,13 +22,14 @@ describe("textos das boas-vindas", () => {
     expect(primeiroNome("")).toBe("");
   });
 
-  it("conta editais com etapa de hoje até daqui a 7 dias", () => {
+  it("conta editais com etapa nos 7 dias contando hoje (hoje a hoje + 6)", () => {
     // 12h de Brasília: o mesmo dia em qualquer fuso do computador.
     const hoje = new Date("2026-09-28T15:00:00Z");
     const linhas = [
       { cronograma_proxima_data: "2026-09-28" },
+      { cronograma_proxima_data: "2026-10-04" },
+      // Hoje + 7: fora desde 11/11/2026 (antes a janela tinha 8 dias).
       { cronograma_proxima_data: "2026-10-05" },
-      { cronograma_proxima_data: "2026-10-06" },
       { cronograma_proxima_data: "2026-09-27" },
       { cronograma_proxima_data: null },
     ];
@@ -40,8 +41,8 @@ describe("textos das boas-vindas", () => {
     const noiteEmBrasilia = new Date("2026-09-28T02:30:00Z");
     const linhas = [
       { cronograma_proxima_data: "2026-09-27" },
+      { cronograma_proxima_data: "2026-10-03" },
       { cronograma_proxima_data: "2026-10-04" },
-      { cronograma_proxima_data: "2026-10-05" },
       { cronograma_proxima_data: "2026-09-30", status: "Cancelado" },
     ];
     expect(editaisComEtapaNaSemana(linhas, noiteEmBrasilia)).toBe(2);

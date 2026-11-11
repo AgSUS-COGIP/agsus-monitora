@@ -166,7 +166,7 @@ afterEach(async () => {
 });
 
 describe("Mapa DSEIs", () => {
-  it("desenha os DSEIs com número, sem bolhas nem CASAIs", async () => {
+  it("desenha os DSEIs com número; sedes e CASAIs começam ligadas (11/11/2026)", async () => {
     await montar();
     const mapa = mapaVivo();
     expect(fetch).toHaveBeenCalledWith(
@@ -178,11 +178,20 @@ describe("Mapa DSEIs", () => {
       .map((m) => m.opcoes.icon?.html?.textContent)
       .filter(Boolean);
     expect(rotulos).toEqual(["1", "16", "34"]);
+    expect(leaflet.desenhadas(mapa, "circleMarker").length).toBeGreaterThan(0);
+    await clicar(host.querySelector(".mapa-simples__pontos"));
     expect(leaflet.desenhadas(mapa, "circleMarker")).toHaveLength(0);
   });
 
-  it("colore pelos números da lista e marca o DSEI sem dado", async () => {
+  it("começa na cor do DSEI; % preenchidas colore pelos números da lista e marca o DSEI sem dado", async () => {
     await montar();
+    expect(poligono(16).elemento.style.fill).toBe(
+      "var(--mapa-simples-dsei-16)",
+    );
+    await clicar(host.querySelector('input[value="preenchidas"]'));
+    expect(localStorage.getItem("agsus_mapa_simples_colorir_v2")).toBe(
+      "preenchidas",
+    );
     expect(poligono(34).elemento.style.fill).toBe("var(--mapa-simples-seq-2)");
     expect(poligono(1).elemento.style.fill).toBe("var(--mapa-simples-seq-5)");
     expect(poligono(16).elemento.style.fill).toBe(
@@ -192,12 +201,6 @@ describe("Mapa DSEIs", () => {
     expect(legenda.getAttribute("aria-label")).toBe("Faixas de % preenchidas");
     expect(legenda.textContent).toContain("80–100%");
     expect(legenda.textContent).toContain("sem dado");
-
-    await clicar(host.querySelector('input[value="dsei"]'));
-    expect(poligono(16).elemento.style.fill).toBe(
-      "var(--mapa-simples-dsei-16)",
-    );
-    expect(localStorage.getItem("agsus_mapa_simples_colorir_v1")).toBe("dsei");
   });
 
   it("a lista mostra o número do DSEI; focar a linha realça o polígono e vice-versa", async () => {
@@ -311,7 +314,7 @@ describe("Mapa DSEIs", () => {
   /*
     O bug: o interruptor era o chip das fases das terras
     (`.mapa-si-terra-fase`), que desligado (`aria-pressed="false"`) sai
-    riscado e esmaecido — e os pontos começam desligados.
+    riscado e esmaecido. (Desde 11/11/2026 os pontos começam ligados.)
   */
   it("'Sedes e CASAIs' é um liga/desliga com aria-pressed, não o chip riscado das fases", async () => {
     await montar();
@@ -319,7 +322,7 @@ describe("Mapa DSEIs", () => {
     const pontos = legenda.querySelector(".mapa-simples__pontos");
     expect(pontos.tagName).toBe("BUTTON");
     expect(pontos.textContent).toBe("Sedes e CASAIs");
-    expect(pontos.getAttribute("aria-pressed")).toBe("false");
+    expect(pontos.getAttribute("aria-pressed")).toBe("true");
     expect(legenda.querySelector(".mapa-si-terra-fase")).toBeNull();
   });
 
@@ -362,11 +365,14 @@ describe("Mapa DSEIs", () => {
     expect(tracos()).toHaveLength(0);
   });
 
-  it("'Sedes e CASAIs' devolve os pontos; voltar ao Mapa tira os polígonos", async () => {
+  it("'Sedes e CASAIs' tira e devolve os pontos; voltar ao Mapa tira os polígonos", async () => {
     await montar();
     const mapa = mapaVivo();
     const pontos = host.querySelector(".mapa-simples__pontos");
+    expect(pontos.getAttribute("aria-pressed")).toBe("true");
+    await clicar(pontos);
     expect(pontos.getAttribute("aria-pressed")).toBe("false");
+    expect(leaflet.desenhadas(mapa, "circleMarker")).toHaveLength(0);
     await clicar(pontos);
     expect(pontos.getAttribute("aria-pressed")).toBe("true");
     expect(leaflet.desenhadas(mapa, "circleMarker").length).toBeGreaterThan(0);

@@ -3438,6 +3438,25 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Mudar o status de vários candidatos",
+    perguntas: [
+      "mudar status de varios",
+      "mudar status em lote",
+      "selecionar varios candidatos",
+      "selecionar todos os candidatos",
+      "status em massa",
+      "marcar varios como desistente",
+      "convocar varios de uma vez",
+    ],
+    resposta:
+      'Na aba Aprovados, quem tem Editor em Aprovados marca a caixa ao lado do nome de cada candidato, ou "Selecionar os N da tabela" para pegar todos os filtrados e buscados (não só as linhas desenhadas), e clica em "Mudar status". Em lote dá para escolher Convocado (com uma data para todos), Desistente ou Documentação Rejeitada; "Sem status" é só do Administrador em Aprovados. Contratado e Migração pedem a matrícula de cada um e continuam pelo botão de status da linha. Antes de gravar, a janela mostra quantos mudam, como estão hoje e quem fica de fora e por quê (já no status, lista inativa ou status definido que só o Administrador muda). São até 500 por vez, e cada mudança fica no histórico do candidato. Mudar um filtro ou a busca limpa a seleção.',
+    fato: "",
+    fonte:
+      "src/modulos/aprovados/status-em-lote.tsx; src/lib/status-em-lote-dos-aprovados.ts; supabase/migrations/20261111180000_status_em_lote_dos_aprovados.sql",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "Cadeado no status do candidato",
     perguntas: [
       "cadeado no status",
@@ -3725,7 +3744,7 @@ export const VERBETES_AYA = Object.freeze([
       "blocos da visao geral",
     ],
     resposta:
-      'Na Visão geral, as boas-vindas dizem quantos editais têm etapa de hoje até daqui a 7 dias (pelo dia de Brasília, sem os cancelados), com o atalho para o Cronograma; o indicador "Processos Críticos" filtra a tabela pelos críticos, e o motivo aparece nos detalhes de cada processo. "Fases" conta os editais em cada fase fixa — Edital, Inscrições, Análise curricular, Recursos, Entrevistas, Resultado, Contratação e Concluído, mais Cancelado, Sem cronograma e Outra quando houver —, lida do status e da atividade do cronograma; o clique filtra a fase. "Pós-resultado" mostra, nos editais com resultado, os concluídos sem lista de aprovados vigente, as listas sem nenhum status, a contratação abaixo de 50% e as desistências; o clique filtra a página por aquela pendência. Em Projetos, "Processos por projeto" mostra cada projeto com processos, abertos, vagas e contratadas; o clique filtra o projeto.',
+      'Na Visão geral, as boas-vindas dizem quantos editais têm etapa nos próximos 7 dias, contando hoje (pelo dia de Brasília, sem os cancelados), com o atalho para o Cronograma; o indicador "Processos Críticos" filtra a tabela pelos críticos, e o motivo aparece nos detalhes de cada processo. "Fases" conta os editais em cada fase fixa — Edital, Inscrições, Análise curricular, Recursos, Entrevistas, Resultado, Contratação e Concluído, mais Cancelado, Sem cronograma e Outra quando houver —, lida do status e da atividade do cronograma; o clique filtra a fase. "Pós-resultado" mostra, nos editais com resultado, os concluídos sem lista de aprovados vigente, as listas sem nenhum status, a contratação abaixo de 50% e as desistências; o clique filtra a página por aquela pendência. Em Projetos, "Processos por projeto" mostra cada projeto com processos, abertos, vagas e contratadas; o clique filtra o projeto.',
     fato: "",
     fonte: "interface do MONITORA",
   },
@@ -5388,7 +5407,7 @@ export const VERBETES_AYA = Object.freeze([
       "contorno dos dseis",
     ],
     resposta:
-      'No MONITORA, o botão "Mapa DSEIs" (ao lado de Mapa e Satélite, no mapa nacional da Saúde Indígena) troca o fundo de ruas por um fundo liso e pinta as áreas dos 34 DSEIs, cada uma com o seu número. A numeração é a ordem alfabética oficial: 1 Alagoas e Sergipe até 34 Yanomami; a lista "Territórios por vagas" mostra o mesmo número. "Colorir por" escolhe a cor: % preenchidas (padrão, cinco faixas de 20 pontos), vagas ociosas (cinco faixas pelos valores do recorte) ou uma cor fixa por DSEI. DSEI fora do recorte ou sem vaga fica cinza, "sem dado". Passar o mouse num DSEI realça a linha da lista e vice-versa; clicar abre o DSEI. Nesse modo as sedes, as CASAIs e as Terras Indígenas começam desligadas ("Sedes e CASAIs" e o botão "Terras Indígenas" as ligam). As áreas são as da camada de abrangência dos DSEIs publicada pela Funai (cópia de 20/04/2022): cobrem as regiões com atendimento, não o país inteiro.',
+      'No MONITORA, o botão "Mapa DSEIs" (ao lado de Mapa e Satélite, no mapa nacional da Saúde Indígena) troca o fundo de ruas por um fundo liso e pinta as áreas dos 34 DSEIs, cada uma com o seu número. É o fundo com que o mapa abre para todos; quem escolhe Mapa ou Satélite tem a escolha guardada neste navegador. A numeração é a ordem alfabética oficial: 1 Alagoas e Sergipe até 34 Yanomami; a lista "Territórios por vagas" mostra o mesmo número. "Colorir por" escolhe a cor: uma cor fixa por DSEI (padrão), % preenchidas (cinco faixas de 20 pontos) ou vagas ociosas (cinco faixas pelos valores do recorte). DSEI fora do recorte ou sem vaga fica cinza, "sem dado". Passar o mouse num DSEI realça a linha da lista e vice-versa; clicar abre o DSEI. Nesse modo as sedes e as CASAIs começam ligadas ("Sedes e CASAIs" as desliga) e as Terras Indígenas, desligadas (o botão "Terras Indígenas" as liga). As áreas são as da camada de abrangência dos DSEIs publicada pela Funai (cópia de 20/04/2022): cobrem as regiões com atendimento, não o país inteiro.',
     fato: "",
     fonte: "interface do MONITORA; Funai, camada areas_dsei",
   },

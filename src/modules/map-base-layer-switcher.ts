@@ -142,7 +142,9 @@ export interface LeafletDoSeletor {
 /* A caixa de cada azulejo de satélite: o Leaflet lê `complete` para abortar. */
 type CaixaDoAzulejo = HTMLDivElement & { complete?: boolean };
 
-const STORAGE_KEY = "agsus_map_base_layer_v1";
+/* v2 (11/11/2026): o Mapa DSEIs virou o padrão do mapa nacional; a chave nova
+   faz todo mundo começar nele uma vez (a escolha da v1 fica para trás). */
+const STORAGE_KEY = "agsus_map_base_layer_v2";
 const MODE_MAP: ModoDoFundo = "map";
 const MODE_SATELLITE: ModoDoFundo = "satellite";
 export const MODO_SIMPLES: ModoDoFundo = "simple";
@@ -686,15 +688,20 @@ function dispatchFallback(map: MapaComSeletor) {
   );
 }
 
-/* A escolha guardada; o "Mapa DSEIs" vale só onde o mapa o oferece. */
+/*
+  A escolha guardada. Sem escolha, o mapa nacional da Saúde Indígena abre no
+  "Mapa DSEIs" e os outros no "Mapa"; o "Mapa DSEIs" guardado vale só onde o
+  mapa o oferece.
+*/
 function readStoredMode(aceitaSimples = false): ModoDoFundo {
+  const padrao = aceitaSimples ? MODO_SIMPLES : MODE_MAP;
   try {
     const guardado = localStorage.getItem(STORAGE_KEY);
+    if (guardado === MODE_MAP) return MODE_MAP;
     if (guardado === MODE_SATELLITE) return MODE_SATELLITE;
-    if (guardado === MODO_SIMPLES && aceitaSimples) return MODO_SIMPLES;
-    return MODE_MAP;
+    return padrao;
   } catch {
-    return MODE_MAP;
+    return padrao;
   }
 }
 
