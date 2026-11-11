@@ -104,7 +104,7 @@ describe("Mapa DSEIs no seletor do fundo", () => {
     expect(botao("simple").getAttribute("aria-pressed")).toBe("true");
     expect(botao("map").getAttribute("aria-pressed")).toBe("false");
     expect(avisos).toEqual(["simple"]);
-    expect(localStorage.getItem("agsus_map_base_layer_v1")).toBe("simple");
+    expect(localStorage.getItem("agsus_map_base_layer_v2")).toBe("simple");
 
     botao("map").click();
     expect(azulejos()).toEqual([base]);
@@ -128,7 +128,7 @@ describe("Mapa DSEIs no seletor do fundo", () => {
   });
 
   it("com o Mapa DSEIs guardado, a camada do fundo nem entra (nenhum azulejo baixado)", () => {
-    localStorage.setItem("agsus_map_base_layer_v1", "simple");
+    localStorage.setItem("agsus_map_base_layer_v2", "simple");
     const { L, map, azulejos, botao, tileLayer } = fixture();
     addResilientBaseLayer(L, map);
     const osm = tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png");
@@ -143,7 +143,7 @@ describe("Mapa DSEIs no seletor do fundo", () => {
   });
 
   it("noutro mapa, o Mapa DSEIs guardado vale como Mapa", () => {
-    localStorage.setItem("agsus_map_base_layer_v1", "simple");
+    localStorage.setItem("agsus_map_base_layer_v2", "simple");
     const { L, map, azulejos, tileLayer } = fixture("detailMap");
     addResilientBaseLayer(L, map);
     expect(map.__agsusDesiredBaseMapMode).toBe("map");
@@ -157,5 +157,43 @@ describe("Mapa DSEIs no seletor do fundo", () => {
     const osm = tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png");
     adicionarCamadaDeFundo(map, osm);
     expect(azulejos()).toEqual([osm]);
+  });
+});
+
+describe("Mapa DSEIs é o padrão do mapa nacional (11/11/2026)", () => {
+  it("sem escolha guardada, o mapa nacional abre no Mapa DSEIs, sem azulejo", () => {
+    const { L, map, azulejos, tileLayer } = fixture();
+    addResilientBaseLayer(L, map);
+    expect(map.__agsusDesiredBaseMapMode).toBe("simple");
+    // Como no teste do Mapa DSEIs guardado: o fundo do app (leaflet.ts) nem entra.
+    map.removeLayer([...azulejos()][0]);
+    const osm = tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png");
+    osm.__agsusBaseMapKind = "map";
+    adicionarCamadaDeFundo(map, osm);
+    expect(azulejos()).toEqual([]);
+  });
+
+  it("os outros mapas continuam abrindo no Mapa", () => {
+    for (const id of ["detailMap", "mapaDosProjetos"]) {
+      const { L, map } = fixture(id);
+      addResilientBaseLayer(L, map);
+      expect(map.__agsusDesiredBaseMapMode).toBe("map");
+    }
+  });
+
+  it("quem escolhe Mapa ou Satélite tem a escolha respeitada", () => {
+    for (const modo of ["map", "satellite"]) {
+      localStorage.setItem("agsus_map_base_layer_v2", modo);
+      const { L, map } = fixture();
+      addResilientBaseLayer(L, map);
+      expect(map.__agsusDesiredBaseMapMode).toBe(modo);
+    }
+  });
+
+  it("a escolha da chave antiga (v1) não vale mais: todo mundo começa no Mapa DSEIs", () => {
+    localStorage.setItem("agsus_map_base_layer_v1", "map");
+    const { L, map } = fixture();
+    addResilientBaseLayer(L, map);
+    expect(map.__agsusDesiredBaseMapMode).toBe("simple");
   });
 });

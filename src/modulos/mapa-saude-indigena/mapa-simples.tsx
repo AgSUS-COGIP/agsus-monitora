@@ -47,7 +47,8 @@ const PANE_DOS_DSEIS = "agsus-mapa-simples";
 const PANE_DOS_ROTULOS = "agsus-mapa-simples-rotulos";
 const PANE_DO_REALCE = "agsus-mapa-simples-realce";
 const CLASSE_DOS_ROTULOS_PEQUENOS = "mapa-simples--rotulos-pequenos";
-const CHAVE_DO_COLORIR = "agsus_mapa_simples_colorir_v1";
+// v2 (11/11/2026): o padrão virou "Cor do DSEI"; todo mundo começa nele uma vez.
+const CHAVE_DO_COLORIR = "agsus_mapa_simples_colorir_v2";
 
 /* O modo do fundo do mapa: o pedido ao seletor e, depois, cada troca avisada. */
 export function usarModoDoFundo(mapa: MapaDoPainel | null): ModoDoFundo {

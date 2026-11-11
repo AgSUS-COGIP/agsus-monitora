@@ -112,10 +112,11 @@ describe("faixas da cor", () => {
     expect(tokenDaClasse(1, 1)).toBe("--mapa-simples-seq-5");
   });
 
-  it("'Colorir por' desconhecido volta ao padrão (% preenchidas)", () => {
+  it("'Colorir por' desconhecido volta ao padrão (Cor do DSEI, desde 11/11/2026)", () => {
     expect(colorirValido("ociosas")).toBe("ociosas");
-    expect(colorirValido("calor")).toBe("preenchidas");
-    expect(colorirValido(null)).toBe("preenchidas");
+    expect(colorirValido("preenchidas")).toBe("preenchidas");
+    expect(colorirValido("calor")).toBe("dsei");
+    expect(colorirValido(null)).toBe("dsei");
   });
 });
 
