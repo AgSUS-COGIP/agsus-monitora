@@ -127,7 +127,10 @@ type ImagemMedivel = {
  * sem a faixa desfocada (11/11/2026). Sem medida, vale 16:9.
  */
 export function medirProporcaoDaArte(
-  tela: Pick<HTMLElement, "style"> | null | undefined,
+  tela:
+    | { style: { setProperty(nome: string, valor: string): void } }
+    | null
+    | undefined,
   url: string | null | undefined,
   criarImagem: () => ImagemMedivel | null = () =>
     typeof Image === "function" ? new Image() : null,

@@ -23,9 +23,11 @@ function telaFalsa() {
     vars,
     tela: {
       style: {
-        setProperty: (nome: string, valor: string) => vars.set(nome, valor),
+        setProperty: (nome: string, valor: string) => {
+          vars.set(nome, valor);
+        },
       },
-    } as unknown as HTMLElement,
+    },
   };
 }
 
