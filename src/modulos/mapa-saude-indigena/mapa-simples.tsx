@@ -11,7 +11,6 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
   OPCOES_DE_COLORIR,
   TOKEN_SEM_DADO,
-  ZOOM_DO_ROTULO_PEQUENO,
   colorirValido,
   dicaDoDseiSimples,
 } from "../../lib/mapa-saude-indigena/mapa-simples.ts";
@@ -46,7 +45,6 @@ import { usarUltimo } from "./usar-ultimo.ts";
 const PANE_DOS_DSEIS = "agsus-mapa-simples";
 const PANE_DOS_ROTULOS = "agsus-mapa-simples-rotulos";
 const PANE_DO_REALCE = "agsus-mapa-simples-realce";
-const CLASSE_DOS_ROTULOS_PEQUENOS = "mapa-simples--rotulos-pequenos";
 // v2 (11/11/2026): o padrão virou "Cor do DSEI"; todo mundo começa nele uma vez.
 const CHAVE_DO_COLORIR = "agsus_mapa_simples_colorir_v2";
 
@@ -246,20 +244,8 @@ export function usarMapaSimples({
       },
     );
 
-    // Rótulo menor com o Brasil inteiro à vista.
-    const elemento = mapa.getContainer?.();
-    const aoZoom = () =>
-      elemento?.classList.toggle(
-        CLASSE_DOS_ROTULOS_PEQUENOS,
-        mapa.getZoom() < ZOOM_DO_ROTULO_PEQUENO,
-      );
-    aoZoom();
-    mapa.on("zoomend", aoZoom);
-
     return () => {
       cancelado = true;
-      mapa.off("zoomend", aoZoom);
-      elemento?.classList.remove(CLASSE_DOS_ROTULOS_PEQUENOS);
       grupo.clearLayers();
       mapa.removeLayer(grupo as never);
       desenhadosAgora.clear();

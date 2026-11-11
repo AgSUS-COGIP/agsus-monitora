@@ -1121,10 +1121,6 @@
     0 0 4px var(--mapa-simples-rotulo-halo);
 }
 
-.mapa-simples--rotulos-pequenos .mapa-simples__rotulo {
-  font-size: 11px;
-}
-
 .mapa-simples__legenda {
   display: grid;
   gap: var(--space-2);
