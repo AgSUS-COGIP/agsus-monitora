@@ -47,7 +47,7 @@ function ErroDaCarga({
   return (
     <ErroAoCarregar
       oQue="os acessos"
-      mensagem={codigo ? `${texto} (código ${codigo})` : texto}
+      mensagem={texto}
       aoTentar={() => void estado.carregarMatriz()}
     />
   );

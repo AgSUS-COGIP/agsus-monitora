@@ -384,10 +384,9 @@ export function ModulosEAbas({ estado }: { estado: EstadoDosModulos }) {
       <ErroAoCarregar
         oQue="módulos e abas"
         mensagem={
-          (atual.erroCodigo === "PGRST202"
+          atual.erroCodigo === "PGRST202"
             ? "o banco ainda não tem a atualização de módulos. Aplique a migration 20260930140000_modulos_e_manutencao.sql e recarregue a página"
-            : atual.erro) +
-          (atual.erroCodigo ? ` (código ${atual.erroCodigo})` : "")
+            : atual.erro
         }
         aoTentar={() => void estado.carregar()}
       />

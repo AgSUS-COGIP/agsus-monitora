@@ -224,7 +224,7 @@ export function LancarRetificacao({
           {lendo ? (
             <>
               <i className="fa-solid fa-spinner fa-spin" aria-hidden="true" />{" "}
-              Lendo o PDF...
+              Lendo o PDF…
             </>
           ) : (
             <>
@@ -453,7 +453,7 @@ export function LancarRetificacao({
                     className="fa-solid fa-spinner fa-spin"
                     aria-hidden="true"
                   />{" "}
-                  Aplicando...
+                  Aplicando…
                 </>
               ) : (
                 <>

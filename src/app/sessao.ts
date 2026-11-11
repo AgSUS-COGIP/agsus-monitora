@@ -83,7 +83,7 @@ export const FASES = Object.freeze({
 });
 
 export const TEXTO_DO_BOTAO = DEFAULT_ACCESS_BRANDING.buttonText;
-export const TEXTO_DO_BOTAO_OCUPADO = "Entrando no sistema...";
+export const TEXTO_DO_BOTAO_OCUPADO = "Entrando no sistema…";
 
 export const MENSAGENS = Object.freeze({
   escolherConta: "Escolha sua conta institucional na janela do Google.",

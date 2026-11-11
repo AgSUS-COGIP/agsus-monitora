@@ -164,8 +164,8 @@ function textoDoStatus({
   carregadoEm,
 }: SnapshotDoCalendario) {
   if (erro && !carregado) return "Sem dados";
-  if (!carregado) return "Carregando dados...";
-  if (carregando) return "Atualizando...";
+  if (!carregado) return "Carregando dados…";
+  if (carregando) return "Atualizando…";
   return carregadoEm
     ? `Atualizado em ${formatarDataHora(carregadoEm)}`
     : "Base carregada";

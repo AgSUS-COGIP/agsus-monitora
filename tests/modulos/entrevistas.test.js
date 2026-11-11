@@ -840,7 +840,7 @@ describe("carga", () => {
     expect(
       secao.querySelectorAll('.ui-tabela tbody tr[aria-hidden="true"]'),
     ).toHaveLength(8);
-    expect(status().textContent).toBe("Carregando dados...");
+    expect(status().textContent).toBe("Carregando dados…");
 
     await esperar(() => responder({ data: PAYLOAD, error: null }));
     expect(kpi("vagas")).toBe("2");

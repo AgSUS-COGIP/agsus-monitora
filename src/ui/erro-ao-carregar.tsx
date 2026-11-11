@@ -1,3 +1,4 @@
+import { erroParaATela } from "../lib/erro-na-tela.ts";
 import { Aviso } from "./aviso.tsx";
 
 /*
@@ -28,7 +29,8 @@ export function ErroAoCarregar({
       <span id={id} className="ui-erro-ao-carregar">
         <span>
           Não foi possível carregar {oQue}
-          {mensagem ? `: ${mensagem}` : "."}
+          {/* O texto técnico vira frase que diz o que fazer (erro-na-tela.ts). */}
+          {mensagem ? `: ${erroParaATela(mensagem)}` : "."}
         </span>
         {aoTentar ? (
           <button

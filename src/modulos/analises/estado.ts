@@ -423,7 +423,7 @@ export function criarEstadoDasAnalises({
     selecionar: Parameters<EstadoDasAnalises["exportarCsv"]>[0],
   ) {
     if (haLinhasSemParecer(selecionar(estado.linhas))) {
-      toast("Preparando o CSV com os pareceres...", "info");
+      toast("Preparando o CSV com os pareceres…", "info");
       if (!(await garantirTextos())) {
         toast(
           "Não foi possível trazer os pareceres para o CSV. Tente novamente.",

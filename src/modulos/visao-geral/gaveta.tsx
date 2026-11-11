@@ -1,3 +1,4 @@
+import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
 import { telaPronta } from "../../app/registro-das-telas.ts";
 import type { LinhaDaVisaoGeral } from "./tipos.ts";
 import { formatNumberBR } from "../../lib/formatters";
@@ -36,7 +37,8 @@ export function GavetaDoProcesso({
   aoFechar: () => void;
   aoVoltarALinha: () => void;
 }) {
-  const urgencia = urgenciaDoCronograma(linha);
+  // O dia de Brasília, como a tabela (não o relógio do computador).
+  const urgencia = urgenciaDoCronograma(linha, hojeEmBrasilia(new Date()));
   const percentual = Math.max(
     0,
     Math.min(100, Number(linha.cronograma_percentual || 0)),
