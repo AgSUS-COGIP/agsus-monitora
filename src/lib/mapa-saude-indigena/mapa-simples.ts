@@ -241,6 +241,3 @@ export function dicaDoDseiSimples(ind: IndicadorDoDsei) {
     "ociosas",
   )}, ${ind.preenchidas}% preenchidas`;
 }
-
-/* Rótulo menor quando o Brasil inteiro está à vista. */
-export const ZOOM_DO_ROTULO_PEQUENO = 5;
