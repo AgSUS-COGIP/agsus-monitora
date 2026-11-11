@@ -17,7 +17,9 @@ import { plural } from "../partes.tsx";
   O modal do botão "Exportar" da aba Aprovados: o que vai sair (registros,
   editais e filtros da tela), o formato (XLSX, CSV ou PDF) e "Exportar", que
   registra no banco, gera o arquivo e baixa. Durante a geração o botão mostra
-  o progresso; fechar o modal antes do fim descarta o arquivo.
+  o progresso; fechar o modal antes do fim descarta o arquivo. A aba Resumo
+  por cargo usa o mesmo modal com `titulo` e `aoExportar` próprios (o mesmo
+  recorte e o mesmo registro, outro conteúdo).
 */
 
 export interface EstadoDaExportacao extends EstadoDaAcao {
@@ -51,10 +53,18 @@ export function ModalDaExportacao({
   estado,
   pedido,
   aoFechar,
+  titulo = "Exportar a lista de aprovados",
+  aoExportar,
 }: {
   estado: EstadoDaExportacao;
   pedido: PedidoDaExportacao;
   aoFechar: () => void;
+  titulo?: string;
+  aoExportar?: (
+    pedido: PedidoDaExportacao,
+    formato: FormatoDaExportacao,
+    seguir: () => boolean,
+  ) => Promise<boolean>;
 }) {
   const [formato, setFormato] = useState<FormatoDaExportacao>("XLSX");
   const aberto = useRef(true);
@@ -68,7 +78,7 @@ export function ModalDaExportacao({
   const semEdital = pedido.editais.length === 0;
 
   async function exportar() {
-    const ok = await estado.exportarLista(
+    const ok = await (aoExportar ?? estado.exportarLista)(
       pedido,
       formato,
       () => aberto.current,
@@ -87,7 +97,7 @@ export function ModalDaExportacao({
     >
       <div className="modal-head">
         <div>
-          <h3 id="approvedExportTitle">Exportar a lista de aprovados</h3>
+          <h3 id="approvedExportTitle">{titulo}</h3>
           <p className="approved-modal-subtitle" id="approvedExportResumo">
             {plural(registros, "registro", "registros")}
             {registros !== pedido.totalDoRecorte

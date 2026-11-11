@@ -33,6 +33,16 @@ import type {
 } from "../../lib/cronograma-do-edital.ts";
 import type { QuadroParaSalvar } from "../../lib/anexos-do-edital.ts";
 import {
+  ANOS_MAXIMOS,
+  MESES_MAXIMOS,
+  VALIDADE_NAO_LIDA,
+  VALIDADE_NOVA,
+  errosDaValidade,
+  prazoDaValidade,
+  validadeDoBanco,
+} from "../../lib/validade-do-edital.ts";
+import type { ValidadeDoFormulario } from "../../lib/validade-do-edital.ts";
+import {
   numeroDoFunil,
   textoDaFonteDoFunil,
 } from "../../lib/funil-do-edital.ts";
@@ -123,6 +133,12 @@ export interface PropriedadesDoModalDoEdital {
 
 const txt = (valor: unknown) => String(valor ?? "").trim();
 
+const ID_DA_VALIDADE = {
+  anos: "mValidadeAnos",
+  meses: "mValidadeMeses",
+  prorrogado: "mValidadeProrrogado",
+} as const;
+
 const RISCOS = ["Baixo", "Médio", "Alto"];
 
 const INDICADORES: readonly (readonly [string, string, string])[] = [
@@ -152,6 +168,7 @@ const CRONOGRAMA_VAZIO: Readonly<CronogramaDoFormulario> = Object.freeze({
   retomada: "",
   motivo: "",
   errata: "",
+  validade: VALIDADE_NOVA,
 });
 
 function cronogramaDoBanco(
@@ -172,6 +189,7 @@ function cronogramaDoBanco(
     motivoExcepcional: txt(monitor.status_override_motivo),
     dataExcepcional: txt(monitor.status_override_data),
     retomada: txt(monitor.status_override_previsao_retomada),
+    validade: validadeDoBanco(monitor),
   };
 }
 
@@ -269,6 +287,8 @@ export function ModalDoEdital({
         chegou({
           ...CRONOGRAMA_VAZIO,
           erroDeCarga: (erro as Error | null)?.message || String(erro),
+          // Sem a leitura, nada de "0 anos" por cima do que está gravado.
+          validade: { ...VALIDADE_NAO_LIDA },
         });
       });
     return () => {
@@ -357,6 +377,17 @@ export function ModalDoEdital({
     { exigirMotivo: editorMexido && Boolean(id) },
   );
   const automatico = cronograma.automatico;
+  const validade = cronograma.validade;
+  const errosDeValidade = errosDaValidade(validade);
+  const prazo = prazoDaValidade(validade, edital.data_fim, agora());
+
+  /* A validade não é o cronograma: mexer nela não pede o motivo das etapas antes da hora. */
+  function mudarValidade(mudancas: Partial<ValidadeDoFormulario>) {
+    setCronograma((atual) => ({
+      ...atual,
+      validade: { ...atual.validade, ...mudancas },
+    }));
+  }
 
   const mudar =
     (campo: keyof FormularioDoEdital) =>
@@ -462,6 +493,13 @@ export function ModalDoEdital({
   }
 
   async function salvar() {
+    const invalido = (["anos", "meses", "prorrogado"] as const).find(
+      (campo) => errosDeValidade[campo],
+    );
+    if (invalido) {
+      document.getElementById(ID_DA_VALIDADE[invalido])?.focus();
+      return;
+    }
     const salvou = await estado.salvarEdital({
       edital,
       etapas: cronograma.etapas,
@@ -827,6 +865,77 @@ export function ModalDoEdital({
               ))}
             </select>
           </Campo>
+
+          <div className="subsection">Validade do processo seletivo</div>
+          {!validade.lida && !cronograma.carregando ? (
+            <Aviso tom="warning" papel="status" className="ui-campo-largo">
+              <span id="mValidadeNaoLida">
+                A validade gravada não foi lida. Preencha só o que quiser mudar;
+                o campo vazio fica como está.
+              </span>
+            </Aviso>
+          ) : null}
+          <Campo rotulo="Anos de validade" erro={errosDeValidade.anos}>
+            <input
+              id={ID_DA_VALIDADE.anos}
+              type="number"
+              inputMode="numeric"
+              min="0"
+              max={ANOS_MAXIMOS}
+              step="1"
+              value={validade.anos}
+              onChange={(evento) =>
+                mudarValidade({ anos: evento.target.value })
+              }
+            />
+          </Campo>
+          <Campo rotulo="Meses de validade" erro={errosDeValidade.meses}>
+            <input
+              id={ID_DA_VALIDADE.meses}
+              type="number"
+              inputMode="numeric"
+              min="0"
+              max={MESES_MAXIMOS}
+              step="1"
+              value={validade.meses}
+              onChange={(evento) =>
+                mudarValidade({ meses: evento.target.value })
+              }
+            />
+          </Campo>
+          <Campo rotulo="Prorrogado" erro={errosDeValidade.prorrogado}>
+            <select
+              id={ID_DA_VALIDADE.prorrogado}
+              value={validade.prorrogado}
+              onChange={(evento) =>
+                mudarValidade({
+                  prorrogado: evento.target
+                    .value as ValidadeDoFormulario["prorrogado"],
+                })
+              }
+            >
+              {validade.lida ? null : <option value="">Não informado</option>}
+              <option value="nao">Não</option>
+              <option value="sim">Sim (prazo em dobro)</option>
+            </select>
+          </Campo>
+          <div className="ui-campo">
+            <span id="mValidadePrazoRotulo" className="edital-validade-rotulo">
+              Prazo calculado
+            </span>
+            <output
+              id="mValidadePrazo"
+              aria-labelledby="mValidadePrazoRotulo"
+              htmlFor={`${ID_DA_VALIDADE.anos} ${ID_DA_VALIDADE.meses} ${ID_DA_VALIDADE.prorrogado}`}
+              className={
+                prazo.tipo === "vencido"
+                  ? "edital-validade-prazo is-vencido"
+                  : "edital-validade-prazo"
+              }
+            >
+              {prazo.texto}
+            </output>
+          </div>
 
           <div className="subsection">Indicadores automáticos</div>
           <div className="readonly-metrics ui-campo-largo">

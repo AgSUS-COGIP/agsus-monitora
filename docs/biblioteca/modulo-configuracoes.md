@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-11
 ---
 
 # Módulo: Configurações
@@ -18,7 +18,9 @@ atualizações). Pasta `src/modulos/configuracoes/`; rota `config`, cada seção
   (seção com tela própria registrada como `secao:<id>`).
 - `estado.ts` — estado com a publicação versionada (barra fixa de publicar, com motivo e histórico em
   `TH_CONFIGURACAO`). Detalhe no topo de cada arquivo e em
-  [docs/arquitetura-react.md](../arquitetura-react.md).
+  [docs/arquitetura-react.md](../arquitetura-react.md). A barra, o Ctrl+S e o "Alterações não
+  salvas" só valem nas seções da moldura, que têm campos (`SECOES_COM_BARRA_DE_SALVAR`); as de tela
+  própria não mostram a barra.
 - Regras puras: `src/lib/publicacao-de-configuracoes.ts` (chaves de cada seção, comparação com o
   retrato do banco, validação de URL e domínio), `apresentacao-das-configuracoes.ts` (tom da faixa de
   aviso global e endereço de imagem aceito nas prévias), `marca-da-barra-lateral.ts` (logo e cor

@@ -11,6 +11,8 @@
 
 import { etapaComDatasValidas } from "./datas-do-cronograma.ts";
 import type { DatasDaEtapa } from "./datas-do-cronograma.ts";
+import { validadeParaSalvar } from "./validade-do-edital.ts";
+import type { ValidadeDoFormulario } from "./validade-do-edital.ts";
 import {
   AREA_SAUDE_INDIGENA,
   ehResponsavelCores,
@@ -108,6 +110,8 @@ export interface CronogramaParaSalvar {
   readonly motivoExcepcional?: unknown;
   readonly dataExcepcional?: unknown;
   readonly retomada?: unknown;
+  /** Validade do processo seletivo: as chaves vão só quando têm valor (validadeParaSalvar). */
+  readonly validade?: ValidadeDoFormulario | null;
 }
 
 /** Uma linha de `get_nucleo_cronograma_resumo`: um edital, o alerta e as etapas. */
@@ -571,6 +575,7 @@ export function editalParaSalvar(
     status_override_motivo: txt(cronograma.motivoExcepcional) || null,
     status_override_data: txt(cronograma.dataExcepcional) || null,
     status_override_previsao_retomada: txt(cronograma.retomada) || null,
+    ...validadeParaSalvar(cronograma.validade),
     ...(txt(area) ? { co_area: txt(area) } : {}),
   };
 }

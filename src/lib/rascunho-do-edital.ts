@@ -24,7 +24,8 @@ export type CampoDoCronogramaNoRascunho =
   | "dataExcepcional"
   | "retomada"
   | "motivo"
-  | "errata";
+  | "errata"
+  | "validade";
 
 export type CronogramaDoRascunho = Partial<
   Pick<CronogramaDoFormulario, CampoDoCronogramaNoRascunho>
@@ -68,6 +69,7 @@ const CAMPOS_DO_CRONOGRAMA: readonly CampoDoCronogramaNoRascunho[] =
     "retomada",
     "motivo",
     "errata",
+    "validade",
   ]);
 
 function armazenamentoPadrao(): ArmazenamentoDoRascunho | null {

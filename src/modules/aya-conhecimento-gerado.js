@@ -3346,6 +3346,24 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
+    titulo: "Resumo por cargo e status",
+    perguntas: [
+      "resumo por cargo",
+      "contagem por cargo e status",
+      "quantos contratados por cargo",
+      "cadastro de reserva por vaga",
+      "desistencia voluntaria tacita",
+      "resumo da lista de aprovados",
+    ],
+    resposta:
+      'A aba "Resumo por cargo" conta a lista vigente com os mesmos filtros da aba Aprovados: por edital, cargo, regime e jornada, uma linha por vaga e modalidade, com subtotal e total geral. Cada vínculo (a linha da lista: vaga e modalidade) cai numa coluna só, e as colunas fecham o total de Aprovados: Contratados (Contratado e Migração), Desistência voluntária e tácita (só quando o subtipo está registrado; hoje o sistema não registra, por isso aparecem "—"), Desistência sem subtipo, Cadastro de reserva (quem está na fila de convocação depois das vagas imediatas e ainda não foi chamado) e Outras situações (Convocado, A convocar, Documentação Rejeitada, Contratado em outra lista, Não classificado). Quem concorre à cota e à ampla tem duas linhas e conta nas duas em Aprovados; contratado por uma delas, a outra vai a Outras situações, sem contar dois contratados. Listas inativas ficam fora. O filtro Situação restringe a base. Clicar num número mostra quem está nele. "Exportar" baixa o resumo em XLSX, CSV ou PDF, sem nomes, com o registro da exportação. Regime e jornada vêm do nome do cargo (ex.: "… - Teletrabalho - 20h"); quando o nome não traz, a tela avisa.',
+    fato: "",
+    fonte:
+      "src/lib/resumo-por-cargo-e-status.ts; src/modulos/aprovados/aba-resumo.tsx; src/lib/exportacao-do-resumo-por-cargo.ts",
+    abrir: "approved",
+  },
+  {
+    arquivo: "regras-da-lista-de-aprovados.md",
     titulo: "A convocar na ordem de chamada",
     perguntas: [
       "a convocar",
@@ -5275,9 +5293,11 @@ export const VERBETES_AYA = Object.freeze([
       "etapa nao aparece no cronograma",
       "sumiu a etapa do cronograma",
       "cronograma vazio",
+      "edital suspenso no cronograma",
+      "edital suspenso sumiu do cronograma",
     ],
     resposta:
-      'O Cronograma só mostra etapas já salvas no cronograma de cada edital, em Editais, e só da área atual: edital sem cronograma não aparece. "Ocultar concluídas" começa ligada, então as etapas que já terminaram ficam escondidas até você desligá-la ou clicar em "Limpar tudo". Etapa com ano impossível sai de "Próximas etapas" e aparece na lista para correção. Confira também a busca, os filtros de unidade e edital e se o tipo está desligado na legenda (riscado).',
+      'O Cronograma só mostra etapas já salvas no cronograma de cada edital, em Editais, e só da área atual: edital sem cronograma não aparece, nem o edital suspenso (status excepcional "Suspenso" no formulário do edital), porque as datas dele não valem enquanto durar a suspensão; ao tirar o status excepcional, as etapas voltam. "Ocultar concluídas" começa ligada, então as etapas que já terminaram ficam escondidas até você desligá-la ou clicar em "Limpar tudo". Etapa com ano impossível sai de "Próximas etapas" e aparece na lista para correção. Confira também a busca, os filtros de unidade e edital e se o tipo está desligado na legenda (riscado).',
     fato: "",
     fonte:
       "src/modulos/cronograma/calendario-editais.tsx; src/lib/calendario-editais.ts; src/lib/datas-do-cronograma.ts",
@@ -5734,7 +5754,7 @@ export const VERBETES_AYA = Object.freeze([
       "cargas de dados",
     ],
     resposta:
-      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental é esperado a cada 20 minutos e fica "Atrasada" depois de 1 hora; a carga completa não tem prazo). Entrevistas e Seleção carregam pelo GitHub Actions só quando alguém clica em "Rodar agora": a agenda automática delas está desligada de propósito desde 16/10/2026, por isso aparecem como "desligada desde 16/10/2026" e nunca ficam "Atrasada". Quem marca os horários das cargas é o banco (Agenda dos robôs), não o GitHub. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". O prazo de cada tarefa do banco sai da própria agenda: o maior intervalo entre duas execuções mais uma folga. As que rodam a cada poucos minutos (como o pacote do painel de análises, a cada 5 minutos) atrasam depois de 15 minutos; as de hora em hora, depois de 2 horas; as diárias, depois de 26 horas; as mensais, depois de 32 dias. Quando a agenda tem uma noite sem carga, o prazo conta a noite (às 8h10, 13h10 e 18h10, o prazo é de 16 horas). As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. Se um horário mudar no banco, o Status das atualizações mostra o horário novo e ajusta o prazo sozinho. A triagem da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
+      'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental roda a cada 20 minutos, mas, com a planilha sem mudança, só chama o banco a cada 6 horas; por isso fica "Atrasada" depois de 7 horas sem envio; a carga completa não tem prazo). Entrevistas e Seleção carregam pelo GitHub Actions só quando alguém clica em "Rodar agora": a agenda automática delas está desligada de propósito desde 16/10/2026, por isso aparecem como "desligada desde 16/10/2026" e nunca ficam "Atrasada". Quem marca os horários das cargas é o banco (Agenda dos robôs), não o GitHub. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". O prazo de cada tarefa do banco sai da própria agenda: o maior intervalo entre duas execuções mais uma folga. As que rodam a cada poucos minutos (como o pacote do painel de análises, a cada 5 minutos) atrasam depois de 15 minutos; as de hora em hora, depois de 2 horas; as diárias, depois de 26 horas; as mensais, depois de 32 dias. Quando a agenda tem uma noite sem carga, o prazo conta a noite (às 8h10, 13h10 e 18h10, o prazo é de 16 horas). As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. Se um horário mudar no banco, o Status das atualizações mostra o horário novo e ajusta o prazo sozinho. A triagem da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
     fato: "",
     fonte:
       "src/lib/saude-das-cargas.ts; src/lib/agenda-do-cron.ts; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; docs/agenda-dos-robos.md",
@@ -6312,6 +6332,26 @@ export const VERBETES_AYA = Object.freeze([
       "No formulário do edital, Inscritos, Aptos análise, Cancelados, Eliminados nota, Reprovados análise, Total eliminados, Aprovados análise, Aprovados prova, Entrevistados, Contratados e Vagas ociosas aparecem só para conferência: vêm das cargas do sistema e não se editam ali. A UF é preenchida pela unidade escolhida, e unidade nova digitada fica registrada na área do edital ao salvar.",
     fato: "",
     fonte: "src/modulos/editais/modal-do-edital.tsx",
+  },
+  {
+    arquivo: "regras-dos-editais.md",
+    titulo: "Validade do processo seletivo",
+    perguntas: [
+      "validade do processo seletivo",
+      "validade do edital",
+      "prazo de validade",
+      "edital prorrogado",
+      "prorrogacao do edital",
+      "quando a lista de aprovados vence",
+      "lista vencida",
+      "lista de aprovados inativa sozinha",
+    ],
+    resposta:
+      'No formulário do edital, em "Validade do processo seletivo", informe os anos (0 a 10), os meses (0 a 11) e se o prazo foi prorrogado. O prazo conta da data de encerramento do edital: o último dia de validade é essa data mais os anos e meses, em dobro quando prorrogado (quando o mês de chegada não tem o dia, vale o último dia dele: 31/01 mais um mês dá 28/02 ou 29/02). Com 0 anos e 0 meses a lista não vence. O formulário mostra o prazo calculado. Passado o último dia (no horário de Brasília), a lista de aprovados vigente do edital fica inativa: na hora, ao salvar o edital, e todo dia logo depois da meia-noite. Para reativá-la, prorrogue o edital ou aumente o prazo.',
+    fato: "",
+    fonte:
+      "src/lib/validade-do-edital.ts; src/modulos/editais/modal-do-edital.tsx",
+    abrir: "nucleo",
   },
   {
     arquivo: "regras-dos-editais.md",

@@ -76,7 +76,14 @@ import { roboDeCarga } from "./robos-de-carga.ts";
 */
 
 const MINUTO = 60 * 1000;
-export const PRAZO_ANALISES_MIN = 60;
+/*
+  Incremental das análises: o gatilho roda a cada 20 min, mas com a planilha
+  igual ao último envio confirmado o Apps Script não chama o banco por até 6 h
+  (MAX_SEM_ENVIO_MS no 3-analises-incremental.gs de cada área). Sem chamada,
+  não há execução registrada: com prazo de 1 h, planilha parada aparecia
+  "Atrasada" entre 1 h e 6 h. Prazo = 6 h + um intervalo do gatilho + folga.
+*/
+export const PRAZO_ANALISES_MIN = 7 * 60;
 export const PRAZO_DIARIO_MIN = 26 * 60;
 export const PRAZO_FREQUENTE_MIN = 15;
 export const PRAZO_MENSAL_MIN = 32 * 24 * 60;
@@ -514,7 +521,9 @@ export function normalizarSaude(
         id: `analises:${texto(o?.origem)}`,
         nome: `${area} · ${incremental ? "incremental" : "carga completa"}`,
         onde: "Apps Script da planilha de análises",
-        esperado: incremental ? "a cada 20 min" : "quando alguém pede",
+        esperado: incremental
+          ? "a cada 20 min (sem mudança na planilha, até 6 h)"
+          : "quando alguém pede",
         prazoMin: incremental ? PRAZO_ANALISES_MIN : null,
         tipo: "analise",
         execucoes: o?.execucoes,

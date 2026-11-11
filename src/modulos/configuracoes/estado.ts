@@ -34,6 +34,7 @@ import type {
 import type { ConfiguracaoCarregada } from "../../lib/publicacao-de-configuracoes.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import type {
+  IdDaSecaoDeConfiguracao,
   ModalDasConfiguracoes,
   OpcoesDoEstadoDasConfiguracoes,
   RascunhoDosPaineis,
@@ -47,11 +48,28 @@ const RPC_HISTORY = "get_configuracoes_historico";
 const RPC_RESTORE = "restaurar_configuracoes_versao";
 const TEMPO_LIMITE_MS = 30000;
 
-/* Seções que salvam pela própria tela React, com motivo: sem barra de salvar. */
-export const SECOES_COM_SALVAR_PROPRIO: readonly string[] = Object.freeze([
-  "acessos",
-  "modulos",
-]);
+/*
+  Seções com campos que publicam pela barra fixa ("Salvar alterações", o
+  Ctrl+S e o "Alterações não salvas" do cabeçalho): as da moldura. As outras
+  não têm campo da barra: Acessos e Módulos e abas salvam pela própria tela,
+  com motivo; Status das atualizações e Automação acompanham e agem pelos
+  próprios botões. Era uma lista ao contrário (só Acessos e Módulos ficavam
+  sem a barra) e a barra aparecia, sem nada a salvar, em Status das
+  atualizações e em Automação (11/11/2026).
+*/
+export const SECOES_COM_BARRA_DE_SALVAR: readonly IdDaSecaoDeConfiguracao[] =
+  Object.freeze([
+    "marca",
+    "inicio",
+    "acesso",
+    "aparencia",
+    "recursos",
+    "comemoracoes",
+    "operacao",
+  ]);
+
+export const temBarraDeSalvar = (secao: string): boolean =>
+  (SECOES_COM_BARRA_DE_SALVAR as readonly string[]).includes(secao);
 
 const txt = (valor: unknown): string => String(valor ?? "").trim();
 
@@ -492,7 +510,7 @@ export function criarEstadoDasConfiguracoes({
         return;
       if (!pagina.isConnected || !pagina.classList.contains("active")) return;
       evento.preventDefault();
-      if (SECOES_COM_SALVAR_PROPRIO.includes(estado.secao)) return;
+      if (!temBarraDeSalvar(estado.secao)) return;
       if (temAlteracoes() && !estado.salvando && !estado.modal) void revisar();
     };
     const aoSairDaPagina = (evento: BeforeUnloadEvent) => {
