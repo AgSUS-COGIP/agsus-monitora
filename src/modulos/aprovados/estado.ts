@@ -112,6 +112,11 @@ import {
   type GerarPdf,
 } from "./exportacao/exportar.ts";
 import {
+  exportarResumoPorCargo,
+  type GerarPdfDoResumo,
+} from "./exportacao/exportar-resumo.ts";
+import type { ResumoPorCargoEStatus } from "../../lib/resumo-por-cargo-e-status.ts";
+import {
   argumentosDaConfiguracao,
   fixarIdsNovos,
   formatarTaxa,
@@ -269,7 +274,11 @@ export function criarEstadoDaListaDeAprovados({
   hoje = () => hojeEmBrasilia(),
   pendencias = () => null,
   gerarPdf,
-}: OpcoesDoEstadoDosAprovados & { gerarPdf?: GerarPdf } = {}) {
+  gerarPdfDoResumo,
+}: OpcoesDoEstadoDosAprovados & {
+  gerarPdf?: GerarPdf;
+  gerarPdfDoResumo?: GerarPdfDoResumo;
+} = {}) {
   let estado: SnapshotDosAprovados = ESTADO_INICIAL;
   let aberturas = 0;
   let mudancasLocais = 0;
@@ -351,6 +360,46 @@ export function criarEstadoDaListaDeAprovados({
             `Lista exportada em ${formato}: ${resultado.registros} ${resultado.registros === 1 ? "registro" : "registros"}.`,
             "success",
           );
+          return true;
+        } catch (erro) {
+          toast(mensagemDe(erro), "error");
+          return false;
+        }
+      },
+    );
+    return feito === true;
+  }
+
+  /*
+    Exportar o Resumo por cargo e status (aba Resumo): o mesmo registro no
+    banco, com p_conteudo 'RESUMO' (exportacao/exportar-resumo.ts).
+  */
+  async function exportarResumo(
+    pedido: PedidoDaExportacao,
+    resumo: ResumoPorCargoEStatus,
+    formato: FormatoDaExportacao,
+    seguir: () => boolean = () => true,
+  ): Promise<boolean> {
+    const feito = await executar(
+      "exportar",
+      `Gerando o ${formato}…`,
+      async () => {
+        try {
+          const resultado = await exportarResumoPorCargo(
+            pedido,
+            resumo,
+            formato,
+            {
+              supabase,
+              baixar,
+              carregarLogo,
+              cabecalho,
+              seguir,
+              ...(gerarPdfDoResumo ? { gerarPdf: gerarPdfDoResumo } : {}),
+            },
+          );
+          if (!resultado) return false;
+          toast(`Resumo exportado em ${formato}.`, "success");
           return true;
         } catch (erro) {
           toast(mensagemDe(erro), "error");
@@ -1937,5 +1986,6 @@ export function criarEstadoDaListaDeAprovados({
     /* Baixa um arquivo gerado na tela (o CSV da ordem de convocação). */
     baixarArquivo: (arquivo: Blob, nome: string) => baixar(arquivo, nome),
     exportarLista,
+    exportarResumo,
   };
 }
