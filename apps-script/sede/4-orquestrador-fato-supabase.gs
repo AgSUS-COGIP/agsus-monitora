@@ -121,6 +121,18 @@ function statusGatilhoFatoESupabase() {
  */
 function orquestrarFatoESupabaseAgendado() {
   INICIO_EXECUCAO_ORQ_MS_ = Date.now();
+  // [sem-permissao] 11/11/2026: o gatilho de uma conta que perdeu a autorizacao do script
+  // falhava na FATO depois de marcar o ciclo, e a janela de 20 min recomecava sem enviar
+  // nada (de 29/10 a 11/11 na Saude Indigena). Agora sai antes de tocar no estado.
+  if (!temAcessoAPlanilhaOrq_()) {
+    return logResultadoOrq_({
+      ok: false,
+      sem_permissao: true,
+      motivo: 'Este gatilho e de uma conta sem autorizacao para a planilha; nada foi feito. ' +
+        'Quem e dono do gatilho abre Extensoes > Apps Script e roda statusGatilhoFatoESupabase ' +
+        '(aceita as permissoes) ou apaga o gatilho em Acionadores.'
+    });
+  }
   const props = PropertiesService.getScriptProperties();
   let state = lerEstadoFatoSupabase_();
 
@@ -603,4 +615,17 @@ function processarLoteSincronizacaoAnalises(e) {
 function logResultadoOrq_(result) {
   Logger.log(JSON.stringify(result, null, 2));
   return result;
+}
+
+/**
+ * [sem-permissao] A conta que roda este gatilho consegue abrir a planilha? Sem a
+ * autorizacao do script, getActiveSpreadsheet lanca erro de permissao.
+ */
+function temAcessoAPlanilhaOrq_() {
+  try {
+    SpreadsheetApp.getActiveSpreadsheet();
+    return true;
+  } catch (err) {
+    return false;
+  }
 }
