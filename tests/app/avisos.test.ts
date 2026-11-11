@@ -176,7 +176,7 @@ describe("tela de carregamento (window.monitoraLoader)", () => {
     expect($("loader").className).toBe("loader show");
     expect($("loader").getAttribute("aria-hidden")).toBe("false");
     expect(document.body.getAttribute("aria-busy")).toBe("true");
-    expect($("loaderTitle").textContent).toBe("Preparando o AgSUS Monitora");
+    expect($("loaderTitle").textContent).toBe("Preparando o Yeendé");
     expect($("loaderPct").textContent).toBe("0%");
     expect($("loaderMeta").textContent).toBe("Etapa 1 de 5");
     expect($("loaderRetry").hidden).toBe(true);

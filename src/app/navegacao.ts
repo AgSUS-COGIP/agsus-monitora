@@ -214,7 +214,7 @@ const PAINEIS_VAZIOS: PaineisDoApp = Object.freeze({
 export const CHAVE_DA_ROTA_PEDIDA = "monitora:rota-pedida";
 
 export const TEXTO_ROTA_DESCONHECIDA =
-  "Este endereço não é uma tela do MONITORA. Abrimos a tela inicial.";
+  "Este endereço não é uma tela do Yeendé. Abrimos a tela inicial.";
 
 export const ESTADO_INICIAL_DA_NAVEGACAO: EstadoDaNavegacao = Object.freeze({
   view: "dashboard",

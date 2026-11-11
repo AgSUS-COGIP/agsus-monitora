@@ -65,13 +65,32 @@ function Traco({
   );
 }
 
-/** O gráfico ao lado de "MONITORA" no lockup. */
-export function IconeDoMonitora() {
+/*
+  O pássaro do Yeendé ao lado do nome no lockup (11/11/2026): asa amarela, asa
+  verde, corpo azul e sol vermelho, nas cores do manual da AgSUS (tokens
+  --marca-agsus-*, platform-shell.css). Yeendé é "pássaro" na língua Kariri.
+*/
+export function IconeDoYeende() {
   return (
-    <Traco className="login-product-icon" tamanho={30}>
-      <path d="M3 3v16a2 2 0 0 0 2 2h16" />
-      <path d="m19 9-5 5-4-4-3 3" />
-    </Traco>
+    <svg
+      className="login-product-icon marca-yeende"
+      viewBox="-30 -24 60 44"
+      width={30}
+      height={30}
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        className="marca-yeende__asa-esquerda"
+        d="M0 4 C-8 -8 -18 -12 -28 -8 C-20 -4 -12 2 -4 12 Z"
+      />
+      <path
+        className="marca-yeende__asa-direita"
+        d="M0 4 C8 -8 18 -12 28 -8 C20 -4 12 2 4 12 Z"
+      />
+      <path className="marca-yeende__corpo" d="M0 4 L4 12 L0 18 L-4 12 Z" />
+      <circle className="marca-yeende__sol" cx="0" cy="-17" r="5.5" />
+    </svg>
   );
 }
 

@@ -23,7 +23,7 @@ import {
 
 const PAGINAS = {
   "index.html":
-    '<!doctype html><title>MONITORA</title><script src="/assets/main-AbCd1234.js"></script>',
+    '<!doctype html><title>Yeendé</title><script src="/assets/main-AbCd1234.js"></script>',
   "auth/callback.html": "<!doctype html><title>Callback</title>",
 };
 
@@ -85,7 +85,7 @@ afterAll(async () => {
   rmSync(dist, { recursive: true, force: true });
 });
 
-describe("servidor web do MONITORA", () => {
+describe("servidor web do Yeendé", () => {
   it.each([
     ["/", "index.html"],
     ["/index.html", "index.html"],

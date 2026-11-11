@@ -278,7 +278,7 @@ export function PreviaDoAcesso({ estado }: { estado: EstadoDasConfiguracoes }) {
               reserva={<strong>AgSUS</strong>}
             />
             <span aria-hidden="true">|</span>
-            <strong>MONITORA</strong>
+            <strong>Yeendé</strong>
           </span>
           <small>Monitoramento de Processos Seletivos</small>
           <strong className="previa-acesso__saudacao">

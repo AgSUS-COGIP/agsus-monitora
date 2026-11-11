@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<
 
   componentDidCatch(erro: unknown, info: ErrorInfo) {
     console.error(
-      `[MONITORA] Erro ao desenhar ${this.props.nome || "o módulo"}:`,
+      `[Yeendé] Erro ao desenhar ${this.props.nome || "o módulo"}:`,
       erro,
       info?.componentStack || "",
     );

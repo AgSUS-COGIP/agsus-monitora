@@ -25,16 +25,16 @@ dos PDFs oficiais).
 ## Quais editais aparecem na Classificação
 
 **perguntas:** quais editais aparecem na classificacao | edital nao aparece na classificacao | por que o edital nao aparece na classificacao | seletor de editais da classificacao | editais sem analise na classificacao
-**resposta:** Sem edital escolhido, a Classificação mostra a busca e um card por edital da área (o número e a unidade, a versão da regra ou "Sem regra" e quantos candidatos); a busca recorta os cards pelo número ou pela unidade e clicar abre o edital, cujo nome fica no cabeçalho com "Trocar" para voltar aos cards. Aparecem só os editais da área que têm análise curricular ativa — feita no MONITORA ou trazida da planilha, porque a classificação lê os candidatos dessas análises — ou que já têm lista gerada. Edital sem nenhuma análise não aparece (não haveria quem classificar); ele entra sozinho quando as análises chegarem. A ordem: os ativos, fora do treinamento, em andamento antes dos concluídos e cancelados; edital de treinamento, quando houver, vem por último.
-**fato:** No MONITORA, os cards da Classificação mostram só os editais com análise curricular ativa (qualquer origem) ou com lista de classificação gerada.
+**resposta:** Sem edital escolhido, a Classificação mostra a busca e um card por edital da área (o número e a unidade, a versão da regra ou "Sem regra" e quantos candidatos); a busca recorta os cards pelo número ou pela unidade e clicar abre o edital, cujo nome fica no cabeçalho com "Trocar" para voltar aos cards. Aparecem só os editais da área que têm análise curricular ativa — feita no Yeendé ou trazida da planilha, porque a classificação lê os candidatos dessas análises — ou que já têm lista gerada. Edital sem nenhuma análise não aparece (não haveria quem classificar); ele entra sozinho quando as análises chegarem. A ordem: os ativos, fora do treinamento, em andamento antes dos concluídos e cancelados; edital de treinamento, quando houver, vem por último.
+**fato:** No Yeendé, os cards da Classificação mostram só os editais com análise curricular ativa (qualquer origem) ou com lista de classificação gerada.
 **fonte:** supabase/migrations/20261023120000_classificacao_so_editais_analisados.sql
 **abrir:** classificacao
 
 ## Regra de classificação do edital
 
 **perguntas:** regra de classificacao | como funciona a regra de classificacao | como funciona a regra de classificacao do edital | versao da regra | versoes da regra | regra do edital
-**resposta:** No MONITORA não há regra de classificação fixa: cada edital tem a sua, decidida pelo gestor do edital em Editais › Regras do edital, etapa Classificação (a aba Classificação › Regra mostra o resumo, com "Editar nas Regras do edital"). Ela define as etapas consideradas, a composição da nota (componentes, pesos, casas decimais e arredondamento), as notas mínimas e eliminatórias (documental, por nível da vaga, total da entrevista e por competência), os critérios de desempate e a ordem deles, o empate final, as modalidades, a convocação para entrevista e o rodapé das listas. Salvar sempre cria uma versão nova (da segunda em diante, com o motivo); as anteriores ficam no histórico e podem voltar ao formulário. Cada lista gerada guarda a versão usada.
-**fato:** No MONITORA, a regra de classificação é de cada edital, versionada: salvar cria versão nova e a lista gerada guarda a versão usada.
+**resposta:** No Yeendé não há regra de classificação fixa: cada edital tem a sua, decidida pelo gestor do edital em Editais › Regras do edital, etapa Classificação (a aba Classificação › Regra mostra o resumo, com "Editar nas Regras do edital"). Ela define as etapas consideradas, a composição da nota (componentes, pesos, casas decimais e arredondamento), as notas mínimas e eliminatórias (documental, por nível da vaga, total da entrevista e por competência), os critérios de desempate e a ordem deles, o empate final, as modalidades, a convocação para entrevista e o rodapé das listas. Salvar sempre cria uma versão nova (da segunda em diante, com o motivo); as anteriores ficam no histórico e podem voltar ao formulário. Cada lista gerada guarda a versão usada.
+**fato:** No Yeendé, a regra de classificação é de cada edital, versionada: salvar cria versão nova e a lista gerada guarda a versão usada.
 **fonte:** src/lib/classificacao/regra.ts; supabase/migrations/20261002150000_classificacao.sql
 **abrir:** classificacao
 
@@ -42,7 +42,7 @@ dos PDFs oficiais).
 
 **perguntas:** rascunho da regra de classificacao | perdi a regra de classificacao | rascunho guardado na classificacao | continuar de onde parei na classificacao | descartar rascunho da classificacao
 **resposta:** No editor da regra da Classificação (Editais › Regras do edital), o que você muda é guardado sozinho cerca de um segundo depois de cada mudança (por edital e por pessoa, só você vê): o indicador ao lado de "Salvar" diz "Rascunho guardado às 14:05" ou, sem internet, "Sem conexão — guardado neste computador". Ao abrir a regra de novo, mesmo em outro computador, aparece "Você tem um rascunho não salvo de…" com "Continuar de onde parei" ou "Descartar"; se outra pessoa salvou uma versão no meio, o aviso diz de qual versão o rascunho partiu. Salvar a versão nova ou descartar apaga o rascunho; com alteração por salvar, recarregar ou fechar a aba pede confirmação.
-**fato:** No MONITORA, o rascunho da regra de classificação é guardado em TB_RASCUNHO_REGRA (tipo CLASSIFICACAO), como o da regra da avaliação documental.
+**fato:** No Yeendé, o rascunho da regra de classificação é guardado em TB_RASCUNHO_REGRA (tipo CLASSIFICACAO), como o da regra da avaliação documental.
 **fonte:** src/app/rascunho-da-regra.ts; supabase/migrations/20261013120000_rascunho_das_regras.sql
 **abrir:** classificacao
 
@@ -65,7 +65,7 @@ dos PDFs oficiais).
 
 **perguntas:** empate final | como funciona o empate final | como funciona o empate final e o sorteio | sorteio do empate | semente do sorteio | decisao manual do empate
 **resposta:** Quando o empate continua depois de todos os critérios, vale o que o gestor escolheu na regra: sorteio registrado, ordem de inscrição (código menor primeiro), mesma posição (1º, 2º, 2º, 3º ou 1º, 2º, 2º, 4º) ou decisão manual com justificativa. No sorteio, a semente é gerada no servidor ou informada pelo gestor; a ordem é a crescente do SHA-256 de "semente:id da análise", e ficam gravados semente, ordem, quem e quando — qualquer pessoa com a semente refaz a conta. Refazer um sorteio exige justificativa e guarda o anterior. Enquanto um empate espera sorteio ou decisão, a lista mostra os empatados na mesma posição, o aviso pede o registro e a lista não pode ser marcada como publicada.
-**fato:** No MONITORA, o empate final é escolha do gestor do edital (sorteio registrado e reprodutível, ordem de inscrição, mesma posição ou decisão manual justificada).
+**fato:** No Yeendé, o empate final é escolha do gestor do edital (sorteio registrado e reprodutível, ordem de inscrição, mesma posição ou decisão manual justificada).
 **fonte:** src/lib/classificacao/sorteio.ts; supabase/migrations/20261002150000_classificacao.sql
 **abrir:** classificacao
 
@@ -131,7 +131,7 @@ dos PDFs oficiais).
 
 **perguntas:** documento oficial da classificacao | modelo do sei da classificacao | como fica o documento da lista | estrutura do documento da lista | padrao das publicacoes da agsus
 **resposta:** O documento segue o Comunicado Externo que a AgSUS publica no SEI (editais 83/2026 e 100/2026): "Brasília, na data da assinatura digital." à direita; o título em caixa alta (ex.: RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR, CONVOCAÇÃO PARA ENTREVISTA, RESULTADO FINAL - ETAPA DE ENTREVISTA, RESULTADO FINAL - PROCESSO SELETIVO); "1. DISPOSIÇÕES PRELIMINARES" com os itens 1.1, 1.2…; uma tabela por vaga, com o cabeçalho "VAGA código - cargo - lotação - unidade - N vagas (x AC + y Pretos e Pardos + CR)" ou "- Cadastro Reserva", todas as vagas, inclusive as vazias ("Não houve candidatos aptos."); e "2. DISPOSIÇÕES FINAIS". Colunas padrão, enxutas: avaliação documental — Classificação, Nome, (Modalidade) e Nota Final (as parciais da regra ficam disponíveis, desmarcadas, na aba Colunas); eliminados — Nome, Nota e Justificativa; convocação — uma tabela Nº, NOME, Vaga, (Modalidade), DATA e HORA, com data e hora da agenda das entrevistas salva (sem agenda, em branco para preencher no SEI); entrevista — Classificação, NOME, NOTA (empate na mesma posição); resultado final — CLASSIFICAÇÃO, NOME, NOTA FINAL, e no fim o rodapé da regra. Em cada tabela (geral ou de cota) em que houve empate de nota resolvido pelo desempate, vai logo abaixo dela a nota em itálico do desempate (o rodapé da regra, ex.: "*Os critérios de desempate foram considerados conforme item 10.1 do edital."). O timbrado, a assinatura eletrônica e o rodapé "título (nº SEI) SEI processo / pg. N" quem põe é o SEI.
-**fato:** No MONITORA, o documento da lista de classificação segue o Comunicado Externo publicado no SEI; timbrado, assinatura e rodapé ficam com o SEI.
+**fato:** No Yeendé, o documento da lista de classificação segue o Comunicado Externo publicado no SEI; timbrado, assinatura e rodapé ficam com o SEI.
 **fonte:** src/lib/classificacao/documento-sei.ts
 **abrir:** classificacao
 
@@ -153,7 +153,7 @@ dos PDFs oficiais).
 
 **perguntas:** nota de desempate | rodape da tabela da vaga | nota de desempate na tabela da cota | nota de desempate no fim da vaga | criterios de desempate foram considerados | asterisco abaixo da tabela | empate na pontuacao no documento do sei | item 10 do edital no documento | mudar o item do desempate | por que a vaga nao tem a nota de desempate
 **resposta:** Quando, numa tabela, dois candidatos com a mesma nota ficaram em posições diferentes — o empate foi resolvido pelos critérios de desempate da regra ou pelo empate final (sorteio, decisão, ordem de inscrição) —, o documento põe logo abaixo daquela tabela, em itálico e letra menor, a nota do desempate (ex.: "_Os critérios de desempate foram considerados conforme item 10.1 do edital."). Vale para cada tabela da vaga: a da classificação geral (ampla concorrência) e a de cada cota (PcD, Pretos e pardos, Indígenas, Quilombolas); a tabela sem empate fica sem a nota, e a vaga sem nenhum empate não leva nota nenhuma. Os candidatos desempatados não ganham asterisco na linha: o "_" fica só no começo da nota. Empate na mesma posição (como na lista do resultado da entrevista, quando a regra não usa os critérios ali) também não leva a nota. Vale em todas as listas por nota (avaliação documental, entrevista, resultado final e a lista provisória), na prévia, no "Baixar DOCX" e no "Copiar para o SEI"; não vale na convocação nem nos eliminados. O texto é um só por edital: em "Como fica no SEI" › Textos, campo "Nota de desempate (abaixo da tabela com empate)". O texto inicial é o rodapé da regra, quando ele já é a frase do desempate (ex.: "conforme item 10.1 do edital"); se o rodapé fala de outra coisa, é a frase padrão do item 10; regra sem rodapé (e sem texto escrito no campo) não leva a nota. Para trocar, escreva no campo e use "Salvar no edital"; "Restaurar o padrão" volta ao texto inicial. A frase do rodapé não se repete no fim do resultado final se já saiu abaixo das tabelas.
-**fato:** No MONITORA, a nota de desempate (o rodapé da regra, ex.: "*Os critérios de desempate foram considerados conforme item 10.1 do edital.") sai logo abaixo de cada tabela — geral ou de cota — com empate de nota resolvido; o texto se edita em Como fica no SEI › Textos.
+**fato:** No Yeendé, a nota de desempate (o rodapé da regra, ex.: "*Os critérios de desempate foram considerados conforme item 10.1 do edital.") sai logo abaixo de cada tabela — geral ou de cota — com empate de nota resolvido; o texto se edita em Como fica no SEI › Textos.
 **fonte:** src/lib/classificacao/documento-sei.ts; src/lib/classificacao/documento-docx.ts; src/modulos/classificacao/documento.tsx
 **abrir:** classificacao
 
@@ -168,7 +168,7 @@ dos PDFs oficiais).
 
 **perguntas:** colunas do documento do sei | escolher colunas da tabela | tirar coluna formacao academica | tirar cursos de aperfeicoamento | mostrar pontuacoes parciais no sei | mudar a ordem das colunas | personalizar colunas da classificacao | coluna situacao cadastro reserva
 **resposta:** Em "Como fica no SEI", a aba "Colunas" escolhe o que aparece na tabela de cada vaga e em que ordem. O padrão é enxuto: Classificação, Nome, Modalidade de Concorrência (só na tabela geral, quando há modalidades) e Nota Final; nos eliminados, Nome, Nota e Justificativa. Em "Outras colunas" ficam as que dá para incluir: as pontuações parciais da avaliação documental que a regra publica (Formação Acadêmica, Cursos de Aperfeiçoamento, Experiência Profissional, Pontuação Étnica) e, no resultado final, a Situação (dentro das vagas ou cadastro reserva). Marque ou desmarque; as setas ou arrastar mudam a ordem. Classificação e Nome (e a Justificativa dos eliminados) têm cadeado: são obrigatórias. A prévia, o "Baixar DOCX" e o "Copiar para o SEI" mudam na hora; "Salvar no edital" grava a escolha daquela publicação na regra do edital (nova versão) e "Restaurar o padrão", com a aba Colunas aberta, volta às colunas padrão. Na convocação para entrevista as colunas são fixas (Nº, NOME, Vaga, DATA e HORA). Não há coluna de inscrição, CPF ou nascimento: o documento é público e leva só o nome.
-**fato:** No MONITORA, as colunas das tabelas do documento do SEI são escolhidas por publicação na aba Colunas e gravadas na regra do edital.
+**fato:** No Yeendé, as colunas das tabelas do documento do SEI são escolhidas por publicação na aba Colunas e gravadas na regra do edital.
 **fonte:** src/modulos/classificacao/colunas-do-documento.tsx; src/lib/classificacao/colunas-do-documento.ts
 **abrir:** classificacao
 
@@ -190,7 +190,7 @@ dos PDFs oficiais).
 
 **perguntas:** de onde vieram as regras dos editais | modelo do edital | regra lida do edital | conferir a regra do edital
 **resposta:** As regras de todos os editais com PDF no site da AgSUS foram lidas dos editais e das retificações oficiais e cadastradas como versão 1, com o motivo "Regra lida do edital (PDF oficial) — conferir". A maioria segue um texto-base (modelo): Saúde Indígena 2026 no padrão do 83/2026, no padrão do 100/2026 (ART e lote) e o do Sanitarista; Saúde Indígena 2025 com entrevista e só curricular; Sede 2025 (entrevista só apto/inapto, barema, prova); e os de Projetos. Em cada regra, "importação" guarda o modelo, os PDFs lidos, a pontuação e o que ficou em aberto. O gestor confere e decide sobretudo o empate depois de todos os critérios (os editais não definem; ficou "mesma posição"). Editais com prova objetiva ainda não têm a prova na nota final.
-**fato:** No MONITORA, a regra inicial de cada edital foi lida do PDF oficial e marcada para o gestor conferir; o empate final ficou "mesma posição" até ele decidir.
+**fato:** No Yeendé, a regra inicial de cada edital foi lida do PDF oficial e marcada para o gestor conferir; o empate final ficou "mesma posição" até ele decidir.
 **fonte:** supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql
 **abrir:** classificacao
 
@@ -218,15 +218,15 @@ dos PDFs oficiais).
 ## Nota alterada pelo recurso
 
 **perguntas:** nota alterada pelo recurso | recurso mudou a nota na classificacao | ajuste aprovado na classificacao | ha recursos aprovados depois desta lista | gere de novo a lista | lista desatualizada
-**resposta:** No MONITORA, a Classificação aplica os ajustes da pontuação aprovados em recurso por cima da nota da análise (a planilha não muda): o valor novo de cada componente substitui o da análise e o candidato aparece com o selo "Recurso nº X" na tabela; a explicação da posição diz o que mudou ("Nota alterada pelo recurso nº X: …") e o retrato da lista gerada guarda o número do recurso. Se a análise mudar depois do ajuste, a tela avisa e vale o ajuste. Quando há ajuste aprovado (ou cancelado depois de aprovado) depois da última lista gerada, a tela avisa "Há recursos aprovados depois desta lista — gere de novo". O documento do SEI segue o modelo das publicações, sem marca.
+**resposta:** No Yeendé, a Classificação aplica os ajustes da pontuação aprovados em recurso por cima da nota da análise (a planilha não muda): o valor novo de cada componente substitui o da análise e o candidato aparece com o selo "Recurso nº X" na tabela; a explicação da posição diz o que mudou ("Nota alterada pelo recurso nº X: …") e o retrato da lista gerada guarda o número do recurso. Se a análise mudar depois do ajuste, a tela avisa e vale o ajuste. Quando há ajuste aprovado (ou cancelado depois de aprovado) depois da última lista gerada, a tela avisa "Há recursos aprovados depois desta lista — gere de novo". O documento do SEI segue o modelo das publicações, sem marca.
 **fonte:** src/lib/classificacao/motor.ts (aplicarAjustes); src/lib/classificacao/ajustes.ts; src/modulos/classificacao/listas.tsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql
 **abrir:** classificacao
 
 ## Publicar como lista de aprovados
 
 **perguntas:** botao publicar como lista de aprovados na classificacao | resultado final vira lista de aprovados | classificacao e lista de aprovados | a classificacao alimenta a lista de aprovados
-**resposta:** No MONITORA, o resultado final da Classificação é a fonte da Lista de aprovados. Em "Resultado final", o Editor de Classificação gera a lista e clica em "Publicar como lista de aprovados": a confirmação mostra, em relação à lista de aprovados vigente, quantos entram, saem e mudam de posição e o que é preservado (status, matrícula, sub judice, anexos); quem não foi reconhecido aparece para revisão. A lista nova entra em vigor com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) de cada candidato; a anterior fica no histórico. "Marcar como publicada" continua sendo só o registro da publicação no SEI.
-**fato:** No MONITORA, o resultado final da Classificação vira a lista de aprovados pelo botão "Publicar como lista de aprovados".
+**resposta:** No Yeendé, o resultado final da Classificação é a fonte da Lista de aprovados. Em "Resultado final", o Editor de Classificação gera a lista e clica em "Publicar como lista de aprovados": a confirmação mostra, em relação à lista de aprovados vigente, quantos entram, saem e mudam de posição e o que é preservado (status, matrícula, sub judice, anexos); quem não foi reconhecido aparece para revisão. A lista nova entra em vigor com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) de cada candidato; a anterior fica no histórico. "Marcar como publicada" continua sendo só o registro da publicação no SEI.
+**fato:** No Yeendé, o resultado final da Classificação vira a lista de aprovados pelo botão "Publicar como lista de aprovados".
 **fonte:** src/modulos/classificacao/publicar-aprovados.tsx; src/lib/publicacao-de-aprovados.ts; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql
 **abrir:** classificacao
 
@@ -247,7 +247,7 @@ dos PDFs oficiais).
 ## Nota da ART e lote de convocação
 
 **perguntas:** o que e art | nota da art | autodeclaracao de requisitos e titulos | lote | triado
-**resposta:** ART é a nota da Autodeclaração de Requisitos e Títulos, a nota do questionário da Empregare. Na Classificação ela pode entrar como componente da nota final ("Nota da autodeclaração (ART)") quando a regra do edital usar, e o recurso deferido pode ajustá-la. A lista provisória do ranqueamento pela ART e a linha de corte (o lote de convocação para a avaliação documental) ainda não são geradas pelo MONITORA: a classificação começa na avaliação documental dos candidatos do lote (situação Triado ou Aprovado na análise).
+**resposta:** ART é a nota da Autodeclaração de Requisitos e Títulos, a nota do questionário da Empregare. Na Classificação ela pode entrar como componente da nota final ("Nota da autodeclaração (ART)") quando a regra do edital usar, e o recurso deferido pode ajustá-la. A lista provisória do ranqueamento pela ART e a linha de corte (o lote de convocação para a avaliação documental) ainda não são geradas pelo Yeendé: a classificação começa na avaliação documental dos candidatos do lote (situação Triado ou Aprovado na análise).
 **fonte:** src/lib/classificacao/catalogo.ts (COMPONENTES_DA_NOTA); supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql (importacao.em_aberto)
 **abrir:** classificacao
 
@@ -255,7 +255,7 @@ dos PDFs oficiais).
 
 **perguntas:** nome da versao da classificacao | nome da regra de classificacao | renomear a regra de classificacao | trocar o nome da versao da classificacao | regra v2 da classificacao | nome desta versao classificacao
 **resposta:** A regra de classificação também pode ter um nome por versão (3 a 80 caracteres). Ao salvar na aba Regra da Classificação, o campo "Nome desta versão" vem com a sugestão — "Classificação do edital 93/2026" mais o começo do motivo — editável (vazio grava sem nome). O seletor de editais, a barra do topo, a lista de versões e a linha da lista gerada mostram o nome em destaque e o número discreto ("Decisão CORES · v3"); sem nome, "Versão 3". "Renomear", em cada versão, troca só o nome, com motivo de 10 a 500 caracteres; a configuração não muda e a troca fica no histórico. Renomeia quem tem Editor na Classificação (e o administrador global).
-**fato:** No MONITORA, a versão da regra de classificação tem nome opcional, trocável com motivo sem mudar a configuração.
+**fato:** No Yeendé, a versão da regra de classificação tem nome opcional, trocável com motivo sem mudar a configuração.
 **fonte:** src/lib/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_classificacao, renomear_versao_regra_classificacao)
 **abrir:** classificacao
 

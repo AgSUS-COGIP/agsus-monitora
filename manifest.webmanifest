@@ -1,7 +1,7 @@
 {
-  "name": "MONITORA",
-  "short_name": "MONITORA",
-  "description": "Painel de monitoramento e análises da AgSUS.",
+  "name": "Yeendé",
+  "short_name": "Yeendé",
+  "description": "Yeendé: acompanhamento dos processos seletivos da AgSUS.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

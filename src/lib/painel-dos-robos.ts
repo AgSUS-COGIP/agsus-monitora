@@ -98,7 +98,7 @@ const QUEM_DO_DISPARO: Readonly<Record<string, string>> = Object.freeze({
   AGENDA: "Agenda",
   GITHUB: "GitHub",
   ROBO: "Depois do robô",
-  MONITORA: "MONITORA",
+  MONITORA: "Yeendé",
 });
 
 /* Situações gravadas pelos robôs → rótulo e tom (os selos da tela). */

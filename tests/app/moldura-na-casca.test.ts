@@ -204,7 +204,7 @@ describe("a moldura na casca", () => {
       act(() => moldura.exportarPdf());
       const cabecalho = achar("#printReportHeader");
       expect(cabecalho.className).toBe("print-only");
-      expect(cabecalho.textContent).toContain("AgSUS Monitora — SEDE");
+      expect(cabecalho.textContent).toContain("Yeendé — SEDE");
       expect(cabecalho.textContent).toContain(
         "Relatório de processos seletivos",
       );

@@ -118,7 +118,7 @@ function linhasDoCorpo({
   contexto: readonly string[];
 }): string[] {
   return [
-    "Chamado aberto pela Aya, assistente do MONITORA.",
+    "Chamado aberto pela Aya, assistente do Yeendé.",
     "",
     `Pergunta: ${pergunta || "(sem pergunta)"}`,
     "",
@@ -172,8 +172,8 @@ export function montarChamado({
   limite = LIMITE_DO_CORPO,
 }: DadosDoChamado = {}): ChamadoDaAya {
   const para = emailDoSuporte(email);
-  const nomeDaPagina = txt(pagina) || "MONITORA";
-  const assunto = ["MONITORA", "Chamado", nomeDaPagina, txt(area)]
+  const nomeDaPagina = txt(pagina) || "Yeendé";
+  const assunto = ["Yeendé", "Chamado", nomeDaPagina, txt(area)]
     .filter(Boolean)
     .join(" · ");
   const contexto = [

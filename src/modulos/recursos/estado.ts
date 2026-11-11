@@ -76,7 +76,7 @@ import {
 import { dadosDoModelo } from "../../lib/modelos-de-resposta.ts";
 
 export const MENSAGEM_SEM_SESSAO =
-  "Sessão não localizada. Entre de novo no MONITORA.";
+  "Sessão não localizada. Entre de novo no Yeendé.";
 
 const ESTADO_INICIAL: Readonly<SnapshotDosRecursos> = Object.freeze({
   area: "",

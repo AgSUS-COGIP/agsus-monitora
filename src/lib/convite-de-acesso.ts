@@ -14,7 +14,7 @@ import type {
   UsuarioDaMatriz,
 } from "./tipos-dos-acessos.ts";
 
-export const ASSUNTO_DO_CONVITE = "Convite para o MONITORA";
+export const ASSUNTO_DO_CONVITE = "Convite para o Yeendé";
 
 const FORMATO_DA_DATA = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
@@ -86,7 +86,7 @@ export function mensagemDoConvite({
 }: DadosDoConvite): string {
   const endereco = String(origem || "").replace(/\/+$/, "");
   return [
-    `${saudacao(nome)} Você foi convidado(a) para o MONITORA (AgSUS).`,
+    `${saudacao(nome)} Você foi convidado(a) para o Yeendé (AgSUS).`,
     `Acesse ${endereco} e entre com sua conta Google ${String(email || "").trim()}.`,
   ].join(" ");
 }

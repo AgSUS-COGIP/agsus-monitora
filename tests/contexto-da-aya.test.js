@@ -46,7 +46,7 @@ describe("contexto da tela para a Aya", () => {
 
   it("responde a própria identidade sem depender do Ollama", () => {
     expect(contextualAyaAnswer("qual é seu nome?", {})).toBe(
-      "Eu sou a Aya, assistente do MONITORA da AgSUS.",
+      "Eu sou a Aya, assistente do Yeendé da AgSUS.",
     );
     expect(contextualAyaAnswer("Quem é você?", {})).toContain("Aya");
   });

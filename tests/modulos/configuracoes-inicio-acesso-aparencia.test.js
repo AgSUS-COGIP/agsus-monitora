@@ -220,10 +220,8 @@ describe("o estado não depende mais do DOM legado", () => {
       kpi_inscritos_label: "Rótulo do KPI inscritos",
       broadcast_type: "Tipo do aviso global",
       broadcast_msg: "Mensagem do aviso global",
-      ui_sidebar_logo_url:
-        "Logo independente da barra lateral do AgSUS Monitora",
-      ui_sidebar_background_color:
-        "Cor de fundo da barra lateral do AgSUS Monitora",
+      ui_sidebar_logo_url: "Logo independente da barra lateral do Yeendé",
+      ui_sidebar_background_color: "Cor de fundo da barra lateral do Yeendé",
     };
     for (const [chave, descricao] of Object.entries(ESPERADO))
       expect(linhas.get(chave)?.descricao, chave).toBe(descricao);

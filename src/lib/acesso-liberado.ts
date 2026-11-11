@@ -139,7 +139,7 @@ export function mensagemDaComemoracao(
   const vocativo = primeiro ? `, ${primeiro}` : "";
   return tipo === "reativado"
     ? `Que bom ter você de volta${vocativo}! Seu acesso foi reativado.`
-    : `Boas-vindas${vocativo}! Seu acesso ao MONITORA foi liberado.`;
+    : `Boas-vindas${vocativo}! Seu acesso ao Yeendé foi liberado.`;
 }
 
 /*

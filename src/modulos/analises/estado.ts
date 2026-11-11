@@ -55,7 +55,7 @@ import { criarConsultasDasAnalises } from "./consultas.ts";
 import { avaliarMarcosDasAnalises } from "./marcos.ts";
 
 export const MENSAGEM_SEM_SESSAO =
-  "Sessão não localizada. Entre de novo no MONITORA.";
+  "Sessão não localizada. Entre de novo no Yeendé.";
 export const MENSAGEM_SEM_ACESSO = "Sem acesso ao Painel das análises.";
 
 /* Reabrir a tela na mesma área depois disto relê por trás. */

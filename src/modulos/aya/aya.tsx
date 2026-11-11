@@ -240,7 +240,7 @@ const MARGEM = 8;
 const ROTULO_DA_ORIGEM: Readonly<Record<string, string>> = Object.freeze({
   "curated-official": "Fonte oficial",
   "monitora-local-context": "Dados desta tela",
-  "base-monitora": "Base do MONITORA",
+  "base-monitora": "Base do Yeendé",
   "monitora-dados": "Dados ao vivo",
   "monitora-perfil": "Seu acesso",
 });
@@ -1306,7 +1306,7 @@ export function Aya({
           className="aya-arara"
           style={estiloDaArara}
           data-borda={borda || undefined}
-          aria-label="Abrir a Aya, assistente do MONITORA"
+          aria-label="Abrir a Aya, assistente do Yeendé"
           aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown"
           title={
             borda
@@ -1379,7 +1379,7 @@ export function Aya({
         >
           <header className="aya-painel__cabecalho">
             <h2 id={idDoTitulo} className="aya-visualmente-oculto">
-              Aya, assistente do MONITORA
+              Aya, assistente do Yeendé
             </h2>
             <div className="aya-apresentacao">
               <span className="aya-avatar aya-figura">

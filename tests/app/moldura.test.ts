@@ -186,9 +186,9 @@ describe("relatório em PDF", () => {
   });
 
   it.each([
-    ["saude-indigena", "AgSUS Monitora — Saúde Indígena"],
-    ["sede", "AgSUS Monitora — SEDE"],
-    ["projetos", "AgSUS Monitora — Projetos"],
+    ["saude-indigena", "Yeendé — Saúde Indígena"],
+    ["sede", "Yeendé — SEDE"],
+    ["projetos", "Yeendé — Projetos"],
   ])("o título do relatório é o da área aberta (%s)", (area, titulo) => {
     definirAreaAtual(area);
     const { moldura } = montar();

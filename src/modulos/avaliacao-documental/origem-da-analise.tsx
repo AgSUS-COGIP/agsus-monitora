@@ -15,7 +15,7 @@ export const ORIGENS_DA_ANALISE: Readonly<Record<string, string>> =
   Object.freeze({
     PLANILHA: "Planilha",
     COMPARACAO: "Comparação",
-    MONITORA: "MONITORA",
+    MONITORA: "Yeendé",
   });
 
 export type RespostaDaTroca = { ok: boolean; erro?: string };
@@ -26,7 +26,7 @@ export function destinoDaTroca(origem: string) {
 }
 
 const ROTULO_DO_BOTAO: Readonly<Record<string, string>> = Object.freeze({
-  MONITORA: "Analisar no MONITORA",
+  MONITORA: "Analisar no Yeendé",
   PLANILHA: "Voltar para a planilha",
 });
 

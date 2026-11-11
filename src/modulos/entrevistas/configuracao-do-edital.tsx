@@ -191,7 +191,7 @@ export function CamposDaBanca({
                     />
                   </Campo>
                   <Campo
-                    rotulo="Perfil no MONITORA (opcional)"
+                    rotulo="Perfil no Yeendé (opcional)"
                     erro={erros[`${p}.perfil`]}
                     dica={
                       a.perfil && a.perfil === meuPerfil

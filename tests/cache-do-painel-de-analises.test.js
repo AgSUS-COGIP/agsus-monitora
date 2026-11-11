@@ -260,7 +260,7 @@ describe("armazenamento no IndexedDB", () => {
     globalThis.indexedDB = original;
   });
 
-  it("o painel guarda e lê pelo IndexedDB; o MONITORA apaga o banco inteiro", async () => {
+  it("o painel guarda e lê pelo IndexedDB; o Yeendé apaga o banco inteiro", async () => {
     const falso = indexedDBFalso();
     globalThis.indexedDB = falso;
     const cache = criarCacheDoPainel({

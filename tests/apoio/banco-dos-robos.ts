@@ -284,8 +284,8 @@ create table public."TL_DISPARO_ROBO" (
     'sincronizar-entrevistas.yml', 'sincronizar-selecao.yml', 'conferencias.yml', 'expurgo-anexos-chat.yml',
     'robo-empregare.yml', 'pre-classificacao.yml', 'leitura-de-arquivos.yml', 'classificacao.yml',
     'contratacao-dos-aprovados.yml', 'pacotes-dos-paineis.yml', 'casamento-da-lista.yml'])),
-  constraint "CK_DISPROBO_TPORIGEM" check ("TP_ORIGEM" in ('AGENDA', 'MONITORA', 'MANUAL', 'GITHUB')),
-  constraint "CK_DISPROBO_USUARIO" check (("TP_ORIGEM" = 'MONITORA') = ("CO_USUARIO" is not null)),
+  constraint "CK_DISPROBO_TPORIGEM" check ("TP_ORIGEM" in ('AGENDA', 'Yeendé', 'MANUAL', 'GITHUB')),
+  constraint "CK_DISPROBO_USUARIO" check (("TP_ORIGEM" = 'Yeendé') = ("CO_USUARIO" is not null)),
   constraint "CK_DISPROBO_TPSITUACAO" check ("TP_SITUACAO" in ('PEDIDO', 'ACEITO', 'FALHOU', 'SEM_TOKEN', 'INICIADO')),
   constraint "CK_DISPROBO_PEDIDO" check (
     ("TP_SITUACAO" in ('SEM_TOKEN', 'INICIADO') and "CO_PEDIDO_HTTP" is null)
