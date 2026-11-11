@@ -193,7 +193,7 @@
   gap: var(--space-3);
   padding: var(--space-4) var(--space-3) var(--space-3) var(--space-4);
   border-bottom: 1px solid var(--border-subtle);
-  /* Tom chapado da marca (o DESIGN.md não usa gradiente). */
+  /* Tom chapado da marca (o Design System não usa gradiente). */
   background: color-mix(in srgb, var(--brand-accent) 6%, var(--surface-card));
 }
 

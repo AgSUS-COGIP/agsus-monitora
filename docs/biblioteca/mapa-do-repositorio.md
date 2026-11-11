@@ -15,7 +15,6 @@ cada pasta com regra própria tem um `CLAUDE.md` curto.
 index.html              entrada principal: <head>, tela de acesso, skeleton (a casca do app é src/app/casca/)
 analises.html           entrada do painel de análises
 auth/callback.html      callback OAuth (JS em src/auth/callback.ts)
-DESIGN.md               guia de interface: tokens, componentes, contraste, plano de migração
 api/                    funções serverless da Vercel (proxy FUNAI, anexos do edital, API para outro sistema)
 src/app/                raiz React única (raiz.tsx), rotas (telas.tsx), navegação, sessão, carga, casca
 src/ui/                 design system: Topo, Filtros, Kpi, Gráfico, Tabela, Gaveta, Modal… (ui.css)

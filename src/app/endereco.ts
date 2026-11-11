@@ -15,7 +15,7 @@
 
   Por que não o React Router: o app só precisa disto, e a entrada do app
   (o JavaScript antes da tela de acesso) já está perto do orçamento
-  (scripts/check-bundle-size.mjs). Ver docs/arquitetura/raiz-react.md.
+  (scripts/check-bundle-size.mjs). Ver docs/arquitetura-react.md ("Rotas e navegação").
 */
 
 export interface LocalDoEndereco {

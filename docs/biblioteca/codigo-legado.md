@@ -22,8 +22,8 @@ das dúvidas".
   Grupos: `aya-*` (assistente) · `map-*`, `health-*`, `indigenous-*` (mapa e Saúde Indígena) ·
   `icones.ts` (registro único de ícones Lucide, usado também pelo React; [[icones]]).
 - Regras de quem ainda mexe ali: sem `innerHTML` cru (`src/lib/sanitize.ts`); nenhum
-  `MutationObserver` novo; dados só por RPC; marcação nova segue os componentes do `DESIGN.md`
-  (seção 4: `.btn`, `.card`, `.table-card`, `.modal`) em vez de inventar classe; teste em `tests/`
+  `MutationObserver` novo; dados só por RPC; marcação nova segue os componentes do Design System
+  (seção 11: `.btn`, `.card`, `.table-card`, `.modal`) em vez de inventar classe; teste em `tests/`
   ou `tests/modules/`.
 - O legado fica onde está (`src/modules/`): não se move para outra pasta aos poucos, porque mover
   arquivo gera conflito com quem trabalha em paralelo. Uma pasta própria para ele só nasce numa

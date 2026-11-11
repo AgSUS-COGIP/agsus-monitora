@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { classes } from "./classes.ts";
 
 /*
-  Indicador em card compacto (~78px; DESIGN.md, "Indicador"): o ícone num tile
+  Indicador em card compacto (~78px; exceção aceita ao Design System 11.7, docs/biblioteca/design-e-tokens.md): o ícone num tile
   na cor do estado, o rótulo e o número já formatado. Com `aoClicar`, o card
   vira botão — filtro (`ativo` liga `aria-pressed`) ou atalho. `carregando`:
   o número vira skeleton (carregando não é zero). O rótulo para em duas

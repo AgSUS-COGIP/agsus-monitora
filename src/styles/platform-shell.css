@@ -80,9 +80,26 @@
     filter: blur(28px);
     transform: scale(1.08);
   }
+  /*
+    A borda esquerda da arte nítida se dissolve no fundo desfocado, em vez de
+    terminar seca numa emenda vertical (11/11/2026). A arte é 16:9 e ocupa a
+    altura toda: a borda dela fica em 100% - 100vh × 16/9 da largura; a
+    transição leva 14vh dali para a direita.
+  */
   .login-screen::after {
     background-size: contain;
     background-position: right center;
+    --borda-da-arte: calc(100% - 100vh * 16 / 9);
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent var(--borda-da-arte),
+      black calc(var(--borda-da-arte) + 14vh)
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent var(--borda-da-arte),
+      black calc(var(--borda-da-arte) + 14vh)
+    );
   }
 }
 .login-outer {
@@ -176,7 +193,7 @@
 /*
   Tipografia e respiros da tela de acesso do SIGAV: saudação, a linha de
   apoio logo abaixo e o botão. Alturas de linha explícitas, para a troca da
-  fonte (Geist chega depois) não mudar a altura do cartão.
+  fonte (General Sans chega depois) não mudar a altura do cartão.
 */
 .login-card h1 {
   margin: 20px 0 0;

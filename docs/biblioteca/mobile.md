@@ -7,8 +7,7 @@ atualizado: 2026-11-10
 # Mobile e responsividade
 
 A interface funciona em desktop, notebook, tablet e celular. Não basta diminuir os componentes:
-reorganize a tela. Fonte: `DESIGN.md` (3.8) e [Design System AgSUS](../design-system-agsus.md),
-seção 16.
+reorganize a tela. Fonte: [Design System AgSUS](../design-system-agsus.md), seção 16.
 
 ## Breakpoints do MONITORA
 

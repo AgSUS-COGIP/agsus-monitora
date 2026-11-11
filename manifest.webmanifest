@@ -9,7 +9,7 @@
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "any",
   "background_color": "#f4f7fa",
-  "theme_color": "#003b70",
+  "theme_color": "#0055a1",
   "lang": "pt-BR",
   "categories": ["business", "productivity", "medical"],
   "icons": [

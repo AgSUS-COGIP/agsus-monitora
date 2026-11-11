@@ -492,7 +492,7 @@ export function CalendarioEditais({
             Hoje
           </button>
           <span id="calContador" className="cal-contador">
-            {/* Carregando não é zero (DESIGN.md, seção 4). */}
+            {/* Carregando não é zero (Design System, 12.2). */}
             {primeiraCarga ? (
               <span
                 className="ui-esqueleto ui-esqueleto-linha cal-contador-esqueleto"

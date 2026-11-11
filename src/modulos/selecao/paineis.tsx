@@ -273,8 +273,8 @@ const rotuloDeValor: Plugin<"bar"> = {
         if (x === null || y === null) return;
         ctx.save();
         ctx.fillStyle = cor || corDoToken("--text-primary", "#20324a");
-        // Nada abaixo de 12px (DESIGN.md, tipografia).
-        ctx.font = "600 12px Geist, system-ui, sans-serif";
+        // Nada abaixo de 12px (regras de ouro, docs/biblioteca/design-e-tokens.md).
+        ctx.font = "600 12px 'General Sans', system-ui, sans-serif";
         ctx.textAlign = deitado ? "left" : "center";
         ctx.textBaseline = deitado ? "middle" : "bottom";
         ctx.fillText(
@@ -302,12 +302,12 @@ const textoNoCentro: Plugin<"doughnut"> = {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = cfg.cor || corDoToken("--text-primary", "#20324a");
-    // Peso até 600 (DESIGN.md, tipografia); o tamanho já destaca o número.
-    ctx.font = "600 28px Geist, system-ui, sans-serif";
+    // Peso até 600 (regras de ouro, docs/biblioteca/design-e-tokens.md); o tamanho já destaca o número.
+    ctx.font = "600 28px 'General Sans', system-ui, sans-serif";
     ctx.fillText(cfg.principal || "", x, y - 8);
     ctx.fillStyle =
       cfg.corSecundaria || corDoToken("--text-secondary", "#526780");
-    ctx.font = "400 12px Geist, system-ui, sans-serif";
+    ctx.font = "400 12px 'General Sans', system-ui, sans-serif";
     ctx.fillText(cfg.secundario || "", x, y + 24);
     ctx.restore();
   },

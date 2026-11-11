@@ -7,7 +7,7 @@ atualizado: 2026-11-10
 # Acessibilidade
 
 Meta: **WCAG 2.2 nível AA** em todas as telas. A tabela completa está no
-[Design System AgSUS](../design-system-agsus.md), seção 17; as regras locais, no `DESIGN.md`.
+[Design System AgSUS](../design-system-agsus.md), seção 17; as regras locais, em [[design-e-tokens]].
 
 ## Regras
 

@@ -9,8 +9,7 @@ atualizado: 2026-11-10
 O front está migrando, tela por tela, para **um único app React** (Vite + React 19 + TypeScript,
 PWA, hospedado na Vercel), com rotas por área e um visual só (`src/ui/`). O alvo, as regras e a
 ordem completos estão em [docs/arquitetura-react.md](../arquitetura-react.md) (aprovado em
-01/10/2026) e a raiz única e as rotas em [docs/arquitetura/raiz-react.md](../arquitetura/raiz-react.md):
-leia antes de criar ou migrar tela.
+01/10/2026), com a raiz única e as rotas na seção "Rotas e navegação": leia antes de criar ou migrar tela.
 
 ## O sistema inteiro
 

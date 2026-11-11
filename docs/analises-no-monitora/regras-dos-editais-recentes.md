@@ -3,11 +3,12 @@
 Situação: levantamento de 06/10/2026, feito nos PDFs oficiais (públicos) de seis editais. Este
 documento compara as regras da **Análise Curricular / Avaliação Documental e de Títulos** com os
 três modelos da regra que já existem
-([`20261006-modelos-da-regra-da-analise.sql`](../../supabase/correcoes/20261006-modelos-da-regra-da-analise.sql)).
+(`supabase/correcoes/20261006-modelos-da-regra-da-analise.sql`, já aplicado e fora do repositório
+desde o commit `c330eb28`; está no histórico do git).
 Ele também diz que modelo usar em cada edital. Os modelos novos estão em
-[`20261006-modelos-dos-editais-recentes.sql`](../../supabase/correcoes/20261006-modelos-dos-editais-recentes.sql)
+[`20261006-modelos-dos-editais-recentes.sql`](../../tests/fixtures/sql-de-dados/20261006-modelos-dos-editais-recentes.sql)
 (Saúde Indígena; não depende da F3) e em
-[`20261006-modelo-proj26-rio-doce.sql`](../../supabase/correcoes/20261006-modelo-proj26-rio-doce.sql)
+[`20261006-modelo-proj26-rio-doce.sql`](../../tests/fixtures/sql-de-dados/20261006-modelo-proj26-rio-doce.sql)
 (114/2026; **aplicar depois da F3**). Os JSON e os casos dourados estão em
 `tests/fixtures/avaliacao-documental/` (`modelos/` e `casos-dos-modelos-recentes.json`).
 

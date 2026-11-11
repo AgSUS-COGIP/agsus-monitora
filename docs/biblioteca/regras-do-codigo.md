@@ -33,7 +33,7 @@ que quebram o build e o CI ([[scripts-e-checagens]]).
   nunca à mão ([[scripts-e-checagens]]).
 - **Link, caminho ou bucket de planilha só em `src/lib/planilhas.ts`**; o consumidor importa de lá
   (`tests/planilhas.test.js` falha se aparecer em outro arquivo). Ver [[planilhas]].
-- **CSS segue `DESIGN.md`**: token em vez de hex, sem `!important`/`#id` novos, sem arquivo
+- **CSS segue as regras de ouro** ([[design-e-tokens]]): token em vez de hex, sem `!important`/`#id` novos, sem arquivo
   `*-fix.css` novo ([[css]], [[design-e-tokens]]).
 - **Interface sem textos genéricos** ([[textos-da-interface]]).
 - Nomenclatura de banco no padrão MAD; skill `mad-ddl-review` ([[nomenclatura-mad]]).

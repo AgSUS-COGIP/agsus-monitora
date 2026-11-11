@@ -1,5 +1,5 @@
 /*
-  Catálogos da regra da avaliação documental (docs/analises-no-monitora/).
+  Catálogos da regra da avaliação documental (docs/biblioteca/avaliacao-documental-regra.md).
 
   Aqui ficam só os NOMES do que a regra pode escolher: tipos de bloco,
   situações, efeitos, parciais, níveis e títulos. Nenhum peso, ponto ou teto

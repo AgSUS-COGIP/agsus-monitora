@@ -31,7 +31,7 @@ um enquadramento, com as 665 terras. Detalhes no comentário de topo do script.
 
 ## Regras
 
-- Terras Indígenas têm cores de domínio (não de paleta; `DESIGN.md` 3.1).
+- Terras Indígenas têm cores de domínio (não de paleta).
 - O servidor serve `/data/*.json` (o antigo Laravel não servia, e as camadas quebravam).
 - Nada em `public/` que não deva ser publicado.
 

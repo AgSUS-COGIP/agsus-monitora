@@ -13,6 +13,7 @@ const APP_SHELL = [
   "/sw-policy.js",
   "/icons/agsus-monitora.svg",
   "/icons/agsus-monitora-maskable.svg",
+  "/fonts/general-sans/GeneralSans-Variable.woff2",
 ];
 
 const BLOCKED_PATH_PREFIXES = [

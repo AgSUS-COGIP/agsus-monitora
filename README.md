@@ -86,4 +86,4 @@ das notas de [`docs/biblioteca/`](docs/biblioteca/), uma por assunto. Para abrir
 | Segurança                       | [seguranca](docs/biblioteca/seguranca.md), [dados-pessoais](docs/biblioteca/dados-pessoais.md)                                                               |
 | Qualidade e CI                  | [ci-e-qualidade](docs/biblioteca/ci-e-qualidade.md), [testes](docs/biblioteca/testes.md)                                                                     |
 | Publicar e operar               | [deploy-e-vercel](docs/biblioteca/deploy-e-vercel.md), [robos-e-agenda](docs/biblioteca/robos-e-agenda.md), [python-e-jobs](docs/biblioteca/python-e-jobs.md) |
-| Interface                       | [DESIGN.md](DESIGN.md), [design-e-tokens](docs/biblioteca/design-e-tokens.md)                                                                                |
+| Interface                       | [design-e-tokens](docs/biblioteca/design-e-tokens.md), [Design System AgSUS](docs/design-system-agsus.md)                                                  |

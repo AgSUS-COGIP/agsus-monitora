@@ -21,7 +21,7 @@
   font-size: var(--text-body);
 }
 
-/* Card: a superfície padrão dos blocos (DESIGN.md, "Superfície"). */
+/* Card: a superfície padrão dos blocos (Design System 11.6). */
 .ui-card {
   min-width: 0;
   padding: var(--space-4) var(--space-5);
@@ -51,7 +51,7 @@
 
 /*
   Botões das telas: o `.btn` de app.css, mais o pequeno (ações de linha, de
-  gaveta e dos filtros) e o destrutivo (DESIGN.md, "Botão"), que app.css não
+  gaveta e dos filtros) e o destrutivo (Design System 11.1), que app.css não
   tem fora de seções específicas. Só dentro de uma tela ou gaveta de src/ui/.
 */
 :is(.ui-tela, .ui-gaveta) .btn.small {
@@ -381,7 +381,7 @@
   background: color-mix(in srgb, var(--state-info) 12%, var(--state-info-soft));
 }
 
-/* ── Kpi: card compacto de ~78px (DESIGN.md, "Indicador") ───────────── */
+/* ── Kpi: card compacto de ~78px (exceção ao Design System 11.7: docs/biblioteca/design-e-tokens.md) ───────────── */
 
 /* Linhas de altura igual: um rótulo que quebra não deixa um card mais alto. */
 /* 140px: os 8 indicadores de Editais cabem numa linha no notebook (1366px),

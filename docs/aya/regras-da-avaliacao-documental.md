@@ -11,14 +11,14 @@ mostra só rótulos, números e botões; o porquê fica aqui. Fontes: `src/modul
 `20261007130000_conteudo_da_ficha.sql` (o conteúdo da ficha),
 `20261007180000_lote_pela_declarada.sql` (o lote pela nota declarada e a declarada congelada), o job Python
 `scripts/pre_classificacao/` com a conta em `python/monitora/avaliacao_documental/`,
-os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o desenho em
-`docs/analises-no-monitora/`.
+os modelos em `tests/fixtures/avaliacao-documental/modelos/` e o que falta em
+`docs/biblioteca/avaliacao-documental-pendencias.md`.
 
 ## Tela de Avaliação documental
 
 **perguntas:** avaliacao documental | tela de avaliacao documental | para que serve avaliacao documental | para que serve a avaliacao documental | modulo avaliacao documental | avaliacao documental e de titulos
 **resposta:** A Avaliação documental é o módulo de trabalho da etapa "Avaliação Documental e de Títulos": escolhido o edital, a coordenação cadastra a regra da avaliação daquele edital (blocos por documento ou pergunta da Empregare, eliminatórios com o item do edital, critério étnico com aldeias, escolaridade por nível, cursos, experiência, nota declarada, lote, distribuição, revisão e os textos do parecer) e diz quem analisa, quem revisa e quem coordena (aba Equipe). Há a regra, a equipe, a Triagem (a Lista Provisória por ART e o lote de convocação de cada vaga, com as listas oficiais PROVISORIA e LOTE) e a Fila (as fichas de quem está no lote, a distribuição entre os analistas e a reserva da ficha aberta); o conteúdo da ficha (documentos, títulos, vínculos e nota) chega na fase seguinte. O resultado continua aparecendo no Painel das análises. As abas Regra, Equipe e Triagem são só de quem coordena o edital (gestor do edital, coordenação na equipe ou administrador global); quem analisa ou revisa (e quem só lê) vê só a Fila, que abre direto.
-**fonte:** src/modulos/avaliacao-documental/; docs/analises-no-monitora/plano-de-construcao.md
+**fonte:** src/modulos/avaliacao-documental/; docs/biblioteca/avaliacao-documental-pendencias.md
 **abrir:** avaliacao-documental
 
 ## Abas da Avaliação documental e entrada
@@ -34,7 +34,7 @@ os modelos em `supabase/correcoes/20261006-modelos-da-regra-da-analise.sql` e o 
 **perguntas:** qual a diferenca entre o painel das analises e a avaliacao documental | painel das analises e avaliacao documental | diferenca entre painel e avaliacao | painel ou avaliacao documental | onde analiso o candidato
 **resposta:** São duas entradas do menu. O Painel das análises (a tela que antes se chamava Análises curriculares) é só leitura: indicadores, pendências, carga por responsável, evolução e a lista das análises, com a permissão Painel das análises. A Avaliação documental é o trabalho: regra da avaliação, equipe e, nas próximas fases, a Provisória por ART, o lote, a fila e a ficha do candidato, com a permissão própria "Avaliação documental". No edital com a análise no Yeendé (o botão ao lado de "Avaliação:", da coordenação), cada ficha grava na hora na mesma base que o Painel das análises e a Classificação leem.
 **fato:** No Yeendé, o Painel das análises é leitura (permissão analises) e a Avaliação documental é o trabalho da avaliação (permissão avaliacao_documental).
-**fonte:** docs/analises-no-monitora/desenho.md; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql
+**fonte:** docs/biblioteca/modulo-avaliacao-documental.md; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql
 **abrir:** avaliacao-documental
 
 ## Regra da avaliação documental

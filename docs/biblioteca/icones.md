@@ -6,8 +6,7 @@ atualizado: 2026-11-10
 
 # Ícones
 
-**Todo o sistema desenha Lucide**; o Font Awesome não é mais carregado. A regra completa está no
-`DESIGN.md`, seção "Ícones". Dois caminhos:
+**Todo o sistema desenha Lucide**; o Font Awesome não é mais carregado. Dois caminhos:
 
 - **Barra lateral e o que é dela** (Sair, tema, botão de recolher e o ☰ do celular) e componente
   reescrito: SVG Lucide de verdade, pelo registro.
