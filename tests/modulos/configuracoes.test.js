@@ -52,7 +52,11 @@ let controlador;
 let alertar;
 let recarregar;
 
-async function montar({ secao = "marca", confirmar = () => true } = {}) {
+async function montar({
+  secao = "marca",
+  confirmar = () => true,
+  secoes,
+} = {}) {
   /* Campos de fora das seções da moldura (outra tela, o legado): não marcam a página. */
   document.body.innerHTML = `
     <input id="buscaDeAcessos" type="search" />
@@ -66,7 +70,7 @@ async function montar({ secao = "marca", confirmar = () => true } = {}) {
     recarregar,
   });
   await act(async () => {
-    controlador = montarConfiguracoesNoTeste({ estado, secao });
+    controlador = montarConfiguracoesNoTeste({ estado, secao, secoes });
   });
   await act(async () => estado.definirValoresCarregados(PUBLICADO));
   await esperar();
@@ -196,6 +200,63 @@ describe("seção Acessos", () => {
     await ctrlS();
     await esperar();
     expect(tituloDoDialogo()).toBe("Revisar publicação");
+  });
+});
+
+/*
+  A barra fixa só nas seções com campos que ela publica. Em Status das
+  atualizações (só acompanhamento) e em Automação aparecia "Salvar
+  alterações" sem nada a salvar (11/11/2026).
+*/
+describe("barra fixa só nas seções com campos", () => {
+  const COM_CAMPOS = [
+    "marca",
+    "inicio",
+    "acesso",
+    "aparencia",
+    "recursos",
+    "comemoracoes",
+    "operacao",
+  ];
+  const SEM_CAMPOS = ["acessos", "modulos", "cargas", "automacao"];
+  // As telas próprias, falsas: o que importa aqui é a moldura.
+  const TELAS_PROPRIAS = Object.fromEntries(
+    SEM_CAMPOS.map((secao) => [
+      `secao:${secao}`,
+      { render: vi.fn(), confirmarSaida: () => true },
+    ]),
+  );
+
+  it("aparece em cada seção da moldura e some nas telas sem campo da barra", async () => {
+    await montar({ secoes: TELAS_PROPRIAS });
+    for (const secao of [...COM_CAMPOS, ...SEM_CAMPOS]) {
+      await act(async () => abrirSecaoNoTeste(secao));
+      await esperar();
+      expect({ secao, barra: Boolean(barra()) }).toEqual({
+        secao,
+        barra: COM_CAMPOS.includes(secao),
+      });
+    }
+  });
+
+  it("Status das atualizações: sem barra, sem “Alterações não salvas” e o Ctrl+S não publica", async () => {
+    const estado = await montar({ secoes: TELAS_PROPRIAS });
+    await digitar($("configMarca-cogipNome"), "Equipe nova");
+    expect(sujo()).toBe(true);
+    await act(async () => abrirSecaoNoTeste("cargas"));
+    await esperar();
+    expect(document.querySelector(".config-cabecalho h2").textContent).toBe(
+      "Status das atualizações",
+    );
+    expect(barra()).toBeNull();
+    expect(document.body.textContent).not.toContain("Salvar alterações");
+    expect(sujo()).toBe(false);
+    cliente.rpc.mockClear();
+    await ctrlS();
+    expect(cliente.rpc).not.toHaveBeenCalled();
+    expect(tituloDoDialogo()).toBeUndefined();
+    // A alteração da Marca continua guardada para quando voltar.
+    expect(estado.temAlteracoes()).toBe(true);
   });
 });
 
