@@ -92,13 +92,23 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.versao }}
 
+      # Plano B (11/11/2026): com o espelho de pacotes do Ubuntu fora do ar, o apt
+      # do --with-deps/install-deps falhava e derrubava o CI de todos os PRs. O
+      # servidor do GitHub já traz as bibliotecas do Chromium; sem o apt, segue com
+      # um aviso e o smoke diz se faltou alguma.
       - name: Instalar navegador do Playwright
         if: steps.navegador.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
+        run: |
+          npx playwright install --with-deps chromium || {
+            echo "::warning::apt indisponível: instalando o Chromium sem as dependências do sistema."
+            npx playwright install chromium
+          }
 
       - name: Instalar dependências do navegador
         if: steps.navegador.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+        run: |
+          npx playwright install-deps chromium ||
+            echo "::warning::apt indisponível: seguindo com as bibliotecas que o servidor já tem."
 
       # Todos os *.spec.js contra o dist/ do passo Build (sem compilar de novo);
       # os que precisam de banco de desenvolvimento são pulados.
