@@ -8,6 +8,7 @@
   cancelado, paralisado) é a única forma de o contrariar, e exige motivo e data.
 */
 
+import type { ValidadeDoFormulario } from "./validade-do-edital.ts";
 import {
   ANO_MAXIMO,
   ANO_MINIMO,
@@ -111,6 +112,10 @@ export interface CronogramaNoBanco {
     status_override_motivo?: string | null;
     status_override_data?: string | null;
     status_override_previsao_retomada?: string | null;
+    /* Validade do processo seletivo (migration 20261111200000; antes, ausentes). */
+    nu_anos_validade?: number | null;
+    nu_meses_validade?: number | null;
+    st_prorrogado?: boolean | null;
   } | null;
   etapas?: DadosDaEtapa[] | null;
   historico?: RegistroDoHistoricoDoCronograma[] | null;
@@ -130,6 +135,8 @@ export interface CronogramaDoFormulario {
   retomada: string;
   motivo: string;
   errata: string;
+  /** Validade do processo seletivo (src/lib/validade-do-edital.ts). */
+  validade: ValidadeDoFormulario;
 }
 
 export const PENDENTE = "Cronograma pendente";

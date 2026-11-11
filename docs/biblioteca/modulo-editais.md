@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-11
 ---
 
 # Módulo: Editais (Equipe Núcleo)
@@ -26,6 +26,17 @@ Rota `/<área>/editais` (`src/app/telas.tsx`); pasta `src/modulos/editais/`. Del
   (10 a 500 caracteres) e histórico em `TH_EDITAL_CRITICO`. Grava à parte do "Salvar"; a
   permissão vem do banco (`obter_critico_do_edital` → `pode_marcar`). Conta nos críticos da
   [[modulo-visao-geral]].
+- **Validade do processo seletivo** (#57, `src/lib/validade-do-edital.ts`): anos (0 a 10), meses
+  (0 a 11) e prorrogado, com o prazo calculado ao lado. O cálculo espelha
+  `private."FC_VENCIMENTO_DO_EDITAL"` (data de encerramento + prazo em meses, em dobro se
+  prorrogado; dia que não existe no mês de chegada vira o último dia dele; 0 = não vence) e
+  "vencido" é o último dia antes de hoje em Brasília, como `FC_INATIVAR_LISTAS_VENCIDAS` (que
+  inativa a lista vigente ao salvar e todo dia às 00:05). Ida: `nu_anos_validade`,
+  `nu_meses_validade` e `st_prorrogado` no `p_payload` de `salvar_monitoramento_com_cronograma_v2`
+  (cada chave só quando tem valor). Volta: `get_monitoramento_cronograma` → `monitoramento`, desde
+  a migration `20261111200000`; sem ela, a validade fica "não lida": aviso, campos vazios e só vai o
+  que a pessoa preencher (nada gravado é sobrescrito). Valor fora do limite mostra a mensagem no
+  campo e o Salvar não envia.
 - Abre o modal de listas da Lista de aprovados por `carregarTela("approved")`
   (`openImportModal(id, rótulo)`; ver [[modulo-aprovados]]).
 
@@ -59,6 +70,7 @@ editais.css
 - `retificacao-do-cronograma.ts` — retificação em PDF (lida por `api/anexos-do-edital.py`):
   casamento das etapas do "Leia-se" com as gravadas, comparação (igual, data muda, nova, sumiu),
   ajustes, cronograma novo, número da errata e motivo com o SEI.
+- `validade-do-edital.ts` — validade do processo seletivo: leitura, validação, payload e prazo.
 - `responsavel-do-edital.ts`, `etapas-de-edital.ts`, `editais-das-linhas.ts`,
   `anexos-do-edital.ts`.
 

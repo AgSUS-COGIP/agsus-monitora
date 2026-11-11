@@ -1828,3 +1828,115 @@ describe("retificação do cronograma por PDF", () => {
     );
   });
 });
+
+/*
+  Cartão #57: validade do processo seletivo no formulário. A RPC de leitura
+  (get_monitoramento_cronograma) só devolve os três campos depois da migration
+  20261111200000; o fixture CRONOGRAMAS["1"] é o banco de antes.
+*/
+describe("validade do processo seletivo", () => {
+  const comValidade = (validade: object) =>
+    supabaseFalso({
+      cronogramas: {
+        ...CRONOGRAMAS,
+        1: {
+          ...CRONOGRAMAS["1"],
+          monitoramento: {
+            ...(CRONOGRAMAS["1"] as { monitoramento: object }).monitoramento,
+            ...validade,
+          },
+        },
+      },
+    });
+  const payload = (supabase: ReturnType<typeof supabaseFalso>) =>
+    supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "salvar_monitoramento_com_cronograma_v2",
+    )?.[1]?.p_payload;
+
+  it("lê a validade gravada, mostra o prazo e devolve as três chaves ao salvar", async () => {
+    const supabase = comValidade({
+      nu_anos_validade: 1,
+      nu_meses_validade: 6,
+      st_prorrogado: false,
+    });
+    await montar({ supabase });
+    await abrirEdital("1");
+    expect(campo("mValidadeAnos")?.value).toBe("1");
+    expect(campo("mValidadeMeses")?.value).toBe("6");
+    expect(seletor("mValidadeProrrogado")?.value).toBe("nao");
+    expect($("mValidadeNaoLida")).toBeNull();
+    // Encerramento pelas etapas: 20/09/2026 + 18 meses.
+    expect($("mValidadePrazo")?.textContent).toBe("Válida até 20/03/2028.");
+
+    await escolher($("mValidadeProrrogado"), "sim");
+    expect($("mValidadePrazo")?.textContent).toBe("Válida até 20/09/2029.");
+    await digitar($("mCronogramaMotivo"), "Prorrogação do edital");
+    supabase.rpc.mockClear();
+    await clicar($("saveEditalBtn"));
+    expect(payload(supabase)).toMatchObject({
+      nu_anos_validade: 1,
+      nu_meses_validade: 6,
+      st_prorrogado: true,
+    });
+  });
+
+  it("valor fora do limite mostra a mensagem no campo e não salva", async () => {
+    const supabase = comValidade({
+      nu_anos_validade: 0,
+      nu_meses_validade: 0,
+      st_prorrogado: false,
+    });
+    await montar({ supabase });
+    await abrirEdital("1");
+    expect($("mValidadePrazo")?.textContent).toBe(
+      "Sem prazo: a lista não vence.",
+    );
+    await digitar($("mValidadeMeses"), "12");
+    expect(campo("mValidadeMeses")?.getAttribute("aria-invalid")).toBe("true");
+    expect(document.body.textContent).toContain(
+      "Use um número inteiro de 0 a 11 meses.",
+    );
+    await digitar($("mCronogramaMotivo"), "Ajuste");
+    supabase.rpc.mockClear();
+    await clicar($("saveEditalBtn"));
+    expect(payload(supabase)).toBeUndefined();
+    expect(document.activeElement?.id).toBe("mValidadeMeses");
+  });
+
+  it("banco sem a leitura: avisa, abre vazio e só manda o que foi preenchido", async () => {
+    const { supabase } = await montar();
+    await abrirEdital("1");
+    expect($("mValidadeNaoLida")).not.toBeNull();
+    expect(campo("mValidadeAnos")?.value).toBe("");
+    expect(seletor("mValidadeProrrogado")?.value).toBe("");
+    await digitar($("mCronogramaMotivo"), "Ajuste");
+    supabase.rpc.mockClear();
+    await clicar($("saveEditalBtn"));
+    const semMexer = payload(supabase);
+    expect(semMexer).toBeDefined();
+    expect(semMexer).not.toHaveProperty("nu_anos_validade");
+    expect(semMexer).not.toHaveProperty("nu_meses_validade");
+    expect(semMexer).not.toHaveProperty("st_prorrogado");
+  });
+
+  it("banco sem a leitura: o campo preenchido vai sozinho", async () => {
+    const { supabase } = await montar();
+    await abrirEdital("1");
+    await digitar($("mValidadeAnos"), "2");
+    await digitar($("mCronogramaMotivo"), "Ajuste");
+    supabase.rpc.mockClear();
+    await clicar($("saveEditalBtn"));
+    const enviado = payload(supabase);
+    expect(enviado).toMatchObject({ nu_anos_validade: 2 });
+    expect(enviado).not.toHaveProperty("nu_meses_validade");
+    expect(enviado).not.toHaveProperty("st_prorrogado");
+  });
+
+  it("edital novo nasce com os padrões do banco (0, 0, não)", async () => {
+    await montar();
+    await clicar($("newEditalBtn"));
+    expect(campo("mValidadeAnos")?.value).toBe("0");
+    expect(campo("mValidadeMeses")?.value).toBe("0");
+    expect(seletor("mValidadeProrrogado")?.value).toBe("nao");
+  });
+});

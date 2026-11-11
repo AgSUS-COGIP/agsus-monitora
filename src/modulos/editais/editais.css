@@ -197,6 +197,24 @@
 .edital-unidade-ajuda.is-erro {
   color: var(--state-danger);
 }
+/* Validade do processo seletivo: o prazo calculado, ao lado dos campos (cartão #57). */
+.edital-validade-rotulo {
+  color: var(--text-primary);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--leading-label);
+}
+.edital-validade-prazo {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.edital-validade-prazo.is-vencido {
+  color: var(--state-danger);
+  font-weight: var(--font-weight-medium);
+}
 /* "Mover para outra área" (só administradores), no topo do formulário. */
 .edital-mover {
   display: grid;
