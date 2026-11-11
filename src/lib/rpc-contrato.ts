@@ -357,7 +357,7 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     argumentos: ["p_payload", "p_cronograma", "p_motivo", "p_numero_errata"],
     critica: true,
     resumo:
-      "Grava monitoramento junto com o cronograma. Com `co_area` no p_payload, salva na área pretendida (recusa unidade de outra área e registra a unidade nova).",
+      "Grava monitoramento junto com o cronograma. Com `co_area` no p_payload, salva na área pretendida (recusa unidade de outra área e registra a unidade nova). Validade do processo seletivo: `nu_anos_validade` (0 a 10), `nu_meses_validade` (0 a 11) e `st_prorrogado`, cada uma só quando vem no p_payload; inativa na hora a lista vencida.",
   },
   mover_edital_de_area: {
     argumentos: ["p_id", "p_area", "p_motivo"],
@@ -381,7 +381,8 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
   get_monitoramento_cronograma: {
     argumentos: ["p_monitoramento_id"],
     critica: true,
-    resumo: "Cronograma de um monitoramento.",
+    resumo:
+      "Cronograma de um monitoramento. Desde 20261111200000, `monitoramento` traz também `nu_anos_validade`, `nu_meses_validade` e `st_prorrogado` (antes, ausentes: o formulário não sobrescreve a validade).",
   },
   listar_etapas_do_cronograma: {
     argumentos: [],
