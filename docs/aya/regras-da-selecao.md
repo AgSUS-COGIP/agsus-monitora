@@ -29,8 +29,8 @@ ficam aqui, com a Aya. Fontes: `src/modulos/selecao/`, `src/lib/selecao-do-paine
 ## Aprovados e contratados na Seleção
 
 **perguntas:** aprovados na selecao | contratados na selecao | nao contratados
-**resposta:** Na Seleção, os aprovados vêm da lista de aprovados vigente de cada edital. Os contratados são os candidatos dessa lista com a situação Contratado ou Migração, e os não contratados são aprovados menos contratados. Sem lista de aprovados, a vaga não soma aprovados nem contratados. Nas vagas de outras bancas (sem código da vaga), a ligação com a lista é pelo nome do cargo, sem diferenciar acento, maiúsculas ou pontuação.
-**fonte:** supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql
+**resposta:** Na Seleção, os aprovados vêm da lista de aprovados vigente de cada edital. Os contratados são os candidatos dessa lista com a situação Contratado ou Migração, e os não contratados são aprovados menos contratados. Quem foi contratado pela outra linha do mesmo edital (ampla concorrência e cota) é a mesma pessoa e conta uma vez só: a linha "Contratado em outra lista" não entra nem nos aprovados nem nos contratados. Sem lista de aprovados, a vaga não soma aprovados nem contratados. Nas vagas de outras bancas (sem código da vaga), a ligação com a lista é pelo nome do cargo, sem diferenciar acento, maiúsculas ou pontuação.
+**fonte:** supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql; supabase/migrations/20261110203000_selecao_conta_uma_vez_quem_esta_em_outra_lista.sql
 
 ## Taxa de contratação
 
