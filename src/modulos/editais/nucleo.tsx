@@ -164,8 +164,8 @@ function textoDoStatus(nucleo: EstadoDoNucleo, carregado: boolean) {
   if (!nucleo.carregadoEm)
     return carregado && nucleo.statusDoResumo === "error"
       ? "Alertas indisponíveis"
-      : "Carregando dados...";
-  if (nucleo.atualizandoResumo) return "Atualizando...";
+      : "Carregando dados…";
+  if (nucleo.atualizandoResumo) return "Atualizando…";
   return `Atualizado em ${formatarDataHora(nucleo.carregadoEm)}`;
 }
 
@@ -478,7 +478,7 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
         idDoCorpo="nucleoRows"
         busca={{
           id: "nucleoSearch",
-          placeholder: "Pesquisar edital, unidade, status...",
+          placeholder: "Pesquisar edital, unidade, status…",
           rotulo: "Pesquisar edital, unidade, status, etapa ou risco",
         }}
         carregado={carregado}

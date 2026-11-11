@@ -8,7 +8,7 @@ import type {
   ChaveDaOrdemDosAprovados,
   OrdemDosAprovados,
 } from "../../lib/ordem-dos-aprovados.ts";
-import { memo, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   OPCOES_DO_FILTRO_DE_STATUS,
   canAlterarCandidatoSubJudice,
@@ -24,6 +24,7 @@ import {
 } from "../../lib/ordem-dos-aprovados.ts";
 import { formatNumberBR } from "../../lib/formatters";
 import { resumoDasOrigens } from "../../lib/publicacao-de-aprovados.ts";
+import { statusDoLotePara } from "../../lib/status-em-lote-dos-aprovados.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import {
   BotaoDeAcao,
@@ -44,6 +45,7 @@ import {
   plural,
   SeloDeStatus,
 } from "./partes.tsx";
+import { ModalDoStatusEmLote } from "./status-em-lote.tsx";
 
 /*
   A aba "Lista de aprovados": indicadores, filtros e a tabela.
@@ -61,6 +63,10 @@ import {
 
   Clique na linha (ou Enter/Espaço com ela em foco) abre a gaveta do
   candidato, como o nome; os botões da linha fazem só a própria ação.
+
+  Status em lote (11/11/2026): quem muda status marca as linhas (ou "todos os
+  da tabela", que são os filtrados e buscados, não só os 50 desenhados) e usa
+  "Mudar status" (status-em-lote.tsx). Mudar filtro ou busca limpa a seleção.
 
   A origem das listas (publicada da Classificação ou manual, por planilha) fica
   numa linha discreta acima da tabela: a do edital, quando o filtro deixa um só.
@@ -118,12 +124,17 @@ const LinhaDoAprovado = memo(function LinhaDoAprovado({
   perfil,
   anexos,
   convocacoes,
+  selecionado = false,
+  aoSelecionar,
 }: {
   row: CandidatoDaTabelaDeAprovados;
   estado: EstadoDaAbaDeAprovados;
   perfil: unknown;
   anexos: ReadonlyMap<string, readonly unknown[]>;
   convocacoes: ConvocacoesDaTabela;
+  selecionado?: boolean;
+  /** Sem ela (quem não muda status), a linha não tem caixa de seleção. */
+  aoSelecionar?: (id: string) => void;
 }) {
   const abrir = () => estado.abrirCandidato(row.candidato_id);
   return (
@@ -145,6 +156,16 @@ const LinhaDoAprovado = memo(function LinhaDoAprovado({
       }}
     >
       <td>
+        {aoSelecionar ? (
+          <input
+            type="checkbox"
+            className="approved-selecao"
+            data-selecao-do-candidato
+            checked={selecionado}
+            aria-label={`Selecionar ${row.nome}`}
+            onChange={() => aoSelecionar(row.candidato_id)}
+          />
+        ) : null}
         <NomeDoCandidato candidato={row} aoAbrir={estado.abrirCandidato} />
       </td>
       <td>{row.cargo || "-"}</td>
@@ -261,6 +282,37 @@ export function AbaAprovados({
     [ordem],
   );
   const carregando = !carregado && !erroAoCarregar;
+
+  // Status em lote: a seleção (ids) vale para as linhas da tabela de agora.
+  const podeSelecionar = statusDoLotePara(perfil).length > 0;
+  const [selecionados, setSelecionados] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const [loteAberto, setLoteAberto] = useState(false);
+  useEffect(() => {
+    setSelecionados(new Set());
+  }, [chaveDosFiltros, busca]);
+  const daTabela = useMemo(
+    () => pelaBusca(ordenadas, busca),
+    [ordenadas, busca],
+  );
+  const escolhidos = useMemo(
+    () => daTabela.filter((row) => selecionados.has(row.candidato_id)),
+    [daTabela, selecionados],
+  );
+  const todos = daTabela.length > 0 && escolhidos.length === daTabela.length;
+  const alternar = useCallback((id: string) => {
+    setSelecionados((atual) => {
+      const novo = new Set(atual);
+      if (novo.has(id)) novo.delete(id);
+      else novo.add(id);
+      return novo;
+    });
+  }, []);
+  const alternarTodos = () =>
+    setSelecionados(
+      todos ? new Set() : new Set(daTabela.map((row) => row.candidato_id)),
+    );
   const quantos = Object.values(filtros).filter((lista) => lista.length).length;
   const origens = carregado
     ? resumoDasOrigens(
@@ -439,6 +491,58 @@ export function AbaAprovados({
           {origens}
         </p>
       ) : null}
+      {podeSelecionar && carregado && daTabela.length ? (
+        <div className="approved-lote" data-status-em-lote>
+          <label className="approved-lote__todos">
+            <input
+              type="checkbox"
+              checked={todos}
+              ref={(caixa) => {
+                if (caixa)
+                  caixa.indeterminate = escolhidos.length > 0 && !todos;
+              }}
+              onChange={alternarTodos}
+            />
+            {todos
+              ? `Todos os ${formatNumberBR(daTabela.length)} da tabela`
+              : `Selecionar os ${formatNumberBR(daTabela.length)} da tabela`}
+          </label>
+          {escolhidos.length ? (
+            <>
+              <span className="approved-lote__quantos" aria-live="polite">
+                {plural(escolhidos.length, "selecionado", "selecionados")}
+              </span>
+              <button
+                type="button"
+                className="btn"
+                data-abrir-status-em-lote
+                onClick={() => setLoteAberto(true)}
+              >
+                Mudar status
+              </button>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={() => setSelecionados(new Set())}
+              >
+                Limpar seleção
+              </button>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+      {loteAberto ? (
+        <ModalDoStatusEmLote
+          estado={estado}
+          perfil={perfil}
+          candidatos={escolhidos}
+          aoFechar={() => setLoteAberto(false)}
+          aoConcluir={() => {
+            setLoteAberto(false);
+            setSelecionados(new Set());
+          }}
+        />
+      ) : null}
       <TabelaInfinita
         tour="aprovados-tabela"
         idDoTitulo="approvedTabelaTitulo"
@@ -481,6 +585,8 @@ export function AbaAprovados({
             perfil={perfil}
             anexos={anexos}
             convocacoes={convocacoes}
+            selecionado={selecionados.has(row.candidato_id)}
+            aoSelecionar={podeSelecionar ? alternar : undefined}
           />
         )}
       />

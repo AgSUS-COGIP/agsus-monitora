@@ -191,7 +191,7 @@ describe("tela de carregamento (window.monitoraLoader)", () => {
 
   it("título próprio fica; subtítulo genérico vira o detalhe da etapa; barra limitada a 100%", () => {
     montar();
-    act(() => mostrarCarregamento(true, "Salvando edital", "Aguarde...", 40));
+    act(() => mostrarCarregamento(true, "Salvando edital", "Aguarde…", 40));
     expect($("loaderTitle").textContent).toBe("Salvando edital");
     expect($("loaderSub").textContent).toBe(
       "Consultando indicadores e registros do monitoramento.",

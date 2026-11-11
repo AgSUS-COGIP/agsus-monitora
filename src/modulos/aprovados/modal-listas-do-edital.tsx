@@ -316,7 +316,7 @@ function PainelDoArquivo({
             acao="remover-lista"
             id="approvedImportRemove"
             className="btn red"
-            onClick={() => void estado.removerLista(editalId)}
+            onClick={() => void estado.removerLista(editalId, rotulo)}
           >
             <i className="fa-solid fa-trash" aria-hidden="true" /> Remover lista
           </BotaoDeAcao>

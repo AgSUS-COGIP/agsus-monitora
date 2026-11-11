@@ -147,6 +147,8 @@ function supabaseFalso({
         data: { arquivo_nome: "termo.pdf", arquivo_base64: btoa("%PDF-1.4") },
         error: null,
       };
+    if (nome === "alterar_status_candidatos_aprovados")
+      return { data: { marcados: 2, ignorados: [] }, error: null };
     if (nome === "listar_modelos_convocacao") return { data: [], error: null };
     if (nome === "listar_configuracao_convocacao")
       return { data: [], error: null };
@@ -355,7 +357,7 @@ const opcoesDoFiltro = (filtro: string) =>
   ).map((opcao) => opcao.textContent);
 
 describe("topo e visões", () => {
-  it("as duas visões são abas (tablist) com o visual do controle segmentado, no topo", async () => {
+  it("as visões são abas (tablist) com o visual do controle segmentado, no topo", async () => {
     await montar();
     const visoes = achar(
       "#page-approved .ui-topo .ui-segmentado[role='tablist']",
@@ -363,7 +365,7 @@ describe("topo e visões", () => {
     expect(visoes).not.toBeNull();
     const abas = acharTodos("[role='tab']", visoes);
     const aprovados = definido(abas[0]);
-    const convocacao = definido(abas[1]);
+    const convocacao = $("approvedTabConvocacao");
     expect(aprovados.id).toBe("approvedTabAprovados");
     expect(aprovados.getAttribute("aria-selected")).toBe("true");
     expect(aprovados.classList.contains("is-ativo")).toBe(true);
@@ -407,7 +409,7 @@ describe("carregamento", () => {
     );
     expect($("approvedCount").textContent).toBe("Carregando…");
     expect(achar("#page-approved [data-status-da-carga]").textContent).toBe(
-      "Carregando dados...",
+      "Carregando dados…",
     );
     expect(
       document.querySelectorAll("#approvedRows tr.ui-esqueleto-tr"),
@@ -2525,5 +2527,139 @@ describe("Exportar a lista de aprovados (issue #583)", () => {
     );
     await clicar($("approvedTabConvocacao"));
     expect($("approvedHeadActions").classList.contains("hidden")).toBe(true);
+  });
+});
+
+/*
+  Status em lote (11/11/2026): quem muda status marca as linhas (ou todas as da
+  tabela) e muda de uma vez; a janela mostra quem fica de fora e por quê.
+*/
+describe("status em lote", () => {
+  it("seleciona todos, mostra quem fica de fora e grava só os que mudam", async () => {
+    const { supabase, toast } = await montar();
+    expect(
+      acharTodos("[data-selecao-do-candidato]").length,
+    ).toBeGreaterThanOrEqual(3);
+    await clicar(achar("[data-status-em-lote] input"));
+    expect(achar("[data-status-em-lote]").textContent).toContain(
+      "selecionados",
+    );
+    await clicar(achar("[data-abrir-status-em-lote]"));
+    const opcoes = [
+      ...$<HTMLSelectElement>("approvedStatusEmLoteSelect").options,
+    ].map((o) => o.value);
+    expect(opcoes).toEqual([
+      "Convocado",
+      "Desistente",
+      "Documentação Rejeitada",
+    ]);
+    await escolher($("approvedStatusEmLoteSelect"), "Desistente");
+    // Ana já é Contratado: quem edita não muda status definido.
+    expect(achar("[data-fora-do-lote]").textContent).toContain(
+      "Status já definido (Contratado): só o admin muda",
+    );
+    const confirmar = achar<HTMLButtonElement>("[data-confirmar-lote]");
+    expect(confirmar.textContent).toBe("Mudar 2 candidatos para Desistente");
+
+    supabase.rpc.mockClear();
+    await clicar(confirmar);
+    const chamada = supabase.rpc.mock.calls.find(
+      ([nome]) => nome === "alterar_status_candidatos_aprovados",
+    );
+    expect(chamada?.[1]).toEqual({
+      p_candidatos: expect.arrayContaining(["bruno", "carla"]),
+      p_status: "Desistente",
+    });
+    expect(
+      (chamada?.[1] as { p_candidatos: string[] }).p_candidatos,
+    ).toHaveLength(2);
+    expect(talvez("approvedStatusEmLoteModal")).toBeNull();
+    expect(toast).toHaveBeenCalledWith(
+      "2 candidato(s) agora como Desistente.",
+      "success",
+    );
+    expect(document.querySelector("[data-abrir-status-em-lote]")).toBeNull();
+  });
+
+  it("Convocado leva a data; marcar uma linha só muda aquela", async () => {
+    const { supabase } = await montar();
+    await clicar(achar("[data-selecao-do-candidato]", linhaDe("Bruno Lima")));
+    await clicar(achar("[data-abrir-status-em-lote]"));
+    const data = $<HTMLInputElement>("approvedStatusEmLoteData");
+    expect(data.value).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    supabase.rpc.mockClear();
+    await clicar(achar("[data-confirmar-lote]"));
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "alterar_status_candidatos_aprovados",
+      {
+        p_candidatos: ["bruno"],
+        p_status: "Convocado",
+        p_data_convocacao: data.value,
+      },
+    );
+  });
+
+  it("quem só lê não vê seleção", async () => {
+    await montar({ perfil: { permissoes: { aprovados: "leitor" } } });
+    expect(document.querySelector("[data-selecao-do-candidato]")).toBeNull();
+    expect(document.querySelector("[data-status-em-lote]")).toBeNull();
+  });
+});
+
+describe("Resumo por cargo (pedido da CORES)", () => {
+  it("conta a lista vigente ativa por vaga e modalidade, com reserva pela fila e total geral", async () => {
+    await montar();
+    await clicar($("approvedTabResumo"));
+    expect($("approvedPanelResumo").classList.contains("hidden")).toBe(false);
+    expect($("approvedHeadActions").classList.contains("hidden")).toBe(true);
+    const total = definido(achar("#approvedPanelResumo tfoot tr"));
+    const celulas = acharTodos("td", total).map((td) => td.textContent?.trim());
+    // Aprovados, Contratados, Voluntária, Tácita, Sem subtipo, Reserva, Outras.
+    expect(celulas).toEqual(["3", "1", "—", "—", "0", "2", "0"]);
+    const avisos = definido(
+      achar("#approvedPanelResumo .approved-resumo-avisos"),
+    ).textContent;
+    expect(avisos).toMatch(/lista inativa ficou fora/);
+    expect(avisos).toMatch(/Não informado no cargo/);
+    expect($("approvedPanelResumo").textContent).not.toMatch(/Diego Alves/);
+  });
+
+  it("o número abre os vínculos daquele recorte numa gaveta que fecha com Esc", async () => {
+    await montar();
+    await clicar($("approvedTabResumo"));
+    const reserva = definido(
+      achar<HTMLButtonElement>(
+        "#approvedPanelResumo tfoot button[aria-label^='Ver os 2 de Cadastro de reserva']",
+      ),
+    );
+    await clicar(reserva);
+    const gaveta = $("approvedResumoDetalhe");
+    expect(gaveta.textContent).toMatch(/Bruno Lima/);
+    expect(gaveta.textContent).toMatch(/Carla Souza/);
+    expect(gaveta.textContent).not.toMatch(/Ana Ribeiro/);
+    await teclar(document, "Escape");
+    expect(document.getElementById("approvedResumoDetalhe")).toBeNull();
+  });
+
+  it("o filtro Situação restringe a base e diz isso", async () => {
+    await montar();
+    await clicar($("approvedTabResumo"));
+    await clicar(opcaoDoFiltro("approvedResumoFiltroStatus", "Contratado"));
+    const total = definido(achar("#approvedPanelResumo tfoot tr"));
+    expect(acharTodos("td", total)[0]?.textContent?.trim()).toBe("1");
+    expect(
+      definido(achar("#approvedPanelResumo .approved-resumo-avisos"))
+        .textContent,
+    ).toMatch(/Situação restringe a base/);
+  });
+
+  it("sem a lista carregada, diz que o resumo depende dela (não é vazio)", async () => {
+    await montar({
+      supabase: supabaseFalso({
+        erros: { listar_listas_aprovados: "sem rede" },
+      }),
+    });
+    await clicar($("approvedTabResumo"));
+    expect($("approvedPanelResumo").textContent).toMatch(/não carregou/);
   });
 });

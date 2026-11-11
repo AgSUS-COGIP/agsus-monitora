@@ -25,6 +25,18 @@ export const NOVIDADES_PUBLICADAS = 5;
 
 export const NOVIDADES: readonly Novidade[] = [
   {
+    id: "2026-11-11-resumo-por-cargo",
+    data: "2026-11-11",
+    texto: "resumo por cargo e status na lista de aprovados",
+    visivel: true,
+  },
+  {
+    id: "2026-11-11-validade-do-processo-seletivo",
+    data: "2026-11-11",
+    texto: "validade do processo seletivo no formulário do edital",
+    visivel: true,
+  },
+  {
     id: "2026-10-21-aviso-de-versao",
     data: "2026-10-21",
     texto: "aviso de versão nova no topo da página",

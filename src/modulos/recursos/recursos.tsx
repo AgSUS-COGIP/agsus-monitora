@@ -26,7 +26,7 @@ import {
   pendenciasPrioritarias,
 } from "../../lib/recursos-dos-candidatos.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { Aviso } from "../../ui/index.ts";
+import { Aviso, EstadoVazio } from "../../ui/index.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { criarEstadoDosRecursos } from "./estado.ts";
 import { FormularioDoRecurso } from "./formulario.tsx";
@@ -113,8 +113,8 @@ function textoDoStatus(
 ) {
   if (e.semSessao) return "Sessão não localizada";
   if (e.erroAoCarregar && !e.carregado) return "Sem dados";
-  if (!e.carregado) return "Carregando dados...";
-  if (e.atualizando) return "Atualizando...";
+  if (!e.carregado) return "Carregando dados…";
+  if (e.atualizando) return "Atualizando…";
   const ultima = recursos
     .map((r) =>
       typeof r.atualizado_em === "string" ? r.atualizado_em : r.criado_em,
@@ -157,6 +157,11 @@ function TelaDaArea({
     () => (dados ? enriquecerRecursos(dados, hoje) : []),
     [dados, hoje],
   );
+  /*
+    A base chegou e não tem recurso nenhum (não é "carregando" nem erro: sem
+    a primeira carga, `carregado` segue falso).
+  */
+  const semRecursos = carregado && recursos.length === 0;
   const filtrados = useMemo(
     () => filtrarRecursos(recursos, filtros),
     [recursos, filtros],
@@ -279,14 +284,28 @@ function TelaDaArea({
                 recursos={filtrados}
                 carregado={carregado}
               />
-              <Graficos
-                recursos={filtrados}
-                pendencias={pendencias}
-                carregado={carregado}
-                filtros={filtros}
-                aoFiltrar={alternarFiltro}
-                escuro={escuro}
-              />
+              {/*
+                Sem recurso na área, uma linha no lugar dos quatro gráficos e
+                das pendências, que ocupavam a tela vazios. Carregando, seguem
+                os skeletons; com falha na carga, o aviso de erro acima.
+              */}
+              {semRecursos ? (
+                <article className="ui-card recursos-sem-recursos">
+                  <EstadoVazio>
+                    Nenhum recurso nesta área. Gráficos e pendências aparecem a
+                    partir do primeiro.
+                  </EstadoVazio>
+                </article>
+              ) : (
+                <Graficos
+                  recursos={filtrados}
+                  pendencias={pendencias}
+                  carregado={carregado}
+                  filtros={filtros}
+                  aoFiltrar={alternarFiltro}
+                  escuro={escuro}
+                />
+              )}
             </>
           )}
           <TabelaDeRecursos

@@ -33,7 +33,8 @@ export const OPCOES_DE_COLORIR: readonly {
   { valor: "dsei", rotulo: "Cor do DSEI" },
 ]);
 
-export const COLORIR_PADRAO: ColorirPor = "preenchidas";
+/* "Cor do DSEI" desde 11/11/2026 (antes, % preenchidas). */
+export const COLORIR_PADRAO: ColorirPor = "dsei";
 
 export function colorirValido(valor: unknown): ColorirPor {
   return OPCOES_DE_COLORIR.some((o) => o.valor === valor)
@@ -240,6 +241,3 @@ export function dicaDoDseiSimples(ind: IndicadorDoDsei) {
     "ociosas",
   )}, ${ind.preenchidas}% preenchidas`;
 }
-
-/* Rótulo menor quando o Brasil inteiro está à vista. */
-export const ZOOM_DO_ROTULO_PEQUENO = 5;

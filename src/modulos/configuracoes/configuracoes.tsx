@@ -26,7 +26,7 @@ import {
 } from "../../ui/index.ts";
 import { SecaoAparencia } from "./aparencia.tsx";
 import { InterruptorPessoal, SecaoComemoracoes } from "./comemoracoes.tsx";
-import { estadoDasConfiguracoes, SECOES_COM_SALVAR_PROPRIO } from "./estado.ts";
+import { estadoDasConfiguracoes, temBarraDeSalvar } from "./estado.ts";
 import { criarImagensDaAparencia } from "./imagens.ts";
 import { SecaoMarca } from "./marca.tsx";
 import { SecaoOperacao } from "./operacao.tsx";
@@ -59,7 +59,9 @@ interface ComEstado {
                     menu lateral), o aviso de alteração não salva e o resumo
                     da validação
     Barra fixa      situação e "Salvar alterações" (e o Ctrl+S, no estado);
-                    some em Acessos e em Módulos e abas, que salvam sozinhas
+                    só nas seções com campos da barra (`temBarraDeSalvar`):
+                    some em Acessos, Módulos e abas, Status das atualizações
+                    e Automação
     Diálogos        corrigir, nada a publicar, revisar e publicar com motivo,
                     restaurar uma versão
     Histórico       publicações auditadas, na seção Operação
@@ -87,7 +89,7 @@ const secaoPorId = (id: string): SecaoDeConfiguracao =>
 function Cabecalho({ estado }: ComEstado) {
   const atual = usarEstado(estado);
   const secao = secaoPorId(atual.secao);
-  const comSalvar = !SECOES_COM_SALVAR_PROPRIO.includes(secao.id);
+  const comSalvar = temBarraDeSalvar(secao.id);
   const erros = atual.errosDaValidacao;
   return (
     <header
@@ -160,7 +162,7 @@ function situacaoDaBarra(
 
 function BarraDeSalvar({ estado }: ComEstado) {
   const atual = usarEstado(estado);
-  if (SECOES_COM_SALVAR_PROPRIO.includes(atual.secao)) return null;
+  if (!temBarraDeSalvar(atual.secao)) return null;
   const alterado = estado.temAlteracoes();
   const situacao = situacaoDaBarra(atual, alterado);
   return (
@@ -201,7 +203,7 @@ function BarraDeSalvar({ estado }: ComEstado) {
           ) : (
             <Icone nome="save" tamanho={16} />
           )}
-          <span>{atual.salvando ? "Publicando..." : "Salvar alterações"}</span>
+          <span>{atual.salvando ? "Publicando…" : "Salvar alterações"}</span>
         </button>
       </div>
     </div>
@@ -387,7 +389,7 @@ function DialogoDeRevisao({
               <Icone nome="cloud-upload" tamanho={16} />
             )}
             {modal.enviando
-              ? " Publicando..."
+              ? " Publicando…"
               : modal.erro
                 ? " Tentar novamente"
                 : ` Publicar ${total} alteração(ões)`}
@@ -457,7 +459,7 @@ function DialogoDeRestauracao({
               <Icone nome="rotate-ccw" tamanho={16} />
             )}
             {modal.enviando
-              ? " Restaurando..."
+              ? " Restaurando…"
               : modal.erro
                 ? " Tentar novamente"
                 : " Restaurar versão"}

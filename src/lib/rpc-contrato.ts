@@ -357,7 +357,7 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     argumentos: ["p_payload", "p_cronograma", "p_motivo", "p_numero_errata"],
     critica: true,
     resumo:
-      "Grava monitoramento junto com o cronograma. Com `co_area` no p_payload, salva na área pretendida (recusa unidade de outra área e registra a unidade nova).",
+      "Grava monitoramento junto com o cronograma. Com `co_area` no p_payload, salva na área pretendida (recusa unidade de outra área e registra a unidade nova). Validade do processo seletivo: `nu_anos_validade` (0 a 10), `nu_meses_validade` (0 a 11) e `st_prorrogado`, cada uma só quando vem no p_payload; inativa na hora a lista vencida.",
   },
   mover_edital_de_area: {
     argumentos: ["p_id", "p_area", "p_motivo"],
@@ -381,7 +381,8 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
   get_monitoramento_cronograma: {
     argumentos: ["p_monitoramento_id"],
     critica: true,
-    resumo: "Cronograma de um monitoramento.",
+    resumo:
+      "Cronograma de um monitoramento. Desde 20261111200000, `monitoramento` traz também `nu_anos_validade`, `nu_meses_validade` e `st_prorrogado` (antes, ausentes: o formulário não sobrescreve a validade).",
   },
   listar_etapas_do_cronograma: {
     argumentos: [],
@@ -648,6 +649,12 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     resumo:
       "Altera o status de um candidato (Convocado, Contratado, Contratado em outra lista, Desistente, Migração, Documentação Rejeitada ou nulo), com processo SEI, matrícula e a data da convocação (Convocado). Status já definido só o admin altera, exceto do Convocado para outro status.",
   },
+  alterar_status_candidatos_aprovados: {
+    argumentos: ["p_candidatos", "p_status", "p_data_convocacao"],
+    critica: false,
+    resumo:
+      "Status em lote na aba Aprovados (20261111180000): Convocado (com a data), Desistente, Documentação Rejeitada ou sem status (só admin), até 500; as regras de um candidato, um a um, e os que não passam voltam em ignorados com o motivo. Aprovados editor.",
+  },
   marcar_candidatos_convocados: {
     argumentos: ["p_candidatos", "p_data_convocacao", "p_carta"],
     critica: false,
@@ -690,10 +697,11 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
       "p_recorte_do_aviso",
       "p_total_na_tela",
       "p_registros",
+      "p_conteudo",
     ],
     critica: false,
     resumo:
-      "Registra a exportação da Lista de aprovados (XLSX/CSV/PDF gerado no navegador): confere área, editais da lista vigente e o total do recorte; devolve exportacao_id e emitida_em. Aprovados leitor.",
+      "Registra a exportação da Lista de aprovados (XLSX/CSV/PDF gerado no navegador): confere área, editais da lista vigente e o total do recorte; p_conteudo LISTA (padrão) ou RESUMO (Resumo por cargo e status, migration 20261111210000); devolve exportacao_id e emitida_em. Aprovados leitor.",
   },
   registrar_carta_convocacao: {
     argumentos: [

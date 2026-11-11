@@ -241,13 +241,13 @@ afterEach(async () => {
 });
 
 describe("a tela dentro do app", () => {
-  it("antes da carga: skeleton nos KPIs e 'Carregando dados...' uma vez só", async () => {
+  it("antes da carga: skeleton nos KPIs e 'Carregando dados…' uma vez só", async () => {
     await montar({ carregar: false });
     expect(secao.querySelector(".ui-tela.visao-geral-tela")).not.toBeNull();
     expect(kpi("vagas").getAttribute("aria-busy")).toBe("true");
     const status = secao.querySelectorAll(".status-discreto");
     expect(status).toHaveLength(1);
-    expect(status[0].textContent).toBe("Carregando dados...");
+    expect(status[0].textContent).toBe("Carregando dados…");
   });
 
   it("os sete KPIs da área atual fecham, com os rótulos de Configurações", async () => {

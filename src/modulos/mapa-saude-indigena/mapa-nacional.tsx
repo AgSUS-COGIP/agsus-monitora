@@ -251,7 +251,8 @@ export function MapaNacional({
     () => ordenarTerritorios(territorios, ordem),
     [territorios, ordem],
   );
-  const [mostrarPontos, definirMostrarPontos] = useState(false);
+  // Sedes e CASAIs começam ligadas no Mapa DSEIs (11/11/2026).
+  const [mostrarPontos, definirMostrarPontos] = useState(true);
   /*
     O realce tem duas pontas. O polígono acende na hora; a linha da lista,
     quando o realce vem do mapa, só depois de o mouse parar no DSEI

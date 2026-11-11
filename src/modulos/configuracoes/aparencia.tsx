@@ -74,7 +74,7 @@ function BotaoDeEnviar({
         ) : (
           <Icone nome="image" tamanho={16} />
         )}
-        <span>{ocupado === "enviar" ? "Enviando..." : "Escolher imagem"}</span>
+        <span>{ocupado === "enviar" ? "Enviando…" : "Escolher imagem"}</span>
       </button>
       <input
         ref={entrada}

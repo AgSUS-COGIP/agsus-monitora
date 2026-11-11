@@ -202,3 +202,27 @@ identificação do edital e a data de emissão, para mandar à área ou anexar a
 
 Testes: `tests/componentes/lista-aprovados.test.ts` ("Exportar a lista de aprovados"),
 `tests/lib/exportacao-da-lista-de-aprovados.test.ts`, `tests/exportacao-de-aprovados-no-banco.test.ts`.
+
+### H9. Resumo por cargo e status (pedido da CORES, 11/11/2026)
+
+Como **a CORES**, quero ver por cargo, regime, jornada, vaga e modalidade quantos foram aprovados,
+contratados, desistiram (voluntária ou tacitamente) e seguem no cadastro de reserva, com subtotais e
+total, para acompanhar o edital sem montar a planilha à mão.
+
+- **Dado** a aba Resumo por cargo, **então** cada vaga distinta tem a sua linha por modalidade, com
+  subtotal por cargo/regime/jornada e total geral, em números pt-BR.
+- **Dado** os filtros da lista (edital, cargo, modalidade, situação), **quando** mudam, **então** o
+  resumo muda junto; o filtro Situação restringe a base e a tela diz isso.
+- **Dado** um vínculo, **então** ele conta em uma coluna só e as colunas fecham Aprovados (Outras
+  situações reconcilia o que não é contratado, desistente nem reserva).
+- **Dado** o cadastro de reserva, **então** ele vem da fila de convocação, nunca de "aprovados menos
+  o resto".
+- **Dado** um desistente, **então** voluntária ou tácita só com subtipo registrado; sem registro,
+  "Desistência sem subtipo". _A definir com a CORES:_ o evento, o prazo e a evidência da tácita.
+- **Dado** um número, **quando** clico, **então** vejo os vínculos dele (o mesmo recorte).
+- **Dado** "Exportar", **então** XLSX, CSV ou PDF com as mesmas linhas da tela, sem dado pessoal,
+  registrado no banco como RESUMO.
+
+Testes: `tests/lib/resumo-por-cargo-e-status.test.ts` (reproduz os subtotais da referência com dados
+fictícios), `tests/lib/exportacao-do-resumo-por-cargo.test.ts`, `tests/componentes/lista-aprovados.test.ts`
+("Resumo por cargo").

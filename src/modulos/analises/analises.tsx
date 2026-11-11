@@ -1,3 +1,4 @@
+import { erroParaATela } from "../../lib/erro-na-tela.ts";
 import type {
   EstadoDasAnalises,
   SnapshotDasAnalises,
@@ -81,8 +82,8 @@ function textoDoStatus(e: SnapshotDasAnalises) {
   if (e.semSessao) return "Sessão não localizada";
   if (e.semAcesso) return "Sem acesso";
   if (e.erroAoCarregar && !e.carregado) return "Sem dados";
-  if (!e.carregado) return "Carregando dados...";
-  if (e.atualizando) return "Atualizando...";
+  if (!e.carregado) return "Carregando dados…";
+  if (e.atualizando) return "Atualizando…";
   const ultima = ultimaAtualizacao(e.linhas, e.payload);
   return (
     textoDaConferencia({ conferidoEm: e.conferidoEm, mudancaEm: ultima }) ||
@@ -134,7 +135,7 @@ function AvisoDaTela({
   if (e.erroAoCarregar && !e.carregado)
     return (
       <Aviso tom="danger" papel="alert">
-        Não foi possível carregar as análises: {e.erroAoCarregar}{" "}
+        Não foi possível carregar as análises: {erroParaATela(e.erroAoCarregar)}{" "}
         <button
           type="button"
           className="btn secondary small"

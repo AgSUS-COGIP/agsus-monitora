@@ -227,7 +227,7 @@ export function MultiSelectBusca({
           ref={campoDeBusca}
           type="search"
           className="multi-select-search"
-          placeholder="Buscar..."
+          placeholder="Buscar…"
           autoComplete="off"
           aria-label="Buscar opções"
           value={busca}

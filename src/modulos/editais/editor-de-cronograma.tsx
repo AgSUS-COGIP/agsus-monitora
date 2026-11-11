@@ -202,7 +202,7 @@ function CopiaDeCronograma({
             setAviso(null);
           }}
         >
-          <option value="">Selecione um edital com cronograma...</option>
+          <option value="">Selecione um edital com cronograma…</option>
           {opcoes.map((item) => (
             <option key={item.id} value={String(item.id)}>
               {`${item.unidade || "Unidade não informada"} — ${item.edital || "Edital sem número"} (${Number(item.cronograma_total || 0)} etapas)`}
@@ -219,7 +219,7 @@ function CopiaDeCronograma({
           {copiando ? (
             <>
               <i className="fa-solid fa-spinner fa-spin" aria-hidden="true" />{" "}
-              Copiando...
+              Copiando…
             </>
           ) : (
             <>

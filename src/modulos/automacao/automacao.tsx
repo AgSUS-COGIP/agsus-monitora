@@ -251,9 +251,7 @@ export function Automacao({ estado }: { estado: EstadoDaAutomacao }) {
     return (
       <ErroAoCarregar
         oQue="a automação"
-        mensagem={
-          atual.erro + (atual.erroCodigo ? ` (código ${atual.erroCodigo})` : "")
-        }
+        mensagem={atual.erro}
         aoTentar={() => void estado.carregar()}
       />
     );

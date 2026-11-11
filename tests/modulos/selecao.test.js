@@ -694,7 +694,7 @@ describe("carga", () => {
       secao.querySelectorAll('.ui-tabela tbody tr[aria-hidden="true"]'),
     ).toHaveLength(8);
     expect(secao.querySelector("#filtro-unidades").disabled).toBe(true);
-    expect(status().textContent).toBe("Carregando dados...");
+    expect(status().textContent).toBe("Carregando dados…");
 
     await esperar(() => responder({ data: PAYLOAD, error: null }));
     expect(kpi("inscritos")).toBe("122");

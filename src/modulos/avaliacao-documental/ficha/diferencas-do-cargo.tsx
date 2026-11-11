@@ -1,3 +1,4 @@
+import { formatNumberBR } from "../../../lib/formatters";
 import {
   avisosDoTituloUnico,
   lancadoComExtra,
@@ -167,7 +168,10 @@ export function ExtrasDoBloco({
           >
             <span className="avd-ficha-cargo-rotulo">
               {e.rotulo}{" "}
-              <strong className="avd-ficha-cargo-pontos">+{e.pontos}</strong>
+              <strong className="avd-ficha-cargo-pontos">
+                +
+                {formatNumberBR(Number(e.pontos), { maximumFractionDigits: 2 })}
+              </strong>
             </span>
             <ConfereOuNao
               valor={valor}

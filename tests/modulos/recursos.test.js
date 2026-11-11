@@ -472,7 +472,7 @@ describe("carga", () => {
     expect(
       secao.querySelectorAll('.ui-tabela tbody tr[aria-hidden="true"]'),
     ).toHaveLength(8);
-    expect(status().textContent).toBe("Carregando dados...");
+    expect(status().textContent).toBe("Carregando dados…");
 
     await esperar(() => responder({ data: payload(), error: null }));
     expect(contagem()).toBe("1 recurso");
@@ -505,6 +505,76 @@ describe("carga", () => {
     await esperar();
     expect(contagem()).toBe("1 recurso");
     expect(secao.querySelector(".ui-aviso[role=alert]")).toBeNull();
+  });
+
+  /*
+    Saúde Indígena sem recurso nenhum: os quatro gráficos e as pendências
+    ocupavam a tela vazios (11/11/2026). Vazio, erro e com dados são três
+    estados diferentes: só a base que chegou vazia ganha a linha compacta.
+  */
+  describe("sem recursos na área × erro × com dados", () => {
+    const vazio = () => secao.querySelector(".recursos-sem-recursos");
+    const cardsDeGrafico = () =>
+      secao.querySelectorAll(".ui-card-de-grafico").length;
+
+    it("base carregada sem recursos: estado vazio compacto no lugar dos gráficos", async () => {
+      let responder;
+      await montar(
+        supabaseFalso({
+          respostas: {
+            get_recursos_da_area: () =>
+              new Promise((ok) => {
+                responder = ok;
+              }),
+          },
+        }),
+      );
+      // Carregando não é vazio: seguem os skeletons dos gráficos.
+      expect(vazio()).toBeNull();
+      expect(secao.querySelectorAll(".ui-grafico.is-carregando")).toHaveLength(
+        4,
+      );
+
+      await esperar(() =>
+        responder({ data: payload({ recursos: [] }), error: null }),
+      );
+      expect(vazio().querySelector(".ui-vazio").textContent).toBe(
+        "Nenhum recurso nesta área. Gráficos e pendências aparecem a partir do primeiro.",
+      );
+      expect(cardsDeGrafico()).toBe(0);
+      expect(graficos).toHaveLength(0);
+      expect(naTela("Pendências prioritárias")).toBe(false);
+      expect(secao.querySelector(".ui-aviso[role=alert]")).toBeNull();
+      // KPIs e fila continuam, com zero e com o vazio da tabela.
+      expect(
+        kpi("aguardando-parecer").querySelector(".ui-kpi-valor").textContent,
+      ).toBe("0");
+      expect(contagem()).toBe("0 recursos");
+    });
+
+    it("falha na carga não vira “nenhum recurso”: só o aviso de erro", async () => {
+      await montar(
+        supabaseFalso({
+          respostas: {
+            get_recursos_da_area: () => ({
+              data: null,
+              error: { message: "rede" },
+            }),
+          },
+        }),
+      );
+      expect(
+        secao.querySelector(".ui-aviso[role=alert]").textContent,
+      ).toContain("Não foi possível carregar os recursos");
+      expect(vazio()).toBeNull();
+    });
+
+    it("com recursos, os gráficos e as pendências, sem o estado vazio", async () => {
+      await montar(supabaseFalso());
+      expect(vazio()).toBeNull();
+      expect(cardsDeGrafico()).toBe(4);
+      expect(naTela("Pendências prioritárias")).toBe(true);
+    });
   });
 
   it("falha ao atualizar com a tela carregada: o aviso global do app (toast)", async () => {

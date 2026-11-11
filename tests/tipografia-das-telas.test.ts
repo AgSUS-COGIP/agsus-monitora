@@ -29,6 +29,7 @@ const ARQUIVOS_DE_COMPONENTES = [
   "src/styles/app.css",
   "src/styles/barra-lateral.css",
   "src/styles/comemoracao.css",
+  "src/styles/indigenous-territories-layer.css",
   "src/styles/loading-experience.css",
   "src/styles/mobile-table-cards.css",
   "src/styles/multi-select-busca.css",
@@ -38,16 +39,15 @@ const ARQUIVOS_DE_COMPONENTES = [
 ];
 
 /*
-  Exceções, por "arquivo seletor": o tamanho é de um ícone (não de texto), o
-  rótulo é de mapa denso ou o texto é uma sigla digitada.
+  Exceções, por "arquivo seletor": o tamanho é de um ícone (não de texto) ou
+  o texto é uma sigla digitada. Rótulo de mapa não é exceção: o de 11px do
+  "Mapa DSEIs" e o das Terras Indígenas subiram para 12px (11/11/2026).
 */
 const EXCECOES = new Set([
   // A sigla da cota digitada no campo (PCD, PPI), não um rótulo.
   "src/modulos/aprovados/convocacao.css .convocacao-categoria-sigla",
   // Ícone de "conferido" num círculo de 20px.
   "src/modulos/entrevistas/entrevistas.css .entrevistas-aba-da-ficha-check",
-  // Rótulos do "Mapa DSEIs" no modo de rótulos pequenos (mapa denso).
-  "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css .mapa-simples--rotulos-pequenos .mapa-simples__rotulo",
   // Seta do botão do seletor múltiplo (ícone).
   "src/styles/multi-select-busca.css .multi-select-trigger .fa-chevron-down",
   // Seta do menu da conta, no cabeçalho (ícone).

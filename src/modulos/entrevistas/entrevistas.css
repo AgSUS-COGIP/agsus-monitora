@@ -18,10 +18,20 @@
 
 /* ── Resultados ─────────────────────────────────────────────────────── */
 
-/* Sete KPIs numa fileira em tela larga; abaixo disso, a grade de src/ui/. */
+/*
+  Os oito KPIs em grade equilibrada: os oito numa fileira em tela larga,
+  quatro por linha (4 × 2) no meio e, até 640px, as duas colunas de src/ui/
+  (4 × 2 de novo). Eram sete colunas para oito cards e o último descia
+  sozinho para a segunda linha (11/11/2026). Mesmo corte da tela de Recursos.
+*/
 @media (min-width: 1380px) {
   .entrevistas-kpis {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+@media (min-width: 641px) and (max-width: 1379px) {
+  .entrevistas-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 

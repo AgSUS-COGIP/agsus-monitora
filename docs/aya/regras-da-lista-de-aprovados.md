@@ -112,6 +112,13 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 **fonte:** src/modulos/aprovados/exportacao/; src/lib/exportacao-da-lista-de-aprovados.ts
 **abrir:** approved
 
+## Resumo por cargo e status
+
+**perguntas:** resumo por cargo | contagem por cargo e status | quantos contratados por cargo | cadastro de reserva por vaga | desistencia voluntaria tacita | resumo da lista de aprovados
+**resposta:** A aba "Resumo por cargo" conta a lista vigente com os mesmos filtros da aba Aprovados: por edital, cargo, regime e jornada, uma linha por vaga e modalidade, com subtotal e total geral. Cada vínculo (a linha da lista: vaga e modalidade) cai numa coluna só, e as colunas fecham o total de Aprovados: Contratados (Contratado e Migração), Desistência voluntária e tácita (só quando o subtipo está registrado; hoje o sistema não registra, por isso aparecem "—"), Desistência sem subtipo, Cadastro de reserva (quem está na fila de convocação depois das vagas imediatas e ainda não foi chamado) e Outras situações (Convocado, A convocar, Documentação Rejeitada, Contratado em outra lista, Não classificado). Quem concorre à cota e à ampla tem duas linhas e conta nas duas em Aprovados; contratado por uma delas, a outra vai a Outras situações, sem contar dois contratados. Listas inativas ficam fora. O filtro Situação restringe a base. Clicar num número mostra quem está nele. "Exportar" baixa o resumo em XLSX, CSV ou PDF, sem nomes, com o registro da exportação. Regime e jornada vêm do nome do cargo (ex.: "… - Teletrabalho - 20h"); quando o nome não traz, a tela avisa.
+**fonte:** src/lib/resumo-por-cargo-e-status.ts; src/modulos/aprovados/aba-resumo.tsx; src/lib/exportacao-do-resumo-por-cargo.ts
+**abrir:** approved
+
 ## A convocar na ordem de chamada
 
 **perguntas:** a convocar | quem chamar agora | proximos a convocar | quem ainda nao foi chamado | ordem de chamada convocado
@@ -151,6 +158,13 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 **perguntas:** historico de cartas do candidato | cartas emitidas | gaveta do candidato | ver cartas de convocacao do candidato
 **resposta:** Clique no nome do candidato, em qualquer aba, para abrir a gaveta: os dados da lista, o status com a data da convocação e as cartas de convocação emitidas para ele (também nas listas anteriores do edital), com quando, quem, modelo e versão, como saiu, o prazo e se a convocação foi marcada pela carta. Se a leitura das cartas falhar, use "Tentar de novo" na gaveta.
 **fonte:** src/modulos/aprovados/gaveta-do-candidato.tsx; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql (listar_cartas_do_candidato)
+**abrir:** approved
+
+## Mudar o status de vários candidatos
+
+**perguntas:** mudar status de varios | mudar status em lote | selecionar varios candidatos | selecionar todos os candidatos | status em massa | marcar varios como desistente | convocar varios de uma vez
+**resposta:** Na aba Aprovados, quem tem Editor em Aprovados marca a caixa ao lado do nome de cada candidato, ou "Selecionar os N da tabela" para pegar todos os filtrados e buscados (não só as linhas desenhadas), e clica em "Mudar status". Em lote dá para escolher Convocado (com uma data para todos), Desistente ou Documentação Rejeitada; "Sem status" é só do Administrador em Aprovados. Contratado e Migração pedem a matrícula de cada um e continuam pelo botão de status da linha. Antes de gravar, a janela mostra quantos mudam, como estão hoje e quem fica de fora e por quê (já no status, lista inativa ou status definido que só o Administrador muda). São até 500 por vez, e cada mudança fica no histórico do candidato. Mudar um filtro ou a busca limpa a seleção.
+**fonte:** src/modulos/aprovados/status-em-lote.tsx; src/lib/status-em-lote-dos-aprovados.ts; supabase/migrations/20261111180000_status_em_lote_dos_aprovados.sql
 **abrir:** approved
 
 ## Cadeado no status do candidato

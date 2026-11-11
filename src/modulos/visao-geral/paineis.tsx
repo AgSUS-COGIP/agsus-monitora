@@ -62,7 +62,7 @@ export function Topo({
   aoExportar: () => void;
 }) {
   const status = !e.carregado
-    ? "Carregando dados..."
+    ? "Carregando dados…"
     : e.carregadoEm
       ? `Atualizado às ${horaCurta(e.carregadoEm)}`
       : "";

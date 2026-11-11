@@ -28,6 +28,13 @@ export interface EstadoDaAbaDeAprovados extends EstadoDaAcao {
   abrirCarta: (ids: readonly string[]) => void;
   abrirAlteracaoJudicial: (id: string) => void;
   removerSubJudice: (id: string) => Promise<unknown>;
+  /** Status em lote da seleção (status-em-lote.tsx). */
+  alterarStatusEmLote: (
+    ids: readonly string[],
+    status: string,
+    data?: string,
+  ) => Promise<unknown>;
+  carta: { hoje: () => string };
 }
 export interface PropsDaAbaDeAprovados {
   ativa: boolean;

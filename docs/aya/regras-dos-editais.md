@@ -90,6 +90,13 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 **resposta:** No formulário do edital, Inscritos, Aptos análise, Cancelados, Eliminados nota, Reprovados análise, Total eliminados, Aprovados análise, Aprovados prova, Entrevistados, Contratados e Vagas ociosas aparecem só para conferência: vêm das cargas do sistema e não se editam ali. A UF é preenchida pela unidade escolhida, e unidade nova digitada fica registrada na área do edital ao salvar.
 **fonte:** src/modulos/editais/modal-do-edital.tsx
 
+## Validade do processo seletivo
+
+**perguntas:** validade do processo seletivo | validade do edital | prazo de validade | edital prorrogado | prorrogacao do edital | quando a lista de aprovados vence | lista vencida | lista de aprovados inativa sozinha
+**resposta:** No formulário do edital, em "Validade do processo seletivo", informe os anos (0 a 10), os meses (0 a 11) e se o prazo foi prorrogado. O prazo conta da data de encerramento do edital: o último dia de validade é essa data mais os anos e meses, em dobro quando prorrogado (quando o mês de chegada não tem o dia, vale o último dia dele: 31/01 mais um mês dá 28/02 ou 29/02). Com 0 anos e 0 meses a lista não vence. O formulário mostra o prazo calculado. Passado o último dia (no horário de Brasília), a lista de aprovados vigente do edital fica inativa: na hora, ao salvar o edital, e todo dia logo depois da meia-noite. Para reativá-la, prorrogue o edital ou aumente o prazo.
+**fonte:** src/lib/validade-do-edital.ts; src/modulos/editais/modal-do-edital.tsx
+**abrir:** nucleo
+
 ## Quem pode cadastrar e editar editais
 
 **perguntas:** quem pode editar edital | quem pode cadastrar edital | botao novo edital nao aparece | nao consigo editar o edital | sumiu o lapis do edital | permissao editais
