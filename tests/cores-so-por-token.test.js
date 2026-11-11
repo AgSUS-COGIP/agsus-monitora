@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 /*
-  Cor só por token (DESIGN.md seção 0; docs/design-system-agsus.md 3.6).
+  Cor só por token (regras de ouro, docs/biblioteca/design-e-tokens.md; docs/design-system-agsus.md 3.6).
 
   Por que existe: no tema escuro, o balão das mensagens próprias do chat ficou
   quase branco com texto claro, e a auditoria de 08/10/2026 achou o mesmo

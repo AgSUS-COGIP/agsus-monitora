@@ -6,3 +6,21 @@ dist
 .cache
 test-results
 playwright-report
+coverage
+.vercel
+
+# Ambiente local e caches de ferramenta
+.venv
+.ruff_cache
+.pytest_cache
+.claude
+.obsidian
+
+# Fora do build do front (o build lê src/, server/, api/, scripts/, tests/ e docs/aya/)
+.github
+supabase
+python
+apps-script
+prototipos
+docs
+!docs/aya

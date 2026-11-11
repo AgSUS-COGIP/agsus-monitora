@@ -14,7 +14,7 @@ src/
   ui/         componentes visuais padrão (o design system)
   modulos/    um por tela: componentes + estado.js + consultas (RPC)
   lib/        regras puras, testadas
-  legado/     o que ainda não migrou (encolhe até sumir)
+  modules/    o legado: o que ainda não migrou (encolhe até sumir)
 ```
 
 ## Regras
@@ -38,7 +38,7 @@ src/
 
 | Etapa | O quê                                                                                |
 | ----- | ------------------------------------------------------------------------------------ |
-| 1     | **Fundação (feita):** `src/app/`, `src/ui/`, pastas `modulos/` e `legado/`, checagem |
+| 1     | **Fundação (feita):** `src/app/`, `src/ui/`, pasta `modulos/`, checagem do legado     |
 | 2     | Entrevistas, Recursos e Seleção saem do iframe (**feita**)                           |
 | 3     | Configurações (**feita**: `configuracoes/`, `acessos/`, `modulos/`; falta Status)    |
 | 4     | Análises (**feita**: `src/modulos/analises/`)                                        |
@@ -53,7 +53,7 @@ gera conflito com quem está trabalhando em paralelo.
 
 | Hoje                                                                                                             | Alvo                                                      | Quando     |
 | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ---------- |
-| `src/app/` (`raiz.tsx`, `telas.tsx`, `navegacao.ts`, `ErrorBoundary.tsx`)                                        | fica (`montar-modulo.tsx` sai no passo 3 da raiz única)   | —          |
+| `src/app/` (`raiz.tsx`, `telas.tsx`, `navegacao.ts`, `ErrorBoundary.tsx`)                                        | fica                                                      | —          |
 | `src/ui/` (design system)                                                                                        | fica                                                      | —          |
 | `src/componentes/icone.tsx`, `multi-select-busca.tsx`                                                            | `src/ui/`                                                 | ao tocar   |
 | Configurações (moldura, seções e `secoes.ts`), Acessos, Módulos e abas                                           | `src/modulos/configuracoes/`, `acessos/`, `modulos/`      | concluído  |
@@ -66,9 +66,8 @@ gera conflito com quem está trabalhando em paralelo.
 | `src/lib/`                                                                                                       | fica                                                      | —          |
 | `src/styles/tokens.css`                                                                                          | fica; os outros CSS vão com o módulo ou saem com o legado | cada etapa |
 
-`src/modules/` **é** o legado de hoje (`src/analises/` ficou só com o `CLAUDE.md`: o painel de
-Análises e o CSS do quadro saíram). O legado não muda de pasta
-aos poucos: uma pasta própria para ele só nasce numa mudança em bloco combinada antes
+`src/modules/` **é** o legado; `src/analises/` já foi removida. O legado não muda de pasta aos
+poucos: uma pasta própria para ele só nasce numa mudança em bloco combinada antes
 (`docs/biblioteca/codigo-legado.md`).
 
 ## Como criar um módulo novo
@@ -96,8 +95,8 @@ tests/<nome>.test.js          teste das regras de src/lib/
 **Uma raiz só** (`src/app/raiz.tsx`, `montarRaiz()` no começo de `src/main.ts`): o React monta em
 `#raiz` e desenha, por portal, os avisos (`#avisosApp`), a tela de acesso (`#telaDeEntrada`) e a
 casca (`#appScreen`: barra lateral, cabeçalho e as telas). O contexto do app
-(`src/app/contexto-do-app.ts`) entrega a navegação e o aviso curto. Rotas, ordem dos passos e
-riscos: **`docs/arquitetura/raiz-react.md`**.
+(`src/app/contexto-do-app.ts`) entrega a navegação e o aviso curto. Rotas e navegação: seção
+[Rotas e navegação](#rotas-e-navegação), abaixo.
 
 **Tela de página inteira = rota** (modelos: `src/modulos/recursos/`, `src/modulos/selecao/`,
 `src/modulos/entrevistas/`, `src/modulos/analises/`). O módulo exporta `criar<Nome>(opcoes)`, sem
@@ -132,6 +131,87 @@ Configurações a desenha no bloco dela (`#acessosApp`…) dentro do `<article>`
 (`confirmarSaida`, pelo registro). As seções que publicam pela barra fixa (Marca… Operação) entram
 por portal no corpo da seção, pela moldura `src/modulos/configuracoes/configuracoes.tsx` (rota
 `config`).
+
+## Rotas e navegação
+
+Um `createRoot` só (`src/app/raiz.tsx`, `montarRaiz()`, num `#raiz` do `index.html`). Avisos,
+entrada e casca entram por **portal** nos lugares de sempre (`#avisosApp`, `#telaDeEntrada`,
+`#appScreen`), com os mesmos ids e classes (CSS, testes e tours continuam valendo). A barra lateral,
+as telas e as peças da casca (Pessoas online, aviso de versão, encerramento, selos:
+`src/app/casca/pecas.tsx`) são filhas da raiz; a busca global também; a Aya baixa por `React.lazy`
+quando a sessão abre o app. A arara dos fogos e a cobertura do painel externo, em DOM feito à mão,
+entram por portais avulsos (`src/app/portais-avulsos.tsx`) até virarem React.
+
+**Rotas** `/:area/:tela[/:edital]` (`src/lib/rotas.ts`, regra pura com teste):
+
+| Tela (view)            | Endereço                                  |
+| ---------------------- | ----------------------------------------- |
+| `dashboard`            | `/saude-indigena/visao-geral`             |
+| `nucleo`               | `/sede/editais` (regras: `/:area/editais/:edital/regras/:etapa`) |
+| `calendario`           | `/projetos/cronograma`                    |
+| `approved`             | `/…/aprovados`                            |
+| `recursos`             | `/…/painel-de-recursos`                   |
+| `analisar-recursos`    | `/…/recursos`                             |
+| `entrevistas`          | `/…/painel-de-entrevistas`                |
+| `conduzir-entrevistas` | `/…/entrevistas[/:edital]`                |
+| `classificacao`        | `/…/classificacao[/:edital]`              |
+| `analises`             | `/…/analises`                             |
+| `avaliacao-documental` | `/…/avaliacao-documental`                 |
+| `pre-classificacao`    | `/…/triagem[/:edital]`                    |
+| `selecao`              | `/…/selecao`                              |
+| `config`               | `/administracao/configuracoes[/:secao]`   |
+| `panel:<codigo>`       | `/paineis/<codigo>`                       |
+| `sem-acesso`           | `/sem-acesso`                             |
+
+- `?visao=` leva a visão (`abrirVisao`) dos links antigos (`entrevistas:conduzir`). `/` abre a tela
+  de entrada (a guardada ou a inicial) com `replaceState`.
+- Os demais parâmetros da busca são os filtros da tela (`usarFiltrosNaUrl`/`usarLojaNaUrl`,
+  `src/app/usar-filtros-na-url.ts`; regras em `src/app/filtros-no-endereco.ts`): Triagem
+  (`edital`, `aba`, `situacao`, `vaga`, `motivo`), Avaliação documental (`edital`, `aba`, `etapa`,
+  `vaga`, `modalidade`, `minhas`) e Classificação (`edital`, `aba`, `tipo`, `vaga`, `lista`,
+  `situacao`). Edital, aba e etapa empilham; os outros trocam a entrada. O padrão não aparece, e a
+  busca por nome ou CPF nunca vai à URL. A navegação guarda os filtros da tela e os devolve ao
+  voltar a ela pelo menu; voltar/avançar dentro da mesma tela só troca os filtros.
+- **Roteador próprio, sem dependência.** O React Router somaria ~20 kB gzip a uma entrada já perto
+  do orçamento (`npm run check:bundle-size`); o app só precisa de `pushState`/`replaceState`/
+  `popstate` e de um store lido com `useSyncExternalStore`. `src/app/endereco.ts` faz isso; a regra
+  de caminho fica em `src/lib/rotas.ts`.
+- **A navegação é um store** (`criarNavegacao`, sem DOM): `obter()` devolve `{ view, area, visao,
+  edital, secao, aviso, titulo, subtitulo, abertura }`; `assinar()` avisa a casca, a barra, a
+  presença e a página aberta. `irPara(view, { edital, visao })` confere saída, versão nova e
+  permissão, empilha o endereço e publica. O `popstate` passa pelas mesmas guardas: recusado, o
+  endereço volta para o da tela atual; tela proibida ou inexistente substitui o endereço pela tela
+  de entrada e avisa. A área do endereço vira a área atual (`definirAreaAtual`) só se for do
+  usuário. O título do cabeçalho vem do store; a presença registra uma `abertura` por troca de
+  endereço.
+- **Configurações** desenha um `<article class="config-secao">` por seção, à vista só o da seção do
+  endereço; a navegação guarda as seções permitidas e a última aberta, conta `aberturaDaSecao` e
+  pergunta à seção antes de trocar.
+- **Regras do edital**: a navegação guarda `regras` (`{ edital, etapa }`); abrir por cima da tabela
+  de Editais empilha uma entrada, trocar de etapa substitui e o "← Editais" volta pelo histórico
+  (`endereco.voltar()`). As outras telas abrem por `navigate("nucleo", { edital, regras })`.
+- **Página desligada ou em manutenção**: a decisão é pura (`avisoDaPagina`,
+  `src/lib/pagina-desligada.ts`); a navegação publica `manutencao` e `faixa`, e a rota desenha
+  `#page-manutencao` e `#faixaDeManutencao`. A situação do sistema fica em
+  `src/app/situacao-do-sistema.ts`.
+- **Hospedagem**: `vercel.json` reescreve as rotas do app para `/index.html` (arquivo com ponto,
+  `/api`, `/assets`, `/auth`, `/icons` e `/data` ficam de fora); `server/servidor.ts` serve o
+  `index.html` para caminhos de rota; o `sw.js` cobre sem rede.
+- **Deep link e login**: endereço de rota aberto sem sessão fica guardado no `sessionStorage`; o
+  retorno do Google (`/?auth=google`) abre a tela pedida, se o perfil puder.
+
+Cuidados ao mexer:
+
+| Risco                                                  | Cuidado                                                                                         |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| Deep link 404 na Vercel                                | `rewrites` com teste que lê o `vercel.json`; servidor com teste de rota                         |
+| Voltar do navegador com alteração não salva            | o `popstate` passa por `confirmarSaida`; recusado, o endereço volta (`pushState` da tela atual) |
+| Link compartilhado para tela que a pessoa não pode ver | `bloqueioDaTela`: aviso e tela de entrada, com `replaceState`                                   |
+| Área do endereço que não é da pessoa                   | ignorada; vale a área atual dela                                                                |
+| Tela desmontada perde filtros                          | as telas visitadas continuam montadas, só a `.active` muda                                      |
+| `render()` em dobro (StrictMode, reabertura)           | a rota guarda a última `abertura` atendida                                                      |
+| Ordem de arranque (quem procura id logo depois)        | a raiz desenha com `flushSync` antes de `ligarSistema()`                                        |
+| `popstate` com o mesmo caminho (marcas do histórico)   | não troca de tela                                                                               |
 
 ## Telas sob demanda (fora do pacote principal)
 
@@ -317,7 +397,7 @@ Ficou para depois (ainda em `src/modules/` ou no `index.html`):
    resto das partes. As telas continuam `<section class="page">` com `.active`.
    `src/componentes/barra-lateral/`, `dados-do-monitoramento.ts` e `usar-area-atual.ts` mudam
    para `src/app/` quando a barra virar filha da casca.
-2. **Rotas**: feitas (`docs/arquitetura/raiz-react.md`): a área e a tela no endereço; a tela
+2. **Rotas**: feitas (ver [Rotas e navegação](#rotas-e-navegação)): a área e a tela no endereço; a tela
    guardada no localStorage só vale quando a página abre na raiz (`/`).
 3. `pwa-lifecycle.ts` (a situação dos módulos já foi: `src/app/situacao-do-sistema.ts`),
    `catalogo-de-abas.ts`, `copia-da-sessao-indexeddb.ts`, `cache-de-payload-indexeddb.ts`,
@@ -352,9 +432,8 @@ acoes.ts             os botões chamam window.refreshData, exportPDF… na hora 
 procura um id da casca (sistema, ilhas, legado) já o encontra. O `#appScreen` continua no
 `index.html` (classe `hidden` desde o primeiro quadro). A casca não tem props; quem se redesenha são
 as filhas que leem estado: a barra lateral, o título do cabeçalho e as telas (a `.active` vem da
-navegação). Perfil, textos configuráveis e a faixa de manutenção ainda são escritos de fora, e as
-ilhas que sobram (Pessoas online, Aya, aviso de versão, encerramento, selos) são raízes próprias
-nos elementos vazios dela (passo 2 de `docs/arquitetura/raiz-react.md`). Testes que leem a marcação do app usam
+navegação). Perfil e textos configuráveis ainda são escritos de fora; Pessoas online, aviso de
+versão, encerramento e selos são filhas da casca (`src/app/casca/pecas.tsx`). Testes que leem a marcação do app usam
 `tests/pagina-montada.ts` (`htmlDaPagina()`: o `index.html` com a casca desenhada).
 
 **Parte B** — o celular (até 900px), em `src/app/casca/`:

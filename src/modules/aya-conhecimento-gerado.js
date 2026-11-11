@@ -704,7 +704,7 @@ export const VERBETES_AYA = Object.freeze([
       'A Avaliação documental é o módulo de trabalho da etapa "Avaliação Documental e de Títulos": escolhido o edital, a coordenação cadastra a regra da avaliação daquele edital (blocos por documento ou pergunta da Empregare, eliminatórios com o item do edital, critério étnico com aldeias, escolaridade por nível, cursos, experiência, nota declarada, lote, distribuição, revisão e os textos do parecer) e diz quem analisa, quem revisa e quem coordena (aba Equipe). Há a regra, a equipe, a Triagem (a Lista Provisória por ART e o lote de convocação de cada vaga, com as listas oficiais PROVISORIA e LOTE) e a Fila (as fichas de quem está no lote, a distribuição entre os analistas e a reserva da ficha aberta); o conteúdo da ficha (documentos, títulos, vínculos e nota) chega na fase seguinte. O resultado continua aparecendo no Painel das análises. As abas Regra, Equipe e Triagem são só de quem coordena o edital (gestor do edital, coordenação na equipe ou administrador global); quem analisa ou revisa (e quem só lê) vê só a Fila, que abre direto.',
     fato: "",
     fonte:
-      "src/modulos/avaliacao-documental/; docs/analises-no-monitora/plano-de-construcao.md",
+      "src/modulos/avaliacao-documental/; docs/biblioteca/avaliacao-documental-pendencias.md",
     abrir: "avaliacao-documental",
   },
   {
@@ -743,7 +743,7 @@ export const VERBETES_AYA = Object.freeze([
       'São duas entradas do menu. O Painel das análises (a tela que antes se chamava Análises curriculares) é só leitura: indicadores, pendências, carga por responsável, evolução e a lista das análises, com a permissão Painel das análises. A Avaliação documental é o trabalho: regra da avaliação, equipe e, nas próximas fases, a Provisória por ART, o lote, a fila e a ficha do candidato, com a permissão própria "Avaliação documental". No edital com a análise no MONITORA (o botão ao lado de "Avaliação:", da coordenação), cada ficha grava na hora na mesma base que o Painel das análises e a Classificação leem.',
     fato: "No MONITORA, o Painel das análises é leitura (permissão analises) e a Avaliação documental é o trabalho da avaliação (permissão avaliacao_documental).",
     fonte:
-      "docs/analises-no-monitora/desenho.md; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql",
+      "docs/biblioteca/modulo-avaliacao-documental.md; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql",
     abrir: "avaliacao-documental",
   },
   {
@@ -5325,6 +5325,9 @@ export const VERBETES_AYA = Object.freeze([
       "ver polos e unidades",
       "abrir o territorio",
       "mapa detalhado do dsei",
+      "como uso o mapa dos dseis",
+      "mapa dos dseis",
+      "mapa da saude indigena",
     ],
     resposta:
       'No MONITORA, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e recorta a página inteira (indicadores e tabela) por ele. "← Voltar ao Brasil", no topo do mapa do DSEI, volta à visão nacional sem apagar os outros filtros.',
@@ -6137,6 +6140,27 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-dos-editais.md",
+    titulo: "Alertas de cronograma na tabela de Editais",
+    perguntas: [
+      "alertas dos editais",
+      "etiqueta do edital",
+      "cronograma incompleto",
+      "proxima etapa em ate 3 dias",
+      "proxima etapa em ate 7 dias",
+      "situacao excepcional",
+      "cronograma regular",
+      "indicadores de editais sem numero",
+      "nao foi possivel carregar os alertas dos editais",
+    ],
+    resposta:
+      'Em Editais, cada linha da tabela leva a etiqueta do seu alerta: Sem cronograma (nenhuma etapa cadastrada), Cronograma incompleto (faltam etapas), Próxima etapa em até 3 dias, Próxima etapa em até 7 dias ou Situação excepcional (registrada à mão). Cronograma regular não leva etiqueta. O indicador Próximos 7 dias soma os de até 3 e até 7 dias. Enquanto o resumo não chega, os indicadores aparecem como cartões cinzas, nunca zerados: zero é sempre um número apurado. "Nenhum edital ativo nesta área" quer dizer que não há edital cadastrado, não que houve falha; "Não foi possível carregar os alertas dos editais" é falha, e o botão "Tentar novamente" pede de novo.',
+    fato: "",
+    fonte:
+      "src/lib/editais-do-nucleo.ts; src/modulos/editais/painel-operacional.tsx",
+    abrir: "nucleo",
+  },
+  {
+    arquivo: "regras-dos-editais.md",
     titulo: "Status e etapa calculados pelo cronograma",
     perguntas: [
       "como o status do edital e calculado",
@@ -6501,16 +6525,22 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-dos-mapas.md",
-    titulo: "Mapa da Saúde Indígena",
+    titulo: "Mapa e Satélite",
     perguntas: [
-      "como uso o mapa dos dseis",
-      "mapa dos dseis",
-      "mapa da saude indigena",
+      "mapa e satelite",
+      "botao satelite",
+      "vista de satelite",
+      "trocar o fundo do mapa",
+      "mapa cinza",
+      "mapa nao carrega",
+      "mapa voltou sozinho para o mapa",
+      "camada de fundo do mapa",
     ],
     resposta:
-      'Na Visão geral da Saúde Indígena, o mapa mostra os DSEIs e as CASAIs, com as Terras Indígenas, e a lista "Territórios por vagas". Escolher um DSEI recorta a página inteira por ele e mostra polos e unidades; voltar ao Brasil sai do território e mantém os outros filtros. Trocar Mapa ou Satélite muda só o fundo cartográfico.',
+      'No canto do mapa, "Mapa" mostra a vista cartográfica (fronteiras, nomes e estradas) e "Satélite" mostra a imagem aérea da Esri, boa para ver o terreno em volta de um polo. Trocar muda só o fundo, não os pontos. A escolha fica guardada no navegador e vale para a próxima visita. Se o fundo escolhido falhar quatro vezes seguidas, o mapa passa sozinho para o outro. Se o mapa ficar cinza nas duas vistas, o problema é a rede ou o acesso aos servidores dos mapas, não os dados do MONITORA.',
     fato: "",
-    fonte: "src/lib/visao-geral-da-area.ts; docs/aya/regras-da-visao-geral.md",
+    fonte:
+      "src/modules/map-base-layer-switcher.ts; src/modulos/mapa-saude-indigena/leaflet.ts",
   },
   {
     arquivo: "regras-dos-mapas.md",

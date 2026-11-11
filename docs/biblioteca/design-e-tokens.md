@@ -1,62 +1,88 @@
 ---
 tipo: regra
 area: front
-atualizado: 2026-11-10
+atualizado: 2026-11-11
 ---
 
 # Design e tokens
 
-O guia normativo da interface é o [`DESIGN.md`](../../DESIGN.md), na raiz: **leia a seção 0 sempre
-que for tocar em CSS**; as demais, só a que o trabalho pede. A norma institucional é o
-[Design System AgSUS](../design-system-agsus.md) (cores, tipografia, espaçamento, raio, sombra,
-componentes, acessibilidade): onde ele e o `DESIGN.md` divergirem, vale o Design System; o
-`DESIGN.md` diz como o MONITORA chega lá e guarda as regras locais (divergências na seção 12).
+A norma de interface é o [Design System AgSUS](../design-system-agsus.md) (cores, tipografia,
+espaçamento, raio, sombra, componentes, gráficos, linguagem, acessibilidade). Esta nota guarda só o
+que é do MONITORA: as regras de ouro, os tokens, as exceções aceitas ao DS. Valores (cor, medida,
+camada) moram no código (`src/styles/tokens.css`, `app.css`), não em documento. Onde escrever CSS e
+a dívida: [[css]].
 
-## Regras de ouro (DESIGN.md, seção 0)
+## Regras de ouro (leia antes de tocar em CSS)
 
-1. Cor, raio, sombra, espaçamento e z-index vêm de **token** (`var(--…)`). Nenhum hex novo em regra
-   de componente (`tests/cores-so-por-token.test.js`).
+1. Cor, raio, sombra, espaçamento e z-index vêm de **token** (`var(--…)`). Nenhum hex novo fora de
+   `tokens.css` (`tests/cores-so-por-token.test.js`; exceções em
+   `tests/fixtures/cores-literais-permitidas.json`).
 2. Nenhum `!important` novo e nenhum seletor `#id` novo. Se for obrigatório vencer uma regra
    legada, faça e comente a origem.
 3. Não crie `*-fix.css`, `post-NNN-*.css` ou `*-refinement.css`: corrija na regra de origem.
 4. Antes de escrever, descubra quem já manda no elemento (`grep … | grep -E "important|#"`).
 5. Confira o estilo computado no navegador (`getComputedStyle(el).prop`), não o arquivo.
-6. Contraste AA: texto ≥ 4,5:1, texto grande e bordas de controle ≥ 3:1. `--brand-accent` é só
-   preenchimento decorativo, nunca cor de texto.
-7. Pesos só 400, 500 e 600; nada abaixo de 12px; conteúdo principal com 14px; sentence case.
-8. Anime só `opacity` e `transform`. O tema escuro sai de `html[data-theme="dark"]`.
+6. Contraste AA: texto ≥ 4,5:1, texto grande e bordas de controle ≥ 3:1, só com os pares do DS
+   (3.4). `--brand-accent` é só preenchimento decorativo, nunca cor de texto. Calcule, não estime
+   (`tests/foco-e-borda-dos-campos.test.ts`).
+7. Pesos só 400, 500 e 600; nada abaixo de 12px; conteúdo principal com 14px; sentence case
+   (`tests/tipografia-das-telas.test.ts`).
+8. Anime só `opacity` e `transform`.
 9. Regra do escoteiro: ao mexer num componente, migre para token os valores daquele bloco.
 
 ## Tokens
 
-- Moram em `src/styles/tokens.css`, primeiro import do `src/main.ts`; os valores são os do Design
-  System AgSUS, seção 8. **Código novo usa os nomes oficiais** (`--color-text-secondary`,
-  `--color-bg-subtle`, `--radius-lg`, `--text-body`…); os nomes antigos do MONITORA (`--brand-*`,
-  `--surface-*`, `--text-*`, `--state-*`, `--series-*`) apontam para os oficiais (tabela na seção
-  3.1 do `DESIGN.md`).
+- Moram em `src/styles/tokens.css`, primeiro import do `src/main.ts`; os valores são os do DS,
+  seção 8. **Código novo usa os nomes oficiais** (`--color-text-secondary`, `--color-bg-subtle`,
+  `--radius-lg`, `--text-body`…); os nomes antigos do MONITORA (`--brand-*`, `--surface-*`,
+  `--text-*`, `--state-*`, `--series-*`) e os de `app.css` (`--card`, `--muted`…) apontam para os
+  oficiais (comentário no topo de cada arquivo).
 - Raio: controle `--radius-md`, card `--radius-lg`, painel e modal `--radius-xl`.
-- Camadas: escada `--z-sticky` … `--z-toast` (seção 3.7); nada acima de `--z-toast`
-  (`tests/camadas-acima-da-barra.test.js`).
-- Séries de gráfico e mapa: `--series-1` … `--series-6` (seção 6; `tests/cores-das-series.test.js`
-  lê a tabela do `DESIGN.md`).
-- Cores de etapa do calendário: tokens `--etapa-*`; Terras Indígenas têm cores de domínio (3.1).
-- A cor da barra lateral vem de Configurações → Aparência (`ui_sidebar_background_color`):
-  exceção aceita ao `--color-sidebar-bg` oficial, por decisão de 25/09/2026.
+- **Camadas** (`--z-*`, em `app.css`): nada acima de `--z-toast`. A Aya fica em 10042, acima do
+  cabeçalho e da barra do celular e abaixo do aviso de parabéns (10045). Quem precisa ficar acima
+  da barra lateral usa `--z-overlay` (modal de busca) ou `--z-toast` (link de pular, aviso de
+  conexão, aviso de sessão); `tests/camadas-acima-da-barra.test.js` guarda a ordem.
+- Cores de etapa do calendário: `--etapa-*`. Terras Indígenas têm cores de domínio, não de paleta
+  ([[terras-indigenas]]).
 
-## Tema escuro (seção 5)
+## Séries de gráfico e mapa
+
+`--series-1` … `--series-6` (azul, laranja, ciano, violeta, magenta, oliva; claro e escuro em
+`tokens.css`, fixados por `tests/cores-das-series.test.js`), validadas com a skill `dataviz`
+(luminosidade, croma, daltonismo, contraste ≥ 3:1). Além do DS 13:
+
+- ordem fixa, nunca ciclada; a 7ª série vira "Outros";
+- a cor segue a entidade, não a posição: filtrar não repinta quem ficou (ex.: um projeto no mapa
+  de Projetos);
+- verde, âmbar e vermelho são de estado, nunca de série;
+- legenda com rótulo obrigatória: magenta e oliva ficam no limite da separação para tritanopia.
+
+## Tema escuro
 
 Chave canônica `html[data-theme="dark"]`, definida em `src/app/moldura.ts`. `body.dark-mode` é
-espelho (não escreva regra nova com ele); `body.sidebar-theme-dark` é o tema configurável da
-barra, outro assunto. O escuro é escolhido, não invertido: cada cor tem seu valor validado.
+espelho (não escreva regra nova com ele); `body.sidebar-theme-dark` é a cor configurada da barra,
+outro assunto. O escuro é escolhido, não invertido: cada token tem o próprio valor no bloco escuro
+de `tokens.css`. Fora do escopo do DS: mantido, sem investir.
+
+## Exceções aceitas ao Design System
+
+Decisões do responsável (25/09/2026); não "corrigir" para o DS.
+
+| Exceção | Como fica |
+| ------- | --------- |
+| KPIs em card (DS 11.7 pede faixa sem card) | `Kpi` de `src/ui/`: card compacto de ~78px no padrão do DS 11.6 (borda sutil, sem sombra), em todas as telas |
+| Blocos da tela em card | filtros, tabela, mapa e blocos em card (DS 11.6, sem sombra), sem card dentro de card; 12px entre os blocos, não os 48px de seção do DS 5.2 |
+| Cor da barra lateral | a de Configurações → Aparência (`ui_sidebar_background_color`), não o `--color-sidebar-bg` oficial |
 
 ## Componentes
 
-React usa `src/ui/` ([[componentes-padrao]]); marcação do legado usa os componentes da seção 4
-(`.btn`, `.card`, `.table-card`, `.modal`, `.chip`, `.alert`), sem inventar classe.
+React usa `src/ui/` ([[componentes-padrao]]); marcação do legado usa as classes de componente do
+DS 11 (`.btn`, `.card`, `.table-card`, `.modal`, `.chip`, `.alert`), sem inventar classe. Não
+redefina `.btn` em CSS de módulo.
 
 ## Relacionadas
 
-- [[css]] — onde escrever CSS e como a cascata funciona
+- [[css]] — onde escrever CSS, a cascata e a dívida
 - [[acessibilidade]] — contraste, foco, teclado
 - [[mobile]] — breakpoints e responsividade
 - [[icones]] — Lucide e o registro único

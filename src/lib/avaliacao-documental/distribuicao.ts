@@ -1,6 +1,6 @@
 /*
   Distribuição das fichas da avaliação documental entre os analistas do
-  edital (docs/analises-no-monitora/, fase F3). Sem DOM e sem estado.
+  edital (docs/biblioteca/modulo-avaliacao-documental.md, fase F3). Sem DOM e sem estado.
 
   A mesma conta existe em Python (python/monitora/avaliacao_documental/
   distribuicao.py), que o job da triagem usa para dar as fichas

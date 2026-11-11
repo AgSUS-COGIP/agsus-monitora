@@ -71,8 +71,6 @@ datas). Ver [[funcoes-da-vercel]].
 
 ## Guias e histórias
 
-- [Guia de uso do Núcleo e dos mapas](../nucleo-e-mapas.md): indicadores, alertas da fila,
-  atualizar e estados do painel.
 - [Histórias de usuário de Editais](../historias-de-usuario/editais.md) (ED-1, ED-2), citadas em
   `tests/componentes/nucleo.test.ts` e `tests/editais-do-nucleo.test.js`.
 - Explicações para quem usa: `docs/aya/regras-dos-editais.md` ([[aya-base-de-conhecimento]]).

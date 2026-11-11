@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 /*
-  Estados de bloco (DESIGN.md, "Estados de página"): nada a mostrar e ainda
+  Estados de bloco (Design System, seção 12): nada a mostrar e ainda
   carregando (`.ui-vazio`). `className` troca a classe quando o bloco tem
   outra moldura (o texto de uma seção da gaveta).
 */

@@ -273,7 +273,7 @@ const rotuloDeValor: Plugin<"bar"> = {
         if (x === null || y === null) return;
         ctx.save();
         ctx.fillStyle = cor || corDoToken("--text-primary", "#20324a");
-        // Nada abaixo de 12px (DESIGN.md, tipografia).
+        // Nada abaixo de 12px (regras de ouro, docs/biblioteca/design-e-tokens.md).
         ctx.font = "600 12px Geist, system-ui, sans-serif";
         ctx.textAlign = deitado ? "left" : "center";
         ctx.textBaseline = deitado ? "middle" : "bottom";
@@ -302,7 +302,7 @@ const textoNoCentro: Plugin<"doughnut"> = {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = cfg.cor || corDoToken("--text-primary", "#20324a");
-    // Peso até 600 (DESIGN.md, tipografia); o tamanho já destaca o número.
+    // Peso até 600 (regras de ouro, docs/biblioteca/design-e-tokens.md); o tamanho já destaca o número.
     ctx.font = "600 28px Geist, system-ui, sans-serif";
     ctx.fillText(cfg.principal || "", x, y - 8);
     ctx.fillStyle =

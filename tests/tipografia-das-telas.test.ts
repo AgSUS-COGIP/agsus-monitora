@@ -3,7 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 /*
-  Tipografia das telas React (DESIGN.md seção 0, regra 7; Design System AgSUS
+  Tipografia das telas React (regras de ouro 7, docs/biblioteca/design-e-tokens.md; Design System AgSUS
   4.1 e 4.3): pesos só até 600, nada abaixo de 12px e sentence case — sem
   `text-transform: uppercase` em rótulos, títulos e botões.
 

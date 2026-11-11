@@ -22,7 +22,6 @@ A documentação do MONITORA é um vault do Obsidian com a raiz do repositório 
 | `docs/*.md` (fora das pastas) | documentos longos de referência, citados por código ou pela Aya; as notas apontam para eles |
 | `docs/aya/`                  | base de conhecimento da Aya, compilada para o app (ver [[aya-base-de-conhecimento]])      |
 | `CLAUDE.md` das pastas       | só a regra local da pasta (10 a 30 linhas) e os links das notas                            |
-| `DESIGN.md` (raiz)           | guia normativo de interface (ver [[design-e-tokens]])                                     |
 
 ## Regras
 
@@ -69,7 +68,7 @@ Obsidian, feche-o antes: aberto, ele grava a configuração da memória por cima
 | azul    | notas de tela (`modulo-*`)                           |
 | verde   | as outras notas da biblioteca                        |
 | laranja | a base da Aya (`docs/aya/`)                          |
-| ciano   | documentos longos (`docs/`, `DESIGN`, `README`, `LEIA-ME`) |
+| ciano   | documentos longos (`docs/`, `README`, `LEIA-ME`) |
 | cinza   | o que saiu de uso (`docs/_arquivo/`)                 |
 
 Nenhum documento fica solto: cada `regras-*.md` da Aya é ligado pela nota da tela (e todos por

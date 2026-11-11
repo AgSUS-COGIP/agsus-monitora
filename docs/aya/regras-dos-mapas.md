@@ -42,11 +42,11 @@ Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-
 **resposta:** A fila do editor de Projetos começa em "Só pendentes": são os lugares cuja posição ainda não foi conferida pelo administrador global ou por um Gestor. Na carga inicial, todo município aparece porque o ponto é só a sede do município (o edital diz o município, não o endereço), e todo lugar só com UF aparece porque o ponto é o centro do estado. Também ficam pendentes o lugar sem coordenada, o município cujo nome, código ou UF não batem, o mesmo município com coordenadas diferentes e o ponto fora do Brasil. A gravidade compara a posição com a referência do lugar (a sede do município pelo IBGE ou o centro da UF): "Provável erro" quando falta a coordenada, o motivo já é um erro ou a referência está a mais de 10 km; "Revisar" quando ela está entre 2 e 10 km, ou quando a lotação é um escritório e o edital só diz a UF; "Só confirmar" quando a posição é a da referência; e "Sem sugestão" quando não há posição candidata. As sugestões são a sede do município (IBGE), o centro da UF, a sede do DSEI do mapa da Saúde Indígena (para escritório distrital) e os outros lugares das vagas na mesma UF.
 **fonte:** src/lib/coordenadas-dos-projetos.ts; src/lib/editor-de-coordenadas.ts; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql
 
-## Mapa da Saúde Indígena
+## Mapa e Satélite
 
-**perguntas:** como uso o mapa dos dseis | mapa dos dseis | mapa da saude indigena
-**resposta:** Na Visão geral da Saúde Indígena, o mapa mostra os DSEIs e as CASAIs, com as Terras Indígenas, e a lista "Territórios por vagas". Escolher um DSEI recorta a página inteira por ele e mostra polos e unidades; voltar ao Brasil sai do território e mantém os outros filtros. Trocar Mapa ou Satélite muda só o fundo cartográfico.
-**fonte:** src/lib/visao-geral-da-area.ts; docs/aya/regras-da-visao-geral.md
+**perguntas:** mapa e satelite | botao satelite | vista de satelite | trocar o fundo do mapa | mapa cinza | mapa nao carrega | mapa voltou sozinho para o mapa | camada de fundo do mapa
+**resposta:** No canto do mapa, "Mapa" mostra a vista cartográfica (fronteiras, nomes e estradas) e "Satélite" mostra a imagem aérea da Esri, boa para ver o terreno em volta de um polo. Trocar muda só o fundo, não os pontos. A escolha fica guardada no navegador e vale para a próxima visita. Se o fundo escolhido falhar quatro vezes seguidas, o mapa passa sozinho para o outro. Se o mapa ficar cinza nas duas vistas, o problema é a rede ou o acesso aos servidores dos mapas, não os dados do MONITORA.
+**fonte:** src/modules/map-base-layer-switcher.ts; src/modulos/mapa-saude-indigena/leaflet.ts
 
 ## Coordenadas do mapa
 

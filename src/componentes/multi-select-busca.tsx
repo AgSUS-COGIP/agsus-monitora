@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 /*
   Select com busca e escolha múltipla — o único do app principal (Análises usa
-  Tom Select; DESIGN.md, seção 4). Controlado: a tela guarda a seleção e a
+  Tom Select; não crie um terceiro). Controlado: a tela guarda a seleção e a
   recebe de volta por `aoMudar`.
 
   Usado também nos filtros de Análises curriculares (src/modulos/analises/). As classes

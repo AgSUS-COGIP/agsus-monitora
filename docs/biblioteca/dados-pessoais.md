@@ -21,7 +21,7 @@ e os logs do GitHub Actions são **públicos**: nada pessoal sai em log, artefat
 | Nome do parente (P20)                 | analista, revisor e coordenação              | mascarado como o CPF                              |
 
 Os registros de acesso (`TL_ACESSO_FICHA_ANALISE`) ficam só para a coordenação e o administrador
-global. Desenho completo em [docs/analises-no-monitora/desenho.md](../analises-no-monitora/desenho.md),
+global. Decisões da Avaliação documental em [[avaliacao-documental-pendencias]],
 seção 10.
 
 ## Nos robôs e jobs

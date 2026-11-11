@@ -16,7 +16,7 @@ Cada `[[nome]]` é `docs/biblioteca/<nome>.md`.
 Regras daqui:
 
 - Tela nova é React em `modulos/`, registrada em `app/telas.tsx`; nada novo em `modules/`.
-- Visual só com `ui/` e tokens; antes de tocar em CSS, `DESIGN.md` seção 0 ([[design-e-tokens]]).
+- Visual só com `ui/` e tokens; antes de tocar em CSS, as regras de ouro de [[design-e-tokens]].
 - Sem `innerHTML`/`dangerouslySetInnerHTML`; `StrictMode` ligado (efeito limpa o que instala); nada
   de `createRoot` novo nem `MutationObserver` novo.
 - Dados só por RPC do contrato ([[rpc-e-contrato]]); auth só pela sessão ([[sessao-e-auth]]).

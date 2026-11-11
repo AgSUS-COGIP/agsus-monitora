@@ -371,11 +371,12 @@ avisar ninguém.
 
 ## 8. Como fechar as Tarefas 2 e 3
 
-O auditor está pronto e testado:
-[`scripts/arquivo/auditar-coordenadas.mjs`](../../scripts/arquivo/auditar-coordenadas.mjs).
+O auditor, `scripts/arquivo/auditar-coordenadas.mjs`, saiu do repositório no commit `c330eb28`
+(o teste junto). Para usar, recupere-o do histórico do git:
 
 ```bash
-node scripts/arquivo/auditar-coordenadas.mjs --arquivo export.json --csv relatorio.csv
+git show c330eb28^:scripts/arquivo/auditar-coordenadas.mjs > auditar-coordenadas.mjs
+node auditar-coordenadas.mjs --arquivo export.json --csv relatorio.csv
 ```
 
 Ele não escreve nada, e aceita duas entradas: a variável `SUPABASE_DB_URL` (em

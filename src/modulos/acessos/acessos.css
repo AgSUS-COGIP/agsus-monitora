@@ -389,7 +389,7 @@ td.acessos-vazio {
 }
 
 /*
-  ── Modal da pessoa (DESIGN.md 4, "detalhe": até 880px) ───────────────────────
+  ── Modal da pessoa (detalhe: até 880px; Design System 11.11) ────────────────
   Centralizado, cabeçalho e rodapé fixos, só o corpo rola (nunca na
   horizontal). O nome "gaveta" ficou das classes e dos ids.
 */

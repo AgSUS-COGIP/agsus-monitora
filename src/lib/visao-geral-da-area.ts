@@ -105,7 +105,7 @@ export const plural = (total: unknown, um: string, varios: string) =>
 
 /*
   Os projetos da área Projetos, na ordem das séries do design system
-  (`--series-1` … `--series-6`, DESIGN.md seção 6). A cor segue o projeto,
+  (`--series-1` … `--series-6`, docs/biblioteca/design-e-tokens.md, "Séries"). A cor segue o projeto,
   não a posição: filtrar não repinta quem fica. O projeto vem da unidade do
   edital ("Projeto Agora Tem Especialistas Caminhoneiros") e é reconhecido
   pela palavra, sem acento nem caixa. Projeto fora da lista fica com a série 0

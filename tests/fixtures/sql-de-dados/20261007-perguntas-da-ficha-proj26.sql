@@ -1,7 +1,7 @@
 /*
   CORREÇÃO DE DADOS — o modelo PROJ26-CURRICULAR com as perguntas da Empregare
   ligadas aos blocos e a nota declarada de titulação e cursos (fase F4 do
-  plano: docs/analises-no-monitora/plano-de-construcao.md).
+  fases: docs/biblioteca/modulo-avaliacao-documental.md).
 
   Por quê: a ficha (F4) mostra em cada bloco o que o candidato DECLAROU na
   Empregare (a resposta das perguntas ligadas ao bloco) e compara os pontos

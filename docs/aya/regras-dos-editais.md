@@ -20,6 +20,13 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 **fonte:** src/lib/editais-do-nucleo.ts; src/modulos/editais/painel-operacional.tsx; docs/historias-de-usuario/editais.md
 **abrir:** nucleo
 
+## Alertas de cronograma na tabela de Editais
+
+**perguntas:** alertas dos editais | etiqueta do edital | cronograma incompleto | proxima etapa em ate 3 dias | proxima etapa em ate 7 dias | situacao excepcional | cronograma regular | indicadores de editais sem numero | nao foi possivel carregar os alertas dos editais
+**resposta:** Em Editais, cada linha da tabela leva a etiqueta do seu alerta: Sem cronograma (nenhuma etapa cadastrada), Cronograma incompleto (faltam etapas), Próxima etapa em até 3 dias, Próxima etapa em até 7 dias ou Situação excepcional (registrada à mão). Cronograma regular não leva etiqueta. O indicador Próximos 7 dias soma os de até 3 e até 7 dias. Enquanto o resumo não chega, os indicadores aparecem como cartões cinzas, nunca zerados: zero é sempre um número apurado. "Nenhum edital ativo nesta área" quer dizer que não há edital cadastrado, não que houve falha; "Não foi possível carregar os alertas dos editais" é falha, e o botão "Tentar novamente" pede de novo.
+**fonte:** src/lib/editais-do-nucleo.ts; src/modulos/editais/painel-operacional.tsx
+**abrir:** nucleo
+
 ## Status e etapa calculados pelo cronograma
 
 **perguntas:** como o status do edital e calculado | status do edital | status calculado | etapa calculada | cronograma pendente | como a etapa do edital e calculada

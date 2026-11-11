@@ -1,7 +1,7 @@
 # `src/componentes/` — a moldura React
 
-Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Este arquivo fica porque o `DESIGN.md` o cita como
-a regra de como o legado fala com os componentes; a regra mora em [[legado-fala-com-react]].
+Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Como o legado fala com os componentes:
+[[legado-fala-com-react]].
 
 Aqui fica só a moldura: barra lateral ([[modulo-barra-lateral]]), busca global
 ([[modulo-busca-global]]), Status das atualizações (`saude-das-cargas/`,

@@ -342,7 +342,7 @@ body.config-loading #loginScreen {
   margin-top: 1px;
 }
 
-/* Rótulo de campo: sentence case, peso 600 (DESIGN.md seção 0). O rótulo de
+/* Rótulo de campo: sentence case, peso 600 (regras de ouro, docs/biblioteca/design-e-tokens.md). O rótulo de
    caixa de marcar/opção (filtros, "Agrupar por projeto") é texto comum: fica
    de fora. */
 label:where(:not(:has(input[type="checkbox"], input[type="radio"]))) {

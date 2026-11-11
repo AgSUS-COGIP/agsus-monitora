@@ -94,7 +94,7 @@ import type { IconNode } from "lucide";
   A migração do Font Awesome para o Lucide começa pela barra lateral e pelo
   que é dela: Sair, tema e o botão de recolher (o ☰ do celular). O
   resto do app continua em Font Awesome até cada componente migrar — nunca os
-  dois conjuntos dentro do mesmo componente (DESIGN.md, "Ícones").
+  dois conjuntos dentro do mesmo componente (docs/biblioteca/icones.md).
 
   Dois jeitos de desenhar, o mesmo registro: `criarIcone` devolve um SVG do DOM
   (código sem framework) e `<Icone>` (`src/componentes/icone.tsx`) desenha o
