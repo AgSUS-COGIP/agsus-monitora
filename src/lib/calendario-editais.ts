@@ -207,7 +207,32 @@ export async function comLimite<T, R>(
   return resultados;
 }
 
-/** Só os editais que têm cronograma: os outros custariam uma chamada à toa. */
+/*
+  EDITAL SUSPENSO NÃO ENTRA NO CRONOGRAMA (cartão #59). As datas de um edital
+  suspenso não vão acontecer como estão: mostrá-las no Mês, na Semana, na
+  Lista, em "Próximas etapas" e na linha do tempo dizia o contrário. O status
+  lido é o da linha do resumo (`get_nucleo_cronograma_resumo`): o efetivo, com
+  o status excepcional (`status_override`, gravado pelo formulário de Editais)
+  por cima do que as datas dizem, como private."FC_ESTADO_DO_CRONOGRAMA"; o
+  `status_override` também é olhado, para o caso de o resumo vir sem o
+  efetivo. Grafias da planilha ("SUSPENSO", "Suspensa") valem, como em
+  `statusCanonico` (src/lib/editais-do-nucleo.ts). Paralisado e Cancelado
+  seguem aparecendo: o cartão pede só o suspenso. Basta filtrar aqui: as
+  etapas (de `listar_etapas_do_cronograma` ou, sem ela, uma chamada por
+  edital) só entram para os editais desta lista, e o cache guarda o que já
+  passou por este filtro.
+*/
+export function editalSuspenso(linha: unknown): boolean {
+  const registro = registroDoCalendario(linha);
+  return [registro.status, registro.status_override].some((valor) =>
+    normalizarTexto(txt(valor)).includes("suspens"),
+  );
+}
+
+/**
+ * Os editais que entram no cronograma: com cronograma (os outros custariam uma
+ * chamada à toa) e não suspensos (`editalSuspenso`).
+ */
 export function editaisComCronograma(resumo: unknown): EditalComCronograma[] {
   const linhas: readonly unknown[] = Array.isArray(resumo) ? resumo : [];
   const editais: EditalComCronograma[] = [];
@@ -221,6 +246,7 @@ export function editaisComCronograma(resumo: unknown): EditalComCronograma[] {
     )
       continue;
     if (!Number.isFinite(total) || total <= 0) continue;
+    if (editalSuspenso(registro)) continue;
     editais.push({
       id,
       unidade: txt(registro.unidade) || "Unidade não informada",
