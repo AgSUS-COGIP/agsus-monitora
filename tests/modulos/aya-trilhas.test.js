@@ -186,7 +186,7 @@ describe("Aprender", () => {
     await abrirPainel();
     await clicar($(".aya-trilha[data-trilha='primeiros-passos']"));
     expect(navegar).toHaveBeenCalledWith("dashboard");
-    expect(tituloDoPasso()).toBe("Boas-vindas ao MONITORA");
+    expect(tituloDoPasso()).toBe("Boas-vindas ao Yeendé");
     await clicar(botao("Próximo"));
     expect(tituloDoPasso()).toBe("Área atual");
     await clicar(botao("Próximo"));
@@ -233,7 +233,7 @@ describe("Aprender", () => {
       await montar();
       await abrirPainel();
       await clicar($(".aya-trilha[data-trilha='primeiros-passos']"));
-      expect(tituloDoPasso()).toBe("Boas-vindas ao MONITORA");
+      expect(tituloDoPasso()).toBe("Boas-vindas ao Yeendé");
     } finally {
       Storage.prototype.setItem = original;
     }
@@ -268,7 +268,7 @@ describe("primeira entrada", () => {
   it("aceitar começa a trilha", async () => {
     await montar();
     await clicar(botao("Mostrar"));
-    expect(tituloDoPasso()).toBe("Boas-vindas ao MONITORA");
+    expect(tituloDoPasso()).toBe("Boas-vindas ao Yeendé");
   });
 
   it("sem perfil (antes de entrar), não oferece", async () => {

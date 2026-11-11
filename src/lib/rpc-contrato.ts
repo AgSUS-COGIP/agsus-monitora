@@ -204,7 +204,7 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     argumentos: [],
     critica: false,
     resumo:
-      "true quando quem está autenticado tem conta no MONITORA e ela está desativada.",
+      "true quando quem está autenticado tem conta no Yeendé e ela está desativada.",
   },
   // ── Identidade e autorização ────────────────────────────────────────────
   meu_usuario: {
@@ -263,7 +263,7 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
   obter_ritmo_da_analise: {
     argumentos: ["p_area"],
     resumo:
-      "Card Ritmo da análise do Painel das análises (migration 20261019170000): por edital da área com a avaliação documental no MONITORA, contagens por situação, concluídas por dia (14 dias), equipe de analistas, avaliadores recentes, cronograma e os destaques de hoje (pódio e candidatos ao selo Precisão: nome, concluídas e reabertas hoje; migration 20261021100000); só quem pode ler o Painel da área.",
+      "Card Ritmo da análise do Painel das análises (migration 20261019170000): por edital da área com a avaliação documental no Yeendé, contagens por situação, concluídas por dia (14 dias), equipe de analistas, avaliadores recentes, cronograma e os destaques de hoje (pódio e candidatos ao selo Precisão: nome, concluídas e reabertas hoje; migration 20261021100000); só quem pode ler o Painel da área.",
   },
   obter_encerramentos_do_edital: {
     argumentos: [],
@@ -1622,7 +1622,7 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     argumentos: ["p_edital", "p_origem", "p_motivo"],
     critica: false,
     resumo:
-      "A coordenação da avaliação do edital (ou o admin global; 42501) troca o dono: MONITORA (as fichas alimentam TB_ANALISE_CURRICULAR, o Painel das análises e a Classificação; a planilha deixa de mexer no edital; recusa 23514 se a planilha já decidiu análises) ou PLANILHA. Motivo de 10 a 2.000 e histórico. Devolve { origem, anterior, mudou, publicadas, devolvidas }.",
+      "A coordenação da avaliação do edital (ou o admin global; 42501) troca o dono: Yeendé (as fichas alimentam TB_ANALISE_CURRICULAR, o Painel das análises e a Classificação; a planilha deixa de mexer no edital; recusa 23514 se a planilha já decidiu análises) ou PLANILHA. Motivo de 10 a 2.000 e histórico. Devolve { origem, anterior, mudou, publicadas, devolvidas }.",
   },
   // ── Avaliação documental: regra e equipe (20261006100000_regra_da_analise.sql)
   listar_editais_avaliacao: {

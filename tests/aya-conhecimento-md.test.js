@@ -64,7 +64,7 @@ describe("base de conhecimento em docs/aya", () => {
 describe("compilador da base", () => {
   it("acusa verbete sem perguntas, mesmo que só tenha fato", () => {
     const { problemas } = compilarExemplo(
-      "# Exemplo\n\n## Sem gatilho\n\n**fato:** Algo.\n**fonte:** interface do MONITORA\n",
+      "# Exemplo\n\n## Sem gatilho\n\n**fato:** Algo.\n**fonte:** interface do Yeendé\n",
     );
     expect(problemas).toEqual([
       "exemplo.md › Sem gatilho: não tem perguntas que o disparem",
@@ -78,11 +78,11 @@ describe("compilador da base", () => {
         "## Um",
         "**perguntas:** lista de aprovados",
         "**resposta:** Um.",
-        "**fonte:** interface do MONITORA",
+        "**fonte:** interface do Yeendé",
         "## Dois",
         "**perguntas:** as listas dos aprovados",
         "**resposta:** Dois.",
-        "**fonte:** interface do MONITORA",
+        "**fonte:** interface do Yeendé",
       ].join("\n\n"),
     );
     expect(problemas).toHaveLength(1);
@@ -91,7 +91,7 @@ describe("compilador da base", () => {
 
   it("aceita variações da mesma pergunta no mesmo verbete", () => {
     const { problemas } = compilarExemplo(
-      "## Edital\n\n**perguntas:** edital | editais\n**resposta:** Edital.\n**fonte:** interface do MONITORA\n",
+      "## Edital\n\n**perguntas:** edital | editais\n**resposta:** Edital.\n**fonte:** interface do Yeendé\n",
     );
     expect(problemas).toEqual([]);
   });

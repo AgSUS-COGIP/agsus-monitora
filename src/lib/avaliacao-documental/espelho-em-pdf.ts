@@ -203,7 +203,7 @@ export function pdfDoEspelho(
   doc.setProperties({
     title: textoParaOPdf(espelho.nomeDoArquivo),
     subject: textoParaOPdf(espelho.titulo),
-    creator: "MONITORA",
+    creator: "Yeendé",
   });
   doc.setLanguage?.("pt-BR");
   doc.setLineHeightFactor(ALTURA_DA_LINHA);

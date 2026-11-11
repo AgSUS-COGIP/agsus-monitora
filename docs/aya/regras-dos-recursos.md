@@ -35,8 +35,8 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 ## Fluxo do parecer jurídico
 
 **perguntas:** parecer juridico | fluxo do recurso | como funciona o fluxo do parecer juridico | fluxo do parecer juridico | em analise juridica | enviar para parecer | situacoes do recurso
-**resposta:** No MONITORA, o recurso nasce Registrado: quem edita Recursos cadastra os dados, anexa documentos e escreve o rascunho da resposta, e então o envia para parecer jurídico (Em análise jurídica). Só quem tem a permissão "Parecer jurídico (Recursos)" decide: defere, defere parcialmente ou indefere, sempre com o texto do parecer (10 a 20.000 caracteres), ou devolve para ajuste com um comentário. Quem decidiu, quando e o parecer ficam gravados, e cada passo vai para o histórico do recurso.
-**fato:** No MONITORA, o recurso vai de Registrado a Em análise jurídica e só quem tem a permissão Parecer jurídico decide (Deferido, Deferido parcialmente ou Indeferido); o nível Administrador de Recursos não decide.
+**resposta:** No Yeendé, o recurso nasce Registrado: quem edita Recursos cadastra os dados, anexa documentos e escreve o rascunho da resposta, e então o envia para parecer jurídico (Em análise jurídica). Só quem tem a permissão "Parecer jurídico (Recursos)" decide: defere, defere parcialmente ou indefere, sempre com o texto do parecer (10 a 20.000 caracteres), ou devolve para ajuste com um comentário. Quem decidiu, quando e o parecer ficam gravados, e cada passo vai para o histórico do recurso.
+**fato:** No Yeendé, o recurso vai de Registrado a Em análise jurídica e só quem tem a permissão Parecer jurídico decide (Deferido, Deferido parcialmente ou Indeferido); o nível Administrador de Recursos não decide.
 **fonte:** supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/recursos-dos-candidatos.ts
 
 ## Quem pode decidir um recurso
@@ -49,31 +49,31 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 ## Aguardando parecer
 
 **perguntas:** aguardando parecer | o que é aguardando parecer | kpi aguardando parecer
-**resposta:** No MONITORA, "Aguardando parecer" conta os recursos Em análise jurídica: já enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a tela por eles. No detalhe, quem não tem o parecer jurídico (e todos no Painel de recursos) vê "Aguardando parecer jurídico" no lugar dos botões de decisão.
+**resposta:** No Yeendé, "Aguardando parecer" conta os recursos Em análise jurídica: já enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a tela por eles. No detalhe, quem não tem o parecer jurídico (e todos no Painel de recursos) vê "Aguardando parecer jurídico" no lugar dos botões de decisão.
 **fonte:** src/modulos/recursos/paineis.tsx; src/lib/recursos-dos-candidatos.ts
 
 ## Deferido parcialmente
 
 **perguntas:** deferido parcialmente | parcialmente indeferido | deferidos inclui parcialmente
-**resposta:** No MONITORA, "Deferido parcialmente" é o mesmo que "parcialmente indeferido" (o código no banco continua PARCIALMENTE_INDEFERIDO, usado pelos modelos de resposta). O indicador "Deferidos" soma os deferidos e os deferidos parcialmente.
+**resposta:** No Yeendé, "Deferido parcialmente" é o mesmo que "parcialmente indeferido" (o código no banco continua PARCIALMENTE_INDEFERIDO, usado pelos modelos de resposta). O indicador "Deferidos" soma os deferidos e os deferidos parcialmente.
 **fonte:** supabase/migrations/20261001170000_recursos_parecer_juridico.sql
 
 ## Devolvido para ajuste
 
 **perguntas:** devolvido para ajuste | recurso devolvido | devolvidos pelo juridico
-**resposta:** No MONITORA, o jurídico pode devolver um recurso Em análise jurídica para ajuste, dizendo o que falta (3 a 2.000 caracteres). Ele volta a Registrado, com o comentário em destaque no detalhe, e aparece na pendência "Devolvidos pelo jurídico" até ser reenviado.
+**resposta:** No Yeendé, o jurídico pode devolver um recurso Em análise jurídica para ajuste, dizendo o que falta (3 a 2.000 caracteres). Ele volta a Registrado, com o comentário em destaque no detalhe, e aparece na pendência "Devolvidos pelo jurídico" até ser reenviado.
 **fonte:** supabase/migrations/20261001170000_recursos_parecer_juridico.sql
 
 ## Reabrir a decisão
 
 **perguntas:** reabrir decisão | desfazer decisão do recurso | mudar a decisão do recurso
-**resposta:** No MONITORA, só o jurídico reabre uma decisão, com motivo, e só enquanto a resposta não foi enviada ao candidato. O recurso volta a Em análise jurídica; o parecer anterior continua no histórico.
+**resposta:** No Yeendé, só o jurídico reabre uma decisão, com motivo, e só enquanto a resposta não foi enviada ao candidato. O recurso volta a Em análise jurídica; o parecer anterior continua no histórico.
 **fonte:** supabase/migrations/20261001170000_recursos_parecer_juridico.sql
 
 ## Resposta ao candidato e parecer
 
 **perguntas:** aprovar resposta do recurso | publicar resposta do recurso | aprovar exige a decisão | quem marca a resposta como enviada | marcar resposta enviada | resposta enviada ao candidato
-**resposta:** No MONITORA, quem edita escreve o rascunho da resposta e pode enviá-lo para revisão; aprovar ou devolver o texto da resposta é do parecer jurídico, e aprovar exige o recurso decidido e um modelo da mesma situação da decisão (quem escreveu ou enviou para revisão não aprova). Marcar a resposta como enviada ao candidato é de quem edita, só com a resposta aprovada e o recurso decidido: isso marca a etapa "Resposta enviada ao candidato" com o nome de quem marcou e a hora. Depois disso a decisão não reabre.
+**resposta:** No Yeendé, quem edita escreve o rascunho da resposta e pode enviá-lo para revisão; aprovar ou devolver o texto da resposta é do parecer jurídico, e aprovar exige o recurso decidido e um modelo da mesma situação da decisão (quem escreveu ou enviou para revisão não aprova). Marcar a resposta como enviada ao candidato é de quem edita, só com a resposta aprovada e o recurso decidido: isso marca a etapa "Resposta enviada ao candidato" com o nome de quem marcou e a hora. Depois disso a decisão não reabre.
 **fonte:** supabase/migrations/20261001170000_recursos_parecer_juridico.sql (transicionar_resposta_recurso, marcar_etapa_recurso)
 
 ## Prazo do recurso
@@ -85,13 +85,13 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 ## Indicadores do Painel de recursos
 
 **perguntas:** indicadores dos recursos | quais sao os indicadores dos recursos | kpis dos recursos | onde está o total de recursos | taxa de conclusão dos recursos | sem processo sei
-**resposta:** No MONITORA, o Painel de recursos tem quatro indicadores: Aguardando parecer, Prazo vencido, Deferidos (com os parcialmente) e Indeferidos; cada um filtra a tela. O total está na contagem da fila; a taxa de decisão, no recorte ("% decididos"); sem processo SEI, sem resposta, respostas em revisão, aprovadas ou devolvidas, mudança de nota, prazo vencendo e registrados sem envio estão nas Pendências prioritárias e nos gráficos.
+**resposta:** No Yeendé, o Painel de recursos tem quatro indicadores: Aguardando parecer, Prazo vencido, Deferidos (com os parcialmente) e Indeferidos; cada um filtra a tela. O total está na contagem da fila; a taxa de decisão, no recorte ("% decididos"); sem processo SEI, sem resposta, respostas em revisão, aprovadas ou devolvidas, mudança de nota, prazo vencendo e registrados sem envio estão nas Pendências prioritárias e nos gráficos.
 **fonte:** src/modulos/recursos/paineis.tsx; src/lib/recursos-dos-candidatos.ts
 
 ## Pendências do Painel de recursos
 
 **perguntas:** pendências dos recursos | prazo não encontrado no cronograma | candidato fora das análises | mudança de nota ou classificação | nota mudou
-**resposta:** No MONITORA, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com os dados digitados, que vale conferir; "Mudança de nota ou classificação" junta a nota mudou (a nota atual da análise difere da guardada no cadastro do recurso) e a classificação mudada pelo ajuste da pontuação aprovado, para conferir no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias; "Devolvidos pelo jurídico" são os que voltaram para ajuste.
+**resposta:** No Yeendé, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com os dados digitados, que vale conferir; "Mudança de nota ou classificação" junta a nota mudou (a nota atual da análise difere da guardada no cadastro do recurso) e a classificação mudada pelo ajuste da pontuação aprovado, para conferir no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias; "Devolvidos pelo jurídico" são os que voltaram para ajuste.
 **fonte:** src/lib/recursos-dos-candidatos.ts; supabase/migrations/20260929120000_recursos.sql
 
 ## Anexos e modelos de resposta
@@ -104,21 +104,21 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 
 **perguntas:** ajuste da pontuacao | ajustar a pontuacao do candidato | mudar a pontuacao no recurso | mudar a nota no recurso | em recurso posso mudar a classificacao | como mudar a classificacao pelo recurso | alterar a nota do candidato no recurso | corrigir a nota do candidato
 **resposta:** Sim. Em Analisar recursos, no recurso deferido (total ou parcialmente), a seção "Ajuste da pontuação" da gaveta mostra os componentes da nota que a regra de classificação do edital tem — pertencimento étnico, formação, cursos, experiência, nota documental, entrevista ou cada competência, ART — com o valor atual (da análise ou da entrevista) e um campo para o novo valor e a justificativa; a nota documental (e a da entrevista, quando há competências) é a soma das diferenças. Escreva a justificativa geral ou a de cada componente alterado. Antes de confirmar, a prévia mostra a nova nota, a nova posição do candidato e quem muda de lugar por causa dele, calculadas pelo motor da Classificação na lista da etapa do recurso (documental, entrevista ou resultado final). Propor é de quem decide o recurso (Parecer jurídico); pode-se propor já em análise jurídica. A nota da planilha nunca é sobrescrita: cada proposta é uma versão guardada com quem propôs, quando e os valores antes e depois.
-**fato:** No MONITORA, o ajuste da pontuação do recurso deferido fica em tabela própria, em versões (proposto, aprovado, cancelado); a nota da análise curricular nunca é sobrescrita e só o ajuste aprovado vale na Classificação.
+**fato:** No Yeendé, o ajuste da pontuação do recurso deferido fica em tabela própria, em versões (proposto, aprovado, cancelado); a nota da análise curricular nunca é sobrescrita e só o ajuste aprovado vale na Classificação.
 **fonte:** src/modulos/recursos/ajuste.tsx; src/lib/classificacao/ajustes.ts; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql
 **abrir:** analisar-recursos
 
 ## Aprovar ou cancelar o ajuste da pontuação
 
 **perguntas:** aprovar o ajuste da pontuacao | quem aprova o ajuste | ajuste proposto | ajuste aprovado | cancelar o ajuste da pontuacao | previa do ajuste | reabrir cancela o ajuste
-**resposta:** No MONITORA, o ajuste proposto ainda não vale. Aprova quem aprova a resposta hoje (Parecer jurídico) e só com o recurso deferido, total ou parcialmente: ao aprovar, a prévia é recalculada com os dados de agora e gravada junto, e o ajuste passa a valer na Classificação (o aprovado anterior do mesmo recurso, se houver, fica como versão cancelada). Cancelar pede motivo. Reabrir a decisão, indeferir, devolver para ajuste ou excluir o recurso cancela o ajuste proposto e o aprovado automaticamente, e tudo fica no histórico do recurso.
+**resposta:** No Yeendé, o ajuste proposto ainda não vale. Aprova quem aprova a resposta hoje (Parecer jurídico) e só com o recurso deferido, total ou parcialmente: ao aprovar, a prévia é recalculada com os dados de agora e gravada junto, e o ajuste passa a valer na Classificação (o aprovado anterior do mesmo recurso, se houver, fica como versão cancelada). Cancelar pede motivo. Reabrir a decisão, indeferir, devolver para ajuste ou excluir o recurso cancela o ajuste proposto e o aprovado automaticamente, e tudo fica no histórico do recurso.
 **fonte:** supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql
 **abrir:** analisar-recursos
 
 ## O recurso mudou a classificação
 
 **perguntas:** o recurso mudou a classificacao | caixa mudou a classificacao | classificacao mudou | marcar que mudou a classificacao
-**resposta:** No MONITORA, "O recurso mudou a classificação" deixou de ser uma caixa marcada à mão: é marcada automaticamente quando o ajuste da pontuação aprovado muda a posição ou a situação do candidato (pela prévia calculada na aprovação) e desmarcada quando esse ajuste é cancelado. Os recursos marcados à mão antes dessa mudança continuam como estavam. A marca alimenta a pendência "Mudança de nota ou classificação", o filtro e o CSV.
+**resposta:** No Yeendé, "O recurso mudou a classificação" deixou de ser uma caixa marcada à mão: é marcada automaticamente quando o ajuste da pontuação aprovado muda a posição ou a situação do candidato (pela prévia calculada na aprovação) e desmarcada quando esse ajuste é cancelado. Os recursos marcados à mão antes dessa mudança continuam como estavam. A marca alimenta a pendência "Mudança de nota ou classificação", o filtro e o CSV.
 **fonte:** supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos-dos-candidatos.ts
 **abrir:** recursos
 

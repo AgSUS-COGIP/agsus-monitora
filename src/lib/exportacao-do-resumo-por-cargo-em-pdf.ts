@@ -58,7 +58,7 @@ export function pdfDoResumo(
     subject: textoParaOPdf(
       `Resumo por cargo e status - ${pedido.rotuloDaArea}`,
     ),
-    creator: "MONITORA",
+    creator: "Yeendé",
   });
   doc.setLanguage?.("pt-BR");
   const largura = doc.internal.pageSize.getWidth();

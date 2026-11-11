@@ -269,9 +269,7 @@ export function criarMoldura({
     publicar({
       relatorio: Object.freeze({
         // O recorte é o da área aberta (Saúde Indígena, SEDE ou Projetos).
-        titulo: ["AgSUS Monitora", nomeDaArea(areaAtual())]
-          .filter(Boolean)
-          .join(" — "),
+        titulo: ["Yeendé", nomeDaArea(areaAtual())].filter(Boolean).join(" — "),
         geradoEm,
         filtros: resumo.filtros,
         processos: resumo.processos,

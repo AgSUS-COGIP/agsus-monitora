@@ -30,11 +30,11 @@ export function AvisoDeVersao({ aviso }: { aviso: Controle }) {
       <p className="aviso-de-versao-texto">
         {forte ? (
           <strong>
-            Esta tela é de uma versão anterior do MONITORA. Atualize para
+            Esta tela é de uma versão anterior do Yeendé. Atualize para
             continuar.
           </strong>
         ) : (
-          "Há uma versão nova do MONITORA."
+          "Há uma versão nova do Yeendé."
         )}
         {estado.novidade ? (
           <span className="aviso-de-versao-novidade">

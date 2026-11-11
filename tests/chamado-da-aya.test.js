@@ -30,7 +30,7 @@ const base = {
   pagina: "Recursos",
   area: "SEDE",
   registro: "Edital 101/2026",
-  versao: "MONITORA Web V2.9.35",
+  versao: "Yeendé Web V2.9.35",
   quando: QUANDO,
 };
 
@@ -38,7 +38,7 @@ describe("montagem do chamado", () => {
   it("assunto com página e área; corpo com pergunta, resposta e contexto", () => {
     const chamado = montarChamado(base);
     expect(chamado.para).toBe("suporte@agenciasus.org.br");
-    expect(chamado.assunto).toBe("MONITORA · Chamado · Recursos · SEDE");
+    expect(chamado.assunto).toBe("Yeendé · Chamado · Recursos · SEDE");
     expect(chamado.corpo).toContain("Pergunta: Quem pode decidir um recurso?");
     expect(chamado.corpo).toContain(
       "Resposta da Aya: Só quem tem a permissão Parecer jurídico.",
@@ -47,7 +47,7 @@ describe("montagem do chamado", () => {
     expect(chamado.corpo).toContain("Área: SEDE");
     expect(chamado.corpo).toContain("Registro aberto: Edital 101/2026");
     expect(chamado.corpo).toContain("Data e hora (Brasília): 01/10/2026 14:05");
-    expect(chamado.corpo).toContain("Versão: MONITORA Web V2.9.35");
+    expect(chamado.corpo).toContain("Versão: Yeendé Web V2.9.35");
     expect(chamado.corpo).toContain(
       "Descreva aqui o problema e anexe prints, se quiser:",
     );
@@ -87,7 +87,7 @@ describe("montagem do chamado", () => {
     );
     expect(corpo).toMatch(/Resposta da Aya: .+…/);
     expect(corpo).toContain("Pergunta: Quem pode decidir um recurso?");
-    expect(corpo).toContain("Versão: MONITORA Web V2.9.35");
+    expect(corpo).toContain("Versão: Yeendé Web V2.9.35");
   });
 
   it("corta também a pergunta, se só a resposta não bastar", () => {

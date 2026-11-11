@@ -215,7 +215,7 @@ async function servirPagina(
   try {
     corpo = await readFile(resolve(dist, arquivo));
   } catch {
-    texto(res, 503, "MONITORA indisponível.");
+    texto(res, 503, "Yeendé indisponível.");
     return;
   }
   res.writeHead(200, {
@@ -321,7 +321,7 @@ function iniciar(): void {
   const servidor = criarServidor({ dist, cabecalhos });
   servidor.listen(porta, host, () => {
     console.log(
-      `MONITORA em http://${host === "0.0.0.0" ? "127.0.0.1" : host}:${porta} (servindo ${dist})`,
+      `Yeendé em http://${host === "0.0.0.0" ? "127.0.0.1" : host}:${porta} (servindo ${dist})`,
     );
   });
   for (const sinal of ["SIGINT", "SIGTERM"] as const) {

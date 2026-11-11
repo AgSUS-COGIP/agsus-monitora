@@ -1444,7 +1444,7 @@ describe("sessão, permissão, erro e demora", () => {
   it("sem sessão: aviso curto, sem o jargão do banco", async () => {
     await montar(supabaseFalso({ sessao: false }));
     expect(secao.querySelector(".ui-aviso").textContent).toBe(
-      "Sessão não localizada. Entre de novo no MONITORA.",
+      "Sessão não localizada. Entre de novo no Yeendé.",
     );
   });
 

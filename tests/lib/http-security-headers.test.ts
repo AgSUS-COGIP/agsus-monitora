@@ -52,7 +52,7 @@ describe("cabeçalhos HTTP de segurança", () => {
     A CSP ainda é Report-Only, então o frame-ancestors dela não bloqueia nada;
     quem bloqueia é o X-Frame-Options.
   */
-  it("não deixa outro site embutir o MONITORA em moldura", () => {
+  it("não deixa outro site embutir o Yeendé em moldura", () => {
     const config = loadConfig();
     const headers = headersForSource(config, "/(.*)");
 

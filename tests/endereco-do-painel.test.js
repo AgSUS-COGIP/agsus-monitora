@@ -17,7 +17,7 @@ describe("endereço do painel externo", () => {
     expect(enderecoDoPainel("http://[x", "http://localhost")).toBe("");
   });
 
-  it("recusa endereço relativo e o do próprio MONITORA", () => {
+  it("recusa endereço relativo e o do próprio Yeendé", () => {
     const origem = "https://monitora.exemplo";
     expect(enderecoDoPainel("/analises.html", origem)).toBe("");
     expect(enderecoDoPainel("analises.html", origem)).toBe("");

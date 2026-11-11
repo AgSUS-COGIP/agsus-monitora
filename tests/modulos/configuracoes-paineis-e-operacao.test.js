@@ -29,7 +29,7 @@ const PUBLICADO = {
   feature_realtime_monitoramento: "true",
   access_heartbeat_minutos: "5",
   cogip_versao: "V.2.7.3",
-  app_version_current: "MONITORA Web V2.9.35",
+  app_version_current: "Yeendé Web V2.9.35",
 };
 
 // Como `loadPanels` lê a TB_PAINEL_EXTERNO.
@@ -334,7 +334,7 @@ describe("Operação", () => {
     expect(corpo.contains($("configOperacao-cogipVersao"))).toBe(true);
     expect($("configOperacao-cogipVersao").value).toBe("V.2.7.3");
     expect($("configOperacao-appVersionCurrent").value).toBe(
-      "MONITORA Web V2.9.35",
+      "Yeendé Web V2.9.35",
     );
     expect($("configOperacao-featureRealtimeMonitoramento").value).toBe(
       "false",

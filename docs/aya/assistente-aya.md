@@ -7,8 +7,8 @@ O que a Aya faz, o que ela não faz e como abrir um chamado ao suporte. Fontes:
 ## O que a Aya faz
 
 **perguntas:** o que voce consegue fazer | o que voce faz | o que a aya faz | como a aya ajuda | para que serve a aya
-**resposta:** Eu explico cada tela do MONITORA e as regras de cada etapa do processo seletivo, sempre na página e na área em que você está, e leio o que já está carregado na tela. Respondo só com a base de conhecimento escrita e conferida pela equipe. Reconheço sinônimos, perguntas sem acento e pequenos erros de digitação. Quando não tenho certeza, ofereço até três perguntas parecidas e a opção de abrir chamado; perguntas fora do MONITORA recebem sugestões do que posso explicar. Quando a resposta depende de um dado que não está carregado, eu digo isso em vez de inventar. Também respondo números ao vivo (contagens e datas), explico a permissão que falta para o seu perfil e mostro a tela item por item. Posso oferecer um botão para abrir a tela certa, mas não altero nada por você.
-**fato:** A interface do MONITORA não tem textos explicativos: quem explica as telas e as regras é a Aya, no contexto da página e da área atuais.
+**resposta:** Eu explico cada tela do Yeendé e as regras de cada etapa do processo seletivo, sempre na página e na área em que você está, e leio o que já está carregado na tela. Respondo só com a base de conhecimento escrita e conferida pela equipe. Reconheço sinônimos, perguntas sem acento e pequenos erros de digitação. Quando não tenho certeza, ofereço até três perguntas parecidas e a opção de abrir chamado; perguntas fora do Yeendé recebem sugestões do que posso explicar. Quando a resposta depende de um dado que não está carregado, eu digo isso em vez de inventar. Também respondo números ao vivo (contagens e datas), explico a permissão que falta para o seu perfil e mostro a tela item por item. Posso oferecer um botão para abrir a tela certa, mas não altero nada por você.
+**fato:** A interface do Yeendé não tem textos explicativos: quem explica as telas e as regras é a Aya, no contexto da página e da área atuais.
 **fonte:** comportamento da Aya
 
 ## A arara da Aya (mascote)
@@ -22,7 +22,7 @@ O que a Aya faz, o que ela não faz e como abrir um chamado ao suporte. Fontes:
 ## Dados e privacidade da Aya
 
 **perguntas:** voce consulta meus dados | a aya ve meus dados | privacidade da aya | a conversa fica guardada
-**resposta:** Eu uso só o que já está disponível para você no MONITORA e não amplio seu acesso. A conversa fica guardada só nesta aba do navegador e some quando ela fecha; "Limpar conversa" apaga antes. A avaliação "Isso ajudou?" fica só no seu navegador.
+**resposta:** Eu uso só o que já está disponível para você no Yeendé e não amplio seu acesso. A conversa fica guardada só nesta aba do navegador e some quando ela fecha; "Limpar conversa" apaga antes. A avaliação "Isso ajudou?" fica só no seu navegador.
 **fonte:** src/modules/aya-memoria.ts; src/modulos/aya/
 
 ## Alterações pela Aya

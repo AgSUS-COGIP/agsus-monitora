@@ -253,6 +253,16 @@ body:not(.access-request-mode) .login-screen,
   --brand-primary-strong: var(--color-action-primary-hover);
   --brand-accent: var(--color-blue-400); /* só preenchimento decorativo */
 
+  /* Cores do Manual de Identidade Visual da AgSUS (marca Yeendé, 11/11/2026). Só
+     preenchimento de marca e ícone: amarelo, verde e vermelho não passam no
+     contraste de texto (1,5, 2,1 e 4,0:1 sobre branco). */
+  --marca-agsus-amarelo: #ffcf00;
+  --marca-agsus-verde: #00cf00;
+  --marca-agsus-azul-vivo: #183eff;
+  --marca-agsus-vermelho: #ff0000;
+  --marca-agsus-azul-escuro: #0055a1;
+  --marca-agsus-azul-claro: #0f8eed;
+
   --surface-page: var(--color-bg-canvas);
   --surface-card: var(--color-bg-canvas);
   --surface-raised: var(--color-bg-subtle);

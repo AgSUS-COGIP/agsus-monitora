@@ -52,7 +52,7 @@ import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb
 import { avaliarMarcosDasEntrevistas } from "./marcos.ts";
 
 export const MENSAGEM_SEM_SESSAO =
-  "Sessão não localizada. Entre de novo no MONITORA.";
+  "Sessão não localizada. Entre de novo no Yeendé.";
 export const MENSAGEM_SEM_ACESSO = "Sem acesso às Entrevistas";
 
 /* A cópia vale só para a mesma publicação do front (o endereço do módulo muda a cada build). */

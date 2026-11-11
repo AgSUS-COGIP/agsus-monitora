@@ -12,67 +12,67 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 
 **perguntas:** configuracao da pagina inicial | o que a secao pagina inicial define | para que serve pagina inicial | para que serve a secao pagina inicial | configurar pagina inicial | titulo da pagina inicial | subtitulo da pagina inicial
 **resposta:** Em Configurações, a seção Página inicial define o título e o subtítulo que abrem a página inicial, o aviso global, os textos do painel de filtros e o rótulo de cada um dos seis indicadores do topo. O título é obrigatório. A prévia ao lado mostra a página como ela vai ficar; os números da prévia são só marcadores.
-**fonte:** interface do MONITORA
+**fonte:** interface do Yeendé
 
 ## Aviso global
 
 **perguntas:** aviso global | como funciona o aviso global | aviso no topo | faixa de aviso | mensagem global | tipo do aviso
 **resposta:** O aviso global é a faixa no topo do sistema, vista por todas as pessoas. O tipo escolhe a cor: Informação (azul), Alerta (amarelo) ou Crítico (vermelho). Com a mensagem em branco, a faixa não aparece. Ele é definido em Configurações › Página inicial e só vale depois de salvo.
-**fonte:** interface do MONITORA
+**fonte:** interface do Yeendé
 
 ## Textos dos filtros e rótulos dos indicadores
 
 **perguntas:** texto do botao de filtros | mostrar filtros | ocultar filtros | rotulo dos indicadores | rotulos dos kpis
 **resposta:** Em Configurações › Página inicial, o grupo Filtros define o título e o subtítulo do painel de filtros do mapa e da tabela, e o texto do botão que abre os filtros (Mostrar) e que os fecha (Ocultar). O grupo Indicadores define o rótulo de cada número do topo da página inicial, na mesma ordem em que aparecem: Processos, Vagas, Contratações, Ociosas, Críticos e Inscritos.
-**fonte:** interface do MONITORA
+**fonte:** interface do Yeendé
 
 ## Tela de acesso nas Configurações
 
 **perguntas:** configurar tela de acesso | o que a secao tela de acesso define | para que serve tela de acesso | para que serve a secao tela de acesso | configurar tela de login | saudacao do login | saudacao da tela de acesso | slogan do login
-**resposta:** Em Configurações, a seção Tela de acesso define a saudação (o título grande do cartão de entrada) e o botão do Google: se ele aparece, o texto dele (vazio, fica "Entrar com Google") e o domínio sugerido. Também define quais domínios de e-mail podem entrar. São fixos o slogan "Monitoramento de Processos Seletivos", a linha "Acesse com sua conta institucional." acima do botão e o rodapé com o nome da Agência. A arte de fundo, o logo e a cor do cartão ficam na seção Aparência. A prévia ao lado mostra a tela como ela vai ficar.
-**fonte:** interface do MONITORA
+**resposta:** Em Configurações, a seção Tela de acesso define a saudação (o título grande do cartão de entrada) e o botão do Google: se ele aparece, o texto dele (vazio, fica "Entrar com Google") e o domínio sugerido. Também define quais domínios de e-mail podem entrar. São fixos o slogan "Gestão dos processos seletivos", a linha "Acesse com sua conta institucional." acima do botão e o rodapé com o nome da Agência. A arte de fundo, o logo e a cor do cartão ficam na seção Aparência. A prévia ao lado mostra a tela como ela vai ficar.
+**fonte:** interface do Yeendé
 
 ## Login com Google desligado
 
 **perguntas:** desligar login google | o que acontece se desligar o login google | login google inativo | desativar google | botao do google sumiu
 **resposta:** Com o Login Google em Inativo, o botão Entrar com Google some da tela de entrada (o espaço dele fica vazio). Como esse é o acesso institucional principal, as pessoas podem ficar sem conseguir entrar; por isso, ao salvar a desativação, o sistema pede confirmação antes de publicar.
-**fonte:** interface do MONITORA
+**fonte:** interface do Yeendé
 
 ## Domínio sugerido no login Google
 
 **perguntas:** dominio sugerido | dica de dominio | dominio do google
 **resposta:** O domínio sugerido é passado à tela do Google para quem tem mais de uma conta conectada, para que a conta institucional apareça primeiro. Deve ser escrito no formato agenciasus.org.br, sem https://, @ ou barras; fora desse formato, a publicação é recusada.
-**fonte:** interface do MONITORA
+**fonte:** interface do Yeendé
 
 ## Domínios permitidos
 
 **perguntas:** dominios permitidos | quais dominios podem entrar | dominios institucionais | quem pode entrar | email de outro dominio
 **resposta:** Só e-mails dos domínios permitidos passam da tela de entrada; quem entra com e-mail de outro domínio não chega ao sistema. Separe mais de um domínio por vírgula, como em agenciasus.org.br,agsus.org.br. Em branco, valem os domínios institucionais padrão (agenciasus.org.br e agsus.org.br).
-**fonte:** interface do MONITORA
+**fonte:** interface do Yeendé
 
 ## Arte de fundo da tela de acesso
 
 **perguntas:** arte de fundo | como trocar a arte de fundo da tela de acesso | como trocar a arte de fundo | imagem de fundo do acesso | fundo da tela de login | artes enviadas | arte de fundo cortada | logo cortado no login
 **resposta:** A arte de fundo da tela de acesso é escolhida em Configurações › Aparência. Use uma arte 16:9, em JPG, PNG ou WEBP, de até 6 MB. Diferente dos outros campos, a arte é aplicada na hora, sem passar por "Salvar alterações". Toda imagem enviada fica guardada em Artes enviadas para ser reutilizada. A arte em uso não pode ser apagada: para apagá-la, escolha outra ou restaure o padrão antes. Restaurar padrão volta para a arte institucional. Em tela mais larga que 16:9, a arte aparece inteira à direita, sobre uma cópia dela desfocada, sem cortar o logo; em tela mais estreita, o corte cai à esquerda, onde fica o cartão.
-**fonte:** interface do MONITORA
+**fonte:** interface do Yeendé
 
 ## Logo da tela de acesso
 
 **perguntas:** logo no acesso | logo da tela de login | logo da agsus no acesso
 **resposta:** O logo da tela de acesso aceita um caminho do próprio site, como /assets/agsus-logo.webp, ou um endereço HTTPS da identidade institucional. Endereço em outro formato é recusado na publicação.
-**fonte:** interface do MONITORA
+**fonte:** interface do Yeendé
 
 ## Cor do painel e texto sobre o painel
 
 **perguntas:** cor do painel de acesso | texto sobre o painel | contraste do painel | o que significa o contraste da cor do painel | sempre claro | sempre escuro
 **resposta:** A cor do painel pinta o cartão da tela de acesso. Em Texto sobre o painel, Automático escolhe texto claro ou escuro pelo contraste com a cor; Sempre claro e Sempre escuro impõem o texto, por decisão de identidade visual, mesmo quando isso reprova a WCAG. Abaixo da cor aparece a razão de contraste: abaixo de 4,5, quem tem baixa visão pode não conseguir ler, e uma cor mais escura ou mais clara resolve sem mudar o tom.
-**fonte:** interface do MONITORA
+**fonte:** interface do Yeendé
 
 ## Logo e cor da barra lateral
 
 **perguntas:** logo da barra lateral | como trocar a logo da barra lateral | cor da barra lateral | logos enviadas | trocar logo do menu
 **resposta:** A logo e a cor da barra lateral são escolhidas em Configurações › Aparência. A logo aceita JPG, PNG ou WEBP de até 6 MB; enviar guarda o arquivo em Logos enviadas, mas a escolha só vale depois de "Salvar alterações". Enquanto a escolha está pendente, a barra lateral já mostra a logo e a cor escolhidas; descartada a alteração, ela volta ao que está publicado. Os textos e ícones da barra mudam sozinhos para claro ou escuro conforme a cor. A logo selecionada não pode ser apagada: escolha outra ou restaure o padrão antes.
-**fonte:** interface do MONITORA
+**fonte:** interface do Yeendé
 
 ## Quem abre as Configurações
 
@@ -103,7 +103,7 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 ## Prévia da barra lateral
 
 **perguntas:** previa da barra lateral | a previa nao bate com a barra | previa diferente da barra | como fica a barra lateral | ver a cor da barra antes de salvar | previa do menu
-**resposta:** A prévia ao lado da seção Marca é a própria barra lateral, em miniatura e sem clique: a logo MONITORA, o seletor de área, os seus itens de menu com os selos BETA, Administração e o rodapé com Claro/Escuro, Recolher menu, Sair e a versão. Ela usa a cor e o logo escolhidos em Aparência antes de salvar e segue o tema claro ou escuro do sistema; para ver o outro tema, troque no rodapé da barra. Se a barra mudar, a prévia muda junto.
+**resposta:** A prévia ao lado da seção Marca é a própria barra lateral, em miniatura e sem clique: a logo Yeendé, o seletor de área, os seus itens de menu com os selos BETA, Administração e o rodapé com Claro/Escuro, Recolher menu, Sair e a versão. Ela usa a cor e o logo escolhidos em Aparência antes de salvar e segue o tema claro ou escuro do sistema; para ver o outro tema, troque no rodapé da barra. Se a barra mudar, a prévia muda junto.
 **fonte:** src/modulos/configuracoes/previa-da-barra-lateral.tsx; src/componentes/barra-lateral/barra-lateral.tsx
 **abrir:** config:marca
 
@@ -117,7 +117,7 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 ## Painéis externos
 
 **perguntas:** o que sao os paineis externos | paineis externos | para que serve paineis externos | para que serve a secao paineis externos | como por um painel em manutencao | painel externo
-**resposta:** Painéis externos são páginas de fora do MONITORA abertas pelo menu, no bloco Acompanhamento da área. Análises, Recursos, Entrevistas e Seleção viraram abas do próprio sistema e seus painéis externos foram arquivados; sem painel ativo, nenhum aparece no menu. Em Configurações › Painéis externos só se editam os painéis que já existem: título, endereço (https:// ou http://; painel ativo precisa de endereço), ativo e em manutenção. Ver um painel exige a marcação dele para a pessoa em Acessos.
+**resposta:** Painéis externos são páginas de fora do Yeendé abertas pelo menu, no bloco Acompanhamento da área. Análises, Recursos, Entrevistas e Seleção viraram abas do próprio sistema e seus painéis externos foram arquivados; sem painel ativo, nenhum aparece no menu. Em Configurações › Painéis externos só se editam os painéis que já existem: título, endereço (https:// ou http://; painel ativo precisa de endereço), ativo e em manutenção. Ver um painel exige a marcação dele para a pessoa em Acessos.
 **fonte:** src/lib/paineis-externos-das-configuracoes.ts; src/modulos/configuracoes/paineis-externos.tsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql
 **abrir:** config:recursos
 
@@ -138,7 +138,7 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 ## Comemorações
 
 **perguntas:** comemoracoes | o que sao as comemoracoes | secao comemoracoes | configurar comemoracoes | confete | fogos | fogos de artificio | serpentina | chuva de estrelas | baloes | coracoes | marcos do ano | som da comemoracao | pular comemoracao | arara nos fogos | efeito da comemoracao | intensidade da comemoracao | nao quero ver comemoracoes
-**resposta:** As comemorações celebram o processo e a equipe, nunca uma pessoa (não há ranking): edital todo analisado (só quando a última ficha em análise é concluída; quem a concluiu ganha uma comemoração própria) e fila de análises zerada, vaga pronta para o resultado final nas Entrevistas, marcos do ano da área (1.000, 2.500, 5.000, 7.500 e 10.000 análises concluídas, depois a cada 5.000), acesso liberado ou reativado e o fim de um tour ou de uma trilha comigo. Em Configurações › Comemorações, quem edita as configurações escolhe, para cada marco: ligado ou desligado, o efeito (Fogos, Confete, Serpentina, Chuva de estrelas, Corações, Balões, Aya comemorando ou Combinado), a intensidade (Suave, Normal ou Festa), a duração (de 2 a 15 segundos; em branco, automática), o som (desligado por padrão), uma mensagem própria e quem vê. Por enquanto só quem fez vê: "Toda a área online" depende de um aviso em tempo real que o MONITORA ainda não tem. Nos fogos, a tela escurece de leve, eu atravesso voando e o último estouro desenha o marco no céu (o número, um coração, uma estrela ou um visto). O aviso no topo tem "Pular" e o botão de som; o som só toca depois de você interagir com a página. Com movimento reduzido no aparelho, só o aviso. Cada marco aparece uma vez por pessoa. As mudanças valem depois de "Salvar alterações", com motivo, e ficam no histórico de Operação. Para não ver comemorações neste navegador, desligue "Para mim", na linha do título de Configurações › Comemorações. O liga/desliga geral, para todos, fica em Módulos e abas › Sistema inteiro.
+**resposta:** As comemorações celebram o processo e a equipe, nunca uma pessoa (não há ranking): edital todo analisado (só quando a última ficha em análise é concluída; quem a concluiu ganha uma comemoração própria) e fila de análises zerada, vaga pronta para o resultado final nas Entrevistas, marcos do ano da área (1.000, 2.500, 5.000, 7.500 e 10.000 análises concluídas, depois a cada 5.000), acesso liberado ou reativado e o fim de um tour ou de uma trilha comigo. Em Configurações › Comemorações, quem edita as configurações escolhe, para cada marco: ligado ou desligado, o efeito (Fogos, Confete, Serpentina, Chuva de estrelas, Corações, Balões, Aya comemorando ou Combinado), a intensidade (Suave, Normal ou Festa), a duração (de 2 a 15 segundos; em branco, automática), o som (desligado por padrão), uma mensagem própria e quem vê. Por enquanto só quem fez vê: "Toda a área online" depende de um aviso em tempo real que o Yeendé ainda não tem. Nos fogos, a tela escurece de leve, eu atravesso voando e o último estouro desenha o marco no céu (o número, um coração, uma estrela ou um visto). O aviso no topo tem "Pular" e o botão de som; o som só toca depois de você interagir com a página. Com movimento reduzido no aparelho, só o aviso. Cada marco aparece uma vez por pessoa. As mudanças valem depois de "Salvar alterações", com motivo, e ficam no histórico de Operação. Para não ver comemorações neste navegador, desligue "Para mim", na linha do título de Configurações › Comemorações. O liga/desliga geral, para todos, fica em Módulos e abas › Sistema inteiro.
 **fonte:** src/lib/catalogo-de-comemoracoes.ts; src/lib/motor-de-efeitos.ts; src/lib/comemoracao.ts; src/lib/fogos.ts; src/modulos/configuracoes/comemoracoes.tsx
 **abrir:** config:comemoracoes
 

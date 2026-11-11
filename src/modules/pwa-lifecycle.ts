@@ -131,8 +131,7 @@ export function marcarAtualizacaoPendenteParaTeste(valor = true): void {
   refreshingForUpdate = false;
 }
 
-const AVISO_SEM_SERVICE_WORKER =
-  "Service worker do AgSUS Monitora não foi registrado:";
+const AVISO_SEM_SERVICE_WORKER = "Service worker do Yeendé não foi registrado:";
 
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;

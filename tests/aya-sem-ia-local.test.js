@@ -18,7 +18,7 @@ describe("Aya sem máquina, sessão de IA ou túnel", () => {
         "Jurídico",
       );
       expect(
-        responder("pergunta do MONITORA que não conheço").oferecerChamado,
+        responder("pergunta do Yeendé que não conheço").oferecerChamado,
       ).toBe(true);
       expect(fetch).not.toHaveBeenCalled();
     } finally {

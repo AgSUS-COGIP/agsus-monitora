@@ -333,7 +333,7 @@ describe("avaliação e chamado", () => {
       ),
     ).toBe(true);
     expect(decodeURIComponent(href)).toContain(
-      "MONITORA · Chamado · Painel de recursos · SEDE",
+      "Yeendé · Chamado · Painel de recursos · SEDE",
     );
     expect(decodeURIComponent(href)).toContain(
       "Pergunta: Quem pode decidir um recurso?",
@@ -402,7 +402,7 @@ describe("a arara: rosto fechada, corpo no painel e escondida na borda", () => {
     expect(mascoteDoBotao().getAttribute("width")).toBe("56");
     // A área clicável e o nome acessível continuam os mesmos.
     expect(arara().getAttribute("aria-label")).toBe(
-      "Abrir a Aya, assistente do MONITORA",
+      "Abrir a Aya, assistente do Yeendé",
     );
     await abrirPainel();
     const doPainel = $(".aya-avatar svg.mascote");

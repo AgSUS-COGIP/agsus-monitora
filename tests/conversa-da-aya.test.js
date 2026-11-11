@@ -44,7 +44,7 @@ describe("intenções de conversa", () => {
     expect(ajuda.pergunta).toBe("como funciona o processo seletivo");
   });
 
-  it("não confunde palavra do MONITORA com conversa", () => {
+  it("não confunde palavra do Yeendé com conversa", () => {
     expect(intencaoDeConversa("quem pode decidir um recurso").intencao).toBe(
       "",
     );
@@ -61,7 +61,7 @@ describe("texto da conversa", () => {
         intro: "Posso explicar Recursos.",
       }),
     ).toBe(
-      "Bom dia! Sou a Aya, assistente do MONITORA. Posso explicar Recursos.",
+      "Bom dia! Sou a Aya, assistente do Yeendé. Posso explicar Recursos.",
     );
   });
 

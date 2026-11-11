@@ -23,7 +23,7 @@ describe("título e Aya conectados à navegação real", () => {
       aplicarAtualizacao: () => false,
     });
     navegacao.irPara(view);
-    expect(document.title).toBe("MONITORA");
+    expect(document.title).toBe("Yeendé");
     expect(navegacao.obter().titulo).toBe(titulo);
     expect(obterPaginaDaAya()).toMatchObject({ view, titulo });
     navegacao.desligar();

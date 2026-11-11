@@ -60,7 +60,7 @@ describe("ErrorBoundary", () => {
     // O resto da página continua lá.
     expect(document.getElementById("fora")?.textContent).toBe("fora");
     const nosso = espiaoDoConsole.mock.calls.find((chamada) =>
-      String(chamada[0]).includes("[MONITORA] Erro ao desenhar o teste"),
+      String(chamada[0]).includes("[Yeendé] Erro ao desenhar o teste"),
     );
     expect(nosso?.[1]?.message).toBe("falhou o render");
   });

@@ -244,7 +244,7 @@ describe("tela de acesso", () => {
     await montar();
     expect(document.querySelectorAll(".login-card")).toHaveLength(1);
     expect($("loginSubtitle")?.textContent).toBe(SLOGAN);
-    expect(SLOGAN).toBe("Monitoramento de Processos Seletivos");
+    expect(SLOGAN).toBe("Gestão dos processos seletivos");
     expect($("loginGreeting")?.textContent).toBe("Boas-vindas!");
     expect($("googleLoginText")?.textContent).toBe(TEXTO_DO_BOTAO);
     expect($("loginMsg")?.classList.contains("hidden")).toBe(true);

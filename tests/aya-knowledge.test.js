@@ -41,7 +41,7 @@ describe("fontes oficiais da Aya", () => {
     expect(ids).toContain("funai");
   });
 
-  it("não cita mais fontes de assuntos fora do MONITORA", () => {
+  it("não cita mais fontes de assuntos fora do Yeendé", () => {
     expect(AYA_SOURCE_CATALOG).not.toHaveProperty("anvisaMedicamentos");
     expect(AYA_SOURCE_CATALOG).not.toHaveProperty("ifab");
     expect(officialSourcesForQuestion("O que é medicamento?")).toEqual([]);
@@ -97,8 +97,8 @@ describe("base institucional pela busca", () => {
     );
   });
 
-  it("nega que MONITORA seja sigla, sem contradição", () => {
-    const answer = resposta("O que significa MONITORA? É uma sigla?");
+  it("nega que Yeendé seja sigla, sem contradição", () => {
+    const answer = resposta("O que significa Yeendé? É uma sigla?");
     expect(answer).toContain("Não é uma sigla");
     expect(answer).not.toMatch(/É uma sigla que/);
   });

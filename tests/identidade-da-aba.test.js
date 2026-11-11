@@ -26,7 +26,7 @@ const semComentarios = (fonte) =>
   publicada**. A cada aplicação da configuração o nome da página virava uma
   string de versão. Era isso que fazia o título "voltar".
 */
-describe("a aba identifica MONITORA", () => {
+describe("a aba identifica Yeendé", () => {
   it("mantém a marca ao navegar e receber configuração antiga", () => {
     for (const section of [
       "Saúde Indígena",
@@ -36,9 +36,9 @@ describe("a aba identifica MONITORA", () => {
       "",
     ]) {
       definirPaginaDaAba(section);
-      expect(document.title).toBe("MONITORA");
-      definirSistemaDaAba("AgSUS Monitora Web V2.9.35");
-      expect(document.title).toBe("MONITORA");
+      expect(document.title).toBe("Yeendé");
+      definirSistemaDaAba("Yeendé Web V2.9.35");
+      expect(document.title).toBe("Yeendé");
     }
   });
 });

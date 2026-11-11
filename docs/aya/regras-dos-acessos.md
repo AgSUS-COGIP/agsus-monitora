@@ -1,7 +1,7 @@
 # Regras dos Acessos
 
 Configurações › Acessos: pessoas, convites, grupos de permissões, coordenações, pedidos e contas
-desativadas. O acesso ao MONITORA é só por convite. Fontes: `src/modulos/acessos/`,
+desativadas. O acesso ao Yeendé é só por convite. Fontes: `src/modulos/acessos/`,
 `src/lib/permissoes-recursos.ts`, `src/lib/teto-de-acessos.ts`, `src/lib/convite-de-acesso.ts`,
 `src/lib/solicitacao-de-acesso.ts`, `src/lib/ver-como.ts`, `src/lib/access-roles.ts` e as migrations
 `20260929121000_grupos_de_acesso.sql`, `20260929121100_coordenacoes.sql`,
@@ -24,14 +24,14 @@ desativadas. O acesso ao MONITORA é só por convite. Fontes: `src/modulos/acess
 
 **perguntas:** como dar acesso a alguem | como dar acesso | dar acesso | adicionar pessoa | convidar pessoa | como convidar alguem | liberar acesso | acesso so por convite
 **resposta:** Em Configurações › Acessos › Usuários, clique em "Adicionar pessoa" e informe o e-mail institucional, o nome, o grupo (padrão Usuário), a coordenação (ou, sem coordenação, pelo menos uma área) e o motivo. O cadastro fica pronto antes de a pessoa entrar, e a tela mostra o "Convite pronto", com a mensagem para copiar ou abrir no e-mail. O link sozinho não dá acesso: só funciona entrando com a conta Google do e-mail convidado, e aí a pessoa entra sem precisar pedir acesso. Enquanto ela não entra, a situação mostra "Convidado · ainda não entrou" e dá para reenviar o convite; cancelar o convite (só o administrador global) desativa o cadastro, com motivo. O coordenador só cadastra na própria coordenação, com grupo dentro do teto dele.
-**fato:** O acesso ao MONITORA é só por convite: a pessoa é cadastrada em Configurações › Acessos e entra com a conta Google do e-mail convidado; o link sozinho não dá acesso.
+**fato:** O acesso ao Yeendé é só por convite: a pessoa é cadastrada em Configurações › Acessos e entra com a conta Google do e-mail convidado; o link sozinho não dá acesso.
 **fonte:** src/modulos/acessos/modal-adicionar-pessoa.tsx; src/lib/convite-de-acesso.ts; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql
 **abrir:** config:acessos
 
 ## Último acesso
 
 **perguntas:** ultimo acesso | o que e ultimo acesso | ultimo acesso errado | ultimo acesso desatualizado | quando a pessoa usou o sistema | ultimo login
-**resposta:** Em Configurações › Acessos, "Último acesso em …" é a última vez que a pessoa usou o MONITORA: o mais recente entre o último login, a última tela ou ação registrada e o último sinal de presença (enviado enquanto o sistema está aberto). Antes de 02/10/2026 era só o último login, e como a sessão se renova sozinha por semanas, a data ficava velha para quem continuava usando. "Convidado · ainda não entrou" aparece para quem nunca teve nenhum acesso. A aba "Desativadas" usa a mesma conta.
+**resposta:** Em Configurações › Acessos, "Último acesso em …" é a última vez que a pessoa usou o Yeendé: o mais recente entre o último login, a última tela ou ação registrada e o último sinal de presença (enviado enquanto o sistema está aberto). Antes de 02/10/2026 era só o último login, e como a sessão se renova sozinha por semanas, a data ficava velha para quem continuava usando. "Convidado · ainda não entrou" aparece para quem nunca teve nenhum acesso. A aba "Desativadas" usa a mesma conta.
 **fonte:** supabase/migrations/20261002200000_gestor_coordenadas_e_ultimo_acesso.sql; src/lib/convite-de-acesso.ts
 **abrir:** config:acessos
 
@@ -69,13 +69,13 @@ desativadas. O acesso ao MONITORA é só por convite. Fontes: `src/modulos/acess
 ## Aviso de aprovação
 
 **perguntas:** a pessoa recebe email quando o acesso e aprovado | aviso de aprovacao | email de aprovacao | como saber se o pedido foi aprovado
-**resposta:** O MONITORA não envia e-mail. A pessoa vê a situação do pedido (aguardando, aprovado com "Entrar agora" ou recusado com o motivo) quando entra de novo com a mesma conta Google. Se precisar avisar, avise pelo canal da equipe.
+**resposta:** O Yeendé não envia e-mail. A pessoa vê a situação do pedido (aguardando, aprovado com "Entrar agora" ou recusado com o motivo) quando entra de novo com a mesma conta Google. Se precisar avisar, avise pelo canal da equipe.
 **fonte:** src/app/entrada/pedido-de-acesso.ts
 
 ## Contas desativadas
 
 **perguntas:** como reativar uma conta desativada | conta desativada | contas desativadas | desativar conta | reativar conta | acesso desativado
-**resposta:** Só o administrador global desativa uma conta, com motivo; ela vai para a aba "Desativadas", que mostra quando, por quem e por quê. "Reativar" pede grupo, coordenação, áreas e motivo (vêm como estavam) e resolve o pedido pendente da pessoa. Quem foi desativado vê "Seu acesso ao MONITORA foi desativado." e pode pedir reativação.
+**resposta:** Só o administrador global desativa uma conta, com motivo; ela vai para a aba "Desativadas", que mostra quando, por quem e por quê. "Reativar" pede grupo, coordenação, áreas e motivo (vêm como estavam) e resolve o pedido pendente da pessoa. Quem foi desativado vê "Seu acesso ao Yeendé foi desativado." e pode pedir reativação.
 **fonte:** supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/modulos/acessos/contas-desativadas.tsx; src/lib/solicitacao-de-acesso.ts
 **abrir:** config:acessos
 
@@ -88,6 +88,6 @@ desativadas. O acesso ao MONITORA é só por convite. Fontes: `src/modulos/acess
 ## Pessoa que não consegue entrar
 
 **perguntas:** nao consigo entrar | por que nao consigo entrar | pessoa nao consegue entrar | o convite nao funciona | erro ao entrar no monitora
-**resposta:** Confira, nesta ordem: a pessoa entrou com a conta Google do e-mail convidado (o link sozinho não dá acesso e outra conta não serve); o e-mail é de um domínio permitido (Configurações › Tela de acesso); e o cadastro está ativo — conta desativada vê "Seu acesso ao MONITORA foi desativado." e pode pedir reativação. Quem entra sem convite vê a tela de pedido de acesso, que vai para Acessos › Usuários › Pendentes. Se o Login Google estiver Inativo, o botão some da tela de entrada; com o sistema inteiro em manutenção, quem não é administrador global vê a tela de manutenção.
+**resposta:** Confira, nesta ordem: a pessoa entrou com a conta Google do e-mail convidado (o link sozinho não dá acesso e outra conta não serve); o e-mail é de um domínio permitido (Configurações › Tela de acesso); e o cadastro está ativo — conta desativada vê "Seu acesso ao Yeendé foi desativado." e pode pedir reativação. Quem entra sem convite vê a tela de pedido de acesso, que vai para Acessos › Usuários › Pendentes. Se o Login Google estiver Inativo, o botão some da tela de entrada; com o sistema inteiro em manutenção, quem não é administrador global vê a tela de manutenção.
 **fonte:** src/lib/convite-de-acesso.ts; src/lib/solicitacao-de-acesso.ts; supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/lib/situacao-dos-modulos.ts
 **abrir:** config:acessos

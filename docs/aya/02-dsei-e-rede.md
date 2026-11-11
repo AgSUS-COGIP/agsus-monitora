@@ -12,15 +12,15 @@ O que é um DSEI e as estruturas que ficam dentro dele.
 ## Rede do SasiSUS em números
 
 **perguntas:** quantos polos base | quantas ubsi | quantas casai | tamanho da rede de saude indigena
-**resposta:** A SESAI informa que a rede do SasiSUS reúne 34 DSEIs, 383 Polos Base, 1.212 UBSIs e 70 CASAIs. Esses são os números da rede oficial; o MONITORA pode mostrar contagens diferentes, porque exibe o recorte carregado na tela e a base de lotações do acompanhamento, que têm outra finalidade e outra data.
-**fato:** A SESAI informa 34 DSEIs, 383 Polos Base, 1.212 UBSIs e 70 CASAIs na rede do SasiSUS. Contagens da tela do MONITORA podem divergir, por terem recorte e data próprios.
+**resposta:** A SESAI informa que a rede do SasiSUS reúne 34 DSEIs, 383 Polos Base, 1.212 UBSIs e 70 CASAIs. Esses são os números da rede oficial; o Yeendé pode mostrar contagens diferentes, porque exibe o recorte carregado na tela e a base de lotações do acompanhamento, que têm outra finalidade e outra data.
+**fato:** A SESAI informa 34 DSEIs, 383 Polos Base, 1.212 UBSIs e 70 CASAIs na rede do SasiSUS. Contagens da tela do Yeendé podem divergir, por terem recorte e data próprios.
 **fonte:** http://www.ccms.saude.gov.br/saudeindigena/asesai/organizacaododsei.html
 
 ## Polo Base
 
 **perguntas:** polo base | polos base | pb
 **resposta:** Polo Base é uma subdivisão territorial do DSEI. Serve de base para as Equipes Multidisciplinares de Saúde Indígena organizarem, técnica e administrativamente, a atenção à população indígena adscrita. Cada DSEI reúne um conjunto de Polos Base, e cada Polo Base cobre um conjunto de aldeias.
-**fato:** Polo Base é subdivisão territorial do DSEI e base para as EMSI organizarem a atenção a um conjunto de aldeias. Na planilha de lotações do MONITORA aparece abreviado como PB.
+**fato:** Polo Base é subdivisão territorial do DSEI e base para as EMSI organizarem a atenção a um conjunto de aldeias. Na planilha de lotações do Yeendé aparece abreviado como PB.
 **fonte:** http://www.ccms.saude.gov.br/saudeindigena/asesai/organizacaododsei.html
 
 ## UBSI

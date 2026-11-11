@@ -36,7 +36,7 @@ beforeEach(() => {
 });
 
 describe("auth-storage", () => {
-  it("remove somente as chaves pertencentes ao AgSUS Monitora", () => {
+  it("remove somente as chaves pertencentes ao Yeendé", () => {
     const storageKey = "agsus-monitora-auth";
     const storage = createSafeAuthStorage(storageKey);
 
