@@ -513,8 +513,14 @@ body:not(.sidebar-collapsed) .config-barra {
   width: min(100%, 230px);
   padding: var(--space-4);
   border-radius: var(--radius-lg);
+  background: var(--cor-do-cartao);
   box-shadow: var(--shadow-md);
   text-align: center;
+}
+/* O painel de vidro na prévia: a mesma tinta e o mesmo desfoque da tela de acesso. */
+.previa-acesso__cartao--vidro {
+  background: color-mix(in srgb, var(--cor-do-cartao) 72%, transparent);
+  backdrop-filter: blur(12px) saturate(140%); /* acabamento: permitido(blur) — prévia do painel de vidro da tela de acesso, sobre a arte escolhida */
 }
 .previa-acesso__logo {
   max-width: 96px;

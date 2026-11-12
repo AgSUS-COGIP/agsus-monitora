@@ -1,7 +1,17 @@
-import { useState, type ChangeEvent, type ReactNode } from "react";
+import {
+  useState,
+  type CSSProperties,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
 import { DEFAULT_ACCESS_BRANDING } from "../../lib/access-branding.ts";
 import { urlDeImagem } from "../../lib/apresentacao-das-configuracoes.ts";
-import { avaliarCor, corDoTextoPara } from "../../lib/contraste.ts";
+import {
+  ESTILO_VIDRO,
+  avaliarCor,
+  corDoTextoPara,
+  normalizarEstilo,
+} from "../../lib/contraste.ts";
 import { Aviso, Campo } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import type {
@@ -180,14 +190,17 @@ export function Previa({
 export function AvisoDeContraste({
   cor,
   modo,
+  estilo,
   comBotao = false,
 }: {
   cor: string;
   /** Modo do texto (contraste.ts); sem ele, o automático. */
   modo?: string;
+  /** Estilo do painel (sólido ou vidro); no vidro, mede no pior trecho da arte. */
+  estilo?: string;
   comBotao?: boolean;
 }) {
-  const avaliacao = avaliarCor(cor, modo);
+  const avaliacao = avaliarCor(cor, modo, estilo);
   if (!avaliacao) return null;
   return (
     <div className="config-contraste ui-campo-largo">
@@ -260,6 +273,9 @@ export function PreviaDoAcesso({ estado }: { estado: EstadoDasConfiguracoes }) {
   );
   const arte = urlDeImagem(estado.valor("auth_access_background_url"));
   const google = estado.valor("auth_google_enabled") !== "false";
+  const vidro =
+    normalizarEstilo(estado.valor("auth_access_painel_estilo")) ===
+    ESTILO_VIDRO;
   return (
     <Previa rotulo="Prévia da tela de acesso">
       <div
@@ -267,8 +283,12 @@ export function PreviaDoAcesso({ estado }: { estado: EstadoDasConfiguracoes }) {
         style={arte ? { backgroundImage: fundoEmCss(arte) } : undefined}
       >
         <div
-          className="previa-acesso__cartao"
-          style={{ background: cor, color: corDoTexto }}
+          className={
+            vidro
+              ? "previa-acesso__cartao previa-acesso__cartao--vidro"
+              : "previa-acesso__cartao"
+          }
+          style={{ "--cor-do-cartao": cor, color: corDoTexto } as CSSProperties}
         >
           <span className="previa-acesso__marca">
             <Imagem

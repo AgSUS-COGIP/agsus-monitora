@@ -45,6 +45,8 @@ const CAMPOS = [
   "buttonText",
   // Modo do texto sobre o painel: auto, claro ou escuro.
   "textoModo",
+  // Estilo do painel: sólido ou vidro.
+  "painelEstilo",
 ] as const;
 
 /** Um dos campos da marca que o cache guarda. */

@@ -386,7 +386,22 @@ describe("Aparência", () => {
     expect(contraste()).toContain("Abaixo do mínimo de 4,5");
     // A prévia da tela de acesso usa a cor e o texto escolhidos.
     const cartao = previa("aparencia").querySelector(".previa-acesso__cartao");
-    expect(cartao.style.background).not.toBe("");
+    expect(cartao.style.getPropertyValue("--cor-do-cartao")).not.toBe("");
+    expect(cartao.classList.contains("previa-acesso__cartao--vidro")).toBe(
+      false,
+    );
+  });
+
+  it("o painel de vidro aparece na prévia e mede o contraste no pior trecho", async () => {
+    await montar({ secao: "aparencia" });
+    await escolher($("configAparencia-authAccessPainelEstilo"), "vidro");
+    const cartao = previa("aparencia").querySelector(".previa-acesso__cartao");
+    expect(cartao.classList.contains("previa-acesso__cartao--vidro")).toBe(
+      true,
+    );
+    expect(
+      secao("aparencia").querySelector(".config-contraste").textContent,
+    ).toContain("sobre o vidro");
   });
 
   it("logo do acesso com endereço inválido não publica", async () => {

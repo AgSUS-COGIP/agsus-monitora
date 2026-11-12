@@ -89,6 +89,42 @@ export function corDoTextoPara(cor: string, modo: unknown = MODO_AUTO): string {
   return needsLightForeground(cor) ? TEXTO_CLARO : TEXTO_ESCURO;
 }
 
+/*
+  O estilo do painel da tela de acesso (Configurações › Tela de acesso):
+  sólido (o padrão) ou vidro. No vidro, a cor do painel vai a
+  OPACIDADE_DO_VIDRO sobre a arte, com desfoque (platform-shell.css usa o
+  mesmo número). A arte é configurável e pode ter trechos brancos ou pretos:
+  o contraste do vidro é medido nos dois extremos, a cor misturada com branco
+  e com preto, e vale o pior.
+*/
+export const ESTILO_SOLIDO = "solido";
+export const ESTILO_VIDRO = "vidro";
+export type EstiloDoPainel = typeof ESTILO_SOLIDO | typeof ESTILO_VIDRO;
+export const OPACIDADE_DO_VIDRO = 0.72;
+
+export function normalizarEstilo(valor: unknown): EstiloDoPainel {
+  const bruto = String(valor ?? "")
+    .trim()
+    .toLowerCase();
+  return bruto === ESTILO_VIDRO ? ESTILO_VIDRO : ESTILO_SOLIDO;
+}
+
+/** `cor` com `opacidade` sobre `fundo`, em hex (a conta do `color-mix` do CSS). */
+export function misturar(
+  cor: string,
+  fundo: string,
+  opacidade: number,
+): string {
+  const [a, b] = [canais(cor), canais(fundo)];
+  return `#${a
+    .map((canal, i) =>
+      Math.round(canal * opacidade + (b[i] ?? 0) * (1 - opacidade))
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")}`;
+}
+
 export interface AvaliacaoDaCor {
   cor: string;
   corDoTexto: string;
@@ -100,12 +136,23 @@ export interface AvaliacaoDaCor {
 export function avaliarCor(
   cor: unknown,
   modo: unknown = MODO_AUTO,
+  estilo: unknown = ESTILO_SOLIDO,
 ): AvaliacaoDaCor | null {
   if (typeof cor !== "string" || !HEX.test(cor.trim())) return null;
 
   const normalizada = cor.trim().toLowerCase();
   const corDoTexto = corDoTextoPara(normalizada, modo);
-  const exata = razaoDeContraste(corDoTexto, normalizada);
+  const vidro = normalizarEstilo(estilo) === ESTILO_VIDRO;
+  const exata = vidro
+    ? Math.min(
+        ...["#ffffff", "#000000"].map((fundo) =>
+          razaoDeContraste(
+            corDoTexto,
+            misturar(normalizada, fundo, OPACIDADE_DO_VIDRO),
+          ),
+        ),
+      )
+    : razaoDeContraste(corDoTexto, normalizada);
   const passa = exata >= MINIMO_AA;
   /*
     Duas casas, cortadas e não arredondadas: arredondar mostrava "4,50 — abaixo
@@ -119,8 +166,8 @@ export function avaliarCor(
     razao,
     passa,
     mensagem: passa
-      ? `Contraste do texto sobre esta cor: ${numero(razao, 2)}. Acima do mínimo de ${numero(MINIMO_AA, 1)} da WCAG AA.`
-      : `Contraste do texto sobre esta cor: ${numero(razao, 2)}. Abaixo do mínimo de ${numero(MINIMO_AA, 1)} da WCAG AA — quem tem baixa visão pode não conseguir ler. Uma cor mais escura ou mais clara resolve sem mudar o tom.`,
+      ? `Contraste do texto sobre ${vidro ? "o vidro, no trecho mais claro ou mais escuro da arte" : "esta cor"}: ${numero(razao, 2)}. Acima do mínimo de ${numero(MINIMO_AA, 1)} da WCAG AA.`
+      : `Contraste do texto sobre ${vidro ? "o vidro, no trecho mais claro ou mais escuro da arte" : "esta cor"}: ${numero(razao, 2)}. Abaixo do mínimo de ${numero(MINIMO_AA, 1)} da WCAG AA — quem tem baixa visão pode não conseguir ler. ${vidro ? "Uma cor mais escura ou mais clara, ou o painel sólido, resolve." : "Uma cor mais escura ou mais clara resolve sem mudar o tom."}`,
   };
 }
 

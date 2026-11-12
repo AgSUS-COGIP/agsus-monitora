@@ -9,7 +9,7 @@
     "src/lib/avaliacao-documental/resumo-da-regra.ts": "documento gerado para impressão/arquivo: papel branco, texto preto",
     "src/lib/classificacao/documento-sei.ts": "documento no padrão do SEI: papel branco, texto preto, bordas e faixas do modelo",
     "src/lib/classificacao/relatorio-de-desempate.ts": "documento para impressão (PDF do relatório de desempate): papel branco, texto escuro, faixas e selo de cota",
-    "src/lib/contraste.ts": "regra de contraste: as duas cores de texto sobre cor configurada (barra, painel de acesso)",
+    "src/lib/contraste.ts": "regra de contraste: as duas cores de texto sobre cor configurada (barra, painel de acesso) e os extremos branco e preto da arte sob o painel de vidro",
     "src/lib/documento-da-resposta.ts": "documento gerado para impressão/arquivo: papel branco, texto preto",
     "src/lib/fogos-paleta.ts": "efeito de comemoração (canvas): cores do fogo de artifício",
     "src/lib/mapa-saude-indigena/formas.ts": "mapa: cores de domínio das camadas e marcadores (iguais nos dois temas)",
@@ -94,7 +94,8 @@
       "#0b3d91": 1
     },
     "src/lib/contraste.ts": {
-      "#ffffff": 1,
+      "#ffffff": 2,
+      "#000000": 1,
       "#102a43": 1
     },
     "src/lib/documento-da-resposta.ts": {
