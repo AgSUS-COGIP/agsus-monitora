@@ -112,6 +112,44 @@ function comoUrlCss(valor: unknown): string {
 const texto = (valor: unknown): string => String(valor ?? "").trim();
 
 /** O estado da marca: `obter()`, `assinar(ouvinte)` e as escritas. */
+/** O que a medida da arte usa de uma imagem (o `Image` do navegador). */
+type ImagemMedivel = {
+  onload: ((evento: Event) => unknown) | null;
+  src: string;
+  naturalWidth: number;
+  naturalHeight: number;
+};
+
+/**
+ * Mede a proporção da arte de acesso quando ela carrega e grava em
+ * `--login-arte-proporcao` (largura ÷ altura), que platform-shell.css usa para
+ * saber onde a arte nítida termina: arte mais larga que a tela cobre tudo,
+ * sem a faixa desfocada (11/11/2026). Sem medida, vale 16:9.
+ */
+export function medirProporcaoDaArte(
+  tela:
+    | { style: { setProperty(nome: string, valor: string): void } }
+    | null
+    | undefined,
+  url: string | null | undefined,
+  criarImagem: () => ImagemMedivel | null = () =>
+    typeof Image === "function" ? new Image() : null,
+): void {
+  const endereco = String(url ?? "").trim();
+  if (!tela || !endereco) return;
+  const imagem = criarImagem();
+  if (!imagem) return;
+  imagem.onload = () => {
+    const { naturalWidth: largura, naturalHeight: altura } = imagem;
+    if (largura > 0 && altura > 0)
+      tela.style.setProperty(
+        "--login-arte-proporcao",
+        (largura / altura).toFixed(4),
+      );
+  };
+  imagem.src = endereco;
+}
+
 export function criarMarcaDaEntrada(): EstadoDaMarcaDaEntrada {
   let atual: Readonly<IdentidadeDaEntrada> = MARCA_INICIAL;
   const ouvintes = new Set<() => void>();
@@ -173,6 +211,7 @@ export function aplicarMarcaNaTela(
       "--login-background-image",
       comoUrlCss(marca.backgroundUrl),
     );
+    medirProporcaoDaArte(tela, marca.backgroundUrl);
   }
   if (tela) aplicarCorDoPainel(tela, marca.panelColor, marca.textoModo);
 
@@ -262,6 +301,7 @@ export function definirMarcaDaConfiguracao(
   if (tela && fundoDoBanco !== null) {
     const url = normalizeAccessBackgroundUrl(fundoDoBanco);
     tela.style.setProperty("--login-background-image", comoUrlCss(url));
+    medirProporcaoDaArte(tela, url);
     marcaParaGuardar.backgroundUrl = url;
   }
 

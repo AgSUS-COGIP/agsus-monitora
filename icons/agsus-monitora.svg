@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
   <title id="title">Yeendé</title>
-  <desc id="description">Pássaro da marca Yeendé: asas amarela e verde, corpo branco e sol vermelho sobre fundo azul da AgSUS.</desc>
+  <desc id="description">Símbolo do Yeendé: pássaro de asas abertas em V, asa amarela, asa verde, corpo branco e cabeça vermelha, sobre o azul da AgSUS.</desc>
   <rect width="512" height="512" rx="112" fill="#183EFF"/>
-  <g transform="translate(256 268) scale(6.4)"><path d="M0 4 C-8 -8 -18 -12 -28 -8 C-20 -4 -12 2 -4 12 Z" fill="#FFCF00"/><path d="M0 4 C8 -8 18 -12 28 -8 C20 -4 12 2 4 12 Z" fill="#00CF00"/><path d="M0 4 L4 12 L0 18 L-4 12 Z" fill="#ffffff"/><circle cx="0" cy="-17" r="5.5" fill="#FF0000"/></g>
+  <g transform="translate(56.0 60.0) scale(4)"><path d="M46 58 L8 58 A38 38 0 0 1 46 20 Z" transform="rotate(-32 46 58)" fill="#FFCF00"/><path d="M54 58 L92 58 A38 38 0 0 0 54 20 Z" transform="rotate(32 54 58)" fill="#00CF00"/><rect x="42" y="52" width="16" height="32" rx="8" fill="#ffffff"/><circle cx="50" cy="38" r="10" fill="#FF0000"/></g>
 </svg>

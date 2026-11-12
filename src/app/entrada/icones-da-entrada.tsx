@@ -66,30 +66,40 @@ function Traco({
 }
 
 /*
-  O pássaro do Yeendé ao lado do nome no lockup (11/11/2026): asa amarela, asa
-  verde, corpo azul e sol vermelho, nas cores do manual da AgSUS (tokens
-  --marca-agsus-*, platform-shell.css). Yeendé é "pássaro" na língua Kariri.
+  O símbolo do Yeendé ao lado do nome no lockup (12/11/2026): o pássaro de
+  frente, de asas abertas em V, com as formas do manual da AgSUS (quartos de
+  círculo e círculo): asa amarela, asa verde, corpo azul e cabeça vermelha
+  (tokens --marca-agsus-*, platform-shell.css). Yeendé é "pássaro" em Kariri.
 */
 export function IconeDoYeende() {
   return (
     <svg
       className="login-product-icon marca-yeende"
-      viewBox="-30 -24 60 44"
-      width={30}
-      height={30}
+      viewBox="4 8 92 82"
+      width={40}
+      height={40}
       aria-hidden="true"
       focusable="false"
     >
       <path
         className="marca-yeende__asa-esquerda"
-        d="M0 4 C-8 -8 -18 -12 -28 -8 C-20 -4 -12 2 -4 12 Z"
+        d="M46 58 L8 58 A38 38 0 0 1 46 20 Z"
+        transform="rotate(-32 46 58)"
       />
       <path
         className="marca-yeende__asa-direita"
-        d="M0 4 C8 -8 18 -12 28 -8 C20 -4 12 2 4 12 Z"
+        d="M54 58 L92 58 A38 38 0 0 0 54 20 Z"
+        transform="rotate(32 54 58)"
       />
-      <path className="marca-yeende__corpo" d="M0 4 L4 12 L0 18 L-4 12 Z" />
-      <circle className="marca-yeende__sol" cx="0" cy="-17" r="5.5" />
+      <rect
+        className="marca-yeende__corpo"
+        x="42"
+        y="52"
+        width="16"
+        height="32"
+        rx="8"
+      />
+      <circle className="marca-yeende__cabeca" cx="50" cy="38" r="10" />
     </svg>
   );
 }
