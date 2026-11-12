@@ -45,6 +45,13 @@
   --z-loader: 20025;
   --z-toast: 20050;
 
+  /* Apelidos por papel, para não surgir um terceiro valor: o menu suspenso
+     fica na camada dos popovers e o modal na dos overlays. A dica (tooltip)
+     fica um degrau acima do toast, porque pode nascer sobre qualquer coisa. */
+  --z-dropdown: var(--z-popover);
+  --z-modal: var(--z-overlay);
+  --z-tooltip: calc(var(--z-toast) + 1);
+
   /* Abaixo dos overlays: o cabeçalho, a barra lateral logo acima dele (o painel
      flutuante do menu e as dicas do trilho passam por cima do cabeçalho) e
      os popovers do cabeçalho. Quem precisa ficar acima da barra usa um dos

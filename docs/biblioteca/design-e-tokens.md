@@ -61,6 +61,14 @@ contam; a cor só conta em valor de declaração (seletor `#abc` não), e `borde
   cabeçalho e da barra do celular e abaixo do aviso de parabéns (10045). Quem precisa ficar acima
   da barra lateral usa `--z-overlay` (modal de busca) ou `--z-toast` (link de pular, aviso de
   conexão, aviso de sessão); `tests/camadas-acima-da-barra.test.js` guarda a ordem.
+  Apelidos por papel: `--z-dropdown` = `--z-popover`, `--z-modal` = `--z-overlay`,
+  `--z-tooltip` = `--z-toast` + 1. `tests/tokens-do-acabamento.test.ts` guarda a ordem estrita.
+- **Divergência com a norma (7.2):** a escala de z-index do projeto não é a da norma (100 a 700).
+  Aqui: `--z-sticky` 2, `--z-header` 10010, `--z-sidebar` 10020, `--z-popover` 10040, `--z-overlay`
+  20000, `--z-loader` 20025, `--z-toast` 20050. Motivo: o cabeçalho já vive em 10010 e isola o
+  próprio contexto, e os modais precisam ficar acima do mapa imersivo (12050) e do diálogo da Saúde
+  Indígena (15000); com 100 a 700 nada disso se sustenta. Valem os do projeto; o porquê está no
+  comentário de `src/styles/app.css` (bloco `--z-*`).
 - Cores de etapa do calendário: `--etapa-*`. Terras Indígenas têm cores de domínio, não de paleta
   ([[terras-indigenas]]).
 
