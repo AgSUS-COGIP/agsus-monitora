@@ -551,9 +551,16 @@ export function temMunicipio(
 /* Pendente e Em análise (src/lib/status-da-analise.ts). */
 export { STATUS_PENDENTES };
 
+/* As análises já feitas (o KPI "Análises realizadas"). */
+const STATUS_ANALISADOS: readonly string[] = Object.freeze([
+  "Revisar",
+  "Aprovado",
+  "Reprovado",
+]);
+
 export const STATUS_DO_KPI: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
-    analisado: Object.freeze(["Revisar", "Aprovado", "Reprovado"]),
+    analisado: STATUS_ANALISADOS,
     pendente: STATUS_PENDENTES,
     revisar: Object.freeze(["Revisar"]),
     aprovado: Object.freeze(["Aprovado"]),
@@ -772,7 +779,8 @@ const n = (valor: number) => valor.toLocaleString("pt-BR");
 /*
   O que pede ação no recorte, da mais grave para a menos (até 8). Cada uma
   tem um atalho que filtra a tela: `{ tipo: "kpi" | "validacao" |
-  "responsavel", valor }`.
+  "responsavel", valor }`; o de validação pode levar também o KPI (`kpi`),
+  para a tabela mostrar exatamente o que o cartão conta.
 */
 export function pendenciasPrioritarias(
   linhas: readonly RegistroDaAnalise[],
@@ -787,9 +795,14 @@ export function pendenciasPrioritarias(
   const semResp = contar(lista, semResponsavel);
   const pendentes = STATUS_PENDENTES.reduce((n, s) => n + status(s), 0);
   const revisar = status("Revisar");
+  // Análise já feita (Revisar, Aprovado, Reprovado) sem data: a mesma conta
+  // que o atalho mostra (KPI Análises realizadas + validação Sem data).
+  // Pendente sem data é o normal, mesmo com a etapa preenchida.
   const semData = contar(
     lista,
-    (l) => texto(l.etapa) && !texto(l.data_analise),
+    (l) =>
+      l.data_validacao_status === "SEM_DATA" &&
+      STATUS_ANALISADOS.includes(texto(l.status_consolidado)),
   );
   const itens: (0 | PendenciaDaAnalise)[] = [
     futura && {
@@ -828,11 +841,11 @@ export function pendenciasPrioritarias(
       atalho: { tipo: "kpi", valor: "revisar" },
     },
     semData && {
-      chave: "etapa-sem-data",
-      titulo: "Etapa sem data",
-      detalhe: `${n(semData)} registro(s) com etapa, mas sem data de análise.`,
+      chave: "analise-sem-data",
+      titulo: "Análise sem data",
+      detalhe: `${n(semData)} análise(s) realizada(s) sem data de análise.`,
       tom: "alerta",
-      atalho: { tipo: "validacao", valor: "SEM_DATA" },
+      atalho: { tipo: "validacao", valor: "SEM_DATA", kpi: "analisado" },
     },
   ];
   return itens

@@ -3927,7 +3927,7 @@ export const VERBETES_AYA = Object.freeze([
       "validacao da janela",
     ],
     resposta:
-      "Nas Análises curriculares, as pendências prioritárias aparecem da mais grave para a menos grave (até 8): Data no futuro, Data fora do período e Sem responsável; depois Pendentes, Em revisão e Etapa sem data. Cada uma tem um atalho que aplica o filtro. A data da análise é comparada com a janela do edital: Dentro do período, Fora do período, Sem data de análise, Sem janela configurada ou Data no futuro (data depois de hoje, um dado a corrigir na planilha). No gráfico de evolução diária, os dias com análise fora do período ou no futuro ficam em vermelho.",
+      "Nas Análises curriculares, as pendências prioritárias aparecem da mais grave para a menos grave (até 8): Data no futuro, Data fora do período e Sem responsável; depois Pendentes, Em revisão e Análise sem data (análise já realizada — Em revisão, Aprovado ou Reprovado — sem data de análise; Pendente sem data é o normal). Cada uma tem um atalho que aplica o filtro, e a tabela mostra o mesmo número do cartão. A data da análise é comparada com a janela do edital: Dentro do período, Fora do período, Sem data de análise, Sem janela configurada ou Data no futuro (data depois de hoje, um dado a corrigir na planilha). No gráfico de evolução diária, os dias com análise fora do período ou no futuro ficam em vermelho.",
     fato: "",
     fonte: "src/lib/analises-curriculares.ts; src/lib/data-de-analise.ts",
   },
