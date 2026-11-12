@@ -68,6 +68,10 @@
     font-weight: var(--font-weight-medium);
     line-height: 1.35;
   }
+  /* Célula de mensagem (vazio, erro) ocupa a linha: sem rótulo de coluna. */
+  table.mobile-card-table td:not([data-mobile-label])::before {
+    content: none;
+  }
 
   table.mobile-card-table td > .btn,
   table.mobile-card-table td > button,
