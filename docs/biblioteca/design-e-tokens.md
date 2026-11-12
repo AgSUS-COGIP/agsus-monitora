@@ -65,10 +65,11 @@ contam; a cor só conta em valor de declaração (seletor `#abc` não), e `borde
   `--z-tooltip` = `--z-toast` + 1. `tests/tokens-do-acabamento.test.ts` guarda a ordem estrita.
 - **Divergência com a norma (7.2):** a escala de z-index do projeto não é a da norma (100 a 700).
   Aqui: `--z-sticky` 2, `--z-header` 10010, `--z-sidebar` 10020, `--z-popover` 10040, `--z-overlay`
-  20000, `--z-loader` 20025, `--z-toast` 20050. Motivo: o cabeçalho já vive em 10010 e isola o
-  próprio contexto, e os modais precisam ficar acima do mapa imersivo (12050) e do diálogo da Saúde
-  Indígena (15000); com 100 a 700 nada disso se sustenta. Valem os do projeto; o porquê está no
-  comentário de `src/styles/app.css` (bloco `--z-*`).
+  20000, `--z-loader` 20025, `--z-toast` 20050. Motivo: o cabeçalho já vive em 10010 e isola o próprio contexto, e os modais
+  precisam ficar acima de tudo o que vive na faixa dos 10 mil (barra lateral, Aya, tour, aviso de
+  parabéns); com 100 a 700 nada disso se sustenta. `--z-modal` coincide com `--z-overlay` por
+  decisão (a norma separa 500 e 510). Valem os do projeto; o porquê está no comentário de
+  `src/styles/app.css` (bloco `--z-*`).
 - Cores de etapa do calendário: `--etapa-*`. Terras Indígenas têm cores de domínio, não de paleta
   ([[terras-indigenas]]).
 

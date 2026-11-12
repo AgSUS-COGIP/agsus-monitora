@@ -45,7 +45,7 @@
   margin: min(22vh, 180px) auto 0;
   padding: 22px;
   border: 1px solid var(--border-subtle);
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   background: var(--surface-card);
   color: var(--text-primary);
   box-shadow: var(--shadow-overlay);
@@ -57,7 +57,7 @@
   display: grid;
   place-items: center;
   margin-bottom: 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: var(--state-danger-soft);
   color: var(--state-danger);
 }
@@ -79,7 +79,7 @@
   margin-top: 12px !important;
   padding: 10px 12px;
   border: 1px solid color-mix(in srgb, var(--state-warning) 40%, transparent);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--state-warning-soft);
   color: var(--state-warning) !important;
   font-weight: 600;
@@ -95,7 +95,7 @@
 .shell-confirm-actions button {
   min-height: 40px;
   padding: 0 15px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   font: inherit;
   font-size: 12px;
   font-weight: 600;
@@ -130,7 +130,7 @@
   gap: 8px;
   padding: 22px;
   border: 1px solid var(--border-subtle);
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   background: var(--surface-card);
   color: var(--text-primary);
   text-align: center;
@@ -143,8 +143,8 @@
   margin-bottom: 4px;
   border: 3px solid var(--border-subtle);
   border-top-color: var(--brand-primary);
-  border-radius: 50%;
-  animation: shell-spin 0.8s linear infinite;
+  border-radius: 50%; /* acabamento: permitido — anel do spinner, círculo */
+  animation: shell-spin 0.8s linear infinite; /* acabamento: permitido — rotação contínua; o linear é o que faz o giro parecer constante */
 }
 
 .shell-signout-card strong {
@@ -165,17 +165,17 @@
 /* Presenca: estados reconheciveis em vez de sincronizacao indefinida. */
 .online-presence[data-presence-state="loading"] .online-presence-dot {
   background: var(--color-status-neutral-solid);
-  box-shadow: 0 0 0 3px var(--state-neutral-soft);
+  box-shadow: 0 0 0 3px var(--state-neutral-soft); /* acabamento: permitido — anel, não é elevação */
 }
 
 .online-presence[data-presence-state="error"] .online-presence-dot {
   background: var(--color-status-warning-solid);
-  box-shadow: 0 0 0 3px var(--state-warning-soft);
+  box-shadow: 0 0 0 3px var(--state-warning-soft); /* acabamento: permitido — anel, não é elevação */
 }
 
 .online-presence[data-presence-state="offline"] .online-presence-dot {
   background: var(--color-status-danger-solid);
-  box-shadow: 0 0 0 3px var(--state-danger-soft);
+  box-shadow: 0 0 0 3px var(--state-danger-soft); /* acabamento: permitido — anel, não é elevação */
 }
 
 .online-presence[data-presence-state="error"] .online-presence-button,

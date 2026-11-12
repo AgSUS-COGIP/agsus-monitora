@@ -37,7 +37,7 @@
   table.mobile-card-table tr {
     overflow: hidden;
     border: 1px solid var(--border-subtle);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     background: var(--surface-card);
     box-shadow: var(--shadow-sm);
   }

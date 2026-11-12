@@ -38,9 +38,13 @@
      porque é o único que avisa do resultado da ação.
 
      A faixa é a dos 20 mil porque foi a que o toast passou a usar na `main`.
-     Ficar aqui em cima também põe os modais acima dos dois painelões que
-     vivem no meio do caminho: o mapa imersivo (12050) e o diálogo de saída
-     da Saúde Indígena (15000). */
+     Ficar aqui em cima põe os modais acima de tudo o que vive na faixa dos 10 mil
+     (cabeçalho, barra lateral, Aya, tour, aviso de parabéns); só o loader e o
+     toast ficam acima deles. Os valores
+     do projeto divergem da escala da norma (7.2: 100 a 700) de propósito:
+     o cabeçalho já vive em 10010 e isola o próprio contexto.
+     `--z-modal` coincide com `--z-overlay` por decisão: a norma separa 500
+     (overlay) de 510 (modal), mas aqui o modal usa a camada do overlay. */
   --z-overlay: 20000;
   --z-loader: 20025;
   --z-toast: 20050;
@@ -146,10 +150,11 @@ strong {
   background: var(--agsus-azul);
   color: var(--color-text-inverse);
   padding: 10px 16px;
-  border-radius: 0 0 10px 10px;
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
   font-weight: 600;
   transform: translateY(-100%);
-  transition: transform 0.15s;
+  transition: transform var(--duration-fast) var(--ease-standard);
   text-decoration: none;
 }
 .skip-link:focus {
@@ -164,7 +169,7 @@ summary:focus-visible,
 [tabindex]:focus-visible {
   outline: 3px solid var(--focus-ring) !important;
   outline-offset: 2px !important;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 @media (prefers-contrast: more) {
   :root {
@@ -176,10 +181,10 @@ summary:focus-visible,
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important; /* acabamento: permitido — reduced-motion: a duração quase nula é o objetivo, para anular a animação */
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important; /* acabamento: permitido — reduced-motion: a duração quase nula é o objetivo, para anular a transição */
   }
 }
 
@@ -210,13 +215,11 @@ body.config-loading #loginScreen {
 .login-outer {
   width: min(520px, calc(100vw - 32px));
   background: var(--color-blue-800);
-  border-radius: 28px;
-  box-shadow:
-    0 50px 130px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
   overflow: hidden; /* faz border-radius cortar as faixas */
   position: relative;
-  z-index: 2;
+  z-index: 2; /* acabamento: permitido — camada local do cartão de login, dentro do próprio contexto de empilhamento */
 }
 
 /* Faixa SUS — imagem oficial 1901×92px, repetida */
@@ -323,7 +326,7 @@ body.config-loading #loginScreen {
 .login-cogip-logo {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 50%; /* acabamento: permitido — logo circular */
   object-fit: cover;
   flex-shrink: 0;
   border: 1.5px solid var(--color-border-subtle);
@@ -364,7 +367,7 @@ textarea {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: var(--card);
   color: var(--text-primary);
   padding: 0 14px;
@@ -387,7 +390,7 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--focus-ring);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus-ring) 15%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus-ring) 15%, transparent); /* acabamento: permitido — anel de foco, não é elevação */
 }
 button:focus-visible,
 a:focus-visible,
@@ -397,7 +400,7 @@ textarea:focus-visible,
 [tabindex]:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
-  box-shadow: 0 0 0 6px color-mix(in srgb, var(--focus-ring) 20%, transparent);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--focus-ring) 20%, transparent); /* acabamento: permitido — anel de foco, não é elevação */
 }
 
 /*
@@ -487,7 +490,7 @@ textarea:focus-visible,
 
 .alert {
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--line);
   background: var(--soft);
   color: var(--slate);
@@ -515,7 +518,7 @@ textarea:focus-visible,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   padding: 5px 11px;
   font-size: var(--text-caption);
   font-weight: 600;
@@ -675,7 +678,7 @@ textarea:focus-visible,
   background: var(--surface-card);
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-overlay);
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 22px 24px;
   color: var(--text-primary);
   display: grid;
@@ -686,10 +689,10 @@ textarea:focus-visible,
 .loader-spin {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 50%; /* acabamento: permitido — anel do spinner, círculo */
   border: 4px solid var(--border-subtle);
   border-top-color: var(--brand-primary);
-  animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite; /* acabamento: permitido — rotação contínua; o linear é o que faz o giro parecer constante */
 }
 .loader-title {
   font-size: 18px;
@@ -704,7 +707,7 @@ textarea:focus-visible,
 .loader-pct {
   border: 1px solid var(--line);
   background: var(--soft);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   text-align: center;
   padding: 8px;
   font-weight: 600;
@@ -713,7 +716,7 @@ textarea:focus-visible,
   grid-column: 1/-1;
   height: 10px;
   background: var(--surface-hover);
-  border-radius: 99px;
+  border-radius: var(--radius-full);
   overflow: hidden;
 }
 .loader-bar span {
@@ -721,13 +724,13 @@ textarea:focus-visible,
   height: 100%;
   width: 0;
   background: var(--brand-primary);
-  transition: width 0.25s ease;
+  transition: width var(--duration-base) var(--ease-standard); /* acabamento: permitido — a barra de progresso comunica o valor pela largura, que o JS grava em width inline */
 }
 .google-login-btn {
   min-height: 44px;
   width: 100%;
   border: 1px solid var(--color-border-subtle);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #fff;
   color: var(--color-text-primary);
   font-weight: 600;
@@ -738,7 +741,7 @@ textarea:focus-visible,
   justify-content: center;
   gap: 9px;
   margin-top: 8px;
-  box-shadow: 0 8px 18px rgba(15, 35, 60, 0.06);
+  box-shadow: none;
 }
 .google-login-btn:hover {
   background: #f8fbff;
@@ -756,8 +759,8 @@ body.config-loading .loader-card {
   width: min(360px, calc(100vw - 36px));
   grid-template-columns: 28px 1fr;
   padding: 12px 14px;
-  border-radius: 12px;
-  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.18);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
 }
 body.config-loading .loader-spin {
   width: 24px;
@@ -790,7 +793,7 @@ body.app-fullscreen-fallback {
 body.app-fullscreen-fallback .app {
   position: fixed !important;
   inset: 0 !important;
-  z-index: 9998 !important;
+  z-index: calc(var(--z-header) - 12) !important;
   width: 100vw !important;
   height: 100vh !important;
   min-height: 100vh !important;
@@ -854,7 +857,7 @@ body.external-clean #externalReturnBar {
   left: 0;
   right: 0;
   height: 46px;
-  z-index: 1300;
+  z-index: 1300; /* acabamento: permitido — barra de retorno do modo externo, fixa no topo; só convive com o conteúdo da tela, sem papel na escala */
   padding: 0 12px;
   box-sizing: border-box;
   background: var(--surface-card);
@@ -873,7 +876,7 @@ body.external-clean #externalReturnBar {
   font-size: 13px;
   line-height: 1;
   padding: 8px 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   cursor: pointer;
   box-shadow: var(--shadow-sm);
 }
@@ -935,10 +938,10 @@ body.external-clean #externalReturnBar {
   @keyframes agsusPulse {
     0%,
     100% {
-      box-shadow: 0 0 0 5px rgba(14, 167, 107, 0.14);
+      box-shadow: 0 0 0 5px rgba(14, 167, 107, 0.14); /* acabamento: permitido — halo animado de pulso, não é elevação */
     }
     50% {
-      box-shadow: 0 0 0 9px rgba(14, 167, 107, 0.05);
+      box-shadow: 0 0 0 9px rgba(14, 167, 107, 0.05); /* acabamento: permitido — halo animado de pulso, não é elevação */
     }
   }
 }
@@ -967,9 +970,9 @@ body.external-clean #externalReturnBar {
   max-height: none;
   overflow: hidden;
   background: var(--surface-card);
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border-subtle);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+  box-shadow: var(--shadow-lg);
 }
 .search-modal-input-wrap {
   display: flex;
@@ -1009,7 +1012,7 @@ body.external-clean #externalReturnBar {
   font-size: var(--text-caption);
   background: var(--surface-raised);
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 2px 7px;
   color: var(--text-secondary);
   font-family: inherit;
@@ -1039,7 +1042,7 @@ body.external-clean #externalReturnBar {
 .search-result-icon {
   width: 32px;
   height: 32px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   display: grid;
   place-items: center;
   font-size: 14px;
@@ -1071,13 +1074,13 @@ body.external-clean #externalReturnBar {
 .search-result-realce {
   background: var(--state-warning-soft);
   color: inherit;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 .search-result-chip {
   font-size: var(--text-caption);
   font-weight: 600;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   flex-shrink: 0;
   border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
 }
@@ -1278,7 +1281,7 @@ table {
 th {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: var(--z-sticky);
   background: var(--surface-raised);
   color: var(--color-text-primary);
   text-align: left;
@@ -1314,10 +1317,10 @@ tr:hover td {
   position: relative;
   width: 100%;
   min-height: 44px;
-  z-index: 5;
+  z-index: 5; /* acabamento: permitido — filtro dentro do próprio contexto: fica acima dos vizinhos sem sair da tela */
 }
 .multi-select.open {
-  z-index: 80;
+  z-index: 80; /* acabamento: permitido — filtro aberto sobe acima dos outros filtros, dentro do contexto da tela */
 }
 .multi-select-menu {
   display: none;
@@ -1325,10 +1328,10 @@ tr:hover td {
   left: 0;
   right: 0;
   top: calc(100% + 7px);
-  z-index: 90;
+  z-index: 90; /* acabamento: permitido — menu do filtro, local ao contexto do .multi-select */
   background: var(--surface-card);
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-overlay);
   overflow: hidden;
 }
@@ -1420,14 +1423,14 @@ tr:hover td {
   max-height: 92vh;
   overflow: auto;
   background: var(--card);
-  border-radius: 22px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--line);
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.32);
+  box-shadow: var(--shadow-lg);
 }
 .modal-head {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: var(--z-sticky);
   background: var(--card);
   border-bottom: 1px solid var(--line);
   padding: 16px 18px;

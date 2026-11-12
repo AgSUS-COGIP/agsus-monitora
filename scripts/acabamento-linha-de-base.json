@@ -107,113 +107,61 @@
     "sombra": 3
   },
   "src/styles/app.css": {
-    "cor": 55,
-    "important": 62,
-    "zIndex": 8,
-    "raio": 21,
-    "sombra": 9,
-    "curva": 5,
-    "animaLayout": 1,
+    "cor": 49,
+    "important": 60,
     "blur": 1
   },
   "src/styles/barra-lateral.css": {
-    "cor": 3,
-    "important": 1,
-    "zIndex": 2,
-    "sombra": 5,
-    "curva": 4
-  },
-  "src/styles/carregamento.css": {
-    "curva": 4
+    "cor": 1,
+    "important": 1
   },
   "src/styles/comemoracao.css": {
-    "cor": 11,
-    "zIndex": 6,
-    "raio": 2,
-    "sombra": 2,
-    "curva": 11,
+    "cor": 10,
     "blur": 1
   },
-  "src/styles/connectivity-status.css": {
-    "raio": 2
-  },
   "src/styles/google-profile-photo.css": {
-    "cor": 2,
-    "sombra": 1
-  },
-  "src/styles/icones-lucide.css": {
-    "curva": 1
+    "cor": 1
   },
   "src/styles/indigenous-territories-layer.css": {
-    "cor": 19,
+    "cor": 17,
     "important": 2,
-    "raio": 3,
-    "sombra": 2,
     "blur": 1
   },
   "src/styles/loading-experience.css": {
     "cor": 4,
     "important": 2,
-    "raio": 5,
-    "curva": 1,
     "blur": 1
   },
   "src/styles/map-base-layer-switcher.css": {
-    "important": 4,
-    "zIndex": 1,
-    "sombra": 1,
-    "curva": 1
+    "important": 4
   },
   "src/styles/mobile-app.css": {
-    "cor": 3,
-    "important": 38,
-    "zIndex": 5,
-    "raio": 5,
-    "sombra": 2,
-    "curva": 1
+    "cor": 1,
+    "important": 38
   },
   "src/styles/mobile-table-cards.css": {
-    "important": 3,
-    "raio": 1
+    "important": 3
   },
   "src/styles/multi-select-busca.css": {
-    "important": 1,
-    "zIndex": 1,
-    "raio": 5,
-    "sombra": 1,
-    "curva": 1
+    "important": 1
   },
   "src/styles/nielsen-shell-ux.css": {
     "cor": 15,
     "important": 25,
-    "raio": 6,
-    "sombra": 3,
-    "curva": 1,
     "blur": 2
   },
   "src/styles/platform-shell.css": {
-    "cor": 34,
+    "cor": 29,
     "important": 9,
-    "zIndex": 1,
-    "raio": 14,
-    "sombra": 4,
-    "curva": 6,
     "blur": 1
   },
   "src/styles/post157-interface-tuning.css": {
     "cor": 3
-  },
-  "src/styles/saude-das-cargas.css": {
-    "sombra": 2
   },
   "src/styles/visual-polish.css": {
     "cor": 1
   },
   "src/ui/grafico.tsx": {
     "cor": 1
-  },
-  "src/ui/ui.css": {
-    "raio": 2,
-    "curva": 3
   }
 }

@@ -1,8 +1,8 @@
 .agsus-indigenous-territories-control {
   background: rgba(255, 255, 255, 0.94);
   border: 1px solid rgba(15, 23, 42, 0.14);
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.16);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
 }
 
@@ -43,7 +43,7 @@
 .agsus-indigenous-territories-control__swatch {
   background: color-mix(in srgb, var(--terra-fundo) 60%, transparent);
   border: 2px solid var(--terra-definitiva);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   box-sizing: border-box;
   display: inline-block;
   height: 14px;
@@ -70,8 +70,8 @@
 .agsus-dsei-tooltip {
   background: rgba(15, 23, 42, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 7px;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
   color: #fff;
   /* 12px (caption) é o mínimo (docs/biblioteca/design-e-tokens.md); 800 não está na escala de pesos. */
   font-size: var(--text-caption);

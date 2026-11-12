@@ -108,10 +108,10 @@
   border-top: 0;
 }
 .saude-item--falhou {
-  box-shadow: inset 4px 0 0 var(--state-danger);
+  box-shadow: inset 4px 0 0 var(--state-danger); /* acabamento: permitido — faixa lateral de 4px de estado, não é elevação */
 }
 .saude-item--atrasada {
-  box-shadow: inset 4px 0 0 var(--state-warning);
+  box-shadow: inset 4px 0 0 var(--state-warning); /* acabamento: permitido — faixa lateral de 4px de estado, não é elevação */
 }
 .saude-item__topo {
   display: flex;

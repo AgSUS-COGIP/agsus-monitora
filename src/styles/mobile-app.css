@@ -32,7 +32,7 @@ textarea,
 @media (max-width: 900px) {
   /* No celular o cabeçalho sobe para 10030 (app.css: --z-header 10010). */
   .app .top {
-    z-index: 10030;
+    z-index: calc(var(--z-header) + 20);
   }
 
   body {
@@ -72,7 +72,7 @@ textarea,
     width: 100%;
     max-width: 520px;
     margin: auto;
-    border-radius: 22px;
+    border-radius: var(--radius-xl);
   }
 
   .login-card {
@@ -102,10 +102,10 @@ textarea,
     height: auto !important;
     /* Acima do cabeçalho (.app .top = 10030, no início deste bloco):
        com 10020 o topo cobria a logo e o primeiro grupo da gaveta aberta. */
-    z-index: 10036;
+    z-index: calc(var(--z-sidebar) + 16);
     transform: translateX(-105%);
-    transition: transform 180ms ease;
-    box-shadow: 22px 0 48px rgba(15, 35, 60, 0.24);
+    transition: transform var(--duration-slow) var(--ease-standard);
+    box-shadow: var(--shadow-lg);
     overflow-y: auto;
     overscroll-behavior: contain;
   }
@@ -121,7 +121,7 @@ textarea,
   #sidebarOverlay {
     position: fixed;
     inset: 0;
-    z-index: 10034;
+    z-index: calc(var(--z-sidebar) + 14);
     background: rgba(5, 22, 40, 0.48);
     backdrop-filter: blur(2px);
   }
@@ -140,7 +140,7 @@ textarea,
   .header {
     position: sticky;
     top: var(--mobile-safe-top);
-    z-index: 900;
+    z-index: 900; /* acabamento: permitido — cabeçalho colante da tela no celular, dentro do contexto do conteúdo */
     width: 100%;
     min-width: 0;
     padding: 10px 12px !important;
@@ -157,8 +157,8 @@ textarea,
   .panel,
   .table-card {
     min-width: 0;
-    border-radius: 16px !important;
-    box-shadow: 0 5px 18px rgba(15, 35, 60, 0.07) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: none !important;
   }
 
   .card,
@@ -177,7 +177,7 @@ textarea,
     overflow-x: auto !important;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
   }
 
   table {
@@ -195,7 +195,7 @@ textarea,
   td:first-child {
     position: sticky;
     left: 0;
-    z-index: 2;
+    z-index: var(--z-sticky);
     background: inherit;
   }
 
@@ -212,7 +212,7 @@ textarea,
     max-width: 100% !important;
     max-height: min(90dvh, 860px) !important;
     margin: 0 !important;
-    border-radius: 22px 22px 0 0 !important;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
     overflow-y: auto;
     padding-bottom: calc(18px + var(--mobile-safe-bottom)) !important;
   }
@@ -257,7 +257,7 @@ textarea,
   .card,
   .panel,
   .table-card {
-    border-radius: 14px !important;
+    border-radius: var(--radius-lg) !important;
     padding: 12px !important;
   }
 
