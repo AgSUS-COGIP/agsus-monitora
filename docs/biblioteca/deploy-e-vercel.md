@@ -1,13 +1,26 @@
 ---
 tipo: guia
 area: operacao
-atualizado: 2026-11-10
+atualizado: 2026-11-12
 ---
 
 # Deploy e Vercel
 
 O front é estático (`dist/` do Vite) e fica na Vercel, com as funções serverless de `api/`
 ([[funcoes-da-vercel]]). Há também um servidor opcional em container ([[servidor-web]]).
+
+## Endereços
+
+- **`https://yeende.vercel.app`** é o endereço do sistema desde 12/11/2026 (o nome Yeendé).
+- **`https://agsus-monitora.vercel.app`** continua no mesmo projeto e na mesma produção, sem
+  redirecionar: os robôs, o Apps Script e os painéis externos chamam `/api/...` por ele. Passar a
+  redirecionar só depois de trocar o endereço nesses clientes.
+- O código não guarda o endereço: o login volta para a origem da página
+  (`getOAuthCallbackUrl`, `src/lib/auth-flow.ts`) e as funções comparam a origem com o próprio
+  host. Domínio novo pede só duas configurações: o domínio na Vercel (Settings › Domains) e a URL
+  `/auth/callback.html` dele em Redirect URLs do Supabase Auth ([[sessao-e-auth]]).
+- Sessão e preferências do navegador são por endereço: no domínio novo, cada pessoa entra de novo
+  e começa com a Aya, o mapa e as colunas no padrão.
 
 ## Publicar
 

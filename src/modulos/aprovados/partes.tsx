@@ -27,7 +27,7 @@ import {
   tomDoStatus,
 } from "../../lib/lista-aprovados-rules.ts";
 import { Icone } from "../../componentes/icone.tsx";
-import { classes } from "../../ui/index.ts";
+import { classes, Selo } from "../../ui/index.ts";
 
 /*
   Peças que as duas abas (aprovados e convocação) e os modais repetem. As
@@ -124,9 +124,7 @@ export function NomeDoCandidato({
       ) : (
         <strong>{candidato.nome}</strong>
       )}
-      {candidato.sub_judice ? (
-        <span className="approved-tag subjudice">SUB JUDICE</span>
-      ) : null}
+      {candidato.sub_judice ? <Selo tom="pendente">Sub judice</Selo> : null}
       <small>
         {candidato.edital || ""}
         {candidato.lista_ativa ? "" : " · Lista inativa"}

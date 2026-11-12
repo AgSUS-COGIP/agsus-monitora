@@ -217,20 +217,6 @@ html[data-theme="dark"] .recursos-link {
   justify-content: space-between;
   gap: var(--space-2);
 }
-.recursos-girando {
-  width: 14px;
-  height: 14px;
-  border: 2px solid color-mix(in srgb, currentColor 35%, transparent);
-  border-top-color: currentColor;
-  border-radius: var(--radius-full);
-  animation: recursos-girando 0.75s linear infinite;
-}
-@keyframes recursos-girando {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /* Parecer jurídico (gaveta): para quem não decide, o aviso no lugar dos botões. */
 .recursos-aguardando {
   margin: 0;

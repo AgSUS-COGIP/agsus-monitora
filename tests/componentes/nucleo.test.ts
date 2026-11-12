@@ -1179,7 +1179,7 @@ describe("formulário do edital", () => {
     await montar({ supabase });
     await abrirEdital("1");
     expect($("cronogramaValidation")?.textContent).toContain(
-      "Erro ao carregar cronograma: sem permissão",
+      "Não foi possível carregar o cronograma: sem permissão",
     );
   });
 

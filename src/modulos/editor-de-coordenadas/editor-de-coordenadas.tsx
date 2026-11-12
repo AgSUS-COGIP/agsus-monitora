@@ -628,7 +628,7 @@ export function EditorDeCoordenadas<P extends PontoDoEditor>({
             ) : null}
             <div className="mapa-si-coordenadas__acoes">
               <button
-                className="btn"
+                className="btn secondary"
                 type="button"
                 disabled={salvando || !mudou}
                 onClick={desfazerPrevia}

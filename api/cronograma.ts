@@ -12,7 +12,7 @@
   1. A chamada (JavaScript):
 
        const resposta = await fetch(
-         "https://agsus-monitora.vercel.app/api/cronograma?unidade=yanomami",
+         "https://yeende.vercel.app/api/cronograma?unidade=yanomami",
          { headers: { Authorization: `Bearer ${CHAVE_DA_API}` } },
        );
        const { etapas, totais } = await resposta.json();
@@ -20,7 +20,7 @@
      Pela linha de comando:
 
        curl -H "Authorization: Bearer <chave>" \
-         "https://agsus-monitora.vercel.app/api/cronograma?edital_id=<id>"
+         "https://yeende.vercel.app/api/cronograma?edital_id=<id>"
 
   2. Filtros opcionais:
        ?edital_id=  ?area=                      igual (sem caixa nem acento)
