@@ -504,21 +504,22 @@
 /* ── Seletor de área ──────────────────────────────────────────────────────── */
 
 /*
-  A cor de cada área: a bolinha do seletor (`menu-de-areas.jsx`) e, no trilho,
-  o anel do botão. Os tokens de estado trocam no escuro sem regra própria. A
-  cor nunca vai sozinha: o ícone da área está na marca e o nome ao lado (no
+  A cor de cada área: a bolinha do seletor (`menu-de-areas.tsx`) e, no trilho,
+  o anel do botão. Vem da paleta do rio (tokens.css), em tons vivos que
+  aparecem na barra escura e na clara (a bolinha tem anel e contorno); são os
+  mesmos da área no título da página. A cor nunca vai sozinha: o ícone da área está na marca e o nome ao lado (no
   trilho, na dica e no rótulo acessível do botão).
 */
 [data-cor-da-area="saude-indigena"] {
-  --cor-da-area: var(--state-success);
+  --cor-da-area: var(--paleta-floresta-claro);
 }
 
 [data-cor-da-area="sede"] {
-  --cor-da-area: var(--state-info);
+  --cor-da-area: var(--paleta-ocre-vivo);
 }
 
 [data-cor-da-area="projetos"] {
-  --cor-da-area: var(--state-warning);
+  --cor-da-area: var(--paleta-terracota-claro);
 }
 
 .menu-seletor {

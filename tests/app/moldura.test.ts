@@ -209,6 +209,20 @@ describe("a página", () => {
     expect(document.documentElement.getAttribute("data-theme")).toBe("");
   });
 
+  it("marca a área aberta no html (a cor da área) e acompanha a troca", () => {
+    definirAreaAtual("saude-indigena");
+    montar();
+    expect(document.documentElement.getAttribute("data-area")).toBe(
+      "saude-indigena",
+    );
+    definirAreaAtual("projetos");
+    expect(document.documentElement.getAttribute("data-area")).toBe("projetos");
+    definido(desligar)();
+    desligar = null;
+    definirAreaAtual("sede");
+    expect(document.documentElement.getAttribute("data-area")).toBe("projetos");
+  });
+
   it("o estado começa no que o primeiro quadro pintou (body e html)", () => {
     document.body.className = "sidebar-collapsed";
     document.documentElement.setAttribute("data-theme", "dark");

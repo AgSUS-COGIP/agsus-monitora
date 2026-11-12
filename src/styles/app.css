@@ -917,7 +917,7 @@ body.external-clean #externalReturnBar {
   margin: 0;
   font-size: var(--text-2xl);
   line-height: 1.15;
-  color: var(--text-primary);
+  color: var(--cor-da-area, var(--text-primary));
   font-weight: 600;
   letter-spacing: -0.02em;
 }
@@ -1161,7 +1161,7 @@ body.external-clean #externalReturnBar {
   ) !important;
 }
 [data-theme="dark"] .app .page-title h1 {
-  color: var(--color-text-brand) !important;
+  color: var(--cor-da-area, var(--color-text-brand)) !important;
 }
 [data-theme="dark"] .app .page-title p {
   color: var(--color-text-secondary) !important;

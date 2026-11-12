@@ -410,15 +410,21 @@
   grid-auto-rows: 1fr;
   gap: var(--space-3);
 }
+/*
+  Os tons dos indicadores vêm da paleta do rio (tokens.css): info no rio,
+  sucesso na folha, alerta no ocre, perigo na terracota e destaque na
+  floresta. A cor aparece no tile do ícone e num friso de 3px no alto do card.
+*/
 .ui-kpi {
-  --kpi-cor: var(--state-info);
-  --kpi-fundo: var(--state-info-soft);
+  --kpi-cor: var(--paleta-rio);
+  --kpi-fundo: var(--paleta-rio-suave);
   display: flex;
   min-width: 0;
   min-height: 78px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   background: var(--surface-card);
+  box-shadow: inset 0 3px 0 var(--kpi-cor);
 }
 .ui-kpi:not(.ui-kpi-clicavel),
 .ui-kpi-alvo {
@@ -487,24 +493,24 @@
   height: var(--leading-metric-sm);
 }
 .ui-kpi[data-tom="sucesso"] {
-  --kpi-cor: var(--state-success);
-  --kpi-fundo: var(--state-success-soft);
+  --kpi-cor: var(--paleta-folha);
+  --kpi-fundo: var(--paleta-folha-suave);
 }
 .ui-kpi[data-tom="alerta"] {
-  --kpi-cor: var(--state-warning);
-  --kpi-fundo: var(--state-warning-soft);
+  --kpi-cor: var(--paleta-ocre);
+  --kpi-fundo: var(--paleta-ocre-suave);
 }
 .ui-kpi[data-tom="perigo"] {
-  --kpi-cor: var(--state-danger);
-  --kpi-fundo: var(--state-danger-soft);
+  --kpi-cor: var(--paleta-terracota);
+  --kpi-fundo: var(--paleta-terracota-suave);
 }
 .ui-kpi[data-tom="neutro"] {
   --kpi-cor: var(--state-neutral);
   --kpi-fundo: var(--state-neutral-soft);
 }
 .ui-kpi[data-tom="destaque"] {
-  --kpi-cor: var(--series-3);
-  --kpi-fundo: color-mix(in srgb, var(--series-3) 14%, transparent);
+  --kpi-cor: var(--paleta-floresta);
+  --kpi-fundo: var(--paleta-floresta-suave);
 }
 
 /* ── CardDeGrafico ─────────────────────────────────────────────────── */
@@ -720,21 +726,22 @@ th[aria-sort="descending"] .ui-ordenar i {
   line-height: var(--leading-caption);
   white-space: nowrap;
 }
+/* Os tons da paleta do rio, como os indicadores. */
 .ui-selo[data-tom="sucesso"] {
-  background: var(--state-success-soft);
-  color: var(--state-success);
+  background: var(--paleta-folha-suave);
+  color: var(--paleta-folha);
 }
 .ui-selo[data-tom="perigo"] {
-  background: var(--state-danger-soft);
-  color: var(--state-danger);
+  background: var(--paleta-terracota-suave);
+  color: var(--paleta-terracota);
 }
 .ui-selo[data-tom="alerta"] {
-  background: var(--state-warning-soft);
-  color: var(--state-warning);
+  background: var(--paleta-ocre-suave);
+  color: var(--paleta-ocre);
 }
 .ui-selo[data-tom="info"] {
-  background: var(--state-info-soft);
-  color: var(--state-info);
+  background: var(--paleta-rio-suave);
+  color: var(--paleta-rio);
 }
 
 /* ── Modal padrão (<Modal tamanho>): respiro, largura e coluna ────────── */

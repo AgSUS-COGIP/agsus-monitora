@@ -5,7 +5,10 @@ import {
 } from "../lib/eventos-da-barra-lateral.ts";
 import { nomeDaArea } from "../lib/menu-lateral.ts";
 import { resumoDoRelatorio } from "../lib/visao-geral.ts";
-import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.ts";
+import {
+  assinarDadosDoMonitoramento,
+  obterDadosDoMonitoramento,
+} from "../componentes/dados-do-monitoramento.ts";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 import { avisar as avisarPadrao } from "./avisos.ts";
 
@@ -310,6 +313,15 @@ export function criarMoldura({
     aplicar();
     ouvintes.add(aplicar);
 
+    // A área aberta vai para `html[data-area]`: a cor da área (tokens.css).
+    const aplicarArea = () => {
+      const area = areaAtual();
+      if (area) documento.documentElement.setAttribute("data-area", area);
+      else documento.documentElement.removeAttribute("data-area");
+    };
+    aplicarArea();
+    const largarArea = assinarDadosDoMonitoramento(aplicarArea);
+
     let espera: ReturnType<typeof setTimeout> | null = null;
     const aoMudar = (atraso: number) => () => {
       clearTimeout(espera!);
@@ -330,6 +342,7 @@ export function criarMoldura({
     documento.addEventListener("fullscreenchange", aoMudarTelaCheia);
     return () => {
       ouvintes.delete(aplicar);
+      largarArea();
       clearTimeout(espera!);
       janela.removeEventListener("resize", aoRedimensionar);
       janela.removeEventListener("orientationchange", aoGirar);
