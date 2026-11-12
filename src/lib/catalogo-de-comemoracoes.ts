@@ -194,7 +194,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Aya",
     onde: "src/modulos/aya/aya.tsx",
     forma: null,
-    letreiro: "Valeu!",
+    letreiro: "Tudo pronto",
     padrao: opcoes("fogos", "normal"),
   },
   {
@@ -203,7 +203,7 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Aya",
     onde: "src/modulos/aya/aya.tsx",
     forma: "estrela",
-    letreiro: "Mandou bem!",
+    letreiro: "Concluída",
     padrao: opcoes("fogos", "festa"),
   },
 ]);
