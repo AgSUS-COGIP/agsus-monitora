@@ -645,9 +645,10 @@
   color: var(--menu-texto);
 }
 
+/* Segmento ativo: branco com o azul do manual nos dois temas (pedido de 12/11/2026). */
 .side-tema__opcao[aria-pressed="true"] {
-  background: var(--menu-flutuante-fundo);
-  color: var(--menu-flutuante-texto);
+  background: var(--color-neutral-0);
+  color: var(--color-blue-600);
   box-shadow: var(--shadow);
   font-weight: 600;
 }
