@@ -41,9 +41,11 @@ import {
   normalizeAccessPanelColor,
 } from "../../lib/access-branding.ts";
 import {
+  ESTILO_VIDRO,
   MODO_AUTO,
   TEXTO_CLARO,
   corDoTextoPara,
+  normalizarEstilo,
   normalizarModo,
 } from "../../lib/contraste.ts";
 
@@ -191,8 +193,23 @@ export function aplicarCorDoPainel(
   return true;
 }
 
+/*
+  O estilo do painel (Configurações › Tela de acesso): `login-panel-vidro` no
+  `#loginScreen` deixa o painel translúcido sobre a arte (platform-shell.css).
+  Sem estilo, ou com qualquer outro valor, sólido.
+*/
+export function aplicarEstiloDoPainel(
+  tela: HTMLElement | null | undefined,
+  estilo: unknown,
+): void {
+  tela?.classList.toggle(
+    "login-panel-vidro",
+    normalizarEstilo(estilo) === ESTILO_VIDRO,
+  );
+}
+
 /**
- * Aplica uma marca (campos do cache: backgroundUrl, panelColor, textoModo,
+ * Aplica uma marca (campos do cache: backgroundUrl, panelColor, textoModo, painelEstilo,
  * logoUrl, greeting, buttonText). Cada campo é opcional; o que falta fica como
  * está. Os campos entram juntos: aplicar só a arte e a cor produzia tela
  * híbrida — o fundo de uma configuração com a saudação e o logotipo de outra.
@@ -214,6 +231,8 @@ export function aplicarMarcaNaTela(
     medirProporcaoDaArte(tela, marca.backgroundUrl);
   }
   if (tela) aplicarCorDoPainel(tela, marca.panelColor, marca.textoModo);
+  if (tela && marca.painelEstilo)
+    aplicarEstiloDoPainel(tela, marca.painelEstilo);
 
   const parcial: Partial<IdentidadeDaEntrada> = {};
   if (marca.logoUrl) parcial.logoUrl = marca.logoUrl;
@@ -293,6 +312,7 @@ export function definirMarcaDaConfiguracao(
   const painelDoBanco = doBanco("auth_access_panel_color");
   const logoDoBanco = doBanco("auth_access_logo_url");
   const saudacaoDoBanco = doBanco("auth_access_greeting");
+  const estiloDoBanco = doBanco("auth_access_painel_estilo");
 
   const tela = documento?.getElementById?.("loginScreen");
   const marcaParaGuardar: MarcaGuardada = {};
@@ -311,6 +331,12 @@ export function definirMarcaDaConfiguracao(
     aplicarCorDoPainel(tela, cor, modo);
     marcaParaGuardar.panelColor = cor;
     marcaParaGuardar.textoModo = modo;
+  }
+
+  if (tela && estiloDoBanco !== null) {
+    const estilo = normalizarEstilo(estiloDoBanco);
+    aplicarEstiloDoPainel(tela, estilo);
+    marcaParaGuardar.painelEstilo = estilo;
   }
 
   if (logoDoBanco !== null) {

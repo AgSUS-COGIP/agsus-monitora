@@ -115,6 +115,38 @@
     background-color var(--duration-slow) var(--ease-standard),
     color var(--duration-slow) var(--ease-standard);
 }
+/*
+  PAINEL DE VIDRO (Configurações › Tela de acesso › Estilo do painel)
+
+  A cor do painel a 72% (OPACIDADE_DO_VIDRO em src/lib/contraste.ts, que mede
+  o contraste do texto com a cor misturada ao branco e ao preto, o pior trecho
+  possível da arte) e a arte desfocada por trás. O cartão fica sem fundo
+  próprio, para a tinta não dobrar. Quem pede menos transparência ao sistema,
+  ou navegador sem desfoque, vê o painel sólido.
+*/
+.login-screen.login-panel-vidro .login-outer {
+  background: color-mix(
+    in srgb,
+    var(--login-panel-color, var(--color-bg-subtle)) 72%,
+    transparent
+  );
+  backdrop-filter: blur(18px) saturate(140%); /* acabamento: permitido(blur) — vidro do painel de acesso, escolhido em Configurações; recua para sólido abaixo */
+}
+.login-screen.login-panel-vidro .login-card {
+  background: transparent;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .login-screen.login-panel-vidro .login-outer,
+  .login-screen.login-panel-vidro .login-card {
+    background: var(--login-panel-color, var(--color-bg-subtle));
+  }
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .login-screen.login-panel-vidro .login-outer,
+  .login-screen.login-panel-vidro .login-card {
+    background: var(--login-panel-color, var(--color-bg-subtle));
+  }
+}
 .login-brand-lockup {
   display: flex;
   align-items: center;

@@ -17,7 +17,7 @@ import {
   normalizeAccessPanelColor,
 } from "./access-branding.ts";
 import { isValidAccessAssetUrl } from "./config-validation";
-import { normalizarModo } from "./contraste.ts";
+import { normalizarEstilo, normalizarModo } from "./contraste.ts";
 import {
   corDaBarraSegura,
   logoDaBarraSegura,
@@ -386,6 +386,19 @@ export const CAMPOS_DAS_SECOES: Readonly<
           ["escuro", "Sempre escuro"],
         ]),
         normalizar: normalizarModo,
+      },
+    ),
+    texto(
+      "auth_access_painel_estilo",
+      "Estilo do painel da tela de acesso",
+      "Estilo do painel",
+      {
+        tipo: "opcoes",
+        opcoes: Object.freeze<OpcaoDoCampo[]>([
+          ["solido", "Sólido"],
+          ["vidro", "Vidro"],
+        ]),
+        normalizar: normalizarEstilo,
       },
     ),
     texto(

@@ -325,9 +325,11 @@ export function SecaoAparencia({ estado, imagens }: PropsDaSecaoNoPortal) {
           {campo("auth_access_logo_url")}
           {campo("auth_access_panel_color")}
           {campo("auth_access_texto_modo")}
+          {campo("auth_access_painel_estilo")}
           <AvisoDeContraste
             cor={estado.valor("auth_access_panel_color")}
             modo={estado.valor("auth_access_texto_modo")}
+            estilo={estado.valor("auth_access_painel_estilo")}
             comBotao
           />
         </Grupo>

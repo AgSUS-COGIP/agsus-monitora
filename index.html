@@ -83,6 +83,8 @@
                   ? false
                   : (r * 299 + g * 587 + b * 114) / 1000 < 145;
           }
+          /* O estilo do painel (sólido ou vidro): a classe vai com a outra. */
+          window.__agsusPainelVidro = marca.painelEstilo === "vidro";
 
           var arte =
             typeof marca.backgroundUrl === "string"
@@ -181,7 +183,12 @@
       chegava a atualizá-la. `identidade-da-aba.js` troca por logo institucional
       configurada depois que ela carrega, e volta para cá se falhar.
     -->
-    <link id="appFavicon" rel="icon" href="/icons/agsus-monitora.svg" type="image/svg+xml" />
+    <link
+      id="appFavicon"
+      rel="icon"
+      href="/icons/agsus-monitora.svg"
+      type="image/svg+xml"
+    />
     <link rel="shortcut icon" href="/icons/agsus-monitora.svg" />
     <link rel="apple-touch-icon" href="/icons/agsus-monitora.svg" />
 
@@ -369,6 +376,11 @@
           document
             .getElementById("loginScreen")
             .classList.add("login-panel-dark");
+        }
+        if (window.__agsusPainelVidro) {
+          document
+            .getElementById("loginScreen")
+            .classList.add("login-panel-vidro");
         }
       </script>
       <!--

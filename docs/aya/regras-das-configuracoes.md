@@ -68,6 +68,12 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 **resposta:** A cor do painel pinta o cartão da tela de acesso. Em Texto sobre o painel, Automático escolhe texto claro ou escuro pelo contraste com a cor; Sempre claro e Sempre escuro impõem o texto, por decisão de identidade visual, mesmo quando isso reprova a WCAG. Abaixo da cor aparece a razão de contraste: abaixo de 4,5, quem tem baixa visão pode não conseguir ler, e uma cor mais escura ou mais clara resolve sem mudar o tom.
 **fonte:** interface do Yeendé
 
+## Painel de vidro na tela de acesso
+
+**perguntas:** painel de vidro | estilo do painel | painel translucido | vidro no login | painel transparente na tela de acesso
+**resposta:** Em Configurações › Aparência, Estilo do painel escolhe entre Sólido (o padrão) e Vidro. No vidro, o cartão da tela de acesso fica translúcido sobre a arte, com a cor do painel a 72% e a arte desfocada por trás. Como a arte pode ter trechos muito claros ou muito escuros, o contraste mostrado abaixo da cor passa a ser medido no pior trecho possível; se ficar abaixo de 4,5, uma cor mais escura ou mais clara, ou o painel sólido, resolve. Quem pediu ao sistema menos transparência, ou usa navegador sem desfoque, vê o painel sólido. Vale depois de "Salvar alterações".
+**fonte:** interface do Yeendé
+
 ## Logo e cor da barra lateral
 
 **perguntas:** logo da barra lateral | como trocar a logo da barra lateral | cor da barra lateral | logos enviadas | trocar logo do menu
