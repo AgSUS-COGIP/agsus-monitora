@@ -434,12 +434,43 @@ describe("KPIs, gráficos e pendências", () => {
       ],
       ["pendentes", "alerta", { tipo: "kpi", valor: "pendente" }],
       ["em-revisao", "alerta", { tipo: "kpi", valor: "revisar" }],
-      ["etapa-sem-data", "alerta", { tipo: "validacao", valor: "SEM_DATA" }],
     ]);
     expect(pendencias[0].detalhe).toBe(
       "1 análise(s) com data depois de hoje. Corrija na planilha de origem.",
     );
     expect(pendenciasPrioritarias([])).toEqual([]);
+  });
+
+  it("Análise sem data conta o mesmo que o atalho mostra (realizadas e sem data)", () => {
+    const base = prontas([
+      // Pendente sem data é o normal, mesmo com a etapa preenchida.
+      linha({ id: "p1", status_consolidado: "Pendente", etapa: "Triagem" }),
+      linha({ id: "p2", status_consolidado: "Pendente" }),
+      linha({ id: "a1", status_consolidado: "Aprovado", etapa: "Triagem" }),
+      linha({ id: "r1", status_consolidado: "Revisar" }),
+      linha({
+        id: "a2",
+        status_consolidado: "Aprovado",
+        data_analise: "10/09/2026",
+      }),
+    ]);
+    const pendencia = pendenciasPrioritarias(base).find(
+      (p) => p.chave === "analise-sem-data",
+    );
+    expect(pendencia).toMatchObject({
+      titulo: "Análise sem data",
+      detalhe: "2 análise(s) realizada(s) sem data de análise.",
+      atalho: { tipo: "validacao", valor: "SEM_DATA", kpi: "analisado" },
+    });
+    // O que a tabela mostra com o atalho: o KPI e a validação dele.
+    const naTabela = recorteVisual(
+      filtrarLinhas(base, {
+        ...FILTROS_VAZIOS,
+        validacao: [pendencia.atalho.valor],
+      }),
+      { kpi: pendencia.atalho.kpi },
+    );
+    expect(naTabela.map((l) => l.id)).toEqual(["a1", "r1"]);
   });
 });
 
