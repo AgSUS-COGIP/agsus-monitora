@@ -32,7 +32,7 @@
     "src/styles/app.css": "tela de acesso (paleta própria, igual nos dois temas), impressão, sombras/véus de modal e dívida: valores escuros de [data-theme=dark] legados (docs/biblioteca/css.md, Dívida)",
     "src/styles/comemoracao.css": "palco escuro fixo da comemoração (fogos) e brilho",
     "src/styles/indigenous-territories-layer.css": "mapa: controles e dicas sobre a base do mapa, par de cores fixo",
-    "src/styles/platform-shell.css": "tela de acesso (paleta própria sobre a cor configurada do painel) e dívida: valores escuros de [data-theme=dark] legados",
+    "src/styles/platform-shell.css": "tela de acesso (paleta própria sobre a cor configurada do painel) e dívida: valores escuros de [data-theme=dark] legados; faixa de aviso (warn/error) no escuro com fundo opaco próprio (tests/aviso-global.spec.js)",
     "src/styles/post157-interface-tuning.css": "CSS do primeiro paint, que roda antes dos tokens (ver tests/piscada-do-login.test.js)",
     "src/styles/visual-polish.css": "mapa (fundo do Leaflet antes do mosaico) e texto da tela de acesso",
     "src/ui/grafico.tsx": "reserva de cor do gráfico quando o token não é lido (a tela lê os tokens)"
@@ -276,7 +276,13 @@
     },
     "src/styles/platform-shell.css": {
       "#ffffff": 1,
-      "#f1f5f9": 1
+      "#f1f5f9": 1,
+      "#2a2008": 1,
+      "#5c4506": 1,
+      "#fbbf24": 1,
+      "#2b1114": 1,
+      "#5c1a22": 1,
+      "#fca5a5": 1
     },
     "src/styles/post157-interface-tuning.css": {
       "#eef4f8": 1,

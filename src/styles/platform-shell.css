@@ -989,22 +989,14 @@ html[data-theme="dark"] .sidebar {
   variante) é o que garante que esta venha depois na disputa.
 */
 [data-theme="dark"] .app .broadcast-bar.warn {
-  background: var(--color-status-warning-bg) !important;
-  border-color: color-mix(
-    in srgb,
-    var(--color-status-warning-solid) 40%,
-    transparent
-  ) !important;
-  color: var(--color-status-warning-text) !important;
+  background: #2a2008 !important; /* acabamento: permitido(cor) — faixa de aviso no escuro precisa de fundo opaco próprio (tests/aviso-global.spec.js) */
+  border-color: #5c4506 !important; /* acabamento: permitido(cor) — faixa de aviso no escuro precisa de fundo opaco próprio (tests/aviso-global.spec.js) */
+  color: #fbbf24 !important; /* acabamento: permitido(cor) — faixa de aviso no escuro precisa de fundo opaco próprio (tests/aviso-global.spec.js) */
 }
 [data-theme="dark"] .app .broadcast-bar.error {
-  background: var(--color-status-danger-bg) !important;
-  border-color: color-mix(
-    in srgb,
-    var(--color-status-danger-solid) 40%,
-    transparent
-  ) !important;
-  color: var(--color-status-danger-text) !important;
+  background: #2b1114 !important; /* acabamento: permitido(cor) — faixa de aviso no escuro precisa de fundo opaco próprio (tests/aviso-global.spec.js) */
+  border-color: #5c1a22 !important; /* acabamento: permitido(cor) — faixa de aviso no escuro precisa de fundo opaco próprio (tests/aviso-global.spec.js) */
+  color: #fca5a5 !important; /* acabamento: permitido(cor) — faixa de aviso no escuro precisa de fundo opaco próprio (tests/aviso-global.spec.js) */
 }
 
 /*
