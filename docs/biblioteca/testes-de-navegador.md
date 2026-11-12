@@ -18,6 +18,7 @@ Os `*.spec.js` de `tests/` rodam no Playwright. O CI roda todos (`npm run test:e
   voltar/avançar, áreas, sem perfil). Precisa de build com `VITE_SUPABASE_URL=https://teste.supabase.co`
   (o do CI); com outro endereço, é pulado. **Teste novo de tela com sessão vai aqui**, simulando as
   RPCs que ela chama.
+- **`acabamento-capturas`:** as telas da base (Editais, Visão geral, Configurações → Módulos e abas, um modal e uma gaveta) em claro e escuro, a 375px e 1280px, com tabela cheia, texto longo, lista vazia e erro 500; grava PNG em `test-results/acabamento/` para conferir por olho e falha com `pageerror` ou rolagem horizontal. Usa `tests/apoio/sessao-simulada.js` (`abrirComSessao` com `rpcs` e `tabelas`) e as respostas de `tests/fixtures/acabamento/`.
 - **Com banco de desenvolvimento** (`E2E_SUPABASE_SESSION_JSON`; sem ela, pulados):
   `sessao-autenticada`, `analises-authenticated`, `mapa-workspace-autenticado`.
 
