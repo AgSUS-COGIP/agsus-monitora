@@ -115,7 +115,7 @@ export function HistoricoDoPonto({
             <div className="mapa-si-coordenadas__acoes">
               <button
                 type="button"
-                className="btn"
+                className="btn secondary"
                 disabled={desabilitado}
                 onClick={() => definirAberto(false)}
               >

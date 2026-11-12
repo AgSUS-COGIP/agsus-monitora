@@ -18,7 +18,13 @@ import type {
   ResultadoDoLote,
 } from "../../lib/cronograma-do-edital.ts";
 import { editaisComCronogramaParaCopiar } from "../../lib/editais-do-nucleo.ts";
-import { Aviso, Campo, LinhasEsqueleto, Selo } from "../../ui/index.ts";
+import {
+  Aviso,
+  Campo,
+  ErroAoCarregar,
+  LinhasEsqueleto,
+  Selo,
+} from "../../ui/index.ts";
 import { LancarRetificacao } from "./lancar-retificacao.tsx";
 import type {
   EstadoDaRetificacao,
@@ -218,8 +224,7 @@ function CopiaDeCronograma({
         >
           {copiando ? (
             <>
-              <i className="fa-solid fa-spinner fa-spin" aria-hidden="true" />{" "}
-              Copiando…
+              <span className="botao-girando" aria-hidden="true" /> Copiando…
             </>
           ) : (
             <>
@@ -250,9 +255,8 @@ function Validacao({
   if (erroDeCarga)
     return (
       <div id="cronogramaValidation" className="cronograma-validation">
-        <Aviso tom="danger" papel="alert">
-          Erro ao carregar cronograma: {erroDeCarga}
-        </Aviso>
+        {/* O texto técnico vira frase que diz o que fazer (erro-na-tela.ts). */}
+        <ErroAoCarregar oQue="o cronograma" mensagem={erroDeCarga} />
       </div>
     );
   const { erros, avisos } = analise;

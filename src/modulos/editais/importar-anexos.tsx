@@ -269,8 +269,7 @@ export function ImportarAnexos({
         >
           {lendo ? (
             <>
-              <i className="fa-solid fa-spinner fa-spin" aria-hidden="true" />{" "}
-              Lendo o PDF…
+              <span className="botao-girando" aria-hidden="true" /> Lendo o PDF…
             </>
           ) : (
             <>

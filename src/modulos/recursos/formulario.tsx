@@ -682,7 +682,7 @@ export function FormularioDoRecurso({
           >
             {salvando ? (
               <>
-                <span className="recursos-girando" aria-hidden="true" />{" "}
+                <span className="botao-girando" aria-hidden="true" />{" "}
                 {acao?.rotulo}
               </>
             ) : edicao ? (
