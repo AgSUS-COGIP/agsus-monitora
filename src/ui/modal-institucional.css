@@ -71,7 +71,7 @@
   background: var(--surface-hover);
 }
 .ui-modal-institucional-fechar:focus-visible {
-  outline: 2px solid var(--brand-primary);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 .ui-modal-institucional-complemento {

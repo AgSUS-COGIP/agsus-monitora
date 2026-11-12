@@ -58,6 +58,11 @@ export function tabelaEmCartoes(tabela: unknown): boolean {
   for (const linha of tabela.querySelectorAll("tbody tr")) {
     Array.from((linha as HTMLTableRowElement).cells).forEach(
       (celula, indice) => {
+        // Célula que ocupa a linha toda (vazio, erro) é mensagem, não valor de uma coluna.
+        if (celula.colSpan > 1) {
+          delete celula.dataset.mobileLabel;
+          return;
+        }
         celula.dataset.mobileLabel =
           cabecalhos[indice] || `Campo ${indice + 1}`;
       },

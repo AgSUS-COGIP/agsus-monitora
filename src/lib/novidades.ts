@@ -25,6 +25,12 @@ export const NOVIDADES_PUBLICADAS = 5;
 
 export const NOVIDADES: readonly Novidade[] = [
   {
+    id: "2026-11-12-acabamento-visual",
+    data: "2026-11-12",
+    texto: "visual mais uniforme e tabelas que avisam quando a carga falha",
+    visivel: true,
+  },
+  {
     id: "2026-11-11-resumo-por-cargo",
     data: "2026-11-11",
     texto: "resumo por cargo e status na lista de aprovados",

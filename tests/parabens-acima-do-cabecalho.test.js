@@ -1,14 +1,17 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { resolver } from "./apoio/tokens-de-camada.ts";
 
 const ler = (arquivo) => readFileSync(arquivo, "utf8").replace(/\r\n/g, "\n");
-/* As camadas (`--z-*`) moram em app.css; `var(--z-…)` vira o número de lá. */
+/* As camadas (`--z-*`) moram em app.css; `var(--z-…)` e `calc(var(--z-…) ± n)` viram número. */
 const app = ler("src/styles/app.css");
 const numero = (valor) => {
-  const token = /^var\((--z-[\w-]+)\)$/.exec(valor)?.[1];
-  return Number(
-    token ? new RegExp(`${token}:\\s*(\\d+)`).exec(app)?.[1] : valor,
-  );
+  if (!valor) return Number.NaN;
+  try {
+    return resolver(valor);
+  } catch {
+    return Number.NaN;
+  }
 };
 /* O maior z-index entre os blocos do seletor (o mesmo seletor aparece em @media). */
 const zDoBloco = (css, seletor) => {
@@ -46,8 +49,10 @@ describe("o aviso de parabéns fica visível", () => {
   });
 
   it("os fogos ficam logo abaixo do aviso", () => {
-    const fogos = Number(
-      /position: fixed;\s*inset: 0;\s*z-index:\s*(\d+)/.exec(comemoracao)?.[1],
+    const fogos = numero(
+      /position: fixed;\s*inset: 0;\s*z-index:\s*([^;]+);/
+        .exec(comemoracao)?.[1]
+        ?.trim(),
     );
     expect(fogos).toBeLessThan(zDoAviso);
     expect(fogos).toBeGreaterThan(10036);

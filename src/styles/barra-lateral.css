@@ -273,7 +273,7 @@
     position: fixed;
     top: var(--menu-flutuante-topo, var(--space-2));
     left: calc(var(--sidebar-mini) + var(--space-2));
-    z-index: 1;
+    z-index: 1; /* acabamento: permitido(zIndex) — painel flutuante, local ao contexto da barra lateral (--z-sidebar) */
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -287,7 +287,7 @@
     transition:
       opacity var(--motion-fast) var(--ease-standard),
       transform var(--motion-fast) var(--ease-standard),
-      visibility 0s linear var(--motion-fast);
+      visibility 0s linear var(--motion-fast); /* acabamento: permitido(curva) — visibility é discreta: o 0s com atraso só espera a saída terminar, a curva não atua */
   }
 
   body.sidebar-collapsed .menu-area--flutuante > .menu-area__painel {
@@ -295,7 +295,7 @@
     visibility: visible;
     pointer-events: auto;
     transform: none;
-    transition-delay: 0s;
+    transition-delay: 0s; /* acabamento: permitido(curva) — zera o atraso do estado fechado para a entrada ser imediata */
   }
 
   /* Ponte invisível sobre o vão até o ícone: o ponteiro atravessa sem sair da área. */
@@ -472,7 +472,7 @@
     width: 7px;
     height: 7px;
     border-radius: var(--radius-pill);
-    background: #a78bfa;
+    background: var(--series-4);
     box-shadow: 0 0 0 2px var(--sidebar-custom-bg, var(--card));
   }
 
@@ -645,9 +645,10 @@
   color: var(--menu-texto);
 }
 
+/* Segmento ativo: branco com o azul do manual nos dois temas (pedido de 12/11/2026). */
 .side-tema__opcao[aria-pressed="true"] {
-  background: var(--menu-flutuante-fundo);
-  color: var(--menu-flutuante-texto);
+  background: var(--color-neutral-0);
+  color: var(--color-blue-600);
   box-shadow: var(--shadow);
   font-weight: 600;
 }
@@ -745,7 +746,7 @@
     position: fixed;
     top: var(--dica-topo, 50%);
     left: calc(var(--sidebar-mini) + var(--space-2));
-    z-index: 2;
+    z-index: 2; /* acabamento: permitido(zIndex) — dica do trilho acima do painel flutuante, no contexto da barra lateral */
     padding: var(--space-1) var(--space-3);
     border-radius: var(--radius-md);
     background: var(--menu-pilula-fundo);
@@ -762,7 +763,7 @@
     transition:
       opacity var(--motion-fast) var(--ease-standard),
       transform var(--motion-fast) var(--ease-standard),
-      visibility 0s linear var(--motion-fast);
+      visibility 0s linear var(--motion-fast); /* acabamento: permitido(curva) — visibility é discreta: o 0s com atraso só espera a saída terminar, a curva não atua */
   }
 
   body.sidebar-collapsed .sidebar [data-dica]:hover::after,
@@ -770,7 +771,7 @@
     opacity: 1;
     visibility: visible;
     transform: translate(0, -50%);
-    transition-delay: 0s;
+    transition-delay: 0s; /* acabamento: permitido(curva) — zera o atraso do estado fechado para a entrada ser imediata */
   }
 
   /* Com a lista das áreas aberta, a pílula dela ocupa o lugar da dica. */
@@ -826,8 +827,8 @@ body.sidebar-theme-dark .menu-manutencao {
     width: 15px;
     height: 15px;
     border-radius: var(--radius-pill);
-    background: #fbbf24;
-    color: #422006;
+    background: var(--color-status-warning-solid);
+    color: var(--color-text-inverse);
     box-shadow: 0 0 0 2px var(--sidebar-custom-bg, var(--card));
   }
 

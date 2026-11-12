@@ -636,7 +636,9 @@ describe("filtros e paginação", () => {
     // A busca é só da tabela: o contador do topo segue os filtros.
     expect($("approvedCount").textContent).toBe("4 candidatos");
     await digitar($("approvedBusca"), "ninguém com esse nome");
-    expect($("approvedRows").textContent).toBe("Nenhum registro encontrado.");
+    expect($("approvedRows").textContent).toBe(
+      "Nenhum resultado para os filtros aplicados.",
+    );
     await clicar(
       achar(
         '[data-acao="limpar-filtros"]',

@@ -49,7 +49,12 @@ describe("densidade do dashboard Saúde Indígena", () => {
     expect(kpis).not.toMatch(/font-size:\s*(8|9|10)(\.\d)?px/);
     expect(kpis).not.toMatch(/font-weight:\s*(7|8|9)\d\d/);
     expect(kpis).not.toMatch(/\bzoom\s*:/);
-    expect(kpis).not.toMatch(/transform:\s*scale\(/);
+    // O único scale permitido é o do botão pressionado (`.btn:active`), não o dos KPIs.
+    const semOBotao = kpis.replace(
+      /\.btn:active:not\(:disabled\)\s*\{[^}]*\}/,
+      "",
+    );
+    expect(semOBotao).not.toMatch(/transform:\s*scale\(/);
   });
 
   it("tokens.css entra antes de qualquer outro CSS", () => {

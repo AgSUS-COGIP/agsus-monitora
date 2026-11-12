@@ -38,12 +38,23 @@
      porque é o único que avisa do resultado da ação.
 
      A faixa é a dos 20 mil porque foi a que o toast passou a usar na `main`.
-     Ficar aqui em cima também põe os modais acima dos dois painelões que
-     vivem no meio do caminho: o mapa imersivo (12050) e o diálogo de saída
-     da Saúde Indígena (15000). */
+     Ficar aqui em cima põe os modais acima de tudo o que vive na faixa dos 10 mil
+     (cabeçalho, barra lateral, Aya, tour, aviso de parabéns); só o loader e o
+     toast ficam acima deles. Os valores
+     do projeto divergem da escala da norma (7.2: 100 a 700) de propósito:
+     o cabeçalho já vive em 10010 e isola o próprio contexto.
+     `--z-modal` coincide com `--z-overlay` por decisão: a norma separa 500
+     (overlay) de 510 (modal), mas aqui o modal usa a camada do overlay. */
   --z-overlay: 20000;
   --z-loader: 20025;
   --z-toast: 20050;
+
+  /* Apelidos por papel, para não surgir um terceiro valor: o menu suspenso
+     fica na camada dos popovers e o modal na dos overlays. A dica (tooltip)
+     fica um degrau acima do toast, porque pode nascer sobre qualquer coisa. */
+  --z-dropdown: var(--z-popover);
+  --z-modal: var(--z-overlay);
+  --z-tooltip: calc(var(--z-toast) + 1);
 
   /* Abaixo dos overlays: o cabeçalho, a barra lateral logo acima dele (o painel
      flutuante do menu e as dicas do trilho passam por cima do cabeçalho) e
@@ -77,7 +88,7 @@ body {
 }
 body {
   margin: 0;
-  font-family: var(--font-sans, "General Sans", system-ui, sans-serif);
+  font-family: var(--font-sans, "Geist", "Segoe UI", Roboto, Arial, sans-serif);
   font-weight: 400;
   color: var(--color-text-primary);
   background: var(--bg);
@@ -96,7 +107,7 @@ strong {
   font-weight: 600;
 }
 .hidden {
-  display: none !important;
+  display: none !important; /* acabamento: permitido(important) — utilitário de ocultar: precisa vencer qualquer display de componente */
 }
 /*
   O atributo `hidden` esconde sempre, como `.hidden`. Sem isto, qualquer
@@ -107,14 +118,14 @@ strong {
   Cada caso ganhou um `[hidden]` local; esta regra cobre também os próximos.
 */
 [hidden] {
-  display: none !important;
+  display: none !important; /* acabamento: permitido(important) — utilitário de ocultar: precisa vencer qualquer display de componente */
 }
 .print-only {
   display: none;
 }
 /* ===== Acessibilidade ===== */
 .sr-only {
-  position: absolute !important;
+  position: absolute !important; /* acabamento: permitido(important) — utilitário só para leitor de tela: precisa vencer o posicionamento do componente */
   width: 1px;
   height: 1px;
   padding: 0;
@@ -139,10 +150,11 @@ strong {
   background: var(--agsus-azul);
   color: var(--color-text-inverse);
   padding: 10px 16px;
-  border-radius: 0 0 10px 10px;
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
   font-weight: 600;
   transform: translateY(-100%);
-  transition: transform 0.15s;
+  transition: transform var(--duration-fast) var(--ease-standard);
   text-decoration: none;
 }
 .skip-link:focus {
@@ -157,11 +169,11 @@ summary:focus-visible,
 [tabindex]:focus-visible {
   outline: 3px solid var(--focus-ring) !important;
   outline-offset: 2px !important;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 @media (prefers-contrast: more) {
   :root {
-    --line: #9bb4cc;
+    --line: var(--color-border-input);
   }
 }
 
@@ -169,10 +181,10 @@ summary:focus-visible,
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important; /* acabamento: permitido(curva,important) — reduced-motion: a duração quase nula é o objetivo, para anular a animação */
+    animation-iteration-count: 1 !important; /* acabamento: permitido(important) — prefers-reduced-motion: anula animação e rolagem suave em tudo */
+    scroll-behavior: auto !important; /* acabamento: permitido(important) — prefers-reduced-motion: anula animação e rolagem suave em tudo */
+    transition-duration: 0.01ms !important; /* acabamento: permitido(curva,important) — reduced-motion: a duração quase nula é o objetivo, para anular a transição */
   }
 }
 
@@ -203,13 +215,11 @@ body.config-loading #loginScreen {
 .login-outer {
   width: min(520px, calc(100vw - 32px));
   background: var(--color-blue-800);
-  border-radius: 28px;
-  box-shadow:
-    0 50px 130px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
   overflow: hidden; /* faz border-radius cortar as faixas */
   position: relative;
-  z-index: 2;
+  z-index: 2; /* acabamento: permitido(zIndex) — camada local do cartão de login, dentro do próprio contexto de empilhamento */
 }
 
 /* Faixa SUS — imagem oficial 1901×92px, repetida */
@@ -226,7 +236,7 @@ body.config-loading #loginScreen {
 
 /* Card branco interno */
 .login-card {
-  background: #ffffff;
+  background: var(--color-bg-canvas);
   margin: 0; /* sem margem — o outer é o espaçador */
   padding: 36px 40px 28px;
   text-align: center;
@@ -245,14 +255,14 @@ body.config-loading #loginScreen {
   letter-spacing: -0.02em;
 }
 .login-card .login-subtitle {
-  color: #526780;
+  color: var(--color-text-secondary);
   font-weight: 600;
   font-size: 13px;
   margin: 0 0 2px;
 }
 .login-card p {
   margin: 0 0 16px;
-  color: #65758d;
+  color: var(--color-text-tertiary);
   font-weight: 500;
 }
 .login-form {
@@ -300,7 +310,7 @@ body.config-loading #loginScreen {
   color: var(--color-success-600);
 }
 .login-screen.login-panel-dark .login-instituicao-icone {
-  color: #8ff3d0;
+  color: #8ff3d0; /* acabamento: permitido(cor) — acento da marca no painel de acesso */
 }
 
 /* Rodapé COGIP */
@@ -310,13 +320,13 @@ body.config-loading #loginScreen {
   gap: 10px;
   margin-top: 18px;
   padding-top: 14px;
-  border-top: 1px solid #eef2f8;
+  border-top: 1px solid var(--color-border-subtle);
   text-align: left;
 }
 .login-cogip-logo {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
+  border-radius: 50%; /* acabamento: permitido(raio) — logo circular */
   object-fit: cover;
   flex-shrink: 0;
   border: 1.5px solid var(--color-border-subtle);
@@ -332,12 +342,12 @@ body.config-loading #loginScreen {
 }
 .login-cogip-role {
   font-size: var(--text-caption);
-  color: #60758f;
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 .login-cogip-dept {
   font-size: var(--text-caption);
-  color: #9fb3c8;
+  color: var(--color-text-tertiary);
   font-weight: 500;
   margin-top: 1px;
 }
@@ -357,7 +367,7 @@ textarea {
   width: 100%;
   min-height: 40px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: var(--card);
   color: var(--text-primary);
   padding: 0 14px;
@@ -480,7 +490,7 @@ textarea:focus-visible,
 
 .alert {
   padding: 12px 14px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--line);
   background: var(--soft);
   color: var(--slate);
@@ -508,7 +518,7 @@ textarea:focus-visible,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   padding: 5px 11px;
   font-size: var(--text-caption);
   font-weight: 600;
@@ -657,7 +667,7 @@ textarea:focus-visible,
   display: none;
   place-items: center;
   z-index: var(--z-loader);
-  background: rgba(2, 8, 23, 0.52);
+  background: var(--color-bg-overlay);
   backdrop-filter: blur(2px);
 }
 .loader.show {
@@ -668,7 +678,7 @@ textarea:focus-visible,
   background: var(--surface-card);
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-overlay);
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 22px 24px;
   color: var(--text-primary);
   display: grid;
@@ -679,10 +689,10 @@ textarea:focus-visible,
 .loader-spin {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: 50%; /* acabamento: permitido(raio) — anel do spinner, círculo */
   border: 4px solid var(--border-subtle);
   border-top-color: var(--brand-primary);
-  animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite; /* acabamento: permitido(curva) — rotação contínua; o linear é o que faz o giro parecer constante */
 }
 .loader-title {
   font-size: 18px;
@@ -697,7 +707,7 @@ textarea:focus-visible,
 .loader-pct {
   border: 1px solid var(--line);
   background: var(--soft);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   text-align: center;
   padding: 8px;
   font-weight: 600;
@@ -706,7 +716,7 @@ textarea:focus-visible,
   grid-column: 1/-1;
   height: 10px;
   background: var(--surface-hover);
-  border-radius: 99px;
+  border-radius: var(--radius-full);
   overflow: hidden;
 }
 .loader-bar span {
@@ -714,14 +724,14 @@ textarea:focus-visible,
   height: 100%;
   width: 0;
   background: var(--brand-primary);
-  transition: width 0.25s ease;
+  transition: width var(--duration-base) var(--ease-standard); /* acabamento: permitido(curva,animaLayout) — a barra de progresso comunica o valor pela largura, que o JS grava em width inline */
 }
 .google-login-btn {
   min-height: 44px;
   width: 100%;
   border: 1px solid var(--color-border-subtle);
-  border-radius: 12px;
-  background: #fff;
+  border-radius: var(--radius-xl);
+  background: #fff; /* acabamento: permitido(cor) — o botão do Google tem fundo branco pela diretriz de marca do Google, nos dois temas */
   color: var(--color-text-primary);
   font-weight: 600;
   font-size: 14px;
@@ -731,26 +741,26 @@ textarea:focus-visible,
   justify-content: center;
   gap: 9px;
   margin-top: 8px;
-  box-shadow: 0 8px 18px rgba(15, 35, 60, 0.06);
+  box-shadow: none;
 }
 .google-login-btn:hover {
-  background: #f8fbff;
+  background: var(--color-bg-subtle);
 }
 .google-login-btn .gmark {
-  color: #4285f4;
+  color: #4285f4; /* acabamento: permitido(cor) — azul do G do Google: cor de marca, igual nos dois temas */
   font-weight: 600;
   font-size: 18px;
   line-height: 1;
 }
 body.config-loading .loader {
-  display: none !important;
+  display: none;
 }
 body.config-loading .loader-card {
   width: min(360px, calc(100vw - 36px));
   grid-template-columns: 28px 1fr;
   padding: 12px 14px;
-  border-radius: 12px;
-  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.18);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
 }
 body.config-loading .loader-spin {
   width: 24px;
@@ -781,12 +791,12 @@ body.app-fullscreen-fallback {
   overflow: hidden;
 }
 body.app-fullscreen-fallback .app {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 9998 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  min-height: 100vh !important;
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-header) - 12);
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
   background: var(--bg);
 }
 body.app-fullscreen-fallback .toast-box {
@@ -847,7 +857,7 @@ body.external-clean #externalReturnBar {
   left: 0;
   right: 0;
   height: 46px;
-  z-index: 1300;
+  z-index: var(--z-header);
   padding: 0 12px;
   box-sizing: border-box;
   background: var(--surface-card);
@@ -866,7 +876,7 @@ body.external-clean #externalReturnBar {
   font-size: 13px;
   line-height: 1;
   padding: 8px 14px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   cursor: pointer;
   box-shadow: var(--shadow-sm);
 }
@@ -928,10 +938,12 @@ body.external-clean #externalReturnBar {
   @keyframes agsusPulse {
     0%,
     100% {
-      box-shadow: 0 0 0 5px rgba(14, 167, 107, 0.14);
+      box-shadow: 0 0 0 5px
+        color-mix(in srgb, var(--state-success) 14%, transparent);
     }
     50% {
-      box-shadow: 0 0 0 9px rgba(14, 167, 107, 0.05);
+      box-shadow: 0 0 0 9px
+        color-mix(in srgb, var(--state-success) 5%, transparent);
     }
   }
 }
@@ -952,7 +964,7 @@ body.external-clean #externalReturnBar {
   z-index: var(--z-overlay);
   place-items: start center;
   padding: 12vh 14px 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--color-bg-overlay);
   backdrop-filter: blur(3px);
 }
 .modal-card.search-modal-card {
@@ -960,9 +972,9 @@ body.external-clean #externalReturnBar {
   max-height: none;
   overflow: hidden;
   background: var(--surface-card);
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border-subtle);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+  box-shadow: var(--shadow-lg);
 }
 .search-modal-input-wrap {
   display: flex;
@@ -1002,7 +1014,7 @@ body.external-clean #externalReturnBar {
   font-size: var(--text-caption);
   background: var(--surface-raised);
   border: 1px solid var(--border-subtle);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 2px 7px;
   color: var(--text-secondary);
   font-family: inherit;
@@ -1032,7 +1044,7 @@ body.external-clean #externalReturnBar {
 .search-result-icon {
   width: 32px;
   height: 32px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   display: grid;
   place-items: center;
   font-size: 14px;
@@ -1064,13 +1076,13 @@ body.external-clean #externalReturnBar {
 .search-result-realce {
   background: var(--state-warning-soft);
   color: inherit;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 .search-result-chip {
   font-size: var(--text-caption);
   font-weight: 600;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   flex-shrink: 0;
   border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
 }
@@ -1097,27 +1109,27 @@ body.external-clean #externalReturnBar {
 
 /* ── Dark mode ── */
 [data-theme="dark"] {
-  --bg: #0f1a2e;
-  --card: #17253d;
-  --line: #253a56;
-  --soft: #1d2f48;
-  --shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
-  --agsus-azul: #4db8ff;
-  --agsus-ciano: #00cfff;
-  --agsus-verde: #2ad98a;
-  --agsus-amarelo: #ffd166;
-  --agsus-vermelho: #ff6b6b;
+  --bg: var(--color-bg-canvas);
+  --card: var(--color-bg-subtle);
+  --line: var(--color-border-subtle);
+  --soft: var(--color-bg-muted);
+  --shadow: var(--shadow-raised);
+  --agsus-azul: var(--color-text-link);
+  --agsus-ciano: var(--brand-accent);
+  --agsus-verde: var(--color-status-success-solid);
+  --agsus-amarelo: var(--color-status-warning-solid);
+  --agsus-vermelho: var(--color-status-danger-solid);
 }
 /* ── Dark mode: aplica APENAS dentro de .app — tela de login NÃO é afetada ── */
 [data-theme="dark"] body {
   background: var(--bg) !important;
 }
 [data-theme="dark"] .app {
-  color: #e2eaf4;
+  color: var(--color-text-primary);
 }
 [data-theme="dark"] .app .top {
-  background: #111f36 !important;
-  border-color: #1e3050 !important;
+  background: var(--color-bg-subtle) !important;
+  border-color: var(--color-border-subtle) !important;
 }
 [data-theme="dark"] .app .card,
 [data-theme="dark"] .app .table-card {
@@ -1129,45 +1141,49 @@ body.external-clean #externalReturnBar {
 [data-theme="dark"] .app .table-card,
 [data-theme="dark"] .app .modal-card,
 [data-theme="dark"] .app .modal-head {
-  background: #111f33 !important;
-  border-color: #29405d !important;
-  color: #c8d6e5 !important;
+  background: var(--color-bg-subtle) !important;
+  border-color: var(--color-border-subtle) !important;
+  color: var(--color-text-primary) !important;
 }
 [data-theme="dark"] .app th {
-  background: #1a2d47 !important;
-  color: #b8d0e8 !important;
+  background: var(--color-bg-muted) !important;
+  color: var(--color-text-secondary) !important;
 }
 [data-theme="dark"] .app td {
-  color: #d0e4f5 !important;
+  color: var(--color-text-primary) !important;
   border-color: var(--line) !important;
 }
 [data-theme="dark"] .app tr:hover td {
-  background: rgba(0, 168, 214, 0.12) !important;
+  background: color-mix(
+    in srgb,
+    var(--color-action-primary) 12%,
+    transparent
+  ) !important;
 }
 [data-theme="dark"] .app .page-title h1 {
-  color: #7dd3fc !important;
+  color: var(--color-text-brand) !important;
 }
 [data-theme="dark"] .app .page-title p {
-  color: #7a9bbf !important;
+  color: var(--color-text-secondary) !important;
 }
 [data-theme="dark"] .app input,
 [data-theme="dark"] .app select,
 [data-theme="dark"] .app textarea,
 [data-theme="dark"] .app .multi-select-menu {
-  background: #16283f !important;
-  border-color: #31506f !important;
-  color: #e2ecf6 !important;
-  -webkit-text-fill-color: #e2ecf6 !important;
+  background: var(--color-bg-muted) !important;
+  border-color: var(--color-border-input) !important;
+  color: var(--color-text-primary) !important;
+  -webkit-text-fill-color: var(--color-text-primary) !important;
 }
 [data-theme="dark"] .app input::placeholder,
 [data-theme="dark"] .app textarea::placeholder {
-  color: #8399b1 !important;
-  -webkit-text-fill-color: #8399b1 !important;
+  color: var(--color-text-tertiary) !important;
+  -webkit-text-fill-color: var(--color-text-tertiary) !important;
   opacity: 1;
 }
 [data-theme="dark"] .app .multi-select-actions {
-  background: #16283f !important;
-  border-color: #1e3050 !important;
+  background: var(--color-bg-muted) !important;
+  border-color: var(--color-border-subtle) !important;
 }
 [data-theme="dark"] .app .table-head {
   background: var(--surface-card);
@@ -1180,34 +1196,34 @@ body.external-clean #externalReturnBar {
   .loader,
   .toast-box,
   .global-side-toggle {
-    display: none !important;
+    display: none !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
   }
   .app {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
   }
   .main {
-    grid-column: 1 !important;
+    grid-column: 1 !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
   }
   .content {
-    padding: 0 !important;
+    padding: 0 !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
   }
   .card {
-    box-shadow: none !important;
-    border: 1px solid #ccc !important;
+    box-shadow: none !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
+    border: 1px solid #ccc !important; /* acabamento: permitido(cor,important) — impressão em papel branco: o token do tema escuro sairia ilegível no papel */
   }
   .table-wrap {
-    max-height: none !important;
-    overflow: visible !important;
+    max-height: none !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
+    overflow: visible !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
   }
   table {
-    min-width: 0 !important;
-    font-size: 12px !important;
+    min-width: 0 !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
+    font-size: 12px !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
   }
   .print-only {
-    display: block !important;
+    display: block !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
   }
   body {
-    background: #fff !important;
+    background: #fff !important; /* acabamento: permitido(cor,important) — impressão em papel branco: o token do tema escuro sairia ilegível no papel */
   }
   @page {
     margin: 1.2cm;
@@ -1271,7 +1287,7 @@ table {
 th {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: var(--z-sticky);
   background: var(--surface-raised);
   color: var(--color-text-primary);
   text-align: left;
@@ -1307,10 +1323,10 @@ tr:hover td {
   position: relative;
   width: 100%;
   min-height: 44px;
-  z-index: 5;
+  z-index: 5; /* acabamento: permitido(zIndex) — filtro dentro do próprio contexto: fica acima dos vizinhos sem sair da tela */
 }
 .multi-select.open {
-  z-index: 80;
+  z-index: 80; /* acabamento: permitido(zIndex) — filtro aberto sobe acima dos outros filtros, dentro do contexto da tela */
 }
 .multi-select-menu {
   display: none;
@@ -1318,10 +1334,10 @@ tr:hover td {
   left: 0;
   right: 0;
   top: calc(100% + 7px);
-  z-index: 90;
+  z-index: 90; /* acabamento: permitido(zIndex) — menu do filtro, local ao contexto do .multi-select */
   background: var(--surface-card);
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-overlay);
   overflow: hidden;
 }
@@ -1348,7 +1364,7 @@ tr:hover td {
   height: calc(100dvh - 126px);
   min-height: 620px;
   border: 0;
-  background: #fff;
+  background: var(--cor-da-folha);
   border-radius: 0;
   display: block;
 }
@@ -1363,10 +1379,10 @@ tr:hover td {
   border-radius: var(--radius);
 }
 .external-panel[hidden] {
-  display: none !important;
+  display: none;
 }
 #page-external .table-head {
-  display: none !important;
+  display: none;
 }
 #page-external .table-card {
   margin-top: 0;
@@ -1403,7 +1419,7 @@ tr:hover td {
   display: none;
   place-items: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--color-bg-overlay);
 }
 .modal.show {
   display: grid;
@@ -1413,14 +1429,14 @@ tr:hover td {
   max-height: 92vh;
   overflow: auto;
   background: var(--card);
-  border-radius: 22px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--line);
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.32);
+  box-shadow: var(--shadow-lg);
 }
 .modal-head {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: var(--z-sticky);
   background: var(--card);
   border-bottom: 1px solid var(--line);
   padding: 16px 18px;
@@ -1532,7 +1548,7 @@ body.system-fullscreen-mode.external-clean .external-panel {
     margin-left: 6px;
   }
   .leaflet-control input[aria-label*="Buscar"] {
-    width: 110px !important;
+    width: 110px !important; /* acabamento: permitido(important) — vence o estilo do controle de busca do Leaflet */
   }
   .table-wrap {
     overflow-x: auto;

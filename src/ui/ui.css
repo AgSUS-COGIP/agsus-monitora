@@ -87,6 +87,21 @@
   background: var(--state-danger-soft);
 }
 
+/* Pressionado: encolhe um pouco (feedback tátil); desabilitado não reage; sem movimento se o usuário pediu. */
+.btn {
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .btn:active:not(:disabled) {
+    transition: none;
+    transform: none;
+  }
+}
+
 /* Skeleton: bloco que pulsa no tamanho do conteúdo (carregando não é zero). */
 /*
   `.ui-esqueleto-linha` sozinha também desenha: 35 usos antigos esqueciam a
@@ -99,7 +114,7 @@
   min-height: 1em;
   border-radius: var(--radius-sm);
   background: var(--color-border-default);
-  animation: ui-esqueleto-pulso 1.4s var(--ease-standard) infinite;
+  animation: ui-esqueleto-pulso 1.4s var(--ease-standard) infinite; /* acabamento: permitido(curva) — ciclo contínuo de carregamento, com duração própria; não é transição de estado */
 }
 .ui-esqueleto-linha {
   width: 80%;
@@ -128,8 +143,8 @@
   height: var(--space-4);
   border: 2px solid var(--color-border-default);
   border-top-color: var(--color-action-primary);
-  border-radius: 50%;
-  animation: ui-carregando-giro 0.8s linear infinite;
+  border-radius: 50%; /* acabamento: permitido(raio) — indicador de carregamento, círculo */
+  animation: ui-carregando-giro 0.8s linear infinite; /* acabamento: permitido(curva) — rotação contínua; o linear é o que faz o giro parecer constante */
 }
 @keyframes ui-carregando-giro {
   to {
@@ -514,7 +529,7 @@
   inset: 0;
   border-radius: var(--radius-md);
   background: var(--border-subtle);
-  animation: ui-esqueleto-pulso 1.4s var(--ease-standard) infinite;
+  animation: ui-esqueleto-pulso 1.4s var(--ease-standard) infinite; /* acabamento: permitido(curva) — ciclo contínuo de carregamento, com duração própria; não é transição de estado */
   content: "";
 }
 
@@ -615,6 +630,19 @@ th[aria-sort="descending"] .ui-ordenar i {
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-primary);
   font-weight: var(--font-weight-regular);
+  /*
+    Nome sem espaço (ou de 200 caracteres) quebra na célula em vez de alargar a
+    tabela. Tem de ser `anywhere`: `break-word` não baixa o min-content, e no
+    auto-layout a palavra comprida alarga a coluna (conferido nas capturas).
+  */
+  overflow-wrap: anywhere;
+}
+/* O selo e o chip quebram só entre palavras: o `anywhere` os espremeria a uma letra por linha. */
+.ui-tabela-rolagem td :is(.ui-selo, .ui-chip) {
+  overflow-wrap: normal;
+}
+.ui-tabela-rolagem td.ui-tabela-erro {
+  padding: var(--space-3);
 }
 .ui-tabela-rolagem tbody tr:hover td {
   background: var(--surface-hover);
@@ -1342,7 +1370,10 @@ th[aria-sort="descending"] .ui-ordenar i {
 .ui-menu-lista button:hover:not(:disabled),
 .ui-menu-lista button:focus-visible {
   background: var(--surface-hover);
-  outline: none;
+}
+.ui-menu-lista button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
 }
 .ui-menu-lista button:disabled {
   color: var(--text-secondary);
@@ -1793,7 +1824,7 @@ button.ui-faixa-item:hover {
   bottom: 0;
   left: var(--space-4);
   height: 3px;
-  border-radius: 3px 3px 0 0;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   background: transparent;
   content: "";
 }

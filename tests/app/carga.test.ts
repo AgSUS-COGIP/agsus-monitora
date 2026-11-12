@@ -802,6 +802,46 @@ describe("linhas do monitoramento sob demanda", () => {
     expect(pedidosDasLinhas(cliente)).toHaveLength(1);
   });
 
+  describe("leitura que falha", () => {
+    const avisosDeErro = (avisar: ReturnType<typeof montar>["avisar"]) =>
+      avisar.mock.calls.filter(([texto]) =>
+        String(texto).startsWith("Erro ao carregar dados"),
+      );
+
+    it("dois pedidos juntos: uma chamada, um aviso e o erro guardado para a tela", async () => {
+      const { carga, cliente, pedidos, avisar } = montar({
+        pedindo: false,
+        telaDeEntrada: "avaliacao-documental",
+        erroNasLinhas: { message: "falhou" },
+      });
+      await carga.carregarEntrada();
+      pedidos.pedir();
+      pedidos.pedir();
+      await esperarTudo();
+      expect(pedidosDasLinhas(cliente)).toHaveLength(1);
+      expect(avisosDeErro(avisar)).toHaveLength(1);
+      expect(obterDadosDoMonitoramento().erro).toBe("falhou");
+      expect(obterDadosDoMonitoramento().carregado).toBe(false);
+    });
+
+    it("pedido novo depois da falha tenta de novo, sem repetir o mesmo aviso", async () => {
+      const { carga, cliente, pedidos, avisar } = montar({
+        pedindo: false,
+        telaDeEntrada: "avaliacao-documental",
+        erroNasLinhas: { message: "falhou" },
+      });
+      await carga.carregarEntrada();
+      pedidos.pedir();
+      await esperarTudo();
+      pedidos.pedir();
+      await esperarTudo();
+      // Falha transitória não deixa a tela sem nova tentativa...
+      expect(pedidosDasLinhas(cliente)).toHaveLength(2);
+      // ...e a mesma falha não vira um segundo toast.
+      expect(avisosDeErro(avisar)).toHaveLength(1);
+    });
+  });
+
   it("antes da entrada terminar, o pedido espera (não lê fora da sessão)", async () => {
     const { carga, cliente, pedidos } = montar({
       pedindo: false,

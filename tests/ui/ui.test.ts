@@ -350,7 +350,7 @@ describe("TabelaInfinita", () => {
     );
     await digitar($(".ui-tabela-busca"), "Zé");
     expect($("tbody td.ui-vazio")?.textContent).toBe(
-      "Nenhum registro encontrado.",
+      "Nenhum resultado para os filtros aplicados.",
     );
   });
 
