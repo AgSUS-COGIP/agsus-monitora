@@ -457,15 +457,15 @@ export function modalidadeSemAspas(value: unknown) {
     .replace(/^["“”']+|["“”']+$/g, "");
 }
 
-/** Tom do selo de status (`.approved-status.<tom>`). */
+/** Tom do `Selo` (src/ui/) do status do candidato. */
 export function tomDoStatus(status: unknown) {
-  if (status === "Contratado") return "success";
+  if (status === "Contratado") return "aprovado";
   if (status === "Desistente" || status === "Documentação Rejeitada")
-    return "danger";
-  if (status === "Migração") return "info";
-  if (status === STATUS_CONTRATADO_EM_OUTRA_LISTA) return "neutral";
-  if (status === STATUS_CONVOCADO) return "warning";
-  return "neutral";
+    return "reprovado";
+  if (status === "Migração") return "revisar";
+  if (status === STATUS_CONTRATADO_EM_OUTRA_LISTA) return "neutro";
+  if (status === STATUS_CONVOCADO) return "pendente";
+  return "neutro";
 }
 
 /** Nome do arquivo no Storage: sem acento, espaço nem símbolo. */

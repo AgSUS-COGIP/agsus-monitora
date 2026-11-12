@@ -17,7 +17,14 @@ import { formatNumberBR } from "../../lib/formatters";
 import { PLANILHAS } from "../../lib/planilhas.ts";
 import type { PreviaDaSubstituicao } from "./tipos-do-estado.ts";
 import { origemDaLista } from "../../lib/publicacao-de-aprovados.ts";
-import { Abas, Aviso, BotaoDeAcao, classes, Modal } from "../../ui/index.ts";
+import {
+  Abas,
+  Aviso,
+  BotaoDeAcao,
+  classes,
+  Modal,
+  Selo,
+} from "../../ui/index.ts";
 import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
 import { ResumoDaChamada } from "./chamada-para-contratacao.tsx";
 import { PreviaDaSubstituicaoDaLista } from "./previa-da-substituicao.tsx";
@@ -60,8 +67,7 @@ function ResumoDaListaAtual({
   lista: ListaDeAprovados | undefined;
   podeSubstituir: boolean;
 }) {
-  if (!lista)
-    return <span className="approved-status neutral">Sem lista importada</span>;
+  if (!lista) return <Selo>Sem lista importada</Selo>;
   const origem = origemDaLista(lista);
   if (!origem) return null;
   const daClassificacao = origem.tipo === "CLASSIFICACAO";
@@ -76,11 +82,9 @@ function ResumoDaListaAtual({
             Lista atual cadastrada
           </strong>
         </div>
-        <span
-          className={`approved-status ${lista.ativo ? "success" : "neutral"}`}
-        >
+        <Selo tom={lista.ativo ? "aprovado" : "neutro"}>
           {lista.ativo ? "Lista ativa" : "Lista inativa"}
-        </span>
+        </Selo>
       </div>
       <div className="approved-import-summary-details">
         <div className="approved-import-summary-detail">

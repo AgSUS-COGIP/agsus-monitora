@@ -91,7 +91,7 @@ describe("regras da tela", () => {
   it("o status novo é opção da tela, guarda a matrícula sem exigi-la e tem tom neutro", () => {
     expect(STATUS_DO_CANDIDATO).toContain("Contratado em outra lista");
     expect(statusGuardaMatricula("Contratado em outra lista")).toBe(true);
-    expect(tomDoStatus("Contratado em outra lista")).toBe("neutral");
+    expect(tomDoStatus("Contratado em outra lista")).toBe("neutro");
   });
 
   it("a sugestão acha a mesma matrícula Contratado em outra linha do edital", () => {

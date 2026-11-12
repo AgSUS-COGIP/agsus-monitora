@@ -460,7 +460,8 @@ describe("carregamento", () => {
     expect($("approvedKpiDesistente").textContent).toBe("1");
     expect($("approvedCount").textContent).toBe("4 candidatos");
     expect(
-      achar(".approved-status.success", linhaDe("Ana Ribeiro")).textContent,
+      achar('.approved-status[data-tom="sucesso"]', linhaDe("Ana Ribeiro"))
+        .textContent,
     ).toBe("Contratado");
     expect(achar(".approved-status", linhaDe("Bruno Lima")).textContent).toBe(
       "Sem status",
