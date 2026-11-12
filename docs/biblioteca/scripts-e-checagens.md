@@ -1,7 +1,7 @@
 ---
 tipo: referencia
 area: operacao
-atualizado: 2026-11-10
+atualizado: 2026-11-12
 ---
 
 # Scripts e checagens
@@ -14,7 +14,7 @@ Prefira o `npm run` equivalente quando houver.
 
 | Grupo                  | Scripts                                                                                                                                                                                                 | Observação |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| **Checagens do build** | `check-rpc-contract.mjs`, `check-supabase-auth-architecture.mjs`, `check-no-new-mutation-observer.mjs`, `check-no-new-patch-layers.mjs`, `check-legado-so-encolhe.mjs`, `check-dist-html-security.mjs`, `check-bundle-size.mjs`, `check-workflow-uniqueness.mjs`, `check-migrations-timestamp-unico.mjs`, `check-changed-lint.mjs`, `check-changed-format.mjs`, `checar-links-da-biblioteca.mjs` | rodam no build/CI; falha aqui = regra violada: corrija o código (ou a nota), não o script |
+| **Checagens do build** | `check-rpc-contract.mjs`, `check-supabase-auth-architecture.mjs`, `check-no-new-mutation-observer.mjs`, `check-no-new-patch-layers.mjs`, `check-legado-so-encolhe.mjs`, `check-acabamento-so-encolhe.mjs`, `check-dist-html-security.mjs`, `check-bundle-size.mjs`, `check-workflow-uniqueness.mjs`, `check-migrations-timestamp-unico.mjs`, `check-changed-lint.mjs`, `check-changed-format.mjs`, `checar-links-da-biblioteca.mjs` | rodam no build/CI; falha aqui = regra violada: corrija o código (ou a nota), não o script |
 | **Banco**              | `check-rpc-contract-db.mjs`, `capturar-baseline-rpcs.mjs`, `estado-das-migrations*.mjs`, `gerar-esquema-atual.mjs` (`npm run db:esquema`), `validar-migration-branding.mjs`, `validar-migration-recusar.mjs` | precisam de credencial de banco (`pg`) |
 | **Geografia**          | `compilar-terras-indigenas.mjs`, `compilar-contornos-dos-dseis.mjs`                                                                                                                                      | geram `public/data/terras-indigenas*.json` e `public/data/contornos-dos-dseis.json` ([[terras-indigenas]]) |
 | **AYA**                | `compilar-conhecimento-aya.mjs` (`npm run aya:conhecimento`)                                                                                                                                             | gera `src/modules/aya-conhecimento-gerado.js` a partir de `docs/aya/` |
@@ -32,10 +32,21 @@ Prefira o `npm run` equivalente quando houver.
 ## `npm run check:architecture`
 
 Roda, em ordem: `check-no-new-mutation-observer.mjs`, `check-no-new-patch-layers.mjs`,
-`check-legado-so-encolhe.mjs`, `check:auth-architecture`, `check:rpc-contract` e `check:docs`
+`check-legado-so-encolhe.mjs`, `check-acabamento-so-encolhe.mjs`, `check:auth-architecture`,
+`check:rpc-contract` e `check:docs`
 (`checar-links-da-biblioteca.mjs`: todo `[[link]]` do `CLAUDE.md` da raiz, dos `CLAUDE.md` das
 pastas e de `docs/biblioteca/` aponta para uma nota que existe; nenhuma nota fica sem ser ligada;
 nenhuma nota repete o nome de outro `.md` do vault; [[documentacao]]).
+
+### `check-acabamento-so-encolhe.mjs`
+
+Conta, por arquivo de `src/` (`.css` e `.tsx`), os desvios de token que uma máquina enxerga (cor
+fixa, `!important`, z-index numérico, raio, sombra, curva e animação de layout, blur fora de camada
+fixa) e compara com `scripts/acabamento-linha-de-base.json`: o número de cada tipo só pode cair; arquivo
+novo entra com limite zero. Corrigiu um lote: `node scripts/check-acabamento-so-encolhe.mjs
+--atualizar` baixa a linha de base (e recusa se algum número subir). Teste:
+`tests/check-acabamento-so-encolhe.test.js`. Regras de contagem e o marcador de exceção:
+[[design-e-tokens]].
 
 ## Regras
 

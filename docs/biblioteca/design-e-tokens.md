@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: front
-atualizado: 2026-11-11
+atualizado: 2026-11-12
 ---
 
 # Design e tokens
@@ -29,6 +29,24 @@ a dívida: [[css]].
    (`tests/tipografia-das-telas.test.ts`).
 8. Anime só `opacity` e `transform`.
 9. Regra do escoteiro: ao mexer num componente, migre para token os valores daquele bloco.
+
+## Trava do acabamento (só encolhe)
+
+`npm run check:architecture` roda `scripts/check-acabamento-so-encolhe.mjs`: por arquivo de `src/`
+(`.css`, e `.tsx` só em literais de string), conta cor fixa (hex, `rgb()`, `hsl()`; `tokens.css` é
+isento), `!important`, `z-index` numérico, `border-radius` e `box-shadow` sem `var()`, curva
+(`ease`, `linear` ou duração literal em `transition`/`animation`), `transition` de
+`width`/`height`/`top`/`left`/`all` e `backdrop-filter` fora de bloco com `position: fixed` ou
+`sticky`. O número de cada tipo, em cada arquivo, nunca passa da linha de base
+(`scripts/acabamento-linha-de-base.json`); arquivo novo começa em zero. Comentário e `url()` não
+contam.
+
+- Corrigiu desvios: `node scripts/check-acabamento-so-encolhe.mjs --atualizar` baixa a linha de
+  base (não grava se algum número subir) e o diff vai no mesmo commit.
+- Exceção legítima (sobrepor CSS do Leaflet, círculo `50%`, z-index local dentro de contexto de
+  empilhamento próprio, cor de mapa, gráfico, marca ou PDF) leva **na mesma linha** um comentário
+  `acabamento: permitido — <motivo>` (em CSS, dentro de `/* */`; em `.tsx`, depois de `//`). Sem
+  motivo depois do travessão, o marcador não isenta. Não use o marcador para fugir de token que existe.
 
 ## Tokens
 

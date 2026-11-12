@@ -1,0 +1,231 @@
+{
+  "src/app/casca/cabecalho-do-relatorio.tsx": {
+    "cor": 6
+  },
+  "src/app/entrada/icones-da-entrada.tsx": {
+    "cor": 4
+  },
+  "src/modulos/acessos/acessos.css": {
+    "sombra": 1,
+    "curva": 1
+  },
+  "src/modulos/analises/paineis.tsx": {
+    "cor": 1
+  },
+  "src/modulos/aprovados/aprovados.css": {
+    "zIndex": 1,
+    "curva": 1
+  },
+  "src/modulos/aprovados/convocacao.css": {
+    "zIndex": 1
+  },
+  "src/modulos/avaliacao-documental/avaliacao-documental.css": {
+    "zIndex": 3,
+    "sombra": 4,
+    "curva": 1
+  },
+  "src/modulos/avaliacao-documental/espelho-editor.css": {
+    "important": 1,
+    "raio": 1
+  },
+  "src/modulos/avaliacao-documental/ficha/ficha.css": {
+    "zIndex": 3,
+    "raio": 5,
+    "sombra": 4,
+    "animaLayout": 1
+  },
+  "src/modulos/aya/aya.css": {
+    "important": 2,
+    "zIndex": 1,
+    "raio": 1,
+    "sombra": 1,
+    "curva": 6
+  },
+  "src/modulos/aya/mascote/desenho.tsx": {
+    "cor": 31
+  },
+  "src/modulos/aya/mascote/mascote.css": {
+    "curva": 27
+  },
+  "src/modulos/aya/tour/tour.css": {
+    "zIndex": 1,
+    "sombra": 1
+  },
+  "src/modulos/classificacao/classificacao.css": {
+    "raio": 1
+  },
+  "src/modulos/comemoracao/letreiro.tsx": {
+    "cor": 1
+  },
+  "src/modulos/configuracoes/configuracoes.css": {
+    "important": 3,
+    "raio": 2,
+    "sombra": 1,
+    "curva": 2
+  },
+  "src/modulos/configuracoes/partes.tsx": {
+    "cor": 1
+  },
+  "src/modulos/cronograma/demandas-internas.css": {
+    "raio": 1
+  },
+  "src/modulos/editais/editais.css": {
+    "zIndex": 1
+  },
+  "src/modulos/encerramento-do-edital/encerramento-do-edital.css": {
+    "sombra": 1
+  },
+  "src/modulos/entrevistas/entrevistas.css": {
+    "zIndex": 3,
+    "raio": 2,
+    "sombra": 2,
+    "curva": 6
+  },
+  "src/modulos/mapa-de-projetos/mapa-de-projetos.css": {
+    "zIndex": 1
+  },
+  "src/modulos/mapa-saude-indigena/legenda.tsx": {
+    "cor": 1
+  },
+  "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css": {
+    "cor": 1,
+    "zIndex": 2,
+    "raio": 6,
+    "sombra": 1,
+    "curva": 2
+  },
+  "src/modulos/recursos/parecer-em-blocos/parecer-em-blocos.css": {
+    "raio": 1
+  },
+  "src/modulos/recursos/recursos.css": {
+    "curva": 1
+  },
+  "src/modulos/resumo-do-dia/resumo-do-dia.css": {
+    "raio": 1
+  },
+  "src/modulos/selecao/paineis.tsx": {
+    "cor": 4
+  },
+  "src/modulos/triagem/triagem.css": {
+    "curva": 2,
+    "animaLayout": 1
+  },
+  "src/modulos/visao-geral/visao-geral.css": {
+    "raio": 1,
+    "sombra": 3
+  },
+  "src/styles/app.css": {
+    "cor": 55,
+    "important": 62,
+    "zIndex": 8,
+    "raio": 24,
+    "sombra": 9,
+    "curva": 5,
+    "animaLayout": 1,
+    "blur": 1
+  },
+  "src/styles/barra-lateral.css": {
+    "cor": 3,
+    "important": 1,
+    "zIndex": 2,
+    "raio": 1,
+    "sombra": 5,
+    "curva": 4
+  },
+  "src/styles/carregamento.css": {
+    "raio": 1,
+    "curva": 4
+  },
+  "src/styles/comemoracao.css": {
+    "cor": 11,
+    "zIndex": 6,
+    "raio": 2,
+    "sombra": 2,
+    "curva": 11,
+    "blur": 1
+  },
+  "src/styles/connectivity-status.css": {
+    "raio": 2
+  },
+  "src/styles/google-profile-photo.css": {
+    "cor": 2,
+    "raio": 1,
+    "sombra": 1
+  },
+  "src/styles/icones-lucide.css": {
+    "curva": 1
+  },
+  "src/styles/indigenous-territories-layer.css": {
+    "cor": 19,
+    "important": 2,
+    "raio": 3,
+    "sombra": 2,
+    "blur": 1
+  },
+  "src/styles/loading-experience.css": {
+    "cor": 4,
+    "important": 2,
+    "raio": 5,
+    "curva": 1,
+    "blur": 1
+  },
+  "src/styles/map-base-layer-switcher.css": {
+    "important": 4,
+    "zIndex": 1,
+    "raio": 1,
+    "sombra": 1,
+    "curva": 1
+  },
+  "src/styles/mobile-app.css": {
+    "cor": 3,
+    "important": 38,
+    "zIndex": 5,
+    "raio": 6,
+    "sombra": 2,
+    "curva": 1
+  },
+  "src/styles/mobile-table-cards.css": {
+    "important": 3,
+    "raio": 1
+  },
+  "src/styles/multi-select-busca.css": {
+    "important": 1,
+    "zIndex": 1,
+    "raio": 5,
+    "sombra": 1,
+    "curva": 1
+  },
+  "src/styles/nielsen-shell-ux.css": {
+    "cor": 15,
+    "important": 25,
+    "raio": 6,
+    "sombra": 3,
+    "curva": 1,
+    "blur": 2
+  },
+  "src/styles/platform-shell.css": {
+    "cor": 34,
+    "important": 9,
+    "zIndex": 1,
+    "raio": 15,
+    "sombra": 4,
+    "curva": 6,
+    "blur": 1
+  },
+  "src/styles/post157-interface-tuning.css": {
+    "cor": 3
+  },
+  "src/styles/saude-das-cargas.css": {
+    "sombra": 2
+  },
+  "src/styles/visual-polish.css": {
+    "cor": 1
+  },
+  "src/ui/grafico.tsx": {
+    "cor": 1
+  },
+  "src/ui/ui.css": {
+    "raio": 6,
+    "curva": 3
+  }
+}
