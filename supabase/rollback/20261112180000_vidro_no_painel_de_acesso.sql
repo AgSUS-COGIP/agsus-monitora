@@ -18,7 +18,7 @@ set local lock_timeout = '5s';
 
 do $guarda$
 begin
-  if md5((select prosrc from pg_proc where oid = to_regprocedure('public.obter_branding_acesso_publico()'))) is distinct from '09273be0dc2f3b56b7c7426264afb48c' then
+  if md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.obter_branding_acesso_publico()')), chr(13), '')) is distinct from '09273be0dc2f3b56b7c7426264afb48c' then
     raise exception 'O corpo vigente de obter_branding_acesso_publico não é o da migration 20261112180000: nada a desfazer.';
   end if;
 end;

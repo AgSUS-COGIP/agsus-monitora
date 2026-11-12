@@ -15,6 +15,9 @@
     permissões; só a lista cresce. Sem dado de pessoa ou sessão.
 
   GUARDAS (a migration não aplica nada se falhar)
+    O md5 é do corpo sem ``: o corpo vigente foi gravado com quebras de
+    linha CRLF (conferido no banco em 12/11/2026), e o retrato e este arquivo
+    usam LF. O conteúdo é o mesmo; só a quebra de linha muda o md5.
     - Já aplicada: o corpo vigente é o desta migration (md5 09273be0dc2f3b56b7c7426264afb48c).
     - O corpo vigente não é o que esta migration conhece (md5 aa86cbdf60488563a3c93d6cad3d9a23,
       retrato supabase/esquema-atual.sql de 12/11/2026): alguém o mudou
@@ -34,7 +37,7 @@ set local lock_timeout = '5s';
 
 do $guarda$
 declare
-  v_md5 text := md5((select prosrc from pg_proc where oid = to_regprocedure('public.obter_branding_acesso_publico()')));
+  v_md5 text := md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.obter_branding_acesso_publico()')), chr(13), ''));
 begin
   if v_md5 = '09273be0dc2f3b56b7c7426264afb48c' then
     raise exception 'A migration 20261112180000 já foi aplicada (obter_branding_acesso_publico já devolve o estilo do painel).';

@@ -5,7 +5,8 @@
   fica no banco. Não mostra dado de pessoa (a função só lê a identidade da tela).
 
   O que confere:
-    A. O corpo vigente é o que a migration conhece (md5 de antes).
+    A. O corpo vigente é o que a migration conhece (md5 de antes, sem ``:
+       no banco ele está com quebras de linha CRLF).
     B. Aplica o corpo da migration (igual ao arquivo; o teste confere).
     C. O corpo aplicado tem o md5 esperado; o anon continua podendo chamar a
        função; com o estilo gravado, a resposta traz a chave, e nenhuma chave
@@ -18,7 +19,7 @@ set local lock_timeout = '5s';
 
 do $guarda$
 begin
-  if md5((select prosrc from pg_proc where oid = to_regprocedure('public.obter_branding_acesso_publico()'))) is distinct from 'aa86cbdf60488563a3c93d6cad3d9a23' then
+  if md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.obter_branding_acesso_publico()')), chr(13), '')) is distinct from 'aa86cbdf60488563a3c93d6cad3d9a23' then
     raise exception 'obter_branding_acesso_publico não está no corpo que a migration conhece: confira antes de aplicar.';
   end if;
 end;
@@ -61,7 +62,7 @@ declare
   v_resposta jsonb := public.obter_branding_acesso_publico();
   v_chave text;
 begin
-  if md5((select prosrc from pg_proc where oid = to_regprocedure('public.obter_branding_acesso_publico()'))) is distinct from '09273be0dc2f3b56b7c7426264afb48c' then
+  if md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.obter_branding_acesso_publico()')), chr(13), '')) is distinct from '09273be0dc2f3b56b7c7426264afb48c' then
     raise exception 'O corpo aplicado não tem o md5 esperado.';
   end if;
   if not has_function_privilege('anon', 'public.obter_branding_acesso_publico()', 'execute') then
