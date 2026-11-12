@@ -339,7 +339,7 @@ body.sidebar-theme-dark .app .side-logo {
   box-shadow: none;
 }
 .login-screen .google-login-btn:hover {
-  background: var(--color-bg-muted);
+  background: #f1f5f9; /* acabamento: permitido(cor) — hover slate-100 do SIGAV: decisão de produto, exigida por tests/logo-em-fundo-escuro.test.js */
   transform: translateY(-1px);
 }
 .login-screen .google-login-btn > span {
