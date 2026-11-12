@@ -25,12 +25,12 @@ function bloco(inicio: string): Map<string, string> {
   const comeco = tokens.indexOf(inicio);
   expect(comeco, inicio).toBeGreaterThan(-1);
   const corpo = tokens.slice(comeco, tokens.indexOf("\n}", comeco));
-  return new Map(
-    [...corpo.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map(([, nome, valor]) => [
-      nome,
-      valor.trim(),
-    ]),
-  );
+  const pares = new Map<string, string>();
+  for (const [, nome = "", valor = ""] of corpo.matchAll(
+    /(--[\w-]+):\s*([^;]+);/g,
+  ))
+    pares.set(nome, valor.trim());
+  return pares;
 }
 
 const claro = bloco(":root {");
@@ -38,25 +38,25 @@ const escuro = bloco('html[data-theme="dark"] {');
 
 /* O hex de um token no tema, seguindo `var(--outro)` (no escuro, cai no claro). */
 function hex(nome: string, tema: Map<string, string>): string {
-  const valor = tema.get(nome) ?? claro.get(nome);
-  expect(valor, nome).toBeDefined();
-  const apelido = /^var\((--[\w-]+)\)$/.exec(valor!);
-  if (apelido) return hex(apelido[1], tema);
+  const valor = tema.get(nome) ?? claro.get(nome) ?? "";
+  expect(valor, nome).not.toBe("");
+  const apelido = /^var\((--[\w-]+)\)$/.exec(valor)?.[1];
+  if (apelido) return hex(apelido, tema);
   expect(valor, nome).toMatch(/^#[0-9a-f]{6}$/i);
-  return valor!;
+  return valor;
 }
 
 function luminancia(cor: string): number {
-  const [r, g, b] = [1, 3, 5].map((i) => {
+  const canal = (i: number) => {
     const c = Number.parseInt(cor.slice(i, i + 2), 16) / 255;
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  return 0.2126 * canal(1) + 0.7152 * canal(3) + 0.0722 * canal(5);
 }
 
 function contraste(a: string, b: string): number {
-  const [maior, menor] = [luminancia(a), luminancia(b)].sort((x, y) => y - x);
-  return (maior + 0.05) / (menor + 0.05);
+  const [la, lb] = [luminancia(a), luminancia(b)];
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
 }
 
 const CORES = ["floresta", "folha", "rio", "terracota", "ocre"];
