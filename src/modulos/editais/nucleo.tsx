@@ -496,7 +496,11 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
           />
         )}
         total={noFiltro.length}
-        vazio="Nenhum resultado para os filtros aplicados."
+        vazio={
+          editais.length
+            ? "Nenhum resultado para os filtros aplicados."
+            : "Nenhum edital cadastrado nesta área."
+        }
         informacao={(quantos) =>
           quantos === null
             ? "Carregando…"
