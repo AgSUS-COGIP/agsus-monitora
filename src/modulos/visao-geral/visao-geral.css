@@ -114,9 +114,28 @@
 
 /* ── KPIs: sete numa fileira em tela larga, quatro por linha no meio ──── */
 
+/*
+  Duas dimensões na mesma fileira (12/11/2026): os quatro primeiros são as
+  vagas imediatas e as três parcelas delas (contratadas, em seleção,
+  ociosas); cadastro reserva, críticos e inscritos medem outra coisa e não
+  entram na soma. Em tela larga, um fio separa os dois grupos; no meio, cada
+  grupo já fica na sua linha (quatro e três).
+*/
 @media (min-width: 1280px) {
   .visao-geral-kpis {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr)) 1px
+      repeat(3, minmax(0, 1fr));
+  }
+  .visao-geral-kpis::after {
+    content: "";
+    grid-row: 1;
+    grid-column: 5;
+    align-self: stretch;
+    background: var(--border-subtle);
+  }
+  .visao-geral-kpis > [data-kpi]:nth-child(5) {
+    grid-column: 6;
   }
 }
 @media (min-width: 641px) and (max-width: 1279px) {

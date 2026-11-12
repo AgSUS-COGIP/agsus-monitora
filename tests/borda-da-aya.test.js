@@ -5,6 +5,7 @@ import {
   ENCOSTO_PX,
   lerPosicaoDaAya,
   passoDaSeta,
+  posicaoNaJanela,
   PASSO_DO_TECLADO_PX,
 } from "../src/lib/borda-da-aya.ts";
 
@@ -82,5 +83,54 @@ describe("lerPosicaoDaAya", () => {
     expect(lerPosicaoDaAya(null)).toBeNull();
     expect(ehBordaDaAya("topo")).toBe(true);
     expect(ehBordaDaAya(3)).toBe(false);
+  });
+});
+
+describe("posicaoNaJanela", () => {
+  const medidas = {
+    largura: 56,
+    altura: 56,
+    larguraDaJanela: 375,
+    alturaDaJanela: 812,
+    margem: 8,
+  };
+
+  it("dentro da janela, a posição guardada fica como está", () => {
+    expect(posicaoNaJanela({ left: 100, top: 300 }, medidas)).toEqual({
+      left: 100,
+      top: 300,
+    });
+  });
+
+  it("guardada numa tela maior, volta só o necessário para dentro", () => {
+    expect(posicaoNaJanela({ left: 1800, top: 300 }, medidas)).toEqual({
+      left: 311,
+      top: 300,
+    });
+    expect(posicaoNaJanela({ left: -40, top: 2000 }, medidas)).toEqual({
+      left: 8,
+      top: 748,
+    });
+  });
+
+  it("escondida na direita ou embaixo, acompanha a borda quando a janela muda", () => {
+    expect(
+      posicaoNaJanela({ left: 1856, top: 300, borda: "direita" }, medidas),
+    ).toEqual({ left: 311, top: 300, borda: "direita" });
+    expect(
+      posicaoNaJanela(
+        { left: 100, top: 400, borda: "baixo" },
+        { ...medidas, alturaDaJanela: 1440 },
+      ),
+    ).toEqual({ left: 100, top: 1376, borda: "baixo" });
+  });
+
+  it("escondida no topo ou na esquerda, segue encostada na margem", () => {
+    expect(
+      posicaoNaJanela({ left: 200, top: 8, borda: "topo" }, medidas),
+    ).toEqual({ left: 200, top: 8, borda: "topo" });
+    expect(
+      posicaoNaJanela({ left: 8, top: 900, borda: "esquerda" }, medidas),
+    ).toEqual({ left: 8, top: 748, borda: "esquerda" });
   });
 });

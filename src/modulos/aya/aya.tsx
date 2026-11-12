@@ -108,6 +108,7 @@ import {
   bordaEncostada,
   lerPosicaoDaAya,
   passoDaSeta,
+  posicaoNaJanela,
 } from "../../lib/borda-da-aya.ts";
 import type { BordaDaAya, PosicaoDaAya } from "../../lib/borda-da-aya.ts";
 import type { AcaoDaAya, SugestaoDaAya } from "../../lib/aya-paginas.ts";
@@ -676,23 +677,34 @@ function usarArraste(
   const arraste = useRef<ArrasteDaArara | null>(null);
   const ignorarClique = useRef(false);
 
-  useEffect(() => {
-    const aoRedimensionar = () =>
-      setPosicao((atual) =>
-        atual
-          ? {
-              ...atual,
-              ...limitarPosicao(
-                janela,
-                refBotao.current,
-                atual.left,
-                atual.top,
-              ),
-            }
-          : atual,
-      );
-    janela.addEventListener("resize", aoRedimensionar);
-    return () => janela.removeEventListener("resize", aoRedimensionar);
+  /*
+    Ao carregar, redimensionar e girar a tela, a posição guardada volta para
+    dentro da janela de agora (só o necessário; escondida, segue na borda).
+    O que está guardado não muda: numa janela maior, ela volta para lá.
+  */
+  useLayoutEffect(() => {
+    const conter = () =>
+      setPosicao((atual) => {
+        if (!atual) return atual;
+        const elemento = refBotao.current;
+        const nova = posicaoNaJanela(atual, {
+          largura: elemento?.offsetWidth || 0,
+          altura: elemento?.offsetHeight || 0,
+          larguraDaJanela: janela.innerWidth,
+          alturaDaJanela: janela.innerHeight,
+          margem: MARGEM,
+        });
+        return nova.left === atual.left && nova.top === atual.top
+          ? atual
+          : nova;
+      });
+    conter();
+    janela.addEventListener("resize", conter);
+    janela.addEventListener("orientationchange", conter);
+    return () => {
+      janela.removeEventListener("resize", conter);
+      janela.removeEventListener("orientationchange", conter);
+    };
   }, [janela, refBotao]);
 
   /* O canto de cima à esquerda de agora (escondida, o translate não conta). */
