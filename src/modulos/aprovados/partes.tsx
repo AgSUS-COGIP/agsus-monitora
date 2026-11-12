@@ -70,21 +70,21 @@ export function SeloDeStatus({
   const dica = contratado && motivo ? motivo : undefined;
   return (
     <span className="approved-status-celula">
-      <span
+      <Selo
+        tom={tomDoStatus(rotulo)}
         className={classes(
           "approved-status",
-          tomDoStatus(rotulo),
           espelho && "approved-status-calculado",
           ambigua && "approved-status-ambiguo",
         )}
-        title={dica}
-        data-contratacao={contratado && situacao ? situacao : undefined}
+        titulo={dica}
+        dados={{ contratacao: contratado && situacao ? situacao : undefined }}
       >
         {ambigua ? (
           <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />
         ) : null}
         {rotulo || "Sem status"}
-      </span>
+      </Selo>
       {espelho || ambigua ? (
         <small className="approved-status-data">
           {espelho ? "pelo sistema" : "a equipe decide"}
