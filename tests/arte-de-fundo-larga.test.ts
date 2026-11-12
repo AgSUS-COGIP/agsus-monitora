@@ -11,7 +11,7 @@ import { medirProporcaoDaArte } from "../src/app/entrada/marca.ts";
 */
 
 type Imagem = {
-  onload: (() => void) | null;
+  onload: ((evento: Event) => unknown) | null;
   src: string;
   naturalWidth: number;
   naturalHeight: number;
@@ -45,7 +45,7 @@ describe("medirProporcaoDaArte", () => {
     medirProporcaoDaArte(tela, " https://exemplo.test/arte.webp ", () => img);
     expect(img.src).toBe("https://exemplo.test/arte.webp");
     expect(vars.has("--login-arte-proporcao")).toBe(false);
-    img.onload?.();
+    img.onload?.(new Event("load"));
     expect(vars.get("--login-arte-proporcao")).toBe("2.3704");
   });
 
@@ -53,7 +53,7 @@ describe("medirProporcaoDaArte", () => {
     const { tela, vars } = telaFalsa();
     const img = imagem(1920, 1080);
     medirProporcaoDaArte(tela, "/arte.png", () => img);
-    img.onload?.();
+    img.onload?.(new Event("load"));
     expect(vars.get("--login-arte-proporcao")).toBe("1.7778");
   });
 
@@ -63,7 +63,7 @@ describe("medirProporcaoDaArte", () => {
     medirProporcaoDaArte(tela, "", () => imagem(10, 10));
     medirProporcaoDaArte(null, "/arte.png", () => imagem(10, 10));
     medirProporcaoDaArte(tela, "/arte.png", () => vazia);
-    vazia.onload?.();
+    vazia.onload?.(new Event("load"));
     medirProporcaoDaArte(tela, "/arte.png", () => null);
     expect(vars.size).toBe(0);
   });

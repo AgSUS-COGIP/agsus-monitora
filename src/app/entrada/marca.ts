@@ -114,7 +114,7 @@ const texto = (valor: unknown): string => String(valor ?? "").trim();
 /** O estado da marca: `obter()`, `assinar(ouvinte)` e as escritas. */
 /** O que a medida da arte usa de uma imagem (o `Image` do navegador). */
 type ImagemMedivel = {
-  onload: (() => void) | null;
+  onload: ((evento: Event) => unknown) | null;
   src: string;
   naturalWidth: number;
   naturalHeight: number;
