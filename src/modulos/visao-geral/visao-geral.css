@@ -256,6 +256,16 @@
 
 /* ── Tabela ──────────────────────────────────────────────────────────── */
 
+/*
+  Notebook (até 1439px): as células com 8px dos lados em vez de 12px. Com as
+  colunas iniciais (sem Observações, src/lib/visao-geral.ts), a tabela cabe em
+  1280px sem rolagem para o lado (eram 1352px numa área de 1122px).
+*/
+@media (max-width: 1439px) {
+  .ui-tabela-rolagem .visao-geral-tabela :is(th, td) {
+    padding-inline: var(--space-2);
+  }
+}
 .visao-geral-tabela :is(th, td).num {
   text-align: right;
   font-variant-numeric: tabular-nums;

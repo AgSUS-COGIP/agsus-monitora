@@ -663,6 +663,12 @@ describe("tabela de processos", () => {
   });
 
   it("observação longa abre com 'Ver mais'", async () => {
+    // Observações começa desligada; quem a ligou no menu "Colunas" a vê.
+    armazenamento = memoria();
+    armazenamento.setItem(
+      CHAVE_DAS_COLUNAS,
+      JSON.stringify(["unidade", "edital", "observacoes"]),
+    );
     await montar();
     const ver = botao("Ver mais", linhas()[0]);
     await clicar(ver);
@@ -729,7 +735,7 @@ describe("tabela de processos", () => {
     );
     const gaveta = document.querySelector("#visaoGeralGaveta");
     expect(gaveta.textContent).toContain("03/2026");
-    expect(gaveta.textContent).toContain("40% concluído");
+    expect(gaveta.textContent).toContain("40% do cronograma");
     expect(
       gaveta.querySelector('a[href="https://agsus.org.br/03-2026.pdf"]'),
     ).not.toBeNull();

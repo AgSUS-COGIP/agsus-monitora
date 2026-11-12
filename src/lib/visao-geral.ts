@@ -717,12 +717,22 @@ export const COLUNAS_PADRAO = Object.freeze(
   COLUNAS_DA_TABELA.map((c) => c.campo),
 );
 
-/* As colunas guardadas: só as conhecidas; nenhuma válida → todas. */
+/*
+  As colunas de quem nunca escolheu (12/11/2026): todas menos Observações, o
+  texto longo que já aparece na gaveta do edital. Sem ela, a tabela cabe na
+  largura de um notebook (1280px) sem rolagem para o lado. Quem já escolheu
+  as colunas continua com a escolha; Observações volta pelo menu "Colunas".
+*/
+export const COLUNAS_INICIAIS = Object.freeze(
+  COLUNAS_PADRAO.filter((campo) => campo !== "observacoes"),
+);
+
+/* As colunas guardadas: só as conhecidas; nenhuma válida → as iniciais. */
 export function normalizarColunas(bruto: unknown) {
   const lista = Array.isArray(bruto)
     ? COLUNAS_PADRAO.filter((campo) => bruto.includes(campo))
     : [];
-  return lista.length ? lista : [...COLUNAS_PADRAO];
+  return lista.length ? lista : [...COLUNAS_INICIAIS];
 }
 
 /* Marcar/desmarcar uma coluna; a última visível não sai. */

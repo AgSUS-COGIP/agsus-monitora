@@ -109,7 +109,7 @@ export function GavetaDoProcesso({
             <i style={{ width: `${percentual}%` }} />
           </div>
           <p className="visao-geral-progresso-texto">
-            <strong>{percentual}% concluído</strong>
+            <strong>{percentual}% do cronograma</strong>
             <span>
               Próxima data: {dataCurta(linha.cronograma_proxima_data) || "-"}
             </span>
