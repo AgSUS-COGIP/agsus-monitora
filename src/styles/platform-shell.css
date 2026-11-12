@@ -155,10 +155,10 @@
 }
 .login-product-icon {
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
 }
-/* O pássaro do Yeendé (icones-da-entrada.tsx e index.html): cores do manual da AgSUS. */
+/* O símbolo do Yeendé (icones-da-entrada.tsx e index.html): cores do manual da AgSUS. */
 .marca-yeende__asa-esquerda {
   fill: var(--marca-agsus-amarelo);
 }
@@ -168,7 +168,7 @@
 .marca-yeende__corpo {
   fill: var(--marca-agsus-azul-vivo);
 }
-.marca-yeende__sol {
+.marca-yeende__cabeca {
   fill: var(--marca-agsus-vermelho);
 }
 .login-product-mark strong {

@@ -151,7 +151,7 @@ describe("como o HTML e o app ficam", () => {
   it("o índice não depende mais de host de terceiros para o ícone", () => {
     const cabecalho = semComentarios(html).slice(0, html.indexOf("</head>"));
     expect(cabecalho).not.toContain("postimg");
-    expect(cabecalho).toContain('href="/assets/agsus-logo.webp"');
+    expect(cabecalho).toContain('href="/icons/agsus-monitora.svg"');
   });
 
   it("traz as três tags, como o SIGAV", () => {

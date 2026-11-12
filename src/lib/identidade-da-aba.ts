@@ -1,8 +1,8 @@
-/* A aba identifica MONITORA. As seções mantêm seus títulos dentro da página.
-   O favicon acompanha a marca institucional, com fallback local. */
+/* A aba identifica o sistema (Yeendé). As seções mantêm seus títulos dentro da
+   página. O ícone da aba é o símbolo do sistema (12/11/2026), com fallback local. */
 
-/** O ícone que existe no repositório. É para onde tudo volta quando algo falha. */
-export const FAVICON_PADRAO = "/assets/agsus-logo.webp";
+/** O símbolo do Yeendé, no repositório. É para onde tudo volta quando algo falha. */
+export const FAVICON_PADRAO = "/icons/agsus-monitora.svg";
 
 /*
   As três tags que o SIGAV usa. `apple-touch-icon` é o que o iOS lê ao guardar

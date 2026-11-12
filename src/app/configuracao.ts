@@ -1,12 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseClient } from "../lib/supabaseClient";
-import {
-  DEFAULT_ACCESS_BRANDING,
-  normalizeAccessLogoUrl,
-} from "../lib/access-branding.ts";
+import { DEFAULT_ACCESS_BRANDING } from "../lib/access-branding.ts";
 import { avisoGlobal } from "../lib/aviso-global";
 import { erroAmigavel } from "../lib/erro-amigavel";
 import {
+  FAVICON_PADRAO,
   aplicarFaviconDaMarca,
   definirSistemaDaAba,
 } from "../lib/identidade-da-aba";
@@ -148,9 +146,9 @@ export function criarConfiguracao({
       do sistema). A metade da página fica com a navegação.
     */
     definirSistemaDaAba(valor("app_title") || "Yeendé");
-    void aplicarFaviconDaMarca(
-      normalizeAccessLogoUrl(valor("auth_access_logo_url")),
-    );
+    // A aba mostra o símbolo do sistema (Yeendé), não o logo da instituição,
+    // que segue no cartão de entrada e na barra lateral (12/11/2026).
+    void aplicarFaviconDaMarca(FAVICON_PADRAO);
     documento
       ?.querySelector('meta[name="description"]')
       ?.setAttribute("content", "Yeendé - Gestão dos processos seletivos");
