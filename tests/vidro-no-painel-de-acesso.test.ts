@@ -45,7 +45,8 @@ describe("migration 20261112180000: a chave do estilo na leitura pública", () =
   const ensaio = ler(`supabase/ensaios/${NOME}.sql`);
   const rollback = ler(`supabase/rollback/${NOME}.sql`);
   const retrato = ler("supabase/esquema-atual.sql");
-  const vigente = (() => {
+  /* O retrato (supabase/esquema-atual.sql) já tem a migration aplicada (12/11/2026). */
+  const retratado = (() => {
     const inicio = retrato.indexOf(
       "CREATE FUNCTION public.obter_branding_acesso_publico()",
     );
@@ -53,6 +54,11 @@ describe("migration 20261112180000: a chave do estilo na leitura pública", () =
     return retrato.slice(abre, retrato.indexOf("$$;", abre));
   })();
   const novo = corpoDaFuncao(migration);
+  const vigente = corpoDaFuncao(rollback);
+
+  it("o retrato mostra a função como a migration a deixou", () => {
+    expect(retratado).toBe(novo);
+  });
 
   it("só acrescenta a chave nova à lista fixa", () => {
     expect(novo).toBe(
@@ -71,10 +77,24 @@ describe("migration 20261112180000: a chave do estilo na leitura pública", () =
     expect(ensaio).toContain(`is distinct from '${md5(novo)}'`);
   });
 
+  /*
+    O corpo vigente no banco foi gravado com CRLF (12/11/2026): o md5 do
+    prosrc com `
+` nunca bateria com o do retrato. A primeira versão da
+    guarda parou o ensaio por isso, sem gravar nada.
+  */
+  it("as guardas comparam o corpo sem \r (o banco o guarda com CRLF)", () => {
+    for (const sql of [migration, ensaio, rollback]) {
+      expect(sql).not.toMatch(/md5\(\(select prosrc/);
+      expect(sql).toContain(
+        "md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.obter_branding_acesso_publico()')), chr(13), ''))",
+      );
+    }
+  });
+
   it("o ensaio aplica o mesmo corpo e termina em rollback; o rollback volta ao de antes", () => {
     expect(corpoDaFuncao(ensaio)).toBe(novo);
     expect(ensaio.trimEnd().endsWith("rollback;")).toBe(true);
-    expect(corpoDaFuncao(rollback)).toBe(vigente);
     for (const sql of [migration, ensaio, rollback]) {
       expect(sql).toContain("security definer");
       expect(sql).toContain("set search_path to ''");

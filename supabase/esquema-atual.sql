@@ -30515,7 +30515,8 @@ CREATE FUNCTION public.obter_branding_acesso_publico() RETURNS jsonb
     'auth_access_greeting',
     'auth_access_instruction',
     'auth_google_button_text',
-    'auth_access_texto_modo'
+    'auth_access_texto_modo',
+    'auth_access_painel_estilo'
   );
 $$;
 
@@ -30523,7 +30524,7 @@ $$;
 -- Name: FUNCTION obter_branding_acesso_publico(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.obter_branding_acesso_publico() IS 'Identidade da tela de acesso para visitantes não autenticados. Lista de chaves fixa, sem dado de pessoa ou sessão.';
+COMMENT ON FUNCTION public.obter_branding_acesso_publico() IS 'Identidade da tela de acesso para visitantes não autenticados. Lista de chaves fixa, sem dado de pessoa ou sessão (desde 20261112180000, também o estilo do painel: sólido ou vidro).';
 
 --
 -- Name: obter_calculo_classificacao(uuid, boolean); Type: FUNCTION; Schema: public; Owner: -
