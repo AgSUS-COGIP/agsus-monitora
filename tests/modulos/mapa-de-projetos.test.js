@@ -854,6 +854,22 @@ describe("tela cheia e tema", () => {
     expect(host.querySelector(".mapa-si--tela-cheia")).toBeNull();
   });
 
+  it("recolhe e mostra o mapa, com a mesma escolha do mapa da Saúde Indígena", async () => {
+    localStorage.removeItem("agsus_yeende_mapa_recolhido_v1");
+    const { carregador } = await carregadorCom(SIMPLES);
+    await montar({ carregador });
+    await clicar(botao("Recolher mapa"));
+    expect(host.querySelector(".mapa-si--recolhido")).not.toBeNull();
+    expect(botao("Mostrar mapa").getAttribute("aria-expanded")).toBe("false");
+    expect(botao("Tela cheia")).toBeUndefined();
+    expect(localStorage.getItem("agsus_yeende_mapa_recolhido_v1")).toBe(
+      "recolhido",
+    );
+    await clicar(botao("Mostrar mapa"));
+    expect(host.querySelector(".mapa-si--recolhido")).toBeNull();
+    expect(localStorage.getItem("agsus_yeende_mapa_recolhido_v1")).toBeNull();
+  });
+
   it("segue o tema do app e aceita o tema forçado pelo pai", async () => {
     const { carregador } = await carregadorCom(SIMPLES);
     await montar({ carregador });

@@ -637,6 +637,18 @@ th[aria-sort="descending"] .ui-ordenar i {
   */
   overflow-wrap: anywhere;
 }
+/*
+  Toque (12/11/2026): o link de uma célula (o número do edital em Editais e na
+  Visão geral) tinha 17px de altura no celular, alvo pequeno para o dedo. Com
+  ponteiro grosso ele ganha 24px de altura (WCAG 2.5.8); no mouse, nada muda.
+*/
+@media (pointer: coarse) {
+  .ui-tabela-rolagem td a.link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+  }
+}
 /* O selo e o chip quebram só entre palavras: o `anywhere` os espremeria a uma letra por linha. */
 .ui-tabela-rolagem td :is(.ui-selo, .ui-chip) {
   overflow-wrap: normal;
