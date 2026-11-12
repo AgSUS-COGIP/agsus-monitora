@@ -52,7 +52,7 @@
   terço do rosto sai da tela (nas laterais; no topo e embaixo, a metade) e
   ela fica espiando com o olho à mostra, virada para dentro (na
   direita, espelhada; no topo, de cabeça para baixo). Mouse em cima ou foco
-  de teclado a trazem um pouco para fora. O olho que segue o ponteiro
+  de teclado a trazem para fora. O olho que segue o ponteiro
   acompanha o espelho (--olho-sentido-*, mascote.css).
 */
 .aya-arara[data-borda="esquerda"] {
@@ -67,17 +67,25 @@
 .aya-arara[data-borda="baixo"] {
   transform: translateY(calc(50% + 8px));
 }
-.aya-arara[data-borda="esquerda"]:is(:hover, :focus-visible) {
+.aya-arara[data-borda="esquerda"]:hover {
   transform: translateX(calc(-12% - 8px));
 }
-.aya-arara[data-borda="direita"]:is(:hover, :focus-visible) {
+.aya-arara[data-borda="direita"]:hover {
   transform: translateX(calc(12% + 8px));
 }
-.aya-arara[data-borda="topo"]:is(:hover, :focus-visible) {
+.aya-arara[data-borda="topo"]:hover {
   transform: translateY(calc(-20% - 8px));
 }
-.aya-arara[data-borda="baixo"]:is(:hover, :focus-visible) {
+.aya-arara[data-borda="baixo"]:hover {
   transform: translateY(calc(20% + 8px));
+}
+/*
+  Com o foco do teclado, a arara escondida sai inteira para dentro da tela:
+  o anel de foco e o rosto ficam à mostra (o mouse em cima só a traz um
+  pouco para fora).
+*/
+.aya-arara[data-borda]:focus-visible {
+  transform: none;
 }
 .aya-arara[data-borda="direita"] .mascote {
   --olho-sentido-x: -1;

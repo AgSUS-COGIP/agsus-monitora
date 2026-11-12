@@ -14,8 +14,15 @@
 
 /* Os KPIs e a grade de baixo da Visão geral são de health-reference-kpis.css e app.css. */
 
+/*
+  A fonte do sistema também no mapa (12/11/2026): o leaflet.css põe "Helvetica
+  Neue" no contêiner, e os rótulos dos DSEIs, os botões Mapa/Satélite e a escala
+  saíam fora da General Sans. O + e o − do zoom seguem com a fonte do Leaflet,
+  que centraliza os símbolos.
+*/
 :root .leaflet-container {
   background: #b7dce7; /* acabamento: permitido(cor) — fundo (mar) do mapa Leaflet, igual nos dois temas */
+  font-family: var(--font-sans);
 }
 
 :root .leaflet-control-container .leaflet-top.leaflet-right {
@@ -28,8 +35,9 @@
   left: 10px;
 }
 
+/* Nada abaixo de 12px (regras de ouro, docs/biblioteca/design-e-tokens.md). */
 :root .leaflet-control-attribution {
-  font-size: 10px;
+  font-size: var(--text-caption);
   line-height: 1.2;
   max-width: 240px;
   white-space: normal;

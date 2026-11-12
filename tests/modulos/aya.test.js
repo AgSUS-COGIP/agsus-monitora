@@ -443,16 +443,21 @@ describe("a arara: rosto fechada, corpo no painel e escondida na borda", () => {
   });
 
   it("lembra escondida ao recarregar; as setas a tiram da borda (e a escondem)", async () => {
+    // Guardada escondida na direita de uma tela mais larga: ao carregar, ela
+    // volta para a borda direita desta janela (margem de 8px).
     localStorage.setItem(
       CHAVE_POSICAO_DA_ARARA,
-      JSON.stringify({ left: 500, top: 300, borda: "direita" }),
+      JSON.stringify({ left: 1856, top: 300, borda: "direita" }),
     );
     await montar();
     expect(arara().dataset.borda).toBe("direita");
     expect(arara().getAttribute("title")).toMatch(/tirá-la da borda/);
     await teclar(arara(), "ArrowLeft");
     expect(arara().dataset.borda).toBeUndefined();
-    expect(posicaoGuardada()).toEqual({ left: 476, top: 300 });
+    expect(posicaoGuardada()).toEqual({
+      left: window.innerWidth - 8 - 24,
+      top: 300,
+    });
     await teclar(arara(), "ArrowUp", { shiftKey: true });
     await teclar(arara(), "ArrowUp", { shiftKey: true });
     await teclar(arara(), "ArrowUp", { shiftKey: true });

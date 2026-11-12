@@ -25,6 +25,7 @@ import { classes } from "../../ui/index.ts";
 import { obterLeaflet } from "./leaflet.ts";
 import { MapaDoDsei } from "./mapa-do-dsei.tsx";
 import { MapaNacional } from "./mapa-nacional.tsx";
+import { usarMapaRecolhido } from "./recolher.tsx";
 import { usarTelaCheia } from "./tela-cheia.tsx";
 import { usarEscParaVoltar, usarVoltaDoDsei } from "./volta-ao-brasil.ts";
 
@@ -65,6 +66,18 @@ export function MapaSaudeIndigena({
   const configuracao = useMemo(() => configuracaoDoMapa(lmap), [lmap]);
   const rede = useMemo(() => redeCnesDoMapa(redeCnes), [redeCnes]);
   const [telaCheia, botaoDeTelaCheia] = usarTelaCheia();
+  const [recolhido, botaoDeRecolher] = usarMapaRecolhido();
+  /*
+    Em tela cheia não se recolhe; recolhido, não se amplia. Os dois lugares
+    ficam sempre na mesma posição, para o React não recriar o botão (e o foco
+    não se perder) ao ligar e desligar.
+  */
+  const acoes = (
+    <>
+      {telaCheia ? null : botaoDeRecolher}
+      {recolhido && !telaCheia ? null : botaoDeTelaCheia}
+    </>
+  );
   const regiao = useRef<HTMLDivElement | null>(null);
 
   const dseis = useMemo(() => configuracao.dsei, [configuracao]);
@@ -122,6 +135,7 @@ export function MapaSaudeIndigena({
         "mapa-si",
         escuro && "mapa-si--escuro",
         telaCheia && "mapa-si--tela-cheia",
+        recolhido && !telaCheia && "mapa-si--recolhido",
       )}
       aria-label="Mapas da rede de saúde indígena"
       role="region"
@@ -145,7 +159,7 @@ export function MapaSaudeIndigena({
         carregando={carregando}
         aoEscolherDsei={aoEscolherDsei}
         aoFiltrarPorBusca={aoFiltrarPorBusca}
-        acoes={botaoDeTelaCheia}
+        acoes={acoes}
       />
       {dsei ? (
         <MapaDoDsei
@@ -161,7 +175,7 @@ export function MapaSaudeIndigena({
           telaCheia={telaCheia}
           aoVoltarAoBrasil={voltarAoBrasil}
           aoEscolherUnidade={aoEscolherUnidade}
-          acoes={botaoDeTelaCheia}
+          acoes={acoes}
         />
       ) : null}
     </div>

@@ -101,6 +101,8 @@
   border-radius: var(--radius-md, 8px);
   background: transparent;
   color: var(--text-secondary);
+  /* Botão não herda a fonte; sem isto o × saía em Arial. */
+  font-family: inherit;
   font-size: var(--text-h2);
   line-height: 1;
   cursor: pointer;

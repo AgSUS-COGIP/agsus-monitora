@@ -5,6 +5,7 @@ import {
   numeroDoDsei,
 } from "../src/lib/mapa-saude-indigena/dseis-oficiais.ts";
 import {
+  NOTA_DA_COR_DO_DSEI,
   TOKEN_SEM_DADO,
   colorirValido,
   dicaDoDseiSimples,
@@ -180,6 +181,14 @@ describe("indicadores e sem dado", () => {
     expect(pintura.tokens.get(16)).toBe("--mapa-simples-dsei-16");
     expect(pintura.tokens.size).toBe(34);
     expect(pintura.legenda).toEqual([]);
+    // As cores só distinguem os distritos: a legenda diz que não é situação.
+    expect(pintura.nota).toBe(NOTA_DA_COR_DO_DSEI);
+  });
+
+  it("nas faixas, a cor é a situação: sem a nota", () => {
+    const ind = indicadoresDosDseis(territorios);
+    expect(pintarDseis(ind, "preenchidas").nota).toBeUndefined();
+    expect(pintarDseis(ind, "ociosas").nota).toBeUndefined();
   });
 
   it("a dica: número, nome, vagas, ociosas e % preenchidas", () => {

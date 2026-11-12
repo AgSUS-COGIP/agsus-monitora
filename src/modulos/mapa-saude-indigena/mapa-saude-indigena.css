@@ -510,6 +510,15 @@
   max-height: clamp(140px, 28vh, 280px);
 }
 
+/*
+  Recolhido (botão "Recolher mapa", recolher.tsx): fica só o cabeçalho, com o
+  título, a contagem e "Mostrar mapa"; as Fases e os Detalhes sobem. O Leaflet
+  reenquadra sozinho quando o corpo volta (ResizeObserver).
+*/
+.mapa-si--recolhido .mapa-si-painel__corpo {
+  display: none;
+}
+
 .mapa-si--tela-cheia .mapa-si-tela-cheia {
   border-color: var(--brand-primary);
   font-weight: var(--font-weight-semibold);
@@ -1196,6 +1205,14 @@
 .mapa-simples__pontos[aria-pressed="true"] .mapa-simples__interruptor::after {
   background: var(--surface-card);
   transform: translateX(12px);
+}
+
+.mapa-simples__nota {
+  margin: 0;
+  max-width: 24ch;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  line-height: var(--leading-caption, 1.4);
 }
 
 .mapa-simples__faixas {

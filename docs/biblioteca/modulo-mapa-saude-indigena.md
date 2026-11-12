@@ -36,7 +36,8 @@ Sub-notas: [[mapa-saude-indigena-modo-dseis]] (terceiro fundo, "Mapa DSEIs"),
 - `mapa-saude-indigena.tsx` — `<MapaSaudeIndigena>`: estado da tela, contas memorizadas, um mapa
   principal de cada vez.
 - `mapa-nacional.tsx` — bolhas dos DSEIs, CASAIs nacionais, leque, enquadramento, "Territórios por
-  vagas", Brasil/Tela cheia, legenda flutuante.
+  vagas", Brasil/Recolher mapa/Tela cheia (recolher.tsx; a escolha em
+  `src/lib/mapa-recolhido.ts`, no localStorage), legenda flutuante.
 - `mapa-do-dsei.tsx` — território do DSEI: unidades (agrupamento por proximidade + leque), sede,
   vínculos externos, filtros por tipo, lista de unidades, Terras Indígenas e povos.
 - `legenda.tsx` — `<Forma>`, `<LegendaFlutuante>` (recolhível; também a de Projetos), legendas

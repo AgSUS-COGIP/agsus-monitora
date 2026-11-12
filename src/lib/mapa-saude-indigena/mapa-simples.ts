@@ -184,7 +184,17 @@ export interface PinturaDoMapaSimples {
   /** Faixas com amostra; "sem dado" por último, só se algum DSEI estiver sem. */
   legenda: ItemDaLegendaSimples[];
   titulo: string;
+  /** Uma linha que diz o que a cor não é (na cor do DSEI, não é situação). */
+  nota?: string;
 }
+
+/*
+  Na cor do DSEI (o padrão), as 34 cores só distinguem um distrito do outro:
+  vermelho não é pior que verde. A situação está em "% preenchidas" e em
+  "Vagas ociosas" (revisão visual de 12/11/2026).
+*/
+export const NOTA_DA_COR_DO_DSEI =
+  "A cor só identifica o DSEI, não a situação.";
 
 export function pintarDseis(
   indicadores: readonly IndicadorDoDsei[],
@@ -199,6 +209,7 @@ export function pintarDseis(
       tokens,
       legenda: [],
       titulo: "Cor do DSEI",
+      nota: NOTA_DA_COR_DO_DSEI,
     };
   }
   const faixas =

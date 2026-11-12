@@ -101,3 +101,43 @@ export function lerPosicaoDaAya(texto: string | null | undefined) {
     return null;
   }
 }
+
+export interface MedidasDaJanela {
+  /** O tamanho da arara sem o translate de quem está escondida (px). */
+  largura: number;
+  altura: number;
+  larguraDaJanela: number;
+  alturaDaJanela: number;
+  /** A folga mínima que a arara guarda das bordas (px). */
+  margem: number;
+}
+
+/**
+ * A posição guardada trazida para dentro da janela de agora, ao carregar, ao
+ * redimensionar e ao girar a tela. Fora da janela, só o necessário volta para
+ * dentro; escondida numa borda, continua encostada nela (a borda direita e a
+ * de baixo andam junto com a janela). A preferência guardada não muda.
+ */
+export function posicaoNaJanela(
+  posicao: PosicaoDaAya,
+  medidas: MedidasDaJanela,
+): PosicaoDaAya {
+  const { largura, altura, larguraDaJanela, alturaDaJanela, margem } = medidas;
+  const maxLeft = Math.max(margem, larguraDaJanela - largura - margem);
+  const maxTop = Math.max(margem, alturaDaJanela - altura - margem);
+  const conter = (valor: number, maximo: number) =>
+    Math.min(Math.max(margem, valor), maximo);
+  const left =
+    posicao.borda === "esquerda"
+      ? margem
+      : posicao.borda === "direita"
+        ? maxLeft
+        : conter(posicao.left, maxLeft);
+  const top =
+    posicao.borda === "topo"
+      ? margem
+      : posicao.borda === "baixo"
+        ? maxTop
+        : conter(posicao.top, maxTop);
+  return posicao.borda ? { left, top, borda: posicao.borda } : { left, top };
+}

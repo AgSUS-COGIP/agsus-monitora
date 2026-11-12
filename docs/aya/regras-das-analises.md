@@ -29,7 +29,7 @@ e `20260930234000_cache_sem_atropelo.sql` e `20261111150000_editais_de_analise_f
 ## Pendências das análises
 
 **perguntas:** quais sao as pendencias das analises curriculares | pendencias das analises | data no futuro | data fora do periodo | sem responsavel | validacao da janela
-**resposta:** Nas Análises curriculares, as pendências prioritárias aparecem da mais grave para a menos grave (até 8): Data no futuro, Data fora do período e Sem responsável; depois Pendentes, Em revisão e Etapa sem data. Cada uma tem um atalho que aplica o filtro. A data da análise é comparada com a janela do edital: Dentro do período, Fora do período, Sem data de análise, Sem janela configurada ou Data no futuro (data depois de hoje, um dado a corrigir na planilha). No gráfico de evolução diária, os dias com análise fora do período ou no futuro ficam em vermelho.
+**resposta:** Nas Análises curriculares, as pendências prioritárias aparecem da mais grave para a menos grave (até 8): Data no futuro, Data fora do período e Sem responsável; depois Pendentes, Em revisão e Análise sem data (análise já realizada — Em revisão, Aprovado ou Reprovado — sem data de análise; Pendente sem data é o normal). Cada uma tem um atalho que aplica o filtro, e a tabela mostra o mesmo número do cartão. A data da análise é comparada com a janela do edital: Dentro do período, Fora do período, Sem data de análise, Sem janela configurada ou Data no futuro (data depois de hoje, um dado a corrigir na planilha). No gráfico de evolução diária, os dias com análise fora do período ou no futuro ficam em vermelho.
 **fonte:** src/lib/analises-curriculares.ts; src/lib/data-de-analise.ts
 
 ## Atualização das análises

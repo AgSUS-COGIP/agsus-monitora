@@ -483,7 +483,14 @@ describe("tabela", () => {
       "edital",
       "atencao",
     ]);
-    expect(normalizarColunas(null)).toHaveLength(11);
+    // Quem nunca escolheu: todas menos Observações (que fica na gaveta).
+    expect(normalizarColunas(null)).toHaveLength(10);
+    expect(normalizarColunas(null)).not.toContain("observacoes");
+    // Quem escolheu Observações continua com ela.
+    expect(normalizarColunas(["observacoes", "edital"])).toEqual([
+      "edital",
+      "observacoes",
+    ]);
     expect(alternarColuna(["edital"], "edital", false)).toEqual(["edital"]);
     expect(alternarColuna(["atencao"], "unidade", true)).toEqual([
       "unidade",
