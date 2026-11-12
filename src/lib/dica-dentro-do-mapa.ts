@@ -20,7 +20,7 @@
   - popup: largura máxima e altura máxima relativas ao tamanho do mapa, e o
     `autoPan` com folga suficiente para não ficar sob os controles. Só o
     `autoPan` da abertura, sem `keepInView`: ele repete o autoPan a cada
-    `moveend`, e o `maxBounds` do `map-guard` também puxa o mapa de volta a
+    `moveend`, e o `maxBounds` da guarda do mapa também puxa o mapa de volta a
     cada `moveend`. Com o popup perto do limite (Pacaraima/RR, no norte), um
     empurrava o mapa para cima e o outro para baixo, sem fim — o mapa
     "saltitava" enquanto o popup estivesse aberto.

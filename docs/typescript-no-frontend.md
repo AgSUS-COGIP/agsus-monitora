@@ -37,7 +37,7 @@ As regras nacionais e distritais de contagens, bolhas, CASAIs, unidades, víncul
 resumos e enquadramento estão em `src/lib/mapa-saude-indigena/chaves.ts`, `mapa-nacional.ts`
 e `mapa-do-dsei.ts`. A integração comum com o Leaflet também está em TypeScript (`leaflet.ts`), incluindo
 criação, fundo com recurso, tamanho, contornos, enquadramento, leque, ícones e balões.
-As guardas globais `map-guard.ts`, `map-zoom-range.ts`, o seletor de Mapa/Satélite
+A guarda do mapa (`src/modulos/mapa-saude-indigena/guarda-do-mapa.ts`, ligada por `criarMapa`), o seletor de Mapa/Satélite
 (`map-base-layer-switcher.ts`) e a camada de Terras Indígenas (`indigenous-territories-layer.ts`,
 com as partes puras em `src/lib/terras-indigenas/`) estão em TypeScript. Painel, lista, legenda, tela cheia, retorno ao Brasil e hooks dos
 mapas já estão em TypeScript, com contratos em `tipos-do-painel.ts`; formas e cores
@@ -100,8 +100,7 @@ direto no Node, que remove os tipos.
 Os módulos não visuais de `src/modules/` também estão em TypeScript: sessão e armazenamento
 (`auth-storage.ts`), cópias no IndexedDB (`copia-da-sessao-indexeddb.ts`,
 `cache-de-payload-indexeddb.ts`), catálogo de abas (`catalogo-de-abas.ts`; a situação dos módulos
-saiu para `src/app/situacao-do-sistema.ts`), memória e fontes da Aya (`aya-memoria.ts`, `aya-knowledge.ts`), guardas do
-mapa (`map-guard.ts`, `map-zoom-range.ts`), foto da conta Google, ciclo do service worker
+saiu para `src/app/situacao-do-sistema.ts`), memória e fontes da Aya (`aya-memoria.ts`, `aya-knowledge.ts`), foto da conta Google, ciclo do service worker
 (`pwa-lifecycle.ts`), comemorações (`comemoracao.ts`, `comemoracao-do-acesso.ts`) e o registro de
 ícones (`icones.ts`). A migração foi só de tipos: a saída do esbuild (sem renomear identificadores) é
 igual à do JavaScript, arquivo a arquivo. O Leaflet, sem tipos instalados, é declarado em cada guarda

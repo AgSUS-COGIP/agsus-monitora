@@ -11,8 +11,7 @@ import type { CamadaDeFundo } from "../modulos/mapa-saude-indigena/tipos-do-leaf
   O SELETOR MAPA | SATÉLITE
 
   Envolve `L.map` e `L.tileLayer` quando o Leaflet chega
-  (src/modulos/mapa-saude-indigena/carregar-leaflet.ts, depois de
-  `map-guard.ts`): cada camada de azulejos sai etiquetada com o tipo de fundo
+  (src/modulos/mapa-saude-indigena/carregar-leaflet.ts): cada camada de azulejos sai etiquetada com o tipo de fundo
   (`__agsusBaseMapKind`) e cada mapa ganha o controle "Mapa | Satélite" no
   canto do Leaflet. Vale para os três mapas da Visão geral (`map`,
   `detailMap` e `mapaDosProjetos`).

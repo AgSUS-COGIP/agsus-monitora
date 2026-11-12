@@ -2,7 +2,7 @@
   O ENQUADRAMENTO DO BRASIL NOS MAPAS DA VISÃO GERAL, sem DOM nem Leaflet.
 
   O problema: o `fitBounds` encaixava o contorno do país (BRASIL_BOUNDS) quase
-  sem folga (10 px) e o `map-guard` não deixava o zoom descer de 4.5. A 4.5 o
+  sem folga (10 px) e a guarda do mapa não deixava o zoom descer de 4.5. A 4.5 o
   Brasil tem ~663 px de altura em Web Mercator; num mapa de 640 px (64vh numa
   tela de 1000 px) o país ficava maior que a moldura e o norte (Roraima e
   Amapá, lat. 5.27) e o sul saíam cortados — e as bolhas da borda, que têm até
@@ -11,7 +11,7 @@
   A regra: a folga de cada lado é o maior ponto do mapa mais 12 px, e o zoom
   mínimo desce, em quartos (`zoomSnap` 0.25), até o país inteiro caber com essa
   folga — 4.5 continua sendo o limite quando a moldura é grande o bastante.
-  O `map-guard.ts` usa `zoomQueCabe` antes de cada enquadramento do Brasil.
+  A guarda do mapa (`src/modulos/mapa-saude-indigena/guarda-do-mapa.ts`) usa `zoomQueCabe` antes de cada enquadramento do Brasil.
 
   A conta é a mesma do Leaflet: Web Mercator com azulejos de 256 px.
 */

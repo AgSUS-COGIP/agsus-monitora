@@ -6,12 +6,12 @@
   o que estava pendurado apaga essas propriedades do namespace, e apaga-as em
   silêncio — nada estoira, porque quem envolve não usa o que apagou.
 
-  Foi o que aconteceu. Três módulos envolvem `L.tileLayer` quando o Leaflet chega
-  (src/modulos/mapa-saude-indigena/carregar-leaflet.ts):
-
-      map-guard.ts              noWrap, updateWhenIdle, keepBuffer
-      map-base-layer-switcher.ts  etiqueta a camada com o tipo de base
-      map-zoom-range.ts         impõe o maxZoom
+  Foi o que aconteceu. Três módulos envolviam `L.tileLayer` quando o Leaflet
+  chegava (src/modulos/mapa-saude-indigena/carregar-leaflet.ts): o antigo
+  `map-guard.ts` (noWrap, updateWhenIdle, keepBuffer), o
+  `map-base-layer-switcher.ts` (etiqueta a camada com o tipo de base) e o
+  antigo `map-zoom-range.ts` (impunha o maxZoom). Hoje só o seletor envolve;
+  a guarda do mapa passa as opções a quem cria a camada (`guarda-do-mapa.ts`).
 
   Nenhum copiava `.wms`. A camada de Terras Indígenas verifica
   `L.tileLayer?.wms` antes de se instalar e desistia a cada arranque: sem

@@ -6,7 +6,10 @@ import {
   formaDoTipo,
 } from "../src/lib/mapa-saude-indigena/formas.ts";
 
-const guard = readFileSync("src/modules/map-guard.ts", "utf8");
+const guard = readFileSync(
+  "src/modulos/mapa-saude-indigena/guarda-do-mapa.ts",
+  "utf8",
+);
 const nacional = readFileSync(
   "src/modulos/mapa-saude-indigena/mapa-nacional.tsx",
   "utf8",
@@ -105,7 +108,7 @@ describe("a bandeira de visão geral sobrevive ao próprio enquadramento", () =>
   um card que continuava largo. Em produção, a 1920, sobravam cerca de 310px de
   card branco à esquerda do mapa — a faixa que motivou esta branch.
 
-  Ele existia para esconder outro problema, que não era de CSS: o `map-guard`
+  Ele existia para esconder outro problema, que não era de CSS: o antigo `map-guard`
   recortava os azulejos a NAVEGACAO_BOUNDS (57.5° de longitude), e um card de
   1642x480 precisa de 171.6° para enquadrar os 39° de latitude do Brasil.
   Medido em `bench/prototipo-workspace.html`, contando os `<img>` no DOM:

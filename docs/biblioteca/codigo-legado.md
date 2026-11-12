@@ -19,7 +19,7 @@ das dúvidas".
   (`aya-conhecimento-gerado.js`). Qualquer `.js`/`.jsx` ali quebra o build (nem editar um antigo):
   módulo que precise mudar vira `.ts`.
 - Os módulos são features de UI sem framework, instaladas por `src/main.ts` (a ordem importa).
-  Grupos: `aya-*` (assistente) · `map-*`, `health-*`, `indigenous-*` (mapa e Saúde Indígena) ·
+  Grupos: `aya-*` (assistente) · `map-*`, `indigenous-*` (seletor de fundo e Terras Indígenas) ·
   `icones.ts` (registro único de ícones Lucide, usado também pelo React; [[icones]]).
 - Regras de quem ainda mexe ali: sem `innerHTML` cru (`src/lib/sanitize.ts`); nenhum
   `MutationObserver` novo; dados só por RPC; marcação nova segue os componentes do Design System

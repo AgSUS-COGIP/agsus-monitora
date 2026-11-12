@@ -14,7 +14,7 @@ import { describe, expect, it, beforeEach, vi } from "vitest";
   aparência foram publicadas sobre código que não era executado.
 
   O teste é de comportamento, não de texto: monta um Leaflet mínimo, instala os
-  guardas na ordem real da aplicação e verifica que a camada consegue instalar-se
+  módulos na ordem real da aplicação e verifica que a camada consegue instalar-se
   no fim. Um teste sobre o texto do ficheiro teria deixado passar.
 */
 
@@ -29,11 +29,16 @@ function leafletMinimo() {
       createPane: () => ({ style: {} }),
       whenReady: () => {},
       on: () => {},
+      off: () => {},
       hasLayer: () => false,
       getZoom: () => 8,
+      setMaxBounds: () => {},
+      fitBounds: () => {},
+      setView: () => {},
     })),
     tileLayer,
     latLngBounds: vi.fn(() => ({})),
+    latLng: vi.fn((lat, lng) => ({ lat, lng })),
     control: vi.fn(() => ({ addTo: () => {}, onAdd: null })),
     geoJSON: vi.fn(() => ({ clearLayers: () => {}, eachLayer: () => {} })),
     layerGroup: vi.fn(() => ({ clearLayers: () => {}, getLayers: () => [] })),
@@ -48,7 +53,84 @@ function leafletMinimo() {
   };
 }
 
-describe("os guardas não podem mutilar o namespace do Leaflet", () => {
+describe("a guarda do mapa não mexe no namespace do Leaflet", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    const L = leafletMinimo();
+    // A guarda dá nome e teclado ao contêiner: aqui, um elemento de verdade.
+    const mapaMinimo = L.map;
+    const conteiner = document.createElement("div");
+    L.map = vi.fn((...argumentos) => ({
+      ...mapaMinimo(...argumentos),
+      getContainer: () => conteiner,
+    }));
+    globalThis.window = {
+      L,
+      matchMedia: () => ({ matches: false }),
+    };
+    globalThis.localStorage = {
+      getItem: () => null,
+      setItem: () => {},
+    };
+  });
+
+  it("criar um mapa não troca L.map, L.tileLayer nem L.tileLayer.wms", async () => {
+    const { criarMapa } =
+      await import("../src/modulos/mapa-saude-indigena/leaflet.ts");
+    const { map, tileLayer } = window.L;
+    const wms = tileLayer.wms;
+
+    criarMapa(window.L, document.createElement("div"));
+
+    expect(window.L.map).toBe(map);
+    expect(window.L.tileLayer).toBe(tileLayer);
+    expect(window.L.tileLayer.wms).toBe(wms);
+  });
+
+  it("o mapa nasce com os limites e a faixa do zoom da guarda", async () => {
+    const { criarMapa } =
+      await import("../src/modulos/mapa-saude-indigena/leaflet.ts");
+    const { ZOOM_MINIMO, ZOOM_MAXIMO } =
+      await import("../src/modulos/mapa-saude-indigena/guarda-do-mapa.ts");
+
+    criarMapa(window.L, document.createElement("div"));
+
+    const opcoes = window.L.map.mock.calls.at(-1)[1];
+    expect(opcoes).toMatchObject({
+      minZoom: ZOOM_MINIMO,
+      maxZoom: ZOOM_MAXIMO,
+      worldCopyJump: false,
+      zoomSnap: 0.25,
+      enquadramentoProprio: true,
+    });
+    expect(opcoes).toHaveProperty("maxBounds");
+    expect([ZOOM_MINIMO, ZOOM_MAXIMO]).toEqual([4.5, 19]);
+  });
+
+  /*
+    O recorte por `bounds` era a origem do card cinzento: o Leaflet deixava de
+    pedir azulejos fora da caixa e dois terços do card ficavam por desenhar. É
+    invisível — não dá erro nem aviso. Só um teste o impede de voltar.
+  */
+  it("o fundo de azulejos sai sem cópias do mundo e sem recorte por bounds", async () => {
+    const { adicionarFundo } =
+      await import("../src/modulos/mapa-saude-indigena/leaflet.ts");
+    const camada = { on: vi.fn(), addTo: vi.fn(() => camada) };
+    window.L.tileLayer.mockReturnValueOnce(camada);
+
+    adicionarFundo(window.L, {}, document.createElement("div"));
+
+    const opcoes = window.L.tileLayer.mock.calls.at(-1)[1];
+    expect(opcoes).toMatchObject({
+      noWrap: true,
+      updateWhenIdle: true,
+      keepBuffer: 2,
+    });
+    expect(Object.keys(opcoes)).not.toContain("bounds");
+  });
+});
+
+describe("os módulos que ainda envolvem o Leaflet não o mutilam", () => {
   beforeEach(() => {
     vi.resetModules();
     globalThis.window = {
@@ -59,73 +141,6 @@ describe("os guardas não podem mutilar o namespace do Leaflet", () => {
       getItem: () => null,
       setItem: () => {},
     };
-  });
-
-  it("L.tileLayer.wms sobrevive ao guarda", async () => {
-    const { installLeafletMapGuard } =
-      await import("../src/modules/map-guard.ts");
-    expect(typeof window.L.tileLayer.wms).toBe("function");
-
-    expect(installLeafletMapGuard()).toBe(true);
-
-    expect(
-      typeof window.L.tileLayer.wms,
-      "o guarda apagou L.tileLayer.wms do namespace",
-    ).toBe("function");
-  });
-
-  it("o guarda continua a aplicar as suas opções aos azulejos comuns", async () => {
-    const { installLeafletMapGuard } =
-      await import("../src/modules/map-guard.ts");
-    const original = window.L.tileLayer;
-    installLeafletMapGuard();
-
-    window.L.tileLayer("https://exemplo/{z}/{x}/{y}.png", { opacity: 0.5 });
-
-    expect(original).toHaveBeenCalledWith(
-      "https://exemplo/{z}/{x}/{y}.png",
-      expect.objectContaining({
-        opacity: 0.5,
-        noWrap: true,
-        updateWhenIdle: true,
-        keepBuffer: 2,
-      }),
-    );
-  });
-
-  /*
-    O recorte por `bounds` era a origem do card cinzento: o Leaflet deixava de
-    pedir azulejos fora da caixa e dois terços do card ficavam por desenhar. É
-    invisível — não dá erro nem aviso. Só um teste o impede de voltar.
-
-    Estava verificado por fatia de texto em `enquadramento-do-mapa.test.js`, e
-    quebrou assim que o guarda mudou de forma. Aqui olha-se para o que o guarda
-    entrega à fábrica, que é o que de facto decide o recorte.
-  */
-  it("o guarda não recorta os azulejos por bounds", async () => {
-    const { installLeafletMapGuard } =
-      await import("../src/modules/map-guard.ts");
-    const original = window.L.tileLayer;
-    installLeafletMapGuard();
-
-    window.L.tileLayer("https://exemplo/{z}/{x}/{y}.png");
-
-    const opcoes = original.mock.calls.at(-1)[1];
-    expect(Object.keys(opcoes)).not.toContain("bounds");
-  });
-
-  /*
-    A camada WMS da Funai declara `updateWhenIdle: false` e `keepBuffer: 3` de
-    propósito, para o raster acompanhar o arrasto. Envolver o `.wms` no guarda
-    sobreporia os dois sem ninguém dar por isso.
-  */
-  it("o .wms é copiado tal e qual, sem as opções do guarda", async () => {
-    const { installLeafletMapGuard } =
-      await import("../src/modules/map-guard.ts");
-    const wmsOriginal = window.L.tileLayer.wms;
-    installLeafletMapGuard();
-
-    expect(window.L.tileLayer.wms).toBe(wmsOriginal);
   });
 
   /*
@@ -147,14 +162,12 @@ describe("os guardas não podem mutilar o namespace do Leaflet", () => {
     await carregarLeaflet({ janela: window });
     const L = window.L;
     return {
-      guarda: L.__agsusMapGuardInstalled === true,
       switcher: L.__agsusBaseLayerSwitcherInstalled === true,
-      zoom: L.__agsusZoomRangeInstalled === true,
       terras: L.__agsusIndigenousTerritoriesInstalled === true,
     };
   };
 
-  it("o .wms sobrevive aos três invólucros, não só ao primeiro", async () => {
+  it("o .wms sobrevive aos invólucros, não só ao primeiro", async () => {
     const wmsOriginal = window.L.tileLayer.wms;
     await arrancarComoAAplicacao();
 
@@ -168,9 +181,7 @@ describe("os guardas não podem mutilar o namespace do Leaflet", () => {
   it("a camada de Terras Indígenas instala-se no fim da sequência", async () => {
     const resultado = await arrancarComoAAplicacao();
 
-    expect(resultado.guarda).toBe(true);
     expect(resultado.switcher).toBe(true);
-    expect(resultado.zoom).toBe(true);
     expect(
       resultado.terras,
       "a camada desistiu porque o namespace do Leaflet chegou mutilado",

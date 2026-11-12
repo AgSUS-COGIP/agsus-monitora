@@ -28,8 +28,8 @@ Indígena** ([[modulo-mapa-saude-indigena]]) e usa as mesmas peças: muda o que 
 
 - Criação, Brasil inicial, fundo com recurso, contornos UF/BR, observador de tamanho:
   `usarMapaDoBrasil` → `criarMapaDoBrasil` (`painel-do-mapa.tsx`, `leaflet.ts`).
-- Limites, zoom, viscosidade, teclado, régua: `criarMapa` (minZoom 4, maxZoom 18, zoomSnap 0,25)
-  e os globais `map-guard.ts` / `map-zoom-range.ts` (`src/modules/`).
+- Limites, zoom (4,5 a 19, em quartos), viscosidade, teclado, régua: `criarMapa`, que liga a
+  guarda do mapa (`opcoesDoMapa` e `protegerMapa`, `src/modulos/mapa-saude-indigena/guarda-do-mapa.ts`).
 - Enquadramento: `enquadramentoDoRecorte` — sem filtro, o Brasil; com filtro, zoom 7 num ponto só
   ou a caixa (padding 60, maxZoom 7) (`src/lib/enquadramento-do-brasil.ts`, `enquadrar`).
 - Reenquadra ao aparecer ou mudar de tamanho até a pessoa mexer; "Brasil" volta a acompanhar

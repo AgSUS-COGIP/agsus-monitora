@@ -387,7 +387,7 @@ describe("o ouvinte do mapa", () => {
   norte dos limites de navegação. O que o Leaflet 1.9 faz a cada `moveend`,
   em uma dimensão (o topo do mapa, em px do mundo):
 
-  - o `maxBounds` (do `map-guard`) puxa o mapa de volta se o topo passou do
+  - o `maxBounds` (da guarda do mapa) puxa o mapa de volta se o topo passou do
     limite (`_panInsideMaxBounds`);
   - com `keepInView`, o popup refaz o autoPan se saiu da vista (`_adjustPan`;
     a bandeira `_autopanning` só pula o `moveend` do próprio autoPan).
