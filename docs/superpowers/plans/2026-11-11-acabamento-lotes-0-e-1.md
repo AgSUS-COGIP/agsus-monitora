@@ -115,7 +115,7 @@ Regras de contagem (uma ocorrência por linha que casa):
 **Files:**
 - Modify: `src/styles/app.css:12-66`, `src/styles/tokens.css`
 - Modify: `docs/biblioteca/design-e-tokens.md` (divergências registradas)
-- Test: `tests/tokens-do-acabamento.test.js`
+- Test: `tests/tokens-do-acabamento.test.ts`
 
 **Interfaces:**
 - Produces: variáveis `--z-dropdown` (= `var(--z-popover)`), `--z-modal` (= `var(--z-overlay)`),
@@ -153,7 +153,7 @@ Mapeamentos fixos (sem escolha do executor):
 - [ ] **Step 1:** aplicar os mapeamentos em `src/styles/` e `src/ui/`.
 - [ ] **Step 2:** `node scripts/check-acabamento-so-encolhe.mjs --atualizar` — `zIndex`, `raio`,
   `sombra`, `curva` e `animaLayout` zerados (ou só com marcador) nesses arquivos.
-- [ ] **Step 3:** `npx vitest run tests/tokens-do-acabamento.test.js tests/aviso-de-contraste.test.js` → PASS.
+- [ ] **Step 3:** `npx vitest run tests/tokens-do-acabamento.test.ts tests/aviso-de-contraste.test.js` → PASS.
 - [ ] **Step 4: Commit** — `Base: camadas, raios, sombras e curvas só por token`.
 
 ### Task 4: Cores só por token em `src/styles/` e `src/ui/`
