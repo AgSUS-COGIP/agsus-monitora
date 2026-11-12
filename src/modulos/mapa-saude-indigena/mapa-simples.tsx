@@ -346,6 +346,9 @@ export function LegendaDoMapaSimples({
           </label>
         ))}
       </fieldset>
+      {pintura.nota ? (
+        <p className="mapa-simples__nota">{pintura.nota}</p>
+      ) : null}
       {pintura.legenda.length ? (
         <ul
           className="mapa-simples__faixas"
