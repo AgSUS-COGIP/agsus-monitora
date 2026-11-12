@@ -33,74 +33,61 @@
   align-items: center;
   justify-content: flex-start;
   background-color: var(--surface-page);
-  background-image: var(--login-background-image, none);
-  background-size: cover;
-  /*
-    A arte de acesso é 16:9 com o desenho à direita e o lado esquerdo livre
-    para o cartão: quando sobra largura, o corte cai à esquerda, não no logo.
-  */
-  background-position: right center;
+  /* A arte vai nas duas camadas abaixo (::before e ::after), não aqui. */
+  background-image: none;
   padding: clamp(28px, 5vh, 64px) clamp(24px, 3.2vw, 64px);
 }
+/*
+  A arte de acesso, em duas camadas (11/11/2026):
+  - ::after, a arte nítida: ocupa a altura toda, ancorada à direita, com a
+    largura da própria proporção. Tela mais estreita que a arte: ela cobre tudo
+    e o corte cai à esquerda (o lado livre, do cartão), nunca em cima ou
+    embaixo. Tela mais larga que a arte: sobra uma faixa à esquerda.
+  - ::before, a mesma arte desfocada, só aparece nessa sobra; a borda da arte
+    nítida se dissolve nela em 14vh, sem emenda.
+  A proporção vem de --login-arte-proporcao, que marca.ts mede quando a arte
+  carrega (16:9 até lá). Arte larga (21:9 ou mais) cobre as telas largas
+  inteiras, sem sobra; a arte 16:9 continua inteira, como antes.
+*/
 .login-screen::before,
 .login-screen::after {
-  display: none;
+  content: "";
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--login-background-image, none);
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+.login-screen::before {
+  background-size: cover;
+  background-position: center;
+  filter: blur(28px);
+  transform: scale(1.08);
+}
+.login-screen::after {
+  background-size: auto 100%;
+  background-position: right center;
+  --borda-da-arte: calc(100% - 100vh * var(--login-arte-proporcao, 1.7778));
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent var(--borda-da-arte),
+    black calc(var(--borda-da-arte) + 14vh)
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent var(--borda-da-arte),
+    black calc(var(--borda-da-arte) + 14vh)
+  );
 }
 /*
   Arte nova que chega da configuração (outra no lugar da guardada) entra com
   fade cruzado em vez de trocar de um quadro para o outro.
 */
-.login-screen,
 .login-screen::before,
 .login-screen::after {
   transition: background-image 0.35s ease;
-}
-/*
-  Tela mais larga que a arte (notebook, janela baixa): o "cover" cortava em
-  cima e embaixo (o logo da AgSUS sumia). Aqui a arte aparece inteira à
-  direita e o resto é a própria arte desfocada, sem faixa de cor solta.
-*/
-@media (min-aspect-ratio: 16/9) {
-  .login-screen {
-    background-image: none;
-  }
-  .login-screen::before,
-  .login-screen::after {
-    content: "";
-    display: block;
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    background-image: var(--login-background-image, none);
-    background-repeat: no-repeat;
-  }
-  .login-screen::before {
-    background-size: cover;
-    background-position: center;
-    filter: blur(28px);
-    transform: scale(1.08);
-  }
-  /*
-    A borda esquerda da arte nítida se dissolve no fundo desfocado, em vez de
-    terminar seca numa emenda vertical (11/11/2026). A arte é 16:9 e ocupa a
-    altura toda: a borda dela fica em 100% - 100vh × 16/9 da largura; a
-    transição leva 14vh dali para a direita.
-  */
-  .login-screen::after {
-    background-size: contain;
-    background-position: right center;
-    --borda-da-arte: calc(100% - 100vh * 16 / 9);
-    -webkit-mask-image: linear-gradient(
-      to right,
-      transparent var(--borda-da-arte),
-      black calc(var(--borda-da-arte) + 14vh)
-    );
-    mask-image: linear-gradient(
-      to right,
-      transparent var(--borda-da-arte),
-      black calc(var(--borda-da-arte) + 14vh)
-    );
-  }
 }
 .login-outer {
   width: min(516px, 31vw);
@@ -168,10 +155,10 @@
 }
 .login-product-icon {
   flex: none;
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
 }
-/* O pássaro do Yeendé (icones-da-entrada.tsx e index.html): cores do manual da AgSUS. */
+/* O símbolo do Yeendé (icones-da-entrada.tsx e index.html): cores do manual da AgSUS. */
 .marca-yeende__asa-esquerda {
   fill: var(--marca-agsus-amarelo);
 }
@@ -181,7 +168,7 @@
 .marca-yeende__corpo {
   fill: var(--marca-agsus-azul-vivo);
 }
-.marca-yeende__sol {
+.marca-yeende__cabeca {
   fill: var(--marca-agsus-vermelho);
 }
 .login-product-mark strong {
