@@ -12,6 +12,8 @@ describe("o atributo hidden sempre esconde", () => {
   const app = readFileSync("src/styles/app.css", "utf8").replace(/\r\n/g, "\n");
 
   it("app.css declara [hidden] com display none !important", () => {
-    expect(app).toMatch(/\n\[hidden\] \{\n\s+display: none !important;\n\}/);
+    expect(app).toMatch(
+      /\n\[hidden\] \{\n\s+display: none !important;(?: \/\*[^\n]*\*\/)?\n\}/,
+    );
   });
 });

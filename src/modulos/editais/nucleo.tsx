@@ -496,7 +496,7 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
           />
         )}
         total={noFiltro.length}
-        vazio="Nenhum registro encontrado."
+        vazio="Nenhum resultado para os filtros aplicados."
         informacao={(quantos) =>
           quantos === null
             ? "Carregando…"

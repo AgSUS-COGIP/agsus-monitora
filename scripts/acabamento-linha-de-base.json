@@ -93,7 +93,7 @@
     "animaLayout": 1
   },
   "src/styles/app.css": {
-    "important": 60,
+    "important": 33,
     "blur": 1
   },
   "src/styles/barra-lateral.css": {
@@ -103,27 +103,22 @@
     "blur": 1
   },
   "src/styles/indigenous-territories-layer.css": {
-    "important": 2,
     "blur": 1
   },
   "src/styles/loading-experience.css": {
-    "important": 2,
     "blur": 1
   },
   "src/styles/map-base-layer-switcher.css": {
-    "important": 4
+    "important": 2
   },
   "src/styles/mobile-app.css": {
-    "important": 38
+    "important": 33
   },
   "src/styles/mobile-table-cards.css": {
     "important": 3
   },
-  "src/styles/multi-select-busca.css": {
-    "important": 1
-  },
   "src/styles/nielsen-shell-ux.css": {
-    "important": 25,
+    "important": 22,
     "blur": 2
   },
   "src/styles/platform-shell.css": {

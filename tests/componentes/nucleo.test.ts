@@ -483,7 +483,7 @@ describe("tabela de editais", () => {
     expect(linhasDaTabela()).toEqual(["1"]);
     await digitar($("nucleoSearch"), "nada disso");
     expect($("nucleoRows")?.textContent).toContain(
-      "Nenhum registro encontrado",
+      "Nenhum resultado para os filtros aplicados",
     );
   });
 

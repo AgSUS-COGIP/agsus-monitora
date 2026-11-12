@@ -29,7 +29,7 @@
 
 .shell-confirm-layer[hidden],
 .shell-signout-busy[hidden] {
-  display: none !important;
+  display: none;
 }
 
 .shell-confirm-backdrop {
@@ -75,13 +75,13 @@
   line-height: 1.55;
 }
 
-.shell-confirm-warning {
-  margin-top: 12px !important;
+.shell-confirm-dialog .shell-confirm-warning {
+  margin-top: 12px;
   padding: 10px 12px;
   border: 1px solid color-mix(in srgb, var(--state-warning) 40%, transparent);
   border-radius: var(--radius-lg);
   background: var(--state-warning-soft);
-  color: var(--state-warning) !important;
+  color: var(--state-warning);
   font-weight: 600;
 }
 

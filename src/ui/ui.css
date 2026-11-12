@@ -84,6 +84,21 @@
   background: var(--state-danger-soft);
 }
 
+/* Pressionado: encolhe um pouco (feedback tátil); desabilitado não reage; sem movimento se o usuário pediu. */
+.btn {
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .btn:active:not(:disabled) {
+    transition: none;
+    transform: none;
+  }
+}
+
 /* Skeleton: bloco que pulsa no tamanho do conteúdo (carregando não é zero). */
 /*
   `.ui-esqueleto-linha` sozinha também desenha: 35 usos antigos esqueciam a
@@ -1339,7 +1354,10 @@ th[aria-sort="descending"] .ui-ordenar i {
 .ui-menu-lista button:hover:not(:disabled),
 .ui-menu-lista button:focus-visible {
   background: var(--surface-hover);
-  outline: none;
+}
+.ui-menu-lista button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
 }
 .ui-menu-lista button:disabled {
   color: var(--text-secondary);

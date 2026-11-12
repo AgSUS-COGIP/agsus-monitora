@@ -82,7 +82,7 @@
 
 .agsus-ti-tooltip::before,
 .agsus-dsei-tooltip::before {
-  border-top-color: #0f172ae6 !important; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
+  border-top-color: #0f172ae6 !important; /* acabamento: permitido(cor,important) — camada de mapa (terras indígenas), igual nos dois temas */
 }
 
 /* O tooltip da Terra Indígena passou a ter mais de uma linha — o povo em
@@ -173,7 +173,7 @@
 }
 
 .agsus-dsei-tooltip::before {
-  border-top-color: #0b5fa5f0 !important; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
+  border-top-color: #0b5fa5f0 !important; /* acabamento: permitido(cor,important) — camada de mapa (terras indígenas), igual nos dois temas */
 }
 
 /*

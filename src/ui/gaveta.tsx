@@ -31,7 +31,7 @@ export function TopoDaGaveta({
   tituloId,
   resumo,
   aoFechar,
-  rotuloDoFechar,
+  rotuloDoFechar = "Fechar",
 }: PropriedadesDoTopoDaGaveta) {
   return (
     <div className="ui-gaveta-topo">

@@ -11,7 +11,7 @@
 .agsus-basemap-switcher {
   display: inline-flex;
   gap: 2px;
-  margin-top: 8px !important;
+  margin-top: 8px !important; /* acabamento: permitido(important) — vence a margem que o Leaflet põe em .leaflet-control */
   padding: 2px;
   border: 0;
   border-radius: var(--radius-md);
@@ -83,7 +83,7 @@
 
 @media (max-width: 700px) {
   .agsus-basemap-switcher {
-    margin-top: 6px !important;
+    margin-top: 6px !important; /* acabamento: permitido(important) — vence a margem que o Leaflet põe em .leaflet-control */
   }
 
   .agsus-basemap-switcher__button {

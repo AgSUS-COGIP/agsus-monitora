@@ -15,9 +15,14 @@ export function EstadoVazio({ className, children }: PropriedadesDoEstado) {
   return <div className={className || "ui-vazio"}>{children}</div>;
 }
 
+/* `role="status"`: o leitor de tela anuncia que está carregando (DS 17). */
 export function Carregando({
   className,
   children = "Carregando…",
 }: PropriedadesDoEstado) {
-  return <div className={className || "ui-vazio"}>{children}</div>;
+  return (
+    <div className={className || "ui-vazio"} role="status">
+      {children}
+    </div>
+  );
 }

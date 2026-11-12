@@ -219,11 +219,11 @@ textarea,
 
   .toast-box,
   #toastBox {
-    left: 12px !important;
-    right: 12px !important;
-    bottom: calc(12px + var(--mobile-safe-bottom)) !important;
-    width: auto !important;
-    max-width: none !important;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + var(--mobile-safe-bottom));
+    width: auto;
+    max-width: none;
   }
 
   iframe {

@@ -15,7 +15,7 @@
 }
 
 body.config-loading .loader {
-  display: none !important;
+  display: none;
 }
 
 .loader-card {
@@ -240,6 +240,6 @@ body.config-loading .loader {
 @media (prefers-reduced-motion: reduce) {
   .loader-spin,
   .loader-bar span::after {
-    animation: none !important;
+    animation: none !important; /* acabamento: permitido(important) — prefers-reduced-motion: anula a animação */
   }
 }

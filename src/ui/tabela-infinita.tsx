@@ -388,7 +388,9 @@ export function TabelaInfinita<T>({
             ) : (
               <tr>
                 <td colSpan={colunas.length} className="ui-vazio">
-                  {total ? "Nenhum registro encontrado." : vazio}
+                  {total
+                    ? "Nenhum resultado para os filtros aplicados."
+                    : vazio}
                 </td>
               </tr>
             )}

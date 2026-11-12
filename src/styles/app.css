@@ -107,7 +107,7 @@ strong {
   font-weight: 600;
 }
 .hidden {
-  display: none !important;
+  display: none !important; /* acabamento: permitido(important) — utilitário de ocultar: precisa vencer qualquer display de componente */
 }
 /*
   O atributo `hidden` esconde sempre, como `.hidden`. Sem isto, qualquer
@@ -118,14 +118,14 @@ strong {
   Cada caso ganhou um `[hidden]` local; esta regra cobre também os próximos.
 */
 [hidden] {
-  display: none !important;
+  display: none !important; /* acabamento: permitido(important) — utilitário de ocultar: precisa vencer qualquer display de componente */
 }
 .print-only {
   display: none;
 }
 /* ===== Acessibilidade ===== */
 .sr-only {
-  position: absolute !important;
+  position: absolute !important; /* acabamento: permitido(important) — utilitário só para leitor de tela: precisa vencer o posicionamento do componente */
   width: 1px;
   height: 1px;
   padding: 0;
@@ -182,8 +182,8 @@ summary:focus-visible,
   *::before,
   *::after {
     animation-duration: 0.01ms !important; /* acabamento: permitido(curva,important) — reduced-motion: a duração quase nula é o objetivo, para anular a animação */
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
+    animation-iteration-count: 1 !important; /* acabamento: permitido(important) — prefers-reduced-motion: anula animação e rolagem suave em tudo */
+    scroll-behavior: auto !important; /* acabamento: permitido(important) — prefers-reduced-motion: anula animação e rolagem suave em tudo */
     transition-duration: 0.01ms !important; /* acabamento: permitido(curva,important) — reduced-motion: a duração quase nula é o objetivo, para anular a transição */
   }
 }
@@ -310,7 +310,7 @@ body.config-loading #loginScreen {
   color: var(--color-success-600);
 }
 .login-screen.login-panel-dark .login-instituicao-icone {
-  color: var(--cor-do-texto-sobre-escuro);
+  color: #8ff3d0; /* acabamento: permitido(cor) — acento da marca no painel de acesso */
 }
 
 /* Rodapé COGIP */
@@ -753,7 +753,7 @@ textarea:focus-visible,
   line-height: 1;
 }
 body.config-loading .loader {
-  display: none !important;
+  display: none;
 }
 body.config-loading .loader-card {
   width: min(360px, calc(100vw - 36px));
@@ -791,12 +791,12 @@ body.app-fullscreen-fallback {
   overflow: hidden;
 }
 body.app-fullscreen-fallback .app {
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: calc(var(--z-header) - 12) !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  min-height: 100vh !important;
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-header) - 12);
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
   background: var(--bg);
 }
 body.app-fullscreen-fallback .toast-box {
@@ -1196,34 +1196,34 @@ body.external-clean #externalReturnBar {
   .loader,
   .toast-box,
   .global-side-toggle {
-    display: none !important;
+    display: none !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
   }
   .app {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: 1fr !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
   }
   .main {
-    grid-column: 1 !important;
+    grid-column: 1 !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
   }
   .content {
-    padding: 0 !important;
+    padding: 0 !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
   }
   .card {
-    box-shadow: none !important;
-    border: 1px solid #ccc !important; /* acabamento: permitido(cor) — impressão em papel branco: o token do tema escuro sairia ilegível no papel */
+    box-shadow: none !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
+    border: 1px solid #ccc !important; /* acabamento: permitido(cor,important) — impressão em papel branco: o token do tema escuro sairia ilegível no papel */
   }
   .table-wrap {
-    max-height: none !important;
-    overflow: visible !important;
+    max-height: none !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
+    overflow: visible !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
   }
   table {
-    min-width: 0 !important;
-    font-size: 12px !important;
+    min-width: 0 !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
+    font-size: 12px !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
   }
   .print-only {
-    display: block !important;
+    display: block !important; /* acabamento: permitido(important) — impressão: o papel ignora a regra de tela */
   }
   body {
-    background: #fff !important; /* acabamento: permitido(cor) — impressão em papel branco: o token do tema escuro sairia ilegível no papel */
+    background: #fff !important; /* acabamento: permitido(cor,important) — impressão em papel branco: o token do tema escuro sairia ilegível no papel */
   }
   @page {
     margin: 1.2cm;
@@ -1379,10 +1379,10 @@ tr:hover td {
   border-radius: var(--radius);
 }
 .external-panel[hidden] {
-  display: none !important;
+  display: none;
 }
 #page-external .table-head {
-  display: none !important;
+  display: none;
 }
 #page-external .table-card {
   margin-top: 0;
@@ -1548,7 +1548,7 @@ body.system-fullscreen-mode.external-clean .external-panel {
     margin-left: 6px;
   }
   .leaflet-control input[aria-label*="Buscar"] {
-    width: 110px !important;
+    width: 110px !important; /* acabamento: permitido(important) — vence o estilo do controle de busca do Leaflet */
   }
   .table-wrap {
     overflow-x: auto;

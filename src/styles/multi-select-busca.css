@@ -120,7 +120,7 @@
   display: grid;
 }
 .multi-select-menu[hidden] {
-  display: none !important;
+  display: none;
 }
 
 .multi-select-search {
