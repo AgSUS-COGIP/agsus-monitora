@@ -63,11 +63,10 @@ describe("seletor Mapa | Satélite", () => {
     expect(source).toContain("maxNativeZoom: SATELLITE_MAX_NATIVE_ZOOM");
   });
 
-  it("é instalado depois do guard do Leaflet e carrega o CSS próprio", () => {
-    const guardCall = carga.indexOf("guarda.installLeafletMapGuard();");
-    const switcherCall = carga.indexOf("fundo.installMapBaseLayerSwitcher();");
-    expect(guardCall).toBeGreaterThan(-1);
-    expect(switcherCall).toBeGreaterThan(guardCall);
+  it("é instalado quando o Leaflet chega e carrega o CSS próprio", () => {
+    expect(carga).toContain("fundo.installMapBaseLayerSwitcher();");
+    // A guarda do mapa não envolve o Leaflet: `criarMapa` a liga.
+    expect(carga).not.toContain("installLeafletMapGuard");
     expect(carga).toContain(
       'import("../../styles/map-base-layer-switcher.css")',
     );

@@ -38,6 +38,7 @@ function leafletMinimo() {
     })),
     tileLayer,
     latLngBounds: vi.fn(() => ({})),
+    latLng: vi.fn((lat, lng) => ({ lat, lng })),
     control: vi.fn(() => ({ addTo: () => {}, onAdd: null })),
     geoJSON: vi.fn(() => ({ clearLayers: () => {}, eachLayer: () => {} })),
     layerGroup: vi.fn(() => ({ clearLayers: () => {}, getLayers: () => [] })),

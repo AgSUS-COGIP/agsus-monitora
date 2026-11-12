@@ -188,9 +188,25 @@ export const OPCOES_DOS_AZULEJOS = Object.freeze({
   keepBuffer: 2,
 });
 
-/** Liga a guarda ao mapa recém-criado (uma vez por mapa). */
-export function protegerMapa(leaflet: object, mapa: object): void {
-  hardenMapInstance(leaflet as LeafletDaGuarda, mapa as MapaDaGuarda);
+/*
+  Liga a guarda ao mapa recém-criado (uma vez por mapa). Como o instalador
+  antigo, só age com o Leaflet inteiro: um `L` ou um mapa sem a API que ela
+  usa (os falsos dos testes dos componentes) ficam como estão.
+*/
+export function protegerMapa(leaflet: object, mapa: object): boolean {
+  const L = leaflet as Partial<LeafletDaGuarda>;
+  const m = mapa as Partial<MapaDaGuarda>;
+  const completo =
+    typeof L.latLng === "function" &&
+    typeof L.latLngBounds === "function" &&
+    typeof m.setMaxBounds === "function" &&
+    typeof m.fitBounds === "function" &&
+    typeof m.setView === "function" &&
+    typeof m.whenReady === "function" &&
+    typeof m.on === "function";
+  if (!completo) return false;
+  hardenMapInstance(L as LeafletDaGuarda, m as MapaDaGuarda);
+  return true;
 }
 
 function hardenMapInstance(L: LeafletDaGuarda, map: MapaDaGuarda) {
