@@ -181,10 +181,10 @@ summary:focus-visible,
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important; /* acabamento: permitido — reduced-motion: a duração quase nula é o objetivo, para anular a animação */
+    animation-duration: 0.01ms !important; /* acabamento: permitido(curva,important) — reduced-motion: a duração quase nula é o objetivo, para anular a animação */
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important; /* acabamento: permitido — reduced-motion: a duração quase nula é o objetivo, para anular a transição */
+    transition-duration: 0.01ms !important; /* acabamento: permitido(curva,important) — reduced-motion: a duração quase nula é o objetivo, para anular a transição */
   }
 }
 
@@ -219,7 +219,7 @@ body.config-loading #loginScreen {
   box-shadow: var(--shadow-lg);
   overflow: hidden; /* faz border-radius cortar as faixas */
   position: relative;
-  z-index: 2; /* acabamento: permitido — camada local do cartão de login, dentro do próprio contexto de empilhamento */
+  z-index: 2; /* acabamento: permitido(zIndex) — camada local do cartão de login, dentro do próprio contexto de empilhamento */
 }
 
 /* Faixa SUS — imagem oficial 1901×92px, repetida */
@@ -326,7 +326,7 @@ body.config-loading #loginScreen {
 .login-cogip-logo {
   width: 36px;
   height: 36px;
-  border-radius: 50%; /* acabamento: permitido — logo circular */
+  border-radius: 50%; /* acabamento: permitido(raio) — logo circular */
   object-fit: cover;
   flex-shrink: 0;
   border: 1.5px solid var(--color-border-subtle);
@@ -390,7 +390,7 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--focus-ring);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus-ring) 15%, transparent); /* acabamento: permitido — anel de foco, não é elevação */
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus-ring) 15%, transparent);
 }
 button:focus-visible,
 a:focus-visible,
@@ -400,7 +400,7 @@ textarea:focus-visible,
 [tabindex]:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
-  box-shadow: 0 0 0 6px color-mix(in srgb, var(--focus-ring) 20%, transparent); /* acabamento: permitido — anel de foco, não é elevação */
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--focus-ring) 20%, transparent);
 }
 
 /*
@@ -689,10 +689,10 @@ textarea:focus-visible,
 .loader-spin {
   width: 44px;
   height: 44px;
-  border-radius: 50%; /* acabamento: permitido — anel do spinner, círculo */
+  border-radius: 50%; /* acabamento: permitido(raio) — anel do spinner, círculo */
   border: 4px solid var(--border-subtle);
   border-top-color: var(--brand-primary);
-  animation: spin 1s linear infinite; /* acabamento: permitido — rotação contínua; o linear é o que faz o giro parecer constante */
+  animation: spin 1s linear infinite; /* acabamento: permitido(curva) — rotação contínua; o linear é o que faz o giro parecer constante */
 }
 .loader-title {
   font-size: 18px;
@@ -724,7 +724,7 @@ textarea:focus-visible,
   height: 100%;
   width: 0;
   background: var(--brand-primary);
-  transition: width var(--duration-base) var(--ease-standard); /* acabamento: permitido — a barra de progresso comunica o valor pela largura, que o JS grava em width inline */
+  transition: width var(--duration-base) var(--ease-standard); /* acabamento: permitido(curva,animaLayout) — a barra de progresso comunica o valor pela largura, que o JS grava em width inline */
 }
 .google-login-btn {
   min-height: 44px;
@@ -857,7 +857,7 @@ body.external-clean #externalReturnBar {
   left: 0;
   right: 0;
   height: 46px;
-  z-index: 1300; /* acabamento: permitido — barra de retorno do modo externo, fixa no topo; só convive com o conteúdo da tela, sem papel na escala */
+  z-index: var(--z-header);
   padding: 0 12px;
   box-sizing: border-box;
   background: var(--surface-card);
@@ -938,10 +938,12 @@ body.external-clean #externalReturnBar {
   @keyframes agsusPulse {
     0%,
     100% {
-      box-shadow: 0 0 0 5px rgba(14, 167, 107, 0.14); /* acabamento: permitido — halo animado de pulso, não é elevação */
+      box-shadow: 0 0 0 5px
+        color-mix(in srgb, var(--state-success) 14%, transparent);
     }
     50% {
-      box-shadow: 0 0 0 9px rgba(14, 167, 107, 0.05); /* acabamento: permitido — halo animado de pulso, não é elevação */
+      box-shadow: 0 0 0 9px
+        color-mix(in srgb, var(--state-success) 5%, transparent);
     }
   }
 }
@@ -1317,10 +1319,10 @@ tr:hover td {
   position: relative;
   width: 100%;
   min-height: 44px;
-  z-index: 5; /* acabamento: permitido — filtro dentro do próprio contexto: fica acima dos vizinhos sem sair da tela */
+  z-index: 5; /* acabamento: permitido(zIndex) — filtro dentro do próprio contexto: fica acima dos vizinhos sem sair da tela */
 }
 .multi-select.open {
-  z-index: 80; /* acabamento: permitido — filtro aberto sobe acima dos outros filtros, dentro do contexto da tela */
+  z-index: 80; /* acabamento: permitido(zIndex) — filtro aberto sobe acima dos outros filtros, dentro do contexto da tela */
 }
 .multi-select-menu {
   display: none;
@@ -1328,7 +1330,7 @@ tr:hover td {
   left: 0;
   right: 0;
   top: calc(100% + 7px);
-  z-index: 90; /* acabamento: permitido — menu do filtro, local ao contexto do .multi-select */
+  z-index: 90; /* acabamento: permitido(zIndex) — menu do filtro, local ao contexto do .multi-select */
   background: var(--surface-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);

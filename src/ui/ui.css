@@ -96,7 +96,7 @@
   min-height: 1em;
   border-radius: var(--radius-sm);
   background: var(--color-border-default);
-  animation: ui-esqueleto-pulso 1.4s var(--ease-standard) infinite; /* acabamento: permitido — ciclo contínuo de carregamento, com duração própria; não é transição de estado */
+  animation: ui-esqueleto-pulso 1.4s var(--ease-standard) infinite; /* acabamento: permitido(curva) — ciclo contínuo de carregamento, com duração própria; não é transição de estado */
 }
 .ui-esqueleto-linha {
   width: 80%;
@@ -125,8 +125,8 @@
   height: var(--space-4);
   border: 2px solid var(--color-border-default);
   border-top-color: var(--color-action-primary);
-  border-radius: 50%; /* acabamento: permitido — indicador de carregamento, círculo */
-  animation: ui-carregando-giro 0.8s linear infinite; /* acabamento: permitido — rotação contínua; o linear é o que faz o giro parecer constante */
+  border-radius: 50%; /* acabamento: permitido(raio) — indicador de carregamento, círculo */
+  animation: ui-carregando-giro 0.8s linear infinite; /* acabamento: permitido(curva) — rotação contínua; o linear é o que faz o giro parecer constante */
 }
 @keyframes ui-carregando-giro {
   to {
@@ -511,7 +511,7 @@
   inset: 0;
   border-radius: var(--radius-md);
   background: var(--border-subtle);
-  animation: ui-esqueleto-pulso 1.4s var(--ease-standard) infinite; /* acabamento: permitido — ciclo contínuo de carregamento, com duração própria; não é transição de estado */
+  animation: ui-esqueleto-pulso 1.4s var(--ease-standard) infinite; /* acabamento: permitido(curva) — ciclo contínuo de carregamento, com duração própria; não é transição de estado */
   content: "";
 }
 

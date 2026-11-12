@@ -46,8 +46,22 @@ contam; a cor só conta em valor de declaração (seletor `#abc` não), e `borde
   base (não grava se algum número subir) e o diff vai no mesmo commit.
 - Exceção legítima (sobrepor CSS do Leaflet, círculo `50%`, z-index local dentro de contexto de
   empilhamento próprio, cor de mapa, gráfico, marca ou PDF) leva **na mesma linha** um comentário
-  `acabamento: permitido — <motivo>` (em CSS, dentro de `/* */`; em `.tsx`, depois de `//`). O separador pode ser
-  travessão (—, –) ou hífen (-). Sem motivo depois dele, o marcador não isenta. Não use o marcador para fugir de token que existe.
+  `acabamento: permitido(<tipo>[,<tipo>…]) — <motivo>` (em CSS, dentro de `/* */`; em `.tsx`, depois
+  de `//`). Os tipos são os do script (`cor`, `important`, `zIndex`, `raio`, `sombra`, `curva`,
+  `animaLayout`, `blur`) e o marcador isenta **só** os listados: `permitido(sombra)` não isenta a
+  `cor` da mesma linha. O separador pode ser travessão (—, –) ou hífen (-). Sem `(tipo)`, com tipo
+  desconhecido ou sem motivo, o marcador não isenta nada, e a falha cita a linha. Não use o marcador
+  para fugir de token que existe.
+- `box-shadow` só de anel (todas as camadas `0 0 0 <spread> <cor>`), `inset …` ou token não é
+  `sombra` (anel de foco e halo não são elevação): dispensa marcador. A cor literal dentro dele
+  continua contando como `cor`.
+- Reajuste excepcional que faz a linha de base subir (ex.: o script ficou mais rigoroso):
+  `node scripts/check-acabamento-so-encolhe.mjs --atualizar --aceitar-subida="<motivo>"`, e o
+  motivo vai na mensagem do commit.
+- **Exceção da comemoração:** `src/styles/comemoracao.css` é uma coreografia deliberada (entrada
+  com mola, selo, letreiro, brilho), fora da norma 7.1 ("sem movimento decorativo"): durações e
+  curvas próprias, com `permitido(curva)` por animação e a justificativa em um comentário de bloco
+  no topo do arquivo. `prefers-reduced-motion` a desliga.
 
 ## Tokens
 

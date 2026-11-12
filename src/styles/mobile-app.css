@@ -140,7 +140,7 @@ textarea,
   .header {
     position: sticky;
     top: var(--mobile-safe-top);
-    z-index: 900; /* acabamento: permitido — cabeçalho colante da tela no celular, dentro do contexto do conteúdo */
+    z-index: 900; /* acabamento: permitido(zIndex) — cabeçalho colante da tela no celular, dentro do contexto do conteúdo */
     width: 100%;
     min-width: 0;
     padding: 10px 12px !important;

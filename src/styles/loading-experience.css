@@ -148,7 +148,7 @@ body.config-loading .loader {
     rgba(255, 255, 255, 0.65),
     transparent
   );
-  animation: loading-progress-shine 1.6s ease-in-out infinite; /* acabamento: permitido — brilho que corre pela barra, ciclo contínuo com duração própria */
+  animation: loading-progress-shine 1.6s ease-in-out infinite; /* acabamento: permitido(curva) — brilho que corre pela barra, ciclo contínuo com duração própria */
 }
 
 .loader-safe {

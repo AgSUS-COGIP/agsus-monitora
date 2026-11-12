@@ -12,6 +12,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   compararComLinhaDeBase,
   contarDesvios,
+  marcadoresInvalidos,
   TIPOS_DE_DESVIO,
 } from "../scripts/check-acabamento-so-encolhe.mjs";
 
@@ -169,31 +170,92 @@ describe("contarDesvios", () => {
   it("marcador com motivo isenta a linha", () => {
     expect(
       css(
-        "a{border-radius:50% /* acabamento: permitido — círculo do avatar */}",
+        "a{border-radius:50% /* acabamento: permitido(raio) — círculo do avatar */}",
       ).raio,
     ).toBe(0);
     expect(
-      css("a{\n z-index:2; /* acabamento: permitido — local ao cartão */\n}")
-        .zIndex,
+      css(
+        "a{\n z-index:2; /* acabamento: permitido(zIndex) — local ao cartão */\n}",
+      ).zIndex,
     ).toBe(0);
   });
 
   it("marcador sem motivo não isenta", () => {
-    expect(css("a{border-radius:50% /* acabamento: permitido — */}").raio).toBe(
-      1,
-    );
+    expect(
+      css("a{border-radius:50% /* acabamento: permitido(raio) — */}").raio,
+    ).toBe(1);
     expect(css("a{border-radius:50% /* acabamento: permitido */}").raio).toBe(
       1,
     );
     expect(
-      css("a{border-radius:50% /* acabamento: permitido —   */}").raio,
+      css("a{border-radius:50% /* acabamento: permitido(raio) —   */}").raio,
     ).toBe(1);
+  });
+
+  it("o marcador é por tipo: sombra não isenta a cor da mesma linha", () => {
+    expect(
+      css(
+        "a{\n box-shadow:0 4px 8px #000; /* acabamento: permitido(sombra) — composição */\n}",
+      ),
+    ).toMatchObject({ sombra: 0, cor: 1 });
+    expect(
+      css(
+        "a{\n box-shadow:0 4px 8px #000; /* acabamento: permitido(cor,sombra) — composição */\n}",
+      ),
+    ).toMatchObject({ sombra: 0, cor: 0 });
+    expect(
+      css(
+        "a{\n box-shadow:0 4px 8px #000; /* acabamento: permitido(cor , sombra) - composição */\n}",
+      ),
+    ).toMatchObject({ sombra: 0, cor: 0 });
+  });
+
+  it("marcador sem tipo ou com tipo desconhecido não isenta nada", () => {
+    expect(
+      css("a{\n border-radius:50%; /* acabamento: permitido — círculo */\n}")
+        .raio,
+    ).toBe(1);
+    expect(
+      css("a{\n border-radius:50%; /* acabamento: permitido() — círculo */\n}")
+        .raio,
+    ).toBe(1);
+    expect(
+      css(
+        "a{\n border-radius:50%; /* acabamento: permitido(raio,cores) — círculo */\n}",
+      ).raio,
+    ).toBe(1);
+    expect(
+      marcadoresInvalidos("a{\n z-index:2; /* acabamento: permitido — x */\n}"),
+    ).toEqual([
+      { linha: 2, texto: "z-index:2; /* acabamento: permitido — x */" },
+    ]);
+    expect(
+      marcadoresInvalidos(
+        "a{ z-index:2; /* acabamento: permitido(zIndex) — x */ }",
+      ),
+    ).toEqual([]);
+  });
+
+  it("anel de foco (0 0 0 spread) e inset não contam como sombra; sombra com blur conta", () => {
+    expect(css("a{box-shadow:0 0 0 3px var(--focus-ring)}").sombra).toBe(0);
+    expect(
+      css("a{box-shadow:0 0 0 2px var(--a, var(--b)), 0 0 0 3px red}").sombra,
+    ).toBe(0);
+    expect(css("a{box-shadow:inset 4px 0 0 var(--x)}").sombra).toBe(0);
+    expect(css("a{box-shadow:0 0 0 1px red, var(--shadow-md)}").sombra).toBe(0);
+    expect(css("a{box-shadow:0 0 0 3px #fff}")).toMatchObject({
+      sombra: 0,
+      cor: 1,
+    });
+    expect(css("a{box-shadow:0 4px 12px rgba(0,0,0,.2)}").sombra).toBe(1);
+    expect(css("a{box-shadow:0 0 8px 2px red}").sombra).toBe(1);
+    expect(css("a{box-shadow:0 0 0 1px red, 0 8px 16px red}").sombra).toBe(1);
   });
 
   it("o marcador vale só para a linha dele", () => {
     expect(
       css(
-        "a{\n border-radius:50%; /* acabamento: permitido — círculo */\n box-shadow:0 0 2px red;\n}",
+        "a{\n border-radius:50%; /* acabamento: permitido(raio) — círculo */\n box-shadow:0 0 2px red;\n}",
       ),
     ).toMatchObject({ raio: 0, sombra: 1 });
   });
@@ -213,9 +275,11 @@ describe("contarDesvios", () => {
   it(".tsx: o marcador isenta e outros tipos não se aplicam", () => {
     const tsx = (texto) => contarDesvios("src/ui/x.tsx", texto);
     expect(
-      tsx('const c = "#fff"; // acabamento: permitido — cor do mapa').cor,
+      tsx('const c = "#fff"; // acabamento: permitido(cor) — cor do mapa').cor,
     ).toBe(0);
-    expect(tsx('const c = "#fff"; // acabamento: permitido —').cor).toBe(1);
+    expect(tsx('const c = "#fff"; // acabamento: permitido(cor) —').cor).toBe(
+      1,
+    );
     expect(tsx('const s = "z-index:3; border-radius:8px";')).toMatchObject({
       zIndex: 0,
       raio: 0,

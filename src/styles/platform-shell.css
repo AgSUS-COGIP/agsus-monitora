@@ -70,7 +70,7 @@
     display: block;
     position: absolute;
     inset: 0;
-    z-index: -1; /* acabamento: permitido — fundo da tela de login atrás do conteúdo, no contexto do próprio .login-screen */
+    z-index: -1; /* acabamento: permitido(zIndex) — fundo da tela de login atrás do conteúdo, no contexto do próprio .login-screen */
     background-image: var(--login-background-image, none);
     background-repeat: no-repeat;
   }
@@ -557,12 +557,12 @@ html[data-theme="dark"] .sidebar {
 .online-presence-dot {
   width: 9px;
   height: 9px;
-  border-radius: 50%; /* acabamento: permitido — ponto de presença, círculo */
+  border-radius: 50%; /* acabamento: permitido(raio) — ponto de presença, círculo */
   background: var(--color-status-neutral-solid);
 }
 .online-presence-dot.is-online {
   background: var(--color-status-success-solid);
-  box-shadow: 0 0 0 3px var(--state-success-soft); /* acabamento: permitido — anel, não é elevação */
+  box-shadow: 0 0 0 3px var(--state-success-soft);
 }
 /* Só o número de pessoas: aparece no celular, no lugar do rótulo (abaixo). */
 .online-presence-curto {
@@ -680,7 +680,7 @@ html[data-theme="dark"] .sidebar {
   width: 13px;
   height: 13px;
   border: 2px solid var(--surface-card);
-  border-radius: 50%; /* acabamento: permitido — ponto de presença no avatar, círculo */
+  border-radius: 50%; /* acabamento: permitido(raio) — ponto de presença no avatar, círculo */
   background: var(--color-status-success-solid);
 }
 

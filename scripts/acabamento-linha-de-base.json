@@ -6,7 +6,6 @@
     "cor": 4
   },
   "src/modulos/acessos/acessos.css": {
-    "sombra": 1,
     "curva": 1
   },
   "src/modulos/analises/paineis.tsx": {
@@ -21,7 +20,6 @@
   },
   "src/modulos/avaliacao-documental/avaliacao-documental.css": {
     "zIndex": 3,
-    "sombra": 4,
     "curva": 1
   },
   "src/modulos/avaliacao-documental/espelho-editor.css": {
@@ -31,13 +29,11 @@
   "src/modulos/avaliacao-documental/ficha/ficha.css": {
     "zIndex": 3,
     "raio": 2,
-    "sombra": 4,
     "animaLayout": 1
   },
   "src/modulos/aya/aya.css": {
     "important": 2,
     "zIndex": 1,
-    "sombra": 1,
     "curva": 6
   },
   "src/modulos/aya/mascote/desenho.tsx": {
@@ -47,8 +43,7 @@
     "curva": 27
   },
   "src/modulos/aya/tour/tour.css": {
-    "zIndex": 1,
-    "sombra": 1
+    "zIndex": 1
   },
   "src/modulos/comemoracao/letreiro.tsx": {
     "cor": 1
@@ -56,7 +51,6 @@
   "src/modulos/configuracoes/configuracoes.css": {
     "important": 3,
     "raio": 1,
-    "sombra": 1,
     "curva": 2
   },
   "src/modulos/configuracoes/partes.tsx": {
@@ -68,13 +62,9 @@
   "src/modulos/editais/editais.css": {
     "zIndex": 1
   },
-  "src/modulos/encerramento-do-edital/encerramento-do-edital.css": {
-    "sombra": 1
-  },
   "src/modulos/entrevistas/entrevistas.css": {
     "zIndex": 3,
     "raio": 1,
-    "sombra": 2,
     "curva": 6
   },
   "src/modulos/mapa-de-projetos/mapa-de-projetos.css": {
@@ -87,7 +77,6 @@
     "cor": 1,
     "zIndex": 2,
     "raio": 4,
-    "sombra": 1,
     "curva": 2
   },
   "src/modulos/recursos/recursos.css": {
@@ -103,16 +92,13 @@
     "curva": 2,
     "animaLayout": 1
   },
-  "src/modulos/visao-geral/visao-geral.css": {
-    "sombra": 3
-  },
   "src/styles/app.css": {
-    "cor": 49,
+    "cor": 47,
     "important": 60,
     "blur": 1
   },
   "src/styles/barra-lateral.css": {
-    "cor": 1,
+    "cor": 3,
     "important": 1
   },
   "src/styles/comemoracao.css": {

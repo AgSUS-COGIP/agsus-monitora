@@ -273,7 +273,7 @@
     position: fixed;
     top: var(--menu-flutuante-topo, var(--space-2));
     left: calc(var(--sidebar-mini) + var(--space-2));
-    z-index: 1; /* acabamento: permitido — painel flutuante, local ao contexto da barra lateral (--z-sidebar) */
+    z-index: 1; /* acabamento: permitido(zIndex) — painel flutuante, local ao contexto da barra lateral (--z-sidebar) */
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -287,7 +287,7 @@
     transition:
       opacity var(--motion-fast) var(--ease-standard),
       transform var(--motion-fast) var(--ease-standard),
-      visibility 0s linear var(--motion-fast); /* acabamento: permitido — visibility é discreta: o 0s com atraso só espera a saída terminar, a curva não atua */
+      visibility 0s linear var(--motion-fast); /* acabamento: permitido(curva) — visibility é discreta: o 0s com atraso só espera a saída terminar, a curva não atua */
   }
 
   body.sidebar-collapsed .menu-area--flutuante > .menu-area__painel {
@@ -295,7 +295,7 @@
     visibility: visible;
     pointer-events: auto;
     transform: none;
-    transition-delay: 0s; /* acabamento: permitido — zera o atraso do estado fechado para a entrada ser imediata */
+    transition-delay: 0s; /* acabamento: permitido(curva) — zera o atraso do estado fechado para a entrada ser imediata */
   }
 
   /* Ponte invisível sobre o vão até o ícone: o ponteiro atravessa sem sair da área. */
@@ -448,7 +448,7 @@
     background: var(--menu-fundo-ativo);
     color: var(--menu-realce);
     box-shadow: inset 0 0 0 1px
-      color-mix(in srgb, currentColor 35%, transparent); /* acabamento: permitido — anel, não é elevação */
+      color-mix(in srgb, currentColor 35%, transparent);
   }
 
   body.sidebar-collapsed .menu-area__itens .menu-item__selo {
@@ -473,7 +473,7 @@
     height: 7px;
     border-radius: var(--radius-pill);
     background: #a78bfa;
-    box-shadow: 0 0 0 2px var(--sidebar-custom-bg, var(--card)); /* acabamento: permitido — anel, não é elevação */
+    box-shadow: 0 0 0 2px var(--sidebar-custom-bg, var(--card));
   }
 
   /*
@@ -549,7 +549,7 @@
   /* Anel na cor da barra + contorno na cor do texto: a bolinha aparece em qualquer cor de barra. */
   box-shadow:
     0 0 0 2px var(--sidebar-custom-bg, var(--card)),
-    0 0 0 3px color-mix(in srgb, currentColor 70%, transparent); /* acabamento: permitido — anel, não é elevação */
+    0 0 0 3px color-mix(in srgb, currentColor 70%, transparent);
 }
 
 /* A marca é o ícone da área atual, com a bolinha da cor dela no canto. */
@@ -597,7 +597,7 @@
   body.sidebar-collapsed .menu-seletor__botao {
     border: 0;
     box-shadow: inset 0 0 0 2px
-      color-mix(in srgb, var(--cor-da-area, currentColor) 80%, transparent); /* acabamento: permitido — anel, não é elevação */
+      color-mix(in srgb, var(--cor-da-area, currentColor) 80%, transparent);
   }
 
   body.sidebar-collapsed .menu-area--administracao {
@@ -745,7 +745,7 @@
     position: fixed;
     top: var(--dica-topo, 50%);
     left: calc(var(--sidebar-mini) + var(--space-2));
-    z-index: 2; /* acabamento: permitido — dica do trilho acima do painel flutuante, no contexto da barra lateral */
+    z-index: 2; /* acabamento: permitido(zIndex) — dica do trilho acima do painel flutuante, no contexto da barra lateral */
     padding: var(--space-1) var(--space-3);
     border-radius: var(--radius-md);
     background: var(--menu-pilula-fundo);
@@ -762,7 +762,7 @@
     transition:
       opacity var(--motion-fast) var(--ease-standard),
       transform var(--motion-fast) var(--ease-standard),
-      visibility 0s linear var(--motion-fast); /* acabamento: permitido — visibility é discreta: o 0s com atraso só espera a saída terminar, a curva não atua */
+      visibility 0s linear var(--motion-fast); /* acabamento: permitido(curva) — visibility é discreta: o 0s com atraso só espera a saída terminar, a curva não atua */
   }
 
   body.sidebar-collapsed .sidebar [data-dica]:hover::after,
@@ -770,7 +770,7 @@
     opacity: 1;
     visibility: visible;
     transform: translate(0, -50%);
-    transition-delay: 0s; /* acabamento: permitido — zera o atraso do estado fechado para a entrada ser imediata */
+    transition-delay: 0s; /* acabamento: permitido(curva) — zera o atraso do estado fechado para a entrada ser imediata */
   }
 
   /* Com a lista das áreas aberta, a pílula dela ocupa o lugar da dica. */
@@ -828,7 +828,7 @@ body.sidebar-theme-dark .menu-manutencao {
     border-radius: var(--radius-pill);
     background: #fbbf24;
     color: #422006;
-    box-shadow: 0 0 0 2px var(--sidebar-custom-bg, var(--card)); /* acabamento: permitido — anel, não é elevação */
+    box-shadow: 0 0 0 2px var(--sidebar-custom-bg, var(--card));
   }
 
   body.sidebar-collapsed .menu-area--direta .menu-manutencao .icone,

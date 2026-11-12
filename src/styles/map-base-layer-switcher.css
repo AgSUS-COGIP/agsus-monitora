@@ -59,17 +59,17 @@
 */
 .agsus-basemap-switcher__button:focus-visible {
   position: relative;
-  z-index: 1; /* acabamento: permitido — anel de foco do segmento acima do vizinho, dentro do grupo */
+  z-index: 1; /* acabamento: permitido(zIndex) — anel de foco do segmento acima do vizinho, dentro do grupo */
   outline: 3px solid currentColor !important;
   outline-offset: -3px !important;
 }
 
 [data-theme="dark"] .agsus-basemap-switcher {
-  box-shadow: 0 0 0 1px var(--border-subtle); /* acabamento: permitido — contorno de 1px do tema escuro, não é elevação */
+  box-shadow: 0 0 0 1px var(--border-subtle);
 }
 
 .map-satellite-fallback .agsus-basemap-switcher {
-  animation: agsus-basemap-fallback-pulse 0.45s ease-out; /* acabamento: permitido — pulso único de aviso de camada reserva, com duração própria; não é transição de estado */
+  animation: agsus-basemap-fallback-pulse 0.45s ease-out; /* acabamento: permitido(curva) — pulso único de aviso de camada reserva, com duração própria; não é transição de estado */
 }
 
 @keyframes agsus-basemap-fallback-pulse {

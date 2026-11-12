@@ -39,7 +39,7 @@
 }
 .multi-select-trigger[aria-expanded="true"] {
   border-color: var(--brand-primary);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus-ring) 15%, transparent); /* acabamento: permitido — anel de foco, não é elevação */
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--focus-ring) 15%, transparent);
 }
 .multi-select-trigger .fa-chevron-down {
   margin-left: auto;
@@ -90,7 +90,7 @@
 
 .multi-select-menu {
   position: absolute;
-  z-index: 1; /* acabamento: permitido — menu dentro do contexto do filtro */
+  z-index: 1; /* acabamento: permitido(zIndex) — menu dentro do contexto do filtro */
   top: calc(100% + 6px);
   left: 0;
   /*
