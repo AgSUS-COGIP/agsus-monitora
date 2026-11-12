@@ -1,168 +1,234 @@
-/* Editor documental com prévia: estilos isolados, sem afetar fichas emitidas. */
-.avd-espelho-editor-identidade {
-  display: grid;
-  gap: 5px;
+/*
+  Modelo do espelho de nota (modelo-do-espelho.tsx), dentro do
+  ModalInstitucional amplo: os campos à esquerda e a prévia à direita (fixa
+  enquanto os campos rolam); em largura menor, um embaixo do outro. Só tokens:
+  o tema escuro vem deles. A folha da prévia é papel e fica branca nos dois
+  temas (--cor-da-folha), como a da carta de convocação; o visual da folha é
+  o do documento (src/lib/avaliacao-documental/espelho-de-nota.ts).
+*/
+.avd-modelo-espelho-salvo {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
 }
-.avd-espelho-editor-sobretitulo {
+.avd-modelo-espelho-corpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+  container-type: inline-size;
+}
+@media (min-width: 1000px) {
+  .avd-modelo-espelho-corpo {
+    grid-template-columns: minmax(320px, 5fr) minmax(0, 7fr);
+  }
+  .avd-modelo-espelho-previa {
+    position: sticky;
+    top: 0;
+  }
+}
+
+/* ---------- Campos ---------- */
+.avd-modelo-espelho-campos {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  min-width: 0;
+}
+.avd-espelho-editor-situacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.avd-espelho-editor-selo {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--surface-raised);
   color: var(--text-secondary);
   font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
 }
-.avd-espelho-editor-resumo {
-  color: var(--text-secondary);
+.avd-espelho-editor-selo-pendente {
+  border-color: transparent;
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.avd-espelho-editor-erros {
+  color: var(--state-danger);
+}
+
+.avd-espelho-editor-timbrado {
+  display: grid;
+  gap: var(--space-2);
+}
+.avd-espelho-editor-timbrado h3,
+.avd-espelho-editor-previa-topo h3 {
+  margin: 0;
+  color: var(--text-primary);
   font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+}
+.avd-espelho-editor-timbrado-folha {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-bottom: 2px solid var(--brand-primary);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  line-height: 1.4;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.avd-espelho-editor-timbrado-folha p {
   margin: 0;
 }
-.avd-modelo-espelho {
-  gap: 16px;
+.avd-espelho-editor-timbrado-folha p:first-child {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
 }
-.avd-modelo-espelho-topo {
-  align-items: flex-start;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-.avd-espelho-editor-status {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
+.avd-espelho-editor-timbrado small {
   color: var(--text-secondary);
-  font-size: var(--text-body-sm);
+  font-size: var(--text-caption);
 }
-.avd-espelho-editor-orientacao {
-  display: grid;
-  gap: 5px;
-  padding: 13px;
-  border-radius: var(--radius-md);
-  background: var(--surface-subtle, var(--surface-secondary));
-  font-size: var(--text-body-sm);
-}
-.avd-espelho-editor-orientacao span {
-  color: var(--text-secondary);
-}
-.avd-modelo-espelho-campos {
-  gap: 16px;
-  min-width: 0;
-}
+
 .avd-modelo-espelho-grupo {
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-4);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 15px;
-  gap: 12px;
+  background: var(--surface-card);
 }
 .avd-modelo-espelho-grupo legend {
-  padding: 0 7px;
+  padding: 0 var(--space-2);
   color: var(--text-primary);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+}
+.avd-modelo-espelho-grupo-campos {
+  display: grid;
+  gap: var(--space-4);
+}
+.avd-espelho-editor-campo {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
 }
 .avd-modelo-espelho-grupo input[type="text"],
 .avd-modelo-espelho-grupo textarea {
+  width: 100%;
   border-radius: var(--radius-md);
+  font-size: var(--text-body-sm);
   line-height: 1.5;
 }
+.avd-modelo-espelho-grupo textarea {
+  resize: vertical;
+}
+.avd-espelho-editor-dica {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+}
+.avd-espelho-editor-contador {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+.avd-espelho-editor-marcador {
+  justify-self: start;
+}
+.avd-modelo-espelho-opcao {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-height: 32px;
+  font-size: var(--text-body-sm);
+  cursor: pointer;
+}
+.avd-modelo-espelho-opcao input {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--brand-primary);
+}
+.avd-modelo-espelho-opcao:has(input:focus-visible) {
+  border-radius: var(--radius-md);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---------- Prévia ---------- */
 .avd-modelo-espelho-previa {
+  display: grid;
+  gap: var(--space-3);
   min-width: 0;
+  padding: var(--space-4);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 14px;
-  background: var(--surface-subtle, var(--surface-secondary));
+  background: var(--surface-raised);
 }
 .avd-espelho-editor-previa-topo {
   display: flex;
-  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 10px;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
 }
 .avd-espelho-editor-previa-topo > div {
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
-.avd-espelho-editor-previa-topo small,
-.avd-espelho-editor-nota {
+.avd-espelho-editor-previa-topo small {
   color: var(--text-secondary);
   font-size: var(--text-caption);
 }
-.avd-espelho-editor-etiqueta {
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
+.avd-modelo-espelho-moldura {
+  overflow: hidden;
   border: 1px solid var(--border-subtle);
-  border-radius: 999px;
-  padding: 4px 10px;
-}
-.avd-modelo-espelho-folha {
+  border-radius: var(--radius-md);
   background: var(--cor-da-folha);
   box-shadow: var(--shadow-md);
 }
-.avd-espelho-editor-nota {
-  line-height: 1.5;
+.avd-modelo-espelho-folha {
+  display: block;
+  width: 100%;
+  height: min(68dvh, 760px);
+  min-height: 420px;
+  border: 0;
+  background: var(--cor-da-folha);
 }
-@media (min-width: 1100px) {
-  .avd-modelo-espelho-corpo {
-    grid-template-columns: minmax(300px, 1fr) minmax(0, 1.35fr);
-    align-items: start;
-  }
-  .avd-modelo-espelho-previa {
-    position: sticky;
-    top: 8px;
-  }
-}
-@media (max-width: 700px) {
-  .avd-modelo-espelho {
-    width: min(100vw, 100%);
-    max-height: 96vh;
-    padding: 12px;
-  }
-  .avd-modelo-espelho-corpo {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .avd-modelo-espelho-grupo {
-    padding: 12px;
-  }
-  .avd-modelo-espelho-folha {
-    min-height: 55vh;
-  }
+.avd-modelo-espelho-folha:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
 }
 
-/* Dialogo institucional: rolagem restrita ao conteudo, com acoes persistentes. */
-.modal-card.avd-modelo-espelho {
-  gap: 0;
-}
-.avd-modelo-espelho-corpo {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
-  align-items: start;
-}
-.avd-modelo-espelho-campos {
-  min-width: 0;
-}
-.avd-modelo-espelho-previa {
-  min-width: 0;
-}
-.avd-modelo-espelho-folha {
-  min-height: 520px;
-  height: 65dvh;
-  max-height: 700px;
-}
-@media (max-width: 900px) {
-  .avd-modelo-espelho-corpo {
-    grid-template-columns: minmax(0, 1fr);
+/* Prévia abaixo dos campos (largura menor): altura pela tela. */
+@container (max-width: 640px) {
+  .avd-modelo-espelho-grupo,
+  .avd-modelo-espelho-previa {
+    padding: var(--space-3);
   }
   .avd-modelo-espelho-folha {
-    height: 440px;
+    height: 60dvh;
     min-height: 340px;
   }
+  .avd-espelho-editor-marcador {
+    justify-self: stretch;
+  }
 }
-@media (max-width: 700px) {
-  .modal-card.avd-modelo-espelho {
-    padding: 0 !important;
-  }
-  .avd-modelo-espelho-corpo {
-    gap: 20px;
-  }
-  .avd-modelo-espelho-previa {
-    padding: 12px;
-  }
-  .avd-modelo-espelho-folha {
-    min-height: 330px;
-    height: 45dvh;
+@media (prefers-reduced-motion: no-preference) {
+  .avd-espelho-editor-selo {
+    transition:
+      background-color var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard);
   }
 }

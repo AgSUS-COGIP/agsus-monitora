@@ -293,6 +293,24 @@ export function comOCandidato(texto: string, nome: string): string {
   return texto.split(MARCADOR_DO_CANDIDATO).join(nome);
 }
 
+/**
+ * O texto com {candidato} no lugar da seleção (início/fim do cursor; sem
+ * cursor, no fim) e onde o cursor fica depois: o "Inserir {candidato}" do
+ * editor do modelo.
+ */
+export function comMarcadorNoCursor(
+  valor: string,
+  inicio: number | null,
+  fim: number | null,
+): { valor: string; cursor: number } {
+  const a = Math.max(0, Math.min(inicio ?? valor.length, valor.length));
+  const b = Math.max(a, Math.min(fim ?? a, valor.length));
+  return {
+    valor: valor.slice(0, a) + MARCADOR_DO_CANDIDATO + valor.slice(b),
+    cursor: a + MARCADOR_DO_CANDIDATO.length,
+  };
+}
+
 /* ── O que a RPC devolve ───────────────────────────────────────────── */
 
 export type ModeloDoEdital = {

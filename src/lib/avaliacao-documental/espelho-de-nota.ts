@@ -435,35 +435,52 @@ const escapar = (valor: unknown) =>
       ] ?? c,
   );
 
-// @page sem margem: o navegador não imprime o cabeçalho/rodapé dele (data,
-// título e o endereço do sistema); a margem fica no padding da folha.
+/*
+  O visual da folha segue o Manual de Identidade Visual da AgSUS (11/11/2026):
+  General Sans (servida pelo próprio site, /fonts; sem ela, Calibri/Arial), o
+  azul do manual (#0055a1) e tintas dele. As cores são as da escala de
+  src/styles/tokens.css, repetidas aqui uma vez só (a folha é um documento
+  sem o CSS do app, e é papel: branca nos dois temas). O PDF
+  (espelho-em-pdf.ts) desenha o mesmo conteúdo com Helvetica e não muda aqui.
+
+  @page sem margem: o navegador não imprime o cabeçalho/rodapé dele (data,
+  título e o endereço do sistema); a margem fica no padding da folha. Na tela
+  (prévia do modelo), a folha fica sobre a mesa e, em largura de celular, com
+  margem menor; na impressão, a folha A4 de sempre, com as cores de fundo.
+*/
 const ESTILO = `
+  @font-face { font-family: "General Sans"; src: url("/fonts/general-sans/GeneralSans-Variable.woff2") format("woff2"); font-weight: 200 700; font-style: normal; font-display: swap; }
   @page { size: A4; margin: 0; }
+  :root { --azul: #0055a1; --azul-escuro: #003c71; --tinta: #e3ecf5; --tinta-clara: #f2f7fa; --borda: #c2d6e8; --texto: #171c26; --texto-2: #556070; --papel: #ffffff; --mesa: #edf0f4; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: #fff; color: #111; font-family: Calibri, Carlito, "Segoe UI", Arial, sans-serif; font-size: 11pt; line-height: 1.4; }
-  .folha { max-width: 210mm; margin: 0 auto; padding: 15mm 18mm 18mm; }
-  .timbrado { text-align: center; font-size: 8pt; line-height: 1.35; padding-bottom: 6pt; border-bottom: 1px solid #003b70; margin-bottom: 12pt; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; background: var(--papel); color: var(--texto); font-family: "General Sans", Calibri, Carlito, "Segoe UI", Arial, sans-serif; font-size: 10.5pt; line-height: 1.45; font-kerning: normal; }
+  .folha { max-width: 210mm; margin: 0 auto; padding: 15mm 18mm 18mm; background: var(--papel); overflow-wrap: anywhere; }
+  .timbrado { text-align: center; font-size: 8pt; line-height: 1.35; color: var(--texto-2); padding-bottom: 8pt; border-bottom: 2pt solid var(--azul); margin-bottom: 14pt; }
   .timbrado img { width: 22mm; height: auto; display: block; margin: 0 auto 6pt; }
   .timbrado p { margin: 0; text-align: center; }
-  .timbrado p:first-of-type { font-weight: bold; color: #003b70; }
-  h1 { font-size: 15pt; text-align: center; margin: 0; color: #003b70; }
-  .subtitulo { text-align: center; margin: 2pt 0 14pt; color: #444; font-size: 10pt; }
-  p { margin: 6pt 0; text-align: justify; }
-  h2 { font-size: 10.5pt; text-transform: uppercase; letter-spacing: .02em; background: #e8eef5; color: #003b70; margin: 14pt 0 0; padding: 4pt 6pt; border: 1px solid #b9c7d6; border-bottom: 0; }
+  .timbrado p:first-of-type { font-weight: 600; color: var(--azul-escuro); letter-spacing: .02em; }
+  h1 { font-size: 15pt; font-weight: 600; line-height: 1.25; text-align: center; margin: 0; color: var(--azul-escuro); text-wrap: balance; }
+  .subtitulo { text-align: center; margin: 3pt 0 14pt; color: var(--texto-2); font-size: 9.5pt; }
+  p { margin: 6pt 0; text-align: justify; hyphens: auto; }
+  h2 { font-size: 9.5pt; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; background: var(--tinta); color: var(--azul-escuro); margin: 14pt 0 0; padding: 4pt 7pt; border: 1px solid var(--borda); border-left: 3pt solid var(--azul); border-bottom: 0; break-after: avoid; page-break-after: avoid; }
   table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
-  tr { page-break-inside: avoid; }
-  th, td { border: 1px solid #b9c7d6; padding: 4pt 6pt; vertical-align: top; text-align: left; }
-  table.dados th { width: 34%; background: #f6f8fb; font-weight: 600; }
-  table.criterios th { background: #f6f8fb; }
-  table.criterios td.n, table.criterios th.n { text-align: center; width: 15%; white-space: nowrap; }
-  table.criterios tr.motivo td { font-size: 9.5pt; color: #333; background: #fcfcfd; }
+  tr { page-break-inside: avoid; break-inside: avoid; }
+  th, td { border: 1px solid var(--borda); padding: 4pt 7pt; vertical-align: top; text-align: left; }
+  table.dados th { width: 34%; background: var(--tinta-clara); font-weight: 600; color: var(--texto); }
+  table.notas td { font-weight: 600; color: var(--azul-escuro); }
+  table.criterios th { background: var(--tinta-clara); font-weight: 600; }
+  table.criterios td.n, table.criterios th.n { text-align: center; width: 15%; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  table.criterios tr.motivo td { font-size: 9pt; color: var(--texto-2); background: var(--papel); }
   table.criterios tr.motivo ul { margin: 0; padding-left: 14pt; }
-  .caixa { border: 1px solid #b9c7d6; padding: 6pt 8pt; }
+  .caixa { border: 1px solid var(--borda); padding: 6pt 8pt; break-inside: avoid; }
   .caixa ul { margin: 0; padding-left: 14pt; }
   .caixa li { margin: 2pt 0; }
-  .vazio { color: #555; font-style: italic; margin: 0; }
+  .vazio { color: var(--texto-2); font-style: italic; margin: 0; }
   .folha + .folha { break-before: page; page-break-before: always; }
-  .rodape { margin-top: 16pt; padding-top: 6pt; border-top: 1px solid #b9c7d6; font-size: 8.5pt; color: #444; }
+  .rodape { margin-top: 16pt; padding-top: 6pt; border-top: 1px solid var(--borda); font-size: 8pt; color: var(--texto-2); text-align: left; }
+  @media screen { body { background: var(--mesa); } .folha { margin: 16px auto; box-shadow: 0 2px 12px rgb(23 28 38 / .12); } }
+  @media screen and (max-width: 640px) { body { font-size: 10pt; } .folha { margin: 0; padding: 20px 16px 24px; box-shadow: none; } table.dados th { width: 42%; } th, td { padding: 4pt 5pt; } p { text-align: left; hyphens: manual; } }
 `;
 
 function tabelaDeLinhas(linhas: LinhaDoEspelho[], classe: string) {
@@ -483,15 +500,20 @@ function listaOuVazio(textos: string[], semObservacao: string) {
 
 type MarcaDoEspelho = { cabecalho?: string; logo?: string };
 
-/** A folha de um espelho (a div.folha, A4), com o timbrado da marca. */
-export function folhaDoEspelho(
-  espelho: Espelho,
-  { cabecalho = CABECALHO_PADRAO, logo = "" }: MarcaDoEspelho = {},
-) {
-  const linhasDoCabecalho = String(cabecalho || CABECALHO_PADRAO)
+/** As linhas do timbrado (o cabeçalho de Configurações › Marca; vazio = o padrão da AgSUS). */
+export function linhasDoTimbrado(cabecalho: string | null | undefined) {
+  return String(cabecalho || CABECALHO_PADRAO)
     .split(/\r?\n/)
     .map((l) => l.trim())
     .filter(Boolean);
+}
+
+/** A folha de um espelho (a div.folha, A4), com o timbrado da marca. */
+export function folhaDoEspelho(
+  espelho: Espelho,
+  { cabecalho, logo = "" }: MarcaDoEspelho = {},
+) {
+  const linhasDoCabecalho = linhasDoTimbrado(cabecalho);
   const imagem = /^(https?:\/\/|\/)[^"'<>\s]*$/.test(logo)
     ? `<img src="${escapar(logo)}" alt="AgSUS">`
     : "";

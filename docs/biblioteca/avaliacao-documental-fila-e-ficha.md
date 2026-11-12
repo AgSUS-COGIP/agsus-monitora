@@ -78,6 +78,14 @@ impressão e o PDF/ZIP leem o modelo na hora (`textosParaOEspelho`; sem modelo o
 padrão). O conteúdo não se edita. Banco: `TB_MODELO_ESPELHO_NOTA` / `TH_MODELO_ESPELHO_NOTA`,
 `obter_modelo_espelho_nota` e `salvar_modelo_espelho_nota` (PT409), `20261019120000`.
 
+O editor (`modelo-do-espelho.tsx`, CSS só em `espelho-editor.css`) mostra o timbrado de
+Configurações › Marca só para leitura, as seções com nome, contador, "Inserir {candidato}", o resumo
+de erros que leva ao campo, Ctrl/⌘+S e "Imprimir exemplo"; a prévia fica fixa ao rolar na tela larga
+e embaixo dos campos na estreita. A folha (`ESTILO` em `src/lib/avaliacao-documental/espelho-de-nota.ts`)
+segue o manual da AgSUS (General Sans, `#0055a1`), com regras de impressão e de tela pequena; o PDF
+(`espelho-em-pdf.ts`) não mudou e tem impressão digital em
+`tests/lib/avaliacao-documental-espelho-visual.test.ts`.
+
 ## Relacionadas
 
 - [[modulo-avaliacao-documental]] — a tela
