@@ -311,7 +311,11 @@
       "--color-success-600",
       "--color-warning-600"
     ],
-    "src/styles/barra-lateral.css": ["--color-warning-600"],
+    "src/styles/barra-lateral.css": [
+      "--color-blue-600",
+      "--color-neutral-0",
+      "--color-warning-600"
+    ],
     "src/styles/comemoracao.css": [
       "--color-blue-950",
       "--color-neutral-0",
