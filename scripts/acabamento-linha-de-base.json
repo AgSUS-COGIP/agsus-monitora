@@ -1,0 +1,125 @@
+{
+  "src/app/casca/cabecalho-do-relatorio.tsx": {
+    "cor": 6
+  },
+  "src/app/entrada/icones-da-entrada.tsx": {
+    "cor": 4
+  },
+  "src/modulos/acessos/acessos.css": {
+    "curva": 1
+  },
+  "src/modulos/analises/paineis.tsx": {
+    "cor": 1
+  },
+  "src/modulos/aprovados/aprovados.css": {
+    "zIndex": 1,
+    "curva": 1
+  },
+  "src/modulos/aprovados/convocacao.css": {
+    "zIndex": 1
+  },
+  "src/modulos/avaliacao-documental/avaliacao-documental.css": {
+    "zIndex": 3,
+    "curva": 1
+  },
+  "src/modulos/avaliacao-documental/espelho-editor.css": {
+    "important": 1,
+    "raio": 1
+  },
+  "src/modulos/avaliacao-documental/ficha/ficha.css": {
+    "zIndex": 3,
+    "raio": 2,
+    "animaLayout": 1
+  },
+  "src/modulos/aya/aya.css": {
+    "important": 2,
+    "zIndex": 1,
+    "curva": 6
+  },
+  "src/modulos/aya/mascote/desenho.tsx": {
+    "cor": 31
+  },
+  "src/modulos/aya/mascote/mascote.css": {
+    "curva": 27
+  },
+  "src/modulos/aya/tour/tour.css": {
+    "zIndex": 1
+  },
+  "src/modulos/comemoracao/letreiro.tsx": {
+    "cor": 1
+  },
+  "src/modulos/configuracoes/configuracoes.css": {
+    "important": 3,
+    "raio": 1,
+    "curva": 2
+  },
+  "src/modulos/configuracoes/partes.tsx": {
+    "cor": 1
+  },
+  "src/modulos/cronograma/demandas-internas.css": {
+    "raio": 1
+  },
+  "src/modulos/editais/editais.css": {
+    "zIndex": 1
+  },
+  "src/modulos/entrevistas/entrevistas.css": {
+    "zIndex": 3,
+    "raio": 1,
+    "curva": 6
+  },
+  "src/modulos/mapa-de-projetos/mapa-de-projetos.css": {
+    "zIndex": 1
+  },
+  "src/modulos/mapa-saude-indigena/legenda.tsx": {
+    "cor": 1
+  },
+  "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css": {
+    "cor": 1,
+    "zIndex": 2,
+    "raio": 4,
+    "curva": 2
+  },
+  "src/modulos/resumo-do-dia/resumo-do-dia.css": {
+    "raio": 1
+  },
+  "src/modulos/selecao/paineis.tsx": {
+    "cor": 4
+  },
+  "src/modulos/triagem/triagem.css": {
+    "curva": 2,
+    "animaLayout": 1
+  },
+  "src/styles/app.css": {
+    "important": 33,
+    "blur": 1
+  },
+  "src/styles/barra-lateral.css": {
+    "important": 1
+  },
+  "src/styles/comemoracao.css": {
+    "blur": 1
+  },
+  "src/styles/indigenous-territories-layer.css": {
+    "blur": 1
+  },
+  "src/styles/loading-experience.css": {
+    "blur": 1
+  },
+  "src/styles/map-base-layer-switcher.css": {
+    "important": 2
+  },
+  "src/styles/mobile-app.css": {
+    "important": 33
+  },
+  "src/styles/mobile-table-cards.css": {
+    "important": 3
+  },
+  "src/styles/nielsen-shell-ux.css": {
+    "important": 22,
+    "blur": 2
+  },
+  "src/styles/platform-shell.css": {
+    "important": 9,
+    "blur": 1
+  }
+}

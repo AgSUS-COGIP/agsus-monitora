@@ -20,6 +20,8 @@ export interface SnapshotDoMonitoramento {
   readonly linhas: readonly LinhaDoMonitoramento[];
   readonly unidades: readonly UnidadeDoCatalogo[];
   readonly carregado: boolean;
+  /** A última leitura das linhas falhou (texto para a tela); vazio se deu certo. */
+  readonly erro: string;
   readonly areas: readonly string[];
   readonly areaAtual: string;
 }
@@ -29,4 +31,5 @@ export interface AreaAtualDoMonitoramento {
   readonly linhas: readonly LinhaDoMonitoramento[];
   readonly ids: ReadonlySet<string>;
   readonly carregado: boolean;
+  readonly erro: string;
 }

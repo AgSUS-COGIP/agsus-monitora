@@ -68,7 +68,7 @@ export function paletaDosGraficos(
     blue: ler("--series-1", reserva.blue),
     surface: ler("--surface-card", reserva.surface),
     // "Sem parecer", "Não informado": a fatia neutra das roscas.
-    neutro: ler("--state-neutral", reserva.neutro || "#94a3b8"),
+    neutro: ler("--state-neutral", reserva.neutro || "#94a3b8"), // acabamento: permitido(cor) — reserva em hex para quando o CSS não está carregado (teste, SSR): a biblioteca de gráfico não lê var()
   };
 }
 

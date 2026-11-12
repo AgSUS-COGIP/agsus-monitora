@@ -44,6 +44,8 @@ import { esconderEsqueleto, marcarAtualizacao } from "./carregamento.ts";
 import {
   assinarPedidosDasLinhas,
   esquecerLinhasDoMonitoramento,
+  obterDadosDoMonitoramento,
+  publicarErroDoMonitoramento,
   linhasPedidas,
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
@@ -283,6 +285,18 @@ export function criarCarga(
   let esperaDoRealtime: ReturnType<typeof setTimeout> | null = null;
   /* Quando as linhas foram lidas do banco pela última vez (o Realtime espaça a partir daí). */
   let ultimaLeitura = Number.NEGATIVE_INFINITY;
+  /*
+    A leitura das linhas falhou: o erro vai para o store (as telas o mostram no
+    lugar do esqueleto) e o toast sai só se for uma falha nova. Pedidos que se
+    seguem à mesma falha (a página, a busca global…) não repetem o aviso; a
+    chamada em voo já é compartilhada (`cargaDasLinhas`).
+  */
+  function falhaDasLinhas(erro: unknown) {
+    const mensagem = erroAmigavel(erro);
+    const repetida = obterDadosDoMonitoramento().erro === mensagem;
+    publicarErroDoMonitoramento(mensagem);
+    if (!repetida) avisar("Erro ao carregar dados: " + mensagem, "error");
+  }
 
   const sb = () => cliente();
   const perfil = () => obterPerfil();
@@ -482,7 +496,7 @@ export function criarCarga(
         consultaDoMonitoramento());
       if (rodada !== rodadaDasLinhas) return false;
       if (error) {
-        avisar("Erro ao carregar dados: " + erroAmigavel(error), "error");
+        falhaDasLinhas(error);
         return false;
       }
       linhas = Array.isArray(data) ? (data as LinhaDoMonitoramento[]) : [];
@@ -531,7 +545,7 @@ export function criarCarga(
       await carregarLinhas();
     } catch (erro) {
       console.warn("Falha ao carregar as linhas do monitoramento:", erro);
-      avisar("Erro ao carregar dados: " + erroAmigavel(erro), "error");
+      falhaDasLinhas(erro);
     }
   }
 

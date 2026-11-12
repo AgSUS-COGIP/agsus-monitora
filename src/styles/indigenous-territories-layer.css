@@ -1,8 +1,8 @@
 .agsus-indigenous-territories-control {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(15, 23, 42, 0.14);
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.16);
+  background: #fffffff0; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
+  border: 1px solid #0f172a24; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
 }
 
@@ -10,7 +10,7 @@
   align-items: center;
   background: transparent;
   border: 0;
-  color: #0f172a;
+  color: #0f172a; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
   cursor: pointer;
   display: flex;
   font: inherit;
@@ -43,7 +43,7 @@
 .agsus-indigenous-territories-control__swatch {
   background: color-mix(in srgb, var(--terra-fundo) 60%, transparent);
   border: 2px solid var(--terra-definitiva);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   box-sizing: border-box;
   display: inline-block;
   height: 14px;
@@ -68,11 +68,11 @@
 
 .agsus-ti-tooltip,
 .agsus-dsei-tooltip {
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 7px;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
-  color: #fff;
+  background: #0f172ae6; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
+  border: 1px solid #ffffff59; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  color: #fff; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
   /* 12px (caption) é o mínimo (docs/biblioteca/design-e-tokens.md); 800 não está na escala de pesos. */
   font-size: var(--text-caption);
   font-weight: 600;
@@ -82,7 +82,7 @@
 
 .agsus-ti-tooltip::before,
 .agsus-dsei-tooltip::before {
-  border-top-color: rgba(15, 23, 42, 0.9) !important;
+  border-top-color: #0f172ae6 !important; /* acabamento: permitido(cor,important) — camada de mapa (terras indígenas), igual nos dois temas */
 }
 
 /* O tooltip da Terra Indígena passou a ter mais de uma linha — o povo em
@@ -126,7 +126,7 @@
 }
 
 .agsus-ti-rotulo__texto {
-  color: #0b3c35;
+  color: #0b3c35; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
   display: inline-block;
   /* Era 11px, abaixo do mínimo do DESIGN.md (seção 0, regra 7). */
   font-size: var(--text-caption);
@@ -135,10 +135,12 @@
   letter-spacing: 0.01em;
   line-height: 1.2;
   position: absolute;
+  --halo-forte: #fff; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
+  --halo-suave: #fffffff2; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
   text-shadow:
-    0 0 3px #fff,
-    0 0 3px #fff,
-    0 1px 2px rgba(255, 255, 255, 0.95);
+    0 0 3px var(--halo-forte),
+    0 0 3px var(--halo-forte),
+    0 1px 2px var(--halo-suave);
   top: 0;
   transform: translate(-50%, -50%);
   white-space: nowrap;
@@ -146,11 +148,13 @@
 
 /* Sobre satélite a mesma letra escura desaparece. Inverte-se o par. */
 .map-satellite-mode .agsus-ti-rotulo__texto {
-  color: #fff;
+  color: #fff; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
+  --halo-forte: #000000f2; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
+  --halo-suave: #000000e6; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
   text-shadow:
-    0 0 3px rgba(0, 0, 0, 0.95),
-    0 0 3px rgba(0, 0, 0, 0.95),
-    0 1px 2px rgba(0, 0, 0, 0.9);
+    0 0 3px var(--halo-forte),
+    0 0 3px var(--halo-forte),
+    0 1px 2px var(--halo-suave);
 }
 
 /* O quadrado do botão não muda com o mapa base.
@@ -165,11 +169,11 @@
    toque. No desktop o tooltip ajuda a identificar o polígono sem competir com
    os popups das unidades. */
 .agsus-dsei-tooltip {
-  background: rgba(11, 95, 165, 0.94);
+  background: #0b5fa5f0; /* acabamento: permitido(cor) — camada de mapa (terras indígenas), igual nos dois temas */
 }
 
 .agsus-dsei-tooltip::before {
-  border-top-color: rgba(11, 95, 165, 0.94) !important;
+  border-top-color: #0b5fa5f0 !important; /* acabamento: permitido(cor,important) — camada de mapa (terras indígenas), igual nos dois temas */
 }
 
 /*

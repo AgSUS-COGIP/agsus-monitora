@@ -14,7 +14,7 @@ import { nomeDaArea } from "../lib/menu-lateral.ts";
   eles que o cronograma e as listas, que não trazem a área, são recortados.
 */
 export function usarAreaAtual(): AreaAtualDoMonitoramento {
-  const { linhas, carregado, areaAtual } = useSyncExternalStore(
+  const { linhas, carregado, erro, areaAtual } = useSyncExternalStore(
     assinarDadosDoMonitoramento,
     obterDadosDoMonitoramento,
   );
@@ -29,5 +29,6 @@ export function usarAreaAtual(): AreaAtualDoMonitoramento {
     linhas: daArea,
     ids,
     carregado,
+    erro,
   };
 }

@@ -133,6 +133,8 @@ export type DadosDoMonitoramento = {
     linhas: readonly unknown[];
     areaAtual: string;
     carregado: boolean;
+    /** A leitura das linhas falhou (texto para a tela); ausente ou vazio = sem falha. */
+    erro?: string;
   };
   assinar: (ouvinte: () => void) => () => void;
 };
@@ -184,6 +186,7 @@ export type SnapshotDaVisaoGeral = Readonly<
     colunas: readonly ColunaDaTabela[];
     area: string;
     carregado: boolean;
+    erro: string;
     hoje: string;
     linhasDaArea: readonly LinhaDaVisaoGeral[];
     etapasPorEdital: Map<string, EtapaDoAcompanhamento[]> | null;

@@ -460,7 +460,8 @@ describe("carregamento", () => {
     expect($("approvedKpiDesistente").textContent).toBe("1");
     expect($("approvedCount").textContent).toBe("4 candidatos");
     expect(
-      achar(".approved-status.success", linhaDe("Ana Ribeiro")).textContent,
+      achar('.approved-status[data-tom="sucesso"]', linhaDe("Ana Ribeiro"))
+        .textContent,
     ).toBe("Contratado");
     expect(achar(".approved-status", linhaDe("Bruno Lima")).textContent).toBe(
       "Sem status",
@@ -635,7 +636,9 @@ describe("filtros e paginação", () => {
     // A busca é só da tabela: o contador do topo segue os filtros.
     expect($("approvedCount").textContent).toBe("4 candidatos");
     await digitar($("approvedBusca"), "ninguém com esse nome");
-    expect($("approvedRows").textContent).toBe("Nenhum registro encontrado.");
+    expect($("approvedRows").textContent).toBe(
+      "Nenhum resultado para os filtros aplicados.",
+    );
     await clicar(
       achar(
         '[data-acao="limpar-filtros"]',

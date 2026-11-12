@@ -11,7 +11,7 @@
 .agsus-basemap-switcher {
   display: inline-flex;
   gap: 2px;
-  margin-top: 8px !important;
+  margin-top: 8px !important; /* acabamento: permitido(important) — vence a margem que o Leaflet põe em .leaflet-control */
   padding: 2px;
   border: 0;
   border-radius: var(--radius-md);
@@ -59,7 +59,7 @@
 */
 .agsus-basemap-switcher__button:focus-visible {
   position: relative;
-  z-index: 1;
+  z-index: 1; /* acabamento: permitido(zIndex) — anel de foco do segmento acima do vizinho, dentro do grupo */
   outline: 3px solid currentColor !important;
   outline-offset: -3px !important;
 }
@@ -69,7 +69,7 @@
 }
 
 .map-satellite-fallback .agsus-basemap-switcher {
-  animation: agsus-basemap-fallback-pulse 0.45s ease-out;
+  animation: agsus-basemap-fallback-pulse 0.45s ease-out; /* acabamento: permitido(curva) — pulso único de aviso de camada reserva, com duração própria; não é transição de estado */
 }
 
 @keyframes agsus-basemap-fallback-pulse {
@@ -83,7 +83,7 @@
 
 @media (max-width: 700px) {
   .agsus-basemap-switcher {
-    margin-top: 6px !important;
+    margin-top: 6px !important; /* acabamento: permitido(important) — vence a margem que o Leaflet põe em .leaflet-control */
   }
 
   .agsus-basemap-switcher__button {

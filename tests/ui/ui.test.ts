@@ -350,7 +350,7 @@ describe("TabelaInfinita", () => {
     );
     await digitar($(".ui-tabela-busca"), "Zé");
     expect($("tbody td.ui-vazio")?.textContent).toBe(
-      "Nenhum registro encontrado.",
+      "Nenhum resultado para os filtros aplicados.",
     );
   });
 
@@ -568,6 +568,23 @@ describe("Aviso, Campo, Selo e estados", () => {
     expect(neutro?.dataset.tom).toBe("neutro");
     expect(aprovado?.className).toBe("ui-selo extra");
     expect(aprovado?.title).toBe("No prazo");
+  });
+
+  it("Selo: `dados` vira data-*; valor indefinido não sai; o tom não é sobrescrito", async () => {
+    await montarNoApp(
+      h(
+        Selo,
+        {
+          tom: "pendente",
+          dados: { contratacao: "OUTRA_LISTA", vazio: undefined, tom: "x" },
+        },
+        "Convocado",
+      ),
+    );
+    const selo = $<HTMLElement>(".ui-selo");
+    expect(selo?.dataset.contratacao).toBe("OUTRA_LISTA");
+    expect(selo?.hasAttribute("data-vazio")).toBe(false);
+    expect(selo?.dataset.tom).toBe("alerta");
   });
 
   it("EstadoVazio e Carregando: a classe pedida no lugar de .ui-vazio", async () => {

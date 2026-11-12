@@ -291,7 +291,7 @@ Fora do escopo desta versão. Não implementar modo escuro de forma isolada em u
 
 | Papel | Família | Pilha completa |
 |---|---|---|
-| Interface | **General Sans** (manual da AgSUS) | `"General Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif` |
+| Interface | **Geist** | `"Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif` |
 | Código e identificadores técnicos | **Geist Mono** | `"Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace` |
 
 Geist Mono serve apenas para código, chaves técnicas e identificadores que precisam ser copiados caractere a caractere. Não use para labels, números de indicadores ou dados comuns.
@@ -608,7 +608,7 @@ Estes tokens são a referência de implementação. Se o projeto usar Tailwind, 
   --color-chart-negative: var(--color-danger-600);
 
   /* ---------- Tipografia ---------- */
-  --font-sans: "General Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --font-weight-regular:  400;
@@ -1458,7 +1458,7 @@ A ordem das cores categóricas alterna luminosidade para que séries vizinhas se
   - paleta desta seção e fundo branco;
   - sem bordas superior e direita;
   - grade horizontal em `neutral-200`;
-  - fonte General Sans quando disponível no ambiente, ou sans-serif padrão;
+  - fonte Geist quando disponível no ambiente, ou sans-serif padrão;
   - exportação em SVG ou PNG com resolução 2x.
 
 ---
@@ -1634,7 +1634,7 @@ Frontend:              React, TypeScript
 Backend:               TypeScript
 Banco de dados:        PostgreSQL
 ETL / processamento:   Python
-Tipografia:            General Sans (Geist Mono para código)
+Tipografia:            Geist (Geist Mono para código)
 Ícones:                Lucide
 ```
 
@@ -1738,7 +1738,7 @@ Se houver excesso de elementos visuais, simplifique.
 - Usar superfícies sutis em vez de caixas com borda.
 - Criar layouts fluidos e contínuos.
 - Reutilizar componentes e manter consistência.
-- Usar General Sans e Lucide.
+- Usar Geist e Lucide.
 - Priorizar produtividade e clareza.
 
 ### Evitar

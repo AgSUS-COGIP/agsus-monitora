@@ -148,6 +148,7 @@ export type {
   BuscaDaTabela,
   ColunaDaTabela,
   GrupoDaTabela,
+  ErroDaTabela,
   PropriedadesDaTabelaInfinita,
   TabelaNoServidor,
 } from "./tabela-infinita.tsx";

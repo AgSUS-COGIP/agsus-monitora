@@ -136,7 +136,7 @@ function ensureSessionUi() {
         background: var(--surface-card);
         color: var(--text-primary);
         box-shadow: var(--shadow-raised);
-        font: 700 12px/1.2 var(--font-sans, "General Sans", system-ui, sans-serif);
+        font: 700 12px/1.2 var(--font-sans, "Geist", system-ui, sans-serif);
         backdrop-filter: blur(10px);
       }
       #agsusSessionTimer[hidden] { display: none !important; }
@@ -164,7 +164,7 @@ function ensureSessionUi() {
         color: var(--state-warning);
         border: 1px solid var(--state-warning);
         box-shadow: var(--shadow-overlay);
-        font: 700 14px/1.4 var(--font-sans, "General Sans", system-ui, sans-serif);
+        font: 700 14px/1.4 var(--font-sans, "Geist", system-ui, sans-serif);
         text-align: center;
       }
       #agsusSessionNotice[data-level="critical"] {

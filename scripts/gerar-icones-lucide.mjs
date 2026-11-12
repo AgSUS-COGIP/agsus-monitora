@@ -82,7 +82,7 @@ export function gerarCssDosIcones() {
   text-align: center;
 }
 .fa-spin {
-  animation: icone-lucide-girar 1s linear infinite;
+  animation: icone-lucide-girar 1s linear infinite; /* acabamento: permitido(curva) — rotação contínua; o linear é o que faz o giro parecer constante */
 }
 @keyframes icone-lucide-girar {
   to {

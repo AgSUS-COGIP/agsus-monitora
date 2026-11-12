@@ -353,6 +353,15 @@ export function TabelaDeProcessos({
           />
         }
         carregado={e.carregado}
+        erro={
+          e.erro
+            ? {
+                mensagem: e.erro,
+                oQue: "os processos seletivos",
+                tentarDeNovo: () => void window.refreshData?.(),
+              }
+            : null
+        }
         itens={e.filtradas}
         filtrarPelaBusca={jaRecortadas}
         colunas={colunas}

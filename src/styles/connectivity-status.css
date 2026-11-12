@@ -10,7 +10,7 @@
   justify-content: space-between;
   padding: 14px 16px;
   border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--surface-card);
   box-shadow: var(--shadow-overlay);
   transform: translateX(-50%);
@@ -50,7 +50,7 @@
   flex-shrink: 0;
   padding: 0 14px;
   border: 1px solid var(--border-control);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: transparent;
   color: var(--color-text-brand);
   font: inherit;

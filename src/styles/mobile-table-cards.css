@@ -37,7 +37,7 @@
   table.mobile-card-table tr {
     overflow: hidden;
     border: 1px solid var(--border-subtle);
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     background: var(--surface-card);
     box-shadow: var(--shadow-sm);
   }
@@ -67,6 +67,10 @@
     font-size: var(--text-caption);
     font-weight: var(--font-weight-medium);
     line-height: 1.35;
+  }
+  /* Célula de mensagem (vazio, erro) ocupa a linha: sem rótulo de coluna. */
+  table.mobile-card-table td:not([data-mobile-label])::before {
+    content: none;
   }
 
   table.mobile-card-table td > .btn,

@@ -293,6 +293,8 @@
 }
 .visao-geral-prazo,
 .visao-geral-cronograma {
+  /* Dentro da célula (`overflow-wrap: anywhere` em ui.css): o selo quebra só entre palavras. */
+  overflow-wrap: normal;
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);

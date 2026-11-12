@@ -5,16 +5,18 @@
  * roxa legada antes do JavaScript aplicar a configuração atual.
  */
 .login-screen {
-  background-color: #eef4f8;
+  background-color: #eef4f8; /* acabamento: permitido(cor) — primeiro paint antes dos tokens (ver tests/piscada-do-login.test.js) */
 }
 
 .login-outer {
-  background: var(--login-panel-color, #ffffff);
+  /* prettier-ignore */
+  background: var(--login-panel-color, #ffffff); /* acabamento: permitido(cor) — primeiro paint antes dos tokens (ver tests/piscada-do-login.test.js) */
 }
 
 /* Sidebar configurável. A classe de contraste é derivada em JS da cor escolhida. */
 .sidebar {
-  background: var(--sidebar-custom-bg, #ffffff);
+  /* prettier-ignore */
+  background: var(--sidebar-custom-bg, #ffffff); /* acabamento: permitido(cor) — primeiro paint antes dos tokens (ver tests/piscada-do-login.test.js) */
 }
 
 /* A logo da barra lateral é o próprio <img id="sideLogo">, cujo `src` vem de
