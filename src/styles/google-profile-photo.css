@@ -6,6 +6,6 @@
   border: 0;
   border-radius: inherit;
   object-fit: cover;
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--color-neutral-0) 8%, transparent);
   box-shadow: none;
 }

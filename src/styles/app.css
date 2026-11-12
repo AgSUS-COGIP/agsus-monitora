@@ -173,7 +173,7 @@ summary:focus-visible,
 }
 @media (prefers-contrast: more) {
   :root {
-    --line: #9bb4cc;
+    --line: var(--color-border-input);
   }
 }
 
@@ -236,7 +236,7 @@ body.config-loading #loginScreen {
 
 /* Card branco interno */
 .login-card {
-  background: #ffffff;
+  background: var(--color-bg-canvas);
   margin: 0; /* sem margem — o outer é o espaçador */
   padding: 36px 40px 28px;
   text-align: center;
@@ -255,14 +255,14 @@ body.config-loading #loginScreen {
   letter-spacing: -0.02em;
 }
 .login-card .login-subtitle {
-  color: #526780;
+  color: var(--color-text-secondary);
   font-weight: 600;
   font-size: 13px;
   margin: 0 0 2px;
 }
 .login-card p {
   margin: 0 0 16px;
-  color: #65758d;
+  color: var(--color-text-tertiary);
   font-weight: 500;
 }
 .login-form {
@@ -310,7 +310,7 @@ body.config-loading #loginScreen {
   color: var(--color-success-600);
 }
 .login-screen.login-panel-dark .login-instituicao-icone {
-  color: #8ff3d0;
+  color: var(--cor-do-texto-sobre-escuro);
 }
 
 /* Rodapé COGIP */
@@ -320,7 +320,7 @@ body.config-loading #loginScreen {
   gap: 10px;
   margin-top: 18px;
   padding-top: 14px;
-  border-top: 1px solid #eef2f8;
+  border-top: 1px solid var(--color-border-subtle);
   text-align: left;
 }
 .login-cogip-logo {
@@ -342,12 +342,12 @@ body.config-loading #loginScreen {
 }
 .login-cogip-role {
   font-size: var(--text-caption);
-  color: #60758f;
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 .login-cogip-dept {
   font-size: var(--text-caption);
-  color: #9fb3c8;
+  color: var(--color-text-tertiary);
   font-weight: 500;
   margin-top: 1px;
 }
@@ -667,7 +667,7 @@ textarea:focus-visible,
   display: none;
   place-items: center;
   z-index: var(--z-loader);
-  background: rgba(2, 8, 23, 0.52);
+  background: var(--color-bg-overlay);
   backdrop-filter: blur(2px);
 }
 .loader.show {
@@ -731,7 +731,7 @@ textarea:focus-visible,
   width: 100%;
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-xl);
-  background: #fff;
+  background: #fff; /* acabamento: permitido(cor) — o botão do Google tem fundo branco pela diretriz de marca do Google, nos dois temas */
   color: var(--color-text-primary);
   font-weight: 600;
   font-size: 14px;
@@ -744,10 +744,10 @@ textarea:focus-visible,
   box-shadow: none;
 }
 .google-login-btn:hover {
-  background: #f8fbff;
+  background: var(--color-bg-subtle);
 }
 .google-login-btn .gmark {
-  color: #4285f4;
+  color: #4285f4; /* acabamento: permitido(cor) — azul do G do Google: cor de marca, igual nos dois temas */
   font-weight: 600;
   font-size: 18px;
   line-height: 1;
@@ -964,7 +964,7 @@ body.external-clean #externalReturnBar {
   z-index: var(--z-overlay);
   place-items: start center;
   padding: 12vh 14px 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--color-bg-overlay);
   backdrop-filter: blur(3px);
 }
 .modal-card.search-modal-card {
@@ -1109,27 +1109,27 @@ body.external-clean #externalReturnBar {
 
 /* ── Dark mode ── */
 [data-theme="dark"] {
-  --bg: #0f1a2e;
-  --card: #17253d;
-  --line: #253a56;
-  --soft: #1d2f48;
-  --shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
-  --agsus-azul: #4db8ff;
-  --agsus-ciano: #00cfff;
-  --agsus-verde: #2ad98a;
-  --agsus-amarelo: #ffd166;
-  --agsus-vermelho: #ff6b6b;
+  --bg: var(--color-bg-canvas);
+  --card: var(--color-bg-subtle);
+  --line: var(--color-border-subtle);
+  --soft: var(--color-bg-muted);
+  --shadow: var(--shadow-raised);
+  --agsus-azul: var(--color-text-link);
+  --agsus-ciano: var(--brand-accent);
+  --agsus-verde: var(--color-status-success-solid);
+  --agsus-amarelo: var(--color-status-warning-solid);
+  --agsus-vermelho: var(--color-status-danger-solid);
 }
 /* ── Dark mode: aplica APENAS dentro de .app — tela de login NÃO é afetada ── */
 [data-theme="dark"] body {
   background: var(--bg) !important;
 }
 [data-theme="dark"] .app {
-  color: #e2eaf4;
+  color: var(--color-text-primary);
 }
 [data-theme="dark"] .app .top {
-  background: #111f36 !important;
-  border-color: #1e3050 !important;
+  background: var(--color-bg-subtle) !important;
+  border-color: var(--color-border-subtle) !important;
 }
 [data-theme="dark"] .app .card,
 [data-theme="dark"] .app .table-card {
@@ -1141,45 +1141,49 @@ body.external-clean #externalReturnBar {
 [data-theme="dark"] .app .table-card,
 [data-theme="dark"] .app .modal-card,
 [data-theme="dark"] .app .modal-head {
-  background: #111f33 !important;
-  border-color: #29405d !important;
-  color: #c8d6e5 !important;
+  background: var(--color-bg-subtle) !important;
+  border-color: var(--color-border-subtle) !important;
+  color: var(--color-text-primary) !important;
 }
 [data-theme="dark"] .app th {
-  background: #1a2d47 !important;
-  color: #b8d0e8 !important;
+  background: var(--color-bg-muted) !important;
+  color: var(--color-text-secondary) !important;
 }
 [data-theme="dark"] .app td {
-  color: #d0e4f5 !important;
+  color: var(--color-text-primary) !important;
   border-color: var(--line) !important;
 }
 [data-theme="dark"] .app tr:hover td {
-  background: rgba(0, 168, 214, 0.12) !important;
+  background: color-mix(
+    in srgb,
+    var(--color-action-primary) 12%,
+    transparent
+  ) !important;
 }
 [data-theme="dark"] .app .page-title h1 {
-  color: #7dd3fc !important;
+  color: var(--color-text-brand) !important;
 }
 [data-theme="dark"] .app .page-title p {
-  color: #7a9bbf !important;
+  color: var(--color-text-secondary) !important;
 }
 [data-theme="dark"] .app input,
 [data-theme="dark"] .app select,
 [data-theme="dark"] .app textarea,
 [data-theme="dark"] .app .multi-select-menu {
-  background: #16283f !important;
-  border-color: #31506f !important;
-  color: #e2ecf6 !important;
-  -webkit-text-fill-color: #e2ecf6 !important;
+  background: var(--color-bg-muted) !important;
+  border-color: var(--color-border-input) !important;
+  color: var(--color-text-primary) !important;
+  -webkit-text-fill-color: var(--color-text-primary) !important;
 }
 [data-theme="dark"] .app input::placeholder,
 [data-theme="dark"] .app textarea::placeholder {
-  color: #8399b1 !important;
-  -webkit-text-fill-color: #8399b1 !important;
+  color: var(--color-text-tertiary) !important;
+  -webkit-text-fill-color: var(--color-text-tertiary) !important;
   opacity: 1;
 }
 [data-theme="dark"] .app .multi-select-actions {
-  background: #16283f !important;
-  border-color: #1e3050 !important;
+  background: var(--color-bg-muted) !important;
+  border-color: var(--color-border-subtle) !important;
 }
 [data-theme="dark"] .app .table-head {
   background: var(--surface-card);
@@ -1205,7 +1209,7 @@ body.external-clean #externalReturnBar {
   }
   .card {
     box-shadow: none !important;
-    border: 1px solid #ccc !important;
+    border: 1px solid #ccc !important; /* acabamento: permitido(cor) — impressão em papel branco: o token do tema escuro sairia ilegível no papel */
   }
   .table-wrap {
     max-height: none !important;
@@ -1219,7 +1223,7 @@ body.external-clean #externalReturnBar {
     display: block !important;
   }
   body {
-    background: #fff !important;
+    background: #fff !important; /* acabamento: permitido(cor) — impressão em papel branco: o token do tema escuro sairia ilegível no papel */
   }
   @page {
     margin: 1.2cm;
@@ -1360,7 +1364,7 @@ tr:hover td {
   height: calc(100dvh - 126px);
   min-height: 620px;
   border: 0;
-  background: #fff;
+  background: var(--cor-da-folha);
   border-radius: 0;
   display: block;
 }
@@ -1415,7 +1419,7 @@ tr:hover td {
   display: none;
   place-items: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--color-bg-overlay);
 }
 .modal.show {
   display: grid;

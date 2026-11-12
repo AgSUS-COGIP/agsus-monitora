@@ -472,7 +472,7 @@
     width: 7px;
     height: 7px;
     border-radius: var(--radius-pill);
-    background: #a78bfa;
+    background: var(--series-4);
     box-shadow: 0 0 0 2px var(--sidebar-custom-bg, var(--card));
   }
 
@@ -826,8 +826,8 @@ body.sidebar-theme-dark .menu-manutencao {
     width: 15px;
     height: 15px;
     border-radius: var(--radius-pill);
-    background: #fbbf24;
-    color: #422006;
+    background: var(--color-status-warning-solid);
+    color: var(--color-text-inverse);
     box-shadow: 0 0 0 2px var(--sidebar-custom-bg, var(--card));
   }
 

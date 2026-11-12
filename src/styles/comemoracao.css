@@ -128,8 +128,8 @@
   z-index: calc(var(--z-popover) + 3);
   background: radial-gradient(
     120% 90% at 50% 30%,
-    rgb(11 31 61 / 0.55),
-    rgb(5 14 30 / 0.72)
+    color-mix(in srgb, var(--color-blue-950) 55%, transparent),
+    color-mix(in srgb, var(--color-neutral-900) 72%, transparent)
   );
   pointer-events: none;
   opacity: 0;
@@ -137,8 +137,8 @@
 html[data-theme="dark"] .comemoracao__veu {
   background: radial-gradient(
     120% 90% at 50% 30%,
-    rgb(0 0 0 / 0.38),
-    rgb(0 0 0 / 0.58)
+    color-mix(in srgb, var(--color-neutral-900) 38%, transparent),
+    color-mix(in srgb, var(--color-neutral-900) 58%, transparent)
   );
 }
 /* A Aya: posição e bater de asas por transform, a cada quadro. */
@@ -151,7 +151,7 @@ html[data-theme="dark"] .comemoracao__veu {
   pointer-events: none;
   transform-origin: 50% 50%;
   will-change: transform, opacity;
-  --brilho-da-aya: rgb(255 214 90 / 0.55);
+  --brilho-da-aya: #ffd65a8c; /* acabamento: permitido(cor) — dourado do brilho da Aya, sem token; coreografia da comemoração (ver o comentário do topo) */
   filter: drop-shadow(0 0 10px var(--brilho-da-aya));
 }
 /* A Aya dançando no fim: a mesma arara, com o brilho mais forte da festa. */
@@ -230,8 +230,8 @@ html[data-theme="dark"] .comemoracao__veu {
   padding: 26vh 16px 0;
   background: radial-gradient(
     ellipse 56% 26% at 50% 63%,
-    rgb(5 12 28 / 0.22),
-    rgb(5 12 28 / 0) 72%
+    color-mix(in srgb, var(--color-neutral-900) 22%, transparent),
+    transparent 72%
   );
   pointer-events: none;
   animation: letreiro-veu 0.5s ease-out both; /* acabamento: permitido(curva) — coreografia da comemoração (ver o comentário do topo) */
@@ -243,10 +243,11 @@ html[data-theme="dark"] .comemoracao__veu {
   overflow: hidden;
   border-radius: var(--radius-xl);
   background: var(--letreiro-placa);
+  --placa-borda: #ffe08a66; /* acabamento: permitido(cor) — borda dourada da placa do letreiro, cor própria da comemoração */
+  --placa-sombra: #000000a6; /* acabamento: permitido(cor) — sombra funda da placa do letreiro, própria da comemoração */
   box-shadow:
-    inset 0 0 0 1px rgb(255 224 138 / 0.4),
-    /* acabamento: permitido(cor) — borda dourada da placa do letreiro, cor própria da comemoração */
-    0 24px 60px -18px rgb(0 0 0 / 0.65); /* acabamento: permitido(cor,sombra) — sombra funda da placa do letreiro, própria da comemoração */
+    inset 0 0 0 1px var(--placa-borda),
+    0 24px 60px -18px var(--placa-sombra); /* acabamento: permitido(sombra) — sombra funda da placa do letreiro, própria da comemoração */
   backdrop-filter: blur(6px);
   font-size: var(--letreiro-fonte);
   animation: letreiro-placa 0.55s cubic-bezier(0.2, 1.25, 0.35, 1) both; /* acabamento: permitido(curva) — coreografia da comemoração (ver o comentário do topo) */
@@ -259,7 +260,7 @@ html[data-theme="dark"] .comemoracao__veu {
   background: linear-gradient(
     105deg,
     transparent 35%,
-    rgb(255 255 255 / 0.16) 50%,
+    color-mix(in srgb, var(--color-neutral-0) 16%, transparent) 50%,
     transparent 65%
   );
   transform: translateX(-120%);
@@ -279,7 +280,7 @@ html[data-theme="dark"] .comemoracao__veu {
   white-space: nowrap;
   text-shadow:
     0 0.04em 0 var(--letreiro-contorno),
-    0 0 0.35em rgb(255 209 102 / 0.35);
+    0 0 0.35em rgb(255 209 102 / 0.35); /* acabamento: permitido(cor) — dourado do letreiro, sem token; coreografia da comemoração (ver o comentário do topo) */
 }
 /* Um traço dourado embaixo da frase, que se abre do centro. */
 .comemoracao__letreiro-texto::after {

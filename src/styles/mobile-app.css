@@ -122,7 +122,7 @@ textarea,
     position: fixed;
     inset: 0;
     z-index: calc(var(--z-sidebar) + 14);
-    background: rgba(5, 22, 40, 0.48);
+    background: var(--color-bg-overlay);
     backdrop-filter: blur(2px);
   }
 

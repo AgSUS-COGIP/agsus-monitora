@@ -5,16 +5,16 @@
  * roxa legada antes do JavaScript aplicar a configuração atual.
  */
 .login-screen {
-  background-color: #eef4f8;
+  background-color: var(--color-bg-muted);
 }
 
 .login-outer {
-  background: var(--login-panel-color, #ffffff);
+  background: var(--login-panel-color, var(--color-bg-canvas));
 }
 
 /* Sidebar configurável. A classe de contraste é derivada em JS da cor escolhida. */
 .sidebar {
-  background: var(--sidebar-custom-bg, #ffffff);
+  background: var(--sidebar-custom-bg, var(--color-bg-canvas));
 }
 
 /* A logo da barra lateral é o próprio <img id="sideLogo">, cujo `src` vem de
