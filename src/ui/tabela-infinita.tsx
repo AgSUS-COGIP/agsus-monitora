@@ -388,7 +388,10 @@ export function TabelaInfinita<T>({
       <div className="ui-tabela-rolagem" onScroll={aoRolar}>
         <table className={classeDaTabela}>
           <CabecalhosDaTabela colunas={colunas} />
-          <tbody id={idDoCorpo} aria-busy={carregado ? undefined : true}>
+          <tbody
+            id={idDoCorpo}
+            aria-busy={carregado || erro ? undefined : true}
+          >
             {!carregado && erro ? (
               <tr>
                 <td colSpan={colunas.length} className="ui-tabela-erro">
