@@ -4474,7 +4474,7 @@ export const VERBETES_AYA = Object.freeze([
       "painel transparente na tela de acesso",
     ],
     resposta:
-      'Em Configurações › Aparência, Estilo do painel escolhe entre Sólido (o padrão) e Vidro. No vidro, o cartão da tela de acesso fica translúcido sobre a arte, com a cor do painel a 72% e a arte desfocada por trás. Como a arte pode ter trechos muito claros ou muito escuros, o contraste mostrado abaixo da cor passa a ser medido no pior trecho possível; se ficar abaixo de 4,5, uma cor mais escura ou mais clara, ou o painel sólido, resolve. Quem pediu ao sistema menos transparência, ou usa navegador sem desfoque, vê o painel sólido. Vale depois de "Salvar alterações".',
+      'Em Configurações › Aparência, Estilo do painel escolhe entre Sólido (o padrão) e Vidro. No vidro, o cartão da tela de acesso fica translúcido sobre a arte, com a cor do painel a 78%, a arte desfocada por trás, um brilho claro por cima e a borda iluminada, que fazem o vidro aparecer mesmo sobre uma arte lisa. Como a arte pode ter trechos muito claros ou muito escuros, o contraste mostrado abaixo da cor passa a ser medido no pior trecho possível; se ficar abaixo de 4,5, uma cor mais escura ou mais clara, ou o painel sólido, resolve. Quem pediu ao sistema menos transparência, ou usa navegador sem desfoque, vê o painel sólido. Vale depois de "Salvar alterações".',
     fato: "",
     fonte: "interface do Yeendé",
   },

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  BRILHO_DO_VIDRO,
   ESTILO_SOLIDO,
   ESTILO_VIDRO,
   OPACIDADE_DO_VIDRO,
@@ -148,6 +149,33 @@ describe("o estilo do painel", () => {
 });
 
 describe("contraste do vidro", () => {
+  /*
+    12/11/2026: o vidro ligado parecia sólido, porque o cartão fica sobre a
+    parte lisa da arte, quase da cor do painel. O brilho e a borda clara fazem
+    o vidro aparecer; o brilho mais forte (o do alto) entra na conta.
+  */
+  it("o brilho do CSS é o da conta, e a borda e o realce de luz estão lá", () => {
+    const css = ler("src/styles/platform-shell.css");
+    const bloco = css.slice(
+      css.indexOf(".login-screen.login-panel-vidro .login-outer {"),
+    );
+    expect(bloco).toContain(
+      `color-mix(in srgb, var(--brilho-do-vidro) ${Math.round(BRILHO_DO_VIDRO * 100)}%, transparent),`,
+    );
+    expect(bloco).toContain(
+      "border-color: color-mix(in srgb, var(--brilho-do-vidro)",
+    );
+    expect(bloco).toContain(
+      "inset 0 1px 0 color-mix(in srgb, var(--brilho-do-vidro)",
+    );
+  });
+
+  it("a cor do painel de hoje (#002f2f) passa no vidro com o brilho", () => {
+    const vidro = avaliarCor("#002f2f", "claro", "vidro");
+    expect(vidro?.passa).toBe(true);
+    expect(vidro!.razao).toBeGreaterThan(5);
+  });
+
   it("mistura como o color-mix do CSS", () => {
     expect(misturar("#000000", "#ffffff", 0.5)).toBe("#808080");
     expect(misturar("#12403f", "#12403f", OPACIDADE_DO_VIDRO)).toBe("#12403f");

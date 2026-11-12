@@ -95,12 +95,16 @@ export function corDoTextoPara(cor: string, modo: unknown = MODO_AUTO): string {
   OPACIDADE_DO_VIDRO sobre a arte, com desfoque (platform-shell.css usa o
   mesmo número). A arte é configurável e pode ter trechos brancos ou pretos:
   o contraste do vidro é medido nos dois extremos, a cor misturada com branco
-  e com preto, e vale o pior.
+  e com preto, e vale o pior. Por cima da tinta vai o brilho do vidro (branco
+  a até BRILHO_DO_VIDRO, no alto do cartão): é ele que faz o vidro aparecer
+  sobre uma arte lisa, e ele entra na conta.
 */
 export const ESTILO_SOLIDO = "solido";
 export const ESTILO_VIDRO = "vidro";
 export type EstiloDoPainel = typeof ESTILO_SOLIDO | typeof ESTILO_VIDRO;
-export const OPACIDADE_DO_VIDRO = 0.72;
+export const OPACIDADE_DO_VIDRO = 0.78;
+export const BRILHO_DO_VIDRO = 0.1;
+const EXTREMOS_DA_ARTE = ["#ffffff", "#000000"] as const;
 
 export function normalizarEstilo(valor: unknown): EstiloDoPainel {
   const bruto = String(valor ?? "")
@@ -145,10 +149,14 @@ export function avaliarCor(
   const vidro = normalizarEstilo(estilo) === ESTILO_VIDRO;
   const exata = vidro
     ? Math.min(
-        ...["#ffffff", "#000000"].map((fundo) =>
+        ...EXTREMOS_DA_ARTE.map((fundo) =>
           razaoDeContraste(
             corDoTexto,
-            misturar(normalizada, fundo, OPACIDADE_DO_VIDRO),
+            misturar(
+              misturar(normalizada, fundo, OPACIDADE_DO_VIDRO),
+              EXTREMOS_DA_ARTE[0],
+              1 - BRILHO_DO_VIDRO,
+            ),
           ),
         ),
       )
