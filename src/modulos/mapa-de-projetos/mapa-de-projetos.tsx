@@ -40,6 +40,7 @@ import {
   propsDoEditor,
   usarMapaDoBrasil,
 } from "../mapa-saude-indigena/painel-do-mapa.tsx";
+import { usarMapaRecolhido } from "../mapa-saude-indigena/recolher.tsx";
 import { usarTelaCheia } from "../mapa-saude-indigena/tela-cheia.tsx";
 import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.ts";
 import { balaoDoLugar } from "./balao.ts";
@@ -137,6 +138,7 @@ export function MapaDeProjetos({
   const escuro = tema ? tema === "escuro" : escuroDoApp;
   const L = obterLeaflet();
   const [telaCheia, botaoDeTelaCheia] = usarTelaCheia();
+  const [recolhido, botaoDeRecolher] = usarMapaRecolhido();
   const resultado = usarLugares(carregador, area, carregadoEm);
   const carregando = !resultado;
   const podeEditar = podeEditarCoordenadas(perfil);
@@ -312,6 +314,7 @@ export function MapaDeProjetos({
         "mapa-projetos",
         escuro && "mapa-si--escuro",
         telaCheia && "mapa-si--tela-cheia",
+        recolhido && !telaCheia && "mapa-si--recolhido",
       )}
       aria-label={TEXTOS.area}
       role="region"
@@ -332,7 +335,13 @@ export function MapaDeProjetos({
           podeEditar={podeEditar}
           modo={modo}
           idDoPainel={idDoPainel}
-          acoes={botaoDeTelaCheia}
+          acoes={
+            /* Como no mapa da Saúde Indígena: em tela cheia não se recolhe; recolhido, não se amplia. */
+            <>
+              {telaCheia ? null : botaoDeRecolher}
+              {recolhido && !telaCheia ? null : botaoDeTelaCheia}
+            </>
+          }
         />
         <div className="mapa-si-painel__corpo">
           <MolduraDoMapa
