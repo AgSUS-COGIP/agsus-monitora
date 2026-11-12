@@ -30,14 +30,13 @@
   },
   "src/modulos/avaliacao-documental/ficha/ficha.css": {
     "zIndex": 3,
-    "raio": 5,
+    "raio": 2,
     "sombra": 4,
     "animaLayout": 1
   },
   "src/modulos/aya/aya.css": {
     "important": 2,
     "zIndex": 1,
-    "raio": 1,
     "sombra": 1,
     "curva": 6
   },
@@ -51,15 +50,12 @@
     "zIndex": 1,
     "sombra": 1
   },
-  "src/modulos/classificacao/classificacao.css": {
-    "raio": 1
-  },
   "src/modulos/comemoracao/letreiro.tsx": {
     "cor": 1
   },
   "src/modulos/configuracoes/configuracoes.css": {
     "important": 3,
-    "raio": 2,
+    "raio": 1,
     "sombra": 1,
     "curva": 2
   },
@@ -77,7 +73,7 @@
   },
   "src/modulos/entrevistas/entrevistas.css": {
     "zIndex": 3,
-    "raio": 2,
+    "raio": 1,
     "sombra": 2,
     "curva": 6
   },
@@ -90,12 +86,9 @@
   "src/modulos/mapa-saude-indigena/mapa-saude-indigena.css": {
     "cor": 1,
     "zIndex": 2,
-    "raio": 6,
+    "raio": 4,
     "sombra": 1,
     "curva": 2
-  },
-  "src/modulos/recursos/parecer-em-blocos/parecer-em-blocos.css": {
-    "raio": 1
   },
   "src/modulos/recursos/recursos.css": {
     "curva": 1
@@ -111,14 +104,13 @@
     "animaLayout": 1
   },
   "src/modulos/visao-geral/visao-geral.css": {
-    "raio": 1,
     "sombra": 3
   },
   "src/styles/app.css": {
     "cor": 55,
     "important": 62,
     "zIndex": 8,
-    "raio": 24,
+    "raio": 21,
     "sombra": 9,
     "curva": 5,
     "animaLayout": 1,
@@ -128,12 +120,10 @@
     "cor": 3,
     "important": 1,
     "zIndex": 2,
-    "raio": 1,
     "sombra": 5,
     "curva": 4
   },
   "src/styles/carregamento.css": {
-    "raio": 1,
     "curva": 4
   },
   "src/styles/comemoracao.css": {
@@ -149,7 +139,6 @@
   },
   "src/styles/google-profile-photo.css": {
     "cor": 2,
-    "raio": 1,
     "sombra": 1
   },
   "src/styles/icones-lucide.css": {
@@ -172,7 +161,6 @@
   "src/styles/map-base-layer-switcher.css": {
     "important": 4,
     "zIndex": 1,
-    "raio": 1,
     "sombra": 1,
     "curva": 1
   },
@@ -180,7 +168,7 @@
     "cor": 3,
     "important": 38,
     "zIndex": 5,
-    "raio": 6,
+    "raio": 5,
     "sombra": 2,
     "curva": 1
   },
@@ -207,7 +195,7 @@
     "cor": 34,
     "important": 9,
     "zIndex": 1,
-    "raio": 15,
+    "raio": 14,
     "sombra": 4,
     "curva": 6,
     "blur": 1
@@ -225,7 +213,7 @@
     "cor": 1
   },
   "src/ui/ui.css": {
-    "raio": 6,
+    "raio": 2,
     "curva": 3
   }
 }

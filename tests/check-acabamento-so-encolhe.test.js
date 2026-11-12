@@ -67,6 +67,31 @@ describe("contarDesvios", () => {
     expect(css("/*\n  #fff e #000\n*/\na{color:var(--text)}").cor).toBe(0);
   });
 
+  it("raio: 0, inherit, initial, unset e calc() com var() não contam; 999px sim", () => {
+    for (const v of [
+      "0",
+      "0px",
+      "inherit",
+      "initial",
+      "unset",
+      "calc(var(--radius-lg) - 2px)",
+    ])
+      expect(css(`a{border-radius:${v}}`).raio, v).toBe(0);
+    expect(css("a{border-radius:999px}").raio).toBe(1);
+    expect(css("a{border-radius:9999px}").raio).toBe(1);
+    expect(css("a{border-radius:0 0 8px 8px}").raio).toBe(1);
+  });
+
+  it("cor: seletor não conta; fallback de var() conta", () => {
+    expect(css("#abc{color:var(--x)}").cor).toBe(0);
+    expect(css("a[href='#abc']{margin:0}").cor).toBe(0);
+    expect(css("#abc{color:#fff}").cor).toBe(1);
+    expect(css("a{color:var(--x, #fff)}").cor).toBe(1);
+    expect(
+      css("a{\n background:linear-gradient(\n #fff,\n #000\n );\n}").cor,
+    ).toBe(2);
+  });
+
   it("z-index: número conta, var() não", () => {
     expect(css("a{z-index:3}").zIndex).toBe(1);
     expect(css("a{z-index:-1}").zIndex).toBe(1);

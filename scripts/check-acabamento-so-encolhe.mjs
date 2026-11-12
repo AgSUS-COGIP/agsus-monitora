@@ -39,8 +39,9 @@ import { dirname } from "node:path";
     outra regra não é visto; use o marcador. Só o `backdrop-filter` sem prefixo.
   - No .tsx, "literal de string" é "..." e '...' (até o fim da linha) e `...`;
     um apóstrofo em texto de JSX pode abrir um literal falso até o fim da linha.
-  - No .css não se distingue seletor `#abc` de cor hex; é raro e se resolve
-    com o marcador.
+  - A cor em .css só conta em valor de declaração; seletor (`#abc{…}`) não.
+    O fallback `var(--x, #fff)` conta (é valor fixo).
+  - `border-radius` com 0, inherit, initial, unset ou calc() com var() não é desvio.
 */
 
 export const TIPOS_DE_DESVIO = [
@@ -66,6 +67,10 @@ const CURVA_PALAVRA =
 const DURACAO_LITERAL = /(?<![\w.-])(?:\d+\.?\d*|\.\d+)m?s(?![\w-])/i;
 const LAYOUT_PALAVRA = /(?<![\w-])(?:width|height|top|left|all)(?![\w-])/i;
 
+/* var(), 0, palavras-chave do CSS e calc() que usa var() não são raio fixo. */
+const RAIO_QUE_NAO_E_DESVIO =
+  /^(?:var\(|calc\(.*var\(|(?:0(?:px|rem|em)?|inherit|initial|unset)$)/i;
+
 const zerado = () => Object.fromEntries(TIPOS_DE_DESVIO.map((t) => [t, 0]));
 
 /* Troca por espaços tudo menos as quebras de linha, para manter as linhas. */
@@ -87,12 +92,6 @@ function contarCss(caminho, texto) {
     .replace(/\/\*[\s\S]*?\*\//g, branquear)
     .replace(/url\([^)]*\)/gi, branquear);
 
-  if (caminho !== ARQUIVO_DE_TOKENS) {
-    limpo.split("\n").forEach((linha, i) => {
-      if (COR.test(linha) && !permitidas.has(i + 1)) contagem.cor += 1;
-    });
-  }
-
   const isenta = (de, ate) => {
     for (let n = de; n <= ate; n += 1) if (permitidas.has(n)) return true;
     return false;
@@ -104,11 +103,22 @@ function contarCss(caminho, texto) {
         d.propriedade === "position" && /^(?:fixed|sticky)\b/i.test(d.valor),
     );
     for (const d of bloco) {
+      /* A cor só conta no valor da declaração (não em seletor), por linha. */
+      if (caminho !== ARQUIVO_DE_TOKENS) {
+        d.valorBruto.split("\n").forEach((linha, k) => {
+          if (COR.test(linha) && !permitidas.has(d.linhaDoValor + k))
+            contagem.cor += 1;
+        });
+      }
       if (isenta(d.de, d.ate)) continue;
       const { propriedade: p, valor: v } = d;
       if (/!\s*important/i.test(v)) contagem.important += 1;
       if (p === "z-index" && /^-?\d/.test(v)) contagem.zIndex += 1;
-      if (p === "border-radius" && !/^var\(/i.test(v)) contagem.raio += 1;
+      if (
+        p === "border-radius" &&
+        !RAIO_QUE_NAO_E_DESVIO.test(v.replace(/!\s*important/i, "").trim())
+      )
+        contagem.raio += 1;
       if (p === "box-shadow" && !/^var\(/i.test(v) && !/^none\b/i.test(v))
         contagem.sombra += 1;
       if (/^(?:-webkit-)?(?:transition|animation)(?:-[a-z-]+)?$/.test(p)) {
@@ -135,6 +145,9 @@ function contarCss(caminho, texto) {
       pilha[pilha.length - 1].push({
         propriedade: pedaco.slice(0, i).trim().toLowerCase(),
         valor: pedaco.slice(i + 1).trim(),
+        valorBruto: pedaco.slice(i + 1),
+        linhaDoValor:
+          linhaInicial + (pedaco.slice(0, i).match(/\n/g) ?? []).length,
         de: linhaInicial,
         ate: linha,
       });

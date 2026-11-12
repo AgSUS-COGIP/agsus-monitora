@@ -39,14 +39,15 @@ isento), `!important`, `z-index` numérico, `border-radius` e `box-shadow` sem `
 `width`/`height`/`top`/`left`/`all` e `backdrop-filter` fora de bloco com `position: fixed` ou
 `sticky`. O número de cada tipo, em cada arquivo, nunca passa da linha de base
 (`scripts/acabamento-linha-de-base.json`); arquivo novo começa em zero. Comentário e `url()` não
-contam.
+contam; a cor só conta em valor de declaração (seletor `#abc` não), e `border-radius` com
+`0`, `inherit`, `initial`, `unset` ou `calc()` com `var()` não é desvio.
 
 - Corrigiu desvios: `node scripts/check-acabamento-so-encolhe.mjs --atualizar` baixa a linha de
   base (não grava se algum número subir) e o diff vai no mesmo commit.
 - Exceção legítima (sobrepor CSS do Leaflet, círculo `50%`, z-index local dentro de contexto de
   empilhamento próprio, cor de mapa, gráfico, marca ou PDF) leva **na mesma linha** um comentário
-  `acabamento: permitido — <motivo>` (em CSS, dentro de `/* */`; em `.tsx`, depois de `//`). Sem
-  motivo depois do travessão, o marcador não isenta. Não use o marcador para fugir de token que existe.
+  `acabamento: permitido — <motivo>` (em CSS, dentro de `/* */`; em `.tsx`, depois de `//`). O separador pode ser
+  travessão (—, –) ou hífen (-). Sem motivo depois dele, o marcador não isenta. Não use o marcador para fugir de token que existe.
 
 ## Tokens
 
@@ -86,11 +87,11 @@ de `tokens.css`. Fora do escopo do DS: mantido, sem investir.
 
 Decisões do responsável (25/09/2026); não "corrigir" para o DS.
 
-| Exceção | Como fica |
-| ------- | --------- |
-| KPIs em card (DS 11.7 pede faixa sem card) | `Kpi` de `src/ui/`: card compacto de ~78px no padrão do DS 11.6 (borda sutil, sem sombra), em todas as telas |
-| Blocos da tela em card | filtros, tabela, mapa e blocos em card (DS 11.6, sem sombra), sem card dentro de card; 12px entre os blocos, não os 48px de seção do DS 5.2 |
-| Cor da barra lateral | a de Configurações → Aparência (`ui_sidebar_background_color`), não o `--color-sidebar-bg` oficial |
+| Exceção                                    | Como fica                                                                                                                                   |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| KPIs em card (DS 11.7 pede faixa sem card) | `Kpi` de `src/ui/`: card compacto de ~78px no padrão do DS 11.6 (borda sutil, sem sombra), em todas as telas                                |
+| Blocos da tela em card                     | filtros, tabela, mapa e blocos em card (DS 11.6, sem sombra), sem card dentro de card; 12px entre os blocos, não os 48px de seção do DS 5.2 |
+| Cor da barra lateral                       | a de Configurações → Aparência (`ui_sidebar_background_color`), não o `--color-sidebar-bg` oficial                                          |
 
 ## Componentes
 
