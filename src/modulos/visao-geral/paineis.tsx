@@ -25,6 +25,7 @@ import {
 import {
   ChipDeFiltro,
   ChipsDeFiltro,
+  ErroAoCarregar,
   EstadoVazio,
   GradeDeKpis,
   Kpi,
@@ -61,11 +62,13 @@ export function Topo({
   e: SnapshotDaVisaoGeral;
   aoExportar: () => void;
 }) {
-  const status = !e.carregado
-    ? "Carregando dados…"
-    : e.carregadoEm
-      ? `Atualizado às ${horaCurta(e.carregadoEm)}`
-      : "";
+  const status = e.erro
+    ? ""
+    : !e.carregado
+      ? "Carregando dados…"
+      : e.carregadoEm
+        ? `Atualizado às ${horaCurta(e.carregadoEm)}`
+        : "";
   return (
     <TopoDoPainel
       status={status}
@@ -334,7 +337,9 @@ export function Fases({ e, estado }: PropsDoPainel) {
       titulo="Fases"
       className="visao-geral-fases"
     >
-      {!e.carregado ? (
+      {e.erro && !e.carregado ? (
+        <ErroAoCarregar oQue="as fases" />
+      ) : !e.carregado ? (
         <div className="ui-esqueleto ui-esqueleto-linha" aria-hidden="true" />
       ) : e.filtradas.length ? (
         <div className="visao-geral-itens">
@@ -394,11 +399,15 @@ export function PosResultado({ e, estado }: PropsDoPainel) {
       titulo="Pós-resultado"
       className="visao-geral-pos-resultado"
     >
-      <ListaDePendencias
-        itens={itens}
-        carregando={!e.carregado}
-        vazio="Nenhuma pendência."
-      />
+      {e.erro && !e.carregado ? (
+        <ErroAoCarregar oQue="as pendências" />
+      ) : (
+        <ListaDePendencias
+          itens={itens}
+          carregando={!e.carregado}
+          vazio="Nenhuma pendência."
+        />
+      )}
     </Bloco>
   );
 }

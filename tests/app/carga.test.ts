@@ -802,6 +802,28 @@ describe("linhas do monitoramento sob demanda", () => {
     expect(pedidosDasLinhas(cliente)).toHaveLength(1);
   });
 
+  it("leitura que falha avisa uma vez, guarda o erro para a tela e não repete com o pedido seguinte", async () => {
+    const { carga, cliente, pedidos, avisar } = montar({
+      pedindo: false,
+      telaDeEntrada: "avaliacao-documental",
+      erroNasLinhas: { message: "falhou" },
+    });
+    await carga.carregarEntrada();
+    pedidos.pedir();
+    await esperarTudo();
+    // A busca global (ou outra tela) pede logo depois: não chama de novo nem avisa de novo.
+    pedidos.pedir();
+    await esperarTudo();
+    expect(pedidosDasLinhas(cliente)).toHaveLength(1);
+    expect(
+      avisar.mock.calls.filter(([texto]) =>
+        String(texto).startsWith("Erro ao carregar dados"),
+      ),
+    ).toHaveLength(1);
+    expect(obterDadosDoMonitoramento().erro).toBe("falhou");
+    expect(obterDadosDoMonitoramento().carregado).toBe(false);
+  });
+
   it("antes da entrada terminar, o pedido espera (não lê fora da sessão)", async () => {
     const { carga, cliente, pedidos } = montar({
       pedindo: false,

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { AriaAttributes, KeyboardEvent, ReactNode, UIEvent } from "react";
 import { formatNumberBR } from "../lib/formatters";
 import { classes } from "./classes.ts";
+import { ErroAoCarregar } from "./erro-ao-carregar.tsx";
 import { LinhasEsqueleto } from "./esqueleto.tsx";
 
 /*
@@ -23,6 +24,8 @@ import { LinhasEsqueleto } from "./esqueleto.tsx";
   banco 50 por vez: `itens` são as já recebidas, `servidor.total` é o do
   recorte (o "N de M") e chegar ao fim da rolagem pede a próxima página. Busca
   e filtros vão ao banco: `filtrarPelaBusca` não se aplica.
+
+  Com `erro` (e nada carregado), o aviso de erro toma o lugar do esqueleto.
 */
 
 const POR_VEZ = 50;
@@ -82,6 +85,14 @@ export interface TabelaNoServidor {
   carregarMais: () => void;
 }
 
+/** A leitura falhou: o erro toma o lugar do esqueleto (norma 12.3). */
+export interface ErroDaTabela {
+  mensagem: string;
+  /** O que não veio, na frase "Não foi possível carregar …" (padrão: "esta lista"). */
+  oQue?: string;
+  tentarDeNovo?: () => void;
+}
+
 export interface PropriedadesDaTabelaInfinita<T> {
   idDoTitulo: string;
   titulo: string;
@@ -101,6 +112,8 @@ export interface PropriedadesDaTabelaInfinita<T> {
   /** Id do `<tbody>` (contrato com o legado e a Aya). */
   idDoCorpo?: string;
   carregado: boolean;
+  /** Com erro, não há esqueleto nem "Carregando…": a mensagem e, se der, "Tentar novamente". */
+  erro?: ErroDaTabela | null;
   itens: readonly T[];
   filtrarPelaBusca: (itens: readonly T[], busca: string) => readonly T[];
   linha: (item: T) => ReactNode;
@@ -242,6 +255,7 @@ export function TabelaInfinita<T>({
   titulo,
   busca: campoDeBusca = null,
   carregado,
+  erro = null,
   itens,
   filtrarPelaBusca,
   colunas,
@@ -363,17 +377,29 @@ export function TabelaInfinita<T>({
         <span data-tabela-mostrando="">
           {carregado
             ? `Mostrando ${formatNumberBR(visiveis.length)} de ${formatNumberBR(noRecorte)} registros`
-            : "Mostrando 0 de 0 registros"}
+            : erro
+              ? ""
+              : "Mostrando 0 de 0 registros"}
         </span>
         <span data-tabela-contagem="">
-          {informacao(carregado ? noRecorte : null)}
+          {erro && !carregado ? "" : informacao(carregado ? noRecorte : null)}
         </span>
       </div>
       <div className="ui-tabela-rolagem" onScroll={aoRolar}>
         <table className={classeDaTabela}>
           <CabecalhosDaTabela colunas={colunas} />
           <tbody id={idDoCorpo} aria-busy={carregado ? undefined : true}>
-            {!carregado ? (
+            {!carregado && erro ? (
+              <tr>
+                <td colSpan={colunas.length} className="ui-tabela-erro">
+                  <ErroAoCarregar
+                    oQue={erro.oQue ?? "esta lista"}
+                    mensagem={erro.mensagem}
+                    aoTentar={erro.tentarDeNovo}
+                  />
+                </td>
+              </tr>
+            ) : !carregado ? (
               <LinhasEsqueleto colunas={colunas.length} />
             ) : grupo && naTabela.length ? (
               linhasAgrupadas({

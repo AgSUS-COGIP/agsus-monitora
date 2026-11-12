@@ -41,6 +41,8 @@ const ESTADO_INICIAL: SnapshotDoMonitoramento = Object.freeze({
   unidades: Object.freeze([]),
   /** Falso até a primeira carga: "ainda não chegou" não é "não há editais". */
   carregado: false,
+  /** A leitura das linhas falhou: o texto para a tela. Vazio = sem falha. */
+  erro: "",
   /** Até o perfil chegar, a área de todo mundo; `definirAreasDoUsuario` corrige. */
   areas: Object.freeze([AREA_SAUDE_INDIGENA]),
   areaAtual: AREA_SAUDE_INDIGENA,
@@ -89,7 +91,13 @@ export function publicarLinhasDoMonitoramento(linhas: unknown) {
   publicar({
     linhas: normalizarLinhasDoMonitoramento(linhas),
     carregado: true,
+    erro: "",
   });
+}
+
+/** A leitura das linhas falhou: as telas mostram o erro no lugar do esqueleto. */
+export function publicarErroDoMonitoramento(mensagem: string) {
+  publicar({ erro: texto(mensagem) || "Falha ao ler os dados." });
 }
 
 /*
@@ -98,7 +106,7 @@ export function publicarLinhasDoMonitoramento(linhas: unknown) {
   corrige pelas áreas dele (`definirAreasDoUsuario`).
 */
 export function esquecerLinhasDoMonitoramento() {
-  publicar({ linhas: ESTADO_INICIAL.linhas, carregado: false });
+  publicar({ linhas: ESTADO_INICIAL.linhas, carregado: false, erro: "" });
 }
 
 export function publicarUnidadesDoCatalogo(unidades: unknown) {

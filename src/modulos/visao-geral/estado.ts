@@ -281,7 +281,7 @@ export function criarEstadoDaVisaoGeral({
 
   /* O que a tela mostra, calculado uma vez por mudança. */
   function calcular() {
-    const { areaAtual, carregado } = dados.obter();
+    const { areaAtual, carregado, erro = "" } = dados.obter();
     const { daArea, acompanhamento, dia } = linhasEnriquecidas();
     const filtradas = recortar(daArea, {
       filtros: proprio.filtros,
@@ -302,6 +302,7 @@ export function criarEstadoDaVisaoGeral({
       ...proprio,
       area: areaAtual,
       carregado,
+      erro,
       hoje: dia,
       linhasDaArea: daArea,
       etapasPorEdital: acompanhamento?.etapasPorEdital || null,

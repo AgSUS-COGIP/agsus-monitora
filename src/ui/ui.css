@@ -630,6 +630,13 @@ th[aria-sort="descending"] .ui-ordenar i {
   /* Nome sem espaço (ou de 200 caracteres) quebra na célula em vez de alargar a tabela. */
   overflow-wrap: anywhere;
 }
+/* O selo e o chip não quebram no meio da palavra: sem isto o `anywhere` os espreme a uma letra por linha. */
+.ui-tabela-rolagem td :is(.ui-selo, .ui-chip) {
+  overflow-wrap: normal;
+}
+.ui-tabela-rolagem td.ui-tabela-erro {
+  padding: var(--space-3);
+}
 .ui-tabela-rolagem tbody tr:hover td {
   background: var(--surface-hover);
 }

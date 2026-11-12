@@ -44,6 +44,7 @@ import { esconderEsqueleto, marcarAtualizacao } from "./carregamento.ts";
 import {
   assinarPedidosDasLinhas,
   esquecerLinhasDoMonitoramento,
+  publicarErroDoMonitoramento,
   linhasPedidas,
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
@@ -283,6 +284,13 @@ export function criarCarga(
   let esperaDoRealtime: ReturnType<typeof setTimeout> | null = null;
   /* Quando as linhas foram lidas do banco pela última vez (o Realtime espaça a partir daí). */
   let ultimaLeitura = Number.NEGATIVE_INFINITY;
+  /*
+    Quando a última leitura das linhas falhou: vários pedidos juntos (a página, a
+    busca global…) não repetem a chamada, nem o aviso, em seguida. Tentar de
+    novo é a ação da pessoa (`atualizarDados`).
+  */
+  let ultimaFalhaDasLinhas = Number.NEGATIVE_INFINITY;
+  const PAUSA_APOS_FALHA_MS = 5_000;
 
   const sb = () => cliente();
   const perfil = () => obterPerfil();
@@ -482,6 +490,8 @@ export function criarCarga(
         consultaDoMonitoramento());
       if (rodada !== rodadaDasLinhas) return false;
       if (error) {
+        ultimaFalhaDasLinhas = agora();
+        publicarErroDoMonitoramento(erroAmigavel(error));
         avisar("Erro ao carregar dados: " + erroAmigavel(error), "error");
         return false;
       }
@@ -514,6 +524,7 @@ export function criarCarga(
   async function garantirLinhas() {
     if (!sessaoAberta || !pedidos.ha() || !podeCarregarMonitoramento()) return;
     if (linhasCarregadas && !desatualizadas) return;
+    if (agora() - ultimaFalhaDasLinhas < PAUSA_APOS_FALHA_MS) return;
     try {
       if (!linhasCarregadas && linhasDaCopia && !publicadas) {
         const daCopia = await linhasDaCopia.catch(() => null);
@@ -531,6 +542,8 @@ export function criarCarga(
       await carregarLinhas();
     } catch (erro) {
       console.warn("Falha ao carregar as linhas do monitoramento:", erro);
+      ultimaFalhaDasLinhas = agora();
+      publicarErroDoMonitoramento(erroAmigavel(erro));
       avisar("Erro ao carregar dados: " + erroAmigavel(erro), "error");
     }
   }
@@ -867,6 +880,7 @@ export function criarCarga(
     versaoDasLinhas = null;
     publicadas = null;
     ultimaLeitura = Number.NEGATIVE_INFINITY;
+    ultimaFalhaDasLinhas = Number.NEGATIVE_INFINITY;
     linhasCarregadas = false;
     desatualizadas = false;
     linhasDaCopia = null;

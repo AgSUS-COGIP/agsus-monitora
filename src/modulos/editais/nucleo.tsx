@@ -381,7 +381,7 @@ function ModalAberto({
 
 export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
   // Só os editais da área escolhida no menu; os indicadores contam os mesmos.
-  const { linhas, carregado } = usarAreaAtual();
+  const { linhas, carregado, erro } = usarAreaAtual();
   const doResumo = useSyncExternalStore(estado.assinar, estado.obter);
   const resumoDaArea = useMemo(
     // O edital de treinamento aparece na tabela, mas não nos indicadores.
@@ -482,6 +482,15 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
           rotulo: "Pesquisar edital, unidade, status, etapa ou risco",
         }}
         carregado={carregado}
+        erro={
+          erro
+            ? {
+                mensagem: erro,
+                oQue: "os editais",
+                tentarDeNovo: () => void window.refreshData?.(),
+              }
+            : null
+        }
         itens={noFiltro}
         filtrarPelaBusca={pelaBusca}
         colunas={COLUNAS}
@@ -496,10 +505,9 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
           />
         )}
         total={noFiltro.length}
+        // Sem edital algum, a faixa de cima já diz "Nenhum edital nesta área.": a tabela não repete.
         vazio={
-          editais.length
-            ? "Nenhum resultado para os filtros aplicados."
-            : "Nenhum edital cadastrado nesta área."
+          editais.length ? "Nenhum resultado para os filtros aplicados." : null
         }
         informacao={(quantos) =>
           quantos === null
