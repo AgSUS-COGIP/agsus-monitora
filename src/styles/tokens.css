@@ -300,6 +300,30 @@ body:not(.access-request-mode) .login-screen,
   --series-5: #d55181;
   --series-6: #8a6d00;
 
+  /* Paleta do rio (a arte da tela de acesso), de apoio às cores do manual:
+     floresta, folha, rio, terracota, ocre e areia. O par de texto (a cor
+     sobre o `-suave` e sobre o card) passa de 4,5:1 nos dois temas
+     (`tests/paleta-do-rio.test.ts` calcula); `--paleta-ocre-vivo` é só
+     preenchimento decorativo (2,3:1 sobre o branco), nunca texto nem ícone.
+     Os `-claro` são os tons para fundo escuro (a barra lateral escura). */
+  --paleta-floresta: #17493b;
+  --paleta-floresta-suave: #e3eee8;
+  --paleta-folha: #3b6e22;
+  --paleta-folha-suave: #e6f0dc;
+  --paleta-rio: #2c6e7a;
+  --paleta-rio-suave: #e0eef0;
+  --paleta-terracota: #a9401f;
+  --paleta-terracota-suave: #f8e4dc;
+  --paleta-ocre: #7e520a;
+  --paleta-ocre-suave: #faedd3;
+  --paleta-ocre-vivo: #d9a23a;
+  --paleta-areia: #f3e7cf;
+  --paleta-floresta-claro: #8fd0b4;
+  --paleta-folha-claro: #a6d27a;
+  --paleta-rio-claro: #86c9d4;
+  --paleta-terracota-claro: #f2a285;
+  --paleta-ocre-claro: #e8bc63;
+
   /* Terras Indígenas (domínio, não paleta): as mesmas
      constantes de `indigenous-territories-layer.js` — o botão da camada e a
      legenda do mapa da Saúde Indígena leem daqui
@@ -396,6 +420,24 @@ body:not(.access-request-mode) .login-screen,
   sucesso, perigo, neutro sólido): no escuro esses preenchimentos clareiam, e o
   texto escurece (#071421 sobre #63b6f3: 8,41).
 */
+/* A cor de cada área (src/lib/menu-lateral.ts), em `html[data-area]` (posto
+   por src/app/moldura.ts): Saúde Indígena na floresta, SEDE no ocre e
+   Projetos na terracota. Fora delas (Painéis, Administração) `--cor-da-area`
+   não existe e quem a lê cai no próprio padrão. Vale nos dois temas, porque os
+   `--paleta-*` já mudam no escuro. */
+html[data-area="saude-indigena"] {
+  --cor-da-area: var(--paleta-floresta);
+  --cor-da-area-suave: var(--paleta-floresta-suave);
+}
+html[data-area="sede"] {
+  --cor-da-area: var(--paleta-ocre);
+  --cor-da-area-suave: var(--paleta-ocre-suave);
+}
+html[data-area="projetos"] {
+  --cor-da-area: var(--paleta-terracota);
+  --cor-da-area-suave: var(--paleta-terracota-suave);
+}
+
 html[data-theme="dark"] {
   --color-sidebar-scroll-thumb: rgb(219 234 254 / 0.28);
   --color-sidebar-scroll-thumb-hover: rgb(219 234 254 / 0.45);
@@ -500,6 +542,20 @@ html[data-theme="dark"] {
   --series-4: #8e6cf2;
   --series-5: #d55181;
   --series-6: #a8861a;
+
+  /* Paleta do rio no escuro: os tons claros sobre suaves escuros. */
+  --paleta-floresta: var(--paleta-floresta-claro);
+  --paleta-floresta-suave: #173a35;
+  --paleta-folha: var(--paleta-folha-claro);
+  --paleta-folha-suave: #1f3526;
+  --paleta-rio: var(--paleta-rio-claro);
+  --paleta-rio-suave: #163847;
+  --paleta-terracota: var(--paleta-terracota-claro);
+  --paleta-terracota-suave: #3a2a2a;
+  --paleta-ocre: var(--paleta-ocre-claro);
+  --paleta-ocre-suave: #33301f;
+  --paleta-ocre-vivo: var(--paleta-ocre-claro);
+  --paleta-areia: #2a2a22;
 
   /* "Mapa DSEIs" no escuro: fundo da página, silhueta e borda escuras, a
      escala invertida em luminância (mais claro = mais). */

@@ -87,6 +87,22 @@ contam; a cor só conta em valor de declaração (seletor `#abc` não), e `borde
 - Cores de etapa do calendário: `--etapa-*`. Terras Indígenas têm cores de domínio, não de paleta
   ([[terras-indigenas]]).
 
+## Paleta do rio
+
+A arte da tela de acesso deu uma paleta de apoio (aprovada em 12/11/2026), ao lado das cores do
+manual (que seguem na marca e nos botões): `--paleta-floresta`, `-folha`, `-rio`, `-terracota`,
+`-ocre`, cada uma com `-suave` (fundo) e `-claro` (sobre fundo escuro), mais `--paleta-ocre-vivo`
+(só preenchimento) e `--paleta-areia`. Onde entra:
+
+- **Cor da área**: `html[data-area]` (posto por `src/app/moldura.ts`) define `--cor-da-area`:
+  Saúde Indígena floresta, SEDE ocre, Projetos terracota. O título da página segue a área (fora
+  das três, o padrão de antes); a bolinha do seletor de área na barra lateral usa os tons vivos
+  (`[data-cor-da-area]`, `barra-lateral.css`).
+- **Indicadores e selos** (`src/ui/ui.css`): info no rio, sucesso na folha, alerta no ocre, perigo
+  na terracota, destaque na floresta; o indicador ganha um friso de 3px na cor do tom.
+- Contraste calculado sobre `tokens.css` em `tests/paleta-do-rio.test.ts` (≥ 4,5:1 sobre o suave e
+  sobre o card, nos dois temas). Avisos e faixas de estado seguem nos `--state-*`.
+
 ## Séries de gráfico e mapa
 
 `--series-1` … `--series-6` (azul, laranja, ciano, violeta, magenta, oliva; claro e escuro em
