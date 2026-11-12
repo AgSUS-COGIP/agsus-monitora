@@ -570,6 +570,23 @@ describe("Aviso, Campo, Selo e estados", () => {
     expect(aprovado?.title).toBe("No prazo");
   });
 
+  it("Selo: `dados` vira data-*; valor indefinido não sai; o tom não é sobrescrito", async () => {
+    await montarNoApp(
+      h(
+        Selo,
+        {
+          tom: "pendente",
+          dados: { contratacao: "OUTRA_LISTA", vazio: undefined, tom: "x" },
+        },
+        "Convocado",
+      ),
+    );
+    const selo = $<HTMLElement>(".ui-selo");
+    expect(selo?.dataset.contratacao).toBe("OUTRA_LISTA");
+    expect(selo?.hasAttribute("data-vazio")).toBe(false);
+    expect(selo?.dataset.tom).toBe("alerta");
+  });
+
   it("EstadoVazio e Carregando: a classe pedida no lugar de .ui-vazio", async () => {
     await montarNoApp(h(Carregando, { className: "ui-secao-vazio" }));
     expect($("#raiz > div")?.className).toBe("ui-secao-vazio");

@@ -10,8 +10,8 @@ describe("origem da requisição aos proxies da Funai", () => {
     expect(
       origemDeTerceiro(
         req({
-          host: "agsus-monitora.vercel.app",
-          referer: "https://agsus-monitora.vercel.app/index.html",
+          host: "yeende.vercel.app",
+          referer: "https://yeende.vercel.app/index.html",
         }),
       ),
     ).toBe(false);
@@ -21,7 +21,7 @@ describe("origem da requisição aos proxies da Funai", () => {
     expect(
       origemDeTerceiro(
         req({
-          host: "agsus-monitora.vercel.app",
+          host: "yeende.vercel.app",
           origin: "https://site-qualquer.example",
         }),
       ),
@@ -34,9 +34,7 @@ describe("origem da requisição aos proxies da Funai", () => {
     embutindo nosso endereço — sempre envia a origem dele.
   */
   it("deixa passar quem não declara origem", () => {
-    expect(origemDeTerceiro(req({ host: "agsus-monitora.vercel.app" }))).toBe(
-      false,
-    );
+    expect(origemDeTerceiro(req({ host: "yeende.vercel.app" }))).toBe(false);
   });
 
   it("vale em preview e em desenvolvimento, sem domínio fixo em código", () => {

@@ -98,7 +98,8 @@ export const SITUACOES: Readonly<
   aguardando: { rotulo: "Aguardando", tom: "neutro" },
   em_andamento: { rotulo: "Em andamento", tom: "revisar" },
   concluida: { rotulo: "Concluída", tom: "aprovado" },
-  faltou: { rotulo: "Faltou", tom: "pendente" },
+  // Vermelho, como a faixa "Faltaram" da Fila do dia (era âmbar, 12/11/2026).
+  faltou: { rotulo: "Faltou", tom: "reprovado" },
 });
 
 export const RECORTES: readonly { valor: Recorte; rotulo: string }[] =

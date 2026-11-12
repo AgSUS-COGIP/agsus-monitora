@@ -41,7 +41,7 @@ describe("mobile Google OAuth", () => {
     await startMobileGoogleOAuth({
       client: { auth: { signInWithOAuth } },
       authStorage: { clearAuthState },
-      locationRef: new URL("https://agsus-monitora.vercel.app/"),
+      locationRef: new URL("https://yeende.vercel.app/"),
       sessionStorageRef: { removeItem },
       timeoutMs: 1000,
     });

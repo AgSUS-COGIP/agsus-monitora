@@ -104,21 +104,6 @@
   color: var(--text-secondary);
   font-size: var(--text-caption);
 }
-/* Badge do DS 11.8; o texto "SUB JUDICE" é literal do JSX. */
-.approved-tag {
-  display: inline-flex;
-  align-items: center;
-  width: max-content;
-  min-height: 20px;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-caption);
-  font-weight: var(--font-weight-medium);
-}
-.approved-tag.subjudice {
-  background: var(--state-warning-soft);
-  color: var(--state-warning);
-}
 /* Nota/modalidade alteradas por decisão judicial: o publicado riscado, o atual em peso. */
 .approved-de-para {
   display: inline-flex;
@@ -143,39 +128,10 @@
   color: var(--text-primary);
   font-size: var(--text-body-sm);
 }
-/* Selo de status: badge do DS 11.8 (20px, raio pequeno, caption 500, cor do estado). */
-.approved-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 20px;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-caption);
-  font-weight: var(--font-weight-medium);
-  white-space: nowrap;
-}
-.approved-status.success {
-  background: var(--state-success-soft);
-  color: var(--state-success);
-}
-.approved-status.danger {
-  background: var(--state-danger-soft);
-  color: var(--state-danger);
-}
-.approved-status.info {
-  background: var(--state-info-soft);
-  color: var(--state-info);
-}
-.approved-status.neutral {
-  background: var(--state-neutral-soft);
-  color: var(--state-neutral);
-}
-/* Convocado: chamado, aguardando apresentação. */
-.approved-status.warning {
-  background: var(--state-warning-soft);
-  color: var(--state-warning);
-}
+/*
+  O status do candidato é o Selo de src/ui/ (pílula, cor do estado; o tom vem
+  de tomDoStatus em lista-aprovados-rules.ts). Aqui só o que é desta tela.
+*/
 /* Contratado em outra lista decidido pelo sistema: borda tracejada (o status gravado é Contratado). */
 .approved-status.approved-status-calculado {
   outline: 1px dashed var(--state-neutral);

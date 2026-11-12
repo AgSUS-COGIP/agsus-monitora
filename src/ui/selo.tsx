@@ -6,7 +6,9 @@ import { classes } from "./classes.ts";
   "pendente", "revisar", "neutro". `className` acrescenta a classe de quem
   usa. Marcação: `.ui-selo[data-tom]` (fundo e texto do estado). `ponto`
   põe a bolinha na cor do texto antes do rótulo (as situações das listas da
-  seleção).
+  seleção). `dados` vira atributos `data-*` (contrato de teste/DOM de quem
+  usa, como o `data-contratacao` da Lista de aprovados); valor indefinido
+  não sai.
 */
 
 const TOM_DO_SELO: Partial<Record<string, string>> = {
@@ -22,6 +24,7 @@ export interface PropriedadesDoSelo {
   titulo?: string;
   className?: string;
   ponto?: boolean;
+  dados?: Readonly<Record<string, string | undefined>>;
   children?: ReactNode;
 }
 
@@ -30,10 +33,17 @@ export function Selo({
   titulo,
   className,
   ponto = false,
+  dados,
   children,
 }: PropriedadesDoSelo) {
+  const atributos = Object.fromEntries(
+    Object.entries(dados || {})
+      .filter(([, valor]) => valor !== undefined)
+      .map(([nome, valor]) => [`data-${nome}`, valor]),
+  );
   return (
     <span
+      {...atributos}
       className={classes("ui-selo", className)}
       data-tom={TOM_DO_SELO[tom] || "neutro"}
       title={titulo}

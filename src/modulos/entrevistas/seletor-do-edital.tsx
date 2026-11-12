@@ -151,8 +151,8 @@ export function usarSeletorDoEdital({
       ) : null}
       {e.carregandoEdital ? (
         <span className="entrevistas-seletor-carregando" role="status">
-          <i className="fa-solid fa-spinner fa-spin" aria-hidden="true" />{" "}
-          Abrindo o edital…
+          <span className="botao-girando" aria-hidden="true" /> Abrindo o
+          edital…
         </span>
       ) : null}
     </div>
