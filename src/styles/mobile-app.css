@@ -219,6 +219,8 @@ textarea,
 
   .toast-box,
   #toastBox {
+    /* Ancorado embaixo: sem `top: auto`, o `top` de app.css e o `bottom` daqui esticavam a caixa na tela toda. */
+    top: auto;
     left: 12px;
     right: 12px;
     bottom: calc(12px + var(--mobile-safe-bottom));
