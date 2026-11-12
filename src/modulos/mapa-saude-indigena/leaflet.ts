@@ -3,12 +3,14 @@
 
   Usado pelo mapa da Saúde Indígena e pelo de Projetos
   (src/modulos/mapa-de-projetos/). O Leaflet vem do CDN como `window.L`,
-  baixado só quando um mapa monta (`carregar-leaflet.ts`) e envolvido por `map-guard.ts` (limites do Brasil, zoom, régua,
-  teclado), `map-base-layer-switcher.ts` (Mapa/Satélite), `map-zoom-range.ts`
-  e `indigenous-territories-layer.ts` (Terras Indígenas e abrangência dos
-  DSEI). Os dois últimos só enfeitam mapas cujo contêiner tem id `map` ou
-  `detailMap` (o Mapa/Satélite também `mapaDosProjetos`) — por isso os ids
-  dos componentes (docs/biblioteca/modulo-mapa-saude-indigena.md).
+  baixado só quando um mapa monta (`carregar-leaflet.ts`). Cada mapa nasce
+  em `criarMapa`, que liga a guarda (`guarda-do-mapa.ts`: limites do Brasil,
+  zoom, régua, teclado). O Leaflet ainda é envolvido por
+  `map-base-layer-switcher.ts` (Mapa/Satélite) e
+  `indigenous-territories-layer.ts` (Terras Indígenas e abrangência dos
+  DSEI), que só enfeitam mapas cujo contêiner tem id `map` ou `detailMap`
+  (o Mapa/Satélite também `mapaDosProjetos`) — por isso os ids dos
+  componentes (docs/biblioteca/modulo-mapa-saude-indigena.md).
 
   Tudo o que entra no mapa é montado com a API do DOM (`textContent`,
   `createElementNS`): popups, dicas e ícones, sem `innerHTML`.
@@ -44,6 +46,11 @@ import {
   ZOOM_NACIONAL,
 } from "../../lib/enquadramento-do-brasil.ts";
 import { calcularLeque } from "../../lib/leque-de-marcadores.ts";
+import {
+  OPCOES_DOS_AZULEJOS,
+  opcoesDoMapa,
+  protegerMapa,
+} from "./guarda-do-mapa.ts";
 import {
   adicionarCamadaDeFundo,
   criarCamadaComRecuo,
@@ -83,20 +90,19 @@ export function prefereMenosMovimento() {
   moldura: com 1, o `fitBounds` só aceita zoom inteiro e o país ocupava 60%.
   Toda dica e todo popup do mapa ficam dentro dele (`manterDicasDentroDoMapa`:
   direção que cabe, largura relativa ao mapa); o `remove` desfaz o ouvinte.
+  A faixa do zoom e os limites são os da guarda (`opcoesDoMapa`).
 */
 export function criarMapa(L: LeafletDoMapa, elemento: HTMLElement) {
-  const mapa = L.map(elemento, {
-    zoomControl: true,
-    scrollWheelZoom: true,
-    attributionControl: true,
-    minZoom: 4,
-    maxZoom: 18,
-    zoomSnap: 0.25,
-    zoomDelta: 0.5,
-    worldCopyJump: false,
-    // O enquadramento é do componente; o map-guard não reenquadra por cima.
-    enquadramentoProprio: true,
-  });
+  const mapa = L.map(
+    elemento,
+    opcoesDoMapa(L, {
+      zoomControl: true,
+      attributionControl: true,
+      // O enquadramento é do componente; a guarda não reenquadra por cima.
+      enquadramentoProprio: true,
+    }),
+  );
+  protegerMapa(L, mapa);
   manterDicasDentroDoMapa(mapa);
   return mapa;
 }
@@ -141,7 +147,7 @@ export function adicionarFundo(
     camada =
       fundo.recuo && L.TileLayer?.extend
         ? criarCamadaComRecuo(L, fundo.url, opcoes)
-        : L.tileLayer(fundo.url, opcoes);
+        : L.tileLayer(fundo.url, { ...opcoes, ...OPCOES_DOS_AZULEJOS });
     camada.on?.("tileload", () => {
       falhas = 0;
       elemento.classList.remove("map-tiles-recovering");
@@ -166,7 +172,7 @@ export function adicionarFundo(
 
   O mapa pode nascer escondido — a Visão geral monta antes do login, e fica
   montada noutra tela ou ao trocar de área — e o enquadramento feito com
-  medida zero sai no zoom errado (o do `map-guard` também desiste). Quando o
+  medida zero sai no zoom errado (o da guarda também desiste). Quando o
   contêiner passa de zero para um tamanho, `aoAparecer` reenquadra; quando
   muda de medida já visível (tela cheia, barra lateral, janela),
   `aoMudarDeTamanho`.
@@ -224,14 +230,14 @@ export function remedir(
   }
 }
 
-/* O Brasil pelo contorno real (`BRASIL_BOUNDS`), como o `map-guard`. */
+/* O Brasil pelo contorno real (`BRASIL_BOUNDS`), como a guarda. */
 export function limitesDoBrasil(L: LeafletDoMapa) {
   return L.latLngBounds(BRASIL_BOUNDS[0], BRASIL_BOUNDS[1]);
 }
 
 /*
   O país inteiro com folga para as bolhas da borda (raio + traço + 12 px,
-  src/lib/enquadramento-do-brasil.ts); numa moldura baixa o `map-guard` deixa
+  src/lib/enquadramento-do-brasil.ts); numa moldura baixa a guarda deixa
   o zoom descer, em quartos, até caber — o norte não sai cortado.
 */
 export function enquadrarNoBrasil(L: LeafletDoMapa, mapa: MapaDoPainel) {
@@ -243,7 +249,7 @@ export function enquadrarNoBrasil(L: LeafletDoMapa, mapa: MapaDoPainel) {
 
 /*
   A volta de um DSEI ao Brasil: o mesmo enquadramento de `enquadrarNoBrasil`
-  (folga das bolhas, escala nacional de ≈ 500 km no máximo; o `map-guard`
+  (folga das bolhas, escala nacional de ≈ 500 km no máximo; a guarda
   desce o mínimo se a altura atual não couber), mas voando em `duracao`
   segundos. Quem decide se anima é `podeVoar` (menos movimento não voa).
 */

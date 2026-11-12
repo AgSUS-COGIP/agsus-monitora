@@ -97,8 +97,11 @@ describe("o Brasil inteiro cabe na moldura", () => {
   });
 });
 
-describe("o map-guard usa a regra", () => {
-  const guarda = readFileSync("src/modules/map-guard.ts", "utf8");
+describe("a guarda do mapa usa a regra", () => {
+  const guarda = readFileSync(
+    "src/modulos/mapa-saude-indigena/guarda-do-mapa.ts",
+    "utf8",
+  );
 
   it("folga do Brasil e zoom mínimo que cabe em todo enquadramento do país", () => {
     expect(guarda).toContain("zoomQueCabe(");

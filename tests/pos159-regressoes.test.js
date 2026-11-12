@@ -11,7 +11,10 @@ import { LOGO_PADRAO_DA_BARRA } from "../src/lib/marca-da-barra-lateral.ts";
 const app = fonteDoApp();
 const governance = readFileSync("src/modulos/configuracoes/estado.ts", "utf8");
 const sidebar = readFileSync("src/componentes/barra-lateral/marca.ts", "utf8");
-const mapGuard = readFileSync("src/modules/map-guard.ts", "utf8");
+const mapGuard = readFileSync(
+  "src/modulos/mapa-saude-indigena/guarda-do-mapa.ts",
+  "utf8",
+);
 const lifecycle = readFileSync("src/lib/session-lifecycle.ts", "utf8");
 // A barra lateral é React: o <img id="sideLogo"> nasce no componente da marca.
 const barraLateral = readFileSync(
@@ -144,9 +147,9 @@ describe("enquadramento do Brasil medido no contorno real", () => {
     src/lib/mapa-saude-indigena/contornos.js) é conferida em
     tests/mapa-saude-indigena.test.js.
   */
-  it("o map-guard usa a medição, não um retângulo à mão", () => {
+  it("a guarda do mapa usa a medição, não um retângulo à mão", () => {
     expect(mapGuard).toContain(
-      'import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../lib/brasil-bounds.ts"',
+      'import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../../lib/brasil-bounds.ts"',
     );
     expect(semComentarios(mapGuard)).not.toContain("-34.9");
     expect(semComentarios(mapGuard)).not.toContain("-74.2");

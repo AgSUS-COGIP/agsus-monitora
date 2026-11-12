@@ -54,8 +54,9 @@ describe("guarda do mapa depois do remove()", () => {
   });
 
   it("não estabiliza um mapa que já foi removido", async () => {
-    await import("../src/modules/map-guard.ts");
-    window.L.map("detailMap");
+    const { protegerMapa } =
+      await import("../src/modulos/mapa-saude-indigena/guarda-do-mapa.ts");
+    protegerMapa(window.L, mapa);
 
     mapa.disparar("move");
     mapa.disparar("unload");
@@ -69,8 +70,9 @@ describe("guarda do mapa depois do remove()", () => {
   });
 
   it("continua a estabilizar enquanto o mapa existe", async () => {
-    await import("../src/modules/map-guard.ts");
-    window.L.map("detailMap");
+    const { protegerMapa } =
+      await import("../src/modulos/mapa-saude-indigena/guarda-do-mapa.ts");
+    protegerMapa(window.L, mapa);
 
     mapa.disparar("move");
     vi.advanceTimersByTime(100);
@@ -123,8 +125,9 @@ describe("guarda do mapa: enquadrar um ponto só e o nome do mapa", () => {
   });
 
   it("ir até um ponto não vira o continente com zoom 4,5", async () => {
-    await import("../src/modules/map-guard.ts");
-    window.L.map(container);
+    const { protegerMapa } =
+      await import("../src/modulos/mapa-saude-indigena/guarda-do-mapa.ts");
+    protegerMapa(window.L, mapa);
     mapa.flyToBounds(caixa([-3.1, -60.0], [-3.1, -60.0]), { maxZoom: 11 });
     const [limites, opcoes] = flyToBoundsOriginal.mock.calls.at(-1);
     expect(limites.getSouth()).toBe(-3.1);
@@ -134,8 +137,9 @@ describe("guarda do mapa: enquadrar um ponto só e o nome do mapa", () => {
 
   it("não troca o nome que o mapa já tem", async () => {
     container.setAttribute("aria-label", "Mapa de Projetos");
-    await import("../src/modules/map-guard.ts");
-    window.L.map(container);
+    const { protegerMapa } =
+      await import("../src/modulos/mapa-saude-indigena/guarda-do-mapa.ts");
+    protegerMapa(window.L, mapa);
     expect(container.getAttribute("aria-label")).toBe("Mapa de Projetos");
   });
 });

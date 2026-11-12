@@ -1,19 +1,26 @@
-import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../lib/brasil-bounds.ts";
+import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../../lib/brasil-bounds.ts";
 import {
   FOLGA_DO_BRASIL,
   zoomQueCabe,
-} from "../lib/enquadramento-do-brasil.ts";
-import { envolverFabricaDoLeaflet } from "../lib/fabrica-do-leaflet.ts";
+} from "../../lib/enquadramento-do-brasil.ts";
 
 /*
+  A GUARDA DO MAPA
+
+  O que todo mapa da Visão geral tem, aplicado por `criarMapa` (leaflet.ts)
+  no mapa que acabou de nascer — sem envolver `L.map` nem `L.tileLayer` no
+  namespace do Leaflet, como fazia o antigo `map-guard.ts`:
+
+    - `opcoesDoMapa`: limites da América do Sul, sem cópias do mundo, zoom em
+      quartos, roda e teclado, de ZOOM_MINIMO (escala nacional) a ZOOM_MAXIMO;
+    - `OPCOES_DOS_AZULEJOS`: o fundo de azulejos sem cópias laterais e sem
+      recorte por `bounds` (ver a nota em `OPCOES_DOS_AZULEJOS`);
+    - `protegerMapa`: enquadramentos presos aos limites, zoom mínimo que
+      acompanha a moldura, régua, teclado (+, −, 0) e nome acessível.
+
   O Leaflet vem do CDN como `window.L`, sem tipos instalados: este arquivo
-  declara só o que usa dele (o namespace, os limites e o mapa).
+  declara só o que usa dele (os limites, o ponto, a régua e o mapa).
 */
-declare global {
-  interface Window {
-    L?: unknown;
-  }
-}
 
 /** `L.latLng`: um ponto. */
 interface PontoDoLeaflet {
@@ -94,22 +101,8 @@ interface MapaDaGuarda {
   __agsusScaleControlAdded?: boolean;
 }
 
-type FabricaDeMapa = (
-  this: unknown,
-  elemento: unknown,
-  opcoes?: OpcoesDoEnquadramento,
-) => MapaDaGuarda;
-
-type FabricaDeCamada = (
-  this: unknown,
-  url: unknown,
-  opcoes?: Record<string, unknown>,
-) => unknown;
-
-/** O namespace `L`, no que o guarda usa, com as marcas de instalação. */
+/** O namespace `L`, no que a guarda usa. */
 interface LeafletDaGuarda {
-  map?: FabricaDeMapa;
-  tileLayer?: FabricaDeCamada;
   latLngBounds: (a: unknown, b?: unknown) => LimitesDoLeaflet;
   latLng: (a: unknown, b?: unknown) => PontoDoLeaflet;
   control?: {
@@ -120,19 +113,10 @@ interface LeafletDaGuarda {
       maxWidth: number;
     }) => { addTo(mapa: MapaDaGuarda): unknown };
   };
-  __agsusMapGuardInstalled?: boolean;
-  __agsusTileLayerGuardInstalled?: boolean;
-  __agsusMapFactoryGuardInstalled?: boolean;
 }
 
-/** O namespace já conferido: as duas fábricas existem. */
-type LeafletComFabricas = LeafletDaGuarda & {
-  map: FabricaDeMapa;
-  tileLayer: FabricaDeCamada;
-};
-
 /*
-  Os limites agora vêm do contorno real do país, não de um retângulo estimado.
+  Os limites vêm do contorno real do país, não de um retângulo estimado.
   Ver `src/lib/brasil-bounds.ts` para a medição e para o que a diferença custava.
 */
 const BRAZIL_VIEW_BOUNDS = BRASIL_BOUNDS;
@@ -142,6 +126,13 @@ const BRAZIL_VIEW_BOUNDS = BRASIL_BOUNDS;
 const SOUTH_AMERICA_MAX_BOUNDS = NAVEGACAO_BOUNDS;
 const HEALTH_MAP_MIN_ZOOM = 4.5;
 const HEALTH_MAP_OVERVIEW_MAX_ZOOM = 4.5;
+
+/*
+  Faixa do zoom: 4.5 é o afastamento nacional (régua na faixa de 500 km);
+  19, a aproximação na faixa de dezenas de metros.
+*/
+export const ZOOM_MINIMO = HEALTH_MAP_MIN_ZOOM;
+export const ZOOM_MAXIMO = 19;
 
 const DEFAULT_MAP_OPTIONS = {
   maxBoundsViscosity: 0.82,
@@ -157,93 +148,49 @@ const DEFAULT_MAP_OPTIONS = {
   keyboardPanDelta: 80,
 };
 
-let installed = false;
-
-export function installLeafletMapGuard(): boolean {
-  if (installed) return true;
-
-  const L = window.L as LeafletDaGuarda | undefined;
-  if (!L?.map || !L.latLngBounds || !L.tileLayer) return false;
-  if (L.__agsusMapGuardInstalled) {
-    installed = true;
-    return true;
-  }
-
-  installTileLayerGuard(L as LeafletComFabricas);
-  installMapGuard(L as LeafletComFabricas);
-
-  L.__agsusMapGuardInstalled = true;
-  installed = true;
-  return true;
-}
-
-function installTileLayerGuard(L: LeafletComFabricas) {
-  if (L.__agsusTileLayerGuardInstalled) return;
-
-  const originalTileLayer = L.tileLayer;
-
-  /*
-    O recorte dos azulejos era a origem do vazio dentro do card.
-
-    `bounds: toMaxBounds(L)` mandava o Leaflet não pedir azulejo nenhum fora de
-    NAVEGACAO_BOUNDS, que tem 57.5° de longitude. Só que o enquadramento do
-    Brasil é decidido pela latitude: 39.0° em 480 px dão zoom 3.75, e a esse
-    zoom cabem 9.57 px por grau. Um card de 1642 px precisa então de 171.6° de
-    longitude — 114° para os quais, por causa do recorte, não existia azulejo.
-    Medido no protótipo: **33% da área do card tinha mapa**; os outros 67%
-    eram o fundo cinzento do container.
-
-    Era esse vazio que a regra `max-width: altura * 1.25` tentava esconder
-    encolhendo o `#detailMap` — e que, ao encolher, virava faixa branca do card.
-
-    `noWrap: true` continua a impedir as cópias laterais do mundo, que é o que
-    o recorte defendia de facto. O que se perde é só o recorte do desenho; quem
-    limita a navegação continua a ser o `maxBounds` do mapa, intacto logo
-    abaixo.
-  */
-  L.tileLayer = envolverFabricaDoLeaflet(
-    originalTileLayer,
-    function guardedTileLayer(
-      this: unknown,
-      urlTemplate: unknown,
-      options: Record<string, unknown> = {},
-    ) {
-      return originalTileLayer.call(this, urlTemplate, {
-        ...options,
-        noWrap: true,
-        updateWhenIdle: true,
-        keepBuffer: 2,
-      });
-    },
-  );
-
-  L.__agsusTileLayerGuardInstalled = true;
-}
-
-function installMapGuard(L: LeafletComFabricas) {
-  if (L.__agsusMapFactoryGuardInstalled) return;
-
-  const originalMap = L.map;
-
-  L.map = function guardedLeafletMap(
-    this: unknown,
-    element: unknown,
-    options: OpcoesDoEnquadramento = {},
-  ) {
-    const map = originalMap.call(this, element, {
-      ...DEFAULT_MAP_OPTIONS,
-      ...options,
-      maxBounds: toMaxBounds(L),
-      maxBoundsViscosity:
-        options.maxBoundsViscosity ?? DEFAULT_MAP_OPTIONS.maxBoundsViscosity,
-      worldCopyJump: false,
-    });
-
-    hardenMapInstance(L, map);
-    return map;
+/** As opções de `L.map`: as do componente sobre as da guarda, com os limites e a faixa do zoom. */
+export function opcoesDoMapa(
+  leaflet: object,
+  opcoes: OpcoesDoEnquadramento = {},
+): Record<string, unknown> {
+  const L = leaflet as LeafletDaGuarda;
+  return {
+    ...DEFAULT_MAP_OPTIONS,
+    ...opcoes,
+    maxBounds: toMaxBounds(L),
+    maxBoundsViscosity:
+      opcoes.maxBoundsViscosity ?? DEFAULT_MAP_OPTIONS.maxBoundsViscosity,
+    worldCopyJump: false,
+    minZoom: ZOOM_MINIMO,
+    maxZoom: ZOOM_MAXIMO,
   };
+}
 
-  L.__agsusMapFactoryGuardInstalled = true;
+/*
+  O recorte dos azulejos era a origem do vazio dentro do card.
+
+  `bounds: NAVEGACAO_BOUNDS` mandava o Leaflet não pedir azulejo nenhum fora
+  da caixa, que tem 57.5° de longitude. Só que o enquadramento do Brasil é
+  decidido pela latitude: 39.0° em 480 px dão zoom 3.75, e a esse zoom cabem
+  9.57 px por grau. Um card de 1642 px precisa então de 171.6° de longitude —
+  114° para os quais, por causa do recorte, não existia azulejo. Medido no
+  protótipo: **33% da área do card tinha mapa**; os outros 67% eram o fundo
+  cinzento do container.
+
+  `noWrap: true` continua a impedir as cópias laterais do mundo, que é o que
+  o recorte defendia de facto. Quem limita a navegação é o `maxBounds` do
+  mapa (`opcoesDoMapa`). A camada WMS da Funai não passa por aqui: ela declara
+  `updateWhenIdle: false` e `keepBuffer: 3` de propósito.
+*/
+export const OPCOES_DOS_AZULEJOS = Object.freeze({
+  noWrap: true,
+  updateWhenIdle: true,
+  keepBuffer: 2,
+});
+
+/** Liga a guarda ao mapa recém-criado (uma vez por mapa). */
+export function protegerMapa(leaflet: object, mapa: object): void {
+  hardenMapInstance(leaflet as LeafletDaGuarda, mapa as MapaDaGuarda);
 }
 
 function hardenMapInstance(L: LeafletDaGuarda, map: MapaDaGuarda) {
@@ -711,5 +658,3 @@ function clampZoom(map: MapaDaGuarda, zoom: unknown): number {
   const max = Number.isFinite(configuredMax) ? Math.max(configuredMax, 18) : 18;
   return Math.max(min, Math.min(value, max));
 }
-
-installLeafletMapGuard();

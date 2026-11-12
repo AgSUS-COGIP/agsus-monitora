@@ -1,7 +1,10 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const guard = readFileSync("src/modules/map-guard.ts", "utf8");
+const guard = readFileSync(
+  "src/modulos/mapa-saude-indigena/guarda-do-mapa.ts",
+  "utf8",
+);
 const switcher = readFileSync("src/modules/map-base-layer-switcher.ts", "utf8");
 
 describe("faixa de zoom do mapa de Saude Indigena", () => {

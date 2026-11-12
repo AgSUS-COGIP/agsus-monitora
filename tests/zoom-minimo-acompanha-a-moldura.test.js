@@ -74,8 +74,9 @@ describe("o zoom mínimo acompanha a moldura", () => {
       clearTimeout: globalThis.clearTimeout,
       requestAnimationFrame: (fn) => globalThis.setTimeout(fn, 0),
     };
-    await import("../src/modules/map-guard.ts");
-    window.L.map("map");
+    const { protegerMapa } =
+      await import("../src/modulos/mapa-saude-indigena/guarda-do-mapa.ts");
+    protegerMapa(window.L, mapa);
     minimoOriginal.mockClear();
   };
 

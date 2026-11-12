@@ -4,7 +4,10 @@ import { describe, expect, it } from "vitest";
 const css = readFileSync("src/styles/post157-interface-tuning.css", "utf8");
 const main = readFileSync("src/main.ts", "utf8");
 const telas = readFileSync("src/app/telas.tsx", "utf8");
-const mapGuard = readFileSync("src/modules/map-guard.ts", "utf8");
+const mapGuard = readFileSync(
+  "src/modulos/mapa-saude-indigena/guarda-do-mapa.ts",
+  "utf8",
+);
 const sidebar = readFileSync("src/componentes/barra-lateral/marca.ts", "utf8");
 // A escolha da logo e da cor é de Configurações › Aparência (React).
 const marcaDaBarra = readFileSync("src/lib/marca-da-barra-lateral.ts", "utf8");

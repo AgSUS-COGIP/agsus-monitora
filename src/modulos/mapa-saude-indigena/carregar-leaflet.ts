@@ -7,11 +7,11 @@
 
     1. o CSS e o script do Leaflet injetados no <head> (uma vez só; se
        `window.L` já existe, o script não é baixado de novo);
-    2. as guardas que envolvem o `L` (mesma ordem de antes, no arranque):
-       `map-guard.ts` (limites do Brasil, zoom, teclado),
-       `map-base-layer-switcher.ts` (Mapa/Satélite), `map-zoom-range.ts` e
+    2. os módulos que ainda envolvem o `L`, nesta ordem:
+       `map-base-layer-switcher.ts` (Mapa/Satélite) e
        `indigenous-territories-layer.ts` (Terras Indígenas e abrangência dos
-       DSEI), com o CSS delas.
+       DSEI), com o CSS deles. A guarda do mapa (limites, zoom, teclado) não
+       envolve nada: `criarMapa` a liga em cada mapa (`guarda-do-mapa.ts`).
 
   Falhou (rede, CDN fora): a promessa rejeita e a próxima chamada tenta de
   novo. Os módulos das guardas passam por `importarComRecarga` (versão nova
@@ -40,9 +40,7 @@ export interface OpcoesDoLeaflet {
 
 const carregarGuardas = importarComRecarga(() =>
   Promise.all([
-    import("../../modules/map-guard.ts"),
     import("../../modules/map-base-layer-switcher.ts"),
-    import("../../modules/map-zoom-range.ts"),
     import("../../modules/indigenous-territories-layer.ts"),
     import("../../styles/map-base-layer-switcher.css"),
     import("../../styles/indigenous-territories-layer.css"),
@@ -50,10 +48,8 @@ const carregarGuardas = importarComRecarga(() =>
 );
 
 async function instalarGuardasPadrao() {
-  const [guarda, fundo, zoom, terras] = await carregarGuardas();
-  guarda.installLeafletMapGuard();
+  const [fundo, terras] = await carregarGuardas();
   fundo.installMapBaseLayerSwitcher();
-  zoom.installMapZoomRange();
   terras.installIndigenousTerritoriesLayer();
 }
 

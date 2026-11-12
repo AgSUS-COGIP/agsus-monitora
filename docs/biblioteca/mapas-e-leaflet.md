@@ -22,8 +22,13 @@ marcadores, lista de unidades) é explicado pela Aya, em `docs/aya/regras-dos-ma
 - `src/lib/mapa-render.ts`, `src/lib/brasil-bounds.ts` (enquadramento pelo contorno real do
   Brasil), `src/lib/mapa-saude-indigena/*.ts` (contagens, bolhas, CASAIs, unidades, vínculos,
   enquadramentos, formas e cores).
-- Guardas globais no legado: `src/modules/map-guard.ts`, `map-zoom-range.ts` e o seletor
-  Mapa/Satélite `map-base-layer-switcher.ts`.
+- `src/modulos/mapa-saude-indigena/guarda-do-mapa.ts` — a guarda que `criarMapa` liga em cada
+  mapa: limites da América do Sul, zoom de 4,5 a 19, zoom mínimo que acompanha a moldura, régua,
+  teclado (+, −, 0) e os azulejos sem cópias do mundo (`OPCOES_DOS_AZULEJOS`). Não envolve
+  `L.map` nem `L.tileLayer`.
+- Ainda no legado, envolvendo o Leaflet quando ele chega (`carregar-leaflet.ts`): o seletor
+  Mapa/Satélite `src/modules/map-base-layer-switcher.ts` e a camada de Terras Indígenas
+  ([[terras-indigenas]]).
 - `src/lib/filtros-do-mapa.ts` — a regra dos filtros da página do mapa: comparação sem acento,
   opções sem duplicata, poda até estabilizar. A Visão geral guarda o estado e delega para cá;
   avisa pelo evento `agsus:filtros-alterados`.

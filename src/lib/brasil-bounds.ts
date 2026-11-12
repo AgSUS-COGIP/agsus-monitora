@@ -7,7 +7,7 @@
     legacy-app [[-33.50, -73.00], [5.50, -34.50]]  → 38.50° de longitude
     contorno   [[-33.75, -73.99], [5.27, -32.42]]  → 39.02° x 41.57°
 
-  O do `map-guard` é 2.28° mais alto que o país — 5.8% de latitude a mais. Como
+  O do antigo `map-guard` é 2.28° mais alto que o país — 5.8% de latitude a mais. Como
   `fitBounds` obedece à dimensão que primeiro esbarra na moldura, num card largo
   quem manda é a latitude: essa sobra reduzia o mapa inteiro e deixava faixas
   vazias em cima e embaixo. O do `legacy-app`, ao contrário, era 3.07° estreito
