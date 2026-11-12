@@ -79,9 +79,6 @@
     "raio": 4,
     "curva": 2
   },
-  "src/modulos/recursos/recursos.css": {
-    "curva": 1
-  },
   "src/modulos/resumo-do-dia/resumo-do-dia.css": {
     "raio": 1
   },
