@@ -300,12 +300,10 @@ describe("marcos do ano", () => {
         marco: 7500,
         ano: 2026,
       }),
-    ).toBe(
-      "A equipe da Saúde Indígena passou de 7.500 análises concluídas em 2026!",
-    );
+    ).toBe("Em 2026, a equipe da Saúde Indígena já concluiu 7.500 análises.");
     expect(
       mensagemDoMarcoDoAno({ nomeDaArea: "Projetos", marco: 1000, ano: 2026 }),
-    ).toBe("A equipe de Projetos passou de 1.000 análises concluídas em 2026!");
+    ).toBe("Em 2026, a equipe de Projetos já concluiu 1.000 análises.");
   });
 
   it("o agradecimento dos fogos é à equipe da área, com o número no céu", () => {

@@ -833,7 +833,9 @@ describe("boas-vindas e marcos do ano", () => {
       p_area: "saude-indigena",
     });
     const marco = secao.querySelector(".marcos-do-ano");
-    expect(marco.textContent).toContain("Saúde Indígena passou de");
+    expect(marco.textContent).toContain(
+      "a equipe da Saúde Indígena já concluiu 7.500 análises",
+    );
     // E os fogos do marco, com o agradecimento à equipe (o número vai no céu);
     // o desenho chega por import() (src/app/comemoracao-sob-demanda.ts).
     await vi.waitFor(() =>

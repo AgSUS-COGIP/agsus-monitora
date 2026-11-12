@@ -34,8 +34,8 @@ import { linhasDaResposta } from "../../lib/visao-geral.ts";
     de fechar — é onde fica a conta dos editais da área atual com etapa na
     semana (o bloco "Próximos 7 dias" saiu por isso); "Ver cronograma" abre o
     Cronograma da área pelo item do menu.
-  - Marcos do ano: "A equipe da Saúde Indígena passou de 7.500 análises
-    concluídas em 2026!", num card igual, com ×, e os fogos do marco (o
+  - Marcos do ano: "Em 2026, a equipe da Saúde Indígena já concluiu 7.500
+    análises.", num card igual, com ×, e os fogos do marco (o
     número desenhado no céu e "7.500 análises concluídas em 2026. Obrigado,
     equipe da Saúde Indígena!"). Números só da equipe
     (obter_marcos_da_area), nunca de uma pessoa; uma leitura por área e por

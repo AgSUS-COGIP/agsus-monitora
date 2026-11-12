@@ -496,7 +496,7 @@ export function mensagemDoMarcoDoAno({
   marco: unknown;
   ano: unknown;
 }): string {
-  return `A ${equipeDaArea(nomeDaArea)} passou de ${formatarMarco(marco)} análises concluídas em ${ano}!`;
+  return `Em ${ano}, a ${equipeDaArea(nomeDaArea)} já concluiu ${formatarMarco(marco)} análises.`;
 }
 
 /** O agradecimento dos fogos do marco do ano: "1.000 análises concluídas em 2026. Obrigado, equipe de Projetos!" */
@@ -531,8 +531,8 @@ export function mensagemDoFimDoTour({
   nome: string;
 }): string {
   return trilha
-    ? `Parabéns! Você concluiu a trilha "${nome}".`
-    : `Parabéns! Você conheceu a tela ${nome}.`;
+    ? `Trilha "${nome}" concluída.`
+    : `Tour da tela ${nome} concluído.`;
 }
 
 /** A forma do marco do ano no céu: o número ("1.000", "2.500"). */
