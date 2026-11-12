@@ -62,13 +62,14 @@ export function Topo({
   e: SnapshotDaVisaoGeral;
   aoExportar: () => void;
 }) {
-  const status = e.erro
-    ? ""
-    : !e.carregado
-      ? "Carregando dados…"
-      : e.carregadoEm
-        ? `Atualizado às ${horaCurta(e.carregadoEm)}`
-        : "";
+  const status =
+    e.erro && !e.carregado
+      ? ""
+      : !e.carregado
+        ? "Carregando dados…"
+        : e.carregadoEm
+          ? `Atualizado às ${horaCurta(e.carregadoEm)}`
+          : "";
   return (
     <TopoDoPainel
       status={status}

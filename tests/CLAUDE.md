@@ -13,6 +13,7 @@ e [[testes-de-navegador]] (Playwright).
 - **Postgres de verdade** em `apoio/banco-dos-robos.ts` (PGlite, `// @vitest-environment node`);
   modelo antes × depois × rollback: `catalogo-dos-robos-no-banco.test.ts`.
 - Teste novo de tela com sessão vai em `sessao-simulada.spec.js`, simulando as RPCs.
+- Spec do Playwright continua `.spec.js` (o `playwright.config.js` só casa esse padrão); o apoio que ele importa fica em `apoio/` (`sessao-simulada.js`).
 - Nome do arquivo descreve o comportamento em português. Bug corrigido → teste que falharia antes.
   Não leia `public/data/*.json` inteiro; use recorte fixo. Dados sempre fictícios.
 

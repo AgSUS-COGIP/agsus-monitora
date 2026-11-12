@@ -8,6 +8,7 @@ import {
 import {
   CENARIOS,
   modulosEAbas,
+  NOME_DE_200,
   monitoramento,
   resumoDoNucleo,
 } from "./fixtures/acabamento/dados.js";
@@ -23,6 +24,9 @@ import {
   horizontal da página. O resto (contraste, camadas, quebra de texto, estado
   vazio e de erro) é conferido por olho, nas imagens.
 
+  Roda só sob demanda (`CAPTURAS=1`): são 56 capturas, e o que elas dão é para
+  olhar. Comando em docs/biblioteca/testes-de-navegador.md.
+
   O tema é o do app: a chave `agsus_dark_mode_v1` = "1" no armazenamento, que o
   <head> lê antes do primeiro quadro e marca `html[data-theme="dark"]`.
 */
@@ -31,6 +35,8 @@ const PASTA = "test-results/acabamento";
 const TEMAS = ["claro", "escuro"];
 const LARGURAS = { 375: 800, 1280: 900 };
 const CHAVE_DO_TEMA = "agsus_dark_mode_v1";
+/** O começo do texto de 200 caracteres: basta para saber que ele chegou à tela. */
+const TRECHO_LONGO = NOME_DE_200.slice(0, 40);
 
 mkdirSync(PASTA, { recursive: true });
 
@@ -84,17 +90,36 @@ async function abrir(page, { caminho, tema, largura, cenario, area }) {
 
 async function assentar(page) {
   await page.waitForLoadState("networkidle").catch(() => {});
-  await page.waitForTimeout(600);
   // O convite do tour da tela cobre o canto: fica fora da captura.
   const convite = page.getByRole("button", { name: "Agora não" });
   if (await convite.isVisible()) {
     await convite.click({ timeout: 2000 }).catch(() => {});
-    await page.waitForTimeout(300);
+    await expect(convite).toBeHidden();
   }
+}
+
+/*
+  O que cada cenário tem de mostrar na tela: sem isto a captura poderia ser de
+  um esqueleto ou de uma tela quebrada e o teste passaria. Cada tela diz onde
+  estão as linhas, a mensagem de vazio e o erro.
+*/
+async function conferirCenario(
+  page,
+  cenario,
+  { linhas, minimo = 50, vazio, erro, texto },
+) {
+  if (cenario === "cheia")
+    // Tabela contínua: desenha 50 por vez, das 220 que vieram.
+    await expect.poll(() => linhas.count()).toBeGreaterThanOrEqual(minimo);
+  if (cenario === "longo") await expect(texto).toBeVisible();
+  if (cenario === "vazio") await expect(vazio).toBeVisible();
+  if (cenario === "erro") await expect(erro).toBeVisible();
 }
 
 async function capturar(page, erros, { tela, tema, largura, cenario }) {
   await assentar(page);
+  // Uma pausa curta só para as transições de entrada (toast, gaveta) terminarem antes da foto.
+  await page.waitForTimeout(400);
   await page.screenshot({
     path: `${PASTA}/${tela}-${tema}-${largura}-${cenario}.png`,
   });
@@ -111,6 +136,10 @@ async function capturar(page, erros, { tela, tema, largura, cenario }) {
 
 test.describe("capturas do acabamento", () => {
   test.beforeEach(async ({ request }) => {
+    test.skip(
+      !process.env.CAPTURAS,
+      "capturas do acabamento: rode com CAPTURAS=1",
+    );
     test.skip(
       !(await buildSimulado(request)),
       `Compile com VITE_SUPABASE_URL=${SUPABASE} para rodar estes testes.`,
@@ -130,6 +159,12 @@ test.describe("capturas do acabamento", () => {
             caminho: "/sede/editais",
           });
           await expect(page.locator("#pageTitle")).toHaveText("Editais");
+          await conferirCenario(page, cenario, {
+            linhas: page.locator("#nucleoRows tr[data-record-id]"),
+            vazio: page.getByText("Nenhum edital nesta área."),
+            erro: page.locator("#nucleoRows").getByRole("alert"),
+            texto: page.locator("#nucleoRows").getByText(TRECHO_LONGO).first(),
+          });
           await capturar(page, erros, { ...opcoes, tela: "editais" });
         });
 
@@ -155,6 +190,15 @@ test.describe("capturas do acabamento", () => {
           const erros = await abrir(page, {
             ...opcoes,
             caminho: "/sede/visao-geral",
+          });
+          await conferirCenario(page, cenario, {
+            linhas: page.locator("tr[data-linha]"),
+            vazio: page.getByText("Nenhum processo seletivo nesta área."),
+            erro: page.locator(".visao-geral-tabela-caixa").getByRole("alert"),
+            texto: page
+              .locator(".visao-geral-tabela-caixa")
+              .getByText(TRECHO_LONGO)
+              .first(),
           });
           await capturar(page, erros, { ...opcoes, tela: "visao-geral" });
         });
@@ -182,9 +226,16 @@ test.describe("capturas do acabamento", () => {
             ...opcoes,
             caminho: "/administracao/configuracoes/modulos",
           });
-          await expect(
-            page.locator('.config-secao[data-secao="modulos"]'),
-          ).toBeVisible();
+          const secao = page.locator('.config-secao[data-secao="modulos"]');
+          await expect(secao).toBeVisible();
+          await conferirCenario(page, cenario, {
+            // Cheia: 12 abas em cada uma das 3 áreas.
+            linhas: secao.getByText(/^Aba \d+ de /),
+            minimo: 30,
+            vazio: secao.getByText("Nenhum painel externo cadastrado."),
+            erro: secao.getByRole("alert"),
+            texto: secao.getByText(TRECHO_LONGO).first(),
+          });
           await capturar(page, erros, {
             ...opcoes,
             tela: "configuracoes-modulos",

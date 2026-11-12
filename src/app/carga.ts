@@ -44,6 +44,7 @@ import { esconderEsqueleto, marcarAtualizacao } from "./carregamento.ts";
 import {
   assinarPedidosDasLinhas,
   esquecerLinhasDoMonitoramento,
+  obterDadosDoMonitoramento,
   publicarErroDoMonitoramento,
   linhasPedidas,
   publicarLinhasDoMonitoramento,
@@ -285,12 +286,17 @@ export function criarCarga(
   /* Quando as linhas foram lidas do banco pela última vez (o Realtime espaça a partir daí). */
   let ultimaLeitura = Number.NEGATIVE_INFINITY;
   /*
-    Quando a última leitura das linhas falhou: vários pedidos juntos (a página, a
-    busca global…) não repetem a chamada, nem o aviso, em seguida. Tentar de
-    novo é a ação da pessoa (`atualizarDados`).
+    A leitura das linhas falhou: o erro vai para o store (as telas o mostram no
+    lugar do esqueleto) e o toast sai só se for uma falha nova. Pedidos que se
+    seguem à mesma falha (a página, a busca global…) não repetem o aviso; a
+    chamada em voo já é compartilhada (`cargaDasLinhas`).
   */
-  let ultimaFalhaDasLinhas = Number.NEGATIVE_INFINITY;
-  const PAUSA_APOS_FALHA_MS = 5_000;
+  function falhaDasLinhas(erro: unknown) {
+    const mensagem = erroAmigavel(erro);
+    const repetida = obterDadosDoMonitoramento().erro === mensagem;
+    publicarErroDoMonitoramento(mensagem);
+    if (!repetida) avisar("Erro ao carregar dados: " + mensagem, "error");
+  }
 
   const sb = () => cliente();
   const perfil = () => obterPerfil();
@@ -490,9 +496,7 @@ export function criarCarga(
         consultaDoMonitoramento());
       if (rodada !== rodadaDasLinhas) return false;
       if (error) {
-        ultimaFalhaDasLinhas = agora();
-        publicarErroDoMonitoramento(erroAmigavel(error));
-        avisar("Erro ao carregar dados: " + erroAmigavel(error), "error");
+        falhaDasLinhas(error);
         return false;
       }
       linhas = Array.isArray(data) ? (data as LinhaDoMonitoramento[]) : [];
@@ -524,7 +528,6 @@ export function criarCarga(
   async function garantirLinhas() {
     if (!sessaoAberta || !pedidos.ha() || !podeCarregarMonitoramento()) return;
     if (linhasCarregadas && !desatualizadas) return;
-    if (agora() - ultimaFalhaDasLinhas < PAUSA_APOS_FALHA_MS) return;
     try {
       if (!linhasCarregadas && linhasDaCopia && !publicadas) {
         const daCopia = await linhasDaCopia.catch(() => null);
@@ -542,9 +545,7 @@ export function criarCarga(
       await carregarLinhas();
     } catch (erro) {
       console.warn("Falha ao carregar as linhas do monitoramento:", erro);
-      ultimaFalhaDasLinhas = agora();
-      publicarErroDoMonitoramento(erroAmigavel(erro));
-      avisar("Erro ao carregar dados: " + erroAmigavel(erro), "error");
+      falhaDasLinhas(erro);
     }
   }
 
@@ -880,7 +881,6 @@ export function criarCarga(
     versaoDasLinhas = null;
     publicadas = null;
     ultimaLeitura = Number.NEGATIVE_INFINITY;
-    ultimaFalhaDasLinhas = Number.NEGATIVE_INFINITY;
     linhasCarregadas = false;
     desatualizadas = false;
     linhasDaCopia = null;

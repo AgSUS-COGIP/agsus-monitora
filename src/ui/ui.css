@@ -627,10 +627,14 @@ th[aria-sort="descending"] .ui-ordenar i {
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-primary);
   font-weight: var(--font-weight-regular);
-  /* Nome sem espaço (ou de 200 caracteres) quebra na célula em vez de alargar a tabela. */
+  /*
+    Nome sem espaço (ou de 200 caracteres) quebra na célula em vez de alargar a
+    tabela. Tem de ser `anywhere`: `break-word` não baixa o min-content, e no
+    auto-layout a palavra comprida alarga a coluna (conferido nas capturas).
+  */
   overflow-wrap: anywhere;
 }
-/* O selo e o chip não quebram no meio da palavra: sem isto o `anywhere` os espreme a uma letra por linha. */
+/* O selo e o chip quebram só entre palavras: o `anywhere` os espremeria a uma letra por linha. */
 .ui-tabela-rolagem td :is(.ui-selo, .ui-chip) {
   overflow-wrap: normal;
 }
