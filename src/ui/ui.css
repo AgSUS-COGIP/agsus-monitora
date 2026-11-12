@@ -627,6 +627,8 @@ th[aria-sort="descending"] .ui-ordenar i {
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-primary);
   font-weight: var(--font-weight-regular);
+  /* Nome sem espaço (ou de 200 caracteres) quebra na célula em vez de alargar a tabela. */
+  overflow-wrap: anywhere;
 }
 .ui-tabela-rolagem tbody tr:hover td {
   background: var(--surface-hover);
