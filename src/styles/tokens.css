@@ -22,19 +22,6 @@
   (body.access-request-mode) segue o tema do app: o formulário é uma
   superfície comum; só a coluna da marca tem a cor configurada.
 */
-/*
-  A fonte do manual de identidade da AgSUS: General Sans, da Indian Type
-  Foundry (Fontshare), sob a ITF Free Font License, que permite uso comercial e
-  em sites (https://www.fontshare.com/licenses/itf-ffl). Um arquivo variável
-  (pesos 200 a 700) servido pelo próprio site, em public/fonts (11/11/2026).
-*/
-@font-face {
-  font-family: "General Sans";
-  src: url("/fonts/general-sans/GeneralSans-Variable.woff2") format("woff2");
-  font-weight: 200 700;
-  font-style: normal;
-  font-display: swap;
-}
 body:not(.access-request-mode) .login-screen,
 :root {
   /* ---------- Primitivos: azul institucional ----------
@@ -162,7 +149,7 @@ body:not(.access-request-mode) .login-screen,
 
   /* ---------- Tipografia ---------- */
   --font-sans:
-    "General Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
   --font-mono:
     "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;

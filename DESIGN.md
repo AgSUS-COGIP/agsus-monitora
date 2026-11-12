@@ -5,7 +5,7 @@ atual até lá. Vale para `index.html` e tudo em `src/styles/` (a `analises.html
 saíram).
 
 Parte do que o sistema já tem — as cores da marca AgSUS (`--agsus-*` em `app.css`), a fonte
-General Sans, o shell de `platform-shell.css` — e organiza isso em tokens com papel definido, para que
+Geist, o shell de `platform-shell.css` — e organiza isso em tokens com papel definido, para que
 o mesmo estado tenha a mesma aparência em Saúde Indígena, Núcleo, Calendário, Aprovados,
 Configurações e Análises.
 
@@ -75,7 +75,7 @@ outros valores (`--green #16934d` contra `#0b8f58`, `--red #e14444` contra `#d92
 `--yellow #e2a400` contra `#f2b705`, `--radius 20px` contra `18px`). O mesmo estado
 tinha cor diferente em cada tela.
 
-**Fonte:** General Sans, a do Manual de Identidade Visual da AgSUS (Indian Type Foundry, ITF Free Font License), servida pelo próprio site como fonte variável (200 a 700 num arquivo só, `public/fonts/general-sans/`). Antes, Geist do Google Fonts.
+**Fonte:** Geist, do Google Fonts, como fonte variável (400 a 900 num arquivo só).
 **Ícones:** Font Awesome 6.5.2 via CDN (62 usos no `index.html`). A barra lateral e o que é dela
 já usam o `lucide`, por `src/modules/icones.ts` (ver "Ícones", seção 4).
 

@@ -180,7 +180,7 @@
 /*
   Tipografia e respiros da tela de acesso do SIGAV: saudação, a linha de
   apoio logo abaixo e o botão. Alturas de linha explícitas, para a troca da
-  fonte (General Sans chega depois) não mudar a altura do cartão.
+  fonte (Geist chega depois) não mudar a altura do cartão.
 */
 .login-card h1 {
   margin: 20px 0 0;

@@ -17,7 +17,7 @@
 /*
   A fonte do sistema também no mapa (12/11/2026): o leaflet.css põe "Helvetica
   Neue" no contêiner, e os rótulos dos DSEIs, os botões Mapa/Satélite e a escala
-  saíam fora da General Sans. O + e o − do zoom seguem com a fonte do Leaflet,
+  saíam fora da fonte do sistema. O + e o − do zoom seguem com a fonte do Leaflet,
   que centraliza os símbolos.
 */
 :root .leaflet-container {
