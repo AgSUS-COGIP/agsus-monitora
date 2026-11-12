@@ -14,7 +14,7 @@
   1. A chamada (JavaScript):
 
        const resposta = await fetch(
-         "https://agsus-monitora.vercel.app/api/aprovados?status=convocado",
+         "https://yeende.vercel.app/api/aprovados?status=convocado",
          { headers: { Authorization: `Bearer ${CHAVE_DA_API}` } },
        );
        const { aprovados, totais } = await resposta.json();
@@ -22,7 +22,7 @@
      Pela linha de comando:
 
        curl -H "Authorization: Bearer <chave>" \
-         "https://agsus-monitora.vercel.app/api/aprovados?edital_id=<id>"
+         "https://yeende.vercel.app/api/aprovados?edital_id=<id>"
 
   2. Filtros opcionais:
        ?edital_id=  ?status=  ?modalidade=  ?area=   igual (sem caixa nem acento)

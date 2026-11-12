@@ -28,7 +28,7 @@
   1. A chamada (JavaScript), com a chave que o MONITORA entregou:
 
        const resposta = await fetch(
-         "https://agsus-monitora.vercel.app/api/editais?risco=alto",
+         "https://yeende.vercel.app/api/editais?risco=alto",
          { headers: { Authorization: `Bearer ${CHAVE_DA_API}` } },
        );
        const { editais, totais } = await resposta.json();
@@ -36,7 +36,7 @@
      Pela linha de comando:
 
        curl -H "Authorization: Bearer <chave>" \
-         "https://agsus-monitora.vercel.app/api/editais?unidade=yanomami"
+         "https://yeende.vercel.app/api/editais?unidade=yanomami"
 
      Guarde a chave no servidor da outra aplicação (variável de ambiente), não
      no código do navegador: quem tem a chave lê os editais.
