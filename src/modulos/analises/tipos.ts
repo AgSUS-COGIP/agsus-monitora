@@ -44,7 +44,12 @@ export interface PendenciaDaAnalise {
   titulo: string;
   detalhe: string;
   tom: "perigo" | "alerta";
-  atalho: { tipo: "kpi" | "validacao" | "responsavel"; valor: string };
+  atalho: {
+    tipo: "kpi" | "validacao" | "responsavel";
+    valor: string;
+    /** Com tipo "validacao": o KPI que entra junto (o cartão conta os dois). */
+    kpi?: string;
+  };
 }
 export interface CargaDoResponsavel {
   rotulo: string;

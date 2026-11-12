@@ -65,7 +65,11 @@ textarea,
     align-items: stretch;
     padding: max(14px, var(--mobile-safe-top)) 12px
       max(14px, var(--mobile-safe-bottom));
-    overflow-y: auto;
+    /*
+      Sem rolagem própria: a tela cresce com o conteúdo e quem rola é a
+      página. Com overflow-y: auto, a arte desfocada (ampliada em 8%,
+      platform-shell.css) virava uma segunda rolagem dentro da primeira.
+    */
   }
 
   .login-outer {
@@ -233,20 +237,13 @@ textarea,
 }
 
 @media (max-width: 560px) {
-  .login-screen {
-    padding-left: 0;
-    padding-right: 0;
-  }
-
-  .login-outer {
-    min-height: 100dvh;
-    border-radius: 0;
-  }
-
-  .login-stripe {
-    height: 38px;
-  }
-
+  /*
+    Login no celular (12/11/2026): o cartão tem a altura do conteúdo. Aqui o
+    .login-outer tinha min-height: 100dvh, que somado ao respiro da tela
+    (platform-shell.css, 14px em cima e embaixo) passava a tela em 28px: duas
+    rolagens e um vazio azul embaixo do botão do Google. As margens e o canto
+    do cartão no celular ficam em platform-shell.css.
+  */
   .main,
   main,
   #conteudoPrincipal {

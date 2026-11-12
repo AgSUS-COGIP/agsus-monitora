@@ -163,9 +163,7 @@ function AvisoDaTela({
   return null;
 }
 
-/* Liga/desliga um único valor num filtro de seleção múltipla (o atalho das pendências). */
-const soEsse = (selecao: readonly string[], valor: string) =>
-  selecao.length === 1 && selecao[0] === valor ? [] : [valor];
+/* O atalho das pendências liga um único valor num filtro de seleção múltipla. */
 const soEsseAtivo = (selecao: readonly string[], valor: string) =>
   selecao.length === 1 && selecao[0] === valor;
 
@@ -284,23 +282,29 @@ function TelaDaArea({
     if (!texto) setFiltros((atuais) => ({ ...atuais, busca: "" }));
   };
 
-  function aplicarAtalho({ tipo, valor }: PendenciaDaAnalise["atalho"]) {
-    if (tipo === "kpi") setKpi((atual) => (atual === valor ? "" : valor));
-    if (tipo === "validacao")
-      setFiltros((atuais) => ({
-        ...atuais,
-        validacao: soEsse(atuais.validacao, valor),
-      }));
-    if (tipo === "responsavel")
-      setFiltros((atuais) => ({
-        ...atuais,
-        responsavel: soEsse(atuais.responsavel, valor),
-      }));
-  }
-  const atalhoAtivo = ({ tipo, valor }: PendenciaDaAnalise["atalho"]) =>
+  const atalhoAtivo = ({
+    tipo,
+    valor,
+    kpi: doAtalho,
+  }: PendenciaDaAnalise["atalho"]) =>
     (tipo === "kpi" && kpi === valor) ||
-    (tipo === "validacao" && soEsseAtivo(filtros.validacao, valor)) ||
+    (tipo === "validacao" &&
+      soEsseAtivo(filtros.validacao, valor) &&
+      (!doAtalho || kpi === doAtalho)) ||
     (tipo === "responsavel" && soEsseAtivo(filtros.responsavel, valor));
+  // Clicar de novo no atalho ativo desliga o que ele ligou.
+  function aplicarAtalho(atalho: PendenciaDaAnalise["atalho"]) {
+    const desligar = atalhoAtivo(atalho);
+    const { tipo, valor } = atalho;
+    const so = desligar ? [] : [valor];
+    if (tipo === "kpi") setKpi(desligar ? "" : valor);
+    if (tipo === "validacao") {
+      setFiltros((atuais) => ({ ...atuais, validacao: so }));
+      if (atalho.kpi) setKpi(desligar ? "" : atalho.kpi);
+    }
+    if (tipo === "responsavel")
+      setFiltros((atuais) => ({ ...atuais, responsavel: so }));
+  }
   const pendencias = pendenciasPrioritarias(recorte).map((p) => ({
     ...p,
     ativo: atalhoAtivo(p.atalho),
