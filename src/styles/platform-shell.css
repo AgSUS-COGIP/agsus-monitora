@@ -866,29 +866,29 @@ html[data-theme="dark"] .sidebar {
 [data-theme="dark"] .app .online-presence-popover,
 [data-theme="dark"] .app .top-user-button,
 [data-theme="dark"] .app .top-user-popover {
-  background: #17253d;
-  border-color: #253a56;
-  color: #b8d0e8;
+  background: var(--surface-card);
+  border-color: var(--border-subtle);
+  color: var(--text-secondary);
 }
 [data-theme="dark"] .app .online-presence-heading,
 [data-theme="dark"] .app .online-presence-avatar i {
-  border-color: #253a56;
+  border-color: var(--border-subtle);
 }
 [data-theme="dark"] .app .online-presence-heading strong,
 [data-theme="dark"] .app .online-presence-person strong,
 [data-theme="dark"] .app .top-user-compact-copy strong,
 [data-theme="dark"] .app .top-user-popover > strong {
-  color: #e2eaf4;
+  color: var(--text-primary);
 }
 [data-theme="dark"] .app .top-user-popover-actions {
-  border-color: #253a56;
+  border-color: var(--border-subtle);
 }
 [data-theme="dark"] .app .top-user-popover-actions button:hover {
-  background: #1a2d47;
-  color: #e2eaf4;
+  background: var(--surface-hover);
+  color: var(--text-primary);
 }
 [data-theme="dark"] .app .online-presence-person:hover {
-  background: #1a2d47;
+  background: var(--surface-hover);
 }
 
 @media (max-width: 900px) {
@@ -993,14 +993,14 @@ html[data-theme="dark"] .sidebar {
   variante) é o que garante que esta venha depois na disputa.
 */
 [data-theme="dark"] .app .broadcast-bar.warn {
-  background: #2a2008 !important;
-  border-color: #5c4506 !important;
-  color: #fbbf24 !important;
+  background: var(--state-warning-soft) !important;
+  border-color: var(--state-warning) !important;
+  color: var(--state-warning) !important;
 }
 [data-theme="dark"] .app .broadcast-bar.error {
-  background: #2b1114 !important;
-  border-color: #5c1a22 !important;
-  color: #fca5a5 !important;
+  background: var(--state-danger-soft) !important;
+  border-color: var(--state-danger) !important;
+  color: var(--state-danger) !important;
 }
 
 /*

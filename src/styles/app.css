@@ -1095,79 +1095,83 @@ body.external-clean #externalReturnBar {
   font-weight: 500;
 }
 
-/* ── Dark mode ── */
+/* ── Dark mode ──
+   Os tons são os do tema escuro do manual da AgSUS (tokens.css, 12/11/2026):
+   antes eram cores fixas da paleta antiga (#111f33, #1a2d47, #7dd3fc,
+   #16283f…), que passavam por cima dos tokens. As variáveis antigas daqui
+   (--bg, --card, --agsus-*) seguem os tokens escuros. Os `!important`
+   continuam por ora: ainda disputam com regras antigas do tema claro. */
 [data-theme="dark"] {
-  --bg: #0f1a2e;
-  --card: #17253d;
-  --line: #253a56;
-  --soft: #1d2f48;
+  --bg: var(--surface-page);
+  --card: var(--surface-card);
+  --line: var(--border-subtle);
+  --soft: var(--surface-raised);
   --shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
-  --agsus-azul: #4db8ff;
-  --agsus-ciano: #00cfff;
-  --agsus-verde: #2ad98a;
-  --agsus-amarelo: #ffd166;
-  --agsus-vermelho: #ff6b6b;
+  --agsus-azul: var(--color-text-link);
+  --agsus-ciano: var(--state-info);
+  --agsus-verde: var(--state-success);
 }
 /* ── Dark mode: aplica APENAS dentro de .app — tela de login NÃO é afetada ── */
 [data-theme="dark"] body {
-  background: var(--bg) !important;
+  background: var(--surface-page) !important;
 }
 [data-theme="dark"] .app {
-  color: #e2eaf4;
+  color: var(--text-primary);
 }
 [data-theme="dark"] .app .top {
-  background: #111f36 !important;
-  border-color: #1e3050 !important;
+  background: var(--surface-card) !important;
+  border-color: var(--border-subtle) !important;
 }
 [data-theme="dark"] .app .card,
 [data-theme="dark"] .app .table-card {
-  background: var(--card) !important;
-  border-color: var(--line) !important;
+  background: var(--surface-card) !important;
+  border-color: var(--border-subtle) !important;
 }
 /* Vence `html[data-theme="dark"] .table-wrap` de nielsen-shell-ux.css pela especificidade. */
 [data-theme="dark"] .app .table-wrap,
 [data-theme="dark"] .app .table-card,
 [data-theme="dark"] .app .modal-card,
 [data-theme="dark"] .app .modal-head {
-  background: #111f33 !important;
-  border-color: #29405d !important;
-  color: #c8d6e5 !important;
+  background: var(--surface-card) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-primary) !important;
 }
 [data-theme="dark"] .app th {
-  background: #1a2d47 !important;
-  color: #b8d0e8 !important;
+  background: var(--surface-raised) !important;
+  color: var(--text-secondary) !important;
 }
 [data-theme="dark"] .app td {
-  color: #d0e4f5 !important;
-  border-color: var(--line) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-subtle) !important;
 }
 [data-theme="dark"] .app tr:hover td {
-  background: rgba(0, 168, 214, 0.12) !important;
+  background: var(--surface-hover) !important;
 }
 [data-theme="dark"] .app .page-title h1 {
-  color: #7dd3fc !important;
+  color: var(--color-text-brand) !important;
 }
 [data-theme="dark"] .app .page-title p {
-  color: #7a9bbf !important;
+  color: var(--text-secondary) !important;
 }
+/* Campo: um tom acima do card e a borda de controle (3:1 sobre o fundo). */
 [data-theme="dark"] .app input,
 [data-theme="dark"] .app select,
 [data-theme="dark"] .app textarea,
 [data-theme="dark"] .app .multi-select-menu {
-  background: #16283f !important;
-  border-color: #31506f !important;
-  color: #e2ecf6 !important;
-  -webkit-text-fill-color: #e2ecf6 !important;
+  background: var(--surface-raised) !important;
+  border-color: var(--border-control) !important;
+  color: var(--text-primary) !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
 }
 [data-theme="dark"] .app input::placeholder,
 [data-theme="dark"] .app textarea::placeholder {
-  color: #8399b1 !important;
-  -webkit-text-fill-color: #8399b1 !important;
+  color: var(--color-text-tertiary) !important;
+  -webkit-text-fill-color: var(--color-text-tertiary) !important;
   opacity: 1;
 }
 [data-theme="dark"] .app .multi-select-actions {
-  background: #16283f !important;
-  border-color: #1e3050 !important;
+  background: var(--surface-raised) !important;
+  border-color: var(--border-subtle) !important;
 }
 [data-theme="dark"] .app .table-head {
   background: var(--surface-card);
