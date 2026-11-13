@@ -235,8 +235,15 @@ describe("a marca vinda da configuração", () => {
     expect(codigo).toMatch(
       /if \(Object\.keys\(marcaParaGuardar\)\.length\) guardarMarca/,
     );
-    // A outra é a do branding público, que guarda a resposta mesclada.
-    expect([...codigo.matchAll(/guardarMarca\(/g)].length).toBe(2);
+    /*
+      As outras: a do branding público, que guarda a resposta mesclada, e a da
+      medida da arte (13/11/2026), que guarda só proporção, cor e endereço
+      medido, nunca um campo da identidade.
+    */
+    expect([...codigo.matchAll(/guardarMarca\(/g)].length).toBe(3);
+    expect(codigo).toMatch(
+      /guardar = \(medida: MedidaDaArte\) => void guardarMarca\(medida\)/,
+    );
   });
 
   it("o logout não apaga nem troca a identidade", () => {

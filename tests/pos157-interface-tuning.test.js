@@ -24,7 +24,7 @@ const governance = readFileSync("src/modulos/configuracoes/estado.ts", "utf8");
 
 describe("primeiro paint da tela de login", () => {
   it("não usa mais os fallbacks roxos do legado", () => {
-    expect(css).toContain("background-color: #eef4f8");
+    expect(css).toContain("background-color: var(--login-arte-cor, #eef4f8);");
     expect(css).toContain("var(--login-panel-color, #ffffff)");
     expect(css).not.toContain("#4d2270");
     expect(css).not.toContain("#c296eb");

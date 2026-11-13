@@ -95,6 +95,20 @@
               "--login-background-image",
               'url("' + arte.replace(/["\\]/g, "") + '")',
             );
+            /*
+              A medida da arte (proporção e cor da borda), se for desta arte:
+              a arte já sai no lugar e o fundo da cor dela, sem piscar
+              (13/11/2026; marca.ts mede e guarda quando a arte carrega).
+            */
+            if (marca.arteMedidaDe === arte) {
+              if (/^\d+(\.\d+)?$/.test(marca.arteProporcao || ""))
+                raiz.style.setProperty(
+                  "--login-arte-proporcao",
+                  marca.arteProporcao,
+                );
+              if (/^#[0-9a-f]{6}$/i.test(marca.arteCor || ""))
+                raiz.style.setProperty("--login-arte-cor", marca.arteCor);
+            }
           }
         } catch (erro) {
           /* Armazenamento bloqueado ou conteúdo inválido: fica o fundo neutro. */

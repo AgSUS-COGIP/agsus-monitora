@@ -146,7 +146,9 @@ describe("os estados que a medição no navegador confirmou", () => {
       "src/styles/post157-interface-tuning.css",
       "utf8",
     );
-    expect(tuning).toContain("background-color: #eef4f8");
+    expect(tuning).toContain(
+      "background-color: var(--login-arte-cor, #eef4f8);",
+    );
     expect(tuning).not.toContain("#4d2270");
     expect(tuning).not.toContain("#c296eb");
   });
