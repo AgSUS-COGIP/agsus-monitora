@@ -523,12 +523,12 @@ body:not(.sidebar-collapsed) .config-barra {
   background:
     linear-gradient(
       to bottom,
-      color-mix(in srgb, var(--brilho-do-vidro) 10%, transparent),
+      color-mix(in srgb, var(--brilho-do-vidro) 8%, transparent),
       color-mix(in srgb, var(--brilho-do-vidro) 3%, transparent) 45%,
       color-mix(in srgb, var(--brilho-do-vidro) 6%, transparent)
     ),
-    color-mix(in srgb, var(--cor-do-cartao) 78%, transparent);
-  backdrop-filter: blur(12px) saturate(140%); /* acabamento: permitido(blur) — prévia do painel de vidro da tela de acesso, sobre a arte escolhida */
+    color-mix(in srgb, var(--cor-do-cartao) 70%, transparent);
+  backdrop-filter: blur(7px) saturate(140%); /* acabamento: permitido(blur) — prévia do painel de vidro da tela de acesso, sobre a arte escolhida */
 }
 .previa-acesso__logo {
   max-width: 96px;
