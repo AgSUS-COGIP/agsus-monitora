@@ -552,8 +552,16 @@
   justify-content: space-between;
   gap: var(--space-3);
 }
+/*
+  A busca cresce até 340px e as ferramentas ocupam o resto da linha do título
+  (13/11/2026): com `width: min(340px, 100%)` o percentual era do próprio
+  contêiner, que encolhia até ela, e o botão ao lado ("Colunas" na Visão
+  geral) descia para uma segunda linha sem necessidade.
+*/
 .ui-tabela-busca {
-  width: min(340px, 100%);
+  flex: 1 1 220px;
+  width: auto;
+  max-width: 340px;
   min-height: 36px;
   border: 1px solid var(--border-control);
   border-radius: var(--radius-md);
@@ -627,6 +635,8 @@ th[aria-sort="descending"] .ui-ordenar i {
 }
 .ui-tabela-ferramentas {
   display: flex;
+  flex: 1 1 auto;
+  justify-content: flex-end;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
@@ -1300,6 +1310,20 @@ th[aria-sort="descending"] .ui-ordenar i {
   }
   .ui-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /*
+    Topo no celular (13/11/2026): a hora da carga numa linha e os botões
+    dividindo a de baixo; antes, "Exportar" descia sozinho para outra linha.
+  */
+  .ui-topo-acoes .status-discreto {
+    flex-basis: 100%;
+  }
+  .ui-topo-acoes .status-discreto:empty {
+    display: none;
+  }
+  .ui-topo-acoes > .btn {
+    flex: 1 1 auto;
+    justify-content: center;
   }
   .ui-card {
     padding: var(--space-3) var(--space-4);

@@ -98,7 +98,7 @@ describe("aprovados e cadastro reserva pela lista vigente", () => {
 });
 
 describe("tabela e arquivo", () => {
-  it("as colunas do resultado existem, mas não entram no início", () => {
+  it("as colunas do resultado estão no padrão, para todos; só Observações fica fora", () => {
     const campos = COLUNAS_DA_TABELA.map((c) => c.campo);
     for (const campo of [
       "duracao",
@@ -107,8 +107,11 @@ describe("tabela e arquivo", () => {
       "cadastro_reserva",
     ] as const) {
       expect(campos).toContain(campo);
-      expect(COLUNAS_INICIAIS).not.toContain(campo);
+      expect(COLUNAS_INICIAIS).toContain(campo);
     }
+    expect(COLUNAS_INICIAIS).toEqual(
+      campos.filter((campo) => campo !== "observacoes"),
+    );
   });
 
   it("sem número fica abaixo do zero ao ordenar", () => {

@@ -725,6 +725,64 @@ describe("tabela de processos", () => {
     expect(secao.querySelector(".visao-geral-colunas-menu").hidden).toBe(true);
   });
 
+  it("colunas padrão para todos: a escolha da v1 não vale; só Observações fica fora", async () => {
+    // Pedido de 13/11/2026: quem guardou colunas antes também passa a ver as do resultado.
+    armazenamento = memoria();
+    armazenamento.setItem(
+      "agsus_visible_cols_v1",
+      JSON.stringify(["unidade", "edital", "vagas_total"]),
+    );
+    await montar();
+    expect(cabecalhos()).toEqual([
+      "Unidade",
+      "Edital",
+      "Início",
+      "Encerramento",
+      "Duração (dias)",
+      "Vagas",
+      "Inscritos",
+      "Aprovados",
+      "Contratados",
+      "Cadastro reserva",
+      "Sem contratação",
+      "Status",
+      "Fase",
+      "Atenção",
+    ]);
+  });
+
+  it("Unidade e Edital ficam presas à esquerda; sem Unidade, Edital é a primeira", async () => {
+    await montar();
+    const th = (rotulo) =>
+      [...secao.querySelectorAll(".visao-geral-tabela thead th")].find(
+        (c) => c.textContent.trim() === rotulo,
+      );
+    expect(th("Unidade").className).toContain("visao-geral-fixa");
+    expect(th("Unidade").className).not.toContain("visao-geral-fixa-ultima");
+    expect(th("Edital").className).toContain("visao-geral-fixa-segunda");
+    expect(th("Edital").className).toContain("visao-geral-fixa-ultima");
+    expect(th("Vagas").className).not.toContain("visao-geral-fixa");
+    const [unidade, edital] = linhas()[0].children;
+    expect(unidade.className).toContain("visao-geral-fixa");
+    expect(edital.className).toContain("visao-geral-fixa-segunda");
+
+    await act(async () => estado.alternarColuna("unidade", false));
+    expect(th("Edital").className).toContain("visao-geral-fixa");
+    expect(th("Edital").className).not.toContain("visao-geral-fixa-segunda");
+  });
+
+  it("selo de atenção leva o texto inteiro no title; sem recorte, a contagem não repete o total", async () => {
+    await montar();
+    const selo = secao.querySelector(".visao-geral-motivos .ui-selo");
+    expect(selo).not.toBeNull();
+    expect(selo.getAttribute("title")).toBe(selo.textContent);
+    const contagem = () =>
+      secao.querySelector("[data-tabela-contagem]").textContent;
+    expect(contagem()).toBe("3 processos");
+    await act(async () => estado.definirBusca("Yanomami"));
+    expect(contagem()).toBe("1 de 3 processos");
+  });
+
   it("a linha abre os detalhes (clique ou Enter); 'Voltar à linha' fecha e destaca", async () => {
     await montar();
     const primeira = linhas()[0];

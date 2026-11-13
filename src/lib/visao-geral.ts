@@ -766,20 +766,15 @@ export const COLUNAS_PADRAO = Object.freeze(
 );
 
 /*
-  As colunas de quem nunca escolheu (12/11/2026): todas menos Observações, o
-  texto longo que já aparece na gaveta do edital, e as do resultado (13/11:
-  Duração, Inscritos, Aprovados e Cadastro reserva). Assim a tabela cabe na
-  largura de um notebook (1280px) sem rolagem para o lado. Quem já escolheu
-  as colunas continua com a escolha; as outras entram pelo menu "Colunas" e
-  vão sempre no arquivo exportado.
+  As colunas padrão, para todos (13/11/2026, pedido do usuário): todas menos
+  Observações, o texto longo que já aparece na gaveta do edital (entra pelo
+  menu "Colunas" e vai sempre no arquivo exportado). As do resultado (Duração,
+  Inscritos, Aprovados e Cadastro reserva) entraram no padrão; a escolha
+  guardada antes disso foi descartada uma vez (`CHAVE_DAS_COLUNAS` passou a
+  v2, estado.ts). Em 1280px a tabela rola de lado; Unidade e Edital ficam
+  presas à esquerda (tabela.tsx).
 */
-const COLUNAS_FORA_DO_INICIO: readonly ColunaDaTabela[] = [
-  "observacoes",
-  "duracao",
-  "inscritos",
-  "aprovados",
-  "cadastro_reserva",
-];
+const COLUNAS_FORA_DO_INICIO: readonly ColunaDaTabela[] = ["observacoes"];
 export const COLUNAS_INICIAIS = Object.freeze(
   COLUNAS_PADRAO.filter((campo) => !COLUNAS_FORA_DO_INICIO.includes(campo)),
 );

@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-13
 ---
 
 # Módulo: Visão geral
@@ -43,6 +43,11 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
   contagem numérica finita e não negativa não gera comemoração.
 - Filtros e colunas são normalizados ao sair do armazenamento; a indisponibilidade do
   armazenamento não impede o uso da página.
+- Colunas padrão, para todos (13/11/2026): todas menos Observações. A chave guardada passou a
+  `agsus_visible_cols_v2`, o que descartou uma vez as escolhas antigas (sem as colunas do
+  resultado). Em 1280px a tabela rola de lado; Unidade e Edital ficam presas à esquerda
+  (`classe` da coluna na `TabelaInfinita`). No celular, em cartões, rótulo e valor ficam na
+  mesma linha e só a página rola.
 - O CSV mantém a proteção contra fórmulas e o nome do arquivo usa a data de Brasília.
 
 ## Limites da tipagem

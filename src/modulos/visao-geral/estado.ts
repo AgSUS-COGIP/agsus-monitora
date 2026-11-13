@@ -40,7 +40,7 @@ import type {
   ao Brasil" ou Esc) e `definirBusca` (CASAI nacional).
 
   Guardado no navegador, como antes: os filtros (`agsus_monitora_filters_v1`)
-  e as colunas visíveis da tabela (`agsus_visible_cols_v1`).
+  e as colunas visíveis da tabela (`agsus_visible_cols_v2`).
 */
 import {
   assinarDadosDoMonitoramento,
@@ -72,7 +72,11 @@ import {
 } from "../../lib/visao-geral.ts";
 
 export const CHAVE_DOS_FILTROS = "agsus_monitora_filters_v1";
-export const CHAVE_DAS_COLUNAS = "agsus_visible_cols_v1";
+/*
+  v2 (13/11/2026): as colunas do resultado entraram no padrão, para todos; a
+  escolha guardada na v1 não as tinha e foi descartada uma vez.
+*/
+export const CHAVE_DAS_COLUNAS = "agsus_visible_cols_v2";
 /** Etapas do cronograma e resumo das listas de aprovados da área. */
 export const RPC_ACOMPANHAMENTO =
   "listar_acompanhamento_da_visao_geral_se_mudou";

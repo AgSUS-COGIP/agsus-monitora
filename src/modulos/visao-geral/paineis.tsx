@@ -5,6 +5,7 @@ import type {
   PropsDoBloco,
   SnapshotDaVisaoGeral,
 } from "./tipos.ts";
+import type { CSSProperties } from "react";
 import { useState } from "react";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import {
@@ -343,7 +344,15 @@ export function Fases({ e, estado }: PropsDoPainel) {
       ) : !e.carregado ? (
         <div className="ui-esqueleto ui-esqueleto-linha" aria-hidden="true" />
       ) : e.filtradas.length ? (
-        <div className="visao-geral-itens">
+        <div
+          className="visao-geral-itens visao-geral-fases-itens"
+          /* Em duas colunas (tela larga), lidas de cima para baixo: metade das fases em cada uma. */
+          style={
+            {
+              "--linhas-das-fases": Math.ceil(fases.length / 2),
+            } as CSSProperties
+          }
+        >
           {fases.map(({ fase, quantos, pct, tom }) => (
             <button
               key={fase}
