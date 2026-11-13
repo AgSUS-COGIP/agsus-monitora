@@ -54,8 +54,14 @@ describe("migration 20261113120000: Seleção liga DSEI/CASAI só ao edital da m
     expect(md5(antigo)).toBe("c7f7a1383861bf420e9ed7b4ed3e3083");
   });
 
-  it("o retrato mostra o corpo de antes ou o da migration", () => {
-    expect([antigo, novo]).toContain(retrato);
+  /* A 20261113180000 (ligar pelo nome o edital sem número) trocou o corpo de novo. */
+  it("o retrato mostra o corpo de antes, o da migration ou o da que veio depois", () => {
+    const seguinte = doArquivo(
+      ler(
+        "supabase/migrations/20261113180000_ligar_selecao_sem_numero_pelo_nome.sql",
+      ),
+    );
+    expect([antigo, novo, seguinte]).toContain(retrato);
   });
 
   it("o ensaio aplica exatamente o corpo da migration", () => {

@@ -6941,9 +6941,10 @@ begin
   with m as materialized (
     select m.id, m."CO_AREA" as area, m.ativo,
            private."FC_NUMERO_EDITAL"(m.edital) as numero,
-           private."FC_TEXTO_BUSCA_RECURSO"(m.unidade) as unidade
+           private."FC_TEXTO_BUSCA_RECURSO"(m.unidade) as unidade,
+           btrim(regexp_replace(private."FC_TEXTO_BUSCA_RECURSO"(m.unidade), '[[:space:]-]+', ' ', 'g')) as unidade_sem_hifen,
+           btrim(regexp_replace(private."FC_TEXTO_BUSCA_RECURSO"(m.edital), '[[:space:]-]+', ' ', 'g')) as nome
       from public."TB_MONITORAMENTO_INDIGENA" m
-     where private."FC_NUMERO_EDITAL"(m.edital) is not null
   ),
   u as materialized (
     select private."FC_TEXTO_BUSCA_RECURSO"(u."NO_UNIDADE") as unidade, u."CO_AREA" as area
@@ -6953,6 +6954,8 @@ begin
     select s."CO_SELECAO_VAGA" as id,
            private."FC_NUMERO_EDITAL"(s."DS_EDITAL") as numero,
            private."FC_TEXTO_BUSCA_RECURSO"(s."NO_UNIDADE") as unidade,
+           btrim(regexp_replace(private."FC_TEXTO_BUSCA_RECURSO"(s."NO_UNIDADE"), '[[:space:]-]+', ' ', 'g')) as unidade_sem_hifen,
+           btrim(regexp_replace(private."FC_TEXTO_BUSCA_RECURSO"(s."DS_EDITAL"), '[[:space:]-]+', ' ', 'g')) as nome,
            private."FC_TEXTO_BUSCA_RECURSO"(s."NO_UNIDADE") ~ '^(dsei|casai)( |$)' as indigena
       from public."TB_SELECAO_VAGA" s
      where s."ST_REGISTRO_ATIVO" = 'S'
@@ -6969,8 +6972,12 @@ begin
       from com_tabela c
       left join lateral (
         select m.id, m.area from m
-         where c.numero is not null and m.numero = c.numero
+         where ((c.numero is not null and m.numero = c.numero)
+                -- Sem número dos dois lados (FGV 2025, FCC): o nome inteiro igual.
+                or (c.numero is null and m.numero is null and c.nome <> '' and m.nome = c.nome))
+           -- DSEI/CASAI: só o edital da Saúde Indígena da mesma unidade.
            and (case when c.indigena then m.area = 'saude-indigena'
+                                          and m.unidade_sem_hifen = c.unidade_sem_hifen
                      else m.area <> 'saude-indigena' end)
          order by m.ativo desc,
                   (m.unidade = c.unidade) desc,
@@ -6994,7 +7001,7 @@ $_$;
 -- Name: FUNCTION "FC_LIGAR_SELECAO_AOS_EDITAIS"(); Type: COMMENT; Schema: private; Owner: -
 --
 
-COMMENT ON FUNCTION private."FC_LIGAR_SELECAO_AOS_EDITAIS"() IS 'Liga cada vaga ativa de TB_SELECAO_VAGA ao edital cadastrado e acerta a área: DSEI/CASAI só na Saúde Indígena e só no edital de mesmo número e mesma unidade (sem acento, caixa, espaço repetido nem hífen; sem ele, a vaga fica sem edital); as outras unidades só na SEDE ou em Projetos (edital de mesmo número: o ativo primeiro, depois a mesma unidade e a área de TA_UNIDADE_AREA; sem edital, TA_UNIDADE_AREA ou sede). Devolve quantas linhas mudaram (20261113120000).';
+COMMENT ON FUNCTION private."FC_LIGAR_SELECAO_AOS_EDITAIS"() IS 'Liga cada vaga ativa de TB_SELECAO_VAGA ao edital cadastrado e acerta a área: DSEI/CASAI só na Saúde Indígena e só no edital de mesmo número e mesma unidade (sem acento, caixa, espaço repetido nem hífen; sem ele, a vaga fica sem edital); as outras unidades só na SEDE ou em Projetos (edital de mesmo número, ou, sem número dos dois lados, de mesmo nome: o ativo primeiro, depois a mesma unidade e a área de TA_UNIDADE_AREA; sem edital, TA_UNIDADE_AREA ou sede). Devolve quantas linhas mudaram (20261113180000).';
 
 --
 -- Name: FC_LIMITE_DA_RESPOSTA_EMPREGARE(jsonb); Type: FUNCTION; Schema: private; Owner: -
@@ -48598,7 +48605,7 @@ CREATE TABLE public."TB_MONITORAMENTO_INDIGENA" (
     ciclo text,
     cargos text,
     vagas_total integer DEFAULT 0 NOT NULL,
-    inscritos integer DEFAULT 0,
+    inscritos integer,
     aptos_analise integer DEFAULT 0,
     cancelados integer DEFAULT 0,
     eliminados_nota integer DEFAULT 0,
