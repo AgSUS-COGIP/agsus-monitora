@@ -71,7 +71,7 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 ## Painel de vidro na tela de acesso
 
 **perguntas:** painel de vidro | estilo do painel | painel translucido | vidro no login | painel transparente na tela de acesso
-**resposta:** Em Configurações › Aparência, Estilo do painel escolhe entre Sólido (o padrão) e Vidro. No vidro, o cartão da tela de acesso fica translúcido sobre a arte, com a cor do painel a 70%, a arte levemente desfocada por trás, um brilho claro por cima e a borda iluminada, que fazem o vidro aparecer mesmo sobre uma arte lisa. Como a arte pode ter trechos muito claros ou muito escuros, o contraste mostrado abaixo da cor passa a ser medido no pior trecho possível; se ficar abaixo de 4,5, uma cor mais escura ou mais clara, ou o painel sólido, resolve. Quem pediu ao sistema menos transparência, ou usa navegador sem desfoque, vê o painel sólido. Vale depois de "Salvar alterações".
+**resposta:** Em Configurações › Aparência, Estilo do painel escolhe entre Sólido (o padrão) e Vidro. No vidro, o cartão da tela de acesso fica sem cor e sem desfoque: a arte aparece nítida por trás, e o vidro se vê pela borda iluminada. O texto vai direto sobre a arte, então ela precisa ser escura atrás do painel para o texto claro (ou clara para o escuro); o sistema não mede a arte, e só o painel sólido garante o contraste. A cor do painel continua escolhendo a cor do texto no modo automático e é o painel de quem pediu ao sistema menos transparência. Vale depois de "Salvar alterações".
 **fonte:** interface do Yeendé
 
 ## Logo e cor da barra lateral

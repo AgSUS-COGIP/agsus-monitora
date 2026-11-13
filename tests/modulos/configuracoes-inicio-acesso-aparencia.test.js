@@ -392,7 +392,7 @@ describe("Aparência", () => {
     );
   });
 
-  it("o painel de vidro aparece na prévia e mede o contraste no pior trecho", async () => {
+  it("o painel de vidro aparece na prévia e o aviso diz que a arte decide", async () => {
     await montar({ secao: "aparencia" });
     await escolher($("configAparencia-authAccessPainelEstilo"), "vidro");
     const cartao = previa("aparencia").querySelector(".previa-acesso__cartao");
@@ -401,7 +401,7 @@ describe("Aparência", () => {
     );
     expect(
       secao("aparencia").querySelector(".config-contraste").textContent,
-    ).toContain("sobre o vidro");
+    ).toContain("No vidro o painel fica sem cor");
   });
 
   it("logo do acesso com endereço inválido não publica", async () => {

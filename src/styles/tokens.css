@@ -401,8 +401,8 @@ body:not(.access-request-mode) .login-screen,
   /* Cores que não mudam com o tema (de propósito): a folha de uma prévia de
      documento é papel, branca nos dois temas; e o texto sobre a barra lateral
      com cor configurada escura (`body.sidebar-theme-dark`) é branco seja
-     qual for o tema da página. O brilho do painel de vidro da tela de
-     acesso também é branco nos dois temas (BRILHO_DO_VIDRO, contraste.ts). */
+     qual for o tema da página. A borda e o realce de luz do painel de
+     vidro da tela de acesso também são brancos nos dois temas. */
   --cor-da-folha: var(--color-neutral-0);
   --cor-do-texto-sobre-escuro: var(--color-neutral-0);
   --brilho-do-vidro: var(--color-neutral-0);
