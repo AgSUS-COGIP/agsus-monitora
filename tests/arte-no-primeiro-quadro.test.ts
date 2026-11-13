@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   guardarMarca,
   lerMarcaGuardada,
@@ -37,6 +37,8 @@ afterEach(() => {
   raiz().removeProperty("--login-arte-proporcao");
   raiz().removeProperty("--login-arte-cor");
   raiz().removeProperty("--login-background-image");
+  document.documentElement.classList.remove("arte-esperando");
+  vi.useRealTimers();
 });
 
 describe("o cache guarda a medida da arte", () => {
@@ -92,5 +94,51 @@ describe("o script do <head> aplica a medida no primeiro quadro", () => {
     rodarScriptDoHead();
     expect(raiz().getPropertyValue("--login-arte-proporcao")).toBe("");
     expect(raiz().getPropertyValue("--login-arte-cor")).toBe("");
+  });
+});
+
+/*
+  13/11/2026, gravado em vídeo no site publicado: a cada atualização, o cartão
+  e o fundo na cor da arte apareciam primeiro e a arte entrava uns 230 ms
+  depois, de uma vez (a imagem, 3200×1370, só era decodificada na hora de
+  pintar). O script do <head> pede e decodifica a arte antes do CSS; enquanto
+  ela não está pronta, `arte-esperando` deixa as camadas transparentes, e elas
+  entram com transição.
+*/
+describe("a arte decodificada antes do CSS", () => {
+  it("com arte guardada, pede a imagem e espera por ela", () => {
+    vi.useFakeTimers();
+    guardarMarca({ backgroundUrl: ARTE });
+    rodarScriptDoHead();
+    const guardada: unknown = Reflect.get(window, "__agsusArteDoAcesso");
+    const imagem = guardada instanceof HTMLImageElement ? guardada : undefined;
+    expect(imagem?.src).toBe(ARTE);
+    expect(document.documentElement.classList.contains("arte-esperando")).toBe(
+      true,
+    );
+    imagem?.dispatchEvent(new Event("load"));
+    imagem?.onload?.(new Event("load"));
+    vi.advanceTimersByTime(3000);
+    expect(document.documentElement.classList.contains("arte-esperando")).toBe(
+      false,
+    );
+  });
+
+  it("sem arte guardada, não espera nada", () => {
+    rodarScriptDoHead();
+    expect(document.documentElement.classList.contains("arte-esperando")).toBe(
+      false,
+    );
+  });
+
+  it("o CSS deixa as camadas transparentes só enquanto espera, e entra com transição", () => {
+    const css = readFileSync("src/styles/platform-shell.css", "utf8");
+    expect(css).toMatch(
+      /html\.arte-esperando \.login-screen::before,\s*html\.arte-esperando \.login-screen::after \{\s*opacity: 0;/,
+    );
+    const transicao = css.slice(
+      css.indexOf("background-image var(--duration-slow)"),
+    );
+    expect(transicao.slice(0, 160)).toContain("opacity var(--duration-slow)");
   });
 });

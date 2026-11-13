@@ -87,7 +87,19 @@
 */
 .login-screen::before,
 .login-screen::after {
-  transition: background-image var(--duration-slow) var(--ease-standard);
+  transition:
+    background-image var(--duration-slow) var(--ease-standard),
+    opacity var(--duration-slow) var(--ease-standard);
+}
+/*
+  A arte guardada ainda decodificando (classe posta e tirada pelo script do
+  <head> do index.html, 13/11/2026): as camadas ficam transparentes sobre o
+  fundo na cor da arte e entram com a transição acima, em vez de surgirem de
+  uma vez depois do cartão.
+*/
+html.arte-esperando .login-screen::before,
+html.arte-esperando .login-screen::after {
+  opacity: 0;
 }
 .login-outer {
   width: min(516px, 31vw);
