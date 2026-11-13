@@ -90,15 +90,20 @@ export function corDoTextoPara(cor: string, modo: unknown = MODO_AUTO): string {
 }
 
 /*
-  O estilo do painel da tela de acesso (Configurações › Tela de acesso):
-  sólido (o padrão) ou vidro. No vidro o painel não tem cor nenhuma
-  (13/11/2026, "vidro mesmo, sem cor") nem desfoque: o texto fica direto
-  sobre a arte, e o vidro se vê só pela borda clara e pelo realce de luz
-  (platform-shell.css). A arte é configurável e o sistema não a mede:
-  no vidro, a leitura depende de a arte atrás do painel combinar com o texto
-  (escura para o texto claro, clara para o escuro). A cor do painel continua
-  escolhendo o texto no modo automático e é o painel de quem não vê o vidro
-  (menos transparência pedida ao sistema).
+  O estilo do painel da tela de acesso (Configurações › Aparência): sólido (o
+  padrão) ou vidro. No vidro, a cor do painel vai na proporção escolhida em
+  "Cor no vidro" (0% a 90%; 0%, o padrão, é o vidro puro) e a arte atrás pode
+  ser desfocada ("Desfoque da arte": nenhum, leve ou forte). As duas escolhas
+  são de 13/11/2026: o vidro mudou quatro vezes no mesmo dia, cada uma com
+  código. O vidro se vê também pela borda clara e pelo realce de luz
+  (platform-shell.css).
+
+  Contraste: com cor no vidro, ele é medido no pior trecho possível da arte (a
+  cor misturada ao branco e ao preto, na proporção escolhida). Sem cor, o
+  texto vai direto sobre a arte, que o sistema não mede: a leitura depende de
+  a arte combinar com o texto. A cor do painel continua escolhendo o texto no
+  modo automático e é o painel de quem não vê o vidro (menos transparência
+  pedida ao sistema).
 */
 export const ESTILO_SOLIDO = "solido";
 export const ESTILO_VIDRO = "vidro";
@@ -109,6 +114,53 @@ export function normalizarEstilo(valor: unknown): EstiloDoPainel {
     .trim()
     .toLowerCase();
   return bruto === ESTILO_VIDRO ? ESTILO_VIDRO : ESTILO_SOLIDO;
+}
+
+/** As proporções da cor do painel no vidro: 0% (vidro puro) a 90%, de 10 em 10. */
+export const CORES_DO_VIDRO = Object.freeze([
+  0, 10, 20, 30, 40, 50, 60, 70, 80, 90,
+] as const);
+
+/** A cor no vidro, em %: um dos valores de CORES_DO_VIDRO; fora deles, 0. */
+export function porcentagemDaCorNoVidro(valor: unknown): number {
+  const numero = Number(String(valor ?? "").trim());
+  return (CORES_DO_VIDRO as readonly number[]).includes(numero) ? numero : 0;
+}
+
+/** A cor no vidro como vai para a configuração ("0" a "90"). */
+export function normalizarCorNoVidro(valor: unknown): string {
+  return String(porcentagemDaCorNoVidro(valor));
+}
+
+/*
+  O desfoque da arte atrás do vidro, em px. A mesma tabela está no script do
+  <head> do index.html (primeiro quadro); tests/vidro-ajustavel-no-painel-de-
+  acesso.test.ts impede as duas de se separarem.
+*/
+export const DESFOQUE_DO_VIDRO_EM_PX = Object.freeze({
+  nenhum: 0,
+  leve: 8,
+  forte: 18,
+} as const);
+export type DesfoqueDoVidro = keyof typeof DESFOQUE_DO_VIDRO_EM_PX;
+
+export function normalizarDesfoqueDoVidro(valor: unknown): DesfoqueDoVidro {
+  const bruto = String(valor ?? "")
+    .trim()
+    .toLowerCase();
+  return bruto === "leve" || bruto === "forte" ? bruto : "nenhum";
+}
+
+/** `cor` com `opacidade` sobre `fundo`, em hex (a conta do `color-mix` do CSS). */
+function misturar(cor: string, fundo: string, opacidade: number): string {
+  const [a, b] = [canais(cor), canais(fundo)];
+  return `#${a
+    .map((canal, i) =>
+      Math.round(canal * opacidade + (b[i] ?? 0) * (1 - opacidade))
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")}`;
 }
 
 export interface AvaliacaoDaCor {
@@ -124,6 +176,7 @@ export function avaliarCor(
   cor: unknown,
   modo: unknown = MODO_AUTO,
   estilo: unknown = ESTILO_SOLIDO,
+  corNoVidro: unknown = 0,
 ): AvaliacaoDaCor | null {
   if (typeof cor !== "string" || !HEX.test(cor.trim())) return null;
 
@@ -137,6 +190,31 @@ export function avaliarCor(
   const razao = Math.floor(exata * 100) / 100;
   const cumpre = exata >= MINIMO_AA;
   const medida = `Contraste do texto sobre esta cor: ${numero(razao, 2)}.`;
+
+  const porcento = porcentagemDaCorNoVidro(corNoVidro);
+  if (normalizarEstilo(estilo) === ESTILO_VIDRO && porcento > 0) {
+    // O pior trecho possível da arte: a cor misturada ao branco e ao preto.
+    const pior = Math.min(
+      ...["#ffffff", "#000000"].map((fundo) =>
+        razaoDeContraste(
+          corDoTexto,
+          misturar(normalizada, fundo, porcento / 100),
+        ),
+      ),
+    );
+    const razaoNoVidro = Math.floor(pior * 100) / 100;
+    const passa = pior >= MINIMO_AA;
+    const sobre = `Contraste do texto sobre o vidro com ${porcento}% da cor, no trecho mais claro ou mais escuro da arte: ${numero(razaoNoVidro, 2)}.`;
+    return {
+      cor: normalizada,
+      corDoTexto,
+      razao: razaoNoVidro,
+      passa,
+      mensagem: passa
+        ? `${sobre} Acima do mínimo de ${numero(MINIMO_AA, 1)} da WCAG AA.`
+        : `${sobre} Abaixo do mínimo de ${numero(MINIMO_AA, 1)} da WCAG AA — quem tem baixa visão pode não conseguir ler. Mais cor no vidro, uma cor mais escura ou mais clara, ou o painel sólido, resolve.`,
+    };
+  }
 
   if (normalizarEstilo(estilo) === ESTILO_VIDRO) {
     const claro = corDoTexto === TEXTO_CLARO;

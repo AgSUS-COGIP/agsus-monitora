@@ -47,6 +47,9 @@ const CAMPOS = [
   "textoModo",
   // Estilo do painel: sólido ou vidro.
   "painelEstilo",
+  // Cor no vidro ("0" a "90", em %) e desfoque da arte (nenhum, leve, forte).
+  "vidroCor",
+  "vidroDesfoque",
   /*
     A medida da arte (13/11/2026): a proporção e a cor da borda esquerda,
     medidas quando a arte carrega, e o endereço medido. O primeiro quadro já

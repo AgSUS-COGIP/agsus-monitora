@@ -54,8 +54,17 @@ describe("migration 20261112180000: a chave do estilo na leitura pública", () =
   const novo = corpoDaFuncao(migration);
   const vigente = corpoDaFuncao(rollback);
 
+  /*
+    13/11/2026: a migration 20261113150000 (aplicada) só acrescentou a cor e
+    o desfoque do vidro à lista; tirando as duas, o retrato é o desta.
+  */
   it("o retrato mostra a função como a migration a deixou", () => {
-    expect(retratado).toBe(novo);
+    expect(
+      retratado.replace(
+        ",\n    'auth_access_vidro_cor',\n    'auth_access_vidro_desfoque'",
+        "",
+      ),
+    ).toBe(novo);
   });
 
   it("só acrescenta a chave nova à lista fixa", () => {
@@ -134,13 +143,14 @@ describe("o estilo do painel", () => {
     expect(html).toContain('.classList.add("login-panel-vidro");');
   });
 
-  it("o vidro não tem cor e recua para o painel sólido", () => {
+  it("sem ajuste, o vidro não tem cor; e recua para o painel sólido", () => {
     const css = ler("src/styles/platform-shell.css");
     const bloco = css.slice(
       css.indexOf(".login-screen.login-panel-vidro .login-outer {"),
       css.indexOf(".login-screen.login-panel-vidro .login-card {"),
     );
-    expect(bloco).not.toContain("--login-panel-color");
+    // A cor só entra na proporção escolhida (13/11/2026); sem escolha, 0%.
+    expect(bloco).toContain("var(--vidro-cor, 0%)");
     expect(css).toContain("@media (prefers-reduced-transparency: reduce)");
     expect(css).toContain(
       "background: var(--login-panel-color, var(--color-bg-subtle));",
@@ -153,17 +163,17 @@ describe("contraste do vidro", () => {
     13/11/2026: "vidro mesmo, sem cor". Nem tinta, nem brilho branco, nem
     realce de saturação: o vidro se vê pela borda clara e pelo realce de luz.
   */
-  it("vidro de verdade: sem tinta, brilho, saturação nem desfoque; só a borda", () => {
+  it("vidro de verdade: sem brilho nem saturação; cor e desfoque só os escolhidos", () => {
     const css = ler("src/styles/platform-shell.css");
     const bloco = css.slice(
       css.indexOf(".login-screen.login-panel-vidro .login-outer {"),
       css.indexOf(".login-screen.login-panel-vidro .login-card {"),
     );
-    expect(bloco).toContain("background: transparent;");
     expect(bloco).not.toContain("linear-gradient");
     expect(bloco).not.toContain("saturate");
-    expect(bloco).toContain("backdrop-filter: none;");
-    expect(bloco).not.toContain("blur(");
+    expect(bloco).toContain(
+      "backdrop-filter: blur(var(--vidro-desfoque, 0px));",
+    );
     expect(bloco).toContain(
       "border-color: color-mix(in srgb, var(--brilho-do-vidro)",
     );

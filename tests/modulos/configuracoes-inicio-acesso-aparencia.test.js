@@ -404,6 +404,26 @@ describe("Aparência", () => {
     ).toContain("No vidro o painel fica sem cor");
   });
 
+  /*
+    13/11/2026: a cor no vidro e o desfoque da arte se escolhem aqui, só com o
+    vidro escolhido; a prévia e o aviso de contraste acompanham.
+  */
+  it("com o vidro, escolhe a cor no vidro e o desfoque; a prévia acompanha", async () => {
+    await montar({ secao: "aparencia" });
+    expect($("configAparencia-authAccessVidroCor")).toBeNull();
+    await escolher($("configAparencia-authAccessPainelEstilo"), "vidro");
+    await escolher($("configAparencia-authAccessVidroCor"), "70");
+    await escolher($("configAparencia-authAccessVidroDesfoque"), "leve");
+    const cartao = previa("aparencia").querySelector(".previa-acesso__cartao");
+    expect(cartao.style.getPropertyValue("--vidro-cor")).toBe("70%");
+    expect(cartao.style.getPropertyValue("--vidro-desfoque")).toBe("8px");
+    expect(
+      secao("aparencia").querySelector(".config-contraste").textContent,
+    ).toContain("70% da cor");
+    await escolher($("configAparencia-authAccessPainelEstilo"), "solido");
+    expect($("configAparencia-authAccessVidroCor")).toBeNull();
+  });
+
   it("logo do acesso com endereço inválido não publica", async () => {
     await montar({ secao: "aparencia" });
     await digitar(

@@ -326,10 +326,17 @@ export function SecaoAparencia({ estado, imagens }: PropsDaSecaoNoPortal) {
           {campo("auth_access_panel_color")}
           {campo("auth_access_texto_modo")}
           {campo("auth_access_painel_estilo")}
+          {estado.valor("auth_access_painel_estilo") === "vidro" ? (
+            <>
+              {campo("auth_access_vidro_cor")}
+              {campo("auth_access_vidro_desfoque")}
+            </>
+          ) : null}
           <AvisoDeContraste
             cor={estado.valor("auth_access_panel_color")}
             modo={estado.valor("auth_access_texto_modo")}
             estilo={estado.valor("auth_access_painel_estilo")}
+            corNoVidro={estado.valor("auth_access_vidro_cor")}
             comBotao
           />
         </Grupo>

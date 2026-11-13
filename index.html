@@ -85,6 +85,20 @@
           }
           /* O estilo do painel (sólido ou vidro): a classe vai com a outra. */
           window.__agsusPainelVidro = marca.painelEstilo === "vidro";
+          /*
+            A cor no vidro (0 a 90, em %) e o desfoque da arte (a tabela de
+            DESFOQUE_DO_VIDRO_EM_PX em src/lib/contraste.ts), 13/11/2026.
+          */
+          if (/^(0|[1-9]0)$/.test(marca.vidroCor || ""))
+            raiz.style.setProperty("--vidro-cor", marca.vidroCor + "%");
+          var desfoques = { nenhum: 0, leve: 8, forte: 18 };
+          if (
+            Object.prototype.hasOwnProperty.call(desfoques, marca.vidroDesfoque)
+          )
+            raiz.style.setProperty(
+              "--vidro-desfoque",
+              desfoques[marca.vidroDesfoque] + "px",
+            );
 
           var arte =
             typeof marca.backgroundUrl === "string"
