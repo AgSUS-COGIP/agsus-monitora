@@ -10,17 +10,47 @@ const cssDe = (pasta) =>
 
 /*
   A fonte do sistema passou de Inter para Geist, no app principal e em
-  Análises. Vem do Google Fonts como fonte variável (um arquivo para 400–900;
-  a CSP já libera fonts.googleapis.com e fonts.gstatic.com) e chega às regras
+  Análises, como fonte variável (um arquivo para 400–900), e chega às regras
   pelo token `--font-sans`, de `tokens.css`.
+
+  13/11/2026: a Geist vinha do Google Fonts e só começava a baixar depois do
+  CSS; a cada atualização o texto aparecia na fonte do sistema e trocava para
+  a Geist (a tela de acesso "piscava"). Agora o próprio site a serve
+  (public/fonts, com a licença OFL ao lado), pedida com preload no <head>, e
+  a @font-face usa `font-display: optional` (nunca troca na frente de quem lê).
 */
 describe("fonte Geist no sistema todo", () => {
-  it("as páginas carregam Geist, e nenhuma carrega Inter", () => {
-    for (const pagina of ["index.html"]) {
-      const html = ler(pagina);
-      expect(html, pagina).toContain("family=Geist:wght@400..900&display=swap");
-      expect(html, pagina).not.toContain("family=Inter");
-    }
+  it("o index.html pede a Geist do próprio site, antes do CSS, e não do Google Fonts", () => {
+    const html = ler("index.html");
+    const preload = html.indexOf('href="/fonts/geist-latin.woff2"');
+    expect(preload).toBeGreaterThan(-1);
+    const tag = html.slice(html.lastIndexOf("<link", preload), preload + 120);
+    expect(tag).toContain('rel="preload"');
+    expect(tag).toContain('as="font"');
+    expect(tag).toContain("crossorigin");
+    expect(preload).toBeLessThan(html.indexOf('href="/src/styles/app.css"'));
+    expect(html).not.toContain("fonts.googleapis.com");
+    expect(html).not.toContain("family=Inter");
+  });
+
+  it("o arquivo e a licença estão em public/fonts", () => {
+    const arquivo = readFileSync("public/fonts/geist-latin.woff2");
+    expect(arquivo.subarray(0, 4).toString("latin1")).toBe("wOF2");
+    expect(ler("public/fonts/LICENSE-Geist.txt")).toContain(
+      "SIL Open Font License, Version 1.1",
+    );
+  });
+
+  it("a @font-face aponta o arquivo e não troca de fonte na frente de quem lê", () => {
+    const tokens = ler("src/styles/tokens.css");
+    const bloco = tokens.slice(tokens.indexOf("@font-face {"));
+    const regra = bloco.slice(0, bloco.indexOf("}"));
+    expect(regra).toContain('font-family: "Geist";');
+    expect(regra).toContain("font-weight: 400 900;");
+    expect(regra).toContain("font-display: optional;");
+    expect(regra).toContain(
+      'src: url("/fonts/geist-latin.woff2") format("woff2");',
+    );
   });
 
   it("o token --font-sans começa pela Geist", () => {

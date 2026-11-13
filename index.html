@@ -220,11 +220,19 @@
     <link rel="shortcut icon" href="/icons/agsus-monitora.svg" />
     <link rel="apple-touch-icon" href="/icons/agsus-monitora.svg" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      A fonte Geist é servida pelo próprio site (public/fonts, 13/11/2026) e
+      pedida aqui, antes do CSS: chega antes do primeiro quadro. Vinda do
+      Google Fonts, ela só começava a baixar depois do CSS, e a cada
+      atualização o texto aparecia na fonte do sistema e trocava para a Geist
+      (a tela de acesso "piscava"). A @font-face está em src/styles/tokens.css.
+    -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@400..900&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      href="/fonts/geist-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
     <!-- Ícones: Lucide via src/styles/icones-lucide.css (gerado). O Font Awesome saiu. -->
     <!-- Leaflet: baixa só quando um mapa monta (src/modulos/mapa-saude-indigena/carregar-leaflet.ts). -->
