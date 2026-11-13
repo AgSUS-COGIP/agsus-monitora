@@ -92,13 +92,13 @@ export function corDoTextoPara(cor: string, modo: unknown = MODO_AUTO): string {
 /*
   O estilo do painel da tela de acesso (Configurações › Tela de acesso):
   sólido (o padrão) ou vidro. No vidro o painel não tem cor nenhuma
-  (13/11/2026, "vidro mesmo, sem cor"): o texto fica direto sobre a arte
-  desfocada, e o vidro se vê só pela borda clara e pelo realce de luz
+  (13/11/2026, "vidro mesmo, sem cor") nem desfoque: o texto fica direto
+  sobre a arte, e o vidro se vê só pela borda clara e pelo realce de luz
   (platform-shell.css). A arte é configurável e o sistema não a mede:
   no vidro, a leitura depende de a arte atrás do painel combinar com o texto
   (escura para o texto claro, clara para o escuro). A cor do painel continua
   escolhendo o texto no modo automático e é o painel de quem não vê o vidro
-  (menos transparência pedida ao sistema, ou navegador sem desfoque).
+  (menos transparência pedida ao sistema).
 */
 export const ESTILO_SOLIDO = "solido";
 export const ESTILO_VIDRO = "vidro";

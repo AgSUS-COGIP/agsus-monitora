@@ -142,7 +142,6 @@ describe("o estilo do painel", () => {
     );
     expect(bloco).not.toContain("--login-panel-color");
     expect(css).toContain("@media (prefers-reduced-transparency: reduce)");
-    expect(css).toContain("@supports not (backdrop-filter: blur(1px))");
     expect(css).toContain(
       "background: var(--login-panel-color, var(--color-bg-subtle));",
     );
@@ -154,7 +153,7 @@ describe("contraste do vidro", () => {
     13/11/2026: "vidro mesmo, sem cor". Nem tinta, nem brilho branco, nem
     realce de saturação: o vidro se vê pela borda clara e pelo realce de luz.
   */
-  it("vidro de verdade: sem tinta, brilho nem saturação; só desfoque e borda", () => {
+  it("vidro de verdade: sem tinta, brilho, saturação nem desfoque; só a borda", () => {
     const css = ler("src/styles/platform-shell.css");
     const bloco = css.slice(
       css.indexOf(".login-screen.login-panel-vidro .login-outer {"),
@@ -163,7 +162,8 @@ describe("contraste do vidro", () => {
     expect(bloco).toContain("background: transparent;");
     expect(bloco).not.toContain("linear-gradient");
     expect(bloco).not.toContain("saturate");
-    expect(bloco).toContain("backdrop-filter: blur(");
+    expect(bloco).toContain("backdrop-filter: none;");
+    expect(bloco).not.toContain("blur(");
     expect(bloco).toContain(
       "border-color: color-mix(in srgb, var(--brilho-do-vidro)",
     );
