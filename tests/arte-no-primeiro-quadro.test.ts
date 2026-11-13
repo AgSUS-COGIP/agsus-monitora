@@ -37,7 +37,11 @@ afterEach(() => {
   raiz().removeProperty("--login-arte-proporcao");
   raiz().removeProperty("--login-arte-cor");
   raiz().removeProperty("--login-background-image");
-  document.documentElement.classList.remove("arte-esperando");
+  document.documentElement.classList.remove(
+    "arte-esperando",
+    "arte-pronta",
+    "arte-atrasada",
+  );
   vi.useRealTimers();
 });
 
@@ -106,22 +110,33 @@ describe("o script do <head> aplica a medida no primeiro quadro", () => {
   entram com transição.
 */
 describe("a arte decodificada antes do CSS", () => {
-  it("com arte guardada, pede a imagem e espera por ela", () => {
+  it("com arte guardada, pede a imagem e esconde o cartão até ela ficar pronta", () => {
     vi.useFakeTimers();
     guardarMarca({ backgroundUrl: ARTE });
     rodarScriptDoHead();
     const guardada: unknown = Reflect.get(window, "__agsusArteDoAcesso");
     const imagem = guardada instanceof HTMLImageElement ? guardada : undefined;
     expect(imagem?.src).toBe(ARTE);
-    expect(document.documentElement.classList.contains("arte-esperando")).toBe(
-      true,
-    );
-    imagem?.dispatchEvent(new Event("load"));
+    const classes = document.documentElement.classList;
+    expect(classes.contains("arte-esperando")).toBe(true);
     imagem?.onload?.(new Event("load"));
-    vi.advanceTimersByTime(3000);
-    expect(document.documentElement.classList.contains("arte-esperando")).toBe(
-      false,
-    );
+    expect(classes.contains("arte-esperando")).toBe(false);
+    expect(classes.contains("arte-pronta")).toBe(true);
+    vi.advanceTimersByTime(600);
+    expect(classes.contains("arte-atrasada")).toBe(false);
+  });
+
+  it("arte que passa de 600 ms: o cartão aparece e a arte entra depois", () => {
+    vi.useFakeTimers();
+    guardarMarca({ backgroundUrl: ARTE });
+    rodarScriptDoHead();
+    const classes = document.documentElement.classList;
+    vi.advanceTimersByTime(600);
+    expect(classes.contains("arte-esperando")).toBe(false);
+    expect(classes.contains("arte-atrasada")).toBe(true);
+    expect(classes.contains("arte-pronta")).toBe(false);
+    vi.advanceTimersByTime(2400);
+    expect(classes.contains("arte-pronta")).toBe(true);
   });
 
   it("sem arte guardada, não espera nada", () => {
@@ -131,14 +146,19 @@ describe("a arte decodificada antes do CSS", () => {
     );
   });
 
-  it("o CSS deixa as camadas transparentes só enquanto espera, e entra com transição", () => {
+  it("o CSS esconde o cartão e a arte enquanto espera; atrasada, a arte entra com transição", () => {
     const css = readFileSync("src/styles/platform-shell.css", "utf8");
-    expect(css).toMatch(
-      /html\.arte-esperando \.login-screen::before,\s*html\.arte-esperando \.login-screen::after \{\s*opacity: 0;/,
+    expect(css).toContain(
+      "html.arte-esperando #loginScreen > * {\n  visibility: hidden;\n}",
     );
-    const transicao = css.slice(
-      css.indexOf("background-image var(--duration-slow)"),
+    expect(css).toContain(
+      "html.arte-atrasada:not(.arte-pronta) .login-screen::after {\n  opacity: 0;\n}",
     );
-    expect(transicao.slice(0, 160)).toContain("opacity var(--duration-slow)");
+    const atrasada = css.slice(
+      css.indexOf(
+        "html.arte-atrasada .login-screen::before,\nhtml.arte-atrasada .login-screen::after {",
+      ),
+    );
+    expect(atrasada.slice(0, 260)).toContain("opacity var(--duration-slow)");
   });
 });

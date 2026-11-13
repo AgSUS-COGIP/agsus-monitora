@@ -87,19 +87,29 @@
 */
 .login-screen::before,
 .login-screen::after {
+  transition: background-image var(--duration-slow) var(--ease-standard);
+}
+/*
+  A arte guardada ainda decodificando (classes postas e tiradas pelo script do
+  <head> do index.html, 13/11/2026). Até 600 ms (`arte-esperando`), o cartão
+  e as camadas da arte ficam escondidos sobre o fundo na cor da arte, e tudo
+  aparece junto quando ela fica pronta. Passou disso (`arte-atrasada`), o
+  cartão aparece e a arte entra com transição quando ficar pronta.
+*/
+html.arte-esperando #loginScreen > * {
+  visibility: hidden;
+}
+html.arte-esperando .login-screen::before,
+html.arte-esperando .login-screen::after,
+html.arte-atrasada:not(.arte-pronta) .login-screen::before,
+html.arte-atrasada:not(.arte-pronta) .login-screen::after {
+  opacity: 0;
+}
+html.arte-atrasada .login-screen::before,
+html.arte-atrasada .login-screen::after {
   transition:
     background-image var(--duration-slow) var(--ease-standard),
     opacity var(--duration-slow) var(--ease-standard);
-}
-/*
-  A arte guardada ainda decodificando (classe posta e tirada pelo script do
-  <head> do index.html, 13/11/2026): as camadas ficam transparentes sobre o
-  fundo na cor da arte e entram com a transição acima, em vez de surgirem de
-  uma vez depois do cartão.
-*/
-html.arte-esperando .login-screen::before,
-html.arte-esperando .login-screen::after {
-  opacity: 0;
 }
 .login-outer {
   width: min(516px, 31vw);
