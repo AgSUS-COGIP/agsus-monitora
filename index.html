@@ -123,6 +123,24 @@
               if (/^#[0-9a-f]{6}$/i.test(marca.arteCor || ""))
                 raiz.style.setProperty("--login-arte-cor", marca.arteCor);
             }
+            /*
+              A arte já pedida e decodificada aqui, antes do CSS (13/11/2026):
+              decodificada só na hora de pintar, ela entrava uns 230 ms depois
+              do cartão, de uma vez (a "piscada" gravada em vídeo). Enquanto
+              não está pronta, `arte-esperando` deixa as camadas da arte
+              transparentes; ao ficar pronta (ou falhar, ou em 3 s), elas entram
+              com transição. Pronta antes da primeira pintura, nada muda.
+            */
+            raiz.classList.add("arte-esperando");
+            var pronta = function () {
+              raiz.classList.remove("arte-esperando");
+            };
+            var imagem = new Image();
+            window.__agsusArteDoAcesso = imagem;
+            imagem.src = arte;
+            if (imagem.decode) imagem.decode().then(pronta, pronta);
+            else imagem.onload = imagem.onerror = pronta;
+            setTimeout(pronta, 3000);
           }
         } catch (erro) {
           /* Armazenamento bloqueado ou conteúdo inválido: fica o fundo neutro. */
