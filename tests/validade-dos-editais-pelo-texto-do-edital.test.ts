@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 
   Nenhum edital tinha a validade gravada, então nenhum vencia. O prazo de 121
   editais foi lido na cláusula do PDF publicado e as prorrogações, nos avisos
-  do site. O comportamento é conferido no banco pelo ensaio (121 gravados, 41
+  do site. O comportamento é conferido no banco pelo ensaio (121 gravados, 45
   vencidos, nenhuma lista vencida ativa); aqui, que migration, ensaio e
   rollback contam a mesma história.
 */
@@ -55,11 +55,22 @@ describe("migration 20261113230000", () => {
     );
   });
 
-  it("03, 04, 06 e 09/2025 ficam com os 3 anos do edital, a confirmar", () => {
+  it("as erratas e retificações valem: 1 ano nos de fevereiro/2025, 12 meses na SEDE", () => {
     for (const edital of ["03/2025", "04/2025", "06/2025", "09/2025"]) {
       const linha = linhas.find((l) => l.includes(`'${edital}'`));
-      expect(linha).toContain("3::smallint, 0::smallint, false");
-      expect(linha).toContain("a confirmar com a DAIS");
+      expect(linha).toContain("1::smallint, 0::smallint, false");
+      expect(linha).toContain("errata de 27/02/2025");
+    }
+    for (const edital of [
+      "31/2025",
+      "33/2025",
+      "45/2025",
+      "46/2025",
+      "48/2025",
+    ]) {
+      const linha = linhas.find((l) => l.includes(`'${edital}'`));
+      expect(linha).toContain("1::smallint, 0::smallint, false");
+      expect(linha).toContain("retificação");
     }
   });
 

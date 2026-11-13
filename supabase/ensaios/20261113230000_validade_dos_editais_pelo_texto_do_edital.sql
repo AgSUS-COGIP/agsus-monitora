@@ -13,12 +13,12 @@ insert into tmp_validade values
     ('25e0a8f7-5e32-4b0a-9222-209ca17161dd'::uuid, '30/2026', 1::smallint, 0::smallint, false),  -- projetos, texto do edital; vence 2027-07-09
     ('f57d77e1-7f6b-416c-9f9e-6e40c6d5bded'::uuid, '93/2026', 1::smallint, 0::smallint, false),  -- projetos, texto do edital; vence 2027-11-19
     ('6d25281f-a9d0-47b9-9283-e37450b5eea5'::uuid, '96/2025', 1::smallint, 0::smallint, false),  -- projetos, texto do edital; vence 2027-02-04
-    ('63e82eaa-9f5b-4eb4-98b3-d6306df9774f'::uuid, '03/2025', 3::smallint, 0::smallint, false),  -- saude-indigena, texto do edital (3 anos); a confirmar com a DAIS; vence 2028-06-16
-    ('ccc57e7a-0abc-411a-b11f-637ae79ba599'::uuid, '04/2025', 3::smallint, 0::smallint, false),  -- saude-indigena, texto do edital (3 anos); a confirmar com a DAIS; vence 2028-06-16
-    ('5bf30394-0a36-45e6-819e-4aeaf1ea35c6'::uuid, '05/2025', 1::smallint, 0::smallint, true),  -- saude-indigena, comunicado de 11/06/2026: validade de 1 ano, prorrogada até 13/06/2027; vence 2027-06-16
-    ('5b22b75c-d03c-49f3-bbfd-e7d0fdf81b04'::uuid, '06/2025', 3::smallint, 0::smallint, false),  -- saude-indigena, texto do edital (3 anos); a confirmar com a DAIS; vence 2028-06-16
+    ('63e82eaa-9f5b-4eb4-98b3-d6306df9774f'::uuid, '03/2025', 1::smallint, 0::smallint, false),  -- saude-indigena, errata de 27/02/2025: item 8.8 passa a 1 ano; vence 2026-06-16
+    ('ccc57e7a-0abc-411a-b11f-637ae79ba599'::uuid, '04/2025', 1::smallint, 0::smallint, false),  -- saude-indigena, errata de 27/02/2025: item 8.8 passa a 1 ano; vence 2026-06-16
+    ('5bf30394-0a36-45e6-819e-4aeaf1ea35c6'::uuid, '05/2025', 1::smallint, 0::smallint, true),  -- saude-indigena, errata de 27/02/2025 (1 ano) e comunicado de 11/06/2026: prorrogado até 13/06/2027; vence 2027-06-16
+    ('5b22b75c-d03c-49f3-bbfd-e7d0fdf81b04'::uuid, '06/2025', 1::smallint, 0::smallint, false),  -- saude-indigena, errata de 27/02/2025: item 8.8 passa a 1 ano; vence 2026-06-16
     ('59ca62a1-130e-483a-9b0f-beb9845f62f2'::uuid, '06/2026', 0::smallint, 6::smallint, false),  -- saude-indigena, texto do edital; vence 2026-12-05
-    ('5ed99875-24b8-4eb2-b54b-bbaab35f1525'::uuid, '09/2025', 3::smallint, 0::smallint, false),  -- saude-indigena, texto do edital (3 anos); a confirmar com a DAIS; vence 2028-06-16
+    ('5ed99875-24b8-4eb2-b54b-bbaab35f1525'::uuid, '09/2025', 1::smallint, 0::smallint, false),  -- saude-indigena, errata de 27/02/2025: item 8.8 passa a 1 ano; vence 2026-06-16
     ('f25c5934-e09f-4c97-af1f-72f70d7d0975'::uuid, '100/2026', 0::smallint, 6::smallint, false),  -- saude-indigena, texto do edital; vence 2027-04-21
     ('5351378f-7b51-43b4-a9e2-54a2a1c57773'::uuid, '101/2026', 0::smallint, 6::smallint, false),  -- saude-indigena, texto do edital; vence 2027-04-21
     ('0079ca2a-cc62-45b2-83ec-72985958ab99'::uuid, '102/2026', 1::smallint, 0::smallint, false),  -- saude-indigena, texto do edital; vence 2027-10-21
@@ -112,14 +112,14 @@ insert into tmp_validade values
     ('9070a331-62c3-49f7-9f30-09078079bab7'::uuid, '95/2025', 0::smallint, 6::smallint, false),  -- saude-indigena, texto do edital; vence 2026-08-09
     ('8eb80bff-2400-402e-9eb8-adde2cfc0010'::uuid, '95/2026', 0::smallint, 6::smallint, false),  -- saude-indigena, texto do edital; vence 2027-05-17
     ('10649332-b04e-4bec-ba46-a1f27886ba08'::uuid, '97/2026', 0::smallint, 6::smallint, false),  -- saude-indigena, texto do edital; vence 2027-04-07
-    ('faa8696b-c7d5-4481-8bf0-dd375321bbe2'::uuid, '31/2025', 0::smallint, 6::smallint, false),  -- sede, texto do edital; vence 2026-05-03
-    ('d99e8b95-32b6-415b-8b48-e0dec3e83977'::uuid, '33/2025', 0::smallint, 6::smallint, false),  -- sede, texto do edital; vence 2026-05-03
+    ('faa8696b-c7d5-4481-8bf0-dd375321bbe2'::uuid, '31/2025', 1::smallint, 0::smallint, false),  -- sede, retificação: validade de 6 para 12 meses; vence 2026-11-03
+    ('d99e8b95-32b6-415b-8b48-e0dec3e83977'::uuid, '33/2025', 1::smallint, 0::smallint, false),  -- sede, retificação: validade de 6 para 12 meses; vence 2026-11-03
     ('76b5e655-3009-4bd6-867d-210381d8308a'::uuid, '35/2025', 1::smallint, 0::smallint, false),  -- sede, texto do edital; vence 2026-11-03
     ('5cb9df0c-412e-463b-9287-d65410b75263'::uuid, '41/2025', 1::smallint, 0::smallint, false),  -- sede, texto do edital; vence 2026-10-28
     ('23221b99-b2c6-44a5-a277-eb22b5631914'::uuid, '43/2025', 1::smallint, 0::smallint, false),  -- sede, texto do edital; vence 2026-11-03
-    ('a053a11a-d548-46e4-bc94-ca534a3a96f9'::uuid, '45/2025', 0::smallint, 6::smallint, false),  -- sede, texto do edital; vence 2026-05-03
-    ('2eda9415-b89e-4dc8-bb54-f41c50b7d60c'::uuid, '46/2025', 0::smallint, 6::smallint, false),  -- sede, texto do edital; vence 2026-05-03
-    ('bfa8370d-e314-46b3-9dda-fa34c8c1db99'::uuid, '48/2025', 0::smallint, 6::smallint, false),  -- sede, texto do edital; vence 2026-05-03
+    ('a053a11a-d548-46e4-bc94-ca534a3a96f9'::uuid, '45/2025', 1::smallint, 0::smallint, false),  -- sede, retificação: validade de 6 para 12 meses; vence 2026-11-03
+    ('2eda9415-b89e-4dc8-bb54-f41c50b7d60c'::uuid, '46/2025', 1::smallint, 0::smallint, false),  -- sede, retificação: validade de 6 para 12 meses; vence 2026-11-03
+    ('bfa8370d-e314-46b3-9dda-fa34c8c1db99'::uuid, '48/2025', 1::smallint, 0::smallint, false),  -- sede, retificação: validade de 6 para 12 meses; vence 2026-11-03
     ('c566aa5f-62d9-4edd-a993-dc653ed50830'::uuid, '50/2025', 1::smallint, 0::smallint, false),  -- sede, texto do edital; vence 2026-10-28
     ('7d5cf8db-06fb-4867-8f31-41b56ae56488'::uuid, '51/2025', 1::smallint, 0::smallint, false),  -- sede, texto do edital; vence 2026-10-28
     ('6c54a4e5-12c4-458f-b264-27dfe04accb9'::uuid, '52/2025', 1::smallint, 0::smallint, false),  -- sede, texto do edital; vence 2026-10-28
@@ -178,10 +178,10 @@ begin
    where l.vigente and l.ativo
      and private."FC_VENCIMENTO_DO_EDITAL"(m.data_fim::date, m."NU_ANOS_VALIDADE", m."NU_MESES_VALIDADE", m."ST_PRORROGADO")
          < (now() at time zone 'America/Sao_Paulo')::date;
-  raise notice 'Editais com validade: % de 121; vencidos hoje: % (em 13/11/2026 eram 41); listas vencidas ainda ativas: %',
+  raise notice 'Editais com validade: % de 121; vencidos hoje: % (em 13/11/2026 eram 45); listas vencidas ainda ativas: %',
     v_gravados, v_vencidos, v_ativas_vencidas;
   if v_gravados <> 121 then raise exception 'Gravou % editais, esperava 121.', v_gravados; end if;
-  if v_vencidos < 41 then raise exception 'Só % vencidos; esperava ao menos 41.', v_vencidos; end if;
+  if v_vencidos < 45 then raise exception 'Só % vencidos; esperava ao menos 45.', v_vencidos; end if;
   if v_ativas_vencidas <> 0 then raise exception 'Ainda há % listas vencidas ativas.', v_ativas_vencidas; end if;
 end;
 $confere$;
