@@ -63,14 +63,15 @@ describe("migration 20261113150000: a cor e o desfoque na leitura pública", () 
     );
   });
 
-  it("o retrato mostra o corpo de antes ou o desta migration", () => {
+  // Aplicada e registrada em 13/11/2026: o retrato mostra o corpo desta.
+  it("o retrato mostra a função como esta migration a deixou", () => {
     const retrato = ler("supabase/esquema-atual.sql");
     const inicio = retrato.indexOf(
       "CREATE FUNCTION public.obter_branding_acesso_publico()",
     );
     const abre = retrato.indexOf("AS $$", inicio) + "AS $$".length;
     const retratado = retrato.slice(abre, retrato.indexOf("$$;", abre));
-    expect([vigente, novo]).toContain(retratado);
+    expect(retratado).toBe(novo);
   });
 
   it("as guardas usam o md5 do corpo de antes e do de depois, sem CR", () => {

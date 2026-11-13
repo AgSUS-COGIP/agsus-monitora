@@ -54,8 +54,19 @@ describe("migration 20261112180000: a chave do estilo na leitura pública", () =
   const novo = corpoDaFuncao(migration);
   const vigente = corpoDaFuncao(rollback);
 
+  /*
+    13/11/2026: a migration 20261113150000 (aplicada) só acrescentou a cor e
+    o desfoque do vidro à lista; tirando as duas, o retrato é o desta.
+  */
   it("o retrato mostra a função como a migration a deixou", () => {
-    expect(retratado).toBe(novo);
+    expect(
+      retratado.replace(
+        ",
+    'auth_access_vidro_cor',
+    'auth_access_vidro_desfoque'",
+        "",
+      ),
+    ).toBe(novo);
   });
 
   it("só acrescenta a chave nova à lista fixa", () => {
