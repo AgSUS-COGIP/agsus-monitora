@@ -559,6 +559,18 @@
           <div class="login-stripe"></div>
         </div>
       </div>
+      <!--
+        O cartão provisório acabou de ser lido: a arte pode aparecer
+        (13/11/2026). Gravado em vídeo: com a arte já pronta, o navegador
+        pintava um quadro com a arte e ainda sem o cartão (o analisador do
+        HTML não tinha chegado nele). Sem a classe, as camadas da arte ficam
+        transparentes (platform-shell.css); a tela sem conteúdo não é
+        mostrada, e o navegador segura a anterior até cartão e arte saírem
+        juntos.
+      -->
+      <script>
+        document.documentElement.classList.add("cartao-lido");
+      </script>
     </section>
 
     <!--
