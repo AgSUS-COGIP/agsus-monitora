@@ -15,8 +15,12 @@ export type ColunaDaTabela =
   | "edital"
   | "data_inicio"
   | "data_fim"
+  | "duracao"
   | "vagas_total"
+  | "inscritos"
+  | "aprovados"
   | "contratados"
+  | "cadastro_reserva"
   | "vagas_ociosas"
   | "status"
   | "fase"
@@ -68,12 +72,18 @@ export type LinhaDoMonitoramento = {
   atencao?: Motivo[];
   pos_resultado?: Pendencia[];
   desistentes?: number;
+  /** Pessoas na lista de aprovados vigente; nulo sem lista. */
+  aprovados?: number | null;
+  /** Aprovados da lista vigente ainda sem status (não chamados); nulo sem lista. */
+  cadastro_reserva?: number | null;
 };
 export type LinhaDaVisaoGeral = LinhaDoMonitoramento & {
   fase: string;
   atencao: Motivo[];
   pos_resultado: Pendencia[];
   desistentes: number;
+  aprovados: number | null;
+  cadastro_reserva: number | null;
 };
 export type EtapaDoAcompanhamento = {
   monitoramento_id: string | number;

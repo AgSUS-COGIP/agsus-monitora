@@ -308,9 +308,40 @@ function pendenciasDaLinha(
   return codigos;
 }
 
+/*
+  O resultado do edital pela lista de aprovados vigente (13/11/2026, pedido da
+  diretoria: quantos passaram e quantos ficaram em cadastro reserva). Aprovados
+  são as pessoas da lista; cadastro reserva, as que ainda não têm status (não
+  foram chamadas). Sem lista, os dois ficam nulos ("—"), não zero.
+*/
+function resultadoDaLista(lista: ListaDoAcompanhamento | null) {
+  if (!lista) return { aprovados: null, cadastro_reserva: null };
+  const aprovados = num(lista.aprovados);
+  return {
+    aprovados,
+    cadastro_reserva: Math.max(0, aprovados - num(lista.com_status)),
+  };
+}
+
+/**
+ * Dias corridos do início ao encerramento do edital (as datas da linha); sem
+ * as duas datas, ou com o encerramento antes do início, nulo.
+ */
+export function duracaoEmDias(linha: LinhaDoMonitoramento): number | null {
+  const dia = (valor: unknown) => {
+    const achado = txt(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return achado
+      ? Date.UTC(Number(achado[1]), Number(achado[2]) - 1, Number(achado[3]))
+      : NaN;
+  };
+  const dias = (dia(linha?.data_fim) - dia(linha?.data_inicio)) / 86_400_000;
+  return Number.isFinite(dias) && dias >= 0 ? dias : null;
+}
+
 /**
  * Cada linha com `fase`, `atencao` (motivos do crítico), `pos_resultado`
- * (pendências) e `desistentes` (da lista vigente). `hoje`: "AAAA-MM-DD".
+ * (pendências), `desistentes`, `aprovados` e `cadastro_reserva` (da lista
+ * vigente). `hoje`: "AAAA-MM-DD".
  */
 export function enriquecerLinhas(
   linhas: readonly LinhaDoMonitoramento[],
@@ -341,6 +372,7 @@ export function enriquecerLinhas(
       atencao: motivosDeAtencao(comFase, { hoje, etapas, limites, marcacao }),
       pos_resultado: pendenciasDaLinha(comFase, lista, temListas, limites),
       desistentes: lista ? num(lista.desistentes) : 0,
+      ...resultadoDaLista(lista),
     };
   });
 }
@@ -413,6 +445,14 @@ export function linhaCasaComBusca(linha: LinhaDoMonitoramento, busca: string) {
 export function valorParaOrdenar(linha: LinhaDoMonitoramento, campo: string) {
   if (["vagas_total", "contratados"].includes(campo))
     return num(linha?.[campo]);
+  // Sem número ("—") fica abaixo do zero.
+  if (["inscritos", "aprovados", "cadastro_reserva"].includes(campo)) {
+    const valor = linha?.[campo];
+    return valor === null || valor === undefined || valor === ""
+      ? -1
+      : num(valor);
+  }
+  if (campo === "duracao") return duracaoEmDias(linha) ?? -1;
   if (campo === "vagas_ociosas") return vagasSemContratacao(linha);
   if (campo === "atencao") return gravidade(linha?.atencao);
   if (campo === "data_inicio" || campo === "data_fim") {
@@ -701,8 +741,16 @@ export const COLUNAS_DA_TABELA: readonly {
   Object.freeze({ campo: "edital", rotulo: "Edital" }),
   Object.freeze({ campo: "data_inicio", rotulo: "Início" }),
   Object.freeze({ campo: "data_fim", rotulo: "Encerramento" }),
+  Object.freeze({ campo: "duracao", rotulo: "Duração (dias)", numero: true }),
   Object.freeze({ campo: "vagas_total", rotulo: "Vagas", numero: true }),
+  Object.freeze({ campo: "inscritos", rotulo: "Inscritos", numero: true }),
+  Object.freeze({ campo: "aprovados", rotulo: "Aprovados", numero: true }),
   Object.freeze({ campo: "contratados", rotulo: "Contratados", numero: true }),
+  Object.freeze({
+    campo: "cadastro_reserva",
+    rotulo: "Cadastro reserva",
+    numero: true,
+  }),
   Object.freeze({
     campo: "vagas_ociosas",
     rotulo: "Sem contratação",
@@ -719,12 +767,21 @@ export const COLUNAS_PADRAO = Object.freeze(
 
 /*
   As colunas de quem nunca escolheu (12/11/2026): todas menos Observações, o
-  texto longo que já aparece na gaveta do edital. Sem ela, a tabela cabe na
+  texto longo que já aparece na gaveta do edital, e as do resultado (13/11:
+  Duração, Inscritos, Aprovados e Cadastro reserva). Assim a tabela cabe na
   largura de um notebook (1280px) sem rolagem para o lado. Quem já escolheu
-  as colunas continua com a escolha; Observações volta pelo menu "Colunas".
+  as colunas continua com a escolha; as outras entram pelo menu "Colunas" e
+  vão sempre no arquivo exportado.
 */
+const COLUNAS_FORA_DO_INICIO: readonly ColunaDaTabela[] = [
+  "observacoes",
+  "duracao",
+  "inscritos",
+  "aprovados",
+  "cadastro_reserva",
+];
 export const COLUNAS_INICIAIS = Object.freeze(
-  COLUNAS_PADRAO.filter((campo) => campo !== "observacoes"),
+  COLUNAS_PADRAO.filter((campo) => !COLUNAS_FORA_DO_INICIO.includes(campo)),
 );
 
 /* As colunas guardadas: só as conhecidas; nenhuma válida → as iniciais. */
@@ -938,12 +995,15 @@ const CAMPOS_DO_CSV: [
   ["contratados", "Contratados"],
   ["vagas_ociosas", "Vagas Sem Contratação"],
   ["inscritos", "Inscritos"],
+  ["aprovados", "Aprovados (lista vigente)"],
+  ["cadastro_reserva", "Cadastro Reserva (aprovados não chamados)"],
   ["status", "Status"],
   ["fase", "Fase"],
   ["etapa", "Etapa"],
   ["atencao", "Atenção", motivosEmTexto],
   ["data_inicio", "Data de Início"],
   ["data_fim", "Data de Encerramento"],
+  ["duracao", "Duração (dias)", (linha) => txt(duracaoEmDias(linha) ?? "")],
   ["responsavel", "Responsável"],
   ["observacoes", "Observações"],
   ["link_edital", "Link do Edital"],
@@ -1130,6 +1190,8 @@ export function linhasDaResposta(
     delete linha.atencao;
     delete linha.pos_resultado;
     delete linha.desistentes;
+    delete linha.aprovados;
+    delete linha.cadastro_reserva;
     resultado.push(linha);
   }
   return resultado;
