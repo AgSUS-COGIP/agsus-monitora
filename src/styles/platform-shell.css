@@ -60,10 +60,22 @@
   background-repeat: no-repeat;
   pointer-events: none;
 }
+/*
+  O fundo desfocado é a miniatura da arte (64 px, --login-background-image-
+  desfocada), que ampliada já sai desfocada; o desfoque que sobra é leve. Antes
+  era a arte inteira com blur(28px) em tela cheia, caro em processador e placa
+  de vídeo fracos (13/11/2026). Sem a miniatura (arte fora do Storage), a
+  própria arte.
+*/
 .login-screen::before {
+  background-image: var(
+    --login-background-image-desfocada,
+    var(--login-background-image, none)
+  );
   background-size: cover;
   background-position: center;
-  filter: blur(28px);
+  /* prettier-ignore */
+  filter: blur(6px); /* acabamento: permitido(blur) — suaviza a miniatura ampliada da arte no fundo da tela de acesso */
   transform: scale(1.08);
 }
 .login-screen::after {

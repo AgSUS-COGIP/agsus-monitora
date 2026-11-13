@@ -105,16 +105,37 @@
               ? marca.backgroundUrl.trim()
               : "";
           if (arte) {
+            /*
+              As versões leves da arte (13/11/2026; a mesma regra de
+              enderecosDaArteNaTela, em src/lib/access-branding.ts): a nítida
+              com 1200 px de altura e a miniatura do fundo desfocado.
+            */
+            var noStorage = arte.match(
+              /^(https:\/\/[^/?#]+)\/storage\/v1\/object\/public\/([^?#]+)$/,
+            );
+            var baseLeve = noStorage
+              ? noStorage[1] + "/storage/v1/render/image/public/" + noStorage[2]
+              : "";
+            var nitida = noStorage
+              ? baseLeve + "?height=1200&quality=75"
+              : arte;
+            var desfocada = noStorage
+              ? baseLeve + "?width=64&quality=50"
+              : arte;
             raiz.style.setProperty(
               "--login-background-image",
-              'url("' + arte.replace(/["\\]/g, "") + '")',
+              'url("' + nitida.replace(/["\\]/g, "") + '")',
+            );
+            raiz.style.setProperty(
+              "--login-background-image-desfocada",
+              'url("' + desfocada.replace(/["\\]/g, "") + '")',
             );
             /*
               A medida da arte (proporção e cor da borda), se for desta arte:
               a arte já sai no lugar e o fundo da cor dela, sem piscar
               (13/11/2026; marca.ts mede e guarda quando a arte carrega).
             */
-            if (marca.arteMedidaDe === arte) {
+            if (marca.arteMedidaDe === nitida) {
               if (/^\d+(\.\d+)?$/.test(marca.arteProporcao || ""))
                 raiz.style.setProperty(
                   "--login-arte-proporcao",
@@ -141,7 +162,7 @@
             };
             var imagem = new Image();
             window.__agsusArteDoAcesso = imagem;
-            imagem.src = arte;
+            imagem.src = nitida;
             if (imagem.decode) imagem.decode().then(pronta, pronta);
             else imagem.onload = imagem.onerror = pronta;
             setTimeout(function () {
