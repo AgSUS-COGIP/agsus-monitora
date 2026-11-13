@@ -61,9 +61,7 @@ describe("migration 20261112180000: a chave do estilo na leitura pública", () =
   it("o retrato mostra a função como a migration a deixou", () => {
     expect(
       retratado.replace(
-        ",
-    'auth_access_vidro_cor',
-    'auth_access_vidro_desfoque'",
+        ",\n    'auth_access_vidro_cor',\n    'auth_access_vidro_desfoque'",
         "",
       ),
     ).toBe(novo);
