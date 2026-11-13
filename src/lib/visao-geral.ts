@@ -7,6 +7,7 @@ import type {
   LinhaDoMonitoramento,
   LinhaDaVisaoGeral,
   ListaDoAcompanhamento,
+  AdmissoesDoEdital,
   EtapaDoAcompanhamento,
   Ordenacao,
   Pendencia,
@@ -27,13 +28,14 @@ import type {
 
   Cada linha ganha, antes do recorte (`enriquecerLinhas`), a fase calculada
   (`fases-do-processo.ts`), os motivos de atenção (`criticos-da-visao-geral.ts`)
-  e as pendências pós-resultado. O recorte: cinco filtros de escolha múltipla
-  (Unidade, Edital, Status, Fase, UF; comparação sem acento nem caixa,
+  e as pendências pós-resultado. O recorte: seis filtros de escolha múltipla
+  (Unidade, Edital, Status, Fase, UF, Ciclo; comparação sem acento nem caixa,
   `filtros-do-mapa.ts`), a busca livre, o DSEI aberto no mapa e um atalho
   (Críticos ou uma pendência do Pós-resultado). KPIs, mapa, blocos, tabela e
   exportação partem do mesmo recorte.
 */
 
+import { cicloPadronizado, numeroDoCiclo } from "./ciclo-do-edital.ts";
 import { hojeEmBrasilia } from "./cronograma-do-edital.ts";
 import {
   diaDoCalendario,
@@ -83,7 +85,7 @@ const pct = (parte: number, total: number) =>
 
 // ── Filtros ──────────────────────────────────────────────────────────────
 
-/* Os cinco filtros, na ordem da página. `mais`: ficam em "Mais opções". */
+/* Os seis filtros, na ordem da página. `mais`: ficam em "Mais opções". */
 export const CAMPOS_DO_FILTRO: readonly {
   campo: CampoDoFiltro;
   rotulo: string;
@@ -95,12 +97,18 @@ export const CAMPOS_DO_FILTRO: readonly {
   Object.freeze({ campo: "status", rotulo: "Status", todos: "Todos" }),
   Object.freeze({ campo: "fase", rotulo: "Fase", todos: "Todas", mais: true }),
   Object.freeze({ campo: "uf", rotulo: "UF", todos: "Todas", mais: true }),
+  Object.freeze({
+    campo: "ciclo",
+    rotulo: "Ciclo",
+    todos: "Todos",
+    mais: true,
+  }),
 ] as const);
 export const CAMPOS = Object.freeze(CAMPOS_DO_FILTRO.map((c) => c.campo));
 
 /** `{ unidade: [], edital: [], … }` */
 export function filtrosVazios(): FiltrosDaVisaoGeral {
-  return { unidade: [], edital: [], status: [], fase: [], uf: [] };
+  return { unidade: [], edital: [], status: [], fase: [], uf: [], ciclo: [] };
 }
 
 /* Do armazenamento (ou de qualquer origem): só os campos conhecidos, só texto. */
@@ -122,6 +130,7 @@ const comoConjuntos = (filtros?: Partial<FiltrosDaVisaoGeral>) => {
     status: new Set<string>(),
     fase: new Set<string>(),
     uf: new Set<string>(),
+    ciclo: new Set<string>(),
   };
   for (const c of CAMPOS) conjuntos[c] = new Set(filtros?.[c] || []);
   return conjuntos;
@@ -267,6 +276,20 @@ export function acompanhamentoDaResposta(
         desistentes: numeroOpcional(lista.desistentes),
       });
   }
+  // A 1ª e a última admissão conciliadas com o RH (20261113210000).
+  const admissoesPorEdital = new Map<string, AdmissoesDoEdital>();
+  for (const bruto of Array.isArray(origem.admissoes) ? origem.admissoes : []) {
+    const admissao = registroDaVisaoGeral(bruto);
+    const id = idDoRegistro(admissao.monitoramento_id);
+    const primeira = textoOpcional(admissao.primeira);
+    const ultima = textoOpcional(admissao.ultima);
+    if (id !== null && primeira && ultima)
+      admissoesPorEdital.set(String(id), {
+        primeira,
+        ultima,
+        quantidade: num(admissao.quantidade),
+      });
+  }
   // A marcação manual de crítico (listar_editais_criticos_manuais, 20261110150000).
   const criticosPorEdital = new Map<string, MarcacaoDeCritico>();
   for (const bruto of Array.isArray(origem.criticos_manuais)
@@ -282,7 +305,12 @@ export function acompanhamentoDaResposta(
         quando: textoOpcional(marcacao.quando) ?? null,
       });
   }
-  return { etapasPorEdital, listasPorEdital, criticosPorEdital };
+  return {
+    etapasPorEdital,
+    listasPorEdital,
+    admissoesPorEdital,
+    criticosPorEdital,
+  };
 }
 
 /* As pendências pós-resultado de uma linha (códigos de PENDENCIAS_POS_RESULTADO). */
@@ -343,7 +371,8 @@ export function duracaoEmDias(linha: LinhaDoMonitoramento): number | null {
 /**
  * Cada linha com `fase`, `atencao` (motivos do crítico), `pos_resultado`
  * (pendências), `desistentes`, `aprovados` e `cadastro_reserva` (da lista
- * vigente). `hoje`: "AAAA-MM-DD".
+ * vigente), `ciclo` padronizado e `primeira_admissao`, `ultima_admissao` e
+ * `admissoes` (conciliadas com o RH). `hoje`: "AAAA-MM-DD".
  */
 export function enriquecerLinhas(
   linhas: readonly LinhaDoMonitoramento[],
@@ -369,12 +398,17 @@ export function enriquecerLinhas(
     const etapas = acompanhamento?.etapasPorEdital?.get(id) || null;
     const lista = acompanhamento?.listasPorEdital?.get(id) || null;
     const marcacao = acompanhamento?.criticosPorEdital?.get(id) || null;
+    const admissoes = acompanhamento?.admissoesPorEdital?.get(id) || null;
     return {
       ...comFase,
+      ciclo: cicloPadronizado(linha?.ciclo),
       atencao: motivosDeAtencao(comFase, { hoje, etapas, limites, marcacao }),
       pos_resultado: pendenciasDaLinha(comFase, lista, temListas, limites),
       desistentes: lista ? num(lista.desistentes) : 0,
       ...resultadoDaLista(lista),
+      primeira_admissao: admissoes?.primeira ?? null,
+      ultima_admissao: admissoes?.ultima ?? null,
+      admissoes: admissoes?.quantidade ?? 0,
     };
   });
 }
@@ -457,7 +491,13 @@ export function valorParaOrdenar(linha: LinhaDoMonitoramento, campo: string) {
   if (campo === "duracao") return duracaoEmDias(linha) ?? -1;
   if (campo === "vagas_ociosas") return vagasSemContratacao(linha);
   if (campo === "atencao") return gravidade(linha?.atencao);
-  if (campo === "data_inicio" || campo === "data_fim") {
+  if (campo === "ciclo") return numeroDoCiclo(linha?.ciclo) ?? -1;
+  if (
+    campo === "data_inicio" ||
+    campo === "data_fim" ||
+    campo === "primeira_admissao" ||
+    campo === "ultima_admissao"
+  ) {
     const valor = txt(linha?.[campo]);
     const tempo = valor ? Date.parse(valor) : NaN;
     return Number.isFinite(tempo) ? tempo : 0;
@@ -741,6 +781,7 @@ export const COLUNAS_DA_TABELA: readonly {
 }[] = Object.freeze([
   Object.freeze({ campo: "unidade", rotulo: "Unidade" }),
   Object.freeze({ campo: "edital", rotulo: "Edital" }),
+  Object.freeze({ campo: "ciclo", rotulo: "Ciclo" }),
   Object.freeze({ campo: "data_inicio", rotulo: "Início" }),
   Object.freeze({ campo: "data_fim", rotulo: "Encerramento" }),
   Object.freeze({ campo: "duracao", rotulo: "Duração (dias)", numero: true }),
@@ -748,6 +789,8 @@ export const COLUNAS_DA_TABELA: readonly {
   Object.freeze({ campo: "inscritos", rotulo: "Inscritos", numero: true }),
   Object.freeze({ campo: "aprovados", rotulo: "Aprovados", numero: true }),
   Object.freeze({ campo: "contratados", rotulo: "Contratados", numero: true }),
+  Object.freeze({ campo: "primeira_admissao", rotulo: "1ª admissão" }),
+  Object.freeze({ campo: "ultima_admissao", rotulo: "Última admissão" }),
   Object.freeze({
     campo: "cadastro_reserva",
     rotulo: "Aguardando chamada",
@@ -773,7 +816,7 @@ export const COLUNAS_PADRAO = Object.freeze(
   menu "Colunas" e vai sempre no arquivo exportado). As do resultado (Duração,
   Inscritos, Aprovados e Aguardando chamada) entraram no padrão; a escolha
   guardada antes disso foi descartada uma vez (`CHAVE_DAS_COLUNAS` passou a
-  v2, estado.ts). Em 1280px a tabela rola de lado; Unidade e Edital ficam
+  v2, estado.ts). Ciclo, 1ª e Última admissão entraram em 13/11/2026 (v3). Em 1280px a tabela rola de lado; Unidade e Edital ficam
   presas à esquerda (tabela.tsx).
 */
 const COLUNAS_FORA_DO_INICIO: readonly ColunaDaTabela[] = ["observacoes"];
@@ -990,6 +1033,9 @@ const CAMPOS_DO_CSV: [
   ["ciclo", "Ciclo"],
   ["vagas_total", "Vagas Imediatas"],
   ["contratados", "Contratados"],
+  ["primeira_admissao", "Primeira Admissão"],
+  ["ultima_admissao", "Última Admissão"],
+  ["admissoes", "Admissões Conciliadas com o RH"],
   ["vagas_ociosas", "Vagas Sem Contratação"],
   ["inscritos", "Inscritos"],
   ["aprovados", "Aprovados (lista vigente)"],

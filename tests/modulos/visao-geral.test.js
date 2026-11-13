@@ -725,17 +725,19 @@ describe("tabela de processos", () => {
     expect(secao.querySelector(".visao-geral-colunas-menu").hidden).toBe(true);
   });
 
-  it("colunas padrão para todos: a escolha da v1 não vale; só Observações fica fora", async () => {
-    // Pedido de 13/11/2026: quem guardou colunas antes também passa a ver as do resultado.
+  it("colunas padrão para todos: a escolha da v2 não vale; só Observações fica fora", async () => {
+    // Pedidos de 13/11/2026: quem guardou colunas antes também passa a ver as
+    // do resultado (v2) e Ciclo, 1ª e Última admissão (v3).
     armazenamento = memoria();
     armazenamento.setItem(
-      "agsus_visible_cols_v1",
+      "agsus_visible_cols_v2",
       JSON.stringify(["unidade", "edital", "vagas_total"]),
     );
     await montar();
     expect(cabecalhos()).toEqual([
       "Unidade",
       "Edital",
+      "Ciclo",
       "Início",
       "Encerramento",
       "Duração (dias)",
@@ -743,6 +745,8 @@ describe("tabela de processos", () => {
       "Inscritos",
       "Aprovados",
       "Contratados",
+      "1ª admissão",
+      "Última admissão",
       "Aguardando chamada",
       "Sem contratação",
       "Status",

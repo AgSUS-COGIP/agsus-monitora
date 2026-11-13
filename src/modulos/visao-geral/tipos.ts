@@ -9,10 +9,12 @@ declare global {
   }
 }
 
-export type CampoDoFiltro = "unidade" | "edital" | "status" | "fase" | "uf";
+export type CampoDoFiltro =
+  "unidade" | "edital" | "status" | "fase" | "uf" | "ciclo";
 export type ColunaDaTabela =
   | "unidade"
   | "edital"
+  | "ciclo"
   | "data_inicio"
   | "data_fim"
   | "duracao"
@@ -20,6 +22,8 @@ export type ColunaDaTabela =
   | "inscritos"
   | "aprovados"
   | "contratados"
+  | "primeira_admissao"
+  | "ultima_admissao"
   | "cadastro_reserva"
   | "vagas_ociosas"
   | "status"
@@ -76,6 +80,11 @@ export type LinhaDoMonitoramento = {
   aprovados?: number | null;
   /** Aprovados da lista vigente ainda sem status (não chamados); nulo sem lista. */
   cadastro_reserva?: number | null;
+  /** A 1ª e a última admissão conciliadas com o RH ("AAAA-MM-DD"); nulas sem admissão. */
+  primeira_admissao?: string | null;
+  ultima_admissao?: string | null;
+  /** Quantas admissões conciliadas o edital tem. */
+  admissoes?: number;
 };
 export type LinhaDaVisaoGeral = LinhaDoMonitoramento & {
   fase: string;
@@ -84,6 +93,9 @@ export type LinhaDaVisaoGeral = LinhaDoMonitoramento & {
   desistentes: number;
   aprovados: number | null;
   cadastro_reserva: number | null;
+  primeira_admissao: string | null;
+  ultima_admissao: string | null;
+  admissoes: number;
 };
 export type EtapaDoAcompanhamento = {
   monitoramento_id: string | number;
@@ -98,9 +110,17 @@ export type ListaDoAcompanhamento = {
   com_status?: number | string;
   desistentes?: number | string;
 };
+/** As admissões conciliadas com o RH de um edital (`admissoes` da RPC). */
+export type AdmissoesDoEdital = {
+  primeira: string;
+  ultima: string;
+  quantidade: number;
+};
 export type Acompanhamento = {
   etapasPorEdital: Map<string, EtapaDoAcompanhamento[]>;
   listasPorEdital: Map<string, ListaDoAcompanhamento>;
+  /** A 1ª e a última admissão por edital; ausente = não carregada. */
+  admissoesPorEdital?: Map<string, AdmissoesDoEdital>;
   /** A marcação manual de crítico por edital (`criticos_manuais`); ausente = não carregada. */
   criticosPorEdital?: Map<
     string,

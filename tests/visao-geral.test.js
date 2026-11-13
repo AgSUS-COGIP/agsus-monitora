@@ -160,13 +160,14 @@ const comFiltros = (parcial) => ({ ...filtrosVazios(), ...parcial });
 const ids = (lista) => lista.map((l) => l.id);
 
 describe("filtros", () => {
-  it("cinco campos; Fase e UF em 'Mais opções'; o Risco manual saiu", () => {
+  it("seis campos; Fase, UF e Ciclo em 'Mais opções'; o Risco manual saiu", () => {
     expect(Object.keys(filtrosVazios())).toEqual([
       "unidade",
       "edital",
       "status",
       "fase",
       "uf",
+      "ciclo",
     ]);
   });
 
@@ -484,7 +485,7 @@ describe("tabela", () => {
       "atencao",
     ]);
     // Quem nunca escolheu: todas menos Observações (que fica na gaveta).
-    expect(normalizarColunas(null)).toHaveLength(14);
+    expect(normalizarColunas(null)).toHaveLength(17);
     expect(normalizarColunas(null)).not.toContain("observacoes");
     // Quem escolheu Observações continua com ela.
     expect(normalizarColunas(["observacoes", "edital"])).toEqual([
