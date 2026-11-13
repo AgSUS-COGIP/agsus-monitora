@@ -3568,10 +3568,10 @@ export const VERBETES_AYA = Object.freeze([
       "atualizacao da selecao",
     ],
     resposta:
-      'A Seleção é carregada pelo GitHub Actions a partir da aba Resultado da planilha Auditoria, quando alguém clica em "Rodar agora" (a agenda automática está desligada desde 16/10/2026). Uma carga com menos da metade das vagas ativas é recusada e nada é desativado. A vaga que sai da planilha fica inativa, guardada para histórico. Na Saúde Indígena só entram as vagas de DSEI e CASAI; as de outras unidades vão para SEDE ou Projetos pelo edital achado.',
+      'A Seleção é carregada pelo GitHub Actions a partir da aba Resultado da planilha Auditoria, quando alguém clica em "Rodar agora" (a agenda automática está desligada desde 16/10/2026). Uma carga com menos da metade das vagas ativas é recusada e nada é desativado. A vaga que sai da planilha fica inativa, guardada para histórico. Na Saúde Indígena só entram as vagas de DSEI e CASAI, e cada uma só conta no edital de mesmo número e da mesma unidade: se a planilha trouxer o número do edital de outro DSEI, a vaga fica sem edital em vez de somar no edital errado. As de outras unidades vão para SEDE ou Projetos pelo edital achado.',
     fato: "",
     fonte:
-      ".github/workflows/sincronizar-selecao.yml; supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql",
+      ".github/workflows/sincronizar-selecao.yml; supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql; supabase/migrations/20261113120000_ligar_selecao_so_ao_edital_da_mesma_unidade.sql",
   },
   {
     arquivo: "regras-da-selecao.md",

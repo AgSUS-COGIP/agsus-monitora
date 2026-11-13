@@ -931,7 +931,10 @@ e `20261001090500_liga_aba_selecao.sql` a liga junto com o front. **Ainda não e
   `sincronizar_selecao(p_sync, p_linhas)` em lotes e `finalizar_sync_selecao(p_sync, p_forcar)`,
   que desativa o que saiu e chama `private."FC_LIGAR_SELECAO_AOS_EDITAIS"()`
   (`20261001100000_selecao_area_pelos_editais.sql`): unidade DSEI ou CASAI fica na Saúde Indígena,
-  com o edital de mesmo número (`FC_NUMERO_EDITAL`) da Saúde Indígena; qualquer outra unidade
+  com o edital de mesmo número (`FC_NUMERO_EDITAL`) da Saúde Indígena **e da mesma unidade**
+  (sem acento, caixa, espaço repetido nem hífen); sem ele, a vaga fica sem edital
+  (`20261113120000_ligar_selecao_so_ao_edital_da_mesma_unidade.sql`: 13 vagas de Parintins com
+  EDITAL 110/2026 na planilha tinham inflado Porto Velho em 11/2026); qualquer outra unidade
   nunca fica nela — edital de mesmo número da SEDE ou de Projetos (de preferência mesma unidade),
   área dele; sem edital, `TA_UNIDADE_AREA`, senão `sede`. Carga com menos da metade das linhas
   ativas é recusada sem `p_forcar`.
