@@ -15,6 +15,7 @@ import {
 import {
   COLUNAS_DA_TABELA,
   dataCurta,
+  duracaoEmDias,
   linkSeguro,
   observacaoLonga,
   prazoDoEdital,
@@ -41,6 +42,9 @@ import { classes, Selo, TabelaInfinita } from "../../ui/index.ts";
 */
 
 const fmt = (valor: unknown) => formatNumberBR(valor);
+/* Sem número (nulo ou vazio) é "—", não zero: o dado falta. */
+const numeroOuTraco = (valor: unknown) =>
+  valor === null || valor === undefined || valor === "" ? "—" : fmt(valor);
 const ESPERA_DA_BUSCA_MS = 300;
 const DESTAQUE_MS = 2500;
 const jaRecortadas = (itens: readonly LinhaDaVisaoGeral[]) => itens;
@@ -200,6 +204,20 @@ function celula(
       return (
         <td key={campo} className="num">
           {fmt(linha.vagas_total)}
+        </td>
+      );
+    case "duracao":
+      return (
+        <td key={campo} className="num">
+          {numeroOuTraco(duracaoEmDias(linha))}
+        </td>
+      );
+    case "inscritos":
+    case "aprovados":
+    case "cadastro_reserva":
+      return (
+        <td key={campo} className="num">
+          {numeroOuTraco(linha[campo])}
         </td>
       );
     case "contratados": {
