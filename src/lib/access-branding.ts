@@ -45,6 +45,35 @@ export function normalizeAccessBackgroundUrl(value: unknown): string {
   return resolveLocalAssetUrl(DEFAULT_ACCESS_BRANDING.backgroundUrl);
 }
 
+/*
+  A arte na tela de acesso em versões leves (13/11/2026: a tela demorava a
+  carregar em processador fraco). O original (3200×1370, 689 KB) era baixado,
+  decodificado e desenhado duas vezes, uma delas com blur(28px) em tela cheia.
+  O Storage do Supabase entrega a mesma imagem redimensionada
+  (`/render/image/`, WebP, cache de um ano): a nítida com 1200 px de altura
+  (~157 KB, a altura de uma tela comum) e a do fundo desfocado com 64 px de
+  largura (~2 KB), que ampliada já é desfocada. A configuração continua com o
+  endereço original; outro endereço (a arte padrão, um https qualquer) fica
+  como está. A mesma regra está no script do <head> do index.html; o teste
+  tests/arte-leve-no-acesso.test.ts impede as duas de se separarem.
+*/
+const OBJETO_PUBLICO_DO_STORAGE =
+  /^(https:\/\/[^/?#]+)\/storage\/v1\/object\/public\/([^?#]+)$/;
+
+export function enderecosDaArteNaTela(url: unknown): {
+  nitida: string;
+  desfocada: string;
+} {
+  const original = String(url ?? "").trim();
+  const achado = original.match(OBJETO_PUBLICO_DO_STORAGE);
+  if (!achado) return { nitida: original, desfocada: original };
+  const base = `${achado[1]}/storage/v1/render/image/public/${achado[2]}`;
+  return {
+    nitida: `${base}?height=1200&quality=75`,
+    desfocada: `${base}?width=64&quality=50`,
+  };
+}
+
 export function normalizeAccessLogoUrl(value: unknown): string {
   const url = String(value || "").trim();
   if (!url) return resolveLocalAssetUrl(DEFAULT_ACCESS_BRANDING.logoUrl);

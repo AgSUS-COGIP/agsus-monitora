@@ -36,6 +36,7 @@ import {
 import { buscarMarcaPublica } from "../../lib/access-branding-publico.ts";
 import {
   DEFAULT_ACCESS_BRANDING,
+  enderecosDaArteNaTela,
   normalizeAccessBackgroundUrl,
   normalizeAccessLogoUrl,
   normalizeAccessPanelColor,
@@ -113,6 +114,24 @@ export const MARCA_INICIAL: Readonly<IdentidadeDaEntrada> = Object.freeze({
 /** `url("…")` seguro: aspas e barras invertidas quebrariam a declaração CSS. */
 function comoUrlCss(valor: unknown): string {
   return `url("${String(valor).replace(/["\\]/g, "")}")`;
+}
+
+/*
+  A arte na tela, nas versões leves (enderecosDaArteNaTela): a nítida nas
+  duas camadas e a miniatura no fundo desfocado. A medida (proporção e cor)
+  é da nítida, a mesma que o script do <head> procura no cache.
+*/
+function aplicarArte(
+  tela: { style: { setProperty(nome: string, valor: string): void } },
+  url: string,
+): void {
+  const { nitida, desfocada } = enderecosDaArteNaTela(url);
+  tela.style.setProperty("--login-background-image", comoUrlCss(nitida));
+  tela.style.setProperty(
+    "--login-background-image-desfocada",
+    comoUrlCss(desfocada),
+  );
+  medirArte(tela, nitida);
 }
 
 const texto = (valor: unknown): string => String(valor ?? "").trim();
@@ -316,13 +335,7 @@ export function aplicarMarcaNaTela(
   if (!marca) return false;
 
   const tela = documento?.getElementById?.("loginScreen");
-  if (tela && marca.backgroundUrl) {
-    tela.style.setProperty(
-      "--login-background-image",
-      comoUrlCss(marca.backgroundUrl),
-    );
-    medirArte(tela, marca.backgroundUrl);
-  }
+  if (tela && marca.backgroundUrl) aplicarArte(tela, marca.backgroundUrl);
   if (tela) aplicarCorDoPainel(tela, marca.panelColor, marca.textoModo);
   if (tela && marca.painelEstilo)
     aplicarEstiloDoPainel(tela, marca.painelEstilo);
@@ -417,8 +430,7 @@ export function definirMarcaDaConfiguracao(
 
   if (tela && fundoDoBanco !== null) {
     const url = normalizeAccessBackgroundUrl(fundoDoBanco);
-    tela.style.setProperty("--login-background-image", comoUrlCss(url));
-    medirArte(tela, url);
+    aplicarArte(tela, url);
     marcaParaGuardar.backgroundUrl = url;
   }
 
