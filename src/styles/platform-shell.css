@@ -118,26 +118,23 @@
 /*
   PAINEL DE VIDRO (Configurações › Tela de acesso › Estilo do painel)
 
-  Sem cor (13/11/2026, "totalmente transparente"): só a arte desfocada por
-  trás e os sinais de vidro, o brilho branco (8% no alto, BRILHO_DO_VIDRO em
-  src/lib/contraste.ts; 3% no meio, 6% embaixo), a borda clara e o realce de
-  luz na aresta de cima. O cartão fica sem fundo próprio. A leitura depende da
-  arte atrás do painel, que o sistema não mede (o aviso de Configurações diz).
-  Quem pede menos transparência ao sistema, ou navegador sem desfoque, vê o
-  painel sólido na cor do painel.
+  Vidro de verdade, sem cor (13/11/2026): nenhuma tinta, nenhum brilho e
+  nenhum realce de saturação por cima da arte, que aparece só desfocada atrás
+  do texto. O vidro se vê pela borda clara e pelo realce de luz na aresta de
+  cima. O cartão fica sem fundo próprio. A leitura depende da arte atrás do
+  painel, que o sistema não mede (o aviso de Configurações diz). Quem pede
+  menos transparência ao sistema, ou navegador sem desfoque, vê o painel
+  sólido na cor do painel.
 */
 .login-screen.login-panel-vidro .login-outer {
   border-color: color-mix(in srgb, var(--brilho-do-vidro) 28%, transparent);
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--brilho-do-vidro) 8%, transparent),
-    color-mix(in srgb, var(--brilho-do-vidro) 3%, transparent) 45%,
-    color-mix(in srgb, var(--brilho-do-vidro) 6%, transparent)
-  );
+  background: transparent;
   box-shadow:
     var(--shadow-lg),
     inset 0 1px 0 color-mix(in srgb, var(--brilho-do-vidro) 40%, transparent);
-  backdrop-filter: blur(10px) saturate(140%); /* acabamento: permitido(blur) — vidro do painel de acesso, escolhido em Configurações; recua para sólido abaixo */
+  backdrop-filter: blur(
+    10px
+  ); /* acabamento: permitido(blur) — vidro do painel de acesso, escolhido em Configurações; recua para sólido abaixo */
 }
 .login-screen.login-panel-vidro .login-card {
   background: transparent;

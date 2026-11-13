@@ -3,7 +3,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
-  BRILHO_DO_VIDRO,
   ESTILO_SOLIDO,
   ESTILO_VIDRO,
   avaliarCor,
@@ -152,17 +151,19 @@ describe("o estilo do painel", () => {
 
 describe("contraste do vidro", () => {
   /*
-    12/11/2026: o vidro ligado parecia sólido; o brilho e a borda clara fazem
-    o vidro aparecer. 13/11/2026: "totalmente transparente", o painel sem cor.
+    13/11/2026: "vidro mesmo, sem cor". Nem tinta, nem brilho branco, nem
+    realce de saturação: o vidro se vê pela borda clara e pelo realce de luz.
   */
-  it("o brilho do CSS é o da conta, e a borda e o realce de luz estão lá", () => {
+  it("vidro de verdade: sem tinta, brilho nem saturação; só desfoque e borda", () => {
     const css = ler("src/styles/platform-shell.css");
     const bloco = css.slice(
       css.indexOf(".login-screen.login-panel-vidro .login-outer {"),
+      css.indexOf(".login-screen.login-panel-vidro .login-card {"),
     );
-    expect(bloco).toContain(
-      `color-mix(in srgb, var(--brilho-do-vidro) ${Math.round(BRILHO_DO_VIDRO * 100)}%, transparent),`,
-    );
+    expect(bloco).toContain("background: transparent;");
+    expect(bloco).not.toContain("linear-gradient");
+    expect(bloco).not.toContain("saturate");
+    expect(bloco).toContain("backdrop-filter: blur(");
     expect(bloco).toContain(
       "border-color: color-mix(in srgb, var(--brilho-do-vidro)",
     );

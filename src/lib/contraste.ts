@@ -91,10 +91,10 @@ export function corDoTextoPara(cor: string, modo: unknown = MODO_AUTO): string {
 
 /*
   O estilo do painel da tela de acesso (Configurações › Tela de acesso):
-  sólido (o padrão) ou vidro. No vidro o painel não tem cor (13/11/2026,
-  "totalmente transparente"): o texto fica direto sobre a arte desfocada, só
-  com o brilho branco do vidro (até BRILHO_DO_VIDRO, no alto do cartão), a
-  borda clara e o realce de luz. A arte é configurável e o sistema não a mede:
+  sólido (o padrão) ou vidro. No vidro o painel não tem cor nenhuma
+  (13/11/2026, "vidro mesmo, sem cor"): o texto fica direto sobre a arte
+  desfocada, e o vidro se vê só pela borda clara e pelo realce de luz
+  (platform-shell.css). A arte é configurável e o sistema não a mede:
   no vidro, a leitura depende de a arte atrás do painel combinar com o texto
   (escura para o texto claro, clara para o escuro). A cor do painel continua
   escolhendo o texto no modo automático e é o painel de quem não vê o vidro
@@ -103,7 +103,6 @@ export function corDoTextoPara(cor: string, modo: unknown = MODO_AUTO): string {
 export const ESTILO_SOLIDO = "solido";
 export const ESTILO_VIDRO = "vidro";
 export type EstiloDoPainel = typeof ESTILO_SOLIDO | typeof ESTILO_VIDRO;
-export const BRILHO_DO_VIDRO = 0.08;
 
 export function normalizarEstilo(valor: unknown): EstiloDoPainel {
   const bruto = String(valor ?? "")
