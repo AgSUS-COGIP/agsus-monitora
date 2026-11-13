@@ -70,6 +70,20 @@ describe("migration 20261113180000", () => {
     expect(rollback).toContain("alter column inscritos set default 0;");
   });
 
+  it("o retrato mostra o corpo aplicado e inscritos sem padrão 0", () => {
+    const retrato = ler("supabase/esquema-atual.sql");
+    const cria = retrato.indexOf(
+      'CREATE FUNCTION private."FC_LIGAR_SELECAO_AOS_EDITAIS"()',
+    );
+    const abre = retrato.indexOf("AS $_$", cria) + "AS $_$".length;
+    expect(retrato.slice(abre, retrato.indexOf("$_$;", abre))).toBe(novo);
+    const tabela = retrato.indexOf(
+      'CREATE TABLE public."TB_MONITORAMENTO_INDIGENA" (',
+    );
+    const colunas = retrato.slice(tabela, retrato.indexOf(");", tabela));
+    expect(colunas).toContain("    inscritos integer,");
+  });
+
   it("o ensaio aplica o mesmo corpo e termina em rollback", () => {
     expect(corpo(ensaio)).toBe(novo);
     expect(ensaio.trimEnd().endsWith("rollback;")).toBe(true);
