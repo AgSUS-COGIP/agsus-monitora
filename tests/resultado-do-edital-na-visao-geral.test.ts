@@ -137,7 +137,7 @@ describe("tabela e arquivo", () => {
     expect(valor("Duração (dias)")).toBe("42");
     expect(valor("Inscritos")).toBe("5179");
     expect(valor("Aprovados (lista vigente)")).toBe("361");
-    expect(valor("Cadastro Reserva (aprovados não chamados)")).toBe("291");
+    expect(valor("Aguardando Chamada (aprovados sem status)")).toBe("291");
     expect(valor("Contratados")).toBe("42");
   });
 });

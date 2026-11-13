@@ -311,8 +311,10 @@ function pendenciasDaLinha(
 /*
   O resultado do edital pela lista de aprovados vigente (13/11/2026, pedido da
   diretoria: quantos passaram e quantos ficaram em cadastro reserva). Aprovados
-  são as pessoas da lista; cadastro reserva, as que ainda não têm status (não
-  foram chamadas). Sem lista, os dois ficam nulos ("—"), não zero.
+  são as pessoas da lista; "Aguardando chamada" (o campo `cadastro_reserva`),
+  as que ainda não têm status (não foram chamadas). O nome da coluna não é
+  "Cadastro reserva" porque o indicador e a gaveta já usam esse nome para os
+  contratados além das vagas. Sem lista, os dois ficam nulos ("—"), não zero.
 */
 function resultadoDaLista(lista: ListaDoAcompanhamento | null) {
   if (!lista) return { aprovados: null, cadastro_reserva: null };
@@ -748,7 +750,7 @@ export const COLUNAS_DA_TABELA: readonly {
   Object.freeze({ campo: "contratados", rotulo: "Contratados", numero: true }),
   Object.freeze({
     campo: "cadastro_reserva",
-    rotulo: "Cadastro reserva",
+    rotulo: "Aguardando chamada",
     numero: true,
   }),
   Object.freeze({
@@ -769,7 +771,7 @@ export const COLUNAS_PADRAO = Object.freeze(
   As colunas padrão, para todos (13/11/2026, pedido do usuário): todas menos
   Observações, o texto longo que já aparece na gaveta do edital (entra pelo
   menu "Colunas" e vai sempre no arquivo exportado). As do resultado (Duração,
-  Inscritos, Aprovados e Cadastro reserva) entraram no padrão; a escolha
+  Inscritos, Aprovados e Aguardando chamada) entraram no padrão; a escolha
   guardada antes disso foi descartada uma vez (`CHAVE_DAS_COLUNAS` passou a
   v2, estado.ts). Em 1280px a tabela rola de lado; Unidade e Edital ficam
   presas à esquerda (tabela.tsx).
@@ -991,7 +993,7 @@ const CAMPOS_DO_CSV: [
   ["vagas_ociosas", "Vagas Sem Contratação"],
   ["inscritos", "Inscritos"],
   ["aprovados", "Aprovados (lista vigente)"],
-  ["cadastro_reserva", "Cadastro Reserva (aprovados não chamados)"],
+  ["cadastro_reserva", "Aguardando Chamada (aprovados sem status)"],
   ["status", "Status"],
   ["fase", "Fase"],
   ["etapa", "Etapa"],
