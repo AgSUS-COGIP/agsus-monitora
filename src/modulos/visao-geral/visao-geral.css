@@ -576,3 +576,78 @@
 .visao-geral-mapa:empty {
   display: none;
 }
+
+/* ── Montador de relatório (montador-de-relatorio.tsx) ───────────────── */
+.visao-geral-relatorio-recorte {
+  margin: var(--space-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.visao-geral-relatorio-corpo {
+  display: grid;
+  gap: var(--space-4);
+}
+.visao-geral-relatorio-modelo {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+}
+.visao-geral-relatorio-escolhas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: var(--space-4);
+}
+.visao-geral-relatorio-grupo {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.visao-geral-relatorio-grupo legend {
+  padding: 0 var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.visao-geral-relatorio-grupo label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body-sm);
+}
+.visao-geral-relatorio-grupo:disabled {
+  opacity: 0.55;
+}
+/* As colunas em duas colunas: são muitas. */
+.visao-geral-relatorio-escolhas .visao-geral-relatorio-grupo:last-child {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.visao-geral-relatorio-escolhas .visao-geral-relatorio-grupo:last-child legend {
+  grid-column: 1 / -1;
+}
+.visao-geral-relatorio-nota,
+.visao-geral-relatorio-erro {
+  margin: 0;
+  font-size: var(--text-body-sm);
+}
+.visao-geral-relatorio-nota {
+  color: var(--text-secondary);
+}
+.visao-geral-relatorio-erro {
+  color: var(--state-danger);
+}
+.visao-geral-relatorio-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+@media (max-width: 640px) {
+  .visao-geral-relatorio-escolhas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
