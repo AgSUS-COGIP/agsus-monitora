@@ -102,8 +102,8 @@ export function corDoTextoPara(cor: string, modo: unknown = MODO_AUTO): string {
 export const ESTILO_SOLIDO = "solido";
 export const ESTILO_VIDRO = "vidro";
 export type EstiloDoPainel = typeof ESTILO_SOLIDO | typeof ESTILO_VIDRO;
-export const OPACIDADE_DO_VIDRO = 0.78;
-export const BRILHO_DO_VIDRO = 0.1;
+export const OPACIDADE_DO_VIDRO = 0.7;
+export const BRILHO_DO_VIDRO = 0.08;
 const EXTREMOS_DA_ARTE = ["#ffffff", "#000000"] as const;
 
 export function normalizarEstilo(valor: unknown): EstiloDoPainel {

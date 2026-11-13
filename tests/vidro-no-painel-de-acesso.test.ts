@@ -173,7 +173,7 @@ describe("contraste do vidro", () => {
   it("a cor do painel de hoje (#002f2f) passa no vidro com o brilho", () => {
     const vidro = avaliarCor("#002f2f", "claro", "vidro");
     expect(vidro?.passa).toBe(true);
-    expect(vidro!.razao).toBeGreaterThan(5);
+    expect(vidro!.razao).toBeGreaterThanOrEqual(4.5);
   });
 
   it("mistura como o color-mix do CSS", () => {
@@ -182,11 +182,20 @@ describe("contraste do vidro", () => {
   });
 
   it("um painel escuro passa no vidro, medido no pior trecho", () => {
-    const solido = avaliarCor("#12403f", "auto", "solido");
-    const vidro = avaliarCor("#12403f", "auto", "vidro");
+    const solido = avaliarCor("#002f2f", "auto", "solido");
+    const vidro = avaliarCor("#002f2f", "auto", "vidro");
     expect(vidro?.passa).toBe(true);
     expect(vidro!.razao).toBeLessThan(solido!.razao);
     expect(vidro?.mensagem).toContain("vidro");
+  });
+
+  /*
+    13/11/2026: o vidro ficou mais transparente (70%). Um verde menos escuro,
+    como #12403f, passa no sólido mas não no vidro: o aviso pede outra cor.
+  */
+  it("mais transparente, um verde menos escuro já pede outra cor no vidro", () => {
+    expect(avaliarCor("#12403f", "auto", "solido")?.passa).toBe(true);
+    expect(avaliarCor("#12403f", "auto", "vidro")?.passa).toBe(false);
   });
 
   it("uma cor que passa sólida pode reprovar no vidro, e o aviso diz", () => {
