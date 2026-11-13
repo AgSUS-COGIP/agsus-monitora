@@ -1,6 +1,9 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { classes } from "../../ui/index.ts";
-import { ACCESS_INSTRUCTION } from "../../lib/access-branding.ts";
+import {
+  ACCESS_INSTRUCTION,
+  normalizeAccessLogoUrl,
+} from "../../lib/access-branding.ts";
 import { FASES, TEXTO_DO_BOTAO, TEXTO_DO_BOTAO_OCUPADO } from "../sessao.ts";
 import {
   IconeDeEscudo,
@@ -80,22 +83,47 @@ export type OpcoesDaLigacaoDaEntrada = {
 };
 
 /**
- * O logo fica invisível se a imagem falhar (e volta se o endereço mudar),
- * sem sair do lugar: o lockup não muda de tamanho.
+ * O logo fica invisível se a imagem falhar, sem sair do lugar: o lockup não
+ * muda de tamanho. Endereço novo (a marca do banco chega depois do primeiro
+ * quadro) só entra depois de carregado, por uma cópia escondida: antes o
+ * logo sumia até a imagem nova chegar, e a tela de acesso piscava a cada
+ * recarga (13/11/2026; o logo configurado estava em outro domínio). Por isso
+ * o logo começa no do primeiro quadro (o do cartão do index.html), e não no
+ * da marca guardada.
  */
+/** O logo do cartão do index.html, o que está na tela quando o React monta. */
+const LOGO_DO_PRIMEIRO_QUADRO = normalizeAccessLogoUrl("");
+
 function LogoDaInstituicao({ url }: { url: string }) {
+  const [mostrada, definirMostrada] = useState(LOGO_DO_PRIMEIRO_QUADRO);
   const [falhou, definirFalhou] = useState(false);
-  useEffect(() => definirFalhou(false), [url]);
+  const trocar = (falha: boolean) => {
+    definirMostrada(url);
+    definirFalhou(falha);
+  };
   return (
-    <img
-      id="loginLogo"
-      src={url}
-      alt=""
-      width="52"
-      height="52"
-      data-falhou={falhou || undefined}
-      onError={() => definirFalhou(true)}
-    />
+    <>
+      <img
+        id="loginLogo"
+        src={mostrada}
+        alt=""
+        width="52"
+        height="52"
+        data-falhou={falhou || undefined}
+        onError={() => definirFalhou(true)}
+      />
+      {url !== mostrada ? (
+        <img
+          key={url}
+          src={url}
+          alt=""
+          hidden
+          data-logo-carregando=""
+          onLoad={() => trocar(false)}
+          onError={() => trocar(true)}
+        />
+      ) : null}
+    </>
   );
 }
 

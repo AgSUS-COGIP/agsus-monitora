@@ -267,6 +267,11 @@ describe("tela de acesso", () => {
         },
       }),
     );
+    await act(async () =>
+      document
+        .querySelector("[data-logo-carregando]")
+        ?.dispatchEvent(new Event("load")),
+    );
     expect($("loginLogo")?.getAttribute("src")).toBe(
       "https://exemplo.org/logo.png",
     );
@@ -302,6 +307,65 @@ describe("tela de acesso", () => {
     expect($("loginLogo")?.getAttribute("height")).toBe("52");
     await act(async () => $("loginLogo")?.dispatchEvent(new Event("error")));
     expect($("loginLogo")?.hidden).toBe(false);
+    expect($("loginLogo")?.hasAttribute("data-falhou")).toBe(true);
+  });
+
+  /*
+    13/11/2026: a tela de acesso piscava a cada recarga. O primeiro quadro tem
+    o logo local; a marca do banco trazia o mesmo logo em outro domínio, e o
+    logo sumia até a imagem nova chegar.
+  */
+  it("começa no logo do primeiro quadro, mesmo com outro na marca guardada", async () => {
+    const marca = criarMarcaDaEntrada();
+    marca.definir({ logoUrl: "https://dominio-antigo.exemplo.org/logo.webp" });
+    await montar({ marca });
+    const primeiroQuadro = new DOMParser()
+      .parseFromString(readFileSync("index.html", "utf8"), "text/html")
+      .querySelector(".login-organization-mark img")
+      ?.getAttribute("src");
+    expect($("loginLogo")?.getAttribute("src")).toBe(primeiroQuadro);
+    expect(
+      document.querySelector("[data-logo-carregando]")?.getAttribute("src"),
+    ).toBe("https://dominio-antigo.exemplo.org/logo.webp");
+  });
+
+  it("logo novo só entra depois de carregado: o de antes fica até lá", async () => {
+    const marca = criarMarcaDaEntrada();
+    await montar({ marca });
+    const antes = $("loginLogo")?.getAttribute("src");
+    await act(async () =>
+      marca.definir({ logoUrl: "https://outro.exemplo.org/logo.webp" }),
+    );
+    expect($("loginLogo")?.getAttribute("src")).toBe(antes);
+    expect($("loginLogo")?.hasAttribute("data-falhou")).toBe(false);
+    const proximo = document.querySelector<HTMLImageElement>(
+      "[data-logo-carregando]",
+    );
+    expect(proximo?.hidden).toBe(true);
+    expect(proximo?.getAttribute("src")).toBe(
+      "https://outro.exemplo.org/logo.webp",
+    );
+    await act(async () => proximo?.dispatchEvent(new Event("load")));
+    expect($("loginLogo")?.getAttribute("src")).toBe(
+      "https://outro.exemplo.org/logo.webp",
+    );
+    expect(document.querySelector("[data-logo-carregando]")).toBeNull();
+  });
+
+  it("logo novo que não carrega some sem sair do lugar", async () => {
+    const marca = criarMarcaDaEntrada();
+    await montar({ marca });
+    await act(async () =>
+      marca.definir({ logoUrl: "https://outro.exemplo.org/quebrado.webp" }),
+    );
+    await act(async () =>
+      document
+        .querySelector("[data-logo-carregando]")
+        ?.dispatchEvent(new Event("error")),
+    );
+    expect($("loginLogo")?.getAttribute("src")).toBe(
+      "https://outro.exemplo.org/quebrado.webp",
+    );
     expect($("loginLogo")?.hasAttribute("data-falhou")).toBe(true);
   });
 
