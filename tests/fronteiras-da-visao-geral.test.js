@@ -32,7 +32,14 @@ describe("fronteiras externas da Visão geral", () => {
         uf: false,
         invasor: ["x"],
       }),
-    ).toEqual({ unidade: ["Sede"], edital: [], status: [], fase: [], uf: [] });
+    ).toEqual({
+      unidade: ["Sede"],
+      edital: [],
+      status: [],
+      fase: [],
+      uf: [],
+      ciclo: [],
+    });
     expect(normalizarFiltros(null).unidade).toEqual([]);
   });
 
