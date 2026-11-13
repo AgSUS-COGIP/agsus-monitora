@@ -94,11 +94,16 @@
   <head> do index.html, 13/11/2026). Até 600 ms (`arte-esperando`), o cartão
   e as camadas da arte ficam escondidos sobre o fundo na cor da arte, e tudo
   aparece junto quando ela fica pronta. Passou disso (`arte-atrasada`), o
-  cartão aparece e a arte entra com transição quando ficar pronta.
+  cartão aparece e a arte entra com transição quando ficar pronta. E a arte
+  só aparece depois de o cartão provisório ser lido (`cartao-lido`, posta
+  por um script logo depois dele no index.html): sem isso, com a arte pronta,
+  saía um quadro com a arte e ainda sem o cartão.
 */
 html.arte-esperando #loginScreen > * {
   visibility: hidden;
 }
+html:not(.cartao-lido) .login-screen::before,
+html:not(.cartao-lido) .login-screen::after,
 html.arte-esperando .login-screen::before,
 html.arte-esperando .login-screen::after,
 html.arte-atrasada:not(.arte-pronta) .login-screen::before,

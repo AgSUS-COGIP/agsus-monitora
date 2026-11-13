@@ -146,6 +146,24 @@ describe("a arte decodificada antes do CSS", () => {
     );
   });
 
+  /*
+    13/11/2026, terceiro vídeo: com a arte já pronta, um quadro de 33 ms
+    mostrava a arte e ainda não o cartão (o HTML do cartão vem depois).
+  */
+  it("a arte só aparece depois de o cartão provisório ser lido", () => {
+    const fimDoCartao = html.indexOf('<div class="login-stripe"></div>');
+    const marca = html.indexOf(
+      'document.documentElement.classList.add("cartao-lido")',
+    );
+    expect(fimDoCartao).toBeGreaterThan(-1);
+    expect(marca).toBeGreaterThan(fimDoCartao);
+    expect(marca).toBeLessThan(html.indexOf("</section>", fimDoCartao));
+    const css = readFileSync("src/styles/platform-shell.css", "utf8");
+    expect(css).toContain(
+      "html:not(.cartao-lido) .login-screen::before,\nhtml:not(.cartao-lido) .login-screen::after,",
+    );
+  });
+
   it("o CSS esconde o cartão e a arte enquanto espera; atrasada, a arte entra com transição", () => {
     const css = readFileSync("src/styles/platform-shell.css", "utf8");
     expect(css).toContain(
