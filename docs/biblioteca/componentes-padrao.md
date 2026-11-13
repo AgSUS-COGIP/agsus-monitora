@@ -52,7 +52,7 @@ Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de
 - `selo-de-treinamento.tsx` — selo "Treinamento" do edital de treinamento.
 - `seletor-de-edital.tsx` — a escolha do edital das telas da seleção (Triagem, Avaliação
   documental, Classificação), com selo e "Mostrar todos".
-- `pessoas-online/` ("Pessoas online" no cabeçalho, estado em `src/app/presenca.ts`) e
+- `pessoas-online/` ("Pessoas online" no menu da conta, estado em `src/app/presenca.ts`) e
   `aviso-de-versao/` (faixa "Há uma versão nova", regra em `src/app/aviso-de-versao.ts`): filhas da
   casca. `usar-area-atual.ts`: hook da área atual, suas linhas e os ids dos editais.
 

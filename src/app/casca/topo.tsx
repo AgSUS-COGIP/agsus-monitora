@@ -11,8 +11,9 @@ import {
 } from "./pecas.tsx";
 
 /*
-  O cabeçalho do app (`header.top`): o título da página e, à direita, Pessoas
-  online, o sininho do resumo do dia e o menu da conta. No celular, uma linha só, com o ☰ da gaveta antes
+  O cabeçalho do app (`header.top`): o título da página e, à direita, o
+  sininho do resumo do dia e o menu da conta (com Pessoas online dentro, desde
+  13/11/2026). No celular, uma linha só, com o ☰ da gaveta antes
   do título.
 
   O título da página vem da navegação (src/app/navegacao.ts), pelo contexto
@@ -32,10 +33,6 @@ export function Topo() {
         <TituloDaPagina />
       </div>
       <div className="actions">
-        {/* Pessoas online (React: src/componentes/pessoas-online/) */}
-        <div id="pessoasOnlineApp" className="pessoas-online-app">
-          <PessoasOnlineDoApp />
-        </div>
         {/* Resumo do dia do responsável (src/modulos/resumo-do-dia/) */}
         <SininhoDoResumo />
         <MenuDaConta />
@@ -103,6 +100,10 @@ function MenuDaConta() {
         {/* Selos de editais (React: src/modulos/encerramento-do-edital/) */}
         <div id="selosDoEditalApp">
           <SelosDoEditalDoApp />
+        </div>
+        {/* Pessoas online (React: src/componentes/pessoas-online/) */}
+        <div id="pessoasOnlineApp" className="pessoas-online-app">
+          <PessoasOnlineDoApp />
         </div>
         {/* Ações da conta. Tema e Sair ficam no rodapé da barra lateral. */}
         <div className="top-user-popover-actions">

@@ -2,9 +2,10 @@ import { useEffect, useReducer, useSyncExternalStore } from "react";
 import { situacaoDaPresenca } from "../../lib/online-presence";
 
 /*
-  "Pessoas online" no cabeçalho (moldura do app): o botão com a contagem e a
-  lista de quem está com o MONITORA aberto, com o lugar de cada um. O estado é
-  de src/app/presenca.ts; aqui só se desenha.
+  "Pessoas online" no menu da conta (moldura do app; saiu do cabeçalho em
+  13/11/2026): a linha com a contagem e, ao clicar, a lista de quem está com o
+  Yeendé aberto, com o lugar de cada um, logo abaixo. O estado é de
+  src/app/presenca.ts; aqui só se desenha.
 
   Os ids (`#onlinePresence`, `#onlinePresenceBtn`,
   `#onlinePresenceList`…) são os de antes: o CSS e os testes de ponta a ponta
@@ -160,20 +161,12 @@ export function PessoasOnline({
         >
           {situacao.rotulo}
         </span>
-        {situacao.curto ? (
-          <span className="online-presence-curto" aria-hidden="true">
-            {situacao.curto}
-          </span>
-        ) : null}
       </button>
       <div
         id="onlinePresencePopover"
         className="online-presence-popover"
         hidden={!estado.aberto}
       >
-        <div className="online-presence-heading">
-          <strong>Pessoas online</strong>
-        </div>
         <div id="onlinePresenceList" className="online-presence-list">
           {estado.pessoas.length && situacao.estado === "ready" ? (
             estado.pessoas.map((pessoa) => (
