@@ -743,7 +743,7 @@ describe("tabela de processos", () => {
       "Inscritos",
       "Aprovados",
       "Contratados",
-      "Cadastro reserva",
+      "Aguardando chamada",
       "Sem contratação",
       "Status",
       "Fase",
