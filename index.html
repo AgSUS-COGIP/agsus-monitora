@@ -124,15 +124,19 @@
                 raiz.style.setProperty("--login-arte-cor", marca.arteCor);
             }
             /*
-              A arte já pedida e decodificada aqui, antes do CSS (13/11/2026):
-              decodificada só na hora de pintar, ela entrava uns 230 ms depois
-              do cartão, de uma vez (a "piscada" gravada em vídeo). Enquanto
-              não está pronta, `arte-esperando` deixa as camadas da arte
-              transparentes; ao ficar pronta (ou falhar, ou em 3 s), elas entram
-              com transição. Pronta antes da primeira pintura, nada muda.
+              A arte pedida e decodificada aqui, antes do CSS (13/11/2026).
+              Decodificada só na hora de pintar, ela entrava uns 230 ms depois
+              do cartão, de uma vez (a "piscada" gravada em vídeo); entrando
+              suave, a piscada ficou mais leve, mas ainda se via. Agora o
+              cartão espera a arte (`arte-esperando`, até 600 ms) e os dois
+              aparecem juntos: ao atualizar, o navegador segura a tela
+              anterior até a nova ter conteúdo, e a troca não se vê. Se a arte
+              passar dos 600 ms (`arte-atrasada`), o cartão aparece e a arte
+              entra com transição quando ficar pronta (ou falhar, ou em 3 s).
             */
             raiz.classList.add("arte-esperando");
             var pronta = function () {
+              raiz.classList.add("arte-pronta");
               raiz.classList.remove("arte-esperando");
             };
             var imagem = new Image();
@@ -140,6 +144,11 @@
             imagem.src = arte;
             if (imagem.decode) imagem.decode().then(pronta, pronta);
             else imagem.onload = imagem.onerror = pronta;
+            setTimeout(function () {
+              if (raiz.classList.contains("arte-pronta")) return;
+              raiz.classList.add("arte-atrasada");
+              raiz.classList.remove("arte-esperando");
+            }, 600);
             setTimeout(pronta, 3000);
           }
         } catch (erro) {
