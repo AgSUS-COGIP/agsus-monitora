@@ -484,7 +484,7 @@ describe("tabela", () => {
       "atencao",
     ]);
     // Quem nunca escolheu: todas menos Observações (que fica na gaveta).
-    expect(normalizarColunas(null)).toHaveLength(10);
+    expect(normalizarColunas(null)).toHaveLength(14);
     expect(normalizarColunas(null)).not.toContain("observacoes");
     // Quem escolheu Observações continua com ela.
     expect(normalizarColunas(["observacoes", "edital"])).toEqual([

@@ -48,7 +48,8 @@ export interface BuscaDaTabela {
  * Uma coluna. Com `aoOrdenar`, o cabeçalho vira botão de ordenar (`ordem`:
  * "asc", "desc" ou "", liga o `aria-sort`); `cabecalho` troca o texto do th
  * (ex.: a caixa "selecionar todos"), `dica` é o title do cabeçalho (sigla
- * explicada) e `chave` vale quando o rótulo se repete.
+ * explicada), `chave` vale quando o rótulo se repete e `classe` vai no th
+ * (ex.: a coluna presa à esquerda da Visão geral).
  */
 export interface ColunaDaTabela {
   rotulo: string;
@@ -57,6 +58,7 @@ export interface ColunaDaTabela {
   dica?: string;
   largura?: string;
   numero?: boolean;
+  classe?: string;
   ordem?: string;
   aoOrdenar?: () => void;
 }
@@ -211,13 +213,14 @@ export function CabecalhosDaTabela({
             ordem,
             aoOrdenar,
             dica,
+            classe,
           }) => (
             <th
               key={chave ?? nome}
               scope="col"
               title={dica}
               style={{ width: largura }}
-              className={numero ? "num" : undefined}
+              className={classes(numero && "num", classe) || undefined}
               aria-sort={
                 aoOrdenar ? ARIA_SORT[ordem ?? ""] || "none" : undefined
               }

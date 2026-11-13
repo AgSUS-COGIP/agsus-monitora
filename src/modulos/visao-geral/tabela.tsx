@@ -34,7 +34,8 @@ import { classes, Selo, TabelaInfinita } from "../../ui/index.ts";
   cronograma na célula do edital, a taxa de vagas sem contratação, a fase, os
   motivos de atenção (selos) e a observação longa com "Ver mais". Sem coluna
   escolhida, os críticos vêm primeiro. A linha abre os detalhes do processo
-  (clique, Enter ou espaço).
+  (clique, Enter ou espaço). Unidade e Edital ficam presas à esquerda quando
+  a tabela rola de lado (`classesFixas`; no celular, em cartões, não).
 
   A busca do cabeçalho vale para a página toda (KPIs, mapa, blocos): ela vai
   para o estado com uma pausa de 300 ms, e a tabela já recebe as linhas
@@ -48,6 +49,28 @@ const numeroOuTraco = (valor: unknown) =>
 const ESPERA_DA_BUSCA_MS = 300;
 const DESTAQUE_MS = 2500;
 const jaRecortadas = (itens: readonly LinhaDaVisaoGeral[]) => itens;
+
+/*
+  As colunas presas à esquerda (13/11/2026): Unidade e Edital, as que estiverem
+  visíveis, nessa ordem. A segunda começa onde a primeira termina (a largura
+  fixa da Unidade, visao-geral.css); a última leva o fio que separa as presas
+  das que rolam.
+*/
+const COLUNAS_FIXAS: readonly ColunaDaTabela[] = ["unidade", "edital"];
+function classesFixas(colunas: readonly ColunaDaTabela[]) {
+  const fixas = COLUNAS_FIXAS.filter((campo) => colunas.includes(campo));
+  return new Map(
+    fixas.map((campo, i): [ColunaDaTabela, string] => [
+      campo,
+      classes(
+        campo === "unidade" && "visao-geral-unidade",
+        "visao-geral-fixa",
+        i > 0 && "visao-geral-fixa-segunda",
+        i === fixas.length - 1 && "visao-geral-fixa-ultima",
+      ),
+    ]),
+  );
+}
 
 function MenuDeColunas({
   colunas,
@@ -125,15 +148,17 @@ function MenuDeColunas({
 function CelulaDoEdital({
   linha,
   hoje,
+  fixa,
 }: {
   linha: LinhaDaVisaoGeral;
   hoje: string | Date;
+  fixa?: string;
 }) {
   const link = linkSeguro(linha.link_edital);
   const prazo = prazoDoEdital(linha, hoje);
   const cronograma = seloDoCronograma(linha, hoje);
   return (
-    <td className="visao-geral-edital">
+    <td className={classes("visao-geral-edital", fixa)}>
       {link ? (
         <a className="link" href={link} target="_blank" rel="noopener">
           {linha.edital || "-"} <span aria-hidden="true">↗</span>
@@ -191,15 +216,31 @@ function celula(
   campo: ColunaDaTabela,
   linha: LinhaDaVisaoGeral,
   hoje: string | Date,
+  fixas: Map<ColunaDaTabela, string>,
 ) {
   switch (campo) {
     case "unidade":
-      return <td key={campo}>{linha.unidade}</td>;
+      return (
+        <td key={campo} className={fixas.get(campo) || "visao-geral-unidade"}>
+          {linha.unidade}
+        </td>
+      );
     case "edital":
-      return <CelulaDoEdital key={campo} linha={linha} hoje={hoje} />;
+      return (
+        <CelulaDoEdital
+          key={campo}
+          linha={linha}
+          hoje={hoje}
+          fixa={fixas.get(campo)}
+        />
+      );
     case "data_inicio":
     case "data_fim":
-      return <td key={campo}>{dataCurta(linha[campo])}</td>;
+      return (
+        <td key={campo} className="visao-geral-data">
+          {dataCurta(linha[campo])}
+        </td>
+      );
     case "vagas_total":
       return (
         <td key={campo} className="num">
@@ -228,7 +269,7 @@ function celula(
       */
       const reserva = contratacoesDoCadastroReserva(linha);
       return (
-        <td key={campo} className="num visao-geral-contratados">
+        <td key={campo} className="num">
           {fmt(contratadasImediatas(linha))}
           {reserva > 0 ? (
             <span
@@ -244,7 +285,7 @@ function celula(
     case "vagas_ociosas": {
       const taxa = taxaDeOciosidade(linha);
       return (
-        <td key={campo} className="num visao-geral-ociosas">
+        <td key={campo} className="num">
           {fmt(linha.vagas_ociosas)}
           <span
             className="visao-geral-taxa"
@@ -264,7 +305,11 @@ function celula(
       );
     case "fase":
       return (
-        <td key={campo} title={linha.etapa || undefined}>
+        <td
+          key={campo}
+          className="visao-geral-fase"
+          title={linha.etapa || undefined}
+        >
           {linha.fase}
         </td>
       );
@@ -272,8 +317,12 @@ function celula(
       return (
         <td key={campo} className="visao-geral-motivos">
           {(linha.atencao || []).map((motivo) => (
-            <Selo key={motivo.codigo} tom={seloDoMotivo(motivo)}>
-              {motivo.rotulo}
+            <Selo
+              key={motivo.codigo}
+              tom={seloDoMotivo(motivo)}
+              titulo={motivo.rotulo}
+            >
+              <span className="visao-geral-motivo-texto">{motivo.rotulo}</span>
             </Selo>
           ))}
         </td>
@@ -338,11 +387,13 @@ export function TabelaDeProcessos({
     return () => clearTimeout(apagar);
   }, [destaque]);
 
+  const fixas = classesFixas(e.colunas);
   const colunas = COLUNAS_DA_TABELA.filter((c) =>
     e.colunas.includes(c.campo),
   ).map(({ campo, rotulo, numero }) => ({
     rotulo,
     numero,
+    classe: fixas.get(campo),
     ordem: e.ordenacao.campo === campo ? e.ordenacao.direcao : "",
     aoOrdenar: () => estado.ordenarPor(campo),
   }));
@@ -389,7 +440,8 @@ export function TabelaDeProcessos({
         informacao={(quantos) =>
           quantos === null
             ? "Carregando…"
-            : `${fmt(quantos)} de ${fmt(total)} ${total === 1 ? "processo" : "processos"}`
+            : // Sem recorte, "108 processos" (não "108 de 108").
+              `${quantos === total ? "" : `${fmt(quantos)} de `}${fmt(total)} ${total === 1 ? "processo" : "processos"}`
         }
         linha={(linha) => {
           const id = String(linha.id);
@@ -414,7 +466,7 @@ export function TabelaDeProcessos({
                 aoAbrir(linha);
               }}
             >
-              {e.colunas.map((campo) => celula(campo, linha, hoje))}
+              {e.colunas.map((campo) => celula(campo, linha, hoje, fixas))}
             </tr>
           );
         }}

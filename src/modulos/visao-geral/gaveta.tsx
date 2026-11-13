@@ -64,12 +64,12 @@ export function GavetaDoProcesso({
         >
           <GradeDeKv rotulo="Situação">
             <Kv rotulo="Status">{statusCanonico(linha.status)}</Kv>
-            <Kv rotulo="Fase">{linha.fase || "-"}</Kv>
+            <Kv rotulo="Fase">{linha.fase || "—"}</Kv>
             <Kv rotulo="Etapa atual">
-              {linha.cronograma_atividade_atual || linha.etapa || "-"}
+              {linha.cronograma_atividade_atual || linha.etapa || "—"}
             </Kv>
             <Kv rotulo="Próxima atividade">
-              {linha.cronograma_proxima_atividade || "-"}
+              {linha.cronograma_proxima_atividade || "—"}
             </Kv>
             <Kv rotulo="Prazo">{urgencia.rotulo}</Kv>
             {linha.atencao?.length ? (
@@ -111,7 +111,7 @@ export function GavetaDoProcesso({
           <p className="visao-geral-progresso-texto">
             <strong>{percentual}% do cronograma</strong>
             <span>
-              Próxima data: {dataCurta(linha.cronograma_proxima_data) || "-"}
+              Próxima data: {dataCurta(linha.cronograma_proxima_data) || "—"}
             </span>
           </p>
           {linha.cronograma_automatico ? null : (
@@ -125,7 +125,7 @@ export function GavetaDoProcesso({
         <Secao icone="fa-circle-info" titulo="Informações" secao="informacoes">
           <GradeDeKv>
             <Kv rotulo="Período">
-              {`${dataCurta(linha.data_inicio) || "-"} a ${dataCurta(linha.data_fim) || "-"}`}
+              {`${dataCurta(linha.data_inicio) || "—"} a ${dataCurta(linha.data_fim) || "—"}`}
             </Kv>
             <Kv rotulo="Responsável">{linha.responsavel || "Não informado"}</Kv>
             <Kv rotulo="Risco">{linha.risco || "Não informado"}</Kv>
