@@ -26683,6 +26683,24 @@ begin
              and l.edital_id = any (select unnest(v_editais)::text)
            group by l.edital_id
         ) r
+    ), '[]'::jsonb),
+    -- A 1ª e a última admissão por edital, das admissões conciliadas com o RH (20261113210000).
+    'admissoes', coalesce((
+      select jsonb_agg(jsonb_build_object(
+               'monitoramento_id', x.edital,
+               'primeira', x.primeira,
+               'ultima', x.ultima,
+               'quantidade', x.quantidade
+             ) order by x.edital)
+        from (
+          select a."CO_MONITORAMENTO" as edital,
+                 min(a."DT_ADMISSAO") as primeira,
+                 max(a."DT_ADMISSAO") as ultima,
+                 count(*)::integer as quantidade
+            from public."TB_ADMISSAO_CONCILIADA" a
+           where a."CO_MONITORAMENTO" = any (v_editais)
+           group by a."CO_MONITORAMENTO"
+        ) x
     ), '[]'::jsonb)
   );
 end;
@@ -26692,7 +26710,7 @@ $$;
 -- Name: FUNCTION listar_acompanhamento_da_visao_geral(p_area text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.listar_acompanhamento_da_visao_geral(p_area text) IS 'Visão geral de uma área (só leitura): as etapas do cronograma e, por edital com lista de aprovados vigente, as contagens de aprovados, com status, contratados (Contratado/Migração) e desistentes. Recurso dashboard, área do usuário e recorte da coordenação.';
+COMMENT ON FUNCTION public.listar_acompanhamento_da_visao_geral(p_area text) IS 'Visão geral de uma área (só leitura): as etapas do cronograma; por edital com lista de aprovados vigente, as contagens de aprovados, com status, contratados (Contratado/Migração) e desistentes; e por edital, a 1ª e a última admissão conciliadas com o RH (TB_ADMISSAO_CONCILIADA, 20261113210000). Recurso dashboard, área do usuário e recorte da coordenação.';
 
 --
 -- Name: listar_acompanhamento_da_visao_geral_se_mudou(text, text); Type: FUNCTION; Schema: public; Owner: -

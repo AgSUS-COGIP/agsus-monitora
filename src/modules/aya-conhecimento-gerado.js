@@ -3833,6 +3833,24 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-visao-geral.md",
+    titulo: "Data de admissão e ciclo na Visão geral",
+    perguntas: [
+      "data de admissao do edital",
+      "quando foram admitidos",
+      "primeira admissao",
+      "ultima admissao",
+      "de onde vem a data de admissao",
+      "ciclo do edital",
+      "qual o ciclo do edital",
+      "filtrar por ciclo",
+    ],
+    resposta:
+      'As colunas 1ª admissão e Última admissão mostram a primeira e a última data de admissão das pessoas contratadas pelo edital, conferidas com o RH (sistema Impacto) nas planilhas de conciliação. Só entram as admissões que a conciliação comprovou; edital sem admissão comprovada fica "—". O arquivo exportado leva também quantas admissões foram conciliadas. A coluna Ciclo mostra o ciclo do edital (1º ciclo, 2º ciclo...), que também é filtro em "Mais opções"; o ciclo se preenche no formulário do edital, em Editais.',
+    fato: "",
+    fonte: "interface do Yeendé",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
     titulo: "De onde vêm os KPIs da Visão geral",
     perguntas: [
       "de onde vem os kpis da visao geral",

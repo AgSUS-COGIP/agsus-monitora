@@ -60,6 +60,12 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 **resposta:** Na tabela de processos da Visão geral, quatro colunas mostram o resultado de cada edital (estão no padrão; o menu "Colunas" as desliga). Duração (dias) são os dias corridos do início ao encerramento do edital. Inscritos vem do funil do edital ("—" quando a fonte não tem o número). Aprovados são as pessoas da lista de aprovados vigente, e Aguardando chamada, as dessa lista que ainda não têm status, isto é, não foram chamadas (não confundir com o indicador Cadastro reserva, que são os contratados além das vagas); sem lista vigente, as duas ficam "—". Contratados é a coluna de sempre. O arquivo exportado leva as quatro, mesmo com as colunas desligadas, e o ano de cada processo está no número do edital (por exemplo, 80/2025).
 **fonte:** interface do Yeendé
 
+## Data de admissão e ciclo na Visão geral
+
+**perguntas:** data de admissao do edital | quando foram admitidos | primeira admissao | ultima admissao | de onde vem a data de admissao | ciclo do edital | qual o ciclo do edital | filtrar por ciclo
+**resposta:** As colunas 1ª admissão e Última admissão mostram a primeira e a última data de admissão das pessoas contratadas pelo edital, conferidas com o RH (sistema Impacto) nas planilhas de conciliação. Só entram as admissões que a conciliação comprovou; edital sem admissão comprovada fica "—". O arquivo exportado leva também quantas admissões foram conciliadas. A coluna Ciclo mostra o ciclo do edital (1º ciclo, 2º ciclo...), que também é filtro em "Mais opções"; o ciclo se preenche no formulário do edital, em Editais.
+**fonte:** interface do Yeendé
+
 ## De onde vêm os KPIs da Visão geral
 
 **perguntas:** de onde vem os kpis da visao geral | de onde vem os indicadores da visao geral | de onde vem os numeros da visao geral | origem dos kpis | kpis do edital | de onde vem os kpis

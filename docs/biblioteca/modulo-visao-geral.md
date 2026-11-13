@@ -36,7 +36,11 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
   ([[modulo-editais]]). A Visão geral lê `listar_editais_criticos_manuais(p_area)` junto com o
   acompanhamento (falha não derruba a tela; sem mudança, o mesmo objeto) e soma a marcação aos
   motivos automáticos como o mais grave (`marcado`).
-- `listar_acompanhamento_da_visao_geral({ p_area })` lê etapas e resumos das listas. O estado
+- `listar_acompanhamento_da_visao_geral({ p_area })` lê etapas, resumos das listas e, desde a
+  migration `20261113210000`, a 1ª e a última admissão de cada edital (`admissoes`, de
+  `TB_ADMISSAO_CONCILIADA`: admissões conciliadas com o RH, carregadas por
+  `scripts/carregar-admissoes-conciliadas.mjs` a partir da aba "Vínculos conciliados" das
+  planilhas de conciliação; sem nome, CPF nem matrícula). O estado
   evita repetir pedidos da mesma carga/área e descarta respostas de cargas ou áreas anteriores.
   Se houver erro, a tela continua com as linhas disponíveis.
 - `obter_marcos_da_area({ p_area })` lê os números anuais da equipe. Resposta sem ano inteiro ou
@@ -44,8 +48,9 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
 - Filtros e colunas são normalizados ao sair do armazenamento; a indisponibilidade do
   armazenamento não impede o uso da página.
 - Colunas padrão, para todos (13/11/2026): todas menos Observações. A chave guardada passou a
-  `agsus_visible_cols_v2`, o que descartou uma vez as escolhas antigas (sem as colunas do
-  resultado). Em 1280px a tabela rola de lado; Unidade e Edital ficam presas à esquerda
+  `agsus_visible_cols_v3` (Ciclo, 1ª admissão e Última admissão), o que descartou uma vez as
+  escolhas antigas. O ciclo é padronizado como "Nº ciclo" (`src/lib/ciclo-do-edital.ts`), é
+  filtro em "Mais opções" e voltou ao formulário do edital. Em 1280px a tabela rola de lado; Unidade e Edital ficam presas à esquerda
   (`classe` da coluna na `TabelaInfinita`). No celular, em cartões, rótulo e valor ficam na
   mesma linha e só a página rola.
 - O CSV mantém a proteção contra fórmulas e o nome do arquivo usa a data de Brasília.
