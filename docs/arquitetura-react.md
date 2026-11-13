@@ -372,7 +372,7 @@ src/app/carga.ts                 consultas em paralelo, cópia da sessão, "Atua
 src/app/presenca.ts              auditoria, heartbeat, presença e a lista de Pessoas online
 src/componentes/pessoas-online/  o botão e a lista no cabeçalho (React)
 src/app/perfil.ts                usuário e perfil (cópia da sessão), cabeçalho, #appScreen
-src/app/moldura.ts               barra recolhida, tema, tela cheia, relatório em PDF
+src/app/moldura.ts               barra recolhida, tema, tela cheia, Montar relatório (abre o montador)
 src/app/avisos.ts                toast (window.monitoraToast) e loader (window.monitoraLoader)
 src/app/carregamento.ts          skeleton da entrada e do painel externo, barra do "Atualizar dados"
 src/lib/erro-amigavel.ts         a frase do erro (antigo friendlyError)

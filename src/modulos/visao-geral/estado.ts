@@ -226,6 +226,7 @@ export function criarEstadoDaVisaoGeral({
     carregadoEm: 0,
     aberta,
     visitada: aberta,
+    montador: false,
   };
   let instantaneo: SnapshotDaVisaoGeral;
   let fonte: { linhas: readonly unknown[] | null; area: string } = {
@@ -580,6 +581,9 @@ export function criarEstadoDaVisaoGeral({
       if (!filtradas.length) return;
       baixar(csvDaVisaoGeral(filtradas), nomeDoCsv(area, new Date(agora())));
     },
+    /* O montador de relatório (src/modulos/visao-geral/montador-de-relatorio.tsx). */
+    abrirMontador: () => publicar({ montador: true }),
+    fecharMontador: () => publicar({ montador: false }),
   };
 }
 

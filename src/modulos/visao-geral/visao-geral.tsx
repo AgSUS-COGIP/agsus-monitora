@@ -38,6 +38,7 @@ import {
   Topo,
 } from "./paineis.tsx";
 import { TabelaDeProcessos } from "./tabela.tsx";
+import { MontadorDeRelatorio } from "./montador-de-relatorio.tsx";
 
 /*
   A Visão geral (view `dashboard`), um módulo do app: monta direto na
@@ -151,7 +152,7 @@ export function TelaDaVisaoGeral({
         supabase={supabase}
         comemoracoesLigadas={comemoracoesLigadas}
       />
-      <Topo e={e} aoExportar={estado.exportarCsv} />
+      <Topo e={e} aoExportar={estado.abrirMontador} />
       <Filtros e={e} estado={estado} textos={textos} />
       <Indicadores e={e} estado={estado} textos={textos} />
       {mapa === MAPA_DOS_DSEIS ? (
@@ -192,6 +193,17 @@ export function TelaDaVisaoGeral({
         agora={agora}
         aoAbrir={abrir}
       />
+      {e.montador && e.aberta ? (
+        <MontadorDeRelatorio
+          e={e}
+          estado={estado}
+          textos={textos}
+          configuracoes={configuracoes}
+          obterPerfil={obterPerfil}
+          agora={agora}
+          aoFechar={estado.fecharMontador}
+        />
+      ) : null}
       {linhaAberta ? (
         <GavetaDoProcesso
           linha={linhaAberta}

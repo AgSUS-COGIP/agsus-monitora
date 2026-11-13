@@ -156,12 +156,11 @@ export function MolduraNaPagina() {
 
 type EstadoDaMolduraNaCasca = Pick<
   ReturnType<Moldura["obter"]>,
-  "telaCheiaDoApp" | "telaCheiaDoNavegador" | "relatorio"
+  "telaCheiaDoApp" | "telaCheiaDoNavegador"
 >;
 const ESTADO_SEM_MOLDURA: EstadoDaMolduraNaCasca = Object.freeze({
   telaCheiaDoApp: false,
   telaCheiaDoNavegador: false,
-  relatorio: null,
 });
 const assinarNada = () => () => {};
 const semMoldura = (): EstadoDaMolduraNaCasca => ESTADO_SEM_MOLDURA;

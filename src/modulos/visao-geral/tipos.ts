@@ -209,6 +209,8 @@ export type EstadoProprio = {
   aberta: boolean;
   /** Já foi aberta nesta visita: até lá a tela não monta mapas nem marcos. */
   visitada: boolean;
+  /** O montador de relatório está aberto (botão Exportar ou menu da conta). */
+  montador: boolean;
 };
 export type SnapshotDaVisaoGeral = Readonly<
   Omit<EstadoProprio, "filtros" | "colunas"> & {
@@ -256,6 +258,8 @@ export type EstadoDaVisaoGeral = {
   ordenarPor: (campo: ColunaDaTabela) => void;
   alternarColuna: (campo: ColunaDaTabela, visivel: boolean) => void;
   exportarCsv: () => void;
+  abrirMontador: () => void;
+  fecharMontador: () => void;
 };
 export type OpcoesDoEstado = {
   dados?: DadosDoMonitoramento;

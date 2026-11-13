@@ -119,8 +119,8 @@ function MenuDaConta() {
             <span id="fullscreenActionText">Tela cheia</span>
           </button>
           <button type="button" onClick={aoClicar("fechar", "exportPDF")}>
-            <i className="fa-solid fa-file-pdf" aria-hidden="true"></i>{" "}
-            <span id="exportPdfActionText">Exportar relatório (PDF)</span>
+            <i className="fa-solid fa-file-lines" aria-hidden="true"></i>{" "}
+            <span id="exportPdfActionText">Montar relatório</span>
           </button>
         </div>
       </div>
