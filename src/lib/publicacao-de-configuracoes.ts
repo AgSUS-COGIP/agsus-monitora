@@ -17,7 +17,13 @@ import {
   normalizeAccessPanelColor,
 } from "./access-branding.ts";
 import { isValidAccessAssetUrl } from "./config-validation";
-import { normalizarEstilo, normalizarModo } from "./contraste.ts";
+import {
+  CORES_DO_VIDRO,
+  normalizarCorNoVidro,
+  normalizarDesfoqueDoVidro,
+  normalizarEstilo,
+  normalizarModo,
+} from "./contraste.ts";
 import {
   corDaBarraSegura,
   logoDaBarraSegura,
@@ -399,6 +405,35 @@ export const CAMPOS_DAS_SECOES: Readonly<
           ["vidro", "Vidro"],
         ]),
         normalizar: normalizarEstilo,
+      },
+    ),
+    texto(
+      "auth_access_vidro_cor",
+      "Cor do painel no vidro da tela de acesso, em %",
+      "Cor no vidro",
+      {
+        tipo: "opcoes",
+        opcoes: Object.freeze<OpcaoDoCampo[]>(
+          CORES_DO_VIDRO.map((porcento) => [
+            String(porcento),
+            porcento ? `${porcento}%` : "Nenhuma (vidro puro)",
+          ]),
+        ),
+        normalizar: normalizarCorNoVidro,
+      },
+    ),
+    texto(
+      "auth_access_vidro_desfoque",
+      "Desfoque da arte atrás do vidro da tela de acesso",
+      "Desfoque da arte",
+      {
+        tipo: "opcoes",
+        opcoes: Object.freeze<OpcaoDoCampo[]>([
+          ["nenhum", "Nenhum"],
+          ["leve", "Leve"],
+          ["forte", "Forte"],
+        ]),
+        normalizar: normalizarDesfoqueDoVidro,
       },
     ),
     texto(

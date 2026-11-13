@@ -118,7 +118,7 @@
 /*
   PAINEL DE VIDRO (Configurações › Tela de acesso › Estilo do painel)
 
-  Vidro de verdade, sem cor e sem desfoque (13/11/2026): nenhuma tinta,
+  Por padrão, vidro de verdade, sem cor e sem desfoque (13/11/2026): nenhuma tinta,
   nenhum brilho, nenhum realce e nenhum desfoque (nem o do painel sólido):
   a arte aparece nítida atrás do texto. O vidro se vê pela borda clara e pelo
   realce de luz na aresta de cima. O cartão fica sem fundo próprio. A leitura
@@ -126,13 +126,25 @@
   Configurações diz). Quem pede menos transparência ao sistema vê o painel
   sólido na cor do painel.
 */
+/*
+  13/11/2026: a cor no vidro (--vidro-cor, 0% a 90% da cor do painel) e o
+  desfoque da arte (--vidro-desfoque, 0, 8 ou 18px) vêm de Configurações ›
+  Aparência, aplicados no #loginScreen por src/app/entrada/marca.ts e, no
+  primeiro quadro, pelo script do <head> do index.html. Sem escolha, 0% e
+  sem desfoque: o vidro puro descrito acima.
+*/
 .login-screen.login-panel-vidro .login-outer {
   border-color: color-mix(in srgb, var(--brilho-do-vidro) 28%, transparent);
-  background: transparent;
+  background: color-mix(
+    in srgb,
+    var(--login-panel-color, var(--color-bg-subtle)) var(--vidro-cor, 0%),
+    transparent
+  );
   box-shadow:
     var(--shadow-lg),
     inset 0 1px 0 color-mix(in srgb, var(--brilho-do-vidro) 40%, transparent);
-  backdrop-filter: none;
+  /* prettier-ignore */
+  backdrop-filter: blur(var(--vidro-desfoque, 0px)); /* acabamento: permitido(blur) — vidro do painel de acesso, desfoque escolhido em Configurações; recua para sólido com menos transparência */
 }
 .login-screen.login-panel-vidro .login-card {
   background: transparent;

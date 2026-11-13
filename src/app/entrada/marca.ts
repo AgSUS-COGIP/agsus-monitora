@@ -41,12 +41,16 @@ import {
   normalizeAccessPanelColor,
 } from "../../lib/access-branding.ts";
 import {
+  DESFOQUE_DO_VIDRO_EM_PX,
   ESTILO_VIDRO,
   MODO_AUTO,
   TEXTO_CLARO,
   corDoTextoPara,
+  normalizarCorNoVidro,
+  normalizarDesfoqueDoVidro,
   normalizarEstilo,
   normalizarModo,
+  porcentagemDaCorNoVidro,
 } from "../../lib/contraste.ts";
 
 /** O rodapé institucional da tela de acesso (chaves `cogip_*`). */
@@ -273,6 +277,30 @@ export function aplicarEstiloDoPainel(
   );
 }
 
+/*
+  A cor no vidro e o desfoque da arte (Configurações › Aparência, 13/11/2026)
+  viram `--vidro-cor` e `--vidro-desfoque` no `#loginScreen`, que
+  platform-shell.css usa no painel de vidro.
+*/
+export function aplicarAjusteDoVidro(
+  tela:
+    | { style: { setProperty(nome: string, valor: string): void } }
+    | null
+    | undefined,
+  corNoVidro: unknown,
+  desfoque: unknown,
+): void {
+  if (!tela) return;
+  tela.style.setProperty(
+    "--vidro-cor",
+    `${porcentagemDaCorNoVidro(corNoVidro)}%`,
+  );
+  tela.style.setProperty(
+    "--vidro-desfoque",
+    `${DESFOQUE_DO_VIDRO_EM_PX[normalizarDesfoqueDoVidro(desfoque)]}px`,
+  );
+}
+
 /**
  * Aplica uma marca (campos do cache: backgroundUrl, panelColor, textoModo, painelEstilo,
  * logoUrl, greeting, buttonText). Cada campo é opcional; o que falta fica como
@@ -298,6 +326,8 @@ export function aplicarMarcaNaTela(
   if (tela) aplicarCorDoPainel(tela, marca.panelColor, marca.textoModo);
   if (tela && marca.painelEstilo)
     aplicarEstiloDoPainel(tela, marca.painelEstilo);
+  if (tela && (marca.vidroCor || marca.vidroDesfoque))
+    aplicarAjusteDoVidro(tela, marca.vidroCor, marca.vidroDesfoque);
 
   const parcial: Partial<IdentidadeDaEntrada> = {};
   if (marca.logoUrl) parcial.logoUrl = marca.logoUrl;
@@ -378,6 +408,8 @@ export function definirMarcaDaConfiguracao(
   const logoDoBanco = doBanco("auth_access_logo_url");
   const saudacaoDoBanco = doBanco("auth_access_greeting");
   const estiloDoBanco = doBanco("auth_access_painel_estilo");
+  const vidroCorDoBanco = doBanco("auth_access_vidro_cor");
+  const vidroDesfoqueDoBanco = doBanco("auth_access_vidro_desfoque");
 
   const tela = documento?.getElementById?.("loginScreen");
   const marcaParaGuardar: MarcaGuardada = {};
@@ -402,6 +434,14 @@ export function definirMarcaDaConfiguracao(
     const estilo = normalizarEstilo(estiloDoBanco);
     aplicarEstiloDoPainel(tela, estilo);
     marcaParaGuardar.painelEstilo = estilo;
+  }
+
+  if (tela && (vidroCorDoBanco !== null || vidroDesfoqueDoBanco !== null)) {
+    const corNoVidro = normalizarCorNoVidro(vidroCorDoBanco);
+    const desfoque = normalizarDesfoqueDoVidro(vidroDesfoqueDoBanco);
+    aplicarAjusteDoVidro(tela, corNoVidro, desfoque);
+    marcaParaGuardar.vidroCor = corNoVidro;
+    marcaParaGuardar.vidroDesfoque = desfoque;
   }
 
   if (logoDoBanco !== null) {

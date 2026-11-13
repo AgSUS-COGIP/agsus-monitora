@@ -59,6 +59,8 @@ const CHAVES_DE_BRANDING: Readonly<Record<string, CampoDaMarcaGuardada>> = {
   auth_google_button_text: "buttonText",
   auth_access_texto_modo: "textoModo",
   auth_access_painel_estilo: "painelEstilo",
+  auth_access_vidro_cor: "vidroCor",
+  auth_access_vidro_desfoque: "vidroDesfoque",
 };
 
 function texto(valor: unknown): string {

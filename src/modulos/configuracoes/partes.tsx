@@ -7,10 +7,13 @@ import {
 import { DEFAULT_ACCESS_BRANDING } from "../../lib/access-branding.ts";
 import { urlDeImagem } from "../../lib/apresentacao-das-configuracoes.ts";
 import {
+  DESFOQUE_DO_VIDRO_EM_PX,
   ESTILO_VIDRO,
   avaliarCor,
   corDoTextoPara,
+  normalizarDesfoqueDoVidro,
   normalizarEstilo,
+  porcentagemDaCorNoVidro,
 } from "../../lib/contraste.ts";
 import { Aviso, Campo } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
@@ -191,6 +194,7 @@ export function AvisoDeContraste({
   cor,
   modo,
   estilo,
+  corNoVidro,
   comBotao = false,
 }: {
   cor: string;
@@ -198,9 +202,11 @@ export function AvisoDeContraste({
   modo?: string;
   /** Estilo do painel (sólido ou vidro); no vidro, mede no pior trecho da arte. */
   estilo?: string;
+  /** A cor no vidro, em % ("0" a "90"); 0 é o vidro puro. */
+  corNoVidro?: string;
   comBotao?: boolean;
 }) {
-  const avaliacao = avaliarCor(cor, modo, estilo);
+  const avaliacao = avaliarCor(cor, modo, estilo, corNoVidro);
   if (!avaliacao) return null;
   return (
     <div className="config-contraste ui-campo-largo">
@@ -288,7 +294,14 @@ export function PreviaDoAcesso({ estado }: { estado: EstadoDasConfiguracoes }) {
               ? "previa-acesso__cartao previa-acesso__cartao--vidro"
               : "previa-acesso__cartao"
           }
-          style={{ "--cor-do-cartao": cor, color: corDoTexto } as CSSProperties}
+          style={
+            {
+              "--cor-do-cartao": cor,
+              "--vidro-cor": `${porcentagemDaCorNoVidro(estado.valor("auth_access_vidro_cor"))}%`,
+              "--vidro-desfoque": `${DESFOQUE_DO_VIDRO_EM_PX[normalizarDesfoqueDoVidro(estado.valor("auth_access_vidro_desfoque"))]}px`,
+              color: corDoTexto,
+            } as CSSProperties
+          }
         >
           <span className="previa-acesso__marca">
             <Imagem
