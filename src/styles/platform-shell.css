@@ -118,34 +118,22 @@
 /*
   PAINEL DE VIDRO (Configurações › Tela de acesso › Estilo do painel)
 
-  A cor do painel a 70% (OPACIDADE_DO_VIDRO em src/lib/contraste.ts, que mede
-  o contraste do texto com a cor misturada ao branco e ao preto, o pior trecho
-  possível da arte) e a arte levemente desfocada por trás (10px, para a
-  textura da arte aparecer através do vidro). O cartão fica sem fundo
-  próprio, para a tinta não dobrar. Quem pede menos transparência ao sistema,
-  ou navegador sem desfoque, vê o painel sólido.
-
-  Sobre uma arte lisa da cor do painel, só a transparência não se vê (12/11:
-  o vidro ligado parecia sólido). Por isso o vidro tem os sinais de vidro: o
-  brilho branco por cima da tinta (8% no alto, BRILHO_DO_VIDRO, que entra na
-  conta do contraste; 3% no meio, 6% embaixo), a borda clara e o realce de
-  luz na aresta de cima. 13/11: pedido de mais transparência; 70% é o mínimo
-  em que a cor de hoje (#002f2f) ainda passa no pior trecho.
+  Sem cor (13/11/2026, "totalmente transparente"): só a arte desfocada por
+  trás e os sinais de vidro, o brilho branco (8% no alto, BRILHO_DO_VIDRO em
+  src/lib/contraste.ts; 3% no meio, 6% embaixo), a borda clara e o realce de
+  luz na aresta de cima. O cartão fica sem fundo próprio. A leitura depende da
+  arte atrás do painel, que o sistema não mede (o aviso de Configurações diz).
+  Quem pede menos transparência ao sistema, ou navegador sem desfoque, vê o
+  painel sólido na cor do painel.
 */
 .login-screen.login-panel-vidro .login-outer {
   border-color: color-mix(in srgb, var(--brilho-do-vidro) 28%, transparent);
-  background:
-    linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--brilho-do-vidro) 8%, transparent),
-      color-mix(in srgb, var(--brilho-do-vidro) 3%, transparent) 45%,
-      color-mix(in srgb, var(--brilho-do-vidro) 6%, transparent)
-    ),
-    color-mix(
-      in srgb,
-      var(--login-panel-color, var(--color-bg-subtle)) 70%,
-      transparent
-    );
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--brilho-do-vidro) 8%, transparent),
+    color-mix(in srgb, var(--brilho-do-vidro) 3%, transparent) 45%,
+    color-mix(in srgb, var(--brilho-do-vidro) 6%, transparent)
+  );
   box-shadow:
     var(--shadow-lg),
     inset 0 1px 0 color-mix(in srgb, var(--brilho-do-vidro) 40%, transparent);

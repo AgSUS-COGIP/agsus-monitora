@@ -6,9 +6,7 @@ import {
   BRILHO_DO_VIDRO,
   ESTILO_SOLIDO,
   ESTILO_VIDRO,
-  OPACIDADE_DO_VIDRO,
   avaliarCor,
-  misturar,
   normalizarEstilo,
 } from "../src/lib/contraste.ts";
 import { mapearBrandingPublico } from "../src/lib/access-branding-publico.ts";
@@ -20,8 +18,8 @@ import { aplicarEstiloDoPainel } from "../src/app/entrada/marca.ts";
   Configurações › Tela de acesso › Estilo do painel: sólido (padrão) ou vidro.
   A chave `auth_access_painel_estilo` chega antes do login pela função pública
   (migration 20261112180000), vai para o cache da marca e vira a classe
-  `login-panel-vidro` no #loginScreen. O contraste do vidro é medido no pior
-  trecho possível da arte: a cor misturada ao branco e ao preto.
+  `login-panel-vidro` no #loginScreen. Desde 13/11/2026 o vidro não tem cor:
+  o texto vai direto sobre a arte, que o sistema não mede.
 */
 
 const RAIZ = path.resolve(import.meta.dirname, "..");
@@ -137,22 +135,25 @@ describe("o estilo do painel", () => {
     expect(html).toContain('.classList.add("login-panel-vidro");');
   });
 
-  it("o CSS usa a mesma opacidade da conta e recua para sólido", () => {
+  it("o vidro não tem cor e recua para o painel sólido", () => {
     const css = ler("src/styles/platform-shell.css");
-    const porcento = `${Math.round(OPACIDADE_DO_VIDRO * 100)}%`;
-    expect(css).toContain(
-      `var(--login-panel-color, var(--color-bg-subtle)) ${porcento},`,
+    const bloco = css.slice(
+      css.indexOf(".login-screen.login-panel-vidro .login-outer {"),
+      css.indexOf(".login-screen.login-panel-vidro .login-card {"),
     );
+    expect(bloco).not.toContain("--login-panel-color");
     expect(css).toContain("@media (prefers-reduced-transparency: reduce)");
     expect(css).toContain("@supports not (backdrop-filter: blur(1px))");
+    expect(css).toContain(
+      "background: var(--login-panel-color, var(--color-bg-subtle));",
+    );
   });
 });
 
 describe("contraste do vidro", () => {
   /*
-    12/11/2026: o vidro ligado parecia sólido, porque o cartão fica sobre a
-    parte lisa da arte, quase da cor do painel. O brilho e a borda clara fazem
-    o vidro aparecer; o brilho mais forte (o do alto) entra na conta.
+    12/11/2026: o vidro ligado parecia sólido; o brilho e a borda clara fazem
+    o vidro aparecer. 13/11/2026: "totalmente transparente", o painel sem cor.
   */
   it("o brilho do CSS é o da conta, e a borda e o realce de luz estão lá", () => {
     const css = ler("src/styles/platform-shell.css");
@@ -170,39 +171,20 @@ describe("contraste do vidro", () => {
     );
   });
 
-  it("a cor do painel de hoje (#002f2f) passa no vidro com o brilho", () => {
-    const vidro = avaliarCor("#002f2f", "claro", "vidro");
-    expect(vidro?.passa).toBe(true);
-    expect(vidro!.razao).toBeGreaterThanOrEqual(4.5);
+  it("no vidro o contraste não é garantido, e o aviso diz que arte combina", () => {
+    const escuro = avaliarCor("#002f2f", "auto", "vidro");
+    expect(escuro?.passa).toBe(false);
+    expect(escuro?.mensagem).toContain("texto claro");
+    expect(escuro?.mensagem).toContain("precisa ser escura");
+    expect(escuro?.mensagem).toContain("painel sólido");
+    const claro = avaliarCor("#f2f2f2", "auto", "vidro");
+    expect(claro?.mensagem).toContain("precisa ser clara");
   });
 
-  it("mistura como o color-mix do CSS", () => {
-    expect(misturar("#000000", "#ffffff", 0.5)).toBe("#808080");
-    expect(misturar("#12403f", "#12403f", OPACIDADE_DO_VIDRO)).toBe("#12403f");
-  });
-
-  it("um painel escuro passa no vidro, medido no pior trecho", () => {
+  it("no sólido a cor continua medida como antes", () => {
     const solido = avaliarCor("#002f2f", "auto", "solido");
-    const vidro = avaliarCor("#002f2f", "auto", "vidro");
-    expect(vidro?.passa).toBe(true);
-    expect(vidro!.razao).toBeLessThan(solido!.razao);
-    expect(vidro?.mensagem).toContain("vidro");
-  });
-
-  /*
-    13/11/2026: o vidro ficou mais transparente (70%). Um verde menos escuro,
-    como #12403f, passa no sólido mas não no vidro: o aviso pede outra cor.
-  */
-  it("mais transparente, um verde menos escuro já pede outra cor no vidro", () => {
-    expect(avaliarCor("#12403f", "auto", "solido")?.passa).toBe(true);
-    expect(avaliarCor("#12403f", "auto", "vidro")?.passa).toBe(false);
-  });
-
-  it("uma cor que passa sólida pode reprovar no vidro, e o aviso diz", () => {
-    const solido = avaliarCor("#3a6ea5", "auto", "solido");
-    const vidro = avaliarCor("#3a6ea5", "auto", "vidro");
     expect(solido?.passa).toBe(true);
-    expect(vidro?.passa).toBe(false);
-    expect(vidro?.mensagem).toContain("painel sólido");
+    expect(solido?.mensagem).toContain("Acima do mínimo");
+    expect(avaliarCor("#8fb3d9", "claro", "solido")?.passa).toBe(false);
   });
 });

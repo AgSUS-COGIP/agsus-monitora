@@ -517,17 +517,15 @@ body:not(.sidebar-collapsed) .config-barra {
   box-shadow: var(--shadow-md);
   text-align: center;
 }
-/* O painel de vidro na prévia: a mesma tinta e o mesmo desfoque da tela de acesso. */
+/* O painel de vidro na prévia: sem cor e com o desfoque, como na tela de acesso. */
 .previa-acesso__cartao--vidro {
   border: 1px solid color-mix(in srgb, var(--brilho-do-vidro) 28%, transparent);
-  background:
-    linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--brilho-do-vidro) 8%, transparent),
-      color-mix(in srgb, var(--brilho-do-vidro) 3%, transparent) 45%,
-      color-mix(in srgb, var(--brilho-do-vidro) 6%, transparent)
-    ),
-    color-mix(in srgb, var(--cor-do-cartao) 70%, transparent);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--brilho-do-vidro) 8%, transparent),
+    color-mix(in srgb, var(--brilho-do-vidro) 3%, transparent) 45%,
+    color-mix(in srgb, var(--brilho-do-vidro) 6%, transparent)
+  );
   backdrop-filter: blur(7px) saturate(140%); /* acabamento: permitido(blur) — prévia do painel de vidro da tela de acesso, sobre a arte escolhida */
 }
 .previa-acesso__logo {

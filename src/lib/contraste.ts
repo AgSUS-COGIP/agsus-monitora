@@ -91,20 +91,19 @@ export function corDoTextoPara(cor: string, modo: unknown = MODO_AUTO): string {
 
 /*
   O estilo do painel da tela de acesso (Configurações › Tela de acesso):
-  sólido (o padrão) ou vidro. No vidro, a cor do painel vai a
-  OPACIDADE_DO_VIDRO sobre a arte, com desfoque (platform-shell.css usa o
-  mesmo número). A arte é configurável e pode ter trechos brancos ou pretos:
-  o contraste do vidro é medido nos dois extremos, a cor misturada com branco
-  e com preto, e vale o pior. Por cima da tinta vai o brilho do vidro (branco
-  a até BRILHO_DO_VIDRO, no alto do cartão): é ele que faz o vidro aparecer
-  sobre uma arte lisa, e ele entra na conta.
+  sólido (o padrão) ou vidro. No vidro o painel não tem cor (13/11/2026,
+  "totalmente transparente"): o texto fica direto sobre a arte desfocada, só
+  com o brilho branco do vidro (até BRILHO_DO_VIDRO, no alto do cartão), a
+  borda clara e o realce de luz. A arte é configurável e o sistema não a mede:
+  no vidro, a leitura depende de a arte atrás do painel combinar com o texto
+  (escura para o texto claro, clara para o escuro). A cor do painel continua
+  escolhendo o texto no modo automático e é o painel de quem não vê o vidro
+  (menos transparência pedida ao sistema, ou navegador sem desfoque).
 */
 export const ESTILO_SOLIDO = "solido";
 export const ESTILO_VIDRO = "vidro";
 export type EstiloDoPainel = typeof ESTILO_SOLIDO | typeof ESTILO_VIDRO;
-export const OPACIDADE_DO_VIDRO = 0.7;
 export const BRILHO_DO_VIDRO = 0.08;
-const EXTREMOS_DA_ARTE = ["#ffffff", "#000000"] as const;
 
 export function normalizarEstilo(valor: unknown): EstiloDoPainel {
   const bruto = String(valor ?? "")
@@ -113,26 +112,11 @@ export function normalizarEstilo(valor: unknown): EstiloDoPainel {
   return bruto === ESTILO_VIDRO ? ESTILO_VIDRO : ESTILO_SOLIDO;
 }
 
-/** `cor` com `opacidade` sobre `fundo`, em hex (a conta do `color-mix` do CSS). */
-export function misturar(
-  cor: string,
-  fundo: string,
-  opacidade: number,
-): string {
-  const [a, b] = [canais(cor), canais(fundo)];
-  return `#${a
-    .map((canal, i) =>
-      Math.round(canal * opacidade + (b[i] ?? 0) * (1 - opacidade))
-        .toString(16)
-        .padStart(2, "0"),
-    )
-    .join("")}`;
-}
-
 export interface AvaliacaoDaCor {
   cor: string;
   corDoTexto: string;
   razao: number;
+  /** O contraste está garantido: a cor passa e o painel é sólido. */
   passa: boolean;
   mensagem: string;
 }
@@ -146,36 +130,34 @@ export function avaliarCor(
 
   const normalizada = cor.trim().toLowerCase();
   const corDoTexto = corDoTextoPara(normalizada, modo);
-  const vidro = normalizarEstilo(estilo) === ESTILO_VIDRO;
-  const exata = vidro
-    ? Math.min(
-        ...EXTREMOS_DA_ARTE.map((fundo) =>
-          razaoDeContraste(
-            corDoTexto,
-            misturar(
-              misturar(normalizada, fundo, OPACIDADE_DO_VIDRO),
-              EXTREMOS_DA_ARTE[0],
-              1 - BRILHO_DO_VIDRO,
-            ),
-          ),
-        ),
-      )
-    : razaoDeContraste(corDoTexto, normalizada);
-  const passa = exata >= MINIMO_AA;
+  const exata = razaoDeContraste(corDoTexto, normalizada);
   /*
     Duas casas, cortadas e não arredondadas: arredondar mostrava "4,50 — abaixo
     do mínimo de 4,5" para uma cor que mede 4,497 (o azul #3879ab).
   */
   const razao = Math.floor(exata * 100) / 100;
+  const cumpre = exata >= MINIMO_AA;
+  const medida = `Contraste do texto sobre esta cor: ${numero(razao, 2)}.`;
+
+  if (normalizarEstilo(estilo) === ESTILO_VIDRO) {
+    const claro = corDoTexto === TEXTO_CLARO;
+    return {
+      cor: normalizada,
+      corDoTexto,
+      razao,
+      passa: false,
+      mensagem: `No vidro o painel fica sem cor e o texto ${claro ? "claro" : "escuro"} vai direto sobre a arte: ela precisa ser ${claro ? "escura" : "clara"} atrás do painel. O sistema não mede a arte; só o painel sólido garante o contraste.`,
+    };
+  }
 
   return {
     cor: normalizada,
     corDoTexto,
     razao,
-    passa,
-    mensagem: passa
-      ? `Contraste do texto sobre ${vidro ? "o vidro, no trecho mais claro ou mais escuro da arte" : "esta cor"}: ${numero(razao, 2)}. Acima do mínimo de ${numero(MINIMO_AA, 1)} da WCAG AA.`
-      : `Contraste do texto sobre ${vidro ? "o vidro, no trecho mais claro ou mais escuro da arte" : "esta cor"}: ${numero(razao, 2)}. Abaixo do mínimo de ${numero(MINIMO_AA, 1)} da WCAG AA — quem tem baixa visão pode não conseguir ler. ${vidro ? "Uma cor mais escura ou mais clara, ou o painel sólido, resolve." : "Uma cor mais escura ou mais clara resolve sem mudar o tom."}`,
+    passa: cumpre,
+    mensagem: cumpre
+      ? `${medida} Acima do mínimo de ${numero(MINIMO_AA, 1)} da WCAG AA.`
+      : `${medida} Abaixo do mínimo de ${numero(MINIMO_AA, 1)} da WCAG AA — quem tem baixa visão pode não conseguir ler. Uma cor mais escura ou mais clara resolve sem mudar o tom.`,
   };
 }
 
