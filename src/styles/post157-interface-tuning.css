@@ -4,8 +4,15 @@
  * O branding real entra pelo cache/RPC. O fallback não pode pintar a identidade
  * roxa legada antes do JavaScript aplicar a configuração atual.
  */
+/*
+ * Com a arte medida, o fundo é a cor da borda dela (--login-arte-cor, guardada
+ * por src/app/entrada/marca.ts e aplicada no primeiro quadro pelo index.html):
+ * antes era sempre este claro, e a tela piscava de claro para a arte escura a
+ * cada carga (13/11/2026).
+ */
 .login-screen {
-  background-color: #eef4f8; /* acabamento: permitido(cor) — primeiro paint antes dos tokens (ver tests/piscada-do-login.test.js) */
+  /* prettier-ignore */
+  background-color: var(--login-arte-cor, #eef4f8); /* acabamento: permitido(cor) — primeiro paint antes dos tokens (ver tests/piscada-do-login.test.js) */
 }
 
 .login-outer {

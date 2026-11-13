@@ -47,6 +47,15 @@ const CAMPOS = [
   "textoModo",
   // Estilo do painel: sólido ou vidro.
   "painelEstilo",
+  /*
+    A medida da arte (13/11/2026): a proporção e a cor da borda esquerda,
+    medidas quando a arte carrega, e o endereço medido. O primeiro quadro já
+    sai com a arte no lugar e o fundo da cor dela; sem isso a tela começava
+    clara e com a arte na posição de 16:9, e piscava ao carregar.
+  */
+  "arteMedidaDe",
+  "arteProporcao",
+  "arteCor",
 ] as const;
 
 /** Um dos campos da marca que o cache guarda. */

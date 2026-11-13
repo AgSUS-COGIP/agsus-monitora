@@ -115,41 +115,106 @@ const texto = (valor: unknown): string => String(valor ?? "").trim();
 
 /** O estado da marca: `obter()`, `assinar(ouvinte)` e as escritas. */
 /** O que a medida da arte usa de uma imagem (o `Image` do navegador). */
-type ImagemMedivel = {
+export type ImagemMedivel = {
   onload: ((evento: Event) => unknown) | null;
+  onerror?: ((evento: Event | string) => unknown) | null;
+  crossOrigin?: string | null;
   src: string;
   naturalWidth: number;
   naturalHeight: number;
 };
 
+/** A medida da arte que vai para o cache (access-branding-cache.ts). */
+export type MedidaDaArte = {
+  arteMedidaDe: string;
+  arteProporcao: string;
+  arteCor?: string;
+};
+
+const hex2 = (valor: number) => Math.round(valor).toString(16).padStart(2, "0");
+
 /**
- * Mede a proporção da arte de acesso quando ela carrega e grava em
- * `--login-arte-proporcao` (largura ÷ altura), que platform-shell.css usa para
- * saber onde a arte nítida termina: arte mais larga que a tela cobre tudo,
- * sem a faixa desfocada (11/11/2026). Sem medida, vale 16:9.
+ * A cor média da borda esquerda da arte (o quarto da esquerda, onde fica o
+ * cartão), em hex. Precisa de canvas e de imagem com CORS; sem um dos dois,
+ * nulo (a tela fica no fundo padrão até a arte aparecer).
  */
-export function medirProporcaoDaArte(
+export function corDaBordaDaArte(imagem: ImagemMedivel): string | null {
+  try {
+    if (
+      typeof HTMLImageElement === "undefined" ||
+      !(imagem instanceof HTMLImageElement)
+    )
+      return null;
+    const canvas = globalThis.document?.createElement("canvas");
+    const contexto = canvas?.getContext("2d");
+    if (!canvas || !contexto) return null;
+    canvas.width = 16;
+    canvas.height = 9;
+    contexto.drawImage(imagem, 0, 0, 16, 9);
+    const dados = contexto.getImageData(0, 0, 4, 9).data;
+    const soma = [0, 0, 0];
+    for (let i = 0; i < dados.length; i += 4)
+      for (let canal = 0; canal < 3; canal += 1)
+        soma[canal] = (soma[canal] ?? 0) + (dados[i + canal] ?? 0);
+    const pixels = dados.length / 4;
+    if (!pixels) return null;
+    return `#${soma.map((total) => hex2(total / pixels)).join("")}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Mede a arte de acesso quando ela carrega: a proporção vai para
+ * `--login-arte-proporcao` (largura ÷ altura), que platform-shell.css usa para
+ * saber onde a arte nítida termina (11/11/2026; sem medida, 16:9), e a cor da
+ * borda esquerda para `--login-arte-cor`, o fundo da tela enquanto a arte não
+ * aparece. As duas são guardadas com o endereço medido, e o script do
+ * index.html as aplica no primeiro quadro da próxima visita (13/11/2026: a
+ * tela começava clara e com a arte fora do lugar, e piscava).
+ *
+ * A imagem é pedida com CORS, para a cor; se o servidor da arte não aceitar,
+ * mede de novo sem CORS, só a proporção.
+ */
+export function medirArte(
   tela:
     | { style: { setProperty(nome: string, valor: string): void } }
     | null
     | undefined,
   url: string | null | undefined,
-  criarImagem: () => ImagemMedivel | null = () =>
-    typeof Image === "function" ? new Image() : null,
+  {
+    criarImagem = () => (typeof Image === "function" ? new Image() : null),
+    lerCor = corDaBordaDaArte,
+    guardar = (medida: MedidaDaArte) => void guardarMarca(medida),
+  }: {
+    criarImagem?: () => ImagemMedivel | null;
+    lerCor?: (imagem: ImagemMedivel) => string | null;
+    guardar?: (medida: MedidaDaArte) => void;
+  } = {},
 ): void {
   const endereco = String(url ?? "").trim();
   if (!tela || !endereco) return;
-  const imagem = criarImagem();
-  if (!imagem) return;
-  imagem.onload = () => {
-    const { naturalWidth: largura, naturalHeight: altura } = imagem;
-    if (largura > 0 && altura > 0)
-      tela.style.setProperty(
-        "--login-arte-proporcao",
-        (largura / altura).toFixed(4),
-      );
+  const medir = (comCors: boolean) => {
+    const imagem = criarImagem();
+    if (!imagem) return;
+    if (comCors) imagem.crossOrigin = "anonymous";
+    imagem.onload = () => {
+      const { naturalWidth: largura, naturalHeight: altura } = imagem;
+      if (!(largura > 0 && altura > 0)) return;
+      const proporcao = (largura / altura).toFixed(4);
+      tela.style.setProperty("--login-arte-proporcao", proporcao);
+      const cor = comCors ? lerCor(imagem) : null;
+      if (cor) tela.style.setProperty("--login-arte-cor", cor);
+      guardar({
+        arteMedidaDe: endereco,
+        arteProporcao: proporcao,
+        ...(cor ? { arteCor: cor } : {}),
+      });
+    };
+    if (comCors) imagem.onerror = () => medir(false);
+    imagem.src = endereco;
   };
-  imagem.src = endereco;
+  medir(true);
 }
 
 export function criarMarcaDaEntrada(): EstadoDaMarcaDaEntrada {
@@ -228,7 +293,7 @@ export function aplicarMarcaNaTela(
       "--login-background-image",
       comoUrlCss(marca.backgroundUrl),
     );
-    medirProporcaoDaArte(tela, marca.backgroundUrl);
+    medirArte(tela, marca.backgroundUrl);
   }
   if (tela) aplicarCorDoPainel(tela, marca.panelColor, marca.textoModo);
   if (tela && marca.painelEstilo)
@@ -321,7 +386,7 @@ export function definirMarcaDaConfiguracao(
   if (tela && fundoDoBanco !== null) {
     const url = normalizeAccessBackgroundUrl(fundoDoBanco);
     tela.style.setProperty("--login-background-image", comoUrlCss(url));
-    medirProporcaoDaArte(tela, url);
+    medirArte(tela, url);
     marcaParaGuardar.backgroundUrl = url;
   }
 
