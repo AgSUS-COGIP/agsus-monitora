@@ -39,6 +39,7 @@ import {
 } from "./paineis.tsx";
 import { TabelaDeProcessos } from "./tabela.tsx";
 import { MontadorDeRelatorio } from "./montador-de-relatorio.tsx";
+import { podeBaixarAprovados } from "../../lib/access-roles.ts";
 
 /*
   A Visão geral (view `dashboard`), um módulo do app: monta direto na
@@ -202,6 +203,8 @@ export function TelaDaVisaoGeral({
           obterPerfil={obterPerfil}
           agora={agora}
           aoFechar={estado.fecharMontador}
+          supabase={supabase}
+          podeAprovados={podeBaixarAprovados(obterPerfil?.())}
         />
       ) : null}
       {linhaAberta ? (

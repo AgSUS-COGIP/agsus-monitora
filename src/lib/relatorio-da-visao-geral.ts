@@ -11,6 +11,7 @@ import type {
   PlanilhaDaClassificacao,
 } from "./classificacao/tipos-dos-documentos.ts";
 import type { ZiparComCompressao } from "./exportacao-da-lista-de-aprovados.ts";
+import type { LinhaPorCargo } from "./relatorio-da-diretoria.ts";
 import { arquivosDoXlsx } from "./classificacao/exportacao.ts";
 import { hojeEmBrasilia } from "./cronograma-do-edital.ts";
 import {
@@ -35,12 +36,15 @@ import {
   Quem gera escolhe as seções, as colunas da tabela dos editais e o formato
   (PDF ou Excel), ou parte de um modelo pronto. Tudo sai do recorte da tela
   (área, filtros, busca e atalho). Aqui, sem DOM: a escolha normalizada, o
-  conteúdo (textos prontos) e as planilhas do Excel. O PDF é desenhado em
+  conteúdo (textos prontos) e as planilhas do Excel. As seções "Vagas por
+  cargo" e "Aprovados" (abas 2 e 3 do relatório da diretoria) vêm do banco na
+  hora de gerar; as linhas delas, em relatorio-da-diretoria.ts. O PDF é desenhado em
   relatorio-da-visao-geral-em-pdf.ts; a janela, em
   src/modulos/visao-geral/montador-de-relatorio.tsx.
 */
 
-export type SecaoDoRelatorio = "numeros" | "editais" | "atencao";
+export type SecaoDoRelatorio =
+  "numeros" | "editais" | "cargos" | "aprovados" | "atencao";
 export type FormatoDoRelatorio = "PDF" | "XLSX" | "CSV";
 
 export const SECOES_DO_RELATORIO: readonly {
@@ -49,6 +53,9 @@ export const SECOES_DO_RELATORIO: readonly {
 }[] = Object.freeze([
   { id: "numeros", rotulo: "Resumo em números" },
   { id: "editais", rotulo: "Tabela dos editais" },
+  { id: "cargos", rotulo: "Vagas por cargo" },
+  /* Nome e matrícula: só com acesso à Lista de aprovados; cada download fica registrado. */
+  { id: "aprovados", rotulo: "Aprovados (nome, status, matrícula e admissão)" },
   { id: "atencao", rotulo: "Editais que pedem atenção" },
 ]);
 
@@ -107,11 +114,11 @@ export const MODELOS_DO_RELATORIO: readonly {
     },
   },
   {
-    /* A 1ª aba do relatório da diretoria (13/11/2026); as outras duas vêm depois. */
+    /* O relatório da diretoria (13/11/2026): editais, vagas por cargo e aprovados. */
     id: "diretoria",
-    rotulo: "Diretoria: resumo dos editais",
+    rotulo: "Diretoria",
     escolha: {
-      secoes: ["editais"],
+      secoes: ["editais", "cargos", "aprovados"],
       colunas: [
         "edital",
         "unidade",
@@ -240,6 +247,15 @@ export interface TabelaDoRelatorio {
   vazio: string;
 }
 
+/** As seções que a pessoa pode gerar: "Aprovados" só com acesso à Lista de aprovados. */
+export function secoesPermitidas(
+  podeAprovados: boolean,
+): readonly SecaoDoRelatorio[] {
+  return SECOES_DO_RELATORIO.map((s) => s.id).filter(
+    (s) => podeAprovados || s !== "aprovados",
+  );
+}
+
 export interface ConteudoDoRelatorio {
   titulo: string;
   area: string;
@@ -285,6 +301,8 @@ export function conteudoDoRelatorio({
   textos,
   quem = "",
   agora = new Date(),
+  porCargo = null,
+  aprovados = null,
 }: {
   escolha: EscolhaDoRelatorio;
   linhas: readonly LinhaDaVisaoGeral[];
@@ -297,6 +315,13 @@ export function conteudoDoRelatorio({
   textos?: Pick<TextosDaVisaoGeral, "rotulos">;
   quem?: string;
   agora?: Date;
+  /** Aba 2: as linhas de relatorio-da-diretoria.ts (só com a seção "cargos"). */
+  porCargo?: readonly LinhaPorCargo[] | null;
+  /** Aba 3: as linhas prontas e o número do registro do download no banco. */
+  aprovados?: {
+    linhas: readonly (readonly string[])[];
+    registro: string;
+  } | null;
 }): ConteudoDoRelatorio {
   const resumo = resumoDoRelatorio({ filtros, busca, atalho, linhas });
   const geradoEm = agora.toLocaleString("pt-BR", {
@@ -314,6 +339,8 @@ export function conteudoDoRelatorio({
     ["Gerado em", geradoEm],
   ];
   if (txt(quem)) identificacao.push(["Gerado por", txt(quem)]);
+  if (aprovados && escolha.secoes.includes("aprovados"))
+    identificacao.push(["Registro do download", aprovados.registro]);
 
   const VALOR: Record<string, number> = {
     kpi_vagas_label: indicadores.vagas,
@@ -350,6 +377,47 @@ export function conteudoDoRelatorio({
         colunas.map((c) => textoDaColuna(c.campo, linha)),
       ),
       vazio: "Nenhum edital no recorte.",
+    });
+  }
+  if (escolha.secoes.includes("cargos") && porCargo) {
+    const opcional = (valor: number | null) =>
+      valor === null ? "—" : numero(valor);
+    tabelas.push({
+      titulo: "Vagas por cargo",
+      colunas: [
+        { rotulo: "Edital", direita: false, peso: 14 },
+        { rotulo: "Unidade", direita: false, peso: 24 },
+        { rotulo: "Vaga", direita: false, peso: 62 },
+        { rotulo: "Vagas imediatas", direita: true, peso: 14 },
+        { rotulo: "Inscritos", direita: true, peso: 12 },
+        { rotulo: "Aprovados", direita: true, peso: 12 },
+      ],
+      linhas: porCargo.map((l) => [
+        l.edital,
+        l.unidade,
+        l.vaga,
+        opcional(l.vagasImediatas),
+        opcional(l.inscritos),
+        numero(l.aprovados),
+      ]),
+      vazio: "Nenhuma vaga da Seleção nem lista de aprovados no recorte.",
+    });
+  }
+  if (escolha.secoes.includes("aprovados") && aprovados) {
+    tabelas.push({
+      titulo: "Aprovados",
+      colunas: [
+        { rotulo: "Edital", direita: false, peso: 13 },
+        { rotulo: "Cargo da vaga", direita: false, peso: 52 },
+        { rotulo: "Nota", direita: true, peso: 9 },
+        { rotulo: "Classificação", direita: true, peso: 13 },
+        { rotulo: "Nome", direita: false, peso: 34 },
+        { rotulo: "Status", direita: false, peso: 16 },
+        { rotulo: "Matrícula", direita: false, peso: 12 },
+        { rotulo: "Admissão", direita: false, peso: 12 },
+      ],
+      linhas: aprovados.linhas,
+      vazio: "Nenhum aprovado nas listas vigentes do recorte.",
     });
   }
   if (escolha.secoes.includes("atencao")) {
@@ -398,10 +466,12 @@ export function planilhasDoRelatorio(
     for (const [r, v] of conteudo.numeros)
       resumo.push([r, Number(v.replace(/\./g, "")) || 0]);
   }
+  /* Número como número: "1.234" → 1234 e "87,5" → 87,5 (só nas colunas à direita). */
   const comoCelula = (texto: string, direita: boolean): CelulaDaPlanilha => {
-    if (!direita) return texto === "—" ? "" : texto;
-    const n = Number(texto.replace(/\./g, ""));
-    return Number.isFinite(n) && /^[\d.]+$/.test(texto) ? n : texto;
+    if (texto === "—") return "";
+    if (!direita || !/^\d{1,3}(\.\d{3})*(,\d+)?$|^\d+(,\d+)?$/.test(texto))
+      return texto;
+    return Number(texto.replace(/\./g, "").replace(",", "."));
   };
   return [
     { nome: "Resumo", linhas: resumo, larguras: [28, 80] },

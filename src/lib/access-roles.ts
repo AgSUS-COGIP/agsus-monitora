@@ -388,3 +388,11 @@ export function paineisPermitidos<P extends PainelExterno>(
     )
     .sort((a, b) => Number(a.ordem || 0) - Number(b.ordem || 0));
 }
+
+/**
+ * Aba "Aprovados" do relatório da diretoria (nome e matrícula): leitor da
+ * Lista de aprovados. O banco confere de novo (exportar_aprovados_da_diretoria).
+ */
+export function podeBaixarAprovados(profile: unknown): boolean {
+  return isAdminGlobal(profile) || hasResource(profile, "aprovados", 1);
+}

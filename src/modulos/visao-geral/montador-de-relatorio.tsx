@@ -9,11 +9,18 @@ import type {
   EscolhaDoRelatorio,
   FormatoDoRelatorio,
 } from "../../lib/relatorio-da-visao-geral.ts";
+import type { ClienteDoRelatorio } from "./dados-da-diretoria.ts";
 import { useEffect, useRef, useState } from "react";
 import { Modal, Segmentado } from "../../ui/index.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
 import { erroDeVersaoNova } from "../../lib/importar-com-recarga.ts";
 import { nomeDaArea } from "../../lib/menu-lateral.ts";
+import {
+  aprovadosNoRecorte,
+  LIMITE_DE_APROVADOS_NO_PDF,
+  linhasDeAprovados,
+  linhasPorCargo,
+} from "../../lib/relatorio-da-diretoria.ts";
 import {
   alternarNaEscolha,
   COLUNAS_DO_RELATORIO,
@@ -24,14 +31,22 @@ import {
   nomeDoArquivoDoRelatorio,
   normalizarEscolha,
   SECOES_DO_RELATORIO,
+  secoesPermitidas,
   xlsxDoRelatorio,
 } from "../../lib/relatorio-da-visao-geral.ts";
+import {
+  baixarAprovadosDaDiretoria,
+  lerVagasPorCargo,
+} from "./dados-da-diretoria.ts";
 
 /*
   O MONTADOR DE RELATÓRIO da Visão geral (botão "Exportar"): um modelo pronto
   ou a escolha de quem gera — as seções, as colunas da tabela dos editais e o
   formato (PDF, Excel ou o CSV de antes). Sai do recorte da tela. A última
-  escolha fica guardada neste navegador. A lógica está em
+  escolha fica guardada neste navegador. "Vagas por cargo" e "Aprovados" (abas
+  2 e 3 do relatório da diretoria) são lidas do banco ao gerar; "Aprovados" só
+  aparece para quem tem acesso à Lista de aprovados, e o banco registra cada
+  download. A lógica está em
   src/lib/relatorio-da-visao-geral.ts; o PDF, em
   src/lib/relatorio-da-visao-geral-em-pdf.ts.
 */
@@ -140,6 +155,8 @@ export function MontadorDeRelatorio({
   obterPerfil,
   agora,
   aoFechar,
+  supabase = null,
+  podeAprovados = false,
 }: {
   e: SnapshotDaVisaoGeral;
   estado: Pick<EstadoDaVisaoGeral, "exportarCsv">;
@@ -148,6 +165,8 @@ export function MontadorDeRelatorio({
   obterPerfil: () => Perfil | null;
   agora: () => Date;
   aoFechar: () => void;
+  supabase?: ClienteDoRelatorio | null;
+  podeAprovados?: boolean;
 }) {
   const [escolha, setEscolha] = useState<EscolhaDoRelatorio>(lerEscolha);
   const [gerando, setGerando] = useState(false);
@@ -165,6 +184,8 @@ export function MontadorDeRelatorio({
   const modelo = modeloDaEscolha(escolha);
   const csv = escolha.formato === "CSV";
   const semEditais = !escolha.secoes.includes("editais");
+  const permitidas = secoesPermitidas(podeAprovados);
+  const secoes = escolha.secoes.filter((s) => permitidas.includes(s));
 
   async function gerar() {
     setErro("");
@@ -176,8 +197,29 @@ export function MontadorDeRelatorio({
     }
     setGerando(true);
     try {
+      const area = e.area;
+      const editais = e.filtradas
+        .map((l) => String(l.id ?? ""))
+        .filter(Boolean);
+      const comAprovados = secoes.includes("aprovados");
+      if (
+        comAprovados &&
+        escolha.formato === "PDF" &&
+        aprovadosNoRecorte(e.filtradas) > LIMITE_DE_APROVADOS_NO_PDF
+      )
+        throw new Error(
+          `São ${aprovadosNoRecorte(e.filtradas).toLocaleString("pt-BR")} aprovados no recorte: acima de ${LIMITE_DE_APROVADOS_NO_PDF.toLocaleString("pt-BR")}, gere em Excel ou filtre os editais.`,
+        );
+      const [vagas, exportacao] = await Promise.all([
+        secoes.includes("cargos")
+          ? lerVagasPorCargo(supabase, area, editais)
+          : null,
+        comAprovados
+          ? baixarAprovadosDaDiretoria(supabase, area, escolha.formato, editais)
+          : null,
+      ]);
       const conteudo = conteudoDoRelatorio({
-        escolha,
+        escolha: { ...escolha, secoes },
         linhas: e.filtradas,
         filtros: e.filtros,
         busca: e.busca,
@@ -188,6 +230,13 @@ export function MontadorDeRelatorio({
         textos,
         quem: String(obterPerfil()?.nome || ""),
         agora: agora(),
+        porCargo: vagas ? linhasPorCargo(vagas, e.filtradas) : null,
+        aprovados: exportacao
+          ? {
+              linhas: linhasDeAprovados(exportacao.aprovados, e.filtradas),
+              registro: exportacao.id,
+            }
+          : null,
       });
       const cabecalho = String(
         configuracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
@@ -269,8 +318,10 @@ export function MontadorDeRelatorio({
           <div className="visao-geral-relatorio-escolhas">
             <Marcar
               titulo="Seções"
-              itens={SECOES_DO_RELATORIO}
-              marcados={escolha.secoes}
+              itens={SECOES_DO_RELATORIO.filter((s) =>
+                permitidas.includes(s.id),
+              )}
+              marcados={secoes}
               aoMudar={(secoes) => mudar({ secoes })}
             />
             <Marcar
@@ -285,6 +336,11 @@ export function MontadorDeRelatorio({
             />
           </div>
         )}
+        {!csv && secoes.includes("aprovados") ? (
+          <p className="visao-geral-relatorio-nota">
+            O download dos aprovados fica registrado com o seu nome.
+          </p>
+        ) : null}
         {erro ? (
           <p className="visao-geral-relatorio-erro" role="alert">
             {erro}

@@ -3909,9 +3909,12 @@ export const VERBETES_AYA = Object.freeze([
       "relatorio da diretoria",
       "escolher colunas do relatorio",
       "exportar csv",
+      "vagas por cargo",
+      "relatorio com matricula",
+      "aprovados com data de admissao",
     ],
     resposta:
-      'O botão Exportar da Visão geral (ou "Montar relatório", no menu com o seu nome) abre o montador. Escolha um modelo pronto (Resumo rápido, Completo ou Diretoria: resumo dos editais) ou monte o seu: marque as seções (resumo em números, tabela dos editais, editais que pedem atenção), as colunas da tabela e o formato. O PDF sai como um documento, com o timbrado da AgSUS, os números, as tabelas e "Página X de Y"; o Excel sai com uma aba por seção; o CSV leva todas as colunas da tabela, como antes. O relatório sai do que está na tela: área, filtros, busca e atalho. A última escolha fica guardada neste navegador.',
+      'O botão Exportar da Visão geral (ou "Montar relatório", no menu com o seu nome) abre o montador. Escolha um modelo pronto (Resumo rápido, Completo ou Diretoria) ou monte o seu: marque as seções (resumo em números, tabela dos editais, vagas por cargo, aprovados, editais que pedem atenção), as colunas da tabela e o formato. O modelo Diretoria sai em Excel com três abas: Editais (número, unidade, vagas, divulgação, encerramento e ciclo), Vagas por cargo (cada vaga do edital com as vagas imediatas, os inscritos e os aprovados; as vagas imediatas vêm do quadro de vagas do edital ou do texto da vaga, e ficam "—" quando nenhum dos dois tem o número) e Aprovados (edital, cargo, nota, classificação, nome, status, matrícula e data de admissão conciliada com o RH). A seção Aprovados só aparece para quem tem acesso à Lista de aprovados, e cada download fica registrado com o nome de quem baixou. No PDF, acima de 3 mil aprovados, o Yeendé pede o Excel ou um recorte menor. O PDF sai como um documento, com o timbrado da AgSUS, os números, as tabelas e "Página X de Y"; o Excel sai com uma aba por seção; o CSV leva todas as colunas da tabela, como antes. O relatório sai do que está na tela: área, filtros, busca e atalho. A última escolha fica guardada neste navegador.',
     fato: "",
     fonte: "interface do Yeendé",
   },
