@@ -12,6 +12,7 @@ import {
   CabecalhosDaTabela,
   CardDaLista,
   LinhasEsqueleto,
+  Popover,
   TopoDoPainel,
 } from "../../ui/index.ts";
 import type { ColunaDaTabela } from "../../ui/index.ts";
@@ -24,6 +25,8 @@ import {
   LINHAS_POR_PAGINA,
   RELATORIOS_DOS_PAINEIS,
   definicaoDoRelatorio,
+  larguraArrastada,
+  linhasDaOrigem,
   paginaDaTabela,
   textoDaCelula,
 } from "../../lib/relatorios-dos-paineis.ts";
@@ -33,6 +36,7 @@ import type {
 } from "../../lib/relatorios-dos-paineis.ts";
 import { criarEstadoDosPaineis } from "./estado.ts";
 import { GavetaDeFontes } from "./fontes-dos-dados.tsx";
+import "./paineis-de-dados.css";
 import type {
   ClienteDosPaineis,
   EstadoDaTelaDePaineis,
@@ -78,6 +82,67 @@ interface PropriedadesDaTabelaPaginada {
   total: number;
   aoIrPara: (pagina: number) => void;
   aoMudarPorPagina: (porPagina: number) => void;
+  /** A soma das larguras escolhidas (px): a tabela vai a layout fixo. */
+  larguraDaTabela: number | null;
+}
+
+/** Quanto ←/→ na alça muda a largura da coluna (px). */
+const PASSO_DO_TECLADO = 16;
+
+/*
+  A alça na borda direita do cabeçalho: arrastar (ou ←/→ com o foco nela)
+  muda a largura da coluna. `aoComecar` devolve a largura de partida (e
+  congela as das outras colunas); `aoMudar` grava a nova.
+*/
+function AlcaDaColuna({
+  rotulo,
+  aoComecar,
+  aoMudar,
+}: {
+  rotulo: string;
+  aoComecar: (th: HTMLElement) => number;
+  aoMudar: (largura: number) => void;
+}) {
+  return (
+    <span
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={`Largura — ${rotulo}`}
+      tabIndex={0}
+      className="paineis-alca-da-coluna"
+      data-alca-da-coluna=""
+      onClick={(evento) => evento.stopPropagation()}
+      onPointerDown={(evento) => {
+        const th = evento.currentTarget.closest("th");
+        if (!th) return;
+        evento.preventDefault();
+        evento.stopPropagation();
+        const base = aoComecar(th);
+        const inicio = evento.clientX;
+        const mover = (m: MouseEvent) =>
+          aoMudar(larguraArrastada(base, m.clientX - inicio));
+        const soltar = () => {
+          window.removeEventListener("pointermove", mover);
+          window.removeEventListener("pointerup", soltar);
+        };
+        window.addEventListener("pointermove", mover);
+        window.addEventListener("pointerup", soltar);
+      }}
+      onKeyDown={(evento) => {
+        if (evento.key !== "ArrowLeft" && evento.key !== "ArrowRight") return;
+        const th = evento.currentTarget.closest("th");
+        if (!th) return;
+        evento.preventDefault();
+        const base = aoComecar(th);
+        aoMudar(
+          larguraArrastada(
+            base,
+            evento.key === "ArrowLeft" ? -PASSO_DO_TECLADO : PASSO_DO_TECLADO,
+          ),
+        );
+      }}
+    />
+  );
 }
 
 /*
@@ -98,6 +163,7 @@ function TabelaPaginada({
   total: totalDoBanco,
   aoIrPara,
   aoMudarPorPagina,
+  larguraDaTabela,
 }: PropriedadesDaTabelaPaginada) {
   const idDoTamanho = useId();
   const { pagina, paginas, inicio, fim, total } = paginaDaTabela(
@@ -157,7 +223,14 @@ function TabelaPaginada({
         </span>
       </div>
       <div className="ui-tabela-rolagem ui-lista-rolagem">
-        <table aria-label={rotulo} data-mobile-table="scroll">
+        <table
+          aria-label={rotulo}
+          data-mobile-table="scroll"
+          data-larguras-escolhidas={larguraDaTabela ? "" : undefined}
+          style={
+            larguraDaTabela ? { width: `${larguraDaTabela}px` } : undefined
+          }
+        >
           <CabecalhosDaTabela colunas={colunas} />
           <tbody aria-busy={carregado ? undefined : true}>
             {carregado ? (
@@ -192,6 +265,42 @@ function Relatorio({ estado }: { estado: EstadoDaTelaDePaineis }) {
   const definicao = definicaoDoRelatorio(e.ativo);
   const leitura = e.relatorios[definicao.id];
   const carregado = leitura.situacao === "pronto";
+  const larguras = e.larguras[definicao.id];
+  const origem = useMemo(
+    () => linhasDaOrigem(definicao, leitura.fontes),
+    [definicao, leitura.fontes],
+  );
+
+  /*
+    A largura de partida de uma coluna. Na primeira vez, congela a largura
+    medida de todas as colunas (para a tabela ir a layout fixo sem pular).
+  */
+  const comecar = useCallback(
+    (campo: string, th: HTMLElement) => {
+      const atuais = estado.obter().larguras[definicao.id];
+      if (definicao.colunas.every((c) => atuais[c.campo] !== undefined))
+        return atuais[campo] ?? 0;
+      const cabecalhos = [...(th.parentElement?.children ?? [])];
+      const medidas = Object.fromEntries(
+        definicao.colunas.map((c, i) => [
+          c.campo,
+          atuais[c.campo] ??
+            larguraArrastada(
+              cabecalhos[i]?.getBoundingClientRect().width ?? 0,
+              0,
+            ),
+        ]),
+      );
+      estado.mudarLarguras(medidas);
+      return medidas[campo] ?? 0;
+    },
+    [estado, definicao],
+  );
+  const larguraDaTabela = definicao.colunas.every(
+    (c) => larguras[c.campo] !== undefined,
+  )
+    ? definicao.colunas.reduce((soma, c) => soma + (larguras[c.campo] ?? 0), 0)
+    : null;
 
   const fontes = leitura.fontes;
   const colunas = useMemo<ColunaDaTabela[]>(
@@ -200,29 +309,37 @@ function Relatorio({ estado }: { estado: EstadoDaTelaDePaineis }) {
         // Coluna com fonte diferente do padrão: marcador discreto, com a fonte na dica.
         const fonte = fontes[c.campo];
         const diferente = fonte && !fonte.padrao;
+        const largura = larguras[c.campo];
         return {
           rotulo: c.rotulo,
           chave: c.campo,
           numero: c.tipo === "inteiro" || c.tipo === "decimal",
-          ...(diferente
-            ? {
-                dica: `Fonte: ${fonte.rotulo}`,
-                cabecalho: (
-                  <>
-                    {c.rotulo}{" "}
-                    <span
-                      data-fonte-diferente=""
-                      aria-label="fonte diferente do padrão"
-                    >
-                      *
-                    </span>
-                  </>
-                ),
-              }
-            : {}),
+          ...(largura !== undefined ? { largura: `${largura}px` } : {}),
+          ...(diferente ? { dica: `Fonte: ${fonte.rotulo}` } : {}),
+          cabecalho: (
+            <>
+              {c.rotulo}
+              {diferente ? (
+                <>
+                  {" "}
+                  <span
+                    data-fonte-diferente=""
+                    aria-label="fonte diferente do padrão"
+                  >
+                    *
+                  </span>
+                </>
+              ) : null}
+              <AlcaDaColuna
+                rotulo={c.rotulo}
+                aoComecar={(th) => comecar(c.campo, th)}
+                aoMudar={(px) => estado.mudarLarguras({ [c.campo]: px })}
+              />
+            </>
+          ),
         };
       }),
-    [definicao, fontes],
+    [definicao, fontes, larguras, comecar, estado],
   );
   const linha = useCallback(
     (item: LinhaDoRelatorio, indice: number) => (
@@ -275,6 +392,19 @@ function Relatorio({ estado }: { estado: EstadoDaTelaDePaineis }) {
           >
             Fontes dos dados
           </button>
+          <Popover
+            rotulo="De onde vêm os dados"
+            dica={origem.join(" ")}
+            gatilho={<Icone nome="info" tamanho={16} />}
+            lado="esquerda"
+            acao="origem-dos-dados"
+          >
+            <div className="paineis-origem-dos-dados" data-origem-dos-dados="">
+              {origem.map((texto) => (
+                <p key={texto}>{texto}</p>
+              ))}
+            </div>
+          </Popover>
         </div>
         {carregado
           ? leitura.avisos.map((aviso) => (
@@ -299,6 +429,7 @@ function Relatorio({ estado }: { estado: EstadoDaTelaDePaineis }) {
             total={leitura.total}
             aoIrPara={(p) => void estado.irParaPagina(p)}
             aoMudarPorPagina={(n) => void estado.mudarPorPagina(n)}
+            larguraDaTabela={larguraDaTabela}
           />
         )}
       </CardDaLista>

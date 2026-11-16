@@ -76,6 +76,8 @@ export interface EstadoDosPaineis {
   baixando: FormatoDoRelatorio | null;
   erroNoDownload: string;
   gaveta: GavetaDeFontes;
+  /** A largura (px) que a pessoa arrastou em cada coluna, por relatório; só em memória. */
+  larguras: Readonly<Record<IdDoRelatorio, Readonly<Record<string, number>>>>;
 }
 
 type RespostaDaRpc = PromiseLike<{ data: unknown; error: unknown }>;
@@ -226,6 +228,9 @@ export function criarEstadoDosPaineis({
     baixando: null,
     erroNoDownload: "",
     gaveta: GAVETA_FECHADA,
+    larguras: Object.fromEntries(
+      RELATORIOS_DOS_PAINEIS.map((r) => [r.id, Object.freeze({})]),
+    ) as Record<IdDoRelatorio, Readonly<Record<string, number>>>,
   };
   const ouvintes = new Set<() => void>();
   // A leitura em curso de cada relatório: a resposta de um pedido antigo não sobrescreve a nova.
@@ -419,6 +424,19 @@ export function criarEstadoDosPaineis({
       return ler(ativo, area, 1, porPagina);
     },
     sincronizar,
+    /**
+     * Junta larguras (px por campo) às do relatório aberto. Ficam só na
+     * memória da tela: recarregar a página volta às originais.
+     */
+    mudarLarguras(larguras: Readonly<Record<string, number>>) {
+      const { ativo } = estado;
+      mudar({
+        larguras: {
+          ...estado.larguras,
+          [ativo]: Object.freeze({ ...estado.larguras[ativo], ...larguras }),
+        },
+      });
+    },
     /** Abre a gaveta "Fontes dos dados" do relatório aberto, na área do menu. */
     async abrirFontes() {
       const { area, ativo } = estado;

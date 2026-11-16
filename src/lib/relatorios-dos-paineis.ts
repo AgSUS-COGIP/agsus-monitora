@@ -123,6 +123,49 @@ export function definicaoDoRelatorio(id: unknown): DefinicaoDoRelatorio {
   );
 }
 
+/* ── Largura das colunas e origem dos dados ────────────────────────── */
+
+/** A coluna não estreita além disto (px), ao arrastar a borda. */
+export const LARGURA_MINIMA_DA_COLUNA = 60;
+
+/** A largura depois de arrastar a borda `deslocamento` px a partir de `inicial`. */
+export function larguraArrastada(
+  inicial: number,
+  deslocamento: number,
+): number {
+  return Math.max(LARGURA_MINIMA_DA_COLUNA, Math.round(inicial + deslocamento));
+}
+
+/** De onde vêm os dados de cada relatório (o ⓘ ao lado das abas). */
+export const ORIGEM_DOS_DADOS: Readonly<Record<IdDoRelatorio, string>> =
+  Object.freeze({
+    "resumo-dos-editais":
+      "Uma linha por edital da área, sem os de treinamento. Vagas imediatas: cadastro do edital. Datas: cronograma do edital (início da 1ª etapa e fim da última) ou, sem cronograma, as datas do cadastro.",
+    "editais-por-cargo":
+      "Uma linha por vaga. Vaga, cargo e inscritos: Seleção (planilha da Auditoria, aba Resultado). Aprovados: lista de aprovados vigente, casada pelo código da vaga. Vagas imediatas: o número no título da vaga. Vagas que só estão na lista e editais sem Seleção também aparecem.",
+    aprovados:
+      "Uma linha por aprovado da lista de aprovados vigente de cada edital. Status: situação registrada no sistema. Data de admissão: dia em que o aprovado virou Contratado no sistema.",
+  });
+
+/**
+ * O texto do ⓘ: a origem fixa do relatório e, para cada coluna com fonte
+ * diferente do padrão na área (na ordem das colunas), a fonte em uso.
+ */
+export function linhasDaOrigem(
+  definicao: DefinicaoDoRelatorio,
+  fontes: Readonly<Record<string, FonteDaColuna>>,
+): string[] {
+  return [
+    ORIGEM_DOS_DADOS[definicao.id],
+    ...definicao.colunas.flatMap((c) => {
+      const fonte = fontes[c.campo];
+      return fonte && !fonte.padrao
+        ? [`Fonte trocada nesta área: ${c.rotulo} → ${fonte.rotulo}`]
+        : [];
+    }),
+  ];
+}
+
 /** Uma linha do relatório: os campos das colunas, já no tipo de cada uma. */
 export type LinhaDoRelatorio = Readonly<Record<string, string | number | null>>;
 

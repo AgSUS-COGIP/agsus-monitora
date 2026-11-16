@@ -5,6 +5,8 @@ import {
   csvDoRelatorio,
   chaveDaPagina,
   definicaoDoRelatorio,
+  larguraArrastada,
+  linhasDaOrigem,
   lerPaginaDoRelatorio,
   linhasDoRelatorio,
   nomeDoArquivoDoRelatorio,
@@ -167,6 +169,43 @@ describe("leitura da resposta", () => {
   it("a chave da página junta área, relatório, página e tamanho", () => {
     expect(chaveDaPagina("sede", "aprovados", 2, 25)).toBe(
       "sede|aprovados|2|25",
+    );
+  });
+});
+
+describe("largura das colunas", () => {
+  it("arrastar soma o deslocamento, arredonda e não passa de 60 px para baixo", () => {
+    expect(larguraArrastada(120, -100)).toBe(60);
+    expect(larguraArrastada(120, 35.6)).toBe(156);
+  });
+});
+
+describe("origem dos dados", () => {
+  it("sem fonte trocada, só o texto fixo do relatório", () => {
+    expect(linhasDaOrigem(porCargo, {})).toEqual([
+      "Uma linha por vaga. Vaga, cargo e inscritos: Seleção (planilha da Auditoria, aba Resultado). Aprovados: lista de aprovados vigente, casada pelo código da vaga. Vagas imediatas: o número no título da vaga. Vagas que só estão na lista e editais sem Seleção também aparecem.",
+    ]);
+  });
+
+  it("com fonte trocada na área, uma linha por coluna fora do padrão", () => {
+    expect(
+      linhasDaOrigem(porCargo, {
+        vagas_imediatas: {
+          padrao: false,
+          visao: "VW_EDITAL_QUADRO_DE_VAGAS",
+          coluna: "QT_VAGA_IMEDIATA",
+          rotulo:
+            "Quadro de vagas do edital › Vagas imediatas (soma do quadro)",
+        },
+        inscritos: {
+          padrao: true,
+          visao: null,
+          coluna: null,
+          rotulo: "Padrão",
+        },
+      })[1],
+    ).toBe(
+      "Fonte trocada nesta área: Vagas imediatas (título da vaga) → Quadro de vagas do edital › Vagas imediatas (soma do quadro)",
     );
   });
 });

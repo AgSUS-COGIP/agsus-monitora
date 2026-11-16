@@ -12,6 +12,7 @@ import {
   digitar,
   escolher,
   esperar,
+  teclar,
 } from "../componentes/interacoes.ts";
 import { paginasPermitidas } from "../../src/lib/access-roles.ts";
 import { bloqueioDaTela } from "../../src/lib/navegacao.ts";
@@ -686,6 +687,74 @@ describe("Fontes dos dados", () => {
     expect(strFromU8(arquivos["xl/workbook.xml"]!)).toContain('name="Fontes"');
     expect(strFromU8(arquivos["xl/worksheets/sheet2.xml"]!)).toContain(
       "Quadro de vagas do edital › Vagas imediatas (soma do quadro)",
+    );
+  });
+});
+
+describe("largura das colunas e origem dos dados", () => {
+  const alca = (n = 0) =>
+    caixa?.querySelectorAll<HTMLElement>("[data-alca-da-coluna]")[n] ?? null;
+  const primeiroTh = () => caixa?.querySelector<HTMLElement>("thead th");
+  async function arrastar(alvo: HTMLElement | null, de: number, ate: number) {
+    await act(async () => {
+      alvo?.dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true, clientX: de }),
+      );
+      window.dispatchEvent(
+        new MouseEvent("pointermove", { bubbles: true, clientX: ate }),
+      );
+      window.dispatchEvent(
+        new MouseEvent("pointerup", { bubbles: true, clientX: ate }),
+      );
+    });
+  }
+
+  it("arrastar a borda muda a largura da coluna e trocar de página mantém", async () => {
+    await montar({ "resumo-dos-editais": CENTO_E_VINTE });
+    expect(alca()?.getAttribute("role")).toBe("separator");
+    expect(alca()?.getAttribute("aria-label")).toBe(
+      "Largura — Número do edital",
+    );
+    await arrastar(alca(), 10, 210);
+    // jsdom mede 0: a partida é o mínimo (60 px), e o arraste soma 200.
+    expect(primeiroTh()?.style.width).toBe("260px");
+    expect(
+      caixa?.querySelector("table")?.hasAttribute("data-larguras-escolhidas"),
+    ).toBe(true);
+    await clicar(caixa?.querySelector("[aria-label='Próxima página']"));
+    await esperar();
+    expect(primeiroTh()?.style.width).toBe("260px");
+  });
+
+  it("seta para a esquerda na alça estreita a coluna", async () => {
+    await montar({ "resumo-dos-editais": CENTO_E_VINTE });
+    await arrastar(alca(), 10, 210);
+    await teclar(alca()!, "ArrowLeft");
+    expect(primeiroTh()?.style.width).toBe("244px");
+  });
+
+  it("uma tela nova volta às larguras originais", async () => {
+    await montar({ "resumo-dos-editais": CENTO_E_VINTE });
+    await arrastar(alca(), 10, 210);
+    await act(async () => raiz?.unmount());
+    caixa?.remove();
+    await montar({ "resumo-dos-editais": CENTO_E_VINTE });
+    expect(primeiroTh()?.style.width).toBe("");
+  });
+
+  it("o ⓘ mostra a origem e a fonte trocada", async () => {
+    await montar({ "resumo-dos-editais": RESUMO_COM_FONTE });
+    const info = caixa?.querySelector<HTMLButtonElement>(
+      "button[aria-label='De onde vêm os dados']",
+    );
+    expect(info?.getAttribute("title")).toContain(
+      "Uma linha por edital da área",
+    );
+    await clicar(info);
+    const painel = caixa?.querySelector("[data-origem-dos-dados]");
+    expect(painel?.textContent).toContain("Uma linha por edital da área");
+    expect(painel?.textContent).toContain(
+      "Fonte trocada nesta área: Total de vagas imediatas → Quadro de vagas do edital › Vagas imediatas (soma do quadro)",
     );
   });
 });
