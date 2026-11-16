@@ -16,6 +16,14 @@ de chamada de cada vaga, pelo modelo de convocação e pelas vagas imediatas) e 
 (decisões do gestor com motivo e histórico, selo de abertas). As duas primeiras leem os mesmos
 candidatos: mudar um status redesenha ambas; decidir uma pendência recarrega a lista.
 
+**Filtros** (os mesmos nas abas Aprovados e Resumo por cargo): Edital, Localidade, Cargo, Modalidade
+e Situação. A **Localidade** (16/11/2026) sai do texto do cargo (`src/lib/localidade-da-vaga.ts`: o
+trecho com UF depois de barra, Polo, PB, CASAI, Distrital, Regional, Abrangência, Sede… ou nome de
+estado; "DSEI X" é a unidade, não a localidade). Só aparece quando os editais escolhidos têm duas ou
+mais localidades (não aparece na SEDE, cujos cargos não trazem lugar); escolhida, o filtro Cargo
+oferece só os cargos dela. Duas grafias do mesmo lugar contam como uma. Na exportação, a localidade
+vai ao banco como os cargos dela (a conferência do total é por edital, cargo e modalidade).
+
 ## Arquivos
 
 ```
@@ -78,8 +86,8 @@ conciliada com o RH (motivo `ADMISSAO_NO_RH`); só fica ambíguo se nenhuma ou m
 
 ## Exportar a lista (issue #583)
 
-"Exportar", no topo da aba Aprovados, baixa a lista filtrada pela tela (edital, cargo, modalidade,
-situação e o recorte do aviso; a busca da tabela não entra) em XLSX, CSV ou PDF, com área, editais,
+"Exportar", no topo da aba Aprovados, baixa a lista filtrada pela tela (edital, localidade, cargo,
+modalidade, situação e o recorte do aviso; a busca da tabela não entra) em XLSX, CSV ou PDF, com área, editais,
 filtros, registros, data dos dados, data de emissão e o número do registro. Não confundir com o
 "Exportar CSV" da Convocação (ordem de chamada).
 
@@ -105,8 +113,9 @@ o detalhe e o arquivo); arquivo em `src/lib/exportacao-do-resumo-por-cargo.ts`.
 
 - **Grupos:** edital → cargo + regime + jornada → uma linha por vaga (código) e modalidade, subtotal
   do grupo, do edital (com mais de um) e total geral. Regime e jornada saem do texto do cargo por
-  regra explícita (`lerRegimeEJornada`: trecho entre " - " que é só o regime ou só a jornada); o que
-  faltar aparece como "não informado" e é contado num aviso.
+  regra explícita (`lerRegimeEJornada`: trecho entre " - " que é só o regime ou só a jornada, e a
+  jornada colada ao nome, como "Assistente Social 30h"). O rótulo do grupo leva só o que se sabe; o
+  que falta é contado num aviso.
 - **Unidade:** o vínculo (linha da lista: edital, vaga, modalidade); nada se junta por nome.
 - **Colunas exclusivas, que fecham Aprovados** (títulos uniformes desde 16/11/2026, com a definição
   na dica do cabeçalho, `DICA_DA_COLUNA`): Contratados (Contratado e Migração), Desistentes (uma

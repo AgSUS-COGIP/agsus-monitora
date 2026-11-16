@@ -1,3 +1,7 @@
+import {
+  naLocalidade,
+  opcoesDeLocalidade,
+} from "../../lib/localidade-da-vaga.ts";
 import type {
   EstadoDosAprovados,
   SnapshotDosAprovados,
@@ -73,6 +77,7 @@ import "./carta-de-convocacao/carta.css";
 const FILTROS_INICIAIS: FiltrosDaTabelaDeAprovados = Object.freeze({
   candidatos: [],
   editalId: [],
+  localidade: [],
   cargo: [],
   modalidade: [],
   status: [],
@@ -333,20 +338,56 @@ export function ListaAprovados({
   const opcoesEditais = useMemo(() => opcoesDeEdital(listas), [listas]);
   const editais = manterSoAsOpcoes(filtros.editalId, opcoesEditais);
   const chaveDosEditais = editais.join("\u0000");
+  const localidades = useMemo(
+    () => opcoesDeLocalidade(candidatos, editais),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [candidatos, chaveDosEditais],
+  );
+  const localidadesEscolhidas = manterSoAsOpcoes(
+    filtros.localidade,
+    localidades,
+  );
+  const chaveDasLocalidades = localidadesEscolhidas.join("\u0000");
+  /*
+    Localidade (16/11/2026): sai do texto do cargo (localidade-da-vaga.ts); com
+    uma escolhida, o filtro Cargo só oferece os cargos dela.
+  */
   const opcoes = useMemo(
     () => ({
       editais: opcoesEditais,
-      cargos: candidateCargosForEdital(candidatos, editais),
+      localidades,
+      cargos: candidateCargosForEdital(candidatos, editais).filter((cargo) =>
+        naLocalidade(cargo, localidadesEscolhidas),
+      ),
       modalidades: candidateModalidadesForEdital(candidatos, editais),
     }),
-    [candidatos, opcoesEditais, chaveDosEditais],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      candidatos,
+      opcoesEditais,
+      chaveDosEditais,
+      localidades,
+      chaveDasLocalidades,
+    ],
   );
   const efetivos = {
     candidatos: filtros.candidatos,
     editalId: editais,
+    localidade: localidadesEscolhidas,
     cargo: manterSoAsOpcoes(filtros.cargo, opcoes.cargos),
     modalidade: manterSoAsOpcoes(filtros.modalidade, opcoes.modalidades),
     status: filtros.status,
+  };
+  /*
+    O banco confere o total da exportação por edital, cargo e modalidade
+    (registrar_exportacao_aprovados): a localidade vai como os cargos dela.
+  */
+  const filtrosParaExportar = {
+    ...efetivos,
+    cargo:
+      efetivos.localidade.length && !efetivos.cargo.length
+        ? [...opcoes.cargos]
+        : efetivos.cargo,
   };
   const chaveDosFiltros = JSON.stringify(efetivos);
   const filtrados = useMemo(
@@ -361,6 +402,10 @@ export function ListaAprovados({
     setFiltros((atuais) => {
       const proximos = { ...atuais, [campo]: valores };
       if (campo === "editalId") {
+        proximos.localidade = manterSoAsOpcoes(
+          atuais.localidade,
+          opcoesDeLocalidade(candidatos, valores),
+        );
         proximos.cargo = manterSoAsOpcoes(
           atuais.cargo,
           candidateCargosForEdital(candidatos, valores),
@@ -541,7 +586,7 @@ export function ListaAprovados({
             rotuloDaArea: nome || String(area || ""),
             candidatosDaArea: candidatos,
             filtrados,
-            filtros: efetivos,
+            filtros: filtrosParaExportar,
             opcoesDeEdital: opcoesEditais,
             convocacoes: dados.convocacoes,
             dadosDe: dados.carregadoEm,
@@ -561,7 +606,7 @@ export function ListaAprovados({
             rotuloDaArea: nome || String(area || ""),
             candidatosDaArea: candidatos,
             filtrados,
-            filtros: efetivos,
+            filtros: filtrosParaExportar,
             opcoesDeEdital: opcoesEditais,
             dadosDe: dados.carregadoEm,
           })}

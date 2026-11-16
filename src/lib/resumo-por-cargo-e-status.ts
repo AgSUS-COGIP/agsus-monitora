@@ -49,7 +49,10 @@ import {
   têm o texto do cargo). A regra explícita está em `lerRegimeEJornada`: os
   trechos do cargo separados por " - " que forem só o regime (Presencial,
   Teletrabalho, Híbrido, Remoto) ou só a jornada (20h, 40 horas) saem do nome
-  do cargo; o que faltar aparece como "não informado" e é contado em `faltas`.
+  do cargo; a jornada colada ao nome ("Assistente Social 30h", "Cirurgião
+  Dentista (40h)") também. O rótulo do grupo leva só o que se sabe (16/11/2026:
+  "Regime não informado · Jornada não informada" em todo grupo não dizia
+  nada); o que falta é contado em `faltas` e aparece num aviso.
   A vaga é o código da vaga (codigo_vaga); sem código, a linha leva
   "Vaga sem código" e também entra em `faltas`.
 */
@@ -233,6 +236,15 @@ export function lerRegimeEJornada(cargo: unknown): {
     }
     return true;
   });
+  // A jornada colada ao nome do cargo: "Assistente Social 30h", "Médico (40h)".
+  if (jornada === null && restantes.length) {
+    const nome = restantes[0]!;
+    const colada = nome.match(/\(?\b(\d{1,2})\s*(?:h|hs|horas)\b\)?/i);
+    if (colada) {
+      jornada = `${Number(colada[1])}h`;
+      restantes[0] = nome.replace(colada[0], " ").replace(/\s+/g, " ").trim();
+    }
+  }
   return {
     cargoBase: restantes.join(" - ") || texto(cargo),
     regime,
@@ -340,9 +352,6 @@ export function reconcilia(contagem: ContagemDoResumo) {
   return soma === contagem.aprovados && motivos === contagem.outras;
 }
 
-const naoInformado = (valor: string | null, nome: string) =>
-  valor ?? `${nome} não informado`;
-
 /**
  * O resumo dos vínculos que passaram pelos filtros da tela. `situacoes` vem de
  * `situacoesNaFila` sobre a lista inteira das vagas. `rotulosDosEditais`:
@@ -418,11 +427,7 @@ export function montarResumoPorCargoEStatus({
         cargoBase,
         regime,
         jornada,
-        rotulo: [
-          cargoBase,
-          naoInformado(regime, "Regime"),
-          naoInformado(jornada, "Jornada"),
-        ].join(" · "),
+        rotulo: [cargoBase, regime, jornada].filter(Boolean).join(" · "),
         linhas: [],
       });
     const grupo = edital.grupos.get(chaveDoGrupo)!;

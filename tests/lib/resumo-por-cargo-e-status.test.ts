@@ -409,7 +409,7 @@ describe("montarResumoPorCargoEStatus", () => {
       semModalidade: 2,
     });
     expect(resumo.editais[0]!.grupos[0]!.rotulo).toBe(
-      "Agente · Regime não informado · Jornada não informado",
+      "Agente",
     );
   });
 
