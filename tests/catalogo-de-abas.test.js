@@ -107,6 +107,7 @@ describe("o catálogo do banco é o do código", () => {
       "analisar-recursos",
       "selecao",
       "classificacao",
+      "paineis-de-dados",
     ]);
     const views = Object.values(paginasPorArea(ABAS_DO_MENU)).flatMap(
       (paginas) => paginas.map((pagina) => pagina.view),
@@ -355,6 +356,7 @@ describe("selo beta das abas", () => {
       "analisar-recursos",
       "conduzir-entrevistas",
       "classificacao",
+      "paineis-de-dados",
     ];
     expect(ABAS_DO_MENU.filter((aba) => aba.beta).map((aba) => aba.id)).toEqual(
       beta,

@@ -530,10 +530,11 @@ describe("blocos da área", () => {
     ABAS_DO_MENU.map((aba) => [aba.view, true]),
   );
 
-  it("são Acompanhar e Processo seletivo, nessa ordem", () => {
+  it("são Acompanhar, Processo seletivo e Dados, nessa ordem", () => {
     expect(BLOCOS_DA_AREA.map((bloco) => bloco.rotulo)).toEqual([
       "Acompanhar",
       "Processo seletivo",
+      "Dados",
     ]);
   });
 
@@ -573,8 +574,21 @@ describe("blocos da área", () => {
             "Lista de aprovados",
           ],
         ],
+        ["Dados", ["Painéis"]],
       ]);
     }
+  });
+
+  it("Painéis entra no bloco Dados, sozinho", () => {
+    const arvore = montarArvoreDoMenu({
+      permitidas: { "paineis-de-dados": true },
+    });
+    expect(
+      blocosDaArea(arvore[0].itens).map((b) => [
+        b.id,
+        b.itens.map((i) => i.view),
+      ]),
+    ).toEqual([["dados", ["paineis-de-dados"]]]);
   });
 
   it("bloco sem página permitida some", () => {

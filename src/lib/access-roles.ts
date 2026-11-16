@@ -154,6 +154,27 @@ export function canViewSelecao(profile: unknown): boolean {
 }
 
 /*
+  Painéis (bloco Dados do menu): recurso próprio `paineis_dados`. Sem a
+  matriz (contexto antigo), não aparece: o recurso só existe na matriz.
+*/
+export function canViewPaineisDeDados(profile: unknown): boolean {
+  if (comoPerfil(profile)?.permissoes)
+    return hasResource(profile, "paineis_dados");
+  return false;
+}
+
+/*
+  Trocar a fonte de uma coluna dos Painéis (Fontes dos dados): só o
+  Administrador em paineis_dados (migration 20261113220000). O banco confere
+  de novo, com a área.
+*/
+export function canManagePaineisDeDados(profile: unknown): boolean {
+  if (comoPerfil(profile)?.permissoes)
+    return hasResource(profile, "paineis_dados", 3);
+  return false;
+}
+
+/*
   Avaliação documental (20261006090000_avaliacao_documental_permissao_e_menu.sql):
   ver a Fila (leitor); Regra, Equipe e Triagem só para quem coordena
   o edital. Quem coordena cada edital o banco decide
@@ -367,6 +388,7 @@ export function paginasPermitidas(profile: unknown): PaginasPermitidas {
     recursos: canViewRecursos(profile),
     "analisar-recursos": canAnalisarRecursos(profile),
     selecao: canViewSelecao(profile),
+    "paineis-de-dados": canViewPaineisDeDados(profile),
     config: podeAbrirConfiguracoes(profile),
   };
 }

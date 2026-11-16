@@ -12,6 +12,7 @@ import type { criarConducaoDeEntrevistas } from "../modulos/entrevistas/conduzir
 import type { criarEntrevistas } from "../modulos/entrevistas/entrevistas.tsx";
 import type { criarRecursos } from "../modulos/recursos/recursos.tsx";
 import type { criarSelecao } from "../modulos/selecao/selecao.tsx";
+import type { criarPaineisDeDados } from "../modulos/paineis-de-dados/paineis-de-dados.tsx";
 import type { criarVisaoGeral } from "../modulos/visao-geral/visao-geral.tsx";
 import type { criarConfiguracoes } from "../modulos/configuracoes/configuracoes.tsx";
 import type { criarAcessos } from "../modulos/acessos/acessos.tsx";
@@ -66,6 +67,7 @@ export interface ControladoresDasTelas {
   "avaliacao-documental": ReturnType<typeof criarAvaliacaoDocumental>;
   "pre-classificacao": ReturnType<typeof criarPreClassificacao>;
   selecao: ReturnType<typeof criarSelecao>;
+  "paineis-de-dados": ReturnType<typeof criarPaineisDeDados>;
   config: ReturnType<typeof criarConfiguracoes>;
   "secao:acessos": ReturnType<typeof criarAcessos>;
   "secao:modulos": ReturnType<typeof criarModulos>;

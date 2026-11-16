@@ -539,6 +539,43 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     resumo:
       "As linhas ativas do monitoramento (VW_MONITORAMENTO_INDIGENA_OPERACIONAL, 40 colunas, por unidade e edital; SECURITY INVOKER, a RLS de sempre), com versão: a entrada, o F5 e o 'Atualizar dados' não baixam de novo o que não mudou. Substitui o select direto na view. Desde 20261103171500 a versão é a marca barata (fontes da view e da RLS, quem lê e a data): igual, { inalterado, versao } sem montar.",
   },
+  listar_fontes_do_painel: {
+    argumentos: ["p_area", "p_relatorio"],
+    critica: false,
+    resumo:
+      "Painéis › Fontes dos dados (jsonb): por área e relatório, cada coluna editável com o padrão, a fonte escolhida, as opções do schema painel (lidas do catálogo), o histórico recente e se quem pede pode editar. paineis_dados ≥ Leitor (20261113220000).",
+  },
+  salvar_fonte_da_coluna: {
+    argumentos: [
+      "p_area",
+      "p_relatorio",
+      "p_coluna",
+      "p_visao",
+      "p_coluna_visao",
+      "p_motivo",
+    ],
+    critica: false,
+    resumo:
+      "Painéis › Fontes dos dados: troca a fonte de uma coluna na área (p_visao nulo = padrão), só entre as opções do catálogo, com motivo e histórico. Administrador em paineis_dados (20261113220000).",
+  },
+  listar_resumo_dos_editais_do_painel: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Painéis › Resumo dos editais (json { linhas }): uma linha por edital da área — número, unidade, vagas imediatas, data da divulgação e data final do processo seletivo. Recurso paineis_dados (20261113210000).",
+  },
+  listar_editais_por_cargo_do_painel: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Painéis › Editais por cargo (json { linhas }): uma linha por vaga — código, cargo, vagas imediatas do título da vaga, inscritos da Seleção e aprovados da lista vigente (casados pelo código da vaga). Recurso paineis_dados (20261113210000).",
+  },
+  listar_aprovados_do_painel: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Painéis › Aprovados (json { linhas }): uma linha por aprovado da lista vigente — edital, cargo, nota, classificação, nome, status, matrícula e a data em que o status atual (Contratado/Migração) foi registrado. Recurso paineis_dados (20261113210000).",
+  },
   listar_candidatos_aprovados_compacto: {
     argumentos: ["p_area", "p_versao"],
     critica: true,

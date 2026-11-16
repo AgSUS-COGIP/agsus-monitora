@@ -89,6 +89,7 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
   [[modulo-triagem]] · [[modulo-avaliacao-documental]] · [[modulo-recursos]] ·
   [[modulo-entrevistas]] · [[modulo-classificacao]] · [[modulo-aprovados]] ·
   [[modulo-encerramento-do-edital]]
+- Dados: [[modulo-paineis-de-dados]]
 - Administração: [[modulo-configuracoes]] · [[modulo-acessos]] · [[modulo-modulos-e-abas]] ·
   [[modulo-automacao]] · [[modulo-status-das-atualizacoes]]
 - Moldura: [[modulo-barra-lateral]] · [[modulo-busca-global]] · [[modulo-aya]] ·

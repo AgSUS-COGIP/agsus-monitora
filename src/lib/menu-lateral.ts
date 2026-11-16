@@ -305,11 +305,22 @@ export const ABAS_DO_MENU = Object.freeze(
       tipo: "nativa",
       areas: NAS_TRES_AREAS,
     },
+    {
+      id: "paineis-de-dados",
+      rotulo: "Painéis",
+      icone: "layout-dashboard",
+      ordem: 14,
+      view: "paineis-de-dados",
+      recurso: "paineis_dados",
+      tipo: "nativa",
+      beta: true,
+      areas: NAS_TRES_AREAS,
+    },
   ].map(congelarAba),
 );
 
 /*
-  Os dois blocos de cada área, com título no menu — iguais em todas as áreas
+  Os blocos de cada área, com título no menu — iguais em todas as áreas
   (cada uma mostra só as abas ligadas nela):
 
   - Acompanhar: as páginas de consulta (Visão geral, os painéis — análises,
@@ -317,6 +328,8 @@ export const ABAS_DO_MENU = Object.freeze(
   - Processo seletivo: onde se trabalha, na ordem do fluxo (Editais, Triagem,
     Avaliação documental, Recursos, Entrevistas, Classificação, Lista de
     aprovados).
+  - Dados: os painéis de dados da área (Painéis), abaixo do processo
+    seletivo.
 
   Dentro de cada bloco vale a ordem do catálogo, que já segue as etapas. O
   bloco é da ABA (o código, não a view, que a área pode trocar): aba nova
@@ -325,11 +338,13 @@ export const ABAS_DO_MENU = Object.freeze(
 */
 export const BLOCO_DE_ACOMPANHAMENTO: BlocoDoMenu = "acompanhamento";
 export const BLOCO_DO_PROCESSO: BlocoDoMenu = "processo";
+export const BLOCO_DE_DADOS: BlocoDoMenu = "dados";
 
 export const BLOCOS_DA_AREA: readonly { id: BlocoDoMenu; rotulo: string }[] =
   Object.freeze([
     Object.freeze({ id: BLOCO_DE_ACOMPANHAMENTO, rotulo: "Acompanhar" }),
     Object.freeze({ id: BLOCO_DO_PROCESSO, rotulo: "Processo seletivo" }),
+    Object.freeze({ id: BLOCO_DE_DADOS, rotulo: "Dados" }),
   ]);
 
 /*
@@ -357,7 +372,10 @@ const ABAS_DE_ACOMPANHAMENTO = new Set([
   "cronograma",
 ]);
 
+const ABAS_DE_DADOS = new Set(["paineis-de-dados"]);
+
 export function blocoDaAba(aba: Pick<AbaDoCatalogo, "id" | "tipo">) {
+  if (ABAS_DE_DADOS.has(aba.id)) return BLOCO_DE_DADOS;
   return ABAS_DE_ACOMPANHAMENTO.has(aba.id) || aba.tipo === "externa"
     ? BLOCO_DE_ACOMPANHAMENTO
     : BLOCO_DO_PROCESSO;

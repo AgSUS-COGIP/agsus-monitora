@@ -88,6 +88,8 @@ export const TELAS_DA_CASCA: readonly ViewDeTela[] = Object.freeze([
   "classificacao",
   // src/modulos/selecao/.
   "selecao",
+  // src/modulos/paineis-de-dados/ — Painéis (bloco Dados).
+  "paineis-de-dados",
 ]);
 
 const TEXTO_SEM_ACESSO =
@@ -203,6 +205,12 @@ export function registrarTelasDoApp({
       carregar: () =>
         import("../modulos/selecao/selecao.tsx").then((m) =>
           m.criarSelecao({ toast: avisar }),
+        ),
+    },
+    "paineis-de-dados": {
+      carregar: () =>
+        import("../modulos/paineis-de-dados/paineis-de-dados.tsx").then((m) =>
+          m.criarPaineisDeDados(),
         ),
     },
     classificacao: {

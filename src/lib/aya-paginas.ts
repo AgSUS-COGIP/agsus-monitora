@@ -268,6 +268,16 @@ const PAGINAS: Readonly<Record<string, PaginaDoMenu>> = Object.freeze({
       sug("Sub judice", "Como funciona o candidato sub judice?"),
     ],
   },
+  "paineis-de-dados": {
+    nome: "Painéis",
+    intro: () =>
+      "Posso explicar os relatórios de conferência, de onde vem cada coluna e como baixar em CSV ou XLSX.",
+    sugestoes: () => [
+      sug("Painéis", "Para que serve a página Painéis?"),
+      sug("Por cargo", "De onde vêm as vagas por cargo?"),
+      sug("Admissão", "De onde vem a data de admissão?"),
+    ],
+  },
 });
 
 /* As seções de Configurações (ids de modulos/configuracoes/secoes.ts), na ordem do menu. */
@@ -444,6 +454,10 @@ export const ACOES_DA_AYA: Readonly<Record<string, AcaoDaAya>> = Object.freeze({
   selecao: Object.freeze({
     rotulo: "Abrir Painel da Seleção",
     view: "selecao",
+  }),
+  "paineis-de-dados": Object.freeze({
+    rotulo: "Abrir Painéis",
+    view: "paineis-de-dados",
   }),
   ...Object.fromEntries(
     Object.entries(SECOES_DA_AYA).map(([id, secao]) => [

@@ -175,6 +175,7 @@ const PAGINAS_DO_ARQUIVO: Readonly<Record<string, readonly string[]>> =
     "regras-da-classificacao.md": ["classificacao"],
     "regras-da-lista-de-aprovados.md": ["approved"],
     "regras-da-selecao.md": ["selecao"],
+    "regras-dos-paineis.md": ["paineis-de-dados"],
     "regras-das-configuracoes.md": ["config"],
     "regras-dos-acessos.md": ["config:acessos", "config"],
     "regras-dos-modulos-e-abas.md": ["config:modulos", "config"],

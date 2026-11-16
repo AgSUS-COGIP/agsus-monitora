@@ -119,6 +119,7 @@ const TELAS: TelaDaRota[] = [
     tituloNaTela: true,
   },
   { view: "selecao", caminho: "selecao", titulo: "Painel da Seleção" },
+  { view: "paineis-de-dados", caminho: "paineis-de-dados", titulo: "Painéis" },
 ];
 export const TELAS_DAS_AREAS: readonly TelaDaRota[] = Object.freeze(
   TELAS.map((tela) => Object.freeze(tela)),
