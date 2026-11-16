@@ -68,6 +68,12 @@ function linha(v: unknown): LinhaDoRetrato {
       ? {}
       : { situacao: l.situacao == null ? null : texto(l.situacao) }),
     ...(l.decisao == null ? {} : { decisao: texto(l.decisao) }),
+    ...(l.nota_documental === undefined
+      ? {}
+      : { nota_documental: numero(l.nota_documental) }),
+    ...(l.nota_entrevista === undefined
+      ? {}
+      : { nota_entrevista: numero(l.nota_entrevista) }),
     ...(l.modalidades == null
       ? {}
       : { modalidades: lista(l.modalidades).map(texto) }),

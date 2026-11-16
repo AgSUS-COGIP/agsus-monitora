@@ -325,11 +325,18 @@ function linhasDasVagas(vagas: readonly VagaRecortada[]): LinhaDaTabela[] {
 }
 const vagaDaLinha = (linha: LinhaDaTabela) => linha.vaga;
 
-const COLUNAS_DA_TABELA: ColunaDaTabela[] = [
+/* No resultado final, a nota de cada etapa antes da final (16/11/2026). */
+const colunasDaTabela = (etapas: boolean): ColunaDaTabela[] => [
   { rotulo: "Posição", largura: "6rem" },
   { rotulo: "Pessoa" },
   { rotulo: "Vaga" },
-  { rotulo: "Nota", numero: true },
+  ...(etapas
+    ? [
+        { rotulo: "Análise curricular", numero: true },
+        { rotulo: "Entrevista", numero: true },
+        { rotulo: "Nota final", numero: true },
+      ]
+    : [{ rotulo: "Nota", numero: true }]),
   { rotulo: "Situação" },
   {
     rotulo: "Ações",
@@ -338,6 +345,8 @@ const COLUNAS_DA_TABELA: ColunaDaTabela[] = [
     cabecalho: <span className="sr-only">Ações</span>,
   },
 ];
+const COLUNAS_DA_TABELA = colunasDaTabela(false);
+const COLUNAS_DO_RESULTADO_FINAL = colunasDaTabela(true);
 
 /* A posição como etiqueta; o 1º lugar em destaque; "=" no empate. */
 function EtiquetaDaPosicao({ l }: { l: LinhaDaLista }) {
@@ -361,9 +370,11 @@ function LinhaDaClassificacao({
   rotulosDasModalidades,
   aoAbrir,
   acoes,
+  etapas = false,
 }: {
   linha: LinhaDaTabela;
   casas: number;
+  etapas?: boolean;
   rotulosDasModalidades: Record<string, string>;
   aoAbrir: (id: string) => void;
   acoes: AcoesDaPessoa;
@@ -403,6 +414,20 @@ function LinhaDaClassificacao({
         </span>
       </td>
       <td>{linha.codigoDaVaga}</td>
+      {etapas ? (
+        <>
+          <td className="num">
+            {linha.tipo === "lista"
+              ? formatarNota(linha.l.notaDocumental ?? null, casas)
+              : "—"}
+          </td>
+          <td className="num">
+            {linha.tipo === "lista"
+              ? formatarNota(linha.l.notaEntrevista ?? null, casas)
+              : "—"}
+          </td>
+        </>
+      ) : null}
       <td className="num">
         {linha.tipo === "lista" ? formatarNota(linha.l.nota, casas) : "—"}
       </td>
@@ -1553,7 +1578,11 @@ export function Listas({
             <TabelaDaLista
               rotulo="Classificação"
               classeDaTabela="classificacao-tabela"
-              colunas={COLUNAS_DA_TABELA}
+              colunas={
+                tipo === "FINAL"
+                  ? COLUNAS_DO_RESULTADO_FINAL
+                  : COLUNAS_DA_TABELA
+              }
               carregado
               itens={linhasDaTabela}
               chaveDoRecorte={`${tipo}:${JSON.stringify(recorte)}`}
@@ -1587,6 +1616,7 @@ export function Listas({
                   rotulosDasModalidades={rotulosDasModalidades}
                   aoAbrir={setAberto}
                   acoes={acoesDasPessoas}
+                  etapas={tipo === "FINAL"}
                 />
               )}
             />

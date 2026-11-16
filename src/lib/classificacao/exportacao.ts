@@ -69,6 +69,13 @@ export function instantaneoDaLista(
     ...soParciais(l.parciais),
     // Nota alterada em recurso (ajuste aprovado): o número do recurso.
     ...(l.recursos?.length ? { recursos: l.recursos } : {}),
+    // Resultado final: a nota de cada etapa (16/11/2026; o retrato.py repete).
+    ...(resultado.tipo === "FINAL"
+      ? {
+          nota_documental: l.notaDocumental ?? null,
+          nota_entrevista: l.notaEntrevista ?? null,
+        }
+      : {}),
   });
   return {
     schema: VERSAO_DO_RETRATO,
@@ -236,7 +243,7 @@ function planilhaXml(
 
 /* Larguras (em caracteres) das colunas de cada planilha. */
 export const LARGURAS_DA_PLANILHA = Object.freeze({
-  classificacao: [10, 48, 22, 13, 40, 9, 28, 18],
+  classificacao: [10, 48, 22, 13, 40, 9, 28, 18, 16, 16],
   eliminados: [10, 48, 40, 42, 60],
   aguardando: [10, 48, 40, 18],
 });
@@ -261,6 +268,9 @@ export function linhasDaPlanilha(entrada: unknown) {
       "Nota",
       "Modalidade",
       "Situação",
+      ...(retrato.tipo === "FINAL"
+        ? ["Nota da análise curricular", "Nota da entrevista"]
+        : []),
     ],
   ];
   const eliminados: CelulaDaPlanilha[][] = [
@@ -290,6 +300,9 @@ export function linhasDaPlanilha(entrada: unknown) {
             .map((m) => rotuloDaModalidade(m, modalidades))
             .join(" / "),
           situacoes[l.situacao ?? ""] || "",
+          ...(retrato.tipo === "FINAL"
+            ? [l.nota_documental ?? null, l.nota_entrevista ?? null]
+            : []),
         ]);
     for (const e of v.eliminados)
       eliminados.push([

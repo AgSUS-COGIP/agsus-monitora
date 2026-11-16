@@ -1479,6 +1479,10 @@ def classificar_com_rastro(entrada: dict | None = None):
                 saida["parciais"] = _parciais_de(c)
             if c.ajustes:
                 saida["recursos"] = _recursos_do_ajuste(c)
+            # Resultado final: a nota de cada etapa que compõe a final (como o motor.ts).
+            if tipo == "FINAL":
+                saida["notaDocumental"] = getattr(c, "notaDocumental", None)
+                saida["notaEntrevista"] = c.notaEntrevista
             return saida
 
         linha_geral_de = {linha.c.analiseId: linha for linha in geral}

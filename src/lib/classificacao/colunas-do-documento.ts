@@ -89,6 +89,12 @@ export function rotuloDaColuna(id: string, tipo: string, eliminados = false) {
       return caixaAlta ? "NOTA FINAL" : "Nota Final";
     case "SITUACAO":
       return caixaAlta ? "SITUAÇÃO" : "Situação";
+    case "NOTA_DOCUMENTAL":
+      return caixaAlta
+        ? "NOTA DA ANÁLISE CURRICULAR"
+        : "Nota da análise curricular";
+    case "NOTA_ENTREVISTA":
+      return caixaAlta ? "NOTA DA ENTREVISTA" : "Nota da entrevista";
     case "JUSTIFICATIVA":
       return "Justificativa";
     default:
@@ -100,6 +106,8 @@ export function rotuloDaColuna(id: string, tipo: string, eliminados = false) {
 const AJUDA: Readonly<Record<string, string | undefined>> = Object.freeze({
   MODALIDADE: "Só na tabela da classificação geral, com as modalidades.",
   SITUACAO: "Dentro das vagas ou cadastro reserva.",
+  NOTA_DOCUMENTAL: "A nota da avaliação documental e de títulos.",
+  NOTA_ENTREVISTA: "A nota da entrevista.",
 });
 
 /**
@@ -138,10 +146,17 @@ export function colunasDoRetrato(
       "JUSTIFICATIVA",
     ];
   } else {
+    // Resultado final gerado a partir de 16/11/2026: a nota de cada etapa.
+    const comEtapas =
+      tipo === "FINAL" &&
+      (retrato.vagas || []).some((v) =>
+        (v.geral || []).some((l) => l.nota_documental !== undefined),
+      );
     ids = [
       "CLASSIFICACAO",
       "NOME",
       ...(lista === "todas" && modalidades.length ? ["MODALIDADE"] : []),
+      ...(comEtapas ? ["NOTA_DOCUMENTAL", "NOTA_ENTREVISTA"] : []),
       "NOTA",
       ...(tipo === "FINAL" ? ["SITUACAO"] : []),
       ...parciais.map(colunaDaParcial),

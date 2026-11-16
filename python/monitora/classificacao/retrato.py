@@ -68,6 +68,9 @@ def instantaneo_da_lista(resultado: dict, edital: dict | None = None, regra=None
         saida.update(so_parciais(lin.get("parciais")))
         if lin.get("recursos"):
             saida["recursos"] = lin["recursos"]
+        if tipo == "FINAL":
+            saida["nota_documental"] = lin.get("notaDocumental")
+            saida["nota_entrevista"] = lin.get("notaEntrevista")
         return saida
 
     def eliminado(e: dict) -> dict:

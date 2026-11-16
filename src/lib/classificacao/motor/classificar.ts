@@ -546,6 +546,13 @@ export function classificar({
       vagaPor: alocacao.get(l.c.analiseId)?.modalidade || null,
       ...(comParciais ? { parciais: parciaisDe(l.c) } : {}),
       ...(l.c.ajustes ? { recursos: recursosDoAjuste(l.c) } : {}),
+      // Resultado final: a nota de cada etapa que compõe a final (colunas da tela e do documento).
+      ...(tipo === "FINAL"
+        ? {
+            notaDocumental: l.c.notaDocumental ?? null,
+            notaEntrevista: l.c.notaEntrevista ?? null,
+          }
+        : {}),
     });
 
     const linhaGeralDe = new Map(geral.map((l) => [l.c.analiseId, l]));

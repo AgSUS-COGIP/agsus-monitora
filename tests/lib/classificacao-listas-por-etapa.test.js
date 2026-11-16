@@ -320,9 +320,57 @@ describe("resultado final: vaga imediata e cadastro reserva", () => {
       ["3º", "Fora do limite", "29,0"],
       ["4º", "Vanderlei", "28,0"],
     ]);
-    expect(linhasDaPlanilha(retrato).classificacao[1].at(-1)).toBe(
-      "Dentro das vagas",
-    );
+    const planilha = linhasDaPlanilha(retrato).classificacao;
+    expect(planilha[0].slice(-3)).toEqual([
+      "Situação",
+      "Nota da análise curricular",
+      "Nota da entrevista",
+    ]);
+    expect(planilha[1].at(-3)).toBe("Dentro das vagas");
+  });
+
+  it("nota de cada etapa (16/11/2026): no retrato, como coluna à escolha no documento e na planilha", () => {
+    const r = classificar({ ...base, tipo: "FINAL" });
+    const primeira = r.vagas[0].geral[0];
+    expect(primeira.notaDocumental).not.toBeUndefined();
+    expect(primeira.notaEntrevista).not.toBeUndefined();
+    const retrato = instantaneoDaLista(r, {
+      edital: { edital: "83/2026" },
+      regra: REGRA_83,
+    });
+    const linha = retrato.vagas[0].geral[0];
+    expect(linha.nota_documental).toBe(primeira.notaDocumental);
+    expect(linha.nota_entrevista).toBe(primeira.notaEntrevista);
+    // Na regra que não as marca, o documento fica como antes (enxuto).
+    const comEtapas = {
+      ...REGRA_83,
+      documento: {
+        colunas: {
+          FINAL_FINAL: [
+            "CLASSIFICACAO",
+            "NOME",
+            "NOTA_DOCUMENTAL",
+            "NOTA_ENTREVISTA",
+            "NOTA",
+          ],
+        },
+      },
+    };
+    const doc = documentoOficial(retrato, {
+      lista: "geral",
+      fase: "FINAL",
+      regra: comEtapas,
+    });
+    const [tabela] = doc.blocos[0].tabelas;
+    expect(tabela.colunas.map((c) => c.rotulo)).toEqual([
+      "CLASSIFICAÇÃO",
+      "NOME",
+      "NOTA DA ANÁLISE CURRICULAR",
+      "NOTA DA ENTREVISTA",
+      "NOTA FINAL",
+    ]);
+    expect(tabela.linhas[0]).toHaveLength(5);
+    expect(tabela.linhas[0].at(-1)).toBe("31,3");
   });
 
   it("entrevistado fora do limite de convocação vira aviso (não some, não entra calado)", () => {
