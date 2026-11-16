@@ -6817,7 +6817,6 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Editais por cargo",
     perguntas: [
       "editais por cargo",
-      "vagas por cargo",
       "inscritos por cargo",
       "aprovados por cargo",
       "de onde vem as vagas por cargo",
