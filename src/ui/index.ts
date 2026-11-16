@@ -128,6 +128,8 @@ export type {
 } from "./segmentado.tsx";
 export { Selo } from "./selo.tsx";
 export type { PropriedadesDoSelo } from "./selo.tsx";
+export { MaisDaCarga, usarCargaContinua } from "./carga-continua.tsx";
+export type { CargaContinua } from "./carga-continua.tsx";
 export { CabecalhosDaTabela, TabelaInfinita } from "./tabela-infinita.tsx";
 export {
   CardDaLista,

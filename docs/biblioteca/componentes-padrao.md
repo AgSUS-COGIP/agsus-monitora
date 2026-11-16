@@ -1,7 +1,7 @@
 ---
 tipo: referencia
 area: front
-atualizado: 2026-11-10
+atualizado: 2026-11-16
 ---
 
 # Componentes padrão (`src/ui/`)
@@ -25,19 +25,19 @@ linha por componente) está em [docs/arquitetura-react.md](../arquitetura-react.
 
 ## O que existe
 
-| Grupo            | Componentes                                                                                                                |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Topo e filtros   | `TopoDoPainel`, `PainelDeFiltros`, `ChipsDeFiltro`/`ChipDeFiltro`, `MaisOpcoes`, `LinhaDoRecorte`/`MarcasDoRecorte`        |
-| Indicadores      | `Kpi` (card de 78px; com `aoClicar` vira filtro), `GradeDeKpis`, `FaixaDeSituacao`, `ListaDePendencias`                    |
-| Gráficos         | `CardDeGrafico`, `Grafico` (Chart.js criado uma vez), `paletaDosGraficos` (cores dos tokens)                               |
-| Listas e tabelas | `TabelaInfinita` (50 por vez, avisa `agsus:content-updated`), `CardDaLista` + `TabelaDaLista`, `BarraDaLista`              |
-| Camadas          | `Gaveta`, `TopoDaGaveta`, `Modal` (portal, Esc, foco preso), `Popover`, `MenuDeAcoes`                                      |
-| Detalhe          | `Secao`, `Kv`, `GradeDeKv`                                                                                                 |
-| Formulário       | `Campo` (liga o rótulo ao controle), `Segmentado` (radiogroup), `Abas` (tablist)                                           |
-| Estados          | `EstadoVazio`, `Carregando`, `CarregandoConteudo`, `ErroAoCarregar`, `LinhasEsqueleto`, `BlocosEsqueleto`, `Aviso`, `Selo` |
-| Ações            | `BotaoDeAcao` (ação que escreve no banco), `AcoesDaLinha`                                                                  |
-| Telas da seleção | `CabecalhoDaTela`, `BarraDaLista`, `FaixaDeSituacao`, `CardDaLista`                                                        |
-| Utilitários      | `usarEstadoDaSessao` (filtros voltam no F5), `classes(...)`                                                                |
+| Grupo            | Componentes                                                                                                                                        |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Topo e filtros   | `TopoDoPainel`, `PainelDeFiltros`, `ChipsDeFiltro`/`ChipDeFiltro`, `MaisOpcoes`, `LinhaDoRecorte`/`MarcasDoRecorte`                                |
+| Indicadores      | `Kpi` (card de 78px; com `aoClicar` vira filtro), `GradeDeKpis`, `FaixaDeSituacao`, `ListaDePendencias`                                            |
+| Gráficos         | `CardDeGrafico`, `Grafico` (Chart.js criado uma vez), `paletaDosGraficos` (cores dos tokens)                                                       |
+| Listas e tabelas | `TabelaInfinita` (50 por vez, avisa `agsus:content-updated`), `CardDaLista` + `TabelaDaLista`, `BarraDaLista`, `usarCargaContinua` + `MaisDaCarga` |
+| Camadas          | `Gaveta`, `TopoDaGaveta`, `Modal` (portal, Esc, foco preso), `Popover`, `MenuDeAcoes`                                                              |
+| Detalhe          | `Secao`, `Kv`, `GradeDeKv`                                                                                                                         |
+| Formulário       | `Campo` (liga o rótulo ao controle), `Segmentado` (radiogroup), `Abas` (tablist)                                                                   |
+| Estados          | `EstadoVazio`, `Carregando`, `CarregandoConteudo`, `ErroAoCarregar`, `LinhasEsqueleto`, `BlocosEsqueleto`, `Aviso`, `Selo`                         |
+| Ações            | `BotaoDeAcao` (ação que escreve no banco), `AcoesDaLinha`                                                                                          |
+| Telas da seleção | `CabecalhoDaTela`, `BarraDaLista`, `FaixaDeSituacao`, `CardDaLista`                                                                                |
+| Utilitários      | `usarEstadoDaSessao` (filtros voltam no F5), `classes(...)`                                                                                        |
 
 Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de-cards`,
 `.ui-pilha`, `.ui-grade-de-campos`, `.ui-acoes`, `.ui-barra-de-salvar`, `.ui-gaveta-*`,
@@ -64,6 +64,15 @@ Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de
 - [[nova-tela-react]] — como a tela usa os componentes
 - [[textos-da-interface]] — estados vazios e de erro curtos
 - [[testes]] — teste de componente em `tests/ui/`
+
+## Lista longa não se desenha inteira
+
+Lista que pode passar de algumas centenas (convocados, fichas, vínculos, pendências) desenha 50
+por vez e mais 50 ao rolar: `TabelaInfinita` ou `TabelaDaLista` para tabela simples; para blocos
+por dia ou por vaga e cartões, `usarCargaContinua(recorte, total)` + `MaisDaCarga` depois da lista,
+com `gruposAteOLimite` (`src/lib/carga-continua.ts`) cortando os blocos. O `recorte` é estável
+(lista memorizada ou chave dos filtros): recriado a cada desenho, a lista volta sempre aos 50.
+Exportação continua com tudo. Guarda: `tests/ui/carga-continua.test.ts`.
 
 ## Carregando não é cartão em branco
 

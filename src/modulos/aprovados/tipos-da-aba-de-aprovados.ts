@@ -17,6 +17,7 @@ export interface CandidatoDaTabelaDeAprovados extends CandidatoDasRegrasDeAprova
 export interface FiltrosDaTabelaDeAprovados {
   candidatos: string[];
   editalId: string[];
+  localidade: string[];
   cargo: string[];
   modalidade: string[];
   status: string[];
@@ -48,6 +49,7 @@ export interface PropsDaAbaDeAprovados {
   erroAoCarregar: string | boolean;
   opcoes: {
     editais: readonly OpcaoDosAprovados[];
+    localidades: readonly string[];
     cargos: readonly string[];
     modalidades: readonly string[];
   };

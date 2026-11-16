@@ -1270,6 +1270,14 @@ th[aria-sort="descending"] .ui-ordenar i {
   justify-self: center;
 }
 
+/* MaisDaCarga (carga-continua.tsx): o "N de M" e o "Carregar mais" embaixo de uma lista. */
+.ui-carga-continua {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+}
+
 /* ── Celular ───────────────────────────────────────────────────────── */
 
 @media (max-width: 900px) {

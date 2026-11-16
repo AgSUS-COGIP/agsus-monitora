@@ -548,6 +548,48 @@ describe("filtros e paginação", () => {
     await clicar(achar('[data-acao="limpar-filtros"]', painel));
     expect(nomes()).toHaveLength(4);
   });
+  it("filtra pela localidade do cargo e o Cargo passa a oferecer só os dela", async () => {
+    // Sem localidade no texto do cargo, o filtro não aparece.
+    await montar();
+    expect(document.getElementById("approvedFilterLocalidade")).toBeNull();
+
+    await montar({
+      supabase: supabaseFalso({
+        candidatos: [
+          candidato({
+            candidato_id: "ana",
+            nome: "Ana Ribeiro",
+            cargo: "Enfermeiro - Pacaraima/RR",
+          }),
+          candidato({
+            candidato_id: "bruno",
+            nome: "Bruno Lima",
+            cargo: "Enfermeiro - Boa Vista/RR",
+          }),
+          candidato({
+            candidato_id: "carla",
+            nome: "Carla Souza",
+            cargo: "Gerente de Saúde - PACARAIMA/RR",
+          }),
+          candidato({
+            candidato_id: "diego",
+            nome: "Diego Alves",
+            cargo: "Médico",
+          }),
+        ],
+      }),
+    });
+    expect(opcoesDoFiltro("approvedFilterLocalidade")).toEqual([
+      "Boa Vista/RR",
+      "Pacaraima/RR",
+    ]);
+    await clicar(opcaoDoFiltro("approvedFilterLocalidade", "Pacaraima/RR"));
+    expect(nomes().sort()).toEqual(["Ana Ribeiro", "Carla Souza"]);
+    expect(opcoesDoFiltro("approvedFilterCargo")).toEqual([
+      "Enfermeiro - Pacaraima/RR",
+      "Gerente de Saúde - PACARAIMA/RR",
+    ]);
+  });
   it("escolher um edital encolhe os cargos e descarta o cargo que sumiu", async () => {
     await montar();
     expect(opcoesDoFiltro("approvedFilterCargo")).toEqual([

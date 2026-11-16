@@ -35,9 +35,11 @@ import {
   ErroAoCarregar,
   GradeDeKpis,
   Kpi,
+  MaisDaCarga,
   Modal,
   Segmentado,
   Selo,
+  usarCargaContinua,
 } from "../../../ui/index.ts";
 import "./pendencias.css";
 
@@ -519,12 +521,27 @@ export function AbaPendencias({
     [dados.pendencias],
   );
   const editalEfetivo = editalFixo || edital;
-  const contagem = contarAbertas(dados.pendencias, editalEfetivo);
-  const visiveis = filtrarPendencias(dados.pendencias, {
-    editalId: editalEfetivo,
-    situacao,
-    tipo,
-  });
+  const contagem = useMemo(
+    () => contarAbertas(dados.pendencias, editalEfetivo),
+    [dados.pendencias, editalEfetivo],
+  );
+  const visiveis = useMemo(
+    () =>
+      filtrarPendencias(dados.pendencias, {
+        editalId: editalEfetivo,
+        situacao,
+        tipo,
+      }),
+    [dados.pendencias, editalEfetivo, situacao, tipo],
+  );
+  /*
+    50 cartões por vez, mais 50 ao rolar (a área inteira passa de centenas).
+    Volta aos 50 ao trocar o filtro; decidir uma pendência mantém a leva.
+  */
+  const carga = usarCargaContinua(
+    `${editalEfetivo}|${situacao}|${tipo}`,
+    visiveis.length,
+  );
   const naModal = dados.modal
     ? dados.pendencias.find((p) => p.id === dados.modal?.pendenciaId)
     : undefined;
@@ -591,13 +608,14 @@ export function AbaPendencias({
         </div>
       ) : visiveis.length ? (
         <div className="pendencias-lista">
-          {visiveis.map((p) => (
+          {visiveis.slice(0, carga.limite).map((p) => (
             <CartaoDaPendencia
               key={p.id}
               pendencia={p}
               aoDecidir={estado.abrir}
             />
           ))}
+          <MaisDaCarga carga={carga} oQue="pendências" />
         </div>
       ) : (
         <EstadoVazio>

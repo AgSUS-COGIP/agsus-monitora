@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: seguranca
-atualizado: 2026-11-10
+atualizado: 2026-11-16
 ---
 
 # Segurança
@@ -40,6 +40,10 @@ banco, funções e robôs.
 - A API para outro sistema confere a chave em tempo constante (`api/_rota-com-chave.ts`).
 - Cabeçalhos de segurança (HSTS, CSP etc.) no `vercel.json`, usados também pelo servidor
   TypeScript ([[servidor-web]]). `npm run check:dist-security` confere o HTML do build.
+- **A CSP é aplicada** (deixou de ser só relatório em 16/11/2026): script de fora só do Google
+  Analytics e do cdnjs, sem `eval`, sem `<object>`. Fonte nova de script, quadro ou conexão entra
+  no `vercel.json` no mesmo PR, senão o navegador a bloqueia. Cada bloqueio vai para
+  `TL_EVENTO_ACESSO` (`csp_report_only_violation`, nome antigo) por `src/lib/csp-report-monitor.ts`.
 - `tests/setup/rede-bloqueada.ts` bloqueia a rede em todo teste unitário (um teste já chamou o
   Supabase de produção via `.env.local`).
 - O servidor e o `dist/` não servem `CLAUDE.md`, `.env` nem arquivo com ponto
