@@ -1317,3 +1317,27 @@ select h."CO_HISTORICO_FICHA", h."NU_VERSAO", h."TP_ACAO", h."DT_REGISTRO", h."D
   from exportado e
   join public."TH_FICHA_ANALISE" h on h."CO_HISTORICO_FICHA" = (e.l ->> 'CO_HISTORICO_FICHA')::bigint;
 ```
+
+## 25. Espaço do banco: histórico do edital sem carimbo (16/11/2026)
+
+O banco está no plano gratuito do Supabase (500 MB). Medição de 16/11/2026: 353 MB de dados, folga
+de 115 a 130 MB. `TH_MONITORAMENTO` (27 MB) guardava 9.152 fotos automáticas do edital
+(`usuario_id` nulo) sem conteúdo: só `updated_at` mudava (6.613, de junho a setembro) ou
+`updated_at` e `"DT_FONTE_FUNIL"` (2.539, desde 27/10, de `private."FC_ATUALIZAR_KPIS_PELA_SELECAO"`,
+cuja data da fonte acompanha a última gravação das vagas na Seleção). Uns 5 MB por mês.
+
+- **`20261116234000_historico_do_edital_ignora_so_carimbo.sql`**: o gatilho
+  `trg_historico_monitoramento` (`public.fn_registrar_historico`) compara a linha sem
+  `updated_at`, `updated_by` e `"DT_FONTE_FUNIL"`; se só eles mudaram, não grava. INSERT,
+  desativação e toda mudança de conteúdo (humana ou automática) gravam como antes. A guarda de
+  `FC_ATUALIZAR_KPIS_PELA_SELECAO` não mudou: `"DT_FONTE_FUNIL"` aparece na Visão geral ("Fonte:
+  Seleção, em 16/10, 08:10") e continua sendo atualizada. Nada lê `TH_MONITORAMENTO` além da
+  auditoria.
+- **`20261116235000_limpar_historico_do_edital_so_carimbo.sql`** (depois da anterior): apaga o
+  registro automático (`evento = 'atualizado'`, sem `campo_alterado`) cuja foto só difere da
+  anterior do mesmo edital no carimbo; com empate de `created_at` (ordem incerta), fica. Mantém
+  humano, criado, desativado, troca de área e todo registro com conteúdo, e confere registro por
+  registro que a foto anterior (sem carimbo) de cada um que fica não muda. Ensaio de 16/11/2026:
+  9.144 apagados (17,9 MB de dados), 2.048 ficam. O rollback não devolve os registros.
+- O espaço em disco só volta com `VACUUM FULL` de `TH_MONITORAMENTO`, à mão, fora do horário dos
+  robôs (trava a tabela por segundos).
