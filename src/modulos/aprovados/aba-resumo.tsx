@@ -16,6 +16,7 @@ import type { UIEvent } from "react";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   CATEGORIAS_DO_RESUMO,
+  DICA_DA_COLUNA,
   LINHAS_DO_RESUMO_POR_VEZ,
   MOTIVOS_DE_OUTRAS,
   montarResumoPorCargoEStatus,
@@ -391,12 +392,21 @@ export function AbaResumo({
             </caption>
             <thead>
               <tr>
-                <th scope="col">Cargo / vaga</th>
-                <th scope="col" className="approved-resumo-num">
+                <th scope="col">Cargo e vaga</th>
+                <th
+                  scope="col"
+                  className="approved-resumo-num"
+                  title={DICA_DA_COLUNA.aprovados}
+                >
                   {ROTULO_DA_COLUNA.aprovados}
                 </th>
                 {CATEGORIAS_DO_RESUMO.map((c) => (
-                  <th key={c} scope="col" className="approved-resumo-num">
+                  <th
+                    key={c}
+                    scope="col"
+                    className="approved-resumo-num"
+                    title={DICA_DA_COLUNA[c]}
+                  >
                     {ROTULO_DA_COLUNA[c]}
                   </th>
                 ))}
@@ -408,7 +418,9 @@ export function AbaResumo({
                   <tbody>
                     <tr className="approved-resumo-edital">
                       <th scope="rowgroup" colSpan={colunas}>
-                        {edital.rotulo}
+                        <span className="approved-resumo-rotulo-preso">
+                          {edital.rotulo}
+                        </span>
                       </th>
                     </tr>
                   </tbody>
@@ -417,7 +429,9 @@ export function AbaResumo({
                   <tbody key={grupo.chave}>
                     <tr className="approved-resumo-grupo">
                       <th scope="rowgroup" colSpan={colunas}>
-                        {grupo.rotulo}
+                        <span className="approved-resumo-rotulo-preso">
+                          {grupo.rotulo}
+                        </span>
                       </th>
                     </tr>
                     {grupo.linhas.map((linha) => {

@@ -217,7 +217,7 @@ total, para acompanhar o edital sem montar a planilha à mão.
   situações reconcilia o que não é contratado, desistente nem reserva).
 - **Dado** o cadastro de reserva, **então** ele vem da fila de convocação, nunca de "aprovados menos
   o resto".
-- **Dado** um desistente, **então** ele conta em Desistência, uma coluna só (16/11/2026: as colunas
+- **Dado** um desistente, **então** ele conta em Desistentes, uma coluna só (16/11/2026: as colunas
   de voluntária e tácita saíram; o sistema não registra o subtipo).
 - **Dado** uma área com milhares de vagas, **então** a tabela mostra 50 linhas de vaga por vez e
   carrega mais ao rolar ou em "Carregar mais", sem travar a tela.

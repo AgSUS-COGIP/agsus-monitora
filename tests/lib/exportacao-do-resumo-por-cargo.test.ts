@@ -82,7 +82,7 @@ describe("arquivo do resumo", () => {
     expect(args.p_editais).toEqual(["e1"]);
   });
 
-  it("as linhas são as da tela: vaga, subtotal e total; uma coluna só de Desistência", () => {
+  it("as linhas são as da tela: vaga, subtotal e total; uma coluna só de Desistentes", () => {
     const linhas = linhasDoArquivoDoResumo(resumo());
     expect(linhas.map((l) => l[0])).toEqual([
       "Vaga",
@@ -95,12 +95,12 @@ describe("arquivo do resumo", () => {
       COLUNAS_DO_ARQUIVO_DO_RESUMO.indexOf(rotulo);
     expect(total[col("Aprovados")]).toBe(4);
     expect(total[col("Contratados")]).toBe(1);
-    expect(total[col("Desistência")]).toBe(1);
+    expect(total[col("Desistentes")]).toBe(1);
     expect(COLUNAS_DO_ARQUIVO_DO_RESUMO.join(" ")).not.toMatch(
       /volunt|tácita|subtipo/i,
     );
-    expect(total[col("Cadastro de reserva")]).toBe(2);
-    expect(total[col("Outras situações")]).toBe(0);
+    expect(total[col("Em reserva")]).toBe(2);
+    expect(total[col("Outros")]).toBe(0);
   });
 
   it("CSV: identificação do resumo, protegido contra fórmula, sem nome de candidato", () => {

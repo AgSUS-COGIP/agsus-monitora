@@ -18,7 +18,7 @@ import {
 
   "Contagem de candidatos por cargo e status": por edital, cargo + regime +
   jornada, e dentro dele uma linha por vaga e modalidade, com Aprovados,
-  Contratados, Desistência e Cadastro de reserva,
+  Contratados, Desistentes, Em reserva (cadastro de reserva) e Outros,
   subtotal por grupo e total geral. Tudo é contado aqui, uma vez: a tabela da
   tela, o detalhe nominal e a exportação leem a MESMA estrutura (critério F).
 
@@ -87,9 +87,25 @@ export const ROTULO_DA_COLUNA: Readonly<Record<ColunaDoResumo, string>> =
   Object.freeze({
     aprovados: "Aprovados",
     contratado: "Contratados",
-    desistencia: "Desistência",
-    reserva: "Cadastro de reserva",
-    outras: "Outras situações",
+    desistencia: "Desistentes",
+    reserva: "Em reserva",
+    outras: "Outros",
+  });
+
+/*
+  Os títulos são uniformes (16/11/2026: todos no plural, sobre pessoas, numa
+  linha só); a definição exata de cada coluna vai na dica do cabeçalho.
+*/
+export const DICA_DA_COLUNA: Readonly<Record<ColunaDoResumo, string>> =
+  Object.freeze({
+    aprovados:
+      "Vínculos da lista vigente: quem concorre à cota e à ampla conta nas duas linhas",
+    contratado: "Contratado ou Migração",
+    desistencia: "Situação Desistente",
+    reserva:
+      "Cadastro de reserva: na fila de convocação, fora das vagas imediatas e ainda não chamados",
+    outras:
+      "Convocados, a convocar, documentação rejeitada, contratados em outra lista e não classificados",
   });
 
 export const ROTULO_DO_MOTIVO: Readonly<Record<MotivoDeOutras, string>> =

@@ -2617,7 +2617,19 @@ describe("Resumo por cargo (pedido da CORES)", () => {
     expect($("approvedHeadActions").classList.contains("hidden")).toBe(true);
     const total = definido(achar("#approvedPanelResumo tfoot tr"));
     const celulas = acharTodos("td", total).map((td) => td.textContent?.trim());
-    // Aprovados, Contratados, Desistência, Reserva, Outras.
+    // Aprovados, Contratados, Desistentes, Em reserva, Outros.
+    expect(
+      acharTodos("#approvedPanelResumo thead th").map((th) =>
+        th.textContent?.trim(),
+      ),
+    ).toEqual([
+      "Cargo e vaga",
+      "Aprovados",
+      "Contratados",
+      "Desistentes",
+      "Em reserva",
+      "Outros",
+    ]);
     expect(celulas).toEqual(["3", "1", "0", "2", "0"]);
     const avisos = definido(
       achar("#approvedPanelResumo .approved-resumo-avisos"),
@@ -2632,7 +2644,7 @@ describe("Resumo por cargo (pedido da CORES)", () => {
     await clicar($("approvedTabResumo"));
     const reserva = definido(
       achar<HTMLButtonElement>(
-        "#approvedPanelResumo tfoot button[aria-label^='Ver os 2 de Cadastro de reserva']",
+        "#approvedPanelResumo tfoot button[aria-label^='Ver os 2 de Em reserva']",
       ),
     );
     await clicar(reserva);

@@ -62,7 +62,7 @@ export const COLUNAS_DO_ARQUIVO_DO_RESUMO: readonly string[] = Object.freeze([
   ...CATEGORIAS_DO_RESUMO.map((c) => ROTULO_DA_COLUNA[c]),
   "Dos contratados: migração",
   ...MOTIVOS_DE_OUTRAS.map(
-    (m) => `Outras: ${ROTULO_DO_MOTIVO[m].toLowerCase()}`,
+    (m) => `Outros: ${ROTULO_DO_MOTIVO[m].toLowerCase()}`,
   ),
   "Sub judice (já incluídos)",
 ]);
@@ -131,11 +131,11 @@ export function identificacaoDoResumo(
     ],
     [
       "Contratados",
-      "Contratado e Migração; Contratado em outra lista vai a Outras situações",
+      "Contratado e Migração; Contratado em outra lista vai a Outros",
     ],
     [
-      "Cadastro de reserva",
-      "Pela fila de convocação: na fila, fora das vagas imediatas e ainda não chamado",
+      "Em reserva",
+      "Cadastro de reserva pela fila de convocação: na fila, fora das vagas imediatas e ainda não chamado",
     ],
   ];
   linhas.splice(antesDosDados < 0 ? linhas.length : antesDosDados, 0, ...base);

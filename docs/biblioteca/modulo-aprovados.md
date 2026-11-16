@@ -106,11 +106,13 @@ o detalhe e o arquivo); arquivo em `src/lib/exportacao-do-resumo-por-cargo.ts`.
   regra explícita (`lerRegimeEJornada`: trecho entre " - " que é só o regime ou só a jornada); o que
   faltar aparece como "não informado" e é contado num aviso.
 - **Unidade:** o vínculo (linha da lista: edital, vaga, modalidade); nada se junta por nome.
-- **Colunas exclusivas, que fecham Aprovados:** Contratados (Contratado e Migração), Desistência
-  (uma coluna só desde 16/11/2026: o banco não guarda se foi voluntária ou tácita), Cadastro de
-  reserva (pela fila de convocação: na fila, fora das vagas imediatas, não chamado) e Outras
-  situações (Convocado, A convocar, Documentação Rejeitada, Contratado em outra lista, Não
-  classificado).
+- **Colunas exclusivas, que fecham Aprovados** (títulos uniformes desde 16/11/2026, com a definição
+  na dica do cabeçalho, `DICA_DA_COLUNA`): Contratados (Contratado e Migração), Desistentes (uma
+  coluna só: o banco não guarda se foi voluntária ou tácita), Em reserva (cadastro de reserva, pela
+  fila de convocação: na fila, fora das vagas imediatas, não chamado) e Outros (Convocado, A
+  convocar, Documentação Rejeitada, Contratado em outra lista, Não classificado).
+- **Congelada:** o cabeçalho fica no topo e a coluna "Cargo e vaga" à esquerda ao rolar (na tela
+  larga; no celular a tabela vira cartões).
 - **Desenho aos poucos:** 50 linhas de vaga por vez, em grupos inteiros (`resumoAteOLimite`), e mais
   50 ao rolar perto do fim ou em "Carregar mais"; o total geral e a exportação são do recorte todo.
   Desenhar tudo de uma vez travava a tela (13 mil vínculos na Saúde Indígena).

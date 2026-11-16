@@ -219,7 +219,7 @@ describe("categoriaDoVinculo", () => {
       ),
     ).toEqual({ categoria: "outras", motivo: "contratadoEmOutraLista" });
   });
-  it("desistente cai em Desistência, uma coluna só", () => {
+  it("desistente cai em Desistentes, uma coluna só", () => {
     expect(
       categoriaDoVinculo({ ...base, status: "Desistente" }, RESERVA).categoria,
     ).toBe("desistencia");
