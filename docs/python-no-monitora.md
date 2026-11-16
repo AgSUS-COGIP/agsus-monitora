@@ -198,11 +198,13 @@ o Empregare separa a vaga por modalidade) é uma contratação só. O job decide
 contratação; as outras ficam "Contratado em outra lista" — não contam nos contratados nem ocupam
 vaga —, sem mudar o status gravado.
 
-- Regra: `python/monitora/aprovados/contratacao.py` (versão 1). Linha **alcançada** = a posição dela
+- Regra: `python/monitora/aprovados/contratacao.py` (versão 2). Linha **alcançada** = a posição dela
   está dentro do que a convocação daquela vaga já chamou (a maior posição com status entre os
   outros candidatos da vaga, sem as linhas em conflito). Uma só alcançada → ela; mais de uma → a de
-  ampla concorrência; nenhuma, ou mais de uma de ampla → **ambíguo** (não decide; a conferência
-  avisa). Sem desempate pela ordem em que a equipe marcou.
+  ampla concorrência; nenhuma, ou mais de uma de ampla → vale a **única linha com a admissão
+  conciliada com o RH** (`admitido` na leitura, de `TB_ADMISSAO_CONCILIADA`; motivo
+  `ADMISSAO_NO_RH`, versão 2, migration `20261116170000`); sem ela, ou com mais de uma →
+  **ambíguo** (não decide; a conferência avisa). Sem desempate pela ordem em que a equipe marcou.
 - **Congelada**: a decisão fica no instantâneo e não muda sozinha (nem se o alcance mudar). É
   refeita quando a base muda — o conjunto de linhas Contratado da matrícula no edital: o gatilho
   `TG_HISTCANDAPROV_CONTRATACAO` apaga a decisão na hora em que uma linha deixa ou passa a ser
