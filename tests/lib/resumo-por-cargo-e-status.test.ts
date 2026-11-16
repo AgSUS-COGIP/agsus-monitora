@@ -408,9 +408,7 @@ describe("montarResumoPorCargoEStatus", () => {
       semCodigoDaVaga: 2,
       semModalidade: 2,
     });
-    expect(resumo.editais[0]!.grupos[0]!.rotulo).toBe(
-      "Agente",
-    );
+    expect(resumo.editais[0]!.grupos[0]!.rotulo).toBe("Agente");
   });
 
   it("os ids de cada coluna abrem o mesmo recorte do número (F)", () => {
