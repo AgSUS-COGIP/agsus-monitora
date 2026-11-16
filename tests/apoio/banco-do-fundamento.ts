@@ -16,6 +16,7 @@
 */
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
+import { moldeDeBanco } from "./molde-de-banco.ts";
 
 export const NOME_DA_MIGRATION =
   "20261110215930_fundamento_conferido_da_eliminacao.sql";
@@ -207,7 +208,7 @@ language sql stable set search_path = '' as $$ select false $$;
 export type Banco = PGlite;
 
 /** O banco de hoje (antes da migration), com o edital fictício, a regra e a Triagem gravada. */
-export async function bancoDeHoje(): Promise<Banco> {
+async function montarBancoDeHoje(): Promise<Banco> {
   const db = await PGlite.create();
   await db.exec(INFRAESTRUTURA);
   for (const f of FUNCOES_DO_RETRATO) await db.exec(funcaoDoRetrato(f));
@@ -291,6 +292,9 @@ export async function bancoDeHoje(): Promise<Banco> {
   }
   return db;
 }
+
+/** O banco de hoje (clone de um molde por arquivo). */
+export const bancoDeHoje = moldeDeBanco(montarBancoDeHoje);
 
 /** Nova versão da regra da Triagem (vigente e conferida). */
 export async function novaVersaoDaRegra(
