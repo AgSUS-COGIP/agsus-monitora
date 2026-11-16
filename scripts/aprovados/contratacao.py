@@ -4,8 +4,9 @@ CONTRATADO EM OUTRA LISTA (job Python)
 Quando a mesma matrícula está Contratado em duas ou mais linhas do mesmo edital (a lista da
 ampla e a da cota), decide qual é a contratação e grava a situação efetiva das outras —
 "Contratado em outra lista" — no instantâneo TB_CONTRATACAO_APROVADO (migration
-20261024120000). Não muda o status gravado de nenhum aprovado. A regra (versão 1, congelada
-depois da primeira decisão) está em python/monitora/aprovados/contratacao.py.
+20261024120000). Não muda o status gravado de nenhum aprovado. A regra (versão 2: a convocação
+e, quando ela não decide, a admissão conciliada com o RH; congelada depois da primeira decisão)
+está em python/monitora/aprovados/contratacao.py.
 
 Lê pela RPC contratacao_ler_aprovados e grava pela gravar_contratacao_dos_aprovados (as duas
 só service_role; a de gravação só valida e guarda, e recalcula os contratados dos editais

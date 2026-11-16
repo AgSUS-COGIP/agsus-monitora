@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-11
+atualizado: 2026-11-16
 ---
 
 # Módulo: Lista de aprovados
@@ -72,7 +72,9 @@ e por quê (`src/lib/status-em-lote-dos-aprovados.ts`); o banco repete as regras
 
 "Contratado em outra lista" (migration `20261024120000`): situação decidida pelo job Python
 `scripts/aprovados/contratacao.py`, no dicionário `contratacao` do pacote; selo, indicadores e
-filtro usam `statusEfetivo`, a Convocação usa `statusNaFila`.
+filtro usam `statusEfetivo`, a Convocação usa `statusNaFila`. Regra versão 2 (16/11/2026,
+migration `20261116170000`): quando a convocação não decide, vale a única linha com a admissão
+conciliada com o RH (motivo `ADMISSAO_NO_RH`); só fica ambíguo se nenhuma ou mais de uma tiver.
 
 ## Exportar a lista (issue #583)
 

@@ -20564,7 +20564,10 @@ CREATE FUNCTION public.contratacao_ler_aprovados() RETURNS jsonb
           'vaga', c.codigo_vaga, 'modalidade', c.modalidade, 'classificacao', c.classificacao,
           'status', c.status,
           'vinculo', case when c.status = 'Contratado' then private."FC_VINCULO_DA_MATRICULA"(c.matricula) end,
-          'anterior', case when c.status = 'Contratado' then c."CO_CANDIDATO_ANTERIOR" end)
+          'anterior', case when c.status = 'Contratado' then c."CO_CANDIDATO_ANTERIOR" end,
+          -- Regra v2 (20261116170000): a linha tem a admissão conciliada com o RH?
+          'admitido', case when c.status = 'Contratado' then exists (
+            select 1 from public."TB_ADMISSAO_CONCILIADA" a where a."CO_CANDIDATO_APROVADO" = c.id) end)
           order by c.id), '[]'::jsonb)
         from public."TB_CANDIDATO_APROVADO" c
         join vigentes v on v.id = c.lista_id
@@ -20585,7 +20588,7 @@ $$;
 -- Name: FUNCTION contratacao_ler_aprovados(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.contratacao_ler_aprovados() IS 'Job "Contratado em outra lista" (Python, só service_role): as linhas com status das listas de aprovados vigentes (id, lista, edital, área, vaga, modalidade, posição, status; nas Contratado, o hash da matrícula e o candidato anterior) e o instantâneo TB_CONTRATACAO_APROVADO. Sem nome, CPF nem matrícula. 20261024120000.';
+COMMENT ON FUNCTION public.contratacao_ler_aprovados() IS 'Job "Contratado em outra lista" (Python, só service_role): as linhas com status das listas de aprovados vigentes (id, lista, edital, área, vaga, modalidade, posição, status; nas Contratado, o hash da matrícula e o candidato anterior) e o instantâneo TB_CONTRATACAO_APROVADO. Sem nome, CPF nem matrícula. 20261024120000. Regra v2 (20261116170000): cada linha Contratado diz se tem a admissão conciliada com o RH (admitido).';
 
 --
 -- Name: convocar_para_entrevista(uuid, uuid, uuid[]); Type: FUNCTION; Schema: public; Owner: -
@@ -24807,7 +24810,7 @@ begin
            (select 'duplicada' from t_decisao group by candidato having count(*) > 1 limit 1),
            (select 'campos' from t_decisao
              where candidato is null or edital is null or vinculo is null or situacao is null or motivo is null
-                or texto is null or base is null or versao is distinct from 1 limit 1),
+                or texto is null or base is null or versao is null or versao not in (1, 2) limit 1),
            (select 'linha' from t_decisao d
              where not exists (select 1 from atuais a
                                 where a.id = d.candidato and a.edital = d.edital and a.vinculo = d.vinculo) limit 1),
@@ -45184,11 +45187,11 @@ CREATE TABLE public."TB_CONTRATACAO_APROVADO" (
     CONSTRAINT "CK_CONTRATAPROV_ESCOLHA" CHECK (
 CASE "TP_SITUACAO"
     WHEN 'AMBIGUO'::text THEN (("CO_CANDIDATO_CONTRATACAO" IS NULL) AND (("TP_MOTIVO")::text = ANY ((ARRAY['NENHUMA_ALCANCADA'::character varying, 'MAIS_DE_UMA_AMPLA'::character varying, 'NENHUMA_AMPLA'::character varying])::text[])))
-    WHEN 'CONTRATACAO'::text THEN (("CO_CANDIDATO_CONTRATACAO" = "CO_CANDIDATO_APROVADO") AND (("TP_MOTIVO")::text = ANY ((ARRAY['UNICA_ALCANCADA'::character varying, 'AMPLA_ALCANCADA'::character varying, 'HERDADA'::character varying])::text[])))
-    ELSE (("CO_CANDIDATO_CONTRATACAO" IS NOT NULL) AND ("CO_CANDIDATO_CONTRATACAO" <> "CO_CANDIDATO_APROVADO") AND (("TP_MOTIVO")::text = ANY ((ARRAY['UNICA_ALCANCADA'::character varying, 'AMPLA_ALCANCADA'::character varying, 'HERDADA'::character varying])::text[])))
+    WHEN 'CONTRATACAO'::text THEN (("CO_CANDIDATO_CONTRATACAO" = "CO_CANDIDATO_APROVADO") AND (("TP_MOTIVO")::text = ANY ((ARRAY['UNICA_ALCANCADA'::character varying, 'AMPLA_ALCANCADA'::character varying, 'HERDADA'::character varying, 'ADMISSAO_NO_RH'::character varying])::text[])))
+    ELSE (("CO_CANDIDATO_CONTRATACAO" IS NOT NULL) AND ("CO_CANDIDATO_CONTRATACAO" <> "CO_CANDIDATO_APROVADO") AND (("TP_MOTIVO")::text = ANY ((ARRAY['UNICA_ALCANCADA'::character varying, 'AMPLA_ALCANCADA'::character varying, 'HERDADA'::character varying, 'ADMISSAO_NO_RH'::character varying])::text[])))
 END),
     CONSTRAINT "CK_CONTRATAPROV_NUVERSAO" CHECK (("NU_VERSAO_REGRA" > 0)),
-    CONSTRAINT "CK_CONTRATAPROV_TPMOTIVO" CHECK ((("TP_MOTIVO")::text = ANY ((ARRAY['UNICA_ALCANCADA'::character varying, 'AMPLA_ALCANCADA'::character varying, 'HERDADA'::character varying, 'NENHUMA_ALCANCADA'::character varying, 'MAIS_DE_UMA_AMPLA'::character varying, 'NENHUMA_AMPLA'::character varying])::text[]))),
+    CONSTRAINT "CK_CONTRATAPROV_TPMOTIVO" CHECK ((("TP_MOTIVO")::text = ANY ((ARRAY['UNICA_ALCANCADA'::character varying, 'AMPLA_ALCANCADA'::character varying, 'HERDADA'::character varying, 'ADMISSAO_NO_RH'::character varying, 'NENHUMA_ALCANCADA'::character varying, 'MAIS_DE_UMA_AMPLA'::character varying, 'NENHUMA_AMPLA'::character varying])::text[]))),
     CONSTRAINT "CK_CONTRATAPROV_TPSITUACAO" CHECK ((("TP_SITUACAO")::text = ANY ((ARRAY['CONTRATACAO'::character varying, 'OUTRA_LISTA'::character varying, 'AMBIGUO'::character varying])::text[])))
 );
 
@@ -45286,7 +45289,7 @@ COMMENT ON CONSTRAINT "CK_CONTRATAPROV_DSVINCULO" ON public."TB_CONTRATACAO_APRO
 -- Name: CONSTRAINT "CK_CONTRATAPROV_ESCOLHA" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON CONSTRAINT "CK_CONTRATAPROV_ESCOLHA" ON public."TB_CONTRATACAO_APROVADO" IS 'Ambíguo sem escolha; contratação aponta para si; em outra lista aponta para outra linha; o motivo combina.';
+COMMENT ON CONSTRAINT "CK_CONTRATAPROV_ESCOLHA" ON public."TB_CONTRATACAO_APROVADO" IS 'Ambíguo sem escolha; contratação aponta para si; em outra lista aponta para outra linha; o motivo combina (ADMISSAO_NO_RH só nas decisões: regra v2, 20261116170000).';
 
 --
 -- Name: CONSTRAINT "CK_CONTRATAPROV_NUVERSAO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
@@ -45298,7 +45301,7 @@ COMMENT ON CONSTRAINT "CK_CONTRATAPROV_NUVERSAO" ON public."TB_CONTRATACAO_APROV
 -- Name: CONSTRAINT "CK_CONTRATAPROV_TPMOTIVO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON CONSTRAINT "CK_CONTRATAPROV_TPMOTIVO" ON public."TB_CONTRATACAO_APROVADO" IS 'Motivos válidos.';
+COMMENT ON CONSTRAINT "CK_CONTRATAPROV_TPMOTIVO" ON public."TB_CONTRATACAO_APROVADO" IS 'Motivos válidos (ADMISSAO_NO_RH desde a regra v2, 20261116170000).';
 
 --
 -- Name: CONSTRAINT "CK_CONTRATAPROV_TPSITUACAO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -

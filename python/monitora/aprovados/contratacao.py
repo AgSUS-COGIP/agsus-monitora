@@ -1,5 +1,5 @@
 """
-QUAL LINHA É A CONTRATAÇÃO ("CONTRATADO EM OUTRA LISTA"), REGRA VERSÃO 1
+QUAL LINHA É A CONTRATAÇÃO ("CONTRATADO EM OUTRA LISTA"), REGRA VERSÃO 2
 
 Quem concorre à cota concorre também à ampla, e o Empregare separa a vaga por modalidade
 ("MÉDICO DE FAMÍLIA E COMUNIDADE" e "… PPIQ"): a mesma pessoa tem uma linha em cada lista do
@@ -18,9 +18,12 @@ A REGRA (o que o edital diz e o banco tem)
   2. Uma só alcançada → é a contratação.
   3. Mais de uma alcançada → a de ampla concorrência (só ampla, sem cota na modalidade): quem
      passa na ampla não ocupa vaga de cota.
-  4. Nenhuma alcançada, ou mais de uma (ou nenhuma) de ampla entre as alcançadas → AMBÍGUO: a
-     regra não escolhe; a conferência avisa a equipe, que marca a linha pela qual a pessoa não
-     foi contratada como "Contratado em outra lista" (o status explícito).
+  4. Nenhuma alcançada, ou mais de uma (ou nenhuma) de ampla entre as alcançadas, mas só UMA
+     linha com a admissão conciliada com o RH (TB_ADMISSAO_CONCILIADA liga cada vínculo do RH a
+     uma linha da lista) → essa é a contratação: o RH diz por qual vaga a pessoa entrou
+     (versão 2, 16/11/2026).
+  5. Fora isso → AMBÍGUO: a regra não escolhe; a conferência avisa a equipe, que marca a linha
+     pela qual a pessoa não foi contratada como "Contratado em outra lista" (o status explícito).
   Sem desempate pela ordem em que a equipe marcou: é a ordem de digitação, não do edital.
 
 CONGELADA
@@ -39,7 +42,7 @@ Ficam fora: a mesma matrícula em editais diferentes (continua como aviso da con
 import re
 from collections import defaultdict
 
-VERSAO = 1
+VERSAO = 2
 
 CONTRATADO = "Contratado"
 MIGRACAO = "Migração"
@@ -49,10 +52,19 @@ CONTRATACAO, OUTRA_LISTA, AMBIGUO = "CONTRATACAO", "OUTRA_LISTA", "AMBIGUO"
 UNICA_ALCANCADA = "UNICA_ALCANCADA"
 AMPLA_ALCANCADA = "AMPLA_ALCANCADA"
 HERDADA = "HERDADA"
+ADMISSAO_NO_RH = "ADMISSAO_NO_RH"
 NENHUMA_ALCANCADA = "NENHUMA_ALCANCADA"
 MAIS_DE_UMA_AMPLA = "MAIS_DE_UMA_AMPLA"
 NENHUMA_AMPLA = "NENHUMA_AMPLA"
-MOTIVOS = (UNICA_ALCANCADA, AMPLA_ALCANCADA, HERDADA, NENHUMA_ALCANCADA, MAIS_DE_UMA_AMPLA, NENHUMA_AMPLA)
+MOTIVOS = (
+    UNICA_ALCANCADA,
+    AMPLA_ALCANCADA,
+    HERDADA,
+    ADMISSAO_NO_RH,
+    NENHUMA_ALCANCADA,
+    MAIS_DE_UMA_AMPLA,
+    NENHUMA_AMPLA,
+)
 
 _COTA = re.compile(
     r"pret|pard|ind[ií]gen|pcd|pessoas? com defici|defici[eê]n|quilomb|trans\b|ppiq|ppq|ppp|negr",
@@ -122,8 +134,7 @@ def _onde_parou(linha, alcance):
     return "ninguém foi chamado ainda" if limite is None else f"a convocação parou no {limite}º"
 
 
-def decidir_grupo(grupo, alcance):
-    """(id da contratação ou None, motivo) para as linhas em conflito de um grupo."""
+def _pela_convocacao(grupo, alcance):
     alcancadas = [linha for linha in grupo if alcancada(linha, alcance)]
     if len(alcancadas) == 1:
         return alcancadas[0]["id"], UNICA_ALCANCADA
@@ -133,6 +144,18 @@ def decidir_grupo(grupo, alcance):
     if len(amplas) == 1:
         return amplas[0]["id"], AMPLA_ALCANCADA
     return None, (MAIS_DE_UMA_AMPLA if amplas else NENHUMA_AMPLA)
+
+
+def decidir_grupo(grupo, alcance):
+    """(id da contratação ou None, motivo) para as linhas em conflito de um grupo."""
+    contratacao, motivo = _pela_convocacao(grupo, alcance)
+    if contratacao is not None:
+        return contratacao, motivo
+    # A convocação não decide: vale a única linha com admissão no RH.
+    admitidas = [linha for linha in grupo if linha.get("admitido")]
+    if len(admitidas) == 1:
+        return admitidas[0]["id"], ADMISSAO_NO_RH
+    return None, motivo
 
 
 def texto_do_motivo(linha, grupo, contratacao, motivo, alcance):
@@ -154,6 +177,7 @@ def texto_do_motivo(linha, grupo, contratacao, motivo, alcance):
             UNICA_ALCANCADA: "é a única linha da pessoa dentro do que a convocação já chamou",
             AMPLA_ALCANCADA: "a convocação a alcançou na ampla concorrência, que não ocupa vaga de cota",
             HERDADA: "decisão da lista anterior do edital, mantida na publicação",
+            ADMISSAO_NO_RH: "é a linha que o RH registra na admissão da pessoa",
         }[motivo]
         texto = f"Esta é a contratação: {porque}. A outra linha ({outras}) fica Contratado em outra lista."
     else:
@@ -162,6 +186,7 @@ def texto_do_motivo(linha, grupo, contratacao, motivo, alcance):
             AMPLA_ALCANCADA: "a convocação alcançou a pessoa nas duas, e quem passa na ampla concorrência não "
             "ocupa vaga de cota",
             HERDADA: "decisão da lista anterior do edital, mantida na publicação",
+            ADMISSAO_NO_RH: "é a linha que o RH registra na admissão; a convocação sozinha não decidia",
         }[motivo]
         texto = (
             f"A pessoa foi contratada pela linha {rotulo(vencedora) if vencedora else 'da outra lista'}: {porque}. "
