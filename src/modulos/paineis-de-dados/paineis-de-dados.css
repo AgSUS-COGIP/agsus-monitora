@@ -1,0 +1,52 @@
+/*
+  Painéis: a alça de largura na borda direita de cada cabeçalho da tabela.
+  Arrastar (ou ←/→ com foco na alça) muda a largura da coluna; com alguma
+  largura escolhida, a tabela passa a layout fixo para a coluna poder também
+  estreitar. As larguras ficam só na memória da tela.
+*/
+.paineis-tela thead th {
+  position: relative;
+}
+
+.paineis-alca-da-coluna {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.paineis-alca-da-coluna:hover {
+  background: var(--border-subtle);
+}
+
+.paineis-alca-da-coluna:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.paineis-tela table[data-larguras-escolhidas] {
+  table-layout: fixed;
+}
+
+.paineis-tela table[data-larguras-escolhidas] th,
+.paineis-tela table[data-larguras-escolhidas] td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.paineis-origem-dos-dados {
+  max-width: 28rem;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+
+.paineis-origem-dos-dados p {
+  margin: 0 0 var(--space-2);
+}
+
+.paineis-origem-dos-dados p:last-child {
+  margin-bottom: 0;
+}

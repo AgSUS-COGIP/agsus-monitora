@@ -558,23 +558,17 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     resumo:
       "Painéis › Fontes dos dados: troca a fonte de uma coluna na área (p_visao nulo = padrão), só entre as opções do catálogo, com motivo e histórico. Administrador em paineis_dados (20261113220000).",
   },
-  listar_resumo_dos_editais_do_painel: {
-    argumentos: ["p_area"],
+  ler_relatorio_do_painel: {
+    argumentos: ["p_area", "p_relatorio", "p_pagina", "p_por_pagina"],
     critica: false,
     resumo:
-      "Painéis › Resumo dos editais (json { linhas }): uma linha por edital da área — número, unidade, vagas imediatas, data da divulgação e data final do processo seletivo. Recurso paineis_dados (20261113210000).",
+      "Painéis (json, schema 4): uma página de um relatório da área (resumo-dos-editais, editais-por-cargo, aprovados), do resultado pronto no banco, com o recorte da coordenação — linhas, total, pagina, por_pagina, calculado_em, fontes e avisos. p_por_pagina 25, 50 ou 100; nulo = todas as linhas (download). paineis_dados ≥ Leitor (20261116160000).",
   },
-  listar_editais_por_cargo_do_painel: {
-    argumentos: ["p_area"],
+  sincronizar_relatorio_do_painel: {
+    argumentos: ["p_area", "p_relatorio"],
     critica: false,
     resumo:
-      "Painéis › Editais por cargo (json { linhas }): uma linha por vaga — código, cargo, vagas imediatas do título da vaga, inscritos da Seleção e aprovados da lista vigente (casados pelo código da vaga). Recurso paineis_dados (20261113210000).",
-  },
-  listar_aprovados_do_painel: {
-    argumentos: ["p_area"],
-    critica: false,
-    resumo:
-      "Painéis › Aprovados (json { linhas }): uma linha por aprovado da lista vigente — edital, cargo, nota, classificação, nome, status, matrícula e a data em que o status atual (Contratado/Migração) foi registrado. Recurso paineis_dados (20261113210000).",
+      "Painéis › Sincronizar (json { calculado_em, recalculado }): recalcula o relatório da área no banco, no máximo uma vez por minuto (dentro do minuto, não recalcula). paineis_dados ≥ Leitor (20261116160000).",
   },
   listar_candidatos_aprovados_compacto: {
     argumentos: ["p_area", "p_versao"],

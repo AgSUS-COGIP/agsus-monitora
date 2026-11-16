@@ -89,16 +89,112 @@ export async function bancoDosPaineis(): Promise<Banco> {
   return db;
 }
 
-/** A sessão: quem está logado, o nível em paineis_dados (0–3) e as áreas. */
+/**
+ * A sessão: quem está logado, o nível em paineis_dados (0–3), as áreas e o
+ * recorte da coordenação (`editais`: vazio = vê todos).
+ */
 export async function entrar(
   db: Banco,
-  { uid, nivel, areas }: { uid: string | null; nivel: number; areas: string[] },
+  {
+    uid,
+    nivel,
+    areas,
+    editais = [],
+  }: { uid: string | null; nivel: number; areas: string[]; editais?: string[] },
 ): Promise<void> {
   await db.query(
     `select set_config('teste.uid', $1, false), set_config('teste.nivel', $2, false),
-            set_config('teste.areas', $3, false)`,
-    [uid ?? "", String(nivel), areas.join(",")],
+            set_config('teste.areas', $3, false), set_config('teste.editais', $4, false)`,
+    [uid ?? "", String(nivel), areas.join(","), editais.join(",")],
   );
+}
+
+/* ── Relatórios prontos (migration 20261116160000) ─────────────────── */
+
+export const NOME_DOS_PRONTOS =
+  "20261116160000_relatorios_dos_paineis_prontos.sql";
+export const migrationDosProntos = () =>
+  ler(`supabase/migrations/${NOME_DOS_PRONTOS}`);
+export const rollbackDosProntos = () =>
+  ler(`supabase/rollback/${NOME_DOS_PRONTOS}`);
+
+const COM_FONTES = "20261113240000_relatorios_dos_paineis_com_fontes.sql";
+export const RPCS_ANTIGAS = [
+  "listar_resumo_dos_editais_do_painel",
+  "listar_editais_por_cargo_do_painel",
+  "listar_aprovados_do_painel",
+] as const;
+
+/** O bloco `create … function <inicio> … $function$;` de um SQL. */
+export function blocoDaFuncao(sql: string, inicio: string): string {
+  const i = sql.indexOf(inicio);
+  if (i < 0) throw new Error(`função não achada: ${inicio}`);
+  const fim = sql.indexOf("$function$;", sql.indexOf("as $function$", i) + 13);
+  return sql.slice(i, fim + "$function$;".length);
+}
+/** O corpo (prosrc) de um bloco: o texto entre `as $function$` e `$function$`. */
+export function corpoDaFuncao(bloco: string): string {
+  const de = bloco.indexOf("as $function$") + "as $function$".length;
+  return bloco.slice(de, bloco.lastIndexOf("$function$"));
+}
+/** As três RPCs dos relatórios como estão no banco (20261113240000). */
+export const rpcsAntigas = () => {
+  const sql = ler(`supabase/migrations/${COM_FONTES}`);
+  return RPCS_ANTIGAS.map((n) =>
+    blocoDaFuncao(sql, `create or replace function public.${n}(p_area text)`),
+  );
+};
+/** salvar_fonte_da_coluna como 20261113220000 a criou. */
+export const salvarDeAntes = () =>
+  blocoDaFuncao(migration(), "create function public.salvar_fonte_da_coluna(");
+
+const RECORTE_DA_COORDENACAO = `
+create function private."FC_EDITAIS_VISIVEIS"() returns uuid[]
+language sql stable as $$
+  select case when coalesce(current_setting('teste.editais', true), '') = '' then null
+              else string_to_array(current_setting('teste.editais', true), ',')::uuid[] end
+$$;
+`;
+
+/*
+  O cálculo de verdade lê as tabelas do banco (editais, Seleção, listas), que o
+  PGlite não tem: a imitação devolve as linhas de public.linha_de_teste, passa
+  pelas fontes como o de verdade e falha na área de teste.falhar ('tudo' = todas).
+*/
+const CALCULO_DE_TESTE = `
+create table public.linha_de_teste (area text, relatorio text, n integer, linha jsonb);
+create or replace function private."FC_LINHAS_DO_RELATORIO_PAINEL"(p_area text, p_relatorio text)
+returns jsonb language plpgsql stable set search_path to '' as $f$
+begin
+  if coalesce(current_setting('teste.falhar', true), '') in ('tudo', p_area) then
+    raise exception 'Falha de teste em %', p_area;
+  end if;
+  return private."FC_APLICAR_FONTES_DO_PAINEL"(p_area, p_relatorio, coalesce(
+    (select jsonb_agg(t.linha order by t.n) from public.linha_de_teste t
+      where t.area = p_area and t.relatorio = p_relatorio), '[]'::jsonb));
+end
+$f$;
+`;
+
+/*
+  A 20261116170000_limites_de_tempo_dos_paineis.sql foi aplicada e saiu do
+  repositório (a main ganhou outra migration com o mesmo timestamp); o SQL dela
+  e o rollback ficaram nas fixtures, como no banco.
+*/
+export const migrationDosLimites = () =>
+  ler("tests/fixtures/limites-de-tempo-dos-paineis.migration.sql");
+export const rollbackDosLimites = () =>
+  ler("tests/fixtures/limites-de-tempo-dos-paineis.rollback.sql");
+
+/** O banco com as fontes, as RPCs de 20261113240000 e as migrations dos prontos. */
+export async function bancoComRelatoriosProntos(): Promise<Banco> {
+  const db = await bancoDosPaineis();
+  await db.exec(RECORTE_DA_COORDENACAO);
+  await db.exec(rpcsAntigas().join("\n\n"));
+  await db.exec(migrationDosProntos());
+  await db.exec(migrationDosLimites());
+  await db.exec(CALCULO_DE_TESTE);
+  return db;
 }
 
 /** Uma linha só, ou nulo. */

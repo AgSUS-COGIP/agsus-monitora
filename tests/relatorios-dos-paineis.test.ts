@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   RELATORIOS_DOS_PAINEIS,
   csvDoRelatorio,
+  chaveDaPagina,
   definicaoDoRelatorio,
-  geradoEmDoRelatorio,
+  larguraArrastada,
+  linhasDaOrigem,
+  lerPaginaDoRelatorio,
   linhasDoRelatorio,
   nomeDoArquivoDoRelatorio,
   paginaDaTabela,
@@ -127,12 +130,83 @@ describe("leitura da resposta", () => {
     expect(linhasDoRelatorio(resumo, [{ edital: "1/2026" }])).toHaveLength(1);
   });
 
-  it("guarda o momento da leitura só quando é uma data", () => {
-    expect(geradoEmDoRelatorio({ gerado_em: "2026-11-13T15:00:00Z" })).toBe(
-      "2026-11-13T15:00:00Z",
+  it("lê a página: linhas, total, página, tamanho e data do cálculo", () => {
+    expect(
+      lerPaginaDoRelatorio(resumo, {
+        calculado_em: "2026-11-13T15:00:00Z",
+        total: 120,
+        pagina: 2,
+        por_pagina: 50,
+        linhas: [{ edital: "51/2026" }],
+      }),
+    ).toEqual({
+      linhas: [expect.objectContaining({ edital: "51/2026" })],
+      total: 120,
+      pagina: 2,
+      porPagina: 50,
+      calculadoEm: "2026-11-13T15:00:00Z",
+    });
+  });
+
+  it("a página tolera resposta vazia ou estranha", () => {
+    expect(lerPaginaDoRelatorio(resumo, null)).toEqual({
+      linhas: [],
+      total: 0,
+      pagina: 1,
+      porPagina: null,
+      calculadoEm: null,
+    });
+    expect(
+      lerPaginaDoRelatorio(resumo, {
+        calculado_em: "x",
+        total: "dez",
+        pagina: -3,
+        linhas: [{ edital: "1/2026" }],
+      }),
+    ).toMatchObject({ total: 1, pagina: 1, calculadoEm: null });
+  });
+
+  it("a chave da página junta área, relatório, página e tamanho", () => {
+    expect(chaveDaPagina("sede", "aprovados", 2, 25)).toBe(
+      "sede|aprovados|2|25",
     );
-    expect(geradoEmDoRelatorio({ gerado_em: "x" })).toBeNull();
-    expect(geradoEmDoRelatorio([])).toBeNull();
+  });
+});
+
+describe("largura das colunas", () => {
+  it("arrastar soma o deslocamento, arredonda e não passa de 60 px para baixo", () => {
+    expect(larguraArrastada(120, -100)).toBe(60);
+    expect(larguraArrastada(120, 35.6)).toBe(156);
+  });
+});
+
+describe("origem dos dados", () => {
+  it("sem fonte trocada, só o texto fixo do relatório", () => {
+    expect(linhasDaOrigem(porCargo, {})).toEqual([
+      "Uma linha por vaga. Vaga, cargo e inscritos: Seleção (planilha da Auditoria, aba Resultado). Aprovados: lista de aprovados vigente, casada pelo código da vaga. Vagas imediatas: o número no título da vaga. Vagas que só estão na lista e editais sem Seleção também aparecem.",
+    ]);
+  });
+
+  it("com fonte trocada na área, uma linha por coluna fora do padrão", () => {
+    expect(
+      linhasDaOrigem(porCargo, {
+        vagas_imediatas: {
+          padrao: false,
+          visao: "VW_EDITAL_QUADRO_DE_VAGAS",
+          coluna: "QT_VAGA_IMEDIATA",
+          rotulo:
+            "Quadro de vagas do edital › Vagas imediatas (soma do quadro)",
+        },
+        inscritos: {
+          padrao: true,
+          visao: null,
+          coluna: null,
+          rotulo: "Padrão",
+        },
+      })[1],
+    ).toBe(
+      "Fonte trocada nesta área: Vagas imediatas (título da vaga) → Quadro de vagas do edital › Vagas imediatas (soma do quadro)",
+    );
   });
 });
 

@@ -8,8 +8,10 @@ import type { FonteDaColuna } from "./fontes-dos-paineis.ts";
 
 /*
   RELATÓRIOS DOS PAINÉIS (bloco Dados do menu): três tabelas de conferência
-  da área escolhida, para baixar em CSV e XLSX. Cada uma vem de uma RPC só de
-  leitura (migration 20261113210000_relatorios_dos_paineis.sql):
+  da área escolhida, para baixar em CSV e XLSX. O banco guarda cada uma pronta
+  (recalculada de hora em hora, pelo Sincronizar e na troca de fonte) e a tela
+  lê uma página por vez de `ler_relatorio_do_painel` (migration
+  20261116160000_relatorios_dos_paineis_prontos.sql):
 
   - Resumo dos editais — uma linha por edital;
   - Editais por cargo — uma linha por vaga de cada edital (código, cargo,
@@ -17,16 +19,17 @@ import type { FonteDaColuna } from "./fontes-dos-paineis.ts";
     lista vigente, casados pelo código da vaga);
   - Aprovados — uma linha por aprovado da lista vigente.
 
-  Aqui: as colunas de cada relatório, a leitura da resposta (`linhasDoRelatorio`,
-  tolerante a campo ausente), o texto de cada célula na tela, o CSV (`;`, BOM,
+  Aqui: as colunas de cada relatório, a leitura da resposta (`linhasDoRelatorio`
+  e `lerPaginaDoRelatorio`, tolerantes a campo ausente), o texto de cada célula
+  na tela, o CSV (`;`, BOM,
   CRLF, células protegidas contra fórmula), as planilhas do XLSX e o nome do
   arquivo. Sem DOM: a tela é src/modulos/paineis-de-dados/.
 */
 
-/* As leituras (RPC_*: o nome que o contrato de RPC confere). */
-const RPC_RESUMO_DOS_EDITAIS = "listar_resumo_dos_editais_do_painel";
-const RPC_EDITAIS_POR_CARGO = "listar_editais_por_cargo_do_painel";
-const RPC_APROVADOS_DO_PAINEL = "listar_aprovados_do_painel";
+/* As RPCs (o nome que o contrato de RPC confere). */
+export const RPC_LER_RELATORIO_DO_PAINEL = "ler_relatorio_do_painel";
+export const RPC_SINCRONIZAR_RELATORIO_DO_PAINEL =
+  "sincronizar_relatorio_do_painel";
 
 export type IdDoRelatorio =
   "resumo-dos-editais" | "editais-por-cargo" | "aprovados";
@@ -47,10 +50,6 @@ export interface DefinicaoDoRelatorio {
   rotulo: string;
   /** O nome da aba no XLSX (até 31 caracteres) e o começo do nome do arquivo. */
   planilha: string;
-  rpc:
-    | typeof RPC_RESUMO_DOS_EDITAIS
-    | typeof RPC_EDITAIS_POR_CARGO
-    | typeof RPC_APROVADOS_DO_PAINEL;
   colunas: readonly ColunaDoRelatorio[];
 }
 
@@ -67,7 +66,6 @@ export const RELATORIOS_DOS_PAINEIS: readonly DefinicaoDoRelatorio[] =
       id: "resumo-dos-editais" as const,
       rotulo: "Resumo dos editais",
       planilha: "Resumo dos editais",
-      rpc: RPC_RESUMO_DOS_EDITAIS,
       colunas: Object.freeze([
         coluna("edital", "Número do edital", "texto", 16),
         coluna("unidade", "DSEI / Unidade", "texto", 36),
@@ -80,7 +78,6 @@ export const RELATORIOS_DOS_PAINEIS: readonly DefinicaoDoRelatorio[] =
       id: "editais-por-cargo" as const,
       rotulo: "Editais por cargo",
       planilha: "Editais por cargo",
-      rpc: RPC_EDITAIS_POR_CARGO,
       colunas: Object.freeze([
         coluna("edital", "Número do edital", "texto", 16),
         coluna("unidade", "DSEI / Unidade", "texto", 36),
@@ -100,7 +97,6 @@ export const RELATORIOS_DOS_PAINEIS: readonly DefinicaoDoRelatorio[] =
       id: "aprovados" as const,
       rotulo: "Aprovados",
       planilha: "Aprovados",
-      rpc: RPC_APROVADOS_DO_PAINEL,
       colunas: Object.freeze([
         coluna("edital", "Edital", "texto", 16),
         coluna("unidade", "DSEI / Unidade", "texto", 30),
@@ -125,6 +121,49 @@ export function definicaoDoRelatorio(id: unknown): DefinicaoDoRelatorio {
     RELATORIOS_DOS_PAINEIS.find((r) => r.id === id) ??
     (RELATORIOS_DOS_PAINEIS[0] as DefinicaoDoRelatorio)
   );
+}
+
+/* ── Largura das colunas e origem dos dados ────────────────────────── */
+
+/** A coluna não estreita além disto (px), ao arrastar a borda. */
+export const LARGURA_MINIMA_DA_COLUNA = 60;
+
+/** A largura depois de arrastar a borda `deslocamento` px a partir de `inicial`. */
+export function larguraArrastada(
+  inicial: number,
+  deslocamento: number,
+): number {
+  return Math.max(LARGURA_MINIMA_DA_COLUNA, Math.round(inicial + deslocamento));
+}
+
+/** De onde vêm os dados de cada relatório (o ⓘ ao lado das abas). */
+export const ORIGEM_DOS_DADOS: Readonly<Record<IdDoRelatorio, string>> =
+  Object.freeze({
+    "resumo-dos-editais":
+      "Uma linha por edital da área, sem os de treinamento. Vagas imediatas: cadastro do edital. Datas: cronograma do edital (início da 1ª etapa e fim da última) ou, sem cronograma, as datas do cadastro.",
+    "editais-por-cargo":
+      "Uma linha por vaga. Vaga, cargo e inscritos: Seleção (planilha da Auditoria, aba Resultado). Aprovados: lista de aprovados vigente, casada pelo código da vaga. Vagas imediatas: o número no título da vaga. Vagas que só estão na lista e editais sem Seleção também aparecem.",
+    aprovados:
+      "Uma linha por aprovado da lista de aprovados vigente de cada edital. Status: situação registrada no sistema. Data de admissão: dia em que o aprovado virou Contratado no sistema.",
+  });
+
+/**
+ * O texto do ⓘ: a origem fixa do relatório e, para cada coluna com fonte
+ * diferente do padrão na área (na ordem das colunas), a fonte em uso.
+ */
+export function linhasDaOrigem(
+  definicao: DefinicaoDoRelatorio,
+  fontes: Readonly<Record<string, FonteDaColuna>>,
+): string[] {
+  return [
+    ORIGEM_DOS_DADOS[definicao.id],
+    ...definicao.colunas.flatMap((c) => {
+      const fonte = fontes[c.campo];
+      return fonte && !fonte.padrao
+        ? [`Fonte trocada nesta área: ${c.rotulo} → ${fonte.rotulo}`]
+        : [];
+    }),
+  ];
 }
 
 /** Uma linha do relatório: os campos das colunas, já no tipo de cada uma. */
@@ -183,13 +222,58 @@ export function linhasDoRelatorio(
     );
 }
 
-/** O momento da leitura (`gerado_em`), quando a resposta traz. */
-export function geradoEmDoRelatorio(resposta: unknown): string | null {
-  if (!resposta || typeof resposta !== "object" || Array.isArray(resposta))
-    return null;
-  const valor = texto((resposta as { gerado_em?: unknown }).gerado_em);
-  return valor && !Number.isNaN(Date.parse(valor)) ? valor : null;
+/** Uma página lida do banco (`ler_relatorio_do_painel`). */
+export interface PaginaLida {
+  linhas: LinhaDoRelatorio[];
+  /** Quantas linhas o relatório tem para quem lê (com o recorte da coordenação). */
+  total: number;
+  pagina: number;
+  /** Nulo: todas as linhas (o download). */
+  porPagina: number | null;
+  /** Quando o banco calculou o relatório. */
+  calculadoEm: string | null;
 }
+
+const inteiroPositivo = (valor: unknown) => {
+  const n = Number(valor);
+  return Number.isInteger(n) && n > 0 ? n : null;
+};
+
+/**
+ * A página da resposta: as linhas (como `linhasDoRelatorio`), o total, a
+ * página, o tamanho e a data do cálculo. Total ausente ou inválido vale o
+ * número de linhas; página inválida, 1; data inválida, nula.
+ */
+export function lerPaginaDoRelatorio(
+  definicao: DefinicaoDoRelatorio,
+  resposta: unknown,
+): PaginaLida {
+  const linhas = linhasDoRelatorio(definicao, resposta);
+  const bruto =
+    resposta && typeof resposta === "object" && !Array.isArray(resposta)
+      ? (resposta as Record<string, unknown>)
+      : {};
+  const total = Number(bruto.total);
+  const calculadoEm = texto(bruto.calculado_em);
+  return {
+    linhas,
+    total: Number.isInteger(total) && total >= 0 ? total : linhas.length,
+    pagina: inteiroPositivo(bruto.pagina) ?? 1,
+    porPagina: inteiroPositivo(bruto.por_pagina),
+    calculadoEm:
+      calculadoEm && !Number.isNaN(Date.parse(calculadoEm))
+        ? calculadoEm
+        : null,
+  };
+}
+
+/** A chave de uma página no cache da tela. */
+export const chaveDaPagina = (
+  area: string,
+  relatorio: IdDoRelatorio,
+  pagina: number,
+  porPagina: number,
+) => `${area}|${relatorio}|${pagina}|${porPagina}`;
 
 const NUMERO_INTEIRO = new Intl.NumberFormat("pt-BR", {
   maximumFractionDigits: 0,

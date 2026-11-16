@@ -1,10 +1,13 @@
 import {
+  LINHAS_POR_PAGINA,
   MIME_DO_RELATORIO,
   RELATORIOS_DOS_PAINEIS,
+  RPC_LER_RELATORIO_DO_PAINEL,
+  RPC_SINCRONIZAR_RELATORIO_DO_PAINEL,
+  chaveDaPagina,
   csvDoRelatorio,
   definicaoDoRelatorio,
-  geradoEmDoRelatorio,
-  linhasDoRelatorio,
+  lerPaginaDoRelatorio,
   nomeDoArquivoDoRelatorio,
   xlsxDoRelatorio,
 } from "../../lib/relatorios-dos-paineis.ts";
@@ -19,19 +22,21 @@ import type {
   FontesDoPainel,
 } from "../../lib/fontes-dos-paineis.ts";
 import type {
-  DefinicaoDoRelatorio,
   FormatoDoRelatorio,
   IdDoRelatorio,
   LinhaDoRelatorio,
+  PaginaLida,
   ZiparRelatorio,
 } from "../../lib/relatorios-dos-paineis.ts";
 
 /*
   O estado da tela de Painéis (sem React): o relatório escolhido e, para cada
-  um, a leitura da área (`carregando`, `pronto` ou `erro`). Cada relatório é
-  lido na primeira vez que aparece na área. "Sincronizar" (no topo da página)
-  relê o aberto e marca os outros para relerem quando aparecerem. O download
-  sai do que está na tela (as mesmas linhas), em CSV ou XLSX.
+  um, a página lida na área (`carregando`, `pronto` ou `erro`). O banco guarda
+  cada relatório pronto (migration 20261116160000); a tela pede só a página
+  visível e guarda as páginas já lidas em memória (nunca no disco: o relatório
+  Aprovados tem dado pessoal). O cache de uma área e relatório cai quando o
+  banco responde com outra data de cálculo, no Sincronizar (que recalcula o
+  relatório aberto) e na troca de fonte. O download pede todas as linhas.
 */
 
 export type SituacaoDoRelatorio = "vazio" | "carregando" | "pronto" | "erro";
@@ -39,12 +44,18 @@ export type SituacaoDoRelatorio = "vazio" | "carregando" | "pronto" | "erro";
 export interface LeituraDoRelatorio {
   situacao: SituacaoDoRelatorio;
   area: string;
+  /** As linhas da página à vista. */
   linhas: readonly LinhaDoRelatorio[];
-  geradoEm: string | null;
+  /** Quando o banco calculou o relatório. */
+  calculadoEm: string | null;
   erro: string;
   /** A origem de cada coluna editável (a resposta do relatório). */
   fontes: Readonly<Record<string, FonteDaColuna>>;
   avisos: readonly string[];
+  pagina: number;
+  porPagina: number;
+  /** Quantas linhas o relatório tem para quem lê. */
+  total: number;
 }
 
 /** A gaveta "Fontes dos dados" do relatório aberto, na área do menu. */
@@ -65,18 +76,27 @@ export interface EstadoDosPaineis {
   baixando: FormatoDoRelatorio | null;
   erroNoDownload: string;
   gaveta: GavetaDeFontes;
+  /** A largura (px) que a pessoa arrastou em cada coluna, por relatório; só em memória. */
+  larguras: Readonly<Record<IdDoRelatorio, Readonly<Record<string, number>>>>;
 }
 
 type RespostaDaRpc = PromiseLike<{ data: unknown; error: unknown }>;
 
-/** O que a tela usa do cliente do Supabase: as três leituras e o editor de fontes. */
+/** O que a tela usa do cliente do Supabase: a leitura, o Sincronizar e o editor de fontes. */
 export interface ClienteDosPaineis {
   rpc(
-    nome: DefinicaoDoRelatorio["rpc"],
-    parametros: { p_area: string },
+    nome: typeof RPC_LER_RELATORIO_DO_PAINEL,
+    parametros: {
+      p_area: string;
+      p_relatorio: IdDoRelatorio;
+      p_pagina: number;
+      p_por_pagina: number | null;
+    },
   ): RespostaDaRpc;
   rpc(
-    nome: typeof RPC_LISTAR_FONTES_DO_PAINEL,
+    nome:
+      | typeof RPC_SINCRONIZAR_RELATORIO_DO_PAINEL
+      | typeof RPC_LISTAR_FONTES_DO_PAINEL,
     parametros: { p_area: string; p_relatorio: string },
   ): RespostaDaRpc;
   rpc(
@@ -109,14 +129,19 @@ export interface OpcoesDoEstadoDosPaineis {
   agora?: () => Date;
 }
 
+const POR_PAGINA_PADRAO = LINHAS_POR_PAGINA[0] as number;
+
 const LEITURA_VAZIA: LeituraDoRelatorio = Object.freeze({
   situacao: "vazio",
   area: "",
   linhas: Object.freeze([]),
-  geradoEm: null,
+  calculadoEm: null,
   erro: "",
   fontes: Object.freeze({}),
   avisos: Object.freeze([]),
+  pagina: 1,
+  porPagina: POR_PAGINA_PADRAO,
+  total: 0,
 });
 
 const GAVETA_FECHADA: GavetaDeFontes = Object.freeze({
@@ -171,6 +196,25 @@ const relatoriosVazios = () =>
     RELATORIOS_DOS_PAINEIS.map((r) => [r.id, LEITURA_VAZIA]),
   ) as Record<IdDoRelatorio, LeituraDoRelatorio>;
 
+/** Uma página guardada no cache: o que o banco devolveu para ela. */
+interface PaginaGuardada {
+  lida: PaginaLida;
+  fontes: Readonly<Record<string, FonteDaColuna>>;
+  avisos: readonly string[];
+}
+
+async function chamar(
+  supabase: ClienteDosPaineis | null,
+  fazer: (cliente: ClienteDosPaineis) => RespostaDaRpc,
+): Promise<{ data?: unknown; error?: unknown }> {
+  try {
+    if (!supabase) throw new Error("Sem conexão com o banco.");
+    return await fazer(supabase);
+  } catch (error) {
+    return { data: null, error };
+  }
+}
+
 export function criarEstadoDosPaineis({
   supabase = null,
   salvar = salvarNoNavegador,
@@ -184,11 +228,17 @@ export function criarEstadoDosPaineis({
     baixando: null,
     erroNoDownload: "",
     gaveta: GAVETA_FECHADA,
+    larguras: Object.fromEntries(
+      RELATORIOS_DOS_PAINEIS.map((r) => [r.id, Object.freeze({})]),
+    ) as Record<IdDoRelatorio, Readonly<Record<string, number>>>,
   };
   const ouvintes = new Set<() => void>();
-  // A leitura em curso de cada relatório: a resposta de uma área antiga não sobrescreve a nova.
+  // A leitura em curso de cada relatório: a resposta de um pedido antigo não sobrescreve a nova.
   const pedidos = new Map<IdDoRelatorio, number>();
   let numeroDoPedido = 0;
+  // As páginas já lidas (só em memória) e a data do cálculo de cada área e relatório.
+  const cache = new Map<string, PaginaGuardada>();
+  const calculos = new Map<string, string | null>();
 
   function mudar(parcial: Partial<EstadoDosPaineis>) {
     estado = { ...estado, ...parcial };
@@ -199,46 +249,89 @@ export function criarEstadoDosPaineis({
     mudar({ relatorios: { ...estado.relatorios, [id]: leitura } });
   }
 
-  async function ler(id: IdDoRelatorio, area: string) {
-    const definicao = definicaoDoRelatorio(id);
-    const pedido = ++numeroDoPedido;
-    pedidos.set(id, pedido);
-    mudarRelatorio(id, {
-      ...estado.relatorios[id],
-      situacao: "carregando",
-      area,
-      erro: "",
-    });
-    let resposta: { data?: unknown; error?: unknown };
-    try {
-      if (!supabase) throw new Error("Sem conexão com o banco.");
-      resposta = await supabase.rpc(definicao.rpc, { p_area: area });
-    } catch (error) {
-      resposta = { data: null, error };
-    }
-    if (pedidos.get(id) !== pedido) return;
-    if (resposta.error) {
-      mudarRelatorio(id, {
-        situacao: "erro",
-        area,
-        linhas: Object.freeze([]),
-        geradoEm: null,
-        erro: mensagemDaFalha(resposta.error),
-        fontes: Object.freeze({}),
-        avisos: Object.freeze([]),
-      });
-      return;
-    }
-    const { fontes, avisos } = lerFontesDoRelatorio(resposta.data);
+  function limparCache(area: string, id: IdDoRelatorio) {
+    const prefixo = `${area}|${id}|`;
+    for (const chave of [...cache.keys()])
+      if (chave.startsWith(prefixo)) cache.delete(chave);
+    calculos.delete(`${area}|${id}`);
+  }
+
+  function mostrar(
+    id: IdDoRelatorio,
+    area: string,
+    porPagina: number,
+    { lida, fontes, avisos }: PaginaGuardada,
+  ) {
     mudarRelatorio(id, {
       situacao: "pronto",
       area,
-      linhas: Object.freeze(linhasDoRelatorio(definicao, resposta.data)),
-      geradoEm: geradoEmDoRelatorio(resposta.data),
+      linhas: Object.freeze(lida.linhas),
+      calculadoEm: lida.calculadoEm,
       erro: "",
       fontes,
       avisos,
+      pagina: lida.pagina,
+      porPagina,
+      total: lida.total,
     });
+  }
+
+  async function ler(
+    id: IdDoRelatorio,
+    area: string,
+    pagina: number,
+    porPagina: number,
+    forcar = false,
+  ) {
+    const definicao = definicaoDoRelatorio(id);
+    const pedido = ++numeroDoPedido;
+    pedidos.set(id, pedido);
+    const guardada = forcar
+      ? undefined
+      : cache.get(chaveDaPagina(area, id, pagina, porPagina));
+    if (guardada) {
+      mostrar(id, area, porPagina, guardada);
+      return;
+    }
+    const anterior = estado.relatorios[id];
+    mudarRelatorio(id, {
+      ...(anterior.area === area ? anterior : LEITURA_VAZIA),
+      situacao: "carregando",
+      area,
+      erro: "",
+      pagina,
+      porPagina,
+    });
+    const resposta = await chamar(supabase, (cliente) =>
+      cliente.rpc(RPC_LER_RELATORIO_DO_PAINEL, {
+        p_area: area,
+        p_relatorio: id,
+        p_pagina: pagina,
+        p_por_pagina: porPagina,
+      }),
+    );
+    if (pedidos.get(id) !== pedido) return;
+    if (resposta.error) {
+      mudarRelatorio(id, {
+        ...LEITURA_VAZIA,
+        situacao: "erro",
+        area,
+        erro: mensagemDaFalha(resposta.error),
+        pagina,
+        porPagina,
+      });
+      return;
+    }
+    const lida = lerPaginaDoRelatorio(definicao, resposta.data);
+    const { fontes, avisos } = lerFontesDoRelatorio(resposta.data);
+    // Outro cálculo no banco: as páginas guardadas do anterior não valem mais.
+    const doCalculo = `${area}|${id}`;
+    if (calculos.has(doCalculo) && calculos.get(doCalculo) !== lida.calculadoEm)
+      limparCache(area, id);
+    calculos.set(doCalculo, lida.calculadoEm);
+    const nova: PaginaGuardada = { lida, fontes, avisos };
+    cache.set(chaveDaPagina(area, id, lida.pagina, porPagina), nova);
+    mostrar(id, area, porPagina, nova);
   }
 
   /* O relatório ativo da área, se ainda não foi lido nela (ou se `forcar`). */
@@ -246,22 +339,55 @@ export function criarEstadoDosPaineis({
     const { area, ativo } = estado;
     if (!area) return Promise.resolve();
     const leitura = estado.relatorios[ativo];
-    if (!forcar && leitura.area === area && leitura.situacao !== "vazio")
+    const mesmaArea = leitura.area === area;
+    if (!forcar && mesmaArea && leitura.situacao !== "vazio")
       return Promise.resolve();
-    return ler(ativo, area);
+    return ler(
+      ativo,
+      area,
+      mesmaArea ? leitura.pagina : 1,
+      leitura.porPagina,
+      forcar,
+    );
   }
 
-  /** Relê o relatório aberto; os outros releem quando forem abertos. */
-  function sincronizar() {
-    mudar({
-      relatorios: Object.fromEntries(
-        RELATORIOS_DOS_PAINEIS.map((r) => [
-          r.id,
-          r.id === estado.ativo ? estado.relatorios[r.id] : LEITURA_VAZIA,
-        ]),
-      ) as Record<IdDoRelatorio, LeituraDoRelatorio>,
+  /** Recalcula no banco o relatório aberto e relê a página à vista. */
+  async function sincronizar() {
+    const { area, ativo } = estado;
+    if (!area) return;
+    const leitura = estado.relatorios[ativo];
+    const pedido = ++numeroDoPedido;
+    pedidos.set(ativo, pedido);
+    mudarRelatorio(ativo, {
+      ...(leitura.area === area ? leitura : LEITURA_VAZIA),
+      situacao: "carregando",
+      area,
+      erro: "",
     });
-    return garantir(true);
+    const resposta = await chamar(supabase, (cliente) =>
+      cliente.rpc(RPC_SINCRONIZAR_RELATORIO_DO_PAINEL, {
+        p_area: area,
+        p_relatorio: ativo,
+      }),
+    );
+    if (pedidos.get(ativo) !== pedido) return;
+    if (resposta.error) {
+      mudarRelatorio(ativo, {
+        ...LEITURA_VAZIA,
+        situacao: "erro",
+        area,
+        erro: mensagemDaFalha(resposta.error),
+      });
+      return;
+    }
+    limparCache(area, ativo);
+    await ler(
+      ativo,
+      area,
+      leitura.area === area ? leitura.pagina : 1,
+      leitura.porPagina,
+      true,
+    );
   }
 
   return {
@@ -285,7 +411,32 @@ export function criarEstadoDosPaineis({
       mudar({ ativo: definicaoDoRelatorio(id).id, erroNoDownload: "" });
       return garantir();
     },
+    /** Vai para outra página do relatório aberto (do cache, se já foi lida). */
+    irParaPagina(pagina: number) {
+      const { area, ativo } = estado;
+      if (!area) return Promise.resolve();
+      return ler(ativo, area, pagina, estado.relatorios[ativo].porPagina);
+    },
+    /** Muda quantas linhas por página e volta à primeira. */
+    mudarPorPagina(porPagina: number) {
+      const { area, ativo } = estado;
+      if (!area) return Promise.resolve();
+      return ler(ativo, area, 1, porPagina);
+    },
     sincronizar,
+    /**
+     * Junta larguras (px por campo) às do relatório aberto. Ficam só na
+     * memória da tela: recarregar a página volta às originais.
+     */
+    mudarLarguras(larguras: Readonly<Record<string, number>>) {
+      const { ativo } = estado;
+      mudar({
+        larguras: {
+          ...estado.larguras,
+          [ativo]: Object.freeze({ ...estado.larguras[ativo], ...larguras }),
+        },
+      });
+    },
     /** Abre a gaveta "Fontes dos dados" do relatório aberto, na área do menu. */
     async abrirFontes() {
       const { area, ativo } = estado;
@@ -293,16 +444,12 @@ export function criarEstadoDosPaineis({
       mudar({
         gaveta: { ...GAVETA_FECHADA, aberta: true, situacao: "carregando" },
       });
-      let resposta: { data?: unknown; error?: unknown };
-      try {
-        if (!supabase) throw new Error("Sem conexão com o banco.");
-        resposta = await supabase.rpc(RPC_LISTAR_FONTES_DO_PAINEL, {
+      const resposta = await chamar(supabase, (cliente) =>
+        cliente.rpc(RPC_LISTAR_FONTES_DO_PAINEL, {
           p_area: area,
           p_relatorio: ativo,
-        });
-      } catch (error) {
-        resposta = { data: null, error };
-      }
+        }),
+      );
       const mesma =
         estado.gaveta.aberta && estado.area === area && estado.ativo === ativo;
       if (!mesma) return;
@@ -323,8 +470,9 @@ export function criarEstadoDosPaineis({
       mudar({ gaveta: GAVETA_FECHADA });
     },
     /**
-     * Troca a fonte de uma coluna (ou volta ao padrão). Deu certo: a gaveta
-     * mostra o estado novo e o relatório aberto é relido.
+     * Troca a fonte de uma coluna (ou volta ao padrão). O banco recalcula o
+     * relatório na mesma transação: deu certo, a gaveta mostra o estado novo,
+     * o cache do relatório cai e a página à vista é relida.
      */
     async salvarFonte(troca: TrocaPedida): Promise<boolean> {
       const { area, ativo } = estado;
@@ -332,20 +480,16 @@ export function criarEstadoDosPaineis({
       mudar({
         gaveta: { ...estado.gaveta, salvando: troca.coluna, erroAoSalvar: "" },
       });
-      let resposta: { data?: unknown; error?: unknown };
-      try {
-        if (!supabase) throw new Error("Sem conexão com o banco.");
-        resposta = await supabase.rpc(RPC_SALVAR_FONTE_DA_COLUNA, {
+      const resposta = await chamar(supabase, (cliente) =>
+        cliente.rpc(RPC_SALVAR_FONTE_DA_COLUNA, {
           p_area: area,
           p_relatorio: ativo,
           p_coluna: troca.coluna,
           p_visao: troca.visao,
           p_coluna_visao: troca.visao ? troca.colunaDaVisao : null,
           p_motivo: troca.motivo.trim(),
-        });
-      } catch (error) {
-        resposta = { data: null, error };
-      }
+        }),
+      );
       const dados = resposta.error ? null : lerFontesDoPainel(resposta.data);
       if (!dados) {
         mudar({
@@ -358,15 +502,37 @@ export function criarEstadoDosPaineis({
         return false;
       }
       mudar({ gaveta: { ...estado.gaveta, salvando: null, dados } });
-      await sincronizar();
+      limparCache(area, ativo);
+      // A pessoa trocou de área ou de relatório enquanto salvava: não relê a página antiga.
+      if (estado.area !== area || estado.ativo !== ativo) return true;
+      const leitura = estado.relatorios[ativo];
+      await ler(
+        ativo,
+        area,
+        leitura.area === area ? leitura.pagina : 1,
+        leitura.porPagina,
+        true,
+      );
       return true;
     },
+    /** Baixa o relatório aberto inteiro (todas as linhas que a pessoa vê). */
     async baixar(formato: FormatoDoRelatorio) {
       const definicao = definicaoDoRelatorio(estado.ativo);
       const leitura = estado.relatorios[definicao.id];
       if (estado.baixando || leitura.situacao !== "pronto") return;
       mudar({ baixando: formato, erroNoDownload: "" });
       try {
+        const resposta = await chamar(supabase, (cliente) =>
+          cliente.rpc(RPC_LER_RELATORIO_DO_PAINEL, {
+            p_area: leitura.area,
+            p_relatorio: definicao.id,
+            p_pagina: 1,
+            p_por_pagina: null,
+          }),
+        );
+        if (resposta.error) throw resposta.error;
+        const { linhas } = lerPaginaDoRelatorio(definicao, resposta.data);
+        const { fontes } = lerFontesDoRelatorio(resposta.data);
         const quando = agora();
         const nome = nomeDoArquivoDoRelatorio(
           definicao,
@@ -376,13 +542,13 @@ export function criarEstadoDosPaineis({
         );
         const conteudo: BlobPart =
           formato === "CSV"
-            ? csvDoRelatorio(definicao, leitura.linhas)
+            ? csvDoRelatorio(definicao, linhas)
             : (xlsxDoRelatorio(
                 definicao,
-                leitura.linhas,
+                linhas,
                 await zipar(),
                 quando,
-                Object.keys(leitura.fontes).length ? leitura.fontes : undefined,
+                Object.keys(fontes).length ? fontes : undefined,
               ) as Uint8Array<ArrayBuffer>);
         salvar(
           new Blob([conteudo], { type: MIME_DO_RELATORIO[formato] }),

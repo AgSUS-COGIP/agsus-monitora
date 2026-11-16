@@ -12,6 +12,7 @@ import {
   digitar,
   escolher,
   esperar,
+  teclar,
 } from "../componentes/interacoes.ts";
 import { paginasPermitidas } from "../../src/lib/access-roles.ts";
 import { bloqueioDaTela } from "../../src/lib/navegacao.ts";
@@ -43,21 +44,77 @@ type Resposta = {
   error: { code: string; message?: string } | null;
 };
 
-/* Supabase falso: guarda as chamadas e responde por RPC. */
+/*
+  Supabase falso: guarda as chamadas e responde por RPC. A leitura dos
+  relatórios responde pelo relatório pedido (a chave é o id do relatório) e
+  recorta a página como o banco: `total`, `pagina` e só as linhas dela.
+*/
+function lerComoOBanco(
+  resposta: Resposta | undefined,
+  args: Record<string, unknown>,
+): Resposta {
+  if (!resposta) return { data: { linhas: [], total: 0 }, error: null };
+  if (resposta.error || !resposta.data) return resposta;
+  const dados = resposta.data as { linhas?: unknown[] };
+  const todas = dados.linhas ?? [];
+  const porPagina = args.p_por_pagina as number | null;
+  if (!porPagina)
+    return {
+      data: { ...dados, total: todas.length, pagina: 1, por_pagina: null },
+      error: null,
+    };
+  const paginas = Math.max(1, Math.ceil(todas.length / porPagina));
+  const pagina = Math.min(paginas, Math.max(1, Number(args.p_pagina) || 1));
+  return {
+    data: {
+      ...dados,
+      total: todas.length,
+      pagina,
+      por_pagina: porPagina,
+      linhas: todas.slice((pagina - 1) * porPagina, pagina * porPagina),
+    },
+    error: null,
+  };
+}
+
 function supabaseFalso(respostas: Record<string, Resposta>) {
   const chamadas: { nome: string; args: unknown }[] = [];
   return {
     chamadas,
-    rpc: vi.fn(async (nome: string, args: Record<string, unknown>) => {
-      chamadas.push({ nome, args });
-      return respostas[nome] ?? { data: { linhas: [] }, error: null };
-    }),
+    rpc: vi.fn(
+      async (
+        nome: string,
+        args: Record<string, unknown>,
+      ): Promise<Resposta> => {
+        chamadas.push({ nome, args });
+        if (nome === LER)
+          return lerComoOBanco(respostas[String(args.p_relatorio)], args);
+        if (nome === "sincronizar_relatorio_do_painel")
+          return (
+            respostas[nome] ?? {
+              data: { calculado_em: "2026-11-13T15:00:00Z", recalculado: true },
+              error: null,
+            }
+          );
+        return respostas[nome] ?? { data: null, error: null };
+      },
+    ),
   };
 }
 
+const LER = "ler_relatorio_do_painel";
+/** Os relatórios pedidos ao banco, na ordem (`relatorio:pagina:porPagina`). */
+const leituras = (chamadas: { nome: string; args: unknown }[]) =>
+  chamadas
+    .filter((c) => c.nome === LER)
+    .map((c) => {
+      const a = c.args as Record<string, unknown>;
+      return `${String(a.p_relatorio)}:${String(a.p_pagina)}:${String(a.p_por_pagina)}`;
+    });
+
 const RESUMO: Resposta = {
   data: {
-    gerado_em: "2026-11-13T15:00:00Z",
+    calculado_em: "2026-11-13T15:00:00Z",
     linhas: [
       {
         edital: "39/2026",
@@ -96,12 +153,18 @@ const botao = (rotulo: string) =>
 describe("Painéis", () => {
   it("abre no Resumo dos editais da área e desenha a tabela", async () => {
     const { supabase } = await montar({
-      listar_resumo_dos_editais_do_painel: RESUMO,
+      "resumo-dos-editais": RESUMO,
     });
+    // Só a página visível é pedida ao banco.
     expect(supabase.chamadas).toEqual([
       {
-        nome: "listar_resumo_dos_editais_do_painel",
-        args: { p_area: "saude-indigena" },
+        nome: LER,
+        args: {
+          p_area: "saude-indigena",
+          p_relatorio: "resumo-dos-editais",
+          p_pagina: 1,
+          p_por_pagina: 50,
+        },
       },
     ]);
     expect(
@@ -127,24 +190,28 @@ describe("Painéis", () => {
     await esperar();
     await clicar(botao("Resumo dos editais"));
     await esperar();
-    expect(supabase.chamadas.map((c) => c.nome)).toEqual([
-      "listar_resumo_dos_editais_do_painel",
-      "listar_aprovados_do_painel",
+    expect(leituras(supabase.chamadas)).toEqual([
+      "resumo-dos-editais:1:50",
+      "aprovados:1:50",
     ]);
+    // Sincronizar recalcula só o relatório aberto e relê a página dele.
     await clicar(botao("Sincronizar"));
     await esperar();
-    expect(supabase.chamadas).toHaveLength(3);
-    // Depois de sincronizar, a outra aba relê ao ser aberta.
+    expect(supabase.chamadas.map((c) => c.nome).slice(-2)).toEqual([
+      "sincronizar_relatorio_do_painel",
+      LER,
+    ]);
+    expect(supabase.chamadas.at(-2)?.args).toEqual({
+      p_area: "saude-indigena",
+      p_relatorio: "resumo-dos-editais",
+    });
     await clicar(botao("Aprovados"));
     await esperar();
-    expect(supabase.chamadas.map((c) => c.nome).at(-1)).toBe(
-      "listar_aprovados_do_painel",
-    );
-    expect(supabase.chamadas).toHaveLength(4);
+    expect(leituras(supabase.chamadas)).toHaveLength(3);
   });
 
   it("o topo tem Sincronizar e a data da última leitura, uma vez só", async () => {
-    await montar({ listar_resumo_dos_editais_do_painel: RESUMO });
+    await montar({ "resumo-dos-editais": RESUMO });
     const topo = caixa?.querySelector(".ui-topo");
     expect(
       topo?.querySelector("[data-acao='atualizar']")?.textContent,
@@ -158,7 +225,7 @@ describe("Painéis", () => {
 
   it("baixa o CSV e o XLSX do que está na tabela", async () => {
     const { salvos } = await montar({
-      listar_resumo_dos_editais_do_painel: RESUMO,
+      "resumo-dos-editais": RESUMO,
     });
     await clicar(botao("Baixar CSV"));
     await esperar();
@@ -180,7 +247,7 @@ describe("Painéis", () => {
       vagas_imediatas: i,
     }));
     await montar({
-      listar_resumo_dos_editais_do_painel: { data: { linhas }, error: null },
+      "resumo-dos-editais": { data: { linhas }, error: null },
     });
     const primeiraCelula = () =>
       caixa?.querySelector("tbody tr td")?.textContent ?? "";
@@ -205,9 +272,11 @@ describe("Painéis", () => {
     ).toBe(true);
 
     await clicar(caixa?.querySelector("[aria-label='Próxima página']"));
+    await esperar();
     expect(primeiraCelula()).toBe("51/2026");
     expect(paginacao()).toContain("Mostrando 51–100 de 120");
     await clicar(caixa?.querySelector("[aria-label='Próxima página']"));
+    await esperar();
     expect(caixa?.querySelectorAll("tbody tr")).toHaveLength(20);
     expect(
       caixa
@@ -216,14 +285,98 @@ describe("Painéis", () => {
     ).toBe(true);
 
     await escolher(caixa?.querySelector("[data-paginacao] select"), "25");
+    await esperar();
     expect(primeiraCelula()).toBe("1/2026");
     expect(paginacao()).toContain("Página 1 de 5");
     expect(caixa?.querySelectorAll("tbody tr")).toHaveLength(25);
   });
 
+  it("voltar a uma página já lida não chama o banco", async () => {
+    const { supabase } = await montar({ "resumo-dos-editais": CENTO_E_VINTE });
+    await clicar(caixa?.querySelector("[aria-label='Próxima página']"));
+    await esperar();
+    await clicar(caixa?.querySelector("[aria-label='Página anterior']"));
+    await esperar();
+    expect(leituras(supabase.chamadas)).toEqual([
+      "resumo-dos-editais:1:50",
+      "resumo-dos-editais:2:50",
+    ]);
+    expect(caixa?.querySelector("tbody tr td")?.textContent).toBe("1/2026");
+  });
+
+  it("sincronizar e trocar fonte limpam o cache do relatório", async () => {
+    const { supabase } = await montar({
+      "resumo-dos-editais": CENTO_E_VINTE,
+      listar_fontes_do_painel: { data: FONTES_EDITAVEIS, error: null },
+      salvar_fonte_da_coluna: { data: FONTES_EDITAVEIS, error: null },
+    });
+    await clicar(caixa?.querySelector("[aria-label='Próxima página']"));
+    await esperar();
+    await clicar(botao("Sincronizar"));
+    await esperar();
+    await clicar(caixa?.querySelector("[aria-label='Página anterior']"));
+    await esperar();
+    // A página 1, lida antes do Sincronizar, é pedida de novo.
+    expect(leituras(supabase.chamadas)).toEqual([
+      "resumo-dos-editais:1:50",
+      "resumo-dos-editais:2:50",
+      "resumo-dos-editais:2:50",
+      "resumo-dos-editais:1:50",
+    ]);
+    await clicar(botao("Fontes dos dados"));
+    await esperar();
+    const linha = naGaveta("data_divulgacao");
+    await digitar(
+      linha?.querySelector("input[aria-label^='Motivo']"),
+      "Voltar ao cronograma.",
+    );
+    await clicar(botaoEm(linha, "Voltar ao padrão"));
+    await esperar();
+    // Depois de trocar a fonte, a página aberta é relida e a outra também.
+    await clicar(caixa?.querySelector("[aria-label='Próxima página']"));
+    await esperar();
+    expect(leituras(supabase.chamadas).slice(-2)).toEqual([
+      "resumo-dos-editais:1:50",
+      "resumo-dos-editais:2:50",
+    ]);
+  });
+
+  it("o download pede todas as linhas", async () => {
+    const { supabase, salvos } = await montar({
+      "resumo-dos-editais": CENTO_E_VINTE,
+    });
+    await clicar(botao("Baixar CSV"));
+    await esperar();
+    expect(leituras(supabase.chamadas).at(-1)).toBe(
+      "resumo-dos-editais:1:null",
+    );
+    const csv = await salvos[0]!.arquivo.text();
+    expect(csv.trim().split("\r\n")).toHaveLength(121);
+  });
+
+  it("as setas da paginação ficam travadas enquanto a página carrega", async () => {
+    const { supabase } = await montar({ "resumo-dos-editais": CENTO_E_VINTE });
+    let liberar = () => {};
+    supabase.rpc.mockImplementationOnce(
+      (_nome: string, args: Record<string, unknown>) =>
+        new Promise<Resposta>((ok) => {
+          liberar = () => ok(lerComoOBanco(CENTO_E_VINTE, args));
+        }),
+    );
+    await clicar(caixa?.querySelector("[aria-label='Próxima página']"));
+    const travada = (rotulo: string) =>
+      caixa
+        ?.querySelector(`[aria-label='${rotulo}']`)
+        ?.hasAttribute("disabled");
+    expect(travada("Próxima página")).toBe(true);
+    expect(travada("Página anterior")).toBe(true);
+    await esperar(async () => liberar());
+    expect(travada("Página anterior")).toBe(false);
+  });
+
   it("sem permissão ou sem a migration, o aviso no lugar da tabela", async () => {
     await montar({
-      listar_resumo_dos_editais_do_painel: {
+      "resumo-dos-editais": {
         data: null,
         error: { code: "42501" },
       },
@@ -235,7 +388,7 @@ describe("Painéis", () => {
     await act(async () => raiz?.unmount());
     caixa?.remove();
     await montar({
-      listar_resumo_dos_editais_do_painel: {
+      "resumo-dos-editais": {
         data: null,
         error: { code: "PGRST202" },
       },
@@ -326,6 +479,18 @@ const FONTES_EDITAVEIS = {
   ],
 };
 
+const CENTO_E_VINTE: Resposta = {
+  data: {
+    calculado_em: "2026-11-13T15:00:00Z",
+    linhas: Array.from({ length: 120 }, (_, i) => ({
+      edital: `${i + 1}/2026`,
+      unidade: "DSEI Teste",
+      vagas_imediatas: i,
+    })),
+  },
+  error: null,
+};
+
 const RESUMO_COM_FONTE: Resposta = {
   data: {
     ...(RESUMO.data as Record<string, unknown>),
@@ -364,7 +529,7 @@ const chamadasDe = (
 
 describe("Fontes dos dados", () => {
   const respostas = (fontes: unknown = FONTES_EDITAVEIS) => ({
-    listar_resumo_dos_editais_do_painel: RESUMO,
+    "resumo-dos-editais": RESUMO,
     listar_fontes_do_painel: { data: fontes, error: null },
     salvar_fonte_da_coluna: { data: fontes, error: null },
   });
@@ -397,6 +562,35 @@ describe("Fontes dos dados", () => {
     );
     expect(naGaveta("vagas_imediatas")?.textContent).toContain(
       "Padrão: vagas do cadastro do edital",
+    );
+  });
+
+  it("trocar de área enquanto a fonte salva não traz a área antiga", async () => {
+    const { supabase, tela } = await montar(respostas());
+    let liberar = () => {};
+    await clicar(botao("Fontes dos dados"));
+    await esperar();
+    const linha = naGaveta("data_divulgacao");
+    await digitar(
+      linha?.querySelector("input[aria-label^='Motivo']"),
+      "Voltar ao cronograma.",
+    );
+    // A próxima chamada (salvar) fica pendente; o mock de listar já respondeu.
+    supabase.rpc.mockImplementationOnce(
+      () =>
+        new Promise<Resposta>((ok) => {
+          liberar = () => ok({ data: FONTES_EDITAVEIS, error: null });
+        }),
+    );
+    await clicar(botaoEm(linha, "Voltar ao padrão"));
+    await esperar(() => tela.estado.carregar("sede"));
+    await esperar(async () => liberar());
+    const areas = supabase.chamadas
+      .filter((c) => c.nome === LER)
+      .map((c) => (c.args as { p_area: string }).p_area);
+    expect(areas.at(-1)).toBe("sede");
+    expect(tela.estado.obter().relatorios["resumo-dos-editais"].area).toBe(
+      "sede",
     );
   });
 
@@ -435,9 +629,11 @@ describe("Fontes dos dados", () => {
         },
       },
     ]);
-    expect(
-      chamadasDe(supabase.chamadas, "listar_resumo_dos_editais_do_painel"),
-    ).toHaveLength(2);
+    // O banco recalculou ao salvar: a página é relida.
+    expect(leituras(supabase.chamadas)).toEqual([
+      "resumo-dos-editais:1:50",
+      "resumo-dos-editais:1:50",
+    ]);
   });
 
   it("Voltar ao padrão manda p_visao nulo", async () => {
@@ -484,7 +680,7 @@ describe("Fontes dos dados", () => {
   });
 
   it("coluna fora do padrão tem marcador no cabeçalho com a fonte na dica", async () => {
-    await montar({ listar_resumo_dos_editais_do_painel: RESUMO_COM_FONTE });
+    await montar({ "resumo-dos-editais": RESUMO_COM_FONTE });
     const cabecalhos = [...(caixa?.querySelectorAll("thead th") ?? [])];
     const vagas = cabecalhos.find((th) =>
       th.textContent?.includes("Total de vagas imediatas"),
@@ -500,7 +696,7 @@ describe("Fontes dos dados", () => {
   });
 
   it("avisos da resposta aparecem acima da tabela", async () => {
-    await montar({ listar_resumo_dos_editais_do_painel: RESUMO_COM_FONTE });
+    await montar({ "resumo-dos-editais": RESUMO_COM_FONTE });
     expect(
       caixa?.querySelector("[data-tone='warning']")?.textContent,
     ).toContain(
@@ -510,7 +706,7 @@ describe("Fontes dos dados", () => {
 
   it("o XLSX baixado tem a aba Fontes", async () => {
     const { salvos } = await montar({
-      listar_resumo_dos_editais_do_painel: RESUMO_COM_FONTE,
+      "resumo-dos-editais": RESUMO_COM_FONTE,
     });
     await clicar(botao("Baixar XLSX"));
     await esperar(() => new Promise((ok) => setTimeout(ok, 50)));
@@ -520,6 +716,74 @@ describe("Fontes dos dados", () => {
     expect(strFromU8(arquivos["xl/workbook.xml"]!)).toContain('name="Fontes"');
     expect(strFromU8(arquivos["xl/worksheets/sheet2.xml"]!)).toContain(
       "Quadro de vagas do edital › Vagas imediatas (soma do quadro)",
+    );
+  });
+});
+
+describe("largura das colunas e origem dos dados", () => {
+  const alca = (n = 0) =>
+    caixa?.querySelectorAll<HTMLElement>("[data-alca-da-coluna]")[n] ?? null;
+  const primeiroTh = () => caixa?.querySelector<HTMLElement>("thead th");
+  async function arrastar(alvo: HTMLElement | null, de: number, ate: number) {
+    await act(async () => {
+      alvo?.dispatchEvent(
+        new MouseEvent("pointerdown", { bubbles: true, clientX: de }),
+      );
+      window.dispatchEvent(
+        new MouseEvent("pointermove", { bubbles: true, clientX: ate }),
+      );
+      window.dispatchEvent(
+        new MouseEvent("pointerup", { bubbles: true, clientX: ate }),
+      );
+    });
+  }
+
+  it("arrastar a borda muda a largura da coluna e trocar de página mantém", async () => {
+    await montar({ "resumo-dos-editais": CENTO_E_VINTE });
+    expect(alca()?.getAttribute("role")).toBe("separator");
+    expect(alca()?.getAttribute("aria-label")).toBe(
+      "Largura — Número do edital",
+    );
+    await arrastar(alca(), 10, 210);
+    // jsdom mede 0: a partida é o mínimo (60 px), e o arraste soma 200.
+    expect(primeiroTh()?.style.width).toBe("260px");
+    expect(
+      caixa?.querySelector("table")?.hasAttribute("data-larguras-escolhidas"),
+    ).toBe(true);
+    await clicar(caixa?.querySelector("[aria-label='Próxima página']"));
+    await esperar();
+    expect(primeiroTh()?.style.width).toBe("260px");
+  });
+
+  it("seta para a esquerda na alça estreita a coluna", async () => {
+    await montar({ "resumo-dos-editais": CENTO_E_VINTE });
+    await arrastar(alca(), 10, 210);
+    await teclar(alca()!, "ArrowLeft");
+    expect(primeiroTh()?.style.width).toBe("244px");
+  });
+
+  it("uma tela nova volta às larguras originais", async () => {
+    await montar({ "resumo-dos-editais": CENTO_E_VINTE });
+    await arrastar(alca(), 10, 210);
+    await act(async () => raiz?.unmount());
+    caixa?.remove();
+    await montar({ "resumo-dos-editais": CENTO_E_VINTE });
+    expect(primeiroTh()?.style.width).toBe("");
+  });
+
+  it("o ⓘ mostra a origem e a fonte trocada", async () => {
+    await montar({ "resumo-dos-editais": RESUMO_COM_FONTE });
+    const info = caixa?.querySelector<HTMLButtonElement>(
+      "button[aria-label='De onde vêm os dados']",
+    );
+    expect(info?.getAttribute("title")).toContain(
+      "Uma linha por edital da área",
+    );
+    await clicar(info);
+    const painel = caixa?.querySelector("[data-origem-dos-dados]");
+    expect(painel?.textContent).toContain("Uma linha por edital da área");
+    expect(painel?.textContent).toContain(
+      "Fonte trocada nesta área: Total de vagas imediatas → Quadro de vagas do edital › Vagas imediatas (soma do quadro)",
     );
   });
 });

@@ -6794,7 +6794,7 @@ export const VERBETES_AYA = Object.freeze([
       "relatorios dos paineis",
     ],
     resposta:
-      "A página Painéis, no bloco Dados do menu, reúne relatórios para conferir os dados da área escolhida, cada um numa aba: Resumo dos editais, Editais por cargo e Aprovados. Cada tabela pode ser baixada em CSV ou XLSX, com as mesmas linhas da tela. Os dados são lidos na primeira vez que a aba é aberta; o botão Atualizar lê de novo. Quem vê é quem o administrador libera em Painéis, na tela de Acessos.",
+      "A página Painéis, no bloco Dados do menu, reúne relatórios para conferir os dados da área escolhida, cada um numa aba: Resumo dos editais, Editais por cargo e Aprovados. Cada tabela pode ser baixada em CSV ou XLSX, com as mesmas linhas da tela. O sistema recalcula os relatórios de hora em hora; o botão Sincronizar, no topo, recalcula na hora o relatório aberto (no máximo uma vez por minuto), e ao lado dele aparece quando o cálculo foi feito. O ícone de informação ao lado dos botões diz de onde vêm os dados de cada relatório. Quem vê é quem o administrador libera em Painéis, na tela de Acessos.",
     fato: "",
     fonte: "src/modulos/paineis-de-dados/; src/lib/relatorios-dos-paineis.ts",
     abrir: "paineis-de-dados",
@@ -6811,7 +6811,8 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "Nos Painéis, o Resumo dos editais traz uma linha por edital ativo da área: número, DSEI ou unidade, total de vagas imediatas (as do cadastro do edital), data da divulgação e data final do processo seletivo. A data da divulgação é o início da primeira etapa do cronograma, e a data final é o fim da última etapa; sem cronograma, valem as datas do cadastro do edital. Editais de treinamento não entram.",
     fato: "",
-    fonte: "supabase/migrations/20261113210000_relatorios_dos_paineis.sql",
+    fonte:
+      "supabase/migrations/20261116160000_relatorios_dos_paineis_prontos.sql",
   },
   {
     arquivo: "regras-dos-paineis.md",
@@ -6826,7 +6827,8 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'Nos Painéis, Editais por cargo traz uma linha por vaga de cada edital (na Saúde Indígena, uma vaga é um cargo num DSEI): o código da vaga, o cargo, as vagas imediatas, os inscritos da Seleção e os aprovados da lista de aprovados vigente. Inscritos e aprovados se casam pelo código da vaga, como no Painel da Seleção; nas vagas de outras bancas, sem código, pelo nome da vaga. As vagas imediatas saem do título da vaga ("2 vagas (1 AC + …)" conta 2; "Cadastro Reserva" conta 0); quando o título não diz, a célula fica vazia — o quadro de vagas do edital não tem o código da vaga e escreve o cargo de outro jeito, por isso não é usado aqui. Aprovados de uma vaga que a Seleção não tem saem numa linha própria, e o edital sem vaga na Seleção sai numa linha só, com os inscritos do edital. Aprovados vazio quer dizer edital sem lista de aprovados.',
     fato: "",
-    fonte: "supabase/migrations/20261113210000_relatorios_dos_paineis.sql",
+    fonte:
+      "supabase/migrations/20261116160000_relatorios_dos_paineis_prontos.sql",
   },
   {
     arquivo: "regras-dos-paineis.md",
@@ -6859,7 +6861,25 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "Nos Painéis, a aba Aprovados traz uma linha por candidato da lista de aprovados vigente de cada edital da área: edital, cargo da vaga, nota, classificação, nome, status, matrícula e data de admissão. O sistema não guarda a data real de admissão: a coluna mostra a data em que o status atual (Contratado ou Migração) foi registrado no sistema, e fica vazia para os outros status.",
     fato: "",
-    fonte: "supabase/migrations/20261113210000_relatorios_dos_paineis.sql",
+    fonte:
+      "supabase/migrations/20261116160000_relatorios_dos_paineis_prontos.sql",
+  },
+  {
+    arquivo: "regras-dos-paineis.md",
+    titulo: "Largura das colunas",
+    perguntas: [
+      "largura da coluna",
+      "aumentar coluna",
+      "diminuir coluna",
+      "arrastar coluna",
+      "coluna estreita",
+      "coluna larga",
+    ],
+    resposta:
+      "Nas tabelas dos Painéis, arraste a borda direita do cabeçalho de uma coluna para alargar ou estreitar a coluna; com o teclado, leve o foco até a borda e use as setas para a esquerda e para a direita. A largura vale enquanto a página estiver aberta, inclusive ao trocar de página ou de aba; ao recarregar a página, as colunas voltam ao tamanho original.",
+    fato: "",
+    fonte: "src/modulos/paineis-de-dados/paineis-de-dados.tsx",
+    abrir: "paineis-de-dados",
   },
   {
     arquivo: "regras-dos-recursos.md",
