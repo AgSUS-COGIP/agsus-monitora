@@ -236,6 +236,33 @@ export function notaNaEscala(
   return opcoesDaEscala(roteiro, maximo).some((o) => o.valor === n);
 }
 
+/**
+ * A nota que a ficha aceita: a da escala do roteiro ou a que já está gravada
+ * (16/11/2026). A importação da planilha da banca
+ * (FC_IMPORTAR_ENTREVISTAS_DA_PLANILHA) grava as médias da planilha (1,67;
+ * 0,75), fora da escala de 0,5 em 0,5. A nota gravada e não mexida conta como
+ * preenchida e não fica vermelha; mudou, a nova segue a escala (o banco
+ * confere a nota nova em lancar_notas_entrevista).
+ */
+export function notaAceita(
+  roteiro: EscalaDoRoteiro | null | undefined,
+  competencia: NumerosDaCompetencia | null | undefined,
+  nota: unknown,
+  gravada: unknown,
+) {
+  if (notaNaEscala(roteiro, competencia, nota)) return true;
+  const n = lerNumero(nota);
+  const g = lerNumero(gravada);
+  const maximo = lerNumero(competencia?.nota_maxima);
+  return (
+    numeroFinito(n) &&
+    numeroFinito(g) &&
+    n === g &&
+    n >= 0 &&
+    (!numeroFinito(maximo) || n <= maximo)
+  );
+}
+
 /* ── Convocação (só ida e volta) e banca do roteiro ─────────────────── */
 
 /*

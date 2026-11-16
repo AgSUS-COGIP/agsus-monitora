@@ -39,7 +39,7 @@ import {
   lerNumero,
   maximoDaCompetencia,
   minimoEmPontos,
-  notaNaEscala,
+  notaAceita,
   opcoesDaEscala,
   pontuacaoMaxima,
   rotuloDoPeso,
@@ -325,7 +325,9 @@ export function FichaDoCandidato({
   const invalidas = Object.entries(f.mapa).filter(([chave, valor]) => {
     if (vazio(valor)) return false;
     const competencia = competencias.find((c) => c.id === chave.split("|")[0]);
-    return competencia && !notaNaEscala(roteiro, competencia, valor);
+    return (
+      competencia && !notaAceita(roteiro, competencia, valor, f.original[chave])
+    );
   }).length;
   const algumEditavel = avaliadores.some((a) => podeLancarPor(dados, a));
   const lista = convocados?.length ? convocados : dados.convocados || [];
@@ -385,7 +387,8 @@ export function FichaDoCandidato({
         }))
       : [{ chave: chaveDaNota(c.id, a.id), nome: "" }];
   const valida = (c: CompetenciaDaFicha, chave: string) =>
-    !vazio(f.mapa[chave]) && notaNaEscala(roteiro, c, f.mapa[chave]);
+    !vazio(f.mapa[chave]) &&
+    notaAceita(roteiro, c, f.mapa[chave], f.original[chave]);
   const escalaDe = useMemo(() => {
     const porMaximo = new Map<
       string,
@@ -605,7 +608,7 @@ export function FichaDoCandidato({
           invalida:
             valor !== "" &&
             !valor.endsWith(",") &&
-            !notaNaEscala(roteiro, c, valor),
+            !notaAceita(roteiro, c, valor, f.original[campo.chave]),
         };
       }),
     };
