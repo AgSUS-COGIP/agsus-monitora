@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { renders } from "../componentes/contar-renders.ts";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";

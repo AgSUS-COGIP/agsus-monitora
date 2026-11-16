@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { ESLint } from "eslint";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 /*
   A regra `no-restricted-syntax` do eslint.config.js barra HTML montado a
@@ -15,6 +15,16 @@ async function erros(codigo, arquivo) {
     .filter((m) => m.ruleId === "no-restricted-syntax")
     .map((m) => m.message);
 }
+
+/*
+  O primeiro lint carrega a config e os plugins (3,9 s sozinho; mais de 15 s
+  com a suíte em carga). Aquecer aqui tira essa partida do primeiro caso, que
+  passa a medir só a regra.
+*/
+beforeAll(
+  () => eslint.lintText("", { filePath: "src/modules/aquecimento.js" }),
+  60_000,
+);
 
 describe("sem HTML cru no front", () => {
   it.each([

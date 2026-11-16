@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { readdirSync, readFileSync } from "node:fs";
 import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";

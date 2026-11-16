@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // Antes do react-dom: conta os desenhos de cada componente.
 import { renders } from "../componentes/contar-renders.ts";
 import { readFileSync } from "node:fs";

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { criarEstadoDasConfiguracoes } from "../../src/modulos/configuracoes/estado.ts";

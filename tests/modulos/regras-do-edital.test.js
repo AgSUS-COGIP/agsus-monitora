@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { montarRegrasDoEdital } from "../componentes/montar-regras-do-edital.ts";

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { act, createElement as h, useSyncExternalStore } from "react";
 import type { ReactElement } from "react";
 import { createRoot } from "react-dom/client";
