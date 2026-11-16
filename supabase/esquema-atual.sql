@@ -3005,9 +3005,14 @@ begin
        and a."CO_AREA" = v_m."CO_AREA"
        and private."FC_NUMERO_EDITAL"(a.edital) = private."FC_NUMERO_EDITAL"(v_m.edital)
        and a.status_consolidado in ('Aprovado', 'Reprovado', 'Revisar')
-       and not private."FC_ANALISE_EH_TREINAMENTO"(a.origem_planilha);
+       and not private."FC_ANALISE_EH_TREINAMENTO"(a.origem_planilha)
+       -- A importada por uma ficha (importar_avaliacao_da_planilha) já é do sistema.
+       and not exists (select 1 from public."TB_FICHA_ANALISE" f
+                        where f."CO_MONITORAMENTO" = p_edital
+                          and f."TP_SITUACAO" = 'CONCLUIDA'
+                          and f."DS_LANCAMENTO" -> 'importada_da_planilha' ->> 'linha' = a.id::text);
     if v_decididas > 0 then
-      raise exception 'O edital já tem % análise(s) decidida(s) pela planilha: a avaliação não passa para o MONITORA por aqui', v_decididas
+      raise exception 'O edital já tem % análise(s) decidida(s) pela planilha: importe os resultados da planilha para passar a avaliação para o Yeendé', v_decididas
         using errcode = '23514';
     end if;
   end if;
@@ -3059,7 +3064,7 @@ $$;
 -- Name: FUNCTION "FC_DEFINIR_ORIGEM_ANALISE"(p_edital uuid, p_origem text, p_motivo text, p_usuario uuid); Type: COMMENT; Schema: private; Owner: -
 --
 
-COMMENT ON FUNCTION private."FC_DEFINIR_ORIGEM_ANALISE"(p_edital uuid, p_origem text, p_motivo text, p_usuario uuid) IS 'Troca o dono da avaliação documental do edital (PLANILHA, COMPARACAO ou MONITORA) com motivo de 10 a 2.000 e histórico em TH_ORIGEM_ANALISE_EDITAL (com o resumo). Para MONITORA, recusa (23514) o edital que já tem análise decidida pela planilha (Aprovado, Reprovado ou Revisar; a virada com adoção é da F8) e publica as fichas que já existem (FC_PUBLICAR_FICHA_ANALISE); saindo de MONITORA, as linhas MONITORA do edital voltam a ser da planilha. Mesmo dono: não muda nada. Quem chama informa o autor. Sem grant: public.definir_origem_analise e o SQL Editor.';
+COMMENT ON FUNCTION private."FC_DEFINIR_ORIGEM_ANALISE"(p_edital uuid, p_origem text, p_motivo text, p_usuario uuid) IS 'Troca o dono da avaliação documental do edital (PLANILHA, COMPARACAO ou MONITORA) com motivo de 10 a 2.000 e histórico em TH_ORIGEM_ANALISE_EDITAL (com o resumo). Para MONITORA, recusa (23514) o edital que já tem análise decidida pela planilha (Aprovado, Reprovado ou Revisar) que nenhuma ficha importou (importar_avaliacao_da_planilha, 16/11/2026) e publica as fichas que já existem (FC_PUBLICAR_FICHA_ANALISE); saindo de MONITORA, as linhas MONITORA do edital voltam a ser da planilha. Mesmo dono: não muda nada. Quem chama informa o autor. Sem grant: public.definir_origem_analise, a importação e o SQL Editor.';
 
 --
 -- Name: FC_DEMANDA_INTERNA_JSON(uuid); Type: FUNCTION; Schema: private; Owner: -
@@ -6457,6 +6462,140 @@ $$;
 COMMENT ON FUNCTION private."FC_IMPACTO_REINICIO_FICHAS"(p_edital uuid) IS 'O que o reinício das fichas do edital desfaria (20261022210000): concluidas, em_analise (EM_ANALISE e REVISAR), com_lancamento (em análise com lançamento), iniciadas (FC_FICHAS_INICIADAS) e exige_aprovacao (há concluída ou em análise com lançamento: só com dois administradores).';
 
 --
+-- Name: FC_IMPORTAR_AVALIACAO_DA_PLANILHA(uuid, text, uuid); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_IMPORTAR_AVALIACAO_DA_PLANILHA"(p_edital uuid, p_motivo text, p_usuario uuid) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_motivo text := btrim(coalesce(p_motivo, ''));
+  v_p record;
+  v_f public."TB_FICHA_ANALISE";
+  v_l public."TB_ANALISE_CURRICULAR";
+  v_problemas integer;
+  v_concluidas integer := 0;
+  v_saem integer := 0;
+  v_resultado text;
+  v_nota numeric;
+  v_data timestamptz;
+  v_usuario uuid;
+  v_marca jsonb;
+  v_retrato jsonb;
+  v_motivo_saida text;
+  v_troca json;
+begin
+  if p_usuario is null then
+    raise exception 'Sessão necessária' using errcode = '42501';
+  end if;
+  if length(v_motivo) not between 10 and 2000 then
+    raise exception 'Diga o motivo da importação (10 a 2.000 caracteres)' using errcode = '22023';
+  end if;
+  if not exists (select 1 from public."TB_MONITORAMENTO_INDIGENA" where id = p_edital) then
+    raise exception 'Edital não encontrado' using errcode = '22023';
+  end if;
+  -- A mesma trava da abertura do lote: job e tela não mexem nas fichas ao mesmo tempo.
+  perform pg_advisory_xact_lock(hashtextextended('avaliacao-documental:fichas:' || p_edital::text, 0));
+  if exists (select 1 from public."TB_ORIGEM_ANALISE_EDITAL" o
+              where o."CO_MONITORAMENTO" = p_edital and o."TP_ORIGEM" = 'MONITORA') then
+    raise exception 'A avaliação deste edital já está no Yeendé' using errcode = '22023';
+  end if;
+  select count(*) into v_problemas from private."FC_PLANO_IMPORTACAO_PLANILHA"(p_edital) x where x.problema is not null;
+  if v_problemas > 0 then
+    raise exception '% caso(s) impedem a importação: veja a prévia', v_problemas using errcode = '23514';
+  end if;
+  if not exists (select 1 from private."FC_PLANO_IMPORTACAO_PLANILHA"(p_edital) x where x.acao = 'CONCLUIR') then
+    raise exception 'A planilha não tem resultado deste edital para importar' using errcode = '22023';
+  end if;
+  v_motivo_saida := 'Não avaliado na planilha (importação de '
+                    || to_char(now() at time zone 'America/Sao_Paulo', 'DD/MM/YYYY') || ')';
+
+  for v_p in select * from private."FC_PLANO_IMPORTACAO_PLANILHA"(p_edital) x
+              where x.acao in ('CONCLUIR', 'SAIR_LOTE') order by x.acao, x.ficha
+  loop
+    select * into v_f from public."TB_FICHA_ANALISE" where "CO_FICHA_ANALISE" = v_p.ficha for update;
+
+    if v_p.acao = 'SAIR_LOTE' then
+      update public."TB_FICHA_ANALISE" set
+        "TP_SITUACAO" = 'FORA_LOTE', "DS_MOTIVO_SAIDA" = v_motivo_saida,
+        "CO_USUARIO_RESERVA" = null, "DT_RESERVA" = null, "DT_RESERVA_EXPIRA" = null,
+        "NU_VERSAO" = "NU_VERSAO" + 1, "DT_ATUALIZACAO" = now()
+       where "CO_FICHA_ANALISE" = v_f."CO_FICHA_ANALISE";
+      perform private."FC_HISTORICO_CONTEUDO_FICHA"(v_f."CO_FICHA_ANALISE", 'SAIR_LOTE', v_f."TP_SITUACAO",
+        v_motivo_saida, p_usuario, null, null);
+      v_saem := v_saem + 1;
+      continue;
+    end if;
+
+    select * into v_l from public."TB_ANALISE_CURRICULAR" where id = v_p.linha;
+    v_resultado := case
+      when v_l.status_consolidado = 'Aprovado' then 'APTO'
+      when coalesce(v_l.nota_final_ajustada, 0) = 0 then 'INAPTO_REQUISITO'
+      else 'INAPTO_NOTA'
+    end;
+    v_nota := case when v_resultado = 'INAPTO_REQUISITO' then 0 else v_l.nota_final_ajustada end;
+    -- A data da planilha (meio-dia em Brasília: o painel mostra o mesmo dia); sem data, a da linha.
+    v_data := coalesce((v_l.data_analise + time '12:00') at time zone 'America/Sao_Paulo', v_l.ultima_atualizacao, now());
+    v_usuario := coalesce(v_p.usuario, p_usuario);
+    -- A marca guarda o que a planilha decidiu (a linha fica como está no painel).
+    v_marca := jsonb_build_object(
+      'linha', v_l.id, 'versao', v_f."NU_VERSAO" + 1, 'em', now(), 'por', p_usuario, 'motivo', v_motivo,
+      'planilha', v_l."CO_PLANILHA", 'status', v_l.status_consolidado, 'etapa', v_l.etapa,
+      'responsavel', v_l.responsavel_analise, 'responsavel_no_sistema', v_p.usuario is not null,
+      'data', v_l.data_analise, 'nota_final', v_l.nota_final_ajustada, 'somatorio', v_l.somatorio,
+      'parciais', jsonb_strip_nulls(jsonb_build_object(
+        'FORMACAO', v_l.pontuacao_escolaridade, 'CURSOS', v_l.pontuacao_cursos_aperfeicoamento,
+        'EXPERIENCIA', v_l.pontuacao_experiencia_profissional, 'ETNICO', v_l.pontuacao_criterio_etnico)),
+      'experiencia_dias', v_l.experiencia_profissional_total,
+      'modalidade', v_l.modalidade_concorrencia, 'pcd', v_l.pcd, 'link_pdf', v_l.link_pdf);
+    -- O que a ficha tinha antes (a análise de teste no sistema, se houve) fica no histórico.
+    v_retrato := case when v_f."DS_LANCAMENTO" is not null or v_f."DS_RESULTADO" is not null or v_f."DS_PARECER" is not null
+                      then jsonb_build_object('lancamento', v_f."DS_LANCAMENTO", 'resultado', v_f."DS_RESULTADO",
+                                              'parecer', v_f."DS_PARECER", 'situacao', v_f."TP_SITUACAO") end;
+
+    update public."TB_FICHA_ANALISE" set
+      "TP_SITUACAO" = 'CONCLUIDA',
+      "TP_RESULTADO" = v_resultado,
+      "VL_NOTA_FINAL" = v_nota,
+      "VL_NOTA_APURADA" = least(greatest(coalesce(v_l.somatorio, v_nota), 0), 1000),
+      "DS_PARECER" = v_l.analise,
+      "DS_LANCAMENTO" = jsonb_build_object('importada_da_planilha', v_marca),
+      "DS_RESULTADO" = jsonb_build_object(
+        'resultado', v_resultado, 'nota_final', v_nota, 'nota_apurada', coalesce(v_l.somatorio, v_nota),
+        'parciais', v_marca -> 'parciais',
+        'experiencia', jsonb_strip_nulls(jsonb_build_object('dias_total', v_l.experiencia_profissional_total)),
+        'importada_da_planilha', true),
+      "DS_MOTIVO_SAIDA" = null,
+      "CO_USUARIO_RESPONSAVEL" = v_usuario,
+      "DT_ATRIBUICAO" = case when "CO_USUARIO_RESPONSAVEL" = v_usuario then coalesce("DT_ATRIBUICAO", v_data) else v_data end,
+      "CO_USUARIO_RESERVA" = null, "DT_RESERVA" = null, "DT_RESERVA_EXPIRA" = null,
+      "CO_USUARIO_RASCUNHO" = null, "DT_RASCUNHO" = null,
+      "CO_USUARIO_CONCLUSAO" = v_usuario, "DT_CONCLUSAO" = v_data,
+      "NU_VERSAO" = "NU_VERSAO" + 1, "DT_ATUALIZACAO" = now()
+     where "CO_FICHA_ANALISE" = v_f."CO_FICHA_ANALISE";
+    perform private."FC_HISTORICO_CONTEUDO_FICHA"(v_f."CO_FICHA_ANALISE", 'IMPORTAR', v_f."TP_SITUACAO",
+      'Importada da planilha: ' || v_motivo, p_usuario,
+      jsonb_build_array(jsonb_build_object('campo', 'origem', 'rotulo', 'Origem da análise',
+        'de', null, 'para', 'PLANILHA', 'linha', v_l.id)),
+      v_retrato);
+    v_concluidas := v_concluidas + 1;
+  end loop;
+
+  -- O edital passa para o sistema: as fichas publicam (as importadas só adotam a linha).
+  v_troca := private."FC_DEFINIR_ORIGEM_ANALISE"(p_edital, 'MONITORA', 'Importação da planilha: ' || v_motivo, p_usuario);
+  return (v_troca::jsonb || jsonb_build_object('importadas', v_concluidas, 'fora_do_lote', v_saem))::json;
+end;
+$$;
+
+
+--
+-- Name: FUNCTION "FC_IMPORTAR_AVALIACAO_DA_PLANILHA"(p_edital uuid, p_motivo text, p_usuario uuid); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_IMPORTAR_AVALIACAO_DA_PLANILHA"(p_edital uuid, p_motivo text, p_usuario uuid) IS 'Importa a avaliação documental da planilha para o sistema (fase F8, 16/11/2026): pelo plano (FC_PLANO_IMPORTACAO_PLANILHA), sem nenhum problema, cada linha Aprovado ou Reprovado vira a ficha CONCLUIDA do inscrito com o resultado, a nota, o parecer e a data da planilha (o analista: o cadastro de mesmo nome, ou quem importa), a marca DS_LANCAMENTO.importada_da_planilha (com a linha e o que a planilha decidiu) e o histórico IMPORTAR com o retrato do que a ficha tinha; a ficha em aberto sem linha sai do lote ("Não avaliado na planilha"); por fim, FC_DEFINIR_ORIGEM_ANALISE para MONITORA (a linha importada só passa a ser do sistema, sem mudar). Recusa edital já MONITORA. Quem chama informa o autor.';
+
+--
 -- Name: FC_INATIVAR_LISTAS_VENCIDAS(uuid); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -9394,6 +9533,95 @@ $$;
 COMMENT ON FUNCTION private."FC_PESSOA_DO_APROVADO"(p_id_origem text, p_nome text) IS 'Chave da pessoa na lista de aprovados: o código do candidato na Empregare ou, sem ele, o nome normalizado (a mesma de conferencia_ler_aprovados, antes do hash).';
 
 --
+-- Name: FC_PLANO_IMPORTACAO_PLANILHA(uuid); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_PLANO_IMPORTACAO_PLANILHA"(p_edital uuid) RETURNS TABLE(linha uuid, ficha uuid, situacao_ficha text, acao text, status text, problema text, usuario uuid)
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  with m as (
+    select e.id, e."CO_AREA", private."FC_NUMERO_EDITAL"(e.edital) as numero
+      from public."TB_MONITORAMENTO_INDIGENA" e where e.id = p_edital
+  ),
+  linhas as (
+    select a.*
+      from public."TB_ANALISE_CURRICULAR" a, m
+     where a.ativo
+       and a."TP_ORIGEM_REGISTRO" = 'PLANILHA'
+       and a."CO_AREA" = m."CO_AREA"
+       and private."FC_NUMERO_EDITAL"(a.edital) = m.numero
+       and not private."FC_ANALISE_EH_TREINAMENTO"(a.origem_planilha)
+  ),
+  -- O inscrito da linha: o da pré-classificação do edital com o mesmo código da Empregare
+  -- (o mesmo código pode ter dois cadastros; vale o da vaga da linha, se houver dois).
+  inscritos as (
+    select l.id as linha, p."CO_EMPREGARE_CANDIDATO" as candidato, p."CO_VAGA" = l.codigo_vaga as mesma_vaga
+      from linhas l
+      join public."TB_EMPREGARE_CANDIDATO" c on btrim(c."CO_CANDIDATO_EMPREGARE") = btrim(l.id_origem)
+      join public."TB_PRE_CLASSIFICACAO" p
+        on p."CO_MONITORAMENTO" = p_edital and p."CO_EMPREGARE_CANDIDATO" = c."CO_EMPREGARE_CANDIDATO"
+  ),
+  escolhido as (
+    select i.linha,
+           case when count(*) = 1 then min(i.candidato::text)::uuid
+                when count(*) filter (where i.mesma_vaga) = 1 then (min(i.candidato::text) filter (where i.mesma_vaga))::uuid
+           end as candidato,
+           count(*) as quantos
+      from inscritos i group by i.linha
+  ),
+  ligadas as (
+    select l.id as linha, l.status_consolidado as status, l.codigo_vaga, l.nota_final_ajustada,
+           l.analise, l.responsavel_analise, e.candidato, coalesce(e.quantos, 0) as quantos,
+           f."CO_FICHA_ANALISE" as ficha, f."TP_SITUACAO" as situacao_ficha, f."CO_VAGA" as vaga_ficha
+      from linhas l
+      left join escolhido e on e.linha = l.id
+      left join public."TB_FICHA_ANALISE" f
+        on f."CO_MONITORAMENTO" = p_edital and f."CO_EMPREGARE_CANDIDATO" = e.candidato
+  )
+  select g.linha, g.ficha, g.situacao_ficha::text,
+         case when g.status in ('Aprovado', 'Reprovado') then 'CONCLUIR' else 'MANTER' end,
+         g.status,
+         case
+           when g.quantos = 0 then 'SEM_INSCRITO'
+           when g.candidato is null then 'MAIS_DE_UM_INSCRITO'
+           when g.ficha is null then 'SEM_FICHA'
+           when g.vaga_ficha is distinct from g.codigo_vaga then 'VAGA_DIFERENTE'
+           -- Em revisão na planilha: a equipe termina a revisão lá antes de importar.
+           when g.status = 'Revisar' then 'EM_REVISAO'
+           when g.status in ('Aprovado', 'Reprovado') and g.nota_final_ajustada is null then 'SEM_NOTA'
+           when g.status = 'Aprovado' and g.nota_final_ajustada > 1000 then 'NOTA_INVALIDA'
+           when g.status in ('Aprovado', 'Reprovado') and length(btrim(coalesce(g.analise, ''))) = 0 then 'SEM_PARECER'
+           when g.status in ('Aprovado', 'Reprovado') and length(g.analise) > 8000 then 'PARECER_LONGO'
+         end,
+         -- Quem analisou: o cadastro de mesmo nome, se for um só (senão, quem importa).
+         (select min(u.user_id::text)::uuid
+            from public."TB_PERFIL_USUARIO" u
+           where nullif(btrim(g.responsavel_analise), '') is not null
+             and (lower(btrim(private."FC_NOME_E_SOBRENOME"(u.nome))) = lower(btrim(g.responsavel_analise))
+                  or lower(btrim(u.nome)) = lower(btrim(g.responsavel_analise)))
+          having count(*) = 1)
+    from ligadas g
+  union all
+  -- Fichas sem linha ativa na planilha: em aberto, saem do lote; concluída é conflito.
+  select null, f."CO_FICHA_ANALISE", f."TP_SITUACAO"::text,
+         case when f."TP_SITUACAO" in ('PENDENTE', 'EM_ANALISE', 'REVISAR') then 'SAIR_LOTE' else 'MANTER' end,
+         null,
+         case when f."TP_SITUACAO" = 'CONCLUIDA' then 'CONCLUIDA_SEM_PLANILHA' end,
+         null
+    from public."TB_FICHA_ANALISE" f
+   where f."CO_MONITORAMENTO" = p_edital
+     and not exists (select 1 from ligadas g where g.ficha = f."CO_FICHA_ANALISE");
+$$;
+
+
+--
+-- Name: FUNCTION "FC_PLANO_IMPORTACAO_PLANILHA"(p_edital uuid); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_PLANO_IMPORTACAO_PLANILHA"(p_edital uuid) IS 'Plano da importação da avaliação da planilha (importar_avaliacao_da_planilha): para cada linha ativa da planilha do edital (TB_ANALISE_CURRICULAR, origem PLANILHA), o inscrito (pré-classificação com o mesmo código da Empregare), a ficha, a ação (CONCLUIR para Aprovado e Reprovado; MANTER para Pendente e Em análise) e o problema que impede (SEM_INSCRITO, MAIS_DE_UM_INSCRITO, SEM_FICHA, VAGA_DIFERENTE, EM_REVISAO, SEM_NOTA, NOTA_INVALIDA, SEM_PARECER, PARECER_LONGO); para cada ficha sem linha, SAIR_LOTE (em aberto) ou o conflito CONCLUIDA_SEM_PLANILHA. usuario: o cadastro com o nome do analista da planilha, se for um só. Só lê.';
+
+--
 -- Name: FC_PODE_ANALISAR_VAGA(uuid, uuid, text); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -11819,6 +12047,23 @@ begin
     return null;
   end if;
 
+  -- Ficha importada da planilha (importar_avaliacao_da_planilha, 16/11/2026): a linha da
+  -- planilha é o resultado e fica como está; só passa a ser do sistema. Vale enquanto a
+  -- ficha está concluída e não foi reaberta depois da importação (reaberta, a análise é
+  -- refeita no sistema e publica pelo caminho de sempre).
+  if v_f."TP_SITUACAO" = 'CONCLUIDA'
+     and jsonb_typeof(v_f."DS_LANCAMENTO" -> 'importada_da_planilha') = 'object'
+     and not exists (select 1 from public."TH_FICHA_ANALISE" h
+                      where h."CO_FICHA_ANALISE" = p_ficha
+                        and h."TP_ACAO" = 'REABRIR'
+                        and h."NU_VERSAO" > coalesce(public.jsonb_int_or_null(v_f."DS_LANCAMENTO" -> 'importada_da_planilha', 'versao'), 0)) then
+    v_id := (v_f."DS_LANCAMENTO" -> 'importada_da_planilha' ->> 'linha')::uuid;
+    update public."TB_ANALISE_CURRICULAR" a
+       set "TP_ORIGEM_REGISTRO" = 'MONITORA', updated_at = now()
+     where a.id = v_id and a."TP_ORIGEM_REGISTRO" is distinct from 'MONITORA';
+    return v_id;
+  end if;
+
   select * into v_m from public."TB_MONITORAMENTO_INDIGENA" where id = v_f."CO_MONITORAMENTO";
   select a."NO_GRUPO_PLANILHA" into v_grupo from public."TB_AREA" a where a."CO_AREA" = v_m."CO_AREA";
   select p."CO_PLANILHA" into v_planilha
@@ -11908,6 +12153,11 @@ begin
        and a.codigo_vaga = v_f."CO_VAGA"
        and a."CO_AREA" = v_m."CO_AREA"
        and private."FC_NUMERO_EDITAL"(a.edital) = v_numero
+       -- A linha que outra ficha importou é dela (o mesmo código pode ter dois cadastros).
+       and not exists (select 1 from public."TB_FICHA_ANALISE" f2
+                        where f2."CO_MONITORAMENTO" = v_f."CO_MONITORAMENTO"
+                          and f2."CO_FICHA_ANALISE" <> p_ficha
+                          and f2."DS_LANCAMENTO" -> 'importada_da_planilha' ->> 'linha' = a.id::text)
      order by a."TP_ORIGEM_REGISTRO" = 'MONITORA' desc, a.ativo desc, a.updated_at desc, a.id
      limit 1;
   end if;
@@ -25767,6 +26017,27 @@ $$;
 COMMENT ON FUNCTION public.ignorar_aviso_conferencia(p_id uuid, p_motivo text) IS 'Ignora um aviso de conferência aberto, com motivo (10 a 500 caracteres): administrador global ou quem vê o aviso e administra o módulo (classificação: editor). O aviso volta a ABERTO se a quantidade crescer.';
 
 --
+-- Name: importar_avaliacao_da_planilha(uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.importar_avaliacao_da_planilha(p_edital uuid, p_motivo text) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+  perform private."FC_EXIGIR_COORD_AVALIACAO"(p_edital);
+  return private."FC_IMPORTAR_AVALIACAO_DA_PLANILHA"(p_edital, p_motivo, (select auth.uid()));
+end;
+$$;
+
+
+--
+-- Name: FUNCTION importar_avaliacao_da_planilha(p_edital uuid, p_motivo text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.importar_avaliacao_da_planilha(p_edital uuid, p_motivo text) IS 'A coordenação da avaliação do edital (gestor, coordenador da equipe ou admin global; 42501) importa os resultados da planilha como fichas concluídas e passa a avaliação para o sistema, com motivo de 10 a 2.000 (FC_IMPORTAR_AVALIACAO_DA_PLANILHA). Recusa (23514) se a prévia aponta problema.';
+
+--
 -- Name: incluir_no_lote_por_decisao(uuid, text[], text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -34403,6 +34674,41 @@ begin
   return jsonb_build_object('ok',true,'sync_id',p_sync_id,'total_ativos_local',p_total_ativos_local,'fato_alterados',v_fato,'editais',v_editais,'staging',v_total,'planilha',v_planilha);
 end;
 $$;
+
+--
+-- Name: previa_importacao_da_planilha(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.previa_importacao_da_planilha(p_edital uuid) RETURNS json
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+  perform private."FC_EXIGIR_COORD_AVALIACAO"(p_edital);
+  return (
+    select json_build_object(
+      'aprovados', count(*) filter (where x.acao = 'CONCLUIR' and x.status = 'Aprovado' and x.problema is null),
+      'reprovados', count(*) filter (where x.acao = 'CONCLUIR' and x.status = 'Reprovado' and x.problema is null),
+      'em_aberto', count(*) filter (where x.linha is not null and x.acao = 'MANTER' and x.problema is null),
+      'saem_do_lote', count(*) filter (where x.acao = 'SAIR_LOTE'),
+      'analista_sem_cadastro', count(*) filter (where x.acao = 'CONCLUIR' and x.usuario is null and x.problema is null),
+      'problemas', coalesce((select json_object_agg(p.problema, p.n)
+                               from (select y.problema, count(*) as n
+                                       from private."FC_PLANO_IMPORTACAO_PLANILHA"(p_edital) y
+                                      where y.problema is not null group by y.problema) p), '{}'::json),
+      'origem', coalesce((select o."TP_ORIGEM" from public."TB_ORIGEM_ANALISE_EDITAL" o
+                           where o."CO_MONITORAMENTO" = p_edital), 'PLANILHA'))
+      from private."FC_PLANO_IMPORTACAO_PLANILHA"(p_edital) x
+  );
+end;
+$$;
+
+
+--
+-- Name: FUNCTION previa_importacao_da_planilha(p_edital uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.previa_importacao_da_planilha(p_edital uuid) IS 'A coordenação da avaliação do edital (42501) vê, antes de importar, o que a importação da planilha faria: aprovados e reprovados que viram fichas concluídas, linhas em aberto que ficam como estão, fichas que saem do lote, analistas sem cadastro de mesmo nome (a ficha fica com quem importa) e os problemas que impedem, por tipo (FC_PLANO_IMPORTACAO_PLANILHA). Só lê.';
 
 --
 -- Name: processar_sync_analises(uuid); Type: FUNCTION; Schema: public; Owner: -
@@ -54059,7 +54365,7 @@ CREATE TABLE public."TH_FICHA_ANALISE" (
     CONSTRAINT "CK_THFICHA_MOTIVO" CHECK (((("TP_ACAO")::text <> ALL (ARRAY[('REDISTRIBUIR'::character varying)::text, ('DEVOLVER_FILA'::character varying)::text, ('LIBERAR_RESERVA'::character varying)::text, ('REVISAR'::character varying)::text, ('REABRIR'::character varying)::text, ('REINICIAR'::character varying)::text, ('REFAZER_LOTE'::character varying)::text])) OR ((length(btrim((COALESCE("DS_MOTIVO", ''::character varying))::text)) >= 10) AND (length(btrim((COALESCE("DS_MOTIVO", ''::character varying))::text)) <= 2000)))),
     CONSTRAINT "CK_THFICHA_ORIGEM" CHECK (((("TP_ORIGEM")::text = ANY (ARRAY[('TELA'::character varying)::text, ('JOB'::character varying)::text])) AND ((("TP_ORIGEM")::text = 'JOB'::text) = ("CO_USUARIO" IS NULL)))),
     CONSTRAINT "CK_THFICHA_SITUACOES" CHECK (((("TP_SITUACAO")::text = ANY (ARRAY[('PENDENTE'::character varying)::text, ('EM_ANALISE'::character varying)::text, ('REVISAR'::character varying)::text, ('CONCLUIDA'::character varying)::text, ('FORA_LOTE'::character varying)::text])) AND (("TP_SITUACAO_ANTERIOR" IS NULL) OR (("TP_SITUACAO_ANTERIOR")::text = ANY (ARRAY[('PENDENTE'::character varying)::text, ('EM_ANALISE'::character varying)::text, ('REVISAR'::character varying)::text, ('CONCLUIDA'::character varying)::text, ('FORA_LOTE'::character varying)::text]))))),
-    CONSTRAINT "CK_THFICHA_TPACAO" CHECK ((("TP_ACAO")::text = ANY (ARRAY['CRIAR'::text, 'PEGAR'::text, 'RESERVAR'::text, 'LIBERAR'::text, 'LIBERAR_RESERVA'::text, 'DISTRIBUIR'::text, 'REDISTRIBUIR'::text, 'DEVOLVER_FILA'::text, 'REVISAR'::text, 'SAIR_LOTE'::text, 'VOLTAR_LOTE'::text, 'SALVAR'::text, 'CONCLUIR'::text, 'REABRIR'::text, 'REINICIAR'::text, 'REFAZER_LOTE'::text, 'MODALIDADE'::text, 'CORRIGIR'::text])))
+    CONSTRAINT "CK_THFICHA_TPACAO" CHECK ((("TP_ACAO")::text = ANY (ARRAY['CRIAR'::text, 'PEGAR'::text, 'RESERVAR'::text, 'LIBERAR'::text, 'LIBERAR_RESERVA'::text, 'DISTRIBUIR'::text, 'REDISTRIBUIR'::text, 'DEVOLVER_FILA'::text, 'REVISAR'::text, 'SAIR_LOTE'::text, 'VOLTAR_LOTE'::text, 'SALVAR'::text, 'CONCLUIR'::text, 'REABRIR'::text, 'REINICIAR'::text, 'REFAZER_LOTE'::text, 'MODALIDADE'::text, 'CORRIGIR'::text, 'IMPORTAR'::text])))
 );
 
 --
@@ -54090,7 +54396,7 @@ COMMENT ON COLUMN public."TH_FICHA_ANALISE"."NU_VERSAO" IS 'Versão da ficha dep
 -- Name: COLUMN "TH_FICHA_ANALISE"."TP_ACAO"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public."TH_FICHA_ANALISE"."TP_ACAO" IS 'CRIAR, PEGAR (Pegar próximo), RESERVAR (abriu), LIBERAR (fechou), LIBERAR_RESERVA (a coordenação liberou a reserva de outra pessoa), DISTRIBUIR, REDISTRIBUIR, DEVOLVER_FILA, REVISAR, SAIR_LOTE, VOLTAR_LOTE, SALVAR (rascunho com alteração: só o que mudou, sem retrato, desde 20261023220000), CONCLUIR, REABRIR, REINICIAR (o administrador global voltou as fichas do edital ao início), REFAZER_LOTE (a ficha intocada ficou fora do lote refeito do zero), MODALIDADE (a pré-classificação mudou a modalidade da ficha não concluída) ou CORRIGIR (correção de dados da ficha concluída, assinada pelo setor).';
+COMMENT ON COLUMN public."TH_FICHA_ANALISE"."TP_ACAO" IS 'CRIAR, PEGAR (Pegar próximo), RESERVAR (abriu), LIBERAR (fechou), LIBERAR_RESERVA (a coordenação liberou a reserva de outra pessoa), DISTRIBUIR, REDISTRIBUIR, DEVOLVER_FILA, REVISAR, SAIR_LOTE, VOLTAR_LOTE, SALVAR (rascunho com alteração: só o que mudou, sem retrato, desde 20261023220000), CONCLUIR, REABRIR, REINICIAR (o administrador global voltou as fichas do edital ao início), REFAZER_LOTE (a ficha intocada ficou fora do lote refeito do zero), MODALIDADE (a pré-classificação mudou a modalidade da ficha não concluída), CORRIGIR (correção de dados da ficha concluída, assinada pelo setor) ou IMPORTAR (o resultado veio da planilha: importar_avaliacao_da_planilha; o retrato guarda o que a ficha tinha).';
 
 --
 -- Name: COLUMN "TH_FICHA_ANALISE"."TP_SITUACAO_ANTERIOR"; Type: COMMENT; Schema: public; Owner: -
@@ -69611,6 +69917,12 @@ REVOKE ALL ON FUNCTION private."FC_HISTORICO_FICHA"(p_ficha uuid, p_acao text, p
 REVOKE ALL ON FUNCTION private."FC_IMPACTO_REINICIO_FICHAS"(p_edital uuid) FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_IMPORTAR_AVALIACAO_DA_PLANILHA"(p_edital uuid, p_motivo text, p_usuario uuid); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_IMPORTAR_AVALIACAO_DA_PLANILHA"(p_edital uuid, p_motivo text, p_usuario uuid) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_INATIVAR_LISTAS_VENCIDAS"(p_edital_id uuid); Type: ACL; Schema: private; Owner: -
 --
 
@@ -70053,6 +70365,12 @@ REVOKE ALL ON FUNCTION private."FC_PERFIL_VE_EDITAL"(p_perfil_usuario uuid, p_ed
 --
 
 REVOKE ALL ON FUNCTION private."FC_PESSOA_DO_APROVADO"(p_id_origem text, p_nome text) FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_PLANO_IMPORTACAO_PLANILHA"(p_edital uuid); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_PLANO_IMPORTACAO_PLANILHA"(p_edital uuid) FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_PODE_ANALISAR_VAGA"(p_edital uuid, p_usuario uuid, p_vaga text); Type: ACL; Schema: private; Owner: -
@@ -71777,6 +72095,13 @@ REVOKE ALL ON FUNCTION public.ignorar_aviso_conferencia(p_id uuid, p_motivo text
 GRANT ALL ON FUNCTION public.ignorar_aviso_conferencia(p_id uuid, p_motivo text) TO authenticated;
 
 --
+-- Name: FUNCTION importar_avaliacao_da_planilha(p_edital uuid, p_motivo text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.importar_avaliacao_da_planilha(p_edital uuid, p_motivo text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.importar_avaliacao_da_planilha(p_edital uuid, p_motivo text) TO authenticated;
+
+--
 -- Name: FUNCTION incluir_no_lote_por_decisao(p_edital uuid, p_codigos text[], p_motivo text, p_vaga text); Type: ACL; Schema: public; Owner: -
 --
 
@@ -72818,6 +73143,13 @@ GRANT ALL ON FUNCTION public.pre_classificacao_ler_editais(p_editais text[], p_a
 
 REVOKE ALL ON FUNCTION public.preparar_sync_analises_incremental(p_sync_id uuid, p_total_ativos_local integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.preparar_sync_analises_incremental(p_sync_id uuid, p_total_ativos_local integer) TO service_role;
+
+--
+-- Name: FUNCTION previa_importacao_da_planilha(p_edital uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.previa_importacao_da_planilha(p_edital uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.previa_importacao_da_planilha(p_edital uuid) TO authenticated;
 
 --
 -- Name: FUNCTION processar_sync_analises(p_sync_id uuid); Type: ACL; Schema: public; Owner: -
