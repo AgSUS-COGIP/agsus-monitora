@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { act } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

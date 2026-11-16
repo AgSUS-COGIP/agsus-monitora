@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { espelhoDaEliminacaoPreAnalise } from "../../src/lib/avaliacao-documental/espelho-da-pre-classificacao.ts";

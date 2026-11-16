@@ -6,6 +6,8 @@ e [[testes-de-navegador]] (Playwright).
 - **Teste novo é `.ts`** (`.tsx` só com JSX), checado por `npm run typecheck:testes` (strict). Sem
   `any`, `@ts-ignore`/`@ts-nocheck` nem `as unknown as`: tipe o mock com `Partial<>`/`Pick<>`,
   `vi.mocked` ou ajudante tipado.
+- **Ambiente node por padrão.** Arquivo que usa DOM começa com `// @vitest-environment jsdom`
+  (só quem precisa: o jsdom é a parte cara da suíte).
 - **React** sem JSX: monte com a função de montagem e envolva cada mudança em `act`; campo
   controlado com `digitar`, `escolher`, `clicar` e `teclar` de `tests/componentes/interacoes.ts`.
   Modelo: `tests/componentes/barra-lateral.test.ts`.

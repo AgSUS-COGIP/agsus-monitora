@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { act } from "react";
 import { montarTela } from "../montar-tela.ts";
 import { afterEach, describe, expect, it, vi } from "vitest";

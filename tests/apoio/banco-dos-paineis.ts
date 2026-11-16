@@ -16,6 +16,7 @@
 */
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
+import { moldeDeBanco } from "./molde-de-banco.ts";
 
 export type Banco = PGlite;
 
@@ -77,7 +78,7 @@ $$;
 `;
 
 /** O banco com a migration das fontes já aplicada (e dois usuários com nome). */
-export async function bancoDosPaineis(): Promise<Banco> {
+async function montarBancoDosPaineis(): Promise<Banco> {
   const db = await PGlite.create();
   await db.exec(INFRAESTRUTURA);
   await db.exec(guardaDosPaineis());
@@ -88,6 +89,9 @@ export async function bancoDosPaineis(): Promise<Banco> {
   await db.exec(migration());
   return db;
 }
+
+/** O banco com a migration das fontes já aplicada (clone de um molde por arquivo). */
+export const bancoDosPaineis = moldeDeBanco(montarBancoDosPaineis);
 
 /**
  * A sessão: quem está logado, o nível em paineis_dados (0–3), as áreas e o
@@ -187,7 +191,7 @@ export const rollbackDosLimites = () =>
   ler("tests/fixtures/limites-de-tempo-dos-paineis.rollback.sql");
 
 /** O banco com as fontes, as RPCs de 20261113240000 e as migrations dos prontos. */
-export async function bancoComRelatoriosProntos(): Promise<Banco> {
+async function montarBancoComRelatoriosProntos(): Promise<Banco> {
   const db = await bancoDosPaineis();
   await db.exec(RECORTE_DA_COORDENACAO);
   await db.exec(rpcsAntigas().join("\n\n"));
@@ -196,6 +200,11 @@ export async function bancoComRelatoriosProntos(): Promise<Banco> {
   await db.exec(CALCULO_DE_TESTE);
   return db;
 }
+
+/** O banco com os relatórios prontos (clone de um molde por arquivo). */
+export const bancoComRelatoriosProntos = moldeDeBanco(
+  montarBancoComRelatoriosProntos,
+);
 
 /** Uma linha só, ou nulo. */
 export async function uma<T>(

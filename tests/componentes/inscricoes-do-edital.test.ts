@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { act, createElement } from "react";
 import type { ComponentProps } from "react";
 import { createRoot } from "react-dom/client";

@@ -17,6 +17,7 @@
 */
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
+import { moldeDeBanco } from "./molde-de-banco.ts";
 
 export const NOME_DA_MIGRATION =
   "20261109180000_catalogo_dos_robos_e_chave_unica.sql";
@@ -324,7 +325,7 @@ export interface OpcoesDoBanco {
 }
 
 /** O banco como está hoje (antes da migration 20261109180000). */
-export async function bancoDeHoje(opcoes: OpcoesDoBanco = {}): Promise<Banco> {
+async function montarBancoDeHoje(opcoes: OpcoesDoBanco = {}): Promise<Banco> {
   const db = await PGlite.create();
   await db.exec(INFRAESTRUTURA);
   for (const nome of FUNCOES_DE_HOJE) await db.exec(definicaoVigente(nome));
@@ -352,6 +353,18 @@ export async function bancoDeHoje(opcoes: OpcoesDoBanco = {}): Promise<Banco> {
       [nome, agenda, opcoes.tarefas?.[nome] ?? ativa],
     );
   return db;
+}
+
+const bancoDeHojePadrao = moldeDeBanco(() => montarBancoDeHoje());
+
+/**
+ * O banco como está hoje (antes da migration 20261109180000). Sem opções, é o
+ * clone de um molde por arquivo; com opções, monta do zero.
+ */
+export function bancoDeHoje(opcoes: OpcoesDoBanco = {}): Promise<Banco> {
+  return Object.keys(opcoes).length === 0
+    ? bancoDeHojePadrao()
+    : montarBancoDeHoje(opcoes);
 }
 
 /** Roda um arquivo inteiro (begin … commit) como o SQL Editor rodaria. */

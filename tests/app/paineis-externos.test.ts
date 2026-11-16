@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { act } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { montarPortaisNoTeste } from "../montar-tela.ts";

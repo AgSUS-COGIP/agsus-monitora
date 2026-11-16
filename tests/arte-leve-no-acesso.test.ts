@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it } from "vitest";
 import { enderecosDaArteNaTela } from "../src/lib/access-branding.ts";

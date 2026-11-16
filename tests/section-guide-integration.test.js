@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import { obterPaginaDaAya } from "../src/modulos/aya/estado.ts";
 import { criarNavegacao } from "../src/app/navegacao.ts";

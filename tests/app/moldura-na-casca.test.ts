@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { StrictMode, act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";

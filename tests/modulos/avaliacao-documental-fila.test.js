@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { renders } from "../componentes/contar-renders.ts";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

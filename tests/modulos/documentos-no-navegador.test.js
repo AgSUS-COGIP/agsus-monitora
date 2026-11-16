@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { Blob as BlobDoNode } from "node:buffer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {

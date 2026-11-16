@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { act, createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SininhoDoResumo } from "../../src/modulos/resumo-do-dia/resumo-do-dia.tsx";

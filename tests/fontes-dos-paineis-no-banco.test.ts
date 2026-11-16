@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   type Banco,
   bancoDosPaineis,
@@ -121,6 +121,11 @@ type Fontes = {
 };
 
 let db: Banco;
+/*
+  A primeira chamada monta o molde do banco (lenta com a suíte em carga):
+  fica aqui, com prazo próprio, fora do prazo de 10 s do beforeEach.
+*/
+beforeAll(() => bancoDosPaineis(), 60_000);
 beforeEach(async () => {
   db = await bancoDosPaineis();
   await db.exec(FONTES_DE_TESTE);

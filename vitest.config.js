@@ -5,7 +5,12 @@ export default defineConfig({
   // JSX dos componentes React; os testes estão passando de .js para .ts.
   plugins: [react()],
   test: {
-    environment: "jsdom",
+    /*
+      node por padrão: montar o jsdom custava 2495 s somados numa suíte de 557
+      arquivos (o dobro do tempo dos testes), e metade deles não usa DOM.
+      Arquivo que usa DOM começa com `// @vitest-environment jsdom`.
+    */
+    environment: "node",
     globals: false,
     // Durante a passagem para TypeScript valem os dois; no fim, só .ts/.tsx.
     include: ["tests/**/*.test.{js,ts,tsx}"],

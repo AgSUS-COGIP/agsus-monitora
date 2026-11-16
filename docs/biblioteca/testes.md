@@ -1,12 +1,12 @@
 ---
 tipo: regra
 area: testes
-atualizado: 2026-11-10
+atualizado: 2026-11-16
 ---
 
 # Testes
 
-Vitest (ambiente jsdom) para lógica e componentes, PGlite para o banco de verdade, pytest para o
+Vitest (ambiente node por padrão; jsdom nos arquivos que o declaram) para lógica e componentes, PGlite para o banco de verdade, pytest para o
 Python e Playwright para o navegador ([[testes-de-navegador]]). Rode o mínimo que responda a
 pergunta.
 
@@ -27,6 +27,12 @@ python -m pytest                           # Python (tests/python/)
   (`tsconfig.tests.json`, strict). Sem `any`, `@ts-ignore`/`@ts-nocheck` nem `as unknown as` (o
   lint recusa): tipe o mock com `Partial<>`/`Pick<>`, `vi.mocked` ou um ajudante tipado. Globais só
   de teste (`IS_REACT_ACT_ENVIRONMENT`) ficam em `tests/globais.d.ts`.
+- **Ambiente:** o padrão é node. Arquivo que usa DOM (`document`, `window`, React montado,
+  `localStorage`) começa com `// @vitest-environment jsdom`. Sem a anotação, quem usa `document`
+  direto falha com "document is not defined", mas código que lê `globalThis.document?.` cai em
+  silêncio no caminho sem DOM: injete o `documento`/`janela` ou anote o arquivo. Não anote quem não precisa: montar o jsdom custava o dobro do tempo dos testes. O
+  Vitest lê a anotação em qualquer comentário do topo do arquivo, inclusive dentro de `/* */`: não
+  a cite por extenso num comentário de arquivo que roda em node.
 - Subpastas: `lib/`, `modules/`, `componentes/` (React), `modulos/` (telas de `src/modulos/`), `ui/`,
   `analises/`, `tipos/` (casos de tipo), `fixtures/`, `apoio/`, `python/`; a maioria fica na raiz,
   nomeada pelo comportamento (`terras-do-dsei.test.js`, `sobreposicao-na-tela.test.js`).
@@ -55,7 +61,7 @@ conferido pelo ensaio antes de aplicar.
 ## Escrever teste
 
 - Nome do arquivo descreve o comportamento em português, não o arquivo testado.
-- Teste a lógica em `src/lib/` (pura). Para `src/modules/`, monte o DOM mínimo no jsdom.
+- Teste a lógica em `src/lib/` (pura). Para `src/modules/`, monte o DOM mínimo no jsdom (com a anotação).
 - **Bug corrigido → teste que falharia antes da correção.**
 - Não leia `public/data/*.json` inteiro no teste; use um recorte fixo.
 - Regra que existe em TypeScript e em Python: caso dourado compartilhado em

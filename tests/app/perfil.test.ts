@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
 import type { User } from "@supabase/supabase-js";
 import { criarPerfil } from "../../src/app/perfil.ts";

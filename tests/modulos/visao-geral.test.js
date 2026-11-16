@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { readdirSync, readFileSync } from "node:fs";
 import { fonteDoApp } from "../fonte-do-app.ts";
 import { act } from "react";

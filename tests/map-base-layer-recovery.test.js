@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import { addResilientBaseLayer } from "../src/modules/map-base-layer-switcher.ts";
 

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
 import {
   CHAVE_COMEMORACOES_PESSOAIS,

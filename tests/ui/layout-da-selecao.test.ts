@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { act, createElement as h, useState } from "react";
 import type { ChangeEvent, ReactElement } from "react";
 import { createRoot } from "react-dom/client";

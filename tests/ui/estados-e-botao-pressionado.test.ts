@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { act, createElement as h } from "react";
 import { createRoot } from "react-dom/client";
 import { readFileSync } from "node:fs";

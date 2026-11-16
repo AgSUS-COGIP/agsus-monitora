@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { EditorDaChamada } from "../../src/modulos/aprovados/chamada-para-contratacao.tsx";
