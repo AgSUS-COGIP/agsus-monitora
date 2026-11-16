@@ -8,6 +8,7 @@ import {
   minimoEmPontos,
   moverItem,
   notaNaEscala,
+  notaAceita,
   opcoesDaEscala,
   pontuacaoMaxima,
   rascunhoDoRoteiro,
@@ -182,6 +183,20 @@ describe("escala", () => {
     expect(notaNaEscala(SESMT, SESMT.competencias[0], 1.5)).toBe(true);
     expect(notaNaEscala(SESMT, SESMT.competencias[0], 1.25)).toBe(false);
     expect(notaNaEscala(SESMT, SESMT.competencias[0], 2.5)).toBe(false);
+  });
+
+  it("nota aceita: a da escala ou a já gravada, mesmo fora dela (importada da planilha, 16/11/2026)", () => {
+    const c = SESMT.competencias[0];
+    expect(notaAceita(SESMT, c, 1.5, null)).toBe(true);
+    // Gravada pela importação (média da planilha) e não mexida: vale.
+    expect(notaAceita(SESMT, c, "1,67", 1.67)).toBe(true);
+    expect(notaAceita(SESMT, c, 0.75, "0.75")).toBe(true);
+    // Mudou: a nova segue a escala.
+    expect(notaAceita(SESMT, c, 1.25, 1.67)).toBe(false);
+    expect(notaAceita(SESMT, c, 1.25, null)).toBe(false);
+    // Fora da faixa nunca vale, nem gravada.
+    expect(notaAceita(SESMT, c, 2.5, 2.5)).toBe(false);
+    expect(notaAceita(SESMT, c, -1, -1)).toBe(false);
   });
 
   it("NIVEIS: os níveis até a nota máxima, com nome e descrição", () => {
