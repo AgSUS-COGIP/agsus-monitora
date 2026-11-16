@@ -71,6 +71,20 @@ seleção (cabeçalho com o edital e as seções).
 Arquivos, regras puras, contratos TypeScript e testes: [[entrevistas-arquivos-e-contratos]].
 Explicações para quem usa: `docs/aya/regras-das-entrevistas.md`.
 
+## Entrevistas feitas na planilha da banca
+
+Edital que entrevistou fora do sistema, nas planilhas "Avaliação Estruturada por Competência" (uma
+por vaga: dois avaliadores dão nota em cada competência, comparecimento, nota final e parecer; aba
+Avaliadores com os nomes), entra pela função `private."FC_IMPORTAR_ENTREVISTAS_DA_PLANILHA"`
+(migration `20261117010000_importar_entrevistas_da_planilha.sql`; sem grant, roda por script de
+banco com autorização). Ela cria a banca (origem "Planilha da banca"), a ficha de notas de cada
+entrevistado (TB_ENTREVISTA sistema, sem exigir a lista de convocação) com banca, comparecimento,
+endereço da planilha e as notas de cada avaliador (sem a escala do roteiro: a planilha guarda
+médias), calcula nota e parecer pelo sistema, compara com a planilha e põe a justificativa da banca
+no inapto e no ausente; histórico em TH_ENTREVISTA_AVALIACAO. Os nomes dos candidatos não passam
+pela função: quem monta os dados liga cada nome à análise do candidato antes. Usada no 93/2026
+(16/11/2026): 49 entrevistas, sem divergência de nota ou parecer com a planilha.
+
 ## Relacionadas
 
 - [[modulo-classificacao]] — convocação, desempate e agenda vêm de lá
