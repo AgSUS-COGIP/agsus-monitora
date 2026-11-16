@@ -1667,6 +1667,19 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     resumo:
       "A coordenação da avaliação do edital (ou o admin global; 42501) troca o dono: Yeendé (as fichas alimentam TB_ANALISE_CURRICULAR, o Painel das análises e a Classificação; a planilha deixa de mexer no edital; recusa 23514 se a planilha já decidiu análises) ou PLANILHA. Motivo de 10 a 2.000 e histórico. Devolve { origem, anterior, mudou, publicadas, devolvidas }.",
   },
+  // ── Importação da avaliação da planilha (20261116233000_importar_avaliacao_da_planilha.sql)
+  previa_importacao_da_planilha: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "A coordenação da avaliação do edital (42501) vê o que a importação da planilha faria: { aprovados, reprovados, em_aberto, saem_do_lote, analista_sem_cadastro, problemas: { CODIGO: n }, origem }. Só lê.",
+  },
+  importar_avaliacao_da_planilha: {
+    argumentos: ["p_edital", "p_motivo"],
+    critica: false,
+    resumo:
+      "A coordenação da avaliação do edital (42501) importa as análises Aprovado e Reprovado da planilha como fichas concluídas (resultado, nota, parecer e data de lá; marca importada_da_planilha) e passa a avaliação para o Yeendé, com motivo de 10 a 2.000. Recusa 23514 com problema na prévia e 22023 se já está no Yeendé. Devolve o da troca de dono mais { importadas, fora_do_lote }.",
+  },
   // ── Avaliação documental: regra e equipe (20261006100000_regra_da_analise.sql)
   listar_editais_avaliacao: {
     argumentos: ["p_area"],

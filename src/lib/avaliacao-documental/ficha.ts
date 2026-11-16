@@ -29,6 +29,7 @@
   O banco revalida a estrutura (supabase/migrations/20261007130000_conteudo_da_ficha.sql)
   e o Python reconfere a conta (python/monitora/avaliacao_documental/pontuacao.py).
 */
+import { semMarcaDaImportacao } from "./importacao-da-planilha.ts";
 import { nivelDaVaga } from "../classificacao/vagas.ts";
 import {
   PARCIAIS,
@@ -384,7 +385,8 @@ export function lancamentoInicial({
     observacoes: "" as Candidato["observacoes"],
     observacoes_prontas: [] as readonly string[],
   };
-  const g = objeto(gravado);
+  // A marca da ficha importada da planilha não volta a ser gravada (reaberta, refaz-se aqui).
+  const g = objeto(semMarcaDaImportacao(gravado));
   const daFicha = {
     vaga: vaga === undefined || vaga === null ? null : String(vaga),
     cargo: cargo ?? null,
