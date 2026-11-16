@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { erroDe, uma } from "./apoio/banco-dos-robos.ts";
 import { moldeDeBanco } from "./apoio/molde-de-banco.ts";
 
@@ -162,6 +162,11 @@ const registrar = (db: PGlite, p: Pedido = {}) =>
 
 describe("registrar_exportacao_aprovados (PGlite)", () => {
   let db: PGlite;
+  /*
+    A primeira chamada monta o molde do banco (lenta com a suíte em carga):
+    fica aqui, com prazo próprio, fora do prazo de 10 s do beforeEach.
+  */
+  beforeAll(() => bancoComLista(), 60_000);
   beforeEach(async () => {
     db = await bancoComLista();
     await db.exec(MIGRATION);

@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { createHash } from "node:crypto";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   type Banco,
   bancoComRelatoriosProntos,
@@ -54,6 +54,11 @@ type Pagina = {
 };
 
 let db: Banco;
+/*
+  A primeira chamada monta o molde do banco (lenta com a suíte em carga):
+  fica aqui, com prazo próprio, fora do prazo de 10 s do beforeEach.
+*/
+beforeAll(() => bancoComRelatoriosProntos(), 60_000);
 beforeEach(async () => {
   db = await bancoComRelatoriosProntos();
   await db.exec(FONTE_DE_TESTE);
