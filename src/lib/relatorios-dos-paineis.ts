@@ -15,7 +15,7 @@ import type { FonteDaColuna } from "./fontes-dos-paineis.ts";
 
   - Resumo dos editais — uma linha por edital;
   - Editais por cargo — uma linha por vaga de cada edital (código, cargo,
-    vagas imediatas do título da vaga, inscritos da Seleção e aprovados da
+    vagas imediatas do quadro de vagas do edital, inscritos da Seleção e aprovados da
     lista vigente, casados pelo código da vaga);
   - Aprovados — uma linha por aprovado da lista vigente.
 
@@ -83,12 +83,7 @@ export const RELATORIOS_DOS_PAINEIS: readonly DefinicaoDoRelatorio[] =
         coluna("unidade", "DSEI / Unidade", "texto", 36),
         coluna("codigo_vaga", "Código da vaga", "texto", 12),
         coluna("cargo", "Cargo", "texto", 50),
-        coluna(
-          "vagas_imediatas",
-          "Vagas imediatas (título da vaga)",
-          "inteiro",
-          14,
-        ),
+        coluna("vagas_imediatas", "Vagas imediatas", "inteiro", 14),
         coluna("inscritos", "Total de inscritos", "inteiro", 12),
         coluna("aprovados", "Total de aprovados", "inteiro", 12),
       ]),
@@ -142,7 +137,7 @@ export const ORIGEM_DOS_DADOS: Readonly<Record<IdDoRelatorio, string>> =
     "resumo-dos-editais":
       "Uma linha por edital da área, sem os de treinamento. Vagas imediatas: cadastro do edital. Datas: cronograma do edital (início da 1ª etapa e fim da última) ou, sem cronograma, as datas do cadastro.",
     "editais-por-cargo":
-      "Uma linha por vaga. Vaga, cargo e inscritos: Seleção (planilha da Auditoria, aba Resultado). Aprovados: lista de aprovados vigente, casada pelo código da vaga. Vagas imediatas: o número no título da vaga. Vagas que só estão na lista e editais sem Seleção também aparecem.",
+      "Uma linha por vaga. Vaga, cargo e inscritos: Seleção (planilha da Auditoria, aba Resultado). Aprovados: lista de aprovados vigente, casada pelo código da vaga. Vagas imediatas: quadro de vagas do edital; sem ele, a convocação da Lista de aprovados, o local da vaga publicado no edital ou o número no título da vaga. Vagas que só estão na lista e editais sem Seleção também aparecem.",
     aprovados:
       "Uma linha por aprovado da lista de aprovados vigente de cada edital. Status: situação registrada no sistema. Data de admissão: dia em que o aprovado virou Contratado no sistema.",
   });

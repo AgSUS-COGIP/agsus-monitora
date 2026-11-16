@@ -20,9 +20,9 @@ conferência em tabela, para baixar em CSV e XLSX. Fontes: `src/modulos/paineis-
 
 ## Editais por cargo
 
-**perguntas:** editais por cargo | inscritos por cargo | aprovados por cargo | de onde vem as vagas por cargo | vagas imediatas do titulo da vaga
-**resposta:** Nos Painéis, Editais por cargo traz uma linha por vaga de cada edital (na Saúde Indígena, uma vaga é um cargo num DSEI): o código da vaga, o cargo, as vagas imediatas, os inscritos da Seleção e os aprovados da lista de aprovados vigente. Inscritos e aprovados se casam pelo código da vaga, como no Painel da Seleção; nas vagas de outras bancas, sem código, pelo nome da vaga. As vagas imediatas saem do título da vaga ("2 vagas (1 AC + …)" conta 2; "Cadastro Reserva" conta 0); quando o título não diz, a célula fica vazia — o quadro de vagas do edital não tem o código da vaga e escreve o cargo de outro jeito, por isso não é usado aqui. Aprovados de uma vaga que a Seleção não tem saem numa linha própria, e o edital sem vaga na Seleção sai numa linha só, com os inscritos do edital. Aprovados vazio quer dizer edital sem lista de aprovados.
-**fonte:** supabase/migrations/20261116160000_relatorios_dos_paineis_prontos.sql
+**perguntas:** editais por cargo | inscritos por cargo | aprovados por cargo | de onde vem as vagas por cargo | vagas imediatas do titulo da vaga | vagas imediatas vazias | quadro de vagas no painel
+**resposta:** Nos Painéis, Editais por cargo traz uma linha por vaga de cada edital (na Saúde Indígena, uma vaga é um cargo num DSEI): o código da vaga, o cargo, as vagas imediatas, os inscritos da Seleção e os aprovados da lista de aprovados vigente. Inscritos e aprovados se casam pelo código da vaga, como no Painel da Seleção; nas vagas de outras bancas, sem código, pelo nome da vaga. As vagas imediatas vêm, nesta ordem, do quadro de vagas do edital (como na Classificação), da convocação da Lista de aprovados, do local da vaga publicado no edital ou do número no título da vaga ("2 vagas (1 AC + …)" conta 2; "Cadastro Reserva" conta 0). Célula vazia quer dizer que o edital não tem quadro de vagas importado nem convocação configurada para aquela vaga. Aprovados de uma vaga que a Seleção não tem saem numa linha própria, e o edital sem vaga na Seleção sai numa linha só, com os inscritos do edital. Aprovados vazio quer dizer edital sem lista de aprovados.
+**fonte:** supabase/migrations/20261116180000_vagas_imediatas_dos_paineis_pelo_quadro.sql
 
 ## Fontes dos dados
 
