@@ -28,8 +28,9 @@ python -m pytest                           # Python (tests/python/)
   lint recusa): tipe o mock com `Partial<>`/`Pick<>`, `vi.mocked` ou um ajudante tipado. Globais só
   de teste (`IS_REACT_ACT_ENVIRONMENT`) ficam em `tests/globais.d.ts`.
 - **Ambiente:** o padrão é node. Arquivo que usa DOM (`document`, `window`, React montado,
-  `localStorage`) começa com `// @vitest-environment jsdom`; sem a anotação, falha com "document is
-  not defined". Não anote quem não precisa: montar o jsdom custava o dobro do tempo dos testes. O
+  `localStorage`) começa com `// @vitest-environment jsdom`. Sem a anotação, quem usa `document`
+  direto falha com "document is not defined", mas código que lê `globalThis.document?.` cai em
+  silêncio no caminho sem DOM: injete o `documento`/`janela` ou anote o arquivo. Não anote quem não precisa: montar o jsdom custava o dobro do tempo dos testes. O
   Vitest lê a anotação em qualquer comentário do topo do arquivo, inclusive dentro de `/* */`: não
   a cite por extenso num comentário de arquivo que roda em node.
 - Subpastas: `lib/`, `modules/`, `componentes/` (React), `modulos/` (telas de `src/modulos/`), `ui/`,
