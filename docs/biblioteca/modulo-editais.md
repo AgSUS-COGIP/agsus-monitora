@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-11
+atualizado: 2026-11-16
 ---
 
 # Módulo: Editais (Equipe Núcleo)
@@ -16,6 +16,9 @@ Rota `/<área>/editais` (`src/app/telas.tsx`); pasta `src/modulos/editais/`. Del
 - **Acompanhamento operacional** no topo da fila: oito indicadores (total, ativos, inativos, em
   andamento, sem cronograma, incompletos, próximos 7 dias, excepcionais); cada um filtra a fila.
 - Retificação do cronograma a partir do PDF da errata (`lancar-retificacao.tsx`).
+- A atividade vai ao banco sem espaços repetidos (`cronogramaParaSalvar`): o texto colado do PDF
+  da Cebraspe vinha com espaços duplos e escondia a etapa de resultado final (16/11/2026;
+  migration `20261116150000` limpou 04/2026, 96/2025 e 97/2025).
 - Responsáveis pelo edital (`responsaveis-do-edital.tsx`, migration `20261104120000`): pessoas do
   sistema em `RL_RESPONSAVEL_EDITAL`; grava sozinho, à parte do "Salvar" do edital (que exige
   motivo para mexer no cronograma). A coluna antiga "responsavel" (USI/CORES) segue intocada.

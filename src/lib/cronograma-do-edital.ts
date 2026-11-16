@@ -17,6 +17,27 @@ import {
 
 const txt = (valor: unknown) => String(valor ?? "").trim();
 
+/*
+  A atividade sem espaços repetidos. O texto colado do PDF da Cebraspe chega
+  com espaços duplos ("resultado  final"): o aviso de "sem etapa de resultado
+  final" e as leituras do banco que procuram o texto não o achavam (04/2026,
+  96/2025 e 97/2025; limpos na migration 20261116150000).
+*/
+export function atividadeLimpa(valor: unknown): string {
+  return txt(valor).replace(/\s+/g, " ");
+}
+
+/** As etapas como vão ao banco: renumeradas e com a atividade limpa. */
+export function cronogramaParaSalvar<T extends { atividade?: string | null }>(
+  etapas: readonly T[],
+): (T & { atividade: string; ordem: number })[] {
+  return etapas.map((etapa, indice) => ({
+    ...etapa,
+    atividade: atividadeLimpa(etapa.atividade),
+    ordem: indice + 1,
+  }));
+}
+
 /** Uma etapa como o formulário a guarda (a linha do cronograma no banco). */
 export interface EtapaDoCronograma {
   ordem: number;
@@ -337,7 +358,7 @@ export function analisarCronograma(
           `${rotulo}: o ano do ${nome} (${etapa[campo].slice(0, 4)}) não é possível. Use um ano entre ${ANO_MINIMO} e ${ANO_MAXIMO}.`,
         );
     }
-    const chave = txt(etapa.atividade).toLowerCase();
+    const chave = atividadeLimpa(etapa.atividade).toLowerCase();
     if (chave && vistas.has(chave))
       erros.push(`${rotulo}: atividade duplicada.`);
     vistas.add(chave);
@@ -351,7 +372,7 @@ export function analisarCronograma(
   if (
     etapas.length &&
     !etapas.some((etapa) =>
-      etapa.atividade.toLowerCase().includes("resultado final"),
+      atividadeLimpa(etapa.atividade).toLowerCase().includes("resultado final"),
     )
   )
     avisos.push("O cronograma não possui uma etapa de resultado final.");

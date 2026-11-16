@@ -17,7 +17,10 @@ import {
 } from "../../lib/access-roles.ts";
 import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.ts";
 import { exigirSessao } from "../../lib/sessao";
-import { analisarCronograma } from "../../lib/cronograma-do-edital.ts";
+import {
+  analisarCronograma,
+  cronogramaParaSalvar,
+} from "../../lib/cronograma-do-edital.ts";
 import { lerAnexoNoServidor } from "../../lib/anexos-do-edital.ts";
 import { lerRetificacaoNoServidor } from "../../lib/retificacao-do-cronograma.ts";
 import { carregarResumoDoNucleo, createNucleoSummaryStore } from "./resumo.ts";
@@ -408,10 +411,7 @@ export function criarEstadoDoNucleo({
     loader(true, "Editais", "Salvando edital e cronograma…", 70);
     try {
       await exigirSessao(supabase);
-      const cronograma = etapas.map((etapa, indice) => ({
-        ...etapa,
-        ordem: indice + 1,
-      }));
+      const cronograma = cronogramaParaSalvar(etapas);
       // Sem Supabase, `exigirSessao` já lançou (o erro vira o aviso abaixo).
       const { data, error } = await supabase!.rpc(RPC_SALVAR, {
         p_payload: edital,
