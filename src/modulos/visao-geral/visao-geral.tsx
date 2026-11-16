@@ -197,7 +197,7 @@ export function TelaDaVisaoGeral({
       {e.montador && e.aberta ? (
         <MontadorDeRelatorio
           e={e}
-          estado={estado}
+          aoBaixarCsv={estado.exportarCsv}
           textos={textos}
           configuracoes={configuracoes}
           obterPerfil={obterPerfil}

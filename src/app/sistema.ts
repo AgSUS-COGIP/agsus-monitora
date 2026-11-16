@@ -320,7 +320,6 @@ export function ligarSistema() {
     monitoraToast: avisar,
     monitoraLoader: mostrarCarregamento,
     exitExternalPanel: sairDoPainelExterno,
-    exportPDF: moldura.montarRelatorio,
     navigate: navegacao.irPara,
     refreshData: carga.atualizarDados,
     reloadExternal: recarregarPainel,

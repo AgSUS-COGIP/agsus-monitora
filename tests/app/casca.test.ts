@@ -21,7 +21,6 @@ const ACOES = [
   "toggleSidebar",
   "refreshData",
   "toggleBrowserFullscreen",
-  "exportPDF",
   "reloadExternal",
 ];
 
@@ -79,7 +78,6 @@ describe("Casca", () => {
       "refreshActionText",
       "fullscreenActionIcon",
       "fullscreenActionText",
-      "exportPdfActionText",
       "avisoDeVersaoApp",
       "ayaApp",
       "encerramentoDoEditalApp",
@@ -150,10 +148,9 @@ describe("Casca", () => {
     clicar(document.getElementById("externalRefreshBtn"));
     expect(chamadas).toEqual([
       "exitExternalPanel:aberto",
-      // Atualizar chama e depois fecha; Tela cheia e PDF fecham antes.
+      // Atualizar chama e depois fecha; Tela cheia fecha antes.
       "refreshData:aberto",
       "toggleBrowserFullscreen:fechado",
-      "exportPDF:fechado",
       "reloadExternal:aberto",
     ]);
     expect(menu.hasAttribute("open")).toBe(true);

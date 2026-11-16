@@ -3,6 +3,7 @@ import {
   useEffect,
   useId,
   useMemo,
+  useState,
   useSyncExternalStore,
 } from "react";
 import type { ReactNode } from "react";
@@ -34,6 +35,19 @@ import type {
   IdDoRelatorio,
   LinhaDoRelatorio,
 } from "../../lib/relatorios-dos-paineis.ts";
+import { podeBaixarAprovados } from "../../lib/access-roles.ts";
+import { textosDaVisaoGeral } from "../../lib/visao-geral.ts";
+import { recorteDaAreaInteira } from "../../lib/relatorio-da-visao-geral.ts";
+import type { RecorteDoRelatorio } from "../../lib/relatorio-da-visao-geral.ts";
+import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
+import { estadoDaVisaoGeral } from "../visao-geral/estado.ts";
+import { MontadorDeRelatorio } from "../visao-geral/montador-de-relatorio.tsx";
+import type { ClienteDoRelatorio } from "../visao-geral/dados-da-diretoria.ts";
+import type {
+  Configuracoes,
+  LinhaDaVisaoGeral,
+  Perfil,
+} from "../visao-geral/tipos.ts";
 import { criarEstadoDosPaineis } from "./estado.ts";
 import { GavetaDeFontes } from "./fontes-dos-dados.tsx";
 import "./paineis-de-dados.css";
@@ -52,6 +66,11 @@ import type {
   (`src/lib/menu-lateral.ts`). As colunas e os arquivos são de
   `src/lib/relatorios-dos-paineis.ts`; o estado, de `./estado.ts`. Título e
   área ficam no cabeçalho da casca.
+
+  "Montar relatório" (no topo, desde 16/11/2026; antes ficava no menu da
+  conta): abre o montador da Visão geral
+  (src/modulos/visao-geral/montador-de-relatorio.tsx) com todos os editais da
+  área, sem os filtros da Visão geral.
 */
 
 const ABAS = RELATORIOS_DOS_PAINEIS.map((r) => ({
@@ -442,13 +461,63 @@ function Relatorio({ estado }: { estado: EstadoDaTelaDePaineis }) {
   );
 }
 
+/* O que o montador de relatório precisa, fora o recorte (vem da criação da tela). */
+export interface ApoioDoRelatorio {
+  /** Os editais da área, já enriquecidos (os da Visão geral, sem filtro). */
+  linhasDaArea: () => readonly LinhaDaVisaoGeral[];
+  configuracoes: Configuracoes;
+  obterPerfil: () => Perfil | null;
+  agora: () => Date;
+  supabase: ClienteDoRelatorio | null;
+}
+
+function usarTextosDoRelatorio(configuracoes: Configuracoes) {
+  const { valores } = useSyncExternalStore(
+    configuracoes.assinar,
+    configuracoes.obter,
+  );
+  return useMemo(
+    () => textosDaVisaoGeral((chave) => valores?.get?.(chave)),
+    [valores],
+  );
+}
+
+function MontadorDosPaineis({
+  recorte,
+  apoio,
+  aoFechar,
+}: {
+  recorte: RecorteDoRelatorio;
+  apoio: ApoioDoRelatorio;
+  aoFechar: () => void;
+}) {
+  const textos = usarTextosDoRelatorio(apoio.configuracoes);
+  return (
+    <MontadorDeRelatorio
+      e={recorte}
+      descricao="da área"
+      textos={textos}
+      configuracoes={apoio.configuracoes}
+      obterPerfil={apoio.obterPerfil}
+      agora={apoio.agora}
+      aoFechar={aoFechar}
+      supabase={apoio.supabase}
+      podeAprovados={podeBaixarAprovados(apoio.obterPerfil())}
+    />
+  );
+}
+
 export function TelaDePaineisDeDados({
   estado,
+  relatorio,
 }: {
   estado: EstadoDaTelaDePaineis;
+  relatorio: ApoioDoRelatorio;
 }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const { area: areaDoApp } = usarAreaAtual();
+  // O recorte é tirado no clique: o montador não muda com uma recarga no meio.
+  const [montando, setMontando] = useState<RecorteDoRelatorio | null>(null);
 
   /*
     A área do app mudou com a tela já aberta: lê a nova. Quem abre a tela é o
@@ -468,7 +537,20 @@ export function TelaDePaineisDeDados({
         aoAtualizar={() => void estado.sincronizar()}
         atualizarDesativado={!e.area || leitura.situacao === "carregando"}
         rotuloDaAtualizacao="Sincronizar"
-      />
+      >
+        <button
+          type="button"
+          className="btn secondary"
+          data-acao="montar-relatorio"
+          disabled={!e.area}
+          onClick={() =>
+            setMontando(recorteDaAreaInteira(e.area, relatorio.linhasDaArea()))
+          }
+        >
+          <i className="fa-solid fa-file-lines" aria-hidden="true" /> Montar
+          relatório
+        </button>
+      </TopoDoPainel>
       <Abas
         rotulo="Relatórios dos Painéis"
         abas={ABAS}
@@ -477,12 +559,21 @@ export function TelaDePaineisDeDados({
       />
       <Relatorio estado={estado} />
       <GavetaDeFontes estado={estado} />
+      {montando ? (
+        <MontadorDosPaineis
+          recorte={montando}
+          apoio={relatorio}
+          aoFechar={() => setMontando(null)}
+        />
+      ) : null}
     </div>
   );
 }
 
 export interface OpcoesDaTelaDePaineis extends OpcoesDoEstadoDosPaineis {
   areaAtual?: () => string | null | undefined;
+  /** O montador de relatório; cada parte tem o padrão do app. */
+  relatorio?: Partial<ApoioDoRelatorio>;
 }
 
 /**
@@ -492,13 +583,22 @@ export interface OpcoesDaTelaDePaineis extends OpcoesDoEstadoDosPaineis {
 export function criarPaineisDeDados({
   supabase = getSupabaseClient() as ClienteDosPaineis | null,
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
+  relatorio = {},
   ...opcoes
 }: OpcoesDaTelaDePaineis = {}) {
   const estado = criarEstadoDosPaineis({ supabase, ...opcoes });
+  const apoio: ApoioDoRelatorio = {
+    linhasDaArea: () => estadoDaVisaoGeral.obter().linhasDaArea,
+    configuracoes: estadoDasConfiguracoes,
+    obterPerfil: () => window.getMonitoraProfile?.() || null,
+    agora: () => new Date(),
+    supabase: getSupabaseClient() as ClienteDoRelatorio | null,
+    ...relatorio,
+  };
   return {
     estado,
     nome: "a tela de Painéis",
-    conteudo: <TelaDePaineisDeDados estado={estado} />,
+    conteudo: <TelaDePaineisDeDados estado={estado} relatorio={apoio} />,
     render() {
       return estado.carregar(String(areaAtual() ?? "").trim());
     },
