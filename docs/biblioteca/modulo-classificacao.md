@@ -29,7 +29,10 @@ em andamento primeiro (`listar_editais_classificacao`,
 - Listas (`TIPOS_DE_LISTA`), no padrão das publicações da AgSUS: `PRELIMINAR` (avaliação documental
   e de títulos, com as parciais e os eliminados — vale como preliminar ou final da etapa; a
   exportação escolhe o título), `CONVOCACAO`, `ENTREVISTA` (resultado da entrevista; empate na mesma
-  posição) e `FINAL` (vagas imediatas e cadastro reserva).
+  posição) e `FINAL` (vagas imediatas e cadastro reserva). No `FINAL`, cada linha guarda também a nota de cada etapa
+  (`nota_documental`, `nota_entrevista`; 16/11/2026, no motor e no Python): a tela mostra as colunas
+  Análise curricular, Entrevista e Nota final; o documento oferece "Nota da análise curricular" e
+  "Nota da entrevista" para marcar em "Como fica no SEI"; a planilha XLSX traz as duas no fim.
 - A lista `CONVOCACAO` gerada aqui é a única convocação para a entrevista: Conduzir entrevistas ›
   Preparar mostra a última gerada e registra para a ficha só quem está nela
   (`20261005150000_convocacao_unica_da_entrevista.sql`); o retrato guarda, por vaga, as vagas, a

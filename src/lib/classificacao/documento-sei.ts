@@ -588,6 +588,10 @@ export const LARGURAS_DAS_COLUNAS: Readonly<
   MODALIDADE: 14,
   SITUAÇÃO: 16,
   Situação: 14,
+  "NOTA DA ANÁLISE CURRICULAR": 18,
+  "Nota da análise curricular": 14,
+  "NOTA DA ENTREVISTA": 16,
+  "Nota da entrevista": 12,
   DATA: 12,
   HORA: 9,
   Justificativa: 34,
@@ -833,6 +837,10 @@ function tabelasDaLista(
       if (id === "NOME") return decisoes.nome(l);
       if (id === "MODALIDADE") return siglaDasModalidades(l, modalidades);
       if (id === "NOTA") return formatarNota(l.nota, casas);
+      if (id === "NOTA_DOCUMENTAL")
+        return formatarNota(l.nota_documental, casas);
+      if (id === "NOTA_ENTREVISTA")
+        return formatarNota(l.nota_entrevista, casas);
       if (id === "SITUACAO")
         return SITUACAO_NO_DOCUMENTO[l.situacao ?? ""] || "-";
       return "";

@@ -21,6 +21,9 @@ export interface LinhaDoRetrato {
   decisao?: string;
   parciais?: Record<string, number | null>;
   recursos?: number[];
+  /** Só no resultado final (16/11/2026). */
+  nota_documental?: number | null;
+  nota_entrevista?: number | null;
 }
 export interface EliminadoDoRetrato extends LinhaDoRetrato {
   motivo: string;

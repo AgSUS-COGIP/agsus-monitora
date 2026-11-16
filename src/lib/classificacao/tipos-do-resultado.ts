@@ -12,6 +12,9 @@ export interface LinhaDaLista {
   vagaPor: string | null;
   recursos?: number[];
   parciais?: Record<string, number | null>;
+  /** Só no resultado final: a nota de cada etapa que compõe a final (16/11/2026). */
+  notaDocumental?: number | null;
+  notaEntrevista?: number | null;
 }
 export interface EliminadoDaLista {
   analiseId: string;
