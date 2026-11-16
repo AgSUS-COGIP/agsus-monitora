@@ -56,6 +56,8 @@ export type DadosDoEdital = {
     roteiro?: RoteiroDoEdital | null;
     lancamento?: string | null;
     banca?: { origem: string; quantidade: number }[] | null;
+    /** NOTA (padrão) ou MEDIA: a média dos avaliadores arredondada antes do peso (16/11/2026). */
+    arredondamento?: string | null;
   } | null;
   regra_classificacao?: {
     versao?: number;

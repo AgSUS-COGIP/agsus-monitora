@@ -100,6 +100,9 @@ def calcular_entrevista(
     eliminatoria}], total, parecer, falta}. Notas como Decimal (ou None).
     """
     roteiro = roteiro or {}
+    # "MEDIA" (16/11/2026): média dos avaliadores em 2 casas antes do peso; a nota da competência
+    # sem arredondar na soma e no mínimo; o total em 2 casas (como a planilha da banca).
+    pela_media = roteiro.get("arredondamento") == "MEDIA"
     aspectos = sorted(roteiro.get("aspectos") or [], key=lambda a: a.get("ordem") or 0)
     com_aspectos = bool(aspectos)
     eliminatorias = (
@@ -147,10 +150,13 @@ def calcular_entrevista(
             )
             continue
         media = sum(notas, Decimal(0)) / len(notas)
-        nota = arredondar(media * peso)
-        total += nota
-        bruto += media * peso
-        abaixo = minimo is not None and nota < minimo
+        if pela_media:
+            media = arredondar(media)
+        exata = media * peso
+        nota = arredondar(exata)
+        total += exata if pela_media else nota
+        bruto += exata
+        abaixo = minimo is not None and (exata if pela_media else nota) < minimo
         eliminatoria = arredondar(media) in eliminatorias
         if abaixo or eliminatoria:
             reprova = True

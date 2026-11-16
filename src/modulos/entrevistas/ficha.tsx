@@ -251,6 +251,7 @@ export function FichaDoCandidato({
   copiar = undefined,
 }: PropriedadesDaFicha) {
   const roteiro = dados.configuracao?.roteiro || null;
+  const arredondamento = dados.configuracao?.arredondamento ?? null;
   const aspectos = useMemo(() => aspectosDoRoteiro(roteiro), [roteiro]);
   const [f, setF] = useState(() => estadoInicial(dados, convocado, aspectos));
   const [erro, setErro] = useState("");
@@ -297,11 +298,12 @@ export function FichaDoCandidato({
     () =>
       calcularEntrevista({
         roteiro,
+        arredondamento,
         compareceu: f.compareceu,
         avaliacoes: avaliacoesDoMapa(f.mapa, aspectos),
         atribuicoes,
       }),
-    [roteiro, f.compareceu, f.mapa, aspectos, atribuicoes],
+    [roteiro, f.compareceu, f.mapa, aspectos, atribuicoes, arredondamento],
   );
   const motivos = motivosCurtos(
     motivosDoParecer(resultado, f.compareceu, roteiro),

@@ -85,6 +85,18 @@ no inapto e no ausente; histórico em TH_ENTREVISTA_AVALIACAO. Os nomes dos cand
 pela função: quem monta os dados liga cada nome à análise do candidato antes. Usada no 93/2026
 (16/11/2026): 49 entrevistas, sem divergência de nota ou parecer com a planilha.
 
+## Arredondamento da nota
+
+Por edital (`TB_ENTREVISTA_EDITAL."TP_ARREDONDAMENTO"`, migration
+`20261117020000_entrevista_arredonda_a_media_como_a_banca.sql`): **NOTA** (o padrão) arredonda cada
+competência (média × peso) em 2 casas e soma; **MEDIA** arredonda a média dos avaliadores em 2
+casas antes do peso, soma as competências sem arredondar (o mínimo da competência também) e
+arredonda o total — a conta da planilha da banca. As três contas seguem o mesmo:
+`private."FC_CALCULAR_ENTREVISTA"`, `calcularEntrevista` (prévia da ficha, pela
+`configuracao.arredondamento` de `obter_entrevistas_do_edital`) e `monitora.entrevistas.calculo`;
+os casos dourados `tests/fixtures/entrevistas/casos-de-calculo.json` cobrem os dois. O 93/2026 está
+em MEDIA: as 49 entrevistas importadas ficaram iguais às planilhas da banca.
+
 ## Relacionadas
 
 - [[modulo-classificacao]] — convocação, desempate e agenda vêm de lá
