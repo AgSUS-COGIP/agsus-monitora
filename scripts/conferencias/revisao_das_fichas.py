@@ -46,6 +46,10 @@ def fichas_com_pendencia(paginas, hoje):
             resultado = _objeto(f.get("resultado"))
             if not isinstance(regra, dict) or not lancamento or not resultado:
                 continue
+            # Importada da planilha (16/11/2026): a análise foi feita lá, sem itens marcados; o
+            # banco também recusa (revisar_ficha_concluida_com_pendencia).
+            if isinstance(lancamento.get("importada_da_planilha"), dict):
+                continue
             try:
                 avaliacao = calcular_avaliacao(
                     regra, lancamento, opcoes_da_ficha(resultado, _objeto(f.get("documental")))

@@ -75,7 +75,10 @@ IMPORTAR com o retrato do que a ficha tinha; a linha do painel fica a mesma (só
 sistema). A ficha importada abre só para ler (`ficha/ficha-importada.tsx`: resultado, parciais,
 parecer, quem analisou, "Espelho da planilha"); reaberta, refaz-se no sistema e a marca sai do
 lançamento. Problemas que impedem: linha sem inscrito ou sem ficha, vaga diferente, em revisão na
-planilha, sem nota ou sem parecer.
+planilha, sem nota ou sem parecer. A conferência automática (job de conferências,
+`revisar_ficha_concluida_com_pendencia`) não manda para revisão a ficha importada e não reaberta: ela
+não tem itens marcados (`20261117030000`; em 16/11/2026 tinha mandado as 94 do 93/2026, desfeito por
+`20261117031000`).
 
 ## Menos egress (plano gratuito do Supabase)
 
