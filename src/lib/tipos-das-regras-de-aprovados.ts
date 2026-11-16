@@ -26,6 +26,8 @@ export interface FiltrosDasRegrasDeAprovados {
   candidatos?: EscolhasDosFiltros;
   editalId?: EscolhasDosFiltros;
   cargo?: EscolhasDosFiltros;
+  /** Localidades do texto do cargo (localidade-da-vaga.ts), comparadas pela chave. */
+  localidade?: EscolhasDosFiltros;
   modalidade?: EscolhasDosFiltros;
   status?: EscolhasDosFiltros;
 }

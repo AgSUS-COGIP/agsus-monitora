@@ -50,10 +50,11 @@ const props: PropsDaAbaDeAprovados = {
   anexos: new Map(),
   carregado: true,
   erroAoCarregar: "",
-  opcoes: { editais: [], cargos: [], modalidades: [] },
+  opcoes: { editais: [], localidades: [], cargos: [], modalidades: [] },
   filtros: {
     candidatos: [],
     editalId: [],
+    localidade: [],
     cargo: [],
     modalidade: [],
     status: [],

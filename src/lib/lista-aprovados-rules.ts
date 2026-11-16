@@ -1,3 +1,4 @@
+import { naLocalidade } from "./localidade-da-vaga.ts";
 import type {
   CandidatoDasRegrasDeAprovados,
   FiltrosDasRegrasDeAprovados,
@@ -264,6 +265,7 @@ export function filterApprovedCandidates<
   const candidatoIds = multi(filters.candidatos);
   const editalIds = multi(filters.editalId);
   const cargos = multi(filters.cargo);
+  const localidades = multi(filters.localidade);
   const modalidades = multi(filters.modalidade);
   const statuses = multi(filters.status);
   return (rows || []).filter((row) => {
@@ -272,6 +274,8 @@ export function filterApprovedCandidates<
     if (editalIds.length && !editalIds.includes(String(row.edital_id)))
       return false;
     if (cargos.length && !cargos.includes(text(row.cargo))) return false;
+    if (localidades.length && !naLocalidade(row.cargo, localidades))
+      return false;
     if (modalidades.length && !modalidades.includes(text(row.modalidade)))
       return false;
     if (statuses.length && !matchStatus(statuses, row)) return false;

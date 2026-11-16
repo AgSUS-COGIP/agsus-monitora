@@ -74,6 +74,7 @@ export interface PropsDaAbaDoResumo {
   erroAoCarregar: string | boolean;
   opcoes: {
     editais: readonly OpcaoDosAprovados[];
+    localidades: readonly string[];
     cargos: readonly string[];
     modalidades: readonly string[];
   };
@@ -557,6 +558,20 @@ export function AbaResumo({
                   aoMudar={(valores) => aoMudarFiltro("editalId", valores)}
                 />
               </Campo>
+              {opcoes.localidades.length ? (
+                <Campo
+                  rotulo="Localidade"
+                  idDoControle="approvedResumoFiltroLocalidade"
+                >
+                  <MultiSelectBusca
+                    id="approvedResumoFiltroLocalidade"
+                    placeholder="Todas as localidades"
+                    opcoes={opcoes.localidades}
+                    selecionados={filtros.localidade}
+                    aoMudar={(valores) => aoMudarFiltro("localidade", valores)}
+                  />
+                </Campo>
+              ) : null}
               <Campo rotulo="Cargo" idDoControle="approvedResumoFiltroCargo">
                 <MultiSelectBusca
                   id="approvedResumoFiltroCargo"

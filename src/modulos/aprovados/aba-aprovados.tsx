@@ -433,6 +433,17 @@ export function AbaAprovados({
               aoMudar={(valores) => aoMudarFiltro("editalId", valores)}
             />
           </Campo>
+          {opcoes.localidades.length ? (
+            <Campo rotulo="Localidade" idDoControle="approvedFilterLocalidade">
+              <MultiSelectBusca
+                id="approvedFilterLocalidade"
+                placeholder="Todas as localidades"
+                opcoes={opcoes.localidades}
+                selecionados={filtros.localidade}
+                aoMudar={(valores) => aoMudarFiltro("localidade", valores)}
+              />
+            </Campo>
+          ) : null}
           <Campo rotulo="Cargo" idDoControle="approvedFilterCargo">
             <MultiSelectBusca
               id="approvedFilterCargo"
