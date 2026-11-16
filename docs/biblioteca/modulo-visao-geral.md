@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-13
+atualizado: 2026-11-16
 ---
 
 # Módulo: Visão geral
@@ -61,6 +61,17 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
   colunas e do formato (PDF desenhado com o timbrado de Configurações › Marca, Excel com uma aba por
   seção, ou o CSV de antes). Sai do recorte da tela; a última escolha fica no navegador. Substituiu a
   impressão da tela inteira (o cabeçalho `.print-only` saiu).
+- **Relatório da diretoria** (16/11/2026; migration `20261116120000`): o modelo Diretoria leva três
+  abas. **Editais** (número, unidade, vagas, divulgação, encerramento e ciclo); **Vagas por cargo**
+  (`listar_vagas_por_cargo_da_visao_geral`, recurso dashboard, sem dado pessoal): uma linha por vaga
+  com vagas imediatas, inscritos e aprovados; **Aprovados** (`exportar_aprovados_da_diretoria`,
+  Aprovados leitor): cargo, nota, classificação, nome, status, matrícula e a admissão conciliada.
+  A aba Aprovados só aparece para quem vê a Lista de aprovados (`podeBaixarAprovados`), e o banco
+  grava cada download em `TL_EXPORTACAO_APROVADO` (`DIRETORIA`) antes de devolver os nomes. A
+  ligação vaga ↔ quadro ↔ lista é feita em `src/lib/relatorio-da-diretoria.ts`: pelo código da
+  vaga, pelo número do começo ou pelo texto (Projetos e SEDE guardam o texto no lugar do código);
+  as vagas imediatas vêm do quadro do edital (cargo e lotação) ou do texto da vaga ("2 vagas",
+  "Cadastro Reserva" = 0), e sem os dois ficam "—". No PDF, acima de 3 mil aprovados, pede o Excel.
 
 ## Limites da tipagem
 
