@@ -41,6 +41,11 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
   por área e relatório; dentro do minuto devolve o que está pronto) e na troca de fonte (na mesma
   transação: se o recálculo falhar, a troca é desfeita). Medição de 16/11/2026: a página de 50
   sai em ~150–190 ms (antes, a leitura inteira levava até 5,5 s e 5,7 MB).
+- **Grava só a linha que mudou** (migration `20261116235500_relatorios_dos_paineis_gravam_so_o_que_mudou.sql`):
+  o recálculo compara o resultado com as linhas guardadas, posição por posição, e só apaga,
+  atualiza ou insere a posição diferente; a linha igual não é regravada. Antes, cada cálculo
+  apagava e regravava tudo (cerca de 34.700 linhas, 16 MB, de hora em hora). O que o painel lê
+  é o mesmo; `DT_CALCULO` continua sendo a hora do último cálculo.
 - Limites de tempo: `ler_relatorio_do_painel`, `sincronizar_relatorio_do_painel` e
   `salvar_fonte_da_coluna` têm `statement_timeout` 30s e `lock_timeout` 15s próprios (o papel
   `authenticated` tem 8s e 3s; no minuto 17 o cron segura os locks por ~6s). Migration
