@@ -79,7 +79,7 @@ class Regra(unittest.TestCase):
         cota = next(d for d in r["gravar"] if d["candidato"] == "cota")
         self.assertIn("ampla concorrência", cota["texto"])
         self.assertIn("Ampla Concorrência · 137º · vaga MED", cota["texto"])
-        self.assertEqual((cota["base"], cota["versao"], cota["edital"]), ("ac,cota", 1, E1))
+        self.assertEqual((cota["base"], cota["versao"], cota["edital"]), ("ac,cota", regra.VERSAO, E1))
         self.assertEqual(r["remover"], [])
         self.assertEqual([g["acao"] for g in r["grupos"]], ["NOVA"])
 
@@ -121,6 +121,51 @@ class Regra(unittest.TestCase):
                 self.assertEqual(set(situacoes(r).values()), {("AMBIGUO", None, motivo)})
                 self.assertIn("A regra não decide", r["gravar"][0]["texto"])
                 self.assertEqual(r["grupos"][0]["acao"], "AMBIGUA")
+
+    def test_ambiguo_decidido_pela_admissao_no_rh(self):
+        # Versão 2: a convocação não decide, mas só uma linha tem a admissão conciliada com o RH.
+        casos = {
+            "NENHUMA_ALCANCADA": [
+                linha("a", "V1", 9),
+                linha("b", "V2", 9, admitido=True),
+                *chamados("V1", 2),
+                *chamados("V2", 2),
+            ],
+            "MAIS_DE_UMA_AMPLA": [
+                linha("a", "V1", 1),
+                linha("b", "V2", 1, admitido=True),
+                *chamados("V1", 2),
+                *chamados("V2", 2),
+            ],
+        }
+        for motivo_antigo, linhas in casos.items():
+            with self.subTest(motivo_antigo):
+                r = regra.decidir(linhas, [])
+                self.assertEqual(
+                    situacoes(r),
+                    {"b": ("CONTRATACAO", "b", "ADMISSAO_NO_RH"), "a": ("OUTRA_LISTA", "b", "ADMISSAO_NO_RH")},
+                )
+                a = next(d for d in r["gravar"] if d["candidato"] == "a")
+                self.assertIn("RH", a["texto"])
+                self.assertIn("vaga V2", a["texto"])
+                self.assertEqual(r["grupos"][0]["acao"], "NOVA")
+
+    def test_a_convocacao_vem_antes_do_rh(self):
+        # Só a "a" foi alcançada: ela é a contratação, mesmo com a admissão do RH na "b".
+        linhas = [linha("a", "V1", 1), linha("b", "V2", 9, admitido=True), *chamados("V1", 2), *chamados("V2", 2)]
+        self.assertEqual(situacoes(regra.decidir(linhas, []))["a"], ("CONTRATACAO", "a", "UNICA_ALCANCADA"))
+
+    def test_rh_em_duas_ou_nenhuma_linha_continua_ambiguo(self):
+        for admitidas in ((), ("a", "b")):
+            with self.subTest(admitidas=admitidas):
+                linhas = [
+                    linha("a", "V1", 9, admitido="a" in admitidas),
+                    linha("b", "V2", 9, admitido="b" in admitidas),
+                    *chamados("V1", 2),
+                    *chamados("V2", 2),
+                ]
+                r = regra.decidir(linhas, [])
+                self.assertEqual(set(situacoes(r).values()), {("AMBIGUO", None, "NENHUMA_ALCANCADA")})
 
     def test_sem_conflito_nao_ha_decisao(self):
         linhas = [
@@ -185,6 +230,14 @@ class Congelada(unittest.TestCase):
         # A convocação andou na V1: agora a regra decide.
         r = regra.decidir([*linhas, *chamados("V1", 10, prefixo="V1n")], inst)
         self.assertEqual(situacoes(r)["a"], ("CONTRATACAO", "a", "UNICA_ALCANCADA"))
+
+    def test_ambiguo_decidido_quando_a_admissao_chega(self):
+        # A carga das admissões do RH chega depois: na rodada seguinte o ambíguo vira decisão.
+        linhas = [linha("a", "V1", 9), linha("b", "V2", 9), *chamados("V1", 2), *chamados("V2", 2)]
+        inst = regra.decidir(linhas, [])["gravar"]
+        com_rh = [{**x, "admitido": True} if x["id"] == "a" else x for x in linhas]
+        r = regra.decidir(com_rh, inst)
+        self.assertEqual(situacoes(r)["b"], ("OUTRA_LISTA", "a", "ADMISSAO_NO_RH"))
 
     def test_lista_nova_herda_pelo_candidato_anterior(self):
         # A publicação de uma lista nova: as linhas novas apontam para as antigas (CO_CANDIDATO_ANTERIOR).
