@@ -69397,7 +69397,7 @@ REVOKE ALL ON FUNCTION private."FC_EXIGIR_EXECUCAO_PRECLASSIF"(p_execucao text) 
 -- Name: TABLE "TB_PERFIL_USUARIO"; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT SELECT,INSERT,UPDATE ON TABLE public."TB_PERFIL_USUARIO" TO authenticated;
+GRANT SELECT ON TABLE public."TB_PERFIL_USUARIO" TO authenticated;
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_PERFIL_USUARIO" TO service_role;
 
 --
@@ -73535,7 +73535,7 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."RL_PERFIL_USUARIO_AR
 -- Name: TABLE "RL_PERFIL_USUARIO_PAINEL_EXT"; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public."RL_PERFIL_USUARIO_PAINEL_EXT" TO authenticated;
+GRANT SELECT ON TABLE public."RL_PERFIL_USUARIO_PAINEL_EXT" TO authenticated;
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."RL_PERFIL_USUARIO_PAINEL_EXT" TO service_role;
 
 --
@@ -73666,7 +73666,7 @@ GRANT SELECT ON TABLE public."TB_CATEGORIA_CONVOCACAO" TO authenticated;
 --
 
 GRANT SELECT ON TABLE public."TB_CONFIGURACAO" TO anon;
-GRANT SELECT,INSERT,UPDATE ON TABLE public."TB_CONFIGURACAO" TO authenticated;
+GRANT SELECT ON TABLE public."TB_CONFIGURACAO" TO authenticated;
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_CONFIGURACAO" TO service_role;
 GRANT SELECT ON TABLE public."TB_CONFIGURACAO" TO supabase_auth_admin;
 
@@ -73675,7 +73675,7 @@ GRANT SELECT ON TABLE public."TB_CONFIGURACAO" TO supabase_auth_admin;
 --
 
 GRANT SELECT ON TABLE public."TB_CONFIG_MAPA_SAUDE_INDIG" TO anon;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public."TB_CONFIG_MAPA_SAUDE_INDIG" TO authenticated;
+GRANT SELECT ON TABLE public."TB_CONFIG_MAPA_SAUDE_INDIG" TO authenticated;
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_CONFIG_MAPA_SAUDE_INDIG" TO service_role;
 
 --
@@ -73891,7 +73891,7 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_MODELO_RESPOSTA_R
 -- Name: TABLE "TB_MONITORAMENTO_INDIGENA"; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT SELECT,INSERT,UPDATE ON TABLE public."TB_MONITORAMENTO_INDIGENA" TO authenticated;
+GRANT SELECT ON TABLE public."TB_MONITORAMENTO_INDIGENA" TO authenticated;
 GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_MONITORAMENTO_INDIGENA" TO service_role;
 
 --
@@ -73910,7 +73910,7 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_ORIGEM_RECURSO" T
 -- Name: TABLE "TB_PAINEL_EXTERNO"; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT SELECT,UPDATE ON TABLE public."TB_PAINEL_EXTERNO" TO authenticated;
+GRANT SELECT ON TABLE public."TB_PAINEL_EXTERNO" TO authenticated;
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_PAINEL_EXTERNO" TO service_role;
 
 --
@@ -74280,70 +74280,61 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TL_EVENTO_ACESSO" TO
 -- Name: COLUMN "TL_EVENTO_ACESSO".id; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT INSERT(id) ON TABLE public."TL_EVENTO_ACESSO" TO anon;
 GRANT INSERT(id) ON TABLE public."TL_EVENTO_ACESSO" TO authenticated;
 
 --
 -- Name: COLUMN "TL_EVENTO_ACESSO".user_id; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT INSERT(user_id) ON TABLE public."TL_EVENTO_ACESSO" TO anon;
 GRANT INSERT(user_id) ON TABLE public."TL_EVENTO_ACESSO" TO authenticated;
 
 --
 -- Name: COLUMN "TL_EVENTO_ACESSO".evento; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT INSERT(evento) ON TABLE public."TL_EVENTO_ACESSO" TO anon;
 GRANT INSERT(evento) ON TABLE public."TL_EVENTO_ACESSO" TO authenticated;
 
 --
 -- Name: COLUMN "TL_EVENTO_ACESSO".tela; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT INSERT(tela) ON TABLE public."TL_EVENTO_ACESSO" TO anon;
 GRANT INSERT(tela) ON TABLE public."TL_EVENTO_ACESSO" TO authenticated;
 
 --
 -- Name: COLUMN "TL_EVENTO_ACESSO".origem; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT INSERT(origem) ON TABLE public."TL_EVENTO_ACESSO" TO anon;
 GRANT INSERT(origem) ON TABLE public."TL_EVENTO_ACESSO" TO authenticated;
 
 --
 -- Name: COLUMN "TL_EVENTO_ACESSO".detalhes; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT INSERT(detalhes) ON TABLE public."TL_EVENTO_ACESSO" TO anon;
 GRANT INSERT(detalhes) ON TABLE public."TL_EVENTO_ACESSO" TO authenticated;
 
 --
 -- Name: COLUMN "TL_EVENTO_ACESSO".client_session_id; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT INSERT(client_session_id) ON TABLE public."TL_EVENTO_ACESSO" TO anon;
 GRANT INSERT(client_session_id) ON TABLE public."TL_EVENTO_ACESSO" TO authenticated;
 
 --
 -- Name: COLUMN "TL_EVENTO_ACESSO".user_agent; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT INSERT(user_agent) ON TABLE public."TL_EVENTO_ACESSO" TO anon;
 GRANT INSERT(user_agent) ON TABLE public."TL_EVENTO_ACESSO" TO authenticated;
 
 --
 -- Name: COLUMN "TL_EVENTO_ACESSO".app_version; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT INSERT(app_version) ON TABLE public."TL_EVENTO_ACESSO" TO anon;
 GRANT INSERT(app_version) ON TABLE public."TL_EVENTO_ACESSO" TO authenticated;
 
 --
 -- Name: TABLE "TL_SYNC_ANALISE"; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public."TL_SYNC_ANALISE" TO authenticated;
+GRANT SELECT ON TABLE public."TL_SYNC_ANALISE" TO authenticated;
 GRANT ALL ON TABLE public."TL_SYNC_ANALISE" TO service_role;
 
 --
@@ -74374,7 +74365,7 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TL_SYNC_SELECAO" TO 
 -- Name: TABLE "TM_ANALISE_CURRICULAR"; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT SELECT,INSERT,DELETE ON TABLE public."TM_ANALISE_CURRICULAR" TO authenticated;
+GRANT SELECT ON TABLE public."TM_ANALISE_CURRICULAR" TO authenticated;
 GRANT ALL ON TABLE public."TM_ANALISE_CURRICULAR" TO service_role;
 
 --

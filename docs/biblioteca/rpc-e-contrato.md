@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: banco
-atualizado: 2026-11-10
+atualizado: 2026-11-16
 ---
 
 # RPC e contrato
@@ -11,6 +11,10 @@ tabela. Cada RPC que o front chama está declarada no contrato, e o build confer
 
 ## Regras
 
+- **Sem escrita direta em tabela** (migration `20261116223000`): `authenticated` só tem SELECT
+  (sob RLS), mais o INSERT em `TL_EVENTO_ACESSO` que a `registrar_evento_acesso` (SECURITY
+  INVOKER) usa; `anon` não grava em tabela nenhuma. Gravação nova vai por RPC `SECURITY DEFINER`;
+  função SECURITY INVOKER que grave em tabela falha para quem tem login.
 - **Contrato:** `src/lib/rpc-contrato.ts`. Criou ou mudou a assinatura de uma RPC no banco → mude
   aqui no mesmo PR. `npm run check:rpc-contract` (`scripts/check-rpc-contract.mjs`, estático, sem
   rede) quebra o build: toda chamada `.rpc("nome")` do front precisa estar no contrato, e todo nome
