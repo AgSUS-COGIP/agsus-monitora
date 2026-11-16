@@ -176,12 +176,20 @@ end
 $f$;
 `;
 
-/** O banco com as fontes, as RPCs de 20261113240000 e a migration dos prontos. */
+export const NOME_DOS_LIMITES =
+  "20261116170000_limites_de_tempo_dos_paineis.sql";
+export const migrationDosLimites = () =>
+  ler(`supabase/migrations/${NOME_DOS_LIMITES}`);
+export const rollbackDosLimites = () =>
+  ler(`supabase/rollback/${NOME_DOS_LIMITES}`);
+
+/** O banco com as fontes, as RPCs de 20261113240000 e as migrations dos prontos. */
 export async function bancoComRelatoriosProntos(): Promise<Banco> {
   const db = await bancoDosPaineis();
   await db.exec(RECORTE_DA_COORDENACAO);
   await db.exec(rpcsAntigas().join("\n\n"));
   await db.exec(migrationDosProntos());
+  await db.exec(migrationDosLimites());
   await db.exec(CALCULO_DE_TESTE);
   return db;
 }

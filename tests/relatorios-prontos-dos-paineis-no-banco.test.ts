@@ -7,6 +7,7 @@ import {
   corpoDaFuncao,
   entrar,
   erroDe,
+  rollbackDosLimites,
   rollbackDosProntos,
   RPCS_ANTIGAS,
   rpcsAntigas,
@@ -286,11 +287,50 @@ describe("recálculo", () => {
   );
 });
 
+describe("limites de tempo (20261116170000)", () => {
+  const RPCS = [
+    "public.ler_relatorio_do_painel(text, text, integer, integer)",
+    "public.sincronizar_relatorio_do_painel(text, text)",
+    "public.salvar_fonte_da_coluna(text, text, text, text, text, text)",
+  ];
+  const config = (assinatura: string) =>
+    uma<{ c: string[] | null }>(
+      db,
+      `select proconfig as c from pg_proc where oid = to_regprocedure($1)`,
+      [assinatura],
+    );
+
+  it(
+    "as RPCs que recalculam esperam o cron e calculam sem cair no limite do papel",
+    async () => {
+      for (const rpc of RPCS)
+        expect((await config(rpc))?.c).toEqual(
+          expect.arrayContaining(["statement_timeout=30s", "lock_timeout=15s"]),
+        );
+    },
+    LONGO,
+  );
+
+  it(
+    "o rollback tira os limites e mantém o resto",
+    async () => {
+      await db.exec(rollbackDosLimites());
+      for (const rpc of RPCS)
+        expect((await config(rpc))?.c ?? []).toEqual(['search_path=""']);
+      const erro = await erroDe(db.exec(rollbackDosLimites()));
+      await db.exec("rollback");
+      expect(erro?.mensagem).toMatch(/não está aplicada/);
+    },
+    LONGO,
+  );
+});
+
 describe("rollback", () => {
   it(
     "o rollback volta ao banco de antes",
     async () => {
       await ler(1, 50);
+      await db.exec(rollbackDosLimites());
       await db.exec(rollbackDosProntos());
       expect(
         await uma(
@@ -325,6 +365,7 @@ describe("rollback", () => {
   it(
     "o rollback aborta se a migration não estiver aplicada",
     async () => {
+      await db.exec(rollbackDosLimites());
       await db.exec(rollbackDosProntos());
       const erro = await erroDe(db.exec(rollbackDosProntos()));
       await db.exec("rollback");

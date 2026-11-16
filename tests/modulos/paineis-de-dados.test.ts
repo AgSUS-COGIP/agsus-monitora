@@ -565,6 +565,35 @@ describe("Fontes dos dados", () => {
     );
   });
 
+  it("trocar de área enquanto a fonte salva não traz a área antiga", async () => {
+    const { supabase, tela } = await montar(respostas());
+    let liberar = () => {};
+    await clicar(botao("Fontes dos dados"));
+    await esperar();
+    const linha = naGaveta("data_divulgacao");
+    await digitar(
+      linha?.querySelector("input[aria-label^='Motivo']"),
+      "Voltar ao cronograma.",
+    );
+    // A próxima chamada (salvar) fica pendente; o mock de listar já respondeu.
+    supabase.rpc.mockImplementationOnce(
+      () =>
+        new Promise<Resposta>((ok) => {
+          liberar = () => ok({ data: FONTES_EDITAVEIS, error: null });
+        }),
+    );
+    await clicar(botaoEm(linha, "Voltar ao padrão"));
+    await esperar(() => tela.estado.carregar("sede"));
+    await esperar(async () => liberar());
+    const areas = supabase.chamadas
+      .filter((c) => c.nome === LER)
+      .map((c) => (c.args as { p_area: string }).p_area);
+    expect(areas.at(-1)).toBe("sede");
+    expect(tela.estado.obter().relatorios["resumo-dos-editais"].area).toBe(
+      "sede",
+    );
+  });
+
   it("salvar manda a fonte e o motivo e relê o relatório", async () => {
     const { supabase } = await montar(respostas());
     await clicar(botao("Fontes dos dados"));

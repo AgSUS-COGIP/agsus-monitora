@@ -503,6 +503,8 @@ export function criarEstadoDosPaineis({
       }
       mudar({ gaveta: { ...estado.gaveta, salvando: null, dados } });
       limparCache(area, ativo);
+      // A pessoa trocou de área ou de relatório enquanto salvava: não relê a página antiga.
+      if (estado.area !== area || estado.ativo !== ativo) return true;
       const leitura = estado.relatorios[ativo];
       await ler(
         ativo,
