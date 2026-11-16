@@ -39,7 +39,9 @@ import {
   Gaveta,
   GradeDeKpis,
   Kpi,
+  MaisDaCarga,
   TabelaInfinita,
+  usarCargaContinua,
 } from "../../ui/index.ts";
 import { baixarNoNavegador } from "../classificacao/estado.ts";
 
@@ -459,6 +461,8 @@ const GruposDoRelatorio = memo(function GruposDoRelatorio({
   grupos: readonly Grupo[];
   aoEscolher: (texto: string) => void;
 }) {
+  // 50 textos por vez, mais 50 ao rolar: texto livre se repete pouco.
+  const carga = usarCargaContinua(grupos, grupos.length);
   return (
     <section
       className="ui-card avd-relatorio-grupos"
@@ -479,7 +483,7 @@ const GruposDoRelatorio = memo(function GruposDoRelatorio({
             </tr>
           </thead>
           <tbody>
-            {grupos.map((g) => (
+            {grupos.slice(0, carga.limite).map((g) => (
               <tr key={g.texto} data-grupo-quantidade={g.quantidade}>
                 <td>
                   <button
@@ -499,6 +503,7 @@ const GruposDoRelatorio = memo(function GruposDoRelatorio({
       ) : (
         <p className="ui-vazio">Nenhum outro motivo escrito.</p>
       )}
+      <MaisDaCarga carga={carga} oQue="textos" />
     </section>
   );
 });
