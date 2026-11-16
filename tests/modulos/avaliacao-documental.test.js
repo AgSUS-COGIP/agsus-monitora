@@ -111,7 +111,12 @@ const EQUIPE = {
   vagas: ["177001"],
 };
 
-function supabaseFalso({ comRegra = true, pode = true, salvarEquipe } = {}) {
+function supabaseFalso({
+  comRegra = true,
+  pode = true,
+  salvarEquipe,
+  previa,
+} = {}) {
   let regra = comRegra ? regraSalva(1) : null;
   const respostas = {
     listar_editais_avaliacao: () => ({
@@ -135,6 +140,16 @@ function supabaseFalso({ comRegra = true, pode = true, salvarEquipe } = {}) {
       mudou: true,
       publicadas: 0,
       devolvidas: 0,
+    }),
+    previa_importacao_da_planilha: () => previa ?? null,
+    importar_avaliacao_da_planilha: () => ({
+      origem: "MONITORA",
+      anterior: "PLANILHA",
+      mudou: true,
+      publicadas: 97,
+      devolvidas: 0,
+      importadas: 94,
+      fora_do_lote: 2,
     }),
     copiar_modelo_regra_analise: () => {
       regra = regraSalva(1);
@@ -565,6 +580,89 @@ describe("dono da avaliação do edital (20261009200000)", () => {
     await esperar();
     expect(secao.querySelector("[data-origem]")).toBeNull();
     expect(botao("Voltar para a planilha", secao)).toBeUndefined();
+  });
+
+  it("edital decidido pela planilha: a janela mostra a prévia e importa (F8, 16/11/2026)", async () => {
+    const supabase = supabaseFalso({
+      previa: {
+        aprovados: 60,
+        reprovados: 34,
+        em_aberto: 0,
+        saem_do_lote: 2,
+        analista_sem_cadastro: 0,
+        problemas: {},
+        origem: "PLANILHA",
+      },
+    });
+    await montar(supabase);
+    await clicar(secao.querySelector("[data-acao='trocar-origem-da-analise']"));
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith("previa_importacao_da_planilha", {
+      p_edital: "e93",
+    });
+    const previa = document.querySelector("[data-importacao='previa']");
+    expect(previa.textContent).toContain(
+      "60 aprovados e 34 reprovados viram fichas concluídas",
+    );
+    expect(previa.textContent).toContain(
+      "2 fichas sem análise na planilha saem do lote",
+    );
+    const confirmar = document.querySelector(
+      "[data-acao='confirmar-origem-da-analise']",
+    );
+    expect(confirmar.textContent).toBe("Importar e passar para o Yeendé");
+    await digitar(
+      document.querySelector(".modal textarea"),
+      "Planilhas de Projetos aposentadas",
+    );
+    await clicar(confirmar);
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "importar_avaliacao_da_planilha",
+      {
+        p_edital: "e93",
+        p_motivo: "Planilhas de Projetos aposentadas",
+      },
+    );
+    expect(supabase.rpc).not.toHaveBeenCalledWith(
+      "definir_origem_analise",
+      expect.anything(),
+    );
+    expect(secao.querySelector("[data-origem]").textContent).toContain(
+      "Avaliação: Yeendé",
+    );
+    expect(toast).toHaveBeenCalledWith(
+      "94 análises importadas da planilha. A avaliação deste edital passa a ser feita no Yeendé.",
+      "success",
+    );
+  });
+
+  it("com problema na prévia, a importação fica travada e diz o que resolver", async () => {
+    await montar(
+      supabaseFalso({
+        previa: {
+          aprovados: 10,
+          reprovados: 0,
+          problemas: { EM_REVISAO: 1, SEM_INSCRITO: 2 },
+        },
+      }),
+    );
+    await clicar(secao.querySelector("[data-acao='trocar-origem-da-analise']"));
+    await esperar();
+    await digitar(
+      document.querySelector(".modal textarea"),
+      "Planilhas de Projetos aposentadas",
+    );
+    expect(document.body.textContent).toContain(
+      "1 análise em revisão na planilha (termine a revisão lá)",
+    );
+    expect(document.body.textContent).toContain(
+      "2 análises da planilha sem inscrito no Yeendé",
+    );
+    expect(
+      document.querySelector("[data-acao='confirmar-origem-da-analise']")
+        .disabled,
+    ).toBe(true);
   });
 
   it("quem não coordena só vê o dono, sem o botão", async () => {

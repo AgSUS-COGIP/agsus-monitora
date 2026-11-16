@@ -2478,3 +2478,36 @@
 .avd-ficha-cartao[data-modo="lista"] .avd-ficha-observacao-do-item {
   padding-top: var(--space-2);
 }
+
+/* Ficha importada da planilha (16/11/2026): o resultado de lá, só para ler. */
+.avd-ficha-importada {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}
+.avd-ficha-importada-dados {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-2) var(--space-4);
+  width: 100%;
+  margin: 0;
+}
+.avd-ficha-importada-dados dt {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.avd-ficha-importada-dados dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+}
+.avd-ficha-importada-titulo {
+  margin: 0;
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+}
+.avd-ficha-importada-parecer {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--text-primary);
+}

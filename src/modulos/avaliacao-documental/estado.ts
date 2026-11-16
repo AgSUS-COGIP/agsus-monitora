@@ -62,6 +62,10 @@
   sobrescreve a gravada; a leitura se refaz.
 */
 import {
+  normalizarPrevia,
+  type PreviaDaImportacao,
+} from "../../lib/avaliacao-documental/importacao-da-planilha.ts";
+import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
@@ -119,6 +123,8 @@ const RPC_OBTER_EQUIPE = "obter_equipe_edital";
 const RPC_SALVAR_EQUIPE = "salvar_equipe_edital";
 const RPC_DEFINIR_ORIGEM = "definir_origem_analise";
 const RPC_SALVAR_ALDEIAS = "salvar_aldeias_dsei";
+const RPC_PREVIA_IMPORTACAO = "previa_importacao_da_planilha";
+const RPC_IMPORTAR_DA_PLANILHA = "importar_avaliacao_da_planilha";
 
 export const MENSAGEM_SEM_ACESSO = "Sem acesso à Avaliação documental";
 const TEMPO_LIMITE_MS = 45000;
@@ -671,6 +677,52 @@ export function criarEstadoDaAvaliacao({
           nova === "MONITORA"
             ? "A avaliação deste edital passa a ser feita no Yeendé."
             : "A avaliação deste edital voltou para a planilha.",
+          "success",
+        );
+        return { ok: true };
+      } catch (erro) {
+        return { ok: false, erro: mensagemDoBanco(erro) };
+      } finally {
+        publicar({ salvando: false });
+      }
+    },
+    /*
+      A importação da avaliação da planilha (fase F8, 16/11/2026): a prévia
+      (o que vira ficha concluída e o que impede) e a importação, que grava as
+      fichas com o resultado da planilha e passa o edital para o Yeendé.
+    */
+    async previaDaImportacao(): Promise<
+      { ok: true; previa: PreviaDaImportacao } | { ok: false; erro: string }
+    > {
+      try {
+        const r = await rpc(RPC_PREVIA_IMPORTACAO, {
+          p_edital: estado.editalId,
+        });
+        return { ok: true, previa: normalizarPrevia(r) };
+      } catch (erro) {
+        return { ok: false, erro: mensagemDoBanco(erro) };
+      }
+    },
+    async importarDaPlanilha(motivo: string): Promise<ResultadoSimples> {
+      const editalId = estado.editalId;
+      publicar({ salvando: true });
+      try {
+        const r = (await rpc(RPC_IMPORTAR_DA_PLANILHA, {
+          p_edital: editalId,
+          p_motivo: motivo,
+        })) as { origem?: string | null; importadas?: number } | null;
+        gravacoes += 1;
+        const nova = r?.origem ?? "MONITORA";
+        if (editalId === estado.editalId && estado.dados)
+          publicar({ dados: { ...estado.dados, origem: nova } });
+        publicar({
+          editais: estado.editais.map((e) =>
+            e.id === editalId ? { ...e, origem: nova } : e,
+          ),
+        });
+        const n = Number(r?.importadas) || 0;
+        toast(
+          `${n.toLocaleString("pt-BR")} ${n === 1 ? "análise importada" : "análises importadas"} da planilha. A avaliação deste edital passa a ser feita no Yeendé.`,
           "success",
         );
         return { ok: true };

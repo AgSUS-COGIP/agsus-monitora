@@ -56,6 +56,8 @@ import {
 import { cpfDaFicha } from "../../../lib/avaliacao-documental/cpf-da-ficha.ts";
 import { ConclusaoDaFicha, type Previa } from "./conclusao-da-ficha.tsx";
 import { ReabrirAFicha } from "./reabrir-a-ficha.tsx";
+import { FichaImportada } from "./ficha-importada.tsx";
+import { marcaDaImportacao } from "../../../lib/avaliacao-documental/importacao-da-planilha.ts";
 import { copiar, EnviosAnteriores } from "./empregare.tsx";
 import { abrirEspelhoDeNota, baixarEspelhoEmPdf } from "./espelho-de-nota.ts";
 import { textosParaOEspelho } from "../modelo-do-espelho-no-banco.ts";
@@ -387,6 +389,24 @@ export function ConteudoDaFicha({
         {children}
         <CarregandoConteudo rotulo="Carregando a ficha…" />
       </>
+    );
+
+  // Importada da planilha (16/11/2026): o resultado de lá, só para ler, até ser reaberta.
+  const importada = concluida
+    ? marcaDaImportacao(st.dados.ficha.lancamento)
+    : null;
+  if (importada)
+    return (
+      <FichaImportada
+        marca={importada}
+        resultado={st.dados.ficha.tp_resultado}
+        nota={st.dados.ficha.nota_final}
+        parecer={st.dados.ficha.parecer}
+        cabecalho={topo ? <CabecalhoDaFicha {...topo} /> : null}
+        reabrir={st.dados.pode_reabrir ? <ReabrirAFicha loja={loja} /> : null}
+      >
+        {children}
+      </FichaImportada>
     );
 
   const ficha = { ...aberta.ficha!, ...st.dados.ficha };

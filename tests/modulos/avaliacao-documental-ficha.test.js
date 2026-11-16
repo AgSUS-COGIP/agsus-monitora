@@ -2234,3 +2234,51 @@ describe("estado da ficha: descartar salva antes", () => {
     ).toHaveLength(0);
   });
 });
+
+describe("ficha importada da planilha (F8, 16/11/2026)", () => {
+  it("mostra o resultado da planilha só para ler, sem itens, com Reabrir para a coordenação", async () => {
+    const ficha = fichaDoBanco({
+      situacao: "CONCLUIDA",
+      editar: false,
+      reabrir: true,
+      lancamento: {
+        importada_da_planilha: {
+          linha: "l1",
+          versao: 6,
+          em: "2026-11-16T23:40:00+00:00",
+          status: "Aprovado",
+          responsavel: "Bia Analista",
+          data: "2026-10-06",
+          nota_final: 52.5,
+          parciais: { FORMACAO: 20, EXPERIENCIA: 32.5 },
+          modalidade: "Ampla concorrência",
+          link_pdf: "https://drive.google.com/espelho",
+        },
+      },
+    });
+    ficha.ficha.tp_resultado = "APTO";
+    ficha.ficha.nota_final = 52.5;
+    ficha.ficha.parecer = "Parecer da planilha";
+    await abrirFicha(supabaseFalso(ficha));
+    const raiz = document.querySelector(".avd-ficha[data-importada='sim']");
+    expect(raiz).toBeTruthy();
+    expect(raiz.textContent).toContain(
+      "Resultado importado da planilha em 16/11/2026.",
+    );
+    expect(raiz.textContent).toContain("52,50");
+    expect(raiz.textContent).toContain("Escolaridade");
+    expect(raiz.textContent).toContain("Bia Analista em 06/10/2026");
+    expect(raiz.textContent).toContain("Parecer da planilha");
+    const espelho = raiz.querySelector("a.btn");
+    expect(espelho.textContent).toBe("Espelho da planilha");
+    expect(espelho.getAttribute("href")).toBe(
+      "https://drive.google.com/espelho",
+    );
+    expect(espelho.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(raiz.querySelector(".avd-ficha-decisao")).toBeNull();
+    expect(document.querySelector(".avd-ficha-salvo").textContent).toBe(
+      "Concluída na planilha",
+    );
+    expect(botao("Reabrir", raiz)).toBeTruthy();
+  });
+});

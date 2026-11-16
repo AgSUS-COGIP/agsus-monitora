@@ -62,8 +62,20 @@ troca o dono com confirmação e motivo (RPC `definir_origem_analise`, migration
 publica cada ficha em `TB_ANALISE_CURRICULAR` (`TP_ORIGEM_REGISTRO` MONITORA): Pendente, Em análise,
 Revisar, Aprovado/Triados ou Reprovado, com responsável, data, parciais, nota e parecer. O Painel das
 análises e a Classificação leem essas linhas sem código especial; a sincronização da planilha ignora
-as linhas e os editais MONITORA. Edital que a planilha já decidiu não vira MONITORA por aqui (a
-virada com adoção é da F8).
+as linhas e os editais MONITORA.
+
+**Edital que a planilha já decidiu** (16/11/2026, F8): a mesma janela mostra a prévia
+(`previa_importacao_da_planilha`: aprovados e reprovados que viram fichas, fichas que saem do lote,
+o que impede) e troca o dono importando (`importar_avaliacao_da_planilha`, migration
+`20261116233000_importar_avaliacao_da_planilha.sql`; lógica em
+`src/lib/avaliacao-documental/importacao-da-planilha.ts`). Cada linha Aprovado ou Reprovado vira a
+ficha concluída do inscrito com o resultado, a nota, o parecer e a data da planilha (analista: o
+cadastro de mesmo nome, ou quem importa), a marca `DS_LANCAMENTO.importada_da_planilha` e o histórico
+IMPORTAR com o retrato do que a ficha tinha; a linha do painel fica a mesma (só passa a ser do
+sistema). A ficha importada abre só para ler (`ficha/ficha-importada.tsx`: resultado, parciais,
+parecer, quem analisou, "Espelho da planilha"); reaberta, refaz-se no sistema e a marca sai do
+lançamento. Problemas que impedem: linha sem inscrito ou sem ficha, vaga diferente, em revisão na
+planilha, sem nota ou sem parecer.
 
 ## Menos egress (plano gratuito do Supabase)
 

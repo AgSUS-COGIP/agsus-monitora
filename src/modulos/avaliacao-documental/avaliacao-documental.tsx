@@ -312,6 +312,8 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
                       }
                       podeTrocar={Boolean(e.dados.pode_coordenar)}
                       aoTrocar={estado.definirOrigem}
+                      aoPrever={estado.previaDaImportacao}
+                      aoImportar={estado.importarDaPlanilha}
                     />
                   </div>
                   <Segmentado
