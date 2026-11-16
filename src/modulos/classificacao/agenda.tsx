@@ -76,9 +76,11 @@ import {
   EstadoVazio,
   GradeDeKpis,
   Kpi,
+  MaisDaCarga,
   Modal,
   Segmentado,
   Selo,
+  usarCargaContinua,
 } from "../../ui/index.ts";
 import { CarregandoConteudo } from "../../ui/index.ts";
 
@@ -895,13 +897,21 @@ function AgendaDosConvocados({
     if (ok) setRascunho(null);
   }
 
-  let porDia: { chave: string; itens: ItemDaAgenda[] }[] = [];
-  for (const i of ordenados) {
-    const chave = i.data || "";
-    const ultimo = porDia.at(-1);
-    if (ultimo && ultimo.chave === chave) ultimo.itens.push(i);
-    else porDia = [...porDia, { chave, itens: [i] }];
-  }
+  /*
+    50 convocados por vez, mais 50 ao rolar (o edital grande tem milhares).
+    A leva continua ao mudar um horário: só volta às 50 com outra lista.
+  */
+  const carga = usarCargaContinua(idDaLista || "calculada", ordenados.length);
+  const porDia = useMemo(() => {
+    const dias: { chave: string; itens: ItemDaAgenda[] }[] = [];
+    for (const i of ordenados.slice(0, carga.limite)) {
+      const chave = i.data || "";
+      const ultimo = dias.at(-1);
+      if (ultimo && ultimo.chave === chave) ultimo.itens.push(i);
+      else dias.push({ chave, itens: [i] });
+    }
+    return dias;
+  }, [ordenados, carga.limite]);
 
   return (
     <section
@@ -1138,6 +1148,7 @@ function AgendaDosConvocados({
               </tbody>
             ))}
           </table>
+          <MaisDaCarga carga={carga} oQue="convocados" />
         </div>
       ) : fonte ? (
         <EstadoVazio>Nenhum convocado na lista de convocação.</EstadoVazio>

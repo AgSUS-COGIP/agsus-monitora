@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type {
   EntrevistaDoPainel,
   AprovadoSemEntrevista,
@@ -11,7 +12,16 @@ import {
   rotuloDoComparecimento,
   rotuloDoParecer,
 } from "../../lib/entrevistas-do-painel.ts";
-import { EstadoVazio, Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.ts";
+import { gruposAteOLimite } from "../../lib/carga-continua.ts";
+import {
+  EstadoVazio,
+  Gaveta,
+  GradeDeKv,
+  Kv,
+  MaisDaCarga,
+  Secao,
+  usarCargaContinua,
+} from "../../ui/index.ts";
 import { SeloDoParecer } from "./tabela.tsx";
 
 /*
@@ -235,7 +245,23 @@ export function GavetaDosSemEntrevista({
   aprovados: readonly AprovadoSemEntrevista[];
   aoFechar(): void;
 }) {
-  const grupos = agruparAprovadosSemEntrevista(aprovados);
+  const grupos = useMemo(
+    () => agruparAprovadosSemEntrevista(aprovados),
+    [aprovados],
+  );
+  // 50 por vez, mais 50 ao rolar a gaveta: a área inteira pode ter milhares.
+  const carga = usarCargaContinua(grupos, aprovados.length);
+  const visiveis = useMemo(
+    () =>
+      gruposAteOLimite(grupos, carga.limite, {
+        contar: (g) => g.candidatos.length,
+        cortar: (g, quantos) => ({
+          ...g,
+          candidatos: g.candidatos.slice(0, quantos),
+        }),
+      }).grupos,
+    [grupos, carga.limite],
+  );
   return (
     <Gaveta
       id="entrevistasSemEntrevista"
@@ -257,7 +283,7 @@ export function GavetaDosSemEntrevista({
     >
       <div className="ui-gaveta-corpo">
         {grupos.length ? (
-          grupos.map((g) => (
+          visiveis.map((g) => (
             <Secao
               key={g.chave}
               icone="fa-briefcase"
@@ -298,6 +324,7 @@ export function GavetaDosSemEntrevista({
             Nenhum aprovado na análise sem entrevista no recorte atual.
           </EstadoVazio>
         )}
+        <MaisDaCarga carga={carga} oQue="aprovados" />
       </div>
     </Gaveta>
   );

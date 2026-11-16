@@ -28,7 +28,16 @@ import {
   criteriosDeDesempate,
   textoDoEmpateFinal,
 } from "../../lib/convocacao-da-entrevista.ts";
-import { Aviso, Campo, classes, Gaveta, Selo } from "../../ui/index.ts";
+import { gruposAteOLimite, totalDosGrupos } from "../../lib/carga-continua.ts";
+import {
+  Aviso,
+  Campo,
+  classes,
+  Gaveta,
+  MaisDaCarga,
+  Selo,
+  usarCargaContinua,
+} from "../../ui/index.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { numeroBR } from "./partes.tsx";
 
@@ -304,6 +313,18 @@ function ModalDeDesconvocar({
   );
 }
 
+const contarDaVaga = (g: GrupoDaConvocacao) =>
+  g.candidatos.length + g.fora.length;
+/* A vaga cortada: os primeiros da lista e, se couber, os de fora dela. */
+const cortarDaVaga = (
+  g: GrupoDaConvocacao,
+  quantos: number,
+): GrupoDaConvocacao => ({
+  ...g,
+  candidatos: g.candidatos.slice(0, quantos),
+  fora: g.fora.slice(0, Math.max(0, quantos - g.candidatos.length)),
+});
+
 export function ListaDeConvocacao({
   dados,
   fonte,
@@ -334,6 +355,21 @@ export function ListaDeConvocacao({
   const podeConvocar = podeEditar && daLista;
   const avisos = avisosDaConvocacao(dados, fonte, grupos);
   const resumo = resumoDaConvocacao(grupos);
+  /*
+    50 candidatos por vez (em blocos por vaga), mais 50 ao rolar: o edital
+    grande tem milhares. A marcação é dos dados, não do que está à vista:
+    "Convocar" leva os marcados de todas as vagas. Convocar não volta às 50.
+  */
+  const total = useMemo(() => totalDosGrupos(grupos, contarDaVaga), [grupos]);
+  const carga = usarCargaContinua(fonte.tipo, total);
+  const visiveis = useMemo(
+    () =>
+      gruposAteOLimite(grupos, carga.limite, {
+        contar: contarDaVaga,
+        cortar: cortarDaVaga,
+      }).grupos,
+    [grupos, carga.limite],
+  );
 
   /* A cada payload novo (convocou, outra lista), todos os da lista a convocar ficam marcados. */
   useEffect(() => setSelecao(new Set(pendentes)), [pendentes]);
@@ -396,7 +432,7 @@ export function ListaDeConvocacao({
         </Aviso>
       ) : null}
       {grupos.length ? (
-        grupos.map((g) => (
+        visiveis.map((g) => (
           <div className="entrevistas-vaga" key={g.vaga} data-vaga={g.vaga}>
             <div className="entrevistas-vaga-topo">
               <strong>
@@ -522,6 +558,7 @@ export function ListaDeConvocacao({
           A lista de convocação não tem candidatos.
         </p>
       ) : null}
+      <MaisDaCarga carga={carga} oQue="candidatos" />
       {podeConvocar ? (
         <div className="entrevistas-acoes">
           <button
