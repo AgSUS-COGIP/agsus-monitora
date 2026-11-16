@@ -467,6 +467,47 @@ describe("MenuDeAcoes", () => {
   });
 });
 
+describe("MenuDeAcoes compacto (o ⋯ da linha)", () => {
+  const caixaEm = (topo: number) => ({
+    top: topo,
+    bottom: topo + 30,
+    left: 900,
+    right: 930,
+    width: 30,
+    height: 30,
+    x: 900,
+    y: topo,
+    toJSON: () => ({}),
+  });
+
+  it("perto do topo abre para baixo; perto do fim abre para cima, sem o top do CSS (16/11/2026)", async () => {
+    vi.stubGlobal("innerHeight", 1000);
+    vi.stubGlobal("innerWidth", 1600);
+    const acoes = [{ id: "c", rotulo: "Copiar código", aoEscolher: () => {} }];
+    await montarNoApp(
+      h(MenuDeAcoes, { compacto: true, rotulo: "Mais ações", acoes }),
+    );
+    const botao = definido($<HTMLElement>("[data-acao='abrir-menu']"));
+
+    botao.getBoundingClientRect = () => caixaEm(100) as DOMRect;
+    await clicar(botao);
+    let lista = definido($<HTMLElement>("[role='menu']"));
+    expect(lista.style.position).toBe("fixed");
+    expect(lista.style.top).toBe("134px");
+    expect(lista.style.bottom).toBe("auto");
+    expect(lista.style.right).toBe("auto");
+    await clicar(botao);
+
+    botao.getBoundingClientRect = () => caixaEm(800) as DOMRect;
+    await clicar(botao);
+    lista = definido($<HTMLElement>("[role='menu']"));
+    expect(lista.style.bottom).toBe("204px");
+    expect(lista.style.top).toBe("auto");
+    expect(lista.style.right).toBe("auto");
+    vi.unstubAllGlobals();
+  });
+});
+
 describe("Gaveta", () => {
   it("classes extras no fundo e no cartão; sem sobretítulo nem resumo, eles não aparecem", async () => {
     await montarNoApp(

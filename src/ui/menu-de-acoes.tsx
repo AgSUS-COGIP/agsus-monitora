@@ -74,10 +74,25 @@ export function MenuDeAcoes({
       Math.min(caixa.right - LARGURA_DA_LISTA, largura - LARGURA_DA_LISTA - 8),
     );
     const emCima = altura > 0 && caixa.bottom > altura * 0.6;
+    // O CSS da lista (.ui-menu-lista) traz top e right do menu comum: aqui
+    // eles saem, senão a lista que abre para cima fica presa à borda de
+    // baixo da janela, fora da vista (16/11/2026).
     setPosicao(
       emCima
-        ? { position: "fixed", left: esquerda, bottom: altura - caixa.top + 4 }
-        : { position: "fixed", left: esquerda, top: caixa.bottom + 4 },
+        ? {
+            position: "fixed",
+            left: esquerda,
+            right: "auto",
+            top: "auto",
+            bottom: altura - caixa.top + 4,
+          }
+        : {
+            position: "fixed",
+            left: esquerda,
+            right: "auto",
+            top: caixa.bottom + 4,
+            bottom: "auto",
+          },
     );
   }, [aberto, compacto]);
 
