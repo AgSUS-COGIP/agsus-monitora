@@ -75,8 +75,9 @@ export const CHAVE_DOS_FILTROS = "agsus_monitora_filters_v1";
 /*
   v2 (13/11/2026): as colunas do resultado entraram no padrão, para todos; a
   escolha guardada na v1 não as tinha e foi descartada uma vez.
+  v3 (13/11/2026): Ciclo, 1ª admissão e Última admissão, pelo mesmo motivo.
 */
-export const CHAVE_DAS_COLUNAS = "agsus_visible_cols_v2";
+export const CHAVE_DAS_COLUNAS = "agsus_visible_cols_v3";
 /** Etapas do cronograma e resumo das listas de aprovados da área. */
 export const RPC_ACOMPANHAMENTO =
   "listar_acompanhamento_da_visao_geral_se_mudou";
@@ -225,6 +226,7 @@ export function criarEstadoDaVisaoGeral({
     carregadoEm: 0,
     aberta,
     visitada: aberta,
+    montador: false,
   };
   let instantaneo: SnapshotDaVisaoGeral;
   let fonte: { linhas: readonly unknown[] | null; area: string } = {
@@ -579,6 +581,9 @@ export function criarEstadoDaVisaoGeral({
       if (!filtradas.length) return;
       baixar(csvDaVisaoGeral(filtradas), nomeDoCsv(area, new Date(agora())));
     },
+    /* O montador de relatório (src/modulos/visao-geral/montador-de-relatorio.tsx). */
+    abrirMontador: () => publicar({ montador: true }),
+    fecharMontador: () => publicar({ montador: false }),
   };
 }
 

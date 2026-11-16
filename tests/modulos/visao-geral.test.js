@@ -725,17 +725,19 @@ describe("tabela de processos", () => {
     expect(secao.querySelector(".visao-geral-colunas-menu").hidden).toBe(true);
   });
 
-  it("colunas padrão para todos: a escolha da v1 não vale; só Observações fica fora", async () => {
-    // Pedido de 13/11/2026: quem guardou colunas antes também passa a ver as do resultado.
+  it("colunas padrão para todos: a escolha da v2 não vale; só Observações fica fora", async () => {
+    // Pedidos de 13/11/2026: quem guardou colunas antes também passa a ver as
+    // do resultado (v2) e Ciclo, 1ª e Última admissão (v3).
     armazenamento = memoria();
     armazenamento.setItem(
-      "agsus_visible_cols_v1",
+      "agsus_visible_cols_v2",
       JSON.stringify(["unidade", "edital", "vagas_total"]),
     );
     await montar();
     expect(cabecalhos()).toEqual([
       "Unidade",
       "Edital",
+      "Ciclo",
       "Início",
       "Encerramento",
       "Duração (dias)",
@@ -743,6 +745,8 @@ describe("tabela de processos", () => {
       "Inscritos",
       "Aprovados",
       "Contratados",
+      "1ª admissão",
+      "Última admissão",
       "Aguardando chamada",
       "Sem contratação",
       "Status",
@@ -838,10 +842,19 @@ describe("tabela de processos", () => {
     expect(linhas()[0].classList.contains("is-destacada")).toBe(true);
   });
 
-  it("Exportar baixa o CSV do recorte", async () => {
+  /* 13/11/2026: Exportar abre o montador de relatório; o CSV é um dos formatos. */
+  it("Exportar abre o montador; o formato CSV baixa o CSV do recorte", async () => {
     await montar();
     await act(async () => estado.definirFiltro("uf", ["RR"]));
     await clicar(secao.querySelector('[data-acao="exportar"]'));
+    const montador = document.getElementById("visaoGeralRelatorio");
+    expect(montador).not.toBeNull();
+    const csv = [...montador.querySelectorAll('[role="radio"]')].find(
+      (b) => b.textContent.trim() === "CSV",
+    );
+    await clicar(csv);
+    await clicar(document.getElementById("visaoGeralRelatorioGerar"));
+    expect(document.getElementById("visaoGeralRelatorio")).toBeNull();
     const [conteudo, nome] = baixar.mock.calls[0];
     expect(nome).toBe("AgSUS_Monitora_SaudeIndigena_20261001.csv");
     expect(conteudo).toContain("DSEI Yanomami");

@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-13
+atualizado: 2026-11-16
 ---
 
 # Módulo: Visão geral
@@ -36,7 +36,11 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
   ([[modulo-editais]]). A Visão geral lê `listar_editais_criticos_manuais(p_area)` junto com o
   acompanhamento (falha não derruba a tela; sem mudança, o mesmo objeto) e soma a marcação aos
   motivos automáticos como o mais grave (`marcado`).
-- `listar_acompanhamento_da_visao_geral({ p_area })` lê etapas e resumos das listas. O estado
+- `listar_acompanhamento_da_visao_geral({ p_area })` lê etapas, resumos das listas e, desde a
+  migration `20261113210000`, a 1ª e a última admissão de cada edital (`admissoes`, de
+  `TB_ADMISSAO_CONCILIADA`: admissões conciliadas com o RH, carregadas por
+  `scripts/carregar-admissoes-conciliadas.mjs` a partir da aba "Vínculos conciliados" das
+  planilhas de conciliação; sem nome, CPF nem matrícula). O estado
   evita repetir pedidos da mesma carga/área e descarta respostas de cargas ou áreas anteriores.
   Se houver erro, a tela continua com as linhas disponíveis.
 - `obter_marcos_da_area({ p_area })` lê os números anuais da equipe. Resposta sem ano inteiro ou
@@ -44,11 +48,30 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
 - Filtros e colunas são normalizados ao sair do armazenamento; a indisponibilidade do
   armazenamento não impede o uso da página.
 - Colunas padrão, para todos (13/11/2026): todas menos Observações. A chave guardada passou a
-  `agsus_visible_cols_v2`, o que descartou uma vez as escolhas antigas (sem as colunas do
-  resultado). Em 1280px a tabela rola de lado; Unidade e Edital ficam presas à esquerda
+  `agsus_visible_cols_v3` (Ciclo, 1ª admissão e Última admissão), o que descartou uma vez as
+  escolhas antigas. O ciclo é padronizado como "Nº ciclo" (`src/lib/ciclo-do-edital.ts`), é
+  filtro em "Mais opções" e voltou ao formulário do edital. Em 1280px a tabela rola de lado; Unidade e Edital ficam presas à esquerda
   (`classe` da coluna na `TabelaInfinita`). No celular, em cartões, rótulo e valor ficam na
   mesma linha e só a página rola.
 - O CSV mantém a proteção contra fórmulas e o nome do arquivo usa a data de Brasília.
+- **Montador de relatório** (13/11/2026; `montador-de-relatorio.tsx`, lógica em
+  `src/lib/relatorio-da-visao-geral.ts`, PDF em `src/lib/relatorio-da-visao-geral-em-pdf.ts`): o
+  botão Exportar e o "Montar relatório" do menu da conta abrem a janela. Modelo pronto (Resumo
+  rápido, Completo, Diretoria) ou escolha das seções (números, tabela dos editais, atenção), das
+  colunas e do formato (PDF desenhado com o timbrado de Configurações › Marca, Excel com uma aba por
+  seção, ou o CSV de antes). Sai do recorte da tela; a última escolha fica no navegador. Substituiu a
+  impressão da tela inteira (o cabeçalho `.print-only` saiu).
+- **Relatório da diretoria** (16/11/2026; migration `20261116120000`): o modelo Diretoria leva três
+  abas. **Editais** (número, unidade, vagas, divulgação, encerramento e ciclo); **Vagas por cargo**
+  (`listar_vagas_por_cargo_da_visao_geral`, recurso dashboard, sem dado pessoal): uma linha por vaga
+  com vagas imediatas, inscritos e aprovados; **Aprovados** (`exportar_aprovados_da_diretoria`,
+  Aprovados leitor): cargo, nota, classificação, nome, status, matrícula e a admissão conciliada.
+  A aba Aprovados só aparece para quem vê a Lista de aprovados (`podeBaixarAprovados`), e o banco
+  grava cada download em `TL_EXPORTACAO_APROVADO` (`DIRETORIA`) antes de devolver os nomes. A
+  ligação vaga ↔ quadro ↔ lista é feita em `src/lib/relatorio-da-diretoria.ts`: pelo código da
+  vaga, pelo número do começo ou pelo texto (Projetos e SEDE guardam o texto no lugar do código);
+  as vagas imediatas vêm do quadro do edital (cargo e lotação) ou do texto da vaga ("2 vagas",
+  "Cadastro Reserva" = 0), e sem os dois ficam "—". No PDF, acima de 3 mil aprovados, pede o Excel.
 
 ## Limites da tipagem
 

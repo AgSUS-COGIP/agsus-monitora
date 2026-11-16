@@ -9,6 +9,7 @@
   mapa (`legacy-app.js`): as duas telas têm de concordar.
 */
 
+import { cicloPadronizado } from "./ciclo-do-edital.ts";
 import { etapaComDatasValidas } from "./datas-do-cronograma.ts";
 import type { DatasDaEtapa } from "./datas-do-cronograma.ts";
 import { validadeParaSalvar } from "./validade-do-edital.ts";
@@ -485,8 +486,8 @@ export function formularioDoEdital(
     siglaUnidade: pelaUnidade ? txt(escolhida?.sigla) : txt(e.sigla_unidade),
     tipoUnidade: pelaUnidade ? txt(escolhida?.tipo) : txt(e.tipo_unidade),
     uf: pelaUnidade ? txt(escolhida?.uf_sede).toUpperCase() : txt(e.uf),
-    // O ciclo saiu do formulário, mas a coluna continua no banco: salvar devolve o valor gravado.
-    ciclo: txt(e.ciclo),
+    // O ciclo voltou ao formulário em 13/11/2026 ("Nº ciclo", ciclo-do-edital.ts).
+    ciclo: cicloPadronizado(e.ciclo),
     link: txt(e.link_edital),
     vagas: String(e.vagas_total || 0),
     dataInicio: txt(e.data_inicio),
@@ -557,7 +558,7 @@ export function editalParaSalvar(
     tipo_unidade: txt(f.tipoUnidade) || txt(unidade?.tipo) || null,
     unidade: txt(unidade?.nome_oficial),
     uf: txt(f.uf),
-    ciclo: txt(f.ciclo),
+    ciclo: cicloPadronizado(f.ciclo),
     vagas_total: Number(f.vagas || 0),
     data_inicio: periodo?.inicio || txt(f.dataInicio) || null,
     data_fim: periodo?.fim || txt(f.dataFim) || null,

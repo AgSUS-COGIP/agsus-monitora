@@ -11,14 +11,14 @@ e os logs do GitHub Actions são **públicos**: nada pessoal sai em log, artefat
 
 ## Na tela (desenho da Avaliação documental, LGPD)
 
-| Dado                                  | Quem vê                                      | Como                                              |
-| ------------------------------------- | -------------------------------------------- | ------------------------------------------------- |
-| Nome, vaga, modalidade, nota, parecer | leitor do painel e da Avaliação documental   | aberto                                            |
-| CPF                                   | analista, revisor e coordenação do edital    | mascarado; "Mostrar" por 60 s, registrado         |
-| Nascimento                            | os mesmos                                    | a idade sempre; a data só na ficha                |
-| E-mail e telefone                     | ninguém na ficha                             | só na Lista de aprovados/convocação               |
-| Documentos                            | quem tem o papel na ficha                    | na Empregare ou em bucket privado com URL assinada curta; cada abertura registrada |
-| Nome do parente (P20)                 | analista, revisor e coordenação              | mascarado como o CPF                              |
+| Dado                                  | Quem vê                                    | Como                                                                               |
+| ------------------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------- |
+| Nome, vaga, modalidade, nota, parecer | leitor do painel e da Avaliação documental | aberto                                                                             |
+| CPF                                   | analista, revisor e coordenação do edital  | mascarado; "Mostrar" por 60 s, registrado                                          |
+| Nascimento                            | os mesmos                                  | a idade sempre; a data só na ficha                                                 |
+| E-mail e telefone                     | ninguém na ficha                           | só na Lista de aprovados/convocação                                                |
+| Documentos                            | quem tem o papel na ficha                  | na Empregare ou em bucket privado com URL assinada curta; cada abertura registrada |
+| Nome do parente (P20)                 | analista, revisor e coordenação            | mascarado como o CPF                                                               |
 
 Os registros de acesso (`TL_ACESSO_FICHA_ANALISE`) ficam só para a coordenação e o administrador
 global. Decisões da Avaliação documental em [[avaliacao-documental-pendencias]],
@@ -42,6 +42,9 @@ seção 10.
 
 - A API `/api/aprovados` entrega nome e matrícula: só com a chave do outro sistema
   ([[funcoes-da-vercel]]).
+- O relatório da diretoria (aba Aprovados do montador da Visão geral) entrega nome e matrícula só a
+  quem é leitor da Lista de aprovados; `exportar_aprovados_da_diretoria` grava cada download em
+  `TL_EXPORTACAO_APROVADO` antes de devolver ([[modulo-visao-geral]]).
 - Os anexos PDF do candidato aprovado ficam no banco (bytea), com limite de tamanho e quantidade
   ([[modulo-aprovados]]).
 - Testes usam dados fictícios; nenhum teste fala com o Supabase ([[testes]]).

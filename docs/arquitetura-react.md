@@ -372,7 +372,7 @@ src/app/carga.ts                 consultas em paralelo, cópia da sessão, "Atua
 src/app/presenca.ts              auditoria, heartbeat, presença e a lista de Pessoas online
 src/componentes/pessoas-online/  o botão e a lista no cabeçalho (React)
 src/app/perfil.ts                usuário e perfil (cópia da sessão), cabeçalho, #appScreen
-src/app/moldura.ts               barra recolhida, tema, tela cheia, relatório em PDF
+src/app/moldura.ts               barra recolhida, tema, tela cheia, Montar relatório (abre o montador)
 src/app/avisos.ts                toast (window.monitoraToast) e loader (window.monitoraLoader)
 src/app/carregamento.ts          skeleton da entrada e do painel externo, barra do "Atualizar dados"
 src/lib/erro-amigavel.ts         a frase do erro (antigo friendlyError)
@@ -423,7 +423,7 @@ claro e escuro) e o DOM do `#appScreen` com posição e tamanho de cada elemento
 
 ```
 casca.tsx            <Casca> (memo, sem props): barra lateral, cabeçalho e <Telas>; portal da raiz em #appScreen
-topo.tsx             header.top: título (da navegação), Pessoas online, menu da conta (o ☰ é da barra lateral)
+topo.tsx             header.top: título (da navegação), menu da conta com Pessoas online dentro (o ☰ é da barra lateral)
 ../telas.tsx         .content: as <section class="page"> (TELAS_DA_CASCA, rotas), quadro externo, Configurações
 acoes.ts             os botões chamam window.refreshData, exportPDF… na hora do clique (como os onclick)
 ```

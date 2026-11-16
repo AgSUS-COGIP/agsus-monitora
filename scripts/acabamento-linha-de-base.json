@@ -1,7 +1,4 @@
 {
-  "src/app/casca/cabecalho-do-relatorio.tsx": {
-    "cor": 6
-  },
   "src/app/entrada/icones-da-entrada.tsx": {
     "cor": 4
   },
@@ -23,7 +20,6 @@
     "curva": 1
   },
   "src/modulos/avaliacao-documental/espelho-editor.css": {
-    "important": 1,
     "raio": 1
   },
   "src/modulos/avaliacao-documental/ficha/ficha.css": {

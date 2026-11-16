@@ -31,15 +31,16 @@ describe("o aviso de parabéns fica visível", () => {
   const comemoracao = ler("src/styles/comemoracao.css");
   const zDoAviso = zDoBloco(comemoracao, ".comemoracao");
 
-  it("acima do cabeçalho, da barra lateral e de Pessoas online", () => {
+  it("acima do cabeçalho, da barra lateral e do menu da conta (com Pessoas online)", () => {
     // O cabeçalho: --z-header em app.css; no celular, 10030 (mobile-app.css).
     const cabecalho = Math.max(
       zDoBloco(app, ".top"),
       zDoBloco(ler("src/styles/mobile-app.css"), "  .app .top"),
     );
+    // Pessoas online fica dentro do menu da conta desde 13/11/2026.
     const pessoasOnline = zDoBloco(
       ler("src/styles/platform-shell.css"),
-      ".online-presence-popover",
+      ".top-user-popover",
     );
     expect(cabecalho).toBeGreaterThan(0);
     expect(pessoasOnline).toBeGreaterThan(0);

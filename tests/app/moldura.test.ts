@@ -5,7 +5,6 @@ import {
   criarMoldura,
 } from "../../src/app/moldura.ts";
 import type { OpcoesDaMoldura } from "../../src/app/moldura.ts";
-import { filtrosVazios } from "../../src/lib/visao-geral.ts";
 import {
   EVENTO_BARRA_ALTERNADA,
   EVENTO_TEMA_ALTERADO,
@@ -36,7 +35,6 @@ function janelaFalsa({ celular = false }: { celular?: boolean } = {}) {
     removeEventListener: (nome: string, funcao: OuvinteDaJanela) =>
       ouvintes[nome]?.delete(funcao),
     dispatchEvent: vi.fn(),
-    print: vi.fn(),
     emitir: (nome: string, evento: unknown = {}) =>
       ouvintes[nome]?.forEach((funcao) => funcao(evento)),
   });
@@ -50,11 +48,6 @@ function montar(
   const moldura = criarMoldura({
     janela,
     avisar,
-    relatorio: () => ({
-      filtros: filtrosVazios(),
-      busca: "",
-      filtradas: [{ vagas_total: 10, contratados: 4, vagas_ociosas: 2 }],
-    }),
     ...opcoes.extras,
   });
   // Como a casca faz ao montar (src/app/casca/pecas.tsx, MolduraNaPagina).
@@ -169,31 +162,28 @@ describe("tela cheia", () => {
   });
 });
 
-describe("relatório em PDF", () => {
-  it("publica o cabeçalho do relatório, imprime e limpa", () => {
-    vi.useFakeTimers();
-    const { moldura, janela, avisar } = montar();
-    moldura.exportarPdf();
-    const { relatorio } = moldura.obter();
-    expect(relatorio?.vagas).toBe(10);
-    expect(relatorio?.contratados).toBe(4);
-    expect(relatorio?.filtros).toContain("Nenhum filtro aplicado");
-    vi.advanceTimersByTime(120);
-    expect(janela.print).toHaveBeenCalled();
-    vi.advanceTimersByTime(1500);
-    expect(moldura.obter().relatorio).toBeNull();
-    expect(avisar).toHaveBeenCalled();
+describe("Montar relatório (menu da conta)", () => {
+  /* 13/11/2026: abre o montador da Visão geral; antes, imprimia a tela. */
+  it("na Visão geral, só abre o montador", () => {
+    const abrirMontador = vi.fn();
+    const irParaVisaoGeral = vi.fn();
+    const { moldura } = montar({
+      extras: { naVisaoGeral: () => true, irParaVisaoGeral, abrirMontador },
+    });
+    moldura.montarRelatorio();
+    expect(irParaVisaoGeral).not.toHaveBeenCalled();
+    expect(abrirMontador).toHaveBeenCalledTimes(1);
   });
 
-  it.each([
-    ["saude-indigena", "Yeendé — Saúde Indígena"],
-    ["sede", "Yeendé — SEDE"],
-    ["projetos", "Yeendé — Projetos"],
-  ])("o título do relatório é o da área aberta (%s)", (area, titulo) => {
-    definirAreaAtual(area);
-    const { moldura } = montar();
-    moldura.exportarPdf();
-    expect(moldura.obter().relatorio?.titulo).toBe(titulo);
+  it("em outra tela, vai para a Visão geral e abre o montador", () => {
+    const abrirMontador = vi.fn();
+    const irParaVisaoGeral = vi.fn();
+    const { moldura } = montar({
+      extras: { naVisaoGeral: () => false, irParaVisaoGeral, abrirMontador },
+    });
+    moldura.montarRelatorio();
+    expect(irParaVisaoGeral).toHaveBeenCalledTimes(1);
+    expect(abrirMontador).toHaveBeenCalledTimes(1);
   });
 });
 

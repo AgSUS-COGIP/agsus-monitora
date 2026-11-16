@@ -14,7 +14,7 @@ import { definido } from "../definido.ts";
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 /*
-  "Pessoas online" no cabeçalho (src/componentes/pessoas-online/): o botão, a
+  "Pessoas online" no menu da conta (src/componentes/pessoas-online/): a linha, a
   lista com o rótulo do perfil (não o código), sem rolagem lateral.
 */
 
@@ -166,10 +166,21 @@ describe("lista", () => {
       /\.online-presence-texto \{\s*flex: 1 1 auto;\s*min-width: 0;/,
     );
     expect(shell).toMatch(/\.online-presence-list \{[^}]*overflow-x: hidden;/);
-    // No celular, a lista abre de borda a borda do cabeçalho (não sai da tela).
-    expect(shell).toMatch(
-      /@media \(max-width: 900px\) \{\s*\.online-presence \{\s*position: static;\s*\}\s*\.online-presence-popover \{\s*left: 0;\s*right: 0;\s*width: auto;/,
+  });
+
+  /* 13/11/2026: o "3 online" saiu do cabeçalho e foi para o menu da conta. */
+  it("fica no menu da conta, como uma linha, e a lista abre logo abaixo", () => {
+    const topo = readFileSync("src/app/casca/topo.tsx", "utf8");
+    const menu = topo.slice(topo.indexOf('<div className="top-user-popover">'));
+    const acoes = topo.slice(
+      topo.indexOf('<div className="actions">'),
+      topo.indexOf("</header>"),
     );
+    expect(menu).toContain('<div id="pessoasOnlineApp"');
+    expect(acoes).not.toContain("pessoasOnlineApp");
+    const shell = readFileSync("src/styles/platform-shell.css", "utf8");
+    expect(shell).toMatch(/\.online-presence-button \{[^}]*width: 100%;/);
+    expect(shell).not.toMatch(/\.online-presence-popover \{/);
   });
 
   it("ninguém mais: o aviso curto", async () => {
@@ -185,12 +196,8 @@ describe("situacaoDaPresenca", () => {
     expect(situacaoDaPresenca({ sincronizado: true, quantos: 1 })).toEqual({
       estado: "ready",
       rotulo: "1 online",
-      curto: "1",
       detalhe: "1 pessoa online.",
     });
-    expect(situacaoDaPresenca({ esperaMs: 2_000 }).curto).toBe("");
-    expect(situacaoDaPresenca({ esperaMs: 15_000 }).curto).toBe("");
-    expect(situacaoDaPresenca({ online: false }).curto).toBe("");
     expect(situacaoDaPresenca({ esperaMs: 2_000 }).estado).toBe("loading");
     expect(situacaoDaPresenca({ esperaMs: 15_000 }).rotulo).toBe(
       "Presença indisponível",

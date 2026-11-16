@@ -21998,6 +21998,111 @@ $$;
 COMMENT ON FUNCTION public.excluir_recurso_candidato(p_id uuid, p_motivo text) IS 'Exclusão lógica (ST_ATIVO = N) de um recurso cadastrado por engano, com motivo no histórico. Exige recursos >= editor, a área e a coordenação do edital; recurso decidido, também o parecer jurídico.';
 
 --
+-- Name: exportar_aprovados_da_diretoria(text, text, uuid[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.exportar_aprovados_da_diretoria(p_area text, p_formato text, p_editais uuid[]) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    SET statement_timeout TO '20s'
+    AS $$
+declare
+  v_area text := lower(btrim(coalesce(p_area, '')));
+  v_formato text := upper(btrim(coalesce(p_formato, '')));
+  v_editais uuid[];
+  v_visiveis uuid[];
+  v_linhas jsonb;
+  v_total integer;
+  v_autor record;
+  v_id uuid;
+  v_emitida timestamptz;
+begin
+  if (select auth.uid()) is null then
+    raise exception 'Sessão não localizada.' using errcode = '28000';
+  end if;
+  if not private.pode_recurso('aprovados', 1) then
+    raise exception 'Sem permissão para exportar a lista de aprovados.' using errcode = '42501';
+  end if;
+  if not exists (select 1 from public."TB_AREA" a where a."CO_AREA" = v_area) then
+    raise exception 'Área inválida.' using errcode = '22023';
+  end if;
+  if not (v_area = any ((select private."FC_AREAS_USUARIO"())::text[])) then
+    raise exception 'Sem permissão para a lista de aprovados desta área.' using errcode = '42501';
+  end if;
+  if v_formato not in ('XLSX', 'CSV', 'PDF') then
+    raise exception 'Formato inválido: escolha XLSX, CSV ou PDF.' using errcode = '22023';
+  end if;
+
+  select coalesce(array_agg(distinct e), '{}') into v_editais
+    from unnest(coalesce(p_editais, '{}'::uuid[])) e where e is not null;
+  if cardinality(v_editais) = 0 then
+    raise exception 'Nenhum edital para exportar.' using errcode = '22023';
+  end if;
+  if cardinality(v_editais) > 1000 then
+    raise exception 'Editais demais para uma exportação.' using errcode = '22023';
+  end if;
+
+  -- Cada edital: da área, fora de treinamento e visível para a coordenação.
+  v_visiveis := private."FC_EDITAIS_VISIVEIS"();
+  if exists (
+    select 1 from unnest(v_editais) e
+     where not exists (
+       select 1 from public."TB_MONITORAMENTO_INDIGENA" m
+        where m.id = e
+          and m."CO_AREA" = v_area
+          and not private."FC_EH_TREINAMENTO"(m."ST_TREINAMENTO")
+          and (v_visiveis is null or m.id = any (v_visiveis))
+     )
+  ) then
+    raise exception 'Há edital fora da área ou sem permissão.' using errcode = '42501';
+  end if;
+
+  select coalesce(jsonb_agg(jsonb_build_object(
+           'monitoramento_id', l.edital_id,
+           'codigo_vaga', c.codigo_vaga,
+           'cargo', c.cargo,
+           'modalidade', c.modalidade,
+           'nota', c.nota,
+           'classificacao', c.classificacao,
+           'nome', c.nome,
+           'status', case when c.status = 'Contratado' and private."FC_EM_OUTRA_LISTA"(c.id)
+                          then 'Contratado em outra lista' else c.status end,
+           'matricula', nullif(btrim(c.matricula), ''),
+           'admissao', a."DT_ADMISSAO"
+         ) order by l.edital_id, c.cargo, c.classificacao nulls last, c.nome), '[]'::jsonb),
+         count(c.id)::integer
+    into v_linhas, v_total
+    from public."TB_LISTA_APROVADO" l
+    join public."TB_CANDIDATO_APROVADO" c on c.lista_id = l.id and c.removido_em is null
+    left join public."TB_ADMISSAO_CONCILIADA" a on a."CO_CANDIDATO_APROVADO" = c.id
+   where l.vigente is true
+     and l.edital_id = any (array(select e::text from unnest(v_editais) e));
+
+  select * into v_autor from private.autor_da_sessao();
+  insert into public."TL_EXPORTACAO_APROVADO" (
+    "CO_AREA", "TP_FORMATO", "TP_CONTEUDO", "DS_FILTRO", "QT_EDITAL", "QT_RECORTE", "QT_REGISTRO",
+    "CO_USUARIO", "NO_USUARIO", "DS_EMAIL_USUARIO"
+  ) values (
+    v_area, v_formato, 'DIRETORIA',
+    jsonb_build_object('editais', to_jsonb(v_editais)),
+    cardinality(v_editais), v_total, v_total,
+    (select auth.uid()), v_autor.nome, v_autor.email
+  ) returning "CO_EXPORTACAO_APROVADO", "DT_EMISSAO" into v_id, v_emitida;
+
+  return jsonb_build_object(
+    'exportacao_id', v_id, 'emitida_em', v_emitida,
+    'registros', v_total, 'aprovados', v_linhas);
+end;
+$$;
+
+
+--
+-- Name: FUNCTION exportar_aprovados_da_diretoria(p_area text, p_formato text, p_editais uuid[]); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.exportar_aprovados_da_diretoria(p_area text, p_formato text, p_editais uuid[]) IS 'Aba 3 do relatório da diretoria: os candidatos das listas vigentes dos editais pedidos (cargo, nota, classificação, nome, status, matrícula e a data de admissão conciliada com o RH). Grava antes o download em TL_EXPORTACAO_APROVADO (DIRETORIA). Aprovados leitor, área do usuário, editais da área visíveis à coordenação (20261116120000).';
+
+--
 -- Name: fechar_vaga_empregare(text, text, jsonb, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -26683,6 +26788,24 @@ begin
              and l.edital_id = any (select unnest(v_editais)::text)
            group by l.edital_id
         ) r
+    ), '[]'::jsonb),
+    -- A 1ª e a última admissão por edital, das admissões conciliadas com o RH (20261113210000).
+    'admissoes', coalesce((
+      select jsonb_agg(jsonb_build_object(
+               'monitoramento_id', x.edital,
+               'primeira', x.primeira,
+               'ultima', x.ultima,
+               'quantidade', x.quantidade
+             ) order by x.edital)
+        from (
+          select a."CO_MONITORAMENTO" as edital,
+                 min(a."DT_ADMISSAO") as primeira,
+                 max(a."DT_ADMISSAO") as ultima,
+                 count(*)::integer as quantidade
+            from public."TB_ADMISSAO_CONCILIADA" a
+           where a."CO_MONITORAMENTO" = any (v_editais)
+           group by a."CO_MONITORAMENTO"
+        ) x
     ), '[]'::jsonb)
   );
 end;
@@ -26692,7 +26815,7 @@ $$;
 -- Name: FUNCTION listar_acompanhamento_da_visao_geral(p_area text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.listar_acompanhamento_da_visao_geral(p_area text) IS 'Visão geral de uma área (só leitura): as etapas do cronograma e, por edital com lista de aprovados vigente, as contagens de aprovados, com status, contratados (Contratado/Migração) e desistentes. Recurso dashboard, área do usuário e recorte da coordenação.';
+COMMENT ON FUNCTION public.listar_acompanhamento_da_visao_geral(p_area text) IS 'Visão geral de uma área (só leitura): as etapas do cronograma; por edital com lista de aprovados vigente, as contagens de aprovados, com status, contratados (Contratado/Migração) e desistentes; e por edital, a 1ª e a última admissão conciliadas com o RH (TB_ADMISSAO_CONCILIADA, 20261113210000). Recurso dashboard, área do usuário e recorte da coordenação.';
 
 --
 -- Name: listar_acompanhamento_da_visao_geral_se_mudou(text, text); Type: FUNCTION; Schema: public; Owner: -
@@ -29783,6 +29906,95 @@ $_$;
 --
 
 COMMENT ON FUNCTION public.listar_vagas_empregare(p_editais text[], p_vagas text[], p_limite integer, p_finalidade text, p_liberacao uuid) IS 'Robô da Empregare (service_role): as vagas a carregar, de três fontes — o quadro de vagas do edital (código pelas análises do edital), a Seleção (TB_SELECAO_VAGA) e as vagas já ligadas ao edital em TB_EMPREGARE_VAGA (origem ligada). Sem filtro: editais ativos e em curso (fim do cronograma há até 30 dias), sem o treinamento; p_editais pelos números; p_vagas pelos códigos (fora das fontes: origem pedida, sem edital). As nunca carregadas e as mais antigas primeiro, até p_limite. Inscrições congeladas (20261020170000): com p_finalidade = carga (padrão), as vagas de edital congelado saem da lista e voltam em "congeladas" ({edital_id, edital, vagas, pedido}; pedido = veio explícito em p_editais/p_vagas, o robô recusa), salvo p_liberacao válida para o edital (override do administrador global); com p_finalidade = anexos (modo "só anexos") nada sai e cada vaga diz se está congelada.';
+
+--
+-- Name: listar_vagas_por_cargo_da_visao_geral(text, uuid[]); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.listar_vagas_por_cargo_da_visao_geral(p_area text, p_editais uuid[]) RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    SET statement_timeout TO '10s'
+    AS $$
+declare
+  v_area text := lower(btrim(coalesce(p_area, '')));
+  v_visiveis uuid[];
+  v_editais uuid[];
+begin
+  if (select auth.uid()) is null then
+    raise exception 'Sessão não localizada.' using errcode = '28000';
+  end if;
+  if not private.pode_recurso('dashboard') then
+    raise exception 'Sem permissão para este recurso' using errcode = '42501';
+  end if;
+  if not (v_area = any ((select private."FC_AREAS_USUARIO"())::text[])) then
+    raise exception 'Sem permissão para esta área' using errcode = '42501';
+  end if;
+  if cardinality(coalesce(p_editais, '{}'::uuid[])) > 1000 then
+    raise exception 'Editais demais para um relatório.' using errcode = '22023';
+  end if;
+
+  -- Só os editais pedidos que a pessoa vê; os outros ficam de fora, sem erro.
+  v_visiveis := private."FC_EDITAIS_VISIVEIS"();
+  select coalesce(array_agg(m.id), '{}') into v_editais
+    from public."TB_MONITORAMENTO_INDIGENA" m
+   where m.id = any (coalesce(p_editais, '{}'::uuid[]))
+     and m."CO_AREA" = v_area
+     and not private."FC_EH_TREINAMENTO"(m."ST_TREINAMENTO")
+     and (v_visiveis is null or m.id = any (v_visiveis));
+
+  return jsonb_build_object(
+    'vagas', coalesce((
+      select jsonb_agg(jsonb_build_object(
+               'monitoramento_id', s."CO_MONITORAMENTO",
+               'codigo', s."CO_VAGA",
+               'vaga', s."DS_VAGA_PLANILHA",
+               'cargo', s."NO_CARGO",
+               'unidade', s."NO_UNIDADE",
+               'inscritos', s."QT_INSCRITO"
+             ) order by s."CO_MONITORAMENTO", s."DS_VAGA_PLANILHA")
+        from public."TB_SELECAO_VAGA" s
+       where s."ST_REGISTRO_ATIVO" = 'S'
+         and s."CO_MONITORAMENTO" = any (v_editais)
+    ), '[]'::jsonb),
+    'quadro', coalesce((
+      select jsonb_agg(jsonb_build_object(
+               'monitoramento_id', q."CO_MONITORAMENTO",
+               'cargo', q."NO_CARGO",
+               'lotacao', q."NO_LOTACAO",
+               'vagas', q."QT_VAGA_IMEDIATA",
+               'reserva', q."ST_CADASTRO_RESERVA" = 'S'
+             ) order by q."CO_MONITORAMENTO", q."NU_ORDEM")
+        from public."TB_QUADRO_VAGA_EDITAL" q
+       where q."ST_REGISTRO_ATIVO" = 'S'
+         and q."CO_MONITORAMENTO" = any (v_editais)
+    ), '[]'::jsonb),
+    'lista', coalesce((
+      select jsonb_agg(jsonb_build_object(
+               'monitoramento_id', r.edital_id,
+               'codigo_vaga', r.codigo_vaga,
+               'cargo', r.cargo,
+               'aprovados', r.aprovados
+             ) order by r.edital_id, r.codigo_vaga, r.cargo)
+        from (
+          select l.edital_id, c.codigo_vaga, c.cargo, count(*)::integer as aprovados
+            from public."TB_LISTA_APROVADO" l
+            join public."TB_CANDIDATO_APROVADO" c on c.lista_id = l.id and c.removido_em is null
+           where l.vigente is true
+             and l.edital_id = any (array(select e::text from unnest(v_editais) e))
+           group by l.edital_id, c.codigo_vaga, c.cargo
+        ) r
+    ), '[]'::jsonb)
+  );
+end;
+$$;
+
+
+--
+-- Name: FUNCTION listar_vagas_por_cargo_da_visao_geral(p_area text, p_editais uuid[]); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.listar_vagas_por_cargo_da_visao_geral(p_area text, p_editais uuid[]) IS 'Aba 2 do relatório da diretoria (montador da Visão geral, só leitura): dos editais pedidos que a pessoa vê, as vagas da Seleção com inscritos, o quadro de vagas do edital e as contagens da lista vigente por vaga. Sem dado pessoal. Recurso dashboard, área do usuário e recorte da coordenação (20261116120000).';
 
 --
 -- Name: mandar_fichas_revisao(uuid, jsonb, text); Type: FUNCTION; Schema: public; Owner: -
@@ -71267,6 +71479,13 @@ GRANT ALL ON FUNCTION public.excluir_recurso_candidato(p_id uuid, p_motivo text)
 GRANT ALL ON FUNCTION public.excluir_recurso_candidato(p_id uuid, p_motivo text) TO service_role;
 
 --
+-- Name: FUNCTION exportar_aprovados_da_diretoria(p_area text, p_formato text, p_editais uuid[]); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.exportar_aprovados_da_diretoria(p_area text, p_formato text, p_editais uuid[]) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.exportar_aprovados_da_diretoria(p_area text, p_formato text, p_editais uuid[]) TO authenticated;
+
+--
 -- Name: FUNCTION fechar_vaga_empregare(p_sync text, p_vaga text, p_colunas jsonb, p_arquivo text, p_vaga_interno text); Type: ACL; Schema: public; Owner: -
 --
 
@@ -72036,6 +72255,13 @@ GRANT ALL ON FUNCTION public.listar_vagas_dos_robos(p_editais uuid[], p_vagas te
 
 REVOKE ALL ON FUNCTION public.listar_vagas_empregare(p_editais text[], p_vagas text[], p_limite integer, p_finalidade text, p_liberacao uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.listar_vagas_empregare(p_editais text[], p_vagas text[], p_limite integer, p_finalidade text, p_liberacao uuid) TO service_role;
+
+--
+-- Name: FUNCTION listar_vagas_por_cargo_da_visao_geral(p_area text, p_editais uuid[]); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.listar_vagas_por_cargo_da_visao_geral(p_area text, p_editais uuid[]) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.listar_vagas_por_cargo_da_visao_geral(p_area text, p_editais uuid[]) TO authenticated;
 
 --
 -- Name: FUNCTION mandar_fichas_revisao(p_edital uuid, p_fichas jsonb, p_motivo text); Type: ACL; Schema: public; Owner: -

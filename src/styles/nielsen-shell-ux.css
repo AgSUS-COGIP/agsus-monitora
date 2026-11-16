@@ -248,21 +248,18 @@ html[data-theme="dark"] .top-user-popover small {
   color: var(--ux-dark-muted) !important;
 }
 
-html[data-theme="dark"] .online-presence-button,
 html[data-theme="dark"] .top-user-button,
-html[data-theme="dark"] .top-user-popover,
-html[data-theme="dark"] .online-presence-popover {
+html[data-theme="dark"] .top-user-popover {
   border-color: var(--ux-dark-border) !important;
   background: var(--ux-dark-surface) !important;
   color: var(--ux-dark-text) !important;
 }
 
-html[data-theme="dark"] .online-presence-button:hover,
 html[data-theme="dark"] .top-user-button:hover {
   background: var(--ux-dark-surface-soft) !important;
 }
 
-html[data-theme="dark"] .online-presence-heading,
+html[data-theme="dark"] .pessoas-online-app,
 html[data-theme="dark"] .top-user-popover-actions {
   border-color: var(--ux-dark-border) !important;
 }

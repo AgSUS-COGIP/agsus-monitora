@@ -12,7 +12,6 @@ import type { EstadoDaPresenca } from "../../src/componentes/pessoas-online/pess
 import type { EstadoDoEncerramento } from "../../src/modulos/encerramento-do-edital/estado.ts";
 import { ESTADO_INICIAL_DA_NAVEGACAO } from "../../src/app/navegacao.ts";
 import type { LeituraDaNavegacao } from "../../src/app/navegacao.ts";
-import { filtrosVazios } from "../../src/lib/visao-geral.ts";
 import { achar } from "../dom.ts";
 import { definido } from "../definido.ts";
 import { janelaCom } from "./janela-falsa.ts";
@@ -57,7 +56,6 @@ function janelaFalsa() {
     removeEventListener: (nome: string, funcao: OuvinteDaJanela) =>
       ouvintes[nome]?.delete(funcao),
     dispatchEvent: vi.fn(),
-    print: vi.fn(),
     contar: (nome: string) => ouvintes[nome]?.size ?? 0,
   });
 }
@@ -180,40 +178,19 @@ describe("a moldura na casca", () => {
     expect(document.documentElement.getAttribute("data-theme")).toBe("dark");
   });
 
-  it("o ícone da tela cheia e o cabeçalho do relatório leem o estado", () => {
-    vi.useFakeTimers();
-    try {
-      const avisar = vi.fn();
-      const moldura = criarMoldura({
-        janela: janelaFalsa(),
-        armazenamento: () => null,
-        avisar,
-        relatorio: () => ({
-          filtros: filtrosVazios(),
-          busca: "",
-          filtradas: [{ vagas_total: 10, contratados: 4, vagas_ociosas: 2 }],
-        }),
-        areaAtual: () => "sede",
-      });
-      montar(moldura);
-      const icone = () => document.getElementById("fullscreenActionIcon");
-      expect(icone()?.className).toBe("fa-solid fa-expand");
-      act(() => moldura.alternarTelaCheia());
-      expect(icone()?.className).toBe("fa-solid fa-compress");
-
-      act(() => moldura.exportarPdf());
-      const cabecalho = achar("#printReportHeader");
-      expect(cabecalho.className).toBe("print-only");
-      expect(cabecalho.textContent).toContain("Yeendé — SEDE");
-      expect(cabecalho.textContent).toContain(
-        "Relatório de processos seletivos",
-      );
-      expect(cabecalho.textContent).toContain("10 vagas previstas");
-      expect(document.querySelector(".content")?.firstChild).toBe(cabecalho);
-      act(() => vi.advanceTimersByTime(1620));
-      expect(document.getElementById("printReportHeader")).toBeNull();
-    } finally {
-      vi.useRealTimers();
-    }
+  it("o ícone da tela cheia lê o estado", () => {
+    const moldura = criarMoldura({
+      janela: janelaFalsa(),
+      armazenamento: () => null,
+      avisar: vi.fn(),
+      areaAtual: () => "sede",
+    });
+    montar(moldura);
+    const icone = () => document.getElementById("fullscreenActionIcon");
+    expect(icone()?.className).toBe("fa-solid fa-expand");
+    act(() => moldura.alternarTelaCheia());
+    expect(icone()?.className).toBe("fa-solid fa-compress");
+    // O cabeçalho do relatório impresso saiu (o menu abre o montador).
+    expect(document.getElementById("printReportHeader")).toBeNull();
   });
 });

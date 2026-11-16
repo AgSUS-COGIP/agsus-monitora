@@ -169,7 +169,7 @@ export function criarConfiguracao({
     escrever("darkModeLabel", valor("dark_mode_label"));
     escrever("fullscreenActionText", valor("action_fullscreen_text"));
     escrever("refreshActionText", valor("action_refresh_text"));
-    escrever("exportPdfActionText", valor("action_export_pdf_text"));
+    // "Montar relatório" (o montador da Visão geral) tem texto próprio desde 13/11/2026.
     escrever("externalTitle", valor("external_default_title"));
     escrever("externalRefreshText", valor("external_refresh_text"));
     escrever("externalOpen", valor("external_open_text"));

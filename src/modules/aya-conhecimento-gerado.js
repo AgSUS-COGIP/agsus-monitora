@@ -3809,7 +3809,7 @@ export const VERBETES_AYA = Object.freeze([
       "taxa de vagas sem contratacao",
     ],
     resposta:
-      'Na tabela de processos da Visão geral, a coluna Contratados mostra as contratações dentro das vagas, como o indicador "Contratadas"; as do cadastro reserva aparecem ao lado, como "+N CR". A célula do edital mostra o prazo do edital (encerra em até 7 dias em vermelho, em até 30 dias em amarelo; concluído ou cancelado em cinza) e a situação do cronograma de Editais (atrasada ou próxima etapa em até 3 dias em vermelho, em até 7 dias em amarelo; "Sem cronograma" quando o edital ainda não tem cronograma em Editais). A borda esquerda da linha segue a mesma cor. "Sem contratação" é vagas menos contratados, com a porcentagem das vagas (a partir de 20% em amarelo, de 40% em vermelho). As colunas Fase e Atenção mostram a fase calculada e os motivos de crítico. Sem coluna escolhida, os críticos vêm primeiro (do motivo mais grave: marcado como crítico, atrasada, parado, sem inscritos, contratação baixa) e depois quem tem mais vagas sem contratação. Clicar no cabeçalho ordena a coluna (crescente, decrescente e de volta à ordem padrão). "Colunas" escolhe as colunas visíveis, guardadas no navegador; o padrão, para todos, são todas menos Observações, que entra pelo menu "Colunas". Quando a tabela rola para o lado, Unidade e Edital ficam presas à esquerda. Clicar na linha (ou Enter) abre os detalhes do processo, com o andamento do cronograma ("N% do cronograma": quanto do cronograma já passou, não a contratação), a linha do tempo de Editais e o link do edital. Exportar baixa o CSV do recorte.',
+      'Na tabela de processos da Visão geral, a coluna Contratados mostra as contratações dentro das vagas, como o indicador "Contratadas"; as do cadastro reserva aparecem ao lado, como "+N CR". A célula do edital mostra o prazo do edital (encerra em até 7 dias em vermelho, em até 30 dias em amarelo; concluído ou cancelado em cinza) e a situação do cronograma de Editais (atrasada ou próxima etapa em até 3 dias em vermelho, em até 7 dias em amarelo; "Sem cronograma" quando o edital ainda não tem cronograma em Editais). A borda esquerda da linha segue a mesma cor. "Sem contratação" é vagas menos contratados, com a porcentagem das vagas (a partir de 20% em amarelo, de 40% em vermelho). As colunas Fase e Atenção mostram a fase calculada e os motivos de crítico. Sem coluna escolhida, os críticos vêm primeiro (do motivo mais grave: marcado como crítico, atrasada, parado, sem inscritos, contratação baixa) e depois quem tem mais vagas sem contratação. Clicar no cabeçalho ordena a coluna (crescente, decrescente e de volta à ordem padrão). "Colunas" escolhe as colunas visíveis, guardadas no navegador; o padrão, para todos, são todas menos Observações, que entra pelo menu "Colunas". Quando a tabela rola para o lado, Unidade e Edital ficam presas à esquerda. Clicar na linha (ou Enter) abre os detalhes do processo, com o andamento do cronograma ("N% do cronograma": quanto do cronograma já passou, não a contratação), a linha do tempo de Editais e o link do edital. Exportar abre o montador de relatório.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -3828,6 +3828,24 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na tabela de processos da Visão geral, quatro colunas mostram o resultado de cada edital (estão no padrão; o menu "Colunas" as desliga). Duração (dias) são os dias corridos do início ao encerramento do edital. Inscritos vem do funil do edital ("—" quando a fonte não tem o número). Aprovados são as pessoas da lista de aprovados vigente, e Aguardando chamada, as dessa lista que ainda não têm status, isto é, não foram chamadas (não confundir com o indicador Cadastro reserva, que são os contratados além das vagas); sem lista vigente, as duas ficam "—". Contratados é a coluna de sempre. O arquivo exportado leva as quatro, mesmo com as colunas desligadas, e o ano de cada processo está no número do edital (por exemplo, 80/2025).',
+    fato: "",
+    fonte: "interface do Yeendé",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
+    titulo: "Data de admissão e ciclo na Visão geral",
+    perguntas: [
+      "data de admissao do edital",
+      "quando foram admitidos",
+      "primeira admissao",
+      "ultima admissao",
+      "de onde vem a data de admissao",
+      "ciclo do edital",
+      "qual o ciclo do edital",
+      "filtrar por ciclo",
+    ],
+    resposta:
+      'As colunas 1ª admissão e Última admissão mostram a primeira e a última data de admissão das pessoas contratadas pelo edital, conferidas com o RH (sistema Impacto) nas planilhas de conciliação. Só entram as admissões que a conciliação comprovou; edital sem admissão comprovada fica "—". O arquivo exportado leva também quantas admissões foram conciliadas. A coluna Ciclo mostra o ciclo do edital (1º ciclo, 2º ciclo...), que também é filtro em "Mais opções"; o ciclo se preenche no formulário do edital, em Editais.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -3879,6 +3897,26 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte: "src/lib/access-roles.ts (paginasPermitidas, podeEditarCoordenadas)",
     abrir: "dashboard",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
+    titulo: "Montar relatório da Visão geral",
+    perguntas: [
+      "como gerar relatorio",
+      "montar relatorio",
+      "exportar relatorio em pdf",
+      "relatorio em excel",
+      "relatorio da diretoria",
+      "escolher colunas do relatorio",
+      "exportar csv",
+      "vagas por cargo",
+      "relatorio com matricula",
+      "aprovados com data de admissao",
+    ],
+    resposta:
+      'O botão Exportar da Visão geral (ou "Montar relatório", no menu com o seu nome) abre o montador. Escolha um modelo pronto (Resumo rápido, Completo ou Diretoria) ou monte o seu: marque as seções (resumo em números, tabela dos editais, vagas por cargo, aprovados, editais que pedem atenção), as colunas da tabela e o formato. O modelo Diretoria sai em Excel com três abas: Editais (número, unidade, vagas, divulgação, encerramento e ciclo), Vagas por cargo (cada vaga do edital com as vagas imediatas, os inscritos e os aprovados; as vagas imediatas vêm do quadro de vagas do edital ou do texto da vaga, e ficam "—" quando nenhum dos dois tem o número) e Aprovados (edital, cargo, nota, classificação, nome, status, matrícula e data de admissão conciliada com o RH). A seção Aprovados só aparece para quem tem acesso à Lista de aprovados, e cada download fica registrado com o nome de quem baixou. No PDF, acima de 3 mil aprovados, o Yeendé pede o Excel ou um recorte menor. O PDF sai como um documento, com o timbrado da AgSUS, os números, as tabelas e "Página X de Y"; o Excel sai com uma aba por seção; o CSV leva todas as colunas da tabela, como antes. O relatório sai do que está na tela: área, filtros, busca e atalho. A última escolha fica guardada neste navegador.',
+    fato: "",
+    fonte: "interface do Yeendé",
   },
   {
     arquivo: "regras-das-analises.md",
@@ -5725,7 +5763,7 @@ export const VERBETES_AYA = Object.freeze([
       "presenca online",
     ],
     resposta:
-      'Pessoas online fica no cabeçalho e só o administrador global e o Gestor veem. Mostra quem está com o Yeendé aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). A presença de cada pessoa é avisada a cada 2 minutos e meio com a aba visível (e na hora de trocar de página, área ou seção); quem fecha ou esconde a aba sai da lista em até 6 minutos. A contagem do botão se atualiza a cada 10 minutos, e a lista aberta, a cada 2 minutos e meio.',
+      'Pessoas online fica no menu da conta (clique no seu nome, no alto à direita) e só o administrador global e o Gestor veem. Mostra quem está com o Yeendé aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). A presença de cada pessoa é avisada a cada 2 minutos e meio com a aba visível (e na hora de trocar de página, área ou seção); quem fecha ou esconde a aba sai da lista em até 6 minutos. A contagem do botão se atualiza a cada 10 minutos, e a lista aberta, a cada 2 minutos e meio.',
     fato: "",
     fonte:
       "src/lib/online-presence.ts; src/app/presenca.ts; src/componentes/pessoas-online/pessoas-online.tsx; src/lib/access-roles.ts (podeVerPessoasOnline)",

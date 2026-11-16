@@ -740,6 +740,18 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     resumo:
       "Registra a exportação da Lista de aprovados (XLSX/CSV/PDF gerado no navegador): confere área, editais da lista vigente e o total do recorte; p_conteudo LISTA (padrão) ou RESUMO (Resumo por cargo e status, migration 20261111210000); devolve exportacao_id e emitida_em. Aprovados leitor.",
   },
+  exportar_aprovados_da_diretoria: {
+    argumentos: ["p_area", "p_formato", "p_editais"],
+    critica: false,
+    resumo:
+      "Aba 3 do relatório da diretoria (montador da Visão geral): os candidatos das listas vigentes dos editais com nome, status, matrícula e data de admissão; registra o download em TL_EXPORTACAO_APROVADO (DIRETORIA) antes de devolver. Aprovados leitor (migration 20261116120000).",
+  },
+  listar_vagas_por_cargo_da_visao_geral: {
+    argumentos: ["p_area", "p_editais"],
+    critica: false,
+    resumo:
+      "Aba 2 do relatório da diretoria: vagas da Seleção com inscritos, quadro de vagas do edital e aprovados da lista vigente por vaga, dos editais pedidos que a pessoa vê. Sem dado pessoal. Recurso dashboard (migration 20261116120000).",
+  },
   registrar_carta_convocacao: {
     argumentos: [
       "p_modelo",

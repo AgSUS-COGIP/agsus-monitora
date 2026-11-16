@@ -3,19 +3,19 @@ import {
   EVENTO_BARRA_ALTERNADA,
   EVENTO_TEMA_ALTERADO,
 } from "../lib/eventos-da-barra-lateral.ts";
-import { nomeDaArea } from "../lib/menu-lateral.ts";
-import { resumoDoRelatorio } from "../lib/visao-geral.ts";
 import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
 } from "../componentes/dados-do-monitoramento.ts";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 import { avisar as avisarPadrao } from "./avisos.ts";
+import { irParaTela } from "./ir-para-tela.ts";
 
 /*
   A moldura do app como store: a barra lateral recolhida (e aberta por cima
-  no celular), o tema claro/escuro, a tela cheia e o cabeçalho do relatório
-  em PDF. Sem DOM nas ações: elas só mudam o estado.
+  no celular), o tema claro/escuro e a tela cheia; e o "Montar relatório" do
+  menu da conta, que abre o montador da Visão geral. Sem DOM nas ações: elas
+  só mudam o estado.
 
   Quem leva o estado para a página é a casca (src/app/casca/pecas.tsx,
   `MolduraNaPagina`): `ligarNaPagina()` aplica as classes de `body`
@@ -23,8 +23,8 @@ import { avisar as avisarPadrao } from "./avisos.ts";
   `system-fullscreen-mode`) e o `html[data-theme]` a cada mudança, avisa a
   barra lateral pelos eventos de eventos-da-barra-lateral.ts e acompanha a
   largura da janela, o tema trocado em outra aba e a tela cheia do navegador
-  — e desliga tudo ao desmontar. O ícone da tela cheia (menu da conta) e o
-  cabeçalho do relatório são React e leem daqui.
+  — e desliga tudo ao desmontar. O ícone da tela cheia (menu da conta) é
+  React e lê daqui.
 
   O primeiro quadro é do index.html: a classe `sidebar-collapsed` do `<body>`
   e o script do `<head>` (tema escuro de quem tem sessão guardada). O estado
@@ -34,34 +34,13 @@ import { avisar as avisarPadrao } from "./avisos.ts";
   primeiro quadro (barra e tema da visita anterior).
 
   Contratos: `window.toggleSidebar`, `toggleDarkMode`, `toggleBrowserFullscreen`
-  e `exportPDF` (casca em src/app/casca/ e barra lateral React), publicados por
+  e `exportPDF` (o "Montar relatório"; casca em src/app/casca/ e barra lateral React), publicados por
   src/app/sistema.ts.
 */
 
 export const CHAVE_DA_BARRA_RECOLHIDA = "agsus_monitora_sidebar_collapsed_v1";
 export const CHAVE_DO_TEMA = "agsus_dark_mode_v1";
 const LARGURA_DO_CELULAR = 900;
-
-type PedidoDoResumo = NonNullable<Parameters<typeof resumoDoRelatorio>[0]>;
-
-/** O recorte da Visão geral que vai para o relatório em PDF. */
-export interface RecorteDoRelatorio {
-  filtros: PedidoDoResumo["filtros"];
-  busca: PedidoDoResumo["busca"];
-  filtradas: PedidoDoResumo["linhas"];
-}
-
-/** O cabeçalho do relatório impresso (só na impressão: `.print-only`). */
-export interface CabecalhoDoRelatorio {
-  readonly titulo: string;
-  readonly geradoEm: string;
-  readonly filtros: string;
-  readonly processos: number;
-  readonly vagas: number;
-  readonly contratados: number;
-  readonly ociosas: number;
-  readonly pctOciosas: number;
-}
 
 export interface EstadoDaMoldura {
   readonly barraRecolhida: boolean;
@@ -71,7 +50,6 @@ export interface EstadoDaMoldura {
   /** Sem a tela cheia do navegador: o app expandido dentro da janela. */
   readonly telaCheiaDoApp: boolean;
   readonly telaCheiaDoNavegador: boolean;
-  readonly relatorio: CabecalhoDoRelatorio | null;
 }
 
 export interface OpcoesDaMoldura {
@@ -80,7 +58,10 @@ export interface OpcoesDaMoldura {
   armazenamento?: () => Storage | null | undefined;
   avisar?: (texto: string, tom?: string) => void;
   alvoDaTelaCheia?: () => Element | null | undefined;
-  relatorio?: () => RecorteDoRelatorio;
+  /** A Visão geral está aberta? (o montador abre nela) */
+  naVisaoGeral?: () => boolean;
+  irParaVisaoGeral?: () => unknown;
+  abrirMontador?: () => void;
   areaAtual?: () => string;
 }
 
@@ -121,7 +102,9 @@ export function criarMoldura({
   armazenamento = () => globalThis.localStorage,
   avisar = avisarPadrao,
   alvoDaTelaCheia = () => null,
-  relatorio = () => estadoDaVisaoGeral.obter(),
+  naVisaoGeral = () => estadoDaVisaoGeral.obter().aberta,
+  irParaVisaoGeral = () => irParaTela({ view: "dashboard" }),
+  abrirMontador = () => estadoDaVisaoGeral.abrirMontador(),
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
 }: OpcoesDaMoldura = {}) {
   // O que o primeiro quadro (index.html) já pintou.
@@ -133,7 +116,6 @@ export function criarMoldura({
       documento?.documentElement?.getAttribute("data-theme") === "dark",
     telaCheiaDoApp: false,
     telaCheiaDoNavegador: Boolean(documento?.fullscreenElement),
-    relatorio: null,
   });
   const ouvintes = new Set<() => void>();
 
@@ -256,44 +238,16 @@ export function criarMoldura({
     if (estado.telaCheiaDoApp) telaCheiaDoApp(false);
   }
 
-  // ── Relatório em PDF (pelo diálogo de impressão, funciona sem rede) ────
+  // ── Relatório (o montador da Visão geral) ──────────────────────────────
 
-  function exportarPdf() {
-    const geradoEm = new Date().toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    // O recorte da Visão geral: filtros aplicados e os números dele.
-    const { filtros, busca, filtradas } = relatorio();
-    const resumo = resumoDoRelatorio({ filtros, busca, linhas: filtradas });
-    publicar({
-      relatorio: Object.freeze({
-        // O recorte é o da área aberta (Saúde Indígena, SEDE ou Projetos).
-        titulo: ["Yeendé", nomeDaArea(areaAtual())].filter(Boolean).join(" — "),
-        geradoEm,
-        filtros: resumo.filtros,
-        processos: resumo.processos,
-        vagas: resumo.vagas,
-        contratados: resumo.contratados,
-        ociosas: resumo.ociosas,
-        pctOciosas: resumo.pctOciosas,
-      }),
-    });
-    const limpar = () => {
-      publicar({ relatorio: null });
-      janela.removeEventListener("afterprint", limpar);
-    };
-    janela.addEventListener("afterprint", limpar);
-    setTimeout(() => {
-      janela.print();
-      setTimeout(limpar, 1500);
-    }, 120);
-    avisar(
-      'Gerando relatório PDF… escolha "Salvar como PDF" na janela de impressão.',
-    );
+  /*
+    "Montar relatório" no menu da conta (13/11/2026): abre o montador da Visão
+    geral (src/modulos/visao-geral/montador-de-relatorio.tsx), indo para ela
+    se a pessoa está em outra tela. Antes, imprimia a tela inteira.
+  */
+  function montarRelatorio() {
+    if (!naVisaoGeral()) irParaVisaoGeral();
+    abrirMontador();
   }
 
   // ── A página ──────────────────────────────────────────────────────────
@@ -368,7 +322,7 @@ export function criarMoldura({
     aplicarTemaGuardado,
     alternarTelaCheia,
     sairDaTelaCheia,
-    exportarPdf,
+    montarRelatorio,
   };
 }
 

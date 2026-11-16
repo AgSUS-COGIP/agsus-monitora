@@ -12,16 +12,10 @@ export interface PessoaOnline {
   onlineAt: string;
 }
 
-/** O que o botão de "Pessoas online" mostra. */
+/** O que a linha de "Pessoas online" (menu da conta) mostra. */
 export interface SituacaoDaPresenca {
   estado: "offline" | "ready" | "error" | "loading";
   rotulo: string;
-  /**
-   * O que cabe no celular, ao lado do ícone: só o número de pessoas, e vazio
-   * nos outros estados (a cor do botão e o `detalhe` dizem o resto). Sem isso
-   * o "1 online" tomava a largura do título do cabeçalho em 375px.
-   */
-  curto: string;
   detalhe: string;
 }
 
@@ -121,7 +115,7 @@ export function rotuloDoLocal(valor: unknown): string {
 export const ESPERA_DA_PRESENCA_MS = 12_000;
 
 /**
- * O que o botão de "Pessoas online" mostra: `estado` (ready, loading, error,
+ * O que a linha de "Pessoas online" mostra: `estado` (ready, loading, error,
  * offline, para o CSS), o `rotulo` curto e o `detalhe` (título, leitor de
  * tela e a mensagem da lista quando não há pessoas).
  */
@@ -142,27 +136,23 @@ export function situacaoDaPresenca({
     return {
       estado: "offline",
       rotulo: "Offline",
-      curto: "",
       detalhe: "Sem conexão com a internet.",
     };
   if (sincronizado)
     return {
       estado: "ready",
       rotulo: `${quantos} online`,
-      curto: String(quantos),
       detalhe: `${quantos} ${quantos === 1 ? "pessoa online" : "pessoas online"}.`,
     };
   if (esperaMs >= limiteMs)
     return {
       estado: "error",
       rotulo: "Presença indisponível",
-      curto: "",
       detalhe: "Não foi possível atualizar a presença agora.",
     };
   return {
     estado: "loading",
     rotulo: "Sincronizando",
-    curto: "",
     detalhe: "Sincronizando presença.",
   };
 }

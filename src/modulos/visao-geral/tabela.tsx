@@ -234,11 +234,19 @@ function celula(
           fixa={fixas.get(campo)}
         />
       );
+    case "ciclo":
+      return (
+        <td key={campo} className="visao-geral-ciclo">
+          {linha.ciclo || "—"}
+        </td>
+      );
     case "data_inicio":
     case "data_fim":
+    case "primeira_admissao":
+    case "ultima_admissao":
       return (
         <td key={campo} className="visao-geral-data">
-          {dataCurta(linha[campo])}
+          {dataCurta(linha[campo]) || "—"}
         </td>
       );
     case "vagas_total":
