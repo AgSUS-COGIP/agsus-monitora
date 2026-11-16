@@ -55,13 +55,42 @@ comment on column public."VW_VAGA_FORA"."QT_VAGA" is 'Fora';
 `;
 
 const LINHAS_POR_VAGA = [
-  { edital_id: EDITAL, codigo_vaga: "100", vagas_imediatas: 2, inscritos: 10, aprovados: 1 },
-  { edital_id: EDITAL, codigo_vaga: "200", vagas_imediatas: null, inscritos: 20, aprovados: 0 },
-  { edital_id: EDITAL, codigo_vaga: null, vagas_imediatas: 5, inscritos: 30, aprovados: null },
-  { edital_id: EDITAL_2, codigo_vaga: "100", vagas_imediatas: 4, inscritos: 40, aprovados: 2 },
+  {
+    edital_id: EDITAL,
+    codigo_vaga: "100",
+    vagas_imediatas: 2,
+    inscritos: 10,
+    aprovados: 1,
+  },
+  {
+    edital_id: EDITAL,
+    codigo_vaga: "200",
+    vagas_imediatas: null,
+    inscritos: 20,
+    aprovados: 0,
+  },
+  {
+    edital_id: EDITAL,
+    codigo_vaga: null,
+    vagas_imediatas: 5,
+    inscritos: 30,
+    aprovados: null,
+  },
+  {
+    edital_id: EDITAL_2,
+    codigo_vaga: "100",
+    vagas_imediatas: 4,
+    inscritos: 40,
+    aprovados: 2,
+  },
 ];
 
-type Fonte = { padrao: boolean; visao: string | null; coluna: string | null; rotulo: string };
+type Fonte = {
+  padrao: boolean;
+  visao: string | null;
+  coluna: string | null;
+  rotulo: string;
+};
 type Aplicado = {
   linhas: Record<string, unknown>[];
   fontes: Record<string, Fonte>;
@@ -75,16 +104,31 @@ type Fontes = {
     tipo: string;
     padrao: string;
     escolha: { visao: string; coluna: string } | null;
-    opcoes: { visao: string; rotulo: string; colunas: { coluna: string; rotulo: string }[] }[];
+    opcoes: {
+      visao: string;
+      rotulo: string;
+      colunas: { coluna: string; rotulo: string }[];
+    }[];
   }[];
-  historico: { em: string; nome: string; coluna: string; antes: string; depois: string; motivo: string }[];
+  historico: {
+    em: string;
+    nome: string;
+    coluna: string;
+    antes: string;
+    depois: string;
+    motivo: string;
+  }[];
 };
 
 let db: Banco;
 beforeEach(async () => {
   db = await bancoDosPaineis();
   await db.exec(FONTES_DE_TESTE);
-  await entrar(db, { uid: USUARIO_ADMIN, nivel: 3, areas: [SI, "sede", "projetos"] });
+  await entrar(db, {
+    uid: USUARIO_ADMIN,
+    nivel: 3,
+    areas: [SI, "sede", "projetos"],
+  });
 }, LONGO);
 
 async function aplicar(area: string, relatorio: string, linhas: unknown[]) {
@@ -96,10 +140,11 @@ async function aplicar(area: string, relatorio: string, linhas: unknown[]) {
   return r!.j;
 }
 async function listar(area: string, relatorio: string) {
-  const r = await uma<{ j: Fontes }>(db, `select public.listar_fontes_do_painel($1, $2) as j`, [
-    area,
-    relatorio,
-  ]);
+  const r = await uma<{ j: Fontes }>(
+    db,
+    `select public.listar_fontes_do_painel($1, $2) as j`,
+    [area, relatorio],
+  );
   return r!.j;
 }
 function salvar(
@@ -133,7 +178,9 @@ describe("catálogo de fontes", () => {
     const datas = await db.query(
       `select no_visao, no_coluna from private."FC_OPCOES_DE_FONTE_DO_PAINEL"('resumo-dos-editais', 'data_divulgacao')`,
     );
-    expect(datas.rows).toEqual([{ no_visao: "VW_EDITAL_TESTE", no_coluna: "DT_REGISTRO" }]);
+    expect(datas.rows).toEqual([
+      { no_visao: "VW_EDITAL_TESTE", no_coluna: "DT_REGISTRO" },
+    ]);
     const nada = await db.query(
       `select * from private."FC_OPCOES_DE_FONTE_DO_PAINEL"('aprovados', 'status')`,
     );
@@ -141,10 +188,19 @@ describe("catálogo de fontes", () => {
   });
 
   it("as 11 colunas editáveis, com o grão de cada relatório", async () => {
-    const r = await db.query<{ co_relatorio: string; tp_grao: string; co_coluna: string; tp_coluna: string }>(
+    const r = await db.query<{
+      co_relatorio: string;
+      tp_grao: string;
+      co_coluna: string;
+      tp_coluna: string;
+    }>(
       `select co_relatorio, tp_grao, co_coluna, tp_coluna from private."FC_COLUNAS_EDITAVEIS_DO_PAINEL"()`,
     );
-    expect(r.rows.map((c) => `${c.co_relatorio}/${c.tp_grao}/${c.co_coluna}/${c.tp_coluna}`)).toEqual([
+    expect(
+      r.rows.map(
+        (c) => `${c.co_relatorio}/${c.tp_grao}/${c.co_coluna}/${c.tp_coluna}`,
+      ),
+    ).toEqual([
       "resumo-dos-editais/EDITAL/vagas_imediatas/inteiro",
       "resumo-dos-editais/EDITAL/data_divulgacao/data",
       "resumo-dos-editais/EDITAL/data_final/data",
@@ -177,7 +233,11 @@ describe("aplicar as fontes", () => {
       expect(a.linhas).toEqual(LINHAS_POR_VAGA);
       expect(a.avisos).toEqual([]);
       // jsonb guarda as chaves do objeto na ordem dele (mais curtas primeiro).
-      expect(Object.keys(a.fontes).sort()).toEqual(["aprovados", "inscritos", "vagas_imediatas"]);
+      expect(Object.keys(a.fontes).sort()).toEqual([
+        "aprovados",
+        "inscritos",
+        "vagas_imediatas",
+      ]);
       expect(a.fontes.vagas_imediatas).toEqual({
         padrao: true,
         visao: null,
@@ -191,7 +251,13 @@ describe("aplicar as fontes", () => {
   it(
     "troca só a coluna escolhida e só na área escolhida",
     async () => {
-      await salvar(SI, "editais-por-cargo", "vagas_imediatas", "VW_VAGA_TESTE", "QT_VAGA");
+      await salvar(
+        SI,
+        "editais-por-cargo",
+        "vagas_imediatas",
+        "VW_VAGA_TESTE",
+        "QT_VAGA",
+      );
       const a = await aplicar(SI, "editais-por-cargo", LINHAS_POR_VAGA);
       expect(coluna(a, "vagas_imediatas")).toEqual([7, 3, null, null]);
       expect(coluna(a, "inscritos")).toEqual([10, 20, 30, 40]);
@@ -209,7 +275,13 @@ describe("aplicar as fontes", () => {
   it(
     "a escolha de uma área não muda a outra",
     async () => {
-      await salvar(SI, "editais-por-cargo", "vagas_imediatas", "VW_VAGA_TESTE", "QT_VAGA");
+      await salvar(
+        SI,
+        "editais-por-cargo",
+        "vagas_imediatas",
+        "VW_VAGA_TESTE",
+        "QT_VAGA",
+      );
       const sede = await aplicar("sede", "editais-por-cargo", LINHAS_POR_VAGA);
       expect(sede.linhas).toEqual(LINHAS_POR_VAGA);
       expect(sede.fontes.vagas_imediatas?.padrao).toBe(true);
@@ -220,12 +292,22 @@ describe("aplicar as fontes", () => {
   it(
     "chave repetida esvazia a célula e avisa",
     async () => {
-      await salvar(SI, "editais-por-cargo", "vagas_imediatas", "VW_VAGA_TESTE", "QT_VAGA");
-      await db.exec(`insert into public.fonte_vaga values ('${EDITAL}', '100', 9, 'nove', null)`);
+      await salvar(
+        SI,
+        "editais-por-cargo",
+        "vagas_imediatas",
+        "VW_VAGA_TESTE",
+        "QT_VAGA",
+      );
+      await db.exec(
+        `insert into public.fonte_vaga values ('${EDITAL}', '100', 9, 'nove', null)`,
+      );
       const a = await aplicar(SI, "editais-por-cargo", LINHAS_POR_VAGA);
       expect(a.linhas).toHaveLength(LINHAS_POR_VAGA.length);
       expect(coluna(a, "vagas_imediatas")).toEqual([null, 3, null, null]);
-      expect(a.avisos).toEqual([expect.stringMatching(/1 chave repetida.*Vagas imediatas/)]);
+      expect(a.avisos).toEqual([
+        expect.stringMatching(/1 chave repetida.*Vagas imediatas/),
+      ]);
     },
     LONGO,
   );
@@ -246,7 +328,12 @@ describe("aplicar as fontes", () => {
       expect(coluna(a, "inscritos")).toEqual([null, null, null, null]);
       expect(a.avisos).toHaveLength(2);
       expect(a.avisos.every((t) => /não está disponível/.test(t))).toBe(true);
-      expect(await uma(db, `select to_regclass('public.fonte_vaga') is not null as existe`)).toEqual({
+      expect(
+        await uma(
+          db,
+          `select to_regclass('public.fonte_vaga') is not null as existe`,
+        ),
+      ).toEqual({
         existe: true,
       });
     },
@@ -256,7 +343,13 @@ describe("aplicar as fontes", () => {
   it(
     "fonte que sumiu deixa a coluna vazia e avisa",
     async () => {
-      await salvar(SI, "editais-por-cargo", "vagas_imediatas", "VW_VAGA_TESTE", "QT_VAGA");
+      await salvar(
+        SI,
+        "editais-por-cargo",
+        "vagas_imediatas",
+        "VW_VAGA_TESTE",
+        "QT_VAGA",
+      );
       await db.exec(`drop view painel."VW_VAGA_TESTE"`);
       const a = await aplicar(SI, "editais-por-cargo", LINHAS_POR_VAGA);
       expect(coluna(a, "vagas_imediatas")).toEqual([null, null, null, null]);
@@ -268,7 +361,13 @@ describe("aplicar as fontes", () => {
   it(
     "data timestamptz sai na data de Brasília",
     async () => {
-      await salvar(SI, "resumo-dos-editais", "data_divulgacao", "VW_EDITAL_TESTE", "DT_REGISTRO");
+      await salvar(
+        SI,
+        "resumo-dos-editais",
+        "data_divulgacao",
+        "VW_EDITAL_TESTE",
+        "DT_REGISTRO",
+      );
       const a = await aplicar(SI, "resumo-dos-editais", [
         { edital_id: EDITAL, data_divulgacao: "2026-01-01" },
       ]);
@@ -283,13 +382,33 @@ describe("listar e salvar", () => {
     "salvar exige Administrador em Painéis e a área",
     async () => {
       await entrar(db, { uid: USUARIO_LEITOR, nivel: 1, areas: [SI] });
-      expect((await erroDe(salvar(SI, "editais-por-cargo", "vagas_imediatas", "VW_VAGA_TESTE", "QT_VAGA")))?.codigo).toBe(
-        "42501",
-      );
+      expect(
+        (
+          await erroDe(
+            salvar(
+              SI,
+              "editais-por-cargo",
+              "vagas_imediatas",
+              "VW_VAGA_TESTE",
+              "QT_VAGA",
+            ),
+          )
+        )?.codigo,
+      ).toBe("42501");
       await entrar(db, { uid: USUARIO_ADMIN, nivel: 3, areas: ["sede"] });
-      expect((await erroDe(salvar(SI, "editais-por-cargo", "vagas_imediatas", "VW_VAGA_TESTE", "QT_VAGA")))?.codigo).toBe(
-        "42501",
-      );
+      expect(
+        (
+          await erroDe(
+            salvar(
+              SI,
+              "editais-por-cargo",
+              "vagas_imediatas",
+              "VW_VAGA_TESTE",
+              "QT_VAGA",
+            ),
+          )
+        )?.codigo,
+      ).toBe("42501");
     },
     LONGO,
   );
@@ -298,14 +417,37 @@ describe("listar e salvar", () => {
     "salvar recusa coluna fixa, fonte fora das opções, motivo curto e troca sem mudança",
     async () => {
       const codigo = async (p: Promise<unknown>) => (await erroDe(p))?.codigo;
-      expect(await codigo(salvar(SI, "aprovados", "nome", null, null))).toBe("22023");
-      expect(await codigo(salvar(SI, "editais-por-cargo", "vagas_imediatas", "VW_VAGA_SEM_COMENTARIO", "QT_VAGA"))).toBe(
+      expect(await codigo(salvar(SI, "aprovados", "nome", null, null))).toBe(
         "22023",
       );
-      expect(await codigo(salvar(SI, "editais-por-cargo", "vagas_imediatas", "VW_VAGA_TESTE", "QT_VAGA", "ok"))).toBe(
-        "22023",
-      );
-      expect(await codigo(salvar(SI, "editais-por-cargo", "vagas_imediatas", null, null))).toBe("22023");
+      expect(
+        await codigo(
+          salvar(
+            SI,
+            "editais-por-cargo",
+            "vagas_imediatas",
+            "VW_VAGA_SEM_COMENTARIO",
+            "QT_VAGA",
+          ),
+        ),
+      ).toBe("22023");
+      expect(
+        await codigo(
+          salvar(
+            SI,
+            "editais-por-cargo",
+            "vagas_imediatas",
+            "VW_VAGA_TESTE",
+            "QT_VAGA",
+            "ok",
+          ),
+        ),
+      ).toBe("22023");
+      expect(
+        await codigo(
+          salvar(SI, "editais-por-cargo", "vagas_imediatas", null, null),
+        ),
+      ).toBe("22023");
     },
     LONGO,
   );
@@ -313,9 +455,20 @@ describe("listar e salvar", () => {
   it(
     "salvar grava o histórico com o nome e p_visao nulo volta ao padrão",
     async () => {
-      const salvo = (await salvar(SI, "editais-por-cargo", "vagas_imediatas", "VW_VAGA_TESTE", "QT_VAGA")).rows[0]!.j;
+      const salvo = (
+        await salvar(
+          SI,
+          "editais-por-cargo",
+          "vagas_imediatas",
+          "VW_VAGA_TESTE",
+          "QT_VAGA",
+        )
+      ).rows[0]!.j;
       const vagas = salvo.colunas.find((c) => c.coluna === "vagas_imediatas")!;
-      expect(vagas.escolha).toEqual({ visao: "VW_VAGA_TESTE", coluna: "QT_VAGA" });
+      expect(vagas.escolha).toEqual({
+        visao: "VW_VAGA_TESTE",
+        coluna: "QT_VAGA",
+      });
       expect(salvo.historico[0]).toMatchObject({
         nome: "Pessoa Administradora",
         coluna: "Vagas imediatas (título da vaga)",
@@ -323,9 +476,19 @@ describe("listar e salvar", () => {
         depois: "Fonte de teste › Vagas de teste",
         motivo: "Troca para conferir a fonte nova.",
       });
-      const voltou = (await salvar(SI, "editais-por-cargo", "vagas_imediatas", null, null, "Voltar ao padrão.")).rows[0]!
-        .j;
-      expect(voltou.colunas.find((c) => c.coluna === "vagas_imediatas")!.escolha).toBeNull();
+      const voltou = (
+        await salvar(
+          SI,
+          "editais-por-cargo",
+          "vagas_imediatas",
+          null,
+          null,
+          "Voltar ao padrão.",
+        )
+      ).rows[0]!.j;
+      expect(
+        voltou.colunas.find((c) => c.coluna === "vagas_imediatas")!.escolha,
+      ).toBeNull();
       expect(voltou.historico).toHaveLength(2);
       expect(voltou.historico[0]!.depois).toMatch(/^Padrão/);
       const a = await aplicar(SI, "editais-por-cargo", LINHAS_POR_VAGA);
@@ -340,12 +503,22 @@ describe("listar e salvar", () => {
       await entrar(db, { uid: USUARIO_LEITOR, nivel: 1, areas: [SI] });
       const f = await listar(SI, "editais-por-cargo");
       expect(f.pode_editar).toBe(false);
-      expect(f.colunas.map((c) => c.coluna)).toEqual(["vagas_imediatas", "inscritos", "aprovados"]);
+      expect(f.colunas.map((c) => c.coluna)).toEqual([
+        "vagas_imediatas",
+        "inscritos",
+        "aprovados",
+      ]);
       expect(f.colunas[0]!.opcoes).toEqual([
-        { visao: "VW_VAGA_TESTE", rotulo: "Fonte de teste", colunas: [{ coluna: "QT_VAGA", rotulo: "Vagas de teste" }] },
+        {
+          visao: "VW_VAGA_TESTE",
+          rotulo: "Fonte de teste",
+          colunas: [{ coluna: "QT_VAGA", rotulo: "Vagas de teste" }],
+        },
       ]);
       await entrar(db, { uid: USUARIO_LEITOR, nivel: 0, areas: [SI] });
-      expect((await erroDe(listar(SI, "editais-por-cargo")))?.codigo).toBe("42501");
+      expect((await erroDe(listar(SI, "editais-por-cargo")))?.codigo).toBe(
+        "42501",
+      );
       await entrar(db, { uid: USUARIO_ADMIN, nivel: 3, areas: [SI] });
       expect((await listar(SI, "editais-por-cargo")).pode_editar).toBe(true);
       expect((await erroDe(listar(SI, "outro")))?.codigo).toBe("22023");
@@ -358,7 +531,9 @@ describe("rollback", () => {
   it(
     "devolve o banco sem nada do núcleo",
     async () => {
-      await db.exec(`drop view painel."VW_VAGA_TESTE", painel."VW_VAGA_SEM_COMENTARIO", painel."VW_EDITAL_TESTE"`);
+      await db.exec(
+        `drop view painel."VW_VAGA_TESTE", painel."VW_VAGA_SEM_COMENTARIO", painel."VW_EDITAL_TESTE"`,
+      );
       await db.exec(rollback());
       expect(
         await uma(
@@ -369,7 +544,13 @@ describe("rollback", () => {
                   to_regprocedure('private."FC_APLICAR_FONTES_DO_PAINEL"(text, text, jsonb)') as aplicar,
                   to_regprocedure('public.salvar_fonte_da_coluna(text, text, text, text, text, text)') as salvar`,
         ),
-      ).toEqual({ schema: null, config: null, historico: null, aplicar: null, salvar: null });
+      ).toEqual({
+        schema: null,
+        config: null,
+        historico: null,
+        aplicar: null,
+        salvar: null,
+      });
     },
     LONGO,
   );
