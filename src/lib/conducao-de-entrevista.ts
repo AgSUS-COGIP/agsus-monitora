@@ -761,19 +761,30 @@ export function calcularEntrevista({
   compareceu,
   avaliacoes,
   atribuicoes = null,
+  arredondamento,
 }: {
-  roteiro: Pick<
-    RoteiroDeEntrevista,
-    | "aspectos"
-    | "competencias"
-    | "notas_eliminatorias"
-    | "nota_minima_total"
-    | "ausencia_elimina"
-  > | null;
+  roteiro:
+    | (Pick<
+        RoteiroDeEntrevista,
+        | "aspectos"
+        | "competencias"
+        | "notas_eliminatorias"
+        | "nota_minima_total"
+        | "ausencia_elimina"
+      > & { arredondamento?: string | null })
+    | null;
   compareceu: Comparecimento;
   avaliacoes: Avaliacao[];
   atribuicoes?: Record<string, string[]> | null;
+  /**
+   * "MEDIA" (configuração do edital, 16/11/2026): a média dos avaliadores
+   * arredondada em 2 casas antes do peso, a nota da competência sem
+   * arredondar na soma e no mínimo, o total em 2 casas — como a planilha da
+   * banca. "NOTA" (o padrão): a nota da competência em 2 casas.
+   */
+  arredondamento?: string | null;
 }): ResultadoDoCalculoDaFicha {
+  const pelaMedia = (arredondamento ?? roteiro?.arredondamento) === "MEDIA";
   const aspectos = aspectosDoRoteiro(roteiro);
   const comAspectos = aspectos.length > 0;
   const eliminatorias = comAspectos
@@ -819,11 +830,14 @@ export function calcularEntrevista({
         eliminatoria: false,
       };
     }
-    const media = notas.reduce((s, n) => s + n, 0) / notas.length;
-    const nota = arredondar(media * peso);
-    total += nota;
-    bruto += media * peso;
-    const abaixoDoMinimo = minimo !== null && nota < minimo;
+    const bruta = notas.reduce((s, n) => s + n, 0) / notas.length;
+    const media = pelaMedia ? arredondar(bruta) : bruta;
+    const exata = media * peso;
+    const nota = arredondar(exata);
+    total += pelaMedia ? exata : nota;
+    bruto += exata;
+    const abaixoDoMinimo =
+      minimo !== null && (pelaMedia ? exata + 1e-9 : nota) < minimo;
     const eliminatoria = eliminatorias.includes(arredondar(media));
     if (abaixoDoMinimo || eliminatoria) reprova = true;
     return {

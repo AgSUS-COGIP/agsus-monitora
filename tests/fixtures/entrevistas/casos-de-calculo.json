@@ -195,6 +195,97 @@
           "tipo_minimo": "VALOR"
         }
       ]
+    },
+    "sesmt_nota": {
+      "escala": "FAIXA",
+      "passo": 0.5,
+      "nota_minima_total": 5,
+      "notas_eliminatorias": [],
+      "ausencia_elimina": true,
+      "competencias": [
+        {
+          "id": "c1",
+          "ordem": 1,
+          "nome": "Técnica",
+          "nota_maxima": 2,
+          "peso": 1,
+          "minimo": 50,
+          "tipo_minimo": "PERCENTUAL"
+        },
+        {
+          "id": "c2",
+          "ordem": 2,
+          "nome": "Intercultural",
+          "nota_maxima": 2,
+          "peso": 1.5,
+          "minimo": 50,
+          "tipo_minimo": "PERCENTUAL"
+        },
+        {
+          "id": "c3",
+          "ordem": 3,
+          "nome": "Comportamental",
+          "nota_maxima": 2,
+          "peso": 1.5,
+          "minimo": 50,
+          "tipo_minimo": "PERCENTUAL"
+        },
+        {
+          "id": "c4",
+          "ordem": 4,
+          "nome": "Situacional",
+          "nota_maxima": 2,
+          "peso": 1,
+          "minimo": 50,
+          "tipo_minimo": "PERCENTUAL"
+        }
+      ]
+    },
+    "sesmt_media": {
+      "escala": "FAIXA",
+      "passo": 0.5,
+      "nota_minima_total": 5,
+      "notas_eliminatorias": [],
+      "ausencia_elimina": true,
+      "competencias": [
+        {
+          "id": "c1",
+          "ordem": 1,
+          "nome": "Técnica",
+          "nota_maxima": 2,
+          "peso": 1,
+          "minimo": 50,
+          "tipo_minimo": "PERCENTUAL"
+        },
+        {
+          "id": "c2",
+          "ordem": 2,
+          "nome": "Intercultural",
+          "nota_maxima": 2,
+          "peso": 1.5,
+          "minimo": 50,
+          "tipo_minimo": "PERCENTUAL"
+        },
+        {
+          "id": "c3",
+          "ordem": 3,
+          "nome": "Comportamental",
+          "nota_maxima": 2,
+          "peso": 1.5,
+          "minimo": 50,
+          "tipo_minimo": "PERCENTUAL"
+        },
+        {
+          "id": "c4",
+          "ordem": 4,
+          "nome": "Situacional",
+          "nota_maxima": 2,
+          "peso": 1,
+          "minimo": 50,
+          "tipo_minimo": "PERCENTUAL"
+        }
+      ],
+      "arredondamento": "MEDIA"
     }
   },
   "casos": [
@@ -746,6 +837,70 @@
         "notas": [3, 3.17, 3, 3],
         "total": 12.17,
         "parecer": "APTO"
+      }
+    },
+    {
+      "nome": "MEDIA (planilha da banca, 16/11/2026): média arredondada antes do peso dá 8,30 (a padrão dá 8,29)",
+      "roteiro": "sesmt_media",
+      "compareceu": "S",
+      "notas": {
+        "c1": [2, 1.67],
+        "c2": [1.75, 2],
+        "c3": [1.76, 1.76],
+        "c4": [1, 1]
+      },
+      "esperado": {
+        "notas": [1.84, 2.82, 2.64, 1],
+        "total": 8.3,
+        "parecer": "APTO"
+      }
+    },
+    {
+      "nome": "NOTA (padrão), as mesmas notas: a competência arredondada depois do peso dá 8,29",
+      "roteiro": "sesmt_nota",
+      "compareceu": "S",
+      "notas": {
+        "c1": [2, 1.67],
+        "c2": [1.75, 2],
+        "c3": [1.76, 1.76],
+        "c4": [1, 1]
+      },
+      "esperado": {
+        "notas": [1.84, 2.81, 2.64, 1],
+        "total": 8.29,
+        "parecer": "APTO"
+      }
+    },
+    {
+      "nome": "MEDIA: a soma sem arredondar as competências (1,605 + 1,635) e o total em 2 casas; abaixo do mínimo na situacional",
+      "roteiro": "sesmt_media",
+      "compareceu": "S",
+      "notas": {
+        "c1": [1.67, 1.33],
+        "c2": [1.25, 0.88],
+        "c3": [1.24, 0.94],
+        "c4": [0, 1]
+      },
+      "esperado": {
+        "notas": [1.5, 1.61, 1.64, 0.5],
+        "total": 5.24,
+        "parecer": "INAPTO"
+      }
+    },
+    {
+      "nome": "MEDIA: total que termina em 5 na terceira casa (4,065) sobe para 4,07",
+      "roteiro": "sesmt_media",
+      "compareceu": "S",
+      "notas": {
+        "c1": [1.33, 1.33],
+        "c2": [0.25, 0.5],
+        "c3": [1.03, 1.18],
+        "c4": [0.33, 0.67]
+      },
+      "esperado": {
+        "notas": [1.33, 0.57, 1.67, 0.5],
+        "total": 4.07,
+        "parecer": "INAPTO"
       }
     }
   ]
