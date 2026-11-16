@@ -17,6 +17,7 @@ import {
   statusCanonico,
   urgenciaDoCronograma,
 } from "../../lib/visao-geral.ts";
+import { textoDaReabertura } from "../../lib/vagas-reabertas.ts";
 import { Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.ts";
 
 /*
@@ -95,6 +96,16 @@ export function GavetaDoProcesso({
               <span>{textoDaFonteDoFunil(linha)}</span>
             </p>
           ) : null}
+          {[
+            textoDaReabertura(linha.reabertas_em, "reabertas"),
+            textoDaReabertura(linha.reabre, "reabre"),
+          ]
+            .filter(Boolean)
+            .map((texto) => (
+              <p key={texto} className="visao-geral-progresso-texto">
+                <span>{texto}</span>
+              </p>
+            ))}
         </Secao>
 
         <Secao icone="fa-route" titulo="Cronograma" secao="cronograma">

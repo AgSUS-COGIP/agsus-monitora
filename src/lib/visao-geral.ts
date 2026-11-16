@@ -64,8 +64,14 @@ import {
   ehCritica,
   indicadoresDoMonitoramento,
   temResultado,
+  vagasEfetivas,
   vagasSemContratacao,
 } from "./indicadores-do-monitoramento.ts";
+import {
+  calcularReaberturas,
+  cargosDaResposta,
+  type ReaberturasDoEdital,
+} from "./vagas-reabertas.ts";
 
 const txt = (valor: unknown) =>
   typeof valor === "string" || typeof valor === "number"
@@ -305,11 +311,16 @@ export function acompanhamentoDaResposta(
         quando: textoOpcional(marcacao.quando) ?? null,
       });
   }
+  // Os cargos de cada edital, para as vagas reabertas (listar_vagas_por_cargo_da_visao_geral).
+  const cargosPorEdital = origem.vagas_por_cargo
+    ? cargosDaResposta(origem.vagas_por_cargo)
+    : undefined;
   return {
     etapasPorEdital,
     listasPorEdital,
     admissoesPorEdital,
     criticosPorEdital,
+    ...(cargosPorEdital ? { cargosPorEdital } : {}),
   };
 }
 
@@ -368,8 +379,23 @@ export function duracaoEmDias(linha: LinhaDoMonitoramento): number | null {
   return Number.isFinite(dias) && dias >= 0 ? dias : null;
 }
 
+/* `vagas_reabertas`, `reabertas_em` e `reabre` da linha (zero e vazios sem reabertura). */
+function dadosDaReabertura(
+  reaberturas: Map<string, ReaberturasDoEdital>,
+  linha: LinhaDoMonitoramento,
+) {
+  const r = reaberturas.get(txt(linha?.id));
+  return {
+    vagas_reabertas: r?.reabertas ?? 0,
+    reabertas_em: r?.reabertasEm ?? [],
+    reabre: r?.reabre ?? [],
+  };
+}
+
 /**
- * Cada linha com `fase`, `atencao` (motivos do crítico), `pos_resultado`
+ * Cada linha com `fase`, `vagas_reabertas` (as vagas sem contratação que um
+ * edital mais novo da mesma unidade reabriu; `reabertas_em` e `reabre` dizem
+ * quais editais), `atencao` (motivos do crítico), `pos_resultado`
  * (pendências), `desistentes`, `aprovados` e `cadastro_reserva` (da lista
  * vigente), `ciclo` padronizado e `primeira_admissao`, `ultima_admissao` e
  * `admissoes` (conciliadas com o RH). `hoje`: "AAAA-MM-DD".
@@ -391,19 +417,26 @@ export function enriquecerLinhas(
   } = {},
 ): LinhaDaVisaoGeral[] {
   const temListas = Boolean(acompanhamento?.listasPorEdital);
-  return (Array.isArray(linhas) ? linhas : []).map((linha) => {
+  const comFases = (Array.isArray(linhas) ? linhas : []).map((linha) => ({
+    ...linha,
+    fase: faseDoEdital(linha),
+  }));
+  const reaberturas = calcularReaberturas(
+    comFases,
+    acompanhamento?.cargosPorEdital,
+  );
+  return comFases.map((comFase) => {
+    const linha = { ...comFase, ...dadosDaReabertura(reaberturas, comFase) };
     const id = txt(linha?.id);
-    const fase = faseDoEdital(linha);
-    const comFase = { ...linha, fase };
     const etapas = acompanhamento?.etapasPorEdital?.get(id) || null;
     const lista = acompanhamento?.listasPorEdital?.get(id) || null;
     const marcacao = acompanhamento?.criticosPorEdital?.get(id) || null;
     const admissoes = acompanhamento?.admissoesPorEdital?.get(id) || null;
     return {
-      ...comFase,
+      ...linha,
       ciclo: cicloPadronizado(linha?.ciclo),
-      atencao: motivosDeAtencao(comFase, { hoje, etapas, limites, marcacao }),
-      pos_resultado: pendenciasDaLinha(comFase, lista, temListas, limites),
+      atencao: motivosDeAtencao(linha, { hoje, etapas, limites, marcacao }),
+      pos_resultado: pendenciasDaLinha(linha, lista, temListas, limites),
       desistentes: lista ? num(lista.desistentes) : 0,
       ...resultadoDaLista(lista),
       primeira_admissao: admissoes?.primeira ?? null,
@@ -744,7 +777,7 @@ export function processosPorProjeto(linhas: readonly LinhaDoMonitoramento[]) {
     item.processos += 1;
     if (!ehCancelado(linha) && !ehConcluido(linha)) item.abertos += 1;
     if (!ehCancelado(linha)) {
-      item.vagas += num(linha?.vagas_total);
+      item.vagas += vagasEfetivas(linha);
       item.contratadas += contratadasImediatas(linha);
     }
     porProjeto.set(projeto, item);
@@ -972,7 +1005,7 @@ export function seloDoCronograma(
 
 /** A taxa de vagas sem contratação da linha: `{ pct, nivel }` (low, medium, high, critical). */
 export function taxaDeOciosidade(linha: LinhaDoMonitoramento) {
-  const vagas = num(linha?.vagas_total);
+  const vagas = vagasEfetivas(linha);
   const taxa =
     vagas > 0 ? Math.round((vagasSemContratacao(linha) * 100) / vagas) : 0;
   const nivel =

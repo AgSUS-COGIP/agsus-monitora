@@ -18,6 +18,7 @@ import {
   contratacoesDoCadastroReserva,
   contratadasImediatas,
   ehCritica,
+  vagasSemContratacao,
 } from "./indicadores-do-monitoramento.ts";
 import {
   COLUNAS_DA_TABELA,
@@ -220,7 +221,7 @@ export function textoDaColuna(
       return `${numero(contratadasImediatas(linha))}${reserva > 0 ? ` +${numero(reserva)} CR` : ""}`;
     }
     case "vagas_ociosas":
-      return `${numero(linha.vagas_ociosas)} (${taxaDeOciosidade(linha).pct}%)`;
+      return `${vagasSemContratacao(linha)} (${taxaDeOciosidade(linha).pct}%)`;
     case "atencao":
       return (linha.atencao || []).map((m) => m.rotulo).join("; ");
     case "ciclo":

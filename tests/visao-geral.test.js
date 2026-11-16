@@ -332,6 +332,7 @@ describe("indicadores", () => {
     expect(k).toEqual({
       processos: 5,
       vagas: 25,
+      reabertas: 0,
       contratadas: 11,
       emSelecao: 8,
       ociosas: 6,

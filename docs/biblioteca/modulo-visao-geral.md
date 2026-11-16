@@ -73,6 +73,20 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
   as vagas imediatas vêm do quadro do edital (cargo e lotação) ou do texto da vaga ("2 vagas",
   "Cadastro Reserva" = 0), e sem os dois ficam "—". No PDF, acima de 3 mil aprovados, pede o Excel.
 
+- **Vagas reabertas** (16/11/2026, `src/lib/vagas-reabertas.ts`): o mesmo DSEI reabre o mesmo
+  posto em editais novos, e a soma das vagas contava a vaga duas vezes. A vaga sem contratação de
+  um edital com resultado, reaberta num edital mais novo da mesma unidade (iniciado depois do fim
+  do anterior) e do mesmo cargo, conta só no novo: o edital antigo ganha `vagas_reabertas` no
+  enriquecimento e perde essas vagas das vagas imediatas e das ociosas (`vagasEfetivas`,
+  `vagasSemContratacao`); as contratadas ficam. Os cargos vêm de
+  `listar_vagas_por_cargo_da_visao_geral` (vagas da Seleção e quadro), lida junto com o
+  acompanhamento; se falhar, as vagas ficam como cada edital publicou. O KPI mostra "sem N
+  reabertas", a gaveta diz de qual edital, a tabela e o CSV mantêm a coluna Vagas como o edital
+  publicou e a coluna de vagas sem contratação já sem as reabertas. O mapa por DSEI e o relatório
+  usam a mesma conta. Conferência de 16/11/2026 (dados reais, status pelo cronograma): −147 vagas na
+  Saúde Indígena (2.263 → 2.116, 14 DSEIs), −10 na SEDE, nenhuma em Projetos. O código da vaga não liga os editais (a Empregare dá código
+  novo a cada edital). Explicação para quem usa: seção "Vagas reabertas" da Aya.
+
 ## Limites da tipagem
 
 - O snapshot e suas coleções de linhas, filtros e colunas têm contratos de leitura; mudanças do
@@ -86,6 +100,7 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
 
 - `tests/modulos/visao-geral.test.js`: a tela e o estado, incluindo mapas e troca de área.
 - `tests/visao-geral.test.js`: as regras.
+- `tests/lib/vagas-reabertas.test.ts`: a vaga reaberta contada uma vez só.
 - `tests/fronteiras-da-visao-geral.test.js`: as fronteiras externas.
 - `tests/tipos/visao-geral.tsx`: contratos positivos e negativos do compilador.
 - Explicações para quem usa: `docs/aya/regras-da-visao-geral.md` (ver [[aya-base-de-conhecimento]]).

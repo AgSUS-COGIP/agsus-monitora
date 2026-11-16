@@ -171,6 +171,38 @@ describe("fronteiras externas da Visão geral", () => {
     ).toEqual([null, "v1"]);
   });
 
+  it("lê os cargos dos editais da área para as vagas reabertas; se falhar, segue sem eles", async () => {
+    const cargos = { vagas: [{ monitoramento_id: "e1", cargo: "Enfermeiro" }] };
+    let falhar = false;
+    const rpc = vi.fn(async (nome) => {
+      if (nome === "listar_editais_criticos_manuais")
+        return { data: [], error: null };
+      if (nome === "listar_vagas_por_cargo_da_visao_geral")
+        return falhar
+          ? { data: null, error: { message: "fora do ar" } }
+          : { data: cargos, error: null };
+      return { data: { etapas: [], listas: [], versao: "v1" }, error: null };
+    });
+    const buscar = buscarAcompanhamentoNoSupabase({ rpc });
+    expect(await buscar("area-dos-cargos", ["e1", "e2"])).toMatchObject({
+      vagas_por_cargo: cargos,
+    });
+    expect(rpc).toHaveBeenCalledWith("listar_vagas_por_cargo_da_visao_geral", {
+      p_area: "area-dos-cargos",
+      p_editais: ["e1", "e2"],
+    });
+    falhar = true;
+    expect(await buscar("area-dos-cargos", ["e1"])).not.toHaveProperty(
+      "vagas_por_cargo",
+    );
+    // Sem editais, não pergunta.
+    rpc.mockClear();
+    await buscar("area-sem-editais");
+    expect(rpc.mock.calls.map(([nome]) => nome)).not.toContain(
+      "listar_vagas_por_cargo_da_visao_geral",
+    );
+  });
+
   it("repassa o erro da RPC e não aceita números de marcos malformados", async () => {
     const erro = { code: "42501", message: "Sem acesso" };
     const rpc = vi.fn(async () => ({ data: null, error: erro }));

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ReactNode } from "react";
+import type { Reabertura } from "../../lib/vagas-reabertas.ts";
 
 /** Contratos existentes de integração com o app, consumidos por esta tela. */
 declare global {
@@ -85,6 +86,12 @@ export type LinhaDoMonitoramento = {
   ultima_admissao?: string | null;
   /** Quantas admissões conciliadas o edital tem. */
   admissoes?: number;
+  /** Vagas sem contratação reabertas depois em edital mais novo (src/lib/vagas-reabertas.ts). */
+  vagas_reabertas?: number;
+  /** Os editais mais novos que reabriram vagas deste. */
+  reabertas_em?: readonly Reabertura[];
+  /** Os editais anteriores de que este reabre vagas. */
+  reabre?: readonly Reabertura[];
 };
 export type LinhaDaVisaoGeral = LinhaDoMonitoramento & {
   fase: string;
@@ -118,6 +125,8 @@ export type AdmissoesDoEdital = {
 };
 export type Acompanhamento = {
   etapasPorEdital: Map<string, EtapaDoAcompanhamento[]>;
+  /** Cargos de cada edital (vagas da Seleção e quadro), para as vagas reabertas; ausente = não carregados. */
+  cargosPorEdital?: Map<string, Map<string, number | null>>;
   listasPorEdital: Map<string, ListaDoAcompanhamento>;
   /** A 1ª e a última admissão por edital; ausente = não carregada. */
   admissoesPorEdital?: Map<string, AdmissoesDoEdital>;
@@ -130,6 +139,8 @@ export type Acompanhamento = {
 export type Indicadores = {
   processos: number;
   vagas: number;
+  /** Vagas reabertas em edital mais novo, fora da soma de `vagas`. */
+  reabertas: number;
   contratadas: number;
   emSelecao: number;
   ociosas: number;
@@ -170,6 +181,8 @@ export type DadosDoMonitoramento = {
 };
 export type BuscaDoAcompanhamento = (
   area: string,
+  /** Os editais da área (para os cargos das vagas reabertas). */
+  editais?: readonly string[],
 ) => unknown | PromiseLike<unknown>;
 export type ClienteDoAcompanhamento = {
   rpc: {
@@ -180,6 +193,10 @@ export type ClienteDoAcompanhamento = {
     (
       nome: "listar_editais_criticos_manuais",
       parametros: { p_area: string },
+    ): PromiseLike<{ data: unknown; error: unknown }>;
+    (
+      nome: "listar_vagas_por_cargo_da_visao_geral",
+      parametros: { p_area: string; p_editais: string[] },
     ): PromiseLike<{ data: unknown; error: unknown }>;
   };
 };

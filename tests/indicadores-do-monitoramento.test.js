@@ -82,6 +82,7 @@ describe("as contas da faixa de indicadores fecham", () => {
     expect(k).toEqual({
       processos: 6,
       vagas: 130 + 4 + 83 + 27 + 0,
+      reabertas: 0,
       contratadas: 130 + 4 + 1 + 0 + 0,
       emSelecao: 27,
       ociosas: 82,
@@ -137,6 +138,7 @@ describe("as contas da faixa de indicadores fecham", () => {
     expect(indicadoresDoMonitoramento(undefined)).toEqual({
       processos: 0,
       vagas: 0,
+      reabertas: 0,
       contratadas: 0,
       emSelecao: 0,
       ociosas: 0,

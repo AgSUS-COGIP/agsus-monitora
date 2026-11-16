@@ -16,6 +16,10 @@
   - Cancelados não entram em nenhum (nem em Inscritos): as vagas deles não
     estão em seleção nem ociosas.
   - Críticos: editais com algum motivo de atenção (`criticos-da-visao-geral.ts`).
+  - Vaga reaberta conta uma vez só (`vagas-reabertas.ts`): a vaga sem
+    contratação que um edital mais novo da mesma unidade reabriu sai do
+    edital antigo (`vagas_reabertas`, preenchido no enriquecimento) e fica no
+    novo. `reabertas` diz quantas saíram da soma.
 
   `contratados` vem da lista de aprovados vigente (Contratado/Migração) e
   `vagas_total` do cadastro do edital.
@@ -66,15 +70,18 @@ export function somarCampo(
   );
 }
 
+/** As vagas do edital sem as reabertas depois em edital mais novo. */
+export const vagasEfetivas = (linha: Linha): number =>
+  Math.max(0, num(linha?.vagas_total) - num(linha?.vagas_reabertas));
 /** Contratações do edital dentro das vagas imediatas. */
 export const contratadasImediatas = (linha: Linha): number =>
   Math.min(num(linha?.contratados), num(linha?.vagas_total));
 /** Contratações acima das vagas imediatas (cadastro reserva). */
 export const contratacoesDoCadastroReserva = (linha: Linha): number =>
   Math.max(0, num(linha?.contratados) - num(linha?.vagas_total));
-/** Vagas imediatas ainda sem contratação. */
+/** Vagas imediatas ainda sem contratação (as reabertas depois saem). */
 export const vagasSemContratacao = (linha: Linha): number =>
-  num(linha?.vagas_total) - contratadasImediatas(linha);
+  Math.max(0, vagasEfetivas(linha) - contratadasImediatas(linha));
 
 /** A linha tem algum motivo de atenção (`atencao`, preenchido pelo recorte). */
 export const ehCritica = (linha: Linha): boolean =>
@@ -93,7 +100,11 @@ export function indicadoresDoMonitoramento(
   let emSelecao = 0;
   let ociosas = 0;
   let cadastroReserva = 0;
+  let vagas = 0;
+  let reabertas = 0;
   for (const linha of validas) {
+    vagas += vagasEfetivas(linha);
+    reabertas += num(linha?.vagas_total) - vagasEfetivas(linha);
     contratadas += contratadasImediatas(linha);
     cadastroReserva += contratacoesDoCadastroReserva(linha);
     if (temResultado(linha)) ociosas += vagasSemContratacao(linha);
@@ -101,7 +112,8 @@ export function indicadoresDoMonitoramento(
   }
   return {
     processos: lista.length,
-    vagas: somarCampo(validas, "vagas_total"),
+    vagas,
+    reabertas,
     contratadas,
     emSelecao,
     ociosas,

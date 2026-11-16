@@ -424,6 +424,7 @@ describe("as abas no montador", () => {
     indicadores: {
       processos: 0,
       vagas: 0,
+      reabertas: 0,
       contratadas: 0,
       emSelecao: 0,
       ociosas: 0,
