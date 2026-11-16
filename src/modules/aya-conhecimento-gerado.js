@@ -3368,11 +3368,12 @@ export const VERBETES_AYA = Object.freeze([
       "contagem por cargo e status",
       "quantos contratados por cargo",
       "cadastro de reserva por vaga",
-      "desistencia voluntaria tacita",
-      "resumo da lista de aprovados",
+      "desistencia no resumo",
+      "resumo da lista",
+      "resumo por cargo lento de aprovados",
     ],
     resposta:
-      'A aba "Resumo por cargo" conta a lista vigente com os mesmos filtros da aba Aprovados: por edital, cargo, regime e jornada, uma linha por vaga e modalidade, com subtotal e total geral. Cada vínculo (a linha da lista: vaga e modalidade) cai numa coluna só, e as colunas fecham o total de Aprovados: Contratados (Contratado e Migração), Desistência voluntária e tácita (só quando o subtipo está registrado; hoje o sistema não registra, por isso aparecem "—"), Desistência sem subtipo, Cadastro de reserva (quem está na fila de convocação depois das vagas imediatas e ainda não foi chamado) e Outras situações (Convocado, A convocar, Documentação Rejeitada, Contratado em outra lista, Não classificado). Quem concorre à cota e à ampla tem duas linhas e conta nas duas em Aprovados; contratado por uma delas, a outra vai a Outras situações, sem contar dois contratados. Listas inativas ficam fora. O filtro Situação restringe a base. Clicar num número mostra quem está nele. "Exportar" baixa o resumo em XLSX, CSV ou PDF, sem nomes, com o registro da exportação. Regime e jornada vêm do nome do cargo (ex.: "… - Teletrabalho - 20h"); quando o nome não traz, a tela avisa.',
+      'A aba "Resumo por cargo" conta a lista vigente com os mesmos filtros da aba Aprovados: por edital, cargo, regime e jornada, uma linha por vaga e modalidade, com subtotal e total geral. Cada vínculo (a linha da lista: vaga e modalidade) cai numa coluna só, e as colunas fecham o total de Aprovados: Contratados (Contratado e Migração), Desistentes (uma coluna só: o sistema não registra se a desistência foi voluntária ou tácita), Em reserva (o cadastro de reserva: quem está na fila de convocação depois das vagas imediatas e ainda não foi chamado) e Outros (Convocado, A convocar, Documentação Rejeitada, Contratado em outra lista, Não classificado). Passar o mouse no título da coluna mostra a definição. O cabeçalho e a coluna "Cargo e vaga" ficam fixos enquanto a tabela rola. Quem concorre à cota e à ampla tem duas linhas e conta nas duas em Aprovados; contratado por uma delas, a outra vai a Outras situações, sem contar dois contratados. Listas inativas ficam fora. O filtro Situação restringe a base. Clicar num número mostra quem está nele. A tabela mostra 50 linhas de vaga por vez e carrega mais ao rolar até o fim ou em "Carregar mais"; o Total geral é sempre do recorte inteiro. "Exportar" baixa o resumo em XLSX, CSV ou PDF, sem nomes, com o registro da exportação. Regime e jornada vêm do nome do cargo (ex.: "… - Teletrabalho - 20h"); quando o nome não traz, a tela avisa.',
     fato: "",
     fonte:
       "src/lib/resumo-por-cargo-e-status.ts; src/modulos/aprovados/aba-resumo.tsx; src/lib/exportacao-do-resumo-por-cargo.ts",

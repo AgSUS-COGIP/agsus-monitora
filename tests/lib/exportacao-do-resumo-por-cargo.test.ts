@@ -82,7 +82,7 @@ describe("arquivo do resumo", () => {
     expect(args.p_editais).toEqual(["e1"]);
   });
 
-  it("as linhas são as da tela: vaga, subtotal e total; voluntária/tácita em branco sem subtipo", () => {
+  it("as linhas são as da tela: vaga, subtotal e total; uma coluna só de Desistentes", () => {
     const linhas = linhasDoArquivoDoResumo(resumo());
     expect(linhas.map((l) => l[0])).toEqual([
       "Vaga",
@@ -95,18 +95,19 @@ describe("arquivo do resumo", () => {
       COLUNAS_DO_ARQUIVO_DO_RESUMO.indexOf(rotulo);
     expect(total[col("Aprovados")]).toBe(4);
     expect(total[col("Contratados")]).toBe(1);
-    expect(total[col("Desistência voluntária")]).toBe("");
-    expect(total[col("Desistência tácita")]).toBe("");
-    expect(total[col("Desistência sem subtipo")]).toBe(1);
-    expect(total[col("Cadastro de reserva")]).toBe(2);
-    expect(total[col("Outras situações")]).toBe(0);
+    expect(total[col("Desistentes")]).toBe(1);
+    expect(COLUNAS_DO_ARQUIVO_DO_RESUMO.join(" ")).not.toMatch(
+      /volunt|tácita|subtipo/i,
+    );
+    expect(total[col("Em reserva")]).toBe(2);
+    expect(total[col("Outros")]).toBe(0);
   });
 
   it("CSV: identificação do resumo, protegido contra fórmula, sem nome de candidato", () => {
     const csv = csvDoResumo(pedido(), REGISTRO, resumo());
     expect(csv).toContain("Documento;Resumo por cargo e status");
     expect(csv).toContain("Unidade de contagem;");
-    expect(csv).toContain("Subtipo não registrado no sistema");
+    expect(csv).not.toMatch(/subtipo/i);
     expect(csv).toContain(REGISTRO.id);
     expect(csv).toContain("'=HYPERLINK");
     expect(csv).not.toMatch(/Pessoa Fictícia/);

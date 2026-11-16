@@ -762,8 +762,44 @@ table.mobile-card-table td.approved-actions {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.approved-resumo-tabela thead th.approved-resumo-num {
-  white-space: normal;
+/*
+  Congelado (16/11/2026): o cabeçalho fica no topo e a coluna "Cargo e vaga" à
+  esquerda enquanto a tabela rola. A regra geral prende todo th no topo; aqui
+  só o do cabeçalho fica no topo — o th de linha (vaga, totais) subia por cima
+  dele. Os títulos cabem numa linha (são curtos e uniformes).
+*/
+.approved-resumo-tabela thead th {
+  white-space: nowrap;
+}
+.approved-resumo-tabela tbody th {
+  position: static;
+}
+@media (min-width: 901px) {
+  .approved-resumo-tabela th:first-child {
+    position: sticky;
+    left: 0;
+    border-right: 1px solid var(--border-subtle);
+  }
+  .approved-resumo-tabela tbody th:first-child {
+    z-index: calc(var(--z-sticky) - 1);
+    background: var(--surface-card);
+  }
+  .approved-resumo-tabela thead th:first-child,
+  .approved-resumo-tabela tfoot th:first-child {
+    z-index: calc(var(--z-sticky) + 1);
+  }
+  /* O nome do edital e do grupo acompanha a coluna presa ao rolar de lado. */
+  .approved-resumo-rotulo-preso {
+    position: sticky;
+    left: var(--space-3);
+  }
+  /* Edital e grupo ocupam a linha toda: rolam com ela, sem coluna presa. */
+  .approved-resumo-tabela
+    :is(.approved-resumo-edital, .approved-resumo-grupo)
+    th {
+    position: static;
+    border-right: 0;
+  }
 }
 .approved-resumo-vaga {
   display: grid;
@@ -787,7 +823,8 @@ table.mobile-card-table td.approved-actions {
 .approved-resumo-tabela .approved-resumo-subtotal th,
 .approved-resumo-tabela .approved-resumo-subtotal td,
 .approved-resumo-tabela .approved-resumo-total th,
-.approved-resumo-tabela .approved-resumo-total td {
+.approved-resumo-tabela .approved-resumo-total td,
+.approved-resumo-tabela .approved-resumo-subtotal th:first-child {
   background: var(--surface-raised);
   font-weight: var(--font-weight-semibold);
   text-align: right;

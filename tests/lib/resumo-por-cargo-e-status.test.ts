@@ -6,6 +6,7 @@ import {
   linhasPlanasDoResumo,
   montarResumoPorCargoEStatus,
   reconcilia,
+  resumoAteOLimite,
   situacoesNaFila,
   type CandidatoDoResumo,
   type ContagemDoResumo,
@@ -58,11 +59,8 @@ function vinculos(
     }
   };
   mais(q.contratado ?? 0, { status: "Contratado" }, "Já chamado");
-  mais(q.voluntaria ?? 0, {
-    status: "Desistente",
-    desistencia_subtipo: "VOLUNTARIA",
-  });
-  mais(q.tacita ?? 0, { status: "Desistente", desistencia_subtipo: "TACITA" });
+  // Desistência é uma coluna só (16/11/2026): voluntária e tácita do quadro somam.
+  mais((q.voluntaria ?? 0) + (q.tacita ?? 0), { status: "Desistente" });
   mais(q.reserva ?? 0, {}, RESERVA);
   return linhas;
 }
@@ -165,8 +163,7 @@ function fixtureDaImagem() {
 const numeros = (c: ContagemDoResumo) => [
   c.aprovados,
   c.contratado,
-  c.desistenciaVoluntaria,
-  c.desistenciaTacita,
+  c.desistencia,
   c.reserva,
 ];
 
@@ -222,16 +219,10 @@ describe("categoriaDoVinculo", () => {
       ),
     ).toEqual({ categoria: "outras", motivo: "contratadoEmOutraLista" });
   });
-  it("desistência só ganha subtipo com registro explícito", () => {
+  it("desistente cai em Desistentes, uma coluna só", () => {
     expect(
       categoriaDoVinculo({ ...base, status: "Desistente" }, RESERVA).categoria,
-    ).toBe("desistenciaSemSubtipo");
-    expect(
-      categoriaDoVinculo(
-        { ...base, status: "Desistente", desistencia_subtipo: "tacita" },
-        undefined,
-      ).categoria,
-    ).toBe("desistenciaTacita");
+    ).toBe("desistencia");
   });
   it("reserva vem da fila, nunca de 'sem status'", () => {
     expect(categoriaDoVinculo(base, RESERVA).categoria).toBe("reserva");
@@ -274,15 +265,14 @@ describe("montarResumoPorCargoEStatus", () => {
       "Cargo Fictício (CF) · Teletrabalho · 40h",
     ]);
     expect(grupos.map((g) => numeros(g.subtotal))).toEqual([
-      [25, 5, 9, 1, 10],
-      [1079, 11, 4, 0, 1064],
-      [86, 0, 0, 0, 86],
-      [382, 41, 9, 0, 332],
+      [25, 5, 10, 10],
+      [1079, 11, 4, 1064],
+      [86, 0, 0, 86],
+      [382, 41, 9, 332],
     ]);
-    expect(numeros(resumo.total)).toEqual([1572, 57, 22, 1, 1492]);
+    expect(numeros(resumo.total)).toEqual([1572, 57, 23, 1492]);
     expect(grupos.every((g) => g.linhas.length === 3)).toBe(true);
     expect(reconcilia(resumo.total)).toBe(true);
-    expect(resumo.subtipoRegistrado).toBe(true);
     expect(resumo.faltas).toEqual({
       semRegime: 0,
       semJornada: 0,
@@ -411,8 +401,7 @@ describe("montarResumoPorCargoEStatus", () => {
     expect(resumo.total.contratado).toBe(1);
     expect(resumo.total.migracao).toBe(1);
     expect(resumo.total.subJudice).toBe(1);
-    expect(resumo.total.desistenciaSemSubtipo).toBe(1);
-    expect(resumo.subtipoRegistrado).toBe(false);
+    expect(resumo.total.desistencia).toBe(1);
     expect(resumo.faltas).toEqual({
       semRegime: 2,
       semJornada: 2,
@@ -489,5 +478,62 @@ describe("situacoesNaFila: a mesma conta da aba Convocação", () => {
     expect(situacoes.get("3")).toBe(RESERVA);
     expect(situacoes.get("2")).toBe("Fora da fila");
     expect(situacoes.get("1")).toBe("Já chamado");
+  });
+});
+
+describe("resumoAteOLimite: a tela desenha 50 linhas de vaga por vez", () => {
+  // Edital 1: cargos A, B e C com 30 vagas cada; edital 2: cargo D com 10.
+  const candidatos = [
+    ...["A", "B", "C"].flatMap((cargo) =>
+      Array.from({ length: 30 }, (_, i) => ({
+        candidato_id: `1-${cargo}-${i}`,
+        edital_id: "e1",
+        edital: "Edital fictício 01/2099",
+        cargo: `Cargo ${cargo}`,
+        codigo_vaga: `${cargo}${i}`,
+        modalidade: "Ampla Concorrência",
+        lista_ativa: true,
+        status: "",
+      })),
+    ),
+    ...Array.from({ length: 10 }, (_, i) => ({
+      candidato_id: `2-D-${i}`,
+      edital_id: "e2",
+      edital: "Edital fictício 02/2099",
+      cargo: "Cargo D",
+      codigo_vaga: `D${i}`,
+      modalidade: "Ampla Concorrência",
+      lista_ativa: true,
+      status: "",
+    })),
+  ];
+  const resumo = montarResumoPorCargoEStatus({
+    candidatos,
+    situacoes: new Map(),
+    rotulosDosEditais: new Map([
+      ["e1", "01/2099"],
+      ["e2", "02/2099"],
+    ]),
+  });
+
+  it("corta em grupos inteiros, e o edital só fecha quando todos os grupos entram", () => {
+    const primeiras = resumoAteOLimite(resumo, 50);
+    expect(primeiras.total).toBe(100);
+    expect(primeiras.mostradas).toBe(60);
+    expect(primeiras.editais).toHaveLength(1);
+    expect(primeiras.editais[0]?.grupos.map((g) => g.linhas.length)).toEqual([
+      30, 30,
+    ]);
+    expect(primeiras.editais[0]?.completo).toBe(false);
+
+    const todas = resumoAteOLimite(resumo, 100);
+    expect(todas.mostradas).toBe(100);
+    expect(todas.editais.map((e) => e.completo)).toEqual([true, true]);
+  });
+
+  it("mostra pelo menos um grupo, mesmo maior que o limite", () => {
+    const um = resumoAteOLimite(resumo, 10);
+    expect(um.mostradas).toBe(30);
+    expect(um.editais[0]?.grupos).toHaveLength(1);
   });
 });

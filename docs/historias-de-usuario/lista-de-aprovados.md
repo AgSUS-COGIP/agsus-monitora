@@ -206,7 +206,7 @@ Testes: `tests/componentes/lista-aprovados.test.ts` ("Exportar a lista de aprova
 ### H9. Resumo por cargo e status (pedido da CORES, 11/11/2026)
 
 Como **a CORES**, quero ver por cargo, regime, jornada, vaga e modalidade quantos foram aprovados,
-contratados, desistiram (voluntária ou tacitamente) e seguem no cadastro de reserva, com subtotais e
+contratados, desistiram e seguem no cadastro de reserva, com subtotais e
 total, para acompanhar o edital sem montar a planilha à mão.
 
 - **Dado** a aba Resumo por cargo, **então** cada vaga distinta tem a sua linha por modalidade, com
@@ -217,8 +217,10 @@ total, para acompanhar o edital sem montar a planilha à mão.
   situações reconcilia o que não é contratado, desistente nem reserva).
 - **Dado** o cadastro de reserva, **então** ele vem da fila de convocação, nunca de "aprovados menos
   o resto".
-- **Dado** um desistente, **então** voluntária ou tácita só com subtipo registrado; sem registro,
-  "Desistência sem subtipo". _A definir com a CORES:_ o evento, o prazo e a evidência da tácita.
+- **Dado** um desistente, **então** ele conta em Desistentes, uma coluna só (16/11/2026: as colunas
+  de voluntária e tácita saíram; o sistema não registra o subtipo).
+- **Dado** uma área com milhares de vagas, **então** a tabela mostra 50 linhas de vaga por vez e
+  carrega mais ao rolar ou em "Carregar mais", sem travar a tela.
 - **Dado** um número, **quando** clico, **então** vejo os vínculos dele (o mesmo recorte).
 - **Dado** "Exportar", **então** XLSX, CSV ou PDF com as mesmas linhas da tela, sem dado pessoal,
   registrado no banco como RESUMO.

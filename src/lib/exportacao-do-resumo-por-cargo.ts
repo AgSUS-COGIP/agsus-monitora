@@ -62,35 +62,22 @@ export const COLUNAS_DO_ARQUIVO_DO_RESUMO: readonly string[] = Object.freeze([
   ...CATEGORIAS_DO_RESUMO.map((c) => ROTULO_DA_COLUNA[c]),
   "Dos contratados: migração",
   ...MOTIVOS_DE_OUTRAS.map(
-    (m) => `Outras: ${ROTULO_DO_MOTIVO[m].toLowerCase()}`,
+    (m) => `Outros: ${ROTULO_DO_MOTIVO[m].toLowerCase()}`,
   ),
   "Sub judice (já incluídos)",
 ]);
 
-/** Voluntária e tácita sem registro de subtipo saem em branco, não como zero. */
-export function numerosDaContagem(
-  c: ContagemDoResumo,
-  subtipoRegistrado: boolean,
-): CelulaDaPlanilha[] {
+export function numerosDaContagem(c: ContagemDoResumo): CelulaDaPlanilha[] {
   return [
     c.aprovados,
-    ...CATEGORIAS_DO_RESUMO.map((categoria) =>
-      !subtipoRegistrado &&
-      (categoria === "desistenciaVoluntaria" ||
-        categoria === "desistenciaTacita")
-        ? ""
-        : c[categoria],
-    ),
+    ...CATEGORIAS_DO_RESUMO.map((categoria) => c[categoria]),
     c.migracao,
     ...MOTIVOS_DE_OUTRAS.map((m) => c.motivos[m]),
     c.subJudice,
   ];
 }
 
-function celulasDaLinha(
-  l: LinhaPlanaDoResumo,
-  subtipoRegistrado: boolean,
-): CelulaDaPlanilha[] {
+function celulasDaLinha(l: LinhaPlanaDoResumo): CelulaDaPlanilha[] {
   const rotulo =
     l.nivel === "Vaga"
       ? "Vaga"
@@ -106,7 +93,7 @@ function celulasDaLinha(
     l.codigoVaga,
     l.unidade,
     l.modalidade,
-    ...numerosDaContagem(l.contagem, subtipoRegistrado),
+    ...numerosDaContagem(l.contagem),
   ];
 }
 
@@ -114,9 +101,7 @@ function celulasDaLinha(
 export function linhasDoArquivoDoResumo(
   resumo: ResumoPorCargoEStatus,
 ): CelulaDaPlanilha[][] {
-  return linhasPlanasDoResumo(resumo).map((l) =>
-    celulasDaLinha(l, resumo.subtipoRegistrado),
-  );
+  return linhasPlanasDoResumo(resumo).map(celulasDaLinha);
 }
 
 /** A identificação: a da lista, com o documento, a base e as regras do resumo. */
@@ -146,17 +131,11 @@ export function identificacaoDoResumo(
     ],
     [
       "Contratados",
-      "Contratado e Migração; Contratado em outra lista vai a Outras situações",
+      "Contratado e Migração; Contratado em outra lista vai a Outros",
     ],
     [
-      "Cadastro de reserva",
-      "Pela fila de convocação: na fila, fora das vagas imediatas e ainda não chamado",
-    ],
-    [
-      "Desistência",
-      resumo.subtipoRegistrado
-        ? "Voluntária e tácita só com o subtipo registrado; sem registro, Desistência sem subtipo"
-        : "Subtipo não registrado no sistema: todos os desistentes estão em Desistência sem subtipo",
+      "Em reserva",
+      "Cadastro de reserva pela fila de convocação: na fila, fora das vagas imediatas e ainda não chamado",
     ],
   ];
   linhas.splice(antesDosDados < 0 ? linhas.length : antesDosDados, 0, ...base);
