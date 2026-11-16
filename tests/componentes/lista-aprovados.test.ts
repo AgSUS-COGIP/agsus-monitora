@@ -2617,8 +2617,8 @@ describe("Resumo por cargo (pedido da CORES)", () => {
     expect($("approvedHeadActions").classList.contains("hidden")).toBe(true);
     const total = definido(achar("#approvedPanelResumo tfoot tr"));
     const celulas = acharTodos("td", total).map((td) => td.textContent?.trim());
-    // Aprovados, Contratados, Voluntária, Tácita, Sem subtipo, Reserva, Outras.
-    expect(celulas).toEqual(["3", "1", "—", "—", "0", "2", "0"]);
+    // Aprovados, Contratados, Desistência, Reserva, Outras.
+    expect(celulas).toEqual(["3", "1", "0", "2", "0"]);
     const avisos = definido(
       achar("#approvedPanelResumo .approved-resumo-avisos"),
     ).textContent;

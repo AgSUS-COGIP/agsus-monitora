@@ -18,7 +18,7 @@ import {
 
   "Contagem de candidatos por cargo e status": por edital, cargo + regime +
   jornada, e dentro dele uma linha por vaga e modalidade, com Aprovados,
-  Contratados, Desistência voluntária, Desistência tácita e Cadastro de reserva,
+  Contratados, Desistência e Cadastro de reserva,
   subtotal por grupo e total geral. Tudo é contado aqui, uma vez: a tabela da
   tela, o detalhe nominal e a exportação leem a MESMA estrutura (critério F).
 
@@ -31,9 +31,9 @@ import {
     - Contratados: status efetivo Contratado ou Migração, como nos KPIs, na
       Seleção e na Visão geral (Migração vai também à parte em `migracao`).
       "Contratado em outra lista" NÃO conta: a pessoa já conta pela outra linha.
-    - Desistência voluntária / tácita: só com o subtipo REGISTRADO na linha
-      (`desistencia_subtipo`). O banco ainda não guarda subtipo: hoje todo
-      Desistente cai em "Desistência sem subtipo". Nada é inferido.
+    - Desistência: status efetivo Desistente. Uma coluna só (16/11/2026): o
+      banco não guarda se foi voluntária ou tácita, e as duas colunas vazias
+      com "Desistência sem subtipo" saíram a pedido.
     - Cadastro de reserva: a regra da fila de convocação (lista-convocacao-rules,
       situacaoNaChamada): na fila, fora das vagas imediatas e ainda não chamado.
       Nunca "aprovados menos o resto".
@@ -60,16 +60,12 @@ export interface CandidatoDoResumo
   edital_id?: unknown;
   classificacao?: unknown;
   codigo_vaga?: unknown;
-  /** Subtipo da desistência, quando registrado: VOLUNTARIA ou TACITA (ainda não existe no banco). */
-  desistencia_subtipo?: unknown;
 }
 
 /** As colunas de contagem, na ordem da tela e do arquivo. */
 export const CATEGORIAS_DO_RESUMO = Object.freeze([
   "contratado",
-  "desistenciaVoluntaria",
-  "desistenciaTacita",
-  "desistenciaSemSubtipo",
+  "desistencia",
   "reserva",
   "outras",
 ] as const);
@@ -91,9 +87,7 @@ export const ROTULO_DA_COLUNA: Readonly<Record<ColunaDoResumo, string>> =
   Object.freeze({
     aprovados: "Aprovados",
     contratado: "Contratados",
-    desistenciaVoluntaria: "Desistência voluntária",
-    desistenciaTacita: "Desistência tácita",
-    desistenciaSemSubtipo: "Desistência sem subtipo",
+    desistencia: "Desistência",
     reserva: "Cadastro de reserva",
     outras: "Outras situações",
   });
@@ -115,9 +109,7 @@ export const COLUNAS_DO_RESUMO: readonly ColunaDoResumo[] = Object.freeze([
 export interface ContagemDoResumo {
   aprovados: number;
   contratado: number;
-  desistenciaVoluntaria: number;
-  desistenciaTacita: number;
-  desistenciaSemSubtipo: number;
+  desistencia: number;
   reserva: number;
   outras: number;
   /** Dos contratados, quantos por Migração. */
@@ -174,8 +166,6 @@ export interface ResumoPorCargoEStatus {
   ids: IdsDoResumo;
   /** Vínculos que ficaram fora por estarem em lista inativa. */
   foraDaListaAtiva: number;
-  /** Algum vínculo traz o subtipo da desistência registrado. */
-  subtipoRegistrado: boolean;
   faltas: FaltasDoResumo;
 }
 
@@ -268,14 +258,8 @@ export function categoriaDoVinculo(
   const status = statusEfetivo(candidato);
   if (status === "Contratado" || status === "Migração")
     return { categoria: "contratado", motivo: null };
-  if (status === "Desistente") {
-    const subtipo = texto(candidato.desistencia_subtipo).toUpperCase();
-    if (subtipo === "VOLUNTARIA")
-      return { categoria: "desistenciaVoluntaria", motivo: null };
-    if (subtipo === "TACITA")
-      return { categoria: "desistenciaTacita", motivo: null };
-    return { categoria: "desistenciaSemSubtipo", motivo: null };
-  }
+  if (status === "Desistente")
+    return { categoria: "desistencia", motivo: null };
   if (status === STATUS_CONVOCADO)
     return { categoria: "outras", motivo: "convocado" };
   if (status === "Documentação Rejeitada")
@@ -295,9 +279,7 @@ export function contagemVazia(): ContagemDoResumo {
   return {
     aprovados: 0,
     contratado: 0,
-    desistenciaVoluntaria: 0,
-    desistenciaTacita: 0,
-    desistenciaSemSubtipo: 0,
+    desistencia: 0,
     reserva: 0,
     outras: 0,
     migracao: 0,
@@ -315,9 +297,7 @@ export function contagemVazia(): ContagemDoResumo {
 const idsVazios = (): IdsDoResumo => ({
   aprovados: [],
   contratado: [],
-  desistenciaVoluntaria: [],
-  desistenciaTacita: [],
-  desistenciaSemSubtipo: [],
+  desistencia: [],
   reserva: [],
   outras: [],
 });
@@ -368,7 +348,6 @@ export function montarResumoPorCargoEStatus({
     semModalidade: 0,
   };
   let foraDaListaAtiva = 0;
-  let subtipoRegistrado = false;
   const vistos = new Set<string>();
   const editais = new Map<
     string,
@@ -390,7 +369,6 @@ export function montarResumoPorCargoEStatus({
       foraDaListaAtiva += 1;
       continue;
     }
-    if (texto(candidato.desistencia_subtipo)) subtipoRegistrado = true;
 
     const editalId = texto(candidato.edital_id);
     const cargo = texto(candidato.cargo);
@@ -515,9 +493,50 @@ export function montarResumoPorCargoEStatus({
     total,
     ids: idsDoTotal,
     foraDaListaAtiva,
-    subtipoRegistrado,
     faltas,
   };
+}
+
+/* ── A tela desenha aos poucos ─────────────────────────────────────────── */
+
+/** Linhas de vaga desenhadas por vez (como a TabelaInfinita das outras abas). */
+export const LINHAS_DO_RESUMO_POR_VEZ = 50;
+
+export interface EditalVisivelDoResumo extends EditalDoResumo {
+  /** Todos os grupos do edital estão desenhados (só então sai o total do edital). */
+  completo: boolean;
+}
+
+/**
+ * O resumo até `limite` linhas de vaga, sempre em grupos inteiros (o subtotal
+ * do grupo vem com ele) e com pelo menos um grupo. Desenhar tudo de uma vez
+ * travava a tela com milhares de vagas (13 mil vínculos na Saúde Indígena).
+ */
+export function resumoAteOLimite(
+  resumo: ResumoPorCargoEStatus,
+  limite: number,
+): { editais: EditalVisivelDoResumo[]; mostradas: number; total: number } {
+  const total = resumo.editais.reduce(
+    (soma, e) => soma + e.grupos.reduce((s, g) => s + g.linhas.length, 0),
+    0,
+  );
+  const editais: EditalVisivelDoResumo[] = [];
+  let mostradas = 0;
+  for (const edital of resumo.editais) {
+    if (mostradas >= limite && mostradas > 0) break;
+    const grupos: GrupoDoResumo[] = [];
+    for (const grupo of edital.grupos) {
+      if (mostradas >= limite && mostradas > 0) break;
+      grupos.push(grupo);
+      mostradas += grupo.linhas.length;
+    }
+    editais.push({
+      ...edital,
+      grupos,
+      completo: grupos.length === edital.grupos.length,
+    });
+  }
+  return { editais, mostradas, total };
 }
 
 /* ── Linhas planas: a mesma estrutura para o arquivo ──────────────────── */

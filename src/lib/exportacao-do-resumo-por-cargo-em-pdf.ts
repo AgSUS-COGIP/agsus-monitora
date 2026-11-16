@@ -138,10 +138,10 @@ export function pdfDoResumo(
           : l.nivel === "Edital"
             ? `Total do edital · ${l.edital}`
             : "Total geral";
-    const numeros = numerosDaContagem(
-      l.contagem,
-      resumo.subtipoRegistrado,
-    ).slice(0, 1 + CATEGORIAS_DO_RESUMO.length);
+    const numeros = numerosDaContagem(l.contagem).slice(
+      0,
+      1 + CATEGORIAS_DO_RESUMO.length,
+    );
     return [textoParaOPdf(rotulo), ...numeros.map(mostrar)];
   });
   autoTable(doc, {

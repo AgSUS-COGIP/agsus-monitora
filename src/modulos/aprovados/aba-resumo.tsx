@@ -12,11 +12,14 @@ import type {
   ContagemDoResumo,
   ResumoPorCargoEStatus,
 } from "../../lib/resumo-por-cargo-e-status.ts";
-import { Fragment, useMemo, useState } from "react";
+import type { UIEvent } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import {
   CATEGORIAS_DO_RESUMO,
+  LINHAS_DO_RESUMO_POR_VEZ,
   MOTIVOS_DE_OUTRAS,
   montarResumoPorCargoEStatus,
+  resumoAteOLimite,
   ROTULO_DA_COLUNA,
   ROTULO_DO_MOTIVO,
   situacoesNaFila,
@@ -50,7 +53,14 @@ import { plural } from "./partes.tsx";
   lista inteira das vagas no recorte de edital e cargo: modalidade e situação
   só escolhem quem é contado, não mudam a fila. Clicar num número abre os
   vínculos daquele número (o mesmo recorte).
+
+  A tabela desenha 50 linhas de vaga por vez (em grupos inteiros) e mais 50 ao
+  rolar perto do fim ou em "Carregar mais", como a aba Aprovados: desenhar
+  tudo travava a tela. O total geral e a exportação são sempre do recorte todo.
 */
+
+/* Perto do fim da caixa que rola, carrega mais (o mesmo da TabelaInfinita). */
+const PERTO_DO_FIM_PX = 240;
 
 export interface PropsDaAbaDoResumo {
   ativa: boolean;
@@ -89,29 +99,14 @@ function Numero({
   ids,
   coluna,
   onde,
-  semSubtipo,
   aoAbrir,
 }: {
   contagem: ContagemDoResumo;
   ids: Record<ColunaDoResumo, string[]>;
   coluna: ColunaDoResumo;
   onde: string;
-  semSubtipo: boolean;
   aoAbrir: (detalhe: Detalhe) => void;
 }) {
-  if (
-    semSubtipo &&
-    (coluna === "desistenciaVoluntaria" || coluna === "desistenciaTacita")
-  )
-    return (
-      <span
-        className="approved-resumo-valor"
-        title="Subtipo não registrado"
-        aria-label="não registrado"
-      >
-        —
-      </span>
-    );
   const valor = contagem[coluna];
   if (!valor)
     return <span className="approved-resumo-valor">{formatNumberBR(0)}</span>;
@@ -144,13 +139,11 @@ function Celulas({
   contagem,
   ids,
   onde,
-  semSubtipo,
   aoAbrir,
 }: {
   contagem: ContagemDoResumo;
   ids: Record<ColunaDoResumo, string[]>;
   onde: string;
-  semSubtipo: boolean;
   aoAbrir: (detalhe: Detalhe) => void;
 }) {
   return (
@@ -162,7 +155,6 @@ function Celulas({
             ids={ids}
             coluna={coluna}
             onde={onde}
-            semSubtipo={semSubtipo}
             aoAbrir={aoAbrir}
           />
         </td>
@@ -280,17 +272,12 @@ export function AbaResumo({
   const quantos = Object.values(filtros).filter((lista) => lista.length).length;
   const semPermissao =
     typeof erroAoCarregar === "string" && /permiss/i.test(erroAoCarregar);
-  const semSubtipo = !resumo?.subtipoRegistrado;
   const faltas = resumo?.faltas;
   const avisos: string[] = [];
   if (resumo) {
     if (filtros.status.length)
       avisos.push(
         "O filtro Situação restringe a base: só os vínculos com as situações escolhidas entram nas contagens.",
-      );
-    if (semSubtipo && resumo.total.desistenciaSemSubtipo)
-      avisos.push(
-        "O subtipo da desistência (voluntária ou tácita) não é registrado no sistema: os desistentes estão em Desistência sem subtipo.",
       );
     if (resumo.foraDaListaAtiva)
       avisos.push(
@@ -316,6 +303,43 @@ export function AbaResumo({
 
   const colunas = 1 + 1 + CATEGORIAS_DO_RESUMO.length;
   const variosEditais = (resumo?.editais.length ?? 0) > 1;
+
+  /*
+    Quantas linhas de vaga estão desenhadas, guardado junto do resumo a que se
+    refere: filtro novo (resumo novo) volta às primeiras 50 no mesmo desenho.
+  */
+  const [carga, setCarga] = useState<{
+    resumo: ResumoPorCargoEStatus | null;
+    limite: number;
+  }>({ resumo: null, limite: LINHAS_DO_RESUMO_POR_VEZ });
+  const limite =
+    carga.resumo === resumo ? carga.limite : LINHAS_DO_RESUMO_POR_VEZ;
+  const visivel = useMemo(
+    () => (resumo ? resumoAteOLimite(resumo, limite) : null),
+    [resumo, limite],
+  );
+  const faltam = visivel ? visivel.total - visivel.mostradas : 0;
+  const carregarMais = () =>
+    setCarga((atual) => ({
+      resumo,
+      limite:
+        (atual.resumo === resumo ? atual.limite : LINHAS_DO_RESUMO_POR_VEZ) +
+        LINHAS_DO_RESUMO_POR_VEZ,
+    }));
+  function aoRolar(evento: UIEvent<HTMLDivElement>) {
+    const caixa = evento.currentTarget;
+    if (
+      faltam > 0 &&
+      caixa.scrollTop + caixa.clientHeight >=
+        caixa.scrollHeight - PERTO_DO_FIM_PX
+    )
+      carregarMais();
+  }
+  // O modo cartão do celular relê os cabeçalhos a cada desenho.
+  const desenhadas = visivel?.mostradas ?? -1;
+  useEffect(() => {
+    if (ativa) document.dispatchEvent(new CustomEvent("agsus:content-updated"));
+  }, [ativa, desenhadas]);
 
   let conteudo;
   if (semPermissao)
@@ -353,120 +377,140 @@ export function AbaResumo({
     );
   else
     conteudo = (
-      <div className="ui-tabela-rolagem approved-resumo-rolagem">
-        <table
-          className="approved-resumo-tabela"
-          aria-describedby="approvedResumoBase"
+      <>
+        <div
+          className="ui-tabela-rolagem approved-resumo-rolagem"
+          onScroll={aoRolar}
         >
-          <caption className="sr-only">
-            Contagem de candidatos por cargo e status
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Cargo / vaga</th>
-              <th scope="col" className="approved-resumo-num">
-                {ROTULO_DA_COLUNA.aprovados}
-              </th>
-              {CATEGORIAS_DO_RESUMO.map((c) => (
-                <th key={c} scope="col" className="approved-resumo-num">
-                  {ROTULO_DA_COLUNA[c]}
+          <table
+            className="approved-resumo-tabela"
+            aria-describedby="approvedResumoBase"
+          >
+            <caption className="sr-only">
+              Contagem de candidatos por cargo e status
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Cargo / vaga</th>
+                <th scope="col" className="approved-resumo-num">
+                  {ROTULO_DA_COLUNA.aprovados}
                 </th>
-              ))}
-            </tr>
-          </thead>
-          {resumo.editais.map((edital) => (
-            <Fragment key={edital.editalId}>
-              {variosEditais ? (
-                <tbody>
-                  <tr className="approved-resumo-edital">
-                    <th scope="rowgroup" colSpan={colunas}>
-                      {edital.rotulo}
-                    </th>
-                  </tr>
-                </tbody>
-              ) : null}
-              {edital.grupos.map((grupo) => (
-                <tbody key={grupo.chave}>
-                  <tr className="approved-resumo-grupo">
-                    <th scope="rowgroup" colSpan={colunas}>
-                      {grupo.rotulo}
-                    </th>
-                  </tr>
-                  {grupo.linhas.map((linha) => {
-                    const onde = [
-                      grupo.rotulo,
-                      linha.modalidade,
-                      linha.codigoVaga && `vaga ${linha.codigoVaga}`,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ");
-                    return (
-                      <tr key={linha.chave}>
-                        <th scope="row" className="approved-resumo-vaga">
-                          <span>{linha.modalidade}</span>
-                          <span className="approved-resumo-meta">
-                            {[
-                              linha.codigoVaga
-                                ? `Vaga ${linha.codigoVaga}`
-                                : "Vaga sem código",
-                              linha.unidade,
-                            ]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          </span>
-                        </th>
-                        <Celulas
-                          contagem={linha.contagem}
-                          ids={linha.ids}
-                          onde={onde}
-                          semSubtipo={semSubtipo}
-                          aoAbrir={setDetalhe}
-                        />
-                      </tr>
-                    );
-                  })}
-                  <tr className="approved-resumo-subtotal">
-                    <th scope="row">Total · {grupo.rotulo}</th>
-                    <Celulas
-                      contagem={grupo.subtotal}
-                      ids={grupo.ids}
-                      onde={`total de ${grupo.rotulo}`}
-                      semSubtipo={semSubtipo}
-                      aoAbrir={setDetalhe}
-                    />
-                  </tr>
-                </tbody>
-              ))}
-              {variosEditais ? (
-                <tbody>
-                  <tr className="approved-resumo-subtotal">
-                    <th scope="row">Total do edital · {edital.rotulo}</th>
-                    <Celulas
-                      contagem={edital.subtotal}
-                      ids={edital.ids}
-                      onde={`total do edital ${edital.rotulo}`}
-                      semSubtipo={semSubtipo}
-                      aoAbrir={setDetalhe}
-                    />
-                  </tr>
-                </tbody>
-              ) : null}
-            </Fragment>
-          ))}
-          <tfoot>
-            <tr className="approved-resumo-total">
-              <th scope="row">Total geral</th>
-              <Celulas
-                contagem={resumo.total}
-                ids={resumo.ids}
-                onde="total geral"
-                semSubtipo={semSubtipo}
-                aoAbrir={setDetalhe}
-              />
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+                {CATEGORIAS_DO_RESUMO.map((c) => (
+                  <th key={c} scope="col" className="approved-resumo-num">
+                    {ROTULO_DA_COLUNA[c]}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            {(visivel?.editais ?? []).map((edital) => (
+              <Fragment key={edital.editalId}>
+                {variosEditais ? (
+                  <tbody>
+                    <tr className="approved-resumo-edital">
+                      <th scope="rowgroup" colSpan={colunas}>
+                        {edital.rotulo}
+                      </th>
+                    </tr>
+                  </tbody>
+                ) : null}
+                {edital.grupos.map((grupo) => (
+                  <tbody key={grupo.chave}>
+                    <tr className="approved-resumo-grupo">
+                      <th scope="rowgroup" colSpan={colunas}>
+                        {grupo.rotulo}
+                      </th>
+                    </tr>
+                    {grupo.linhas.map((linha) => {
+                      const onde = [
+                        grupo.rotulo,
+                        linha.modalidade,
+                        linha.codigoVaga && `vaga ${linha.codigoVaga}`,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ");
+                      return (
+                        <tr key={linha.chave}>
+                          <th scope="row" className="approved-resumo-vaga">
+                            <span>{linha.modalidade}</span>
+                            <span className="approved-resumo-meta">
+                              {[
+                                linha.codigoVaga
+                                  ? `Vaga ${linha.codigoVaga}`
+                                  : "Vaga sem código",
+                                linha.unidade,
+                              ]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </span>
+                          </th>
+                          <Celulas
+                            contagem={linha.contagem}
+                            ids={linha.ids}
+                            onde={onde}
+                            aoAbrir={setDetalhe}
+                          />
+                        </tr>
+                      );
+                    })}
+                    <tr className="approved-resumo-subtotal">
+                      <th scope="row">Total · {grupo.rotulo}</th>
+                      <Celulas
+                        contagem={grupo.subtotal}
+                        ids={grupo.ids}
+                        onde={`total de ${grupo.rotulo}`}
+                        aoAbrir={setDetalhe}
+                      />
+                    </tr>
+                  </tbody>
+                ))}
+                {variosEditais && edital.completo ? (
+                  <tbody>
+                    <tr className="approved-resumo-subtotal">
+                      <th scope="row">Total do edital · {edital.rotulo}</th>
+                      <Celulas
+                        contagem={edital.subtotal}
+                        ids={edital.ids}
+                        onde={`total do edital ${edital.rotulo}`}
+                        aoAbrir={setDetalhe}
+                      />
+                    </tr>
+                  </tbody>
+                ) : null}
+              </Fragment>
+            ))}
+            <tfoot>
+              <tr className="approved-resumo-total">
+                <th scope="row">Total geral</th>
+                <Celulas
+                  contagem={resumo.total}
+                  ids={resumo.ids}
+                  onde="total geral"
+                  aoAbrir={setDetalhe}
+                />
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        {visivel ? (
+          <div className="ui-tabela-status" role="status" aria-live="polite">
+            {faltam > 0
+              ? `${formatNumberBR(visivel.mostradas)} de ${formatNumberBR(visivel.total)} linhas de vaga`
+              : `Todas as ${formatNumberBR(visivel.total)} linhas de vaga do recorte foram carregadas`}
+          </div>
+        ) : null}
+        {faltam > 0 ? (
+          <button
+            id="approvedResumoCarregarMais"
+            type="button"
+            className="btn secondary small ui-tabela-mais"
+            data-acao="carregar-mais"
+            onClick={carregarMais}
+          >
+            <i className="fa-solid fa-plus" aria-hidden="true" /> Carregar mais{" "}
+            {formatNumberBR(Math.min(LINHAS_DO_RESUMO_POR_VEZ, faltam))}
+          </button>
+        ) : null}
+      </>
     );
 
   return (
