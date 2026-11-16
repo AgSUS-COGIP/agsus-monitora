@@ -3,7 +3,6 @@ import {
   useEffect,
   useId,
   useMemo,
-  useState,
   useSyncExternalStore,
 } from "react";
 import type { ReactNode } from "react";
@@ -70,19 +69,23 @@ const HORA = new Intl.DateTimeFormat("pt-BR", {
 interface PropriedadesDaTabelaPaginada {
   rotulo: string;
   colunas: ReadonlyArray<ColunaDaTabela>;
+  /** As linhas da página à vista (o banco já recortou). */
   linhas: readonly LinhaDoRelatorio[];
   linha: (item: LinhaDoRelatorio, indice: number) => ReactNode;
   carregado: boolean;
+  pagina: number;
   porPagina: number;
+  total: number;
+  aoIrPara: (pagina: number) => void;
   aoMudarPorPagina: (porPagina: number) => void;
 }
 
 /*
   A tabela do relatório, uma página por vez (o mesmo visual da lista de
   src/ui/: caixa que rola e cabeçalho fixo), com a paginação numa barra
-  acima da tabela (`data-paginacao`). A página volta à 1
-  quando o relatório, a área ou a leitura mudam (quem usa troca a `key`) e
-  quando muda o tamanho da página.
+  acima da tabela (`data-paginacao`). A página, o tamanho e o total vêm do
+  banco (ler_relatorio_do_painel); enquanto a página carrega, as setas e o
+  tamanho ficam travados.
 */
 function TabelaPaginada({
   rotulo,
@@ -90,17 +93,19 @@ function TabelaPaginada({
   linhas,
   linha,
   carregado,
+  pagina: pedida,
   porPagina,
+  total: totalDoBanco,
+  aoIrPara,
   aoMudarPorPagina,
 }: PropriedadesDaTabelaPaginada) {
-  const [pedida, setPedida] = useState(1);
   const idDoTamanho = useId();
   const { pagina, paginas, inicio, fim, total } = paginaDaTabela(
-    carregado ? linhas.length : 0,
+    carregado ? totalDoBanco : 0,
     pedida,
     porPagina,
   );
-  const ir = (destino: number) => setPedida(destino);
+  const ir = (destino: number) => aoIrPara(destino);
 
   return (
     <>
@@ -117,10 +122,7 @@ function TabelaPaginada({
           id={idDoTamanho}
           value={porPagina}
           disabled={!carregado}
-          onChange={(evento) => {
-            setPedida(1);
-            aoMudarPorPagina(Number(evento.target.value));
-          }}
+          onChange={(evento) => aoMudarPorPagina(Number(evento.target.value))}
         >
           {[...LINHAS_POR_PAGINA]
             .sort((a, b) => a - b)
@@ -159,9 +161,7 @@ function TabelaPaginada({
           <CabecalhosDaTabela colunas={colunas} />
           <tbody aria-busy={carregado ? undefined : true}>
             {carregado ? (
-              linhas
-                .slice(inicio, fim)
-                .map((item, i) => linha(item, inicio + i))
+              linhas.map((item, i) => linha(item, inicio + i))
             ) : (
               <LinhasEsqueleto colunas={colunas.length} />
             )}
@@ -178,12 +178,12 @@ function TabelaPaginada({
   );
 }
 
-/* A data da última leitura do relatório aberto, discreta, no topo da página. */
+/* A data do cálculo do relatório aberto (no banco), discreta, no topo da página. */
 function textoDaSincronizacao(leitura: LeituraDoRelatorio) {
   if (leitura.situacao === "carregando") return "Sincronizando…";
   if (leitura.situacao === "erro") return "Sem dados";
-  if (leitura.situacao === "pronto" && leitura.geradoEm)
-    return `Sincronizado em ${HORA.format(new Date(leitura.geradoEm))}`;
+  if (leitura.situacao === "pronto" && leitura.calculadoEm)
+    return `Sincronizado em ${HORA.format(new Date(leitura.calculadoEm))}`;
   return "";
 }
 
@@ -192,7 +192,6 @@ function Relatorio({ estado }: { estado: EstadoDaTelaDePaineis }) {
   const definicao = definicaoDoRelatorio(e.ativo);
   const leitura = e.relatorios[definicao.id];
   const carregado = leitura.situacao === "pronto";
-  const [porPagina, setPorPagina] = useState(LINHAS_POR_PAGINA[0] as number);
 
   const fontes = leitura.fontes;
   const colunas = useMemo<ColunaDaTabela[]>(
@@ -290,14 +289,16 @@ function Relatorio({ estado }: { estado: EstadoDaTelaDePaineis }) {
           </Aviso>
         ) : (
           <TabelaPaginada
-            key={`${definicao.id}:${leitura.area}:${leitura.geradoEm}`}
             rotulo={definicao.rotulo}
             colunas={colunas}
             linhas={leitura.linhas}
             linha={linha}
             carregado={carregado}
-            porPagina={porPagina}
-            aoMudarPorPagina={setPorPagina}
+            pagina={leitura.pagina}
+            porPagina={leitura.porPagina}
+            total={leitura.total}
+            aoIrPara={(p) => void estado.irParaPagina(p)}
+            aoMudarPorPagina={(n) => void estado.mudarPorPagina(n)}
           />
         )}
       </CardDaLista>

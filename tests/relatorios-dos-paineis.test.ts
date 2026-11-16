@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   RELATORIOS_DOS_PAINEIS,
   csvDoRelatorio,
+  chaveDaPagina,
   definicaoDoRelatorio,
-  geradoEmDoRelatorio,
+  lerPaginaDoRelatorio,
   linhasDoRelatorio,
   nomeDoArquivoDoRelatorio,
   paginaDaTabela,
@@ -127,12 +128,46 @@ describe("leitura da resposta", () => {
     expect(linhasDoRelatorio(resumo, [{ edital: "1/2026" }])).toHaveLength(1);
   });
 
-  it("guarda o momento da leitura só quando é uma data", () => {
-    expect(geradoEmDoRelatorio({ gerado_em: "2026-11-13T15:00:00Z" })).toBe(
-      "2026-11-13T15:00:00Z",
+  it("lê a página: linhas, total, página, tamanho e data do cálculo", () => {
+    expect(
+      lerPaginaDoRelatorio(resumo, {
+        calculado_em: "2026-11-13T15:00:00Z",
+        total: 120,
+        pagina: 2,
+        por_pagina: 50,
+        linhas: [{ edital: "51/2026" }],
+      }),
+    ).toEqual({
+      linhas: [expect.objectContaining({ edital: "51/2026" })],
+      total: 120,
+      pagina: 2,
+      porPagina: 50,
+      calculadoEm: "2026-11-13T15:00:00Z",
+    });
+  });
+
+  it("a página tolera resposta vazia ou estranha", () => {
+    expect(lerPaginaDoRelatorio(resumo, null)).toEqual({
+      linhas: [],
+      total: 0,
+      pagina: 1,
+      porPagina: null,
+      calculadoEm: null,
+    });
+    expect(
+      lerPaginaDoRelatorio(resumo, {
+        calculado_em: "x",
+        total: "dez",
+        pagina: -3,
+        linhas: [{ edital: "1/2026" }],
+      }),
+    ).toMatchObject({ total: 1, pagina: 1, calculadoEm: null });
+  });
+
+  it("a chave da página junta área, relatório, página e tamanho", () => {
+    expect(chaveDaPagina("sede", "aprovados", 2, 25)).toBe(
+      "sede|aprovados|2|25",
     );
-    expect(geradoEmDoRelatorio({ gerado_em: "x" })).toBeNull();
-    expect(geradoEmDoRelatorio([])).toBeNull();
   });
 });
 
