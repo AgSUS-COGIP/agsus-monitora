@@ -21,7 +21,8 @@
   GUARDAS: 20261117030000 aplicada; entre 90 e 94 fichas a corrigir (medidas: 94).
   Quem corrige: o usuário que pediu (dados.recursoshumanos), pelo e-mail no auth.users.
   Ensaio: supabase/ensaios/20261117031000_voltar_fichas_importadas_do_93_a_concluidas.sql
-  Rollback: não há (voltar as fichas a REVISAR desfaria a correção pedida; o histórico guarda tudo).
+  Rollback: supabase/rollback/20261117031000_voltar_fichas_importadas_do_93_a_concluidas.sql (volta
+            as fichas a REVISAR, o estado ruim; só se for mesmo preciso).
 */
 
 begin;
