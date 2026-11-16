@@ -36,3 +36,31 @@ describe("Actions presas ao SHA", () => {
     expect(soltas).toEqual([]);
   });
 });
+
+/*
+  Revisão de segurança de 16/11/2026: o `actions/checkout` guarda o token do
+  job no `.git/config` por padrão, e qualquer passo seguinte (pip, npm, script
+  do robô) consegue lê-lo. Nenhum workflow faz `git push`, e o `git fetch` da
+  `main` é de repositório público: o token não precisa ficar.
+*/
+describe("checkout sem credencial guardada", () => {
+  it("todo actions/checkout tem persist-credentials: false", () => {
+    const semGuarda = readdirSync(PASTA)
+      .filter((nome) => /\.ya?ml$/.test(nome))
+      .flatMap((nome) => {
+        const linhas = readFileSync(`${PASTA}/${nome}`, "utf8").split(/\r?\n/);
+        return linhas.flatMap((linha, i) => {
+          if (!/uses:\s*actions\/checkout@/.test(linha)) return [];
+          const proximas = linhas.slice(i + 1, i + 8);
+          const fim = proximas.findIndex((l) => /^\s*-\s/.test(l));
+          const bloco = fim < 0 ? proximas : proximas.slice(0, fim);
+          return bloco.some((l) =>
+            /^\s*persist-credentials:\s*false\s*$/.test(l),
+          )
+            ? []
+            : [`${nome}:${i + 1}`];
+        });
+      });
+    expect(semGuarda).toEqual([]);
+  });
+});

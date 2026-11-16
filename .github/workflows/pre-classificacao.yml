@@ -102,6 +102,7 @@ jobs:
         with:
           fetch-depth: 1
           show-progress: false
+          persist-credentials: false
 
       # Só biblioteca padrão (python/monitora/ e scripts/pre_classificacao/): sem pip install.
       - name: Configurar Python
