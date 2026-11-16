@@ -176,12 +176,15 @@ end
 $f$;
 `;
 
-export const NOME_DOS_LIMITES =
-  "20261116170000_limites_de_tempo_dos_paineis.sql";
+/*
+  A 20261116170000_limites_de_tempo_dos_paineis.sql foi aplicada e saiu do
+  repositório (a main ganhou outra migration com o mesmo timestamp); o SQL dela
+  e o rollback ficaram nas fixtures, como no banco.
+*/
 export const migrationDosLimites = () =>
-  ler(`supabase/migrations/${NOME_DOS_LIMITES}`);
+  ler("tests/fixtures/limites-de-tempo-dos-paineis.migration.sql");
 export const rollbackDosLimites = () =>
-  ler(`supabase/rollback/${NOME_DOS_LIMITES}`);
+  ler("tests/fixtures/limites-de-tempo-dos-paineis.rollback.sql");
 
 /** O banco com as fontes, as RPCs de 20261113240000 e as migrations dos prontos. */
 export async function bancoComRelatoriosProntos(): Promise<Banco> {

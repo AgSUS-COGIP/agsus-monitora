@@ -41,6 +41,11 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
   por área e relatório; dentro do minuto devolve o que está pronto) e na troca de fonte (na mesma
   transação: se o recálculo falhar, a troca é desfeita). Medição de 16/11/2026: a página de 50
   sai em ~150–190 ms (antes, a leitura inteira levava até 5,5 s e 5,7 MB).
+- Limites de tempo: `ler_relatorio_do_painel`, `sincronizar_relatorio_do_painel` e
+  `salvar_fonte_da_coluna` têm `statement_timeout` 30s e `lock_timeout` 15s próprios (o papel
+  `authenticated` tem 8s e 3s; no minuto 17 o cron segura os locks por ~6s). Migration
+  `20261116170000_limites_de_tempo_dos_paineis.sql`, aplicada; saiu da pasta porque a main tem outra
+  com o mesmo timestamp (o SQL está em `tests/fixtures/limites-de-tempo-dos-paineis.*.sql`).
 - `ler_relatorio_do_painel(área, relatório, página, por página)` exige o recurso e a área e aplica o
   recorte da coordenação (`FC_EDITAIS_VISIVEIS`) na leitura: página, total e download só com os
   editais que a pessoa vê. As três RPCs antigas (`listar_*_do_painel`) saíram.
