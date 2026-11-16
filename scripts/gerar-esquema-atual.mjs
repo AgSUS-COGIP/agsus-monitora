@@ -7,7 +7,7 @@ import { join } from "node:path";
 
   As migrations já aplicadas saíram do repositório em 10/11/2026: o código vigente das funções
   do banco passou a existir só no banco. Este script grava em supabase/esquema-atual.sql o
-  schema de produção (public, private, arquivo) e as tarefas do pg_cron, para que se leia e se
+  schema de produção (public, private, arquivo, painel) e as tarefas do pg_cron, para que se leia e se
   pesquise o código vigente no repositório e para que o diff do retrato mostre, no PR, o que
   cada migration mudou.
 
@@ -23,7 +23,7 @@ import { join } from "node:path";
 */
 
 export const ARQUIVO_DO_RETRATO = "supabase/esquema-atual.sql";
-export const SCHEMAS = ["public", "private", "arquivo"];
+export const SCHEMAS = ["public", "private", "arquivo", "painel"];
 
 export const CABECALHO = `--
 -- RETRATO DO SCHEMA DE PRODUÇÃO — SÓ LEITURA, NÃO APLICAR.

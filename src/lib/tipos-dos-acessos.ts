@@ -36,6 +36,7 @@ export type ModuloDeAcesso =
   | "recursos"
   | "recursos_parecer"
   | "selecao"
+  | "paineis_dados"
   | "importacao"
   | "paineis"
   | "configuracoes"
@@ -112,6 +113,7 @@ export type PaginasPermitidas = {
   recursos: boolean;
   "analisar-recursos": boolean;
   selecao: boolean;
+  "paineis-de-dados": boolean;
   config: boolean;
 };
 

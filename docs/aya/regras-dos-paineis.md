@@ -1,0 +1,38 @@
+# Regras dos Painéis
+
+A página Painéis (view `paineis-de-dados`), no bloco Dados do menu de cada área: relatórios de
+conferência em tabela, para baixar em CSV e XLSX. Fontes: `src/modulos/paineis-de-dados/`,
+`src/lib/relatorios-dos-paineis.ts` e as migrations `20261113200000_paineis_no_bloco_dados.sql`
+(a aba e a permissão Painéis) e `20261113210000_relatorios_dos_paineis.sql` (as três leituras).
+
+## Página Painéis
+
+**perguntas:** paineis | pagina paineis | para que serve paineis | para que serve a pagina paineis | bloco dados | relatorios de conferencia | relatorios dos paineis
+**resposta:** A página Painéis, no bloco Dados do menu, reúne relatórios para conferir os dados da área escolhida, cada um numa aba: Resumo dos editais, Editais por cargo e Aprovados. Cada tabela pode ser baixada em CSV ou XLSX, com as mesmas linhas da tela. Os dados são lidos na primeira vez que a aba é aberta; o botão Atualizar lê de novo. Quem vê é quem o administrador libera em Painéis, na tela de Acessos.
+**fonte:** src/modulos/paineis-de-dados/; src/lib/relatorios-dos-paineis.ts
+**abrir:** paineis-de-dados
+
+## Resumo dos editais
+
+**perguntas:** resumo dos editais | data da divulgacao do edital | data final do processo seletivo | vagas imediatas do edital
+**resposta:** Nos Painéis, o Resumo dos editais traz uma linha por edital ativo da área: número, DSEI ou unidade, total de vagas imediatas (as do cadastro do edital), data da divulgação e data final do processo seletivo. A data da divulgação é o início da primeira etapa do cronograma, e a data final é o fim da última etapa; sem cronograma, valem as datas do cadastro do edital. Editais de treinamento não entram.
+**fonte:** supabase/migrations/20261113210000_relatorios_dos_paineis.sql
+
+## Editais por cargo
+
+**perguntas:** editais por cargo | vagas por cargo | inscritos por cargo | aprovados por cargo | de onde vem as vagas por cargo | vagas imediatas do titulo da vaga
+**resposta:** Nos Painéis, Editais por cargo traz uma linha por vaga de cada edital (na Saúde Indígena, uma vaga é um cargo num DSEI): o código da vaga, o cargo, as vagas imediatas, os inscritos da Seleção e os aprovados da lista de aprovados vigente. Inscritos e aprovados se casam pelo código da vaga, como no Painel da Seleção; nas vagas de outras bancas, sem código, pelo nome da vaga. As vagas imediatas saem do título da vaga ("2 vagas (1 AC + …)" conta 2; "Cadastro Reserva" conta 0); quando o título não diz, a célula fica vazia — o quadro de vagas do edital não tem o código da vaga e escreve o cargo de outro jeito, por isso não é usado aqui. Aprovados de uma vaga que a Seleção não tem saem numa linha própria, e o edital sem vaga na Seleção sai numa linha só, com os inscritos do edital. Aprovados vazio quer dizer edital sem lista de aprovados.
+**fonte:** supabase/migrations/20261113210000_relatorios_dos_paineis.sql
+
+## Fontes dos dados
+
+**perguntas:** fontes dos dados | fonte da coluna | trocar a fonte | de onde vem a coluna | mudar a origem dos dados | escolher fonte | asterisco no cabecalho
+**resposta:** Nos Painéis, o botão Fontes dos dados mostra, para o relatório aberto e a área escolhida no menu, de onde vem cada coluna que pode trocar de origem (vagas, datas, inscritos, aprovados, nota, classificação, status, matrícula e data de admissão). Quem é Administrador em Painéis escolhe outra fonte, entre as conferidas que o sistema lista (por exemplo, as vagas da convocação ou o quadro de vagas do edital), informa o motivo e salva; ou volta ao padrão. A escolha vale só para aquela área, e cada troca fica no histórico com quem, quando e o motivo. Coluna com fonte diferente do padrão aparece com um asterisco no cabeçalho, com a fonte na dica, e o XLSX traz a aba Fontes. Se a fonte não tiver o dado de uma linha, a célula fica vazia; com fonte diferente do padrão, os totais entre os relatórios podem não fechar. Ninguém escreve SQL: fonte nova é criada pela equipe de desenvolvimento.
+**fonte:** src/modulos/paineis-de-dados/fontes-dos-dados.tsx; supabase/migrations/20261113220000_fontes_das_colunas_dos_paineis.sql
+**abrir:** paineis-de-dados
+
+## Aprovados nos Painéis
+
+**perguntas:** aprovados nos paineis | relatorio de aprovados | data de admissao | matricula dos aprovados
+**resposta:** Nos Painéis, a aba Aprovados traz uma linha por candidato da lista de aprovados vigente de cada edital da área: edital, cargo da vaga, nota, classificação, nome, status, matrícula e data de admissão. O sistema não guarda a data real de admissão: a coluna mostra a data em que o status atual (Contratado ou Migração) foi registrado no sistema, e fica vazia para os outros status.
+**fonte:** supabase/migrations/20261113210000_relatorios_dos_paineis.sql

@@ -27,7 +27,7 @@ export interface AbaDoCatalogo {
  * processo; em Administração, um dos três grupos das seções.
  */
 export type BlocoDoMenu =
-  "acompanhamento" | "processo" | "aparencia" | "pessoas" | "sistema";
+  "acompanhamento" | "processo" | "dados" | "aparencia" | "pessoas" | "sistema";
 export interface ItemDoMenu {
   readonly view: string;
   readonly rotulo: string;

@@ -136,6 +136,7 @@ const GRUPOS = [
       classificacao: "leitor",
       recursos: "leitor",
       selecao: "leitor",
+      paineis_dados: "leitor",
       importacao: "leitor",
       paineis: "leitor",
       configuracoes: "sem_acesso",

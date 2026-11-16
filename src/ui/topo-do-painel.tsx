@@ -4,7 +4,8 @@ import type { ReactNode } from "react";
   O topo de uma tela (`.ui-topo`): as visões (um <Segmentado>, opcional), a
   data da última carga, discreta e uma vez só (`.status-discreto`), e as ações
   (Atualizar, Exportar e os botões da tela, que entram como filhos, depois de
-  Exportar).
+  Exportar). `rotuloDaAtualizacao` troca o texto do Atualizar (os Painéis
+  usam "Sincronizar").
 
   O título e a área já estão no cabeçalho do app, e tema e tela cheia são do
   app (barra lateral e menu da conta): o topo não os repete.
@@ -15,6 +16,7 @@ export interface PropriedadesDoTopoDoPainel {
   status: ReactNode;
   aoAtualizar: () => void;
   atualizarDesativado?: boolean;
+  rotuloDaAtualizacao?: string;
   aoExportar?: () => void;
   exportarDesativado?: boolean;
   visoes?: ReactNode;
@@ -29,6 +31,7 @@ export function TopoDoPainel({
   aoAtualizar,
   idDaAtualizacao,
   atualizarDesativado,
+  rotuloDaAtualizacao = "Atualizar",
   aoExportar,
   exportarDesativado,
   tour,
@@ -49,7 +52,8 @@ export function TopoDoPainel({
           disabled={atualizarDesativado}
           onClick={aoAtualizar}
         >
-          <i className="fa-solid fa-rotate" aria-hidden="true" /> Atualizar
+          <i className="fa-solid fa-rotate" aria-hidden="true" />{" "}
+          {rotuloDaAtualizacao}
         </button>
         {aoExportar ? (
           <button

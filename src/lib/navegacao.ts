@@ -6,6 +6,7 @@ import {
   canViewEntrevistas,
   canViewRecursos,
   canViewSelecao,
+  canViewPaineisDeDados,
   paginasPermitidas,
   permissaoLegada,
   podeAbrirConfiguracoes,
@@ -125,6 +126,7 @@ const BLOQUEIOS: Readonly<
   ],
   classificacao: [canViewClassificacao, "Sem permissão para Classificação."],
   selecao: [canViewSelecao, "Sem permissão para Seleção."],
+  "paineis-de-dados": [canViewPaineisDeDados, "Sem permissão para Painéis."],
   config: [podeAbrirConfiguracoes, "Sem permissão para Configurações."],
 });
 

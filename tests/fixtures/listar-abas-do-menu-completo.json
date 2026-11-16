@@ -375,5 +375,34 @@
         "ds_icone": "user-round-check"
       }
     ]
+  },
+  {
+    "co_aba": "paineis-de-dados",
+    "no_aba": "Painéis",
+    "ds_icone": "layout-dashboard",
+    "nu_ordem": 14,
+    "co_view": "paineis-de-dados",
+    "co_recurso": "paineis_dados",
+    "tp_aba": "nativa",
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 14,
+        "co_view": "paineis-de-dados",
+        "ds_icone": "layout-dashboard"
+      },
+      {
+        "co_area": "sede",
+        "nu_ordem": 14,
+        "co_view": "paineis-de-dados",
+        "ds_icone": "layout-dashboard"
+      },
+      {
+        "co_area": "projetos",
+        "nu_ordem": 14,
+        "co_view": "paineis-de-dados",
+        "ds_icone": "layout-dashboard"
+      }
+    ]
   }
 ]

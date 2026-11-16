@@ -307,5 +307,47 @@
         "dt_previsao": null
       }
     ]
+  },
+  {
+    "co_aba": "paineis-de-dados",
+    "no_aba": "Painéis",
+    "ds_icone": "layout-dashboard",
+    "nu_ordem": 14,
+    "co_view": "paineis-de-dados",
+    "co_recurso": "paineis_dados",
+    "tp_aba": "nativa",
+    "st_beta": true,
+    "tp_situacao": "ATIVA",
+    "ds_mensagem": null,
+    "dt_previsao": null,
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 14,
+        "co_view": "paineis-de-dados",
+        "ds_icone": "layout-dashboard",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      },
+      {
+        "co_area": "sede",
+        "nu_ordem": 14,
+        "co_view": "paineis-de-dados",
+        "ds_icone": "layout-dashboard",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      },
+      {
+        "co_area": "projetos",
+        "nu_ordem": 14,
+        "co_view": "paineis-de-dados",
+        "ds_icone": "layout-dashboard",
+        "tp_situacao": "ATIVA",
+        "ds_mensagem": null,
+        "dt_previsao": null
+      }
+    ]
   }
 ]
