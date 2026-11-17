@@ -23,10 +23,12 @@ Toda migration tem `supabase/rollback/<mesmo nome>.sql` (e o ensaio em `supabase
 - **Dado não se desfaz.** Linhas gravadas, histórico (`TH_*`) e estados já corrigidos (ex.: tarefa
   que o alinhador desligou) ficam como estão. O comentário de topo diz o que fica e por quê.
 - **Teste.** O rollback restaura exatamente o banco de antes: as mesmas funções, constraints,
-  comentários e tabelas. Quando a migration troca função, o modelo é
-  `tests/catalogo-dos-robos-no-banco.test.ts` (PGlite: hoje × migrada × migrada + rollback com as
-  mesmas respostas; o "hoje" fica numa fixture com os corpos copiados do banco). No mínimo, um
-  teste estático confere que os blocos restaurados são idênticos aos de antes.
+  comentários e tabelas. Quando a migration troca função, o modelo é o que
+  `tests/catalogo-dos-robos-no-banco.test.ts` fazia enquanto ela estava pendente (PGlite: hoje ×
+  migrada × migrada + rollback com as mesmas respostas; o "hoje" fica numa fixture com os corpos
+  copiados do banco; no Git, antes de 17/11/2026). No mínimo, um teste estático confere que os
+  blocos restaurados são idênticos aos de antes. Aplicada a migration, os testes do rollback e do
+  ensaio saem com ela.
 
 ## Aplicar um rollback em produção
 

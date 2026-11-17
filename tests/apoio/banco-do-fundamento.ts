@@ -25,9 +25,10 @@ export const NOME_DA_MIGRATION =
 
 const ler = (caminho: string) =>
   readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
-export const MIGRATION = ler(`supabase/migrations/${NOME_DA_MIGRATION}`);
-export const ROLLBACK = ler(`supabase/rollback/${NOME_DA_MIGRATION}`);
-export const ENSAIO = ler(`supabase/ensaios/${NOME_DA_MIGRATION}`);
+/* A migration aplicada, guardada em tests/fixtures/sql-do-banco/ só para montar o banco. */
+export const MIGRATION = ler(
+  `tests/fixtures/sql-do-banco/${NOME_DA_MIGRATION}`,
+);
 const RETRATO = ler(
   "tests/fixtures/banco-antes-do-fundamento-da-eliminacao.sql",
 );

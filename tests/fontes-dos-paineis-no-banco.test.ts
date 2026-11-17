@@ -5,17 +5,17 @@ import {
   bancoDosPaineis,
   entrar,
   erroDe,
-  rollback,
   uma,
   USUARIO_ADMIN,
   USUARIO_LEITOR,
 } from "./apoio/banco-dos-paineis.ts";
 
 /*
-  Fontes das colunas dos Painéis (migration 20261113220000) num Postgres de
-  verdade (PGlite): o catálogo de fontes lido do próprio banco, a troca de
-  valores por área com SQL montado só a partir do catálogo, as guardas contra
-  nome forjado, chave repetida e fonte que sumiu, e as RPCs de listar e salvar.
+  Fontes das colunas dos Painéis (migration 20261113220000, já aplicada; o SQL
+  em tests/fixtures/sql-do-banco/) num Postgres de verdade (PGlite): o catálogo
+  de fontes lido do próprio banco, a troca de valores por área com SQL montado
+  só a partir do catálogo, as guardas contra nome forjado, chave repetida e
+  fonte que sumiu, e as RPCs de listar e salvar.
 */
 
 const LONGO = 60_000;
@@ -527,35 +527,6 @@ describe("listar e salvar", () => {
       await entrar(db, { uid: USUARIO_ADMIN, nivel: 3, areas: [SI] });
       expect((await listar(SI, "editais-por-cargo")).pode_editar).toBe(true);
       expect((await erroDe(listar(SI, "outro")))?.codigo).toBe("22023");
-    },
-    LONGO,
-  );
-});
-
-describe("rollback", () => {
-  it(
-    "devolve o banco sem nada do núcleo",
-    async () => {
-      await db.exec(
-        `drop view painel."VW_VAGA_TESTE", painel."VW_VAGA_SEM_COMENTARIO", painel."VW_EDITAL_TESTE"`,
-      );
-      await db.exec(rollback());
-      expect(
-        await uma(
-          db,
-          `select to_regnamespace('painel') as schema,
-                  to_regclass('public."TB_FONTE_COLUNA_PAINEL"') as config,
-                  to_regclass('public."TH_FONTE_COLUNA_PAINEL"') as historico,
-                  to_regprocedure('private."FC_APLICAR_FONTES_DO_PAINEL"(text, text, jsonb)') as aplicar,
-                  to_regprocedure('public.salvar_fonte_da_coluna(text, text, text, text, text, text)') as salvar`,
-        ),
-      ).toEqual({
-        schema: null,
-        config: null,
-        historico: null,
-        aplicar: null,
-        salvar: null,
-      });
     },
     LONGO,
   );

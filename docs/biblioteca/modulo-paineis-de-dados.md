@@ -107,13 +107,16 @@ Sincronizar, downloads, gaveta de fontes, largura das colunas, ⓘ e Montar rela
 (colunas, página lida, arquivos, largura, origem), `tests/fontes-dos-paineis.test.ts` (leitura das
 fontes, permissão, aba Fontes), `tests/fontes-dos-paineis-no-banco.test.ts` (o núcleo das fontes em
 PGlite), `tests/relatorios-prontos-dos-paineis-no-banco.test.ts` (resultado pronto em PGlite: página,
-recorte da coordenação, Sincronizar 1/min, troca de fonte que falha, cálculo de todos, rollback) e
-`tests/relatorios-prontos-dos-paineis-migration.test.ts` (md5 das guardas, rollback e ensaio) e
-`tests/vagas-imediatas-dos-paineis-no-banco.test.ts` (a ordem das fontes das vagas imediatas,
-guarda e rollback de `20261116180000`).
+recorte da coordenação, Sincronizar 1/min, troca de fonte que falha, cálculo de todos) e
+`tests/vagas-imediatas-dos-paineis-no-banco.test.ts` (a ordem das fontes das vagas imediatas, de
+`20261116180000`). As migrations aplicadas que montam esses bancos ficam em
+`tests/fixtures/sql-do-banco/`.
 
 ## Relacionadas
 
 - [[nova-tela-react]] — como a tela entra no app
 - [[permissoes-e-perfis]] — quem vê
 - [[modulo-barra-lateral]] — o bloco Dados do menu
+- [regras-dos-paineis](../aya/regras-dos-paineis.md) — o que a Aya responde sobre a tela
+- [Desenho das fontes das colunas](../superpowers/specs/2026-11-13-fontes-das-colunas-dos-paineis-design.md) e [plano](../superpowers/plans/2026-11-13-fontes-das-colunas-dos-paineis.md) — feito no #829
+- [Desenho do carregamento rápido](../superpowers/specs/2026-11-16-paineis-carregamento-e-tabela-design.md) e [plano](../superpowers/plans/2026-11-16-paineis-carregamento-e-tabela.md) — feito no #836

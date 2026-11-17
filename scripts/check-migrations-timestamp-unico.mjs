@@ -107,8 +107,12 @@ function git(args) {
   }).trim();
 }
 
+/*
+  Pelo caminho, e não por `<ref>:<pasta>`: com todas as migrations aplicadas
+  fora do repositório a pasta some do Git, e aí a lista é vazia, não erro.
+*/
 function migrationsEm(ref) {
-  return git(["ls-tree", "--name-only", `${ref}:${PASTA_DAS_MIGRATIONS}`])
+  return git(["ls-tree", "--name-only", ref, "--", `${PASTA_DAS_MIGRATIONS}/`])
     .split(/\r?\n/)
     .filter(Boolean);
 }

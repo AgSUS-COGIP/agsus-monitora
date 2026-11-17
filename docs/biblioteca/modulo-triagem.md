@@ -93,8 +93,7 @@ lê o que o job gravou (`src/lib/avaliacao-documental/tela-da-pre-classificacao.
 quem usa: `docs/aya/regras-da-avaliacao-documental.md` (Abas, Regras e Provisória da Triagem).
 
 Testes: `tests/modulos/avaliacao-documental-pre-classificacao.test.js`,
-`tests/fundamento-da-eliminacao-no-banco.test.ts` (PGlite: quem confere, auditoria, comunicado,
-ensaio e rollback), `tests/lib/fundamento-da-eliminacao.test.ts`,
+`tests/fundamento-da-eliminacao-no-banco.test.ts` (PGlite: quem confere, auditoria, comunicado), `tests/lib/fundamento-da-eliminacao.test.ts`,
 `tests/modulos/avaliacao-documental-fundamentos-da-eliminacao.test.ts`,
 `tests/python/test_pre_classificacao.py`,
 `tests/python/test_pre_classificacao_job.py`.

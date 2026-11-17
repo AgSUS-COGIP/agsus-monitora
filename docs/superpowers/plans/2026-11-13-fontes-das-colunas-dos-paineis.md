@@ -1,5 +1,7 @@
 # Fontes das colunas dos Painéis — plano de implementação
 
+> **Feito** no PR #829 (16/11/2026). As caixas abaixo não foram marcadas durante a execução: ficam como o roteiro que se seguiu, e o que vale é o código do PR.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** trocar, por área e pela tela, a fonte de cada coluna editável dos três relatórios dos

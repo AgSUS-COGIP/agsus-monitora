@@ -145,3 +145,4 @@ redefina `.btn` em CSS de módulo.
 - [[mobile]] — breakpoints e responsividade
 - [[icones]] — Lucide e o registro único
 - [[textos-da-interface]] — a linguagem da tela
+- [Desenho do acabamento visual](../superpowers/specs/2026-11-11-acabamento-visual-design.md) e [plano dos lotes 0 e 1](../superpowers/plans/2026-11-11-acabamento-lotes-0-e-1.md) — feito no #797

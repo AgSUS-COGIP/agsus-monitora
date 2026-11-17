@@ -88,3 +88,4 @@ Guardado como histórico; não descreve o sistema de hoje.
 - [[mapa-do-repositorio]] — as pastas e os arquivos que não se leem inteiros
 - [[scripts-e-checagens]] — onde está o `check:docs`
 - [[fluxo-git-e-prs]] — documentação muda no mesmo PR do código
+- [biblioteca.base](../biblioteca.base) — a tabela das notas no Obsidian (Bases), por tipo, área e data

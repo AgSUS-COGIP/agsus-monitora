@@ -26,10 +26,15 @@ convenções e a história de cada assunto estão em [docs/banco-de-dados.md](..
   diff mostra o que a migration mudou. Pode estar atrasado; para a guarda md5, confira no banco.
 - Para trocar uma função, copie o corpo vigente com `pg_get_functiondef` no SQL Editor
   (`select pg_get_functiondef('private."FC_X"(text)'::regprocedure);`) e guarde a migration pelo
-  md5 do `prosrc` (modelo: `20261109180000`), para não sobrescrever uma mudança que você não viu.
+  md5 do `prosrc`, para não sobrescrever uma mudança que você não viu (modelo:
+  `tests/fixtures/sql-do-banco/20261109180000_catalogo_dos_robos_e_chave_unica.sql`).
 - **O rollback copia o corpo de antes** desse mesmo `pg_get_functiondef`, não de uma migration.
 - Os testes que precisavam do "antes" guardam só o trecho que usam, em fixture
   (`tests/fixtures/banco-antes-do-catalogo-dos-robos.sql`, `tests/fixtures/sql-de-dados/`).
+- 17/11/2026: saíram as 41 migrations seguintes (aplicadas e registradas, conferidas pelo hash),
+  com ensaio, rollback e os testes de texto. A que monta o banco de um teste de comportamento
+  (PGlite) ficou, sem mudança, em `tests/fixtures/sql-do-banco/<mesmo nome>.sql`; o teste do
+  rollback e do ensaio dela saiu.
 - O histórico está no Git (`git log --all -- supabase/migrations/<arquivo>`); nome de migration
   citado em doc, nota ou comentário é esse histórico (e a linha do registro), não um arquivo daqui.
 - Não recriar `migrations-historicas/`, `descartadas/` nem `correcoes/`

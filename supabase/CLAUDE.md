@@ -6,7 +6,9 @@ rollback: [[rollback-de-migration]].
 - `migrations/` — só as migrations que ainda importam: `AAAAMMDDHHMMSS_descricao_em_portugues.sql`
   (14 dígitos, timestamp único). **Nunca editar migration já aplicada**: crie outra. Aplicação
   **manual** + registro em `public.migracoes_aplicadas`; **nunca `supabase db push`**.
-- **As migrations aplicadas saíram do repositório (10/11/2026); o banco não mudou.** A fonte do
+- **As migrations aplicadas saíram do repositório (10/11/2026; de novo em 17/11/2026); o banco
+  não mudou.** A que monta o banco de um teste de comportamento fica em
+  `tests/fixtures/sql-do-banco/`. A fonte do
   código do banco é o banco: para trocar uma função, copie o corpo com `pg_get_functiondef` e guarde
   a migration pelo md5 do `prosrc` (modelo `20261109180000`). Nome de migration citado em doc é
   histórico do Git, não arquivo daqui.
