@@ -29,14 +29,15 @@ seção 10.
 Algumas telas guardam no navegador (IndexedDB `agsus-monitora-analises`, loja `payload`) uma cópia
 do que o banco mandou, para abrir na hora e para consultar sem rede.
 
-| Cópia (chave)                                                              | O que leva                                                                          |
-| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Análises (`<área>:<escopo>`)                                               | candidato, vaga, responsável, data e nota da análise                                |
-| Lista de aprovados (`aprovados:<área>`)                                    | nome, nota, classificação, modalidade, status, SEI, matrícula; as listas            |
-| Entrevistas › Resultados (`entrevistas:<área>`)                            | nome e código, notas por critério, parecer, comparecimento                          |
-| Condução (`conducao:editais:…`, `conducao:edital:<id>`)                    | editais da área; convocados (nome, código, vaga, banca), notas, observações, agenda |
-| Seleção (`selecao:<área>`)                                                 | só contagens por vaga                                                               |
-| Avaliação documental, pré-classificação e Classificação (`<RPC>:<edital>`) | regra; nome, código e notas dos candidatos                                          |
+| Cópia (chave)                                                              | O que leva                                                                                                                                     |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Análises (`<área>:<escopo>`)                                               | candidato, vaga, responsável, data e nota da análise                                                                                           |
+| Lista de aprovados (`aprovados:<área>`)                                    | nome, nota, classificação, modalidade, status, SEI, matrícula; as listas                                                                       |
+| Entrevistas › Resultados (`entrevistas:<área>`)                            | nome e código, notas por critério, parecer, comparecimento                                                                                     |
+| Condução (`conducao:editais:…`, `conducao:edital:<id>`)                    | editais da área; convocados (nome, código, vaga, banca), notas, observações e agenda: só da banca de quem avalia (a coordenação leva o edital) |
+| Perfil para entrar sem rede (`perfil`)                                     | o perfil (nome, e-mail, grupo, permissões) e os painéis liberados                                                                              |
+| Seleção (`selecao:<área>`)                                                 | só contagens por vaga                                                                                                                          |
+| Avaliação documental, pré-classificação e Classificação (`<RPC>:<edital>`) | regra; nome, código e notas dos candidatos                                                                                                     |
 
 - **Sem CPF, e-mail nem telefone:** as RPCs dessas telas não os mandam.
 - **48 horas** (`VALIDADE_DO_CACHE_MS`, `src/lib/cache-de-payload.ts`): a cópia vencida é apagada

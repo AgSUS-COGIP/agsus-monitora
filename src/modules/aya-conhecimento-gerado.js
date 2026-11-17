@@ -4843,6 +4843,25 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-das-entrevistas.md",
+    titulo: "Levar para o campo",
+    perguntas: [
+      "levar para o campo",
+      "entrevista sem internet",
+      "conduzir sem internet",
+      "ficha sem internet",
+      "fila sem internet",
+      "baixar as entrevistas",
+      "entrevista offline",
+      "trabalho de campo",
+    ],
+    resposta:
+      'Em Conduzir entrevistas, com o edital aberto e com internet, o botão "Levar para o campo" (no alto, ao lado do Atualizar) guarda neste aparelho a fila do dia, a agenda e as fichas: quem avalia numa banca leva só a sua banca; a coordenação, sem banca no edital, leva o edital inteiro. Ao terminar, aparece "Pronto para o campo", com a data até quando a cópia fica no aparelho (48 horas). Sem internet, a fila e as fichas abrem dessa cópia, só para consulta, com a data dos dados ao lado do edital, como "Dados de 17/11, 10:14". Lançar notas, concluir e convocar precisam de internet. O edital aberto com internet também fica guardado sozinho, do mesmo jeito; o botão confirma que a cópia está atualizada. A cópia não leva CPF nem contatos e sai ao Sair, ao perder o acesso ou quando outra pessoa entra no navegador.',
+    fato: "",
+    fonte:
+      "src/modulos/entrevistas/conduzir.tsx; src/modulos/entrevistas/estado-da-conducao.ts (levarParaOCampo); src/lib/conducao-para-o-campo.ts; src/app/copias-da-conducao.ts",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
     titulo: "Preparar o edital",
     perguntas: [
       "preparar",
@@ -5791,10 +5810,10 @@ export const VERBETES_AYA = Object.freeze([
       "dados guardados no celular",
     ],
     resposta:
-      'Depois de aberto uma vez com internet, o Yeendé guarda no aparelho o necessário para abrir todas as telas, mesmo as que você ainda não abriu: com o Yeendé aberto, se a conexão cair, aparece o aviso "Sem conexão com a internet" e você continua trocando de tela. Recarregar a página ou abrir o Yeendé sem internet ainda não funciona: a entrada confere suas permissões no banco. Os dados vêm do banco. Sem internet, Análises, Seleção, Entrevistas (o painel, a fila do dia e a ficha) e a Lista de aprovados mostram o que o aparelho guardou da última vez que foram abertas com internet, com a data no alto, como "Dados de 17/11, 10:14": dá para consultar, não para gravar. Essas cópias ficam só no aparelho, sem CPF nem contatos, valem 48 horas e saem ao Sair, ao perder o acesso ou quando outra pessoa entra no navegador. Mapas de terras e DSEIs precisam de internet. Quando a conexão volta, aparece "Conexão restabelecida". O Yeendé se instala pelo navegador, no celular e no computador; não há aplicativo de loja.',
+      'Depois de aberto uma vez com internet, o Yeendé guarda no aparelho o necessário para abrir todas as telas, mesmo as que você ainda não abriu. Sem conexão, aparece o aviso "Sem conexão com a internet" e você continua trocando de tela, recarregando a página e até abrindo o Yeendé de novo: até 48 horas depois da última entrada com internet, ele entra com o seu perfil guardado no aparelho e confere as suas permissões no banco quando a conexão volta (se o acesso tiver sido retirado, o Yeendé fecha e apaga o que guardou). Os dados vêm do banco: sem internet, Análises, Seleção, Entrevistas (o painel, a fila do dia e a ficha) e a Lista de aprovados mostram o que o aparelho guardou da última vez que foram abertas com internet, com a data no alto, como "Dados de 17/11, 10:14"; dá para consultar, não para gravar. Essas cópias ficam só no aparelho, sem CPF nem contatos, valem 48 horas e saem ao Sair, ao perder o acesso ou quando outra pessoa entra no navegador. Mapas de terras e DSEIs precisam de internet. Quando a conexão volta, aparece "Conexão restabelecida". O Yeendé se instala pelo navegador, no celular e no computador; não há aplicativo de loja.',
     fato: "",
     fonte:
-      "sw.js; sw-policy.js; src/lib/cache-do-service-worker.ts; src/app/casca/aviso-de-conexao.tsx; src/lib/cache-de-payload.ts; src/app/copias-da-conducao.ts",
+      "sw.js; sw-policy.js; src/lib/cache-do-service-worker.ts; src/app/casca/aviso-de-conexao.tsx; src/lib/cache-de-payload.ts; src/lib/sessao-sem-rede.ts; src/app/sessao.ts; src/app/copias-da-conducao.ts",
   },
   {
     arquivo: "regras-do-sistema.md",

@@ -69,6 +69,11 @@ import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
+import {
+  FORMATO_DA_COPIA_DA_CONDUCAO,
+  copiaParaOCampo,
+  validadeDaCopia,
+} from "../../lib/conducao-para-o-campo.ts";
 
 const TEMPO_LIMITE_MS = 30000;
 
@@ -156,7 +161,7 @@ export function mensagemDe(erro: unknown) {
 }
 
 /* Formato das cópias da condução (sobe quando o que se guarda muda). */
-const FORMATO_DA_COPIA = 1;
+const FORMATO_DA_COPIA = FORMATO_DA_COPIA_DA_CONDUCAO;
 const chaveDosEditais = (area: string, todos: boolean) =>
   `editais:${area}:${todos ? "todos" : "janela"}`;
 const chaveDoEdital = (id: string) => `edital:${id}`;
@@ -168,6 +173,9 @@ function daCopia(
   const payload = objetoDaConducao(lida?.payload);
   return payload?.formato === FORMATO_DA_COPIA ? payload : null;
 }
+
+/* A última gravação do edital no aparelho (para o "Levar para o campo"). */
+type GravacaoDaCopia = { soDaBanca: boolean; guardou: Promise<boolean> };
 
 export function criarEstadoDaConducao({
   supabase = null,
@@ -183,6 +191,7 @@ export function criarEstadoDaConducao({
   let pedidoDosRoteiros = 0;
   let pedidoDosEditais = 0;
   let geracaoDaConducao = 0;
+  let ultimaGravacao: GravacaoDaCopia | null = null;
   const ouvintes = new Set<() => void>();
 
   function publicar(mudancas: Partial<EstadoDaConducao>) {
@@ -508,10 +517,14 @@ export function criarEstadoDaConducao({
       if (meu !== pedidoDoEdital) return false;
       const partes = { resposta, previsao, agenda, calculo };
       aplicar(partes, null);
-      void copias?.guardar(chaveDoEdital(id), {
-        formato: FORMATO_DA_COPIA,
-        ...partes,
-      });
+      // No aparelho, só o necessário (src/lib/conducao-para-o-campo.ts).
+      const copia = copiaParaOCampo(partes);
+      ultimaGravacao = {
+        soDaBanca: copia.soDaBanca,
+        guardou: Promise.resolve(copias?.guardar(chaveDoEdital(id), copia))
+          .then((ok) => ok === true || ok === undefined)
+          .catch(() => false),
+      };
       return true;
     } catch (erro) {
       if (meu !== pedidoDoEdital) return false;
@@ -717,6 +730,39 @@ export function criarEstadoDaConducao({
     });
   }
 
+  /*
+    "Levar para o campo": relê o edital aberto com rede e confirma que ele
+    ficou no aparelho (a fila, a agenda e as fichas da banca de quem avalia),
+    para consultar sem rede por 48 h.
+  */
+  async function levarParaOCampo(): Promise<Resultado> {
+    const id = estado.editalId;
+    if (!id || !copias) return { erro: "Escolha o edital." };
+    ultimaGravacao = null;
+    const abriu = await abrirEdital(id);
+    const gravacao = ultimaGravacao as GravacaoDaCopia | null;
+    if (!abriu || estado.copiaDe !== null || !gravacao) {
+      const erro =
+        "Sem conexão: abra o edital com internet para levar ao campo.";
+      toast(erro, "warn");
+      return { erro };
+    }
+    if (!(await gravacao.guardou)) {
+      const erro = "Não foi possível guardar o edital neste aparelho.";
+      toast(erro, "error");
+      return { erro };
+    }
+    toast(
+      `Pronto para o campo: ${
+        gravacao.soDaBanca
+          ? "a fila e as fichas da sua banca ficam"
+          : "a fila e as fichas do edital ficam"
+      } neste aparelho até ${validadeDaCopia(Date.now())}.`,
+      "ok",
+    );
+    return { ok: true };
+  }
+
   /** Abre (id do convocado) ou fecha (null) a ficha de notas. */
   function abrirFicha(id: string | null) {
     publicar({ fichaAberta: id || null });
@@ -744,5 +790,6 @@ export function criarEstadoDaConducao({
     concluirEntrevista,
     reabrirEntrevista,
     abrirFicha,
+    levarParaOCampo,
   };
 }

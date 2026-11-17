@@ -418,7 +418,21 @@ function TelaDeConducao({
           if (visao === "preparar") void conducao.carregarRoteiros(e.area);
         }}
         atualizarDesativado={!e.area || e.carregandoEdital}
-      />
+      >
+        {e.editalId ? (
+          <button
+            type="button"
+            className="btn contorno"
+            data-acao="levar-para-o-campo"
+            data-tour="conduzir-levar-para-o-campo"
+            disabled={e.carregandoEdital || Boolean(e.acao)}
+            onClick={() => void conducao.levarParaOCampo()}
+          >
+            <i className="fa-solid fa-download" aria-hidden="true" /> Levar para
+            o campo
+          </button>
+        ) : null}
+      </CabecalhoDaTela>
       {seletor.avisos}
 
       {visao === "fila" &&

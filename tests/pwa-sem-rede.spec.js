@@ -51,6 +51,27 @@ import {
 
 const titulo = (page) => page.locator("#pageTitle");
 
+/* Há cópia com esta chave no IndexedDB das cópias de payload? */
+const guardado = (page, chave) =>
+  page.evaluate(
+    (chave) =>
+      new Promise((pronto) => {
+        const pedido = indexedDB.open("agsus-monitora-analises");
+        pedido.onsuccess = () => {
+          const leitura = pedido.result
+            .transaction("payload")
+            .objectStore("payload")
+            .get(chave);
+          leitura.onsuccess = () => {
+            pedido.result.close();
+            pronto(Boolean(leitura.result));
+          };
+        };
+        pedido.onerror = () => pronto(false);
+      }),
+    chave,
+  );
+
 test.describe("PWA sem rede", () => {
   test.beforeEach(async ({ request }) => {
     test.skip(
@@ -135,25 +156,7 @@ test.describe("PWA sem rede", () => {
     await expect(page.getByText("Pessoa Fictícia").first()).toBeVisible();
     // A cópia no aparelho (IndexedDB das cópias de payload).
     await expect
-      .poll(() =>
-        page.evaluate(
-          () =>
-            new Promise((pronto) => {
-              const pedido = indexedDB.open("agsus-monitora-analises");
-              pedido.onsuccess = () => {
-                const leitura = pedido.result
-                  .transaction("payload")
-                  .objectStore("payload")
-                  .get("entrevistas:saude-indigena");
-                leitura.onsuccess = () => {
-                  pedido.result.close();
-                  pronto(Boolean(leitura.result));
-                };
-              };
-              pedido.onerror = () => pronto(false);
-            }),
-        ),
-      )
+      .poll(() => guardado(page, "entrevistas:saude-indigena"))
       .toBe(true);
     await page.close();
 
@@ -172,6 +175,42 @@ test.describe("PWA sem rede", () => {
       /^Dados de \d{2}\/\d{2}, \d{2}:\d{2}$/,
     );
     await expect(semRede.getByText(/Não foi possível/)).toHaveCount(0);
+    expect([...erros, ...errosSemRede]).toEqual([]);
+  });
+
+  test("abrir o app sem rede entra com o perfil guardado e mostra a cópia", async ({
+    page,
+    context,
+  }) => {
+    const erros = await abrirComSessao(page, {
+      rpcs: { get_entrevistas_da_area_se_mudou: ENTREVISTAS },
+    });
+    await page.goto("/saude-indigena/painel-de-entrevistas", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.getByText("Pessoa Fictícia").first()).toBeVisible();
+    // As cópias do perfil e do painel são gravadas por trás.
+    for (const chave of ["perfil", "entrevistas:saude-indigena"])
+      await expect.poll(() => guardado(page, chave)).toBe(true);
+    await page.close();
+
+    // Outra abertura com o Supabase inteiro fora do alcance, como sem rede.
+    const semRede = await context.newPage();
+    const errosSemRede = await abrirComSessao(semRede);
+    await semRede.route(`${SUPABASE}/**`, (rota) =>
+      rota.abort("internetdisconnected"),
+    );
+    await semRede.goto("/saude-indigena/painel-de-entrevistas", {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(semRede.locator("#loginScreen")).toBeHidden();
+    await expect(
+      semRede.getByText("Não foi possível verificar suas permissões"),
+    ).toHaveCount(0);
+    await expect(semRede.getByText("Pessoa Fictícia").first()).toBeVisible();
+    await expect(semRede.locator("[data-status-da-carga]:visible")).toHaveText(
+      /^Dados de \d{2}\/\d{2}, \d{2}:\d{2}$/,
+    );
     expect([...erros, ...errosSemRede]).toEqual([]);
   });
 });

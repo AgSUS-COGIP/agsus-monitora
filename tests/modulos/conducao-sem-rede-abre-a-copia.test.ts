@@ -135,4 +135,73 @@ describe("condução de entrevistas sem rede", () => {
     expect(comErro.obter().edital).toBeNull();
     expect(comErro.obter().copiaDe).toBeNull();
   });
+
+  it("Levar para o campo: relê com rede, guarda só a banca de quem avalia e confirma", async () => {
+    const { dados, copias } = copiasEmMemoria();
+    const EDITAL_COM_BANCAS = {
+      ...EDITAL,
+      meu_perfil: "perfil-ana",
+      avaliadores: [
+        { id: "a1", perfil: "perfil-ana", banca: 2, ativo: true },
+        { id: "a2", perfil: "outro", banca: 1, ativo: true },
+      ],
+      convocados: [
+        { id: "c1", candidato: "Pessoa da banca 1", banca: 1 },
+        { id: "c2", candidato: "Pessoa da banca 2", banca: 2 },
+      ],
+    };
+    const toast = vi.fn();
+    const conducao = criarEstadoDaConducao({
+      supabase: banco({
+        ...COM_REDE,
+        obter_entrevistas_do_edital: EDITAL_COM_BANCAS,
+        obter_agenda_entrevista: {
+          itens: [
+            { analise_id: "x1", banca: 1 },
+            { analise_id: "x2", banca: 2 },
+          ],
+        },
+      }),
+      copias,
+      toast,
+    });
+    await conducao.abrirEdital("E1");
+    // Na tela, o edital inteiro; no aparelho, só a banca 2.
+    expect(conducao.obter().edital?.convocados).toHaveLength(2);
+    expect(await conducao.levarParaOCampo()).toEqual({ ok: true });
+    const guardado = dados.get("edital:E1") as {
+      resposta: { convocados: { id: string }[] };
+      agenda: { itens: { analise_id: string }[] };
+      calculo: unknown;
+    };
+    expect(guardado.resposta.convocados.map((c) => c.id)).toEqual(["c2"]);
+    expect(guardado.agenda.itens.map((i) => i.analise_id)).toEqual(["x2"]);
+    expect(guardado.calculo).toBeNull();
+    expect(toast).toHaveBeenLastCalledWith(
+      expect.stringMatching(
+        /^Pronto para o campo: a fila e as fichas da sua banca ficam neste aparelho até \d{2}\/\d{2}, \d{2}:\d{2}\.$/,
+      ),
+      "ok",
+    );
+  });
+
+  it("Levar para o campo sem rede avisa que precisa de internet", async () => {
+    const { copias } = copiasEmMemoria();
+    await guardarComRede(copias);
+    const toast = vi.fn();
+    const semRede = criarEstadoDaConducao({
+      supabase: banco(null),
+      copias,
+      toast,
+    });
+    await semRede.abrirEdital("E1");
+    expect(semRede.obter().copiaDe).toBe(GUARDADO_EM);
+    expect(await semRede.levarParaOCampo()).toEqual({
+      erro: "Sem conexão: abra o edital com internet para levar ao campo.",
+    });
+    expect(toast).toHaveBeenCalledWith(
+      "Sem conexão: abra o edital com internet para levar ao campo.",
+      "warn",
+    );
+  });
 });

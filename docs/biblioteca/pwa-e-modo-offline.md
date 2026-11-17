@@ -58,8 +58,26 @@ usam a cópia que guardaram no IndexedDB na última leitura com rede (o que leva
 - A cópia é lida quando a falha é de conexão (`ehFalhaDeConexao`); erro do banco ou de permissão
   continua erro, e 42501/22023 apagam as cópias.
 - Gravar (notas, convocação, status) exige rede: lançar notas sem rede é a fase 3, ainda não feita.
-- **Limite:** abrir ou recarregar o app sem rede não entra (a entrada confere o perfil no banco), e
-  com o token vencido (1 h) sem rede a sessão não é lida. A cópia serve com o app já aberto.
+- **"Levar para o campo"** (Conduzir entrevistas, edital aberto): relê o edital com rede e confirma
+  a cópia ("Pronto para o campo … neste aparelho até 19/11, 10:14"). Quem avalia leva só a sua banca;
+  a coordenação, o edital inteiro; o cálculo da convocação não vai (`src/lib/conducao-para-o-campo.ts`,
+  a mesma regra da cópia automática).
+
+## Entrar sem rede
+
+Decisão de 17/11/2026, para o trabalho de campo (`src/lib/sessao-sem-rede.ts`):
+
+- **Sessão:** o token vence em 1 h; vencido e sem rede, o `getSession()` do auth-js devolve `null`
+  embora a sessão continue guardada. O cliente (`src/lib/supabaseClient.ts`) passa a devolver a
+  guardada quando a renovação falha por falta de rede, por até 48 h depois de vencer. Recusa do
+  servidor segue como sessão encerrada.
+- **Perfil:** a entrada sempre consulta o perfil; se a consulta falha por falta de rede, serve o perfil
+  guardado na última entrada com rede (`src/app/perfil-guardado.ts`, cópia de 48 h, de um usuário
+  só). O estado da sessão fica com `semRede: true`.
+- **A rede voltou** (evento `online`): o perfil é conferido no banco. Sem acesso, o app fecha e as
+  cópias saem (`ficarSemAcesso`); com acesso, `semRede` volta a `false`.
+- Risco aceito: quem teve o acesso retirado ainda vê, sem rede, o que já estava no aparelho, por até
+  48 h.
 
 ## Testes
 
@@ -69,10 +87,12 @@ usam a cópia que guardaram no IndexedDB na última leitura com rede (o que leva
 - Sem rede em cada tela: `tests/modulos/entrevistas.test.js`, `selecao.test.js`,
   `analises-consultas.test.js`, `tests/componentes/lista-aprovados.test.ts` e
   `tests/modulos/conducao-sem-rede-abre-a-copia.test.ts`.
+- Entrada sem rede: `tests/sessao-sem-rede.test.ts` (a regra) e `tests/app/sessao.test.ts`
+  ("entrar sem rede"); "Levar para o campo": `tests/conducao-para-o-campo.test.ts`.
 - `tests/pwa-sem-rede.spec.js` (Playwright, build simulado): abre o app, espera o service worker
   terminar de guardar, desliga a rede (`context.setOffline(true)`) e troca para o Cronograma, que
-  nunca foi aberto; depois dá F5 sem rede (com o Supabase simulado: de verdade, a entrada sem rede
-  ainda falha ao conferir o perfil, "Não foi possível verificar suas permissões").
+  nunca foi aberto; depois dá F5 sem rede (com o Supabase simulado). O segundo teste derruba a
+  leitura do painel de Entrevistas e confere a cópia com "Dados de …" na tela.
 
 ## Conferir à mão
 

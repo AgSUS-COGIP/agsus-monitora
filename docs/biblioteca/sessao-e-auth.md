@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: seguranca
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
 # Sessão e autenticação
@@ -39,6 +39,9 @@ solicitação aprovada. **Há um caminho único de auth**: nenhum `createClient`
   ([[seguranca]]).
 - Nunca aplicar o acesso automático @agenciasus (decisão de nunca aplicar, em `supabase/`).
 - Login e permissões falham de forma clara, nunca com tela travada.
+- **Sem rede**, a sessão guardada e o perfil guardado servem por até 48 h, e o perfil é conferido
+  quando a rede volta ([[pwa-e-modo-offline]], `src/lib/sessao-sem-rede.ts`). Só a falha de rede
+  abre esse caminho: recusa do servidor e erro do banco seguem como antes.
 
 ## Testes
 

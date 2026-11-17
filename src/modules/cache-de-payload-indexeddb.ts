@@ -19,7 +19,7 @@
   `criarCacheDePayload`; `apagarCacheDePayload` também nunca lança.
 */
 
-import { registroVencido } from "../lib/cache-de-payload";
+import { registroVencido } from "../lib/validade-das-copias";
 
 const BANCO = "agsus-monitora-analises";
 const LOJA = "payload";

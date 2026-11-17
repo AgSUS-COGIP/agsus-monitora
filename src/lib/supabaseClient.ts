@@ -12,6 +12,7 @@ import {
   type SinalDeTelaAntiga,
 } from "./versao-do-sistema.ts";
 import { comNovasTentativas, criarOrcamento } from "./novas-tentativas.ts";
+import { sessaoSemRede } from "./sessao-sem-rede.ts";
 
 type ArmazenamentoDaSessao = ReturnType<typeof createSafeAuthStorage>;
 
@@ -104,7 +105,26 @@ export function getSupabaseClient(): SupabaseClient | null {
         ),
       },
     });
+    lerSessaoTambemSemRede(supabaseClient);
   }
 
   return supabaseClient;
+}
+
+/*
+  Sem rede e com o token vencido (1 h), o auth-js devolve `session: null`
+  embora a sessão continue guardada: a leitura da sessão do cliente passa a
+  devolver a guardada, por até 48 h (src/lib/sessao-sem-rede.ts). É aqui, onde
+  o cliente nasce, para valer em todas as telas que pedem o usuário ao
+  `getSession()`. Com a rede de volta, a leitura da biblioteca renova o token.
+*/
+function lerSessaoTambemSemRede(cliente: SupabaseClient) {
+  const auth = cliente.auth;
+  const daBiblioteca = auth.getSession.bind(auth);
+  auth.getSession = (async () =>
+    sessaoSemRede(await daBiblioteca(), {
+      guardada: getSupabaseAuthStorage().getItem(SUPABASE_AUTH_STORAGE_KEY),
+      agora: Date.now(),
+      online: globalThis.navigator?.onLine !== false,
+    })) as typeof auth.getSession;
 }

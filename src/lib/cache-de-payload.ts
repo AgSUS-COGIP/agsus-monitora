@@ -34,6 +34,8 @@
   `LISTA_DE_APROVADOS` (candidatos-aprovados-compactos.ts).
 */
 
+import { VALIDADE_DO_CACHE_MS, registroVencido } from "./validade-das-copias";
+
 /** O armazenamento (IndexedDB): pode lançar erro; aqui ele vira "não há cópia". */
 export interface ArmazenamentoDoCache {
   ler(chave: string): unknown;
@@ -64,19 +66,7 @@ export interface RegistroDoCache {
   texto: string;
 }
 
-/*
-  48 h: a cópia baixada na véspera ainda serve no dia do trabalho de campo, e
-  nomes e notas de candidatos não ficam no aparelho além disso. Era 7 dias.
-*/
-export const VALIDADE_DO_CACHE_MS = 48 * 60 * 60 * 1000;
-
-/** A cópia passou da validade (ou a hora dela é inválida)? O registro do dono não vence. */
-export function registroVencido(registro: unknown, agora: number): boolean {
-  if (!registro || typeof registro !== "object") return false;
-  const idade =
-    agora - Number((registro as { guardadoEm?: unknown }).guardadoEm);
-  return !(idade >= 0 && idade <= VALIDADE_DO_CACHE_MS);
-}
+export { VALIDADE_DO_CACHE_MS, registroVencido };
 
 /*
   As RPCs `*_se_mudou` (migration 20261013160000) recebem a `versao` da cópia

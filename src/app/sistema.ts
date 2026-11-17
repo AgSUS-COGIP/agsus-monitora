@@ -190,9 +190,12 @@ export function localizarLinhaDoMonitoramento(id: unknown) {
 
 /*
   A pessoa saiu (ou a sessão acabou, ou saiu em outra aba): nada dela fica na
-  tela. `carga.esquecer` também fecha o Realtime e tira as linhas do store.
+  tela. `carga.esquecer` também fecha o Realtime e tira as linhas do store. As
+  cópias de payload (nomes e notas de candidatos, o perfil para entrar sem
+  rede) saem do aparelho também quando a saída não foi pelo botão.
 */
 function limparEstadoDeslogado() {
+  void apagarCacheDePayload();
   esquecerDaPessoa();
   inicioDaSessao.esquecer();
   carga.esquecer();

@@ -145,6 +145,8 @@ export type EstadoDaConducaoComAcoes = {
     motivo: string,
   ) => Promise<Resultado>;
   recarregarEdital: () => Promise<boolean>;
+  /** Guarda o edital aberto no aparelho para consultar sem rede (48 h). */
+  levarParaOCampo: () => Promise<Resultado>;
   lancarNotas: (
     entrevista: string,
     dados: PayloadDasNotas,
