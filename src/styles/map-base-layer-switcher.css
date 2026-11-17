@@ -91,3 +91,10 @@
     padding: 0 var(--space-2);
   }
 }
+
+/* Toque: botões de 44px (Design System, seção 16); o trilho continua no canto. */
+@media (pointer: coarse) {
+  .agsus-basemap-switcher .agsus-basemap-switcher__button {
+    min-height: 44px;
+  }
+}

@@ -62,7 +62,7 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
 - Banco: [[banco-e-migrations]] · [[rpc-e-contrato]] · Segurança: [[seguranca]] ·
   [[dados-pessoais]]
 - Qualidade: [[testes]] · [[ci-e-qualidade]] · Operação: [[comandos-e-ambiente]] ·
-  [[deploy-e-vercel]] · [[servidor-web]] · [[documentacao]]
+  [[deploy-e-vercel]] · [[servidor-web]] · [[pwa-e-modo-offline]] · [[documentacao]]
 - Robôs e dados: [[python-e-jobs]] · [[robos-e-agenda]] · [[planilhas]]
 
 **Telas comuns às três áreas** (a área é dado, não estrutura: [[arquitetura-do-front]])
