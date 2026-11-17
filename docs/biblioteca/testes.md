@@ -75,3 +75,4 @@ conferido pelo ensaio antes de aplicar.
 - [[ci-e-qualidade]] — o que roda em todo PR
 - [[comandos-e-ambiente]] — os outros comandos
 - [[logica-em-src-lib]] — o que se testa como lógica pura
+- [Plano dos testes mais rápidos](../superpowers/plans/2026-11-16-testes-mais-rapidos.md) — o ambiente `node` por padrão, feito no #839
