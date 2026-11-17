@@ -167,7 +167,7 @@ const LOTE_PRELIMINARES = linhas(
 
 const FINAL_PRELIMINARES = linhas(
   `A Agência Brasileira de Apoio à Gestão do SUS (AgSUS){autoridade}, em conformidade com o **Edital nº {edital}**, referente {ao} **{unidade}**, ${COMPROMISSO}, torna público o **Resultado {fase} do Processo Seletivo {publico}**, conforme previsto no item 10 do referido Edital.`,
-  "A nota final do processo seletivo corresponde à soma das pontuações obtidas na Avaliação Documental e de Títulos (até 30 pontos) e na Entrevista Individual (até 20 pontos).",
+  "{frase_da_nota}",
   "Foram considerados(as) aprovados(as) na etapa final do Processo Seletivo os(as) candidatos(as) relacionados(as) a seguir, por ordem de classificação, com indicação do nome completo e da respectiva nota obtida:",
 );
 const FINAL_ELIMINADOS_PRELIMINARES = linhas(
@@ -278,7 +278,7 @@ export const MODELOS_PADRAO: Readonly<
     titulo: "RESULTADO {FASE} - ETAPA DE ENTREVISTA",
     preliminares: ENTREVISTA_PRELIMINARES,
     finais:
-      "Esta nota corresponde somente à nota atribuída na etapa de Entrevista. Ressalta-se que será publicada a nota final do processo seletivo, que condiz à soma das pontuações obtidas na Avaliação Documental e de Títulos (até 30 pontos) e na Entrevista Individual (até 20 pontos). O resultado será divulgado conforme o cronograma estabelecido na última retificação publicada, e a classificação final ocorrerá em ordem decrescente da pontuação total, observados os critérios de desempate previstos no item 10.4.",
+      "Esta nota corresponde somente à nota atribuída na etapa de Entrevista. Ressalta-se que será publicada a nota final do processo seletivo{conta_entre_virgulas}. O resultado será divulgado conforme o cronograma estabelecido na última retificação publicada, e a classificação final ocorrerá em ordem decrescente da pontuação total, observados os critérios de desempate previstos no item 10.4.",
   },
   ENTREVISTA_PRELIMINAR_ELIMINADOS: {
     rotulo: "Entrevista — eliminados (preliminar)",
@@ -498,6 +498,12 @@ const NOTA_DO_COMPONENTE: Readonly<Record<string, string>> = Object.freeze({
   ART: "nota da autodeclaração (ART)",
 });
 export function textoDaComposicao(regraBruta: unknown): string {
+  const conta = contaDaNotaFinal(regraBruta);
+  return conta ? `A nota final é ${conta}.` : "";
+}
+
+/** "a média aritmética da nota da análise curricular e da nota da entrevista" (ou ""). */
+export function contaDaNotaFinal(regraBruta: unknown): string {
   const r = normalizarRegra(regraBruta);
   const componentes = r.composicao.componentes.filter(
     (c) => NOTA_DO_COMPONENTE[c.codigo] && c.peso > 0,
@@ -510,16 +516,16 @@ export function textoDaComposicao(regraBruta: unknown): string {
   const iguais = pesos.every((p) => Math.abs(p - pesos[0]!) < 1e-9);
   const soma = pesos.reduce((s, p) => s + p, 0);
   if (iguais && Math.abs(soma - 1) < 1e-9)
-    return `A nota final é a média aritmética ${juntar(nomes)}.`;
+    return `a média aritmética ${juntar(nomes)}`;
   if (iguais && Math.abs(pesos[0]! - 1) < 1e-9)
-    return `A nota final é a soma ${juntar(nomes)}.`;
+    return `a soma ${juntar(nomes)}`;
   const porcento = (p: number) =>
     `${String(Math.round(p * 10000) / 100).replace(".", ",")}%`;
-  return `A nota final é a soma de ${juntar(
+  return `a soma de ${juntar(
     componentes.map(
       (c) => `${porcento(c.peso)} ${`da ${NOTA_DO_COMPONENTE[c.codigo]}`}`,
     ),
-  )}.`;
+  )}`;
 }
 
 const MESES = [
@@ -1107,6 +1113,13 @@ export function documentoOficial(
     FASE: faseTexto.toUpperCase(),
     publico: publicoDaLista(retrato, listaEfetiva, MODELOS_PADRAO[chave]),
     notas_minimas: textoDasNotasMinimas(r),
+    // A conta da nota final pela composição da regra (sem componente a somar, nada).
+    frase_da_nota: contaDaNotaFinal(r)
+      ? `A nota final do processo seletivo é ${contaDaNotaFinal(r)}.`
+      : "",
+    conta_entre_virgulas: contaDaNotaFinal(r)
+      ? `, que é ${contaDaNotaFinal(r)}`
+      : "",
     processo: doc.processo,
   };
   const limpar = (t: unknown) =>
@@ -1118,10 +1131,9 @@ export function documentoOficial(
       campos,
     ).replace(/ {2,}/g, " ");
   const titulo = itensDoTexto(textos.titulo).map((i) => limpar(i.texto));
-  const preliminares = itensDoTexto(textos.preliminares).map((i) => ({
-    ...i,
-    texto: limpar(i.texto),
-  }));
+  const preliminares = itensDoTexto(textos.preliminares)
+    .map((i) => ({ ...i, texto: limpar(i.texto) }))
+    .filter((i) => i.texto.trim());
   const finais = itensDoTexto(textos.finais).map((i) => ({
     ...i,
     texto: limpar(i.texto),
@@ -1147,7 +1159,9 @@ export function documentoOficial(
     composicao &&
     retrato.tipo === "FINAL" &&
     listaEfetiva !== "eliminados" &&
-    !finais.some((i) => /a nota final é/i.test(semMarcas(i.texto)))
+    ![...preliminares, ...finais].some((i) =>
+      /a nota final (do processo seletivo )?é/i.test(semMarcas(i.texto)),
+    )
   )
     finais.push({ nivel: 2, texto: composicao });
   // O rodapé da regra (ex.: os critérios de desempate) vale para o resultado

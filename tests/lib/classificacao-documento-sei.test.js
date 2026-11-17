@@ -610,8 +610,9 @@ describe("resultado da entrevista e resultado final (83/2026)", () => {
     expect(semMarcas(doc.preliminares[0].texto)).toBe(
       "A Agência Brasileira de Apoio à Gestão do SUS (AgSUS), por intermédio da Diretoria de Atenção Integral à Saúde, no uso das atribuições que lhe foram conferidas pela Designação nº 28/2026/PRES/AgSUS, em conformidade com o Edital nº 83/2026, referente ao Distrito Sanitário Especial Indígena Xingu (DSEI XINGU), no exercício de seu compromisso institucional com a transparência, responsabilidade e adequada condução de seus certames, torna público o Resultado Final do Processo Seletivo, conforme previsto no item 10 do referido Edital.",
     );
-    expect(doc.preliminares[1].texto).toContain(
-      "(até 30 pontos) e na Entrevista Individual (até 20 pontos)",
+    // A conta sai da composição da regra (antes, "soma… até 30… até 20" fixo).
+    expect(doc.preliminares[1].texto).toBe(
+      "A nota final do processo seletivo é a soma da nota da análise curricular e da nota da entrevista.",
     );
     expect(rotulos(doc.blocos[0].tabelas[0])).toEqual([
       "CLASSIFICAÇÃO",
@@ -626,7 +627,6 @@ describe("resultado da entrevista e resultado final (83/2026)", () => {
     expect(doc.finais.map((i) => i.texto)).toEqual([
       "Os(as) candidatos(as) aprovados(as) dentro do quantitativo de vagas ofertadas para início imediato serão convocados(as) para a realização dos exames médicos admissionais, seguindo rigorosamente a ordem de classificação.",
       "Os(as) candidatos(as) integrantes do cadastro de reserva poderão ser convocados(as) à medida que surgirem novas vagas, observados o prazo de validade do processo seletivo e as necessidades operacionais do DSEI Xingu.",
-      "A nota final é a soma da nota da análise curricular e da nota da entrevista.",
       "Os critérios de desempate foram considerados conforme item 10.4 do edital.",
     ]);
   });
@@ -946,5 +946,67 @@ describe("a conta da nota final no resultado final", () => {
       ),
     ).toBe("");
     expect(textoDaComposicao(comPesos([["DOCUMENTAL", 1]]))).toBe("");
+  });
+});
+
+describe("a conta da nota final nos textos padrão", () => {
+  const regra = (pesos) => ({
+    composicao: {
+      componentes: pesos.map(([codigo, peso]) => ({ codigo, peso })),
+      casas: 2,
+    },
+  });
+  const final = {
+    tipo: "FINAL",
+    edital: { edital: "93/2026" },
+    modalidades: [],
+    vagas: [],
+  };
+
+  it("o resultado final diz a conta da regra no item de abertura, uma vez só", () => {
+    const doc = documentoOficial(final, {
+      lista: "geral",
+      regra: regra([
+        ["DOCUMENTAL", 0.5],
+        ["ENTREVISTA", 0.5],
+      ]),
+    });
+    const textos = [...doc.preliminares, ...doc.finais].map((i) => i.texto);
+    expect(textos).toContain(
+      "A nota final do processo seletivo é a média aritmética da nota da análise curricular e da nota da entrevista.",
+    );
+    expect(textos.join(" ")).not.toMatch(/até 30 pontos|até 20 pontos/);
+    expect(textos.filter((x) => /nota final .*é a/.test(x))).toHaveLength(1);
+  });
+
+  it("sem conta a explicar (um componente só), o item sai", () => {
+    const doc = documentoOficial(final, {
+      lista: "geral",
+      regra: regra([["DOCUMENTAL", 1]]),
+    });
+    const textos = [...doc.preliminares, ...doc.finais].map((i) => i.texto);
+    expect(
+      textos.some((x) => /nota final do processo seletivo é/.test(x)),
+    ).toBe(false);
+    expect(textos.every((x) => x.trim())).toBe(true);
+  });
+
+  it("o resultado final da entrevista também deixa o 'até 30 / até 20' fixo", () => {
+    const doc = documentoOficial(
+      { ...final, tipo: "ENTREVISTA" },
+      {
+        lista: "geral",
+        fase: "FINAL",
+        regra: regra([
+          ["DOCUMENTAL", 0.5],
+          ["ENTREVISTA", 0.5],
+        ]),
+      },
+    );
+    const textos = doc.finais.map((i) => i.texto).join(" ");
+    expect(textos).toContain(
+      "nota final do processo seletivo, que é a média aritmética da nota da análise curricular e da nota da entrevista.",
+    );
+    expect(textos).not.toMatch(/até 30 pontos/);
   });
 });
