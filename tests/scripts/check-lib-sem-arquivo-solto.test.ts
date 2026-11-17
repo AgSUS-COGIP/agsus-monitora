@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import {
   ACIMA_DO_LIMITE,
@@ -67,6 +68,21 @@ describe("conferirLib", () => {
     const cresceu = conferirLib(pasta(registrada.slice(0, -1), tamanho + 1));
     expect(cresceu).toHaveLength(1);
     expect(cresceu[0]).toContain(`${tamanho + 1}`);
+  });
+
+  /*
+    O check:architecture não roda no CI; esta suíte roda. Assim um PR com
+    arquivo solto em src/lib/ quebra no CI, não só quando alguém lembra de
+    rodar a checagem à mão.
+  */
+  it("o repositório de verdade: nada solto em src/lib/ e nenhuma pasta acima do limite", () => {
+    const arquivos = execFileSync("git", ["ls-files", "-z", "src/lib"], {
+      encoding: "utf8",
+    })
+      .split("\0")
+      .filter(Boolean);
+    expect(arquivos.length).toBeGreaterThan(0);
+    expect(conferirLib(arquivos)).toEqual([]);
   });
 
   it("ignora o que não está em src/lib/", () => {

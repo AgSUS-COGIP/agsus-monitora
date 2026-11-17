@@ -68,9 +68,10 @@ existe; nenhuma nota fica sem ser ligada; nenhuma nota repete o nome de outro `.
 
 ### `check-lib-sem-arquivo-solto.mjs`
 
-`src/lib/` é organizada por assunto ([[mapa-do-repositorio]], "Assunto → pastas"). Quebra o build
-quando há arquivo solto na raiz de `src/lib/` (só `CLAUDE.md` e `rpc-contrato.ts` ficam ali) ou
-quando uma pasta passa de 30 arquivos diretos. As pastas que já passavam disso quando a organização
+`src/lib/` é organizada por assunto ([[mapa-do-repositorio]], "Assunto → pastas"). Reprova
+arquivo solto na raiz de `src/lib/` (só `CLAUDE.md` e `rpc-contrato.ts` ficam ali) e pasta com
+mais de 30 arquivos diretos. Roda no `check:architecture` e, no CI, pelo teste que aplica a mesma
+regra aos arquivos do repositório (o `check:architecture` não roda no CI). As pastas que já passavam disso quando a organização
 foi feita estão em `ACIMA_DO_LIMITE`, com o tamanho daquele dia como teto: só encolhem (hoje,
 `avaliacao-documental/` com 55). Teste: `tests/scripts/check-lib-sem-arquivo-solto.test.ts`.
 
