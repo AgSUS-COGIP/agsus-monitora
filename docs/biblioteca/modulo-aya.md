@@ -77,6 +77,6 @@ chega como `unknown` e passa pelas leituras que já existiam; o resultado de cad
 
 - [[aya-base-de-conhecimento]] — base de conhecimento, busca e chamado
 - [[textos-da-interface]] — explicação é com a Aya, não na tela
-- [[modulo-status-das-atualizacoes]] — a mesma lista de cargas em atenção
+- [[robos-e-agenda]] — a mesma lista de cargas em atenção
 - [[modulo-configuracoes]] — prévia da mascote
-- [[acessibilidade]] — foco preso, Esc, leitor de tela e movimento reduzido
+- [[acessibilidade-e-mobile]] — foco preso, Esc, leitor de tela e movimento reduzido

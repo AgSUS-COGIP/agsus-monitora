@@ -1,14 +1,14 @@
 ---
 tipo: referencia
 area: front
-atualizado: 2026-11-16
+atualizado: 2026-11-17
 ---
 
 # Componentes padrão (`src/ui/`)
 
-O design system em React: toda tela monta com estes componentes e os tokens. A API completa (uma
-linha por componente) está em [docs/arquitetura-react.md](../arquitetura-react.md), "Como usar
-`ui/`"; aqui, o que existe e as regras de uso.
+O design system em React: toda tela monta com estes componentes, os tokens e os ícones Lucide. A
+API completa (uma linha por componente) está em [docs/arquitetura-react.md](../arquitetura-react.md),
+"Como usar `ui/`"; aqui, o que existe e as regras de uso.
 
 ## Uso
 
@@ -51,7 +51,7 @@ Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de
 
 ## Fora de `ui/` (ainda em `src/componentes/`)
 
-- `icone.tsx` — `<Icone nome="…">`, Lucide, do registro de `src/modules/icones.ts` ([[icones]]).
+- `icone.tsx` — `<Icone nome="…">`, Lucide, do registro de `src/modules/icones.ts` (ver Ícones).
 - `multi-select-busca.tsx` — `<MultiSelectBusca>`: seleção múltipla com busca, controlada (a única
   do app; CSS em `src/styles/multi-select-busca.css`).
 - `selo-de-treinamento.tsx` — selo "Treinamento" do edital de treinamento.
@@ -62,13 +62,6 @@ Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de
   casca. `usar-area-atual.ts`: hook da área atual, suas linhas e os ids dos editais.
 
 `icone.tsx` e `multi-select-busca.tsx` vão para `src/ui/` ao serem tocados.
-
-## Relacionadas
-
-- [[design-e-tokens]] — tokens e regras de ouro
-- [[nova-tela-react]] — como a tela usa os componentes
-- [[textos-da-interface]] — estados vazios e de erro curtos
-- [[testes]] — teste de componente em `tests/ui/`
 
 ## Lista longa não se desenha inteira
 
@@ -86,3 +79,43 @@ Bloco que espera uma leitura (o edital escolhido, a fila, a regra…) usa
 indicador girando, linhas de esqueleto e `role="status"`; `semMoldura` dentro de um cartão.
 Nunca um `.ui-card` com `.ui-esqueleto-linha` soltas: até 10/11/2026 elas não tinham a classe
 base e a tela ficava segundos num cartão vazio (#732). Guarda: `tests/ui/carregando-conteudo.test.ts`.
+
+## Ícones
+
+**Todo o sistema desenha Lucide**; o Font Awesome não é mais carregado. Dois caminhos:
+
+- **Barra lateral e o que é dela** (Sair, tema, botão de recolher e o ☰ do celular) e componente
+  reescrito: SVG Lucide de verdade, pelo registro.
+- **Resto do sistema:** o HTML e os módulos ainda escrevem `<i class="fa-solid fa-…">`, e
+  `src/styles/icones-lucide.css` desenha em cada classe o ícone Lucide equivalente.
+
+Onde fica:
+
+- `src/modules/icones.ts` — **registro único** dos ícones Lucide, que importa cada ícone pelo nome
+  (só os usados entram no bundle). Ícone novo: registre lá. Sem framework,
+  `criarIcone(nome, { tamanho })`; em React, `<Icone nome="…" tamanho={…} />`
+  (`src/componentes/icone.tsx`). Não misture dois conjuntos no mesmo componente.
+- `src/lib/mapa-de-icones-lucide.ts` — o mapa Font Awesome → Lucide (`FA_PARA_LUCIDE`).
+- `src/styles/icones-lucide.css` — **gerado** por `npm run icones`
+  (`scripts/gerar-icones-lucide.mjs`): cada classe `fa-…` vira uma máscara no `::before` do `<i>`
+  (`mask-image` com o SVG, `background-color: currentColor`), então segue a cor do texto.
+  `img-src data:` já é permitido pela CSP (`vercel.json`). Ícone novo com classe `fa-…`: acrescente
+  o par no mapa e rode `npm run icones`; `tests/icones-lucide.test.js` falha se faltar. Não edite o
+  CSS à mão.
+
+Regras:
+
+- Tamanhos 16, 18 e 20px, traço 1,75, na cor do texto ao lado (`stroke: currentColor`).
+- O ícone é decorativo (`aria-hidden`); quem nomeia o controle é o texto dele ou um `aria-label`.
+  Botão só com ícone: `aria-label` + `title` e alvo de 40×40 ([[acessibilidade-e-mobile]]).
+- Nenhum emoji no lugar de ícone (Design System, seção 14).
+- Ao reescrever um componente, prefira o registro à classe `fa-…`.
+
+## Relacionadas
+
+- [[design-e-tokens]] — tokens e regras de ouro
+- [[nova-tela-e-legado]] — como a tela usa os componentes
+- [[acessibilidade-e-mobile]] — foco, alvos de toque e tabelas em cartões
+- [[textos-da-interface]] — estados vazios e de erro curtos
+- [[ci-e-qualidade]] — os geradores, como o de ícones
+- [[testes]] — teste de componente em `tests/ui/`

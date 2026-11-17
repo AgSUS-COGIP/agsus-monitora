@@ -6,10 +6,12 @@ atualizado: 2026-11-17
 
 # Mapas e Leaflet
 
-O MONITORA tem dois mapas, os dois em Leaflet e em TypeScript: o da Saúde Indígena (nacional e por
-DSEI) e o de Projetos, ligados na Visão geral da área. O que a pessoa vê (Mapa e Satélite,
-marcadores, lista de unidades) é explicado pela Aya, em `docs/aya/regras-dos-mapas.md` e
-`docs/aya/regras-do-mapa-saude-indigena.md`.
+O MONITORA tem dois mapas, os dois em Leaflet e em TypeScript, ligados na Visão geral da área: o da
+Saúde Indígena (nacional e por DSEI, [[modulo-mapa-saude-indigena]]) e o de Projetos
+([[modulo-mapa-de-projetos]]). **Esta nota vale para os dois**: a fábrica, as guardas, o fundo e as
+formas são comuns. Só a camada de Terras Indígenas é exclusiva da Saúde Indígena. O que a pessoa vê
+(Mapa e Satélite, marcadores, lista de unidades) é explicado pela Aya, em
+`docs/aya/regras-dos-mapas.md` e `docs/aya/regras-do-mapa-saude-indigena.md`.
 
 ## Onde fica
 
@@ -18,7 +20,7 @@ marcadores, lista de unidades) é explicado pela Aya, em `docs/aya/regras-dos-ma
 - `src/modulos/mapa-saude-indigena/leaflet.ts` — a integração comum (criação, fundo com recurso,
   tamanho, contornos, enquadramento, leque, ícones e balões), com contratos em
   `tipos-do-leaflet.ts`; a base compartilhada (painel, legenda, tela cheia, retorno ao Brasil e
-  hooks) também mora em `src/modulos/mapa-saude-indigena/`.
+  hooks) também mora em `src/modulos/mapa-saude-indigena/` ([[mapa-saude-indigena-contratos]]).
 - `src/lib/mapa-render.ts`, `src/lib/brasil-bounds.ts` (enquadramento pelo contorno real do
   Brasil), `src/lib/mapa-saude-indigena/*.ts` (contagens, bolhas, CASAIs, unidades, vínculos,
   enquadramentos, formas e cores).
@@ -27,12 +29,11 @@ marcadores, lista de unidades) é explicado pela Aya, em `docs/aya/regras-dos-ma
   teclado (+, −, 0) e os azulejos sem cópias do mundo (`OPCOES_DOS_AZULEJOS`). Não envolve
   `L.map` nem `L.tileLayer`.
 - Ainda no legado, envolvendo o Leaflet quando ele chega (`carregar-leaflet.ts`): o seletor
-  Mapa/Satélite `src/modules/map-base-layer-switcher.ts` e a camada de Terras Indígenas
-  ([[terras-indigenas]]).
+  Mapa/Satélite `src/modules/map-base-layer-switcher.ts` e a camada de Terras Indígenas (abaixo).
 - `src/lib/filtros-do-mapa.ts` — a regra dos filtros da página do mapa: comparação sem acento,
   opções sem duplicata, poda até estabilizar. A Visão geral guarda o estado e delega para cá;
   avisa pelo evento `agsus:filtros-alterados`.
-- Editor de coordenadas (só o mapa de Projetos): [[modulo-editor-de-coordenadas]].
+- Editor de coordenadas (só o mapa de Projetos): [[coordenadas]].
 
 ## Regras de comportamento
 
@@ -53,10 +54,35 @@ marcadores, lista de unidades) é explicado pela Aya, em `docs/aya/regras-dos-ma
 - **Os pontos da Saúde Indígena vêm só do SIGEPSI; os de Projetos, do banco** ([[coordenadas]]).
 - Cores de série dos projetos: `--series-*` ([[design-e-tokens]]).
 
+## Terras Indígenas (camada da Funai)
+
+Só no mapa da Saúde Indígena (`#map` e `#detailMap`); o de Projetos (`#mapaDosProjetos`) não tem
+camadas indígenas. A geometria vem da Funai, compilada num arquivo que o mapa carrega uma vez só.
+
+- `src/modules/indigenous-territories-layer.ts` — a camada (41 KB, legado em TypeScript; **não ler
+  por inteiro**); as partes puras estão em `src/lib/terras-indigenas/` (`catalogo.ts`,
+  `fases-e-estilos.ts`, `geometria.ts`, `preferencias.ts`, `textos.ts`, `tipos.ts`).
+- `scripts/compilar-terras-indigenas.mjs` gera `public/data/terras-indigenas*.json`;
+  `scripts/compilar-contornos-dos-dseis.mjs` gera `public/data/contornos-dos-dseis.json`
+  (shapefile Funai `areas_dsei`), usado pela abrangência dos DSEIs e pelo modo "Mapa DSEIs"
+  ([[modulo-mapa-saude-indigena]]). Arquivos gerados: regenere, não edite.
+- `api/funai-geodata.ts` (GeoServer OWS) e `api/funai-wms.ts` (WMS, camada `Funai:tis_poligonais`):
+  proxies da Funai, com a origem validada ([[deploy-e-vercel]]).
+- **Por que compilar.** O mapa pedia a geometria à Funai a cada movimento, e nenhuma cache acertava
+  (cada enquadramento é um bbox diferente): ~0,5–0,7 s e 1,2 MB por arrasto para desenhar 23
+  terras. O país inteiro são 665 terras e 1.835.560 vértices (47 MB), detalhe que a tela não
+  distingue. Simplificado com Douglas-Peucker a 0,001° (111 m), ficam 113.864 vértices, 2,17 MB
+  (0,61 MB comprimido): menos que um enquadramento, com as 665 terras. Detalhes no comentário de
+  topo do script.
+- Terras Indígenas têm cores de domínio (não de paleta). O servidor serve `/data/*.json` (o antigo
+  Laravel não servia, e as camadas quebravam). Nada em `public/` que não deva ser publicado.
+
 ## Relacionadas
 
 - [[modulo-mapa-saude-indigena]] e [[modulo-mapa-de-projetos]] — os dois mapas
-- [[terras-indigenas]] — a camada da Funai
+- [[mapa-saude-indigena-contratos]] — os contratos da integração com o Leaflet
 - [[modulo-visao-geral]] — onde os mapas aparecem
-- [[acessibilidade]] — formas, não só cores
+- [[coordenadas]] — de onde vêm os pontos e o editor de Projetos
+- [[acessibilidade-e-mobile]] — formas, não só cores
+- [[ci-e-qualidade]] — os scripts geradores
 - [regras-dos-mapas](../aya/regras-dos-mapas.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

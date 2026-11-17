@@ -55,7 +55,7 @@ docs/                   biblioteca, documentos longos de referência e base de c
 ## Relacionadas
 
 - [[arquitetura-do-front]] — como as pastas do front se encaixam
-- [[codigo-legado]] — o que é legado e como sai
-- [[logica-em-src-lib]] — os arquivos de `src/lib/` que exigem cuidado
+- [[nova-tela-e-legado]] — o que é legado e como sai
+- [[regras-do-codigo]] — os arquivos de `src/lib/` que exigem cuidado
 - [[comandos-e-ambiente]] — rodar o mínimo
 - [[documentacao]] — onde fica a documentação

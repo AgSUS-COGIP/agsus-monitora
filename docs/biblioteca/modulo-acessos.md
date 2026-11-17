@@ -1,16 +1,33 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
-# Módulo: Acessos (Configurações › Acessos)
+# Módulo: Acessos, perfis e permissões
 
-Grupos de permissões + permissões individuais, coordenações, teto do coordenador, "como a pessoa
-vê" e pedidos de acesso, em React. Pasta `src/modulos/acessos/`; o legado abre por
-`window.acessosController`. Explicações para quem usa: `docs/aya/regras-dos-acessos.md`.
+Cada pessoa vê só as áreas e os módulos que o seu grupo de acesso libera. **A permissão é decidida
+no banco** (RLS e RPCs `SECURITY DEFINER`); o front só esconde o que a pessoa não pode usar. Quem
+edita isso é Configurações › Acessos: grupos de permissões + permissões individuais, coordenações,
+teto do coordenador, "como a pessoa vê" e pedidos de acesso, em React. Pasta
+`src/modulos/acessos/`; o legado abre por `window.acessosController`. Explicações para quem usa:
+`docs/aya/regras-dos-acessos.md`.
 
-## Abas
+## Perfis e permissões
+
+- `src/lib/access-roles.ts` — o que cada perfil pode e a **regra única de páginas e seções
+  liberadas** (`paginasPermitidas`, `secaoDeConfiguracaoPermitida`), usada pela barra lateral e
+  pelo "Ver como".
+- `src/lib/permissoes-recursos.ts` — módulos (recursos de permissão) e níveis.
+- O menu por permissão e por área: `src/lib/menu-lateral.ts` ([[modulo-barra-lateral]]).
+- **O perfil é relido a cada `render()`**: as permissões mudam sem aviso do legado.
+- Quem só lê não vê os controles de edição (sem selo "Somente consulta"; [[textos-da-interface]]).
+- RLS ligada por padrão; não desligar para "resolver" permissão. Mudar a matriz costuma exigir
+  migration junto ([[banco-e-migrations]]).
+- Módulos e abas podem ser desligados ou postos em manutenção em Configurações › Módulos e abas,
+  sem deploy ([[modulo-configuracoes]]).
+
+## A tela: abas
 
 - **Usuários** — visão simples (uma linha por pessoa: grupo e o que ele deixa fazer, áreas,
   coordenação, situação) ou "Ver permissões por módulo (avançado)": a matriz, com grupo (tag) e um
@@ -60,8 +77,9 @@ o pedido.
 
 ## Relacionadas
 
-- [[permissoes-e-perfis]] — módulos, níveis e páginas liberadas
-- [[sessao-e-auth]] — login e domínio institucional
-- [[areas-do-sistema]] — áreas e coordenações
-- [[modulo-configuracoes]] — a moldura das seções
+- [[seguranca]] — RLS, RPCs, login e domínio institucional
+- [[arquitetura-do-front]] — a área como dimensão da permissão; áreas e coordenações
+- [[modulo-configuracoes]] — a moldura das seções e Módulos e abas
+- [[modulo-barra-lateral]] — o menu por permissão
+- [[modulo-paineis-externos]] — quais painéis cada perfil vê
 - [regras-dos-acessos](../aya/regras-dos-acessos.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

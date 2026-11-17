@@ -1,7 +1,7 @@
 # `tests/`
 
-Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Guia completo: [[testes]] (Vitest, PGlite, pytest)
-e [[testes-de-navegador]] (Playwright).
+Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Guia completo: [[testes]] (Vitest, PGlite, pytest
+e Playwright).
 
 - **Teste novo é `.ts`** (`.tsx` só com JSX), checado por `npm run typecheck:testes` (strict). Sem
   `any`, `@ts-ignore`/`@ts-nocheck` nem `as unknown as`: tipe o mock com `Partial<>`/`Pick<>`,

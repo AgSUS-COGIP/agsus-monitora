@@ -45,5 +45,5 @@ escrito lá: a Aya só responde com o que está no material ([[aya-base-de-conhe
 
 - [[design-e-tokens]] — o resto do guia de interface
 - [[componentes-padrao]] — os componentes de estado (vazio, carregando, erro)
-- [[acessibilidade]] — erros associados ao campo, `aria-live`
+- [[acessibilidade-e-mobile]] — erros associados ao campo, `aria-live`
 - [[modulo-aya]] — o painel que explica

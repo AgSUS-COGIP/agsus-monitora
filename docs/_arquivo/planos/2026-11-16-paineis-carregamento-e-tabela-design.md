@@ -1,7 +1,7 @@
 # Painéis: carregamento rápido, largura das colunas e origem dos dados
 
 Data: 16/11/2026 · Módulo: Painéis (bloco Dados) · Antecede: [[modulo-paineis-de-dados]],
-`docs/superpowers/specs/2026-11-13-fontes-das-colunas-dos-paineis-design.md`.
+`docs/_arquivo/planos/2026-11-13-fontes-das-colunas-dos-paineis-design.md`.
 
 ## Por que
 
@@ -100,7 +100,7 @@ cada tabela explique de onde vêm os dados.
      `CO_MONITORAMENTO`, inclusive a de "edital sem vaga", então nenhuma linha escapa do
      filtro. O total é contado depois do filtro.
 5. **Migration** nova, com ensaio e rollback guardados conforme
-   `docs/biblioteca/rollback-de-migration.md`. Ela é aplicada no banco do `.env.local` com a
+   `docs/biblioteca/banco-e-migrations.md`. Ela é aplicada no banco do `.env.local` com a
    mesma autorização do trabalho anterior: ensaio, aplicação e registro na mesma transação.
 
 ### Tela

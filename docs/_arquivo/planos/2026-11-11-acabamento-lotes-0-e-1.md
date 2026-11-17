@@ -16,7 +16,7 @@ valor. Um spec do Playwright reaproveita a sessão simulada para tirar as captur
 **Tech Stack:** Node ≥ 20 (ESM `.mjs`), Vitest, Playwright, CSS com custom properties, React 19 +
 TS, Docker Compose.
 
-**Spec:** `docs/superpowers/specs/2026-11-11-acabamento-visual-design.md`
+**Spec:** `docs/_arquivo/planos/2026-11-11-acabamento-visual-design.md`
 
 **Lotes 2 a 5** (estrutura, processo seletivo, acompanhar, administração) ganham cada um o seu
 plano curto, escrito ao fim deste, com a mesma receita das Tasks 3 a 7.
@@ -108,7 +108,7 @@ Regras de contagem (uma ocorrência por linha que casa):
 - [ ] **Step 5:** `node scripts/check-acabamento-so-encolhe.mjs --atualizar`, depois
   `npm run check:architecture` → verde. Conferir que os números de `src/styles/app.css` ficam
   perto da linha de base do desenho (≈ h42 i62 z8 r24 s8).
-- [ ] **Step 6:** documentar a trava em `docs/biblioteca/scripts-e-checagens.md` e em
+- [ ] **Step 6:** documentar a trava em `docs/biblioteca/ci-e-qualidade.md` e em
   `docs/biblioteca/design-e-tokens.md` (como usar o marcador); `npm run check:docs` → verde.
 - [ ] **Step 7: Commit** — `Trava do acabamento: desvio de token por arquivo só encolhe`.
 
@@ -234,5 +234,5 @@ Mapeamentos fixos (sem escolha do executor):
 
 ### Task 8: Plano do próximo lote
 
-- [ ] Escrever `docs/superpowers/plans/AAAA-MM-DD-acabamento-lote-2.md` com a mesma receita
+- [ ] Escrever `docs/_arquivo/planos/AAAA-MM-DD-acabamento-lote-2.md` com a mesma receita
   (Tasks 3 a 7 aplicadas aos arquivos do lote 2) e o que este lote ensinou.

@@ -21,7 +21,7 @@ import "./carregamento-do-painel.css";
   nova aba" e "Tentar novamente". Erro (o iframe recusou, a conexão caiu ou o
   painel avisou): a mensagem e as mesmas duas saídas.
 
-  Painel que avisa (docs/painel-externo-avisa-que-carregou.md): quem manda
+  Painel que avisa (docs/biblioteca/modulo-paineis-externos.md, seção Protocolo): quem manda
   `agsus:painel-carregando` mantém a cobertura até `agsus:painel-pronto` (ou
   até a espera máxima, para não ficar coberto para sempre); `agsus:painel-erro`
   mostra o erro.

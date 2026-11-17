@@ -101,8 +101,7 @@ Testes: `tests/modulos/avaliacao-documental-pre-classificacao.test.js`,
 ## Relacionadas
 
 - [[modulo-avaliacao-documental]] — a etapa seguinte; a tela da Triagem mora na pasta dela
-- [[modulo-regras-do-edital]] — onde a regra da Triagem se edita (etapa 1)
+- [[modulo-editais]] — onde a regra da Triagem se edita (etapa 1)
 - [[modulo-classificacao]] — exporta as listas PROVISORIA e LOTE
 - [[python-e-jobs]] — o job da triagem
-- [[robos-e-agenda]] — robô da Empregare e o "Recalcular"
-- [[modulo-automacao]] — chave "Triagem automática"
+- [[robos-e-agenda]] — robô da Empregare, o "Recalcular" e a chave "Triagem automática"

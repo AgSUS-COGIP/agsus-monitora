@@ -63,4 +63,4 @@ arquivos do build); Network → Offline; trocar de tela e recarregar.
 
 - [[servidor-web]] — o que o servidor publica
 - [[deploy-e-vercel]] — a versão do build
-- [[testes-de-navegador]] — Playwright e o build simulado
+- [[testes]] — Playwright e o build simulado

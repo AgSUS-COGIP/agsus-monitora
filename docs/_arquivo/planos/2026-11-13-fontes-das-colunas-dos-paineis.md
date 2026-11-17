@@ -16,7 +16,7 @@ dos relatórios (guarda por md5).
 
 **Tech Stack:** PostgreSQL/Supabase (plpgsql, PGlite nos testes), React 19 + TypeScript, Vitest.
 
-**Spec:** `docs/superpowers/specs/2026-11-13-fontes-das-colunas-dos-paineis-design.md`
+**Spec:** `docs/_arquivo/planos/2026-11-13-fontes-das-colunas-dos-paineis-design.md`
 
 ## Global Constraints
 

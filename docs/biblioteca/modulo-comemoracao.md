@@ -47,7 +47,7 @@ Lógica pura em `src/lib/`:
   `agsus_monitora_comemoracao_com_efeito`, com try/catch): as seguintes do mesmo dia saem só como
   aviso. O Testar e o Soltar de Configurações não contam nem são limitados.
 - **Celebra o processo e a equipe, nunca uma pessoa** (não há ranking). A exceção é quem fecha a
-  última ficha do edital, que ganha a própria comemoração ([[modulo-encerramento-do-edital]]).
+  última ficha do edital, que ganha a própria comemoração ([[modulo-editais]]).
 - **Uma vez por pessoa e navegador.** A primeira leitura é linha de base, em silêncio (também no
   marco do ano: o já alcançado não é anunciado); comemora a transição vista depois (`avaliarMarco`
   em `src/app/comemoracao-sob-demanda.ts`).

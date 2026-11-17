@@ -1,6 +1,6 @@
 # `src/lib/` — lógica pura e testável
 
-Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. O que cada arquivo sensível faz: [[logica-em-src-lib]].
+Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. O que cada arquivo sensível faz: [[regras-do-codigo]].
 
 Regras do diretório:
 
@@ -10,10 +10,10 @@ Regras do diretório:
 - Fronteiras que não se afrouxam:
   - `rpc-contrato.ts` — mudou no banco, muda aqui ([[rpc-e-contrato]]);
   - `sessao.ts`, `session-lifecycle.ts`, `supabaseClient.ts`, `auth-flow.ts`, `novas-tentativas.ts`
-    — único caminho de auth e de nova tentativa ([[sessao-e-auth]]);
+    — único caminho de auth e de nova tentativa ([[seguranca]]);
   - `sanitize.ts`, `html-security.ts`, `csv-security.ts` e `copia-da-sessao.ts` ([[seguranca]]);
   - `access-roles.ts`, `permissoes-recursos.ts` — costumam exigir migration junto
-    ([[permissoes-e-perfis]]).
+    ([[modulo-acessos]]).
 - Catálogos únicos: `planilhas.ts` ([[planilhas]]), `menu-lateral.ts` ([[modulo-barra-lateral]]),
   `agenda-do-cron.ts` e `catalogo-dos-robos.ts` ([[robos-e-agenda]]), `novidades.ts`
   ([[deploy-e-vercel]]). Reutilize `contraste.ts` em vez de reescrever.
