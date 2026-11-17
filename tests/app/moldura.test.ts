@@ -163,31 +163,6 @@ describe("tela cheia", () => {
   });
 });
 
-describe("Montar relatório (menu da conta)", () => {
-  /* 13/11/2026: abre o montador da Visão geral; antes, imprimia a tela. */
-  it("na Visão geral, só abre o montador", () => {
-    const abrirMontador = vi.fn();
-    const irParaVisaoGeral = vi.fn();
-    const { moldura } = montar({
-      extras: { naVisaoGeral: () => true, irParaVisaoGeral, abrirMontador },
-    });
-    moldura.montarRelatorio();
-    expect(irParaVisaoGeral).not.toHaveBeenCalled();
-    expect(abrirMontador).toHaveBeenCalledTimes(1);
-  });
-
-  it("em outra tela, vai para a Visão geral e abre o montador", () => {
-    const abrirMontador = vi.fn();
-    const irParaVisaoGeral = vi.fn();
-    const { moldura } = montar({
-      extras: { naVisaoGeral: () => false, irParaVisaoGeral, abrirMontador },
-    });
-    moldura.montarRelatorio();
-    expect(irParaVisaoGeral).toHaveBeenCalledTimes(1);
-    expect(abrirMontador).toHaveBeenCalledTimes(1);
-  });
-});
-
 describe("a página", () => {
   it("desligada (a casca desmontou), as mudanças não mexem mais na página", () => {
     const { moldura, janela } = montar();

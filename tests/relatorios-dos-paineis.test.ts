@@ -183,7 +183,7 @@ describe("largura das colunas", () => {
 describe("origem dos dados", () => {
   it("sem fonte trocada, só o texto fixo do relatório", () => {
     expect(linhasDaOrigem(porCargo, {})).toEqual([
-      "Uma linha por vaga. Vaga, cargo e inscritos: Seleção (planilha da Auditoria, aba Resultado). Aprovados: lista de aprovados vigente, casada pelo código da vaga. Vagas imediatas: o número no título da vaga. Vagas que só estão na lista e editais sem Seleção também aparecem.",
+      "Uma linha por vaga. Vaga, cargo e inscritos: Seleção (planilha da Auditoria, aba Resultado). Aprovados: lista de aprovados vigente, casada pelo código da vaga. Vagas imediatas: quadro de vagas do edital; sem ele, a convocação da Lista de aprovados, o local da vaga publicado no edital ou o número no título da vaga. Vagas que só estão na lista e editais sem Seleção também aparecem.",
     ]);
   });
 
@@ -205,7 +205,7 @@ describe("origem dos dados", () => {
         },
       })[1],
     ).toBe(
-      "Fonte trocada nesta área: Vagas imediatas (título da vaga) → Quadro de vagas do edital › Vagas imediatas (soma do quadro)",
+      "Fonte trocada nesta área: Vagas imediatas → Quadro de vagas do edital › Vagas imediatas (soma do quadro)",
     );
   });
 });
@@ -239,7 +239,7 @@ describe("arquivos", () => {
     const csv = csvDoRelatorio(porCargo, linhas);
     expect(csv.startsWith("﻿")).toBe(true);
     expect(csv.slice(1).split("\r\n")).toEqual([
-      "Número do edital;DSEI / Unidade;Código da vaga;Cargo;Vagas imediatas (título da vaga);Total de inscritos;Total de aprovados",
+      "Número do edital;DSEI / Unidade;Código da vaga;Cargo;Vagas imediatas;Total de inscritos;Total de aprovados",
       "39/2026;DSEI Teste;178962;'=CMD();3;120;",
       "",
     ]);

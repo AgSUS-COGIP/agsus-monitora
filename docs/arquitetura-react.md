@@ -373,7 +373,7 @@ src/app/carga.ts                 consultas em paralelo, cópia da sessão, "Atua
 src/app/presenca.ts              auditoria, heartbeat, presença e a lista de Pessoas online
 src/componentes/pessoas-online/  o botão e a lista no cabeçalho (React)
 src/app/perfil.ts                usuário e perfil (cópia da sessão), cabeçalho, #appScreen
-src/app/moldura.ts               barra recolhida, tema, tela cheia, Montar relatório (abre o montador)
+src/app/moldura.ts               barra recolhida, tema, tela cheia
 src/app/avisos.ts                toast (window.monitoraToast) e loader (window.monitoraLoader)
 src/app/carregamento.ts          skeleton da entrada e do painel externo, barra do "Atualizar dados"
 src/lib/erro-amigavel.ts         a frase do erro (antigo friendlyError)
@@ -381,8 +381,8 @@ src/lib/erro-amigavel.ts         a frase do erro (antigo friendlyError)
 
 Contratos mantidos em `window`: `navigate` (é `navegacao.irPara`; agora também escreve o endereço), `refreshData`,
 `getMonitoraProfile`, `monitoraToast`, `monitoraLoader`, `exitExternalPanel`,
-`reloadExternal`, `exportPDF`, `toggleBrowserFullscreen`, `toggleDarkMode`, `toggleSidebar`
-(saíram `window.$`, `toggleOnlinePresence` e `getMonitoraUser`, sem uso). As telas não estão mais em
+`reloadExternal`, `toggleBrowserFullscreen`, `toggleDarkMode`, `toggleSidebar`
+(saíram `window.$`, `toggleOnlinePresence` e `getMonitoraUser`, sem uso, e `exportPDF` em 16/11/2026, quando o "Montar relatório" foi do menu da conta para os Painéis). As telas não estão mais em
 `window`: são rotas (`src/app/telas.tsx`), e a rota chama `render()` a cada abertura.
 Quem acompanha a navegação assina `navegacao.assinar`: `{ tipo: "abertura", view, anterior }`
 (auditoria) e `{ tipo: "menu" }` (o lugar da pessoa na presença).
@@ -426,7 +426,7 @@ claro e escuro) e o DOM do `#appScreen` com posição e tamanho de cada elemento
 casca.tsx            <Casca> (memo, sem props): barra lateral, cabeçalho e <Telas>; portal da raiz em #appScreen
 topo.tsx             header.top: título (da navegação), menu da conta com Pessoas online dentro (o ☰ é da barra lateral)
 ../telas.tsx         .content: as <section class="page"> (TELAS_DA_CASCA, rotas), quadro externo, Configurações
-acoes.ts             os botões chamam window.refreshData, exportPDF… na hora do clique (como os onclick)
+acoes.ts             os botões chamam window.refreshData, toggleSidebar… na hora do clique (como os onclick)
 ```
 
 `src/main.ts` chama `montarRaiz()` (a raiz única, com a casca) antes de `ligarSistema()`: tudo que

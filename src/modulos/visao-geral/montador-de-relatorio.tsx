@@ -1,13 +1,8 @@
-import type {
-  Configuracoes,
-  EstadoDaVisaoGeral,
-  Perfil,
-  SnapshotDaVisaoGeral,
-  TextosDaVisaoGeral,
-} from "./tipos.ts";
+import type { Configuracoes, Perfil, TextosDaVisaoGeral } from "./tipos.ts";
 import type {
   EscolhaDoRelatorio,
   FormatoDoRelatorio,
+  RecorteDoRelatorio,
 } from "../../lib/relatorio-da-visao-geral.ts";
 import type { ClienteDoRelatorio } from "./dados-da-diretoria.ts";
 import { useEffect, useRef, useState } from "react";
@@ -15,6 +10,7 @@ import { Modal, Segmentado } from "../../ui/index.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
 import { erroDeVersaoNova } from "../../lib/importar-com-recarga.ts";
 import { nomeDaArea } from "../../lib/menu-lateral.ts";
+import { csvDaVisaoGeral, nomeDoCsv } from "../../lib/visao-geral.ts";
 import {
   aprovadosNoRecorte,
   LIMITE_DE_APROVADOS_NO_PDF,
@@ -40,9 +36,11 @@ import {
 } from "./dados-da-diretoria.ts";
 
 /*
-  O MONTADOR DE RELATÓRIO da Visão geral (botão "Exportar"): um modelo pronto
+  O MONTADOR DE RELATÓRIO da Visão geral (botão "Exportar", com o recorte da
+  tela) e dos Painéis (botão "Montar relatório", com a área inteira —
+  src/modulos/paineis-de-dados/): um modelo pronto
   ou a escolha de quem gera — as seções, as colunas da tabela dos editais e o
-  formato (PDF, Excel ou o CSV de antes). Sai do recorte da tela. A última
+  formato (PDF, Excel ou o CSV de antes). Sai do recorte recebido. A última
   escolha fica guardada neste navegador. "Vagas por cargo" e "Aprovados" (abas
   2 e 3 do relatório da diretoria) são lidas do banco ao gerar; "Aprovados" só
   aparece para quem tem acesso à Lista de aprovados, e o banco registra cada
@@ -149,7 +147,8 @@ function Marcar<T extends string>({
 
 export function MontadorDeRelatorio({
   e,
-  estado,
+  descricao = "do recorte da tela",
+  aoBaixarCsv,
   textos,
   configuracoes,
   obterPerfil,
@@ -158,8 +157,11 @@ export function MontadorDeRelatorio({
   supabase = null,
   podeAprovados = false,
 }: {
-  e: SnapshotDaVisaoGeral;
-  estado: Pick<EstadoDaVisaoGeral, "exportarCsv">;
+  e: RecorteDoRelatorio;
+  /** De onde vêm os processos, no subtítulo ("do recorte da tela", "da área"). */
+  descricao?: string;
+  /** O CSV de antes; sem ele, o montador baixa o CSV das linhas do recorte. */
+  aoBaixarCsv?: () => void;
   textos: TextosDaVisaoGeral;
   configuracoes: Configuracoes;
   obterPerfil: () => Perfil | null;
@@ -191,7 +193,14 @@ export function MontadorDeRelatorio({
     setErro("");
     guardarEscolha(escolha);
     if (csv) {
-      estado.exportarCsv();
+      if (aoBaixarCsv) aoBaixarCsv();
+      else if (e.filtradas.length)
+        baixar(
+          new Blob([csvDaVisaoGeral(e.filtradas)], {
+            type: "text/csv;charset=utf-8;",
+          }),
+          nomeDoCsv(e.area, agora()),
+        );
       aoFechar();
       return;
     }
@@ -276,8 +285,8 @@ export function MontadorDeRelatorio({
           <h3 id="visaoGeralRelatorioTitulo">Montar relatório</h3>
           <p className="visao-geral-relatorio-recorte">
             {e.filtradas.length.toLocaleString("pt-BR")}{" "}
-            {e.filtradas.length === 1 ? "processo" : "processos"} do recorte da
-            tela · {nomeDaArea(e.area) || e.area}
+            {e.filtradas.length === 1 ? "processo" : "processos"} {descricao} ·{" "}
+            {nomeDaArea(e.area) || e.area}
           </p>
         </div>
         <button className="btn secondary" type="button" onClick={aoFechar}>

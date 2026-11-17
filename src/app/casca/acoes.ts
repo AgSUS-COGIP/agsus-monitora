@@ -1,6 +1,6 @@
 /*
   As ações da casca chamam os contratos que `src/app/sistema.ts` publica em
-  `window` (`refreshData`, `exportPDF`…), resolvidos na hora do clique — como
+  `window` (`refreshData`, `toggleSidebar`…), resolvidos na hora do clique — como
   faziam os `onclick` do index.html. Assim a casca monta antes de
   `ligarSistema()` e não importa o sistema (que importa a casca de volta só
   pelo DOM, nunca pelo módulo).
@@ -10,7 +10,6 @@ export type AcaoDaCasca =
   | "toggleSidebar"
   | "refreshData"
   | "toggleBrowserFullscreen"
-  | "exportPDF"
   | "reloadExternal";
 
 export function chamarAcaoDaCasca(nome: AcaoDaCasca): unknown {

@@ -11,10 +11,14 @@ import {
   nomeDoArquivoDoRelatorio,
   normalizarEscolha,
   planilhasDoRelatorio,
+  recorteDaAreaInteira,
   textoDaColuna,
   xlsxDoRelatorio,
 } from "../../src/lib/relatorio-da-visao-geral.ts";
-import { filtrosVazios } from "../../src/lib/visao-geral.ts";
+import {
+  filtrosVazios,
+  indicadoresDaVisaoGeral,
+} from "../../src/lib/visao-geral.ts";
 import type {
   Indicadores,
   LinhaDaVisaoGeral,
@@ -230,15 +234,32 @@ describe("os arquivos", () => {
   });
 });
 
+describe("o recorte da área inteira (montador nos Painéis)", () => {
+  it("leva todos os editais da área, sem filtro, busca nem atalho", () => {
+    const recorte = recorteDaAreaInteira("saude-indigena", LINHAS);
+    expect(recorte).toEqual({
+      area: "saude-indigena",
+      filtradas: LINHAS,
+      filtros: filtrosVazios(),
+      busca: "",
+      atalho: "",
+      indicadores: indicadoresDaVisaoGeral(LINHAS),
+    });
+  });
+});
+
 describe("na tela", () => {
-  it("o Exportar da Visão geral e o menu da conta abrem o montador", () => {
+  it("o Exportar da Visão geral abre o montador; o menu da conta não tem mais", () => {
     const tela = readFileSync(
       "src/modulos/visao-geral/visao-geral.tsx",
       "utf8",
     );
     expect(tela).toContain("aoExportar={estado.abrirMontador}");
     expect(tela).toContain("<MontadorDeRelatorio");
+    // 16/11/2026: o "Montar relatório" saiu do menu da conta para os Painéis.
     const sistema = readFileSync("src/app/sistema.ts", "utf8");
-    expect(sistema).toContain("exportPDF: moldura.montarRelatorio");
+    expect(sistema).not.toContain("exportPDF");
+    const topo = readFileSync("src/app/casca/topo.tsx", "utf8");
+    expect(topo).not.toContain("Montar relatório");
   });
 });

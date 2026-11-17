@@ -59,21 +59,32 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
   Sincronizar (recalcula o relatório aberto) e na troca de fonte. "Sincronizado em" é a data do
   cálculo. O download pede todas as linhas (CSV com `;`, BOM e células protegidas; XLSX com o
   gerador de `src/lib/classificacao/exportacao.ts` e `fflate` sob demanda).
+- **Montar relatório** (16/11/2026; antes no menu da conta): o botão no topo abre o montador da
+  Visão geral (`src/modulos/visao-geral/montador-de-relatorio.tsx`, [[modulo-visao-geral]]) com
+  todos os editais da área, sem os filtros da Visão geral (`recorteDaAreaInteira`, em
+  `src/lib/relatorio-da-visao-geral.ts`). As linhas são as do estado da Visão geral, lidas no
+  clique; "Aprovados" só para quem tem acesso à Lista de aprovados.
 - Largura das colunas: a alça na borda direita do cabeçalho (arrastar, ou ←/→ com foco nela) muda
   a largura; no primeiro arraste a tabela vai a layout fixo. A largura fica só em memória:
   recarregar a página volta às originais.
 - O ⓘ da barra do relatório diz de onde vêm os dados (`ORIGEM_DOS_DADOS`) e, quando houver, as
   colunas com fonte trocada na área.
 - Editais por cargo é uma linha por vaga: Seleção e lista de aprovados casam pelo código da vaga
-  (as regras de `get_selecao_da_area`); as vagas imediatas saem do título da vaga ("N vagas";
-  Cadastro Reserva = 0). O quadro de vagas do edital (`TB_QUADRO_VAGA_EDITAL`) não tem o código da
-  vaga e escreve o cargo de outro jeito: na verificação de 13/11/2026, casar pelo nome deixou mais
-  da metade das linhas desencontradas. Conferências da verificação: a soma dos aprovados por vaga
+  (as regras de `get_selecao_da_area`). Vagas imediatas (migration `20261116180000`), na ordem da
+  Classificação: a linha do quadro de vagas do edital (`TB_QUADRO_VAGA_EDITAL`) ligada pelo nome da
+  vaga (`FC_QUADRO_DA_VAGA`, só quando a ligação é única); sem ela, a convocação (a vaga ou o padrão
+  do edital, abaixo de 10000, que é "chamar todos"); sem ela, o local da vaga publicado
+  (`TB_LOCAL_VAGA_EDITAL`) quando um só casa com o cargo; por último, o número no título da vaga
+  ("N vagas"; Cadastro Reserva = 0). A ligação pelo código da Empregare ficou de fora (custo de
+  ~10 s por cálculo para 36 linhas). Conferências da verificação: a soma dos aprovados por vaga
   é o total do relatório Aprovados, e a soma dos inscritos é a dos editais (edital sem vaga na
   Seleção sai numa linha só, com os inscritos dele).
 - Lacunas conhecidas: o ciclo do edital ficou para depois (texto livre, sem domínio); não há data de
   admissão no banco — a coluna traz a data em que o status atual (Contratado ou Migração) foi
-  registrado; vagas imediatas só onde o título da vaga diz (na Saúde Indígena, cerca de metade).
+  registrado; vagas imediatas vazias onde o edital não tem quadro de vagas importado nem convocação
+  (em 16/11/2026: 919 de 2863 linhas na Saúde Indígena, 375 de 413 em Projetos, todas as 237 da
+  SEDE) — falta de cadastro, não de cálculo. Em Projetos, os locais das vagas valem para todos os
+  cargos do lugar e não dão o número por cargo.
 - Dado pessoal: a aba Aprovados traz nome e matrícula ([[dados-pessoais]]).
 - Paginação no banco: 50 linhas por página (25 ou 100), acima da tabela; setas travadas enquanto a
   página carrega.
@@ -92,12 +103,14 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
 ## Testes
 
 `tests/modulos/paineis-de-dados.test.ts` (tela, permissão, rota, paginação no banco, cache,
-Sincronizar, downloads, gaveta de fontes, largura das colunas e ⓘ), `tests/relatorios-dos-paineis.test.ts`
+Sincronizar, downloads, gaveta de fontes, largura das colunas, ⓘ e Montar relatório), `tests/relatorios-dos-paineis.test.ts`
 (colunas, página lida, arquivos, largura, origem), `tests/fontes-dos-paineis.test.ts` (leitura das
 fontes, permissão, aba Fontes), `tests/fontes-dos-paineis-no-banco.test.ts` (o núcleo das fontes em
 PGlite), `tests/relatorios-prontos-dos-paineis-no-banco.test.ts` (resultado pronto em PGlite: página,
 recorte da coordenação, Sincronizar 1/min, troca de fonte que falha, cálculo de todos, rollback) e
-`tests/relatorios-prontos-dos-paineis-migration.test.ts` (md5 das guardas, rollback e ensaio).
+`tests/relatorios-prontos-dos-paineis-migration.test.ts` (md5 das guardas, rollback e ensaio) e
+`tests/vagas-imediatas-dos-paineis-no-banco.test.ts` (a ordem das fontes das vagas imediatas,
+guarda e rollback de `20261116180000`).
 
 ## Relacionadas
 
