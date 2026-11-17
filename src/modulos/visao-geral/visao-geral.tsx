@@ -23,6 +23,8 @@ import {
 import { criarCarregadorDeMunicipios } from "../mapa-de-projetos/carregador.ts";
 // Os mapas (e o Leaflet) baixam quando montam: ./mapas-sob-demanda.tsx.
 import { MapaDeProjetos, MapaSaudeIndigena } from "./mapas-sob-demanda.tsx";
+import { usarLocalizacoesDoSigepsi } from "../mapa-saude-indigena/localizacoes.ts";
+import { aplicarLocalizacoes } from "../../lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
 import { BoasVindas, MarcosDoAno } from "./boas-vindas.tsx";
 import {
   buscarAcompanhamentoNoSupabase,
@@ -82,7 +84,13 @@ function MapaDaSaudeIndigena({
   perfil,
   supabase,
 }: PropsDoPainel & { perfil: Perfil | null; supabase: SupabaseClient | null }) {
-  const { lmap, redeCnes } = e.mapa || {};
+  const { lmap: lmapDoBanco, redeCnes } = e.mapa || {};
+  // Polos e CASAIs do SIGEPSI por cima do `lmap` do banco (o resto do DSEI fica).
+  const localizacoes = usarLocalizacoesDoSigepsi(supabase);
+  const lmap = useMemo(
+    () => aplicarLocalizacoes(lmapDoBanco, localizacoes),
+    [lmapDoBanco, localizacoes],
+  );
   return (
     <div
       className="visao-geral-mapa"

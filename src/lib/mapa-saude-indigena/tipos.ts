@@ -13,6 +13,11 @@ export interface PoloDoMapa {
   uf?: string;
   cod?: string | number | null;
   cnes?: string;
+  /** Polo do SIGEPSI: o tipo vem de TP_UNIDADE ("polo" quando ausente). */
+  tipo?: "casai" | "polo" | "unidade";
+  municipio?: string;
+  /** "sigepsi" quando veio da API (o editor de coordenadas não oferece). */
+  origem?: string;
 }
 export interface DseiDoMapa extends PoloDoMapa {
   k: string;
@@ -24,6 +29,8 @@ export interface DseiDoMapa extends PoloDoMapa {
   sede_uf?: string;
   sede_endereco?: string;
   sede_cnes?: string;
+  /** "sigepsi" quando a sede (lat/lon) veio da API (o editor não oferece). */
+  sede_origem?: string;
 }
 export type EstabelecimentoCompacto = [
   nome: string,

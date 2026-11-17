@@ -34,6 +34,15 @@ respondem 404. A Aya responde no navegador; o endpoint de IA e o bridge local fo
   - As três trazem `area` (Saúde Indígena, SEDE, Projetos; migration `20261105190000`) e aceitam
     `?area=`. Como o outro sistema usa: comentário do topo de cada rota.
 
+- `dseis.ts` — **sede, polos base, CASAIs e unidades de lotação de cada DSEI, do SIGEPSI**, para o
+  [[modulo-mapa-saude-indigena]]. Só para quem está logado: o front manda o token da sessão do
+  Supabase (conferido em `/auth/v1/user`) e a função lê
+  `https://sigepsi.agenciasus.org.br/api/mapa-dseis/localizacoes/todas` com
+  `Bearer <SIGEPSI_API_TOKEN>` (variável da Vercel, nunca no front). Responde
+  `{ dseis: { <chave>: { polos, sede } }, lidoEm }` já agrupado por `chaveDoDsei` (`src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts`), guarda
+  10 min na instância e só em cache privado. Sem a variável: 500 com `faltam`; SIGEPSI recusando:
+  502 com `status_do_sigepsi`.
+
 ## Regras
 
 - Os dois proxies validam a origem com `src/lib/origem-da-requisicao.ts` (`origemDeTerceiro`). Não
@@ -52,7 +61,7 @@ respondem 404. A Aya responde no navegador; o endpoint de IA e o bridge local fo
 ## Testes
 
 `npx vitest run tests/funai-geodata-proxy.test.js tests/editais-api.test.js
-tests/aprovados-e-cronograma-api.test.js`; `python -m pytest tests/python/test_anexos_do_edital.py
+tests/aprovados-e-cronograma-api.test.js tests/lib/localizacoes-do-sigepsi.test.ts`; `python -m pytest tests/python/test_anexos_do_edital.py
 tests/python/test_retificacao_do_cronograma.py` (PDFs sintéticos).
 
 ## Relacionadas

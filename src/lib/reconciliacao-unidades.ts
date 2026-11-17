@@ -230,6 +230,14 @@ export function tipoDeclarado(nome: unknown): TipoDeclarado {
 export function tiposCompativeis(tipoLmap: string, tipoCnes: string): boolean {
   if (tipoLmap === "polo") return tipoCnes === "polo";
   if (tipoLmap === "casai") return tipoCnes === "casai";
+  /*
+    `unidade`: unidade de lotação do SIGEPSI (src/lib/mapa-saude-indigena/
+    localizacoes-do-sigepsi.ts). O SIGEPSI não diz se é UBSI ou posto, e o
+    nome às vezes nem diz ("NOVO DIA" × "UBSI NOVO DIA"): une com o que não é
+    polo nem CASAI — esses dois ela nunca apaga.
+  */
+  if (tipoLmap === "unidade")
+    return tipoCnes === "ubsi" || tipoCnes === "posto" || tipoCnes === "outro";
   return false;
 }
 
