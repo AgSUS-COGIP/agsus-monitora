@@ -40,7 +40,7 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       passo(
         [t("visao-geral-filtros"), "#page-dashboard .visao-geral-filtros"],
         "Filtros",
-        "O botão Filtros abre Ano, Unidade, Edital e Status; Fase e UF ficam em Mais opções. Cada filtro recorta a página inteira e aparece como etiqueta embaixo do cabeçalho.",
+        "O botão Filtros abre Ano, Unidade, Edital e Status; Fase e UF ficam em Mais opções. Cada filtro recorta a página inteira.",
       ),
       passo(
         [t("visao-geral-kpis"), "#page-dashboard .visao-geral-kpis"],

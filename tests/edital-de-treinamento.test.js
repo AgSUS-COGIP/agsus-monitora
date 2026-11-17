@@ -91,12 +91,13 @@ describe("fora dos indicadores e da Visão geral", () => {
     expect(sem).not.toEqual(com);
   });
 
-  it("a Visão geral, as boas-vindas e os indicadores de Editais aplicam o predicado", () => {
+  it("a Visão geral, a semana do cabeçalho e os indicadores de Editais aplicam o predicado", () => {
     expect(ler("src/modulos/visao-geral/estado.ts")).toContain(
       "semTreinamento(linhasDaArea(linhasDaResposta(linhas), areaAtual))",
     );
-    expect(ler("src/modulos/visao-geral/boas-vindas.tsx")).toContain(
-      "semTreinamento(linhasDaArea(linhasDaResposta(linhas), areaAtual))",
+    // A semana do cabeçalho conta sobre as linhas da área do estado, já sem o treinamento.
+    expect(ler("src/modulos/visao-geral/paineis.tsx")).toContain(
+      "editaisComEtapaNaSemana(e.linhasDaArea, agora())",
     );
     expect(ler("src/modulos/editais/nucleo.tsx")).toContain(
       "resumoDasLinhas(doResumo.resumo, semTreinamento(linhas))",
