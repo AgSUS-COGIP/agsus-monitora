@@ -28,11 +28,26 @@ const edital = (
 });
 
 /* Cargos por edital: cargo → vagas do quadro (null = sem quadro). */
-const cargos = (porEdital: Record<string, Record<string, number | null>>) =>
+/*
+  Cargos por edital: texto → vagas do quadro (null = sem quadro), ou
+  { codigo, vagas } para o cargo oficial (co_cargo).
+*/
+type CargoDoTeste = number | null | { codigo: number; vagas: number | null };
+const cargos = (porEdital: Record<string, Record<string, CargoDoTeste>>) =>
   new Map(
     Object.entries(porEdital).map(([id, c]) => [
       id,
-      new Map(Object.entries(c)),
+      new Map(
+        Object.entries(c).map(([texto, valor]) => {
+          const oficial = valor !== null && typeof valor === "object";
+          const codigo = oficial ? String(valor.codigo) : null;
+          const vagas = oficial ? valor.vagas : valor;
+          return [
+            codigo ? `c:${codigo}` : `t:${texto}`,
+            { codigo, texto, vagas },
+          ];
+        }),
+      ),
     ]),
   );
 
@@ -89,11 +104,37 @@ describe("cargosDaResposta", () => {
     });
     expect(porEdital.get("a")).toEqual(
       new Map([
-        ["enfermeiro", 3],
-        ["psicologo", null],
+        ["t:enfermeiro", { codigo: null, texto: "enfermeiro", vagas: 3 }],
+        ["t:psicologo", { codigo: null, texto: "psicologo", vagas: null }],
       ]),
     );
     expect(porEdital.has("b")).toBe(false);
+  });
+
+  it("com o cargo oficial, grafias diferentes do mesmo cargo viram um só", () => {
+    const porEdital = cargosDaResposta({
+      quadro: [
+        {
+          monitoramento_id: "a",
+          cargo: "ENFERMEIRA (A)",
+          co_cargo: 12,
+          vagas: 2,
+        },
+      ],
+      vagas: [
+        { monitoramento_id: "a", cargo: "Enfermeiro - PPP", co_cargo: 12 },
+        { monitoramento_id: "a", cargo: "AISAN", co_cargo: 40 },
+        // co_cargo torto vale como sem cargo oficial: fica o texto.
+        { monitoramento_id: "a", cargo: "Psicólogo", co_cargo: "x" },
+      ],
+    });
+    expect(porEdital.get("a")).toEqual(
+      new Map([
+        ["c:12", { codigo: "12", texto: "enfermeira", vagas: 2 }],
+        ["c:40", { codigo: "40", texto: "aisan", vagas: null }],
+        ["t:psicologo", { codigo: null, texto: "psicologo", vagas: null }],
+      ]),
+    );
   });
 
   it("resposta torta vira mapa vazio", () => {
@@ -137,6 +178,49 @@ describe("calcularReaberturas", () => {
       reabertasEm: [],
       reabre: [{ edital: "78/2025", vagas: 6 }],
     });
+  });
+
+  it("mesmo cargo oficial com grafias diferentes: a vaga reaberta conta uma vez só", () => {
+    const r = calcularReaberturas(
+      [antigo, novo],
+      cargos({
+        e1: { aisan: { codigo: 40, vagas: null } },
+        e2: { "agente indigena saneamento": { codigo: 40, vagas: null } },
+      }),
+    );
+    expect(r.get("e1")?.reabertas).toBe(6);
+  });
+
+  it("cargos oficiais diferentes não casam, nem com o mesmo texto", () => {
+    expect(
+      calcularReaberturas(
+        [antigo, novo],
+        cargos({
+          e1: { medico: { codigo: 7, vagas: null } },
+          e2: { medico: { codigo: 8, vagas: null } },
+        }),
+      ).size,
+    ).toBe(0);
+  });
+
+  it("sem cargo oficial num dos lados (SEDE, Projetos, grafia sem casamento), vale o texto", () => {
+    const r = calcularReaberturas(
+      [antigo, novo],
+      cargos({
+        e1: { enfermeiro: { codigo: 12, vagas: null } },
+        e2: { enfermeiro: null },
+      }),
+    );
+    expect(r.get("e1")?.reabertas).toBe(6);
+    expect(
+      calcularReaberturas(
+        [antigo, novo],
+        cargos({
+          e1: { aisan: { codigo: 40, vagas: null } },
+          e2: { "agente indigena saneamento": null },
+        }),
+      ).size,
+    ).toBe(0);
   });
 
   it("cargo diferente, outra unidade, edital cancelado ou sem cargos: a vaga é nova", () => {

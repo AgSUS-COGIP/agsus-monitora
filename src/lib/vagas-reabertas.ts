@@ -18,6 +18,10 @@
     já reabriu não reabre de novo em outro antigo.
   - Do edital antigo mais recente para o mais velho (o posto reaberto é o do
     último edital que o ofereceu).
+  - Mesmo cargo: pelo cargo oficial (`co_cargo`, TD_CARGO pela grafia, só na
+    Saúde Indígena) quando os dois lados o têm — "AISAN" e "Agente Indígena de
+    Saneamento" são o mesmo cargo, e cargos oficiais diferentes nunca casam;
+    senão (SEDE, Projetos, grafia sem casamento), pelo texto (`chaveDoCargo`).
   - Sem cargo conhecido num dos dois (sem vagas na Seleção nem quadro), não há
     reabertura: na dúvida, a vaga conta como nova.
   - Não pega a reposição de quem foi contratado e saiu (é contratação nova) nem
@@ -36,8 +40,14 @@ import {
 } from "./indicadores-do-monitoramento.ts";
 import type { LinhaDoMonitoramento } from "../modulos/visao-geral/tipos.ts";
 
-/** Cargo → vagas imediatas no quadro do edital (nulo: cargo sem quadro). */
-export type CargosDoEdital = ReadonlyMap<string, number | null>;
+/** Um cargo do edital: o oficial (se casou), o texto e as vagas do quadro (nulo: sem quadro). */
+export interface CargoDoEdital {
+  codigo: string | null;
+  texto: string;
+  vagas: number | null;
+}
+/** Os cargos de um edital, por "c:<co_cargo>" ou, sem cargo oficial, "t:<texto>". */
+export type CargosDoEdital = ReadonlyMap<string, CargoDoEdital>;
 
 export interface Reabertura {
   edital: string;
@@ -105,40 +115,53 @@ export function chaveDoCargo(valor: unknown): string {
     .join(" ");
 }
 
+/* O cargo oficial (inteiro positivo); outro valor vira nulo. */
+function codigoDoCargo(valor: unknown): string | null {
+  if (valor === null || valor === undefined || valor === "") return null;
+  const n = Number(valor);
+  return Number.isInteger(n) && n > 0 ? String(n) : null;
+}
+
 /**
  * Os cargos de cada edital pela resposta de
  * listar_vagas_por_cargo_da_visao_geral: os das vagas da Seleção (sem
- * quantidade) e os do quadro (com as vagas imediatas somadas por cargo).
+ * quantidade) e os do quadro (com as vagas imediatas somadas por cargo), pelo
+ * cargo oficial (`co_cargo`) quando há, senão pelo texto.
  */
 export function cargosDaResposta(
   bruto: unknown,
-): Map<string, Map<string, number | null>> {
+): Map<string, Map<string, CargoDoEdital>> {
   const origem =
     bruto && typeof bruto === "object" && !Array.isArray(bruto)
       ? (bruto as Record<string, unknown>)
       : {};
-  const porEdital = new Map<string, Map<string, number | null>>();
-  const doEdital = (id: string) => {
+  const porEdital = new Map<string, Map<string, CargoDoEdital>>();
+  const acrescentar = (
+    registro: Record<string, unknown>,
+    textoBruto: unknown,
+    vagas: number | null,
+  ) => {
+    const id = txt(registro.monitoramento_id);
+    const texto = chaveDoCargo(textoBruto);
+    if (!id || !texto || /^\d+$/.test(texto)) return;
+    const codigo = codigoDoCargo(registro.co_cargo);
+    const chave = codigo ? `c:${codigo}` : `t:${texto}`;
     let cargos = porEdital.get(id);
     if (!cargos) porEdital.set(id, (cargos = new Map()));
-    return cargos;
+    const atual = cargos.get(chave);
+    if (!atual) cargos.set(chave, { codigo, texto, vagas });
+    else if (vagas !== null) atual.vagas = (atual.vagas ?? 0) + vagas;
   };
-  for (const q of registros(origem.quadro)) {
-    const id = txt(q.monitoramento_id);
-    const cargo = chaveDoCargo(q.cargo);
-    if (!id || !cargo) continue;
-    const cargos = doEdital(id);
-    cargos.set(cargo, (cargos.get(cargo) ?? 0) + num(q.vagas));
-  }
-  for (const v of registros(origem.vagas)) {
-    const id = txt(v.monitoramento_id);
-    const cargo = chaveDoCargo(v.cargo || v.vaga);
-    if (!id || !cargo || /^\d+$/.test(cargo)) continue;
-    const cargos = doEdital(id);
-    if (!cargos.has(cargo)) cargos.set(cargo, null);
-  }
+  for (const q of registros(origem.quadro))
+    acrescentar(q, q.cargo, num(q.vagas));
+  for (const v of registros(origem.vagas))
+    acrescentar(v, v.cargo || v.vaga, null);
   return porEdital;
 }
+
+/** Mesmo cargo: pelo oficial quando os dois têm; senão, pelo texto. */
+export const mesmoCargo = (a: CargoDoEdital, b: CargoDoEdital): boolean =>
+  a.codigo && b.codigo ? a.codigo === b.codigo : a.texto === b.texto;
 
 /* "AAAA-MM-DD…" → dia em número; sem data, nulo. */
 function dia(valor: unknown): number | null {
@@ -165,11 +188,12 @@ function vagasEmComum(
   let comQuadro = 0;
   let algumEmComum = false;
   let algumSemQuadro = false;
-  for (const [cargo, vagas] of novo) {
-    if (!antigo.has(cargo)) continue;
+  const doAntigo = [...antigo.values()];
+  for (const cargo of novo.values()) {
+    if (!doAntigo.some((outro) => mesmoCargo(cargo, outro))) continue;
     algumEmComum = true;
-    if (vagas === null) algumSemQuadro = true;
-    else comQuadro += vagas;
+    if (cargo.vagas === null) algumSemQuadro = true;
+    else comQuadro += cargo.vagas;
   }
   if (!algumEmComum) return 0;
   return algumSemQuadro ? totalDoNovo : Math.min(comQuadro, totalDoNovo);

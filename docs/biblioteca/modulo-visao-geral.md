@@ -81,7 +81,11 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
   enriquecimento e perde essas vagas das vagas imediatas e das ociosas (`vagasEfetivas`,
   `vagasSemContratacao`); as contratadas ficam. Os cargos vêm de
   `listar_vagas_por_cargo_da_visao_geral` (vagas da Seleção e quadro), lida junto com o
-  acompanhamento; se falhar, as vagas ficam como cada edital publicou. O módulo da regra chega por
+  acompanhamento; se falhar, as vagas ficam como cada edital publicou. O "mesmo cargo" é o cargo
+  oficial (`co_cargo`, TD_CARGO pela grafia com `FC_CARGO_DA_GRAFIA`, migration `20261117130000`)
+  quando os dois lados o têm; na SEDE, em Projetos e na grafia sem casamento, o texto
+  (`chaveDoCargo`). Em 17/11/2026, dos 544 pares de editais do mesmo DSEI com o mesmo cargo
+  oficial, só 3 casavam só pelo código, sem mudar o total. O módulo da regra chega por
   import dinâmico só quando os cargos chegam (`acompanhamento.reaberturas`), fora do pacote de
   entrada (orçamento de bundle). O KPI mostra "sem N
   reabertas", a gaveta diz de qual edital, a tabela e o CSV mantêm a coluna Vagas como o edital
