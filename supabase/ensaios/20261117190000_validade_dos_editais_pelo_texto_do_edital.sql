@@ -1,35 +1,6 @@
 /*
-  A VALIDADE DOS EDITAIS PELO TEXTO DO EDITAL (pedido de 13/11/2026: "tem que
-  mapear os editais que venceram")
-
-  Nenhum edital tinha a validade gravada (NU_ANOS_VALIDADE, NU_MESES_VALIDADE
-  e ST_PRORROGADO zerados), então nenhum vencia. O prazo de 121 editais foi
-  lido na cláusula de validade do PDF publicado (6, 12, 24 ou 36 meses,
-  contados da homologação do resultado final) e as prorrogações, nos avisos
-  do site da AgSUS:
-    - 79/2025 (DSEI Alto Rio Juruá): 6 meses, prorrogado (aviso de 22/05/2026);
-    - 05/2025 (DSEI Cuiabá): 1 ano, prorrogado (aviso de 11/06/2026).
-  Atos que mudaram o prazo do edital (conferência do Codex, 13/11/2026):
-    - 03, 04, 05, 06 e 09/2025: errata de 27/02/2025, o item 8.8 passa de
-      3 anos para 1 ano;
-    - SEDE 31, 33, 45, 46 e 48/2025: retificação, de 6 para 12 meses.
-
-  Fora: editais cancelados, sem PDF, sem cláusula de validade (SEDE de 2025)
-  e o 117/2026 (cita a vigência sem prazo). Ficam sem validade (não vencem).
-
-  O vencimento conta da data de encerramento (data_fim), um pouco depois da
-  homologação: erra para o lado de manter a lista ativa.
-
-  O QUE MUDA: grava a validade de 121 editais e roda
-  FC_INATIVAR_LISTAS_VENCIDAS (a rotina das 00:05): as listas vigentes dos
-  45 editais vencidos ficam inativas.
-
-  Ensaio: supabase/ensaios/20261117160000_validade_dos_editais_pelo_texto_do_edital.sql
-  Rollback: supabase/rollback/20261117160000_validade_dos_editais_pelo_texto_do_edital.sql (zera a validade desses editais e
-  reativa as listas inativadas por esta migration; as 27 que já estavam
-  inativas antes ficam como estavam)
+  ENSAIO de 20261117190000_validade_dos_editais_pelo_texto_do_edital: grava, inativa, confere; termina em rollback.
 */
-
 begin;
 
 set local lock_timeout = '5s';
@@ -215,4 +186,4 @@ begin
 end;
 $confere$;
 
-commit;
+rollback;
