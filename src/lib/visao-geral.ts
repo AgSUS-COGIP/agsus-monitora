@@ -67,11 +67,6 @@ import {
   vagasEfetivas,
   vagasSemContratacao,
 } from "./indicadores-do-monitoramento.ts";
-import {
-  calcularReaberturas,
-  cargosDaResposta,
-  type ReaberturasDoEdital,
-} from "./vagas-reabertas.ts";
 
 const txt = (valor: unknown) =>
   typeof valor === "string" || typeof valor === "number"
@@ -311,16 +306,11 @@ export function acompanhamentoDaResposta(
         quando: textoOpcional(marcacao.quando) ?? null,
       });
   }
-  // Os cargos de cada edital, para as vagas reabertas (listar_vagas_por_cargo_da_visao_geral).
-  const cargosPorEdital = origem.vagas_por_cargo
-    ? cargosDaResposta(origem.vagas_por_cargo)
-    : undefined;
   return {
     etapasPorEdital,
     listasPorEdital,
     admissoesPorEdital,
     criticosPorEdital,
-    ...(cargosPorEdital ? { cargosPorEdital } : {}),
   };
 }
 
@@ -379,23 +369,10 @@ export function duracaoEmDias(linha: LinhaDoMonitoramento): number | null {
   return Number.isFinite(dias) && dias >= 0 ? dias : null;
 }
 
-/* `vagas_reabertas`, `reabertas_em` e `reabre` da linha (zero e vazios sem reabertura). */
-function dadosDaReabertura(
-  reaberturas: Map<string, ReaberturasDoEdital>,
-  linha: LinhaDoMonitoramento,
-) {
-  const r = reaberturas.get(txt(linha?.id));
-  return {
-    vagas_reabertas: r?.reabertas ?? 0,
-    reabertas_em: r?.reabertasEm ?? [],
-    reabre: r?.reabre ?? [],
-  };
-}
-
 /**
- * Cada linha com `fase`, `vagas_reabertas` (as vagas sem contratação que um
- * edital mais novo da mesma unidade reabriu; `reabertas_em` e `reabre` dizem
- * quais editais), `atencao` (motivos do crítico), `pos_resultado`
+ * Cada linha com `fase`, `vagas_reabertas` e `textos_da_reabertura` (as vagas
+ * sem contratação que um edital mais novo da mesma unidade reabriu, pela conta
+ * `acompanhamento.reaberturas`, de src/lib/vagas-reabertas.ts), `atencao` (motivos do crítico), `pos_resultado`
  * (pendências), `desistentes`, `aprovados` e `cadastro_reserva` (da lista
  * vigente), `ciclo` padronizado e `primeira_admissao`, `ultima_admissao` e
  * `admissoes` (conciliadas com o RH). `hoje`: "AAAA-MM-DD".
@@ -421,12 +398,14 @@ export function enriquecerLinhas(
     ...linha,
     fase: faseDoEdital(linha),
   }));
-  const reaberturas = calcularReaberturas(
-    comFases,
-    acompanhamento?.cargosPorEdital,
-  );
+  const reaberturas = acompanhamento?.reaberturas?.(comFases);
   return comFases.map((comFase) => {
-    const linha = { ...comFase, ...dadosDaReabertura(reaberturas, comFase) };
+    const reabertura = reaberturas?.get(txt(comFase.id));
+    const linha = {
+      ...comFase,
+      vagas_reabertas: reabertura?.reabertas ?? 0,
+      textos_da_reabertura: reabertura?.textos ?? [],
+    };
     const id = txt(linha?.id);
     const etapas = acompanhamento?.etapasPorEdital?.get(id) || null;
     const lista = acompanhamento?.listasPorEdital?.get(id) || null;

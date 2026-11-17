@@ -81,12 +81,17 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
   enriquecimento e perde essas vagas das vagas imediatas e das ociosas (`vagasEfetivas`,
   `vagasSemContratacao`); as contratadas ficam. Os cargos vêm de
   `listar_vagas_por_cargo_da_visao_geral` (vagas da Seleção e quadro), lida junto com o
-  acompanhamento; se falhar, as vagas ficam como cada edital publicou. O KPI mostra "sem N
+  acompanhamento; se falhar, as vagas ficam como cada edital publicou. O módulo da regra chega por
+  import dinâmico só quando os cargos chegam (`acompanhamento.reaberturas`), fora do pacote de
+  entrada (orçamento de bundle). O KPI mostra "sem N
   reabertas", a gaveta diz de qual edital, a tabela e o CSV mantêm a coluna Vagas como o edital
   publicou e a coluna de vagas sem contratação já sem as reabertas. O mapa por DSEI e o relatório
   usam a mesma conta. Conferência de 16/11/2026 (dados reais, status pelo cronograma): −147 vagas na
   Saúde Indígena (2.263 → 2.116, 14 DSEIs), −10 na SEDE, nenhuma em Projetos. O código da vaga não liga os editais (a Empregare dá código
   novo a cada edital). Explicação para quem usa: seção "Vagas reabertas" da Aya.
+  Diferença conhecida: os Painéis (Editais por cargo, Resumo dos editais) mostram as vagas de cada
+  edital como publicadas (pelo quadro, desde #850), sem o desconto; e o "Montar relatório" dos
+  Painéis só traz o desconto se a Visão geral já leu o acompanhamento da área nesta visita.
 
 ## Limites da tipagem
 

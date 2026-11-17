@@ -412,8 +412,25 @@ export function criarEstadoDaVisaoGeral({
       .filter(Boolean);
     Promise.resolve()
       .then(() => buscar(areaAtual, editais))
+      .then(async (resposta) => {
+        const acompanhamento = acompanhamentoDaResposta(resposta);
+        /*
+          As vagas reabertas: o módulo chega sob demanda, só com os cargos na
+          resposta (fora do pacote de entrada). Sem ele, as vagas ficam como
+          cada edital publicou.
+        */
+        const cargos = (resposta as { vagas_por_cargo?: unknown } | null)
+          ?.vagas_por_cargo;
+        if (acompanhamento && cargos)
+          acompanhamento.reaberturas =
+            await import("../../lib/vagas-reabertas.ts").then(
+              (modulo) => modulo.reaberturasDosCargos(cargos),
+              () => undefined,
+            );
+        return acompanhamento;
+      })
       .then(
-        (resposta) => {
+        (acompanhamento) => {
           if (pedido !== este) return;
           pedido = null;
           const atual = dados.obter();
@@ -422,7 +439,7 @@ export function criarEstadoDaVisaoGeral({
             acompanhamento: {
               area: areaAtual,
               linhas,
-              dados: acompanhamentoDaResposta(resposta),
+              dados: acompanhamento,
             },
           });
         },

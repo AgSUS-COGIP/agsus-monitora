@@ -3,6 +3,7 @@ import {
   calcularReaberturas,
   cargosDaResposta,
   chaveDoCargo,
+  reaberturasDosCargos,
   textoDaReabertura,
 } from "../../src/lib/vagas-reabertas.ts";
 import {
@@ -313,18 +314,17 @@ describe("indicadores com vagas reabertas", () => {
 });
 
 describe("Visão geral com os cargos das vagas", () => {
-  it("o acompanhamento traz os cargos e o enriquecimento marca as reabertas", () => {
-    const acompanhamento = acompanhamentoDaResposta({
-      etapas: [],
-      listas: [],
-      vagas_por_cargo: {
-        vagas: [
-          { monitoramento_id: "e1", cargo: "Enfermeiro" },
-          { monitoramento_id: "e2", cargo: "Enfermeiro - PPP" },
-        ],
-        quadro: [],
-        lista: [],
-      },
+  it("com a conta dos cargos, o enriquecimento marca as reabertas e as frases da gaveta", () => {
+    const acompanhamento = acompanhamentoDaResposta({ etapas: [], listas: [] });
+    if (!acompanhamento) throw new Error("sem acompanhamento");
+    // O estado da Visão geral põe a conta depois do import dinâmico.
+    acompanhamento.reaberturas = reaberturasDosCargos({
+      vagas: [
+        { monitoramento_id: "e1", cargo: "Enfermeiro" },
+        { monitoramento_id: "e2", cargo: "Enfermeiro - PPP" },
+      ],
+      quadro: [],
+      lista: [],
     });
     const [velho, novo] = enriquecerLinhas(
       [
@@ -347,14 +347,18 @@ describe("Visão geral com os cargos das vagas", () => {
       { hoje: "2026-11-16", acompanhamento },
     );
     expect(velho?.vagas_reabertas).toBe(6);
-    expect(velho?.reabertas_em).toEqual([{ edital: "79/2026", vagas: 6 }]);
+    expect(velho?.textos_da_reabertura).toEqual([
+      "6 vagas reabertas no edital 79/2026",
+    ]);
     expect(novo?.vagas_reabertas).toBe(0);
-    expect(novo?.reabre).toEqual([{ edital: "78/2025", vagas: 6 }]);
+    expect(novo?.textos_da_reabertura).toEqual([
+      "Reabre 6 vagas do edital 78/2025",
+    ]);
   });
 
   it("sem os cargos (leitura falhou), as vagas ficam como cada edital publicou", () => {
     const acompanhamento = acompanhamentoDaResposta({ etapas: [], listas: [] });
-    expect(acompanhamento?.cargosPorEdital).toBeUndefined();
+    expect(acompanhamento?.reaberturas).toBeUndefined();
     const [linha] = enriquecerLinhas([edital({ id: "e1", vagas_total: 10 })], {
       acompanhamento,
     });

@@ -141,6 +141,62 @@ describe("fronteiras externas da Visão geral", () => {
     expect(buscar).toHaveBeenCalledTimes(2);
   });
 
+  it("com os cargos na resposta, o estado carrega a conta e desconta a vaga reaberta", async () => {
+    const velho = {
+      ...linha,
+      id: "e1",
+      edital: "1/2025",
+      status: "Concluído",
+      data_inicio: "2025-06-09",
+      data_fim: "2025-08-20",
+      vagas_total: 10,
+      contratados: 4,
+    };
+    const novo = {
+      ...linha,
+      id: "e2",
+      edital: "2/2026",
+      data_inicio: "2026-06-16",
+      vagas_total: 5,
+      contratados: 0,
+    };
+    const snapshot = {
+      linhas: [velho, novo],
+      areaAtual: "sede",
+      carregado: true,
+    };
+    const buscar = vi.fn(async () => ({
+      etapas: [],
+      listas: [],
+      vagas_por_cargo: {
+        vagas: [
+          { monitoramento_id: "e1", cargo: "Analista" },
+          { monitoramento_id: "e2", cargo: "Analista" },
+        ],
+      },
+    }));
+    const estado = criarEstadoDaVisaoGeral({
+      dados: { obter: () => snapshot, assinar: () => () => {} },
+      armazenamento: null,
+    });
+    estado.definirBuscaDoAcompanhamento(buscar);
+    await vi.waitFor(() =>
+      expect(estado.obter().indicadores.reabertas).toBe(5),
+    );
+    // Os editais da área vão junto, para a leitura dos cargos.
+    expect(buscar).toHaveBeenCalledWith("sede", ["e1", "e2"]);
+    expect(estado.obter().indicadores).toMatchObject({
+      vagas: 10,
+      contratadas: 4,
+      emSelecao: 5,
+      ociosas: 1,
+    });
+    expect(
+      estado.obter().linhasDaArea.find((l) => l.id === "e1")
+        .textos_da_reabertura,
+    ).toEqual(["5 vagas reabertas no edital 2/2026"]);
+  });
+
   it("o acompanhamento pergunta pela versão que já tem; inalterado, volta o mesmo", async () => {
     const primeiro = {
       etapas: [],

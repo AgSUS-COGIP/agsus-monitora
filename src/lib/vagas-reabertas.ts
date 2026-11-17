@@ -272,3 +272,34 @@ export function textoDaReabertura(
   const reaberta = total === 1 ? "reaberta" : "reabertas";
   return `${vagas} ${reaberta} ${nomes.replace(/^do/, "no")}`;
 }
+
+/** O que a linha da Visão geral recebe: as vagas reabertas e as frases da gaveta. */
+export interface ReaberturaDaLinha {
+  reabertas: number;
+  textos: string[];
+}
+
+/**
+ * A conta pronta para a Visão geral, pela resposta de
+ * listar_vagas_por_cargo_da_visao_geral: devolve a função que, das linhas da
+ * área (com a `fase`), diz as reabertas e as frases de cada edital. Este
+ * módulo chega sob demanda (import dinâmico no estado da Visão geral), fora
+ * do pacote de entrada.
+ */
+export function reaberturasDosCargos(
+  bruto: unknown,
+): (linhas: readonly LinhaDoMonitoramento[]) => Map<string, ReaberturaDaLinha> {
+  const cargos = cargosDaResposta(bruto);
+  return (linhas) => {
+    const porEdital = new Map<string, ReaberturaDaLinha>();
+    for (const [id, r] of calcularReaberturas(linhas, cargos))
+      porEdital.set(id, {
+        reabertas: r.reabertas,
+        textos: [
+          textoDaReabertura(r.reabertasEm, "reabertas"),
+          textoDaReabertura(r.reabre, "reabre"),
+        ].filter(Boolean),
+      });
+    return porEdital;
+  };
+}
