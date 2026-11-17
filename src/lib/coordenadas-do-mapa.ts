@@ -81,14 +81,21 @@ export function pontosEditaveisDoMapa(
     )
       return;
     const chave = dsei.k;
-    // Sede do SIGEPSI não está no banco: a correção é feita lá.
-    if (dsei.sede_origem !== "sigepsi")
+    /*
+      Sede ou DSEI do SIGEPSI não está no banco: a correção é feita lá. Com a
+      lista do SIGEPSI, a posição do DSEI no banco vem em `indice_no_banco`.
+    */
+    const doSigepsi =
+      dsei.origem === "sigepsi" || dsei.sede_origem === "sigepsi";
+    const indiceNoBanco =
+      typeof dsei.indice_no_banco === "number" ? dsei.indice_no_banco : indice;
+    if (!doSigepsi)
       incluir(
         {
           fonte: "lmap",
           tipo: "sede",
           dsei: chave,
-          indice,
+          indice: indiceNoBanco,
           codigo: null,
           nome: texto(dsei.n),
         },
