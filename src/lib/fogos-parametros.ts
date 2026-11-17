@@ -31,7 +31,6 @@ export const INTENSIDADES = Object.freeze({
     tiros: 0,
     apoteose: 0,
     danca: false,
-    letreiro: false,
   }),
   cheio: Object.freeze({
     explosoes: 9,
@@ -41,7 +40,6 @@ export const INTENSIDADES = Object.freeze({
     tiros: 4,
     apoteose: 3,
     danca: true,
-    letreiro: true,
   }),
   fogos: Object.freeze({
     explosoes: 10,
@@ -51,7 +49,6 @@ export const INTENSIDADES = Object.freeze({
     tiros: 5,
     apoteose: 3,
     danca: true,
-    letreiro: true,
   }),
   /* Festa: onde vale tudo. */
   festa: Object.freeze({
@@ -62,7 +59,6 @@ export const INTENSIDADES = Object.freeze({
     tiros: 6,
     apoteose: 6,
     danca: true,
-    letreiro: true,
   }),
 });
 
@@ -302,18 +298,6 @@ export const MARCO = Object.freeze({
   /* A forma se desfaz este tanto antes do fim e cai até apagar. */
   desfazAntes: 0.75,
   queda: 0.6,
-});
-
-/*
-  O letreiro: estoura pouco antes do marco (as faíscas levam ~0,8 s para
-  chegar) e fica legível até perto do fim, junto com a forma, o grande
-  final e a apoteose.
-*/
-export const LETREIRO = Object.freeze({
-  /* Quantos pontos no texto (numa tela de referência). */
-  pontos: 420,
-  estouraAntes: 2.6,
-  desfazAntes: 0.5,
 });
 
 /* As rajadas: um tiro a cada `intervalo` s, cada um com `porte` do estouro. */

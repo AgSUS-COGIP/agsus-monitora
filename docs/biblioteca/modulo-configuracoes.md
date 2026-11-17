@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-11
+atualizado: 2026-11-17
 ---
 
 # Módulo: Configurações
@@ -28,22 +28,23 @@ atualizações). Pasta `src/modulos/configuracoes/`; rota `config`, cada seção
 
 ## Comemorações
 
-O desenho (aviso, fogos, letreiro, som) e as regras de quando comemorar estão em
+O desenho (aviso, fogos, som) e as regras de quando comemorar estão em
 [[modulo-comemoracao]]; aqui, a seção que configura.
 
-| Peça                                  | O quê                                                                                   |
-| ------------------------------------- | --------------------------------------------------------------------------------------- |
-| `comemoracoes.tsx`                    | a seção: catálogo de marcos, personalizados, palco de testes e preferência pessoal      |
-| `palco-de-testes.tsx`                 | efeito, intensidade, duração e som escolhidos na hora, sem gravar                       |
-| `src/lib/catalogo-de-comemoracoes.ts` | catálogo, normalização, JSON publicado, decisão de mostrar, revisão campo a campo       |
-| `src/lib/motor-de-efeitos.ts`         | confete, serpentina, estrelas, corações e balões; embute os fogos de `fogos.ts`         |
-| `src/modulos/comemoracao/`            | canvas, `requestAnimationFrame`, aviso, som e o evento da Aya                           |
-| `src/app/marcos-personalizados.ts`    | avaliação dos personalizados com as linhas que o front já tem                           |
+| Peça                                  | O quê                                                                              |
+| ------------------------------------- | ---------------------------------------------------------------------------------- |
+| `comemoracoes.tsx`                    | a seção: catálogo de marcos, personalizados, palco de testes e preferência pessoal |
+| `palco-de-testes.tsx`                 | efeito, intensidade, duração e som escolhidos na hora, sem gravar                  |
+| `src/lib/catalogo-de-comemoracoes.ts` | catálogo, normalização, JSON publicado, decisão de mostrar, revisão campo a campo  |
+| `src/lib/motor-de-efeitos.ts`         | confete, serpentina, estrelas, corações e balões; embute os fogos de `fogos.ts`    |
+| `src/modulos/comemoracao/`            | canvas, `requestAnimationFrame`, aviso, som e o evento da Aya                      |
+| `src/app/marcos-personalizados.ts`    | avaliação dos personalizados com as linhas que o front já tem                      |
 
 `src/modulos/comemoracao/` é filha da casca: aviso no topo (`role="status"`) com "Pular", botão de
 som (desligado por padrão) e ×; efeito num `<canvas>` (véu escuro com fogos ou estrelas); a Aya
-(`src/modulos/aya/mascote/`) atravessa a tela nos fogos; a frase do marco é texto numa placa
-escura (`letreiro.tsx`). Tudo por portal no fim do `body`.
+(`src/modulos/aya/mascote/`) atravessa a tela nos fogos; a frase fica só no aviso. Tudo por
+portal no fim do `body`. Fila zerada, vaga pronta e os personalizados são só o aviso: a linha
+deles não tem efeito, intensidade, duração nem som.
 
 - **Persistência.** Chave `comemoracoes_marcos` de `TB_CONFIGURACAO`, publicada pela barra fixa
   (`salvar_configuracoes_e_paineis_v2`, com motivo e `TH_CONFIGURACAO`; restaurar versão volta os
@@ -55,13 +56,15 @@ escura (`letreiro.tsx`). Tudo por portal no fim do `body`.
 - **Quem vê.** Só quem fez (quem vê a transição no próprio navegador). "Toda a área online" fica
   desabilitado: a presença é uma batida a cada 45 s, sem canal por área. Próximo passo: canal
   Supabase Realtime por área (broadcast `comemoracao` com `{ marco, texto }`).
-- **Respeita** `prefers-reduced-motion` (só o aviso e a frase), o liga/desliga geral (Módulos e abas
+- **Respeita** `prefers-reduced-motion` (só o aviso), o liga/desliga geral (Módulos e abas
   › Sistema inteiro) e a preferência pessoal (`agsus_monitora_comemoracoes_desligadas` = `"1"`,
   `CHAVE_COMEMORACOES_PESSOAIS` em `src/lib/preferencia-de-comemoracoes.ts`, a mesma da mascote).
   "Testar" e o palco passam `teste: true`: ignoram configuração e preferência e não gravam.
 - **Marcos personalizados.** "Edital X chegou a N contratados" (soma de `contratados` das linhas do
   monitoramento, a cada carga/Realtime) e "a área passou de N análises concluídas no dia" (linhas de
-  Análises). Linha de base em silêncio, comemora a transição, uma vez por pessoa e navegador.
+  Análises). Linha de base em silêncio, comemora a transição, uma vez por pessoa e navegador. Só o
+  aviso; vários alcançados na mesma leitura, só o maior. Frases: "Edital X: N contratados." e
+  "N análises concluídas hoje." (a mensagem própria tem prioridade).
 
 ### Integração com a mascote (Aya)
 

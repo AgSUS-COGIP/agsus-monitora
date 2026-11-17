@@ -41,9 +41,6 @@
   "src/modulos/aya/tour/tour.css": {
     "zIndex": 1
   },
-  "src/modulos/comemoracao/letreiro.tsx": {
-    "cor": 1
-  },
   "src/modulos/configuracoes/configuracoes.css": {
     "important": 3,
     "raio": 1,
@@ -91,9 +88,6 @@
   },
   "src/styles/barra-lateral.css": {
     "important": 1
-  },
-  "src/styles/comemoracao.css": {
-    "blur": 1
   },
   "src/styles/indigenous-territories-layer.css": {
     "blur": 1

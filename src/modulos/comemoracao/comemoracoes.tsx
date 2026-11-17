@@ -48,8 +48,6 @@ import {
   registrarQuadro,
 } from "./desempenho.ts";
 import { planoDaComemoracao, TEMPO_DO_AVISO_MS } from "./plano.ts";
-import { mostrarLetreiro } from "./letreiro.ts";
-import { Letreiro } from "./letreiro.tsx";
 import "../../styles/comemoracao.css";
 import type { PosicaoDaAya } from "../../lib/fogos-cena.ts";
 import type { EstadoDaMascote } from "../../lib/estado-da-aya.ts";
@@ -65,10 +63,8 @@ import type { ComemoracaoNaTela, OpcoesDaComemoracao } from "./plano.ts";
   num <canvas>, com um véu escuro suave quando há fogos ou estrelas e a Aya
   (a mascote de verdade, src/modulos/aya/mascote/) atravessando a tela nos
   fogos e, no Normal e no Festa, voltando no fim para dançar, dar uma
-  cambalhota e soltar confete. A frase do marco (o letreiro, fora do Suave)
-  é texto de verdade numa placa escura por cima de tudo (letreiro.tsx), para
-  ser lida em qualquer tema. Com prefers-reduced-motion, só o aviso e a
-  frase, sem partículas.
+  cambalhota e soltar confete. A frase fica só no aviso. Sem efeito (marco
+  só de aviso, segundo efeito do dia ou prefers-reduced-motion), só o aviso.
 
   Tudo vai por portal para o fim do body (como antes: o aviso e o canvas
   ficam por cima de tudo). O laço de quadros (requestAnimationFrame) é de
@@ -99,11 +95,10 @@ export interface ComemoracaoAberta {
 /**
  * Aviso + efeito. Com `marco`, a configuração decide; desligado, nada
  * aparece (devolve null). `confete` (nome antigo) é a intensidade dos fogos
- * de quem não passa marco (false: só o aviso); `forma`, o marco no céu;
- * `letreiro`, o texto escrito no céu no fim dos fogos (sem ele, o do marco
- * ou, no Festa, "Parabéns!"). Com
- * efeito, o aviso ganha "Pular" (some quando o efeito acaba) e o botão de
- * som; o × também encerra. Sem efeito quando a pessoa pediu menos movimento.
+ * de quem não passa marco (false: só o aviso); `forma`, o marco no céu.
+ * Com efeito, o aviso ganha "Pular" (some quando o efeito acaba) e o botão
+ * de som; o × também encerra. Sem efeito quando a pessoa pediu menos
+ * movimento, no marco só de aviso e depois do primeiro efeito do dia.
  */
 export function comemorar({
   texto = "",
@@ -117,7 +112,6 @@ export function comemorar({
   intensidade = null,
   duracaoMs = null,
   som = false,
-  letreiro,
   doc = globalThis.document,
   janela = globalThis.window,
   aleatorio,
@@ -130,7 +124,6 @@ export function comemorar({
     intensidade,
     duracaoMs,
     som,
-    letreiro,
     janela,
   });
   if (!plano || !doc?.body) return null;
@@ -198,12 +191,6 @@ function ShowDaComemoracao({
   );
   const [somLigado, definirSomLigado] = useState(() => som?.ligado ?? false);
   const terminar = useCallback(() => definirRodando(false), []);
-  const [pulado, definirPulado] = useState(false);
-  const pular = useCallback(() => {
-    definirPulado(true);
-    definirRodando(false);
-  }, []);
-  const [comLetreiro] = useState(() => mostrarLetreiro(c.plano));
 
   // Sem efeito, o aviso fecha no tempo de leitura; com efeito, quando ele
   // acaba — mas nunca antes do tempo de leitura (um efeito curto não o corta).
@@ -259,7 +246,7 @@ function ShowDaComemoracao({
               <button
                 type="button"
                 className="comemoracao__pular"
-                onClick={pular}
+                onClick={terminar}
               >
                 Pular
               </button>
@@ -281,9 +268,6 @@ function ShowDaComemoracao({
         ) : (
           <Fogos comemoracao={c} som={som} aoTerminar={terminar} />
         )
-      ) : null}
-      {comLetreiro ? (
-        <Letreiro plano={c.plano} reduzido={!comEfeito} pulado={pulado} />
       ) : null}
     </>,
     c.doc.body,
@@ -397,8 +381,6 @@ function Fogos({
       // Com a mascote comemorando, a arara voando dos fogos fica de fora.
       comAya: !efeitoChamaAya(c.plano.efeito!),
       forma: c.forma,
-      // A frase é o Letreiro (texto de verdade), não faíscas em pontinhos.
-      letreiro: null,
       aleatorio: c.aleatorio ?? Math.random,
       amostrarTexto: (texto) => amostrarTexto(doc, janela!, texto),
     });

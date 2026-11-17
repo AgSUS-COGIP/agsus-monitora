@@ -1,7 +1,7 @@
 import type { MarcoDasAnalises } from "./tipos.ts";
 /*
-  Marcos da tela de Análises curriculares: edital 100% analisado, fila
-  zerada e a meta de hoje batida pela equipe (card "Ritmo da análise"). Chamado pelo estado (estado.ts) sempre que as linhas do escopo
+  Marcos da tela de Análises curriculares: edital 100% analisado (com
+  efeito) e fila zerada (só o aviso). Chamado pelo estado (estado.ts) sempre que as linhas do escopo
   "Ativo" chegam (do servidor ou da cópia do navegador) — Inativo e Todos
   misturam editais encerrados. Também os marcos personalizados "análises no
   dia" (src/app/marcos-personalizados.ts). A regra (linha de base, transições, frases) é
@@ -19,14 +19,7 @@ import {
   pendentesDaFila,
   situacaoDosEditais,
 } from "../../lib/comemoracao.ts";
-import { avaliarMarco, comemorar } from "../../app/comemoracao-sob-demanda.ts";
-import {
-  gravarMetaComemorada,
-  lerMetaComemorada,
-  metaDaEquipeBatida,
-  TEXTO_DA_META_BATIDA,
-  type RitmoDoEdital,
-} from "../../lib/ritmo-da-analise.ts";
+import { avaliarMarco } from "../../app/comemoracao-sob-demanda.ts";
 import { avaliarMarcosPersonalizados } from "../../app/marcos-personalizados.ts";
 import { EVENTO_EDITAL_CONCLUIDO } from "../../lib/encerramento-do-edital.ts";
 
@@ -75,42 +68,5 @@ export function avaliarMarcosDasAnalises({
     // Comemoração nunca atrapalha a tela.
     console.warn("Marcos de Análises curriculares indisponíveis:", erro);
     return null;
-  }
-}
-
-/*
-  Meta de hoje batida pela equipe (card "Ritmo da análise"): uma vez por dia
-  por pessoa, guardado neste navegador. Com as comemorações desligadas no
-  sistema, não grava nada (religar no mesmo dia ainda comemora); o marco
-  "meta-do-dia" do catálogo decide o efeito e respeita a preferência pessoal;
-  com prefers-reduced-motion, só o aviso (src/modulos/comemoracao/).
-*/
-export function comemorarMetaDoDia({
-  ritmos,
-  hoje,
-  usuario,
-  ligadas,
-  soltar = comemorar,
-}: {
-  ritmos: readonly RitmoDoEdital[];
-  hoje: string;
-  usuario: string | null | undefined;
-  ligadas: boolean;
-  soltar?: typeof comemorar;
-}): boolean {
-  try {
-    if (!ligadas || !usuario) return false;
-    const batida = metaDaEquipeBatida(ritmos);
-    if (!batida || lerMetaComemorada(usuario) === hoje) return false;
-    gravarMetaComemorada(usuario, hoje);
-    void soltar({
-      texto: TEXTO_DA_META_BATIDA,
-      marco: "meta-do-dia",
-      forma: "estrela",
-    });
-    return true;
-  } catch (erro) {
-    console.warn("Comemoração da meta do dia indisponível:", erro);
-    return false;
   }
 }

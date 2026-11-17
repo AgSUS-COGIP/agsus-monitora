@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
 # Módulo: Entrevistas
@@ -28,7 +28,8 @@ seleção (cabeçalho com o edital e as seções).
   sem agenda, Todos); faixa de situação (período, aguardando, em andamento, concluídas, faltaram e
   sem nota) com o contador "X de Y hoje" e a próxima entrevista; barra com período, busca, vaga e
   banca; tabela em ordem de horário, 50 e mais 50 ao rolar, com a linha "Agora"; a ação da linha
-  abre a ficha em tela cheia, com "Salvar e abrir o próximo"; concluir o dia comemora uma vez.
+  abre a ficha em tela cheia, com "Salvar e abrir o próximo"; concluir o dia mostra um aviso
+  ("Entrevistas de hoje concluídas: 4 de 4."), sem efeito, uma vez.
 - **Preparar**: o topo com "N de 4 passos prontos", o período e as regras; a trilha dos passos
   Roteiro, Banca, Convocação e Agenda e o passo escolhido, com o que falta; os **roteiros** da área
   ficam no passo 1 (a configuração do gestor, como Regra e Equipe na Avaliação documental).

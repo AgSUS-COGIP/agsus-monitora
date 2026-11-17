@@ -1,13 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-  agradecimentoDoMarco,
   chaveDoMarco,
   comemoracaoDasAnalises,
   comemoracaoDasEntrevistas,
   comemoracoesLigadasNaResposta,
   editaisConcluidos,
-  equipeDaArea,
   estadoGuardadoDasVagas,
   estadoGuardadoDosEditais,
   filaZerou,
@@ -15,7 +13,10 @@ import {
   marcoAlcancado,
   marcoNovo,
   mensagemDaFilaZerada,
+  mensagemDaVagaPronta,
+  mensagemDoEditalConcluido,
   mensagemDoMarcoDoAno,
+  naArea,
   pendentesDaFila,
   proximoEstadoDoMarco,
   situacaoDasVagas,
@@ -185,23 +186,49 @@ describe("edital concluído e fila zerada", () => {
       nomeDaArea: "SEDE",
     });
     expect(comemoracao.texto).toBe(
-      "Edital 01/2026 · DSEI Xingu: todas as análises concluídas!",
+      "Edital 01/2026 (DSEI Xingu): as 2 fichas foram analisadas.",
     );
-    expect(comemoracao.itens).toEqual([
-      "Fila zerada, nenhuma análise pendente. Obrigado, equipe da SEDE!",
-    ]);
+    expect(comemoracao.itens).toEqual(["Nenhuma ficha pendente na SEDE."]);
     // Edital concluído desenha um coração no céu.
     expect(comemoracao.forma).toBe("coracao");
+    expect(comemoracao.marco).toBe("edital-concluido");
     expect(comemoracao.editais).toEqual(["01/2026"]);
-    expect(mensagemDaFilaZerada("")).toBe(
-      "Fila zerada, nenhuma análise pendente. Obrigado, equipe!",
+  });
+
+  it("as frases dizem o fato com o número, sem exclamação nem agradecimento", () => {
+    expect(
+      mensagemDoEditalConcluido({
+        edital: "114/2026",
+        unidade: "Rio de Janeiro",
+        total: 1512,
+      }),
+    ).toBe(
+      "Edital 114/2026 (Rio de Janeiro): as 1.512 fichas foram analisadas.",
+    );
+    expect(
+      mensagemDoEditalConcluido({ edital: "7/2026", unidade: "", total: 1 }),
+    ).toBe("Edital 7/2026: a ficha foi analisada.");
+    expect(mensagemDaFilaZerada("SEDE")).toBe(
+      "Nenhuma ficha pendente na SEDE.",
+    );
+    expect(mensagemDaFilaZerada("Saúde Indígena")).toBe(
+      "Nenhuma ficha pendente na Saúde Indígena.",
     );
     expect(mensagemDaFilaZerada("Projetos")).toBe(
-      "Fila zerada, nenhuma análise pendente. Obrigado, equipe de Projetos!",
+      "Nenhuma ficha pendente em Projetos.",
+    );
+    expect(mensagemDaFilaZerada("")).toBe("Nenhuma ficha pendente.");
+    expect(naArea("projetos")).toBe("em projetos");
+    expect(naArea("")).toBe("");
+    expect(mensagemDaVagaPronta({ vaga: "179698", cargo: "Químico" })).toBe(
+      "Vaga 179698 (Químico): todas as entrevistas têm parecer. Já pode seguir para a Classificação.",
+    );
+    expect(mensagemDaVagaPronta({ vaga: "179698", cargo: "" })).toBe(
+      "Vaga 179698: todas as entrevistas têm parecer. Já pode seguir para a Classificação.",
     );
   });
 
-  it("só a fila zerada desenha uma estrela", () => {
+  it("só a fila zerada: o aviso dela (sem efeito, pelo catálogo)", () => {
     const situacao = situacaoDosEditais([linha("01/2026", "X", "Apto")]);
     expect(
       comemoracaoDasAnalises({
@@ -212,8 +239,7 @@ describe("edital concluído e fila zerada", () => {
         nomeDaArea: "Saúde Indígena",
       }),
     ).toEqual({
-      texto:
-        "Fila zerada, nenhuma análise pendente. Obrigado, equipe da Saúde Indígena!",
+      texto: "Nenhuma ficha pendente na Saúde Indígena.",
       itens: [],
       forma: "estrela",
       marco: "fila-zerada",
@@ -249,7 +275,7 @@ describe("vaga pronta", () => {
       situacao: situacaoDasVagas(dados("APTO")),
     });
     expect(comemoracao.texto).toBe(
-      "Vaga V10 · Enfermeiro pronta para o resultado final: toda entrevista tem parecer.",
+      "Vaga V10 (Enfermeiro): todas as entrevistas têm parecer. Já pode seguir para a Classificação.",
     );
     expect(
       comemoracaoDasEntrevistas({
@@ -271,9 +297,12 @@ describe("marcos do ano", () => {
     expect(marcoAlcancado(26000)).toBe(25000);
   });
 
-  it("primeira vez anuncia o marco do ano; depois só contra o guardado; ano novo recomeça", () => {
-    expect(marcoNovo(null, { ano: 2026, quantidade: 8000 })).toBe(7500);
+  it("primeira vez em silêncio (linha de base); depois só contra o guardado; ano novo recomeça", () => {
+    expect(marcoNovo(null, { ano: 2026, quantidade: 8000 })).toBe(0);
     expect(marcoNovo(null, { ano: 2026, quantidade: 400 })).toBe(0);
+    expect(proximoEstadoDoMarco(null, { ano: 2026, quantidade: 8000 })).toEqual(
+      { estado: { ano: 2026, marco: 7500 }, novo: 0 },
+    );
     expect(
       marcoNovo({ ano: 2026, marco: 5000 }, { ano: 2026, quantidade: 7600 }),
     ).toBe(7500);
@@ -294,27 +323,17 @@ describe("marcos do ano", () => {
     ).toEqual({ estado: { ano: 2026, marco: 7500 }, novo: 0 });
   });
 
-  it("a frase", () => {
+  it("a frase: a área, o número e o ano; o número no céu", () => {
     expect(
       mensagemDoMarcoDoAno({
         nomeDaArea: "Saúde Indígena",
         marco: 7500,
         ano: 2026,
       }),
-    ).toBe("Em 2026, a equipe da Saúde Indígena já concluiu 7.500 análises.");
+    ).toBe("Saúde Indígena: 7.500 análises concluídas em 2026.");
     expect(
       mensagemDoMarcoDoAno({ nomeDaArea: "Projetos", marco: 1000, ano: 2026 }),
-    ).toBe("Em 2026, a equipe de Projetos já concluiu 1.000 análises.");
-  });
-
-  it("o agradecimento dos fogos é à equipe da área, com o número no céu", () => {
-    expect(
-      agradecimentoDoMarco({ nomeDaArea: "Projetos", marco: 1000, ano: 2026 }),
-    ).toBe("1.000 análises concluídas em 2026. Obrigado, equipe de Projetos!");
-    expect(
-      agradecimentoDoMarco({ nomeDaArea: "SEDE", marco: 2500, ano: 2026 }),
-    ).toBe("2.500 análises concluídas em 2026. Obrigado, equipe da SEDE!");
-    expect(equipeDaArea("")).toBe("equipe");
+    ).toBe("Projetos: 1.000 análises concluídas em 2026.");
     expect(formaDoMarco(10000)).toEqual({ tipo: "numero", texto: "10.000" });
   });
 });
