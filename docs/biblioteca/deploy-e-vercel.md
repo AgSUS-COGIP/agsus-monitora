@@ -32,7 +32,7 @@ O front é estático (`dist/` do Vite) e fica na Vercel, com as funções server
   entregam o `index.html` nas rotas das telas e a configuração de cada função (`maxDuration`,
   `includeFiles`/`excludeFiles`).
 - Na Vercel, só as variáveis `VITE_*` públicas e as das funções (`EDITAIS_API_CHAVE`,
-  `SUPABASE_SERVICE_ROLE_KEY`, que nunca vão para o front). A antiga `GITHUB_DISPATCH_TOKEN` pode ser
+  `SUPABASE_SERVICE_ROLE_KEY`, `SIGEPSI_API_TOKEN`, que nunca vão para o front). A antiga `GITHUB_DISPATCH_TOKEN` pode ser
   apagada: o disparo dos robôs passou para o banco ([[robos-e-agenda]]).
 
 ## Versão nova e novidades

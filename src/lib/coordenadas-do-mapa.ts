@@ -81,21 +81,25 @@ export function pontosEditaveisDoMapa(
     )
       return;
     const chave = dsei.k;
-    incluir(
-      {
-        fonte: "lmap",
-        tipo: "sede",
-        dsei: chave,
-        indice,
-        codigo: null,
-        nome: texto(dsei.n),
-      },
-      `Sede · ${texto(dsei.n)}`,
-      dsei.lat,
-      dsei.lon,
-    );
+    // Sede do SIGEPSI não está no banco: a correção é feita lá.
+    if (dsei.sede_origem !== "sigepsi")
+      incluir(
+        {
+          fonte: "lmap",
+          tipo: "sede",
+          dsei: chave,
+          indice,
+          codigo: null,
+          nome: texto(dsei.n),
+        },
+        `Sede · ${texto(dsei.n)}`,
+        dsei.lat,
+        dsei.lon,
+      );
     lista(dsei.polos).forEach((valorDoPolo, i) => {
       const polo = registro(valorDoPolo);
+      // Polo do SIGEPSI não está no banco: a correção é feita lá.
+      if (polo.origem === "sigepsi") return;
       incluir(
         {
           fonte: "lmap",

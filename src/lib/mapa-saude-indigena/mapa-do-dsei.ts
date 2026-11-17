@@ -31,7 +31,11 @@ import type {
   enquadramentos (território / com vínculos externos).
 */
 import {
+  LIMIAR_MESMO_PONTO_KM,
+  distanciaKm,
   reconciliarDsei,
+  tipoDeclarado,
+  tiposCompativeis,
   unirEstabelecimentosRepetidos,
 } from "../reconciliacao-unidades.ts";
 import {
@@ -40,7 +44,28 @@ import {
   classificarVinculoTerritorial,
 } from "../uf-ibge.ts";
 import { formatarNumero, temCoordenada, texto } from "./chaves.ts";
-import { TIPO_CASAI, TIPO_POLO, TIPO_SEDE, tipoDaUnidade } from "./formas.ts";
+import {
+  TIPO_CASAI,
+  TIPO_POLO,
+  TIPO_SEDE,
+  TIPO_UNIDADE,
+  tipoDaUnidade,
+} from "./formas.ts";
+
+/*
+  O tipo de um polo do `lmap`: o do SIGEPSI (TP_UNIDADE) ou polo base. A
+  unidade de lotação toma o tipo do nome (o do SIGEPSI primeiro, depois o do
+  CNES unido a ela): "NOVO DIA" + "UBSI NOVO DIA" é UBSI.
+*/
+function tipoDoPolo(tipo: unknown, ...nomes: unknown[]) {
+  if (tipo === "casai") return TIPO_CASAI;
+  if (tipo !== "unidade") return TIPO_POLO;
+  for (const nome of nomes) {
+    const doNome = tipoDaUnidade(nome);
+    if (doNome !== TIPO_UNIDADE) return doNome;
+  }
+  return TIPO_UNIDADE;
+}
 
 /* Estabelecimento compacto do `rede_cnes`: [nome, cnes, lat, lon, município, uf]. */
 export function abrirEstabelecimento(a: EstabelecimentoCompacto) {
@@ -96,22 +121,31 @@ export function registrosDoDsei(
         lon: Number(p.lon),
         uf: p.uf,
         cod: p.cod ?? null,
-        tipo: "polo",
+        tipo: p.tipo || "polo",
       })),
     estabelecimentos: unicos,
   });
 
-  const unificados = reconciliados.map((u) => ({
-    name: u.nome_exibicao,
-    cnes: u.cnes,
-    lat: u.lat,
-    lon: u.lon,
-    city: u.municipio,
-    uf: u.uf || dsei.sedeuf,
-    type: TIPO_POLO,
-    origens: u.origens,
-    nomes: u.nomes,
-  }));
+  /*
+    Repetido entre o SIGEPSI e o CNES: vale o SIGEPSI (nome, município e UF;
+    a posição já é a do polo). Do CNES fica só o código.
+  */
+  const polosPorNome = new Map((dsei.polos || []).map((p) => [p.n, p]));
+  const unificados = reconciliados.map((u) => {
+    const polo = polosPorNome.get(u.nomes?.lmap ?? "");
+    const doSigepsi = polo?.origem === "sigepsi";
+    return {
+      name: doSigepsi ? polo.n : u.nome_exibicao,
+      cnes: u.cnes,
+      lat: u.lat,
+      lon: u.lon,
+      city: (doSigepsi && polo.municipio) || u.municipio,
+      uf: (doSigepsi && polo.uf) || u.uf || dsei.sedeuf,
+      type: tipoDoPolo(u.tipo, u.nomes?.lmap, u.nomes?.rede_cnes),
+      origens: doSigepsi ? ["sigepsi", "rede_cnes"] : u.origens,
+      nomes: u.nomes,
+    };
+  });
 
   // Polos que a reconciliação não casou continuam a existir.
   const unidos = new Set(reconciliados.map((u) => u.nomes?.lmap));
@@ -122,15 +156,39 @@ export function registrosDoDsei(
       cnes: "",
       lat: Number(p.lat),
       lon: Number(p.lon),
-      city: "",
+      city: p.municipio || "",
       uf: p.uf || dsei.sedeuf,
-      type: TIPO_POLO,
-      origens: ["lmap"],
+      type: tipoDoPolo(p.tipo, p.n),
+      origens: [p.origem === "sigepsi" ? "sigepsi" : "lmap"],
     }));
+
+  /*
+    O SIGEPSI é a fonte verdadeira: o estabelecimento do CNES que sobrou a
+    menos de LIMIAR_MESMO_PONTO_KM de um ponto do SIGEPSI de tipo compatível é
+    esse ponto com outro nome ("CASAI DSEI AL/SE" × "CASAI ALAGOAS", sem
+    palavra em comum) e sai do mapa. Só vale contra o SIGEPSI: entre o lmap
+    do banco e o CNES a coordenada sozinha continua sem ser prova.
+  */
+  const pontosDoSigepsi = (dsei.polos || []).filter(
+    (p) => p.origem === "sigepsi" && temCoordenada(p.lat, p.lon),
+  );
+  const repeteOSigepsi = (e: (typeof unicos)[number]) =>
+    pontosDoSigepsi.some((p) => {
+      if (!tiposCompativeis(p.tipo || "polo", tipoDeclarado(e.nome)))
+        return false;
+      const km = distanciaKm(
+        Number(p.lat),
+        Number(p.lon),
+        Number(e.lat),
+        Number(e.lon),
+      );
+      return km != null && km <= LIMIAR_MESMO_PONTO_KM;
+    });
 
   // Estabelecimentos que nenhuma reconciliação absorveu.
   const soltos = unicos
     .filter((e) => !estabelecimentosUsados.has(e.chave))
+    .filter((e) => !repeteOSigepsi(e))
     .map((e) => ({
       name: e.nome,
       cnes: e.cnes,
@@ -225,7 +283,10 @@ export function resumoDaRede(
   }
   const total = (registros || []).length;
   const linhas = [];
-  const polos = (dsei.polos || []).length;
+  // CASAI e outras unidades do SIGEPSI não são polo base.
+  const polos = (dsei.polos || []).filter(
+    (p) => !p.tipo || p.tipo === "polo",
+  ).length;
   if (polos) linhas.push(`Polos base: ${polos}`);
   if (total) {
     const contagens: [string, number][] = [

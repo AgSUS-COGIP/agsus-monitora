@@ -5477,7 +5477,7 @@ export const VERBETES_AYA = Object.freeze([
       "dsei com processo ativo",
     ],
     resposta:
-      "No Yeendé, cada bolha da visão nacional fica na sede do DSEI. O tamanho segue a população indígena atendida (a área da bolha é proporcional à população). Verde com borda amarela é DSEI com edital no recorte atual; azul, sem edital. Com algum filtro ativo, só aparecem os DSEIs que têm edital no resultado. A dica da bolha traz população, quantos polos base o distrito tem, quantos pontos o mapa desenha, as UFs administrativas, os processos seletivos e as vagas ociosas.",
+      "No Yeendé, cada bolha da visão nacional fica na sede do DSEI, na posição cadastrada no SIGEPSI. O tamanho segue a população indígena atendida (a área da bolha é proporcional à população). Verde com borda amarela é DSEI com edital no recorte atual; azul, sem edital. Com algum filtro ativo, só aparecem os DSEIs que têm edital no resultado. A dica da bolha traz população, quantos polos base o distrito tem, quantos pontos o mapa desenha, as UFs administrativas, os processos seletivos e as vagas ociosas.",
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -5593,7 +5593,7 @@ export const VERBETES_AYA = Object.freeze([
       "contagem da dica do dsei",
     ],
     resposta:
-      'No Yeendé, a dica do DSEI responde a duas perguntas: "Polos base" é quantos polos o distrito tem no cadastro do mapa no banco (lmap); "No mapa" é quantos pontos o mapa desenha (polos, unidades e CASAIs). Os números podem divergir porque o mesmo polo pode estar no lmap e no CNES com nomes ou posições diferentes; quando a reconciliação não tem certeza de que são o mesmo, os dois continuam desenhados. Quando são o mesmo, o ponto fica na posição do lmap.',
+      'No Yeendé, a dica do DSEI responde a duas perguntas: "Polos base" é quantos polos base o distrito tem no SIGEPSI (ou, se o SIGEPSI não responder, no cadastro do mapa no banco, o lmap); "No mapa" é quantos pontos o mapa desenha (polos, unidades e CASAIs). Os números podem divergir porque o mapa também desenha CASAIs, unidades de lotação e estabelecimentos do CNES. Quando o mesmo ponto está no SIGEPSI e no CNES, vale o SIGEPSI: o mapa desenha um ponto só, com o nome, a posição, o município e a UF do SIGEPSI.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -5610,7 +5610,7 @@ export const VERBETES_AYA = Object.freeze([
       "ponto do polo esta certo",
     ],
     resposta:
-      'No Yeendé, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há mais frases como "Localização em validação", "Fontes discordam" ou "validada": elas vinham de uma validação de 22/09/2026 anterior à auditoria oficial e foram retiradas em 02/10/2026. Toda coordenada vem do banco (lmap para polos e sedes, rede_cnes para os estabelecimentos), auditada em 01 e 02/10/2026 contra fontes oficiais (CNES, IBGE, Funai, PDSI e OpenStreetMap); os pontos que a auditoria não confirmou (92 polos e 156 UBSI/postos) ficam numa fila de conferência que só o administrador global e o Gestor veem, no editor de coordenadas; o popup não mostra essa situação. Se um ponto parecer errado, a correção é feita pelo editor, que grava no banco.',
+      'No Yeendé, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há mais frases como "Localização em validação", "Fontes discordam" ou "validada": elas vinham de uma validação de 22/09/2026 anterior à auditoria oficial e foram retiradas em 02/10/2026. A sede, os polos base, as CASAIs e as unidades de lotação de cada DSEI vêm do SIGEPSI, a fonte verdadeira, lidos a cada abertura do mapa (se o SIGEPSI não responder, valem os do banco); os estabelecimentos do CNES vêm do rede_cnes, no banco, auditada em 01 e 02/10/2026 contra fontes oficiais (CNES, IBGE, Funai, PDSI e OpenStreetMap); os pontos que a auditoria não confirmou (92 polos e 156 UBSI/postos) ficam numa fila de conferência que só o administrador global e o Gestor veem, no editor de coordenadas; o popup não mostra essa situação. Se um ponto parecer errado, a correção é feita pelo editor, que grava no banco; a sede e os pontos que vêm do SIGEPSI não aparecem no editor e são corrigidos no próprio SIGEPSI.',
     fato: "",
     fonte:
       "docs/coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md; src/lib/mapa-saude-indigena/mapa-do-dsei.ts",
