@@ -187,3 +187,11 @@
 .leaflet-container path.leaflet-interactive:focus {
   outline: none;
 }
+
+/* Toque: 44px (Design System, seção 16). */
+@media (pointer: coarse) {
+  .agsus-indigenous-territories-control
+    .agsus-indigenous-territories-control__button {
+    min-height: 44px;
+  }
+}
