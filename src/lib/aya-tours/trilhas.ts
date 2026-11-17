@@ -39,13 +39,13 @@ export const TRILHAS: readonly TrilhaDaAya[] = Object.freeze([
       passo(
         [t("visao-geral-filtros"), "#page-dashboard .visao-geral-filtros"],
         "Visão geral: filtros",
-        "Os filtros recortam os indicadores, o mapa e a tabela.",
+        "O botão Filtros abre os campos; cada filtro recorta os números, o mapa e a tabela.",
         { pagina: "dashboard" },
       ),
       passo(
         [t("visao-geral-kpis"), "#page-dashboard .visao-geral-kpis"],
-        "Visão geral: indicadores",
-        "Processos, Vagas, Contratações, Vagas ociosas, Críticos e Inscritos do recorte.",
+        "Visão geral: vagas",
+        "As vagas imediatas e como se dividem: contratadas, em seleção e ociosas. Embaixo, cadastro reserva e inscritos.",
         { pagina: "dashboard" },
       ),
       passo(

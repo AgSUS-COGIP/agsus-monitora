@@ -1,4 +1,4 @@
-import type { MouseEvent as EventoReact } from "react";
+import type { MouseEvent as EventoReact, ReactElement } from "react";
 import type {
   ColunaDaTabela,
   EstadoDaVisaoGeral,
@@ -6,7 +6,7 @@ import type {
   PropsComTextos,
   TextosDaVisaoGeral,
 } from "./tipos.ts";
-import { useEffect, useRef, useState } from "react";
+import { cloneElement, useEffect, useRef, useState } from "react";
 import { formatNumberBR } from "../../lib/formatters";
 import {
   contratacoesDoCadastroReserva,
@@ -159,7 +159,7 @@ function CelulaDoEdital({
   const prazo = prazoDoEdital(linha, hoje);
   const cronograma = seloDoCronograma(linha, hoje);
   return (
-    <td className={classes("visao-geral-edital", fixa)}>
+    <td className={classes("visao-geral-edital", fixa)} data-campo="edital">
       {link ? (
         <a className="link" href={link} target="_blank" rel="noopener">
           {linha.edital || "-"} <span aria-hidden="true">↗</span>
@@ -447,10 +447,12 @@ export function TabelaDeProcessos({
         total={total}
         vazio="Nenhum processo seletivo nesta área."
         informacao={(quantos) =>
-          quantos === null
-            ? "Carregando…"
-            : // Sem recorte, "108 processos" (não "108 de 108").
-              `${quantos === total ? "" : `${fmt(quantos)} de `}${fmt(total)} ${total === 1 ? "processo" : "processos"}`
+          // "Mostrando 50 de 108 registros" já diz o recorte; o total da área
+          // só entra quando um filtro tirou editais (antes, "108 processos"
+          // repetia o mesmo número na mesma linha).
+          quantos === null || quantos === total
+            ? ""
+            : `${fmt(total)} ${total === 1 ? "edital" : "editais"} na área`
         }
         linha={(linha) => {
           const id = String(linha.id);
@@ -475,7 +477,16 @@ export function TabelaDeProcessos({
                 aoAbrir(linha);
               }}
             >
-              {e.colunas.map((campo) => celula(campo, linha, hoje, fixas))}
+              {e.colunas.map((campo) =>
+                // `data-campo`: no celular, o cartão mostra só as colunas
+                // principais (visao-geral.css); o resto fica na gaveta.
+                cloneElement(
+                  celula(campo, linha, hoje, fixas) as ReactElement<{
+                    "data-campo"?: string;
+                  }>,
+                  { "data-campo": campo },
+                ),
+              )}
             </tr>
           );
         }}

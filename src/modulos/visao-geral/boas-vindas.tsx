@@ -1,16 +1,9 @@
-import type { PropsDasBoasVindas, PropsDosMarcos } from "./tipos.ts";
+import type { PropsDosMarcos } from "./tipos.ts";
 import { useEffect, useRef, useSyncExternalStore } from "react";
 import {
   assinarDadosDoMonitoramento,
-  linhasDaArea,
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.ts";
-import {
-  editaisComEtapaNaSemana,
-  primeiroNome,
-  resumoDoDia,
-  saudacao,
-} from "../../lib/boas-vindas.ts";
 import {
   chaveDoMarco,
   formaDoMarco,
@@ -19,19 +12,14 @@ import {
   mensagemDoMarcoDoAno,
   proximoEstadoDoMarco,
 } from "../../lib/comemoracao.ts";
-import { semTreinamento } from "../../lib/edital-de-treinamento.ts";
 import { nomeDaArea } from "../../lib/menu-lateral.ts";
 import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
 import { lerMarcosDaArea } from "./marcos.ts";
-import { linhasDaResposta } from "../../lib/visao-geral.ts";
 
 /*
-  O topo da Visão geral (a mesma página nas três áreas), antes do resto:
+  Os marcos do ano da Visão geral (a saudação e a semana ficam no cabeçalho
+  da tela, paineis.tsx, desde o layout A de 17/11/2026):
 
-  - Boas-vindas: aparece quando o perfil e os editais já chegaram, sem botão
-    de fechar — é onde fica a conta dos editais da área atual com etapa na
-    semana (o bloco "Próximos 7 dias" saiu por isso); "Ver cronograma" abre o
-    Cronograma da área pelo item do menu.
   - Marcos do ano: sem card na tela; só o aviso da comemoração ("Saúde
     Indígena: 7.500 análises concluídas em 2026.") com os fogos do marco (o
     número desenhado no céu). Números só da equipe (obter_marcos_da_area),
@@ -41,56 +29,8 @@ import { linhasDaResposta } from "../../lib/visao-geral.ts";
     src/lib/comemoracao.ts. Qualquer falha: nada aparece.
 */
 
-/* Abre o Cronograma da área pelo item do menu (troca a área e a tela). */
-function abrirCronogramaDaArea(area: string) {
-  document
-    .querySelector<HTMLElement>(
-      `.menu-item[data-view="calendario"][data-area="${area}"]`,
-    )
-    ?.click();
-}
-
 const usarDados = () =>
   useSyncExternalStore(assinarDadosDoMonitoramento, obterDadosDoMonitoramento);
-
-export function BoasVindas({ obterPerfil, agora }: PropsDasBoasVindas) {
-  const { linhas, carregado, areaAtual } = usarDados();
-  const perfil = obterPerfil();
-  if (!perfil || !carregado) return null;
-
-  const nome = primeiroNome(perfil.nome || perfil.email?.split("@")[0]);
-  const quantidade = editaisComEtapaNaSemana(
-    semTreinamento(linhasDaArea(linhasDaResposta(linhas), areaAtual)),
-    agora(),
-  );
-  const titulo = [saudacao(agora().getHours()), nome]
-    .filter(Boolean)
-    .join(", ");
-  return (
-    <div
-      className="boas-vindas"
-      role="status"
-      aria-live="polite"
-      data-tour="visao-geral-boas-vindas"
-    >
-      <div className="boas-vindas__texto">
-        <strong>{titulo}</strong>
-        <span>{resumoDoDia(quantidade)}</span>
-      </div>
-      {quantidade ? (
-        <button
-          type="button"
-          className="boas-vindas__acao"
-          data-boas-vindas="cronograma"
-          data-tour="visao-geral-ver-cronograma"
-          onClick={() => abrirCronogramaDaArea(areaAtual)}
-        >
-          Ver cronograma
-        </button>
-      ) : null}
-    </div>
-  );
-}
 
 /* Não desenha nada: lê o marco do ano da área e solta a comemoração. */
 export function MarcosDoAno({

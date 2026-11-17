@@ -25,6 +25,13 @@ export const NOVIDADES_PUBLICADAS = 5;
 
 export const NOVIDADES: readonly Novidade[] = [
   {
+    id: "2026-11-17-visao-geral-painel-de-decisao",
+    data: "2026-11-17",
+    texto:
+      "visão geral nova: vagas, o que pede ação e as fases em andamento no topo",
+    visivel: true,
+  },
+  {
     id: "2026-11-17-comemoracoes-so-ocasioes-reais",
     data: "2026-11-17",
     texto:

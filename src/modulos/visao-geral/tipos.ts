@@ -249,6 +249,11 @@ export type SnapshotDaVisaoGeral = Readonly<
     quantosFiltros: number;
     criticosAtivo: boolean;
     indicadores: Indicadores;
+    /**
+     * As vagas ainda esperam o acompanhamento (com o desconto das reabertas):
+     * a tela mostra o esqueleto em vez de um número que vai mudar.
+     */
+    aguardandoVagas: boolean;
   }
 >;
 export type EstadoDaVisaoGeral = {

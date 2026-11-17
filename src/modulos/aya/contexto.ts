@@ -128,7 +128,7 @@ export function collectAyaPageContext(
     400,
   );
 
-  const kpis = visibleTextList(doc, ".visao-geral-kpis .ui-kpi", 12, 180);
+  const kpis = visibleTextList(doc, ".visao-geral-kpis [data-kpi]", 12, 180);
 
   const activeFilters = uniqueTexts(
     [...visibleTextList(doc, ".visao-geral-filtros .ui-chip", 12, 120)],
