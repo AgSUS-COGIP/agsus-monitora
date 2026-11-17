@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { createHtmlSecurityPlugin } from "./src/lib/html-security";
 import { swComVersao } from "./src/lib/cache-do-service-worker";
 import { novidadesVisiveis } from "./src/lib/novidades.ts";
+import { apiLocalNoVite } from "./scripts/servir-api-no-vite.mjs";
 
 const projectDirectory = dirname(fileURLToPath(import.meta.url));
 
@@ -86,6 +87,7 @@ export default defineConfig({
     createHtmlSecurityPlugin(),
     copyProgressiveWebAppAssets(),
     publicarVersaoDoBuild(),
+    apiLocalNoVite(),
   ],
   build: {
     rollupOptions: {
