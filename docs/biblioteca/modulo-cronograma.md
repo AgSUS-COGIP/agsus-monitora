@@ -19,9 +19,9 @@ responsável (o sininho do topo), que leva a esta tela.
   (Lista e Semana), `estado.ts` (store externo, sessão, carga, cache, aviso de falhas parciais),
   `tipos.ts` e `demandas-internas.tsx`. CSS em `cronograma.css` e `demandas-internas.css` (cor da
   demanda: `--etapa-demanda`).
-- `calendario-editais.ts`: etapas por dia (conta no início e no fim, não no meio), filtros, grade
+- `cronograma/calendario-editais.ts`: etapas por dia (conta no início e no fim, não no meio), filtros, grade
   de 42 células, próximas etapas. Classificação de etapas e plausibilidade das datas em
-  `etapas-de-edital.ts` e `datas-do-cronograma.ts`.
+  `editais/etapas-de-edital.ts` e `cronograma/datas-do-cronograma.ts`.
 
 ## Vistas
 
@@ -52,7 +52,7 @@ outros e avisa carga incompleta. Cache de um minuto e deduplicação de pedidos 
 Editais invalida o cache; trocar de área só recorta. Respostas entram como `unknown`; edital
 precisa de ID textual ou numérico finito; etapas sem início interpretável ficam fora.
 
-**Edital suspenso fica fora** (cartão #59, `editalSuspenso` em `calendario-editais.ts`): o banco
+**Edital suspenso fica fora** (cartão #59, `editalSuspenso` em `cronograma/calendario-editais.ts`): o banco
 devolve todo edital com `ativo = true`, e o suspenso continua ativo. O resumo traz o status efetivo
 (`status`, com o excepcional `status_override` por cima das datas, como
 `private."FC_ESTADO_DO_CRONOGRAMA"`) e `status_override`; se um deles contém "suspens" (sem acento

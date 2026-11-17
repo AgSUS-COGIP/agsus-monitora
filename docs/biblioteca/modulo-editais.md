@@ -120,12 +120,12 @@ conta, avisados pelos marcos de `src/modulos/analises/marcos.ts`. Banco: migrati
 
 - Cadastro: `modal-do-edital.tsx` (formulário e payload), `editor-de-cronograma.tsx`,
   `importar-anexos.tsx`, `modal-linha-do-tempo.tsx`, `painel-operacional.tsx`, `editais.css`.
-- Regras puras em `src/lib/`: `editais-do-nucleo.ts` (a página sem DOM: ordem da fila, tons de
+- Regras puras em `src/lib/`: `editais/editais-do-nucleo.ts` (a página sem DOM: ordem da fila, tons de
   status e risco também usados pelo mapa, unidades do formulário USI × CORES, rascunho, payload e
-  filtro dos indicadores), `cronograma-do-edital.ts` (estado pelas datas, validação, modelo padrão,
-  datas coladas em lote), `retificacao-do-cronograma.ts` (casa o "Leia-se" com as etapas gravadas:
-  igual, data muda, nova, sumiu; número da errata e motivo com o SEI), `validade-do-edital.ts`,
-  `regras-do-edital.ts`, `encerramento-do-edital.ts` (leitura, tela a mostrar, selos e fogos).
+  filtro dos indicadores), `cronograma/cronograma-do-edital.ts` (estado pelas datas, validação, modelo padrão,
+  datas coladas em lote), `cronograma/retificacao-do-cronograma.ts` (casa o "Leia-se" com as etapas gravadas:
+  igual, data muda, nova, sumiu; número da errata e motivo com o SEI), `editais/validade-do-edital.ts`,
+  `regras-do-edital/regras-do-edital.ts`, `encerramento-do-edital/encerramento-do-edital.ts` (leitura, tela a mostrar, selos e fogos).
 - Testes: `tests/componentes/nucleo.test.ts` e `tests/editais-do-nucleo.test.js` citam as
   [histórias de usuário de Editais](../historias-de-usuario/editais.md) (ED-1, ED-2).
 - Explicações para quem usa: [regras-dos-editais](../aya/regras-dos-editais.md) (a explicação mora

@@ -23,9 +23,9 @@ própria têm nota sua ([[modulo-acessos]], [[robos-e-agenda]], [[modulo-paineis
   salvas" só valem nas seções da moldura, que têm campos (`SECOES_COM_BARRA_DE_SALVAR`); as de tela
   própria não mostram a barra.
 - Regras puras: `src/lib/configuracoes/publicacao-de-configuracoes.ts` (chaves de cada seção, comparação com o
-  retrato do banco, validação de URL e domínio), `apresentacao-das-configuracoes.ts` (tom da faixa de
-  aviso global e endereço de imagem aceito nas prévias), `marca-da-barra-lateral.ts` (logo e cor
-  publicadas e em rascunho), `paineis-externos-das-configuracoes.ts`.
+  retrato do banco, validação de URL e domínio), `configuracoes/apresentacao-das-configuracoes.ts` (tom da faixa de
+  aviso global e endereço de imagem aceito nas prévias), `navegacao/marca-da-barra-lateral.ts` (logo e cor
+  publicadas e em rascunho), `configuracoes/paineis-externos-das-configuracoes.ts`.
 
 ## Comemorações
 

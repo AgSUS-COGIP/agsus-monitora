@@ -22,7 +22,7 @@ o build e o CI ([[ci-e-qualidade]]).
   `*-refinement`, `*-enhancements`, `post-N…` nem `window.navigate = …`/`window.saveAdminSettings
   = …` por outro módulo. Mude a fonte onde o comportamento é definido; ao passar por um remendo
   existente, prefira absorvê-lo na fonte e apagá-lo.
-- **HTML dinâmico** passa por `src/lib/seguranca/sanitize.ts` / `html-security.ts`. Nunca `innerHTML` cru;
+- **HTML dinâmico** passa por `src/lib/seguranca/sanitize.ts` / `seguranca/html-security.ts`. Nunca `innerHTML` cru;
   em React, sem `dangerouslySetInnerHTML` ([[seguranca]]).
 - Tela ou feature nova = **React** em `src/modulos/<nome>/`, nada novo em `src/modules/` nem em
   `src/analises/` ([[nova-tela-e-legado]]).
@@ -54,39 +54,42 @@ o build e o CI ([[ci-e-qualidade]]).
 
 `src/lib/` é a lógica pura e testável: **sem DOM e sem estado global**, entrada → saída, com teste
 em `tests/<nome>.test.ts` (ou `tests/lib/`). Arquivo novo: nome em português, kebab-case, com teste
-junto. A UI pertence a `src/modulos/` (e, no legado, a `src/modules/`).
+junto, **na pasta do assunto** (a da tela em `src/modulos/<nome>/`, ou uma pasta técnica quando
+várias telas usam; nunca solto na raiz: `check:lib-por-assunto`). Qual pasta guarda o quê:
+[[mapa-do-repositorio]], "Assunto → pastas". Os caminhos abaixo são relativos a `src/lib/`. A UI
+pertence a `src/modulos/` (e, no legado, a `src/modules/`).
 
 **Fronteiras (não afrouxar):**
 
 - `rpc-contrato.ts` — contrato das RPCs; mudou no banco, muda aqui.
-- `sessao.ts`, `session-lifecycle.ts`, `supabaseClient.ts`, `auth-flow.ts` — único caminho de auth;
-  `novas-tentativas.ts` — regra única de nova tentativa.
-- `sanitize.ts`, `html-security.ts`, `csv-security.ts` — fronteira de segurança ([[seguranca]]).
-- `copia-da-sessao.ts` — quando a cópia guardada pode abrir a tela; afrouxar expõe dado a quem
+- `sessao/sessao.ts`, `sessao/session-lifecycle.ts`, `sessao/supabaseClient.ts`, `sessao/auth-flow.ts` — único caminho de auth;
+  `sessao/novas-tentativas.ts` — regra única de nova tentativa.
+- `seguranca/sanitize.ts`, `seguranca/html-security.ts`, `seguranca/csv-security.ts` — fronteira de segurança ([[seguranca]]).
+- `sessao/copia-da-sessao.ts` — quando a cópia guardada pode abrir a tela; afrouxar expõe dado a quem
   perdeu acesso ([[arquitetura-do-front]]).
-- `env.ts` — leitura de variáveis; nunca chave escrita no código.
+- `sessao/env.ts` — leitura de variáveis; nunca chave escrita no código.
 
 **Regras de negócio que o banco ou o robô repetem** (mudou aqui, muda lá):
 
-- `anexos-do-candidato.ts` — PDF no banco em bytea; 2 MB, 5 por candidato ([[modulo-aprovados]]).
-- `configuracao-de-convocacao.ts` — precedência do quadro: manual > total da vaga > padrão.
+- `aprovados/anexos-do-candidato.ts` — PDF no banco em bytea; 2 MB, 5 por candidato ([[modulo-aprovados]]).
+- `aprovados/carta-de-convocacao/configuracao-de-convocacao.ts` — precedência do quadro: manual > total da vaga > padrão.
 - `avaliacao-documental/datas-do-vinculo.ts` — nada antes de 1960 nem fim depois de hoje
   ([[modulo-avaliacao-documental]]).
-- `status-da-analise.ts` — status sem decisão (Pendente, Em análise), comum ao KPI "Pendentes" e
+- `analises/status-da-analise.ts` — status sem decisão (Pendente, Em análise), comum ao KPI "Pendentes" e
   aos marcos.
 
 **Lugar único de cada coisa** (reutilize, não reescreva):
 
-- `fabrica-do-leaflet.ts` — único lugar que cria mapa Leaflet ([[mapas-e-leaflet]]).
-- `menu-lateral.ts` — catálogo do menu; área ou página nova entra aqui ([[modulo-barra-lateral]]).
-- `access-roles.ts`, `permissoes-recursos.ts` — matriz de permissão ([[modulo-acessos]]).
-- `publicacao-de-configuracoes.ts`, `apresentacao-das-configuracoes.ts`,
-  `marca-da-barra-lateral.ts` — Configurações ([[modulo-configuracoes]]); `contraste.ts` —
+- `mapas/fabrica-do-leaflet.ts` — único lugar que cria mapa Leaflet ([[mapas-e-leaflet]]).
+- `navegacao/menu-lateral.ts` — catálogo do menu; área ou página nova entra aqui ([[modulo-barra-lateral]]).
+- `acessos/access-roles.ts`, `acessos/permissoes-recursos.ts` — matriz de permissão ([[modulo-acessos]]).
+- `configuracoes/publicacao-de-configuracoes.ts`, `configuracoes/apresentacao-das-configuracoes.ts`,
+  `navegacao/marca-da-barra-lateral.ts` — Configurações ([[modulo-configuracoes]]); `base/contraste.ts` —
   contraste do aviso de branding.
-- `planilhas.ts` — catálogo das planilhas, com `usadaEm` ([[planilhas]]).
-- `agenda-do-cron.ts` e `catalogo-dos-robos.ts` — agenda do pg_cron e nomes dos robôs
+- `base/planilhas.ts` — catálogo das planilhas, com `usadaEm` ([[planilhas]]).
+- `automacao/agenda-do-cron.ts` e `automacao/catalogo-dos-robos.ts` — agenda do pg_cron e nomes dos robôs
   ([[robos-e-agenda]]).
-- `novidades.ts` e `versao-do-sistema.ts` — aviso de versão nova ([[deploy-e-vercel]]).
+- `base/novidades.ts` e `base/versao-do-sistema.ts` — aviso de versão nova ([[deploy-e-vercel]]).
 
 As regras de cada tela estão na nota `modulo-<nome>` dela.
 

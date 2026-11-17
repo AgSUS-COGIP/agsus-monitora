@@ -108,7 +108,7 @@ edital (`FC_PAPEL_AVALIACAO` = COORDENADOR), com motivo de `private."FC_MOTIVO_R
 (a mesma lista em `src/lib/entrevistas/reabertura-da-entrevista.ts`, comparada no teste); o componente de
 reabrir é o da Avaliação documental (`ReabrirAFicha`, com `motivos`). Conclusão e reabertura vão
 para `TH_ENTREVISTA_AVALIACAO`. `obter_entrevistas_do_edital` traz `pode_reabrir` e, por convocado,
-`concluida_em` e `concluida_por`. Na fila, `a_concluir` (`fila-de-conducao.ts`) é o resultado
+`concluida_em` e `concluida_por`. Na fila, `a_concluir` (`entrevistas/fila-de-conducao.ts`) é o resultado
 definido sem conclusão; `concluida` é só a concluída. A lista gerada que ficou para trás já é
 avisada pela Classificação (`geracaoDesatualizada`).
 
@@ -131,12 +131,12 @@ pela função: quem monta os dados liga cada nome à análise do candidato antes
 
 - Estado fora do React: `estado.ts` (painel: carga da área com cópia guardada, gaveta, CSV, agenda
   do recorte, comemorações) e `estado-da-conducao.ts` (editais, edital aberto, escritas uma por vez).
-- Regras puras em `src/lib/`: `entrevistas-do-painel.ts`, `painel-de-entrevistas.ts`,
-  `fila-de-conducao.ts`, `conducao-de-entrevista.ts` e `roteiro-de-entrevista.ts` (escalas, pesos,
-  mínimos, aspectos, atribuições, permissões, cálculo do parecer), `convocacao-da-entrevista.ts`,
-  `resumo-da-entrevista.ts`, `comemoracao.ts`.
+- Regras puras em `src/lib/`: `entrevistas/entrevistas-do-painel.ts`, `entrevistas/painel-de-entrevistas.ts`,
+  `entrevistas/fila-de-conducao.ts`, `entrevistas/conducao-de-entrevista.ts` e `entrevistas/roteiro-de-entrevista.ts` (escalas, pesos,
+  mínimos, aspectos, atribuições, permissões, cálculo do parecer), `entrevistas/convocacao-da-entrevista.ts`,
+  `entrevistas/resumo-da-entrevista.ts`, `comemoracao/comemoracao.ts`.
 - Contratos (`tipos*.ts` na pasta e em `src/lib/`). O que vem do banco entra como `unknown` e é
-  verificado só nos campos usados (`entrevistas-do-painel.ts`, `src/lib/entrevistas/dados-da-conducao.ts`, que
+  verificado só nos campos usados (`entrevistas/entrevistas-do-painel.ts`, `src/lib/entrevistas/dados-da-conducao.ts`, que
   preserva os dados opacos da Classificação); nada valida o JSON inteiro. A ficha distingue notas
   diretas de notas por aspectos (números; `null` apaga). O editor de roteiros separa texto do
   rascunho de números enviados e preserva campos antigos de convocação e desempate.

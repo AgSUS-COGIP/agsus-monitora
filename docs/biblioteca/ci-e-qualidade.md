@@ -61,10 +61,18 @@ python -m pytest && python -m ruff check . && python -m ruff format --check .
 
 Roda, em ordem: `check-no-new-mutation-observer.mjs`, `check-no-new-patch-layers.mjs`,
 `check-legado-so-encolhe.mjs`, `check-acabamento-so-encolhe.mjs`, `check:auth-architecture`,
-`check:rpc-contract` e `check:docs` (`checar-links-da-biblioteca.mjs`: todo `[[link]]` do
+`check:rpc-contract`, `check:docs` (`checar-links-da-biblioteca.mjs`: todo `[[link]]` do
 `CLAUDE.md` da raiz, dos `CLAUDE.md` das pastas e de `docs/biblioteca/` aponta para uma nota que
 existe; nenhuma nota fica sem ser ligada; nenhuma nota repete o nome de outro `.md` do vault;
-[[documentacao]]).
+[[documentacao]]) e `check:lib-por-assunto`.
+
+### `check-lib-sem-arquivo-solto.mjs`
+
+`src/lib/` é organizada por assunto ([[mapa-do-repositorio]], "Assunto → pastas"). Quebra o build
+quando há arquivo solto na raiz de `src/lib/` (só `CLAUDE.md` e `rpc-contrato.ts` ficam ali) ou
+quando uma pasta passa de 30 arquivos diretos. As pastas que já passavam disso quando a organização
+foi feita estão em `ACIMA_DO_LIMITE`, com o tamanho daquele dia como teto: só encolhem (hoje,
+`avaliacao-documental/` com 55). Teste: `tests/scripts/check-lib-sem-arquivo-solto.test.ts`.
 
 ### `check-acabamento-so-encolhe.mjs`
 
@@ -84,7 +92,7 @@ Prefira o `npm run` equivalente quando houver.
 
 | Grupo                      | Scripts                                                                                                                                                                                                                                                                                                                                                                                                                             | O que faz ou gera                                                                                         |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Checagens do build**     | `check-rpc-contract.mjs`, `check-supabase-auth-architecture.mjs`, `check-no-new-mutation-observer.mjs`, `check-no-new-patch-layers.mjs`, `check-legado-so-encolhe.mjs`, `check-acabamento-so-encolhe.mjs`, `check-dist-html-security.mjs`, `check-bundle-size.mjs`, `check-workflow-uniqueness.mjs`, `check-migrations-timestamp-unico.mjs`, `check-changed-lint.mjs`, `check-changed-format.mjs`, `checar-links-da-biblioteca.mjs` | rodam no build/CI; falha aqui = regra violada: corrija o código (ou a nota), não o script                 |
+| **Checagens do build**     | `check-rpc-contract.mjs`, `check-supabase-auth-architecture.mjs`, `check-no-new-mutation-observer.mjs`, `check-no-new-patch-layers.mjs`, `check-legado-so-encolhe.mjs`, `check-acabamento-so-encolhe.mjs`, `check-dist-html-security.mjs`, `check-bundle-size.mjs`, `check-workflow-uniqueness.mjs`, `check-migrations-timestamp-unico.mjs`, `check-lib-sem-arquivo-solto.mjs`, `check-changed-lint.mjs`, `check-changed-format.mjs`, `checar-links-da-biblioteca.mjs` | rodam no build/CI; falha aqui = regra violada: corrija o código (ou a nota), não o script                 |
 | **Banco**                  | `check-rpc-contract-db.mjs`, `capturar-baseline-rpcs.mjs`, `estado-das-migrations*.mjs`, `gerar-esquema-atual.mjs` (`npm run db:esquema`), `validar-migration-branding.mjs`, `validar-migration-recusar.mjs`, `carregar-admissoes-conciliadas.mjs` (`--seco`)                                                                                                                                                                       | precisam de credencial de banco (`pg`) ([[banco-e-migrations]])                                           |
 | **Geografia**              | `compilar-terras-indigenas.mjs`, `compilar-contornos-dos-dseis.mjs`                                                                                                                                                                                                                                                                                                                                                                 | geram `public/data/terras-indigenas*.json` e `public/data/contornos-dos-dseis.json` ([[mapas-e-leaflet]]) |
 | **AYA**                    | `compilar-conhecimento-aya.mjs` (`npm run aya:conhecimento`)                                                                                                                                                                                                                                                                                                                                                                        | gera `src/modules/aya-conhecimento-gerado.js` a partir de `docs/aya/` ([[aya-base-de-conhecimento]])      |

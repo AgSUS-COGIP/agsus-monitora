@@ -26,7 +26,7 @@ erros, nunca voltou ao front.
 - Projetos: coordenada no banco, corrigida pelo editor ou por correção de dados com ensaio.
 - O histórico `private."TH_COORDENADA_MAPA_SAUDE_INDIG"` e o catálogo `TD_UNIDADE` ficam no banco
   (a linha `rede_cnes` e as pendências saíram em 17/11/2026, com cópias `*_backup_20261117_*`).
-- `uf-ibge.ts` e `brasil-bounds.ts` são a referência geográfica usada pelos scripts de auditoria.
+- `mapas/uf-ibge.ts` e `mapas/brasil-bounds.ts` são a referência geográfica usada pelos scripts de auditoria.
 - Os scripts de geografia (`compilar-terras-indigenas.mjs`, `compilar-contornos-dos-dseis.mjs`)
   partem do banco e da Funai ([[mapas-e-leaflet]]).
 - As regras para a Aya: `docs/aya/regras-dos-mapas.md` e `docs/aya/regras-do-mapa-saude-indigena.md`.

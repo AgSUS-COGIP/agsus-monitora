@@ -97,8 +97,8 @@ filtros, registros, data dos dados, data de emissão e o número do registro. N�
   nos editais, cargos e modalidades e recusa (40001) se a tela tem outro número; grava
   `TL_EXPORTACAO_APROVADO` (sem dado de candidato) e devolve o id e a data de emissão.
 - **Depois, o arquivo, no navegador:** conteúdo em `src/lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts`
-  (linhas sem repetir, CSV por `csv-security.ts`, XLSX pelo `arquivosDoXlsx` da Classificação zipado
-  com o fflate) e o PDF em `exportacao-da-lista-de-aprovados-em-pdf.ts`, desenhado por lotes
+  (linhas sem repetir, CSV por `seguranca/csv-security.ts`, XLSX pelo `arquivosDoXlsx` da Classificação zipado
+  com o fflate) e o PDF em `aprovados/exportacao/exportacao-da-lista-de-aprovados-em-pdf.ts`, desenhado por lotes
   (cede a vez à tela a cada 300 linhas e mostra o progresso no botão; um Web Worker duplicaria o
   jsPDF no build). Nada vai a Storage, artifact ou log. Medido com 13 mil linhas: CSV e XLSX em
   ~0,6 s; PDF em alguns segundos.
@@ -146,18 +146,18 @@ Campos: {NOME}, {CPF} (sempre mascarado; a lista não guarda CPF, sai em branco 
 
 ## Convocação e contratos (tudo em TypeScript)
 
-- Configuração: `src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts`, `configuracao-de-convocacao.ts`; tipos em
-  `tipos-da-configuracao-de-convocacao.ts` (reusados pela Classificação). Precedência: quadro manual
+- Configuração: `src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts`, `aprovados/carta-de-convocacao/configuracao-de-convocacao.ts`; tipos em
+  `aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts` (reusados pela Classificação). Precedência: quadro manual
   da vaga > total da vaga > padrão do edital; resposta malformada avisa e preserva os mapas.
-- Convocação: `tipos-da-lista-de-convocacao.ts`, `tipos-da-aba-de-convocacao.ts`. Sub judice sem
+- Convocação: `aprovados/tipos-da-lista-de-convocacao.ts`, `tipos-da-aba-de-convocacao.ts`. Sub judice sem
   código só se associa ao cargo com uma única vaga desse cargo no próprio edital.
-- Aprovados: `tipos-das-regras-de-aprovados.ts`, `tipos-da-aba-de-aprovados.ts`; campo editável não
+- Aprovados: `aprovados/tipos-das-regras-de-aprovados.ts`, `tipos-da-aba-de-aprovados.ts`; campo editável não
   substitui o texto enquanto se digita. Estado e modais: `tipos-do-estado.ts`, `tipos-dos-modais.ts`,
   `src/lib/aprovados/tipos-do-estado-de-aprovados.ts`; marcar convocados exige confirmação de todos os IDs.
-- Carta: `src/lib/aprovados/carta-de-convocacao/tipos-da-carta.ts`, `dados-da-carta.ts`; coleção de modelos malformada para a carga.
-- Base: `aprovados-import.ts` (XLSX), `candidatos-aprovados-compactos.ts` (formatos 1 e 2),
-  `anexos-do-candidato.ts` (PDFs: 2 MB, 5 por candidato; o banco repete), tipos em
-  `tipos-da-importacao-de-aprovados.ts`.
+- Carta: `src/lib/aprovados/carta-de-convocacao/tipos-da-carta.ts`, `aprovados/carta-de-convocacao/dados-da-carta.ts`; coleção de modelos malformada para a carga.
+- Base: `aprovados/aprovados-import.ts` (XLSX), `aprovados/candidatos-aprovados-compactos.ts` (formatos 1 e 2),
+  `aprovados/anexos-do-candidato.ts` (PDFs: 2 MB, 5 por candidato; o banco repete), tipos em
+  `aprovados/tipos-da-importacao-de-aprovados.ts`.
 
 ## Banco
 

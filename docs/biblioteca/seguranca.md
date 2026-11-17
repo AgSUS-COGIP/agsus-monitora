@@ -16,7 +16,7 @@ convite ou por solicitação aprovada por um administrador, que define grupo e p
 ([[modulo-acessos]]). **Há um caminho único de auth**: nenhum `createClient` avulso
 (`npm run check:auth-architecture`, `scripts/check-supabase-auth-architecture.mjs`).
 
-- `src/lib/sessao/sessao.ts`, `session-lifecycle.ts`, `auth-flow.ts`, `supabaseClient.ts` — o único
+- `src/lib/sessao/sessao.ts`, `sessao/session-lifecycle.ts`, `sessao/auth-flow.ts`, `sessao/supabaseClient.ts` — o único
   caminho de auth; o cliente Supabase é um só (`getSupabaseClient()`).
 - `src/modules/auth-storage.ts` — guarda da sessão (vai para `src/lib/` na etapa 6 da
   arquitetura).
@@ -27,8 +27,8 @@ convite ou por solicitação aprovada por um administrador, que define grupo e p
 - `src/app/sessao.ts` e `src/app/sistema.ts` — o contrato "Sessão ↔ sistema" entre a sessão e o
   resto do app ([docs/arquitetura-react.md](../arquitetura-react.md)).
 - `src/app/entrada/` — a tela de acesso e o pedido de acesso (`src/lib/acessos/solicitacao-de-acesso.ts`).
-  A marca da tela de acesso fica em `src/lib/entrada/access-branding.ts`, `access-branding-cache.ts` e
-  `access-branding-publico.ts`; a da barra lateral, em `src/componentes/barra-lateral/marca.ts`.
+  A marca da tela de acesso fica em `src/lib/entrada/access-branding.ts`, `entrada/access-branding-cache.ts` e
+  `entrada/access-branding-publico.ts`; a da barra lateral, em `src/componentes/barra-lateral/marca.ts`.
 - `src/auth/callback.ts` (de `auth/callback.html`) — o retorno do OAuth. O login volta para
   `<endereço>/auth/callback.html`, que precisa estar nas **Redirect URLs** do Supabase.
 - `src/lib/sessao/env.ts` — leitura de variáveis; nunca chave escrita no código.
@@ -69,8 +69,8 @@ fixado ([[rpc-e-contrato]]). Não desligar RLS para "resolver" permissão.
 
 ## Fronteiras no código (não afrouxar)
 
-- HTML dinâmico passa por `src/lib/seguranca/sanitize.ts` / `html-security.ts`; CSV exportado por
-  `csv-security.ts`. Nunca `innerHTML` cru nem `dangerouslySetInnerHTML`.
+- HTML dinâmico passa por `src/lib/seguranca/sanitize.ts` / `seguranca/html-security.ts`; CSV exportado por
+  `seguranca/csv-security.ts`. Nunca `innerHTML` cru nem `dangerouslySetInnerHTML`.
 - Os proxies da FUNAI validam a origem com `src/lib/seguranca/origem-da-requisicao.ts`
   (`origemDeTerceiro`): sem isso o endpoint vira proxy aberto.
 - A API para outro sistema confere a chave em tempo constante (`api/_rota-com-chave.ts`).

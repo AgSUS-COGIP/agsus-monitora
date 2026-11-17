@@ -7,7 +7,8 @@ atualizado: 2026-11-17
 # Nova tela e código legado
 
 Tela ou feature nova é **React**: módulo em `src/modulos/<nome>/`, tela de página inteira como
-rota, visual com `src/ui/` e tokens, lógica pura em `src/lib/` com teste. O legado é o código
+rota, visual com `src/ui/` e tokens, lógica pura em `src/lib/<nome>/` (mesmo nome do módulo) com
+teste. O legado é o código
 antigo, sem React, em `src/modules/` (o do `index.html`; `src/analises/` já foi esvaziada e
 removida): ele **só encolhe**, conversa com o React por estado externo e eventos e sai inteiro
 quando a mudança que o substitui é confirmada. Detalhes em
@@ -21,7 +22,7 @@ src/modulos/<nome>/
   estado.ts       store sem React: obter(), assinar(ouvinte) e as ações (RPC)
   consultas.ts    (opcional) as RPCs do módulo, se o estado ficar grande
   <nome>.css      (opcional) só o que é desta tela; o resto vem de src/ui/
-src/lib/<nome>.ts               regras puras
+src/lib/<nome>/<regra>.ts       regras puras, na pasta do assunto (nunca solta na raiz de src/lib/)
 tests/modulos/<nome>.test.ts    teste do componente (sem JSX, com act)
 tests/<nome>.test.ts            teste das regras de src/lib/
 ```

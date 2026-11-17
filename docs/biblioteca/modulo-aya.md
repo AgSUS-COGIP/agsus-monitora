@@ -39,30 +39,30 @@ quando o app abre). Substitui os antigos `arara-guide.js`, `arara-speaking-effec
 
 ## Regras em `src/lib/`
 
-- Tours e trilhas ("Me mostra esta tela"): `aya-tours.ts`; os `data-tour="…"` das telas (e a
+- Tours e trilhas ("Me mostra esta tela"): `aya/aya-tours.ts`; os `data-tour="…"` das telas (e a
   prop `tour` de `src/ui/`) existem só para eles.
-- Perguntas com número: intenções e entidades em `intencoes-da-aya.ts`; contas e resposta em
-  `dados-da-aya.ts` (permissão conferida antes; só contagens e datas). O "Abrir" deixa o filtro em
-  `src/app/pedido-de-filtro.ts`; Recursos, Entrevistas e Seleção aplicam com `filtro-da-aya.ts`.
-- "Não aparece o botão": `permissoes-da-aya.ts`, pelo perfil.
-- "Não ajudou" e "não entendi" guardam a pergunta sem dado pessoal (`perguntas-sem-resposta.ts`);
+- Perguntas com número: intenções e entidades em `aya/intencoes-da-aya.ts`; contas e resposta em
+  `aya/dados-da-aya.ts` (permissão conferida antes; só contagens e datas). O "Abrir" deixa o filtro em
+  `src/app/pedido-de-filtro.ts`; Recursos, Entrevistas e Seleção aplicam com `aya/filtro-da-aya.ts`.
+- "Não aparece o botão": `aya/permissoes-da-aya.ts`, pelo perfil.
+- "Não ajudou" e "não entendi" guardam a pergunta sem dado pessoal (`aya/perguntas-sem-resposta.ts`);
   o administrador global copia a lista pelo painel.
-- O que a Aya diz em cada página: `aya-paginas.ts`. Chamado ao suporte (Gmail, com alternativa
-  `mailto:`): `chamado-da-aya.ts`. Respostas: `busca-da-aya.ts`.
-- Borda (qual vale ao soltar, setas, posição guardada): `borda-da-aya.ts`; o deslocamento de quem
+- O que a Aya diz em cada página: `aya/aya-paginas.ts`. Chamado ao suporte (Gmail, com alternativa
+  `mailto:`): `aya/chamado-da-aya.ts`. Respostas: `aya/busca-da-aya.ts`.
+- Borda (qual vale ao soltar, setas, posição guardada): `aya/borda-da-aya.ts`; o deslocamento de quem
   está escondida fica em `aya.css`.
 - Estados da mascote (prioridade, movimento reduzido, comemorações desligadas, tempos sorteados):
-  `estado-da-aya.ts`. Qualquer tela pede `definirEstadoDaAya("comemorando", 3000)` ou o evento
+  `aya/estado-da-aya.ts`. Qualquer tela pede `definirEstadoDaAya("comemorando", 3000)` ou o evento
   `aya:estado` (`{ detail: { estado, duracaoMs } }`); os fogos (`src/modulos/comemoracao/`) já
   pedem "comemorando". Prévia em Configurações › Marca › Mascote (`cartao-da-mascote.tsx`).
 
 ## TypeScript e limites
 
 Módulo e regras em TypeScript, sem JS/JSX; a base gerada (`src/modules/aya-conhecimento-gerado.js`)
-continua em JavaScript, e o compilador importa `aya-paginas.ts` e `termos-da-aya.ts` direto no
+continua em JavaScript, e o compilador importa `aya/aya-paginas.ts` e `aya/termos-da-aya.ts` direto no
 Node. O que vem do navegador (conversa, progresso, convites, perguntas sem resposta) e das RPCs
 chega como `unknown` e passa pelas leituras que já existiam; o resultado de cada fonte em
-`dados-da-aya.ts` é convertido no ponto de uso, sem validação nova. `cargasQuePedemAtencao` usa o
+`aya/dados-da-aya.ts` é convertido no ponto de uso, sem validação nova. `cargasQuePedemAtencao` usa o
 `atencao` de `visaoSimples`, a mesma lista que o Status das atualizações destaca.
 
 ## Testes

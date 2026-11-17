@@ -285,7 +285,7 @@ só fica no módulo.
 
 O modo "no quadro" (`<PainelNoQuadro>`, a marcação do antigo painel de análises para as telas que
 rodavam em iframe) saiu com a Seleção, a última delas, ao fim da Etapa 2 — junto com o CSS que
-sobrava em `src/analises/` e o `pagina-do-painel.js` de `src/modules/` (o que restou dele é o
+sobrava em `src/analises/` e o `paineis/pagina-do-painel.js` de `src/modules/` (o que restou dele é o
 `src/lib/paineis/pagina-do-painel.ts`). Nenhuma tela do app abre mais em
 iframe; só os painéis externos (`TB_PAINEL_EXTERNO`) continuam no quadro.
 
@@ -317,10 +317,10 @@ Testes: `tests/app/sessao.test.ts`, `tests/app/entrada.test.ts`, `tests/solicita
 | `loadProfile` (`obter_contexto_monitora`, `meu_usuario`)                             | `carregarPerfil()` na sessão                                                    |
 | `loginWithGoogle`, popup, `message`, `pageshow`, `mobile-google-oauth.js`            | `entrarComGoogle()`; `startMobileGoogleOAuth` em `src/lib/sessao/auth-flow.ts`         |
 | `logout`, `returnToLogin`, `clearLocalAuthState`, `aplicarSaida`                     | `sair()`, `limparSessao()`, `aplicarSaida()` na sessão                          |
-| `showAccessRequestState`, `submitAccessRequest`, `solicitacao-de-acesso.js` (legado) | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                             |
+| `showAccessRequestState`, `submitAccessRequest`, `acessos/solicitacao-de-acesso.js` (legado) | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                             |
 | `access-branding-boot.js`, marca e rodapé de `applyConfigToUi`                       | `src/app/entrada/marca.ts` (`definirMarcaDaConfiguracao`)                       |
 | marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.ts`)             | `src/lib/acessos/acesso-liberado.ts` (a comemoração continua no legado)                 |
-| `#loginMsg` escrito por `session-lifecycle.js`                                       | `installSessionLifecycle({ aoExpirar })` → `sessaoDoApp.mostrarMensagem`        |
+| `#loginMsg` escrito por `sessao/session-lifecycle.js`                                       | `installSessionLifecycle({ aoExpirar })` → `sessaoDoApp.mostrarMensagem`        |
 | `window.loginWithGoogle`, `logout`, `returnToLogin`, `submitAccessRequest`           | saíram; o Sair confirmado (`src/app/casca/saida.ts`) chama `sessaoDoApp.sair()` |
 
 Acesso só por convite: a sessão não chama mais `garantir_acesso_basico` (saiu do front e do

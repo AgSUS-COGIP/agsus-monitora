@@ -72,8 +72,8 @@ silêncio:
   agenda e formatos XML. O cache do logo considera URL e largura; conversão que falha pode ser
   tentada de novo.
 - **Publicação**: `src/lib/aprovados/tipos-da-publicacao-de-aprovados.ts` e
-  `dados-da-publicacao-de-aprovados.ts`. **Agenda**: `src/lib/entrevistas/tipos-da-agenda.ts` e
-  `dados-da-agenda.ts`.
+  `aprovados/dados-da-publicacao-de-aprovados.ts`. **Agenda**: `src/lib/entrevistas/tipos-da-agenda.ts` e
+  `entrevistas/dados-da-agenda.ts`.
 - **Troca de edital, área ou usuário** invalida os efeitos locais de gravações e leituras: voltar ao
   mesmo ID não aceita resposta anterior (inclusive A → B → A; não altera dados, avisos nem botões);
   uma carga de logo antiga não inicia download; chamadas já enviadas não são canceladas.

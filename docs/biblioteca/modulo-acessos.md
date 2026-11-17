@@ -69,8 +69,8 @@ formulários sobrevivem à troca de aba.
 
 ## Regras puras e banco
 
-`src/lib/acessos/matriz-de-acessos.ts` (rascunho; grupo × individual), `teto-de-acessos.ts` (teto do
-coordenador), `grupos-e-coordenacoes.ts`, `ver-como.ts`, `solicitacao-de-acesso.ts` (pedido por
+`src/lib/acessos/matriz-de-acessos.ts` (rascunho; grupo × individual), `acessos/teto-de-acessos.ts` (teto do
+coordenador), `acessos/grupos-e-coordenacoes.ts`, `acessos/ver-como.ts`, `acessos/solicitacao-de-acesso.ts` (pedido por
 área: listas, situação, validação, recusa; ver `src/app/entrada/`). Banco nas migrations
 `20260929121000`–`121300`, `190000`–`190200`, `20261021140000` e `20261022140100`; só as RPCs gravam
 o pedido.

@@ -96,9 +96,9 @@ Explicações para a Aya:
   recente. O cartão de avisos das [[modulo-conferencias]] relê só quando muda a última conferência
   (`marcaDasConferencias`).
 - Arquivos: `estado.ts` (estado lido com `useSyncExternalStore`), `tipos.ts` (dados, dependências e
-  ações); em `src/lib/`, `saude-das-cargas.ts` (normaliza as cargas, calcula selos e resumo),
-  `painel-dos-robos.ts` (normaliza editais, vagas, histórico; monta filtros, prévia e
-  acompanhamento) e `robos-de-carga.ts` (compartilhado com a Avaliação documental).
+  ações); em `src/lib/`, `automacao/saude-das-cargas.ts` (normaliza as cargas, calcula selos e resumo),
+  `automacao/painel-dos-robos.ts` (normaliza editais, vagas, histórico; monta filtros, prévia e
+  acompanhamento) e `automacao/robos-de-carga.ts` (compartilhado com a Avaliação documental).
 - **Fronteiras:** recebem `unknown`, conferem objetos e listas, descartam o que não é registro e
   tratam datas e números inválidos. Texto não exibe objeto serializado; rótulos de dicionário não
   vêm de propriedade herdada. Links de execução só HTTP ou HTTPS. Isso não substitui a autorização

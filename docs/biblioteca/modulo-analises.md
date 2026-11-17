@@ -37,9 +37,9 @@ marcos.ts       edital 100% analisado e fila zerada (escopo Ativo); meta de hoje
 ```
 
 Regras puras em `src/lib/analises/analises-curriculares.ts` (janela e validação, filtros em cascata, KPIs,
-gráficos, pendências, recorte, gaveta, CSV), mais `area-do-painel-de-analises.ts`,
-`lista-do-painel-de-analises.ts`, `textos-do-painel-de-analises.ts` e
-`cache-do-painel-de-analises.ts`; o ritmo (etapa do cronograma, dias úteis, projeção) em
+gráficos, pendências, recorte, gaveta, CSV), mais `analises/area-do-painel-de-analises.ts`,
+`analises/lista-do-painel-de-analises.ts`, `analises/textos-do-painel-de-analises.ts` e
+`analises/cache-do-painel-de-analises.ts`; o ritmo (etapa do cronograma, dias úteis, projeção) em
 `src/lib/analises/ritmo-da-analise.ts`. Visual só de `src/ui/` (sem CSS próprio). `marcos.ts` também avisa o
 [[modulo-editais]].
 

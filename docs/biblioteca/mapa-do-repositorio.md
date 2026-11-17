@@ -1,7 +1,7 @@
 ---
 tipo: referencia
 area: front
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
 # Mapa do repositório
@@ -20,7 +20,7 @@ src/app/                raiz React única (raiz.tsx), rotas (telas.tsx), navega�
 src/ui/                 design system: Topo, Filtros, Kpi, Gráfico, Tabela, Gaveta, Modal… (ui.css)
 src/modulos/            as telas em React, uma pasta por tela
 src/componentes/        moldura React: barra lateral, busca global, Status das atualizações, dados compartilhados
-src/lib/                lógica pura e testável (regras, contratos, formatos)
+src/lib/<assunto>/      lógica pura e testável, uma pasta por assunto (tabela abaixo); solto só rpc-contrato.ts
 src/modules/            LEGADO: só encolhe, nada novo
 src/styles/             CSS do app principal (ordem de import em main.ts)
 src/main.ts             bootstrap: importa CSS e instala módulos, em ordem
@@ -38,6 +38,54 @@ docs/                   biblioteca, documentos longos de referência e base de c
 
 **Nada em `public/` que não deva ser publicado**: tudo ali vai para o site (e para a Vercel).
 `dist/` é saída do build: não editar.
+
+## Assunto → pastas
+
+Procurando algo de uma tela, comece pelo nome dela: a tela está em `src/modulos/<nome>/` e a
+lógica em `src/lib/<nome>/`. O que várias telas usam fica numa das pastas técnicas.
+`check:lib-por-assunto` impede arquivo solto na raiz de `src/lib/` e pasta com mais de 30 arquivos
+diretos ([[ci-e-qualidade]]).
+
+| Assunto                | Tela (`src/modulos/`)                                                 | Lógica (`src/lib/`)                                      |
+| ---------------------- | --------------------------------------------------------------------- | -------------------------------------------------------- |
+| Acessos                | `acessos/`                                                            | `acessos/`                                               |
+| Análises               | `analises/`                                                           | `analises/`                                              |
+| Aprovados              | `aprovados/`                                                          | `aprovados/` (+ `carta-de-convocacao/`, `exportacao/`)   |
+| Automação e robôs      | `automacao/`                                                          | `automacao/`                                             |
+| Avaliação documental   | `avaliacao-documental/`                                               | `avaliacao-documental/`                                  |
+| Aya                    | `aya/`                                                                | `aya/` (+ `tours/`)                                      |
+| Classificação          | `classificacao/`                                                      | `classificacao/` (+ `motor/`)                            |
+| Comemoração            | `comemoracao/`                                                        | `comemoracao/` (fogos, motor de efeitos)                 |
+| Conferências           | `conferencias/`                                                       | `conferencias/`                                          |
+| Configurações          | `configuracoes/`                                                      | `configuracoes/`                                         |
+| Cronograma             | `cronograma/`                                                         | `cronograma/`                                            |
+| Editais                | `editais/`                                                            | `editais/`                                               |
+| Encerramento do edital | `encerramento-do-edital/`                                             | `encerramento-do-edital/`                                |
+| Entrevistas            | `entrevistas/`                                                        | `entrevistas/`                                           |
+| Mapas e coordenadas    | `mapa-saude-indigena/`, `mapa-de-projetos/`, `editor-de-coordenadas/` | `mapas/` (+ `mapa-saude-indigena/`, `terras-indigenas/`) |
+| Módulos e abas         | `modulos/`                                                            | `navegacao/`                                             |
+| Painéis                | `paineis-de-dados/`, `paineis-externos/`                              | `paineis/`                                               |
+| Recursos               | `recursos/`                                                           | `recursos/` (+ `parecer-em-blocos/`)                     |
+| Regras do edital       | `regras-do-edital/`                                                   | `regras-do-edital/`                                      |
+| Resumo do dia          | `resumo-do-dia/`                                                      | `resumo-do-dia/`                                         |
+| Seleção                | `selecao/`                                                            | `selecao/`                                               |
+| Triagem                | `triagem/`                                                            | `triagem/`                                               |
+| Visão geral            | `visao-geral/`                                                        | `visao-geral/`                                           |
+
+Pastas técnicas de `src/lib/` (várias telas usam):
+
+| Pasta        | O que guarda                                                                                             |
+| ------------ | -------------------------------------------------------------------------------------------------------- |
+| `sessao/`    | sessão, cliente Supabase, login, entrar sem rede, novas tentativas, cópia da sessão, `env.ts`            |
+| `seguranca/` | `sanitize.ts`, `html-security.ts`, `csv-security.ts`, monitor de CSP, origem da requisição              |
+| `entrada/`   | tela de acesso: marca, fundo, boas-vindas, esqueleto e textos de carregamento                            |
+| `navegacao/` | rotas, menu lateral, módulos e abas, busca global, páginas desligadas, situação dos módulos              |
+| `carga/`     | cópias guardadas (cache de payload, validade, versão, rótulo), carga de telas, falha de rede, recarga    |
+| `base/`      | formatadores, contraste, planilhas, novidades, versão, erros, Chart.js, ícones, cabeçalho dos documentos |
+
+Os testes ainda não seguem este desenho (`tests/` tem centenas de arquivos soltos); as próximas
+etapas da organização, em `docs/_arquivo/planos/2026-11-17-organizacao-por-assunto-design.md`, os
+levam para `tests/lib/<assunto>/` e `tests/modulos/<nome>/`, e agrupam `scripts/` e `src/styles/`.
 
 ## Não ler por inteiro (grep -n → sed -n 'A,Bp')
 
