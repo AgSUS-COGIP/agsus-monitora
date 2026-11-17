@@ -51,7 +51,8 @@ telas guardam no IndexedDB, e por quanto tempo, estão em [[dados-pessoais]].
   do build.
 - `tests/pwa-sem-rede.spec.js` (Playwright, build simulado): abre o app, espera o service worker
   terminar de guardar, desliga a rede (`context.setOffline(true)`) e troca para o Cronograma, que
-  nunca foi aberto; depois dá F5 sem rede.
+  nunca foi aberto; depois dá F5 sem rede (com o Supabase simulado: de verdade, a entrada sem rede
+  ainda falha ao conferir o perfil, "Não foi possível verificar suas permissões").
 
 ## Conferir à mão
 
