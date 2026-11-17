@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { lerDigitacao } from "../src/lib/digitacao-de-notas.ts";
 import {
   arredondar,
   dadosDoRoteiroParaSalvar,
@@ -197,6 +198,24 @@ describe("escala", () => {
     // Fora da faixa nunca vale, nem gravada.
     expect(notaAceita(SESMT, c, 2.5, 2.5)).toBe(false);
     expect(notaAceita(SESMT, c, -1, -1)).toBe(false);
+  });
+
+  it("FAIXA de 0,01 em 0,01 (93/2026, 17/11/2026): aceita a nota quebrada da banca e se digita", () => {
+    const duasCasas = { ...SESMT, passo: 0.01 };
+    const c = SESMT.competencias[0];
+    expect(notaNaEscala(duasCasas, c, 1.29)).toBe(true);
+    expect(notaNaEscala(duasCasas, c, 0.88)).toBe(true);
+    expect(notaNaEscala(duasCasas, c, 1.295)).toBe(false);
+    expect(notaNaEscala(duasCasas, c, 2.01)).toBe(false);
+    const opcoes = opcoesDaEscala(duasCasas, 2).map((o) => o.valor);
+    expect(opcoes).toHaveLength(201);
+    expect(lerDigitacao("1", opcoes).estado).toBe("parcial");
+    expect(lerDigitacao("1,2", opcoes).estado).toBe("parcial");
+    expect(lerDigitacao("1,29", opcoes)).toEqual({
+      estado: "completa",
+      texto: "1,29",
+    });
+    expect(lerDigitacao("1,295", opcoes).estado).toBe("recusada");
   });
 
   it("NIVEIS: os níveis até a nota máxima, com nome e descrição", () => {

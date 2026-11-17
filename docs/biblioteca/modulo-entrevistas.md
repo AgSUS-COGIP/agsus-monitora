@@ -95,7 +95,10 @@ arredonda o total — a conta da planilha da banca. As três contas seguem o mes
 `private."FC_CALCULAR_ENTREVISTA"`, `calcularEntrevista` (prévia da ficha, pela
 `configuracao.arredondamento` de `obter_entrevistas_do_edital`) e `monitora.entrevistas.calculo`;
 os casos dourados `tests/fixtures/entrevistas/casos-de-calculo.json` cobrem os dois. O 93/2026 está
-em MEDIA: as 49 entrevistas importadas ficaram iguais às planilhas da banca.
+em MEDIA: as 49 entrevistas importadas ficaram iguais às planilhas da banca. Nota quebrada (1,29; 0,88): a escala
+FAIXA aceita o passo que o roteiro tiver ("Passo das notas" em Preparar › Roteiro); com 0,01, qualquer
+nota com até duas casas. O roteiro do 93/2026 (também do 96/2025, concluído) passou a 0,01
+(`20261117040000`).
 
 ## Relacionadas
 
