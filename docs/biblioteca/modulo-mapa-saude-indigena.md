@@ -69,7 +69,8 @@ com as Lotações), `redeCnes` (chave "rede_cnes"), `linhas` (editais recortados
 
 - **Dados.** `carregarMapa` (`src/app/carga.ts`) lê a tabela (faz parte da cópia da sessão e da
   recarga) e publica `estado.definirDadosDoMapa({ lmap, redeCnes })`.
-- **SIGEPSI, a fonte verdadeira da lista de DSEIs e dos pontos.** `MapaDaSaudeIndigena` pede
+- **SIGEPSI, a fonte verdadeira da lista de DSEIs e dos pontos.** `MapaSaudeIndigenaComSigepsi`
+  (`mapa-com-sigepsi.tsx`, no pedaço do mapa baixado sob demanda, fora da entrada) pede
   `/api/dseis` ([[funcoes-da-vercel]]) por `usarLocalizacoesDoSigepsi` (`localizacoes.ts`, um pedido
   a cada 10 min para a página) e fica em "carregando" até a resposta (não mostra a lista do banco
   para trocá-la em seguida). `aplicarLocalizacoes` monta a lista de DSEIs com a do SIGEPSI: DSEI só

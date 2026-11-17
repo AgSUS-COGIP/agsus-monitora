@@ -13,7 +13,7 @@ import { Carregando, ErroAoCarregar } from "../../ui/index.ts";
 */
 
 type MapaSI =
-  typeof import("../mapa-saude-indigena/mapa-saude-indigena.tsx").MapaSaudeIndigena;
+  typeof import("../mapa-saude-indigena/mapa-com-sigepsi.tsx").MapaSaudeIndigenaComSigepsi;
 type MapaProjetos =
   typeof import("../mapa-de-projetos/mapa-de-projetos.tsx").MapaDeProjetos;
 
@@ -55,9 +55,10 @@ function sobDemanda<C>(importar: () => Promise<C>) {
   return { carregar, assinar, obter: () => estado };
 }
 
+// Com o SIGEPSI por cima do banco (a lógica dele também fica fora da entrada).
 const mapaSI = sobDemanda<MapaSI>(() =>
-  import("../mapa-saude-indigena/mapa-saude-indigena.tsx").then(
-    (modulo) => modulo.MapaSaudeIndigena,
+  import("../mapa-saude-indigena/mapa-com-sigepsi.tsx").then(
+    (modulo) => modulo.MapaSaudeIndigenaComSigepsi,
   ),
 );
 const mapaProjetos = sobDemanda<MapaProjetos>(() =>
